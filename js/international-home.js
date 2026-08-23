@@ -70,6 +70,9 @@
     mapReady: false,
     hubStats: {},
     activeModal: null,
+    armedCountryId: null,
+    labelItems: [],
+    projection: null,
   };
 
   var els = {};
@@ -142,26 +145,87 @@
     return n.toLocaleString('en-GB');
   }
 
+  function isCoarsePointer() {
+    return window.matchMedia('(hover: none), (pointer: coarse)').matches;
+  }
+
+  function popupActionText(meta) {
+    if (meta.live) {
+      return isCoarsePointer() ? 'Tap again to explore →' : 'Click to explore →';
+    }
+    if (meta.building) {
+      return isCoarsePointer()
+        ? 'Tap again to tell us about your group →'
+        : 'Tell us about your group →';
+    }
+    if (meta.unavailable) {
+      return 'We don\u2019t operate in this region';
+    }
+    return isCoarsePointer()
+      ? 'Tap again to register interest →'
+      : 'Register your interest →';
+  }
+
+  function clearArmedCountry() {
+    state.armedCountryId = null;
+    if (els.labels) {
+      els.labels.querySelectorAll('.intl-map-label.is-active').forEach(function (node) {
+        node.classList.remove('is-active');
+      });
+    }
+  }
+
   function hideCountryPopup() {
     if (!els.popup) return;
     els.popup.hidden = true;
-    els.popup.classList.remove('is-visible', 'is-below', 'intl-country-popup--live', 'intl-country-popup--building', 'intl-country-popup--soon', 'intl-country-popup--unavailable');
+    els.popup.classList.remove(
+      'is-visible',
+      'is-below',
+      'intl-country-popup--live',
+      'intl-country-popup--building',
+      'intl-country-popup--soon',
+      'intl-country-popup--unavailable'
+    );
   }
 
   function positionCountryPopup(path) {
-    if (!els.popup || !els.canvas || !path) return;
+    if (!els.popup || !els.canvas) return;
 
-    var pathRect = path.getBoundingClientRect();
     var canvasRect = els.canvas.getBoundingClientRect();
     var popupWidth = els.popup.offsetWidth || 220;
     var popupHeight = els.popup.offsetHeight || 140;
+    var centerX;
+    var centerY;
+    var placeBelow;
+    var x;
+    var y;
 
-    var centerX = pathRect.left + pathRect.width / 2 - canvasRect.left;
-    var centerY = pathRect.top + pathRect.height / 2 - canvasRect.top;
-
-    var x = Math.max(16 + popupWidth / 2, Math.min(canvasRect.width - 16 - popupWidth / 2, centerX));
-    var placeBelow = centerY - popupHeight - 20 < 8;
-    var y = placeBelow ? Math.min(canvasRect.height - 8, centerY + pathRect.height / 2 + 8) : Math.max(8 + popupHeight, centerY - pathRect.height / 2);
+    if (path) {
+      var pathRect = path.getBoundingClientRect();
+      centerX = pathRect.left + pathRect.width / 2 - canvasRect.left;
+      centerY = pathRect.top + pathRect.height / 2 - canvasRect.top;
+      placeBelow = centerY - popupHeight - 20 < 8;
+      x = Math.max(
+        16 + popupWidth / 2,
+        Math.min(canvasRect.width - 16 - popupWidth / 2, centerX)
+      );
+      y = placeBelow
+        ? Math.min(canvasRect.height - 8, centerY + pathRect.height / 2 + 8)
+        : Math.max(8 + popupHeight, centerY - pathRect.height / 2);
+    } else {
+      var activeLabel =
+        els.labels && els.labels.querySelector('.intl-map-label.is-active');
+      if (!activeLabel) return;
+      var labelRect = activeLabel.getBoundingClientRect();
+      centerX = labelRect.left + labelRect.width / 2 - canvasRect.left;
+      centerY = labelRect.bottom - canvasRect.top + 14;
+      placeBelow = true;
+      x = Math.max(
+        16 + popupWidth / 2,
+        Math.min(canvasRect.width - 16 - popupWidth / 2, centerX)
+      );
+      y = Math.min(canvasRect.height - 8, centerY + popupHeight);
+    }
 
     els.popup.style.left = x + 'px';
     els.popup.style.top = y + 'px';
@@ -187,17 +251,14 @@
 
     if (meta.live) {
       els.popupKicker.textContent = 'Live';
-      els.popupAction.textContent = 'Click to explore →';
     } else if (meta.building) {
       els.popupKicker.textContent = 'Building';
-      els.popupAction.textContent = 'Tell us about your group →';
     } else if (meta.unavailable) {
       els.popupKicker.textContent = 'Not available';
-      els.popupAction.textContent = 'We don\u2019t operate in this region';
     } else {
       els.popupKicker.textContent = 'Coming soon';
-      els.popupAction.textContent = 'Register your interest →';
     }
+    els.popupAction.textContent = popupActionText(meta);
 
     els.popupName.textContent = meta.name;
 
@@ -251,8 +312,47 @@
     hideCountryPopup();
   }
 
+  function selectCountry(path, meta, options) {
+    options = options || {};
+    clearHover();
+    if (path) path.classList.add('is-hovered');
+    showCountryPopup(path, meta);
+    if (els.labels) {
+      els.labels.querySelectorAll('.intl-map-label').forEach(function (node) {
+        node.classList.toggle('is-active', node.getAttribute('data-country-id') === meta.numericId);
+      });
+    }
+    if (options.arm && !meta.unavailable) {
+      state.armedCountryId = meta.numericId;
+    }
+  }
+
+  function onCountryActivate(path, meta) {
+    if (!meta) return;
+
+    if (meta.unavailable) {
+      selectCountry(path, meta, { arm: false });
+      return;
+    }
+
+    // Touch / coarse pointers: first tap shows the card, second tap acts.
+    if (isCoarsePointer()) {
+      if (state.armedCountryId === meta.numericId) {
+        clearArmedCountry();
+        handleCountryAction(meta);
+        return;
+      }
+      selectCountry(path, meta, { arm: true });
+      return;
+    }
+
+    handleCountryAction(meta);
+  }
+
   function handleCountryAction(meta) {
     if (!meta || meta.unavailable) return;
+    clearArmedCountry();
+    clearHover();
     if (meta.live && meta.url) {
       window.location.href = meta.url;
       return;
@@ -369,22 +469,33 @@
     path.setAttribute('aria-label', meta.name + countryStatusLabel(meta));
 
     function onEnter() {
-      clearHover();
-      path.classList.add('is-hovered');
-      showCountryPopup(path, meta);
+      if (isCoarsePointer()) return;
+      clearArmedCountry();
+      selectCountry(path, meta, { arm: false });
     }
 
     function onLeave() {
+      if (isCoarsePointer()) return;
       path.classList.remove('is-hovered');
-      hideCountryPopup();
+      if (state.armedCountryId !== meta.numericId) hideCountryPopup();
+      if (els.labels) {
+        els.labels.querySelectorAll('.intl-map-label.is-active').forEach(function (node) {
+          if (node.getAttribute('data-country-id') === meta.numericId) {
+            node.classList.remove('is-active');
+          }
+        });
+      }
     }
 
     path.addEventListener('mouseenter', onEnter);
     path.addEventListener('mouseleave', onLeave);
-    path.addEventListener('focus', onEnter);
+    path.addEventListener('focus', function () {
+      selectCountry(path, meta, { arm: false });
+    });
     path.addEventListener('blur', onLeave);
-    path.addEventListener('click', function () {
-      if (!meta.unavailable) handleCountryAction(meta);
+    path.addEventListener('click', function (event) {
+      event.preventDefault();
+      onCountryActivate(path, meta);
     });
     path.addEventListener('keydown', function (event) {
       if (meta.unavailable) return;
@@ -393,6 +504,116 @@
         handleCountryAction(meta);
       }
     });
+  }
+
+  function viewBoxToCanvasPoint(x, y) {
+    if (!els.svg || !els.canvas) return null;
+    var svgRect = els.svg.getBoundingClientRect();
+    var canvasRect = els.canvas.getBoundingClientRect();
+    if (!svgRect.width || !svgRect.height) return null;
+    var scale = Math.min(svgRect.width / 960, svgRect.height / 500);
+    var offsetX = (svgRect.width - 960 * scale) / 2;
+    var offsetY = (svgRect.height - 500 * scale) / 2;
+    return {
+      x: svgRect.left - canvasRect.left + offsetX + x * scale,
+      y: svgRect.top - canvasRect.top + offsetY + y * scale,
+    };
+  }
+
+  function shortLabelName(meta) {
+    if (meta.iso2 === 'GB') return 'UK';
+    return meta.name;
+  }
+
+  function positionMapLabels() {
+    if (!state.labelItems.length) return;
+    state.labelItems.forEach(function (item) {
+      var point = viewBoxToCanvasPoint(item.x, item.y);
+      if (!point) return;
+      item.el.style.left = point.x + 'px';
+      item.el.style.top = point.y + 'px';
+    });
+  }
+
+  function renderMapLabels(projection, features) {
+    if (!els.labels) return;
+    els.labels.innerHTML = '';
+    state.labelItems = [];
+
+    var spotlight = state.countries.filter(function (meta) {
+      return meta.live || meta.building;
+    });
+
+    spotlight.forEach(function (meta) {
+      var feature = featureByNumericId(features, meta.numericId);
+      if (!feature) return;
+      var centroid = window.d3.geoCentroid(feature);
+      var projected = projection(centroid);
+      if (!projected) return;
+
+      // Nudge UK label so it sits above the islands clearly.
+      var x = projected[0];
+      var y = projected[1];
+      if (meta.iso2 === 'GB') {
+        x += 8;
+        y -= 14;
+      } else if (meta.iso2 === 'AU') {
+        y += 6;
+      } else if (meta.iso2 === 'CA') {
+        y += 10;
+      }
+
+      var button = document.createElement('button');
+      button.type = 'button';
+      button.className =
+        'intl-map-label intl-map-label--' + (meta.live ? 'live' : 'building');
+      button.setAttribute('data-country-id', meta.numericId);
+      button.setAttribute(
+        'aria-label',
+        meta.name + countryStatusLabel(meta)
+      );
+      button.innerHTML =
+        '<span class="intl-map-label-name">' +
+        shortLabelName(meta) +
+        '</span>' +
+        '<span class="intl-map-label-status">' +
+        (meta.live ? 'Live' : 'Building') +
+        '</span>';
+
+      function labelPath() {
+        return (
+          els.svg &&
+          els.svg.querySelector(
+            '.intl-country[data-country-id="' + meta.numericId + '"]'
+          )
+        );
+      }
+
+      button.addEventListener('click', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        onCountryActivate(labelPath(), meta);
+      });
+
+      button.addEventListener('mouseenter', function () {
+        if (isCoarsePointer()) return;
+        selectCountry(labelPath(), meta, { arm: false });
+      });
+
+      button.addEventListener('mouseleave', function () {
+        if (isCoarsePointer()) return;
+        if (state.armedCountryId === meta.numericId) return;
+        var path = labelPath();
+        if (path) path.classList.remove('is-hovered');
+        hideCountryPopup();
+        button.classList.remove('is-active');
+      });
+
+      els.labels.appendChild(button);
+      state.labelItems.push({ el: button, x: x, y: y, meta: meta });
+    });
+
+    positionMapLabels();
   }
 
   function featureByNumericId(features, numericId) {
@@ -553,6 +774,7 @@
 
     els.svg.appendChild(countriesGroup);
     renderNetworkArcs(projection, features);
+    renderMapLabels(projection, features);
 
     els.loading.hidden = true;
     state.mapReady = true;
@@ -725,6 +947,7 @@
     els.mapWrap = byId('intl-map-wrap');
     els.svg = byId('intl-map-svg');
     els.loading = byId('intl-map-loading');
+    els.labels = byId('intl-map-labels');
     els.mobilePicker = byId('intl-mobile-picker');
     els.select = byId('intl-country-select');
     els.popup = byId('intl-country-popup');
@@ -763,9 +986,22 @@
     loadHubStats();
 
     window.addEventListener('resize', function () {
+      positionMapLabels();
       var hovered = els.svg && els.svg.querySelector('.intl-country.is-hovered');
       if (hovered) positionCountryPopup(hovered);
+      else if (state.armedCountryId) positionCountryPopup(null);
     });
+
+    if (els.canvas) {
+      els.canvas.addEventListener('click', function (event) {
+        if (!isCoarsePointer()) return;
+        if (event.target.closest('.intl-country, .intl-map-label, .intl-country-popup')) {
+          return;
+        }
+        clearArmedCountry();
+        clearHover();
+      });
+    }
 
     if (els.select) {
       els.select.addEventListener('change', function () {
