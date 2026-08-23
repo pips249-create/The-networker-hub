@@ -76,7 +76,7 @@
     modal.innerHTML =
       '<div class="hub-organiser-terms-panel">' +
       '<h2 id="hub-organiser-terms-title">Organiser terms</h2>' +
-      '<p>Before you publish on The Networker Hub, please confirm you agree to our organiser terms, including refund responsibilities, attendee data protection, and listing accuracy.</p>' +
+      '<p>Before you publish on The Networker UK, please confirm you agree to our organiser terms, including refund responsibilities, attendee data protection, and listing accuracy.</p>' +
       '<ul class="hub-organiser-terms-list">' +
       '<li>You are responsible for delivering events and honouring your stated refund policy</li>' +
       '<li>Business opportunity listings must be truthful and not misleading</li>' +

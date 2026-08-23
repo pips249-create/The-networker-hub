@@ -23,7 +23,7 @@ function isStaleBookingReminderTemplate(bodyHtml) {
   if (sponsorAt === -1) return true;
   if (waveAt !== -1 && sponsorAt > waveAt) return true;
   if (sponsorAt !== -1 && keepBuildingAt !== -1 && sponsorAt > keepBuildingAt) return true;
-  const headerLogoAt = body.indexOf('alt="The Networker Hub" width="180"');
+  const headerLogoAt = body.indexOf('alt="The Networker UK" width="180"');
   if (
     sponsorAt !== -1 &&
     headerLogoAt !== -1 &&
@@ -31,9 +31,9 @@ function isStaleBookingReminderTemplate(bodyHtml) {
   ) {
     return true;
   }
-  if (body.includes('hello@thenetworkerhub.com')) return true;
-  if (body.includes('{{logo_url}}" alt="The Networker Hub" width="200"')) return true;
-  if (body.includes('The Networker Hub</p>') && body.includes('background:#f5f0e8;padding:28px')) return true;
+  if (body.includes('hello@thenetworkeruk.com')) return true;
+  if (body.includes('{{logo_url}}" alt="The Networker UK" width="200"')) return true;
+  if (body.includes('The Networker UK</p>') && body.includes('background:#f5f0e8;padding:28px')) return true;
   if (!body.includes('hub-email-layout-v3-purple')) return true;
   if (body.includes('background:#4a4446')) return true;
   if (!body.includes('{{logo_footer_url}}')) return true;

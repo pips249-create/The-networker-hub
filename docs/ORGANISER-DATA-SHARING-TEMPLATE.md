@@ -1,7 +1,7 @@
 # Organiser data-sharing schedule (optional template)
 
 **Between:** The Networker Group Ltd (“**Platform**”) and [Organiser legal name] (“**Organiser**”)  
-**Product:** The Networker Hub  
+**Product:** The Networker UK  
 **Last updated:** 10 July 2026
 
 *Optional one-page schedule for enterprise organisers who request written terms. **Not required** for standard self-serve listing — organiser terms section 6 already covers roles. Not legal advice — review with your solicitor before signing.*
@@ -51,7 +51,7 @@ The Organiser shall:
 4. Honour data subject rights for data the Organiser holds  
 5. Not sell or disclose data to third parties except as needed to run the event (e.g. venue staff) under equivalent safeguards  
 6. Delete or anonymise data when no longer needed, subject to legal retention  
-7. Notify the Platform at **hello@thenetworkerhub.com** within 24 hours of becoming aware of a personal data breach affecting shared data  
+7. Notify the Platform at **hello@thenetworkeruk.com** within 24 hours of becoming aware of a personal data breach affecting shared data  
 
 ---
 

@@ -23,7 +23,7 @@ dotenv.config({ path: path.join(root, '.env') });
 const { getSupabaseAdmin } = require('../api/_lib/supabase');
 const { isPublicOrganiser } = require('../api/_lib/supabase-organisers-browse');
 
-const SITE = 'https://www.thenetworkerhub.com';
+const SITE = 'https://www.thenetworkeruk.com';
 const DEFAULT_OUT = path.join(root, 'ops/organiser-outreach-tracker.csv');
 const PHONE_CSV = path.join(root, 'data/networking-groups-organisers.csv');
 
@@ -31,9 +31,9 @@ const { isExcludedLaunchOrganiser } = require('./launch-excluded-organisers');
 
 const SKIP_EMAILS = new Set([
   'pips249@gmail.com',
-  'hello@thenetworkerhub.com',
-  'catherine@thenetworkerhub.com',
-  'rosie@thenetworkerhub.com',
+  'hello@thenetworkeruk.com',
+  'catherine@thenetworkeruk.com',
+  'rosie@thenetworkeruk.com',
 ]);
 
 /** Manual columns — never overwritten on refresh. */

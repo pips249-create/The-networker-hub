@@ -1,6 +1,6 @@
 # SEO & AEO launch plan
 
-**Private until 25 August 2026** (tickets & enquiries from 1 September) · Public hub: `www.thenetworkerhub.com`  
+**Private until 25 August 2026** (tickets & enquiries from 1 September) · Public hub: `www.thenetworkeruk.com`  
 Code foundations ~65% ready — gate, domain, and Search Console still decide launch discoverability.
 
 > Cursor canvas side panel: `seo-aeo-launch-plan.canvas.tsx` (open from the Canvas / right sidebar in Cursor).
@@ -15,10 +15,10 @@ Code foundations ~65% ready — gate, domain, and Search Console still decide la
 
 | Do | Don't |
 |----|--------|
-| Sign in with `catherine@thenetworkerhub.com` (Google Workspace); add Rosie as Owner/Manager | Use Magpas HQ / PO box / accountants address on GBP |
+| Sign in with `catherine@thenetworkeruk.com` (Google Workspace); add Rosie as Owner/Manager | Use Magpas HQ / PO box / accountants address on GBP |
 | Category: Software company (or Online service) | Claim “customers visit this location” at Magpas |
 | No public address / no storefront; UK service area if asked | Expect it to rank individual event pages or replace GSC |
-| Website `https://www.thenetworkerhub.com`; contact hello@ | Force a Maps pin if Google won’t verify without a real premises |
+| Website `https://www.thenetworkeruk.com`; contact hello@ | Force a Maps pin if Google won’t verify without a real premises |
 | If Google won’t create without a verifiable address — **park GBP** until you have one | Treat Trustpilot as day-one (optional later) |
 
 ---
@@ -46,10 +46,10 @@ Code foundations ~65% ready — gate, domain, and Search Console still decide la
 
 ## Do beforehand (while still private)
 
-1. **Lock the public origin** — `www.thenetworkerhub.com` (apex → www). Set `SITE_URL` in Vercel Production to that exact URL.
-2. **Align SEO surfaces** — `robots.txt` Sitemap line, rebuild `llms.txt` (`SITE_URL=https://www.thenetworkerhub.com npm run build-seo`), fix hard-coded `the-networker.co.uk` canonical leftovers (guides/faq).
+1. **Lock the public origin** — `www.thenetworkeruk.com` (apex → www). Set `SITE_URL` in Vercel Production to that exact URL.
+2. **Align SEO surfaces** — `robots.txt` Sitemap line, rebuild `llms.txt` (`SITE_URL=https://www.thenetworkeruk.com npm run build-seo`), fix hard-coded `the-networker.co.uk` canonical leftovers (guides/faq).
 3. **Redirect map** — draft in [`docs/LEGACY-REDIRECT-MAP.md`](./LEGACY-REDIRECT-MAP.md); confirm old analytics URLs → hub 301s for apex + www.
-4. **Google Search Console** — property for `www.thenetworkerhub.com` (domain property if possible). Prepare DNS TXT / HTML verification.
+4. **Google Search Console** — property for `www.thenetworkeruk.com` (domain property if possible). Prepare DNS TXT / HTML verification.
 5. **Google Business Profile** (optional / best-effort) — Software company / online, **no Magpas pin**; hide address or UK service area; verify via phone/email/video. Park if Google requires a premises you can’t verify. Keep Magpas on legal footer / Companies House only.
 6. **Analytics** — keep Vercel Analytics only, or add GA4/GTM after cookie consent.
 7. **Content freeze** — FAQs, About, Contact NAP; spot-check View Source on sample event + organiser pages after a staging gate-off test.
@@ -61,7 +61,7 @@ Code foundations ~65% ready — gate, domain, and Search Console still decide la
 
 1. Remove `SITE_ACCESS_PASSWORD` → Redeploy (public browsing on).
 2. Confirm `/robots.txt` Allow, `/sitemap.xml` 200, `/llms.txt` + `/agents.txt` 200, no public `noindex`.
-3. Search Console: verify → submit `https://www.thenetworkerhub.com/sitemap.xml` → request indexing on home + 3–5 key pages.
+3. Search Console: verify → submit `https://www.thenetworkeruk.com/sitemap.xml` → request indexing on home + 3–5 key pages.
 4. Keep tickets and opportunity enquiries closed until 1 September; banner copy should say so.
 5. If GBP exists: set website to live hub URL and publish only if verified without a Magpas Maps pin. Otherwise skip — GSC is enough.
 6. Week 1–2: watch Coverage / Page indexing; fix 404s from old URLs; confirm Event schema where eligible.
@@ -87,8 +87,8 @@ Code foundations ~65% ready — gate, domain, and Search Console still decide la
 
 | Domain | Role now | Launch action |
 |--------|----------|---------------|
-| `www.thenetworkerhub.com` | Live hub + default SEO/AEO origin | Single canonical; apex 301 → www |
-| `thenetworkerhub.co.uk` (+ www) | UK brand variant / typo catch | 301 → `www.thenetworkerhub.com` (Vercel domain + `vercel.json`) |
+| `www.thenetworkeruk.com` | Live hub + default SEO/AEO origin | Single canonical; apex 301 → www |
+| `thenetworkerhub.co.uk` (+ www) | UK brand variant / typo catch | 301 → `www.thenetworkeruk.com` (Vercel domain + `vercel.json`) |
 | `the-networker.co.uk` | Legacy brand / email / leftover canonicals | 301 → hub; keep email |
 | `the-networker-hub.vercel.app` | Deploy / preview host | Never submit to GSC as primary |
 

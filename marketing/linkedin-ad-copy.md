@@ -1,4 +1,4 @@
-# LinkedIn ad copy · The Networker Hub
+# LinkedIn ad copy · The Networker UK
 
 ## LinkedIn one-page PDFs (1080×1080)
 
@@ -13,10 +13,10 @@ Square PDFs for LinkedIn document posts, carousels, or DMs. All hosted at `/asse
 | `list-business-opportunity-guide.pdf` | Providers | A4 printable: full how-to-list guide |
 
 **Downloads folder copies:**
-- `Networker Hub - Why Browse Here (LinkedIn).pdf`
-- `Networker Hub - What is Business Opportunities (LinkedIn).pdf`
-- `Networker Hub - Organiser Benefits (LinkedIn).pdf`
-- `Networker Hub - How to List Business Opportunities (LinkedIn).pdf`
+- `Networker UK - Why Browse Here (LinkedIn).pdf`
+- `Networker UK - What is Business Opportunities (LinkedIn).pdf`
+- `Networker UK - Organiser Benefits (LinkedIn).pdf`
+- `Networker UK - How to List Business Opportunities (LinkedIn).pdf`
 
 Re-export all LinkedIn PDFs:
 
@@ -33,11 +33,11 @@ node export-listing-pdf.mjs   # also regenerates A4 how-to-list
 **Intro text**
 > Looking for a franchise, side hustle, or partnership, but tired of scrolling generic job boards?
 >
-> **Business Opportunities** on The Networker Hub is a free-to-browse UK directory for franchises, side hustles, partnerships, distributorships, and networking openings. Filter by type, investment budget, and location, then enquire directly with providers. No per-lead fees. Browse free; sign up only when you're ready to enquire.
+> **Business Opportunities** on The Networker UK is a free-to-browse UK directory for franchises, side hustles, partnerships, distributorships, and networking openings. Filter by type, investment budget, and location, then enquire directly with providers. No per-lead fees. Browse free; sign up only when you're ready to enquire.
 
 **Headline:** What are Business Opportunities?  
 **CTA:** Learn more  
-**URL:** https://thenetworkerhub.com/opportunities
+**URL:** https://thenetworkeruk.com/opportunities
 
 ---
 
@@ -46,11 +46,11 @@ node export-listing-pdf.mjs   # also regenerates A4 how-to-list
 **Intro text**
 > Still running your networking group on a generic ticketing platform?
 >
-> The Networker Hub is built for UK networking organisers: **free to list**, you **keep 100% of the ticket price**, members discover you in our events and organiser directory, and you get tools other platforms don't offer: guest visits, visit tracking, Category Exclusivity, Previous Attendees, and **memberships** — upload your member list, sell Members only tickets without access codes, and track renewals with reports and booking reminders. Plus list business opportunities in the same dashboard.
+> The Networker UK is built for UK networking organisers: **free to list**, you **keep 100% of the ticket price**, members discover you in our events and organiser directory, and you get tools other platforms don't offer: guest visits, visit tracking, Category Exclusivity, Previous Attendees, and **memberships** — upload your member list, sell Members only tickets without access codes, and track renewals with reports and booking reminders. Plus list business opportunities in the same dashboard.
 
 **Headline:** Ticketing built for networking groups  
 **CTA:** Learn more  
-**URL:** https://thenetworkerhub.com/for-organisers
+**URL:** https://thenetworkeruk.com/for-organisers
 
 ---
 
@@ -59,13 +59,13 @@ node export-listing-pdf.mjs   # also regenerates A4 how-to-list
 **Intro text**
 > Still hunting for your next networking event across Eventbrite, LinkedIn, and WhatsApp groups?
 >
-> The Networker Hub brings **UK business events**, **organiser communities**, and **business opportunities** into one place. Browse free: no account needed until you're ready to book or enquire. Filter by location, date, event type, investment budget, and more.
+> The Networker UK brings **UK business events**, **organiser communities**, and **business opportunities** into one place. Browse free: no account needed until you're ready to book or enquire. Filter by location, date, event type, investment budget, and more.
 
 **Headline:** Find your next event, connection, or opportunity  
 **CTA:** Visit website  
-**URL:** https://thenetworkerhub.com/for-attendees
+**URL:** https://thenetworkeruk.com/for-attendees
 
-**Key benefits to mention:** My Hub dashboard · Smart alerts · Member rates · Booking reminders · Guest visits · Reviews & share cards
+**Key benefits to mention:** My account dashboard · Smart alerts · Member rates · Booking reminders · Guest visits · Reviews & share cards
 
 ---
 
@@ -95,11 +95,11 @@ node export-ad-video.mjs attendee dark
 **Intro text**
 > Looking for your next business move?
 >
-> Coming 1st September: browse franchises, side hustles, partnerships and more on The Networker Hub. Filter by type, investment, and location. Free to browse. Enquire when you're ready.
+> Coming 1st September: browse franchises, side hustles, partnerships and more on The Networker UK. Filter by type, investment, and location. Free to browse. Enquire when you're ready.
 
 **Headline:** Find your next business opportunity  
 **CTA:** Learn more  
-**URL:** https://thenetworkerhub.com/opportunities
+**URL:** https://thenetworkeruk.com/opportunities
 
 ---
 
@@ -108,11 +108,11 @@ node export-ad-video.mjs attendee dark
 **Intro text**
 > Why switch from generic ticketing?
 >
-> Coming 1st September: The Networker Hub is built for UK networking organisers, with a full organiser dashboard, free listings, you keep 100% of the ticket price, and tools other ticket platforms don't have.
+> Coming 1st September: The Networker UK is built for UK networking organisers, with a full organiser dashboard, free listings, you keep 100% of the ticket price, and tools other ticket platforms don't have.
 
 **Headline:** Why switch, coming 1st September  
 **CTA:** Learn more  
-**URL:** https://thenetworkerhub.com/for-organisers
+**URL:** https://thenetworkeruk.com/for-organisers
 
 ---
 
@@ -123,20 +123,20 @@ node export-ad-video.mjs attendee dark
 **Intro text**
 > Still searching Eventbrite, LinkedIn, and WhatsApp for your next networking event?
 >
-> The Networker Hub brings UK business events, organiser communities, and opportunities into one place. Free to browse. Sign up only when you're ready to book or enquire.
+> The Networker UK brings UK business events, organiser communities, and opportunities into one place. Free to browse. Sign up only when you're ready to book or enquire.
 
 **Headline:** Find your next business event  
 **CTA:** Learn more  
-**URL:** https://thenetworkerhub.com/events
+**URL:** https://thenetworkeruk.com/events
 
 ### Ad 2 · Short
 
 **Intro text**
-> Find your next event, connection, or opportunity across the UK, in one place. Browse free on The Networker Hub.
+> Find your next event, connection, or opportunity across the UK, in one place. Browse free on The Networker UK.
 
 **Headline:** Your next move starts here  
 **CTA:** Visit website  
-**URL:** https://thenetworkerhub.com
+**URL:** https://thenetworkeruk.com
 
 ---
 

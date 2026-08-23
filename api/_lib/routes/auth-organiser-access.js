@@ -106,7 +106,7 @@ module.exports = async function handler(req, res) {
         ok: true,
         ...status,
         redirect: '/account/',
-        message: 'Organiser workspace hidden. You can still buy tickets and manage bookings in My Hub.',
+        message: 'Organiser workspace hidden. You can still buy tickets and manage bookings in My account.',
       });
     } catch (e) {
       return json(res, e.status || 500, {

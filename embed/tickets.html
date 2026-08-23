@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Ticket widget – The Networker Hub</title>
+  <title>Ticket widget – The Networker UK</title>
   <meta
     name="description"
-    content="Embed Networker Hub event tickets on your own website. White-label ticket widget with secure Hub checkout."
+    content="Embed Networker UK event tickets on your own website. White-label ticket widget with secure Hub checkout."
   />
   <meta name="robots" content="noindex, nofollow" />
-  <link rel="icon" href="/favicon.ico?v=20260722fav2" sizes="any" />
-  <link rel="icon" href="/assets/favicon.svg?v=20260722fav2" type="image/svg+xml" />
+  <link rel="icon" href="/favicon.ico?v=20260823uk" sizes="any" />
+  <link rel="icon" href="/assets/favicon.svg?v=20260823uk" type="image/svg+xml" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
@@ -107,7 +107,7 @@
     <h1>Put tickets on your website</h1>
     <p class="lede">
       Paste one snippet on your site. Buyers see your event and ticket prices in an embed;
-      checkout still happens securely on The Networker Hub — your live Hub event page is unchanged.
+      checkout still happens securely on The Networker UK — your live Hub event page is unchanged.
     </p>
 
     <label for="embed-slug">Event slug</label>
@@ -146,7 +146,7 @@
       var preview = document.getElementById('embed-preview');
       var copyBtn = document.getElementById('embed-copy');
       var openLink = document.getElementById('embed-open');
-      var origin = window.location.origin || 'https://www.thenetworkerhub.com';
+      var origin = window.location.origin || 'https://www.thenetworkeruk.com';
 
       function slug() {
         return String(slugInput && slugInput.value || '')
@@ -164,7 +164,7 @@
       function snippet() {
         var src = widgetUrl();
         return (
-          '<!-- The Networker Hub ticket widget -->\n' +
+          '<!-- The Networker UK ticket widget -->\n' +
           '<iframe\n' +
           '  src="' +
           src +

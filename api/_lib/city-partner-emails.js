@@ -21,7 +21,7 @@ async function sendCityPartnerPaymentWelcome(opts) {
   const cities = Array.isArray(opts?.cities) ? opts.cities : [];
   const cityNames = cityNamesForSlugs(cities);
   const siteUrl = siteBase();
-  const creativeEmail = String(process.env.CITY_PARTNER_CREATIVE_EMAIL || 'rosie@thenetworkerhub.com')
+  const creativeEmail = String(process.env.CITY_PARTNER_CREATIVE_EMAIL || 'rosie@thenetworkeruk.com')
     .trim()
     .toLowerCase();
 

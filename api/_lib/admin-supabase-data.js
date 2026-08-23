@@ -223,7 +223,7 @@ function buildAlertsFromCounts(counts) {
       id: 'open-complaints',
       severity: 'high',
       title: `${counts.openComplaints} complaint${counts.openComplaints === 1 ? '' : 's'} need a response`,
-      detail: 'Log and reply to emails sent to hello@thenetworkerhub.com.',
+      detail: 'Log and reply to emails sent to hello@thenetworkeruk.com.',
       href: '#support/complaints',
       time: new Date().toISOString(),
     });
@@ -1348,7 +1348,7 @@ async function approveOrganiserClaimRequest(requestId) {
   const { resolveOrganiserClaimUrl } = require('./organiser-claim-url');
   const { sendTemplatedEmail } = require('./send-template-email');
   const { campaignSiteVars } = require('./organiser-campaign-defaults');
-  const host = String(process.env.SITE_URL || 'https://www.thenetworkerhub.com').replace(/\/$/, '');
+  const host = String(process.env.SITE_URL || 'https://www.thenetworkeruk.com').replace(/\/$/, '');
   const claimUrl = await resolveOrganiserClaimUrl(claimantEmail, host);
   const organiserName =
     String(organiser.name || request.organiser_name || 'your group').trim() || 'your group';

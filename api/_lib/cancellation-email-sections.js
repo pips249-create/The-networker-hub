@@ -189,7 +189,7 @@ function buildOrganiserMessageRow(message, options = {}) {
   const text = String(message || '').trim();
   if (!text) return '';
   const label = options.hubRemoved
-    ? 'Message from The Networker Hub'
+    ? 'Message from The Networker UK'
     : 'Message from the organiser';
   return (
     '<tr><td class="mobile-pad" style="padding:0 48px 20px;">' +
@@ -218,7 +218,7 @@ function buildEventCancelledRefundCopy(registration, options = {}) {
     return {
       refund_headline: 'A full refund of ' + amountPaid + ' is on its way',
       refund_details:
-        'The Networker Hub has removed this event. You will receive a full refund of the ticket price you paid, including any booking fees shown at checkout.',
+        'The Networker UK has removed this event. You will receive a full refund of the ticket price you paid, including any booking fees shown at checkout.',
     };
   }
   return {

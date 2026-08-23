@@ -1,13 +1,13 @@
 # LinkedIn post · Rebuild story
 
 **Attach:** `marketing/exports/rebuild-story-12s.mp4` (preferred) or `rebuild-story-12s.gif`  
-**Link in comments or first comment:** https://thenetworkerhub.com
+**Link in comments or first comment:** https://thenetworkeruk.com
 
 ---
 
 ## Post copy (ready to paste)
 
-We've spent months rebuilding The Networker into **The Networker Hub**.
+We've spent months rebuilding The Networker into **The Networker UK**.
 
 Not a rebrand for the sake of it. A proper rebuild — same team, same mission, but a platform that finally matches how UK networking actually works.
 
@@ -33,17 +33,17 @@ We're launching **1st September**.
 
 Same team. New Hub. Built for networkers and the organisers who bring them together.
 
-Have a look: **thenetworkerhub.com**
+Have a look: **thenetworkeruk.com**
 
-If you run a networking group and want your page ready for launch, email me: **catherine@thenetworkerhub.com**
+If you run a networking group and want your page ready for launch, email me: **catherine@thenetworkeruk.com**
 
-#TheNetworkerHub #UKNetworking #BusinessNetworking #StartupJourney #FounderLife
+#TheNetworkerUK #UKNetworking #BusinessNetworking #StartupJourney #FounderLife
 
 ---
 
 ## Shorter alternative (if you want a tighter post)
 
-We've spent months rebuilding The Networker into **The Networker Hub**.
+We've spent months rebuilding The Networker into **The Networker UK**.
 
 Same team. Same mission. A fuller platform — events, organisers, and business opportunities in one place.
 
@@ -51,8 +51,8 @@ Same team. Same mission. A fuller platform — events, organisers, and business 
 
 **Lessons:** listen to organisers first, keep what already worked, and ship the foundation before chasing perfect.
 
-Launching **1st September** → thenetworkerhub.com
+Launching **1st September** → thenetworkeruk.com
 
 I'd love your thoughts — especially if you organise networking groups.
 
-Email: catherine@thenetworkerhub.com
+Email: catherine@thenetworkeruk.com

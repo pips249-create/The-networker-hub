@@ -57,7 +57,7 @@
       { label: 'Member list', prompt: 'What is a member list?' },
     ],
     'event-review': [
-      { label: 'What happens when I publish', prompt: 'What happens when I publish my event on The Networker Hub?' },
+      { label: 'What happens when I publish', prompt: 'What happens when I publish my event on The Networker UK?' },
       { label: 'Edit before publish', prompt: 'Can I still edit my event after publishing?' },
       { label: 'Approval time', prompt: 'How long does event listing review take before it goes live?' },
     ],

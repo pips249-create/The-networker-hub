@@ -12,9 +12,9 @@ const FOUNDING_HOMEPAGE_CAP = 50;
 const STAFF_FOUNDING_EXCLUDED_EMAILS = new Set(
   [
     'rosie@the-networker.co.uk',
-    'rosie@thenetworkerhub.com',
-    'jamie@thenetworkerhub.com',
-    'catherine@thenetworkerhub.com',
+    'rosie@thenetworkeruk.com',
+    'jamie@thenetworkeruk.com',
+    'catherine@thenetworkeruk.com',
     'pips249@gmail.com',
   ].map((email) => email.toLowerCase())
 );

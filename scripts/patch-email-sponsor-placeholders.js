@@ -92,7 +92,7 @@ function inject(file, { main, mini }) {
 
   if (main && !html.includes('{{sponsor_row}}')) {
     // Place in the cream logo-hero band, just below the Hub logo (before the wave).
-    const logoRow = /(alt="The Networker Hub"[^>]*>[\s\S]*?<\/td>\s*<\/tr>)/i;
+    const logoRow = /(alt="The Networker UK"[^>]*>[\s\S]*?<\/td>\s*<\/tr>)/i;
     if (logoRow.test(html)) {
       html = html.replace(logoRow, '$1\n\n        {{sponsor_row}}\n');
     }

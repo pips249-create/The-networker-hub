@@ -5,7 +5,7 @@
  * Usage:
  *   node scripts/smoke-test-member-roster.js
  *   node scripts/smoke-test-member-roster.js http://localhost:3000
- *   node scripts/smoke-test-member-roster.js https://www.thenetworkerhub.com
+ *   node scripts/smoke-test-member-roster.js https://www.thenetworkeruk.com
  *
  * Credentials (local.env / shell):
  *   SMOKE_ORGANISER_EMAIL + SMOKE_ORGANISER_PASSWORD

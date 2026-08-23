@@ -66,6 +66,8 @@
     try {
       var host = new URL(url).hostname.toLowerCase().replace(/^www\./, '');
       if (
+        host === 'thenetworkeruk.com' ||
+        host === 'thenetworkerinternational.com' ||
         host === 'thenetworkerhub.com' ||
         host === 'thenetworkerhub.co.uk' ||
         host === 'the-networker.co.uk' ||

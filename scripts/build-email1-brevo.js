@@ -7,7 +7,7 @@ const path = require('path');
 const https = require('https');
 
 const root = path.join(__dirname, '..');
-const SITE = 'https://www.thenetworkerhub.com';
+const SITE = 'https://www.thenetworkeruk.com';
 const LEGACY = 'https://the-networker.co.uk';
 
 const vars = {

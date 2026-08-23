@@ -307,7 +307,7 @@ module.exports = async function handler(req, res) {
         ok: false,
         error: 'application_required',
         message:
-          'This event uses Category Exclusivity. Apply first, wait for approval, then pay from My Hub — or book as a member if you are on the organiser’s membership list.',
+          'This event uses Category Exclusivity. Apply first, wait for approval, then pay from My account — or book as a member if you are on the organiser’s membership list.',
       });
     }
 

@@ -273,7 +273,7 @@ async function ensureOrganisers(sb) {
     'Women Who Network',
     'Sport & Social Club',
     'Events Collective UK',
-    'The Networker Hub',
+    'The Networker UK',
   ];
 
   const ids = [];

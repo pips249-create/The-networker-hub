@@ -2029,7 +2029,7 @@
 
   function populateFromEvent(ev) {
     currentEvent = ev;
-    document.title = ev.title + ' – The Networker Hub';
+    document.title = ev.title + ' – The Networker UK';
     document.body.setAttribute('data-event-id', ev.id);
     setText('ev-title', ev.title);
     setText('ev-trail-current', ev.title);
@@ -2447,7 +2447,7 @@
       email_mismatch: 'Sign in with the email address that received the previous attendee invite.',
       series_bundle_unavailable:
         'Book all dates is not available for this ticket right now. Pick a single date instead.',
-      already_going: "You're already going to this event. View your ticket in My Hub.",
+      already_going: "You're already going to this event. View your ticket in My account.",
       not_authenticated: 'Please sign in or create a free account to complete your booking.',
     };
     if (data && data.message) return String(data.message);
@@ -3803,13 +3803,13 @@
       return {
         title: 'Application submitted',
         lead:
-          "You've already applied for this event. We'll let you know when the organiser has made a decision — check your email and My Hub for updates.",
+          "You've already applied for this event. We'll let you know when the organiser has made a decision — check your email and My account for updates.",
       };
     }
     if (status === 'Approved') {
       return {
         title: 'Application approved',
-        lead: 'Good news — the organiser approved your application. Complete your booking in My Hub to secure your seat.',
+        lead: 'Good news — the organiser approved your application. Complete your booking in My account to secure your seat.',
       };
     }
     return {
@@ -3835,7 +3835,7 @@
       return;
     }
 
-    link.textContent = 'View in My Hub';
+    link.textContent = 'View in My account';
     link.href = '/account/';
     if (anotherBtn) anotherBtn.hidden = true;
   }
@@ -4352,7 +4352,7 @@
       icsContent: [
         'BEGIN:VCALENDAR',
         'VERSION:2.0',
-        'PRODID:-//The Networker Hub//EN',
+        'PRODID:-//The Networker UK//EN',
         'BEGIN:VEVENT',
         'UID:' + (ev.id || 'event') + '@thenetworkerhub',
         'DTSTAMP:' + formatIcsDate(new Date()),
@@ -4420,7 +4420,7 @@
   }
 
   function buildEventShareContent(ev, shareUrl) {
-    const title = String(ev.title || 'Event on The Networker Hub').trim();
+    const title = String(ev.title || 'Event on The Networker UK').trim();
     const parts = [];
     const whenWhere = String(ev.dateLine || '').trim();
     if (whenWhere) {
@@ -4555,7 +4555,7 @@
       if (shareEmail) {
         shareEmail.href =
           'mailto:?subject=' +
-          encodeURIComponent(shareState.share.title + ' – The Networker Hub') +
+          encodeURIComponent(shareState.share.title + ' – The Networker UK') +
           '&body=' +
           encodeURIComponent('I thought you might like this event:\n\n' + shareState.share.message);
       }
@@ -5019,7 +5019,7 @@
             showCheckoutSignInGate(true, {
               title: 'Sign in to get your free ticket',
               lead:
-                'Create a free account or sign in to register. Your ticket is saved to My Hub — one account per person, no repeat guest bookings.',
+                'Create a free account or sign in to register. Your ticket is saved to My account — one account per person, no repeat guest bookings.',
               checkoutFlag: true,
             });
             return;
@@ -5065,7 +5065,7 @@
           showCheckoutSignInGate(true, {
             title: 'Sign in to buy tickets',
             lead:
-              'Create a free account or sign in to complete your booking. Your ticket is saved to My Hub — one account per person.',
+              'Create a free account or sign in to complete your booking. Your ticket is saved to My account — one account per person.',
             checkoutFlag: true,
           });
           return;
@@ -5252,7 +5252,7 @@
           id: route && route.id,
           slug: route && route.slug,
           image: seoImage,
-          title: document.title.replace(/\s+[–-]\s+The Networker Hub\s*$/i, ''),
+          title: document.title.replace(/\s+[–-]\s+The Networker UK\s*$/i, ''),
         };
       }
     }
@@ -5340,7 +5340,7 @@
     const title = stub.title || 'Event';
     const cancelled = data.error === 'event_cancelled';
     const ended = data.error === 'event_ended' || stub.isEventPast;
-    document.title = title + ' – The Networker Hub';
+    document.title = title + ' – The Networker UK';
     setText('ev-title', title);
     setText('ev-trail-current', title);
     const aboutLead = document.getElementById('ev-about-lead');

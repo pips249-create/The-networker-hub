@@ -12,7 +12,7 @@
 
 UK organisations that process personal data (accounts, bookings, enquiries, analytics where identifiable) must normally pay the data protection fee and appear on the ICO register unless exempt.
 
-The Networker Hub processes personal data as a **data controller** (see `docs/RoPA.md`).
+The Networker UK processes personal data as a **data controller** (see `docs/RoPA.md`).
 
 ---
 
@@ -31,7 +31,7 @@ The Networker Hub processes personal data as a **data controller** (see `docs/Ro
 Certificate PDF: `docs/certificates/ICO-ZB694959-Registration-Certificate.pdf`  
 Register: [ICO search](https://ico.org.uk/ESDWebPages/Search) → The Networker Group Ltd.
 
-Address matches Magpas HQ used on legal / GBP / company filings. Hub trading name “The Networker Hub” sits under the same controller.
+Address matches Magpas HQ used on legal / GBP / company filings. Hub trading name “The Networker UK” sits under the same controller.
 
 ---
 
@@ -60,4 +60,4 @@ Address matches Magpas HQ used on legal / GBP / company filings. Hub trading nam
 
 Add calendar reminder **30 days before 29 May 2027** (and each subsequent expiry).
 
-**Privacy enquiries:** hello@thenetworkerhub.com · Procedure: `docs/GDPR-SAR-PROCEDURE.md`
+**Privacy enquiries:** hello@thenetworkeruk.com · Procedure: `docs/GDPR-SAR-PROCEDURE.md`

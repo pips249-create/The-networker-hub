@@ -39,7 +39,7 @@ async function main() {
   const { data: org, error: orgErr } = await sb
     .from('organisers')
     .insert({
-      name: 'The Networker Hub',
+      name: 'The Networker UK',
       email: process.env.ADMIN_EMAIL || 'hello@networkerhub.example',
       description: 'Sample organiser profile for testing the events listing.',
       organiser_type: 'Events',
@@ -89,7 +89,7 @@ async function main() {
   if (tixErr) throw new Error(tixErr.message);
 
   console.log('Sample event created:', ev.title);
-  console.log('Organiser:', 'The Networker Hub');
+  console.log('Organiser:', 'The Networker UK');
   console.log('View: https://the-networker-hub.vercel.app/events/');
 }
 

@@ -1,11 +1,13 @@
-function siteBase(siteUrl) {
-  return String(siteUrl || process.env.SITE_URL || 'https://www.thenetworkerhub.com').replace(
-    /\/$/,
-    ''
-  );
-}
+const {
+  DEFAULT_PUBLIC_SITE,
+  SUPPORT_EMAIL: BRAND_SUPPORT_EMAIL,
+  MAIL_FROM_DOMAIN,
+  LOGO_ASSET_VERSION,
+} = require('./hub-brand');
 
-const DEFAULT_PUBLIC_SITE = 'https://www.thenetworkerhub.com';
+function siteBase(siteUrl) {
+  return String(siteUrl || process.env.SITE_URL || DEFAULT_PUBLIC_SITE).replace(/\/$/, '');
+}
 
 function isNonPublicSiteUrl(url) {
   const raw = String(url || '').trim().toLowerCase();
@@ -150,9 +152,6 @@ function opportunityPublicUrl(opportunityRow, siteUrl) {
   return site + '/opportunities/' + encodeURIComponent(id);
 }
 
-/** Cache-bust so inbox clients pick up logo asset updates. */
-const LOGO_ASSET_VERSION = '20260805footer';
-
 function logoNavUrl(siteUrl) {
   return toPublicAssetUrl('/assets/logo-nav-transparent.png?v=' + LOGO_ASSET_VERSION, siteUrl);
 }
@@ -242,13 +241,13 @@ function supportEmail() {
     .toLowerCase();
   if (parsed && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(parsed)) {
     // Prefer the human inbox when Resend sends from mail.thenetworkerhub.com.
-    if (parsed.endsWith('@mail.thenetworkerhub.com')) {
-      return 'hello@thenetworkerhub.com';
+    if (parsed.endsWith('@' + MAIL_FROM_DOMAIN)) {
+      return BRAND_SUPPORT_EMAIL;
     }
     return parsed;
   }
 
-  return 'hello@thenetworkerhub.com';
+  return BRAND_SUPPORT_EMAIL;
 }
 
 module.exports = {

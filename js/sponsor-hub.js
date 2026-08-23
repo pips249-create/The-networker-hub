@@ -3,7 +3,7 @@
  */
 (function () {
   var SPONSOR_ENQUIRE_MAILTO =
-    'mailto:rosie@thenetworkerhub.com?subject=' + encodeURIComponent('Powered by hero enquiry');
+    'mailto:rosie@thenetworkeruk.com?subject=' + encodeURIComponent('Powered by hero enquiry');
 
   var SPONSOR_SLOT_AD_PATHS = {
     events_sponsor_hub: '/advertising#ad-panel-events',

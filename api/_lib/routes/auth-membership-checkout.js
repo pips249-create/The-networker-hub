@@ -120,7 +120,7 @@ module.exports = async function handler(req, res) {
         ok: false,
         error: 'already_member',
         message:
-          'You already have an active membership with this group. Manage billing from My Hub → Memberships.',
+          'You already have an active membership with this group. Manage billing from My account → Memberships.',
       });
     }
 

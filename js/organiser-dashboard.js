@@ -35,7 +35,7 @@
       var test = /^https?:\/\//i.test(raw) ? raw : 'https://' + raw;
       var host = new URL(test).hostname.toLowerCase().replace(/^www\./, '');
       return (
-        host === 'thenetworkerhub.com' ||
+        host === 'thenetworkeruk.com' ||
         host === 'thenetworkerhub.co.uk' ||
         host === 'the-networker.co.uk' ||
         host === 'the-networker.com' ||
@@ -524,16 +524,16 @@
   }
 
   function groupPublicProfileAbsUrl(groupId, slug) {
-    const origin = location.origin || 'https://www.thenetworkerhub.com';
+    const origin = location.origin || 'https://www.thenetworkeruk.com';
     const s = String(slug || '').trim();
     if (s) return origin + '/organisers/' + encodeURIComponent(s);
     return origin + '/events/organiser?id=' + encodeURIComponent(groupId);
   }
 
   function partnerBadgeEmbedHtml(profileUrl, groupName) {
-    const origin = location.origin || 'https://www.thenetworkerhub.com';
+    const origin = location.origin || 'https://www.thenetworkeruk.com';
     const badgeSrc = origin + '/assets/partner-badge.svg?v=20260806logo';
-    const alt = (groupName || 'Our group') + ' on The Networker Hub';
+    const alt = (groupName || 'Our group') + ' on The Networker UK';
     return (
       '<a href="' +
       profileUrl +
@@ -552,7 +552,7 @@
   function buildPartnerBadgeCardHtml(g) {
     const profileUrl = groupPublicProfileAbsUrl(g.id, g.slug);
     const embed = partnerBadgeEmbedHtml(profileUrl, g.name);
-    const origin = location.origin || 'https://www.thenetworkerhub.com';
+    const origin = location.origin || 'https://www.thenetworkeruk.com';
     return (
       '<article class="org-partner-badge-card">' +
       '<div class="org-partner-badge-card-head">' +
@@ -623,7 +623,7 @@
   }
 
   function ticketWidgetUrlForEvent(ev) {
-    const origin = location.origin || 'https://www.thenetworkerhub.com';
+    const origin = location.origin || 'https://www.thenetworkeruk.com';
     const slug = String((ev && ev.slug) || '').trim();
     // Query form only — cleanUrls maps embed/event.html → /embed/event, so
     // /embed/event/:slug 404s as a nested path under a clean URL file.
@@ -633,7 +633,7 @@
 
   function ticketWidgetSnippet(src) {
     return (
-      '<!-- The Networker Hub ticket widget -->\n' +
+      '<!-- The Networker UK ticket widget -->\n' +
       '<iframe\n' +
       '  src="' +
       src +
@@ -745,7 +745,7 @@
       (groupName || 'our group') +
       ' is a ' +
       badge +
-      ' on The Networker Hub. ⭐ ' +
+      ' on The Networker UK. ⭐ ' +
       absUrl
     );
   }
@@ -816,7 +816,7 @@
   }
 
   function rankingBadgeImageUrl(tier, periodLabel, extras) {
-    const origin = location.origin || 'https://www.thenetworkerhub.com';
+    const origin = location.origin || 'https://www.thenetworkeruk.com';
     const opts = extras && typeof extras === 'object' ? extras : {};
     const params = new URLSearchParams();
     const t = String(tier || 'top50').toLowerCase();
@@ -831,7 +831,7 @@
   }
 
   function rankingBadgeShareUrl(groupId, slug) {
-    const origin = location.origin || 'https://www.thenetworkerhub.com';
+    const origin = location.origin || 'https://www.thenetworkeruk.com';
     const params = new URLSearchParams();
     if (groupId) params.set('id', String(groupId));
     if (slug) params.set('slug', String(slug));
@@ -839,7 +839,7 @@
   }
 
   function rankingBadgeEmbedHtml(g, row) {
-    const origin = (location.origin || 'https://www.thenetworkerhub.com').replace(/\/$/, '');
+    const origin = (location.origin || 'https://www.thenetworkeruk.com').replace(/\/$/, '');
     const profileUrl = groupPublicProfileAbsUrl(g.id, g.slug);
     const rankingsUrl = origin + '/rankings';
     const tier = String(row.tier || 'top50').toLowerCase();
@@ -848,7 +848,7 @@
       (g.name || 'Our group') +
       ' — ' +
       (row.cardLabel || rankingBadgeText(row) || 'Top ranking') +
-      ' on The Networker Hub';
+      ' on The Networker UK';
     const imgSrc = rankingBadgeImageUrl(tier, periodLabel, {
       name: g.name,
       organiserId: g.id,
@@ -868,7 +868,7 @@
       '<a href="' +
       rankingsUrl +
       '" target="_blank" rel="noopener noreferrer" style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#64748b;text-decoration:underline;">' +
-      'See the monthly leaderboard on The Networker Hub</a>'
+      'See the monthly leaderboard on The Networker UK</a>'
     );
   }
 
@@ -3116,7 +3116,7 @@
     }
     if (isPlatformWebsiteImportUrl(url)) {
       setBrandKitStatus(
-        'Enter your own business website (e.g. yourcompany.co.uk), not The Networker Hub.',
+        'Enter your own business website (e.g. yourcompany.co.uk), not The Networker UK.',
         'error'
       );
       if (els.website) els.website.focus();
@@ -6804,7 +6804,7 @@
         esc(a.id) +
         '">' +
         '<p class="org-application-review-label">Awaiting payment</p>' +
-        '<p class="org-application-review-hint">The attendee can pay from My Hub.</p>' +
+        '<p class="org-application-review-hint">The attendee can pay from My account.</p>' +
         '<button type="button" class="org-application-resend-approval-btn" data-resend-approval-email="' +
         esc(a.id) +
         '">Resend payment email</button>' +
@@ -11458,7 +11458,7 @@
         pastLabel +
         ' — at or over our reliability limit of ' +
         yearLimit +
-        '. Further cancellations may lead to a reliability review and possible suspension from The Networker Hub.'
+        '. Further cancellations may lead to a reliability review and possible suspension from The Networker UK.'
       );
     }
 
@@ -12618,7 +12618,7 @@
     const raw = String(meta.actorName || meta.impersonatorName || '').trim();
     const first = raw.split(/\s+/)[0] || '';
     if (first && first.indexOf('@') === -1) {
-      return first + ' at The Networker Hub';
+      return first + ' at The Networker UK';
     }
     return 'Hub support';
   }

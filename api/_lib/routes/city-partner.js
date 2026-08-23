@@ -146,7 +146,7 @@ module.exports = async function handler(req, res) {
         return res.status(503).json({
           ok: false,
           error: 'stripe_not_configured',
-          message: 'Online checkout is not available yet — email rosie@thenetworkerhub.com',
+          message: 'Online checkout is not available yet — email rosie@thenetworkeruk.com',
         });
       }
 

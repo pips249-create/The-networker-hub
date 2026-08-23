@@ -127,7 +127,7 @@ async function createConnectAccountForOrganiser(organiser) {
       name: businessName,
       url: site,
       mcc: '8699',
-      product_description: 'Networking events and ticket sales via The Networker Hub',
+      product_description: 'Networking events and ticket sales via The Networker UK',
     },
     metadata: {
       organiser_id: String(organiser.id),
@@ -178,7 +178,7 @@ async function createConnectOnboardingLink(organiserId, returnPath) {
           name: String(organiser.name || 'Event organiser').trim() || undefined,
           url: site,
           mcc: '8699',
-          product_description: 'Networking events and ticket sales via The Networker Hub',
+          product_description: 'Networking events and ticket sales via The Networker UK',
         },
       });
     } catch {

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Seed demo reviews for BMUK, Pip's Test, and The Networker Hub,
+ * Seed demo reviews for BMUK, Pip's Test, and The Networker UK,
  * then run a ranking snapshot so badges appear on browse cards and profiles.
  *
  * Usage: node scripts/seed-ranking-demo-reviews.js
@@ -20,7 +20,7 @@ const { runMonthlyOrganiserRankingSnapshot } = require('../api/_lib/organiser-ra
 const GROUP_MATCHERS = [
   { label: 'BMUK', test: (name) => /bmuk|business matching uk/i.test(name) },
   { label: "Pip's Test", test: (name) => /pip'?s?\s*test/i.test(name) },
-  { label: 'The Networker Hub', test: (name) => /networker hub/i.test(name) },
+  { label: 'The Networker UK', test: (name) => /networker hub/i.test(name) },
 ];
 
 const REVIEW_TEXTS = [

@@ -910,7 +910,7 @@ function buildPreviewDocument(variables) {
     '<div style="background:#f5f0e8;padding:20px 22px 8px;text-align:center;">' +
     '<img src="' +
     escapeHtml(logo) +
-    '" alt="The Networker Hub" width="160" style="height:auto;max-width:160px;margin:0 auto;display:block;" onerror="this.style.display=\'none\'" />' +
+    '" alt="The Networker UK" width="160" style="height:auto;max-width:160px;margin:0 auto;display:block;" onerror="this.style.display=\'none\'" />' +
     '</div>' +
     '<div style="background:#f5f0e8;height:18px;border-radius:0 0 50% 50% / 0 0 100% 100%;"></div>' +
     '<div style="padding:18px 22px 8px;text-align:center;">' +
@@ -940,7 +940,7 @@ function buildPreviewDocument(variables) {
     ' →</a>' +
     '</div>' +
     '<div style="background:#1c2040;padding:18px 20px 22px;text-align:center;color:rgba(255,255,255,0.65);font-size:11px;line-height:1.5;">' +
-    '<p style="margin:0 0 6px;">Sent via The Networker Hub</p>' +
+    '<p style="margin:0 0 6px;">Sent via The Networker UK</p>' +
     '<p style="margin:0 0 8px;opacity:0.75;">You received this because you booked with ' +
     escapeHtml(v.organiser_name || 'this group') +
     '.</p>' +

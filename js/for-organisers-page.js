@@ -317,12 +317,12 @@
       var discoverLede = document.querySelector('[data-fo-discover-lede]');
       if (discoverLede) {
         discoverLede.textContent =
-          'The Networker Hub connects UK networkers to your events. List for free, then promote from your workspace with LinkedIn pictures and ranking badges — not another generic listing site.';
+          'The Networker UK connects UK networkers to your events. List for free, then promote from your workspace with LinkedIn pictures and ranking badges — not another generic listing site.';
       }
     } catch (e) {}
 
     try {
-      document.title = 'Your organiser page is ready – For organisers – The Networker Hub';
+      document.title = 'Your organiser page is ready – For organisers – The Networker UK';
     } catch (e) {}
   }
 

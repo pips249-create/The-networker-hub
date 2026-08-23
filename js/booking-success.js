@@ -433,12 +433,12 @@
       return leadMsg + ' We have emailed you the details.';
     }
     if (email.skipped) {
-      return leadMsg + ' Check My Hub for your booking details.';
+      return leadMsg + ' Check My account for your booking details.';
     }
     if (email.errors && email.errors.length) {
       return (
         leadMsg +
-        ' Your ticket is saved — if the confirmation email does not arrive shortly, check spam or My Hub.'
+        ' Your ticket is saved — if the confirmation email does not arrive shortly, check spam or My account.'
       );
     }
     return leadMsg + ' We have emailed you the details.';
@@ -575,7 +575,7 @@
     if (signedIn) {
       if (noteSpan) {
         noteSpan.innerHTML =
-          'Confirmation email sent · Ticket saved in <strong>My Hub</strong> · Tax invoice available';
+          'Confirmation email sent · Ticket saved in <strong>My account</strong> · Tax invoice available';
       }
       if (accountBtn) {
         accountBtn.textContent = 'View my tickets';

@@ -116,7 +116,7 @@
   }
 
   function showNotFound() {
-    document.title = 'Opportunity not found – The Networker Hub';
+    document.title = 'Opportunity not found – The Networker UK';
     if (els.notFound) els.notFound.hidden = false;
     if (els.layout) els.layout.hidden = true;
     if (els.trailCurrent) els.trailCurrent.textContent = 'Not found';
@@ -332,12 +332,12 @@
     els.typeNotice.innerHTML =
       '<p><strong>Network marketing — product-selling only.</strong> ' +
       'This listing should be about selling products or services. It is not an investment product, ' +
-      'and The Networker Hub does not verify earnings claims. Do your own due diligence before committing.</p>';
+      'and The Networker UK does not verify earnings claims. Do your own due diligence before committing.</p>';
   }
 
   function render(item) {
     current = item;
-    document.title = item.title + ' – The Networker Hub';
+    document.title = item.title + ' – The Networker UK';
 
     if (els.trailCurrent) els.trailCurrent.textContent = shortTitle(item.title);
     if (els.title) els.title.textContent = item.title;
@@ -348,7 +348,7 @@
     var posterNote = document.querySelector('.opp-detail-poster-note');
     if (posterNote) {
       posterNote.textContent = item.claimable
-        ? 'Listed on behalf of this business by The Networker Hub. Use the claim form below if you represent this company.'
+        ? 'Listed on behalf of this business by The Networker UK. Use the claim form below if you represent this company.'
         : 'Enquiries go directly to the poster — no middlemen or per-lead fees.';
     }
 
@@ -549,7 +549,7 @@
           }
           showClaimStatus(
             (result.data && (result.data.message || result.data.error)) ||
-              'Could not send your request. Please email hello@thenetworkerhub.com instead.',
+              'Could not send your request. Please email hello@thenetworkeruk.com instead.',
             false
           );
         })
@@ -559,7 +559,7 @@
             els.claimSubmit.textContent = 'Request to claim listing';
           }
           showClaimStatus(
-            'Could not send your request. Please email hello@thenetworkerhub.com instead.',
+            'Could not send your request. Please email hello@thenetworkeruk.com instead.',
             false
           );
         });

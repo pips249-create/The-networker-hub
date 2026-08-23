@@ -231,7 +231,7 @@ async function findActiveRosterRow(sb, { organiserId, email, attendeeId, userId 
     if (!candidate && byAttendee.data) candidate = byAttendee.data;
   }
 
-  // Hub-billed rows can look expired until Stripe expiry is healed (same as My Hub).
+  // Hub-billed rows can look expired until Stripe expiry is healed (same as My account).
   if (candidate && candidate.stripe_subscription_id) {
     try {
       const { repairMembershipRosterExpiry } = require('./membership-billing');
@@ -397,10 +397,10 @@ function buildOrganiserInviteIntroSection(organiserRow, siteUrl, { userName, var
     variant === 'existing'
       ? 'Hi ' +
         safeUser +
-        ', you&apos;ve been added to their membership on The Networker Hub. Sign in with this email address to see member rates and book as a member where that applies — no access codes needed.'
+        ', you&apos;ve been added to their membership on The Networker UK. Sign in with this email address to see member rates and book as a member where that applies — no access codes needed.'
       : 'Hi ' +
         safeUser +
-        ', you&apos;ve been added to their membership on The Networker Hub. Create your free account with this email address to see member rates and book as a member where that applies.';
+        ', you&apos;ve been added to their membership on The Networker UK. Create your free account with this email address to see member rates and book as a member where that applies.';
 
   if (variant === 'pay') {
     eyebrow = 'Membership payment';
@@ -408,7 +408,7 @@ function buildOrganiserInviteIntroSection(organiserRow, siteUrl, { userName, var
     bodyCopy =
       'Hi ' +
       safeUser +
-      ', you can pay monthly or annually through The Networker Hub. After you pay, your membership unlocks member rates and member booking options automatically.';
+      ', you can pay monthly or annually through The Networker UK. After you pay, your membership unlocks member rates and member booking options automatically.';
   }
 
   return (
@@ -1660,7 +1660,7 @@ async function listRosterGroupsForAttendee(email) {
     if (!row.stripe_subscription_id) continue;
     const status = String(row.subscription_status || '').toLowerCase();
     // Refresh live Hub subscriptions from Stripe so Basil-era missing/stale
-    // expires_at values self-heal on the next My Hub load.
+    // expires_at values self-heal on the next My account load.
     if (status && status !== 'active' && status !== 'trialing' && status !== 'past_due') {
       continue;
     }

@@ -32,14 +32,14 @@ const vars = mergeEmailPreviewVariables(
   {
     user_name: 'Catherine',
     user_email: to,
-    event_name: 'The Networker Hub',
+    event_name: 'The Networker UK',
     event_date: 'Thursday 17 July 2026',
     event_time: '18:30',
     event_location: 'Magpas HQ, Barnwell Road, Alconbury Weald, Huntingdon, PE28 4YF',
     ticket_name: 'General admission',
     amount_paid: '£1.25',
     payment_status: 'Paid',
-    organiser_name: 'The Networker Hub',
+    organiser_name: 'The Networker UK',
     meeting_type: 'In person',
     meeting_link: '',
     refund_policy: 'full_refund',
@@ -57,7 +57,7 @@ sendTemplatedEmail({
   to,
   variables: vars,
   skipEmailCheck: true,
-  subject: "[Test] You're booked for The Networker Hub",
+  subject: "[Test] You're booked for The Networker UK",
 })
   .then(function (result) {
     console.log('Sent booking confirmation test to', to);

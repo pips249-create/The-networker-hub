@@ -1,7 +1,7 @@
 {
   "name": "the-networker-hub",
   "private": true,
-  "description": "The Networker Hub — static site + Vercel serverless API",
+  "description": "The Networker UK — static site + Vercel serverless API",
   "scripts": {
     "prestart": "node scripts/sync-local-env.js",
     "sync-env": "node scripts/sync-local-env.js",
@@ -13,7 +13,7 @@
     "deploy": "npx vercel --prod",
     "check:api": "node scripts/smoke-test-api.js",
     "check:local": "node scripts/smoke-test-site.js http://localhost:3000",
-    "check:live": "node scripts/smoke-test-site.js https://www.thenetworkerhub.com",
+    "check:live": "node scripts/smoke-test-site.js https://www.thenetworkeruk.com",
     "check:member-roster": "node scripts/smoke-test-member-roster.js",
     "check:member-roster:local": "node scripts/smoke-test-member-roster.js http://localhost:3000",
     "seed-admin": "node scripts/seed-admin.js",

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Enlarge header/footer logos and remove footer "The Networker Hub" text line.
+ * Enlarge header/footer logos and remove footer "The Networker UK" text line.
  * Run: node scripts/patch-email-branding.js
  */
 const fs = require('fs');
@@ -10,10 +10,10 @@ const dir = path.join(__dirname, '../email-templates');
 const files = fs.readdirSync(dir).filter((f) => f.endsWith('.html'));
 
 const FOOTER_TEXT_RE =
-  /\s*<p style="font-family:'DM Sans',system-ui,sans-serif;font-size:12px;font-weight:600;color:#ffffff;margin:0 0 8px;">The Networker Hub<\/p>/g;
+  /\s*<p style="font-family:'DM Sans',system-ui,sans-serif;font-size:12px;font-weight:600;color:#ffffff;margin:0 0 8px;">The Networker UK<\/p>/g;
 
 const FOOTER_TEXT_RE_PURPLE =
-  /\s*<p style="font-family:'DM Sans',system-ui,sans-serif;font-size:12px;font-weight:600;color:#ffffff;margin:0 0 8px;">The Networker Hub<\/p>/g;
+  /\s*<p style="font-family:'DM Sans',system-ui,sans-serif;font-size:12px;font-weight:600;color:#ffffff;margin:0 0 8px;">The Networker UK<\/p>/g;
 
 function patchHtml(html) {
   let out = html;

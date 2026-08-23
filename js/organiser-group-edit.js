@@ -30,7 +30,7 @@
       var test = /^https?:\/\//i.test(raw) ? raw : 'https://' + raw;
       var host = new URL(test).hostname.toLowerCase().replace(/^www\./, '');
       return (
-        host === 'thenetworkerhub.com' ||
+        host === 'thenetworkeruk.com' ||
         host === 'thenetworkerhub.co.uk' ||
         host === 'the-networker.co.uk' ||
         host === 'the-networker.com' ||
@@ -339,7 +339,7 @@
     }
     if (isPlatformWebsiteImportUrl(url)) {
       setImportStatus(
-        'Enter your own business website (e.g. yourcompany.co.uk), not The Networker Hub.',
+        'Enter your own business website (e.g. yourcompany.co.uk), not The Networker UK.',
         'error'
       );
       if (websiteEl) websiteEl.focus();

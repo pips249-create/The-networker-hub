@@ -31,7 +31,7 @@ const BOOKING_ERROR_MESSAGES = {
   membership_expired:
     'Your membership has expired. Contact the organiser to renew before booking member tickets.',
   already_going:
-    "You're already going to this event. View your ticket in My Hub.",
+    "You're already going to this event. View your ticket in My account.",
   organiser_attendance_blocked:
     "You're not able to book this organiser's events. Contact them if you think this is a mistake.",
   ticket_sold_out: 'Sorry — that ticket tier is sold out.',

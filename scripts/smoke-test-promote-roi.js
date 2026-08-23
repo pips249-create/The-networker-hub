@@ -4,7 +4,7 @@
  *
  * Usage:
  *   node scripts/smoke-test-promote-roi.js
- *   node scripts/smoke-test-promote-roi.js https://www.thenetworkerhub.com
+ *   node scripts/smoke-test-promote-roi.js https://www.thenetworkeruk.com
  *
  * Needs local.env with SITE_ACCESS_PASSWORD + Supabase service role.
  * Optional: ORGANISER_SMOKE_EMAIL + ORGANISER_SMOKE_PASSWORD (or ADMIN_EMAIL + ADMIN_INITIAL_PASSWORD)
@@ -22,7 +22,7 @@ for (const name of ['local.env', '.env.local', '.env']) {
   if (fs.existsSync(p)) dotenv.config({ path: p, override: false });
 }
 
-const base = String(process.argv[2] || process.env.SMOKE_BASE_URL || 'https://www.thenetworkerhub.com').replace(
+const base = String(process.argv[2] || process.env.SMOKE_BASE_URL || 'https://www.thenetworkeruk.com').replace(
   /\/$/,
   ''
 );

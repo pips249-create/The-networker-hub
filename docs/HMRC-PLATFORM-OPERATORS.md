@@ -10,7 +10,7 @@
 
 ## 1. Why this applies
 
-The Networker Hub:
+The Networker UK:
 
 - Connects **sellers** (event organisers) with **buyers** (attendees)
 - Processes **ticket payments** via Stripe (including Stripe Connect destination charges)
@@ -76,7 +76,7 @@ You are VAT-registered. With your accountant confirm:
 
 ## 3. What Stripe does vs what you do
 
-| Task | Stripe | The Networker Hub |
+| Task | Stripe | The Networker UK |
 |------|--------|-------------------|
 | KYC on Connect accounts | Collects identity documents | Ensure onboarding completed before payouts |
 | Payment processing | ✓ | Webhook + registration records |

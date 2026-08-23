@@ -140,7 +140,7 @@ function isBlockedHost(hostname) {
 }
 
 const PLATFORM_WEBSITE_HOSTS = new Set([
-  'thenetworkerhub.com',
+  'thenetworkeruk.com',
   'thenetworkerhub.co.uk',
   'the-networker.co.uk',
   'the-networker.com',
@@ -734,7 +734,7 @@ async function fetchWebsiteMeta(rawUrl) {
     const err = new Error('platform_url');
     err.status = 400;
     err.message =
-      'That is The Networker Hub — enter your own business website (e.g. yourcompany.co.uk) to import brand colours.';
+      'That is The Networker UK — enter your own business website (e.g. yourcompany.co.uk) to import brand colours.';
     throw err;
   }
 

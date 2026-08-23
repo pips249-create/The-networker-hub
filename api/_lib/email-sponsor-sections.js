@@ -177,7 +177,7 @@ function wrapSponsorRow(inner) {
 }
 
 function siteBaseForSponsors() {
-  return String(process.env.SITE_URL || 'https://www.thenetworkerhub.com').replace(/\/$/, '');
+  return String(process.env.SITE_URL || 'https://www.thenetworkeruk.com').replace(/\/$/, '');
 }
 
 /** Normalize a CMS main-sponsor block (or carousel ad) for the footer logo strip. */
@@ -470,7 +470,7 @@ function insertSponsorPlaceholderAfterHeader(html, placeholder) {
 
   // Combined logo+wave cell (legacy cancellation layouts): insert between </a> and wave div.
   const combinedHeader = body.search(
-    /alt="The Networker Hub"[^>]*>[\s\S]*?<\/a>\s*<div[^>]*>\s*<svg[\s\S]*?viewBox="0 0 600 40"/i
+    /alt="The Networker UK"[^>]*>[\s\S]*?<\/a>\s*<div[^>]*>\s*<svg[\s\S]*?viewBox="0 0 600 40"/i
   );
   if (combinedHeader !== -1) {
     const anchorEnd = body.indexOf('</a>', combinedHeader);
@@ -487,7 +487,7 @@ function insertSponsorPlaceholderAfterHeader(html, placeholder) {
 
   // Prefer: cream logo-hero band, immediately after the Hub logo row and before the wave.
   const logoMatch = body.search(
-    /alt="The Networker Hub"[^>]*class="email-logo-header"|alt="The Networker Hub" width="2[0-9]{2}"|class="email-logo-header"/i
+    /alt="The Networker UK"[^>]*class="email-logo-header"|alt="The Networker UK" width="2[0-9]{2}"|class="email-logo-header"/i
   );
   if (logoMatch !== -1) {
     const logoRowEnd = body.indexOf('</tr>', logoMatch);
@@ -503,7 +503,7 @@ function insertSponsorPlaceholderAfterHeader(html, placeholder) {
   }
 
   // Follow-up / non-wave headers: first Hub logo row.
-  const anyLogo = body.search(/alt="The Networker Hub"/i);
+  const anyLogo = body.search(/alt="The Networker UK"/i);
   if (anyLogo !== -1) {
     const rowEnd = body.indexOf('</tr>', anyLogo);
     if (rowEnd !== -1) {

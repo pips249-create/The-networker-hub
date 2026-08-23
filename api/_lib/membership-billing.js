@@ -721,7 +721,7 @@ async function sendMembershipRenewalReceipt({ invoice, subscription, rosterRow, 
         : 'Thanks — your membership payment went through.',
       period_note: periodEnd
         ? 'Your membership is current until ' + periodEnd + '.'
-        : 'You can manage or cancel anytime from My Hub → Memberships.',
+        : 'You can manage or cancel anytime from My account → Memberships.',
       cta_url: site + '/login?email=' + encodeURIComponent(email) + '&next=' + encodeURIComponent('/account/#memberships'),
       cta_label: 'Manage membership',
       hub_account_url: hubAccountUrl(site),

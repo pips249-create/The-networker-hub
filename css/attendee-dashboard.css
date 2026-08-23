@@ -1017,7 +1017,7 @@ button.ad-stat-link:focus-visible::after {
   display: none;
 }
 
-/* My Hub mobile: full-width segments (no sideways scroll) */
+/* My account mobile: full-width segments (no sideways scroll) */
 @media (max-width: 768px) {
   .attendee-dashboard-page .ad-subpage-kicker,
   .attendee-dashboard-page .ad-saved-scope-kicker {

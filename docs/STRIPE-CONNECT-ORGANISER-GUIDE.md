@@ -3,7 +3,7 @@
 **Last updated:** June 2026  
 **Audience:** Hub platform admin (you) and event organisers
 
-The Networker Hub uses **Stripe Connect (Express)** so organisers receive the **full ticket price** in their own connected Stripe account. The Hub keeps only the attendee **booking fee** (4.5% + 20p per ticket) at checkout.
+The Networker UK uses **Stripe Connect (Express)** so organisers receive the **full ticket price** in their own connected Stripe account. The Hub keeps only the attendee **booking fee** (4.5% + 20p per ticket) at checkout.
 
 Organisers do **not** sign up for a separate Stripe product or paste API keys. They complete a short **Connect Stripe** flow inside the organiser dashboard; Stripe hosts the bank and identity form.
 
@@ -11,12 +11,12 @@ Organisers do **not** sign up for a separate Stripe product or paste API keys. T
 
 ## Part 1 — What you (platform admin) need to connect
 
-**Yes — you need one Stripe account for The Networker Hub.** That is the *platform* account. Organisers connect *to* your platform; they do not replace your account.
+**Yes — you need one Stripe account for The Networker UK.** That is the *platform* account. Organisers connect *to* your platform; they do not replace your account.
 
 ### One-time: Stripe Dashboard (platform account)
 
 1. **Create or use your Hub Stripe account**  
-   [dashboard.stripe.com](https://dashboard.stripe.com) — this is The Networker Hub’s business account (test mode first, then live).
+   [dashboard.stripe.com](https://dashboard.stripe.com) — this is The Networker UK’s business account (test mode first, then live).
 
 2. **Enable Connect**  
    - **Settings → Connect** (or [Connect settings](https://dashboard.stripe.com/settings/connect))  
@@ -26,7 +26,7 @@ Organisers do **not** sign up for a separate Stripe product or paste API keys. T
 
 3. **Branding (optional but recommended)**  
    - **Settings → Connect → Branding**  
-   - Add Hub name, icon, and colours so organisers see “The Networker Hub” during onboarding
+   - Add Hub name, icon, and colours so organisers see “The Networker UK” during onboarding
 
 4. **Webhook endpoint** (if not already done)  
    - **Developers → Webhooks → Add endpoint**  
@@ -91,7 +91,7 @@ If Connect is not finished, the Hub blocks publishing paid ticket types and show
 ### What organisers receive
 
 - **Full ticket price** paid by attendees → their connected Stripe balance  
-- **Booking fee** (4.5% + 20p per ticket) → paid by attendees to The Networker Hub at checkout (not deducted from the organiser’s ticket price)
+- **Booking fee** (4.5% + 20p per ticket) → paid by attendees to The Networker UK at checkout (not deducted from the organiser’s ticket price)
 
 ### Step-by-step: Connect Stripe
 
@@ -162,7 +162,7 @@ Attendees are told refunds are processed by the organiser through Stripe, not by
 | **“Connect Stripe” banner won’t go away** | Open Revenue → click Connect again; finish any missing steps in Stripe |
 | **Onboarding interrupted** | Return to Revenue → **Connect Stripe** — Stripe resumes where you left off |
 | **Can’t publish paid tickets** | Connect must be complete for that group; free tickets still work without Connect |
-| **Checkout says organiser hasn’t finished setup** | Group owner needs to complete Connect; contact hello@thenetworkerhub.com if it persists after connecting |
+| **Checkout says organiser hasn’t finished setup** | Group owner needs to complete Connect; contact hello@thenetworkeruk.com if it persists after connecting |
 | **Where is my money?** | Stripe Express dashboard / Stripe emails — not the Hub bank account. Hub Revenue shows sales totals only |
 | **How do I refund?** | Stripe dashboard → Payments → Refund. Use booking ref from Hub **Cancellations** |
 
@@ -196,11 +196,11 @@ Key code paths:
 
 ## Part 4 — Email copy you can send organisers
 
-**Subject:** Connect Stripe to sell paid tickets on The Networker Hub
+**Subject:** Connect Stripe to sell paid tickets on The Networker UK
 
 Hi [name],
 
-To sell **paid** tickets on The Networker Hub, you need to connect a Stripe account once per group profile. It takes about 5–10 minutes and is done entirely inside the organiser dashboard — you don’t need your own Stripe API keys.
+To sell **paid** tickets on The Networker UK, you need to connect a Stripe account once per group profile. It takes about 5–10 minutes and is done entirely inside the organiser dashboard — you don’t need your own Stripe API keys.
 
 **Steps:**
 
@@ -210,13 +210,13 @@ To sell **paid** tickets on The Networker Hub, you need to connect a Stripe acco
 4. Complete Stripe’s form (business details + UK bank account)
 5. Return to the dashboard and publish your paid event
 
-**Money:** You receive the **full ticket price**. Attendees pay a separate booking fee (4.5% + 20p per ticket) to The Networker Hub at checkout.
+**Money:** You receive the **full ticket price**. Attendees pay a separate booking fee (4.5% + 20p per ticket) to The Networker UK at checkout.
 
 **Refunds:** If an attendee cancels and a refund is due, you issue it from your **Stripe dashboard** using the booking reference shown in **My events → Cancellations**.
 
 Free events do not require Stripe.
 
-Questions? Reply to this email or contact hello@thenetworkerhub.com.
+Questions? Reply to this email or contact hello@thenetworkeruk.com.
 
 ---
 

@@ -1,4 +1,4 @@
-# The Networker Hub — build roadmap
+# The Networker UK — build roadmap
 
 Repo: [pips249-create/The-networker-hub](https://github.com/pips249-create/The-networker-hub)  
 Live: `https://the-networker-hub.vercel.app/`

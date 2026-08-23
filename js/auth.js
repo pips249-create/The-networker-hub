@@ -490,8 +490,8 @@
     if (params.get('intent') !== 'organiser-claim') return;
 
     document.title = loginForm
-      ? 'Claim your organiser page – Sign in – The Networker Hub'
-      : 'Claim your organiser page – Create account – The Networker Hub';
+      ? 'Claim your organiser page – Sign in – The Networker UK'
+      : 'Claim your organiser page – Create account – The Networker UK';
 
     var callout = document.getElementById('auth-intent-callout');
     if (callout) callout.hidden = false;
@@ -590,7 +590,7 @@
     var calloutNote = document.getElementById('auth-intent-callout-note');
     if (calloutNote) {
       calloutNote.innerHTML =
-        'Email changed? Email <a href="mailto:catherine@thenetworkerhub.com">catherine@thenetworkerhub.com</a> with your group name and we\u2019ll help.';
+        'Email changed? Email <a href="mailto:catherine@thenetworkeruk.com">catherine@thenetworkeruk.com</a> with your group name and we\u2019ll help.';
     }
 
     var audienceToggle = document.getElementById('auth-audience-toggle');
@@ -622,19 +622,19 @@
 
     var LOGIN_AUDIENCE = {
       neutral: {
-        kicker: 'The Networker Hub',
+        kicker: 'The Networker UK',
         titleHtml: 'Your Hub account',
         lede: 'One login for browsing events, managing bookings, and opening your organiser workspace.',
         points: [
           'Browse & book UK networking events',
-          'My Hub dashboard, alerts & saved listings',
+          'My account dashboard, alerts & saved listings',
           'List events & manage your group when you\u2019re ready',
           'Compare & enquire on Business Opportunities',
         ],
         ctaText: 'See what\u2019s included for networkers \u2192',
         ctaHref: '/for-networkers',
-        formLede: 'Welcome back \u2014 use the email and password for your Hub account. Same login for My Hub and your organiser workspace.',
-        createLead: 'New to The Networker Hub?',
+        formLede: 'Welcome back \u2014 use the email and password for your Hub account. Same login for My account and your organiser workspace.',
+        createLead: 'New to The Networker UK?',
         createBtn: 'Create a free account',
         createHint: '17,000+ networkers last year \u00b7 free to join',
         panelProof: '27,000+ Events listed \u00b7 17,000+ networkers last year',
@@ -644,18 +644,18 @@
       networker: {
         kicker: 'For networkers',
         titleHtml: 'Find your next <span class="auth-panel-accent" id="login-hero-word">event</span>',
-        lede: 'Stop wasting time searching for your next event, business opportunities, or organisers \u2014 they can all be found on your Networker Hub.',
+        lede: 'Stop wasting time searching for your next event, business opportunities, or organisers \u2014 they can all be found on your Networker UK.',
         points: [
           'Browse & book UK networking events',
           'Compare & enquire on Business Opportunities',
           'Discover organisers & read reviews',
-          'My Hub dashboard & smart alerts',
+          'My account dashboard & smart alerts',
           'Guest visits & member rates when signed in',
         ],
         ctaText: 'See what\u2019s included for networkers \u2192',
         ctaHref: '/for-networkers',
-        formLede: 'Sign in to open My Hub \u2014 saved events, bookings, alerts, and member rates.',
-        createLead: 'New to The Networker Hub?',
+        formLede: 'Sign in to open My account \u2014 saved events, bookings, alerts, and member rates.',
+        createLead: 'New to The Networker UK?',
         createBtn: 'Create a free account',
         createHint: '17,000+ networkers last year \u00b7 free to join',
         panelProof: '27,000+ Events listed \u00b7 17,000+ networkers last year',
@@ -905,7 +905,7 @@
     if (full) full.hidden = false;
     if (steps) steps.hidden = false;
     if (/nothing to set up today/i.test(document.title || '')) {
-      document.title = 'Create account – The Networker Hub';
+      document.title = 'Create account – The Networker UK';
     }
   }
 
@@ -916,7 +916,7 @@
     if (early) early.hidden = false;
     if (full) full.hidden = true;
     if (steps) steps.hidden = true;
-    document.title = 'Nothing to set up today – The Networker Hub';
+    document.title = 'Nothing to set up today – The Networker UK';
   }
 
   /**

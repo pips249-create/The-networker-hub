@@ -31,7 +31,7 @@ async function createOpportunityClaimRequest(input) {
   if (!opportunity) throw new Error('not_found');
   if (!isHubSeedOwnerEmail(opportunity.ownerEmail)) throw new Error('not_claimable');
 
-  const siteUrl = String(process.env.SITE_URL || 'https://www.thenetworkerhub.com').replace(/\/$/, '');
+  const siteUrl = String(process.env.SITE_URL || 'https://www.thenetworkeruk.com').replace(/\/$/, '');
   const listingUrl =
     siteUrl +
     '/opportunities/' +
@@ -79,7 +79,7 @@ async function createOpportunityClaimRequest(input) {
     '<p><a href="' +
     escapeHtml(adminUrl) +
     '">Open opportunities in Command Centre</a></p>' +
-    '<p>— The Networker Hub</p>';
+    '<p>— The Networker UK</p>';
 
   const emailResult = await sendViaResend({
     to,

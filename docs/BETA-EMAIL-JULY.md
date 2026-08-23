@@ -7,7 +7,7 @@ Send to **50–100 organisers** first (not the full 3,500 list). Goal: **20 grou
 | Step | When | Template | From | Asks for password? |
 |------|------|----------|------|-------------------|
 | **Email 1** | This week | `organiser_rebrand_announcement` | `hello@the-networker.co.uk` (or co.uk inbox) | **No** |
-| **Email 2** | 3–5 days later | `organiser_launch_invite` | `hello@thenetworkerhub.com` | **Yes** (create password) |
+| **Email 2** | 3–5 days later | `organiser_launch_invite` | `hello@thenetworkeruk.com` | **Yes** (create password) |
 
 ### Why two emails?
 
@@ -21,7 +21,7 @@ Organisers who knew **the-networker.co.uk** may treat a single “claim your pag
 
 **What it does:**
 
-- Explains the move from the-networker.co.uk → thenetworkerhub.com
+- Explains the move from the-networker.co.uk → thenetworkeruk.com
 - Says their listing is being prepared — **nothing to do today**
 - CTA: “See the new platform for organisers” → `/for-organisers` (no account)
 - Company number + both domains in footer
@@ -46,7 +46,7 @@ Reply-to is set to `hello@the-networker.co.uk` when sent via Campaigns.
 
 ## Email 2 — Confirm organiser page
 
-**Subject:** `Confirm your organiser page — The Networker Hub`
+**Subject:** `Confirm your organiser page — The Networker UK`
 
 **What it does:**
 
@@ -74,7 +74,7 @@ Before Email 1, run:
 
 ```bash
 npm run check:organiser-journey
-# or: node scripts/smoke-test-organiser-journey.js https://www.thenetworkerhub.com
+# or: node scripts/smoke-test-organiser-journey.js https://www.thenetworkeruk.com
 ```
 
 That checks the Email 1 funnel opens **without** the preview password (`/for-organisers`, contact, about, legal, auth), while guides/FAQ/advertising/catalogue **stay gated**. On `/for-organisers`, CTAs stay soft (“nothing to do today”) until the public catalogue opens.

@@ -55,8 +55,8 @@
   function showReady(featuredUntil, cappedByEvent) {
     if (lede) {
       lede.textContent = title
-        ? '"' + title + '" is now a featured listing on The Networker Hub.'
-        : 'Your event is now a featured listing on The Networker Hub.';
+        ? '"' + title + '" is now a featured listing on The Networker UK.'
+        : 'Your event is now a featured listing on The Networker UK.';
     }
     if (status) {
       if (window.HubOrganiserFeaturedDuration) {

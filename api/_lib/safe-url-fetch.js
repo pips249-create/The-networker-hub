@@ -170,7 +170,7 @@ function imageFetchHeadersForUrl(rawUrl) {
       headers.Referer = parsed.origin + '/';
     }
   } catch {
-    headers.Referer = 'https://www.thenetworkerhub.com/';
+    headers.Referer = 'https://www.thenetworkeruk.com/';
   }
   return headers;
 }

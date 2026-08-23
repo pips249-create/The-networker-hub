@@ -80,10 +80,10 @@
     html: function (hubView) {
       var isOrg = hubView === 'organiser';
       return (
-        '<div class="hub-mode-switch" role="group" aria-label="Switch between My Hub and organiser workspace">' +
+        '<div class="hub-mode-switch" role="group" aria-label="Switch between My account and organiser workspace">' +
         '<button type="button" class="hub-mode-btn' +
         (!isOrg ? ' is-active' : '') +
-        '" data-hub-mode="attendee">My Hub</button>' +
+        '" data-hub-mode="attendee">My account</button>' +
         '<button type="button" class="hub-mode-btn' +
         (isOrg ? ' is-active' : '') +
         '" data-hub-mode="organiser">Organiser workspace</button>' +
@@ -102,7 +102,8 @@
  * NAV_BUILD=20260709h — transparent nav logo (from logo-nav.png).
  */
 (function () {
-  var NAV_BUILD = '20260814listevent1';
+  var NAV_BUILD = '20260823nav1';
+  var LOGO_SRC = '/assets/logo-nav-transparent.png?v=20260823ukpng';
   var SESSION_KEY = 'hub_nav_session_v1';
   var SESSION_TTL_MS = 5 * 60 * 1000;
   var script = document.currentScript;
@@ -357,7 +358,7 @@
       href('/account/') +
       '"' +
       accountActive +
-      '>My Hub</a>' +
+      '>My account</a>' +
       organiserItem +
       '<a role="menuitem" class="nav-dropdown-item" href="' +
       href('/account/settings') +
@@ -481,6 +482,9 @@
     } else {
       html += link('/events/', 'Events', 'events');
       html += link('/opportunities/', 'Opportunities', 'opportunities');
+      if (!user) {
+        html += link('/for-organisers', 'For organisers', 'for-organisers');
+      }
       if (user) {
         html += link('/events/?mode=organisers', 'Organisers', 'organisers');
         html += link('/faq', 'Help', 'faq');
@@ -506,6 +510,7 @@
     } else if (early) {
       html += link('/login', 'Sign in', 'auth', 'nav-signin');
     } else {
+      html += link('/register', 'Join free', 'auth', 'nav-register');
       html += link('/login', 'Sign in', 'auth', 'nav-signin');
     }
     return html;
@@ -562,6 +567,7 @@
       html += link('/events/', 'Events', 'events', 'nav-mobile-item');
       html += link('/opportunities/', 'Opportunities', 'opportunities', 'nav-mobile-item');
       html += link('/events/?mode=organisers', 'Organisers', 'organisers', 'nav-mobile-item');
+      html += link('/for-organisers', 'For organisers', 'for-organisers', 'nav-mobile-item');
       html += link('/rankings', 'Top groups', 'rankings', 'nav-mobile-item');
       html += buildMobileDrawerCities();
       html += '<p class="nav-mobile-section-label">Help &amp; info</p>';
@@ -582,7 +588,7 @@
     if (user) {
       // Same mobile account section for everyone; optional links only when relevant.
       html += '<p class="nav-mobile-account-label">My account</p>';
-      html += link('/account/', 'My Hub', 'account', 'nav-mobile-item');
+      html += link('/account/', 'My account', 'account', 'nav-mobile-item');
       if (user.organiserUiVisible) {
         html += link('/organiser/', 'Organiser workspace', 'organiser', 'nav-mobile-item');
       }
@@ -596,6 +602,7 @@
     } else if (early) {
       html += link('/login', 'Sign in', 'auth', 'nav-mobile-item nav-mobile-signin');
     } else {
+      html += link('/register', 'Join free', 'auth', 'nav-mobile-item nav-mobile-register');
       html += link('/login', 'Sign in', 'auth', 'nav-mobile-item nav-mobile-signin');
     }
     return html;
@@ -911,10 +918,10 @@
       '" id="site-nav">' +
       '<a class="nav-logo" href="' +
       homeHref +
-      '" aria-label="The Networker Hub home">' +
+      '" aria-label="The Networker UK home">' +
       '<img src="' +
-      href('/assets/logo-nav-transparent.png?v=20260729a') +
-      '" alt="The Networker Hub" width="550" height="255">' +
+      href(LOGO_SRC) +
+      '" alt="The Networker UK" width="550" height="255">' +
       '</a>' +
       '<nav class="nav-links" aria-label="Main">' +
       buildNavLinks(user, pending) +

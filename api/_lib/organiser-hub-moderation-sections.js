@@ -27,7 +27,7 @@ function buildSuspensionNoticeRow(willSuspend, warningCount, warningLimit) {
     ' of ' +
     escapeHtml(String(warningLimit)) +
     '</p>' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:400;color:#635c5e;line-height:1.65;margin:0;">Your organiser profile and live events have been removed from The Networker Hub. Contact hello@thenetworkerhub.com to appeal.</p>' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:400;color:#635c5e;line-height:1.65;margin:0;">Your organiser profile and live events have been removed from The Networker UK. Contact hello@thenetworkeruk.com to appeal.</p>' +
     '</td></tr></table></td></tr>'
   );
 }

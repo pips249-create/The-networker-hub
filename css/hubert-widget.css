@@ -317,7 +317,7 @@ body.opp-enquire-jump-active .hubert-launcher-icon {
 }
 
 @media (max-width: 768px) {
-  /* Clear fixed hub bottom nav (organiser + My Hub) */
+  /* Clear fixed hub bottom nav (organiser + My account) */
   body.organiser-dashboard-page .hubert-widget:not(.hubert-widget--open),
   body.attendee-dashboard-page .hubert-widget:not(.hubert-widget--open) {
     bottom: calc(72px + env(safe-area-inset-bottom, 0px));

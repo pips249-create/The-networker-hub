@@ -2,8 +2,8 @@
 
 **When:** after Email 2 openers are known  
 **Audience:** Email 2 **openers only**  
-**Send via:** **Resend** (`hello@mail.thenetworkerhub.com`) — not Brevo  
-**Reply-to:** `catherine@thenetworkerhub.com`  
+**Send via:** **Resend** (`hello@mail.thenetworkeruk.com`) — not Brevo  
+**Reply-to:** `catherine@thenetworkeruk.com`  
 **Template:** `organiser_call_followup`  
 **Subject:** `Do you need a hand with {{group_name}}?`
 
@@ -20,6 +20,6 @@
 
 ```bash
 node scripts/build-email3-call-followup.js
-node scripts/send-email3-call-followup.js --test catherine@thenetworkerhub.com
+node scripts/send-email3-call-followup.js --test catherine@thenetworkeruk.com
 node scripts/send-email3-call-followup.js --send
 ```

@@ -71,7 +71,7 @@ module.exports = async function handler(req, res) {
       return json(res, 503, {
         ok: false,
         error: 'not_configured',
-        message: 'Online enquiries are not available yet — email rosie@thenetworkerhub.com.',
+        message: 'Online enquiries are not available yet — email rosie@thenetworkeruk.com.',
       });
     }
 

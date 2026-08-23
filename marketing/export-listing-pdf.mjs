@@ -63,8 +63,8 @@ await exportPdf(browser, 'list-business-opportunity-linkedin.html', 'list-busine
 await browser.close();
 
 const downloads = [
-  ['list-business-opportunity-guide.pdf', 'Networker Hub - How to List Business Opportunities.pdf'],
-  ['list-business-opportunity-linkedin.pdf', 'Networker Hub - How to List Business Opportunities (LinkedIn).pdf'],
+  ['list-business-opportunity-guide.pdf', 'Networker UK - How to List Business Opportunities.pdf'],
+  ['list-business-opportunity-linkedin.pdf', 'Networker UK - How to List Business Opportunities (LinkedIn).pdf'],
 ];
 
 for (const [src, dest] of downloads) {

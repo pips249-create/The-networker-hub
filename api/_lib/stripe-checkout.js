@@ -141,7 +141,7 @@ async function createOpportunityListingCheckoutSession(opts) {
             description:
               'Directory listing for "' +
               title +
-              '" on The Networker Hub (£25/month ex VAT)',
+              '" on The Networker UK (£25/month ex VAT)',
           },
           unit_amount: totals.subtotalExVatPence,
         },

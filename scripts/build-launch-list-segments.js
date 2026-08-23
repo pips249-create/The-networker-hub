@@ -24,9 +24,9 @@ const { isExcludedLaunchOrganiser } = require('./launch-excluded-organisers');
 
 const SKIP_EMAILS = new Set([
   'pips249@gmail.com',
-  'hello@thenetworkerhub.com',
-  'catherine@thenetworkerhub.com',
-  'rosie@thenetworkerhub.com',
+  'hello@thenetworkeruk.com',
+  'catherine@thenetworkeruk.com',
+  'rosie@thenetworkeruk.com',
 ]);
 
 function normEmail(v) {

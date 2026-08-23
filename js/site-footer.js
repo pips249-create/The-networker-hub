@@ -134,6 +134,7 @@
         '<a href="' +
         href('/about') +
         '">About us</a>' +
+        '<a href="https://www.thenetworkerinternational.com" rel="noopener noreferrer">The Networker International</a>' +
         '<a href="' +
         href('/advertising') +
         '">Advertising &amp; sponsorship</a>' +
@@ -152,7 +153,7 @@
         '" data-footer-policy="terms">Terms &amp; conditions</a>' +
         '<a href="' +
         href('/legal-policies#hub-rules') +
-        '" data-footer-policy="hub-rules">Hub rules</a>' +
+        '" data-footer-policy="hub-rules">Platform rules</a>' +
         '<a href="' +
         href('/legal-policies#refunds') +
         '" data-footer-policy="refunds">Refunds &amp; cancellations</a>' +
@@ -175,7 +176,7 @@
       homeHref +
       '" class="footer-brand" aria-label="Home">' +
       '<img class="footer-logo" src="' +
-      href('/assets/logo-nav-transparent.png?v=20260729a') +
+      href('/assets/logo-nav-transparent.png?v=20260823ukpng') +
       '" alt="" width="550" height="255" aria-hidden="true">' +
       '</a>' +
       '<div class="footer-columns">' +

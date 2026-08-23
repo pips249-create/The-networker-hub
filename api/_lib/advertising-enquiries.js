@@ -4,7 +4,7 @@
 const { getSupabaseAdmin } = require('./supabase');
 const { sendViaResend } = require('./send-template-email');
 
-const ROSIE_EMAIL = String(process.env.ADVERTISING_ENQUIRY_EMAIL || 'rosie@thenetworkerhub.com')
+const ROSIE_EMAIL = String(process.env.ADVERTISING_ENQUIRY_EMAIL || 'rosie@thenetworkeruk.com')
   .trim()
   .toLowerCase();
 
@@ -102,11 +102,11 @@ function buildConfirmationEmailHtml(input) {
     ',</p>' +
     '<p style="margin:0 0 12px;">Thanks for your enquiry about <strong>' +
     escHtml(input.packageName) +
-    '</strong> on The Networker Hub (' +
+    '</strong> on The Networker UK (' +
     escHtml(input.section) +
     ' section).</p>' +
     '<p style="margin:0 0 12px;">Rosie will review your details and reply within <strong>one business day</strong> with availability, next steps, and anything we need for creative.</p>' +
-    '<p style="margin:0;">The Networker Hub<br><a href="https://www.thenetworkerhub.com/advertising">thenetworkerhub.com/advertising</a></p>' +
+    '<p style="margin:0;">The Networker UK<br><a href="https://www.thenetworkeruk.com/advertising">thenetworkeruk.com/advertising</a></p>' +
     '</div>'
   );
 }
@@ -165,7 +165,7 @@ async function submitAdvertisingEnquiry(body) {
 
   if (error) {
     if (/advertising_enquiries/i.test(error.message || '')) {
-      const err = new Error('Enquiry storage is not configured yet — email rosie@thenetworkerhub.com directly.');
+      const err = new Error('Enquiry storage is not configured yet — email rosie@thenetworkeruk.com directly.');
       err.code = 'not_configured';
       throw err;
     }
@@ -189,7 +189,7 @@ async function submitAdvertisingEnquiry(body) {
   try {
     await sendViaResend({
       to: input.email,
-      subject: 'We received your advertising enquiry — The Networker Hub',
+      subject: 'We received your advertising enquiry — The Networker UK',
       html: buildConfirmationEmailHtml(input),
       replyTo: ROSIE_EMAIL,
       skipAllowlist: true,

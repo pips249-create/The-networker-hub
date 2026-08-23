@@ -19,8 +19,8 @@ const { sendTemplatedEmail } = require('../api/_lib/send-template-email');
 const { mergeEmailPreviewVariables } = require('../api/_lib/email-preview-variables');
 const { campaignSiteVars } = require('../api/_lib/organiser-campaign-defaults');
 
-const SITE = 'https://www.thenetworkerhub.com';
-const BOOK_CALL = 'https://savvycal.com/TheNetworkerHub/website-preview';
+const SITE = 'https://www.thenetworkeruk.com';
+const BOOK_CALL = 'https://savvycal.com/TheNetworkerUK/website-preview';
 const CSV = path.join(root, 'data/Email3-A-Segment.csv');
 const SLUG = 'organiser_call_followup';
 
@@ -56,7 +56,7 @@ async function sendOne(row, toOverride) {
       other_groups_note: row.otherNote,
       claim_url: row.claimUrl,
       book_call_url: BOOK_CALL,
-      support_email: 'catherine@thenetworkerhub.com',
+      support_email: 'catherine@thenetworkeruk.com',
     },
     SITE
   );
@@ -65,7 +65,7 @@ async function sendOne(row, toOverride) {
     to,
     variables: vars,
     skipEmailCheck: true,
-    replyTo: 'catherine@thenetworkerhub.com',
+    replyTo: 'catherine@thenetworkeruk.com',
     resendTags: [
       { name: 'campaign', value: 'email3_help' },
       { name: 'segment', value: 'a_openers' },
@@ -76,7 +76,7 @@ async function sendOne(row, toOverride) {
 (async () => {
   const rows = parseCsv(CSV);
   console.log('From:', process.env.RESEND_FROM || 'hello@mail.thenetworkerhub.com (default)');
-  console.log('Reply-to: catherine@thenetworkerhub.com');
+  console.log('Reply-to: catherine@thenetworkeruk.com');
   console.log('Recipients in CSV:', rows.length);
 
   if (testTo) {
@@ -91,7 +91,7 @@ async function sendOne(row, toOverride) {
   if (!doSend) {
     console.log('Dry-run. First 5:');
     rows.slice(0, 5).forEach((r) => console.log('  ', r.email, '—', r.name));
-    console.log('Send a test: node scripts/send-email3-call-followup.js --test catherine@thenetworkerhub.com');
+    console.log('Send a test: node scripts/send-email3-call-followup.js --test catherine@thenetworkeruk.com');
     console.log('Send the 28: node scripts/send-email3-call-followup.js --send');
     return;
   }

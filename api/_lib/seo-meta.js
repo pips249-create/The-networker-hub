@@ -48,7 +48,7 @@ function buildOpenGraphTags(meta) {
   const image = meta.image || '';
   const tags = {
     'og:type': meta.ogType || 'website',
-    'og:site_name': 'The Networker Hub',
+    'og:site_name': 'The Networker UK',
     'og:title': meta.title,
     'og:description': meta.description,
     'og:url': meta.canonical,
@@ -60,7 +60,7 @@ function buildOpenGraphTags(meta) {
   };
   if (image) {
     tags['og:image:secure_url'] = image;
-    tags['og:image:alt'] = meta.title || 'The Networker Hub';
+    tags['og:image:alt'] = meta.title || 'The Networker UK';
   }
   return tags;
 }
@@ -302,7 +302,7 @@ async function buildEventMeta(slug, origin) {
   const eventSlug = ev.slug || publicEventSlug({ slug: row.slug, title: row.title });
   if (!eventSlug) return null;
 
-  const title = `${ev.title} – The Networker Hub`;
+  const title = `${ev.title} – The Networker UK`;
   const bits = [
     ev.dateLine || ev.date,
     ev.location || ev.city,
@@ -311,7 +311,7 @@ async function buildEventMeta(slug, origin) {
   ].filter(Boolean);
   const description =
     trimText(ev.description, 120) ||
-    `Book ${ev.title} on The Networker Hub. ${bits.join(' · ')}`.trim();
+    `Book ${ev.title} on The Networker UK. ${bits.join(' · ')}`.trim();
 
   const canonical = absoluteUrl(origin, '/events/' + encodeURIComponent(eventSlug));
   const image = ev.photo
@@ -398,10 +398,10 @@ async function buildOpportunityMeta(slug, origin) {
   if (!oppSlug) return null;
 
   const typeLabel = OPPORTUNITY_TYPE_LABELS[item.type] || 'Business opportunity';
-  const title = `${item.title} – ${typeLabel} – The Networker Hub`;
+  const title = `${item.title} – ${typeLabel} – The Networker UK`;
   const description =
     trimText(item.desc, 160) ||
-    `${item.title} — ${typeLabel} listed by ${item.host || 'The Networker Hub'}. Enquire on The Networker Hub.`;
+    `${item.title} — ${typeLabel} listed by ${item.host || 'The Networker UK'}. Enquire on The Networker UK.`;
 
   const canonical = absoluteUrl(origin, '/opportunities/' + encodeURIComponent(oppSlug));
   const image = item.imageUrl
@@ -443,10 +443,10 @@ async function buildOrganiserMeta(slug, origin) {
   const org = await getPublicOrganiserBySlug(slug);
   if (!org || !org.slug) return null;
 
-  const title = `${org.name} – Networking organiser – The Networker Hub`;
+  const title = `${org.name} – Networking organiser – The Networker UK`;
   const description =
     trimText(org.description, 160) ||
-    `${org.name} on The Networker Hub — browse upcoming networking events and book tickets.`;
+    `${org.name} on The Networker UK — browse upcoming networking events and book tickets.`;
 
   const canonical = absoluteUrl(origin, '/organisers/' + encodeURIComponent(org.slug));
   const image = org.photoUrl || absoluteUrl(origin, '/assets/logo.png');
@@ -514,16 +514,16 @@ async function buildNetworkingRegionMeta(slug, origin) {
   const ssr = await buildNetworkingRegionSsr(slug, origin);
   const eventCount = Number(ssr.total) || 0;
   let description = trimText(
-    `Find business networking events, meetings and organiser groups in ${region.name}. Browse upcoming local listings and book your next event on The Networker Hub.`,
+    `Find business networking events, meetings and organiser groups in ${region.name}. Browse upcoming local listings and book your next event on The Networker UK.`,
     160
   );
   if (eventCount > 0) {
     description = trimText(
-      `Browse ${eventCount} upcoming business networking events in ${region.name}. Find meetings, workshops and conferences — book on The Networker Hub.`,
+      `Browse ${eventCount} upcoming business networking events in ${region.name}. Find meetings, workshops and conferences — book on The Networker UK.`,
       160
     );
   }
-  const title = `Business Networking Events in ${region.name} ${year} – The Networker Hub`;
+  const title = `Business Networking Events in ${region.name} ${year} – The Networker UK`;
   const meta = { title, description, canonical, image, ogType: 'website' };
   const pageName = `The best business networking events and groups in ${region.name} ${year}`;
   const about =
@@ -554,7 +554,7 @@ async function buildNetworkingRegionMeta(slug, origin) {
     description,
     isPartOf: {
       '@type': 'WebSite',
-      name: 'The Networker Hub',
+      name: 'The Networker UK',
       url: absoluteUrl(origin, '/'),
     },
     about,
@@ -607,9 +607,9 @@ async function buildRankingBadgeMeta(lookup, origin) {
   }
 
   if (!entry) {
-    const title = 'Ranking badge – The Networker Hub';
+    const title = 'Ranking badge – The Networker UK';
     const description =
-      'Share your Top 10, Top 25 or Top 50 networking group ranking badge from The Networker Hub.';
+      'Share your Top 10, Top 25 or Top 50 networking group ranking badge from The Networker UK.';
     const canonical = absoluteUrl(origin, '/rankings/badge');
     const meta = {
       ok: true,
@@ -626,8 +626,8 @@ async function buildRankingBadgeMeta(lookup, origin) {
   const org = entry.organiser || {};
   const badgeLabel = entry.cardLabel || entry.displayLabel || entry.label || 'Top ranking';
   const name = org.name || 'Networking group';
-  const title = `${name} — ${badgeLabel} | The Networker Hub`;
-  const description = `${name} is recognised as a ${badgeLabel} on The Networker Hub — ranked by attendee ratings, then review rate.`;
+  const title = `${name} — ${badgeLabel} | The Networker UK`;
+  const description = `${name} is recognised as a ${badgeLabel} on The Networker UK — ranked by attendee ratings, then review rate.`;
   const qs = new URLSearchParams();
   if (org.id) qs.set('id', org.id);
   else if (org.slug) qs.set('slug', org.slug);

@@ -39,7 +39,7 @@ values (
   'account_welcome',
   'Account welcome',
   'Sent when someone creates a new Hub account.',
-  'Welcome to The Networker Hub, {{user_name}}',
+  'Welcome to The Networker UK, {{user_name}}',
   '${escaped}',
   array[
     'user_name', 'user_email', 'hub_account_url', 'browse_events_url', 'opportunities_url', 'welcome_url',

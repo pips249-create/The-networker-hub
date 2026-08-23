@@ -18,7 +18,7 @@ function isStaleApplicationReceivedTemplate(bodyHtml) {
   if (!body.includes('{{logo_footer_url}}')) return true;
   if (body.includes('background:#1c2040') || body.includes('background:#4a4446')) return true;
   if (body.includes('Payouts are processed')) return true;
-  if (body.includes('hello@thenetworkerhub.com')) return true;
+  if (body.includes('hello@thenetworkeruk.com')) return true;
   if (body.includes('Need help?') && !body.includes('{{support_email}}')) return true;
   return false;
 }

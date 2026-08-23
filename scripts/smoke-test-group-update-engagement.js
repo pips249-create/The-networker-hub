@@ -144,7 +144,7 @@ async function testTrackHandler() {
   ok('open returns 1×1 GIF');
 
   const clickRes = mockRes();
-  const dest = encodeURIComponent('https://www.thenetworkerhub.com/events/organiser?id=abc');
+  const dest = encodeURIComponent('https://www.thenetworkeruk.com/events/organiser?id=abc');
   await trackHandler(
     mockReq(
       '/api/track?kind=click&t=11111111-2222-3333-4444-555555555555&u=' + dest
@@ -153,7 +153,7 @@ async function testTrackHandler() {
   );
   assert.strictEqual(clickRes.statusCode, 302);
   assert.ok(
-    String(clickRes.headers.location || '').startsWith('https://www.thenetworkerhub.com/')
+    String(clickRes.headers.location || '').startsWith('https://www.thenetworkeruk.com/')
   );
   ok('click redirects to destination URL');
 

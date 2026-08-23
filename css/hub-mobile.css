@@ -418,8 +418,8 @@ body.nav-menu-open {
   }
 
   .nav-logo img {
-    height: 52px;
-    max-width: 100%;
+    height: 56px;
+    max-width: min(280px, 72vw);
   }
 
   /* Bar links live in the drawer — stops header overflow */

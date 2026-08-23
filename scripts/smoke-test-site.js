@@ -15,7 +15,7 @@
  * Usage:
  *   node scripts/smoke-test-site.js
  *   node scripts/smoke-test-site.js http://localhost:3000
- *   node scripts/smoke-test-site.js https://www.thenetworkerhub.com
+ *   node scripts/smoke-test-site.js https://www.thenetworkeruk.com
  *   SITE_ACCESS_PASSWORD='…' npm run check:live
  *
  * Optional env (local.env / .env.local / shell):
@@ -43,7 +43,7 @@ const PUBLIC_PAGES = [
   { path: '/about', expect: /about|networker/i },
   { path: '/contact', expect: /contact|hubert/i },
   { path: '/for-organisers', expect: /organis/i },
-  { path: '/for-attendees', expect: /My Hub|attendee|networker|peek/i },
+  { path: '/for-attendees', expect: /My account|attendee|networker|peek/i },
   { path: '/peek', expect: /sneak peek|networker/i },
   { path: '/peek/about-us', expect: /about|networker/i },
   { path: '/peek/for-organisers', expect: /organis/i },

@@ -25,8 +25,8 @@ function linkifyAnswer(text) {
   let html = escapeHtml(text);
   html = html.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1">$1</a>');
   html = html.replace(/(\/[a-z0-9][a-z0-9/_.-]*)/gi, '<a href="$1">$1</a>');
-  html = html.replace(/hello@thenetworkerhub\.com/g, '<a href="mailto:hello@thenetworkerhub.com">hello@thenetworkerhub.com</a>');
-  html = html.replace(/rosie@thenetworkerhub\.com/g, '<a href="mailto:rosie@thenetworkerhub.com">rosie@thenetworkerhub.com</a>');
+  html = html.replace(/hello@thenetworkerhub\.com/g, '<a href="mailto:hello@thenetworkeruk.com">hello@thenetworkeruk.com</a>');
+  html = html.replace(/rosie@thenetworkerhub\.com/g, '<a href="mailto:rosie@thenetworkeruk.com">rosie@thenetworkeruk.com</a>');
   return html;
 }
 

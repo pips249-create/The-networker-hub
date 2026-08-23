@@ -2,7 +2,7 @@
  * Public site base URL for Hubert listing links.
  */
 function hubSiteBase() {
-  return String(process.env.SITE_URL || 'https://www.thenetworkerhub.com').replace(/\/$/, '');
+  return String(process.env.SITE_URL || 'https://www.thenetworkeruk.com').replace(/\/$/, '');
 }
 
 function hubSiteUrl(path) {

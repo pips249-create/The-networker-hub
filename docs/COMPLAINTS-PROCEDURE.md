@@ -1,7 +1,7 @@
 # Complaints handling — procedure
 
 **Operator:** The Networker Group Ltd  
-**Contact:** hello@thenetworkerhub.com (subject line **Complaint**)  
+**Contact:** hello@thenetworkeruk.com (subject line **Complaint**)  
 **Acknowledgement target:** 2 working days  
 **Substantive response target:** 14 calendar days  
 **Last updated:** 10 July 2026
@@ -12,7 +12,7 @@
 
 ## 1. Scope
 
-This procedure covers complaints about The Networker Hub as a platform — not disputes that are solely between an attendee and an organiser about a private event, unless the complaint is about **how the Hub handled** that situation.
+This procedure covers complaints about The Networker UK as a platform — not disputes that are solely between an attendee and an organiser about a private event, unless the complaint is about **how the Hub handled** that situation.
 
 | Category | Examples | Primary owner |
 |----------|----------|---------------|
@@ -35,7 +35,7 @@ This procedure covers complaints about The Networker Hub as a platform — not d
 |------|------|----------------|
 | **Operations Director / complaints owner** | Catherine Hancher | Owns the register, platform/refund/listing complaints, final sign-off on escalated cases |
 | **Commercial Director** | Rosie McGilvray | Advertising, sponsorship, ASA/media complaints |
-| **Support inbox** | hello@thenetworkerhub.com | Monitored actively — log every complaint in Command Centre within 1 working day |
+| **Support inbox** | hello@thenetworkeruk.com | Monitored actively — log every complaint in Command Centre within 1 working day |
 | **Privacy lead** | Catherine Hancher | Data complaints; ICO liaison if needed |
 | **Moderation** | Catherine Hancher (Command Centre) | Listing/review complaints; unpublish or dismiss reports |
 
@@ -43,7 +43,7 @@ This procedure covers complaints about The Networker Hub as a platform — not d
 
 ## 3. Intake
 
-1. Complaint received at **hello@thenetworkerhub.com** with **“Complaint”** in the subject line (or clearly framed as a complaint in the body).
+1. Complaint received at **hello@thenetworkeruk.com** with **“Complaint”** in the subject line (or clearly framed as a complaint in the body).
 2. Log in the **complaints register** in Command Centre: **Support → Complaints** (`/admin/#support/complaints`). Supabase table: `public.complaints`.
 
    | Field | Example |

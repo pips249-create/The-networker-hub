@@ -1,4 +1,4 @@
-# Support inbox runbook — hello@thenetworkerhub.com
+# Support inbox runbook — hello@thenetworkeruk.com
 
 **Owner:** Catherine Hancher (Operations Director, primary) · Rosie McGilvray (Commercial Director, cover)  
 **Last updated:** 6 August 2026
@@ -9,7 +9,7 @@
 
 ## 1. Purpose
 
-`hello@thenetworkerhub.com` is the support, privacy, and complaints inbox for The Networker Hub (The Networker Group Ltd).
+`hello@thenetworkeruk.com` is the support, privacy, and complaints inbox for The Networker UK (The Networker Group Ltd).
 
 **Response targets**
 
@@ -28,7 +28,7 @@
 - [ ] Escalate **Complaint** or **Privacy** subjects to Catherine same day
 - [ ] Log every **Complaint** in Command Centre → **Support → Complaints** (see `docs/COMPLAINTS-PROCEDURE.md`)
 
-**Sales / sponsorship enquiries** → forward or cc `rosie@thenetworkerhub.com`
+**Sales / sponsorship enquiries** → forward or cc `rosie@thenetworkeruk.com`
 
 ---
 
@@ -57,24 +57,24 @@ Copy/paste and personalise. Keep tone short and human.
 ### Login / password
 
 > Thanks for getting in touch.  
-> Please try resetting your password at https://www.thenetworkerhub.com/login — use the same email as your account.  
+> Please try resetting your password at https://www.thenetworkeruk.com/login — use the same email as your account.  
 > If that doesn’t work, reply from the address on the account and we’ll look it up.
 
 ### Claim / “where is my group?”
 
-> Your networking group may already be listed on The Networker Hub.  
-> Use the personal claim link from our email if you have one, or go to https://www.thenetworkerhub.com/for-organisers and follow Claim your page.  
+> Your networking group may already be listed on The Networker UK.  
+> Use the personal claim link from our email if you have one, or go to https://www.thenetworkeruk.com/for-organisers and follow Claim your page.  
 > If your email has changed since the-networker.co.uk, reply with the old and new addresses and the group name.
 
 ### Publish an event
 
 > Sign in → organiser dashboard → create or open the event → complete tickets and refund policy → Publish.  
-> Guide: https://www.thenetworkerhub.com/guides/list-an-event  
+> Guide: https://www.thenetworkeruk.com/guides/list-an-event  
 > If it still doesn’t appear on Browse after publishing, send us the event title and we’ll check approval/status.
 
 ### Bookings / confirmation email missing
 
-> Your tickets also appear under My Hub: https://www.thenetworkerhub.com/account/  
+> Your tickets also appear under My account: https://www.thenetworkeruk.com/account/  
 > Please check spam/junk for the confirmation. If it’s still missing, reply with the event name and the email used at checkout.
 
 ### Refunds
@@ -90,14 +90,14 @@ Copy/paste and personalise. Keep tone short and human.
 
 ### “Where did the old site go?” (after redirect)
 
-> We’ve upgraded the-networker.co.uk to The Networker Hub: https://www.thenetworkerhub.com  
+> We’ve upgraded the-networker.co.uk to The Networker UK: https://www.thenetworkeruk.com  
 > Same team — new platform for events, organiser pages, and bookings.  
 > Bookmark the new address; your co.uk email still works as before.
 
 ### Sponsorship / advertising
 
-> Thanks — I’ve copied Rosie (rosie@thenetworkerhub.com).  
-> Overview of placements: https://www.thenetworkerhub.com/advertising
+> Thanks — I’ve copied Rosie (rosie@thenetworkeruk.com).  
+> Overview of placements: https://www.thenetworkeruk.com/advertising
 
 ---
 

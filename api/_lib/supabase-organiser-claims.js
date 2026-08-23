@@ -133,7 +133,7 @@ async function notifyAdminOfClaimDispute({ organiser, session, disputeId }) {
     '<p>Review in Command Centre → Group profile cleanup, or open <a href="' +
     escapeHtml(adminLink) +
     '">admin groups</a>.</p>' +
-    '<p>— The Networker Hub</p>';
+    '<p>— The Networker UK</p>';
 
   try {
     await sendViaResend({ to: adminEmail, subject, html });

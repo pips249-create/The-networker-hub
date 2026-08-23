@@ -1115,7 +1115,7 @@ async function buildEventSoftLanding(sb, row, organiser) {
   const status = String(row.status || '').toLowerCase();
   const past = isEventPast(row);
   let error = 'event_unavailable';
-  let message = 'This event is no longer available on The Networker Hub.';
+  let message = 'This event is no longer available on The Networker UK.';
   if (status === 'cancelled' || status === 'canceled') {
     error = 'event_cancelled';
     message = 'This event was cancelled.';

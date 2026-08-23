@@ -71,7 +71,7 @@ Ship/verify membership work, then scale readiness before loading more of the alp
 
 - Guest visit + Category Exclusivity E2E
 - Email 1 organiser soft-trust send (Brevo Segment A ~1,100)
-- SEO rebuild: FAQ/guides/help canonicals → `www.thenetworkerhub.com` (were localhost)
+- SEO rebuild: FAQ/guides/help canonicals → `www.thenetworkeruk.com` (were localhost)
 - Middleware: gated `robots.txt` Disallow + block `llms.txt` / `agents.txt` until public launch (matcher bug fixed)
 - Launch list Hub segments: **1,103 organisers · 207 accounts · 158 both · 46 attendees-only** (`npm run build:launch-segments`)
 - Support inbox pre-draft replies (`docs/SUPPORT-INBOX-RUNBOOK.md`)
@@ -195,12 +195,12 @@ Monitor Resend dashboard during July beta — if daily sends approach **80–90*
 | Done | Task |
 |:----:|------|
 | [ ] | the-networker.co.uk redirect live |
-| [x] | thenetworkerhub.co.uk (+ www) → www.thenetworkerhub.com (Vercel domain + DNS) — domains attached 6 Aug; middleware 308 canonical (apex was skipping vercel.json) |
+| [x] | thenetworkerhub.co.uk (+ www) → www.thenetworkeruk.com (Vercel domain + DNS) — domains attached 6 Aug; middleware 308 canonical (apex was skipping vercel.json) |
 | [x] | Checkout + confirmation email verified on prod |
 | [x] | Stripe Connect destination charge test passed (Tab 9) — live proof Jul 2026 |
 | [x] | 1,000+ organiser group profiles browsable |
 | [ ] | 200+ claimed groups (stretch goal) |
-| [ ] | Support email monitored (hello@thenetworkerhub.com) |
+| [ ] | Support email monitored (hello@thenetworkeruk.com) |
 | [x] | Command Centre admin login tested |
 | [ ] | **Business ops** — Tab 10 gates complete (or consciously deferred with owner) |
 | [ ] | SEO/AEO — Tab 6 + `docs/SEO-AEO-LAUNCH-PLAN.md` launch-week steps |
@@ -238,11 +238,11 @@ The **Email Template Manager** works without Resend (edit & save in Command Cent
 | [x] | Create an API key |
 | [x] | Add **`RESEND_API_KEY`** in Vercel → Project → Settings → Environment Variables |
 | [x] | Verify sending domain (the-networker.co.uk or hub domain) |
-| [x] | Add **`RESEND_FROM`**, e.g. `The Networker <hello@thenetworkerhub.com>` |
+| [x] | Add **`RESEND_FROM`**, e.g. `The Networker <hello@thenetworkeruk.com>` |
 | [x] | Redeploy so env vars apply |
 | [x] | Command Centre → **Email templates** → Send test to yourself |
 | [x] | **Test checkout:** buy a ticket → confirmation email received |
-| [x] | **SPF + DKIM + DMARC** on sending domain (not `onboarding@resend.dev`) — public dig 6 Aug: DKIM + send.mail SPF/MX + apex DMARC `p=none`; Resend From `hello@mail.thenetworkerhub.com` |
+| [x] | **SPF + DKIM + DMARC** on sending domain (not `onboarding@resend.dev`) — public dig 6 Aug: DKIM + send.mail SPF/MX + apex DMARC `p=none`; Resend From `hello@mail.thenetworkeruk.com` |
 | [x] | **`CRON_SECRET`** set in Vercel Production — booking reminders + saved-event nudges |
 | [x] | Spot-check: `booking_cancelled`, `event_cancelled`, `refund_processed`, welcome email — templates present in DB (`account_welcome` + cancel/refund slugs); optional visual review in `/admin/emails` |
 | [ ] | Review/edit templates at [`/admin/emails`](https://the-networker-hub.vercel.app/admin/emails) |
@@ -361,11 +361,11 @@ Without Connect, paid revenue stays on the Hub Stripe account (legacy **Request 
 | [x] | Server-side meta injection (`middleware.js`) for `/events/:slug` and `/organisers/:slug` |
 | [x] | Canonical + Open Graph on home, events browse, about, contact, FAQ, opportunities, training, legal |
 | [x] | JSON-LD in `<head>` on static pages; BreadcrumbList on event/organiser pages |
-| [x] | **`SITE_URL`** in Vercel Production = `https://www.thenetworkerhub.com` (exact canonical) — confirmed 6 Aug |
+| [x] | **`SITE_URL`** in Vercel Production = `https://www.thenetworkeruk.com` (exact canonical) — confirmed 6 Aug |
 | [ ] | Verify `/sitemap.xml` after deploy — counts match published events + organisers |
 | [x] | Align hard-coded `the-networker.co.uk` canonical leftovers; run `npm run build-seo` |
-| [x] | Rebuild FAQ/guides/help canonicals to `https://www.thenetworkerhub.com` (6 Aug — were `localhost:3000`) |
-| [x] | **Google Search Console** — domain property `thenetworkerhub.com` verified (6 Aug); **submit sitemap at gate-off** when `/sitemap.xml` is public |
+| [x] | Rebuild FAQ/guides/help canonicals to `https://www.thenetworkeruk.com` (6 Aug — were `localhost:3000`) |
+| [x] | **Google Search Console** — domain property `thenetworkeruk.com` verified (6 Aug); **submit sitemap at gate-off** when `/sitemap.xml` is public |
 | [~] | **Google Business Profile** — Software company, UK service area, hub URL; verification processing (submitted 6 Aug; may take up to 5 days). No Magpas pin. |
 | [ ] | Launch week: remove `SITE_ACCESS_PASSWORD` → confirm `/robots.txt` Allow, `/llms.txt` 200 |
 | [x] | `the-networker.co.uk` 301 redirect map ready (Tab 7) — draft `docs/LEGACY-REDIRECT-MAP.md` |
@@ -482,7 +482,7 @@ Legal policies, cookie consent, terms at registration, pre-checkout acknowledgem
 | Checkout + email | `CHECKOUT-SETUP.md` |
 | SEO / AEO | `robots.txt`, `agents.txt`, `llms.txt`, `/sitemap.xml`, `/api/seo-meta` |
 | Legacy redirects | `docs/LEGACY-REDIRECT-MAP.md` |
-| Rebuild FAQ + schema | `SITE_URL=https://www.thenetworkerhub.com npm run build-seo` |
+| Rebuild FAQ + schema | `SITE_URL=https://www.thenetworkeruk.com npm run build-seo` |
 | Stripe Connect test | `PIPS-TODO.md` Tab 9 |
 | Business ops / compliance | `docs/COMPLIANCE-RUNBOOK.md` · Tab 10 |
 | Subprocessor DPAs | `docs/DPA-SUBPROCESSORS.md` · `npm run check:dpas` |
@@ -497,5 +497,5 @@ Legal policies, cookie consent, terms at registration, pre-checkout acknowledgem
 - Migrations **001–146** on disk — run any new files in `supabase/migrations/` in order on production.
 - **June/July money + data gates** are done — focus is Connect proof test, SEO domain, beta email, business ops.
 - Organiser **groups are in Supabase** — July/August focus is **claims, republishing events**, and email waves.
-- After editing FAQs run `SITE_URL=https://www.thenetworkerhub.com npm run build-seo` before deploy.
+- After editing FAQs run `SITE_URL=https://www.thenetworkeruk.com npm run build-seo` before deploy.
 - Add new items here so launch tasks stay in one place.

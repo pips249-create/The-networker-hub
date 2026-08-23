@@ -86,7 +86,7 @@
   upsertCanonical(canonical);
 
   upsertMeta('property', 'og:type', cfg.ogType || 'website');
-  upsertMeta('property', 'og:site_name', 'The Networker Hub');
+  upsertMeta('property', 'og:site_name', 'The Networker UK');
   upsertMeta('property', 'og:title', cfg.title);
   upsertMeta('property', 'og:description', cfg.description);
   upsertMeta('property', 'og:url', canonical);

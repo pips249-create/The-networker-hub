@@ -78,11 +78,11 @@ const { patchEmailMobileStyles } = require('./email-mobile-styles');
 
 const PLACEHOLDER_RE = /\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g;
 
-const DEFAULT_RESEND_FROM_NAME = 'The Networker Hub';
+const DEFAULT_RESEND_FROM_NAME = 'The Networker UK';
 const DEFAULT_RESEND_FROM_EMAIL = 'hello@mail.thenetworkerhub.com';
 
 /**
- * Always send with a friendly from-name so inboxes show "The Networker Hub"
+ * Always send with a friendly from-name so inboxes show "The Networker UK"
  * instead of only the mail.thenetworkerhub.com address.
  */
 function formatResendFrom(raw) {

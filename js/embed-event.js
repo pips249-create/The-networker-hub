@@ -6,7 +6,7 @@
 (function () {
   'use strict';
 
-  var ORIGIN = window.location.origin || 'https://www.thenetworkerhub.com';
+  var ORIGIN = window.location.origin || 'https://www.thenetworkeruk.com';
   var root = document.getElementById('embed-ticket-root');
   if (!root) return;
 
@@ -278,7 +278,7 @@
       '</a>' +
       '</div></div>' +
       '<div class="embed-ticket__powered">' +
-      '<span>Secure checkout on The Networker Hub</span>' +
+      '<span>Secure checkout on The Networker UK</span>' +
       '<a href="' +
       esc(ORIGIN + '/') +
       '" target="_blank" rel="noopener noreferrer">Powered by TNH</a>' +

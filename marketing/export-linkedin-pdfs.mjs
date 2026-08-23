@@ -20,22 +20,22 @@ const LINKEDIN_PDFS = [
   {
     html: 'linkedin-pdf-business-opportunities-explainer.html',
     file: 'business-opportunities-explainer-linkedin.pdf',
-    download: 'Networker Hub - What is Business Opportunities (LinkedIn).pdf',
+    download: 'Networker UK - What is Business Opportunities (LinkedIn).pdf',
   },
   {
     html: 'linkedin-pdf-organiser-benefits.html',
     file: 'organiser-benefits-linkedin.pdf',
-    download: 'Networker Hub - Organiser Benefits (LinkedIn).pdf',
+    download: 'Networker UK - Organiser Benefits (LinkedIn).pdf',
   },
   {
     html: 'linkedin-pdf-attendee-benefits.html',
     file: 'attendee-benefits-linkedin.pdf',
-    download: 'Networker Hub - Why Browse Here (LinkedIn).pdf',
+    download: 'Networker UK - Why Browse Here (LinkedIn).pdf',
   },
   {
     html: 'list-business-opportunity-linkedin.html',
     file: 'list-business-opportunity-linkedin.pdf',
-    download: 'Networker Hub - How to List Business Opportunities (LinkedIn).pdf',
+    download: 'Networker UK - How to List Business Opportunities (LinkedIn).pdf',
   },
 ];
 

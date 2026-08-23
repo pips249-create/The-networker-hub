@@ -4,9 +4,12 @@
 const { FAQ_AEO_ENTRIES } = require('./hubert-faq');
 const { HELP_PAGES } = require('./help-pages');
 
-const SITE_NAME = 'The Networker Hub';
-const LEGAL_NAME = 'The Networker Group Ltd';
-const DEFAULT_ORIGIN = 'https://www.thenetworkerhub.com';
+const {
+  BRAND_NAME: SITE_NAME,
+  LEGAL_NAME,
+  DEFAULT_PUBLIC_SITE: DEFAULT_ORIGIN,
+  SUPPORT_EMAIL,
+} = require('./hub-brand');
 
 function siteOrigin(override) {
   const raw = String(override || process.env.SITE_URL || DEFAULT_ORIGIN).trim();
@@ -23,7 +26,7 @@ function buildOrganizationSchema(origin) {
     url: base,
     logo: base + '/assets/logo.png',
     image: base + '/assets/logo.png',
-    email: 'hello@thenetworkerhub.com',
+    email: SUPPORT_EMAIL,
     description:
       'UK platform for networking events, exhibitions, and business opportunities.',
     address: {
@@ -37,7 +40,7 @@ function buildOrganizationSchema(origin) {
     contactPoint: {
       '@type': 'ContactPoint',
       contactType: 'customer support',
-      email: 'hello@thenetworkerhub.com',
+      email: SUPPORT_EMAIL,
       availableLanguage: ['English'],
     },
     founder: [
@@ -80,7 +83,7 @@ function buildFaqPageSchema(entries, origin) {
     '@type': 'FAQPage',
     '@id': base + '/faq#faq',
     url: base + '/faq',
-    name: 'The Networker Hub — Frequently asked questions',
+    name: 'The Networker UK — Frequently asked questions',
     mainEntity: list.map(function (item) {
       return {
         '@type': 'Question',
@@ -104,7 +107,7 @@ function buildHubertSchema(origin) {
     operatingSystem: 'Web',
     url: base + '/contact',
     description:
-      'Hubert is the business butler and concierge for The Networker Hub — an AI assistant that helps users find events and business opportunities, understand ticketing and enquiries, and navigate organiser tools.',
+      'Hubert is the business butler and concierge for The Networker UK — an AI assistant that helps users find events and business opportunities, understand ticketing and enquiries, and navigate organiser tools.',
     offers: {
       '@type': 'Offer',
       price: '0',
@@ -173,9 +176,9 @@ function buildContactPageSchema(origin) {
     '@type': 'ContactPage',
     '@id': base + '/contact',
     url: base + '/contact',
-    name: 'Contact The Networker Hub',
+    name: 'Contact The Networker UK',
     description:
-      'Contact The Networker Hub or chat with Hubert, your business butler and concierge, for help with events, tickets, and business opportunities.',
+      'Contact The Networker UK or chat with Hubert, your business butler and concierge, for help with events, tickets, and business opportunities.',
     mainEntity: buildHubertSchema(base),
   };
 }
@@ -289,7 +292,7 @@ function buildHelpArticleSchema(pageKey, origin) {
   if (!page) return null;
 
   const url = base + page.path;
-  const headline = page.title.replace(' – The Networker Hub', '');
+  const headline = page.title.replace(' – The Networker UK', '');
 
   return {
     '@context': 'https://schema.org',
@@ -353,9 +356,9 @@ function buildSchemaGraph(page, origin) {
       '@context': 'https://schema.org',
       '@type': 'AboutPage',
       url: base + '/about',
-      name: 'About The Networker Hub',
+      name: 'About The Networker UK',
       description:
-        'The Networker Hub connects UK business owners and professionals with networking events, exhibitions, and business opportunities.',
+        'The Networker UK connects UK business owners and professionals with networking events, exhibitions, and business opportunities.',
       mainEntity: buildOrganizationSchema(base),
     });
   } else if (page === 'rankings') {
@@ -363,9 +366,9 @@ function buildSchemaGraph(page, origin) {
       '@context': 'https://schema.org',
       '@type': 'WebPage',
       url: base + '/rankings',
-      name: 'Networking group leaderboard – The Networker Hub',
+      name: 'Networking group leaderboard – The Networker UK',
       description:
-        'Monthly Top 10, Top 25 and Top 50 networking groups on The Networker Hub, ranked by attendee ratings and review rate.',
+        'Monthly Top 10, Top 25 and Top 50 networking groups on The Networker UK, ranked by attendee ratings and review rate.',
       about: buildOrganizationSchema(base),
     });
   } else if (page === 'for-organisers') {
@@ -373,7 +376,7 @@ function buildSchemaGraph(page, origin) {
       '@context': 'https://schema.org',
       '@type': 'WebPage',
       url: base + '/for-organisers',
-      name: 'For Organisers – The Networker Hub',
+      name: 'For Organisers – The Networker UK',
       description:
         'Organiser dashboard, guest visit programme, visit tracking, Category Exclusivity, Previous Attendees, and discovery in the UK events and opportunities directories.',
       about: buildOrganizationSchema(base),
@@ -383,9 +386,9 @@ function buildSchemaGraph(page, origin) {
       '@context': 'https://schema.org',
       '@type': 'WebPage',
       url: base + '/for-networkers',
-      name: 'For networkers – The Networker Hub',
+      name: 'For networkers – The Networker UK',
       description:
-        'UK Events, Organiser pages, and Business Opportunities in one place. Free My Hub account with saved alerts, member rates, booking reminders, reviews, and guest visits.',
+        'UK Events, Organiser pages, and Business Opportunities in one place. Free My account account with saved alerts, member rates, booking reminders, reviews, and guest visits.',
       about: buildOrganizationSchema(base),
     });
   } else if (page === 'advertising') {
@@ -393,9 +396,9 @@ function buildSchemaGraph(page, origin) {
       '@context': 'https://schema.org',
       '@type': 'WebPage',
       url: base + '/advertising',
-      name: 'Advertising & sponsorship – The Networker Hub',
+      name: 'Advertising & sponsorship – The Networker UK',
       description:
-        'Sponsor placements and advertising rates for the events directory and business opportunities on The Networker Hub.',
+        'Sponsor placements and advertising rates for the events directory and business opportunities on The Networker UK.',
       about: buildOrganizationSchema(base),
     });
   } else if (page === 'events') {
@@ -421,9 +424,9 @@ function buildSchemaGraph(page, origin) {
       '@context': 'https://schema.org',
       '@type': 'WebPage',
       url: base + '/legal-policies',
-      name: 'Legal & policies — The Networker Hub',
+      name: 'Legal & policies — The Networker UK',
       description:
-        'Privacy policy, terms, refunds, and cookie information for The Networker Hub.',
+        'Privacy policy, terms, refunds, and cookie information for The Networker UK.',
     });
   } else if (page === 'help-organiser-payouts') {
     return buildHelpArticleSchema('organiser-payouts', base);
@@ -448,9 +451,9 @@ function buildLlmsTxt(origin) {
   }).join('\n\n');
 
   return (
-    '# The Networker Hub\n' +
+    '# The Networker UK\n' +
     '> UK business networking platform — events and business opportunities.\n\n' +
-    'Operated by The Networker Group Ltd (Company No. 15252227). Contact: hello@thenetworkerhub.com\n\n' +
+    'Operated by The Networker Group Ltd (Company No. 15252227). Contact: hello@thenetworkeruk.com\n\n' +
     '## Canonical URLs\n' +
     '- Home: ' +
     base +
@@ -500,7 +503,7 @@ function buildLlmsTxt(origin) {
     '\n\nFull page: ' +
     base +
     '/help/organiser-payouts\n\n' +
-    '### What fees does The Networker Hub charge on tickets?\n' +
+    '### What fees does The Networker UK charge on tickets?\n' +
     HELP_PAGES['pricing-fees'].llmsSummary +
     '\n\nFull page: ' +
     base +

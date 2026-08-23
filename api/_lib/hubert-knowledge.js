@@ -18,10 +18,10 @@ const KNOWLEDGE_SECTIONS = [
   {
     title: 'WHO WE ARE',
     body:
-      'The Networker Hub (www.thenetworkerhub.com; formerly the-networker.co.uk) is a UK platform connecting business owners and professionals with networking events, exhibitions, conferences, and business opportunities. ' +
+      'The Networker UK (www.thenetworkeruk.com; formerly the-networker.co.uk) is a UK platform connecting business owners and professionals with networking events, exhibitions, conferences, and business opportunities. ' +
       'Operated by The Networker Group Ltd (Company No. 15252227, VAT No. 454 4092 94). ' +
       'Co-founded and run by Rosie and Catherine. Mission: help people find the right room at the right time to grow their network and business. ' +
-      'Contact: hello@thenetworkerhub.com · Address: Magpas HQ, Barnwell Road, Alconbury Weald, Huntingdon, Cambridgeshire PE28 4YF.',
+      'Contact: hello@thenetworkeruk.com · Address: Magpas HQ, Barnwell Road, Alconbury Weald, Huntingdon, Cambridgeshire PE28 4YF.',
   },
   {
     title: 'TWO PILLARS',
@@ -33,7 +33,7 @@ const KNOWLEDGE_SECTIONS = [
     title: 'KEY PAGES',
     body:
       'Home / · Events /events/ · Opportunities /opportunities/ · List an opportunity /opportunities/list · ' +
-      'My Hub /account/ · For networkers /for-networkers · For organisers /for-organisers · Organiser workspace /organiser/ · Organiser guides /guides · ' +
+      'My account /account/ · For networkers /for-networkers · For organisers /for-organisers · Organiser workspace /organiser/ · Organiser guides /guides · ' +
       'Sign in /login · Register /register · FAQ /faq · Help: organiser payouts /help/organiser-payouts · ticket fees /help/pricing-fees · ' +
       'About /about · Contact /contact (chat with Hubert) · Advertising /advertising · Legal /legal-policies · Organiser profiles /organisers/{slug}.',
   },
@@ -43,7 +43,7 @@ const KNOWLEDGE_SECTIONS = [
       'Browsing is completely free — no sign-in needed to explore events and business opportunities. ' +
       'A free account is required only when you want to: buy a ticket or send a business opportunity enquiry. Sign-up takes about 2 minutes at /register. ' +
       'Sign in at /login. Forgot password? Use the password reset link on the sign-in page. You must be 18+ to create an account. ' +
-      'With an account you can save event and opportunity favourites, follow organisers (saving an event also saves its organiser), get email alerts when tickets go on sale for saved events, receive booking reminders before events you booked, generate "I\'m going" share cards after booking, set up saved opportunity search alerts in My Hub (/account/), manage tickets and track opportunity enquiries, and leave reviews after events you attended. Add your company and job title in account settings — they appear on printable name badges when organisers export them.',
+      'With an account you can save event and opportunity favourites, follow organisers (saving an event also saves its organiser), get email alerts when tickets go on sale for saved events, receive booking reminders before events you booked, generate "I\'m going" share cards after booking, set up saved opportunity search alerts in My account (/account/), manage tickets and track opportunity enquiries, and leave reviews after events you attended. Add your company and job title in account settings — they appear on printable name badges when organisers export them.',
   },
   {
     title: 'EVENTS & TICKETING',
@@ -61,22 +61,22 @@ const KNOWLEDGE_SECTIONS = [
       'Refund rules depend on the organiser and what was shown at booking — /legal-policies#refunds. ' +
       'To cancel: contact the organiser first via the event page. Free events can often be cancelled from /account/ or via the organiser. ' +
       'If the organiser cancels the event: you are entitled to a full refund of the ticket price (including mandatory fees shown at checkout), typically within 14 days via Stripe. ' +
-      'If unresolved, email hello@thenetworkerhub.com with your booking reference. Failed checkout payments are not charged — retry checkout or email hello@ if charged in error.',
+      'If unresolved, email hello@thenetworkeruk.com with your booking reference. Failed checkout payments are not charged — retry checkout or email hello@ if charged in error.',
   },
   {
     title: 'BUSINESS OPPORTUNITIES',
     body:
       'Browse free at /opportunities/. Types: franchise, side hustle, partnership, distributorship, networking/referral. Not FCA-regulated; not investment advice; due diligence is your responsibility. ' +
       'To enquire: free account → open listing → send enquiry from the page. ' +
-      'SAVE & ALERTS: signed-in members can heart-save listings in My Hub → Saved Opportunities, get email when a saved listing is closing soon, and save search criteria for email alerts when new matching listings publish. Compare up to 3 saved opportunities side by side. ' +
+      'SAVE & ALERTS: signed-in members can heart-save listings in My account → Saved Opportunities, get email when a saved listing is closing soon, and save search criteria for email alerts when new matching listings publish. Compare up to 3 saved opportunities side by side. ' +
       'To list an opportunity as an organiser: /opportunities/list or /organiser/.',
   },
   {
     title: 'ORGANISERS',
     body:
       'Approved organisers use /organiser/ to create events, sell tickets via Stripe, manage attendees, export registrations, list opportunities, and invite team members. Stripe Connect onboarding under Revenue is required before publishing paid tickets. ' +
-      'CLAIM YOUR PAGE: many UK networking groups already have a directory page from the legacy Networker site. Browse organisers on /events/, sign in with the email linked to your group — when it matches, a claim prompt appears on Overview automatically — guide at /guides/claim-your-organiser-page. Email changed or no prompt? Find your group on /events/ (organisers tab) and use Request access on its profile page, or email hello@thenetworkerhub.com with your group name and current contact email. New groups without a listing: email hello@thenetworkerhub.com with your group name, format, and location. Organiser terms: /legal-policies#organisers. Hub rules (plain-English standards for organisers): /legal-policies#hub-rules. ' +
-      'EVENT NOT ON BROWSE PAGE? Public browse only shows events that are Published (not Draft), Approved, and linked to a published organiser profile. Finish the publish flow in /organiser/ (tickets, refund policy, publish). If it still does not appear, email hello@thenetworkerhub.com with the event title. ' +
+      'CLAIM YOUR PAGE: many UK networking groups already have a directory page from the legacy Networker site. Browse organisers on /events/, sign in with the email linked to your group — when it matches, a claim prompt appears on Overview automatically — guide at /guides/claim-your-organiser-page. Email changed or no prompt? Find your group on /events/ (organisers tab) and use Request access on its profile page, or email hello@thenetworkeruk.com with your group name and current contact email. New groups without a listing: email hello@thenetworkeruk.com with your group name, format, and location. Organiser terms: /legal-policies#organisers. Hub rules (plain-English standards for organisers): /legal-policies#hub-rules. ' +
+      'EVENT NOT ON BROWSE PAGE? Public browse only shows events that are Published (not Draft), Approved, and linked to a published organiser profile. Finish the publish flow in /organiser/ (tickets, refund policy, publish). If it still does not appear, email hello@thenetworkeruk.com with the event title. ' +
       'DOWNLOAD ATTENDEES: Sign in → /organiser/ → Events → Attendees. Filter by event, then use Download attendees CSV. Export printable name badges (PDF for standard or large A4 sticker sheets) from the same screen — badges use each guest’s name, company, and job title from their Hub account when set. ' +
       'PAYOUTS: With Stripe Connect (standard), ticket revenue goes to your connected Stripe account when attendees pay — open Stripe Express from Revenue for balance, refunds, and bank payouts. Events archive automatically after they end. Legacy manual Hub payouts (if Connect is off): 7-day settlement after the event, then request payout from Revenue when net amount is above £1. Minimum payout £1. Full guide: /help/organiser-payouts. ' +
       'FEES: Attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before they pay). This covers platform and payment processing — organisers receive the full ticket price, with no separate platform or Stripe deductions. Worked examples: /help/pricing-fees.',
@@ -107,8 +107,8 @@ const KNOWLEDGE_SECTIONS = [
       'SETUP: open your organiser page → Member list (or group-edit → Manage member list). Add members one by one or import CSV (columns: email required, name, expires or membership expiry). Optionally send invite emails — new Hub users get a sign-up invite; existing Hub members get a welcome email with the group’s next meeting. ' +
       'When you publish a new Approved event, people on the member list are queued for a daily digest email (Members only rates apply when they sign in with that email). ' +
       'REPORTS on the member list page: membership health (active, signed up vs not yet, expiring soon), booked vs not booked for a selected upcoming event, new vs returning among your uploaded members only, members who missed recent meetings, memberships expiring within 14 days. Reports never include non-members who booked the event — use Attendees for full event lists. Download members CSV or an event report CSV. Email booking reminders to members who have not booked; members are also auto-emailed when you publish Approved events. ' +
-      'MEMBERS: when added, they see the group under My Hub → My memberships (/account/#memberships). Sign in with the membership email to book member-only tickets. ' +
-      'RENEWALS: organisers can collect monthly or annual membership dues through the Hub (Stripe Connect) — members pay the published price plus a booking fee (4.5% + 20p, same as tickets); the group receives 100% of the membership price. Members join from the organiser page or renew/manage from My Hub → Memberships (update card or cancel via Stripe Customer Portal). Organisers can also Invite to pay from the member list, and can still renew people off-platform by updating expiry dates. ' +
+      'MEMBERS: when added, they see the group under My account → My memberships (/account/#memberships). Sign in with the membership email to book member-only tickets. ' +
+      'RENEWALS: organisers can collect monthly or annual membership dues through the Hub (Stripe Connect) — members pay the published price plus a booking fee (4.5% + 20p, same as tickets); the group receives 100% of the membership price. Members join from the organiser page or renew/manage from My account → Memberships (update card or cancel via Stripe Customer Portal). Organisers can also Invite to pay from the member list, and can still renew people off-platform by updating expiry dates. ' +
       'TICKETS: on event-tickets.html, add a Members only ticket tier — access is enforced via the member list.',
   },
   {
@@ -128,21 +128,21 @@ const KNOWLEDGE_SECTIONS = [
   {
     title: 'TEAM & STORY',
     body:
-      'Co-founders Rosie and Catherine built The Networker Hub to connect UK business owners and professionals with the right events, communities, and opportunities. Both are listed as Co-founders on /about. ' +
+      'Co-founders Rosie and Catherine built The Networker UK to connect UK business owners and professionals with the right events, communities, and opportunities. Both are listed as Co-founders on /about. ' +
       'Why it started: the mission is that the right room at the right time changes careers and companies — one trusted place for event listings, organiser profiles, and business opportunities. ' +
-      'For specific questions about the team beyond what is on /about, email hello@thenetworkerhub.com.',
+      'For specific questions about the team beyond what is on /about, email hello@thenetworkeruk.com.',
   },
   {
     title: 'ADVERTISING & SPONSORSHIP',
     body:
-      'Paid hero sponsor placements appear on event and opportunity pages — labelled Powered by on browse pages and clearly labelled Sponsored elsewhere. Rate card at /advertising (events main sponsor £2,000/mo, mini sponsors £600/slot ×3, featured events £55 one-time; organisers main sponsor £1,000/mo, mini £300/slot ×3, featured profiles £27.50 one-time; opportunities main sponsor £2,000/mo, mini £600/slot ×3, listings £25/mo + VAT, premium spotlight £55 one-time; City Partner from £29/mo per city + VAT, £75 for 3 cities). Most sponsorship packages offer monthly billing or prepaid 1 / 3 / 6 / 12 months (save 5% / 10% / 15% on longer prepaid terms). Enquiries: rosie@thenetworkerhub.com. Policy: /legal-policies#advertising. ' +
-      'Organisers can also reach audiences by listing events (/organiser/) or business opportunities (/opportunities/list). Featured placement may be available — ask rosie@thenetworkerhub.com.',
+      'Paid hero sponsor placements appear on event and opportunity pages — labelled Powered by on browse pages and clearly labelled Sponsored elsewhere. Rate card at /advertising (events main sponsor £2,000/mo, mini sponsors £600/slot ×3, featured events £55 one-time; organisers main sponsor £1,000/mo, mini £300/slot ×3, featured profiles £27.50 one-time; opportunities main sponsor £2,000/mo, mini £600/slot ×3, listings £25/mo + VAT, premium spotlight £55 one-time; City Partner from £29/mo per city + VAT, £75 for 3 cities). Most sponsorship packages offer monthly billing or prepaid 1 / 3 / 6 / 12 months (save 5% / 10% / 15% on longer prepaid terms). Enquiries: rosie@thenetworkeruk.com. Policy: /legal-policies#advertising. ' +
+      'Organisers can also reach audiences by listing events (/organiser/) or business opportunities (/opportunities/list). Featured placement may be available — ask rosie@thenetworkeruk.com.',
   },
   {
     title: 'REVIEWS & ORGANISER PROFILES',
     body:
       'Leave reviews after attending — sign in and use the review option on the event page. Top networking groups earn ranking badges from attendee feedback. ' +
-      'Organiser profiles at /organisers/{slug} show who runs a networking community and their events. Follow an organiser from their profile or by saving one of their events — they appear under My Hub → Saved organisers, and you get alerts when they publish new listings. ' +
+      'Organiser profiles at /organisers/{slug} show who runs a networking community and their events. Follow an organiser from their profile or by saving one of their events — they appear under My account → Saved organisers, and you get alerts when they publish new listings. ' +
       'Report a listing: use Report listing on an event, organiser, or opportunity page if something looks wrong — our team reviews reports.',
   },
   {
@@ -161,10 +161,10 @@ const SYSTEM_PROMPT =
   ASSISTANT_NAME +
   ', the ' +
   ASSISTANT_ROLE +
-  ' for The Networker Hub — polished, discreet, and quietly proactive. ' +
+  ' for The Networker UK — polished, discreet, and quietly proactive. ' +
   'Introduce yourself as ' +
   ASSISTANT_NAME +
-  ', at your service on The Networker Hub, when asked who you are. ' +
+  ', at your service on The Networker UK, when asked who you are. ' +
   'Anticipate what they need next, offer clear recommendations, and guide them to the right page or listing without being pushy. ' +
   'When someone is ready to act (book, enquire, register), mention that a free account takes about two minutes at /register. ' +
   KNOWLEDGE_BASE +
@@ -176,34 +176,34 @@ const SYSTEM_PROMPT =
   'LIMITS: Never invent event dates, prices, venues, opportunity details, refund outcomes, or policies. If you lack specifics, say so honestly — "I\'m afraid I don\'t have that detail to hand." ' +
   'When a LIVE EVENT LOOKUP block is provided, answer event-finding questions using only those listings and include the full URL link shown for each event. ' +
   'When a LIVE OPPORTUNITY LOOKUP block is provided, answer opportunity questions using only those listings and include the full URL link shown for each listing. ' +
-  'For account-specific issues you cannot resolve, direct people politely to hello@thenetworkerhub.com or /faq.';
+  'For account-specific issues you cannot resolve, direct people politely to hello@thenetworkeruk.com or /faq.';
 
 /** Most specific patterns first — order matters. */
 const FALLBACK_REPLIES = [
   {
     match: /event.*(not show|doesn.?t show|isn.?t show|missing|not appear|not on browse)|added my event|publish.*not|why.*(on|in) browse/i,
     reply:
-      'Browse events only lists items that are Published (not Draft), Approved, and tied to a published organiser profile. In /organiser/, open your event, complete tickets and your refund policy, then publish. New listings may need hub approval. Still missing? Email hello@thenetworkerhub.com with the event title and your organiser account email.',
+      'Browse events only lists items that are Published (not Draft), Approved, and tied to a published organiser profile. In /organiser/, open your event, complete tickets and your refund policy, then publish. New listings may need hub approval. Still missing? Email hello@thenetworkeruk.com with the event title and your organiser account email.',
   },
   {
     match: /advertis|sponsor|promote my business|marketing on (the )?site|get exposure|city partner|city sponsor/i,
     reply:
-      'For paid advertising, see /advertising — events main sponsor £2,000/mo, mini sponsors £600/slot (max 3), featured events £55 one-time; organisers directory main sponsor £1,000/mo, mini £300/slot (max 3), featured profiles £27.50 one-time; opportunities main sponsor £2,000/mo, mini £600/slot (max 3), listings £25/mo + VAT, premium spotlight £55 one-time; City Partner from £29/mo per city + VAT (£75 for 3 cities). Most packages: monthly or prepaid 1 / 3 / 6 / 12 months (save up to 15% yearly). Email rosie@thenetworkerhub.com. You can also list events from /organiser/ or a business opportunity at /opportunities/list. Policy: /legal-policies#advertising.',
+      'For paid advertising, see /advertising — events main sponsor £2,000/mo, mini sponsors £600/slot (max 3), featured events £55 one-time; organisers directory main sponsor £1,000/mo, mini £300/slot (max 3), featured profiles £27.50 one-time; opportunities main sponsor £2,000/mo, mini £600/slot (max 3), listings £25/mo + VAT, premium spotlight £55 one-time; City Partner from £29/mo per city + VAT (£75 for 3 cities). Most packages: monthly or prepaid 1 / 3 / 6 / 12 months (save up to 15% yearly). Email rosie@thenetworkeruk.com. You can also list events from /organiser/ or a business opportunity at /opportunities/list. Policy: /legal-policies#advertising.',
   },
   {
     match: /what does rosie do|who is rosie|rosie('s)? role/i,
     reply:
-      'Rosie is co-founder of The Networker Hub alongside Catherine. Together they built the platform to connect UK business owners and professionals with events, communities, and opportunities. More on /about — for specific enquiries, hello@thenetworkerhub.com.',
+      'Rosie is co-founder of The Networker UK alongside Catherine. Together they built the platform to connect UK business owners and professionals with events, communities, and opportunities. More on /about — for specific enquiries, hello@thenetworkeruk.com.',
   },
   {
     match: /who is catherine|catherine.*co-founder|what does catherine do/i,
     reply:
-      'Catherine is co-founder of The Networker Hub alongside Rosie. Together they run The Networker Group Ltd and built the hub as a trusted place to discover networking events and business opportunities across the UK. More on /about.',
+      'Catherine is co-founder of The Networker UK alongside Rosie. Together they run The Networker Group Ltd and built the hub as a trusted place to discover networking events and business opportunities across the UK. More on /about.',
   },
   {
     match: /why.*(start|created|built)|how did (the )?hub start|origin of|story behind/i,
     reply:
-      'The Networker Hub started from a simple belief: the right room at the right time changes careers and companies. Rosie and Catherine built one trusted UK platform for event listings, organiser profiles, and business opportunities — so members can find what matters and organisers can reach the audiences they deserve. /about',
+      'The Networker UK started from a simple belief: the right room at the right time changes careers and companies. Rosie and Catherine built one trusted UK platform for event listings, organiser profiles, and business opportunities — so members can find what matters and organisers can reach the audiences they deserve. /about',
   },
   {
     match: /how much.*(hub|networker|platform).*(make|take|fee|charge|per ticket)|platform fee|booking fee|what do you charge/i,
@@ -223,42 +223,42 @@ const FALLBACK_REPLIES = [
   {
     match: /what is hubert|who is hubert|tell me about hubert/i,
     reply:
-      "Good afternoon — I'm Hubert, your host and concierge at The Networker Hub. I'm at your service for events, business opportunities, tickets, enquiries, and organiser tools. You'll find me on the contact page and via the chat button on public pages.",
+      "Good afternoon — I'm Hubert, your host and concierge at The Networker UK. I'm at your service for events, business opportunities, tickets, enquiries, and organiser tools. You'll find me on the contact page and via the chat button on public pages.",
   },
   {
     match: /confirmation email|booking email|didn.?t receive|didn't receive|no confirmation|email.*ticket/i,
     reply:
-      'Booking confirmations are sent by email after successful checkout. Please check your spam or junk folder and that your account email is correct in /account/. Your tickets also appear in My Hub (/account/). Still missing? Email hello@thenetworkerhub.com with the event name and the email address you used.',
+      'Booking confirmations are sent by email after successful checkout. Please check your spam or junk folder and that your account email is correct in /account/. Your tickets also appear in My account (/account/). Still missing? Email hello@thenetworkeruk.com with the event name and the email address you used.',
   },
   {
     match: /forgot.*password|reset.*password|password reset/i,
     reply:
-      'Use the password reset link on the sign-in page at /login — enter your email and follow the instructions. If you are still stuck, email hello@thenetworkerhub.com from the address on your account.',
+      'Use the password reset link on the sign-in page at /login — enter your email and follow the instructions. If you are still stuck, email hello@thenetworkeruk.com from the address on your account.',
   },
   {
     match: /transfer.*ticket|give.*ticket|ticket.*colleague|ticket.*someone else/i,
     reply:
-      'Tickets are generally non-transferable without the organiser\'s consent. Contact the organiser via the event listing page to ask if a transfer is possible. For booking changes, email hello@thenetworkerhub.com with your order reference if you need help reaching them.',
+      'Tickets are generally non-transferable without the organiser\'s consent. Contact the organiser via the event listing page to ask if a transfer is possible. For booking changes, email hello@thenetworkeruk.com with your order reference if you need help reaching them.',
   },
   {
     match: /organiser cancel|event cancel|cancelled.*event|event.*cancelled/i,
     reply:
-      'If an organiser cancels an event, you should receive a full refund of the ticket price you paid (including any mandatory booking fees shown at checkout), typically within 14 days to your original payment method via Stripe. If you have not heard anything, email hello@thenetworkerhub.com with your booking reference.',
+      'If an organiser cancels an event, you should receive a full refund of the ticket price you paid (including any mandatory booking fees shown at checkout), typically within 14 days to your original payment method via Stripe. If you have not heard anything, email hello@thenetworkeruk.com with your booking reference.',
   },
   {
     match: /payment failed|failed payment|stripe.*fail|checkout.*fail|card.*declin/i,
     reply:
-      'If checkout failed, your card should not have been charged — you can try again from the event page. Check your card details and try a different payment method if needed. If you believe you were charged without a confirmation, email hello@thenetworkerhub.com with the event name and time of the attempt.',
+      'If checkout failed, your card should not have been charged — you can try again from the event page. Check your card details and try a different payment method if needed. If you believe you were charged without a confirmation, email hello@thenetworkeruk.com with the event name and time of the attempt.',
   },
   {
     match: /cancel.*(book|ticket|registration)|cancel my (book|ticket)/i,
     reply:
-      'Cancellation rules depend on the organiser and what was shown when you booked — see /legal-policies#refunds. Contact the organiser first via the event page. For free events, you may be able to cancel from My Hub (/account/). If you need help, email hello@thenetworkerhub.com with your booking reference.',
+      'Cancellation rules depend on the organiser and what was shown when you booked — see /legal-policies#refunds. Contact the organiser first via the event page. For free events, you may be able to cancel from My account (/account/). If you need help, email hello@thenetworkeruk.com with your booking reference.',
   },
   {
     match: /refund|chargeback|cooling.?off/i,
     reply:
-      'Refund rules depend on the organiser and what was shown when you booked — see /legal-policies#refunds. Contact the organiser first via the event page. If an event was cancelled by the organiser, you should receive a full refund via Stripe. For help, email hello@thenetworkerhub.com with your booking reference.',
+      'Refund rules depend on the organiser and what was shown when you booked — see /legal-policies#refunds. Contact the organiser first via the event page. If an event was cancelled by the organiser, you should receive a full refund via Stripe. For help, email hello@thenetworkeruk.com with your booking reference.',
   },
   {
     match: /list.*(franchise|opportunit)|publish.*opportunit|post.*opportunit|sell.*franchise/i,
@@ -268,7 +268,7 @@ const FALLBACK_REPLIES = [
   {
     match: /why (list|use|choose).*(hub|networker)|why should i list|benefits of listing/i,
     reply:
-      'The Networker Hub is built for UK business networking. You get a permanent organiser profile, events in a directory members use to find networking meetings, optional business opportunity listings, team editors, and reviews. Networking-specific tools include Free trial visits (1–3 free visits before paid member tickets), visit tracking on your attendee list (1st visit vs returning, with filters and CSV export), Category Exclusivity for application-based events, and Previous Attendees to invite past attendees to exclusive returning rates on repeat events. You receive the full ticket price; attendees pay one booking fee (4.5% + 20p per ticket) at checkout. Free events need no Stripe. Guides: /guides · Organisers: /for-organisers',
+      'The Networker UK is built for UK business networking. You get a permanent organiser profile, events in a directory members use to find networking meetings, optional business opportunity listings, team editors, and reviews. Networking-specific tools include Free trial visits (1–3 free visits before paid member tickets), visit tracking on your attendee list (1st visit vs returning, with filters and CSV export), Category Exclusivity for application-based events, and Previous Attendees to invite past attendees to exclusive returning rates on repeat events. You receive the full ticket price; attendees pay one booking fee (4.5% + 20p per ticket) at checkout. Free events need no Stripe. Guides: /guides · Organisers: /for-organisers',
   },
   {
     match: /(paid|member).*(ticket|tier).*(guest visit|complimentary visit|guest programme|free trial visit)|(guest visit|complimentary visit|guest programme|free trial visit).*(paid|member).*(ticket|tier)/i,
@@ -288,17 +288,17 @@ const FALLBACK_REPLIES = [
   {
     match: /already use|eventbrite|meetup|other platform|alongside|as well as|in addition to/i,
     reply:
-      'Yes — you can list on The Networker Hub alongside other event platforms. There is no exclusivity requirement. Many organisers use the hub to reach members browsing specifically for UK networking events and to build their organiser profile here. List the same events you run elsewhere if you like.',
+      'Yes — you can list on The Networker UK alongside other event platforms. There is no exclusivity requirement. Many organisers use the hub to reach members browsing specifically for UK networking events and to build their organiser profile here. List the same events you run elsewhere if you like.',
   },
   {
     match: /list.*(networking group|my group|our group)|become an organiser|onboard.*organiser/i,
     reply:
-      'Many UK networking groups already have a page on the hub. Browse organisers on /events/, sign in with the email linked to your group, and confirm the claim prompt on Overview — step-by-step guide at /guides/claim-your-organiser-page. Brand-new group not listed yet? Email hello@thenetworkerhub.com with your group name, typical format, and location. Once approved, use /organiser/ to create events and manage attendees.',
+      'Many UK networking groups already have a page on the hub. Browse organisers on /events/, sign in with the email linked to your group, and confirm the claim prompt on Overview — step-by-step guide at /guides/claim-your-organiser-page. Brand-new group not listed yet? Email hello@thenetworkeruk.com with your group name, typical format, and location. Once approved, use /organiser/ to create events and manage attendees.',
   },
   {
     match: /cost to list|how much.*list|fee.*list|price.*list.*event|listing fee/i,
     reply:
-      'There is no monthly subscription to list events. Use /organiser/ to publish free or paid events. For paid tickets, attendees pay one booking fee at checkout (4.5% + 20p per ticket) — you receive the full ticket price. Free events do not require Stripe. Email hello@thenetworkerhub.com for onboarding help.',
+      'There is no monthly subscription to list events. Use /organiser/ to publish free or paid events. For paid tickets, attendees pay one booking fee at checkout (4.5% + 20p per ticket) — you receive the full ticket price. Free events do not require Stripe. Email hello@thenetworkeruk.com for onboarding help.',
   },
   {
     match: /free (networking )?events?|events?.*free\b|no cost events?/i,
@@ -313,7 +313,7 @@ const FALLBACK_REPLIES = [
   {
     match: /claim.*(organiser|page|profile|group)|take over.*(page|profile|listing)|already listed|legacy networker|old networker site/i,
     reply:
-      'To claim your organiser page: browse organisers on /events/ and find your group → sign in at /login with the email linked to your group → confirm the claim prompt on Overview in /organiser/ (appears automatically when your email matches). Update your logo, description, and guest visit settings, then list your next event. Full guide: /guides/claim-your-organiser-page. No claim prompt? Your email may have changed — open your group\'s public profile and use Request access, or email hello@thenetworkerhub.com with your group name and current contact email.',
+      'To claim your organiser page: browse organisers on /events/ and find your group → sign in at /login with the email linked to your group → confirm the claim prompt on Overview in /organiser/ (appears automatically when your email matches). Update your logo, description, and guest visit settings, then list your next event. Full guide: /guides/claim-your-organiser-page. No claim prompt? Your email may have changed — open your group\'s public profile and use Request access, or email hello@thenetworkeruk.com with your group name and current contact email.',
   },
   {
     match: /invite.*team|team member|add.*editor|editor access|team & invites|remove.*team member/i,
@@ -323,7 +323,7 @@ const FALLBACK_REPLIES = [
   {
     match: /respond to.*enquir|reply to.*enquir|manage.*opportunity enquir|enquir.*as organiser|prospect enquir/i,
     reply:
-      'When someone enquires on your listing, you receive an email notification. Reply directly to the prospect and track enquiries under Business opportunities in /organiser/. Attendees can also view sent enquiries in My Hub (/account/).',
+      'When someone enquires on your listing, you receive an email notification. Reply directly to the prospect and track enquiries under Business opportunities in /organiser/. Attendees can also view sent enquiries in My account (/account/).',
   },
   {
     match: /what happens when i publish|after i publish|publish my event|how long.*approv|listing review|when will my event go live|event approval/i,
@@ -333,7 +333,7 @@ const FALLBACK_REPLIES = [
   {
     match: /venue step|event location step|where do i (set|add) the venue|online join link|postcode.*event/i,
     reply:
-      'On the location step, add your venue name and address for in-person events, or paste your online join link for webinars. The postcode helps attendees find you on the map. Attendees see the full venue or link after booking — online links also appear in My Hub (/account/).',
+      'On the location step, add your venue name and address for in-person events, or paste your online join link for webinars. The postcode helps attendees find you on the map. Attendees see the full venue or link after booking — online links also appear in My account (/account/).',
   },
   {
     match: /how do i find events|where (can|do) i (find|browse|search) events|discover events/i,
@@ -343,32 +343,32 @@ const FALLBACK_REPLIES = [
   {
     match: /ticket.*(alert|on sale|go on sale)|alert.*ticket|notify.*ticket|when tickets (open|go on sale)/i,
     reply:
-      'Save an event while signed in (heart icon on the listing). If tickets are not on sale yet, we email you when they open. You can also follow organisers — saving one of their events adds them under My Hub → Saved organisers, and you get alerts when they publish new listings.',
+      'Save an event while signed in (heart icon on the listing). If tickets are not on sale yet, we email you when they open. You can also follow organisers — saving one of their events adds them under My account → Saved organisers, and you get alerts when they publish new listings.',
   },
   {
     match: /follow.*organiser|save.*organiser|favourite organiser|favorite organiser|saved organiser/i,
     reply:
-      'Follow an organiser from their profile page, or save any of their events — the organiser is added under My Hub → Saved organisers. You will get email alerts when they publish new events. Browse organisers from /events/ (organisers tab).',
+      'Follow an organiser from their profile page, or save any of their events — the organiser is added under My account → Saved organisers. You will get email alerts when they publish new events. Browse organisers from /events/ (organisers tab).',
   },
   {
     match: /share card|i.?m going|linkedin.*(event|going|attending)|social.*(share|post).*event/i,
     reply:
-      'After you book, open My Hub (/account/) → your upcoming event → use the share option to generate an "I\'m going" card for LinkedIn or social media. Booking references and online meeting links are also in My Hub.',
+      'After you book, open My account (/account/) → your upcoming event → use the share option to generate an "I\'m going" card for LinkedIn or social media. Booking references and online meeting links are also in My account.',
   },
   {
     match: /booking reminder|remind me before|email before (the )?event|event reminder/i,
     reply:
-      'We send booking reminder emails before events you have booked — check your inbox (and spam folder). Your tickets and meeting links are always in My Hub (/account/).',
+      'We send booking reminder emails before events you have booked — check your inbox (and spam folder). Your tickets and meeting links are always in My account (/account/).',
   },
   {
     match: /track.*enquir|my enquir|opportunity enquir|enquiries i sent/i,
     reply:
-      'Sign in and open My Hub (/account/) → My opportunity enquiries to see enquiries you have sent and any replies from listers. Browse opportunities at /opportunities/.',
+      'Sign in and open My account (/account/) → My opportunity enquiries to see enquiries you have sent and any replies from listers. Browse opportunities at /opportunities/.',
   },
   {
     match: /report.*(listing|event|organiser|opportunit)|flag.*(listing|event|page|inappropriate)/i,
     reply:
-      'Use Report listing on the event, organiser profile, or opportunity page. Choose a reason and optional details — our team reviews reports. For urgent booking issues, email hello@thenetworkerhub.com with the listing name.',
+      'Use Report listing on the event, organiser profile, or opportunity page. Choose a reason and optional details — our team reviews reports. For urgent booking issues, email hello@thenetworkeruk.com with the listing name.',
   },
   {
     match: /connect stripe|stripe connect|stripe onboarding|set up (stripe|bank|payout)|bank details.*organiser/i,
@@ -388,42 +388,42 @@ const FALLBACK_REPLIES = [
   {
     match: /save an event|save events|saving events/i,
     reply:
-      'Create a free account at /register, then tap the heart on any event while browsing. Saved events appear in My Hub (/account/). If tickets are not on sale yet, we email you when they open. Saving an event also saves its organiser.',
+      'Create a free account at /register, then tap the heart on any event while browsing. Saved events appear in My account (/account/). If tickets are not on sale yet, we email you when they open. Saving an event also saves its organiser.',
   },
   {
     match: /who (runs|operates) (this |the )?(site|hub|platform)/i,
     reply:
-      'The Networker Hub is operated by The Networker Group Ltd (Company No. 15252227), co-founded by Rosie and Catherine. More at /about and /faq.',
+      'The Networker UK is operated by The Networker Group Ltd (Company No. 15252227), co-founded by Rosie and Catherine. More at /about and /faq.',
   },
   {
     match: /favourit|favorit/i,
     reply:
-      'Create a free account at /register, then save events and business opportunities to your favourites while browsing. Manage saved items in My Hub (/account/) — events under Saved events, opportunities under Saved Opportunities with optional closing-soon email alerts.',
+      'Create a free account at /register, then save events and business opportunities to your favourites while browsing. Manage saved items in My account (/account/) — events under Saved events, opportunities under Saved Opportunities with optional closing-soon email alerts.',
   },
   {
     match: /guest|add a name|book for someone/i,
     reply:
-      'Yes — when you buy a ticket you can add guest names at Stripe checkout. Those names are shared with the organiser to manage attendance. View your bookings in My Hub (/account/).',
+      'Yes — when you buy a ticket you can add guest names at Stripe checkout. Those names are shared with the organiser to manage attendance. View your bookings in My account (/account/).',
   },
   {
     match: /\bbook\b.*\bticket|\bticket\b.*\bbook|how do i book|buy a ticket|checkout|my tickets/i,
     reply:
-      'Browse events free at /events/. To buy a ticket: create a free account at /register (about 2 minutes), open an event, choose your ticket type, and complete secure Stripe checkout. Add guest names at checkout. View bookings in My Hub (/account/). Issues? Email hello@thenetworkerhub.com with your event name and order reference.',
+      'Browse events free at /events/. To buy a ticket: create a free account at /register (about 2 minutes), open an event, choose your ticket type, and complete secure Stripe checkout. Add guest names at checkout. View bookings in My account (/account/). Issues? Email hello@thenetworkeruk.com with your event name and order reference.',
   },
   {
     match: /save.*opportunit|opportunit.*favourit|heart.*opportunit|saved opportunit/i,
     reply:
-      'Sign in and tap the heart on any opportunity listing, or open My Hub (/account/) → Saved → Saved Opportunities. You can get an email when a saved listing is closing soon. Compare up to 3 saved opportunities side by side from My Hub.',
+      'Sign in and tap the heart on any opportunity listing, or open My account (/account/) → Saved → Saved Opportunities. You can get an email when a saved listing is closing soon. Compare up to 3 saved opportunities side by side from My account.',
   },
   {
     match: /saved search.*opportunit|opportunit.*saved search|alert.*new opportunit|notify.*new listing/i,
     reply:
-      'On /opportunities/, set your filters, then save the search while signed in. Matching new listings trigger email alerts in My Hub. Manage saved searches from /account/ under Saved.',
+      'On /opportunities/, set your filters, then save the search while signed in. Matching new listings trigger email alerts in My account. Manage saved searches from /account/ under Saved.',
   },
   {
     match: /compare.*opportunit|opportunit.*compare|side by side/i,
     reply:
-      'Save two or more opportunities to My Hub, then use Compare to view up to 3 listings side by side — useful for weighing franchise or partnership options.',
+      'Save two or more opportunities to My account, then use Compare to view up to 3 listings side by side — useful for weighing franchise or partnership options.',
   },
   {
     match: /opportunit|franchise|partnership|side[\s-]?hustle|distributorship|white.?label/i,
@@ -463,7 +463,7 @@ const FALLBACK_REPLIES = [
   {
     match: /remove.*(date|day)|delete.*(date|day)|get rid of.*(date|day)|accident.*(date|day)|extra date|wrong date|deselect.*(date|day)/i,
     reply:
-      'Click the highlighted date again on the calendar to deselect it — selected days show as highlighted and appear in the date list below. You need at least one date to continue to tickets. If you already saved and need to drop a date from a published series, open the listing from My Events — if ticket sales are locked, email hello@thenetworkerhub.com.',
+      'Click the highlighted date again on the calendar to deselect it — selected days show as highlighted and appear in the date list below. You need at least one date to continue to tickets. If you already saved and need to drop a date from a published series, open the listing from My Events — if ticket sales are locked, email hello@thenetworkeruk.com.',
   },
   {
     match: /same (name|title).*(different|another).*(time|location|venue|place)|different (time|location|venue).*(same name|same title)|several (session|event).*same name|multiple (event|session|listing).*(different time|different location|different venue)/i,
@@ -498,7 +498,7 @@ const FALLBACK_REPLIES = [
   {
     match: /added (me|to my).*member (list|roster)|on (a|the) member (list|roster)|member (lists|rosters) in my hub|why.*member (list|roster) email|group added me/i,
     reply:
-      'A networking group added your email to their member list so you can book member-only ticket rates. Sign in at /login with that exact email — the group appears under My Hub → My memberships (/account/#memberships). Open their event and you will see member tickets the public cannot.',
+      'A networking group added your email to their member list so you can book member-only ticket rates. Sign in at /login with that exact email — the group appears under My account → My memberships (/account/#memberships). Open their event and you will see member tickets the public cannot.',
   },
   {
     match: /import.*(member|list|roster).*csv|csv.*member (list|roster)|upload.*member list|bulk.*member (list|roster)|import.*(spreadsheet|excel).*member/i,
@@ -518,7 +518,7 @@ const FALLBACK_REPLIES = [
   {
     match: /membership expir|expiring membership|renew.*membership.*(list|roster)|(list|roster).*expir/i,
     reply:
-      'Optional expiry dates on /organiser/#memberships flag memberships expiring soon in your reports. Groups can also bill monthly or annual dues through the Hub — set prices on Memberships, then members pay from the public Join section or My Hub → Memberships. Use Invite to pay (or bulk invite) for renewals; failed card payments show as Payment failed on the list.',
+      'Optional expiry dates on /organiser/#memberships flag memberships expiring soon in your reports. Groups can also bill monthly or annual dues through the Hub — set prices on Memberships, then members pay from the public Join section or My account → Memberships. Use Invite to pay (or bulk invite) for renewals; failed card payments show as Payment failed on the list.',
   },
   {
     match: /access code|private ticket|members? only ticket|member (list|roster) ticket|hidden ticket/i,
@@ -603,7 +603,7 @@ const FALLBACK_REPLIES = [
   {
     match: /organiser|organizer|dashboard|sell ticket|stripe onboard|payout/i,
     reply:
-      'Sign in and open /organiser/ to create events, manage attendees, sell tickets, and list opportunities. Complete Stripe onboarding there for payouts. New groups: email hello@thenetworkerhub.com with your group name, format, and location.',
+      'Sign in and open /organiser/ to create events, manage attendees, sell tickets, and list opportunities. Complete Stripe onboarding there for payouts. New groups: email hello@thenetworkeruk.com with your group name, format, and location.',
   },
   {
     match: /account|register|sign up|create account|sign in|login/i,
@@ -618,12 +618,12 @@ const FALLBACK_REPLIES = [
   {
     match: /academy|training|workshop|webinar|masterclass|course/i,
     reply:
-      'The Networker Hub focuses on networking events and business opportunities. Browse events at /events/ or opportunities at /opportunities/. For seminars and learning-style meetups, filter the events directory by Seminar, Workshop or Masterclass.',
+      'The Networker UK focuses on networking events and business opportunities. Browse events at /events/ or opportunities at /opportunities/. For seminars and learning-style meetups, filter the events directory by Seminar, Workshop or Masterclass.',
   },
   {
     match: /review|rating/i,
     reply:
-      'Members can leave a review after each event they attend. After five event reviews they\'re recognised as a Top contributor in My Hub — that helps groups climb the monthly rankings. Sign in, visit My Hub or the group page, and follow the review option. Organisers can reply from their dashboard under Reviews — replies appear on the public group profile.',
+      'Members can leave a review after each event they attend. After five event reviews they\'re recognised as a Top contributor in My account — that helps groups climb the monthly rankings. Sign in, visit My account or the group page, and follow the review option. Organisers can reply from their dashboard under Reviews — replies appear on the public group profile.',
   },
   {
     match: /organiser profile|networking group profile|\/organisers\//i,
@@ -633,17 +633,17 @@ const FALLBACK_REPLIES = [
   {
     match: /privacy|cookie|gdpr|legal|terms|policy/i,
     reply:
-      'Privacy, terms, refunds, cookies, and organiser terms: /legal-policies. Cookie preferences: Cookie settings in the site footer. Questions: hello@thenetworkerhub.com.',
+      'Privacy, terms, refunds, cookies, and organiser terms: /legal-policies. Cookie preferences: Cookie settings in the site footer. Questions: hello@thenetworkeruk.com.',
   },
   {
     match: /what is (the )?networker|about (the )?hub/i,
     reply:
-      'The Networker Hub is a UK platform for networking events, exhibitions, and business opportunities — run by Rosie and Catherine at The Networker Group Ltd. Browse free; create a free account when you are ready to book or enquire. /about · /faq',
+      'The Networker UK is a UK platform for networking events, exhibitions, and business opportunities — run by Rosie and Catherine at The Networker Group Ltd. Browse free; create a free account when you are ready to book or enquire. /about · /faq',
   },
   {
     match: /contact|support|email|phone|address|where are you/i,
     reply:
-      'Email hello@thenetworkerhub.com. Address: Magpas HQ, Barnwell Road, Alconbury Weald, Huntingdon, Cambridgeshire PE28 4YF. For booking issues include your event name and order reference. Chat with me on /contact.',
+      'Email hello@thenetworkeruk.com. Address: Magpas HQ, Barnwell Road, Alconbury Weald, Huntingdon, Cambridgeshire PE28 4YF. For booking issues include your event name and order reference. Chat with me on /contact.',
   },
   {
     match: /is (this |the )?(site|hub) free|free to use/i,
@@ -749,13 +749,13 @@ function fallbackReply(latestUser) {
     return applyGentlemanTone(
       "Good afternoon. I'm " +
         ASSISTANT_NAME +
-        ", at your service on The Networker Hub. How may I assist you today — finding events or opportunities, booking tickets, or getting started as an organiser?"
+        ", at your service on The Networker UK. How may I assist you today — finding events or opportunities, booking tickets, or getting started as an organiser?"
     );
   }
   const matched = matchedFallbackReply(text);
   if (matched) return applyGentlemanTone(matched);
   return applyGentlemanTone(
-    "Thank you for your enquiry. I'm afraid I don't have quite enough detail to answer that precisely — do email hello@thenetworkerhub.com, or browse our FAQ at /faq. " +
+    "Thank you for your enquiry. I'm afraid I don't have quite enough detail to answer that precisely — do email hello@thenetworkeruk.com, or browse our FAQ at /faq. " +
       "Otherwise, ask me about events, business opportunities, tickets, accounts, or organiser tools and I'll do my best to help."
   );
 }

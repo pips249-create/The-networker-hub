@@ -90,7 +90,7 @@ async function createOrganiserClaimRequest(input) {
 
   const publicOrganiser = await getPublicOrganiserById(organiserId);
   const slug = publicOrganiser?.slug || '';
-  const siteUrl = String(process.env.SITE_URL || 'https://www.thenetworkerhub.com').replace(/\/$/, '');
+  const siteUrl = String(process.env.SITE_URL || 'https://www.thenetworkeruk.com').replace(/\/$/, '');
   const listingUrl = slug
     ? siteUrl + '/organisers/' + encodeURIComponent(slug)
     : siteUrl + '/events/organiser?id=' + encodeURIComponent(organiserId);
@@ -99,7 +99,7 @@ async function createOrganiserClaimRequest(input) {
 
   const subject = 'Organiser claim request — ' + organiserName;
   const html =
-    '<p>Someone has asked to <strong>claim and manage</strong> a public organiser profile on The Networker Hub.</p>' +
+    '<p>Someone has asked to <strong>claim and manage</strong> a public organiser profile on The Networker UK.</p>' +
     '<h3>Group profile</h3>' +
     '<ul>' +
     '<li><strong>Name:</strong> ' +
@@ -134,7 +134,7 @@ async function createOrganiserClaimRequest(input) {
     '<p><a href="' +
     escapeHtml(adminUrl) +
     '">Open group cleanup in Command Centre</a></p>' +
-    '<p>— The Networker Hub</p>';
+    '<p>— The Networker UK</p>';
 
   const emailResult = await sendViaResend({
     to,

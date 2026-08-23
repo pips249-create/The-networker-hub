@@ -38,7 +38,7 @@ const shell = (pageTitle, bodyRows) => `<!DOCTYPE html>
         <tr>
           <td class="mobile-header-pad" style="background:#f5f0e8;padding:28px 40px 0;text-align:center;">
             <a href="{{site_url}}/" style="text-decoration:none;display:inline-block;">
-              <img src="{{logo_url}}" alt="The Networker Hub" width="240" style="height:auto;display:inline-block;margin:0 auto;border:0;max-width:240px;width:100%;">
+              <img src="{{logo_url}}" alt="The Networker UK" width="240" style="height:auto;display:inline-block;margin:0 auto;border:0;max-width:240px;width:100%;">
             </a>
           </td>
         </tr>
@@ -55,7 +55,7 @@ const shell = (pageTitle, bodyRows) => `<!DOCTYPE html>
         <tr>
           <td class="mobile-pad" style="background:#1c2040;padding:28px 40px 40px;text-align:center;border-radius:0 0 20px 20px;">
             <a href="{{site_url}}/" style="text-decoration:none;display:inline-block;">
-              <img src="{{logo_footer_url}}" alt="The Networker Hub" width="200" style="height:auto;display:inline-block;margin:0 auto 16px;border:0;max-width:200px;">
+              <img src="{{logo_footer_url}}" alt="The Networker UK" width="200" style="height:auto;display:inline-block;margin:0 auto 16px;border:0;max-width:200px;">
             </a>
             <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:11px;font-weight:400;color:rgba(255,255,255,0.55);margin:0;">
               <a href="{{privacy_url}}" style="color:#4aa8f0;text-decoration:none;">Privacy</a>
@@ -146,7 +146,7 @@ const templates = [
     'Hi {{organiser_name}}, <strong style="color:#1c2040;">{{event_name}}</strong> has only <strong>{{tickets_remaining}}</strong> places left ({{tickets_sold}} sold).') +
     ctaRow(btn('{{dashboard_url}}', 'Manage attendees &rarr;', '#1c2040'))],
   ['attendee-reengagement.html', 'Events for you', hero('&#128075;', '#ebe0f0', '#9a7aa8', 'We miss you', '#9a7aa8', 'Ready to network again?',
-    'Hi {{user_name}}, it has been a while since your last booking on The Networker Hub. Here are some popular organisers and upcoming events you might like.') +
+    'Hi {{user_name}}, it has been a while since your last booking on The Networker UK. Here are some popular organisers and upcoming events you might like.') +
     cardBlock('{{recommendations_html}}') +
     ctaRow(btn('{{browse_events_url}}', 'Browse all events &rarr;', '#1c2040'))],
   ['organiser-low-upcoming-events.html', 'Add more events', hero('&#128197;', '#daeeff', '#4aa8f0', 'Your calendar', '#4aa8f0', 'Only {{upcoming_count}} events left on your calendar',

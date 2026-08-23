@@ -9,7 +9,7 @@ const { enforceRateLimit } = require('./_lib/rate-limit');
 const { useSupabase } = require('./_lib/supabase');
 const { recordSponsorClick } = require('./_lib/sponsor-clicks');
 
-const FALLBACK = 'https://www.thenetworkerhub.com/advertising';
+const FALLBACK = 'https://www.thenetworkeruk.com/advertising';
 
 function safeDest(raw) {
   const url = String(raw || '').trim();

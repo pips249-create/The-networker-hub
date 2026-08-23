@@ -25,7 +25,7 @@ const { isPublicOrganiser } = require('../api/_lib/supabase-organisers-browse');
 const { publicOrganiserSlug } = require('../api/_lib/organiser-slug');
 const { buildEmail2SponsorRowHtml } = require('../api/_lib/email2-sponsor');
 
-const SITE = 'https://www.thenetworkerhub.com';
+const SITE = 'https://www.thenetworkeruk.com';
 const LEGACY = 'https://the-networker.co.uk';
 
 /** Email 2 uses My Medical Cover — Barnsgate declined sponsorship. */
@@ -43,9 +43,9 @@ const { isExcludedLaunchOrganiser } = require('./launch-excluded-organisers');
 
 const SKIP_EMAILS = new Set([
   'pips249@gmail.com',
-  'hello@thenetworkerhub.com',
-  'catherine@thenetworkerhub.com',
-  'rosie@thenetworkerhub.com',
+  'hello@thenetworkeruk.com',
+  'catherine@thenetworkeruk.com',
+  'rosie@thenetworkeruk.com',
 ]);
 
 function isInternalTest(name, email) {
@@ -159,13 +159,13 @@ function fillTemplate(template, vars) {
   const shared = {
     site_url: SITE,
     legacy_site_url: LEGACY,
-    logo_url: SITE + '/assets/logo-nav-transparent.png?v=20260729a',
-    logo_footer_url: SITE + '/assets/logo-email-footer.png',
+    logo_url: SITE + '/assets/logo-nav-transparent.png?v=20260823ukpng',
+    logo_footer_url: SITE + '/assets/logo-nav-transparent.png?v=20260823ukpng',
     for_organisers_url: SITE + '/for-organisers',
     claim_url: previewClaim,
     company_name: 'The Networker Group Ltd',
     company_number: '15252227',
-    support_email: 'catherine@thenetworkerhub.com',
+    support_email: 'catherine@thenetworkeruk.com',
     privacy_url: SITE + '/legal-policies#privacy',
     terms_url: SITE + '/legal-policies#terms',
     refunds_url: SITE + '/legal-policies#refunds',

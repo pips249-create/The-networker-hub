@@ -103,7 +103,7 @@
   function eventPageUrl(ev) {
     const origin = (global.location && global.location.origin
       ? global.location.origin
-      : 'https://www.thenetworkerhub.com'
+      : 'https://www.thenetworkeruk.com'
     ).replace(/\/$/, '');
     const slug = ev && ev.slug ? String(ev.slug).trim() : '';
     if (slug && slug !== 'event' && slug !== 'event.html') {
@@ -145,7 +145,7 @@
       icsContent: [
         'BEGIN:VCALENDAR',
         'VERSION:2.0',
-        'PRODID:-//The Networker Hub//EN',
+        'PRODID:-//The Networker UK//EN',
         'BEGIN:VEVENT',
         'UID:' + ((ev && ev.id) || 'event') + '@thenetworkerhub',
         'DTSTAMP:' + formatIcsDate(new Date()),
@@ -167,8 +167,8 @@
     const count = Math.max(1, parseInt(qty, 10) || 1);
     const goingText =
       count > 1
-        ? "We're going to " + title + ' on The Networker Hub!'
-        : "I'm going to " + title + ' on The Networker Hub!';
+        ? "We're going to " + title + ' on The Networker UK!'
+        : "I'm going to " + title + ' on The Networker UK!';
 
     return {
       url: url,

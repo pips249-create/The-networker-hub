@@ -1,4 +1,4 @@
-# How Stripe, tickets, and events work on The Networker Hub
+# How Stripe, tickets, and events work on The Networker UK
 
 A plain-language guide for organisers and admins.
 
@@ -66,7 +66,7 @@ If you still use Payment Link fallback (no `STRIPE_SECRET_KEY`), each paid event
 1. Branded **booking confirmed** page on the hub
 2. **Add to calendar** (Google, Outlook, .ics)
 3. **Share** on LinkedIn, Facebook, X, WhatsApp
-4. Ticket(s) on **My Hub** (`/account/`)
+4. Ticket(s) on **My account** (`/account/`)
 5. Confirmation email (when Resend is configured)
 
 ---

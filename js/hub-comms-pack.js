@@ -80,7 +80,7 @@
             "We're hosting a networking meetup — come and meet local business owners.\n\n📅 " +
             title +
             metaBlock +
-            '\n\nFree to attend — save your place on The Networker Hub:\n' +
+            '\n\nFree to attend — save your place on The Networker UK:\n' +
             url,
         });
         variants.push({
@@ -90,7 +90,7 @@
             'Looking for a friendly room of business owners to connect with?\n\n📅 ' +
             title +
             metaBlock +
-            '\n\nIt is free to join — register on The Networker Hub:\n' +
+            '\n\nIt is free to join — register on The Networker UK:\n' +
             url,
         });
       } else {
@@ -101,7 +101,7 @@
             'Our next networking meetup is open for booking.\n\n📅 ' +
             title +
             metaBlock +
-            '\n\nGet your ticket on The Networker Hub:\n' +
+            '\n\nGet your ticket on The Networker UK:\n' +
             url,
         });
         variants.push({
@@ -111,7 +111,7 @@
             '📅 ' +
             title +
             metaBlock +
-            '\n\nBook your place on The Networker Hub:\n' +
+            '\n\nBook your place on The Networker UK:\n' +
             url,
         });
       }
@@ -124,7 +124,7 @@
           title +
           ' — a chance to connect with peers in your industry.' +
           metaBlock +
-          '\n\nRegister free on The Networker Hub:\n' +
+          '\n\nRegister free on The Networker UK:\n' +
           url,
       });
       variants.push({
@@ -134,7 +134,7 @@
           "We've just opened registration for:\n\n📅 " +
           title +
           metaBlock +
-          '\n\nFree entry — save your place on The Networker Hub:\n' +
+          '\n\nFree entry — save your place on The Networker UK:\n' +
           url,
       });
     } else {
@@ -146,7 +146,7 @@
           title +
           '.' +
           metaBlock +
-          '\n\nBook on The Networker Hub:\n' +
+          '\n\nBook on The Networker UK:\n' +
           url,
       });
       variants.push({
@@ -156,7 +156,7 @@
           "We've just added a new event:\n\n📅 " +
           title +
           metaBlock +
-          '\n\nGet your ticket on The Networker Hub:\n' +
+          '\n\nGet your ticket on The Networker UK:\n' +
           url,
       });
     }
@@ -199,7 +199,7 @@
       title +
       (host ? ' — ' + host : '') +
       (description ? '\n\n' + description : '') +
-      '\n\nBrowse and enquire on The Networker Hub:\n' +
+      '\n\nBrowse and enquire on The Networker UK:\n' +
       url;
     return { title: title, url: url, caption: caption };
   }

@@ -7,20 +7,44 @@
   "redirects": [
     {
       "source": "/:path*",
+      "has": [{ "type": "host", "value": "thenetworkeruk.com" }],
+      "destination": "https://www.thenetworkeruk.com/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "thenetworkerinternational.com" }],
+      "destination": "https://www.thenetworkerinternational.com/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "www.thenetworkerinternational.com" }],
+      "destination": "https://www.thenetworkerinternational.com/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
       "has": [{ "type": "host", "value": "thenetworkerhub.co.uk" }],
-      "destination": "https://www.thenetworkerhub.com/:path*",
+      "destination": "https://www.thenetworkeruk.com/:path*",
       "permanent": true
     },
     {
       "source": "/:path*",
       "has": [{ "type": "host", "value": "www.thenetworkerhub.co.uk" }],
-      "destination": "https://www.thenetworkerhub.com/:path*",
+      "destination": "https://www.thenetworkeruk.com/:path*",
       "permanent": true
     },
     {
       "source": "/:path*",
       "has": [{ "type": "host", "value": "thenetworkerhub.com" }],
-      "destination": "https://www.thenetworkerhub.com/:path*",
+      "destination": "https://www.thenetworkeruk.com/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "www.thenetworkerhub.com" }],
+      "destination": "https://www.thenetworkeruk.com/:path*",
       "permanent": true
     },
     { "source": "/index.html", "destination": "/", "permanent": true },

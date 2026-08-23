@@ -10,7 +10,7 @@
       /\/$/,
       ''
     );
-    return origin || 'https://www.thenetworkerhub.com';
+    return origin || 'https://www.thenetworkeruk.com';
   }
 
   function hubLogoUrl() {
@@ -43,7 +43,7 @@
       'Looking forward to connecting with local businesses at ' +
       title +
       datePart +
-      '! Joining via @The Networker Hub — anyone else from my network going?'
+      '! Joining via @The Networker UK — anyone else from my network going?'
     );
   }
 
@@ -344,12 +344,12 @@
     ctx.fillStyle = '#5a4a62';
     ctx.font = '600 22px "DM Sans", system-ui, sans-serif';
     ctx.textBaseline = 'middle';
-    ctx.fillText('The Networker Hub', hubLogo ? 250 : 96, CARD_H - 44);
+    ctx.fillText('The Networker UK', hubLogo ? 250 : 96, CARD_H - 44);
 
     ctx.fillStyle = '#9d87aa';
     ctx.font = '500 20px "DM Sans", system-ui, sans-serif';
     ctx.textAlign = 'right';
-    ctx.fillText('thenetworkerhub.com', CARD_W - 96, CARD_H - 44);
+    ctx.fillText('thenetworkeruk.com', CARD_W - 96, CARD_H - 44);
     ctx.textAlign = 'left';
 
     return canvas.toDataURL('image/png');
@@ -382,7 +382,7 @@
     return (
       "We've just added a new event:\n\n📅 " +
       title +
-      '\n\nBook your place on The Networker Hub:\n' +
+      '\n\nBook your place on The Networker UK:\n' +
       url
     );
   }
@@ -491,7 +491,7 @@
     ctx.fillStyle = '#5a4a62';
     ctx.font = '500 24px "DM Sans", system-ui, sans-serif';
     ctx.textBaseline = 'middle';
-    ctx.fillText('Book on The Networker Hub', textX, Math.min(metaBottom + 28, CARD_H - 110));
+    ctx.fillText('Book on The Networker UK', textX, Math.min(metaBottom + 28, CARD_H - 110));
 
     ctx.fillStyle = 'rgba(45, 27, 94, 0.08)';
     ctx.fillRect(64, CARD_H - 78, CARD_W - 128, 1);
@@ -502,12 +502,12 @@
     ctx.fillStyle = '#5a4a62';
     ctx.font = '600 22px "DM Sans", system-ui, sans-serif';
     ctx.textBaseline = 'middle';
-    ctx.fillText('The Networker Hub', hubLogo ? 250 : 96, CARD_H - 44);
+    ctx.fillText('The Networker UK', hubLogo ? 250 : 96, CARD_H - 44);
 
     ctx.fillStyle = '#9d87aa';
     ctx.font = '500 20px "DM Sans", system-ui, sans-serif';
     ctx.textAlign = 'right';
-    ctx.fillText('thenetworkerhub.com', CARD_W - 96, CARD_H - 44);
+    ctx.fillText('thenetworkeruk.com', CARD_W - 96, CARD_H - 44);
     ctx.textAlign = 'left';
 
     return canvas.toDataURL('image/png');

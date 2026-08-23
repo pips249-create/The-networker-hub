@@ -165,7 +165,7 @@
   }
 
   var organisersHubCtaHtml =
-    'Want to be included in The Networker Hub? <a href="/for-organisers" class="events-hub-cta-link">Find out more</a>';
+    'Want to be included in The Networker UK? <a href="/for-organisers" class="events-hub-cta-link">Find out more</a>';
 
   function syncOrganiserCta() {
     if (heroOrganiserCta) heroOrganiserCta.innerHTML = organisersHubCtaHtml;
@@ -210,7 +210,7 @@
         regional.name +
         ' ' +
         year +
-        ' – The Networker Hub';
+        ' – The Networker UK';
       initSponsorHub(mode);
       syncBrowseToggles(mode);
       syncOrganiserCta();
@@ -228,8 +228,8 @@
     if (filterInboxHeading) filterInboxHeading.textContent = c.filterTitle;
     document.title =
       mode === 'organisers'
-        ? 'Find networking groups – The Networker Hub'
-        : 'Find your next event – The Networker Hub';
+        ? 'Find networking groups – The Networker UK'
+        : 'Find your next event – The Networker UK';
     initSponsorHub(mode);
     syncBrowseToggles(mode);
     syncOrganiserCta();

@@ -1,5 +1,5 @@
 /**
- * For attendees page: scroll reveals, hero rotation, and My Hub preview.
+ * For attendees page: scroll reveals, hero rotation, and My account preview.
  */
 (function () {
   function initReveal() {

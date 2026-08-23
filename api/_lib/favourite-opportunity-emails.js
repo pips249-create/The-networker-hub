@@ -31,7 +31,7 @@ function buildSavedOpportunityClosingSoonVars({ attendee, opportunityRow, siteUr
     user_name: name,
     user_email: email,
     opportunity_title: String(opportunityRow.title || 'Opportunity').trim(),
-    opportunity_host: String(opportunityRow.host || 'Listed on The Networker Hub').trim(),
+    opportunity_host: String(opportunityRow.host || 'Listed on The Networker UK').trim(),
     expiry_date: formatEmailDate(opportunityRow.listing_expires_at),
     opportunity_url: opportunityPublicUrl(opportunityRow, site),
     hub_account_url: hubAccountUrl(site) + '#saved',

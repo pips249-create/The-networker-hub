@@ -44,7 +44,7 @@ function sanitizePath(raw) {
   if (!p) return '';
   if (p.startsWith('/')) return p;
   try {
-    return new URL(p, 'https://thenetworkerhub.com').pathname.slice(0, MAX_PATH);
+    return new URL(p, 'https://thenetworkeruk.com').pathname.slice(0, MAX_PATH);
   } catch {
     return '';
   }
@@ -806,7 +806,7 @@ async function getSponsorClicksReport(query) {
     hubLogoUrl: '/assets/logo-nav-transparent.png',
     contact: {
       name: 'Rosie McGilvray',
-      email: 'rosie@thenetworkerhub.com',
+      email: 'rosie@thenetworkeruk.com',
       label: 'Questions about this pack?',
     },
     executiveSummary,

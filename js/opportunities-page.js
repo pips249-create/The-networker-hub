@@ -2338,7 +2338,7 @@
         closeAlertDialog();
         setSaveSearchStatus(
           'Alert saved — we will email you when new listings match. ' +
-            '<a href="/account/#search-alerts">Manage alerts in My Hub</a>.',
+            '<a href="/account/#search-alerts">Manage alerts in My account</a>.',
           false,
           true
         );

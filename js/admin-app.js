@@ -177,7 +177,7 @@
     },
     support: {
       title: 'Help requests',
-      subtitle: 'Look up bookings and log complaints from hello@thenetworkerhub.com',
+      subtitle: 'Look up bookings and log complaints from hello@thenetworkeruk.com',
     },
     campaigns: {
       title: 'Email campaigns',
@@ -290,7 +290,7 @@
     'support-complaints': {
       title: 'How to log a complaint',
       steps: [
-        'Click Log complaint and enter details from the email to hello@thenetworkerhub.com.',
+        'Click Log complaint and enter details from the email to hello@thenetworkeruk.com.',
         'Note the date received — you have 14 days to respond.',
         'Update status as you work on it: acknowledged, in progress, resolved.',
         'Add notes so someone else can pick it up if needed.',
@@ -1009,7 +1009,7 @@
     }
     if (route === 'support') {
       if (hash.indexOf('complaints') !== -1) {
-        return 'Log complaints from hello@thenetworkerhub.com and track acknowledgement and 14-day response deadlines.';
+        return 'Log complaints from hello@thenetworkeruk.com and track acknowledgement and 14-day response deadlines.';
       }
       return PAGE_META.support.subtitle;
     }
@@ -9175,7 +9175,7 @@
     var hubLogo = (logos && logos.hub) || '';
     var brandLogo = (logos && logos.brand) || '';
     var amName = contact.name || 'Rosie McGilvray';
-    var amEmail = contact.email || 'rosie@thenetworkerhub.com';
+    var amEmail = contact.email || 'rosie@thenetworkeruk.com';
     var highlight = buildSponsorPackHighlight(
       {
         pageVisits: pageViews,
@@ -9210,8 +9210,8 @@
     var hubLogoHtml = hubLogo
       ? '<img src="' +
         attrEsc(hubLogo) +
-        '" alt="The Networker Hub" width="140" height="36" style="width:140px;height:36px;display:block;object-fit:contain;">'
-      : '<span style="font-family:' + fontSans + ';font-size:13px;font-weight:700;color:#4a4446;">The Networker Hub</span>';
+        '" alt="The Networker UK" width="140" height="36" style="width:140px;height:36px;display:block;object-fit:contain;">'
+      : '<span style="font-family:' + fontSans + ';font-size:13px;font-weight:700;color:#4a4446;">The Networker UK</span>';
 
     var brandLogoHtml = brandLogo
       ? '<img src="' +
@@ -9441,7 +9441,7 @@
       ';font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#9a7aa8;margin-bottom:6px;">Where your leads show up</div>' +
       '<div style="font-family:' +
       fontSans +
-      ';font-size:12.5px;line-height:1.45;color:#4a4446;">When someone clicks your logo, we tag the visit so it appears in <strong>your</strong> Google Analytics / CRM as traffic from The Networker Hub.</div>' +
+      ';font-size:12.5px;line-height:1.45;color:#4a4446;">When someone clicks your logo, we tag the visit so it appears in <strong>your</strong> Google Analytics / CRM as traffic from The Networker UK.</div>' +
       '</td></tr></table></td>' +
       '<td width="42%" style="width:42%;padding-left:6px;vertical-align:top;">' +
       '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;background:#4a4446;"><tr><td style="padding:12px 14px;">' +
@@ -9461,12 +9461,12 @@
       '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;border-top:1px solid rgba(194,153,209,0.35);"><tr>' +
       '<td style="padding-top:10px;font-family:' +
       fontSans +
-      ';font-size:9px;letter-spacing:0.04em;text-transform:uppercase;color:#7a7274;">Confidential · The Networker Hub × ' +
+      ';font-size:9px;letter-spacing:0.04em;text-transform:uppercase;color:#7a7274;">Confidential · The Networker UK × ' +
       esc(brandName) +
       '</td>' +
       '<td style="padding-top:10px;font-family:' +
       fontSans +
-      ';font-size:9px;letter-spacing:0.04em;text-transform:uppercase;color:#7a7274;text-align:right;">thenetworkerhub.com</td>' +
+      ';font-size:9px;letter-spacing:0.04em;text-transform:uppercase;color:#7a7274;text-align:right;">thenetworkeruk.com</td>' +
       '</tr></table></div>'
     );
   }
@@ -9670,7 +9670,7 @@
   function downloadSponsorPackPdf(data, filename) {
     var brand = (data && data.brand) || {};
     var brandName = brand.company || 'Partner';
-    var hubUrl = '/assets/logo-nav-transparent.png';
+    var hubUrl = '/assets/logo-nav-transparent.png?v=20260823ukpng';
     var brandUrl = brand.logoUrl || '';
     try {
       hubUrl = new URL(hubUrl, window.location.origin).href;
@@ -9702,7 +9702,7 @@
       year: 'numeric',
     });
     var amName = contact.name || 'Rosie McGilvray';
-    var amEmail = contact.email || 'rosie@thenetworkerhub.com';
+    var amEmail = contact.email || 'rosie@thenetworkeruk.com';
     var highlight = buildSponsorPackHighlight(
       {
         pageVisits: pageViews,
@@ -9733,10 +9733,10 @@
     return Promise.all([
       fetchImageAsDataUrl(hubUrl)
         .then(function (d) {
-          return d || fetchImageAsDataUrl('/assets/logo-nav-transparent.png');
+          return d || fetchImageAsDataUrl('/assets/logo-nav-transparent.png?v=20260823ukpng');
         })
         .catch(function () {
-          return fetchImageAsDataUrl('/assets/logo-nav-transparent.png').catch(function () {
+          return fetchImageAsDataUrl('/assets/logo-nav-transparent.png?v=20260823ukpng').catch(function () {
             return '';
           });
         }),
@@ -9808,7 +9808,7 @@
             doc.setFont(SANS, 'bold');
             doc.setFontSize(8);
             doc.setTextColor.apply(doc, CHAR);
-            doc.text('The Networker Hub', m + 3, y + 9.5);
+            doc.text('The Networker UK', m + 3, y + 9.5);
           }
           if (!drawn[1]) {
             doc.setFont(SANS, 'bold');
@@ -10017,7 +10017,7 @@
           y += Math.max(h1, h2) + 5;
 
           var leadsText =
-            'When someone clicks your logo, we tag the visit so it appears in your Google Analytics / CRM as traffic from The Networker Hub.';
+            'When someone clicks your logo, we tag the visit so it appears in your Google Analytics / CRM as traffic from The Networker UK.';
           var leadsW = contentW * 0.58;
           var contactW = contentW - leadsW - gap;
           var leadsLines = sponsorPackWrap(doc, SANS, 'normal', 8.5, leadsText, leadsW - 8);
@@ -10062,7 +10062,7 @@
             m,
             footY
           );
-          doc.text('thenetworkerhub.com', pageW - m, footY, { align: 'right' });
+          doc.text('thenetworkeruk.com', pageW - m, footY, { align: 'right' });
 
           doc.save(filename || 'sponsor-pack.pdf');
         });
@@ -10339,7 +10339,7 @@
       var brandName = brand.company || (document.getElementById('sponsor-clicks-company') || {}).value || 'All sponsors';
       var fromLabel = String(data.from || '').slice(0, 10);
       var toLabel = String(data.to || '').slice(0, 10);
-      var hubLogo = data.hubLogoUrl || '/assets/logo-nav-transparent.png';
+      var hubLogo = data.hubLogoUrl || '/assets/logo-nav-transparent.png?v=20260823ukpng';
       var brandLogo = brand.logoUrl || '';
       var brandDark = brand.logoBandDark === true;
       var ctrInfo = formatSponsorPackCtr(summary.clicks || 0, summary.pageVisits || 0);
@@ -10358,7 +10358,7 @@
         '<div class="sponsor-pack-logo-tile">' +
         '<img src="' +
         attrEsc(hubLogo) +
-        '" alt="The Networker Hub" class="sponsor-pack-logo sponsor-pack-logo--hub">' +
+        '" alt="The Networker UK" class="sponsor-pack-logo sponsor-pack-logo--hub">' +
         '</div>' +
         '<span class="sponsor-pack-logo-x" aria-hidden="true">×</span>' +
         '<div class="sponsor-pack-logo-tile' +
@@ -10405,7 +10405,7 @@
             : 'Pending';
       var emailCtrLabel = eng.ctrPct != null ? String(eng.ctrPct) + '%' : '—';
       var contactName = contact.name || 'Rosie McGilvray';
-      var contactEmail = contact.email || 'rosie@thenetworkerhub.com';
+      var contactEmail = contact.email || 'rosie@thenetworkeruk.com';
       var contactLabel = contact.label || 'Questions about this pack?';
       var theme = resolveSponsorPackTheme(data);
       var placementFilter = data.placementFilter || '';
@@ -10535,8 +10535,8 @@
             '<li><strong>Clicks by placement</strong> splits on-page Page Partners from Page Partner emails so renewals can see which surface drove traffic.</li>'
           : '<li><strong>Page views</strong> count each visit to the sponsored directory while their hero is live (Events, Organisers, or Opportunities).</li>') +
         '<li><strong>Email opens &amp; CTR</strong> come from Resend (opens + link clicks). Hub email-placement clicks are also included in Email CTR.</li>' +
-        '<li><strong>Leads &amp; form fills</strong> show up in <strong>their</strong> Google Analytics / CRM as traffic from The Networker Hub.</li>' +
-        '<li><strong>Suggestion:</strong> lead with Site CTR + email volume on the renewal call; ask them to filter sessions from The Networker Hub in GA as proof of pipeline.</li>' +
+        '<li><strong>Leads &amp; form fills</strong> show up in <strong>their</strong> Google Analytics / CRM as traffic from The Networker UK.</li>' +
+        '<li><strong>Suggestion:</strong> lead with Site CTR + email volume on the renewal call; ask them to filter sessions from The Networker UK in GA as proof of pipeline.</li>' +
         '</ul></section>' +
         '<section class="sponsor-pack-contact">' +
         '<p class="sponsor-pack-contact-label">' +
@@ -10550,9 +10550,9 @@
         esc(contactEmail) +
         '</a></section>' +
         '<footer class="sponsor-pack-footer">' +
-        '<span>Confidential · The Networker Hub × ' +
+        '<span>Confidential · The Networker UK × ' +
         esc(brandName) +
-        '</span><span>thenetworkerhub.com</span></footer></article>';
+        '</span><span>thenetworkeruk.com</span></footer></article>';
     }
 
     function load() {
@@ -12163,7 +12163,7 @@
       var origin = window.location.origin || '';
       // Email previews must never link to localhost — use the public Hub.
       if (!origin || /localhost|127\.0\.0\.1/i.test(origin)) {
-        return 'https://www.thenetworkerhub.com';
+        return 'https://www.thenetworkeruk.com';
       }
       return origin;
     })();
@@ -12215,8 +12215,8 @@
       welcome_url: previewOrigin + '/welcome',
       dashboard_url: previewOrigin + '/organiser/',
       site_url: previewOrigin,
-      logo_url: previewOrigin + '/assets/logo-nav-transparent.png?v=20260805footer',
-      logo_footer_url: previewOrigin + '/assets/logo-email-footer.png?v=20260805footer',
+      logo_url: previewOrigin + '/assets/logo-nav-transparent.png?v=20260823ukpng',
+      logo_footer_url: previewOrigin + '/assets/logo-nav-transparent.png?v=20260823ukpng',
       screening_industry: 'Financial services',
       screening_job_title: 'Business development manager',
       denial_closing: '',
@@ -12245,7 +12245,7 @@
       review_count: '27',
       profile_url: previewOrigin + '/events/organiser?slug=city-connectors',
       social_share_text:
-        'City Connectors is a Top 10 networking group on The Networker Hub for June 2026.',
+        'City Connectors is a Top 10 networking group on The Networker UK for June 2026.',
       organiser_url: previewOrigin + '/events/organiser?slug=city-connectors',
       pending_applications: '2',
     };
@@ -17427,7 +17427,7 @@
       '</select></div>' +
       '<div><label for="admin-listing-message-body" class="block text-xs font-semibold text-slate-500 mb-1">Message</label>' +
       '<textarea id="admin-listing-message-body" rows="5" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="We have updated…"></textarea>' +
-      '<p class="text-[11px] text-slate-500 mt-1">Sent to the group contact email. They can reply to hello@thenetworkerhub.com.</p></div>' +
+      '<p class="text-[11px] text-slate-500 mt-1">Sent to the group contact email. They can reply to hello@thenetworkeruk.com.</p></div>' +
       '<p id="admin-listing-message-error" class="text-xs text-red-700 font-semibold hidden"></p>' +
       '<div class="flex justify-end gap-2 pt-1">' +
       '<button type="button" id="admin-listing-message-cancel" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Cancel</button>' +
@@ -18310,11 +18310,11 @@
             })
             .join('\n');
           var caption =
-            '🏆 Top 10 networking groups on The Networker Hub — ' +
+            '🏆 Top 10 networking groups on The Networker UK — ' +
             periodLabel +
             '\n\n' +
             listFull +
-            '\n\nBrowse events and groups: https://www.thenetworkerhub.com/rankings';
+            '\n\nBrowse events and groups: https://www.thenetworkeruk.com/rankings';
           if (captionEl) captionEl.value = caption;
           if (panel) panel.classList.remove('hidden');
           if (msg) msg.textContent = 'Generating Top 10 graphic…';
@@ -20323,7 +20323,7 @@
   function renderSupportComplaints() {
     main.innerHTML =
       '<div class="space-y-6">' +
-      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">When a complaint arrives at <strong>hello@thenetworkerhub.com</strong>, log it here after sending the acknowledgement (target: 2 working days). Substantive response target: <strong>14 days</strong>. Ops lead: <strong>Catherine Hancher</strong>. Commercial / ASA: <strong>Rosie McGilvray</strong>.</p>' +
+      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">When a complaint arrives at <strong>hello@thenetworkeruk.com</strong>, log it here after sending the acknowledgement (target: 2 working days). Substantive response target: <strong>14 days</strong>. Ops lead: <strong>Catherine Hancher</strong>. Commercial / ASA: <strong>Rosie McGilvray</strong>.</p>' +
       '<form id="complaint-create-form" class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">' +
       '<h3 class="font-bold text-brand-900">Log complaint</h3>' +
       '<div class="grid gap-4 sm:grid-cols-2">' +
@@ -23338,12 +23338,12 @@
       : '• (confirmations will appear here as groups claim)';
     if (more > 0) nameBlock += '\n• …and ' + more + ' more founding organisers';
     return (
-      'Meet the Founding Organisers of The Networker Hub 🎉\n\n' +
+      'Meet the Founding Organisers of The Networker UK 🎉\n\n' +
       'These UK networking groups have claimed their pages ahead of our 1 September launch — and they\'re already on the Hub organiser leaderboard.\n\n' +
       nameBlock +
       '\n\nIf you run a networking group, claim your free page before 1 September for Founding Organiser · 2026:\n' +
-      'https://www.thenetworkerhub.com/for-organisers\n\n' +
-      '#TheNetworkerHub #FoundingOrganisers #UKNetworking #BusinessNetworking #NetworkingEvents #NetworkingGroups #SME #Entrepreneurs #BusinessCommunity #B2BNetworking'
+      'https://www.thenetworkeruk.com/for-organisers\n\n' +
+      '#TheNetworkerUK #FoundingOrganisers #UKNetworking #BusinessNetworking #NetworkingEvents #NetworkingGroups #SME #Entrepreneurs #BusinessCommunity #B2BNetworking'
     );
   }
 
@@ -23370,11 +23370,11 @@
       var email = String((o && o.email) || '').trim();
       if (!email) return '';
       var group = String((o && o.name) || 'your networking group').trim();
-      var subject = encodeURIComponent('Quick favours for ' + group + ' on The Networker Hub');
+      var subject = encodeURIComponent('Quick favours for ' + group + ' on The Networker UK');
       var body = encodeURIComponent(
         'Hi there,\n\nThanks again for confirming ' +
           group +
-          ' on The Networker Hub.\n\nCould you add your logo and website on your organiser page? It helps your Hub profile look sharp — and means we can feature you properly on the homepage / founding organisers social post.\n\nEdit here:\nhttps://www.thenetworkerhub.com/organiser/group-edit?id=' +
+          ' on The Networker UK.\n\nCould you add your logo and website on your organiser page? It helps your Hub profile look sharp — and means we can feature you properly on the homepage / founding organisers social post.\n\nEdit here:\nhttps://www.thenetworkeruk.com/organiser/group-edit?id=' +
           o.id +
           '&onboard=review\n\nAny questions, just reply.\n\nCatherine'
       );
@@ -23692,16 +23692,16 @@
   function renderSalesKit() {
     var followUp =
       'Hi {{name}},\n\n' +
-      'Lovely to show you around The Networker Hub today.\n\n' +
+      'Lovely to show you around The Networker UK today.\n\n' +
       'Quick recap:\n' +
       '• Free to list — you keep 100% of the ticket price (attendees pay 4.5% + 20p)\n' +
       '• Built for networking groups — guest visits, member rates, visit tracking, attendee round-ups\n' +
       '• List autumn dates now; public browsing 25 August, ticket buying 1 September\n' +
       '• Claim before 1 Sept → Founding Organiser · 2026\n\n' +
-      'Benefits one-pager: https://thenetworkerhub.com/guides/organiser-leavebehind\n' +
-      'PDF: https://thenetworkerhub.com/assets/guides/organiser-leavebehind.pdf\n' +
-      'For organisers: https://thenetworkerhub.com/for-organisers\n' +
-      'Book a setup call: https://savvycal.com/TheNetworkerHub/website-preview\n\n' +
+      'Benefits one-pager: https://thenetworkeruk.com/guides/organiser-leavebehind\n' +
+      'PDF: https://thenetworkeruk.com/assets/guides/organiser-leavebehind.pdf\n' +
+      'For organisers: https://thenetworkeruk.com/for-organisers\n' +
+      'Book a setup call: https://savvycal.com/TheNetworkerUK/website-preview\n\n' +
       'Happy to list your next 2–3 meetings with you whenever suits.\n\n' +
       'Best wishes,\n{{sender}}';
 
@@ -23909,7 +23909,7 @@
         '<div class="rounded-xl border border-emerald-200 bg-emerald-50 p-4 flex flex-wrap items-start justify-between gap-3">' +
         '<div class="min-w-0">' +
         '<p class="font-semibold text-emerald-950">Organiser leave-behind</p>' +
-        '<p class="text-sm text-emerald-900/80 mt-1 break-all">thenetworkerhub.com/guides/organiser-leavebehind</p>' +
+        '<p class="text-sm text-emerald-900/80 mt-1 break-all">thenetworkeruk.com/guides/organiser-leavebehind</p>' +
         '</div>' +
         '<div class="flex flex-wrap gap-2">' +
         '<button type="button" id="sales-kit-copy-leavebehind" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-3 py-2 hover:bg-brand-900">Copy link</button>' +
@@ -23937,7 +23937,7 @@
         '<a class="admin-shortcut" href="/assets/guides/organiser-leavebehind.pdf" target="_blank" rel="noopener"><span class="admin-shortcut-label">Leave-behind PDF</span><span class="admin-shortcut-desc">Send after the chat</span></a>' +
         '<a class="admin-shortcut" href="/guides/organiser-leavebehind" target="_blank" rel="noopener"><span class="admin-shortcut-label">Leave-behind page</span><span class="admin-shortcut-desc">Shareable link</span></a>' +
         '<a class="admin-shortcut" href="/for-organisers" target="_blank" rel="noopener"><span class="admin-shortcut-label">Public for-organisers</span><span class="admin-shortcut-desc">Website page</span></a>' +
-        '<a class="admin-shortcut" href="https://savvycal.com/TheNetworkerHub/website-preview" target="_blank" rel="noopener"><span class="admin-shortcut-label">Book a setup call</span><span class="admin-shortcut-desc">SavvyCal</span></a>' +
+        '<a class="admin-shortcut" href="https://savvycal.com/TheNetworkerUK/website-preview" target="_blank" rel="noopener"><span class="admin-shortcut-label">Book a setup call</span><span class="admin-shortcut-desc">SavvyCal</span></a>' +
         '</div></div></section>' +
         '<section class="admin-dash-section">' +
         '<div class="admin-dash-section-head"><h3>60-second Loom script</h3>' +
@@ -24028,7 +24028,7 @@
       if (leaveBtn) {
         leaveBtn.addEventListener('click', function () {
           copyText(
-            'https://www.thenetworkerhub.com/guides/organiser-leavebehind',
+            'https://www.thenetworkeruk.com/guides/organiser-leavebehind',
             leaveStatus,
             'Link copied — paste into email or WhatsApp.'
           );

@@ -10,7 +10,7 @@ const BRANDED_EMAIL_TEMPLATES = {
   organiser_claim_invite: {
     file: 'organiser-claim-invite.html',
     marker: 'hub-email-layout-v3-purple',
-    subject: 'Claim your page & finish setup — The Networker Hub',
+    subject: 'Claim your page & finish setup — The Networker UK',
   },
   organiser_claim_confirmed: {
     file: 'organiser-claim-confirmed.html',
@@ -20,7 +20,7 @@ const BRANDED_EMAIL_TEMPLATES = {
   organiser_launch_invite: {
     file: 'organiser-launch-invite.html',
     marker: 'hub-email-layout-v3-purple',
-    subject: 'Confirm your page & finish setup — The Networker Hub',
+    subject: 'Confirm your page & finish setup — The Networker UK',
   },
   organiser_call_followup: {
     file: 'organiser-call-followup.html',
@@ -150,7 +150,7 @@ const BRANDED_EMAIL_TEMPLATES = {
   account_welcome: {
     file: 'account-welcome.html',
     marker: 'hub-email-layout-v3-purple',
-    subject: 'Welcome to The Networker Hub',
+    subject: 'Welcome to The Networker UK',
   },
   refund_processed: {
     file: 'refund-processed.html',
@@ -200,7 +200,7 @@ const BRANDED_EMAIL_TEMPLATES = {
   member_roster_invite: {
     file: 'member-roster-invite.html',
     marker: 'hub-email-layout-v3-purple',
-    subject: '{{organiser_name}} added you to their membership on The Networker Hub',
+    subject: '{{organiser_name}} added you to their membership on The Networker UK',
   },
   member_roster_existing: {
     file: 'member-roster-existing.html',
@@ -240,7 +240,7 @@ const BRANDED_EMAIL_TEMPLATES = {
   attendee_signup_events_nudge: {
     file: 'attendee-signup-events-nudge.html',
     marker: 'hub-email-layout-v3-purple',
-    subject: 'Events picked for you on The Networker Hub',
+    subject: 'Events picked for you on The Networker UK',
   },
   attendee_signup_events_nudge_followup: {
     file: 'attendee-signup-events-nudge-followup.html',
@@ -265,22 +265,22 @@ const BRANDED_EMAIL_TEMPLATES = {
   event_removed_by_hub: {
     file: 'event-removed-by-hub.html',
     marker: 'hub-email-layout-v3-purple',
-    subject: 'Your event {{event_name}} has been removed from The Networker Hub',
+    subject: 'Your event {{event_name}} has been removed from The Networker UK',
   },
   event_unpublished_by_hub: {
     file: 'event-unpublished-by-hub.html',
     marker: 'hub-email-layout-v3-purple',
-    subject: 'Your event {{event_name}} has been unpublished on The Networker Hub',
+    subject: 'Your event {{event_name}} has been unpublished on The Networker UK',
   },
   organiser_listing_unpublished_by_hub: {
     file: 'organiser-listing-unpublished-by-hub.html',
     marker: 'hub-email-layout-v3-purple',
-    subject: 'Your organiser page has been unpublished on The Networker Hub',
+    subject: 'Your organiser page has been unpublished on The Networker UK',
   },
   organiser_listing_updated_by_hub: {
     file: 'organiser-listing-updated-by-hub.html',
     marker: 'hub-email-layout-v3-purple',
-    subject: "We've updated {{listing_label}} on The Networker Hub",
+    subject: "We've updated {{listing_label}} on The Networker UK",
   },
   listing_report_upheld_reporter: {
     file: 'listing-report-upheld-reporter.html',
@@ -290,12 +290,12 @@ const BRANDED_EMAIL_TEMPLATES = {
   organiser_hub_warning: {
     file: 'organiser-hub-warning.html',
     marker: 'hub-email-layout-v3-purple',
-    subject: 'Warning {{warning_count}} of {{warning_limit}} — The Networker Hub',
+    subject: 'Warning {{warning_count}} of {{warning_limit}} — The Networker UK',
   },
   organiser_hub_suspended: {
     file: 'organiser-hub-suspended.html',
     marker: 'hub-email-layout-v3-purple',
-    subject: 'Your organiser account has been suspended — The Networker Hub',
+    subject: 'Your organiser account has been suspended — The Networker UK',
   },
   saved_organiser_new_listing: {
     file: 'saved-organiser-new-listing.html',
@@ -325,7 +325,7 @@ const BRANDED_EMAIL_TEMPLATES = {
   password_reset: {
     file: 'password-reset.html',
     marker: 'hub-email-layout-v3-purple',
-    subject: 'Reset your Networker Hub password',
+    subject: 'Reset your Networker UK password',
   },
   organiser_email_verify: {
     file: 'organiser-email-verify.html',

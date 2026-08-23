@@ -22,9 +22,9 @@ dotenv.config({ path: path.join(root, '.env') });
 const { previewClaimUrl } = require('../api/_lib/organiser-claim-url');
 const { isExcludedLaunchOrganiser } = require('./launch-excluded-organisers');
 
-const SITE = 'https://www.thenetworkerhub.com';
+const SITE = 'https://www.thenetworkeruk.com';
 const LEGACY = 'https://the-networker.co.uk';
-const BOOK_CALL = 'https://savvycal.com/TheNetworkerHub/website-preview';
+const BOOK_CALL = 'https://savvycal.com/TheNetworkerUK/website-preview';
 
 /** Segment A Email 2 openers (Brevo, 19 Aug 2026). */
 const SEGMENT_A_OPENERS = [
@@ -135,14 +135,14 @@ function phoneIndex() {
   const shared = {
     site_url: SITE,
     legacy_site_url: LEGACY,
-    logo_url: SITE + '/assets/logo-nav-transparent.png?v=20260729a',
+    logo_url: SITE + '/assets/logo-nav-transparent.png?v=20260823ukpng',
     logo_footer_url: SITE + '/assets/logo-email-footer.png',
     for_organisers_url: SITE + '/for-organisers',
     claim_url: previewClaim,
     book_call_url: BOOK_CALL,
     company_name: 'The Networker Group Ltd',
     company_number: '15252227',
-    support_email: 'catherine@thenetworkerhub.com',
+    support_email: 'catherine@thenetworkeruk.com',
     privacy_url: SITE + '/legal-policies#privacy',
     terms_url: SITE + '/legal-policies#terms',
     refunds_url: SITE + '/legal-policies#refunds',

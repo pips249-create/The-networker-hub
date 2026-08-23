@@ -117,7 +117,7 @@
   function organiserCardDescription(org, maxLen) {
     var snippet = cardDescriptionSnippet(org && org.description, maxLen);
     if (snippet) return snippet;
-    if (Number(org && org.eventCount) > 0) return 'Networking group on The Networker Hub.';
+    if (Number(org && org.eventCount) > 0) return 'Networking group on The Networker UK.';
     return 'No upcoming listings';
   }
 

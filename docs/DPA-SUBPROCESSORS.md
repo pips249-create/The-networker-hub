@@ -12,7 +12,7 @@
 ## Before you start (5 minutes)
 
 1. Create a folder **outside this repo**:  
-   `Company records / Data protection / DPAs / 2026 / The Networker Hub`
+   `Company records / Data protection / DPAs / 2026 / The Networker UK`
 2. Open `docs/DPA-REGISTER.md` — you will note dates and file names there after each step.
 3. Log in as the **organisation owner** for each account (not a team member with limited access).
 4. Run `npm run check:dpas` when done to confirm the register is complete.
@@ -40,7 +40,7 @@
 
 ### Steps
 
-1. Log in to [Stripe Dashboard](https://dashboard.stripe.com) (production account for The Networker Hub).
+1. Log in to [Stripe Dashboard](https://dashboard.stripe.com) (production account for The Networker UK).
 2. Confirm the legal entity on the account is **The Networker Group Ltd** (Settings → Business settings → Business details).
 3. Download the current DPA: [stripe.com/gb/legal/dpa](https://stripe.com/gb/legal/dpa) → **Click here to download** (PDF).
 4. Optional: Settings → **Legal** — review Services Agreement acceptance (if shown).
@@ -125,10 +125,10 @@ This is the **only provider that needs an explicit signature**.
 2. Select your **Organisation** (not just the project).
 3. Open **Legal documents**: [supabase.com/dashboard/org/_/documents](https://supabase.com/dashboard/org/_/documents)  
    (replace `_` with your organisation slug if the link redirects).
-4. Request the **executable DPA** — enter **catherine@thenetworkerhub.com** (or your director email).
+4. Request the **executable DPA** — enter **catherine@thenetworkeruk.com** (or your director email).
 5. Within ~24 hours, complete the **PandaDoc** envelope:
    - Signatory: **Catherine Hancher**, Director, The Networker Group Ltd
-   - Complete Part 1 processing details (Hub database, auth, storage; UK data subjects; contact hello@thenetworkerhub.com)
+   - Complete Part 1 processing details (Hub database, auth, storage; UK data subjects; contact hello@thenetworkeruk.com)
 6. When PandaDoc confirms execution, download the signed PDF from PandaDoc or the dashboard.
 7. Save as: `2026-07-XX_supabase-dpa-signed.pdf`
 8. Update `docs/DPA-REGISTER.md`.
@@ -139,7 +139,7 @@ This is the **only provider that needs an explicit signature**.
 
 ## 5. OpenAI (optional — not in use)
 
-**Status:** **Not required.** The Networker Hub runs **Hubert** on built-in FAQ answers and live Supabase event/opportunity lookups. There is **no** `OPENAI_API_KEY` in production — visitor chat is not sent to OpenAI or ChatGPT.
+**Status:** **Not required.** The Networker UK runs **Hubert** on built-in FAQ answers and live Supabase event/opportunity lookups. There is **no** `OPENAI_API_KEY` in production — visitor chat is not sent to OpenAI or ChatGPT.
 
 Keep this section for reference **only if** you later decide to enable third-party AI for Hubert.
 
@@ -178,7 +178,7 @@ Keep this section for reference **only if** you later decide to enable third-par
    | OpenAI contracting entity | **OpenAI Ireland Ltd** |
    | Signatory name | Catherine Hancher |
    | Signatory title | Director |
-   | Signatory email | catherine@thenetworkerhub.com (or your director email) |
+   | Signatory email | catherine@thenetworkeruk.com (or your director email) |
 
 4. Submit — you receive an email to **review and e-sign** the DPA.
 5. When countersigned, download the **PDF** from the email link or Ironclad portal.
@@ -189,7 +189,7 @@ Keep this section for reference **only if** you later decide to enable third-par
 
 ### Step 3 — API key in Vercel (if not already)
 
-1. [platform.openai.com/api-keys](https://platform.openai.com/api-keys) → **Create new secret key** (name e.g. `The Networker Hub production`).
+1. [platform.openai.com/api-keys](https://platform.openai.com/api-keys) → **Create new secret key** (name e.g. `The Networker UK production`).
 2. **Vercel → Project → Settings → Environment Variables → Production:**
    - `OPENAI_API_KEY` = `sk-…`
    - Optional: `OPENAI_CHAT_MODEL` = `gpt-4o-mini` (default in code if unset)

@@ -53,7 +53,7 @@ Hub keeps:      booking fee (covers ~3% platform + ~1.5% Stripe + 20p per ticket
 
 ### Attendee cancellation (recently built)
 
-- Attendee can cancel from My Hub (`/account/`) — upcoming events + payments tables.
+- Attendee can cancel from My account (`/account/`) — upcoming events + payments tables.
 - Modal shows organiser's refund policy and states refunds are handled by the organiser, not the Hub.
 - API: `POST /api/auth/cancel-booking`
 - Attendee gets **booking cancelled** email.

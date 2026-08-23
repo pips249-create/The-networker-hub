@@ -432,7 +432,7 @@
     if (shareQuickEmail) {
       shareQuickEmail.href =
         'mailto:?subject=' +
-        encodeURIComponent('Join my event on The Networker Hub') +
+        encodeURIComponent('Join my event on The Networker UK') +
         '&body=' +
         encodeURIComponent(shareText);
       shareQuickEmail.removeAttribute('target');

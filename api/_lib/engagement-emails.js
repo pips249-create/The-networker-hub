@@ -468,7 +468,7 @@ async function sendDueSignupEventsNudgeEmails(sb) {
             location_tip_html: locationTipHtml(siteUrl, attendee.location),
             add_location_url: accountSettingsUrl(siteUrl),
           },
-          subject: 'Events picked for you on The Networker Hub',
+          subject: 'Events picked for you on The Networker UK',
         });
       } catch (sendErr) {
         await releaseRowTimestamp(sb, {
@@ -1042,7 +1042,7 @@ async function sendDueGuestVisitFollowupEmails(sb, options) {
     let ctaLabel = nextEvent ? 'Book the next event' : 'View ' + organiserName;
     // Near-term conversion is the next booking. Hub membership dues are a slower path (~months).
     let followupNextStep =
-      'If you liked the group, the easiest next step is to book a member ticket for an upcoming date — your organiser page and events are on The Networker Hub.';
+      'If you liked the group, the easiest next step is to book a member ticket for an upcoming date — your organiser page and events are on The Networker UK.';
     let membershipCtaSection = '';
 
     if (membershipOffered) {

@@ -144,7 +144,7 @@ function basePreviewVars(siteUrl) {
     secondary_cta_url: site + '/rankings',
     secondary_cta_label: 'See this month’s top groups',
     social_share_text:
-      'City Connectors is a Top 10 networking group on The Networker Hub for June 2026.',
+      'City Connectors is a Top 10 networking group on The Networker UK for June 2026.',
     screening_industry: 'Financial services',
     screening_job_title: 'Business development manager',
     price_if_approved: '£25.00',
@@ -718,7 +718,7 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     }
     if (slug === 'organiser_call_followup') {
       vars.book_call_url =
-        vars.book_call_url || 'https://savvycal.com/TheNetworkerHub/website-preview';
+        vars.book_call_url || 'https://savvycal.com/TheNetworkerUK/website-preview';
     }
   }
 

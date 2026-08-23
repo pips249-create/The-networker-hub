@@ -40,7 +40,7 @@ Or `npm run check:local` (same script). You should see `Smoke passed` (warnings 
    ```
 3. After deploy finishes (needs `SITE_ACCESS_PASSWORD` in the shell or `local.env` to unlock):
    ```bash
-   node scripts/smoke-test-site.js https://www.thenetworkerhub.com
+   node scripts/smoke-test-site.js https://www.thenetworkeruk.com
    ```
 4. Or open https://the-networker-hub.vercel.app/events/ and hard refresh (unlock if gated).
 

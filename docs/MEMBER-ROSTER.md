@@ -27,7 +27,7 @@ Organisers can still renew people off-platform and update expiry dates manually.
   - `POST /api/auth/membership-portal` — Stripe Customer Portal (update card / cancel)
   - Webhooks sync roster `expires_at` / `subscription_status` from Stripe (`past_due` emails member + organiser)
   - Renewal/receipt email on successful `invoice.paid`
-  - Public join CTA on organiser profile; renew/manage from My Hub → Memberships
+  - Public join CTA on organiser profile; renew/manage from My account → Memberships
   - **Invite to pay** from the member register (Actions) or when adding a member — emails the Join / renew link
   - Bulk **Invite unpaid / expiring to pay** (+ report buttons on Expiring / Lapsed)
   - Overview report shows estimated Hub MRR from active paid subscriptions
@@ -45,12 +45,12 @@ Organisers can still renew people off-platform and update expiry dates manually.
 | **Rejoin / reinstated** | When a member is added back to an active membership | Upcoming live events (`member_roster_new_event`) |
 | **Not booked reminder** | When organiser clicks **Email not booked** on the membership page | `member_roster_booking_reminder` |
 
-Members see the group under **My Hub → My groups** once added. They book member tickets when signed in with their membership email.
+Members see the group under **My account → My groups** once added. They book member tickets when signed in with their membership email.
 
 ## Hub-billed memberships — money flow
 
 1. Organiser sets monthly and/or annual price on Memberships (requires Stripe Connect bank details).
-2. Member joins from the organiser public page or renews from My Hub.
+2. Member joins from the organiser public page or renews from My account.
 3. Checkout charges **membership (+ organiser VAT if added) + booking fee (4.5% + 20p)** each billing period.
 4. Destination charge: organiser connected account receives the membership price; Hub keeps the fee (Stripe processing absorbed from the fee).
 5. Webhooks update the roster expiry to the subscription period end.

@@ -1,7 +1,7 @@
 # Legacy redirect map — the-networker.co.uk → hub
 
 **Status:** banner install now (August 2026) · Hub browsing **25 August 2026** · tickets **1 September 2026** · **Hard 301s deferred ~3 months for SEO (~November 2026)**  
-**Target host:** `https://www.thenetworkerhub.com`  
+**Target host:** `https://www.thenetworkeruk.com`  
 **Keep on co.uk:** mailbox / MX for `@the-networker.co.uk` (do not point email at Vercel); **website stays live** during the SEO hold
 
 Use this when configuring DNS + hosting 301s on the old site. Hub-internal tidy redirects already live in `vercel.json` (`.html` → clean paths) — this file is only for **legacy domain → hub**.
@@ -26,15 +26,15 @@ Prefer **301** once the hub path is confirmed. Use **302** only while still test
 
 | From | To | Notes |
 |------|-----|--------|
-| `http://the-networker.co.uk/*` | `https://www.thenetworkerhub.com/…` | Force HTTPS + www in one hop if possible |
-| `https://the-networker.co.uk/*` | `https://www.thenetworkerhub.com/…` | |
-| `http://www.the-networker.co.uk/*` | `https://www.thenetworkerhub.com/…` | |
-| `https://www.the-networker.co.uk/*` | `https://www.thenetworkerhub.com/…` | |
-| `http://thenetworkerhub.co.uk/*` | `https://www.thenetworkerhub.com/…` | UK variant — add domain in Vercel + DNS; `vercel.json` 301 ready |
-| `https://thenetworkerhub.co.uk/*` | `https://www.thenetworkerhub.com/…` | |
-| `http://www.thenetworkerhub.co.uk/*` | `https://www.thenetworkerhub.com/…` | |
-| `https://www.thenetworkerhub.co.uk/*` | `https://www.thenetworkerhub.com/…` | |
-| `www.thenetworkerhub.com` apex | `https://www.thenetworkerhub.com` | Hub apex → www (already planned) |
+| `http://the-networker.co.uk/*` | `https://www.thenetworkeruk.com/…` | Force HTTPS + www in one hop if possible |
+| `https://the-networker.co.uk/*` | `https://www.thenetworkeruk.com/…` | |
+| `http://www.the-networker.co.uk/*` | `https://www.thenetworkeruk.com/…` | |
+| `https://www.the-networker.co.uk/*` | `https://www.thenetworkeruk.com/…` | |
+| `http://thenetworkerhub.co.uk/*` | `https://www.thenetworkeruk.com/…` | UK variant — add domain in Vercel + DNS; `vercel.json` 301 ready |
+| `https://thenetworkerhub.co.uk/*` | `https://www.thenetworkeruk.com/…` | |
+| `http://www.thenetworkerhub.co.uk/*` | `https://www.thenetworkeruk.com/…` | |
+| `https://www.thenetworkerhub.co.uk/*` | `https://www.thenetworkeruk.com/…` | |
+| `www.thenetworkeruk.com` apex | `https://www.thenetworkeruk.com` | Hub apex → www (already planned) |
 
 Never submit `the-networker-hub.vercel.app` as the primary Search Console property.
 
@@ -83,20 +83,20 @@ Exact syntax depends on where co.uk is hosted (cPanel, Cloudflare, Netlify, etc.
 
 ```
 # High confidence
-/                → https://www.thenetworkerhub.com/                 301
-/events*         → https://www.thenetworkerhub.com/events/          301
-/opportunities*  → https://www.thenetworkerhub.com/opportunities/   301
-/login*          → https://www.thenetworkerhub.com/login            301
-/register*       → https://www.thenetworkerhub.com/register         301
-/about*          → https://www.thenetworkerhub.com/about            301
-/contact*        → https://www.thenetworkerhub.com/contact          301
-/faq*            → https://www.thenetworkerhub.com/faq              301
-/legal*          → https://www.thenetworkerhub.com/legal-policies   301
-/privacy*        → https://www.thenetworkerhub.com/legal-policies   301
-/terms*          → https://www.thenetworkerhub.com/legal-policies   301
+/                → https://www.thenetworkeruk.com/                 301
+/events*         → https://www.thenetworkeruk.com/events/          301
+/opportunities*  → https://www.thenetworkeruk.com/opportunities/   301
+/login*          → https://www.thenetworkeruk.com/login            301
+/register*       → https://www.thenetworkeruk.com/register         301
+/about*          → https://www.thenetworkeruk.com/about            301
+/contact*        → https://www.thenetworkeruk.com/contact          301
+/faq*            → https://www.thenetworkeruk.com/faq              301
+/legal*          → https://www.thenetworkeruk.com/legal-policies   301
+/privacy*        → https://www.thenetworkeruk.com/legal-policies   301
+/terms*          → https://www.thenetworkeruk.com/legal-policies   301
 
 # Catch-all (after specific rules)
-/*               → https://www.thenetworkerhub.com/                 301
+/*               → https://www.thenetworkeruk.com/                 301
 ```
 
 Organiser/event slug rules go **above** the catch-all once confirmed.
@@ -109,7 +109,7 @@ Organiser/event slug rules go **above** the catch-all once confirmed.
 |------|--------|
 | `@the-networker.co.uk` MX / inboxes | Canonical website → hub |
 | Resend / SPF aligned to sending domain | Footer links on old emails → hub |
-| Mentions of “The Networker” brand | Public URLs and OG tags → `www.thenetworkerhub.com` |
+| Mentions of “The Networker” brand | Public URLs and OG tags → `www.thenetworkeruk.com` |
 
 ---
 
@@ -118,7 +118,7 @@ Organiser/event slug rules go **above** the catch-all once confirmed.
 - [ ] Google Search Console → Page indexing / “Not found” for co.uk referring URLs
 - [ ] Hub `/sitemap.xml` 200 and submitted
 - [ ] Spot-check 10 old bookmarks (home, browse, 3 organisers, 3 events, login)
-- [ ] If GBP exists (no Magpas pin): website field → `https://www.thenetworkerhub.com`
+- [ ] If GBP exists (no Magpas pin): website field → `https://www.thenetworkeruk.com`
 - [ ] Support inbox: “where did the old site go?” FAQ ready
 
 ---

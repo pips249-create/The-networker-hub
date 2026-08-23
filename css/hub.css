@@ -1,4 +1,4 @@
-/* The Networker Hub — bright palette, transparent logo */
+/* The Networker UK — bright palette, transparent logo */
 :root {
   --charcoal: #4a4446;
   --charcoal-soft: #5c5557;
@@ -166,9 +166,9 @@ a:hover { color: var(--charcoal); }
   flex-shrink: 0;
 }
 .nav-logo img {
-  height: 68px;
+  height: 72px;
   width: auto;
-  max-width: min(300px, 46vw);
+  max-width: min(320px, 48vw);
   display: block;
   object-fit: contain;
   object-position: left center;
@@ -511,6 +511,25 @@ a:hover { color: var(--charcoal); }
   color: var(--lavender-deep) !important;
 }
 .nav-signin:hover {
+  color: var(--charcoal) !important;
+}
+
+.nav-register {
+  display: inline-flex !important;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 8px 14px;
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--charcoal) !important;
+  background: var(--lavender-light);
+  border: 1px solid rgba(194, 153, 209, 0.55);
+  text-decoration: none !important;
+  white-space: nowrap;
+}
+.nav-register:hover {
+  background: var(--lavender-soft);
   color: var(--charcoal) !important;
 }
 

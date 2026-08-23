@@ -157,7 +157,7 @@ module.exports = async function handler(req, res) {
 
   if (kind === 'click') {
     res.statusCode = 302;
-    res.setHeader('Location', targetUrl || 'https://www.thenetworkerhub.com/');
+    res.setHeader('Location', targetUrl || 'https://www.thenetworkeruk.com/');
     res.setHeader('Cache-Control', 'no-store');
     return res.end();
   }

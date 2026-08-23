@@ -7,7 +7,7 @@
  *
  * Usage:
  *   node scripts/smoke-test-organiser-journey.js
- *   node scripts/smoke-test-organiser-journey.js https://www.thenetworkerhub.com
+ *   node scripts/smoke-test-organiser-journey.js https://www.thenetworkeruk.com
  */
 const fs = require('fs');
 const path = require('path');
@@ -19,7 +19,7 @@ for (const name of ['local.env', '.env.local', '.env']) {
   if (fs.existsSync(p)) dotenv.config({ path: p, override: false });
 }
 
-const base = (process.argv[2] || process.env.SITE_URL || 'https://www.thenetworkerhub.com').replace(
+const base = (process.argv[2] || process.env.SITE_URL || 'https://www.thenetworkeruk.com').replace(
   /\/$/,
   ''
 );

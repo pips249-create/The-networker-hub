@@ -1,6 +1,6 @@
 # Online Safety Act 2023 — risk assessment & action plan
 
-**Service:** The Networker Hub (user-to-user content: reviews, listings, enquiries, profiles)  
+**Service:** The Networker UK (user-to-user content: reviews, listings, enquiries, profiles)  
 **Last updated:** 8 July 2026
 
 *Risk assessment for internal use. Ofcom guidance and thresholds evolve — seek legal advice on in-scope duties. Not legal advice.*
@@ -62,7 +62,7 @@ Focus moderation and reporting on content that is **illegal**:
 |--------------|-------------|--------|
 | Reviews | “Report review” on event/organiser pages + organiser dashboard | ✓ / extending to organiser dashboard |
 | Opportunity listings | “Report listing” on detail page | ☑ Wired |
-| General / illegal content | hello@thenetworkerhub.com — subject “Content report” | Document in footer/help |
+| General / illegal content | hello@thenetworkeruk.com — subject “Content report” | Document in footer/help |
 
 ### C. Moderation capability
 

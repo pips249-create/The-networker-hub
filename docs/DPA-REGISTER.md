@@ -1,7 +1,7 @@
 # DPA register — The Networker Group Ltd
 
 **Controller:** The Networker Group Ltd (Company No. 15252227)  
-**Product:** The Networker Hub  
+**Product:** The Networker UK  
 **File storage (signed PDFs):** `Company records / Data protection / DPAs / 2026 /` — **not in git**
 
 Run `npm run check:dpas` to verify this register.
@@ -33,4 +33,4 @@ Run `npm run check:dpas` to verify this register.
 
 ## Notes
 
-All four subprocessors filed 10 July 2026. **Hubert** uses built-in FAQ and live Supabase lookups only — no OpenAI API key in production. Customer on all agreements: **The Networker Group Ltd** (not the “The Networker Hub” trading name).
+All four subprocessors filed 10 July 2026. **Hubert** uses built-in FAQ and live Supabase lookups only — no OpenAI API key in production. Customer on all agreements: **The Networker Group Ltd** (not the “The Networker UK” trading name).

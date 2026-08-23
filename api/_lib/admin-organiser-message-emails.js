@@ -82,7 +82,7 @@ async function sendOrganiserListingUpdatedEmail(sb, options = {}) {
     }
   }
 
-  const siteUrl = (process.env.SITE_URL || 'https://www.thenetworkerhub.com').replace(/\/$/, '');
+  const siteUrl = (process.env.SITE_URL || 'https://www.thenetworkeruk.com').replace(/\/$/, '');
   const organiserName = String(contact.name || organiser.name || 'there').trim() || 'there';
   const eventTitle = eventRow ? String(eventRow.title || '').trim() || 'Untitled event' : '';
   const listingLabel = eventTitle || String(organiser.name || '').trim() || 'your listing';

@@ -198,7 +198,7 @@
         rows: [
           ['Active users', '17,000+', 'GA4 active users who used the directory last year'],
           ['Page views', '70,000+', 'Total page views across the old site (~5.8k / mo average)'],
-          ['Moving to the Hub', '1 Sep redirect', 'co.uk traffic lands on thenetworkerhub.com — Barnsgate already on /events/'],
+          ['Moving to the Hub', '1 Sep redirect', 'co.uk traffic lands on thenetworkeruk.com — Barnsgate already on /events/'],
         ],
       },
       launch: {

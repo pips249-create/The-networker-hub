@@ -14,7 +14,7 @@ const PUBLIC_BADGE_PATH = '/assets/' + BADGE_FILENAME;
 let cachedBase64 = null;
 
 function foundingBadgePublicUrl(siteUrl) {
-  const base = String(siteUrl || 'https://www.thenetworkerhub.com').replace(/\/$/, '');
+  const base = String(siteUrl || 'https://www.thenetworkeruk.com').replace(/\/$/, '');
   return base + PUBLIC_BADGE_PATH;
 }
 

@@ -380,12 +380,12 @@
         }
         setStatus(
           (result.data && result.data.message) ||
-            'Could not send your details. Email hello@thenetworkerhub.com instead.',
+            'Could not send your details. Email hello@thenetworkeruk.com instead.',
           'error'
         );
       })
       .catch(function () {
-        setStatus('Could not send your details. Email hello@thenetworkerhub.com instead.', 'error');
+        setStatus('Could not send your details. Email hello@thenetworkeruk.com instead.', 'error');
       })
       .finally(function () {
         if (submitBtn) {

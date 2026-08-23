@@ -1,5 +1,5 @@
 /**
- * Compare up to 3 saved opportunities side-by-side (My Hub).
+ * Compare up to 3 saved opportunities side-by-side (My account).
  */
 (function () {
   var STORAGE_KEY = 'hub_opp_compare';

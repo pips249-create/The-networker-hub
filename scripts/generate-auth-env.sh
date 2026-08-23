@@ -2,7 +2,7 @@
 # Generates values for Vercel auth env vars (run locally — do not commit output).
 set -euo pipefail
 
-echo "=== The Networker Hub — Auth environment variables ==="
+echo "=== The Networker UK — Auth environment variables ==="
 echo ""
 echo "Copy each KEY and VALUE into Vercel → your project → Settings → Environment Variables"
 echo "Enable Production (and Preview if you use preview URLs). Then Redeploy."

@@ -78,7 +78,7 @@ async function notifyPremiumWaitlistIfSlotsOpen(sb) {
           opportunity_title: 'your business opportunity',
           dashboard_url: dashboardUrl,
           premium_note:
-            'A premium spotlight place has opened on The Networker Hub. Upgrade from My business opportunities while slots last.',
+            'A premium spotlight place has opened on The Networker UK. Upgrade from My business opportunities while slots last.',
         },
       });
       await client

@@ -22,7 +22,7 @@
       kicker: 'Legal',
       title: 'Legal & policies',
       lede:
-        'Plain-English policies for The Networker Hub. Select a topic from the menu or read the overview below.',
+        'Plain-English policies for The Networker UK. Select a topic from the menu or read the overview below.',
     },
     privacy: {
       kicker: 'Legal · Privacy policy',
@@ -81,7 +81,7 @@
     },
   };
 
-  var defaultTitle = 'Legal & policies – The Networker Hub';
+  var defaultTitle = 'Legal & policies – The Networker UK';
 
   function updateHero(id) {
     var copy = heroCopy[id] || heroCopy.overview;
@@ -91,7 +91,7 @@
     if (kicker) kicker.textContent = copy.kicker;
     if (title) title.textContent = copy.title;
     if (lede) lede.textContent = copy.lede;
-    document.title = id === 'overview' ? defaultTitle : copy.title + ' – The Networker Hub';
+    document.title = id === 'overview' ? defaultTitle : copy.title + ' – The Networker UK';
   }
 
   function updateFooterNav(id) {

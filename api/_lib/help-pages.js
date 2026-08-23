@@ -4,9 +4,9 @@
 const HELP_PAGES = {
   'organiser-payouts': {
     path: '/help/organiser-payouts',
-    title: 'Organiser payouts – The Networker Hub',
+    title: 'Organiser payouts – The Networker UK',
     description:
-      'When organisers receive ticket payouts on The Networker Hub — 7-day settlement, Stripe Connect, archiving events, and requesting payouts from your dashboard.',
+      'When organisers receive ticket payouts on The Networker UK — 7-day settlement, Stripe Connect, archiving events, and requesting payouts from your dashboard.',
     image: '/assets/logo.png',
     ogType: 'article',
     faqQuestion: 'When do organisers receive payouts for ticket sales?',
@@ -17,12 +17,12 @@ const HELP_PAGES = {
   },
   'pricing-fees': {
     path: '/help/pricing-fees',
-    title: 'Ticket pricing & fees – The Networker Hub',
+    title: 'Ticket pricing & fees – The Networker UK',
     description:
-      'How The Networker Hub ticket fees work — 4.5% + 20p booking fee paid by attendees, organisers receive the full ticket price, with worked examples.',
+      'How The Networker UK ticket fees work — 4.5% + 20p booking fee paid by attendees, organisers receive the full ticket price, with worked examples.',
     image: '/assets/logo.png',
     ogType: 'article',
-    faqQuestion: 'What fees does The Networker Hub charge on tickets?',
+    faqQuestion: 'What fees does The Networker UK charge on tickets?',
     faqAnswer:
       'Attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before payment), which covers platform and payment processing. Organisers receive the full ticket price.',
     llmsSummary:

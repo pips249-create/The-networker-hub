@@ -183,7 +183,7 @@ function scanOpportunityRedFlags(opportunity) {
     flagged: true,
     reasons: hits,
     rejectionNote:
-      'We could not approve this listing because it includes content we do not allow on The Networker Hub:\n\n' +
+      'We could not approve this listing because it includes content we do not allow on The Networker UK:\n\n' +
       bulletLines +
       '\n\nPlease remove prohibited claims (such as recruitment-primary network marketing, guaranteed income, or unregulated investment promotions), ensure investment and territory are clearly stated, and resubmit.',
   };

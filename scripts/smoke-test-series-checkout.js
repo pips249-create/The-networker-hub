@@ -398,7 +398,7 @@ function runStaticChecks() {
     'attendee-dashboard-grouping',
     attendeeDash.includes('groupSeriesRegistrations') &&
       attendeeDash.includes('seriesDateLabel'),
-    'series grouping in My Hub'
+    'series grouping in My account'
   );
 
   const bookingSuccess = fs.readFileSync(path.join(root, 'js/booking-success.js'), 'utf8');

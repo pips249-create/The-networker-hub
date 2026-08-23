@@ -28,7 +28,7 @@ dotenv.config({ path: path.join(root, '.env') });
 const { getSupabaseAdmin } = require('../api/_lib/supabase');
 const { REGION_SECTORS } = require('../api/_lib/uk-outcode');
 
-const SITE = 'https://www.thenetworkerhub.com';
+const SITE = 'https://www.thenetworkeruk.com';
 const DEFAULT_OUT = path.join(root, 'data/Segment-A-hub-accounts-enriched.csv');
 const HUB_CSV = path.join(root, 'data/Segment-A-with-hub-accounts.csv');
 const SEGMENT_CSV = path.join(root, 'data/segment-a-email1.csv');

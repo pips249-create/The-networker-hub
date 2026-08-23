@@ -21,7 +21,7 @@
           id: 'spotlight',
           label: 'Spotlight callout',
           caption:
-            'Looking for your next move? {{title}} is now live on The Networker Hub.\n\n{{description}}\n\n👉 {{url}}',
+            'Looking for your next move? {{title}} is now live on The Networker UK.\n\n{{description}}\n\n👉 {{url}}',
           image: 'listing',
         },
         {
@@ -34,7 +34,7 @@
           id: 'question',
           label: 'Engagement question',
           caption:
-            'Could {{title}} be your next opportunity?\n\n{{description}}\n\nSee the full listing on The Networker Hub: {{url}}',
+            'Could {{title}} be your next opportunity?\n\n{{description}}\n\nSee the full listing on The Networker UK: {{url}}',
           image: 'listing',
         },
       ],
@@ -56,7 +56,7 @@
           id: 'carousel',
           label: 'Carousel-friendly',
           caption:
-            '{{title}} — now in the spotlight on The Networker Hub.\n\nSwipe-worthy opportunity 👇\n{{url}}',
+            '{{title}} — now in the spotlight on The Networker UK.\n\nSwipe-worthy opportunity 👇\n{{url}}',
           image: 'listing',
         },
         {
@@ -77,14 +77,14 @@
           id: 'upcoming',
           label: 'Coming up',
           caption:
-            '📅 Coming up on The Networker Hub — {{title}}\n\n{{date_line}} · {{location}}\n\n{{host_line}}Book your place: {{url}}',
+            '📅 Coming up on The Networker UK — {{title}}\n\n{{date_line}} · {{location}}\n\n{{host_line}}Book your place: {{url}}',
           image: 'listing',
         },
         {
           id: 'book_now',
           label: 'Book now',
           caption:
-            'Don\'t miss {{title}} — {{date_line}} in {{location}}.\n\nSecure your spot on The Networker Hub: {{url}}',
+            'Don\'t miss {{title}} — {{date_line}} in {{location}}.\n\nSecure your spot on The Networker UK: {{url}}',
           image: 'listing',
         },
         {
@@ -119,7 +119,7 @@
           id: 'free_entry',
           label: 'Free to attend',
           caption:
-            '🎟️ Free networking — {{title}}\n\n{{date_line}} · {{location}}\n\nRegister on The Networker Hub: {{url}}',
+            '🎟️ Free networking — {{title}}\n\n{{date_line}} · {{location}}\n\nRegister on The Networker UK: {{url}}',
           image: 'listing',
         },
         {
@@ -141,21 +141,21 @@
           id: 'discover',
           label: 'Discover the group',
           caption:
-            'Discover {{name}} on The Networker Hub — UK networking events and meetings.\n\n{{description}}\n\nView their profile: {{url}}',
+            'Discover {{name}} on The Networker UK — UK networking events and meetings.\n\n{{description}}\n\nView their profile: {{url}}',
           image: 'organiser',
         },
         {
           id: 'community',
           label: 'Community shoutout',
           caption:
-            '👋 Shoutout to {{name}} — one of the active networking groups on The Networker Hub.\n\n{{description}}\n\n{{url}}',
+            '👋 Shoutout to {{name}} — one of the active networking groups on The Networker UK.\n\n{{description}}\n\n{{url}}',
           image: 'organiser',
         },
         {
           id: 'events_live',
           label: 'Events now live',
           caption:
-            '{{name}} has events live on The Networker Hub right now.\n\nBrowse their upcoming listings: {{url}}',
+            '{{name}} has events live on The Networker UK right now.\n\nBrowse their upcoming listings: {{url}}',
           image: 'listing',
         },
       ],
@@ -168,21 +168,21 @@
           id: 'welcome',
           label: 'Group welcome',
           caption:
-            'Meet a few of our Founding Organisers · 2026 🎉\n\nHere are just a few of our 30 founding organisers confirmed ahead of launch on The Networker Hub:\n\n{{name_block}}\n\nWant your logo in the next post? Claim your free page, then email catherine@thenetworkerhub.com and ask to be included.\n{{url}}\n\n#TheNetworkerHub #FoundingOrganisers #UKNetworking #BusinessNetworking #NetworkingEvents #NetworkingGroups #SME #Entrepreneurs #BusinessCommunity #B2BNetworking',
+            'Meet a few of our Founding Organisers · 2026 🎉\n\nHere are just a few of our 30 founding organisers confirmed ahead of launch on The Networker UK:\n\n{{name_block}}\n\nWant your logo in the next post? Claim your free page, then email catherine@thenetworkeruk.com and ask to be included.\n{{url}}\n\n#TheNetworkerUK #FoundingOrganisers #UKNetworking #BusinessNetworking #NetworkingEvents #NetworkingGroups #SME #Entrepreneurs #BusinessCommunity #B2BNetworking',
           image: 'founding_card',
         },
         {
           id: 'leaderboard',
           label: 'Leaderboard shoutout',
           caption:
-            'Just a few of our 30 Founding Organisers · 2026 👏\n\n{{name_block}}\n\nWant in on the next shoutout? Claim your page, then email catherine@thenetworkerhub.com.\n{{url}}\n\n#TheNetworkerHub #FoundingOrganisers #UKNetworking #NetworkingEvents #BusinessNetworking #NetworkingGroups #SmallBusinessUK #B2B',
+            'Just a few of our 30 Founding Organisers · 2026 👏\n\n{{name_block}}\n\nWant in on the next shoutout? Claim your page, then email catherine@thenetworkeruk.com.\n{{url}}\n\n#TheNetworkerUK #FoundingOrganisers #UKNetworking #NetworkingEvents #BusinessNetworking #NetworkingGroups #SmallBusinessUK #B2B',
           image: 'founding_card',
         },
         {
           id: 'short',
           label: 'Short & punchy',
           caption:
-            'Just a few of our 30 Founding Organisers · 2026 🙌\n\n{{name_block_short}}\n\nClaim your page + email catherine@thenetworkerhub.com to be in the next post → {{url}}\n\n#TheNetworkerHub #FoundingOrganisers #UKNetworking #BusinessNetworking #NetworkingEvents #SME',
+            'Just a few of our 30 Founding Organisers · 2026 🙌\n\n{{name_block_short}}\n\nClaim your page + email catherine@thenetworkeruk.com to be in the next post → {{url}}\n\n#TheNetworkerUK #FoundingOrganisers #UKNetworking #BusinessNetworking #NetworkingEvents #SME',
           image: 'founding_card',
         },
       ],
@@ -195,14 +195,14 @@
           id: 'leaderboard',
           label: 'Leaderboard announce',
           caption:
-            '🏆 Top 10 networking groups on The Networker Hub — {{period_label}}\n\n{{ranked_list}}\n\nBrowse events and groups: {{url}}',
+            '🏆 Top 10 networking groups on The Networker UK — {{period_label}}\n\n{{ranked_list}}\n\nBrowse events and groups: {{url}}',
           image: 'ranking_card',
         },
         {
           id: 'carousel',
           label: 'Carousel caption',
           caption:
-            'Who made the Top 10 this month? 🏆\n\n{{ranked_list_short}}\n\nFull leaderboard on The Networker Hub: {{url}}',
+            'Who made the Top 10 this month? 🏆\n\n{{ranked_list_short}}\n\nFull leaderboard on The Networker UK: {{url}}',
           image: 'ranking_card',
         },
         {
@@ -224,14 +224,14 @@
           id: 'celebrate',
           label: 'Celebrate ranking',
           caption:
-            '🏆 {{name}} is ranked on The Networker Hub — recognised for great networking events.\n\nSee their profile: {{url}}',
+            '🏆 {{name}} is ranked on The Networker UK — recognised for great networking events.\n\nSee their profile: {{url}}',
           image: 'organiser',
         },
         {
           id: 'congrats',
           label: 'Congratulations post',
           caption:
-            'Congratulations to {{name}} — a top-rated networking group on The Networker Hub.\n\n{{url}}',
+            'Congratulations to {{name}} — a top-rated networking group on The Networker UK.\n\n{{url}}',
           image: 'organiser',
         },
       ],
@@ -244,14 +244,14 @@
           id: 'directory',
           label: 'Events directory',
           caption:
-            'Find your next networking event on The Networker Hub — meetings, webinars, workshops, exhibitions, awards and more across the UK.\n\nBrowse free: {{url}}',
+            'Find your next networking event on The Networker UK — meetings, webinars, workshops, exhibitions, awards and more across the UK.\n\nBrowse free: {{url}}',
           image: 'hub',
         },
         {
           id: 'weekend',
           label: 'Weekend planning',
           caption:
-            'Planning your week? Discover networking events near you on The Networker Hub.\n\n{{url}}',
+            'Planning your week? Discover networking events near you on The Networker UK.\n\n{{url}}',
           image: 'hub',
         },
       ],
@@ -264,14 +264,14 @@
           id: 'directory',
           label: 'Opportunities directory',
           caption:
-            'Browse franchises, side hustles, partnerships and more on Business Opportunities — free on The Networker Hub.\n\n{{url}}',
+            'Browse franchises, side hustles, partnerships and more on Business Opportunities — free on The Networker UK.\n\n{{url}}',
           image: 'hub',
         },
         {
           id: 'entrepreneur',
           label: 'For entrepreneurs',
           caption:
-            'Building something new? Explore business opportunities on The Networker Hub.\n\n{{url}}',
+            'Building something new? Explore business opportunities on The Networker UK.\n\n{{url}}',
           image: 'hub',
         },
       ],
@@ -284,21 +284,21 @@
           id: 'welcome',
           label: 'Welcome / intro',
           caption:
-            'Find your next networking event or business opportunity on The Networker Hub — free to browse.\n\n{{url}}',
+            'Find your next networking event or business opportunity on The Networker UK — free to browse.\n\n{{url}}',
           image: 'hub',
         },
         {
           id: 'three_things',
           label: 'Events · Opportunities',
           caption:
-            'The Networker Hub — your place for UK networking events and business opportunities.\n\nStart here: {{url}}',
+            'The Networker UK — your place for UK networking events and business opportunities.\n\nStart here: {{url}}',
           image: 'hub',
         },
         {
           id: 'sign_up',
           label: 'Sign up nudge',
           caption:
-            'Create a free account on The Networker Hub — book tickets, enquire about opportunities, and save your favourites.\n\n{{url}}',
+            'Create a free account on The Networker UK — book tickets, enquire about opportunities, and save your favourites.\n\n{{url}}',
           image: 'hub',
         },
       ],
@@ -312,7 +312,7 @@
     organiser: { label: 'Group profile photo' },
     ranking_card: { label: 'Top 10 ranking graphic' },
     founding_card: { label: 'Founding organisers graphic' },
-    hub: { label: 'Networker Hub logo' },
+    hub: { label: 'Networker UK logo' },
     none: { label: 'No image' },
   };
 
@@ -333,7 +333,7 @@
       /\/$/,
       ''
     );
-    return origin || 'https://www.thenetworkerhub.com';
+    return origin || 'https://www.thenetworkeruk.com';
   }
 
   function hubLogoUrl() {
@@ -757,11 +757,11 @@
       'Meet a few of our Founding Organisers · 2026 🎉\n\n' +
       'Here are just a few of our ' +
       SOCIAL_FOUNDING_TOTAL +
-      ' founding organisers confirmed ahead of launch on The Networker Hub:\n\n' +
+      ' founding organisers confirmed ahead of launch on The Networker UK:\n\n' +
       names.nameBlock +
-      '\n\nWant your logo in the next post? Claim your free page, then email catherine@thenetworkerhub.com and ask to be included.\n' +
+      '\n\nWant your logo in the next post? Claim your free page, then email catherine@thenetworkeruk.com and ask to be included.\n' +
       hubForOrganisersUrl() +
-      '\n\n#TheNetworkerHub #FoundingOrganisers #UKNetworking #BusinessNetworking #NetworkingEvents #NetworkingGroups #SME #Entrepreneurs #BusinessCommunity #B2BNetworking'
+      '\n\n#TheNetworkerUK #FoundingOrganisers #UKNetworking #BusinessNetworking #NetworkingEvents #NetworkingGroups #SME #Entrepreneurs #BusinessCommunity #B2BNetworking'
     );
   }
 
@@ -1022,7 +1022,7 @@
     ctx.font = '600 12px system-ui, sans-serif';
     var lines = [
       'Then email',
-      'catherine@thenetworkerhub.com',
+      'catherine@thenetworkeruk.com',
       'to be included in our',
       'social media post',
     ];
@@ -1137,7 +1137,7 @@
     ctx.fillStyle = 'rgba(255,255,255,0.55)';
     ctx.font = '500 20px system-ui, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('The Networker Hub · thenetworkerhub.com', width / 2, height - 42);
+    ctx.fillText('The Networker UK · thenetworkeruk.com', width / 2, height - 42);
 
     return canvas.toDataURL('image/png');
   }
@@ -1224,7 +1224,7 @@
     ctx.font = '500 22px system-ui, sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText(
-      'Just a few of our ' + SOCIAL_FOUNDING_TOTAL + ' founding organisers · thenetworkerhub.com',
+      'Just a few of our ' + SOCIAL_FOUNDING_TOTAL + ' founding organisers · thenetworkeruk.com',
       width / 2,
       height - 48
     );
@@ -1668,7 +1668,7 @@
       var style = currentStyle();
       var caption = applyTemplate(style.caption, {
         title: opp.title || 'Business opportunity',
-        description: trimText(opp.description, 140) || 'Explore this opportunity on The Networker Hub.',
+        description: trimText(opp.description, 140) || 'Explore this opportunity on The Networker UK.',
         url: opportunityPublicUrl(opp.id),
       });
       applyBuild(

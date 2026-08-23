@@ -1,5 +1,5 @@
 /** Hub-owned seed listings — temporary owner until a company claims and pays. */
-const HUB_SEED_OWNER_EMAIL = 'catherine@thenetworkerhub.com';
+const HUB_SEED_OWNER_EMAIL = 'catherine@thenetworkeruk.com';
 
 function isHubSeedOwnerEmail(email) {
   return (

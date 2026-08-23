@@ -163,7 +163,7 @@ async function sendOrganiserHubSuspendedEmail(sb, organiserId, options = {}) {
       warning_count: String(options.warningCount || CONDUCT_WARNING_LIMIT),
       suspension_reason:
         String(options.reason || '').trim() ||
-        'Repeated breaches of The Networker Hub organiser terms',
+        'Repeated breaches of The Networker UK organiser terms',
       suspension_details: String(options.details || '').trim(),
     },
     ''
@@ -406,7 +406,7 @@ async function reinstateOrganiser(sb, opts) {
     .insert({
       organiser_id: organiserId,
       action_type: 'reinstatement',
-      reason: 'Reinstated by The Networker Hub',
+      reason: 'Reinstated by The Networker UK',
       details: details || null,
       created_by: adminUserId,
     })

@@ -156,7 +156,7 @@ function buildRankingBadgeSvg(options) {
   const fullName = cleanGroupName(opts.name || opts.groupName || opts.organiserName);
   const nameLines = wrapGroupName(fullName, NAME_LINE_CHARS, 2);
   const displayName = nameLines.join(' ');
-  const title = `${displayName} — ${theme.shortLabel} on The Networker Hub · ${periodLine}`;
+  const title = `${displayName} — ${theme.shortLabel} on The Networker UK · ${periodLine}`;
   const uid =
     tier +
     '-' +
@@ -233,7 +233,7 @@ function buildRankingBadgeSvg(options) {
     `<text x="${TEXT_X}" y="${kickerY}" fill="${theme.muted}" font-family="Arial, Helvetica, sans-serif" font-size="9.5" font-weight="700" letter-spacing="0.16em">THE NETWORKER HUB</text>` +
     `<text x="${TEXT_X}" y="${tierY}" fill="${theme.metalSoft}" font-family="Georgia, 'Times New Roman', serif" font-size="18" font-weight="700">${escapeXml(theme.label)}</text>` +
     nameTexts +
-    `<text x="${TEXT_X}" y="${footerY}" fill="${theme.muted}" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="600">${escapeXml(periodLine)} · Verified on thenetworkerhub.com</text>` +
+    `<text x="${TEXT_X}" y="${footerY}" fill="${theme.muted}" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="600">${escapeXml(periodLine)} · Verified on thenetworkeruk.com</text>` +
     // Soft top sheen
     `<rect x="10" y="10" width="${BADGE_WIDTH - 20}" height="36" rx="10" fill="url(#sheen-${uid})"/>` +
     `</g>` +
@@ -256,8 +256,8 @@ function buildUnearnedRankingBadgeSvg(options) {
         : 'NOT A VERIFIED AWARD';
   const detail = period
     ? `${period} · Check current rankings`
-    : 'See verified awards on The Networker Hub';
-  const title = `${headline} — The Networker Hub`;
+    : 'See verified awards on The Networker UK';
+  const title = `${headline} — The Networker UK`;
   const uid = 'unearned-' + String(period || reason).replace(/[^a-z0-9]+/gi, '').slice(0, 12);
 
   return (
@@ -307,7 +307,7 @@ function rankingBadgeImageUrl(origin, tier, periodLabel, extras) {
 
 function rankingBadgeEmbedHtml(options) {
   const opts = options && typeof options === 'object' ? options : {};
-  const origin = String(opts.origin || 'https://www.thenetworkerhub.com').replace(/\/$/, '');
+  const origin = String(opts.origin || 'https://www.thenetworkeruk.com').replace(/\/$/, '');
   const profileUrl = String(opts.profileUrl || origin + '/rankings').trim();
   const rankingsUrl = String(opts.rankingsUrl || origin + '/rankings').trim();
   const groupName = String(opts.groupName || opts.name || 'Our group').trim();
@@ -315,7 +315,7 @@ function rankingBadgeEmbedHtml(options) {
   const tier = normalizeTier(opts.tier);
   const periodLabel = String(opts.periodLabel || opts.period || '').trim();
   const theme = tierTheme(tier);
-  const alt = `${groupName} — ${theme.shortLabel} networking group on The Networker Hub${periodLabel ? ' · ' + periodLabel : ''}`;
+  const alt = `${groupName} — ${theme.shortLabel} networking group on The Networker UK${periodLabel ? ' · ' + periodLabel : ''}`;
   const imgSrc = rankingBadgeImageUrl(origin, tier, periodLabel, {
     name: groupName,
     organiserId,
@@ -341,7 +341,7 @@ function rankingBadgeEmbedHtml(options) {
     '<a href="' +
     rankingsUrl.replace(/"/g, '&quot;') +
     '" target="_blank" rel="noopener noreferrer" style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#64748b;text-decoration:underline;">' +
-    'See this month’s top groups on The Networker Hub' +
+    'See this month’s top groups on The Networker UK' +
     '</a>'
   );
 }

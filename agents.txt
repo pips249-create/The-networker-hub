@@ -1,7 +1,7 @@
-# The Networker Hub — AI agent policy
-# https://www.thenetworkerhub.com
+# The Networker UK — AI agent policy
+# https://www.thenetworkeruk.com
 
 Structured FAQ & schema: /api/hubert-schema?format=llms
 FAQ JSON: /api/hubert-schema?page=faq-entries
 
-Contact: hello@thenetworkerhub.com
+Contact: hello@thenetworkeruk.com

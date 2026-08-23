@@ -99,7 +99,7 @@ function buildDocumentContext(registration) {
   const attendee = registration.attendees || {};
   const booked = resolveBookedListing({ registration, eventRow: ev, ticketRow: ticket });
   const bookingReference = formatBookingReference(registration.id);
-  const siteUrl = String(process.env.SITE_URL || 'https://www.thenetworkerhub.com').replace(/\/$/, '');
+  const siteUrl = String(process.env.SITE_URL || 'https://www.thenetworkeruk.com').replace(/\/$/, '');
   const eventUrl = booked.eventRow.slug
     ? siteUrl + '/events/' + encodeURIComponent(booked.eventRow.slug)
     : siteUrl + '/events/event?id=' + encodeURIComponent(registration.event_id || '');
@@ -197,7 +197,7 @@ function buildTicketPdf(context) {
     '',
     'Event page: ' + context.eventUrl,
     '',
-    'Issued by The Networker Hub on behalf of the event organiser.',
+    'Issued by The Networker UK on behalf of the event organiser.',
   ].filter(Boolean);
   return buildSimpleTextPdf(lines);
 }
@@ -256,7 +256,7 @@ function buildHubInvoiceHtml(context, options) {
         (context.bookingFee > 0
           ? '<tr><td>' +
             escapeHtml(context.bookingFeeLabel) +
-            ' — The Networker Hub</td><td>' +
+            ' — The Networker UK</td><td>' +
             escapeHtml(context.bookingFeeDisplay) +
             '</td></tr>'
           : '')
@@ -281,7 +281,7 @@ function buildHubInvoiceHtml(context, options) {
     escapeHtml(context.bookingReference) +
     '</h1><p class="note">Issued ' +
     escapeHtml(issuedAt) +
-    ' · The Networker Hub<br>Bill to: ' +
+    ' · The Networker UK<br>Bill to: ' +
     escapeHtml(context.attendeeName) +
     (context.attendeeEmail ? ' · ' + escapeHtml(context.attendeeEmail) : '') +
     '</p>' +

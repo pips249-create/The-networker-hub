@@ -46,7 +46,7 @@ module.exports = async function handler(req, res) {
     return json(res, 503, {
       ok: false,
       error: 'not_configured',
-      message: 'Online submissions are not available yet — email hello@thenetworkerhub.com.',
+      message: 'Online submissions are not available yet — email hello@thenetworkeruk.com.',
     });
   }
 

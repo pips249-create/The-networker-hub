@@ -3,7 +3,7 @@
  */
 (function (global) {
   var HUBERT_GREETING =
-    "Good afternoon. I'm Hubert — at your service on The Networker Hub. Do browse events and opportunities freely, or allow me to guide you through tickets, enquiries, and organiser tools.";
+    "Good afternoon. I'm Hubert — at your service on The Networker UK. Do browse events and opportunities freely, or allow me to guide you through tickets, enquiries, and organiser tools.";
 
   var DEFAULT_SUGGESTIONS = [
     { label: 'Upcoming events', prompt: 'What networking events are coming up?' },
@@ -106,7 +106,7 @@
         typing.remove();
         var reply =
           (data && data.reply) ||
-          'Sorry — I could not get a reply just now. Please email hello@thenetworkerhub.com.';
+          'Sorry — I could not get a reply just now. Please email hello@thenetworkeruk.com.';
         self.appendBubble('assistant', reply);
         self.history.push({ role: 'assistant', content: reply });
       })
@@ -114,7 +114,7 @@
         typing.remove();
         self.appendBubble(
           'assistant',
-          'Something went wrong. Please try again or email hello@thenetworkerhub.com.'
+          'Something went wrong. Please try again or email hello@thenetworkeruk.com.'
         );
       })
       .finally(function () {

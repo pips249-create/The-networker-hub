@@ -6,10 +6,10 @@
 const DEFAULT_ALLOWED_RECIPIENTS = [
   'pips249@gmail.com',
   'catherine@the-networker.co.uk',
-  'catherine@thenetworkerhub.com',
+  'catherine@thenetworkeruk.com',
   'rosie@the-networker.co.uk',
-  'rosie@thenetworkerhub.com',
-  'jamie@thenetworkerhub.com',
+  'rosie@thenetworkeruk.com',
+  'jamie@thenetworkeruk.com',
   'andreagaiga8@gmail.com',
   'hancher249@gmail.com',
   'rosie.mcgilvray@yahoo.co.uk',

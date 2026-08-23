@@ -21,7 +21,7 @@ File: `marketing/co-uk-upgrade-banner-snippet.html` — paste the **entire** fil
 ### Sneak Peek CTA (already in the snippet)
 
 ```
-https://www.thenetworkerhub.com/peek?utm_source=the-networker.co.uk&utm_medium=banner&utm_campaign=soft_launch_2026&utm_content=peek
+https://www.thenetworkeruk.com/peek?utm_source=the-networker.co.uk&utm_medium=banner&utm_campaign=soft_launch_2026&utm_content=peek
 ```
 
 ---
@@ -63,4 +63,4 @@ No Hub logo — co.uk purple header keeps the brand.
 
 ## When to remove
 
-Disable the snippet only when hard **301s** to `www.thenetworkerhub.com` go live (after the ~3-month SEO hold). Keep MX / `@the-networker.co.uk` mailboxes unchanged.
+Disable the snippet only when hard **301s** to `www.thenetworkeruk.com` go live (after the ~3-month SEO hold). Keep MX / `@the-networker.co.uk` mailboxes unchanged.

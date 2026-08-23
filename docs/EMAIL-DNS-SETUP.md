@@ -1,7 +1,7 @@
 # Email authentication — SPF, DKIM, DMARC
 
-**Domain:** `thenetworkerhub.com`  
-**Sending address today:** `hello@mail.thenetworkerhub.com` (Resend)  
+**Domain:** `thenetworkeruk.com`  
+**Sending address today:** `hello@mail.thenetworkeruk.com` (Resend)  
 **Owner:** Tech (Catherine)  
 **Last updated:** 5 August 2026
 
@@ -23,37 +23,37 @@ Checked publicly for the Hub send path:
 
 | Check | Status | Notes |
 |-------|--------|--------|
-| Apex SPF (`thenetworkerhub.com`) | Microsoft only | `v=spf1 include:spf.protection.outlook.com -all` — authorises Microsoft 365 for the root inbox, **not** Resend |
-| DKIM on `mail.thenetworkerhub.com` | Present | `resend._domainkey.mail` TXT in Vercel |
+| Apex SPF (`thenetworkeruk.com`) | Microsoft only | `v=spf1 include:spf.protection.outlook.com -all` — authorises Microsoft 365 for the root inbox, **not** Resend |
+| DKIM on `mail.thenetworkeruk.com` | Present | `resend._domainkey.mail` TXT in Vercel |
 | SPF / return-path | Present | `send.mail` TXT (`include:amazonses.com`) + MX (`feedback-smtp.eu-west-1.amazonses.com`) |
-| DMARC (`_dmarc.thenetworkerhub.com`) | Present | `v=DMARC1; p=none;` (optional: add `rua=mailto:hello@thenetworkerhub.com`) |
-| Apex MX | Microsoft 365 | Correct for receiving at `hello@thenetworkerhub.com` |
+| DMARC (`_dmarc.thenetworkeruk.com`) | Present | `v=DMARC1; p=none;` (optional: add `rua=mailto:hello@thenetworkeruk.com`) |
+| Apex MX | Microsoft 365 | Correct for receiving at `hello@thenetworkeruk.com` |
 
-**Bottom line:** Resend auth for `mail.thenetworkerhub.com` is in place (DKIM + `send.mail` SPF/MX + apex DMARC). Remaining junk/Other placement is mostly domain reputation and engagement — warm gently, ask recipients to move to Inbox, and avoid double nurture sends.
+**Bottom line:** Resend auth for `mail.thenetworkeruk.com` is in place (DKIM + `send.mail` SPF/MX + apex DMARC). Remaining junk/Other placement is mostly domain reputation and engagement — warm gently, ask recipients to move to Inbox, and avoid double nurture sends.
 
 ---
 
 ## 3. Resend setup (do this in order)
 
 1. Log in to [Resend](https://resend.com) → **Domains**.
-2. Open (or add) **`mail.thenetworkerhub.com`** — must match the domain in `RESEND_FROM`.
+2. Open (or add) **`mail.thenetworkeruk.com`** — must match the domain in `RESEND_FROM`.
 3. Copy **every** record Resend shows (typically DKIM TXT + SPF/MX on a `send` hostname). Exact values come from Resend — do not invent them.
-4. Add them in **Vercel DNS** for `thenetworkerhub.com` (NS is `ns1`/`ns2.vercel-dns.com`).
+4. Add them in **Vercel DNS** for `thenetworkeruk.com` (NS is `ns1`/`ns2.vercel-dns.com`).
 5. Click **Verify** in Resend. Wait until status is **Verified** (minutes to 48h).
 6. Publish DMARC if Resend did not create it (apex is enough for subdomains unless you set a separate policy):
 
 ```
 Type: TXT
 Name: _dmarc
-Value: v=DMARC1; p=none; rua=mailto:hello@thenetworkerhub.com
+Value: v=DMARC1; p=none; rua=mailto:hello@thenetworkeruk.com
 ```
 
 7. Confirm Vercel env:
    - `RESEND_API_KEY`
-   - `RESEND_FROM` = `The Networker Hub <hello@mail.thenetworkerhub.com>` (or another address on the **verified** domain)
+   - `RESEND_FROM` = `The Networker UK <hello@mail.thenetworkeruk.com>` (or another address on the **verified** domain)
 8. Redeploy. Send a test from Command Centre to Gmail **and** Outlook. Open the message → View headers → look for `spf=pass`, `dkim=pass`, `dmarc=pass`.
 
-Optional later: verify apex `thenetworkerhub.com` in Resend too if you want From addresses like `hello@thenetworkerhub.com` without the `mail.` prefix. Do **not** merge Resend into the existing Microsoft SPF on apex without care — you need a single SPF record that includes both `spf.protection.outlook.com` and Resend’s include.
+Optional later: verify apex `thenetworkeruk.com` in Resend too if you want From addresses like `hello@thenetworkeruk.com` without the `mail.` prefix. Do **not** merge Resend into the existing Microsoft SPF on apex without care — you need a single SPF record that includes both `spf.protection.outlook.com` and Resend’s include.
 
 For organiser **Email 1** rebrand campaigns, also verify **`the-networker.co.uk`** and set `RESEND_FROM_LEGACY` (e.g. `Rosie @ The Networker <hello@the-networker.co.uk>`). That domain already has DMARC via Brevo; keep SPF includes aligned with whoever actually sends.
 
@@ -61,7 +61,7 @@ For organiser **Email 1** rebrand campaigns, also verify **`the-networker.co.uk`
 
 ## 4. Records to expect from Resend
 
-Exact hostnames/values come from the Resend Domains UI. Typically for `mail.thenetworkerhub.com`:
+Exact hostnames/values come from the Resend Domains UI. Typically for `mail.thenetworkeruk.com`:
 
 | Type | Host (example) | Purpose |
 |------|----------------|---------|
@@ -72,7 +72,7 @@ Exact hostnames/values come from the Resend Domains UI. Typically for `mail.then
 **DMARC starter policy (after SPF + DKIM pass):**
 
 ```
-v=DMARC1; p=none; rua=mailto:hello@thenetworkerhub.com
+v=DMARC1; p=none; rua=mailto:hello@thenetworkeruk.com
 ```
 
 Move to `p=quarantine` or `p=reject` once rua reports look clean (weeks, not days).
@@ -84,7 +84,7 @@ Move to `p=quarantine` or `p=reject` once rua reports look clean (weeks, not day
 Authentication is the gate. Then:
 
 1. **Warm gently** — avoid large blast days while the domain is new. The dual signup-nudge catch-up is fixed in code so Email 1 and Email 2 no longer go out in the same cron.
-2. **Ask recipients to move one message to Inbox** and add `The Networker Hub` / `hello@mail.thenetworkerhub.com` as a contact (strong signal for Outlook).
+2. **Ask recipients to move one message to Inbox** and add `The Networker UK` / `hello@mail.thenetworkeruk.com` as a contact (strong signal for Outlook).
 3. **Reply to a test** from your own Outlook inbox — engagement helps more than subject-line tricks.
 4. In Resend, open the failed/junk send → **Deliverability Insights**.
 5. Keep unsubscribe visible (templates already include it; sends also set `List-Unsubscribe` + one-click `List-Unsubscribe-Post`).
@@ -101,7 +101,7 @@ Register for monitoring when volume grows:
 
 | Step | Done |
 |------|:----:|
-| `mail.thenetworkerhub.com` added in Resend | ☐ |
+| `mail.thenetworkeruk.com` added in Resend | ☐ |
 | All Resend DNS records published in Vercel DNS | ☐ |
 | Resend shows domain **Verified** | ☐ |
 | DMARC TXT published (`p=none` minimum) | ☐ |

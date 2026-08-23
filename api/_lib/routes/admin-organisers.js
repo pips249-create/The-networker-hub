@@ -789,7 +789,7 @@ async function createOrganiserGroupFromAdmin(body) {
   if (error) throw new Error(error.message);
   const counts = await eventCountsForOrganisers(sb, [created.id]);
   const loginMeta = await loginMetaForOrganisers(sb, [row]);
-  const host = String(process.env.SITE_URL || 'https://www.thenetworkerhub.com').replace(/\/$/, '');
+  const host = String(process.env.SITE_URL || 'https://www.thenetworkeruk.com').replace(/\/$/, '');
   const claimUrl = await resolveOrganiserClaimUrl(email, host);
 
   return {
@@ -949,7 +949,7 @@ module.exports = async function handler(req, res) {
         });
       }
 
-      const host = String(process.env.SITE_URL || 'https://www.thenetworkerhub.com').replace(/\/$/, '');
+      const host = String(process.env.SITE_URL || 'https://www.thenetworkeruk.com').replace(/\/$/, '');
       const claimUrl = await resolveOrganiserClaimUrl(email, host);
       const organiserName = String(organiser.name || '').trim() || 'your group';
       const { sendTemplatedEmail } = require('../send-template-email');
@@ -957,7 +957,7 @@ module.exports = async function handler(req, res) {
       await sendTemplatedEmail({
         slug: 'organiser_launch_invite',
         to: email,
-        subject: "We've set up a page for " + organiserName + ' on The Networker Hub',
+        subject: "We've set up a page for " + organiserName + ' on The Networker UK',
         variables: {
           ...campaignSiteVars(host),
           ...foundOrganiserLaunchInviteCopy(organiserName),

@@ -1,8 +1,8 @@
-# The Networker Hub
+# The Networker UK
 
 Member and organiser platform for UK networking events, exhibitions, and business opportunities.
 
-**Production:** https://www.thenetworkerhub.com · **Preview:** https://the-networker-hub.vercel.app/
+**Production:** https://www.thenetworkeruk.com · **Preview:** https://the-networker-hub.vercel.app/
 
 ## Start here
 

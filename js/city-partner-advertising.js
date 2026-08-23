@@ -543,7 +543,7 @@
             );
           }
           setStatus(
-            'Thanks — payment confirmed. Your cities are reserved and we have emailed next steps. Send logo and link to rosie@thenetworkerhub.com and we will publish once creative is approved.',
+            'Thanks — payment confirmed. Your cities are reserved and we have emailed next steps. Send logo and link to rosie@thenetworkeruk.com and we will publish once creative is approved.',
             'ok'
           );
           focusCityPartnerPackage();
@@ -551,14 +551,14 @@
         .catch(function (err) {
           setStatus(
             err.message ||
-              'Payment received — if this message persists, email rosie@thenetworkerhub.com with your checkout receipt.',
+              'Payment received — if this message persists, email rosie@thenetworkeruk.com with your checkout receipt.',
             'error'
           );
           focusCityPartnerPackage();
         });
     } else {
       setStatus(
-        'Thanks — payment received. Your cities are reserved. Send logo and link to rosie@thenetworkerhub.com and we will publish your placement once creative is approved.',
+        'Thanks — payment received. Your cities are reserved. Send logo and link to rosie@thenetworkeruk.com and we will publish your placement once creative is approved.',
         'ok'
       );
       focusCityPartnerPackage();

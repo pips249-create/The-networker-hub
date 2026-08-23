@@ -18,7 +18,7 @@ const {
   organiserGroupEditUrl,
 } = require('./hub-email-urls');
 
-const CLAIM_CONFIRMED_REPLY_TO = 'catherine@thenetworkerhub.com';
+const CLAIM_CONFIRMED_REPLY_TO = 'catherine@thenetworkeruk.com';
 
 const {
   foundingBadgePublicUrl,

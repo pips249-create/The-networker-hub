@@ -79,7 +79,7 @@ function buildSponsorSection(block, options) {
   if (!hasSponsorLogo(block) || !isEmailSafeLogoUrl(rawLogo)) return '';
   const logo = toPublicAssetUrl(rawLogo, process.env.SITE_URL);
   if (!logo) return '';
-  const site = String(options?.siteUrl || process.env.SITE_URL || 'https://www.thenetworkerhub.com').replace(
+  const site = String(options?.siteUrl || process.env.SITE_URL || 'https://www.thenetworkeruk.com').replace(
     /\/$/,
     ''
   );

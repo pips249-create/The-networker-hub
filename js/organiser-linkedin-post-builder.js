@@ -69,11 +69,11 @@
       kicker: 'NEXT EVENT',
       line1: 'We have just added',
       line2: 'a new event',
-      line3: 'Book your place on The Networker Hub',
+      line3: 'Book your place on The Networker UK',
       caption:
-        "We've just added a new event: {eventTitle}\n\n{dateLine}{locationLine}Buy tickets now on The Networker Hub:\n{url}",
+        "We've just added a new event: {eventTitle}\n\n{dateLine}{locationLine}Buy tickets now on The Networker UK:\n{url}",
       captionPast:
-        'Thank you to everyone who joined us for {eventTitle}.\n\n{dateLine}{locationLine}Find our next date on The Networker Hub:\n{url}',
+        'Thank you to everyone who joined us for {eventTitle}.\n\n{dateLine}{locationLine}Find our next date on The Networker UK:\n{url}',
     },
     {
       id: 'split_frame',
@@ -86,11 +86,11 @@
       kicker: 'JOIN US',
       line1: 'Save the date',
       line2: 'for our next meet',
-      line3: 'Tickets open on The Networker Hub',
+      line3: 'Tickets open on The Networker UK',
       caption:
-        'Save the date for {eventTitle}.\n\n{dateLine}{locationLine}Book via The Networker Hub:\n{url}',
+        'Save the date for {eventTitle}.\n\n{dateLine}{locationLine}Book via The Networker UK:\n{url}',
       captionPast:
-        'What a room — thank you for coming to {eventTitle}.\n\n{dateLine}{locationLine}See what’s next on The Networker Hub:\n{url}',
+        'What a room — thank you for coming to {eventTitle}.\n\n{dateLine}{locationLine}See what’s next on The Networker UK:\n{url}',
     },
     {
       id: 'big_type',
@@ -105,9 +105,9 @@
       line2: 'of warm referrals',
       line3: 'Meet local business owners ready to swap introductions',
       caption:
-        'Our next networking event: {eventTitle}\n\n{dateLine}{locationLine}Find us on The Networker Hub → {url}',
+        'Our next networking event: {eventTitle}\n\n{dateLine}{locationLine}Find us on The Networker UK → {url}',
       captionPast:
-        'Grateful for everyone who came to {eventTitle}.\n\n{dateLine}{locationLine}Next gathering on The Networker Hub → {url}',
+        'Grateful for everyone who came to {eventTitle}.\n\n{dateLine}{locationLine}Next gathering on The Networker UK → {url}',
     },
     {
       id: 'magazine',
@@ -122,9 +122,9 @@
       line2: 'inbox later',
       line3: 'Meet the people behind the profiles',
       caption:
-        'Come and meet us at {eventTitle}.\n\n{dateLine}{locationLine}Details on The Networker Hub → {url}',
+        'Come and meet us at {eventTitle}.\n\n{dateLine}{locationLine}Details on The Networker UK → {url}',
       captionPast:
-        'Thanks for the conversations at {eventTitle}.\n\n{dateLine}{locationLine}Our next date is on The Networker Hub → {url}',
+        'Thanks for the conversations at {eventTitle}.\n\n{dateLine}{locationLine}Our next date is on The Networker UK → {url}',
     },
     {
       id: 'brand_spotlight',
@@ -137,11 +137,11 @@
       kicker: 'TICKETS OPEN',
       line1: 'Save your seat',
       line2: 'at the table',
-      line3: 'Book on The Networker Hub',
+      line3: 'Book on The Networker UK',
       caption:
-        'Tickets are open for {eventTitle}.\n\n{dateLine}{locationLine}Book via The Networker Hub → {url}',
+        'Tickets are open for {eventTitle}.\n\n{dateLine}{locationLine}Book via The Networker UK → {url}',
       captionPast:
-        'Thank you for joining {eventTitle}.\n\n{dateLine}{locationLine}Book the next one on The Networker Hub → {url}',
+        'Thank you for joining {eventTitle}.\n\n{dateLine}{locationLine}Book the next one on The Networker UK → {url}',
     },
     {
       id: 'opportunity',
@@ -155,7 +155,7 @@
       line2: 'worth a conversation',
       line3: 'Franchise, partnership, or side-hustle — enquire to learn more',
       caption:
-        "There's a business opportunity open that may be worth a conversation — franchise, partnership, or side-hustle.\n\n{listing}\nEnquire on The Networker Hub → {url}",
+        "There's a business opportunity open that may be worth a conversation — franchise, partnership, or side-hustle.\n\n{listing}\nEnquire on The Networker UK → {url}",
     },
     {
       id: 'partnership',
@@ -169,7 +169,7 @@
       line2: 'right partners',
       line3: 'Serious enquiries welcome from aligned founders',
       caption:
-        "We're looking for the right partners. Serious enquiries welcome from aligned founders and operators.\n\n{listing}\nOn The Networker Hub → {url}",
+        "We're looking for the right partners. Serious enquiries welcome from aligned founders and operators.\n\n{listing}\nOn The Networker UK → {url}",
     },
     {
       id: 'franchise',
@@ -183,7 +183,7 @@
       line2: 'now open to enquire',
       line3: 'Explore territory, investment, and next steps',
       caption:
-        'Franchise opportunity now open to enquire — explore territory, investment, and next steps.\n\n{listing}\nOn The Networker Hub → {url}',
+        'Franchise opportunity now open to enquire — explore territory, investment, and next steps.\n\n{listing}\nOn The Networker UK → {url}',
     },
     {
       id: 'enquire',
@@ -197,7 +197,7 @@
       line2: 'Enquire to learn more',
       line3: 'Send a short note — we will share what matters',
       caption:
-        'Curious? Enquire to learn more — send a short note and we will share the details that matter.\n\n{listing}\nOn The Networker Hub → {url}',
+        'Curious? Enquire to learn more — send a short note and we will share the details that matter.\n\n{listing}\nOn The Networker UK → {url}',
     },
     {
       id: 'verified',
@@ -207,11 +207,11 @@
       accent: '#c299d1',
       kicker: 'TRUST MARK',
       line1: 'Verified organiser',
-      line2: 'on The Networker Hub',
+      line2: 'on The Networker UK',
       line3: 'A small credibility mark for your LinkedIn post',
       hubEmphasis: true,
       caption:
-        "We're a verified organiser on The Networker Hub — the UK home for networking events and business opportunities.\n\n{name}\n→ {url}",
+        "We're a verified organiser on The Networker UK — the UK home for networking events and business opportunities.\n\n{name}\n→ {url}",
     },
     {
       id: 'listed',
@@ -221,11 +221,11 @@
       accent: '#9a7aa8',
       kicker: 'DIRECTORY',
       line1: 'Listed on',
-      line2: 'The Networker Hub',
+      line2: 'The Networker UK',
       line3: 'UK networking events and business opportunities',
       hubEmphasis: true,
       caption:
-        "You'll find us listed on The Networker Hub — UK networking events and business opportunities.\n\n{name}\n→ {url}",
+        "You'll find us listed on The Networker UK — UK networking events and business opportunities.\n\n{name}\n→ {url}",
     },
   ];
 
@@ -304,7 +304,7 @@
       x: W - w - 40,
       y: H - h - 40,
       textBelow: false,
-      label: 'The Networker Hub',
+      label: 'The Networker UK',
     };
   }
 
@@ -987,7 +987,7 @@
 
   function siteOrigin() {
     if (global.location && global.location.origin) return global.location.origin;
-    return 'https://www.thenetworkerhub.com';
+    return 'https://www.thenetworkeruk.com';
   }
 
   function withShareUtm(url, content) {
@@ -1290,7 +1290,7 @@
       '<label class="org-post-field" id="post-listing-field" hidden style="display:none">' +
       '<span class="org-post-label">Which business opportunity?</span>' +
       '<select id="post-listing" aria-label="Business opportunity listing"></select>' +
-      '<span class="org-post-hint">The post will link to this listing on The Networker Hub.</span>' +
+      '<span class="org-post-hint">The post will link to this listing on The Networker UK.</span>' +
       '</label>' +
       '</div>' +
       '<div class="org-post-field">' +
@@ -1995,8 +1995,8 @@
       if (!state.hubLogoImg) {
         try {
           state.hubLogoImg = await loadAsset([
-            '../assets/logo-nav-transparent.png',
-            '/assets/logo-nav-transparent.png',
+            '../assets/logo-nav-transparent.png?v=20260823ukpng',
+            '/assets/logo-nav-transparent.png?v=20260823ukpng',
           ]);
         } catch (e) {
           state.hubLogoImg = null;

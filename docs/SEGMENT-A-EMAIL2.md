@@ -4,7 +4,7 @@
 **Status:** **Path B** — CTA lands on their public organiser page first; Claim / Edit → free account → organiser claim flow  
 **Template:** `organiser_launch_invite`  
 **Subject (Brevo):** `Congratulations: {{ contact.ORGANISER_NAME }} is ready`  
-**Send from:** Brevo (same co.uk / organiser list) · **Reply-to:** `catherine@thenetworkerhub.com`  
+**Send from:** Brevo (same co.uk / organiser list) · **Reply-to:** `catherine@thenetworkeruk.com`  
 **Paste HTML:** `data/email2-brevo-ready.html`  
 **Sponsor:** My Medical Cover (Barnsgate declined)
 
@@ -50,7 +50,7 @@ node scripts/build-email2-brevo.js
 4. [ ] Import `data/Segment-A-Email2-1st-100-Brevo-import.csv` into a **new list** (e.g. `Email2 soft batch 100`) — update existing contacts if prompted
 5. [ ] Map attributes: `ORGANISER_NAME` ← Organiser name · `OTHER_GROUPS_NOTE` · `CLAIM_URL`
 6. [ ] Paste `data/email2-brevo-ready.html` as the campaign body
-7. [ ] Subject / reply-to / from as Email 1 (`catherine@thenetworkerhub.com` reply-to)
+7. [ ] Subject / reply-to / from as Email 1 (`catherine@thenetworkeruk.com` reply-to)
 8. [ ] Audience = that first-100 list only (not full Segment A)
 9. [ ] Optional: one more test send to yourself from the campaign
 10. [ ] **Send now** — first 100

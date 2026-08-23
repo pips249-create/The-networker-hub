@@ -21,7 +21,7 @@
   }
 
   function origin() {
-    return (location.origin || 'https://www.thenetworkerhub.com').replace(/\/$/, '');
+    return (location.origin || 'https://www.thenetworkeruk.com').replace(/\/$/, '');
   }
 
   function normalizeTier(raw) {
@@ -61,7 +61,7 @@
       name +
       ' — ' +
       String(entry.cardLabel || entry.displayLabel || 'Top ranking') +
-      ' on The Networker Hub';
+      ' on The Networker UK';
     var img = badgeImageUrl(tier, period, { name: name, organiserId: org.id });
 
     return (
@@ -79,7 +79,7 @@
       '<a href="' +
       rankingsUrl +
       '" target="_blank" rel="noopener noreferrer" style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#64748b;text-decoration:underline;">' +
-      'See the monthly leaderboard on The Networker Hub</a>'
+      'See the monthly leaderboard on The Networker UK</a>'
     );
   }
 
@@ -130,7 +130,7 @@
         ' badge on your website. It links to your Hub profile and the monthly leaderboard.';
     }
 
-    document.title = name + ' ranking badge – The Networker Hub';
+    document.title = name + ' ranking badge – The Networker UK';
 
     var profileUrl =
       org.profilePath && org.profilePath.indexOf('http') === 0

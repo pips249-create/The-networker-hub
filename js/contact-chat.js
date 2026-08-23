@@ -12,6 +12,6 @@
     if (!name || !email || !message) return;
     var subject = encodeURIComponent('Contact from ' + name);
     var body = encodeURIComponent('Name: ' + name + '\nEmail: ' + email + '\n\n' + message);
-    window.location.href = 'mailto:hello@thenetworkerhub.com?subject=' + subject + '&body=' + body;
+    window.location.href = 'mailto:hello@thenetworkeruk.com?subject=' + subject + '&body=' + body;
   });
 })();

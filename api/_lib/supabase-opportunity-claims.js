@@ -123,7 +123,7 @@ async function notifyAdminOfOpportunityClaimDispute({ opportunity, session, disp
   const title = String(opportunity?.title || 'Business opportunity').trim();
   const profileEmailAddr = profileEmail(opportunity);
   const reporterEmail = String(session?.email || '').trim();
-  const siteUrl = String(process.env.SITE_URL || 'https://www.thenetworkerhub.com').replace(/\/$/, '');
+  const siteUrl = String(process.env.SITE_URL || 'https://www.thenetworkeruk.com').replace(/\/$/, '');
   const adminLink = siteUrl + '/admin/#cleanup/opportunities';
 
   const subject = 'Business opportunity disputed — ' + title;
@@ -146,7 +146,7 @@ async function notifyAdminOfOpportunityClaimDispute({ opportunity, session, disp
     '<p>Review in Command Centre → Opportunities cleanup, or open <a href="' +
     escapeHtml(adminLink) +
     '">admin opportunities</a>.</p>' +
-    '<p>— The Networker Hub</p>';
+    '<p>— The Networker UK</p>';
 
   try {
     await sendViaResend({ to: adminEmail, subject, html });

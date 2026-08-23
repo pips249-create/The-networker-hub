@@ -62,7 +62,7 @@
     reminder: {
       kicker: 'Event reminder',
       title: 'Your event is coming up',
-      lede: 'A quick reminder about the event you booked on The Networker Hub. ' + LOREM_SHORT,
+      lede: 'A quick reminder about the event you booked on The Networker UK. ' + LOREM_SHORT,
       detailHtml:
         '<div class="ad-full-email-event-wrap">' +
         '<div class="ad-full-email-event">' +
@@ -465,13 +465,13 @@
         }
         var message =
           (result.data && result.data.message) ||
-          'Could not send your enquiry. Email rosie@thenetworkerhub.com and our team will follow up.';
+          'Could not send your enquiry. Email rosie@thenetworkeruk.com and our team will follow up.';
         if (callbacks.onError) callbacks.onError(message);
         return result;
       })
       .catch(function () {
         if (callbacks.onError) {
-          callbacks.onError('Could not send your enquiry. Email rosie@thenetworkerhub.com and our team will follow up.');
+          callbacks.onError('Could not send your enquiry. Email rosie@thenetworkeruk.com and our team will follow up.');
         }
       });
   }
@@ -1173,7 +1173,7 @@
       '<div class="ad-full-email-body">' +
       '<div class="ad-full-email-check" aria-hidden="true"></div>' +
       '<p class="ad-full-email-kicker">' +
-      esc(config.kicker || 'Update from The Networker Hub') +
+      esc(config.kicker || 'Update from The Networker UK') +
       '</p>' +
       '<p class="ad-full-email-title">' +
       esc(config.title || 'You have a new notification') +
@@ -1194,7 +1194,7 @@
       '<img src="' +
       DEMO_HUB_LOGO +
       '" alt="" class="ad-full-email-hub-logo ad-full-email-hub-logo--sm">' +
-      '<p class="ad-full-email-brand-name">The Networker Hub</p>' +
+      '<p class="ad-full-email-brand-name">The Networker UK</p>' +
       '</div>' +
       '</div>';
   }

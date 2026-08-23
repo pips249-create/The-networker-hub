@@ -16,8 +16,8 @@
   function showReady() {
     if (lede) {
       lede.textContent = title
-        ? '"' + title + '" is now a premium listing on The Networker Hub.'
-        : 'Your opportunity is now a premium listing on The Networker Hub.';
+        ? '"' + title + '" is now a premium listing on The Networker UK.'
+        : 'Your opportunity is now a premium listing on The Networker UK.';
     }
     if (status) status.textContent = 'Featured placement is active. Thank you for subscribing.';
     if (actions) actions.hidden = false;

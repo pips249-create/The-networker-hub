@@ -439,7 +439,7 @@ async function runMonthlyOrganiserRankingSnapshot(options) {
 
       const profileUrl = profileUrlForOrganiser(orgRow, siteUrl);
       const badgeShort = publicBadgeLabel(row.label);
-      const socialShareText = `Proud to share that ${orgRow.name || 'our group'} is a ${badgeShort} on The Networker Hub for ${periodLabel}. ⭐ ${profileUrl}`;
+      const socialShareText = `Proud to share that ${orgRow.name || 'our group'} is a ${badgeShort} on The Networker UK for ${periodLabel}. ⭐ ${profileUrl}`;
       const badgeUrl = `${siteUrl}/rankings/badge?id=${encodeURIComponent(row.organiserId)}`;
       const rankingsUrl = `${siteUrl}/rankings`;
       const primaryCta = Math.random() < 0.5 ? 'badge' : 'rankings';

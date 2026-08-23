@@ -272,8 +272,8 @@ function buildConfirmationEmailHtml(input) {
     '<p style="margin:0 0 12px;">Thanks — we have your details for <strong>' +
     escHtml(input.eventTitle) +
     '</strong>.</p>' +
-    '<p style="margin:0 0 12px;">Catherine or Jamie will list it on The Networker Hub and email you when it&rsquo;s live (usually within one business day).</p>' +
-    '<p style="margin:0;">The Networker Hub<br><a href="https://www.thenetworkerhub.com/add-your-event">thenetworkerhub.com/add-your-event</a></p>' +
+    '<p style="margin:0 0 12px;">Catherine or Jamie will list it on The Networker UK and email you when it&rsquo;s live (usually within one business day).</p>' +
+    '<p style="margin:0;">The Networker UK<br><a href="https://www.thenetworkeruk.com/add-your-event">thenetworkeruk.com/add-your-event</a></p>' +
     '</div>'
   );
 }
@@ -348,7 +348,7 @@ async function submitEventIntake(body) {
   if (error) {
     if (/event_intake_submissions/i.test(error.message || '')) {
       const err = new Error(
-        'Event intake is not configured yet — email hello@thenetworkerhub.com with your event details.'
+        'Event intake is not configured yet — email hello@thenetworkeruk.com with your event details.'
       );
       err.code = 'not_configured';
       throw err;
@@ -374,7 +374,7 @@ async function submitEventIntake(body) {
   try {
     await sendViaResend({
       to: input.email,
-      subject: 'We received your event details — The Networker Hub',
+      subject: 'We received your event details — The Networker UK',
       html: buildConfirmationEmailHtml(input),
       replyTo: to,
       skipAllowlist: true,

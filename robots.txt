@@ -1,4 +1,4 @@
-# The Networker Hub — https://www.thenetworkerhub.com
+# The Networker UK — https://www.thenetworkeruk.com
 User-agent: *
 Allow: /
 Disallow: /admin/
@@ -18,7 +18,7 @@ Disallow: /reset-password
 Disallow: /home2.5
 Disallow: /advertising-cta-preview
 
-Sitemap: https://www.thenetworkerhub.com/sitemap.xml
+Sitemap: https://www.thenetworkeruk.com/sitemap.xml
 
 # AI / answer-engine crawlers
 Allow: /llms.txt

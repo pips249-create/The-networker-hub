@@ -66,7 +66,7 @@
     'fo-stripe-connect': {
       title: 'Secure Stripe Connect checkout',
       body:
-        'Paid checkout uses Stripe Connect. Attendees pay on The Networker Hub; ticket revenue goes to your connected account. Connect once per organiser page under Revenue.',
+        'Paid checkout uses Stripe Connect. Attendees pay on The Networker UK; ticket revenue goes to your connected account. Connect once per organiser page under Revenue.',
     },
     'fo-keep-ticket-price': {
       title: 'Keep 100% of the ticket price',
@@ -91,7 +91,7 @@
     'fo-booking-confirmations': {
       title: 'Automated booking confirmations',
       body:
-        'Every booking triggers a branded confirmation email with event details, ticket type, and a link to My Hub. No manual sending after checkout.',
+        'Every booking triggers a branded confirmation email with event details, ticket type, and a link to My account. No manual sending after checkout.',
     },
     'fo-24hr-reminders': {
       title: '24-hour event reminders',

@@ -179,7 +179,7 @@
     try {
       document.title =
         (org && org.name ? org.name + ' — ' : '') +
-        'Claim your organiser page – The Networker Hub';
+        'Claim your organiser page – The Networker UK';
     } catch (e) {}
 
     document.body.classList.add('org-claim-invite-active');
@@ -319,7 +319,7 @@
     if (marquee) {
       marquee.setAttribute(
         'aria-label',
-        'Organisers already on The Networker Hub'
+        'Organisers already on The Networker UK'
       );
     }
   }
@@ -692,7 +692,7 @@
     if (heading) heading.textContent = 'Your membership';
     if (leadEl) {
       leadEl.textContent = state.billedThroughHub
-        ? 'You are an active member of this group. Manage your card or cancel from My Hub.'
+        ? 'You are an active member of this group. Manage your card or cancel from My account.'
         : 'You are on this group’s member list. Member rates unlock automatically when you book while signed in.';
     }
     plansEl.innerHTML =
@@ -705,7 +705,7 @@
         : 'Your membership is active on this organiser’s member list.') +
       '</p>' +
       '</div>' +
-      '<a class="org-profile-btn org-profile-btn--primary" href="/account/#memberships">Manage in My Hub</a>' +
+      '<a class="org-profile-btn org-profile-btn--primary" href="/account/#memberships">Manage in My account</a>' +
       '</div>';
   }
 
@@ -746,7 +746,7 @@
     if (heading) heading.textContent = 'Join this group';
     if (leadEl) {
       leadEl.textContent =
-        'Pay monthly or annually through The Networker Hub. The group receives 100% of the membership price (and their VAT if they add it). A booking fee (4.5% + 20p) is added at checkout.';
+        'Pay monthly or annually through The Networker UK. The group receives 100% of the membership price (and their VAT if they add it). A booking fee (4.5% + 20p) is added at checkout.';
     }
 
     section.hidden = false;
@@ -1029,7 +1029,7 @@
   function renderOrganiser(org) {
     currentOrganiser = org;
     document.getElementById('org-profile-content').hidden = false;
-    document.title = (org.name || 'Organiser') + ' – The Networker Hub';
+    document.title = (org.name || 'Organiser') + ' – The Networker UK';
 
     renderPhoto(org);
     document.getElementById('org-name').textContent = org.name || 'Organiser';
@@ -1128,7 +1128,7 @@
     if (descEl) {
       var descText =
         org.description ||
-        'This organiser is building their profile on The Networker Hub. Browse their upcoming listings below.';
+        'This organiser is building their profile on The Networker UK. Browse their upcoming listings below.';
       if (window.HubPlainTextFormat && HubPlainTextFormat.formatDocument && org.description) {
         descEl.innerHTML = HubPlainTextFormat.formatDocument(descText, {
           paragraphClass: 'org-profile-p',
@@ -1218,7 +1218,7 @@
         var url = location.href;
         if (navigator.share) {
           navigator
-            .share({ title: org.name, text: 'Networking group on The Networker Hub', url: url })
+            .share({ title: org.name, text: 'Networking group on The Networker UK', url: url })
             .catch(function () {});
           return;
         }
@@ -1333,7 +1333,7 @@
           }
           showClaimStatus(
             (result.data && (result.data.message || result.data.error)) ||
-              'Could not send your request. Please email hello@thenetworkerhub.com instead.',
+              'Could not send your request. Please email hello@thenetworkeruk.com instead.',
             false
           );
         })

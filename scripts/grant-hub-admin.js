@@ -15,10 +15,10 @@ const { promoteUserToAdmin } = require('../api/_lib/supabase-auth');
 const { isSupabaseConfigured } = require('../api/_lib/supabase');
 
 const DEFAULT_NAMES = {
-  'catherine@thenetworkerhub.com': 'Catherine',
-  'rosie@thenetworkerhub.com': 'Rosie',
+  'catherine@thenetworkeruk.com': 'Catherine',
+  'rosie@thenetworkeruk.com': 'Rosie',
   'rosie.mcgilvray@yahoo.co.uk': 'Rosie McGilvray',
-  'jamie@thenetworkerhub.com': 'Jamie',
+  'jamie@thenetworkeruk.com': 'Jamie',
 };
 
 async function main() {

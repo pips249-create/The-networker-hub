@@ -24,7 +24,7 @@ function mapReportReasonToRemovalReason(reason) {
 function buildRemovalDetails() {
   return (
     'We reviewed a community report about this listing and upheld it. ' +
-    'Update the listing to meet our standards, then contact hello@thenetworkerhub.com if you need help republishing.'
+    'Update the listing to meet our standards, then contact hello@thenetworkeruk.com if you need help republishing.'
   );
 }
 

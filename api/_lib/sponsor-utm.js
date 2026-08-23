@@ -20,7 +20,7 @@ function withSponsorUtm(rawUrl, placement, opts) {
     .replace(/^_+|_+$/g, '')
     .slice(0, 64) || 'sponsor';
 
-  const source = String(opts?.source || 'thenetworkerhub').trim().slice(0, 64) || 'thenetworkerhub';
+  const source = String(opts?.source || 'thenetworkeruk').trim().slice(0, 64) || 'thenetworkeruk';
   const medium = String(opts?.medium || 'sponsor').trim().slice(0, 64) || 'sponsor';
   const campaign = String(opts?.campaign || place).trim().slice(0, 64) || place;
 
@@ -42,7 +42,7 @@ function withSponsorClickThrough(rawUrl, placement, opts) {
   const dest = withSponsorUtm(rawUrl, placement, opts);
   if (!/^https?:\/\//i.test(dest)) return dest;
 
-  const site = String(opts?.siteUrl || process.env.SITE_URL || 'https://www.thenetworkerhub.com')
+  const site = String(opts?.siteUrl || process.env.SITE_URL || 'https://www.thenetworkeruk.com')
     .trim()
     .replace(/\/$/, '');
   const place = String(placement || opts?.placement || 'email_sponsor')

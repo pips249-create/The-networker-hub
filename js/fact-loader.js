@@ -196,7 +196,7 @@
       '<span class="fact-loader__pulse-bar"></span>' +
       '</div>' +
       '<div class="fact-loader__content">' +
-      '<img class="fact-loader__logo" src="/assets/logo-nav.png" alt="The Networker Hub" width="200" height="80" decoding="async">' +
+      '<img class="fact-loader__logo" src="/assets/logo-nav.png" alt="The Networker UK" width="200" height="80" decoding="async">' +
       '<div class="fact-loader__card">' +
       '<span class="fact-loader__label"></span>' +
       '<p class="fact-loader__fact"></p>' +

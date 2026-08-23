@@ -2,7 +2,7 @@
 /**
  * Smoke test event listings API. Usage:
  *   node scripts/smoke-test-api.js                    # localhost
- *   node scripts/smoke-test-api.js https://www.thenetworkerhub.com
+ *   node scripts/smoke-test-api.js https://www.thenetworkeruk.com
  */
 const base = (process.argv[2] || 'http://localhost:3000').replace(/\/$/, '');
 const paths = ['/api/hub-listings', '/api/events'];

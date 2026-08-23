@@ -198,7 +198,7 @@ While the live domain is up but the site is not yet public, lock it behind a sha
 
 **Team password cookie:** after the correct `SITE_ACCESS_PASSWORD`, a signed `hub_site_preview` cookie unlocks the full site for 7 days (signed with the preview password value).
 
-**Banner peek:** `/api/auth/site-access?peek=co-uk-peek-2026&next=/peek` → redirects into **/peek only** (no full-site cookie). Prefer linking straight to `https://www.thenetworkerhub.com/peek` from WordPress.
+**Banner peek:** `/api/auth/site-access?peek=co-uk-peek-2026&next=/peek` → redirects into **/peek only** (no full-site cookie). Prefer linking straight to `https://www.thenetworkeruk.com/peek` from WordPress.
 
 **Still works without unlocking:** Stripe webhooks, Vercel crons (`CRON_SECRET`), `/api/health`, and CSS/JS/assets for the gate page.
 
