@@ -102,7 +102,7 @@
  * NAV_BUILD=20260709h — transparent nav logo (from logo-nav.png).
  */
 (function () {
-  var NAV_BUILD = '20260823nav1';
+  var NAV_BUILD = '20260823uknav1';
   var LOGO_SRC = '/assets/logo-nav-transparent.png?v=20260823uk3';
   var SESSION_KEY = 'hub_nav_session_v1';
   var SESSION_TTL_MS = 5 * 60 * 1000;

@@ -14,7 +14,7 @@
   }
 
   function hubLogoUrl() {
-    return siteOrigin() + '/assets/logo-nav.png';
+    return siteOrigin() + '/assets/logo-nav-transparent.png?v=20260823uk3';
   }
 
   function eventPageUrl(ev) {
