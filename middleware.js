@@ -97,6 +97,9 @@ const GATE_BYPASS_PREFIXES = [
   '/css/',
   '/js/',
   '/assets/',
+  '/data/',
+  '/international',
+  '/api/international-interest',
 ];
 
 /** Unlisted internal sales decks — not linked from nav; noindex in page HTML. */
@@ -817,7 +820,7 @@ export const config = {
   // files until SITE_ACCESS_PASSWORD is removed. Static robots.txt says Allow — do not
   // serve that while the preview gate is on.
   matcher: [
-    '/((?!api/stripe-webhook|api/resend-webhook|api/sponsor-out|api/health|_next/static|_next/image|favicon.ico|css/|js/|assets/).*)',
+    '/((?!api/stripe-webhook|api/resend-webhook|api/sponsor-out|api/health|_next/static|_next/image|favicon.ico|css/|js/|assets/|data/).*)',
   ],
 };
 

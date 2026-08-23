@@ -14,6 +14,6 @@
     logoEmail: '/assets/logo-email-footer.png?v=20260823uk2',
     logoUk: '/assets/logo-networker-uk-transparent.png?v=20260823uk2',
     logoGroup: '/assets/logo-networker-group-transparent.png?v=20260823uk2',
-    logoInternational: '/assets/logo-networker-international-transparent.png?v=20260823uk2',
+    logoInternational: '/assets/logo-networker-international.png?v=20260823intl',
   };
 })(typeof window !== 'undefined' ? window : globalThis);

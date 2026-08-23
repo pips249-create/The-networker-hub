@@ -98,6 +98,7 @@
     { "source": "/peek/for-organisers.html", "destination": "/peek/for-organisers", "permanent": true },
     { "source": "/peek/for-networkers.html", "destination": "/peek/for-networkers", "permanent": true },
     { "source": "/home2.5.html", "destination": "/home2.5", "permanent": true },
+    { "source": "/international.html", "destination": "/international", "permanent": true },
     { "source": "/opportunities/list.html", "destination": "/opportunities/list", "permanent": true },
     { "source": "/opportunities/browse.html", "destination": "/opportunities/", "permanent": true },
     { "source": "/account/settings.html", "destination": "/account/settings", "permanent": true },
@@ -250,7 +251,8 @@
     "api/resend-webhook.js": { "maxDuration": 15 },
     "api/contact-chat.js": { "maxDuration": 30 },
     "api/event-intake.js": { "maxDuration": 15 },
-    "api/advertising.js": { "maxDuration": 15 }
+    "api/advertising.js": { "maxDuration": 15 },
+    "api/international-interest.js": { "maxDuration": 10 }
   },
   "rewrites": [
     { "source": "/sitemap.xml", "destination": "/api/sitemap" },
@@ -415,6 +417,14 @@
     {
       "source": "/admin/import",
       "destination": "/admin/import.html"
+    },
+    {
+      "source": "/international",
+      "destination": "/international/index.html"
+    },
+    {
+      "source": "/international/",
+      "destination": "/international/index.html"
     }
   ]
 }
