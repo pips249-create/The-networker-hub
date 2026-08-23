@@ -9670,7 +9670,7 @@
   function downloadSponsorPackPdf(data, filename) {
     var brand = (data && data.brand) || {};
     var brandName = brand.company || 'Partner';
-    var hubUrl = '/assets/logo-nav-transparent.png?v=20260823uk2';
+    var hubUrl = '/assets/logo-nav-transparent.png?v=20260823uk3';
     var brandUrl = brand.logoUrl || '';
     try {
       hubUrl = new URL(hubUrl, window.location.origin).href;
@@ -9733,10 +9733,10 @@
     return Promise.all([
       fetchImageAsDataUrl(hubUrl)
         .then(function (d) {
-          return d || fetchImageAsDataUrl('/assets/logo-nav-transparent.png?v=20260823uk2');
+          return d || fetchImageAsDataUrl('/assets/logo-nav-transparent.png?v=20260823uk3');
         })
         .catch(function () {
-          return fetchImageAsDataUrl('/assets/logo-nav-transparent.png?v=20260823uk2').catch(function () {
+          return fetchImageAsDataUrl('/assets/logo-nav-transparent.png?v=20260823uk3').catch(function () {
             return '';
           });
         }),
@@ -10339,7 +10339,7 @@
       var brandName = brand.company || (document.getElementById('sponsor-clicks-company') || {}).value || 'All sponsors';
       var fromLabel = String(data.from || '').slice(0, 10);
       var toLabel = String(data.to || '').slice(0, 10);
-      var hubLogo = data.hubLogoUrl || '/assets/logo-nav-transparent.png?v=20260823uk2';
+      var hubLogo = data.hubLogoUrl || '/assets/logo-nav-transparent.png?v=20260823uk3';
       var brandLogo = brand.logoUrl || '';
       var brandDark = brand.logoBandDark === true;
       var ctrInfo = formatSponsorPackCtr(summary.clicks || 0, summary.pageVisits || 0);
@@ -12215,8 +12215,8 @@
       welcome_url: previewOrigin + '/welcome',
       dashboard_url: previewOrigin + '/organiser/',
       site_url: previewOrigin,
-      logo_url: previewOrigin + '/assets/logo-nav-transparent.png?v=20260823uk2',
-      logo_footer_url: previewOrigin + '/assets/logo-nav-transparent.png?v=20260823uk2',
+      logo_url: previewOrigin + '/assets/logo-nav-transparent.png?v=20260823uk3',
+      logo_footer_url: previewOrigin + '/assets/logo-nav-transparent.png?v=20260823uk3',
       screening_industry: 'Financial services',
       screening_job_title: 'Business development manager',
       denial_closing: '',

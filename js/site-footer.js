@@ -178,7 +178,7 @@
       homeHref +
       '" class="footer-brand" aria-label="Home">' +
       '<img class="footer-logo" src="' +
-      href('/assets/logo-nav-transparent.png?v=20260823uk2') +
+      href('/assets/logo-nav-transparent.png?v=20260823uk3') +
       '" alt="" width="550" height="255" aria-hidden="true">' +
       '</a>' +
       '<div class="footer-columns">' +

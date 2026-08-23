@@ -8,12 +8,12 @@
     legalName: 'The Networker Group Ltd',
     site: 'https://www.thenetworkerhub.com',
     supportEmail: 'hello@thenetworkeruk.com',
-    logoAssetVersion: '20260823uk2',
-    logoSvg: '/assets/logo-nav-transparent.png?v=20260823uk2',
-    logoNav: '/assets/logo-nav-transparent.png?v=20260823uk2',
-    logoEmail: '/assets/logo-email-footer.png?v=20260823uk2',
-    logoUk: '/assets/logo-networker-uk-transparent.png?v=20260823uk2',
-    logoGroup: '/assets/logo-networker-group-transparent.png?v=20260823uk2',
+    logoAssetVersion: '20260823uk3',
+    logoSvg: '/assets/logo-nav-transparent.png?v=20260823uk3',
+    logoNav: '/assets/logo-nav-transparent.png?v=20260823uk3',
+    logoEmail: '/assets/logo-email-footer.png?v=20260823uk3',
+    logoUk: '/assets/logo-networker-uk-transparent.png?v=20260823uk3',
+    logoGroup: '/assets/logo-networker-group-transparent.png?v=20260823uk3',
     logoInternational: '/assets/logo-networker-international.png?v=20260823intl',
   };
 })(typeof window !== 'undefined' ? window : globalThis);
