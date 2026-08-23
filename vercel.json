@@ -26,25 +26,19 @@
     {
       "source": "/:path*",
       "has": [{ "type": "host", "value": "thenetworkerhub.co.uk" }],
-      "destination": "https://www.thenetworkeruk.com/:path*",
+      "destination": "https://www.thenetworkerhub.com/:path*",
       "permanent": true
     },
     {
       "source": "/:path*",
       "has": [{ "type": "host", "value": "www.thenetworkerhub.co.uk" }],
-      "destination": "https://www.thenetworkeruk.com/:path*",
+      "destination": "https://www.thenetworkerhub.com/:path*",
       "permanent": true
     },
     {
       "source": "/:path*",
       "has": [{ "type": "host", "value": "thenetworkerhub.com" }],
-      "destination": "https://www.thenetworkeruk.com/:path*",
-      "permanent": true
-    },
-    {
-      "source": "/:path*",
-      "has": [{ "type": "host", "value": "www.thenetworkerhub.com" }],
-      "destination": "https://www.thenetworkeruk.com/:path*",
+      "destination": "https://www.thenetworkerhub.com/:path*",
       "permanent": true
     },
     { "source": "/index.html", "destination": "/", "permanent": true },

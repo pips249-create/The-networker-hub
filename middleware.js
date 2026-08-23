@@ -826,15 +826,19 @@ export default async function middleware(request) {
   const host = String(url.hostname || '')
     .trim()
     .toLowerCase();
-  // Canonicalise UK + apex hosts before the preview gate (vercel.json host redirects
-  // do not always win over middleware on apex).
+  // Canonicalise apex Hub hosts — do not redirect to thenetworkeruk.com until that domain DNS is live.
   if (
     host === 'thenetworkerhub.com' ||
-    host === 'www.thenetworkerhub.com' ||
     host === 'thenetworkerhub.co.uk' ||
-    host === 'www.thenetworkerhub.co.uk' ||
-    host === 'thenetworkeruk.com'
+    host === 'www.thenetworkerhub.co.uk'
   ) {
+    const dest = new URL(request.url);
+    dest.protocol = 'https:';
+    dest.hostname = 'www.thenetworkerhub.com';
+    dest.port = '';
+    return Response.redirect(dest.toString(), 308);
+  }
+  if (host === 'thenetworkeruk.com') {
     const dest = new URL(request.url);
     dest.protocol = 'https:';
     dest.hostname = 'www.thenetworkeruk.com';
