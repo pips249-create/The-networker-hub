@@ -395,17 +395,115 @@
     });
   }
 
-  function pulseLiveCountries() {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  function featureByNumericId(features, numericId) {
+    return features.find(function (feature) {
+      return padNumericId(feature.id) === numericId;
+    });
+  }
 
-    var livePaths = els.svg ? els.svg.querySelectorAll('.intl-country--live') : [];
-    livePaths.forEach(function (path) {
-      path.classList.add('is-intro-pulse');
+  function arcPath(projection, fromFeature, toFeature) {
+    var from = projection(window.d3.geoCentroid(fromFeature));
+    var to = projection(window.d3.geoCentroid(toFeature));
+    if (!from || !to) return '';
+    var mx = (from[0] + to[0]) / 2;
+    var my = (from[1] + to[1]) / 2 - Math.abs(to[0] - from[0]) * 0.14 - 28;
+    return 'M' + from[0] + ',' + from[1] + ' Q' + mx + ',' + my + ' ' + to[0] + ',' + to[1];
+  }
+
+  function ensureMapDefs() {
+    if (!els.svg || els.svg.querySelector('#intl-arc-live')) return;
+
+    var defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+
+    var liveGrad = document.createElementNS('http://www.w3.org/2000/svg', 'linearGradient');
+    liveGrad.setAttribute('id', 'intl-arc-live');
+    liveGrad.setAttribute('gradientUnits', 'userSpaceOnUse');
+    liveGrad.setAttribute('x1', '0');
+    liveGrad.setAttribute('y1', '0');
+    liveGrad.setAttribute('x2', '960');
+    liveGrad.setAttribute('y2', '500');
+    liveGrad.innerHTML =
+      '<stop offset="0%" stop-color="#b189b8" stop-opacity="0.15"></stop>' +
+      '<stop offset="45%" stop-color="#b189b8" stop-opacity="0.85"></stop>' +
+      '<stop offset="100%" stop-color="#b8956a" stop-opacity="0.35"></stop>';
+
+    var buildingGrad = document.createElementNS('http://www.w3.org/2000/svg', 'linearGradient');
+    buildingGrad.setAttribute('id', 'intl-arc-building');
+    buildingGrad.setAttribute('gradientUnits', 'userSpaceOnUse');
+    buildingGrad.setAttribute('x1', '0');
+    buildingGrad.setAttribute('y1', '0');
+    buildingGrad.setAttribute('x2', '960');
+    buildingGrad.setAttribute('y2', '500');
+    buildingGrad.innerHTML =
+      '<stop offset="0%" stop-color="#b8956a" stop-opacity="0.2"></stop>' +
+      '<stop offset="50%" stop-color="#c9ad7a" stop-opacity="0.75"></stop>' +
+      '<stop offset="100%" stop-color="#b8956a" stop-opacity="0.25"></stop>';
+
+    defs.appendChild(liveGrad);
+    defs.appendChild(buildingGrad);
+    els.svg.insertBefore(defs, els.svg.firstChild);
+  }
+
+  function renderNetworkArcs(projection, features) {
+    if (!els.svg) return;
+
+    var hubFeature = featureByNumericId(features, '826');
+    if (!hubFeature) return;
+
+    var arcsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    arcsGroup.setAttribute('class', 'intl-map-arcs');
+    arcsGroup.setAttribute('aria-hidden', 'true');
+
+    var links = [
+      { to: '036', className: 'intl-map-arc--building' },
+      { to: '124', className: 'intl-map-arc--building' },
+    ];
+
+    links.forEach(function (link) {
+      var target = featureByNumericId(features, link.to);
+      if (!target) return;
+      var d = arcPath(projection, hubFeature, target);
+      if (!d) return;
+
+      var path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', d);
+      path.classList.add('intl-map-arc');
+      path.classList.add(link.className);
+      arcsGroup.appendChild(path);
+    });
+
+    if (arcsGroup.childNodes.length) {
+      els.svg.insertBefore(arcsGroup, els.svg.firstChild.nextSibling);
+    }
+  }
+
+  function pulseCountries(selector, pulseClass, glowClass) {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      if (els.svg) {
+        els.svg.querySelectorAll(selector).forEach(function (path) {
+          path.classList.add(glowClass);
+        });
+      }
+      return;
+    }
+
+    var paths = els.svg ? els.svg.querySelectorAll(selector) : [];
+    paths.forEach(function (path) {
+      path.classList.add(pulseClass);
       path.addEventListener('animationend', function onEnd() {
-        path.classList.remove('is-intro-pulse');
+        path.classList.remove(pulseClass);
+        path.classList.add(glowClass);
         path.removeEventListener('animationend', onEnd);
       });
     });
+  }
+
+  function pulseLiveCountries() {
+    pulseCountries('.intl-country--live', 'is-intro-pulse', 'is-active-glow');
+  }
+
+  function pulseBuildingCountries() {
+    pulseCountries('.intl-country--building', 'is-intro-pulse', 'is-active-glow');
   }
 
   function renderMap(world) {
@@ -415,6 +513,11 @@
 
     state.countries = features.map(countryMeta);
     populateMobileSelect();
+
+    ensureMapDefs();
+
+    var countriesGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    countriesGroup.setAttribute('id', 'intl-map-countries');
 
     features.forEach(function (feature) {
       var meta = countryMeta(feature);
@@ -426,12 +529,17 @@
       else if (meta.unavailable) path.classList.add('intl-country--unavailable');
       else path.classList.add('intl-country--soon');
       bindCountryPath(path, meta);
-      els.svg.appendChild(path);
+      countriesGroup.appendChild(path);
     });
+
+    els.svg.appendChild(countriesGroup);
+    renderNetworkArcs(projection, features);
 
     els.loading.hidden = true;
     state.mapReady = true;
+    if (els.mapWrap) els.mapWrap.classList.add('is-ready');
     pulseLiveCountries();
+    pulseBuildingCountries();
   }
 
   function initModal() {
@@ -595,6 +703,7 @@
 
   function init() {
     els.canvas = byId('intl-map-canvas');
+    els.mapWrap = byId('intl-map-wrap');
     els.svg = byId('intl-map-svg');
     els.loading = byId('intl-map-loading');
     els.mobilePicker = byId('intl-mobile-picker');
