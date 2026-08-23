@@ -894,15 +894,84 @@
 }
 
 @media (max-width: 720px) {
-  .intl-org-picker {
-    grid-template-columns: 1fr;
+  .intl-home-page {
+    --intl-header-h: 72px;
+  }
+
+  .intl-header-inner {
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas: 'logo tagline uk';
+    padding: 8px 12px;
+    gap: 8px 10px;
+  }
+
+  .intl-logo img {
+    width: min(112px, 28vw);
+  }
+
+  .intl-header-title {
+    font-size: clamp(1.05rem, 4.6vw, 1.35rem);
+  }
+
+  .intl-header-uk-link {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  .intl-footer {
+    display: none;
+  }
+
+  .intl-map-shell,
+  .intl-map-wrap,
+  .intl-map-svg {
+    min-height: calc(100svh - var(--intl-header-h));
+  }
+
+  .intl-map-canvas {
+    position: absolute;
+    inset: 0;
+    flex: none;
+    min-height: calc(100svh - var(--intl-header-h));
+  }
+
+  .intl-map-wrap {
+    position: relative;
+  }
+
+  .intl-mobile-picker {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    z-index: 6;
+    padding: 10px 12px;
+    border: 1px solid rgba(184, 174, 166, 0.4);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 10px 28px rgba(58, 52, 56, 0.14);
+  }
+
+  .intl-mobile-picker-label {
+    margin: 0 0 6px;
+    font-size: 11px;
+  }
+
+  .intl-country-select {
+    padding: 11px 12px;
   }
 
   .intl-map-legend {
     left: 12px;
     right: 12px;
-    bottom: 12px;
+    bottom: 88px;
     justify-content: center;
+    max-width: none;
+  }
+
+  .intl-org-picker {
+    grid-template-columns: 1fr;
   }
 
   .intl-country-popup-stats {
