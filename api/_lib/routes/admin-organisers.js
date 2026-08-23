@@ -974,7 +974,7 @@ module.exports = async function handler(req, res) {
           entity_id: organiser.id,
           organiser_id: organiser.id,
           action: 'admin_claim_invite',
-          summary: 'Hub admin sent Email 2 claim invite to ' + email,
+          summary: 'platform admin sent Email 2 claim invite to ' + email,
           metadata: { to: email, slug: 'organiser_launch_invite', source: 'admin' },
         });
       } catch {
@@ -1154,7 +1154,7 @@ module.exports = async function handler(req, res) {
           organiser_id: organiserId,
           action: 'admin_listing_message',
           summary:
-            'Hub admin emailed organiser about a listing change' +
+            'platform admin emailed organiser about a listing change' +
             (result.listingLabel ? ': ' + String(result.listingLabel).slice(0, 80) : '') +
             (reason ? ' (' + reason + ')' : ''),
           metadata: { reason, to: result.to, eventId: eventId || null, source: 'admin' },
@@ -1412,7 +1412,7 @@ module.exports = async function handler(req, res) {
         organiser_id: id,
         action: 'admin_organiser_updated',
         summary:
-          'Hub admin updated group profile' +
+          'platform admin updated group profile' +
           (data?.name ? ': ' + String(data.name).slice(0, 80) : '') +
           ' (' +
           Object.keys(patch).slice(0, 8).join(', ') +

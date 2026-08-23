@@ -416,7 +416,7 @@ function buildAssessment(categories, period, totals) {
   }
 
   const notes = [
-    'Ticket sales (£2,500) is the most modest target — booking fees accrue automatically from paid event tickets and Hub-billed memberships.',
+    'Ticket sales (£2,500) is the most modest target — booking fees accrue automatically from paid event tickets and platform-billed memberships.',
     'Events (£42,500) and opportunities (£48,000) are the stretch goals — they rely on closing directory sponsors and premium packages consistently.',
     'Browse organisers (£10,000) is achievable with one hero sponsor plus mini-sponsor inventory over the period.',
     'Awards (£5,000) is marked TBC — log revenue manually when sponsorship is confirmed.',

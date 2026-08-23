@@ -129,7 +129,7 @@ function basePreviewVars(siteUrl) {
     message_preview: 'Hi, I would like to find out more about this opportunity.',
     amount_net: '£240.00',
     group_name: 'City Connectors',
-    badge_label: 'Top 10 networking group on the Hub',
+    badge_label: 'Top 10 networking group on The Networker UK',
     period_label: 'June 2026',
     rank: '8',
     total_ranked: '42',
@@ -390,7 +390,7 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     vars.next_event_location = 'The Shard, London SE1';
     vars.next_event_url = vars.event_url;
     vars.followup_next_step =
-      'If you liked the group, book their next meeting first. Membership (monthly or annual through the Hub) can wait until you are ready to join properly.';
+      'If you liked the group, book their next meeting first. Membership (monthly or annual through The Networker UK) can wait until you are ready to join properly.';
     vars.next_event_section =
       '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#1c2040;border-radius:16px;">' +
       '<tr><td style="padding:24px;text-align:center;">' +
@@ -625,7 +625,7 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
       '<tr><td class="mobile-pad" style="padding:0 40px 20px;">' +
       '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f0e8;border-radius:14px;border:1px solid #d9c4e0;">' +
       '<tr><td style="padding:20px 22px;">' +
-      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:700;color:#1c2040;margin:0 0 6px;">Note from the Hub team</p>' +
+      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:700;color:#1c2040;margin:0 0 6px;">Note from The Networker UK team</p>' +
       '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;line-height:1.65;color:#635c5e;margin:0;">We have updated the wording on your listing so guest visits are described as complimentary rather than free.</p>' +
       '</td></tr></table></td></tr>';
   }
@@ -699,7 +699,7 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
   if (slug === 'organiser_hub_suspended') {
     vars.warning_count = vars.warning_count || '3';
     vars.suspension_reason =
-      vars.suspension_reason || 'Repeated breaches of Hub rules after prior warnings.';
+      vars.suspension_reason || 'Repeated breaches of Platform rules after prior warnings.';
     vars.suspension_details_row = vars.suspension_details_row || '';
   }
 
@@ -785,7 +785,7 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
       vars.reply_hint_html ||
       '<tr><td class="mobile-pad" style="padding:0 40px 12px;text-align:center;"><p style="font-size:14px;color:#635c5e;margin:0;">Reply to this email to reach the organiser team directly.</p></td></tr>';
     vars.cta_url = vars.cta_url || vars.organiser_url;
-    vars.cta_label = vars.cta_label || 'Visit our Hub page';
+    vars.cta_label = vars.cta_label || 'Visit our organiser page';
     vars.tracking_pixel_html = vars.tracking_pixel_html || '';
   }
 

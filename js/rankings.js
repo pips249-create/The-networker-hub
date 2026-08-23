@@ -7,7 +7,7 @@
     {
       rank: 1,
       tier: 'top10',
-      label: 'Top 10 networking group on the Hub',
+      label: 'Top 10 networking group on The Networker UK',
       cardLabel: 'Top 10 · July 2026',
       rating: 5.0,
       reviewCount: 28,
@@ -17,7 +17,7 @@
     {
       rank: 2,
       tier: 'top10',
-      label: 'Top 10 networking group on the Hub',
+      label: 'Top 10 networking group on The Networker UK',
       cardLabel: 'Top 10 · July 2026',
       rating: 4.9,
       reviewCount: 41,
@@ -27,7 +27,7 @@
     {
       rank: 3,
       tier: 'top10',
-      label: 'Top 10 networking group on the Hub',
+      label: 'Top 10 networking group on The Networker UK',
       cardLabel: 'Top 10 · July 2026',
       rating: 4.9,
       reviewCount: 19,
@@ -37,7 +37,7 @@
     {
       rank: 8,
       tier: 'top10',
-      label: 'Top 10 networking group on the Hub',
+      label: 'Top 10 networking group on The Networker UK',
       cardLabel: 'Top 10 · July 2026',
       rating: 4.8,
       reviewCount: 22,
@@ -47,7 +47,7 @@
     {
       rank: 14,
       tier: 'top25',
-      label: 'Top 25 networking group on the Hub',
+      label: 'Top 25 networking group on The Networker UK',
       cardLabel: 'Top 25 · July 2026',
       rating: 4.7,
       reviewCount: 16,
@@ -57,7 +57,7 @@
     {
       rank: 22,
       tier: 'top25',
-      label: 'Top 25 networking group on the Hub',
+      label: 'Top 25 networking group on The Networker UK',
       cardLabel: 'Top 25 · July 2026',
       rating: 4.6,
       reviewCount: 12,
@@ -67,7 +67,7 @@
     {
       rank: 31,
       tier: 'top50',
-      label: 'Top 50 networking group on the Hub',
+      label: 'Top 50 networking group on The Networker UK',
       cardLabel: 'Top 50 · July 2026',
       rating: 4.5,
       reviewCount: 9,
@@ -77,7 +77,7 @@
     {
       rank: 47,
       tier: 'top50',
-      label: 'Top 50 networking group on the Hub',
+      label: 'Top 50 networking group on The Networker UK',
       cardLabel: 'Top 50 · July 2026',
       rating: 4.4,
       reviewCount: 7,
@@ -157,7 +157,7 @@
     var badge =
       entry.cardLabel ||
       entry.displayLabel ||
-      String(entry.label || '').replace(' on the Hub', '');
+      String(entry.label || '').replace(' on The Networker UK', '');
     var rateLabel = formatRate(entry.reviewRate);
     var rating = Number(entry.rating || 0).toFixed(1);
     var reviews = String(entry.reviewCount || 0);

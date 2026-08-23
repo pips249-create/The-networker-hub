@@ -15,9 +15,9 @@ Organiser gets: full ticket price
 Hub keeps:      booking fee (covers ~3% platform + ~1.5% Stripe + 20p per ticket)
 ```
 
-- Ticket revenue should go to the **organiser's Stripe account**, not sit in the Hub business account.
+- Ticket revenue should go to the **organiser's Stripe account**, not sit in the platform business account.
 - The **booking fee** is the only Hub charge — it merges platform and payment processing into one attendee-facing fee. Organisers are **not** charged a separate 3% or Stripe deduction.
-- Refunds should debit the **organiser's** Stripe balance, not the Hub's.
+- Refunds should debit the **organiser's** Stripe balance, not the platform's.
 
 **Stripe product for this:** [Stripe Connect](https://stripe.com/connect) with **destination charges**:
 
@@ -32,7 +32,7 @@ Hub keeps:      booking fee (covers ~3% platform + ~1.5% Stripe + 20p per ticket
 
 ### Payments (checkout)
 
-- All checkout uses **one Hub Stripe account** (`STRIPE_SECRET_KEY`) — see `STRIPE-AND-TICKETS.md`.
+- All checkout uses **one platform Stripe account** (`STRIPE_SECRET_KEY`) — see `STRIPE-AND-TICKETS.md`.
 - Stripe Connect is **built** behind `STRIPE_CONNECT_ENABLED` — enable on Vercel for production.
 - Checkout creates line items: ticket(s) + booking fee (`api/_lib/stripe-checkout.js`, `api/_lib/booking-fees.js`).
 
@@ -40,8 +40,8 @@ Hub keeps:      booking fee (covers ~3% platform + ~1.5% Stripe + 20p per ticket
 
 - Organiser requests payout **after** event is archived + 7-day settlement period (`api/_lib/supabase-organiser-payouts.js`).
 - Legacy payout breakdown shows **gross ticket sales = net payout** (organiser receives full ticket price; booking fee paid by attendees).
-- Payout status: `pending_review` → `approved` → `paid` (manual Hub admin review).
-- Money effectively sits in the **Hub Stripe balance** until approved payout — this does **not** match the intended Connect model.
+- Payout status: `pending_review` → `approved` → `paid` (manual platform admin review).
+- Money effectively sits in the **platform Stripe balance** until approved payout — this does **not** match the intended Connect model.
 
 ### Event cancellation (organiser)
 
@@ -54,7 +54,7 @@ Hub keeps:      booking fee (covers ~3% platform + ~1.5% Stripe + 20p per ticket
 ### Attendee cancellation (recently built)
 
 - Attendee can cancel from My account (`/account/`) — upcoming events + payments tables.
-- Modal shows organiser's refund policy and states refunds are handled by the organiser, not the Hub.
+- Modal shows organiser's refund policy and states refunds are handled by the organiser, not the platform.
 - API: `POST /api/auth/cancel-booking`
 - Attendee gets **booking cancelled** email.
 - **Organiser does not get an email** when a single attendee cancels.
@@ -80,7 +80,7 @@ Hub keeps:      booking fee (covers ~3% platform + ~1.5% Stripe + 20p per ticket
 
 | Gap | Risk |
 |-----|------|
-| No Stripe Connect at checkout | Money goes to Hub account, not organiser — legal/model mismatch |
+| No Stripe Connect at checkout | Money goes to Account, not organiser — legal/model mismatch |
 | "Confirm refunds issued" is self-reported | Organiser can click without refunding; attendees get misleading emails |
 | No automatic refunds on event cancel | Organiser must manually refund in Stripe |
 | No organiser email on attendee cancel | Organiser may not know to refund |

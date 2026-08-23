@@ -3,7 +3,7 @@
 **Last updated:** June 2026  
 **Audience:** Hub platform admin (you) and event organisers
 
-The Networker UK uses **Stripe Connect (Express)** so organisers receive the **full ticket price** in their own connected Stripe account. The Hub keeps only the attendee **booking fee** (4.5% + 20p per ticket) at checkout.
+The Networker UK uses **Stripe Connect (Express)** so organisers receive the **full ticket price** in their own connected Stripe account. The Networker UK keeps only the attendee **booking fee** (4.5% + 20p per ticket) at checkout.
 
 Organisers do **not** sign up for a separate Stripe product or paste API keys. They complete a short **Connect Stripe** flow inside the organiser dashboard; Stripe hosts the bank and identity form.
 
@@ -15,7 +15,7 @@ Organisers do **not** sign up for a separate Stripe product or paste API keys. T
 
 ### One-time: Stripe Dashboard (platform account)
 
-1. **Create or use your Hub Stripe account**  
+1. **Create or use your platform Stripe account**  
    [dashboard.stripe.com](https://dashboard.stripe.com) — this is The Networker UK’s business account (test mode first, then live).
 
 2. **Enable Connect**  
@@ -49,7 +49,7 @@ Redeploy after changing env vars.
 
 - A separate Stripe account per organiser (Connect creates connected accounts automatically)
 - Organisers to give you their Stripe secret keys
-- Manual “linking” of each organiser in the Stripe Dashboard (onboarding is self-service from the Hub)
+- Manual “linking” of each organiser in the Stripe Dashboard (onboarding is self-service from The Networker UK)
 
 ### Test vs live
 
@@ -62,7 +62,7 @@ Use test mode end-to-end before flipping `STRIPE_CONNECT_ENABLED=true` on produc
 
 ### Quick platform checklist
 
-- [ ] Hub Stripe account created
+- [ ] platform Stripe account created
 - [ ] Connect enabled (Express)
 - [ ] Platform Connect profile complete
 - [ ] Webhook endpoint live with signing secret in Vercel
@@ -86,7 +86,7 @@ Share this section with organisers who want to sell **paid** tickets.
 | **Free events / £0 tickets** | No |
 | **Paid tickets** | **Yes** — before you can publish a paid event |
 
-If Connect is not finished, the Hub blocks publishing paid ticket types and shows a **Connect Stripe** prompt.
+If Connect is not finished, the platform blocks publishing paid ticket types and shows a **Connect Stripe** prompt.
 
 ### What organisers receive
 
@@ -123,7 +123,7 @@ Stripe will ask for typical payout details, for example:
 
 This usually takes **5–10 minutes**. You can save and return if interrupted.
 
-**4. Return to the Hub**
+**4. Return to the platform**
 
 - After submitting, Stripe redirects you back to the organiser dashboard (**Revenue**)
 - You should see **“Stripe account updated”** or the Connect banner disappears when setup is complete
@@ -142,18 +142,18 @@ Paid checkout is only live once Connect shows as ready for your group.
 - The attendee pays on the event page (ticket + booking fee)
 - **Ticket price** goes to **your** Stripe connected account
 - You can view balances and payouts in **Stripe Express** (link from Stripe emails or dashboard access Stripe provides after onboarding)
-- Sales also appear in the Hub under **Revenue**, **Attendees**, and **Tickets sold**
+- Sales also appear in the platform under **Revenue**, **Attendees**, and **Tickets sold**
 
 ### Refunds (organiser responsibility)
 
-The Hub does **not** issue refunds from the dashboard today. You handle refunds in **your Stripe dashboard**:
+The Networker UK does **not** issue refunds from the dashboard today. You handle refunds in **your Stripe dashboard**:
 
 1. Open **Cancellations** under My events when an attendee cancels (or check **Attendees**)
 2. Note the **booking reference** (e.g. `HUB-A7D2B119`) and attendee email
 3. In **Stripe**, find the payment and issue a refund if your policy requires it
-4. If you **cancel a whole event**, refund all paid attendees in Stripe first, then use **Confirm refunds issued** in the Hub when prompted
+4. If you **cancel a whole event**, refund all paid attendees in Stripe first, then use **Confirm refunds issued** in the platform when prompted
 
-Attendees are told refunds are processed by the organiser through Stripe, not by the Hub.
+Attendees are told refunds are processed by the organiser through Stripe, not by the platform.
 
 ### Troubleshooting for organisers
 
@@ -163,7 +163,7 @@ Attendees are told refunds are processed by the organiser through Stripe, not by
 | **Onboarding interrupted** | Return to Revenue → **Connect Stripe** — Stripe resumes where you left off |
 | **Can’t publish paid tickets** | Connect must be complete for that group; free tickets still work without Connect |
 | **Checkout says organiser hasn’t finished setup** | Group owner needs to complete Connect; contact hello@thenetworkeruk.com if it persists after connecting |
-| **Where is my money?** | Stripe Express dashboard / Stripe emails — not the Hub bank account. Hub Revenue shows sales totals only |
+| **Where is my money?** | Stripe Express dashboard / Stripe emails — not the platform bank account. Hub Revenue shows sales totals only |
 | **How do I refund?** | Stripe dashboard → Payments → Refund. Use booking ref from Hub **Cancellations** |
 
 ### Free events only?

@@ -19,7 +19,7 @@ Without complete SPF, DKIM, and DMARC on the **exact domain in `RESEND_FROM`**, 
 
 ## 2. Current live DNS audit (5 Aug 2026)
 
-Checked publicly for the Hub send path:
+Checked publicly for the platform send path:
 
 | Check | Status | Notes |
 |-------|--------|--------|

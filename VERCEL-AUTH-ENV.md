@@ -194,7 +194,7 @@ While the live domain is up but the site is not yet public, lock it behind a sha
 | Key | Value | Notes |
 |-----|--------|--------|
 | `SITE_ACCESS_PASSWORD` | *your chosen preview password* | When set, the public only sees `/site-access` (waitlist + team unlock). Everyone else needs this shared password. |
-| `SITE_ACCESS_BANNER_TOKEN` | `co-uk-peek-2026` | Soft preview for the co.uk “Peek at the Hub” banner. Must match `peek=` if used. **Does not** unlock the full Hub — only `/peek`. |
+| `SITE_ACCESS_BANNER_TOKEN` | `co-uk-peek-2026` | Soft preview for the co.uk “Peek at the platform” banner. Must match `peek=` if used. **Does not** unlock the full Hub — only `/peek`. |
 
 **Team password cookie:** after the correct `SITE_ACCESS_PASSWORD`, a signed `hub_site_preview` cookie unlocks the full site for 7 days (signed with the preview password value).
 

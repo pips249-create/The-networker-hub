@@ -1,5 +1,5 @@
 /**
- * Organiser membership dues billed through Hub Stripe Connect.
+ * Organiser membership dues billed through platform Stripe Connect.
  * Members pay: membership (+ organiser VAT if added) + booking fee (4.5% + 20p).
  * Organisers receive 100% of membership (+ any membership VAT they charge).
  * Same fee formula as tickets — covers platform and Stripe processing.
@@ -745,7 +745,7 @@ async function retrieveMembershipSubscription(subscriptionId) {
 }
 
 /**
- * Find a live Hub membership subscription for an email (and optional organiser).
+ * Find a live membership subscription for an email (and optional organiser).
  * Used when checkout webhooks never linked stripe_subscription_id onto the roster row.
  */
 async function findMembershipSubscriptionForEmail(email, organiserId) {
@@ -814,7 +814,7 @@ async function handleMembershipInvoicePaid(invoice) {
     expiresAt: invoicePeriodEnd,
   });
 
-  // Hub booking fee (4.5% + 20p) → Sales targets → Ticket sales (same as event tickets).
+  // booking fee (4.5% + 20p) → Sales targets → Ticket sales (same as event tickets).
   let revenueResult = null;
   try {
     const { recordMembershipBookingFeeFromInvoice } = require('./stripe-revenue');
@@ -875,7 +875,7 @@ async function repairMembershipRosterExpiry(row, options) {
     subscription = await retrieveMembershipSubscription(subId);
   } else {
     // No Stripe link on the roster — only probe Stripe when expiry is blank (or forced).
-    // Avoids rewriting manual expiry dates for people who never paid through the Hub.
+    // Avoids rewriting manual expiry dates for people who never paid through The Networker UK.
     if (!opts.force && !missing) return null;
     subscription = await findMembershipSubscriptionForEmail(row?.email, row?.organiser_id);
     if (!subscription) return null;

@@ -13,7 +13,7 @@
 |--------|-----------------|-----|
 | **Ticket to attend an event** | Event organiser (seller) | Organiser’s responsibility — depends on whether they are VAT-registered and the nature of the event |
 | **Membership dues (monthly / annual)** | Event organiser (seller) | Organiser’s responsibility — choose **VAT included**, **Add 20% VAT at checkout**, or **Not VAT registered** on Memberships |
-| **Booking fee on tickets (4.5% + 20p)** | The Networker Group Ltd (platform) | Charged by the Hub on event tickets |
+| **Booking fee on tickets (4.5% + 20p)** | The Networker Group Ltd (platform) | Charged by the platform on event tickets |
 | **Booking fee on memberships (4.5% + 20p)** | The Networker Group Ltd (platform) | Same formula as tickets — covers platform and payment processing; do not add VAT again on this fee |
 
 Attendees see ticket price + booking fee at checkout. The organiser receives the **full ticket price** they set (via Stripe Connect).
@@ -25,7 +25,7 @@ Attendees see ticket price + booking fee at checkout. The organiser receives the
 Organisers should:
 
 1. **Know their VAT status** — register with HMRC if turnover exceeds the threshold (or voluntarily if beneficial).
-2. **Choose VAT treatment on tickets** when publishing — the Hub asks whether ticket prices are **VAT included**, **VAT added at checkout**, or **Not VAT registered** (no VAT charged).
+2. **Choose VAT treatment on tickets** when publishing — the platform asks whether ticket prices are **VAT included**, **VAT added at checkout**, or **Not VAT registered** (no VAT charged).
 3. **Keep records** of ticket sales, refunds, and payouts (Stripe Dashboard + organiser exports).
 4. **Issue invoices** if required for B2B sales — Stripe receipts may not replace a proper VAT invoice for all cases; confirm with accountant.
 5. **Report income** — ticket revenue is the organiser’s income; platform may report to HMRC under platform operator rules (see `docs/HMRC-PLATFORM-OPERATORS.md`).

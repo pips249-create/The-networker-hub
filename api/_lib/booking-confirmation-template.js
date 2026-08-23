@@ -26,11 +26,11 @@ function isStaleBookingTemplate(bodyHtml) {
   })) {
     return true;
   }
-  // Event Directory sponsor belongs in the cream container just below the Hub logo.
+  // Event Directory sponsor belongs in the cream container just below the Networker UK logo.
   var sponsorAt = body.indexOf('{{sponsor_row}}');
   var bookedAt = body.indexOf('You&rsquo;re booked!');
   var waveAt = body.indexOf('viewBox="0 0 600 40"');
-  var infoBandAt = body.indexOf('Your ticket is saved in your Hub account');
+  var infoBandAt = body.indexOf('Your ticket is saved in your Account');
   var footerAt = body.indexOf('Operated by');
   if (sponsorAt === -1) return true;
   if (waveAt !== -1 && sponsorAt > waveAt) return true;

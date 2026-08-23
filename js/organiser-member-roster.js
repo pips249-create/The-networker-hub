@@ -69,7 +69,7 @@
     return d.innerHTML;
   }
 
-  /** Hub-billed members only — Monthly / Annually next to expiry. */
+  /** platform-billed members only — Monthly / Annually next to expiry. */
   function billingIntervalLabel(m) {
     if (!m || !(m.billedThroughHub || m.stripeSubscriptionId)) return '';
     const interval = String(m.billingInterval || '').toLowerCase();
@@ -91,7 +91,7 @@
       : '—';
     const interval = billingIntervalLabel(m);
     const intervalHtml = interval
-      ? '<span class="omr-billing-interval" title="Billed through the Hub">' +
+      ? '<span class="omr-billing-interval" title="Billed through The Networker UK">' +
         (m.expiresAt ? ' · ' : '') +
         esc(interval) +
         '</span>'
@@ -903,7 +903,7 @@
           esc(m.id) +
           '" data-email="' +
           esc(m.email) +
-          '"><span class="org-action-icon">✉</span><span class="org-action-text"><strong>Resend invite</strong><span>Send Hub sign-up email again</span></span></button>'
+          '"><span class="org-action-icon">✉</span><span class="org-action-text"><strong>Resend invite</strong><span>Send sign-up email again</span></span></button>'
       );
     }
     if (billingOffered) {
@@ -1217,14 +1217,14 @@
       if (hubBilling.activePaid || hubBilling.pastDue) {
         html +=
           '<div class="omr-report-card omr-report-card--stat">' +
-          '<p class="omr-report-kicker">Hub billing</p>' +
+          '<p class="omr-report-kicker">platform billing</p>' +
           '<p class="omr-report-stat">' +
           esc(mrr) +
           '<span> estimated monthly</span></p>' +
           '<div class="omr-report-metrics">' +
           '<span><strong>' +
           esc(hubBilling.activePaid || 0) +
-          '</strong> paying via Hub</span>' +
+          '</strong> paying on the platform</span>' +
           '<span><strong>' +
           esc(hubBilling.monthlyCount || 0) +
           '</strong> monthly</span>' +
@@ -1235,7 +1235,7 @@
             ? '<span><strong>' + esc(hubBilling.pastDue) + '</strong> payment failed</span>'
             : '') +
           '</div>' +
-          '<p class="omr-report-note">Estimated from your membership prices on active Hub subscriptions (annual ÷ 12). Past-due cards are excluded from the monthly figure.</p></div>';
+          '<p class="omr-report-note">Estimated from your membership prices on active platform subscriptions (annual ÷ 12). Past-due cards are excluded from the monthly figure.</p></div>';
       }
     }
 
@@ -1577,7 +1577,7 @@
       'Industry',
       'Membership expires',
       'Expiring soon',
-      'Hub account',
+      'Account',
       'Invite sent',
       'Event bookings',
     ];
@@ -1806,7 +1806,7 @@
               title.textContent = 'No members match these filters';
               text.textContent =
                 filters.status === 'hub_billed'
-                  ? 'Nobody on this list is paying through the Hub yet. Use Invite to pay, or try Not paying through the Hub.'
+                  ? 'Nobody on this list is paying through The Networker UK yet. Use Invite to pay, or try Not paying through The Networker UK.'
                   : 'Try a different search or filter, or clear the event filter.';
             } else if (title && text) {
               title.textContent = 'No members yet';
@@ -1831,7 +1831,7 @@
           ? '<span class="omr-badge-claimed">Signed up</span>'
           : '<span class="omr-badge-pending">Not yet</span>';
         const invite = isClaimed(m)
-          ? '<span class="omr-badge-muted" title="Already signed up on the Hub">Not needed</span>'
+          ? '<span class="omr-badge-muted" title="Already signed up on The Networker UK">Not needed</span>'
           : m.inviteSentAt
             ? '<span class="omr-badge-claimed">Sent</span>'
             : '<span class="omr-badge-pending">Not sent</span>';
@@ -1856,7 +1856,7 @@
           esc(m.id) +
           '">' +
           renderExpiresCell(m) +
-          '</td><td data-label="Hub account">' +
+          '</td><td data-label="Account">' +
           hub +
           '</td><td data-label="Invite">' +
           invite +
@@ -2125,7 +2125,7 @@
     const stats = rosterSummaryStats();
     const unclaimed = Number(stats.unclaimed) || 0;
     if (!unclaimed) {
-      showAlert('Everyone on the list already has a Hub account.', 'success');
+      showAlert('Everyone on the list already has a Account.', 'success');
       return;
     }
     if (
@@ -2177,7 +2177,7 @@
       expiring: 'members expiring within 14 days',
       lapsed: 'lapsed members',
       past_due: 'members with a failed payment',
-      unpaid: 'members not yet paying through the Hub',
+      unpaid: 'members not yet paying through The Networker UK',
     };
     if (
       !confirm(
@@ -2769,7 +2769,7 @@
         if (connectNote) {
           connectNote.hidden = false;
           connectNote.textContent =
-            'Add bank details before members can pay you through the Hub.';
+            'Add bank details before members can pay you through The Networker UK.';
         }
         if (connectLink) connectLink.hidden = false;
       } else {
@@ -2833,7 +2833,7 @@
     el.textContent = parts.length
       ? parts.join(' · ')
       : (Number.isFinite(monthly) && monthly === 0) || (Number.isFinite(annual) && annual === 0)
-        ? '£0 membership — people join via your member list, with no charge through the Hub.'
+        ? '£0 membership — people join via your member list, with no charge through The Networker UK.'
         : 'Enter a monthly and/or annual price. Use 0 if joining is free. Leave blank to not offer that option.';
   }
 

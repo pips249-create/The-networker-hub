@@ -94,7 +94,7 @@
     },
     visibility: {
       title: 'Grow your visibility',
-      sub: 'Pin your own listings higher, or sponsor the hub as a brand to reach audiences across events, organisers, and business opportunities.',
+      sub: 'Pin your own listings higher, or sponsor The Networker UK as a brand to reach audiences across events, organisers, and business opportunities.',
     },
     'reviews-pending': {
       title: 'Reviews to write',
@@ -1810,7 +1810,7 @@
           if (reward && reward.toastMessage) {
             showAdToast(reward.toastMessage);
           } else {
-            showAdToast('Thanks — your review helps this group on the Hub.');
+            showAdToast('Thanks — your review helps this group on The Networker UK.');
           }
           await reloadDashboard();
         } catch (submitErr) {
@@ -2672,7 +2672,7 @@
         ? count + ' event review' + (count === 1 ? '' : 's')
         : 'Your reviews';
     const nextLine = isTop
-      ? 'Thanks for reviewing after events — it helps groups you support on the Hub.'
+      ? 'Thanks for reviewing after events — it helps groups you support on The Networker UK.'
       : reward && reward.nextTier && reward.nextTier.remaining
         ? reward.nextTier.remaining +
           ' more review' +
@@ -3284,7 +3284,7 @@
           myGroups.length +
           ' memberships →</a></p>'
         : '<p class="ad-overview-more"><a href="#memberships">View memberships →</a></p>') +
-      '<p class="ad-overview-membership-nudge-footnote">Renewals are handled by your networking group — contact them directly, not through the Hub.</p>' +
+      '<p class="ad-overview-membership-nudge-footnote">Renewals are handled by your networking group — contact them directly, not through The Networker UK.</p>' +
       '</div>';
 
     el.querySelectorAll('a[href="#memberships"]').forEach((link) => {
@@ -3819,7 +3819,7 @@
         title: item.organiserName || item.name,
         imageUrl: item.organiserPhotoUrl || '',
       };
-      const account = item.claimedAt || item.attendeeId ? 'Signed up on Hub' : 'Invite sent — use the same email to sign in';
+      const account = item.claimedAt || item.attendeeId ? 'Signed up on The Networker UK' : 'Invite sent — use the same email to sign in';
       const href = membershipOrganiserHref(item);
       const card = document.createElement('article');
       card.className = 'ad-membership-card';
@@ -3859,7 +3859,7 @@
               ? item.paymentFailed
                 ? 'Update payment'
                 : 'Manage membership'
-              : 'Pay / renew via Hub') +
+              : 'Pay / renew on the platform') +
             '</button>'
           : '') +
         '</div>';

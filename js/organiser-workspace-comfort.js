@@ -17,7 +17,7 @@
       steps: [
         'Click a row to open an event — edit details, tickets, or registrations.',
         'Use List event to create a new meeting, exhibition, or conference.',
-        'Published events appear on the public Hub; drafts stay private until you publish.',
+        'Published events appear on the public site; drafts stay private until you publish.',
         'If you see Setup on the sidebar, finish bank details before selling paid tickets.',
       ],
     },
@@ -49,7 +49,7 @@
     groups: {
       title: 'How to manage your organiser page',
       steps: [
-        'This is your public group profile on the Hub — add logo, description, and contact details.',
+        'This is your public group profile on The Networker UK — add logo, description, and contact details.',
         'A complete page helps people trust your events before they book.',
         'Use Edit to update details, or view the public page to check how it looks.',
       ],
@@ -84,14 +84,14 @@
       steps: [
         'Each row is someone interested in your business opportunity listing.',
         'Open an enquiry to read their message and contact details.',
-        'Reply directly from your email — the Hub notifies you when new enquiries arrive.',
+        'Reply directly from your email — the platform notifies you when new enquiries arrive.',
       ],
     },
     'business-list': {
       title: 'How to list a business opportunity',
       steps: [
         'Fill in the title, description, and contact details clearly.',
-        'Submit for review — the Hub team approves before it goes live.',
+        'Submit for review — the our team approves before it goes live.',
         'You can edit the listing later from My business opportunities.',
       ],
     },
@@ -124,8 +124,8 @@
       title: 'How to get more reach',
       steps: [
         'Feature a business opportunity to show it first in the opportunities directory.',
-        'Sponsor the hub as a brand to reach people browsing events, opportunities, or organiser pages.',
-        'To pin an event higher on the hub, use Feature event (£55/mo) — checkout lives on that tab.',
+        'Sponsor The Networker UK as a brand to reach people browsing events, opportunities, or organiser pages.',
+        'To pin an event higher on the platform, use Feature event (£55/mo) — checkout lives on that tab.',
         'City Sponsor checks out online; Headline Sponsor and Page Partner are confirmed by enquiry.',
       ],
     },
@@ -134,7 +134,7 @@
       steps: [
         'Groups are ranked by attendee ratings, then review rate.',
         'Share your ranking award badge when you place, and choose whether to appear on the public list.',
-        'The Hub partner badge (listed-on seal) is separate — find it under Promote → Hub partner badge.',
+        'The Partner badge (listed-on seal) is separate — find it under Promote → Partner badge.',
       ],
     },
     team: {

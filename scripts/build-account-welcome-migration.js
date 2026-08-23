@@ -38,7 +38,7 @@ insert into public.email_templates (
 values (
   'account_welcome',
   'Account welcome',
-  'Sent when someone creates a new Hub account.',
+  'Sent when someone creates a new Account.',
   'Welcome to The Networker UK, {{user_name}}',
   '${escaped}',
   array[

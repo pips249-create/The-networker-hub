@@ -90,7 +90,7 @@ const GUIDE_PAGES = {
       { id: 'open-attendees', name: 'Open the attendee list', text: 'Sign in to the organiser dashboard and go to Events → Attendees. Pick a networking group and event, or view all upcoming registrations.' },
       { id: 'visit-tracking', name: 'See visit counts', text: 'Each attendee shows their visit count (1st visit, 2 visits, returning member, etc.). Filter by new or returning to focus on guests vs members.' },
       { id: 'export-csv', name: 'Download attendees CSV', text: 'Apply filters if needed, then click Download attendees CSV. The export includes names, companies, ticket types, visit counts, and dietary notes where collected.' },
-      { id: 'name-badges', name: 'Print name badges', text: 'From the same screen, export printable name badges (PDF for standard A4 sticker sheets). Badges use each guest name, company, and job title from their Hub account when set.' },
+      { id: 'name-badges', name: 'Print name badges', text: 'From the same screen, export printable name badges (PDF for standard A4 sticker sheets). Badges use each guest name, company, and job title from their Account when set.' },
       { id: 'guest-visits', name: 'Set up the guest visit programme', text: 'On the event tickets step, tick Enable guest visit programme to offer complimentary trial visits before paid member tickets. Configure visit limits on your organiser page.' },
     ],
   },

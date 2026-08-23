@@ -250,7 +250,7 @@
     }
     if (payHowIncludesMembership() && !hubMembershipHasPrice()) {
       blockers.push(
-        'Membership must be blank/£0 (free via member list) or at least £1 for Hub billing'
+        'Membership must be blank/£0 (free via member list) or at least £1 for platform billing'
       );
     }
     if (
@@ -3104,7 +3104,7 @@
     if (amounts.annualRaw !== '' && !Number.isFinite(amounts.annual)) return false;
     if (amounts.monthly != null && amounts.monthly < 0) return false;
     if (amounts.annual != null && amounts.annual < 0) return false;
-    // Hub billing stores £1+ only. Blank or 0 = free join via member list (no plan row).
+    // platform billing stores £1+ only. Blank or 0 = free join via member list (no plan row).
     if (amounts.monthly != null && amounts.monthly > 0 && amounts.monthly < 1) return false;
     if (amounts.annual != null && amounts.annual > 0 && amounts.annual < 1) return false;
     return true;
@@ -3152,12 +3152,12 @@
       setHubMembershipStatus(
         plan.paid
           ? 'Membership fees loaded from your Memberships settings.'
-          : 'Free membership — people join via your member list (no Hub charge).',
+          : 'Free membership — people join via your member list (no platform charge).',
         'ok'
       );
     } else if (isMembershipMeetingMode() || hubMembershipEnabled()) {
       setHubMembershipStatus(
-        'Leave blank if joining is free (member list only). Paid Hub memberships start from £1.',
+        'Leave blank if joining is free (member list only). Paid memberships start from £1.',
         'ok'
       );
     } else {
@@ -3175,13 +3175,13 @@
       return {
         ok: false,
         message:
-          'Membership prices must be blank/£0 (free via member list) or at least £1 for Hub billing.',
+          'Membership prices must be blank/£0 (free via member list) or at least £1 for platform billing.',
       };
     }
     // Free join — no organiser_membership_plans row (database only allows £1+).
     if (!hubMembershipIsPaid()) {
       setHubMembershipStatus(
-        'Joining stays free via your member list — no Hub membership charge to save.',
+        'Joining stays free via your member list — no membership charge to save.',
         'ok'
       );
       return { ok: true };
@@ -4958,7 +4958,7 @@
 
     if (hubMembershipEnabled() && !hubMembershipHasPrice()) {
       showAlert(
-        'Membership must be blank/£0 (free via member list) or at least £1 for Hub billing.',
+        'Membership must be blank/£0 (free via member list) or at least £1 for platform billing.',
         'warn'
       );
       document.getElementById('ee-hub-membership-monthly')?.focus();
@@ -5363,8 +5363,8 @@
 
     showAlert(
       salesScheduled
-        ? 'Your event is live on the hub. Ticket sales will open on the date you set — saved attendees will be emailed when sales begin.'
-        : 'Your event is live on the hub and ticket sales are on.',
+        ? 'Your event is live on the platform. Ticket sales will open on the date you set — saved attendees will be emailed when sales begin.'
+        : 'Your event is live on the platform and ticket sales are on.',
       'ok'
     );
 

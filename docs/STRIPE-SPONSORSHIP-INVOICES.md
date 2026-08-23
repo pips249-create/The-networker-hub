@@ -99,7 +99,7 @@ When you create an invoice for a sponsor, add **metadata** on the invoice (Strip
 | `source_label` | Display name in Revenue targets (e.g. `Acme Ltd — Jul 2026 main sponsor`) |
 | `cms_slot` | Link to sponsorship placement in Command Centre |
 
-If `source_label` is omitted, the hub uses the customer name and line description.
+If `source_label` is omitted, The Networker UK uses the customer name and line description.
 
 ## Example (Stripe Dashboard)
 

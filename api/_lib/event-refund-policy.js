@@ -197,7 +197,7 @@ function buildRefundPolicySection(eventRow, siteUrl) {
     '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:400;color:#7a7274;line-height:1.5;margin:12px 0 0;">Set by the event organiser. Platform terms: ' +
     '<a href="' +
     escapeHtml(refundsHref) +
-    '" style="color:#9a7aa8;text-decoration:none;">Hub refunds policy</a>.</p>' +
+    '" style="color:#9a7aa8;text-decoration:none;">Refunds policy</a>.</p>' +
     '</td></tr></table></td></tr>'
   );
 }

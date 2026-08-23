@@ -71,7 +71,7 @@
     },
     {
       title: 'Promote & share',
-      body: 'Make a free LinkedIn post with ready-made words and a picture, or pay for extra visibility on the hub.',
+      body: 'Make a free LinkedIn post with ready-made words and a picture, or pay for extra visibility on the platform.',
       target: '#org-page-social .org-page-head',
       beforeShow: function () {
         if (window.orgDashSetRoute) window.orgDashSetRoute('social');

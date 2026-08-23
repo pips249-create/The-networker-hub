@@ -10,7 +10,7 @@ const { issueEventRefundsInStripe, waitForEventRefundsInStripe } = require('./st
 const { isStripeConnectEnabled } = require('./stripe-connect');
 
 const ADMIN_REMOVAL_REASONS = [
-  'Breach of Hub rules',
+  'Breach of platform rules',
   'Misleading listing',
   'Duplicate or test event',
   'Quality issue',

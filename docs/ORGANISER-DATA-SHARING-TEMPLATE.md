@@ -70,7 +70,7 @@ The Platform shall:
 
 This schedule starts on the date signed and continues while the Organiser maintains an active listing, unless terminated earlier.
 
-On termination, the Organiser must delete or anonymise Hub-sourced personal data unless retention is required by law, and confirm deletion on request.
+On termination, the Organiser must delete or anonymise platform-sourced personal data unless retention is required by law, and confirm deletion on request.
 
 ---
 

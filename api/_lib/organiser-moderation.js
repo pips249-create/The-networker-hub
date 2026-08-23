@@ -12,13 +12,13 @@ const {
 const CONDUCT_WARNING_LIMIT = 3;
 
 const CONDUCT_REMOVAL_REASONS = new Set([
-  'Breach of Hub rules',
+  'Breach of platform rules',
   'Misleading listing',
   'Quality issue',
 ]);
 
 const MANUAL_WARNING_REASONS = [
-  'Breach of Hub rules',
+  'Breach of platform rules',
   'Misleading listing',
   'Quality issue',
   'Spam or prohibited content',
@@ -134,7 +134,7 @@ async function sendOrganiserHubWarningEmail(sb, organiserId, options = {}) {
       organiser_name: contact.name || 'there',
       warning_count: String(warningCount),
       warning_limit: String(CONDUCT_WARNING_LIMIT),
-      warning_reason: String(options.reason || '').trim() || 'Breach of Hub rules',
+      warning_reason: String(options.reason || '').trim() || 'Breach of platform rules',
       warning_details: String(options.details || '').trim(),
       will_suspend: warningCount >= CONDUCT_WARNING_LIMIT ? '1' : '',
     },
@@ -245,7 +245,7 @@ function mapListingReportReasonToConductReason(reportReason) {
   const key = String(reportReason || '').trim().toLowerCase();
   if (key === 'misleading' || key === 'wrong_details') return 'Misleading listing';
   if (key === 'duplicate') return 'Quality issue';
-  return 'Breach of Hub rules';
+  return 'Breach of platform rules';
 }
 
 async function recordConductWarning(sb, opts) {

@@ -309,7 +309,7 @@ function buildHubInvoiceHtml(context, options) {
     escapeHtml(context.amountPaid) +
     '</td></tr>' +
     '</tbody></table>' +
-    '<p class="note">Ticket supply is from the event organiser. The Hub booking fee is charged by The Networker Group Ltd (Company No. 15252227, VAT No. 454 4092 94). Ticket VAT treatment is the organiser&rsquo;s responsibility. Use this document for expense claims; print or save the PDF for your accounts team.</p>' +
+    '<p class="note">Ticket supply is from the event organiser. The booking fee is charged by The Networker Group Ltd (Company No. 15252227, VAT No. 454 4092 94). Ticket VAT treatment is the organiser&rsquo;s responsibility. Use this document for expense claims; print or save the PDF for your accounts team.</p>' +
     '<div class="actions"><a class="btn" href="' +
     escapeHtml(pdfHref) +
     '">Download PDF</a><a class="btn btn-secondary" href="#" onclick="window.print();return false;">Print</a>' +

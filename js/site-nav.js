@@ -820,7 +820,7 @@
     banner.className = 'hub-impersonation-banner';
     banner.setAttribute('role', 'status');
     banner.innerHTML =
-      'You are viewing the Hub as <strong>' +
+      'You are viewing the site as <strong>' +
       (sessionData.user.email || 'this user') +
       '</strong> (admin: ' +
       (sessionData.impersonatorEmail || 'you') +

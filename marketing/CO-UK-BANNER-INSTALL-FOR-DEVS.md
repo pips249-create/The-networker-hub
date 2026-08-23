@@ -1,7 +1,7 @@
 # WordPress install brief — Hub upgrade banner
 
 **For:** the-networker.co.uk developers  
-**Goal:** Sitewide soft banner pointing visitors to the new Hub, while co.uk stays fully live for SEO (~3 months).  
+**Goal:** Sitewide soft banner pointing visitors to the The Networker UK, while co.uk stays fully live for SEO (~3 months).  
 **Do not** add hard redirects yet.
 
 ---
@@ -34,7 +34,7 @@ Three columns (unequal widths):
 2. **Find your next** *[rotating word]*
 3. **Sneak Peek →** (opens Hub `/peek` mini-site)
 
-No Hub logo — co.uk purple header keeps the brand.
+No Networker UK logo — co.uk purple header keeps the brand.
 
 ---
 

@@ -130,7 +130,7 @@
         s.eventsDone[String(fam.key)] = true;
       }
     });
-    // Keep the prompt available when Hub-listed events still need sales review.
+    // Keep the prompt available when platform-listed events still need sales review.
     if (families.some(familyNeedsHubListingReview)) {
       s.dismissed = false;
     } else {
@@ -205,7 +205,7 @@
     );
   }
 
-  /** Published by the Hub / admin with ticket sales still closed — organiser must review. */
+  /** Published by the platform / admin with ticket sales still closed — organiser must review. */
   function eventNeedsHubListingReview(ev) {
     if (!ev || eventIsCancelledOrGone(ev) || eventIsPast(ev)) return false;
     var salesOn = ev.ticketSalesEnabled === true || ev.ticket_sales_enabled === true;
@@ -222,7 +222,7 @@
     var members = family.events || [];
     if (!members.length) return false;
 
-    // Hub-listed published events with sales still closed always need review.
+    // platform-listed published events with sales still closed always need review.
     // Do not honour localStorage "done" flags — sales must be confirmed on the server.
     if (familyNeedsHubListingReview(family)) return true;
 
@@ -333,7 +333,7 @@
           group: g,
           ordinal: idx + 1,
         });
-        // Hub-listed events still need review even if the profile is thin.
+        // platform-listed events still need review even if the profile is thin.
         pendingFamilies.forEach(function (fam) {
           if (!fam || queuedEventKeys[fam.key]) return;
           if (String(fam.organiserId || '') !== gid) return;
@@ -349,7 +349,7 @@
             place: fam.place || '',
             family: fam,
             hubListed: true,
-            indexHint: 'Listed by the Hub — review',
+            indexHint: 'Listed by the platform — review',
           });
         });
         return;
@@ -375,7 +375,7 @@
           family: fam,
           hubListed: hubListed,
           indexHint: hubListed
-            ? 'Listed by the Hub — review'
+            ? 'Listed by the platform — review'
             : fam.isSeries
               ? 'Series (' + fam.dateCount + ' dates)'
               : 'Event',
@@ -399,14 +399,14 @@
         family: fam,
         hubListed: hubListed,
         indexHint: hubListed
-          ? 'Listed by the Hub — review'
+          ? 'Listed by the platform — review'
           : fam.isSeries
             ? 'Series (' + fam.dateCount + ' dates)'
             : 'Event',
       });
     });
 
-    // Prefer Hub-listed event reviews before profile polish.
+    // Prefer platform-listed event reviews before profile polish.
     queue.sort(function (a, b) {
       var aHub = a && a.kind === 'event' && a.hubListed ? 1 : 0;
       var bHub = b && b.kind === 'event' && b.hubListed ? 1 : 0;
@@ -421,7 +421,7 @@
     var hasHubListed = built.queue.some(function (q) {
       return q.kind === 'event' && q.hubListed;
     });
-    // Hub-listed events must surface even if the organiser dismissed an earlier setup prompt.
+    // platform-listed events must surface even if the organiser dismissed an earlier setup prompt.
     if (built.stored.dismissed && !hasHubListed) return null;
     return built.queue[0] || null;
   }

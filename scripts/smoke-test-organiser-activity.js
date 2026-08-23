@@ -45,7 +45,7 @@ async function main() {
 
   ok('api/organiser.js registers activity route', /activity:\s*require\('\.\/_lib\/routes\/organiser-activity'\)/.test(organiserJs));
   ok('route is GET-only with owner gate', /canManageTeam/.test(routeFile) && /method !== 'GET'/.test(routeFile));
-  ok('route strips Hub admin emails', /actorRole[\s\S]*admin[\s\S]*actorEmail:\s*''/.test(routeFile));
+  ok('route strips platform admin emails', /actorRole[\s\S]*admin[\s\S]*actorEmail:\s*''/.test(routeFile));
   ok('Team page has Recent activity panel', html.includes('id="org-team-activity"') && html.includes('Recent activity'));
   ok('Dashboard loads /api/organiser/activity', dash.includes('/api/organiser/activity') && dash.includes('loadTeamActivity'));
   ok('Activity panel hidden for non-owners', dash.includes('activityPanel.hidden = !state.canManageTeam'));

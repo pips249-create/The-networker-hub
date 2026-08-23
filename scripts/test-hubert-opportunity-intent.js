@@ -6,7 +6,7 @@
 const { wantsOpportunitySearch } = require('../api/_lib/hubert-opportunities');
 
 const NO_BROWSE = [
-  'How do I list a business opportunity on the hub?',
+  'How do I list a business opportunity on The Networker UK?',
   'I want to list a franchise opportunity',
   'How do I enquire about a franchise?',
   'How do I respond to opportunity enquiries as an organiser?',
@@ -15,8 +15,8 @@ const NO_BROWSE = [
 ];
 
 const YES_BROWSE = [
-  'What franchise opportunities are on the hub?',
-  'Help me find a low-investment side hustle opportunity on the hub.',
+  'What franchise opportunities are on The Networker UK?',
+  'Help me find a low-investment side hustle opportunity on the platform.',
   'Show me partnership deals',
   'Find franchise opportunities under £10k',
   'Browse opportunities for distributorships',

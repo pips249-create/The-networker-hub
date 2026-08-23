@@ -45,7 +45,7 @@ const cases = [
   },
   {
     name: 'Static fallback when no live search ran',
-    text: 'How do I find events on the hub?',
+    text: 'How do I find events on The Networker UK?',
     eventLookup: null,
     opportunityLookup: null,
     expect: /Browse all events.*\/events\//is,
@@ -59,18 +59,18 @@ const cases = [
   },
   {
     name: 'Franchise browse empty results beat generic opportunity fallback',
-    text: 'What franchise opportunities are on the hub?',
+    text: 'What franchise opportunities are on The Networker UK?',
     eventLookup: null,
     opportunityLookup: {
       opportunities: [],
-      query: { text: 'What franchise opportunities are on the hub?', types: ['franchise'], configured: true },
+      query: { text: 'What franchise opportunities are on The Networker UK?', types: ['franchise'], configured: true },
     },
     expect: /I'm afraid I couldn't find published business opportunities|Allow me to highlight/i,
     reject: /Browse free at \/opportunities\/.*To enquire, create a free account and send a message/i,
   },
   {
     name: 'Franchise browse with results lists opportunities',
-    text: 'What franchise opportunities are on the hub?',
+    text: 'What franchise opportunities are on The Networker UK?',
     eventLookup: null,
     opportunityLookup: {
       opportunities: [
@@ -82,13 +82,13 @@ const cases = [
           id: 'coffee-franchise-uk',
         },
       ],
-      query: { text: 'What franchise opportunities are on the hub?', types: ['franchise'], configured: true },
+      query: { text: 'What franchise opportunities are on The Networker UK?', types: ['franchise'], configured: true },
     },
     expect: /Coffee franchise UK.*https?:\/\/.*\/opportunities\/coffee-franchise-uk/is,
   },
   {
     name: 'List opportunity question uses organiser fallback not live browse',
-    text: 'How do I list a business opportunity on the hub?',
+    text: 'How do I list a business opportunity on The Networker UK?',
     eventLookup: null,
     opportunityLookup: null,
     expect: /\/organiser\/.*Business opportunities|\/guides\/list-a-business-opportunity/i,

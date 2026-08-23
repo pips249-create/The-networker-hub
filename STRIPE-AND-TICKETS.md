@@ -9,7 +9,7 @@ A plain-language guide for organisers and admins.
 | **Supabase** | Stores events, ticket types, prices, and who bought what |
 | **Your Stripe account** | Takes card payments (one account for the whole hub today) |
 | **The hub website** | Shows events, calculates booking fee, opens Stripe Checkout |
-| **Stripe webhook** | Tells the hub when payment succeeded → creates a registration |
+| **Stripe webhook** | Tells The Networker UK when payment succeeded → creates a registration |
 
 You do **not** need a separate Stripe Payment Link per event anymore if `STRIPE_SECRET_KEY` is set on Vercel. The hub builds checkout automatically from ticket prices in Supabase.
 
@@ -63,7 +63,7 @@ If you still use Payment Link fallback (no `STRIPE_SECRET_KEY`), each paid event
 
 ## What attendees see after paying
 
-1. Branded **booking confirmed** page on the hub
+1. Branded **booking confirmed** page on The Networker UK
 2. **Add to calendar** (Google, Outlook, .ics)
 3. **Share** on LinkedIn, Facebook, X, WhatsApp
 4. Ticket(s) on **My account** (`/account/`)

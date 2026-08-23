@@ -136,7 +136,7 @@ function rosterRowIsActive(row, now = new Date()) {
   return !Number.isNaN(exp.getTime()) && exp.getTime() >= now.getTime();
 }
 
-/** Live Hub-billed subscriptions still count as members when expires_at lags Stripe. */
+/** Live platform-billed subscriptions still count as members when expires_at lags Stripe. */
 function rosterRowHasLiveHubSubscription(row) {
   if (!row || !row.stripe_subscription_id) return false;
   const subStatus = String(row.subscription_status || '')
@@ -231,7 +231,7 @@ async function findActiveRosterRow(sb, { organiserId, email, attendeeId, userId 
     if (!candidate && byAttendee.data) candidate = byAttendee.data;
   }
 
-  // Hub-billed rows can look expired until Stripe expiry is healed (same as My account).
+  // platform-billed rows can look expired until Stripe expiry is healed (same as My account).
   if (candidate && candidate.stripe_subscription_id) {
     try {
       const { repairMembershipRosterExpiry } = require('./membership-billing');
@@ -725,7 +725,7 @@ async function listRosterForOrganiser(organiserId, { status } = {}) {
 }
 
 /**
- * Refresh expires_at from Stripe for Hub-billed members when missing or already due
+ * Refresh expires_at from Stripe for platform-billed members when missing or already due
  * while the subscription is still live (covers Basil-era blank/same-day writes).
  */
 async function healHubBilledRosterExpiries(rows) {
@@ -2306,7 +2306,7 @@ async function queueUnclaimedMemberInvites(organiserId) {
 }
 
 /**
- * Queue Invite to pay emails for renewal targets: past_due, expiring, lapsed, or not Hub-billed.
+ * Queue Invite to pay emails for renewal targets: past_due, expiring, lapsed, or not platform-billed.
  */
 async function queueMembershipPayInvites(organiserId, options) {
   const orgId = String(organiserId || '').trim();

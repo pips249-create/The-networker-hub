@@ -3,7 +3,7 @@
  * Enrich public networking groups with geography (organisers.outcode).
  *
  * Priority:
- *   1. Most common outcode from their Hub events
+ *   1. Most common outcode from their events
  *   2. Full UK postcode found in name / description
  *   3. Place / region name → networking region → centre outcode
  *

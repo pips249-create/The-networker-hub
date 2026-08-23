@@ -229,7 +229,7 @@
     if (titleEl) titleEl.textContent = 'Create your organiser page';
     if (descEl) {
       descEl.innerHTML =
-        'Your public page on the hub. <a href="/events/#organisers" class="org-getting-started-link">Search existing groups</a> first (available once you are signed in — public browsing opens 25 August). If yours is already listed, open it and request access instead of creating a duplicate.';
+        'Your public page on the platform. <a href="/events/#organisers" class="org-getting-started-link">Search existing groups</a> first (available once you are signed in — public browsing opens 25 August). If yours is already listed, open it and request access instead of creating a duplicate.';
     }
     if (createBtn) createBtn.hidden = false;
     if (findLink) findLink.hidden = true;
@@ -514,7 +514,7 @@
 
   function rankingBadgeText(row) {
     if (!row) return '';
-    return row.displayLabel || String(row.label || '').replace(' on the Hub', '') + (row.periodLabel ? ' · ' + row.periodLabel : '');
+    return row.displayLabel || String(row.label || '').replace(' on The Networker UK', '') + (row.periodLabel ? ' · ' + row.periodLabel : '');
   }
 
   function groupPublicProfileUrl(groupId, slug) {
@@ -559,7 +559,7 @@
       '<div><h3 class="org-partner-badge-card-name">' +
       esc(g.name || 'Your group') +
       '</h3>' +
-      '<p class="org-partner-badge-meta">Hub partner badge · links to your public profile</p></div>' +
+      '<p class="org-partner-badge-meta">Partner badge · links to your public profile</p></div>' +
       '<div class="hub-partner-badge-preview">' +
       '<img src="' +
       esc(origin + '/assets/partner-badge.svg?v=20260806logo') +
@@ -1142,7 +1142,7 @@
           groupsMount.innerHTML =
             '<section class="org-ranking-share org-ranking-share--board">' +
             '<h2 class="org-section-title">Your award badge</h2>' +
-            '<p class="org-section-sub">Embed this on your website — it links to your Hub profile and this month&rsquo;s Top groups list.</p>' +
+            '<p class="org-section-sub">Embed this on your website — it links to your profile and this month&rsquo;s Top groups list.</p>' +
             '<div class="org-ranking-share-cards">' +
             cardsHtml +
             '</div></section>';
@@ -3449,7 +3449,7 @@
         esc(String(best.rank)) +
         ' of ' +
         esc(String(best.totalRanked)) +
-        ' rated groups on the Hub (★ ' +
+        ' rated groups on The Networker UK (★ ' +
         esc(Number(best.rating).toFixed(1)) +
         ' from ' +
         esc(String(best.reviewCount)) +
@@ -3536,7 +3536,7 @@
         return ev && ev.featured && eventIsEligibleForFeaturedUpgrade(ev);
       }).length;
       if (!state.eventsLoaded) {
-        eventsMeta.textContent = 'Show your event first when people browse upcoming events on the hub.';
+        eventsMeta.textContent = 'Show your event first when people browse upcoming events on the platform.';
       } else if (!eligible.length) {
         eventsMeta.textContent = 'Publish an upcoming event first, then come back here to feature it.';
       } else if (featuredCount > 0) {
@@ -3566,7 +3566,7 @@
         return o && (o.featured || opportunityPremiumMeta(o).tone !== 'muted');
       }).length;
       if (!state.opportunitiesLoaded) {
-        oppMeta.textContent = 'Show your listing first when people browse business opportunities on the hub.';
+        oppMeta.textContent = 'Show your listing first when people browse business opportunities on the platform.';
       } else if (!liveListings.length) {
         oppMeta.textContent = 'Publish a business opportunity first, then come back here to feature it.';
       } else if (premiumCount > 0) {
@@ -3980,7 +3980,7 @@
             type: 'info',
             title: 'Set up your organiser workspace',
             text:
-              'Start with your <strong>organiser page</strong> — your public page on the hub for your group, business, or brand. Then you can list events, add ticket types, and manage bookings.',
+              'Start with your <strong>organiser page</strong> — your public page on the platform for your group, business, or brand. Then you can list events, add ticket types, and manage bookings.',
             actions:
               '<a class="org-btn org-btn-gold org-btn-sm" href="/organiser/group-edit">Create organiser page</a>',
           });
@@ -5007,13 +5007,13 @@
     }
     if (payoutInfo) {
       payoutInfo.innerHTML = connect
-        ? '<strong>Stripe Connect:</strong> paid ticket revenue goes to your connected Stripe account when attendees checkout — not to the Hub. Use <strong>Open Stripe dashboard</strong> above to view balance, issue refunds, and manage bank payouts. The column here shows legacy Hub payout requests (if any) or <strong>In Stripe</strong> for ticket sales.'
+        ? '<strong>Stripe Connect:</strong> paid ticket revenue goes to your connected Stripe account when attendees checkout — not to the platform. Use <strong>Open Stripe dashboard</strong> above to view balance, issue refunds, and manage bank payouts. The column here shows legacy platform payout requests (if any) or <strong>In Stripe</strong> for ticket sales.'
         : '<strong>Payout column:</strong> shows whether a payout was requested or paid. After an event ends it is archived automatically — then you can use <strong>Request payout</strong> when the net amount is above £1. If refunds are still processing, use <strong>Retry automatic refunds</strong>.';
     }
     if (modalLead) {
       modalLead.textContent = connect
-        ? 'Manual Hub payouts are not used with Stripe Connect. Ticket revenue is already in your connected Stripe account.'
-        : 'Request a manual Hub payout after your event is archived and the 7-day settlement period has passed.';
+        ? 'Manual platform payouts are not used with Stripe Connect. Ticket revenue is already in your connected Stripe account.'
+        : 'Request a manual payout after your event is archived and the 7-day settlement period has passed.';
     }
   }
 
@@ -5079,7 +5079,7 @@
 
   function ratingHtml(rating) {
     const n = rating == null || rating === '' ? NaN : Number(rating);
-    // Hub ratings are 1–5; 0 / null means no reviews yet — don't show a gold “0.0”.
+    // platform ratings are 1–5; 0 / null means no reviews yet — don't show a gold “0.0”.
     if (!Number.isFinite(n) || n <= 0) {
       return '<span class="org-rating org-rating--empty">No reviews</span>';
     }
@@ -5230,7 +5230,7 @@
       return (
         '<button type="button" class="org-action-item" data-republish-event="' +
         esc(id) +
-        '"><span class="org-action-icon">↻</span><span class="org-action-text"><strong>Republish</strong><span>List on the hub again</span></span></button>'
+        '"><span class="org-action-icon">↻</span><span class="org-action-text"><strong>Republish</strong><span>List on the platform again</span></span></button>'
       );
     }
     if (statusKey === 'draft' || statusKey === 'cancelled' || statusKey === 'archived') {
@@ -6077,9 +6077,9 @@
           (n === 1 ? 'first event booking' : n + ' event bookings') +
           ' with your organiser page"'
         : rel === 'returning' && n > 1
-          ? ' title="Including this booking — ' + n + ' Hub bookings with your organiser page"'
+          ? ' title="Including this booking — ' + n + ' platform bookings with your organiser page"'
           : rel === 'new'
-            ? ' title="First Hub booking with your organiser page"'
+            ? ' title="First platform booking with your organiser page"'
             : '';
     const visitBadge =
       '<span class="org-badge org-badge-visit ' +
@@ -9155,7 +9155,7 @@
     const pad = 12;
     const gap = 6;
     const hardCap = 420;
-    // Keep the menu clear of the Hubert launcher in the bottom-right.
+    // Keep the menu clear of the platformert launcher in the bottom-right.
     const bottomClearance = 88;
     // Roughly header + note + 4–5 actions — below this, prefer the roomier side.
     const minComfortable = 280;
@@ -10982,7 +10982,7 @@
     const titles = {
       'business-listings': [
         'My business opportunities',
-        'Listings you publish on the hub — edit, renew, or promote each one.',
+        'Listings you publish on the platform — edit, renew, or promote each one.',
       ],
       'business-enquiries': [
         'Enquiries received',
@@ -11634,7 +11634,7 @@
         title: hasGroups ? 'No matching organiser pages' : 'No organiser pages yet',
         text: hasGroups
           ? 'Try adjusting your search or status filter.'
-          : 'Create your organiser page on the hub before listing events.',
+          : 'Create your organiser page on the platform before listing events.',
         hideActions: hasGroups,
       });
       updatePaginationNav('groups', { totalPages: 1, start: 0, end: 0, total: 0, page: 1 });
@@ -12608,7 +12608,7 @@
     const r = String(role || '').toLowerCase();
     if (r === 'owner') return 'Owner';
     if (r === 'team' || r === 'editor') return 'Team member';
-    if (r === 'admin') return 'Hub support';
+    if (r === 'admin') return 'platform support';
     if (r === 'system') return 'System';
     return 'Unknown';
   }
@@ -12620,7 +12620,7 @@
     if (first && first.indexOf('@') === -1) {
       return first + ' at The Networker UK';
     }
-    return 'Hub support';
+    return 'platform support';
   }
 
   function renderTeamActivityItems(items) {
@@ -13398,7 +13398,7 @@
       if (bodyEl) {
         bodyEl.textContent = hasClaimOnboardMismatch()
           ? 'Your email did not match a listing — find your group and request access instead of creating a duplicate page.'
-          : 'Create or claim your organiser page to get started on the hub.';
+          : 'Create or claim your organiser page to get started on the platform.';
       }
     } else if (needsOrganiserProfileReview()) {
       if (titleEl) titleEl.textContent = 'Step 1 of 3 — check your organiser page';
@@ -14000,13 +14000,13 @@
         introEl.textContent =
           'Great — this page is ready. Next we’ll ask about your other organiser page' +
           (pendingClaims === 1 ? '' : 's') +
-          '. If you claimed before 1 September, your Founding Organiser · 2026 badge is on your Hub page.';
+          '. If you claimed before 1 September, your Founding Organiser · 2026 badge is on your organiser page.';
       } else if (nextLaunch && nextLaunch.kind === 'profile') {
         introEl.textContent =
-          'This page is ready. Next, review your other organiser page. If you claimed before 1 September, your Founding Organiser · 2026 badge is on your Hub page.';
+          'This page is ready. Next, review your other organiser page. If you claimed before 1 September, your Founding Organiser · 2026 badge is on your organiser page.';
       } else {
         introEl.textContent =
-          'You’re set in the workspace. If you claimed before 1 September, your Founding Organiser · 2026 badge is on your Hub page. Free tickets can publish without bank details; add them before paid sales.';
+          'You’re set in the workspace. If you claimed before 1 September, your Founding Organiser · 2026 badge is on your organiser page. Free tickets can publish without bank details; add them before paid sales.';
       }
     }
     if (nextBtn) {
@@ -14172,7 +14172,7 @@
     }
     if (kicker) {
       if (item.kind === 'event' && item.hubListed) {
-        kicker.textContent = 'Listed for you by the Hub';
+        kicker.textContent = 'Listed for you by the platform';
       } else if (item.kind === 'event') {
         kicker.textContent = 'Still in draft — publish to finish';
       } else {
@@ -14190,7 +14190,7 @@
             : 'Review your organiser page';
       } else if (item.hubListed) {
         titleEl.textContent =
-          eventsLeft > 1 ? 'Review these Hub listings' : 'Review this event';
+          eventsLeft > 1 ? 'Review these platform listings' : 'Review this event';
       } else {
         titleEl.textContent =
           eventsLeft > 1
@@ -14575,7 +14575,7 @@
     const introEl = document.getElementById('org-group-claim-intro');
     if (introEl) {
       introEl.textContent = groupClaimRejectMode
-        ? 'This will remove the page below from your dashboard and notify the Hub team. Add an optional note if the email match looks wrong.'
+        ? 'This will remove the page below from your dashboard and notify the our team. Add an optional note if the email match looks wrong.'
         : 'You have early access to the organiser workspace before public browsing opens on 25 August. Confirm you manage this page, then use the full tools — events, LinkedIn, emails, memberships. Attendees cannot buy tickets on the public site until 1 September.';
     }
   }
@@ -14667,7 +14667,7 @@
         updateGettingStartedPanel();
         syncOverviewSetupQuietMode();
         showOrganiserAlert(
-          data.message || 'Profile removed from your dashboard. The Hub team has been notified.',
+          data.message || 'Profile removed from your dashboard. The our team has been notified.',
           false
         );
         return;
@@ -14866,7 +14866,7 @@
         setRoute('business-overview', { skipEventsGuard: true });
       } else if (action === 'reject') {
         showOrganiserAlert(
-          data.message || 'Listing removed from your dashboard. The Hub team has been notified.',
+          data.message || 'Listing removed from your dashboard. The our team has been notified.',
           false
         );
       }
@@ -15765,7 +15765,7 @@
     } else {
       titleEl.textContent = 'List a business opportunity';
       leadEl.textContent =
-        'See how business opportunities work, what they cost, and start promoting a franchise, partnership, or side hustle on the hub.';
+        'See how business opportunities work, what they cost, and start promoting a franchise, partnership, or side hustle on the platform.';
     }
   }
 

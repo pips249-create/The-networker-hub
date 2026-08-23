@@ -82,7 +82,7 @@ module.exports = async function handler(req, res) {
         return json(res, 400, {
           ok: false,
           error: 'not_claimable',
-          message: 'This profile is not available to claim through the hub.',
+          message: 'This profile is not available to claim through The Networker UK.',
         });
       }
       if (msg === 'invalid_email' || msg === 'missing_name' || msg === 'missing_organiser_id') {

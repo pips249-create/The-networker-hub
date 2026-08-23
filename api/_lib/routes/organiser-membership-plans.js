@@ -111,7 +111,7 @@ module.exports = async function handler(req, res) {
             ok: false,
             error: 'stripe_connect_required',
             message:
-              'Add your bank details (Stripe Connect) before offering paid memberships through the Hub.',
+              'Add your bank details (Stripe Connect) before offering paid memberships through The Networker UK.',
           });
         }
       }

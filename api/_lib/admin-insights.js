@@ -45,7 +45,7 @@ function isConfirmedSiteTicket(reg) {
   return status === 'Paid' || status === 'Free';
 }
 
-/** Tickets bought on the Hub in the period (quantity, not just booking rows). */
+/** Tickets bought on The Networker UK in the period (quantity, not just booking rows). */
 function computeTicketVolume(regs) {
   let bookings = 0;
   let tickets = 0;

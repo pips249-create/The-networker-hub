@@ -26,7 +26,7 @@ The incident lead coordinates containment, assessment, notification, and documen
 
 A breach of security leading to accidental or unlawful **destruction, loss, alteration, unauthorised disclosure of, or access to** personal data.
 
-Examples relevant to the Hub:
+Examples relevant to the platform:
 
 - Supabase or Vercel credential leak
 - Accidental export of attendee list to wrong recipient
@@ -105,7 +105,7 @@ Use email from verified Resend domain or account message where possible.
 If Supabase, Stripe, Resend, or Vercel notifies you of a breach:
 
 1. Obtain their incident summary and affected data scope.
-2. Assess impact on Hub members.
+2. Assess impact on members.
 3. Follow Phases 2–5 as controller for your users’ data.
 4. Rely on processor DPA for their obligations; you remain responsible for notifying ICO/users where required.
 

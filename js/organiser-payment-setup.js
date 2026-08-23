@@ -1,6 +1,6 @@
 /**
  * Simple “add bank details” flow for paid ticket sales (Stripe Connect).
- * Always launches Stripe via a top-level Hub page in a new tab so Stripe is
+ * Always launches Stripe via a top-level organiser page in a new tab so Stripe is
  * never embedded in the organiser tickets drawer iframe.
  */
 (function (global) {

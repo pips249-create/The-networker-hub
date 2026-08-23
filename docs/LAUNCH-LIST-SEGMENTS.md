@@ -10,8 +10,8 @@
 | Segment | Who | Primary use |
 |---------|-----|-------------|
 | **Organisers** | Emails on a public group profile (Segment A) | Claim / publish waves (Email 2+) |
-| **Attendees** | Hub accounts or legacy contacts with **no** organiser profile email | Soft launch / browse / book messaging |
-| **Both** | Same email is on a group **and** has a Hub account (or booked before) | Claim-focused copy; already know the brand |
+| **Attendees** | Accounts or legacy contacts with **no** organiser profile email | Soft launch / browse / book messaging |
+| **Both** | Same email is on a group **and** has a Account (or booked before) | Claim-focused copy; already know the brand |
 
 Always **dedupe by email** (one send per address). Prefer Segment A exclusions: exhibition-style names, internal/test accounts, browse-hidden groups.
 
@@ -40,9 +40,9 @@ Writes under `data/`:
 | File | Contents |
 |------|----------|
 | `launch-segment-organisers.csv` | Public organiser emails (Segment A rules) |
-| `launch-segment-hub-accounts.csv` | Hub account emails |
+| `launch-segment-hub-accounts.csv` | Account emails |
 | `launch-segment-both.csv` | Intersection |
-| `launch-segment-attendees-only.csv` | Hub accounts **not** on organiser list |
+| `launch-segment-attendees-only.csv` | Accounts **not** on organiser list |
 | `launch-segment-summary.json` | Counts |
 
 ---

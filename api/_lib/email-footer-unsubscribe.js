@@ -1,5 +1,5 @@
 /**
- * Ensure every Hub email footer includes an Unsubscribe link (PECR / marketing law).
+ * Ensure every platform email footer includes an Unsubscribe link (PECR / marketing law).
  * Works on template HTML ({{unsubscribe_url}}) and on already-rendered HTML.
  */
 

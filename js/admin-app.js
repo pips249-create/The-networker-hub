@@ -153,7 +153,7 @@
     },
     impersonate: {
       title: 'Impersonate user',
-      subtitle: 'Browse Supabase accounts and sign in as any non-admin user to debug on the Hub',
+      subtitle: 'Browse Supabase accounts and sign in as any non-admin user to debug on The Networker UK',
     },
     users: {
       title: 'Users & accounts',
@@ -217,7 +217,7 @@
     },
     social: {
       title: 'Social posts',
-      subtitle: 'Draft captions from Hub listings — copy or open share links for LinkedIn, Facebook, and X',
+      subtitle: 'Draft captions from platform listings — copy or open share links for LinkedIn, Facebook, and X',
     },
     'social-founding': {
       title: 'Founding organisers',
@@ -229,7 +229,7 @@
     dashboard: {
       title: 'How to use Home',
       steps: [
-        'Glance at the numbers at the top — Hub booking fees, events, organisers, and member accounts.',
+        'Glance at the numbers at the top — Booking fees, events, organisers, and member accounts.',
         'Use Quick links if you already know where you want to go — Organiser sales kit has cheat sheets and demo decks.',
         'If Things to do appears, start with Urgent items and click Go there on each row.',
         'Recent activity shows new sign-ups, events, and reviews.',
@@ -248,10 +248,10 @@
       title: 'How to view analytics',
       steps: [
         'Use the Overview, Demand, Insights, and Waitlist tabs — each page loads only what you need.',
-        'Overview links out to Vercel for visitor charts and shows live Hub counts.',
+        'Overview links out to Vercel for visitor charts and shows live platform counts.',
         'Demand shows searches, favourites, opportunity enquiries, and guest visits.',
         'Waitlist shows launch / peek email sign-ups (site access, /peek/about-us, About) with source breakdown and CSV export.',
-        'Insights opens with tickets bought on the Hub (paid vs free), then ranks top groups and events. Sales pitch opens (e.g. Barnsgate) are under Insights → Sales pitches. Change 7 / 30 / all days on Demand or Insights.',
+        'Insights opens with tickets bought on The Networker UK (paid vs free), then ranks top groups and events. Sales pitch opens (e.g. Barnsgate) are under Insights → Sales pitches. Change 7 / 30 / all days on Demand or Insights.',
       ],
     },
     rankings: {
@@ -274,7 +274,7 @@
       title: 'How to sign in as another user',
       steps: [
         'Search for the account you need to debug.',
-        'Click Impersonate — you will be signed in as that user on the public Hub.',
+        'Click Impersonate — you will be signed in as that user on the public site.',
         'When finished, stop impersonating from the banner at the top of the site.',
         'Never impersonate without a clear support reason.',
       ],
@@ -453,7 +453,7 @@
     social: {
       title: 'How to draft social posts',
       steps: [
-        'Pick a post type — listings, Top 10, Founding organisers, or Hub promos.',
+        'Pick a post type — listings, Top 10, Founding organisers, or platform promos.',
         'Review the generated caption (and download the graphic for Top 10 / Founding posts).',
         'Copy the text or open the share link for LinkedIn, Facebook, or X.',
       ],
@@ -1023,7 +1023,7 @@
       if (hash.indexOf('waitlist') !== -1) {
         return 'Launch and peek email sign-ups by source.';
       }
-      return 'Visitor traffic, Hub activity, tickets, and demand signals.';
+      return 'Visitor traffic, platform activity, tickets, and demand signals.';
     }
     if (route === 'financials') {
       if (hash.indexOf('organisers') !== -1) {
@@ -1039,7 +1039,7 @@
     }
     if (route === 'moderation') {
       if (hash.indexOf('import') !== -1) return PAGE_META.import.subtitle;
-      if (hash.indexOf('listings') !== -1) return 'Browse Hub events — jump to cleanup to edit.';
+      if (hash.indexOf('listings') !== -1) return 'Browse events — jump to cleanup to edit.';
       if (hash.indexOf('reviews') !== -1) return 'Review spam-like or reported reviews.';
       return 'Open listing and review reports waiting for a decision.';
     }
@@ -1139,7 +1139,7 @@
       } else if (fullHash === 'sponsorship/clicks-report' || fullHash === 'sponsorship/report') {
         title = 'Sponsor click report';
         subtitle =
-          'Outbound clicks from Hub placements (heroes, partners, mini sponsors). Filter by brand and month for sponsor packs.';
+          'Outbound clicks from platform placements (heroes, partners, mini sponsors). Filter by brand and month for sponsor packs.';
       } else if (fullHash === 'sponsorship/event-page-carousel') {
         title = 'Event & organiser pages — Sponsor carousel (3 ads)';
         subtitle =
@@ -3319,7 +3319,7 @@
         if (!organiserId) return;
         if (
           !window.confirm(
-            'Clean up references to this deleted group profile?\n\nLinked events will be unlinked. This is safe if the networking group no longer exists on the Hub.'
+            'Clean up references to this deleted group profile?\n\nLinked events will be unlinked. This is safe if the networking group no longer exists on The Networker UK.'
           )
         ) {
           return;
@@ -3381,7 +3381,7 @@
         if (!unpublishReportId) return;
         if (
           !window.confirm(
-            'Unpublish this listing on the Hub? The poster and reporter will be emailed, a conduct warning may apply, and the report will be marked upheld.'
+            'Unpublish this listing on The Networker UK? The poster and reporter will be emailed, a conduct warning may apply, and the report will be marked upheld.'
           )
         ) {
           return;
@@ -4325,7 +4325,7 @@
       '<a href="#insights-places" class="admin-insights-jump-link">Places &amp; ratings</a>' +
       '</nav>' +
       '<section id="insights-tickets" class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3 scroll-mt-24">' +
-      '<div><h3 class="font-bold text-brand-900">Tickets bought on the Hub</h3>' +
+      '<div><h3 class="font-bold text-brand-900">Tickets bought on The Networker UK</h3>' +
       '<p class="text-sm text-slate-500 mt-0.5">Confirmed bookings in ' +
       esc(periodLabel.toLowerCase()) +
       ' — paid and free tickets (cancelled and pending applications excluded). Quantity counts multi-ticket checkouts.</p></div>' +
@@ -4891,7 +4891,7 @@
       var listings = m.listings || {};
       if (metricsEl) {
         metricsEl.innerHTML =
-          card('Hub accounts', String(m.attendees || 0), 'hub_accounts and attendee profiles', 'blue') +
+          card('Accounts', String(m.attendees || 0), 'hub_accounts and attendee profiles', 'blue') +
           card(
             'On events browse',
             String(m.liveEvents || 0),
@@ -4909,7 +4909,7 @@
             'violet'
           ) +
           card(
-            'Hub booking fees',
+            'Booking fees',
             fmtMoney(m.fees || 0),
             'After Stripe · ticket volume ' + fmtMoney(m.revenue || 0) + ' (organiser · E2E excluded)',
             'emerald'
@@ -4948,13 +4948,13 @@
       '</div></div></section>' +
       '<div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_18rem] xl:items-start">' +
       '<section class="bg-white rounded-xl border border-slate-200 p-4 lg:p-5 shadow-sm min-w-0">' +
-      '<h3 class="font-bold text-brand-900">Hub platform activity</h3>' +
+      '<h3 class="font-bold text-brand-900">Platform activity</h3>' +
       '<p class="text-sm text-slate-500 mt-1 mb-4">Live Supabase counts — separate from anonymous visitor traffic.</p>' +
       '<div class="admin-metric-grid admin-metric-grid--4" id="analytics-platform-metrics">' +
-      card('Hub accounts', '…', 'Loading…', 'blue') +
+      card('Accounts', '…', 'Loading…', 'blue') +
       card('On events browse', '…', 'Loading…', 'brand') +
       card('On organiser browse', '…', 'Loading…', 'violet') +
-      card('Hub booking fees', '…', 'Loading…', 'emerald') +
+      card('Booking fees', '…', 'Loading…', 'emerald') +
       '</div></section>' +
       '<aside class="admin-panel-sticky bg-white rounded-xl border border-slate-200 p-4 lg:p-5 shadow-sm min-w-0 flex flex-col">' +
       '<h3 class="font-bold text-brand-900 text-sm shrink-0">Recent genuine activity</h3>' +
@@ -5204,7 +5204,7 @@
     if (metricsEl) {
       metricsEl.innerHTML =
         card(
-          'Hub booking fees',
+          'Booking fees',
           fmtMoney(m.fees || 0),
           'Your cut after Stripe (E2E/test excluded) · organiser ticket volume ' +
           fmtMoney(m.revenue || 0)
@@ -5223,7 +5223,7 @@
           String(m.browseOrganisers != null ? m.browseOrganisers : m.organisers || 0),
           (m.organisers || 0) + ' group profiles all-time'
         ) +
-        card('Member accounts', String(m.attendees || 0), 'People signed up on the Hub');
+        card('Member accounts', String(m.attendees || 0), 'People signed up on The Networker UK');
     }
 
     if (preEl) preEl.innerHTML = renderMetricsSummary(data);
@@ -5896,7 +5896,7 @@
       main.innerHTML =
         '<div class="space-y-5">' +
         '<section class="admin-stat-grid admin-stat-grid--4" id="dashboard-metrics">' +
-        card('Hub booking fees', '…', 'Loading…') +
+        card('Booking fees', '…', 'Loading…') +
         card('On events browse', '…', 'Loading…') +
         card('On organiser browse', '…', 'Loading…') +
         card('Member accounts', '…', 'Loading…') +
@@ -5953,7 +5953,7 @@
         '<div id="live-metrics" class="text-base text-slate-600 min-h-[10rem]">Loading…</div></div></div></section>' +
         '<a href="#analytics/demand" class="admin-quick-link group">' +
         '<div><p class="admin-quick-link-title">Analytics — demand &amp; tickets</p>' +
-        '<p class="admin-quick-link-desc">Searches, saves, tickets bought, and Hub growth.</p></div>' +
+        '<p class="admin-quick-link-desc">Searches, saves, tickets bought, and platform growth.</p></div>' +
         '<span class="admin-action-btn">Open Analytics</span></a></div>';
     }
 
@@ -5999,7 +5999,7 @@
       '<div><dt>Member accounts</dt><dd>' +
       esc(String(m.attendees || 0)) +
       '</dd></div>' +
-      '<div><dt>Hub booking fees</dt><dd>' +
+      '<div><dt>Booking fees</dt><dd>' +
       esc(fmtMoney(m.fees || 0)) +
       '</dd></div>' +
       '<div><dt>Organiser ticket volume</dt><dd>' +
@@ -6104,7 +6104,7 @@
       '<div class="space-y-6 max-w-4xl">' +
       '<div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">' +
       '<p class="font-semibold">Support &amp; debugging only</p>' +
-      '<p class="mt-1 opacity-90">You will be signed in as the chosen user across the Hub. A banner lets you return to your admin account at any time. Admin accounts cannot be impersonated. Networking group profiles get a silent login if needed (no email sent). Choose <strong>Organiser dashboard</strong> to add events on that group&apos;s profile.</p>' +
+      '<p class="mt-1 opacity-90">You will be signed in as the chosen user on the site. A banner lets you return to your admin account at any time. Admin accounts cannot be impersonated. Networking group profiles get a silent login if needed (no email sent). Choose <strong>Organiser dashboard</strong> to add events on that group&apos;s profile.</p>' +
       '</div>' +
       '<form id="impersonate-form" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5">' +
       '<div><label class="text-xs font-semibold text-slate-500 uppercase" for="impersonate-email">User email</label>' +
@@ -6137,7 +6137,7 @@
       '<div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">' +
       '<div class="px-4 py-3 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">' +
       '<div><h3 class="text-sm font-bold text-slate-700">Browse login accounts</h3>' +
-      '<p class="text-xs text-slate-500 mt-0.5">People with Hub sign-ins — not every networking group profile.</p></div>' +
+      '<p class="text-xs text-slate-500 mt-0.5">People with sign-ins — not every networking group profile.</p></div>' +
       '<p id="impersonate-directory-status" class="text-xs text-slate-500">Loading…</p></div>' +
       '<div class="px-4 py-3 border-b border-slate-100 flex flex-wrap gap-3 items-end">' +
       '<div class="flex-1 min-w-[200px]"><label class="text-xs font-semibold text-slate-500 uppercase">Search</label>' +
@@ -6389,7 +6389,7 @@
       '<div class="flex justify-between gap-4"><dt class="text-slate-500 shrink-0">Role</dt><dd class="font-medium text-right">' +
       esc(u.role) +
       '</dd></div>' +
-      '<div class="flex justify-between gap-4"><dt class="text-slate-500 shrink-0">Hub view</dt><dd class="font-medium text-right">' +
+      '<div class="flex justify-between gap-4"><dt class="text-slate-500 shrink-0">Public view</dt><dd class="font-medium text-right">' +
       esc(hubViewLabel(u.hubView)) +
       '</dd></div>' +
       '<div class="flex justify-between gap-4"><dt class="text-slate-500 shrink-0">Location</dt><dd class="font-medium text-right">' +
@@ -6412,7 +6412,7 @@
       '<div class="border-t border-slate-100 pt-4 mt-4">' +
       '<p class="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Account settings (as user sees)</p>' +
       '<dl class="space-y-3 text-sm">' +
-      emailPrefRow('Hub marketing', u.emailsEnabled === true) +
+      emailPrefRow('Marketing emails', u.emailsEnabled === true) +
       emailPrefRow('Event reminders', u.emailPrefEventReminders !== false) +
       emailPrefRow('Organiser alerts', u.emailPrefOrganiserAlerts !== false) +
       (u.organiserTermsAcceptedAt
@@ -6680,7 +6680,7 @@
       parts.push(
         '<a href="' +
           attrEsc(r.viewUrl) +
-          '" target="_blank" rel="noopener" class="rounded-lg border border-brand-200 bg-white text-brand-800 px-2.5 py-1 text-xs font-semibold hover:bg-brand-50">View on Hub</a>'
+          '" target="_blank" rel="noopener" class="rounded-lg border border-brand-200 bg-white text-brand-800 px-2.5 py-1 text-xs font-semibold hover:bg-brand-50">View on site</a>'
       );
     }
     if (r.adminUrl) {
@@ -6936,7 +6936,7 @@
           '<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p class="text-xs text-slate-500 uppercase tracking-wide">Ticket revenue</p><p class="text-xl font-bold text-brand-900 mt-1">' +
         financialsMoney(summary.totalTicketRevenue) +
           '</p></div>' +
-          '<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p class="text-xs text-slate-500 uppercase tracking-wide">Hub fees (after Stripe)</p><p class="text-xl font-bold text-brand-900 mt-1">' +
+          '<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p class="text-xs text-slate-500 uppercase tracking-wide">platform fees (after Stripe)</p><p class="text-xl font-bold text-brand-900 mt-1">' +
         financialsMoney(summary.totalBookingFees) +
           '</p></div>' +
           '<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"><p class="text-xs text-slate-500 uppercase tracking-wide">Paid bookings</p><p class="text-xl font-bold text-brand-900 mt-1">' +
@@ -9039,7 +9039,7 @@
         (emails > 0
           ? ' Your logo also appeared in ' +
             formatSponsorPackNumber(emails) +
-            ' Hub email' +
+            ' platform email' +
             (emails === 1 ? '' : 's') +
             (opens > 0 ? ' (' + formatSponsorPackNumber(opens) + ' opens).' : '.')
           : '')
@@ -9060,7 +9060,7 @@
         ( /s$/i.test(name) ? name + "'" : name + '’s' ) +
         ' logo appeared in ' +
         formatSponsorPackNumber(emails) +
-        ' Hub email' +
+        ' platform email' +
         (emails === 1 ? '' : 's') +
         ' this period.'
       );
@@ -9145,7 +9145,7 @@
   }
 
   /**
-   * Single A4 partnership pack — reliable capture, Hub fonts, local logos.
+   * Single A4 partnership pack — reliable capture, Networker UK fonts, local logos.
    */
   function buildSponsorPackPdfDocument(data, logos) {
     var summary = (data && data.summary) || {};
@@ -9387,7 +9387,7 @@
       kpiCell(
         'Emails with logo',
         formatSponsorPackNumber(emails),
-        momHint('Hub emails carrying your logo', deltas.emailSendsPct)
+        momHint('platform emails carrying your logo', deltas.emailSendsPct)
       ) +
       '</tr></table>' +
       // Email panel
@@ -9398,7 +9398,7 @@
       ';font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#4a4446;">Email engagement</div>' +
       '<div style="font-family:' +
       fontSans +
-      ';font-size:11px;color:#635c5e;margin-top:2px;">Opens and clicks from Hub emails that included your logo</div></div>' +
+      ';font-size:11px;color:#635c5e;margin-top:2px;">Opens and clicks from platform emails that included your logo</div></div>' +
       '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;"><tr>' +
       emailMetric('Opens', formatSponsorPackNumber(opens), momHint('Email opens', deltas.emailOpensPct)) +
       emailMetric('Open rate', openRateLabel, openRateHint) +
@@ -9915,13 +9915,13 @@
             kpiH,
             'Emails with logo',
             formatSponsorPackNumber(emails),
-            momHint('Hub emails carrying your logo', deltas.emailSendsPct),
+            momHint('platform emails carrying your logo', deltas.emailSendsPct),
             false
           );
           y += kpiH + 5;
 
           // Email engagement
-          var emailSub = 'Opens and clicks from Hub emails that included your logo';
+          var emailSub = 'Opens and clicks from platform emails that included your logo';
           var emailH = 34;
           doc.setFillColor.apply(doc, WHITE);
           doc.setDrawColor.apply(doc, LAV);
@@ -10124,7 +10124,7 @@
       opportunity_page_sidebar_ad: 'Opportunity Page Partner',
       email_mini_sponsors: 'Email mini sponsors',
       sponsor_sidebar: 'Sidebar sponsor',
-      hub_partner_email: 'Hub partner emails',
+      hub_partner_email: 'Partner emails',
     };
     if (map[s]) return map[s];
     return s.replace(/_/g, ' ');
@@ -10173,7 +10173,7 @@
       '<button type="button" id="sponsor-clicks-print" class="sponsor-pack-btn">Download PDF</button>' +
       '</div></form>' +
       '<p id="sponsor-clicks-status" class="sponsor-pack-status">Loading…</p>' +
-      '<p class="sponsor-pack-print-hint no-print">Download PDF creates a one-page Hub pack themed for Events (lavender), Organisers (blue), or Opportunities (gold). Pick a brand and optionally a hero or Page Partner placement, then Apply.</p>' +
+      '<p class="sponsor-pack-print-hint no-print">Download PDF creates a one-page Networker UK pack themed for Events (lavender), Organisers (blue), or Opportunities (gold). Pick a brand and optionally a hero or Page Partner placement, then Apply.</p>' +
       '</section>' +
       '<div id="sponsor-clicks-body" class="sponsor-pack-sheet"></div></div>';
 
@@ -10468,7 +10468,7 @@
         esc(
           isPagePartnerPack
             ? 'Selected emails that included their Page Partner logo'
-            : 'Hub emails that included their logo'
+            : 'platform emails that included their logo'
         ) +
         '</p>' +
         sponsorPackMomDeltaHtml(deltas.emailSendsPct) +
@@ -10519,7 +10519,7 @@
         '</div></section>' +
         '<section class="sponsor-pack-card sponsor-pack-card--wide">' +
         '<div class="sponsor-pack-card-head"><h3>Recent outbound clicks</h3>' +
-        '<p>Latest Hub clicks through to their website</p></div>' +
+        '<p>Latest platform clicks through to their website</p></div>' +
         (recentRows
           ? '<div class="sponsor-pack-table-wrap"><table class="sponsor-pack-table"><thead><tr>' +
             '<th>When (UTC)</th><th>Placement</th><th>Path</th><th>Destination</th></tr></thead><tbody>' +
@@ -10534,7 +10534,7 @@
           ? '<li><strong>Page views</strong> count logo impressions on detail pages (Event / Organiser / Opportunity Page Partner slots). Filter by placement to isolate one package.</li>' +
             '<li><strong>Clicks by placement</strong> splits on-page Page Partners from Page Partner emails so renewals can see which surface drove traffic.</li>'
           : '<li><strong>Page views</strong> count each visit to the sponsored directory while their hero is live (Events, Organisers, or Opportunities).</li>') +
-        '<li><strong>Email opens &amp; CTR</strong> come from Resend (opens + link clicks). Hub email-placement clicks are also included in Email CTR.</li>' +
+        '<li><strong>Email opens &amp; CTR</strong> come from Resend (opens + link clicks). platform email-placement clicks are also included in Email CTR.</li>' +
         '<li><strong>Leads &amp; form fills</strong> show up in <strong>their</strong> Google Analytics / CRM as traffic from The Networker UK.</li>' +
         '<li><strong>Suggestion:</strong> lead with Site CTR + email volume on the renewal call; ask them to filter sessions from The Networker UK in GA as proof of pipeline.</li>' +
         '</ul></section>' +
@@ -12161,7 +12161,7 @@
     var EVENTS_SPONSOR_SLOT = 'events_sponsor_hub';
     var previewOrigin = (function () {
       var origin = window.location.origin || '';
-      // Email previews must never link to localhost — use the public Hub.
+      // Email previews must never link to localhost — use the public site.
       if (!origin || /localhost|127\.0\.0\.1/i.test(origin)) {
         return 'https://www.thenetworkeruk.com';
       }
@@ -12237,7 +12237,7 @@
       create_event_url: previewOrigin + '/organiser/event-format',
       connect_url: previewOrigin + '/organiser/?panel=revenue',
       group_name: 'City Connectors',
-      badge_label: 'Top 10 networking group on the Hub',
+      badge_label: 'Top 10 networking group on The Networker UK',
       period_label: 'June 2026',
       rank: '8',
       total_ranked: '42',
@@ -12653,13 +12653,13 @@
     }
 
     var EMAIL_TEMPLATE_GROUPS = [
-      { key: 'automated', label: 'Automated — sent by the Hub' },
+      { key: 'automated', label: 'Automated — sent by the platform' },
       { key: 'attendees', label: 'Attendees' },
       { key: 'organisers', label: 'Organisers' },
       { key: 'opportunities', label: 'Business opportunities' },
     ];
 
-    // Cron/marketing emails the Hub sends on its own schedule (no admin action needed).
+    // Cron/marketing emails the platform sends on its own schedule (no admin action needed).
     var AUTOMATED_EMAIL_INFO = {
       attendee_hubert_event_concierge:
         'Monthly digest to members with marketing emails on — nearby and popular event picks.',
@@ -12988,7 +12988,7 @@
       if (automatedNote) {
         var autoInfo = AUTOMATED_EMAIL_INFO[template.slug];
         if (autoInfo) {
-          automatedNote.textContent = 'Automated: ' + autoInfo + ' Edits here change what the Hub sends.';
+          automatedNote.textContent = 'Automated: ' + autoInfo + ' Edits here change what the platform sends.';
           automatedNote.classList.remove('hidden');
         } else {
           automatedNote.textContent = '';
@@ -14580,7 +14580,7 @@
   }
 
   var MANUAL_CONDUCT_WARNING_REASONS = [
-    'Breach of Hub rules',
+    'Breach of platform rules',
     'Misleading listing',
     'Quality issue',
     'Spam or prohibited content',
@@ -14611,7 +14611,7 @@
     var r = String(role || '').toLowerCase();
     if (r === 'owner') return 'Owner';
     if (r === 'team' || r === 'editor') return 'Team member';
-    if (r === 'admin') return 'Hub admin';
+    if (r === 'admin') return 'platform admin';
     if (r === 'system') return 'System';
     return 'Unknown';
   }
@@ -14659,7 +14659,7 @@
       '>' +
       '<div class="flex flex-wrap items-center justify-between gap-2">' +
       '<div><p class="text-xs font-semibold text-brand-900">Activity log</p>' +
-      '<p class="text-[11px] text-slate-500 mt-0.5">Who changed this listing — owner, team member, or Hub admin.</p></div>' +
+      '<p class="text-[11px] text-slate-500 mt-0.5">Who changed this listing — owner, team member, or platform admin.</p></div>' +
       '<button type="button" class="entity-activity-load rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold px-3 py-1.5 hover:bg-slate-50">Show activity</button></div>' +
       '<div class="entity-activity-body mt-2 hidden"></div></div>'
     );
@@ -14733,7 +14733,7 @@
       '">' +
       '<div class="flex flex-wrap items-center justify-between gap-2">' +
       '<div><p class="text-xs font-semibold text-brand-900">Conduct &amp; warnings</p>' +
-      '<p class="text-[11px] text-slate-500 mt-0.5">Three conduct warnings suspend the organiser from the Hub. <a href="../legal-policies#hub-rules" target="_blank" rel="noopener" class="text-brand-700 font-semibold hover:underline">Hub rules</a></p></div>' +
+      '<p class="text-[11px] text-slate-500 mt-0.5">Three conduct warnings suspend the organiser from The Networker UK. <a href="../legal-policies#hub-rules" target="_blank" rel="noopener" class="text-brand-700 font-semibold hover:underline">Platform rules</a></p></div>' +
       moderationBadge(o) +
       '</div>' +
       '<ul class="space-y-1 list-disc pl-4">' +
@@ -15141,7 +15141,7 @@
         (alreadySent ? 'Send the claim email again to ' : 'Email their claim link to ') +
           to +
           (name ? ' for “' + name + '”' : '') +
-          '?\n\nThis sends Email 2, worded as: we found their group, invited them to the Hub, and have already set up their page. No email is sent until you confirm.'
+          '?\n\nThis sends Email 2, worded as: we found their group, invited them to The Networker UK, and have already set up their page. No email is sent until you confirm.'
       )
     ) {
       return;
@@ -17142,7 +17142,7 @@
   }
 
   var ADMIN_EVENT_REMOVAL_REASONS = [
-    'Breach of Hub rules',
+    'Breach of platform rules',
     'Misleading listing',
     'Duplicate or test event',
     'Quality issue',
@@ -21082,7 +21082,7 @@
       }) +
       '<div class="sm:col-span-2 rounded-lg border border-slate-200 bg-white p-3 space-y-2">' +
       '<p class="text-xs font-semibold text-slate-600">Listing owner &amp; claim invite</p>' +
-      '<p class="text-xs text-slate-500">Hub-owned listings stay claimable until you assign a claimant email. Assigning opens the in-dashboard claim prompt when they sign in.</p>' +
+      '<p class="text-xs text-slate-500">Platform-owned listings stay claimable until you assign a claimant email. Assigning opens the in-dashboard claim prompt when they sign in.</p>' +
       '<div class="flex flex-wrap gap-2 items-end">' +
       '<div class="flex-1 min-w-[12rem]"><label class="block text-xs font-semibold text-slate-500 mb-1">Owner email</label>' +
       '<input type="email" name="owner_email" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
@@ -22245,7 +22245,7 @@
       '" autocomplete="off">' +
       '<div class="ei-create-org-results hidden absolute left-0 right-0 top-full mt-1 max-h-48 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg z-20"></div>' +
       '<p class="ei-create-org-chosen hidden mt-1 text-xs text-brand-800"></p></div>' +
-      '<p class="text-[11px] text-slate-500 mt-1">We match by email first. If this group is not on the Hub yet, creating the listing will add it from this request.</p></div>' +
+      '<p class="text-[11px] text-slate-500 mt-1">We match by email first. If this group is not on The Networker UK yet, creating the listing will add it from this request.</p></div>' +
       '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Title</label>' +
       '<input type="text" name="title" required class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
       attrEsc(row.eventTitle || '') +
@@ -23339,7 +23339,7 @@
     if (more > 0) nameBlock += '\n• …and ' + more + ' more founding organisers';
     return (
       'Meet the Founding Organisers of The Networker UK 🎉\n\n' +
-      'These UK networking groups have claimed their pages ahead of our 1 September launch — and they\'re already on the Hub organiser leaderboard.\n\n' +
+      'These UK networking groups have claimed their pages ahead of our 1 September launch — and they\'re already on the organiser leaderboard.\n\n' +
       nameBlock +
       '\n\nIf you run a networking group, claim your free page before 1 September for Founding Organiser · 2026:\n' +
       'https://www.thenetworkeruk.com/for-organisers\n\n' +
@@ -23374,7 +23374,7 @@
       var body = encodeURIComponent(
         'Hi there,\n\nThanks again for confirming ' +
           group +
-          ' on The Networker UK.\n\nCould you add your logo and website on your organiser page? It helps your Hub profile look sharp — and means we can feature you properly on the homepage / founding organisers social post.\n\nEdit here:\nhttps://www.thenetworkeruk.com/organiser/group-edit?id=' +
+          ' on The Networker UK.\n\nCould you add your logo and website on your organiser page? It helps your organiser profile look sharp — and means we can feature you properly on the homepage / founding organisers social post.\n\nEdit here:\nhttps://www.thenetworkeruk.com/organiser/group-edit?id=' +
           o.id +
           '&onboard=review\n\nAny questions, just reply.\n\nCatherine'
       );
@@ -23965,7 +23965,7 @@
         '<div class="admin-dash-section-body space-y-3 text-sm text-slate-700">' +
         '<p><strong>“We’re on Eventbrite.”</strong> List both for a month — compare admin time and new bookings.</p>' +
         '<p><strong>“Members won’t sign up.”</strong> Browse free; about two minutes only when they book.</p>' +
-        '<p><strong>“We have a CRM.”</strong> Keep it for renewals; Hub handles booking visibility and member rates.</p>' +
+        '<p><strong>“We have a CRM.”</strong> Keep it for renewals; The Networker UK handles booking visibility and member rates.</p>' +
         '<p><strong>“What’s the catch?”</strong> None on listing. Attendees pay 4.5% + 20p. Optional Premium Spotlight.</p>' +
         '</div></section>' +
         '<section class="admin-dash-section">' +

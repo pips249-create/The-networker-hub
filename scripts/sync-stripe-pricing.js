@@ -45,7 +45,7 @@ async function main() {
   }
 
   const mode = key.startsWith('sk_live_') ? 'LIVE' : key.startsWith('sk_test_') ? 'TEST' : 'UNKNOWN';
-  console.log('Hub Stripe catalog — ' + HUB_STRIPE_CATALOG.length + ' items');
+  console.log('platform Stripe catalog — ' + HUB_STRIPE_CATALOG.length + ' items');
   if (!dryRun) {
     console.log('Stripe mode: ' + mode);
   }

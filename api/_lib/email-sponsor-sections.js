@@ -485,7 +485,7 @@ function insertSponsorPlaceholderAfterHeader(html, placeholder) {
     }
   }
 
-  // Prefer: cream logo-hero band, immediately after the Hub logo row and before the wave.
+  // Prefer: cream logo-hero band, immediately after the Networker UK logo row and before the wave.
   const logoMatch = body.search(
     /alt="The Networker UK"[^>]*class="email-logo-header"|alt="The Networker UK" width="2[0-9]{2}"|class="email-logo-header"/i
   );
@@ -502,7 +502,7 @@ function insertSponsorPlaceholderAfterHeader(html, placeholder) {
     }
   }
 
-  // Follow-up / non-wave headers: first Hub logo row.
+  // Follow-up / non-wave headers: first Networker UK logo row.
   const anyLogo = body.search(/alt="The Networker UK"/i);
   if (anyLogo !== -1) {
     const rowEnd = body.indexOf('</tr>', anyLogo);

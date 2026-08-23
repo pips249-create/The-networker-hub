@@ -12,13 +12,13 @@
 
 ## 1. Scope
 
-This procedure covers complaints about The Networker UK as a platform — not disputes that are solely between an attendee and an organiser about a private event, unless the complaint is about **how the Hub handled** that situation.
+This procedure covers complaints about The Networker UK as a platform — not disputes that are solely between an attendee and an organiser about a private event, unless the complaint is about **how the platform handled** that situation.
 
 | Category | Examples | Primary owner |
 |----------|----------|---------------|
 | **Platform / service** | Login, bookings, refunds processed via Hub, account access, emails | Catherine Hancher (Operations Director) |
 | **Listings & content** | Misleading event or opportunity listing, fake reviews, copyright | Catherine Hancher |
-| **Advertising & sponsorship** | ASA concern about sponsored placement labelling or Hub marketing copy | Rosie McGilvray (Commercial Director) |
+| **Advertising & sponsorship** | ASA concern about sponsored placement labelling or Marketing emails copy | Rosie McGilvray (Commercial Director) |
 | **Data protection** | Privacy, cookies, marketing emails | Catherine Hancher → `GDPR-SAR-PROCEDURE.md` |
 | **Payments** | Stripe checkout, fees, payout issues | Catherine Hancher + Finance |
 | **Accessibility** | Barriers using the site | Catherine Hancher / Tech |
@@ -73,7 +73,7 @@ This procedure covers complaints about The Networker UK as a platform — not di
 | **Misleading opportunity / earnings claim** | Suspend listing pending review; follow `docs/OPPORTUNITY-MODERATION.md` |
 | **Fake or abusive review** | Command Centre → review reports queue |
 | **Sponsored unit not labelled** | Fix placement in Command Centre; note ASA risk |
-| **Hub marketing / email copy** | Director review; pause campaign if earnings-led or unsubstantiated |
+| **Marketing emails / email copy** | Director review; pause campaign if earnings-led or unsubstantiated |
 | **Personal data** | Hand to privacy lead; SAR clock may apply |
 | **Threats, fraud, illegal content** | Escalate immediately; preserve evidence |
 
@@ -86,7 +86,7 @@ This procedure covers complaints about The Networker UK as a platform — not di
 1. Gather facts from Supabase, Stripe Dashboard, Command Centre logs, and email history.
 2. Contact the **organiser or lister** if their conduct is relevant; allow them **5 working days** to respond unless urgent (safety/fraud).
 3. Document evidence in the register (screenshots, refund IDs, policy version at time of booking).
-4. For **attendee vs organiser** disputes where the Hub processed payment correctly:
+4. For **attendee vs organiser** disputes where the platform processed payment correctly:
    - Explain the organiser’s published refund policy and Consumer Rights Act position
    - Facilitate contact where appropriate
    - Escalate to Director if Hub error (wrong fee, failed email, system bug)

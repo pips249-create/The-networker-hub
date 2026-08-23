@@ -203,7 +203,7 @@
       id: 'verified',
       label: 'Verified organiser',
       group: 'badges',
-      groupLabel: 'Hub trust badges',
+      groupLabel: 'Networker UK trust badges',
       accent: '#c299d1',
       kicker: 'TRUST MARK',
       line1: 'Verified organiser',
@@ -215,9 +215,9 @@
     },
     {
       id: 'listed',
-      label: 'Listed on the Hub',
+      label: 'Listed on The Networker UK',
       group: 'badges',
-      groupLabel: 'Hub trust badges',
+      groupLabel: 'Networker UK trust badges',
       accent: '#9a7aa8',
       kicker: 'DIRECTORY',
       line1: 'Listed on',
@@ -291,7 +291,7 @@
     drawLogoPlaceholder(ctx, x, y, w, h, accent || '#9a7aa8');
   }
 
-  /** Hub credit mark — bottom-right; sized to read on mobile LinkedIn feeds. */
+  /** Networker UK credit mark — bottom-right; sized to read on mobile LinkedIn feeds. */
   function hubCreditBox(opts) {
     opts = opts || {};
     var emphasis = Boolean(opts.emphasis);
@@ -856,7 +856,7 @@
     var creditColor = bg.credit;
 
     if (isEventSpotlight && !quietBrand) {
-      // Clean brand spotlight: one org mark, optional full-width photo, event copy, one Hub credit.
+      // Clean brand spotlight: one org mark, optional full-width photo, event copy, one Networker UK credit.
       var spotAccent = bg.accent || tpl.accent || '#9a7aa8';
       ctx.fillStyle = spotAccent;
       ctx.fillRect(0, 0, W, 16);
@@ -1198,7 +1198,7 @@
     var CATEGORIES = [
       { id: 'events', label: 'Events & group' },
       { id: 'opportunities', label: 'Business opportunities' },
-      { id: 'badges', label: 'Hub trust badges' },
+      { id: 'badges', label: 'Networker UK trust badges' },
     ];
 
     var DEFAULT_TEMPLATE_BY_CATEGORY = {
@@ -2074,7 +2074,7 @@
       var url =
         (event && (event.imageUrl || event.photoUrl || event.photo_url)) || state.eventImageUrl || '';
       var orgLogoUrl = resolveLogoUrl();
-      // Never treat Hub branding or the organiser logo as the event cover — that
+      // Never treat platform branding or the organiser logo as the event cover — that
       // stacks the same mark three times on Brand spotlight.
       if (!url || isLikelyLogoAssetUrl(url, orgLogoUrl)) {
         state.eventImageImg = null;

@@ -230,7 +230,7 @@
       if (lead) {
         lead.textContent =
           config.lead ||
-          'A free Hub account lets us take payment securely and save your ticket. Your selection below will be kept.';
+          'A free Account lets us take payment securely and save your ticket. Your selection below will be kept.';
       }
       const checkoutFlag = config.checkoutFlag !== false;
       if (signIn) signIn.href = authPageUrl('login', checkoutFlag);
@@ -1251,7 +1251,7 @@
         (reviewCount === 1 ? '' : 's');
       metaWrap.hidden = false;
     } else if (metaWrap && ratingMeta) {
-      ratingMeta.textContent = 'New on the Hub — be among the first to review after you attend.';
+      ratingMeta.textContent = 'New on The Networker UK — be among the first to review after you attend.';
       metaWrap.hidden = false;
     } else if (metaWrap) metaWrap.hidden = true;
   }
@@ -5351,7 +5351,7 @@
     if (aboutExtra) {
       aboutExtra.hidden = false;
       aboutExtra.textContent =
-        'Explore upcoming networking from this organiser or across the Hub.';
+        'Explore upcoming networking from this organiser or across the platform.';
     }
     applyEndedEventBanner(stub, {
       force: true,

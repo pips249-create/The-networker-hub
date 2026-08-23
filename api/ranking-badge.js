@@ -4,7 +4,7 @@
  * Verified awards only:
  *   GET /api/ranking-badge?organiserId=<uuid>&period=August%202026
  * Optional tier / name query params are ignored for entitlement — we serve the
- * tier they earned and the group name from the Hub record.
+ * tier they earned and the group name from The Networker UK record.
  *
  * Missing / unearned embeds return a muted “not verified / period ended” plaque
  * so hotlinked Top 10 artwork cannot be forged.

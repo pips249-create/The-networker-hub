@@ -26,7 +26,7 @@
 
 | Item | Detail |
 |------|--------|
-| **Purpose** | Create and manage Hub accounts; sign-in; attendee/organiser mode |
+| **Purpose** | Create and manage Accounts; sign-in; attendee/organiser mode |
 | **Data subjects** | Registered members, organisers, admins |
 | **Categories of data** | Name, email, password hash (Supabase Auth), hub preferences, organiser access timestamps |
 | **Lawful basis** | Contract (Art. 6(1)(b)); Legitimate interests for security (Art. 6(1)(f)) |
@@ -128,13 +128,13 @@
 
 | Item | Detail |
 |------|--------|
-| **Purpose** | Organisers maintain per-group membership lists for Members-only tickets, Hub-billed memberships, digests of new events, and booking reminders |
-| **Data subjects** | People added by organisers to a group membership list (may not yet have a Hub account) |
-| **Categories of data** | Name, email, optional industry/category, membership expiry, claim/invite status, Stripe subscription refs (when Hub-billed) |
-| **Lawful basis** | **Legitimate interests** of organiser + Hub to operate membership-gated events (Art. 6(1)(f)); **Contract** where the person pays Hub-billed membership (Art. 6(1)(b)); organiser remains responsible for lawful collection of the list they upload |
-| **Recipients** | Supabase; Resend (invites, digests, payment messages); Stripe (Hub-billed memberships); the organiser (controller of their list) |
+| **Purpose** | Organisers maintain per-group membership lists for Members-only tickets, platform-billed memberships, digests of new events, and booking reminders |
+| **Data subjects** | People added by organisers to a group membership list (may not yet have a Account) |
+| **Categories of data** | Name, email, optional industry/category, membership expiry, claim/invite status, Stripe subscription refs (when platform-billed) |
+| **Lawful basis** | **Legitimate interests** of organiser + Hub to operate membership-gated events (Art. 6(1)(f)); **Contract** where the person pays platform-billed membership (Art. 6(1)(b)); organiser remains responsible for lawful collection of the list they upload |
+| **Recipients** | Supabase; Resend (invites, digests, payment messages); Stripe (platform-billed memberships); the organiser (controller of their list) |
 | **Retention** | While the membership row is active + up to 2 years after removal unless financial records require longer |
-| **Notes** | CSV import is organiser-initiated (plain-text JSON upload, size-capped). New-event digests respect Hub `organiser_alerts` preferences when the email matches a Hub account. |
+| **Notes** | CSV import is organiser-initiated (plain-text JSON upload, size-capped). New-event digests respect Hub `organiser_alerts` preferences when the email matches a Account. |
 
 ---
 

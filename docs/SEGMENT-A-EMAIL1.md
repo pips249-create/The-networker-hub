@@ -3,7 +3,7 @@
 **Wave:** All organiser groups with an email · **Ordered:** A–Z by primary group name  
 **Deduped:** **one email = one send** (multi-group contacts listed once; extra groups in `other_groups`)  
 **Count:** see `data/segment-a-email1.csv`  
-**Excluded:** exhibition-style names · internal/test Hub accounts · groups **hidden from browse** (`listing_status: unpublished` / not public)  
+**Excluded:** exhibition-style names · internal/test Accounts · groups **hidden from browse** (`listing_status: unpublished` / not public)  
 **Send from:** Brevo · **Reply-to:** `catherine@thenetworkeruk.com`  
 **Paste HTML:** `data/email1-brevo-ready.html`  
 **Subject:** The Networker’s new chapter  

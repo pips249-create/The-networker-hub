@@ -717,7 +717,7 @@
     if (descEl) {
       const d = plainDescription(ev.description);
       descEl.textContent =
-        d.length > 220 ? d.slice(0, 217) + '…' : d || 'Your published listing is live on the hub.';
+        d.length > 220 ? d.slice(0, 217) + '…' : d || 'Your published listing is live on the platform.';
     }
     if (previewLink) previewLink.href = listingUrl;
 
@@ -731,7 +731,7 @@
       lead.textContent =
         'Your ' +
         eventIds.length +
-        ' dates are live on the hub. Share your listing now to start filling seats.';
+        ' dates are live on the platform. Share your listing now to start filling seats.';
     }
 
     setShareUrls(title);
@@ -826,7 +826,7 @@
     if (lead) {
       lead.textContent = needsMembersCta
         ? 'Your listing is live. Add people under Memberships so members can book this members-only meeting, or share it free on social media.'
-        : 'Your listing is live. Share it free on social media, or feature it in Premium Spotlight for extra visibility on the hub.';
+        : 'Your listing is live. Share it free on social media, or feature it in Premium Spotlight for extra visibility on the platform.';
     }
     showMembersCtaIfNeeded();
     setPromoteVisibility(true, {

@@ -27,7 +27,7 @@ function buildAdminMessageRow(message) {
     '<tr><td class="mobile-pad" style="padding:0 40px 20px;">' +
     '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f0e8;border-radius:14px;border:1px solid #d9c4e0;">' +
     '<tr><td style="padding:20px 22px;">' +
-    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:700;color:#1c2040;margin:0 0 6px;">Note from the Hub team</p>' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:700;color:#1c2040;margin:0 0 6px;">Note from The Networker UK team</p>' +
     '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;line-height:1.65;color:#635c5e;margin:0;">' +
     formatMultilineHtml(text) +
     '</p></td></tr></table></td></tr>'

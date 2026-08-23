@@ -127,7 +127,7 @@
       lede.textContent =
         'Embed this ' +
         badgeLabel +
-        ' badge on your website. It links to your Hub profile and the monthly leaderboard.';
+        ' badge on your website. It links to your profile and the monthly leaderboard.';
     }
 
     document.title = name + ' ranking badge – The Networker UK';

@@ -115,11 +115,11 @@ function buildOrganiserClaimConfirmedVars({ group, groups, session, siteUrl }) {
     hero_badge_html: heroBadgeHtml({ founding, siteUrl: site }),
     intro_line: founding
       ? multi
-        ? 'Thanks for listing before launch. Your Founding Organiser · 2026 badge is below (and attached as a PNG) — and on each confirmed Hub profile.'
-        : 'Thanks for listing before launch. Your Founding Organiser · 2026 badge is below (and attached as a PNG) — and on your Hub profile.'
+        ? 'Thanks for listing before launch. Your Founding Organiser · 2026 badge is below (and attached as a PNG) — and on each confirmed profile.'
+        : 'Thanks for listing before launch. Your Founding Organiser · 2026 badge is below (and attached as a PNG) — and on your profile.'
       : multi
-        ? 'Thanks for confirming. Add a logo and website on each page so members recognise your groups on the Hub.'
-        : 'Thanks for confirming. Add your logo and website so members recognise your group on the Hub.',
+        ? 'Thanks for confirming. Add a logo and website on each page so members recognise your groups on The Networker UK.'
+        : 'Thanks for confirming. Add your logo and website so members recognise your group on The Networker UK.',
     founding_perk_row: founding
       ? foundingPerkRowHtml({ foundingHomepage, siteUrl: site })
       : '',
@@ -148,7 +148,7 @@ function claimConfirmedSubject(group, groups) {
   }
   const groupName = String(group?.name || allGroups[0]?.name || 'Your organiser page').trim();
   if (founding) return "You're a Founding Organiser · 2026 — " + groupName;
-  return groupName + ' is claimed — finish your Hub page';
+  return groupName + ' is claimed — finish your organiser page';
 }
 
 function claimConfirmedIdempotencyKey(session, groups) {

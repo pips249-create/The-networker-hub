@@ -155,7 +155,7 @@ module.exports = async function handler(req, res) {
     const sessionUser = {
       sub: target.id,
       email: target.email,
-      // Never carry platform-admin into the public Hub / organiser workspace.
+      // Never carry platform-admin into the public site / organiser workspace.
       role: 'client',
       name: target.name || '',
       impersonator,

@@ -51,7 +51,7 @@
     },
     payments: {
       title: 'Payments',
-      text: 'Receipts, booking references, and refund status for tickets you purchased through the Hub.'
+      text: 'Receipts, booking references, and refund status for tickets you purchased through The Networker UK.'
     },
     saved: {
       title: 'Saved',

@@ -51,7 +51,7 @@ Redeploy after changing env vars.
 3. Events: **`checkout.session.completed`**, **`customer.subscription.updated`**, **`customer.subscription.deleted`**, **`invoice.paid`**, and **`charge.refunded`**
 4. Copy **Signing secret** → `STRIPE_WEBHOOK_SECRET` in Vercel
 
-`customer.subscription.updated` / `customer.subscription.deleted` drive City Partner slot release, waitlist emails, and scheduled open dates when a sponsor cancels at period end. The same events (plus `checkout.session.completed` / `invoice.paid`) sync Hub-billed organiser memberships on the member roster (`checkout_type=organiser_membership`).
+`customer.subscription.updated` / `customer.subscription.deleted` drive City Partner slot release, waitlist emails, and scheduled open dates when a sponsor cancels at period end. The same events (plus `checkout.session.completed` / `invoice.paid`) sync platform-billed organiser memberships on the member roster (`checkout_type=organiser_membership`).
 
 `invoice.paid` logs sponsorship & advertising invoices into Revenue targets when invoice metadata includes `revenue_category` (see `docs/STRIPE-SPONSORSHIP-INVOICES.md`).
 
@@ -74,7 +74,7 @@ Use the **same mode** as your key: `sk_test_…` with test cards, `sk_live_…` 
 
 ## 5. Payment Links (fallback)
 
-If `STRIPE_SECRET_KEY` is missing, the hub falls back to a static [Payment Link](https://dashboard.stripe.com/payment-links) — **booking fee is not added automatically** in that mode.
+If `STRIPE_SECRET_KEY` is missing, The Networker UK falls back to a static [Payment Link](https://dashboard.stripe.com/payment-links) — **booking fee is not added automatically** in that mode.
 
 ### Stripe Connect (optional)
 
@@ -113,7 +113,7 @@ The event API exposes these as `stripePaymentLink` on events and tickets.
 
 ## 6. Free tickets
 
-If a tier is **£0** and has no Payment Link, the hub calls `POST /api/auth/complete-booking` directly (attendee must be signed in).
+If a tier is **£0** and has no Payment Link, The Networker UK calls `POST /api/auth/complete-booking` directly (attendee must be signed in).
 
 ## 7. Production test checklist
 

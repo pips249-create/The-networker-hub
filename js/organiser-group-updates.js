@@ -163,7 +163,7 @@
         'Replies go to ' + addr + ' — attendees can write you back from the round-up.';
     } else {
       el.textContent =
-        'Add a contact email on your organiser page so replies reach you (not just the Hub).';
+        'Add a contact email on your organiser page so replies reach you (not just the platform).';
     }
   }
 
@@ -179,7 +179,7 @@
     if (stats.eventsHosted) bits.push(stats.eventsHosted + ' event' + (stats.eventsHosted === 1 ? '' : 's'));
     if (stats.uniqueGuests) bits.push(stats.uniqueGuests + ' guest' + (stats.uniqueGuests === 1 ? '' : 's'));
     else if (stats.bookings) bits.push(stats.bookings + ' booking' + (stats.bookings === 1 ? '' : 's'));
-    if (stats.rating != null) bits.push(stats.rating + ' Hub rating');
+    if (stats.rating != null) bits.push(stats.rating + ' platform rating');
     el.hidden = false;
     el.textContent =
       'This month so far: ' + bits.join(' · ') + ' — included automatically when the stats module is on.';
@@ -442,7 +442,7 @@
       report.bookingsAfter +
       '</dd></div>' +
       '</dl>' +
-      '<p class="org-group-update-hint">Booked after = unique recipients who booked one of your Hub events after this send.</p>' +
+      '<p class="org-group-update-hint">Booked after = unique recipients who booked one of your events after this send.</p>' +
       links;
   }
 
@@ -684,7 +684,7 @@
       applyDefaultSubject(res.data.defaults, orgName);
       setStatus(
         (res.data.recipientEstimate || 0) +
-          ' people who booked via the Hub can receive this update.',
+          ' people who booked via The Networker UK can receive this update.',
         'ok'
       );
     }
@@ -786,7 +786,7 @@
   async function sendUpdate() {
     if (
       !global.confirm(
-        'Send this monthly update to Hub attendees for this organiser page? Emails go out over the next couple of hours.'
+        'Send this monthly update to attendees for this organiser page? Emails go out over the next couple of hours.'
       )
     ) {
       return;

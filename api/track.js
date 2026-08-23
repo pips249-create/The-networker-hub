@@ -1,5 +1,5 @@
 /**
- * Public open/click tracking for Hub emails.
+ * Public open/click tracking for platform emails.
  * GET /api/track?kind=open&t=TOKEN
  * GET /api/track?kind=click&t=TOKEN&u=ENCODED_URL
  *

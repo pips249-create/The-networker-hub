@@ -1,5 +1,5 @@
 /**
- * Organiser monthly group updates — modular email to Hub attendees.
+ * Organiser monthly group updates — modular email to attendees.
  *
  * Limits:
  * - 1 free send per organiser group per calendar month
@@ -129,8 +129,8 @@ function normalizeContent(raw) {
 const AUDIENCE_SLICES = {
   all: {
     id: 'all',
-    label: 'Everyone who booked via the Hub',
-    blurb: 'All Hub attendees for this organiser page',
+    label: 'Everyone who booked via The Networker UK',
+    blurb: 'All attendees for this organiser page',
   },
   once: {
     id: 'once',
@@ -338,7 +338,7 @@ function mapEventRow(row) {
 }
 
 /**
- * Auto Hub stats for the round-up period — events hosted + people who booked.
+ * Auto platform stats for the round-up period — events hosted + people who booked.
  * This is the mail-merge killer: DIY export can't assemble this cleanly.
  */
 async function getMonthStatsForOrganiser(organiserId, key) {
@@ -436,7 +436,7 @@ function buildGreetingHtml(recipient, accentColor) {
     ',</p>' +
     '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;color:#8a8386;margin:0 0 8px;border-bottom:2px solid ' +
     accent +
-    ';padding-bottom:12px;">Your personalised update from the Hub</p>' +
+    ';padding-bottom:12px;">Your personalised update from The Networker UK</p>' +
     '</td></tr>'
   );
 }
@@ -462,7 +462,7 @@ function buildMonthStatsHtml(stats, accentColor) {
     });
   }
   if (stats.rating != null) {
-    items.push({ value: String(stats.rating), label: 'Hub rating' });
+    items.push({ value: String(stats.rating), label: 'platform rating' });
   }
   if (!items.length) return '';
   const accent = normalizeHexColor(accentColor) || DEFAULT_ACCENT;
@@ -483,7 +483,7 @@ function buildMonthStatsHtml(stats, accentColor) {
     )
     .join('');
   return sectionHtml(
-    (stats.periodLabel || 'This month') + ' on the Hub',
+    (stats.periodLabel || 'This month') + ' on The Networker UK',
     '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f7fafb;border-radius:14px;border:1px solid #e4eef0;">' +
       '<tr>' +
       cells +
@@ -525,7 +525,7 @@ function buildReplyHintHtml(organiserName, replyTo) {
     return (
       '<tr><td class="mobile-pad" style="padding:4px 40px 12px;">' +
       '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:13px;color:#8a8386;margin:0;font-style:italic;">' +
-      'Want to reply? Use the Hub contact details on their organiser page.' +
+      'Want to reply? Use the platform contact details on their organiser page.' +
       '</p></td></tr>'
     );
   }
@@ -598,7 +598,7 @@ function buildEventsHtml(events, siteUrl, brand, trackToken) {
     })
     .join('');
   return sectionHtml(
-    'Coming up — book on the Hub',
+    'Coming up — book on The Networker UK',
     '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">' +
       rows +
       '</table>',
@@ -843,7 +843,7 @@ async function buildTemplateVariables({
     reply_hint_html: buildReplyHintHtml(group.name || 'your organiser', replyAddress),
     tracking_pixel_html: trackingPixelHtml(trackToken),
     cta_url: organiserUrl,
-    cta_label: 'Visit our Hub page',
+    cta_label: 'Visit our organiser page',
     hub_account_url: wrapTrackedUrl(siteUrl + '/account', trackToken),
     browse_events_url: wrapTrackedUrl(siteUrl + '/events', trackToken),
     contact_url: siteUrl + '/contact',
@@ -936,7 +936,7 @@ function buildPreviewDocument(variables) {
     '" style="display:inline-block;padding:11px 22px;background:' +
     cta +
     ';border-radius:999px;color:#fff;font-size:14px;font-weight:700;text-decoration:none;">' +
-    escapeHtml(v.cta_label || 'Visit our Hub page') +
+    escapeHtml(v.cta_label || 'Visit our organiser page') +
     ' →</a>' +
     '</div>' +
     '<div style="background:#1c2040;padding:18px 20px 22px;text-align:center;color:rgba(255,255,255,0.65);font-size:11px;line-height:1.5;">' +
@@ -1063,7 +1063,7 @@ async function queueUpdateSend({ organiserId, updateId }) {
           ? 'No one-time bookers found for this slice yet.'
           : content.audienceSlice === 'recent'
             ? 'No recent bookers (last 30 days) found for this slice yet.'
-            : 'No Hub attendees found for this group yet.'
+            : 'No attendees found for this group yet.'
     );
     err.status = 400;
     throw err;

@@ -41,7 +41,7 @@ function nearbyLocationLabel(location) {
 function nearbySectionHeading(nearbyResult) {
   const source = String(nearbyResult?.source || 'nearby').trim();
   if (source === 'popular_online') return 'Popular online events';
-  if (source === 'upcoming') return 'Coming up on the Hub';
+  if (source === 'upcoming') return 'Coming up on The Networker UK';
 
   const label = String(nearbyResult?.locationLabel || '').trim();
   const radiusMi = nearbyResult?.radiusMiles;
@@ -71,8 +71,8 @@ function nearbySectionSubtitle(nearbyResult) {
   }
   if (source === 'upcoming') {
     return label
-      ? 'Nothing within 25 miles of ' + label + ' — here\u2019s what\u2019s next on the Hub'
-      : 'The next upcoming events on the Hub';
+      ? 'Nothing within 25 miles of ' + label + ' — here\u2019s what\u2019s next on The Networker UK'
+      : 'The next upcoming events on The Networker UK';
   }
   if (label) {
     return 'Within 25 miles of ' + label;

@@ -11,7 +11,7 @@ const HELP_NOT_OPPORTUNITY_BROWSE =
 
 /** Explicit browse / discovery intent for business opportunities. */
 const OPPORTUNITY_BROWSE_INTENT =
-  /\b(what opportunit\w*|find (?:a |an )?(?:franchise|partnership|side|deal|opportunit\w*)|show (?:me )?(?:any )?(?:franchise|partnership|side|opportunit\w*)|any franchis|franchise opportunit\w*|partnership opportunit\w*|side[\s-]?hustle opportunit\w*|distributorship opportunit\w*|browse opportunit\w*|search opportunit\w*|help me find|(?:on|available on) (?:the )?hub|what(?:'s| is) (?:on|available on) (?:the )?opportunit\w*|low[\s-]?investment|under £|under \d+k|featured opportunit\w*|opportunities on the hub|franchise deals?|partnership deals?)\b/i;
+  /\b(what opportunit\w*|find (?:a |an )?(?:franchise|partnership|side|deal|opportunit\w*)|show (?:me )?(?:any )?(?:franchise|partnership|side|opportunit\w*)|any franchis|franchise opportunit\w*|partnership opportunit\w*|side[\s-]?hustle opportunit\w*|distributorship opportunit\w*|browse opportunit\w*|search opportunit\w*|help me find|(?:on|available on) (?:the )?hub|what(?:'s| is) (?:on|available on) (?:the )?opportunit\w*|low[\s-]?investment|under £|under \d+k|featured opportunit\w*|opportunities on The Networker UK|franchise deals?|partnership deals?)\b/i;
 
 const TYPE_ALIASES = {
   franchise: /\bfranchis/i,
@@ -244,7 +244,7 @@ function formatOpportunityFallbackReply(result) {
     return (
       "I'm afraid I couldn't find published business opportunities" +
       typeHint +
-      ' on the hub at present. Do browse the directory at ' +
+      ' on the platform at present. Do browse the directory at ' +
       hubSiteUrl('/opportunities/') +
       ', or check back soon.'
     );

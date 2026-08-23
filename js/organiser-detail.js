@@ -701,7 +701,7 @@
       '<strong>You’re a member</strong>' +
       '<p>' +
       (state.billedThroughHub
-        ? 'Hub billing is active for this group.'
+        ? 'platform billing is active for this group.'
         : 'Your membership is active on this organiser’s member list.') +
       '</p>' +
       '</div>' +
@@ -1055,7 +1055,7 @@
       var badgeText =
         org.ranking.cardLabel ||
         org.ranking.displayLabel ||
-        String(org.ranking.label).replace(' on the Hub', '').replace(' networking group', '') +
+        String(org.ranking.label).replace(' on The Networker UK', '').replace(' networking group', '') +
           (org.ranking.periodLabel ? ' · ' + org.ranking.periodLabel : '');
 
       if (panel) panel.hidden = false;
@@ -1069,7 +1069,7 @@
           org.ranking.rank +
           ' of ' +
           org.ranking.totalRanked +
-          ' rated networking groups on the Hub';
+          ' rated networking groups on The Networker UK';
       }
 
       if (metaEl) {
@@ -1096,7 +1096,7 @@
                 var label =
                   row.cardLabel ||
                   row.displayLabel ||
-                  String(row.label || '').replace(' on the Hub', '') ||
+                  String(row.label || '').replace(' on The Networker UK', '') ||
                   'Top group';
                 return '<li>' + escapeHtml(label) + '</li>';
               })

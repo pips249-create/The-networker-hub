@@ -100,6 +100,7 @@ const GATE_BYPASS_PREFIXES = [
   '/data/',
   '/international',
   '/api/international-interest',
+  '/api/international-hub-stats',
 ];
 
 /** Unlisted internal sales decks — not linked from nav; noindex in page HTML. */

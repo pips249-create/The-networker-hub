@@ -504,7 +504,7 @@
     var loginLede = document.querySelector('#login-form') && document.querySelector('.auth-lede');
     if (loginLede) {
       loginLede.textContent =
-        'Use the email address your group listing is linked to on the Hub — when it matches, you\u2019ll get a claim prompt on your dashboard. If you are new here, create a free account below instead.';
+        'Use the email address your group listing is linked to on The Networker UK — when it matches, you\u2019ll get a claim prompt on your dashboard. If you are new here, create a free account below instead.';
     }
 
     var panelKicker = document.getElementById('auth-panel-kicker');
@@ -535,7 +535,7 @@
     }
 
     var createLead = document.getElementById('login-create-account-lead');
-    if (createLead) createLead.textContent = 'No Hub account yet?';
+    if (createLead) createLead.textContent = 'No Account yet?';
 
     var createBtn = document.getElementById('login-create-account');
     if (createBtn) createBtn.textContent = 'Create a free organiser account';
@@ -553,7 +553,7 @@
     var registerLede = document.querySelector('#register-form') && document.querySelector('.auth-lede');
     if (registerLede) {
       registerLede.textContent =
-        'Creating an account is free. Use the same email address your group listing is linked to on the Hub — then confirm your organiser page (about a minute).';
+        'Creating an account is free. Use the same email address your group listing is linked to on The Networker UK — then confirm your organiser page (about a minute).';
     }
 
     var registerProof = document.getElementById('auth-platform-proof');
@@ -623,7 +623,7 @@
     var LOGIN_AUDIENCE = {
       neutral: {
         kicker: 'The Networker UK',
-        titleHtml: 'Your Hub account',
+        titleHtml: 'Your Account',
         lede: 'One login for browsing events, managing bookings, and opening your organiser workspace.',
         points: [
           'Browse & book UK networking events',
@@ -633,7 +633,7 @@
         ],
         ctaText: 'See what\u2019s included for networkers \u2192',
         ctaHref: '/for-networkers',
-        formLede: 'Welcome back \u2014 use the email and password for your Hub account. Same login for My account and your organiser workspace.',
+        formLede: 'Welcome back \u2014 use the email and password for your Account. Same login for My account and your organiser workspace.',
         createLead: 'New to The Networker UK?',
         createBtn: 'Create a free account',
         createHint: '17,000+ networkers last year \u00b7 free to join',
@@ -669,13 +669,13 @@
         points: [
           'List events & sell tickets with guest-visit tools',
           'Manage bookings, visits & attendee exports',
-          'Reach members browsing events on the Hub',
+          'Reach members browsing events on The Networker UK',
           'Keep 100% of ticket price \u00b7 free to list',
           'Claim your page if your group is already listed',
         ],
         ctaText: 'See what\u2019s included for organisers \u2192',
         ctaHref: '/for-organisers',
-        formLede: 'Sign in to open your organiser workspace \u2014 list events, manage attendees, and reach members browsing the Hub.',
+        formLede: 'Sign in to open your organiser workspace \u2014 list events, manage attendees, and reach members browsing the platform.',
         createLead: 'No organiser account yet?',
         createBtn: 'Create a free organiser account',
         createHint: '27,000+ Events listed last year \u00b7 free to list',

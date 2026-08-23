@@ -598,7 +598,7 @@ function normalizeAttendeeExtraText(input) {
 
 /**
  * Handle Stripe checkout.session.completed — expects metadata.event_id (+ optional ticket_id),
- * or client_reference_id from the hub checkout URL (id<event-uuid>-ticket-<ticket-uuid>-...).
+ * or client_reference_id from the platform checkout URL (id<event-uuid>-ticket-<ticket-uuid>-...).
  */
 async function handleCheckoutSessionCompleted(session) {
   const metadata = session.metadata || {};

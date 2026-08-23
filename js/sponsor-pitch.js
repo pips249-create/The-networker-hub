@@ -198,11 +198,11 @@
         rows: [
           ['Active users', '17,000+', 'GA4 active users who used the directory last year'],
           ['Page views', '70,000+', 'Total page views across the old site (~5.8k / mo average)'],
-          ['Moving to the Hub', '1 Sep redirect', 'co.uk traffic lands on thenetworkeruk.com — Barnsgate already on /events/'],
+          ['Moving to the platform', '1 Sep redirect', 'co.uk traffic lands on thenetworkeruk.com — Barnsgate already on /events/'],
         ],
       },
       launch: {
-        label: 'Expected · Hub launch (months 1–3 post Sep 2026)',
+        label: 'Expected · platform launch (months 1–3 post Sep 2026)',
         rows: [
           ['Directory impressions', '2k – 5k / mo', 'Hero slot on every /events/ browse visit'],
           ['Attendee emails', '800 – 2.5k / mo', 'Logo + link in booking lifecycle headers'],
@@ -222,7 +222,7 @@
         rows: [
           ['Directory impressions', '20k – 45k / mo', 'Directory + regional SEO pages'],
           ['Attendee emails', '12k – 35k / mo', 'Reminders, saved events, nudges'],
-          ['Combined reach', '32k – 80k / mo', 'Flagship Hub inventory'],
+          ['Combined reach', '32k – 80k / mo', 'Flagship platform inventory'],
         ],
       },
     };

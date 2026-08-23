@@ -1,6 +1,6 @@
 /**
  * White-label ticket embed — /embed/event?slug=… or /embed/event/:slug
- * Checkout stays on the live Hub event page (top-level navigation).
+ * Checkout stays on the live event page (top-level navigation).
  * Does not modify event-detail.js or Stripe checkout APIs.
  */
 (function () {

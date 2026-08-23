@@ -1140,7 +1140,7 @@ module.exports = async function handler(req, res) {
           organiser_id: row.organiser_id || null,
           action: 'admin_event_updated',
           summary:
-            'Hub admin updated event' +
+            'platform admin updated event' +
             (event?.title ? ': ' + String(event.title).slice(0, 80) : '') +
             (changed.length ? ' (' + changed.slice(0, 8).join(', ') + ')' : ''),
           metadata: { changedFields: changed, source: 'admin' },

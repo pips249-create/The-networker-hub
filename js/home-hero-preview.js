@@ -22,9 +22,9 @@
     },
     {
       id: 'hub',
-      label: 'A · Hub-led',
+      label: 'A · Brand-led',
       strategy: 'Explain what you are',
-      note: 'Names the brand and positions the hub as the UK\u2019s single place for events, groups, and opportunities. Best for cold traffic and word-of-mouth referrals.',
+      note: 'Names the brand and positions The Networker UK as the UK\u2019s single place for events, groups, and opportunities. Best for cold traffic and word-of-mouth referrals.',
       kicker: 'The Networker UK',
       titleLine: 'The UK\u2019s home for',
       titleAccent: 'business connection',
@@ -77,7 +77,7 @@
       tagline: 'Compare UK networking groups, read reviews, and claim complimentary guest visits \u2014 events, organisers, and opportunities on one hub.',
       searchLabel: 'Find an event or group',
       searchPlaceholder: 'City, networking group, industry\u2026',
-      searchBtn: 'Search the hub',
+      searchBtn: 'Search The Networker UK',
       proof: 'Free to browse \u00b7 No account needed until you book',
       stats: [
         { label: 'Guest visits', detail: 'Try a meeting before you join' },
@@ -120,7 +120,7 @@
       label: 'E · Mix',
       layout: 'dual-cta',
       strategy: 'Best of all variants',
-      note: 'Keeps "Find your next\u2026" centre stage (B/D), names the hub (A), explains breadth + guest visits (C/D), and uses the dual coloured CTAs without UK framing.',
+      note: 'Keeps "Find your next\u2026" centre stage (B/D), names The Networker UK (A), explains breadth + guest visits (C/D), and uses the dual coloured CTAs without UK framing.',
       kicker: 'The Networker UK',
       titleLine: 'Find your next\u2026',
       lede: 'Networking meetings, conferences, business opportunities, side hustles, training and so much more \u2014 all in one place. Compare groups, claim guest visits, and browse free.',
@@ -252,7 +252,7 @@
   function renderPillars(pillars) {
     if (!pillars || !pillars.length) return '';
     return (
-      '<ul class="home-hero-pillars" aria-label="Explore the hub">' +
+      '<ul class="home-hero-pillars" aria-label="Explore The Networker UK">' +
       pillars
         .map(function (pillar) {
           return (

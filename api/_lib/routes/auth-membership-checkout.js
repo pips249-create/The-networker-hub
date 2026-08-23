@@ -102,7 +102,7 @@ module.exports = async function handler(req, res) {
       return json(res, 404, { ok: false, error: 'organiser_not_found' });
     }
 
-    // Block a second Hub-billed subscription while one is already live.
+    // Block a second platform-billed subscription while one is already live.
     const {
       getActiveRosterMembership,
       rosterRowHasLiveHubSubscription,

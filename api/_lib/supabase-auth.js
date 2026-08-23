@@ -199,7 +199,7 @@ async function canSendEmailCategory(email, category) {
     return hubPrefEnabled(hub, 'email_pref_organiser_alerts');
   }
   if (category === 'organiser_roundups') {
-    // Independent of Hub marketing. Pre-migration DBs fall back to marketing opt-in.
+    // Independent of Marketing emails. Pre-migration DBs fall back to marketing opt-in.
     if (!Object.prototype.hasOwnProperty.call(hub, 'email_pref_organiser_roundups')) {
       return hub.emails_enabled === true;
     }

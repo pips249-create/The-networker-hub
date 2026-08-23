@@ -9,9 +9,9 @@ const MIN_ELIGIBLE_ATTENDEES_FOR_RANKING = 10;
 const TIER_ORDER = { top10: 1, top25: 2, top50: 3 };
 
 function rankingLabel(rank) {
-  if (rank <= 10) return 'Top 10 networking group on the Hub';
-  if (rank <= 25) return 'Top 25 networking group on the Hub';
-  if (rank <= 50) return 'Top 50 networking group on the Hub';
+  if (rank <= 10) return 'Top 10 networking group on The Networker UK';
+  if (rank <= 25) return 'Top 25 networking group on The Networker UK';
+  if (rank <= 50) return 'Top 50 networking group on The Networker UK';
   return null;
 }
 
@@ -23,7 +23,7 @@ function rankingTier(rank) {
 }
 
 function publicBadgeLabel(label) {
-  return String(label || '').replace(' on the Hub', '');
+  return String(label || '').replace(' on The Networker UK', '');
 }
 
 function formatBadgeWithPeriod(label, periodLabel) {

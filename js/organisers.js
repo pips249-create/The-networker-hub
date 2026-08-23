@@ -338,7 +338,7 @@
     var reviews = Number(org.reviews) || 0;
     if (reviews > 0 && rating > 0) return rating.toFixed(1) + ' · ' + reviews + ' reviews';
     if (reviews > 0) return reviews + ' reviews';
-    return 'New on the hub';
+    return 'New on The Networker UK';
   }
 
   function premiumSpotlightCard(org) {
@@ -471,7 +471,7 @@
           escapeHtml(
             org.ranking.cardLabel ||
               org.ranking.displayLabel ||
-              String(org.ranking.label).replace(' on the Hub', '')
+              String(org.ranking.label).replace(' on The Networker UK', '')
           ) +
           '</span>'
         : '') +

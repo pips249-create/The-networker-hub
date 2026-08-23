@@ -4,39 +4,39 @@
 Operated by The Networker Group Ltd (Company No. 15252227). Contact: hello@thenetworkeruk.com
 
 ## Canonical URLs
-- Home: https://www.thenetworkeruk.com/
-- Events: https://www.thenetworkeruk.com/events/
-- Business opportunities: https://www.thenetworkeruk.com/opportunities/
-- FAQ: https://www.thenetworkeruk.com/faq
-- Contact (Hubert assistant): https://www.thenetworkeruk.com/contact
-- About: https://www.thenetworkeruk.com/about
-- For Organisers: https://www.thenetworkeruk.com/for-organisers
-- For Networkers: https://www.thenetworkeruk.com/for-networkers
-- Organiser guides: https://www.thenetworkeruk.com/guides
-- Advertising & sponsorship: https://www.thenetworkeruk.com/advertising
-- Legal: https://www.thenetworkeruk.com/legal-policies
-- Organiser payouts: https://www.thenetworkeruk.com/help/organiser-payouts
-- Ticket pricing & fees: https://www.thenetworkeruk.com/help/pricing-fees
-- Sitemap: https://www.thenetworkeruk.com/sitemap.xml
+- Home: https://www.thenetworkerhub.com/
+- Events: https://www.thenetworkerhub.com/events/
+- Business opportunities: https://www.thenetworkerhub.com/opportunities/
+- FAQ: https://www.thenetworkerhub.com/faq
+- Contact (Hubert assistant): https://www.thenetworkerhub.com/contact
+- About: https://www.thenetworkerhub.com/about
+- For Organisers: https://www.thenetworkerhub.com/for-organisers
+- For Networkers: https://www.thenetworkerhub.com/for-networkers
+- Organiser guides: https://www.thenetworkerhub.com/guides
+- Advertising & sponsorship: https://www.thenetworkerhub.com/advertising
+- Legal: https://www.thenetworkerhub.com/legal-policies
+- Organiser payouts: https://www.thenetworkerhub.com/help/organiser-payouts
+- Ticket pricing & fees: https://www.thenetworkerhub.com/help/pricing-fees
+- Sitemap: https://www.thenetworkerhub.com/sitemap.xml
 
 ## Organiser help articles
 
 ### When do organisers receive payouts?
 Organisers receive the full ticket price they set. With Stripe Connect enabled, that revenue is collected in the organiser connected Stripe account when attendees pay; use Stripe Express for refunds, balance, and bank payouts. Legacy mode (Connect off): archive the event in /organiser/, wait 7 days after the event ends, then request payout from Revenue — requests are reviewed before transfer.
 
-Full page: https://www.thenetworkeruk.com/help/organiser-payouts
+Full page: https://www.thenetworkerhub.com/help/organiser-payouts
 
 ### What fees does The Networker UK charge on tickets?
 There is no monthly subscription to list events. For paid tickets, attendees pay one booking fee at checkout: 4.5% + 20p per ticket, shown before payment. Organisers receive the full ticket price they set. Free events do not require Stripe.
 
-Full page: https://www.thenetworkeruk.com/help/pricing-fees
+Full page: https://www.thenetworkerhub.com/help/pricing-fees
 
 ## Machine discovery
-- Sitemap: https://www.thenetworkeruk.com/sitemap.xml
-- AI crawler policy: https://www.thenetworkeruk.com/agents.txt
-- Dynamic page meta API: https://www.thenetworkeruk.com/api/seo-meta?type=event&slug={slug}
-- Organiser meta API: https://www.thenetworkeruk.com/api/seo-meta?type=organiser&slug={slug}
-- Opportunity meta API: https://www.thenetworkeruk.com/api/seo-meta?type=opportunity&slug={slug}
+- Sitemap: https://www.thenetworkerhub.com/sitemap.xml
+- AI crawler policy: https://www.thenetworkerhub.com/agents.txt
+- Dynamic page meta API: https://www.thenetworkerhub.com/api/seo-meta?type=event&slug={slug}
+- Organiser meta API: https://www.thenetworkerhub.com/api/seo-meta?type=organiser&slug={slug}
+- Opportunity meta API: https://www.thenetworkerhub.com/api/seo-meta?type=opportunity&slug={slug}
 
 ## Hubert — business butler & concierge
 Hubert is the on-site AI assistant. He answers questions about browsing, accounts, tickets, opportunities, and organiser tools. He can look up live published events and business opportunities when asked.

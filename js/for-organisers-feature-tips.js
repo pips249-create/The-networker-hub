@@ -11,7 +11,7 @@
     'fo-premium-spotlight': {
       title: 'Premium Spotlight featured listings',
       body:
-        'Upgrade a live event to Premium Spotlight for top placement in the hub carousel and stronger visibility on browse pages — ideal when you want extra reach for a flagship date.',
+        'Upgrade a live event to Premium Spotlight for top placement in the platform carousel and stronger visibility on browse pages — ideal when you want extra reach for a flagship date.',
     },
     'fo-organiser-profiles': {
       title: 'Organiser profile pages & reviews',
@@ -46,7 +46,7 @@
     'fo-ranking-badges': {
       title: 'Ranking badges & Top groups',
       body:
-        'When your group ranks on the Hub Top groups list, download a shareable badge for LinkedIn and your site. Opt into public rankings and Hub shout-outs from Promote.',
+        'When your group ranks on The Networker UK Top groups list, download a shareable badge for LinkedIn and your site. Opt into public rankings and platform shout-outs from Promote.',
     },
     'fo-attendee-roundup': {
       title: 'Attendee round-up emails',

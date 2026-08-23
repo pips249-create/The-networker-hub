@@ -429,7 +429,7 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
   }
 
   if (sponsorSection) {
-    // Main sponsor always sits in the cream container just below the Hub logo hero.
+    // Main sponsor always sits in the cream container just below the Networker UK logo hero.
     bodyHtml = ensureSponsorPlaceholderAfterHeader(bodyHtml, '{{sponsor_row}}');
   }
   if (dbMiniSponsorsRow && !/\{\{\s*mini_sponsors_row\s*\}\}/.test(bodyHtml)) {

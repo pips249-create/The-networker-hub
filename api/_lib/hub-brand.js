@@ -1,4 +1,4 @@
-/** Canonical public brand — The Networker UK (rebrand from The Networker Hub). */
+/** Canonical public brand — The Networker UK (rebrand from The Networker UK). */
 const BRAND_NAME = 'The Networker UK';
 const BRAND_NAME_SHORT = 'Networker UK';
 const LEGAL_NAME = 'The Networker Group Ltd';

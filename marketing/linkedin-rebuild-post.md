@@ -26,7 +26,7 @@ Organisers needed tools. Networkers needed a cleaner way to browse events, commu
 
 1. **Talk to organisers before you build the clever bit.** The features they asked for (clear payouts, member rates, guest visits) beat half the ideas we started with.
 2. **One place beats ten tabs.** Events, organiser pages, and business opportunities belong together — because that's how people already search.
-3. **Keep what worked.** The Hub isn't starting from zero. It's the next chapter of something the UK networking community already used.
+3. **Keep what worked.** The Networker UK isn't starting from zero. It's the next chapter of something the UK networking community already used.
 4. **Ship the foundation, then iterate.** Waiting for every edge case would still have us rebuilding in silence.
 
 We're launching **1st September**.

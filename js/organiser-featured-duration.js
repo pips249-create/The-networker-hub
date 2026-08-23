@@ -115,7 +115,7 @@
     }
     var preview = previewPlacement(opts);
     if (!preview.cappedByEvent) {
-      return 'One-time Premium Spotlight — up to 30 days for people browsing your area and dates on the hub.';
+      return 'One-time Premium Spotlight — up to 30 days for people browsing your area and dates on the platform.';
     }
     var eventDate = formatDate(opts.eventStartIso || opts.date);
     return (

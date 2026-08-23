@@ -49,6 +49,7 @@
     selectedIntent: 'attend',
     selectedCountry: null,
     mapReady: false,
+    hubStats: {},
   };
 
   var els = {};
@@ -98,10 +99,53 @@
     });
   }
 
-  function setHint(text, isLive) {
+  function formatCount(value) {
+    if (value == null || value === '') return null;
+    var n = Number(value);
+    if (!Number.isFinite(n)) return null;
+    return n.toLocaleString('en-GB');
+  }
+
+  function liveCountryHint(meta) {
+    var stats = state.hubStats[meta.iso2];
+    if (!stats || stats.events == null) {
+      return meta.name + ' — live · Click to explore';
+    }
+    return (
+      meta.name +
+      ' — ' +
+      formatCount(stats.events) +
+      ' events · ' +
+      formatCount(stats.organisers) +
+      ' organisers · ' +
+      formatCount(stats.opportunities) +
+      ' business opportunities'
+    );
+  }
+
+  function setHint(text, options) {
+    options = options || {};
     if (!els.hint) return;
     els.hint.textContent = text;
-    els.hint.classList.toggle('is-live', Boolean(isLive));
+    els.hint.classList.toggle('is-live', Boolean(options.live));
+    els.hint.classList.toggle('is-stats', Boolean(options.stats));
+  }
+
+  function loadHubStats() {
+    return fetch('/api/international-hub-stats?country=GB')
+      .then(function (res) {
+        return res.json();
+      })
+      .then(function (data) {
+        if (data && data.ok && data.countryCode) {
+          state.hubStats[data.countryCode] = {
+            events: data.events,
+            organisers: data.organisers,
+            opportunities: data.opportunities,
+          };
+        }
+      })
+      .catch(function () {});
   }
 
   function clearHover() {
@@ -171,12 +215,16 @@
     function onEnter() {
       clearHover();
       path.classList.add('is-hovered');
-      setHint(meta.live ? meta.name + ' — live' : meta.name, meta.live);
+      if (meta.live) {
+        setHint(liveCountryHint(meta), { live: true, stats: true });
+      } else {
+        setHint(meta.name, { live: false, stats: false });
+      }
     }
 
     function onLeave() {
       path.classList.remove('is-hovered');
-      setHint('Hover or tap a country on the map', false);
+      setHint('Hover or tap a country on the map', { live: false, stats: false });
     }
 
     path.addEventListener('mouseenter', onEnter);
@@ -302,27 +350,32 @@
   }
 
   function initScrollHero() {
-    var journey = byId('intl-journey');
+    var stage = byId('intl-journey');
     var hero = byId('intl-hero-float');
-    if (!journey || !hero) return;
+    if (!stage || !hero) return;
 
     var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reducedMotion) {
-      journey.classList.add('is-map-focused');
+      stage.classList.add('is-map-focused');
       return;
     }
 
     var ticking = false;
 
+    function scrollRangePx() {
+      var spacer = stage.querySelector('.intl-scroll-spacer');
+      return spacer ? spacer.offsetHeight : 200;
+    }
+
     function update() {
       ticking = false;
-      var range = Math.max(journey.offsetHeight - window.innerHeight, 1);
-      var progress = Math.min(1, Math.max(0, window.scrollY / (range * 0.72)));
+      var range = Math.max(scrollRangePx(), 1);
+      var progress = Math.min(1, Math.max(0, window.scrollY / range));
       var fade = 1 - progress;
       hero.style.opacity = String(fade);
       hero.style.transform =
-        'translateX(-50%) translateY(' + (-progress * 88) + 'px) scale(' + (1 - progress * 0.06) + ')';
-      journey.classList.toggle('is-map-focused', progress > 0.45);
+        'translateX(-50%) translateY(' + (-progress * 64) + 'px) scale(' + (1 - progress * 0.05) + ')';
+      stage.classList.toggle('is-map-focused', progress > 0.35);
     }
 
     function onScroll() {
@@ -354,6 +407,7 @@
 
     initModal();
     initScrollHero();
+    loadHubStats();
 
     if (els.select) {
       els.select.addEventListener('change', function () {

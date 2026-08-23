@@ -315,7 +315,7 @@ async function handleSponsorshipCheckoutCompleted(session) {
 }
 
 /**
- * Hub booking fee on organiser membership invoices → ticket_sales target.
+ * booking fee on organiser membership invoices → ticket_sales target.
  * Idempotent on stripe_invoice_id (same unique index as sponsorship invoices).
  */
 async function recordMembershipBookingFeeFromInvoice(invoice, subscription) {

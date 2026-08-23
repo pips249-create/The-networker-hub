@@ -247,7 +247,7 @@ async function buildRecommendationsHtml(sb, attendeeLocation) {
         parts.push(
           recommendationCard(
             orgName,
-            'Top-rated networking group on the Hub',
+            'Top-rated networking group on The Networker UK',
             orgUrl
           )
         );
@@ -490,7 +490,7 @@ async function sendDueSignupEventsNudgeEmails(sb) {
 }
 
 /**
- * Hub accounts with organiser workspace enabled, plus emails linked to an
+ * Accounts with organiser workspace enabled, plus emails linked to an
  * organiser profile — used to keep attendee nurture mail off organiser inboxes.
  */
 async function loadOrganiserRecipientKeys(sb, attendees) {
@@ -1040,14 +1040,14 @@ async function sendDueGuestVisitFollowupEmails(sb, options) {
 
     let ctaUrl = nextEventUrl;
     let ctaLabel = nextEvent ? 'Book the next event' : 'View ' + organiserName;
-    // Near-term conversion is the next booking. Hub membership dues are a slower path (~months).
+    // Near-term conversion is the next booking. membership dues are a slower path (~months).
     let followupNextStep =
       'If you liked the group, the easiest next step is to book a member ticket for an upcoming date — your organiser page and events are on The Networker UK.';
     let membershipCtaSection = '';
 
     if (membershipOffered) {
       followupNextStep =
-        'If you liked the group, book their next meeting first. Membership (monthly or annual through the Hub) can wait until you are ready to join properly.';
+        'If you liked the group, book their next meeting first. Membership (monthly or annual through The Networker UK) can wait until you are ready to join properly.';
       membershipCtaSection = buildGuestVisitMembershipCtaSection(membershipJoinUrl, organiserName);
     }
 

@@ -72,7 +72,7 @@
     bannerEl.setAttribute('aria-label', 'Cookie consent');
     bannerEl.innerHTML =
       '<div class="hub-cookie-banner-inner">' +
-      '<p class="hub-cookie-banner-copy">We use essential cookies to run the Hub and optional analytics to improve the site. ' +
+      '<p class="hub-cookie-banner-copy">We use essential cookies to run the platform and optional analytics to improve the site. ' +
       '<a href="/legal-policies#cookies">Cookie policy</a></p>' +
       '<div class="hub-cookie-banner-actions">' +
       '<button type="button" class="hub-cookie-btn" id="hub-cookie-settings-btn">Manage</button>' +

@@ -19,7 +19,7 @@ function parseBody(req) {
   return body || {};
 }
 
-/** POST /api/auth/membership-portal — Stripe Customer Portal for Hub-billed memberships. */
+/** POST /api/auth/membership-portal — Stripe Customer Portal for platform-billed memberships. */
 module.exports = async function handler(req, res) {
   setCors(req, res);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -63,7 +63,7 @@ module.exports = async function handler(req, res) {
     return json(res, 404, {
       ok: false,
       error: 'no_hub_subscription',
-      message: 'No Hub-billed membership found for this group. Use Pay / renew instead.',
+      message: 'No platform-billed membership found for this group. Use Pay / renew instead.',
     });
   }
 

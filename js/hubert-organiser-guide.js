@@ -76,8 +76,8 @@
       { label: 'Contact email', prompt: 'Who sees the contact email on my organiser page?' },
     ],
     'organiser-dashboard': [
-      { label: 'Getting started', prompt: 'How do I list my first event on the hub?' },
-      { label: 'Claim my group', prompt: 'How do I claim my organiser page on the hub?' },
+      { label: 'Getting started', prompt: 'How do I list my first event on The Networker UK?' },
+      { label: 'Claim my group', prompt: 'How do I claim my organiser page on The Networker UK?' },
       { label: 'Stripe payouts', prompt: 'How do Stripe Connect payouts and refunds work for organisers?' },
       { label: 'Invite my team', prompt: 'How do I invite team members to help manage events?' },
     ],

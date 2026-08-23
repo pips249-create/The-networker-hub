@@ -43,7 +43,7 @@
     },
     social: {
       title: 'Promote',
-      text: 'Build LinkedIn posts with your brand colours, send monthly Hub email updates (smart audiences + engagement report), feature events, and share ranking badges when you earn one.'
+      text: 'Build LinkedIn posts with your brand colours, send monthly platform email updates (smart audiences + engagement report), feature events, and share ranking badges when you earn one.'
     },
     events: {
       title: 'My events',

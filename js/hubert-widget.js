@@ -58,7 +58,7 @@
       : 'Ask Hubert to find events, opportunities, or guide you…';
   var widgetGreeting =
     publicPageContext() === 'opportunities'
-      ? "Good afternoon. I'm Hubert — allow me to help you explore business opportunities on the hub. Ask about franchises, side hustles, or partnerships, or tap a suggestion below."
+      ? "Good afternoon. I'm Hubert — allow me to help you explore business opportunities on the platform. Ask about franchises, side hustles, or partnerships, or tap a suggestion below."
       : greeting;
 
   var mount = document.createElement('div');

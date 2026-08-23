@@ -70,7 +70,7 @@ function buildReviewerReward(count, options) {
 function reviewerRewardToastMessage(reward) {
   const r = reward && typeof reward === 'object' ? reward : null;
   if (!r || !r.count) {
-    return 'Thanks — your review helps this group on the Hub.';
+    return 'Thanks — your review helps this group on The Networker UK.';
   }
   if (r.justUnlocked && r.tier) {
     return (

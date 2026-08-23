@@ -52,7 +52,7 @@ const KNOWLEDGE_SECTIONS = [
       'Each event page is the source of truth for dates, venue, price, and organiser. ' +
       'To book: create a free account → open the event → choose ticket type → Stripe checkout. Add guest names at checkout (shared with the organiser). ' +
       'Booking confirmations are sent by email — check spam/junk and that your account email is correct; view tickets in /account/. ' +
-      'Paid event contract is usually with the organiser on the listing; the Hub provides booking technology. ' +
+      'Paid event contract is usually with the organiser on the listing; the platform provides booking technology. ' +
       'Tickets are generally non-transferable without organiser consent — contact the organiser via the event page to ask.',
   },
   {
@@ -75,10 +75,10 @@ const KNOWLEDGE_SECTIONS = [
     title: 'ORGANISERS',
     body:
       'Approved organisers use /organiser/ to create events, sell tickets via Stripe, manage attendees, export registrations, list opportunities, and invite team members. Stripe Connect onboarding under Revenue is required before publishing paid tickets. ' +
-      'CLAIM YOUR PAGE: many UK networking groups already have a directory page from the legacy Networker site. Browse organisers on /events/, sign in with the email linked to your group — when it matches, a claim prompt appears on Overview automatically — guide at /guides/claim-your-organiser-page. Email changed or no prompt? Find your group on /events/ (organisers tab) and use Request access on its profile page, or email hello@thenetworkeruk.com with your group name and current contact email. New groups without a listing: email hello@thenetworkeruk.com with your group name, format, and location. Organiser terms: /legal-policies#organisers. Hub rules (plain-English standards for organisers): /legal-policies#hub-rules. ' +
+      'CLAIM YOUR PAGE: many UK networking groups already have a directory page from the legacy Networker site. Browse organisers on /events/, sign in with the email linked to your group — when it matches, a claim prompt appears on Overview automatically — guide at /guides/claim-your-organiser-page. Email changed or no prompt? Find your group on /events/ (organisers tab) and use Request access on its profile page, or email hello@thenetworkeruk.com with your group name and current contact email. New groups without a listing: email hello@thenetworkeruk.com with your group name, format, and location. Organiser terms: /legal-policies#organisers. Platform rules (plain-English standards for organisers): /legal-policies#hub-rules. ' +
       'EVENT NOT ON BROWSE PAGE? Public browse only shows events that are Published (not Draft), Approved, and linked to a published organiser profile. Finish the publish flow in /organiser/ (tickets, refund policy, publish). If it still does not appear, email hello@thenetworkeruk.com with the event title. ' +
-      'DOWNLOAD ATTENDEES: Sign in → /organiser/ → Events → Attendees. Filter by event, then use Download attendees CSV. Export printable name badges (PDF for standard or large A4 sticker sheets) from the same screen — badges use each guest’s name, company, and job title from their Hub account when set. ' +
-      'PAYOUTS: With Stripe Connect (standard), ticket revenue goes to your connected Stripe account when attendees pay — open Stripe Express from Revenue for balance, refunds, and bank payouts. Events archive automatically after they end. Legacy manual Hub payouts (if Connect is off): 7-day settlement after the event, then request payout from Revenue when net amount is above £1. Minimum payout £1. Full guide: /help/organiser-payouts. ' +
+      'DOWNLOAD ATTENDEES: Sign in → /organiser/ → Events → Attendees. Filter by event, then use Download attendees CSV. Export printable name badges (PDF for standard or large A4 sticker sheets) from the same screen — badges use each guest’s name, company, and job title from their Account when set. ' +
+      'PAYOUTS: With Stripe Connect (standard), ticket revenue goes to your connected Stripe account when attendees pay — open Stripe Express from Revenue for balance, refunds, and bank payouts. Events archive automatically after they end. Legacy manual payouts (if Connect is off): 7-day settlement after the event, then request payout from Revenue when net amount is above £1. Minimum payout £1. Full guide: /help/organiser-payouts. ' +
       'FEES: Attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before they pay). This covers platform and payment processing — organisers receive the full ticket price, with no separate platform or Stripe deductions. Worked examples: /help/pricing-fees.',
   },
   {
@@ -94,21 +94,21 @@ const KNOWLEDGE_SECTIONS = [
     title: 'ORGANISER TICKETS & ATTENDEES',
     body:
       'TICKET SETUP (event-tickets.html): choose Ticket types (open booking) or Category Exclusivity — these two attendance modes are mutually exclusive. ' +
-      'OPEN BOOKING: add one row per ticket tier (Standard, Early bird, etc.) with price, quantity, and sale dates. Optionally enable Free trial visits: visitors get 1–3 free visits (Hub maximum) before paid member tickets unlock — either on this organiser page only, or shared across all your organiser pages. Use “Pause free visits on this date only” to skip free visits on a specific date (e.g. conferences) while keeping paid tickets available. NETWORKING GROUP MEETING: for groups with monthly/annual Hub membership — free visits for visitors, a free member ticket for people on your member list, then join membership after visits (no public event ticket). “Closed meeting — member list only” is different: no public ticket and no free visits. The optional member ticket price adds a hidden rate for your member list while public tickets stay on sale. Previous Attendees is an optional add-on: a returning ticket for past attendees, with invites sent from your dashboard after publish. ' +
+      'OPEN BOOKING: add one row per ticket tier (Standard, Early bird, etc.) with price, quantity, and sale dates. Optionally enable Free trial visits: visitors get 1–3 free visits (maximum 3) before paid member tickets unlock — either on this organiser page only, or shared across all your organiser pages. Use “Pause free visits on this date only” to skip free visits on a specific date (e.g. conferences) while keeping paid tickets available. NETWORKING GROUP MEETING: for groups with monthly/annual membership — free visits for visitors, a free member ticket for people on your member list, then join membership after visits (no public event ticket). “Closed meeting — member list only” is different: no public ticket and no free visits. The optional member ticket price adds a hidden rate for your member list while public tickets stay on sale. Previous Attendees is an optional add-on: a returning ticket for past attendees, with invites sent from your dashboard after publish. ' +
       'CATEGORY EXCLUSIVITY: prospective attendees apply instead of buying straight away. They answer two fixed questions — their industry and job title. You approve or deny each application from your organiser dashboard; approved applicants receive a payment link to complete booking. Set an optional price (leave at £0 for free), places limit, and application closing date. Cannot be combined with open ticket types on the same event. ' +
       'APPLICATION QUESTIONS: under Category Exclusivity, industry and job title are fixed and cannot be changed. For open ticket booking, you can optionally tick boxes under Attendee information at booking to note food is included or to collect dietary or accessibility requirements at checkout. ' +
-      'VIEW REGISTRATIONS: sign in → /organiser/ → Events → Attendees. Filter by event or by new vs returning. Each row shows visit count (1st visit, 2 visits, etc.) based on Hub bookings with your organiser page. After the event starts, mark Didn’t attend on anyone who no-showed — they skip the review email and cannot leave a review for that event. Download attendees CSV or export printable name badges (PDF).',
+      'VIEW REGISTRATIONS: sign in → /organiser/ → Events → Attendees. Filter by event or by new vs returning. Each row shows visit count (1st visit, 2 visits, etc.) based on platform bookings with your organiser page. After the event starts, mark Didn’t attend on anyone who no-showed — they skip the review email and cannot leave a review for that event. Download attendees CSV or export printable name badges (PDF).',
   },
   {
     title: 'MEMBER LIST',
     body:
       'Per networking group (organiser page), organisers maintain a Member list at /organiser/member-roster — name, email, and optional membership expiry. ' +
       'PURPOSE: unlock Members only ticket tiers. The public never sees those tickets; people on the list see them automatically when signed in with the same email — no access codes. ' +
-      'SETUP: open your organiser page → Member list (or group-edit → Manage member list). Add members one by one or import CSV (columns: email required, name, expires or membership expiry). Optionally send invite emails — new Hub users get a sign-up invite; existing Hub members get a welcome email with the group’s next meeting. ' +
+      'SETUP: open your organiser page → Member list (or group-edit → Manage member list). Add members one by one or import CSV (columns: email required, name, expires or membership expiry). Optionally send invite emails — The Networker UK users get a sign-up invite; existing members get a welcome email with the group’s next meeting. ' +
       'When you publish a new Approved event, people on the member list are queued for a daily digest email (Members only rates apply when they sign in with that email). ' +
       'REPORTS on the member list page: membership health (active, signed up vs not yet, expiring soon), booked vs not booked for a selected upcoming event, new vs returning among your uploaded members only, members who missed recent meetings, memberships expiring within 14 days. Reports never include non-members who booked the event — use Attendees for full event lists. Download members CSV or an event report CSV. Email booking reminders to members who have not booked; members are also auto-emailed when you publish Approved events. ' +
       'MEMBERS: when added, they see the group under My account → My memberships (/account/#memberships). Sign in with the membership email to book member-only tickets. ' +
-      'RENEWALS: organisers can collect monthly or annual membership dues through the Hub (Stripe Connect) — members pay the published price plus a booking fee (4.5% + 20p, same as tickets); the group receives 100% of the membership price. Members join from the organiser page or renew/manage from My account → Memberships (update card or cancel via Stripe Customer Portal). Organisers can also Invite to pay from the member list, and can still renew people off-platform by updating expiry dates. ' +
+      'RENEWALS: organisers can collect monthly or annual membership dues through The Networker UK (Stripe Connect) — members pay the published price plus a booking fee (4.5% + 20p, same as tickets); the group receives 100% of the membership price. Members join from the organiser page or renew/manage from My account → Memberships (update card or cancel via Stripe Customer Portal). Organisers can also Invite to pay from the member list, and can still renew people off-platform by updating expiry dates. ' +
       'TICKETS: on event-tickets.html, add a Members only ticket tier — access is enforced via the member list.',
   },
   {
@@ -183,7 +183,7 @@ const FALLBACK_REPLIES = [
   {
     match: /event.*(not show|doesn.?t show|isn.?t show|missing|not appear|not on browse)|added my event|publish.*not|why.*(on|in) browse/i,
     reply:
-      'Browse events only lists items that are Published (not Draft), Approved, and tied to a published organiser profile. In /organiser/, open your event, complete tickets and your refund policy, then publish. New listings may need hub approval. Still missing? Email hello@thenetworkeruk.com with the event title and your organiser account email.',
+      'Browse events only lists items that are Published (not Draft), Approved, and tied to a published organiser profile. In /organiser/, open your event, complete tickets and your refund policy, then publish. New listings may need platform approval. Still missing? Email hello@thenetworkeruk.com with the event title and your organiser account email.',
   },
   {
     match: /advertis|sponsor|promote my business|marketing on (the )?site|get exposure|city partner|city sponsor/i,
@@ -198,7 +198,7 @@ const FALLBACK_REPLIES = [
   {
     match: /who is catherine|catherine.*co-founder|what does catherine do/i,
     reply:
-      'Catherine is co-founder of The Networker UK alongside Rosie. Together they run The Networker Group Ltd and built the hub as a trusted place to discover networking events and business opportunities across the UK. More on /about.',
+      'Catherine is co-founder of The Networker UK alongside Rosie. Together they run The Networker Group Ltd and built The Networker UK as a trusted place to discover networking events and business opportunities across the UK. More on /about.',
   },
   {
     match: /why.*(start|created|built)|how did (the )?hub start|origin of|story behind/i,
@@ -288,12 +288,12 @@ const FALLBACK_REPLIES = [
   {
     match: /already use|eventbrite|meetup|other platform|alongside|as well as|in addition to/i,
     reply:
-      'Yes — you can list on The Networker UK alongside other event platforms. There is no exclusivity requirement. Many organisers use the hub to reach members browsing specifically for UK networking events and to build their organiser profile here. List the same events you run elsewhere if you like.',
+      'Yes — you can list on The Networker UK alongside other event platforms. There is no exclusivity requirement. Many organisers use The Networker UK to reach members browsing specifically for UK networking events and to build their organiser profile here. List the same events you run elsewhere if you like.',
   },
   {
     match: /list.*(networking group|my group|our group)|become an organiser|onboard.*organiser/i,
     reply:
-      'Many UK networking groups already have a page on the hub. Browse organisers on /events/, sign in with the email linked to your group, and confirm the claim prompt on Overview — step-by-step guide at /guides/claim-your-organiser-page. Brand-new group not listed yet? Email hello@thenetworkeruk.com with your group name, typical format, and location. Once approved, use /organiser/ to create events and manage attendees.',
+      'Many UK networking groups already have a page on the platform. Browse organisers on /events/, sign in with the email linked to your group, and confirm the claim prompt on Overview — step-by-step guide at /guides/claim-your-organiser-page. Brand-new group not listed yet? Email hello@thenetworkeruk.com with your group name, typical format, and location. Once approved, use /organiser/ to create events and manage attendees.',
   },
   {
     match: /cost to list|how much.*list|fee.*list|price.*list.*event|listing fee/i,
@@ -303,7 +303,7 @@ const FALLBACK_REPLIES = [
   {
     match: /free (networking )?events?|events?.*free\b|no cost events?/i,
     reply:
-      'Many networking events on the hub are free to attend — browse /events/ and check each event page for pricing. You can filter listings and look for free tickets. Free events may still need registration; some require a free account to complete sign-up.',
+      'Many networking events on the platform are free to attend — browse /events/ and check each event page for pricing. You can filter listings and look for free tickets. Free events may still need registration; some require a free account to complete sign-up.',
   },
   {
     match: /email changed|wrong email|different email|no claim prompt|request access.*(organiser|group|page)/i,
@@ -328,7 +328,7 @@ const FALLBACK_REPLIES = [
   {
     match: /what happens when i publish|after i publish|publish my event|how long.*approv|listing review|when will my event go live|event approval/i,
     reply:
-      'When you publish, your event is submitted for hub approval — typically within one working day. Once Approved and tied to a published organiser profile, it appears on /events/ and attendees can book. People on your member list get a daily digest email about new Approved events (not an instant blast on publish).',
+      'When you publish, your event is submitted for platform approval — typically within one working day. Once Approved and tied to a published organiser profile, it appears on /events/ and attendees can book. People on your member list get a daily digest email about new Approved events (not an instant blast on publish).',
   },
   {
     match: /venue step|event location step|where do i (set|add) the venue|online join link|postcode.*event/i,
@@ -493,7 +493,7 @@ const FALLBACK_REPLIES = [
   {
     match: /what is (a |the )?member (list|roster)|how does (the )?member (list|roster) work|explain.*member (list|roster)|member (list|roster) do/i,
     reply:
-      'A Member list is your per-group list of members (name, email, optional expiry) at /organiser/#memberships. It unlocks Members only tickets — people on the list see those rates when signed in with their membership email; the public does not. Add members individually or import CSV, track who has signed up, and use reports for bookings and expiring memberships. You can collect dues through the Hub (monthly/annual prices on Memberships) or renew off-platform and update expiry dates.',
+      'A Member list is your per-group list of members (name, email, optional expiry) at /organiser/#memberships. It unlocks Members only tickets — people on the list see those rates when signed in with their membership email; the public does not. Add members individually or import CSV, track who has signed up, and use reports for bookings and expiring memberships. You can collect dues through The Networker UK (monthly/annual prices on Memberships) or renew off-platform and update expiry dates.',
   },
   {
     match: /added (me|to my).*member (list|roster)|on (a|the) member (list|roster)|member (lists|rosters) in my hub|why.*member (list|roster) email|group added me/i,
@@ -503,7 +503,7 @@ const FALLBACK_REPLIES = [
   {
     match: /import.*(member|list|roster).*csv|csv.*member (list|roster)|upload.*member list|bulk.*member (list|roster)|import.*(spreadsheet|excel).*member/i,
     reply:
-      'On /organiser/member-roster, use Import CSV — drop a spreadsheet saved as CSV from Excel or Google Sheets, or paste CSV text. Required column: email. Optional: name, expires (or membership expiry). Example row: jane@example.com,Jane Smith,2026-12-31. Max 5,000 rows / 512 KB per import. Invite emails are queued by default after import (untick to skip) — new accounts get a sign-up link; existing Hub accounts get a sign-in link. Sends gradually over about 2 hours.',
+      'On /organiser/member-roster, use Import CSV — drop a spreadsheet saved as CSV from Excel or Google Sheets, or paste CSV text. Required column: email. Optional: name, expires (or membership expiry). Example row: jane@example.com,Jane Smith,2026-12-31. Max 5,000 rows / 512 KB per import. Invite emails are queued by default after import (untick to skip) — new accounts get a sign-up link; existing Accounts get a sign-in link. Sends gradually over about 2 hours.',
   },
   {
     match: /add.*(to|someone).*(member list|member roster|roster)|manage member (list|roster)|set up member (list|roster)|open member (list|roster)|where.*member (list|roster)/i,
@@ -518,7 +518,7 @@ const FALLBACK_REPLIES = [
   {
     match: /membership expir|expiring membership|renew.*membership.*(list|roster)|(list|roster).*expir/i,
     reply:
-      'Optional expiry dates on /organiser/#memberships flag memberships expiring soon in your reports. Groups can also bill monthly or annual dues through the Hub — set prices on Memberships, then members pay from the public Join section or My account → Memberships. Use Invite to pay (or bulk invite) for renewals; failed card payments show as Payment failed on the list.',
+      'Optional expiry dates on /organiser/#memberships flag memberships expiring soon in your reports. Groups can also bill monthly or annual dues through The Networker UK — set prices on Memberships, then members pay from the public Join section or My account → Memberships. Use Invite to pay (or bulk invite) for renewals; failed card payments show as Payment failed on the list.',
   },
   {
     match: /access code|private ticket|members? only ticket|member (list|roster) ticket|hidden ticket/i,
@@ -533,7 +533,7 @@ const FALLBACK_REPLIES = [
   {
     match: /name badge|printable badge|avery l?7160|avery l?7163|sticker sheet|badge pdf/i,
     reply:
-      'Sign in → /organiser/ → Events → Attendees, then choose your sheet size (standard — 63.5 × 38.1 mm, 21 per sheet; or large — 99.1 × 38.1 mm, 14 per sheet) and click Export name badges (PDF). Each badge shows the guest’s name, company, and job title from their Hub account when set — ask attendees to update these in account settings before the event.',
+      'Sign in → /organiser/ → Events → Attendees, then choose your sheet size (standard — 63.5 × 38.1 mm, 21 per sheet; or large — 99.1 × 38.1 mm, 14 per sheet) and click Export name badges (PDF). Each badge shows the guest’s name, company, and job title from their Account when set — ask attendees to update these in account settings before the event.',
   },
   {
     match: /job title.*(badge|profile|account)|update.*job title|company.*badge/i,
@@ -548,7 +548,7 @@ const FALLBACK_REPLIES = [
   {
     match: /(start )?times? (change|changed|wrong|shift|shifted|jump|jumped)|hour (out|off|wrong)|clocks? (change|go back|go forward)|daylight saving|british summer|why.*(different|wrong).*time.*(date|series|recurring)|recurring.*time.*(wrong|change|hour)/i,
     reply:
-      'Event times are always UK local time (Europe/London). On a multi-date series, the start and end time you set applies as the same clock time on every date — for example 10:15 stays 10:15 before and after the clocks change. If an older series shows a one-hour difference across autumn or spring (for example November an hour earlier than September), refresh My Events — the Hub realigns those dates to the same UK wall-clock time automatically — or open Edit event, confirm the start time, and save again. Need a different time on one day? Create that session as its own listing.',
+      'Event times are always UK local time (Europe/London). On a multi-date series, the start and end time you set applies as the same clock time on every date — for example 10:15 stays 10:15 before and after the clocks change. If an older series shows a one-hour difference across autumn or spring (for example November an hour earlier than September), refresh My Events — the platform realigns those dates to the same UK wall-clock time automatically — or open Edit event, confirm the start time, and save again. Need a different time on one day? Create that session as its own listing.',
   },
   {
     match: /can i set different times|different (start )?times?.*(date|day|session)|same time every (date|day)/i,
@@ -583,7 +583,7 @@ const FALLBACK_REPLIES = [
   {
     match: /visit count|1st visit|first visit|returning attendee|new to your group|repeat attendee/i,
     reply:
-      'Open /organiser/ → Events → Attendees. Each registration shows a visit count (1st visit, 2 visits, etc.) based on Hub bookings with your organiser page — not annual membership records. Filter by new or returning, filter by event, and export a CSV with visit counts. Use this to welcome visitors and spot regulars.',
+      'Open /organiser/ → Events → Attendees. Each registration shows a visit count (1st visit, 2 visits, etc.) based on platform bookings with your organiser page — not annual membership records. Filter by new or returning, filter by event, and export a CSV with visit counts. Use this to welcome visitors and spot regulars.',
   },
   {
     match: /previous attendees?|alumni ticket|alumni rate|past attendee invite/i,

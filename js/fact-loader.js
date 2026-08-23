@@ -22,7 +22,7 @@
   const FADE_MS = 350;
 
   const LABELS = {
-    hub: 'From the hub',
+    hub: 'From The Networker UK',
     research: 'Did you know?',
     insight: 'Networking insight',
   };

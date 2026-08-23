@@ -86,7 +86,7 @@ module.exports = async function handler(req, res) {
       action: 'reject',
       disputeId: result.disputeId,
       message:
-        'Thanks — we have removed this listing from your dashboard and notified the Hub team to review it.',
+        'Thanks — we have removed this listing from your dashboard and notified the our team to review it.',
       emailResult: result.emailResult,
     });
   } catch (e) {

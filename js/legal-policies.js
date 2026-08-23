@@ -32,7 +32,7 @@
     terms: {
       kicker: 'Legal · Terms & conditions',
       title: 'Terms & conditions',
-      lede: 'Rules for using the Hub, accounts, listings and bookings.',
+      lede: 'Rules for using the platform, accounts, listings and bookings.',
     },
     refunds: {
       kicker: 'Legal · Refunds & cancellations',
@@ -45,8 +45,8 @@
       lede: 'Obligations for hosts listing events and opportunities.',
     },
     'hub-rules': {
-      kicker: 'Legal · Hub rules',
-      title: 'Hub rules',
+      kicker: 'Legal · Platform rules',
+      title: 'Platform rules',
       lede: 'Plain-English standards for organisers — listings, conduct, and enforcement.',
     },
     cookies: {
@@ -62,17 +62,17 @@
     copyright: {
       kicker: 'Legal · Copyright & content',
       title: 'Copyright & content',
-      lede: 'How content on the Hub is owned, used and reported.',
+      lede: 'How content on The Networker UK is owned, used and reported.',
     },
     advertising: {
       kicker: 'Legal · Advertising & sponsorship',
       title: 'Advertising & sponsorship',
-      lede: 'Terms for paid placements and sponsored content on the Hub.',
+      lede: 'Terms for paid placements and sponsored content on The Networker UK.',
     },
     accessibility: {
       kicker: 'Legal · Accessibility',
       title: 'Accessibility statement',
-      lede: 'How we aim to make the Hub usable for everyone.',
+      lede: 'How we aim to make the platform usable for everyone.',
     },
     legal: {
       kicker: 'Legal · Legal information',

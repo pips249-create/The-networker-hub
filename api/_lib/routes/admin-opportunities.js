@@ -315,7 +315,7 @@ function applyPublishedListingPayment(patch, row, now) {
 async function createAdminOpportunity(input) {
   const sb = getSupabaseAdmin();
   const title = String(input.title || '').trim();
-  const host = String(input.host || '').trim() || 'Hub listing';
+  const host = String(input.host || '').trim() || 'platform listing';
   if (!title) throw new Error('missing_title');
 
   const status = String(input.status || 'published').trim().toLowerCase();

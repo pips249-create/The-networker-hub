@@ -95,7 +95,7 @@ module.exports = async function handler(req, res) {
     return json(res, 404, {
       ok: false,
       error: 'no_hub_subscription',
-      message: 'No Hub membership subscription found for this account yet.',
+      message: 'No membership subscription found for this account yet.',
     });
   }
 

@@ -35,7 +35,7 @@ function withSponsorUtm(rawUrl, placement, opts) {
 }
 
 /**
- * Wrap a destination URL in the Hub click-through so email / Brevo logos
+ * Wrap a destination URL in the platform click-through so email / Brevo logos
  * land in Command Centre sponsor reports (sponsor_clicks).
  */
 function withSponsorClickThrough(rawUrl, placement, opts) {

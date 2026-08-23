@@ -11,7 +11,7 @@ async function sessionManagesOrganiser(session, organiserId) {
   const orgId = String(organiserId || '').trim();
   if (!session?.email || !orgId || !isUuid(orgId)) return false;
 
-  // Hub admins oversee organiser pages — never pitch Join to them.
+  // platform admins oversee organiser pages — never pitch Join to them.
   if (isAdminRole(session.role)) return true;
 
   try {

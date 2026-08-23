@@ -27,7 +27,7 @@
         {
           id: 'short',
           label: 'Short & punchy',
-          caption: 'New on the Hub: {{title}} — check it out 👇\n{{url}}',
+          caption: 'New on The Networker UK: {{title}} — check it out 👇\n{{url}}',
           image: 'logo',
         },
         {
@@ -277,7 +277,7 @@
       ],
     },
     hub_general: {
-      label: 'Hub promo',
+      label: 'platform promo',
       source: 'none',
       styles: [
         {
@@ -1298,7 +1298,7 @@
 
     main.innerHTML =
       '<div class="space-y-6 max-w-4xl">' +
-      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Draft social posts from live Hub listings. Search for an event or group, pick a caption style, then copy or open a share link. Top 10 and Founding organiser posts generate a graphic you can download.</p>' +
+      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Draft social posts from live platform listings. Search for an event or group, pick a caption style, then copy or open a share link. Top 10 and Founding organiser posts generate a graphic you can download.</p>' +
       '<div class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm space-y-4">' +
       '<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">' +
       '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Post type</label>' +
@@ -1785,7 +1785,7 @@
       var periodLabel = (snap && snap.period_label) || 'this month';
       var style = currentStyle();
       var listFull = rankedListText(top10, false);
-      var listShort = rankedListText(top10.slice(0, 5), true) + (top10.length > 5 ? '\n…see full list on the Hub' : '');
+      var listShort = rankedListText(top10.slice(0, 5), true) + (top10.length > 5 ? '\n…see full list on The Networker UK' : '');
       var caption = applyTemplate(style.caption, {
         period_label: periodLabel,
         ranked_list: listFull,

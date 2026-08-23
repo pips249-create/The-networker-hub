@@ -4,7 +4,7 @@
  *
  * - Sets matching organiser pages back to ownership_claim_status = pending
  * - Clears owner linkage + founding flags so claim awards them again
- * - Optionally deletes the Hub auth user for a clean signup
+ * - Optionally deletes the platform auth user for a clean signup
  *
  * Usage:
  *   node scripts/reset-email2-claim-retest.js
@@ -83,7 +83,7 @@ async function main() {
   }
 
   if (!execute) {
-    console.log('\nRe-run with --execute to apply. Add --delete-hub-user to remove the Hub account.');
+    console.log('\nRe-run with --execute to apply. Add --delete-hub-user to remove the Account.');
     return;
   }
 

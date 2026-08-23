@@ -20,7 +20,7 @@ Ship/verify membership work, then scale readiness before loading more of the alp
 
 ### Midday — organiser checks
 5. Past-due / invite-to-pay tools on Memberships
-6. Round-up email preference independent of Hub marketing
+6. Round-up email preference independent of Marketing emails
 7. LinkedIn post builder: one upcoming + one past event
 
 ### Afternoon — launch E2E (pick at least one)
@@ -65,7 +65,7 @@ Ship/verify membership work, then scale readiness before loading more of the alp
 7. **August redirect** — banner install now; hard 301s deferred ~3 months for SEO (~Nov 2026)
 8. **Resend Pro + Supabase Pro** — deferred ~1 week (before wider Resend sends / gate-off)
 
-*Note: events are listed fresh on the hub — we are not migrating or copying events from the old WordPress site.*
+*Note: events are listed fresh on the platform — we are not migrating or copying events from the old WordPress site.*
 
 ### Recently completed (early August 2026)
 
@@ -120,7 +120,7 @@ Training and workshops, organiser messaging, review replies, PDF tickets, calend
 | **Organiser groups** | **Already in Supabase** (~1,000+ networking group profiles) — ongoing Command Centre cleanup & quality |
 | **Existing behaviour** | Organisers already add their own events on the old site — new hub must match that |
 
-**September success (realistic):** 1,000+ group profiles browsable · 200–400 claimed & active · 500+ events · paid bookings + confirmation emails working · the-networker.co.uk redirecting to the hub.
+**September success (realistic):** 1,000+ group profiles browsable · 200–400 claimed & active · 500+ events · paid bookings + confirmation emails working · the-networker.co.uk redirecting to The Networker UK.
 
 ---
 
@@ -343,7 +343,7 @@ The **Email Template Manager** works without Resend (edit & save in Command Cent
 4. Returns to dashboard — status syncs automatically.
 5. Paid ticket revenue goes to their connected account.
 
-Without Connect, paid revenue stays on the Hub Stripe account (legacy **Request payout** flow — avoid for production).
+Without Connect, paid revenue stays on The Networker UK Stripe account (legacy **Request payout** flow — avoid for production).
 
 ---
 
@@ -395,7 +395,7 @@ Without Connect, paid revenue stays on the Hub Stripe account (legacy **Request 
 
 **What it is:** A single paid ticket purchase that proves Stripe Connect is routing money correctly — not just that checkout “works.”
 
-With `STRIPE_CONNECT_ENABLED=true`, checkout uses **destination charges** on the platform account. The attendee pays ticket price + booking fee; the organiser receives the **full ticket price** via transfer; the Hub keeps only the **booking fee** as `application_fee_amount` (Stripe processing comes out of that fee).
+With `STRIPE_CONNECT_ENABLED=true`, checkout uses **destination charges** on the platform account. The attendee pays ticket price + booking fee; the organiser receives the **full ticket price** via transfer; the platform keeps only the **booking fee** as `application_fee_amount` (Stripe processing comes out of that fee).
 
 ```
 Attendee pays £10 ticket + £0.65 booking fee = £10.65 total
@@ -404,7 +404,7 @@ Attendee pays £10 ticket + £0.65 booking fee = £10.65 total
   → Webhook creates registration in Supabase
 ```
 
-This is different from the legacy flow where all money sat in the Hub Stripe account until manual payout.
+This is different from the legacy flow where all money sat in the platform Stripe account until manual payout.
 
 ### How to run the test (~15 minutes)
 

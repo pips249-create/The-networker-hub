@@ -228,7 +228,7 @@ function friendlyGroupUpdateMessage(err) {
   if (/missing_organiser|organiser_not_found/i.test(raw)) {
     return 'Choose an organiser page first.';
   }
-  if (/No Hub attendees/i.test(raw)) {
+  if (/No attendees/i.test(raw)) {
     return raw;
   }
   if (/Monthly send limit|No free sends|Extra credits/i.test(raw)) {

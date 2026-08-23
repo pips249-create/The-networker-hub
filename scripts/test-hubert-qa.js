@@ -93,13 +93,13 @@ const MEMBER_QUESTIONS = [
   },
   { q: 'How do I invite a team member to my organiser account?', expect: /Team & invites|\/guides\/invite-your-team/i },
   {
-    q: 'How do I list a business opportunity on the hub?',
+    q: 'How do I list a business opportunity on The Networker UK?',
     expect: /Business opportunities|\/guides\/list-a-business-opportunity|submit for review/i,
   },
   { q: 'What happens when I publish my event?', expect: /approval|Approved|\/events\//i },
   { q: 'How do I respond to opportunity enquiries?', expect: /Business opportunities|\/organiser\/|email notification/i },
   { q: 'Where do I set the venue for my event?', expect: /venue|location|join link|postcode/i },
-  { q: 'What franchise opportunities are on the hub?', expect: /\/opportunities\//i },
+  { q: 'What franchise opportunities are on The Networker UK?', expect: /\/opportunities\//i },
 ];
 
 let failed = 0;

@@ -1,6 +1,6 @@
 # Legacy redirect map — the-networker.co.uk → hub
 
-**Status:** banner install now (August 2026) · Hub browsing **25 August 2026** · tickets **1 September 2026** · **Hard 301s deferred ~3 months for SEO (~November 2026)**  
+**Status:** banner install now (August 2026) · platform browsing **25 August 2026** · tickets **1 September 2026** · **Hard 301s deferred ~3 months for SEO (~November 2026)**  
 **Target host:** `https://www.thenetworkeruk.com`  
 **Keep on co.uk:** mailbox / MX for `@the-networker.co.uk` (do not point email at Vercel); **website stays live** during the SEO hold
 
@@ -18,7 +18,7 @@ Related: `docs/SEO-AEO-LAUNCH-PLAN.md` · `PIPS-TODO.md` Tab 7 · `marketing/CO-
 | **Hub soft launch (1 Sep)** | Remove hub `SITE_ACCESS_PASSWORD`; co.uk still live with banner — **no hard 301s yet** |
 | **Hard flip (~Nov 2026)** | Apex + www 301 to hub; disable banner snippet; watch Search Console 404s for a week |
 
-Prefer **301** once the hub path is confirmed. Use **302** only while still testing redirects.
+Prefer **301** once The Networker UK path is confirmed. Use **302** only while still testing redirects.
 
 ---
 

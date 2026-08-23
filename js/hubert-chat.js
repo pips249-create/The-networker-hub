@@ -7,7 +7,7 @@
 
   var DEFAULT_SUGGESTIONS = [
     { label: 'Upcoming events', prompt: 'What networking events are coming up?' },
-    { label: 'Franchise deals', prompt: 'What franchise opportunities are on the hub?' },
+    { label: 'Franchise deals', prompt: 'What franchise opportunities are on The Networker UK?' },
     { label: 'Do I need an account?', prompt: 'Do I need an account to browse?' },
     { label: 'Book a ticket', prompt: 'How do I book a ticket?' },
   ];

@@ -82,7 +82,7 @@
       '<li>Business opportunity listings must be truthful and not misleading</li>' +
       '<li>Network marketing listings must be product-selling only — recruitment-primary / downline schemes are not allowed</li>' +
       '<li>Use attendee contact details only to run your events — not for unrelated marketing</li>' +
-      '<li>You must follow our <a href="/legal-policies#hub-rules" target="_blank" rel="noopener noreferrer">Hub rules</a> for organisers</li>' +
+      '<li>You must follow our <a href="/legal-policies#hub-rules" target="_blank" rel="noopener noreferrer">Platform rules</a> for organisers</li>' +
       '</ul>' +
       '<label class="hub-organiser-terms-check">' +
       '<input type="checkbox" id="hub-organiser-terms-checkbox" />' +
