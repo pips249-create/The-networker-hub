@@ -134,7 +134,9 @@
         '<a href="' +
         href('/about') +
         '">About us</a>' +
-        '<a href="https://www.thenetworkerinternational.com" rel="noopener noreferrer">The Networker International</a>' +
+        '<a href="' +
+        href('/international') +
+        '">The Networker International</a>' +
         '<a href="' +
         href('/advertising') +
         '">Advertising &amp; sponsorship</a>' +
@@ -176,7 +178,7 @@
       homeHref +
       '" class="footer-brand" aria-label="Home">' +
       '<img class="footer-logo" src="' +
-      href('/assets/logo-nav-transparent.png?v=20260823ukpng') +
+      href('/assets/logo-nav-transparent.png?v=20260823uk2') +
       '" alt="" width="550" height="255" aria-hidden="true">' +
       '</a>' +
       '<div class="footer-columns">' +

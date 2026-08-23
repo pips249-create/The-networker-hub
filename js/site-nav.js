@@ -103,7 +103,7 @@
  */
 (function () {
   var NAV_BUILD = '20260823nav1';
-  var LOGO_SRC = '/assets/logo-nav-transparent.png?v=20260823ukpng';
+  var LOGO_SRC = '/assets/logo-nav-transparent.png?v=20260823uk2';
   var SESSION_KEY = 'hub_nav_session_v1';
   var SESSION_TTL_MS = 5 * 60 * 1000;
   var script = document.currentScript;

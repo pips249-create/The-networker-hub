@@ -1995,8 +1995,8 @@
       if (!state.hubLogoImg) {
         try {
           state.hubLogoImg = await loadAsset([
-            '../assets/logo-nav-transparent.png?v=20260823ukpng',
-            '/assets/logo-nav-transparent.png?v=20260823ukpng',
+            '../assets/logo-nav-transparent.png?v=20260823uk2',
+            '/assets/logo-nav-transparent.png?v=20260823uk2',
           ]);
         } catch (e) {
           state.hubLogoImg = null;

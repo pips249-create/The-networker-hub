@@ -159,8 +159,8 @@ function fillTemplate(template, vars) {
   const shared = {
     site_url: SITE,
     legacy_site_url: LEGACY,
-    logo_url: SITE + '/assets/logo-nav-transparent.png?v=20260823ukpng',
-    logo_footer_url: SITE + '/assets/logo-nav-transparent.png?v=20260823ukpng',
+    logo_url: SITE + '/assets/logo-nav-transparent.png?v=20260823uk2',
+    logo_footer_url: SITE + '/assets/logo-nav-transparent.png?v=20260823uk2',
     for_organisers_url: SITE + '/for-organisers',
     claim_url: previewClaim,
     company_name: 'The Networker Group Ltd',
