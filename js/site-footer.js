@@ -5,7 +5,7 @@
  * preview cookie unlocks catalogue APIs.
  */
 (function () {
-  var FOOTER_BUILD = '20260813peekintake';
+  var FOOTER_BUILD = '20260823uknav1';
   var script = document.currentScript;
   var root = (script && script.getAttribute('data-root')) || '';
 
