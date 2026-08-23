@@ -118,10 +118,6 @@
     return n.toLocaleString('en-GB');
   }
 
-  function liveCountryHint(meta) {
-    return meta.name + ' — live · Click to explore';
-  }
-
   function hideCountryPopup() {
     if (!els.popup) return;
     els.popup.hidden = true;
@@ -151,8 +147,11 @@
   function showCountryPopup(path, meta) {
     if (!els.popup) return;
 
-    var stats = meta.live ? state.hubStats[meta.iso2] : null;
-    var hasStats = Boolean(stats && stats.events != null);
+    var stats = null;
+    if (meta.live && meta.iso2) {
+      stats = state.hubStats[meta.iso2] || null;
+    }
+    var hasStats = Boolean(meta.live && stats && stats.events != null);
 
     els.popup.classList.remove('intl-country-popup--live', 'intl-country-popup--building', 'intl-country-popup--soon');
     els.popup.classList.add('intl-country-popup--' + meta.status);
@@ -177,6 +176,9 @@
       els.popupOpportunities.textContent = formatCount(stats.opportunities);
     } else {
       els.popupStats.hidden = true;
+      els.popupEvents.textContent = '';
+      els.popupOrganisers.textContent = '';
+      els.popupOpportunities.textContent = '';
     }
 
     els.popup.hidden = false;
@@ -184,14 +186,6 @@
       positionCountryPopup(path);
       els.popup.classList.add('is-visible');
     });
-  }
-
-  function setHint(text, options) {
-    options = options || {};
-    if (!els.hint) return;
-    els.hint.textContent = text;
-    els.hint.classList.toggle('is-live', options.status === 'live');
-    els.hint.classList.toggle('is-building', options.status === 'building');
   }
 
   function loadHubStats() {
@@ -325,14 +319,6 @@
     return ' — coming soon';
   }
 
-  function countryHoverHint(meta) {
-    if (meta.live) return liveCountryHint(meta);
-    if (meta.building) {
-      return meta.name + ' — building · Tell us about your group';
-    }
-    return meta.name;
-  }
-
   function bindCountryPath(path, meta) {
     path.setAttribute('data-country-id', meta.numericId);
     path.setAttribute('tabindex', '0');
@@ -342,14 +328,12 @@
     function onEnter() {
       clearHover();
       path.classList.add('is-hovered');
-      setHint(countryHoverHint(meta), { status: meta.status });
       showCountryPopup(path, meta);
     }
 
     function onLeave() {
       path.classList.remove('is-hovered');
       hideCountryPopup();
-      setHint('Hover or tap a country on the map', { status: null });
     }
 
     path.addEventListener('mouseenter', onEnter);
@@ -364,6 +348,19 @@
         event.preventDefault();
         handleCountryAction(meta);
       }
+    });
+  }
+
+  function pulseLiveCountries() {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    var livePaths = els.svg ? els.svg.querySelectorAll('.intl-country--live') : [];
+    livePaths.forEach(function (path) {
+      path.classList.add('is-intro-pulse');
+      path.addEventListener('animationend', function onEnd() {
+        path.classList.remove('is-intro-pulse');
+        path.removeEventListener('animationend', onEnd);
+      });
     });
   }
 
@@ -389,6 +386,7 @@
 
     els.loading.hidden = true;
     state.mapReady = true;
+    pulseLiveCountries();
   }
 
   function initModal() {
@@ -551,7 +549,6 @@
   }
 
   function init() {
-    els.hint = byId('intl-map-hint');
     els.canvas = byId('intl-map-canvas');
     els.svg = byId('intl-map-svg');
     els.loading = byId('intl-map-loading');
