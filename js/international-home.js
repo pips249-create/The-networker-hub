@@ -19,11 +19,10 @@
 
   /**
    * Markets we do not plan to serve — no waitlist, no click-through.
-   * Focus on sanctions / severe regulatory barriers (UK company perspective).
+   * Sanctions / severe regulatory barriers from a UK company perspective.
    */
   var UNAVAILABLE_MARKETS = {
     '112': { iso2: 'BY', name: 'Belarus' },
-    '192': { iso2: 'CU', name: 'Cuba' },
     '364': { iso2: 'IR', name: 'Iran' },
     '408': { iso2: 'KP', name: 'North Korea' },
     '643': { iso2: 'RU', name: 'Russia' },
