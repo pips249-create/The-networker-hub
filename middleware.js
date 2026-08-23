@@ -100,6 +100,7 @@ const GATE_BYPASS_PREFIXES = [
   '/data/',
   '/international',
   '/api/international-interest',
+  '/api/international-group-intake',
   '/api/international-hub-stats',
 ];
 

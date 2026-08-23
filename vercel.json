@@ -253,6 +253,7 @@
     "api/event-intake.js": { "maxDuration": 15 },
     "api/advertising.js": { "maxDuration": 15 },
     "api/international-interest.js": { "maxDuration": 10 },
+    "api/international-group-intake.js": { "maxDuration": 10 },
     "api/international-hub-stats.js": { "maxDuration": 10 }
   },
   "rewrites": [
