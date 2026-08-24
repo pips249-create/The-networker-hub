@@ -181,6 +181,63 @@
   overflow: hidden;
 }
 
+.intl-intro-card {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  z-index: 7;
+  width: min(380px, calc(100% - 36px));
+  padding: 16px 18px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(194, 153, 209, 0.18);
+  box-shadow: 0 14px 36px rgba(58, 52, 56, 0.12);
+}
+
+.intl-intro-kicker {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--lavender-deep);
+}
+
+.intl-intro-title {
+  margin: 0 0 8px;
+  font-family: 'DM Serif Display', 'DM Serif Display Fallback', Georgia, serif;
+  font-size: clamp(1.15rem, 2vw, 1.55rem);
+  line-height: 1.1;
+  color: var(--charcoal);
+}
+
+.intl-intro-copy,
+.intl-intro-details p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.intl-intro-details,
+.intl-modal-explainer {
+  margin-top: 10px;
+}
+
+.intl-intro-details summary,
+.intl-modal-explainer summary {
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--charcoal);
+}
+
+.intl-intro-details[open] summary,
+.intl-modal-explainer[open] summary {
+  margin-bottom: 8px;
+}
+
 .intl-map-ambient {
   position: absolute;
   inset: 0;
@@ -687,11 +744,52 @@
 }
 
 .intl-mobile-picker {
-  position: relative;
-  z-index: 4;
-  padding: 0 16px 16px;
-  border-top: 1px solid rgba(184, 174, 166, 0.35);
-  background: rgba(255, 255, 255, 0.78);
+  position: absolute;
+  left: 18px;
+  bottom: 18px;
+  z-index: 6;
+  width: min(360px, calc(100% - 36px));
+  padding: 14px 16px 16px;
+  border: 1px solid rgba(184, 174, 166, 0.36);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 14px 36px rgba(58, 52, 56, 0.12);
+}
+
+.intl-mobile-picker-title {
+  margin: 12px 0 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--charcoal);
+}
+
+.intl-featured-countries {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.intl-featured-country {
+  border: 1px solid rgba(184, 174, 166, 0.45);
+  background: #fff;
+  color: var(--charcoal);
+  border-radius: 999px;
+  padding: 9px 12px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.intl-featured-country--live {
+  border-color: rgba(154, 122, 168, 0.45);
+  color: var(--lavender-deep);
+}
+
+.intl-featured-country--building {
+  border-color: rgba(184, 149, 106, 0.5);
+  color: var(--gold);
 }
 
 .intl-mobile-picker-label {
@@ -710,6 +808,71 @@
   background: #fff;
   font: inherit;
   color: var(--charcoal);
+}
+
+.intl-country-search {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-soft);
+  background: #fff;
+  font: inherit;
+  color: var(--charcoal);
+}
+
+.intl-country-search:focus-visible {
+  outline: 2px solid var(--lavender);
+  outline-offset: 2px;
+}
+
+.intl-country-results {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+  max-height: min(40vh, 280px);
+  overflow: auto;
+}
+
+.intl-country-result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid rgba(184, 174, 166, 0.4);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.96);
+  color: var(--charcoal);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.intl-country-result-name {
+  font-weight: 700;
+}
+
+.intl-country-result-status {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.intl-country-result--live .intl-country-result-status {
+  color: var(--lavender-deep);
+}
+
+.intl-country-result--building .intl-country-result-status {
+  color: var(--gold);
+}
+
+.intl-country-results-empty {
+  padding: 10px 2px 2px;
+  font-size: 12px;
+  color: var(--text-muted);
 }
 
 .intl-footer {
@@ -955,6 +1118,12 @@
     --intl-header-h: 118px;
   }
 
+  .intl-intro-card {
+    top: 16px;
+    left: 16px;
+    width: min(360px, calc(100% - 32px));
+  }
+
   .intl-header-inner {
     grid-template-columns: 1fr auto;
     grid-template-areas:
@@ -984,6 +1153,21 @@
     --intl-header-h: 72px;
   }
 
+  .intl-intro-card {
+    position: relative;
+    left: auto;
+    right: auto;
+    top: auto;
+    width: auto;
+    margin: 12px 12px 0;
+    padding: 14px;
+    border-radius: 18px;
+  }
+
+  .intl-intro-title {
+    font-size: 1.15rem;
+  }
+
   .intl-header-inner {
     grid-template-columns: auto 1fr auto;
     grid-template-areas: 'logo tagline uk';
@@ -1009,34 +1193,48 @@
   }
 
   .intl-map-shell,
-  .intl-map-wrap,
-  .intl-map-svg {
-    min-height: calc(100svh - var(--intl-header-h));
+  .intl-map-wrap {
+    min-height: auto;
   }
 
   .intl-map-canvas {
-    position: absolute;
-    inset: 0;
+    position: relative;
+    inset: auto;
     flex: none;
-    min-height: calc(100svh - var(--intl-header-h));
+    min-height: 0;
+    height: min(58svh, 460px);
+    margin: 10px 0 0;
+  }
+
+  .intl-map-svg {
+    min-height: 0;
+    height: 100%;
   }
 
   .intl-map-wrap {
     position: relative;
+    min-height: auto;
+    padding-bottom: 18px;
   }
 
   .intl-mobile-picker {
-    position: absolute;
-    left: 12px;
-    right: 12px;
-    bottom: 12px;
+    position: relative;
+    left: auto;
+    right: auto;
+    bottom: auto;
     z-index: 6;
+    width: auto;
+    margin: 12px 12px 0;
     padding: 10px 12px;
     border: 1px solid rgba(184, 174, 166, 0.4);
     border-radius: 14px;
     background: rgba(255, 255, 255, 0.92);
     backdrop-filter: blur(10px);
     box-shadow: 0 10px 28px rgba(58, 52, 56, 0.14);
+  }
+
+  .intl-featured-countries {
+    margin-bottom: 8px;
   }
 
   .intl-mobile-picker-label {
@@ -1051,9 +1249,13 @@
   .intl-map-legend {
     left: 12px;
     right: 12px;
-    bottom: 88px;
+    bottom: 12px;
     justify-content: center;
     max-width: none;
+  }
+
+  .intl-country-popup {
+    width: min(240px, calc(100vw - 24px));
   }
 
   .intl-map-label {
@@ -1082,12 +1284,6 @@
     flex-direction: row;
     align-items: baseline;
     gap: 6px;
-  }
-}
-
-@media (pointer: fine) {
-  .intl-mobile-picker {
-    display: none;
   }
 }
 

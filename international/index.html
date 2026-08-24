@@ -9,8 +9,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/css/hub.css?v=20260823intl18">
-<link rel="stylesheet" href="/css/international-home.css?v=20260823intl18">
+<link rel="stylesheet" href="/css/hub.css?v=20260824intl20">
+<link rel="stylesheet" href="/css/international-home.css?v=20260824intl20">
 <link rel="icon" href="/favicon.ico?v=20260823uk3" sizes="any">
 <link rel="icon" href="/assets/favicon.svg?v=20260823uk3" type="image/svg+xml">
 </head>
@@ -21,7 +21,7 @@
 <header class="intl-header">
   <div class="intl-header-inner">
     <a class="intl-logo" href="/international" aria-label="The Networker International home">
-      <img src="/assets/logo-networker-international.png?v=20260823intl18" width="240" height="52" alt="The Networker International">
+      <img src="/assets/logo-networker-international.png?v=20260824intl20" width="240" height="52" alt="The Networker International">
     </a>
     <div class="intl-header-tagline">
       <h1 class="intl-header-title">
@@ -45,6 +45,19 @@
         <span class="intl-ambient-orb intl-ambient-orb--lavender"></span>
         <span class="intl-ambient-orb intl-ambient-orb--gold"></span>
       </div>
+      <aside class="intl-intro-card" aria-labelledby="intl-intro-title">
+        <p class="intl-intro-kicker">What is The Networker International?</p>
+        <h2 class="intl-intro-title" id="intl-intro-title">A home for trusted business networking across countries.</h2>
+        <p class="intl-intro-copy">
+          We bring together networking groups, organisers, and professionals market by market. If your country is live, explore it. If we are building there, tell us about your group. If we are not there yet, register your interest.
+        </p>
+        <details class="intl-intro-details">
+          <summary>Learn more</summary>
+          <p>
+            The Networker helps people discover quality business networking opportunities, starting with live hubs like the UK and expanding into new countries with local partners.
+          </p>
+        </details>
+      </aside>
       <div class="intl-map-canvas" id="intl-map-canvas" role="img" aria-label="World map — select a country">
         <p class="intl-map-loading" id="intl-map-loading">Loading world map&hellip;</p>
         <svg class="intl-map-svg" id="intl-map-svg" viewBox="0 0 960 500" preserveAspectRatio="xMidYMid meet" aria-hidden="true"></svg>
@@ -77,10 +90,22 @@
       </div>
 
       <div class="intl-mobile-picker" id="intl-mobile-picker">
-        <label class="intl-mobile-picker-label" for="intl-country-select">Or choose a country</label>
-        <select class="intl-country-select" id="intl-country-select">
-          <option value="">Select a country&hellip;</option>
-        </select>
+        <p class="intl-mobile-picker-title">Choose your route</p>
+        <div class="intl-featured-countries" id="intl-featured-countries">
+          <button type="button" class="intl-featured-country intl-featured-country--live" data-country-id="826">United Kingdom</button>
+          <button type="button" class="intl-featured-country intl-featured-country--building" data-country-id="036">Australia</button>
+          <button type="button" class="intl-featured-country intl-featured-country--building" data-country-id="124">Canada</button>
+        </div>
+        <label class="intl-mobile-picker-label" for="intl-country-search">Or search for your country</label>
+        <input
+          class="intl-country-search"
+          id="intl-country-search"
+          type="search"
+          inputmode="search"
+          autocomplete="off"
+          placeholder="Type a country name"
+        >
+        <div class="intl-country-results" id="intl-country-results" role="listbox" aria-label="Country search results"></div>
       </div>
       </div>
     </div>
@@ -156,6 +181,13 @@
       The Networker isn&rsquo;t live in this country yet. Tell us if you&rsquo;d like to attend events or list a networking group when we launch.
     </p>
 
+    <details class="intl-modal-explainer">
+      <summary>What is The Networker International?</summary>
+      <p>
+        The Networker helps people find trusted business networking communities and helps strong local groups get discovered. We are launching country by country, starting with the UK.
+      </p>
+    </details>
+
     <div class="intl-intent-picker" role="group" aria-label="Your interest">
       <button type="button" class="intl-intent-btn is-selected" data-intent="attend">I want to attend</button>
       <button type="button" class="intl-intent-btn" data-intent="list">I want to list a group</button>
@@ -174,6 +206,6 @@
   </div>
 </div>
 
-<script src="/js/international-home.js?v=20260823intl18" defer></script>
+<script src="/js/international-home.js?v=20260824intl20" defer></script>
 </body>
 </html>

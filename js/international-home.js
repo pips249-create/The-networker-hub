@@ -70,7 +70,6 @@
     mapReady: false,
     hubStats: {},
     activeModal: null,
-    armedCountryId: null,
     labelItems: [],
     projection: null,
   };
@@ -151,23 +150,22 @@
 
   function popupActionText(meta) {
     if (meta.live) {
-      return isCoarsePointer() ? 'Tap again to explore →' : 'Click to explore →';
+      return isCoarsePointer() ? 'Tap to explore →' : 'Click to explore →';
     }
     if (meta.building) {
       return isCoarsePointer()
-        ? 'Tap again to tell us about your group →'
+        ? 'Tap to tell us about your group →'
         : 'Tell us about your group →';
     }
     if (meta.unavailable) {
       return 'We don\u2019t operate in this region';
     }
     return isCoarsePointer()
-      ? 'Tap again to register interest →'
+      ? 'Tap to register interest →'
       : 'Register your interest →';
   }
 
-  function clearArmedCountry() {
-    state.armedCountryId = null;
+  function clearActiveLabels() {
     if (els.labels) {
       els.labels.querySelectorAll('.intl-map-label.is-active').forEach(function (node) {
         node.classList.remove('is-active');
@@ -310,6 +308,7 @@
       node.classList.remove('is-hovered');
     });
     hideCountryPopup();
+    clearActiveLabels();
   }
 
   function selectCountry(path, meta, options) {
@@ -322,9 +321,6 @@
         node.classList.toggle('is-active', node.getAttribute('data-country-id') === meta.numericId);
       });
     }
-    if (options.arm && !meta.unavailable) {
-      state.armedCountryId = meta.numericId;
-    }
   }
 
   function onCountryActivate(path, meta) {
@@ -335,14 +331,8 @@
       return;
     }
 
-    // Touch / coarse pointers: first tap shows the card, second tap acts.
     if (isCoarsePointer()) {
-      if (state.armedCountryId === meta.numericId) {
-        clearArmedCountry();
-        handleCountryAction(meta);
-        return;
-      }
-      selectCountry(path, meta, { arm: true });
+      handleCountryAction(meta);
       return;
     }
 
@@ -351,7 +341,6 @@
 
   function handleCountryAction(meta) {
     if (!meta || meta.unavailable) return;
-    clearArmedCountry();
     clearHover();
     if (meta.live && meta.url) {
       window.location.href = meta.url;
@@ -431,8 +420,92 @@
     if (state.activeModal === 'building') state.activeModal = null;
   }
 
-  function populateMobileSelect() {
-    if (!els.select) return;
+  function featuredRank(meta) {
+    if (meta.numericId === '826') return 0;
+    if (meta.numericId === '036') return 1;
+    if (meta.numericId === '124') return 2;
+    if (meta.live) return 3;
+    if (meta.building) return 4;
+    return 5;
+  }
+
+  function searchableCountries() {
+    return state.countries
+      .filter(function (meta) {
+        return !meta.unavailable;
+      })
+      .slice()
+      .sort(function (a, b) {
+        var rankDiff = featuredRank(a) - featuredRank(b);
+        if (rankDiff !== 0) return rankDiff;
+        return a.name.localeCompare(b.name);
+      });
+  }
+
+  function statusBadge(meta) {
+    if (meta.live) return 'Live';
+    if (meta.building) return 'Building';
+    return 'Coming soon';
+  }
+
+  function renderCountryResults(query) {
+    if (!els.results) return;
+    var normalized = String(query || '').trim().toLowerCase();
+    var matches = searchableCountries().filter(function (meta) {
+      if (!normalized) return meta.live || meta.building;
+      return meta.name.toLowerCase().indexOf(normalized) !== -1;
+    });
+
+    els.results.innerHTML = '';
+
+    if (!matches.length) {
+      var empty = document.createElement('p');
+      empty.className = 'intl-country-results-empty';
+      empty.textContent = 'No matching countries yet. Try another search.';
+      els.results.appendChild(empty);
+      return;
+    }
+
+    matches.slice(0, normalized ? 10 : 6).forEach(function (meta) {
+      var button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'intl-country-result intl-country-result--' + meta.status;
+      button.setAttribute('role', 'option');
+      button.innerHTML =
+        '<span class="intl-country-result-name">' +
+        meta.name +
+        '</span>' +
+        '<span class="intl-country-result-status">' +
+        statusBadge(meta) +
+        '</span>';
+      button.addEventListener('click', function () {
+        handleCountryAction(meta);
+      });
+      els.results.appendChild(button);
+    });
+  }
+
+  function initCountryFinder() {
+    if (els.search) {
+      els.search.addEventListener('input', function () {
+        renderCountryResults(els.search.value);
+      });
+    }
+
+    if (els.featuredButtons.length) {
+      els.featuredButtons.forEach(function (button) {
+        button.addEventListener('click', function () {
+          var id = button.getAttribute('data-country-id');
+          var meta = state.countries.find(function (country) {
+            return country.numericId === id;
+          });
+          if (meta) handleCountryAction(meta);
+        });
+      });
+    }
+  }
+
+  function populateCountryFinder() {
     var sorted = state.countries
       .filter(function (meta) {
         return !meta.unavailable;
@@ -441,13 +514,10 @@
       .sort(function (a, b) {
         return a.name.localeCompare(b.name);
       });
-    sorted.forEach(function (meta) {
-      var option = document.createElement('option');
-      option.value = meta.numericId;
-      var suffix = meta.live ? ' (live)' : meta.building ? ' (building)' : '';
-      option.textContent = meta.name + suffix;
-      els.select.appendChild(option);
-    });
+    if (els.search) {
+      els.search.setAttribute('aria-label', 'Search for your country');
+    }
+    if (sorted.length) renderCountryResults('');
   }
 
   function countryStatusLabel(meta) {
@@ -470,14 +540,13 @@
 
     function onEnter() {
       if (isCoarsePointer()) return;
-      clearArmedCountry();
       selectCountry(path, meta, { arm: false });
     }
 
     function onLeave() {
       if (isCoarsePointer()) return;
       path.classList.remove('is-hovered');
-      if (state.armedCountryId !== meta.numericId) hideCountryPopup();
+      hideCountryPopup();
       if (els.labels) {
         els.labels.querySelectorAll('.intl-map-label.is-active').forEach(function (node) {
           if (node.getAttribute('data-country-id') === meta.numericId) {
@@ -602,7 +671,6 @@
 
       button.addEventListener('mouseleave', function () {
         if (isCoarsePointer()) return;
-        if (state.armedCountryId === meta.numericId) return;
         var path = labelPath();
         if (path) path.classList.remove('is-hovered');
         hideCountryPopup();
@@ -752,7 +820,7 @@
     var features = window.topojson.feature(world, world.objects.countries).features;
 
     state.countries = features.map(countryMeta);
-    populateMobileSelect();
+    populateCountryFinder();
 
     ensureMapDefs();
 
@@ -949,7 +1017,9 @@
     els.loading = byId('intl-map-loading');
     els.labels = byId('intl-map-labels');
     els.mobilePicker = byId('intl-mobile-picker');
-    els.select = byId('intl-country-select');
+    els.search = byId('intl-country-search');
+    els.results = byId('intl-country-results');
+    els.featuredButtons = Array.prototype.slice.call(document.querySelectorAll('.intl-featured-country'));
     els.popup = byId('intl-country-popup');
     els.popupKicker = byId('intl-popup-kicker');
     els.popupName = byId('intl-popup-name');
@@ -983,13 +1053,13 @@
     els.buildingSubmit = byId('intl-building-submit');
 
     initModal();
+    initCountryFinder();
     loadHubStats();
 
     window.addEventListener('resize', function () {
       positionMapLabels();
       var hovered = els.svg && els.svg.querySelector('.intl-country.is-hovered');
       if (hovered) positionCountryPopup(hovered);
-      else if (state.armedCountryId) positionCountryPopup(null);
     });
 
     if (els.canvas) {
@@ -998,18 +1068,7 @@
         if (event.target.closest('.intl-country, .intl-map-label, .intl-country-popup')) {
           return;
         }
-        clearArmedCountry();
         clearHover();
-      });
-    }
-
-    if (els.select) {
-      els.select.addEventListener('change', function () {
-        var id = els.select.value;
-        if (!id) return;
-        var meta = state.countries.find(function (c) { return c.numericId === id; });
-        if (meta) handleCountryAction(meta);
-        els.select.value = '';
       });
     }
 
