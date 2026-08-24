@@ -873,25 +873,38 @@ export default async function middleware(request) {
 
   const pathname = url.pathname.replace(/\/$/, '') || '/';
 
-  // International domain: non-landing product paths belong on the UK site.
-  if (
-    isInternationalHost(host) &&
-    pathname !== '/' &&
-    pathname !== '/international' &&
-    pathname !== '/international/index.html' &&
-    !pathname.startsWith('/api/international-') &&
-    !pathname.startsWith('/css/') &&
-    !pathname.startsWith('/js/') &&
-    !pathname.startsWith('/assets/') &&
-    !pathname.startsWith('/data/') &&
-    pathname !== '/favicon.ico' &&
-    pathname !== '/robots.txt'
-  ) {
-    const dest = new URL(request.url);
-    dest.protocol = 'https:';
-    dest.hostname = 'www.thenetworkeruk.com';
-    dest.port = '';
-    return Response.redirect(dest.toString(), 302);
+  // International domain: homepage is the world-map landing (root index.html is the UK home,
+  // so we must rewrite rather than rely on vercel.json host rewrites alone).
+  if (isInternationalHost(host)) {
+    if (
+      pathname === '/' ||
+      pathname === '/international' ||
+      pathname === '/international/index.html'
+    ) {
+      const dest = new URL('/international/index.html', url.origin);
+      return new Response(null, {
+        status: 200,
+        headers: {
+          'x-middleware-rewrite': dest.toString(),
+        },
+      });
+    }
+
+    if (
+      !pathname.startsWith('/api/international-') &&
+      !pathname.startsWith('/css/') &&
+      !pathname.startsWith('/js/') &&
+      !pathname.startsWith('/assets/') &&
+      !pathname.startsWith('/data/') &&
+      pathname !== '/favicon.ico' &&
+      pathname !== '/robots.txt'
+    ) {
+      const dest = new URL(request.url);
+      dest.protocol = 'https:';
+      dest.hostname = 'www.thenetworkeruk.com';
+      dest.port = '';
+      return Response.redirect(dest.toString(), 302);
+    }
   }
 
   const gateResult = await maybeGateSiteAccess(request, url);
