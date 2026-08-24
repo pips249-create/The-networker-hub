@@ -237,24 +237,24 @@
   overflow: hidden;
 }
 
-.intl-intro-card,
 .intl-intro-card {
   position: absolute;
-  top: 18px;
-  left: 18px;
+  left: 20px;
+  bottom: 20px;
+  top: auto;
   z-index: 7;
-  width: min(380px, calc(100% - 36px));
-  padding: 16px 18px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.88);
+  width: min(300px, calc(100% - 40px));
+  padding: 14px 16px 15px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(12px);
   border: 1px solid rgba(194, 153, 209, 0.18);
-  box-shadow: 0 14px 36px rgba(58, 52, 56, 0.12);
+  box-shadow: 0 12px 28px rgba(58, 52, 56, 0.12);
 }
 
 .intl-intro-kicker {
-  margin: 0 0 6px;
-  font-size: 11px;
+  margin: 0 0 5px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -262,10 +262,10 @@
 }
 
 .intl-intro-title {
-  margin: 0 0 8px;
+  margin: 0 0 6px;
   font-family: 'DM Serif Display', 'DM Serif Display Fallback', Georgia, serif;
-  font-size: clamp(1.15rem, 2vw, 1.55rem);
-  line-height: 1.1;
+  font-size: clamp(1.05rem, 1.6vw, 1.28rem);
+  line-height: 1.15;
   color: var(--charcoal);
 }
 
@@ -273,13 +273,13 @@
 .intl-intro-details p {
   margin: 0;
   color: var(--text-muted);
-  font-size: 13px;
-  line-height: 1.55;
+  font-size: 12.5px;
+  line-height: 1.45;
 }
 
 .intl-intro-details,
 .intl-modal-explainer {
-  margin-top: 10px;
+  margin-top: 8px;
 }
 
 .intl-intro-details summary,
@@ -292,25 +292,23 @@
 
 .intl-intro-details[open] summary,
 .intl-modal-explainer[open] summary {
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
-.intl-intro-uk-btn,
 .intl-intro-uk-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   margin-top: 12px;
-  padding: 10px 14px;
+  padding: 9px 14px;
   border-radius: 999px;
   background: var(--charcoal);
   color: #fff;
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 700;
   text-decoration: none;
 }
 
-.intl-intro-uk-btn:hover,
 .intl-intro-uk-btn:hover {
   background: var(--charcoal-soft, #4a4448);
   color: #fff;
@@ -1196,11 +1194,11 @@
     --intl-header-h: 118px;
   }
 
-  .intl-intro-card,
   .intl-intro-card {
-    top: 16px;
     left: 16px;
-    width: min(360px, calc(100% - 32px));
+    bottom: 16px;
+    top: auto;
+    width: min(280px, calc(100% - 32px));
   }
 
   .intl-header-inner {
@@ -1236,19 +1234,18 @@
     --intl-header-h: 72px;
   }
 
-  .intl-intro-card,
   .intl-intro-card {
     position: relative;
     left: auto;
     right: auto;
     top: auto;
+    bottom: auto;
     width: auto;
     margin: 12px 12px 0;
     padding: 14px;
     border-radius: 18px;
   }
 
-  .intl-intro-uk-btn,
   .intl-intro-uk-btn {
     width: 100%;
   }
