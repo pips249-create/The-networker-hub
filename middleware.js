@@ -834,8 +834,9 @@ export const config = {
   // Include robots/llms/agents so the gate can Disallow crawlers and 403 discovery
   // files until SITE_ACCESS_PASSWORD is removed. Static robots.txt says Allow — do not
   // serve that while the preview gate is on.
+  // international/index.html is excluded so middleware can safely fetch it for host rewrites.
   matcher: [
-    '/((?!api/stripe-webhook|api/resend-webhook|api/sponsor-out|api/health|_next/static|_next/image|favicon.ico|css/|js/|assets/|data/).*)',
+    '/((?!api/stripe-webhook|api/resend-webhook|api/sponsor-out|api/health|_next/static|_next/image|favicon.ico|css/|js/|assets/|data/|international/index\\.html).*)',
   ],
 };
 
@@ -873,21 +874,30 @@ export default async function middleware(request) {
 
   const pathname = url.pathname.replace(/\/$/, '') || '/';
 
-  // International domain: homepage is the world-map landing (root index.html is the UK home,
-  // so we must rewrite rather than rely on vercel.json host rewrites alone).
-  if (isInternationalHost(host)) {
+  // International domain: homepage is the world-map landing (root index.html is the UK home).
+  // Subrequests use x-intl-landing-fetch to avoid recursion when we pull the HTML.
+  if (isInternationalHost(host) && request.headers.get('x-intl-landing-fetch') !== '1') {
     if (
       pathname === '/' ||
       pathname === '/international' ||
       pathname === '/international/index.html'
     ) {
-      const dest = new URL('/international/index.html', url.origin);
-      return new Response(null, {
-        status: 200,
-        headers: {
-          'x-middleware-rewrite': dest.toString(),
-        },
-      });
+      try {
+        const htmlRes = await fetch(new URL('/international', url.origin).toString(), {
+          headers: { 'x-intl-landing-fetch': '1' },
+        });
+        if (htmlRes.ok) {
+          return new Response(await htmlRes.text(), {
+            status: 200,
+            headers: {
+              'Content-Type': 'text/html; charset=utf-8',
+              'Cache-Control': 'public, max-age=60, must-revalidate',
+            },
+          });
+        }
+      } catch {
+        /* fall through */
+      }
     }
 
     if (
