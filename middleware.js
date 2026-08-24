@@ -34,6 +34,13 @@ function isSiteAccessGateActive() {
   return true;
 }
 
+function isInternationalHost(host) {
+  const h = String(host || '')
+    .trim()
+    .toLowerCase();
+  return h === 'thenetworkerinternational.com' || h === 'www.thenetworkerinternational.com';
+}
+
 function isSocialCrawler(request) {
   const ua = String(request.headers.get('user-agent') || '');
   return SOCIAL_CRAWLER_UA.test(ua);
@@ -639,6 +646,12 @@ async function maybeGateSiteAccess(request, url) {
 
   const pathname = url.pathname.replace(/\/$/, '') || '/';
   const search = url.search || '';
+  const host = String(url.hostname || '')
+    .trim()
+    .toLowerCase();
+
+  // International domain is a public routing layer — never send it through Hub preview.
+  if (isInternationalHost(host)) return null;
 
   if (isGateBypassPath(pathname)) return null;
 
@@ -850,8 +863,36 @@ export default async function middleware(request) {
     dest.port = '';
     return Response.redirect(dest.toString(), 308);
   }
+  if (host === 'thenetworkerinternational.com') {
+    const dest = new URL(request.url);
+    dest.protocol = 'https:';
+    dest.hostname = 'www.thenetworkerinternational.com';
+    dest.port = '';
+    return Response.redirect(dest.toString(), 308);
+  }
 
   const pathname = url.pathname.replace(/\/$/, '') || '/';
+
+  // International domain: non-landing product paths belong on the UK site.
+  if (
+    isInternationalHost(host) &&
+    pathname !== '/' &&
+    pathname !== '/international' &&
+    pathname !== '/international/index.html' &&
+    !pathname.startsWith('/api/international-') &&
+    !pathname.startsWith('/css/') &&
+    !pathname.startsWith('/js/') &&
+    !pathname.startsWith('/assets/') &&
+    !pathname.startsWith('/data/') &&
+    pathname !== '/favicon.ico' &&
+    pathname !== '/robots.txt'
+  ) {
+    const dest = new URL(request.url);
+    dest.protocol = 'https:';
+    dest.hostname = 'www.thenetworkeruk.com';
+    dest.port = '';
+    return Response.redirect(dest.toString(), 302);
+  }
 
   const gateResult = await maybeGateSiteAccess(request, url);
   if (gateResult instanceof Response) return gateResult;

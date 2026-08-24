@@ -19,12 +19,6 @@
     },
     {
       "source": "/:path*",
-      "has": [{ "type": "host", "value": "www.thenetworkerinternational.com" }],
-      "destination": "https://www.thenetworkerinternational.com/:path*",
-      "permanent": true
-    },
-    {
-      "source": "/:path*",
       "has": [{ "type": "host", "value": "thenetworkerhub.co.uk" }],
       "destination": "https://www.thenetworkerhub.com/:path*",
       "permanent": true
@@ -419,6 +413,11 @@
     {
       "source": "/admin/import",
       "destination": "/admin/import.html"
+    },
+    {
+      "source": "/",
+      "has": [{ "type": "host", "value": "www.thenetworkerinternational.com" }],
+      "destination": "/international/index.html"
     },
     {
       "source": "/international",

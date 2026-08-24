@@ -5,7 +5,7 @@
  * preview cookie unlocks catalogue APIs.
  */
 (function () {
-  var FOOTER_BUILD = '20260823uknav1';
+  var FOOTER_BUILD = '20260824intl22';
   var script = document.currentScript;
   var root = (script && script.getAttribute('data-root')) || '';
 
@@ -134,9 +134,7 @@
         '<a href="' +
         href('/about') +
         '">About us</a>' +
-        '<a href="' +
-        href('/international') +
-        '">The Networker International</a>' +
+        '<a href="https://www.thenetworkerinternational.com/">The Networker International</a>' +
         '<a href="' +
         href('/advertising') +
         '">Advertising &amp; sponsorship</a>' +
