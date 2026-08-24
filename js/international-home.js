@@ -448,21 +448,29 @@
     return 'Coming soon';
   }
 
-  function renderCountryResults(query) {
-    if (!els.results) return;
+  function renderCountryResults(query, container, options) {
+    if (!container) return;
+    options = options || {};
     var normalized = String(query || '').trim().toLowerCase();
     var matches = searchableCountries().filter(function (meta) {
       if (!normalized) return meta.live || meta.building;
       return meta.name.toLowerCase().indexOf(normalized) !== -1;
     });
 
-    els.results.innerHTML = '';
+    container.innerHTML = '';
+
+    if (options.hideWhenEmpty && !normalized) {
+      container.hidden = true;
+      return;
+    }
+
+    container.hidden = false;
 
     if (!matches.length) {
       var empty = document.createElement('p');
       empty.className = 'intl-country-results-empty';
       empty.textContent = 'No matching countries yet. Try another search.';
-      els.results.appendChild(empty);
+      container.appendChild(empty);
       return;
     }
 
@@ -480,15 +488,33 @@
         '</span>';
       button.addEventListener('click', function () {
         handleCountryAction(meta);
+        if (els.headerResults) els.headerResults.hidden = true;
       });
-      els.results.appendChild(button);
+      container.appendChild(button);
     });
   }
 
   function initCountryFinder() {
     if (els.search) {
       els.search.addEventListener('input', function () {
-        renderCountryResults(els.search.value);
+        renderCountryResults(els.search.value, els.results);
+      });
+    }
+
+    if (els.headerSearch) {
+      els.headerSearch.addEventListener('input', function () {
+        renderCountryResults(els.headerSearch.value, els.headerResults, { hideWhenEmpty: true });
+      });
+      els.headerSearch.addEventListener('focus', function () {
+        if (els.headerSearch.value) {
+          renderCountryResults(els.headerSearch.value, els.headerResults, { hideWhenEmpty: true });
+        }
+      });
+      document.addEventListener('click', function (event) {
+        if (!els.headerFinder) return;
+        if (!els.headerFinder.contains(event.target)) {
+          els.headerResults.hidden = true;
+        }
       });
     }
 
@@ -517,7 +543,7 @@
     if (els.search) {
       els.search.setAttribute('aria-label', 'Search for your country');
     }
-    if (sorted.length) renderCountryResults('');
+    if (sorted.length) renderCountryResults('', els.results);
   }
 
   function countryStatusLabel(meta) {
@@ -1019,7 +1045,12 @@
     els.mobilePicker = byId('intl-mobile-picker');
     els.search = byId('intl-country-search');
     els.results = byId('intl-country-results');
-    els.featuredButtons = Array.prototype.slice.call(document.querySelectorAll('.intl-featured-country'));
+    els.headerFinder = byId('intl-header-finder');
+    els.headerSearch = byId('intl-header-search');
+    els.headerResults = byId('intl-header-results');
+    els.featuredButtons = Array.prototype.slice.call(
+      document.querySelectorAll('.intl-featured-country, .intl-featured-country')
+    );
     els.popup = byId('intl-country-popup');
     els.popupKicker = byId('intl-popup-kicker');
     els.popupName = byId('intl-popup-name');

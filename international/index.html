@@ -9,8 +9,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/css/hub.css?v=20260824intl20">
-<link rel="stylesheet" href="/css/international-home.css?v=20260824intl20">
+<link rel="stylesheet" href="/css/hub.css?v=20260824intl21">
+<link rel="stylesheet" href="/css/international-home.css?v=20260824intl21">
 <link rel="icon" href="/favicon.ico?v=20260823uk3" sizes="any">
 <link rel="icon" href="/assets/favicon.svg?v=20260823uk3" type="image/svg+xml">
 </head>
@@ -21,7 +21,7 @@
 <header class="intl-header">
   <div class="intl-header-inner">
     <a class="intl-logo" href="/international" aria-label="The Networker International home">
-      <img src="/assets/logo-networker-international.png?v=20260824intl20" width="240" height="52" alt="The Networker International">
+      <img src="/assets/logo-networker-international.png?v=20260824intl21" width="240" height="52" alt="The Networker International">
     </a>
     <div class="intl-header-tagline">
       <h1 class="intl-header-title">
@@ -29,6 +29,17 @@
         <span class="intl-header-title-accent">next&hellip;</span>
       </h1>
       <p class="intl-header-lede">Choose your country on the map</p>
+    </div>
+    <div class="intl-header-finder" id="intl-header-finder">
+      <label class="intl-header-finder-label" for="intl-header-search">Find your country</label>
+      <input
+        class="intl-header-search"
+        id="intl-header-search"
+        type="search"
+        autocomplete="off"
+        placeholder="Search a country"
+      >
+      <div class="intl-header-results" id="intl-header-results" role="listbox" aria-label="Country search results" hidden></div>
     </div>
     <a class="intl-header-uk-link" href="https://www.thenetworkeruk.com" rel="noopener noreferrer">
       <span class="intl-live-dot" aria-hidden="true"></span>
@@ -57,6 +68,7 @@
             The Networker helps people discover quality business networking opportunities, starting with live hubs like the UK and expanding into new countries with local partners.
           </p>
         </details>
+        <a class="intl-intro-uk-btn" href="https://www.thenetworkeruk.com" rel="noopener noreferrer">Open UK now</a>
       </aside>
       <div class="intl-map-canvas" id="intl-map-canvas" role="img" aria-label="World map — select a country">
         <p class="intl-map-loading" id="intl-map-loading">Loading world map&hellip;</p>
@@ -206,6 +218,6 @@
   </div>
 </div>
 
-<script src="/js/international-home.js?v=20260824intl20" defer></script>
+<script src="/js/international-home.js?v=20260824intl21" defer></script>
 </body>
 </html>
