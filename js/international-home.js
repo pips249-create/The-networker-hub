@@ -13,8 +13,7 @@
 
   /** ISO numeric ids (3 digits) for markets actively being built out. */
   var BUILDING_HUBS = {
-    '036': { iso2: 'AU', name: 'Australia' },
-    '124': { iso2: 'CA', name: 'Canada' },
+    '372': { iso2: 'IE', name: 'Ireland' },
   };
 
   /**
@@ -422,8 +421,7 @@
 
   function featuredRank(meta) {
     if (meta.numericId === '826') return 0;
-    if (meta.numericId === '036') return 1;
-    if (meta.numericId === '124') return 2;
+    if (meta.numericId === '372') return 1;
     if (meta.live) return 3;
     if (meta.building) return 4;
     return 5;
@@ -617,6 +615,7 @@
 
   function shortLabelName(meta) {
     if (meta.iso2 === 'GB') return 'UK';
+    if (meta.iso2 === 'IE') return 'Ireland';
     return meta.name;
   }
 
@@ -770,8 +769,7 @@
     arcsGroup.setAttribute('aria-hidden', 'true');
 
     var links = [
-      { to: '036', className: 'intl-map-arc--building' },
-      { to: '124', className: 'intl-map-arc--building' },
+      { to: '372', className: 'intl-map-arc--building' },
     ];
 
     links.forEach(function (link) {
