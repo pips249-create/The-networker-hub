@@ -295,7 +295,7 @@
   function hubCreditBox(opts) {
     opts = opts || {};
     var emphasis = Boolean(opts.emphasis);
-    // Landscape wordmark (logo-nav-transparent) — not the square stacked mark.
+    // Landscape wordmark — not the square stacked mark.
     var w = emphasis ? 300 : 260;
     var h = emphasis ? 110 : 96;
     return {
@@ -311,14 +311,14 @@
   function drawHubCredit(ctx, logos, style) {
     style = style || {};
     logos = logos || {};
-    // Always prefer the landscape nav wordmark on a light pill — logo-hub-dark is a
-    // square with a baked black fill and looks wrong in this corner.
-    var hubLogo = logos.onLight || logos.onDark;
+    // onDark corner → cream "The"/"UK" (Light logo). onLight → charcoal "The"/"UK" (Black logo).
+    var onDark = Boolean(style.onDark);
+    var hubLogo = onDark ? logos.onDark || logos.onLight : logos.onLight || logos.onDark;
     if (!hubLogo) return null;
     var box = hubCreditBox(style);
     var padX = 18;
     var padY = 14;
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.96)';
+    ctx.fillStyle = onDark ? 'rgba(8, 12, 18, 0.72)' : 'rgba(255, 255, 255, 0.96)';
     roundRect(
       ctx,
       box.x - padX,
@@ -332,9 +332,14 @@
     return box;
   }
 
-  /** @deprecated kept for call sites — credit always uses the light pill + nav wordmark. */
-  function hubCreditOnDark() {
-    return false;
+  /** Prefer Light logo on dark corners; Black logo on light/cream corners. */
+  function hubCreditOnDark(bg, layoutHint) {
+    if (layoutHint === 'photo' || layoutHint === 'split') return true;
+    if (layoutHint === 'magazine') return false;
+    if (!bg) return false;
+    // Navy & gold puts a bright gold blob in the credit corner.
+    if (bg.id === 'navy') return false;
+    return Boolean(bg.dark);
   }
 
   /** Readable text colours for dark photo / split overlays, driven by brand kit. */
@@ -673,7 +678,9 @@
       }
 
       if (hubLogos.onDark || hubLogos.onLight) {
-        drawHubCredit(ctx, hubLogos, { onDark: false });
+        drawHubCredit(ctx, hubLogos, {
+          onDark: hubCreditOnDark(bg, 'photo'),
+        });
       }
       return;
     }
@@ -738,7 +745,9 @@
         sy += 30;
       }
       if (hubLogos.onDark || hubLogos.onLight) {
-        drawHubCredit(ctx, hubLogos, { onDark: false });
+        drawHubCredit(ctx, hubLogos, {
+          onDark: hubCreditOnDark(bg, 'split'),
+        });
       }
       return;
     }
@@ -824,7 +833,9 @@
         my += 34;
       }
       if (hubLogos.onDark || hubLogos.onLight) {
-        drawHubCredit(ctx, hubLogos, { onDark: false });
+        drawHubCredit(ctx, hubLogos, {
+          onDark: hubCreditOnDark(bg, 'magazine'),
+        });
       }
       return;
     }
@@ -1992,20 +2003,34 @@
     }
 
     async function ensureHubLogos() {
+      // Black logo (charcoal The/UK) — for light / cream corners.
       if (!state.hubLogoImg) {
         try {
           state.hubLogoImg = await loadAsset([
-            '../assets/logo-nav-transparent.png?v=20260823uk3',
-            '/assets/logo-nav-transparent.png?v=20260823uk3',
+            '../assets/logo-networker-uk.png?v=20260824tnuk',
+            '/assets/logo-networker-uk.png?v=20260824tnuk',
+            '../assets/logo-nav-transparent.png?v=20260824tnuk',
+            '/assets/logo-nav-transparent.png?v=20260824tnuk',
           ]);
         } catch (e) {
           state.hubLogoImg = null;
         }
       }
-      // Landscape wordmark only — skip logo-hub-dark (square, baked black fill).
+      // Light logo (cream The/UK) — for dark photo / navy corners.
+      // File name is the Light wordmark variant (not “for use on light backgrounds”).
+      if (!state.hubLogoDarkImg) {
+        try {
+          state.hubLogoDarkImg = await loadAsset([
+            '../assets/logo-nav-on-light.png?v=20260824tnuklight',
+            '/assets/logo-nav-on-light.png?v=20260824tnuklight',
+          ]);
+        } catch (e) {
+          state.hubLogoDarkImg = null;
+        }
+      }
       return {
-        onDark: state.hubLogoImg,
-        onLight: state.hubLogoImg,
+        onDark: state.hubLogoDarkImg || state.hubLogoImg,
+        onLight: state.hubLogoImg || state.hubLogoDarkImg,
       };
     }
 
