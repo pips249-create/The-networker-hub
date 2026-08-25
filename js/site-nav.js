@@ -102,7 +102,7 @@
  * NAV_BUILD=20260709h — transparent nav logo (from logo-nav.png).
  */
 (function () {
-  var NAV_BUILD = '20260825intl1';
+  var NAV_BUILD = '20260825guestnav1';
   var LOGO_SRC = '/assets/logo-nav-transparent.png?v=20260823uk3';
   var SESSION_KEY = 'hub_nav_session_v1';
   var SESSION_TTL_MS = 5 * 60 * 1000;
@@ -503,16 +503,27 @@
     if (!user && !early) {
       html += moreNavDropdownHtml({ earlyAccess: false });
     }
+    var actions = '';
     if (showListEventCta(user) && catalogueOpen !== false) {
-      html += listEventCta(user);
+      actions += listEventCta(user);
     }
     if (user) {
-      html += myHubDropdownHtml(user);
+      actions += myHubDropdownHtml(user);
     } else if (early) {
-      html += link('/login', 'Sign in', 'auth', 'nav-signin');
+      actions +=
+        '<span class="nav-auth">' +
+        link('/login', 'Sign in', 'auth', 'nav-signin') +
+        '</span>';
     } else {
-      html += link('/register', 'Join free', 'auth', 'nav-register');
-      html += link('/login', 'Sign in', 'auth', 'nav-signin');
+      /* Sign in (quiet) then Join free (primary) — reads as one auth cluster */
+      actions +=
+        '<span class="nav-auth">' +
+        link('/login', 'Sign in', 'auth', 'nav-signin') +
+        link('/register', 'Join free', 'auth', 'nav-register') +
+        '</span>';
+    }
+    if (actions) {
+      html += '<div class="nav-actions">' + actions + '</div>';
     }
     return html;
   }
@@ -607,8 +618,10 @@
     } else if (early) {
       html += link('/login', 'Sign in', 'auth', 'nav-mobile-item nav-mobile-signin');
     } else {
-      html += link('/register', 'Join free', 'auth', 'nav-mobile-item nav-mobile-register');
+      html += '<div class="nav-mobile-auth">';
       html += link('/login', 'Sign in', 'auth', 'nav-mobile-item nav-mobile-signin');
+      html += link('/register', 'Join free', 'auth', 'nav-mobile-item nav-mobile-register');
+      html += '</div>';
     }
     return html;
   }

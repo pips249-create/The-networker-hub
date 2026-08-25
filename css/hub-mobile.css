@@ -365,17 +365,38 @@ body.nav-menu-open .opp-enquire-jump {
   margin: -4px 0 16px;
 }
 
-.nav-mobile-links a.nav-mobile-signin {
+.nav-mobile-links .nav-mobile-auth {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
   margin-top: 12px;
+  padding-top: 4px;
+}
+
+.nav-mobile-links a.nav-mobile-signin {
   text-align: center;
-  color: #fff !important;
-  background: var(--lavender-deep, #5b2f99);
-  border: 1px solid transparent;
-  box-shadow: 0 6px 18px rgba(91, 47, 153, 0.22);
+  color: var(--charcoal, #4a4446) !important;
+  background: transparent;
+  border: 1px solid rgba(74, 68, 70, 0.28);
+  box-shadow: none;
+  font-weight: 600;
 }
 
 .nav-mobile-links a.nav-mobile-signin:active {
-  background: #4a2680;
+  background: rgba(194, 153, 209, 0.12);
+}
+
+.nav-mobile-links a.nav-mobile-register {
+  text-align: center;
+  color: var(--brand-black, #000) !important;
+  background: var(--brand-lavender-icon, #c397c3);
+  border: 1px solid transparent;
+  box-shadow: 0 6px 18px rgba(195, 151, 195, 0.28);
+  font-weight: 700;
+}
+
+.nav-mobile-links a.nav-mobile-register:active {
+  background: #d4b4d4;
 }
 
 .nav-mobile-hub-mode .hub-mode-switch {

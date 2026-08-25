@@ -507,30 +507,73 @@ a:hover { color: var(--charcoal); }
   color: var(--lavender-deep);
 }
 
+/* Guest / CTA cluster — tighter than browse-link gap so the bar doesn’t feel sparse */
+.nav-actions {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 10px;
+  margin-left: 2px;
+  padding-left: clamp(12px, 1.6vw, 22px);
+  border-left: 1px solid rgba(194, 153, 209, 0.38);
+}
+.nav-auth {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.nav-actions:has(.nav-auth) .nav-organiser {
+  background: transparent;
+  border-color: rgba(74, 68, 70, 0.28);
+  font-weight: 600;
+  color: var(--charcoal) !important;
+}
+.nav-actions:has(.nav-auth) .nav-organiser:hover {
+  background: rgba(194, 153, 209, 0.12);
+  border-color: rgba(194, 153, 209, 0.55);
+  color: var(--charcoal) !important;
+}
+.nav-actions:has(.nav-auth) .nav-organiser[aria-current="page"] {
+  background: var(--gold-light);
+  border-color: rgba(184, 149, 106, 0.55);
+  color: var(--charcoal) !important;
+}
+
 .nav-signin {
-  color: var(--lavender-deep) !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-height: 40px;
+  padding: 0 12px;
+  color: var(--charcoal) !important;
+  font-weight: 600;
+  white-space: nowrap;
 }
 .nav-signin:hover {
-  color: var(--charcoal) !important;
+  color: var(--lavender-deep) !important;
 }
 
 .nav-register {
   display: inline-flex !important;
   align-items: center;
   flex-shrink: 0;
-  padding: 8px 14px;
+  padding: 8px 16px;
   border-radius: var(--radius-pill);
   font-size: 13px;
   font-weight: 700;
-  color: var(--charcoal) !important;
-  background: var(--lavender-light);
-  border: 1px solid rgba(194, 153, 209, 0.55);
+  color: var(--brand-black) !important;
+  background: var(--brand-lavender-icon);
+  border: 1px solid transparent;
   text-decoration: none !important;
   white-space: nowrap;
+  transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
 }
 .nav-register:hover {
-  background: var(--lavender-soft);
-  color: var(--charcoal) !important;
+  background: #d4b4d4;
+  color: var(--brand-black) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(195, 151, 195, 0.35);
 }
 
 /*
