@@ -102,7 +102,7 @@
  * NAV_BUILD=20260709h — transparent nav logo (from logo-nav.png).
  */
 (function () {
-  var NAV_BUILD = '20260823uknav1';
+  var NAV_BUILD = '20260825intl1';
   var LOGO_SRC = '/assets/logo-nav-transparent.png?v=20260823uk3';
   var SESSION_KEY = 'hub_nav_session_v1';
   var SESSION_TTL_MS = 5 * 60 * 1000;
@@ -179,8 +179,8 @@
   if (!window.__hubComplianceAssets) {
     window.__hubComplianceAssets = true;
     loadComplianceAsset('css/cookie-consent.css?v=20260609');
-    loadComplianceAsset('js/hub-analytics.js?v=20260729events1');
-    loadComplianceAsset('js/cookie-consent.js?v=20260727demand');
+    loadComplianceAsset('js/hub-analytics.js?v=20260825gdpr1');
+    loadComplianceAsset('js/cookie-consent.js?v=20260825gdpr1');
   }
 
   var mount = document.getElementById('hub-site-nav');
@@ -449,7 +449,8 @@
       href('/contact') +
       '"' +
       contactActive +
-      '>Contact</a>';
+      '>Contact</a>' +
+      '<a role="menuitem" class="nav-dropdown-item" href="https://www.thenetworkerinternational.com/" rel="noopener noreferrer">International</a>';
     return (
       '<div class="nav-dropdown nav-more-dropdown" id="nav-more">' +
       '<button type="button" class="nav-dropdown-toggle' +
@@ -562,6 +563,8 @@
       }
       html += link('/contact', 'Contact', 'contact', 'nav-mobile-item');
       html += link('/legal-policies', 'Legal', 'legal', 'nav-mobile-item');
+      html +=
+        '<a class="nav-mobile-item" href="https://www.thenetworkerinternational.com/" rel="noopener noreferrer">International</a>';
     } else {
       html += '<p class="nav-mobile-section-label">Browse</p>';
       html += link('/events/', 'Events', 'events', 'nav-mobile-item');
@@ -573,6 +576,8 @@
       html += '<p class="nav-mobile-section-label">Help &amp; info</p>';
       html += link('/faq', 'Help', 'faq', 'nav-mobile-item');
       html += link('/contact', 'Contact', 'contact', 'nav-mobile-item');
+      html +=
+        '<a class="nav-mobile-item" href="https://www.thenetworkerinternational.com/" rel="noopener noreferrer">International</a>';
     }
     if (pending && !user) {
       html +=

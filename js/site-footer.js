@@ -5,7 +5,7 @@
  * preview cookie unlocks catalogue APIs.
  */
 (function () {
-  var FOOTER_BUILD = '20260824intl22';
+  var FOOTER_BUILD = '20260825intl1';
   var script = document.currentScript;
   var root = (script && script.getAttribute('data-root')) || '';
 
@@ -118,26 +118,25 @@
         ? href('/')
         : href('/for-organisers');
     var helpBlock = '';
-    var companyBlock = '';
+    var companyBlock =
+      '<div class="footer-col">' +
+      '<p class="footer-col-title">Company</p>' +
+      '<nav class="footer-col-links" aria-label="Company">' +
+      (catalogueOpen
+        ? '<a href="' + href('/about') + '">About us</a>'
+        : '') +
+      '<a href="https://www.thenetworkerinternational.com/">The Networker International</a>' +
+      (catalogueOpen
+        ? '<a href="' + href('/advertising') + '">Advertising &amp; sponsorship</a>'
+        : '') +
+      '</nav>' +
+      '</div>';
     if (catalogueOpen) {
       helpBlock =
         '<div class="footer-col">' +
         '<p class="footer-col-title">Help</p>' +
         '<nav class="footer-col-links" aria-label="Help">' +
         helpLinksHtml(true) +
-        '</nav>' +
-        '</div>';
-      companyBlock =
-        '<div class="footer-col">' +
-        '<p class="footer-col-title">Company</p>' +
-        '<nav class="footer-col-links" aria-label="Company">' +
-        '<a href="' +
-        href('/about') +
-        '">About us</a>' +
-        '<a href="https://www.thenetworkerinternational.com/">The Networker International</a>' +
-        '<a href="' +
-        href('/advertising') +
-        '">Advertising &amp; sponsorship</a>' +
         '</nav>' +
         '</div>';
     }

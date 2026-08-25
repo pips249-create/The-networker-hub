@@ -12,18 +12,18 @@
       kicker: 'Ireland business networking',
       source: 'market_preview_ie',
       canonical: 'https://www.thenetworkerireland.com/',
-      logo: '/assets/logo-networker-ireland.png?v=20260825mkt2',
+      logo: '/assets/logo-networker-ireland.png?v=20260825mkt3',
     },
     US: {
       iso2: 'US',
       name: 'United States',
       brand: 'The Networker USA',
       adjective: 'US',
-      badge: 'Coming soon',
+      badge: 'Building · coming soon',
       kicker: 'US business networking',
       source: 'market_preview_us',
       canonical: 'https://www.thenetworkerusa.com/',
-      logo: '/assets/logo-networker-usa.png?v=20260825mkt2',
+      logo: '/assets/logo-networker-usa.png?v=20260825mkt3',
     },
   };
 

@@ -4,13 +4,15 @@
   --mp-header: #3a3438;
   --mp-cream: #faf6ee;
   --mp-lavender: #c299d1;
+  --mp-gold: #c9ad7a;
+  --mp-gold-soft: rgba(201, 173, 122, 0.22);
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   background:
-    radial-gradient(ellipse 70% 50% at 20% 10%, rgba(194, 153, 209, 0.22), transparent 55%),
-    radial-gradient(ellipse 55% 45% at 90% 80%, rgba(201, 173, 122, 0.18), transparent 50%),
-    linear-gradient(165deg, #423c40 0%, var(--mp-header) 42%, #2f2a2d 100%);
+    radial-gradient(ellipse 70% 50% at 18% 8%, rgba(194, 153, 209, 0.28), transparent 55%),
+    radial-gradient(ellipse 60% 48% at 92% 18%, rgba(201, 173, 122, 0.26), transparent 52%),
+    linear-gradient(165deg, #4a4246 0%, var(--mp-header) 38%, #2a2629 100%);
   color: var(--mp-cream);
 }
 
@@ -21,41 +23,70 @@
 .market-preview-hero {
   position: relative;
   overflow: hidden;
-  padding: clamp(28px, 5vw, 56px) clamp(16px, 4vw, 32px) clamp(36px, 6vw, 64px);
+  padding: clamp(28px, 5vw, 56px) clamp(16px, 4vw, 32px) clamp(40px, 6vw, 72px);
+}
+
+.market-preview-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(250, 246, 238, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(250, 246, 238, 0.035) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, #000 20%, transparent 75%);
+  pointer-events: none;
+  opacity: 0.7;
 }
 
 .market-preview-orb {
   position: absolute;
   border-radius: 50%;
   pointer-events: none;
-  filter: blur(40px);
-  opacity: 0.55;
+  filter: blur(44px);
+  opacity: 0.6;
+  animation: market-preview-drift 14s ease-in-out infinite alternate;
 }
 
 .market-preview-orb--lavender {
-  width: min(420px, 70vw);
-  height: min(420px, 70vw);
-  top: -12%;
-  right: -8%;
-  background: rgba(194, 153, 209, 0.45);
+  width: min(460px, 74vw);
+  height: min(460px, 74vw);
+  top: -14%;
+  right: -10%;
+  background: rgba(194, 153, 209, 0.5);
 }
 
 .market-preview-orb--gold {
-  width: min(340px, 60vw);
-  height: min(340px, 60vw);
-  bottom: -18%;
-  left: -10%;
-  background: rgba(201, 173, 122, 0.35);
+  width: min(380px, 64vw);
+  height: min(380px, 64vw);
+  bottom: -20%;
+  left: -12%;
+  background: rgba(201, 173, 122, 0.42);
+  animation-delay: -4s;
+}
+
+@keyframes market-preview-drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(18px, -14px, 0) scale(1.06);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .market-preview-orb {
+    animation: none;
+  }
 }
 
 .market-preview-shell {
   position: relative;
   z-index: 1;
-  max-width: 1080px;
+  max-width: 1100px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(300px, 400px);
-  gap: clamp(24px, 4vw, 44px);
+  grid-template-columns: minmax(0, 1.2fr) minmax(300px, 410px);
+  gap: clamp(24px, 4vw, 48px);
   align-items: start;
 }
 
@@ -65,9 +96,10 @@
 }
 
 .market-preview-logo img {
-  width: min(240px, 62vw);
+  width: min(248px, 64vw);
   height: auto;
   display: block;
+  filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.28));
 }
 
 .market-preview-badge {
@@ -75,55 +107,99 @@
   align-items: center;
   gap: 8px;
   margin: 0 0 14px;
-  padding: 7px 12px;
+  padding: 8px 14px;
   border-radius: 999px;
-  border: 1px solid rgba(194, 153, 209, 0.35);
-  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(201, 173, 122, 0.45);
+  background: rgba(201, 173, 122, 0.14);
   font-size: 0.82rem;
   font-weight: 600;
-  color: rgba(250, 246, 238, 0.9);
+  color: rgba(250, 246, 238, 0.95);
 }
 
 .market-preview-badge-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--mp-lavender);
-  box-shadow: 0 0 0 4px rgba(194, 153, 209, 0.2);
+  background: var(--mp-gold);
+  box-shadow: 0 0 0 4px rgba(201, 173, 122, 0.22);
 }
 
 .market-preview-kicker {
   margin: 0 0 8px;
   font-size: 0.88rem;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   color: rgba(250, 246, 238, 0.62);
 }
 
 .market-preview-title {
-  margin: 0 0 12px;
+  margin: 0 0 14px;
   font-family: 'DM Serif Display', Georgia, serif;
   font-weight: 400;
-  font-size: clamp(2rem, 5vw, 3rem);
-  line-height: 1.08;
+  font-size: clamp(2.15rem, 5.2vw, 3.25rem);
+  line-height: 1.05;
 }
 
 .market-preview-title-line {
   display: block;
-  color: rgba(250, 246, 238, 0.92);
+  color: rgba(250, 246, 238, 0.94);
 }
 
 .market-preview-title-accent {
   display: block;
-  color: var(--mp-lavender);
+  color: var(--mp-gold);
 }
 
 .market-preview-lede {
-  margin: 0 0 18px;
+  margin: 0 0 22px;
   max-width: 34rem;
-  font-size: 1.05rem;
+  font-size: 1.08rem;
   line-height: 1.5;
-  color: rgba(250, 246, 238, 0.78);
+  color: rgba(250, 246, 238, 0.8);
+}
+
+.market-preview-steps {
+  list-style: none;
+  margin: 0 0 22px;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+  max-width: 28rem;
+}
+
+.market-preview-steps li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 12px;
+  align-items: start;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(250, 246, 238, 0.1);
+}
+
+.market-preview-step-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--mp-gold-soft);
+  border: 1px solid rgba(201, 173, 122, 0.5);
+  color: #faf6ee;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.market-preview-step-copy {
+  font-size: 0.92rem;
+  line-height: 1.4;
+  color: rgba(250, 246, 238, 0.82);
+}
+
+.market-preview-step-copy strong {
+  color: #faf6ee;
 }
 
 .market-preview-jump,
@@ -143,15 +219,37 @@
 
 .market-preview-jump a:hover,
 .market-preview-contact a:hover {
-  color: #d9c4e0;
+  color: var(--mp-gold);
 }
 
 .market-preview-panel {
-  padding: 22px 20px 20px;
-  border-radius: 18px;
-  background: rgba(250, 246, 238, 0.96);
+  padding: 24px 22px 22px;
+  border-radius: 20px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(250, 246, 238, 0.98) 100%);
   color: #4a4446;
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
+  box-shadow:
+    0 22px 48px rgba(0, 0, 0, 0.28),
+    0 0 0 1px rgba(201, 173, 122, 0.28);
+  transform: translateY(0);
+  animation: market-preview-panel-in 0.7s ease both;
+}
+
+@keyframes market-preview-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .market-preview-panel {
+    animation: none;
+  }
 }
 
 .market-preview-panel-eyebrow {
@@ -160,13 +258,13 @@
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #9a7aa8;
+  color: #9a7a4e;
 }
 
 .market-preview-panel-title {
   margin: 0 0 8px;
   font-family: 'DM Serif Display', Georgia, serif;
-  font-size: 1.45rem;
+  font-size: 1.5rem;
   font-weight: 400;
   color: #3a3438;
 }
@@ -186,8 +284,8 @@
 }
 
 .market-preview-intent-btn {
-  padding: 10px 8px;
-  border-radius: 10px;
+  padding: 11px 8px;
+  border-radius: 12px;
   border: 1px solid rgba(184, 174, 166, 0.55);
   background: #fff;
   color: #4a4446;
@@ -195,11 +293,12 @@
   font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
 }
 
 .market-preview-intent-btn.is-selected {
-  border-color: #9a7aa8;
-  background: rgba(194, 153, 209, 0.16);
+  border-color: #b8956a;
+  background: rgba(201, 173, 122, 0.18);
   color: #3a3438;
 }
 
@@ -213,14 +312,14 @@
 .market-preview-input {
   width: 100%;
   padding: 12px 14px;
-  border-radius: 10px;
+  border-radius: 12px;
   border: 1px solid rgba(184, 174, 166, 0.55);
   font: inherit;
   background: #fff;
 }
 
 .market-preview-input:focus-visible {
-  outline: 2px solid #c299d1;
+  outline: 2px solid #c9ad7a;
   outline-offset: 2px;
 }
 
@@ -254,14 +353,15 @@
 .market-preview-submit {
   width: 100%;
   margin-top: 12px;
-  padding: 13px 16px;
+  padding: 14px 16px;
   border: 0;
-  border-radius: 10px;
-  background: #3a3438;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #4a4246 0%, #3a3438 100%);
   color: #fff;
   font: inherit;
   font-weight: 600;
   cursor: pointer;
+  box-shadow: 0 10px 22px rgba(58, 52, 56, 0.28);
 }
 
 .market-preview-submit:hover {
@@ -276,11 +376,85 @@
 .market-preview-success {
   margin: 0;
   padding: 12px 14px;
-  border-radius: 10px;
+  border-radius: 12px;
   background: rgba(122, 158, 106, 0.14);
   border: 1px solid rgba(122, 158, 106, 0.35);
   color: #3a3438;
   font-size: 0.9rem;
+}
+
+.market-preview-features {
+  position: relative;
+  z-index: 1;
+  background: linear-gradient(180deg, rgba(250, 246, 238, 0.96) 0%, #f3eee4 100%);
+  color: #4a4446;
+  border-top: 1px solid rgba(201, 173, 122, 0.28);
+}
+
+.market-preview-features-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: clamp(36px, 5vw, 56px) clamp(16px, 4vw, 32px) clamp(40px, 6vw, 64px);
+}
+
+.market-preview-features-title {
+  margin: 0 0 8px;
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 400;
+  color: #3a3438;
+}
+
+.market-preview-features-lede {
+  margin: 0 0 24px;
+  max-width: 36rem;
+  color: #635c5e;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.market-preview-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.market-preview-feature {
+  padding: 18px 16px 20px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(184, 174, 166, 0.35);
+  box-shadow: 0 10px 24px rgba(58, 52, 56, 0.06);
+}
+
+.market-preview-feature h3 {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+  color: #3a3438;
+}
+
+.market-preview-feature p {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: #635c5e;
+}
+
+.market-preview-uk-cta {
+  display: inline-flex;
+  align-items: center;
+  padding: 12px 18px;
+  border-radius: 999px;
+  background: #3a3438;
+  color: #faf6ee;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.market-preview-uk-cta:hover {
+  background: #4a4446;
+  color: #fff;
 }
 
 .market-preview-footer {
@@ -289,6 +463,7 @@
   font-size: 0.8rem;
   color: rgba(250, 246, 238, 0.55);
   border-top: 1px solid rgba(194, 153, 209, 0.14);
+  background: #2a2629;
 }
 
 .market-preview-footer a {
@@ -302,6 +477,10 @@
 
 @media (max-width: 860px) {
   .market-preview-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .market-preview-feature-grid {
     grid-template-columns: 1fr;
   }
 }
