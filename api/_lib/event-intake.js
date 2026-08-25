@@ -2,8 +2,8 @@
  * Submit event details from /add-your-event — store + email staff.
  */
 const { getSupabaseAdmin } = require('./supabase');
-const { sendViaResend } = require('./send-template-email');
-const { supportEmail } = require('./hub-email-urls');
+const { sendViaResend, sendTemplatedEmail } = require('./send-template-email');
+const { supportEmail, emailSiteBase } = require('./hub-email-urls');
 
 function staffInbox() {
   const configured = String(process.env.EVENT_INTAKE_EMAIL || '').trim();
@@ -263,19 +263,28 @@ function buildStaffEmailHtml(input) {
   );
 }
 
-function buildConfirmationEmailHtml(input) {
-  return (
-    '<div style="font-family:DM Sans,Arial,sans-serif;line-height:1.55;color:#2d2636;max-width:560px;">' +
-    '<p style="margin:0 0 12px;">Hi ' +
-    escHtml(input.contactName) +
-    ',</p>' +
-    '<p style="margin:0 0 12px;">Thanks — we have your details for <strong>' +
-    escHtml(input.eventTitle) +
-    '</strong>.</p>' +
-    '<p style="margin:0 0 12px;">Catherine or Jamie will list it on The Networker UK and email you when it&rsquo;s live (usually within one business day).</p>' +
-    '<p style="margin:0;">The Networker UK<br><a href="https://www.thenetworkeruk.com/add-your-event">thenetworkeruk.com/add-your-event</a></p>' +
-    '</div>'
-  );
+function locationLineFromInput(input) {
+  if (String(input.format || '').toLowerCase() === 'online') {
+    return 'Online';
+  }
+  const parts = [input.venue, input.city, input.postcode]
+    .map(function (v) {
+      return String(v || '').trim();
+    })
+    .filter(Boolean);
+  return parts.length ? parts.join(', ') : 'To be confirmed';
+}
+
+function confirmationVariables(input) {
+  const site = emailSiteBase(process.env.SITE_URL);
+  return {
+    contact_name: String(input.contactName || '').trim() || 'there',
+    event_title: String(input.eventTitle || '').trim() || 'your event',
+    group_name: String(input.groupName || '').trim() || 'Your group',
+    event_dates: String(input.eventDates || '').trim() || 'Date to be confirmed',
+    location_line: locationLineFromInput(input),
+    events_url: site + '/events/',
+  };
 }
 
 async function submitEventIntake(body) {
@@ -372,12 +381,12 @@ async function submitEventIntake(body) {
   }
 
   try {
-    await sendViaResend({
+    await sendTemplatedEmail({
+      slug: 'event_intake_received',
       to: input.email,
-      subject: 'We received your event details — The Networker UK',
-      html: buildConfirmationEmailHtml(input),
+      variables: confirmationVariables(input),
       replyTo: to,
-      skipAllowlist: true,
+      skipEmailCheck: true,
     });
   } catch (e) {
     console.error('[event-intake-confirm-email]', e.message || e);

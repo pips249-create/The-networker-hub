@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en-GB" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="x-apple-disable-message-reformatting">
+  <title>We received your event details</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
+    body, table, td, p, a { margin:0; padding:0; border:0; font-size:100%; font:inherit; vertical-align:top; }
+    img { border:0; display:block; max-width:100%; height:auto; }
+    body { -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; background-color:#ebe8f2; }
+    table { border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; }
+    @media only screen and (max-width:600px) {
+      .email-outer-pad { padding:8px 0 !important; }
+      .email-wrapper {
+        width:100% !important;
+        max-width:100% !important;
+        border-radius:0 !important;
+        box-shadow:none !important;
+        overflow:visible !important;
+      }
+      .hero-title { font-size:24px !important; line-height:1.2 !important; }
+      .mobile-pad { padding-left:16px !important; padding-right:16px !important; }
+      .mobile-header-pad { padding:24px 16px 0 !important; }
+      .mobile-footer-pad { padding:24px 16px 30px !important; }
+      .email-logo-header { max-width:200px !important; width:200px !important; height:auto !important; }
+      .email-logo-footer { max-width:168px !important; width:168px !important; height:auto !important; }
+      .detail-cell { display:block !important; width:100% !important; padding:12px 0 !important; border-top:1px solid rgba(255,255,255,0.12) !important; }
+      .detail-cell:first-child { border-top:none !important; padding-top:0 !important; }
+      .email-cta a { display:block !important; width:100% !important; box-sizing:border-box !important; text-align:center !important; }
+    }
+  </style>
+</head>
+<body style="margin:0;padding:0;background:#ebe8f2;font-family:'DM Sans',system-ui,sans-serif;">
+<!-- Preheader -->
+<div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;">
+  We’ve got {{event_title}} — we’ll email you when it’s live.&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
+</div>
+<!-- hub-email-layout-v3-purple -->
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#ebe8f2;">
+  <tr>
+    <td class="email-outer-pad" align="center" style="padding:32px 16px 56px;">
+      <table class="email-wrapper" role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" style="max-width:600px;width:100%;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 8px 40px rgba(69,45,92,0.12);">
+        <tr>
+          <td class="mobile-header-pad" style="background:#f5f0e8;padding:28px 40px 0;text-align:center;">
+            <a href="{{site_url}}/" style="text-decoration:none;display:inline-block;">
+              <img class="email-logo-header" src="{{logo_url}}" alt="The Networker UK" width="240" style="height:auto;display:inline-block;margin:0 auto;border:0;max-width:240px;width:100%;">
+            </a>
+          </td>
+        </tr>
+
+        {{sponsor_row}}
+
+        <tr>
+          <td style="background:#f5f0e8;padding:0;text-align:center;">
+            <div style="line-height:0;font-size:0;margin-top:8px;">
+              <svg viewBox="0 0 600 40" xmlns="http://www.w3.org/2000/svg" style="display:block;width:100%;height:40px;">
+                <path d="M0,24 C150,46 450,4 600,24 L600,40 L0,40 Z" fill="#ffffff"/>
+              </svg>
+            </div>
+          </td>
+        </tr>
+
+        <tr>
+          <td class="mobile-pad" style="padding:28px 40px 16px;text-align:center;">
+            <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto 16px;">
+              <tr>
+                <td style="width:52px;height:52px;background:#ebe0f0;border-radius:50%;text-align:center;vertical-align:middle;font-size:24px;color:#9a7aa8;line-height:52px;">&#10003;</td>
+              </tr>
+            </table>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px;">Event details received</p>
+            <h1 class="hero-title" style="font-family:'DM Sans',system-ui,sans-serif;font-size:28px;font-weight:600;color:#452d5c;margin:0 0 10px;line-height:1.15;">We’ve got your event</h1>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:0;">
+              Hi {{contact_name}}, thanks — we have your details for <strong style="color:#452d5c;">{{event_title}}</strong>.
+            </p>
+          </td>
+        </tr>
+
+        <tr>
+          <td class="mobile-pad" style="padding:0 40px 20px;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#452d5c;border-radius:16px;">
+              <tr>
+                <td style="padding:24px;">
+                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px;margin:0 0 14px;">What you sent</p>
+                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                    <tr>
+                      <td class="detail-cell" style="padding:0 12px 0 0;width:50%;vertical-align:top;">
+                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:12px;font-weight:600;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.6px;margin:0 0 4px;">Group</p>
+                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:600;color:#ffffff;margin:0;line-height:1.35;">{{group_name}}</p>
+                      </td>
+                      <td class="detail-cell" style="padding:0;width:50%;vertical-align:top;">
+                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:12px;font-weight:600;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.6px;margin:0 0 4px;">When</p>
+                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:600;color:#ffffff;margin:0;line-height:1.35;">{{event_dates}}</p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="detail-cell" colspan="2" style="padding:16px 0 0;vertical-align:top;">
+                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:12px;font-weight:600;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.6px;margin:0 0 4px;">Where</p>
+                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:600;color:#ffffff;margin:0;line-height:1.35;">{{location_line}}</p>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <tr>
+          <td class="mobile-pad" style="padding:0 40px 20px;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f8f4ec;border-radius:14px;border:1px solid #e8d9a8;">
+              <tr>
+                <td style="padding:20px 22px;">
+                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:#1c2040;margin:0 0 8px;">What happens next</p>
+                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.65;color:#5c5557;margin:0;">
+                    Catherine or Jamie will list it on The Networker UK and email you when it’s live (usually within one business day).
+                  </p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <tr>
+          <td class="mobile-pad email-cta" style="padding:0 40px 12px;text-align:center;">
+            <a href="{{events_url}}" style="display:inline-block;text-align:center;padding:14px 32px;background:#5b2f99;border-radius:999px;color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;margin:0 6px 10px;">Browse events &rarr;</a>
+          </td>
+        </tr>
+        <tr>
+          <td class="mobile-pad" style="padding:0 40px 28px;text-align:center;">
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.7;color:#635c5e;margin:0;">
+              Questions? Reply to this email or write to
+              <a href="mailto:{{support_email}}" style="color:#5b2f99;text-decoration:none;font-weight:600;">{{support_email}}</a>.
+            </p>
+          </td>
+        </tr>
+
+        {{mini_sponsors_row}}
+
+        <tr>
+          <td class="mobile-footer-pad" style="background:#452d5c;padding:28px 40px 40px;text-align:center;border-radius:0 0 20px 20px;">
+            <a href="{{site_url}}/" style="text-decoration:none;display:inline-block;">
+              <img class="email-logo-footer" src="{{logo_footer_url}}" alt="The Networker UK" width="200" style="height:auto;display:inline-block;margin:0 auto 16px;border:0;max-width:200px;">
+            </a>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:400;color:rgba(255,255,255,0.55);line-height:1.7;margin:0 0 10px;">
+              Operated by The Networker Group Ltd &nbsp;&middot;&nbsp; Company No. 15252227<br>
+              <a href="mailto:{{support_email}}" style="color:#d9c4e0;text-decoration:none;">{{support_email}}</a>
+            </p>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:400;color:rgba(255,255,255,0.55);margin:0;">
+              <a href="{{privacy_url}}" style="color:#d9c4e0;text-decoration:none;">Privacy</a>
+              &nbsp;&middot;&nbsp;
+              <a href="{{terms_url}}" style="color:#d9c4e0;text-decoration:none;">Terms</a>
+              &nbsp;&middot;&nbsp;
+              <a href="{{refunds_url}}" style="color:#d9c4e0;text-decoration:none;">Refunds</a>
+              &nbsp;&middot;&nbsp;
+              <a href="{{contact_url}}" style="color:#d9c4e0;text-decoration:none;">Contact</a>
+              &nbsp;&middot;&nbsp;
+              <a href="{{unsubscribe_url}}" style="color:#ebe0f0;text-decoration:none;">Unsubscribe</a>
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+</body>
+</html>

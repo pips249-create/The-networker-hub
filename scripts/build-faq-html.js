@@ -33,7 +33,9 @@ function linkifyAnswer(text) {
   });
   // Relative Hub paths only (not fragments of already-captured absolute URLs).
   html = html.replace(/(^|[^"'>/\w])(\/[a-z0-9][a-z0-9/_.#-]*)/gi, function (_m, lead, path) {
-    return lead + '<a href="' + path + '">' + path + '</a>';
+    const trimmed = path.replace(/[.,;:!?)]+$/g, '');
+    const trail = path.slice(trimmed.length);
+    return lead + '<a href="' + trimmed + '">' + trimmed + '</a>' + trail;
   });
   html = html.replace(/hello@thenetworker(?:uk|hub)\.com/g, '<a href="mailto:hello@thenetworkeruk.com">hello@thenetworkeruk.com</a>');
   html = html.replace(/rosie@thenetworker(?:uk|hub)\.com/g, '<a href="mailto:rosie@thenetworkeruk.com">rosie@thenetworkeruk.com</a>');

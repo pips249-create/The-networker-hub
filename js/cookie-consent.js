@@ -118,7 +118,7 @@
       '<input type="checkbox" checked disabled aria-label="Essential cookies always on" />' +
       '</div>' +
       '<div class="hub-cookie-pref">' +
-      '<div><strong>Analytics</strong><span>Privacy-oriented usage statistics via Vercel Web Analytics.</span></div>' +
+      '<div><strong>Analytics</strong><span>Usage statistics via Google Analytics and Vercel Web Analytics (only if you allow).</span></div>' +
       '<input type="checkbox" id="hub-cookie-analytics" aria-label="Allow analytics cookies" />' +
       '</div>' +
       '<div class="hub-cookie-modal-actions">' +

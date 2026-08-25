@@ -510,6 +510,15 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     vars.reset_url = site + '/reset-password?token=sample';
   }
 
+  if (slug === 'event_intake_received') {
+    vars.contact_name = vars.contact_name || vars.user_name || 'Ashley';
+    vars.event_title = vars.event_title || 'First Friday Lewes';
+    vars.group_name = vars.group_name || 'First Friday Lewes';
+    vars.event_dates = vars.event_dates || 'Friday 5 September 2026';
+    vars.location_line = vars.location_line || 'Lewes, East Sussex';
+    vars.events_url = vars.events_url || site + '/events/';
+  }
+
   if (slug === 'organiser_email_verify') {
     vars.verify_url = site + '/organiser/verify-email';
     vars.verify_code = '482917';

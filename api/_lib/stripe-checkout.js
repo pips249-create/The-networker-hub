@@ -108,7 +108,7 @@ function lineItemFromCatalog(catalogKey, fallbackPriceData) {
 }
 
 /**
- * Prepaid business opportunity listing (£25/month ex VAT, minimum 3 months).
+ * Business opportunity directory listing — £25/month + VAT, monthly Stripe subscription.
  */
 async function createOpportunityListingCheckoutSession(opts) {
   const stripe = getStripeClient();

@@ -182,6 +182,27 @@ window.HUB_SEO_DATA = {
       "icon": "💼"
     },
     {
+      "question": "What does the £25 business opportunity listing include?",
+      "answer": "£25 per month + VAT is a monthly Stripe subscription for a standard directory listing — not a one-off and not Premium Spotlight. While subscribed, your opportunity appears on /opportunities/ browse and search results and has a public detail page where signed-in members can send you an enquiry. It does not include homepage placement, email/newsletter promotion, social posts, or Featured Opportunity Boost. Cancel any time in Stripe. Optional Featured Opportunity Boost is a separate £55 one-time fee for up to 30 days of pinned/highlighted placement. Details: /opportunities/list and /advertising.",
+      "category": "organisers",
+      "icon": "💷",
+      "helpLink": "/opportunities/list"
+    },
+    {
+      "question": "Is the £25 opportunity listing the same as Premium Spotlight?",
+      "answer": "No. The £25/month + VAT fee is the standard business opportunity directory listing. Premium Spotlight / Featured Opportunity Boost is optional, costs £55 one-time for up to 30 days, and is never applied automatically. See /advertising#ad-pkg-opportunities-listing and /advertising#ad-pkg-opportunities-spotlight.",
+      "category": "organisers",
+      "icon": "✨",
+      "helpLink": "/advertising"
+    },
+    {
+      "question": "Does The Networker UK verify or endorse business opportunities?",
+      "answer": "No. The Networker Group Ltd does not verify opportunity claims, endorse listers, or provide investment advice. Before publication we check that a submission is complete and not misleading; that is not financial or FCA-regulated approval. Always do your own due diligence. See /legal-policies.",
+      "category": "general",
+      "icon": "🛡️",
+      "helpLink": "/legal-policies"
+    },
+    {
       "question": "When do organisers receive payouts for ticket sales?",
       "answer": "Payouts are not instant. A 7-day settlement period applies after the event ends. Archive the event, then request a payout from the organiser dashboard when eligible. Stripe onboarding is required.",
       "category": "organisers",
@@ -649,6 +670,30 @@ window.HUB_SEO_DATA = {
               "acceptedAnswer": {
                 "@type": "Answer",
                 "text": "Yes — sign in and tap the heart on any opportunity listing. Saved opportunities appear in My account (/account/). You can get an email when a saved listing is closing soon, save search alerts for new matching listings, and compare up to 3 saved opportunities side by side."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What does the £25 business opportunity listing include?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "£25 per month + VAT is a monthly Stripe subscription for a standard directory listing — not a one-off and not Premium Spotlight. While subscribed, your opportunity appears on /opportunities/ browse and search results and has a public detail page where signed-in members can send you an enquiry. It does not include homepage placement, email/newsletter promotion, social posts, or Featured Opportunity Boost. Cancel any time in Stripe. Optional Featured Opportunity Boost is a separate £55 one-time fee for up to 30 days of pinned/highlighted placement. Details: /opportunities/list and /advertising."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Is the £25 opportunity listing the same as Premium Spotlight?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "No. The £25/month + VAT fee is the standard business opportunity directory listing. Premium Spotlight / Featured Opportunity Boost is optional, costs £55 one-time for up to 30 days, and is never applied automatically. See /advertising#ad-pkg-opportunities-listing and /advertising#ad-pkg-opportunities-spotlight."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Does The Networker UK verify or endorse business opportunities?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "No. The Networker Group Ltd does not verify opportunity claims, endorse listers, or provide investment advice. Before publication we check that a submission is complete and not misleading; that is not financial or FCA-regulated approval. Always do your own due diligence. See /legal-policies."
               }
             },
             {
