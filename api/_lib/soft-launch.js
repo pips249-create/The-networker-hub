@@ -3,6 +3,8 @@
  * Browse: 25 Aug 2026 · Tickets & opportunity enquiries: 1 Sep 2026 (Europe/London).
  *
  * Override for staging/admin tests:
+ *   PUBLIC_TICKET_SALES_FORCE_OPEN=true
+ *   PUBLIC_TICKET_SALES_FORCE_CLOSED=true
  *   PUBLIC_ENQUIRIES_FORCE_OPEN=true
  *   PUBLIC_ENQUIRIES_FORCE_CLOSED=true
  */
@@ -31,8 +33,22 @@ function isPublicBrowseOpen(nowMs) {
 }
 
 /**
- * Opportunity enquiries (and the public ticket/enquiry soft-launch window).
- * Opens 1 September 2026 unless forced open/closed via env.
+ * Public ticket buying (paid + free). Opens 1 September 2026 unless forced.
+ * Browse and organiser nudges stay available before then.
+ */
+function arePublicTicketSalesOpen(nowMs) {
+  if (parseEnvFlag('PUBLIC_TICKET_SALES_FORCE_CLOSED')) return false;
+  if (parseEnvFlag('PUBLIC_TICKET_SALES_FORCE_OPEN')) return true;
+  const now = nowMs == null ? Date.now() : Number(nowMs);
+  return now >= publicTransactionsOpensAtMs();
+}
+
+function publicTicketSalesClosedMessage() {
+  return 'Ticket buying opens on 1 September 2026. You can browse events now and nudge organisers to list tickets.';
+}
+
+/**
+ * Opportunity enquiries. Opens 1 September 2026 unless forced open/closed via env.
  */
 function arePublicEnquiriesOpen(nowMs) {
   if (parseEnvFlag('PUBLIC_ENQUIRIES_FORCE_CLOSED')) return false;
@@ -50,6 +66,8 @@ function softLaunchPublicMeta(nowMs) {
   return {
     browseOpen: isPublicBrowseOpen(now),
     browseOpensAt: PUBLIC_BROWSE_OPENS_AT,
+    ticketSalesOpen: arePublicTicketSalesOpen(now),
+    ticketSalesOpensAt: PUBLIC_TRANSACTIONS_OPENS_AT,
     enquiriesOpen: arePublicEnquiriesOpen(now),
     enquiriesOpensAt: PUBLIC_TRANSACTIONS_OPENS_AT,
     transactionsOpensAt: PUBLIC_TRANSACTIONS_OPENS_AT,
@@ -62,6 +80,8 @@ module.exports = {
   publicBrowseOpensAtMs,
   publicTransactionsOpensAtMs,
   isPublicBrowseOpen,
+  arePublicTicketSalesOpen,
+  publicTicketSalesClosedMessage,
   arePublicEnquiriesOpen,
   publicEnquiriesClosedMessage,
   softLaunchPublicMeta,

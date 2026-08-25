@@ -165,7 +165,15 @@
   function ctaLabel(ev, canBuy) {
     if (ev.isEventPast) return 'View event';
     if (ev.isSoldOut) return 'Sold out — view event';
-    if (ev.isTicketSalesPending || ev.isTicketSalesScheduled) return 'Sales opening soon';
+    if (
+      (window.HubSoftLaunch &&
+        typeof window.HubSoftLaunch.arePublicTicketSalesOpen === 'function' &&
+        !window.HubSoftLaunch.arePublicTicketSalesOpen()) ||
+      ev.isTicketSalesPending ||
+      ev.isTicketSalesScheduled
+    ) {
+      return 'Sales opening soon';
+    }
     if (ev.isSalesClosed) return 'View event';
     if (!canBuy) return 'View event details';
     if (ev.priceKey === 'free') return 'Get free tickets';
@@ -173,8 +181,13 @@
   }
 
   function render(ev) {
+    var platformTicketsClosed =
+      window.HubSoftLaunch &&
+      typeof window.HubSoftLaunch.arePublicTicketSalesOpen === 'function' &&
+      !window.HubSoftLaunch.arePublicTicketSalesOpen();
     var tiers = publicTiers(ev);
     var canBuy =
+      !platformTicketsClosed &&
       !ev.isEventPast &&
       !ev.isSoldOut &&
       !ev.isSalesClosed &&
@@ -238,7 +251,9 @@
     var notice = '';
     if (ev.isEventPast) notice = 'This event has ended.';
     else if (ev.isSoldOut) notice = 'Tickets are sold out.';
-    else if (ev.isTicketSalesPending || ev.isTicketSalesScheduled) {
+    else if (platformTicketsClosed) {
+      notice = 'Ticket buying opens on 1 September 2026.';
+    } else if (ev.isTicketSalesPending || ev.isTicketSalesScheduled) {
       notice = ev.ticketSalesOpensLabel
         ? 'Ticket sales open ' + ev.ticketSalesOpensLabel + '.'
         : 'Ticket sales are not open yet.';

@@ -37,6 +37,8 @@ const BOOKING_ERROR_MESSAGES = {
   ticket_sold_out: 'Sorry — that ticket tier is sold out.',
   event_sold_out: 'Sorry — this event is fully booked.',
   applications_full: 'Sorry — all places for this event are taken.',
+  ticket_sales_platform_closed:
+    'Ticket buying opens on 1 September 2026. You can browse events now and nudge organisers to list tickets.',
 };
 
 const ALUMNI_ERROR_CODES = new Set([
@@ -49,6 +51,7 @@ const ALUMNI_ERROR_CODES = new Set([
   'members_only_not_eligible',
   'membership_expired',
   'organiser_attendance_blocked',
+  'ticket_sales_platform_closed',
 ]);
 
 function bookingErrorResponse(msg) {

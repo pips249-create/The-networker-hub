@@ -389,13 +389,41 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
     ? formatTicketSalesOpensShort(ticketSalesOpensAtDate)
     : '';
   const ticketSalesEnabled = resolveTicketSalesEnabled(row, eventTickets);
-  const isTicketSalesScheduled =
+  let isTicketSalesScheduled =
     isEventPublishedForSale(row) && hasTicketTiers && !ticketsOnSale && Boolean(ticketSalesOpensAt);
-  const isTicketSalesPending =
+  let isTicketSalesPending =
     isEventPublishedForSale(row) &&
     !isTicketSalesScheduled &&
     !ticketSalesEnabled &&
     (!hasTicketTiers || ticketsOnSale);
+  let ticketSalesOpensAtOut = ticketSalesOpensAt;
+  let ticketSalesOpensLabelOut = ticketSalesOpensLabel;
+  let ticketSalesOpensShortOut = ticketSalesOpensShort;
+  let ticketSalesEnabledOut = ticketSalesEnabled;
+  let salesClosedReason = '';
+  const eventHasEnded = isEventPast(row);
+  const { arePublicTicketSalesOpen, PUBLIC_TRANSACTIONS_OPENS_AT } = require('./soft-launch');
+  const platformTicketsOpen = arePublicTicketSalesOpen();
+  // Soft launch: browse + nudge only until 1 September — hide buy even if organiser enabled sales.
+  if (
+    !platformTicketsOpen &&
+    isEventPublishedForSale(row) &&
+    !isTicketSalesPending &&
+    !eventHasEnded
+  ) {
+    const platformOpens = new Date(PUBLIC_TRANSACTIONS_OPENS_AT);
+    const effectiveOpens =
+      ticketSalesOpensAtDate && ticketSalesOpensAtDate > platformOpens
+        ? ticketSalesOpensAtDate
+        : platformOpens;
+    ticketSalesEnabledOut = false;
+    isTicketSalesScheduled = true;
+    isTicketSalesPending = false;
+    ticketSalesOpensAtOut = effectiveOpens.toISOString();
+    ticketSalesOpensLabelOut = formatTicketSalesOpensLabel(effectiveOpens);
+    ticketSalesOpensShortOut = formatTicketSalesOpensShort(effectiveOpens);
+    salesClosedReason = 'platform_soft_launch';
+  }
   const connectRequired = connectRequiredForPaidCheckout() && hasPaidTickets;
   const connectReady =
     !connectRequired ||
@@ -405,21 +433,22 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
         organiser.stripe_charges_enabled &&
         organiser.stripe_connect_details_submitted
     );
-  const eventHasEnded = isEventPast(row);
   const isSalesClosed =
     eventHasEnded ||
     isSoldOut ||
-    !ticketSalesEnabled ||
+    !ticketSalesEnabledOut ||
     !ticketsOnSale ||
-    (connectRequired && !connectReady);
-  let salesClosedReason = '';
-  if (eventHasEnded) salesClosedReason = 'ended';
-  else if (isTicketSalesScheduled) salesClosedReason = 'scheduled';
-  else if (!hasTicketTiers) salesClosedReason = 'no_tickets';
-  else if (!ticketSalesEnabled) salesClosedReason = 'organiser_pending';
-  else if (connectRequired && !connectReady) salesClosedReason = 'stripe_connect';
-  else if (!ticketsOnSale) salesClosedReason = 'no_tickets';
-  else if (isSoldOut) salesClosedReason = 'sold_out';
+    (connectRequired && !connectReady) ||
+    !platformTicketsOpen;
+  if (!salesClosedReason) {
+    if (eventHasEnded) salesClosedReason = 'ended';
+    else if (isTicketSalesScheduled) salesClosedReason = 'scheduled';
+    else if (!hasTicketTiers) salesClosedReason = 'no_tickets';
+    else if (!ticketSalesEnabledOut) salesClosedReason = 'organiser_pending';
+    else if (connectRequired && !connectReady) salesClosedReason = 'stripe_connect';
+    else if (!ticketsOnSale) salesClosedReason = 'no_tickets';
+    else if (isSoldOut) salesClosedReason = 'sold_out';
+  }
 
   const orgName = organiser ? String(organiser.name || '').trim() : '';
   const orgRating =
@@ -496,10 +525,10 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
     isEventPast: eventHasEnded,
     isTicketSalesPending,
     isTicketSalesScheduled,
-    ticketSalesEnabled,
-    ticketSalesOpensAt,
-    ticketSalesOpensLabel,
-    ticketSalesOpensShort,
+    ticketSalesEnabled: ticketSalesEnabledOut,
+    ticketSalesOpensAt: ticketSalesOpensAtOut,
+    ticketSalesOpensLabel: ticketSalesOpensLabelOut,
+    ticketSalesOpensShort: ticketSalesOpensShortOut,
     hasTicketTiers,
     salesClosedReason,
     spotsLeft,

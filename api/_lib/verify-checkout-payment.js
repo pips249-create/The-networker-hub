@@ -76,6 +76,11 @@ function checkoutBookingFields(checkout, input) {
 }
 
 async function assertFreeTicketAllowed(input) {
+  const { arePublicTicketSalesOpen } = require('./soft-launch');
+  if (!arePublicTicketSalesOpen()) {
+    throw new Error('ticket_sales_platform_closed');
+  }
+
   const sb = getSupabaseAdmin();
   const eventId = String(input.eventId || input.event_id || '').trim();
   const ticketId = String(input.ticketId || input.ticket_id || '').trim();

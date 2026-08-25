@@ -16,6 +16,15 @@
     return now >= opensAtMs(PUBLIC_BROWSE_OPENS_AT);
   }
 
+  function arePublicTicketSalesOpen(nowMs) {
+    var now = nowMs == null ? Date.now() : Number(nowMs);
+    return now >= opensAtMs(PUBLIC_TRANSACTIONS_OPENS_AT);
+  }
+
+  function publicTicketSalesClosedMessage() {
+    return 'Ticket buying opens on 1 September 2026. You can browse events now and nudge organisers to list tickets.';
+  }
+
   function arePublicEnquiriesOpen(nowMs) {
     var now = nowMs == null ? Date.now() : Number(nowMs);
     return now >= opensAtMs(PUBLIC_TRANSACTIONS_OPENS_AT);
@@ -30,6 +39,8 @@
     return {
       browseOpen: isPublicBrowseOpen(now),
       browseOpensAt: PUBLIC_BROWSE_OPENS_AT,
+      ticketSalesOpen: arePublicTicketSalesOpen(now),
+      ticketSalesOpensAt: PUBLIC_TRANSACTIONS_OPENS_AT,
       enquiriesOpen: arePublicEnquiriesOpen(now),
       enquiriesOpensAt: PUBLIC_TRANSACTIONS_OPENS_AT,
       transactionsOpensAt: PUBLIC_TRANSACTIONS_OPENS_AT,
@@ -40,6 +51,8 @@
     PUBLIC_BROWSE_OPENS_AT: PUBLIC_BROWSE_OPENS_AT,
     PUBLIC_TRANSACTIONS_OPENS_AT: PUBLIC_TRANSACTIONS_OPENS_AT,
     isPublicBrowseOpen: isPublicBrowseOpen,
+    arePublicTicketSalesOpen: arePublicTicketSalesOpen,
+    publicTicketSalesClosedMessage: publicTicketSalesClosedMessage,
     arePublicEnquiriesOpen: arePublicEnquiriesOpen,
     publicEnquiriesClosedMessage: publicEnquiriesClosedMessage,
     softLaunchPublicMeta: softLaunchPublicMeta,

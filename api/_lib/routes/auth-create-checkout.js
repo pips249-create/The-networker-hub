@@ -9,6 +9,11 @@ const {
 } = require('../stripe-connect');
 const { normalizeGuestNames, createRegistrationFromPayment, createSeriesBundleFromPayment } = require('../supabase-registrations');
 const { resolveTicketSalesEnabled } = require('../ticket-sales');
+const {
+  arePublicTicketSalesOpen,
+  publicTicketSalesClosedMessage,
+  softLaunchPublicMeta,
+} = require('../soft-launch');
 const { assertRefundPolicyForPaidCheckout } = require('../event-refund-policy');
 const { isUuid } = require('../uuid');
 const {
@@ -184,6 +189,15 @@ module.exports = async function handler(req, res) {
         ok: false,
         error: 'event_ended',
         message: 'This event has ended.',
+      });
+    }
+
+    if (!arePublicTicketSalesOpen()) {
+      return json(res, 403, {
+        ok: false,
+        error: 'ticket_sales_platform_closed',
+        message: publicTicketSalesClosedMessage(),
+        softLaunch: softLaunchPublicMeta(),
       });
     }
 
