@@ -1008,9 +1008,9 @@
 
 .intl-footer {
   margin-top: auto;
-  border-top: 1px solid var(--border-soft);
-  background: var(--cream);
-  color: var(--text-muted);
+  border-top: 1px solid rgba(194, 153, 209, 0.16);
+  background: linear-gradient(180deg, #423c40 0%, var(--intl-header-bg, #3a3438) 100%);
+  color: rgba(250, 246, 238, 0.72);
 }
 
 .intl-footer-inner {
@@ -1049,12 +1049,12 @@
 .intl-footer-nav a {
   font-size: 0.92rem;
   font-weight: 600;
-  color: var(--charcoal);
+  color: #faf6ee;
   text-decoration: none;
 }
 
 .intl-footer-nav a:hover {
-  color: var(--lavender-deep);
+  color: var(--lavender-soft, #d9c4e0);
 }
 
 .intl-footer-cookie-btn {
@@ -1065,35 +1065,41 @@
   font: inherit;
   font-size: 0.92rem;
   font-weight: 600;
-  color: var(--charcoal);
+  color: #faf6ee;
 }
 
 .intl-footer-cookie-btn:hover {
-  color: var(--lavender-deep);
+  color: var(--lavender-soft, #d9c4e0);
 }
 
 .intl-footer-belong {
   margin: 0 0 10px;
   font-size: 0.95rem;
   line-height: 1.45;
-  color: var(--charcoal-soft);
+  color: rgba(250, 246, 238, 0.78);
 }
 
 .intl-footer-belong strong {
-  color: var(--charcoal);
+  color: #faf6ee;
   font-weight: 700;
 }
 
 .intl-footer-belong a {
-  color: var(--charcoal);
+  color: #faf6ee;
   font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.intl-footer-belong a:hover {
+  color: var(--lavender-soft, #d9c4e0);
 }
 
 .intl-footer-copy {
   margin: 0;
   font-size: var(--text-size-small, 0.82rem);
   line-height: 1.55;
-  color: var(--text-muted);
+  color: rgba(250, 246, 238, 0.62);
 }
 
 .intl-footer-copy .nowrap {
