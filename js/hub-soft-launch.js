@@ -47,6 +47,77 @@
     };
   }
 
+  var BANNER_ID = 'hub-browse-week-banner';
+  var BANNER_DISMISS_KEY = 'hub_browse_week_banner_dismissed_v1';
+
+  function shouldSkipBrowseWeekBanner() {
+    var path = String((global.location && global.location.pathname) || '').toLowerCase();
+    if (path.indexOf('/admin') === 0) return true;
+    if (path === '/peek' || path.indexOf('/peek/') === 0) return true;
+    if (path.indexOf('/site-access') === 0) return true;
+    if (path.indexOf('/marketing/') === 0) return true;
+    if (path.indexOf('/embed/') === 0) return true;
+    try {
+      if (global.self !== global.top) return true;
+    } catch (e) {
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Quiet site-wide notice while browsing is open but tickets/enquiries are not.
+   * Inserts above the shared nav when possible; dismissible until 1 September.
+   */
+  function mountBrowseWeekBanner(opts) {
+    opts = opts || {};
+    if (typeof document === 'undefined') return;
+    if (shouldSkipBrowseWeekBanner()) return;
+    if (!isPublicBrowseOpen() || arePublicTicketSalesOpen()) return;
+    try {
+      if (global.localStorage && global.localStorage.getItem(BANNER_DISMISS_KEY) === '1') return;
+    } catch (e) {
+      /* private mode — still show */
+    }
+    if (document.getElementById(BANNER_ID)) return;
+
+    var banner = document.createElement('div');
+    banner.id = BANNER_ID;
+    banner.className = 'hub-browse-week-banner';
+    banner.setAttribute('role', 'status');
+    banner.innerHTML =
+      '<p class="hub-browse-week-banner-text">' +
+      '<strong>Looking around is open</strong>' +
+      '<span class="hub-browse-week-banner-sep" aria-hidden="true">·</span>' +
+      'Booking &amp; enquiries from <strong>1 September</strong>' +
+      '</p>' +
+      '<button type="button" class="hub-browse-week-banner-dismiss" aria-label="Dismiss notice">×</button>';
+
+    var beforeEl = opts.beforeEl || document.getElementById('hub-site-nav');
+    if (beforeEl && beforeEl.parentNode) {
+      beforeEl.parentNode.insertBefore(banner, beforeEl);
+    } else if (document.body) {
+      document.body.insertBefore(banner, document.body.firstChild);
+    } else {
+      return;
+    }
+
+    document.documentElement.classList.add('has-hub-browse-week-banner');
+
+    var dismiss = banner.querySelector('.hub-browse-week-banner-dismiss');
+    if (dismiss) {
+      dismiss.addEventListener('click', function () {
+        try {
+          if (global.localStorage) global.localStorage.setItem(BANNER_DISMISS_KEY, '1');
+        } catch (err) {
+          /* ignore */
+        }
+        banner.remove();
+        document.documentElement.classList.remove('has-hub-browse-week-banner');
+      });
+    }
+  }
+
   global.HubSoftLaunch = {
     PUBLIC_BROWSE_OPENS_AT: PUBLIC_BROWSE_OPENS_AT,
     PUBLIC_TRANSACTIONS_OPENS_AT: PUBLIC_TRANSACTIONS_OPENS_AT,
@@ -56,5 +127,6 @@
     arePublicEnquiriesOpen: arePublicEnquiriesOpen,
     publicEnquiriesClosedMessage: publicEnquiriesClosedMessage,
     softLaunchPublicMeta: softLaunchPublicMeta,
+    mountBrowseWeekBanner: mountBrowseWeekBanner,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

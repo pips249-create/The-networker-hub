@@ -102,7 +102,7 @@
  * NAV_BUILD=20260709h — transparent nav logo (from logo-nav.png).
  */
 (function () {
-  var NAV_BUILD = '20260825guestnav1';
+  var NAV_BUILD = '20260825banner1';
   var LOGO_SRC = '/assets/logo-nav-transparent.png?v=20260823uk3';
   var SESSION_KEY = 'hub_nav_session_v1';
   var SESSION_TTL_MS = 5 * 60 * 1000;
@@ -181,6 +181,30 @@
     loadComplianceAsset('css/cookie-consent.css?v=20260609');
     loadComplianceAsset('js/hub-analytics.js?v=20260825gdpr1');
     loadComplianceAsset('js/cookie-consent.js?v=20260825gdpr1');
+  }
+
+  function mountBrowseWeekBannerWhenReady() {
+    function run() {
+      if (window.HubSoftLaunch && typeof window.HubSoftLaunch.mountBrowseWeekBanner === 'function') {
+        window.HubSoftLaunch.mountBrowseWeekBanner({ beforeEl: mount });
+      }
+    }
+    if (window.HubSoftLaunch && typeof window.HubSoftLaunch.mountBrowseWeekBanner === 'function') {
+      run();
+      return;
+    }
+    var path = 'js/hub-soft-launch.js?v=20260825banner1';
+    var existing = document.querySelector('script[data-hub-soft-launch="1"]');
+    if (existing) {
+      existing.addEventListener('load', run);
+      return;
+    }
+    var s = document.createElement('script');
+    s.src = root + path;
+    s.defer = true;
+    s.setAttribute('data-hub-soft-launch', '1');
+    s.addEventListener('load', run);
+    document.head.appendChild(s);
   }
 
   var mount = document.getElementById('hub-site-nav');
@@ -1125,4 +1149,6 @@
   } else {
     ensureMainSkipTarget();
   }
+
+  mountBrowseWeekBannerWhenReady();
 })();

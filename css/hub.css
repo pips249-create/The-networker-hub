@@ -605,6 +605,68 @@ body.hub-page-admin .site-nav {
   z-index: 60;
 }
 
+/* Soft-launch browse week — quiet notice (dismissible; auto-hides 1 Sept) */
+.hub-browse-week-banner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px 14px;
+  padding: 9px 44px 9px 16px;
+  background: #f3ebe3;
+  color: var(--charcoal);
+  font-size: 13px;
+  line-height: 1.45;
+  text-align: center;
+  border-bottom: 1px solid rgba(74, 68, 70, 0.1);
+  z-index: 55;
+}
+
+.hub-browse-week-banner-text {
+  margin: 0;
+  max-width: 52rem;
+}
+
+.hub-browse-week-banner-text strong {
+  font-weight: 650;
+  color: #1c2040;
+}
+
+.hub-browse-week-banner-sep {
+  margin: 0 0.35em;
+  color: rgba(74, 68, 70, 0.45);
+}
+
+.hub-browse-week-banner-dismiss {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(74, 68, 70, 0.55);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.hub-browse-week-banner-dismiss:hover,
+.hub-browse-week-banner-dismiss:focus-visible {
+  color: #1c2040;
+  background: rgba(74, 68, 70, 0.06);
+  outline: none;
+}
+
+@media (max-width: 520px) {
+  .hub-browse-week-banner {
+    padding: 10px 40px 10px 12px;
+    font-size: 12px;
+  }
+}
+
 .hub-impersonation-banner {
   display: flex;
   align-items: center;
