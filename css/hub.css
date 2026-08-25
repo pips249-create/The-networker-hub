@@ -584,13 +584,13 @@ a:hover { color: var(--charcoal); }
  */
 body:has([id='hub-site-nav']):not(:has(script[data-page='home'])):not(:has(script[data-page='admin'])):not(:has(script[data-page='organiser'])):not(:has(script[data-page='account'])):not(:has(script[data-page='settings'])),
 body.has-site-nav {
-  padding-top: 84px;
+  padding-top: calc(84px + var(--hub-browse-banner-h, 0px));
 }
 
 /* Opportunities family uses a slightly shorter offset */
 body.opportunities-page:has([id='hub-site-nav']):not(:has(script[data-page='home'])):not(:has(script[data-page='admin'])):not(:has(script[data-page='organiser'])):not(:has(script[data-page='account'])):not(:has(script[data-page='settings'])),
 body.opportunities-page.has-site-nav {
-  padding-top: 72px;
+  padding-top: calc(72px + var(--hub-browse-banner-h, 0px));
 }
 
 body.hub-page-admin {
@@ -607,19 +607,24 @@ body.hub-page-admin .site-nav {
 
 /* Soft-launch browse week — quiet notice (dismissible; auto-hides 1 Sept) */
 .hub-browse-week-banner {
-  position: relative;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px 14px;
-  padding: 9px 44px 9px 16px;
+  padding: 10px 44px 10px 16px;
+  min-height: 40px;
+  box-sizing: border-box;
   background: #f3ebe3;
   color: var(--charcoal);
   font-size: 13px;
   line-height: 1.45;
   text-align: center;
   border-bottom: 1px solid rgba(74, 68, 70, 0.1);
-  z-index: 55;
+  z-index: 110;
 }
 
 .hub-browse-week-banner-text {
@@ -665,6 +670,15 @@ body.hub-page-admin .site-nav {
     padding: 10px 40px 10px 12px;
     font-size: 12px;
   }
+}
+
+/* Fixed nav sits under the browse-week banner while it is visible */
+html.has-hub-browse-week-banner .site-nav {
+  top: var(--hub-browse-banner-h, 40px);
+}
+
+html.has-hub-browse-week-banner body.hub-page-admin .site-nav {
+  top: var(--hub-browse-banner-h, 40px) !important;
 }
 
 .hub-impersonation-banner {

@@ -67,7 +67,7 @@
 
   /**
    * Quiet site-wide notice while browsing is open but tickets/enquiries are not.
-   * Inserts above the shared nav when possible; dismissible until 1 September.
+   * Fixed under the top of the viewport; nav is offset via --hub-browse-banner-h.
    */
   function mountBrowseWeekBanner(opts) {
     opts = opts || {};
@@ -102,7 +102,22 @@
       return;
     }
 
+    function syncBannerHeight() {
+      var h = Math.ceil(banner.getBoundingClientRect().height || banner.offsetHeight || 40);
+      document.documentElement.style.setProperty('--hub-browse-banner-h', h + 'px');
+    }
+
+    function clearBannerHeight() {
+      document.documentElement.style.removeProperty('--hub-browse-banner-h');
+      document.documentElement.classList.remove('has-hub-browse-week-banner');
+    }
+
     document.documentElement.classList.add('has-hub-browse-week-banner');
+    syncBannerHeight();
+    if (global.requestAnimationFrame) {
+      global.requestAnimationFrame(syncBannerHeight);
+    }
+    global.addEventListener('resize', syncBannerHeight);
 
     var dismiss = banner.querySelector('.hub-browse-week-banner-dismiss');
     if (dismiss) {
@@ -112,8 +127,9 @@
         } catch (err) {
           /* ignore */
         }
+        global.removeEventListener('resize', syncBannerHeight);
         banner.remove();
-        document.documentElement.classList.remove('has-hub-browse-week-banner');
+        clearBannerHeight();
       });
     }
   }

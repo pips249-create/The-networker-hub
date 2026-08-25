@@ -456,13 +456,13 @@ body.nav-menu-open {
 
   body:has([id='hub-site-nav']):not(:has(script[data-page='home'])):not(:has(script[data-page='admin'])):not(:has(script[data-page='organiser'])):not(:has(script[data-page='account'])):not(:has(script[data-page='settings'])),
   body.has-site-nav {
-    padding-top: 64px;
+    padding-top: calc(64px + var(--hub-browse-banner-h, 0px));
   }
 
   /* Align opportunities browse header offset with events browse */
   body.opportunities-page:has([id='hub-site-nav']):not(:has(script[data-page='home'])):not(:has(script[data-page='admin'])):not(:has(script[data-page='organiser'])):not(:has(script[data-page='account'])):not(:has(script[data-page='settings'])),
   body.opportunities-page.has-site-nav {
-    padding-top: 64px;
+    padding-top: calc(64px + var(--hub-browse-banner-h, 0px));
   }
 
   body.hub-page-organiser .site-nav,

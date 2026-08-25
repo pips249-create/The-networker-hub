@@ -31,7 +31,7 @@ html:has(.home-page) {
   --home-bg-warm: var(--cream);
   --home-border: var(--border-soft);
   --home-muted: var(--text-muted);
-  --home-nav-height: 84px;
+  --home-nav-height: calc(84px + var(--hub-browse-banner-h, 0px));
   overflow-x: hidden;
   width: 100%;
   min-height: 100vh;
@@ -2708,7 +2708,7 @@ html:has(.home-page) {
 
 @media (max-width: 768px) {
   .home-page {
-    --home-nav-height: 64px;
+    --home-nav-height: calc(64px + var(--hub-browse-banner-h, 0px));
   }
 }
 
