@@ -863,11 +863,14 @@ export default async function middleware(request) {
     .trim()
     .toLowerCase();
   // Hub brand domains → canonical UK host (DNS live; consolidates Search Console / Google listing).
+  // Legacy WordPress domain (early SEO flip — MX stays on co.uk DNS; web only on Vercel).
   if (
     host === 'thenetworkerhub.com' ||
     host === 'www.thenetworkerhub.com' ||
     host === 'thenetworkerhub.co.uk' ||
-    host === 'www.thenetworkerhub.co.uk'
+    host === 'www.thenetworkerhub.co.uk' ||
+    host === 'the-networker.co.uk' ||
+    host === 'www.the-networker.co.uk'
   ) {
     const dest = new URL(request.url);
     dest.protocol = 'https:';

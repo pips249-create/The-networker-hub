@@ -1,8 +1,9 @@
 # Legacy redirect map — the-networker.co.uk → hub
 
-**Status:** early flip available — see `docs/CO-UK-EARLY-FLIP-CHECKLIST.md` · platform browsing **25 August 2026** · tickets **1 September 2026** · original soft hold was ~November 2026 (optional now)  
+**Status:** **EARLY FLIP IN PROGRESS (25 Aug 2026)** — see `docs/CO-UK-EARLY-FLIP-CHECKLIST.md` · browsing live · tickets **1 September 2026**  
 **Target host:** `https://www.thenetworkeruk.com`  
-**Keep on co.uk:** mailbox / MX for `@the-networker.co.uk` (do not point email at Vercel)
+**Keep on co.uk:** mailbox / MX for `@the-networker.co.uk` (do not point email at Vercel)  
+**Hub code:** `middleware.js` + `vercel.json` redirect `the-networker.co.uk` / `www` → UK host once domains are attached in Vercel
 
 Use this when configuring DNS + hosting 301s on the old site. Hub-internal tidy redirects already live in `vercel.json` (`.html` → clean paths) — this file is only for **legacy domain → hub**.
 
