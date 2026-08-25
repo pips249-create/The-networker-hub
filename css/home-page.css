@@ -2604,6 +2604,23 @@ html:has(.home-page) {
   text-decoration: underline;
 }
 
+.home-about-teaser-legal {
+  display: block;
+  margin-top: 0.55em;
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.home-about-teaser-legal a {
+  color: var(--gold-light);
+  text-decoration: none;
+}
+
+.home-about-teaser-legal a:hover {
+  text-decoration: underline;
+}
+
 .home-faq {
   position: relative;
   z-index: 1;
