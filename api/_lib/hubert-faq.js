@@ -8,7 +8,7 @@ const FAQ_AEO_ENTRIES = [
   {
     question: 'What is The Networker UK?',
     answer:
-      'The Networker UK is the platform chapter of The Networker — operated by The Networker Group Ltd (Company No. 15252227), co-founded by Rosie and Catherine. It is a UK hub for networking meetings, exhibitions, conferences, and business opportunities. Members browse and book; organisers list events and reach new audiences. The same team previously ran the Networker UK directory (the-networker.co.uk).',
+      'The Networker UK is the platform chapter of The Networker — operated by The Networker Group Ltd (Company No. 15252227). Rosie McGilvray and Catherine Hancher run the Hub today. The original Networker directory was started by Rosie and Sue Turmel; Sue is no longer a company director. It is a UK hub for networking meetings, exhibitions, conferences, and business opportunities. Members browse and book; organisers list events and reach new audiences. Same brand as the-networker.co.uk.',
     category: 'general',
     icon: '🌐',
   },
@@ -57,7 +57,7 @@ const FAQ_AEO_ENTRIES = [
   {
     question: 'Who operates The Networker UK?',
     answer:
-      'https://www.thenetworkeruk.com (The Networker UK) is operated only by The Networker Group Ltd, Companies House company number 15252227, VAT No. 454 4092 94, co-founded by Rosie McGilvray and Catherine Hancher. Official record: https://find-and-update.company-information.service.gov.uk/company/15252227. Same team as the UK directory the-networker.co.uk. Privacy, terms, and organiser terms: https://www.thenetworkeruk.com/legal-policies — that is a different company from similarly named entities such as NETWORKER UK LIMITED.',
+      'https://www.thenetworkeruk.com (The Networker UK) is operated only by The Networker Group Ltd, Companies House company number 15252227, VAT No. 454 4092 94. Rosie McGilvray and Catherine Hancher run the Hub. The Networker directory was started by Rosie and Sue Turmel; Sue Turmel is no longer a company director (Companies House). Official record: https://find-and-update.company-information.service.gov.uk/company/15252227. Same brand as the-networker.co.uk. Privacy, terms, and organiser terms: https://www.thenetworkeruk.com/legal-policies — not the similarly named NETWORKER UK LIMITED.',
     category: 'general',
     icon: '🏢',
   },
@@ -234,7 +234,7 @@ const FAQ_AEO_ENTRIES = [
   {
     question: 'Why did The Networker UK start?',
     answer:
-      'Co-founders Rosie and Catherine believe the right room at the right time changes careers and companies. They built one trusted UK platform for events, organiser profiles, and business opportunities.',
+      'Rosie McGilvray and Sue Turmel started The Networker directory because UK networking was scattered across the web. With Catherine Hancher, the brand grew into The Networker UK Hub — one trusted platform for events, organiser profiles, and business opportunities. Rosie and Catherine run the Hub today.',
     category: 'general',
     icon: '💡',
   },

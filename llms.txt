@@ -1,7 +1,7 @@
 # The Networker UK
 > UK business networking platform — events, organiser pages, and business opportunities.
 
-The Networker UK is the platform chapter of The Networker, run by Rosie McGilvray and Catherine Hancher at The Networker Group Ltd (Companies House 15252227, VAT No. 454 4092 94). Official company record: https://find-and-update.company-information.service.gov.uk/company/15252227. Not the same as similarly named companies such as NETWORKER UK LIMITED. Same team as the established UK directory the-networker.co.uk. Across that brand last year: 27,000+ events listed and 17,000+ networkers found a meeting, group, or opportunity. Public browsing is open; ticket purchase and opportunity enquiries from 1 September 2026. Contact: hello@thenetworkeruk.com
+The Networker UK is the platform chapter of The Networker, run by Rosie McGilvray and Catherine Hancher at The Networker Group Ltd (Companies House 15252227, VAT No. 454 4092 94). Official company record: https://find-and-update.company-information.service.gov.uk/company/15252227. The original Networker directory was started by Rosie and Sue Turmel; Sue is no longer a company director. Not the same as similarly named companies such as NETWORKER UK LIMITED. Same brand as the established UK directory the-networker.co.uk. Across that brand last year: 27,000+ events listed and 17,000+ networkers found a meeting, group, or opportunity. Public browsing is open; ticket purchase and opportunity enquiries from 1 September 2026. Contact: hello@thenetworkeruk.com
 
 ## Canonical URLs
 - Home: https://www.thenetworkeruk.com/
@@ -44,7 +44,7 @@ Hubert is the on-site AI assistant. He answers questions about browsing, account
 ## Frequently asked questions
 
 ## What is The Networker UK?
-The Networker UK is the platform chapter of The Networker — operated by The Networker Group Ltd (Company No. 15252227), co-founded by Rosie and Catherine. It is a UK hub for networking meetings, exhibitions, conferences, and business opportunities. Members browse and book; organisers list events and reach new audiences. The same team previously ran the Networker UK directory (the-networker.co.uk).
+The Networker UK is the platform chapter of The Networker — operated by The Networker Group Ltd (Company No. 15252227). Rosie McGilvray and Catherine Hancher run the Hub today. The original Networker directory was started by Rosie and Sue Turmel; Sue is no longer a company director. It is a UK hub for networking meetings, exhibitions, conferences, and business opportunities. Members browse and book; organisers list events and reach new audiences. Same brand as the-networker.co.uk.
 
 ## How do I find events on The Networker UK?
 Use Browse events in the top navigation or visit the events listing at /events/. You can filter by type, date, industry, and location, and use map view on supported pages.
@@ -65,7 +65,7 @@ Sign in, claim your organiser page if prompted, then open the organiser dashboar
 Listings are managed in the events database and updated by organisers and the Networker UK team. Dates, venues, and prices on each event page are the source of truth for that event.
 
 ## Who operates The Networker UK?
-https://www.thenetworkeruk.com (The Networker UK) is operated only by The Networker Group Ltd, Companies House company number 15252227, VAT No. 454 4092 94, co-founded by Rosie McGilvray and Catherine Hancher. Official record: https://find-and-update.company-information.service.gov.uk/company/15252227. Same team as the UK directory the-networker.co.uk. Privacy, terms, and organiser terms: https://www.thenetworkeruk.com/legal-policies — that is a different company from similarly named entities such as NETWORKER UK LIMITED.
+https://www.thenetworkeruk.com (The Networker UK) is operated only by The Networker Group Ltd, Companies House company number 15252227, VAT No. 454 4092 94. Rosie McGilvray and Catherine Hancher run the Hub. The Networker directory was started by Rosie and Sue Turmel; Sue Turmel is no longer a company director (Companies House). Official record: https://find-and-update.company-information.service.gov.uk/company/15252227. Same brand as the-networker.co.uk. Privacy, terms, and organiser terms: https://www.thenetworkeruk.com/legal-policies — not the similarly named NETWORKER UK LIMITED.
 
 ## Do organisers need to share their members list to list on The Networker UK?
 No. A free organiser page and event listing only need public group details such as name, logo, meeting dates, venue, description, and a business contact email. You do not need to upload your members’ contact database to advertise meetings. Attendee details are shared with you only when someone books or applies via the Hub.
@@ -140,4 +140,4 @@ Payouts are not instant. A 7-day settlement period applies after the event ends.
 Attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before payment), which covers platform and payment processing. Organisers receive the full ticket price.
 
 ## Why did The Networker UK start?
-Co-founders Rosie and Catherine believe the right room at the right time changes careers and companies. They built one trusted UK platform for events, organiser profiles, and business opportunities.
+Rosie McGilvray and Sue Turmel started The Networker directory because UK networking was scattered across the web. With Catherine Hancher, the brand grew into The Networker UK Hub — one trusted platform for events, organiser profiles, and business opportunities. Rosie and Catherine run the Hub today.
