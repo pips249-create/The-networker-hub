@@ -526,6 +526,21 @@
   color: rgba(250, 246, 238, 0.88);
 }
 
+.market-preview-cookie-btn {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: inherit;
+  font-weight: 600;
+  color: rgba(250, 246, 238, 0.85);
+}
+
+.market-preview-cookie-btn:hover {
+  color: #faf6ee;
+}
+
 @media (max-width: 860px) {
   .market-preview-shell {
     grid-template-columns: 1fr;

@@ -12,7 +12,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/hub.css?v=20260825mkt4">
-<link rel="stylesheet" href="/css/market-preview.css?v=20260825mkt4">
+<link rel="stylesheet" href="/css/cookie-consent.css?v=20260825mkt5">
+<link rel="stylesheet" href="/css/market-preview.css?v=20260825mkt5">
 <link rel="icon" href="/favicon.ico?v=20260825intl26" sizes="any">
 <link rel="icon" href="/assets/favicon.svg?v=20260825intl26" type="image/svg+xml">
 </head>
@@ -170,9 +171,26 @@
     Part of <strong>The Networker Group Limited</strong>
     · Company No. 15252227
     · <a href="https://www.thenetworkerinternational.com/">The Networker International</a>
+    · <a href="https://www.thenetworkeruk.com/legal-policies#privacy" rel="noopener noreferrer">Privacy</a>
+    · <a href="https://www.thenetworkeruk.com/legal-policies#cookies" rel="noopener noreferrer">Cookies</a>
+    · <button type="button" class="market-preview-cookie-btn" id="market-preview-cookie-settings">Cookie settings</button>
   </p>
 </footer>
 
-<script src="/js/market-preview.js?v=20260825mkt4" defer></script>
+<script src="/js/hub-analytics.js?v=20260825mkt5" defer></script>
+<script src="/js/cookie-consent.js?v=20260825mkt5" defer></script>
+<script src="/js/market-preview.js?v=20260825mkt5" defer></script>
+<script>
+  (function () {
+    var cookieBtn = document.getElementById('market-preview-cookie-settings');
+    if (cookieBtn) {
+      cookieBtn.addEventListener('click', function () {
+        if (window.HubCookieConsent && window.HubCookieConsent.openSettings) {
+          window.HubCookieConsent.openSettings();
+        }
+      });
+    }
+  })();
+</script>
 </body>
 </html>

@@ -29,6 +29,18 @@
     }
   }
 
+  function cookiePolicyHref() {
+    var host = String(window.location.hostname || '').toLowerCase().replace(/^www\./, '');
+    if (
+      host === 'thenetworkerinternational.com' ||
+      host === 'thenetworkerireland.com' ||
+      host === 'thenetworkerusa.com'
+    ) {
+      return 'https://www.thenetworkeruk.com/legal-policies#cookies';
+    }
+    return '/legal-policies#cookies';
+  }
+
   function loadAnalytics() {
     if (!window.HubAnalytics || typeof window.HubAnalytics.load !== 'function') return;
     window.HubAnalytics.load();
@@ -81,9 +93,7 @@
       '<div class="hub-cookie-banner-inner">' +
       '<p class="hub-cookie-banner-copy">We use essential cookies to run the platform and optional analytics to improve the site. ' +
       '<a href="' +
-      (/(^|\.)thenetworkerinternational\.com$/i.test(String(window.location.hostname || ''))
-        ? 'https://www.thenetworkeruk.com/legal-policies#cookies'
-        : '/legal-policies#cookies') +
+      cookiePolicyHref() +
       '">Cookie policy</a></p>' +
       '<div class="hub-cookie-banner-actions">' +
       '<button type="button" class="hub-cookie-btn" id="hub-cookie-settings-btn">Manage</button>' +

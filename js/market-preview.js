@@ -36,6 +36,16 @@
     return document.getElementById(id);
   }
 
+  function trackPreview(name, data) {
+    try {
+      if (window.HubAnalytics && typeof window.HubAnalytics.track === 'function') {
+        window.HubAnalytics.track(name, data);
+      }
+    } catch (e) {
+      /* analytics optional */
+    }
+  }
+
   function detectMarket() {
     var host = String(window.location.hostname || '')
       .toLowerCase()
@@ -236,6 +246,17 @@
               (result.data && result.data.message) ||
                 (listing ? 'Could not save your group details.' : 'Could not save your interest.')
             );
+          }
+          if (listing) {
+            trackPreview('intl_building_submit', {
+              country: market.iso2,
+              orgType: selectedOrgType,
+            });
+          } else {
+            trackPreview('intl_interest_submit', {
+              country: market.iso2,
+              intent: 'attend',
+            });
           }
           form.hidden = true;
           if (intentWrap) intentWrap.hidden = true;

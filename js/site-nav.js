@@ -184,7 +184,7 @@
     window.__hubComplianceAssets = true;
     loadComplianceAsset('css/cookie-consent.css?v=20260609');
     loadComplianceAsset('js/hub-analytics.js?v=20260825gdpr1');
-    loadComplianceAsset('js/cookie-consent.js?v=20260825gdpr1');
+    loadComplianceAsset('js/cookie-consent.js?v=20260825mkt5');
   }
 
   function mountBrowseWeekBannerWhenReady() {
