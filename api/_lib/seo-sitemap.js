@@ -130,16 +130,19 @@ async function buildSitemapXml(originOverride) {
     (events || []).map((row) => row.organiser_id).filter(Boolean)
   );
 
-  const eventSlugs = new Set();
+  // One <loc> per public event slug (recurring series share a slug — duplicates upset GSC).
+  const eventSlugLastmod = new Map();
   (events || []).forEach((row) => {
     const slug = publicEventSlug({ slug: row.slug, title: row.title });
     if (!slug) return;
-    eventSlugs.add(slug);
-    body += urlEntry(
-      origin,
-      '/events/' + encodeURIComponent(slug),
-      isoDate(row.starts_at || row.created_at)
-    );
+    const lastmod = isoDate(row.starts_at || row.created_at);
+    const prev = eventSlugLastmod.get(slug);
+    if (prev == null || (lastmod && lastmod > prev)) {
+      eventSlugLastmod.set(slug, lastmod || prev || '');
+    }
+  });
+  eventSlugLastmod.forEach((lastmod, slug) => {
+    body += urlEntry(origin, '/events/' + encodeURIComponent(slug), lastmod);
   });
 
   const organiserSlugs = new Set();
