@@ -8,8 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/hub.css?v=20260825banner2">
-<link rel="stylesheet" href="css/home-page.css?v=20260825banner2">
+<link rel="stylesheet" href="css/hub.css?v=20260825tododot1">
+<link rel="stylesheet" href="css/home-page.css?v=20260825trust1">
 <link rel="stylesheet" href="css/hubert-widget.css?v=20260711">
 <link rel="icon" href="/favicon.ico?v=20260823uk3" sizes="any">
 <link rel="icon" href="/assets/favicon.svg?v=20260823uk3" type="image/svg+xml">
@@ -24,7 +24,7 @@
 <body class="home-page">
 
 <div id="hub-site-nav"></div>
-<script src="js/site-nav.js?v=20260825banner2" data-root="" data-page="home"></script>
+<script src="js/site-nav.js?v=20260825tododot1" data-root="" data-page="home"></script>
 
 <main class="home-flow">
 
@@ -301,10 +301,15 @@
       </div>
       <aside class="home-about-teaser" aria-label="About The Networker UK">
         <p class="home-about-teaser-copy">
-          Run by <strong>The Networker Group Ltd</strong> — the same UK team behind the Networker directory.
+          Run by <strong>The Networker Group Ltd</strong> (Company No. 15252227) — the same UK team behind the Networker directory.
           Across that brand last year, <strong>27,000+</strong> events were listed and
           <strong>17,000+</strong> networkers found a meeting, group, or opportunity.
           <a class="home-about-teaser-link" href="/about">About us →</a>
+          <span class="home-about-teaser-legal">
+            <a href="/legal-policies">Legal centre</a>
+            · <a href="/legal-policies#privacy">Privacy</a>
+            · <a href="/legal-policies#organisers">Organiser terms</a>
+          </span>
         </p>
       </aside>
       <div class="home-faq">
@@ -336,7 +341,26 @@
 
 </main>
 
-<div id="hub-site-footer"></div>
+<div id="hub-site-footer">
+  <!-- Crawlable fallback until site-footer.js replaces this (company ↔ domain ↔ legal). -->
+  <footer class="site-footer site-footer--seo-fallback" aria-label="Site footer">
+    <div class="footer-inner">
+      <p class="footer-copy">
+        <strong>thenetworkeruk.com</strong> (The Networker UK) is operated by
+        <strong>The Networker Group Ltd</strong>, registered in England &amp; Wales
+        (Company No. 15252227 · VAT No. 454 4092 94).
+        Same team as <a href="https://the-networker.co.uk/">the-networker.co.uk</a>.
+        Official Companies House record:
+        <a href="https://find-and-update.company-information.service.gov.uk/company/15252227" rel="noopener noreferrer">15252227</a>.
+        <a href="/legal-policies">Legal centre</a> ·
+        <a href="/legal-policies#privacy">Privacy</a> ·
+        <a href="/legal-policies#terms">Terms</a> ·
+        <a href="/legal-policies#organisers">Organiser terms</a> ·
+        <a href="mailto:hello@thenetworkeruk.com">hello@thenetworkeruk.com</a>
+      </p>
+    </div>
+  </footer>
+</div>
 <script src="js/site-footer.js?v=20260825a11y1" data-root=""></script>
 <script src="js/region-landmark-icons.js?v=20260729county"></script>
 <script src="js/networking-region-themes.js?v=20260729county"></script>

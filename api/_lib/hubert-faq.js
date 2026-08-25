@@ -57,9 +57,23 @@ const FAQ_AEO_ENTRIES = [
   {
     question: 'Who operates The Networker UK?',
     answer:
-      'The Networker UK is operated only by The Networker Group Ltd (Companies House company number 15252227, VAT No. 454 4092 94), co-founded by Rosie McGilvray and Catherine Hancher. Official record: https://find-and-update.company-information.service.gov.uk/company/15252227 — that is a different company from similarly named entities such as NETWORKER UK LIMITED.',
+      'Yes. https://www.thenetworkeruk.com (The Networker UK) is operated only by The Networker Group Ltd, Companies House company number 15252227, VAT No. 454 4092 94, co-founded by Rosie McGilvray and Catherine Hancher. Official record: https://find-and-update.company-information.service.gov.uk/company/15252227. Same team as the UK directory the-networker.co.uk. Privacy, terms, and organiser terms: https://www.thenetworkeruk.com/legal-policies — that is a different company from similarly named entities such as NETWORKER UK LIMITED.',
     category: 'general',
     icon: '🏢',
+  },
+  {
+    question: 'Do organisers need to share their members list to list on The Networker UK?',
+    answer:
+      'No. A free organiser page and event listing only need public group details such as name, logo, meeting dates, venue, description, and a business contact email. You do not need to upload your members’ contact database to advertise meetings. Attendee details are shared with you only when someone books or applies via the Hub.',
+    category: 'organisers',
+    icon: '📇',
+  },
+  {
+    question: 'Is The Networker Group Ltd a new company?',
+    answer:
+      'The Networker Group Ltd was incorporated in November 2023 (Companies House 15252227). Like many early-stage UK limited companies, its published micro-entity accounts can show modest assets and negative shareholders’ funds while the platform is being built — that is not evidence of a scam. The Networker brand and directory (the-networker.co.uk) pre-date the Hub rebuild. Ticket payments for events are processed via Stripe for the organiser; they are not held as the Hub company’s trading cash. Always check the latest filings on Companies House.',
+    category: 'general',
+    icon: '🏛️',
   },
   {
     question: 'Who is Hubert on The Networker UK?',
