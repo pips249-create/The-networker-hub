@@ -189,6 +189,19 @@ html:has(.site-access-page) {
   text-align: center;
 }
 
+.site-access-privacy-note {
+  margin: 10px 0 0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.site-access-privacy-note a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .site-access-organiser-link a {
   color: var(--lavender-deep);
   font-weight: 700;

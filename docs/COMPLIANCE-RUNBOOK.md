@@ -43,7 +43,7 @@ Internal checklist for items that cannot be fully automated in code. Review quar
 | ICO registration | Follow `docs/ICO-REGISTRATION.md` — **ZB694959** · expires 29 May 2027 | Catherine | ☑ Verified 6 Aug 2026 |
 | Solicitor review | UK lawyer review `legal-policies.html` before scaling paid ticketing | Catherine | ☑ Done (confirmed 6 Aug 2026) |
 | DPAs | Follow `docs/DPA-SUBPROCESSORS.md`; track in `docs/DPA-REGISTER.md`; run `npm run check:dpas` | Catherine | ☑ Filed 10 Jul 2026 |
-| RoPA | Maintain `docs/RoPA.md` when features or subprocessors change | Catherine | ☑ Updated 13 Aug 2026 (roster §J) |
+| RoPA | Maintain `docs/RoPA.md` when features or subprocessors change | Catherine | ☑ Updated 25 Aug 2026 (§K + Brevo) |
 | Backups / monitoring | `docs/OPS-RELIABILITY.md` — Supabase Pro backups + UptimeRobot on `/api/health` | Catherine | ☐ Confirm Pro + monitor |
 | Breach runbook | Named leads in `docs/DATA-BREACH-RESPONSE.md` | Catherine | ☑ |
 | GDPR requests | `docs/GDPR-SAR-PROCEDURE.md` — hello@ monitored | Catherine / Rosie | ☑ Procedure + owners |
@@ -59,7 +59,7 @@ Internal checklist for items that cannot be fully automated in code. Review quar
 | Company VAT | The Networker Group Ltd VAT No. 454 4092 94 | Finance | ☑ Registered |
 | Organiser VAT treatment | Accountant sign-off on booking-fee / ticket VAT options (`docs/VAT-ORGANISER-GUIDANCE.md` §4) | Finance | ☐ |
 | Insurance | Optional: platform liability + cyber (broker quotes) — park if deferred | Catherine | ☐ Optional |
-| Legacy marketing opt-in | Run `node scripts/audit-legacy-marketing-opt-in.js`; re-permission email | Marketing | ☐ Audit script ready |
+| Legacy marketing opt-in | Run `node scripts/audit-legacy-marketing-opt-in.js`; follow `docs/MARKETING-REPERMISSION.md` | Marketing | ☐ Audit + re-permission pending |
 
 ### Product & trust
 
@@ -80,6 +80,7 @@ Internal checklist for items that cannot be fully automated in code. Review quar
 | Stripe | Payments | ☑ DPA PDF filed (incorporated in SSA) |
 | Resend | Email | ☑ DPA from Settings → Documents |
 | Vercel | Hosting, analytics | ☑ DPA PDF filed (incorporated in Terms) |
+| Brevo | Launch / campaign email (when used) | ☐ Pending — `docs/DPA-SUBPROCESSORS.md` §7 |
 
 **Hubert:** FAQ + live Supabase lookups only — no OpenAI subprocessor.
 
@@ -100,6 +101,7 @@ Internal checklist for items that cannot be fully automated in code. Review quar
 | `docs/ICO-REGISTRATION.md` | ICO fee verification |
 | `docs/OPS-RELIABILITY.md` | Backups, restore drill, uptime monitoring |
 | `docs/DPA-SUBPROCESSORS.md` | Processor agreements |
+| `docs/MARKETING-REPERMISSION.md` | Re-permission for pre-ticked marketing opt-in |
 | `docs/VAT-ORGANISER-GUIDANCE.md` | Organiser VAT summary |
 
 ---

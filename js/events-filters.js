@@ -163,6 +163,7 @@
       toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
       sheet.hidden = !open;
       sheet.setAttribute('aria-hidden', open ? 'false' : 'true');
+      if ('inert' in sheet) sheet.inert = !open;
       if (open) {
         lastFocus = document.activeElement;
         mountSheetContent();
@@ -204,6 +205,9 @@
       if (sheetOpen) {
         syncSheetTitle();
         syncApplyLabel();
+      } else {
+        sheet.setAttribute('aria-hidden', 'true');
+        if ('inert' in sheet) sheet.inert = true;
       }
     }
 

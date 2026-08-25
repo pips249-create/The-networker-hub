@@ -4,6 +4,9 @@
   var PROFILE_REVIEW_KEY = 'hub_organiser_profile_review_v1';
   var READY_EVENT_KEY = 'hub_ready_event_dismissed';
   var RESUME_KEY = 'hub_setup_resume_dismissed';
+  /** Match launch-setup: claim is settled after an hour (domain wipe heal). */
+  var CLAIM_SETTLE_MS = 60 * 60 * 1000;
+  var ONBOARD_HEAL_SESSION_KEY = 'hub_organiser_onboard_healed_v1';
 
   function goDashboard() {
     if (window.orgDashSetRoute) window.orgDashSetRoute('dashboard');
@@ -254,6 +257,99 @@
     }
   }
 
+  function workspaceGroups() {
+    try {
+      if (typeof window.orgDashLaunchSetupInput === 'function') {
+        var input = window.orgDashLaunchSetupInput();
+        if (input && Array.isArray(input.groups)) return input.groups;
+      }
+    } catch (e) {
+      /* ignore */
+    }
+    return [];
+  }
+
+  function groupIsSettledClaim(group) {
+    if (!group) return false;
+    var raw = group.ownershipClaimedAt || group.ownership_claimed_at;
+    if (raw) {
+      var t = Date.parse(raw);
+      if (!isNaN(t)) return Date.now() - t >= CLAIM_SETTLE_MS;
+    }
+    var st = String(group.ownershipClaimStatus || group.ownership_claim_status || '')
+      .trim()
+      .toLowerCase();
+    return st === 'claimed';
+  }
+
+  function hasSettledClaimedGroup() {
+    return workspaceGroups().some(groupIsSettledClaim);
+  }
+
+  /**
+   * Domain changes wipe tour/checklist localStorage. Re-dismiss for organisers
+   * who already claimed so the Overview walkthrough does not auto-play again.
+   * Fresh claims (< 1 hour) and explicit ?onboard=1 are left alone.
+   */
+  function restoreOnboardingForSettledClaims() {
+    try {
+      if (sessionStorage.getItem(ONBOARD_HEAL_SESSION_KEY) === '1') return;
+    } catch (e) {
+      /* ignore */
+    }
+
+    var params;
+    try {
+      params = new URLSearchParams((window.location && window.location.search) || '');
+    } catch (e) {
+      params = new URLSearchParams('');
+    }
+    if (params.get('onboard') === '1' || params.get('onboard') === 'claim') {
+      try {
+        sessionStorage.setItem(ONBOARD_HEAL_SESSION_KEY, '1');
+      } catch (e) {
+        /* ignore */
+      }
+      return;
+    }
+
+    try {
+      if (window.hubPendingGroupClaims) {
+        sessionStorage.setItem(ONBOARD_HEAL_SESSION_KEY, '1');
+        return;
+      }
+    } catch (e) {
+      /* ignore */
+    }
+
+    if (!hasSettledClaimedGroup()) {
+      try {
+        sessionStorage.setItem(ONBOARD_HEAL_SESSION_KEY, '1');
+      } catch (e) {
+        /* ignore */
+      }
+      return;
+    }
+
+    try {
+      localStorage.setItem(TOUR_KEY, '1');
+      localStorage.setItem(CHECKLIST_KEY, '1');
+      localStorage.setItem(RESUME_KEY, '1');
+      localStorage.setItem(READY_EVENT_KEY, '1');
+      localStorage.setItem(PROFILE_REVIEW_KEY, '1');
+    } catch (e) {
+      /* ignore */
+    }
+    try {
+      sessionStorage.setItem(ONBOARD_HEAL_SESSION_KEY, '1');
+    } catch (e) {
+      /* ignore */
+    }
+    var panel = document.getElementById('org-getting-started');
+    if (panel) panel.hidden = true;
+    refreshSetupChrome();
+  }
+
   function shouldDeferGroupClaim() {
     // Claim always wins over the workspace tour (Email 2 / pending invites).
     try {
@@ -267,6 +363,7 @@
   }
 
   function shouldAutoStart() {
+    restoreOnboardingForSettledClaims();
     if (isTourDone()) return false;
     var params = new URLSearchParams(window.location.search);
     if (params.get('onboard') === 'claim') return false;
@@ -471,6 +568,7 @@
 
   function initAfterDashboardReady() {
     bindGettingStarted();
+    restoreOnboardingForSettledClaims();
     var params = new URLSearchParams(window.location.search);
     var claimOnboard = params.get('onboard') === 'claim';
     var hasPendingClaims = Boolean(window.hubPendingGroupClaims);

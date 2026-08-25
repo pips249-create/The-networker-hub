@@ -967,6 +967,12 @@ html:has(.about-page) {
   color: var(--about-muted);
 }
 
+.about-updates-note a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 /* Founding organisers marquee */
 @keyframes about-founding-marquee {
   0% { transform: translateX(0); }

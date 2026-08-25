@@ -5,7 +5,7 @@
  * preview cookie unlocks catalogue APIs.
  */
 (function () {
-  var FOOTER_BUILD = '20260825intl1';
+  var FOOTER_BUILD = '20260825a11y1';
   var script = document.currentScript;
   var root = (script && script.getAttribute('data-root')) || '';
 
@@ -272,7 +272,13 @@
   if (/\/contact(?:\.html)?\/?$/.test(pagePath)) return;
 
   function loadHubertWidget() {
-    if (document.querySelector('script[src*="hubert-widget"]')) return;
+    if (
+      document.getElementById('hubert-widget') ||
+      window.HubertWidget ||
+      document.querySelector('script[src*="hubert-widget"]')
+    ) {
+      return;
+    }
     var hubertCss = document.createElement('link');
     hubertCss.rel = 'stylesheet';
     hubertCss.href = href('css/hubert-widget.css?v=' + FOOTER_BUILD);
@@ -281,6 +287,8 @@
     var hubertChat = document.createElement('script');
     hubertChat.src = href('js/hubert-chat.js?v=' + FOOTER_BUILD);
     hubertChat.onload = function () {
+      if (document.getElementById('hubert-widget') || window.HubertWidget) return;
+      if (document.querySelector('script[src*="hubert-widget.js"]')) return;
       var hubertWidget = document.createElement('script');
       hubertWidget.src = href('js/hubert-widget.js?v=' + FOOTER_BUILD);
       hubertWidget.setAttribute('data-root', root);

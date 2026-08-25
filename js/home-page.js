@@ -12,6 +12,22 @@
     return d.innerHTML;
   }
 
+  /** Marquee clones must not be tabbable / announced (animation duplicates only). */
+  function demoteMarqueeCloneItems(track, originalCount) {
+    if (!track || !(originalCount > 0)) return;
+    var kids = track.children;
+    for (var i = originalCount; i < kids.length; i++) {
+      var el = kids[i];
+      el.setAttribute('aria-hidden', 'true');
+      if (el.tagName === 'A' || el.tagName === 'BUTTON') {
+        el.setAttribute('tabindex', '-1');
+      }
+      el.querySelectorAll('a[href], button, input, select, textarea, [tabindex]').forEach(function (node) {
+        node.setAttribute('tabindex', '-1');
+      });
+    }
+  }
+
   function isBarnsgatePartner(name, url) {
     return /barnsgate/i.test(String(name || '')) || /barnsgate[-_]?logo/i.test(String(url || ''));
   }
@@ -375,6 +391,7 @@
     track.classList.toggle('home-partners-track--scroll', isScrollable);
     track.classList.toggle('home-partners-track--static', isStatic);
     track.innerHTML = useMarquee ? items + items : items;
+    if (useMarquee) demoteMarqueeCloneItems(track, partners.length);
     track.style.setProperty(
       '--home-marquee-duration',
       useMarquee ? Math.max(60, Math.round(partners.length * 3.8)) + 's' : ''
@@ -633,6 +650,7 @@
     track.classList.toggle('home-partners-track--scroll', false);
     track.classList.toggle('home-partners-track--static', !useMarquee);
     track.innerHTML = useMarquee ? items + items : items;
+    if (useMarquee) demoteMarqueeCloneItems(track, orgs.length);
     if (seconds) track.style.setProperty('--home-marquee-duration', seconds + 's');
     else track.style.removeProperty('--home-marquee-duration');
 
@@ -675,12 +693,15 @@
       var rows = splitFoundingRows(spaced);
       paintFoundingTrack(track, marquee, rows.rowA, { reverse: false });
       paintFoundingTrack(trackB, marqueeB, rows.rowB, { reverse: true });
-      trackB.setAttribute('aria-hidden', 'true');
+      trackB.removeAttribute('aria-hidden');
+      if ('inert' in trackB) trackB.inert = false;
     } else {
       paintFoundingTrack(track, marquee, spaced, { reverse: false });
       if (marqueeB) marqueeB.hidden = true;
       if (trackB) {
         trackB.innerHTML = '';
+        trackB.removeAttribute('aria-hidden');
+        if ('inert' in trackB) trackB.inert = false;
         trackB.classList.remove(
           'home-partners-track--marquee',
           'home-partners-track--marquee-reverse',

@@ -10,11 +10,12 @@
 
 ```env
 SUPABASE_URL=https://uztgzbjrmjbonfniyqcu.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-AIRTABLE_API_KEY=your_airtable_token
+SUPABASE_SERVICE_ROLE_KEY=<paste service role key>
+# Personal access token from airtable.com/create/tokens (starts with pat)
+AIRTABLE_API_KEY=<paste airtable personal access token>
 AIRTABLE_BASE_ID=appQwgOxCrFFNweHe
 ADMIN_EMAIL=pips249@gmail.com
-ADMIN_INITIAL_PASSWORD=your_chosen_password
+ADMIN_INITIAL_PASSWORD=<choose a strong password>
 ```
 
 ## Run (once)

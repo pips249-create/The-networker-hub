@@ -3,7 +3,7 @@
 **Controller:** The Networker Group Ltd  
 **Contact:** hello@thenetworkeruk.com  
 **Response deadline:** One calendar month (extendable by two months if complex — inform the requester)  
-**Last updated:** 8 July 2026
+**Last updated:** 25 August 2026
 
 *Operational procedure. Not legal advice.*
 
@@ -77,6 +77,9 @@ Export from Supabase (admin / SQL):
 - `favourites` / saved events
 - `opportunity_enquiries` — enquiries sent
 - `complaints` — any complaint logged against their email (Command Centre register)
+- `international_country_interest` — expansion waitlist rows for their email
+- `international_group_intake` — group onboarding submissions for their email
+- Preview / city-partner waitlists if their email appears there
 
 Provide a **readable summary** (PDF or email) plus **CSV/JSON** where portability applies. Redact third-party personal data (e.g. other guests) where not the requester’s own data.
 
@@ -92,6 +95,8 @@ Update via admin tools or direct Supabase patch. Confirm changes to requester.
    - `hub_accounts`, `attendees` row
    - Reviews (or anonymise author)
    - Marketing preferences
+   - `international_country_interest` / `international_group_intake` rows for their email
+   - Waitlist rows for their email
 3. **Retain** transaction records where required by law (anonymise link to individual where possible).
 4. Notify Stripe only if Connect account exists (organiser erasure — follow Stripe account closure).
 
@@ -131,4 +136,5 @@ Review this procedure annually or after any ICO complaint. Update the change log
 
 | Date | Change |
 |------|--------|
+| 2026-08-25 | Added international interest/intake + waitlist tables to access/erasure checklist |
 | 2026-07-08 | Formal procedure created |

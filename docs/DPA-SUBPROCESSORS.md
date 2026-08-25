@@ -224,9 +224,27 @@ Keep this section for reference **only if** you later decide to enable third-par
 
 ---
 
+## 7. Brevo (Sendinblue) — campaign / launch email (~10 minutes)
+
+**When needed:** You export or import contact lists into Brevo for organiser launch campaigns (Email 1 / Email 2 tooling under `scripts/` and `data/*brevo*`). Platform transactional mail stays on **Resend**.
+
+**Counterparty:** Sendinblue SAS (Brevo)
+
+1. Log in to [Brevo](https://app.brevo.com).
+2. Open **Settings → GDPR / Data processing agreement** (or [Brevo DPA](https://www.brevo.com/legal/termsofuse/#data-processing-agreement)).
+3. Accept / download the executed DPA PDF.
+4. Save as `brevo-dpa-YYYY.pdf` in the company DPAs folder (not git).
+5. Update `docs/DPA-REGISTER.md` — Brevo row Status ☑, effective date, filename.
+6. Update `docs/RoPA.md` subprocessor table — Brevo DPA ☑.
+7. If you **stop** using Brevo entirely, delete remaining contact lists in Brevo, mark the register row “Retired”, and remove from the public privacy policy processors list.
+
+**Data hygiene:** Prefer one-way import CSVs that stay local (`data/` gitignored patterns). Do not commit full Brevo list exports with emails.
+
+---
+
 ## Privacy policy
 
-`legal-policies.html` lists Stripe, Supabase, Resend, Vercel, and describes Hubert as on-site help (no third-party AI). Update only if you add new tools or enable OpenAI.
+`legal-policies.html` lists Stripe, Supabase, Resend, Vercel, and Brevo (when used for campaign email), and describes Hubert as on-site help (no third-party AI). Update if you add new tools, enable OpenAI, or retire Brevo.
 
 ---
 

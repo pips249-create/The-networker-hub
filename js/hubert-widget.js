@@ -37,6 +37,9 @@
     return;
   }
 
+  // Prevent double-mount if the footer loader races or the script is included twice.
+  if (document.getElementById('hubert-widget') || window.HubertWidget) return;
+
   var guide = window.HubertOrganiserGuide;
   var greeting =
     organiserDashMode && guide && guide.DASHBOARD_GREETING

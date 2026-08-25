@@ -16,8 +16,10 @@ Run `npm run check:dpas` to verify this register.
 | Vercel | Deemed signed on [Vercel Terms](https://vercel.com/legal/terms) acceptance | 2026-07-10 | Catherine Hancher | vercel-dpa-20260317.pdf | ☑ |
 | Resend | Executed on account signup — download from Settings → Documents | 2026-07-10 | Catherine Hancher | resend-dpa-executed.pdf | ☑ |
 | Supabase | PandaDoc signature via [org legal documents](https://supabase.com/dashboard/org/_/documents) | 2026-07-10 | Catherine Hancher | supabase-dpa-signed.pdf | ☑ |
+| Brevo | Marketing / launch campaign email (Sendinblue) — execute DPA in Brevo account | — | — | — | ☐ Pending |
 
-**Completion:** 4 / 4
+**Core platform DPAs:** 4 / 4 filed  
+**Brevo (campaign ESP):** ☐ — follow `docs/DPA-SUBPROCESSORS.md` §7 when still sending from Brevo
 
 **Not in use:** OpenAI — Hubert runs on in-house FAQ + live listings (no `OPENAI_API_KEY`). See `docs/DPA-SUBPROCESSORS.md` §5 only if you enable third-party AI later.
 

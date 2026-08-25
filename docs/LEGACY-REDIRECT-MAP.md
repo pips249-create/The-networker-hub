@@ -1,8 +1,8 @@
 # Legacy redirect map — the-networker.co.uk → hub
 
-**Status:** banner install now (August 2026) · platform browsing **25 August 2026** · tickets **1 September 2026** · **Hard 301s deferred ~3 months for SEO (~November 2026)**  
+**Status:** early flip available — see `docs/CO-UK-EARLY-FLIP-CHECKLIST.md` · platform browsing **25 August 2026** · tickets **1 September 2026** · original soft hold was ~November 2026 (optional now)  
 **Target host:** `https://www.thenetworkeruk.com`  
-**Keep on co.uk:** mailbox / MX for `@the-networker.co.uk` (do not point email at Vercel); **website stays live** during the SEO hold
+**Keep on co.uk:** mailbox / MX for `@the-networker.co.uk` (do not point email at Vercel)
 
 Use this when configuring DNS + hosting 301s on the old site. Hub-internal tidy redirects already live in `vercel.json` (`.html` → clean paths) — this file is only for **legacy domain → hub**.
 
@@ -14,9 +14,9 @@ Related: `docs/SEO-AEO-LAUNCH-PLAN.md` · `PIPS-TODO.md` Tab 7 · `marketing/CO-
 
 | Phase | Behaviour |
 |-------|-----------|
-| **Now – ~Nov 2026** | Soft banner on co.uk → Hub `/about`; **old URLs keep working** (SEO hold with ex-developers) |
-| **Hub soft launch (1 Sep)** | Remove hub `SITE_ACCESS_PASSWORD`; co.uk still live with banner — **no hard 301s yet** |
-| **Hard flip (~Nov 2026)** | Apex + www 301 to hub; disable banner snippet; watch Search Console 404s for a week |
+| **Soft hold (optional)** | Soft banner on co.uk → Hub; old URLs keep working |
+| **Early flip (preferred if banner blocked)** | Apex + www **301** to `www.thenetworkeruk.com` — checklist: `docs/CO-UK-EARLY-FLIP-CHECKLIST.md` |
+| **Hard flip (~Nov 2026)** | Same as early flip if not done sooner; disable banner; watch Search Console 404s |
 
 Prefer **301** once The Networker UK path is confirmed. Use **302** only while still testing redirects.
 

@@ -117,14 +117,14 @@
           <h2 class="legal-panel-title" id="privacy-title">Privacy policy</h2>
           <div class="legal-panel-meta">
             <span class="legal-badge legal-badge--current">Current</span>
-            <span class="legal-badge legal-badge--version">v2.0 · 9 June 2026</span>
+            <span class="legal-badge legal-badge--version">v2.1 · 25 August 2026</span>
             <span class="legal-badge legal-badge--required">Required reading</span>
           </div>
         </header>
         <div class="legal-panel-body">
           <p class="legal-intro">
             This Privacy Policy explains how <strong>The Networker Group Ltd</strong> (&ldquo;we&rdquo;, &ldquo;us&rdquo;, &ldquo;our&rdquo;) collects, uses, stores and protects personal information when you use
-            <strong>The Networker UK</strong> website and services. We process personal data in accordance with the <strong>UK General Data Protection Regulation (UK GDPR)</strong>
+            <strong>The Networker UK</strong>, <strong>The Networker International</strong>, and related websites and services. We process personal data in accordance with the <strong>UK General Data Protection Regulation (UK GDPR)</strong>
             and the <strong>Data Protection Act 2018</strong>.
           </p>
 
@@ -142,6 +142,8 @@
               <li><strong>Account data</strong> — login credentials (passwords are hashed; we do not store plain-text passwords), account preferences, attendee/organiser mode</li>
               <li><strong>Transaction data</strong> — event registrations, ticket quantities, guest names, payment status, Stripe checkout session and payment intent references (card details are processed by Stripe; we do not store full card numbers)</li>
               <li><strong>Event &amp; listing data</strong> — events you save, reviews you submit, organiser profiles, business opportunity listings and enquiries</li>
+              <li><strong>International interest &amp; group intake</strong> — email, country, attend/list preference, and (for group intake) name, phone, organisation details you submit via The Networker International map</li>
+              <li><strong>Waitlists &amp; event intake</strong> — email and contact details when you join a preview/partner waitlist or submit an event for listing</li>
               <li><strong>Technical data</strong> — IP address, browser type, device information, pages visited and referral source</li>
               <li><strong>Communications</strong> — messages you send us, support requests, and emails we send in relation to your account or bookings</li>
             </ul>
@@ -155,6 +157,7 @@
               <li>Display organiser dashboards, attendee dashboards and opportunity listings</li>
               <li>Send booking confirmations, reminders, password resets and service messages</li>
               <li>Facilitate enquiries between members and opportunity listers</li>
+              <li>Contact you about The Networker launching in a country where you registered interest or submitted group details</li>
               <li>Improve platform security, performance and user experience</li>
               <li>Comply with legal, tax and regulatory obligations</li>
               <li>Send marketing communications where you have opted in (you may unsubscribe at any time)</li>
@@ -177,7 +180,8 @@
             <ul>
               <li><strong>Stripe</strong> — payment processing and payouts to organisers</li>
               <li><strong>Supabase</strong> — database hosting, authentication and file storage</li>
-              <li><strong>Resend</strong> — transactional and service emails</li>
+              <li><strong>Resend</strong> — transactional and service emails (and Hub marketing where you have opted in)</li>
+              <li><strong>Brevo</strong> — occasional launch or organiser campaign email where we use that platform to send to a list</li>
               <li><strong>Vercel</strong> — website hosting and privacy-friendly analytics</li>
               <li><strong>Hubert help chat</strong> — our on-site assistant uses built-in FAQ answers and live event listings; messages are <strong>not</strong> sent to third-party AI services (chat stays in your browser session and is not stored on our servers)</li>
               <li><strong>Event organisers</strong> — attendee name, email and guest details needed to run events you book</li>
@@ -194,6 +198,7 @@
               <li><strong>Active account data</strong> — for the life of your account plus up to 2 years after closure, unless a longer period is required</li>
               <li><strong>Transaction and financial records</strong> — 7 years for tax and accounting compliance</li>
               <li><strong>Event registration records</strong> — 2 years after the event date, or longer if needed for disputes</li>
+              <li><strong>International interest &amp; group intake</strong> — until the relevant market launches and follow-up is complete, or up to 2 years from submission, or sooner if you ask us to delete your details</li>
               <li><strong>Marketing preferences</strong> — until you withdraw consent or unsubscribe</li>
               <li><strong>Support enquiries</strong> — 1 year from resolution, unless related to an active dispute</li>
             </ul>
@@ -580,12 +585,12 @@
           <h2 class="legal-panel-title" id="cookies-title">Cookie policy</h2>
           <div class="legal-panel-meta">
             <span class="legal-badge legal-badge--current">Current</span>
-            <span class="legal-badge legal-badge--version">v2.0 · 9 June 2026</span>
+            <span class="legal-badge legal-badge--version">v2.1 · 25 August 2026</span>
           </div>
         </header>
         <div class="legal-panel-body">
           <p class="legal-intro">
-            This Cookie Policy explains how The Networker UK uses cookies and similar technologies, in accordance with the
+            This Cookie Policy explains how The Networker UK and The Networker International use cookies and similar technologies, in accordance with the
             <strong>Privacy and Electronic Communications Regulations (PECR)</strong> and UK GDPR.
           </p>
 
@@ -598,8 +603,10 @@
             <h2>2. Cookies we use</h2>
             <ul>
               <li><strong>Strictly necessary</strong> — authentication sessions, security tokens, and hub view preferences (e.g. attendee/organiser mode). These are essential and cannot be switched off</li>
-              <li><strong>Functional</strong> — remember dashboard preferences and session cache for navigation performance</li>
-              <li><strong>Analytics</strong> — Vercel Web Analytics helps us understand page views and performance. When you accept analytics cookies, we may also store anonymised event-search and filter usage (search terms, location/type filters, and result counts — not your name or email) to improve inventory and discovery. We configure this to minimise personal data collection</li>
+              <li><strong>Functional</strong> — remember dashboard preferences, login email when you choose &ldquo;remember me&rdquo;, and session cache for navigation performance</li>
+              <li><strong>Analytics</strong> — Vercel Web Analytics helps us understand page views and performance. When you accept analytics cookies, we may also store anonymised event-search and filter usage (search terms, location/type filters, and result counts — not your name or email) to improve inventory and discovery. We configure this to minimise personal data collection. If you later switch analytics off, we stop sending further analytics events</li>
+              <li><strong>First-party product beacons</strong> — limited, cookieless counts for sponsor clicks, pitch opens, and promote links (no name or email; used to operate paid placements)</li>
+              <li><strong>Fonts</strong> — pages may load typefaces from Google Fonts, which can involve a connection to Google&rsquo;s servers</li>
               <li><strong>Third-party (during checkout)</strong> — Stripe may set cookies when you complete a payment</li>
               <li><strong>Maps</strong> — map views may load resources from third-party providers (e.g. OpenStreetMap/Leaflet tiles)</li>
             </ul>

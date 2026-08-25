@@ -29,6 +29,7 @@ npm-debug.log*
 # Generated launch list CSVs (may contain personal emails)
 data/launch-segment-*.csv
 data/brevo-full-list.csv
+data/legacy-marketing-opt-in-audit.csv
 
 # Ops outreach tracker (call notes / PII — regenerate via script)
 ops/organiser-outreach-tracker.csv

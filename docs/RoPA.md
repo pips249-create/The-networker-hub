@@ -2,7 +2,7 @@
 
 **Controller:** The Networker Group Ltd (Company No. 15252227)  
 **ICO registration:** Transferred from the-networker.co.uk  
-**Last updated:** 10 July 2026  
+**Last updated:** 25 August 2026  
 **Review cycle:** Quarterly (or when a new feature/subprocessor is added)
 
 *Operational document supporting UK GDPR Article 30. Not legal advice.*
@@ -83,23 +83,24 @@
 
 | Item | Detail |
 |------|--------|
-| **Purpose** | Transactional (bookings, reminders, password reset); optional marketing (tips, re-engagement) |
-| **Data subjects** | All members with email |
-| **Categories of data** | Email address, name, email preference flags, send logs (Resend) |
+| **Purpose** | Transactional (bookings, reminders, password reset); optional marketing (tips, re-engagement); launch/organiser campaigns |
+| **Data subjects** | All members with email; campaign list contacts imported for launch waves |
+| **Categories of data** | Email address, name, email preference flags, send logs (Resend / Brevo) |
 | **Lawful basis** | Contract for transactional; **Consent** for marketing (PECR + UK GDPR Art. 6(1)(a)) |
-| **Recipients** | Resend |
-| **Retention** | Preferences until withdrawal; send metadata per Resend retention |
+| **Recipients** | Resend; Brevo when campaign sends use that ESP |
+| **Retention** | Preferences until withdrawal; send metadata per ESP retention |
+| **Notes** | Pre-25 Aug 2026 registrations may need re-permission — `docs/MARKETING-REPERMISSION.md` |
 
 ### G. Analytics & technical logs
 
 | Item | Detail |
 |------|--------|
-| **Purpose** | Site performance, security, fraud prevention |
+| **Purpose** | Site performance, security, fraud prevention; operate paid placements |
 | **Data subjects** | Website visitors |
-| **Categories of data** | IP (may be truncated), browser/device, pages viewed, session cookies |
+| **Categories of data** | IP (may be truncated), browser/device, pages viewed, session cookies; anonymised browse-search terms (with analytics consent); cookieless promote/pitch/sponsor click or open counts (no name/email) |
 | **Lawful basis** | Legitimate interests (Art. 6(1)(f)); Consent for non-essential analytics (PECR) |
-| **Recipients** | Vercel (hosting/analytics) |
-| **Retention** | Per Vercel defaults; security logs ~90 days internally |
+| **Recipients** | Vercel (hosting/analytics); Supabase for first-party browse/promote logs |
+| **Retention** | Per Vercel defaults; security logs ~90 days internally; browse/promote logs per product need (review annually) |
 
 ### H. Admin, support & complaints
 
@@ -136,6 +137,18 @@
 | **Retention** | While the membership row is active + up to 2 years after removal unless financial records require longer |
 | **Notes** | CSV import is organiser-initiated (plain-text JSON upload, size-capped). New-event digests respect Hub `organiser_alerts` preferences when the email matches a Account. |
 
+### K. International expansion interest & group intake
+
+| Item | Detail |
+|------|--------|
+| **Purpose** | Capture interest in markets not yet live; collect networking group / training org details for markets we are building; prioritise launches and follow up with contacts |
+| **Data subjects** | People registering interest on The Networker International map; group contacts submitting intake forms |
+| **Categories of data** | Email, country code/name, attend/list intent (`international_country_interest`); contact name, email, phone, group name, website, org type, description (`international_group_intake`) |
+| **Lawful basis** | **Consent** / soft opt-in where the person requests launch contact (Art. 6(1)(a) + PECR); **Legitimate interests** to evaluate and onboard groups for market launch (Art. 6(1)(f)) |
+| **Recipients** | Supabase; Resend (staff notification + confirmation for group intake); internal Command Centre admins |
+| **Retention** | Until market launch follow-up is complete, or up to 2 years from submission, or sooner on erasure request |
+| **Notes** | Public forms include a privacy notice and link to the privacy policy. Tables are service_role only (RLS enabled). |
+
 ---
 
 ## 3. Subprocessors
@@ -144,8 +157,9 @@
 |-----------|------------|----------|------------|
 | Supabase | Database, auth, storage | US/EU | ☑ Filed 10 Jul 2026 |
 | Stripe | Payments, Connect payouts | US/EU | ☑ Filed 10 Jul 2026 |
-| Resend | Email delivery | US | ☑ Filed 10 Jul 2026 |
+| Resend | Transactional + Hub marketing email | US | ☑ Filed 10 Jul 2026 |
 | Vercel | Hosting, Web Analytics | US/EU | ☑ Filed 10 Jul 2026 |
+| Brevo (Sendinblue) | Launch / organiser campaign email (list import + sends) | EU | ☐ Pending — see `docs/DPA-SUBPROCESSORS.md` §7 |
 
 ---
 
@@ -186,6 +200,7 @@ Handled via procedure in `GDPR-SAR-PROCEDURE.md`. Contact: hello@thenetworkeruk.
 
 | Date | Change | Author |
 |------|--------|--------|
+| 2026-08-25 | International interest & group intake (Art. 30 §K); Brevo listed as campaign ESP (DPA pending) | Catherine Hancher |
 | 2026-08-13 | Membership roster/CSV processing (Art. 30 §J); security measures updated (admin live check, cron, capacity trigger) | Catherine Hancher |
 | 2026-07-10 | Hubert confirmed fallback-only (no OpenAI); complaints register; DPA filed dates | Catherine Hancher |
 | 2026-07-08 | Initial RoPA created | — |
