@@ -6,6 +6,7 @@
   var saves = window.HubOpportunitySaves;
   var current = null;
   var sessionUser = null;
+  var enquiriesOpen = true;
 
   var els = {
     notFound: document.getElementById('opp-not-found'),
@@ -27,6 +28,8 @@
     form: document.getElementById('opp-enquire-form'),
     submit: document.getElementById('opp-enquire-submit'),
     enquireStatus: document.getElementById('opp-enquire-status'),
+    enquireClosed: document.getElementById('opp-enquire-closed'),
+    enquireLede: document.getElementById('opp-enquire-lede'),
     investBreakdownSection: document.getElementById('opp-investment-breakdown-section'),
     investBreakdownLede: document.getElementById('opp-investment-breakdown-lede'),
     investBreakdownList: document.getElementById('opp-investment-breakdown-list'),
@@ -41,6 +44,25 @@
     claimSubmit: document.getElementById('opp-claim-submit'),
     claimStatus: document.getElementById('opp-claim-status'),
   };
+
+  function syncEnquiriesOpenFromSoftLaunch(meta) {
+    if (meta && typeof meta.enquiriesOpen === 'boolean') {
+      enquiriesOpen = meta.enquiriesOpen;
+      return;
+    }
+    if (window.HubSoftLaunch && typeof window.HubSoftLaunch.arePublicEnquiriesOpen === 'function') {
+      enquiriesOpen = window.HubSoftLaunch.arePublicEnquiriesOpen();
+      return;
+    }
+    enquiriesOpen = Date.now() >= Date.parse('2026-09-01T00:00:00+01:00');
+  }
+
+  function enquiriesClosedCopy() {
+    if (window.HubSoftLaunch && window.HubSoftLaunch.publicEnquiriesClosedMessage) {
+      return window.HubSoftLaunch.publicEnquiriesClosedMessage();
+    }
+    return 'Opportunity enquiries open on 1 September 2026. You can browse listings now and enquire when they go live.';
+  }
 
   function escapeHtml(s) {
     return String(s)
@@ -431,7 +453,24 @@
     var emailEl = document.getElementById('opp-enquire-email');
     var messageEl = document.getElementById('opp-enquire-message');
     var termsEl = document.getElementById('opp-enquire-terms');
+    var jumpBtn = document.getElementById('opp-enquire-jump-btn');
 
+    if (els.enquireClosed) {
+      els.enquireClosed.hidden = enquiriesOpen;
+    }
+    if (els.enquireLede) {
+      els.enquireLede.hidden = !enquiriesOpen;
+    }
+
+    if (!enquiriesOpen) {
+      if (els.enquireSignin) els.enquireSignin.hidden = true;
+      if (els.form) els.form.hidden = true;
+      if (els.submit) els.submit.disabled = true;
+      if (jumpBtn) jumpBtn.textContent = 'Enquiries open 1 September';
+      return;
+    }
+
+    if (jumpBtn) jumpBtn.textContent = 'Enquire about this listing';
     if (els.enquireSignin) els.enquireSignin.hidden = signedIn;
     if (els.form) els.form.hidden = !signedIn;
     if (els.submit) els.submit.disabled = !signedIn;
@@ -571,6 +610,11 @@
     els.form.addEventListener('submit', function (e) {
       e.preventDefault();
       if (!current) return;
+      if (!enquiriesOpen) {
+        showEnquireStatus(enquiriesClosedCopy(), false);
+        applyEnquireAuthUi();
+        return;
+      }
 
       var name = (document.getElementById('opp-enquire-name').value || '').trim();
       var email = (document.getElementById('opp-enquire-email').value || '').trim();
@@ -615,6 +659,16 @@
             var messageEl = document.getElementById('opp-enquire-message');
             if (messageEl) messageEl.value = '';
             if (terms) terms.checked = false;
+            return;
+          }
+          if (result.data && result.data.error === 'enquiries_closed') {
+            if (result.data.softLaunch) syncEnquiriesOpenFromSoftLaunch(result.data.softLaunch);
+            else enquiriesOpen = false;
+            applyEnquireAuthUi();
+            showEnquireStatus(
+              (result.data && result.data.message) || enquiriesClosedCopy(),
+              false
+            );
             return;
           }
           if (result.data && result.data.error === 'not_authenticated') {
@@ -736,7 +790,8 @@
     refreshEnquireJumpVisibility();
   }
 
-  function finishInit(item) {
+  function finishInit(item, softLaunchMeta) {
+    syncEnquiriesOpenFromSoftLaunch(softLaunchMeta);
     if (!item) {
       showNotFound();
       return;
@@ -754,6 +809,7 @@
   }
 
   function init() {
+    syncEnquiriesOpenFromSoftLaunch(null);
     if (!catalog) {
       showNotFound();
       return;
@@ -768,7 +824,13 @@
 
     var fetcher = catalog.fetchBySlugOrId || catalog.fetchById;
     if (fetcher) {
-      fetcher(slug).then(finishInit);
+      fetcher(slug).then(function (result) {
+        if (result && result.opportunity) {
+          finishInit(result.opportunity, result.softLaunch || null);
+          return;
+        }
+        finishInit(result, result && result._softLaunch ? result._softLaunch : null);
+      });
       return;
     }
 

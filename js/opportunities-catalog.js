@@ -496,7 +496,9 @@
       .then(function (result) {
         var data = result.data;
         if (result.ok && data && data.ok && data.opportunity) {
-          return normalizeListing(apiRowToSeed(data.opportunity), 0);
+          var item = normalizeListing(apiRowToSeed(data.opportunity), 0);
+          if (item && data.softLaunch) item._softLaunch = data.softLaunch;
+          return item;
         }
         return null;
       });
