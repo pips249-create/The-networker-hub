@@ -23,10 +23,21 @@ function escapeHtml(text) {
 
 function linkifyAnswer(text) {
   let html = escapeHtml(text);
-  html = html.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1">$1</a>');
-  html = html.replace(/(\/[a-z0-9][a-z0-9/_.-]*)/gi, '<a href="$1">$1</a>');
-  html = html.replace(/hello@thenetworkerhub\.com/g, '<a href="mailto:hello@thenetworkeruk.com">hello@thenetworkeruk.com</a>');
-  html = html.replace(/rosie@thenetworkerhub\.com/g, '<a href="mailto:rosie@thenetworkeruk.com">rosie@thenetworkeruk.com</a>');
+  const absUrls = [];
+  html = html.replace(/(https?:\/\/[^\s<]+)/g, function (match) {
+    absUrls.push(match);
+    return '\u0000ABS' + (absUrls.length - 1) + '\u0000';
+  });
+  // Relative Hub paths only (not fragments of already-captured absolute URLs).
+  html = html.replace(/(^|[^"'>/\w])(\/[a-z0-9][a-z0-9/_.#-]*)/gi, function (_m, lead, path) {
+    return lead + '<a href="' + path + '">' + path + '</a>';
+  });
+  html = html.replace(/hello@thenetworker(?:uk|hub)\.com/g, '<a href="mailto:hello@thenetworkeruk.com">hello@thenetworkeruk.com</a>');
+  html = html.replace(/rosie@thenetworker(?:uk|hub)\.com/g, '<a href="mailto:rosie@thenetworkeruk.com">rosie@thenetworkeruk.com</a>');
+  html = html.replace(/\u0000ABS(\d+)\u0000/g, function (_m, idx) {
+    const url = absUrls[Number(idx)];
+    return '<a href="' + url + '">' + url + '</a>';
+  });
   return html;
 }
 

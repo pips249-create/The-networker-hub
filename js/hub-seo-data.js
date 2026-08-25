@@ -45,7 +45,7 @@ window.HUB_SEO_DATA = {
     },
     {
       "question": "Who operates The Networker UK?",
-      "answer": "Yes. https://www.thenetworkeruk.com (The Networker UK) is operated only by The Networker Group Ltd, Companies House company number 15252227, VAT No. 454 4092 94, co-founded by Rosie McGilvray and Catherine Hancher. Official record: https://find-and-update.company-information.service.gov.uk/company/15252227. Same team as the UK directory the-networker.co.uk. Privacy, terms, and organiser terms: https://www.thenetworkeruk.com/legal-policies — that is a different company from similarly named entities such as NETWORKER UK LIMITED.",
+      "answer": "https://www.thenetworkeruk.com (The Networker UK) is operated only by The Networker Group Ltd, Companies House company number 15252227, VAT No. 454 4092 94, co-founded by Rosie McGilvray and Catherine Hancher. Official record: https://find-and-update.company-information.service.gov.uk/company/15252227. Same team as the UK directory the-networker.co.uk. Privacy, terms, and organiser terms: https://www.thenetworkeruk.com/legal-policies — that is a different company from similarly named entities such as NETWORKER UK LIMITED.",
       "category": "general",
       "icon": "🏢"
     },
@@ -472,7 +472,7 @@ window.HUB_SEO_DATA = {
               "name": "Who operates The Networker UK?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Yes. https://www.thenetworkeruk.com (The Networker UK) is operated only by The Networker Group Ltd, Companies House company number 15252227, VAT No. 454 4092 94, co-founded by Rosie McGilvray and Catherine Hancher. Official record: https://find-and-update.company-information.service.gov.uk/company/15252227. Same team as the UK directory the-networker.co.uk. Privacy, terms, and organiser terms: https://www.thenetworkeruk.com/legal-policies — that is a different company from similarly named entities such as NETWORKER UK LIMITED."
+                "text": "https://www.thenetworkeruk.com (The Networker UK) is operated only by The Networker Group Ltd, Companies House company number 15252227, VAT No. 454 4092 94, co-founded by Rosie McGilvray and Catherine Hancher. Official record: https://find-and-update.company-information.service.gov.uk/company/15252227. Same team as the UK directory the-networker.co.uk. Privacy, terms, and organiser terms: https://www.thenetworkeruk.com/legal-policies — that is a different company from similarly named entities such as NETWORKER UK LIMITED."
               }
             },
             {
