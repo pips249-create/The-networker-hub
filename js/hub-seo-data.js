@@ -3,7 +3,7 @@ window.HUB_SEO_DATA = {
   "faq": [
     {
       "question": "What is The Networker UK?",
-      "answer": "The Networker UK is a UK platform for discovering networking meetings, exhibitions, conferences, and business opportunities. Members can search and book; organisers can list events and reach new audiences.",
+      "answer": "The Networker UK is the platform chapter of The Networker — operated by The Networker Group Ltd (Company No. 15252227), co-founded by Rosie and Catherine. It is a UK hub for networking meetings, exhibitions, conferences, and business opportunities. Members browse and book; organisers list events and reach new audiences. The same team previously ran the Networker UK directory (the-networker.co.uk).",
       "category": "general",
       "icon": "🌐"
     },
@@ -63,19 +63,19 @@ window.HUB_SEO_DATA = {
     },
     {
       "question": "I forgot my password — how do I sign in?",
-      "answer": "Go to /login and use the password reset link. Enter your email and follow the instructions. If you are still stuck, email hello@thenetworkeruk.com from the address on your account.",
+      "answer": "Go to /login and use the password reset link. Enter your email and follow the instructions. If you are still stuck, email hello@thenetworkerhub.com from the address on your account.",
       "category": "general",
       "icon": "🔑"
     },
     {
       "question": "I did not receive my booking confirmation email",
-      "answer": "Check your spam or junk folder and confirm your account email is correct. Your tickets also appear in My account at /account/. If you still cannot find your booking, email hello@thenetworkeruk.com with the event name and email address used at checkout.",
+      "answer": "Check your spam or junk folder and confirm your account email is correct. Your tickets also appear in My account at /account/. If you still cannot find your booking, email hello@thenetworkerhub.com with the event name and email address used at checkout.",
       "category": "buyers",
       "icon": "📧"
     },
     {
       "question": "Can I transfer my ticket to someone else?",
-      "answer": "Tickets are generally non-transferable without the organiser's consent. Contact the organiser via the event listing page to ask. For help, email hello@thenetworkeruk.com with your order reference.",
+      "answer": "Tickets are generally non-transferable without the organiser's consent. Contact the organiser via the event listing page to ask. For help, email hello@thenetworkerhub.com with your order reference.",
       "category": "buyers",
       "icon": "🎟️"
     },
@@ -105,13 +105,13 @@ window.HUB_SEO_DATA = {
     },
     {
       "question": "How much does it cost to list an event as an organiser?",
-      "answer": "There is no monthly subscription to list events. Use the organiser dashboard at /organiser/ to publish free or paid events. For paid tickets, attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before payment), which covers platform and payment processing — you receive the full ticket price. Free events do not require Stripe. Email hello@thenetworkeruk.com for onboarding help.",
+      "answer": "There is no monthly subscription to list events. Use the organiser dashboard at /organiser/ to publish free or paid events. For paid tickets, attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before payment), which covers platform and payment processing — you receive the full ticket price. Free events do not require Stripe. Email hello@thenetworkerhub.com for onboarding help.",
       "category": "organisers",
       "icon": "💷"
     },
     {
       "question": "Why is my event not showing on the browse events page?",
-      "answer": "Public browse only shows events that are Published (not Draft), Approved, and linked to a published organiser profile. Complete tickets, refund policy, and publish in /organiser/. Email hello@thenetworkeruk.com with the event title if it is still missing.",
+      "answer": "Public browse only shows events that are Published (not Draft), Approved, and linked to a published organiser profile. Complete tickets, refund policy, and publish in /organiser/. Email hello@thenetworkerhub.com with the event title if it is still missing.",
       "category": "organisers",
       "icon": "👁️"
     },
@@ -175,10 +175,10 @@ window.HUB_SEO_DATA = {
           "@type": "Organization",
           "name": "The Networker UK",
           "legalName": "The Networker Group Ltd",
-          "url": "https://www.thenetworkerhub.com",
-          "logo": "https://www.thenetworkerhub.com/assets/logo.png",
-          "image": "https://www.thenetworkerhub.com/assets/logo.png",
-          "email": "hello@thenetworkeruk.com",
+          "url": "https://www.thenetworkeruk.com",
+          "logo": "https://www.thenetworkeruk.com/assets/logo.png",
+          "image": "https://www.thenetworkeruk.com/assets/logo.png",
+          "email": "hello@thenetworkerhub.com",
           "description": "UK platform for networking events, exhibitions, and business opportunities.",
           "address": {
             "@type": "PostalAddress",
@@ -191,7 +191,7 @@ window.HUB_SEO_DATA = {
           "contactPoint": {
             "@type": "ContactPoint",
             "contactType": "customer support",
-            "email": "hello@thenetworkeruk.com",
+            "email": "hello@thenetworkerhub.com",
             "availableLanguage": [
               "English"
             ]
@@ -211,18 +211,18 @@ window.HUB_SEO_DATA = {
           "@context": "https://schema.org",
           "@type": "WebSite",
           "name": "The Networker UK",
-          "url": "https://www.thenetworkerhub.com",
+          "url": "https://www.thenetworkeruk.com",
           "description": "Browse UK networking events and business opportunities. Free to explore; create a free account to buy tickets or send enquiries.",
           "publisher": {
             "@type": "Organization",
             "name": "The Networker Group Ltd",
-            "url": "https://www.thenetworkerhub.com"
+            "url": "https://www.thenetworkeruk.com"
           },
           "potentialAction": {
             "@type": "SearchAction",
             "target": {
               "@type": "EntryPoint",
-              "urlTemplate": "https://www.thenetworkerhub.com/events/?q={search_term_string}"
+              "urlTemplate": "https://www.thenetworkeruk.com/events/?q={search_term_string}"
             },
             "query-input": "required name=search_term_string"
           }
@@ -230,8 +230,8 @@ window.HUB_SEO_DATA = {
         {
           "@context": "https://schema.org",
           "@type": "FAQPage",
-          "@id": "https://www.thenetworkerhub.com/faq#faq",
-          "url": "https://www.thenetworkerhub.com/faq",
+          "@id": "https://www.thenetworkeruk.com/faq#faq",
+          "url": "https://www.thenetworkeruk.com/faq",
           "name": "The Networker UK — Frequently asked questions",
           "mainEntity": [
             {
@@ -239,7 +239,7 @@ window.HUB_SEO_DATA = {
               "name": "What is The Networker UK?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "The Networker UK is a UK platform for discovering networking meetings, exhibitions, conferences, and business opportunities. Members can search and book; organisers can list events and reach new audiences."
+                "text": "The Networker UK is the platform chapter of The Networker — operated by The Networker Group Ltd (Company No. 15252227), co-founded by Rosie and Catherine. It is a UK hub for networking meetings, exhibitions, conferences, and business opportunities. Members browse and book; organisers list events and reach new audiences. The same team previously ran the Networker UK directory (the-networker.co.uk)."
               }
             },
             {
@@ -294,10 +294,10 @@ window.HUB_SEO_DATA = {
           "@type": "Organization",
           "name": "The Networker UK",
           "legalName": "The Networker Group Ltd",
-          "url": "https://www.thenetworkerhub.com",
-          "logo": "https://www.thenetworkerhub.com/assets/logo.png",
-          "image": "https://www.thenetworkerhub.com/assets/logo.png",
-          "email": "hello@thenetworkeruk.com",
+          "url": "https://www.thenetworkeruk.com",
+          "logo": "https://www.thenetworkeruk.com/assets/logo.png",
+          "image": "https://www.thenetworkeruk.com/assets/logo.png",
+          "email": "hello@thenetworkerhub.com",
           "description": "UK platform for networking events, exhibitions, and business opportunities.",
           "address": {
             "@type": "PostalAddress",
@@ -310,7 +310,7 @@ window.HUB_SEO_DATA = {
           "contactPoint": {
             "@type": "ContactPoint",
             "contactType": "customer support",
-            "email": "hello@thenetworkeruk.com",
+            "email": "hello@thenetworkerhub.com",
             "availableLanguage": [
               "English"
             ]
@@ -329,8 +329,8 @@ window.HUB_SEO_DATA = {
         {
           "@context": "https://schema.org",
           "@type": "FAQPage",
-          "@id": "https://www.thenetworkerhub.com/faq#faq",
-          "url": "https://www.thenetworkerhub.com/faq",
+          "@id": "https://www.thenetworkeruk.com/faq#faq",
+          "url": "https://www.thenetworkeruk.com/faq",
           "name": "The Networker UK — Frequently asked questions",
           "mainEntity": [
             {
@@ -338,7 +338,7 @@ window.HUB_SEO_DATA = {
               "name": "What is The Networker UK?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "The Networker UK is a UK platform for discovering networking meetings, exhibitions, conferences, and business opportunities. Members can search and book; organisers can list events and reach new audiences."
+                "text": "The Networker UK is the platform chapter of The Networker — operated by The Networker Group Ltd (Company No. 15252227), co-founded by Rosie and Catherine. It is a UK hub for networking meetings, exhibitions, conferences, and business opportunities. Members browse and book; organisers list events and reach new audiences. The same team previously ran the Networker UK directory (the-networker.co.uk)."
               }
             },
             {
@@ -418,7 +418,7 @@ window.HUB_SEO_DATA = {
               "name": "I forgot my password — how do I sign in?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Go to /login and use the password reset link. Enter your email and follow the instructions. If you are still stuck, email hello@thenetworkeruk.com from the address on your account."
+                "text": "Go to /login and use the password reset link. Enter your email and follow the instructions. If you are still stuck, email hello@thenetworkerhub.com from the address on your account."
               }
             },
             {
@@ -426,7 +426,7 @@ window.HUB_SEO_DATA = {
               "name": "I did not receive my booking confirmation email",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Check your spam or junk folder and confirm your account email is correct. Your tickets also appear in My account at /account/. If you still cannot find your booking, email hello@thenetworkeruk.com with the event name and email address used at checkout."
+                "text": "Check your spam or junk folder and confirm your account email is correct. Your tickets also appear in My account at /account/. If you still cannot find your booking, email hello@thenetworkerhub.com with the event name and email address used at checkout."
               }
             },
             {
@@ -434,7 +434,7 @@ window.HUB_SEO_DATA = {
               "name": "Can I transfer my ticket to someone else?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Tickets are generally non-transferable without the organiser's consent. Contact the organiser via the event listing page to ask. For help, email hello@thenetworkeruk.com with your order reference."
+                "text": "Tickets are generally non-transferable without the organiser's consent. Contact the organiser via the event listing page to ask. For help, email hello@thenetworkerhub.com with your order reference."
               }
             },
             {
@@ -474,7 +474,7 @@ window.HUB_SEO_DATA = {
               "name": "How much does it cost to list an event as an organiser?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "There is no monthly subscription to list events. Use the organiser dashboard at /organiser/ to publish free or paid events. For paid tickets, attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before payment), which covers platform and payment processing — you receive the full ticket price. Free events do not require Stripe. Email hello@thenetworkeruk.com for onboarding help."
+                "text": "There is no monthly subscription to list events. Use the organiser dashboard at /organiser/ to publish free or paid events. For paid tickets, attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before payment), which covers platform and payment processing — you receive the full ticket price. Free events do not require Stripe. Email hello@thenetworkerhub.com for onboarding help."
               }
             },
             {
@@ -482,7 +482,7 @@ window.HUB_SEO_DATA = {
               "name": "Why is my event not showing on the browse events page?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Public browse only shows events that are Published (not Draft), Approved, and linked to a published organiser profile. Complete tickets, refund policy, and publish in /organiser/. Email hello@thenetworkeruk.com with the event title if it is still missing."
+                "text": "Public browse only shows events that are Published (not Draft), Approved, and linked to a published organiser profile. Complete tickets, refund policy, and publish in /organiser/. Email hello@thenetworkerhub.com with the event title if it is still missing."
               }
             },
             {
@@ -561,10 +561,10 @@ window.HUB_SEO_DATA = {
           "@type": "Organization",
           "name": "The Networker UK",
           "legalName": "The Networker Group Ltd",
-          "url": "https://www.thenetworkerhub.com",
-          "logo": "https://www.thenetworkerhub.com/assets/logo.png",
-          "image": "https://www.thenetworkerhub.com/assets/logo.png",
-          "email": "hello@thenetworkeruk.com",
+          "url": "https://www.thenetworkeruk.com",
+          "logo": "https://www.thenetworkeruk.com/assets/logo.png",
+          "image": "https://www.thenetworkeruk.com/assets/logo.png",
+          "email": "hello@thenetworkerhub.com",
           "description": "UK platform for networking events, exhibitions, and business opportunities.",
           "address": {
             "@type": "PostalAddress",
@@ -577,7 +577,7 @@ window.HUB_SEO_DATA = {
           "contactPoint": {
             "@type": "ContactPoint",
             "contactType": "customer support",
-            "email": "hello@thenetworkeruk.com",
+            "email": "hello@thenetworkerhub.com",
             "availableLanguage": [
               "English"
             ]
@@ -596,8 +596,8 @@ window.HUB_SEO_DATA = {
         {
           "@context": "https://schema.org",
           "@type": "ContactPage",
-          "@id": "https://www.thenetworkerhub.com/contact",
-          "url": "https://www.thenetworkerhub.com/contact",
+          "@id": "https://www.thenetworkeruk.com/contact",
+          "url": "https://www.thenetworkeruk.com/contact",
           "name": "Contact The Networker UK",
           "description": "Contact The Networker UK or chat with Hubert, your business butler and concierge, for help with events, tickets, and business opportunities.",
           "mainEntity": {
@@ -606,7 +606,7 @@ window.HUB_SEO_DATA = {
             "name": "Hubert",
             "applicationCategory": "BusinessApplication",
             "operatingSystem": "Web",
-            "url": "https://www.thenetworkerhub.com/contact",
+            "url": "https://www.thenetworkeruk.com/contact",
             "description": "Hubert is the business butler and concierge for The Networker UK — an AI assistant that helps users find events and business opportunities, understand ticketing and enquiries, and navigate organiser tools.",
             "offers": {
               "@type": "Offer",
@@ -616,7 +616,7 @@ window.HUB_SEO_DATA = {
             "provider": {
               "@type": "Organization",
               "name": "The Networker Group Ltd",
-              "url": "https://www.thenetworkerhub.com"
+              "url": "https://www.thenetworkeruk.com"
             }
           }
         },
@@ -626,7 +626,7 @@ window.HUB_SEO_DATA = {
           "name": "Hubert",
           "applicationCategory": "BusinessApplication",
           "operatingSystem": "Web",
-          "url": "https://www.thenetworkerhub.com/contact",
+          "url": "https://www.thenetworkeruk.com/contact",
           "description": "Hubert is the business butler and concierge for The Networker UK — an AI assistant that helps users find events and business opportunities, understand ticketing and enquiries, and navigate organiser tools.",
           "offers": {
             "@type": "Offer",
@@ -636,7 +636,7 @@ window.HUB_SEO_DATA = {
           "provider": {
             "@type": "Organization",
             "name": "The Networker Group Ltd",
-            "url": "https://www.thenetworkerhub.com"
+            "url": "https://www.thenetworkeruk.com"
           }
         }
       ]
@@ -649,10 +649,10 @@ window.HUB_SEO_DATA = {
           "@type": "Organization",
           "name": "The Networker UK",
           "legalName": "The Networker Group Ltd",
-          "url": "https://www.thenetworkerhub.com",
-          "logo": "https://www.thenetworkerhub.com/assets/logo.png",
-          "image": "https://www.thenetworkerhub.com/assets/logo.png",
-          "email": "hello@thenetworkeruk.com",
+          "url": "https://www.thenetworkeruk.com",
+          "logo": "https://www.thenetworkeruk.com/assets/logo.png",
+          "image": "https://www.thenetworkeruk.com/assets/logo.png",
+          "email": "hello@thenetworkerhub.com",
           "description": "UK platform for networking events, exhibitions, and business opportunities.",
           "address": {
             "@type": "PostalAddress",
@@ -665,7 +665,7 @@ window.HUB_SEO_DATA = {
           "contactPoint": {
             "@type": "ContactPoint",
             "contactType": "customer support",
-            "email": "hello@thenetworkeruk.com",
+            "email": "hello@thenetworkerhub.com",
             "availableLanguage": [
               "English"
             ]
@@ -684,7 +684,7 @@ window.HUB_SEO_DATA = {
         {
           "@context": "https://schema.org",
           "@type": "AboutPage",
-          "url": "https://www.thenetworkerhub.com/about",
+          "url": "https://www.thenetworkeruk.com/about",
           "name": "About The Networker UK",
           "description": "The Networker UK connects UK business owners and professionals with networking events, exhibitions, and business opportunities.",
           "mainEntity": {
@@ -692,10 +692,10 @@ window.HUB_SEO_DATA = {
             "@type": "Organization",
             "name": "The Networker UK",
             "legalName": "The Networker Group Ltd",
-            "url": "https://www.thenetworkerhub.com",
-            "logo": "https://www.thenetworkerhub.com/assets/logo.png",
-            "image": "https://www.thenetworkerhub.com/assets/logo.png",
-            "email": "hello@thenetworkeruk.com",
+            "url": "https://www.thenetworkeruk.com",
+            "logo": "https://www.thenetworkeruk.com/assets/logo.png",
+            "image": "https://www.thenetworkeruk.com/assets/logo.png",
+            "email": "hello@thenetworkerhub.com",
             "description": "UK platform for networking events, exhibitions, and business opportunities.",
             "address": {
               "@type": "PostalAddress",
@@ -708,7 +708,7 @@ window.HUB_SEO_DATA = {
             "contactPoint": {
               "@type": "ContactPoint",
               "contactType": "customer support",
-              "email": "hello@thenetworkeruk.com",
+              "email": "hello@thenetworkerhub.com",
               "availableLanguage": [
                 "English"
               ]
@@ -735,10 +735,10 @@ window.HUB_SEO_DATA = {
           "@type": "Organization",
           "name": "The Networker UK",
           "legalName": "The Networker Group Ltd",
-          "url": "https://www.thenetworkerhub.com",
-          "logo": "https://www.thenetworkerhub.com/assets/logo.png",
-          "image": "https://www.thenetworkerhub.com/assets/logo.png",
-          "email": "hello@thenetworkeruk.com",
+          "url": "https://www.thenetworkeruk.com",
+          "logo": "https://www.thenetworkeruk.com/assets/logo.png",
+          "image": "https://www.thenetworkeruk.com/assets/logo.png",
+          "email": "hello@thenetworkerhub.com",
           "description": "UK platform for networking events, exhibitions, and business opportunities.",
           "address": {
             "@type": "PostalAddress",
@@ -751,7 +751,7 @@ window.HUB_SEO_DATA = {
           "contactPoint": {
             "@type": "ContactPoint",
             "contactType": "customer support",
-            "email": "hello@thenetworkeruk.com",
+            "email": "hello@thenetworkerhub.com",
             "availableLanguage": [
               "English"
             ]
@@ -770,7 +770,7 @@ window.HUB_SEO_DATA = {
         {
           "@context": "https://schema.org",
           "@type": "WebPage",
-          "url": "https://www.thenetworkerhub.com/rankings",
+          "url": "https://www.thenetworkeruk.com/rankings",
           "name": "Networking group leaderboard – The Networker UK",
           "description": "Monthly Top 10, Top 25 and Top 50 networking groups on The Networker UK, ranked by attendee ratings and review rate.",
           "about": {
@@ -778,10 +778,10 @@ window.HUB_SEO_DATA = {
             "@type": "Organization",
             "name": "The Networker UK",
             "legalName": "The Networker Group Ltd",
-            "url": "https://www.thenetworkerhub.com",
-            "logo": "https://www.thenetworkerhub.com/assets/logo.png",
-            "image": "https://www.thenetworkerhub.com/assets/logo.png",
-            "email": "hello@thenetworkeruk.com",
+            "url": "https://www.thenetworkeruk.com",
+            "logo": "https://www.thenetworkeruk.com/assets/logo.png",
+            "image": "https://www.thenetworkeruk.com/assets/logo.png",
+            "email": "hello@thenetworkerhub.com",
             "description": "UK platform for networking events, exhibitions, and business opportunities.",
             "address": {
               "@type": "PostalAddress",
@@ -794,7 +794,7 @@ window.HUB_SEO_DATA = {
             "contactPoint": {
               "@type": "ContactPoint",
               "contactType": "customer support",
-              "email": "hello@thenetworkeruk.com",
+              "email": "hello@thenetworkerhub.com",
               "availableLanguage": [
                 "English"
               ]
@@ -821,10 +821,10 @@ window.HUB_SEO_DATA = {
           "@type": "Organization",
           "name": "The Networker UK",
           "legalName": "The Networker Group Ltd",
-          "url": "https://www.thenetworkerhub.com",
-          "logo": "https://www.thenetworkerhub.com/assets/logo.png",
-          "image": "https://www.thenetworkerhub.com/assets/logo.png",
-          "email": "hello@thenetworkeruk.com",
+          "url": "https://www.thenetworkeruk.com",
+          "logo": "https://www.thenetworkeruk.com/assets/logo.png",
+          "image": "https://www.thenetworkeruk.com/assets/logo.png",
+          "email": "hello@thenetworkerhub.com",
           "description": "UK platform for networking events, exhibitions, and business opportunities.",
           "address": {
             "@type": "PostalAddress",
@@ -837,7 +837,7 @@ window.HUB_SEO_DATA = {
           "contactPoint": {
             "@type": "ContactPoint",
             "contactType": "customer support",
-            "email": "hello@thenetworkeruk.com",
+            "email": "hello@thenetworkerhub.com",
             "availableLanguage": [
               "English"
             ]
@@ -856,7 +856,7 @@ window.HUB_SEO_DATA = {
         {
           "@context": "https://schema.org",
           "@type": "WebPage",
-          "url": "https://www.thenetworkerhub.com/for-organisers",
+          "url": "https://www.thenetworkeruk.com/for-organisers",
           "name": "For Organisers – The Networker UK",
           "description": "Organiser dashboard, guest visit programme, visit tracking, Category Exclusivity, Previous Attendees, and discovery in the UK events and opportunities directories.",
           "about": {
@@ -864,10 +864,10 @@ window.HUB_SEO_DATA = {
             "@type": "Organization",
             "name": "The Networker UK",
             "legalName": "The Networker Group Ltd",
-            "url": "https://www.thenetworkerhub.com",
-            "logo": "https://www.thenetworkerhub.com/assets/logo.png",
-            "image": "https://www.thenetworkerhub.com/assets/logo.png",
-            "email": "hello@thenetworkeruk.com",
+            "url": "https://www.thenetworkeruk.com",
+            "logo": "https://www.thenetworkeruk.com/assets/logo.png",
+            "image": "https://www.thenetworkeruk.com/assets/logo.png",
+            "email": "hello@thenetworkerhub.com",
             "description": "UK platform for networking events, exhibitions, and business opportunities.",
             "address": {
               "@type": "PostalAddress",
@@ -880,7 +880,7 @@ window.HUB_SEO_DATA = {
             "contactPoint": {
               "@type": "ContactPoint",
               "contactType": "customer support",
-              "email": "hello@thenetworkeruk.com",
+              "email": "hello@thenetworkerhub.com",
               "availableLanguage": [
                 "English"
               ]
@@ -907,10 +907,10 @@ window.HUB_SEO_DATA = {
           "@type": "Organization",
           "name": "The Networker UK",
           "legalName": "The Networker Group Ltd",
-          "url": "https://www.thenetworkerhub.com",
-          "logo": "https://www.thenetworkerhub.com/assets/logo.png",
-          "image": "https://www.thenetworkerhub.com/assets/logo.png",
-          "email": "hello@thenetworkeruk.com",
+          "url": "https://www.thenetworkeruk.com",
+          "logo": "https://www.thenetworkeruk.com/assets/logo.png",
+          "image": "https://www.thenetworkeruk.com/assets/logo.png",
+          "email": "hello@thenetworkerhub.com",
           "description": "UK platform for networking events, exhibitions, and business opportunities.",
           "address": {
             "@type": "PostalAddress",
@@ -923,7 +923,7 @@ window.HUB_SEO_DATA = {
           "contactPoint": {
             "@type": "ContactPoint",
             "contactType": "customer support",
-            "email": "hello@thenetworkeruk.com",
+            "email": "hello@thenetworkerhub.com",
             "availableLanguage": [
               "English"
             ]
@@ -942,7 +942,7 @@ window.HUB_SEO_DATA = {
         {
           "@context": "https://schema.org",
           "@type": "WebPage",
-          "url": "https://www.thenetworkerhub.com/for-networkers",
+          "url": "https://www.thenetworkeruk.com/for-networkers",
           "name": "For networkers – The Networker UK",
           "description": "UK Events, Organiser pages, and Business Opportunities in one place. Free My account account with saved alerts, member rates, booking reminders, reviews, and guest visits.",
           "about": {
@@ -950,10 +950,10 @@ window.HUB_SEO_DATA = {
             "@type": "Organization",
             "name": "The Networker UK",
             "legalName": "The Networker Group Ltd",
-            "url": "https://www.thenetworkerhub.com",
-            "logo": "https://www.thenetworkerhub.com/assets/logo.png",
-            "image": "https://www.thenetworkerhub.com/assets/logo.png",
-            "email": "hello@thenetworkeruk.com",
+            "url": "https://www.thenetworkeruk.com",
+            "logo": "https://www.thenetworkeruk.com/assets/logo.png",
+            "image": "https://www.thenetworkeruk.com/assets/logo.png",
+            "email": "hello@thenetworkerhub.com",
             "description": "UK platform for networking events, exhibitions, and business opportunities.",
             "address": {
               "@type": "PostalAddress",
@@ -966,7 +966,7 @@ window.HUB_SEO_DATA = {
             "contactPoint": {
               "@type": "ContactPoint",
               "contactType": "customer support",
-              "email": "hello@thenetworkeruk.com",
+              "email": "hello@thenetworkerhub.com",
               "availableLanguage": [
                 "English"
               ]
@@ -993,10 +993,10 @@ window.HUB_SEO_DATA = {
           "@type": "Organization",
           "name": "The Networker UK",
           "legalName": "The Networker Group Ltd",
-          "url": "https://www.thenetworkerhub.com",
-          "logo": "https://www.thenetworkerhub.com/assets/logo.png",
-          "image": "https://www.thenetworkerhub.com/assets/logo.png",
-          "email": "hello@thenetworkeruk.com",
+          "url": "https://www.thenetworkeruk.com",
+          "logo": "https://www.thenetworkeruk.com/assets/logo.png",
+          "image": "https://www.thenetworkeruk.com/assets/logo.png",
+          "email": "hello@thenetworkerhub.com",
           "description": "UK platform for networking events, exhibitions, and business opportunities.",
           "address": {
             "@type": "PostalAddress",
@@ -1009,7 +1009,7 @@ window.HUB_SEO_DATA = {
           "contactPoint": {
             "@type": "ContactPoint",
             "contactType": "customer support",
-            "email": "hello@thenetworkeruk.com",
+            "email": "hello@thenetworkerhub.com",
             "availableLanguage": [
               "English"
             ]
@@ -1028,7 +1028,7 @@ window.HUB_SEO_DATA = {
         {
           "@context": "https://schema.org",
           "@type": "WebPage",
-          "url": "https://www.thenetworkerhub.com/for-networkers",
+          "url": "https://www.thenetworkeruk.com/for-networkers",
           "name": "For networkers – The Networker UK",
           "description": "UK Events, Organiser pages, and Business Opportunities in one place. Free My account account with saved alerts, member rates, booking reminders, reviews, and guest visits.",
           "about": {
@@ -1036,10 +1036,10 @@ window.HUB_SEO_DATA = {
             "@type": "Organization",
             "name": "The Networker UK",
             "legalName": "The Networker Group Ltd",
-            "url": "https://www.thenetworkerhub.com",
-            "logo": "https://www.thenetworkerhub.com/assets/logo.png",
-            "image": "https://www.thenetworkerhub.com/assets/logo.png",
-            "email": "hello@thenetworkeruk.com",
+            "url": "https://www.thenetworkeruk.com",
+            "logo": "https://www.thenetworkeruk.com/assets/logo.png",
+            "image": "https://www.thenetworkeruk.com/assets/logo.png",
+            "email": "hello@thenetworkerhub.com",
             "description": "UK platform for networking events, exhibitions, and business opportunities.",
             "address": {
               "@type": "PostalAddress",
@@ -1052,7 +1052,7 @@ window.HUB_SEO_DATA = {
             "contactPoint": {
               "@type": "ContactPoint",
               "contactType": "customer support",
-              "email": "hello@thenetworkeruk.com",
+              "email": "hello@thenetworkerhub.com",
               "availableLanguage": [
                 "English"
               ]
@@ -1079,10 +1079,10 @@ window.HUB_SEO_DATA = {
           "@type": "Organization",
           "name": "The Networker UK",
           "legalName": "The Networker Group Ltd",
-          "url": "https://www.thenetworkerhub.com",
-          "logo": "https://www.thenetworkerhub.com/assets/logo.png",
-          "image": "https://www.thenetworkerhub.com/assets/logo.png",
-          "email": "hello@thenetworkeruk.com",
+          "url": "https://www.thenetworkeruk.com",
+          "logo": "https://www.thenetworkeruk.com/assets/logo.png",
+          "image": "https://www.thenetworkeruk.com/assets/logo.png",
+          "email": "hello@thenetworkerhub.com",
           "description": "UK platform for networking events, exhibitions, and business opportunities.",
           "address": {
             "@type": "PostalAddress",
@@ -1095,7 +1095,7 @@ window.HUB_SEO_DATA = {
           "contactPoint": {
             "@type": "ContactPoint",
             "contactType": "customer support",
-            "email": "hello@thenetworkeruk.com",
+            "email": "hello@thenetworkerhub.com",
             "availableLanguage": [
               "English"
             ]
@@ -1114,7 +1114,7 @@ window.HUB_SEO_DATA = {
         {
           "@context": "https://schema.org",
           "@type": "WebPage",
-          "url": "https://www.thenetworkerhub.com/advertising",
+          "url": "https://www.thenetworkeruk.com/advertising",
           "name": "Advertising & sponsorship – The Networker UK",
           "description": "Sponsor placements and advertising rates for the events directory and business opportunities on The Networker UK.",
           "about": {
@@ -1122,10 +1122,10 @@ window.HUB_SEO_DATA = {
             "@type": "Organization",
             "name": "The Networker UK",
             "legalName": "The Networker Group Ltd",
-            "url": "https://www.thenetworkerhub.com",
-            "logo": "https://www.thenetworkerhub.com/assets/logo.png",
-            "image": "https://www.thenetworkerhub.com/assets/logo.png",
-            "email": "hello@thenetworkeruk.com",
+            "url": "https://www.thenetworkeruk.com",
+            "logo": "https://www.thenetworkeruk.com/assets/logo.png",
+            "image": "https://www.thenetworkeruk.com/assets/logo.png",
+            "email": "hello@thenetworkerhub.com",
             "description": "UK platform for networking events, exhibitions, and business opportunities.",
             "address": {
               "@type": "PostalAddress",
@@ -1138,7 +1138,7 @@ window.HUB_SEO_DATA = {
             "contactPoint": {
               "@type": "ContactPoint",
               "contactType": "customer support",
-              "email": "hello@thenetworkeruk.com",
+              "email": "hello@thenetworkerhub.com",
               "availableLanguage": [
                 "English"
               ]
@@ -1165,10 +1165,10 @@ window.HUB_SEO_DATA = {
           "@type": "Organization",
           "name": "The Networker UK",
           "legalName": "The Networker Group Ltd",
-          "url": "https://www.thenetworkerhub.com",
-          "logo": "https://www.thenetworkerhub.com/assets/logo.png",
-          "image": "https://www.thenetworkerhub.com/assets/logo.png",
-          "email": "hello@thenetworkeruk.com",
+          "url": "https://www.thenetworkeruk.com",
+          "logo": "https://www.thenetworkeruk.com/assets/logo.png",
+          "image": "https://www.thenetworkeruk.com/assets/logo.png",
+          "email": "hello@thenetworkerhub.com",
           "description": "UK platform for networking events, exhibitions, and business opportunities.",
           "address": {
             "@type": "PostalAddress",
@@ -1181,7 +1181,7 @@ window.HUB_SEO_DATA = {
           "contactPoint": {
             "@type": "ContactPoint",
             "contactType": "customer support",
-            "email": "hello@thenetworkeruk.com",
+            "email": "hello@thenetworkerhub.com",
             "availableLanguage": [
               "English"
             ]
@@ -1200,14 +1200,14 @@ window.HUB_SEO_DATA = {
         {
           "@context": "https://schema.org",
           "@type": "CollectionPage",
-          "@id": "https://www.thenetworkerhub.com/events/",
-          "url": "https://www.thenetworkerhub.com/events/",
+          "@id": "https://www.thenetworkeruk.com/events/",
+          "url": "https://www.thenetworkeruk.com/events/",
           "name": "Networking events — The Networker UK",
           "description": "Browse UK networking events, meetings, webinars, workshops, exhibitions, and awards.",
           "isPartOf": {
             "@type": "WebSite",
             "name": "The Networker UK",
-            "url": "https://www.thenetworkerhub.com"
+            "url": "https://www.thenetworkeruk.com"
           }
         }
       ]
@@ -1220,10 +1220,10 @@ window.HUB_SEO_DATA = {
           "@type": "Organization",
           "name": "The Networker UK",
           "legalName": "The Networker Group Ltd",
-          "url": "https://www.thenetworkerhub.com",
-          "logo": "https://www.thenetworkerhub.com/assets/logo.png",
-          "image": "https://www.thenetworkerhub.com/assets/logo.png",
-          "email": "hello@thenetworkeruk.com",
+          "url": "https://www.thenetworkeruk.com",
+          "logo": "https://www.thenetworkeruk.com/assets/logo.png",
+          "image": "https://www.thenetworkeruk.com/assets/logo.png",
+          "email": "hello@thenetworkerhub.com",
           "description": "UK platform for networking events, exhibitions, and business opportunities.",
           "address": {
             "@type": "PostalAddress",
@@ -1236,7 +1236,7 @@ window.HUB_SEO_DATA = {
           "contactPoint": {
             "@type": "ContactPoint",
             "contactType": "customer support",
-            "email": "hello@thenetworkeruk.com",
+            "email": "hello@thenetworkerhub.com",
             "availableLanguage": [
               "English"
             ]
@@ -1255,14 +1255,14 @@ window.HUB_SEO_DATA = {
         {
           "@context": "https://schema.org",
           "@type": "CollectionPage",
-          "@id": "https://www.thenetworkerhub.com/opportunities/",
-          "url": "https://www.thenetworkerhub.com/opportunities/",
+          "@id": "https://www.thenetworkeruk.com/opportunities/",
+          "url": "https://www.thenetworkeruk.com/opportunities/",
           "name": "Business opportunities — The Networker UK",
           "description": "Browse franchises, partnerships, and business opportunities across the UK.",
           "isPartOf": {
             "@type": "WebSite",
             "name": "The Networker UK",
-            "url": "https://www.thenetworkerhub.com"
+            "url": "https://www.thenetworkeruk.com"
           }
         }
       ]
@@ -1275,10 +1275,10 @@ window.HUB_SEO_DATA = {
           "@type": "Organization",
           "name": "The Networker UK",
           "legalName": "The Networker Group Ltd",
-          "url": "https://www.thenetworkerhub.com",
-          "logo": "https://www.thenetworkerhub.com/assets/logo.png",
-          "image": "https://www.thenetworkerhub.com/assets/logo.png",
-          "email": "hello@thenetworkeruk.com",
+          "url": "https://www.thenetworkeruk.com",
+          "logo": "https://www.thenetworkeruk.com/assets/logo.png",
+          "image": "https://www.thenetworkeruk.com/assets/logo.png",
+          "email": "hello@thenetworkerhub.com",
           "description": "UK platform for networking events, exhibitions, and business opportunities.",
           "address": {
             "@type": "PostalAddress",
@@ -1291,7 +1291,7 @@ window.HUB_SEO_DATA = {
           "contactPoint": {
             "@type": "ContactPoint",
             "contactType": "customer support",
-            "email": "hello@thenetworkeruk.com",
+            "email": "hello@thenetworkerhub.com",
             "availableLanguage": [
               "English"
             ]
@@ -1310,7 +1310,7 @@ window.HUB_SEO_DATA = {
         {
           "@context": "https://schema.org",
           "@type": "WebPage",
-          "url": "https://www.thenetworkerhub.com/legal-policies",
+          "url": "https://www.thenetworkeruk.com/legal-policies",
           "name": "Legal & policies — The Networker UK",
           "description": "Privacy policy, terms, refunds, and cookie information for The Networker UK."
         }
@@ -1321,14 +1321,14 @@ window.HUB_SEO_DATA = {
       "@graph": [
         {
           "@type": "CollectionPage",
-          "@id": "https://www.thenetworkerhub.com/guides",
-          "url": "https://www.thenetworkerhub.com/guides",
+          "@id": "https://www.thenetworkeruk.com/guides",
+          "url": "https://www.thenetworkeruk.com/guides",
           "name": "Organiser guides – The Networker UK",
           "description": "Step-by-step onboarding checklists for organisers — list events, publish business opportunities, invite team members, and manage attendees on The Networker UK.",
           "isPartOf": {
             "@type": "WebSite",
             "name": "The Networker UK",
-            "url": "https://www.thenetworkerhub.com"
+            "url": "https://www.thenetworkeruk.com"
           }
         },
         {
@@ -1338,13 +1338,13 @@ window.HUB_SEO_DATA = {
               "@type": "ListItem",
               "position": 1,
               "name": "Home",
-              "item": "https://www.thenetworkerhub.com/"
+              "item": "https://www.thenetworkeruk.com/"
             },
             {
               "@type": "ListItem",
               "position": 2,
               "name": "Organiser guides",
-              "item": "https://www.thenetworkerhub.com/guides"
+              "item": "https://www.thenetworkeruk.com/guides"
             }
           ]
         }
@@ -1355,30 +1355,30 @@ window.HUB_SEO_DATA = {
       "@graph": [
         {
           "@type": "Article",
-          "@id": "https://www.thenetworkerhub.com/help/organiser-payouts#article",
-          "url": "https://www.thenetworkerhub.com/help/organiser-payouts",
+          "@id": "https://www.thenetworkeruk.com/help/organiser-payouts#article",
+          "url": "https://www.thenetworkeruk.com/help/organiser-payouts",
           "headline": "Organiser payouts",
           "description": "When organisers receive ticket payouts on The Networker UK — 7-day settlement, Stripe Connect, archiving events, and requesting payouts from your dashboard.",
           "author": {
             "@type": "Organization",
             "name": "The Networker Group Ltd",
-            "url": "https://www.thenetworkerhub.com"
+            "url": "https://www.thenetworkeruk.com"
           },
           "publisher": {
             "@type": "Organization",
             "name": "The Networker Group Ltd",
-            "url": "https://www.thenetworkerhub.com",
+            "url": "https://www.thenetworkeruk.com",
             "logo": {
               "@type": "ImageObject",
-              "url": "https://www.thenetworkerhub.com/assets/logo.png"
+              "url": "https://www.thenetworkeruk.com/assets/logo.png"
             }
           },
-          "mainEntityOfPage": "https://www.thenetworkerhub.com/help/organiser-payouts"
+          "mainEntityOfPage": "https://www.thenetworkeruk.com/help/organiser-payouts"
         },
         {
           "@type": "FAQPage",
-          "@id": "https://www.thenetworkerhub.com/help/organiser-payouts#faq",
-          "url": "https://www.thenetworkerhub.com/help/organiser-payouts",
+          "@id": "https://www.thenetworkeruk.com/help/organiser-payouts#faq",
+          "url": "https://www.thenetworkeruk.com/help/organiser-payouts",
           "mainEntity": [
             {
               "@type": "Question",
@@ -1397,19 +1397,19 @@ window.HUB_SEO_DATA = {
               "@type": "ListItem",
               "position": 1,
               "name": "Home",
-              "item": "https://www.thenetworkerhub.com/"
+              "item": "https://www.thenetworkeruk.com/"
             },
             {
               "@type": "ListItem",
               "position": 2,
               "name": "FAQ & Help",
-              "item": "https://www.thenetworkerhub.com/faq"
+              "item": "https://www.thenetworkeruk.com/faq"
             },
             {
               "@type": "ListItem",
               "position": 3,
               "name": "Organiser payouts",
-              "item": "https://www.thenetworkerhub.com/help/organiser-payouts"
+              "item": "https://www.thenetworkeruk.com/help/organiser-payouts"
             }
           ]
         }
@@ -1420,30 +1420,30 @@ window.HUB_SEO_DATA = {
       "@graph": [
         {
           "@type": "Article",
-          "@id": "https://www.thenetworkerhub.com/help/pricing-fees#article",
-          "url": "https://www.thenetworkerhub.com/help/pricing-fees",
+          "@id": "https://www.thenetworkeruk.com/help/pricing-fees#article",
+          "url": "https://www.thenetworkeruk.com/help/pricing-fees",
           "headline": "Ticket pricing & fees",
           "description": "How The Networker UK ticket fees work — 4.5% + 20p booking fee paid by attendees, organisers receive the full ticket price, with worked examples.",
           "author": {
             "@type": "Organization",
             "name": "The Networker Group Ltd",
-            "url": "https://www.thenetworkerhub.com"
+            "url": "https://www.thenetworkeruk.com"
           },
           "publisher": {
             "@type": "Organization",
             "name": "The Networker Group Ltd",
-            "url": "https://www.thenetworkerhub.com",
+            "url": "https://www.thenetworkeruk.com",
             "logo": {
               "@type": "ImageObject",
-              "url": "https://www.thenetworkerhub.com/assets/logo.png"
+              "url": "https://www.thenetworkeruk.com/assets/logo.png"
             }
           },
-          "mainEntityOfPage": "https://www.thenetworkerhub.com/help/pricing-fees"
+          "mainEntityOfPage": "https://www.thenetworkeruk.com/help/pricing-fees"
         },
         {
           "@type": "FAQPage",
-          "@id": "https://www.thenetworkerhub.com/help/pricing-fees#faq",
-          "url": "https://www.thenetworkerhub.com/help/pricing-fees",
+          "@id": "https://www.thenetworkeruk.com/help/pricing-fees#faq",
+          "url": "https://www.thenetworkeruk.com/help/pricing-fees",
           "mainEntity": [
             {
               "@type": "Question",
@@ -1462,19 +1462,19 @@ window.HUB_SEO_DATA = {
               "@type": "ListItem",
               "position": 1,
               "name": "Home",
-              "item": "https://www.thenetworkerhub.com/"
+              "item": "https://www.thenetworkeruk.com/"
             },
             {
               "@type": "ListItem",
               "position": 2,
               "name": "FAQ & Help",
-              "item": "https://www.thenetworkerhub.com/faq"
+              "item": "https://www.thenetworkeruk.com/faq"
             },
             {
               "@type": "ListItem",
               "position": 3,
               "name": "Ticket pricing & fees",
-              "item": "https://www.thenetworkerhub.com/help/pricing-fees"
+              "item": "https://www.thenetworkeruk.com/help/pricing-fees"
             }
           ]
         }
@@ -1485,20 +1485,20 @@ window.HUB_SEO_DATA = {
       "@graph": [
         {
           "@type": "WebPage",
-          "@id": "https://www.thenetworkerhub.com/guides/list-an-event#webpage",
-          "url": "https://www.thenetworkerhub.com/guides/list-an-event",
+          "@id": "https://www.thenetworkeruk.com/guides/list-an-event#webpage",
+          "url": "https://www.thenetworkeruk.com/guides/list-an-event",
           "name": "List an event – How-to guides – The Networker UK",
           "description": "Start listing events on The Networker UK — sign in to the organiser dashboard for a guided setup checklist and Hubert walkthrough.",
           "isPartOf": {
             "@type": "WebSite",
             "name": "The Networker UK",
-            "url": "https://www.thenetworkerhub.com"
+            "url": "https://www.thenetworkeruk.com"
           }
         },
         {
           "@type": "HowTo",
-          "@id": "https://www.thenetworkerhub.com/guides/list-an-event#howto",
-          "url": "https://www.thenetworkerhub.com/guides/list-an-event",
+          "@id": "https://www.thenetworkeruk.com/guides/list-an-event#howto",
+          "url": "https://www.thenetworkeruk.com/guides/list-an-event",
           "name": "How to list an event on The Networker UK",
           "description": "Start listing events on The Networker UK — sign in to the organiser dashboard for a guided setup checklist and Hubert walkthrough.",
           "step": [
@@ -1507,28 +1507,28 @@ window.HUB_SEO_DATA = {
               "position": 1,
               "name": "Sign in to the organiser dashboard",
               "text": "Sign in and open the organiser dashboard at /organiser/. If your networking group is already listed, search the organiser directory and claim your page when prompted.",
-              "url": "https://www.thenetworkerhub.com/guides/list-an-event#sign-in"
+              "url": "https://www.thenetworkeruk.com/guides/list-an-event#sign-in"
             },
             {
               "@type": "HowToStep",
               "position": 2,
               "name": "Create or claim your organiser page",
               "text": "Follow the setup checklist on Overview — add your public group profile or confirm the claim prompt for an existing page.",
-              "url": "https://www.thenetworkerhub.com/guides/list-an-event#organiser-page"
+              "url": "https://www.thenetworkeruk.com/guides/list-an-event#organiser-page"
             },
             {
               "@type": "HowToStep",
               "position": 3,
               "name": "Optional: set up membership",
               "text": "Upload your member register if you sell members-only tickets or track renewals. Skip this step if you only need open booking.",
-              "url": "https://www.thenetworkerhub.com/guides/list-an-event#membership"
+              "url": "https://www.thenetworkeruk.com/guides/list-an-event#membership"
             },
             {
               "@type": "HowToStep",
               "position": 4,
               "name": "List your event in the dashboard",
               "text": "Choose List event from My events. Hubert walks you through format, details, tickets, and publish. For paid tickets, connect Stripe under the Revenue tab before publishing.",
-              "url": "https://www.thenetworkerhub.com/guides/list-an-event#list-event"
+              "url": "https://www.thenetworkeruk.com/guides/list-an-event#list-event"
             }
           ]
         },
@@ -1539,19 +1539,19 @@ window.HUB_SEO_DATA = {
               "@type": "ListItem",
               "position": 1,
               "name": "Home",
-              "item": "https://www.thenetworkerhub.com/"
+              "item": "https://www.thenetworkeruk.com/"
             },
             {
               "@type": "ListItem",
               "position": 2,
               "name": "Organiser guides",
-              "item": "https://www.thenetworkerhub.com/guides"
+              "item": "https://www.thenetworkeruk.com/guides"
             },
             {
               "@type": "ListItem",
               "position": 3,
               "name": "List an event",
-              "item": "https://www.thenetworkerhub.com/guides/list-an-event"
+              "item": "https://www.thenetworkeruk.com/guides/list-an-event"
             }
           ]
         }
@@ -1562,20 +1562,20 @@ window.HUB_SEO_DATA = {
       "@graph": [
         {
           "@type": "WebPage",
-          "@id": "https://www.thenetworkerhub.com/guides/list-a-conference-or-exhibition#webpage",
-          "url": "https://www.thenetworkerhub.com/guides/list-a-conference-or-exhibition",
+          "@id": "https://www.thenetworkeruk.com/guides/list-a-conference-or-exhibition#webpage",
+          "url": "https://www.thenetworkeruk.com/guides/list-a-conference-or-exhibition",
           "name": "List a conference or exhibition – How-to guides – The Networker UK",
           "description": "Guide for organisers listing conferences, exhibitions, awards dinners and summits on The Networker UK — free listings, optional paid tickets, and visibility.",
           "isPartOf": {
             "@type": "WebSite",
             "name": "The Networker UK",
-            "url": "https://www.thenetworkerhub.com"
+            "url": "https://www.thenetworkeruk.com"
           }
         },
         {
           "@type": "HowTo",
-          "@id": "https://www.thenetworkerhub.com/guides/list-a-conference-or-exhibition#howto",
-          "url": "https://www.thenetworkerhub.com/guides/list-a-conference-or-exhibition",
+          "@id": "https://www.thenetworkeruk.com/guides/list-a-conference-or-exhibition#howto",
+          "url": "https://www.thenetworkeruk.com/guides/list-a-conference-or-exhibition",
           "name": "How to list a conference or exhibition on The Networker UK",
           "description": "Guide for organisers listing conferences, exhibitions, awards dinners and summits on The Networker UK — free listings, optional paid tickets, and visibility.",
           "step": [
@@ -1584,35 +1584,35 @@ window.HUB_SEO_DATA = {
               "position": 1,
               "name": "Claim or create your organiser page",
               "text": "Sign in to the organiser dashboard. If your group or exhibition brand is already listed, confirm the claim prompt. Otherwise create an organiser page with logo, description, and contact email.",
-              "url": "https://www.thenetworkerhub.com/guides/list-a-conference-or-exhibition#organiser-page"
+              "url": "https://www.thenetworkeruk.com/guides/list-a-conference-or-exhibition#organiser-page"
             },
             {
               "@type": "HowToStep",
               "position": 2,
               "name": "Start a new listing",
               "text": "From the dashboard choose Add new → Event. Pick your organiser page, set format, venue, and dates. For a recurring series or multi-day conference with the same schedule each day, select every date on the calendar.",
-              "url": "https://www.thenetworkerhub.com/guides/list-a-conference-or-exhibition#new-listing"
+              "url": "https://www.thenetworkeruk.com/guides/list-a-conference-or-exhibition#new-listing"
             },
             {
               "@type": "HowToStep",
               "position": 3,
               "name": "Choose Conference or Exhibition",
               "text": "On the event details step, set Event type to Conference or Exhibition so attendees can filter you on Browse events.",
-              "url": "https://www.thenetworkerhub.com/guides/list-a-conference-or-exhibition#event-type"
+              "url": "https://www.thenetworkeruk.com/guides/list-a-conference-or-exhibition#event-type"
             },
             {
               "@type": "HowToStep",
               "position": 4,
               "name": "Set up tickets (free or paid)",
               "text": "Add delegate ticket tiers (early bird, standard, VIP, or free registration). For one admission price covering every day, tick Full series pass on that tier. For the same per-session price on each day, leave it unchecked — attendees can book all remaining dates in one checkout. Paid tickets require Connect Stripe under Revenue.",
-              "url": "https://www.thenetworkerhub.com/guides/list-a-conference-or-exhibition#tickets"
+              "url": "https://www.thenetworkeruk.com/guides/list-a-conference-or-exhibition#tickets"
             },
             {
               "@type": "HowToStep",
               "position": 5,
               "name": "Publish and promote",
               "text": "Publish when details, tickets, VAT if applicable, and refund policy are complete. Optional Premium Spotlight adds extra visibility on the browse page.",
-              "url": "https://www.thenetworkerhub.com/guides/list-a-conference-or-exhibition#publish"
+              "url": "https://www.thenetworkeruk.com/guides/list-a-conference-or-exhibition#publish"
             }
           ]
         },
@@ -1623,19 +1623,19 @@ window.HUB_SEO_DATA = {
               "@type": "ListItem",
               "position": 1,
               "name": "Home",
-              "item": "https://www.thenetworkerhub.com/"
+              "item": "https://www.thenetworkeruk.com/"
             },
             {
               "@type": "ListItem",
               "position": 2,
               "name": "Organiser guides",
-              "item": "https://www.thenetworkerhub.com/guides"
+              "item": "https://www.thenetworkeruk.com/guides"
             },
             {
               "@type": "ListItem",
               "position": 3,
               "name": "List a conference or exhibition",
-              "item": "https://www.thenetworkerhub.com/guides/list-a-conference-or-exhibition"
+              "item": "https://www.thenetworkeruk.com/guides/list-a-conference-or-exhibition"
             }
           ]
         }
@@ -1646,20 +1646,20 @@ window.HUB_SEO_DATA = {
       "@graph": [
         {
           "@type": "WebPage",
-          "@id": "https://www.thenetworkerhub.com/guides/list-a-business-opportunity#webpage",
-          "url": "https://www.thenetworkerhub.com/guides/list-a-business-opportunity",
+          "@id": "https://www.thenetworkeruk.com/guides/list-a-business-opportunity#webpage",
+          "url": "https://www.thenetworkeruk.com/guides/list-a-business-opportunity",
           "name": "List a business opportunity – How-to guides – The Networker UK",
           "description": "How organisers list a business opportunity on The Networker UK — create a listing, submit for review, and manage enquiries.",
           "isPartOf": {
             "@type": "WebSite",
             "name": "The Networker UK",
-            "url": "https://www.thenetworkerhub.com"
+            "url": "https://www.thenetworkeruk.com"
           }
         },
         {
           "@type": "HowTo",
-          "@id": "https://www.thenetworkerhub.com/guides/list-a-business-opportunity#howto",
-          "url": "https://www.thenetworkerhub.com/guides/list-a-business-opportunity",
+          "@id": "https://www.thenetworkeruk.com/guides/list-a-business-opportunity#howto",
+          "url": "https://www.thenetworkeruk.com/guides/list-a-business-opportunity",
           "name": "How to list a business opportunity on The Networker UK",
           "description": "How organisers list a business opportunity on The Networker UK — create a listing, submit for review, and manage enquiries.",
           "step": [
@@ -1668,49 +1668,49 @@ window.HUB_SEO_DATA = {
               "position": 1,
               "name": "Open the organiser dashboard",
               "text": "Sign in and go to Business opportunities in the sidebar. You need an organiser account — the same workspace you use for events.",
-              "url": "https://www.thenetworkerhub.com/guides/list-a-business-opportunity#dashboard"
+              "url": "https://www.thenetworkeruk.com/guides/list-a-business-opportunity#dashboard"
             },
             {
               "@type": "HowToStep",
               "position": 2,
               "name": "Start a new listing",
               "text": "Choose List a listing. Review how listings work, pricing, and what happens after submission, then open the listing form.",
-              "url": "https://www.thenetworkerhub.com/guides/list-a-business-opportunity#new-listing"
+              "url": "https://www.thenetworkeruk.com/guides/list-a-business-opportunity#new-listing"
             },
             {
               "@type": "HowToStep",
               "position": 3,
               "name": "Complete the listing form",
               "text": "Add title, opportunity type, summary, description, investment notes, location, industry, images, and contact details. Listings are reviewed before going live.",
-              "url": "https://www.thenetworkerhub.com/guides/list-a-business-opportunity#listing-form"
+              "url": "https://www.thenetworkeruk.com/guides/list-a-business-opportunity#listing-form"
             },
             {
               "@type": "HowToStep",
               "position": 4,
               "name": "Submit for review",
               "text": "Submit the listing. You receive email updates when it is approved, live, or if changes are needed.",
-              "url": "https://www.thenetworkerhub.com/guides/list-a-business-opportunity#submit"
+              "url": "https://www.thenetworkeruk.com/guides/list-a-business-opportunity#submit"
             },
             {
               "@type": "HowToStep",
               "position": 5,
               "name": "Optional: premium placement",
               "text": "Featured carousel slots may be available for extra visibility on the opportunities browse page after submission.",
-              "url": "https://www.thenetworkerhub.com/guides/list-a-business-opportunity#premium"
+              "url": "https://www.thenetworkeruk.com/guides/list-a-business-opportunity#premium"
             },
             {
               "@type": "HowToStep",
               "position": 6,
               "name": "Manage enquiries",
               "text": "When someone enquires, you receive an email notification. Reply directly to the prospect and track enquiries from Business opportunities in the dashboard.",
-              "url": "https://www.thenetworkerhub.com/guides/list-a-business-opportunity#enquiries"
+              "url": "https://www.thenetworkeruk.com/guides/list-a-business-opportunity#enquiries"
             },
             {
               "@type": "HowToStep",
               "position": 7,
               "name": "Renew or update",
               "text": "Listings run for a set period. Renew or edit from your dashboard before expiry to stay visible on Browse opportunities.",
-              "url": "https://www.thenetworkerhub.com/guides/list-a-business-opportunity#renew"
+              "url": "https://www.thenetworkeruk.com/guides/list-a-business-opportunity#renew"
             }
           ]
         },
@@ -1721,19 +1721,19 @@ window.HUB_SEO_DATA = {
               "@type": "ListItem",
               "position": 1,
               "name": "Home",
-              "item": "https://www.thenetworkerhub.com/"
+              "item": "https://www.thenetworkeruk.com/"
             },
             {
               "@type": "ListItem",
               "position": 2,
               "name": "Organiser guides",
-              "item": "https://www.thenetworkerhub.com/guides"
+              "item": "https://www.thenetworkeruk.com/guides"
             },
             {
               "@type": "ListItem",
               "position": 3,
               "name": "List a business opportunity",
-              "item": "https://www.thenetworkerhub.com/guides/list-a-business-opportunity"
+              "item": "https://www.thenetworkeruk.com/guides/list-a-business-opportunity"
             }
           ]
         }
@@ -1744,20 +1744,20 @@ window.HUB_SEO_DATA = {
       "@graph": [
         {
           "@type": "WebPage",
-          "@id": "https://www.thenetworkerhub.com/guides/invite-your-team#webpage",
-          "url": "https://www.thenetworkerhub.com/guides/invite-your-team",
+          "@id": "https://www.thenetworkeruk.com/guides/invite-your-team#webpage",
+          "url": "https://www.thenetworkeruk.com/guides/invite-your-team",
           "name": "Invite team members – How-to guides – The Networker UK",
           "description": "How to invite team members to your organiser workspace on The Networker UK — permissions, group access, limits, and accept flow.",
           "isPartOf": {
             "@type": "WebSite",
             "name": "The Networker UK",
-            "url": "https://www.thenetworkerhub.com"
+            "url": "https://www.thenetworkeruk.com"
           }
         },
         {
           "@type": "HowTo",
-          "@id": "https://www.thenetworkerhub.com/guides/invite-your-team#howto",
-          "url": "https://www.thenetworkerhub.com/guides/invite-your-team",
+          "@id": "https://www.thenetworkeruk.com/guides/invite-your-team#howto",
+          "url": "https://www.thenetworkeruk.com/guides/invite-your-team",
           "name": "How to invite team members to your organiser workspace on The Networker UK",
           "description": "How to invite team members to your organiser workspace on The Networker UK — permissions, group access, limits, and accept flow.",
           "step": [
@@ -1766,42 +1766,42 @@ window.HUB_SEO_DATA = {
               "position": 1,
               "name": "Who can invite",
               "text": "Only the account owner can send or remove team invites. Team members can see the team list but cannot invite others.",
-              "url": "https://www.thenetworkerhub.com/guides/invite-your-team#who-can-invite"
+              "url": "https://www.thenetworkeruk.com/guides/invite-your-team#who-can-invite"
             },
             {
               "@type": "HowToStep",
               "position": 2,
               "name": "Send an invite",
               "text": "In the organiser dashboard, open Team & invites. Click Invite team member, enter their email, choose All groups or specific networking groups, and send. You can invite up to 100 team members per organiser account.",
-              "url": "https://www.thenetworkerhub.com/guides/invite-your-team#send-invite"
+              "url": "https://www.thenetworkeruk.com/guides/invite-your-team#send-invite"
             },
             {
               "@type": "HowToStep",
               "position": 3,
               "name": "They accept by signing in",
               "text": "Your colleague opens the email and signs in with that exact email address. Once signed in, their status changes to Active on your team list.",
-              "url": "https://www.thenetworkerhub.com/guides/invite-your-team#accept"
+              "url": "https://www.thenetworkeruk.com/guides/invite-your-team#accept"
             },
             {
               "@type": "HowToStep",
               "position": 4,
               "name": "What team members can do",
               "text": "Team members can view assigned networking groups, create and edit events and tickets, view revenue and registrations, and manage business opportunity listings.",
-              "url": "https://www.thenetworkerhub.com/guides/invite-your-team#permissions"
+              "url": "https://www.thenetworkeruk.com/guides/invite-your-team#permissions"
             },
             {
               "@type": "HowToStep",
               "position": 5,
               "name": "What team members cannot do",
               "text": "Team members cannot invite or remove colleagues, create new networking groups, add bank details, request payouts, or delete events.",
-              "url": "https://www.thenetworkerhub.com/guides/invite-your-team#restrictions"
+              "url": "https://www.thenetworkeruk.com/guides/invite-your-team#restrictions"
             },
             {
               "@type": "HowToStep",
               "position": 6,
               "name": "Remove someone",
               "text": "From the team table, choose Remove next to a team member or resend a pending invite if they did not receive the email.",
-              "url": "https://www.thenetworkerhub.com/guides/invite-your-team#remove"
+              "url": "https://www.thenetworkeruk.com/guides/invite-your-team#remove"
             }
           ]
         },
@@ -1812,19 +1812,19 @@ window.HUB_SEO_DATA = {
               "@type": "ListItem",
               "position": 1,
               "name": "Home",
-              "item": "https://www.thenetworkerhub.com/"
+              "item": "https://www.thenetworkeruk.com/"
             },
             {
               "@type": "ListItem",
               "position": 2,
               "name": "Organiser guides",
-              "item": "https://www.thenetworkerhub.com/guides"
+              "item": "https://www.thenetworkeruk.com/guides"
             },
             {
               "@type": "ListItem",
               "position": 3,
               "name": "Invite team members",
-              "item": "https://www.thenetworkerhub.com/guides/invite-your-team"
+              "item": "https://www.thenetworkeruk.com/guides/invite-your-team"
             }
           ]
         }
@@ -1835,20 +1835,20 @@ window.HUB_SEO_DATA = {
       "@graph": [
         {
           "@type": "WebPage",
-          "@id": "https://www.thenetworkerhub.com/guides/claim-your-organiser-page#webpage",
-          "url": "https://www.thenetworkerhub.com/guides/claim-your-organiser-page",
+          "@id": "https://www.thenetworkeruk.com/guides/claim-your-organiser-page#webpage",
+          "url": "https://www.thenetworkeruk.com/guides/claim-your-organiser-page",
           "name": "Claim your organiser page – How-to guides – The Networker UK",
           "description": "How to find and claim your networking group on The Networker UK — verify ownership, update your profile, and start listing events.",
           "isPartOf": {
             "@type": "WebSite",
             "name": "The Networker UK",
-            "url": "https://www.thenetworkerhub.com"
+            "url": "https://www.thenetworkeruk.com"
           }
         },
         {
           "@type": "HowTo",
-          "@id": "https://www.thenetworkerhub.com/guides/claim-your-organiser-page#howto",
-          "url": "https://www.thenetworkerhub.com/guides/claim-your-organiser-page",
+          "@id": "https://www.thenetworkeruk.com/guides/claim-your-organiser-page#howto",
+          "url": "https://www.thenetworkeruk.com/guides/claim-your-organiser-page",
           "name": "How to claim your organiser page on The Networker UK",
           "description": "How to find and claim your networking group on The Networker UK — verify ownership, update your profile, and start listing events.",
           "step": [
@@ -1857,35 +1857,35 @@ window.HUB_SEO_DATA = {
               "position": 1,
               "name": "Find your group in the directory",
               "text": "Browse organisers on /events/ or search your group name. Many UK networking groups already have a page from the legacy Networker directory.",
-              "url": "https://www.thenetworkerhub.com/guides/claim-your-organiser-page#find-page"
+              "url": "https://www.thenetworkeruk.com/guides/claim-your-organiser-page#find-page"
             },
             {
               "@type": "HowToStep",
               "position": 2,
               "name": "Sign in with the right email",
               "text": "Sign in or create an account using the email address linked to your group. When it matches, a claim prompt appears automatically on your organiser dashboard. Email changed? Find your group on /events/ and use Request access on its profile page.",
-              "url": "https://www.thenetworkerhub.com/guides/claim-your-organiser-page#sign-in"
+              "url": "https://www.thenetworkeruk.com/guides/claim-your-organiser-page#sign-in"
             },
             {
               "@type": "HowToStep",
               "position": 3,
               "name": "Confirm the claim",
-              "text": "Follow the claim prompt on Overview in the organiser dashboard. Review the existing profile details and confirm you represent this group. No prompt? Use Request access on your group profile or email hello@thenetworkeruk.com.",
-              "url": "https://www.thenetworkerhub.com/guides/claim-your-organiser-page#confirm-claim"
+              "text": "Follow the claim prompt on Overview in the organiser dashboard. Review the existing profile details and confirm you represent this group. No prompt? Use Request access on your group profile or email hello@thenetworkerhub.com.",
+              "url": "https://www.thenetworkeruk.com/guides/claim-your-organiser-page#confirm-claim"
             },
             {
               "@type": "HowToStep",
               "position": 4,
               "name": "Update your public profile",
               "text": "Add or refresh your logo, description, contact email, social links, and guest visit settings on your organiser page.",
-              "url": "https://www.thenetworkerhub.com/guides/claim-your-organiser-page#update-profile"
+              "url": "https://www.thenetworkeruk.com/guides/claim-your-organiser-page#update-profile"
             },
             {
               "@type": "HowToStep",
               "position": 5,
               "name": "List your next event",
               "text": "From My events choose List event, or open the getting started checklist on Overview. Connect Stripe under Revenue before publishing paid tickets.",
-              "url": "https://www.thenetworkerhub.com/guides/claim-your-organiser-page#next-steps"
+              "url": "https://www.thenetworkeruk.com/guides/claim-your-organiser-page#next-steps"
             }
           ]
         },
@@ -1896,19 +1896,19 @@ window.HUB_SEO_DATA = {
               "@type": "ListItem",
               "position": 1,
               "name": "Home",
-              "item": "https://www.thenetworkerhub.com/"
+              "item": "https://www.thenetworkeruk.com/"
             },
             {
               "@type": "ListItem",
               "position": 2,
               "name": "Organiser guides",
-              "item": "https://www.thenetworkerhub.com/guides"
+              "item": "https://www.thenetworkeruk.com/guides"
             },
             {
               "@type": "ListItem",
               "position": 3,
               "name": "Claim your organiser page",
-              "item": "https://www.thenetworkerhub.com/guides/claim-your-organiser-page"
+              "item": "https://www.thenetworkeruk.com/guides/claim-your-organiser-page"
             }
           ]
         }
@@ -1919,20 +1919,20 @@ window.HUB_SEO_DATA = {
       "@graph": [
         {
           "@type": "WebPage",
-          "@id": "https://www.thenetworkerhub.com/guides/export-attendees-and-visits#webpage",
-          "url": "https://www.thenetworkerhub.com/guides/export-attendees-and-visits",
+          "@id": "https://www.thenetworkeruk.com/guides/export-attendees-and-visits#webpage",
+          "url": "https://www.thenetworkeruk.com/guides/export-attendees-and-visits",
           "name": "Export attendees & track visits – How-to guides – The Networker UK",
           "description": "How to download attendee lists, filter by visit count, export name badges, and use the guest visit programme on The Networker UK.",
           "isPartOf": {
             "@type": "WebSite",
             "name": "The Networker UK",
-            "url": "https://www.thenetworkerhub.com"
+            "url": "https://www.thenetworkeruk.com"
           }
         },
         {
           "@type": "HowTo",
-          "@id": "https://www.thenetworkerhub.com/guides/export-attendees-and-visits#howto",
-          "url": "https://www.thenetworkerhub.com/guides/export-attendees-and-visits",
+          "@id": "https://www.thenetworkeruk.com/guides/export-attendees-and-visits#howto",
+          "url": "https://www.thenetworkeruk.com/guides/export-attendees-and-visits",
           "name": "How to export attendees and track visits on The Networker UK",
           "description": "How to download attendee lists, filter by visit count, export name badges, and use the guest visit programme on The Networker UK.",
           "step": [
@@ -1941,35 +1941,35 @@ window.HUB_SEO_DATA = {
               "position": 1,
               "name": "Open the attendee list",
               "text": "Sign in to the organiser dashboard and go to Events → Attendees. Pick a networking group and event, or view all upcoming registrations.",
-              "url": "https://www.thenetworkerhub.com/guides/export-attendees-and-visits#open-attendees"
+              "url": "https://www.thenetworkeruk.com/guides/export-attendees-and-visits#open-attendees"
             },
             {
               "@type": "HowToStep",
               "position": 2,
               "name": "See visit counts",
               "text": "Each attendee shows their visit count (1st visit, 2 visits, returning member, etc.). Filter by new or returning to focus on guests vs members.",
-              "url": "https://www.thenetworkerhub.com/guides/export-attendees-and-visits#visit-tracking"
+              "url": "https://www.thenetworkeruk.com/guides/export-attendees-and-visits#visit-tracking"
             },
             {
               "@type": "HowToStep",
               "position": 3,
               "name": "Download attendees CSV",
               "text": "Apply filters if needed, then click Download attendees CSV. The export includes names, companies, ticket types, visit counts, and dietary notes where collected.",
-              "url": "https://www.thenetworkerhub.com/guides/export-attendees-and-visits#export-csv"
+              "url": "https://www.thenetworkeruk.com/guides/export-attendees-and-visits#export-csv"
             },
             {
               "@type": "HowToStep",
               "position": 4,
               "name": "Print name badges",
               "text": "From the same screen, export printable name badges (PDF for standard A4 sticker sheets). Badges use each guest name, company, and job title from their Account when set.",
-              "url": "https://www.thenetworkerhub.com/guides/export-attendees-and-visits#name-badges"
+              "url": "https://www.thenetworkeruk.com/guides/export-attendees-and-visits#name-badges"
             },
             {
               "@type": "HowToStep",
               "position": 5,
               "name": "Set up the guest visit programme",
               "text": "On the event tickets step, tick Enable guest visit programme to offer complimentary trial visits before paid member tickets. Configure visit limits on your organiser page.",
-              "url": "https://www.thenetworkerhub.com/guides/export-attendees-and-visits#guest-visits"
+              "url": "https://www.thenetworkeruk.com/guides/export-attendees-and-visits#guest-visits"
             }
           ]
         },
@@ -1980,19 +1980,19 @@ window.HUB_SEO_DATA = {
               "@type": "ListItem",
               "position": 1,
               "name": "Home",
-              "item": "https://www.thenetworkerhub.com/"
+              "item": "https://www.thenetworkeruk.com/"
             },
             {
               "@type": "ListItem",
               "position": 2,
               "name": "Organiser guides",
-              "item": "https://www.thenetworkerhub.com/guides"
+              "item": "https://www.thenetworkeruk.com/guides"
             },
             {
               "@type": "ListItem",
               "position": 3,
               "name": "Export attendees & track visits",
-              "item": "https://www.thenetworkerhub.com/guides/export-attendees-and-visits"
+              "item": "https://www.thenetworkeruk.com/guides/export-attendees-and-visits"
             }
           ]
         }

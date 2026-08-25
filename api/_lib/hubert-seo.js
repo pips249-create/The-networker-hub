@@ -452,8 +452,13 @@ function buildLlmsTxt(origin) {
 
   return (
     '# The Networker UK\n' +
-    '> UK business networking platform — events and business opportunities.\n\n' +
-    'Operated by The Networker Group Ltd (Company No. 15252227). Contact: hello@thenetworkeruk.com\n\n' +
+    '> UK business networking platform — events, organiser pages, and business opportunities.\n\n' +
+    'The Networker UK is the platform chapter of The Networker, run by Rosie and Catherine at ' +
+    'The Networker Group Ltd (Company No. 15252227, VAT No. 454 4092 94). ' +
+    'Same team as the established UK directory the-networker.co.uk. ' +
+    'Across that brand last year: 27,000+ events listed and 17,000+ networkers found a meeting, group, or opportunity. ' +
+    'Public browsing is open; ticket purchase and opportunity enquiries from 1 September 2026. ' +
+    'Contact: hello@thenetworkeruk.com\n\n' +
     '## Canonical URLs\n' +
     '- Home: ' +
     base +

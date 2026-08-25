@@ -8,7 +8,7 @@ const FAQ_AEO_ENTRIES = [
   {
     question: 'What is The Networker UK?',
     answer:
-      'The Networker UK is a UK platform for discovering networking meetings, exhibitions, conferences, and business opportunities. Members can search and book; organisers can list events and reach new audiences.',
+      'The Networker UK is the platform chapter of The Networker — operated by The Networker Group Ltd (Company No. 15252227), co-founded by Rosie and Catherine. It is a UK hub for networking meetings, exhibitions, conferences, and business opportunities. Members browse and book; organisers list events and reach new audiences. The same team previously ran the Networker UK directory (the-networker.co.uk).',
     category: 'general',
     icon: '🌐',
   },
@@ -78,21 +78,21 @@ const FAQ_AEO_ENTRIES = [
   {
     question: 'I forgot my password — how do I sign in?',
     answer:
-      'Go to /login and use the password reset link. Enter your email and follow the instructions. If you are still stuck, email hello@thenetworkeruk.com from the address on your account.',
+      'Go to /login and use the password reset link. Enter your email and follow the instructions. If you are still stuck, email hello@thenetworkerhub.com from the address on your account.',
     category: 'general',
     icon: '🔑',
   },
   {
     question: 'I did not receive my booking confirmation email',
     answer:
-      'Check your spam or junk folder and confirm your account email is correct. Your tickets also appear in My account at /account/. If you still cannot find your booking, email hello@thenetworkeruk.com with the event name and email address used at checkout.',
+      'Check your spam or junk folder and confirm your account email is correct. Your tickets also appear in My account at /account/. If you still cannot find your booking, email hello@thenetworkerhub.com with the event name and email address used at checkout.',
     category: 'buyers',
     icon: '📧',
   },
   {
     question: 'Can I transfer my ticket to someone else?',
     answer:
-      'Tickets are generally non-transferable without the organiser\'s consent. Contact the organiser via the event listing page to ask. For help, email hello@thenetworkeruk.com with your order reference.',
+      'Tickets are generally non-transferable without the organiser\'s consent. Contact the organiser via the event listing page to ask. For help, email hello@thenetworkerhub.com with your order reference.',
     category: 'buyers',
     icon: '🎟️',
   },
@@ -127,14 +127,14 @@ const FAQ_AEO_ENTRIES = [
   {
     question: 'How much does it cost to list an event as an organiser?',
     answer:
-      'There is no monthly subscription to list events. Use the organiser dashboard at /organiser/ to publish free or paid events. For paid tickets, attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before payment), which covers platform and payment processing — you receive the full ticket price. Free events do not require Stripe. Email hello@thenetworkeruk.com for onboarding help.',
+      'There is no monthly subscription to list events. Use the organiser dashboard at /organiser/ to publish free or paid events. For paid tickets, attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before payment), which covers platform and payment processing — you receive the full ticket price. Free events do not require Stripe. Email hello@thenetworkerhub.com for onboarding help.',
     category: 'organisers',
     icon: '💷',
   },
   {
     question: 'Why is my event not showing on the browse events page?',
     answer:
-      'Public browse only shows events that are Published (not Draft), Approved, and linked to a published organiser profile. Complete tickets, refund policy, and publish in /organiser/. Email hello@thenetworkeruk.com with the event title if it is still missing.',
+      'Public browse only shows events that are Published (not Draft), Approved, and linked to a published organiser profile. Complete tickets, refund policy, and publish in /organiser/. Email hello@thenetworkerhub.com with the event title if it is still missing.',
     category: 'organisers',
     icon: '👁️',
   },

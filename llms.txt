@@ -1,42 +1,42 @@
 # The Networker UK
-> UK business networking platform — events and business opportunities.
+> UK business networking platform — events, organiser pages, and business opportunities.
 
-Operated by The Networker Group Ltd (Company No. 15252227). Contact: hello@thenetworkeruk.com
+The Networker UK is the platform chapter of The Networker, run by Rosie and Catherine at The Networker Group Ltd (Company No. 15252227, VAT No. 454 4092 94). Same team as the established UK directory the-networker.co.uk. Across that brand last year: 27,000+ events listed and 17,000+ networkers found a meeting, group, or opportunity. Public browsing is open; ticket purchase and opportunity enquiries from 1 September 2026. Contact: hello@thenetworkeruk.com
 
 ## Canonical URLs
-- Home: https://www.thenetworkerhub.com/
-- Events: https://www.thenetworkerhub.com/events/
-- Business opportunities: https://www.thenetworkerhub.com/opportunities/
-- FAQ: https://www.thenetworkerhub.com/faq
-- Contact (Hubert assistant): https://www.thenetworkerhub.com/contact
-- About: https://www.thenetworkerhub.com/about
-- For Organisers: https://www.thenetworkerhub.com/for-organisers
-- For Networkers: https://www.thenetworkerhub.com/for-networkers
-- Organiser guides: https://www.thenetworkerhub.com/guides
-- Advertising & sponsorship: https://www.thenetworkerhub.com/advertising
-- Legal: https://www.thenetworkerhub.com/legal-policies
-- Organiser payouts: https://www.thenetworkerhub.com/help/organiser-payouts
-- Ticket pricing & fees: https://www.thenetworkerhub.com/help/pricing-fees
-- Sitemap: https://www.thenetworkerhub.com/sitemap.xml
+- Home: https://www.thenetworkeruk.com/
+- Events: https://www.thenetworkeruk.com/events/
+- Business opportunities: https://www.thenetworkeruk.com/opportunities/
+- FAQ: https://www.thenetworkeruk.com/faq
+- Contact (Hubert assistant): https://www.thenetworkeruk.com/contact
+- About: https://www.thenetworkeruk.com/about
+- For Organisers: https://www.thenetworkeruk.com/for-organisers
+- For Networkers: https://www.thenetworkeruk.com/for-networkers
+- Organiser guides: https://www.thenetworkeruk.com/guides
+- Advertising & sponsorship: https://www.thenetworkeruk.com/advertising
+- Legal: https://www.thenetworkeruk.com/legal-policies
+- Organiser payouts: https://www.thenetworkeruk.com/help/organiser-payouts
+- Ticket pricing & fees: https://www.thenetworkeruk.com/help/pricing-fees
+- Sitemap: https://www.thenetworkeruk.com/sitemap.xml
 
 ## Organiser help articles
 
 ### When do organisers receive payouts?
 Organisers receive the full ticket price they set. With Stripe Connect enabled, that revenue is collected in the organiser connected Stripe account when attendees pay; use Stripe Express for refunds, balance, and bank payouts. Legacy mode (Connect off): archive the event in /organiser/, wait 7 days after the event ends, then request payout from Revenue — requests are reviewed before transfer.
 
-Full page: https://www.thenetworkerhub.com/help/organiser-payouts
+Full page: https://www.thenetworkeruk.com/help/organiser-payouts
 
 ### What fees does The Networker UK charge on tickets?
 There is no monthly subscription to list events. For paid tickets, attendees pay one booking fee at checkout: 4.5% + 20p per ticket, shown before payment. Organisers receive the full ticket price they set. Free events do not require Stripe.
 
-Full page: https://www.thenetworkerhub.com/help/pricing-fees
+Full page: https://www.thenetworkeruk.com/help/pricing-fees
 
 ## Machine discovery
-- Sitemap: https://www.thenetworkerhub.com/sitemap.xml
-- AI crawler policy: https://www.thenetworkerhub.com/agents.txt
-- Dynamic page meta API: https://www.thenetworkerhub.com/api/seo-meta?type=event&slug={slug}
-- Organiser meta API: https://www.thenetworkerhub.com/api/seo-meta?type=organiser&slug={slug}
-- Opportunity meta API: https://www.thenetworkerhub.com/api/seo-meta?type=opportunity&slug={slug}
+- Sitemap: https://www.thenetworkeruk.com/sitemap.xml
+- AI crawler policy: https://www.thenetworkeruk.com/agents.txt
+- Dynamic page meta API: https://www.thenetworkeruk.com/api/seo-meta?type=event&slug={slug}
+- Organiser meta API: https://www.thenetworkeruk.com/api/seo-meta?type=organiser&slug={slug}
+- Opportunity meta API: https://www.thenetworkeruk.com/api/seo-meta?type=opportunity&slug={slug}
 
 ## Hubert — business butler & concierge
 Hubert is the on-site AI assistant. He answers questions about browsing, accounts, tickets, opportunities, and organiser tools. He can look up live published events and business opportunities when asked.
@@ -44,7 +44,7 @@ Hubert is the on-site AI assistant. He answers questions about browsing, account
 ## Frequently asked questions
 
 ## What is The Networker UK?
-The Networker UK is a UK platform for discovering networking meetings, exhibitions, conferences, and business opportunities. Members can search and book; organisers can list events and reach new audiences.
+The Networker UK is the platform chapter of The Networker — operated by The Networker Group Ltd (Company No. 15252227), co-founded by Rosie and Catherine. It is a UK hub for networking meetings, exhibitions, conferences, and business opportunities. Members browse and book; organisers list events and reach new audiences. The same team previously ran the Networker UK directory (the-networker.co.uk).
 
 ## How do I find events on The Networker UK?
 Use Browse events in the top navigation or visit the events listing at /events/. You can filter by type, date, industry, and location, and use map view on supported pages.
@@ -74,13 +74,13 @@ Hubert is the British English gentleman and concierge on The Networker UK. He is
 Yes — browsing events and business opportunities is completely free with no sign-in required. You only pay when you purchase an event ticket at the price shown by the organiser.
 
 ## I forgot my password — how do I sign in?
-Go to /login and use the password reset link. Enter your email and follow the instructions. If you are still stuck, email hello@thenetworkeruk.com from the address on your account.
+Go to /login and use the password reset link. Enter your email and follow the instructions. If you are still stuck, email hello@thenetworkerhub.com from the address on your account.
 
 ## I did not receive my booking confirmation email
-Check your spam or junk folder and confirm your account email is correct. Your tickets also appear in My account at /account/. If you still cannot find your booking, email hello@thenetworkeruk.com with the event name and email address used at checkout.
+Check your spam or junk folder and confirm your account email is correct. Your tickets also appear in My account at /account/. If you still cannot find your booking, email hello@thenetworkerhub.com with the event name and email address used at checkout.
 
 ## Can I transfer my ticket to someone else?
-Tickets are generally non-transferable without the organiser's consent. Contact the organiser via the event listing page to ask. For help, email hello@thenetworkeruk.com with your order reference.
+Tickets are generally non-transferable without the organiser's consent. Contact the organiser via the event listing page to ask. For help, email hello@thenetworkerhub.com with your order reference.
 
 ## What happens if an organiser cancels an event?
 If an organiser cancels, you should receive a full refund of the ticket price paid, including mandatory booking fees shown at checkout, typically within 14 days via Stripe to your original payment method.
@@ -95,10 +95,10 @@ The Networker UK is built for UK business networking — not generic ticketing. 
 Yes — many organisers use The Networker UK alongside other tools. There is no exclusivity requirement. List here to reach members who browse specifically for UK networking events, build your organiser profile here, and optionally publish business opportunities. You can list the same events you run elsewhere.
 
 ## How much does it cost to list an event as an organiser?
-There is no monthly subscription to list events. Use the organiser dashboard at /organiser/ to publish free or paid events. For paid tickets, attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before payment), which covers platform and payment processing — you receive the full ticket price. Free events do not require Stripe. Email hello@thenetworkeruk.com for onboarding help.
+There is no monthly subscription to list events. Use the organiser dashboard at /organiser/ to publish free or paid events. For paid tickets, attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before payment), which covers platform and payment processing — you receive the full ticket price. Free events do not require Stripe. Email hello@thenetworkerhub.com for onboarding help.
 
 ## Why is my event not showing on the browse events page?
-Public browse only shows events that are Published (not Draft), Approved, and linked to a published organiser profile. Complete tickets, refund policy, and publish in /organiser/. Email hello@thenetworkeruk.com with the event title if it is still missing.
+Public browse only shows events that are Published (not Draft), Approved, and linked to a published organiser profile. Complete tickets, refund policy, and publish in /organiser/. Email hello@thenetworkerhub.com with the event title if it is still missing.
 
 ## How can I advertise my business on The Networker UK?
 Paid hero sponsor placements are available on the events directory, organisers browse, and business opportunities — labelled Powered by on browse pages — see /advertising for guide pricing. Email rosie@thenetworkeruk.com. You can also list events or business opportunities to reach the network organically.
