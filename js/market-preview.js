@@ -6,20 +6,24 @@
     IE: {
       iso2: 'IE',
       name: 'Ireland',
+      brand: 'The Networker Ireland',
       adjective: 'Irish',
       badge: 'Building · coming soon',
       kicker: 'Ireland business networking',
       source: 'market_preview_ie',
       canonical: 'https://www.thenetworkerireland.com/',
+      logo: '/assets/logo-networker-ireland.png?v=20260825mkt2',
     },
     US: {
       iso2: 'US',
       name: 'United States',
+      brand: 'The Networker USA',
       adjective: 'US',
       badge: 'Coming soon',
       kicker: 'US business networking',
       source: 'market_preview_us',
       canonical: 'https://www.thenetworkerusa.com/',
+      logo: '/assets/logo-networker-usa.png?v=20260825mkt2',
     },
   };
 
@@ -51,16 +55,26 @@
       return;
     }
 
-    document.title = 'Coming soon in ' + market.name + ' – The Networker';
+    document.title = 'Coming soon – ' + market.brand;
     var desc =
-      'The Networker is coming soon in ' +
-      market.name +
-      '. Register interest to attend events or list a networking group.';
+      market.brand +
+      ' is coming soon. Register interest to attend events or list a networking group.';
     var descEl = document.querySelector('meta[name="description"]');
     if (descEl) descEl.setAttribute('content', desc);
 
     var canonical = document.querySelector('link[rel="canonical"]');
     if (canonical) canonical.setAttribute('href', market.canonical);
+
+    var logoLink = byId('market-preview-logo');
+    var logoImg = byId('market-preview-logo-img');
+    if (logoLink) {
+      logoLink.href = market.canonical;
+      logoLink.setAttribute('aria-label', market.brand + ' home');
+    }
+    if (logoImg) {
+      logoImg.src = market.logo;
+      logoImg.alt = market.brand;
+    }
 
     var badge = byId('market-preview-badge-text');
     if (badge) badge.textContent = market.badge;

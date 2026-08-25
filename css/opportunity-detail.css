@@ -542,6 +542,22 @@
   color: rgba(255, 255, 255, 0.82);
 }
 
+.opportunity-detail-page .opp-enquire-closed {
+  margin: 0 0 4px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  font-size: 14px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.opportunity-detail-page .opp-enquire-closed strong {
+  font-weight: 700;
+  color: #fff;
+}
+
 .opportunity-detail-page .opp-enquire-signin {
   margin: 0 0 14px;
   padding: 12px 14px;

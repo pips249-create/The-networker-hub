@@ -695,6 +695,13 @@ function enquiryRowToDto(row, opportunity) {
 }
 
 async function createOpportunityEnquiry(input, session) {
+  const { arePublicEnquiriesOpen } = require('./soft-launch');
+  if (!arePublicEnquiriesOpen()) {
+    const err = new Error('enquiries_closed');
+    err.code = 'enquiries_closed';
+    throw err;
+  }
+
   const opportunityId = String(input.opportunityId || '').trim();
   const message = String(input.message || '').trim();
   if (!isUuid(opportunityId)) throw new Error('invalid_opportunity_id');

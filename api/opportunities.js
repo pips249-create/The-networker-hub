@@ -123,6 +123,15 @@ module.exports = async function handler(req, res) {
       return json(res, 200, { ok: true, enquiry });
     } catch (e) {
       const msg = e.message || String(e);
+      if (msg === 'enquiries_closed') {
+        const { publicEnquiriesClosedMessage, softLaunchPublicMeta } = require('./_lib/soft-launch');
+        return json(res, 403, {
+          ok: false,
+          error: 'enquiries_closed',
+          message: publicEnquiriesClosedMessage(),
+          softLaunch: softLaunchPublicMeta(),
+        });
+      }
       if (msg === 'not_found') return json(res, 404, { ok: false, error: 'not_found' });
       if (msg === 'not_authenticated') {
         return json(res, 401, {
@@ -159,15 +168,17 @@ module.exports = async function handler(req, res) {
   const slug = String(req.query?.slug || req.query?.page || '').trim();
 
   try {
+    const { softLaunchPublicMeta } = require('./_lib/soft-launch');
+    const softLaunch = softLaunchPublicMeta();
     if (slug || id) {
       const opportunity = slug
         ? await getPublishedOpportunityBySlug(slug)
         : await getPublishedOpportunityById(id);
       if (!opportunity) return json(res, 404, { error: 'not_found' });
-      return json(res, 200, { ok: true, opportunity });
+      return json(res, 200, { ok: true, opportunity, softLaunch });
     }
     const opportunities = await listPublishedOpportunities();
-    return json(res, 200, { ok: true, opportunities });
+    return json(res, 200, { ok: true, opportunities, softLaunch });
   } catch (e) {
     return json(res, 500, { error: 'opportunities_fetch_failed', message: e.message });
   }

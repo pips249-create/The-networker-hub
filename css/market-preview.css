@@ -65,7 +65,7 @@
 }
 
 .market-preview-logo img {
-  width: min(220px, 58vw);
+  width: min(240px, 62vw);
   height: auto;
   display: block;
 }
