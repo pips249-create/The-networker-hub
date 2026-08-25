@@ -25,8 +25,11 @@ function linkifyAnswer(text) {
   let html = escapeHtml(text);
   const absUrls = [];
   html = html.replace(/(https?:\/\/[^\s<]+)/g, function (match) {
-    absUrls.push(match);
-    return '\u0000ABS' + (absUrls.length - 1) + '\u0000';
+    // Keep trailing sentence punctuation out of the URL.
+    const trimmed = match.replace(/[.,;:!?)]+$/g, '');
+    const trail = match.slice(trimmed.length);
+    absUrls.push(trimmed);
+    return '\u0000ABS' + (absUrls.length - 1) + '\u0000' + trail;
   });
   // Relative Hub paths only (not fragments of already-captured absolute URLs).
   html = html.replace(/(^|[^"'>/\w])(\/[a-z0-9][a-z0-9/_.#-]*)/gi, function (_m, lead, path) {
