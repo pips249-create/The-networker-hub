@@ -45,7 +45,7 @@ window.HUB_SEO_DATA = {
     },
     {
       "question": "Who operates The Networker UK?",
-      "answer": "The Networker UK is operated by The Networker Group Ltd (Company No. 15252227, VAT No. 454 4092 94), co-founded by Rosie and Catherine.",
+      "answer": "The Networker UK is operated only by The Networker Group Ltd (Companies House company number 15252227, VAT No. 454 4092 94), co-founded by Rosie McGilvray and Catherine Hancher. Official record: https://find-and-update.company-information.service.gov.uk/company/15252227 — that is a different company from similarly named entities such as NETWORKER UK LIMITED.",
       "category": "general",
       "icon": "🏢"
     },
@@ -175,11 +175,32 @@ window.HUB_SEO_DATA = {
           "@type": "Organization",
           "name": "The Networker UK",
           "legalName": "The Networker Group Ltd",
+          "alternateName": [
+            "The Networker",
+            "the-networker.co.uk"
+          ],
           "url": "https://www.thenetworkeruk.com",
           "logo": "https://www.thenetworkeruk.com/assets/logo.png",
           "image": "https://www.thenetworkeruk.com/assets/logo.png",
           "email": "hello@thenetworkerhub.com",
-          "description": "UK platform for networking events, exhibitions, and business opportunities.",
+          "description": "UK platform for networking events, exhibitions, and business opportunities. Operated by The Networker Group Ltd (Companies House 15252227) — the same team as the Networker UK directory.",
+          "identifier": [
+            {
+              "@type": "PropertyValue",
+              "name": "Companies House company number",
+              "value": "15252227",
+              "url": "https://find-and-update.company-information.service.gov.uk/company/15252227"
+            },
+            {
+              "@type": "PropertyValue",
+              "name": "VAT number",
+              "value": "GB454409294"
+            }
+          ],
+          "sameAs": [
+            "https://find-and-update.company-information.service.gov.uk/company/15252227",
+            "https://the-networker.co.uk/"
+          ],
           "address": {
             "@type": "PostalAddress",
             "streetAddress": "Magpas HQ, Barnwell Road, Alconbury Weald",
@@ -199,7 +220,7 @@ window.HUB_SEO_DATA = {
           "founder": [
             {
               "@type": "Person",
-              "name": "Rosie"
+              "name": "Rosie McGilvray"
             },
             {
               "@type": "Person",
@@ -294,11 +315,32 @@ window.HUB_SEO_DATA = {
           "@type": "Organization",
           "name": "The Networker UK",
           "legalName": "The Networker Group Ltd",
+          "alternateName": [
+            "The Networker",
+            "the-networker.co.uk"
+          ],
           "url": "https://www.thenetworkeruk.com",
           "logo": "https://www.thenetworkeruk.com/assets/logo.png",
           "image": "https://www.thenetworkeruk.com/assets/logo.png",
           "email": "hello@thenetworkerhub.com",
-          "description": "UK platform for networking events, exhibitions, and business opportunities.",
+          "description": "UK platform for networking events, exhibitions, and business opportunities. Operated by The Networker Group Ltd (Companies House 15252227) — the same team as the Networker UK directory.",
+          "identifier": [
+            {
+              "@type": "PropertyValue",
+              "name": "Companies House company number",
+              "value": "15252227",
+              "url": "https://find-and-update.company-information.service.gov.uk/company/15252227"
+            },
+            {
+              "@type": "PropertyValue",
+              "name": "VAT number",
+              "value": "GB454409294"
+            }
+          ],
+          "sameAs": [
+            "https://find-and-update.company-information.service.gov.uk/company/15252227",
+            "https://the-networker.co.uk/"
+          ],
           "address": {
             "@type": "PostalAddress",
             "streetAddress": "Magpas HQ, Barnwell Road, Alconbury Weald",
@@ -318,7 +360,7 @@ window.HUB_SEO_DATA = {
           "founder": [
             {
               "@type": "Person",
-              "name": "Rosie"
+              "name": "Rosie McGilvray"
             },
             {
               "@type": "Person",
@@ -394,7 +436,7 @@ window.HUB_SEO_DATA = {
               "name": "Who operates The Networker UK?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "The Networker UK is operated by The Networker Group Ltd (Company No. 15252227, VAT No. 454 4092 94), co-founded by Rosie and Catherine."
+                "text": "The Networker UK is operated only by The Networker Group Ltd (Companies House company number 15252227, VAT No. 454 4092 94), co-founded by Rosie McGilvray and Catherine Hancher. Official record: https://find-and-update.company-information.service.gov.uk/company/15252227 — that is a different company from similarly named entities such as NETWORKER UK LIMITED."
               }
             },
             {
@@ -561,11 +603,32 @@ window.HUB_SEO_DATA = {
           "@type": "Organization",
           "name": "The Networker UK",
           "legalName": "The Networker Group Ltd",
+          "alternateName": [
+            "The Networker",
+            "the-networker.co.uk"
+          ],
           "url": "https://www.thenetworkeruk.com",
           "logo": "https://www.thenetworkeruk.com/assets/logo.png",
           "image": "https://www.thenetworkeruk.com/assets/logo.png",
           "email": "hello@thenetworkerhub.com",
-          "description": "UK platform for networking events, exhibitions, and business opportunities.",
+          "description": "UK platform for networking events, exhibitions, and business opportunities. Operated by The Networker Group Ltd (Companies House 15252227) — the same team as the Networker UK directory.",
+          "identifier": [
+            {
+              "@type": "PropertyValue",
+              "name": "Companies House company number",
+              "value": "15252227",
+              "url": "https://find-and-update.company-information.service.gov.uk/company/15252227"
+            },
+            {
+              "@type": "PropertyValue",
+              "name": "VAT number",
+              "value": "GB454409294"
+            }
+          ],
+          "sameAs": [
+            "https://find-and-update.company-information.service.gov.uk/company/15252227",
+            "https://the-networker.co.uk/"
+          ],
           "address": {
             "@type": "PostalAddress",
             "streetAddress": "Magpas HQ, Barnwell Road, Alconbury Weald",
@@ -585,7 +648,7 @@ window.HUB_SEO_DATA = {
           "founder": [
             {
               "@type": "Person",
-              "name": "Rosie"
+              "name": "Rosie McGilvray"
             },
             {
               "@type": "Person",
@@ -649,11 +712,32 @@ window.HUB_SEO_DATA = {
           "@type": "Organization",
           "name": "The Networker UK",
           "legalName": "The Networker Group Ltd",
+          "alternateName": [
+            "The Networker",
+            "the-networker.co.uk"
+          ],
           "url": "https://www.thenetworkeruk.com",
           "logo": "https://www.thenetworkeruk.com/assets/logo.png",
           "image": "https://www.thenetworkeruk.com/assets/logo.png",
           "email": "hello@thenetworkerhub.com",
-          "description": "UK platform for networking events, exhibitions, and business opportunities.",
+          "description": "UK platform for networking events, exhibitions, and business opportunities. Operated by The Networker Group Ltd (Companies House 15252227) — the same team as the Networker UK directory.",
+          "identifier": [
+            {
+              "@type": "PropertyValue",
+              "name": "Companies House company number",
+              "value": "15252227",
+              "url": "https://find-and-update.company-information.service.gov.uk/company/15252227"
+            },
+            {
+              "@type": "PropertyValue",
+              "name": "VAT number",
+              "value": "GB454409294"
+            }
+          ],
+          "sameAs": [
+            "https://find-and-update.company-information.service.gov.uk/company/15252227",
+            "https://the-networker.co.uk/"
+          ],
           "address": {
             "@type": "PostalAddress",
             "streetAddress": "Magpas HQ, Barnwell Road, Alconbury Weald",
@@ -673,7 +757,7 @@ window.HUB_SEO_DATA = {
           "founder": [
             {
               "@type": "Person",
-              "name": "Rosie"
+              "name": "Rosie McGilvray"
             },
             {
               "@type": "Person",
@@ -692,11 +776,32 @@ window.HUB_SEO_DATA = {
             "@type": "Organization",
             "name": "The Networker UK",
             "legalName": "The Networker Group Ltd",
+            "alternateName": [
+              "The Networker",
+              "the-networker.co.uk"
+            ],
             "url": "https://www.thenetworkeruk.com",
             "logo": "https://www.thenetworkeruk.com/assets/logo.png",
             "image": "https://www.thenetworkeruk.com/assets/logo.png",
             "email": "hello@thenetworkerhub.com",
-            "description": "UK platform for networking events, exhibitions, and business opportunities.",
+            "description": "UK platform for networking events, exhibitions, and business opportunities. Operated by The Networker Group Ltd (Companies House 15252227) — the same team as the Networker UK directory.",
+            "identifier": [
+              {
+                "@type": "PropertyValue",
+                "name": "Companies House company number",
+                "value": "15252227",
+                "url": "https://find-and-update.company-information.service.gov.uk/company/15252227"
+              },
+              {
+                "@type": "PropertyValue",
+                "name": "VAT number",
+                "value": "GB454409294"
+              }
+            ],
+            "sameAs": [
+              "https://find-and-update.company-information.service.gov.uk/company/15252227",
+              "https://the-networker.co.uk/"
+            ],
             "address": {
               "@type": "PostalAddress",
               "streetAddress": "Magpas HQ, Barnwell Road, Alconbury Weald",
@@ -716,7 +821,7 @@ window.HUB_SEO_DATA = {
             "founder": [
               {
                 "@type": "Person",
-                "name": "Rosie"
+                "name": "Rosie McGilvray"
               },
               {
                 "@type": "Person",
@@ -735,11 +840,32 @@ window.HUB_SEO_DATA = {
           "@type": "Organization",
           "name": "The Networker UK",
           "legalName": "The Networker Group Ltd",
+          "alternateName": [
+            "The Networker",
+            "the-networker.co.uk"
+          ],
           "url": "https://www.thenetworkeruk.com",
           "logo": "https://www.thenetworkeruk.com/assets/logo.png",
           "image": "https://www.thenetworkeruk.com/assets/logo.png",
           "email": "hello@thenetworkerhub.com",
-          "description": "UK platform for networking events, exhibitions, and business opportunities.",
+          "description": "UK platform for networking events, exhibitions, and business opportunities. Operated by The Networker Group Ltd (Companies House 15252227) — the same team as the Networker UK directory.",
+          "identifier": [
+            {
+              "@type": "PropertyValue",
+              "name": "Companies House company number",
+              "value": "15252227",
+              "url": "https://find-and-update.company-information.service.gov.uk/company/15252227"
+            },
+            {
+              "@type": "PropertyValue",
+              "name": "VAT number",
+              "value": "GB454409294"
+            }
+          ],
+          "sameAs": [
+            "https://find-and-update.company-information.service.gov.uk/company/15252227",
+            "https://the-networker.co.uk/"
+          ],
           "address": {
             "@type": "PostalAddress",
             "streetAddress": "Magpas HQ, Barnwell Road, Alconbury Weald",
@@ -759,7 +885,7 @@ window.HUB_SEO_DATA = {
           "founder": [
             {
               "@type": "Person",
-              "name": "Rosie"
+              "name": "Rosie McGilvray"
             },
             {
               "@type": "Person",
@@ -778,11 +904,32 @@ window.HUB_SEO_DATA = {
             "@type": "Organization",
             "name": "The Networker UK",
             "legalName": "The Networker Group Ltd",
+            "alternateName": [
+              "The Networker",
+              "the-networker.co.uk"
+            ],
             "url": "https://www.thenetworkeruk.com",
             "logo": "https://www.thenetworkeruk.com/assets/logo.png",
             "image": "https://www.thenetworkeruk.com/assets/logo.png",
             "email": "hello@thenetworkerhub.com",
-            "description": "UK platform for networking events, exhibitions, and business opportunities.",
+            "description": "UK platform for networking events, exhibitions, and business opportunities. Operated by The Networker Group Ltd (Companies House 15252227) — the same team as the Networker UK directory.",
+            "identifier": [
+              {
+                "@type": "PropertyValue",
+                "name": "Companies House company number",
+                "value": "15252227",
+                "url": "https://find-and-update.company-information.service.gov.uk/company/15252227"
+              },
+              {
+                "@type": "PropertyValue",
+                "name": "VAT number",
+                "value": "GB454409294"
+              }
+            ],
+            "sameAs": [
+              "https://find-and-update.company-information.service.gov.uk/company/15252227",
+              "https://the-networker.co.uk/"
+            ],
             "address": {
               "@type": "PostalAddress",
               "streetAddress": "Magpas HQ, Barnwell Road, Alconbury Weald",
@@ -802,7 +949,7 @@ window.HUB_SEO_DATA = {
             "founder": [
               {
                 "@type": "Person",
-                "name": "Rosie"
+                "name": "Rosie McGilvray"
               },
               {
                 "@type": "Person",
@@ -821,11 +968,32 @@ window.HUB_SEO_DATA = {
           "@type": "Organization",
           "name": "The Networker UK",
           "legalName": "The Networker Group Ltd",
+          "alternateName": [
+            "The Networker",
+            "the-networker.co.uk"
+          ],
           "url": "https://www.thenetworkeruk.com",
           "logo": "https://www.thenetworkeruk.com/assets/logo.png",
           "image": "https://www.thenetworkeruk.com/assets/logo.png",
           "email": "hello@thenetworkerhub.com",
-          "description": "UK platform for networking events, exhibitions, and business opportunities.",
+          "description": "UK platform for networking events, exhibitions, and business opportunities. Operated by The Networker Group Ltd (Companies House 15252227) — the same team as the Networker UK directory.",
+          "identifier": [
+            {
+              "@type": "PropertyValue",
+              "name": "Companies House company number",
+              "value": "15252227",
+              "url": "https://find-and-update.company-information.service.gov.uk/company/15252227"
+            },
+            {
+              "@type": "PropertyValue",
+              "name": "VAT number",
+              "value": "GB454409294"
+            }
+          ],
+          "sameAs": [
+            "https://find-and-update.company-information.service.gov.uk/company/15252227",
+            "https://the-networker.co.uk/"
+          ],
           "address": {
             "@type": "PostalAddress",
             "streetAddress": "Magpas HQ, Barnwell Road, Alconbury Weald",
@@ -845,7 +1013,7 @@ window.HUB_SEO_DATA = {
           "founder": [
             {
               "@type": "Person",
-              "name": "Rosie"
+              "name": "Rosie McGilvray"
             },
             {
               "@type": "Person",
@@ -864,11 +1032,32 @@ window.HUB_SEO_DATA = {
             "@type": "Organization",
             "name": "The Networker UK",
             "legalName": "The Networker Group Ltd",
+            "alternateName": [
+              "The Networker",
+              "the-networker.co.uk"
+            ],
             "url": "https://www.thenetworkeruk.com",
             "logo": "https://www.thenetworkeruk.com/assets/logo.png",
             "image": "https://www.thenetworkeruk.com/assets/logo.png",
             "email": "hello@thenetworkerhub.com",
-            "description": "UK platform for networking events, exhibitions, and business opportunities.",
+            "description": "UK platform for networking events, exhibitions, and business opportunities. Operated by The Networker Group Ltd (Companies House 15252227) — the same team as the Networker UK directory.",
+            "identifier": [
+              {
+                "@type": "PropertyValue",
+                "name": "Companies House company number",
+                "value": "15252227",
+                "url": "https://find-and-update.company-information.service.gov.uk/company/15252227"
+              },
+              {
+                "@type": "PropertyValue",
+                "name": "VAT number",
+                "value": "GB454409294"
+              }
+            ],
+            "sameAs": [
+              "https://find-and-update.company-information.service.gov.uk/company/15252227",
+              "https://the-networker.co.uk/"
+            ],
             "address": {
               "@type": "PostalAddress",
               "streetAddress": "Magpas HQ, Barnwell Road, Alconbury Weald",
@@ -888,7 +1077,7 @@ window.HUB_SEO_DATA = {
             "founder": [
               {
                 "@type": "Person",
-                "name": "Rosie"
+                "name": "Rosie McGilvray"
               },
               {
                 "@type": "Person",
@@ -907,11 +1096,32 @@ window.HUB_SEO_DATA = {
           "@type": "Organization",
           "name": "The Networker UK",
           "legalName": "The Networker Group Ltd",
+          "alternateName": [
+            "The Networker",
+            "the-networker.co.uk"
+          ],
           "url": "https://www.thenetworkeruk.com",
           "logo": "https://www.thenetworkeruk.com/assets/logo.png",
           "image": "https://www.thenetworkeruk.com/assets/logo.png",
           "email": "hello@thenetworkerhub.com",
-          "description": "UK platform for networking events, exhibitions, and business opportunities.",
+          "description": "UK platform for networking events, exhibitions, and business opportunities. Operated by The Networker Group Ltd (Companies House 15252227) — the same team as the Networker UK directory.",
+          "identifier": [
+            {
+              "@type": "PropertyValue",
+              "name": "Companies House company number",
+              "value": "15252227",
+              "url": "https://find-and-update.company-information.service.gov.uk/company/15252227"
+            },
+            {
+              "@type": "PropertyValue",
+              "name": "VAT number",
+              "value": "GB454409294"
+            }
+          ],
+          "sameAs": [
+            "https://find-and-update.company-information.service.gov.uk/company/15252227",
+            "https://the-networker.co.uk/"
+          ],
           "address": {
             "@type": "PostalAddress",
             "streetAddress": "Magpas HQ, Barnwell Road, Alconbury Weald",
@@ -931,7 +1141,7 @@ window.HUB_SEO_DATA = {
           "founder": [
             {
               "@type": "Person",
-              "name": "Rosie"
+              "name": "Rosie McGilvray"
             },
             {
               "@type": "Person",
@@ -950,11 +1160,32 @@ window.HUB_SEO_DATA = {
             "@type": "Organization",
             "name": "The Networker UK",
             "legalName": "The Networker Group Ltd",
+            "alternateName": [
+              "The Networker",
+              "the-networker.co.uk"
+            ],
             "url": "https://www.thenetworkeruk.com",
             "logo": "https://www.thenetworkeruk.com/assets/logo.png",
             "image": "https://www.thenetworkeruk.com/assets/logo.png",
             "email": "hello@thenetworkerhub.com",
-            "description": "UK platform for networking events, exhibitions, and business opportunities.",
+            "description": "UK platform for networking events, exhibitions, and business opportunities. Operated by The Networker Group Ltd (Companies House 15252227) — the same team as the Networker UK directory.",
+            "identifier": [
+              {
+                "@type": "PropertyValue",
+                "name": "Companies House company number",
+                "value": "15252227",
+                "url": "https://find-and-update.company-information.service.gov.uk/company/15252227"
+              },
+              {
+                "@type": "PropertyValue",
+                "name": "VAT number",
+                "value": "GB454409294"
+              }
+            ],
+            "sameAs": [
+              "https://find-and-update.company-information.service.gov.uk/company/15252227",
+              "https://the-networker.co.uk/"
+            ],
             "address": {
               "@type": "PostalAddress",
               "streetAddress": "Magpas HQ, Barnwell Road, Alconbury Weald",
@@ -974,7 +1205,7 @@ window.HUB_SEO_DATA = {
             "founder": [
               {
                 "@type": "Person",
-                "name": "Rosie"
+                "name": "Rosie McGilvray"
               },
               {
                 "@type": "Person",
@@ -993,11 +1224,32 @@ window.HUB_SEO_DATA = {
           "@type": "Organization",
           "name": "The Networker UK",
           "legalName": "The Networker Group Ltd",
+          "alternateName": [
+            "The Networker",
+            "the-networker.co.uk"
+          ],
           "url": "https://www.thenetworkeruk.com",
           "logo": "https://www.thenetworkeruk.com/assets/logo.png",
           "image": "https://www.thenetworkeruk.com/assets/logo.png",
           "email": "hello@thenetworkerhub.com",
-          "description": "UK platform for networking events, exhibitions, and business opportunities.",
+          "description": "UK platform for networking events, exhibitions, and business opportunities. Operated by The Networker Group Ltd (Companies House 15252227) — the same team as the Networker UK directory.",
+          "identifier": [
+            {
+              "@type": "PropertyValue",
+              "name": "Companies House company number",
+              "value": "15252227",
+              "url": "https://find-and-update.company-information.service.gov.uk/company/15252227"
+            },
+            {
+              "@type": "PropertyValue",
+              "name": "VAT number",
+              "value": "GB454409294"
+            }
+          ],
+          "sameAs": [
+            "https://find-and-update.company-information.service.gov.uk/company/15252227",
+            "https://the-networker.co.uk/"
+          ],
           "address": {
             "@type": "PostalAddress",
             "streetAddress": "Magpas HQ, Barnwell Road, Alconbury Weald",
@@ -1017,7 +1269,7 @@ window.HUB_SEO_DATA = {
           "founder": [
             {
               "@type": "Person",
-              "name": "Rosie"
+              "name": "Rosie McGilvray"
             },
             {
               "@type": "Person",
@@ -1036,11 +1288,32 @@ window.HUB_SEO_DATA = {
             "@type": "Organization",
             "name": "The Networker UK",
             "legalName": "The Networker Group Ltd",
+            "alternateName": [
+              "The Networker",
+              "the-networker.co.uk"
+            ],
             "url": "https://www.thenetworkeruk.com",
             "logo": "https://www.thenetworkeruk.com/assets/logo.png",
             "image": "https://www.thenetworkeruk.com/assets/logo.png",
             "email": "hello@thenetworkerhub.com",
-            "description": "UK platform for networking events, exhibitions, and business opportunities.",
+            "description": "UK platform for networking events, exhibitions, and business opportunities. Operated by The Networker Group Ltd (Companies House 15252227) — the same team as the Networker UK directory.",
+            "identifier": [
+              {
+                "@type": "PropertyValue",
+                "name": "Companies House company number",
+                "value": "15252227",
+                "url": "https://find-and-update.company-information.service.gov.uk/company/15252227"
+              },
+              {
+                "@type": "PropertyValue",
+                "name": "VAT number",
+                "value": "GB454409294"
+              }
+            ],
+            "sameAs": [
+              "https://find-and-update.company-information.service.gov.uk/company/15252227",
+              "https://the-networker.co.uk/"
+            ],
             "address": {
               "@type": "PostalAddress",
               "streetAddress": "Magpas HQ, Barnwell Road, Alconbury Weald",
@@ -1060,7 +1333,7 @@ window.HUB_SEO_DATA = {
             "founder": [
               {
                 "@type": "Person",
-                "name": "Rosie"
+                "name": "Rosie McGilvray"
               },
               {
                 "@type": "Person",
@@ -1079,11 +1352,32 @@ window.HUB_SEO_DATA = {
           "@type": "Organization",
           "name": "The Networker UK",
           "legalName": "The Networker Group Ltd",
+          "alternateName": [
+            "The Networker",
+            "the-networker.co.uk"
+          ],
           "url": "https://www.thenetworkeruk.com",
           "logo": "https://www.thenetworkeruk.com/assets/logo.png",
           "image": "https://www.thenetworkeruk.com/assets/logo.png",
           "email": "hello@thenetworkerhub.com",
-          "description": "UK platform for networking events, exhibitions, and business opportunities.",
+          "description": "UK platform for networking events, exhibitions, and business opportunities. Operated by The Networker Group Ltd (Companies House 15252227) — the same team as the Networker UK directory.",
+          "identifier": [
+            {
+              "@type": "PropertyValue",
+              "name": "Companies House company number",
+              "value": "15252227",
+              "url": "https://find-and-update.company-information.service.gov.uk/company/15252227"
+            },
+            {
+              "@type": "PropertyValue",
+              "name": "VAT number",
+              "value": "GB454409294"
+            }
+          ],
+          "sameAs": [
+            "https://find-and-update.company-information.service.gov.uk/company/15252227",
+            "https://the-networker.co.uk/"
+          ],
           "address": {
             "@type": "PostalAddress",
             "streetAddress": "Magpas HQ, Barnwell Road, Alconbury Weald",
@@ -1103,7 +1397,7 @@ window.HUB_SEO_DATA = {
           "founder": [
             {
               "@type": "Person",
-              "name": "Rosie"
+              "name": "Rosie McGilvray"
             },
             {
               "@type": "Person",
@@ -1122,11 +1416,32 @@ window.HUB_SEO_DATA = {
             "@type": "Organization",
             "name": "The Networker UK",
             "legalName": "The Networker Group Ltd",
+            "alternateName": [
+              "The Networker",
+              "the-networker.co.uk"
+            ],
             "url": "https://www.thenetworkeruk.com",
             "logo": "https://www.thenetworkeruk.com/assets/logo.png",
             "image": "https://www.thenetworkeruk.com/assets/logo.png",
             "email": "hello@thenetworkerhub.com",
-            "description": "UK platform for networking events, exhibitions, and business opportunities.",
+            "description": "UK platform for networking events, exhibitions, and business opportunities. Operated by The Networker Group Ltd (Companies House 15252227) — the same team as the Networker UK directory.",
+            "identifier": [
+              {
+                "@type": "PropertyValue",
+                "name": "Companies House company number",
+                "value": "15252227",
+                "url": "https://find-and-update.company-information.service.gov.uk/company/15252227"
+              },
+              {
+                "@type": "PropertyValue",
+                "name": "VAT number",
+                "value": "GB454409294"
+              }
+            ],
+            "sameAs": [
+              "https://find-and-update.company-information.service.gov.uk/company/15252227",
+              "https://the-networker.co.uk/"
+            ],
             "address": {
               "@type": "PostalAddress",
               "streetAddress": "Magpas HQ, Barnwell Road, Alconbury Weald",
@@ -1146,7 +1461,7 @@ window.HUB_SEO_DATA = {
             "founder": [
               {
                 "@type": "Person",
-                "name": "Rosie"
+                "name": "Rosie McGilvray"
               },
               {
                 "@type": "Person",
@@ -1165,11 +1480,32 @@ window.HUB_SEO_DATA = {
           "@type": "Organization",
           "name": "The Networker UK",
           "legalName": "The Networker Group Ltd",
+          "alternateName": [
+            "The Networker",
+            "the-networker.co.uk"
+          ],
           "url": "https://www.thenetworkeruk.com",
           "logo": "https://www.thenetworkeruk.com/assets/logo.png",
           "image": "https://www.thenetworkeruk.com/assets/logo.png",
           "email": "hello@thenetworkerhub.com",
-          "description": "UK platform for networking events, exhibitions, and business opportunities.",
+          "description": "UK platform for networking events, exhibitions, and business opportunities. Operated by The Networker Group Ltd (Companies House 15252227) — the same team as the Networker UK directory.",
+          "identifier": [
+            {
+              "@type": "PropertyValue",
+              "name": "Companies House company number",
+              "value": "15252227",
+              "url": "https://find-and-update.company-information.service.gov.uk/company/15252227"
+            },
+            {
+              "@type": "PropertyValue",
+              "name": "VAT number",
+              "value": "GB454409294"
+            }
+          ],
+          "sameAs": [
+            "https://find-and-update.company-information.service.gov.uk/company/15252227",
+            "https://the-networker.co.uk/"
+          ],
           "address": {
             "@type": "PostalAddress",
             "streetAddress": "Magpas HQ, Barnwell Road, Alconbury Weald",
@@ -1189,7 +1525,7 @@ window.HUB_SEO_DATA = {
           "founder": [
             {
               "@type": "Person",
-              "name": "Rosie"
+              "name": "Rosie McGilvray"
             },
             {
               "@type": "Person",
@@ -1220,11 +1556,32 @@ window.HUB_SEO_DATA = {
           "@type": "Organization",
           "name": "The Networker UK",
           "legalName": "The Networker Group Ltd",
+          "alternateName": [
+            "The Networker",
+            "the-networker.co.uk"
+          ],
           "url": "https://www.thenetworkeruk.com",
           "logo": "https://www.thenetworkeruk.com/assets/logo.png",
           "image": "https://www.thenetworkeruk.com/assets/logo.png",
           "email": "hello@thenetworkerhub.com",
-          "description": "UK platform for networking events, exhibitions, and business opportunities.",
+          "description": "UK platform for networking events, exhibitions, and business opportunities. Operated by The Networker Group Ltd (Companies House 15252227) — the same team as the Networker UK directory.",
+          "identifier": [
+            {
+              "@type": "PropertyValue",
+              "name": "Companies House company number",
+              "value": "15252227",
+              "url": "https://find-and-update.company-information.service.gov.uk/company/15252227"
+            },
+            {
+              "@type": "PropertyValue",
+              "name": "VAT number",
+              "value": "GB454409294"
+            }
+          ],
+          "sameAs": [
+            "https://find-and-update.company-information.service.gov.uk/company/15252227",
+            "https://the-networker.co.uk/"
+          ],
           "address": {
             "@type": "PostalAddress",
             "streetAddress": "Magpas HQ, Barnwell Road, Alconbury Weald",
@@ -1244,7 +1601,7 @@ window.HUB_SEO_DATA = {
           "founder": [
             {
               "@type": "Person",
-              "name": "Rosie"
+              "name": "Rosie McGilvray"
             },
             {
               "@type": "Person",
@@ -1275,11 +1632,32 @@ window.HUB_SEO_DATA = {
           "@type": "Organization",
           "name": "The Networker UK",
           "legalName": "The Networker Group Ltd",
+          "alternateName": [
+            "The Networker",
+            "the-networker.co.uk"
+          ],
           "url": "https://www.thenetworkeruk.com",
           "logo": "https://www.thenetworkeruk.com/assets/logo.png",
           "image": "https://www.thenetworkeruk.com/assets/logo.png",
           "email": "hello@thenetworkerhub.com",
-          "description": "UK platform for networking events, exhibitions, and business opportunities.",
+          "description": "UK platform for networking events, exhibitions, and business opportunities. Operated by The Networker Group Ltd (Companies House 15252227) — the same team as the Networker UK directory.",
+          "identifier": [
+            {
+              "@type": "PropertyValue",
+              "name": "Companies House company number",
+              "value": "15252227",
+              "url": "https://find-and-update.company-information.service.gov.uk/company/15252227"
+            },
+            {
+              "@type": "PropertyValue",
+              "name": "VAT number",
+              "value": "GB454409294"
+            }
+          ],
+          "sameAs": [
+            "https://find-and-update.company-information.service.gov.uk/company/15252227",
+            "https://the-networker.co.uk/"
+          ],
           "address": {
             "@type": "PostalAddress",
             "streetAddress": "Magpas HQ, Barnwell Road, Alconbury Weald",
@@ -1299,7 +1677,7 @@ window.HUB_SEO_DATA = {
           "founder": [
             {
               "@type": "Person",
-              "name": "Rosie"
+              "name": "Rosie McGilvray"
             },
             {
               "@type": "Person",

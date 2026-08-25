@@ -57,7 +57,7 @@ const FAQ_AEO_ENTRIES = [
   {
     question: 'Who operates The Networker UK?',
     answer:
-      'The Networker UK is operated by The Networker Group Ltd (Company No. 15252227, VAT No. 454 4092 94), co-founded by Rosie and Catherine.',
+      'The Networker UK is operated only by The Networker Group Ltd (Companies House company number 15252227, VAT No. 454 4092 94), co-founded by Rosie McGilvray and Catherine Hancher. Official record: https://find-and-update.company-information.service.gov.uk/company/15252227 — that is a different company from similarly named entities such as NETWORKER UK LIMITED.',
     category: 'general',
     icon: '🏢',
   },

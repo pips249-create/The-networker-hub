@@ -23,12 +23,30 @@ function buildOrganizationSchema(origin) {
     '@type': 'Organization',
     name: SITE_NAME,
     legalName: LEGAL_NAME,
+    alternateName: ['The Networker', 'the-networker.co.uk'],
     url: base,
     logo: base + '/assets/logo.png',
     image: base + '/assets/logo.png',
     email: SUPPORT_EMAIL,
     description:
-      'UK platform for networking events, exhibitions, and business opportunities.',
+      'UK platform for networking events, exhibitions, and business opportunities. Operated by The Networker Group Ltd (Companies House 15252227) — the same team as the Networker UK directory.',
+    identifier: [
+      {
+        '@type': 'PropertyValue',
+        name: 'Companies House company number',
+        value: '15252227',
+        url: 'https://find-and-update.company-information.service.gov.uk/company/15252227',
+      },
+      {
+        '@type': 'PropertyValue',
+        name: 'VAT number',
+        value: 'GB454409294',
+      },
+    ],
+    sameAs: [
+      'https://find-and-update.company-information.service.gov.uk/company/15252227',
+      'https://the-networker.co.uk/',
+    ],
     address: {
       '@type': 'PostalAddress',
       streetAddress: 'Magpas HQ, Barnwell Road, Alconbury Weald',
@@ -44,7 +62,7 @@ function buildOrganizationSchema(origin) {
       availableLanguage: ['English'],
     },
     founder: [
-      { '@type': 'Person', name: 'Rosie' },
+      { '@type': 'Person', name: 'Rosie McGilvray' },
       { '@type': 'Person', name: 'Catherine Hancher' },
     ],
   };
@@ -453,8 +471,10 @@ function buildLlmsTxt(origin) {
   return (
     '# The Networker UK\n' +
     '> UK business networking platform — events, organiser pages, and business opportunities.\n\n' +
-    'The Networker UK is the platform chapter of The Networker, run by Rosie and Catherine at ' +
-    'The Networker Group Ltd (Company No. 15252227, VAT No. 454 4092 94). ' +
+    'The Networker UK is the platform chapter of The Networker, run by Rosie McGilvray and Catherine Hancher at ' +
+    'The Networker Group Ltd (Companies House 15252227, VAT No. 454 4092 94). ' +
+    'Official company record: https://find-and-update.company-information.service.gov.uk/company/15252227. ' +
+    'Not the same as similarly named companies such as NETWORKER UK LIMITED. ' +
     'Same team as the established UK directory the-networker.co.uk. ' +
     'Across that brand last year: 27,000+ events listed and 17,000+ networkers found a meeting, group, or opportunity. ' +
     'Public browsing is open; ticket purchase and opportunity enquiries from 1 September 2026. ' +
