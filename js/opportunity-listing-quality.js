@@ -285,6 +285,7 @@
   }
 
   function listingCompleteness(input) {
+    var affiliate = Boolean(input.affiliateStyle);
     var checks = [
       { key: 'title', label: 'Title', weight: 12, ok: Boolean(input.title) },
       { key: 'types', label: 'Opportunity type', weight: 10, ok: (input.types || []).length > 0 },
@@ -292,18 +293,22 @@
       { key: 'about', label: 'Full description', weight: 10, ok: Boolean(input.about) },
       { key: 'host', label: 'Company name', weight: 10, ok: Boolean(input.host) },
       { key: 'email', label: 'Contact email', weight: 8, ok: Boolean(input.email) },
-      { key: 'investment', label: 'Investment amount', weight: 12, ok: Boolean(input.investment) },
+      affiliate
+        ? { key: 'commission', label: 'Commission', weight: 12, ok: Boolean(input.commission) }
+        : { key: 'investment', label: 'Investment amount', weight: 12, ok: Boolean(input.investment) },
+      affiliate
+        ? { key: 'promote', label: 'What you promote', weight: 10, ok: Boolean(input.promote) }
+        : {
+            key: 'breakdown',
+            label: 'Cost breakdown',
+            weight: 6,
+            ok: Boolean(input.investmentIncludes),
+            tip: 'Help browsers trust your listing',
+          },
       { key: 'location', label: 'Territory / location', weight: 10, ok: Boolean(input.location) },
       { key: 'commitment', label: 'Commitment', weight: 8, ok: Boolean(input.commitment) },
       { key: 'logo', label: 'Logo or image', weight: 8, ok: Boolean(input.logoUrl || input.logoFile) },
       { key: 'cover', label: 'Cover photo', weight: 6, ok: Boolean(input.imageUrl || input.imageFile) },
-      {
-        key: 'breakdown',
-        label: 'Cost breakdown',
-        weight: 6,
-        ok: Boolean(input.investmentIncludes),
-        tip: 'Help browsers trust your listing',
-      },
       {
         key: 'companies-house',
         label: 'Companies House number',
@@ -312,6 +317,15 @@
         tip: 'Optional — shows co. number on your listing',
       },
     ];
+    if (affiliate) {
+      checks.push({
+        key: 'suits',
+        label: 'Who it suits',
+        weight: 4,
+        ok: Boolean(input.suits),
+        tip: 'Optional — helps the right people enquire',
+      });
+    }
     var earned = 0;
     var total = 0;
     var missing = [];

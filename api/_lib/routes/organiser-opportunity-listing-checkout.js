@@ -4,7 +4,7 @@ const {
   createOpportunityListingCheckoutSession,
   siteBaseUrl,
 } = require('../stripe-checkout');
-const { normalizeListingMonths, calculateOpportunityListingTotals } = require('../opportunity-listing-pricing');
+const { calculateOpportunityListingTotals } = require('../opportunity-listing-pricing');
 const { validateFcaDisclaimer } = require('../opportunity-moderation');
 
 function parseBody(req) {
@@ -25,7 +25,7 @@ function isUuid(value) {
   );
 }
 
-/** Start Stripe Checkout for a prepaid opportunity listing (£25/month ex VAT, min 3 months). */
+/** Start Stripe Checkout for a monthly opportunity listing subscription (£25/month + VAT). */
 module.exports = async function handler(req, res) {
   const api = getOrganiserApi();
   const { json, setCors, requireOrganiserSession, getOpportunityById, opportunityOwnedBySession, isPlatformAdmin } =
@@ -53,7 +53,6 @@ module.exports = async function handler(req, res) {
   try {
     const body = parseBody(req);
     const opportunityId = String(body.opportunityId || body.id || '').trim();
-    const months = normalizeListingMonths(body.months);
     if (!isUuid(opportunityId)) {
       return json(res, 400, { ok: false, error: 'invalid_opportunity_id' });
     }
@@ -83,19 +82,16 @@ module.exports = async function handler(req, res) {
 
     const siteUrl = siteBaseUrl();
     const title = encodeURIComponent(opportunity.title || '');
-    const totals = calculateOpportunityListingTotals(months);
+    const totals = calculateOpportunityListingTotals(1);
     const checkoutSession = await createOpportunityListingCheckoutSession({
       email: auth.session.email,
       opportunityId,
-      months,
       opportunityTitle: opportunity.title,
       successUrl:
         siteUrl +
         '/organiser/opportunity-listing-success?session_id={CHECKOUT_SESSION_ID}&id=' +
         encodeURIComponent(opportunityId) +
-        (title ? '&title=' + title : '') +
-        '&months=' +
-        encodeURIComponent(String(months)),
+        (title ? '&title=' + title : ''),
       cancelUrl:
         siteUrl +
         '/organiser/opportunity-edit?id=' +
@@ -107,6 +103,7 @@ module.exports = async function handler(req, res) {
       ok: true,
       url: checkoutSession.url,
       sessionId: checkoutSession.id,
+      billingMode: 'subscription',
       months: totals.months,
       subtotalExVatPence: totals.subtotalExVatPence,
       vatPence: totals.vatPence,

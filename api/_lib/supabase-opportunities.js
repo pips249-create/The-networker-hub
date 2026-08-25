@@ -222,6 +222,7 @@ function rowToListing(row) {
     listingMonths: row.listing_months != null ? Number(row.listing_months) : null,
     listingPaidAt: row.listing_paid_at || null,
     listingExpiresAt: row.listing_expires_at || null,
+    listingStripeSubscriptionId: row.listing_stripe_subscription_id || null,
     listingPaymentActive: listingPaymentCurrent(row),
     outcode: String(row.outcode || '').trim(),
     regionSlug: String(row.region_slug || '').trim(),
@@ -401,11 +402,24 @@ async function buildOpportunityRow(payload, opportunityId, mode) {
   return row;
 }
 
-async function activateOpportunityListingPayment(opportunityId, months, sessionId) {
+async function activateOpportunityListingPayment(opportunityId, monthsOrOpts, sessionIdMaybe) {
   const id = String(opportunityId || '').trim();
-  const termMonths = normalizeListingMonths(months);
-  const sid = sessionId ? String(sessionId).trim() : '';
   if (!isUuid(id)) throw new Error('invalid_opportunity_id');
+
+  let opts = {};
+  if (monthsOrOpts && typeof monthsOrOpts === 'object' && !Array.isArray(monthsOrOpts)) {
+    opts = monthsOrOpts;
+  } else {
+    opts = {
+      months: monthsOrOpts,
+      sessionId: sessionIdMaybe,
+    };
+  }
+
+  const sid = opts.sessionId ? String(opts.sessionId).trim() : '';
+  const subscriptionId = opts.subscriptionId ? String(opts.subscriptionId).trim() : '';
+  const periodEnd = opts.periodEndIso ? new Date(opts.periodEndIso) : null;
+  const termMonths = normalizeListingMonths(opts.months != null ? opts.months : 1);
 
   const sb = getSupabaseAdmin();
   const { data: existing, error: loadErr } = await sb
@@ -416,38 +430,49 @@ async function activateOpportunityListingPayment(opportunityId, months, sessionI
   if (loadErr) throw new Error(loadErr.message);
   if (!existing) throw new Error('not_found');
 
-  // Stripe retries must not stack listing months for the same checkout session.
+  // Stripe retries must not re-activate for the same checkout session.
   if (sid && String(existing.listing_stripe_session_id || '').trim() === sid) {
     return rowToListing(existing);
   }
 
   const now = new Date();
-  let base = now;
-  if (existing.listing_expires_at && new Date(existing.listing_expires_at) > base) {
-    base = new Date(existing.listing_expires_at);
+  let expiresAt;
+  if (periodEnd && !Number.isNaN(periodEnd.getTime())) {
+    expiresAt = periodEnd;
+  } else {
+    let base = now;
+    if (existing.listing_expires_at && new Date(existing.listing_expires_at) > base) {
+      base = new Date(existing.listing_expires_at);
+    }
+    expiresAt = addMonths(base, termMonths);
   }
-  const expiresAt = addMonths(base, termMonths);
+
   const slug = await ensureOpportunitySlug(sb, {
     title: existing.title,
     opportunityId: id,
     currentSlug: existing.slug,
   });
 
+  const patch = {
+    status: 'published',
+    approval_status: existing.approval_status === 'Approved' ? 'Approved' : 'Pending Review',
+    slug,
+    published_at: existing.published_at || now.toISOString(),
+    listing_months: termMonths,
+    listing_paid_at: now.toISOString(),
+    listing_expires_at: expiresAt.toISOString(),
+    listing_stripe_session_id: sid || existing.listing_stripe_session_id || null,
+    listing_expiry_reminder_sent_at: null,
+    package_tier: 'standard',
+    updated_at: now.toISOString(),
+  };
+  if (subscriptionId) {
+    patch.listing_stripe_subscription_id = subscriptionId;
+  }
+
   const { data, error } = await sb
     .from('business_opportunities')
-    .update({
-      status: 'published',
-      approval_status: 'Pending Review',
-      slug,
-      published_at: existing.published_at || now.toISOString(),
-      listing_months: termMonths,
-      listing_paid_at: now.toISOString(),
-      listing_expires_at: expiresAt.toISOString(),
-      listing_stripe_session_id: sid || null,
-      listing_expiry_reminder_sent_at: null,
-      package_tier: 'standard',
-      updated_at: now.toISOString(),
-    })
+    .update(patch)
     .eq('id', id)
     .select('*')
     .single();
@@ -458,9 +483,7 @@ async function activateOpportunityListingPayment(opportunityId, months, sessionI
     return autoReject.listing;
   }
 
-  const listing = rowToListing(data);
-
-  return listing;
+  return rowToListing(data);
 }
 
 async function listPublishedOpportunities() {
@@ -842,7 +865,6 @@ async function handleOpportunityListingCheckout(session) {
   }
 
   const opportunityId = String(metadata.opportunity_id || '').trim();
-  const months = normalizeListingMonths(metadata.listing_months);
   if (!opportunityId) return { skipped: true, reason: 'missing_opportunity_id' };
 
   const paid =
@@ -851,16 +873,49 @@ async function handleOpportunityListingCheckout(session) {
     session.status === 'complete';
   if (!paid) return { skipped: true, reason: 'payment_not_complete' };
 
-  const opportunity = await activateOpportunityListingPayment(
-    opportunityId,
-    months,
-    session.id
-  );
+  const {
+    subscriptionIdFromSession,
+    periodEndIso,
+  } = require('./opportunity-listing-subscriptions');
+  const { retrieveCheckoutSession, getStripeClient } = require('./stripe-checkout');
+
+  let subscriptionId = subscriptionIdFromSession(session);
+  let periodEnd = null;
+
+  if (subscriptionId) {
+    try {
+      const stripe = getStripeClient();
+      const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+      periodEnd = periodEndIso(subscription);
+    } catch {
+      /* fall through — activate with 1 month from now */
+    }
+  } else if (session.id) {
+    try {
+      const full = await retrieveCheckoutSession(session.id);
+      subscriptionId = subscriptionIdFromSession(full);
+      if (subscriptionId) {
+        const stripe = getStripeClient();
+        const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+        periodEnd = periodEndIso(subscription);
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  const opportunity = await activateOpportunityListingPayment(opportunityId, {
+    months: 1,
+    sessionId: session.id,
+    subscriptionId,
+    periodEndIso: periodEnd,
+  });
   return {
     ok: true,
     opportunityId,
     listingExpiresAt: opportunity.listingExpiresAt,
     listingMonths: opportunity.listingMonths,
+    subscriptionId: subscriptionId || null,
   };
 }
 

@@ -12,7 +12,8 @@
 ## Before you start (5 minutes)
 
 1. Create a folder **outside this repo**:  
-   `Company records / Data protection / DPAs / 2026 / The Networker UK`
+   Desktop: `Company records: data protection: DPAs : 2026`  
+   (Live folder for The Networker Group Ltd — PDFs stay **out of git**.)
 2. Open `docs/DPA-REGISTER.md` — you will note dates and file names there after each step.
 3. Log in as the **organisation owner** for each account (not a team member with limited access).
 4. Run `npm run check:dpas` when done to confirm the register is complete.

@@ -338,6 +338,7 @@
   var activeCitySlug = '';
   var activeCityName = '';
   var expandedCardId = null;
+  var applyFiltersToken = 0;
 
   var els = {};
 
@@ -765,6 +766,14 @@
   }
 
   function investmentLabel(item) {
+    if (catalog && catalog.isAffiliateStyleListing && catalog.isAffiliateStyleListing(item)) {
+      var commission = '';
+      (item.meta || []).forEach(function (m) {
+        if (/^commission$/i.test(m.key) && m.val) commission = String(m.val).trim();
+      });
+      if (commission) return commission;
+      return 'Affiliate';
+    }
     if (catalog && catalog.cardDisplayMeta) {
       var meta = catalog.cardDisplayMeta(item);
       for (var i = 0; i < meta.length; i++) {
@@ -1976,19 +1985,27 @@
     resetListingPagination();
     writeFiltersToUrl();
     setOppListingsLoading(true);
-    /* Double rAF so the spinner paints before a heavy re-render. */
-    window.requestAnimationFrame(function () {
+    var token = ++applyFiltersToken;
+    var ran = false;
+    function runApply() {
+      if (ran || token !== applyFiltersToken) return;
+      ran = true;
+      try {
+        renderListings();
+        renderSpotlight();
+        if (window.hubSyncMobileFilterToggle) window.hubSyncMobileFilterToggle();
+        logOpportunityBrowseSearch();
+      } finally {
+        if (token === applyFiltersToken) setOppListingsLoading(false);
+      }
+    }
+    /* Double rAF so the spinner can paint; setTimeout fallback if rAF is throttled/skipped. */
+    if (typeof window.requestAnimationFrame === 'function') {
       window.requestAnimationFrame(function () {
-        try {
-          renderListings();
-          renderSpotlight();
-          if (window.hubSyncMobileFilterToggle) window.hubSyncMobileFilterToggle();
-          logOpportunityBrowseSearch();
-        } finally {
-          setOppListingsLoading(false);
-        }
+        window.requestAnimationFrame(runApply);
       });
-    });
+    }
+    window.setTimeout(runApply, 50);
   }
 
   function logOpportunityBrowseSearch() {

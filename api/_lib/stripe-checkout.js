@@ -2,7 +2,6 @@ const Stripe = require('stripe');
 const { BOOKING_FEE_NON_REFUNDABLE_NOTE } = require('./booking-fees');
 const {
   calculateOpportunityListingTotals,
-  normalizeListingMonths,
 } = require('./opportunity-listing-pricing');
 const { getCatalogPriceId } = require('./hub-stripe-catalog');
 
@@ -114,22 +113,24 @@ function lineItemFromCatalog(catalogKey, fallbackPriceData) {
 async function createOpportunityListingCheckoutSession(opts) {
   const stripe = getStripeClient();
   const opportunityId = String(opts.opportunityId || '').trim();
-  const months = normalizeListingMonths(opts.months);
   if (!opportunityId) throw new Error('missing_opportunity_id');
 
-  const totals = calculateOpportunityListingTotals(months);
+  const totals = calculateOpportunityListingTotals(1);
   const title = String(opts.opportunityTitle || 'Business opportunity').trim();
+  const metadata = {
+    opportunity_id: opportunityId,
+    checkout_type: 'opportunity_listing',
+    billing_mode: 'subscription',
+    listing_months: '1',
+    owner_email: String(opts.email || '').toLowerCase(),
+  };
 
   return stripe.checkout.sessions.create({
-    mode: 'payment',
+    mode: 'subscription',
     customer_email: opts.email,
-    client_reference_id: 'opp-listing-' + opportunityId + '-' + months + 'm',
-    metadata: {
-      opportunity_id: opportunityId,
-      checkout_type: 'opportunity_listing',
-      listing_months: String(months),
-      owner_email: String(opts.email || '').toLowerCase(),
-    },
+    client_reference_id: 'opp-listing-' + opportunityId,
+    metadata,
+    subscription_data: { metadata },
     success_url: opts.successUrl,
     cancel_url: opts.cancelUrl,
     line_items: [
@@ -137,13 +138,14 @@ async function createOpportunityListingCheckoutSession(opts) {
         price_data: {
           currency: 'gbp',
           product_data: {
-            name: 'Business opportunity listing — ' + months + ' months',
+            name: 'Business opportunity listing',
             description:
-              'Directory listing for "' +
+              'Monthly directory listing for "' +
               title +
-              '" on The Networker UK (£25/month ex VAT)',
+              '" on The Networker UK (£25/month + VAT)',
           },
-          unit_amount: totals.subtotalExVatPence,
+          unit_amount: totals.monthlyExVatPence,
+          recurring: { interval: 'month' },
         },
         quantity: 1,
       },
@@ -152,9 +154,10 @@ async function createOpportunityListingCheckoutSession(opts) {
           currency: 'gbp',
           product_data: {
             name: 'VAT (20%)',
-            description: months + ' months listing VAT',
+            description: 'VAT on monthly business opportunity listing',
           },
-          unit_amount: totals.vatPence,
+          unit_amount: totals.monthlyVatPence,
+          recurring: { interval: 'month' },
         },
         quantity: 1,
       },

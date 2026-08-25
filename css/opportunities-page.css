@@ -1733,6 +1733,10 @@
 }
 
 /* Sponsor Hub — opportunities gold/navy palette */
+.opp-browse-page .sponsor-hub [hidden] {
+  display: none !important;
+}
+
 .opp-browse-page .sponsor-hub {
   position: relative;
   background: linear-gradient(165deg, #fff 0%, #fdf8ef 55%, #faf3e3 100%);
@@ -1953,17 +1957,33 @@
 }
 
 .opp-browse-page .sponsor-hub--fallback .sponsor-tagline {
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 800;
-  margin-bottom: 8px;
+  line-height: 1.25;
+  margin-bottom: 14px;
+  color: var(--opp-navy);
 }
 
 .opp-browse-page .sponsor-hub--fallback .sponsor-tagline .sponsor-fallback-price {
   display: block;
-  margin-top: 4px;
-  font-size: 12px;
+  margin-top: 6px;
+  font-size: 13px;
   font-weight: 600;
-  color: #6b7280;
+  color: #4b5563;
+}
+
+.opp-browse-page .sponsor-hub--fallback .sponsor-logo-wrap {
+  display: none !important;
+}
+
+.opp-browse-page .sponsor-hub--in-hero.sponsor-hub--fallback {
+  padding: 16px 18px 18px;
+  justify-content: flex-start;
+  gap: 0;
+}
+
+.opp-browse-page .sponsor-hub--in-hero.sponsor-hub--fallback .sponsor-hub-head {
+  margin-bottom: 14px;
 }
 
 .opp-browse-page .sponsor-list {
@@ -2009,14 +2029,15 @@
 }
 
 .opp-browse-page .sponsor-hub--fallback .sponsor-cta {
-  background: transparent;
-  color: var(--opp-gold) !important;
-  border: 1px solid var(--opp-gold-border);
+  background: var(--opp-navy);
+  color: #faf8f5 !important;
+  border: 1px solid var(--opp-navy);
 }
 
 .opp-browse-page .sponsor-hub--fallback .sponsor-cta:hover {
-  background: var(--opp-gold-pale);
+  background: var(--opp-gold);
   color: var(--opp-navy) !important;
+  border-color: var(--opp-gold);
 }
 
 .opp-browse-page .opp-shell {

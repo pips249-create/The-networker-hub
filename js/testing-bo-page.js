@@ -108,6 +108,14 @@
   }
 
   function investmentLabel(item) {
+    if (catalog && catalog.isAffiliateStyleListing && catalog.isAffiliateStyleListing(item)) {
+      var commission = '';
+      (item.meta || []).forEach(function (m) {
+        if (/^commission$/i.test(m.key) && m.val) commission = String(m.val).trim();
+      });
+      if (commission) return commission;
+      return 'Affiliate';
+    }
     if (catalog && catalog.cardDisplayMeta) {
       var meta = catalog.cardDisplayMeta(item);
       for (var i = 0; i < meta.length; i++) {

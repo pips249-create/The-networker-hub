@@ -89,7 +89,7 @@
 | **Lawful basis** | Contract for transactional; **Consent** for marketing (PECR + UK GDPR Art. 6(1)(a)) |
 | **Recipients** | Resend; Brevo when campaign sends use that ESP |
 | **Retention** | Preferences until withdrawal; send metadata per ESP retention |
-| **Notes** | Pre-25 Aug 2026 registrations may need re-permission — `docs/MARKETING-REPERMISSION.md` |
+| **Notes** | Pre-25 Aug 2026 registrations had a pre-ticked marketing checkbox; re-permission email **deferred** (25 Aug 2026) — see `docs/MARKETING-REPERMISSION.md` |
 
 ### G. Analytics & technical logs
 

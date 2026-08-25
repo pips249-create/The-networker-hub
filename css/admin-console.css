@@ -287,9 +287,8 @@ body.hub-page-admin .site-nav {
 }
 
 .admin-filter-bar {
-  position: sticky;
-  top: 3.35rem;
-  z-index: 20;
+  position: relative;
+  z-index: 1;
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
@@ -298,10 +297,137 @@ body.hub-page-admin .site-nav {
   padding: 0.65rem 0.75rem;
   border: 1px solid #e2e8f0;
   border-radius: 0.75rem;
-  background: rgba(255, 255, 255, 0.94);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: #fff;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.admin-filter-bar--listings {
+  display: block;
+}
+
+.admin-filter-more {
+  border-top: 1px solid #f1f5f9;
+  padding-top: 0.5rem;
+}
+
+.admin-filter-more > summary {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #5b2f99;
+  user-select: none;
+}
+
+.admin-filter-more > summary::-webkit-details-marker {
+  display: none;
+}
+
+.admin-filter-more > summary::before {
+  content: '▸';
+  display: inline-block;
+  width: 0.75rem;
+  color: #94a3b8;
+  transition: transform 0.15s ease;
+}
+
+.admin-filter-more[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.admin-filter-more-count {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  border: 1px solid #e9d5ff;
+  background: #faf5ff;
+  color: #5b2f99;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  padding: 0.125rem 0.5rem;
+}
+
+.admin-page-goto {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-left: 0.35rem;
+}
+
+.admin-page-goto-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+}
+
+.admin-page-goto-input {
+  width: 3.5rem;
+  min-height: 2.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  padding: 0 0.4rem;
+  text-align: center;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #2d1b3d;
+  background: #fff;
+}
+
+.admin-page-goto-input:focus {
+  outline: 2px solid #c9a8d8;
+  outline-offset: 1px;
+  border-color: #5b2f99;
+}
+
+.revenue-mix-scenario-btn {
+  border: 1px solid #e2e8f0;
+  background: #fff;
+  color: #334155;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  border-radius: 0.625rem;
+  padding: 0.55rem 0.85rem;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.revenue-mix-scenario-btn:hover {
+  background: #faf6fe;
+  border-color: #c9a8d8;
+}
+
+.revenue-mix-scenario-btn.is-active {
+  background: #5b2f99;
+  border-color: #5b2f99;
+  color: #fff;
+}
+
+.revenue-mix-details > summary {
+  list-style: none;
+  cursor: pointer;
+  font-weight: 700;
+  color: #1e3a5f;
+  user-select: none;
+}
+
+.revenue-mix-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.revenue-mix-details > summary::before {
+  content: '▸ ';
+  color: #94a3b8;
+}
+
+.revenue-mix-details[open] > summary::before {
+  content: '▾ ';
 }
 
 .admin-main-column {

@@ -301,30 +301,57 @@
     return v;
   }
 
+  function isAffiliateStyleListing(item) {
+    var types = [];
+    if (item && item.type) types.push(String(item.type).toLowerCase());
+    (item && item.tags ? item.tags : []).forEach(function (tag) {
+      var t = String(tag || '').toLowerCase();
+      if (t && types.indexOf(t) === -1) types.push(t);
+    });
+    if (types.indexOf('partnership') === -1) return false;
+    var capital = ['franchise', 'distributorship', 'business-opportunity', 'network-marketing'];
+    return !types.some(function (value) {
+      return capital.indexOf(value) !== -1;
+    });
+  }
+
   function cardDisplayMeta(item) {
     var meta = item.meta || [];
     var investment = null;
+    var commission = null;
+    var promote = null;
+    var suits = null;
     var scarcity = null;
     var location = null;
     var extra = [];
+    var affiliate = isAffiliateStyleListing(item);
 
     meta.forEach(function (m) {
       if (/^investment includes$/i.test(m.key)) return;
       if (/^companies house$/i.test(m.key)) return;
-      if (/^(return(\s+est\.?)?|earnings|commission|revenue|income|profit)$/i.test(m.key)) return;
+      if (/^(return(\s+est\.?)?|earnings|revenue|income|profit)$/i.test(m.key)) return;
       if (/^investment$/i.test(m.key)) investment = m;
+      else if (/^commission$/i.test(m.key)) commission = m;
+      else if (/^what you promote$/i.test(m.key)) promote = m;
+      else if (/^who it suits$/i.test(m.key)) suits = m;
       else if (isScarcityMeta(m.key, m.val)) scarcity = scarcity || m;
       else if (/^location$/i.test(m.key)) location = location || m;
       else extra.push(m);
     });
+
+    if (affiliate) {
+      var commitment = metaVal(meta, /^commitment$/i);
+      var rows = [commission, promote || suits, scarcity || location || (commitment ? { key: 'Commitment', val: commitment } : null)];
+      return rows.filter(Boolean).slice(0, 4);
+    }
 
     var row3 = scarcity || location || extra[0] || null;
     var row4 = null;
     if (scarcity && location) row4 = location;
     else if (extra.length) row4 = extra[0];
 
-    var commitment = metaVal(meta, /^commitment$/i);
-    if (!row4 && commitment) row4 = { key: 'Commitment', val: commitment };
+    var commitmentCap = metaVal(meta, /^commitment$/i);
+    if (!row4 && commitmentCap) row4 = { key: 'Commitment', val: commitmentCap };
 
     return [investment, row3, row4].filter(Boolean).slice(0, 4);
   }
@@ -583,6 +610,7 @@
     detailHref: detailHref,
     typeClass: typeClass,
     cardDisplayMeta: cardDisplayMeta,
+    isAffiliateStyleListing: isAffiliateStyleListing,
     formatMetaDisplayValue: formatMetaDisplayValue,
     isScarcityMeta: isScarcityMeta,
     parseInvestmentAmount: parseInvestmentAmount,

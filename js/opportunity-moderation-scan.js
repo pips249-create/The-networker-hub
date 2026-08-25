@@ -85,14 +85,45 @@
       .join(' ');
   }
 
+  function collectOpportunityTypes(opportunity) {
+    var types = Array.isArray(opportunity && opportunity.types)
+      ? opportunity.types.map(function (value) {
+          return String(value || '').trim().toLowerCase();
+        }).filter(Boolean)
+      : [];
+    var primary = String((opportunity && opportunity.type) || '').trim().toLowerCase();
+    if (primary && types.indexOf(primary) === -1) types.unshift(primary);
+    return types;
+  }
+
+  function isAffiliateStyleListing(opportunity) {
+    var types = collectOpportunityTypes(opportunity);
+    if (types.indexOf('partnership') === -1) return false;
+    var capital = ['franchise', 'distributorship', 'business-opportunity', 'network-marketing'];
+    return !types.some(function (value) {
+      return capital.indexOf(value) !== -1;
+    });
+  }
+
   function validateStructuredFields(opportunity) {
     var meta = normalizeMeta(opportunity && opportunity.meta);
     var missing = [];
-    if (!metaValue(meta, /^investment$/i)) missing.push('investment amount');
+    var types = collectOpportunityTypes(opportunity);
+    var affiliateOnly = isAffiliateStyleListing(opportunity);
+
+    if (affiliateOnly) {
+      if (!metaValue(meta, /^commission$/i)) missing.push('commission');
+      if (!metaValue(meta, /^what you promote$/i)) missing.push('what you promote');
+    } else if (!metaValue(meta, /^investment$/i)) {
+      missing.push('investment amount');
+    }
+
     if (!metaValue(meta, /^location$/i) && !metaValue(meta, /^territory$/i)) {
       missing.push('territory / location');
     }
-    if (!String((opportunity && opportunity.type) || '').trim()) missing.push('opportunity type');
+    if (!String((opportunity && opportunity.type) || '').trim() && !types.length) {
+      missing.push('opportunity type');
+    }
     if (!missing.length) return null;
     return {
       flagged: true,

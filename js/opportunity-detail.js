@@ -43,7 +43,39 @@
     claimForm: document.getElementById('opp-claim-form'),
     claimSubmit: document.getElementById('opp-claim-submit'),
     claimStatus: document.getElementById('opp-claim-status'),
+    claimInvite: document.getElementById('opp-claim-invite'),
+    claimInviteBtn: document.getElementById('opp-claim-invite-btn'),
+    claimInviteTitle: document.getElementById('opp-claim-invite-title'),
   };
+
+  function claimInviteQuery() {
+    var params = new URLSearchParams(window.location.search);
+    var intent = String(params.get('intent') || '').trim().toLowerCase();
+    return {
+      isClaim: intent === 'opportunity-claim',
+      email: String(params.get('email') || '').trim(),
+      auth: String(params.get('auth') || 'register').trim().toLowerCase() === 'login' ? 'login' : 'register',
+      next: String(params.get('next') || '/organiser/?onboard=opportunity-claim').trim(),
+    };
+  }
+
+  function initClaimInviteFromEmail(item) {
+    var q = claimInviteQuery();
+    if (!q.isClaim || !els.claimInvite) return;
+    els.claimInvite.hidden = false;
+    if (els.claimInviteTitle && item && item.title) {
+      els.claimInviteTitle.textContent = 'This is a preview of ' + item.title;
+    }
+    var safeNext = q.next && q.next.charAt(0) === '/' ? q.next : '/organiser/?onboard=opportunity-claim';
+    var path = q.auth === 'login' ? '/login' : '/register';
+    var href =
+      path +
+      '?intent=opportunity-claim&next=' +
+      encodeURIComponent(safeNext) +
+      (q.email ? '&email=' + encodeURIComponent(q.email) : '');
+    if (els.claimInviteBtn) els.claimInviteBtn.setAttribute('href', href);
+    if (els.claimSection) els.claimSection.hidden = true;
+  }
 
   function syncEnquiriesOpenFromSoftLaunch(meta) {
     if (meta && typeof meta.enquiriesOpen === 'boolean') {
@@ -291,6 +323,11 @@
 
   function renderInvestmentBreakdown(item) {
     if (!els.investBreakdownSection) return;
+    if (catalog && catalog.isAffiliateStyleListing && catalog.isAffiliateStyleListing(item)) {
+      els.investBreakdownSection.hidden = true;
+      if (els.investBreakdownList) els.investBreakdownList.innerHTML = '';
+      return;
+    }
     var investUi = window.HubOpportunityInvestment;
     var items =
       item.investmentIncludes ||
@@ -345,16 +382,24 @@
 
   function renderTypeNotice(item) {
     if (!els.typeNotice) return;
-    if (!isNetworkMarketingListing(item)) {
-      els.typeNotice.hidden = true;
-      els.typeNotice.innerHTML = '';
+    if (isNetworkMarketingListing(item)) {
+      els.typeNotice.hidden = false;
+      els.typeNotice.innerHTML =
+        '<p><strong>Network marketing — product-selling only.</strong> ' +
+        'This listing should be about selling products or services. It is not an investment product, ' +
+        'and The Networker UK does not verify earnings claims. Do your own due diligence before committing.</p>';
       return;
     }
-    els.typeNotice.hidden = false;
-    els.typeNotice.innerHTML =
-      '<p><strong>Network marketing — product-selling only.</strong> ' +
-      'This listing should be about selling products or services. It is not an investment product, ' +
-      'and The Networker UK does not verify earnings claims. Do your own due diligence before committing.</p>';
+    if (catalog && catalog.isAffiliateStyleListing && catalog.isAffiliateStyleListing(item)) {
+      els.typeNotice.hidden = false;
+      els.typeNotice.innerHTML =
+        '<p><strong>Partnership / Affiliate.</strong> ' +
+        'This is a commission-based partnership, not a franchise or capital investment. ' +
+        'Commission figures are set by the advertiser — verify terms before you promote.</p>';
+      return;
+    }
+    els.typeNotice.hidden = true;
+    els.typeNotice.innerHTML = '';
   }
 
   function render(item) {
@@ -409,6 +454,7 @@
     renderSimilar(item);
     refreshSaveButton();
     applyClaimSection(item);
+    initClaimInviteFromEmail(item);
 
     if (els.notFound) els.notFound.hidden = true;
     if (els.layout) els.layout.hidden = false;

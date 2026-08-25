@@ -14864,7 +14864,24 @@
       await loadBootstrap();
       if (action === 'claim') {
         showOrganiserAlert(
-          data.message || 'Listing claimed — open My business opportunities to manage it.',
+          'Listing claimed — opening Stripe to start your £25/month + VAT subscription…',
+          false
+        );
+        try {
+          const checkout = await api('/api/organiser/opportunity-listing-checkout', {
+            method: 'POST',
+            body: JSON.stringify({ opportunityId: opportunity.id }),
+          });
+          if (checkout.ok && checkout.data && checkout.data.url) {
+            location.href = checkout.data.url;
+            return;
+          }
+        } catch {
+          /* fall through to overview */
+        }
+        showOrganiserAlert(
+          data.message ||
+            'Listing claimed — open My business opportunities and start the monthly subscription to keep it live.',
           false
         );
         setRoute('business-overview', { skipEventsGuard: true });
@@ -15306,14 +15323,13 @@
     return (
       '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-opp-renew="' +
       esc(opportunity.id) +
-      '" data-opp-renew-months="3">Renew 3 months</button>'
+      '">Start monthly subscription</button>'
     );
   }
 
-  async function startOpportunityListingRenew(opportunityId, months, triggerBtn) {
+  async function startOpportunityListingRenew(opportunityId, _months, triggerBtn) {
     if (!opportunityId) return;
     const btn = triggerBtn || null;
-    const termMonths = Math.max(3, Number(months) || 3);
     const prevLabel = btn ? btn.textContent : '';
     if (btn) {
       btn.disabled = true;
@@ -15322,19 +15338,19 @@
     try {
       const { ok, data } = await api('/api/organiser/opportunity-listing-checkout', {
         method: 'POST',
-        body: JSON.stringify({ opportunityId: opportunityId, months: termMonths }),
+        body: JSON.stringify({ opportunityId: opportunityId }),
       });
       if (ok && data.ok && data.url) {
         location.href = data.url;
         return;
       }
-      window.alert(data.message || data.error || 'Could not start renewal checkout.');
+      window.alert(data.message || data.error || 'Could not start subscription checkout.');
     } catch {
       window.alert('Could not reach checkout. Try again in a moment.');
     } finally {
       if (btn) {
         btn.disabled = false;
-        btn.textContent = prevLabel || 'Renew 3 months';
+        btn.textContent = prevLabel || 'Start monthly subscription';
       }
     }
   }

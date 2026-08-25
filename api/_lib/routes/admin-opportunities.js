@@ -62,7 +62,9 @@ const TEST_SAMPLE_LISTINGS = [
       'Ideal for networkers who already introduce business owners.',
     ],
     meta: [
-      { key: 'Investment', val: '£0' },
+      { key: 'Commission', val: '20% recurring on referred clients' },
+      { key: 'What you promote', val: 'White-label web & SEO for SMEs' },
+      { key: 'Who it suits', val: 'Networkers who introduce business owners' },
       { key: 'Location', val: 'UK-wide' },
       { key: 'Commitment', val: 'Flexible' },
     ],
@@ -179,6 +181,9 @@ function mapOpportunityRow(row) {
     meta,
     investment: metaVal(meta, /^investment$/i),
     investment_includes: metaVal(meta, /^investment includes$/i),
+    commission: metaVal(meta, /^commission$/i),
+    promote: metaVal(meta, /^what you promote$/i) || metaVal(meta, /^promotes?$/i),
+    suits: metaVal(meta, /^who it suits$/i),
     location: metaVal(meta, /^location$/i) || metaVal(meta, /territor/i),
     commitment: metaVal(meta, /^commitment$/i),
     host: String(row.host || '').trim(),
@@ -203,15 +208,32 @@ function mapOpportunityRow(row) {
   };
 }
 
+function isAffiliateStyleAdminType(type) {
+  const t = String(type || '')
+    .trim()
+    .toLowerCase();
+  return t === 'partnership';
+}
+
 function buildMetaFromAdminInput(input) {
   if (Array.isArray(input.meta)) return stripEarningsMeta(normalizeMeta(input.meta));
   const meta = [];
+  const affiliate = isAffiliateStyleAdminType(input.type);
   const investment = String(input.investment || '').trim();
   const includes = String(input.investment_includes || input.investmentIncludes || '').trim();
+  const commission = String(input.commission || '').trim();
+  const promote = String(input.promote || input.what_you_promote || '').trim();
+  const suits = String(input.suits || input.who_it_suits || '').trim();
   const location = String(input.location || '').trim();
   const commitment = String(input.commitment || '').trim();
-  if (investment) meta.push({ key: 'Investment', val: investment });
-  if (includes) meta.push({ key: 'Investment includes', val: includes });
+  if (affiliate) {
+    if (commission) meta.push({ key: 'Commission', val: commission });
+    if (promote) meta.push({ key: 'What you promote', val: promote });
+    if (suits) meta.push({ key: 'Who it suits', val: suits });
+  } else {
+    if (investment) meta.push({ key: 'Investment', val: investment });
+    if (includes) meta.push({ key: 'Investment includes', val: includes });
+  }
   if (location) meta.push({ key: 'Location', val: location });
   if (commitment) meta.push({ key: 'Commitment', val: commitment });
   return stripEarningsMeta(normalizeMeta(meta));
@@ -482,6 +504,9 @@ module.exports = async function handler(req, res) {
           owner_email: body.owner_email || body.ownerEmail,
           investment: body.investment,
           investment_includes: body.investment_includes || body.investmentIncludes,
+          commission: body.commission,
+          promote: body.promote || body.what_you_promote,
+          suits: body.suits || body.who_it_suits,
           location: body.location,
           commitment: body.commitment,
           meta: body.meta,
@@ -614,7 +639,47 @@ module.exports = async function handler(req, res) {
           .select('*')
           .single();
         if (error) throw new Error(error.message);
-        return json(res, 200, { ok: true, opportunity: mapOpportunityRow(data) });
+
+        let claimUrl = null;
+        let emailSent = false;
+        if (!isHubSeedOwnerEmail(ownerEmail) && patch.ownership_claim_status === 'pending') {
+          const siteHost = String(process.env.SITE_URL || 'https://www.thenetworkeruk.com').replace(
+            /\/$/,
+            ''
+          );
+          const { resolveOpportunityClaimUrl } = require('../opportunity-claim-url');
+          const { sendTemplatedEmail } = require('../send-template-email');
+          const { campaignSiteVars } = require('../organiser-campaign-defaults');
+          const slugOrId = String(data.slug || data.id || '').trim();
+          claimUrl = await resolveOpportunityClaimUrl(ownerEmail, siteHost, slugOrId);
+          const ownerName =
+            String(data.host || '').trim() ||
+            ownerEmail.split('@')[0] ||
+            'there';
+          await sendTemplatedEmail({
+            slug: 'opportunity_claim_invite',
+            to: ownerEmail,
+            subject: 'Claim your listing — ' + String(data.title || 'Business opportunity'),
+            variables: {
+              ...campaignSiteVars(siteHost),
+              owner_name: ownerName,
+              opportunity_title: String(data.title || 'your business opportunity'),
+              claim_url: claimUrl,
+            },
+            skipEmailCheck: true,
+          });
+          emailSent = true;
+        }
+
+        return json(res, 200, {
+          ok: true,
+          opportunity: mapOpportunityRow(data),
+          claimUrl,
+          emailSent,
+          message: emailSent
+            ? 'Owner assigned and claim invite emailed to ' + ownerEmail + '.'
+            : 'Owner assigned.',
+        });
       } catch (e) {
         return json(res, 500, { ok: false, error: 'assign_owner_failed', message: e.message });
       }
@@ -639,7 +704,11 @@ module.exports = async function handler(req, res) {
       Object.prototype.hasOwnProperty.call(body, 'investment') ||
       Object.prototype.hasOwnProperty.call(body, 'location') ||
       Object.prototype.hasOwnProperty.call(body, 'commitment') ||
-      Object.prototype.hasOwnProperty.call(body, 'investment_includes')
+      Object.prototype.hasOwnProperty.call(body, 'investment_includes') ||
+      Object.prototype.hasOwnProperty.call(body, 'commission') ||
+      Object.prototype.hasOwnProperty.call(body, 'promote') ||
+      Object.prototype.hasOwnProperty.call(body, 'suits') ||
+      Object.prototype.hasOwnProperty.call(body, 'type')
     ) {
       patch.meta = buildMetaFromAdminInput(body);
       const geo = deriveOpportunityGeo(body, patch.meta);

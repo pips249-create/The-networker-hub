@@ -79,11 +79,22 @@ function metaValue(meta, keyPattern) {
 function validateStructuredFields(opportunity) {
   const meta = normalizeMeta(opportunity?.meta);
   const missing = [];
-  if (!metaValue(meta, /^investment$/i)) missing.push('investment amount');
+  const types = collectOpportunityTypes(opportunity);
+  const affiliateOnly = isAffiliateStyleListing(types);
+
+  if (affiliateOnly) {
+    if (!metaValue(meta, /^commission$/i)) missing.push('commission');
+    if (!metaValue(meta, /^what you promote$/i) && !metaValue(meta, /^promotes?$/i)) {
+      missing.push('what you promote');
+    }
+  } else if (!metaValue(meta, /^investment$/i)) {
+    missing.push('investment amount');
+  }
+
   if (!metaValue(meta, /^location$/i) && !metaValue(meta, /^territory$/i)) {
     missing.push('territory / location');
   }
-  if (!String(opportunity?.type || '').trim()) missing.push('opportunity type');
+  if (!String(opportunity?.type || '').trim() && !types.length) missing.push('opportunity type');
   if (!missing.length) return null;
   return {
     flagged: true,
@@ -91,7 +102,9 @@ function validateStructuredFields(opportunity) {
     rejectionNote:
       'We could not approve this listing because required details are missing: ' +
       missing.join(', ') +
-      '. Please complete investment, opportunity type, and territory / location, then resubmit.',
+      (affiliateOnly
+        ? '. Please complete commission, what you promote, opportunity type, and territory / location, then resubmit.'
+        : '. Please complete investment, opportunity type, and territory / location, then resubmit.'),
   };
 }
 
@@ -99,13 +112,13 @@ function opportunityHasFinancialMeta(meta) {
   return normalizeMeta(meta).some(
     (m) =>
       m.val &&
-      /^(return(\s+est\.?)?|earnings|commission|revenue|income|profit)$/i.test(m.key)
+      /^(return(\s+est\.?)?|earnings|revenue|income|profit)$/i.test(m.key)
   );
 }
 
-/** Earnings / return / commission figures are no longer collected on listings. */
+/** Guaranteed-return style keys — not affiliate commission. */
 function isEarningsMetaKey(key) {
-  return /^(return(\s+est\.?)?|earnings|commission|revenue|income|profit)$/i.test(
+  return /^(return(\s+est\.?)?|earnings|revenue|income|profit)$/i.test(
     String(key || '').trim()
   );
 }
@@ -121,22 +134,46 @@ function parseInvestmentAmount(meta) {
   return Number.isNaN(num) ? null : num;
 }
 
-const HIGH_RISK_OPPORTUNITY_TYPES = new Set([
+const CAPITAL_OPPORTUNITY_TYPES = new Set([
   'franchise',
   'distributorship',
-  'partnership',
   'business-opportunity',
   'network-marketing',
 ]);
 
-function opportunityRequiresFcaDisclaimer(opportunity) {
-  const type = String(opportunity?.type || '').trim().toLowerCase();
+const HIGH_RISK_OPPORTUNITY_TYPES = new Set([
+  'franchise',
+  'distributorship',
+  'business-opportunity',
+  'network-marketing',
+]);
+
+function collectOpportunityTypes(opportunity) {
   const types = Array.isArray(opportunity?.types)
-    ? opportunity.types.map((value) => String(value || '').trim().toLowerCase())
+    ? opportunity.types.map((value) => String(value || '').trim().toLowerCase()).filter(Boolean)
     : [];
-  const hasHighRiskType =
-    HIGH_RISK_OPPORTUNITY_TYPES.has(type) ||
-    types.some((value) => HIGH_RISK_OPPORTUNITY_TYPES.has(value));
+  const primary = String(opportunity?.type || '').trim().toLowerCase();
+  if (primary && types.indexOf(primary) === -1) types.unshift(primary);
+  return types;
+}
+
+/** Partnership / Affiliate without capital-intensive types (franchise, etc.). */
+function isAffiliateStyleListing(typesOrOpportunity) {
+  const types = Array.isArray(typesOrOpportunity)
+    ? typesOrOpportunity.map((value) => String(value || '').trim().toLowerCase()).filter(Boolean)
+    : collectOpportunityTypes(typesOrOpportunity);
+  if (!types.length) return false;
+  if (types.indexOf('partnership') === -1) return false;
+  return !types.some((value) => CAPITAL_OPPORTUNITY_TYPES.has(value));
+}
+
+function opportunityRequiresFcaDisclaimer(opportunity) {
+  const types = collectOpportunityTypes(opportunity);
+  if (isAffiliateStyleListing(types)) {
+    const investment = parseInvestmentAmount(opportunity?.meta);
+    return investment != null && investment >= 10000;
+  }
+  const hasHighRiskType = types.some((value) => HIGH_RISK_OPPORTUNITY_TYPES.has(value));
   const investment = parseInvestmentAmount(opportunity?.meta);
   return hasHighRiskType || (investment != null && investment >= 10000);
 }
@@ -194,6 +231,8 @@ module.exports = {
   NETWORK_MARKETING_TYPE,
   isNetworkMarketingType,
   collectOpportunityText,
+  collectOpportunityTypes,
+  isAffiliateStyleListing,
   validateStructuredFields,
   opportunityHasFinancialMeta,
   isEarningsMetaKey,

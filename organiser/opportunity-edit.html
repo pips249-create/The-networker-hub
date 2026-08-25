@@ -142,25 +142,44 @@
           </div>
         </div>
 
-        <div class="ee-card" id="oe-card-meta">
+          <div class="ee-card" id="oe-card-meta">
           <h2>Card highlights</h2>
           <p class="ee-hint" style="margin-top: 0">These appear in the meta row on your listing card.</p>
-          <div class="ee-field">
-            <label for="oe-investment">Investment required</label>
-            <input type="text" id="oe-investment" required placeholder="e.g. £0 or £9,500" />
+          <div id="oe-fields-capital">
+            <div class="ee-field">
+              <label for="oe-investment">Investment required</label>
+              <input type="text" id="oe-investment" placeholder="e.g. £0 or £9,500" />
+            </div>
+            <div class="ee-field">
+              <label for="oe-investment-includes">What&apos;s included in this investment? <span class="ee-optional">(optional)</span></label>
+              <p class="ee-hint" style="margin: 0 0 8px">
+                Help browsers trust your listing — one item per line (e.g. training, starter kit, insurance registration).
+                The Networker UK does not verify this breakdown.
+              </p>
+              <textarea
+                id="oe-investment-includes"
+                rows="4"
+                maxlength="600"
+                placeholder="Training&#10;Starter kit&#10;Insurance registration&#10;Marketing materials"
+              ></textarea>
+            </div>
           </div>
-          <div class="ee-field">
-            <label for="oe-investment-includes">What&apos;s included in this investment? <span class="ee-optional">(optional)</span></label>
-            <p class="ee-hint" style="margin: 0 0 8px">
-              Help browsers trust your listing — one item per line (e.g. training, starter kit, insurance registration).
-              The Networker UK does not verify this breakdown.
+          <div id="oe-fields-affiliate" hidden>
+            <p class="ee-hint" style="margin-top: 0">
+              Partnership / Affiliate listings focus on commission and what partners promote — not franchise-style investment.
             </p>
-            <textarea
-              id="oe-investment-includes"
-              rows="4"
-              maxlength="600"
-              placeholder="Training&#10;Starter kit&#10;Insurance registration&#10;Marketing materials"
-            ></textarea>
+            <div class="ee-field">
+              <label for="oe-commission">Commission</label>
+              <input type="text" id="oe-commission" placeholder="e.g. 20% recurring, or £50 per sale" />
+            </div>
+            <div class="ee-field">
+              <label for="oe-promote">What you promote</label>
+              <input type="text" id="oe-promote" maxlength="160" placeholder="e.g. White-label web &amp; SEO for SMEs" />
+            </div>
+            <div class="ee-field">
+              <label for="oe-suits">Who it suits <span class="ee-optional">(optional)</span></label>
+              <input type="text" id="oe-suits" maxlength="160" placeholder="e.g. Networkers who already introduce business owners" />
+            </div>
           </div>
           <div class="ee-field">
             <label for="oe-location">Territory / location</label>
@@ -224,33 +243,20 @@
           <div class="oe-listing-payment" id="oe-listing-payment">
             <h2 class="oe-listing-payment-title">Listing fee</h2>
             <p class="oe-listing-payment-lead">
-              Business opportunities are <strong>£25 per month + VAT</strong>, billed upfront for your chosen term (minimum 3 months). Payment is taken securely via Stripe to The Networker UK.
+              Business opportunities are a <strong>monthly subscription of £25 + VAT</strong> (£30 total per month).
+              Billed every month via Stripe — cancel any time from your Stripe customer portal or by contacting us.
             </p>
-            <div class="oe-listing-payment-row">
-              <label class="oe-listing-months-label" for="oe-listing-months">How many months?</label>
-              <input
-                type="number"
-                id="oe-listing-months"
-                name="listing_months"
-                min="3"
-                max="36"
-                step="1"
-                value="3"
-                inputmode="numeric"
-                class="oe-listing-months-input"
-              />
-            </div>
             <dl class="oe-listing-price-breakdown" id="oe-listing-price-breakdown">
-              <div><dt>£25 × <span id="oe-price-months">3</span> months</dt><dd id="oe-price-subtotal">£75.00</dd></div>
-              <div><dt>VAT (20%)</dt><dd id="oe-price-vat">£12.00</dd></div>
-              <div class="oe-listing-price-total"><dt>Total due today</dt><dd id="oe-price-total">£90.00</dd></div>
+              <div><dt>Listing fee (monthly)</dt><dd>£25.00</dd></div>
+              <div><dt>VAT (20%)</dt><dd>£5.00</dd></div>
+              <div class="oe-listing-price-total"><dt>Due today, then monthly</dt><dd>£30.00</dd></div>
             </dl>
           </div>
           <div class="ee-actions ee-actions--split">
             <button type="button" class="ee-btn ee-btn-outline" id="oe-save-draft">Save as draft</button>
             <button type="submit" class="ee-btn ee-btn-gold" id="oe-submit">Continue to payment</button>
           </div>
-          <p class="ee-hint ee-actions-note">You’ll complete payment on Stripe, then your listing goes live in the directory.</p>
+          <p class="ee-hint ee-actions-note">You’ll start a monthly Stripe subscription, then your listing goes live in the directory.</p>
         </div>
       </form>
     </div>
@@ -261,8 +267,8 @@
     <script src="../js/organiser-image-upload.js?v=20260605" defer></script>
     <script src="../js/hub-location-autocomplete.js?v=20260609" defer></script>
     <script src="../js/organiser-terms.js?v=20260728nm" data-root="../" defer></script>
-    <script src="../js/opportunity-moderation-scan.js?v=20260728nm" defer></script>
-    <script src="../js/opportunity-listing-quality.js?v=20260710d" defer></script>
-    <script src="../js/organiser-opportunity-edit.js?v=20260728nm" defer></script>
+    <script src="../js/opportunity-moderation-scan.js?v=20260825aff1" defer></script>
+    <script src="../js/opportunity-listing-quality.js?v=20260825aff1" defer></script>
+    <script src="../js/organiser-opportunity-edit.js?v=20260825aff1" defer></script>
   </body>
 </html>

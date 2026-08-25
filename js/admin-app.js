@@ -14514,6 +14514,19 @@
       }
     }
     parts.push(btn(page + 1, 'Next →', false, page >= totalPages - 1));
+    parts.push(
+      '<form class="admin-page-goto" data-page-attr="' +
+        attrEsc(attr) +
+        '">' +
+        '<label class="admin-page-goto-label">Go to' +
+        '<input type="number" class="admin-page-goto-input" min="1" max="' +
+        totalPages +
+        '" value="' +
+        (page + 1) +
+        '" inputmode="numeric" aria-label="Page number" />' +
+        '</label>' +
+        '<button type="submit" class="admin-page-btn">Go</button></form>'
+    );
     return (
       '<nav class="admin-pagination" aria-label="Page navigation">' +
       parts.join('') +
@@ -14523,6 +14536,34 @@
       totalPages +
       '</span></nav>'
     );
+  }
+
+  function bindAdminPaginationGoto() {
+    if (window.__adminPaginationGotoBound || !main) return;
+    window.__adminPaginationGotoBound = true;
+    main.addEventListener('submit', function (e) {
+      var form = e.target && e.target.closest ? e.target.closest('form.admin-page-goto') : null;
+      if (!form || !main.contains(form)) return;
+      e.preventDefault();
+      var attr = form.getAttribute('data-page-attr');
+      var input = form.querySelector('.admin-page-goto-input');
+      if (!attr || !input) return;
+      var page1 = parseInt(input.value, 10);
+      var max1 = parseInt(input.getAttribute('max'), 10) || 1;
+      if (!Number.isFinite(page1) || page1 < 1 || page1 > max1) {
+        input.focus();
+        input.select();
+        return;
+      }
+      var fake = document.createElement('button');
+      fake.type = 'button';
+      fake.setAttribute(attr, String(page1 - 1));
+      fake.className = 'admin-page-btn';
+      fake.hidden = true;
+      form.appendChild(fake);
+      fake.click();
+      fake.remove();
+    });
   }
 
   function paginateRows(rows, page, pageSize) {
@@ -21002,23 +21043,56 @@
       ) +
       '<div class="sm:col-span-2 rounded-lg border border-slate-200 bg-white p-3 grid sm:grid-cols-2 gap-3">' +
       '<p class="sm:col-span-2 text-xs font-semibold text-slate-600">Card details</p>' +
+      '<div class="sm:col-span-2 opp-admin-capital-fields"' +
+      (String(opp.type || '') === 'partnership' ? ' hidden' : '') +
+      '>' +
+      '<div class="grid sm:grid-cols-2 gap-3">' +
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Investment required</label>' +
       '<input type="text" name="investment" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
       attrEsc(opp.investment || '') +
       '" placeholder="e.g. £0 or £9,500"></div>' +
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">What’s included in this investment? <span class="font-normal">(optional)</span></label>' +
+      '<textarea name="investment_includes" rows="2" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Training, starter kit, marketing materials…">' +
+      esc(opp.investment_includes || '') +
+      '</textarea></div></div></div>' +
+      '<div class="sm:col-span-2 opp-admin-affiliate-fields"' +
+      (String(opp.type || '') === 'partnership' ? '' : ' hidden') +
+      '>' +
+      '<p class="text-xs text-slate-500 mb-2">Partnership / Affiliate — commission-focused, not franchise investment.</p>' +
+      '<div class="grid sm:grid-cols-2 gap-3">' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Commission</label>' +
+      '<input type="text" name="commission" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+      attrEsc(opp.commission || '') +
+      '" placeholder="e.g. 20% recurring or £50 per sale"></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">What you promote</label>' +
+      '<input type="text" name="promote" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+      attrEsc(opp.promote || '') +
+      '" placeholder="e.g. White-label web &amp; SEO for SMEs"></div>' +
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Who it suits <span class="font-normal">(optional)</span></label>' +
+      '<input type="text" name="suits" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+      attrEsc(opp.suits || '') +
+      '" placeholder="e.g. Networkers who introduce business owners"></div></div></div>' +
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Territory / location</label>' +
       '<input type="text" name="location" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
       attrEsc(opp.location || '') +
       '" placeholder="e.g. Yorkshire / Remote / UK-wide"></div>' +
-      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">What’s included in this investment? <span class="font-normal">(optional)</span></label>' +
-      '<textarea name="investment_includes" rows="2" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Training, starter kit, marketing materials…">' +
-      esc(opp.investment_includes || '') +
-      '</textarea></div>' +
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Commitment</label>' +
       '<select name="commitment" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
       opportunityCommitmentOptions(opp.commitment || '') +
       '</select></div></div>'
     );
+  }
+
+  function syncOpportunityAdminAffiliateFields(form) {
+    if (!form) return;
+    var typeField = form.querySelector('[name="type"]');
+    var affiliate = typeField && String(typeField.value || '') === 'partnership';
+    form.querySelectorAll('.opp-admin-capital-fields').forEach(function (el) {
+      el.hidden = !!affiliate;
+    });
+    form.querySelectorAll('.opp-admin-affiliate-fields').forEach(function (el) {
+      el.hidden = !affiliate;
+    });
   }
 
   function opportunityCleanupHasActiveFilters() {
@@ -21086,7 +21160,7 @@
       }) +
       '<div class="sm:col-span-2 rounded-lg border border-slate-200 bg-white p-3 space-y-2">' +
       '<p class="text-xs font-semibold text-slate-600">Listing owner &amp; claim invite</p>' +
-      '<p class="text-xs text-slate-500">Platform-owned listings stay claimable until you assign a claimant email. Assigning opens the in-dashboard claim prompt when they sign in.</p>' +
+      '<p class="text-xs text-slate-500">Platform-owned listings stay claimable until you assign a claimant email. Assigning emails them a claim link to the public listing, then Stripe monthly subscription (£25 + VAT).</p>' +
       '<div class="flex flex-wrap gap-2 items-end">' +
       '<div class="flex-1 min-w-[12rem]"><label class="block text-xs font-semibold text-slate-500 mb-1">Owner email</label>' +
       '<input type="email" name="owner_email" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
@@ -21596,6 +21670,7 @@
 
     syncOpportunityCleanupFilterUi();
     bindAdminLogoZones(main.querySelector('.opportunity-create-form'));
+    syncOpportunityAdminAffiliateFields(main.querySelector('.opportunity-create-form'));
     refreshOpportunityCleanupData();
   }
 
@@ -21627,6 +21702,9 @@
       about_text: formFieldVal(form, 'about_text') || null,
       investment: formFieldVal(form, 'investment') || null,
       investment_includes: formFieldVal(form, 'investment_includes') || null,
+      commission: formFieldVal(form, 'commission') || null,
+      promote: formFieldVal(form, 'promote') || null,
+      suits: formFieldVal(form, 'suits') || null,
       location: formFieldVal(form, 'location') || null,
       commitment: formFieldVal(form, 'commitment') || null,
       featured: !!(form.querySelector('[name="featured"]') && form.querySelector('[name="featured"]').checked),
@@ -21749,7 +21827,11 @@
       .then(function (data) {
         if (!data.ok) throw new Error(data.message || data.error || 'Assign owner failed');
         if (msg) {
-          msg.textContent = 'Owner assigned — claim invite will appear when they sign in.';
+          msg.textContent =
+            (data.message ||
+              (data.emailSent
+                ? 'Owner assigned — claim invite emailed.'
+                : 'Owner assigned — claim invite will appear when they sign in.'));
           msg.className = 'opportunity-cleanup-msg text-xs text-emerald-700 font-semibold';
         }
         return refreshOpportunityCleanupPage();
@@ -22008,6 +22090,13 @@
 
     document.body.addEventListener('change', function (e) {
       if (!e.target.closest('#admin-main')) return;
+      if (e.target.name === 'type') {
+        var typeForm = e.target.closest('.opportunity-create-form, .opportunity-cleanup-form');
+        if (typeForm) {
+          syncOpportunityAdminAffiliateFields(typeForm);
+          return;
+        }
+      }
       if (e.target.classList && e.target.classList.contains('opportunity-select-checkbox')) {
         var oppId = e.target.value;
         if (e.target.checked) {

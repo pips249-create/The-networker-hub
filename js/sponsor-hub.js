@@ -221,7 +221,7 @@
 
   function renderSponsorFallback(els, slot) {
     if (!els.sponsorHub) return;
-    els.sponsorHub.classList.remove('sponsor-hub--active');
+    els.sponsorHub.classList.remove('sponsor-hub--active', 'sponsor-hub--logo-only');
     els.sponsorHub.classList.add('sponsor-hub--fallback');
     clearHeroLogoLink(els);
 
@@ -231,8 +231,20 @@
     var ctaUrl = advertisingUrlForSlot(slotKey);
     var price = SPONSOR_FALLBACK_PRICES[slotKey] || SPONSOR_FALLBACK_PRICES.events_sponsor_hub;
 
-    if (els.sponsorLogoWrap) els.sponsorLogoWrap.hidden = true;
-    if (els.sponsorCompany) els.sponsorCompany.hidden = true;
+    if (els.sponsorLogoWrap) {
+      els.sponsorLogoWrap.hidden = true;
+      els.sponsorLogoWrap.classList.remove('has-logo');
+    }
+    if (els.sponsorLogoPlaceholder) els.sponsorLogoPlaceholder.hidden = true;
+    if (els.sponsorLogoLink) els.sponsorLogoLink.hidden = true;
+    if (els.sponsorLogo) {
+      els.sponsorLogo.hidden = true;
+      els.sponsorLogo.removeAttribute('src');
+    }
+    if (els.sponsorCompany) {
+      els.sponsorCompany.hidden = true;
+      els.sponsorCompany.textContent = '';
+    }
     if (els.sponsorTagline) {
       els.sponsorTagline.hidden = false;
       els.sponsorTagline.innerHTML =

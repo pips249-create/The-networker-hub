@@ -59,7 +59,7 @@ Internal checklist for items that cannot be fully automated in code. Review quar
 | Company VAT | The Networker Group Ltd VAT No. 454 4092 94 | Finance | ☑ Registered |
 | Organiser VAT treatment | Accountant sign-off on booking-fee / ticket VAT options (`docs/VAT-ORGANISER-GUIDANCE.md` §4) | Finance | ☐ |
 | Insurance | Optional: platform liability + cyber (broker quotes) — park if deferred | Catherine | ☐ Optional |
-| Legacy marketing opt-in | Run `node scripts/audit-legacy-marketing-opt-in.js`; follow `docs/MARKETING-REPERMISSION.md` | Marketing | ☐ Audit + re-permission pending |
+| Legacy marketing opt-in | Audit CSV available; **re-permission email not sending** (decision 25 Aug 2026). Keep register checkbox unchecked; see `docs/MARKETING-REPERMISSION.md` | Marketing | ☑ Deferred — no send |
 
 ### Product & trust
 

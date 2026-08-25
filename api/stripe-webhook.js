@@ -21,6 +21,11 @@ const {
   handleCityPartnerSubscriptionDeleted,
 } = require('./_lib/city-partner-subscriptions');
 const {
+  handleOpportunityListingSubscriptionUpdated,
+  handleOpportunityListingSubscriptionDeleted,
+  handleOpportunityListingInvoicePaid,
+} = require('./_lib/opportunity-listing-subscriptions');
+const {
   handleMembershipCheckoutCompleted,
   handleMembershipSubscriptionUpdated,
   handleMembershipSubscriptionDeleted,
@@ -173,24 +178,27 @@ async function handler(req, res) {
       const subscription = event.data.object || {};
       const cityPartnerResult = await handleCityPartnerSubscriptionUpdated(subscription);
       const membershipResult = await handleMembershipSubscriptionUpdated(subscription);
+      const listingResult = await handleOpportunityListingSubscriptionUpdated(subscription);
       res.statusCode = 200;
-      return res.end(JSON.stringify({ ok: true, cityPartnerResult, membershipResult }));
+      return res.end(JSON.stringify({ ok: true, cityPartnerResult, membershipResult, listingResult }));
     }
 
     if (event.type === 'customer.subscription.deleted') {
       const subscription = event.data.object || {};
       const cityPartnerResult = await handleCityPartnerSubscriptionDeleted(subscription);
       const membershipResult = await handleMembershipSubscriptionDeleted(subscription);
+      const listingResult = await handleOpportunityListingSubscriptionDeleted(subscription);
       res.statusCode = 200;
-      return res.end(JSON.stringify({ ok: true, cityPartnerResult, membershipResult }));
+      return res.end(JSON.stringify({ ok: true, cityPartnerResult, membershipResult, listingResult }));
     }
 
     if (event.type === 'invoice.paid') {
       const invoice = event.data.object || {};
       const revenueResult = await handleInvoicePaid(invoice);
       const membershipResult = await handleMembershipInvoicePaid(invoice);
+      const listingResult = await handleOpportunityListingInvoicePaid(invoice);
       res.statusCode = 200;
-      return res.end(JSON.stringify({ ok: true, revenueResult, membershipResult }));
+      return res.end(JSON.stringify({ ok: true, revenueResult, membershipResult, listingResult }));
     }
 
     if (event.type === 'invoice.payment_failed') {

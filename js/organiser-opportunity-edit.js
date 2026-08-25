@@ -18,8 +18,6 @@
 
   const LISTING_MONTHLY_EX_VAT = 25;
   const LISTING_VAT_RATE = 0.2;
-  const LISTING_MIN_MONTHS = 3;
-  const LISTING_MAX_MONTHS = 36;
 
   const OPPORTUNITY_TYPES = [
     'franchise',
@@ -30,6 +28,8 @@
     'business-opportunity',
     'distributorship',
   ];
+
+  const CAPITAL_TYPES = ['franchise', 'distributorship', 'business-opportunity', 'network-marketing'];
 
   function getSelectedTypes() {
     return Array.from(document.querySelectorAll('#oe-type-group input[name="oe-type"]:checked'))
@@ -44,46 +44,52 @@
     });
   }
 
+  function isAffiliateStyleListing(types) {
+    const list = types || getSelectedTypes();
+    if (list.indexOf('partnership') === -1) return false;
+    return !list.some((type) => CAPITAL_TYPES.indexOf(type) !== -1);
+  }
+
   function formatGbp(amount) {
     return '£' + amount.toFixed(2);
   }
 
-  function normalizeListingMonths(value) {
-    const n = parseInt(value, 10);
-    if (!Number.isFinite(n) || n < LISTING_MIN_MONTHS) return LISTING_MIN_MONTHS;
-    return Math.min(n, LISTING_MAX_MONTHS);
-  }
-
-  function monthsForPriceDisplay(value) {
-    const raw = String(value ?? '').trim();
-    if (raw === '') return LISTING_MIN_MONTHS;
-    const n = parseInt(raw, 10);
-    if (!Number.isFinite(n) || n < 1) return LISTING_MIN_MONTHS;
-    return Math.min(n, LISTING_MAX_MONTHS);
-  }
-
-  function updateListingPriceBreakdown(options) {
-    const clamp = options && options.clamp;
-    const input = document.getElementById('oe-listing-months');
-    let months;
-    if (clamp && input) {
-      months = normalizeListingMonths(input.value);
-      if (String(input.value) !== String(months)) input.value = String(months);
-    } else {
-      months = monthsForPriceDisplay(input ? input.value : null);
-    }
-    const subtotal = LISTING_MONTHLY_EX_VAT * months;
+  function updateListingPriceBreakdown() {
+    const subtotal = LISTING_MONTHLY_EX_VAT;
     const vat = Math.round(subtotal * LISTING_VAT_RATE * 100) / 100;
     const total = subtotal + vat;
-    const monthsEl = document.getElementById('oe-price-months');
     const subtotalEl = document.getElementById('oe-price-subtotal');
     const vatEl = document.getElementById('oe-price-vat');
     const totalEl = document.getElementById('oe-price-total');
-    if (monthsEl) monthsEl.textContent = String(months);
     if (subtotalEl) subtotalEl.textContent = formatGbp(subtotal);
     if (vatEl) vatEl.textContent = formatGbp(vat);
     if (totalEl) totalEl.textContent = formatGbp(total);
-    return months;
+    return 1;
+  }
+
+  function syncAffiliateFormMode() {
+    const affiliate = isAffiliateStyleListing();
+    const capitalWrap = document.getElementById('oe-fields-capital');
+    const affiliateWrap = document.getElementById('oe-fields-affiliate');
+    const investmentEl = document.getElementById('oe-investment');
+    const commissionEl = document.getElementById('oe-commission');
+    const promoteEl = document.getElementById('oe-promote');
+    if (capitalWrap) capitalWrap.hidden = affiliate;
+    if (affiliateWrap) affiliateWrap.hidden = !affiliate;
+    if (investmentEl) {
+      if (affiliate) investmentEl.removeAttribute('required');
+      else investmentEl.setAttribute('required', 'required');
+    }
+    if (commissionEl) {
+      if (affiliate) commissionEl.setAttribute('required', 'required');
+      else commissionEl.removeAttribute('required');
+    }
+    if (promoteEl) {
+      if (affiliate) promoteEl.setAttribute('required', 'required');
+      else promoteEl.removeAttribute('required');
+    }
+    updateFcaAttestVisibility();
+    refreshCompleteness();
   }
 
   function listingPaymentPanelVisible() {
@@ -99,15 +105,15 @@
 
   function parseInvestmentFromForm() {
     const raw = document.getElementById('oe-investment')?.value.trim() || '';
+    if (!raw) return null;
     const num = parseInt(raw.replace(/[^0-9]/g, ''), 10);
     return Number.isNaN(num) ? null : num;
   }
 
   function hasHighRiskOpportunityType() {
+    if (isAffiliateStyleListing()) return false;
     const types = getSelectedTypes();
-    return types.some((type) =>
-      ['franchise', 'distributorship', 'partnership', 'business-opportunity', 'network-marketing'].includes(type)
-    );
+    return types.some((type) => CAPITAL_TYPES.indexOf(type) !== -1);
   }
 
   function requiresFcaDisclaimer() {
@@ -128,13 +134,13 @@
     }
   }
 
-  async function startListingCheckout(opportunityId, months) {
+  async function startListingCheckout(opportunityId) {
     const submitBtn = document.getElementById('oe-submit');
     if (submitBtn) {
       submitBtn.disabled = true;
       submitBtn.textContent = 'Opening secure checkout…';
     }
-    const checkoutBody = { opportunityId: opportunityId, months: months };
+    const checkoutBody = { opportunityId: opportunityId };
     if (requiresFcaDisclaimer()) {
       checkoutBody.fcaDisclaimerAttested = Boolean(document.getElementById('oe-fca-attest')?.checked);
     }
@@ -228,14 +234,29 @@
     document.getElementById('oe-email').value = opp.contactEmail || '';
     document.getElementById('oe-investment').value = metaValue(opp.meta, /^investment$/i);
     document.getElementById('oe-investment-includes').value = metaValue(opp.meta, /^investment includes$/i);
+    const commissionEl = document.getElementById('oe-commission');
+    const promoteEl = document.getElementById('oe-promote');
+    const suitsEl = document.getElementById('oe-suits');
+    if (commissionEl) commissionEl.value = metaValue(opp.meta, /^commission$/i);
+    if (promoteEl) promoteEl.value = metaValue(opp.meta, /^what you promote$/i);
+    if (suitsEl) suitsEl.value = metaValue(opp.meta, /^who it suits$/i);
     document.getElementById('oe-location').value = metaValue(opp.meta, /^location$/i);
     document.getElementById('oe-commitment').value = metaValue(opp.meta, /^commitment$/i);
-    updateFcaAttestVisibility();
+    syncAffiliateFormMode();
 
-    const usedKeys = new Set(['investment', 'investment includes', 'location', 'commitment', 'companies house']);
+    const usedKeys = new Set([
+      'investment',
+      'investment includes',
+      'location',
+      'commitment',
+      'companies house',
+      'commission',
+      'what you promote',
+      'who it suits',
+    ]);
     const extra = (opp.meta || []).find((m) => {
       const k = String(m.key || '').toLowerCase();
-      return !usedKeys.has(k) && !/^(return|earnings|commission|revenue|income|profit)/i.test(m.key);
+      return !usedKeys.has(k) && !/^(return|earnings|revenue|income|profit)/i.test(m.key);
     });
     if (extra) {
       document.getElementById('oe-extra-key').value = extra.key;
@@ -265,7 +286,7 @@
     showStatusBadge(opp);
     document.getElementById('oe-page-title').textContent = 'Edit opportunity';
     listingPaymentPanelVisible();
-    updateListingPriceBreakdown({ clamp: true });
+    updateListingPriceBreakdown();
     refreshCompleteness();
     const submitBtn = document.getElementById('oe-submit');
     if (submitBtn) {
@@ -384,19 +405,35 @@
 
   function buildMeta() {
     const meta = [];
-    const investment = document.getElementById('oe-investment').value.trim();
+    const affiliate = isAffiliateStyleListing();
     const location = document.getElementById('oe-location').value.trim();
     const commitment = document.getElementById('oe-commitment').value.trim();
     const extraKey = document.getElementById('oe-extra-key').value.trim();
     const extraVal = document.getElementById('oe-extra-val').value.trim();
 
-    if (investment) meta.push({ key: 'Investment', val: investment });
-    const includes = document.getElementById('oe-investment-includes').value.trim();
-    if (includes) meta.push({ key: 'Investment includes', val: includes });
+    if (affiliate) {
+      const commission = document.getElementById('oe-commission')?.value.trim() || '';
+      const promote = document.getElementById('oe-promote')?.value.trim() || '';
+      const suits = document.getElementById('oe-suits')?.value.trim() || '';
+      if (commission) meta.push({ key: 'Commission', val: commission });
+      if (promote) meta.push({ key: 'What you promote', val: promote });
+      if (suits) meta.push({ key: 'Who it suits', val: suits });
+    } else {
+      const investment = document.getElementById('oe-investment').value.trim();
+      if (investment) meta.push({ key: 'Investment', val: investment });
+      const includes = document.getElementById('oe-investment-includes').value.trim();
+      if (includes) meta.push({ key: 'Investment includes', val: includes });
+    }
+
     const companiesHouse = document.getElementById('oe-companies-house')?.value.trim() || '';
     if (companiesHouse) meta.push({ key: 'Companies House', val: companiesHouse });
     if (location) meta.push({ key: 'Location', val: location });
-    if (extraKey && extraVal && !/^(return|earnings|commission|revenue|income|profit)/i.test(extraKey)) {
+    if (
+      extraKey &&
+      extraVal &&
+      !/^(return|earnings|revenue|income|profit)/i.test(extraKey) &&
+      !/^(commission|what you promote|who it suits|investment)/i.test(extraKey)
+    ) {
       meta.push({ key: extraKey, val: extraVal });
     }
     if (commitment) meta.push({ key: 'Commitment', val: commitment });
@@ -450,11 +487,15 @@
     return {
       title: document.getElementById('oe-title')?.value.trim(),
       types: getSelectedTypes(),
+      affiliateStyle: isAffiliateStyleListing(),
       desc: document.getElementById('oe-desc')?.value.trim(),
       about: document.getElementById('oe-about')?.value.trim(),
       host: document.getElementById('oe-host')?.value.trim(),
       email: document.getElementById('oe-email')?.value.trim(),
       investment: document.getElementById('oe-investment')?.value.trim(),
+      commission: document.getElementById('oe-commission')?.value.trim(),
+      promote: document.getElementById('oe-promote')?.value.trim(),
+      suits: document.getElementById('oe-suits')?.value.trim(),
       location: document.getElementById('oe-location')?.value.trim(),
       commitment: document.getElementById('oe-commitment')?.value.trim(),
       investmentIncludes: document.getElementById('oe-investment-includes')?.value.trim(),
@@ -595,6 +636,9 @@
       'oe-host',
       'oe-investment',
       'oe-investment-includes',
+      'oe-commission',
+      'oe-promote',
+      'oe-suits',
       'oe-location',
       'oe-commitment',
       'oe-companies-house',
@@ -626,7 +670,16 @@
     if (!payload.description) return 'Add a short description for the card.';
     if (!payload.host) return 'Enter your business or company name.';
     if (!payload.contactEmail) return 'Enter a contact email for enquiries.';
-    if (!payload.meta.some((m) => /^investment$/i.test(m.key))) return 'Enter the investment required.';
+    if (isAffiliateStyleListing(payload.types)) {
+      if (!payload.meta.some((m) => /^commission$/i.test(m.key))) {
+        return 'Enter the commission (e.g. 20% recurring or £50 per sale).';
+      }
+      if (!payload.meta.some((m) => /^what you promote$/i.test(m.key))) {
+        return 'Say what partners promote.';
+      }
+    } else if (!payload.meta.some((m) => /^investment$/i.test(m.key))) {
+      return 'Enter the investment required.';
+    }
     if (!payload.meta.some((m) => /^location$/i.test(m.key) || /^territory$/i.test(m.key))) {
       return 'Enter the territory or location for this opportunity.';
     }
@@ -777,8 +830,8 @@
       return;
     }
 
-    const months = updateListingPriceBreakdown({ clamp: true });
-    await startListingCheckout(opportunity.id, months);
+    updateListingPriceBreakdown();
+    await startListingCheckout(opportunity.id);
   }
 
   async function init() {
@@ -801,8 +854,12 @@
       investmentEl.addEventListener('change', updateFcaAttestVisibility);
     }
     document.querySelectorAll('#oe-type-group input[name="oe-type"]').forEach((input) => {
-      input.addEventListener('change', updateFcaAttestVisibility);
+      input.addEventListener('change', function () {
+        syncAffiliateFormMode();
+        updateFcaAttestVisibility();
+      });
     });
+    syncAffiliateFormMode();
     updateFcaAttestVisibility();
 
     const backLink = document.getElementById('oe-back-link');
@@ -811,19 +868,7 @@
       backLink.textContent = '← Back to My business opportunities';
     }
 
-    const monthsInput = document.getElementById('oe-listing-months');
-    if (monthsInput) {
-      monthsInput.addEventListener('input', function () {
-        updateListingPriceBreakdown({ clamp: false });
-      });
-      monthsInput.addEventListener('change', function () {
-        updateListingPriceBreakdown({ clamp: true });
-      });
-      monthsInput.addEventListener('blur', function () {
-        updateListingPriceBreakdown({ clamp: true });
-      });
-    }
-    updateListingPriceBreakdown({ clamp: true });
+    updateListingPriceBreakdown();
     listingPaymentPanelVisible();
 
     if (checkoutCancelled) {

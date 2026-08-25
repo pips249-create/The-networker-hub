@@ -1,20 +1,22 @@
 # Marketing re-permission (pre-ticked opt-in)
 
-**Why:** Until 25 August 2026 the registration marketing checkbox was pre-ticked. Under UK GDPR / PECR, consent should be a clear affirmative opt-in. Accounts created before that date with `emails_enabled = true` should be re-permissioned before bulk marketing.
+**Why:** Until 25 August 2026 the registration marketing checkbox was pre-ticked. Under UK GDPR / PECR, consent should be a clear affirmative opt-in.
 
-**Not legal advice.** Operational checklist for The Networker Group Ltd.
+**Decision (25 Aug 2026):** Do **not** send a re-permission email for now. Going forward, registration stays unchecked-by-default. Revisit before any large bulk marketing send if needed.
+
+**Not legal advice.** Operational note for The Networker Group Ltd.
 
 ---
 
-## 1. Run the audit
+## Audit (already run)
 
 ```bash
 node scripts/audit-legacy-marketing-opt-in.js
 ```
 
-Writes `data/legacy-marketing-opt-in-audit.csv` (gitignored). Filter where `needs_repermission=yes`.
+Writes `data/legacy-marketing-opt-in-audit.csv` (gitignored). Filter where `needs_repermission=yes` if you later choose to mail.
 
-## 2. Send a one-off re-permission email
+## If you later send a one-off re-permission email
 
 Use Resend (or Brevo if that list already lives there). Subject ideas:
 
@@ -39,17 +41,7 @@ Suggested body (plain English):
 
 Include **List-Unsubscribe** headers (already used for marketing templates in Hub). Link to `/account/settings` (or equivalent) and `/legal-policies#privacy`.
 
-## 3. After the campaign
-
-| Action | Owner | Done |
-|--------|-------|:----:|
-| Audit CSV generated | Ops | ☐ |
-| Re-permission email sent | Marketing | ☐ |
-| Soft bounce / unsubscribe processed | Ops | ☐ |
-| Optional: set `emails_enabled = false` for non-responders after ~14 days (stricter) | Marketing + Tech | ☐ |
-| Tick complete in `docs/COMPLIANCE-RUNBOOK.md` | Catherine | ☐ |
-
-## 4. Going forward
+## Going forward
 
 - Registration marketing checkbox must stay **unchecked** by default (`register.html`).
 - New accounts after 25 Aug 2026 are treated as valid opt-in if they ticked the box.
