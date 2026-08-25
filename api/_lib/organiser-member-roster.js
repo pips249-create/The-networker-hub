@@ -739,15 +739,32 @@ async function healHubBilledRosterExpiries(rows) {
   }
   const out = [];
   let emailLookups = 0;
+  let stripeHeals = 0;
+  // Keep Membership page loads snappy — further repairs run on later pages / account sync.
   const EMAIL_LOOKUP_CAP = 8;
+  const STRIPE_HEAL_CAP = 3;
+  const today = new Date().toISOString().slice(0, 10);
   for (const row of list) {
     if (!row) {
       out.push(row);
       continue;
     }
     const hasSub = Boolean(String(row.stripe_subscription_id || '').trim());
-    const missingExpires = !String(row.expires_at || '').trim();
-    if (!hasSub && !missingExpires) {
+    const expires = String(row.expires_at || '').trim().slice(0, 10);
+    const missingExpires = !expires;
+    const status = String(row.subscription_status || '')
+      .trim()
+      .toLowerCase();
+    const live =
+      !status || status === 'active' || status === 'trialing' || status === 'past_due';
+    const staleWhileLive = Boolean(hasSub && live && expires && expires <= today);
+    const needsStripe = hasSub ? missingExpires || staleWhileLive : missingExpires;
+
+    if (!needsStripe) {
+      out.push(row);
+      continue;
+    }
+    if (stripeHeals >= STRIPE_HEAL_CAP) {
       out.push(row);
       continue;
     }
@@ -758,6 +775,7 @@ async function healHubBilledRosterExpiries(rows) {
       }
       emailLookups += 1;
     }
+    stripeHeals += 1;
     try {
       const repaired = await repairMembershipRosterExpiry(
         row,
@@ -895,9 +913,17 @@ async function listRosterPage(organiserId, options = {}) {
   if (error) throw new Error(error.message);
   const healed = await healHubBilledRosterExpiries(data || []);
   const rows = healed.map(rosterRowToClient);
-  const members = enrichBookings
-    ? await enrichMembersWithBookings(orgId, rows, { emails: rows.map((m) => m.email) })
-    : rows;
+  let members = rows;
+  if (enrichBookings) {
+    try {
+      members = await enrichMembersWithBookings(orgId, rows, {
+        emails: rows.map((m) => m.email),
+      });
+    } catch (err) {
+      console.error('[member-roster] booking enrich failed', err?.message || err);
+      members = rows;
+    }
+  }
   const totalActive = await countActiveRosterMembers(orgId);
   return { members, total: Number(count) || rows.length, totalActive };
 }
@@ -1548,20 +1574,69 @@ async function buildRosterReports(
   return reports;
 }
 
+async function fetchRegistrationsForBookingIndex(sb, orgId, emailFilter) {
+  const pageSize = 500;
+  const hardCap = 5000;
+  const select =
+    'event_id, created_at, application_status, payment_status, cancelled_at, attendee_id, attendees(email)';
+  const emails = emailFilter ? [...emailFilter] : [];
+
+  // Page of members: scope by attendee ids so we do not scan the whole organiser history.
+  if (emails.length && emails.length <= 100) {
+    const attendeeIds = [];
+    for (let i = 0; i < emails.length; i += 80) {
+      const chunk = emails.slice(i, i + 80);
+      const { data: atts, error: attErr } = await sb
+        .from('attendees')
+        .select('id, email')
+        .in('email', chunk);
+      if (attErr) throw new Error(attErr.message);
+      (atts || []).forEach((row) => {
+        if (row?.id) attendeeIds.push(row.id);
+      });
+    }
+    if (!attendeeIds.length) return [];
+
+    const regs = [];
+    for (let i = 0; i < attendeeIds.length; i += 80) {
+      const chunk = attendeeIds.slice(i, i + 80);
+      const { data, error } = await sb
+        .from('registrations')
+        .select(select)
+        .eq('organiser_id', orgId)
+        .in('attendee_id', chunk)
+        .is('cancelled_at', null);
+      if (error) throw new Error(error.message);
+      regs.push(...(data || []));
+    }
+    return regs;
+  }
+
+  const regs = [];
+  for (let from = 0; from < hardCap; from += pageSize) {
+    const to = Math.min(from + pageSize - 1, hardCap - 1);
+    const { data, error } = await sb
+      .from('registrations')
+      .select(select)
+      .eq('organiser_id', orgId)
+      .is('cancelled_at', null)
+      .order('created_at', { ascending: false })
+      .range(from, to);
+    if (error) throw new Error(error.message);
+    const batch = data || [];
+    regs.push(...batch);
+    if (batch.length < pageSize) break;
+  }
+  return regs;
+}
+
 async function buildMemberBookingIndex(orgId, options) {
   const sb = getSupabaseAdmin();
   const emailFilter =
     options && options.emails
       ? new Set((options.emails || []).map(normalizeRosterEmail).filter(Boolean))
       : null;
-  const { data: regs, error } = await sb
-    .from('registrations')
-    .select(
-      'event_id, created_at, application_status, payment_status, cancelled_at, attendees(email)'
-    )
-    .eq('organiser_id', orgId)
-    .is('cancelled_at', null);
-  if (error) throw new Error(error.message);
+  const regs = await fetchRegistrationsForBookingIndex(sb, orgId, emailFilter);
 
   const eventIds = [...new Set((regs || []).map((row) => row.event_id).filter(Boolean))];
   const eventsById = new Map();

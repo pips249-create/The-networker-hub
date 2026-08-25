@@ -1820,7 +1820,7 @@
   let linkedInPostBuilder = null;
   const deferredAssetPromises = {};
   const LINKEDIN_POST_BUILDER_SRC = '../js/organiser-linkedin-post-builder.js?v=20260824tnuklogo';
-  const MEMBER_ROSTER_SRC = '../js/organiser-member-roster.js?v=20260814fast1';
+  const MEMBER_ROSTER_SRC = '../js/organiser-member-roster.js?v=20260825load1';
   const MEMBER_ROSTER_CSS = '../css/organiser-member-roster.css?v=20260812ux2';
   const EVENT_EDIT_CSS = '../css/organiser-event-edit.css?v=20260811claimux2';
   const RANKINGS_PAGE_CSS = '../css/rankings-page.css?v=20260807rank';
@@ -7325,6 +7325,10 @@
               ? 'No new attendees in this view'
               : 'No returning attendees in this view';
           text = 'Try a different filter or show all attendees.';
+        } else if (filters.attendeesHideArchived && filters.attendeesEvent === 'all') {
+          title = 'No upcoming-event attendees';
+          text =
+            'Past event attendees are hidden. Uncheck “Hide archived events”, or pick a past event from the list.';
         } else {
           title = 'No matching attendees';
           text = 'No attendees match this event filter.';
@@ -7562,13 +7566,10 @@
   }
 
   function attendeesEventPickerOptions() {
-    const list = allEventOptions().filter(function (ev) {
-      return (
-        !filters.attendeesHideArchived ||
-        !eventRowIsArchived(ev) ||
-        ev.id === filters.attendeesEvent
-      );
-    });
+    // Always include past/archived events in the picker so organisers can open
+    // a finished event's attendees. "Hide archived events" only filters the
+    // All-events aggregate list (see filteredAttendeesList).
+    const list = allEventOptions();
     const titleDateCount = new Map();
     list.forEach(function (ev) {
       const key =
@@ -7592,6 +7593,9 @@
         includeTime: duplicate,
         groupName: groupName,
       });
+      if (eventRowIsArchived(ev) && !/\bArchived\b/i.test(label)) {
+        label += ' · Archived';
+      }
       if (duplicate && !groupName) {
         label += ' · #' + String(ev.id).replace(/^rec/, '').slice(-4);
       }

@@ -65,26 +65,47 @@ async function listAttendeesForOrganiserEvents(eventIds, filterEventId) {
     const select = includeExtras
       ? selectBase.replace('guest_names,', 'guest_names,\n' + extrasSelect)
       : selectBase;
-    let result = await sb
-      .from('registrations')
-      .select(select)
-      .in('event_id', eventFilterIds)
-      .is('cancelled_at', null);
-    if (result.error && /no_show_at/i.test(String(result.error.message || ''))) {
-      result = await sb
+
+    const ids = Array.isArray(eventFilterIds) ? eventFilterIds.filter(Boolean) : [];
+    if (!ids.length) return { data: [], error: null };
+
+    const pageSize = 500;
+    const hardCap = 8000;
+    const all = [];
+
+    async function queryChunk(chunkIds, from, to, stripNoShow, stripEndsAt) {
+      let sel = select;
+      if (stripNoShow) sel = sel.replace(/\n?\s*no_show_at,/, '');
+      if (stripEndsAt) sel = sel.replace(', ends_at', '');
+      let q = sb
         .from('registrations')
-        .select(select.replace(/\n?\s*no_show_at,/, ''))
-        .in('event_id', eventFilterIds)
-        .is('cancelled_at', null);
+        .select(sel)
+        .in('event_id', chunkIds)
+        .is('cancelled_at', null)
+        .order('created_at', { ascending: false })
+        .range(from, to);
+      return q;
     }
-    if (result.error && /ends_at/i.test(String(result.error.message || ''))) {
-      result = await sb
-        .from('registrations')
-        .select(select.replace(', ends_at', '').replace(/\n?\s*no_show_at,/, ''))
-        .in('event_id', eventFilterIds)
-        .is('cancelled_at', null);
+
+    for (let i = 0; i < ids.length; i += 80) {
+      const chunkIds = ids.slice(i, i + 80);
+      for (let from = 0; from < hardCap; from += pageSize) {
+        const to = Math.min(from + pageSize - 1, hardCap - 1);
+        let result = await queryChunk(chunkIds, from, to, false, false);
+        if (result.error && /no_show_at/i.test(String(result.error.message || ''))) {
+          result = await queryChunk(chunkIds, from, to, true, false);
+        }
+        if (result.error && /ends_at/i.test(String(result.error.message || ''))) {
+          result = await queryChunk(chunkIds, from, to, true, true);
+        }
+        if (result.error) return result;
+        const batch = result.data || [];
+        all.push(...batch);
+        if (batch.length < pageSize) break;
+      }
     }
-    return result;
+
+    return { data: all, error: null };
   }
 
   async function fetchWithProfileFallback(includeExtras, eventFilterIds) {

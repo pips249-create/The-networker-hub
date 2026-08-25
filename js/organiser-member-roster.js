@@ -122,16 +122,38 @@
   }
 
   async function api(path, options) {
-    const res = await fetch(path, {
-      credentials: 'include',
-      cache: 'no-store',
-      ...(options || {}),
-    });
-    const data = await res.json().catch(function () {
-      return {};
-    });
-    if (!res.ok) throw new Error(data.message || data.error || 'Request failed');
-    return data;
+    const raw = options || {};
+    const timeoutMs = Number(raw.timeoutMs) > 0 ? Number(raw.timeoutMs) : 0;
+    const opts = Object.assign({}, raw);
+    delete opts.timeoutMs;
+    let timer = null;
+    let controller = null;
+    if (timeoutMs && typeof AbortController !== 'undefined' && !opts.signal) {
+      controller = new AbortController();
+      opts.signal = controller.signal;
+      timer = setTimeout(function () {
+        controller.abort();
+      }, timeoutMs);
+    }
+    try {
+      const res = await fetch(path, {
+        credentials: 'include',
+        cache: 'no-store',
+        ...opts,
+      });
+      const data = await res.json().catch(function () {
+        return {};
+      });
+      if (!res.ok) throw new Error(data.message || data.error || 'Request failed');
+      return data;
+    } catch (err) {
+      if (err && err.name === 'AbortError') {
+        throw new Error('Request timed out — please refresh and try again');
+      }
+      throw err;
+    } finally {
+      if (timer) clearTimeout(timer);
+    }
   }
 
   function rosterListQuery(offset, limit) {
@@ -2223,7 +2245,7 @@
       encodeURIComponent(groupId) +
       rosterListQuery((page - 1) * PAGE_SIZE, PAGE_SIZE);
     try {
-      const data = await api(path);
+      const data = await api(path, { timeoutMs: 25000 });
       if (getOrganiserId() !== groupId) return;
       members = data.members || [];
       rosterTotal = Number(data.total) || members.length;

@@ -8,6 +8,7 @@ const {
   listConfirmedAttendeesForEvent,
   inviteEmailVariables,
   isAlumniTicket,
+  registrationCountsAsAlumniSource,
 } = require('./alumni-invites');
 
 async function assertOrganiserOwnsEvent(session, eventId) {
@@ -69,17 +70,53 @@ async function listEligibleSourceEvents(session, targetEventId) {
     .limit(100);
   if (error) throw new Error(error.message);
 
+  const events = data || [];
+  const countsByEvent = new Map();
+  if (events.length) {
+    const eventIds = events.map((row) => row.id).filter(Boolean);
+    const pageSize = 500;
+    const hardCap = 8000;
+    for (let i = 0; i < eventIds.length; i += 80) {
+      const chunk = eventIds.slice(i, i + 80);
+      for (let from = 0; from < hardCap; from += pageSize) {
+        const to = Math.min(from + pageSize - 1, hardCap - 1);
+        const { data: regs, error: regErr } = await sb
+          .from('registrations')
+          .select(
+            'event_id, application_status, payment_status, cancelled_at, attendees(email)'
+          )
+          .in('event_id', chunk)
+          .is('cancelled_at', null)
+          .order('created_at', { ascending: false })
+          .range(from, to);
+        if (regErr) throw new Error(regErr.message);
+        const batch = regs || [];
+        batch.forEach((row) => {
+          if (!registrationCountsAsAlumniSource(row)) return;
+          const email = String(row.attendees?.email || '')
+            .trim()
+            .toLowerCase();
+          if (!email || !row.event_id) return;
+          if (!countsByEvent.has(row.event_id)) countsByEvent.set(row.event_id, new Set());
+          countsByEvent.get(row.event_id).add(email);
+        });
+        if (batch.length < pageSize) break;
+      }
+    }
+  }
+
   const results = [];
-  for (const row of data || []) {
-    const attendees = await listConfirmedAttendeesForEvent(sb, row.id);
-    if (!attendees.length) continue;
+  for (const row of events) {
+    const emails = countsByEvent.get(row.id);
+    const confirmedAttendeeCount = emails ? emails.size : 0;
+    if (!confirmedAttendeeCount) continue;
     results.push({
       id: row.id,
       title: row.title,
       slug: row.slug,
       startsAt: row.starts_at,
       status: row.status,
-      confirmedAttendeeCount: attendees.length,
+      confirmedAttendeeCount,
     });
   }
   return {
