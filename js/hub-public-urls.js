@@ -68,6 +68,8 @@
       if (
         host === 'thenetworkeruk.com' ||
         host === 'thenetworkerinternational.com' ||
+        host === 'thenetworkerireland.com' ||
+        host === 'thenetworkerusa.com' ||
         host === 'thenetworkerhub.com' ||
         host === 'thenetworkerhub.co.uk' ||
         host === 'the-networker.co.uk' ||

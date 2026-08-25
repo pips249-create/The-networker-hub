@@ -41,6 +41,23 @@ function isInternationalHost(host) {
   return h === 'thenetworkerinternational.com' || h === 'www.thenetworkerinternational.com';
 }
 
+function isMarketPreviewHost(host) {
+  const h = String(host || '')
+    .trim()
+    .toLowerCase();
+  return (
+    h === 'thenetworkerireland.com' ||
+    h === 'www.thenetworkerireland.com' ||
+    h === 'thenetworkerusa.com' ||
+    h === 'www.thenetworkerusa.com'
+  );
+}
+
+/** Public routing / coming-soon domains — never send through UK site-access gate. */
+function isPublicMarketHost(host) {
+  return isInternationalHost(host) || isMarketPreviewHost(host);
+}
+
 function isSocialCrawler(request) {
   const ua = String(request.headers.get('user-agent') || '');
   return SOCIAL_CRAWLER_UA.test(ua);
@@ -650,8 +667,8 @@ async function maybeGateSiteAccess(request, url) {
     .trim()
     .toLowerCase();
 
-  // International domain is a public routing layer — never send it through Hub preview.
-  if (isInternationalHost(host)) return null;
+  // International + market preview domains are public — never send through Hub preview.
+  if (isPublicMarketHost(host)) return null;
 
   if (isGateBypassPath(pathname)) return null;
 
@@ -872,7 +889,52 @@ export default async function middleware(request) {
     return Response.redirect(dest.toString(), 308);
   }
 
+  if (host === 'thenetworkerireland.com') {
+    const dest = new URL(request.url);
+    dest.protocol = 'https:';
+    dest.hostname = 'www.thenetworkerireland.com';
+    dest.port = '';
+    return Response.redirect(dest.toString(), 308);
+  }
+  if (host === 'thenetworkerusa.com') {
+    const dest = new URL(request.url);
+    dest.protocol = 'https:';
+    dest.hostname = 'www.thenetworkerusa.com';
+    dest.port = '';
+    return Response.redirect(dest.toString(), 308);
+  }
+
   const pathname = url.pathname.replace(/\/$/, '') || '/';
+
+  // Market preview domains (Ireland / USA): always serve the coming-soon gate.
+  if (isMarketPreviewHost(host) && request.headers.get('x-market-preview-fetch') !== '1') {
+    if (
+      pathname.startsWith('/api/international-') ||
+      pathname.startsWith('/css/') ||
+      pathname.startsWith('/js/') ||
+      pathname.startsWith('/assets/') ||
+      pathname === '/favicon.ico'
+    ) {
+      /* allow static + interest APIs */
+    } else {
+      try {
+        const htmlRes = await fetch(new URL('/market-preview', url.origin).toString(), {
+          headers: { 'x-market-preview-fetch': '1' },
+        });
+        if (htmlRes.ok) {
+          return new Response(await htmlRes.text(), {
+            status: 200,
+            headers: {
+              'Content-Type': 'text/html; charset=utf-8',
+              'Cache-Control': 'public, max-age=60, must-revalidate',
+            },
+          });
+        }
+      } catch {
+        /* fall through */
+      }
+    }
+  }
 
   // International domain: homepage is the world-map landing (root index.html is the UK home).
   // Subrequests use x-intl-landing-fetch to avoid recursion when we pull the HTML.

@@ -16,6 +16,12 @@
     '372': { iso2: 'IE', name: 'Ireland' },
   };
 
+  /** Coming-soon / building domains — map click opens the market preview gate. */
+  var MARKET_PREVIEW_URLS = {
+    '372': 'https://www.thenetworkerireland.com',
+    '840': 'https://www.thenetworkerusa.com',
+  };
+
   /**
    * Markets we do not plan to serve — no waitlist, no click-through.
    * Sanctions / severe regulatory barriers from a UK company perspective.
@@ -135,7 +141,7 @@
       live: status === 'live',
       building: status === 'building',
       unavailable: status === 'unavailable',
-      url: live ? live.url : '',
+      url: (live && live.url) || MARKET_PREVIEW_URLS[numericId] || '',
     };
   }
 
@@ -174,6 +180,9 @@
   function popupActionText(meta) {
     if (meta.live) {
       return isCoarsePointer() ? 'Tap to explore →' : 'Click to explore →';
+    }
+    if (meta.url) {
+      return isCoarsePointer() ? 'Tap to open preview →' : 'Open market preview →';
     }
     if (meta.building) {
       return isCoarsePointer()
@@ -365,7 +374,7 @@
   function handleCountryAction(meta) {
     if (!meta || meta.unavailable) return;
     clearHover();
-    if (meta.live && meta.url) {
+    if (meta.url) {
       window.location.href = meta.url;
       return;
     }

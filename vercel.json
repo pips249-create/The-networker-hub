@@ -19,6 +19,18 @@
     },
     {
       "source": "/:path*",
+      "has": [{ "type": "host", "value": "thenetworkerireland.com" }],
+      "destination": "https://www.thenetworkerireland.com/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "thenetworkerusa.com" }],
+      "destination": "https://www.thenetworkerusa.com/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
       "has": [{ "type": "host", "value": "thenetworkerhub.co.uk" }],
       "destination": "https://www.thenetworkerhub.com/:path*",
       "permanent": true
@@ -438,6 +450,24 @@
       "source": "/",
       "has": [{ "type": "host", "value": "www.thenetworkerinternational.com" }],
       "destination": "/international/index.html"
+    },
+    {
+      "source": "/",
+      "has": [{ "type": "host", "value": "www.thenetworkerireland.com" }],
+      "destination": "/market-preview/index.html"
+    },
+    {
+      "source": "/",
+      "has": [{ "type": "host", "value": "www.thenetworkerusa.com" }],
+      "destination": "/market-preview/index.html"
+    },
+    {
+      "source": "/market-preview",
+      "destination": "/market-preview/index.html"
+    },
+    {
+      "source": "/market-preview/",
+      "destination": "/market-preview/index.html"
     },
     {
       "source": "/international",

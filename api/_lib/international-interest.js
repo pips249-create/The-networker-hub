@@ -49,6 +49,17 @@ async function submitInternationalInterest(payload) {
     return { ok: false, error: 'invalid_intent', message: 'Choose whether you want to attend or list.' };
   }
 
+  const allowedSources = new Set([
+    'international_map',
+    'market_preview_ie',
+    'market_preview_us',
+  ]);
+  const sourceRaw = String(payload?.source || '')
+    .trim()
+    .toLowerCase()
+    .slice(0, 64);
+  const source = allowedSources.has(sourceRaw) ? sourceRaw : 'international_map';
+
   const sb = getSupabaseAdmin();
   const insertRes = await sb
     .from('international_country_interest')
@@ -57,7 +68,7 @@ async function submitInternationalInterest(payload) {
       country_code: countryCode,
       country_name: countryName,
       intent,
-      source: 'international_map',
+      source,
     })
     .select('id, email, country_code, intent, created_at')
     .single();

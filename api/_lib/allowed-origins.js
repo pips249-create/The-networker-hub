@@ -26,8 +26,10 @@ function configuredSiteOrigins() {
   out.add('https://thenetworkeruk.com');
   out.add('https://www.thenetworkerinternational.com');
   out.add('https://thenetworkerinternational.com');
-  out.add('https://www.thenetworkeruk.com');
-  out.add('https://thenetworkeruk.com');
+  out.add('https://www.thenetworkerireland.com');
+  out.add('https://thenetworkerireland.com');
+  out.add('https://www.thenetworkerusa.com');
+  out.add('https://thenetworkerusa.com');
   out.add('https://www.thenetworkerhub.co.uk');
   out.add('https://thenetworkerhub.co.uk');
   out.add('https://the-networker-hub.vercel.app');
