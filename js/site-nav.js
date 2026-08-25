@@ -102,17 +102,53 @@
  * NAV_BUILD=20260709h — transparent nav logo (from logo-nav.png).
  */
 (function () {
-  var NAV_BUILD = '20260825adminbadge1';
+  var NAV_BUILD = '20260825navopen1';
   var LOGO_SRC = '/assets/logo-nav-transparent.png?v=20260823uk3';
   var SESSION_KEY = 'hub_nav_session_v1';
   var SESSION_TTL_MS = 5 * 60 * 1000;
   var ORG_TODO_BADGE_KEY = 'hub_org_todo_badge_v1';
   var ADMIN_ATTENTION_BADGE_KEY = 'hub_admin_attention_badge_v1';
+  var CATALOGUE_CACHE_KEY = 'hub_catalogue_open_v1';
+  /** Keep in sync with js/hub-soft-launch.js — used before that script loads. */
+  var PUBLIC_BROWSE_OPENS_AT_MS = Date.parse('2026-08-25T00:00:00+01:00');
   var orgTodoListenerBound = false;
   var adminAttentionListenerBound = false;
   var script = document.currentScript;
   var root = (script && script.getAttribute('data-root')) || '';
   var page = (script && script.getAttribute('data-page')) || '';
+
+  function isPublicBrowseDateOpen() {
+    if (window.HubSoftLaunch && typeof window.HubSoftLaunch.isPublicBrowseOpen === 'function') {
+      return window.HubSoftLaunch.isPublicBrowseOpen();
+    }
+    return Date.now() >= PUBLIC_BROWSE_OPENS_AT_MS;
+  }
+
+  function readCatalogueCache() {
+    try {
+      var raw = sessionStorage.getItem(CATALOGUE_CACHE_KEY);
+      if (raw === '1') return true;
+      if (raw === '0') return false;
+    } catch (e) {
+      /* ignore */
+    }
+    return null;
+  }
+
+  function writeCatalogueCache(open) {
+    try {
+      sessionStorage.setItem(CATALOGUE_CACHE_KEY, open ? '1' : '0');
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  /** Prefer last known open state, then public-browse date — avoids Contact/early-access flash. */
+  function guessCatalogueOpen() {
+    var cached = readCatalogueCache();
+    if (cached !== null) return cached;
+    return isPublicBrowseDateOpen();
+  }
 
   /** Soft-launch /peek mini-site — closed nav bubble (no catalogue, no sign-in unlock). */
   function isPeekPath() {
@@ -1232,9 +1268,9 @@
   }
 
   var cachedUser = readCachedUser();
-  // Until we know the catalogue is open, render organiser early-access nav
-  // so Email 1 visitors never see Events / Opportunities links.
-  catalogueOpen = false;
+  // Prefer full public nav once browse is open (or last probe was open). Only fall back
+  // to early-access chrome when the catalogue is known closed — avoids a Contact flash.
+  catalogueOpen = guessCatalogueOpen();
   if (cachedUser) {
     renderNav(cachedUser, false);
   } else {
@@ -1244,10 +1280,12 @@
   var catalogueProbePromise = null;
   var profilePromise = null;
 
-  function applyCatalogueOpen(open) {
+  function applyCatalogueOpen(open, opts) {
+    var persist = !opts || opts.persist !== false;
     var prev = catalogueOpen;
     catalogueOpen = open === true;
     window.HubCatalogueOpen = catalogueOpen;
+    if (persist) writeCatalogueCache(catalogueOpen);
     try {
       window.dispatchEvent(new CustomEvent('hub-catalogue-access', { detail: { open: catalogueOpen } }));
     } catch (e) {
@@ -1266,7 +1304,8 @@
   function probeCatalogueAccess(force) {
     if (forceEarlyAccessChrome()) {
       catalogueProbePromise = null;
-      applyCatalogueOpen(false);
+      // Marketing/trust pages use early chrome for this view only — do not poison session cache.
+      applyCatalogueOpen(false, { persist: false });
       return Promise.resolve(false);
     }
     if (!force && catalogueProbePromise) return catalogueProbePromise;
@@ -1280,11 +1319,12 @@
             return !(data && data.open === false);
           })
           .catch(function () {
-            return true;
+            return isPublicBrowseDateOpen();
           });
       })
       .catch(function () {
-        return false;
+        // Network blip: keep public browse open after launch rather than flashing early nav.
+        return isPublicBrowseDateOpen();
       })
       .then(function (open) {
         return applyCatalogueOpen(open);

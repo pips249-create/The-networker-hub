@@ -5,9 +5,29 @@
  * preview cookie unlocks catalogue APIs.
  */
 (function () {
-  var FOOTER_BUILD = '20260825a11y1';
+  var FOOTER_BUILD = '20260825navopen1';
+  var PUBLIC_BROWSE_OPENS_AT_MS = Date.parse('2026-08-25T00:00:00+01:00');
   var script = document.currentScript;
   var root = (script && script.getAttribute('data-root')) || '';
+
+  function isPublicBrowseDateOpen() {
+    if (window.HubSoftLaunch && typeof window.HubSoftLaunch.isPublicBrowseOpen === 'function') {
+      return window.HubSoftLaunch.isPublicBrowseOpen();
+    }
+    return Date.now() >= PUBLIC_BROWSE_OPENS_AT_MS;
+  }
+
+  function guessCatalogueOpen() {
+    if (typeof window.HubCatalogueOpen === 'boolean') return window.HubCatalogueOpen;
+    try {
+      var raw = sessionStorage.getItem('hub_catalogue_open_v1');
+      if (raw === '1') return true;
+      if (raw === '0') return false;
+    } catch (e) {
+      /* ignore */
+    }
+    return isPublicBrowseDateOpen();
+  }
 
   function href(path) {
     if (!path) return root || '/';
@@ -213,10 +233,8 @@
     }
   }
 
-  // Default to gated footer so Email 1 visitors never see catalogue links.
-  var catalogueOpen = effectiveCatalogueOpen(
-    typeof window.HubCatalogueOpen === 'boolean' ? window.HubCatalogueOpen : false
-  );
+  // Prefer full Explore links once browse is open; avoid slim-footer flash.
+  var catalogueOpen = effectiveCatalogueOpen(guessCatalogueOpen());
   renderFooter(catalogueOpen);
 
   window.addEventListener('hub-catalogue-access', function (ev) {
@@ -226,28 +244,33 @@
 
   if (forceEarlyAccessChrome()) {
     // Stay slim on Email 1 pages even when preview cookie unlocks /api/events.
-    window.HubCatalogueOpen = false;
+    // Do not mutate HubCatalogueOpen — that would flash early nav on the next page.
   } else if (typeof window.HubCatalogueOpen !== 'boolean') {
     var probe =
       typeof window.hubProbeCatalogueAccess === 'function'
         ? window.hubProbeCatalogueAccess()
         : fetch('/api/events?probe=1', { credentials: 'include', cache: 'no-store' })
             .then(function (res) {
-              if (res.status !== 200) return false;
+              if (res.status !== 200) return isPublicBrowseDateOpen();
               return res
                 .json()
                 .then(function (data) {
                   return !(data && data.open === false);
                 })
                 .catch(function () {
-                  return true;
+                  return isPublicBrowseDateOpen();
                 });
             })
             .catch(function () {
-              return false;
+              return isPublicBrowseDateOpen();
             })
             .then(function (open) {
               window.HubCatalogueOpen = open;
+              try {
+                sessionStorage.setItem('hub_catalogue_open_v1', open ? '1' : '0');
+              } catch (e) {
+                /* ignore */
+              }
               return open;
             });
     probe.then(function (open) {
