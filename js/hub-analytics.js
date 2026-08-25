@@ -3,9 +3,19 @@
  * Custom events: https://vercel.com/docs/analytics/custom-events
  */
 (function () {
+  var enabled = false;
+
+  function hasConsent() {
+    if (window.HubCookieConsent && typeof window.HubCookieConsent.hasAnalyticsConsent === 'function') {
+      return window.HubCookieConsent.hasAnalyticsConsent();
+    }
+    return false;
+  }
+
   function ensureVaStub() {
     if (!window.va) {
       window.va = function () {
+        if (!enabled) return;
         (window.vaq = window.vaq || []).push(arguments);
       };
     }
@@ -16,6 +26,7 @@
    * Pro plan allows at most 2 custom data keys; values must be string/number/boolean/null.
    */
   function track(name, data) {
+    if (!enabled || !hasConsent()) return;
     var eventName = String(name || '').trim().slice(0, 255);
     if (!eventName) return;
     ensureVaStub();
@@ -44,7 +55,8 @@
     loaded: false,
     track: track,
     load: function () {
-      if (this.loaded) return;
+      if (this.loaded || !hasConsent()) return;
+      enabled = true;
       var host = String(window.location.hostname || '').toLowerCase();
       if (host === 'localhost' || host === '127.0.0.1' || host.endsWith('.local')) {
         this.loaded = true;
@@ -63,6 +75,15 @@
         /* non-fatal — analytics optional in preview/local */
       };
       document.head.appendChild(insights);
+    },
+    /** Stop further events after consent withdrawal (script already in page cannot be fully unloaded). */
+    disable: function () {
+      enabled = false;
+      try {
+        window.vaq = [];
+      } catch (e) {
+        /* ignore */
+      }
     },
   };
 })();

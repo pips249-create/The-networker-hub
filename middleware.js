@@ -877,6 +877,34 @@ export default async function middleware(request) {
   // International domain: homepage is the world-map landing (root index.html is the UK home).
   // Subrequests use x-intl-landing-fetch to avoid recursion when we pull the HTML.
   if (isInternationalHost(host) && request.headers.get('x-intl-landing-fetch') !== '1') {
+    // Root robots.txt / llms.txt / agents.txt are UK static files — Vercel serves them
+    // before host rewrites. Proxy the International copies here instead.
+    const intlDiscovery = {
+      '/robots.txt': { path: '/international/robots.txt', type: 'text/plain; charset=utf-8' },
+      '/llms.txt': { path: '/international/llms.txt', type: 'text/plain; charset=utf-8' },
+      '/agents.txt': { path: '/international/agents.txt', type: 'text/plain; charset=utf-8' },
+      '/sitemap.xml': { path: '/international/sitemap.xml', type: 'application/xml; charset=utf-8' },
+    };
+    const discovery = intlDiscovery[pathname];
+    if (discovery) {
+      try {
+        const fileRes = await fetch(new URL(discovery.path, url.origin).toString(), {
+          headers: { 'x-intl-landing-fetch': '1' },
+        });
+        if (fileRes.ok) {
+          return new Response(await fileRes.text(), {
+            status: 200,
+            headers: {
+              'Content-Type': discovery.type,
+              'Cache-Control': 'public, max-age=3600, must-revalidate',
+            },
+          });
+        }
+      } catch {
+        /* fall through */
+      }
+    }
+
     if (
       pathname === '/' ||
       pathname === '/international' ||

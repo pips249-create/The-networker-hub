@@ -3,20 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Find your next connection – The Networker International</title>
+<title>The Networker International – Find your country</title>
 <meta name="description" content="Choose your country on The Networker International. The Networker UK is live now — tell us where you would like to attend or list networking next. Part of The Networker Group Limited.">
 <link rel="canonical" href="https://www.thenetworkerinternational.com/">
 <meta name="robots" content="index,follow">
+<meta name="theme-color" content="#3a3438">
+<meta name="application-name" content="The Networker International">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="The Networker International">
-<meta property="og:title" content="Find your next connection – The Networker International">
+<meta property="og:locale" content="en_GB">
+<meta property="og:title" content="The Networker International – Find your country">
 <meta property="og:description" content="Trusted business networking, country by country. The UK is live; Ireland is building. Register interest where we haven’t launched yet.">
 <meta property="og:url" content="https://www.thenetworkerinternational.com/">
 <meta property="og:image" content="https://www.thenetworkerinternational.com/assets/logo-networker-international.png">
+<meta property="og:image:alt" content="The Networker International">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Find your next connection – The Networker International">
+<meta name="twitter:title" content="The Networker International – Find your country">
 <meta name="twitter:description" content="Trusted business networking, country by country. The UK is live; Ireland is building.">
 <meta name="twitter:image" content="https://www.thenetworkerinternational.com/assets/logo-networker-international.png">
+<meta name="twitter:image:alt" content="The Networker International">
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -80,11 +85,12 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/css/hub.css?v=20260825intl25">
-<link rel="stylesheet" href="/css/cookie-consent.css?v=20260825intl25">
-<link rel="stylesheet" href="/css/international-home.css?v=20260825intl25">
-<link rel="icon" href="/favicon.ico?v=20260823uk3" sizes="any">
-<link rel="icon" href="/assets/favicon.svg?v=20260823uk3" type="image/svg+xml">
+<link rel="stylesheet" href="/css/hub.css?v=20260825intl26">
+<link rel="stylesheet" href="/css/cookie-consent.css?v=20260825intl26">
+<link rel="stylesheet" href="/css/international-home.css?v=20260825intl26">
+<link rel="icon" href="/favicon.ico?v=20260825intl26" sizes="any">
+<link rel="icon" href="/assets/favicon.svg?v=20260825intl26" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/assets/logo-networker-international.png?v=20260825intl26">
 </head>
 <body class="intl-home-page">
 
@@ -93,7 +99,7 @@
 <header class="intl-header">
   <div class="intl-header-inner">
     <a class="intl-logo" href="https://www.thenetworkerinternational.com/" aria-label="The Networker International home">
-      <img src="/assets/logo-networker-international.png?v=20260825intl25" width="240" height="52" alt="The Networker International">
+      <img src="/assets/logo-networker-international.png?v=20260825intl26" width="240" height="52" alt="The Networker International">
     </a>
     <div class="intl-header-tagline">
       <h1 class="intl-header-title">
@@ -250,7 +256,7 @@
       <a class="intl-footer-brand" href="https://www.thenetworkerinternational.com/" aria-label="The Networker International home">
         <img
           class="intl-footer-logo"
-          src="/assets/logo-networker-international.png?v=20260825intl25"
+          src="/assets/logo-networker-international.png?v=20260825intl26"
           width="220"
           height="48"
           alt=""
@@ -260,6 +266,9 @@
       <nav class="intl-footer-nav" aria-label="Footer">
         <a href="#about">About</a>
         <a href="#contact">Contact</a>
+        <a href="https://www.thenetworkeruk.com/legal-policies#privacy" rel="noopener noreferrer">Privacy</a>
+        <a href="https://www.thenetworkeruk.com/legal-policies#cookies" rel="noopener noreferrer">Cookies</a>
+        <button type="button" class="intl-footer-cookie-btn" id="intl-footer-cookie-settings">Cookie settings</button>
         <a href="https://www.thenetworkeruk.com" rel="noopener noreferrer">UK site</a>
       </nav>
     </div>
@@ -311,6 +320,14 @@
       <label class="intl-field-label" for="intl-building-description">Tell us about your group</label>
       <textarea class="intl-field-textarea" id="intl-building-description" name="description" rows="3" placeholder="Who you serve, how often you meet, and anything else we should know"></textarea>
 
+      <p class="intl-privacy-note">
+        We use your details to follow up about launching The Networker in this country and to onboard your group.
+        We will not add you to unrelated marketing lists. See our
+        <a href="https://www.thenetworkeruk.com/legal-policies#privacy" target="_blank" rel="noopener noreferrer">privacy policy</a>.
+        You can ask us to delete your details anytime at
+        <a href="mailto:hello@thenetworkeruk.com">hello@thenetworkeruk.com</a>.
+      </p>
+
       <p class="intl-form-error" id="intl-building-error" hidden></p>
       <button type="submit" class="intl-submit-btn" id="intl-building-submit">Send details</button>
     </form>
@@ -346,6 +363,13 @@
     <form class="intl-interest-form" id="intl-interest-form" novalidate>
       <label class="intl-field-label" for="intl-interest-email">Email</label>
       <input class="intl-field-input" id="intl-interest-email" name="email" type="email" autocomplete="email" required placeholder="you@company.com">
+      <p class="intl-privacy-note">
+        We&rsquo;ll use your email only to contact you about The Networker launching in this country
+        (based on whether you want to attend or list a group). See our
+        <a href="https://www.thenetworkeruk.com/legal-policies#privacy" target="_blank" rel="noopener noreferrer">privacy policy</a>.
+        Unsubscribe or request deletion anytime via
+        <a href="mailto:hello@thenetworkeruk.com">hello@thenetworkeruk.com</a>.
+      </p>
       <p class="intl-form-error" id="intl-interest-error" hidden></p>
       <button type="submit" class="intl-submit-btn" id="intl-interest-submit">Register interest</button>
     </form>
@@ -356,13 +380,21 @@
   </div>
 </div>
 
-<script src="/js/hub-analytics.js?v=20260825intl25" defer></script>
-<script src="/js/cookie-consent.js?v=20260825intl25" defer></script>
-<script src="/js/international-home.js?v=20260825intl25" defer></script>
+<script src="/js/hub-analytics.js?v=20260825intl26" defer></script>
+<script src="/js/cookie-consent.js?v=20260825intl26" defer></script>
+<script src="/js/international-home.js?v=20260825intl26" defer></script>
 <script>
   (function () {
     var yearEl = document.getElementById('intl-footer-year');
     if (yearEl) yearEl.textContent = String(new Date().getFullYear());
+    var cookieBtn = document.getElementById('intl-footer-cookie-settings');
+    if (cookieBtn) {
+      cookieBtn.addEventListener('click', function () {
+        if (window.HubCookieConsent && window.HubCookieConsent.openSettings) {
+          window.HubCookieConsent.openSettings();
+        }
+      });
+    }
   })();
 </script>
 </body>
