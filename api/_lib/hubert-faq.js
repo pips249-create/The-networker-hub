@@ -78,21 +78,21 @@ const FAQ_AEO_ENTRIES = [
   {
     question: 'I forgot my password — how do I sign in?',
     answer:
-      'Go to /login and use the password reset link. Enter your email and follow the instructions. If you are still stuck, email hello@thenetworkerhub.com from the address on your account.',
+      'Go to /login and use the password reset link. Enter your email and follow the instructions. If you are still stuck, email hello@thenetworkeruk.com from the address on your account.',
     category: 'general',
     icon: '🔑',
   },
   {
     question: 'I did not receive my booking confirmation email',
     answer:
-      'Check your spam or junk folder and confirm your account email is correct. Your tickets also appear in My account at /account/. If you still cannot find your booking, email hello@thenetworkerhub.com with the event name and email address used at checkout.',
+      'Check your spam or junk folder and confirm your account email is correct. Your tickets also appear in My account at /account/. If you still cannot find your booking, email hello@thenetworkeruk.com with the event name and email address used at checkout.',
     category: 'buyers',
     icon: '📧',
   },
   {
     question: 'Can I transfer my ticket to someone else?',
     answer:
-      'Tickets are generally non-transferable without the organiser\'s consent. Contact the organiser via the event listing page to ask. For help, email hello@thenetworkerhub.com with your order reference.',
+      'Tickets are generally non-transferable without the organiser\'s consent. Contact the organiser via the event listing page to ask. For help, email hello@thenetworkeruk.com with your order reference.',
     category: 'buyers',
     icon: '🎟️',
   },
@@ -111,6 +111,34 @@ const FAQ_AEO_ENTRIES = [
     icon: '🎉',
   },
   {
+    question: 'Who owns my group logo and photos on The Networker UK?',
+    answer:
+      'You keep ownership of your group name, logo, photos, and copy. By publishing a profile or listing you give The Networker Group Ltd a licence to display that content on the Hub so people can find you. While your page is public we may also show your group name and logo in Hub marketing that promotes the directory (for example founding-organiser strips or social round-ups of listed groups). We do not sell your logo as a standalone asset. Email hello@thenetworkeruk.com to ask us to stop featuring your logo in new Hub marketing. Full detail: /legal-policies#organisers',
+    category: 'organisers',
+    icon: '🖼️',
+  },
+  {
+    question: 'Does The Networker UK sell organiser or member data to third parties?',
+    answer:
+      'No. We do not sell organiser or member contact lists to third parties for their own marketing. We use processors such as Stripe, Supabase, Resend and Vercel to run the platform, listed in our Privacy policy. When someone books your event we share the minimum attendee details you need to run it — you must not use that for unrelated marketing without their consent. See /legal-policies#privacy and /legal-policies#organisers',
+    category: 'organisers',
+    icon: '🔒',
+  },
+  {
+    question: 'Will my free organiser listing become a paid featured listing?',
+    answer:
+      'No. Standard organiser pages and event listings are free to publish. Featured or premium placements and advertising packages are optional and only apply if you choose and pay for them — never automatically. See /advertising and /legal-policies#organisers',
+    category: 'organisers',
+    icon: '🆓',
+  },
+  {
+    question: 'What happens if I remove my group from The Networker UK?',
+    answer:
+      'You can unpublish events and ask us to unpublish your organiser page from the public directory (via your dashboard where available, or hello@thenetworkeruk.com). Once unpublished, your page and events are no longer shown on public browse. We may retain account, booking and payment records where the law or disputes require it. Attendee data you already downloaded remains your responsibility to delete when no longer needed. See /legal-policies#organisers',
+    category: 'organisers',
+    icon: '🚪',
+  },
+  {
     question: 'Why should I list my networking group on The Networker UK?',
     answer:
       'The Networker UK is built for UK business networking — not generic ticketing. You get a permanent organiser profile, your events in a searchable directory members use to find networking meetings and exhibitions, optional business opportunity listings, team editors, and attendee reviews. Networking-specific tools include Free trial visits (1–3 free visits before paid member tickets), visit tracking on your attendee list (1st visit vs returning, with filters and CSV export), Category Exclusivity for application-based events, and Previous Attendees to invite past attendees to exclusive returning rates on repeat events. You receive the full ticket price you set; attendees pay one booking fee (4.5% + 20p per ticket) at checkout. Free events are supported without Stripe. Step-by-step organiser guides are on the guides page.',
@@ -127,14 +155,14 @@ const FAQ_AEO_ENTRIES = [
   {
     question: 'How much does it cost to list an event as an organiser?',
     answer:
-      'There is no monthly subscription to list events. Use the organiser dashboard at /organiser/ to publish free or paid events. For paid tickets, attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before payment), which covers platform and payment processing — you receive the full ticket price. Free events do not require Stripe. Email hello@thenetworkerhub.com for onboarding help.',
+      'There is no monthly subscription to list events. Use the organiser dashboard at /organiser/ to publish free or paid events. For paid tickets, attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before payment), which covers platform and payment processing — you receive the full ticket price. Free events do not require Stripe. Email hello@thenetworkeruk.com for onboarding help.',
     category: 'organisers',
     icon: '💷',
   },
   {
     question: 'Why is my event not showing on the browse events page?',
     answer:
-      'Public browse only shows events that are Published (not Draft), Approved, and linked to a published organiser profile. Complete tickets, refund policy, and publish in /organiser/. Email hello@thenetworkerhub.com with the event title if it is still missing.',
+      'Public browse only shows events that are Published (not Draft), Approved, and linked to a published organiser profile. Complete tickets, refund policy, and publish in /organiser/. Email hello@thenetworkeruk.com with the event title if it is still missing.',
     category: 'organisers',
     icon: '👁️',
   },
