@@ -955,10 +955,19 @@
     if (window.HubFavourites) window.HubFavourites.refreshButtons(els.listings);
   }
 
+  function revealBrowseResultCount() {
+    const loading = document.getElementById('results-loading');
+    const ready = document.getElementById('results-ready');
+    if (loading) loading.hidden = true;
+    if (ready) ready.hidden = false;
+  }
+  window.hubRevealBrowseResultCount = revealBrowseResultCount;
+
   function updateResultsSummary(totalItems) {
     const searchInput = document.getElementById('search');
     const searchQ = searchInput ? String(searchInput.value || '').trim() : '';
     const queryEl = document.getElementById('events-search-query');
+    revealBrowseResultCount();
     if (els.resultsCount) els.resultsCount.textContent = String(totalItems);
     if (!queryEl) return;
     if (searchQ) {

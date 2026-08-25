@@ -139,6 +139,7 @@
     var all = window.hubAllOrganisers || [];
     var filtered = window.hubGetFilteredOrganisers(all);
     if (resultsCount) resultsCount.textContent = String(filtered.length);
+    if (window.hubRevealBrowseResultCount) window.hubRevealBrowseResultCount();
     if (window.hubRefreshOrganiserListings) window.hubRefreshOrganiserListings();
     logOrganiserBrowseSearch(filtered.length);
   }

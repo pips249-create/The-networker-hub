@@ -606,6 +606,7 @@
         '<button type="button" class="empty-state-btn" id="empty-reset">Clear all filters</button>' +
         '</div></div>';
       if (els.resultsCount) els.resultsCount.textContent = '0';
+      if (window.hubRevealBrowseResultCount) window.hubRevealBrowseResultCount();
       return;
     }
 
@@ -630,6 +631,7 @@
       paginationHtml(currentPage, totalPages);
 
     if (els.resultsCount) els.resultsCount.textContent = String(rows.length);
+    if (window.hubRevealBrowseResultCount) window.hubRevealBrowseResultCount();
     if (window.HubOrganiserFavourites) window.HubOrganiserFavourites.refreshButtons(els.listings);
   }
 

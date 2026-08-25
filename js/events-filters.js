@@ -1062,6 +1062,7 @@
     var filtered = window.hubGetFilteredEvents(all);
 
     if (resultsCount) resultsCount.textContent = String(filtered.length);
+    if (window.hubRevealBrowseResultCount) window.hubRevealBrowseResultCount();
 
     if (window.hubRefreshListings) window.hubRefreshListings();
     if (window.hubRefreshMap) window.hubRefreshMap(filtered);

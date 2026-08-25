@@ -26,6 +26,20 @@
 <script src="../js/hub-seo-static.js?v=20260612" data-page="events"></script>
 <script src="../js/hub-seo-data.js?v=20260612" defer></script>
 <script src="../js/hub-seo-schema.js?v=20260612" defer></script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": "Find your next event – The Networker UK",
+  "description": "Find meetings, webinars, workshops, exhibitions, and awards across the UK. Search by breakfast, women only, location, organiser, and more.",
+  "url": "https://www.thenetworkeruk.com/events/",
+  "isPartOf": {
+    "@type": "WebSite",
+    "name": "The Networker UK",
+    "url": "https://www.thenetworkeruk.com/"
+  }
+}
+</script>
 </head>
 <body class="events-page">
 
@@ -307,7 +321,12 @@
   </div>
 
   <div class="events-results-meta" id="events-results">
-    <span class="events-results-count">Showing <strong id="results-count">0</strong> results<span id="events-search-query" hidden></span></span>
+    <span class="events-results-count" aria-live="polite">
+      <span id="results-loading">Browse UK networking events</span>
+      <span id="results-ready" hidden
+        >Showing <strong id="results-count">0</strong> results<span id="events-search-query" hidden></span
+      ></span>
+    </span>
     <div class="events-results-actions">
       <nav
         class="browse-mode-toggle events-browse-switch"
@@ -414,7 +433,22 @@
           </nav>
         </div>
         <h2 class="listings-header" id="all-heading">All listings</h2>
-        <div class="event-listings" id="event-listings"></div>
+        <div class="event-listings" id="event-listings">
+          <div class="seo-browse-fallback" id="seo-browse-fallback">
+            <p>
+              Browse upcoming UK business networking events, meetings, workshops, exhibitions and awards
+              on The Networker UK. Filter by location, date, format and price — or jump to a city below.
+            </p>
+            <ul>
+              <li><a href="/networking/central-london">Central London networking events</a></li>
+              <li><a href="/networking/manchester">Manchester networking events</a></li>
+              <li><a href="/networking/birmingham">Birmingham networking events</a></li>
+              <li><a href="/networking/leeds">Leeds networking events</a></li>
+              <li><a href="/events/?format=online">Online networking events</a></li>
+              <li><a href="/events/?mode=organisers">Browse organisers</a></li>
+            </ul>
+          </div>
+        </div>
         <p class="events-organiser-footnote" id="events-organiser-footnote">
           Want to be included in The Networker UK? <a href="/for-organisers" class="events-hub-cta-link">Find out more</a>
         </p>
@@ -690,7 +724,7 @@
 <script src="../js/booking-fees.js?v=20260814visits1" defer></script>
 <script src="../js/hub-event-timezone.js?v=20260716" defer></script>
 <script src="../js/hub-search-match.js?v=20260807search2" defer></script>
-<script src="../js/events-filters.js?v=20260811perf1" defer></script>
+<script src="../js/events-filters.js?v=20260825soft404" defer></script>
 <script src="../js/browse-analytics-client.js?v=20260728index1" defer></script>
 <script src="../js/events-browse-api.js?v=20260811perf1" defer></script>
 <script src="../js/events-map.js?v=20260728maparea1" defer></script>
@@ -698,9 +732,9 @@
 <script src="../js/hub-event-preview.js?v=20260721" defer></script>
 <script src="../js/hub-spotlight-carousel.js?v=20260807fix3" defer></script>
 <script src="../js/hub-public-urls.js?v=20260807fix3b" defer></script>
-<script src="../js/events.js?v=20260807fix3b" defer></script>
-<script src="../js/organisers-filters.js?v=20260807search2" defer></script>
-<script src="../js/organisers.js?v=20260807fix3b" defer></script>
+<script src="../js/events.js?v=20260825soft404" defer></script>
+<script src="../js/organisers-filters.js?v=20260825soft404" defer></script>
+<script src="../js/organisers.js?v=20260825soft404" defer></script>
 <script src="../js/hub-organiser-actions.js?v=20260710" data-root="../" defer></script>
 <script src="../js/browse-mode.js?v=20260727sheet" defer></script>
 </body>

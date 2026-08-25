@@ -29,6 +29,20 @@
     <script src="/js/hub-seo-data.js?v=20260612" defer></script>
     <script src="/js/hub-seo-schema.js?v=20260612" defer></script>
     <script src="/js/hub-lazy-vendor.js?v=20260726m"></script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      "name": "Find your next business opportunity – The Networker UK",
+      "description": "Find your next franchise, side hustle, or partnership across the UK. Browse free on The Networker UK and enquire directly with providers.",
+      "url": "https://www.thenetworkeruk.com/opportunities/",
+      "isPartOf": {
+        "@type": "WebSite",
+        "name": "The Networker UK",
+        "url": "https://www.thenetworkeruk.com/"
+      }
+    }
+    </script>
   </head>
   <body class="events-page opportunities-page opp-browse-page">
     <div id="hub-site-nav"></div>
@@ -322,7 +336,10 @@
       </div>
 
       <div class="events-results-meta" id="results">
-        <span class="events-results-count" aria-live="polite">Showing <strong id="opp-results-count">0</strong> results</span>
+        <span class="events-results-count" aria-live="polite">
+          <span id="opp-results-loading">Browse UK business opportunities</span>
+          <span id="opp-results-ready" hidden>Showing <strong id="opp-results-count">0</strong> results</span>
+        </span>
         <div class="events-results-actions">
           <div class="opp-results-tools">
             <button type="button" class="opp-copy-link-btn" id="opp-copy-link-btn" title="Copy a link to this filtered view">Copy link</button>
@@ -407,7 +424,20 @@
 
           <section class="listings-block" id="listings-view" aria-labelledby="opp-listings-heading">
             <h2 class="listings-header" id="opp-listings-heading">All opportunities</h2>
-            <div class="event-listings" id="opp-listings-mount"></div>
+            <div class="event-listings" id="opp-listings-mount">
+              <div class="seo-browse-fallback" id="opp-seo-browse-fallback">
+                <p>
+                  Browse franchises, partnerships, side hustles and business opportunities across the UK
+                  on The Networker UK. Filter by investment level, sector and location.
+                </p>
+                <ul>
+                  <li><a href="/opportunities/?type=franchise">Franchises</a></li>
+                  <li><a href="/opportunities/?type=partnership">Partnerships</a></li>
+                  <li><a href="/opportunities/?type=side-hustle">Side hustles</a></li>
+                  <li><a href="/for-organisers">List your opportunity</a></li>
+                </ul>
+              </div>
+            </div>
             <p class="events-organiser-footnote">
               Provider?
               <a href="/organiser/opportunity-edit" class="events-organiser-footnote-link" data-hub-action="add-opportunity">List an opportunity</a>
