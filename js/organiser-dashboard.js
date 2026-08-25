@@ -4150,6 +4150,28 @@
     }).length;
   }
 
+  const ORG_TODO_BADGE_KEY = 'hub_org_todo_badge_v1';
+
+  function persistOrganiserTodoCount(count) {
+    const safeCount = Math.max(0, Number(count) || 0);
+    const userId = String(state.user?.sub || state.user?.email || '').trim();
+    try {
+      localStorage.setItem(
+        ORG_TODO_BADGE_KEY,
+        JSON.stringify({ count: safeCount, userId: userId, ts: Date.now() })
+      );
+    } catch (e) {
+      /* ignore quota / private mode */
+    }
+    try {
+      window.dispatchEvent(
+        new CustomEvent('hub:org-todo-count', { detail: { count: safeCount, userId: userId } })
+      );
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
   function updateNotificationsNavBadge(notices) {
     const badge = document.getElementById('org-notifications-count');
     const navBtn = document.getElementById('org-notifications-nav');
@@ -4170,6 +4192,7 @@
         count > 0 ? 'To-do, ' + count + ' need action' : 'To-do'
       );
     }
+    persistOrganiserTodoCount(count);
     refreshOrgBottomMoreCount(count);
   }
 

@@ -1973,17 +1973,48 @@
 }
 
 .opp-browse-page .sponsor-hub--fallback .sponsor-logo-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f4f0e6;
+}
+
+.opp-browse-page .sponsor-hub--fallback .sponsor-logo-link {
   display: none !important;
 }
 
+.opp-browse-page .sponsor-hub--fallback .sponsor-logo-placeholder {
+  width: 100%;
+  max-width: 200px;
+  min-height: 68px;
+  margin: 0 auto;
+  border-radius: 8px;
+  border: 1.5px dashed var(--opp-gold-border);
+  background: rgba(255, 255, 255, 0.7);
+  color: #6b7280;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
 .opp-browse-page .sponsor-hub--in-hero.sponsor-hub--fallback {
-  padding: 16px 18px 18px;
+  padding: 14px 18px 16px;
   justify-content: flex-start;
   gap: 0;
 }
 
 .opp-browse-page .sponsor-hub--in-hero.sponsor-hub--fallback .sponsor-hub-head {
-  margin-bottom: 14px;
+  margin-bottom: 10px;
+}
+
+.opp-browse-page .sponsor-hub--in-hero.sponsor-hub--fallback .sponsor-logo-wrap {
+  min-height: 100px;
+  margin-bottom: 12px;
+  padding: 14px 16px;
+}
+
+.opp-browse-page .sponsor-hub--in-hero.sponsor-hub--fallback .sponsor-tagline {
+  margin-bottom: 12px;
 }
 
 .opp-browse-page .sponsor-list {

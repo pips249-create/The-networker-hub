@@ -102,10 +102,14 @@
  * NAV_BUILD=20260709h — transparent nav logo (from logo-nav.png).
  */
 (function () {
-  var NAV_BUILD = '20260825banner2';
+  var NAV_BUILD = '20260825adminbadge1';
   var LOGO_SRC = '/assets/logo-nav-transparent.png?v=20260823uk3';
   var SESSION_KEY = 'hub_nav_session_v1';
   var SESSION_TTL_MS = 5 * 60 * 1000;
+  var ORG_TODO_BADGE_KEY = 'hub_org_todo_badge_v1';
+  var ADMIN_ATTENTION_BADGE_KEY = 'hub_admin_attention_badge_v1';
+  var orgTodoListenerBound = false;
+  var adminAttentionListenerBound = false;
   var script = document.currentScript;
   var root = (script && script.getAttribute('data-root')) || '';
   var page = (script && script.getAttribute('data-page')) || '';
@@ -356,7 +360,7 @@
     var organiserItem = '';
     if (showOrganiserLink) {
       organiserItem =
-        '<a role="menuitem" class="nav-dropdown-item nav-organiser-in-menu" href="' +
+        '<a role="menuitem" class="nav-dropdown-item nav-organiser-in-menu nav-org-workspace" href="' +
         href('/organiser/') +
         '"' +
         organiserActive +
@@ -365,7 +369,7 @@
     var adminItem = '';
     if (user && user.role === 'admin') {
       adminItem =
-        '<a role="menuitem" class="nav-dropdown-item" href="' +
+        '<a role="menuitem" class="nav-dropdown-item nav-admin-cc" href="' +
         href('/admin/') +
         '"' +
         adminActive +
@@ -417,12 +421,197 @@
     try {
       if (!user) {
         sessionStorage.removeItem(SESSION_KEY);
+        clearOrgTodoBadge();
+        clearAdminAttentionBadge();
         return;
       }
       sessionStorage.setItem(SESSION_KEY, JSON.stringify({ ts: Date.now(), user: user }));
     } catch (e) {
       /* ignore quota / private mode */
     }
+  }
+
+  function clearOrgTodoBadge() {
+    try {
+      localStorage.removeItem(ORG_TODO_BADGE_KEY);
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function clearAdminAttentionBadge() {
+    try {
+      localStorage.removeItem(ADMIN_ATTENTION_BADGE_KEY);
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function readOrgTodoCount(user) {
+    if (!user || !user.organiserUiVisible) return 0;
+    /* Workspace To-do already has its own badge while on organiser pages. */
+    if (page === 'organiser') return 0;
+    try {
+      var raw = localStorage.getItem(ORG_TODO_BADGE_KEY);
+      if (!raw) return 0;
+      var parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== 'object') return 0;
+      var userId = String(user.sub || user.email || '').trim();
+      if (userId && parsed.userId && String(parsed.userId) !== userId) return 0;
+      var count = Math.max(0, Number(parsed.count) || 0);
+      return count > 0 ? count : 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  function readAdminAttentionCount(user) {
+    if (!user || user.role !== 'admin') return 0;
+    /* Command Center already shows its own badges while on admin pages. */
+    if (page === 'admin') return 0;
+    try {
+      var raw = localStorage.getItem(ADMIN_ATTENTION_BADGE_KEY);
+      if (!raw) return 0;
+      var parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== 'object') return 0;
+      var userId = String(user.sub || user.email || '').trim();
+      if (userId && parsed.userId && String(parsed.userId) !== userId) return 0;
+      var count = Math.max(0, Number(parsed.count) || 0);
+      return count > 0 ? count : 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  function applyAccountAttention(user) {
+    if (!mount) return;
+    var u = user || lastNavUser;
+    var orgCount = readOrgTodoCount(u);
+    var adminCount = readAdminAttentionCount(u);
+    var total = orgCount + adminCount;
+    var show = total > 0;
+    var parts = [];
+    if (orgCount > 0) {
+      parts.push(
+        orgCount === 1
+          ? '1 organiser to-do needs attention'
+          : orgCount + ' organiser to-dos need attention'
+      );
+    }
+    if (adminCount > 0) {
+      parts.push(
+        adminCount === 1
+          ? '1 Command Center item needs attention'
+          : adminCount + ' Command Center items need attention'
+      );
+    }
+    var labelSuffix = parts.length ? ', ' + parts.join('; ') : '';
+
+    function setAttention(el, baseLabel, keepLabelWhenClear, forceShow) {
+      if (!el) return;
+      var on = forceShow == null ? show : !!forceShow;
+      el.classList.toggle('has-attention', on);
+      if (!baseLabel) return;
+      if (on) {
+        el.setAttribute('aria-label', baseLabel + labelSuffix);
+      } else if (keepLabelWhenClear) {
+        el.setAttribute('aria-label', baseLabel);
+      } else {
+        el.removeAttribute('aria-label');
+      }
+    }
+
+    setAttention(document.getElementById('nav-my-hub-toggle'), 'My account', false);
+    setAttention(document.getElementById('nav-menu-toggle'), 'Open menu', true);
+    mount.querySelectorAll('.nav-org-workspace').forEach(function (el) {
+      setAttention(el, 'Organiser workspace', false, orgCount > 0);
+    });
+    mount.querySelectorAll('.nav-admin-cc').forEach(function (el) {
+      var adminSuffix =
+        adminCount > 0
+          ? ', ' +
+            (adminCount === 1
+              ? '1 item needs attention'
+              : adminCount + ' items need attention')
+          : '';
+      el.classList.toggle('has-attention', adminCount > 0);
+      if (adminCount > 0) {
+        el.setAttribute('aria-label', 'Command Center' + adminSuffix);
+      } else {
+        el.removeAttribute('aria-label');
+      }
+    });
+  }
+
+  function applyOrgTodoAttention(user) {
+    applyAccountAttention(user);
+  }
+
+  function bindOrgTodoListener() {
+    if (orgTodoListenerBound) return;
+    orgTodoListenerBound = true;
+    window.addEventListener('hub:org-todo-count', function () {
+      applyAccountAttention(lastNavUser);
+    });
+  }
+
+  function bindAdminAttentionListener() {
+    if (adminAttentionListenerBound) return;
+    adminAttentionListenerBound = true;
+    window.addEventListener('hub:admin-attention-count', function () {
+      applyAccountAttention(lastNavUser);
+    });
+  }
+
+  function persistAdminAttentionFromNav(count, user) {
+    var safe = Math.max(0, Number(count) || 0);
+    var userId = String((user && (user.sub || user.email)) || '').trim();
+    try {
+      localStorage.setItem(
+        ADMIN_ATTENTION_BADGE_KEY,
+        JSON.stringify({ count: safe, userId: userId, ts: Date.now() })
+      );
+    } catch (e) {
+      /* ignore */
+    }
+    try {
+      window.dispatchEvent(
+        new CustomEvent('hub:admin-attention-count', {
+          detail: { count: safe, userId: userId },
+        })
+      );
+    } catch (e2) {
+      /* ignore */
+    }
+  }
+
+  function refreshAdminAttentionBadge(user) {
+    if (!user || user.role !== 'admin' || page === 'admin') return;
+    fetch('/api/admin/metrics?light=1', { credentials: 'include', cache: 'no-store' })
+      .then(function (res) {
+        return res.json();
+      })
+      .then(function (data) {
+        if (!data || data.error || data.configured === false) return;
+        var counts = data.actionCounts || {};
+        var total =
+          Number(data.notificationCount) ||
+          (Number(counts.openListingReports) || 0) +
+            (Number(counts.openReviewReports) || 0) +
+            (Number(counts.spamReviews) || 0) +
+            (Number(counts.pendingOpportunities) || 0) +
+            (Number(counts.openClaimDisputes) || 0) +
+            (Number(counts.openOrganiserClaimRequests) || 0) +
+            (Number(counts.openComplaints) || 0) +
+            (Number(counts.pendingPayouts) || 0) +
+            (Number(counts.openEventRequests) || 0) +
+            (Number(counts.incompleteOrganisers) || 0);
+        persistAdminAttentionFromNav(total, user);
+        applyAccountAttention(user);
+      })
+      .catch(function () {
+        /* ignore — keep cached badge */
+      });
   }
 
   function isMoreNavActive() {
@@ -499,7 +688,7 @@
     if (early) {
       // Soft launch: only destinations they can actually open (no catalogue browse).
       if (user && user.organiserUiVisible) {
-        html += link('/organiser/', 'Organiser workspace', 'organiser');
+        html += link('/organiser/', 'Organiser workspace', 'organiser', 'nav-org-workspace');
       } else {
         html += link('/for-organisers', 'For organisers', 'for-organisers');
       }
@@ -592,7 +781,12 @@
     if (early) {
       html += '<p class="nav-mobile-section-label">Explore</p>';
       if (user && user.organiserUiVisible) {
-        html += link('/organiser/', 'Organiser workspace', 'organiser', 'nav-mobile-item');
+        html += link(
+          '/organiser/',
+          'Organiser workspace',
+          'organiser',
+          'nav-mobile-item nav-org-workspace'
+        );
       } else {
         html += link('/for-organisers', 'For organisers', 'for-organisers', 'nav-mobile-item');
       }
@@ -630,12 +824,17 @@
       html += '<p class="nav-mobile-account-label">My account</p>';
       html += link('/account/', 'My account', 'account', 'nav-mobile-item');
       if (user.organiserUiVisible) {
-        html += link('/organiser/', 'Organiser workspace', 'organiser', 'nav-mobile-item');
+        html += link(
+          '/organiser/',
+          'Organiser workspace',
+          'organiser',
+          'nav-mobile-item nav-org-workspace'
+        );
       }
       html += link('/account/settings', 'Account settings', 'settings', 'nav-mobile-item');
       html += link('/contact', 'Contact us', 'contact', 'nav-mobile-item');
       if (user.role === 'admin') {
-        html += link('/admin/', 'Command Center', 'admin', 'nav-mobile-item');
+        html += link('/admin/', 'Command Center', 'admin', 'nav-mobile-item nav-admin-cc');
       }
       html +=
         '<button type="button" class="nav-mobile-item nav-mobile-signout" id="nav-mobile-signout">Sign out</button>';
@@ -1002,6 +1201,10 @@
     bindMyHubDropdown(nav);
     bindMoreDropdown(nav);
     bindListEventCta();
+    bindOrgTodoListener();
+    bindAdminAttentionListener();
+    applyAccountAttention(user);
+    refreshAdminAttentionBadge(user);
 
     var signOut = document.getElementById('nav-signout');
     if (signOut) {

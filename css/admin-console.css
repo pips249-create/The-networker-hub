@@ -94,9 +94,21 @@ body.hub-page-admin .site-nav {
 }
 
 .admin-sidebar-head h1 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
   font-size: 1.0625rem;
   font-weight: 600;
   letter-spacing: -0.01em;
+}
+
+.admin-cc-head-badge {
+  margin-left: 0;
+  font-size: 0.6875rem;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  line-height: 1.25rem;
 }
 
 .admin-sidebar-user {

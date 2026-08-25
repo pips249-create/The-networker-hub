@@ -395,7 +395,17 @@ body.browse-mode-organisers .events-organiser-footnote .events-hub-cta-link {
 }
 
 .sponsor-hub--in-hero.sponsor-hub--fallback .sponsor-logo-wrap {
-  display: none !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 96px;
+  margin-bottom: 12px;
+  padding: 14px 16px;
+}
+
+.sponsor-hub--in-hero.sponsor-hub--fallback .sponsor-logo-placeholder {
+  max-width: 200px;
+  min-height: 64px;
 }
 
 .sponsor-hub--in-hero .sponsor-cta {
@@ -1574,7 +1584,25 @@ body.browse-mode-organisers .events-organiser-footnote-link {
   color: var(--text-muted);
 }
 .sponsor-hub--fallback .sponsor-logo-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.sponsor-hub--fallback .sponsor-logo-link {
   display: none !important;
+}
+.sponsor-hub--fallback .sponsor-logo-placeholder {
+  width: 100%;
+  max-width: 220px;
+  min-height: 72px;
+  margin: 0 auto;
+  border-radius: 8px;
+  border: 1.5px dashed rgba(122, 61, 138, 0.45);
+  background: rgba(255, 255, 255, 0.55);
+  color: #6b6470;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 .sponsor-hub--fallback .sponsor-body {
   font-size: 13px;

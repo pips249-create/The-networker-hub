@@ -386,10 +386,10 @@
     'revenue-mix': {
       title: 'How to use the revenue mix model',
       steps: [
-        'Pick Launch, Growth, or Scale — or adjust the fields for your own forecast.',
-        'Load live sponsor slots to pull Headline and Page Partner fill from the CMS.',
-        'Raise paid ticket volume to see when transaction fees start to catch sponsorship.',
-        'Use Sales targets for recorded actuals and Payments for live booking data.',
+        'Tap Launch, Growth, or Scale — totals update instantly.',
+        'Drag paid tickets / month to see when fees catch up with sponsorship.',
+        'Open Sponsorship inventory only when you need to tweak slot fill (or Load live slots).',
+        'Charts and break-even tables stay collapsed until you need them — Sales targets holds actuals.',
       ],
     },
     spotlight: {
@@ -1445,36 +1445,122 @@
         (Number(counts.spamReviews) || 0) +
         (Number(counts.pendingOpportunities) || 0) +
         (Number(counts.openClaimDisputes) || 0) +
-        (Number(counts.openOrganiserClaimRequests) || 0)
+        (Number(counts.openOrganiserClaimRequests) || 0) +
+        (Number(counts.openComplaints) || 0) +
+        (Number(counts.pendingPayouts) || 0) +
+        (Number(counts.openEventRequests) || 0) +
+        (Number(counts.incompleteOrganisers) || 0)
       );
     }
     return Number(data && data.notificationCount) || 0;
   }
 
-  function sidebarNotificationTotal(data) {
-    var actionCount = sumActionNotificationCounts(data);
-    var healthCount = healthCache && Number(healthCache.count) > 0 ? Number(healthCache.count) : 0;
-    return actionCount + healthCount;
-  }
-
-  function listingFixSeverityCounts() {
+  function urgentEventHealthCount() {
     var urgent = 0;
-    var polish = 0;
     ((healthCache && healthCache.events) || []).forEach(function (ev) {
       var issues = ev.issues || [];
       var hasHigh = issues.some(function (issue) {
         return issue && issue.severity === 'high';
       });
       if (hasHigh) urgent += 1;
-      else polish += 1;
     });
-    var incomplete =
-      (adminMetricsCache &&
-        adminMetricsCache.actionCounts &&
-        Number(adminMetricsCache.actionCounts.incompleteOrganisers)) ||
-      0;
-    polish += incomplete;
-    return { urgent: urgent, polish: polish };
+    return urgent;
+  }
+
+  function softEventHealthCount() {
+    var soft = 0;
+    ((healthCache && healthCache.events) || []).forEach(function (ev) {
+      var issues = ev.issues || [];
+      var hasHigh = issues.some(function (issue) {
+        return issue && issue.severity === 'high';
+      });
+      if (!hasHigh) soft += 1;
+    });
+    return soft;
+  }
+
+  /** Fix listings sidebar badge — matches tab work (groups / requests / opps / urgent data). */
+  function listingFixSeverityCounts() {
+    var counts =
+      (adminMetricsCache && adminMetricsCache.actionCounts) ||
+      ((readCachedAdminMetrics() || {}).actionCounts) ||
+      {};
+    var urgent = urgentEventHealthCount();
+    var polish =
+      (Number(counts.incompleteOrganisers) || 0) +
+      (Number(counts.openEventRequests) || 0) +
+      (Number(counts.pendingOpportunities) || 0);
+    return { urgent: urgent, polish: polish, softEvents: softEventHealthCount() };
+  }
+
+  function fixListingsBadgeTotal() {
+    var parts = listingFixSeverityCounts();
+    return parts.urgent + parts.polish;
+  }
+
+  function adminAttentionTotal(data) {
+    var actionCount = sumActionNotificationCounts(data || adminMetricsCache || {});
+    return actionCount + urgentEventHealthCount();
+  }
+
+  var ADMIN_ATTENTION_BADGE_KEY = 'hub_admin_attention_badge_v1';
+
+  function persistAdminAttentionCount(total) {
+    var safe = Math.max(0, Number(total) || 0);
+    var userId = String(
+      (currentUser && (currentUser.sub || currentUser.email)) || ''
+    ).trim();
+    try {
+      localStorage.setItem(
+        ADMIN_ATTENTION_BADGE_KEY,
+        JSON.stringify({ count: safe, userId: userId, ts: Date.now() })
+      );
+    } catch (_e) {
+      /* ignore */
+    }
+    try {
+      window.dispatchEvent(
+        new CustomEvent('hub:admin-attention-count', {
+          detail: { count: safe, userId: userId },
+        })
+      );
+    } catch (_e2) {
+      /* ignore */
+    }
+  }
+
+  function updateCommandCenterHeaderBadge(total) {
+    var badge = document.getElementById('admin-cc-attention-badge');
+    if (!badge) return;
+    var n = Math.max(0, Number(total) || 0);
+    if (n <= 0) {
+      badge.classList.add('hidden');
+      badge.textContent = '0';
+      badge.setAttribute('aria-label', 'No items needing attention');
+      return;
+    }
+    badge.textContent = n > 99 ? '99+' : String(n);
+    badge.classList.remove('hidden');
+    badge.setAttribute(
+      'aria-label',
+      n + ' item' + (n === 1 ? '' : 's') + ' needing attention'
+    );
+  }
+
+  function updateModerationNavBadge(data) {
+    var badge = document.getElementById('admin-moderation-badge');
+    if (!badge) return;
+    var counts = (data && data.actionCounts) || {};
+    var n =
+      (Number(counts.openListingReports) || 0) + (Number(counts.openReviewReports) || 0);
+    if (n <= 0) {
+      badge.classList.add('hidden');
+      badge.textContent = '0';
+      return;
+    }
+    badge.textContent = n > 99 ? '99+' : String(n);
+    badge.classList.remove('hidden');
+    badge.setAttribute('aria-label', n + ' open report' + (n === 1 ? '' : 's'));
   }
 
   function updateHealthBadge() {
@@ -1483,36 +1569,42 @@
     var counts = listingFixSeverityCounts();
     var urgent = counts.urgent;
     var polish = counts.polish;
+    var total = urgent + polish;
     badge.classList.remove('admin-nav-badge--polish');
     if (urgent > 0) {
-      badge.textContent = urgent > 99 ? '99+' : String(urgent);
+      badge.textContent = total > 99 ? '99+' : String(total);
       badge.classList.remove('hidden');
       badge.setAttribute(
         'aria-label',
         urgent +
           ' urgent listing issue' +
           (urgent === 1 ? '' : 's') +
-          (polish ? ', ' + polish + ' also need polish' : '')
+          (polish ? ', ' + polish + ' other Fix listings items' : '')
       );
       badge.title =
         urgent +
-        ' urgent · ' +
+        ' urgent data issues · ' +
         polish +
-        ' need polish (incomplete groups / softer event data gaps)';
+        ' incomplete groups / open requests / pending opportunities';
     } else if (polish > 0) {
       badge.textContent = polish > 99 ? '99+' : String(polish);
       badge.classList.add('admin-nav-badge--polish');
       badge.classList.remove('hidden');
       badge.setAttribute(
         'aria-label',
-        polish + ' listing' + (polish === 1 ? '' : 's') + ' need polish'
+        polish + ' Fix listings item' + (polish === 1 ? '' : 's') + ' need attention'
       );
-      badge.title = polish + ' need polish — not urgent blockers';
+      badge.title =
+        polish + ' incomplete groups, open event requests, or pending opportunities';
     } else {
       badge.classList.add('hidden');
       badge.setAttribute('aria-label', 'No open listing fixes');
       badge.title = '';
     }
+  }
+
+  function sidebarNotificationTotal(data) {
+    return adminAttentionTotal(data);
   }
 
   function updateAdminDataBadge(updatedAt) {
@@ -1689,6 +1781,15 @@
     if (!data.light) {
       adminMetricsCache = data;
       writeCachedAdminMetrics(data);
+    } else if (data.actionCounts) {
+      var previous = adminMetricsCache || readCachedAdminMetrics() || {};
+      adminMetricsCache = Object.assign({}, previous, {
+        actionCounts: data.actionCounts,
+        notificationCount: data.notificationCount,
+        updatedAt: data.updatedAt || previous.updatedAt,
+        light: true,
+      });
+      writeCachedAdminMetrics(adminMetricsCache);
     }
     updateAdminDataBadge(data.updatedAt);
 
@@ -1741,6 +1842,10 @@
     }
 
     updateHealthBadge();
+    updateModerationNavBadge(data);
+    var attentionTotal = adminAttentionTotal(data);
+    persistAdminAttentionCount(attentionTotal);
+    updateCommandCenterHeaderBadge(attentionTotal);
     syncScheduledRemindersSection();
     syncLiveHubTabBadges(data);
     syncNeedsAttentionStrip(data);
@@ -2227,10 +2332,11 @@
     );
     push(counts.openComplaints, 'Complaints', '#support/complaints', 'amber');
     push(counts.incompleteOrganisers, 'Incomplete groups (polish)', '#cleanup/groups', 'slate');
+    push(counts.openEventRequests, 'Event requests', '#cleanup/requests', 'amber');
     push(counts.pendingOpportunities, 'Opportunity reviews', '#cleanup/opportunities', 'slate');
     var healthParts = listingFixSeverityCounts();
     push(healthParts.urgent, 'Urgent event data', '#cleanup/issues', 'rose');
-    push(healthParts.polish - (Number(counts.incompleteOrganisers) || 0), 'Event polish', '#cleanup/issues', 'slate');
+    push(healthParts.softEvents, 'Event polish', '#cleanup/issues', 'slate');
     return chips;
   }
 
@@ -14113,6 +14219,17 @@
     );
   }
 
+  function eventCleanupActiveFilterCount() {
+    var n = 0;
+    if (eventCleanupState.organiserId) n += 1;
+    if (eventCleanupState.status) n += 1;
+    if (eventCleanupState.approval) n += 1;
+    if (eventCleanupState.when) n += 1;
+    if (eventCleanupState.unlinked) n += 1;
+    if (eventCleanupState.noDate) n += 1;
+    return n;
+  }
+
   function syncEventCleanupFilterUi() {
     var el;
     el = document.getElementById('event-cleanup-organiser');
@@ -14131,6 +14248,17 @@
     if (el) el.value = eventCleanupState.approval || '';
     el = document.getElementById('event-cleanup-sort');
     if (el) el.value = eventCleanupState.sort || 'recent';
+    var countEl = document.getElementById('event-cleanup-filter-count');
+    var activeCount = eventCleanupActiveFilterCount();
+    if (countEl) {
+      if (activeCount) {
+        countEl.textContent = activeCount + ' active';
+        countEl.classList.remove('hidden');
+      } else {
+        countEl.textContent = '';
+        countEl.classList.add('hidden');
+      }
+    }
     main.querySelectorAll('[data-event-quick]').forEach(function (btn) {
       var key = btn.getAttribute('data-event-quick');
       var active = false;
@@ -15037,6 +15165,13 @@
     });
   }
 
+  function groupCleanupActiveFilterCount() {
+    var n = 0;
+    if (groupCleanupState.visibility) n += 1;
+    if (groupCleanupState.incomplete) n += 1;
+    return n;
+  }
+
   function syncGroupCleanupFilterUi() {
     var el = document.getElementById('group-cleanup-visibility');
     if (el) el.value = groupCleanupState.visibility || '';
@@ -15044,6 +15179,17 @@
     if (el) el.checked = !!groupCleanupState.incomplete;
     el = document.getElementById('group-cleanup-exclude-hidden');
     if (el) el.checked = !!groupCleanupState.excludeHidden && !groupCleanupState.visibility;
+    var countEl = document.getElementById('group-cleanup-filter-count');
+    var activeCount = groupCleanupActiveFilterCount();
+    if (countEl) {
+      if (activeCount) {
+        countEl.textContent = activeCount + ' active';
+        countEl.classList.remove('hidden');
+      } else {
+        countEl.textContent = '';
+        countEl.classList.add('hidden');
+      }
+    }
     if (!main) return;
     main.querySelectorAll('[data-group-quick]').forEach(function (btn) {
       var key = btn.getAttribute('data-group-quick');
@@ -16958,10 +17104,24 @@
       '<div class="flex flex-wrap items-center gap-3">' +
       '<button type="button" id="group-delete-btn" class="rounded-lg bg-red-600 text-white text-sm font-semibold px-4 py-2 hover:bg-red-700">Delete selected</button>' +
       '<span id="group-delete-msg" class="text-xs"></span></div></div></div>' +
-      '<div class="admin-filter-bar flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">' +
+      '<div class="admin-filter-bar admin-filter-bar--listings flex flex-col gap-3">' +
+      '<div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">' +
       '<input type="search" id="group-cleanup-search" placeholder="Search by name or email…" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full sm:max-w-xs bg-white" value="' +
       attrEsc(groupCleanupState.q) +
       '">' +
+      '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">' +
+      '<input type="checkbox" id="group-cleanup-select-page" class="rounded border-slate-300"> Select all on page</label></div>' +
+      '<details class="admin-filter-more"' +
+      (groupCleanupActiveFilterCount() ? ' open' : '') +
+      '>' +
+      '<summary><span>More filters</span>' +
+      '<span id="group-cleanup-filter-count" class="admin-filter-more-count' +
+      (groupCleanupActiveFilterCount() ? '' : ' hidden') +
+      '">' +
+      (groupCleanupActiveFilterCount() ? groupCleanupActiveFilterCount() + ' active' : '') +
+      '</span></summary>' +
+      '<div class="space-y-3 pt-3">' +
+      '<div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">' +
       '<select id="group-cleanup-visibility" class="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white w-full sm:max-w-[12rem]" aria-label="Browse visibility">' +
       '<option value=""' +
       (groupCleanupState.visibility === '' ? ' selected' : '') +
@@ -16978,16 +17138,15 @@
       '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">' +
       '<input type="checkbox" id="group-cleanup-incomplete" class="rounded border-slate-300"' +
       (groupCleanupState.incomplete ? ' checked' : '') +
-      '> Show incomplete only</label>' +
-      '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">' +
-      '<input type="checkbox" id="group-cleanup-select-page" class="rounded border-slate-300"> Select all on page</label></div>' +
+      '> Show incomplete only</label></div>' +
       '<div class="flex flex-wrap gap-2">' +
       '<button type="button" data-group-quick="browse" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">On browse</button>' +
       '<button type="button" data-group-quick="draft" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Draft</button>' +
       '<button type="button" data-group-quick="unpublished" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Unpublished</button>' +
       '<button type="button" data-group-quick="incomplete" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Incomplete</button>' +
       '<button type="button" data-group-quick="clear" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-500 hover:bg-slate-50">Clear filters</button></div>' +
-      '<p class="text-xs text-slate-500">Compact rows — click <strong>Edit profile</strong> to expand. Use page numbers below to browse.</p>' +
+      '</div></details></div>' +
+      '<p class="text-xs text-slate-500">Compact rows — click <strong>Edit profile</strong> to expand. Use page numbers or Go to below to browse.</p>' +
       '<div id="group-cleanup-list" class="space-y-2"></div></div>';
 
     groupCleanupState.page = 0;
@@ -17995,8 +18154,9 @@
   }
 
   function eventCleanupFiltersHtml() {
+    var activeCount = eventCleanupActiveFilterCount();
     return (
-      '<div class="admin-filter-bar rounded-xl border border-slate-200 bg-white p-4 space-y-3 shadow-sm">' +
+      '<div class="admin-filter-bar admin-filter-bar--listings rounded-xl border border-slate-200 bg-white p-3 space-y-3 shadow-sm">' +
       '<div class="flex flex-col gap-3 sm:flex-row sm:items-center">' +
       '<input type="search" id="event-cleanup-search" placeholder="Search title or city…" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full sm:flex-1 bg-white" value="' +
       attrEsc(eventCleanupState.q) +
@@ -18011,6 +18171,16 @@
       '<option value="title"' +
       (eventCleanupState.sort === 'title' ? ' selected' : '') +
       '>Title A–Z</option></select></div>' +
+      '<details class="admin-filter-more"' +
+      (activeCount ? ' open' : '') +
+      '>' +
+      '<summary><span>More filters</span>' +
+      '<span id="event-cleanup-filter-count" class="admin-filter-more-count' +
+      (activeCount ? '' : ' hidden') +
+      '">' +
+      (activeCount ? activeCount + ' active' : '') +
+      '</span></summary>' +
+      '<div class="space-y-3 pt-3">' +
       '<div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">' +
       '<select id="event-cleanup-organiser" class="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white w-full sm:max-w-xs">' +
       '<option value="">All organisers</option></select>' +
@@ -18055,6 +18225,7 @@
       '<button type="button" data-event-quick="draft" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Draft</button>' +
       '<button type="button" data-event-quick="pending" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Draft events</button>' +
       '<button type="button" data-event-quick="clear" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-500 hover:bg-slate-50">Clear filters</button></div>' +
+      '</div></details>' +
       '<div class="flex flex-wrap items-center justify-between gap-2 border-t border-slate-100 pt-2">' +
       '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">' +
       '<input type="checkbox" id="event-cleanup-select-page" class="rounded border-slate-300"> Select all on page</label>' +
@@ -18065,7 +18236,7 @@
   function eventCleanupHintHtml() {
     return (
       '<p id="event-cleanup-hint" class="hidden text-xs text-amber-900 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">' +
-      'Large catalogue — search by title or city, pick an organiser, or use quick filters. Use the page numbers below the table to browse.</p>'
+      'Large catalogue — search by title or city, open More filters, or type a page number below the table to jump ahead.</p>'
     );
   }
 
@@ -21106,6 +21277,16 @@
     );
   }
 
+  function opportunityCleanupActiveFilterCount() {
+    var n = 0;
+    if (opportunityCleanupState.status) n += 1;
+    if (opportunityCleanupState.approval) n += 1;
+    if (opportunityCleanupState.type) n += 1;
+    if (opportunityCleanupState.featured) n += 1;
+    if (opportunityCleanupState.noImage) n += 1;
+    return n;
+  }
+
   function syncOpportunityCleanupFilterUi() {
     var el;
     el = document.getElementById('opportunity-cleanup-search');
@@ -21122,6 +21303,17 @@
     if (el) el.checked = !!opportunityCleanupState.featured;
     el = document.getElementById('opportunity-cleanup-no-image');
     if (el) el.checked = !!opportunityCleanupState.noImage;
+    var countEl = document.getElementById('opportunity-cleanup-filter-count');
+    var activeCount = opportunityCleanupActiveFilterCount();
+    if (countEl) {
+      if (activeCount) {
+        countEl.textContent = activeCount + ' active';
+        countEl.classList.remove('hidden');
+      } else {
+        countEl.textContent = '';
+        countEl.classList.add('hidden');
+      }
+    }
     if (!main) return;
     main.querySelectorAll('[data-opp-quick]').forEach(function (btn) {
       var key = btn.getAttribute('data-opp-quick');
@@ -21575,7 +21767,7 @@
       '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Manage business opportunity listings submitted by organisers. Approve pending listings, toggle <strong>featured</strong> for the Premium Spotlight carousel on <code class="text-[11px]">/opportunities/</code>, or expand a row to edit details.</p>' +
       '<div id="opportunity-cleanup-status" class="text-sm text-slate-500">Loading business opportunities…</div>' +
       '<p id="opportunity-cleanup-hint" class="hidden text-xs text-amber-900 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">' +
-      'Large catalogue — use search and filters below. Use page numbers below the table to browse.</p>' +
+      'Large catalogue — use search and More filters. Type a page number below the table to jump ahead.</p>' +
       '<div id="opportunity-cleanup-bulk" class="hidden rounded-xl border border-brand-200 bg-brand-50 p-4 shadow-sm space-y-3">' +
       '<div class="flex flex-wrap items-center justify-between gap-2">' +
       '<p class="text-sm font-semibold text-brand-900"><span id="opportunity-bulk-count">0</span> listings selected</p>' +
@@ -21588,7 +21780,7 @@
       '<div class="flex flex-wrap items-center gap-3">' +
       '<button type="button" id="opportunity-delete-btn" class="rounded-lg bg-red-600 text-white text-sm font-semibold px-4 py-2 hover:bg-red-700">Delete selected</button>' +
       '<span id="opportunity-delete-msg" class="text-xs"></span></div></div></div>' +
-      '<div class="admin-filter-bar sticky top-0 z-10 rounded-xl border border-slate-200 bg-white/95 backdrop-blur p-4 space-y-3 shadow-sm">' +
+      '<div class="admin-filter-bar admin-filter-bar--listings rounded-xl border border-slate-200 bg-white p-3 space-y-3 shadow-sm">' +
       '<div class="flex flex-col gap-3 sm:flex-row sm:items-center">' +
       '<input type="search" id="opportunity-cleanup-search" placeholder="Search title, host, or owner email…" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full sm:flex-1 bg-white" value="' +
       attrEsc(opportunityCleanupState.q) +
@@ -21606,6 +21798,16 @@
       '<option value="host"' +
       (opportunityCleanupState.sort === 'host' ? ' selected' : '') +
       '>Host A–Z</option></select></div>' +
+      '<details class="admin-filter-more"' +
+      (opportunityCleanupActiveFilterCount() ? ' open' : '') +
+      '>' +
+      '<summary><span>More filters</span>' +
+      '<span id="opportunity-cleanup-filter-count" class="admin-filter-more-count' +
+      (opportunityCleanupActiveFilterCount() ? '' : ' hidden') +
+      '">' +
+      (opportunityCleanupActiveFilterCount() ? opportunityCleanupActiveFilterCount() + ' active' : '') +
+      '</span></summary>' +
+      '<div class="space-y-3 pt-3">' +
       '<div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">' +
       '<select id="opportunity-cleanup-status-filter" class="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white w-full sm:max-w-[10rem]">' +
       '<option value="">Any status</option>' +
@@ -21641,7 +21843,8 @@
       '<button type="button" data-opp-quick="featured" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Featured</button>' +
       '<button type="button" data-opp-quick="no_image" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">No image</button>' +
       '<button type="button" data-opp-quick="clear" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-500 hover:bg-slate-50">Clear filters</button></div>' +
-      '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">' +
+      '</div></details>' +
+      '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer border-t border-slate-100 pt-2">' +
       '<input type="checkbox" id="opportunity-cleanup-select-page" class="rounded border-slate-300"> Select all on page</label></div>' +
       '<div id="opportunity-cleanup-list"></div>' +
       '<details class="rounded-xl border border-brand-200 bg-brand-50/50 group" open>' +
@@ -23349,14 +23552,16 @@
     if (!tab) return;
 
     var incompleteBadge = hubTabBadge(actionCountValue('incompleteOrganisers'));
+    var requestBadge = hubTabBadge(actionCountValue('openEventRequests'));
     var oppBadge = hubTabBadge(actionCountValue('pendingOpportunities'));
+    var urgentBadge = hubTabBadge(urgentEventHealthCount());
     var tabsHtml = adminHubTabsHtml(
       [
         { key: 'groups', label: 'Groups', href: '#cleanup/groups', badgeHtml: incompleteBadge, badgeKey: 'incompleteOrganisers' },
         { key: 'events', label: 'Events', href: '#cleanup/events' },
-        { key: 'requests', label: 'Event requests', href: '#cleanup/requests' },
+        { key: 'requests', label: 'Event requests', href: '#cleanup/requests', badgeHtml: requestBadge, badgeKey: 'openEventRequests' },
         { key: 'opportunities', label: 'Opportunities', href: '#cleanup/opportunities', badgeHtml: oppBadge, badgeKey: 'pendingOpportunities' },
-        { key: 'issues', label: 'Data issues', href: '#cleanup/issues' },
+        { key: 'issues', label: 'Data issues', href: '#cleanup/issues', badgeHtml: urgentBadge },
       ],
       tab
     );
@@ -24773,6 +24978,7 @@
     bindGroupCleanupForms();
     bindEventCleanupForms();
     bindOpportunityCleanupForms();
+    bindAdminPaginationGoto();
     // Metrics only after admin session is confirmed — never paint cache for guests
     adminMetricsCache = readCachedAdminMetrics();
     if (adminMetricsCache && document.getElementById('dashboard-action-queue')) {

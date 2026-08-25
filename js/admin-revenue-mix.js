@@ -216,25 +216,49 @@
     );
   }
 
+  function fieldSlider(name, label, value, min, max, step, hint) {
+    return (
+      '<label class="revenue-mix-field block text-xs">' +
+      '<span class="flex items-center justify-between gap-2 font-semibold text-slate-600">' +
+      '<span>' +
+      label +
+      '</span>' +
+      '<span class="tabular-nums text-brand-900" data-mix-slider-value="' +
+      name +
+      '">' +
+      value +
+      '</span></span>' +
+      '<input type="range" min="' +
+      min +
+      '" max="' +
+      max +
+      '" step="' +
+      (step || 1) +
+      '" class="mt-2 w-full accent-brand-700" data-mix-field="' +
+      name +
+      '" data-mix-slider="1" value="' +
+      value +
+      '" />' +
+      (hint ? '<span class="block mt-1 text-[11px] text-slate-500">' + hint + '</span>' : '') +
+      '</label>'
+    );
+  }
+
   function renderInsight(state, revenue, esc) {
     var ticketsNeeded = ticketsToMatchSponsorship(revenue.sponsorship, state.inputs.avgTicketPrice);
     return (
       '<div class="rounded-lg border border-brand-200 bg-brand-50 p-4 text-sm text-slate-700">' +
-      '<p class="font-semibold text-brand-900">Key insight</p>' +
+      '<p class="font-semibold text-brand-900">What this means</p>' +
       '<p class="mt-2 leading-relaxed">' +
-      'At <strong>' +
-      esc(String(state.inputs.paidTicketsPerMonth)) +
-      '</strong> paid tickets/month (' +
-      gbp(state.inputs.avgTicketPrice, esc) +
-      ' average), ticket fees contribute <strong>' +
+      'Ticket fees are <strong>' +
       gbp(revenue.ticketFees, esc) +
-      '</strong>. You would need <strong>' +
+      '</strong> at your current volume. You’d need about <strong>' +
       esc(String(ticketsNeeded)) +
-      ' paid tickets/month</strong> at that price for ticketing alone to match sponsorship (' +
+      ' paid tickets/month</strong> for ticketing alone to match sponsorship (' +
       gbp(revenue.sponsorship, esc) +
-      '). Sponsorship is <strong>' +
+      '). Right now sponsorship is <strong>' +
       esc(pct(revenue.sponsorship, revenue.total)) +
-      '</strong> of total revenue in this model.</p></div>'
+      '</strong> of the model.</p></div>'
     );
   }
 
@@ -299,10 +323,8 @@
       })
       .join('');
     return (
-      '<section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
-      '<h3 class="font-bold text-brand-900">Break-even: paid tickets to replace sponsorship</h3>' +
-      '<p class="text-xs text-slate-500 mt-1">Hub net per ticket is 3% of ticket price (Stripe absorbed in booking fee).</p>' +
-      '<div class="mt-4 admin-table-scroll">' +
+      '<p class="text-xs text-slate-500">Paid tickets needed to replace sponsorship. Hub net per ticket is 3% of ticket price.</p>' +
+      '<div class="mt-3 admin-table-scroll">' +
       '<table class="w-full text-sm"><thead class="bg-slate-50 text-xs uppercase text-slate-500">' +
       '<tr><th class="px-3 py-2 text-right">Ticket price</th>' +
       '<th class="px-3 py-2 text-right">Hub net / ticket</th>' +
@@ -316,45 +338,45 @@
       gbp(headlineTotal, esc) +
       '/mo · All sponsorship: ' +
       gbp(revenue.sponsorship, esc) +
-      '/mo</p></section>'
+      '/mo</p>'
     );
   }
 
   function renderShell(state, esc) {
     var revenue = computeRevenue(state.inputs);
     var scenarioOptions = [
-      { id: 'launch', label: 'Launch (months 1–3)' },
-      { id: 'growth', label: 'Growth (months 4–12)' },
-      { id: 'scale', label: 'Scale (year 2+)' },
-      { id: 'custom', label: 'Custom' },
+      { id: 'launch', label: 'Launch', hint: 'Months 1–3' },
+      { id: 'growth', label: 'Growth', hint: 'Months 4–12' },
+      { id: 'scale', label: 'Scale', hint: 'Year 2+' },
+      { id: 'custom', label: 'Custom', hint: 'Your numbers' },
     ];
 
     return (
-      '<div class="revenue-mix space-y-5" id="revenue-mix-root">' +
+      '<div class="revenue-mix space-y-4" id="revenue-mix-root">' +
       '<div class="rounded-xl border border-brand-200 bg-gradient-to-r from-brand-50 to-white p-4 sm:p-5">' +
-      '<p class="text-xs font-semibold uppercase tracking-wide text-brand-700">Revenue mix model</p>' +
-      '<p class="text-sm text-slate-600 mt-2 max-w-3xl">Plan monthly Hub revenue from sponsorship, organiser upsells, and transaction fees. Uses live rate card pricing (ex-VAT). Adjust sliders or load current sponsor slot fill from the site.</p>' +
-      '<div class="mt-4 flex flex-wrap items-end gap-3">' +
-      '<label class="block text-xs min-w-[12rem]"><span class="font-semibold text-slate-600">Scenario</span>' +
-      '<select id="revenue-mix-scenario" class="mt-1 w-full rounded-lg border border-slate-200 px-2.5 py-2 text-sm">' +
+      '<p class="text-sm text-slate-600 max-w-3xl">Plan monthly Hub revenue (ex-VAT rate card). Pick a scenario, then tweak ticket volume — advanced slots stay tucked away.</p>' +
+      '<div class="mt-4 flex flex-wrap gap-2" role="group" aria-label="Scenario">' +
       scenarioOptions
         .map(function (opt) {
           return (
-            '<option value="' +
+            '<button type="button" class="revenue-mix-scenario-btn' +
+            (state.scenario === opt.id ? ' is-active' : '') +
+            '" data-mix-scenario="' +
             opt.id +
-            '"' +
-            (state.scenario === opt.id ? ' selected' : '') +
-            '>' +
+            '">' +
             esc(opt.label) +
-            '</option>'
+            '<span class="block text-[10px] font-semibold opacity-80">' +
+            esc(opt.hint) +
+            '</span></button>'
           );
         })
         .join('') +
-      '</select></label>' +
+      '</div>' +
+      '<div class="mt-3 flex flex-wrap items-center gap-2">' +
       '<button type="button" id="revenue-mix-load-slots" class="rounded-lg border border-slate-200 bg-white text-sm font-semibold px-3 py-2 hover:bg-slate-50">Load live sponsor slots</button>' +
       '<button type="button" id="revenue-mix-reset" class="rounded-lg border border-slate-200 bg-white text-sm font-semibold px-3 py-2 hover:bg-slate-50">Reset to Launch</button>' +
       '<p id="revenue-mix-status" class="text-xs text-slate-500" role="status"></p>' +
-      '<a href="#revenue-targets" class="text-xs font-semibold text-brand-700 hover:underline ml-auto">Sales targets (actuals) →</a>' +
+      '<a href="#revenue-targets" class="text-xs font-semibold text-brand-700 hover:underline ml-auto">Sales targets →</a>' +
       '<a href="#financials" class="text-xs font-semibold text-brand-700 hover:underline">Payments →</a>' +
       '</div></div>' +
       '<div id="revenue-mix-stats">' +
@@ -363,10 +385,40 @@
       '<div id="revenue-mix-insight">' +
       renderInsight(state, revenue, esc) +
       '</div>' +
-      '<div class="grid lg:grid-cols-2 gap-4">' +
       '<section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
-      '<h3 class="font-bold text-brand-900">Sponsorship inventory filled</h3>' +
-      '<div class="mt-4 grid sm:grid-cols-2 gap-3">' +
+      '<h3 class="font-bold text-brand-900">Ticket volume (biggest lever)</h3>' +
+      '<p class="text-xs text-slate-500 mt-1">Drag to see when fees start to matter vs sponsorship.</p>' +
+      '<div class="mt-4 grid sm:grid-cols-2 gap-4">' +
+      fieldSlider(
+        'paidTicketsPerMonth',
+        'Paid tickets / month',
+        state.inputs.paidTicketsPerMonth,
+        0,
+        20000,
+        50
+      ) +
+      fieldSlider(
+        'avgTicketPrice',
+        'Average ticket price (£)',
+        state.inputs.avgTicketPrice,
+        1,
+        50,
+        1,
+        'Hub keeps 3% net'
+      ) +
+      fieldNumber('membershipSubs', 'Active membership subs', state.inputs.membershipSubs) +
+      fieldNumber(
+        'avgMembershipPrice',
+        'Average membership price (£)',
+        state.inputs.avgMembershipPrice
+      ) +
+      '</div></section>' +
+      '<details class="revenue-mix-details bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
+      '<summary>Sponsorship inventory &amp; organiser products</summary>' +
+      '<div class="mt-4 grid lg:grid-cols-2 gap-4">' +
+      '<div>' +
+      '<p class="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-3">Sponsorship slots filled</p>' +
+      '<div class="grid sm:grid-cols-2 gap-3">' +
       fieldNumber('eventsHeadline', 'Events Headline (£2k, max 1)', state.inputs.eventsHeadline, 1) +
       fieldNumber(
         'organisersHeadline',
@@ -398,36 +450,12 @@
         state.inputs.opportunitiesPagePartners,
         3
       ) +
-      fieldNumber(
-        'citySponsors',
-        'City Sponsors (£29 launch)',
-        state.inputs.citySponsors,
-        24
-      ) +
-      fieldNumber(
-        'countySponsors',
-        'County Sponsors (£49 launch)',
-        state.inputs.countySponsors,
-        12
-      ) +
-      '</div></section>' +
-      '<section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
-      '<h3 class="font-bold text-brand-900">Volume & organiser products</h3>' +
-      '<div class="mt-4 grid sm:grid-cols-2 gap-3">' +
-      fieldNumber('paidTicketsPerMonth', 'Paid tickets / month', state.inputs.paidTicketsPerMonth) +
-      fieldNumber(
-        'avgTicketPrice',
-        'Average ticket price (£)',
-        state.inputs.avgTicketPrice,
-        null,
-        'Hub keeps 3% net'
-      ) +
-      fieldNumber('membershipSubs', 'Active membership subs', state.inputs.membershipSubs) +
-      fieldNumber(
-        'avgMembershipPrice',
-        'Average membership price (£)',
-        state.inputs.avgMembershipPrice
-      ) +
+      fieldNumber('citySponsors', 'City Sponsors (£29 launch)', state.inputs.citySponsors, 24) +
+      fieldNumber('countySponsors', 'County Sponsors (£49 launch)', state.inputs.countySponsors, 12) +
+      '</div></div>' +
+      '<div>' +
+      '<p class="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-3">Organiser upsells</p>' +
+      '<div class="grid sm:grid-cols-2 gap-3">' +
       fieldNumber(
         'opportunityListings',
         'Opportunity listings live',
@@ -449,23 +477,27 @@
         null,
         'Blended ~£15'
       ) +
-      '</div></section></div>' +
-      '<div class="grid lg:grid-cols-2 gap-4">' +
-      '<section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
-      '<h3 class="font-bold text-brand-900">Revenue mix</h3>' +
+      '</div></div></div></details>' +
+      '<details class="revenue-mix-details bg-white rounded-xl border border-slate-200 p-5 shadow-sm" open>' +
+      '<summary>Charts</summary>' +
+      '<div class="mt-4 grid lg:grid-cols-2 gap-4">' +
+      '<div>' +
+      '<h3 class="font-bold text-brand-900 text-sm">Revenue mix</h3>' +
       '<p class="text-xs text-slate-500 mt-1">Monthly split · ex-VAT</p>' +
-      '<div class="relative h-64 mt-3"><canvas id="revenue-mix-chart-pie" aria-label="Revenue mix pie chart"></canvas></div></section>' +
-      '<section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
-      '<h3 class="font-bold text-brand-900">Sponsorship vs ticketing as volume grows</h3>' +
-      '<p class="text-xs text-slate-500 mt-1">X-axis: paid tickets per month · Y-axis: GBP/month</p>' +
-      '<div class="relative h-64 mt-3"><canvas id="revenue-mix-chart-crossover" aria-label="Revenue crossover line chart"></canvas></div></section></div>' +
-      '<section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
-      '<h3 class="font-bold text-brand-900">Scenario comparison (preset totals)</h3>' +
-      '<p class="text-xs text-slate-500 mt-1">Launch · Growth · Scale assumptions</p>' +
-      '<div class="relative h-64 mt-3"><canvas id="revenue-mix-chart-scenarios" aria-label="Scenario comparison bar chart"></canvas></div></section>' +
-      '<div id="revenue-mix-breakeven">' +
+      '<div class="relative h-64 mt-3"><canvas id="revenue-mix-chart-pie" aria-label="Revenue mix pie chart"></canvas></div></div>' +
+      '<div>' +
+      '<h3 class="font-bold text-brand-900 text-sm">Sponsorship vs ticketing as volume grows</h3>' +
+      '<p class="text-xs text-slate-500 mt-1">X-axis: paid tickets per month</p>' +
+      '<div class="relative h-64 mt-3"><canvas id="revenue-mix-chart-crossover" aria-label="Revenue crossover line chart"></canvas></div></div></div>' +
+      '<div class="mt-4">' +
+      '<h3 class="font-bold text-brand-900 text-sm">Scenario comparison</h3>' +
+      '<p class="text-xs text-slate-500 mt-1">Launch · Growth · Scale presets</p>' +
+      '<div class="relative h-64 mt-3"><canvas id="revenue-mix-chart-scenarios" aria-label="Scenario comparison bar chart"></canvas></div></div></details>' +
+      '<details class="revenue-mix-details bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
+      '<summary>Break-even table</summary>' +
+      '<div class="mt-4" id="revenue-mix-breakeven">' +
       renderBreakEvenTable(state, revenue, esc) +
-      '</div></div>'
+      '</div></details></div>'
     );
   }
 
@@ -501,6 +533,27 @@
     if (insightWrap) insightWrap.innerHTML = renderInsight(state, revenue, esc);
     var breakEvenWrap = root.querySelector('#revenue-mix-breakeven');
     if (breakEvenWrap) breakEvenWrap.innerHTML = renderBreakEvenTable(state, revenue, esc);
+    root.querySelectorAll('[data-mix-slider-value]').forEach(function (el) {
+      var key = el.getAttribute('data-mix-slider-value');
+      if (key && key in state.inputs) el.textContent = String(state.inputs[key]);
+    });
+  }
+
+  function syncScenarioButtons(root, scenario) {
+    root.querySelectorAll('[data-mix-scenario]').forEach(function (btn) {
+      btn.classList.toggle('is-active', btn.getAttribute('data-mix-scenario') === scenario);
+    });
+  }
+
+  function applyInputsToDom(root, inputs) {
+    root.querySelectorAll('[data-mix-field]').forEach(function (el) {
+      var key = el.getAttribute('data-mix-field');
+      if (key && key in inputs) el.value = String(inputs[key]);
+    });
+    root.querySelectorAll('[data-mix-slider-value]').forEach(function (el) {
+      var key = el.getAttribute('data-mix-slider-value');
+      if (key && key in inputs) el.textContent = String(inputs[key]);
+    });
   }
 
   function renderCharts(state) {
@@ -677,8 +730,7 @@
       if (fromDom) {
         state.inputs = readInputsFromDom(root);
         state.scenario = 'custom';
-        var scenarioEl = document.getElementById('revenue-mix-scenario');
-        if (scenarioEl) scenarioEl.value = 'custom';
+        syncScenarioButtons(root, 'custom');
       }
       saveState(state);
       paintDynamicSections(root, state, esc);
@@ -687,24 +739,35 @@
 
     root.addEventListener('input', function (e) {
       if (!e.target.matches('[data-mix-field]')) return;
+      if (e.target.getAttribute('data-mix-slider') === '1') {
+        var key = e.target.getAttribute('data-mix-field');
+        var label = root.querySelector('[data-mix-slider-value="' + key + '"]');
+        if (label) label.textContent = e.target.value;
+      }
       refresh(true);
     });
 
-    var scenarioEl = document.getElementById('revenue-mix-scenario');
-    if (scenarioEl) {
-      scenarioEl.addEventListener('change', function () {
-        var id = scenarioEl.value;
-        state.scenario = id;
-        if (id !== 'custom' && SCENARIOS[id]) {
-          state.inputs = Object.assign({}, SCENARIOS[id]);
-          root.querySelectorAll('[data-mix-field]').forEach(function (el) {
-            var key = el.getAttribute('data-mix-field');
-            if (key && key in state.inputs) el.value = String(state.inputs[key]);
-          });
-        }
-        refresh(false);
+    root.addEventListener('click', function (e) {
+      var btn = e.target.closest('[data-mix-scenario]');
+      if (!btn || !root.contains(btn)) return;
+      var id = btn.getAttribute('data-mix-scenario');
+      if (!id) return;
+      state.scenario = id;
+      if (id !== 'custom' && SCENARIOS[id]) {
+        state.inputs = Object.assign({}, SCENARIOS[id]);
+        applyInputsToDom(root, state.inputs);
+      }
+      syncScenarioButtons(root, id);
+      refresh(false);
+    });
+
+    root.addEventListener('toggle', function (e) {
+      if (!e.target || !e.target.matches || !e.target.matches('details.revenue-mix-details')) return;
+      if (!e.target.open || !e.target.querySelector('canvas')) return;
+      requestAnimationFrame(function () {
+        renderCharts(state);
       });
-    }
+    });
 
     var resetBtn = document.getElementById('revenue-mix-reset');
     if (resetBtn) {
@@ -740,13 +803,12 @@
             }
             state.inputs = applyAvailabilityToInputs(readInputsFromDom(root), data.availability);
             state.scenario = 'custom';
-            if (scenarioEl) scenarioEl.value = 'custom';
-            root.querySelectorAll('[data-mix-field]').forEach(function (el) {
-              var key = el.getAttribute('data-mix-field');
-              if (key && key in state.inputs) el.value = String(state.inputs[key]);
-            });
+            applyInputsToDom(root, state.inputs);
+            syncScenarioButtons(root, 'custom');
             refresh(false);
-            if (statusEl) statusEl.textContent = 'Updated Headline and Page Partner counts from live CMS slots.';
+            if (statusEl) {
+              statusEl.textContent = 'Updated Headline and Page Partner counts from live CMS slots.';
+            }
           })
           .catch(function (err) {
             if (statusEl) {

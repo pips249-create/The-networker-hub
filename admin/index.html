@@ -14,9 +14,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="../css/admin-tailwind.css?v=20260714a">
-  <link rel="stylesheet" href="../css/hub.css?v=20260825banner2">
-  <link rel="stylesheet" href="../css/hub-mobile.css?v=20260825banner2">
-  <link rel="stylesheet" href="../css/admin-console.css?v=20260822mix1">
+  <link rel="stylesheet" href="../css/hub.css?v=20260825adminbadge1">
+  <link rel="stylesheet" href="../css/hub-mobile.css?v=20260825adminbadge1">
+  <link rel="stylesheet" href="../css/admin-console.css?v=20260825badge1">
   <link rel="stylesheet" href="../css/networking-regions.css?v=20260716cp2">
   <link rel="stylesheet" href="../css/cms-carousel-ad.css?v=20260822adslot">
   <link rel="stylesheet" href="../css/events-page.css?v=20260721a">
@@ -38,7 +38,10 @@
     <div id="admin-sidebar-backdrop" class="hidden fixed inset-0 z-40 bg-slate-900/40 lg:hidden" aria-hidden="true"></div>
     <aside id="admin-sidebar" class="bg-brand-900 text-white shadow-xl" aria-label="Command Center navigation">
       <div class="admin-sidebar-head">
-        <h1>Command Center</h1>
+        <h1>
+          Command Center
+          <span id="admin-cc-attention-badge" class="hidden admin-nav-badge admin-cc-head-badge" aria-label="Items needing attention">0</span>
+        </h1>
         <p class="admin-sidebar-user truncate" id="sidebar-user">—</p>
       </div>
       <nav class="flex-1 admin-sidebar-nav overflow-y-auto" aria-label="Admin">
@@ -69,7 +72,10 @@
               Fix listings
               <span id="admin-health-badge" class="hidden admin-nav-badge" aria-label="Events needing fixes">0</span>
             </a>
-            <a href="#moderation" data-route="moderation" class="admin-nav-link">Reported items</a>
+            <a href="#moderation" data-route="moderation" class="admin-nav-link relative">
+              Reported items
+              <span id="admin-moderation-badge" class="hidden admin-nav-badge" aria-label="Open reports">0</span>
+            </a>
           </div>
         </div>
 
@@ -299,14 +305,14 @@
   </div>
 
   <script src="../js/hub-search-match.js?v=20260813adminsearch1" defer></script>
-  <script src="../js/site-nav.js?v=20260825banner2" data-root="../" data-page="admin" defer></script>
+  <script src="../js/site-nav.js?v=20260825adminbadge1" data-root="../" data-page="admin" defer></script>
   <script src="../js/hub-event-timezone.js?v=20260806dst" defer></script>
   <script src="../js/organiser-image-upload.js?v=20260614" defer></script>
   <script src="../js/cms-sponsor-fields.js?v=20260822creamlogo" defer></script>
   <script src="../js/sponsor-hub.js?v=20260813filler1" defer></script>
     <script src="../js/cms-ad-blocks.js?v=20260822adslot" defer></script>
   <script src="../js/admin-social-posts.js?v=20260820socialall" defer></script>
-  <script src="../js/admin-revenue-mix.js?v=20260822mix1" defer></script>
-  <script src="../js/admin-app.js?v=20260825aff1" defer></script>
+  <script src="../js/admin-revenue-mix.js?v=20260825ux1" defer></script>
+  <script src="../js/admin-app.js?v=20260825badge1" defer></script>
 </body>
 </html>

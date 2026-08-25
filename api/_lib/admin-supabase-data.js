@@ -80,9 +80,13 @@ async function fetchAdminActionCounts(sb, options) {
       .select('id', { count: 'exact', head: true })
       .not('stripe_account_id', 'is', null)
       .eq('stripe_charges_enabled', false),
+    sb
+      .from('event_intake_submissions')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'open'),
   ];
 
-  if (light) {
+  function mapCounts(parts, spamReviews) {
     const [
       openListingReportsRes,
       openReviewReportsRes,
@@ -93,8 +97,8 @@ async function fetchAdminActionCounts(sb, options) {
       incompleteOrgsRes,
       pendingPayoutsRes,
       stripeOnboardingRes,
-    ] = await Promise.all(baseQueries);
-
+      openEventRequestsRes,
+    ] = parts;
     return {
       openListingReports: openListingReportsRes.error ? 0 : openListingReportsRes.count || 0,
       openReviewReports: openReviewReportsRes.error ? 0 : openReviewReportsRes.count || 0,
@@ -104,45 +108,27 @@ async function fetchAdminActionCounts(sb, options) {
         ? 0
         : openOrganiserClaimRequestsRes.count || 0,
       openComplaints: openComplaintsRes.error ? 0 : openComplaintsRes.count || 0,
-      spamReviews: 0,
+      spamReviews: spamReviews || 0,
       incompleteOrganisers: incompleteOrgsRes.error ? 0 : incompleteOrgsRes.count || 0,
       pendingPayouts: pendingPayoutsRes.error ? 0 : pendingPayoutsRes.count || 0,
       stripeOnboarding: stripeOnboardingRes.error ? 0 : stripeOnboardingRes.count || 0,
+      openEventRequests: openEventRequestsRes.error ? 0 : openEventRequestsRes.count || 0,
     };
   }
 
-  const [
-    openListingReportsRes,
-    openReviewReportsRes,
-    pendingOpportunitiesRes,
-    claimDisputesRes,
-    openOrganiserClaimRequestsRes,
-    openComplaintsRes,
-    incompleteOrgsRes,
-    pendingPayoutsRes,
-    stripeOnboardingRes,
-    recentReviewsRes,
-  ] = await Promise.all([
-    ...baseQueries,
+  if (light) {
+    const parts = await Promise.all(baseQueries);
+    return mapCounts(parts, 0);
+  }
+
+  const [parts, recentReviewsRes] = await Promise.all([
+    Promise.all(baseQueries),
     sb.from('reviews').select('review_text').order('created_at', { ascending: false }).limit(50),
   ]);
 
   const spamReviews = (recentReviewsRes.data || []).filter((r) => isSpamReview(r.review_text)).length;
 
-  return {
-    openListingReports: openListingReportsRes.error ? 0 : openListingReportsRes.count || 0,
-    openReviewReports: openReviewReportsRes.error ? 0 : openReviewReportsRes.count || 0,
-    pendingOpportunities: pendingOpportunitiesRes.error ? 0 : pendingOpportunitiesRes.count || 0,
-    openClaimDisputes: claimDisputesRes.error ? 0 : claimDisputesRes.count || 0,
-    openOrganiserClaimRequests: openOrganiserClaimRequestsRes.error
-      ? 0
-      : openOrganiserClaimRequestsRes.count || 0,
-    openComplaints: openComplaintsRes.error ? 0 : openComplaintsRes.count || 0,
-    spamReviews,
-    incompleteOrganisers: incompleteOrgsRes.error ? 0 : incompleteOrgsRes.count || 0,
-    pendingPayouts: pendingPayoutsRes.error ? 0 : pendingPayoutsRes.count || 0,
-    stripeOnboarding: stripeOnboardingRes.error ? 0 : stripeOnboardingRes.count || 0,
-  };
+  return mapCounts(parts, spamReviews);
 }
 
 function sumAdminNotificationCounts(counts) {
@@ -155,7 +141,9 @@ function sumAdminNotificationCounts(counts) {
     (counts.openClaimDisputes || 0) +
     (counts.openOrganiserClaimRequests || 0) +
     (counts.openComplaints || 0) +
-    (counts.pendingPayouts || 0)
+    (counts.pendingPayouts || 0) +
+    (counts.openEventRequests || 0) +
+    (counts.incompleteOrganisers || 0)
   );
 }
 
@@ -181,6 +169,17 @@ function buildAlertsFromCounts(counts) {
       title: `${counts.incompleteOrganisers} group page${counts.incompleteOrganisers === 1 ? '' : 's'} need a photo or description`,
       detail: 'Add a logo, description, or website link.',
       href: '#cleanup/groups',
+      time: new Date().toISOString(),
+    });
+  }
+
+  if (counts.openEventRequests > 0) {
+    alerts.push({
+      id: 'open-event-requests',
+      severity: 'medium',
+      title: `${counts.openEventRequests} event request${counts.openEventRequests === 1 ? '' : 's'} waiting to be listed`,
+      detail: 'Open a request and create the listing for the organiser.',
+      href: '#cleanup/requests',
       time: new Date().toISOString(),
     });
   }

@@ -231,15 +231,25 @@
     var ctaUrl = advertisingUrlForSlot(slotKey);
     var price = SPONSOR_FALLBACK_PRICES[slotKey] || SPONSOR_FALLBACK_PRICES.events_sponsor_hub;
 
-    if (els.sponsorLogoWrap) {
-      els.sponsorLogoWrap.hidden = true;
-      els.sponsorLogoWrap.classList.remove('has-logo');
-    }
-    if (els.sponsorLogoPlaceholder) els.sponsorLogoPlaceholder.hidden = true;
-    if (els.sponsorLogoLink) els.sponsorLogoLink.hidden = true;
     if (els.sponsorLogo) {
       els.sponsorLogo.hidden = true;
       els.sponsorLogo.removeAttribute('src');
+      els.sponsorLogo.removeAttribute('alt');
+    }
+    if (els.sponsorLogoLink) {
+      els.sponsorLogoLink.hidden = true;
+      els.sponsorLogoLink.removeAttribute('href');
+    }
+    if (els.sponsorLogoWrap) {
+      els.sponsorLogoWrap.hidden = false;
+      els.sponsorLogoWrap.classList.remove('has-logo');
+      if (window.CmsSponsorFields) {
+        window.CmsSponsorFields.applyLogoBand(els.sponsorLogoWrap, null, false);
+      }
+    }
+    if (els.sponsorLogoPlaceholder) {
+      els.sponsorLogoPlaceholder.hidden = false;
+      els.sponsorLogoPlaceholder.textContent = 'Your logo';
     }
     if (els.sponsorCompany) {
       els.sponsorCompany.hidden = true;

@@ -269,11 +269,11 @@
     { id: 'all', label: 'All', shortLabel: 'All' },
     { id: 'franchise', label: 'Franchise', shortLabel: 'Franchise' },
     { id: 'side-hustle', label: 'Side hustle', shortLabel: 'Side hustle' },
-    { id: 'partnership', label: 'Partnership / Affiliate', shortLabel: 'Partnership' },
-    { id: 'networking', label: 'Networking group / Ambassador', shortLabel: 'Networking' },
+    { id: 'partnership', label: 'Partnership', shortLabel: 'Partnership' },
+    { id: 'networking', label: 'Ambassador', shortLabel: 'Ambassador' },
     { id: 'network-marketing', label: 'Network marketing', shortLabel: 'Net. marketing' },
-    { id: 'business-opportunity', label: 'Business opportunity', shortLabel: 'Business' },
-    { id: 'distributorship', label: 'Distributorship / Reseller', shortLabel: 'Distributor' },
+    { id: 'business-opportunity', label: 'Business', shortLabel: 'Business' },
+    { id: 'distributorship', label: 'Distribution', shortLabel: 'Distribution' },
   ];
 
   var COMMITMENTS = [
@@ -309,7 +309,7 @@
 
   var allListings = [];
   var activeTypes = [];
-  var hideNetworkMarketing = true;
+  /** Default “All” excludes network marketing; opt in via the Network marketing type chip. */
   var activeInvestTier = 'all';
   var activeCategory = '';
   var activeCommitments = [];
@@ -910,14 +910,11 @@
 
   function matchesFilter(item) {
     if (activeCitySlug && !matchesCityRegion(item)) return false;
-    if (
-      hideNetworkMarketing &&
-      isNetworkMarketingListing(item) &&
-      activeTypes.indexOf('network-marketing') === -1
-    ) {
+    if (!activeTypes.length) {
+      if (isNetworkMarketingListing(item)) return false;
+    } else if (!matchesTypes(item)) {
       return false;
     }
-    if (!matchesTypes(item)) return false;
     if (activeCategory && item.category !== activeCategory) return false;
     if (!matchesInvestTier(item)) return false;
     if (!matchesCommitments(item)) return false;
@@ -1536,8 +1533,16 @@
 
   function buildTypeChips() {
     if (!els.typeChipsRoot) return;
+    var titles = {
+      partnership: 'Partnership / Affiliate',
+      networking: 'Networking group / Ambassador',
+      'business-opportunity': 'Business opportunity',
+      distributorship: 'Distributorship / Reseller',
+      'network-marketing': 'Network marketing (opt-in — not included in All)',
+    };
     els.typeChipsRoot.innerHTML = TYPE_CHIPS.map(function (chip, index) {
       var shortLabel = chip.shortLabel || chip.label;
+      var title = titles[chip.id] || chip.label;
       return (
         '<button type="button" class="event-type-chip' +
         (index === 0 ? ' is-active' : '') +
@@ -1546,7 +1551,7 @@
         '" aria-pressed="' +
         (index === 0 ? 'true' : 'false') +
         '" title="' +
-        escapeHtml(chip.label) +
+        escapeHtml(title) +
         '">' +
         '<span class="event-type-chip-label-full">' +
         escapeHtml(chip.label) +
@@ -1567,7 +1572,6 @@
   }
 
   function visibleListingCountForAllChip() {
-    if (!hideNetworkMarketing) return allListings.length;
     return countBy(function (item) {
       return !isNetworkMarketingListing(item);
     });
@@ -1668,32 +1672,31 @@
     bindEmptyStateActions();
   }
 
-  function countHiddenNetworkMarketingMatches() {
-    if (!hideNetworkMarketing) return 0;
+  function countOptInNetworkMarketingMatches() {
+    if (activeTypes.length) return 0;
+    activeTypes = ['network-marketing'];
     var n = 0;
-    hideNetworkMarketing = false;
     for (var i = 0; i < allListings.length; i++) {
-      var item = allListings[i];
-      if (isNetworkMarketingListing(item) && matchesFilter(item)) n += 1;
+      if (matchesFilter(allListings[i])) n += 1;
     }
-    hideNetworkMarketing = true;
+    activeTypes = [];
     return n;
   }
 
   function emptyListingsHtml(totalMatches) {
-    var nmHiddenMatches = !totalMatches ? countHiddenNetworkMarketingMatches() : 0;
+    var nmOptInMatches = !totalMatches ? countOptInNetworkMarketingMatches() : 0;
 
-    if (nmHiddenMatches > 0) {
+    if (nmOptInMatches > 0) {
       return (
         '<div class="events-empty opp-empty-state" role="status">' +
         '<p class="opp-empty-title">No listings in this view</p>' +
         '<p class="opp-empty-copy">' +
-        nmHiddenMatches +
+        nmOptInMatches +
         ' network marketing listing' +
-        (nmHiddenMatches === 1 ? ' matches' : 's match') +
-        ' your filters but ' +
-        (nmHiddenMatches === 1 ? 'is' : 'are') +
-        ' hidden by default.</p>' +
+        (nmOptInMatches === 1 ? ' matches' : 's match') +
+        ' your filters. Network marketing is opt-in — open that type chip to see ' +
+        (nmOptInMatches === 1 ? 'it' : 'them') +
+        '.</p>' +
         '<div class="opp-empty-actions">' +
         '<button type="button" class="opp-empty-btn" id="opp-show-network-marketing">Show network marketing</button>' +
         '<button type="button" class="clear-filters-link" id="opp-clear-filters">Clear filters</button>' +
@@ -1768,8 +1771,8 @@
     if (showNm && !showNm.dataset.bound) {
       showNm.dataset.bound = '1';
       showNm.addEventListener('click', function () {
-        hideNetworkMarketing = false;
-        syncHideNetworkMarketingUi();
+        activeTypes = ['network-marketing'];
+        syncTypeChipUi();
         applyFilters();
       });
     }
@@ -1854,11 +1857,6 @@
     });
   }
 
-  function syncHideNetworkMarketingUi() {
-    var input = document.getElementById('opp-hide-network-marketing');
-    if (input) input.checked = hideNetworkMarketing;
-  }
-
   function currentFilterCriteria() {
     var locationQuery = els.postcode ? String(els.postcode.value || '').trim() : '';
     if (/^remote$/i.test(locationQuery) && activeLocationTag === 'remote') locationQuery = '';
@@ -1873,7 +1871,6 @@
       sort: sortBy || 'recommended',
       minInvest: minInvest != null ? minInvest : '',
       maxInvest: maxInvest != null ? maxInvest : '',
-      hideNm: hideNetworkMarketing ? '1' : '0',
     };
   }
 
@@ -1883,6 +1880,11 @@
     var type = params.get('type');
     activeTypes = type && TAB_TYPES.indexOf(type) !== -1 && type !== 'all' ? [type] : [];
 
+    // Legacy ?hideNm=0 meant “include network marketing” — map to the type chip once.
+    if (!activeTypes.length && params.get('hideNm') === '0') {
+      activeTypes = ['network-marketing'];
+    }
+
     activeCategory = params.get('category') || '';
     searchQ = String(params.get('q') || '').trim().toLowerCase();
     sortBy = params.get('sort') || 'recommended';
@@ -1890,9 +1892,6 @@
     activeLocationTag = params.get('location') || '';
     var commitment = params.get('commitment') || '';
     activeCommitments = commitment ? commitment.split(',').filter(Boolean) : [];
-    var hideNm = params.get('hideNm');
-    hideNetworkMarketing = hideNm !== '0';
-    syncHideNetworkMarketingUi();
 
     if (els.search && searchQ) els.search.value = searchQ;
     if (els.sort) els.sort.value = sortBy;
@@ -1949,7 +1948,6 @@
     if (c.sort && c.sort !== 'recommended') params.set('sort', c.sort);
     if (c.minInvest !== '' && c.minInvest != null) params.set('min', String(c.minInvest));
     if (c.maxInvest !== '' && c.maxInvest != null) params.set('max', String(c.maxInvest));
-    if (!hideNetworkMarketing) params.set('hideNm', '0');
     if (activeCitySlug) params.set('city', activeCitySlug);
     if (viewMode && viewMode !== DEFAULT_VIEW_MODE) params.set('view', viewMode);
 
@@ -2050,7 +2048,6 @@
     }
 
     activeTypes = [];
-    hideNetworkMarketing = true;
     activeInvestTier = 'all';
     activeCategory = '';
     activeCommitments = [];
@@ -2070,7 +2067,6 @@
     if (els.filterCategory) els.filterCategory.value = '';
 
     syncTypeChipUi();
-    syncHideNetworkMarketingUi();
     syncCategorySelect();
     syncInvestPills();
     syncCommitmentChecks();
@@ -2559,14 +2555,6 @@
       });
     });
 
-    var hideNmInput = document.getElementById('opp-hide-network-marketing');
-    if (hideNmInput) {
-      hideNmInput.addEventListener('change', function () {
-        hideNetworkMarketing = !!hideNmInput.checked;
-        applyFilters();
-      });
-    }
-
     if (els.filterCategory) {
       els.filterCategory.addEventListener('change', applyFilters);
     }
@@ -2631,7 +2619,6 @@
     if (activeTypes.length) return true;
     if (activeInvestTier && activeInvestTier !== 'all') return true;
     if (activeCommitments.length) return true;
-    if (!hideNetworkMarketing) return true;
     if (minInvest != null || maxInvest != null) return true;
     if (activeLocationTag) return true;
     return false;
@@ -2739,6 +2726,8 @@
     syncInvestPills();
     syncCommitmentChecks();
     syncCategorySelect();
+    // Drop legacy ?hideNm= from the address bar (opt-in is now ?type=network-marketing).
+    writeFiltersToUrl();
     resetSpotlightOrder();
     renderSpotlight();
     renderListings();
