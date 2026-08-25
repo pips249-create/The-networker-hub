@@ -862,15 +862,16 @@ export default async function middleware(request) {
   const host = String(url.hostname || '')
     .trim()
     .toLowerCase();
-  // Canonicalise apex Hub hosts — do not redirect to thenetworkeruk.com until that domain DNS is live.
+  // Hub brand domains → canonical UK host (DNS live; consolidates Search Console / Google listing).
   if (
     host === 'thenetworkerhub.com' ||
+    host === 'www.thenetworkerhub.com' ||
     host === 'thenetworkerhub.co.uk' ||
     host === 'www.thenetworkerhub.co.uk'
   ) {
     const dest = new URL(request.url);
     dest.protocol = 'https:';
-    dest.hostname = 'www.thenetworkerhub.com';
+    dest.hostname = 'www.thenetworkeruk.com';
     dest.port = '';
     return Response.redirect(dest.toString(), 308);
   }
