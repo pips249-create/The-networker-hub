@@ -8,7 +8,7 @@
 
 UTM: `utm_source=the-networker.co.uk&utm_medium=banner&utm_campaign=soft_launch_2026&utm_content=peek`
 
-Product voice: rotating **Find your next…**, launch line (**Browse from 25 August**), dismissible **7 days** (`tnh_upgrade_banner_dismissed_v14`).
+Product voice: **The Networker UK** logo (cream chip), rotating **Find your next…**, launch line (**Browse from 25 August**). No dismiss — banner always shows.
 
 ---
 
@@ -50,7 +50,7 @@ Do **not** change the banner to `position: fixed` — that is what would clash w
 ## Nice-to-haves (optional, not required)
 
 - After ~1 week, check UTM traffic in analytics (`utm_campaign=soft_launch_2026`).
-- If the strip feels busy on video pages, dismiss + slower word rotate (3.2s) already keep it calm.
+- If the strip feels busy on video pages, slower word rotate (3.2s) already keeps it calm.
 
 ---
 
@@ -58,7 +58,7 @@ Do **not** change the banner to `position: fixed` — that is what would clash w
 
 1. Confirm Hub `/peek` loads without the password gate.
 2. WPCode / Code Snippets → Header → paste `co-uk-upgrade-banner-snippet.html` (see `CO-UK-BANNER-INSTALL-FOR-DEVS.md`).
-3. Spot-check mobile + desktop; dismiss = **7 days** (`tnh_upgrade_banner_dismissed_v14`).
+3. Spot-check mobile + desktop; banner has **no dismiss** (always visible).
 
 ---
 

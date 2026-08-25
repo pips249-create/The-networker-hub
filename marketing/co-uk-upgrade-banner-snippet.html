@@ -1,7 +1,8 @@
 <!--
   WordPress paste snippet — The Networker co.uk upgrade banner
-  3 columns: upgrade + date | Find your next… | Sneak Peek CTA
-  CTA → /peek (For organisers · For networkers · About us). No logo.
+  3 columns: UK logo + upgrade date | Find your next… | Sneak Peek CTA
+  CTA → /peek (For organisers · For networkers · About us).
+  Logo: The Networker UK (hosted on thenetworkeruk.com — cream chip for contrast).
   Install: Custom CSS & JS / WPCode → Body (frontend) → paste ALL of this file
   CSS uses #id + !important so Elementor/theme cannot restyle it.
 -->
@@ -17,6 +18,11 @@
   <span class="tnh-upgrade-banner__glow tnh-upgrade-banner__glow--2" aria-hidden="true"></span>
   <div class="tnh-upgrade-banner__inner">
     <div class="tnh-upgrade-banner__col tnh-upgrade-banner__col--status">
+      <a class="tnh-upgrade-banner__logo-link" href="https://www.thenetworkeruk.com/?utm_source=the-networker.co.uk&amp;utm_medium=banner&amp;utm_campaign=soft_launch_2026&amp;utm_content=logo" target="_blank" rel="noopener">
+        <span class="tnh-upgrade-banner__logo-chip">
+          <img class="tnh-upgrade-banner__logo" src="https://www.thenetworkeruk.com/assets/logo-networker-uk-transparent.png?v=20260825banner" width="140" height="65" alt="The Networker UK">
+        </span>
+      </a>
       <p class="tnh-upgrade-banner__status">We&rsquo;re upgrading</p>
       <p class="tnh-upgrade-banner__date">Browse from <strong>25 August</strong></p>
     </div>
@@ -32,7 +38,6 @@
       </a>
     </div>
   </div>
-  <button type="button" class="tnh-upgrade-banner__close" id="tnh-upgrade-banner-close" aria-label="Dismiss announcement">&times;</button>
 </aside>
 
 <!-- 2) CSS — #id + !important so Elementor/theme can't restyle it -->
@@ -97,7 +102,7 @@
   position: relative !important;
   max-width: 1120px !important;
   margin: 0 auto !important;
-  padding: 26px 58px 26px 24px !important;
+  padding: 26px 24px !important;
   display: grid !important;
   grid-template-columns: minmax(150px, 0.85fr) minmax(240px, 1.7fr) auto !important;
   align-items: center !important;
@@ -107,6 +112,37 @@
 }
 #tnh-upgrade-banner .tnh-upgrade-banner__col--status {
   min-width: 0 !important;
+}
+#tnh-upgrade-banner a.tnh-upgrade-banner__logo-link {
+  display: inline-block !important;
+  margin: 0 0 8px !important;
+  padding: 0 !important;
+  text-decoration: none !important;
+  border: 0 !important;
+  background: none !important;
+  line-height: 0 !important;
+}
+#tnh-upgrade-banner .tnh-upgrade-banner__logo-chip {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 6px 10px !important;
+  border-radius: 10px !important;
+  background: #fff8ef !important;
+  box-shadow: 0 4px 14px rgba(26, 16, 48, 0.18) !important;
+  border: 0 !important;
+}
+#tnh-upgrade-banner img.tnh-upgrade-banner__logo {
+  display: block !important;
+  width: auto !important;
+  max-width: 148px !important;
+  height: 44px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: none !important;
+  object-fit: contain !important;
 }
 #tnh-upgrade-banner .tnh-upgrade-banner__status {
   margin: 0 !important;
@@ -212,48 +248,20 @@
   0%, 100% { box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.35), 0 10px 28px rgba(26, 16, 48, 0.28); }
   50% { box-shadow: 0 0 0 4px rgba(255, 224, 138, 0.35), 0 12px 30px rgba(26, 16, 48, 0.32); }
 }
-#tnh-upgrade-banner button.tnh-upgrade-banner__close {
-  position: absolute !important;
-  top: 50% !important;
-  right: 12px !important;
-  left: auto !important;
-  bottom: auto !important;
-  transform: translateY(-50%) !important;
-  width: 34px !important;
-  height: 34px !important;
-  min-width: 34px !important;
-  min-height: 34px !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  border: 0 !important;
-  border-radius: 999px !important;
-  background: rgba(255, 255, 255, 0.22) !important;
-  color: #fff8ef !important;
-  font-size: 22px !important;
-  font-weight: 400 !important;
-  font-family: inherit !important;
-  line-height: 1 !important;
-  cursor: pointer !important;
-  box-shadow: none !important;
-  text-shadow: none !important;
-  appearance: none !important;
-  -webkit-appearance: none !important;
-}
-#tnh-upgrade-banner button.tnh-upgrade-banner__close:hover,
-#tnh-upgrade-banner button.tnh-upgrade-banner__close:focus {
-  color: #1a1030 !important;
-  background: #fff8ef !important;
-}
 @media (max-width: 820px) {
   #tnh-upgrade-banner .tnh-upgrade-banner__inner {
     grid-template-columns: 1fr auto !important;
     grid-template-areas:
       "status cta"
       "hero hero";
-    padding: 22px 48px 22px 18px !important;
+    padding: 22px 18px !important;
     gap: 10px 16px !important;
   }
   #tnh-upgrade-banner .tnh-upgrade-banner__col--status { grid-area: status; }
+  #tnh-upgrade-banner img.tnh-upgrade-banner__logo {
+    height: 38px !important;
+    max-width: 128px !important;
+  }
   #tnh-upgrade-banner .tnh-upgrade-banner__col--hero {
     grid-area: hero;
     text-align: left !important;
@@ -284,38 +292,13 @@
 }
 </style>
 
-<!-- 3) JS — rotate words + dismiss 7 days -->
+<!-- 3) JS — rotate words -->
 <script>
 (function () {
-  var KEY = "tnh_upgrade_banner_dismissed_v14";
-  var DAYS = 7;
   var WORDS = ["event", "opportunity", "group", "attendee", "connection"];
-  var el = document.getElementById("tnh-upgrade-banner");
-  var btn = document.getElementById("tnh-upgrade-banner-close");
   var word = document.getElementById("tnh-upgrade-banner-word");
-  if (!el) return;
-
-  try {
-    var raw = localStorage.getItem(KEY);
-    if (raw) {
-      var until = parseInt(raw, 10);
-      if (until && Date.now() < until) {
-        el.hidden = true;
-        return;
-      }
-    }
-  } catch (e) {}
-
-  if (btn) {
-    btn.addEventListener("click", function () {
-      el.hidden = true;
-      try {
-        localStorage.setItem(KEY, String(Date.now() + DAYS * 24 * 60 * 60 * 1000));
-      } catch (e) {}
-    });
-  }
-
   if (!word || !WORDS.length) return;
+
   var reduce = false;
   try {
     reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;

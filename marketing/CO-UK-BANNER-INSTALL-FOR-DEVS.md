@@ -30,11 +30,11 @@ https://www.thenetworkeruk.com/peek?utm_source=the-networker.co.uk&utm_medium=ba
 
 Three columns (unequal widths):
 
-1. **We’re upgrading** · Browse from **25 August**
+1. **The Networker UK logo** (cream chip) · We’re upgrading · Browse from **25 August**
 2. **Find your next** *[rotating word]*
 3. **Sneak Peek →** (opens Hub `/peek` mini-site)
 
-No Networker UK logo — co.uk purple header keeps the brand.
+Logo is hosted from `thenetworkeruk.com` — do not hotlink a local WordPress media upload.
 
 ---
 
@@ -44,7 +44,7 @@ No Networker UK logo — co.uk purple header keeps the brand.
 |------|------|
 | Placement | **In document flow** above the purple nav — `position: relative` only |
 | CTA | **Sneak Peek** → Hub `/peek` (+ UTMs above) |
-| Dismiss | × hides for **7 days** (`localStorage` key `tnh_upgrade_banner_dismissed_v14`) |
+| Dismiss | **None** — banner always visible |
 | Motion | Rotating word after “Find your next…” every 3.2s |
 
 **Do not** switch the banner to `position: fixed` or `sticky` — that covers Elementor hero videos.
@@ -56,8 +56,7 @@ No Networker UK logo — co.uk purple header keeps the brand.
 1. Home (hero video) — banner above purple bar; video still plays full-bleed.
 2. Mobile — stacks cleanly (status → headline → button).
 3. **Sneak Peek** — opens Hub `/peek` in a new tab with UTM params.
-4. Dismiss × — banner hidden for 7 days on that browser.
-5. Word rotates: event → opportunity → group → attendee → connection.
+4. Word rotates: event → opportunity → group → attendee → connection.
 
 ---
 
