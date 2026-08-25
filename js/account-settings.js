@@ -42,6 +42,7 @@
     // Default on so fields stay visible even if an older API omits these flags.
     setFieldWritable('as-company', w.company !== false);
     setFieldWritable('as-job-title', w.jobTitle !== false);
+    setFieldWritable('as-industry', w.businessSector !== false);
     setFieldWritable('as-professional-role', w.professionalRole !== false);
     setFieldWritable('as-location', w.location !== false);
   }
@@ -84,6 +85,7 @@
     fillReviewNameMode(profile);
     setFieldValue('as-company', profile.company || '');
     setFieldValue('as-job-title', profile.jobTitle || '');
+    setFieldValue('as-industry', profile.businessSector || '');
     setFieldValue('as-professional-role', profile.professionalRole || '');
     setFieldValue('as-location', profile.location || '');
     fillEmailPrefs(profile);
@@ -265,6 +267,7 @@
       reviewNameMode: selectedReviewNameMode(),
       company: document.getElementById('as-company')?.value.trim() || '',
       jobTitle: document.getElementById('as-job-title')?.value.trim() || '',
+      businessSector: document.getElementById('as-industry')?.value.trim() || '',
       professionalRole: document.getElementById('as-professional-role')
         ? document.getElementById('as-professional-role').value.trim()
         : '',
@@ -327,6 +330,7 @@
           reviewNameMode: selectedReviewNameMode(),
           company: document.getElementById('as-company').value.trim(),
           jobTitle: document.getElementById('as-job-title').value.trim(),
+          businessSector: document.getElementById('as-industry').value.trim(),
           professionalRole: document.getElementById('as-professional-role')
             ? document.getElementById('as-professional-role').value.trim()
             : '',
