@@ -46,12 +46,12 @@ function applyOrganiserLaunchInviteCopy(vars) {
   if (!next.organiser_name) next.organiser_name = group;
   next.preheader =
     next.preheader ||
-    'Your free page is ready — claim before 1 September for Founding Organiser extras.';
+    'Free to claim — your organiser page is ready. Claim before 1 September for Founding Organiser extras.';
   next.hero_kicker = next.hero_kicker || 'Early invite · organisers only';
   next.hero_title = next.hero_title || 'Congratulations: ' + group + ' is ready';
   if (!next.intro_html) {
     next.intro_html =
-      'Hi there. We&rsquo;re delighted to say your free organiser page is ready on <strong style="color:#1c2040;">The Networker UK</strong>' +
+      'Hi there. We&rsquo;re delighted to say your <strong style="color:#1c2040;">free</strong> organiser page is ready on <strong style="color:#1c2040;">The Networker UK</strong>' +
       String(next.other_groups_note || '') +
       '.';
   }
@@ -66,11 +66,11 @@ function foundOrganiserLaunchInviteCopy(groupName) {
     group_name: group,
     organiser_name: group,
     preheader:
-      'We found your networking group and have set up a free page for you on The Networker UK.',
+      'Free to claim — we found your networking group and set up a page for you on The Networker UK.',
     hero_kicker: 'An invitation from The Networker UK',
     hero_title: "There's a page with your name on it",
     intro_html:
-      'Hi there. We came across your networking group and wanted to invite you onto <strong style="color:#1c2040;">The Networker UK</strong> &mdash; a free directory and workspace for UK networking groups. We&rsquo;ve already set up a page for <strong style="color:#1c2040;">' +
+      'Hi there. We came across your networking group and wanted to invite you onto <strong style="color:#1c2040;">The Networker UK</strong> &mdash; a <strong style="color:#1c2040;">free</strong> directory and workspace for UK networking groups. We&rsquo;ve already set up a page for <strong style="color:#1c2040;">' +
       escapeHtml(group) +
       '</strong>, so you can claim it, add your details, and list events when you&rsquo;re ready.',
   };

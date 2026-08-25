@@ -957,7 +957,7 @@ module.exports = async function handler(req, res) {
       await sendTemplatedEmail({
         slug: 'organiser_launch_invite',
         to: email,
-        subject: "We've set up a page for " + organiserName + ' on The Networker UK',
+        subject: "We've set up a free page for " + organiserName + ' on The Networker UK',
         variables: {
           ...campaignSiteVars(host),
           ...foundOrganiserLaunchInviteCopy(organiserName),

@@ -25,7 +25,7 @@ const BRANDED_EMAIL_TEMPLATES = {
   organiser_launch_invite: {
     file: 'organiser-launch-invite.html',
     marker: 'hub-email-layout-v3-purple',
-    subject: 'Confirm your page & finish setup — The Networker UK',
+    subject: 'Your free organiser page is ready — The Networker UK',
   },
   organiser_call_followup: {
     file: 'organiser-call-followup.html',
