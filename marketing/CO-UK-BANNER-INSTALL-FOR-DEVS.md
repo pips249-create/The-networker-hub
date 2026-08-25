@@ -1,28 +1,32 @@
 # WordPress install brief — Hub upgrade banner
 
 **For:** the-networker.co.uk developers  
-**Goal:** Sitewide soft banner pointing visitors to the The Networker UK, while co.uk stays fully live for SEO (~3 months).  
+**Goal:** Sitewide soft banner pointing visitors to The Networker UK, while co.uk stays fully live for SEO (~3 months).  
 **Do not** add hard redirects yet.
 
 ---
 
-## What to paste
+## What to paste (Simple Custom CSS & JS on co.uk)
 
-File: `marketing/co-uk-upgrade-banner-snippet.html` — paste the **entire** file (fonts + HTML + CSS + JS).
+**Use Custom JS — not HTML.** HTML snippets are not appearing on the live site (NitroPack / head injection). JS snippets do load.
 
-**If an older banner is already live:** replace the whole snippet (layout and copy changed — CTA-only swap is not enough).
+File: `marketing/co-uk-upgrade-banner-snippet.js` — paste the **entire** file.
 
-1. Open **WPCode** or **Code Snippets** (or equivalent header injection).
-2. Create / edit a snippet that runs on the **frontend Header** (every public page).
-3. Paste the full contents of `co-uk-upgrade-banner-snippet.html`.
-4. Publish / activate.
-5. Hard-refresh the homepage (and clear any WP/CDN cache if used).
+1. **Custom CSS & JS → Add Custom JS Code** (type must be **JS**).
+2. Title e.g. `Hub 2026 banner`.
+3. Paste the full contents of `co-uk-upgrade-banner-snippet.js`.
+4. **Where on page:** Header · **In Frontend** · **Active**.
+5. Update.
+6. **Deactivate** any older Hub / HTML banner snippets so only this JS one runs.
+7. NitroPack → **Purge cache** → hard-refresh the homepage (private window).
 
 ### Sneak Peek CTA (already in the snippet)
 
 ```
 https://www.thenetworkeruk.com/peek?utm_source=the-networker.co.uk&utm_medium=banner&utm_campaign=soft_launch_2026&utm_content=peek
 ```
+
+*(Alternative file `co-uk-upgrade-banner-snippet.html` is for WPCode HTML paste if you switch plugins later.)*
 
 ---
 
@@ -42,10 +46,10 @@ Logo is hosted from `thenetworkeruk.com` — do not hotlink a local WordPress me
 
 | Item | Spec |
 |------|------|
-| Placement | **In document flow** above the purple nav — `position: relative` only |
+| Placement | Injected above `#c27-site-wrapper` (above the purple nav) |
 | CTA | **Sneak Peek** → Hub `/peek` (+ UTMs above) |
 | Dismiss | **None** — banner always visible |
-| Motion | Rotating word after “Find your next…” every 3.2s |
+| Motion | Rotating word after “Find your next…” every 2s |
 
 **Do not** switch the banner to `position: fixed` or `sticky` — that covers Elementor hero videos.
 
