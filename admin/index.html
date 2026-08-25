@@ -16,7 +16,7 @@
   <link rel="stylesheet" href="../css/admin-tailwind.css?v=20260714a">
   <link rel="stylesheet" href="../css/hub.css?v=20260825adminbadge1">
   <link rel="stylesheet" href="../css/hub-mobile.css?v=20260825adminbadge1">
-  <link rel="stylesheet" href="../css/admin-console.css?v=20260825badge1">
+  <link rel="stylesheet" href="../css/admin-console.css?v=20260825inbox1">
   <link rel="stylesheet" href="../css/networking-regions.css?v=20260716cp2">
   <link rel="stylesheet" href="../css/cms-carousel-ad.css?v=20260822adslot">
   <link rel="stylesheet" href="../css/events-page.css?v=20260721a">
@@ -58,7 +58,10 @@
             <a href="#international" data-route="international" class="admin-nav-link">International leads</a>
             <a href="#rankings" data-route="rankings" class="admin-nav-link">Top performers</a>
             <a href="#accounts/users" data-route="accounts" class="admin-nav-link">User accounts</a>
-            <a href="#support/bookings" data-route="support" class="admin-nav-link">Help requests</a>
+            <a href="#support/bookings" data-route="support" class="admin-nav-link relative">
+              Help requests
+              <span id="admin-support-badge" class="hidden admin-nav-badge" aria-label="Open help items">0</span>
+            </a>
           </div>
         </div>
 
@@ -85,7 +88,10 @@
             <span class="admin-nav-chevron" aria-hidden="true">▾</span>
           </button>
           <div id="admin-nav-section-revenue" class="admin-nav-section-links">
-            <a href="#financials" data-route="financials" class="admin-nav-link">Payments</a>
+            <a href="#financials" data-route="financials" class="admin-nav-link relative">
+              Payments
+              <span id="admin-payments-badge" class="hidden admin-nav-badge" aria-label="Payment items">0</span>
+            </a>
             <a href="#revenue-mix" data-route="revenue-mix" class="admin-nav-link">Revenue mix</a>
             <a href="#revenue-targets" data-route="revenue-targets" class="admin-nav-link">Sales targets</a>
             <a href="#sales-kit" data-route="sales-kit" class="admin-nav-link">Organiser sales kit</a>
@@ -119,7 +125,7 @@
           </button>
           <div class="min-w-0">
             <h2 class="admin-page-title truncate" id="page-title">Home</h2>
-            <p class="admin-page-subtitle line-clamp-2" id="page-subtitle">Your to-do list, key numbers, and recent activity</p>
+            <p class="admin-page-subtitle line-clamp-2" id="page-subtitle">Do this next — then glance at numbers and recent activity</p>
           </div>
         </div>
         <div class="admin-page-header-actions">
@@ -146,7 +152,7 @@
         <div class="space-y-5" id="dashboard-boot">
           <section class="admin-stat-grid admin-stat-grid--4" id="dashboard-metrics">
             <article class="admin-stat-card min-w-0">
-              <p class="admin-stat-card-label">Paid ticket revenue</p>
+              <p class="admin-stat-card-label">Booking fees</p>
               <p class="admin-stat-card-value">…</p>
               <p class="admin-stat-card-sub">Loading…</p>
             </article>
@@ -165,6 +171,54 @@
               <p class="admin-stat-card-value">…</p>
               <p class="admin-stat-card-sub">Loading…</p>
             </article>
+          </section>
+
+          <section class="admin-inbox" id="dashboard-inbox">
+            <div class="admin-inbox-head">
+              <h3>Do this next</h3>
+              <p>Urgent and soon — click through to clear them.</p>
+            </div>
+            <div id="dashboard-inbox-urgent" class="admin-inbox-group" hidden></div>
+            <div id="dashboard-inbox-soon" class="admin-inbox-group" hidden></div>
+            <p id="dashboard-inbox-empty" class="admin-inbox-empty" hidden>Nothing urgent — you’re clear for now.</p>
+            <details class="admin-inbox-later" id="dashboard-inbox-later" hidden>
+              <summary>Later / polish <span id="dashboard-inbox-later-count" class="admin-inbox-later-count"></span></summary>
+              <div id="dashboard-inbox-later-body" class="admin-inbox-later-body"></div>
+            </details>
+          </section>
+
+          <section class="admin-dash-section" id="dashboard-scheduled-reminders-section">
+            <div class="admin-dash-section-head">
+              <h3>Scheduled reminders</h3>
+              <p>Future tasks — these move into Do this next when due.</p>
+            </div>
+            <div class="admin-dash-section-body" id="dashboard-scheduled-reminders">
+              <div class="admin-scheduled-reminder">
+                <p class="admin-scheduled-reminder-title">Review marketing page stats</p>
+                <p class="admin-scheduled-reminder-meta"><strong>Due 23 Nov 2026</strong></p>
+                <p class="admin-scheduled-reminder-detail">Check whether 27,000+ Events listed and 17,000+ networkers last year still match Google Analytics and platform data.</p>
+              </div>
+            </div>
+          </section>
+
+          <section class="admin-dash-section" id="dashboard-disputes-section" hidden>
+            <div class="admin-dash-section-head">
+              <h3>Group profile disputes</h3>
+              <p>An organiser signed in and said a pre-imported profile is not theirs.</p>
+            </div>
+            <div class="admin-dash-section-body" id="dashboard-disputes">
+              <p class="text-sm text-slate-500">Loading…</p>
+            </div>
+          </section>
+
+          <section class="admin-dash-section" id="dashboard-claim-requests-section" hidden>
+            <div class="admin-dash-section-head">
+              <h3>Organiser claim requests</h3>
+              <p>Someone asked to claim a public group profile — verify the claimant, then approve.</p>
+            </div>
+            <div class="admin-dash-section-body" id="dashboard-claim-requests">
+              <p class="text-sm text-slate-500">Loading…</p>
+            </div>
           </section>
 
           <section class="admin-dash-section">
@@ -203,55 +257,6 @@
                   <span class="admin-shortcut-desc">Traffic, demand, and tickets</span>
                 </a>
               </div>
-            </div>
-          </section>
-
-          <section class="admin-dash-section" id="dashboard-scheduled-reminders-section">
-            <div class="admin-dash-section-head">
-              <h3>Scheduled reminders</h3>
-              <p>Future tasks — these move into Things to do when due.</p>
-            </div>
-            <div class="admin-dash-section-body" id="dashboard-scheduled-reminders">
-              <div class="admin-scheduled-reminder">
-                <p class="admin-scheduled-reminder-title">Review marketing page stats</p>
-                <p class="admin-scheduled-reminder-meta"><strong>Due 23 Nov 2026</strong></p>
-                <p class="admin-scheduled-reminder-detail">Check whether 27,000+ Events listed and 17,000+ networkers last year still match Google Analytics and platform data.</p>
-              </div>
-            </div>
-          </section>
-
-          <section class="admin-dash-section" id="dashboard-action-section">
-            <div class="admin-dash-section-head">
-              <h3>Things to do</h3>
-              <p>Work through these in order — urgent items are listed first.</p>
-            </div>
-            <div class="admin-dash-section-body">
-              <div class="admin-action-queue min-h-[6rem]" id="dashboard-action-queue">
-                <div class="admin-action-row admin-action-row--static" aria-hidden="true">
-                  <span class="admin-action-priority admin-action-priority--low">—</span>
-                  <span class="admin-action-body"><span class="admin-action-title">Loading queue…</span></span>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section class="admin-dash-section" id="dashboard-disputes-section" hidden>
-            <div class="admin-dash-section-head">
-              <h3>Group profile disputes</h3>
-              <p>An organiser signed in and said a pre-imported profile is not theirs.</p>
-            </div>
-            <div class="admin-dash-section-body" id="dashboard-disputes">
-              <p class="text-sm text-slate-500">Loading…</p>
-            </div>
-          </section>
-
-          <section class="admin-dash-section" id="dashboard-claim-requests-section" hidden>
-            <div class="admin-dash-section-head">
-              <h3>Organiser claim requests</h3>
-              <p>Someone asked to claim a public group profile — verify the claimant, then approve.</p>
-            </div>
-            <div class="admin-dash-section-body" id="dashboard-claim-requests">
-              <p class="text-sm text-slate-500">Loading…</p>
             </div>
           </section>
 
@@ -313,6 +318,6 @@
     <script src="../js/cms-ad-blocks.js?v=20260822adslot" defer></script>
   <script src="../js/admin-social-posts.js?v=20260820socialall" defer></script>
   <script src="../js/admin-revenue-mix.js?v=20260825ux1" defer></script>
-  <script src="../js/admin-app.js?v=20260825badge1" defer></script>
+  <script src="../js/admin-app.js?v=20260825inbox1" defer></script>
 </body>
 </html>

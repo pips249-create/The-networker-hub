@@ -113,7 +113,7 @@
   var PAGE_META = {
     dashboard: {
       title: 'Home',
-      subtitle: 'Your to-do list, key numbers, and recent activity',
+      subtitle: 'Do this next — then glance at numbers and recent activity',
     },
     analytics: {
       title: 'Analytics',
@@ -233,11 +233,10 @@
     dashboard: {
       title: 'How to use Home',
       steps: [
-        'Glance at the numbers at the top — Booking fees, events, organisers, and member accounts.',
-        'Use Quick links if you already know where you want to go — Organiser sales kit has cheat sheets and demo decks.',
-        'If Things to do appears, start with Urgent items and click Go there on each row.',
-        'Recent activity shows new sign-ups, events, and reviews.',
-        'At a glance lists the same key counts in more detail.',
+        'Start with Do this next — Urgent first, then Soon. Click Go there on each row.',
+        'Open Later / polish only when you have spare time (incomplete groups, soft data gaps).',
+        'Glance at the numbers at the top, then Quick links if you already know where to go.',
+        'Recent activity and At a glance are for context — not the daily queue.',
       ],
     },
     system: {
@@ -1563,6 +1562,49 @@
     badge.setAttribute('aria-label', n + ' open report' + (n === 1 ? '' : 's'));
   }
 
+  function updateSupportNavBadge(data) {
+    var badge = document.getElementById('admin-support-badge');
+    if (!badge) return;
+    var counts = (data && data.actionCounts) || {};
+    var n = Number(counts.openComplaints) || 0;
+    if (n <= 0) {
+      badge.classList.add('hidden');
+      badge.textContent = '0';
+      return;
+    }
+    badge.textContent = n > 99 ? '99+' : String(n);
+    badge.classList.remove('hidden');
+    badge.setAttribute('aria-label', n + ' open complaint' + (n === 1 ? '' : 's'));
+    badge.title = n + ' complaint' + (n === 1 ? '' : 's') + ' need a response';
+  }
+
+  function updatePaymentsNavBadge(data) {
+    var badge = document.getElementById('admin-payments-badge');
+    if (!badge) return;
+    var counts = (data && data.actionCounts) || {};
+    var pending = Number(counts.pendingPayouts) || 0;
+    var stripe = Number(counts.stripeOnboarding) || 0;
+    var n = pending + stripe;
+    if (n <= 0) {
+      badge.classList.add('hidden');
+      badge.textContent = '0';
+      return;
+    }
+    badge.textContent = n > 99 ? '99+' : String(n);
+    badge.classList.remove('hidden');
+    badge.classList.toggle('admin-nav-badge--polish', pending === 0 && stripe > 0);
+    badge.setAttribute(
+      'aria-label',
+      pending
+        ? pending + ' payout' + (pending === 1 ? '' : 's') + ' waiting'
+        : stripe + ' organiser' + (stripe === 1 ? '' : 's') + ' need Stripe setup'
+    );
+    badge.title =
+      (pending ? pending + ' payout' + (pending === 1 ? '' : 's') : '') +
+      (pending && stripe ? ' · ' : '') +
+      (stripe ? stripe + ' unfinished Stripe setup' : '');
+  }
+
   function updateHealthBadge() {
     var badge = document.getElementById('admin-health-badge');
     if (!badge) return;
@@ -1660,28 +1702,19 @@
 
   function collectDashboardAlerts(data) {
     var alerts = data && data.alerts ? data.alerts.slice() : [];
-    var healthCount = healthCache && Number(healthCache.count) > 0 ? Number(healthCache.count) : 0;
     var healthUrgent = listingFixSeverityCounts().urgent;
-    if (healthCount > 0 && !alerts.some(function (a) {
+    if (healthUrgent > 0 && !alerts.some(function (a) {
       return a.id === 'event-health';
     })) {
       alerts.unshift({
         id: 'event-health',
-        severity: healthUrgent > 0 ? 'high' : 'low',
+        severity: 'high',
         title:
-          healthUrgent > 0
-            ? healthUrgent +
-              ' event' +
-              (healthUrgent === 1 ? '' : 's') +
-              ' with urgent data issues'
-            : healthCount +
-              ' event' +
-              (healthCount === 1 ? '' : 's') +
-              ' need polish',
-        detail:
-          healthUrgent > 0
-            ? 'Missing date or organiser — fix these first. Softer gaps are listed under Fix listings.'
-            : 'Add logos, VAT, format, or tidy past dates when you have time.',
+          healthUrgent +
+          ' event' +
+          (healthUrgent === 1 ? '' : 's') +
+          ' with urgent data issues',
+        detail: 'Missing date or organiser — fix these first under Data issues.',
         href: '#cleanup/issues',
         time: new Date().toISOString(),
       });
@@ -1699,22 +1732,154 @@
     return alerts;
   }
 
-  function renderActionQueueHtml(data) {
-    return collectDashboardAlerts(data).map(actionQueueRow).join('');
+  function inboxChipHtml(chip) {
+    return (
+      '<a href="' +
+      attrEsc(chip.href) +
+      '" class="admin-needs-chip admin-needs-chip--' +
+      attrEsc(chip.tone || 'amber') +
+      '">' +
+      '<span class="admin-needs-chip-count">' +
+      esc(String(chip.count > 99 ? '99+' : chip.count)) +
+      '</span>' +
+      '<span class="admin-needs-chip-label">' +
+      esc(chip.label) +
+      '</span></a>'
+    );
   }
 
-  function syncDashboardActionSection(data) {
-    var actionSection = document.getElementById('dashboard-action-section');
-    var queueEl = document.getElementById('dashboard-action-queue');
-    if (!actionSection || !queueEl) return;
+  function inboxGroupHtml(title, alerts, chips) {
+    var chipHtml = (chips || []).map(inboxChipHtml).join('');
+    var rows = (alerts || []).map(actionQueueRow).join('');
+    if (!chipHtml && !rows) return '';
+    return (
+      '<div class="admin-inbox-group-inner">' +
+      '<p class="admin-inbox-group-label">' +
+      esc(title) +
+      '</p>' +
+      (chipHtml ? '<div class="admin-inbox-chips">' + chipHtml + '</div>' : '') +
+      (rows ? '<div class="admin-action-queue">' + rows + '</div>' : '') +
+      '</div>'
+    );
+  }
+
+  function needsAttentionChips(data) {
+    var counts = (data && data.actionCounts) || {};
+    var chips = { high: [], medium: [], low: [] };
+    function push(bucket, n, label, href, tone) {
+      var count = Number(n) || 0;
+      if (count <= 0) return;
+      chips[bucket].push({
+        count: count,
+        label: label,
+        href: href,
+        tone: tone || 'amber',
+      });
+    }
+    push('high', counts.pendingPayouts, 'Payouts to process', '#financials/payouts', 'rose');
+    push('high', counts.openComplaints, 'Complaints', '#support/complaints', 'rose');
+    push('high', listingFixSeverityCounts().urgent, 'Urgent event data', '#cleanup/issues', 'rose');
+    push(
+      'medium',
+      (Number(counts.openListingReports) || 0) + (Number(counts.openReviewReports) || 0),
+      'Open reports',
+      '#moderation/reports',
+      'amber'
+    );
+    push('medium', counts.openEventRequests, 'Event requests', '#cleanup/requests', 'amber');
+    push('medium', counts.pendingOpportunities, 'Opportunity reviews', '#cleanup/opportunities', 'amber');
+    push('medium', counts.stripeOnboarding, 'Stripe setup incomplete', '#financials/organisers', 'amber');
+    push('low', counts.incompleteOrganisers, 'Incomplete groups', '#cleanup/groups', 'slate');
+    var soft = listingFixSeverityCounts().softEvents;
+    if (soft > 0 && soft <= 40) {
+      push('low', soft, 'Event polish', '#cleanup/issues', 'slate');
+    }
+    return chips;
+  }
+
+  function syncDashboardInbox(data) {
+    var inbox = document.getElementById('dashboard-inbox');
+    if (!inbox) return;
     if (!data || data.error || data.configured === false) return;
 
     var alerts = collectDashboardAlerts(data);
-    var hasActions = alerts.length > 0;
-    actionSection.hidden = !hasActions;
-    if (hasActions) {
-      queueEl.innerHTML = alerts.map(actionQueueRow).join('');
+    var chips = needsAttentionChips(data);
+    var urgentAlerts = alerts.filter(function (a) {
+      return a.severity === 'high';
+    });
+    var soonAlerts = alerts.filter(function (a) {
+      return a.severity === 'medium';
+    });
+    var laterAlerts = alerts.filter(function (a) {
+      return a.severity !== 'high' && a.severity !== 'medium';
+    });
+
+    var urgentEl = document.getElementById('dashboard-inbox-urgent');
+    var soonEl = document.getElementById('dashboard-inbox-soon');
+    var emptyEl = document.getElementById('dashboard-inbox-empty');
+    var laterEl = document.getElementById('dashboard-inbox-later');
+    var laterBody = document.getElementById('dashboard-inbox-later-body');
+    var laterCount = document.getElementById('dashboard-inbox-later-count');
+
+    var urgentHtml = inboxGroupHtml('Urgent', urgentAlerts, []);
+    var soonHtml = inboxGroupHtml('Soon', soonAlerts, []);
+    var laterHtml = inboxGroupHtml('', laterAlerts, chips.low);
+
+    if (urgentEl) {
+      urgentEl.innerHTML = urgentHtml;
+      urgentEl.hidden = !urgentHtml;
     }
+    if (soonEl) {
+      soonEl.innerHTML = soonHtml;
+      soonEl.hidden = !soonHtml;
+    }
+
+    var hasActive = !!(urgentHtml || soonHtml);
+    if (emptyEl) emptyEl.hidden = hasActive;
+
+    var laterItemCount =
+      laterAlerts.length + (chips.low || []).reduce(function (sum, c) {
+        return sum + (Number(c.count) || 0);
+      }, 0);
+    if (laterEl && laterBody) {
+      if (laterHtml) {
+        laterEl.hidden = false;
+        laterBody.innerHTML = laterHtml;
+        if (laterCount) {
+          laterCount.textContent = laterItemCount > 99 ? '99+' : String(laterItemCount);
+        }
+      } else {
+        laterEl.hidden = true;
+        laterBody.innerHTML = '';
+        if (laterCount) laterCount.textContent = '';
+      }
+    }
+
+    // Legacy hooks (older cached markup)
+    var actionSection = document.getElementById('dashboard-action-section');
+    var queueEl = document.getElementById('dashboard-action-queue');
+    if (actionSection && queueEl) {
+      var legacy = urgentAlerts.concat(soonAlerts);
+      actionSection.hidden = legacy.length === 0;
+      if (legacy.length) queueEl.innerHTML = legacy.map(actionQueueRow).join('');
+    }
+  }
+
+  function renderActionQueueHtml(data) {
+    return collectDashboardAlerts(data)
+      .filter(function (a) {
+        return a.severity === 'high' || a.severity === 'medium';
+      })
+      .map(actionQueueRow)
+      .join('');
+  }
+
+  function syncDashboardActionSection(data) {
+    syncDashboardInbox(data);
+  }
+
+  function syncNeedsAttentionStrip(data) {
+    syncDashboardInbox(data);
   }
 
   function dashboardAlertsHtml(data) {
@@ -1793,9 +1958,8 @@
     }
     updateAdminDataBadge(data.updatedAt);
 
-    var queueEl = document.getElementById('dashboard-action-queue');
-    if (queueEl) {
-      syncDashboardActionSection(data);
+    if (document.getElementById('dashboard-inbox') || document.getElementById('dashboard-action-queue')) {
+      syncDashboardInbox(data);
     }
 
     var alertsEl = document.getElementById('dashboard-alerts');
@@ -1843,12 +2007,13 @@
 
     updateHealthBadge();
     updateModerationNavBadge(data);
+    updateSupportNavBadge(data);
+    updatePaymentsNavBadge(data);
     var attentionTotal = adminAttentionTotal(data);
     persistAdminAttentionCount(attentionTotal);
     updateCommandCenterHeaderBadge(attentionTotal);
     syncScheduledRemindersSection();
     syncLiveHubTabBadges(data);
-    syncNeedsAttentionStrip(data);
   }
 
   function refreshEventHealthQuietly(force) {
@@ -2308,67 +2473,6 @@
     if (container) {
       container.innerHTML = renderAttentionQueue(attention);
     }
-  }
-
-  function needsAttentionChips(data) {
-    var counts = (data && data.actionCounts) || {};
-    var chips = [];
-    function push(n, label, href, tone) {
-      var count = Number(n) || 0;
-      if (count <= 0) return;
-      chips.push({
-        count: count,
-        label: label,
-        href: href,
-        tone: tone || 'amber',
-      });
-    }
-    push(counts.pendingPayouts, 'Payouts to process', '#financials/payouts', 'rose');
-    push(
-      (Number(counts.openListingReports) || 0) + (Number(counts.openReviewReports) || 0),
-      'Open reports',
-      '#moderation/reports',
-      'amber'
-    );
-    push(counts.openComplaints, 'Complaints', '#support/complaints', 'amber');
-    push(counts.incompleteOrganisers, 'Incomplete groups (polish)', '#cleanup/groups', 'slate');
-    push(counts.openEventRequests, 'Event requests', '#cleanup/requests', 'amber');
-    push(counts.pendingOpportunities, 'Opportunity reviews', '#cleanup/opportunities', 'slate');
-    var healthParts = listingFixSeverityCounts();
-    push(healthParts.urgent, 'Urgent event data', '#cleanup/issues', 'rose');
-    push(healthParts.softEvents, 'Event polish', '#cleanup/issues', 'slate');
-    return chips;
-  }
-
-  function syncNeedsAttentionStrip(data) {
-    var section = document.getElementById('dashboard-needs-attention');
-    var body = document.getElementById('dashboard-needs-attention-body');
-    if (!section || !body) return;
-    if (!data || data.error || data.configured === false) return;
-    var chips = needsAttentionChips(data);
-    if (!chips.length) {
-      section.hidden = true;
-      body.innerHTML = '';
-      return;
-    }
-    section.hidden = false;
-    body.innerHTML = chips
-      .map(function (chip) {
-        return (
-          '<a href="' +
-          attrEsc(chip.href) +
-          '" class="admin-needs-chip admin-needs-chip--' +
-          attrEsc(chip.tone) +
-          '">' +
-          '<span class="admin-needs-chip-count">' +
-          esc(String(chip.count > 99 ? '99+' : chip.count)) +
-          '</span>' +
-          '<span class="admin-needs-chip-label">' +
-          esc(chip.label) +
-          '</span></a>'
-        );
-      })
-      .join('');
   }
 
   function renderAttentionQueue(attention) {
@@ -6002,7 +6106,7 @@
   }
 
   function renderDashboard() {
-    if (!document.getElementById('dashboard-action-queue') && !document.getElementById('dashboard-alerts')) {
+    if (!document.getElementById('dashboard-inbox') && !document.getElementById('dashboard-action-queue') && !document.getElementById('dashboard-alerts')) {
       main.innerHTML =
         '<div class="space-y-5">' +
         '<section class="admin-stat-grid admin-stat-grid--4" id="dashboard-metrics">' +
@@ -6011,6 +6115,27 @@
         card('On organiser browse', '…', 'Loading…') +
         card('Member accounts', '…', 'Loading…') +
         '</section>' +
+        '<section class="admin-inbox" id="dashboard-inbox">' +
+        '<div class="admin-inbox-head"><h3>Do this next</h3>' +
+        '<p>Urgent and soon — click through to clear them.</p></div>' +
+        '<div id="dashboard-inbox-urgent" class="admin-inbox-group" hidden></div>' +
+        '<div id="dashboard-inbox-soon" class="admin-inbox-group" hidden></div>' +
+        '<p id="dashboard-inbox-empty" class="admin-inbox-empty" hidden>Nothing urgent — you’re clear for now.</p>' +
+        '<details class="admin-inbox-later" id="dashboard-inbox-later" hidden>' +
+        '<summary>Later / polish <span id="dashboard-inbox-later-count" class="admin-inbox-later-count"></span></summary>' +
+        '<div id="dashboard-inbox-later-body" class="admin-inbox-later-body"></div></details></section>' +
+        '<section class="admin-dash-section" id="dashboard-scheduled-reminders-section">' +
+        '<div class="admin-dash-section-head"><h3>Scheduled reminders</h3>' +
+        '<p>Future tasks — these move into Do this next when due.</p></div>' +
+        '<div class="admin-dash-section-body" id="dashboard-scheduled-reminders"></div></section>' +
+        '<section class="admin-dash-section" id="dashboard-disputes-section" hidden>' +
+        '<div class="admin-dash-section-head"><h3>Group profile disputes</h3>' +
+        '<p>An organiser signed in and said a pre-imported profile is not theirs.</p></div>' +
+        '<div class="admin-dash-section-body" id="dashboard-disputes"><p class="text-sm text-slate-500">Loading…</p></div></section>' +
+        '<section class="admin-dash-section" id="dashboard-claim-requests-section" hidden>' +
+        '<div class="admin-dash-section-head"><h3>Organiser claim requests</h3>' +
+        '<p>Someone asked to claim a public group profile — verify the claimant, then approve.</p></div>' +
+        '<div class="admin-dash-section-body" id="dashboard-claim-requests"><p class="text-sm text-slate-500">Loading…</p></div></section>' +
         '<section class="admin-dash-section">' +
         '<div class="admin-dash-section-head"><h3>Quick links</h3>' +
         '<p>Jump straight to the pages you use most often.</p></div>' +
@@ -6025,31 +6150,6 @@
         '<a href="#moderation/reports" class="admin-shortcut"><span class="admin-shortcut-label">Open reports</span><span class="admin-shortcut-desc">Listing and review reports</span></a>' +
         '<a href="#analytics/insights" class="admin-shortcut"><span class="admin-shortcut-label">Analytics</span><span class="admin-shortcut-desc">Tickets, demand, growth</span></a>' +
         '</div></div></section>' +
-        '<section class="admin-dash-section" id="dashboard-scheduled-reminders-section">' +
-        '<div class="admin-dash-section-head"><h3>Scheduled reminders</h3>' +
-        '<p>Future tasks — these move into Things to do when due.</p></div>' +
-        '<div class="admin-dash-section-body" id="dashboard-scheduled-reminders"></div></section>' +
-        '<section class="admin-needs-attention" id="dashboard-needs-attention" hidden>' +
-        '<div class="admin-needs-attention-head"><h3>Needs attention</h3>' +
-        '<p>Live counts — tap to jump straight in.</p></div>' +
-        '<div class="admin-needs-attention-body" id="dashboard-needs-attention-body"></div></section>' +
-        '<section class="admin-dash-section" id="dashboard-action-section">' +
-        '<div class="admin-dash-section-head"><h3>Things to do</h3>' +
-        '<p>Work through these in order — urgent items are listed first.</p></div>' +
-        '<div class="admin-dash-section-body">' +
-        '<div class="admin-action-queue min-h-[6rem]" id="dashboard-action-queue">' +
-        '<div class="admin-action-row admin-action-row--static" aria-hidden="true">' +
-        '<span class="admin-action-priority admin-action-priority--low">—</span>' +
-        '<span class="admin-action-body"><span class="admin-action-title">Loading queue…</span></span>' +
-        '</div></div></div></section>' +
-        '<section class="admin-dash-section" id="dashboard-disputes-section" hidden>' +
-        '<div class="admin-dash-section-head"><h3>Group profile disputes</h3>' +
-        '<p>An organiser signed in and said a pre-imported profile is not theirs.</p></div>' +
-        '<div class="admin-dash-section-body" id="dashboard-disputes"><p class="text-sm text-slate-500">Loading…</p></div></section>' +
-        '<section class="admin-dash-section" id="dashboard-claim-requests-section" hidden>' +
-        '<div class="admin-dash-section-head"><h3>Organiser claim requests</h3>' +
-        '<p>Someone asked to claim a public group profile — verify the claimant, then approve.</p></div>' +
-        '<div class="admin-dash-section-body" id="dashboard-claim-requests"><p class="text-sm text-slate-500">Loading…</p></div></section>' +
         '<section class="grid lg:grid-cols-2 gap-5">' +
         '<div class="admin-dash-section min-w-0">' +
         '<div class="admin-dash-section-head"><h3>Recent activity</h3>' +
@@ -24981,7 +25081,7 @@
     bindAdminPaginationGoto();
     // Metrics only after admin session is confirmed — never paint cache for guests
     adminMetricsCache = readCachedAdminMetrics();
-    if (adminMetricsCache && document.getElementById('dashboard-action-queue')) {
+    if (adminMetricsCache && (document.getElementById('dashboard-inbox') || document.getElementById('dashboard-action-queue'))) {
       applyDashboardMetrics(adminMetricsCache);
       applyDashboardNotifications(adminMetricsCache);
     }
