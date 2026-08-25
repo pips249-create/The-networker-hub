@@ -55,30 +55,6 @@
     },
     {
       "source": "/:path*",
-      "has": [{ "type": "host", "value": "thenetworkhub.com" }],
-      "destination": "https://www.thenetworkeruk.com/:path*",
-      "permanent": true
-    },
-    {
-      "source": "/:path*",
-      "has": [{ "type": "host", "value": "www.thenetworkhub.com" }],
-      "destination": "https://www.thenetworkeruk.com/:path*",
-      "permanent": true
-    },
-    {
-      "source": "/:path*",
-      "has": [{ "type": "host", "value": "thenetworkuk.com" }],
-      "destination": "https://www.thenetworkeruk.com/:path*",
-      "permanent": true
-    },
-    {
-      "source": "/:path*",
-      "has": [{ "type": "host", "value": "www.thenetworkuk.com" }],
-      "destination": "https://www.thenetworkeruk.com/:path*",
-      "permanent": true
-    },
-    {
-      "source": "/:path*",
       "has": [{ "type": "host", "value": "the-networker.co.uk" }],
       "destination": "https://www.thenetworkeruk.com/:path*",
       "permanent": true
