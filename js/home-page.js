@@ -464,7 +464,8 @@
     });
   }
 
-  function foundingItemHtml(org) {
+  function foundingItemHtml(org, opts) {
+    opts = opts || {};
     var name = String(org.name || 'Organiser').trim() || 'Organiser';
     var href = String(org.href || org.website || '').trim();
     var photo = String(org.photoUrl || '').trim();
@@ -473,6 +474,9 @@
     var darkClass = org.logoBandDark ? ' home-partner-item--dark-logo' : '';
     var inner;
     if (photo) {
+      // Near-fold strip: eager-load originals so tiles are not blank while lazy waits.
+      // Marquee clones stay lazy (same URL hits HTTP cache after the first paint).
+      var loading = opts.clone ? 'lazy' : 'eager';
       // No fallback initial in the DOM while the logo is present — CSS `display`
       // on .home-founding-initial was overriding [hidden] and showing giant letters.
       inner =
@@ -480,7 +484,9 @@
         esc(photo) +
         '" alt="' +
         esc(name) +
-        '" loading="lazy" decoding="async" class="home-partner-logo" onerror="this.remove();var s=document.createElement(\'span\');s.className=\'home-founding-initial\';s.setAttribute(\'aria-hidden\',\'true\');s.textContent=this.alt?this.alt.charAt(0).toUpperCase():\'?\';this.parentElement.classList.add(\'home-founding-item--fallback\');this.parentElement.classList.remove(\'home-partner-item--dark-logo\');this.parentElement.appendChild(s);" />';
+        '" loading="' +
+        loading +
+        '" decoding="async" width="156" height="60" class="home-partner-logo" onerror="this.remove();var s=document.createElement(\'span\');s.className=\'home-founding-initial\';s.setAttribute(\'aria-hidden\',\'true\');s.textContent=this.alt?this.alt.charAt(0).toUpperCase():\'?\';this.parentElement.classList.add(\'home-founding-item--fallback\');this.parentElement.classList.remove(\'home-partner-item--dark-logo\');this.parentElement.appendChild(s);" />';
     } else {
       inner =
         '<span class="home-founding-initial" aria-hidden="true">' + esc(initial) + '</span>';
@@ -641,7 +647,16 @@
     if (!track) return;
     var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var useMarquee = orgs.length >= 4 && !prefersReducedMotion;
-    var items = orgs.map(foundingItemHtml).join('');
+    var items = orgs.map(function (org) {
+      return foundingItemHtml(org, { clone: false });
+    }).join('');
+    var cloneItems = useMarquee
+      ? orgs
+          .map(function (org) {
+            return foundingItemHtml(org, { clone: true });
+          })
+          .join('')
+      : '';
     var seconds = useMarquee ? Math.max(36, Math.round(orgs.length * 4.2)) : '';
 
     track.classList.remove('home-partners-track--loading');
@@ -649,7 +664,7 @@
     track.classList.toggle('home-partners-track--marquee-reverse', Boolean(useMarquee && opts.reverse));
     track.classList.toggle('home-partners-track--scroll', false);
     track.classList.toggle('home-partners-track--static', !useMarquee);
-    track.innerHTML = useMarquee ? items + items : items;
+    track.innerHTML = useMarquee ? items + cloneItems : items;
     if (useMarquee) demoteMarqueeCloneItems(track, orgs.length);
     if (seconds) track.style.setProperty('--home-marquee-duration', seconds + 's');
     else track.style.removeProperty('--home-marquee-duration');

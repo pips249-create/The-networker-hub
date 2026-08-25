@@ -8,6 +8,7 @@ const { json, setCors } = require('./_lib/auth');
 const { getSupabaseAdmin } = require('./_lib/supabase');
 const { publicOrganiserSlug } = require('./_lib/organiser-slug');
 const { organiserDisplayPhotoUrl } = require('./_lib/supabase-organisers-browse');
+const { logoStripUrl } = require('./_lib/logo-strip-url');
 const {
   listFoundingHomepageOrganisers,
   listFoundingOrganisersForGateway,
@@ -37,7 +38,8 @@ function mapRow(row, { includeHubHref }) {
     name: String(row.name || '').trim() || 'Organiser',
     slug,
     href: hubHref || website,
-    photoUrl: organiserDisplayPhotoUrl(row),
+    // Strip-sized CDN rewrite — full uploads were leaving blank marquee tiles for seconds.
+    photoUrl: logoStripUrl(organiserDisplayPhotoUrl(row)),
     website,
     industry: industries[0] || '',
     foundingOrganiser: true,
@@ -65,7 +67,14 @@ module.exports = async function handler(req, res) {
       : await listFoundingHomepageOrganisers(sb);
     const organisers = rows.map((row) => mapRow(row, { includeHubHref: !forGateway }));
 
-    return json(res, 200, {
+    // Public list changes rarely — short CDN cache avoids a cold serverless hit on every home view.
+    // (auth.json always sets no-store, so respond directly.)
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.setHeader(
+      'Cache-Control',
+      'public, max-age=120, s-maxage=300, stale-while-revalidate=600'
+    );
+    return res.status(200).json({
       ok: true,
       organisers,
       for: forGateway ? 'gateway' : 'homepage',

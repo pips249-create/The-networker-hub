@@ -335,7 +335,6 @@
 
     fetch('/api/founding-organisers?for=gateway', {
       credentials: 'include',
-      cache: 'no-store',
     })
       .then(function (res) {
         return res.ok ? res.json() : null;

@@ -322,7 +322,7 @@
     var grid = document.getElementById('site-access-founding-grid');
     if (!section || !grid) return;
 
-    fetch('/api/founding-organisers?for=gateway', { cache: 'no-store' })
+    fetch('/api/founding-organisers?for=gateway')
       .then(function (r) {
         return r.json();
       })
