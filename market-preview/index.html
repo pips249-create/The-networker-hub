@@ -11,8 +11,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/css/hub.css?v=20260825mkt3">
-<link rel="stylesheet" href="/css/market-preview.css?v=20260825mkt3">
+<link rel="stylesheet" href="/css/hub.css?v=20260825mkt4">
+<link rel="stylesheet" href="/css/market-preview.css?v=20260825mkt4">
 <link rel="icon" href="/favicon.ico?v=20260825intl26" sizes="any">
 <link rel="icon" href="/assets/favicon.svg?v=20260825intl26" type="image/svg+xml">
 </head>
@@ -29,7 +29,7 @@
         <a class="market-preview-logo" id="market-preview-logo" href="https://www.thenetworkerinternational.com/" aria-label="The Networker">
           <img
             id="market-preview-logo-img"
-            src="/assets/logo-networker-international.png?v=20260825mkt3"
+            src="/assets/logo-networker-international.png?v=20260825mkt4"
             width="240"
             height="111"
             alt="The Networker"
@@ -77,7 +77,7 @@
       <aside class="market-preview-panel" aria-labelledby="market-preview-panel-title">
         <p class="market-preview-panel-eyebrow">Register interest</p>
         <h2 class="market-preview-panel-title" id="market-preview-panel-title">Be first when we launch</h2>
-        <p class="market-preview-panel-lede">
+        <p class="market-preview-panel-lede" id="market-preview-panel-lede">
           Tell us if you want to attend events or list a networking group. We&rsquo;ll be in touch as we get closer.
         </p>
 
@@ -88,6 +88,30 @@
 
         <form class="market-preview-form" id="market-preview-form" novalidate>
           <input type="text" name="website_hp" class="market-preview-honeypot" tabindex="-1" autocomplete="off" aria-hidden="true">
+
+          <div class="market-preview-group-fields" id="market-preview-group-fields" hidden>
+            <div class="market-preview-org" role="group" aria-label="Organisation type">
+              <button type="button" class="market-preview-org-btn is-selected" data-org-type="networking_group">Networking group</button>
+              <button type="button" class="market-preview-org-btn" data-org-type="training">Training organisation</button>
+              <button type="button" class="market-preview-org-btn" data-org-type="both">Both</button>
+            </div>
+
+            <label class="market-preview-label" for="market-preview-name">Your name</label>
+            <input class="market-preview-input" id="market-preview-name" name="name" type="text" autocomplete="name" placeholder="Your name">
+
+            <label class="market-preview-label" for="market-preview-phone">Phone <span class="market-preview-optional">(optional)</span></label>
+            <input class="market-preview-input" id="market-preview-phone" name="phone" type="tel" autocomplete="tel" placeholder="Phone number">
+
+            <label class="market-preview-label" for="market-preview-group">Group / organisation name</label>
+            <input class="market-preview-input" id="market-preview-group" name="group" type="text" autocomplete="organization" placeholder="e.g. Dublin Business Network">
+
+            <label class="market-preview-label" for="market-preview-website">Website <span class="market-preview-optional">(optional)</span></label>
+            <input class="market-preview-input" id="market-preview-website" name="website" type="url" placeholder="https://yourgroup.com">
+
+            <label class="market-preview-label" for="market-preview-description">Tell us about your group</label>
+            <textarea class="market-preview-textarea" id="market-preview-description" name="description" rows="3" placeholder="Who you serve, how often you meet, and anything else we should know"></textarea>
+          </div>
+
           <label class="market-preview-label" for="market-preview-email">Email</label>
           <input
             class="market-preview-input"
@@ -98,7 +122,7 @@
             required
             placeholder="you@company.com"
           >
-          <p class="market-preview-privacy">
+          <p class="market-preview-privacy" id="market-preview-privacy">
             We use your email only about launching The Networker in this country.
             See our
             <a href="https://www.thenetworkeruk.com/legal-policies#privacy" rel="noopener noreferrer">privacy policy</a>.
@@ -149,6 +173,6 @@
   </p>
 </footer>
 
-<script src="/js/market-preview.js?v=20260825mkt3" defer></script>
+<script src="/js/market-preview.js?v=20260825mkt4" defer></script>
 </body>
 </html>

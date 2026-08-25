@@ -62,6 +62,15 @@ function normalizeOrgType(raw) {
 
 function normalizeInput(payload) {
   payload = payload || {};
+  const allowedSources = new Set([
+    'international_map',
+    'market_preview_ie',
+    'market_preview_us',
+  ]);
+  const sourceRaw = String(payload.source || '')
+    .trim()
+    .toLowerCase()
+    .slice(0, 64);
   return {
     contactName: String(payload.name || payload.contactName || payload.contact_name || '').trim(),
     email: normalizeEmail(payload.email),
@@ -73,6 +82,7 @@ function normalizeInput(payload) {
     countryCode: normalizeCountryCode(payload.countryCode || payload.country_code),
     countryName: String(payload.countryName || payload.country_name || '').trim().slice(0, 120),
     website: String(payload.website_hp || '').trim(),
+    source: allowedSources.has(sourceRaw) ? sourceRaw : 'international_map',
   };
 }
 
@@ -195,7 +205,7 @@ async function submitInternationalGroupIntake(payload) {
       country_code: input.countryCode,
       country_name: input.countryName,
       status: 'open',
-      source: 'international_map',
+      source: input.source,
     })
     .select('id, created_at')
     .single();

@@ -304,9 +304,48 @@
 
 .market-preview-label {
   display: block;
-  margin-bottom: 6px;
+  margin: 12px 0 6px;
   font-size: 0.82rem;
   font-weight: 600;
+}
+
+.market-preview-label:first-of-type {
+  margin-top: 0;
+}
+
+.market-preview-optional {
+  font-weight: 500;
+  color: #8a8284;
+}
+
+.market-preview-group-fields {
+  margin-bottom: 4px;
+}
+
+.market-preview-org {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.market-preview-org-btn {
+  padding: 9px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(184, 174, 166, 0.55);
+  background: #fff;
+  color: #4a4446;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+
+.market-preview-org-btn.is-selected {
+  border-color: #b8956a;
+  background: rgba(201, 173, 122, 0.18);
+  color: #3a3438;
 }
 
 .market-preview-input {
@@ -318,7 +357,19 @@
   background: #fff;
 }
 
-.market-preview-input:focus-visible {
+.market-preview-textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(184, 174, 166, 0.55);
+  font: inherit;
+  background: #fff;
+  resize: vertical;
+  min-height: 84px;
+}
+
+.market-preview-input:focus-visible,
+.market-preview-textarea:focus-visible {
   outline: 2px solid #c9ad7a;
   outline-offset: 2px;
 }
