@@ -298,6 +298,10 @@
     if (guestProgrammeEnabled() && !payHowIncludesTickets() && !payHowIncludesMembership()) {
       blockers.push('After complimentary visits, people need tickets or membership — choose one above');
     }
+    const alumni = collectAlumniFastPass();
+    if (alumni.enabled && !alumni.saleEnd) {
+      blockers.push('Choose a sale end for the previous attendee ticket');
+    }
     if (publicFreeTicketIsFirstVisitStandIn(list)) {
       blockers.push(
         'A first-visit ticket (for example First Meeting) should be complimentary visits — you can still keep a free ticket and a paid ticket'
@@ -1551,6 +1555,7 @@
         ? 'Required for this path. Set what members pay for this event (often £0). Visitors still use the public ticket.'
         : 'Optional. Let people on your member list book cheaper (or free) while everyone else uses the ticket above.';
     }
+    syncAlumniAddonVisibility();
 
     syncHubMembershipMount();
     syncGuestProgrammeMount();
@@ -2553,6 +2558,7 @@
         optionalExtras.hidden = on;
       }
     }
+    syncAlumniAddonVisibility();
     const guestAddon = document.getElementById('ee-guest-addon');
     // Guest visits live in Step 2 mounts — don't hide when already relocated there.
     if (
@@ -2566,7 +2572,9 @@
         (on && !membershipMeeting);
     }
     const alumniAddon = document.getElementById('ee-alumni-addon');
-    if (alumniAddon) alumniAddon.hidden = true;
+    if (alumniAddon) {
+      // Visibility owned by syncAlumniAddonVisibility — keep enabled state here.
+    }
     const extrasMembershipMount = document.getElementById('ee-hub-membership-mount-extras');
     if (extrasMembershipMount && membershipMeeting && step2Confirmed && payHowConfirmed) {
       extrasMembershipMount.hidden = false;
@@ -3840,6 +3848,8 @@
   }
 
   function tiersHavePaidPrice(tiers) {
+    const alumni = collectAlumniFastPass();
+    if (alumni.enabled && Number(alumni.price) > 0) return true;
     return (tiers || []).some(function (tier) {
       const price = Number(tier.price);
       return Number.isFinite(price) && price > 0;
@@ -4322,16 +4332,120 @@
     if (disabledEl) disabledEl.addEventListener('change', updatePublishButton);
   }
 
+  function syncAlumniAddonVisibility() {
+    const alumniAddon = document.getElementById('ee-alumni-addon');
+    if (!alumniAddon) return;
+    const membersOnlyClosed =
+      membersOnlyEventEnabled() && !isMembershipMeetingMode() && !guestProgrammeEnabled();
+    const ready = Boolean(step2Confirmed && payHowConfirmed);
+    const show =
+      ready &&
+      !membersOnlyClosed &&
+      (isOpenBookingMode(attendanceMode) ||
+        attendanceMode === 'category_exclusivity' ||
+        isMembershipMeetingMode());
+    alumniAddon.hidden = !show;
+    // Closed member-list meetings cannot use Previous Attendees — clear if left on.
+    if (membersOnlyClosed) {
+      const enabled = document.getElementById('ee-alumni-enabled');
+      if (enabled && enabled.checked) {
+        enabled.checked = false;
+        enabled.dispatchEvent(new Event('change'));
+      }
+    }
+  }
+
   function bindAlumniFastPassFields() {
-    /* Previous Attendees removed from ticket setup. */
+    const enabled = document.getElementById('ee-alumni-enabled');
+    const fields = document.getElementById('ee-alumni-fields');
+    const closeSel = document.getElementById('ee-alumni-sale-end');
+    const customWrap = document.getElementById('ee-alumni-sale-end-custom');
+    const toggle = () => {
+      const on = Boolean(enabled?.checked);
+      if (fields) fields.hidden = !on;
+      syncAddonCard('ee-alumni-addon', on);
+      updatePublishButton();
+    };
+    if (enabled) {
+      enabled.addEventListener('change', toggle);
+      toggle();
+    }
+    if (closeSel && customWrap) {
+      const syncClose = () => {
+        customWrap.hidden = closeSel.value !== 'custom';
+        updatePublishButton();
+      };
+      closeSel.addEventListener('change', syncClose);
+      syncClose();
+    }
+    ['ee-alumni-price', 'ee-alumni-qty', 'ee-alumni-sale-end-date'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('input', updatePublishButton);
+      if (el) el.addEventListener('change', updatePublishButton);
+    });
+    populateQuarterTimeSelect(document.getElementById('ee-alumni-sale-end-time'), '18:00');
   }
 
   function collectAlumniFastPass() {
-    return { enabled: false };
+    const enabled = Boolean(document.getElementById('ee-alumni-enabled')?.checked);
+    if (!enabled) return { enabled: false };
+    const price = document.getElementById('ee-alumni-price')?.value;
+    const qty = document.getElementById('ee-alumni-qty')?.value;
+    const saleOption = document.getElementById('ee-alumni-sale-end')?.value || '1_week';
+    const customDt = combineDateAndQuarterTime(
+      document.getElementById('ee-alumni-sale-end-date')?.value,
+      document.getElementById('ee-alumni-sale-end-time')?.value
+    );
+    const eventDate = seriesMeta.events && seriesMeta.events[0] ? seriesMeta.events[0].date : null;
+    const saleEnd = computeSaleEndIso(saleOption, customDt, eventDate);
+    return {
+      enabled: true,
+      price: price === '' ? 0 : price,
+      quantityAvailable: qty === '' ? null : Number(qty),
+      saleEnd,
+      saleEndOption: saleOption,
+      saleEndCustom: customDt,
+    };
   }
 
-  function prefillAlumniFastPass() {
-    /* no-op — Previous Attendees removed from ticket setup */
+  function prefillAlumniFastPass(eventRow, alumniTicket) {
+    const enabledEl = document.getElementById('ee-alumni-enabled');
+    const fields = document.getElementById('ee-alumni-fields');
+    const enabled = Boolean(eventRow?.alumniFastPassEnabled);
+    if (enabledEl) enabledEl.checked = enabled;
+    if (!enabled || !alumniTicket) {
+      if (fields) fields.hidden = true;
+      syncAddonCard('ee-alumni-addon', false);
+      return;
+    }
+    const priceEl = document.getElementById('ee-alumni-price');
+    if (priceEl) {
+      priceEl.value =
+        alumniTicket.price === '' || alumniTicket.price == null ? '0' : String(alumniTicket.price);
+    }
+    const qtyEl = document.getElementById('ee-alumni-qty');
+    if (qtyEl) {
+      qtyEl.value =
+        alumniTicket.quantityAvailable == null || alumniTicket.quantityAvailable === ''
+          ? ''
+          : String(alumniTicket.quantityAvailable);
+    }
+    const eventDate = seriesMeta.events && seriesMeta.events[0] ? seriesMeta.events[0].date : null;
+    const closeSel = document.getElementById('ee-alumni-sale-end');
+    const customWrap = document.getElementById('ee-alumni-sale-end-custom');
+    if (alumniTicket.saleEnd) {
+      const option = inferSaleEndOptionFromIso(alumniTicket.saleEnd, eventDate);
+      if (closeSel) closeSel.value = option;
+      if (customWrap) customWrap.hidden = option !== 'custom';
+      if (option === 'custom') {
+        const dateEl = document.getElementById('ee-alumni-sale-end-date');
+        const timeEl = document.getElementById('ee-alumni-sale-end-time');
+        if (dateEl) dateEl.value = isoToDateInput(alumniTicket.saleEnd);
+        if (timeEl) populateQuarterTimeSelect(timeEl, isoToTimeInput(alumniTicket.saleEnd) || '18:00');
+      }
+    }
+    if (fields) fields.hidden = false;
+    syncAddonCard('ee-alumni-addon', true);
   }
 
   function isCategoryExclusivityTicket(ticket) {

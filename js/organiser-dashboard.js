@@ -1820,7 +1820,7 @@
   let linkedInPostBuilder = null;
   const deferredAssetPromises = {};
   const LINKEDIN_POST_BUILDER_SRC = '../js/organiser-linkedin-post-builder.js?v=20260824tnuklogo';
-  const MEMBER_ROSTER_SRC = '../js/organiser-member-roster.js?v=20260825load1';
+  const MEMBER_ROSTER_SRC = '../js/organiser-member-roster.js?v=20260825alumni1';
   const MEMBER_ROSTER_CSS = '../css/organiser-member-roster.css?v=20260812ux2';
   const EVENT_EDIT_CSS = '../css/organiser-event-edit.css?v=20260811claimux2';
   const RANKINGS_PAGE_CSS = '../css/rankings-page.css?v=20260807rank';
@@ -6530,6 +6530,7 @@
         state.attendeesAll = data.attendees || [];
         state.attendeeBlocks = data.blocks || [];
         state.attendeesLoaded = true;
+        maybeRelaxAttendeesHideArchived();
         maybeClearAttendeesPendingFilter();
         updateMyEventsTabCounts();
         updatePendingApplicationsNavBadge();
@@ -6558,6 +6559,19 @@
     } finally {
       if (hint) hint.hidden = true;
     }
+  }
+
+  function maybeRelaxAttendeesHideArchived() {
+    if (!filters.attendeesHideArchived) return;
+    const events = allEventOptions();
+    if (!events.length) return;
+    const hasCurrent = events.some(function (ev) {
+      return !eventRowIsArchived(ev);
+    });
+    if (hasCurrent) return;
+    filters.attendeesHideArchived = false;
+    const el = document.getElementById('filter-attendees-hide-archived');
+    if (el) el.checked = false;
   }
 
   function exportAttendeesCsv() {
@@ -9625,9 +9639,21 @@
     if (!ok) {
       if (errEl) {
         errEl.hidden = false;
-        errEl.textContent = data.message || data.error || 'Could not load source events';
+        errEl.innerHTML =
+          esc(data.message || data.error || 'Could not load source events') +
+          ' <button type="button" class="org-inline-link" id="modal-alumni-invites-retry">Try again</button>';
+        const retry = document.getElementById('modal-alumni-invites-retry');
+        if (retry) {
+          retry.addEventListener('click', function () {
+            openAlumniInvitesModal(eventId);
+          });
+        }
       }
-      sourceSel.innerHTML = '<option value="">No source events available</option>';
+      sourceSel.innerHTML = '<option value="">Could not load — try again</option>';
+      if (sendBtn) {
+        sendBtn.disabled = true;
+        sendBtn.textContent = 'Send invites';
+      }
       return;
     }
 
@@ -9638,6 +9664,10 @@
         errEl.hidden = false;
         errEl.textContent =
           'Publish a previous event with confirmed attendees first, then return here to invite previous attendees.';
+      }
+      if (sendBtn) {
+        sendBtn.disabled = true;
+        sendBtn.textContent = 'Send invites';
       }
       return;
     }

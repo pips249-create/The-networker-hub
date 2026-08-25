@@ -123,6 +123,12 @@
         'Monthly or annual fee to belong to your group — not the ticket for this meeting. Members already on your list book with the member ticket (usually £0). Change amounts later under Memberships.',
       hubertPrompt: 'How do I set monthly membership when setting up tickets?',
     },
+    'alumni-fast-pass': {
+      title: 'Previous Attendees',
+      body:
+        'Optional returning ticket for people who came to a past event. After you publish, send them personal booking links from your Events list (Invite previous attendees).',
+      hubertPrompt: 'What is Previous Attendees for repeat events?',
+    },
     'category-exclusivity': {
       title: 'Application based',
       body:

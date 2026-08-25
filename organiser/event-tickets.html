@@ -354,6 +354,57 @@
           </div>
         </div>
 
+        <div class="ee-card ee-addon-card ee-alumni-card" id="ee-alumni-addon" hidden>
+          <p class="ee-step-label" data-ee-step-label>Optional</p>
+          <label class="ee-addon-toggle">
+            <input type="checkbox" id="ee-alumni-enabled" />
+            <span class="ee-addon-toggle-copy">
+              <strong data-hub-tip="alumni-fast-pass">Previous Attendees</strong>
+              <span class="ee-addon-summary"
+                >Invite-only returning rate — send personal booking links after you publish</span
+              >
+            </span>
+          </label>
+          <div class="ee-addon-body" id="ee-alumni-fields" hidden>
+            <div class="ee-field">
+              <label for="ee-alumni-price">Previous attendee price (&pound;)</label>
+              <input type="number" id="ee-alumni-price" min="0" step="0.01" value="0" inputmode="decimal" />
+              <p class="ee-hint">Set to 0 for a free returning ticket.</p>
+            </div>
+            <div class="ee-field ee-guest-visits-field">
+              <label for="ee-alumni-qty">Quantity available <span class="ee-optional">(optional)</span></label>
+              <input
+                type="number"
+                id="ee-alumni-qty"
+                min="0"
+                step="1"
+                inputmode="numeric"
+                placeholder="Unlimited"
+              />
+            </div>
+            <div class="ee-field">
+              <label for="ee-alumni-sale-end">Sale ends</label>
+              <select id="ee-alumni-sale-end">
+                <option value="at_start">When the event starts</option>
+                <option value="12_hours">12 hours before the event</option>
+                <option value="1_day">1 day before the event</option>
+                <option value="1_week" selected>1 week before the event</option>
+                <option value="custom">Custom date &amp; time</option>
+              </select>
+            </div>
+            <div id="ee-alumni-sale-end-custom" class="ee-sale-custom" hidden>
+              <div class="ee-field">
+                <label for="ee-alumni-sale-end-date">Custom sale end date</label>
+                <input type="date" id="ee-alumni-sale-end-date" />
+              </div>
+              <div class="ee-field">
+                <label for="ee-alumni-sale-end-time">Time</label>
+                <select id="ee-alumni-sale-end-time"></select>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Shared membership prices (moved into networking meeting or CE panel) -->
         <div id="ee-hub-membership-config" hidden>
           <div class="ee-addon-card ee-membership-fee-card is-enabled" id="ee-hub-membership-addon" data-hub-tip="hub-membership-prices">
@@ -658,9 +709,9 @@
     <script src="../js/organiser-quarter-time.js?v=20260714time" defer></script>
     <script src="../js/organiser-terms.js?v=20260609" data-root="../" defer></script>
     <script src="../js/organiser-payment-setup.js?v=20260811seriesux" defer></script>
-    <script src="../js/organiser-field-tips.js?v=20260818comp2" defer></script>
+    <script src="../js/organiser-field-tips.js?v=20260825alumni1" defer></script>
     <script src="../js/hub-field-tip.js?v=20260711" defer></script>
     <script src="../js/organiser-launch-setup.js?v=20260820hubreview1" defer></script>
-    <script src="../js/organiser-event-tickets.js?v=20260821savefast2" defer></script>
+    <script src="../js/organiser-event-tickets.js?v=20260825alumni1" defer></script>
   </body>
 </html>

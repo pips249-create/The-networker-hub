@@ -2803,7 +2803,10 @@
       billingOffered = false;
       const payInviteWrap = document.getElementById('omr-send-pay-invite-wrap');
       if (payInviteWrap) payInviteWrap.hidden = true;
-      /* panel stays visible; organiser can still try save */
+      showAlert(
+        (e && e.message) || 'Could not load membership prices. You can still edit and try Save.',
+        'error'
+      );
       updateBillingPreview();
     }
   }
@@ -2984,6 +2987,7 @@
         return null;
       });
       const billingP = Promise.resolve(loadBillingPlan()).catch(function () {
+        // loadBillingPlan already surfaces an alert
         return null;
       });
       await fetchRosterPage(1, { showLoader: false });
