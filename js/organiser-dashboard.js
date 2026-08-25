@@ -4042,16 +4042,16 @@
         type: 'action',
         title:
           refillOps.length === 1
-            ? 'Review archived applications for open seats'
-            : 'Fill ' + totalOpen + ' open seats from archived applications',
+            ? 'Review denied applications for open seats'
+            : 'Fill ' + totalOpen + ' open seats from denied applications',
         text:
           refillOps.length === 1
             ? esc(refillOps[0].eventTitle) +
-              ' has open seats and archived applicants you can reconsider.'
+              ' has open seats and denied applicants you can reconsider.'
             : totalArchived +
-              ' archived applications may fit open Category Exclusivity seats.',
+              ' denied applications may fit open Category Exclusivity seats.',
         actions:
-          '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-org-route="events-attendees" data-attendees-archive="1">Review archived applications</button>',
+          '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-org-route="events-attendees" data-attendees-archive="1">Review denied applications</button>',
       });
     }
 
@@ -5813,47 +5813,142 @@
     return ops;
   }
 
+  function syncAttendeesStatusSelect() {
+    const statusEl = document.getElementById('filter-attendees-status');
+    if (!statusEl) return;
+    if (filters.attendeesView === 'archive') {
+      filters.attendeesStatus = 'denied';
+      statusEl.value = 'denied';
+      return;
+    }
+    if (filters.attendeesStatus === 'denied') {
+      filters.attendeesStatus = 'all';
+    }
+    statusEl.value = filters.attendeesStatus || 'all';
+  }
+
+  function syncAttendeesSearchPlaceholder() {
+    const searchEl = document.getElementById('filter-attendees-search');
+    if (!searchEl) return;
+    if (filters.attendeesView === 'archive') {
+      searchEl.placeholder = 'Search denied applicants by name, email, industry or event…';
+      searchEl.setAttribute('aria-label', 'Search denied applications');
+    } else if (filters.attendeesView === 'blocked') {
+      searchEl.placeholder = 'Search blocked people by name or email…';
+      searchEl.setAttribute('aria-label', 'Search blocked people');
+    } else {
+      searchEl.placeholder = 'Search name, email, company or industry…';
+      searchEl.setAttribute('aria-label', 'Search attendees');
+    }
+  }
+
   function setAttendeesView(view) {
     if (view === 'archive') filters.attendeesView = 'archive';
     else if (view === 'blocked') filters.attendeesView = 'blocked';
     else filters.attendeesView = 'active';
     filters.attendeesPendingOnly = false;
+    syncAttendeesStatusSelect();
     listPages.attendees = 1;
     renderAttendees();
   }
 
+  function attendeeMatchesSearch(a, search) {
+    const q = String(search || '').trim().toLowerCase();
+    if (!q) return true;
+    return [
+      a.name,
+      a.email,
+      a.company,
+      a.jobTitle,
+      a.screeningJobTitle,
+      a.screeningIndustry,
+      a.rosterIndustry,
+      a.businessSector,
+      a.eventTitle,
+      a.ticketName,
+      a.applicationDenialReason,
+      ...(a.guestNames || []),
+    ].some((value) => String(value || '').toLowerCase().includes(q));
+  }
+
+  function matchingDeniedApplicationsForSearch() {
+    const search = String(filters.attendeesSearch || '').trim();
+    if (!search) return [];
+    let list = archivedApplicationsList();
+    if (filters.attendeesHideArchived && filters.attendeesEvent === 'all') {
+      const archivedEventIds = new Set(
+        allEventOptions()
+          .filter((ev) => eventRowIsArchived(ev))
+          .map((ev) => ev.id)
+      );
+      list = list.filter((a) => !archivedEventIds.has(a.eventId));
+    }
+    if (filters.attendeesEvent !== 'all') {
+      list = list.filter((a) => attendeesEventMatchesFilter(a.eventId));
+    }
+    return list.filter((a) => attendeeMatchesSearch(a, search));
+  }
+
+  function renderAttendeesArchiveSearchNudge() {
+    const nudge = document.getElementById('attendees-archive-search-nudge');
+    const textEl = document.getElementById('attendees-archive-search-nudge-text');
+    if (!nudge || !textEl) return;
+    if (filters.attendeesView !== 'active') {
+      nudge.hidden = true;
+      return;
+    }
+    const matches = matchingDeniedApplicationsForSearch();
+    if (!matches.length) {
+      nudge.hidden = true;
+      return;
+    }
+    const q = String(filters.attendeesSearch || '').trim();
+    textEl.textContent =
+      matches.length === 1
+        ? '1 denied application matches “' + q + '”.'
+        : String(matches.length) + ' denied applications match “' + q + '”.';
+    nudge.hidden = false;
+  }
+
   function renderAttendeesArchiveNav() {
-    const link = document.getElementById('btn-attendees-view-archive');
-    const blockedLink = document.getElementById('btn-attendees-view-blocked');
+    const activeTab = document.getElementById('btn-attendees-view-active-tab');
+    const archiveTab = document.getElementById('btn-attendees-view-archive');
+    const blockedTab = document.getElementById('btn-attendees-view-blocked');
+    const archiveCountEl = document.getElementById('attendees-view-count-archive');
+    const blockedCountEl = document.getElementById('attendees-view-count-blocked');
     const archiveNote = document.getElementById('attendees-archive-note');
     const blockedNote = document.getElementById('attendees-blocked-note');
     const filterNote = document.getElementById('attendees-filter-note');
     const archivedCount = archivedApplicationsList().length;
     const blockedCount = (state.attendeeBlocks || []).length;
-    if (link) {
-      if (filters.attendeesView === 'archive') {
-        link.hidden = true;
-      } else {
-        link.hidden = archivedCount < 1;
-        link.textContent =
-          archivedCount === 1
-            ? 'Archived applications (1)'
-            : 'Archived applications (' + String(archivedCount) + ')';
-      }
+    const view = filters.attendeesView || 'active';
+
+    if (activeTab) {
+      activeTab.classList.toggle('is-active', view === 'active');
+      activeTab.setAttribute('aria-pressed', view === 'active' ? 'true' : 'false');
     }
-    if (blockedLink) {
-      if (filters.attendeesView === 'blocked') {
-        blockedLink.hidden = true;
-      } else {
-        blockedLink.hidden = blockedCount < 1;
-        blockedLink.textContent =
-          blockedCount === 1
-            ? 'Blocked from your events (1)'
-            : 'Blocked from your events (' + String(blockedCount) + ')';
-      }
+    if (archiveTab) {
+      archiveTab.hidden = archivedCount < 1 && view !== 'archive';
+      archiveTab.classList.toggle('is-active', view === 'archive');
+      archiveTab.setAttribute('aria-pressed', view === 'archive' ? 'true' : 'false');
     }
-    if (archiveNote) archiveNote.hidden = filters.attendeesView !== 'archive';
-    if (blockedNote) blockedNote.hidden = filters.attendeesView !== 'blocked';
+    if (archiveCountEl) {
+      archiveCountEl.hidden = archivedCount < 1;
+      archiveCountEl.textContent = String(archivedCount);
+    }
+    if (blockedTab) {
+      blockedTab.hidden = blockedCount < 1 && view !== 'blocked';
+      blockedTab.classList.toggle('is-active', view === 'blocked');
+      blockedTab.setAttribute('aria-pressed', view === 'blocked' ? 'true' : 'false');
+    }
+    if (blockedCountEl) {
+      blockedCountEl.hidden = blockedCount < 1;
+      blockedCountEl.textContent = String(blockedCount);
+    }
+    if (archiveNote) archiveNote.hidden = view !== 'archive';
+    if (blockedNote) blockedNote.hidden = view !== 'blocked';
+    syncAttendeesSearchPlaceholder();
+    renderAttendeesArchiveSearchNudge();
     const postEventNote = document.getElementById('attendees-post-event-note');
     if (postEventNote) {
       const selectedId = String(filters.attendeesEvent || 'all');
@@ -5862,14 +5957,14 @@
           ? (state.events || []).find((ev) => ev.id === selectedId)
           : null;
       const showPostEvent =
-        filters.attendeesView === 'active' &&
+        view === 'active' &&
         selectedEvent &&
         (eventOccurrenceHasEnded(selectedEvent) ||
           (eventOccurrenceRaw(selectedEvent) &&
             new Date(eventOccurrenceRaw(selectedEvent)).getTime() <= Date.now()));
       postEventNote.hidden = !showPostEvent;
     }
-    if (filterNote && (filters.attendeesView === 'archive' || filters.attendeesView === 'blocked')) {
+    if (filterNote && (view === 'archive' || view === 'blocked')) {
       filterNote.hidden = true;
     }
   }
@@ -5895,7 +5990,7 @@
       .map((op) => {
         const seatLabel = op.openSeats === 1 ? '1 seat' : op.openSeats + ' seats';
         const archiveLabel =
-          op.archivedCount === 1 ? '1 archived application' : op.archivedCount + ' archived applications';
+          op.archivedCount === 1 ? '1 denied application' : op.archivedCount + ' denied applications';
         return (
           '<p><strong>' +
           esc(op.eventTitle) +
@@ -5915,7 +6010,7 @@
       lines +
       more +
       '<div class="org-applications-banner-actions">' +
-      '<button type="button" class="org-applications-banner-cta" id="btn-attendees-seat-refill-archive">Review archived applications</button>' +
+      '<button type="button" class="org-applications-banner-cta" id="btn-attendees-seat-refill-archive">Review denied applications</button>' +
       '</div>';
     banner.hidden = false;
     banner.classList.add('org-applications-banner-seat-refill');
@@ -6122,7 +6217,7 @@
     const applicationStatus = String(a.applicationStatus || 'Approved').trim();
     if (applicationStatus === 'Pending') return 'Application pending';
     if (applicationStatus === 'Denied') {
-      return filters.attendeesView === 'archive' ? 'Archived' : 'Application denied';
+      return filters.attendeesView === 'archive' ? 'Denied' : 'Application denied';
     }
     if (a.isNoShow) return 'Did not attend';
     return 'Confirmed';
@@ -6131,7 +6226,7 @@
   function attendeeStatusBadgeHtml(a) {
     const applicationStatus = String(a.applicationStatus || 'Approved').trim();
     if (filters.attendeesView === 'archive' && applicationStatus === 'Denied') {
-      return '<span class="org-badge org-badge-archived">Archived</span>';
+      return '<span class="org-badge org-badge-red">Denied</span>';
     }
     if (applicationStatus === 'Pending') {
       return '<span class="org-badge org-badge-gold">Pending review</span>';
@@ -6215,21 +6310,17 @@
     }
     const search = String(filters.attendeesSearch || '').trim().toLowerCase();
     if (search) {
-      list = list.filter((a) =>
-        [
-          a.name,
-          a.email,
-          a.company,
-          a.jobTitle,
-          a.screeningJobTitle,
-          a.eventTitle,
-          a.ticketName,
-          ...(a.guestNames || []),
-        ].some((value) => String(value || '').toLowerCase().includes(search))
-      );
+      list = list.filter((a) => attendeeMatchesSearch(a, search));
     }
-    if (filters.attendeesStatus === 'pending') {
+    if (filters.attendeesView === 'archive') {
+      // Archive view is already denied-only; ignore other status chips.
+    } else if (filters.attendeesStatus === 'pending') {
       list = list.filter((a) => String(a.applicationStatus || '') === 'Pending');
+    } else if (filters.attendeesStatus === 'denied') {
+      list = list.filter(
+        (a) =>
+          a.isCategoryExclusivityApplication && String(a.applicationStatus || '').trim() === 'Denied'
+      );
     } else if (filters.attendeesStatus === 'awaiting_payment') {
       list = list.filter(
         (a) => String(a.applicationStatus || 'Approved') === 'Approved' && a.needsPayment
@@ -6823,7 +6914,7 @@
         '<textarea id="deny-note-' +
         esc(a.id) +
         '" class="org-application-deny-note" maxlength="400" rows="3" placeholder="e.g. This session is full for founders in your sector. Try our open networking events instead."></textarea>' +
-        '<p class="org-application-deny-hint">Keep this professional and event-related. Leave blank for a standard message. They will move to archived applications and you can reconsider them later if a seat opens.</p>' +
+        '<p class="org-application-deny-hint">Keep this professional and event-related. Leave blank for a standard message. They move to <strong>Denied applications</strong> on this page — searchable by name, email, or industry — so you can reconsider them if a seat opens.</p>' +
         '<div class="org-application-deny-panel-actions">' +
         '<button type="button" class="org-application-deny-confirm-btn" data-confirm-deny-application="' +
         esc(a.id) +
@@ -6882,7 +6973,7 @@
         '<div class="org-application-review org-application-review--archive" data-review-id="' +
         esc(a.id) +
         '">' +
-        '<p class="org-application-review-label">Archived application</p>' +
+        '<p class="org-application-review-label">Denied application</p>' +
         '<p class="org-application-review-hint">Approve now if a seat is open, or move back to pending for another review.</p>' +
         '<div class="org-application-review-buttons">' +
         '<button type="button" class="org-application-approve-btn" data-reconsider-application="' +
@@ -7189,7 +7280,7 @@
     renderAttendees();
     showOrganiserAlert(
       data.message ||
-        (action === 'approve' ? 'Application approved.' : 'Application declined and archived.'),
+        (action === 'approve' ? 'Application approved.' : 'Application declined — find them under Denied applications.'),
       false
     );
     alertEl?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -7200,7 +7291,7 @@
     const name = attendee ? attendee.name : 'this applicant';
     const reconsiderMode = mode === 'pending' ? 'pending' : 'approve';
     if (reconsiderMode === 'approve') {
-      const ok = window.confirm('Approve ' + name + ' from archived applications? They will be notified by email.');
+      const ok = window.confirm('Approve ' + name + ' from denied applications? They will be notified by email.');
       if (!ok) return;
     }
 
@@ -7217,7 +7308,7 @@
       const message =
         data.error === 'applications_full'
           ? 'No seats available for this event. Approve another attendee first, or increase places on the ticket.'
-          : data.message || data.error || 'Could not update this archived application.';
+          : data.message || data.error || 'Could not update this denied application.';
       showOrganiserAlert(message, true);
       alertEl?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       return;
@@ -7246,7 +7337,7 @@
     showOrganiserAlert(
       data.message ||
         (reconsiderMode === 'approve'
-          ? 'Application approved from archive.'
+          ? 'Application approved from denied list.'
           : 'Application moved back to pending review.'),
       false
     );
@@ -7351,8 +7442,12 @@
       let title = 'No registrations yet';
       let text = 'Attendees appear here when people book tickets for your events.';
       if (filters.attendeesView === 'archive') {
-        title = 'No archived applications';
-        text = 'Declined Category Exclusivity applications appear here so you can reconsider them when a seat opens.';
+        title = filters.attendeesSearch
+          ? 'No matching denied applications'
+          : 'No denied applications';
+        text = filters.attendeesSearch
+          ? 'No declined applications match this search. Try another name, email, industry, or event.'
+          : 'Declined Category Exclusivity applications appear here so you can search and reconsider them when a seat opens.';
       } else if (hasAttendees) {
         if (filters.attendeesPendingOnly) {
           title = 'No pending applications';
@@ -17205,7 +17300,16 @@
     const attendeesStatusFilter = document.getElementById('filter-attendees-status');
     if (attendeesStatusFilter) {
       attendeesStatusFilter.addEventListener('change', () => {
-        filters.attendeesStatus = attendeesStatusFilter.value;
+        const next = attendeesStatusFilter.value;
+        if (next === 'denied') {
+          setAttendeesView('archive');
+          return;
+        }
+        filters.attendeesStatus = next;
+        if (filters.attendeesView === 'archive' || filters.attendeesView === 'blocked') {
+          setAttendeesView('active');
+          return;
+        }
         listPages.attendees = 1;
         renderAttendees();
       });
@@ -17275,6 +17379,16 @@
     const btnAttendeesViewArchive = document.getElementById('btn-attendees-view-archive');
     if (btnAttendeesViewArchive) {
       btnAttendeesViewArchive.addEventListener('click', () => setAttendeesView('archive'));
+    }
+    const btnAttendeesViewActiveTab = document.getElementById('btn-attendees-view-active-tab');
+    if (btnAttendeesViewActiveTab) {
+      btnAttendeesViewActiveTab.addEventListener('click', () => setAttendeesView('active'));
+    }
+    const btnAttendeesViewArchiveFromSearch = document.getElementById(
+      'btn-attendees-view-archive-from-search'
+    );
+    if (btnAttendeesViewArchiveFromSearch) {
+      btnAttendeesViewArchiveFromSearch.addEventListener('click', () => setAttendeesView('archive'));
     }
 
     const btnAttendeesViewActive = document.getElementById('btn-attendees-view-active');

@@ -2454,6 +2454,7 @@
             <div class="org-toolbar org-toolbar--section">
               <p class="org-section-sub org-sub-lead org-sub-lead--flush">
                 Everyone registered or applied for your events — see who is new to your organiser page vs returning, filter by event, export a CSV, or print name badges for check-in.
+                Declined Category Exclusivity applicants live under <strong>Denied applications</strong> (search by name, email, industry, or event).
                 Block someone from future bookings from the Actions column if you need to.
                 After an event, send an <a class="org-inline-link" href="#communicate" data-org-route="communicate">Attendee round-up</a> from Communicate.
               </p>
@@ -2468,12 +2469,45 @@
                 Export a CSV when you need your own records; print name badges the night before on standard or large A4 sticker sheets. Badges use each guest’s name, company and job title from their Account when set. The Networker UK still sends booking confirmations and reminders on your behalf.
               </p>
             </div>
+            <nav class="org-attendees-view-switch" id="attendees-view-switch" aria-label="Attendee lists">
+              <button
+                type="button"
+                class="org-attendees-view-btn is-active"
+                id="btn-attendees-view-active-tab"
+                data-attendees-view="active"
+                aria-pressed="true"
+              >
+                Active attendees
+              </button>
+              <button
+                type="button"
+                class="org-attendees-view-btn"
+                id="btn-attendees-view-archive"
+                data-attendees-view="archive"
+                aria-pressed="false"
+                hidden
+              >
+                Denied applications
+                <span class="org-attendees-view-count" id="attendees-view-count-archive" hidden>0</span>
+              </button>
+              <button
+                type="button"
+                class="org-attendees-view-btn"
+                id="btn-attendees-view-blocked"
+                data-attendees-view="blocked"
+                aria-pressed="false"
+                hidden
+              >
+                Blocked
+                <span class="org-attendees-view-count" id="attendees-view-count-blocked" hidden>0</span>
+              </button>
+            </nav>
             <div class="org-filter-bar">
               <input
                 type="search"
                 class="org-table-search"
                 id="filter-attendees-search"
-                placeholder="Search name, email or company…"
+                placeholder="Search name, email, company or industry…"
                 aria-label="Search attendees"
               />
               <div class="org-event-picker" id="attendees-event-picker">
@@ -2511,6 +2545,7 @@
                 <option value="all">All statuses</option>
                 <option value="confirmed">Confirmed</option>
                 <option value="pending">Application pending</option>
+                <option value="denied">Denied applications</option>
                 <option value="awaiting_payment">Awaiting payment</option>
                 <option value="no_show">Did not attend</option>
               </select>
@@ -2537,14 +2572,6 @@
                 ⬇ Export name badges (PDF)
               </button>
             </div>
-            <div class="org-attendees-archive-nav" id="attendees-archive-nav">
-              <button type="button" class="org-inline-link org-attendees-archive-link" id="btn-attendees-view-archive" hidden>
-                Archived applications
-              </button>
-              <button type="button" class="org-inline-link org-attendees-archive-link" id="btn-attendees-view-blocked" hidden>
-                Blocked from your events
-              </button>
-            </div>
             <div class="org-applications-banner org-applications-banner--pending" id="attendees-pending-banner" hidden role="status"></div>
             <div class="org-applications-banner" id="attendees-seat-refill-banner" hidden role="status"></div>
             <div class="org-attendees-relationship-summary" id="attendees-relationship-summary" hidden></div>
@@ -2553,12 +2580,18 @@
               <button type="button" class="org-inline-link" id="btn-attendees-show-all">Show all attendees</button>
             </p>
             <p class="org-attendees-filter-note" id="attendees-archive-note" hidden>
-              Archived Category Exclusivity applications — declined applicants you can reconsider when a seat opens.
-              <button type="button" class="org-inline-link" id="btn-attendees-view-active">Back to attendees</button>
+              Denied Category Exclusivity applications — search by name, email, industry, or event, then reconsider when a seat opens.
+              <button type="button" class="org-inline-link" id="btn-attendees-view-active">Back to active attendees</button>
+            </p>
+            <p class="org-attendees-filter-note org-attendees-filter-note--nudge" id="attendees-archive-search-nudge" hidden>
+              <span id="attendees-archive-search-nudge-text"></span>
+              <button type="button" class="org-inline-link" id="btn-attendees-view-archive-from-search">
+                View denied applications
+              </button>
             </p>
             <p class="org-attendees-filter-note" id="attendees-blocked-note" hidden>
               People blocked from booking this organiser page’s future events. Unblock anytime. Private notes stay on your side only.
-              <button type="button" class="org-inline-link" id="btn-attendees-view-active-from-blocked">Back to attendees</button>
+              <button type="button" class="org-inline-link" id="btn-attendees-view-active-from-blocked">Back to active attendees</button>
             </p>
             <p class="org-attendees-filter-note" id="attendees-post-event-note" hidden>
               Mark anyone who didn’t attend so they don’t get a review email. Then send the attendee round-up from Communicate.
