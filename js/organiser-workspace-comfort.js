@@ -91,7 +91,7 @@
       title: 'How to list a business opportunity',
       steps: [
         'Fill in the title, description, and contact details clearly.',
-        'Submit for review — the our team approves before it goes live.',
+        'Submit for review — our team approves before it goes live.',
         'You can edit the listing later from My business opportunities.',
       ],
     },

@@ -209,7 +209,7 @@
       if (titleEl) titleEl.textContent = 'Find your existing listing';
       if (descEl) {
         descEl.innerHTML =
-          'Your email did not match a listing on file. After you sign in, open your group in <a href="/events/?mode=organisers" class="org-getting-started-link">Browse organisers</a> and tap <strong>Request access</strong> — we will verify you and send a claim link. Only create a new page if your group is not listed yet. (Public browsing opens 25 August.)';
+          'Your email did not match a listing on file. After you sign in, open your group in <a href="/events/?mode=organisers" class="org-getting-started-link">Browse organisers</a> and tap <strong>Request access</strong> — we will verify you and send a claim link. Only create a new page if your group is not listed yet.';
       }
       if (createBtn) createBtn.hidden = true;
       if (!findLink) {
@@ -229,7 +229,7 @@
     if (titleEl) titleEl.textContent = 'Create your organiser page';
     if (descEl) {
       descEl.innerHTML =
-        'Your public page on the platform. <a href="/events/#organisers" class="org-getting-started-link">Search existing groups</a> first (available once you are signed in — public browsing opens 25 August). If yours is already listed, open it and request access instead of creating a duplicate.';
+        'Your public page on the platform. <a href="/events/#organisers" class="org-getting-started-link">Search existing groups</a> first. If yours is already listed, open it and request access instead of creating a duplicate.';
     }
     if (createBtn) createBtn.hidden = false;
     if (findLink) findLink.hidden = true;
@@ -354,6 +354,7 @@
       statusLabel: summary.statusLabel || 'Draft',
       attendanceMode: summary.attendanceMode || 'tickets',
       seriesGroupId: summary.seriesGroupId || null,
+      alumniFastPassEnabled: Boolean(summary.alumniFastPassEnabled),
       ticketsSoldLabel: '…',
       revenueDisplay: '…',
       revenueNum: 0,
@@ -785,7 +786,7 @@
       done();
       if (window.HubCatalogueOpen !== true && publicListingLinkNeedsLaunchNote(value)) {
         showOrganiserAlert(
-          'Link copied. Public event and opportunity pages open for everyone on 25 August — until then, cold traffic may see the waitlist page.',
+          'Link copied. Public browsing is open — share freely. Ticket buying and enquiries open 1 September.',
           false
         );
       }
@@ -9628,19 +9629,94 @@
       errEl.textContent = '';
     }
     sourceSel.innerHTML = '<option value="">Loading…</option>';
-    if (sendBtn) sendBtn.disabled = true;
+    if (sendBtn) {
+      sendBtn.disabled = true;
+      sendBtn.textContent = 'Send invites';
+    }
     openModal('modal-alumni-invites');
 
-    const { ok, data } = await api(
-      '/api/organiser/alumni-invites?eventId=' +
-        encodeURIComponent(eventId) +
-        '&action=sources'
-    );
-    if (!ok) {
+    try {
+      const { ok, data } = await api(
+        '/api/organiser/alumni-invites?eventId=' +
+          encodeURIComponent(eventId) +
+          '&action=sources'
+      );
+      if (!ok) {
+        if (errEl) {
+          errEl.hidden = false;
+          errEl.innerHTML =
+            esc(data.message || data.error || 'Could not load source events') +
+            ' <button type="button" class="org-inline-link" id="modal-alumni-invites-retry">Try again</button>';
+          const retry = document.getElementById('modal-alumni-invites-retry');
+          if (retry) {
+            retry.addEventListener('click', function () {
+              openAlumniInvitesModal(eventId);
+            });
+          }
+        }
+        sourceSel.innerHTML = '<option value="">Could not load — try again</option>';
+        return;
+      }
+
+      const sources = Array.isArray(data.sourceEvents) ? data.sourceEvents : [];
+      if (!sources.length) {
+        sourceSel.innerHTML = '<option value="">No past events with confirmed attendees</option>';
+        if (errEl) {
+          errEl.hidden = false;
+          errEl.textContent =
+            'Publish a previous event with confirmed attendees first, then return here to invite previous attendees.';
+        }
+        return;
+      }
+
+      const defaultId =
+        data.targetEvent?.alumniSourceEventId ||
+        data.targetEvent?.alumni_source_event_id ||
+        '';
+      sourceSel.innerHTML = sources
+        .map(function (row) {
+          const label =
+            (row.title || 'Event') +
+            ' (' +
+            (row.confirmedAttendeeCount || 0) +
+            ' attendee' +
+            (row.confirmedAttendeeCount === 1 ? '' : 's') +
+            ')';
+          return (
+            '<option value="' +
+            esc(row.id) +
+            '"' +
+            (row.id === defaultId ? ' selected' : '') +
+            '>' +
+            esc(label) +
+            '</option>'
+          );
+        })
+        .join('');
+      if (sendBtn) sendBtn.disabled = false;
+
+      const statsRes = await api(
+        '/api/organiser/alumni-invites?eventId=' + encodeURIComponent(eventId)
+      );
+      if (statsRes.ok && statsRes.data.stats && statsEl) {
+        const s = statsRes.data.stats;
+        if (s.total > 0) {
+          statsEl.textContent =
+            'Invites on this event: ' +
+            s.sent +
+            ' sent · ' +
+            s.redeemed +
+            ' redeemed · ' +
+            s.pending +
+            ' pending';
+          statsEl.hidden = false;
+        }
+      }
+    } catch (err) {
       if (errEl) {
         errEl.hidden = false;
         errEl.innerHTML =
-          esc(data.message || data.error || 'Could not load source events') +
+          esc((err && err.message) || 'Could not load source events') +
           ' <button type="button" class="org-inline-link" id="modal-alumni-invites-retry">Try again</button>';
         const retry = document.getElementById('modal-alumni-invites-retry');
         if (retry) {
@@ -9650,70 +9726,6 @@
         }
       }
       sourceSel.innerHTML = '<option value="">Could not load — try again</option>';
-      if (sendBtn) {
-        sendBtn.disabled = true;
-        sendBtn.textContent = 'Send invites';
-      }
-      return;
-    }
-
-    const sources = Array.isArray(data.sourceEvents) ? data.sourceEvents : [];
-    if (!sources.length) {
-      sourceSel.innerHTML = '<option value="">No past events with confirmed attendees</option>';
-      if (errEl) {
-        errEl.hidden = false;
-        errEl.textContent =
-          'Publish a previous event with confirmed attendees first, then return here to invite previous attendees.';
-      }
-      if (sendBtn) {
-        sendBtn.disabled = true;
-        sendBtn.textContent = 'Send invites';
-      }
-      return;
-    }
-
-    const defaultId =
-      data.targetEvent?.alumniSourceEventId ||
-      data.targetEvent?.alumni_source_event_id ||
-      '';
-    sourceSel.innerHTML = sources
-      .map(function (row) {
-        const label =
-          (row.title || 'Event') +
-          ' (' +
-          (row.confirmedAttendeeCount || 0) +
-          ' attendee' +
-          (row.confirmedAttendeeCount === 1 ? '' : 's') +
-          ')';
-        return (
-          '<option value="' +
-          esc(row.id) +
-          '"' +
-          (row.id === defaultId ? ' selected' : '') +
-          '>' +
-          esc(label) +
-          '</option>'
-        );
-      })
-      .join('');
-    if (sendBtn) sendBtn.disabled = false;
-
-    const statsRes = await api(
-      '/api/organiser/alumni-invites?eventId=' + encodeURIComponent(eventId)
-    );
-    if (statsRes.ok && statsRes.data.stats && statsEl) {
-      const s = statsRes.data.stats;
-      if (s.total > 0) {
-        statsEl.textContent =
-          'Invites on this event: ' +
-          s.sent +
-          ' sent · ' +
-          s.redeemed +
-          ' redeemed · ' +
-          s.pending +
-          ' pending';
-        statsEl.hidden = false;
-      }
     }
   }
 
@@ -9734,26 +9746,34 @@
       sendBtn.disabled = true;
       sendBtn.textContent = 'Sending…';
     }
-    const { ok, data } = await api('/api/organiser/alumni-invites', {
-      method: 'POST',
-      body: JSON.stringify({
-        targetEventId: pendingAlumniInviteEventId,
-        sourceEventId,
-      }),
-    });
-    if (!ok) {
+    try {
+      const { ok, data } = await api('/api/organiser/alumni-invites', {
+        method: 'POST',
+        body: JSON.stringify({
+          targetEventId: pendingAlumniInviteEventId,
+          sourceEventId,
+        }),
+      });
+      if (!ok) {
+        if (errEl) {
+          errEl.hidden = false;
+          errEl.textContent = data.message || data.error || 'Could not send previous attendee invites';
+        }
+        return;
+      }
+      closeModals();
+      showOrganiserAlert(data.message || 'Previous attendee invites sent.', false);
+    } catch (err) {
       if (errEl) {
         errEl.hidden = false;
-        errEl.textContent = data.message || data.error || 'Could not send previous attendee invites';
+        errEl.textContent = (err && err.message) || 'Could not send previous attendee invites';
       }
-      if (sendBtn) {
+    } finally {
+      if (sendBtn && document.getElementById('modal-alumni-invites') && !document.getElementById('modal-alumni-invites').hidden) {
         sendBtn.disabled = false;
         sendBtn.textContent = 'Send invites';
       }
-      return;
     }
-    closeModals();
-    showOrganiserAlert(data.message || 'Previous attendee invites sent.', false);
   }
 
   function findSeriesDisplayRowForEvent(eventId) {
@@ -14632,8 +14652,8 @@
     const introEl = document.getElementById('org-group-claim-intro');
     if (introEl) {
       introEl.textContent = groupClaimRejectMode
-        ? 'This will remove the page below from your dashboard and notify the our team. Add an optional note if the email match looks wrong.'
-        : 'You have early access to the organiser workspace before public browsing opens on 25 August. Confirm you manage this page, then use the full tools — events, LinkedIn, emails, memberships. Attendees cannot buy tickets on the public site until 1 September.';
+        ? 'This will remove the page below from your dashboard and notify our team. Add an optional note if the email match looks wrong.'
+        : 'Confirm you manage this page, then use the full tools — events, LinkedIn, emails, memberships. Public browsing is open now; attendees can buy tickets on the public site from 1 September.';
     }
   }
 

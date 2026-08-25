@@ -950,7 +950,7 @@
   document.getElementById('ep-copy-link')?.addEventListener('click', async () => {
     const feedback = document.getElementById('ep-copy-feedback');
     const softNote =
-      'Link copied. Public browsing opens 25 August — until then, cold traffic may see the waitlist page.';
+      'Link copied. Public browsing is open — share freely. Ticket buying and enquiries open 1 September.';
     const okMsg = beforePublicCatalogueLaunch() ? softNote : 'Link copied to clipboard';
     const copied = await copyText(listingUrl, feedback, '', okMsg);
     if (copied) markShareDone('copy_caption');

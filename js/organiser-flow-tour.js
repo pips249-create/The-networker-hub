@@ -322,7 +322,7 @@
     },
     {
       title: 'Contact email',
-      body: 'Confirm a contact email so attendees and the our team can reach you.',
+      body: 'Confirm a contact email so attendees and our team can reach you.',
       target: '#ge-contact-email',
     },
     {
@@ -350,7 +350,7 @@
     },
     {
       title: 'Contact email',
-      body: 'Add a contact email so attendees and the our team can reach you.',
+      body: 'Add a contact email so attendees and our team can reach you.',
       target: '#ge-contact-email',
     },
     {

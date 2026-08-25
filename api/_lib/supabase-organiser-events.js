@@ -474,7 +474,7 @@ async function listEventSummariesForOrganiserGroups(groupIds, allEvents, options
   let query = sb
     .from('events')
     .select(
-      'id, title, slug, organiser_id, starts_at, ends_at, status, approval_status, attendance_mode, series_group_id, location_label, city, venue, meeting_type, meeting_link, image_url, image_position'
+      'id, title, slug, organiser_id, starts_at, ends_at, status, approval_status, attendance_mode, series_group_id, location_label, city, venue, meeting_type, meeting_link, image_url, image_position, alumni_fast_pass_enabled'
     )
     .order('starts_at', {
       ascending: false,
@@ -513,6 +513,7 @@ async function listEventSummariesForOrganiserGroups(groupIds, allEvents, options
       onlinePlatform: inferOnlinePlatformFromLink(row.meeting_link),
       imageUrl: eventImageUrl(row),
       imagePosition: normalizeEventImagePosition(row.image_position),
+      alumniFastPassEnabled: Boolean(row.alumni_fast_pass_enabled),
     };
   });
 }
@@ -2532,6 +2533,8 @@ async function createTicketsForEvents({
       throw e;
     }
     alumniEventUpdate.alumni_source_event_id = sourceId;
+  } else if (!alumniConfig) {
+    alumniEventUpdate.alumni_source_event_id = null;
   }
 
   await assertTicketsEditableForEvents(sb, ids);

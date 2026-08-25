@@ -4411,9 +4411,9 @@
   function prefillAlumniFastPass(eventRow, alumniTicket) {
     const enabledEl = document.getElementById('ee-alumni-enabled');
     const fields = document.getElementById('ee-alumni-fields');
-    const enabled = Boolean(eventRow?.alumniFastPassEnabled);
-    if (enabledEl) enabledEl.checked = enabled;
-    if (!enabled || !alumniTicket) {
+    const on = Boolean(eventRow?.alumniFastPassEnabled) && Boolean(alumniTicket);
+    if (enabledEl) enabledEl.checked = on;
+    if (!on) {
       if (fields) fields.hidden = true;
       syncAddonCard('ee-alumni-addon', false);
       return;
