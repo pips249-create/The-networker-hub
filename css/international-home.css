@@ -1057,6 +1057,21 @@
   color: var(--lavender-deep);
 }
 
+.intl-footer-cookie-btn {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--charcoal);
+}
+
+.intl-footer-cookie-btn:hover {
+  color: var(--lavender-deep);
+}
+
 .intl-footer-belong {
   margin: 0 0 10px;
   font-size: 0.95rem;
@@ -1339,6 +1354,23 @@
 .intl-field-input:focus-visible {
   outline: 2px solid var(--lavender);
   outline-offset: 2px;
+}
+
+.intl-privacy-note {
+  margin: 12px 0 0;
+  font-size: var(--text-size-small);
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.intl-privacy-note a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.intl-privacy-note a:hover {
+  color: var(--charcoal);
 }
 
 .intl-form-error {

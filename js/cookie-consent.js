@@ -30,13 +30,20 @@
   }
 
   function loadAnalytics() {
-    if (!window.HubAnalytics || window.HubAnalytics.loaded) return;
+    if (!window.HubAnalytics || typeof window.HubAnalytics.load !== 'function') return;
     window.HubAnalytics.load();
+  }
+
+  function disableAnalytics() {
+    if (window.HubAnalytics && typeof window.HubAnalytics.disable === 'function') {
+      window.HubAnalytics.disable();
+    }
   }
 
   function applyConsent(prefs) {
     writeConsent(prefs);
     if (prefs.analytics) loadAnalytics();
+    else disableAnalytics();
     hideBanner();
     hideModal();
   }
