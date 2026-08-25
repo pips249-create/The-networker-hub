@@ -119,6 +119,10 @@
       title: 'Analytics',
       subtitle: 'Traffic overview, demand signals, tickets bought, and platform insights',
     },
+    international: {
+      title: 'International leads',
+      subtitle: 'Ireland building intake and country interest sign-ups from the map',
+    },
     'event-health': {
       title: 'Event data issues',
       subtitle: 'Fix published events missing dates, organisers, VAT, or profile data',
@@ -488,7 +492,7 @@
   var ADMIN_NAV_SECTIONS_KEY = 'tnh_admin_nav_sections_v1';
   var ADMIN_HUB_TABS_KEY = 'tnh_admin_hub_tabs_v1';
   var NAV_SECTION_ROUTES = {
-    platform: ['system', 'analytics', 'rankings', 'accounts', 'support'],
+    platform: ['system', 'analytics', 'international', 'rankings', 'accounts', 'support'],
     listings: ['cleanup', 'moderation'],
     revenue: ['financials', 'revenue-mix', 'revenue-targets', 'sales-kit', 'spotlight', 'sponsorship'],
     comms: ['email', 'social', 'social-founding'],
@@ -24226,9 +24230,323 @@
     load();
   }
 
+  function formatIntlLeadDate(iso) {
+    if (!iso) return '—';
+    try {
+      return new Date(iso).toLocaleString('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    } catch (e) {
+      return String(iso);
+    }
+  }
+
+  function renderInternationalLeadsHub() {
+    main.innerHTML =
+      '<div class="space-y-6">' +
+      '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-3">' +
+      '<div class="flex flex-wrap items-start justify-between gap-3">' +
+      '<div><h3 class="font-bold text-brand-900">International leads</h3>' +
+      '<p class="text-xs text-slate-500 mt-1">Interest sign-ups and Ireland building intake from <a class="text-brand-700 hover:underline" href="https://www.thenetworkerinternational.com/" target="_blank" rel="noopener">thenetworkerinternational.com</a>.</p></div>' +
+      '<div class="flex flex-wrap gap-2">' +
+      '<button type="button" id="intl-leads-refresh" class="rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold px-3 py-2 hover:bg-slate-50">Refresh</button>' +
+      '<button type="button" id="intl-leads-export-interest" class="rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold px-3 py-2 hover:bg-slate-50">Export interest CSV</button>' +
+      '<button type="button" id="intl-leads-export-intake" class="rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold px-3 py-2 hover:bg-slate-50">Export building CSV</button>' +
+      '</div></div>' +
+      '<p id="intl-leads-status" class="text-sm text-slate-500">Loading leads…</p>' +
+      '</section>' +
+      '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-3">' +
+      '<div class="flex flex-wrap items-center justify-between gap-2">' +
+      '<h3 class="font-bold text-brand-900">Building intake <span class="text-slate-400 font-semibold text-sm" id="intl-intake-count"></span></h3>' +
+      '<div class="flex flex-wrap gap-2" id="intl-intake-filters">' +
+      '<button type="button" data-intl-intake-view="open" class="rounded-lg border text-xs font-semibold px-3 py-1.5 border-brand-700 bg-brand-50 text-brand-900">Open</button>' +
+      '<button type="button" data-intl-intake-view="all" class="rounded-lg border text-xs font-semibold px-3 py-1.5 border-slate-300 bg-white text-slate-700 hover:bg-slate-50">All</button>' +
+      '<button type="button" data-intl-intake-view="done" class="rounded-lg border text-xs font-semibold px-3 py-1.5 border-slate-300 bg-white text-slate-700 hover:bg-slate-50">Done</button>' +
+      '</div></div>' +
+      '<div id="intl-intake-body" class="overflow-x-auto"></div>' +
+      '</section>' +
+      '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-3">' +
+      '<h3 class="font-bold text-brand-900">Country interest <span class="text-slate-400 font-semibold text-sm" id="intl-interest-count"></span></h3>' +
+      '<div id="intl-interest-body" class="overflow-x-auto"></div>' +
+      '</section></div>';
+
+    var statusEl = document.getElementById('intl-leads-status');
+    var intakeBody = document.getElementById('intl-intake-body');
+    var interestBody = document.getElementById('intl-interest-body');
+    var intakeView = 'open';
+    var cache = { interest: [], intake: [] };
+
+    function setStatus(text, tone) {
+      if (!statusEl) return;
+      statusEl.textContent = text || '';
+      statusEl.className =
+        'text-sm ' +
+        (tone === 'error'
+          ? 'text-red-700 font-semibold'
+          : tone === 'ok'
+            ? 'text-emerald-700 font-semibold'
+            : 'text-slate-500');
+    }
+
+    function paintIntakeFilters() {
+      document.querySelectorAll('[data-intl-intake-view]').forEach(function (btn) {
+        var active = btn.getAttribute('data-intl-intake-view') === intakeView;
+        btn.className =
+          'rounded-lg border text-xs font-semibold px-3 py-1.5 ' +
+          (active
+            ? 'border-brand-700 bg-brand-50 text-brand-900'
+            : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50');
+      });
+    }
+
+    function filteredIntake() {
+      if (intakeView === 'all') return cache.intake;
+      if (intakeView === 'done') {
+        return cache.intake.filter(function (row) {
+          return row.status === 'done' || row.status === 'spam';
+        });
+      }
+      return cache.intake.filter(function (row) {
+        return row.status === 'open';
+      });
+    }
+
+    function renderIntake() {
+      if (!intakeBody) return;
+      var rows = filteredIntake();
+      var openCount = cache.intake.filter(function (r) {
+        return r.status === 'open';
+      }).length;
+      var countEl = document.getElementById('intl-intake-count');
+      if (countEl) countEl.textContent = '(' + openCount + ' open · ' + cache.intake.length + ' total)';
+      if (!rows.length) {
+        intakeBody.innerHTML =
+          '<p class="text-sm text-slate-500">No building intake in this view yet.</p>';
+        return;
+      }
+      intakeBody.innerHTML =
+        '<table class="min-w-full text-sm">' +
+        '<thead><tr class="text-left text-xs uppercase tracking-wide text-slate-500 border-b border-slate-200">' +
+        '<th class="py-2 pr-3">When</th><th class="py-2 pr-3">Country</th><th class="py-2 pr-3">Contact</th>' +
+        '<th class="py-2 pr-3">Group</th><th class="py-2 pr-3">Type</th><th class="py-2 pr-3">Status</th><th class="py-2">Actions</th>' +
+        '</tr></thead><tbody>' +
+        rows
+          .map(function (row) {
+            return (
+              '<tr class="border-b border-slate-100 align-top">' +
+              '<td class="py-2.5 pr-3 whitespace-nowrap text-slate-600">' +
+              esc(formatIntlLeadDate(row.createdAt)) +
+              '</td>' +
+              '<td class="py-2.5 pr-3">' +
+              esc(row.countryName || row.countryCode || '—') +
+              '</td>' +
+              '<td class="py-2.5 pr-3"><div class="font-semibold text-brand-900">' +
+              esc(row.contactName || '—') +
+              '</div><a class="text-xs text-brand-700 hover:underline" href="mailto:' +
+              attrEsc(row.email || '') +
+              '">' +
+              esc(row.email || '') +
+              '</a>' +
+              (row.phone
+                ? '<div class="text-xs text-slate-500 mt-0.5">' + esc(row.phone) + '</div>'
+                : '') +
+              (row.description
+                ? '<p class="text-xs text-slate-500 mt-1 max-w-xs">' + esc(row.description) + '</p>'
+                : '') +
+              '</td>' +
+              '<td class="py-2.5 pr-3">' +
+              esc(row.groupName || '—') +
+              (row.websiteUrl
+                ? '<div><a class="text-xs text-brand-700 hover:underline" href="' +
+                  attrEsc(row.websiteUrl) +
+                  '" target="_blank" rel="noopener">Website</a></div>'
+                : '') +
+              '</td>' +
+              '<td class="py-2.5 pr-3 text-slate-600">' +
+              esc(String(row.orgType || '').replace(/_/g, ' ')) +
+              '</td>' +
+              '<td class="py-2.5 pr-3"><span class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ' +
+              (row.status === 'open'
+                ? 'bg-amber-50 text-amber-900'
+                : row.status === 'spam'
+                  ? 'bg-rose-50 text-rose-800'
+                  : 'bg-emerald-50 text-emerald-800') +
+              '">' +
+              esc(row.status || 'open') +
+              '</span></td>' +
+              '<td class="py-2.5"><div class="flex flex-wrap gap-1">' +
+              (row.status !== 'done'
+                ? '<button type="button" class="rounded border border-slate-200 px-2 py-1 text-xs font-semibold hover:bg-slate-50" data-intl-intake-status="done" data-id="' +
+                  attrEsc(row.id) +
+                  '">Done</button>'
+                : '') +
+              (row.status !== 'open'
+                ? '<button type="button" class="rounded border border-slate-200 px-2 py-1 text-xs font-semibold hover:bg-slate-50" data-intl-intake-status="open" data-id="' +
+                  attrEsc(row.id) +
+                  '">Reopen</button>'
+                : '') +
+              (row.status !== 'spam'
+                ? '<button type="button" class="rounded border border-slate-200 px-2 py-1 text-xs font-semibold hover:bg-slate-50" data-intl-intake-status="spam" data-id="' +
+                  attrEsc(row.id) +
+                  '">Spam</button>'
+                : '') +
+              '</div></td></tr>'
+            );
+          })
+          .join('') +
+        '</tbody></table>';
+
+      intakeBody.querySelectorAll('[data-intl-intake-status]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var id = btn.getAttribute('data-id');
+          var status = btn.getAttribute('data-intl-intake-status');
+          if (!id || !status) return;
+          adminPatch('/api/admin/international-leads', { id: id, status: status })
+            .then(function (data) {
+              if (!data || !data.ok) {
+                throw new Error((data && data.message) || 'Could not update status');
+              }
+              load();
+            })
+            .catch(function (err) {
+              window.alert((err && err.message) || 'Could not update status');
+            });
+        });
+      });
+    }
+
+    function renderInterest() {
+      if (!interestBody) return;
+      var countEl = document.getElementById('intl-interest-count');
+      if (countEl) countEl.textContent = '(' + cache.interest.length + ')';
+      if (!cache.interest.length) {
+        interestBody.innerHTML =
+          '<p class="text-sm text-slate-500">No country interest sign-ups yet.</p>';
+        return;
+      }
+      interestBody.innerHTML =
+        '<table class="min-w-full text-sm">' +
+        '<thead><tr class="text-left text-xs uppercase tracking-wide text-slate-500 border-b border-slate-200">' +
+        '<th class="py-2 pr-3">When</th><th class="py-2 pr-3">Country</th><th class="py-2 pr-3">Email</th><th class="py-2">Intent</th>' +
+        '</tr></thead><tbody>' +
+        cache.interest
+          .map(function (row) {
+            return (
+              '<tr class="border-b border-slate-100">' +
+              '<td class="py-2.5 pr-3 whitespace-nowrap text-slate-600">' +
+              esc(formatIntlLeadDate(row.createdAt)) +
+              '</td>' +
+              '<td class="py-2.5 pr-3">' +
+              esc(row.countryName || row.countryCode || '—') +
+              '</td>' +
+              '<td class="py-2.5 pr-3"><a class="text-brand-700 hover:underline" href="mailto:' +
+              attrEsc(row.email || '') +
+              '">' +
+              esc(row.email || '') +
+              '</a></td>' +
+              '<td class="py-2.5">' +
+              esc(row.intent || '—') +
+              '</td></tr>'
+            );
+          })
+          .join('') +
+        '</tbody></table>';
+    }
+
+    function load() {
+      setStatus('Loading leads…');
+      adminGet('/api/admin/international-leads?limit=300')
+        .then(function (data) {
+          if (!data || data.ok === false) {
+            throw new Error((data && data.message) || (data && data.error) || 'load_failed');
+          }
+          cache.interest = Array.isArray(data.interest) ? data.interest : [];
+          cache.intake = Array.isArray(data.intake) ? data.intake : [];
+          paintIntakeFilters();
+          renderIntake();
+          renderInterest();
+          setStatus(
+            (data.intakeOpenCount || 0) +
+              ' open building leads · ' +
+              (data.interestRecentCount || 0) +
+              ' interest in last 7 days',
+            'ok'
+          );
+        })
+        .catch(function (err) {
+          if (intakeBody) {
+            intakeBody.innerHTML =
+              '<p class="text-sm text-red-700">' +
+              esc((err && err.message) || 'Could not load leads') +
+              '</p>';
+          }
+          setStatus((err && err.message) || 'Could not load leads', 'error');
+        });
+    }
+
+    document.getElementById('intl-leads-refresh').addEventListener('click', load);
+    document.querySelectorAll('[data-intl-intake-view]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        intakeView = btn.getAttribute('data-intl-intake-view') || 'open';
+        paintIntakeFilters();
+        renderIntake();
+      });
+    });
+    document.getElementById('intl-leads-export-interest').addEventListener('click', function () {
+      if (!cache.interest.length) {
+        window.alert('No interest sign-ups to export yet.');
+        return;
+      }
+      downloadAdminCsv(
+        'international-interest.csv',
+        cache.interest.map(function (row) {
+          return {
+            createdAt: row.createdAt,
+            countryCode: row.countryCode,
+            countryName: row.countryName,
+            email: row.email,
+            intent: row.intent,
+            source: row.source,
+          };
+        })
+      );
+    });
+    document.getElementById('intl-leads-export-intake').addEventListener('click', function () {
+      if (!cache.intake.length) {
+        window.alert('No building intake to export yet.');
+        return;
+      }
+      downloadAdminCsv(
+        'international-building-intake.csv',
+        cache.intake.map(function (row) {
+          return {
+            createdAt: row.createdAt,
+            status: row.status,
+            countryCode: row.countryCode,
+            countryName: row.countryName,
+            contactName: row.contactName,
+            email: row.email,
+            phone: row.phone,
+            groupName: row.groupName,
+            orgType: row.orgType,
+            websiteUrl: row.websiteUrl,
+            description: row.description,
+          };
+        })
+      );
+    });
+
+    load();
+  }
+
   var routes = {
     dashboard: renderDashboard,
     analytics: renderAnalyticsHub,
+    international: renderInternationalLeadsHub,
     system: renderSystem,
     rankings: renderRankingsHub,
     cleanup: renderCleanupHub,

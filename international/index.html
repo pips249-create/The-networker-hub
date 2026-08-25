@@ -4,13 +4,85 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Find your next connection – The Networker International</title>
-<meta name="description" content="Choose your country on The Networker International. The Networker UK is live now — tell us where you would like to attend or list networking next.">
+<meta name="description" content="Choose your country on The Networker International. The Networker UK is live now — tell us where you would like to attend or list networking next. Part of The Networker Group Limited.">
 <link rel="canonical" href="https://www.thenetworkerinternational.com/">
+<meta name="robots" content="index,follow">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="The Networker International">
+<meta property="og:title" content="Find your next connection – The Networker International">
+<meta property="og:description" content="Trusted business networking, country by country. The UK is live; Ireland is building. Register interest where we haven’t launched yet.">
+<meta property="og:url" content="https://www.thenetworkerinternational.com/">
+<meta property="og:image" content="https://www.thenetworkerinternational.com/assets/logo-networker-international.png">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Find your next connection – The Networker International">
+<meta name="twitter:description" content="Trusted business networking, country by country. The UK is live; Ireland is building.">
+<meta name="twitter:image" content="https://www.thenetworkerinternational.com/assets/logo-networker-international.png">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://www.thenetworkerinternational.com/#organization",
+      "name": "The Networker International",
+      "url": "https://www.thenetworkerinternational.com/",
+      "logo": "https://www.thenetworkerinternational.com/assets/logo-networker-international.png",
+      "email": "hello@thenetworkeruk.com",
+      "parentOrganization": {
+        "@type": "Organization",
+        "name": "The Networker Group Limited",
+        "legalName": "The Networker Group Ltd",
+        "url": "https://www.thenetworkeruk.com",
+        "identifier": "15252227"
+      }
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://www.thenetworkerinternational.com/#website",
+      "name": "The Networker International",
+      "url": "https://www.thenetworkerinternational.com/",
+      "publisher": { "@id": "https://www.thenetworkerinternational.com/#organization" },
+      "description": "Country-by-country business networking — live markets, building markets, and interest waitlists."
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://www.thenetworkerinternational.com/#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is The Networker International?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The Networker International is the global routing layer for The Networker. Choose your country on the map to open a live local site, join a market we are building, or register interest where we have not launched yet. It is part of The Networker Group Limited."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Which markets are live or building?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The United Kingdom is live at thenetworkeruk.com. Ireland is in building — networking groups and training organisations can submit details. Other countries are coming soon."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do markets launch?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "We launch market by market. Interest and group intake help us prioritise the next countries after the UK and Ireland."
+          }
+        }
+      ]
+    }
+  ]
+}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/css/hub.css?v=20260824intl23">
-<link rel="stylesheet" href="/css/international-home.css?v=20260824intl23">
+<link rel="stylesheet" href="/css/hub.css?v=20260825intl25">
+<link rel="stylesheet" href="/css/cookie-consent.css?v=20260825intl25">
+<link rel="stylesheet" href="/css/international-home.css?v=20260825intl25">
 <link rel="icon" href="/favicon.ico?v=20260823uk3" sizes="any">
 <link rel="icon" href="/assets/favicon.svg?v=20260823uk3" type="image/svg+xml">
 </head>
@@ -21,7 +93,7 @@
 <header class="intl-header">
   <div class="intl-header-inner">
     <a class="intl-logo" href="https://www.thenetworkerinternational.com/" aria-label="The Networker International home">
-      <img src="/assets/logo-networker-international.png?v=20260824intl23" width="240" height="52" alt="The Networker International">
+      <img src="/assets/logo-networker-international.png?v=20260825intl25" width="240" height="52" alt="The Networker International">
     </a>
     <div class="intl-header-tagline">
       <h1 class="intl-header-title">
@@ -62,12 +134,24 @@
         <p class="intl-intro-copy">
           Explore live markets, join markets we&rsquo;re building, or register interest where we haven&rsquo;t launched yet.
         </p>
-        <details class="intl-intro-details">
-          <summary>Learn more</summary>
-          <p>
-            The Networker helps people discover quality business networking communities and helps strong local groups get found. We launch market by market, starting with the UK.
-          </p>
-        </details>
+        <div class="intl-intro-learn">
+          <button
+            type="button"
+            class="intl-intro-learn-toggle"
+            id="intl-learn-toggle"
+            aria-expanded="false"
+            aria-controls="intl-learn-panel"
+          >
+            Learn more
+          </button>
+          <div class="intl-intro-learn-panel" id="intl-learn-panel" hidden>
+            <ul class="intl-intro-learn-list">
+              <li><strong>For attendees</strong> — find trusted networking communities in live markets, or register interest where we&rsquo;re coming next.</li>
+              <li><strong>For groups</strong> — get discovered when a market launches; in building markets, share your group details now.</li>
+              <li><strong>How markets launch</strong> — we go country by country. The UK is live; Ireland is building; interest helps prioritise what follows.</li>
+            </ul>
+          </div>
+        </div>
         <a class="intl-intro-uk-btn" href="https://www.thenetworkeruk.com" rel="noopener noreferrer">Open UK now</a>
       </aside>
       <div class="intl-map-canvas" id="intl-map-canvas" role="img" aria-label="World map — select a country">
@@ -121,16 +205,71 @@
       </div>
     </div>
   </section>
+
+  <section class="intl-about" id="about" aria-labelledby="intl-about-title">
+    <div class="intl-about-inner">
+      <h2 class="intl-about-title" id="intl-about-title">How The Networker International works</h2>
+      <p class="intl-about-lede">
+        One map. Local markets. Part of <strong>The Networker Group Limited</strong>.
+      </p>
+      <div class="intl-about-grid">
+        <article class="intl-about-card">
+          <h3>For attendees</h3>
+          <p>Open a live market to browse events and opportunities, or register interest so we know where demand is building.</p>
+        </article>
+        <article class="intl-about-card">
+          <h3>For groups</h3>
+          <p>In building markets (starting with Ireland), tell us about your networking group or training organisation. Elsewhere, register to list when we launch.</p>
+        </article>
+        <article class="intl-about-card">
+          <h3>How markets launch</h3>
+          <p>We launch country by country. The UK is live today. Ireland is next. Interest and intake shape the queue after that.</p>
+        </article>
+      </div>
+      <dl class="intl-faq-list">
+        <div>
+          <dt>What is The Networker International?</dt>
+          <dd>The global routing layer for The Networker — choose your country to enter a live site, join a building market, or register interest.</dd>
+        </div>
+        <div>
+          <dt>Which markets are live or building?</dt>
+          <dd>United Kingdom is live. Ireland is building. Other countries are coming soon; a few are unavailable for compliance reasons.</dd>
+        </div>
+        <div>
+          <dt>How do I get in touch?</dt>
+          <dd>Email <a href="mailto:hello@thenetworkeruk.com">hello@thenetworkeruk.com</a>.</dd>
+        </div>
+      </dl>
+    </div>
+  </section>
 </main>
 
-<footer class="intl-footer">
+<footer class="intl-footer" id="contact">
   <div class="intl-footer-inner">
-    <p class="intl-footer-copy">
-      Part of <strong>The Networker Group Ltd</strong>.
-      <a href="https://www.thenetworkeruk.com" rel="noopener noreferrer">The Networker UK</a> is live today.
+    <div class="intl-footer-top">
+      <a class="intl-footer-brand" href="https://www.thenetworkerinternational.com/" aria-label="The Networker International home">
+        <img
+          class="intl-footer-logo"
+          src="/assets/logo-networker-international.png?v=20260825intl25"
+          width="220"
+          height="48"
+          alt=""
+          aria-hidden="true"
+        >
+      </a>
+      <nav class="intl-footer-nav" aria-label="Footer">
+        <a href="#about">About</a>
+        <a href="#contact">Contact</a>
+        <a href="https://www.thenetworkeruk.com" rel="noopener noreferrer">UK site</a>
+      </nav>
+    </div>
+    <p class="intl-footer-belong">
+      The Networker International is part of <strong>The Networker Group Limited</strong>.
+      Questions? <a href="mailto:hello@thenetworkeruk.com">hello@thenetworkeruk.com</a>
     </p>
     <p class="intl-footer-copy">
-      Questions? <a href="mailto:hello@thenetworkeruk.com">hello@thenetworkeruk.com</a>
+      &copy; <span id="intl-footer-year">2026</span> The Networker Group Ltd &middot; Registered in England &amp; Wales (Company No. 15252227) &middot; <span class="nowrap">VAT No. 454&nbsp;4092&nbsp;94</span><br>
+      Magpas HQ, Barnwell Road, Alconbury Weald, Huntingdon, Cambridgeshire PE28 4YF
     </p>
   </div>
 </footer>
@@ -217,6 +356,14 @@
   </div>
 </div>
 
-<script src="/js/international-home.js?v=20260824intl23" defer></script>
+<script src="/js/hub-analytics.js?v=20260825intl25" defer></script>
+<script src="/js/cookie-consent.js?v=20260825intl25" defer></script>
+<script src="/js/international-home.js?v=20260825intl25" defer></script>
+<script>
+  (function () {
+    var yearEl = document.getElementById('intl-footer-year');
+    if (yearEl) yearEl.textContent = String(new Date().getFullYear());
+  })();
+</script>
 </body>
 </html>

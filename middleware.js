@@ -907,7 +907,10 @@ export default async function middleware(request) {
       !pathname.startsWith('/assets/') &&
       !pathname.startsWith('/data/') &&
       pathname !== '/favicon.ico' &&
-      pathname !== '/robots.txt'
+      pathname !== '/robots.txt' &&
+      pathname !== '/sitemap.xml' &&
+      pathname !== '/llms.txt' &&
+      pathname !== '/agents.txt'
     ) {
       const dest = new URL(request.url);
       dest.protocol = 'https:';

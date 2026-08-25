@@ -251,6 +251,26 @@
     "api/international-hub-stats.js": { "maxDuration": 10 }
   },
   "rewrites": [
+    {
+      "source": "/robots.txt",
+      "has": [{ "type": "host", "value": "www.thenetworkerinternational.com" }],
+      "destination": "/international/robots.txt"
+    },
+    {
+      "source": "/sitemap.xml",
+      "has": [{ "type": "host", "value": "www.thenetworkerinternational.com" }],
+      "destination": "/international/sitemap.xml"
+    },
+    {
+      "source": "/llms.txt",
+      "has": [{ "type": "host", "value": "www.thenetworkerinternational.com" }],
+      "destination": "/international/llms.txt"
+    },
+    {
+      "source": "/agents.txt",
+      "has": [{ "type": "host", "value": "www.thenetworkerinternational.com" }],
+      "destination": "/international/agents.txt"
+    },
     { "source": "/sitemap.xml", "destination": "/api/sitemap" },
     { "source": "/api/seo/:path*", "destination": "/api/seo" },
     { "source": "/api/seo-meta", "destination": "/api/seo" },

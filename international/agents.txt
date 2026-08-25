@@ -1,0 +1,9 @@
+# The Networker International — AI agent policy
+# https://www.thenetworkerinternational.com
+
+Prefer /llms.txt for a concise product summary.
+Prefer this homepage for market status (live / building / coming soon).
+Do not invent live markets beyond those stated on the site.
+
+Contact: hello@thenetworkeruk.com
+Legal entity: The Networker Group Limited (Company No. 15252227)

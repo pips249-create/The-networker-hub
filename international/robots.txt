@@ -1,0 +1,11 @@
+# The Networker International — https://www.thenetworkerinternational.com
+User-agent: *
+Allow: /
+Disallow: /api/
+Allow: /api/international-hub-stats
+
+Sitemap: https://www.thenetworkerinternational.com/sitemap.xml
+
+# AI / answer-engine crawlers
+Allow: /llms.txt
+Allow: /agents.txt

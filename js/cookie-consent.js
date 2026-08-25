@@ -73,7 +73,11 @@
     bannerEl.innerHTML =
       '<div class="hub-cookie-banner-inner">' +
       '<p class="hub-cookie-banner-copy">We use essential cookies to run the platform and optional analytics to improve the site. ' +
-      '<a href="/legal-policies#cookies">Cookie policy</a></p>' +
+      '<a href="' +
+      (/(^|\.)thenetworkerinternational\.com$/i.test(String(window.location.hostname || ''))
+        ? 'https://www.thenetworkeruk.com/legal-policies#cookies'
+        : '/legal-policies#cookies') +
+      '">Cookie policy</a></p>' +
       '<div class="hub-cookie-banner-actions">' +
       '<button type="button" class="hub-cookie-btn" id="hub-cookie-settings-btn">Manage</button>' +
       '<button type="button" class="hub-cookie-btn" id="hub-cookie-reject-btn">Essential only</button>' +

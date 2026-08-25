@@ -28,6 +28,30 @@
     '760': { iso2: 'SY', name: 'Syria' },
   };
 
+  var searchTrackTimer = null;
+  var lastSearchTracked = '';
+
+  function trackIntl(name, data) {
+    try {
+      if (window.HubAnalytics && typeof window.HubAnalytics.track === 'function') {
+        window.HubAnalytics.track(name, data);
+      }
+    } catch (e) {
+      /* analytics optional */
+    }
+  }
+
+  function trackSearchQuery(raw) {
+    var q = String(raw || '').trim().toLowerCase();
+    if (q.length < 2) return;
+    if (q === lastSearchTracked) return;
+    clearTimeout(searchTrackTimer);
+    searchTrackTimer = setTimeout(function () {
+      lastSearchTracked = q;
+      trackIntl('intl_search', { query: q.slice(0, 40), length: q.length });
+    }, 600);
+  }
+
   var ISO_NUMERIC_TO_ALPHA2 = {
     '004': 'AF', '008': 'AL', '012': 'DZ', '016': 'AS', '020': 'AD', '024': 'AO', '028': 'AG', '031': 'AZ',
     '032': 'AR', '036': 'AU', '040': 'AT', '044': 'BS', '048': 'BH', '050': 'BD', '051': 'AM', '052': 'BB',
@@ -496,12 +520,14 @@
     if (els.search) {
       els.search.addEventListener('input', function () {
         renderCountryResults(els.search.value, els.results);
+        trackSearchQuery(els.search.value);
       });
     }
 
     if (els.headerSearch) {
       els.headerSearch.addEventListener('input', function () {
         renderCountryResults(els.headerSearch.value, els.headerResults, { hideWhenEmpty: true });
+        trackSearchQuery(els.headerSearch.value);
       });
       els.headerSearch.addEventListener('focus', function () {
         if (els.headerSearch.value) {
@@ -523,10 +549,26 @@
           var meta = state.countries.find(function (country) {
             return country.numericId === id;
           });
+          trackIntl('intl_featured_click', {
+            country: (meta && meta.iso2) || id || 'unknown',
+            status: (meta && meta.status) || 'unknown',
+          });
           if (meta) handleCountryAction(meta);
         });
       });
     }
+  }
+
+  function initLearnMorePanel() {
+    var toggle = byId('intl-learn-toggle');
+    var panel = byId('intl-learn-panel');
+    if (!toggle || !panel) return;
+    toggle.addEventListener('click', function () {
+      var open = toggle.getAttribute('aria-expanded') === 'true';
+      var next = !open;
+      toggle.setAttribute('aria-expanded', next ? 'true' : 'false');
+      panel.hidden = !next;
+    });
   }
 
   function populateCountryFinder() {
@@ -944,6 +986,10 @@
         if (!result.ok || !result.data.ok) {
           throw new Error((result.data && result.data.message) || 'Could not save your interest.');
         }
+        trackIntl('intl_interest_submit', {
+          country: state.selectedCountry.iso2,
+          intent: state.selectedIntent,
+        });
         els.form.hidden = true;
         els.success.hidden = false;
       })
@@ -1004,6 +1050,10 @@
         if (!result.ok || !result.data.ok) {
           throw new Error((result.data && result.data.message) || 'Could not save your details.');
         }
+        trackIntl('intl_building_submit', {
+          country: state.selectedCountry.iso2,
+          orgType: state.selectedOrgType,
+        });
         els.buildingForm.hidden = true;
         els.buildingSuccess.hidden = false;
       })
@@ -1082,6 +1132,7 @@
     els.buildingSubmit = byId('intl-building-submit');
 
     initModal();
+    initLearnMorePanel();
     initCountryFinder();
     loadHubStats();
 

@@ -18,6 +18,7 @@ const routes = {
   'city-partner-waitlist': require('./_lib/routes/admin-city-partner-waitlist'),
   'preview-waitlist': require('./_lib/routes/admin-preview-waitlist'),
   'advertising-enquiries': require('./_lib/routes/admin-advertising-enquiries'),
+  'international-leads': require('./_lib/routes/admin-international-leads'),
   'event-intake': require('./_lib/routes/admin-event-intake'),
   'sponsor-clicks': require('./_lib/routes/admin-sponsor-clicks'),
   emails: require('./_lib/routes/admin-emails'),
