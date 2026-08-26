@@ -204,7 +204,7 @@ Monitor Resend dashboard during July beta — if daily sends approach **80–90*
 | [x] | Command Centre admin login tested |
 | [ ] | **Business ops** — Tab 10 gates complete (or consciously deferred with owner) |
 | [ ] | SEO/AEO — Tab 6 + `docs/SEO-AEO-LAUNCH-PLAN.md` launch-week steps |
-| [ ] | `EMAIL_ALLOWLIST_DISABLED=true` on launch (if allowlist was on) |
+| [x] | `EMAIL_ALLOWLIST_DISABLED=true` on launch (if allowlist was on) |
 | [ ] | `SITE_ACCESS_PASSWORD` removed — public gate off (25 August browse) |
 | [ ] | **Supabase Pro** active before gate-off (backups + no auto-pause on live ticketing) |
 
@@ -247,7 +247,7 @@ The **Email Template Manager** works without Resend (edit & save in Command Cent
 | [x] | Spot-check: `booking_cancelled`, `event_cancelled`, `refund_processed`, welcome email — templates present in DB (`account_welcome` + cancel/refund slugs); optional visual review in `/admin/emails` |
 | [ ] | Review/edit templates at [`/admin/emails`](https://the-networker-hub.vercel.app/admin/emails) |
 | [x] | Launch invite template (organiser “claim your profile”) — `organiser_launch_invite` + `organiser_claim_invite` in DB; Email 2 uses launch invite via Brevo |
-| [ ] | At launch: **`EMAIL_ALLOWLIST_DISABLED=true`** if pre-launch allowlist was on |
+| [x] | At launch: **`EMAIL_ALLOWLIST_DISABLED=true`** if pre-launch allowlist was on |
 | [ ] | **Resend Pro** — before August wider email / September 3,500 send (see Tab 0 August infrastructure table) |
 | [ ] | Optional: `AUTH_SEND_EMAILS=true` for password-reset emails |
 

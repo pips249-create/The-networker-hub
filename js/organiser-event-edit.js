@@ -2770,15 +2770,18 @@
       const msg =
         err === 'missing_dates'
           ? 'Select at least one date on the calendar before publishing.'
-          : err === 'duplicate_title_matches_source'
+          : err === 'listing_hate_speech_blocked'
             ? res.data.message ||
-              'This draft copy must keep “(copy)” in the title or use a new name — it cannot match the original event title.'
-            : err === 'event_not_owned'
+              'This listing can’t go live because it includes language that isn’t allowed. Please remove it and try again.'
+            : err === 'duplicate_title_matches_source'
               ? res.data.message ||
-                'You do not have access to this event. Open it from My Events, or start a new listing under an organiser page you own.'
-              : err === 'group_not_owned'
-                ? 'Pick an organiser page you own before saving.'
-                : res.data.message || err || 'Could not save event';
+                'This draft copy must keep “(copy)” in the title or use a new name — it cannot match the original event title.'
+              : err === 'event_not_owned'
+                ? res.data.message ||
+                  'You do not have access to this event. Open it from My Events, or start a new listing under an organiser page you own.'
+                : err === 'group_not_owned'
+                  ? 'Pick an organiser page you own before saving.'
+                  : res.data.message || err || 'Could not save event';
       showAlert(msg);
       return;
     }

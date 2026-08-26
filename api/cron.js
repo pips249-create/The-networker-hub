@@ -3,6 +3,10 @@
  */
 const { getSubRoute } = require('./_lib/route-path');
 const { json, setCors } = require('./_lib/auth');
+const {
+  isAutomatedSequenceCronRoute,
+  respondIfAutomatedSequencesPaused,
+} = require('./_lib/automated-email-sequences');
 
 const routes = {
   'booking-reminders': require('./_lib/routes/cron-booking-reminders'),
@@ -24,6 +28,9 @@ module.exports = async function handler(req, res) {
   const fn = routes[route];
   if (!fn) {
     return json(res, 404, { error: 'not_found', path: route || '(empty)' });
+  }
+  if (isAutomatedSequenceCronRoute(route) && respondIfAutomatedSequencesPaused(res, json)) {
+    return;
   }
   return fn(req, res);
 };

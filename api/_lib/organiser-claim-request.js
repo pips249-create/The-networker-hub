@@ -141,6 +141,7 @@ async function createOrganiserClaimRequest(input) {
     subject,
     html,
     replyTo: email,
+    skipAllowlist: true,
   });
 
   return {

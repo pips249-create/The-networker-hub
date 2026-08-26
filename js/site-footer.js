@@ -5,7 +5,7 @@
  * preview cookie unlocks catalogue APIs.
  */
 (function () {
-  var FOOTER_BUILD = '20260825navopen1';
+  var FOOTER_BUILD = '20260825navfull1';
   var PUBLIC_BROWSE_OPENS_AT_MS = Date.parse('2026-08-25T00:00:00+01:00');
   var script = document.currentScript;
   var root = (script && script.getAttribute('data-root')) || '';
@@ -41,11 +41,9 @@
     return p === '/peek' || p.indexOf('/peek/') === 0;
   }
 
-  /** Email 1 / pre-launch marketing pages — never show catalogue footer links. */
+  /** Soft-launch /peek mini-site only — marketing pages follow real catalogue state. */
   function forceEarlyAccessChrome() {
-    var p = String(window.location.pathname || '').toLowerCase();
-    if (isPeekPath()) return true;
-    return /\/(for-organisers|for-networkers|for-attendees|about|contact|legal-policies)(?:\.html)?\/?$/.test(p);
+    return isPeekPath();
   }
 
   function effectiveCatalogueOpen(open) {
@@ -243,7 +241,7 @@
   });
 
   if (forceEarlyAccessChrome()) {
-    // Stay slim on Email 1 pages even when preview cookie unlocks /api/events.
+    // Peek mini-site stays slim even when preview cookie unlocks /api/events.
     // Do not mutate HubCatalogueOpen — that would flash early nav on the next page.
   } else if (typeof window.HubCatalogueOpen !== 'boolean') {
     var probe =

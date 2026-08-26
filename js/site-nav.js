@@ -102,7 +102,7 @@
  * NAV_BUILD=20260709h — transparent nav logo (from logo-nav.png).
  */
 (function () {
-  var NAV_BUILD = '20260825navopen1';
+  var NAV_BUILD = '20260825navfull1';
   var LOGO_SRC = '/assets/logo-nav-transparent.png?v=20260823uk3';
   var SESSION_KEY = 'hub_nav_session_v1';
   var SESSION_TTL_MS = 5 * 60 * 1000;
@@ -156,13 +156,9 @@
     return p === '/peek' || p.indexOf('/peek/') === 0;
   }
 
-  /** Email 1 / pre-launch marketing + auth — always early-access nav chrome. */
+  /** Soft-launch /peek mini-site only — marketing pages follow real catalogue state. */
   function forceEarlyAccessChrome() {
-    var p = String(window.location.pathname || '').toLowerCase();
-    if (isPeekPath()) return true;
-    // Marketing / trust pages only — login & register must follow real catalogue state
-    // so the full signup form returns when the gate is off / claim links arrive.
-    return /\/(for-organisers|for-networkers|for-attendees|about|contact|legal-policies)(?:\.html)?\/?$/.test(p);
+    return isPeekPath();
   }
 
   function peekNavLinks(pending) {
@@ -1304,7 +1300,7 @@
   function probeCatalogueAccess(force) {
     if (forceEarlyAccessChrome()) {
       catalogueProbePromise = null;
-      // Marketing/trust pages use early chrome for this view only — do not poison session cache.
+      // Peek mini-site uses early chrome for this view only — do not poison session cache.
       applyCatalogueOpen(false, { persist: false });
       return Promise.resolve(false);
     }

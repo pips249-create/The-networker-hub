@@ -6,15 +6,23 @@ const { publicEventSlug } = require('./event-slug');
 const { publicOrganiserSlug } = require('./organiser-slug');
 const { normalizeEventType } = require('./event-types');
 const { fetchEventRegistrationStats } = require('./admin-event-commerce');
+const { scanEventForOffPlatformBooking } = require('./off-platform-booking');
+const { scanEventListingLanguage } = require('./listing-language-moderation');
 
 const ISSUE_DEFS = {
   missing_date: { label: 'Missing event date', severity: 'high' },
   missing_organiser: { label: 'No organiser linked', severity: 'high' },
   invalid_organiser: { label: 'Organiser link broken', severity: 'high' },
+  listing_hate_speech: { label: 'Hate speech / extreme abuse in listing', severity: 'high' },
   organiser_not_published: { label: 'Organiser profile not published', severity: 'medium' },
   missing_organiser_logo: { label: 'Organiser has no logo', severity: 'medium' },
   missing_organiser_profile: { label: 'Organiser profile empty', severity: 'medium' },
   missing_vat: { label: 'VAT not set (paid tickets)', severity: 'medium' },
+  off_platform_booking: {
+    label: 'Off-platform booking (Eventbrite / Luma / Ticket Tailor / Net Hub / etc.)',
+    severity: 'medium',
+  },
+  listing_profanity: { label: 'Strong language in listing', severity: 'medium' },
   missing_event_type: { label: 'Event type not set', severity: 'low' },
   missing_meeting_type: { label: 'Format not set', severity: 'low' },
   stale_past_date: { label: 'Event date is in the past', severity: 'medium' },
@@ -198,6 +206,13 @@ async function scanEventHealth() {
     if (!String(row.event_type || '').trim()) codes.push('missing_event_type');
     if (!String(row.meeting_type || '').trim()) codes.push('missing_meeting_type');
 
+    const offPlatformHits = scanEventForOffPlatformBooking(row);
+    if (offPlatformHits.length) codes.push('off_platform_booking');
+
+    const languageScan = scanEventListingLanguage(row);
+    if (languageScan.hate.length) codes.push('listing_hate_speech');
+    else if (languageScan.profanity.length) codes.push('listing_profanity');
+
     if (!codes.length) continue;
 
     codes.forEach((code) => {
@@ -205,6 +220,34 @@ async function scanEventHealth() {
     });
 
     const org = row.organiser_id ? orgById.get(row.organiser_id) : null;
+    const issues = codes.map((code) => {
+      if (code === 'off_platform_booking' && offPlatformHits.length) {
+        const labels = offPlatformHits.map((hit) => hit.label);
+        return {
+          code,
+          label: 'Off-platform booking: ' + labels.join(', '),
+          severity: 'medium',
+          platforms: labels,
+        };
+      }
+      if (code === 'listing_hate_speech' && languageScan.hate.length) {
+        return {
+          code,
+          label: 'Hate speech / extreme abuse in listing',
+          severity: 'high',
+          matches: languageScan.hate,
+        };
+      }
+      if (code === 'listing_profanity' && languageScan.profanity.length) {
+        return {
+          code,
+          label: 'Strong language in listing',
+          severity: 'medium',
+          matches: languageScan.profanity,
+        };
+      }
+      return issuePayload(code);
+    });
     flagged.push({
       id: row.id,
       title: String(row.title || '').trim(),
@@ -222,7 +265,11 @@ async function scanEventHealth() {
         : '',
       meeting_type: normalizeMeetingType(row.meeting_type),
       vat_treatment: row.vat_treatment || '',
-      issues: codes.map(issuePayload),
+      off_platform_platforms: offPlatformHits.map((hit) => hit.label),
+      language_matches: languageScan.hate.length
+        ? languageScan.hate
+        : languageScan.profanity,
+      issues,
     });
   }
 

@@ -1478,6 +1478,43 @@
     return soft;
   }
 
+  function offPlatformBookingHealthCount() {
+    var count = 0;
+    ((healthCache && healthCache.events) || []).forEach(function (ev) {
+      var issues = ev.issues || [];
+      if (
+        issues.some(function (issue) {
+          return issue && issue.code === 'off_platform_booking';
+        })
+      ) {
+        count += 1;
+      }
+    });
+    return count;
+  }
+
+  function listingLanguageHealthCounts() {
+    var hate = 0;
+    var profanity = 0;
+    ((healthCache && healthCache.events) || []).forEach(function (ev) {
+      var issues = ev.issues || [];
+      if (
+        issues.some(function (issue) {
+          return issue && issue.code === 'listing_hate_speech';
+        })
+      ) {
+        hate += 1;
+      } else if (
+        issues.some(function (issue) {
+          return issue && issue.code === 'listing_profanity';
+        })
+      ) {
+        profanity += 1;
+      }
+    });
+    return { hate: hate, profanity: profanity };
+  }
+
   /** Fix listings sidebar badge — matches tab work (groups / requests / opps / urgent data). */
   function listingFixSeverityCounts() {
     var counts =
@@ -1714,8 +1751,58 @@
           ' event' +
           (healthUrgent === 1 ? '' : 's') +
           ' with urgent data issues',
-        detail: 'Missing date or organiser — fix these first under Data issues.',
+        detail: 'Missing date, organiser, or hate speech — fix these first under Data issues.',
         href: '#cleanup/issues',
+        time: new Date().toISOString(),
+      });
+    }
+    var languageCounts = listingLanguageHealthCounts();
+    if (languageCounts.hate > 0 && !alerts.some(function (a) {
+      return a.id === 'listing-hate-speech';
+    })) {
+      alerts.push({
+        id: 'listing-hate-speech',
+        severity: 'high',
+        title:
+          languageCounts.hate +
+          ' event' +
+          (languageCounts.hate === 1 ? '' : 's') +
+          ' may contain hate speech or extreme abuse',
+        detail: 'Unpublish or edit urgently — organisers are also blocked from publishing this language.',
+        href: '#cleanup/issues?issue=listing_hate_speech',
+        time: new Date().toISOString(),
+      });
+    }
+    if (languageCounts.profanity > 0 && !alerts.some(function (a) {
+      return a.id === 'listing-profanity';
+    })) {
+      alerts.push({
+        id: 'listing-profanity',
+        severity: 'medium',
+        title:
+          languageCounts.profanity +
+          ' event' +
+          (languageCounts.profanity === 1 ? '' : 's') +
+          ' use strong language',
+        detail: 'Still live — review and unpublish or ask the organiser to edit if needed.',
+        href: '#cleanup/issues?issue=listing_profanity',
+        time: new Date().toISOString(),
+      });
+    }
+    var offPlatform = offPlatformBookingHealthCount();
+    if (offPlatform > 0 && !alerts.some(function (a) {
+      return a.id === 'off-platform-booking';
+    })) {
+      alerts.push({
+        id: 'off-platform-booking',
+        severity: 'medium',
+        title:
+          offPlatform +
+          ' event' +
+          (offPlatform === 1 ? '' : 's') +
+          ' mention Eventbrite, Luma, Ticket Tailor, Net Hub, etc.',
+        detail: 'May be steering sign-ups off The Networker UK — review under Data issues.',
+        href: '#cleanup/issues?issue=off_platform_booking',
         time: new Date().toISOString(),
       });
     }
@@ -1789,6 +1876,21 @@
     push('medium', counts.openEventRequests, 'Event requests', '#cleanup/requests', 'amber');
     push('medium', counts.pendingOpportunities, 'Opportunity reviews', '#cleanup/opportunities', 'amber');
     push('medium', counts.stripeOnboarding, 'Stripe setup incomplete', '#financials/organisers', 'amber');
+    var languageCounts = listingLanguageHealthCounts();
+    push(
+      'medium',
+      languageCounts.profanity,
+      'Strong language in listings',
+      '#cleanup/issues?issue=listing_profanity',
+      'amber'
+    );
+    push(
+      'medium',
+      offPlatformBookingHealthCount(),
+      'Off-platform booking mentions',
+      '#cleanup/issues?issue=off_platform_booking',
+      'amber'
+    );
     push('low', counts.incompleteOrganisers, 'Incomplete groups', '#cleanup/groups', 'slate');
     var soft = listingFixSeverityCounts().softEvents;
     if (soft > 0 && soft <= 40) {
@@ -3194,6 +3296,9 @@
       showVat: codes.indexOf('missing_vat') >= 0,
       showOrgLogo: codes.indexOf('missing_organiser_logo') >= 0,
       showOrgBio: codes.indexOf('missing_organiser_profile') >= 0,
+      showOffPlatform: codes.indexOf('off_platform_booking') >= 0,
+      showHateSpeech: codes.indexOf('listing_hate_speech') >= 0,
+      showProfanity: codes.indexOf('listing_profanity') >= 0,
     };
   }
 
@@ -3687,7 +3792,15 @@
     });
   }
 
-  function renderEventHealth() {
+  function renderEventHealth(fullHash) {
+    if (fullHash != null) {
+      var query = parseAdminHashQuery(fullHash || '');
+      var issueFromHash = String(query.get('issue') || '').trim();
+      if (issueFromHash) {
+        eventHealthState.issueFilter = issueFromHash;
+      }
+    }
+
     main.innerHTML =
       '<div class="space-y-4">' +
       '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Checks <strong>published</strong> events only. Draft events still being built by organisers are not included.</p>' +
@@ -4135,6 +4248,22 @@
             '<div class="mt-2">' +
             issueHtml +
             '</div>' +
+            (fields.showHateSpeech
+              ? '<p class="text-xs text-red-900 mt-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2"><strong>Hate speech / extreme abuse</strong> detected in the title or description. Unpublish now — organisers cannot keep this language on a live listing.</p>'
+              : '') +
+            (fields.showProfanity
+              ? '<p class="text-xs text-amber-900 mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">Strong language in the listing (e.g. swearing). Still live — review and unpublish or ask the organiser to edit if it is not appropriate.</p>'
+              : '') +
+            (fields.showOffPlatform
+              ? '<p class="text-xs text-amber-900 mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">Mentions ' +
+                esc(
+                  (ev.off_platform_platforms && ev.off_platform_platforms.length
+                    ? ev.off_platform_platforms
+                    : ['another ticketing site']
+                  ).join(', ')
+                ) +
+                '. Check the description for “sign up elsewhere” / visibility-only copy, then unpublish or edit the listing.</p>'
+              : '') +
             (needsOrganiser
               ? '<p class="text-xs text-red-800 mt-2">Select an organiser below, then click <strong>Save fixes</strong>.</p>'
               : '') +
@@ -23685,7 +23814,10 @@
       withHubTabs(tabsHtml, function () {
         renderOpportunityCleanup(fullHash);
       });
-    else if (tab === 'issues') withHubTabs(tabsHtml, renderEventHealth);
+    else if (tab === 'issues')
+      withHubTabs(tabsHtml, function () {
+        renderEventHealth(fullHash);
+      });
     else withHubTabs(tabsHtml, function () {
       renderGroupCleanup(fullHash);
     });

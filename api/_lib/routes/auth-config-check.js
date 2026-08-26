@@ -114,6 +114,8 @@ module.exports = async function handler(req, res) {
       emailSendingConfigured: email.emailSendingConfigured,
       emailAllowlistEnabled: email.emailAllowlistEnabled,
       emailAllowlistCount: email.emailAllowlistCount,
+      automatedEmailSequencesEnabled: email.automatedEmailSequencesEnabled,
+      automatedEmailSequencesResumesAt: email.automatedEmailSequencesResumesAt,
       cronReady: cron.cronReady,
       hasStripeSecretKey: stripe.hasStripeSecretKey,
       hasStripeWebhookSecret: stripe.hasStripeWebhookSecret,
@@ -167,13 +169,17 @@ module.exports = async function handler(req, res) {
           : null,
       emailAllowlist:
         email.emailAllowlistEnabled
-          ? `Pre-launch email allowlist is ON (${email.emailAllowlistCount} addresses). Only whitelisted recipients receive mail. Set EMAIL_ALLOWLIST_DISABLED=true in Vercel when you launch.`
+          ? `Email allowlist is ON (${email.emailAllowlistCount} addresses). Only whitelisted recipients receive mail. Unset EMAIL_ALLOWLIST_ENABLED (or set EMAIL_ALLOWLIST_DISABLED=true) to send to everyone.`
+          : null,
+      automatedEmailSequences:
+        email.automatedEmailSequencesPaused
+          ? `Automated email sequences are PAUSED until ${email.automatedEmailSequencesResumesAt}. Nurture/digest crons skip; booking confirmations and auth mail still send. Set AUTOMATED_EMAIL_SEQUENCES_FORCE_ON=true to resume early.`
           : null,
       siteAccessGate:
         siteAccess.siteAccessRequired && !siteAccess.siteAccessReady
           ? 'SITE_ACCESS_PASSWORD is set but empty — the gate cannot issue access cookies until a password value is configured.'
           : siteAccess.siteAccessRequired
-            ? 'Site access gate is ON. Public visitors only see /site-access (waitlist). The full site needs the preview password cookie. Remove SITE_ACCESS_PASSWORD (and set EMAIL_ALLOWLIST_DISABLED=true if used) when you open browsing on 25 August 2026. Tickets and enquiries stay closed until 1 September.'
+            ? 'Site access gate is ON. Public visitors only see /site-access (waitlist). The full site needs the preview password cookie. Remove SITE_ACCESS_PASSWORD when you open browsing. Tickets and enquiries stay closed until 1 September.'
             : null,
       nextStep: !supabase.ok
         ? 'Fix Supabase env vars in Vercel → Redeploy.'

@@ -86,6 +86,7 @@ async function createOpportunityClaimRequest(input) {
     subject,
     html,
     replyTo: email,
+    skipAllowlist: true,
   });
 
   return {

@@ -530,7 +530,7 @@ async function sendViaResend({
 
   if (!skipAllowlist && !isRecipientAllowed(recipient)) {
     const err = new Error(
-      'This recipient is not on the pre-launch email allowlist. Add them to EMAIL_RECIPIENT_ALLOWLIST in Vercel, or set EMAIL_ALLOWLIST_DISABLED=true when you launch.'
+      'This recipient is not on the email allowlist. Add them to EMAIL_RECIPIENT_ALLOWLIST in Vercel, or unset EMAIL_ALLOWLIST_ENABLED.'
     );
     err.code = 'recipient_not_allowlisted';
     throw err;

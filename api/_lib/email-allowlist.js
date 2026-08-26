@@ -1,7 +1,8 @@
 /**
- * Pre-launch recipient allowlist — only these addresses receive outbound email
- * while Resend/domain setup is in progress. Set EMAIL_ALLOWLIST_DISABLED=true
- * in Vercel when you launch to send to all users.
+ * Optional recipient allowlist (off by default after launch).
+ * Set EMAIL_ALLOWLIST_ENABLED=true to restrict outbound mail to
+ * DEFAULT_ALLOWED_RECIPIENTS + EMAIL_RECIPIENT_ALLOWLIST only.
+ * EMAIL_ALLOWLIST_DISABLED=true also keeps the allowlist off (legacy).
  */
 const DEFAULT_ALLOWED_RECIPIENTS = [
   'pips249@gmail.com',
@@ -14,6 +15,8 @@ const DEFAULT_ALLOWED_RECIPIENTS = [
   'hancher249@gmail.com',
   'rosie.mcgilvray@yahoo.co.uk',
   'gary.dixon336@outlook.com',
+  'hello@thenetworkeruk.com',
+  'hello@the-networker.co.uk',
 ];
 
 function normalizeEmail(email) {
@@ -30,10 +33,14 @@ function parseEnvAllowlist(raw) {
 }
 
 function isEmailAllowlistEnabled() {
-  const flag = String(process.env.EMAIL_ALLOWLIST_DISABLED || '')
+  const disabled = String(process.env.EMAIL_ALLOWLIST_DISABLED || '')
     .trim()
     .toLowerCase();
-  return flag !== 'true' && flag !== '1' && flag !== 'yes';
+  if (disabled === 'true' || disabled === '1' || disabled === 'yes') return false;
+  const enabled = String(process.env.EMAIL_ALLOWLIST_ENABLED || '')
+    .trim()
+    .toLowerCase();
+  return enabled === 'true' || enabled === '1' || enabled === 'yes';
 }
 
 function getAllowedRecipients() {
