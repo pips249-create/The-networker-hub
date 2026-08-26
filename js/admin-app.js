@@ -22639,7 +22639,7 @@
       '<input type="search" class="ei-create-org-search w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Search by group name or email…" value="' +
       attrEsc(row.groupName || '') +
       '" autocomplete="off">' +
-      '<div class="ei-create-org-results hidden absolute left-0 right-0 top-full mt-1 max-h-48 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg z-20"></div>' +
+      '<div class="ei-create-org-results hidden absolute left-0 right-0 top-full mt-1 max-h-48 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg z-40"></div>' +
       '<p class="ei-create-org-chosen hidden mt-1 text-xs text-brand-800"></p></div>' +
       '<p class="text-[11px] text-slate-500 mt-1">We match by email first. If this group is not on The Networker UK yet, creating the listing will add it from this request.</p></div>' +
       '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Title</label>' +
@@ -22867,7 +22867,6 @@
                 var notes = String(row.notes || '').trim();
                 var btnClass =
                   'inline-flex items-center rounded-lg border text-xs font-semibold px-3 py-1.5';
-                var linkClass = btnClass + ' no-underline';
                 var actions = '';
                 if (row.status === 'open') {
                   actions +=
@@ -22879,21 +22878,21 @@
                 }
                 actions +=
                   row.status === 'open'
-                    ? '<a href="' +
-                      attrEsc(eventIntakeActionHref('done', row.id)) +
-                      '" class="' +
-                      linkClass +
-                      ' border-slate-300 bg-white text-slate-700 hover:bg-slate-50">Mark done</a> ' +
-                      '<a href="' +
-                      attrEsc(eventIntakeActionHref('spam', row.id)) +
-                      '" class="' +
-                      linkClass +
-                      ' border-red-200 bg-white text-red-700 hover:bg-red-50">Spam</a>'
-                    : '<a href="' +
-                      attrEsc(eventIntakeActionHref('open', row.id)) +
-                      '" class="' +
-                      linkClass +
-                      ' border-slate-300 bg-white text-slate-700 hover:bg-slate-50">Reopen</a>';
+                    ? '<button type="button" class="' +
+                      btnClass +
+                      ' border-slate-300 bg-white text-slate-700 hover:bg-slate-50" data-ei-id="' +
+                      attrEsc(row.id) +
+                      '" data-ei-status="done">Mark done</button> ' +
+                      '<button type="button" class="' +
+                      btnClass +
+                      ' border-red-200 bg-white text-red-700 hover:bg-red-50" data-ei-id="' +
+                      attrEsc(row.id) +
+                      '" data-ei-status="spam">Spam</button>'
+                    : '<button type="button" class="' +
+                      btnClass +
+                      ' border-slate-300 bg-white text-slate-700 hover:bg-slate-50" data-ei-id="' +
+                      attrEsc(row.id) +
+                      '" data-ei-status="open">Reopen</button>';
 
                 var findOrgBtn =
                   '<button type="button" class="' +
@@ -23249,7 +23248,7 @@
     bindEventIntakeDocClicks();
     (page || root)
       .querySelectorAll(
-        '[data-ei-create-toggle], [data-ei-create-cancel], [data-ei-find-organiser], [data-ei-import-brand]'
+        '[data-ei-create-toggle], [data-ei-create-cancel], [data-ei-find-organiser], [data-ei-import-brand], [data-ei-status][data-ei-id]'
       )
       .forEach(function (btn) {
         if (btn.dataset.eiBound === '1') return;
@@ -23469,12 +23468,14 @@
   function handleEventIntakeDocClick(e) {
     var t = eventIntakeClickEl(e);
     if (!t) return;
-    if (t.closest && t.closest('a[href*="cleanup/"]')) return;
+    /* Leave Fix listings hub tabs alone — only handle Event request card actions. */
+    if (t.closest && t.closest('.admin-hub-tabs')) return;
     var btn =
       t.closest('[data-ei-create-toggle]') ||
       t.closest('[data-ei-create-cancel]') ||
       t.closest('[data-ei-find-organiser]') ||
-      t.closest('[data-ei-import-brand]');
+      t.closest('[data-ei-import-brand]') ||
+      t.closest('[data-ei-status][data-ei-id]');
     if (!btn) return;
     var api = window.AdminEventIntake;
     if (!api) return;
@@ -23492,11 +23493,23 @@
     }
     if (btn.hasAttribute('data-ei-import-brand')) {
       api.importBrand(btn, e);
+      return;
+    }
+    if (btn.hasAttribute('data-ei-status') && btn.hasAttribute('data-ei-id')) {
+      api.setStatus(btn, e);
     }
   }
 
   function bindEventIntakeDocClicks() {
-    /* Hash links drive Event requests. Do not intercept clicks on Fix listings. */
+    if (document.documentElement.dataset.eiDocBound === '1') return;
+    document.documentElement.dataset.eiDocBound = '1';
+    document.addEventListener(
+      'click',
+      function (e) {
+        handleEventIntakeDocClick(e);
+      },
+      true
+    );
   }
 
   window.AdminEventIntake = {
