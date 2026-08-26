@@ -403,8 +403,10 @@ async function assertPaidMemberBookingAllowed(
   sb,
   { organiserId, attendeeId, email, attendanceMode, guestPassesDisabled }
 ) {
-  if (String(attendanceMode || '').trim() !== 'guest_programme' &&
-      String(attendanceMode || '').trim() !== 'membership_meeting') {
+  const mode = String(attendanceMode || '').trim();
+  // guest_programme (ticket / ticket+membership + visits): guests may buy a public
+  // ticket OR take a free visit. Only membership_meeting funnels visitors through visits first.
+  if (mode !== 'membership_meeting') {
     return null;
   }
   if (guestPassesDisabled) return null;

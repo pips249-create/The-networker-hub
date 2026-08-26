@@ -2920,7 +2920,11 @@
       tier.innerHTML = categoryExclusivityTierCardHtml(t, soldOut);
       tiersEl.appendChild(tier);
     } else if ((!showAlumniTier || rosterMember) && !alumniOnlyView) {
-    (showGuestTier ? [] : memberTiers).forEach((t, index) => {
+    // membership_meeting visitors: free visit only (member rates when on the list).
+    // guest_programme / tickets: show public tickets alongside the free visit.
+    const hideOtherTiersForGuest =
+      showGuestTier && eventIsMembershipMeeting(ev) && !rosterMember;
+    (hideOtherTiersForGuest ? [] : memberTiers).forEach((t, index) => {
       const soldOut = Boolean(t.soldOut) || panelClosed;
       const priceNum = t.priceKey === 'free' ? 0 : Number(t.priceNum) || 0;
       const priceDisplay = t.priceKey === 'free' ? 'Free' : t.price || fmt(priceNum);
@@ -4174,8 +4178,9 @@
         if (footText) footText.textContent = 'Application reviewed by the organiser';
       }
     } else if (
+      showGuestVisitSelected(ev) &&
       eventAllowsGuestPasses(ev) &&
-      guestVisitEligibility?.eligible &&
+      (guestVisitEligibility?.eligible || guestVisitEligibility?.signedOut) &&
       !isRosterMemberForEvent()
     ) {
       const categoryExclusivityFoot = document.getElementById('category-exclusivity-apply-foot');

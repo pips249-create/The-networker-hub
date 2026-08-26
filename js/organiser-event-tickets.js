@@ -2901,7 +2901,13 @@
   }
 
   function privateTicketEnabled() {
-    return membersOnlyEventEnabled() || Boolean(document.getElementById('ee-private-ticket-enabled')?.checked);
+    // Membership-meeting (free visits → join) always uses the member-ticket fields,
+    // even when the closed-meeting checkbox is off.
+    return (
+      membersOnlyEventEnabled() ||
+      isMembershipMeetingMode() ||
+      Boolean(document.getElementById('ee-private-ticket-enabled')?.checked)
+    );
   }
 
   function ceMemberTicketEnabled() {
@@ -3813,7 +3819,9 @@
   }
 
   function collectTiers() {
-    if (membersOnlyEventEnabled()) {
+    // Closed meeting OR membership-meeting (visits → join): member ticket only —
+    // never the hidden default public General admission row.
+    if (membersOnlyEventEnabled() || isMembershipMeetingMode()) {
       const privateTier = collectMembersOnlyTicket([]);
       return privateTier ? [privateTier] : [];
     }
