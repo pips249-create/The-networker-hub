@@ -855,6 +855,16 @@ function assertEventHasOrganiserForPublish(row) {
   }
 }
 
+function assertEventLanguageForPublish(row, existing) {
+  const { assertNoHateSpeechOnLiveListing } = require('./listing-language-moderation');
+  const effective = {
+    title: row.title !== undefined ? row.title : existing?.title,
+    description: row.description !== undefined ? row.description : existing?.description,
+    status: row.status !== undefined ? row.status : existing?.status,
+  };
+  assertNoHateSpeechOnLiveListing(effective, existing?.status);
+}
+
 async function buildEventRow(payload, eventId, mode) {
   const touchDate = mode !== 'update' || payloadTouchesDate(payload);
   const image_url = payload._deferImage ? undefined : await resolveEventPhotoUrl(payload, eventId);
@@ -1097,6 +1107,7 @@ async function createEvent(payload) {
     'create'
   );
   row = await inheritGroupPhotoIfMissing(row, payload);
+  assertEventLanguageForPublish(row, null);
   const { data, error } = await insertEventRow(sb, row);
   if (error) throw new Error(error.message);
 
@@ -1375,6 +1386,7 @@ async function updateEvent(eventId, payload) {
       }
     }
   }
+  assertEventLanguageForPublish(row, existing);
   const { data, error } = await updateEventRowById(sb, eventId, row);
   if (error) throw new Error(error.message);
   if (existing?.starts_at !== data?.starts_at && data?.starts_at) {
@@ -2424,6 +2436,10 @@ async function createTicketsForEvents({
   if (!ids.length || !tiers.length) return { created: 0, tickets: [] };
 
   const mode = normalizeAttendanceMode(attendanceMode);
+  const hasCeTiers = tiers.some(
+    (t) => t.categoryExclusivity || /application/i.test(String(t.ticketType || t.name || ''))
+  );
+  const effectiveMode = mode === 'category_exclusivity' || hasCeTiers ? 'category_exclusivity' : mode;
 
   const guestPassesDisabledFlag = Boolean(guestPassesDisabled);
   const { guestVisitTierPayload, publicFreeTicketIsFirstVisitStandIn } = require('./guest-visits');
@@ -2439,9 +2455,9 @@ async function createTicketsForEvents({
 
   // Guest visits: guest_programme, membership_meeting, or optional add-on on Category Exclusivity.
   const guestVisitsEnabled =
-    mode === 'guest_programme' ||
-    mode === 'membership_meeting' ||
-    (mode === 'category_exclusivity' && Boolean(enableGuestVisits));
+    effectiveMode === 'guest_programme' ||
+    effectiveMode === 'membership_meeting' ||
+    (effectiveMode === 'category_exclusivity' && Boolean(enableGuestVisits));
 
   if (guestVisitsEnabled) {
     const { data: eventRows, error: eventRowsErr } = await sb
@@ -2604,14 +2620,11 @@ async function createTicketsForEvents({
   }
   const out = await insertTicketsBatch(insertRows);
 
-  const hasCategoryExclusivity =
-    mode === 'category_exclusivity' ||
-    tiers.some(
-      (t) => t.categoryExclusivity || /application/i.test(String(t.ticketType || t.name || ''))
-    );
+  const hasCategoryExclusivity = effectiveMode === 'category_exclusivity' || hasCeTiers;
+  const resolvedMode = hasCategoryExclusivity ? 'category_exclusivity' : effectiveMode;
   const { error: approvalErr } = await sb
     .from('events')
-    .update({ auto_approve: !hasCategoryExclusivity, attendance_mode: mode })
+    .update({ auto_approve: !hasCategoryExclusivity, attendance_mode: resolvedMode })
     .in('id', ids);
   if (approvalErr) throw new Error(approvalErr.message);
 
@@ -2657,7 +2670,7 @@ async function republishEvent(eventId) {
   const { data: existing, error } = await sb
     .from('events')
     .select(
-      'id, title, status, starts_at, ticket_sales_enabled, published_at, approval_status, organiser_id, refund_policy, refund_policy_details, refund_terms_agreed, refund_terms_agreed_at'
+      'id, title, description, status, starts_at, ticket_sales_enabled, published_at, approval_status, organiser_id, refund_policy, refund_policy_details, refund_terms_agreed, refund_terms_agreed_at'
     )
     .eq('id', id)
     .maybeSingle();
@@ -2677,6 +2690,7 @@ async function republishEvent(eventId) {
 
   assertEventHasDateForPublish(existing);
   assertEventHasOrganiserForPublish(existing);
+  assertEventLanguageForPublish({ ...existing, status: 'published' }, existing);
   await assertEventsHaveTicketsForPublish(sb, [id]);
 
   const { data: tickets, error: ticketErr } = await sb.from('tickets').select('*').eq('event_id', id);

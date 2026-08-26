@@ -277,9 +277,12 @@ async function createRegistrationFromPayment(input) {
     input.ceMemberDirectBook || input.ce_member_direct_book
   );
   let ceMemberEligibility = null;
+  // Guest visits and alumni are direct-book even on Category Exclusivity events.
   const needsApplication =
-    requiresApprovedApplication({ attendance_mode: eventAttendanceMode }, ticketRow) ||
-    registrationKind === 'application';
+    registrationKind !== 'guest_visit' &&
+    registrationKind !== 'alumni' &&
+    (requiresApprovedApplication({ attendance_mode: eventAttendanceMode }, ticketRow) ||
+      registrationKind === 'application');
 
   if (needsApplication) {
     try {

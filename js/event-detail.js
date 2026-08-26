@@ -2681,6 +2681,33 @@
     );
   }
 
+  function showGuestVisitSelected(ev) {
+    const tierEl = getSelectedTierEl();
+    if (!tierEl) return false;
+    if (tierEl.getAttribute('data-guest-visit') === '1') return true;
+    return Boolean(
+      ev?.guestVisitTier && tierEl.getAttribute('data-ticket-id') === String(ev.guestVisitTier.id)
+    );
+  }
+
+  /** Application ticket id for CE apply — never send guest-visit / alumni ids. */
+  function categoryExclusivityApplyTicketId() {
+    const ceTier = document.getElementById('ev-tier-category-exclusivity');
+    if (ceTier) {
+      const id = ceTier.getAttribute('data-ticket-id');
+      if (id) return id;
+    }
+    const selected = getSelectedTierEl();
+    if (
+      selected &&
+      selected.getAttribute('data-guest-visit') !== '1' &&
+      selected.getAttribute('data-alumni') !== '1'
+    ) {
+      return selected.getAttribute('data-ticket-id');
+    }
+    return null;
+  }
+
   function tierRemainingCount(t) {
     const capRaw = Number(t.quantityAvailable);
     // Cap of 0 was a common mis-save meaning "unlimited" — treat as no cap.
@@ -2813,6 +2840,44 @@
       tiersEl.appendChild(tier);
     }
 
+    // Alumni can sit alongside Category Exclusivity (invite rate) — not only as an else branch.
+    if (showAlumniTier) {
+      const t = ev.alumniTier;
+      let soldOut = panelClosed;
+      const priceNum = t.priceKey === 'free' ? 0 : Number(t.priceNum) || 0;
+      const cap = tierCapacityCap(t);
+      const sold = Math.max(0, Number(t.registrationsCount) || 0);
+      if (cap != null) {
+        const left = Math.max(0, cap - sold);
+        if (left <= 0) soldOut = true;
+      }
+      const tier = document.createElement('div');
+      tier.className =
+        'tier tier-alumni' +
+        (soldOut ? ' sold-out tier-disabled' : '') +
+        (!firstSelectable && !soldOut ? ' selected' : '');
+      tier.id = 'ev-tier-alumni';
+      tier.setAttribute('data-ticket-id', t.id);
+      tier.setAttribute('data-price', String(priceNum));
+      tier.setAttribute('data-label', 'Previous attendee ticket');
+      tier.setAttribute('data-qty-max', '1');
+      tier.setAttribute('data-alumni', '1');
+      if (!soldOut) {
+        tier.setAttribute('role', 'button');
+        tier.setAttribute('tabindex', '0');
+        if (!firstSelectable) {
+          firstSelectable = tier;
+          tier.setAttribute('aria-pressed', 'true');
+        } else {
+          tier.setAttribute('aria-pressed', 'false');
+        }
+      } else {
+        tier.setAttribute('aria-disabled', 'true');
+      }
+      tier.innerHTML = alumniTierCardHtml(t, alumniEligibility, soldOut);
+      tiersEl.appendChild(tier);
+    }
+
     if (isCategoryExclusivity && tiers.length && !rosterMember) {
       const t = tiers.find((tier) => tierIsApplication(tier)) || tiers[0];
       let soldOut = Boolean(t.soldOut) || panelClosed;
@@ -2854,34 +2919,7 @@
 
       tier.innerHTML = categoryExclusivityTierCardHtml(t, soldOut);
       tiersEl.appendChild(tier);
-    } else if (showAlumniTier) {
-      const t = ev.alumniTier;
-      let soldOut = panelClosed;
-      const priceNum = t.priceKey === 'free' ? 0 : Number(t.priceNum) || 0;
-      const cap = tierCapacityCap(t);
-      const sold = Math.max(0, Number(t.registrationsCount) || 0);
-      if (cap != null) {
-        const left = Math.max(0, cap - sold);
-        if (left <= 0) soldOut = true;
-      }
-      const tier = document.createElement('div');
-      tier.className =
-        'tier tier-alumni' + (soldOut ? ' sold-out tier-disabled' : ' selected');
-      tier.id = 'ev-tier-alumni';
-      tier.setAttribute('data-ticket-id', t.id);
-      tier.setAttribute('data-price', String(priceNum));
-      tier.setAttribute('data-label', 'Previous attendee ticket');
-      tier.setAttribute('data-qty-max', '1');
-      tier.setAttribute('data-alumni', '1');
-      if (!soldOut) {
-        tier.setAttribute('aria-pressed', 'true');
-        firstSelectable = tier;
-      } else {
-        tier.setAttribute('aria-disabled', 'true');
-      }
-      tier.innerHTML = alumniTierCardHtml(t, alumniEligibility, soldOut);
-      tiersEl.appendChild(tier);
-    } else if (!alumniOnlyView) {
+    } else if ((!showAlumniTier || rosterMember) && !alumniOnlyView) {
     (showGuestTier ? [] : memberTiers).forEach((t, index) => {
       const soldOut = Boolean(t.soldOut) || panelClosed;
       const priceNum = t.priceKey === 'free' ? 0 : Number(t.priceNum) || 0;
@@ -4100,21 +4138,37 @@
     if (purchaseView) purchaseView.removeAttribute('aria-hidden');
 
     if (eventIsCategoryExclusivity(ev)) {
-      if (isRosterMemberForEvent()) {
-        panel.classList.remove('is-approval-mode');
-      } else {
-        panel.classList.add('is-approval-mode');
-      }
       const categoryExclusivityFoot = document.getElementById('category-exclusivity-apply-foot');
       const footText = document.getElementById('category-exclusivity-apply-foot-text');
       if (isRosterMemberForEvent()) {
+        panel.classList.remove('is-approval-mode');
         buy.textContent = 'Book as a member';
         if (categoryExclusivityFoot) categoryExclusivityFoot.hidden = false;
         if (footText) {
           footText.textContent =
             'You’re on this group’s membership list — book without applying. Guests still need host approval.';
         }
+      } else if (showGuestVisitSelected(ev)) {
+        // Free visit selected — direct book, no application.
+        panel.classList.remove('is-approval-mode');
+        buy.textContent = 'Book free visit';
+        if (categoryExclusivityFoot) categoryExclusivityFoot.hidden = false;
+        if (footText) {
+          footText.textContent =
+            'No application needed for a free visit. Switch to Apply below for a full place.';
+        }
+      } else if (showAlumniTierSelected(ev)) {
+        panel.classList.remove('is-approval-mode');
+        const tierEl = getSelectedTierEl();
+        const priceNum = tierEl ? parseFloat(tierEl.getAttribute('data-price')) || 0 : 0;
+        buy.textContent =
+          priceNum > 0 ? 'Book previous attendee ticket' : 'Claim previous attendee ticket';
+        if (categoryExclusivityFoot) categoryExclusivityFoot.hidden = false;
+        if (footText) {
+          footText.textContent = 'Previous attendee rate — invite only. No application needed.';
+        }
       } else {
+        panel.classList.add('is-approval-mode');
         buy.textContent = 'Apply for a Seat';
         if (categoryExclusivityFoot) categoryExclusivityFoot.hidden = false;
         if (footText) footText.textContent = 'Application reviewed by the organiser';
@@ -4219,8 +4273,12 @@
     else if (ev.isTicketSalesScheduled) labelText = 'Tickets opening soon';
     else if (ev.isSoldOut) labelText = 'Sold out';
     else if (ev.isSalesClosed) labelText = 'Registration closed';
-    else if (eventIsCategoryExclusivity(ev))
-      labelText = isRosterMemberForEvent() ? 'Book as a member' : 'Apply for a seat';
+    else if (eventIsCategoryExclusivity(ev)) {
+      if (isRosterMemberForEvent()) labelText = 'Book as a member';
+      else if (showGuestVisitSelected(ev)) labelText = 'Book free visit';
+      else if (showAlumniTierSelected(ev)) labelText = 'Previous attendee ticket';
+      else labelText = 'Apply for a seat';
+    }
     else if (ev.priceKey === 'free') labelText = 'Get free ticket';
     else labelText = 'Buy ticket';
 
@@ -4764,6 +4822,7 @@
         }
       }
       syncPaidCheckoutPanel(label, billQty, total);
+      if (evNow) applyTicketPanelState(evNow);
     }
 
     if (bundleCheck && !bundleCheck.dataset.bound) {
@@ -4841,8 +4900,7 @@
           }
 
           const ev = activeEvent();
-          const tierEl = getSelectedTierEl();
-          const ticketId = tierEl ? tierEl.getAttribute('data-ticket-id') : null;
+          const ticketId = categoryExclusivityApplyTicketId();
           const submitBtn = appForm.querySelector('button[type="submit"]');
           if (submitBtn) {
             submitBtn.disabled = true;
@@ -4993,7 +5051,9 @@
         }
         if (
           (evNow?.isApprovalRequired || eventIsCategoryExclusivity(evNow)) &&
-          !isRosterMemberForEvent()
+          !isRosterMemberForEvent() &&
+          !showGuestVisitSelected(evNow) &&
+          !showAlumniTierSelected(evNow)
         ) {
           if (applicationBlocksReapply(eventApplicationState)) {
             await refreshEventApplicationUi(evNow);
@@ -5012,14 +5072,17 @@
                   action: 'apply',
                   qty: qty,
                   termsAgreed: false,
-                  ticketId: getSelectedTierEl()
-                    ? getSelectedTierEl().getAttribute('data-ticket-id')
-                    : null,
+                  ticketId: categoryExclusivityApplyTicketId(),
                 },
               },
             }))
           ) {
             return;
+          }
+          // Ensure apply form targets the Application ticket, not a visit/alumni selection.
+          const ceTier = document.getElementById('ev-tier-category-exclusivity');
+          if (ceTier && !ceTier.classList.contains('sold-out') && !ceTier.classList.contains('tier-disabled')) {
+            selectTier(ceTier);
           }
           showSeatApplication(true);
           const industry = document.getElementById('apply-industry');

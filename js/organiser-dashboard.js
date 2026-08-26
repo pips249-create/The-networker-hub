@@ -7255,7 +7255,11 @@
     });
 
     if (!ok || !data.ok) {
-      showOrganiserAlert(data.message || data.error || 'Could not update this application.', true);
+      const message =
+        data.error === 'applications_full'
+          ? 'No seats left to approve. Decline another applicant first, or increase places on the Application ticket.'
+          : data.message || data.error || 'Could not update this application.';
+      showOrganiserAlert(message, true);
       alertEl?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       return;
     }

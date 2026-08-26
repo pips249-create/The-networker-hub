@@ -35,7 +35,7 @@ async function loadRegistrationForReview(sb, registrationId) {
       cancelled_at,
       attendees ( id, name, email ),
       events ( id, title, slug, organiser_id ),
-      tickets ( id, name, price )
+      tickets ( id, name, price, quantity )
     `
     )
     .eq('id', registrationId)

@@ -980,6 +980,30 @@
     return guestProgrammeEnabled() ? 'guest_programme' : 'tickets';
   }
 
+  /**
+   * Apply attendance mode from door + pay-how.
+   * Application door must stay category_exclusivity even on membership-only pay-how
+   * (do not demote to General membership_meeting / closed tickets).
+   */
+  function applyModeFromDoorAndPayHow() {
+    if (attendanceDoor === 'application') {
+      setMembersOnlyEventEnabled(false);
+      setAttendanceMode('category_exclusivity');
+      return;
+    }
+    if (isMembershipOnlyPayHow()) {
+      if (guestProgrammeEnabled()) {
+        setMembersOnlyEventEnabled(false);
+        setAttendanceMode('membership_meeting');
+      } else {
+        setMembersOnlyEventEnabled(true);
+        setAttendanceMode('tickets');
+      }
+      return;
+    }
+    setAttendanceMode(resolveModeFromDoorAndPayHow());
+  }
+
   function resolveOpenBookingMode() {
     if (isMembershipMeetingMode()) return 'membership_meeting';
     return guestProgrammeEnabled() ? 'guest_programme' : 'tickets';
@@ -1308,15 +1332,7 @@
     showAlert('');
     step2Confirmed = true;
     payHowConfirmed = false;
-    if (isMembershipOnlyPayHow()) {
-      if (guestProgrammeEnabled()) setAttendanceMode('membership_meeting');
-      else {
-        setMembersOnlyEventEnabled(true);
-        setAttendanceMode('tickets');
-      }
-    } else {
-      setAttendanceMode(resolveModeFromDoorAndPayHow());
-    }
+    applyModeFromDoorAndPayHow();
     revealPayHowStep();
     scrollStepIntoView(document.getElementById('ee-panel-pay-how'));
   }
@@ -1363,15 +1379,7 @@
   function confirmPayHowAndRevealRest() {
     showAlert('');
     payHowConfirmed = true;
-    if (isMembershipOnlyPayHow()) {
-      if (guestProgrammeEnabled()) setAttendanceMode('membership_meeting');
-      else {
-        setMembersOnlyEventEnabled(true);
-        setAttendanceMode('tickets');
-      }
-    } else {
-      setAttendanceMode(resolveModeFromDoorAndPayHow());
-    }
+    applyModeFromDoorAndPayHow();
     revealPostStep2();
     scrollStepIntoView(activeStep2Panel() || document.getElementById('ee-panel-tickets'));
   }
@@ -2307,6 +2315,14 @@
   }
 
   function handleMembersOnlyEventToggle() {
+    // Closed meeting is a General-door control — never demote Application / CE.
+    if (attendanceDoor === 'application') {
+      setMembersOnlyEventEnabled(false);
+      setAttendanceMode('category_exclusivity');
+      syncMembersOnlyEventMode();
+      updatePublishButton();
+      return;
+    }
     if (isMembershipOnlyPayHow()) {
       if (membersOnlyEventEnabled()) {
         // Closed meeting: member list only — turn free trial visits off.
@@ -2420,8 +2436,24 @@
     }
     if (ticketsGuestMount) ticketsGuestMount.hidden = true;
 
-    // Membership-only: keep free trial visits on the path-choice step.
-    if (membershipOnly && !isMeeting) {
+    // Membership-only (General): keep free trial visits on the path-choice step.
+    // Application / Category Exclusivity must fall through (or use pay-how mount below).
+    if (membershipOnly && !isMeeting && !isCategory) {
+      if (meetingMount) meetingMount.hidden = true;
+      if (ceMount) ceMount.hidden = true;
+      if (fieldsHome && fields.parentElement !== fieldsHome) fieldsHome.appendChild(fields);
+      if (generalMount && guestAddon) {
+        generalMount.hidden = false;
+        if (guestAddon.parentElement !== generalMount) generalMount.appendChild(guestAddon);
+        guestAddon.hidden = false;
+        fields.hidden = !guestProgrammeEnabled();
+        if (optOut) optOut.hidden = true;
+      }
+      return;
+    }
+
+    // Application + membership: visits stay on pay-how until Continue (CE panel still hidden).
+    if (isCategory && membershipOnly && !payHowConfirmed) {
       if (meetingMount) meetingMount.hidden = true;
       if (ceMount) ceMount.hidden = true;
       if (fieldsHome && fields.parentElement !== fieldsHome) fieldsHome.appendChild(fields);
@@ -2499,8 +2531,12 @@
   function syncMembersOnlyEventMode() {
     const membershipMeeting = isMembershipMeetingMode();
     const membershipOnlyPay = isMembershipOnlyPayHow();
-    // Membership-only (with or without visits) never shows public Ticket 1 rows.
-    const on = membersOnlyEventEnabled() || membershipMeeting || membershipOnlyPay;
+    // Membership-only (with or without visits) never shows public Ticket 1 rows —
+    // except Application / CE, which uses its own panel (not the members-only shell).
+    const on =
+      membersOnlyEventEnabled() ||
+      membershipMeeting ||
+      (membershipOnlyPay && attendanceDoor !== 'application');
     // Do not force the closed-meeting checkbox here — user must be able to untick it
     // and turn free trial visits back on.
     const addonOnly = !on && Boolean(document.getElementById('ee-private-ticket-enabled')?.checked);
@@ -2883,7 +2919,7 @@
     } else if (payHowIncludesMembership()) {
       setPayHow('membership');
     } else {
-      setPayHow('membership');
+      setPayHow('tickets');
     }
     syncPayHowUi();
   }
@@ -2956,7 +2992,9 @@
       setHubMembershipEnabled(true);
     } else {
       setHubMembershipEnabled(false);
-      if (guestProgrammeEnabled()) setGuestProgrammeEnabled(false);
+      // General tickets-only: free visits belong with membership.
+      // Application door keeps CE guest visits available on the CE panel.
+      if (!isApplication && guestProgrammeEnabled()) setGuestProgrammeEnabled(false);
     }
 
     // Membership path: default free trial visits on once (user can untick).
@@ -3342,23 +3380,21 @@
       if (visitsToggle && !visitsToggle.dataset.userToggled) {
         setGuestProgrammeEnabled(true);
       }
-      if (guestProgrammeEnabled()) {
-        setMembersOnlyEventEnabled(false);
-        setAttendanceMode('membership_meeting');
-      } else {
-        setMembersOnlyEventEnabled(true);
-        setAttendanceMode('tickets');
-      }
+      applyModeFromDoorAndPayHow();
     } else {
       // Tickets or Both — leave membership-meeting / closed shell so public tiers show.
-      if (isMembershipMeetingMode()) {
+      // Keep Application door intact (do not force general tickets mode first).
+      if (isMembershipMeetingMode() && attendanceDoor !== 'application') {
         attendanceMode = 'tickets';
       }
       setMembersOnlyEventEnabled(false);
       if (!payHowIncludesMembership()) {
         setHubMembershipEnabled(false);
         // Free visits belong on Join the group — clear them on tickets-only.
-        setGuestProgrammeEnabled(false);
+        // Application + tickets still allows CE guest visits via the CE panel.
+        if (attendanceDoor !== 'application') {
+          setGuestProgrammeEnabled(false);
+        }
       }
       setAttendanceMode(resolveModeFromDoorAndPayHow());
       ensurePublicTiersAfterLeavingMembership();
@@ -3901,9 +3937,11 @@
         savedAt: Date.now(),
         eventIds: eventIds.slice(),
         attendanceMode: attendanceMode,
+        attendanceDoor: attendanceDoor,
+        payHow: readPayHow(),
         maxAttendees: collectEventCapacity(),
         guestPassesDisabled: collectGuestPassesDisabled(),
-        enableGuestVisits: ceGuestVisitsEnabled(),
+        enableGuestVisits: ceGuestVisitsEnabled() || guestProgrammeEnabled(),
         membersOnlyEvent: membersOnlyEventEnabled(),
         tiers: collectActiveTiers(),
         vatTreatment: collectVatTreatment(),
@@ -3938,6 +3976,12 @@
 
   function restoreTicketDraft(draft) {
     if (!draft || typeof draft !== 'object') return false;
+    if (draft.payHow === 'membership' || draft.payHow === 'both' || draft.payHow === 'tickets') {
+      setPayHow(draft.payHow);
+    }
+    if (draft.attendanceDoor === 'application' || draft.attendanceDoor === 'general') {
+      attendanceDoor = draft.attendanceDoor;
+    }
     if (draft.attendanceMode === 'category_exclusivity') {
       setAttendanceMode('category_exclusivity');
       if (Array.isArray(draft.tiers) && draft.tiers[0]) {
@@ -3948,6 +3992,10 @@
       if (draft.enableGuestVisits) {
         setGuestProgrammeEnabled(true);
         setAttendanceMode('category_exclusivity');
+      }
+      // Restore pay-how again after prefill (prefill may infer from price).
+      if (draft.payHow === 'membership' || draft.payHow === 'both' || draft.payHow === 'tickets') {
+        setPayHow(draft.payHow);
       }
     } else if (draft.attendanceMode === 'membership_meeting') {
       setAttendanceMode('membership_meeting');
@@ -4488,7 +4536,9 @@
     attendanceDoor = 'application';
     if (hasPaidTicket && payHowIncludesMembership()) setPayHow('both');
     else if (hasPaidTicket) setPayHow('tickets');
-    else setPayHow(payHowIncludesMembership() ? 'membership' : 'membership');
+    else if (payHowIncludesTickets() && payHowIncludesMembership()) setPayHow('both');
+    else if (payHowIncludesTickets()) setPayHow('tickets');
+    else setPayHow('membership');
     const priceEl = document.getElementById('ee-ce-price');
     if (priceEl) {
       priceEl.value = hasPaidTicket ? String(ticket.price) : '0';
@@ -4531,13 +4581,15 @@
         !isGuestVisitTicket(t) &&
         !isAlumniTicket(t) &&
         String(t.visibility || '').toLowerCase() !== 'members_only' &&
-        !t.categoryExclusivity
+        !t.categoryExclusivity &&
+        !/application/i.test(String(t.ticketType || ''))
       );
     });
     const hasPublic = publicTiers.length > 0;
     const hasMembersOnlyTier = (tickets || []).some(isMembersOnlyTicket);
 
-    if (mode === 'category_exclusivity') {
+    // Prefer Application tickets even if attendance_mode was demoted to membership_meeting.
+    if (mode === 'category_exclusivity' || ceTier) {
       attendanceDoor = 'application';
       if (cePaid && (hubMembershipEnabled() || hasMembersOnlyTier)) setPayHow('both');
       else if (cePaid) setPayHow('tickets');
@@ -4781,14 +4833,20 @@
       if (loaded.event.imagePosition && !seriesMeta.imagePosition) {
         seriesMeta.imagePosition = loaded.event.imagePosition;
       }
-      if (loaded.event.attendanceMode === 'membership_meeting') {
+      if (loaded.event.attendanceMode === 'category_exclusivity') {
+        setAttendanceMode('category_exclusivity');
+      } else if (
+        Array.isArray(loaded.tickets) &&
+        loaded.tickets.some(isCategoryExclusivityTicket)
+      ) {
+        // Heal demoted membership_meeting / tickets mode when Application tiers remain.
+        setAttendanceMode('category_exclusivity');
+      } else if (loaded.event.attendanceMode === 'membership_meeting') {
         setAttendanceMode('membership_meeting');
       } else if (loaded.event.attendanceMode === 'guest_programme') {
         setAttendanceMode(
           ticketsAreMembersOnlyEvent(loaded.tickets) ? 'membership_meeting' : 'guest_programme'
         );
-      } else if (loaded.event.attendanceMode === 'category_exclusivity') {
-        setAttendanceMode('category_exclusivity');
       }
       prefillGuestPassesDisabled(loaded.event);
       prefillEventCapacity(loaded.event);
@@ -4821,7 +4879,13 @@
       const memberTickets = loaded.tickets.filter(
         (t) => !isGuestVisitTicket(t) && !isAlumniTicket(t) && !isMembersOnlyTicket(t)
       );
-      if (
+      // Application-based tiers win over a demoted attendance_mode.
+      if (categoryExclusivityTicket) {
+        prefillCategoryExclusivityFromTicket(categoryExclusivityTicket);
+        prefillCeMemberTicket(loaded.tickets);
+        prefillCeGuestVisits(loaded.event, loaded.tickets);
+        setAttendanceMode('category_exclusivity');
+      } else if (
         loaded.event &&
         (loaded.event.attendanceMode === 'membership_meeting' ||
           (loaded.event.attendanceMode === 'guest_programme' &&
@@ -4835,11 +4899,6 @@
         prefillTiers(memberTickets);
         prefillMembersOnlyTicket(loaded.tickets);
         prefillGuestPassesDisabled(loaded.event);
-      } else if (categoryExclusivityTicket) {
-        prefillCategoryExclusivityFromTicket(categoryExclusivityTicket);
-        prefillCeMemberTicket(loaded.tickets);
-        prefillCeGuestVisits(loaded.event, loaded.tickets);
-        setAttendanceMode('category_exclusivity');
       } else {
         if (ticketsAreMembersOnlyEvent(loaded.tickets)) {
           prefillMembersOnlyTicket(loaded.tickets);
@@ -4858,7 +4917,8 @@
       // Keep free trial visits opt-in for new General ticketing events.
     }
 
-    if (loaded.event) {
+    // Do not overwrite a restored draft's pay-how / door with server inference.
+    if (loaded.event && !restoredDraft) {
       applyPayHowFromLoadedEvent(loaded.event, loaded.tickets || []);
     }
 
@@ -4870,7 +4930,7 @@
     });
     bindAttendanceStep1Ui();
     parkStep2Panels();
-    if (loaded.tickets && loaded.tickets.length) {
+    if (restoredDraft || (loaded.tickets && loaded.tickets.length)) {
       step2Confirmed = true;
       payHowConfirmed = true;
       revealPostStep2();
@@ -4885,14 +4945,8 @@
       const toggle = document.getElementById('ee-guest-programme-enabled');
       if (toggle) toggle.dataset.userToggled = '1';
       if (isMembershipOnlyPayHow()) {
-        if (guestProgrammeEnabled()) {
-          setMembersOnlyEventEnabled(false);
-          setAttendanceMode('membership_meeting');
-        } else {
-          // Unticked visits on membership-only → closed meeting (no public ticket).
-          setMembersOnlyEventEnabled(true);
-          setAttendanceMode('tickets');
-        }
+        // Application stays CE; General membership-only toggles meeting vs closed list.
+        applyModeFromDoorAndPayHow();
         updatePublishButton();
         return;
       }

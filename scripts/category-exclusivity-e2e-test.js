@@ -217,6 +217,20 @@ async function main() {
       { ticket_type: 'Application-based' }
     )
   );
+  assert(
+    'helper exempts guest visits on CE events',
+    !requiresApprovedApplication(
+      { attendance_mode: 'category_exclusivity' },
+      { ticket_type: 'Guest-visit', name: 'Guest visit' }
+    )
+  );
+  assert(
+    'helper exempts alumni on CE events',
+    !requiresApprovedApplication(
+      { attendance_mode: 'category_exclusivity' },
+      { ticket_type: 'Alumni', name: 'Previous attendee ticket' }
+    )
+  );
 
   const org = await upsertOrganiser(sb);
   const event = await upsertEvent(sb, org.id);

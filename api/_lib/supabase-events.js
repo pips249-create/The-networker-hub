@@ -273,14 +273,33 @@ async function fetchRegistrationCountsByTicket(sb, ticketRows) {
       .select('ticket_id, quantity')
       .in('ticket_id', chunk)
       .eq('application_status', 'Approved')
-      .neq('payment_status', 'Refunded'));
+      .neq('payment_status', 'Refunded')
+      .is('cancelled_at', null));
     if (error && /quantity/i.test(String(error.message || ''))) {
       ({ data, error } = await sb
         .from('registrations')
         .select('ticket_id')
         .in('ticket_id', chunk)
         .eq('application_status', 'Approved')
+        .neq('payment_status', 'Refunded')
+        .is('cancelled_at', null));
+    }
+    // Legacy DBs without cancelled_at: fall back without that filter.
+    if (error && /cancelled_at/i.test(String(error.message || ''))) {
+      ({ data, error } = await sb
+        .from('registrations')
+        .select('ticket_id, quantity')
+        .in('ticket_id', chunk)
+        .eq('application_status', 'Approved')
         .neq('payment_status', 'Refunded'));
+      if (error && /quantity/i.test(String(error.message || ''))) {
+        ({ data, error } = await sb
+          .from('registrations')
+          .select('ticket_id')
+          .in('ticket_id', chunk)
+          .eq('application_status', 'Approved')
+          .neq('payment_status', 'Refunded'));
+      }
     }
     if (error) throw new Error(error.message);
     (data || []).forEach((row) => {

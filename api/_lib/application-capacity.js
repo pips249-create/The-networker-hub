@@ -25,8 +25,15 @@ async function countApprovedApplicationSeats(sb, ticketId) {
 }
 
 async function assertApplicationSeatAvailable(sb, ticketRow, { excludeRegistrationId } = {}) {
-  if (!ticketRow || ticketRow.quantity == null) return;
-  const cap = Math.max(0, Number(ticketRow.quantity) || 0);
+  if (!ticketRow) return;
+  const qtyRaw =
+    ticketRow.quantity != null
+      ? ticketRow.quantity
+      : ticketRow.quantity_available != null
+        ? ticketRow.quantity_available
+        : ticketRow.quantityAvailable;
+  if (qtyRaw == null || qtyRaw === '') return;
+  const cap = Math.max(0, Number(qtyRaw) || 0);
   if (cap <= 0) return;
 
   let query = sb
