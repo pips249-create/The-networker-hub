@@ -134,7 +134,7 @@ module.exports = async function handler(req, res) {
 
     // Do not auto-claim on Impersonate. Workspace scope already includes
     // impersonatedOrganiserIds, and claiming falsely marks pages as owned
-    // (blocks Email 2 / "Email their claim link") when staff only previewed.
+    // (blocks Email 2 / claim links) when staff only previewed.
     if (body.provision !== false && organiserIdsToClaim.length && useSupabase()) {
       for (const oid of organiserIdsToClaim) {
         try {

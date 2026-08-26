@@ -58,7 +58,7 @@ function applyOrganiserLaunchInviteCopy(vars) {
   return next;
 }
 
-/** Command Centre “Email their claim link” — we found the group and set the page up. */
+/** Claim-link copy used by campaign Email 2 / launch invite templates. */
 function foundOrganiserLaunchInviteCopy(groupName) {
   const { escapeHtml } = require('./event-refund-policy');
   const group = String(groupName || 'your group').trim() || 'your group';

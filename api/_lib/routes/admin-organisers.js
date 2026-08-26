@@ -906,7 +906,7 @@ module.exports = async function handler(req, res) {
     }
   }
 
-  if (body.action === 'send_claim_invite') {
+  if (body.action === 'get_claim_url' || body.action === 'send_claim_invite') {
     const organiserId = String(body.id || body.organiserId || body.organiser_id || '').trim();
     if (!organiserId) {
       return json(res, 400, { ok: false, error: 'missing_id', message: 'Group id is required.' });
@@ -929,43 +929,19 @@ module.exports = async function handler(req, res) {
         return json(res, 400, {
           ok: false,
           error: 'organiser_missing_email',
-          message: 'Add a valid contact email before sending the claim email.',
+          message: 'Add a valid contact email before getting the claim link.',
         });
       }
-      const loginMeta = await loginMetaForOrganisers(sb, [organiser]);
-      const meta = loginMeta.get(organiser.id);
       if (String(organiser.ownership_claim_status || '').toLowerCase() === 'claimed') {
         return json(res, 400, {
           ok: false,
           error: 'already_claimed',
-          message: 'This group has already claimed their page, so the claim invite is not needed.',
-        });
-      }
-      if (meta && meta.emailsEnabled === false) {
-        return json(res, 400, {
-          ok: false,
-          error: 'emails_blocked',
-          message: 'Emails are blocked for this group. Enable emails first, then send the claim link.',
+          message: 'This group has already claimed their page, so the claim link is not needed.',
         });
       }
 
       const host = String(process.env.SITE_URL || 'https://www.thenetworkeruk.com').replace(/\/$/, '');
       const claimUrl = await resolveOrganiserClaimUrl(email, host);
-      const organiserName = String(organiser.name || '').trim() || 'your group';
-      const { sendTemplatedEmail } = require('../send-template-email');
-      const { campaignSiteVars, foundOrganiserLaunchInviteCopy } = require('../organiser-campaign-defaults');
-      await sendTemplatedEmail({
-        slug: 'organiser_launch_invite',
-        to: email,
-        subject: "We've set up a free page for " + organiserName + ' on The Networker UK',
-        variables: {
-          ...campaignSiteVars(host),
-          ...foundOrganiserLaunchInviteCopy(organiserName),
-          claim_url: claimUrl,
-          add_event_url: host + '/add-your-event',
-        },
-        skipEmailCheck: true,
-      });
 
       try {
         const { logFromSession } = require('../entity-activity-log');
@@ -973,9 +949,9 @@ module.exports = async function handler(req, res) {
           entity_type: 'organiser',
           entity_id: organiser.id,
           organiser_id: organiser.id,
-          action: 'admin_claim_invite',
-          summary: 'platform admin sent Email 2 claim invite to ' + email,
-          metadata: { to: email, slug: 'organiser_launch_invite', source: 'admin' },
+          action: 'admin_claim_url',
+          summary: 'platform admin copied claim link for ' + email,
+          metadata: { to: email, claimUrl, source: 'admin' },
         });
       } catch {
         /* ignore */
@@ -985,14 +961,13 @@ module.exports = async function handler(req, res) {
         ok: true,
         email,
         claimUrl,
-        claimInviteSentAt: new Date().toISOString(),
-        message: 'Email 2 sent to ' + email + ' with their claim link.',
+        message: 'Claim link ready for ' + email + '.',
       });
     } catch (e) {
       return json(res, e.status || 500, {
         ok: false,
-        error: e.message || 'send_claim_invite_failed',
-        message: e.message || 'Could not send the claim email.',
+        error: e.message || 'get_claim_url_failed',
+        message: e.message || 'Could not resolve the claim link.',
       });
     }
   }

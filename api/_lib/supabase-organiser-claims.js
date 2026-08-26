@@ -356,8 +356,8 @@ async function bootstrapOrganiserFromPendingClaims(session) {
  * for the contact email so staff can open the workspace.
  *
  * Does NOT set ownership_claim_status to claimed — that is reserved for the
- * personalised claim-URL flow (Email 2). Admin work used to false-claim pages
- * and hide "Email their claim link".
+ * personalised claim-URL flow. Admin work used to false-claim pages
+ * and hide "Copy claim link".
  */
 async function ensureOrganiserClaimedForAdminEvent(organiserId) {
   const sb = getSupabaseAdmin();
