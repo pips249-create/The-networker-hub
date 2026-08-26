@@ -1821,7 +1821,9 @@ async function runEngagementEmailMaintenance(sb) {
   const signupEventsNudge = await sendDueSignupEventsNudgeEmails(sb);
   const signupEventsNudgeFollowup = await sendDueSignupEventsNudgeFollowupEmails(sb);
   const hubertConcierge = await sendDueHubertEventConciergeEmails(sb);
-  const lowEvents = await sendOrganiserLowUpcomingEventsNudges(sb);
+  // Disabled: "Only N events left on your calendar" was flooding organisers
+  // (one email per group contact; shared contacts got many in one run).
+  const lowEvents = { sent: 0, skipped: 0, errors: [], disabled: true };
   const stripeConnect = await sendDueStripeConnectNudges(sb);
   return {
     guestVisitFollowup,
