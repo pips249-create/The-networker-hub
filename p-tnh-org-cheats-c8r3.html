@@ -65,6 +65,8 @@
   }
   .screen-actions button.is-active { background: var(--teal); color: #fff; }
   .screen-actions .print { background: #7dffd4; color: var(--navy); }
+  .screen-actions .download { background: #fff; color: var(--navy); border: 2px solid #7dffd4; }
+  .screen-actions .download:disabled { opacity: .65; cursor: wait; }
 
   .sheet-stack { padding: 24px 16px 48px; display: flex; flex-direction: column; gap: 28px; align-items: center; }
 
@@ -319,6 +321,7 @@
     font-weight: 600;
     margin: 3px 0;
   }
+  .links a:hover { text-decoration: underline; }
   .links .tiny { font-size: 9.5px; opacity: .85; font-weight: 500; margin-top: 6px; }
 
   .foot {
@@ -361,8 +364,8 @@
   <div class="screen-bar">
     <div>
       <div>
-        <strong>Internal · Organiser walkthrough cheat sheets</strong>
-        — one A4 each for Catherine, Rosie &amp; Jamie · not indexed
+        <strong>Organiser one-pagers</strong>
+        — Catherine, Rosie &amp; Jamie · download &amp; email to organisers · not indexed
       </div>
       <div style="opacity:.85">Open via <code>/p-tnh-org-cheats-c8r3</code></div>
     </div>
@@ -372,6 +375,7 @@
       <button type="button" data-show="rosie">Rosie</button>
       <button type="button" data-show="jamie">Jamie</button>
       <button type="button" class="print" id="print-btn">Print</button>
+      <button type="button" class="download" id="download-btn">Download PDF</button>
       <a class="btn" href="/p-tnh-org-onboard-x4n7">Full sales deck</a>
     </div>
   </div>
@@ -385,14 +389,14 @@
           <img src="/assets/logo-nav-transparent.png?v=20260823uk3" alt="The Networker UK" width="150" height="33">
         </div>
         <div class="sheet-owner">
-          <div class="badge">Demo cheat sheet</div>
+          <div class="badge">For organisers</div>
           <div class="name">Catherine</div>
           <div class="meta"><a href="mailto:catherine@thenetworkeruk.com">catherine@thenetworkeruk.com</a></div>
         </div>
       </header>
 
       <h1>Why organisers choose <em>The Networker UK</em></h1>
-      <p class="hook"><strong>One-line hook:</strong> Ticketing built for UK networking groups — not another generic events marketplace. Free to list. They keep <strong>100%</strong> of the ticket price.</p>
+      <p class="hook">Ticketing built for UK networking groups — not another generic events marketplace. Free to list. You keep <strong>100%</strong> of the ticket price.</p>
 
       <div class="stats">
         <div class="stat"><strong>17,000+</strong><span>Directory users last year</span></div>
@@ -444,7 +448,7 @@
 
       <div class="row-2">
         <div class="panel">
-          <h2>Networking-only tools (say these out loud)</h2>
+          <h2>Built for networking groups</h2>
           <ul>
             <li><strong>Guest visits</strong> — 1–3 complimentary trials before paid membership</li>
             <li><strong>Visit tracking</strong> — first vs returning on every attendee list</li>
@@ -455,7 +459,7 @@
           <p class="say">“Generic platforms weren’t built for how UK networking groups grow — trial visits, member rates, curated rooms, and repeat attendance.”</p>
         </div>
         <div class="panel objections">
-          <h2>Quick objections</h2>
+          <h2>Common questions</h2>
           <ul>
             <li><span class="q">“We’re on Eventbrite”</span><br><span class="a">List both for a month — compare admin &amp; new bookings.</span></li>
             <li><span class="q">“Members won’t sign up”</span><br><span class="a">Browse free; ~2 min only when they book.</span></li>
@@ -476,33 +480,32 @@
         </div>
         <div class="soft-card">
           <h2>Pricing line</h2>
-          <p>Free to list. They receive the price they set. Attendee booking fee: <strong>4.5% + 20p</strong>.</p>
+          <p>Free to list. You receive the price you set. Attendee booking fee: <strong>4.5% + 20p</strong>.</p>
         </div>
       </div>
 
       <div class="close">
         <div class="steps">
-          <h2>Close the walkthrough</h2>
+          <h2>Ready to list with us?</h2>
           <ol>
-            <li>Claim / confirm their page together</li>
-            <li>List next 2–3 meetings (ok alongside Eventbrite)</li>
-            <li>Turn on guest visits <em>or</em> upload member CSV</li>
-            <li>Book a follow-up after first event to review bookings</li>
+            <li>Claim or confirm your organiser page</li>
+            <li>List your next 2–3 meetings (fine alongside Eventbrite)</li>
+            <li>Turn on guest visits <em>or</em> upload your member list</li>
+            <li>Book a free setup call if you’d like a walkthrough</li>
           </ol>
         </div>
         <div class="links">
-          <h2>Send them</h2>
-          <a href="https://thenetworkeruk.com/for-organisers">/for-organisers</a>
+          <h2>Next steps</h2>
+          <a href="https://thenetworkeruk.com/for-organisers">thenetworkeruk.com/for-organisers</a>
+          <a href="https://thenetworkeruk.com/add-your-event">List an event</a>
           <a href="https://savvycal.com/TheNetworkerUK/website-preview">Book a setup call</a>
-          <a href="https://thenetworkeruk.com/guides/organiser-leavebehind">Leave-behind page</a>
-          <a href="https://thenetworkeruk.com/assets/guides/organiser-leavebehind.pdf">Leave-behind PDF</a>
-          <p class="tiny">Works alongside other platforms during transition.</p>
+          <p class="tiny">Works alongside other platforms while you switch.</p>
         </div>
       </div>
 
       <footer class="foot">
-        <span>The Networker UK · Confidential · Aug 2026</span>
-        <span>Catherine’s walkthrough sheet</span>
+        <span>The Networker UK · Aug 2026</span>
+        <span>Your contact: Catherine · catherine@thenetworkeruk.com</span>
       </footer>
     </article>
 
@@ -513,14 +516,14 @@
           <img src="/assets/logo-nav-transparent.png?v=20260823uk3" alt="The Networker UK" width="150" height="33">
         </div>
         <div class="sheet-owner">
-          <div class="badge">Demo cheat sheet</div>
+          <div class="badge">For organisers</div>
           <div class="name">Rosie</div>
           <div class="meta"><a href="mailto:rosie@thenetworkeruk.com">rosie@thenetworkeruk.com</a></div>
         </div>
       </header>
 
       <h1>Why organisers choose <em>The Networker UK</em></h1>
-      <p class="hook"><strong>One-line hook:</strong> Ticketing built for UK networking groups — not another generic events marketplace. Free to list. They keep <strong>100%</strong> of the ticket price.</p>
+      <p class="hook">Ticketing built for UK networking groups — not another generic events marketplace. Free to list. You keep <strong>100%</strong> of the ticket price.</p>
 
       <div class="stats">
         <div class="stat"><strong>17,000+</strong><span>Directory users last year</span></div>
@@ -572,7 +575,7 @@
 
       <div class="row-2">
         <div class="panel">
-          <h2>Networking-only tools (say these out loud)</h2>
+          <h2>Built for networking groups</h2>
           <ul>
             <li><strong>Guest visits</strong> — 1–3 complimentary trials before paid membership</li>
             <li><strong>Visit tracking</strong> — first vs returning on every attendee list</li>
@@ -583,7 +586,7 @@
           <p class="say">“Generic platforms weren’t built for how UK networking groups grow — trial visits, member rates, curated rooms, and repeat attendance.”</p>
         </div>
         <div class="panel objections">
-          <h2>Quick objections</h2>
+          <h2>Common questions</h2>
           <ul>
             <li><span class="q">“We’re on Eventbrite”</span><br><span class="a">List both for a month — compare admin &amp; new bookings.</span></li>
             <li><span class="q">“Members won’t sign up”</span><br><span class="a">Browse free; ~2 min only when they book.</span></li>
@@ -604,33 +607,32 @@
         </div>
         <div class="soft-card">
           <h2>Pricing line</h2>
-          <p>Free to list. They receive the price they set. Attendee booking fee: <strong>4.5% + 20p</strong>.</p>
+          <p>Free to list. You receive the price you set. Attendee booking fee: <strong>4.5% + 20p</strong>.</p>
         </div>
       </div>
 
       <div class="close">
         <div class="steps">
-          <h2>Close the walkthrough</h2>
+          <h2>Ready to list with us?</h2>
           <ol>
-            <li>Claim / confirm their page together</li>
-            <li>List next 2–3 meetings (ok alongside Eventbrite)</li>
-            <li>Turn on guest visits <em>or</em> upload member CSV</li>
-            <li>Book a follow-up after first event to review bookings</li>
+            <li>Claim or confirm your organiser page</li>
+            <li>List your next 2–3 meetings (fine alongside Eventbrite)</li>
+            <li>Turn on guest visits <em>or</em> upload your member list</li>
+            <li>Book a free setup call if you’d like a walkthrough</li>
           </ol>
         </div>
         <div class="links">
-          <h2>Send them</h2>
-          <a href="https://thenetworkeruk.com/for-organisers">/for-organisers</a>
+          <h2>Next steps</h2>
+          <a href="https://thenetworkeruk.com/for-organisers">thenetworkeruk.com/for-organisers</a>
+          <a href="https://thenetworkeruk.com/add-your-event">List an event</a>
           <a href="https://savvycal.com/TheNetworkerUK/website-preview">Book a setup call</a>
-          <a href="https://thenetworkeruk.com/guides/organiser-leavebehind">Leave-behind page</a>
-          <a href="https://thenetworkeruk.com/assets/guides/organiser-leavebehind.pdf">Leave-behind PDF</a>
-          <p class="tiny">Works alongside other platforms during transition.</p>
+          <p class="tiny">Works alongside other platforms while you switch.</p>
         </div>
       </div>
 
       <footer class="foot">
-        <span>The Networker UK · Confidential · Aug 2026</span>
-        <span>Rosie’s walkthrough sheet</span>
+        <span>The Networker UK · Aug 2026</span>
+        <span>Your contact: Rosie · rosie@thenetworkeruk.com</span>
       </footer>
     </article>
 
@@ -641,14 +643,14 @@
           <img src="/assets/logo-nav-transparent.png?v=20260823uk3" alt="The Networker UK" width="150" height="33">
         </div>
         <div class="sheet-owner">
-          <div class="badge">Demo cheat sheet</div>
+          <div class="badge">For organisers</div>
           <div class="name">Jamie</div>
           <div class="meta"><a href="mailto:jamie@thenetworkeruk.com">jamie@thenetworkeruk.com</a></div>
         </div>
       </header>
 
       <h1>Why organisers choose <em>The Networker UK</em></h1>
-      <p class="hook"><strong>One-line hook:</strong> Ticketing built for UK networking groups — not another generic events marketplace. Free to list. They keep <strong>100%</strong> of the ticket price.</p>
+      <p class="hook">Ticketing built for UK networking groups — not another generic events marketplace. Free to list. You keep <strong>100%</strong> of the ticket price.</p>
 
       <div class="stats">
         <div class="stat"><strong>17,000+</strong><span>Directory users last year</span></div>
@@ -700,7 +702,7 @@
 
       <div class="row-2">
         <div class="panel">
-          <h2>Networking-only tools (say these out loud)</h2>
+          <h2>Built for networking groups</h2>
           <ul>
             <li><strong>Guest visits</strong> — 1–3 complimentary trials before paid membership</li>
             <li><strong>Visit tracking</strong> — first vs returning on every attendee list</li>
@@ -711,7 +713,7 @@
           <p class="say">“Generic platforms weren’t built for how UK networking groups grow — trial visits, member rates, curated rooms, and repeat attendance.”</p>
         </div>
         <div class="panel objections">
-          <h2>Quick objections</h2>
+          <h2>Common questions</h2>
           <ul>
             <li><span class="q">“We’re on Eventbrite”</span><br><span class="a">List both for a month — compare admin &amp; new bookings.</span></li>
             <li><span class="q">“Members won’t sign up”</span><br><span class="a">Browse free; ~2 min only when they book.</span></li>
@@ -732,33 +734,32 @@
         </div>
         <div class="soft-card">
           <h2>Pricing line</h2>
-          <p>Free to list. They receive the price they set. Attendee booking fee: <strong>4.5% + 20p</strong>.</p>
+          <p>Free to list. You receive the price you set. Attendee booking fee: <strong>4.5% + 20p</strong>.</p>
         </div>
       </div>
 
       <div class="close">
         <div class="steps">
-          <h2>Close the walkthrough</h2>
+          <h2>Ready to list with us?</h2>
           <ol>
-            <li>Claim / confirm their page together</li>
-            <li>List next 2–3 meetings (ok alongside Eventbrite)</li>
-            <li>Turn on guest visits <em>or</em> upload member CSV</li>
-            <li>Book a follow-up after first event to review bookings</li>
+            <li>Claim or confirm your organiser page</li>
+            <li>List your next 2–3 meetings (fine alongside Eventbrite)</li>
+            <li>Turn on guest visits <em>or</em> upload your member list</li>
+            <li>Book a free setup call if you’d like a walkthrough</li>
           </ol>
         </div>
         <div class="links">
-          <h2>Send them</h2>
-          <a href="https://thenetworkeruk.com/for-organisers">/for-organisers</a>
+          <h2>Next steps</h2>
+          <a href="https://thenetworkeruk.com/for-organisers">thenetworkeruk.com/for-organisers</a>
+          <a href="https://thenetworkeruk.com/add-your-event">List an event</a>
           <a href="https://savvycal.com/TheNetworkerUK/website-preview">Book a setup call</a>
-          <a href="https://thenetworkeruk.com/guides/organiser-leavebehind">Leave-behind page</a>
-          <a href="https://thenetworkeruk.com/assets/guides/organiser-leavebehind.pdf">Leave-behind PDF</a>
-          <p class="tiny">Works alongside other platforms during transition.</p>
+          <p class="tiny">Works alongside other platforms while you switch.</p>
         </div>
       </div>
 
       <footer class="foot">
-        <span>The Networker UK · Confidential · Aug 2026</span>
-        <span>Jamie’s walkthrough sheet</span>
+        <span>The Networker UK · Aug 2026</span>
+        <span>Your contact: Jamie · jamie@thenetworkeruk.com</span>
       </footer>
     </article>
 
@@ -769,6 +770,7 @@
   var buttons = document.querySelectorAll('[data-show]');
   var sheets = document.querySelectorAll('.sheet');
   var printBtn = document.getElementById('print-btn');
+  var downloadBtn = document.getElementById('download-btn');
   var current = 'all';
 
   function show(who) {
@@ -798,6 +800,87 @@
 
   printBtn.addEventListener('click', function () {
     window.print();
+  });
+
+  function loadHtml2Pdf() {
+    if (window.html2pdf) return Promise.resolve(window.html2pdf);
+    return new Promise(function (resolve, reject) {
+      var existing = document.querySelector('script[data-hub-html2pdf]');
+      if (existing) {
+        existing.addEventListener('load', function () {
+          if (window.html2pdf) resolve(window.html2pdf);
+          else reject(new Error('PDF library failed to load.'));
+        });
+        existing.addEventListener('error', function () {
+          reject(new Error('PDF library failed to load.'));
+        });
+        return;
+      }
+      var script = document.createElement('script');
+      script.src = 'https://unpkg.com/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js';
+      script.async = true;
+      script.setAttribute('data-hub-html2pdf', '1');
+      script.onload = function () {
+        if (window.html2pdf) resolve(window.html2pdf);
+        else reject(new Error('PDF library failed to load.'));
+      };
+      script.onerror = function () {
+        reject(new Error('PDF library failed to load.'));
+      };
+      document.head.appendChild(script);
+    });
+  }
+
+  function pdfFilename() {
+    if (current === 'all') return 'organiser-overview-pack.pdf';
+    return current + '-organiser-overview.pdf';
+  }
+
+  downloadBtn.addEventListener('click', function () {
+    var label = downloadBtn.textContent;
+    downloadBtn.disabled = true;
+    downloadBtn.textContent = 'Preparing…';
+
+    var restore = [];
+    sheets.forEach(function (sheet) {
+      restore.push({ sheet: sheet, hidden: sheet.hidden });
+      var keep = current === 'all' || sheet.getAttribute('data-person') === current;
+      sheet.hidden = !keep;
+    });
+
+    var source = current === 'all'
+      ? document.querySelector('.sheet-stack')
+      : document.querySelector('.sheet[data-person="' + current + '"]');
+
+    loadHtml2Pdf()
+      .then(function (html2pdf) {
+        return html2pdf()
+          .set({
+            margin: 0,
+            filename: pdfFilename(),
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: {
+              scale: 2,
+              useCORS: true,
+              logging: false,
+              backgroundColor: '#ffffff'
+            },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+            pagebreak: { mode: ['css', 'legacy'], after: '.sheet' }
+          })
+          .from(source)
+          .save();
+      })
+      .catch(function () {
+        window.alert('Could not prepare the PDF. Try Print → Save as PDF instead.');
+      })
+      .then(function () {
+        restore.forEach(function (item) {
+          item.sheet.hidden = item.hidden;
+        });
+        downloadBtn.disabled = false;
+        downloadBtn.textContent = label;
+      });
   });
 
   var hash = (location.hash || '').replace(/^#/, '').toLowerCase();
