@@ -26,6 +26,7 @@
   let groupRosterSummary = null;
   let reportPeriod = 6;
   let billingOffered = false;
+  let enrichBookingsToken = 0;
   const filters = { search: '', status: 'all' };
 
   function isLoadInFlight() {
@@ -156,7 +157,7 @@
     }
   }
 
-  function rosterListQuery(offset, limit) {
+  function rosterListQuery(offset, limit, options) {
     const params = new URLSearchParams();
     params.set('limit', String(limit != null ? limit : PAGE_SIZE));
     params.set('offset', String(offset != null ? offset : (page - 1) * PAGE_SIZE));
@@ -165,6 +166,9 @@
     const eventId = selectedEventId();
     if (eventId && (filters.status === 'booked' || filters.status === 'not_booked')) {
       params.set('eventId', eventId);
+    }
+    if (options && options.enrichBookings === false) {
+      params.set('enrichBookings', '0');
     }
     return '&' + params.toString();
   }
@@ -1086,8 +1090,38 @@
     btn.hidden = !(billingOffered && totalActive > 0);
   }
 
-  async function loadEvents() {
+  async function loadEvents(preloaded) {
     try {
+      if (Array.isArray(preloaded) && preloaded.length) {
+        const now = Date.now();
+        events = preloaded
+          .filter(function (ev) {
+            return String(ev.organiserGroupId || ev.organiserId || '') === getOrganiserId();
+          })
+          .filter(function (ev) {
+            const status = String(ev.status || ev.listingStatus || '').toLowerCase();
+            const approval = String(ev.approvalStatus || ev.approval_status || 'Approved');
+            // Summaries may omit status — keep them so filters still populate.
+            if (!status) return true;
+            return status === 'published' && approval === 'Approved';
+          })
+          .sort(function (a, b) {
+            const aStart = a.startsAt || a.starts_at || a.date || '';
+            const bStart = b.startsAt || b.starts_at || b.date || '';
+            const aTime = aStart ? new Date(aStart).getTime() : 0;
+            const bTime = bStart ? new Date(bStart).getTime() : 0;
+            const aUpcoming = aTime >= now;
+            const bUpcoming = bTime >= now;
+            if (aUpcoming !== bUpcoming) return aUpcoming ? -1 : 1;
+            if (aUpcoming) return aTime - bTime;
+            return bTime - aTime;
+          });
+        if (events.length) {
+          populateEventSelects();
+          bindEventSelectHandlers();
+          return;
+        }
+      }
       const data = await api('/api/organiser/events');
       const now = Date.now();
       events = (data.events || [])
@@ -1111,38 +1145,41 @@
           return bTime - aTime;
         });
       populateEventSelects();
-
-      const memberSel = document.getElementById('omr-event-select');
-      if (memberSel && memberSel.dataset.omrBound !== '1') {
-        memberSel.dataset.omrBound = '1';
-        memberSel.addEventListener('change', function () {
-          syncMembersEventFilter();
-          syncEventActionButtons();
-          if (
-            !memberSel.value &&
-            (filters.status === 'booked' || filters.status === 'not_booked')
-          ) {
-            filters.status = 'all';
-            const statusSel = document.getElementById('omr-status-filter');
-            if (statusSel) statusSel.value = 'all';
-          }
-          page = 1;
-          fetchRosterPage(1).then(function () {
-            renderRoster();
-          });
-        });
-      }
-
-      const reportSel = document.getElementById('omr-reports-event-select');
-      if (reportSel && reportSel.dataset.omrBound !== '1') {
-        reportSel.dataset.omrBound = '1';
-        reportSel.addEventListener('change', function () {
-          updateReportsSetupSummary();
-          markReportsStale();
-        });
-      }
+      bindEventSelectHandlers();
     } catch {
       /* optional */
+    }
+  }
+
+  function bindEventSelectHandlers() {
+    const memberSel = document.getElementById('omr-event-select');
+    if (memberSel && memberSel.dataset.omrBound !== '1') {
+      memberSel.dataset.omrBound = '1';
+      memberSel.addEventListener('change', function () {
+        syncMembersEventFilter();
+        syncEventActionButtons();
+        if (
+          !memberSel.value &&
+          (filters.status === 'booked' || filters.status === 'not_booked')
+        ) {
+          filters.status = 'all';
+          const statusSel = document.getElementById('omr-status-filter');
+          if (statusSel) statusSel.value = 'all';
+        }
+        page = 1;
+        fetchRosterPage(1).then(function () {
+          renderRoster();
+        });
+      });
+    }
+
+    const reportSel = document.getElementById('omr-reports-event-select');
+    if (reportSel && reportSel.dataset.omrBound !== '1') {
+      reportSel.dataset.omrBound = '1';
+      reportSel.addEventListener('change', function () {
+        updateReportsSetupSummary();
+        markReportsStale();
+      });
     }
   }
 
@@ -2238,27 +2275,56 @@
     const groupId = getOrganiserId();
     if (!groupId) return;
     const showLoader = !options || options.showLoader !== false;
+    const wantEnrich = !options || options.enrichBookings !== false;
     page = Math.max(Number(pageNum) || 1, 1);
     if (showLoader) setRosterLoading(true);
-    const path =
+    const leanPath =
       '/api/organiser/roster?organiserId=' +
       encodeURIComponent(groupId) +
-      rosterListQuery((page - 1) * PAGE_SIZE, PAGE_SIZE);
+      rosterListQuery((page - 1) * PAGE_SIZE, PAGE_SIZE, { enrichBookings: false });
+    const enrichToken = ++enrichBookingsToken;
     try {
-      const data = await api(path, { timeoutMs: 25000 });
-      if (getOrganiserId() !== groupId) return;
+      const data = await api(leanPath, { timeoutMs: 20000 });
+      if (getOrganiserId() !== groupId || enrichToken !== enrichBookingsToken) return;
       members = data.members || [];
       rosterTotal = Number(data.total) || members.length;
       rosterActiveTotal = Number(data.totalActive) || rosterTotal;
+      if (showLoader) setRosterLoading(false);
+      renderRoster();
+
+      if (!wantEnrich || !members.length) return;
+      // Booking chips load after first paint so the member list is usable immediately.
+      enrichCurrentPageBookings(groupId, enrichToken).catch(function () {
+        /* non-fatal */
+      });
     } catch (err) {
-      if (getOrganiserId() !== groupId) return;
+      if (getOrganiserId() !== groupId || enrichToken !== enrichBookingsToken) return;
       showAlert(err.message, 'error');
     } finally {
-      if (getOrganiserId() === groupId) {
+      if (getOrganiserId() === groupId && enrichToken === enrichBookingsToken) {
         if (showLoader) setRosterLoading(false);
-        renderRoster();
+        if (!rosterAppearsPainted()) renderRoster();
       }
     }
+  }
+
+  async function enrichCurrentPageBookings(groupId, enrichToken) {
+    const id = String(groupId || getOrganiserId() || '').trim();
+    if (!id) return;
+    const path =
+      '/api/organiser/roster?organiserId=' +
+      encodeURIComponent(id) +
+      rosterListQuery((page - 1) * PAGE_SIZE, PAGE_SIZE);
+    const data = await api(path, { timeoutMs: 25000 });
+    if (getOrganiserId() !== id || enrichToken !== enrichBookingsToken) return;
+    if ((Number(data.total) || 0) !== rosterTotal && data.total != null) {
+      rosterTotal = Number(data.total) || rosterTotal;
+    }
+    if (data.totalActive != null) {
+      rosterActiveTotal = Number(data.totalActive) || rosterActiveTotal;
+    }
+    members = data.members || members;
+    renderRoster();
   }
 
   async function refresh() {
@@ -2911,8 +2977,9 @@
     });
   }
 
-  async function loadForGroup(groupId) {
+  async function loadForGroup(groupId, options) {
     const id = String(groupId || '').trim();
+    const opts = options || {};
     bindControlsOnce();
     if (String(organiserId || '') !== id) {
       groupRosterSummary = null;
@@ -2946,6 +3013,7 @@
     if (activeLoadGroupId === id && activeLoadPromise) return activeLoadPromise;
 
     activeLoadGroupId = id;
+    enrichBookingsToken += 1;
     setRosterLoading(true);
     members = [];
     rosterTotal = 0;
@@ -2960,6 +3028,11 @@
     const emptyEl = document.getElementById('omr-empty');
     if (bodyEl) bodyEl.innerHTML = '';
     if (emptyEl) emptyEl.hidden = true;
+
+    const preloadedEvents =
+      (Array.isArray(opts.events) && opts.events.length && opts.events) ||
+      (Array.isArray(opts.eventSummaries) && opts.eventSummaries.length && opts.eventSummaries) ||
+      null;
 
     activeLoadPromise = (async function () {
       page = 1;
@@ -2983,7 +3056,7 @@
           /* ignore */
         });
 
-      const eventsP = Promise.resolve(loadEvents()).catch(function () {
+      const eventsP = Promise.resolve(loadEvents(preloadedEvents)).catch(function () {
         return null;
       });
       const billingP = Promise.resolve(loadBillingPlan()).catch(function () {

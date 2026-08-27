@@ -1831,7 +1831,7 @@
   let linkedInPostBuilder = null;
   const deferredAssetPromises = {};
   const LINKEDIN_POST_BUILDER_SRC = '../js/organiser-linkedin-post-builder.js?v=20260824tnuklogo';
-  const MEMBER_ROSTER_SRC = '../js/organiser-member-roster.js?v=20260825alumni1';
+  const MEMBER_ROSTER_SRC = '../js/organiser-member-roster.js?v=20260827fast1';
   const MEMBER_ROSTER_CSS = '../css/organiser-member-roster.css?v=20260812ux2';
   const EVENT_EDIT_CSS = '../css/organiser-event-edit.css?v=20260811claimux2';
   const RANKINGS_PAGE_CSS = '../css/rankings-page.css?v=20260807rank';
@@ -10903,7 +10903,9 @@
               window.OrganiserMemberRoster.setLoading(true);
             }
             if (window.OrganiserMemberRoster && typeof window.OrganiserMemberRoster.loadForGroup === 'function') {
-              return window.OrganiserMemberRoster.loadForGroup(filters.membershipsGroup);
+              return window.OrganiserMemberRoster.loadForGroup(filters.membershipsGroup, {
+                events: state.events && state.events.length ? state.events : state.eventSummaries || [],
+              });
             }
           })
           .then(function () {
@@ -10968,7 +10970,11 @@
 
         if (shouldLoad) {
           if (typeof roster.setLoading === 'function') roster.setLoading(true);
-          return roster.loadForGroup(groupId).then(function () {
+          return roster
+            .loadForGroup(groupId, {
+              events: state.events && state.events.length ? state.events : state.eventSummaries || [],
+            })
+            .then(function () {
             if (groupId === filters.membershipsGroup && membershipsRosterAppearsPainted()) {
               membershipsRosterLoadedFor = groupId;
             }

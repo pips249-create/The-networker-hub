@@ -113,14 +113,36 @@ module.exports = async function handler(req, res) {
         const search = String(req.query?.search || req.query?.q || '').trim();
         const filter = String(req.query?.filter || req.query?.statusFilter || 'all').trim();
         const eventId = String(req.query?.eventId || req.query?.event_id || '').trim();
+        const enrichRaw = String(
+          req.query?.enrichBookings || req.query?.enrich_bookings || ''
+        )
+          .trim()
+          .toLowerCase();
+        const enrichBookings = !(
+          enrichRaw === '0' ||
+          enrichRaw === 'false' ||
+          enrichRaw === 'no' ||
+          String(req.query?.lean || '').trim() === '1'
+        );
+        const started = Date.now();
         const { members, total, totalActive } = await listRosterPage(organiserId, {
           limit,
           offset,
           search,
           filter,
           eventId,
+          enrichBookings,
         });
-        return json(res, 200, { ok: true, members, total, totalActive, limit, offset });
+        return json(res, 200, {
+          ok: true,
+          members,
+          total,
+          totalActive,
+          limit,
+          offset,
+          enrichBookings,
+          durationMs: Date.now() - started,
+        });
       }
 
       const status = String(req.query?.status || 'active').trim().toLowerCase();

@@ -699,7 +699,7 @@ async function claimRosterEntriesForAttendee(sb, { email, attendeeId }) {
   return { claimed: (data || []).length, organiserIds };
 }
 
-async function listRosterForOrganiser(organiserId, { status } = {}) {
+async function listRosterForOrganiser(organiserId, { status, heal = false } = {}) {
   const sb = getSupabaseAdmin();
   const orgId = String(organiserId || '').trim();
   if (!orgId) return [];
@@ -720,8 +720,8 @@ async function listRosterForOrganiser(organiserId, { status } = {}) {
 
   const { data, error } = await q;
   if (error) throw new Error(error.message);
-  const healed = await healHubBilledRosterExpiries(data || []);
-  return healed.map(rosterRowToClient);
+  const rows = heal ? await healHubBilledRosterExpiries(data || []) : data || [];
+  return rows.map(rosterRowToClient);
 }
 
 /**
@@ -829,6 +829,8 @@ function memberMatchesSearch(member, search) {
 
 /**
  * Paginated roster for dashboard lazy loading.
+ * Stripe expiry healing is skipped here — list loads must stay snappy; repairs
+ * run from webhooks, account sync, and attendee membership views instead.
  */
 async function listRosterPage(organiserId, options = {}) {
   const sb = getSupabaseAdmin();
@@ -847,28 +849,39 @@ async function listRosterPage(organiserId, options = {}) {
 
   const bookingFilters = ['booked', 'not_booked', 'has_bookings', 'no_bookings'];
   if (bookingFilters.includes(filter)) {
-    let filtered = await listRosterForOrganiser(orgId, { status: 'active' });
+    let filtered = await listRosterForOrganiser(orgId, { status: 'active', heal: false });
     if (filter === 'booked' || filter === 'not_booked') {
       if (!eventId) return { members: [], total: 0, totalActive: 0 };
-      const bookedEmails = await getBookedEmailsForEvent(sb, orgId, eventId);
+      const [bookedEmails, totalActive] = await Promise.all([
+        getBookedEmailsForEvent(sb, orgId, eventId),
+        countActiveRosterMembers(orgId),
+      ]);
       filtered = filtered.filter((m) => {
         const isBooked = bookedEmails.has(m.email);
         return filter === 'booked' ? isBooked : !isBooked;
       });
-    } else {
-      const index = await buildMemberBookingIndex(orgId);
-      filtered = filtered.filter((m) => {
-        const has = (index.get(m.email)?.total || 0) > 0;
-        return filter === 'has_bookings' ? has : !has;
-      });
+      if (search) {
+        filtered = filtered.filter((m) => memberMatchesSearch(m, search));
+      }
+      const total = filtered.length;
+      const slice = filtered.slice(offset, offset + limit);
+      const members = enrichBookings ? await enrichMembersWithBookings(orgId, slice) : slice;
+      return { members, total, totalActive };
     }
+    const [index, totalActive] = await Promise.all([
+      buildMemberBookingIndex(orgId),
+      countActiveRosterMembers(orgId),
+    ]);
+    filtered = filtered.filter((m) => {
+      const has = (index.get(m.email)?.total || 0) > 0;
+      return filter === 'has_bookings' ? has : !has;
+    });
     if (search) {
       filtered = filtered.filter((m) => memberMatchesSearch(m, search));
     }
     const total = filtered.length;
     const slice = filtered.slice(offset, offset + limit);
     const members = enrichBookings ? await enrichMembersWithBookings(orgId, slice) : slice;
-    const totalActive = await countActiveRosterMembers(orgId);
     return { members, total, totalActive };
   }
 
@@ -909,10 +922,12 @@ async function listRosterPage(organiserId, options = {}) {
     .order('email', { ascending: true })
     .range(offset, offset + limit - 1);
 
-  const { data, error, count } = await q;
+  const [{ data, error, count }, totalActive] = await Promise.all([
+    q,
+    countActiveRosterMembers(orgId),
+  ]);
   if (error) throw new Error(error.message);
-  const healed = await healHubBilledRosterExpiries(data || []);
-  const rows = healed.map(rosterRowToClient);
+  const rows = (data || []).map(rosterRowToClient);
   let members = rows;
   if (enrichBookings) {
     try {
@@ -924,7 +939,6 @@ async function listRosterPage(organiserId, options = {}) {
       members = rows;
     }
   }
-  const totalActive = await countActiveRosterMembers(orgId);
   return { members, total: Number(count) || rows.length, totalActive };
 }
 
