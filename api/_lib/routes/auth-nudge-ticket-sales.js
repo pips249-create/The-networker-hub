@@ -50,7 +50,7 @@ module.exports = async function handler(req, res) {
     return json(res, 400, {
       ok: false,
       error: 'missing_email',
-      message: 'Enter your email so the organiser knows who to reply to.',
+      message: 'Enter your email so we can record your interest.',
     });
   }
 

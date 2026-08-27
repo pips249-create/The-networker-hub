@@ -11,14 +11,6 @@ const {
   isEventPublishedForSale,
 } = require('./ticket-sales');
 
-function escapeHtml(value) {
-  return String(value || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
 function organiserRecipientEmail(organiser, account) {
   const candidates = [
     organiser?.contact_email,
@@ -116,7 +108,7 @@ async function recentNudgeExists(eventId, nudgerEmail, hours) {
   return (data || []).length > 0;
 }
 
-async function sendOrganiserTicketSalesNudgeEmail({ event, organiser, to, nudgerEmail, nudgerName, message }) {
+async function sendOrganiserTicketSalesNudgeEmail({ event, organiser, to }) {
   const siteUrl = String(process.env.SITE_URL || 'https://the-networker-hub.vercel.app').replace(/\/$/, '');
   const eventTitle = String(event.title || 'your event').trim();
   const organiserName = String(organiser?.name || 'there').trim();
@@ -126,26 +118,16 @@ async function sendOrganiserTicketSalesNudgeEmail({ event, organiser, to, nudger
     encodeURIComponent(event.id);
   const dashboardUrl = siteBase(siteUrl) + '/organiser/';
 
-  const visitorMessageRow = message
-    ? '<tr><td class="mobile-pad" style="padding:0 40px 20px;">' +
-      '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f0e8;border-radius:14px;border:1px solid #d9c4e0;">' +
-      '<tr><td style="padding:20px 22px;">' +
-      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:700;color:#1c2040;margin:0 0 6px;">Message from the visitor</p>' +
-      '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;line-height:1.65;color:#635c5e;margin:0;">' +
-      escapeHtml(message).replace(/\n/g, '<br>') +
-      '</p></td></tr></table></td></tr>'
-    : '';
-
+  // Keep the requester anonymous in the email so organisers enable Hub sales
+  // rather than contacting the visitor off-platform. Name/email stay in DB.
   return sendTemplatedEmail({
     slug: 'organiser_ticket_sales_nudge',
     to,
     variables: {
       organiser_name: organiserName,
       event_name: eventTitle,
-      nudger_name: String(nudgerName || nudgerEmail || 'A visitor').trim(),
       tickets_url: ticketsUrl,
       dashboard_url: dashboardUrl,
-      visitor_message_row: visitorMessageRow,
     },
     skipEmailCheck: true,
   });
@@ -192,9 +174,6 @@ async function nudgeOrganiserForTicketSales({ eventId, nudgerEmail, nudgerName, 
     event: ctx.event,
     organiser: ctx.organiser,
     to: ctx.to,
-    nudgerEmail: email,
-    nudgerName: name,
-    message: note,
   });
 
   const row = await recordTicketSalesNudge({
