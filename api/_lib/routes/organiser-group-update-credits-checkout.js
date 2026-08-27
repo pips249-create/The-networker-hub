@@ -76,8 +76,8 @@ module.exports = async function handler(req, res) {
     const base = siteBaseUrl();
     const successUrl =
       base +
-      '/organiser/?credits_session={CHECKOUT_SESSION_ID}#events-attendees';
-    const cancelUrl = base + '/organiser/#events-attendees';
+      '/organiser/?credits_session={CHECKOUT_SESSION_ID}#group-updates';
+    const cancelUrl = base + '/organiser/#group-updates';
 
     const session = await createGroupUpdateCreditsCheckoutSession({
       organiserId,

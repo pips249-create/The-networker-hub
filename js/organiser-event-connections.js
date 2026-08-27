@@ -13,6 +13,7 @@
     bound: false,
     engagementPollTimer: null,
     creditPacks: [],
+    canSend: true,
   };
 
   function els() {
@@ -152,6 +153,7 @@
     var pageName = selectedGroupName();
     var canSend = preview && preview.canSend != null ? Boolean(preview.canSend) : !freeUsed || extraCredits > 0;
     var nextBillable = (preview && preview.nextBillable) || (freeUsed ? (extraCredits > 0 ? 'extra' : 'none') : 'free');
+    state.canSend = canSend;
 
     el.hidden = false;
     el.classList.toggle('is-used', freeUsed && extraCredits < 1);
@@ -272,17 +274,9 @@
     if (els().event && els().event.value) {
       await loadPreview();
     } else if (res.data.allowance) {
-      setUsage(
-        Object.assign({}, state.preview || {}, {
-          freeAllowanceUsed: res.data.allowance.freeAllowanceUsed,
-          lastSentAt: res.data.allowance.lastSentAt,
-          lastSentCount: res.data.allowance.lastSentCount,
-          extraCredits: res.data.allowance.extraCredits,
-          canSend: res.data.allowance.canSend,
-          nextBillable: res.data.allowance.nextBillable,
-          creditPacks: res.data.allowance.creditPacks || state.creditPacks,
-        })
-      );
+      setUsage(res.data.allowance);
+    } else {
+      await loadAllowance().catch(function () {});
     }
   }
 
@@ -291,7 +285,32 @@
     var hasEvent = Boolean(e.event && String(e.event.value || '').trim());
     if (e.details) e.details.classList.toggle('is-waiting', !hasEvent);
     if (e.previewBtn) e.previewBtn.disabled = !hasEvent;
-    if (e.sendBtn && !state.sending) e.sendBtn.disabled = !hasEvent;
+    if (e.sendBtn && !state.sending) {
+      e.sendBtn.disabled = !hasEvent || !state.canSend;
+    }
+  }
+
+  async function loadAllowance() {
+    var organiserId = selectedGroupId();
+    if (!organiserId) {
+      state.canSend = true;
+      setUsage(null);
+      return null;
+    }
+    var res = await api(
+      '/api/organiser/event-connections?action=allowance&organiserId=' +
+        encodeURIComponent(organiserId)
+    );
+    if (!res.ok || !res.data || !res.data.ok || !res.data.allowance) {
+      setUsage(null);
+      return null;
+    }
+    var allowance = res.data.allowance;
+    if (allowance.creditPacks && allowance.creditPacks.length) {
+      state.creditPacks = allowance.creditPacks;
+    }
+    setUsage(allowance);
+    return allowance;
   }
 
   function api(path, opts) {
@@ -826,7 +845,9 @@
         state.omittedEmails = {};
         renderPreview(null);
         setStatus('Pick an event to continue.');
-        setUsage(null);
+        loadAllowance().catch(function () {
+          setUsage(null);
+        });
         syncFormReadyState();
       });
     }
@@ -839,7 +860,9 @@
         if (e.event.value) loadPreview().catch(function () {});
         else {
           setStatus('Pick an event to continue.');
-          setUsage(null);
+          loadAllowance().catch(function () {
+            setUsage(null);
+          });
         }
       });
     }
@@ -917,7 +940,6 @@
     bind();
     fillGroups();
     fillEvents();
-    setUsage(null);
     syncFormReadyState();
 
     var pendingSession = '';
@@ -927,13 +949,21 @@
     } catch (err) {
       pendingSession = '';
     }
+
+    var ready = loadAllowance().catch(function () {
+      setUsage(null);
+      return null;
+    });
+
     if (pendingSession) {
-      completeCreditsPurchase(pendingSession).catch(function (err) {
-        setStatus(
-          (err && err.message) ||
-            'Payment received, but credits need a moment to appear — refresh shortly.',
-          'error'
-        );
+      ready = ready.then(function () {
+        return completeCreditsPurchase(pendingSession).catch(function (err) {
+          setStatus(
+            (err && err.message) ||
+              'Payment received, but credits need a moment to appear — refresh shortly.',
+            'error'
+          );
+        });
       });
     }
 
@@ -942,7 +972,9 @@
       if (e.event) {
         e.event.value = opts.eventId;
         syncFormReadyState();
-        loadPreview().catch(function () {});
+        ready.then(function () {
+          return loadPreview().catch(function () {});
+        });
       }
     } else {
       setStatus('Pick an event to continue.');
