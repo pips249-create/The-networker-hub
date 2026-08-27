@@ -192,6 +192,9 @@ function mapOpportunityRow(row) {
     contact_email: String(row.contact_email || '').trim(),
     status: row.status || 'draft',
     approval_status: row.approval_status || 'Pending Review',
+    review_submitted_at: row.review_submitted_at || null,
+    approved_at: row.approved_at || null,
+    listing_payment_active: listingPaymentCurrent(row),
     featured: Boolean(row.featured),
     featured_until: row.featured_until || null,
     featuredUntil: row.featured_until || null,
@@ -310,7 +313,13 @@ async function listOpportunitiesForAdmin(query) {
   }
 
   if (status) dbQuery = dbQuery.eq('status', status);
-  if (approvalStatus) dbQuery = dbQuery.eq('approval_status', approvalStatus);
+  if (approvalStatus) {
+    dbQuery = dbQuery.eq('approval_status', approvalStatus);
+    // Pending review queue = actually submitted, not incomplete drafts.
+    if (approvalStatus === 'Pending Review') {
+      dbQuery = dbQuery.not('review_submitted_at', 'is', null);
+    }
+  }
   if (type) dbQuery = dbQuery.eq('type', normalizeType(type));
   if (featuredOnly) dbQuery = dbQuery.eq('featured', true);
   if (noImage) dbQuery = dbQuery.or('image_url.is.null,image_url.eq.');
@@ -335,7 +344,8 @@ async function listOpportunitiesForAdmin(query) {
   const pendingCountRes = await sb
     .from('business_opportunities')
     .select('id', { count: 'exact', head: true })
-    .eq('approval_status', 'Pending Review');
+    .eq('approval_status', 'Pending Review')
+    .not('review_submitted_at', 'is', null);
   if (pendingCountRes.error) throw new Error(pendingCountRes.error.message);
 
   return {
@@ -597,12 +607,14 @@ module.exports = async function handler(req, res) {
         const now = new Date();
         const patch = {
           approval_status: 'Approved',
+          approved_at: now.toISOString(),
           rejection_note: null,
+          approved_pay_reminder_sent_at: null,
           updated_at: now.toISOString(),
         };
         const { data: current } = await sb
           .from('business_opportunities')
-          .select('status, published_at, listing_expires_at, listing_paid_at')
+          .select('status, published_at, listing_expires_at, listing_paid_at, review_submitted_at')
           .eq('id', id)
           .maybeSingle();
         const alreadyPaid = listingPaymentCurrent(current || {});
@@ -621,6 +633,9 @@ module.exports = async function handler(req, res) {
           if (String(current?.status || '').toLowerCase() === 'published') {
             patch.status = 'draft';
           }
+        }
+        if (!current?.review_submitted_at) {
+          patch.review_submitted_at = now.toISOString();
         }
 
         const { data, error } = await sb
@@ -642,9 +657,44 @@ module.exports = async function handler(req, res) {
           console.warn('[opportunity] approve email failed:', emailErr.message || emailErr);
         }
 
-        return json(res, 200, { ok: true, opportunity: mapOpportunityRow(data) });
+        return json(res, 200, {
+          ok: true,
+          opportunity: mapOpportunityRow(data),
+          went_live: alreadyPaid,
+        });
       } catch (e) {
         return json(res, 500, { ok: false, error: 'approve_failed', message: e.message });
+      }
+    }
+
+    if (body.action === 'resend_pay_email') {
+      try {
+        const sb = getSupabaseAdmin();
+        const { data, error } = await sb
+          .from('business_opportunities')
+          .select('*')
+          .eq('id', id)
+          .maybeSingle();
+        if (error) throw new Error(error.message);
+        if (!data) return json(res, 404, { ok: false, error: 'not_found' });
+        if (String(data.approval_status || '') !== 'Approved') {
+          return json(res, 400, {
+            ok: false,
+            error: 'not_approved',
+            message: 'Only approved listings awaiting payment can receive this email.',
+          });
+        }
+        if (listingPaymentCurrent(data)) {
+          return json(res, 400, {
+            ok: false,
+            error: 'already_paid',
+            message: 'This listing already has an active subscription.',
+          });
+        }
+        await sendOpportunityListingApprovedPayEmail(rowToListing(data));
+        return json(res, 200, { ok: true, opportunity: mapOpportunityRow(data) });
+      } catch (e) {
+        return json(res, 500, { ok: false, error: 'resend_pay_email_failed', message: e.message });
       }
     }
 

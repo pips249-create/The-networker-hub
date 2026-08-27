@@ -7,7 +7,8 @@ const {
   sendOpportunityListingExpiredEmail,
   sendOpportunityPremiumExpiredEmail,
 } = require('./lifecycle-emails');
-const { formatEmailDate, ownerNameFromOpportunity } = require('./opportunity-emails');
+const { formatEmailDate, ownerNameFromOpportunity, sendOpportunityListingApprovedPayEmail } = require('./opportunity-emails');
+const { listingPaymentCurrent } = require('./opportunity-listing-pricing');
 const {
   siteBase,
   opportunityPublicUrl,
@@ -17,6 +18,7 @@ const { claimRowTimestamp, releaseRowTimestamp } = require('./email-send-claim')
 
 const LISTING_REMINDER_DAYS = 7;
 const PREMIUM_REMINDER_DAYS = 2;
+const APPROVED_PAY_REMINDER_DAYS = 3;
 const REMINDER_WINDOW_HOURS = 12;
 
 function reminderWindow(targetDays) {
@@ -307,6 +309,70 @@ async function expireOpportunityListings(sb) {
   return result;
 }
 
+async function sendApprovedPayReminders(sb) {
+  const client = sb || getSupabaseAdmin();
+  const cutoff = new Date(Date.now() - APPROVED_PAY_REMINDER_DAYS * 24 * 60 * 60 * 1000).toISOString();
+
+  const { data: rows, error } = await client
+    .from('business_opportunities')
+    .select('*')
+    .eq('approval_status', 'Approved')
+    .is('approved_pay_reminder_sent_at', null)
+    .not('approved_at', 'is', null)
+    .lte('approved_at', cutoff)
+    .is('listing_paid_at', null)
+    .limit(50);
+  if (error) throw new Error(error.message);
+
+  const result = { sent: 0, skipped: 0, errors: [] };
+
+  for (const row of rows || []) {
+    if (listingPaymentCurrent(row)) {
+      result.skipped += 1;
+      continue;
+    }
+    const to = ownerEmail(row);
+    if (!to) {
+      result.skipped += 1;
+      continue;
+    }
+
+    try {
+      const claimedAt = new Date().toISOString();
+      const claimed = await claimRowTimestamp(client, {
+        table: 'business_opportunities',
+        id: row.id,
+        column: 'approved_pay_reminder_sent_at',
+        claimedAt,
+        previousValue: null,
+      });
+      if (!claimed) {
+        result.skipped += 1;
+        continue;
+      }
+
+      try {
+        const { rowToListing } = require('./supabase-opportunities');
+        await sendOpportunityListingApprovedPayEmail(rowToListing(row), { reminder: true });
+      } catch (sendErr) {
+        await releaseRowTimestamp(client, {
+          table: 'business_opportunities',
+          id: row.id,
+          column: 'approved_pay_reminder_sent_at',
+          claimedAt,
+        });
+        throw sendErr;
+      }
+      result.sent += 1;
+    } catch (e) {
+      if (e.code === 'emails_disabled') result.skipped += 1;
+      else result.errors.push({ id: row.id, error: e.message || String(e) });
+    }
+  }
+
+  return result;
+}
+
 async function runOpportunityReminderMaintenance(sb) {
   const { sendDueSavedOpportunityClosingEmails } = require('./favourite-opportunity-emails');
   const { sendDueSavedSearchMatchEmails } = require('./opportunity-saved-search-emails');
@@ -314,6 +380,7 @@ async function runOpportunityReminderMaintenance(sb) {
   const client = sb || getSupabaseAdmin();
   const listing = await sendListingExpiryReminders(client);
   const premium = await sendPremiumExpiryReminders(client);
+  const approvedPay = await sendApprovedPayReminders(client);
   const savedClosingSoon = await sendDueSavedOpportunityClosingEmails(client);
   const savedSearchMatches = await sendDueSavedSearchMatchEmails(client);
   const eventSavedSearchMatches = await sendDueEventSavedSearchMatchEmails(client);
@@ -324,6 +391,7 @@ async function runOpportunityReminderMaintenance(sb) {
   return {
     listing,
     premium,
+    approvedPay,
     savedClosingSoon,
     savedSearchMatches,
     eventSavedSearchMatches,
@@ -336,6 +404,7 @@ async function runOpportunityReminderMaintenance(sb) {
 module.exports = {
   sendListingExpiryReminders,
   sendPremiumExpiryReminders,
+  sendApprovedPayReminders,
   expireOpportunityPremium,
   expireOpportunityListings,
   runOpportunityReminderMaintenance,

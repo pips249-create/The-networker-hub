@@ -262,6 +262,8 @@ function rowToListing(row) {
     logoUrl: String(row.logo_url || '').trim(),
     status: row.status || 'draft',
     approvalStatus: row.approval_status || 'Pending Review',
+    reviewSubmittedAt: row.review_submitted_at || null,
+    approvedAt: row.approved_at || null,
     organiserId: row.organiser_id || '',
     ownerEmail: String(row.owner_email || '').toLowerCase(),
     ownerUserId: row.supabase_user_id || '',
@@ -691,6 +693,9 @@ async function createOpportunity(payload) {
   if (submitForReview) {
     row.status = 'draft';
     row.approval_status = 'Pending Review';
+    row.review_submitted_at = new Date().toISOString();
+  } else {
+    row.review_submitted_at = null;
   }
   row.slug = await ensureOpportunitySlug(sb, {
     title: row.title,
@@ -719,14 +724,22 @@ async function updateOpportunity(id, payload) {
     // Review-then-pay: queue for admin without publishing or charging.
     row.status = existing?.listingPaymentActive ? 'published' : 'draft';
     row.approval_status = 'Pending Review';
+    if (!existing?.reviewSubmittedAt) {
+      row.review_submitted_at = new Date().toISOString();
+    }
   } else if (row.status === 'published') {
     if (existing?.approvalStatus === 'Approved') {
       delete row.approval_status;
     } else {
       row.approval_status = 'Pending Review';
+      if (!existing?.reviewSubmittedAt) {
+        row.review_submitted_at = new Date().toISOString();
+      }
     }
   }
-  const wasAlreadyPending = String(existing?.approvalStatus || '') === 'Pending Review';
+  const wasAlreadyQueued =
+    String(existing?.approvalStatus || '') === 'Pending Review' &&
+    Boolean(existing?.reviewSubmittedAt);
   const data = await writeOpportunityRow(sb, 'update', row, id);
 
   if (data.status === 'published') {
@@ -735,7 +748,7 @@ async function updateOpportunity(id, payload) {
   }
 
   const listing = rowToListing(data);
-  if (submitForReview && !wasAlreadyPending) await sendPendingReviewEmailSafe(listing);
+  if (submitForReview && !wasAlreadyQueued) await sendPendingReviewEmailSafe(listing);
   return listing;
 }
 

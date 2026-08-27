@@ -70,6 +70,20 @@ module.exports = async function handler(req, res) {
     if (String(opportunity.status || '').toLowerCase() !== 'published') {
       return json(res, 400, { ok: false, error: 'opportunity_not_live' });
     }
+    if (String(opportunity.approvalStatus || opportunity.approval_status || '') !== 'Approved') {
+      return json(res, 400, {
+        ok: false,
+        error: 'opportunity_not_approved',
+        message: 'Premium Spotlight is only available after your listing is approved and live.',
+      });
+    }
+    if (!opportunity.listingPaymentActive) {
+      return json(res, 400, {
+        ok: false,
+        error: 'opportunity_not_live',
+        message: 'Start your monthly listing subscription before buying Premium Spotlight.',
+      });
+    }
 
     if (isNetworkMarketingType(opportunity)) {
       return json(res, 400, {

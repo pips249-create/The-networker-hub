@@ -145,7 +145,7 @@ async function sendOpportunityListingPendingReviewEmail(opportunity) {
   return { sent: true, to };
 }
 
-async function sendOpportunityListingApprovedPayEmail(opportunity) {
+async function sendOpportunityListingApprovedPayEmail(opportunity, options) {
   const to = ownerEmailForOpportunity(opportunity);
   if (!to) return { skipped: true, reason: 'no_owner_email' };
 
@@ -154,8 +154,11 @@ async function sendOpportunityListingApprovedPayEmail(opportunity) {
   const checkoutUrl = organiserBusinessDashboardUrl(siteUrl, {
     renewOpportunityId: opportunity.id,
   });
+  const isReminder = options && options.reminder;
   await sendTemplatedEmail({
-    slug: 'opportunity_listing_approved_pay',
+    slug: isReminder
+      ? 'opportunity_listing_approved_pay_reminder'
+      : 'opportunity_listing_approved_pay',
     to,
     variables: {
       owner_name: ownerNameFromOpportunity(opportunity, to),
@@ -169,7 +172,9 @@ async function sendOpportunityListingApprovedPayEmail(opportunity) {
         encodeURIComponent(String(opportunity.id || '')) +
         '&checkout=start',
     },
-    subject: 'Approved — pay to go live — ' + listing.opportunity_title,
+    subject: isReminder
+      ? 'Reminder: pay to go live — ' + listing.opportunity_title
+      : 'Approved — pay to go live — ' + listing.opportunity_title,
   });
   return { sent: true, to };
 }

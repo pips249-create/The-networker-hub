@@ -57,7 +57,8 @@ async function fetchAdminActionCounts(sb, options) {
     sb
       .from('business_opportunities')
       .select('id', { count: 'exact', head: true })
-      .eq('approval_status', 'Pending Review'),
+      .eq('approval_status', 'Pending Review')
+      .not('review_submitted_at', 'is', null),
     sb
       .from('organiser_claim_disputes')
       .select('id', { count: 'exact', head: true })
@@ -624,9 +625,10 @@ async function fetchAttentionQueue(sb, counts) {
     await Promise.all([
       sb
         .from('business_opportunities')
-        .select('id, title, host, created_at')
+        .select('id, title, host, created_at, review_submitted_at')
         .eq('approval_status', 'Pending Review')
-        .order('created_at', { ascending: false })
+        .not('review_submitted_at', 'is', null)
+        .order('review_submitted_at', { ascending: false })
         .limit(10),
       sb
         .from('organiser_claim_disputes')
