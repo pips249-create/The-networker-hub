@@ -572,6 +572,7 @@
   var eventOrganiserOptionsCache = null;
   var eventCreateOrganiserDocClickBound = false;
   var eventBulkOrganiserDocClickBound = false;
+  var eventEditOrganiserDocClickBound = false;
   var opportunityCleanupCache = null;
   var featuredSpotlightEvents = [];
   var featuredSpotlightState = {
@@ -14101,6 +14102,145 @@
     syncEventCreateOrganiserPicker(eventOrganiserOptionsCache || []);
   }
 
+  function setEventEditOrganiserSelection(picker, id, name, status) {
+    if (!picker) return;
+    var hidden = picker.querySelector('input[name="organiser_id"]');
+    var search = picker.querySelector('.event-edit-organiser-search');
+    var selected = picker.querySelector('.event-edit-organiser-selected');
+    var results = picker.querySelector('.event-edit-organiser-results');
+    if (hidden) hidden.value = id || '';
+    if (search) {
+      search.value = '';
+      search.classList.toggle('hidden', Boolean(id));
+    }
+    if (selected) {
+      if (id) {
+        selected.classList.remove('hidden');
+        selected.innerHTML =
+          '<span class="font-semibold text-brand-900">' +
+          esc(name || id) +
+          '</span>' +
+          (status && status !== 'published'
+            ? '<span class="text-slate-500">' + esc(organiserListingSuffix(status)) + '</span>'
+            : '') +
+          ' <button type="button" class="event-edit-organiser-clear text-brand-700 hover:underline ml-2">Change</button>';
+      } else {
+        selected.classList.add('hidden');
+        selected.textContent = '';
+      }
+    }
+    if (results) {
+      results.classList.add('hidden');
+      results.innerHTML = '';
+    }
+  }
+
+  function paintEventEditOrganiserResults(picker, items, emptyMsg) {
+    var results = picker && picker.querySelector('.event-edit-organiser-results');
+    if (!results) return;
+    if (!items.length) {
+      results.innerHTML =
+        '<p class="px-3 py-3 text-sm text-slate-500">' + esc(emptyMsg || 'No organisers found') + '</p>';
+      results.classList.remove('hidden');
+      return;
+    }
+    results.innerHTML = items
+      .map(function (org) {
+        var suffix = organiserListingSuffix(org.listingStatus || org.listing_status);
+        return (
+          '<button type="button" class="event-edit-organiser-result w-full text-left px-3 py-2.5 hover:bg-brand-50 transition border-b border-slate-100 last:border-0" data-id="' +
+          attrEsc(org.id) +
+          '" data-name="' +
+          attrEsc(org.name || org.id) +
+          '" data-status="' +
+          attrEsc(org.listingStatus || org.listing_status || '') +
+          '">' +
+          '<span class="block text-sm font-semibold text-brand-900">' +
+          esc(org.name || org.id) +
+          esc(suffix) +
+          '</span>' +
+          (org.slug ? '<span class="block text-xs text-slate-500 mt-0.5">/' + esc(org.slug) + '</span>' : '') +
+          (org.email
+            ? '<span class="block text-xs text-slate-500 mt-0.5">' + esc(org.email) + '</span>'
+            : '') +
+          '</button>'
+        );
+      })
+      .join('');
+    results.classList.remove('hidden');
+  }
+
+  function bindEventEditOrganiserPickers(root) {
+    var scope = root || main;
+    if (!scope) return;
+    scope.querySelectorAll('.event-edit-organiser-picker').forEach(function (picker) {
+      if (picker.dataset.bound === '1') return;
+      picker.dataset.bound = '1';
+
+      var search = picker.querySelector('.event-edit-organiser-search');
+      var searchTimer = null;
+
+      function runOrganiserSearch(query) {
+        var params = new URLSearchParams();
+        params.set('limit', '50');
+        if (query) params.set('q', query);
+        adminGet('/api/admin/organisers?' + params.toString())
+          .then(function (data) {
+            var items = ((data && data.organisers) || []).map(normalizeOrganiserOption);
+            paintEventEditOrganiserResults(
+              picker,
+              items,
+              query ? 'No groups match that search' : 'Type a group name to search'
+            );
+          })
+          .catch(function () {
+            paintEventEditOrganiserResults(picker, [], 'Could not search organisers');
+          });
+      }
+
+      if (search) {
+        search.addEventListener('focus', function () {
+          runOrganiserSearch(String(search.value || '').trim());
+        });
+        search.addEventListener('input', function () {
+          clearTimeout(searchTimer);
+          searchTimer = setTimeout(function () {
+            runOrganiserSearch(String(search.value || '').trim());
+          }, 220);
+        });
+      }
+
+      picker.addEventListener('click', function (e) {
+        var clearBtn = e.target.closest('.event-edit-organiser-clear');
+        if (clearBtn) {
+          setEventEditOrganiserSelection(picker, '', '', '');
+          if (search) search.focus();
+          return;
+        }
+        var btn = e.target.closest('.event-edit-organiser-result');
+        if (!btn) return;
+        setEventEditOrganiserSelection(
+          picker,
+          btn.getAttribute('data-id') || '',
+          btn.getAttribute('data-name') || '',
+          btn.getAttribute('data-status') || ''
+        );
+      });
+    });
+
+    if (!eventEditOrganiserDocClickBound) {
+      eventEditOrganiserDocClickBound = true;
+      document.addEventListener('click', function (e) {
+        document.querySelectorAll('.event-edit-organiser-picker').forEach(function (picker) {
+          var results = picker.querySelector('.event-edit-organiser-results');
+          if (results && !picker.contains(e.target)) {
+            results.classList.add('hidden');
+          }
+        });
+      });
+    }
+  }
+
   function setEventBulkOrganiserSelection(id, name, status) {
     var hidden = document.getElementById('event-bulk-organiser-id');
     var search = document.getElementById('event-bulk-organiser-search');
@@ -14596,7 +14736,13 @@
     });
   }
 
-  function eventCleanupEditFormHtml(ev, organisers) {
+  function eventCleanupEditFormHtml(ev) {
+    var orgId = ev.organiser_id || '';
+    var orgName = ev.organiser_name || orgId;
+    var orgMatch = orgId
+      ? findOrganiserOptionById(eventOrganiserOptionsCache || [], orgId)
+      : null;
+    var orgStatus = (orgMatch && orgMatch.listingStatus) || '';
     return (
       '<form class="event-cleanup-form grid sm:grid-cols-2 gap-3" data-event-id="' +
       attrEsc(ev.id) +
@@ -14606,10 +14752,29 @@
       attrEsc(ev.title || '') +
       '"></div>' +
       eventDescriptionFieldHtml(ev.description || '') +
-      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Organiser / group</label>' +
-      '<select name="organiser_id" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
-      organiserOptionsHtml(organisers, ev.organiser_id) +
-      '</select>' +
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Organiser / group</label>' +
+      '<div class="event-edit-organiser-picker relative">' +
+      '<input type="hidden" name="organiser_id" value="' +
+      attrEsc(orgId) +
+      '">' +
+      '<input type="search" class="event-edit-organiser-search w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm' +
+      (orgId ? ' hidden' : '') +
+      '" autocomplete="off" placeholder="Search by group name or email…">' +
+      '<div class="event-edit-organiser-selected rounded-lg border border-brand-200 bg-white px-3 py-2 text-sm' +
+      (orgId ? '' : ' hidden') +
+      '">' +
+      (orgId
+        ? '<span class="font-semibold text-brand-900">' +
+          esc(orgName) +
+          '</span>' +
+          (orgStatus && orgStatus !== 'published'
+            ? '<span class="text-slate-500">' + esc(organiserListingSuffix(orgStatus)) + '</span>'
+            : '') +
+          ' <button type="button" class="event-edit-organiser-clear text-brand-700 hover:underline ml-2">Change</button>'
+        : '') +
+      '</div>' +
+      '<div class="event-edit-organiser-results hidden absolute left-0 right-0 top-full mt-1 max-h-56 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg z-20"></div>' +
+      '</div>' +
       (ev.organiser_id && !ev.organiser_email
         ? '<p class="text-[11px] text-amber-800 font-semibold mt-1">This organiser profile has no contact email — add one below so the owner can sign in.</p>'
         : ev.organiser_email
@@ -18277,7 +18442,7 @@
     return fetchEventCleanup(eventCleanupState.page).then(applyEventCleanupData);
   }
 
-  function eventCleanupRowHtml(ev, organisers) {
+  function eventCleanupRowHtml(ev) {
     var publicHref = ev.slug ? '../events/' + encodeURIComponent(ev.slug) : '';
     var organiserLabel = ev.organiser_name
       ? esc(ev.organiser_name)
@@ -18351,7 +18516,7 @@
       attrEsc(ev.id) +
       '">' +
       '<td colspan="6" class="p-4">' +
-      eventCleanupEditFormHtml(ev, organisers) +
+      eventCleanupEditFormHtml(ev) +
       '</td></tr>'
     );
   }
@@ -18363,8 +18528,6 @@
     if (!list || !eventCleanupCache) return;
 
     var data = eventCleanupCache;
-    var organisers =
-      eventOrganiserOptionsCache || (data.organisers || []).map(normalizeOrganiserOption);
     var events = eventCleanupState.items.length ? eventCleanupState.items : data.events || [];
     var page = eventCleanupState.page;
     var shown = events.length;
@@ -18406,7 +18569,7 @@
 
     var rows = events
       .map(function (ev) {
-        return eventCleanupRowHtml(ev, organisers);
+        return eventCleanupRowHtml(ev);
       })
       .join('');
 
@@ -18425,6 +18588,7 @@
           rows +
           '</tbody></table>'
       ) + pagination;
+    bindEventEditOrganiserPickers(list);
     updateEventBulkBar();
   }
 
@@ -22817,12 +22981,6 @@
     if (String(row.freeTrialVisits || '').toLowerCase() === 'yes' && row.freeTrialDetails) {
       descParts.push('Free trial visits: ' + String(row.freeTrialDetails).trim());
     }
-    if (row.contactName || row.phone) {
-      descParts.push(
-        'Contact: ' +
-          [row.contactName, row.phone].filter(Boolean).join(' · ')
-      );
-    }
 
     return (
       '<form class="ei-create-form hidden mt-3 rounded-lg border border-brand-200 bg-brand-50/40 p-3" hidden data-intake-id="' +
@@ -23169,15 +23327,20 @@
                   '<h4 class="font-bold text-brand-900 mt-1">' +
                   esc(row.eventTitle || 'Untitled') +
                   '</h4>' +
-                  '<p class="text-sm text-slate-700">' +
-                  esc(row.groupName || '—') +
-                  ' · ' +
+                  (row.groupName
+                    ? '<p class="text-sm text-slate-700">' + esc(row.groupName) + '</p>'
+                    : '') +
+                  '</div></div>' +
+                  '<dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-sm text-slate-700">' +
+                  '<div><dt class="text-xs uppercase tracking-wide text-slate-500">Contact</dt><dd>' +
                   esc(row.contactName || '—') +
-                  ' · <a class="text-brand-700 hover:underline" href="mailto:' +
-                  attrEsc(row.email || '') +
-                  '">' +
-                  esc(row.email || '—') +
-                  '</a>' +
+                  (row.email
+                    ? ' · <a class="text-brand-700 hover:underline" href="mailto:' +
+                      attrEsc(row.email) +
+                      '">' +
+                      esc(row.email) +
+                      '</a>'
+                    : '') +
                   (row.phone
                     ? ' · <a class="text-brand-700 hover:underline" href="tel:' +
                       attrEsc(String(row.phone).replace(/\s+/g, '')) +
@@ -23185,8 +23348,7 @@
                       esc(row.phone) +
                       '</a>'
                     : '') +
-                  '</p></div></div>' +
-                  '<dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-sm text-slate-700">' +
+                  '</dd></div>' +
                   '<div><dt class="text-xs uppercase tracking-wide text-slate-500">Date(s)</dt><dd>' +
                   esc(row.eventDates || '—') +
                   (times ? ' · ' + esc(times) : '') +
