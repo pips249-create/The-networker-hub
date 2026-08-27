@@ -49,14 +49,22 @@
         });
       })
       .then(function (res) {
-        return res.json().then(function (data) {
-          return { ok: res.ok, data: data || {} };
-        });
+        return res
+          .json()
+          .catch(function () {
+            return {};
+          })
+          .then(function (data) {
+            return { ok: res.ok, data: data || {} };
+          });
       })
       .then(function (result) {
         if (!result.ok || !result.data.ok) {
           setStatus(
             result.data.message ||
+              (result.data.error === 'site_private'
+                ? 'This form is temporarily unavailable. Please email hi@thenetworkeruk.com instead.'
+                : null) ||
               'Could not send your message. Please email hi@thenetworkeruk.com instead.',
             true
           );

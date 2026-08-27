@@ -1,10 +1,11 @@
 /**
  * Contact page — message Rosie & Catherine via Resend.
+ * Always delivers to the public support inbox (not env overrides).
  */
 const { sendViaResend } = require('./send-template-email');
-const { supportEmail } = require('./hub-email-urls');
+const { SUPPORT_EMAIL } = require('./hub-brand');
 
-const TEAM_INBOX = String(process.env.CONTACT_TEAM_EMAIL || supportEmail() || 'hi@thenetworkeruk.com')
+const TEAM_INBOX = String(SUPPORT_EMAIL || 'hi@thenetworkeruk.com')
   .trim()
   .toLowerCase();
 

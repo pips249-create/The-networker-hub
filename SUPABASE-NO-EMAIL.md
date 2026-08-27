@@ -4,8 +4,8 @@
 
 - **Spreadsheet import** → use `scripts/import-attendees-csv.js` → rows go to **`attendees` only** → **no email**
 - **Admin / migrate / register API** → `auth.admin.createUser` with **`email_confirm: true`** → marks email verified → **no signup confirmation email**
-- **Forgot password** → **does not email** unless you set `AUTH_SEND_EMAILS=true`
-- **Resend** (optional) → only used when `AUTH_SEND_EMAILS=true` and `RESEND_API_KEY` is set
+- **Forgot password** → sends via Resend when `RESEND_API_KEY` is set (set `AUTH_SEND_EMAILS=false` to force off)
+- **Resend** → required for password-reset and other transactional mail
 
 ## Supabase dashboard (do once)
 
@@ -16,14 +16,14 @@
 ## Environment variables (Vercel + local.env)
 
 ```env
-# Leave unset or false — no auth emails from the app
+# Optional kill switch — leave unset so password reset works whenever Resend is configured
 # AUTH_SEND_EMAILS=false
 
 # Optional: shared password if you later import logins (not recommended for production)
 # IMPORT_DEFAULT_PASSWORD=
 ```
 
-To **allow** password-reset emails later: `AUTH_SEND_EMAILS=true` and configure Supabase SMTP or Resend.
+Password-reset emails send when `RESEND_API_KEY` is set unless you explicitly set `AUTH_SEND_EMAILS=false`.
 
 ## Import Excel / CSV (recommended)
 

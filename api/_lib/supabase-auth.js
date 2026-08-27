@@ -6,12 +6,14 @@ const { getSupabaseAdmin, getSupabaseAnon, isSupabaseConfigured } = require('./s
 const USER_ROLES = { ADMIN: 'admin', CLIENT: 'client' };
 const CURRENT_ORGANISER_TERMS_VERSION = 'v2';
 
-/** When false (default), the app never triggers Supabase/Resend auth emails. */
+/** Auth emails (password reset). Explicit false stays off; otherwise on when Resend is configured. */
 function authEmailsEnabled() {
   const v = String(process.env.AUTH_SEND_EMAILS || '')
     .trim()
     .toLowerCase();
-  return v === '1' || v === 'true' || v === 'yes';
+  if (v === '0' || v === 'false' || v === 'no') return false;
+  if (v === '1' || v === 'true' || v === 'yes') return true;
+  return Boolean(String(process.env.RESEND_API_KEY || '').trim());
 }
 
 function normalizeRole(raw) {

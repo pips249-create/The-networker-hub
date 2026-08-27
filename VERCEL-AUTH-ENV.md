@@ -245,7 +245,8 @@ After deploy, check `/api/auth/config-check` — `siteAccess.siteAccessRequired`
 
 | Key | Purpose |
 |-----|---------|
-| `RESEND_API_KEY` | Email for forgot-password links |
+| `RESEND_API_KEY` | Transactional email (including forgot-password). Password reset sends when this is set. |
+| `AUTH_SEND_EMAILS` | Optional kill switch: `false` disables password-reset emails even if Resend is configured. Leave unset in production. |
 | `AUTH_SHOW_RESET_LINK` / `AUTH_DEV_RESET_LINK` | Preview-only opt-in (`true`) to include `resetUrl` in the forgot-password API when email is not sent. Production never returns `resetUrl`. |
 | `HUB_INTERNAL_SEO_SECRET` | Dedicated secret for middleware → seo-meta while gated (preferred over reusing the preview password) |
 

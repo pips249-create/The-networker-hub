@@ -88,38 +88,44 @@
       var widgetId = null;
       var lastToken = '';
 
-      return loadScript().then(function () {
-        if (!global.turnstile || !mount) {
+      return loadScript()
+        .then(function () {
+          if (!global.turnstile || !mount) {
+            return function () {
+              return Promise.resolve('');
+            };
+          }
+          widgetId = global.turnstile.render(mount, {
+            sitekey: cfg.siteKey,
+            theme: 'light',
+            callback: function (token) {
+              lastToken = String(token || '');
+            },
+            'expired-callback': function () {
+              lastToken = '';
+            },
+            'error-callback': function () {
+              lastToken = '';
+            },
+          });
+
+          return function getToken() {
+            if (lastToken) return Promise.resolve(lastToken);
+            if (widgetId != null && global.turnstile && typeof global.turnstile.getResponse === 'function') {
+              var fromWidget = String(global.turnstile.getResponse(widgetId) || '');
+              if (fromWidget) {
+                lastToken = fromWidget;
+                return Promise.resolve(fromWidget);
+              }
+            }
+            return Promise.resolve('');
+          };
+        })
+        .catch(function () {
           return function () {
             return Promise.resolve('');
           };
-        }
-        widgetId = global.turnstile.render(mount, {
-          sitekey: cfg.siteKey,
-          theme: 'light',
-          callback: function (token) {
-            lastToken = String(token || '');
-          },
-          'expired-callback': function () {
-            lastToken = '';
-          },
-          'error-callback': function () {
-            lastToken = '';
-          },
         });
-
-        return function getToken() {
-          if (lastToken) return Promise.resolve(lastToken);
-          if (widgetId != null && global.turnstile && typeof global.turnstile.getResponse === 'function') {
-            var fromWidget = String(global.turnstile.getResponse(widgetId) || '');
-            if (fromWidget) {
-              lastToken = fromWidget;
-              return Promise.resolve(fromWidget);
-            }
-          }
-          return Promise.resolve('');
-        };
-      });
     });
 
     return form.__hubTurnstileReady;

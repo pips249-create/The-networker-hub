@@ -249,7 +249,7 @@ The **Email Template Manager** works without Resend (edit & save in Command Cent
 | [x] | Launch invite template (organiser “claim your profile”) — `organiser_launch_invite` + `organiser_claim_invite` in DB; Email 2 uses launch invite via Brevo |
 | [x] | At launch: **`EMAIL_ALLOWLIST_DISABLED=true`** if pre-launch allowlist was on |
 | [ ] | **Resend Pro** — before August wider email / September 3,500 send (see Tab 0 August infrastructure table) |
-| [ ] | Optional: `AUTH_SEND_EMAILS=true` for password-reset emails |
+| [x] | Password-reset emails on when `RESEND_API_KEY` is set (`AUTH_SEND_EMAILS=false` to kill) |
 
 **Safe test recipients** are in `email_test_recipients` (migration 051 + 052). Add your address in Command Centre if test sends are blocked.
 

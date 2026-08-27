@@ -141,6 +141,8 @@ const GATE_BYPASS_PREFIXES = [
   '/api/international-interest',
   '/api/international-group-intake',
   '/api/international-hub-stats',
+  // Non-secret client bootstrap (Turnstile site key) — needed on gated + early-access forms.
+  '/api/public-config',
 ];
 
 /** Unlisted internal sales decks — not linked from nav; noindex in page HTML. */
@@ -201,7 +203,9 @@ const ORGANISER_EARLY_ACCESS_PREFIXES = [
   '/api/auth',
   '/api/organiser',
   '/api/contact-chat',
+  '/api/contact-message',
   '/api/event-intake',
+  '/api/advertising',
   // Snippet helper for organisers (widget iframe itself is fully public via isTicketEmbedPath).
   '/embed/tickets',
   '/embed/tickets.html',
