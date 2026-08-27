@@ -9,12 +9,21 @@ const {
 } = require('../auth');
 const { useSupabase } = require('../supabase');
 const sbAuth = require('../supabase-auth');
-const { enforceRateLimitAsync } = require('../rate-limit');
+const {
+  enforceRateLimitAsync,
+  consumeRateLimitKeyAsync,
+  isDurableRateLimitExceeded,
+  clientIp,
+} = require('../rate-limit');
+const { verifyTurnstileToken } = require('../turnstile');
 const {
   isOrganiserAuthIntent,
   maybeAutoEnableOrganiserAccess,
   redirectAfterOrganiserAuth,
 } = require('../organiser-auth-intent');
+
+const LOGIN_FAIL_MAX = 8;
+const LOGIN_FAIL_WINDOW_MS = 900_000;
 
 module.exports = async function handler(req, res) {
   setCors(req, res);
@@ -71,9 +80,47 @@ module.exports = async function handler(req, res) {
     });
   }
 
+  const failKey = 'auth_login_fail:' + email.slice(0, 120);
+  const emailLocked = await isDurableRateLimitExceeded(failKey, {
+    max: LOGIN_FAIL_MAX,
+    windowMs: LOGIN_FAIL_WINDOW_MS,
+  });
+  if (!emailLocked.allowed) {
+    res.setHeader('Retry-After', String(emailLocked.retryAfterSec || 1));
+    return json(res, 429, {
+      error: 'account_temporarily_locked',
+      message:
+        'Too many failed sign-in attempts for this email. Please wait a few minutes, then try again or reset your password.',
+      retryAfterSec: emailLocked.retryAfterSec,
+    });
+  }
+
+  const captcha = await verifyTurnstileToken(
+    body.turnstileToken || body['cf-turnstile-response'],
+    clientIp(req)
+  );
+  if (!captcha.ok) {
+    return json(res, 400, {
+      error: captcha.error || 'captcha_failed',
+      message: 'Please complete the security check and try again.',
+    });
+  }
+
   try {
     const login = await sbAuth.verifyLogin(email, password);
     if (!login.ok) {
+      const failLimit = await consumeRateLimitKeyAsync(res, failKey, {
+        max: LOGIN_FAIL_MAX,
+        windowMs: LOGIN_FAIL_WINDOW_MS,
+      });
+      if (!failLimit.allowed) {
+        return json(res, 429, {
+          error: 'account_temporarily_locked',
+          message:
+            'Too many failed sign-in attempts for this email. Please wait a few minutes, then try again or reset your password.',
+          retryAfterSec: failLimit.retryAfterSec,
+        });
+      }
       return json(res, 401, {
         error: 'invalid_credentials',
         message: 'Email or password is incorrect.',

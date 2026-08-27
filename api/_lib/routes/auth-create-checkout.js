@@ -44,6 +44,7 @@ const {
   loadCeApplicationTicket,
 } = require('../ce-member-invites');
 const { availableEventQty, assertEventHasCapacity } = require('../event-capacity');
+const { enforceRateLimitAsync } = require('../rate-limit');
 
 function parseBody(req) {
   let body = req.body;
@@ -126,6 +127,32 @@ module.exports = async function handler(req, res) {
   }
   if (!checkoutName) {
     return json(res, 400, { ok: false, error: 'missing_name' });
+  }
+
+  const ipLimited = await enforceRateLimitAsync(req, res, 'auth_create_checkout', {
+    max: 20,
+    windowMs: 600_000,
+  });
+  if (!ipLimited.allowed) {
+    return json(res, 429, {
+      ok: false,
+      error: 'rate_limited',
+      message: 'Too many checkout attempts. Please wait a few minutes and try again.',
+      retryAfterSec: ipLimited.retryAfterSec,
+    });
+  }
+  const emailLimited = await enforceRateLimitAsync(req, res, 'auth_create_checkout_email', {
+    max: 12,
+    windowMs: 600_000,
+    identity: checkoutEmail,
+  });
+  if (!emailLimited.allowed) {
+    return json(res, 429, {
+      ok: false,
+      error: 'rate_limited',
+      message: 'Too many checkout attempts for this email. Please wait a few minutes and try again.',
+      retryAfterSec: emailLimited.retryAfterSec,
+    });
   }
 
   if (!isSupabaseConfigured()) {

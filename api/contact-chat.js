@@ -3,7 +3,8 @@
  * Body: { messages: [{ role: 'user'|'assistant', content: string }] }
  */
 const { json, setCors } = require('./_lib/auth');
-const { enforceRateLimit } = require('./_lib/rate-limit');
+const { enforceRateLimitAsync, clientIp } = require('./_lib/rate-limit');
+const { verifyTurnstileToken } = require('./_lib/turnstile');
 const {
   SYSTEM_PROMPT,
   buildPageContextAddendum,
@@ -88,7 +89,7 @@ module.exports = async function handler(req, res) {
     return json(res, 405, { error: 'method_not_allowed' });
   }
 
-  const limited = enforceRateLimit(req, res, 'contact_chat', { max: 20, windowMs: 300_000 });
+  const limited = await enforceRateLimitAsync(req, res, 'contact_chat', { max: 20, windowMs: 300_000 });
   if (!limited.allowed) {
     return json(res, 429, {
       error: 'rate_limited',
@@ -106,6 +107,19 @@ module.exports = async function handler(req, res) {
     }
   }
   body = body || {};
+
+  // Optional when Turnstile keys are set and the client sends a token (fail-open if absent
+  // so existing Hubert widgets keep working without a captcha UI).
+  const turnstileToken = body.turnstileToken || body['cf-turnstile-response'];
+  if (turnstileToken) {
+    const captcha = await verifyTurnstileToken(turnstileToken, clientIp(req));
+    if (!captcha.ok) {
+      return json(res, 400, {
+        error: captcha.error || 'captcha_failed',
+        message: 'Please complete the security check and try again.',
+      });
+    }
+  }
 
   const messages = sanitizeMessages(body.messages);
   const latestUser = messages.filter(function (m) {

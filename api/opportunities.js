@@ -2,7 +2,7 @@
  * Public business opportunities API — published listings only.
  */
 const { json, setCors, sessionFromRequest } = require('./_lib/auth');
-const { enforceRateLimit } = require('./_lib/rate-limit');
+const { enforceRateLimit, enforceRateLimitAsync } = require('./_lib/rate-limit');
 const { useSupabase } = require('./_lib/supabase');
 
 module.exports = async function handler(req, res) {
@@ -55,7 +55,10 @@ module.exports = async function handler(req, res) {
     }
 
     if (action === 'claim_request') {
-      const limited = enforceRateLimit(req, res, 'opportunity_claim', { max: 5, windowMs: 600_000 });
+      const limited = await enforceRateLimitAsync(req, res, 'opportunity_claim', {
+        max: 5,
+        windowMs: 600_000,
+      });
       if (!limited.allowed) {
         return json(res, 429, {
           ok: false,
@@ -91,7 +94,10 @@ module.exports = async function handler(req, res) {
       }
     }
 
-    const limited = enforceRateLimit(req, res, 'opportunity_enquiry', { max: 10, windowMs: 300_000 });
+    const limited = await enforceRateLimitAsync(req, res, 'opportunity_enquiry', {
+      max: 10,
+      windowMs: 300_000,
+    });
     if (!limited.allowed) {
       return json(res, 429, {
         ok: false,

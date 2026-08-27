@@ -16,6 +16,7 @@ const {
 } = require('../auth');
 const { useSupabase } = require('../supabase');
 const sbProfile = require('../supabase-profile');
+const { validateNewPassword } = require('../password-policy');
 
 function parseBody(req) {
   let body = req.body;
@@ -117,10 +118,11 @@ async function handleSupabase(req, res, session) {
     if (!current || !next) {
       return json(res, 400, { error: 'missing_fields' });
     }
-    if (next.length < 8) {
+    const passwordCheck = validateNewPassword(next);
+    if (!passwordCheck.ok) {
       return json(res, 400, {
-        error: 'weak_password',
-        message: 'New password must be at least 8 characters.',
+        error: passwordCheck.error,
+        message: passwordCheck.message,
       });
     }
 
@@ -225,10 +227,11 @@ module.exports = async function handler(req, res) {
       if (!current || !next) {
         return json(res, 400, { error: 'missing_fields' });
       }
-      if (next.length < 8) {
+      const passwordCheck = validateNewPassword(next);
+      if (!passwordCheck.ok) {
         return json(res, 400, {
-          error: 'weak_password',
-          message: 'New password must be at least 8 characters.',
+          error: passwordCheck.error,
+          message: passwordCheck.message,
         });
       }
       if (!user.passwordHash || !verifyPassword(current, user.passwordHash)) {

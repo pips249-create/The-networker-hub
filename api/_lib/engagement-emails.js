@@ -76,7 +76,7 @@ function hubertLocationFooterHtml(siteUrl, location) {
 
 const REENGAGEMENT_INACTIVE_DAYS = 30;
 const REENGAGEMENT_COOLDOWN_DAYS = 60;
-const LOW_EVENTS_MAX_UPCOMING = 3;
+const LOW_EVENTS_MAX_UPCOMING = 1;
 const LOW_EVENTS_NUDGE_COOLDOWN_DAYS = 30;
 const POST_EVENT_REVIEW_HOURS = 24;
 // Catch up missed sends (e.g. if cron skipped a day) up to this age.

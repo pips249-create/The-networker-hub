@@ -154,9 +154,21 @@
 
   prefillEmailFromQuery();
 
+  var noopTurnstile = function () {
+    return Promise.resolve('');
+  };
+  var getLoginTurnstileToken = noopTurnstile;
+  var getRegisterTurnstileToken = noopTurnstile;
+
   var loginForm = document.getElementById('login-form');
   if (loginForm) {
-    function submitLogin(email, password, rememberMe, next) {
+    if (window.HUB_turnstile && typeof window.HUB_turnstile.bindForm === 'function') {
+      window.HUB_turnstile.bindForm(loginForm).then(function (fn) {
+        getLoginTurnstileToken = fn || noopTurnstile;
+      });
+    }
+
+    function submitLogin(email, password, rememberMe, next, turnstileToken) {
       var msg = document.getElementById('auth-message');
       var btn = document.getElementById('login-submit');
       btn.disabled = true;
@@ -169,6 +181,7 @@
         rememberMe: rememberMe,
         intent: getIntentParam(),
       };
+      if (turnstileToken) payload.turnstileToken = turnstileToken;
 
       fetch('/api/auth/login', {
         method: 'POST',
@@ -208,12 +221,20 @@
       var rememberEl = document.getElementById('remember-me');
       var rememberMe = rememberEl ? rememberEl.checked : false;
       var next = getNextParam();
-      submitLogin(email, password, rememberMe, next);
+      getLoginTurnstileToken().then(function (token) {
+        submitLogin(email, password, rememberMe, next, token);
+      });
     });
   }
 
   var registerForm = document.getElementById('register-form');
   if (registerForm) {
+    if (window.HUB_turnstile && typeof window.HUB_turnstile.bindForm === 'function') {
+      window.HUB_turnstile.bindForm(registerForm).then(function (fn) {
+        getRegisterTurnstileToken = fn || noopTurnstile;
+      });
+    }
+
     registerForm.addEventListener('submit', function (e) {
       e.preventDefault();
       var msg = document.getElementById('auth-message');
@@ -228,8 +249,12 @@
         showMessage(msg, 'Passwords do not match.', 'error');
         return;
       }
-      if (password.length < 8) {
-        showMessage(msg, 'Password must be at least 8 characters.', 'error');
+      if (password.length < 10) {
+        showMessage(msg, 'Password must be at least 10 characters.', 'error');
+        return;
+      }
+      if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
+        showMessage(msg, 'Password must include at least one letter and one number.', 'error');
         return;
       }
 
@@ -244,19 +269,24 @@
 
       var marketingEl = document.getElementById('register-marketing');
 
-      fetch('/api/auth/register', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: email,
-          password: password,
-          name: name,
-          next: next,
-          intent: getIntentParam(),
-          marketingOptIn: marketingEl ? marketingEl.checked : false,
-        }),
-      })
+      getRegisterTurnstileToken()
+        .then(function (token) {
+          var payload = {
+            email: email,
+            password: password,
+            name: name,
+            next: next,
+            intent: getIntentParam(),
+            marketingOptIn: marketingEl ? marketingEl.checked : false,
+          };
+          if (token) payload.turnstileToken = token;
+          return fetch('/api/auth/register', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+        })
         .then(function (res) {
           return res.json().then(function (data) {
             return { ok: res.ok, data: data };
@@ -387,6 +417,14 @@
       }
       if (p1 !== p2) {
         showMessage(msg, 'Passwords do not match.', 'error');
+        return;
+      }
+      if (p1.length < 10) {
+        showMessage(msg, 'Password must be at least 10 characters.', 'error');
+        return;
+      }
+      if (!/[A-Za-z]/.test(p1) || !/[0-9]/.test(p1)) {
+        showMessage(msg, 'Password must include at least one letter and one number.', 'error');
         return;
       }
 

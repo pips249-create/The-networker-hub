@@ -2,7 +2,9 @@ const { setSessionCookie, json, setCors, hubViewFromRequest } = require('../auth
 const { useSupabase } = require('../supabase');
 const sbAuth = require('../supabase-auth');
 const { sendAccountWelcomeEmail } = require('../account-emails');
-const { enforceRateLimitAsync } = require('../rate-limit');
+const { enforceRateLimitAsync, clientIp } = require('../rate-limit');
+const { verifyTurnstileToken } = require('../turnstile');
+const { validateNewPassword } = require('../password-policy');
 const {
   isOrganiserAuthIntent,
   isOrganiserClaimNext,
@@ -57,10 +59,11 @@ module.exports = async function handler(req, res) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return json(res, 400, { error: 'invalid_email', message: 'Enter a valid email address.' });
   }
-  if (password.length < 8) {
+  const passwordCheck = validateNewPassword(password);
+  if (!passwordCheck.ok) {
     return json(res, 400, {
-      error: 'weak_password',
-      message: 'Password must be at least 8 characters.',
+      error: passwordCheck.error,
+      message: passwordCheck.message,
     });
   }
 
@@ -70,6 +73,17 @@ module.exports = async function handler(req, res) {
       error: 'rate_limited',
       message: 'Too many sign-up attempts. Please wait a few minutes and try again.',
       retryAfterSec: limited.retryAfterSec,
+    });
+  }
+
+  const captcha = await verifyTurnstileToken(
+    body.turnstileToken || body['cf-turnstile-response'],
+    clientIp(req)
+  );
+  if (!captcha.ok) {
+    return json(res, 400, {
+      error: captcha.error || 'captcha_failed',
+      message: 'Please complete the security check and try again.',
     });
   }
 

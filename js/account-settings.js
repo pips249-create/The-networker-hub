@@ -378,6 +378,14 @@
       showAlert('New passwords do not match.', false);
       return;
     }
+    if (next.length < 10) {
+      showAlert('Password must be at least 10 characters.', false);
+      return;
+    }
+    if (!/[A-Za-z]/.test(next) || !/[0-9]/.test(next)) {
+      showAlert('Password must include at least one letter and one number.', false);
+      return;
+    }
     try {
       const res = await fetch('/api/auth/profile', {
         method: 'POST',

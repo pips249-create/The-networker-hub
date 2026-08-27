@@ -7,7 +7,7 @@
  * POST /api/organisers { action: 'claim_request', ... }
  */
 const { json, setCors } = require('./_lib/auth');
-const { enforceRateLimit } = require('./_lib/rate-limit');
+const { enforceRateLimitAsync } = require('./_lib/rate-limit');
 const { isSupabaseConfigured, supabaseConfig } = require('./_lib/supabase');
 const {
   listPublicOrganisers,
@@ -62,7 +62,10 @@ module.exports = async function handler(req, res) {
       return json(res, 400, { ok: false, error: 'unknown_action' });
     }
 
-    const limited = enforceRateLimit(req, res, 'organiser_claim', { max: 5, windowMs: 600_000 });
+    const limited = await enforceRateLimitAsync(req, res, 'organiser_claim', {
+      max: 5,
+      windowMs: 600_000,
+    });
     if (!limited.allowed) {
       return json(res, 429, {
         ok: false,

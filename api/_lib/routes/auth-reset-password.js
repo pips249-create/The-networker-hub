@@ -9,6 +9,8 @@ const {
   setCors,
 } = require('../auth');
 const { useSupabase, getSupabaseAdmin } = require('../supabase');
+const { enforceRateLimitAsync } = require('../rate-limit');
+const { validateNewPassword } = require('../password-policy');
 
 function fieldNameOnRecord(recordFields, candidates, fallback) {
   const f = recordFields || {};
@@ -74,8 +76,25 @@ module.exports = async function handler(req, res) {
   const password = String(body.password || '');
 
   if (!password) return json(res, 400, { error: 'missing_fields' });
-  if (password.length < 8) {
-    return json(res, 400, { error: 'weak_password', message: 'Use at least 8 characters.' });
+
+  const limited = await enforceRateLimitAsync(req, res, 'auth_reset_password', {
+    max: 10,
+    windowMs: 900_000,
+  });
+  if (!limited.allowed) {
+    return json(res, 429, {
+      error: 'rate_limited',
+      message: 'Too many password reset attempts. Please wait a few minutes and try again.',
+      retryAfterSec: limited.retryAfterSec,
+    });
+  }
+
+  const passwordCheck = validateNewPassword(password);
+  if (!passwordCheck.ok) {
+    return json(res, 400, {
+      error: passwordCheck.error,
+      message: passwordCheck.message,
+    });
   }
 
   if (useSupabase()) {
