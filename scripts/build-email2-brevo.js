@@ -43,7 +43,7 @@ const { isExcludedLaunchOrganiser } = require('./launch-excluded-organisers');
 
 const SKIP_EMAILS = new Set([
   'pips249@gmail.com',
-  'hello@thenetworkeruk.com',
+  'hi@thenetworkeruk.com',
   'catherine@thenetworkeruk.com',
   'rosie@thenetworkeruk.com',
 ]);

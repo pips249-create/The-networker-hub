@@ -52,6 +52,15 @@
       /* keep default source */
     }
 
+    var getTurnstileToken = function () {
+      return Promise.resolve('');
+    };
+    if (window.HUB_turnstile && typeof window.HUB_turnstile.bindForm === 'function') {
+      window.HUB_turnstile.bindForm(form).then(function (fn) {
+        if (typeof fn === 'function') getTurnstileToken = fn;
+      });
+    }
+
     function unlock() {
       if (btn) btn.disabled = false;
     }
@@ -69,17 +78,22 @@
       if (btn) btn.disabled = true;
       showAlert(msg, 'Saving your place…', 'success');
 
-      fetch('/api/auth/site-access', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          intent: 'waitlist',
-          email: email,
-          website: honeypot ? honeypot.value : '',
-          source: source,
-        }),
-      })
+      getTurnstileToken()
+        .then(function (token) {
+          var body = {
+            intent: 'waitlist',
+            email: email,
+            website: honeypot ? honeypot.value : '',
+            source: source,
+          };
+          if (token) body.turnstileToken = token;
+          return fetch('/api/auth/site-access', {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+          });
+        })
         .then(function (res) {
           return res.text().then(function (text) {
             return parseResponse(res, text);

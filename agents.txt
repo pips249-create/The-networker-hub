@@ -4,4 +4,4 @@
 Structured FAQ & schema: /api/hubert-schema?format=llms
 FAQ JSON: /api/hubert-schema?page=faq-entries
 
-Contact: hello@thenetworkeruk.com
+Contact: hi@thenetworkeruk.com

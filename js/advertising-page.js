@@ -446,34 +446,44 @@
 
   function submitAdvertisingEnquiry(payload, callbacks) {
     callbacks = callbacks || {};
-    return fetch('/api/advertising', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    })
-      .then(function (res) {
-        return res.json().then(function (data) {
-          return { ok: res.ok, data: data };
-        });
+    var send = function (body) {
+      return fetch('/api/advertising', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
       })
-      .then(function (result) {
-        if (result.ok && result.data && result.data.ok) {
-          if (callbacks.onOk) {
-            callbacks.onOk(result.data.message || 'Thanks — our partnerships team will reply within one business day.');
+        .then(function (res) {
+          return res.json().then(function (data) {
+            return { ok: res.ok, data: data };
+          });
+        })
+        .then(function (result) {
+          if (result.ok && result.data && result.data.ok) {
+            if (callbacks.onOk) {
+              callbacks.onOk(result.data.message || 'Thanks — our partnerships team will reply within one business day.');
+            }
+            return result;
           }
+          var message =
+            (result.data && result.data.message) ||
+            'Could not send your enquiry. Email rosie@thenetworkeruk.com and our team will follow up.';
+          if (callbacks.onError) callbacks.onError(message);
           return result;
-        }
-        var message =
-          (result.data && result.data.message) ||
-          'Could not send your enquiry. Email rosie@thenetworkeruk.com and our team will follow up.';
-        if (callbacks.onError) callbacks.onError(message);
-        return result;
-      })
-      .catch(function () {
-        if (callbacks.onError) {
-          callbacks.onError('Could not send your enquiry. Email rosie@thenetworkeruk.com and our team will follow up.');
-        }
+        })
+        .catch(function () {
+          if (callbacks.onError) {
+            callbacks.onError('Could not send your enquiry. Email rosie@thenetworkeruk.com and our team will follow up.');
+          }
+        });
+    };
+
+    if (callbacks.getTurnstileToken) {
+      return callbacks.getTurnstileToken().then(function (token) {
+        if (token) payload.turnstileToken = token;
+        return send(payload);
       });
+    }
+    return send(payload);
   }
 
   function initQuickEnquiry() {
@@ -482,6 +492,14 @@
 
     var submitBtn = document.getElementById('ad-enquiry-quick-submit');
     var moreLink = document.getElementById('ad-enquiry-quick-more');
+    var getTurnstileToken = function () {
+      return Promise.resolve('');
+    };
+    if (window.HUB_turnstile && typeof window.HUB_turnstile.bindForm === 'function') {
+      window.HUB_turnstile.bindForm(form).then(function (fn) {
+        if (typeof fn === 'function') getTurnstileToken = fn;
+      });
+    }
 
     if (moreLink) {
       moreLink.addEventListener('click', function () {
@@ -533,6 +551,7 @@
       }
 
       submitAdvertisingEnquiry(payload, {
+        getTurnstileToken: getTurnstileToken,
         onOk: function (message) {
           setQuickEnquiryStatus(message, 'ok');
           form.reset();
@@ -556,6 +575,14 @@
     var packageEl = document.getElementById('ad-enquiry-package');
     var cityPartnerNote = document.getElementById('ad-enquiry-city-partner-note');
     var submitBtn = document.getElementById('ad-enquiry-submit');
+    var getTurnstileToken = function () {
+      return Promise.resolve('');
+    };
+    if (window.HUB_turnstile && typeof window.HUB_turnstile.bindForm === 'function') {
+      window.HUB_turnstile.bindForm(form).then(function (fn) {
+        if (typeof fn === 'function') getTurnstileToken = fn;
+      });
+    }
 
     function isTerritorySponsorPackage(pkg) {
       return pkg === 'City Partner' || pkg === 'City Sponsor' || pkg === 'County Sponsor';
@@ -615,6 +642,7 @@
       }
 
       submitAdvertisingEnquiry(payload, {
+        getTurnstileToken: getTurnstileToken,
         onOk: function (message) {
           setEnquiryStatus(message, 'ok');
           form.reset();

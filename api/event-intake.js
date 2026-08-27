@@ -2,9 +2,10 @@
  * Public event intake API — organisers send details for staff to list.
  */
 const { json, setCors } = require('./_lib/auth');
-const { enforceRateLimit } = require('./_lib/rate-limit');
+const { enforceRateLimit, clientIp } = require('./_lib/rate-limit');
 const { useSupabase } = require('./_lib/supabase');
 const { submitEventIntake } = require('./_lib/event-intake');
+const { verifyTurnstileToken } = require('./_lib/turnstile');
 
 function parseBody(req) {
   let body = req.body;
@@ -46,12 +47,25 @@ module.exports = async function handler(req, res) {
     return json(res, 503, {
       ok: false,
       error: 'not_configured',
-      message: 'Online submissions are not available yet — email hello@thenetworkeruk.com.',
+      message: 'Online submissions are not available yet — email hi@thenetworkeruk.com.',
+    });
+  }
+
+  const body = parseBody(req);
+  const captcha = await verifyTurnstileToken(
+    body.turnstileToken || body['cf-turnstile-response'],
+    clientIp(req)
+  );
+  if (!captcha.ok) {
+    return json(res, 400, {
+      ok: false,
+      error: captcha.error || 'captcha_failed',
+      message: 'Please complete the security check and try again.',
     });
   }
 
   try {
-    const result = await submitEventIntake(parseBody(req));
+    const result = await submitEventIntake(body);
     if (!result.ok) {
       return json(res, 400, {
         ok: false,

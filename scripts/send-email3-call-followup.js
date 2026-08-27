@@ -20,7 +20,7 @@ const { mergeEmailPreviewVariables } = require('../api/_lib/email-preview-variab
 const { campaignSiteVars } = require('../api/_lib/organiser-campaign-defaults');
 
 const SITE = 'https://www.thenetworkeruk.com';
-const BOOK_CALL = 'https://savvycal.com/TheNetworkerUK/website-preview';
+const BOOK_CALL = 'https://www.thenetworkeruk.com/contact';
 const CSV = path.join(root, 'data/Email3-A-Segment.csv');
 const SLUG = 'organiser_call_followup';
 

@@ -75,19 +75,19 @@ window.HUB_SEO_DATA = {
     },
     {
       "question": "I forgot my password — how do I sign in?",
-      "answer": "Go to /login and use the password reset link. Enter your email and follow the instructions. If you are still stuck, email hello@thenetworkeruk.com from the address on your account.",
+      "answer": "Go to /login and use the password reset link. Enter your email and follow the instructions. If you are still stuck, email hi@thenetworkeruk.com from the address on your account.",
       "category": "general",
       "icon": "🔑"
     },
     {
       "question": "I did not receive my booking confirmation email",
-      "answer": "Check your spam or junk folder and confirm your account email is correct. Your tickets also appear in My account at /account/. If you still cannot find your booking, email hello@thenetworkeruk.com with the event name and email address used at checkout.",
+      "answer": "Check your spam or junk folder and confirm your account email is correct. Your tickets also appear in My account at /account/. If you still cannot find your booking, email hi@thenetworkeruk.com with the event name and email address used at checkout.",
       "category": "buyers",
       "icon": "📧"
     },
     {
       "question": "Can I transfer my ticket to someone else?",
-      "answer": "Tickets are generally non-transferable without the organiser's consent. Contact the organiser via the event listing page to ask. For help, email hello@thenetworkeruk.com with your order reference.",
+      "answer": "Tickets are generally non-transferable without the organiser's consent. Contact the organiser via the event listing page to ask. For help, email hi@thenetworkeruk.com with your order reference.",
       "category": "buyers",
       "icon": "🎟️"
     },
@@ -105,7 +105,7 @@ window.HUB_SEO_DATA = {
     },
     {
       "question": "Who owns my group logo and photos on The Networker UK?",
-      "answer": "You keep ownership of your group name, logo, photos, and copy. By publishing a profile or listing you give The Networker Group Ltd a licence to display that content on the Hub so people can find you. While your page is public we may also show your group name and logo in Hub marketing that promotes the directory (for example founding-organiser strips or social round-ups of listed groups). We do not sell your logo as a standalone asset. Email hello@thenetworkeruk.com to ask us to stop featuring your logo in new Hub marketing. Full detail: /legal-policies#organisers",
+      "answer": "You keep ownership of your group name, logo, photos, and copy. By publishing a profile or listing you give The Networker Group Ltd a licence to display that content on the Hub so people can find you. While your page is public we may also show your group name and logo in Hub marketing that promotes the directory (for example founding-organiser strips or social round-ups of listed groups). We do not sell your logo as a standalone asset. Email hi@thenetworkeruk.com to ask us to stop featuring your logo in new Hub marketing. Full detail: /legal-policies#organisers",
       "category": "organisers",
       "icon": "🖼️"
     },
@@ -123,7 +123,7 @@ window.HUB_SEO_DATA = {
     },
     {
       "question": "What happens if I remove my group from The Networker UK?",
-      "answer": "You can unpublish events and ask us to unpublish your organiser page from the public directory (via your dashboard where available, or hello@thenetworkeruk.com). Once unpublished, your page and events are no longer shown on public browse. We may retain account, booking and payment records where the law or disputes require it. Attendee data you already downloaded remains your responsibility to delete when no longer needed. See /legal-policies#organisers",
+      "answer": "You can unpublish events and ask us to unpublish your organiser page from the public directory (via your dashboard where available, or hi@thenetworkeruk.com). Once unpublished, your page and events are no longer shown on public browse. We may retain account, booking and payment records where the law or disputes require it. Attendee data you already downloaded remains your responsibility to delete when no longer needed. See /legal-policies#organisers",
       "category": "organisers",
       "icon": "🚪"
     },
@@ -141,13 +141,13 @@ window.HUB_SEO_DATA = {
     },
     {
       "question": "How much does it cost to list an event as an organiser?",
-      "answer": "There is no monthly subscription to list events. Use the organiser dashboard at /organiser/ to publish free or paid events. For paid tickets, attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before payment), which covers platform and payment processing — you receive the full ticket price. Free events do not require Stripe. Email hello@thenetworkeruk.com for onboarding help.",
+      "answer": "There is no monthly subscription to list events. Use the organiser dashboard at /organiser/ to publish free or paid events. For paid tickets, attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before payment), which covers platform and payment processing — you receive the full ticket price. Free events do not require Stripe. Email hi@thenetworkeruk.com for onboarding help.",
       "category": "organisers",
       "icon": "💷"
     },
     {
       "question": "Why is my event not showing on the browse events page?",
-      "answer": "Public browse only shows events that are Published (not Draft), Approved, and linked to a published organiser profile. Complete tickets, refund policy, and publish in /organiser/. Email hello@thenetworkeruk.com with the event title if it is still missing.",
+      "answer": "Public browse only shows events that are Published (not Draft), Approved, and linked to a published organiser profile. Complete tickets, refund policy, and publish in /organiser/. Email hi@thenetworkeruk.com with the event title if it is still missing.",
       "category": "organisers",
       "icon": "👁️"
     },
@@ -239,7 +239,7 @@ window.HUB_SEO_DATA = {
           "url": "https://www.thenetworkeruk.com",
           "logo": "https://www.thenetworkeruk.com/assets/logo.png",
           "image": "https://www.thenetworkeruk.com/assets/logo.png",
-          "email": "hello@thenetworkeruk.com",
+          "email": "hi@thenetworkeruk.com",
           "description": "UK platform for networking events, exhibitions, and business opportunities. Operated by The Networker Group Ltd (Companies House 15252227) — the same team as the Networker UK directory.",
           "identifier": [
             {
@@ -269,7 +269,7 @@ window.HUB_SEO_DATA = {
           "contactPoint": {
             "@type": "ContactPoint",
             "contactType": "customer support",
-            "email": "hello@thenetworkeruk.com",
+            "email": "hi@thenetworkeruk.com",
             "availableLanguage": [
               "English"
             ]
@@ -379,7 +379,7 @@ window.HUB_SEO_DATA = {
           "url": "https://www.thenetworkeruk.com",
           "logo": "https://www.thenetworkeruk.com/assets/logo.png",
           "image": "https://www.thenetworkeruk.com/assets/logo.png",
-          "email": "hello@thenetworkeruk.com",
+          "email": "hi@thenetworkeruk.com",
           "description": "UK platform for networking events, exhibitions, and business opportunities. Operated by The Networker Group Ltd (Companies House 15252227) — the same team as the Networker UK directory.",
           "identifier": [
             {
@@ -409,7 +409,7 @@ window.HUB_SEO_DATA = {
           "contactPoint": {
             "@type": "ContactPoint",
             "contactType": "customer support",
-            "email": "hello@thenetworkeruk.com",
+            "email": "hi@thenetworkeruk.com",
             "availableLanguage": [
               "English"
             ]
@@ -533,7 +533,7 @@ window.HUB_SEO_DATA = {
               "name": "I forgot my password — how do I sign in?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Go to /login and use the password reset link. Enter your email and follow the instructions. If you are still stuck, email hello@thenetworkeruk.com from the address on your account."
+                "text": "Go to /login and use the password reset link. Enter your email and follow the instructions. If you are still stuck, email hi@thenetworkeruk.com from the address on your account."
               }
             },
             {
@@ -541,7 +541,7 @@ window.HUB_SEO_DATA = {
               "name": "I did not receive my booking confirmation email",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Check your spam or junk folder and confirm your account email is correct. Your tickets also appear in My account at /account/. If you still cannot find your booking, email hello@thenetworkeruk.com with the event name and email address used at checkout."
+                "text": "Check your spam or junk folder and confirm your account email is correct. Your tickets also appear in My account at /account/. If you still cannot find your booking, email hi@thenetworkeruk.com with the event name and email address used at checkout."
               }
             },
             {
@@ -549,7 +549,7 @@ window.HUB_SEO_DATA = {
               "name": "Can I transfer my ticket to someone else?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Tickets are generally non-transferable without the organiser's consent. Contact the organiser via the event listing page to ask. For help, email hello@thenetworkeruk.com with your order reference."
+                "text": "Tickets are generally non-transferable without the organiser's consent. Contact the organiser via the event listing page to ask. For help, email hi@thenetworkeruk.com with your order reference."
               }
             },
             {
@@ -573,7 +573,7 @@ window.HUB_SEO_DATA = {
               "name": "Who owns my group logo and photos on The Networker UK?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "You keep ownership of your group name, logo, photos, and copy. By publishing a profile or listing you give The Networker Group Ltd a licence to display that content on the Hub so people can find you. While your page is public we may also show your group name and logo in Hub marketing that promotes the directory (for example founding-organiser strips or social round-ups of listed groups). We do not sell your logo as a standalone asset. Email hello@thenetworkeruk.com to ask us to stop featuring your logo in new Hub marketing. Full detail: /legal-policies#organisers"
+                "text": "You keep ownership of your group name, logo, photos, and copy. By publishing a profile or listing you give The Networker Group Ltd a licence to display that content on the Hub so people can find you. While your page is public we may also show your group name and logo in Hub marketing that promotes the directory (for example founding-organiser strips or social round-ups of listed groups). We do not sell your logo as a standalone asset. Email hi@thenetworkeruk.com to ask us to stop featuring your logo in new Hub marketing. Full detail: /legal-policies#organisers"
               }
             },
             {
@@ -597,7 +597,7 @@ window.HUB_SEO_DATA = {
               "name": "What happens if I remove my group from The Networker UK?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "You can unpublish events and ask us to unpublish your organiser page from the public directory (via your dashboard where available, or hello@thenetworkeruk.com). Once unpublished, your page and events are no longer shown on public browse. We may retain account, booking and payment records where the law or disputes require it. Attendee data you already downloaded remains your responsibility to delete when no longer needed. See /legal-policies#organisers"
+                "text": "You can unpublish events and ask us to unpublish your organiser page from the public directory (via your dashboard where available, or hi@thenetworkeruk.com). Once unpublished, your page and events are no longer shown on public browse. We may retain account, booking and payment records where the law or disputes require it. Attendee data you already downloaded remains your responsibility to delete when no longer needed. See /legal-policies#organisers"
               }
             },
             {
@@ -621,7 +621,7 @@ window.HUB_SEO_DATA = {
               "name": "How much does it cost to list an event as an organiser?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "There is no monthly subscription to list events. Use the organiser dashboard at /organiser/ to publish free or paid events. For paid tickets, attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before payment), which covers platform and payment processing — you receive the full ticket price. Free events do not require Stripe. Email hello@thenetworkeruk.com for onboarding help."
+                "text": "There is no monthly subscription to list events. Use the organiser dashboard at /organiser/ to publish free or paid events. For paid tickets, attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before payment), which covers platform and payment processing — you receive the full ticket price. Free events do not require Stripe. Email hi@thenetworkeruk.com for onboarding help."
               }
             },
             {
@@ -629,7 +629,7 @@ window.HUB_SEO_DATA = {
               "name": "Why is my event not showing on the browse events page?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "Public browse only shows events that are Published (not Draft), Approved, and linked to a published organiser profile. Complete tickets, refund policy, and publish in /organiser/. Email hello@thenetworkeruk.com with the event title if it is still missing."
+                "text": "Public browse only shows events that are Published (not Draft), Approved, and linked to a published organiser profile. Complete tickets, refund policy, and publish in /organiser/. Email hi@thenetworkeruk.com with the event title if it is still missing."
               }
             },
             {
@@ -739,7 +739,7 @@ window.HUB_SEO_DATA = {
           "url": "https://www.thenetworkeruk.com",
           "logo": "https://www.thenetworkeruk.com/assets/logo.png",
           "image": "https://www.thenetworkeruk.com/assets/logo.png",
-          "email": "hello@thenetworkeruk.com",
+          "email": "hi@thenetworkeruk.com",
           "description": "UK platform for networking events, exhibitions, and business opportunities. Operated by The Networker Group Ltd (Companies House 15252227) — the same team as the Networker UK directory.",
           "identifier": [
             {
@@ -769,7 +769,7 @@ window.HUB_SEO_DATA = {
           "contactPoint": {
             "@type": "ContactPoint",
             "contactType": "customer support",
-            "email": "hello@thenetworkeruk.com",
+            "email": "hi@thenetworkeruk.com",
             "availableLanguage": [
               "English"
             ]
@@ -848,7 +848,7 @@ window.HUB_SEO_DATA = {
           "url": "https://www.thenetworkeruk.com",
           "logo": "https://www.thenetworkeruk.com/assets/logo.png",
           "image": "https://www.thenetworkeruk.com/assets/logo.png",
-          "email": "hello@thenetworkeruk.com",
+          "email": "hi@thenetworkeruk.com",
           "description": "UK platform for networking events, exhibitions, and business opportunities. Operated by The Networker Group Ltd (Companies House 15252227) — the same team as the Networker UK directory.",
           "identifier": [
             {
@@ -878,7 +878,7 @@ window.HUB_SEO_DATA = {
           "contactPoint": {
             "@type": "ContactPoint",
             "contactType": "customer support",
-            "email": "hello@thenetworkeruk.com",
+            "email": "hi@thenetworkeruk.com",
             "availableLanguage": [
               "English"
             ]
@@ -912,7 +912,7 @@ window.HUB_SEO_DATA = {
             "url": "https://www.thenetworkeruk.com",
             "logo": "https://www.thenetworkeruk.com/assets/logo.png",
             "image": "https://www.thenetworkeruk.com/assets/logo.png",
-            "email": "hello@thenetworkeruk.com",
+            "email": "hi@thenetworkeruk.com",
             "description": "UK platform for networking events, exhibitions, and business opportunities. Operated by The Networker Group Ltd (Companies House 15252227) — the same team as the Networker UK directory.",
             "identifier": [
               {
@@ -942,7 +942,7 @@ window.HUB_SEO_DATA = {
             "contactPoint": {
               "@type": "ContactPoint",
               "contactType": "customer support",
-              "email": "hello@thenetworkeruk.com",
+              "email": "hi@thenetworkeruk.com",
               "availableLanguage": [
                 "English"
               ]
@@ -976,7 +976,7 @@ window.HUB_SEO_DATA = {
           "url": "https://www.thenetworkeruk.com",
           "logo": "https://www.thenetworkeruk.com/assets/logo.png",
           "image": "https://www.thenetworkeruk.com/assets/logo.png",
-          "email": "hello@thenetworkeruk.com",
+          "email": "hi@thenetworkeruk.com",
           "description": "UK platform for networking events, exhibitions, and business opportunities. Operated by The Networker Group Ltd (Companies House 15252227) — the same team as the Networker UK directory.",
           "identifier": [
             {
@@ -1006,7 +1006,7 @@ window.HUB_SEO_DATA = {
           "contactPoint": {
             "@type": "ContactPoint",
             "contactType": "customer support",
-            "email": "hello@thenetworkeruk.com",
+            "email": "hi@thenetworkeruk.com",
             "availableLanguage": [
               "English"
             ]
@@ -1040,7 +1040,7 @@ window.HUB_SEO_DATA = {
             "url": "https://www.thenetworkeruk.com",
             "logo": "https://www.thenetworkeruk.com/assets/logo.png",
             "image": "https://www.thenetworkeruk.com/assets/logo.png",
-            "email": "hello@thenetworkeruk.com",
+            "email": "hi@thenetworkeruk.com",
             "description": "UK platform for networking events, exhibitions, and business opportunities. Operated by The Networker Group Ltd (Companies House 15252227) — the same team as the Networker UK directory.",
             "identifier": [
               {
@@ -1070,7 +1070,7 @@ window.HUB_SEO_DATA = {
             "contactPoint": {
               "@type": "ContactPoint",
               "contactType": "customer support",
-              "email": "hello@thenetworkeruk.com",
+              "email": "hi@thenetworkeruk.com",
               "availableLanguage": [
                 "English"
               ]
@@ -1104,7 +1104,7 @@ window.HUB_SEO_DATA = {
           "url": "https://www.thenetworkeruk.com",
           "logo": "https://www.thenetworkeruk.com/assets/logo.png",
           "image": "https://www.thenetworkeruk.com/assets/logo.png",
-          "email": "hello@thenetworkeruk.com",
+          "email": "hi@thenetworkeruk.com",
           "description": "UK platform for networking events, exhibitions, and business opportunities. Operated by The Networker Group Ltd (Companies House 15252227) — the same team as the Networker UK directory.",
           "identifier": [
             {
@@ -1134,7 +1134,7 @@ window.HUB_SEO_DATA = {
           "contactPoint": {
             "@type": "ContactPoint",
             "contactType": "customer support",
-            "email": "hello@thenetworkeruk.com",
+            "email": "hi@thenetworkeruk.com",
             "availableLanguage": [
               "English"
             ]
@@ -1168,7 +1168,7 @@ window.HUB_SEO_DATA = {
             "url": "https://www.thenetworkeruk.com",
             "logo": "https://www.thenetworkeruk.com/assets/logo.png",
             "image": "https://www.thenetworkeruk.com/assets/logo.png",
-            "email": "hello@thenetworkeruk.com",
+            "email": "hi@thenetworkeruk.com",
             "description": "UK platform for networking events, exhibitions, and business opportunities. Operated by The Networker Group Ltd (Companies House 15252227) — the same team as the Networker UK directory.",
             "identifier": [
               {
@@ -1198,7 +1198,7 @@ window.HUB_SEO_DATA = {
             "contactPoint": {
               "@type": "ContactPoint",
               "contactType": "customer support",
-              "email": "hello@thenetworkeruk.com",
+              "email": "hi@thenetworkeruk.com",
               "availableLanguage": [
                 "English"
               ]
@@ -1232,7 +1232,7 @@ window.HUB_SEO_DATA = {
           "url": "https://www.thenetworkeruk.com",
           "logo": "https://www.thenetworkeruk.com/assets/logo.png",
           "image": "https://www.thenetworkeruk.com/assets/logo.png",
-          "email": "hello@thenetworkeruk.com",
+          "email": "hi@thenetworkeruk.com",
           "description": "UK platform for networking events, exhibitions, and business opportunities. Operated by The Networker Group Ltd (Companies House 15252227) — the same team as the Networker UK directory.",
           "identifier": [
             {
@@ -1262,7 +1262,7 @@ window.HUB_SEO_DATA = {
           "contactPoint": {
             "@type": "ContactPoint",
             "contactType": "customer support",
-            "email": "hello@thenetworkeruk.com",
+            "email": "hi@thenetworkeruk.com",
             "availableLanguage": [
               "English"
             ]
@@ -1296,7 +1296,7 @@ window.HUB_SEO_DATA = {
             "url": "https://www.thenetworkeruk.com",
             "logo": "https://www.thenetworkeruk.com/assets/logo.png",
             "image": "https://www.thenetworkeruk.com/assets/logo.png",
-            "email": "hello@thenetworkeruk.com",
+            "email": "hi@thenetworkeruk.com",
             "description": "UK platform for networking events, exhibitions, and business opportunities. Operated by The Networker Group Ltd (Companies House 15252227) — the same team as the Networker UK directory.",
             "identifier": [
               {
@@ -1326,7 +1326,7 @@ window.HUB_SEO_DATA = {
             "contactPoint": {
               "@type": "ContactPoint",
               "contactType": "customer support",
-              "email": "hello@thenetworkeruk.com",
+              "email": "hi@thenetworkeruk.com",
               "availableLanguage": [
                 "English"
               ]
@@ -1360,7 +1360,7 @@ window.HUB_SEO_DATA = {
           "url": "https://www.thenetworkeruk.com",
           "logo": "https://www.thenetworkeruk.com/assets/logo.png",
           "image": "https://www.thenetworkeruk.com/assets/logo.png",
-          "email": "hello@thenetworkeruk.com",
+          "email": "hi@thenetworkeruk.com",
           "description": "UK platform for networking events, exhibitions, and business opportunities. Operated by The Networker Group Ltd (Companies House 15252227) — the same team as the Networker UK directory.",
           "identifier": [
             {
@@ -1390,7 +1390,7 @@ window.HUB_SEO_DATA = {
           "contactPoint": {
             "@type": "ContactPoint",
             "contactType": "customer support",
-            "email": "hello@thenetworkeruk.com",
+            "email": "hi@thenetworkeruk.com",
             "availableLanguage": [
               "English"
             ]
@@ -1424,7 +1424,7 @@ window.HUB_SEO_DATA = {
             "url": "https://www.thenetworkeruk.com",
             "logo": "https://www.thenetworkeruk.com/assets/logo.png",
             "image": "https://www.thenetworkeruk.com/assets/logo.png",
-            "email": "hello@thenetworkeruk.com",
+            "email": "hi@thenetworkeruk.com",
             "description": "UK platform for networking events, exhibitions, and business opportunities. Operated by The Networker Group Ltd (Companies House 15252227) — the same team as the Networker UK directory.",
             "identifier": [
               {
@@ -1454,7 +1454,7 @@ window.HUB_SEO_DATA = {
             "contactPoint": {
               "@type": "ContactPoint",
               "contactType": "customer support",
-              "email": "hello@thenetworkeruk.com",
+              "email": "hi@thenetworkeruk.com",
               "availableLanguage": [
                 "English"
               ]
@@ -1488,7 +1488,7 @@ window.HUB_SEO_DATA = {
           "url": "https://www.thenetworkeruk.com",
           "logo": "https://www.thenetworkeruk.com/assets/logo.png",
           "image": "https://www.thenetworkeruk.com/assets/logo.png",
-          "email": "hello@thenetworkeruk.com",
+          "email": "hi@thenetworkeruk.com",
           "description": "UK platform for networking events, exhibitions, and business opportunities. Operated by The Networker Group Ltd (Companies House 15252227) — the same team as the Networker UK directory.",
           "identifier": [
             {
@@ -1518,7 +1518,7 @@ window.HUB_SEO_DATA = {
           "contactPoint": {
             "@type": "ContactPoint",
             "contactType": "customer support",
-            "email": "hello@thenetworkeruk.com",
+            "email": "hi@thenetworkeruk.com",
             "availableLanguage": [
               "English"
             ]
@@ -1552,7 +1552,7 @@ window.HUB_SEO_DATA = {
             "url": "https://www.thenetworkeruk.com",
             "logo": "https://www.thenetworkeruk.com/assets/logo.png",
             "image": "https://www.thenetworkeruk.com/assets/logo.png",
-            "email": "hello@thenetworkeruk.com",
+            "email": "hi@thenetworkeruk.com",
             "description": "UK platform for networking events, exhibitions, and business opportunities. Operated by The Networker Group Ltd (Companies House 15252227) — the same team as the Networker UK directory.",
             "identifier": [
               {
@@ -1582,7 +1582,7 @@ window.HUB_SEO_DATA = {
             "contactPoint": {
               "@type": "ContactPoint",
               "contactType": "customer support",
-              "email": "hello@thenetworkeruk.com",
+              "email": "hi@thenetworkeruk.com",
               "availableLanguage": [
                 "English"
               ]
@@ -1616,7 +1616,7 @@ window.HUB_SEO_DATA = {
           "url": "https://www.thenetworkeruk.com",
           "logo": "https://www.thenetworkeruk.com/assets/logo.png",
           "image": "https://www.thenetworkeruk.com/assets/logo.png",
-          "email": "hello@thenetworkeruk.com",
+          "email": "hi@thenetworkeruk.com",
           "description": "UK platform for networking events, exhibitions, and business opportunities. Operated by The Networker Group Ltd (Companies House 15252227) — the same team as the Networker UK directory.",
           "identifier": [
             {
@@ -1646,7 +1646,7 @@ window.HUB_SEO_DATA = {
           "contactPoint": {
             "@type": "ContactPoint",
             "contactType": "customer support",
-            "email": "hello@thenetworkeruk.com",
+            "email": "hi@thenetworkeruk.com",
             "availableLanguage": [
               "English"
             ]
@@ -1692,7 +1692,7 @@ window.HUB_SEO_DATA = {
           "url": "https://www.thenetworkeruk.com",
           "logo": "https://www.thenetworkeruk.com/assets/logo.png",
           "image": "https://www.thenetworkeruk.com/assets/logo.png",
-          "email": "hello@thenetworkeruk.com",
+          "email": "hi@thenetworkeruk.com",
           "description": "UK platform for networking events, exhibitions, and business opportunities. Operated by The Networker Group Ltd (Companies House 15252227) — the same team as the Networker UK directory.",
           "identifier": [
             {
@@ -1722,7 +1722,7 @@ window.HUB_SEO_DATA = {
           "contactPoint": {
             "@type": "ContactPoint",
             "contactType": "customer support",
-            "email": "hello@thenetworkeruk.com",
+            "email": "hi@thenetworkeruk.com",
             "availableLanguage": [
               "English"
             ]
@@ -1768,7 +1768,7 @@ window.HUB_SEO_DATA = {
           "url": "https://www.thenetworkeruk.com",
           "logo": "https://www.thenetworkeruk.com/assets/logo.png",
           "image": "https://www.thenetworkeruk.com/assets/logo.png",
-          "email": "hello@thenetworkeruk.com",
+          "email": "hi@thenetworkeruk.com",
           "description": "UK platform for networking events, exhibitions, and business opportunities. Operated by The Networker Group Ltd (Companies House 15252227) — the same team as the Networker UK directory.",
           "identifier": [
             {
@@ -1798,7 +1798,7 @@ window.HUB_SEO_DATA = {
           "contactPoint": {
             "@type": "ContactPoint",
             "contactType": "customer support",
-            "email": "hello@thenetworkeruk.com",
+            "email": "hi@thenetworkeruk.com",
             "availableLanguage": [
               "English"
             ]
@@ -2377,7 +2377,7 @@ window.HUB_SEO_DATA = {
               "@type": "HowToStep",
               "position": 3,
               "name": "Confirm the claim",
-              "text": "Follow the claim prompt on Overview in the organiser dashboard. Review the existing profile details and confirm you represent this group. No prompt? Use Request access on your group profile or email hello@thenetworkeruk.com.",
+              "text": "Follow the claim prompt on Overview in the organiser dashboard. Review the existing profile details and confirm you represent this group. No prompt? Use Request access on your group profile or email hi@thenetworkeruk.com.",
               "url": "https://www.thenetworkeruk.com/guides/claim-your-organiser-page#confirm-claim"
             },
             {

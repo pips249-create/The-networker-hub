@@ -310,6 +310,15 @@
   renderCalendar();
   syncDatesField();
 
+  var getTurnstileToken = function () {
+    return Promise.resolve('');
+  };
+  if (window.HUB_turnstile && typeof window.HUB_turnstile.bindForm === 'function') {
+    window.HUB_turnstile.bindForm(form).then(function (fn) {
+      if (typeof fn === 'function') getTurnstileToken = fn;
+    });
+  }
+
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     setStatus('', '');
@@ -355,11 +364,15 @@
       submitBtn.textContent = 'Sending…';
     }
 
-    fetch('/api/event-intake', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    })
+    getTurnstileToken()
+      .then(function (token) {
+        if (token) payload.turnstileToken = token;
+        return fetch('/api/event-intake', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+      })
       .then(function (res) {
         return res.json().then(function (data) {
           return { ok: res.ok, data: data };
@@ -380,12 +393,12 @@
         }
         setStatus(
           (result.data && result.data.message) ||
-            'Could not send your details. Email hello@thenetworkeruk.com instead.',
+            'Could not send your details. Email hi@thenetworkeruk.com instead.',
           'error'
         );
       })
       .catch(function () {
-        setStatus('Could not send your details. Email hello@thenetworkeruk.com instead.', 'error');
+        setStatus('Could not send your details. Email hi@thenetworkeruk.com instead.', 'error');
       })
       .finally(function () {
         if (submitBtn) {

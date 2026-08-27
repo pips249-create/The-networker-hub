@@ -2,10 +2,11 @@
  * Public advertising API — enquiry submission and slot availability.
  */
 const { json, setCors } = require('./_lib/auth');
-const { enforceRateLimit } = require('./_lib/rate-limit');
+const { enforceRateLimit, clientIp } = require('./_lib/rate-limit');
 const { useSupabase } = require('./_lib/supabase');
 const { submitAdvertisingEnquiry } = require('./_lib/advertising-enquiries');
 const { getAdvertisingAvailability } = require('./_lib/advertising-availability');
+const { verifyTurnstileToken } = require('./_lib/turnstile');
 
 function parseBody(req) {
   let body = req.body;
@@ -75,8 +76,21 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    const body = parseBody(req);
+    const captcha = await verifyTurnstileToken(
+      body.turnstileToken || body['cf-turnstile-response'],
+      clientIp(req)
+    );
+    if (!captcha.ok) {
+      return json(res, 400, {
+        ok: false,
+        error: captcha.error || 'captcha_failed',
+        message: 'Please complete the security check and try again.',
+      });
+    }
+
     try {
-      const result = await submitAdvertisingEnquiry(parseBody(req));
+      const result = await submitAdvertisingEnquiry(body);
       if (!result.ok) {
         return json(res, 400, {
           ok: false,

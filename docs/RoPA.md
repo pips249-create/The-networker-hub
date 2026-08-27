@@ -15,7 +15,7 @@
 |-------|--------|
 | Organisation | The Networker Group Ltd |
 | Address | Magpas HQ, Barnwell Road, Alconbury Weald, Huntingdon, Cambridgeshire PE28 4YF |
-| Contact | hello@thenetworkeruk.com |
+| Contact | hi@thenetworkeruk.com |
 | DPO / privacy lead | Catherine Hancher (Director); Rosie McGilvray (cover) |
 
 ---
@@ -192,7 +192,7 @@ Organisers are **separate controllers** for attendee data they receive. Organise
 
 ## 6. Data subject rights
 
-Handled via procedure in `GDPR-SAR-PROCEDURE.md`. Contact: hello@thenetworkeruk.com.
+Handled via procedure in `GDPR-SAR-PROCEDURE.md`. Contact: hi@thenetworkeruk.com.
 
 ---
 

@@ -8,8 +8,9 @@ const {
   siteAccessStatus,
 } = require('../site-access');
 const { addPreviewWaitlistEmail } = require('../preview-waitlist');
-const { enforceRateLimitAsync } = require('../rate-limit');
+const { enforceRateLimitAsync, clientIp } = require('../rate-limit');
 const { timingSafeEqualString } = require('../crypto-utils');
+const { verifyTurnstileToken } = require('../turnstile');
 
 function parseBody(req) {
   let body = req.body;
@@ -59,6 +60,17 @@ async function handleWaitlistSignup(req, res, body) {
       error: 'rate_limited',
       message: 'Too many sign-up attempts. Please try again shortly.',
       retryAfterSec: limited.retryAfterSec,
+    });
+  }
+
+  const captcha = await verifyTurnstileToken(
+    body.turnstileToken || body['cf-turnstile-response'],
+    clientIp(req)
+  );
+  if (!captcha.ok) {
+    return json(res, 400, {
+      error: captcha.error || 'captcha_failed',
+      message: 'Please complete the security check and try again.',
     });
   }
 

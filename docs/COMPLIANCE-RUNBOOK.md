@@ -47,7 +47,7 @@ Internal checklist for items that cannot be fully automated in code. Review quar
 | Backups / monitoring | `docs/OPS-RELIABILITY.md` — Supabase Pro backups + UptimeRobot on `/api/health` | Catherine | ☐ Confirm Pro + monitor |
 | Breach runbook | Named leads in `docs/DATA-BREACH-RESPONSE.md` | Catherine | ☑ |
 | GDPR requests | `docs/GDPR-SAR-PROCEDURE.md` — hello@ monitored | Catherine / Rosie | ☑ Procedure + owners |
-| Complaints | `docs/COMPLAINTS-PROCEDURE.md` — log in Command Centre → Support → Complaints | Catherine Hancher | ☑ hello@thenetworkeruk.com monitored |
+| Complaints | `docs/COMPLAINTS-PROCEDURE.md` — log in Command Centre → Support → Complaints | Catherine Hancher | ☑ hi@thenetworkeruk.com monitored |
 | HMRC platform reporting | `docs/HMRC-PLATFORM-OPERATORS.md`; accountant sign-off | Finance | ☐ |
 
 ### Operations

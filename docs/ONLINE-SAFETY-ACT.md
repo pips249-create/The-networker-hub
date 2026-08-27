@@ -62,7 +62,7 @@ Focus moderation and reporting on content that is **illegal**:
 |--------------|-------------|--------|
 | Reviews | “Report review” on event/organiser pages + organiser dashboard | ✓ / extending to organiser dashboard |
 | Opportunity listings | “Report listing” on detail page | ☑ Wired |
-| General / illegal content | hello@thenetworkeruk.com — subject “Content report” | Document in footer/help |
+| General / illegal content | hi@thenetworkeruk.com — subject “Content report” | Document in footer/help |
 
 ### C. Moderation capability
 

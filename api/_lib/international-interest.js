@@ -24,7 +24,7 @@ function normalizeIntent(raw) {
 
 async function submitInternationalInterest(payload) {
   if (!isSupabaseConfigured()) {
-    const err = new Error('Interest capture is not configured yet — email hello@thenetworkeruk.com.');
+    const err = new Error('Interest capture is not configured yet — email hi@thenetworkeruk.com.');
     err.code = 'not_configured';
     throw err;
   }

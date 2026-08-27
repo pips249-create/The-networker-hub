@@ -7,7 +7,7 @@ Send to **50–100 organisers** first (not the full 3,500 list). Goal: **20 grou
 | Step | When | Template | From | Asks for password? |
 |------|------|----------|------|-------------------|
 | **Email 1** | This week | `organiser_rebrand_announcement` | `hello@the-networker.co.uk` (or co.uk inbox) | **No** |
-| **Email 2** | 3–5 days later | `organiser_launch_invite` | `hello@thenetworkeruk.com` | **Yes** (create password) |
+| **Email 2** | 3–5 days later | `organiser_launch_invite` | `hi@thenetworkeruk.com` | **Yes** (create password) |
 
 ### Why two emails?
 

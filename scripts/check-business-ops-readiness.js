@@ -60,7 +60,7 @@ const GATES = [
     weight: 1,
     check: () => {
       const text = fs.readFileSync(path.join(root, 'docs/GDPR-SAR-PROCEDURE.md'), 'utf8');
-      return /Catherine|Rosie/.test(text) && /hello@thenetworkerhub\.com/.test(text);
+      return /Catherine|Rosie/.test(text) && /hi@thenetworkeruk\.com/.test(text);
     },
   },
   {

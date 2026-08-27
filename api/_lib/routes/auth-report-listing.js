@@ -1,5 +1,6 @@
 const { sessionFromRequest, json, setCors } = require('../auth');
 const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
+const { enforceRateLimit } = require('../rate-limit');
 
 const REASONS = new Set([
   'misleading',
@@ -27,6 +28,19 @@ module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
 
   if (req.method !== 'POST') return json(res, 405, { error: 'method_not_allowed' });
+
+  const limited = enforceRateLimit(req, res, 'report_listing', {
+    max: 10,
+    windowMs: 600_000,
+  });
+  if (!limited.allowed) {
+    return json(res, 429, {
+      ok: false,
+      error: 'rate_limited',
+      message: 'Too many reports. Please wait a few minutes and try again.',
+      retryAfterSec: limited.retryAfterSec,
+    });
+  }
 
   if (!isSupabaseConfigured()) {
     return json(res, 503, { ok: false, error: 'not_configured' });

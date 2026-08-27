@@ -37,7 +37,7 @@ function linkifyAnswer(text) {
     const trail = path.slice(trimmed.length);
     return lead + '<a href="' + trimmed + '">' + trimmed + '</a>' + trail;
   });
-  html = html.replace(/hello@thenetworker(?:uk|hub)\.com/g, '<a href="mailto:hello@thenetworkeruk.com">hello@thenetworkeruk.com</a>');
+  html = html.replace(/(?:hello|hi)@thenetworker(?:uk|hub)\.com/g, '<a href="mailto:hi@thenetworkeruk.com">hi@thenetworkeruk.com</a>');
   html = html.replace(/rosie@thenetworker(?:uk|hub)\.com/g, '<a href="mailto:rosie@thenetworkeruk.com">rosie@thenetworkeruk.com</a>');
   html = html.replace(/\u0000ABS(\d+)\u0000/g, function (_m, idx) {
     const url = absUrls[Number(idx)];

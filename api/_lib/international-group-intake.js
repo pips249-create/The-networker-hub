@@ -173,7 +173,7 @@ function buildConfirmationEmailHtml(input) {
 async function submitInternationalGroupIntake(payload) {
   if (!isSupabaseConfigured()) {
     const err = new Error(
-      'Group intake is not configured yet — email hello@thenetworkeruk.com with your details.'
+      'Group intake is not configured yet — email hi@thenetworkeruk.com with your details.'
     );
     err.code = 'not_configured';
     throw err;
@@ -213,7 +213,7 @@ async function submitInternationalGroupIntake(payload) {
   if (insertRes.error) {
     if (/international_group_intake/i.test(insertRes.error.message || '')) {
       const err = new Error(
-        'Group intake is not configured yet — email hello@thenetworkeruk.com with your details.'
+        'Group intake is not configured yet — email hi@thenetworkeruk.com with your details.'
       );
       err.code = 'not_configured';
       throw err;

@@ -3,7 +3,7 @@ const BRAND_NAME = 'The Networker UK';
 const BRAND_NAME_SHORT = 'Networker UK';
 const LEGAL_NAME = 'The Networker Group Ltd';
 const DEFAULT_PUBLIC_SITE = 'https://www.thenetworkerhub.com';
-const SUPPORT_EMAIL = 'hello@thenetworkeruk.com';
+const SUPPORT_EMAIL = 'hi@thenetworkeruk.com';
 const MAIL_FROM_DOMAIN = 'mail.thenetworkerhub.com';
 const LOGO_ASSET_VERSION = '20260823uk3';
 

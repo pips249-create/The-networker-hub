@@ -210,7 +210,30 @@ While the live domain is up but the site is not yet public, lock it behind a sha
 3. Share the password only with your team.
 4. Clear unlocks anytime via `/site-access?lock=1`.
 
-**To open the site publicly:** remove `SITE_ACCESS_PASSWORD` from Vercel → **Redeploy**. No code change needed.
+**To open the site publicly (browse from 25 August 2026):**
+
+1. In Vercel → Project → Settings → Environment Variables → Production:
+   - **Remove** `SITE_ACCESS_PASSWORD`, **or** set `DISABLE_SITE_ACCESS_GATE=true`
+2. Redeploy Production.
+3. Confirm `/events/` and `/` load without redirecting to `/site-access`.
+4. Confirm `/robots.txt` allows crawl and `/sitemap.xml` / `/llms.txt` return 200.
+
+Optional hardening while the gate is still on: set `HUB_INTERNAL_SEO_SECRET` (random string) so middleware does not send `SITE_ACCESS_PASSWORD` as the `x-hub-internal-seo` header.
+
+---
+
+## Cloudflare Turnstile (optional bot protection)
+
+When both keys are set, public forms (event intake, advertising enquiries, preview waitlist) require a Turnstile token. If unset, forms work as before (rate limits + honeypots only).
+
+| Key | Notes |
+|-----|--------|
+| `TURNSTILE_SITE_KEY` | Public site key from Cloudflare Turnstile widget |
+| `TURNSTILE_SECRET_KEY` | Secret key — server verify only |
+
+Create a widget at [Cloudflare Turnstile](https://dash.cloudflare.com/?to=/:account/turnstile) (Managed / non-interactive recommended), add your production domain, then set both keys in Vercel and redeploy.
+
+---
 
 **Preview waitlist:** run migration `109_preview_waitlist.sql` in Supabase. Emails from the launch page are stored in `preview_waitlist`. View them in **Command Centre → Analytics → Waitlist**, or in the Supabase Table Editor.
 
@@ -224,5 +247,6 @@ After deploy, check `/api/auth/config-check` — `siteAccess.siteAccessRequired`
 |-----|---------|
 | `RESEND_API_KEY` | Email for forgot-password links |
 | `AUTH_SHOW_RESET_LINK` / `AUTH_DEV_RESET_LINK` | Preview-only opt-in (`true`) to include `resetUrl` in the forgot-password API when email is not sent. Production never returns `resetUrl`. |
+| `HUB_INTERNAL_SEO_SECRET` | Dedicated secret for middleware → seo-meta while gated (preferred over reusing the preview password) |
 
 See also: `AUTH-SETUP.md`

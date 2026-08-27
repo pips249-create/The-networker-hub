@@ -51,7 +51,7 @@ The Organiser shall:
 4. Honour data subject rights for data the Organiser holds  
 5. Not sell or disclose data to third parties except as needed to run the event (e.g. venue staff) under equivalent safeguards  
 6. Delete or anonymise data when no longer needed, subject to legal retention  
-7. Notify the Platform at **hello@thenetworkeruk.com** within 24 hours of becoming aware of a personal data breach affecting shared data  
+7. Notify the Platform at **hi@thenetworkeruk.com** within 24 hours of becoming aware of a personal data breach affecting shared data  
 
 ---
 

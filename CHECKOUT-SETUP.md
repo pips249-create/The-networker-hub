@@ -28,7 +28,7 @@ Run once in [Supabase SQL Editor](https://supabase.com/dashboard):
 | `STRIPE_CONNECT_ENABLED` | No (off by default) | Set `true` to route ticket revenue to organiser Connect accounts (destination charges) |
 | `STRIPE_WEBHOOK_SECRET` | **Yes (prod)** | From Stripe webhook endpoint |
 | `RESEND_API_KEY` | **Yes (emails)** | All transactional mail (bookings, welcome, reminders, saved events) |
-| `RESEND_FROM` | **Yes (emails)** | Verified sender, e.g. `The Networker UK <hello@thenetworkeruk.com>` |
+| `RESEND_FROM` | **Yes (emails)** | Verified sender, e.g. `The Networker UK <hi@thenetworkeruk.com>` |
 | `CRON_SECRET` | **Yes (production)** | Long random string — Vercel Cron sends `Authorization: Bearer <CRON_SECRET>` |
 
 **Local test sends:** copy `RESEND_API_KEY` and `RESEND_FROM` from Vercel into `local.env`, run `npm run sync-env`, restart `npm start`.

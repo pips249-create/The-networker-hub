@@ -20,7 +20,7 @@ Works while the site gate is on (bypassed in middleware).
 
 1. Create a free [UptimeRobot](https://uptimerobot.com) (or Better Stack) monitor.
 2. Type: **HTTP(s)** → URL above → every **5 minutes**.
-3. Alert to **hello@thenetworkeruk.com** (and a phone SMS if available).
+3. Alert to **hi@thenetworkeruk.com** (and a phone SMS if available).
 4. Optional second monitor: `https://www.thenetworkeruk.com/` (may 302/403 while gate is on — prefer `/api/health`).
 
 Also in Vercel: **Project → Settings → Notifications** — enable deployment failure emails for the team.

@@ -5,6 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Advertising &amp; sponsorship – The Networker UK</title>
 <meta name="description" content="Promote your brand on The Networker UK — sponsor events, organisers, and opportunities. Monthly billing or prepaid 1, 3, 6 or 12 months (save up to 15% yearly). View pricing and placements.">
+<!-- hub-static-seo -->
+<link rel="canonical" href="https://www.thenetworkeruk.com/advertising">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="The Networker UK">
+<meta property="og:title" content="Advertising &amp; sponsorship – The Networker UK">
+<meta property="og:description" content="Promote your brand on The Networker UK — sponsor the events directory, business opportunities, and event page placements.">
+<meta property="og:url" content="https://www.thenetworkeruk.com/advertising">
+<meta property="og:image" content="https://www.thenetworkeruk.com/assets/logo.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Advertising &amp; sponsorship – The Networker UK">
+<meta name="twitter:description" content="Promote your brand on The Networker UK — sponsor the events directory, business opportunities, and event page placements.">
+<meta name="twitter:image" content="https://www.thenetworkeruk.com/assets/logo.png">
+<!-- /hub-static-seo -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
@@ -97,7 +110,9 @@
       <h2 class="ad-enquiry-quick-title" id="ad-enquiry-quick-title">Get a media recommendation</h2>
       <p class="ad-enquiry-quick-lede">Not sure which placement fits your budget? Leave your details below and our partnerships team will send a tailored recommendation within one business day.</p>
       <form class="ad-enquiry-quick-form" id="ad-enquiry-quick-form">
-        <input type="text" name="website" class="ad-enquiry-honeypot" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <div class="ad-enquiry-honeypot" inert aria-hidden="true">
+          <label>Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+        </div>
         <div class="ad-enquiry-quick-fields">
           <label class="ad-enquiry-field">
             <span class="visually-hidden">Your name</span>
@@ -161,7 +176,7 @@
                   <aside class="ad-mock-city-partner-ad">
                     <span class="ad-mock-city-partner-badge">City Sponsor</span>
                     <span class="ad-mock-city-partner-logo">
-                      <img src="/assets/advertising-example-everlasting-build.png" alt="Everlasting Build" class="ad-mock-city-partner-logo-img" loading="lazy" decoding="async">
+                      <img src="/assets/advertising-example-everlasting-build.png" alt="Everlasting Build" class="ad-mock-city-partner-logo-img" width="1024" height="331" loading="lazy" decoding="async">
                     </span>
                   </aside>
                 </div>
@@ -183,7 +198,7 @@
               </details>
               <fieldset class="city-partner-term-fieldset">
                 <legend class="city-partner-section-label">Billing</legend>
-                <div class="city-partner-term-options" id="city-partner-term-options" role="radiogroup" aria-label="City Sponsor billing term">
+                <div class="city-partner-term-options" id="city-partner-term-options">
                   <label class="city-partner-term-option">
                     <input type="radio" name="city-partner-term" value="monthly" checked>
                     <span class="city-partner-term-option-copy">
@@ -290,7 +305,7 @@
                   <aside class="ad-mock-city-partner-ad">
                     <span class="ad-mock-city-partner-badge">County Sponsor</span>
                     <span class="ad-mock-city-partner-logo">
-                      <img src="/assets/advertising-example-everlasting-build.png" alt="Everlasting Build" class="ad-mock-city-partner-logo-img" loading="lazy" decoding="async">
+                      <img src="/assets/advertising-example-everlasting-build.png" alt="Everlasting Build" class="ad-mock-city-partner-logo-img" width="1024" height="331" loading="lazy" decoding="async">
                     </span>
                   </aside>
                 </div>
@@ -1533,7 +1548,9 @@
           <p class="ad-enquiry-lede">Prefer to share more detail? Complete the form below — we reply within one business day.</p>
         </header>
         <form class="ad-enquiry-form" id="ad-enquiry-form">
-          <input type="text" name="website" class="ad-enquiry-honeypot" tabindex="-1" autocomplete="off" aria-hidden="true">
+          <div class="ad-enquiry-honeypot" inert aria-hidden="true">
+            <label>Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label>
+          </div>
           <div class="ad-enquiry-grid">
             <label class="ad-enquiry-field">
               <span>Company name</span>
@@ -1593,7 +1610,7 @@
           <p class="ad-enquiry-note">
             We reply within one business day. Your details are used only to respond to this advertising enquiry.
             See our <a href="/legal-policies#privacy">privacy policy</a>.
-            Request deletion anytime via <a href="mailto:hello@thenetworkeruk.com">hello@thenetworkeruk.com</a>.
+            Request deletion anytime via <a href="mailto:hi@thenetworkeruk.com">hi@thenetworkeruk.com</a>.
           </p>
         </form>
       </div>
@@ -1611,7 +1628,8 @@
 <script src="js/site-footer.js?v=20260825navfull1" data-root=""></script>
 <script src="js/cms-sponsor-fields.js?v=20260609c"></script>
 <script src="js/cms-ad-blocks.js?v=20260722cp12"></script>
-<script src="js/advertising-page.js?v=20260818terms1"></script>
+<script src="js/hub-turnstile.js?v=20260827sec1"></script>
+<script src="js/advertising-page.js?v=20260827sec1"></script>
 <script src="js/city-partner-advertising.js?v=20260818terms1"></script>
 
 </body>

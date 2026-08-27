@@ -705,7 +705,7 @@
 
   const SERIES_SHARED_CARD_IDS = ['ee-card-details'];
 
-  const SUPPORT_EMAIL = 'hello@thenetworkeruk.com';
+  const SUPPORT_EMAIL = 'hi@thenetworkeruk.com';
 
   function ticketSalesLockBannerHtml() {
     return (

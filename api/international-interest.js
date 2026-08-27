@@ -46,7 +46,7 @@ module.exports = async function handler(req, res) {
     return json(res, 503, {
       ok: false,
       error: 'not_configured',
-      message: 'Online interest capture is not available yet — email hello@thenetworkeruk.com.',
+      message: 'Online interest capture is not available yet — email hi@thenetworkeruk.com.',
     });
   }
 

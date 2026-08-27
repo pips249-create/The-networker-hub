@@ -74,7 +74,7 @@ const GUIDE_PAGES = {
     steps: [
       { id: 'find-page', name: 'Find your group in the directory', text: 'Browse organisers on /events/ or search your group name. Many UK networking groups already have a page from the legacy Networker directory.' },
       { id: 'sign-in', name: 'Sign in with the right email', text: 'Sign in or create an account using the email address linked to your group. When it matches, a claim prompt appears automatically on your organiser dashboard. Email changed? Find your group on /events/ and use Request access on its profile page.' },
-      { id: 'confirm-claim', name: 'Confirm the claim', text: 'Follow the claim prompt on Overview in the organiser dashboard. Review the existing profile details and confirm you represent this group. No prompt? Use Request access on your group profile or email hello@thenetworkeruk.com.' },
+      { id: 'confirm-claim', name: 'Confirm the claim', text: 'Follow the claim prompt on Overview in the organiser dashboard. Review the existing profile details and confirm you represent this group. No prompt? Use Request access on your group profile or email hi@thenetworkeruk.com.' },
       { id: 'update-profile', name: 'Update your public profile', text: 'Add or refresh your logo, description, contact email, social links, and guest visit settings on your organiser page.' },
       { id: 'next-steps', name: 'List your next event', text: 'From My events choose List event, or open the getting started checklist on Overview. Connect Stripe under Revenue before publishing paid tickets.' },
     ],

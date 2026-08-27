@@ -1332,7 +1332,7 @@
           }
           showClaimStatus(
             (result.data && (result.data.message || result.data.error)) ||
-              'Could not send your request. Please email hello@thenetworkeruk.com instead.',
+              'Could not send your request. Please email hi@thenetworkeruk.com instead.',
             false
           );
         })

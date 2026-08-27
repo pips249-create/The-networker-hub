@@ -26,8 +26,8 @@ Checked publicly for the platform send path:
 | Apex SPF (`thenetworkeruk.com`) | Microsoft only | `v=spf1 include:spf.protection.outlook.com -all` — authorises Microsoft 365 for the root inbox, **not** Resend |
 | DKIM on `mail.thenetworkeruk.com` | Present | `resend._domainkey.mail` TXT in Vercel |
 | SPF / return-path | Present | `send.mail` TXT (`include:amazonses.com`) + MX (`feedback-smtp.eu-west-1.amazonses.com`) |
-| DMARC (`_dmarc.thenetworkeruk.com`) | Present | `v=DMARC1; p=none;` (optional: add `rua=mailto:hello@thenetworkeruk.com`) |
-| Apex MX | Microsoft 365 | Correct for receiving at `hello@thenetworkeruk.com` |
+| DMARC (`_dmarc.thenetworkeruk.com`) | Present | `v=DMARC1; p=none;` (optional: add `rua=mailto:hi@thenetworkeruk.com`) |
+| Apex MX | Microsoft 365 | Correct for receiving at `hi@thenetworkeruk.com` |
 
 **Bottom line:** Resend auth for `mail.thenetworkeruk.com` is in place (DKIM + `send.mail` SPF/MX + apex DMARC). Remaining junk/Other placement is mostly domain reputation and engagement — warm gently, ask recipients to move to Inbox, and avoid double nurture sends.
 
@@ -45,7 +45,7 @@ Checked publicly for the platform send path:
 ```
 Type: TXT
 Name: _dmarc
-Value: v=DMARC1; p=none; rua=mailto:hello@thenetworkeruk.com
+Value: v=DMARC1; p=none; rua=mailto:hi@thenetworkeruk.com
 ```
 
 7. Confirm Vercel env:
@@ -53,7 +53,7 @@ Value: v=DMARC1; p=none; rua=mailto:hello@thenetworkeruk.com
    - `RESEND_FROM` = `The Networker UK <hello@mail.thenetworkeruk.com>` (or another address on the **verified** domain)
 8. Redeploy. Send a test from Command Centre to Gmail **and** Outlook. Open the message → View headers → look for `spf=pass`, `dkim=pass`, `dmarc=pass`.
 
-Optional later: verify apex `thenetworkeruk.com` in Resend too if you want From addresses like `hello@thenetworkeruk.com` without the `mail.` prefix. Do **not** merge Resend into the existing Microsoft SPF on apex without care — you need a single SPF record that includes both `spf.protection.outlook.com` and Resend’s include.
+Optional later: verify apex `thenetworkeruk.com` in Resend too if you want From addresses like `hi@thenetworkeruk.com` without the `mail.` prefix. Do **not** merge Resend into the existing Microsoft SPF on apex without care — you need a single SPF record that includes both `spf.protection.outlook.com` and Resend’s include.
 
 For organiser **Email 1** rebrand campaigns, also verify **`the-networker.co.uk`** and set `RESEND_FROM_LEGACY` (e.g. `Rosie @ The Networker <hello@the-networker.co.uk>`). That domain already has DMARC via Brevo; keep SPF includes aligned with whoever actually sends.
 
@@ -72,7 +72,7 @@ Exact hostnames/values come from the Resend Domains UI. Typically for `mail.then
 **DMARC starter policy (after SPF + DKIM pass):**
 
 ```
-v=DMARC1; p=none; rua=mailto:hello@thenetworkeruk.com
+v=DMARC1; p=none; rua=mailto:hi@thenetworkeruk.com
 ```
 
 Move to `p=quarantine` or `p=reject` once rua reports look clean (weeks, not days).

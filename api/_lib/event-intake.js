@@ -357,7 +357,7 @@ async function submitEventIntake(body) {
   if (error) {
     if (/event_intake_submissions/i.test(error.message || '')) {
       const err = new Error(
-        'Event intake is not configured yet — email hello@thenetworkeruk.com with your event details.'
+        'Event intake is not configured yet — email hi@thenetworkeruk.com with your event details.'
       );
       err.code = 'not_configured';
       throw err;

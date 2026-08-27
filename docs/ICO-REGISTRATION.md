@@ -60,4 +60,4 @@ Address matches Magpas HQ used on legal / GBP / company filings. Hub trading nam
 
 Add calendar reminder **30 days before 29 May 2027** (and each subsequent expiry).
 
-**Privacy enquiries:** hello@thenetworkeruk.com · Procedure: `docs/GDPR-SAR-PROCEDURE.md`
+**Privacy enquiries:** hi@thenetworkeruk.com · Procedure: `docs/GDPR-SAR-PROCEDURE.md`

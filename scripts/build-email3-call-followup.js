@@ -24,7 +24,7 @@ const { isExcludedLaunchOrganiser } = require('./launch-excluded-organisers');
 
 const SITE = 'https://www.thenetworkeruk.com';
 const LEGACY = 'https://the-networker.co.uk';
-const BOOK_CALL = 'https://savvycal.com/TheNetworkerUK/website-preview';
+const BOOK_CALL = 'https://www.thenetworkeruk.com/contact';
 
 /** Segment A Email 2 openers (Brevo, 19 Aug 2026). */
 const SEGMENT_A_OPENERS = [

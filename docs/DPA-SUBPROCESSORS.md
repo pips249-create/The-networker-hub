@@ -129,7 +129,7 @@ This is the **only provider that needs an explicit signature**.
 4. Request the **executable DPA** — enter **catherine@thenetworkeruk.com** (or your director email).
 5. Within ~24 hours, complete the **PandaDoc** envelope:
    - Signatory: **Catherine Hancher**, Director, The Networker Group Ltd
-   - Complete Part 1 processing details (Hub database, auth, storage; UK data subjects; contact hello@thenetworkeruk.com)
+   - Complete Part 1 processing details (Hub database, auth, storage; UK data subjects; contact hi@thenetworkeruk.com)
 6. When PandaDoc confirms execution, download the signed PDF from PandaDoc or the dashboard.
 7. Save as: `2026-07-XX_supabase-dpa-signed.pdf`
 8. Update `docs/DPA-REGISTER.md`.

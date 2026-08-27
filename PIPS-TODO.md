@@ -200,12 +200,12 @@ Monitor Resend dashboard during July beta — if daily sends approach **80–90*
 | [x] | Stripe Connect destination charge test passed (Tab 9) — live proof Jul 2026 |
 | [x] | 1,000+ organiser group profiles browsable |
 | [ ] | 200+ claimed groups (stretch goal) |
-| [ ] | Support email monitored (hello@thenetworkeruk.com) |
+| [ ] | Support email monitored (hi@thenetworkeruk.com) |
 | [x] | Command Centre admin login tested |
 | [ ] | **Business ops** — Tab 10 gates complete (or consciously deferred with owner) |
 | [ ] | SEO/AEO — Tab 6 + `docs/SEO-AEO-LAUNCH-PLAN.md` launch-week steps |
 | [x] | `EMAIL_ALLOWLIST_DISABLED=true` on launch (if allowlist was on) |
-| [ ] | `SITE_ACCESS_PASSWORD` removed — public gate off (25 August browse) |
+| [ ] | `SITE_ACCESS_PASSWORD` removed — public gate off (25 August browse). **Action:** Vercel → remove env var or set `DISABLE_SITE_ACCESS_GATE=true` → redeploy |
 | [ ] | **Supabase Pro** active before gate-off (backups + no auto-pause on live ticketing) |
 
 ---
@@ -238,7 +238,7 @@ The **Email Template Manager** works without Resend (edit & save in Command Cent
 | [x] | Create an API key |
 | [x] | Add **`RESEND_API_KEY`** in Vercel → Project → Settings → Environment Variables |
 | [x] | Verify sending domain (the-networker.co.uk or hub domain) |
-| [x] | Add **`RESEND_FROM`**, e.g. `The Networker <hello@thenetworkeruk.com>` |
+| [x] | Add **`RESEND_FROM`**, e.g. `The Networker <hi@thenetworkeruk.com>` |
 | [x] | Redeploy so env vars apply |
 | [x] | Command Centre → **Email templates** → Send test to yourself |
 | [x] | **Test checkout:** buy a ticket → confirmation email received |

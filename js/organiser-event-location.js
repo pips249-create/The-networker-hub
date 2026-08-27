@@ -33,7 +33,7 @@
     online: 'Online',
   };
 
-  const SUPPORT_EMAIL = 'hello@thenetworkeruk.com';
+  const SUPPORT_EMAIL = 'hi@thenetworkeruk.com';
 
   function ticketSalesLockBannerHtml() {
     return (

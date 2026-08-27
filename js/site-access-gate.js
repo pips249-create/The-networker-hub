@@ -209,6 +209,14 @@
     var waitlistBtn = document.getElementById('waitlist-submit');
     var waitlistEmail = document.getElementById('waitlist-email');
     var honeypot = document.getElementById('waitlist-website');
+    var getWaitlistTurnstileToken = function () {
+      return Promise.resolve('');
+    };
+    if (window.HUB_turnstile && typeof window.HUB_turnstile.bindForm === 'function') {
+      window.HUB_turnstile.bindForm(waitlistForm).then(function (fn) {
+        if (typeof fn === 'function') getWaitlistTurnstileToken = fn;
+      });
+    }
 
     function unlockWaitlist() {
       if (waitlistBtn) waitlistBtn.disabled = false;
@@ -227,11 +235,16 @@
       if (waitlistBtn) waitlistBtn.disabled = true;
       showAlert(waitlistMsg, 'Saving your place…', 'success');
 
-      postSiteAccess({
-        intent: 'waitlist',
-        email: email,
-        website: honeypot ? honeypot.value : '',
-      })
+      getWaitlistTurnstileToken()
+        .then(function (token) {
+          var body = {
+            intent: 'waitlist',
+            email: email,
+            website: honeypot ? honeypot.value : '',
+          };
+          if (token) body.turnstileToken = token;
+          return postSiteAccess(body);
+        })
         .then(function (result) {
           if (!result.ok) {
             showAlert(waitlistMsg, friendlyError(result), 'error');

@@ -21,7 +21,7 @@ const KNOWLEDGE_SECTIONS = [
       'The Networker UK (www.thenetworkeruk.com; formerly the-networker.co.uk) is a UK platform connecting business owners and professionals with networking events, exhibitions, conferences, and business opportunities. ' +
       'Operated by The Networker Group Ltd (Company No. 15252227, VAT No. 454 4092 94). ' +
       'Co-founded and run by Rosie and Catherine. Mission: help people find the right room at the right time to grow their network and business. ' +
-      'Contact: hello@thenetworkeruk.com · Address: Magpas HQ, Barnwell Road, Alconbury Weald, Huntingdon, Cambridgeshire PE28 4YF.',
+      'Contact: hi@thenetworkeruk.com · Address: Magpas HQ, Barnwell Road, Alconbury Weald, Huntingdon, Cambridgeshire PE28 4YF.',
   },
   {
     title: 'TWO PILLARS',
@@ -61,7 +61,7 @@ const KNOWLEDGE_SECTIONS = [
       'Refund rules depend on the organiser and what was shown at booking — /legal-policies#refunds. ' +
       'To cancel: contact the organiser first via the event page. Free events can often be cancelled from /account/ or via the organiser. ' +
       'If the organiser cancels the event: you are entitled to a full refund of the ticket price (including mandatory fees shown at checkout), typically within 14 days via Stripe. ' +
-      'If unresolved, email hello@thenetworkeruk.com with your booking reference. Failed checkout payments are not charged — retry checkout or email hello@ if charged in error.',
+      'If unresolved, email hi@thenetworkeruk.com with your booking reference. Failed checkout payments are not charged — retry checkout or email hello@ if charged in error.',
   },
   {
     title: 'BUSINESS OPPORTUNITIES',
@@ -75,8 +75,8 @@ const KNOWLEDGE_SECTIONS = [
     title: 'ORGANISERS',
     body:
       'Approved organisers use /organiser/ to create events, sell tickets via Stripe, manage attendees, export registrations, list opportunities, and invite team members. Stripe Connect onboarding under Revenue is required before publishing paid tickets. ' +
-      'CLAIM YOUR PAGE: many UK networking groups already have a directory page from the legacy Networker site. Browse organisers on /events/, sign in with the email linked to your group — when it matches, a claim prompt appears on Overview automatically — guide at /guides/claim-your-organiser-page. Email changed or no prompt? Find your group on /events/ (organisers tab) and use Request access on its profile page, or email hello@thenetworkeruk.com with your group name and current contact email. New groups without a listing: email hello@thenetworkeruk.com with your group name, format, and location. Organiser terms: /legal-policies#organisers. Platform rules (plain-English standards for organisers): /legal-policies#hub-rules. ' +
-      'EVENT NOT ON BROWSE PAGE? Public browse only shows events that are Published (not Draft), Approved, and linked to a published organiser profile. Finish the publish flow in /organiser/ (tickets, refund policy, publish). If it still does not appear, email hello@thenetworkeruk.com with the event title. ' +
+      'CLAIM YOUR PAGE: many UK networking groups already have a directory page from the legacy Networker site. Browse organisers on /events/, sign in with the email linked to your group — when it matches, a claim prompt appears on Overview automatically — guide at /guides/claim-your-organiser-page. Email changed or no prompt? Find your group on /events/ (organisers tab) and use Request access on its profile page, or email hi@thenetworkeruk.com with your group name and current contact email. New groups without a listing: email hi@thenetworkeruk.com with your group name, format, and location. Organiser terms: /legal-policies#organisers. Platform rules (plain-English standards for organisers): /legal-policies#hub-rules. ' +
+      'EVENT NOT ON BROWSE PAGE? Public browse only shows events that are Published (not Draft), Approved, and linked to a published organiser profile. Finish the publish flow in /organiser/ (tickets, refund policy, publish). If it still does not appear, email hi@thenetworkeruk.com with the event title. ' +
       'DOWNLOAD ATTENDEES: Sign in → /organiser/ → Events → Attendees. Filter by event, then use Download attendees CSV. Export printable name badges (PDF for standard or large A4 sticker sheets) from the same screen — badges use each guest’s name, company, and job title from their Account when set. ' +
       'PAYOUTS: With Stripe Connect (standard), ticket revenue goes to your connected Stripe account when attendees pay — open Stripe Express from Revenue for balance, refunds, and bank payouts. Events archive automatically after they end. Legacy manual payouts (if Connect is off): 7-day settlement after the event, then request payout from Revenue when net amount is above £1. Minimum payout £1. Full guide: /help/organiser-payouts. ' +
       'FEES: Attendees pay one booking fee at checkout (4.5% + 20p per ticket, shown before they pay). This covers platform and payment processing — organisers receive the full ticket price, with no separate platform or Stripe deductions. Worked examples: /help/pricing-fees.',
@@ -130,7 +130,7 @@ const KNOWLEDGE_SECTIONS = [
     body:
       'Co-founders Rosie and Catherine built The Networker UK to connect UK business owners and professionals with the right events, communities, and opportunities. Both are listed as Co-founders on /about. ' +
       'Why it started: the mission is that the right room at the right time changes careers and companies — one trusted place for event listings, organiser profiles, and business opportunities. ' +
-      'For specific questions about the team beyond what is on /about, email hello@thenetworkeruk.com.',
+      'For specific questions about the team beyond what is on /about, email hi@thenetworkeruk.com.',
   },
   {
     title: 'ADVERTISING & SPONSORSHIP',
@@ -176,14 +176,14 @@ const SYSTEM_PROMPT =
   'LIMITS: Never invent event dates, prices, venues, opportunity details, refund outcomes, or policies. If you lack specifics, say so honestly — "I\'m afraid I don\'t have that detail to hand." ' +
   'When a LIVE EVENT LOOKUP block is provided, answer event-finding questions using only those listings and include the full URL link shown for each event. ' +
   'When a LIVE OPPORTUNITY LOOKUP block is provided, answer opportunity questions using only those listings and include the full URL link shown for each listing. ' +
-  'For account-specific issues you cannot resolve, direct people politely to hello@thenetworkeruk.com or /faq.';
+  'For account-specific issues you cannot resolve, direct people politely to hi@thenetworkeruk.com or /faq.';
 
 /** Most specific patterns first — order matters. */
 const FALLBACK_REPLIES = [
   {
     match: /event.*(not show|doesn.?t show|isn.?t show|missing|not appear|not on browse)|added my event|publish.*not|why.*(on|in) browse/i,
     reply:
-      'Browse events only lists items that are Published (not Draft), Approved, and tied to a published organiser profile. In /organiser/, open your event, complete tickets and your refund policy, then publish. New listings may need platform approval. Still missing? Email hello@thenetworkeruk.com with the event title and your organiser account email.',
+      'Browse events only lists items that are Published (not Draft), Approved, and tied to a published organiser profile. In /organiser/, open your event, complete tickets and your refund policy, then publish. New listings may need platform approval. Still missing? Email hi@thenetworkeruk.com with the event title and your organiser account email.',
   },
   {
     match: /advertis|sponsor|promote my business|marketing on (the )?site|get exposure|city partner|city sponsor/i,
@@ -193,7 +193,7 @@ const FALLBACK_REPLIES = [
   {
     match: /what does rosie do|who is rosie|rosie('s)? role/i,
     reply:
-      'Rosie is co-founder of The Networker UK alongside Catherine. Together they built the platform to connect UK business owners and professionals with events, communities, and opportunities. More on /about — for specific enquiries, hello@thenetworkeruk.com.',
+      'Rosie is co-founder of The Networker UK alongside Catherine. Together they built the platform to connect UK business owners and professionals with events, communities, and opportunities. More on /about — for specific enquiries, hi@thenetworkeruk.com.',
   },
   {
     match: /who is catherine|catherine.*co-founder|what does catherine do/i,
@@ -228,37 +228,37 @@ const FALLBACK_REPLIES = [
   {
     match: /confirmation email|booking email|didn.?t receive|didn't receive|no confirmation|email.*ticket/i,
     reply:
-      'Booking confirmations are sent by email after successful checkout. Please check your spam or junk folder and that your account email is correct in /account/. Your tickets also appear in My account (/account/). Still missing? Email hello@thenetworkeruk.com with the event name and the email address you used.',
+      'Booking confirmations are sent by email after successful checkout. Please check your spam or junk folder and that your account email is correct in /account/. Your tickets also appear in My account (/account/). Still missing? Email hi@thenetworkeruk.com with the event name and the email address you used.',
   },
   {
     match: /forgot.*password|reset.*password|password reset/i,
     reply:
-      'Use the password reset link on the sign-in page at /login — enter your email and follow the instructions. If you are still stuck, email hello@thenetworkeruk.com from the address on your account.',
+      'Use the password reset link on the sign-in page at /login — enter your email and follow the instructions. If you are still stuck, email hi@thenetworkeruk.com from the address on your account.',
   },
   {
     match: /transfer.*ticket|give.*ticket|ticket.*colleague|ticket.*someone else/i,
     reply:
-      'Tickets are generally non-transferable without the organiser\'s consent. Contact the organiser via the event listing page to ask if a transfer is possible. For booking changes, email hello@thenetworkeruk.com with your order reference if you need help reaching them.',
+      'Tickets are generally non-transferable without the organiser\'s consent. Contact the organiser via the event listing page to ask if a transfer is possible. For booking changes, email hi@thenetworkeruk.com with your order reference if you need help reaching them.',
   },
   {
     match: /organiser cancel|event cancel|cancelled.*event|event.*cancelled/i,
     reply:
-      'If an organiser cancels an event, you should receive a full refund of the ticket price you paid (including any mandatory booking fees shown at checkout), typically within 14 days to your original payment method via Stripe. If you have not heard anything, email hello@thenetworkeruk.com with your booking reference.',
+      'If an organiser cancels an event, you should receive a full refund of the ticket price you paid (including any mandatory booking fees shown at checkout), typically within 14 days to your original payment method via Stripe. If you have not heard anything, email hi@thenetworkeruk.com with your booking reference.',
   },
   {
     match: /payment failed|failed payment|stripe.*fail|checkout.*fail|card.*declin/i,
     reply:
-      'If checkout failed, your card should not have been charged — you can try again from the event page. Check your card details and try a different payment method if needed. If you believe you were charged without a confirmation, email hello@thenetworkeruk.com with the event name and time of the attempt.',
+      'If checkout failed, your card should not have been charged — you can try again from the event page. Check your card details and try a different payment method if needed. If you believe you were charged without a confirmation, email hi@thenetworkeruk.com with the event name and time of the attempt.',
   },
   {
     match: /cancel.*(book|ticket|registration)|cancel my (book|ticket)/i,
     reply:
-      'Cancellation rules depend on the organiser and what was shown when you booked — see /legal-policies#refunds. Contact the organiser first via the event page. For free events, you may be able to cancel from My account (/account/). If you need help, email hello@thenetworkeruk.com with your booking reference.',
+      'Cancellation rules depend on the organiser and what was shown when you booked — see /legal-policies#refunds. Contact the organiser first via the event page. For free events, you may be able to cancel from My account (/account/). If you need help, email hi@thenetworkeruk.com with your booking reference.',
   },
   {
     match: /refund|chargeback|cooling.?off/i,
     reply:
-      'Refund rules depend on the organiser and what was shown when you booked — see /legal-policies#refunds. Contact the organiser first via the event page. If an event was cancelled by the organiser, you should receive a full refund via Stripe. For help, email hello@thenetworkeruk.com with your booking reference.',
+      'Refund rules depend on the organiser and what was shown when you booked — see /legal-policies#refunds. Contact the organiser first via the event page. If an event was cancelled by the organiser, you should receive a full refund via Stripe. For help, email hi@thenetworkeruk.com with your booking reference.',
   },
   {
     match: /list.*(franchise|opportunit)|publish.*opportunit|post.*opportunit|sell.*franchise/i,
@@ -293,12 +293,12 @@ const FALLBACK_REPLIES = [
   {
     match: /list.*(networking group|my group|our group)|become an organiser|onboard.*organiser/i,
     reply:
-      'Many UK networking groups already have a page on the platform. Browse organisers on /events/, sign in with the email linked to your group, and confirm the claim prompt on Overview — step-by-step guide at /guides/claim-your-organiser-page. Brand-new group not listed yet? Email hello@thenetworkeruk.com with your group name, typical format, and location. Once approved, use /organiser/ to create events and manage attendees.',
+      'Many UK networking groups already have a page on the platform. Browse organisers on /events/, sign in with the email linked to your group, and confirm the claim prompt on Overview — step-by-step guide at /guides/claim-your-organiser-page. Brand-new group not listed yet? Email hi@thenetworkeruk.com with your group name, typical format, and location. Once approved, use /organiser/ to create events and manage attendees.',
   },
   {
     match: /cost to list|how much.*list|fee.*list|price.*list.*event|listing fee/i,
     reply:
-      'There is no monthly subscription to list events. Use /organiser/ to publish free or paid events. For paid tickets, attendees pay one booking fee at checkout (4.5% + 20p per ticket) — you receive the full ticket price. Free events do not require Stripe. Email hello@thenetworkeruk.com for onboarding help.',
+      'There is no monthly subscription to list events. Use /organiser/ to publish free or paid events. For paid tickets, attendees pay one booking fee at checkout (4.5% + 20p per ticket) — you receive the full ticket price. Free events do not require Stripe. Email hi@thenetworkeruk.com for onboarding help.',
   },
   {
     match: /free (networking )?events?|events?.*free\b|no cost events?/i,
@@ -313,7 +313,7 @@ const FALLBACK_REPLIES = [
   {
     match: /claim.*(organiser|page|profile|group)|take over.*(page|profile|listing)|already listed|legacy networker|old networker site/i,
     reply:
-      'To claim your organiser page: browse organisers on /events/ and find your group → sign in at /login with the email linked to your group → confirm the claim prompt on Overview in /organiser/ (appears automatically when your email matches). Update your logo, description, and guest visit settings, then list your next event. Full guide: /guides/claim-your-organiser-page. No claim prompt? Your email may have changed — open your group\'s public profile and use Request access, or email hello@thenetworkeruk.com with your group name and current contact email.',
+      'To claim your organiser page: browse organisers on /events/ and find your group → sign in at /login with the email linked to your group → confirm the claim prompt on Overview in /organiser/ (appears automatically when your email matches). Update your logo, description, and guest visit settings, then list your next event. Full guide: /guides/claim-your-organiser-page. No claim prompt? Your email may have changed — open your group\'s public profile and use Request access, or email hi@thenetworkeruk.com with your group name and current contact email.',
   },
   {
     match: /invite.*team|team member|add.*editor|editor access|team & invites|remove.*team member/i,
@@ -368,7 +368,7 @@ const FALLBACK_REPLIES = [
   {
     match: /report.*(listing|event|organiser|opportunit)|flag.*(listing|event|page|inappropriate)/i,
     reply:
-      'Use Report listing on the event, organiser profile, or opportunity page. Choose a reason and optional details — our team reviews reports. For urgent booking issues, email hello@thenetworkeruk.com with the listing name.',
+      'Use Report listing on the event, organiser profile, or opportunity page. Choose a reason and optional details — our team reviews reports. For urgent booking issues, email hi@thenetworkeruk.com with the listing name.',
   },
   {
     match: /connect stripe|stripe connect|stripe onboarding|set up (stripe|bank|payout)|bank details.*organiser/i,
@@ -408,7 +408,7 @@ const FALLBACK_REPLIES = [
   {
     match: /\bbook\b.*\bticket|\bticket\b.*\bbook|how do i book|buy a ticket|checkout|my tickets/i,
     reply:
-      'Browse events free at /events/. To buy a ticket: create a free account at /register (about 2 minutes), open an event, choose your ticket type, and complete secure Stripe checkout. Add guest names at checkout. View bookings in My account (/account/). Issues? Email hello@thenetworkeruk.com with your event name and order reference.',
+      'Browse events free at /events/. To buy a ticket: create a free account at /register (about 2 minutes), open an event, choose your ticket type, and complete secure Stripe checkout. Add guest names at checkout. View bookings in My account (/account/). Issues? Email hi@thenetworkeruk.com with your event name and order reference.',
   },
   {
     match: /save.*opportunit|opportunit.*favourit|heart.*opportunit|saved opportunit/i,
@@ -463,7 +463,7 @@ const FALLBACK_REPLIES = [
   {
     match: /remove.*(date|day)|delete.*(date|day)|get rid of.*(date|day)|accident.*(date|day)|extra date|wrong date|deselect.*(date|day)/i,
     reply:
-      'Click the highlighted date again on the calendar to deselect it — selected days show as highlighted and appear in the date list below. You need at least one date to continue to tickets. If you already saved and need to drop a date from a published series, open the listing from My Events — if ticket sales are locked, email hello@thenetworkeruk.com.',
+      'Click the highlighted date again on the calendar to deselect it — selected days show as highlighted and appear in the date list below. You need at least one date to continue to tickets. If you already saved and need to drop a date from a published series, open the listing from My Events — if ticket sales are locked, email hi@thenetworkeruk.com.',
   },
   {
     match: /same (name|title).*(different|another).*(time|location|venue|place)|different (time|location|venue).*(same name|same title)|several (session|event).*same name|multiple (event|session|listing).*(different time|different location|different venue)/i,
@@ -603,7 +603,7 @@ const FALLBACK_REPLIES = [
   {
     match: /organiser|organizer|dashboard|sell ticket|stripe onboard|payout/i,
     reply:
-      'Sign in and open /organiser/ to create events, manage attendees, sell tickets, and list opportunities. Complete Stripe onboarding there for payouts. New groups: email hello@thenetworkeruk.com with your group name, format, and location.',
+      'Sign in and open /organiser/ to create events, manage attendees, sell tickets, and list opportunities. Complete Stripe onboarding there for payouts. New groups: email hi@thenetworkeruk.com with your group name, format, and location.',
   },
   {
     match: /account|register|sign up|create account|sign in|login/i,
@@ -633,7 +633,7 @@ const FALLBACK_REPLIES = [
   {
     match: /privacy|cookie|gdpr|legal|terms|policy/i,
     reply:
-      'Privacy, terms, refunds, cookies, and organiser terms: /legal-policies. Cookie preferences: Cookie settings in the site footer. Questions: hello@thenetworkeruk.com.',
+      'Privacy, terms, refunds, cookies, and organiser terms: /legal-policies. Cookie preferences: Cookie settings in the site footer. Questions: hi@thenetworkeruk.com.',
   },
   {
     match: /what is (the )?networker|about (the )?hub/i,
@@ -643,7 +643,7 @@ const FALLBACK_REPLIES = [
   {
     match: /contact|support|email|phone|address|where are you/i,
     reply:
-      'Email hello@thenetworkeruk.com. Address: Magpas HQ, Barnwell Road, Alconbury Weald, Huntingdon, Cambridgeshire PE28 4YF. For booking issues include your event name and order reference. Chat with me on /contact.',
+      'Email hi@thenetworkeruk.com. Address: Magpas HQ, Barnwell Road, Alconbury Weald, Huntingdon, Cambridgeshire PE28 4YF. For booking issues include your event name and order reference. Chat with me on /contact.',
   },
   {
     match: /is (this |the )?(site|hub) free|free to use/i,
@@ -755,7 +755,7 @@ function fallbackReply(latestUser) {
   const matched = matchedFallbackReply(text);
   if (matched) return applyGentlemanTone(matched);
   return applyGentlemanTone(
-    "Thank you for your enquiry. I'm afraid I don't have quite enough detail to answer that precisely — do email hello@thenetworkeruk.com, or browse our FAQ at /faq. " +
+    "Thank you for your enquiry. I'm afraid I don't have quite enough detail to answer that precisely — do email hi@thenetworkeruk.com, or browse our FAQ at /faq. " +
       "Otherwise, ask me about events, business opportunities, tickets, accounts, or organiser tools and I'll do my best to help."
   );
 }

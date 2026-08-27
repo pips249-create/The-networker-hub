@@ -60,4 +60,4 @@ Organisers should:
 - Tickets step → VAT radio buttons when publishing paid events
 - This document (internal / link from organiser help when expanded)
 
-**Questions:** hello@thenetworkeruk.com
+**Questions:** hi@thenetworkeruk.com

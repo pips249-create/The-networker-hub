@@ -1,4 +1,4 @@
-# Support inbox runbook — hello@thenetworkeruk.com
+# Support inbox runbook — hi@thenetworkeruk.com
 
 **Owner:** Catherine Hancher (Operations Director, primary) · Rosie McGilvray (Commercial Director, cover)  
 **Last updated:** 6 August 2026
@@ -9,7 +9,7 @@
 
 ## 1. Purpose
 
-`hello@thenetworkeruk.com` is the support, privacy, and complaints inbox for The Networker UK (The Networker Group Ltd).
+`hi@thenetworkeruk.com` is the support, privacy, and complaints inbox for The Networker UK (The Networker Group Ltd).
 
 **Response targets**
 

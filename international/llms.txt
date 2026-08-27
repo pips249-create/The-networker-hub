@@ -1,7 +1,7 @@
 # The Networker International
 > Country-by-country business networking — find live markets, join markets being built, or register interest where we have not launched yet.
 
-Operated by The Networker Group Limited (Company No. 15252227). Contact: hello@thenetworkeruk.com
+Operated by The Networker Group Limited (Company No. 15252227). Contact: hi@thenetworkeruk.com
 
 ## What it is
 The Networker International is the global routing layer for The Networker. People choose their country on a world map. Live markets open the local Networker site. Building markets collect group/partner intake. Other markets collect interest to attend or list a networking group later.
@@ -21,7 +21,7 @@ The Networker International is the global routing layer for The Networker. Peopl
 ## Who it is for
 - Attendees: discover trusted business networking communities in markets that are live or coming soon.
 - Groups / organisers: get found when a market launches; in building markets, submit group details now.
-- Partners / press: contact hello@thenetworkeruk.com — The Networker International is part of The Networker Group Limited.
+- Partners / press: contact hi@thenetworkeruk.com — The Networker International is part of The Networker Group Limited.
 
 ## How markets launch
 We launch market by market. The UK is live first. Ireland is in building. Interest and intake forms help prioritise the next countries.

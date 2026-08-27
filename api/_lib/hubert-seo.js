@@ -479,7 +479,7 @@ function buildLlmsTxt(origin) {
     'Same brand as the established UK directory the-networker.co.uk. ' +
     'Across that brand last year: 27,000+ events listed and 17,000+ networkers found a meeting, group, or opportunity. ' +
     'Public browsing is open; ticket purchase and opportunity enquiries from 1 September 2026. ' +
-    'Contact: hello@thenetworkeruk.com\n\n' +
+    'Contact: hi@thenetworkeruk.com\n\n' +
     '## Canonical URLs\n' +
     '- Home: ' +
     base +

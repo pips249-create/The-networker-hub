@@ -34,6 +34,21 @@ function isSiteAccessGateActive() {
   return true;
 }
 
+/** Prefer dedicated secret so SITE_ACCESS_PASSWORD is not sent as an HTTP header. */
+function getInternalSeoSecret() {
+  return (
+    String(process.env.HUB_INTERNAL_SEO_SECRET || '').trim() ||
+    String(process.env.SESSION_SECRET || '').trim() ||
+    String(process.env.SITE_ACCESS_PASSWORD || '').trim()
+  );
+}
+
+function matchesInternalSeoHeader(headerValue) {
+  const expected = getInternalSeoSecret();
+  if (!expected) return false;
+  return String(headerValue || '').trim() === expected;
+}
+
 function isInternationalHost(host) {
   const h = String(host || '')
     .trim()
@@ -748,8 +763,9 @@ async function maybeGateSiteAccess(request, url) {
     return { authorized: true, socialCrawler: true };
   }
 
-  const previewInternalSeo =
-    String(request.headers.get('x-hub-internal-seo') || '').trim() === password;
+  const previewInternalSeo = matchesInternalSeoHeader(
+    request.headers.get('x-hub-internal-seo')
+  );
   const internalSeoTemplate =
     pathname === '/events' ||
     pathname === '/events/index' ||
@@ -1091,9 +1107,10 @@ export default async function middleware(request) {
     metaUrl.searchParams.set('type', type);
     metaUrl.searchParams.set('slug', slug);
 
+    const seoSecret = getInternalSeoSecret();
     const internalHeaders =
-      isSiteAccessGateActive() && String(process.env.SITE_ACCESS_PASSWORD || '').trim()
-        ? { 'x-hub-internal-seo': String(process.env.SITE_ACCESS_PASSWORD).trim() }
+      isSiteAccessGateActive() && String(process.env.SITE_ACCESS_PASSWORD || '').trim() && seoSecret
+        ? { 'x-hub-internal-seo': seoSecret }
         : {};
     const [metaRes, htmlRes] = await Promise.all([
       fetch(metaUrl.toString(), {

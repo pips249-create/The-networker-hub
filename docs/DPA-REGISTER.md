@@ -16,7 +16,7 @@ Run `npm run check:dpas` to verify this register.
 | Vercel | Deemed signed on [Vercel Terms](https://vercel.com/legal/terms) acceptance | 2026-07-10 | Catherine Hancher | `Vercel_Customer_DPA__032923.pdf` | ☑ |
 | Resend | Executed on account signup — download from Settings → Documents | 2026-07-10 | Catherine Hancher | `resend-dpa-signed.pdf` | ☑ |
 | Supabase | PandaDoc / customer DPA template | 2026-07-10 | Catherine Hancher | `Template Supabase Customer DPA (June 1).pdf` | ☑ |
-| Brevo | Marketing / launch campaign email (Sendinblue) — execute DPA in Brevo account | — | — | — | ☐ Missing from folder |
+| Brevo | Marketing / launch campaign email (Sendinblue) — execute DPA in Brevo account | — | — | — | ☐ Missing from folder — download from Brevo Settings → GDPR (see `docs/DPA-SUBPROCESSORS.md` §7) |
 
 **Core platform DPAs:** 4 / 4 on file (verified against Desktop folder 25 Aug 2026)  
 **Brevo (campaign ESP):** ☐ not in folder — download when still sending from Brevo (`docs/DPA-SUBPROCESSORS.md` §7)

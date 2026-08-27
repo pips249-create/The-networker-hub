@@ -15,7 +15,7 @@ const DEFAULT_ALLOWED_RECIPIENTS = [
   'hancher249@gmail.com',
   'rosie.mcgilvray@yahoo.co.uk',
   'gary.dixon336@outlook.com',
-  'hello@thenetworkeruk.com',
+  'hi@thenetworkeruk.com',
   'hello@the-networker.co.uk',
 ];
 
