@@ -392,7 +392,13 @@
         );
         return;
       }
-      if (!getRecoveryAccessToken() && !new URLSearchParams(window.location.search).get('token')) {
+      var bootParams = new URLSearchParams(window.location.search);
+      var hasTokenHash = Boolean(bootParams.get('token_hash') || bootParams.get('tokenHash'));
+      if (
+        !getRecoveryAccessToken() &&
+        !bootParams.get('token') &&
+        !hasTokenHash
+      ) {
         showMessage(
           msg,
           'Missing reset token. Open the link from your email, or request a new one.',
@@ -407,11 +413,12 @@
       var btn = document.getElementById('reset-submit');
       var params = new URLSearchParams(window.location.search);
       var token = params.get('token');
+      var tokenHash = params.get('token_hash') || params.get('tokenHash') || '';
       var accessToken = getRecoveryAccessToken();
       var p1 = document.getElementById('password').value;
       var p2 = document.getElementById('password2').value;
 
-      if (!accessToken && !token) {
+      if (!accessToken && !token && !tokenHash) {
         showMessage(msg, 'Missing reset token. Request a new link.', 'error');
         return;
       }
@@ -432,6 +439,7 @@
 
       var payload = { password: p1 };
       if (accessToken) payload.accessToken = accessToken;
+      if (tokenHash) payload.token_hash = tokenHash;
       if (token) payload.token = token;
 
       fetch('/api/auth/reset-password', {

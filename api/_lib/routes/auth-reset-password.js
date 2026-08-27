@@ -8,7 +8,7 @@ const {
   USER_FIELDS,
   setCors,
 } = require('../auth');
-const { useSupabase, getSupabaseAdmin } = require('../supabase');
+const { useSupabase, getSupabaseAdmin, getSupabaseAnon } = require('../supabase');
 const { enforceRateLimitAsync } = require('../rate-limit');
 const { validateNewPassword } = require('../password-policy');
 
@@ -18,6 +18,50 @@ function fieldNameOnRecord(recordFields, candidates, fallback) {
     if (Object.prototype.hasOwnProperty.call(f, key)) return key;
   }
   return fallback;
+}
+
+async function finishSupabasePasswordUpdate(userId, email, password) {
+  const { error: updateError } = await getSupabaseAdmin().auth.admin.updateUserById(userId, {
+    password,
+  });
+  if (updateError) {
+    return {
+      status: 500,
+      body: { error: 'update_failed', message: updateError.message || 'Could not update password.' },
+    };
+  }
+
+  try {
+    await appendSystemLog(`Password updated for ${email || userId}`, 'auth');
+  } catch {
+    /* optional */
+  }
+
+  return {
+    status: 200,
+    body: { ok: true, message: 'Password updated. You can sign in now.' },
+  };
+}
+
+/** Hub-hosted reset links (?token_hash=) — bypasses broken Supabase Auth Site URL redirects. */
+async function handleSupabaseResetWithTokenHash(tokenHash, password) {
+  const anon = getSupabaseAnon();
+  const { data, error } = await anon.auth.verifyOtp({
+    token_hash: tokenHash,
+    type: 'recovery',
+  });
+  if (error || !data?.user?.id) {
+    return {
+      status: 400,
+      body: {
+        error: 'invalid_token',
+        message: 'This reset link is invalid or expired. Request a new one from Forgot password.',
+      },
+    };
+  }
+
+  const email = String(data.user.email || '').trim().toLowerCase();
+  return finishSupabasePasswordUpdate(data.user.id, email, password);
 }
 
 async function handleSupabaseReset(accessToken, password) {
@@ -33,25 +77,8 @@ async function handleSupabaseReset(accessToken, password) {
     };
   }
 
-  const { error: updateError } = await sb.auth.admin.updateUserById(data.user.id, { password });
-  if (updateError) {
-    return {
-      status: 500,
-      body: { error: 'update_failed', message: updateError.message || 'Could not update password.' },
-    };
-  }
-
   const email = String(data.user.email || '').trim().toLowerCase();
-  try {
-    await appendSystemLog(`Password updated for ${email || data.user.id}`, 'auth');
-  } catch {
-    /* optional */
-  }
-
-  return {
-    status: 200,
-    body: { ok: true, message: 'Password updated. You can sign in now.' },
-  };
+  return finishSupabasePasswordUpdate(data.user.id, email, password);
 }
 
 module.exports = async function handler(req, res) {
@@ -72,6 +99,7 @@ module.exports = async function handler(req, res) {
   }
 
   const accessToken = String(body.accessToken || body.access_token || '').trim();
+  const tokenHash = String(body.token_hash || body.tokenHash || '').trim();
   const token = String(body.token || '').trim();
   const password = String(body.password || '');
 
@@ -98,14 +126,16 @@ module.exports = async function handler(req, res) {
   }
 
   if (useSupabase()) {
-    if (!accessToken) {
+    if (!accessToken && !tokenHash) {
       return json(res, 400, {
         error: 'missing_token',
         message: 'Missing reset token. Request a new link from Forgot password.',
       });
     }
     try {
-      const result = await handleSupabaseReset(accessToken, password);
+      const result = tokenHash
+        ? await handleSupabaseResetWithTokenHash(tokenHash, password)
+        : await handleSupabaseReset(accessToken, password);
       return json(res, result.status, result.body);
     } catch (e) {
       return json(res, 500, {
