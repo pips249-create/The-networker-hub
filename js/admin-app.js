@@ -343,8 +343,9 @@
       steps: [
         'Filter to Pending review to see new listings.',
         'Open a row to read the full details.',
-        'Approve — if unpaid, the owner gets a pay-to-go-live email; if already paid, it goes live now.',
+        'Approve — if unpaid, the owner gets a pay-to-go-live email; if already paid, it goes live now. Confirm dialog explains which.',
         'Reject if it does not meet standards (include a reason).',
+        'Use Resend pay email on Approved listings still awaiting Stripe.',
         'Toggle Featured only for Approved live listings in the opportunities carousel.',
       ],
     },
@@ -22262,16 +22263,28 @@
         var publicHref =
           '../opportunities/' +
           encodeURIComponent(opp.slug || opp.id);
-        var isPending = opp.approval_status === 'Pending Review';
-        var rowClass = isPending ? 'border-b border-amber-100 bg-amber-50/40' : 'border-b border-slate-100';
+        var isPending =
+          opp.approval_status === 'Pending Review' && Boolean(opp.review_submitted_at);
+        var awaitingPay =
+          opp.approval_status === 'Approved' && !opp.listing_payment_active;
+        var rowClass = isPending
+          ? 'border-b border-amber-100 bg-amber-50/40'
+          : awaitingPay
+            ? 'border-b border-sky-100 bg-sky-50/40'
+            : 'border-b border-slate-100';
         var isOpen = !!opportunityCleanupState.expanded[opp.id];
         if (opportunityCleanupState.selected[opp.id]) rememberSelectedOpportunity(opp);
         var checked = opportunityCleanupState.selected[opp.id] ? ' checked' : '';
+        var approveLabel = opp.listing_payment_active
+          ? 'Approve &amp; go live'
+          : 'Approve — email pay link';
         return (
           '<tr class="hover:bg-slate-50/80 ' +
           rowClass +
           '" data-opportunity-id-row="' +
           attrEsc(opp.id) +
+          '" data-opp-paid="' +
+          (opp.listing_payment_active ? '1' : '0') +
           '">' +
           '<td class="py-2.5 pr-2 w-8">' +
           '<input type="checkbox" class="opportunity-select-checkbox rounded border-slate-300" value="' +
@@ -22295,7 +22308,12 @@
           '</td>' +
           '<td class="py-2.5 pr-3"><div class="flex flex-wrap gap-1">' +
           listingStatusBadge(opp.status) +
-          approvalStatusBadge(opp.approval_status) +
+          (opp.approval_status === 'Pending Review' && !opp.review_submitted_at
+            ? '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-slate-100 text-slate-600">Not submitted</span>'
+            : approvalStatusBadge(opp.approval_status)) +
+          (awaitingPay
+            ? '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-sky-100 text-sky-900">Awaiting payment</span>'
+            : '') +
           (opp.featured
             ? '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-violet-100 text-violet-800">Featured</span>'
             : '') +
@@ -22306,8 +22324,13 @@
           '<td class="py-2.5 text-right whitespace-nowrap">' +
           '<div class="flex flex-wrap justify-end gap-2">' +
           (isPending
-            ? '<button type="button" data-opp-approve class="text-xs font-semibold rounded-lg bg-brand-700 text-white px-2.5 py-1 hover:bg-brand-900">Approve</button>' +
+            ? '<button type="button" data-opp-approve class="text-xs font-semibold rounded-lg bg-brand-700 text-white px-2.5 py-1 hover:bg-brand-900">' +
+              approveLabel +
+              '</button>' +
               '<button type="button" data-opp-reject class="text-xs font-semibold rounded-lg border border-red-200 text-red-700 px-2.5 py-1 hover:bg-red-50">Reject</button>'
+            : '') +
+          (awaitingPay
+            ? '<button type="button" data-opp-resend-pay class="text-xs font-semibold rounded-lg border border-sky-300 text-sky-900 px-2.5 py-1 hover:bg-sky-50">Resend pay email</button>'
             : '') +
           '<a href="' +
           attrEsc(publicHref) +
@@ -22864,6 +22887,11 @@
       var approveRow = approveBtn.closest('[data-opportunity-id-row]');
       var approveId = approveRow && approveRow.getAttribute('data-opportunity-id-row');
       if (!approveId) return;
+      var alreadyPaid = approveRow.getAttribute('data-opp-paid') === '1';
+      var confirmMsg = alreadyPaid
+        ? 'Approve and go live now? Payment is already active — the listing will appear on /opportunities/ and the owner gets a “listing is live” email.'
+        : 'Approve this listing? It will stay off the public site until they pay. The owner will get an email with a Stripe pay link.';
+      if (!window.confirm(confirmMsg)) return;
       approveBtn.disabled = true;
       adminPost('/api/admin/opportunities', { id: approveId, action: 'approve' })
         .then(function (data) {
@@ -22876,6 +22904,25 @@
         .catch(function (err) {
           window.alert(err.message || 'Could not approve listing.');
           approveBtn.disabled = false;
+        });
+      return;
+    }
+    var resendPayBtn = e.target.closest('[data-opp-resend-pay]');
+    if (resendPayBtn) {
+      var resendRow = resendPayBtn.closest('[data-opportunity-id-row]');
+      var resendId = resendRow && resendRow.getAttribute('data-opportunity-id-row');
+      if (!resendId) return;
+      if (!window.confirm('Resend the “pay to go live” email to the listing owner?')) return;
+      resendPayBtn.disabled = true;
+      adminPost('/api/admin/opportunities', { id: resendId, action: 'resend_pay_email' })
+        .then(function (data) {
+          if (!data.ok) throw new Error(data.message || data.error || 'Could not resend email');
+          window.alert('Pay-to-go-live email sent.');
+          resendPayBtn.disabled = false;
+        })
+        .catch(function (err) {
+          window.alert(err.message || 'Could not resend pay email.');
+          resendPayBtn.disabled = false;
         });
       return;
     }

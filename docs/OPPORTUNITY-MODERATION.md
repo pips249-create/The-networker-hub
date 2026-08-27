@@ -95,6 +95,7 @@ The platform already shows disclaimers and blocks some MLM patterns in `js/oppor
 
 | Date | Change |
 |------|--------|
+| 2026-08-27 | Queue only listings with `review_submitted_at`; Approve clarity + resend pay email; 3-day unpaid reminder; Premium Spotlight gated until live |
 | 2026-08-27 | Review-then-pay: submit → pending review → Approve → Stripe → live; pending + approved-pay emails |
 | 2026-07-28 | Product-selling `network-marketing` type allowed; recruitment-primary auto-reject; not eligible for Premium Spotlight; browse hide filter default on |
 | 2026-07-10 | Earnings attestation required when listers enter financial figures; moderation owner assigned |

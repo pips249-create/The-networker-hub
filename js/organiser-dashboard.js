@@ -15641,7 +15641,10 @@
 
   function opportunityCanUpgradePremium(opportunity) {
     const status = String(opportunity?.status || '').toLowerCase();
+    const approval = String(opportunity?.approvalStatus || opportunity?.approval_status || '').trim();
     if (status !== 'published' && status !== 'live') return false;
+    if (approval !== 'Approved') return false;
+    if (!opportunity?.listingPaymentActive) return false;
     return opportunityPremiumMeta(opportunity).tone === 'muted';
   }
 
@@ -16094,6 +16097,40 @@
       '</div>';
   }
 
+  function renderOpportunityAwaitingPayBanner() {
+    const mount = document.getElementById('org-opp-awaiting-pay-banner');
+    if (!mount) return;
+    const awaiting = (state.opportunities || []).filter(function (o) {
+      const approval = String(o.approvalStatus || o.approval_status || '').trim();
+      return approval === 'Approved' && !o.listingPaymentActive;
+    });
+    if (!awaiting.length) {
+      mount.hidden = true;
+      mount.replaceChildren();
+      return;
+    }
+    const first = awaiting[0];
+    const copy =
+      awaiting.length === 1
+        ? '<strong>' +
+          esc(first.title || 'Your listing') +
+          '</strong> is approved — pay via Stripe to go live on the directory.'
+        : awaiting.length +
+          ' listings are approved and waiting for payment to go live.';
+    mount.hidden = false;
+    mount.innerHTML =
+      '<div class="org-inline-banner org-inline-banner--info">' +
+      '<p>' +
+      copy +
+      '</p>' +
+      (first.id
+        ? '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-opp-renew="' +
+          esc(first.id) +
+          '">Pay to go live</button>'
+        : '') +
+      '</div>';
+  }
+
   function opportunitySaveCount(o) {
     return Math.max(0, Number(o && o.saveCount) || 0);
   }
@@ -16222,6 +16259,7 @@
     if (!list.length) {
       setOrgEmpty(empty, { show: true });
       renderOpportunityExpiryBanner();
+      renderOpportunityAwaitingPayBanner();
       return;
     }
     setOrgEmpty(empty, { show: false });
@@ -16280,6 +16318,7 @@
       body.appendChild(tr);
     });
     renderOpportunityExpiryBanner();
+    renderOpportunityAwaitingPayBanner();
     renderOpportunityPerformance();
     renderOpportunityRoiInsights();
     renderOpportunityCompare();

@@ -11195,6 +11195,12 @@ body.org-event-drawer-open {
   color: #9a3412;
 }
 
+.org-inline-banner--info {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  color: #1e3a8a;
+}
+
 .org-opp-new-count {
   display: inline-flex;
   align-items: center;
