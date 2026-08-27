@@ -222,7 +222,7 @@ function buildAlertsFromCounts(counts) {
       id: 'open-complaints',
       severity: 'high',
       title: `${counts.openComplaints} complaint${counts.openComplaints === 1 ? '' : 's'} need a response`,
-      detail: 'Log and reply to emails sent to hello@thenetworkeruk.com.',
+      detail: 'Log and reply to emails sent to hi@thenetworkeruk.com.',
       href: '#support/complaints',
       time: new Date().toISOString(),
     });
@@ -428,6 +428,7 @@ async function fetchDashboardMetrics(sb) {
   if (userEventsApprovedRes.error) throw new Error(userEventsApprovedRes.error.message);
 
   const memberAccounts = Math.max(attendeesRes.count || 0, accountsRes.count || 0);
+  const outreach = await fetchOutreachMetrics(sb);
 
   return {
     revenue: paidTotals.revenue,
@@ -455,6 +456,88 @@ async function fetchDashboardMetrics(sb) {
     /** Upcoming catalogue size — matches the unfiltered /events/ browse total. */
     liveEvents,
     currency: 'GBP',
+    ...outreach,
+  };
+}
+
+/**
+ * Outreach / nudge counts — claim links, automated engagement emails, walkthrough log.
+ * Missing tables/columns resolve to 0 so older environments still load the home page.
+ */
+async function fetchOutreachMetrics(sb) {
+  const softCount = async (promise) => {
+    try {
+      const res = await promise;
+      if (res.error) return 0;
+      return res.count || 0;
+    } catch {
+      return 0;
+    }
+  };
+
+  const [
+    claimLinks,
+    claimInvites,
+    signupNudges,
+    signupNudgeFollowups,
+    reengagement,
+    stripeConnectNudges,
+    hubertConcierge,
+    walkthroughs,
+  ] = await Promise.all([
+    softCount(
+      sb.from('entity_activity_log').select('id', { count: 'exact', head: true }).eq('action', 'admin_claim_url')
+    ),
+    softCount(
+      sb
+        .from('entity_activity_log')
+        .select('id', { count: 'exact', head: true })
+        .eq('action', 'admin_claim_invite')
+    ),
+    softCount(
+      sb
+        .from('attendees')
+        .select('id', { count: 'exact', head: true })
+        .not('signup_events_nudge_sent_at', 'is', null)
+    ),
+    softCount(
+      sb
+        .from('attendees')
+        .select('id', { count: 'exact', head: true })
+        .not('signup_events_nudge_followup_sent_at', 'is', null)
+    ),
+    softCount(
+      sb
+        .from('attendees')
+        .select('id', { count: 'exact', head: true })
+        .not('reengagement_email_sent_at', 'is', null)
+    ),
+    softCount(
+      sb
+        .from('organisers')
+        .select('id', { count: 'exact', head: true })
+        .not('stripe_connect_nudge_sent_at', 'is', null)
+    ),
+    softCount(
+      sb
+        .from('attendees')
+        .select('id', { count: 'exact', head: true })
+        .not('hubert_event_concierge_sent_at', 'is', null)
+    ),
+    softCount(sb.from('organiser_sales_demos').select('id', { count: 'exact', head: true })),
+  ]);
+
+  return {
+    claimLinksCopied: claimLinks,
+    claimInvitesSent: claimInvites,
+    /** Claim URL copies + legacy claim-invite emails. */
+    claimOutreach: claimLinks + claimInvites,
+    signupNudges,
+    signupNudgeFollowups,
+    reengagementEmails: reengagement,
+    stripeConnectNudges,
+    hubertConciergeEmails: hubertConcierge,
+    walkthroughsLogged: walkthroughs,
   };
 }
 

@@ -625,6 +625,15 @@ body.hub-page-admin .site-nav {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.admin-stat-row-label {
+  margin: 0.25rem 0 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--admin-text-muted, #64748b);
+}
+
 @media (min-width: 1280px) {
   .admin-stat-grid--4 {
     grid-template-columns: repeat(4, minmax(0, 1fr));

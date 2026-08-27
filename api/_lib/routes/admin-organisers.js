@@ -216,8 +216,8 @@ async function claimInviteSentAtForOrganisers(sb, ids) {
   try {
     const { data, error } = await sb
       .from('entity_activity_log')
-      .select('organiser_id, created_at')
-      .eq('action', 'admin_claim_invite')
+      .select('organiser_id, created_at, action')
+      .in('action', ['admin_claim_invite', 'admin_claim_url'])
       .in('organiser_id', unique)
       .order('created_at', { ascending: false })
       .limit(Math.min(unique.length * 5, 200));

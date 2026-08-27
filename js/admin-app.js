@@ -181,7 +181,7 @@
     },
     support: {
       title: 'Help requests',
-      subtitle: 'Look up bookings and log complaints from hello@thenetworkeruk.com',
+      subtitle: 'Look up bookings and log complaints from hi@thenetworkeruk.com',
     },
     campaigns: {
       title: 'Email campaigns',
@@ -293,7 +293,7 @@
     'support-complaints': {
       title: 'How to log a complaint',
       steps: [
-        'Click Log complaint and enter details from the email to hello@thenetworkeruk.com.',
+        'Click Log complaint and enter details from the email to hi@thenetworkeruk.com.',
         'Note the date received — you have 14 days to respond.',
         'Update status as you work on it: acknowledged, in progress, resolved.',
         'Add notes so someone else can pick it up if needed.',
@@ -1012,7 +1012,7 @@
     }
     if (route === 'support') {
       if (hash.indexOf('complaints') !== -1) {
-        return 'Log complaints from hello@thenetworkeruk.com and track acknowledgement and 14-day response deadlines.';
+        return 'Log complaints from hi@thenetworkeruk.com and track acknowledgement and 14-day response deadlines.';
       }
       return PAGE_META.support.subtitle;
     }
@@ -5543,8 +5543,9 @@
 
   function applyDashboardMetrics(data) {
     var metricsEl = document.getElementById('dashboard-metrics');
+    var outreachEl = document.getElementById('dashboard-outreach-metrics');
     var preEl = document.getElementById('live-metrics');
-    if (!metricsEl && !preEl) return;
+    if (!metricsEl && !outreachEl && !preEl) return;
 
     if (!data || data.error || data.configured === false) {
       if (preEl) {
@@ -5587,6 +5588,38 @@
           'Passwords set',
           String(m.accountsWithPassword || 0),
           'Signed in at least once · ' + (m.attendees || 0) + ' member accounts'
+        );
+    }
+
+    if (outreachEl) {
+      outreachEl.innerHTML =
+        card(
+          'Claim outreach',
+          String(m.claimOutreach || 0),
+          (m.claimLinksCopied || 0) +
+            ' links copied · ' +
+            (m.claimInvitesSent || 0) +
+            ' claim emails (legacy)'
+        ) +
+        card(
+          'Signup nudges',
+          String(m.signupNudges || 0),
+          (m.signupNudgeFollowups || 0) +
+            ' day-10 follow-ups · ' +
+            (m.hubertConciergeEmails || 0) +
+            ' Hubert concierge'
+        ) +
+        card(
+          'Connect nudges',
+          String(m.stripeConnectNudges || 0),
+          'Stripe bank-details nudges · ' +
+            (m.reengagementEmails || 0) +
+            ' member re-engagement'
+        ) +
+        card(
+          'Walkthroughs',
+          String(m.walkthroughsLogged || 0),
+          'Sales kit / impersonate outreach log'
         );
     }
 
@@ -6265,6 +6298,13 @@
         card('Events by users', '…', 'Loading…') +
         card('Passwords set', '…', 'Loading…') +
         '</section>' +
+        '<p class="admin-stat-row-label">Outreach &amp; nudges</p>' +
+        '<section class="admin-stat-grid admin-stat-grid--4" id="dashboard-outreach-metrics">' +
+        card('Claim outreach', '…', 'Loading…') +
+        card('Signup nudges', '…', 'Loading…') +
+        card('Connect nudges', '…', 'Loading…') +
+        card('Walkthroughs', '…', 'Loading…') +
+        '</section>' +
         '<section class="admin-inbox" id="dashboard-inbox">' +
         '<div class="admin-inbox-head"><h3>Do this next</h3>' +
         '<p>Urgent and soon — click through to clear them.</p></div>' +
@@ -6354,6 +6394,30 @@
       '</dd></div>' +
       '<div><dt>Member accounts</dt><dd>' +
       esc(String(m.attendees || 0)) +
+      '</dd></div>' +
+      '<div><dt>Claim outreach</dt><dd>' +
+      esc(String(m.claimOutreach || 0)) +
+      ' (' +
+      esc(String(m.claimLinksCopied || 0)) +
+      ' links · ' +
+      esc(String(m.claimInvitesSent || 0)) +
+      ' emails)</dd></div>' +
+      '<div><dt>Signup nudges</dt><dd>' +
+      esc(String(m.signupNudges || 0)) +
+      ' (+' +
+      esc(String(m.signupNudgeFollowups || 0)) +
+      ' follow-ups)</dd></div>' +
+      '<div><dt>Connect nudges</dt><dd>' +
+      esc(String(m.stripeConnectNudges || 0)) +
+      '</dd></div>' +
+      '<div><dt>Re-engagement</dt><dd>' +
+      esc(String(m.reengagementEmails || 0)) +
+      '</dd></div>' +
+      '<div><dt>Hubert concierge</dt><dd>' +
+      esc(String(m.hubertConciergeEmails || 0)) +
+      '</dd></div>' +
+      '<div><dt>Walkthroughs logged</dt><dd>' +
+      esc(String(m.walkthroughsLogged || 0)) +
       '</dd></div>' +
       '<div><dt>On events browse</dt><dd>' +
       esc(String(m.liveEvents || 0)) +
@@ -17889,7 +17953,7 @@
       '</select></div>' +
       '<div><label for="admin-listing-message-body" class="block text-xs font-semibold text-slate-500 mb-1">Message</label>' +
       '<textarea id="admin-listing-message-body" rows="5" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="We have updated…"></textarea>' +
-      '<p class="text-[11px] text-slate-500 mt-1">Sent to the group contact email. They can reply to hello@thenetworkeruk.com.</p></div>' +
+      '<p class="text-[11px] text-slate-500 mt-1">Sent to the group contact email. They can reply to hi@thenetworkeruk.com.</p></div>' +
       '<p id="admin-listing-message-error" class="text-xs text-red-700 font-semibold hidden"></p>' +
       '<div class="flex justify-end gap-2 pt-1">' +
       '<button type="button" id="admin-listing-message-cancel" class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Cancel</button>' +
@@ -20797,7 +20861,7 @@
   function renderSupportComplaints() {
     main.innerHTML =
       '<div class="space-y-6">' +
-      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">When a complaint arrives at <strong>hello@thenetworkeruk.com</strong>, log it here after sending the acknowledgement (target: 2 working days). Substantive response target: <strong>14 days</strong>. Ops lead: <strong>Catherine Hancher</strong>. Commercial / ASA: <strong>Rosie McGilvray</strong>.</p>' +
+      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">When a complaint arrives at <strong>hi@thenetworkeruk.com</strong>, log it here after sending the acknowledgement (target: 2 working days). Substantive response target: <strong>14 days</strong>. Ops lead: <strong>Catherine Hancher</strong>. Commercial / ASA: <strong>Rosie McGilvray</strong>.</p>' +
       '<form id="complaint-create-form" class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">' +
       '<h3 class="font-bold text-brand-900">Log complaint</h3>' +
       '<div class="grid gap-4 sm:grid-cols-2">' +
@@ -24273,7 +24337,7 @@
       'Benefits one-pager: https://thenetworkeruk.com/guides/organiser-leavebehind\n' +
       'PDF: https://thenetworkeruk.com/assets/guides/organiser-leavebehind.pdf\n' +
       'For organisers: https://thenetworkeruk.com/for-organisers\n' +
-      'Book a setup call: https://savvycal.com/TheNetworkerUK/website-preview\n\n' +
+      'Get in touch: https://www.thenetworkeruk.com/contact\n\n' +
       'Happy to list your next 2–3 meetings with you whenever suits.\n\n' +
       'Best wishes,\n{{sender}}';
 
@@ -24286,7 +24350,7 @@
       '5. Impersonate the pinned demo organiser → organiser dashboard.\n' +
       '6. Show Attendees (visit tracking), Promote (LinkedIn post), then mention attendee round-up.\n' +
       '7. Close (say): “List autumn dates now. Browsing opens 25 August; buying opens 1 September. Claim before 1 September for Founding Organiser · 2026.”\n' +
-      '8. CTA: claim page + next 2–3 dates, or book SavvyCal.';
+      '8. CTA: claim page + next 2–3 dates, or contact us.';
 
     var outcomeLabels = {
       interested: 'Interested',
@@ -24509,7 +24573,7 @@
         '<a class="admin-shortcut" href="/assets/guides/organiser-leavebehind.pdf" target="_blank" rel="noopener"><span class="admin-shortcut-label">Leave-behind PDF</span><span class="admin-shortcut-desc">Send after the chat</span></a>' +
         '<a class="admin-shortcut" href="/guides/organiser-leavebehind" target="_blank" rel="noopener"><span class="admin-shortcut-label">Leave-behind page</span><span class="admin-shortcut-desc">Shareable link</span></a>' +
         '<a class="admin-shortcut" href="/for-organisers" target="_blank" rel="noopener"><span class="admin-shortcut-label">Public for-organisers</span><span class="admin-shortcut-desc">Website page</span></a>' +
-        '<a class="admin-shortcut" href="https://savvycal.com/TheNetworkerUK/website-preview" target="_blank" rel="noopener"><span class="admin-shortcut-label">Book a setup call</span><span class="admin-shortcut-desc">SavvyCal</span></a>' +
+        '<a class="admin-shortcut" href="https://www.thenetworkeruk.com/contact" target="_blank" rel="noopener"><span class="admin-shortcut-label">Contact us</span><span class="admin-shortcut-desc">Contact page</span></a>' +
         '</div></div></section>' +
         '<section class="admin-dash-section">' +
         '<div class="admin-dash-section-head"><h3>60-second Loom script</h3>' +
