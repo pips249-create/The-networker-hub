@@ -75,7 +75,7 @@ async function sendOne(row, toOverride) {
 
 (async () => {
   const rows = parseCsv(CSV);
-  console.log('From:', process.env.RESEND_FROM || 'hello@mail.thenetworkerhub.com (default)');
+  console.log('From:', process.env.RESEND_FROM || 'hello@mail.thenetworkeruk.com (default)');
   console.log('Reply-to: catherine@thenetworkeruk.com');
   console.log('Recipients in CSV:', rows.length);
 

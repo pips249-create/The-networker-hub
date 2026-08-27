@@ -6,7 +6,7 @@
     name: 'The Networker UK',
     shortName: 'Networker UK',
     legalName: 'The Networker Group Ltd',
-    site: 'https://www.thenetworkerhub.com',
+    site: 'https://www.thenetworkeruk.com',
     supportEmail: 'hi@thenetworkeruk.com',
     logoAssetVersion: '20260823uk3',
     logoSvg: '/assets/logo-nav-transparent.png?v=20260823uk3',

@@ -1,10 +1,11 @@
-/** Canonical public brand — The Networker UK (rebrand from The Networker UK). */
+/** Canonical public brand — The Networker UK (rebrand from The Networker Hub). */
 const BRAND_NAME = 'The Networker UK';
 const BRAND_NAME_SHORT = 'Networker UK';
 const LEGAL_NAME = 'The Networker Group Ltd';
-const DEFAULT_PUBLIC_SITE = 'https://www.thenetworkerhub.com';
+const DEFAULT_PUBLIC_SITE = 'https://www.thenetworkeruk.com';
 const SUPPORT_EMAIL = 'hi@thenetworkeruk.com';
-const MAIL_FROM_DOMAIN = 'mail.thenetworkerhub.com';
+const MAIL_FROM_DOMAIN = 'mail.thenetworkeruk.com';
+const LEGACY_MAIL_FROM_DOMAINS = ['mail.thenetworkeruk.com', 'mail.thenetworkerhub.com'];
 const LOGO_ASSET_VERSION = '20260823uk3';
 
 /** Legacy / future hosts — keep for redirects and platform URL detection. */
@@ -28,6 +29,7 @@ module.exports = {
   DEFAULT_PUBLIC_SITE,
   SUPPORT_EMAIL,
   MAIL_FROM_DOMAIN,
+  LEGACY_MAIL_FROM_DOMAINS,
   LOGO_ASSET_VERSION,
   LEGACY_PUBLIC_HOSTS,
 };

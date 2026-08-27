@@ -2,6 +2,7 @@ const {
   DEFAULT_PUBLIC_SITE,
   SUPPORT_EMAIL: BRAND_SUPPORT_EMAIL,
   MAIL_FROM_DOMAIN,
+  LEGACY_MAIL_FROM_DOMAINS,
   LOGO_ASSET_VERSION,
 } = require('./hub-brand');
 
@@ -240,8 +241,11 @@ function supportEmail() {
     .trim()
     .toLowerCase();
   if (parsed && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(parsed)) {
-    // Prefer the human inbox when Resend sends from mail.thenetworkerhub.com.
-    if (parsed.endsWith('@' + MAIL_FROM_DOMAIN)) {
+    // Prefer the human inbox when Resend sends from a mail.* transactional domain.
+    const mailDomains = Array.isArray(LEGACY_MAIL_FROM_DOMAINS)
+      ? LEGACY_MAIL_FROM_DOMAINS
+      : [MAIL_FROM_DOMAIN];
+    if (mailDomains.some(function (d) { return parsed.endsWith('@' + d); })) {
       return BRAND_SUPPORT_EMAIL;
     }
     return parsed;
