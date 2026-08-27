@@ -142,15 +142,37 @@ function tokensForMatch(raw) {
   return spaced.split(/\s+/).filter(Boolean);
 }
 
+function tokenEqualsTerm(token, term) {
+  if (token === term) return true;
+  // Simple plurals so "rapists" still matches "rapist"
+  if (token === term + 's' || token === term + 'es') return true;
+  return false;
+}
+
+/**
+ * Whole-token matches, plus obfuscation like n.i.g.g.e.r after collapse.
+ * Do NOT use naive collapsed.includes — that flags "therapist" as "rapist".
+ */
 function matchesTokenList(collapsed, tokens, list) {
   const hits = new Set();
   for (let i = 0; i < tokens.length; i++) {
-    if (list.includes(tokens[i])) hits.add(tokens[i]);
+    for (let j = 0; j < list.length; j++) {
+      if (tokenEqualsTerm(tokens[i], list[j])) hits.add(list[j]);
+    }
   }
   for (let i = 0; i < list.length; i++) {
     const term = list[i];
-    if (term.length >= 4 && collapsed === term) hits.add(term);
-    if (term.length >= 5 && collapsed.includes(term)) hits.add(term);
+    if (term.length >= 4 && collapsed === term) {
+      hits.add(term);
+      continue;
+    }
+    // Obfuscated slur across punctuation/spaces only when no longer clean
+    // word already contains the term (avoids therapist → rapist).
+    if (term.length < 5 || !collapsed.includes(term)) continue;
+    const embeddedInLongerWord = tokens.some(
+      (t) => t.length > term.length && t.includes(term) && !tokenEqualsTerm(t, term)
+    );
+    if (!embeddedInLongerWord) hits.add(term);
   }
   return [...hits];
 }
@@ -196,10 +218,13 @@ function scanListingLanguage(text) {
   if (!profanity.length && !hateUnique.length) {
     for (let i = 0; i < PROFANITY_TOKENS.length; i++) {
       const term = PROFANITY_TOKENS[i];
-      if (term.length >= 4 && collapsed.includes(term)) {
-        profanity.push(term);
-        break;
-      }
+      if (term.length < 4 || !collapsed.includes(term)) continue;
+      const embeddedInLongerWord = tokens.some(
+        (t) => t.length > term.length && t.includes(term) && !tokenEqualsTerm(t, term)
+      );
+      if (embeddedInLongerWord) continue;
+      profanity.push(term);
+      break;
     }
   }
 

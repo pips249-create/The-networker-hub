@@ -70,6 +70,13 @@
     return labels[item.type] || item.type || 'Opportunity';
   }
 
+  function moneyFieldLabel(item) {
+    if (catalog && catalog.isAffiliateStyleListing && catalog.isAffiliateStyleListing(item)) {
+      return 'Commission';
+    }
+    return 'Investment';
+  }
+
   function investmentLabel(item) {
     if (!catalog || !catalog.cardDisplayMeta) return '';
     if (catalog.isAffiliateStyleListing && catalog.isAffiliateStyleListing(item)) {
@@ -77,13 +84,19 @@
       (item.meta || []).forEach(function (m) {
         if (/^commission$/i.test(m.key) && m.val) commission = String(m.val).trim();
       });
-      return commission || 'Affiliate';
+      return commission || 'On request';
     }
     var meta = catalog.cardDisplayMeta(item);
     for (var i = 0; i < meta.length; i++) {
       if (/invest/i.test(meta[i].key)) return meta[i].val || '';
     }
     return '';
+  }
+
+  function moneyDisplay(item) {
+    var amount = investmentLabel(item);
+    if (!amount) return '';
+    return moneyFieldLabel(item) + ' · ' + amount;
   }
 
   function isMobileMapLayout() {
@@ -231,7 +244,7 @@
   }
 
   function popupHtml(item) {
-    var invest = investmentLabel(item);
+    var invest = moneyDisplay(item);
     var premium = item.featured ? '<span class="opp-map-card-premium">Premium</span>' : '';
     return (
       '<div class="opp-map-card">' +
@@ -304,13 +317,13 @@
 
   function sidebarItemLabel(item) {
     var parts = [item.title, item.locationLabel || ''];
-    var invest = investmentLabel(item);
+    var invest = moneyDisplay(item);
     if (invest) parts.push(invest);
     return parts.join(', ');
   }
 
   function sidebarItemHtml(item) {
-    var invest = investmentLabel(item);
+    var invest = moneyDisplay(item);
     var meta = [item.locationLabel || 'UK'];
     if (invest) meta.push(invest);
     return (

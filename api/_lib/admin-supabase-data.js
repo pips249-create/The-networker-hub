@@ -309,24 +309,58 @@ async function fetchPaidRegistrationTotals(sb) {
   };
 }
 
+/**
+ * Count Auth users who have signed in at least once.
+ * Silent imports get a random password they never know — last_sign_in_at is the
+ * practical signal that someone has set (or been given) a password and used it.
+ */
+async function countSignedInAuthUsers(sb) {
+  let page = 1;
+  let signedIn = 0;
+  let authUsers = 0;
+  const perPage = 1000;
+  while (page <= 50) {
+    const { data, error } = await sb.auth.admin.listUsers({ page, perPage });
+    if (error) throw new Error(error.message);
+    const users = data?.users || [];
+    authUsers += users.length;
+    for (const u of users) {
+      if (u.last_sign_in_at) signedIn += 1;
+    }
+    if (users.length < perPage) break;
+    page += 1;
+  }
+  return { signedIn, authUsers };
+}
+
 async function fetchDashboardMetrics(sb) {
   const { applyPublicOrganiserBrowseFilter } = require('./supabase-organisers-browse');
   const nowIso = new Date().toISOString();
   const cutoff = new Date(Date.now() - 86400000).toISOString();
   let browseOrgQuery = sb.from('organisers').select('id', { count: 'exact', head: true });
   browseOrgQuery = applyPublicOrganiserBrowseFilter(browseOrgQuery);
+  let claimedOrgQuery = sb
+    .from('organisers')
+    .select('id', { count: 'exact', head: true })
+    .eq('ownership_claim_status', 'claimed');
+  // Exclude Hub demo / internal profiles when the column exists.
+  claimedOrgQuery = claimedOrgQuery.eq('is_internal', false);
   const [
     approvedTotalRes,
     exhibitionsRes,
     workshopsRes,
     orgRes,
     browseOrgRes,
+    claimedOrgRes,
+    userEventsRes,
+    userEventsApprovedRes,
     attendeesRes,
     accountsRes,
     paidTotals,
     browseUpcomingRes,
     liveDatedRes,
     liveUndatedRes,
+    signedInCounts,
   ] = await Promise.all([
     sb.from('events').select('id', { count: 'exact', head: true }).eq('approval_status', 'Approved'),
     sb
@@ -337,6 +371,14 @@ async function fetchDashboardMetrics(sb) {
     sb.from('workshops').select('id', { count: 'exact', head: true }),
     sb.from('organisers').select('id', { count: 'exact', head: true }),
     browseOrgQuery,
+    claimedOrgQuery,
+    // Platform-created listings (organiser/admin added on Hub — not Airtable import or seed-browse-*).
+    sb.from('events').select('id', { count: 'exact', head: true }).is('airtable_id', null),
+    sb
+      .from('events')
+      .select('id', { count: 'exact', head: true })
+      .is('airtable_id', null)
+      .eq('approval_status', 'Approved'),
     sb.from('attendees').select('id', { count: 'exact', head: true }),
     sb.from('hub_accounts').select('user_id', { count: 'exact', head: true }),
     fetchPaidRegistrationTotals(sb),
@@ -355,6 +397,7 @@ async function fetchDashboardMetrics(sb) {
       .select('id', { count: 'exact', head: true })
       .eq('approval_status', 'Approved')
       .is('starts_at', null),
+    countSignedInAuthUsers(sb).catch(() => ({ signedIn: 0, authUsers: 0 })),
   ]);
 
   if (approvedTotalRes.error) throw new Error(approvedTotalRes.error.message);
@@ -368,6 +411,23 @@ async function fetchDashboardMetrics(sb) {
   const liveEvents = browseUpcomingRes.error ? browseFallback : browseUpcomingRes.count || 0;
   const organisersAll = orgRes.count || 0;
   const browseOrganisers = browseOrgRes.error ? organisersAll : browseOrgRes.count || 0;
+  let claimedOrganisers = 0;
+  if (claimedOrgRes.error && /is_internal/i.test(String(claimedOrgRes.error.message || ''))) {
+    const fallback = await sb
+      .from('organisers')
+      .select('id', { count: 'exact', head: true })
+      .eq('ownership_claim_status', 'claimed');
+    if (fallback.error) throw new Error(fallback.error.message);
+    claimedOrganisers = fallback.count || 0;
+  } else if (claimedOrgRes.error) {
+    throw new Error(claimedOrgRes.error.message);
+  } else {
+    claimedOrganisers = claimedOrgRes.count || 0;
+  }
+  if (userEventsRes.error) throw new Error(userEventsRes.error.message);
+  if (userEventsApprovedRes.error) throw new Error(userEventsApprovedRes.error.message);
+
+  const memberAccounts = Math.max(attendeesRes.count || 0, accountsRes.count || 0);
 
   return {
     revenue: paidTotals.revenue,
@@ -382,8 +442,16 @@ async function fetchDashboardMetrics(sb) {
     organisers: organisersAll,
     /** Public directory size — matches organiser browse. */
     browseOrganisers,
+    /** Profiles with ownership_claim_status = claimed (excludes is_internal when column exists). */
+    claimedOrganisers,
+    /** Events created on the Hub (airtable_id null) — not legacy import or seed-browse. */
+    userAddedEvents: userEventsRes.count || 0,
+    userAddedEventsApproved: userEventsApprovedRes.count || 0,
     providers: training,
-    attendees: Math.max(attendeesRes.count || 0, accountsRes.count || 0),
+    attendees: memberAccounts,
+    /** Auth users who have signed in at least once (know / have set a password). */
+    accountsWithPassword: signedInCounts.signedIn || 0,
+    authUsers: signedInCounts.authUsers || 0,
     /** Upcoming catalogue size — matches the unfiltered /events/ browse total. */
     liveEvents,
     currency: 'GBP',

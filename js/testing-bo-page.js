@@ -107,14 +107,22 @@
     return copy;
   }
 
+  function isAffiliateMoney(item) {
+    return !!(catalog && catalog.isAffiliateStyleListing && catalog.isAffiliateStyleListing(item));
+  }
+
+  function moneyFieldLabel(item) {
+    return isAffiliateMoney(item) ? 'Commission' : 'Investment';
+  }
+
   function investmentLabel(item) {
-    if (catalog && catalog.isAffiliateStyleListing && catalog.isAffiliateStyleListing(item)) {
+    if (isAffiliateMoney(item)) {
       var commission = '';
       (item.meta || []).forEach(function (m) {
         if (/^commission$/i.test(m.key) && m.val) commission = String(m.val).trim();
       });
       if (commission) return commission;
-      return 'Affiliate';
+      return 'On request';
     }
     if (catalog && catalog.cardDisplayMeta) {
       var meta = catalog.cardDisplayMeta(item);
@@ -128,6 +136,18 @@
       return 'From £' + item.investAmount;
     }
     return 'Enquire';
+  }
+
+  function moneyPriceHtml(item) {
+    return (
+      '<span class="event-grid-price">' +
+      '<span class="event-grid-price-label">' +
+      escapeHtml(moneyFieldLabel(item)) +
+      '</span>' +
+      '<span class="event-grid-price-value">' +
+      escapeHtml(investmentLabel(item)) +
+      '</span></span>'
+    );
   }
 
   function commitmentLabel(item) {
@@ -275,7 +295,12 @@
     var invest = investmentLabel(item);
     var commitment = commitmentLabel(item);
     var tier = detectInvestTier(item);
-    var metaLine = [item.locationLabel || 'UK', invest].filter(Boolean).join(' · ');
+    var metaLine = [
+      item.locationLabel || 'UK',
+      moneyFieldLabel(item) + ' ' + invest,
+    ]
+      .filter(Boolean)
+      .join(' · ');
     var premiumBadge = item.featured ? '<span class="event-grid-premium">Premium</span>' : '';
     var detailId = 'bo-opp-detail-' + String(item.id).replace(/[^a-z0-9_-]/gi, '');
 
@@ -299,9 +324,8 @@
       '">' +
       escapeHtml(commitment) +
       '</span>' +
-      '<span class="event-grid-price">' +
-      escapeHtml(invest) +
-      '</span></div>' +
+      moneyPriceHtml(item) +
+      '</div>' +
       '<h3 class="event-grid-title">' +
       escapeHtml(item.title) +
       '</h3>' +

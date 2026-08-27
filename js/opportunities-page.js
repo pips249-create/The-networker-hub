@@ -616,11 +616,7 @@
   }
 
   function spotlightInvestmentLabel(item) {
-    var meta = catalog ? catalog.cardDisplayMeta(item) : (item.meta || []).slice(0, 1);
-    if (meta.length && meta[0].val) {
-      return formatMetaVal(meta[0].key, meta[0].val);
-    }
-    return 'Enquire';
+    return moneyFieldLabel(item) + ' · ' + investmentLabel(item);
   }
 
   function premiumSpotlightMediaHtml(item, thumb) {
@@ -765,14 +761,22 @@
     return (item.filterTags || []).concat(item.tags || []).indexOf(tag) !== -1;
   }
 
+  function isAffiliateMoney(item) {
+    return !!(catalog && catalog.isAffiliateStyleListing && catalog.isAffiliateStyleListing(item));
+  }
+
+  function moneyFieldLabel(item) {
+    return isAffiliateMoney(item) ? 'Commission' : 'Investment';
+  }
+
   function investmentLabel(item) {
-    if (catalog && catalog.isAffiliateStyleListing && catalog.isAffiliateStyleListing(item)) {
+    if (isAffiliateMoney(item)) {
       var commission = '';
       (item.meta || []).forEach(function (m) {
         if (/^commission$/i.test(m.key) && m.val) commission = String(m.val).trim();
       });
       if (commission) return commission;
-      return 'Affiliate';
+      return 'On request';
     }
     if (catalog && catalog.cardDisplayMeta) {
       var meta = catalog.cardDisplayMeta(item);
@@ -790,6 +794,18 @@
       return 'From £' + item.investAmount;
     }
     return 'On request';
+  }
+
+  function moneyPriceHtml(item) {
+    return (
+      '<span class="event-grid-price">' +
+      '<span class="event-grid-price-label">' +
+      escapeHtml(moneyFieldLabel(item)) +
+      '</span>' +
+      '<span class="event-grid-price-value">' +
+      escapeHtml(investmentLabel(item)) +
+      '</span></span>'
+    );
   }
 
   function commitmentLabel(item) {
@@ -1152,7 +1168,6 @@
     var typeLabels = catalog ? catalog.TYPE_LABELS : {};
     var typeLabel = typeLabels[item.type] || item.type || 'Opportunity';
     var thumb = item.thumb || { emoji: '✦', gradient: 'linear-gradient(135deg,#fdf6e3,#f5e0a0)' };
-    var invest = investmentLabel(item);
     var commitment = commitmentLabel(item);
     var tier = detectInvestTier(item);
     var locationLabel = item.locationLabel || 'UK';
@@ -1197,9 +1212,8 @@
       '">' +
       escapeHtml(commitment) +
       '</span>' +
-      '<span class="event-grid-price">' +
-      escapeHtml(invest) +
-      '</span></div>' +
+      moneyPriceHtml(item) +
+      '</div>' +
       '<h3 class="event-grid-title">' +
       escapeHtml(item.title) +
       '</h3>' +

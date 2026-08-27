@@ -4249,10 +4249,18 @@
             issueHtml +
             '</div>' +
             (fields.showHateSpeech
-              ? '<p class="text-xs text-red-900 mt-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2"><strong>Hate speech / extreme abuse</strong> detected in the title or description. Unpublish now — organisers cannot keep this language on a live listing.</p>'
+              ? '<p class="text-xs text-red-900 mt-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2"><strong>Hate speech / extreme abuse</strong> detected in the title or description' +
+                (ev.language_matches && ev.language_matches.length
+                  ? ' (matched: ' + esc(ev.language_matches.join(', ')) + ')'
+                  : '') +
+                '. Unpublish now — organisers cannot keep this language on a live listing.</p>'
               : '') +
             (fields.showProfanity
-              ? '<p class="text-xs text-amber-900 mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">Strong language in the listing (e.g. swearing). Still live — review and unpublish or ask the organiser to edit if it is not appropriate.</p>'
+              ? '<p class="text-xs text-amber-900 mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">Strong language in the listing' +
+                (ev.language_matches && ev.language_matches.length
+                  ? ' (matched: ' + esc(ev.language_matches.join(', ')) + ')'
+                  : ' (e.g. swearing)') +
+                '. Still live — review and unpublish or ask the organiser to edit if it is not appropriate.</p>'
               : '') +
             (fields.showOffPlatform
               ? '<p class="text-xs text-amber-900 mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">Mentions ' +
@@ -5231,24 +5239,31 @@
         return;
       }
       var m = data.metrics || {};
-      var listings = m.listings || {};
       if (metricsEl) {
         metricsEl.innerHTML =
-          card('Accounts', String(m.attendees || 0), 'hub_accounts and attendee profiles', 'blue') +
           card(
-            'On events browse',
-            String(m.liveEvents || 0),
-            (listings.total || 0) +
-              ' approved all-time · Meetings ' +
-              (listings.meetings || 0) +
-              ' · Exhibitions ' +
-              (listings.exhibitions || 0),
+            'Passwords set',
+            String(m.accountsWithPassword || 0),
+            'Signed in at least once · ' + (m.attendees || 0) + ' member accounts',
+            'blue'
+          ) +
+          card(
+            'Events by users',
+            String(m.userAddedEvents || 0),
+            (m.userAddedEventsApproved || 0) +
+              ' approved · ' +
+              (m.liveEvents || 0) +
+              ' on events browse',
             'brand'
           ) +
           card(
-            'On organiser browse',
-            String(m.browseOrganisers != null ? m.browseOrganisers : m.organisers || 0),
-            (m.organisers || 0) + ' group profiles all-time',
+            'Claimed profiles',
+            String(m.claimedOrganisers || 0),
+            'Of ' +
+              (m.organisers || 0) +
+              ' group profiles · ' +
+              (m.browseOrganisers != null ? m.browseOrganisers : m.organisers || 0) +
+              ' on browse',
             'violet'
           ) +
           card(
@@ -5294,9 +5309,9 @@
       '<h3 class="font-bold text-brand-900">Platform activity</h3>' +
       '<p class="text-sm text-slate-500 mt-1 mb-4">Live Supabase counts — separate from anonymous visitor traffic.</p>' +
       '<div class="admin-metric-grid admin-metric-grid--4" id="analytics-platform-metrics">' +
-      card('Accounts', '…', 'Loading…', 'blue') +
-      card('On events browse', '…', 'Loading…', 'brand') +
-      card('On organiser browse', '…', 'Loading…', 'violet') +
+      card('Passwords set', '…', 'Loading…', 'blue') +
+      card('Events by users', '…', 'Loading…', 'brand') +
+      card('Claimed profiles', '…', 'Loading…', 'violet') +
       card('Booking fees', '…', 'Loading…', 'emerald') +
       '</div></section>' +
       '<aside class="admin-panel-sticky bg-white rounded-xl border border-slate-200 p-4 lg:p-5 shadow-sm min-w-0 flex flex-col">' +
@@ -5542,7 +5557,6 @@
     if (data.light || !data.metrics) return;
 
     var m = data.metrics || {};
-    var listings = m.listings || {};
 
     if (metricsEl) {
       metricsEl.innerHTML =
@@ -5550,23 +5564,30 @@
           'Booking fees',
           fmtMoney(m.fees || 0),
           'Your cut after Stripe (E2E/test excluded) · organiser ticket volume ' +
-          fmtMoney(m.revenue || 0)
+            fmtMoney(m.revenue || 0)
         ) +
         card(
-          'On events browse',
-          String(m.liveEvents || 0),
-          (listings.total || 0) +
-            ' approved all-time · Meetings ' +
-            (listings.meetings || 0) +
-            ' · Exhibitions ' +
-            (listings.exhibitions || 0)
+          'Claimed profiles',
+          String(m.claimedOrganisers || 0),
+          'Of ' +
+            (m.organisers || 0) +
+            ' group profiles · ' +
+            (m.browseOrganisers != null ? m.browseOrganisers : m.organisers || 0) +
+            ' on organiser browse'
         ) +
         card(
-          'On organiser browse',
-          String(m.browseOrganisers != null ? m.browseOrganisers : m.organisers || 0),
-          (m.organisers || 0) + ' group profiles all-time'
+          'Events by users',
+          String(m.userAddedEvents || 0),
+          (m.userAddedEventsApproved || 0) +
+            ' approved · ' +
+            (m.liveEvents || 0) +
+            ' on events browse (incl. directory import)'
         ) +
-        card('Member accounts', String(m.attendees || 0), 'People signed up on The Networker UK');
+        card(
+          'Passwords set',
+          String(m.accountsWithPassword || 0),
+          'Signed in at least once · ' + (m.attendees || 0) + ' member accounts'
+        );
     }
 
     if (preEl) preEl.innerHTML = renderMetricsSummary(data);
@@ -6240,9 +6261,9 @@
         '<div class="space-y-5">' +
         '<section class="admin-stat-grid admin-stat-grid--4" id="dashboard-metrics">' +
         card('Booking fees', '…', 'Loading…') +
-        card('On events browse', '…', 'Loading…') +
-        card('On organiser browse', '…', 'Loading…') +
-        card('Member accounts', '…', 'Loading…') +
+        card('Claimed profiles', '…', 'Loading…') +
+        card('Events by users', '…', 'Loading…') +
+        card('Passwords set', '…', 'Loading…') +
         '</section>' +
         '<section class="admin-inbox" id="dashboard-inbox">' +
         '<div class="admin-inbox-head"><h3>Do this next</h3>' +
@@ -6320,6 +6341,20 @@
     var updated = data.updatedAt ? fmtTime(data.updatedAt) : '—';
     return (
       '<dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">' +
+      '<div><dt>Claimed profiles</dt><dd>' +
+      esc(String(m.claimedOrganisers || 0)) +
+      '</dd></div>' +
+      '<div><dt>Events by users</dt><dd>' +
+      esc(String(m.userAddedEvents || 0)) +
+      ' (' +
+      esc(String(m.userAddedEventsApproved || 0)) +
+      ' approved)</dd></div>' +
+      '<div><dt>Passwords set</dt><dd>' +
+      esc(String(m.accountsWithPassword || 0)) +
+      '</dd></div>' +
+      '<div><dt>Member accounts</dt><dd>' +
+      esc(String(m.attendees || 0)) +
+      '</dd></div>' +
       '<div><dt>On events browse</dt><dd>' +
       esc(String(m.liveEvents || 0)) +
       '</dd></div>' +
@@ -6331,12 +6366,6 @@
       '</dd></div>' +
       '<div><dt>Group profiles all-time</dt><dd>' +
       esc(String(m.organisers || 0)) +
-      '</dd></div>' +
-      '<div><dt>Workshops listed</dt><dd>' +
-      esc(String(m.providers || 0)) +
-      '</dd></div>' +
-      '<div><dt>Member accounts</dt><dd>' +
-      esc(String(m.attendees || 0)) +
       '</dd></div>' +
       '<div><dt>Booking fees</dt><dd>' +
       esc(fmtMoney(m.fees || 0)) +
