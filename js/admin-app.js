@@ -343,8 +343,9 @@
       steps: [
         'Filter to Pending review to see new listings.',
         'Open a row to read the full details.',
-        'Approve to publish on the site, or reject if it does not meet standards.',
-        'Toggle Featured to show it in the opportunities carousel.',
+        'Approve — if unpaid, the owner gets a pay-to-go-live email; if already paid, it goes live now.',
+        'Reject if it does not meet standards (include a reason).',
+        'Toggle Featured only for Approved live listings in the opportunities carousel.',
       ],
     },
     moderation: {
@@ -22367,7 +22368,7 @@
 
     main.innerHTML =
       '<div class="space-y-4">' +
-      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Manage business opportunity listings submitted by organisers. Approve pending listings, toggle <strong>featured</strong> for the Premium Spotlight carousel on <code class="text-[11px]">/opportunities/</code>, or expand a row to edit details.</p>' +
+      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Manage business opportunity listings submitted by organisers. Approve pending listings (owner then pays via Stripe to go live), toggle <strong>featured</strong> for the Premium Spotlight carousel on <code class="text-[11px]">/opportunities/</code>, or expand a row to edit details.</p>' +
       '<div class="rounded-xl border border-brand-200 bg-brand-50/50 overflow-hidden">' +
       '<div class="px-4 py-3 border-b border-brand-100 space-y-3">' +
       '<div class="flex flex-wrap items-center justify-between gap-2">' +

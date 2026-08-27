@@ -1,5 +1,5 @@
 /**
- * Compare up to 3 saved opportunities side-by-side (My account).
+ * Compare up to 3 opportunities side-by-side (browse page + My account).
  */
 (function () {
   var STORAGE_KEY = 'hub_opp_compare';
@@ -165,6 +165,13 @@
     );
   }
 
+  function listingHref(item) {
+    if (item && item.slug) {
+      return '/opportunities/' + encodeURIComponent(item.slug);
+    }
+    return '/opportunities/opportunity?id=' + encodeURIComponent(item && item.id ? item.id : '');
+  }
+
   function renderModal(catalog, ids, fallbacks) {
     var items = resolveItems(catalog, ids, fallbacks);
     if (items.length < 2) return '';
@@ -174,13 +181,10 @@
 
     var headers = items
       .map(function (item) {
-        var href = item.slug
-          ? '../opportunities/' + encodeURIComponent(item.slug)
-          : '/opportunities/opportunity?id=' + encodeURIComponent(item.id);
         return (
           '<th scope="col">' +
           '<a class="opp-compare-card" href="' +
-          escapeHtml(href) +
+          escapeHtml(listingHref(item)) +
           '">' +
           mediaHtml(item) +
           '<span class="opp-compare-title">' +
@@ -261,8 +265,22 @@
       el.addEventListener('click', function () {
         var modal = document.getElementById('opp-compare-modal');
         if (modal) modal.remove();
+        document.body.classList.remove('opp-compare-modal-open');
       });
     });
+    document.body.classList.add('opp-compare-modal-open');
+  }
+
+  function openModal(catalog, ids, fallbacks) {
+    var selected = Array.isArray(ids) && ids.length ? ids : readIds();
+    if (selected.length < 2) return false;
+    var existing = document.getElementById('opp-compare-modal');
+    if (existing) existing.remove();
+    var html = renderModal(catalog, selected, fallbacks);
+    if (!html) return false;
+    document.body.insertAdjacentHTML('beforeend', html);
+    bindModal(document.getElementById('opp-compare-modal'));
+    return true;
   }
 
   window.HubOpportunityCompare = {
@@ -274,6 +292,7 @@
     clear: clear,
     renderModal: renderModal,
     bindModal: bindModal,
+    openModal: openModal,
     resolveItems: resolveItems,
   };
 })();

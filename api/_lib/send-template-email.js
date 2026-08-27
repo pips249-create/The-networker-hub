@@ -126,6 +126,8 @@ const TRANSACTIONAL_EMAIL_SLUGS = new Set([
   'organiser_rebrand_announcement',
   'organiser_team_invite',
   'opportunity_listing_live',
+  'opportunity_listing_pending_review',
+  'opportunity_listing_approved_pay',
   'opportunity_listing_expiry_reminder',
   'opportunity_premium_expiry_reminder',
   'opportunity_premium_live',

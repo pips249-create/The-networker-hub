@@ -5,6 +5,8 @@
   const params = new URLSearchParams(location.search);
   const editId = params.get('id') || '';
   const checkoutCancelled = params.get('checkout') === 'cancelled';
+  const checkoutStart = params.get('checkout') === 'start';
+  const justSubmitted = params.get('submitted') === '1';
   const isEmbedDrawer = params.get('embed') === '1' || window.self !== window.top;
 
   if (isEmbedDrawer) {
@@ -118,7 +120,47 @@
       return false;
     }
     panel.hidden = false;
+    const lead = document.getElementById('oe-listing-payment-lead');
+    const note = document.getElementById('oe-actions-note');
+    const approval = String(
+      (currentOpportunity && currentOpportunity.approvalStatus) || ''
+    ).trim();
+    if (approval === 'Approved') {
+      if (lead) {
+        lead.innerHTML =
+          'Your listing is <strong>approved</strong>. Start a <strong>monthly subscription of £25 + VAT</strong> (£30 total) and it goes live on the directory immediately.';
+      }
+      if (note) {
+        note.textContent =
+          'Billed monthly via Stripe — cancel any time from your Stripe customer portal or by contacting us.';
+      }
+    } else {
+      if (lead) {
+        lead.innerHTML =
+          'Submit your listing for review first — no charge yet. After we approve it, start a <strong>monthly subscription of £25 + VAT</strong> (£30 total) and it goes live immediately.';
+      }
+      if (note) {
+        note.textContent =
+          'We review listings before payment. Once approved, you’ll pay via Stripe and go live straight away.';
+      }
+    }
     return true;
+  }
+
+  function primarySubmitLabel() {
+    if (currentOpportunity && currentOpportunity.listingPaymentActive) return 'Update listing';
+    const approval = String(
+      (currentOpportunity && currentOpportunity.approvalStatus) || ''
+    ).trim();
+    if (approval === 'Approved') return 'Pay to go live';
+    if (approval === 'Pending Review') return 'Update submission';
+    if (approval === 'Rejected') return 'Resubmit for review';
+    return 'Submit for review';
+  }
+
+  function syncPrimarySubmitButton() {
+    const submitBtn = document.getElementById('oe-submit');
+    if (submitBtn) submitBtn.textContent = primarySubmitLabel();
   }
 
   function parseInvestmentFromForm() {
@@ -177,9 +219,7 @@
     showAlert(msg);
     if (submitBtn) {
       submitBtn.disabled = false;
-      submitBtn.textContent = currentOpportunity && currentOpportunity.listingPaymentActive
-        ? 'Update listing'
-        : 'Continue to payment';
+      submitBtn.textContent = primarySubmitLabel();
     }
   }
 
@@ -216,16 +256,24 @@
     const badge = document.getElementById('oe-status-badge');
     if (!badge || !opportunity) return;
     const status = String(opportunity.status || 'draft').toLowerCase();
+    const approval = String(opportunity.approvalStatus || '').trim();
     let label = 'Draft';
     let cls = 'is-draft';
-    if (status === 'published') {
-      if (opportunity.approvalStatus === 'Approved') {
-        label = 'Live';
-        cls = 'is-published';
-      } else {
-        label = 'Pending review';
-        cls = 'is-draft';
-      }
+    if (opportunity.listingPaymentActive && status === 'published' && approval === 'Approved') {
+      label = 'Live';
+      cls = 'is-published';
+    } else if (approval === 'Approved') {
+      label = 'Approved — pay to go live';
+      cls = 'is-draft';
+    } else if (approval === 'Rejected') {
+      label = 'Not approved';
+      cls = 'is-draft';
+    } else if (approval === 'Pending Review') {
+      label = 'Pending review';
+      cls = 'is-draft';
+    } else if (status === 'published') {
+      label = 'Pending review';
+      cls = 'is-draft';
     }
     badge.textContent = label;
     badge.className = 'ee-status-badge ' + cls;
@@ -310,10 +358,7 @@
     listingPaymentPanelVisible();
     updateListingPriceBreakdown();
     refreshCompleteness();
-    const submitBtn = document.getElementById('oe-submit');
-    if (submitBtn) {
-      submitBtn.textContent = opp.listingPaymentActive ? 'Update listing' : 'Continue to payment';
-    }
+    syncPrimarySubmitButton();
   }
 
   function logoSuggestsDarkPad(url) {
@@ -763,9 +808,31 @@
 
     const hasActiveListing =
       currentOpportunity && currentOpportunity.listingPaymentActive && editId;
-    const payload = buildPayload(
-      publish && hasActiveListing ? 'published' : 'draft'
-    );
+    const approval = String(
+      (currentOpportunity && currentOpportunity.approvalStatus) || ''
+    ).trim();
+    const awaitingPayment = approval === 'Approved' && !hasActiveListing;
+
+    // Approved + unpaid → open Stripe. Otherwise submit for review (no charge yet).
+    if (publish && awaitingPayment) {
+      if (!editId && !(currentOpportunity && currentOpportunity.id)) {
+        showAlert('Save your listing before starting checkout.');
+        return;
+      }
+      const payloadCheck = buildPayload('draft');
+      const validationError = validatePayload(payloadCheck, false);
+      if (validationError) {
+        showAlert(validationError);
+        return;
+      }
+      await startListingCheckout(editId || currentOpportunity.id);
+      return;
+    }
+
+    const payload = buildPayload(publish && hasActiveListing ? 'published' : 'draft');
+    if (publish && !hasActiveListing) {
+      payload.submitForReview = true;
+    }
     const validationError = validatePayload(payload, !publish);
     if (validationError) {
       showAlert(validationError);
@@ -808,7 +875,11 @@
     try {
       if (loading && loading.run) {
         res = await loading.run(
-          publish ? (hasActiveListing ? 'Updating listing' : 'Saving listing') : 'Saving draft',
+          publish
+            ? hasActiveListing
+              ? 'Updating listing'
+              : 'Submitting for review'
+            : 'Saving draft',
           saveWork
         );
       } else {
@@ -820,6 +891,7 @@
       [submitBtn, draftBtn].forEach((b) => {
         if (b) b.disabled = false;
       });
+      syncPrimarySubmitButton();
     }
 
     if (!res.ok) {
@@ -834,6 +906,9 @@
 
     const opportunity = res.data.opportunity || {};
     currentOpportunity = opportunity;
+    showStatusBadge(opportunity);
+    listingPaymentPanelVisible();
+    syncPrimarySubmitButton();
 
     if (!publish) {
       if (!editId && opportunity.id) {
@@ -881,8 +956,27 @@
       return;
     }
 
-    updateListingPriceBreakdown();
-    await startListingCheckout(opportunity.id);
+    if (isEmbedDrawer && window.parent && window.parent !== window) {
+      window.parent.postMessage(
+        {
+          type: 'hub-opportunity-saved',
+          draft: false,
+          pendingReview: true,
+          id: opportunity.id || editId,
+          title: opportunity.title || '',
+        },
+        window.location.origin
+      );
+      return;
+    }
+
+    showAlert(
+      'Submitted for review. We’ll email you when it’s approved — then you can pay via Stripe to go live.'
+    );
+    if (opportunity.id && !editId) {
+      location.href =
+        '/organiser/opportunity-edit?id=' + encodeURIComponent(opportunity.id) + '&submitted=1';
+    }
   }
 
   async function init() {
@@ -921,9 +1015,16 @@
 
     updateListingPriceBreakdown();
     listingPaymentPanelVisible();
+    syncPrimarySubmitButton();
 
     if (checkoutCancelled) {
-      showAlert('Checkout was cancelled — your draft is saved. Continue to payment when you are ready.');
+      showAlert(
+        'Checkout was cancelled. Your listing stays approved — pay via Stripe when you are ready to go live.'
+      );
+    } else if (justSubmitted) {
+      showAlert(
+        'Submitted for review. We’ll email you when it’s approved — then you can pay via Stripe to go live.'
+      );
     }
 
     if (window.hubBindLocationAutocomplete) {
@@ -964,6 +1065,17 @@
         if (loading) loading.hide();
       }
     }
+
+    if (
+      checkoutStart &&
+      currentOpportunity &&
+      currentOpportunity.approvalStatus === 'Approved' &&
+      !currentOpportunity.listingPaymentActive
+    ) {
+      await startListingCheckout(currentOpportunity.id || editId);
+      return;
+    }
+
     notifyEmbedDrawerReady();
   }
 

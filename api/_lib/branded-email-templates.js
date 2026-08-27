@@ -52,6 +52,16 @@ const BRANDED_EMAIL_TEMPLATES = {
     marker: 'hub-email-layout-v3-navy-gold-details',
     subject: 'Your opportunity is live — {{opportunity_title}}',
   },
+  opportunity_listing_pending_review: {
+    file: 'opportunity-listing-pending-review.html',
+    marker: 'hub-email-layout-v3-navy-gold-details',
+    subject: 'Your listing is pending review — {{opportunity_title}}',
+  },
+  opportunity_listing_approved_pay: {
+    file: 'opportunity-listing-approved-pay.html',
+    marker: 'hub-email-layout-v3-navy-gold-details',
+    subject: 'Approved — pay to go live — {{opportunity_title}}',
+  },
   opportunity_listing_expiry_reminder: {
     file: 'opportunity-listing-expiry-reminder.html',
     marker: 'hub-email-layout-v3-navy-gold',

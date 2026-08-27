@@ -28,7 +28,7 @@ The platform already shows disclaimers and blocks some MLM patterns in `js/oppor
 
 ### Tier 1 — Keep (implement now)
 
-1. **Pre-publish review** — All opportunity listings require admin approval before going live (`activateOpportunityListingPayment` sets `Pending Review`; live email on admin approve).
+1. **Pre-publish review** — Organisers submit for review with **no charge**. Admin Approve sends a pay-to-go-live email; Stripe payment then publishes immediately (`activateOpportunityListingPayment` + `opportunity_listing_live`). Already-paid pending listings go live on Approve.
 2. **Structured listing fields** — Investment amount, opportunity type, territory / location — required on submit; automated rejection if missing or vague.
 3. **Automated red flags** — Server-side pattern checks in `api/_lib/opportunity-moderation.js` for recruitment-primary network marketing, guaranteed income, passive income, crypto, and unregulated investment language.
 4. **Reject + email** — `opportunity_listing_rejected` template with required admin reason (or automated reason); edit and resubmit.
@@ -67,7 +67,7 @@ The platform already shows disclaimers and blocks some MLM patterns in `js/oppor
 
 ## 4. Moderation workflow
 
-1. Listing submitted → status `pending_review` (or equivalent).
+1. Listing submitted → `Pending Review` (draft; no Stripe yet).
 2. Admin Command Centre → Opportunities queue.
 3. Moderator checks:
    - [ ] Truthful title and description
@@ -75,8 +75,10 @@ The platform already shows disclaimers and blocks some MLM patterns in `js/oppor
    - [ ] No prohibited patterns (recruitment-primary network marketing, guaranteed returns)
    - [ ] Lister has organiser terms accepted
    - [ ] Images do not infringe copyright (see legal policies)
-4. **Approve** → publish + `opportunity_listing_live` email  
-   **Reject** → reason recorded + `opportunity_listing_rejected` email
+4. **Approve (unpaid)** → `Approved` + `opportunity_listing_approved_pay` email (Stripe link) — not public yet  
+   **Approve (already paid)** → live + `opportunity_listing_live` email  
+   **Reject** → reason recorded + `opportunity_listing_rejected` email  
+   **After Stripe payment on Approved listing** → published live + `opportunity_listing_live`
 5. Log decision in internal register (date, listing ID, moderator, outcome).
 
 ---
@@ -93,6 +95,7 @@ The platform already shows disclaimers and blocks some MLM patterns in `js/oppor
 
 | Date | Change |
 |------|--------|
+| 2026-08-27 | Review-then-pay: submit → pending review → Approve → Stripe → live; pending + approved-pay emails |
 | 2026-07-28 | Product-selling `network-marketing` type allowed; recruitment-primary auto-reject; not eligible for Premium Spotlight; browse hide filter default on |
 | 2026-07-10 | Earnings attestation required when listers enter financial figures; moderation owner assigned |
 | 2026-07-08 | Pre-publish review enforced; automated red flags; report listing; admin rejection reasons |

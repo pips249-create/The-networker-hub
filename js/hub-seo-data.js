@@ -183,7 +183,7 @@ window.HUB_SEO_DATA = {
     },
     {
       "question": "What does the £25 business opportunity listing include?",
-      "answer": "£25 per month + VAT is a monthly Stripe subscription for a standard directory listing — not a one-off and not Premium Spotlight. While subscribed, your opportunity appears on /opportunities/ browse and search results and has a public detail page where signed-in members can send you an enquiry. It does not include homepage placement, email/newsletter promotion, social posts, or Featured Opportunity Boost. Cancel any time in Stripe. Optional Featured Opportunity Boost is a separate £55 one-time fee for up to 30 days of pinned/highlighted placement. Details: /opportunities/list and /advertising.",
+      "answer": "£25 per month + VAT is a monthly Stripe subscription for a standard directory listing — not a one-off and not Premium Spotlight. You submit for review first (no charge); after approval you pay and the listing goes live immediately. While subscribed, your opportunity appears on /opportunities/ browse and search results and has a public detail page where signed-in members can send you an enquiry. It does not include homepage placement, email/newsletter promotion, social posts, or Featured Opportunity Boost. Cancel any time in Stripe. Optional Featured Opportunity Boost is a separate £55 one-time fee for up to 30 days of pinned/highlighted placement. Details: /opportunities/list and /advertising.",
       "category": "organisers",
       "icon": "💷",
       "helpLink": "/opportunities/list"
@@ -677,7 +677,7 @@ window.HUB_SEO_DATA = {
               "name": "What does the £25 business opportunity listing include?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "£25 per month + VAT is a monthly Stripe subscription for a standard directory listing — not a one-off and not Premium Spotlight. While subscribed, your opportunity appears on /opportunities/ browse and search results and has a public detail page where signed-in members can send you an enquiry. It does not include homepage placement, email/newsletter promotion, social posts, or Featured Opportunity Boost. Cancel any time in Stripe. Optional Featured Opportunity Boost is a separate £55 one-time fee for up to 30 days of pinned/highlighted placement. Details: /opportunities/list and /advertising."
+                "text": "£25 per month + VAT is a monthly Stripe subscription for a standard directory listing — not a one-off and not Premium Spotlight. You submit for review first (no charge); after approval you pay and the listing goes live immediately. While subscribed, your opportunity appears on /opportunities/ browse and search results and has a public detail page where signed-in members can send you an enquiry. It does not include homepage placement, email/newsletter promotion, social posts, or Featured Opportunity Boost. Cancel any time in Stripe. Optional Featured Opportunity Boost is a separate £55 one-time fee for up to 30 days of pinned/highlighted placement. Details: /opportunities/list and /advertising."
               }
             },
             {

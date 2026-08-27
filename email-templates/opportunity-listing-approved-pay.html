@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Opportunity listing live</title>
+  <title>Opportunity approved — pay to go live</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
     body, table, td, p, a { margin:0; padding:0; border:0; font-size:100%; font:inherit; vertical-align:top; }
@@ -66,9 +66,9 @@
             <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto 16px;">
               <tr><td style="width:52px;height:52px;background:#fff4d6;border-radius:50%;text-align:center;vertical-align:middle;font-size:24px;color:#b8860b;line-height:52px;">&#10003;</td></tr>
             </table>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:#b8860b;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px;">Listing live</p>
-            <h1 class="hero-title" style="font-family:'DM Sans',system-ui,sans-serif;font-size:28px;font-weight:600;color:#1c2040;margin:0 0 10px;line-height:1.15;">Your opportunity is live</h1>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:0;">Hi {{owner_name}}, <strong style="color:#1c2040;">{{opportunity_title}}</strong> is now published on The Networker UK business opportunities directory.</p>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:#b8860b;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px;">Approved</p>
+            <h1 class="hero-title" style="font-family:'DM Sans',system-ui,sans-serif;font-size:28px;font-weight:600;color:#1c2040;margin:0 0 10px;line-height:1.15;">Pay to go live</h1>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:0;">Hi {{owner_name}}, good news — <strong style="color:#1c2040;">{{opportunity_title}}</strong> has been approved. Start your monthly listing subscription (£25 + VAT) and it goes live on the directory immediately.</p>
           </td>
         </tr><tr>
           <td class="mobile-pad" style="padding:0 40px 20px;">
@@ -79,12 +79,12 @@
                 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                   {{opportunity_details_rows}}
                 </table>
-                <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.65;color:rgba(255,255,255,0.8);margin:8px 0 0;">{{expiry_note}}</p>
+                <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.65;color:rgba(255,255,255,0.8);margin:8px 0 0;">Billed monthly via Stripe. Cancel any time.</p>
               </td></tr>
             </table>
           </td>
         </tr><tr>
-          <td class="mobile-pad email-cta" style="padding:0 40px 28px;text-align:center;"><a href="{{opportunity_url}}" style="display:inline-block;text-align:center;padding:14px 32px;background:#4aa8f0;border-radius:999px;color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;margin:0 6px 10px;">View listing &rarr;</a><a href="{{dashboard_url}}" style="display:inline-block;text-align:center;padding:14px 32px;background:#1c2040;border-radius:999px;color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;margin:0 6px 10px;">Open dashboard</a></td>
+          <td class="mobile-pad email-cta" style="padding:0 40px 28px;text-align:center;"><a href="{{pay_url}}" style="display:inline-block;text-align:center;padding:14px 32px;background:#4aa8f0;border-radius:999px;color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;margin:0 6px 10px;">Pay via Stripe &rarr;</a><a href="{{opportunity_edit_url}}" style="display:inline-block;text-align:center;padding:14px 32px;background:#1c2040;border-radius:999px;color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;margin:0 6px 10px;">Open listing</a></td>
         </tr>
         {{mini_sponsors_row}}
         <!-- hub-email-layout-v3-navy-gold-details -->

@@ -3638,6 +3638,12 @@
     const existing = document.getElementById('opp-compare-modal');
     if (existing) existing.remove();
 
+    if (typeof cmp.openModal === 'function') {
+      const opened = cmp.openModal(window.HubOpportunitiesCatalog, ids, savedOpportunities);
+      refreshCompareToolbar();
+      return opened;
+    }
+
     const html = cmp.renderModal(window.HubOpportunitiesCatalog, ids, savedOpportunities);
     if (!html) return false;
     document.body.insertAdjacentHTML('beforeend', html);

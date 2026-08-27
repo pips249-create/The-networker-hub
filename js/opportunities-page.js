@@ -338,7 +338,6 @@
   var pendingResultsScroll = false;
   var activeCitySlug = '';
   var activeCityName = '';
-  var expandedCardId = null;
   var applyFiltersToken = 0;
 
   var INDUSTRY_CHIPS = (
@@ -1211,141 +1210,6 @@
     });
   }
 
-  function formatMetaVal(key, val) {
-    if (catalog && catalog.formatMetaDisplayValue) {
-      return catalog.formatMetaDisplayValue(key, val);
-    }
-    return val;
-  }
-
-  function isEmptyMetaValue(val) {
-    var v = String(val == null ? '' : val).trim();
-    return !v || v === '—' || v === '\u00a0' || /^n\/?a$/i.test(v);
-  }
-
-  function metaCellHtml(m, item) {
-    if (!m || isEmptyMetaValue(m.val) || isEmptyMetaValue(m.key)) return '';
-    var scarcity = catalog && catalog.isScarcityMeta(m.key, m.val);
-    var isInvestment = /^investment$/i.test(m.key);
-    var investUi = window.HubOpportunityInvestment;
-    var infoBtn =
-      isInvestment && investUi && item ? investUi.infoButtonHtml(item) : '';
-    return (
-      '<div class="opp-meta-cell' +
-      (scarcity ? ' opp-meta-cell--scarcity' : '') +
-      (isInvestment && infoBtn ? ' opp-meta-cell--has-invest-info' : '') +
-      '"><span class="opp-meta-k">' +
-      escapeHtml(m.key) +
-      '</span><span class="opp-meta-v-wrap"><span class="opp-meta-v">' +
-      escapeHtml(formatMetaVal(m.key, m.val)) +
-      '</span>' +
-      infoBtn +
-      '</span></div>'
-    );
-  }
-
-  function companyAvatarHtml(item) {
-    var logo = item.logoUrl || '';
-    if (logo) {
-      var dark =
-        window.CmsSponsorFields && window.CmsSponsorFields.logoUrlSuggestsDarkBand
-          ? window.CmsSponsorFields.logoUrlSuggestsDarkBand(logo)
-          : /(?:^|[\/_\-.])white(?:[\/_\-.]|$)/i.test(logo);
-      return (
-        '<div class="opp-co-avatar opp-co-avatar--logo' +
-        (dark ? ' is-logo-dark' : '') +
-        '" aria-hidden="true">' +
-        '<img src="' +
-        escapeHtml(logo) +
-        '" alt="" width="24" height="24" loading="lazy" decoding="async" aria-hidden="true" />' +
-        '</div>'
-      );
-    }
-    return (
-      '<div class="opp-co-avatar" style="background:' +
-      escapeHtml(item.hostColor) +
-      '" aria-hidden="true">' +
-      escapeHtml(item.hostInitials) +
-      '</div>'
-    );
-  }
-
-  function cardBadgesHtml(item, typeClassFn, typeLabels) {
-    return (
-      '<div class="opp-card-head">' +
-      '<div class="opp-card-badges">' +
-      '<span class="opp-type-tag ' +
-      typeClassFn(item.type) +
-      '">' +
-      escapeHtml(typeLabels[item.type] || item.type) +
-      '</span>' +
-      (item.featured ? '<span class="opp-feat-pip">Featured</span>' : '') +
-      '</div></div>'
-    );
-  }
-
-  function cardDetailHtml(item) {
-    var href = detailHref(item);
-    var displayMeta = (catalog ? catalog.cardDisplayMeta(item) : (item.meta || []).slice(0, 4)).filter(
-      function (m) {
-        return m && !isEmptyMetaValue(m.key) && !isEmptyMetaValue(m.val);
-      }
-    );
-    var locIcon = /remote/i.test(item.locationLabel || '') ? '🌐' : '📍';
-    var desc = String(item.desc || '').trim();
-    var metaHtml = displayMeta
-      .map(function (m) {
-        return metaCellHtml(m, item);
-      })
-      .join('');
-
-    return (
-      '<div class="bo-opp-detail-inner">' +
-      '<div class="opp-company">' +
-      companyAvatarHtml(item) +
-      '<span class="opp-co-name">' +
-      escapeHtml(item.host || 'Provider') +
-      '</span></div>' +
-      (desc ? '<p class="opp-card-desc">' + escapeHtml(desc) + '</p>' : '') +
-      (quality && quality.trustBadgesHtml
-        ? quality.trustBadgesHtml(item, 'opp-trust-badges opp-trust-badges--card')
-        : '') +
-      (metaHtml ? '<div class="opp-meta-row">' + metaHtml + '</div>' : '') +
-      '<div class="bo-opp-detail-footer">' +
-      '<span class="opp-location">' +
-      locIcon +
-      ' ' +
-      escapeHtml(item.locationLabel || 'UK') +
-      '</span>' +
-      '<a href="' +
-      escapeHtml(href) +
-      '" class="opp-enquire-btn">View full listing →</a>' +
-      '</div></div>'
-    );
-  }
-
-  function mediaBlockHtml(item, thumb) {
-    if (item.imageUrl) {
-      return (
-        '<div class="opp-card-media opp-card-media--image">' +
-        '<img class="opp-card-media-img" src="' +
-        escapeHtml(item.imageUrl) +
-        '" alt="' +
-        escapeHtml(item.title || 'Opportunity cover') +
-        '" loading="lazy" decoding="async" />' +
-        '</div>'
-      );
-    }
-    return (
-      '<div class="opp-card-media opp-card-media--placeholder" style="background:' +
-      escapeHtml(thumb.gradient) +
-      '">' +
-      '<span class="opp-card-media-emoji" aria-hidden="true">' +
-      thumb.emoji +
-      '</span></div>'
-    );
-  }
-
   function gridCard(item) {
     var href = detailHref(item);
     var typeLabels = catalog ? catalog.TYPE_LABELS : {};
@@ -1360,7 +1224,6 @@
       hostLabel.toLowerCase() !== 'provider' &&
       !hostsAreNearDuplicate(titleLabel, hostLabel);
     var premiumBadge = item.featured ? '<span class="event-grid-premium">Premium</span>' : '';
-    var previewId = 'bo-opp-preview-' + String(item.id).replace(/[^a-z0-9_-]/gi, '');
     var saved = saves && saves.isSaved(item.id);
 
     return (
@@ -1409,12 +1272,22 @@
       '<a class="bo-opp-primary-btn" href="' +
       escapeHtml(href) +
       '">View listing</a>' +
-      '<button type="button" class="bo-opp-expand-btn" aria-haspopup="dialog" aria-controls="bo-opp-preview-drawer" data-preview-for="' +
-      escapeHtml(previewId) +
+      '<button type="button" class="bo-opp-compare-btn' +
+      (window.HubOpportunityCompare && window.HubOpportunityCompare.isSelected(item.id)
+        ? ' is-active'
+        : '') +
+      '" data-opp-compare-id="' +
+      escapeHtml(item.id) +
+      '" aria-pressed="' +
+      (window.HubOpportunityCompare && window.HubOpportunityCompare.isSelected(item.id)
+        ? 'true'
+        : 'false') +
       '">' +
-      '<span class="bo-opp-expand-label">Quick look</span>' +
-      '<svg class="bo-opp-expand-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>' +
-      '</button></div></div></div>' +
+      (window.HubOpportunityCompare && window.HubOpportunityCompare.isSelected(item.id)
+        ? 'In compare'
+        : 'Compare') +
+      '</button>' +
+      '</div></div></div>' +
       '<a class="event-grid-card-link" href="' +
       escapeHtml(href) +
       '" aria-label="View ' +
@@ -1423,143 +1296,105 @@
     );
   }
 
-  function ensurePreviewDrawer() {
-    var existing = document.getElementById('bo-opp-preview-drawer');
-    if (existing) return existing;
-
-    var root = document.createElement('div');
-    root.id = 'bo-opp-preview-drawer';
-    root.className = 'bo-opp-preview-drawer';
-    root.hidden = true;
-    root.setAttribute('aria-hidden', 'true');
-    root.innerHTML =
-      '<div class="bo-opp-preview-backdrop" data-bo-preview-close="1" tabindex="-1"></div>' +
-      '<div class="bo-opp-preview-panel" role="dialog" aria-modal="true" aria-labelledby="bo-opp-preview-title" tabindex="-1">' +
-      '<div class="bo-opp-preview-head">' +
-      '<p class="bo-opp-preview-kicker">Quick look</p>' +
-      '<h2 class="bo-opp-preview-title" id="bo-opp-preview-title"></h2>' +
-      '<button type="button" class="bo-opp-preview-close" data-bo-preview-close="1" aria-label="Close quick look">' +
-      '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>' +
-      '</button></div>' +
-      '<div class="bo-opp-preview-body" id="bo-opp-preview-body"></div>' +
-      '</div>';
-    document.body.appendChild(root);
-    return root;
-  }
-
-  function findListingById(id) {
-    for (var i = 0; i < allListings.length; i++) {
-      if (String(allListings[i].id) === String(id)) return allListings[i];
-    }
-    return null;
-  }
-
-  function bindPreviewInvestPopovers() {
-    if (!window.HubOpportunityInvestment || !window.HubOpportunityInvestment.bindCardPopovers) return;
-    window.HubOpportunityInvestment.bindCardPopovers(findListingById);
-  }
-
-  function closePreviewDrawer() {
-    var drawer = document.getElementById('bo-opp-preview-drawer');
-    if (!drawer || drawer.hidden) return;
-
-    drawer.classList.remove('is-open');
-    drawer.setAttribute('aria-hidden', 'true');
-    document.body.classList.remove('bo-opp-preview-open');
-
-    var restoreId = expandedCardId;
-    expandedCardId = null;
-
-    window.setTimeout(function () {
-      if (drawer.classList.contains('is-open')) return;
-      drawer.hidden = true;
-      var body = document.getElementById('bo-opp-preview-body');
-      if (body) body.innerHTML = '';
-    }, 220);
-
-    if (restoreId && els.mount) {
-      var btn = els.mount.querySelector('.bo-opp-card[data-id="' + restoreId + '"] .bo-opp-expand-btn');
-      if (btn && typeof btn.focus === 'function') btn.focus();
-    }
-  }
-
-  function openPreviewDrawer(item, triggerBtn) {
-    if (!item) return;
-    var drawer = ensurePreviewDrawer();
-    var titleEl = document.getElementById('bo-opp-preview-title');
-    var bodyEl = document.getElementById('bo-opp-preview-body');
-    var panel = drawer.querySelector('.bo-opp-preview-panel');
-
-    if (titleEl) titleEl.textContent = item.title || 'Opportunity';
-    if (bodyEl) bodyEl.innerHTML = cardDetailHtml(item);
-
-    expandedCardId = String(item.id);
-    drawer.hidden = false;
-    drawer.setAttribute('aria-hidden', 'false');
-    document.body.classList.add('bo-opp-preview-open');
-
-    window.requestAnimationFrame(function () {
-      drawer.classList.add('is-open');
-      if (panel && typeof panel.focus === 'function') panel.focus();
+  function syncCompareButtons(root) {
+    var cmp = window.HubOpportunityCompare;
+    if (!cmp) return;
+    (root || document).querySelectorAll('[data-opp-compare-id]').forEach(function (btn) {
+      var id = btn.getAttribute('data-opp-compare-id');
+      var on = cmp.isSelected(id);
+      btn.classList.toggle('is-active', on);
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      btn.textContent = on ? 'In compare' : 'Compare';
     });
-
-    bindPreviewInvestPopovers();
-    if (saves && bodyEl) saves.refreshButtons(bodyEl);
   }
 
-  function setCardExpanded(card, expand) {
-    if (!card) return;
-    if (!expand) {
-      if (String(card.getAttribute('data-id') || '') === String(expandedCardId || '')) {
-        closePreviewDrawer();
-      }
-      return;
+  function ensureCompareTray() {
+    var existing = document.getElementById('bo-opp-compare-tray');
+    if (existing) return existing;
+    var el = document.createElement('div');
+    el.id = 'bo-opp-compare-tray';
+    el.className = 'bo-opp-compare-tray';
+    el.hidden = true;
+    el.setAttribute('role', 'region');
+    el.setAttribute('aria-label', 'Compare opportunities');
+    el.innerHTML =
+      '<div class="bo-opp-compare-tray-inner">' +
+      '<p class="bo-opp-compare-tray-text"><strong id="bo-opp-compare-count">0</strong> selected to compare <span class="bo-opp-compare-tray-hint">(max 3)</span></p>' +
+      '<div class="bo-opp-compare-tray-actions">' +
+      '<button type="button" class="bo-opp-compare-tray-clear" id="bo-opp-compare-clear">Clear</button>' +
+      '<button type="button" class="bo-opp-compare-tray-open" id="bo-opp-compare-open" disabled>Compare</button>' +
+      '</div></div>';
+    document.body.appendChild(el);
+    return el;
+  }
+
+  function refreshCompareTray() {
+    var cmp = window.HubOpportunityCompare;
+    var tray = ensureCompareTray();
+    if (!cmp || !tray) return;
+    var ids = cmp.ids();
+    var countEl = document.getElementById('bo-opp-compare-count');
+    var openBtn = document.getElementById('bo-opp-compare-open');
+    var clearBtn = document.getElementById('bo-opp-compare-clear');
+    if (countEl) countEl.textContent = String(ids.length);
+    if (openBtn) openBtn.disabled = ids.length < 2;
+    if (clearBtn) clearBtn.disabled = !ids.length;
+    tray.hidden = ids.length === 0;
+    document.body.classList.toggle('bo-opp-compare-tray-open', ids.length > 0);
+    syncCompareButtons(els.mount || document);
+  }
+
+  function openBrowseCompare(forceIds) {
+    var cmp = window.HubOpportunityCompare;
+    if (!cmp || !cmp.openModal) return false;
+    if (Array.isArray(forceIds) && forceIds.length && cmp.setIds) {
+      cmp.setIds(forceIds);
+      refreshCompareTray();
     }
-    var item = findListingById(card.getAttribute('data-id'));
-    openPreviewDrawer(item, card.querySelector('.bo-opp-expand-btn'));
+    return cmp.openModal(catalog, cmp.ids(), allListings);
   }
 
-  function bindCardExpand() {
-    if (!els.mount || els.mount.dataset.expandBound === '1') return;
-    els.mount.dataset.expandBound = '1';
+  function bindCompareControls() {
+    if (!els.mount || els.mount.dataset.compareBound === '1') return;
+    if (!window.HubOpportunityCompare) return;
+    els.mount.dataset.compareBound = '1';
 
-    ensurePreviewDrawer();
+    ensureCompareTray();
+    refreshCompareTray();
 
     els.mount.addEventListener('click', function (e) {
-      var btn = e.target.closest('.bo-opp-expand-btn');
+      var btn = e.target.closest('[data-opp-compare-id]');
       if (!btn) return;
       e.preventDefault();
       e.stopPropagation();
-
-      var card = btn.closest('.bo-opp-card');
-      if (!card) return;
-      var id = card.getAttribute('data-id');
-      if (expandedCardId && String(expandedCardId) === String(id)) {
-        closePreviewDrawer();
+      var cmp = window.HubOpportunityCompare;
+      var id = btn.getAttribute('data-opp-compare-id');
+      if (!cmp || !id) return;
+      if (!cmp.isSelected(id) && cmp.ids().length >= cmp.MAX) {
+        btn.blur();
         return;
       }
-      setCardExpanded(card, true);
+      cmp.toggle(id);
+      refreshCompareTray();
     });
 
-    var drawer = document.getElementById('bo-opp-preview-drawer');
-    if (drawer && drawer.dataset.bound !== '1') {
-      drawer.dataset.bound = '1';
-      drawer.addEventListener('click', function (e) {
-        if (e.target.closest('[data-bo-preview-close]')) {
-          e.preventDefault();
-          closePreviewDrawer();
-        }
-      });
-      document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') closePreviewDrawer();
+    var openBtn = document.getElementById('bo-opp-compare-open');
+    var clearBtn = document.getElementById('bo-opp-compare-clear');
+    if (openBtn && openBtn.dataset.bound !== '1') {
+      openBtn.dataset.bound = '1';
+      openBtn.addEventListener('click', function () {
+        openBrowseCompare();
       });
     }
-  }
+    if (clearBtn && clearBtn.dataset.bound !== '1') {
+      clearBtn.dataset.bound = '1';
+      clearBtn.addEventListener('click', function () {
+        window.HubOpportunityCompare.clear();
+        refreshCompareTray();
+      });
+    }
 
-  function restoreExpandedCard() {
-    if (!expandedCardId || !els.mount) return;
-    var card = els.mount.querySelector('.bo-opp-card[data-id="' + expandedCardId + '"]');
-    if (card) setCardExpanded(card, true);
+    window.HubOpportunityCompareOpenBrowse = openBrowseCompare;
   }
 
   function paginationHtml(page, totalPages) {
@@ -1777,8 +1612,8 @@
 
       updateResultsCount(filtered.length);
       updateLoadMoreControls(filtered, nextShown, nextShown < filtered.length);
+      refreshCompareTray();
       loadingMore = false;
-      restoreExpandedCard();
       return;
     }
 
@@ -2026,7 +1861,7 @@
     if (saves) saves.refreshButtons(els.mount);
     if (slice.hasMore) observeLazySentinel();
     else disconnectLazyObserver();
-    restoreExpandedCard();
+    refreshCompareTray();
     bindEmptyStateActions();
   }
 
@@ -3060,8 +2895,8 @@
     initSort();
     initViewToggle();
     initPagination();
-    bindCardExpand();
     initFavClicks();
+    bindCompareControls();
     initCopyLink();
     initSaveSearch();
     initAlertDialog();

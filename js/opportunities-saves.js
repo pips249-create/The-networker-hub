@@ -356,7 +356,7 @@
   }
 
   function compareHref() {
-    return '../account/?scope=opportunities&compare=1#saved';
+    return '/opportunities/';
   }
 
   function dismissCompareNudge() {
@@ -379,11 +379,9 @@
     el.setAttribute('role', 'status');
     el.innerHTML =
       '<div class="opp-compare-nudge-inner">' +
-      '<p class="opp-compare-nudge-text">You have saved 2 opportunities. You can compare them side by side.</p>' +
+      '<p class="opp-compare-nudge-text">You have saved 2 opportunities. Compare them side by side here.</p>' +
       '<div class="opp-compare-nudge-actions">' +
-      '<a class="opp-compare-nudge-btn" href="' +
-      compareHref() +
-      '">Compare now</a>' +
+      '<button type="button" class="opp-compare-nudge-btn" id="opp-compare-nudge-open">Compare now</button>' +
       '<button type="button" class="opp-compare-nudge-dismiss" aria-label="Dismiss">Not now</button>' +
       '</div></div>';
     document.body.appendChild(el);
@@ -392,14 +390,21 @@
     if (dismissBtn) {
       dismissBtn.addEventListener('click', dismissCompareNudge);
     }
-    var link = el.querySelector('.opp-compare-nudge-btn');
-    if (link) {
-      link.addEventListener('click', function () {
+    var openBtn = document.getElementById('opp-compare-nudge-open');
+    if (openBtn) {
+      openBtn.addEventListener('click', function () {
         var savedIds = ids().slice(0, 3);
         try {
           localStorage.setItem('hub_opp_compare', JSON.stringify(savedIds));
         } catch (err) {
           /* ignore */
+        }
+        dismissCompareNudge();
+        if (typeof window.HubOpportunityCompareOpenBrowse === 'function') {
+          window.HubOpportunityCompareOpenBrowse(savedIds);
+        } else if (window.HubOpportunityCompare && window.HubOpportunityCompare.setIds) {
+          window.HubOpportunityCompare.setIds(savedIds);
+          window.location.href = compareHref();
         }
       });
     }

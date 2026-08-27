@@ -15051,27 +15051,49 @@
       hideOpportunityClaimModal();
       await loadBootstrap();
       if (action === 'claim') {
-        showOrganiserAlert(
-          'Listing claimed — opening Stripe to start your £25/month + VAT subscription…',
-          false
-        );
+        showOrganiserAlert('Listing claimed.', false);
         try {
-          const checkout = await api('/api/organiser/opportunity-listing-checkout', {
-            method: 'POST',
-            body: JSON.stringify({ opportunityId: opportunity.id }),
+          const claimed = (state.opportunities || []).find(function (o) {
+            return String(o.id) === String(opportunity.id);
           });
-          if (checkout.ok && checkout.data && checkout.data.url) {
-            location.href = checkout.data.url;
+          const freshRes = await api(
+            '/api/organiser/opportunities?id=' + encodeURIComponent(opportunity.id)
+          );
+          const fresh =
+            (freshRes.ok && freshRes.data && freshRes.data.opportunity) || claimed || opportunity;
+          const approval = String(fresh.approvalStatus || fresh.approval_status || '').trim();
+          const paid = Boolean(fresh.listingPaymentActive);
+          if (paid) {
+            showOrganiserAlert('Listing claimed — it is already live on your dashboard.', false);
+            setRoute('business-overview', { skipEventsGuard: true });
             return;
+          }
+          if (approval === 'Approved') {
+            showOrganiserAlert(
+              'Listing claimed — opening Stripe to start your £25/month + VAT subscription…',
+              false
+            );
+            const checkout = await api('/api/organiser/opportunity-listing-checkout', {
+              method: 'POST',
+              body: JSON.stringify({ opportunityId: opportunity.id }),
+            });
+            if (checkout.ok && checkout.data && checkout.data.url) {
+              location.href = checkout.data.url;
+              return;
+            }
+            showOrganiserAlert(
+              'Listing claimed — use Pay to go live on My business opportunities when you are ready.',
+              false
+            );
+          } else {
+            showOrganiserAlert(
+              'Listing claimed. It still needs hub approval before you can start the monthly subscription.',
+              false
+            );
           }
         } catch {
           /* fall through to overview */
         }
-        showOrganiserAlert(
-          data.message ||
-            'Listing claimed — open My business opportunities and start the monthly subscription to keep it live.',
-          false
-        );
         setRoute('business-overview', { skipEventsGuard: true });
       } else if (action === 'reject') {
         showOrganiserAlert(
@@ -15506,6 +15528,15 @@
   }
 
   function opportunityRenewButtonHtml(opportunity) {
+    const approval = String(opportunity.approvalStatus || opportunity.approval_status || '').trim();
+    const paid = Boolean(opportunity.listingPaymentActive);
+    if (approval === 'Approved' && !paid) {
+      return (
+        '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-opp-renew="' +
+        esc(opportunity.id) +
+        '">Pay to go live</button>'
+      );
+    }
     const meta = opportunityExpiryMeta(opportunity);
     if (meta.tone !== 'warn' && meta.tone !== 'danger') return '';
     return (
@@ -15593,11 +15624,15 @@
       const match = (state.opportunities || []).find(function (o) {
         return String(o.id) === String(renewId);
       });
-      if (match) {
-        requestAnimationFrame(function () {
-          const row = document.querySelector('[data-opp-renew="' + renewId + '"]');
-          if (row) row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        });
+      if (!match) return;
+      requestAnimationFrame(function () {
+        const row = document.querySelector('[data-opp-renew="' + renewId + '"]');
+        if (row) row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+      const approval = String(match.approvalStatus || match.approval_status || '').trim();
+      const paid = Boolean(match.listingPaymentActive);
+      if (approval === 'Approved' && !paid) {
+        startOpportunityListingRenew(renewId, 1, null);
       }
     } catch {
       /* ignore */
@@ -16156,11 +16191,25 @@
 
   function opportunityStatusForBadge(o) {
     const status = String(o.status || '').toLowerCase();
-    if (status === 'published' || status === 'live') return { key: 'live', label: 'Live' };
+    const approval = String(o.approvalStatus || o.approval_status || '').trim();
+    const paid = Boolean(o.listingPaymentActive);
+    if (paid && (status === 'published' || status === 'live') && approval === 'Approved') {
+      return { key: 'live', label: 'Live' };
+    }
+    if (approval === 'Approved' && !paid) {
+      return { key: 'pending_approval', label: 'Approved — pay to go live' };
+    }
+    if (/pending/i.test(approval)) {
+      return { key: 'pending_approval', label: 'Pending review' };
+    }
+    if (approval === 'Rejected') {
+      return { key: 'unpublished', label: 'Not approved' };
+    }
     if (status === 'draft') return { key: 'draft', label: 'Draft' };
     if (status === 'unpublished') return { key: 'unpublished', label: 'Unpublished' };
-    const approval = String(o.approvalStatus || '');
-    if (/pending/i.test(approval)) return { key: 'pending_approval', label: approval };
+    if (status === 'published' || status === 'live') {
+      return { key: 'pending_approval', label: approval || 'Pending review' };
+    }
     return { key: 'draft', label: status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Draft' };
   }
 

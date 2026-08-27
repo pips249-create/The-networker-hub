@@ -243,21 +243,21 @@
         <div class="ee-card ee-card-actions">
           <div class="oe-listing-payment" id="oe-listing-payment">
             <h2 class="oe-listing-payment-title">Listing fee</h2>
-            <p class="oe-listing-payment-lead">
-              Business opportunities are a <strong>monthly subscription of £25 + VAT</strong> (£30 total per month).
-              Billed every month via Stripe — cancel any time from your Stripe customer portal or by contacting us.
+            <p class="oe-listing-payment-lead" id="oe-listing-payment-lead">
+              Submit your listing for review first — no charge yet. After we approve it, start a
+              <strong>monthly subscription of £25 + VAT</strong> (£30 total) and it goes live immediately.
             </p>
             <dl class="oe-listing-price-breakdown" id="oe-listing-price-breakdown">
               <div><dt>Listing fee (monthly)</dt><dd>£25.00</dd></div>
               <div><dt>VAT (20%)</dt><dd>£5.00</dd></div>
-              <div class="oe-listing-price-total"><dt>Due today, then monthly</dt><dd>£30.00</dd></div>
+              <div class="oe-listing-price-total"><dt>Due after approval, then monthly</dt><dd>£30.00</dd></div>
             </dl>
           </div>
           <div class="ee-actions ee-actions--split">
             <button type="button" class="ee-btn ee-btn-outline" id="oe-save-draft">Save as draft</button>
-            <button type="submit" class="ee-btn ee-btn-gold" id="oe-submit">Continue to payment</button>
+            <button type="submit" class="ee-btn ee-btn-gold" id="oe-submit">Submit for review</button>
           </div>
-          <p class="ee-hint ee-actions-note">You’ll start a monthly Stripe subscription, then your listing goes live in the directory.</p>
+          <p class="ee-hint ee-actions-note" id="oe-actions-note">We review listings before payment. Once approved, you’ll pay via Stripe and go live straight away.</p>
         </div>
       </form>
     </div>
@@ -270,6 +270,6 @@
     <script src="../js/organiser-terms.js?v=20260728nm" data-root="../" defer></script>
     <script src="../js/opportunity-moderation-scan.js?v=20260827aff2" defer></script>
     <script src="../js/opportunity-listing-quality.js?v=20260825aff1" defer></script>
-    <script src="../js/organiser-opportunity-edit.js?v=20260827whitelogo" defer></script>
+    <script src="../js/organiser-opportunity-edit.js?v=20260827reviewpay" defer></script>
   </body>
 </html>

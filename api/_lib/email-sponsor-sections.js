@@ -25,6 +25,8 @@ const OPPORTUNITY_SIDEBAR_SLOT = 'opportunity_page_sidebar_ad';
 /** Every business-opportunity email uses the Business Ops sponsor. */
 const OPPORTUNITY_EMAIL_SLUGS = new Set([
   'opportunity_listing_live',
+  'opportunity_listing_pending_review',
+  'opportunity_listing_approved_pay',
   'opportunity_listing_expiry_reminder',
   'opportunity_premium_expiry_reminder',
   'opportunity_premium_live',
@@ -118,6 +120,8 @@ const ORGANISER_MINI_SPONSOR_SLUGS = new Set([
 
 const OPPORTUNITY_MINI_SPONSOR_SLUGS = new Set([
   'opportunity_listing_live',
+  'opportunity_listing_pending_review',
+  'opportunity_listing_approved_pay',
   'opportunity_listing_expiry_reminder',
   'opportunity_premium_expiry_reminder',
   'opportunity_premium_live',
