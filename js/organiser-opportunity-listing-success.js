@@ -139,13 +139,17 @@
 
   function investmentLabel(item) {
     var catalog = window.HubOpportunitiesCatalog;
+    var affiliate =
+      catalog && catalog.isAffiliateStyleListing && catalog.isAffiliateStyleListing(item);
+    var kind = affiliate ? 'Commission' : 'Investment';
     var meta = catalog ? catalog.cardDisplayMeta(item) : (item.meta || []).slice(0, 1);
     if (meta.length && meta[0].val) {
-      return catalog
+      var val = catalog
         ? catalog.formatMetaDisplayValue(meta[0].key, meta[0].val)
         : String(meta[0].val);
+      return kind + ' · ' + val;
     }
-    return 'Enquire';
+    return kind + ' · Enquire';
   }
 
   function previewItemFromParams() {

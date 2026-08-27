@@ -393,8 +393,8 @@
     if (catalog && catalog.isAffiliateStyleListing && catalog.isAffiliateStyleListing(item)) {
       els.typeNotice.hidden = false;
       els.typeNotice.innerHTML =
-        '<p><strong>Partnership / Affiliate.</strong> ' +
-        'This is a commission-based partnership, not a franchise or capital investment. ' +
+        '<p><strong>Affiliate programme.</strong> ' +
+        'This is commission-based (promote a product or service), not a franchise or capital investment. ' +
         'Commission figures are set by the advertiser — verify terms before you promote.</p>';
       return;
     }
@@ -634,7 +634,7 @@
           }
           showClaimStatus(
             (result.data && (result.data.message || result.data.error)) ||
-              'Could not send your request. Please email hello@thenetworkeruk.com instead.',
+              'Could not send your request. Please email hi@thenetworkeruk.com instead.',
             false
           );
         })
@@ -644,7 +644,7 @@
             els.claimSubmit.textContent = 'Request to claim listing';
           }
           showClaimStatus(
-            'Could not send your request. Please email hello@thenetworkeruk.com instead.',
+            'Could not send your request. Please email hi@thenetworkeruk.com instead.',
             false
           );
         });

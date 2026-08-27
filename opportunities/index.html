@@ -8,7 +8,20 @@
       name="description"
       content="Find your next franchise, side hustle, or partnership across the UK. Browse free on The Networker UK and enquire directly with providers."
     />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <!-- hub-static-seo -->
+<link rel="canonical" href="https://www.thenetworkeruk.com/opportunities/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="The Networker UK">
+<meta property="og:title" content="Find your next business opportunity – The Networker UK">
+<meta property="og:description" content="Find your next franchise, side hustle, or partnership across the UK. Browse free on The Networker UK and enquire directly with providers.">
+<meta property="og:url" content="https://www.thenetworkeruk.com/opportunities/">
+<meta property="og:image" content="https://www.thenetworkeruk.com/assets/logo.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Find your next business opportunity – The Networker UK">
+<meta name="twitter:description" content="Find your next franchise, side hustle, or partnership across the UK. Browse free on The Networker UK and enquire directly with providers.">
+<meta name="twitter:image" content="https://www.thenetworkeruk.com/assets/logo.png">
+<!-- /hub-static-seo -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap"
@@ -16,7 +29,7 @@
     />
     <link rel="stylesheet" href="/css/hub.css?v=20260825adminbadge1" />
     <link rel="stylesheet" href="/css/events-page.css?v=20260825sponsor2" />
-    <link rel="stylesheet" href="/css/opportunities-page.css?v=20260827invest1" />
+    <link rel="stylesheet" href="/css/opportunities-page.css?v=20260827aff1" />
     <link rel="stylesheet" href="/css/events-filter-bar.css?v=20260727sheet4" />
     <link rel="icon" href="/favicon.ico?v=20260823uk3" sizes="any" />
     <link rel="icon" href="/assets/favicon.svg?v=20260823uk3" type="image/svg+xml" />
@@ -192,6 +205,10 @@
                         <input type="radio" name="invest-tier" data-invest-tier="high-invest">
                         <span class="filter-format-pill-face">£10k+</span>
                       </label>
+                      <label class="filter-format-pill">
+                        <input type="radio" name="invest-tier" data-invest-tier="on-request">
+                        <span class="filter-format-pill-face">On request</span>
+                      </label>
                     </div>
                   </fieldset>
                   <button type="button" class="filter-more-toggle" id="filter-more-toggle" aria-expanded="false" aria-controls="filter-more-panel">
@@ -203,16 +220,23 @@
                 </div>
                 <div class="filter-bar-row filter-bar-row-types filter-bar-row-types--nested">
                   <div class="event-type-chips-wrap">
+                    <span class="filter-bar-chip-label filter-bar-chip-label--inline">Type</span>
                     <nav class="event-type-chips" id="opp-type-chips" aria-label="Opportunity type"></nav>
+                  </div>
+                </div>
+                <div class="filter-bar-row filter-bar-row-industries filter-bar-row-types--nested">
+                  <div class="event-type-chips-wrap">
+                    <span class="filter-bar-chip-label filter-bar-chip-label--inline">Industry</span>
+                    <nav class="event-type-chips" id="opp-industry-chips" aria-label="Industry"></nav>
                   </div>
                 </div>
                 <div class="filter-more-panel filter-opp-more-panel" id="filter-more-panel" hidden>
                   <div class="filter-opp-more-grid">
-                    <div class="filter-opp-category-wrap">
+                    <div class="filter-opp-category-wrap" hidden>
                       <label class="filter-bar-select" for="opp-filter-category">
-                        <span class="filter-bar-chip-label">Category</span>
+                        <span class="filter-bar-chip-label">Industry</span>
                         <select id="opp-filter-category">
-                          <option value="">All categories</option>
+                          <option value="">All industries</option>
                           <option value="cleaning" data-count-category="cleaning">Cleaning</option>
                           <option value="food" data-count-category="food">Food &amp; Drink</option>
                           <option value="tech" data-count-category="tech">Tech &amp; Digital</option>
@@ -268,9 +292,13 @@
             </div>
           </div>
         </div>
+
+      <div class="opp-active-filters-bar" id="opp-active-filters-bar" hidden>
+        <ul class="opp-active-filters" id="opp-active-filters" aria-label="Active filters"></ul>
+      </div>
       </div>
 
-      <div class="filter-mobile-sheet" id="filter-mobile-sheet" hidden aria-hidden="true">
+      <div class="filter-mobile-sheet" id="filter-mobile-sheet" hidden aria-hidden="true" inert>
         <div class="filter-mobile-sheet-backdrop" id="filter-mobile-sheet-backdrop" tabindex="-1"></div>
         <div
           class="filter-mobile-sheet-panel"
@@ -292,7 +320,7 @@
         </div>
       </div>
 
-      <div class="opp-alert-dialog" id="opp-alert-dialog" hidden aria-hidden="true">
+      <div class="opp-alert-dialog" id="opp-alert-dialog" hidden aria-hidden="true" inert>
         <div class="opp-alert-dialog-backdrop" id="opp-alert-dialog-backdrop" tabindex="-1"></div>
         <div
           class="opp-alert-dialog-panel"
@@ -428,6 +456,7 @@
                 <ul>
                   <li><a href="/opportunities/?type=franchise">Franchises</a></li>
                   <li><a href="/opportunities/?type=partnership">Partnerships</a></li>
+                  <li><a href="/opportunities/?type=affiliate">Affiliates</a></li>
                   <li><a href="/opportunities/?type=side-hustle">Side hustles</a></li>
                   <li><a href="/for-organisers">List your opportunity</a></li>
                 </ul>
@@ -645,7 +674,7 @@
 
     <script src="/js/cms-ad-blocks.js?v=20260813pagepartner1" defer></script>
     <script src="/js/hub-organiser-actions.js?v=20260710" data-root="/" defer></script>
-    <script src="/js/opportunities-catalog.js?v=20260825aff1" defer></script>
+    <script src="/js/opportunities-catalog.js?v=20260827aff2" defer></script>
     <script src="/js/opportunity-listing-quality.js?v=20260825aff1" defer></script>
     <script src="/js/opportunity-investment-breakdown.js?v=20260710" defer></script>
     <script src="/js/opportunities-saves.js?v=20260714a" defer></script>
@@ -658,7 +687,7 @@
     <script src="/js/hub-spotlight-carousel.js?v=20260807fix3" defer></script>
     <script src="/js/browse-analytics-client.js?v=20260728browse2" defer></script>
     <script src="/js/hub-search-match.js?v=20260807search2" defer></script>
-    <script src="/js/opportunities-page.js?v=20260827invest1" defer></script>
+    <script src="/js/opportunities-page.js?v=20260827aff1" defer></script>
     <script src="/js/opportunities-map.js?v=20260827invest1" defer></script>
   </body>
 </html>

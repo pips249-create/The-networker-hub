@@ -21358,7 +21358,8 @@
   var OPPORTUNITY_TYPES = [
     ['franchise', 'Franchise'],
     ['side-hustle', 'Side hustle'],
-    ['partnership', 'Partnership / Affiliate'],
+    ['partnership', 'Partnership'],
+    ['affiliate', 'Affiliate'],
     ['networking', 'Networking group / Ambassador'],
     ['network-marketing', 'Network marketing'],
     ['business-opportunity', 'Business opportunity'],
@@ -21489,7 +21490,11 @@
       '" placeholder="Acme Ltd"></div>' +
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Type</label>' +
       '<select name="type" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
-      opportunityTypeOptions(opp.type || 'business-opportunity') +
+      opportunityTypeOptions(
+        String(opp.type || '') === 'partnership' && String(opp.commission || '').trim() && !String(opp.investment || '').trim()
+          ? 'affiliate'
+          : opp.type || 'business-opportunity'
+      ) +
       '</select></div>' +
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Status</label>' +
       '<select name="status" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
@@ -21537,7 +21542,12 @@
       '<div class="sm:col-span-2 rounded-lg border border-slate-200 bg-white p-3 grid sm:grid-cols-2 gap-3">' +
       '<p class="sm:col-span-2 text-xs font-semibold text-slate-600">Card details</p>' +
       '<div class="sm:col-span-2 opp-admin-capital-fields"' +
-      (String(opp.type || '') === 'partnership' ? ' hidden' : '') +
+      (String(opp.type || '') === 'affiliate' ||
+      (String(opp.type || '') === 'partnership' &&
+        String(opp.commission || '').trim() &&
+        !String(opp.investment || '').trim())
+        ? ' hidden'
+        : '') +
       '>' +
       '<div class="grid sm:grid-cols-2 gap-3">' +
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Investment required</label>' +
@@ -21549,9 +21559,14 @@
       esc(opp.investment_includes || '') +
       '</textarea></div></div></div>' +
       '<div class="sm:col-span-2 opp-admin-affiliate-fields"' +
-      (String(opp.type || '') === 'partnership' ? '' : ' hidden') +
+      (String(opp.type || '') === 'affiliate' ||
+      (String(opp.type || '') === 'partnership' &&
+        String(opp.commission || '').trim() &&
+        !String(opp.investment || '').trim())
+        ? ''
+        : ' hidden') +
       '>' +
-      '<p class="text-xs text-slate-500 mb-2">Partnership / Affiliate — commission-focused, not franchise investment.</p>' +
+      '<p class="text-xs text-slate-500 mb-2">Affiliate — commission-focused, not franchise investment.</p>' +
       '<div class="grid sm:grid-cols-2 gap-3">' +
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Commission</label>' +
       '<input type="text" name="commission" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
@@ -21579,7 +21594,7 @@
   function syncOpportunityAdminAffiliateFields(form) {
     if (!form) return;
     var typeField = form.querySelector('[name="type"]');
-    var affiliate = typeField && String(typeField.value || '') === 'partnership';
+    var affiliate = typeField && String(typeField.value || '') === 'affiliate';
     form.querySelectorAll('.opp-admin-capital-fields').forEach(function (el) {
       el.hidden = !!affiliate;
     });

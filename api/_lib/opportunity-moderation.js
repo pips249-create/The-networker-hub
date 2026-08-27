@@ -80,7 +80,7 @@ function validateStructuredFields(opportunity) {
   const meta = normalizeMeta(opportunity?.meta);
   const missing = [];
   const types = collectOpportunityTypes(opportunity);
-  const affiliateOnly = isAffiliateStyleListing(types);
+  const affiliateOnly = isAffiliateStyleListing(opportunity);
 
   if (affiliateOnly) {
     if (!metaValue(meta, /^commission$/i)) missing.push('commission');
@@ -139,6 +139,7 @@ const CAPITAL_OPPORTUNITY_TYPES = new Set([
   'distributorship',
   'business-opportunity',
   'network-marketing',
+  'partnership',
 ]);
 
 const HIGH_RISK_OPPORTUNITY_TYPES = new Set([
@@ -157,19 +158,44 @@ function collectOpportunityTypes(opportunity) {
   return types;
 }
 
-/** Partnership / Affiliate without capital-intensive types (franchise, etc.). */
+/** Affiliate programmes (or legacy partnership + commission) without capital-intensive types. */
 function isAffiliateStyleListing(typesOrOpportunity) {
+  const opportunity = Array.isArray(typesOrOpportunity) ? null : typesOrOpportunity;
   const types = Array.isArray(typesOrOpportunity)
     ? typesOrOpportunity.map((value) => String(value || '').trim().toLowerCase()).filter(Boolean)
     : collectOpportunityTypes(typesOrOpportunity);
   if (!types.length) return false;
-  if (types.indexOf('partnership') === -1) return false;
+
+  const meta = normalizeMeta(opportunity?.meta);
+  const hasCommission = Boolean(metaValue(meta, /^commission$/i));
+  const investRaw = metaValue(meta, /^investment$/i);
+  const investNum = investRaw ? parseInt(String(investRaw).replace(/[^0-9]/g, ''), 10) : null;
+  const hasMeaningfulInvest =
+    investRaw &&
+    !/^(unlimited|n\/?a|tbc|tba|contact|enquire|varies|negotiable|on request)$/i.test(investRaw) &&
+    !Number.isNaN(investNum) &&
+    investNum > 0;
+  const capitalOthers = new Set([
+    'franchise',
+    'distributorship',
+    'business-opportunity',
+    'network-marketing',
+  ]);
+  const legacyPartnership =
+    types.indexOf('partnership') !== -1 &&
+    types.indexOf('affiliate') === -1 &&
+    !types.some((value) => capitalOthers.has(value)) &&
+    hasCommission &&
+    !hasMeaningfulInvest;
+
+  if (legacyPartnership) return true;
+  if (types.indexOf('affiliate') === -1) return false;
   return !types.some((value) => CAPITAL_OPPORTUNITY_TYPES.has(value));
 }
 
 function opportunityRequiresFcaDisclaimer(opportunity) {
   const types = collectOpportunityTypes(opportunity);
-  if (isAffiliateStyleListing(types)) {
+  if (isAffiliateStyleListing(opportunity)) {
     const investment = parseInvestmentAmount(opportunity?.meta);
     return investment != null && investment >= 10000;
   }

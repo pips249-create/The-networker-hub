@@ -32,6 +32,7 @@ const VALID_TYPES = new Set([
   'franchise',
   'side-hustle',
   'partnership',
+  'affiliate',
   'networking',
   'distributorship',
   'business-opportunity',
@@ -78,7 +79,56 @@ function normalizeType(type) {
   if (s === 'sidehustle') return 'side-hustle';
   if (s === 'business') return 'business-opportunity';
   if (s === 'networkmarketing' || s === 'mlm') return 'network-marketing';
+  if (s === 'affiliate-programme' || s === 'affiliate-program' || s === 'affiliates') return 'affiliate';
   return 'business-opportunity';
+}
+
+function metaValFromList(meta, keyRe) {
+  for (let i = 0; i < (meta || []).length; i++) {
+    if (keyRe.test(String(meta[i].key || ''))) return String(meta[i].val || '').trim();
+  }
+  return '';
+}
+
+function hasMeaningfulInvestmentMeta(meta) {
+  const raw = metaValFromList(meta, /^investment$/i);
+  if (!raw) return false;
+  if (/^(unlimited|n\/?a|tbc|tba|contact|enquire|varies|negotiable|on request)$/i.test(raw)) {
+    return false;
+  }
+  const num = parseInt(raw.replace(/[^0-9]/g, ''), 10);
+  return !Number.isNaN(num) && num > 0;
+}
+
+/** Legacy Partnership / Affiliate rows stored as partnership with commission only. */
+function isLegacyAffiliatePartnership(listing) {
+  const types = [];
+  if (listing?.type) types.push(String(listing.type).toLowerCase());
+  (Array.isArray(listing?.tags) ? listing.tags : []).forEach((tag) => {
+    const t = String(tag || '').toLowerCase();
+    if (t && types.indexOf(t) === -1) types.push(t);
+  });
+  if (types.indexOf('affiliate') !== -1) return false;
+  if (types.indexOf('partnership') === -1) return false;
+  const capitalOthers = [
+    'franchise',
+    'distributorship',
+    'business-opportunity',
+    'network-marketing',
+  ];
+  if (types.some((t) => capitalOthers.indexOf(t) !== -1)) return false;
+  const meta = Array.isArray(listing?.meta) ? listing.meta : [];
+  if (!metaValFromList(meta, /^commission$/i)) return false;
+  return !hasMeaningfulInvestmentMeta(meta);
+}
+
+function coerceLegacyAffiliateListing(listing) {
+  if (!listing || !isLegacyAffiliatePartnership(listing)) return listing;
+  const tags = (Array.isArray(listing.tags) ? listing.tags : [])
+    .map((t) => (String(t).toLowerCase() === 'partnership' ? 'affiliate' : t))
+    .filter(Boolean);
+  if (tags.indexOf('affiliate') === -1) tags.push('affiliate');
+  return Object.assign({}, listing, { type: 'affiliate', tags });
 }
 
 function normalizeTypes(payload) {
@@ -192,7 +242,7 @@ function normalizeStatus(input) {
 function rowToListing(row) {
   if (!row) return null;
   const meta = normalizeListingMeta(row.meta);
-  return {
+  return coerceLegacyAffiliateListing({
     id: row.id,
     slug: publicOpportunitySlug(row),
     type: row.type,
@@ -231,7 +281,7 @@ function rowToListing(row) {
     rejectionNote: row.rejection_note || null,
     publishedAt: row.published_at || null,
     viewCount: Number(row.view_count) || 0,
-  };
+  });
 }
 
 async function incrementOpportunityViewCount(opportunityId) {

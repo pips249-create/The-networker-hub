@@ -98,8 +98,33 @@
 
   function isAffiliateStyleListing(opportunity) {
     var types = collectOpportunityTypes(opportunity);
-    if (types.indexOf('partnership') === -1) return false;
-    var capital = ['franchise', 'distributorship', 'business-opportunity', 'network-marketing'];
+    var meta = normalizeMeta(opportunity && opportunity.meta);
+    var hasCommission = Boolean(metaValue(meta, /^commission$/i));
+    var investRaw = metaValue(meta, /^investment$/i);
+    var investNum = investRaw ? parseInt(String(investRaw).replace(/[^0-9]/g, ''), 10) : null;
+    var hasMeaningfulInvest =
+      investRaw &&
+      !/^(unlimited|n\/?a|tbc|tba|contact|enquire|varies|negotiable|on request)$/i.test(investRaw) &&
+      !isNaN(investNum) &&
+      investNum > 0;
+    var capitalOthers = ['franchise', 'distributorship', 'business-opportunity', 'network-marketing'];
+    var legacyPartnership =
+      types.indexOf('partnership') !== -1 &&
+      types.indexOf('affiliate') === -1 &&
+      !types.some(function (value) {
+        return capitalOthers.indexOf(value) !== -1;
+      }) &&
+      hasCommission &&
+      !hasMeaningfulInvest;
+    if (legacyPartnership) return true;
+    if (types.indexOf('affiliate') === -1) return false;
+    var capital = [
+      'franchise',
+      'distributorship',
+      'business-opportunity',
+      'network-marketing',
+      'partnership',
+    ];
     return !types.some(function (value) {
       return capital.indexOf(value) !== -1;
     });

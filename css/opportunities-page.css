@@ -801,6 +801,11 @@
   color: #1d4ed8;
 }
 
+.opportunities-page .opp-type-affiliate {
+  background: rgba(34, 211, 238, 0.14);
+  color: #0e7490;
+}
+
 .opportunities-page .opp-type-networking {
   background: rgba(244, 114, 182, 0.15);
   color: #9d174d;
@@ -2299,6 +2304,64 @@
   padding-top: 2px;
 }
 
+.opp-browse-page .opp-active-filters-bar {
+  margin: 10px 0 0;
+  padding: 0 4px;
+}
+
+.opp-browse-page .opp-active-filters {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.opp-browse-page .opp-active-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 6px 10px;
+  border: 1px solid rgba(13, 31, 60, 0.18);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--opp-navy, #0d1f3c);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.opp-browse-page .opp-active-filter-chip:hover {
+  border-color: var(--opp-gold, #c9a227);
+  background: #fffdf6;
+}
+
+.opp-browse-page .opp-active-filter-chip-x {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  opacity: 0.55;
+}
+
+.opp-browse-page .opp-active-filter-chip:hover .opp-active-filter-chip-x {
+  opacity: 0.9;
+}
+
+.opp-browse-page .filter-bar-chip-label--inline {
+  flex: 0 0 auto;
+  margin: 0;
+  white-space: nowrap;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 @media (max-width: 1100px) {
   .opp-browse-page .filter-opp-more-grid {
     grid-template-columns: 1fr 1fr;
@@ -2343,6 +2406,26 @@
 
 .opp-browse-page .filter-mobile-sheet-body .filter-bar-row-types::before {
   content: 'Opportunity type';
+}
+
+.opp-browse-page .filter-mobile-sheet-body .filter-bar-row-industries::before {
+  content: 'Industry';
+}
+
+.opp-browse-page .filter-mobile-sheet-body .filter-bar-chip-label--inline {
+  display: none;
+}
+
+.opp-browse-page .filter-mobile-sheet-body .filter-bar-row-industries {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  width: 100%;
+  order: 11;
+  margin: 0;
+  padding: 14px 0 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
 }
 
 .opp-browse-page .filter-mobile-sheet-body .filter-opp-more-panel,
@@ -4972,9 +5055,17 @@ body.opp-view-map.opp-browse-page .opp-listings-toolbar {
 
 .opp-browse-page .event-type-chips-wrap {
   position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   min-width: 0;
   flex: 1 1 auto;
   overflow: hidden;
+}
+
+.opp-browse-page .event-type-chips-wrap .event-type-chips {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .opp-browse-page .event-type-chips-wrap::after {

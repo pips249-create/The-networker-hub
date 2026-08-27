@@ -23,13 +23,14 @@
     'franchise',
     'side-hustle',
     'partnership',
+    'affiliate',
     'networking',
     'network-marketing',
     'business-opportunity',
     'distributorship',
   ];
 
-  const CAPITAL_TYPES = ['franchise', 'distributorship', 'business-opportunity', 'network-marketing'];
+  const CAPITAL_TYPES = ['franchise', 'distributorship', 'business-opportunity', 'network-marketing', 'partnership'];
 
   function getSelectedTypes() {
     return Array.from(document.querySelectorAll('#oe-type-group input[name="oe-type"]:checked'))
@@ -46,8 +47,25 @@
 
   function isAffiliateStyleListing(types) {
     const list = types || getSelectedTypes();
-    if (list.indexOf('partnership') === -1) return false;
+    if (list.indexOf('affiliate') === -1) return false;
     return !list.some((type) => CAPITAL_TYPES.indexOf(type) !== -1);
+  }
+
+  function coerceLegacyAffiliateTypes(types, meta) {
+    const list = (types || []).slice();
+    if (list.indexOf('affiliate') !== -1) return list;
+    if (list.indexOf('partnership') === -1) return list;
+    const capitalOthers = ['franchise', 'distributorship', 'business-opportunity', 'network-marketing'];
+    if (list.some((type) => capitalOthers.indexOf(type) !== -1)) return list;
+    if (!metaValue(meta, /^commission$/i)) return list;
+    const investRaw = String(metaValue(meta, /^investment$/i) || '').trim();
+    if (investRaw) {
+      if (!/^(unlimited|n\/?a|tbc|tba|contact|enquire|varies|negotiable|on request)$/i.test(investRaw)) {
+        const num = parseInt(investRaw.replace(/[^0-9]/g, ''), 10);
+        if (!Number.isNaN(num) && num > 0) return list;
+      }
+    }
+    return list.map((type) => (type === 'partnership' ? 'affiliate' : type));
   }
 
   function formatGbp(amount) {
@@ -225,7 +243,8 @@
     currentOpportunity = opp;
     document.getElementById('oe-title').value = opp.title || '';
     const typeTags = (opp.tags || []).filter((tag) => OPPORTUNITY_TYPES.includes(tag));
-    setSelectedTypes(typeTags.length ? typeTags : opp.type ? [opp.type] : []);
+    const initialTypes = typeTags.length ? typeTags : opp.type ? [opp.type] : [];
+    setSelectedTypes(coerceLegacyAffiliateTypes(initialTypes, opp.meta));
     document.getElementById('oe-category').value = opp.category || '';
     document.getElementById('oe-desc').value = opp.desc || '';
     document.getElementById('oe-about').value = (opp.about || []).join('\n\n');

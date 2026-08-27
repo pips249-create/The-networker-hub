@@ -5,7 +5,8 @@
   var TYPE_LABELS = {
     franchise: 'Franchise',
     'side-hustle': 'Side hustle',
-    partnership: 'Partnership / Affiliate',
+    partnership: 'Partnership',
+    affiliate: 'Affiliate',
     networking: 'Networking group / Ambassador',
     'network-marketing': 'Network marketing',
     'business-opportunity': 'Business opportunity',
@@ -82,6 +83,7 @@
     franchise: { emoji: '🏢', gradient: 'linear-gradient(135deg,#fdf6e3,#f5e0a0)' },
     'side-hustle': { emoji: '💡', gradient: 'linear-gradient(135deg,#e6f7f5,#b2e8e2)' },
     partnership: { emoji: '🤝', gradient: 'linear-gradient(135deg,#eff6ff,#bfdbfe)' },
+    affiliate: { emoji: '🔗', gradient: 'linear-gradient(135deg,#ecfeff,#a5f3fc)' },
     networking: { emoji: '🔗', gradient: 'linear-gradient(135deg,#fdf4ff,#e9d5ff)' },
     'network-marketing': { emoji: '🌐', gradient: 'linear-gradient(135deg,#eff6ff,#c7d2fe)' },
     distributorship: { emoji: '📦', gradient: 'linear-gradient(135deg,#fff7ed,#fed7aa)' },
@@ -214,11 +216,11 @@
   function enrichFilterTags(item) {
     var tags = (item.tags || []).slice();
     var inv = item.investAmount;
-    if (inv !== null && inv !== undefined) {
-      if (inv <= 2500) tags.push('low-invest');
-      else if (inv <= 10000) tags.push('mid-invest');
-      else tags.push('high-invest');
-    }
+    if (inv === null || inv === undefined || inv <= 0) {
+      tags.push('on-request');
+    } else if (inv <= 2500) tags.push('low-invest');
+    else if (inv <= 10000) tags.push('mid-invest');
+    else tags.push('high-invest');
     var loc = metaVal(item.meta, /^location$/i).toLowerCase();
     var searchBlob = (loc + ' ' + item.title + ' ' + item.desc).toLowerCase();
     if (/remote|online/.test(searchBlob)) tags.push('remote');
@@ -301,6 +303,45 @@
     return v;
   }
 
+  function isLegacyAffiliatePartnership(item) {
+    var types = [];
+    if (item && item.type) types.push(String(item.type).toLowerCase());
+    (item && item.tags ? item.tags : []).forEach(function (tag) {
+      var t = String(tag || '').toLowerCase();
+      if (t && types.indexOf(t) === -1) types.push(t);
+    });
+    if (types.indexOf('affiliate') !== -1) return false;
+    if (types.indexOf('partnership') === -1) return false;
+    var capitalOthers = [
+      'franchise',
+      'distributorship',
+      'business-opportunity',
+      'network-marketing',
+    ];
+    if (
+      types.some(function (value) {
+        return capitalOthers.indexOf(value) !== -1;
+      })
+    ) {
+      return false;
+    }
+    if (!metaVal(item.meta, /^commission$/i)) return false;
+    var amount = parseInvestmentAmount(item.meta);
+    return !(amount != null && amount > 0);
+  }
+
+  function coerceLegacyAffiliateListing(item) {
+    if (!isLegacyAffiliatePartnership(item)) return item;
+    item.type = 'affiliate';
+    item.tags = (item.tags || [])
+      .map(function (t) {
+        return String(t).toLowerCase() === 'partnership' ? 'affiliate' : t;
+      })
+      .filter(Boolean);
+    if (item.tags.indexOf('affiliate') === -1) item.tags.push('affiliate');
+    return item;
+  }
+
   function isAffiliateStyleListing(item) {
     var types = [];
     if (item && item.type) types.push(String(item.type).toLowerCase());
@@ -308,8 +349,15 @@
       var t = String(tag || '').toLowerCase();
       if (t && types.indexOf(t) === -1) types.push(t);
     });
-    if (types.indexOf('partnership') === -1) return false;
-    var capital = ['franchise', 'distributorship', 'business-opportunity', 'network-marketing'];
+    if (isLegacyAffiliatePartnership(item)) return true;
+    if (types.indexOf('affiliate') === -1) return false;
+    var capital = [
+      'franchise',
+      'distributorship',
+      'business-opportunity',
+      'network-marketing',
+      'partnership',
+    ];
     return !types.some(function (value) {
       return capital.indexOf(value) !== -1;
     });
@@ -403,6 +451,7 @@
       return { key: m.key, val: m.val };
     });
     item.about = (seed.about || []).slice();
+    item = coerceLegacyAffiliateListing(item);
     var assetSlug = seedAssetSlug(seed);
     item.logoUrl = String(seed.logoUrl || seedLogoUrl(assetSlug) || '').trim();
     item.imageUrl = String(seed.imageUrl || seedCoverUrl(assetSlug) || '').trim();
@@ -584,6 +633,7 @@
     var map = {
       'side-hustle': 'opp-type-sidehustle',
       partnership: 'opp-type-partnership',
+      affiliate: 'opp-type-affiliate',
       networking: 'opp-type-networking',
       'network-marketing': 'opp-type-network-marketing',
       distributorship: 'opp-type-distributorship',

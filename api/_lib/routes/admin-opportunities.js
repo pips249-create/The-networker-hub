@@ -53,9 +53,9 @@ const TEST_SAMPLE_LISTINGS = [
     featured: false,
   },
   {
-    title: '[TEST] Partnership — marketing agency white-label',
+    title: '[TEST] Affiliate — marketing agency white-label',
     host: 'North Star Digital',
-    type: 'partnership',
+    type: 'affiliate',
     description: 'Sample test listing for preview — safe to delete from Command Centre.',
     about: [
       'Refer SME clients to a white-label web and SEO agency and earn recurring commission.',
@@ -208,17 +208,36 @@ function mapOpportunityRow(row) {
   };
 }
 
-function isAffiliateStyleAdminType(type) {
+function isAffiliateStyleAdminType(type, meta) {
   const t = String(type || '')
     .trim()
     .toLowerCase();
-  return t === 'partnership';
+  if (t === 'affiliate') return true;
+  if (t !== 'partnership') return false;
+  const list = Array.isArray(meta) ? meta : [];
+  const commission = list.some(function (m) {
+    return /^commission$/i.test(String(m.key || '')) && String(m.val || '').trim();
+  });
+  if (!commission) return false;
+  const invest = list.find(function (m) {
+    return /^investment$/i.test(String(m.key || ''));
+  });
+  const investRaw = invest ? String(invest.val || '').trim() : '';
+  if (!investRaw) return true;
+  if (/^(unlimited|n\/?a|tbc|tba|contact|enquire|varies|negotiable|on request)$/i.test(investRaw)) {
+    return true;
+  }
+  const num = parseInt(investRaw.replace(/[^0-9]/g, ''), 10);
+  return Number.isNaN(num) || num <= 0;
 }
 
 function buildMetaFromAdminInput(input) {
   if (Array.isArray(input.meta)) return stripEarningsMeta(normalizeMeta(input.meta));
   const meta = [];
-  const affiliate = isAffiliateStyleAdminType(input.type);
+  const affiliate = isAffiliateStyleAdminType(input.type, [
+    { key: 'Commission', val: String(input.commission || '').trim() },
+    { key: 'Investment', val: String(input.investment || '').trim() },
+  ]);
   const investment = String(input.investment || '').trim();
   const includes = String(input.investment_includes || input.investmentIncludes || '').trim();
   const commission = String(input.commission || '').trim();

@@ -15,7 +15,8 @@ const OPPORTUNITY_BROWSE_INTENT =
 
 const TYPE_ALIASES = {
   franchise: /\bfranchis/i,
-  partnership: /\bpartner/i,
+  partnership: /\bpartnership|\bjoint venture\b|\bwhite[\s-]?label\b/i,
+  affiliate: /\baffiliate\b|\baffiliate (?:link|program+e?|market)/i,
   'side-hustle': /\bside[\s-]?hustle|\bextra income\b|\bmoonlight/i,
   distributorship: /\bdistribut/i,
   networking: /\bnetwork(?:ing)? opportunit|\breferral\b/i,
@@ -64,7 +65,8 @@ function typeLabel(type) {
   const labels = {
     franchise: 'Franchise',
     'side-hustle': 'Side hustle',
-    partnership: 'Partnership / Affiliate',
+    partnership: 'Partnership',
+    affiliate: 'Affiliate',
     networking: 'Networking group / Ambassador',
     'network-marketing': 'Network marketing',
     'business-opportunity': 'Business opportunity',
