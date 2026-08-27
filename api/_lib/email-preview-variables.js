@@ -488,6 +488,13 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
       site + '/organiser/opportunity-edit?id=preview-opportunity&checkout=start';
   }
 
+  if (slug === 'opportunity_listing_approved_pay_reminder') {
+    vars.pay_url = site + '/organiser/?renew=preview-opportunity#business-overview';
+    vars.checkout_url = vars.pay_url;
+    vars.opportunity_edit_url =
+      site + '/organiser/opportunity-edit?id=preview-opportunity&checkout=start';
+  }
+
   if (slug && String(slug).startsWith('opportunity_')) {
     if (!String(vars.opportunity_details_rows || '').trim()) {
       vars.opportunity_details_rows =
