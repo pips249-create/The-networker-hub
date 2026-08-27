@@ -33,6 +33,16 @@
     online: 'Online',
   };
 
+  function publicTicketBuyingOpen() {
+    if (
+      window.HubSoftLaunch &&
+      typeof window.HubSoftLaunch.arePublicTicketSalesOpen === 'function'
+    ) {
+      return window.HubSoftLaunch.arePublicTicketSalesOpen();
+    }
+    return Date.now() >= Date.parse('2026-09-01T00:00:00+01:00');
+  }
+
   const REFUND_LABELS = {
     flexible: 'Flexible',
     standard: 'Standard',
@@ -325,8 +335,9 @@
         confirmBtn.dataset.bankBlocked = '';
       }
       if (lede) {
-        lede.textContent =
-          'Check everything looks right. Once you publish, your listing goes live automatically and ticket sales can start straight away.';
+        lede.textContent = publicTicketBuyingOpen()
+          ? 'Check everything looks right. Once you publish, your listing goes live automatically and ticket sales can start straight away.'
+          : 'Check everything looks right. Once you publish, your listing goes live on Browse events. Public ticket buying opens 1 September 2026.';
       }
       return;
     }
@@ -335,8 +346,9 @@
       returnPath: paymentSetupReturnPath(),
       buttonClass: 'hub-payment-setup-btn ee-btn ee-btn-primary',
       title: 'Add bank details before publishing paid tickets',
-      lead:
-        'This listing has paid tickets. Connect your UK bank account via Stripe, then return here to publish. Free events do not need bank details.',
+      lead: publicTicketBuyingOpen()
+        ? 'This listing has paid tickets. Connect your UK bank account via Stripe, then return here to publish. Free events do not need bank details.'
+        : 'This listing has paid tickets. Connect your UK bank account via Stripe before you publish — you can set tickets up now; public buying opens 1 September 2026. Free events do not need bank details.',
       singleGroupOnly: true,
       onLinked: handleReviewPaymentLinked,
     });
@@ -696,7 +708,11 @@
       return !Number.isNaN(start.getTime()) && start > Date.now();
     });
     let text = 'Your listing goes live automatically on Browse events';
-    if (scheduled) {
+    if (!publicTicketBuyingOpen()) {
+      text +=
+        '. Public ticket buying opens 1 September 2026' +
+        (scheduled ? ' (or on your scheduled sale dates after that)' : '');
+    } else if (scheduled) {
       text += ' and ticket sales open on the start dates you set';
     } else {
       text += ' and ticket sales go live straight away';

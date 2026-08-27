@@ -5,12 +5,29 @@ const { validateRefundPublishPayload } = require('../event-refund-policy');
 const { tiersHavePaidPrice } = require('../supabase-events');
 const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
 const { adminViewFromSession, resolveOrganiserGroupScope } = require('../organiser-api-scope');
+const { publicErrorPayload } = require('../public-error');
+const { arePublicTicketSalesOpen } = require('../soft-launch');
 
 const EVENT_NOT_OWNED = {
   error: 'event_not_owned',
   message:
     'This event is not on the organiser pages for this account. If you are impersonating, impersonate the group that owns the listing, then open tickets from My Events.',
 };
+
+function jsonPublicError(res, json, e, code, extra) {
+  const payload = publicErrorPayload(e, { code });
+  if (payload.status >= 500) {
+    console.error('[organiser-tickets]', code || payload.error, e && e.message ? e.message : e);
+  }
+  return json(res, payload.status, Object.assign({ error: payload.error, message: payload.message }, extra || {}));
+}
+
+function enableSalesSuccessMessage() {
+  if (arePublicTicketSalesOpen()) {
+    return 'Ticket sales are now live on your public event page.';
+  }
+  return 'Ticket sales are enabled on your listing. Public buying opens on 1 September 2026 — until then people can browse and nudge you.';
+}
 
 function requestHasPaidTickets(tiers, alumniFastPass) {
   if (alumniFastPass?.enabled && Number(alumniFastPass.price) > 0) return true;
@@ -88,9 +105,7 @@ module.exports = async function handler(req, res) {
       const tickets = await listTicketsForSession(auth.session, ids);
       return json(res, 200, { ok: true, tickets });
     } catch (e) {
-      return json(res, e.status || 500, {
-        error: 'tickets_fetch_failed',
-        message: e.message,
+      return jsonPublicError(res, json, e, 'tickets_fetch_failed', {
         airtable: airtableSetupHint('tickets'),
       });
     }
@@ -242,9 +257,7 @@ module.exports = async function handler(req, res) {
         }
         return json(res, 201, { ok: true, published: publish, ...result });
       } catch (e) {
-        return json(res, e.status || 500, {
-          error: e.code || 'tickets_bulk_failed',
-          message: e.message,
+        return jsonPublicError(res, json, e, e.code || 'tickets_bulk_failed', {
           airtable: airtableSetupHint('tickets'),
         });
       }
@@ -276,9 +289,7 @@ module.exports = async function handler(req, res) {
       });
       return json(res, 201, { ok: true, ticket });
     } catch (e) {
-      return json(res, e.status || 500, {
-        error: e.code || 'ticket_create_failed',
-        message: e.message,
+      return jsonPublicError(res, json, e, e.code || 'ticket_create_failed', {
         airtable: airtableSetupHint('tickets'),
       });
     }
@@ -303,13 +314,10 @@ module.exports = async function handler(req, res) {
       return json(res, 200, {
         ok: true,
         event,
-        message: 'Ticket sales are now live on your public event page.',
+        message: enableSalesSuccessMessage(),
       });
     } catch (e) {
-      return json(res, e.status || 500, {
-        error: e.code || 'enable_sales_failed',
-        message: e.message,
-      });
+      return jsonPublicError(res, json, e, e.code || 'enable_sales_failed');
     }
   }
 

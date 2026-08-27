@@ -4,14 +4,20 @@
 (function () {
   const featuredPlanDuration = document.getElementById('ep-featured-plan-duration');
 
-  function beforePublicCatalogueLaunch() {
-    // Europe/London midnight 25 Aug 2026 — public browsing (tickets stay 1 Sept).
-    return Date.now() < Date.parse('2026-08-25T00:00:00+01:00');
+  function beforePublicTicketBuying() {
+    if (
+      window.HubSoftLaunch &&
+      typeof window.HubSoftLaunch.arePublicTicketSalesOpen === 'function'
+    ) {
+      return !window.HubSoftLaunch.arePublicTicketSalesOpen();
+    }
+    // Europe/London midnight 1 Sep 2026 — public ticket buying / enquiries.
+    return Date.now() < Date.parse('2026-09-01T00:00:00+01:00');
   }
 
   (function syncSoftLaunchShareNote() {
     const note = document.getElementById('ep-share-soft-launch');
-    if (note && !beforePublicCatalogueLaunch()) note.hidden = true;
+    if (note && !beforePublicTicketBuying()) note.hidden = true;
   })();
 
   function applyFeaturedQuote(quote) {
@@ -951,7 +957,7 @@
     const feedback = document.getElementById('ep-copy-feedback');
     const softNote =
       'Link copied. Public browsing is open — share freely. Ticket buying and enquiries open 1 September.';
-    const okMsg = beforePublicCatalogueLaunch() ? softNote : 'Link copied to clipboard';
+    const okMsg = beforePublicTicketBuying() ? softNote : 'Link copied to clipboard';
     const copied = await copyText(listingUrl, feedback, '', okMsg);
     if (copied) markShareDone('copy_caption');
     if (!copied) {
