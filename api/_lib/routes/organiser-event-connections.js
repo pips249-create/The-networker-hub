@@ -3,6 +3,7 @@
  */
 const { getOrganiserApi } = require('../organiser-provider');
 const { assertOrganiserEmailVerified } = require('../organiser-access-guard');
+const { jsonPublicError } = require('../public-error');
 const {
   getConnectionsPreview,
   sendConnectionsEmail,
@@ -110,11 +111,6 @@ module.exports = async function handler(req, res) {
     return json(res, 405, { error: 'method_not_allowed' });
   } catch (e) {
     const status = e.status || 500;
-    return json(res, status, {
-      ok: false,
-      error: e.code || e.message || 'event_connections_failed',
-      message: e.message || String(e),
-      lastSentAt: e.lastSentAt || null,
-    });
+    return jsonPublicError(res, json, e, { code: e.code || e.message || 'event_connections_failed', logLabel: '[organiser-event-connections]', extra: { lastSentAt: e.lastSentAt || null } });
   }
 };

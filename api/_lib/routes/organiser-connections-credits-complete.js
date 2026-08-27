@@ -4,6 +4,7 @@ const { listAccessibleGroupsForSession } = require('../supabase-organiser-access
 const { isStripeCheckoutConfigured, retrieveCheckoutSession } = require('../stripe-checkout');
 const { handleConnectionsCreditsCheckout } = require('../connections-credits');
 const { getConnectionsAllowance } = require('../event-connections-email');
+const { jsonPublicError } = require('../public-error');
 
 function parseBody(req) {
   let body = req.body;
@@ -66,10 +67,6 @@ module.exports = async function handler(req, res) {
     const allowance = await getConnectionsAllowance(organiserId).catch(() => null);
     return json(res, 200, { ok: true, result, allowance });
   } catch (e) {
-    return json(res, e.status || 500, {
-      ok: false,
-      error: 'credits_complete_failed',
-      message: e.message || String(e),
-    });
+    return jsonPublicError(res, json, e, { code: 'credits_complete_failed', logLabel: '[organiser-connections-credits-complete]' });
   }
 };

@@ -2,6 +2,7 @@ const { getOrganiserApi } = require('../organiser-provider');
 const { assertOrganiserEmailVerified } = require('../organiser-access-guard');
 const { resolveOrganiserApiScope } = require('../organiser-api-scope');
 const { buildNameBadgesPdf, resolveLabelFormat } = require('../organiser-name-badges-pdf');
+const { jsonPublicError } = require('../public-error');
 
 module.exports = async function handler(req, res) {
   const api = getOrganiserApi();
@@ -55,10 +56,7 @@ module.exports = async function handler(req, res) {
     try {
       pdf = buildNameBadgesPdf(attendees, { eventTitle, labelFormat: labelFormat.id });
     } catch (e) {
-      return json(res, e.status || 400, {
-        error: 'badges_unavailable',
-        message: e.message || 'Could not build name badges',
-      });
+      return jsonPublicError(res, json, e, { code: 'badges_unavailable', logLabel: '[organiser-attendee-badges-pdf]' });
     }
 
     const suffix =
@@ -71,9 +69,6 @@ module.exports = async function handler(req, res) {
     res.setHeader('Content-Disposition', 'attachment; filename="' + filename + '"');
     res.end(pdf);
   } catch (e) {
-    return json(res, 500, {
-      error: 'badges_pdf_failed',
-      message: e.message || String(e),
-    });
+    return jsonPublicError(res, json, e, { code: 'badges_pdf_failed', logLabel: '[organiser-attendee-badges-pdf]' });
   }
 };

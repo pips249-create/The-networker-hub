@@ -1,5 +1,6 @@
 const { getOrganiserApi } = require('../organiser-provider');
 const { countSavesForOpportunityIds } = require('../supabase-opportunity-favourites');
+const { jsonPublicError } = require('../public-error');
 
 function parseBody(req) {
   let body = req.body;
@@ -114,11 +115,7 @@ module.exports = async function handler(req, res) {
       const opportunities = await attachSaveCounts(await listOpportunitiesForSession(auth.session));
       return json(res, 200, { ok: true, opportunities });
     } catch (e) {
-      return json(res, e.status || 500, {
-        error: 'opportunities_fetch_failed',
-        message: e.message,
-        airtable: airtableSetupHint ? airtableSetupHint('opportunities') : undefined,
-      });
+      return jsonPublicError(res, json, e, { code: 'opportunities_fetch_failed', logLabel: '[organiser-opportunities]', extra: { airtable: airtableSetupHint ? airtableSetupHint('opportunities') : undefined } });
     }
   }
 
@@ -143,10 +140,7 @@ module.exports = async function handler(req, res) {
       const opportunity = await updateOpportunity(opportunityId, base);
       return json(res, 200, { ok: true, opportunity });
     } catch (e) {
-      return json(res, e.status || 500, {
-        error: 'opportunity_update_failed',
-        message: e.message,
-      });
+      return jsonPublicError(res, json, e, { code: 'opportunity_update_failed', logLabel: '[organiser-opportunities]' });
     }
   }
 
@@ -166,10 +160,7 @@ module.exports = async function handler(req, res) {
       const opportunity = await createOpportunity(base);
       return json(res, 200, { ok: true, opportunity });
     } catch (e) {
-      return json(res, e.status || 500, {
-        error: 'opportunity_create_failed',
-        message: e.message,
-      });
+      return jsonPublicError(res, json, e, { code: 'opportunity_create_failed', logLabel: '[organiser-opportunities]' });
     }
   }
 

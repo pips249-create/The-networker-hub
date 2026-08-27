@@ -1,4 +1,5 @@
 const { getOrganiserApi } = require('../organiser-provider');
+const { jsonPublicError } = require('../public-error');
 
 function parseBody(req) {
   let body = req.body;
@@ -46,7 +47,7 @@ module.exports = async function handler(req, res) {
       const context = await getCancellationContext(auth.session, eventId);
       return json(res, 200, { ok: true, ...context });
     } catch (e) {
-      return json(res, e.status || 500, { error: 'cancellation_context_failed', message: e.message });
+      return jsonPublicError(res, json, e, { code: 'cancellation_context_failed', logLabel: '[organiser-cancellations]' });
     }
   }
 
@@ -121,6 +122,6 @@ module.exports = async function handler(req, res) {
       message,
     });
   } catch (e) {
-    return json(res, e.status || 500, { error: 'cancellation_failed', message: e.message });
+    return jsonPublicError(res, json, e, { code: 'cancellation_failed', logLabel: '[organiser-cancellations]' });
   }
 };

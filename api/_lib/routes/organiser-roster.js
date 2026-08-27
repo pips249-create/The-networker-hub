@@ -1,5 +1,6 @@
 const { getOrganiserApi } = require('../organiser-provider');
 const { assertOrganiserEmailVerified } = require('../organiser-access-guard');
+const { jsonPublicError } = require('../public-error');
 const {
   listRosterForOrganiser,
   listRosterPage,
@@ -285,10 +286,6 @@ module.exports = async function handler(req, res) {
 
     return json(res, 405, { error: 'method_not_allowed' });
   } catch (e) {
-    return json(res, e.status || 500, {
-      ok: false,
-      error: e.code || e.message || 'roster_failed',
-      message: e.message,
-    });
+    return jsonPublicError(res, json, e, { code: e.code || e.message || 'roster_failed', logLabel: '[organiser-roster]' });
   }
 };

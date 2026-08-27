@@ -784,7 +784,7 @@
     };
     const afterCopy = function () {
       done();
-      if (window.HubCatalogueOpen !== true && publicListingLinkNeedsLaunchNote(value)) {
+      if (publicListingLinkNeedsSoftLaunchNote(value)) {
         showOrganiserAlert(
           'Link copied. Public browsing is open — share freely. Ticket buying and enquiries open 1 September.',
           false
@@ -802,8 +802,18 @@
     }
   }
 
-  function publicListingLinkNeedsLaunchNote(url) {
-    if (!(Date.now() < Date.parse('2026-08-25T00:00:00+01:00'))) return false;
+  function publicTicketBuyingOpen() {
+    if (
+      window.HubSoftLaunch &&
+      typeof window.HubSoftLaunch.arePublicTicketSalesOpen === 'function'
+    ) {
+      return window.HubSoftLaunch.arePublicTicketSalesOpen();
+    }
+    return Date.now() >= Date.parse('2026-09-01T00:00:00+01:00');
+  }
+
+  function publicListingLinkNeedsSoftLaunchNote(url) {
+    if (publicTicketBuyingOpen()) return false;
     try {
       const path = new URL(url, location.origin).pathname.replace(/\/$/, '') || '/';
       if (path.indexOf('/organisers/') === 0) return false;

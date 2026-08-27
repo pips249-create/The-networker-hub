@@ -1,6 +1,7 @@
 const { getOrganiserApi } = require('../organiser-provider');
 const { organiserPersonalScopeFromRequest } = require('../auth');
 const { listAccessibleGroupsForSession } = require('../supabase-organiser-access');
+const { jsonPublicError } = require('../public-error');
 const {
   isStripeCheckoutConfigured,
   createGroupUpdateCreditsCheckoutSession,
@@ -99,10 +100,6 @@ module.exports = async function handler(req, res) {
       },
     });
   } catch (e) {
-    return json(res, e.status || 500, {
-      ok: false,
-      error: e.code || 'credits_checkout_failed',
-      message: e.message || 'Could not start checkout',
-    });
+    return jsonPublicError(res, json, e, { code: e.code || 'credits_checkout_failed', logLabel: '[organiser-group-update-credits-checkout]' });
   }
 };

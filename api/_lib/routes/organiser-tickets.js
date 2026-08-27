@@ -5,7 +5,7 @@ const { validateRefundPublishPayload } = require('../event-refund-policy');
 const { tiersHavePaidPrice } = require('../supabase-events');
 const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
 const { adminViewFromSession, resolveOrganiserGroupScope } = require('../organiser-api-scope');
-const { publicErrorPayload } = require('../public-error');
+const { jsonPublicError } = require('../public-error');
 const { arePublicTicketSalesOpen } = require('../soft-launch');
 
 const EVENT_NOT_OWNED = {
@@ -13,14 +13,6 @@ const EVENT_NOT_OWNED = {
   message:
     'This event is not on the organiser pages for this account. If you are impersonating, impersonate the group that owns the listing, then open tickets from My Events.',
 };
-
-function jsonPublicError(res, json, e, code, extra) {
-  const payload = publicErrorPayload(e, { code });
-  if (payload.status >= 500) {
-    console.error('[organiser-tickets]', code || payload.error, e && e.message ? e.message : e);
-  }
-  return json(res, payload.status, Object.assign({ error: payload.error, message: payload.message }, extra || {}));
-}
 
 function enableSalesSuccessMessage() {
   if (arePublicTicketSalesOpen()) {
@@ -105,9 +97,7 @@ module.exports = async function handler(req, res) {
       const tickets = await listTicketsForSession(auth.session, ids);
       return json(res, 200, { ok: true, tickets });
     } catch (e) {
-      return jsonPublicError(res, json, e, 'tickets_fetch_failed', {
-        airtable: airtableSetupHint('tickets'),
-      });
+      return jsonPublicError(res, json, e, { code: 'tickets_fetch_failed', logLabel: '[organiser-tickets]', extra: { airtable: airtableSetupHint('tickets') } });
     }
   }
 
@@ -257,9 +247,7 @@ module.exports = async function handler(req, res) {
         }
         return json(res, 201, { ok: true, published: publish, ...result });
       } catch (e) {
-        return jsonPublicError(res, json, e, e.code || 'tickets_bulk_failed', {
-          airtable: airtableSetupHint('tickets'),
-        });
+        return jsonPublicError(res, json, e, { code: e.code || 'tickets_bulk_failed', logLabel: '[organiser-tickets]', extra: { airtable: airtableSetupHint('tickets') } });
       }
     }
 
@@ -289,9 +277,7 @@ module.exports = async function handler(req, res) {
       });
       return json(res, 201, { ok: true, ticket });
     } catch (e) {
-      return jsonPublicError(res, json, e, e.code || 'ticket_create_failed', {
-        airtable: airtableSetupHint('tickets'),
-      });
+      return jsonPublicError(res, json, e, { code: e.code || 'ticket_create_failed', logLabel: '[organiser-tickets]', extra: { airtable: airtableSetupHint('tickets') } });
     }
   }
 
@@ -317,7 +303,7 @@ module.exports = async function handler(req, res) {
         message: enableSalesSuccessMessage(),
       });
     } catch (e) {
-      return jsonPublicError(res, json, e, e.code || 'enable_sales_failed');
+      return jsonPublicError(res, json, e, { code: e.code || 'enable_sales_failed', logLabel: '[organiser-tickets]' });
     }
   }
 

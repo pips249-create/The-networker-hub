@@ -1,6 +1,7 @@
 const { getOrganiserApi } = require('../organiser-provider');
 const { isStripeCheckoutConfigured, retrieveCheckoutSession } = require('../stripe-checkout');
 const { handleEventFeaturedCheckout } = require('../event-featured');
+const { jsonPublicError } = require('../public-error');
 
 function parseBody(req) {
   let body = req.body;
@@ -75,10 +76,6 @@ module.exports = async function handler(req, res) {
     const result = await handleEventFeaturedCheckout(session);
     return json(res, 200, { ok: true, result, event });
   } catch (e) {
-    return json(res, 500, {
-      ok: false,
-      error: 'featured_complete_failed',
-      message: e.message || String(e),
-    });
+    return jsonPublicError(res, json, e, { code: 'featured_complete_failed', logLabel: '[organiser-event-featured-complete]' });
   }
 };

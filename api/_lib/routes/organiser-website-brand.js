@@ -3,6 +3,7 @@
  */
 const { getOrganiserApi } = require('../organiser-provider');
 const { fetchWebsiteMeta } = require('../website-meta');
+const { jsonPublicError } = require('../public-error');
 
 function parseBody(req) {
   let body = req.body;
@@ -59,10 +60,6 @@ module.exports = async function handler(req, res) {
         'We found brand details on your website. Review them, then save.',
     });
   } catch (e) {
-    return json(res, e.status || 500, {
-      ok: false,
-      error: e.message || 'website_brand_failed',
-      message: e.message || 'Could not read that website.',
-    });
+    return jsonPublicError(res, json, e, { code: e.message || 'website_brand_failed', logLabel: '[organiser-website-brand]' });
   }
 };

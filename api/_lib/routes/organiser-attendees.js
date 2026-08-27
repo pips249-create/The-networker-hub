@@ -1,6 +1,7 @@
 const { getOrganiserApi } = require('../organiser-provider');
 const { assertOrganiserEmailVerified } = require('../organiser-access-guard');
 const { resolveOrganiserApiScope } = require('../organiser-api-scope');
+const { jsonPublicError } = require('../public-error');
 const {
   listBlocksForOrganiserIds,
   normalizeBlockEmail,
@@ -88,17 +89,16 @@ module.exports = async function handler(req, res) {
         });
       }
     } catch (e) {
-      return json(res, 500, {
-        error:
-          view === 'cancellations'
-            ? 'cancellations_fetch_failed'
-            : view === 'blocks'
-              ? 'blocks_fetch_failed'
-              : 'attendees_fetch_failed',
-        message: e.message,
-        attendees: [],
-        cancellations: [],
-        blocks: [],
+      const code =
+        view === 'cancellations'
+          ? 'cancellations_fetch_failed'
+          : view === 'blocks'
+            ? 'blocks_fetch_failed'
+            : 'attendees_fetch_failed';
+      return jsonPublicError(res, json, e, {
+        code,
+        logLabel: '[organiser-attendees]',
+        extra: { attendees: [], cancellations: [], blocks: [] },
       });
     }
 
@@ -112,6 +112,6 @@ module.exports = async function handler(req, res) {
       airtable: airtableSetupHint && airtableSetupHint('events'),
     });
   } catch (e) {
-    return json(res, 500, { error: 'server_error', message: e.message, attendees: [] });
+    return jsonPublicError(res, json, e, { code: 'server_error', logLabel: '[organiser-attendees]', extra: { attendees: [] } });
   }
 };

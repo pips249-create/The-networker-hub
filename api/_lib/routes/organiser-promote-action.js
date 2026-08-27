@@ -4,6 +4,7 @@
 const { getOrganiserApi } = require('../organiser-provider');
 const { recordPromoteAction } = require('../organiser-promote-log');
 const { enforceRateLimit } = require('../rate-limit');
+const { jsonPublicError } = require('../public-error');
 
 function parseBody(req) {
   let body = req.body;
@@ -73,10 +74,6 @@ module.exports = async function handler(req, res) {
     }
     return json(res, 200, result);
   } catch (e) {
-    return json(res, 500, {
-      ok: false,
-      error: e.code || 'promote_action_failed',
-      message: e.message || 'Could not record promote action.',
-    });
+    return jsonPublicError(res, json, e, { code: e.code || 'promote_action_failed', logLabel: '[organiser-promote-action]' });
   }
 };

@@ -1,4 +1,5 @@
 const { getOrganiserApi } = require('../organiser-provider');
+const { jsonPublicError } = require('../public-error');
 const {
   isStripeCheckoutConfigured,
   createOpportunityListingCheckoutSession,
@@ -110,10 +111,6 @@ module.exports = async function handler(req, res) {
       totalPence: totals.totalPence,
     });
   } catch (e) {
-    return json(res, 500, {
-      ok: false,
-      error: 'checkout_failed',
-      message: e.message || String(e),
-    });
+    return jsonPublicError(res, json, e, { code: 'checkout_failed', logLabel: '[organiser-opportunity-listing-checkout]' });
   }
 };

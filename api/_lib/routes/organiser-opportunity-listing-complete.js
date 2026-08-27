@@ -1,4 +1,5 @@
 const { getOrganiserApi } = require('../organiser-provider');
+const { jsonPublicError } = require('../public-error');
 const {
   isStripeCheckoutConfigured,
   retrieveCheckoutSession,
@@ -78,10 +79,6 @@ module.exports = async function handler(req, res) {
     const refreshed = await getOpportunityById(opportunityId);
     return json(res, 200, { ok: true, result, opportunity: refreshed });
   } catch (e) {
-    return json(res, 500, {
-      ok: false,
-      error: 'listing_complete_failed',
-      message: e.message || String(e),
-    });
+    return jsonPublicError(res, json, e, { code: 'listing_complete_failed', logLabel: '[organiser-opportunity-listing-complete]' });
   }
 };

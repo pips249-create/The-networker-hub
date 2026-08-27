@@ -1,5 +1,6 @@
 const { getOrganiserApi } = require('../organiser-provider');
 const { buildFeaturedQuoteForEvent } = require('../event-featured-quote');
+const { jsonPublicError } = require('../public-error');
 
 function parseBody(req) {
   let body = req.body;
@@ -70,10 +71,6 @@ module.exports = async function handler(req, res) {
     if (e.message === 'event_not_found') {
       return json(res, 404, { ok: false, error: 'event_not_found' });
     }
-    return json(res, 500, {
-      ok: false,
-      error: 'featured_quote_failed',
-      message: e.message || String(e),
-    });
+    return jsonPublicError(res, json, e, { code: 'featured_quote_failed', logLabel: '[organiser-event-featured-quote]' });
   }
 };

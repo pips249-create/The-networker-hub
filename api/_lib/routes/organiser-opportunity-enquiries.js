@@ -1,4 +1,5 @@
 const { getOrganiserApi } = require('../organiser-provider');
+const { jsonPublicError } = require('../public-error');
 
 function parseBody(req) {
   let body = req.body;
@@ -45,10 +46,7 @@ module.exports = async function handler(req, res) {
       const newCount = enquiries.filter((e) => e.status === 'new').length;
       return json(res, 200, { ok: true, enquiries, newCount });
     } catch (e) {
-      return json(res, 500, {
-        error: 'enquiries_fetch_failed',
-        message: e.message,
-      });
+      return jsonPublicError(res, json, e, { code: 'enquiries_fetch_failed', logLabel: '[organiser-opportunity-enquiries]' });
     }
   }
 

@@ -1,5 +1,6 @@
 const { getOrganiserApi } = require('../organiser-provider');
 const { assertOrganiserEmailVerified } = require('../organiser-access-guard');
+const { jsonPublicError } = require('../public-error');
 const {
   getMembershipPlanForOrganiser,
   upsertMembershipPlan,
@@ -123,10 +124,6 @@ module.exports = async function handler(req, res) {
     return json(res, 405, { ok: false, error: 'method_not_allowed' });
   } catch (e) {
     const status = e.status || 500;
-    return json(res, status, {
-      ok: false,
-      error: e.code || e.message || 'membership_plans_failed',
-      message: e.message || String(e),
-    });
+    return jsonPublicError(res, json, e, { code: e.code || e.message || 'membership_plans_failed', logLabel: '[organiser-membership-plans]' });
   }
 };

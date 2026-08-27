@@ -1,5 +1,6 @@
 const { getOrganiserApi } = require('../organiser-provider');
 const { getSupabaseAdmin } = require('../supabase');
+const { jsonPublicError } = require('../public-error');
 const {
   isStripeCheckoutConfigured,
   createEventFeaturedCheckoutSession,
@@ -170,10 +171,6 @@ module.exports = async function handler(req, res) {
       quote,
     });
   } catch (e) {
-    return json(res, 500, {
-      ok: false,
-      error: 'checkout_failed',
-      message: e.message || String(e),
-    });
+    return jsonPublicError(res, json, e, { code: 'checkout_failed', logLabel: '[organiser-event-featured-checkout]' });
   }
 };

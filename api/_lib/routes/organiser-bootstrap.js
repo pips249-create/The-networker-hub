@@ -1,6 +1,7 @@
 const { getOrganiserApi } = require('../organiser-provider');
 const { getOrganiserAccessStatus } = require('../organiser-access-guard');
 const { organiserPersonalScopeFromRequest } = require('../auth');
+const { jsonPublicError } = require('../public-error');
 
 module.exports = async function handler(req, res) {
   const startedAt = Date.now();
@@ -167,6 +168,6 @@ module.exports = async function handler(req, res) {
       },
     });
   } catch (e) {
-    return json(res, 500, { error: 'server_error', message: e.message });
+    return jsonPublicError(res, json, e, { code: 'server_error', logLabel: '[organiser-bootstrap]' });
   }
 };

@@ -1,4 +1,5 @@
 const { getOrganiserApi } = require('../organiser-provider');
+const { jsonPublicError } = require('../public-error');
 
 module.exports = async function handler(req, res) {
   const startedAt = Date.now();
@@ -37,6 +38,6 @@ module.exports = async function handler(req, res) {
       },
     });
   } catch (e) {
-    return json(res, 500, { error: 'server_error', message: e.message });
+    return jsonPublicError(res, json, e, { code: 'server_error', logLabel: '[organiser-workspace-stats]' });
   }
 };

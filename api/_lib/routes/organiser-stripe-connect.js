@@ -1,6 +1,7 @@
 const { getOrganiserApi } = require('../organiser-provider');
 const { isAdminRole } = require('../auth');
 const { assertOrganiserEmailVerified } = require('../organiser-access-guard');
+const { jsonPublicError } = require('../public-error');
 const {
   isStripeConnectEnabled,
   syncOrganiserConnectStatus,
@@ -132,9 +133,6 @@ module.exports = async function handler(req, res) {
       expiresAt: link.expiresAt,
     });
   } catch (e) {
-    return json(res, e.status || 500, {
-      error: 'stripe_connect_failed',
-      message: e.message || String(e),
-    });
+    return jsonPublicError(res, json, e, { code: 'stripe_connect_failed', logLabel: '[organiser-stripe-connect]' });
   }
 };

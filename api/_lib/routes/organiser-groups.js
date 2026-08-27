@@ -3,6 +3,7 @@ const { getOrganiserApi } = require('../organiser-provider');
 const { assertDescriptionLimit } = require('../text-limits');
 const { assertOrganiserEmailVerified, isPublishIntent } = require('../organiser-access-guard');
 const { listAccessibleGroupsForSession } = require('../supabase-organiser-access');
+const { jsonPublicError } = require('../public-error');
 
 function organiserApi() {
   return getOrganiserApi();
@@ -63,11 +64,7 @@ module.exports = async function handler(req, res) {
       const { groups } = await ownedGroupsForRequest(req, auth.session);
       return json(res, 200, { ok: true, groups });
     } catch (e) {
-      return json(res, e.status || 500, {
-        error: 'groups_fetch_failed',
-        message: e.message,
-        airtable: api.airtableSetupHint && api.airtableSetupHint('groups'),
-      });
+      return jsonPublicError(res, json, e, { code: 'groups_fetch_failed', logLabel: '[organiser-groups]', extra: { airtable: api.airtableSetupHint && api.airtableSetupHint('groups') } });
     }
   }
 
@@ -208,11 +205,7 @@ module.exports = async function handler(req, res) {
         message,
       });
     } catch (e) {
-      return json(res, e.status || 500, {
-        error: e.code || 'group_update_failed',
-        message: e.message,
-        airtable: api.airtableSetupHint && api.airtableSetupHint('groups'),
-      });
+      return jsonPublicError(res, json, e, { code: e.code || 'group_update_failed', logLabel: '[organiser-groups]', extra: { airtable: api.airtableSetupHint && api.airtableSetupHint('groups') } });
     }
   }
 
@@ -249,12 +242,7 @@ module.exports = async function handler(req, res) {
         );
         return json(res, 200, { ok: true, group });
       } catch (e) {
-        return json(res, e.status || 500, {
-          error: e.code || 'group_unpublish_failed',
-          message: e.message,
-          eventCount: e.eventCount || undefined,
-          airtable: api.airtableSetupHint && api.airtableSetupHint('groups'),
-        });
+        return jsonPublicError(res, json, e, { code: e.code || 'group_unpublish_failed', logLabel: '[organiser-groups]', extra: { eventCount: e.eventCount || undefined, airtable: api.airtableSetupHint && api.airtableSetupHint('groups') } });
       }
     }
 
@@ -300,11 +288,7 @@ module.exports = async function handler(req, res) {
           message: 'Group duplicated as a draft — review the copy and publish when ready. Bank details are not copied; set up Stripe separately if you sell paid tickets on this page.',
         });
       } catch (e) {
-        return json(res, e.status || 500, {
-          error: 'group_duplicate_failed',
-          message: e.message,
-          airtable: api.airtableSetupHint && api.airtableSetupHint('groups'),
-        });
+        return jsonPublicError(res, json, e, { code: 'group_duplicate_failed', logLabel: '[organiser-groups]', extra: { airtable: api.airtableSetupHint && api.airtableSetupHint('groups') } });
       }
     }
 
@@ -362,11 +346,7 @@ module.exports = async function handler(req, res) {
           : null,
       });
     } catch (e) {
-      return json(res, e.status || 500, {
-        error: e.code || 'group_create_failed',
-        message: e.message,
-        airtable: api.airtableSetupHint && api.airtableSetupHint('groups'),
-      });
+      return jsonPublicError(res, json, e, { code: e.code || 'group_create_failed', logLabel: '[organiser-groups]', extra: { airtable: api.airtableSetupHint && api.airtableSetupHint('groups') } });
     }
   }
 

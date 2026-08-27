@@ -1,4 +1,5 @@
 const { getOrganiserApi } = require('../organiser-provider');
+const { jsonPublicError } = require('../public-error');
 const {
   isStripeCheckoutConfigured,
   retrieveCheckoutSession,
@@ -77,10 +78,6 @@ module.exports = async function handler(req, res) {
     const result = await handleOpportunityPremiumCheckout(session);
     return json(res, 200, { ok: true, result, opportunity });
   } catch (e) {
-    return json(res, 500, {
-      ok: false,
-      error: 'premium_complete_failed',
-      message: e.message || String(e),
-    });
+    return jsonPublicError(res, json, e, { code: 'premium_complete_failed', logLabel: '[organiser-opportunity-premium-complete]' });
   }
 };

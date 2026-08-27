@@ -5,6 +5,7 @@ const { getOrganiserApi } = require('../organiser-provider');
 const { resolveOrganiserAccess } = require('../supabase-organiser-access');
 const { fetchAccountActivity } = require('../entity-activity-log');
 const { enforceRateLimit } = require('../rate-limit');
+const { jsonPublicError } = require('../public-error');
 
 module.exports = async function handler(req, res) {
   const { json, setCors, requireOrganiserSession } = getOrganiserApi();
@@ -69,10 +70,6 @@ module.exports = async function handler(req, res) {
       }),
     });
   } catch (e) {
-    return json(res, e.status || 500, {
-      ok: false,
-      error: e.code || 'activity_failed',
-      message: e.message || 'Could not load activity.',
-    });
+    return jsonPublicError(res, json, e, { code: e.code || 'activity_failed', logLabel: '[organiser-activity]' });
   }
 };

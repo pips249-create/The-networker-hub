@@ -1,4 +1,5 @@
 const { getOrganiserApi } = require('../organiser-provider');
+const { jsonPublicError } = require('../public-error');
 
 function parseBody(req) {
   let body = req.body;
@@ -77,10 +78,6 @@ module.exports = async function handler(req, res) {
 
     return json(res, 405, { error: 'method_not_allowed' });
   } catch (e) {
-    return json(res, e.status || 500, {
-      ok: false,
-      error: e.code || e.message || 'alumni_invites_failed',
-      message: e.message || String(e),
-    });
+    return jsonPublicError(res, json, e, { code: e.code || e.message || 'alumni_invites_failed', logLabel: '[organiser-alumni-invites]' });
   }
 };

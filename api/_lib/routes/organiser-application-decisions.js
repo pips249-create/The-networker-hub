@@ -1,4 +1,5 @@
 const { getOrganiserApi } = require('../organiser-provider');
+const { jsonPublicError } = require('../public-error');
 
 function parseBody(req) {
   let body = req.body;
@@ -140,10 +141,6 @@ module.exports = async function handler(req, res) {
     }
     return json(res, 200, { ok: true, ...result, message });
   } catch (e) {
-    return json(res, e.status || 500, {
-      ok: false,
-      error: e.code || e.message || 'review_failed',
-      message: e.message,
-    });
+    return jsonPublicError(res, json, e, { code: e.code || e.message || 'review_failed', logLabel: '[organiser-application-decisions]' });
   }
 };

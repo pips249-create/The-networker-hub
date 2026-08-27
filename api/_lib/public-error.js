@@ -34,8 +34,33 @@ function publicErrorPayload(err, opts) {
   };
 }
 
+/**
+ * Respond with a sanitised error body. Logs the real message for 5xx.
+ * @param {*} res
+ * @param {(res: *, status: number, body: object) => *} json
+ * @param {Error & { status?: number, code?: string }} err
+ * @param {{ code?: string, fallback?: string, logLabel?: string, extra?: object }} [opts]
+ */
+function jsonPublicError(res, json, err, opts) {
+  opts = opts || {};
+  const payload = publicErrorPayload(err, { code: opts.code, fallback: opts.fallback });
+  if (payload.status >= 500) {
+    console.error(
+      opts.logLabel || '[api]',
+      opts.code || payload.error,
+      err && err.message ? err.message : err
+    );
+  }
+  return json(
+    res,
+    payload.status,
+    Object.assign({ error: payload.error, message: payload.message }, opts.extra || {})
+  );
+}
+
 module.exports = {
   GENERIC_PUBLIC_ERROR: GENERIC,
   looksInternalMessage,
   publicErrorPayload,
+  jsonPublicError,
 };

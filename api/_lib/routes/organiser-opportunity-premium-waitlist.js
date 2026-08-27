@@ -1,4 +1,5 @@
 const { getOrganiserApi } = require('../organiser-provider');
+const { jsonPublicError } = require('../public-error');
 const {
   joinPremiumWaitlist,
   premiumWaitlistStatus,
@@ -35,7 +36,7 @@ module.exports = async function handler(req, res) {
       const status = await premiumWaitlistStatus(auth.session);
       return json(res, 200, { ok: true, ...status });
     } catch (e) {
-      return json(res, 500, { error: 'waitlist_status_failed', message: e.message });
+      return jsonPublicError(res, json, e, { code: 'waitlist_status_failed', logLabel: '[organiser-opportunity-premium-waitlist]' });
     }
   }
 

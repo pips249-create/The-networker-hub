@@ -1,4 +1,5 @@
 const { getOrganiserApi } = require('../organiser-provider');
+const { jsonPublicError } = require('../public-error');
 
 function parseBody(req) {
   let body = req.body;
@@ -52,6 +53,6 @@ module.exports = async function handler(req, res) {
 
     return json(res, 405, { error: 'method_not_allowed' });
   } catch (e) {
-    return json(res, e.status || 500, { error: 'payout_request_failed', message: e.message });
+    return jsonPublicError(res, json, e, { code: 'payout_request_failed', logLabel: '[organiser-payouts]' });
   }
 };
