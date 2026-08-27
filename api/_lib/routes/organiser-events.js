@@ -2,6 +2,15 @@ const { getOrganiserApi } = require('../organiser-provider');
 const { assertOrganiserEmailVerified, isPublishIntent } = require('../organiser-access-guard');
 const { assertDescriptionLimit } = require('../text-limits');
 const { adminViewFromSession, resolveOrganiserGroupScope } = require('../organiser-api-scope');
+const { publicErrorPayload } = require('../public-error');
+
+function jsonPublicError(res, json, e, code, extra) {
+  const payload = publicErrorPayload(e, { code });
+  if (payload.status >= 500) {
+    console.error('[organiser-events]', code || payload.error, e && e.message ? e.message : e);
+  }
+  return json(res, payload.status, Object.assign({ error: payload.error, message: payload.message }, extra || {}));
+}
 
 function parseBody(req) {
   let body = req.body;
@@ -177,9 +186,7 @@ module.exports = async function handler(req, res) {
       const events = await listEventsForSession(auth.session, groupIds, []);
       return json(res, 200, { ok: true, events, groups });
     } catch (e) {
-      return json(res, e.status || 500, {
-        error: 'events_fetch_failed',
-        message: e.message,
+      return jsonPublicError(res, json, e, 'events_fetch_failed', {
         airtable: airtableSetupHint('events'),
       });
     }
@@ -262,9 +269,7 @@ module.exports = async function handler(req, res) {
         needsTickets: synced.eventIds.length > 0,
       });
     } catch (e) {
-      return json(res, e.status || 500, {
-        error: e.code || 'event_update_failed',
-        message: e.message,
+      return jsonPublicError(res, json, e, e.code || 'event_update_failed', {
         airtable: airtableSetupHint('events'),
       });
     }
@@ -295,10 +300,7 @@ module.exports = async function handler(req, res) {
             'Event duplicated as a draft — add new dates, review ticket types, then publish.',
         });
       } catch (e) {
-        return json(res, e.status || 500, {
-          error: e.code || 'event_duplicate_failed',
-          message: e.message,
-        });
+        return jsonPublicError(res, json, e, e.code || 'event_duplicate_failed');
       }
     }
 
@@ -329,10 +331,7 @@ module.exports = async function handler(req, res) {
           message: 'Event unpublished — it is hidden from Browse events.',
         });
       } catch (e) {
-        return json(res, e.status || 500, {
-          error: e.code || 'event_unpublish_failed',
-          message: e.message,
-        });
+        return jsonPublicError(res, json, e, e.code || 'event_unpublish_failed');
       }
     }
 
@@ -363,10 +362,7 @@ module.exports = async function handler(req, res) {
           message: 'Event republished — it is live on Browse events again.',
         });
       } catch (e) {
-        return json(res, e.status || 500, {
-          error: e.code || 'event_republish_failed',
-          message: e.message,
-        });
+        return jsonPublicError(res, json, e, e.code || 'event_republish_failed');
       }
     }
 
@@ -433,9 +429,7 @@ module.exports = async function handler(req, res) {
         needsTickets: eventIds.length > 0,
       });
     } catch (e) {
-      return json(res, e.status || 500, {
-        error: e.code || 'event_create_failed',
-        message: e.message,
+      return jsonPublicError(res, json, e, e.code || 'event_create_failed', {
         airtable: airtableSetupHint('events'),
       });
     }
@@ -476,10 +470,7 @@ module.exports = async function handler(req, res) {
       }
       return json(res, 200, { ok: true, event: deleted, message: 'Event deleted.' });
     } catch (e) {
-      return json(res, e.status || 500, {
-        error: e.code || 'event_delete_failed',
-        message: e.message,
-      });
+      return jsonPublicError(res, json, e, e.code || 'event_delete_failed');
     }
   }
 

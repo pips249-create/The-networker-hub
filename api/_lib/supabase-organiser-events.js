@@ -15,6 +15,9 @@ const { resolveOrganiserAccess, groupVisibleInOrganiserWorkspace, emailMatchedOr
 const { eventHasTicketsOnSale, resolveTierSaleEnd } = require('./ticket-sales');
 const { assertTicketsEditableForEvents, loadLockedOrActiveSaleEvents, lockEventOnFirstSale } = require('./event-sale-lock');
 const { applyListingLifecyclePreserve } = require('./listing-lifecycle');
+// Top-level so Vercel file tracing includes this module in the organiser bundle
+// (dynamic require() inside assertEventLanguageForPublish was omitted from /var/task).
+const { assertNoHateSpeechOnLiveListing } = require('./listing-language-moderation');
 
 const WORKSPACE_EVENTS_LIMIT_DEFAULT = 100;
 const WORKSPACE_EVENTS_LIMIT_MAX = 250;
@@ -856,7 +859,6 @@ function assertEventHasOrganiserForPublish(row) {
 }
 
 function assertEventLanguageForPublish(row, existing) {
-  const { assertNoHateSpeechOnLiveListing } = require('./listing-language-moderation');
   const effective = {
     title: row.title !== undefined ? row.title : existing?.title,
     description: row.description !== undefined ? row.description : existing?.description,

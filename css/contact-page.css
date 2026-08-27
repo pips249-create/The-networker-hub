@@ -444,6 +444,17 @@
   min-height: 120px;
 }
 
+.contact-team-status {
+  margin: 0 0 8px;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: var(--charcoal);
+}
+
+.contact-team-status--error {
+  color: #8a1f2b;
+}
+
 .contact-team-form-actions {
   display: flex;
   flex-wrap: wrap;

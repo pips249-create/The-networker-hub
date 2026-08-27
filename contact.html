@@ -5,6 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Contact us – The Networker UK</title>
 <meta name="description" content="Get in touch with The Networker UK — email Rosie and Catherine for help with events, tickets, and organiser listings.">
+<!-- hub-static-seo -->
+<link rel="canonical" href="https://www.thenetworkeruk.com/contact">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="The Networker UK">
+<meta property="og:title" content="Contact us – The Networker UK">
+<meta property="og:description" content="Get in touch with The Networker UK — chat with Hubert, your business butler and concierge, or email the team.">
+<meta property="og:url" content="https://www.thenetworkeruk.com/contact">
+<meta property="og:image" content="https://www.thenetworkeruk.com/assets/logo.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Contact us – The Networker UK">
+<meta name="twitter:description" content="Get in touch with The Networker UK — chat with Hubert, your business butler and concierge, or email the team.">
+<meta name="twitter:image" content="https://www.thenetworkeruk.com/assets/logo.png">
+<!-- /hub-static-seo -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
@@ -51,7 +64,7 @@
             </span>
             <span class="contact-details-label">Email</span>
           </div>
-          <a href="mailto:hello@thenetworkeruk.com">hello@thenetworkeruk.com</a>
+          <a href="mailto:hi@thenetworkeruk.com">hi@thenetworkeruk.com</a>
           <span class="contact-details-note">Our team replies to urgent account queries within 24 business hours.</span>
         </li>
         <li class="contact-detail-card">
@@ -87,7 +100,7 @@
         For refunds or booking issues, include your event name and order reference so we can help faster.
       </p>
       <p>
-        <a class="btn btn-secondary" href="mailto:hello@thenetworkeruk.com">Email hello@thenetworkeruk.com</a>
+        <a class="btn btn-secondary" href="mailto:hi@thenetworkeruk.com">hi@thenetworkeruk.com</a>
       </p>
     </aside>
 
@@ -113,6 +126,7 @@
           <label for="contact-team-only-message">Your message</label>
           <textarea id="contact-team-only-message" name="message" rows="5" required maxlength="4000" placeholder="Tell us about your organiser page, listing, or enquiry…"></textarea>
         </div>
+        <p id="contact-team-only-status" class="contact-team-status" hidden role="status"></p>
         <div class="contact-team-form-actions">
           <button type="submit" class="btn btn-primary">Send to the team</button>
         </div>
@@ -123,7 +137,8 @@
 
 <div id="hub-site-footer"></div>
 <script src="js/site-footer.js?v=20260825navfull1" data-root="" data-hubert="off"></script>
-<script src="js/contact-chat.js?v=20260805email1b"></script>
+<script src="js/hub-turnstile.js?v=20260827sec1"></script>
+<script src="js/contact-chat.js?v=20260827contact1"></script>
 
 </body>
 </html>
