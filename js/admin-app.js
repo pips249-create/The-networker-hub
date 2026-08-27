@@ -21615,19 +21615,54 @@
   }
 
   function opportunityCommitmentOptions(selected) {
-    return ['', 'Full-time', 'Part-time / Flexible', 'Event-based', 'Flexible']
+    return ['', 'Full-time', 'Part-time / Flexible', 'Event-based']
       .map(function (s) {
+        var value = s;
+        var label = s || 'Select…';
+        // Map legacy "Flexible" stored values onto Part-time / Flexible.
+        var isSelected =
+          selected === value ||
+          (value === 'Part-time / Flexible' && selected === 'Flexible');
         return (
           '<option value="' +
-          attrEsc(s) +
+          attrEsc(value) +
           '"' +
-          (selected === s ? ' selected' : '') +
+          (isSelected ? ' selected' : '') +
           '>' +
-          esc(s || 'Select…') +
+          esc(label) +
           '</option>'
         );
       })
       .join('');
+  }
+
+  var OPPORTUNITY_CATEGORIES = [
+    ['cleaning', 'Cleaning'],
+    ['food', 'Food & Drink'],
+    ['tech', 'Tech & Digital'],
+    ['health', 'Health & Fitness'],
+    ['beauty', 'Beauty & Wellness'],
+    ['property', 'Property'],
+    ['education', 'Education & Coaching'],
+    ['finance', 'Finance & Admin'],
+    ['pets', 'Pets & Animals'],
+    ['mlm', 'Network marketing'],
+    ['general', 'Other'],
+  ];
+
+  function opportunityCategoryOptions(selected) {
+    var current = String(selected || 'general').trim() || 'general';
+    return OPPORTUNITY_CATEGORIES.map(function (pair) {
+      return (
+        '<option value="' +
+        attrEsc(pair[0]) +
+        '"' +
+        (current === pair[0] ? ' selected' : '') +
+        '>' +
+        esc(pair[1]) +
+        '</option>'
+      );
+    }).join('');
   }
 
   function opportunityImageFieldHtml(key, urlName, label, help, imageUrl) {
@@ -21718,6 +21753,10 @@
           : opp.type || 'business-opportunity'
       ) +
       '</select></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Industry</label>' +
+      '<select name="category" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      opportunityCategoryOptions(opp.category || 'general') +
+      '</select></div>' +
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Status</label>' +
       '<select name="status" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
       opportunityStatusOptions(opp.status || 'published') +
@@ -21761,8 +21800,13 @@
         'Square logo shown beside the company name.',
         opp.logo_url || ''
       ) +
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Contact email for enquiries</label>' +
+      '<input type="email" name="contact_email" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+      attrEsc(opp.contact_email || '') +
+      '" placeholder="enquiries@company.co.uk">' +
+      '<p class="text-[11px] text-slate-500 mt-1">Used for enquiry routing on the public listing. Falls back to owner email if blank.</p></div>' +
       '<div class="sm:col-span-2 rounded-lg border border-slate-200 bg-white p-3 grid sm:grid-cols-2 gap-3">' +
-      '<p class="sm:col-span-2 text-xs font-semibold text-slate-600">Card details</p>' +
+      '<p class="sm:col-span-2 text-xs font-semibold text-slate-600">Card details <span class="font-normal text-slate-500">(shown on browse cards &amp; Quick look)</span></p>' +
       '<div class="sm:col-span-2 opp-admin-capital-fields"' +
       (String(opp.type || '') === 'affiliate' ||
       (String(opp.type || '') === 'partnership' &&
@@ -22324,6 +22368,43 @@
     main.innerHTML =
       '<div class="space-y-4">' +
       '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Manage business opportunity listings submitted by organisers. Approve pending listings, toggle <strong>featured</strong> for the Premium Spotlight carousel on <code class="text-[11px]">/opportunities/</code>, or expand a row to edit details.</p>' +
+      '<div class="rounded-xl border border-brand-200 bg-brand-50/50 overflow-hidden">' +
+      '<div class="px-4 py-3 border-b border-brand-100 space-y-3">' +
+      '<div class="flex flex-wrap items-center justify-between gap-2">' +
+      '<p class="text-sm font-semibold text-brand-900">Create listing &amp; related pages</p>' +
+      '<a href="/opportunities/" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-700 hover:underline">Open live browse →</a></div>' +
+      '<div class="flex flex-wrap gap-2">' +
+      '<a href="#spotlight/opportunities" class="inline-flex items-center rounded-lg border border-brand-200 bg-white px-3 py-1.5 text-xs font-semibold text-brand-900 hover:border-brand-400 hover:bg-brand-50">Premium Spotlight</a>' +
+      '<a href="#sponsorship/placements" class="inline-flex items-center rounded-lg border border-brand-200 bg-white px-3 py-1.5 text-xs font-semibold text-brand-900 hover:border-brand-400 hover:bg-brand-50">Ads &amp; sponsors</a>' +
+      '<a href="#sponsorship/county-partners" class="inline-flex items-center rounded-lg border border-brand-200 bg-white px-3 py-1.5 text-xs font-semibold text-brand-900 hover:border-brand-400 hover:bg-brand-50">County partners</a>' +
+      '<a href="/organiser/opportunity-edit" target="_blank" rel="noopener" class="inline-flex items-center rounded-lg border border-brand-200 bg-white px-3 py-1.5 text-xs font-semibold text-brand-900 hover:border-brand-400 hover:bg-brand-50">Organiser list form</a>' +
+      '<a href="/guides/list-a-business-opportunity" target="_blank" rel="noopener" class="inline-flex items-center rounded-lg border border-brand-200 bg-white px-3 py-1.5 text-xs font-semibold text-brand-900 hover:border-brand-400 hover:bg-brand-50">Listing guide</a>' +
+      '<a href="/advertising#ad-panel-opportunities" target="_blank" rel="noopener" class="inline-flex items-center rounded-lg border border-brand-200 bg-white px-3 py-1.5 text-xs font-semibold text-brand-900 hover:border-brand-400 hover:bg-brand-50">Advertising rate card</a>' +
+      '<button type="button" data-opp-quick="pending" class="inline-flex items-center rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-900 hover:bg-amber-100">Pending review</button>' +
+      '</div></div>' +
+      '<details class="group">' +
+      '<summary class="cursor-pointer list-none font-semibold text-brand-900 px-4 py-3 select-none">Create listing</summary>' +
+      '<div class="px-4 pb-4 space-y-4 border-t border-brand-100">' +
+      '<p class="text-xs text-slate-600 pt-3">Create a hub-owned business opportunity with image, description, and card details. It stays claimable until you assign an owner email (or someone requests a claim). Prefix the title with <code class="text-[11px]">[TEST]</code> for throwaway previews.</p>' +
+      '<form class="opportunity-create-form grid sm:grid-cols-2 gap-3">' +
+      opportunityListingFieldsHtml(
+        { type: 'business-opportunity', status: 'published' },
+        { coverKey: 'opp-create-cover', logoKey: 'opp-create-logo' }
+      ) +
+      '<div class="sm:col-span-2 rounded-lg border border-slate-200 bg-white p-3 space-y-2">' +
+      '<p class="text-xs font-semibold text-slate-600">Claim later (optional)</p>' +
+      '<p class="text-xs text-slate-500">Leave blank to keep the listing hub-owned and claimable. Enter an email to open the in-dashboard claim prompt when that person signs in.</p>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Owner / claimant email</label>' +
+      '<input type="email" name="owner_email" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Leave blank for hub-owned"></div></div>' +
+      '<div class="sm:col-span-2 flex flex-wrap items-center gap-3">' +
+      '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Create listing</button>' +
+      '<span class="opportunity-create-msg text-xs"></span></div></form>' +
+      '<div class="border-t border-brand-100 pt-4 space-y-3">' +
+      '<p class="text-xs font-semibold text-slate-600">Quick samples</p>' +
+      '<p class="text-xs text-slate-600">Add 3 sample <code class="text-[11px]">[TEST]</code> listings with stock images for previewing /opportunities/ — delete them from the table when done.</p>' +
+      '<div class="flex flex-wrap items-center gap-3">' +
+      '<button type="button" id="opportunity-test-samples-btn" class="rounded-lg border border-brand-300 bg-white text-brand-900 text-sm font-semibold px-4 py-2 hover:bg-brand-50">Add 3 sample test listings</button>' +
+      '<span id="opportunity-test-samples-msg" class="text-xs"></span></div></div></div></details></div>' +
       '<div id="opportunity-cleanup-status" class="text-sm text-slate-500">Loading business opportunities…</div>' +
       '<p id="opportunity-cleanup-hint" class="hidden text-xs text-amber-900 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">' +
       'Large catalogue — use search and More filters. Type a page number below the table to jump ahead.</p>' +
@@ -22405,30 +22486,7 @@
       '</div></details>' +
       '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer border-t border-slate-100 pt-2">' +
       '<input type="checkbox" id="opportunity-cleanup-select-page" class="rounded border-slate-300"> Select all on page</label></div>' +
-      '<div id="opportunity-cleanup-list"></div>' +
-      '<details class="rounded-xl border border-brand-200 bg-brand-50/50 group" open>' +
-      '<summary class="cursor-pointer list-none font-semibold text-brand-900 px-4 py-3 select-none">Create listing</summary>' +
-      '<div class="px-4 pb-4 space-y-4 border-t border-brand-100">' +
-      '<p class="text-xs text-slate-600 pt-3">Create a hub-owned business opportunity with image, description, and card details. It stays claimable until you assign an owner email (or someone requests a claim). Prefix the title with <code class="text-[11px]">[TEST]</code> for throwaway previews.</p>' +
-      '<form class="opportunity-create-form grid sm:grid-cols-2 gap-3">' +
-      opportunityListingFieldsHtml(
-        { type: 'business-opportunity', status: 'published' },
-        { coverKey: 'opp-create-cover', logoKey: 'opp-create-logo' }
-      ) +
-      '<div class="sm:col-span-2 rounded-lg border border-slate-200 bg-white p-3 space-y-2">' +
-      '<p class="text-xs font-semibold text-slate-600">Claim later (optional)</p>' +
-      '<p class="text-xs text-slate-500">Leave blank to keep the listing hub-owned and claimable. Enter an email to open the in-dashboard claim prompt when that person signs in.</p>' +
-      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Owner / claimant email</label>' +
-      '<input type="email" name="owner_email" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Leave blank for hub-owned"></div></div>' +
-      '<div class="sm:col-span-2 flex flex-wrap items-center gap-3">' +
-      '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Create listing</button>' +
-      '<span class="opportunity-create-msg text-xs"></span></div></form>' +
-      '<div class="border-t border-brand-100 pt-4 space-y-3">' +
-      '<p class="text-xs font-semibold text-slate-600">Quick samples</p>' +
-      '<p class="text-xs text-slate-600">Add 3 sample <code class="text-[11px]">[TEST]</code> listings with stock images for previewing /opportunities/ — delete them from the table when done.</p>' +
-      '<div class="flex flex-wrap items-center gap-3">' +
-      '<button type="button" id="opportunity-test-samples-btn" class="rounded-lg border border-brand-300 bg-white text-brand-900 text-sm font-semibold px-4 py-2 hover:bg-brand-50">Add 3 sample test listings</button>' +
-      '<span id="opportunity-test-samples-msg" class="text-xs"></span></div></div></div></details></div>';
+      '<div id="opportunity-cleanup-list"></div></div>';
 
     syncOpportunityCleanupFilterUi();
     bindAdminLogoZones(main.querySelector('.opportunity-create-form'));
@@ -22443,6 +22501,8 @@
     if (statusField) statusField.value = 'published';
     var typeField = formField(form, 'type');
     if (typeField) typeField.value = 'business-opportunity';
+    var categoryField = formField(form, 'category');
+    if (categoryField) categoryField.value = 'general';
     delete adminLogoPending['opp-create-cover'];
     delete adminLogoPending['opp-create-logo'];
     form.querySelectorAll('.admin-logo-preview').forEach(function (img) {
@@ -22452,6 +22512,7 @@
     form.querySelectorAll('.admin-logo-placeholder').forEach(function (el) {
       el.classList.remove('hidden');
     });
+    syncOpportunityAdminAffiliateFields(form);
   }
 
   function opportunityFormPayload(form) {
@@ -22459,9 +22520,11 @@
       title: formFieldVal(form, 'title'),
       host: formFieldVal(form, 'host'),
       type: formFieldVal(form, 'type') || 'business-opportunity',
+      category: formFieldVal(form, 'category') || 'general',
       status: formFieldVal(form, 'status') || 'published',
       description: formFieldVal(form, 'description') || null,
       about_text: formFieldVal(form, 'about_text') || null,
+      contact_email: formFieldVal(form, 'contact_email') || null,
       investment: formFieldVal(form, 'investment') || null,
       investment_includes: formFieldVal(form, 'investment_includes') || null,
       commission: formFieldVal(form, 'commission') || null,
@@ -22474,9 +22537,50 @@
     };
   }
 
+  function opportunityCardFieldGaps(payload, form) {
+    var gaps = [];
+    var type = String((payload && payload.type) || '').trim();
+    var affiliate = type === 'affiliate';
+    if (!String((payload && payload.host) || '').trim()) gaps.push('host / company');
+    if (!String((payload && payload.description) || '').trim()) gaps.push('short description');
+    if (!String((payload && payload.location) || '').trim()) gaps.push('territory / location');
+    if (!String((payload && payload.commitment) || '').trim()) gaps.push('commitment');
+    if (affiliate) {
+      if (!String((payload && payload.commission) || '').trim()) gaps.push('commission');
+    } else if (!String((payload && payload.investment) || '').trim()) {
+      gaps.push('investment');
+    }
+    var coverKey =
+      form &&
+      form.querySelector('[data-admin-logo-url-name="image_url"]') &&
+      form.querySelector('[data-admin-logo-url-name="image_url"]').getAttribute('data-admin-logo-key');
+    var pendingCover = coverKey && adminLogoPending[coverKey] && adminLogoPending[coverKey].file;
+    var hasCover =
+      !!(payload && payload.image_url) ||
+      !!pendingCover ||
+      !!(form && form.querySelector('[data-admin-logo-url-name="image_url"] .admin-logo-preview:not(.hidden)'));
+    if (!hasCover) gaps.push('cover image');
+    return gaps;
+  }
+
+  function confirmOpportunityCardGaps(payload, form, actionLabel) {
+    var gaps = opportunityCardFieldGaps(payload, form);
+    if (!gaps.length) return true;
+    return window.confirm(
+      (actionLabel || 'Save') +
+        ' this listing with missing card fields?\n\n' +
+        gaps.map(function (g) {
+          return '• ' + g;
+        }).join('\n') +
+        '\n\nThese show on /opportunities/ cards and Quick look.'
+    );
+  }
+
   function createOpportunityCleanupForm(form) {
     var msg = form.querySelector('.opportunity-create-msg');
     var btn = form.querySelector('[type="submit"]');
+    var basePayload = opportunityFormPayload(form);
+    if (!confirmOpportunityCardGaps(basePayload, form, 'Create')) return;
     if (btn) btn.disabled = true;
     if (msg) {
       msg.textContent = 'Creating…';
@@ -22495,7 +22599,7 @@
       opportunityImagePayloadForKey(logoKey, form, 'logo_url', 'logo'),
     ])
       .then(function (parts) {
-        var payload = Object.assign({ action: 'create' }, opportunityFormPayload(form), parts[0], parts[1]);
+        var payload = Object.assign({ action: 'create' }, basePayload, parts[0], parts[1]);
         return adminPost('/api/admin/opportunities', payload);
       })
       .then(function (data) {
@@ -22616,22 +22720,30 @@
     var id = form.getAttribute('data-opportunity-id');
     var msg = form.querySelector('.opportunity-cleanup-msg');
     var btn = form.querySelector('[type="submit"]');
+    var basePayload = opportunityFormPayload(form);
+    basePayload.approval_status = formFieldVal(form, 'approval_status') || null;
+    if (!confirmOpportunityCardGaps(basePayload, form, 'Save')) return;
     if (btn) btn.disabled = true;
     if (msg) {
       msg.textContent = 'Saving…';
       msg.className = 'opportunity-cleanup-msg text-xs text-slate-500';
     }
-    adminPost('/api/admin/opportunities', {
-      id: id,
-      title: formFieldVal(form, 'title'),
-      host: formFieldVal(form, 'host'),
-      type: formFieldVal(form, 'type'),
-      status: formFieldVal(form, 'status'),
-      approval_status: formFieldVal(form, 'approval_status'),
-      featured: !!(form.querySelector('[name="featured"]') && form.querySelector('[name="featured"]').checked),
-      image_url: formFieldVal(form, 'image_url') || null,
-      description: formFieldVal(form, 'description') || null,
-    })
+    var coverKey =
+      (form.querySelector('[data-admin-logo-url-name="image_url"]') &&
+        form.querySelector('[data-admin-logo-url-name="image_url"]').getAttribute('data-admin-logo-key')) ||
+      'opp-edit-cover-' + id;
+    var logoKey =
+      (form.querySelector('[data-admin-logo-url-name="logo_url"]') &&
+        form.querySelector('[data-admin-logo-url-name="logo_url"]').getAttribute('data-admin-logo-key')) ||
+      'opp-edit-logo-' + id;
+    Promise.all([
+      opportunityImagePayloadForKey(coverKey, form, 'image_url', 'photo'),
+      opportunityImagePayloadForKey(logoKey, form, 'logo_url', 'logo'),
+    ])
+      .then(function (parts) {
+        var payload = Object.assign({ id: id }, basePayload, parts[0], parts[1]);
+        return adminPost('/api/admin/opportunities', payload);
+      })
       .then(function (data) {
         if (!data.ok) throw new Error(data.message || data.error || 'Save failed');
         if (msg) {

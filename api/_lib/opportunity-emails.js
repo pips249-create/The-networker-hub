@@ -122,6 +122,58 @@ async function sendOpportunityListingLiveEmail(opportunity) {
   return { sent: true, to };
 }
 
+async function sendOpportunityListingPendingReviewEmail(opportunity) {
+  const to = ownerEmailForOpportunity(opportunity);
+  if (!to) return { skipped: true, reason: 'no_owner_email' };
+
+  const siteUrl = siteBase();
+  const listing = buildOpportunityListingEmailVars(opportunity);
+  await sendTemplatedEmail({
+    slug: 'opportunity_listing_pending_review',
+    to,
+    variables: {
+      owner_name: ownerNameFromOpportunity(opportunity, to),
+      ...listing,
+      dashboard_url: organiserBusinessDashboardUrl(siteUrl),
+      opportunity_edit_url:
+        siteUrl +
+        '/organiser/opportunity-edit?id=' +
+        encodeURIComponent(String(opportunity.id || '')),
+    },
+    subject: 'Your listing is pending review — ' + listing.opportunity_title,
+  });
+  return { sent: true, to };
+}
+
+async function sendOpportunityListingApprovedPayEmail(opportunity) {
+  const to = ownerEmailForOpportunity(opportunity);
+  if (!to) return { skipped: true, reason: 'no_owner_email' };
+
+  const siteUrl = siteBase();
+  const listing = buildOpportunityListingEmailVars(opportunity);
+  const checkoutUrl = organiserBusinessDashboardUrl(siteUrl, {
+    renewOpportunityId: opportunity.id,
+  });
+  await sendTemplatedEmail({
+    slug: 'opportunity_listing_approved_pay',
+    to,
+    variables: {
+      owner_name: ownerNameFromOpportunity(opportunity, to),
+      ...listing,
+      dashboard_url: organiserBusinessDashboardUrl(siteUrl),
+      checkout_url: checkoutUrl,
+      pay_url: checkoutUrl,
+      opportunity_edit_url:
+        siteUrl +
+        '/organiser/opportunity-edit?id=' +
+        encodeURIComponent(String(opportunity.id || '')) +
+        '&checkout=start',
+    },
+    subject: 'Approved — pay to go live — ' + listing.opportunity_title,
+  });
+  return { sent: true, to };
+}
+
 async function sendOpportunityPremiumLiveEmail(opportunity) {
   const to = ownerEmailForOpportunity(opportunity);
   if (!to) return { skipped: true, reason: 'no_owner_email' };
@@ -223,6 +275,8 @@ module.exports = {
   ownerEmailForOpportunity,
   buildOpportunityListingEmailVars,
   sendOpportunityListingLiveEmail,
+  sendOpportunityListingPendingReviewEmail,
+  sendOpportunityListingApprovedPayEmail,
   sendOpportunityPremiumLiveEmail,
   sendOpportunityEnquiryEmails,
 };

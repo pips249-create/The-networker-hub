@@ -2,7 +2,7 @@
 window.HUB_SEO_STATIC = {
   "home": {
     "path": "/",
-    "title": "Find events, organiser pages & opportunities – The Networker UK",
+    "title": "The Networker UK: Find Your Next… Event, Organiser & Opportunity",
     "description": "Browse UK networking events, organiser pages, and business opportunities in one place. Free on The Networker UK; sign up when you're ready to book or enquire.",
     "image": "/assets/logo.png",
     "ogType": "website"

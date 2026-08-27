@@ -67,6 +67,20 @@ module.exports = async function handler(req, res) {
       return json(res, 403, { ok: false, error: 'opportunity_not_owned' });
     }
 
+    const approval = String(opportunity.approvalStatus || opportunity.approval_status || '').trim();
+    const alreadyPaid = Boolean(opportunity.listingPaymentActive);
+    // Review-then-pay: first subscription only after Approve. Renewals keep working while Approved.
+    if (approval !== 'Approved' && !alreadyPaid && !isPlatformAdmin(auth.session)) {
+      return json(res, 400, {
+        ok: false,
+        error: 'not_approved',
+        message:
+          approval === 'Rejected'
+            ? 'This listing was not approved. Edit and resubmit for review before paying.'
+            : 'This listing is still pending review. You can start your subscription once it is approved.',
+      });
+    }
+
     const fcaAttestation = validateFcaDisclaimer({
       type: opportunity.type,
       types: opportunity.types,

@@ -887,29 +887,41 @@
     return isAffiliateMoney(item) ? 'Commission' : 'Investment';
   }
 
+  function formatMoneyDisplay(key, raw) {
+    var val = String(raw || '').trim();
+    if (!val || /^enquire$/i.test(val) || val === '—') return 'On request';
+    if (catalog && catalog.formatMetaDisplayValue) {
+      return catalog.formatMetaDisplayValue(key, val) || val;
+    }
+    if (/^£/.test(val) || /%/.test(val)) return val;
+    if (/\d/.test(val) && /^investment/i.test(key || '')) return '£' + val;
+    return val;
+  }
+
   function investmentLabel(item) {
     if (isAffiliateMoney(item)) {
       var commission = '';
       (item.meta || []).forEach(function (m) {
         if (/^commission$/i.test(m.key) && m.val) commission = String(m.val).trim();
       });
-      if (commission) return commission;
+      if (commission) return formatMoneyDisplay('Commission', commission);
       return 'On request';
     }
     if (catalog && catalog.cardDisplayMeta) {
       var meta = catalog.cardDisplayMeta(item);
       for (var i = 0; i < meta.length; i++) {
         if (/investment/i.test(meta[i].key) && meta[i].val) {
-          var metaVal = String(meta[i].val).trim();
-          if (/^enquire$/i.test(metaVal)) return 'On request';
-          return metaVal;
+          return formatMoneyDisplay(meta[i].key, meta[i].val);
         }
       }
     }
     if (item.investAmount != null && !isNaN(item.investAmount)) {
       if (item.investAmount <= 0) return 'On request';
-      if (item.investAmount >= 1000) return 'From £' + Math.round(item.investAmount / 1000) + 'k';
-      return 'From £' + item.investAmount;
+      if (item.investAmount >= 1000) {
+        var rounded = Math.round(item.investAmount / 1000) * 1000;
+        return 'From £' + rounded.toLocaleString('en-GB');
+      }
+      return 'From £' + Number(item.investAmount).toLocaleString('en-GB');
     }
     return 'On request';
   }
@@ -917,13 +929,45 @@
   function moneyPriceHtml(item) {
     return (
       '<span class="event-grid-price">' +
-      '<span class="event-grid-price-label">' +
-      escapeHtml(moneyFieldLabel(item)) +
-      '</span>' +
       '<span class="event-grid-price-value">' +
       escapeHtml(investmentLabel(item)) +
+      '</span>' +
+      '<span class="event-grid-price-label">' +
+      escapeHtml(moneyFieldLabel(item)) +
       '</span></span>'
     );
+  }
+
+  function hostsAreNearDuplicate(title, host) {
+    var a = String(title || '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim();
+    var b = String(host || '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim();
+    if (!a || !b) return false;
+    if (a === b) return true;
+    if (a.indexOf(b) !== -1 || b.indexOf(a) !== -1) return true;
+    var aTokens = a.split(/\s+/).filter(Boolean);
+    var bTokens = b.split(/\s+/).filter(Boolean);
+    if (!aTokens.length || !bTokens.length) return false;
+    var shared = 0;
+    for (var i = 0; i < bTokens.length; i++) {
+      if (aTokens.indexOf(bTokens[i]) !== -1) shared += 1;
+    }
+    return shared >= Math.min(2, bTokens.length) && shared / bTokens.length >= 0.6;
+  }
+
+  function isLogoCoverImage(item) {
+    var imageUrl = String((item && item.imageUrl) || '').trim();
+    var logoUrl = String((item && item.logoUrl) || '').trim();
+    if (!imageUrl) return false;
+    if (logoUrl && imageUrl === logoUrl) return true;
+    if (/\/opportunities\/logos\//i.test(imageUrl)) return true;
+    if (/\.svg(?:$|\?)/i.test(imageUrl) && /logo/i.test(imageUrl)) return true;
+    return false;
   }
 
   function commitmentLabel(item) {
@@ -944,7 +988,7 @@
 
   function mediaHtml(item, thumb) {
     if (item.imageUrl) {
-      var logoClass = item.logoUrl ? ' is-logo-cover' : '';
+      var logoClass = isLogoCoverImage(item) ? ' is-logo-cover' : '';
       return (
         '<img class="event-grid-img' +
         logoClass +
@@ -959,8 +1003,9 @@
       '<div class="event-grid-img is-placeholder" style="display:flex;align-items:center;justify-content:center;background:' +
       escapeHtml(thumb.gradient) +
       ';font-size:2.4rem">' +
-      thumb.emoji +
-      '</div>'
+      '<span aria-hidden="true">' +
+      (thumb.emoji || '✦') +
+      '</span></div>'
     );
   }
 
@@ -1173,7 +1218,13 @@
     return val;
   }
 
+  function isEmptyMetaValue(val) {
+    var v = String(val == null ? '' : val).trim();
+    return !v || v === '—' || v === '\u00a0' || /^n\/?a$/i.test(v);
+  }
+
   function metaCellHtml(m, item) {
+    if (!m || isEmptyMetaValue(m.val) || isEmptyMetaValue(m.key)) return '';
     var scarcity = catalog && catalog.isScarcityMeta(m.key, m.val);
     var isInvestment = /^investment$/i.test(m.key);
     var investUi = window.HubOpportunityInvestment;
@@ -1235,12 +1286,18 @@
 
   function cardDetailHtml(item) {
     var href = detailHref(item);
-    var displayMeta = catalog ? catalog.cardDisplayMeta(item) : (item.meta || []).slice(0, 4);
+    var displayMeta = (catalog ? catalog.cardDisplayMeta(item) : (item.meta || []).slice(0, 4)).filter(
+      function (m) {
+        return m && !isEmptyMetaValue(m.key) && !isEmptyMetaValue(m.val);
+      }
+    );
     var locIcon = /remote/i.test(item.locationLabel || '') ? '🌐' : '📍';
-
-    while (displayMeta.length < 4) {
-      displayMeta.push({ key: '\u00a0', val: '—' });
-    }
+    var desc = String(item.desc || '').trim();
+    var metaHtml = displayMeta
+      .map(function (m) {
+        return metaCellHtml(m, item);
+      })
+      .join('');
 
     return (
       '<div class="bo-opp-detail-inner">' +
@@ -1249,19 +1306,11 @@
       '<span class="opp-co-name">' +
       escapeHtml(item.host || 'Provider') +
       '</span></div>' +
-      '<p class="opp-card-desc">' +
-      escapeHtml(item.desc || '') +
-      '</p>' +
+      (desc ? '<p class="opp-card-desc">' + escapeHtml(desc) + '</p>' : '') +
       (quality && quality.trustBadgesHtml
         ? quality.trustBadgesHtml(item, 'opp-trust-badges opp-trust-badges--card')
         : '') +
-      '<div class="opp-meta-row">' +
-      displayMeta
-        .map(function (m) {
-          return metaCellHtml(m, item);
-        })
-        .join('') +
-      '</div>' +
+      (metaHtml ? '<div class="opp-meta-row">' + metaHtml + '</div>' : '') +
       '<div class="bo-opp-detail-footer">' +
       '<span class="opp-location">' +
       locIcon +
@@ -1270,7 +1319,7 @@
       '</span>' +
       '<a href="' +
       escapeHtml(href) +
-      '" class="opp-enquire-btn">Enquire →</a>' +
+      '" class="opp-enquire-btn">View full listing →</a>' +
       '</div></div>'
     );
   }
@@ -1308,10 +1357,10 @@
     var titleLabel = String(item.title || '').trim();
     var showHost =
       hostLabel &&
-      hostLabel.toLowerCase() !== titleLabel.toLowerCase() &&
-      hostLabel.toLowerCase() !== 'provider';
+      hostLabel.toLowerCase() !== 'provider' &&
+      !hostsAreNearDuplicate(titleLabel, hostLabel);
     var premiumBadge = item.featured ? '<span class="event-grid-premium">Premium</span>' : '';
-    var detailId = 'bo-opp-detail-' + String(item.id).replace(/[^a-z0-9_-]/gi, '');
+    var previewId = 'bo-opp-preview-' + String(item.id).replace(/[^a-z0-9_-]/gi, '');
     var saved = saves && saves.isSaved(item.id);
 
     return (
@@ -1360,17 +1409,12 @@
       '<a class="bo-opp-primary-btn" href="' +
       escapeHtml(href) +
       '">View listing</a>' +
-      '<button type="button" class="bo-opp-expand-btn" aria-expanded="false" aria-controls="' +
-      escapeHtml(detailId) +
+      '<button type="button" class="bo-opp-expand-btn" aria-haspopup="dialog" aria-controls="bo-opp-preview-drawer" data-preview-for="' +
+      escapeHtml(previewId) +
       '">' +
       '<span class="bo-opp-expand-label">Quick look</span>' +
-      '<svg class="bo-opp-expand-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>' +
+      '<svg class="bo-opp-expand-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>' +
       '</button></div></div></div>' +
-      '<div class="bo-opp-detail" id="' +
-      escapeHtml(detailId) +
-      '" hidden>' +
-      cardDetailHtml(item) +
-      '</div>' +
       '<a class="event-grid-card-link" href="' +
       escapeHtml(href) +
       '" aria-label="View ' +
@@ -1379,25 +1423,107 @@
     );
   }
 
+  function ensurePreviewDrawer() {
+    var existing = document.getElementById('bo-opp-preview-drawer');
+    if (existing) return existing;
+
+    var root = document.createElement('div');
+    root.id = 'bo-opp-preview-drawer';
+    root.className = 'bo-opp-preview-drawer';
+    root.hidden = true;
+    root.setAttribute('aria-hidden', 'true');
+    root.innerHTML =
+      '<div class="bo-opp-preview-backdrop" data-bo-preview-close="1" tabindex="-1"></div>' +
+      '<div class="bo-opp-preview-panel" role="dialog" aria-modal="true" aria-labelledby="bo-opp-preview-title" tabindex="-1">' +
+      '<div class="bo-opp-preview-head">' +
+      '<p class="bo-opp-preview-kicker">Quick look</p>' +
+      '<h2 class="bo-opp-preview-title" id="bo-opp-preview-title"></h2>' +
+      '<button type="button" class="bo-opp-preview-close" data-bo-preview-close="1" aria-label="Close quick look">' +
+      '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"/></svg>' +
+      '</button></div>' +
+      '<div class="bo-opp-preview-body" id="bo-opp-preview-body"></div>' +
+      '</div>';
+    document.body.appendChild(root);
+    return root;
+  }
+
+  function findListingById(id) {
+    for (var i = 0; i < allListings.length; i++) {
+      if (String(allListings[i].id) === String(id)) return allListings[i];
+    }
+    return null;
+  }
+
+  function bindPreviewInvestPopovers() {
+    if (!window.HubOpportunityInvestment || !window.HubOpportunityInvestment.bindCardPopovers) return;
+    window.HubOpportunityInvestment.bindCardPopovers(findListingById);
+  }
+
+  function closePreviewDrawer() {
+    var drawer = document.getElementById('bo-opp-preview-drawer');
+    if (!drawer || drawer.hidden) return;
+
+    drawer.classList.remove('is-open');
+    drawer.setAttribute('aria-hidden', 'true');
+    document.body.classList.remove('bo-opp-preview-open');
+
+    var restoreId = expandedCardId;
+    expandedCardId = null;
+
+    window.setTimeout(function () {
+      if (drawer.classList.contains('is-open')) return;
+      drawer.hidden = true;
+      var body = document.getElementById('bo-opp-preview-body');
+      if (body) body.innerHTML = '';
+    }, 220);
+
+    if (restoreId && els.mount) {
+      var btn = els.mount.querySelector('.bo-opp-card[data-id="' + restoreId + '"] .bo-opp-expand-btn');
+      if (btn && typeof btn.focus === 'function') btn.focus();
+    }
+  }
+
+  function openPreviewDrawer(item, triggerBtn) {
+    if (!item) return;
+    var drawer = ensurePreviewDrawer();
+    var titleEl = document.getElementById('bo-opp-preview-title');
+    var bodyEl = document.getElementById('bo-opp-preview-body');
+    var panel = drawer.querySelector('.bo-opp-preview-panel');
+
+    if (titleEl) titleEl.textContent = item.title || 'Opportunity';
+    if (bodyEl) bodyEl.innerHTML = cardDetailHtml(item);
+
+    expandedCardId = String(item.id);
+    drawer.hidden = false;
+    drawer.setAttribute('aria-hidden', 'false');
+    document.body.classList.add('bo-opp-preview-open');
+
+    window.requestAnimationFrame(function () {
+      drawer.classList.add('is-open');
+      if (panel && typeof panel.focus === 'function') panel.focus();
+    });
+
+    bindPreviewInvestPopovers();
+    if (saves && bodyEl) saves.refreshButtons(bodyEl);
+  }
+
   function setCardExpanded(card, expand) {
     if (!card) return;
-    var btn = card.querySelector('.bo-opp-expand-btn');
-    var detail = card.querySelector('.bo-opp-detail');
-    var label = btn && btn.querySelector('.bo-opp-expand-label');
-    var id = card.getAttribute('data-id');
-
-    card.classList.toggle('is-expanded', expand);
-    if (detail) detail.hidden = !expand;
-    if (btn) {
-      btn.setAttribute('aria-expanded', expand ? 'true' : 'false');
-      if (label) label.textContent = expand ? 'Hide' : 'Quick look';
+    if (!expand) {
+      if (String(card.getAttribute('data-id') || '') === String(expandedCardId || '')) {
+        closePreviewDrawer();
+      }
+      return;
     }
-    expandedCardId = expand ? id : null;
+    var item = findListingById(card.getAttribute('data-id'));
+    openPreviewDrawer(item, card.querySelector('.bo-opp-expand-btn'));
   }
 
   function bindCardExpand() {
     if (!els.mount || els.mount.dataset.expandBound === '1') return;
     els.mount.dataset.expandBound = '1';
+
+    ensurePreviewDrawer();
 
     els.mount.addEventListener('click', function (e) {
       var btn = e.target.closest('.bo-opp-expand-btn');
@@ -1407,22 +1533,27 @@
 
       var card = btn.closest('.bo-opp-card');
       if (!card) return;
-
-      var willExpand = !card.classList.contains('is-expanded');
-      els.mount.querySelectorAll('.bo-opp-card.is-expanded').forEach(function (openCard) {
-        if (openCard !== card) setCardExpanded(openCard, false);
-      });
-      setCardExpanded(card, willExpand);
-
-      if (willExpand && window.HubOpportunityInvestment && window.HubOpportunityInvestment.bindCardPopovers) {
-        window.HubOpportunityInvestment.bindCardPopovers(function (lookupId) {
-          for (var i = 0; i < allListings.length; i++) {
-            if (String(allListings[i].id) === String(lookupId)) return allListings[i];
-          }
-          return null;
-        });
+      var id = card.getAttribute('data-id');
+      if (expandedCardId && String(expandedCardId) === String(id)) {
+        closePreviewDrawer();
+        return;
       }
+      setCardExpanded(card, true);
     });
+
+    var drawer = document.getElementById('bo-opp-preview-drawer');
+    if (drawer && drawer.dataset.bound !== '1') {
+      drawer.dataset.bound = '1';
+      drawer.addEventListener('click', function (e) {
+        if (e.target.closest('[data-bo-preview-close]')) {
+          e.preventDefault();
+          closePreviewDrawer();
+        }
+      });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closePreviewDrawer();
+      });
+    }
   }
 
   function restoreExpandedCard() {
@@ -1794,7 +1925,10 @@
           }, { category: true })
         : countMatching(null, { category: true });
       countEl.textContent = '(' + n + ')';
-      chip.classList.toggle('is-zero', Boolean(id) && n === 0);
+      var isZero = Boolean(id) && n === 0;
+      var keepVisible = chip.classList.contains('is-active');
+      chip.classList.toggle('is-zero', isZero);
+      chip.hidden = isZero && !keepVisible;
     });
   }
 
@@ -1811,7 +1945,10 @@
               return hasTag(item, type);
             }, { type: true });
       countEl.textContent = '(' + n + ')';
-      chip.classList.toggle('is-zero', n === 0);
+      var isZero = type !== 'all' && n === 0;
+      var keepVisible = chip.classList.contains('is-active');
+      chip.classList.toggle('is-zero', isZero);
+      chip.hidden = isZero && !keepVisible;
     });
     updateIndustryChipCounts();
   }

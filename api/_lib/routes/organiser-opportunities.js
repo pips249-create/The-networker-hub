@@ -35,6 +35,7 @@ function opportunityPayloadFromBody(body, session) {
     tags: body.tags,
     packageTier: body.packageTier,
     listingStatus: body.listingStatus != null ? body.listingStatus : body.status,
+    submitForReview: Boolean(body.submitForReview),
     ownerEmail: String(session?.email || '').toLowerCase(),
     ownerUserId: session?.sub || '',
     photoBase64: body.photoBase64 || body.imageBase64 || null,

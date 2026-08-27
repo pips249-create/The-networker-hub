@@ -9,9 +9,9 @@ const {
   writeOpportunityRow,
 } = require('../supabase-opportunities');
 const { stripEarningsMeta, isNetworkMarketingType } = require('../opportunity-moderation');
-const { sendOpportunityListingLiveEmail } = require('../opportunity-emails');
+const { sendOpportunityListingLiveEmail, sendOpportunityListingApprovedPayEmail } = require('../opportunity-emails');
 const { ensureOpportunitySlug } = require('../opportunity-slug');
-const { addMonths } = require('../opportunity-listing-pricing');
+const { addMonths, listingPaymentCurrent } = require('../opportunity-listing-pricing');
 const { resolveImageUrl } = require('../supabase-storage');
 
 const { HUB_SEED_OWNER_EMAIL, isHubSeedOwnerEmail } = require('../opportunity-hub-seed');
@@ -189,6 +189,7 @@ function mapOpportunityRow(row) {
     host: String(row.host || '').trim(),
     type: row.type || '',
     category: row.category || '',
+    contact_email: String(row.contact_email || '').trim(),
     status: row.status || 'draft',
     approval_status: row.approval_status || 'Pending Review',
     featured: Boolean(row.featured),
@@ -231,7 +232,7 @@ function isAffiliateStyleAdminType(type, meta) {
   return Number.isNaN(num) || num <= 0;
 }
 
-function buildMetaFromAdminInput(input) {
+function buildMetaFromAdminInput(input, existingMeta) {
   if (Array.isArray(input.meta)) return stripEarningsMeta(normalizeMeta(input.meta));
   const meta = [];
   const affiliate = isAffiliateStyleAdminType(input.type, [
@@ -255,7 +256,31 @@ function buildMetaFromAdminInput(input) {
   }
   if (location) meta.push({ key: 'Location', val: location });
   if (commitment) meta.push({ key: 'Commitment', val: commitment });
-  return stripEarningsMeta(normalizeMeta(meta));
+
+  const managed =
+    /^(investment|investment includes|commission|what you promote|who it suits|location|commitment)$/i;
+  const preserved = normalizeMeta(existingMeta).filter(function (m) {
+    return m && m.key && !managed.test(String(m.key));
+  });
+  return stripEarningsMeta(normalizeMeta(meta.concat(preserved)));
+}
+
+function buildAdminOpportunityTags(type, category, existingTags, isTest) {
+  const tags = [];
+  const typeNorm = normalizeType(type || 'business-opportunity');
+  if (typeNorm) tags.push(typeNorm);
+  const cat = String(category || '').trim();
+  if (cat && cat !== 'general') tags.push('cat-' + cat);
+  if (isTest || (Array.isArray(existingTags) && existingTags.includes('admin-test'))) {
+    if (!tags.includes('admin-test')) tags.push('admin-test');
+  }
+  (Array.isArray(existingTags) ? existingTags : []).forEach(function (tag) {
+    const t = String(tag || '').trim();
+    if (!t) return;
+    if (t === typeNorm || /^cat-/.test(t) || t === 'admin-test') return;
+    if (!tags.includes(t)) tags.push(t);
+  });
+  return tags;
 }
 
 async function listOpportunitiesForAdmin(query) {
@@ -376,6 +401,10 @@ async function createAdminOpportunity(input) {
   if (featured && isNetworkMarketingType(type)) {
     throw new Error('network_marketing_not_spotlight');
   }
+  const category = String(input.category || 'general').trim() || 'general';
+  const contactEmail = String(input.contact_email || input.contactEmail || '')
+    .trim()
+    .toLowerCase();
 
   const row = {
     organiser_id: null,
@@ -386,7 +415,8 @@ async function createAdminOpportunity(input) {
     ownership_disputed_by_email: null,
     supabase_user_id: null,
     type,
-    category: String(input.category || 'general').trim() || 'general',
+    category,
+    contact_email: contactEmail || null,
     title,
     description: String(input.description || '').trim() || null,
     about,
@@ -396,7 +426,7 @@ async function createAdminOpportunity(input) {
     meta,
     outcode: geo.outcode,
     region_slug: geo.regionSlug,
-    tags: isTest ? ['admin-test', type] : [type],
+    tags: buildAdminOpportunityTags(type, category, isTest ? ['admin-test'] : [], isTest),
     image_url: String(input.image_url || input.photo_url || '').trim() || null,
     logo_url: String(input.logo_url || '').trim() || null,
     status: published ? 'published' : 'draft',
@@ -513,6 +543,7 @@ module.exports = async function handler(req, res) {
           title,
           host: body.host,
           type: body.type,
+          category: body.category,
           status: body.status,
           description: body.description,
           about: body.about,
@@ -521,6 +552,7 @@ module.exports = async function handler(req, res) {
           image_url: body.image_url || body.photo_url,
           logo_url: body.logo_url,
           owner_email: body.owner_email || body.ownerEmail,
+          contact_email: body.contact_email || body.contactEmail,
           investment: body.investment,
           investment_includes: body.investment_includes || body.investmentIncludes,
           commission: body.commission,
@@ -573,15 +605,24 @@ module.exports = async function handler(req, res) {
           .select('status, published_at, listing_expires_at, listing_paid_at')
           .eq('id', id)
           .maybeSingle();
-        // Browse requires status=published + Approved. Organiser submits already
-        // published; Command Centre drafts need status flipped on Approve.
-        if (String(current?.status || '').toLowerCase() !== 'published') {
-          patch.status = 'published';
+        const alreadyPaid = listingPaymentCurrent(current || {});
+
+        if (alreadyPaid) {
+          // Legacy / paid-while-pending: Approve goes live immediately.
+          if (String(current?.status || '').toLowerCase() !== 'published') {
+            patch.status = 'published';
+          }
+          if (!current?.published_at) {
+            patch.published_at = now.toISOString();
+          }
+        } else {
+          // Review-then-pay: stay off the public directory until Stripe payment.
+          // Avoid published + published_at without expiry (legacy gate treats that as live).
+          if (String(current?.status || '').toLowerCase() === 'published') {
+            patch.status = 'draft';
+          }
         }
-        if (!current?.published_at) {
-          patch.published_at = now.toISOString();
-        }
-        applyPublishedListingPayment(patch, { ...(current || {}), status: 'published' }, now);
+
         const { data, error } = await sb
           .from('business_opportunities')
           .update(patch)
@@ -590,10 +631,15 @@ module.exports = async function handler(req, res) {
           .single();
         if (error) throw new Error(error.message);
 
+        const listing = rowToListing(data);
         try {
-          await sendOpportunityListingLiveEmail(rowToListing(data));
+          if (alreadyPaid) {
+            await sendOpportunityListingLiveEmail(listing);
+          } else {
+            await sendOpportunityListingApprovedPayEmail(listing);
+          }
         } catch (emailErr) {
-          console.warn('[opportunity] approve live email failed:', emailErr.message || emailErr);
+          console.warn('[opportunity] approve email failed:', emailErr.message || emailErr);
         }
 
         return json(res, 200, { ok: true, opportunity: mapOpportunityRow(data) });
@@ -732,7 +778,16 @@ module.exports = async function handler(req, res) {
       Object.prototype.hasOwnProperty.call(body, 'suits') ||
       Object.prototype.hasOwnProperty.call(body, 'type')
     ) {
-      patch.meta = buildMetaFromAdminInput(body);
+      const sbMeta = getSupabaseAdmin();
+      const { data: currentMetaRow } = await sbMeta
+        .from('business_opportunities')
+        .select('meta, type')
+        .eq('id', id)
+        .maybeSingle();
+      const metaInput = Object.assign({}, body, {
+        type: body.type || (currentMetaRow && currentMetaRow.type) || '',
+      });
+      patch.meta = buildMetaFromAdminInput(metaInput, currentMetaRow && currentMetaRow.meta);
       const geo = deriveOpportunityGeo(body, patch.meta);
       patch.outcode = geo.outcode;
       patch.region_slug = geo.regionSlug;
@@ -743,6 +798,40 @@ module.exports = async function handler(req, res) {
     }
     if (Object.prototype.hasOwnProperty.call(body, 'type')) {
       patch.type = normalizeType(body.type);
+    }
+    if (Object.prototype.hasOwnProperty.call(body, 'category')) {
+      patch.category = String(body.category || 'general').trim() || 'general';
+    }
+    if (
+      Object.prototype.hasOwnProperty.call(body, 'contact_email') ||
+      Object.prototype.hasOwnProperty.call(body, 'contactEmail')
+    ) {
+      const contactEmail = String(body.contact_email || body.contactEmail || '')
+        .trim()
+        .toLowerCase();
+      patch.contact_email = contactEmail || null;
+    }
+    if (
+      Object.prototype.hasOwnProperty.call(body, 'type') ||
+      Object.prototype.hasOwnProperty.call(body, 'category')
+    ) {
+      const sbTags = getSupabaseAdmin();
+      const { data: currentTagRow } = await sbTags
+        .from('business_opportunities')
+        .select('type, category, tags')
+        .eq('id', id)
+        .maybeSingle();
+      const nextType = patch.type || (currentTagRow && currentTagRow.type) || 'business-opportunity';
+      const nextCategory =
+        Object.prototype.hasOwnProperty.call(patch, 'category')
+          ? patch.category
+          : (currentTagRow && currentTagRow.category) || 'general';
+      patch.tags = buildAdminOpportunityTags(
+        nextType,
+        nextCategory,
+        currentTagRow && currentTagRow.tags,
+        false
+      );
     }
     const imageUrl = await resolveAdminOpportunityImage(body, id);
     if (imageUrl !== undefined) patch.image_url = imageUrl;

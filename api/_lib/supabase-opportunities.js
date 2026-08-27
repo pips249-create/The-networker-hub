@@ -503,6 +503,11 @@ async function activateOpportunityListingPayment(opportunityId, monthsOrOpts, se
     currentSlug: existing.slug,
   });
 
+  const wasLive =
+    String(existing.approval_status || '') === 'Approved' &&
+    String(existing.status || '').toLowerCase() === 'published' &&
+    listingPaymentCurrent(existing);
+
   const patch = {
     status: 'published',
     approval_status: existing.approval_status === 'Approved' ? 'Approved' : 'Pending Review',
@@ -533,7 +538,21 @@ async function activateOpportunityListingPayment(opportunityId, monthsOrOpts, se
     return autoReject.listing;
   }
 
-  return rowToListing(data);
+  const listing = rowToListing(data);
+  // Pay-after-approve: go live email fires when payment activates an Approved listing.
+  if (!wasLive && listing.approvalStatus === 'Approved') {
+    try {
+      const { sendOpportunityListingLiveEmail } = require('./opportunity-emails');
+      await sendOpportunityListingLiveEmail(listing);
+    } catch (emailErr) {
+      console.warn(
+        '[opportunity] listing live email failed:',
+        emailErr && emailErr.message ? emailErr.message : emailErr
+      );
+    }
+  }
+
+  return listing;
 }
 
 async function listPublishedOpportunities() {
@@ -647,42 +666,67 @@ function assertOpportunityListingCompliance() {
   // Earnings / return fields were removed from listing forms.
 }
 
+async function sendPendingReviewEmailSafe(listing) {
+  try {
+    const { sendOpportunityListingPendingReviewEmail } = require('./opportunity-emails');
+    await sendOpportunityListingPendingReviewEmail(listing);
+  } catch (emailErr) {
+    console.warn(
+      '[opportunity] pending review email failed:',
+      emailErr && emailErr.message ? emailErr.message : emailErr
+    );
+  }
+}
+
 async function createOpportunity(payload) {
   const sb = getSupabaseAdmin();
+  const submitForReview = Boolean(payload.submitForReview);
   const status = normalizeStatus(payload.listingStatus || payload.status);
-  if (status === 'published') assertOpportunityListingCompliance(payload);
+  if (status === 'published' || submitForReview) assertOpportunityListingCompliance(payload);
   const row = await buildOpportunityRow(payload, 'new', 'create');
   if (!row.owner_email && !row.supabase_user_id) throw new Error('missing_owner');
   if (!row.title) throw new Error('missing_title');
   if (!row.host) row.host = 'Draft listing';
   if (!row.type) row.type = 'business-opportunity';
+  if (submitForReview) {
+    row.status = 'draft';
+    row.approval_status = 'Pending Review';
+  }
   row.slug = await ensureOpportunitySlug(sb, {
     title: row.title,
     opportunityId: null,
     currentSlug: null,
   });
   const data = await writeOpportunityRow(sb, 'insert', row);
-  return rowToListing(data);
+  const listing = rowToListing(data);
+  if (submitForReview) await sendPendingReviewEmailSafe(listing);
+  return listing;
 }
 
 async function updateOpportunity(id, payload) {
   const sb = getSupabaseAdmin();
   const existing = await getOpportunityById(id);
+  const submitForReview = Boolean(payload.submitForReview);
   const nextStatus = normalizeStatus(payload.listingStatus || payload.status || existing?.status);
-  if (nextStatus === 'published') assertOpportunityListingCompliance(payload);
+  if (nextStatus === 'published' || submitForReview) assertOpportunityListingCompliance(payload);
   const row = await buildOpportunityRow(payload, id, 'update');
   row.slug = await ensureOpportunitySlug(sb, {
     title: row.title || existing?.title,
     opportunityId: id,
     currentSlug: existing?.slug,
   });
-  if (row.status === 'published') {
+  if (submitForReview) {
+    // Review-then-pay: queue for admin without publishing or charging.
+    row.status = existing?.listingPaymentActive ? 'published' : 'draft';
+    row.approval_status = 'Pending Review';
+  } else if (row.status === 'published') {
     if (existing?.approvalStatus === 'Approved') {
       delete row.approval_status;
     } else {
       row.approval_status = 'Pending Review';
     }
   }
+  const wasAlreadyPending = String(existing?.approvalStatus || '') === 'Pending Review';
   const data = await writeOpportunityRow(sb, 'update', row, id);
 
   if (data.status === 'published') {
@@ -690,7 +734,9 @@ async function updateOpportunity(id, payload) {
     if (autoReject.rejected) return autoReject.listing;
   }
 
-  return rowToListing(data);
+  const listing = rowToListing(data);
+  if (submitForReview && !wasAlreadyPending) await sendPendingReviewEmailSafe(listing);
+  return listing;
 }
 
 async function activateOpportunityPremium(opportunityId, sessionId) {
