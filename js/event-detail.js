@@ -2450,7 +2450,7 @@
       already_going: "You're already going to this event. View your ticket in My account.",
       not_authenticated: 'Please sign in or create a free account to complete your booking.',
       ticket_sales_platform_closed:
-        'Ticket buying opens on 1 September 2026. You can browse events now and nudge organisers to list tickets.',
+        'Ticket buying opens on 1 September 2026. You can browse events now — ticket interest alerts start then too.',
     };
     if (data && data.message) return String(data.message);
     if (messages[code]) return messages[code];
@@ -3980,13 +3980,12 @@
     const scheduledPanel = document.getElementById('ticket-sales-scheduled');
     if (!panel || !buy) return;
 
-    // Client safety net: platform soft-launch locks buying until 1 September.
+    // Client safety net: platform soft-launch locks buying + interest nudges until 1 September.
     if (
       window.HubSoftLaunch &&
       typeof window.HubSoftLaunch.arePublicTicketSalesOpen === 'function' &&
       !window.HubSoftLaunch.arePublicTicketSalesOpen() &&
-      !ev.isEventPast &&
-      !ev.isTicketSalesPending
+      !ev.isEventPast
     ) {
       ev = Object.assign({}, ev, {
         isTicketSalesScheduled: true,

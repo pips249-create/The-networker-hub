@@ -678,7 +678,10 @@ module.exports = async function handler(req, res) {
           await sendTemplatedEmail({
             slug: 'opportunity_claim_invite',
             to: ownerEmail,
-            subject: 'Claim your listing — ' + String(data.title || 'Business opportunity'),
+            subject:
+              'Congratulations: ' +
+              String(data.title || 'your opportunity') +
+              ' is ready — claim your listing',
             variables: {
               ...campaignSiteVars(siteHost),
               owner_name: ownerName,

@@ -76,6 +76,15 @@ module.exports = async function handler(req, res) {
         message: 'You already nudged the organiser about this event today. Please check back soon.',
       });
     }
+    if (msg === 'ticket_sales_platform_closed') {
+      return json(res, 403, {
+        ok: false,
+        error: 'ticket_sales_platform_closed',
+        message:
+          e.publicMessage ||
+          'Ticket interest alerts open when ticket buying starts on 1 September 2026.',
+      });
+    }
     if (msg === 'ticket_sales_scheduled') {
       return json(res, 400, {
         ok: false,

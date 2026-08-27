@@ -229,7 +229,7 @@
       run();
       return;
     }
-    var path = 'js/hub-soft-launch.js?v=20260825banner2';
+    var path = 'js/hub-soft-launch.js?v=20260827nudgepause';
     var existing = document.querySelector('script[data-hub-soft-launch="1"]');
     if (existing) {
       existing.addEventListener('load', run);

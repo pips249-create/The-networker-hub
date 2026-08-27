@@ -287,7 +287,10 @@
       const logoPreview = document.getElementById('oe-logo-preview');
       const logoPlaceholder = document.getElementById('oe-logo-placeholder');
       const logoPreviewImg = document.getElementById('oe-logo-preview-img');
-      if (logoPreviewImg) logoPreviewImg.src = opp.logoUrl;
+      if (logoPreviewImg) {
+        logoPreviewImg.src = opp.logoUrl;
+        syncLogoPreviewContrast(logoPreviewImg, opp.logoUrl);
+      }
       if (logoPreview) logoPreview.hidden = false;
       if (logoPlaceholder) logoPlaceholder.hidden = true;
     }
@@ -313,6 +316,23 @@
     }
   }
 
+  function logoSuggestsDarkPad(url) {
+    if (window.CmsSponsorFields && window.CmsSponsorFields.logoUrlSuggestsDarkBand) {
+      return window.CmsSponsorFields.logoUrlSuggestsDarkBand(url);
+    }
+    var path = String(url || '')
+      .split('?')[0]
+      .split('#')[0]
+      .toLowerCase();
+    return /(?:^|[\/_\-.])(?:logo[_-]?)?(?:text[_-]?)?white(?:[\/_\-.]|$)/.test(path);
+  }
+
+  function syncLogoPreviewContrast(img, src) {
+    if (!img) return;
+    var dark = logoSuggestsDarkPad(src || img.src || '');
+    img.classList.toggle('is-logo-dark', dark);
+  }
+
   function bindLogoUpload() {
     const zone = document.getElementById('oe-logo-zone');
     const fileInput = document.getElementById('oe-logo-file');
@@ -320,9 +340,13 @@
     const placeholder = document.getElementById('oe-logo-placeholder');
     const previewImg = document.getElementById('oe-logo-preview-img');
     const clearBtn = document.getElementById('oe-logo-clear');
+    const urlInput = document.getElementById('oe-logo-url');
 
     function showPreview(src) {
-      if (previewImg) previewImg.src = src;
+      if (previewImg) {
+        previewImg.src = src;
+        syncLogoPreviewContrast(previewImg, src);
+      }
       if (preview) preview.hidden = false;
       if (placeholder) placeholder.hidden = true;
     }
@@ -332,7 +356,10 @@
       if (fileInput) fileInput.value = '';
       if (preview) preview.hidden = true;
       if (placeholder) placeholder.hidden = false;
-      if (previewImg) previewImg.removeAttribute('src');
+      if (previewImg) {
+        previewImg.removeAttribute('src');
+        previewImg.classList.remove('is-logo-dark');
+      }
     }
 
     function setLogoFile(file) {
@@ -357,8 +384,13 @@
       clearBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         resetPreview();
-        const urlInput = document.getElementById('oe-logo-url');
         if (urlInput) urlInput.value = '';
+      });
+    }
+    if (urlInput) {
+      urlInput.addEventListener('input', () => {
+        const url = String(urlInput.value || '').trim();
+        if (url) showPreview(url);
       });
     }
   }

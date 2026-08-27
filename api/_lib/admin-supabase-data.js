@@ -318,6 +318,7 @@ async function countSignedInAuthUsers(sb) {
   let page = 1;
   let signedIn = 0;
   let authUsers = 0;
+  const signedInIds = new Set();
   const perPage = 1000;
   while (page <= 50) {
     const { data, error } = await sb.auth.admin.listUsers({ page, perPage });
@@ -325,12 +326,49 @@ async function countSignedInAuthUsers(sb) {
     const users = data?.users || [];
     authUsers += users.length;
     for (const u of users) {
-      if (u.last_sign_in_at) signedIn += 1;
+      if (u.last_sign_in_at) {
+        signedIn += 1;
+        if (u.id) signedInIds.add(u.id);
+      }
     }
     if (users.length < perPage) break;
     page += 1;
   }
-  return { signedIn, authUsers };
+  return { signedIn, authUsers, signedInIds };
+}
+
+/**
+ * Claimed group profiles whose linked owner has signed in (knows email + password).
+ * Excludes silent imports that were marked claimed without ever logging in.
+ */
+async function countOrganisersWithSignedInOwner(sb, signedInIds) {
+  const ids = signedInIds instanceof Set ? signedInIds : new Set();
+  if (!ids.size) return 0;
+
+  let query = sb
+    .from('organisers')
+    .select('id, supabase_user_id')
+    .eq('ownership_claim_status', 'claimed')
+    .not('supabase_user_id', 'is', null)
+    .eq('is_internal', false);
+
+  let { data, error } = await query;
+  if (error && /is_internal/i.test(String(error.message || ''))) {
+    const fallback = await sb
+      .from('organisers')
+      .select('id, supabase_user_id')
+      .eq('ownership_claim_status', 'claimed')
+      .not('supabase_user_id', 'is', null);
+    data = fallback.data;
+    error = fallback.error;
+  }
+  if (error) throw new Error(error.message);
+
+  let count = 0;
+  for (const row of data || []) {
+    if (row.supabase_user_id && ids.has(row.supabase_user_id)) count += 1;
+  }
+  return count;
 }
 
 async function fetchDashboardMetrics(sb) {
@@ -397,7 +435,7 @@ async function fetchDashboardMetrics(sb) {
       .select('id', { count: 'exact', head: true })
       .eq('approval_status', 'Approved')
       .is('starts_at', null),
-    countSignedInAuthUsers(sb).catch(() => ({ signedIn: 0, authUsers: 0 })),
+    countSignedInAuthUsers(sb).catch(() => ({ signedIn: 0, authUsers: 0, signedInIds: new Set() })),
   ]);
 
   if (approvedTotalRes.error) throw new Error(approvedTotalRes.error.message);
@@ -428,6 +466,13 @@ async function fetchDashboardMetrics(sb) {
   if (userEventsApprovedRes.error) throw new Error(userEventsApprovedRes.error.message);
 
   const memberAccounts = Math.max(attendeesRes.count || 0, accountsRes.count || 0);
+  const signedInIds = signedInCounts.signedInIds || new Set();
+  let organisersWithPassword = 0;
+  try {
+    organisersWithPassword = await countOrganisersWithSignedInOwner(sb, signedInIds);
+  } catch {
+    organisersWithPassword = 0;
+  }
   const outreach = await fetchOutreachMetrics(sb);
 
   return {
@@ -445,6 +490,11 @@ async function fetchDashboardMetrics(sb) {
     browseOrganisers,
     /** Profiles with ownership_claim_status = claimed (excludes is_internal when column exists). */
     claimedOrganisers,
+    /**
+     * Claimed groups whose owner has signed in at least once
+     * (email + password they know — not silent import).
+     */
+    organisersWithPassword,
     /** Events created on the Hub (airtable_id null) — not legacy import or seed-browse. */
     userAddedEvents: userEventsRes.count || 0,
     userAddedEventsApproved: userEventsApprovedRes.count || 0,

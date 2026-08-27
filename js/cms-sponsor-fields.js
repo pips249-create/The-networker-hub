@@ -466,6 +466,51 @@
     return !!(band && band.dark && !band.darkSurface);
   }
 
+  /** Filename / path cues when canvas sampling is blocked by CORS (e.g. *-white.png). */
+  function logoUrlSuggestsDarkBand(url) {
+    var path = String(url || '')
+      .split('?')[0]
+      .split('#')[0]
+      .toLowerCase();
+    if (!path) return false;
+    return /(?:^|[\/_\-.])(?:logo[_-]?)?(?:text[_-]?)?white(?:[\/_\-.]|$)|[_-]on[_-]?dark(?:[\/_\-.]|$)|(?:^|[\/_\-.])(?:light|cream|ivory)[_-]?(?:logo|mark|wordmark)?(?:[\/_\-.]|$)|(?:logo|mark|wordmark)[_-]?(?:light|cream|ivory|white)(?:[\/_\-.]|$)/.test(
+      path
+    );
+  }
+
+  /**
+   * Paint a logo surface dark when artwork is light (sampled or URL heuristic).
+   * Returns true when a dark pad was applied.
+   */
+  function applyLogoSurfaceContrast(surfaceEl, imgOrUrl, opts) {
+    if (!surfaceEl) return false;
+    var url = '';
+    var img = null;
+    if (typeof imgOrUrl === 'string') {
+      url = imgOrUrl;
+    } else if (imgOrUrl) {
+      img = imgOrUrl;
+      url = img.currentSrc || img.src || '';
+    }
+    var forceDark = opts && opts.forceDark === true;
+    var dark =
+      forceDark ||
+      logoUrlSuggestsDarkBand(url) ||
+      (img && prefersDarkLogoBand(img));
+    surfaceEl.classList.toggle('is-logo-dark', Boolean(dark));
+    if (dark) {
+      surfaceEl.style.backgroundColor = LOGO_BAND_DARK;
+      surfaceEl.style.background = LOGO_BAND_DARK;
+    } else if (opts && opts.lightColor) {
+      surfaceEl.style.backgroundColor = opts.lightColor;
+      surfaceEl.style.background = opts.lightColor;
+    } else {
+      surfaceEl.style.backgroundColor = '';
+      surfaceEl.style.background = '';
+    }
+    return Boolean(dark);
+  }
+
   function logoBandDark(block) {
     return !!(block && block.logo_band_dark === true);
   }
@@ -580,6 +625,9 @@
     sampleLogoColorHex: sampleLogoColorHex,
     sampleLogoBandColor: sampleLogoBandColor,
     prefersDarkLogoBand: prefersDarkLogoBand,
+    logoUrlSuggestsDarkBand: logoUrlSuggestsDarkBand,
+    applyLogoSurfaceContrast: applyLogoSurfaceContrast,
+    LOGO_BAND_DARK: LOGO_BAND_DARK,
     ctaColor: ctaColor,
     ctaTextOnBg: ctaTextOnBg,
     applyCtaColor: applyCtaColor,

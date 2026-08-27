@@ -211,16 +211,17 @@
   color: var(--opp-navy);
 }
 
-.testing-bo-page .event-grid-format.investment-low {
-  color: #2d8a4e;
+.testing-bo-page .event-grid-format.commitment-full-time {
+  color: #9a3412;
 }
 
-.testing-bo-page .event-grid-format.investment-mid {
+.testing-bo-page .event-grid-format.commitment-part-time,
+.testing-bo-page .event-grid-format.commitment-flexible {
   color: #2563eb;
 }
 
-.testing-bo-page .event-grid-format.investment-high {
-  color: #9a3412;
+.testing-bo-page .event-grid-format.commitment-event-based {
+  color: #2d8a4e;
 }
 
 .testing-bo-page .event-grid-title {

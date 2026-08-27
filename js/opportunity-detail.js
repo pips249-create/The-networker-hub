@@ -198,15 +198,33 @@
     var logo = hostLogoUrl(item);
     if (logo) {
       el.textContent = '';
-      el.style.background = '#fff';
       el.classList.add('has-logo');
       el.innerHTML =
         '<img src="' +
         escapeHtml(logo) +
         '" alt="" width="40" height="40" loading="lazy" />';
+      var img = el.querySelector('img');
+      var paint = function () {
+        if (window.CmsSponsorFields && window.CmsSponsorFields.applyLogoSurfaceContrast) {
+          window.CmsSponsorFields.applyLogoSurfaceContrast(el, img || logo, {
+            lightColor: '#ffffff',
+          });
+        } else {
+          var dark =
+            window.CmsSponsorFields && window.CmsSponsorFields.logoUrlSuggestsDarkBand
+              ? window.CmsSponsorFields.logoUrlSuggestsDarkBand(logo)
+              : /white/i.test(logo);
+          el.classList.toggle('is-logo-dark', dark);
+          el.style.background = dark ? '#1a1a2e' : '#fff';
+        }
+      };
+      paint();
+      if (img) {
+        img.addEventListener('load', paint, { once: true });
+      }
       return;
     }
-    el.classList.remove('has-logo');
+    el.classList.remove('has-logo', 'is-logo-dark');
     el.innerHTML = '';
     el.textContent = item.hostInitials || '';
     el.style.background = item.hostColor || '#0d1f3c';

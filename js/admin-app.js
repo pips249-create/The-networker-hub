@@ -5243,9 +5243,9 @@
       if (metricsEl) {
         metricsEl.innerHTML =
           card(
-            'Passwords set',
+            'Member accounts',
             String(m.accountsWithPassword || 0),
-            'Signed in at least once · ' + (m.attendees || 0) + ' member accounts',
+            'Created an account and signed in · ' + (m.attendees || 0) + ' emails on file',
             'blue'
           ) +
           card(
@@ -5258,13 +5258,13 @@
             'brand'
           ) +
           card(
-            'Claimed profiles',
-            String(m.claimedOrganisers || 0),
-            'Of ' +
+            'Organiser accounts',
+            String(m.organisersWithPassword != null ? m.organisersWithPassword : m.claimedOrganisers || 0),
+            'Claimed with email & password · ' +
+              (m.claimedOrganisers || 0) +
+              ' marked claimed · ' +
               (m.organisers || 0) +
-              ' group profiles · ' +
-              (m.browseOrganisers != null ? m.browseOrganisers : m.organisers || 0) +
-              ' on browse',
+              ' group profiles',
             'violet'
           ) +
           card(
@@ -5310,9 +5310,9 @@
       '<h3 class="font-bold text-brand-900">Platform activity</h3>' +
       '<p class="text-sm text-slate-500 mt-1 mb-4">Live Supabase counts — separate from anonymous visitor traffic.</p>' +
       '<div class="admin-metric-grid admin-metric-grid--4" id="analytics-platform-metrics">' +
-      card('Passwords set', '…', 'Loading…', 'blue') +
+      card('Member accounts', '…', 'Loading…', 'blue') +
       card('Events by users', '…', 'Loading…', 'brand') +
-      card('Claimed profiles', '…', 'Loading…', 'violet') +
+      card('Organiser accounts', '…', 'Loading…', 'violet') +
       card('Booking fees', '…', 'Loading…', 'emerald') +
       '</div></section>' +
       '<aside class="admin-panel-sticky bg-white rounded-xl border border-slate-200 p-4 lg:p-5 shadow-sm min-w-0 flex flex-col">' +
@@ -5569,13 +5569,13 @@
             fmtMoney(m.revenue || 0)
         ) +
         card(
-          'Claimed profiles',
-          String(m.claimedOrganisers || 0),
-          'Of ' +
+          'Organiser accounts',
+          String(m.organisersWithPassword != null ? m.organisersWithPassword : m.claimedOrganisers || 0),
+          'Claimed with email & password · ' +
+            (m.claimedOrganisers || 0) +
+            ' marked claimed · ' +
             (m.organisers || 0) +
-            ' group profiles · ' +
-            (m.browseOrganisers != null ? m.browseOrganisers : m.organisers || 0) +
-            ' on organiser browse'
+            ' group profiles'
         ) +
         card(
           'Events by users',
@@ -5586,9 +5586,9 @@
             ' on events browse (incl. directory import)'
         ) +
         card(
-          'Passwords set',
+          'Member accounts',
           String(m.accountsWithPassword || 0),
-          'Signed in at least once · ' + (m.attendees || 0) + ' member accounts'
+          'Created an account and signed in · ' + (m.attendees || 0) + ' emails on file'
         );
     }
 
@@ -6295,9 +6295,9 @@
         '<div class="space-y-5">' +
         '<section class="admin-stat-grid admin-stat-grid--4" id="dashboard-metrics">' +
         card('Booking fees', '…', 'Loading…') +
-        card('Claimed profiles', '…', 'Loading…') +
+        card('Organiser accounts', '…', 'Loading…') +
         card('Events by users', '…', 'Loading…') +
-        card('Passwords set', '…', 'Loading…') +
+        card('Member accounts', '…', 'Loading…') +
         '</section>' +
         '<p class="admin-stat-row-label">Outreach &amp; nudges</p>' +
         '<section class="admin-stat-grid admin-stat-grid--4" id="dashboard-outreach-metrics">' +
@@ -6382,20 +6382,21 @@
     var updated = data.updatedAt ? fmtTime(data.updatedAt) : '—';
     return (
       '<dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">' +
-      '<div><dt>Claimed profiles</dt><dd>' +
+      '<div><dt>Organiser accounts</dt><dd>' +
+      esc(String(m.organisersWithPassword != null ? m.organisersWithPassword : m.claimedOrganisers || 0)) +
+      ' with email &amp; password (' +
       esc(String(m.claimedOrganisers || 0)) +
-      '</dd></div>' +
+      ' marked claimed)</dd></div>' +
       '<div><dt>Events by users</dt><dd>' +
       esc(String(m.userAddedEvents || 0)) +
       ' (' +
       esc(String(m.userAddedEventsApproved || 0)) +
       ' approved)</dd></div>' +
-      '<div><dt>Passwords set</dt><dd>' +
-      esc(String(m.accountsWithPassword || 0)) +
-      '</dd></div>' +
       '<div><dt>Member accounts</dt><dd>' +
+      esc(String(m.accountsWithPassword || 0)) +
+      ' signed in (' +
       esc(String(m.attendees || 0)) +
-      '</dd></div>' +
+      ' emails on file)</dd></div>' +
       '<div><dt>Claim outreach</dt><dd>' +
       esc(String(m.claimOutreach || 0)) +
       ' (' +
@@ -14910,6 +14911,30 @@
     );
   }
 
+  function syncAdminLogoPreviewContrast(preview, src) {
+    if (!preview) return;
+    var isLogoField = !!preview.closest('[data-admin-logo-url-name="logo_url"]');
+    if (!isLogoField) return;
+    var fields = window.CmsSponsorFields;
+    if (fields && fields.applyLogoSurfaceContrast) {
+      fields.applyLogoSurfaceContrast(preview, src || preview.src || '', {
+        lightColor: '#ffffff',
+      });
+      preview.classList.toggle('bg-slate-900', preview.classList.contains('is-logo-dark'));
+      preview.classList.toggle('bg-white', !preview.classList.contains('is-logo-dark'));
+      return;
+    }
+    var dark =
+      fields && fields.logoUrlSuggestsDarkBand
+        ? fields.logoUrlSuggestsDarkBand(src || preview.src || '')
+        : /white/i.test(String(src || preview.src || ''));
+    preview.classList.toggle('is-logo-dark', dark);
+    preview.classList.toggle('bg-slate-900', dark);
+    preview.classList.toggle('bg-white', !dark);
+    if (dark) preview.style.background = '#1a1a2e';
+    else preview.style.background = '#fff';
+  }
+
   function bindAdminLogoZone(zone) {
     if (!zone || zone.dataset.logoBound) return;
     zone.dataset.logoBound = '1';
@@ -14929,6 +14954,16 @@
       if (preview) {
         preview.src = src;
         preview.classList.remove('hidden');
+        syncAdminLogoPreviewContrast(preview, src);
+        if (urlName === 'logo_url') {
+          preview.addEventListener(
+            'load',
+            function onLogoLoad() {
+              syncAdminLogoPreviewContrast(preview, src);
+            },
+            { once: true }
+          );
+        }
       }
       if (placeholder) placeholder.classList.add('hidden');
     }
@@ -14963,8 +14998,20 @@
           preview.classList.remove('hidden');
           if (placeholder) placeholder.classList.add('hidden');
           delete adminLogoPending[key];
+          syncAdminLogoPreviewContrast(preview, url);
+          preview.addEventListener(
+            'load',
+            function onLogoUrlLoad() {
+              syncAdminLogoPreviewContrast(preview, url);
+            },
+            { once: true }
+          );
         }
       });
+    }
+
+    if (preview && preview.src && !preview.classList.contains('hidden')) {
+      syncAdminLogoPreviewContrast(preview, preview.src);
     }
   }
 
@@ -21585,6 +21632,16 @@
 
   function opportunityImageFieldHtml(key, urlName, label, help, imageUrl) {
     var hasPhoto = !!imageUrl;
+    var isLogo = urlName === 'logo_url';
+    var logoDark =
+      isLogo &&
+      window.CmsSponsorFields &&
+      window.CmsSponsorFields.logoUrlSuggestsDarkBand &&
+      window.CmsSponsorFields.logoUrlSuggestsDarkBand(imageUrl);
+    var previewClass = isLogo
+      ? 'admin-logo-preview mx-auto h-16 w-auto max-w-full rounded-lg object-contain border border-slate-200 p-2' +
+        (logoDark ? ' is-logo-dark bg-slate-900' : ' bg-white')
+      : 'admin-logo-preview mx-auto h-16 w-auto max-w-full rounded-lg object-cover border border-slate-200';
     return (
       '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">' +
       esc(label) +
@@ -21600,7 +21657,8 @@
       attrEsc(label) +
       '">' +
       '<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>' +
-      '<img class="admin-logo-preview mx-auto h-16 w-auto max-w-full rounded-lg object-cover border border-slate-200' +
+      '<img class="' +
+      previewClass +
       (hasPhoto ? '' : ' hidden') +
       '" src="' +
       attrEsc(imageUrl || '') +

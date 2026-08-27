@@ -2526,16 +2526,17 @@
   color: var(--opp-navy);
 }
 
-.opp-browse-page .event-grid-format.investment-low {
-  color: #2d8a4e;
+.opp-browse-page .event-grid-format.commitment-full-time {
+  color: #9a3412;
 }
 
-.opp-browse-page .event-grid-format.investment-mid {
+.opp-browse-page .event-grid-format.commitment-part-time,
+.opp-browse-page .event-grid-format.commitment-flexible {
   color: #2563eb;
 }
 
-.opp-browse-page .event-grid-format.investment-high {
-  color: #9a3412;
+.opp-browse-page .event-grid-format.commitment-event-based {
+  color: #2d8a4e;
 }
 
 .opp-browse-page .event-grid-title {
@@ -3868,6 +3869,11 @@
   border: 1px solid var(--opp-border);
   overflow: hidden;
   padding: 2px;
+}
+
+.opp-browse-page .opp-co-avatar--logo.is-logo-dark {
+  background: #1a1a2e;
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .opp-browse-page .opp-co-avatar--logo img {

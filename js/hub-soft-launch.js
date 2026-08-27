@@ -22,7 +22,7 @@
   }
 
   function publicTicketSalesClosedMessage() {
-    return 'Ticket buying opens on 1 September 2026. You can browse events now and nudge organisers to list tickets.';
+    return 'Ticket buying opens on 1 September 2026. You can browse events now — ticket interest alerts start then too.';
   }
 
   function arePublicEnquiriesOpen(nowMs) {

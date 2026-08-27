@@ -423,11 +423,10 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
   const eventHasEnded = isEventPast(row);
   const { arePublicTicketSalesOpen, PUBLIC_TRANSACTIONS_OPENS_AT } = require('./soft-launch');
   const platformTicketsOpen = arePublicTicketSalesOpen();
-  // Soft launch: browse + nudge only until 1 September — hide buy even if organiser enabled sales.
+  // Soft launch: browse only until 1 September — hide buy and pause interest nudges.
   if (
     !platformTicketsOpen &&
     isEventPublishedForSale(row) &&
-    !isTicketSalesPending &&
     !eventHasEnded
   ) {
     const platformOpens = new Date(PUBLIC_TRANSACTIONS_OPENS_AT);

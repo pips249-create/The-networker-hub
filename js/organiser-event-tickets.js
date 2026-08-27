@@ -4685,10 +4685,10 @@
     el.className = 'ee-alert';
     el.hidden = false;
     el.innerHTML =
-      '<strong>Ticket sales are off for this event</strong> — visitors see a nudge instead of checkout. Turn sales on when you are ready.' +
+      '<strong>Ticket sales are off for this event</strong> — ' +
       (publicTicketBuyingOpen()
-        ? ''
-        : ' Public buying opens 1 September 2026 — you can enable sales now so checkout is ready then.') +
+        ? 'visitors see a nudge instead of checkout. Turn sales on when you are ready.'
+        : 'public buying opens 1 September 2026. You can enable sales now so checkout is ready then; interest alerts to you stay paused until that date.') +
       '<div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px;">' +
       '<button type="button" class="ee-btn ee-btn-primary" id="ee-enable-sales-btn">Enable ticket sales</button>' +
       '</div>';

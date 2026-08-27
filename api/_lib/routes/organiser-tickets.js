@@ -18,7 +18,7 @@ function enableSalesSuccessMessage() {
   if (arePublicTicketSalesOpen()) {
     return 'Ticket sales are now live on your public event page.';
   }
-  return 'Ticket sales are enabled on your listing. Public buying opens on 1 September 2026 — until then people can browse and nudge you.';
+  return 'Ticket sales are enabled on your listing. Public buying opens on 1 September 2026 — until then people can browse your event.';
 }
 
 function requestHasPaidTickets(tiers, alumniFastPass) {

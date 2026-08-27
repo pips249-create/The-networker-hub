@@ -934,24 +934,12 @@
     return 'Flexible';
   }
 
-  function investTierClass(tier) {
-    if (tier === 'low-invest') return 'investment-low';
-    if (tier === 'mid-invest') return 'investment-mid';
-    if (tier === 'high-invest') return 'investment-high';
-    return 'investment-mid';
-  }
-
-  function detectInvestTier(item) {
-    var amount = item.investAmount;
-    if (amount == null || isNaN(amount)) {
-      if (hasTag(item, 'low-invest')) return 'low-invest';
-      if (hasTag(item, 'mid-invest')) return 'mid-invest';
-      if (hasTag(item, 'high-invest')) return 'high-invest';
-      return 'mid-invest';
+  function commitmentClass(item) {
+    var tags = item.filterTags || [];
+    for (var i = 0; i < COMMITMENTS.length; i++) {
+      if (tags.indexOf(COMMITMENTS[i].id) !== -1) return 'commitment-' + COMMITMENTS[i].id;
     }
-    if (amount <= 2500) return 'low-invest';
-    if (amount <= 10000) return 'mid-invest';
-    return 'high-invest';
+    return 'commitment-flexible';
   }
 
   function mediaHtml(item, thumb) {
@@ -1208,8 +1196,14 @@
   function companyAvatarHtml(item) {
     var logo = item.logoUrl || '';
     if (logo) {
+      var dark =
+        window.CmsSponsorFields && window.CmsSponsorFields.logoUrlSuggestsDarkBand
+          ? window.CmsSponsorFields.logoUrlSuggestsDarkBand(logo)
+          : /(?:^|[\/_\-.])white(?:[\/_\-.]|$)/i.test(logo);
       return (
-        '<div class="opp-co-avatar opp-co-avatar--logo" aria-hidden="true">' +
+        '<div class="opp-co-avatar opp-co-avatar--logo' +
+        (dark ? ' is-logo-dark' : '') +
+        '" aria-hidden="true">' +
         '<img src="' +
         escapeHtml(logo) +
         '" alt="" width="24" height="24" loading="lazy" decoding="async" aria-hidden="true" />' +
@@ -1309,7 +1303,6 @@
     var typeLabel = typeLabels[item.type] || item.type || 'Opportunity';
     var thumb = item.thumb || { emoji: '✦', gradient: 'linear-gradient(135deg,#fdf6e3,#f5e0a0)' };
     var commitment = commitmentLabel(item);
-    var tier = detectInvestTier(item);
     var locationLabel = item.locationLabel || 'UK';
     var hostLabel = String(item.host || '').trim();
     var titleLabel = String(item.title || '').trim();
@@ -1348,7 +1341,7 @@
       '<div class="event-grid-body">' +
       '<div class="event-grid-body-top">' +
       '<span class="event-grid-format ' +
-      investTierClass(tier) +
+      commitmentClass(item) +
       '">' +
       escapeHtml(commitment) +
       '</span>' +

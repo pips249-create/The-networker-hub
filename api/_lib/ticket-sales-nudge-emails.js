@@ -10,6 +10,7 @@ const {
   earliestTicketSaleStart,
   isEventPublishedForSale,
 } = require('./ticket-sales');
+const { arePublicTicketSalesOpen, publicTicketSalesClosedMessage } = require('./soft-launch');
 
 function organiserRecipientEmail(organiser, account) {
   const candidates = [
@@ -157,6 +158,14 @@ async function nudgeOrganiserForTicketSales({ eventId, nudgerEmail, nudgerName, 
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     const err = new Error('invalid_email');
     err.status = 400;
+    throw err;
+  }
+
+  // Soft launch: pause interest emails until public ticket buying opens (1 Sep 2026).
+  if (!arePublicTicketSalesOpen()) {
+    const err = new Error('ticket_sales_platform_closed');
+    err.status = 403;
+    err.publicMessage = publicTicketSalesClosedMessage();
     throw err;
   }
 

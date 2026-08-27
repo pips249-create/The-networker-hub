@@ -34,7 +34,7 @@ function isPublicBrowseOpen(nowMs) {
 
 /**
  * Public ticket buying (paid + free). Opens 1 September 2026 unless forced.
- * Browse and organiser nudges stay available before then.
+ * Browse stays available before then; ticket-interest nudges stay paused until buying opens.
  */
 function arePublicTicketSalesOpen(nowMs) {
   if (parseEnvFlag('PUBLIC_TICKET_SALES_FORCE_CLOSED')) return false;
@@ -44,7 +44,7 @@ function arePublicTicketSalesOpen(nowMs) {
 }
 
 function publicTicketSalesClosedMessage() {
-  return 'Ticket buying opens on 1 September 2026. You can browse events now and nudge organisers to list tickets.';
+  return 'Ticket buying opens on 1 September 2026. You can browse events now — ticket interest alerts start then too.';
 }
 
 /**

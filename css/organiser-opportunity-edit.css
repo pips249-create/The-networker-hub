@@ -230,6 +230,13 @@
   border-radius: 10px;
   background: #fff;
   border: 1px solid var(--opp-border);
+  padding: 6px;
+  box-sizing: border-box;
+}
+
+.organiser-opportunity-edit-page .oe-logo-upload .ee-upload-preview img.is-logo-dark {
+  background: #1a1a2e;
+  border-color: rgba(26, 26, 46, 0.35);
 }
 
 .organiser-opportunity-edit-page .hub-location-suggest {
