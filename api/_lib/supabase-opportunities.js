@@ -343,7 +343,7 @@ async function writeOpportunityRow(sb, mode, row, id) {
   }
   if (error && isMissingOpportunityPendingReviewColumnError(error)) {
     console.warn(
-      '[opportunities] pending_review_payload missing — apply migration 270_opportunity_pending_review_payload.sql'
+      '[opportunities] pending_review_payload missing — apply migration 272_opportunity_pending_review_payload.sql'
     );
     ({ data, error } = await run(stripOpportunityPendingReviewFields(row)));
   }
@@ -1380,6 +1380,7 @@ module.exports = {
   updateOpportunity,
   rejectOpportunityListing,
   rejectPendingOpportunityChanges,
+  applyApprovedPendingReviewChanges,
   maybeAutoRejectOpportunity,
   activateOpportunityPremium,
   activateOpportunityListingPayment,
