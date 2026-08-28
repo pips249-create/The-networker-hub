@@ -22795,6 +22795,11 @@
       '<div class="opp-review-admin-edit-body" data-opp-admin-edit-for="' +
       attrEsc(id) +
       '"><p class="text-sm text-slate-500">Loading admin edit form…</p></div></details>' +
+      '<details class="opp-review-open-days">' +
+      '<summary>Open days</summary>' +
+      '<div class="opp-review-open-days-body" data-opp-open-days-for="' +
+      attrEsc(id) +
+      '"><p class="text-sm text-slate-500">Loading open days…</p></div></details>' +
       '</div>'
     );
   }
@@ -22819,6 +22824,207 @@
     }
   }
 
+  function toOpenDayDatetimeLocal(iso) {
+    if (!iso) return '';
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    function pad(n) {
+      return String(n).padStart(2, '0');
+    }
+    return (
+      d.getFullYear() +
+      '-' +
+      pad(d.getMonth() + 1) +
+      '-' +
+      pad(d.getDate()) +
+      'T' +
+      pad(d.getHours()) +
+      ':' +
+      pad(d.getMinutes())
+    );
+  }
+
+  function fromOpenDayDatetimeLocal(value) {
+    var raw = String(value || '').trim();
+    if (!raw) return '';
+    var d = new Date(raw);
+    if (isNaN(d.getTime())) return '';
+    return d.toISOString();
+  }
+
+  function opportunityAdminOpenDayRowHtml(day) {
+    var d = day || {};
+    return (
+      '<div class="opp-admin-open-day-row" data-open-day-id="' +
+      attrEsc(d.id || '') +
+      '">' +
+      '<div class="opp-admin-open-day-grid">' +
+      '<label class="block text-xs font-semibold text-slate-500">Date &amp; start' +
+      '<input type="datetime-local" class="opp-admin-open-day-starts mt-1 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm" value="' +
+      attrEsc(toOpenDayDatetimeLocal(d.startsAt)) +
+      '" required /></label>' +
+      '<label class="block text-xs font-semibold text-slate-500">End <span class="font-normal text-slate-400">(optional)</span>' +
+      '<input type="datetime-local" class="opp-admin-open-day-ends mt-1 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm" value="' +
+      attrEsc(toOpenDayDatetimeLocal(d.endsAt)) +
+      '" /></label>' +
+      '<label class="block text-xs font-semibold text-slate-500 sm:col-span-2">Venue <span class="font-normal text-slate-400">(optional)</span>' +
+      '<input type="text" class="opp-admin-open-day-venue mt-1 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm" maxlength="120" value="' +
+      attrEsc(d.venueName || '') +
+      '" /></label>' +
+      '<label class="block text-xs font-semibold text-slate-500 sm:col-span-2">Address' +
+      '<input type="text" class="opp-admin-open-day-address mt-1 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm" maxlength="200" value="' +
+      attrEsc(d.addressLine || '') +
+      '" required /></label>' +
+      '<label class="block text-xs font-semibold text-slate-500">City' +
+      '<input type="text" class="opp-admin-open-day-city mt-1 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm" maxlength="80" value="' +
+      attrEsc(d.city || '') +
+      '" /></label>' +
+      '<label class="block text-xs font-semibold text-slate-500">Postcode' +
+      '<input type="text" class="opp-admin-open-day-postcode mt-1 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm" maxlength="20" value="' +
+      attrEsc(d.postcode || '') +
+      '" /></label>' +
+      '<label class="block text-xs font-semibold text-slate-500 sm:col-span-2">Notes <span class="font-normal text-slate-400">(optional)</span>' +
+      '<input type="text" class="opp-admin-open-day-notes mt-1 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm" maxlength="400" value="' +
+      attrEsc(d.notes || '') +
+      '" /></label>' +
+      '</div>' +
+      (d.interestCount
+        ? '<p class="text-xs text-slate-500 mt-2">' +
+          esc(String(d.interestCount)) +
+          ' interest registration' +
+          (Number(d.interestCount) === 1 ? '' : 's') +
+          '</p>'
+        : '') +
+      '<button type="button" class="opp-admin-open-day-remove mt-2 text-xs font-semibold text-red-700 hover:underline">Remove</button>' +
+      '</div>'
+    );
+  }
+
+  function collectAdminOpenDaysFromMount(mount) {
+    if (!mount) return [];
+    var out = [];
+    mount.querySelectorAll('.opp-admin-open-day-row').forEach(function (row, index) {
+      var startsAt = fromOpenDayDatetimeLocal(
+        (row.querySelector('.opp-admin-open-day-starts') || {}).value
+      );
+      var endsAt = fromOpenDayDatetimeLocal(
+        (row.querySelector('.opp-admin-open-day-ends') || {}).value
+      );
+      var addressLine = String(
+        (row.querySelector('.opp-admin-open-day-address') || {}).value || ''
+      ).trim();
+      if (!startsAt && !addressLine) return;
+      out.push({
+        id: String(row.getAttribute('data-open-day-id') || '').trim() || undefined,
+        startsAt: startsAt,
+        endsAt: endsAt || null,
+        venueName: String((row.querySelector('.opp-admin-open-day-venue') || {}).value || '').trim(),
+        addressLine: addressLine,
+        city: String((row.querySelector('.opp-admin-open-day-city') || {}).value || '').trim(),
+        postcode: String((row.querySelector('.opp-admin-open-day-postcode') || {}).value || '').trim(),
+        notes: String((row.querySelector('.opp-admin-open-day-notes') || {}).value || '').trim(),
+        sortOrder: index,
+      });
+    });
+    return out;
+  }
+
+  function ensureOpportunityOpenDaysLoaded(id) {
+    var mount = document.querySelector('[data-opp-open-days-for="' + id + '"]');
+    if (!mount || mount.dataset.loaded === '1') return;
+    mount.dataset.loaded = '1';
+    mount.innerHTML = '<p class="text-sm text-slate-500">Loading open days…</p>';
+    adminGet('/api/admin/opportunities?open_days=1&id=' + encodeURIComponent(id))
+      .then(function (data) {
+        if (!data || !data.ok) throw new Error((data && data.message) || 'load_failed');
+        var days = Array.isArray(data.openDays) ? data.openDays : [];
+        mount.innerHTML =
+          '<p class="text-xs text-slate-500 mb-3">Add visit dates for this business opportunity only — does not change listing fields. Visitors register interest on the public page.</p>' +
+          '<div class="opp-admin-open-days-list space-y-3">' +
+          (days.length
+            ? days.map(opportunityAdminOpenDayRowHtml).join('')
+            : '') +
+          '</div>' +
+          '<div class="flex flex-wrap items-center gap-2 mt-3">' +
+          '<button type="button" class="rounded-lg border border-slate-300 bg-white text-slate-700 text-sm font-semibold px-3 py-1.5 hover:bg-slate-50" data-opp-open-day-add="' +
+          attrEsc(id) +
+          '">+ Add open day</button>' +
+          '<button type="button" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-3 py-1.5 hover:bg-brand-900" data-opp-open-days-save="' +
+          attrEsc(id) +
+          '">Save open days</button>' +
+          '<span class="opp-admin-open-days-msg text-xs" data-opp-open-days-msg="' +
+          attrEsc(id) +
+          '"></span>' +
+          '</div>';
+      })
+      .catch(function (err) {
+        mount.innerHTML =
+          '<p class="text-sm text-red-700">Could not load open days: ' +
+          esc(err && err.message ? err.message : 'unknown error') +
+          '</p>';
+      });
+  }
+
+  function saveOpportunityAdminOpenDays(id) {
+    var mount = document.querySelector('[data-opp-open-days-for="' + id + '"]');
+    var msg = document.querySelector('[data-opp-open-days-msg="' + id + '"]');
+    var btn = document.querySelector('[data-opp-open-days-save="' + id + '"]');
+    if (!mount) return;
+    var openDays = collectAdminOpenDaysFromMount(mount);
+    for (var i = 0; i < openDays.length; i++) {
+      if (!openDays[i].startsAt) {
+        if (msg) {
+          msg.textContent = 'Each open day needs a date and start time.';
+          msg.className = 'opp-admin-open-days-msg text-xs text-red-700 font-semibold';
+        }
+        return;
+      }
+      if (!openDays[i].addressLine) {
+        if (msg) {
+          msg.textContent = 'Each open day needs an address.';
+          msg.className = 'opp-admin-open-days-msg text-xs text-red-700 font-semibold';
+        }
+        return;
+      }
+    }
+    if (btn) btn.disabled = true;
+    if (msg) {
+      msg.textContent = 'Saving…';
+      msg.className = 'opp-admin-open-days-msg text-xs text-slate-500';
+    }
+    adminPost('/api/admin/opportunities', {
+      id: id,
+      action: 'save_open_days',
+      openDays: openDays,
+    })
+      .then(function (data) {
+        if (!data || !data.ok) {
+          throw new Error((data && (data.message || data.error)) || 'save_failed');
+        }
+        var saved = Array.isArray(data.openDays) ? data.openDays : [];
+        var list = mount.querySelector('.opp-admin-open-days-list');
+        if (list) list.innerHTML = saved.map(opportunityAdminOpenDayRowHtml).join('');
+        if (msg) {
+          msg.textContent =
+            'Saved ' +
+            saved.length +
+            ' open day' +
+            (saved.length === 1 ? '' : 's') +
+            ' — listing fields unchanged.';
+          msg.className = 'opp-admin-open-days-msg text-xs text-emerald-700 font-semibold';
+        }
+      })
+      .catch(function (err) {
+        if (msg) {
+          msg.textContent = err.message || 'Could not save open days.';
+          msg.className = 'opp-admin-open-days-msg text-xs text-red-700 font-semibold';
+        }
+      })
+      .finally(function () {
+        if (btn) btn.disabled = false;
+      });
+  }
+
   function ensureOpportunityCleanupPanelLoaded(id) {
     var panel = opportunityCleanupPanelEl(id);
     if (!panel) return panel;
@@ -22834,6 +23040,15 @@
           adminEditDetails.dataset.boundReviewReload = '1';
           adminEditDetails.addEventListener('toggle', function () {
             if (adminEditDetails.open) ensureOpportunityAdminEditLoaded(id);
+          });
+        }
+      }
+      var openDaysDetails = panel.querySelector('.opp-review-open-days');
+      if (openDaysDetails) {
+        if (!openDaysDetails.dataset.boundOpenDaysReload) {
+          openDaysDetails.dataset.boundOpenDaysReload = '1';
+          openDaysDetails.addEventListener('toggle', function () {
+            if (openDaysDetails.open) ensureOpportunityOpenDaysLoaded(id);
           });
         }
       }
@@ -23806,6 +24021,27 @@
         deleteFormBtn.getAttribute('data-opp-delete-form'),
         deleteFormBtn.getAttribute('data-opp-delete-title')
       );
+      return;
+    }
+
+    var openDayAddBtn = e.target.closest('[data-opp-open-day-add]');
+    if (openDayAddBtn) {
+      var addMount = document.querySelector(
+        '[data-opp-open-days-for="' + openDayAddBtn.getAttribute('data-opp-open-day-add') + '"]'
+      );
+      var addList = addMount && addMount.querySelector('.opp-admin-open-days-list');
+      if (addList) addList.insertAdjacentHTML('beforeend', opportunityAdminOpenDayRowHtml({}));
+      return;
+    }
+    var openDayRemoveBtn = e.target.closest('.opp-admin-open-day-remove');
+    if (openDayRemoveBtn) {
+      var openDayRow = openDayRemoveBtn.closest('.opp-admin-open-day-row');
+      if (openDayRow) openDayRow.remove();
+      return;
+    }
+    var openDaysSaveBtn = e.target.closest('[data-opp-open-days-save]');
+    if (openDaysSaveBtn) {
+      saveOpportunityAdminOpenDays(openDaysSaveBtn.getAttribute('data-opp-open-days-save'));
       return;
     }
 

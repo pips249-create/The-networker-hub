@@ -811,11 +811,32 @@
     return out;
   }
 
+  function setOpenDaysSaveOnlyVisible(visible) {
+    const btn = document.getElementById('oe-open-days-save-only');
+    if (btn) btn.hidden = !visible;
+  }
+
+  function setOpenDaysSaveStatus(message, kind) {
+    const el = document.getElementById('oe-open-days-save-status');
+    if (!el) return;
+    const text = String(message || '').trim();
+    if (!text) {
+      el.hidden = true;
+      el.textContent = '';
+      el.style.color = '';
+      return;
+    }
+    el.hidden = false;
+    el.textContent = text;
+    el.style.color = kind === 'error' ? '#b91c1c' : kind === 'success' ? '#166534' : '';
+  }
+
   function bindOpenDaysEditor() {
     if (openDaysBound) return;
     openDaysBound = true;
     const addBtn = document.getElementById('oe-open-day-add');
     const list = document.getElementById('oe-open-days-list');
+    const saveOnlyBtn = document.getElementById('oe-open-days-save-only');
     if (addBtn) {
       addBtn.addEventListener('click', function () {
         if (!list) return;
@@ -828,6 +849,33 @@
         if (!btn) return;
         const row = btn.closest('.oe-open-day-row');
         if (row) row.remove();
+      });
+    }
+    if (saveOnlyBtn) {
+      saveOnlyBtn.addEventListener('click', async function () {
+        const opportunityId =
+          (currentOpportunity && currentOpportunity.id) || editId || '';
+        if (!opportunityId) {
+          setOpenDaysSaveStatus('Save the listing once first, then you can update open days alone.', 'error');
+          return;
+        }
+        saveOnlyBtn.disabled = true;
+        setOpenDaysSaveStatus('Saving open days…', null);
+        try {
+          const result = await saveOpenDaysForOpportunity(opportunityId);
+          if (!result.ok) {
+            setOpenDaysSaveStatus(result.message || 'Could not save open days.', 'error');
+            return;
+          }
+          if (Array.isArray(result.openDays)) {
+            renderOpenDaysEditor(result.openDays);
+          }
+          setOpenDaysSaveStatus('Open days saved — listing details unchanged.', 'success');
+        } catch (err) {
+          setOpenDaysSaveStatus((err && err.message) || 'Could not save open days.', 'error');
+        } finally {
+          saveOnlyBtn.disabled = false;
+        }
       });
     }
   }
@@ -869,7 +917,7 @@
       };
     }
     if (Array.isArray(res.data.openDays)) renderOpenDaysEditor(res.data.openDays);
-    return { ok: true };
+    return { ok: true, openDays: res.data.openDays || [] };
   }
 
   function syncSavedOpportunityMedia(opportunity) {
@@ -2671,6 +2719,7 @@
       bindOpenDaysEditor();
       if (editId) {
         document.getElementById('oe-page-title').textContent = 'Edit opportunity';
+        setOpenDaysSaveOnlyVisible(true);
         const res = await api('/api/organiser/opportunities?id=' + encodeURIComponent(editId));
         if (res.ok && res.data.opportunity) {
           prefillFromOpportunity(res.data.opportunity);
@@ -2681,6 +2730,7 @@
         return;
       }
 
+      setOpenDaysSaveOnlyVisible(false);
       renderOpenDaysEditor([]);
       if (actions) {
         const session = await actions.fetchSession();

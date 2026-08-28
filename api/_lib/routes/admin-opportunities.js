@@ -601,7 +601,20 @@ module.exports = async function handler(req, res) {
 
   if (req.method === 'GET') {
     try {
-      const data = await listOpportunitiesForAdmin(queryFromRequest(req));
+      const q = queryFromRequest(req);
+      const openDaysFor = String(q.open_days_for || q.openDaysFor || '').trim();
+      if (openDaysFor || String(q.open_days || '') === '1') {
+        const opportunityId = openDaysFor || String(q.id || '').trim();
+        if (!opportunityId) {
+          return json(res, 400, { ok: false, error: 'missing_id' });
+        }
+        const { listOpenDaysForOpportunity } = require('../opportunity-open-days');
+        const openDays = await listOpenDaysForOpportunity(opportunityId, {
+          includeInterestCounts: true,
+        });
+        return json(res, 200, { ok: true, openDays });
+      }
+      const data = await listOpportunitiesForAdmin(q);
       return json(res, 200, { ok: true, ...data });
     } catch (e) {
       return json(res, 500, { ok: false, error: 'list_failed', message: e.message });
@@ -687,6 +700,54 @@ module.exports = async function handler(req, res) {
 
     const id = String(body.id || '').trim();
     if (!id) return json(res, 400, { error: 'missing_id' });
+
+    if (body.action === 'save_open_days') {
+      try {
+        const { replaceOpenDaysForOpportunity } = require('../opportunity-open-days');
+        const openDays = await replaceOpenDaysForOpportunity(
+          id,
+          body.openDays || body.days || [],
+          null
+        );
+        return json(res, 200, { ok: true, openDays });
+      } catch (e) {
+        const msg = e.message || String(e);
+        if (msg === 'not_found') {
+          return json(res, 404, { ok: false, error: 'not_found', message: 'Listing not found.' });
+        }
+        if (
+          msg === 'missing_open_day_starts_at' ||
+          msg === 'invalid_open_day_starts_at' ||
+          msg === 'missing_open_day_address' ||
+          msg === 'invalid_open_day_ends_at' ||
+          msg === 'open_day_ends_before_start' ||
+          msg === 'too_many_open_days' ||
+          msg === 'open_days_unavailable'
+        ) {
+          return json(res, 400, {
+            ok: false,
+            error: msg,
+            message:
+              msg === 'open_days_unavailable'
+                ? 'Open days are not available yet — apply migration 269_opportunity_open_days.sql.'
+                : msg === 'missing_open_day_address'
+                  ? 'Each open day needs an address.'
+                  : msg === 'missing_open_day_starts_at' || msg === 'invalid_open_day_starts_at'
+                    ? 'Each open day needs a valid date and start time.'
+                    : msg === 'open_day_ends_before_start'
+                      ? 'End time must be after the start time.'
+                      : msg === 'too_many_open_days'
+                        ? 'Too many open days on this listing.'
+                        : undefined,
+          });
+        }
+        return json(res, 500, {
+          ok: false,
+          error: 'save_open_days_failed',
+          message: msg,
+        });
+      }
+    }
 
     if (body.action === 'approve') {
       try {
