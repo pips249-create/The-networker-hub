@@ -6855,6 +6855,7 @@
       (u.organiserTermsAcceptedAt
         ? '<div class="flex justify-between gap-4"><dt class="text-slate-500 shrink-0">Organiser terms</dt><dd class="font-medium text-right text-xs">' +
           esc(formatAccountDate(u.organiserTermsAcceptedAt)) +
+          (u.organiserTermsVersion ? ' · ' + esc(String(u.organiserTermsVersion)) : '') +
           '</dd></div>'
         : '') +
       '</dl>' +

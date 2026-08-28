@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260723" />
     <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260608c" />
-    <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260828polish1" />
+    <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260828opp1" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260825adminbadge1" />
   </head>
   <body class="opportunities-page organiser-event-edit-page organiser-opportunity-edit-page">
@@ -126,8 +126,13 @@
             <input type="email" id="oe-email" required placeholder="you@company.co.uk" />
             <p class="ee-hint">Interested members contact you directly at this address.</p>
           </div>
+          <div class="ee-field" id="oe-visual-field">
+            <label>Business logo or cover photo</label>
+            <p class="ee-hint" id="oe-visual-hint">At least one image is required — a square logo, a cover photo, or both.</p>
+            <p class="oe-visual-requirement" id="oe-visual-requirement" hidden>Add a logo or cover photo before submitting.</p>
+          </div>
           <div class="ee-field">
-            <label>Business logo (optional)</label>
+            <label>Business logo</label>
             <p class="ee-hint">Square logo shown beside your company name on cards and the detail page.</p>
             <div class="ee-upload-zone oe-logo-upload" id="oe-logo-zone" tabindex="0" role="button" aria-label="Upload business logo">
               <input type="file" id="oe-logo-file" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
@@ -140,7 +145,7 @@
                 <span>PNG or JPG — large files are compressed automatically — or paste a URL below</span>
               </div>
             </div>
-            <input type="url" id="oe-logo-url" placeholder="https://… (optional if you uploaded a file)" style="margin-top: 10px" />
+            <input type="url" id="oe-logo-url" placeholder="https://… (or upload above)" style="margin-top: 10px" />
           </div>
         </div>
 
@@ -187,8 +192,14 @@
               <input type="text" id="oe-suits" maxlength="160" placeholder="e.g. Networkers who already introduce business owners" />
             </div>
           </div>
-          <div class="ee-field">
+          <div class="ee-field" id="oe-location-field">
             <label for="oe-location">Territory / location</label>
+            <p class="ee-hint">Required — where this opportunity is based or available. Use UK-wide or Remote if there is no fixed territory.</p>
+            <div class="oe-location-shortcuts">
+              <button type="button" class="oe-location-chip" data-location-value="UK-wide">UK-wide</button>
+              <button type="button" class="oe-location-chip" data-location-value="Remote">Remote</button>
+              <button type="button" class="oe-location-chip" data-location-value="Nationwide">Nationwide</button>
+            </div>
             <div class="hub-location-field oe-location-field">
               <span class="hub-location-icon" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-5.4 7-11a7 7 0 1 0-14 0c0 5.6 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
@@ -211,12 +222,6 @@
               <option value="Event-based">Event-based</option>
             </select>
           </div>
-          <div class="ee-field" id="oe-fca-attest-field">
-            <label class="auth-terms-check auth-terms-check--optional" id="oe-fca-attest-wrap" hidden>
-              <input type="checkbox" id="oe-fca-attest" />
-              <span>I confirm this is not a regulated investment and I will not make guaranteed return claims.</span>
-            </label>
-          </div>
           <div class="ee-field">
             <label for="oe-extra-key">Extra highlight (optional)</label>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px">
@@ -227,9 +232,9 @@
         </div>
 
         <div class="ee-card" id="oe-card-photo">
-          <h2>Opportunity photo (optional)</h2>
+          <h2>Cover photo</h2>
           <div class="ee-field">
-            <p class="auth-lede" style="margin: 0 0 8px; font-size: 13px">Large photo on your detail page and listing card — separate from your business logo.</p>
+            <p class="auth-lede" style="margin: 0 0 8px; font-size: 13px">Large photo on your detail page and listing card — separate from your business logo. Logo or cover photo required (both is ideal).</p>
             <div class="ee-upload-zone" id="oe-photo-zone" tabindex="0" role="button" aria-label="Upload opportunity image">
               <input type="file" id="oe-photo-file" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
               <div class="ee-upload-preview" id="oe-photo-preview" hidden>
@@ -258,6 +263,19 @@
               <div class="oe-listing-price-total"><dt>Due after approval, then monthly</dt><dd>£30.00</dd></div>
             </dl>
           </div>
+          <div class="oe-fca-attest-panel" id="oe-fca-attest-panel" hidden>
+            <h2 class="oe-fca-attest-title">Listing declaration</h2>
+            <p class="oe-fca-attest-lead" id="oe-fca-attest-lead">
+              Required before you submit franchise, partnership, distributorship, or high-investment listings.
+            </p>
+            <label class="oe-fca-attest-check" id="oe-fca-attest-wrap">
+              <input type="checkbox" id="oe-fca-attest" />
+              <span>I confirm this is not a regulated investment and I will not make guaranteed return claims.</span>
+            </label>
+            <p class="ee-hint oe-fca-attest-note">
+              Listings are informational only — not investment advice. The Networker UK does not verify financial claims in your listing.
+            </p>
+          </div>
           <div class="ee-actions ee-actions--split">
             <button type="button" class="ee-btn ee-btn-outline" id="oe-save-draft">Save as draft</button>
             <button type="submit" class="ee-btn ee-btn-gold" id="oe-submit">Submit for review</button>
@@ -272,9 +290,9 @@
     <script src="../js/organiser-page-loading.js?v=20260608d" defer></script>
     <script src="../js/organiser-image-upload.js?v=20260605" defer></script>
     <script src="../js/hub-location-autocomplete.js?v=20260609" defer></script>
-    <script src="../js/organiser-terms.js?v=20260728nm" data-root="../" defer></script>
+    <script src="../js/organiser-terms.js?v=20260828opp1" data-root="../" data-context="opportunity" defer></script>
     <script src="../js/opportunity-moderation-scan.js?v=20260827aff2" defer></script>
     <script src="../js/opportunity-listing-quality.js?v=20260825aff1" defer></script>
-    <script src="../js/organiser-opportunity-edit.js?v=20260828polish1" defer></script>
+    <script src="../js/organiser-opportunity-edit.js?v=20260828opp1" defer></script>
   </body>
 </html>

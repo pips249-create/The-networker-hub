@@ -8,6 +8,46 @@
   var serverChecked = false;
   var serverAccepted = false;
 
+  function termsContext() {
+    var script = document.querySelector('script[data-context]');
+    if (script && script.getAttribute('data-context')) {
+      return script.getAttribute('data-context');
+    }
+    if (document.body && document.body.classList.contains('organiser-opportunity-edit-page')) {
+      return 'opportunity';
+    }
+    return 'event';
+  }
+
+  function modalCopy(context) {
+    if (context === 'opportunity') {
+      return {
+        title: 'Business listing terms',
+        intro:
+          'Before you submit a business opportunity on The Networker UK, please confirm you agree to our organiser terms — including listing accuracy, enquiry handling, and what is allowed on the directory.',
+        bullets: [
+          'Your listing must be truthful, complete, and not misleading about investment, earnings, or territory',
+          'Network marketing listings must be product-selling only — recruitment-primary / downline schemes are not allowed',
+          'You will respond to member enquiries in good faith using the contact details you provide',
+          'Use enquiry contact details only for this opportunity — not for unrelated marketing',
+          'You must follow our <a href="/legal-policies#hub-rules" target="_blank" rel="noopener noreferrer">Platform rules</a> for organisers',
+        ],
+      };
+    }
+    return {
+      title: 'Organiser terms',
+      intro:
+        'Before you publish on The Networker UK, please confirm you agree to our organiser terms, including refund responsibilities, attendee data protection, and listing accuracy.',
+      bullets: [
+        'You are responsible for delivering events and honouring your stated refund policy',
+        'Business opportunity listings must be truthful and not misleading',
+        'Network marketing listings must be product-selling only — recruitment-primary / downline schemes are not allowed',
+        'Use attendee contact details only to run your events — not for unrelated marketing',
+        'You must follow our <a href="/legal-policies#hub-rules" target="_blank" rel="noopener noreferrer">Platform rules</a> for organisers',
+      ],
+    };
+  }
+
   function hasAcceptedLocal() {
     try {
       return localStorage.getItem(STORAGE_KEY) === '1';
@@ -48,7 +88,7 @@
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ version: TERMS_VERSION }),
+      body: JSON.stringify({ version: TERMS_VERSION, context: termsContext() }),
     })
       .then(function (r) {
         return r.json().then(function (body) {
@@ -75,19 +115,16 @@
     modal.setAttribute('aria-labelledby', 'hub-organiser-terms-title');
     modal.innerHTML =
       '<div class="hub-organiser-terms-panel">' +
-      '<h2 id="hub-organiser-terms-title">Organiser terms</h2>' +
-      '<p>Before you publish on The Networker UK, please confirm you agree to our organiser terms, including refund responsibilities, attendee data protection, and listing accuracy.</p>' +
-      '<ul class="hub-organiser-terms-list">' +
-      '<li>You are responsible for delivering events and honouring your stated refund policy</li>' +
-      '<li>Business opportunity listings must be truthful and not misleading</li>' +
-      '<li>Network marketing listings must be product-selling only — recruitment-primary / downline schemes are not allowed</li>' +
-      '<li>Use attendee contact details only to run your events — not for unrelated marketing</li>' +
-      '<li>You must follow our <a href="/legal-policies#hub-rules" target="_blank" rel="noopener noreferrer">Platform rules</a> for organisers</li>' +
-      '</ul>' +
+      '<h2 id="hub-organiser-terms-title"></h2>' +
+      '<p id="hub-organiser-terms-intro"></p>' +
+      '<ul class="hub-organiser-terms-list" id="hub-organiser-terms-list"></ul>' +
       '<label class="hub-organiser-terms-check">' +
       '<input type="checkbox" id="hub-organiser-terms-checkbox" />' +
       '<span>I agree to the <a href="/legal-policies#organisers" target="_blank" rel="noopener noreferrer">Organiser terms</a> and <a href="/legal-policies#terms" target="_blank" rel="noopener noreferrer">Terms &amp; conditions</a></span>' +
       '</label>' +
+      '<p class="hub-organiser-terms-note" id="hub-organiser-terms-note">We record the date and version you accept (currently ' +
+      TERMS_VERSION +
+      ').</p>' +
       '<p class="hub-organiser-terms-error" id="hub-organiser-terms-error" hidden></p>' +
       '<div class="hub-organiser-terms-actions">' +
       '<button type="button" class="hub-organiser-terms-btn" id="hub-organiser-terms-cancel">Cancel</button>' +
@@ -133,11 +170,28 @@
     });
   }
 
+  function applyModalCopy(context) {
+    var copy = modalCopy(context);
+    var titleEl = document.getElementById('hub-organiser-terms-title');
+    var introEl = document.getElementById('hub-organiser-terms-intro');
+    var listEl = document.getElementById('hub-organiser-terms-list');
+    if (titleEl) titleEl.textContent = copy.title;
+    if (introEl) introEl.textContent = copy.intro;
+    if (listEl) {
+      listEl.innerHTML = copy.bullets
+        .map(function (item) {
+          return '<li>' + item + '</li>';
+        })
+        .join('');
+    }
+  }
+
   window.HubOrganiserTerms = {
     requireAcceptance: function () {
       return checkServerAccepted().then(function (accepted) {
         if (accepted) return Promise.resolve();
         ensureModal();
+        applyModalCopy(termsContext());
         var modal = document.getElementById('hub-organiser-terms-modal');
         var checkbox = document.getElementById('hub-organiser-terms-checkbox');
         var confirmBtn = document.getElementById('hub-organiser-terms-confirm');

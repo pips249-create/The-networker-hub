@@ -245,12 +245,22 @@
   }
 
   function updateFcaAttestVisibility() {
+    const panel = document.getElementById('oe-fca-attest-panel');
     const wrap = document.getElementById('oe-fca-attest-wrap');
-    const field = document.getElementById('oe-fca-attest-field');
-    if (!wrap) return;
+    const lead = document.getElementById('oe-fca-attest-lead');
+    if (!panel || !wrap) return;
     const show = requiresFcaDisclaimer();
-    wrap.hidden = !show;
-    if (field) field.hidden = !show;
+    panel.hidden = !show;
+    if (lead) {
+      const investment = parseInvestmentFromForm();
+      if (investment != null && investment >= 10000 && !hasHighRiskOpportunityType()) {
+        lead.textContent =
+          'Required because your investment is £10,000 or more — confirm this before submitting.';
+      } else {
+        lead.textContent =
+          'Required before you submit franchise, partnership, distributorship, or high-investment listings.';
+      }
+    }
     if (!show) {
       const box = document.getElementById('oe-fca-attest');
       if (box) box.checked = false;
@@ -370,7 +380,8 @@
     if (commissionEl) commissionEl.value = metaValue(opp.meta, /^commission$/i);
     if (promoteEl) promoteEl.value = metaValue(opp.meta, /^what you promote$/i);
     if (suitsEl) suitsEl.value = metaValue(opp.meta, /^who it suits$/i);
-    document.getElementById('oe-location').value = metaValue(opp.meta, /^location$/i);
+    document.getElementById('oe-location').value =
+      metaValue(opp.meta, /^location$/i) || metaValue(opp.meta, /^territory$/i);
     document.getElementById('oe-commitment').value = metaValue(opp.meta, /^commitment$/i);
     syncAffiliateFormMode();
 
@@ -475,6 +486,8 @@
       const reader = new FileReader();
       reader.onload = () => showPreview(reader.result);
       reader.readAsDataURL(file);
+      refreshCompleteness();
+      syncVisualRequirement(false);
     }
 
     if (zone && window.hubBindImageUpload) {
@@ -493,12 +506,16 @@
         e.stopPropagation();
         resetPreview();
         if (urlInput) urlInput.value = '';
+        refreshCompleteness();
+        syncVisualRequirement(false);
       });
     }
     if (urlInput) {
       urlInput.addEventListener('input', () => {
         const url = String(urlInput.value || '').trim();
         if (url) showPreview(url);
+        refreshCompleteness();
+        syncVisualRequirement(false);
       });
     }
   }
@@ -530,6 +547,8 @@
       const reader = new FileReader();
       reader.onload = () => showPreview(reader.result);
       reader.readAsDataURL(file);
+      refreshCompleteness();
+      syncVisualRequirement(false);
     }
 
     if (zone && window.hubBindImageUpload) {
@@ -549,6 +568,17 @@
         resetPreview();
         const urlInput = document.getElementById('oe-photo-url');
         if (urlInput) urlInput.value = '';
+        refreshCompleteness();
+        syncVisualRequirement(false);
+      });
+    }
+    const photoUrlInput = document.getElementById('oe-photo-url');
+    if (photoUrlInput) {
+      photoUrlInput.addEventListener('input', () => {
+        const url = String(photoUrlInput.value || '').trim();
+        if (url) showPreview(url);
+        refreshCompleteness();
+        syncVisualRequirement(false);
       });
     }
   }
@@ -560,6 +590,52 @@
       reader.onerror = reject;
       reader.readAsDataURL(file);
     });
+  }
+
+  function hasListingImage(payload) {
+    if (photoFile || logoFile) return true;
+    const p = payload || buildPayload('draft');
+    if (String(p.photoUrl || '').trim() || String(p.logoUrl || '').trim()) return true;
+    const logoPreview = document.getElementById('oe-logo-preview');
+    const photoPreview = document.getElementById('oe-photo-preview');
+    if (logoPreview && !logoPreview.hidden && document.getElementById('oe-logo-preview-img')?.src) {
+      return true;
+    }
+    if (photoPreview && !photoPreview.hidden && document.getElementById('oe-photo-preview-img')?.src) {
+      return true;
+    }
+    return false;
+  }
+
+  function syncVisualRequirement(showMissing) {
+    const note = document.getElementById('oe-visual-requirement');
+    if (!note) return;
+    const missing = showMissing && !hasListingImage(buildPayload('draft'));
+    note.hidden = !missing;
+  }
+
+  function scrollToValidationField(message) {
+    const msg = String(message || '').toLowerCase();
+    let id = '';
+    if (/territory|location/.test(msg)) id = 'oe-location';
+    else if (/logo|photo|cover|image/.test(msg)) id = 'oe-card-host';
+    else if (/commission/.test(msg)) id = 'oe-commission';
+    else if (/promote/.test(msg)) id = 'oe-promote';
+    else if (/investment/.test(msg)) id = 'oe-investment';
+    else if (/commitment/.test(msg)) id = 'oe-commitment';
+    else if (/type/.test(msg)) id = 'oe-type-group';
+    else if (/declaration|regulated investment/.test(msg)) id = 'oe-fca-attest-panel';
+    if (!id) return;
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const focusable = el.querySelector('input, select, textarea, button');
+    if (focusable && typeof focusable.focus === 'function') {
+      focusable.focus({ preventScroll: true });
+    }
+    if (id === 'oe-location') {
+      document.getElementById('oe-location-field')?.classList.add('is-invalid');
+    }
   }
 
   function buildMeta() {
@@ -685,6 +761,7 @@
         tipEl.textContent = 'Great — your listing has strong detail for browsers.';
       }
     }
+    syncVisualRequirement(false);
   }
 
   function bindCompletenessScan() {
@@ -843,9 +920,12 @@
       return 'Enter the investment required.';
     }
     if (!payload.meta.some((m) => /^location$/i.test(m.key) || /^territory$/i.test(m.key))) {
-      return 'Enter the territory or location for this opportunity.';
+      return 'Enter the territory or location for this opportunity (e.g. UK-wide, Remote, or a city).';
     }
     if (!payload.meta.some((m) => /^commitment$/i.test(m.key))) return 'Select a commitment level.';
+    if (!isDraft && !hasListingImage(payload)) {
+      return 'Add a business logo or cover photo before submitting.';
+    }
     if (requiresFcaDisclaimer() && !payload.fcaDisclaimerAttested) {
       return 'Confirm this is not a regulated investment and you will not make guaranteed return claims.';
     }
@@ -889,6 +969,8 @@
       const validationError = validatePayload(payloadCheck, false);
       if (validationError) {
         showAlert(validationError);
+        scrollToValidationField(validationError);
+        syncVisualRequirement(true);
         return;
       }
       await startListingCheckout(editId || currentOpportunity.id);
@@ -902,6 +984,8 @@
     const validationError = validatePayload(payload, !publish);
     if (validationError) {
       showAlert(validationError);
+      scrollToValidationField(validationError);
+      syncVisualRequirement(true);
       return;
     }
 
@@ -1083,6 +1167,27 @@
         updateFcaAttestVisibility();
       });
     });
+    document.querySelectorAll('.oe-location-chip').forEach((btn) => {
+      btn.addEventListener('click', function () {
+        const locationEl = document.getElementById('oe-location');
+        const value = btn.getAttribute('data-location-value') || '';
+        if (locationEl && value) {
+          locationEl.value = value;
+          locationEl.dispatchEvent(new Event('input', { bubbles: true }));
+          locationEl.focus();
+        }
+        document.getElementById('oe-location-field')?.classList.remove('is-invalid');
+        refreshCompleteness();
+      });
+    });
+    const locationEl = document.getElementById('oe-location');
+    if (locationEl) {
+      locationEl.addEventListener('input', function () {
+        if (locationEl.value.trim()) {
+          document.getElementById('oe-location-field')?.classList.remove('is-invalid');
+        }
+      });
+    }
     syncAffiliateFormMode();
     updateFcaAttestVisibility();
 

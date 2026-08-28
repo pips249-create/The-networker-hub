@@ -826,9 +826,9 @@ async function fetchActivity(sb) {
 
 async function fetchUsers(sb) {
   const accountsSelectWithRoundups =
-    'user_id, role, display_name, hub_view, emails_enabled, email_pref_event_reminders, email_pref_organiser_alerts, email_pref_organiser_roundups, organiser_terms_accepted_at, created_at';
+    'user_id, role, display_name, hub_view, emails_enabled, email_pref_event_reminders, email_pref_organiser_alerts, email_pref_organiser_roundups, organiser_terms_accepted_at, organiser_terms_version, created_at';
   const accountsSelectFallback =
-    'user_id, role, display_name, hub_view, emails_enabled, email_pref_event_reminders, email_pref_organiser_alerts, organiser_terms_accepted_at, created_at';
+    'user_id, role, display_name, hub_view, emails_enabled, email_pref_event_reminders, email_pref_organiser_alerts, organiser_terms_accepted_at, organiser_terms_version, created_at';
   let accountsRes = await sb.from('hub_accounts').select(accountsSelectWithRoundups);
   if (
     accountsRes.error &&
@@ -888,6 +888,7 @@ async function fetchUsers(sb) {
       emailPrefOrganiserAlerts: acc.email_pref_organiser_alerts !== false,
       emailPrefOrganiserRoundups: acc.email_pref_organiser_roundups !== false,
       organiserTermsAcceptedAt: acc.organiser_terms_accepted_at || null,
+      organiserTermsVersion: acc.organiser_terms_version || null,
       organiserListingStatus: org?.listing_status || null,
       accountCreatedAt: acc.created_at || auth?.created_at || null,
       lastSignInAt: auth?.last_sign_in_at || null,

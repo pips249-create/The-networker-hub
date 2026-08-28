@@ -1424,6 +1424,13 @@ body.hub-organiser-terms-open {
   color: #b91c1c;
 }
 
+.hub-organiser-terms-note {
+  margin: 0 0 12px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--text-muted, #64748b);
+}
+
 .hub-organiser-terms-actions {
   display: flex;
   flex-wrap: wrap;

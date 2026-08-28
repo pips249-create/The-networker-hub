@@ -307,8 +307,7 @@
           },
       { key: 'location', label: 'Territory / location', weight: 10, ok: Boolean(input.location) },
       { key: 'commitment', label: 'Commitment', weight: 8, ok: Boolean(input.commitment) },
-      { key: 'logo', label: 'Logo or image', weight: 8, ok: Boolean(input.logoUrl || input.logoFile) },
-      { key: 'cover', label: 'Cover photo', weight: 6, ok: Boolean(input.imageUrl || input.imageFile) },
+      { key: 'visual', label: 'Logo or cover photo', weight: 12, ok: Boolean(input.logoUrl || input.logoFile || input.imageUrl || input.imageFile) },
       {
         key: 'companies-house',
         label: 'Companies House number',
