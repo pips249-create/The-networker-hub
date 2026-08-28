@@ -503,35 +503,42 @@
     panel.hidden = false;
     const lead = document.getElementById('oe-listing-payment-lead');
     const note = document.getElementById('oe-actions-note');
+    const payStripeBtn = document.getElementById('oe-pay-stripe');
     const approval = String(
       (currentOpportunity && currentOpportunity.approvalStatus) || ''
     ).trim();
     if (approval === 'Approved') {
+      panel.classList.add('is-awaiting-payment');
+      if (payStripeBtn) payStripeBtn.hidden = false;
       if (lead) {
         lead.innerHTML =
-          'Your listing is <strong>approved</strong>. Start a <strong>monthly subscription of £25 + VAT</strong> (£30 total) and it goes live on the directory immediately.';
+          'Your listing is <strong>approved</strong>. Pay via Stripe to start your <strong>monthly subscription of £25 + VAT</strong> (£30 total) — it goes live on the directory immediately.';
       }
       if (note) {
         note.textContent =
           'Billed monthly via Stripe — cancel any time from your Stripe customer portal or by contacting us.';
       }
-    } else if (isSubmittedAwaitingApproval(currentOpportunity)) {
-      if (lead) {
-        lead.innerHTML =
-          'Your listing is <strong>awaiting approval</strong>. You can still edit below — save changes and submit for approval again to send updates. After we approve it, start a <strong>monthly subscription of £25 + VAT</strong> (£30 total) and it goes live immediately.';
-      }
-      if (note) {
-        note.textContent =
-          'No charge until approved. Keep editing as needed, then submit for approval again after changes.';
-      }
     } else {
-      if (lead) {
-        lead.innerHTML =
-          'Review everything below, then submit for approval — no charge yet. After we approve it, start a <strong>monthly subscription of £25 + VAT</strong> (£30 total) and it goes live immediately.';
-      }
-      if (note) {
-        note.textContent =
-          'Review your listing, then submit for approval. You can keep editing until we approve — submit again after any changes.';
+      panel.classList.remove('is-awaiting-payment');
+      if (payStripeBtn) payStripeBtn.hidden = true;
+      if (isSubmittedAwaitingApproval(currentOpportunity)) {
+        if (lead) {
+          lead.innerHTML =
+            'Your listing is <strong>awaiting approval</strong>. You can still edit below — save changes and submit for approval again to send updates. After we approve it, start a <strong>monthly subscription of £25 + VAT</strong> (£30 total) and it goes live immediately.';
+        }
+        if (note) {
+          note.textContent =
+            'No charge until approved. Keep editing as needed, then submit for approval again after changes.';
+        }
+      } else {
+        if (lead) {
+          lead.innerHTML =
+            'Review everything below, then submit for approval — no charge yet. After we approve it, start a <strong>monthly subscription of £25 + VAT</strong> (£30 total) and it goes live immediately.';
+        }
+        if (note) {
+          note.textContent =
+            'Review your listing, then submit for approval. You can keep editing until we approve — submit again after any changes.';
+        }
       }
     }
     return true;
@@ -678,7 +685,7 @@
     const approval = String(
       (currentOpportunity && currentOpportunity.approvalStatus) || ''
     ).trim();
-    if (approval === 'Approved') return 'Pay to go live';
+    if (approval === 'Approved') return 'Pay via Stripe →';
     if (approval === 'Rejected') return 'Resubmit for approval';
     if (isSubmittedAwaitingApproval(currentOpportunity)) return 'Save & submit for approval';
     return 'Submit for approval';
@@ -771,10 +778,13 @@
 
   async function startListingCheckout(opportunityId) {
     const submitBtn = document.getElementById('oe-submit');
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'Opening secure checkout…';
-    }
+    const payStripeBtn = document.getElementById('oe-pay-stripe');
+    [submitBtn, payStripeBtn].forEach(function (btn) {
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Opening secure checkout…';
+      }
+    });
     const checkoutBody = { opportunityId: opportunityId };
     const approval = String(
       (currentOpportunity && currentOpportunity.approvalStatus) || ''
@@ -801,6 +811,10 @@
     if (submitBtn) {
       submitBtn.disabled = false;
       submitBtn.textContent = primarySubmitLabel();
+    }
+    if (payStripeBtn) {
+      payStripeBtn.disabled = false;
+      payStripeBtn.textContent = 'Pay via Stripe →';
     }
   }
 
@@ -3057,6 +3071,16 @@
     document.getElementById('oe-delete-draft')?.addEventListener('click', function () {
       deleteCurrentOpportunityDraft().catch(function (err) {
         showAlert(String((err && err.message) || 'Could not delete draft.'), true);
+      });
+    });
+    document.getElementById('oe-pay-stripe')?.addEventListener('click', function () {
+      const id = editId || (currentOpportunity && currentOpportunity.id);
+      if (!id) {
+        showAlert('Save your listing before starting checkout.');
+        return;
+      }
+      startListingCheckout(id).catch(function (err) {
+        showAlert(String((err && err.message) || 'Could not start checkout.'), true);
       });
     });
 

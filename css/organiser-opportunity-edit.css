@@ -1019,6 +1019,20 @@ body.hub-page-organiser.organiser-opportunity-edit-page {
   background: linear-gradient(180deg, rgba(253, 244, 216, 0.55) 0%, rgba(255, 255, 255, 0.9) 100%);
 }
 
+.oe-listing-payment.is-awaiting-payment {
+  border-color: rgba(201, 150, 31, 0.55);
+  background: linear-gradient(180deg, rgba(253, 244, 216, 0.95) 0%, rgba(255, 252, 245, 1) 100%);
+  box-shadow: 0 4px 20px rgba(201, 150, 31, 0.18);
+}
+
+.oe-listing-pay-stripe {
+  width: 100%;
+  margin-top: 4px;
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 14px 20px;
+}
+
 .oe-listing-payment-title {
   margin: 0 0 6px;
   font-size: 1rem;
