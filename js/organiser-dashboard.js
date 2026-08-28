@@ -18045,6 +18045,7 @@
     });
     syncOpenDayFormatFields();
     initOpenDayTimeSelects();
+    bindBusinessHubSummaryNav();
 
     ['filter-events-status', 'filter-events-type', 'filter-events-search'].forEach((id) => {
       const el = document.getElementById(id);
