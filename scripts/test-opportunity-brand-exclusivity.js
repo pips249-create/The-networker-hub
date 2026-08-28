@@ -4,6 +4,7 @@
  */
 const {
   detectExclusiveBrand,
+  groupExclusiveBrandDuplicates,
   exclusiveBrandConflictError,
 } = require('../api/_lib/opportunity-brand-exclusivity');
 
@@ -28,6 +29,18 @@ assert(
       existing: { title: 'Join BNI', host: 'BNI UK' },
     })
   )
+);
+assert(
+  'Duplicate groups only when 2+ same brand',
+  (function () {
+    const groups = groupExclusiveBrandDuplicates([
+      { id: '1', title: 'Join BNI Leeds', host: 'BNI' },
+      { id: '2', title: 'BNI Manchester', host: 'Local chapter' },
+      { id: '3', title: 'Café franchise', host: 'Coffee Co' },
+      { id: '4', title: 'Utility Warehouse partner', host: 'UW' },
+    ]);
+    return groups.length === 1 && groups[0].brandKey === 'bni' && groups[0].listings.length === 2;
+  })()
 );
 
 if (!process.exitCode) {

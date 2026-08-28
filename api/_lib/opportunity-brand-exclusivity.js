@@ -43,6 +43,56 @@ function detectExclusiveBrandFromRow(row) {
   });
 }
 
+function groupExclusiveBrandDuplicates(rows) {
+  const byBrand = {};
+  for (let i = 0; i < (rows || []).length; i += 1) {
+    const row = rows[i];
+    const brand = detectExclusiveBrandFromRow(row);
+    if (!brand) continue;
+    if (!byBrand[brand.key]) {
+      byBrand[brand.key] = {
+        brand: brand.label,
+        brandKey: brand.key,
+        listings: [],
+      };
+    }
+    byBrand[brand.key].listings.push({
+      id: row.id,
+      title: String(row.title || '').trim(),
+      host: String(row.host || '').trim(),
+      status: row.status || '',
+      approval_status: row.approval_status || '',
+    });
+  }
+  return Object.keys(byBrand)
+    .map(function (key) {
+      return byBrand[key];
+    })
+    .filter(function (group) {
+      return group.listings.length > 1;
+    });
+}
+
+async function findExclusiveBrandDuplicateGroups(sb) {
+  const { data, error } = await sb
+    .from('business_opportunities')
+    .select('id, title, host, description, about, status, approval_status')
+    .neq('status', 'archived');
+  if (error) throw new Error(error.message);
+  return groupExclusiveBrandDuplicates(data || []);
+}
+
+async function findExclusiveBrandDuplicateListingIds(sb) {
+  const groups = await findExclusiveBrandDuplicateGroups(sb);
+  const ids = [];
+  groups.forEach(function (group) {
+    group.listings.forEach(function (listing) {
+      ids.push(String(listing.id));
+    });
+  });
+  return [...new Set(ids)];
+}
+
 async function findExclusiveBrandConflict(sb, fields, excludeId) {
   const brand = detectExclusiveBrand(fields);
   if (!brand) return null;
@@ -116,6 +166,9 @@ module.exports = {
   collectListingText,
   detectExclusiveBrand,
   detectExclusiveBrandFromRow,
+  groupExclusiveBrandDuplicates,
+  findExclusiveBrandDuplicateGroups,
+  findExclusiveBrandDuplicateListingIds,
   findExclusiveBrandConflict,
   exclusiveBrandConflictError,
   assertExclusiveBrandAvailable,

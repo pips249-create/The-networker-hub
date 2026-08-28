@@ -565,6 +565,7 @@
     featured: false,
     noImage: false,
     awaitingPayment: false,
+    brandDuplicates: false,
     sort: 'recent',
     page: 0,
     q: '',
@@ -582,6 +583,7 @@
   var eventBulkOrganiserDocClickBound = false;
   var eventEditOrganiserDocClickBound = false;
   var opportunityCleanupCache = null;
+  var opportunityExclusiveBrandDuplicates = null;
   var featuredSpotlightEvents = [];
   var featuredSpotlightState = {
     q: '',
@@ -22314,6 +22316,84 @@
     });
   }
 
+  function opportunityExclusiveBrandDuplicateMeta(oppId) {
+    var groups = (opportunityExclusiveBrandDuplicates && opportunityExclusiveBrandDuplicates.groups) || [];
+    var id = String(oppId || '');
+    if (!id || !groups.length) return null;
+    for (var g = 0; g < groups.length; g += 1) {
+      var group = groups[g];
+      var listings = group.listings || [];
+      for (var i = 0; i < listings.length; i += 1) {
+        if (String(listings[i].id) === id) {
+          return {
+            brand: group.brand || 'Exclusive brand',
+            count: listings.length,
+          };
+        }
+      }
+    }
+    return null;
+  }
+
+  function renderOpportunityExclusiveBrandDuplicatesBanner() {
+    var banner = document.getElementById('opportunity-exclusive-brand-duplicates');
+    if (!banner) return;
+    var groups = (opportunityExclusiveBrandDuplicates && opportunityExclusiveBrandDuplicates.groups) || [];
+    if (!groups.length) {
+      banner.classList.add('hidden');
+      banner.innerHTML = '';
+      return;
+    }
+    var listingCount = 0;
+    var parts = groups.map(function (group) {
+      listingCount += (group.listings || []).length;
+      var names = (group.listings || [])
+        .map(function (listing) {
+          return esc(String(listing.title || 'Untitled').trim());
+        })
+        .join(', ');
+      return (
+        '<li><strong>' +
+        esc(group.brand || 'Brand') +
+        '</strong> — ' +
+        (group.listings || []).length +
+        ' listings: ' +
+        names +
+        '</li>'
+      );
+    });
+    banner.classList.remove('hidden');
+    banner.innerHTML =
+      '<div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 space-y-2">' +
+      '<p class="text-sm font-semibold text-red-900">Exclusive brand duplicates in catalogue</p>' +
+      '<p class="text-xs text-red-800">Only one Utility Warehouse, Arbonne, or BNI listing should be live. Archive or delete extras, then keep the best one.</p>' +
+      '<ul class="text-xs text-red-900 list-disc pl-5 space-y-1">' +
+      parts.join('') +
+      '</ul>' +
+      '<div class="flex flex-wrap gap-2 pt-1">' +
+      '<button type="button" data-opp-quick="brand_duplicates" class="text-xs font-semibold rounded-full border border-red-300 bg-white px-3 py-1.5 text-red-900 hover:bg-red-100">Show duplicate listings (' +
+      listingCount +
+      ')</button></div></div>';
+  }
+
+  function fetchOpportunityExclusiveBrandDuplicates() {
+    return adminGet('/api/admin/opportunities?exclusive_brand_duplicates=1')
+      .then(function (data) {
+        if (!data || data.error || data.ok === false) {
+          opportunityExclusiveBrandDuplicates = { groups: [] };
+        } else {
+          opportunityExclusiveBrandDuplicates = { groups: data.groups || [] };
+        }
+        renderOpportunityExclusiveBrandDuplicatesBanner();
+        return opportunityExclusiveBrandDuplicates;
+      })
+      .catch(function () {
+        opportunityExclusiveBrandDuplicates = { groups: [] };
+        renderOpportunityExclusiveBrandDuplicatesBanner();
+        return opportunityExclusiveBrandDuplicates;
+      });
+  }
+
   function adminContentRoot() {
     return document.getElementById('admin-main') || document;
   }
@@ -22670,12 +22750,15 @@
         : '';
     var statusNote = isDraftNotSubmitted
       ? 'Pending approval — submission stamp missing or not yet submitted. You can still approve if the listing looks complete.'
-      : isPendingSubmitted
-        ? 'Submitted for approval — lister can still edit and resubmit until you approve.' +
+      : opportunityHasPendingLiveUpdate(opp)
+        ? 'Live listing — proposed changes awaiting approval. The current version stays public until you approve.' +
           (submittedAt ? ' · ' + submittedAt : '')
-        : awaitingPay
-          ? 'Approved — awaiting listing payment before going live.'
-          : 'Review what was submitted before making admin changes.';
+        : isPendingSubmitted
+          ? 'Submitted for approval — lister can still edit and resubmit until you approve.' +
+            (submittedAt ? ' · ' + submittedAt : '')
+          : awaitingPay
+            ? 'Approved — awaiting listing payment before going live.'
+            : 'Review what was submitted before making admin changes.';
     var priorRejection = String(opp.rejection_note || '').trim();
     return (
       '<div class="opp-review-panel" data-opp-review-for="' +
@@ -22804,7 +22887,9 @@
           '" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">' +
           approveLabel +
           '</button>' +
-          '<button type="button" data-opp-reject class="rounded-lg border border-red-300 bg-red-50 text-red-800 text-sm font-semibold px-4 py-2 hover:bg-red-100">Deny listing</button>' +
+          '<button type="button" data-opp-reject class="rounded-lg border border-red-300 bg-red-50 text-red-800 text-sm font-semibold px-4 py-2 hover:bg-red-100">' +
+          (opportunityHasPendingLiveUpdate(opp) ? 'Deny changes' : 'Deny listing') +
+          '</button>' +
           '</div></section>'
         : '') +
       '<details class="opp-review-admin-edit">' +
@@ -23086,7 +23171,8 @@
   function opportunityCleanupDataRowHtml(opp) {
     var publicHref = opportunityAdminViewHref(opp);
     var isPendingSubmitted =
-      opp.approval_status === 'Pending Review' && opportunityIsSubmittedForReview(opp);
+      (opp.approval_status === 'Pending Review' && opportunityIsSubmittedForReview(opp)) ||
+      opportunityHasPendingLiveUpdate(opp);
     var canApprove = opportunityCanApprove(opp);
     var awaitingPay = opp.approval_status === 'Approved' && !opp.listing_payment_active;
     var rowClass = isPendingSubmitted
@@ -23097,9 +23183,12 @@
     var isOpen = !!opportunityCleanupState.expanded[opp.id];
     if (opportunityCleanupState.selected[opp.id]) rememberSelectedOpportunity(opp);
     var checked = opportunityCleanupState.selected[opp.id] ? ' checked' : '';
-    var approveLabel = opp.listing_payment_active
-      ? 'Approve &amp; go live'
-      : 'Approve — email pay link';
+    var approveLabel = opportunityHasPendingLiveUpdate(opp)
+      ? 'Approve changes'
+      : opp.listing_payment_active
+        ? 'Approve &amp; go live'
+        : 'Approve — email pay link';
+    var brandDup = opportunityExclusiveBrandDuplicateMeta(opp.id);
     return (
       '<tr class="hover:bg-slate-50/80 ' +
       rowClass +
@@ -23138,6 +23227,15 @@
         : '') +
       (opp.featured
         ? '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-violet-100 text-violet-800">Featured</span>'
+        : '') +
+      (brandDup
+        ? '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-red-100 text-red-900" title="Only one ' +
+          attrEsc(brandDup.brand) +
+          ' listing allowed — ' +
+          brandDup.count +
+          ' found in catalogue">' +
+          esc(brandDup.brand) +
+          ' duplicate</span>'
         : '') +
       '</div></td>' +
       '<td class="py-2.5 pr-3 text-xs text-slate-500 max-w-[10rem] truncate">' +
@@ -23385,6 +23483,7 @@
     if (opportunityCleanupState.featured) params.set('featured', '1');
     if (opportunityCleanupState.noImage) params.set('no_image', '1');
     if (opportunityCleanupState.awaitingPayment) params.set('awaiting_payment', '1');
+    if (opportunityCleanupState.brandDuplicates) params.set('brand_duplicates', '1');
     if (opportunityCleanupState.sort) params.set('sort', opportunityCleanupState.sort);
     if (opportunityCleanupState.q) params.set('q', opportunityCleanupState.q);
     return adminGet('/api/admin/opportunities?' + params.toString())
@@ -23435,7 +23534,13 @@
   function refreshOpportunityCleanupData() {
     opportunityCleanupState.page = 0;
     opportunityCleanupState.expanded = {};
-    return fetchOpportunityCleanup(0).then(applyOpportunityCleanupData);
+    return Promise.all([
+      fetchOpportunityCleanup(0),
+      fetchOpportunityExclusiveBrandDuplicates(),
+    ]).then(function (results) {
+      applyOpportunityCleanupData(results[0]);
+      return results[0];
+    });
   }
 
   function refreshOpportunityCleanupPage() {
@@ -23620,6 +23725,7 @@
       '<button type="button" id="opportunity-test-samples-btn" class="rounded-lg border border-brand-300 bg-white text-brand-900 text-sm font-semibold px-4 py-2 hover:bg-brand-50">Add 3 sample test listings</button>' +
       '<span id="opportunity-test-samples-msg" class="text-xs"></span></div></div></div></details></div>' +
       '<div id="opportunity-cleanup-status" class="text-sm text-slate-500">Loading business opportunities…</div>' +
+      '<div id="opportunity-exclusive-brand-duplicates" class="hidden"></div>' +
       '<p id="opportunity-cleanup-hint" class="hidden text-xs text-amber-900 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">' +
       'Large catalogue — use search and More filters. Type a page number below the table to jump ahead.</p>' +
       '<div id="opportunity-cleanup-bulk" class="hidden rounded-xl border border-brand-200 bg-brand-50 p-4 shadow-sm space-y-3">' +
@@ -23689,7 +23795,11 @@
       '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">' +
       '<input type="checkbox" id="opportunity-cleanup-no-image" class="rounded border-slate-300"' +
       (opportunityCleanupState.noImage ? ' checked' : '') +
-      '> No cover image</label></div>' +
+      '> No cover image</label>' +
+      '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">' +
+      '<input type="checkbox" id="opportunity-cleanup-brand-duplicates" class="rounded border-slate-300"' +
+      (opportunityCleanupState.brandDuplicates ? ' checked' : '') +
+      '> Brand duplicates only</label></div>' +
       '<div class="flex flex-wrap gap-2">' +
       '<button type="button" data-opp-quick="pending" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Pending review</button>' +
       '<button type="button" data-opp-quick="awaiting_payment" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Awaiting payment</button>' +
@@ -23697,6 +23807,7 @@
       '<button type="button" data-opp-quick="published" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Published</button>' +
       '<button type="button" data-opp-quick="featured" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Featured</button>' +
       '<button type="button" data-opp-quick="no_image" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">No image</button>' +
+      '<button type="button" data-opp-quick="brand_duplicates" class="text-xs font-semibold rounded-full border border-red-200 px-3 py-1 text-red-800 hover:bg-red-50">Brand duplicates</button>' +
       '<button type="button" data-opp-quick="clear" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-500 hover:bg-slate-50">Clear filters</button></div>' +
       '</div></details>' +
       '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer border-t border-slate-100 pt-2">' +
@@ -24297,6 +24408,7 @@
         opportunityCleanupState.featured = false;
         opportunityCleanupState.noImage = false;
         opportunityCleanupState.awaitingPayment = false;
+        opportunityCleanupState.brandDuplicates = false;
         opportunityCleanupState.q = '';
       } else if (key === 'pending') {
         if (opportunityCleanupState.approval === 'Pending Review') {
@@ -24321,6 +24433,8 @@
         opportunityCleanupState.featured = !opportunityCleanupState.featured;
       } else if (key === 'no_image') {
         opportunityCleanupState.noImage = !opportunityCleanupState.noImage;
+      } else if (key === 'brand_duplicates') {
+        opportunityCleanupState.brandDuplicates = !opportunityCleanupState.brandDuplicates;
       }
       syncOpportunityCleanupFilterUi();
       refreshOpportunityCleanupData();
@@ -24413,6 +24527,11 @@
       }
       if (e.target.id === 'opportunity-cleanup-no-image') {
         opportunityCleanupState.noImage = e.target.checked;
+        syncOpportunityCleanupFilterUi();
+        refreshOpportunityCleanupData();
+      }
+      if (e.target.id === 'opportunity-cleanup-brand-duplicates') {
+        opportunityCleanupState.brandDuplicates = e.target.checked;
         syncOpportunityCleanupFilterUi();
         refreshOpportunityCleanupData();
       }

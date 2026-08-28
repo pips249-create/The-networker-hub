@@ -31,6 +31,8 @@ const {
 } = require('../opportunity-review-queue');
 const {
   findExclusiveBrandConflict,
+  findExclusiveBrandDuplicateGroups,
+  findExclusiveBrandDuplicateListingIds,
   assertExclusiveBrandAvailable,
   sendExclusiveBrandConflict,
   exclusiveBrandConflictError,
@@ -216,14 +218,19 @@ function moderationFlagsForAdminRow(mapped) {
 }
 
 function mapOpportunityRow(row) {
-  const meta = normalizeMeta(row.meta);
+  const hasPendingLiveUpdate = hasPendingLiveListingUpdate(row);
+  const source =
+    hasPendingLiveUpdate && row.pending_review_payload && row.pending_review_payload.row
+      ? Object.assign({}, row, row.pending_review_payload.row)
+      : row;
+  const meta = normalizeMeta(source.meta);
   const mapped = {
     id: row.id,
-    slug: row.slug || '',
-    title: String(row.title || '').trim(),
-    description: String(row.description || '').trim(),
-    about: Array.isArray(row.about) ? row.about.map(String) : [],
-    about_text: aboutToText(row.about),
+    slug: source.slug || row.slug || '',
+    title: String(source.title || '').trim(),
+    description: String(source.description || '').trim(),
+    about: Array.isArray(source.about) ? source.about.map(String) : [],
+    about_text: aboutToText(source.about),
     meta,
     investment: metaVal(meta, /^investment$/i),
     investment_includes: metaVal(meta, /^investment includes$/i),
@@ -233,12 +240,12 @@ function mapOpportunityRow(row) {
     location: metaVal(meta, /^location$/i) || metaVal(meta, /territor/i),
     commitment: metaVal(meta, /^commitment$/i),
     cookie_window: metaVal(meta, /^cookie window$/i),
-    region_slug: String(row.region_slug || '').trim(),
-    regionSlug: String(row.region_slug || '').trim(),
-    host: String(row.host || '').trim(),
-    type: row.type || '',
-    category: row.category || '',
-    contact_email: String(row.contact_email || '').trim(),
+    region_slug: String(source.region_slug || row.region_slug || '').trim(),
+    regionSlug: String(source.region_slug || row.region_slug || '').trim(),
+    host: String(source.host || '').trim(),
+    type: source.type || row.type || '',
+    category: source.category || row.category || '',
+    contact_email: String(source.contact_email || row.contact_email || '').trim(),
     status: row.status || 'draft',
     approval_status: row.approval_status || 'Pending Review',
     review_submitted_at: effectiveReviewSubmittedAt(row),
@@ -250,17 +257,17 @@ function mapOpportunityRow(row) {
     owner_email: String(row.owner_email || '').toLowerCase(),
     ownership_claim_status: row.ownership_claim_status || null,
     organiser_id: row.organiser_id || '',
-    image_url: row.image_url || '',
-    logo_url: row.logo_url || '',
-    ...resolveOpportunityDisplayCover(row.image_url, row.logo_url),
-    package_tier: row.package_tier || '',
+    image_url: source.image_url || row.image_url || '',
+    logo_url: source.logo_url || row.logo_url || '',
+    ...resolveOpportunityDisplayCover(source.image_url || row.image_url, source.logo_url || row.logo_url),
+    package_tier: source.package_tier || row.package_tier || '',
     listing_expires_at: row.listing_expires_at || '',
     listing_paid_at: row.listing_paid_at || '',
     created_at: row.created_at || '',
     updated_at: row.updated_at || '',
     published_at: row.published_at || '',
     rejection_note: row.rejection_note || null,
-    has_pending_live_update: hasPendingLiveListingUpdate(row),
+    has_pending_live_update: hasPendingLiveUpdate,
     pending_review_payload: row.pending_review_payload || null,
   };
   mapped.moderation_flags = moderationFlagsForAdminRow(mapped);
@@ -373,6 +380,8 @@ async function listOpportunitiesForAdmin(query) {
   const sort = String(query.sort || 'recent').trim().toLowerCase();
   const featuredOnly = query.featured === '1' || query.featured === 'true';
   const noImage = query.no_image === '1' || query.no_image === 'true';
+  const brandDuplicatesOnly =
+    query.brand_duplicates === '1' || query.brand_duplicates === 'true';
   const awaitingPayment =
     query.awaiting_payment === '1' || query.awaiting_payment === 'true';
   const offset = Math.max(parseInt(String(query.offset || ''), 10) || 0, 0);
@@ -417,6 +426,25 @@ async function listOpportunitiesForAdmin(query) {
 
   let rows = [];
   let total = 0;
+  let brandDuplicateIds = null;
+
+  if (brandDuplicatesOnly) {
+    brandDuplicateIds = await findExclusiveBrandDuplicateListingIds(sb);
+    if (!brandDuplicateIds.length) {
+      const pendingCountRes = await applyPendingOpportunitiesAdminFilter(
+        sb.from('business_opportunities').select('id', { count: 'exact', head: true }),
+        reviewQueueReady
+      );
+      const pendingCountResult = await pendingCountRes;
+      if (pendingCountResult.error) throw new Error(pendingCountResult.error.message);
+      return {
+        opportunities: [],
+        total: 0,
+        pending_count: pendingCountResult.count || 0,
+      };
+    }
+    dbQuery = dbQuery.in('id', brandDuplicateIds);
+  }
 
   if (awaitingPayment) {
     const awaitingRes = await dbQuery.limit(200);
@@ -654,6 +682,11 @@ module.exports = async function handler(req, res) {
           conflict,
           message: conflict ? exclusiveBrandConflictError(conflict) : null,
         });
+      }
+      if (String(q.exclusive_brand_duplicates || '') === '1') {
+        const sb = getSupabaseAdmin();
+        const groups = await findExclusiveBrandDuplicateGroups(sb);
+        return json(res, 200, { ok: true, groups });
       }
       const data = await listOpportunitiesForAdmin(q);
       return json(res, 200, { ok: true, ...data });
