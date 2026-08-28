@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260723" />
     <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260608c" />
-    <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260828flow1" />
+    <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260828photocopy1" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260825adminbadge1" />
   </head>
   <body class="opportunities-page organiser-event-edit-page organiser-opportunity-edit-page">
@@ -29,7 +29,7 @@
       </div>
     </div>
     <div id="hub-site-nav"></div>
-    <script src="../js/site-nav.js?v=20260825navfull1" data-root="../" data-page="opportunities"></script>
+    <script src="../js/site-nav.js?v=20260828oppdash1" data-root="../" data-page="opportunities"></script>
 
     <div class="ee-wrap">
       <header class="ee-page-head">
@@ -76,11 +76,7 @@
               <label for="oe-title">Opportunity title</label>
               <input type="text" id="oe-title" required placeholder="e.g. Tropic Skincare — Ambassador Programme" />
             </div>
-            <div class="oe-step-next" id="oe-next-title">
-              <button type="button" class="ee-btn ee-btn-gold" id="oe-continue-title">Continue →</button>
-            </div>
-            <div class="oe-step-panel" id="oe-panel-details-rest" hidden>
-              <div class="ee-field" id="oe-field-type">
+            <div class="ee-field" id="oe-field-type">
                 <p class="ee-label-block" id="oe-type-label">Opportunity type</p>
                 <p class="ee-hint" id="oe-type-hint">Pick the type that best describes your listing. You can combine investment-style types (franchise, partnership, etc.) if they genuinely apply. <strong>Affiliate is a separate track</strong> — select it on its own.</p>
                 <div class="oe-type-group" id="oe-type-group" role="group" aria-labelledby="oe-type-label" aria-describedby="oe-type-hint oe-type-mode-note">
@@ -101,14 +97,19 @@
                 <select id="oe-category">
                   <option value="">Select category…</option>
                   <option value="cleaning">Cleaning</option>
+                  <option value="home-services">Home services &amp; trades</option>
                   <option value="food">Food &amp; Drink</option>
+                  <option value="retail">Retail &amp; E-commerce</option>
                   <option value="tech">Tech &amp; Digital</option>
                   <option value="health">Health &amp; Fitness</option>
                   <option value="beauty">Beauty &amp; Wellness</option>
                   <option value="property">Property</option>
+                  <option value="automotive">Automotive</option>
                   <option value="education">Education &amp; Coaching</option>
+                  <option value="childcare">Childcare &amp; Family</option>
                   <option value="finance">Finance &amp; Admin</option>
                   <option value="pets">Pets &amp; Animals</option>
+                  <option value="leisure">Leisure, travel &amp; hospitality</option>
                   <option value="mlm">Network marketing</option>
                   <option value="general">Other</option>
                 </select>
@@ -123,9 +124,8 @@
                 <p class="ee-hint">Shown on the detail page. Separate paragraphs with a blank line.</p>
                 <textarea id="oe-about" rows="6" maxlength="3000" placeholder="Tell people what's included, what support you offer, and what you're looking for in a partner or ambassador."></textarea>
               </div>
-              <div class="oe-step-next">
-                <button type="button" class="ee-btn ee-btn-gold" id="oe-continue-details">Continue →</button>
-              </div>
+            <div class="oe-step-next">
+              <button type="button" class="ee-btn ee-btn-gold" id="oe-continue-details">Continue →</button>
             </div>
           </div>
         </div>
@@ -154,14 +154,9 @@
               <input type="email" id="oe-email" required placeholder="you@company.co.uk" />
               <p class="ee-hint">Interested members contact you directly at this address.</p>
             </div>
-            <div class="ee-field" id="oe-visual-field">
-              <label>Business logo or cover photo</label>
-              <p class="ee-hint" id="oe-visual-hint">At least one image is required — a square logo, a cover photo, or both.</p>
-              <p class="oe-visual-requirement" id="oe-visual-requirement" hidden>Add a logo or cover photo before submitting.</p>
-            </div>
             <div class="ee-field">
               <label>Business logo</label>
-              <p class="ee-hint">Square logo shown beside your company name on cards and the detail page.</p>
+              <p class="ee-hint">Square logo shown beside your company name on cards and the detail page. Optional here — you can add a cover photo in step 4 instead.</p>
               <div class="ee-upload-zone oe-logo-upload" id="oe-logo-zone" tabindex="0" role="button" aria-label="Upload business logo">
                 <input type="file" id="oe-logo-file" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
                 <div class="ee-upload-preview" id="oe-logo-preview" hidden>
@@ -193,11 +188,16 @@
             <div id="oe-fields-capital">
               <div class="ee-field">
                 <label for="oe-investment">Investment required</label>
+                <p class="ee-hint" style="margin: 0 0 8px">
+                  Enter the figure you show to prospects. Add <strong>+ VAT</strong>, <strong>inc VAT</strong>, or
+                  <strong>total package</strong> in the text if it helps — e.g. <strong>£9,500 + VAT</strong> or
+                  <strong>£12,000 total</strong>. We don&apos;t add VAT automatically.
+                </p>
                 <div class="oe-investment-shortcuts" id="oe-investment-shortcuts">
                   <button type="button" class="oe-investment-chip" data-investment-value="£0">No upfront cost</button>
                   <button type="button" class="oe-investment-chip" data-investment-value="On request">On request</button>
                 </div>
-                <input type="text" id="oe-investment" placeholder="e.g. £0 or £9,500" />
+                <input type="text" id="oe-investment" placeholder="e.g. £9,500 + VAT or £12,000 total" />
               </div>
               <div class="ee-field">
                 <label for="oe-investment-includes">What&apos;s included in this investment? <span class="ee-optional">(optional)</span></label>
@@ -221,18 +221,20 @@
                 <label for="oe-commission">Commission</label>
                 <input type="text" id="oe-commission" placeholder="e.g. 20% recurring, or £50 per sale" />
               </div>
-              <div class="ee-field">
-                <label for="oe-promote">What you promote</label>
-                <input type="text" id="oe-promote" maxlength="160" placeholder="e.g. White-label web &amp; SEO for SMEs" />
-              </div>
-              <div class="ee-field">
-                <label for="oe-suits">Who it suits <span class="ee-optional">(optional)</span></label>
-                <input type="text" id="oe-suits" maxlength="160" placeholder="e.g. Networkers who already introduce business owners" />
-              </div>
+            <div class="ee-field">
+              <label for="oe-promote">What you promote</label>
+              <p class="ee-hint">Shown on your listing card — describe the product or service in plain language (not a link). You share signup or tracking links with partners after they enquire.</p>
+              <input type="text" id="oe-promote" maxlength="160" placeholder="e.g. Skincare &amp; beauty products, or home energy switching" />
+            </div>
+            <div class="ee-field">
+              <label for="oe-suits">Who it suits <span class="ee-optional">(optional)</span></label>
+              <p class="ee-hint">Who should consider promoting this — e.g. networkers with a local business audience.</p>
+              <input type="text" id="oe-suits" maxlength="160" placeholder="e.g. People who already introduce business owners locally" />
+            </div>
             </div>
             <div class="ee-field" id="oe-location-field">
-              <label for="oe-region">Region</label>
-              <p class="ee-hint">Required — matches how browsers filter opportunities. Pick the widest area that applies.</p>
+            <label for="oe-region">Region</label>
+            <p class="ee-hint">Required — pick UK-wide, a UK nation, county, city, or wider area. Matches how browsers filter opportunities.</p>
               <select id="oe-region" required>
                 <option value="">Select region…</option>
               </select>
@@ -248,12 +250,16 @@
               />
             </div>
             <div class="ee-field">
-              <label for="oe-commitment">Commitment</label>
-              <select id="oe-commitment" required>
-                <option value="">Select…</option>
+              <label for="oe-commitment">Commitment <span class="ee-optional">(optional)</span></label>
+              <p class="ee-hint">Helps browsers filter — skip if it varies or isn&apos;t relevant (e.g. pure affiliate programmes).</p>
+              <select id="oe-commitment">
+                <option value="">Select if relevant…</option>
                 <option value="Full-time">Full-time</option>
                 <option value="Part-time / Flexible">Part-time / Flexible</option>
+                <option value="Side hustle — few hours a week">Side hustle — few hours a week</option>
+                <option value="Flexible — no fixed hours">Flexible — no fixed hours</option>
                 <option value="Event-based">Event-based</option>
+                <option value="Varies — discuss when you enquire">Varies — discuss when you enquire</option>
               </select>
             </div>
             <div class="ee-field">
@@ -277,8 +283,10 @@
             <button type="button" class="ee-btn ee-btn-outline oe-step-change" data-oe-change="photo">Change</button>
           </div>
           <div class="oe-step-body" id="oe-body-photo">
-            <div class="ee-field">
-              <p class="auth-lede" style="margin: 0 0 8px; font-size: 13px">Large photo on your detail page and listing card — separate from your business logo. Logo or cover photo required (both is ideal).</p>
+            <div class="ee-field" id="oe-visual-field">
+              <p class="ee-hint" id="oe-visual-hint">Large photo on your detail page and listing card — separate from your business logo.</p>
+              <p class="ee-hint">At least one image is required before you submit — a logo from step 2, a cover photo here, or both.</p>
+              <p class="oe-visual-requirement" id="oe-visual-requirement" hidden>Add a logo or cover photo before submitting.</p>
               <div class="ee-upload-zone" id="oe-photo-zone" tabindex="0" role="button" aria-label="Upload opportunity image">
                 <input type="file" id="oe-photo-file" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
                 <div class="ee-upload-preview" id="oe-photo-preview" hidden>
@@ -334,13 +342,13 @@
       </form>
     </div>
 
-    <script src="../js/hub-organiser-actions.js?v=20260606" data-root="../" defer></script>
+    <script src="../js/hub-organiser-actions.js?v=20260828oppdash1" data-root="../" defer></script>
     <script src="../js/fact-loader.js?v=20260723" defer></script>
     <script src="../js/organiser-page-loading.js?v=20260608d" defer></script>
     <script src="../js/organiser-image-upload.js?v=20260605" defer></script>
     <script src="../js/organiser-terms.js?v=20260828oppterms1" data-root="../" data-context="opportunity" defer></script>
     <script src="../js/opportunity-moderation-scan.js?v=20260827aff2" defer></script>
     <script src="../js/opportunity-listing-quality.js?v=20260825aff1" defer></script>
-    <script src="../js/organiser-opportunity-edit.js?v=20260828flow1" defer></script>
+    <script src="../js/organiser-opportunity-edit.js?v=20260828regions2" defer></script>
   </body>
 </html>

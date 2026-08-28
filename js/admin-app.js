@@ -21744,14 +21744,19 @@
 
   var OPPORTUNITY_CATEGORIES = [
     ['cleaning', 'Cleaning'],
+    ['home-services', 'Home services & trades'],
     ['food', 'Food & Drink'],
+    ['retail', 'Retail & E-commerce'],
     ['tech', 'Tech & Digital'],
     ['health', 'Health & Fitness'],
     ['beauty', 'Beauty & Wellness'],
     ['property', 'Property'],
+    ['automotive', 'Automotive'],
     ['education', 'Education & Coaching'],
+    ['childcare', 'Childcare & Family'],
     ['finance', 'Finance & Admin'],
     ['pets', 'Pets & Animals'],
+    ['leisure', 'Leisure, travel & hospitality'],
     ['mlm', 'Network marketing'],
     ['general', 'Other'],
   ];

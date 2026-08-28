@@ -1319,16 +1319,24 @@
   probeCatalogueAccess();
 
   var sessionPromise = null;
-  window.hubFetchSession = function () {
+  window.hubFetchSession = function (force) {
+    if (force) sessionPromise = null;
     if (!sessionPromise) {
-      sessionPromise = fetch('/api/auth/session', { credentials: 'include' })
-        .then(function (res) {
-          return res.json();
-        })
-        .catch(function () {
+      if (!force && window.hubSessionPrefetchPromise) {
+        sessionPromise = window.hubSessionPrefetchPromise.catch(function () {
           sessionPromise = null;
           return { ok: false };
         });
+      } else {
+        sessionPromise = fetch('/api/auth/session', { credentials: 'include', cache: 'no-store' })
+          .then(function (res) {
+            return res.json();
+          })
+          .catch(function () {
+            sessionPromise = null;
+            return { ok: false };
+          });
+      }
     }
     return sessionPromise;
   };

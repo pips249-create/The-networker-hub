@@ -48,12 +48,12 @@
   };
 
   const TYPE_CATEGORY_HINTS = {
+    franchise: 'retail',
     'network-marketing': 'mlm',
   };
 
   const OE_STEP_ORDER = ['details', 'host', 'meta', 'photo', 'submit'];
 
-  let oeTitleConfirmed = false;
   let oeStepsConfirmed = {
     details: false,
     host: false,
@@ -62,31 +62,96 @@
   };
   let oeFlowRevealAll = false;
 
-  const LISTING_REGIONS = [
-    { slug: 'uk-wide', label: 'UK-wide' },
-    { slug: 'remote', label: 'Remote / Online' },
-    { slug: 'london', label: 'London' },
-    { slug: 'manchester', label: 'Manchester' },
-    { slug: 'birmingham', label: 'Birmingham' },
-    { slug: 'leeds', label: 'Leeds' },
-    { slug: 'liverpool', label: 'Liverpool' },
-    { slug: 'newcastle', label: 'Newcastle' },
-    { slug: 'sheffield', label: 'Sheffield' },
-    { slug: 'nottingham', label: 'Nottingham' },
-    { slug: 'bristol', label: 'Bristol' },
-    { slug: 'brighton', label: 'Brighton' },
-    { slug: 'cambridge', label: 'Cambridge' },
-    { slug: 'oxford', label: 'Oxford' },
-    { slug: 'chester', label: 'Chester' },
-    { slug: 'cardiff', label: 'Cardiff & Wales' },
-    { slug: 'glasgow', label: 'Glasgow' },
-    { slug: 'edinburgh', label: 'Edinburgh' },
-    { slug: 'belfast', label: 'Belfast' },
-    { slug: 'yorkshire', label: 'Yorkshire (wider area)' },
+  const LISTING_REGION_GROUPS = [
+    {
+      label: 'Nationwide',
+      regions: [
+        { slug: 'uk-wide', label: 'UK-wide' },
+        { slug: 'england', label: 'England' },
+        { slug: 'scotland', label: 'Scotland' },
+        { slug: 'wales', label: 'Wales' },
+        { slug: 'northern-ireland', label: 'Northern Ireland' },
+        { slug: 'remote', label: 'Remote / Online' },
+      ],
+    },
+    {
+      label: 'Counties',
+      regions: [
+        { slug: 'berkshire', label: 'Berkshire' },
+        { slug: 'buckinghamshire', label: 'Buckinghamshire' },
+        { slug: 'cambridgeshire', label: 'Cambridgeshire' },
+        { slug: 'cheshire', label: 'Cheshire' },
+        { slug: 'essex', label: 'Essex' },
+        { slug: 'hampshire', label: 'Hampshire' },
+        { slug: 'hertfordshire', label: 'Hertfordshire' },
+        { slug: 'kent', label: 'Kent' },
+        { slug: 'lancashire', label: 'Lancashire' },
+        { slug: 'oxfordshire', label: 'Oxfordshire' },
+        { slug: 'surrey', label: 'Surrey' },
+        { slug: 'sussex', label: 'Sussex' },
+      ],
+    },
+    {
+      label: 'Wider regions',
+      regions: [
+        { slug: 'yorkshire', label: 'Yorkshire' },
+        { slug: 'north-west', label: 'North West England' },
+        { slug: 'north-east', label: 'North East England' },
+        { slug: 'east-midlands', label: 'East Midlands' },
+        { slug: 'west-midlands', label: 'West Midlands' },
+        { slug: 'east-of-england', label: 'East of England' },
+        { slug: 'south-east', label: 'South East England' },
+        { slug: 'south-west', label: 'South West England' },
+      ],
+    },
+    {
+      label: 'London',
+      regions: [
+        { slug: 'london', label: 'London (all areas)' },
+        { slug: 'central-london', label: 'Central London' },
+        { slug: 'north-london', label: 'North London' },
+        { slug: 'south-london', label: 'South London' },
+        { slug: 'east-london', label: 'East London' },
+        { slug: 'west-london', label: 'West London' },
+      ],
+    },
+    {
+      label: 'Cities & towns',
+      regions: [
+        { slug: 'belfast', label: 'Belfast' },
+        { slug: 'birmingham', label: 'Birmingham' },
+        { slug: 'bournemouth', label: 'Bournemouth' },
+        { slug: 'brighton', label: 'Brighton' },
+        { slug: 'bristol', label: 'Bristol' },
+        { slug: 'cambridge', label: 'Cambridge' },
+        { slug: 'cardiff', label: 'Cardiff' },
+        { slug: 'chester', label: 'Chester' },
+        { slug: 'edinburgh', label: 'Edinburgh' },
+        { slug: 'glasgow', label: 'Glasgow' },
+        { slug: 'leeds', label: 'Leeds' },
+        { slug: 'leicester', label: 'Leicester' },
+        { slug: 'liverpool', label: 'Liverpool' },
+        { slug: 'manchester', label: 'Manchester' },
+        { slug: 'newcastle', label: 'Newcastle' },
+        { slug: 'nottingham', label: 'Nottingham' },
+        { slug: 'oxford', label: 'Oxford' },
+        { slug: 'reading', label: 'Reading' },
+        { slug: 'sheffield', label: 'Sheffield' },
+      ],
+    },
   ];
 
+  const LISTING_REGIONS = LISTING_REGION_GROUPS.reduce(function (acc, group) {
+    return acc.concat(group.regions);
+  }, []);
+
+  const LISTING_REGION_LEGACY = {
+    online: 'remote',
+  };
+
   function listingRegionBySlug(slug) {
-    const key = String(slug || '').trim().toLowerCase();
+    let key = String(slug || '').trim().toLowerCase();
+    if (LISTING_REGION_LEGACY[key]) key = LISTING_REGION_LEGACY[key];
     return LISTING_REGIONS.find((row) => row.slug === key) || null;
   }
 
@@ -122,6 +187,10 @@
     const norm = text.toLowerCase();
     if (/remote|online/.test(norm)) return { slug: 'remote', detail: '' };
     if (/uk.?wide|nationwide/.test(norm)) return { slug: 'uk-wide', detail: '' };
+    if (/^england$/.test(norm)) return { slug: 'england', detail: '' };
+    if (/^scotland$/.test(norm)) return { slug: 'scotland', detail: '' };
+    if (/^wales$/.test(norm)) return { slug: 'wales', detail: '' };
+    if (/northern ireland/.test(norm)) return { slug: 'northern-ireland', detail: '' };
     for (let i = 0; i < LISTING_REGIONS.length; i++) {
       const row = LISTING_REGIONS[i];
       const labelNorm = row.label.toLowerCase();
@@ -141,13 +210,19 @@
 
   function populateListingRegionSelect() {
     const select = document.getElementById('oe-region');
-    if (!select || select.options.length > 1) return;
-    LISTING_REGIONS.forEach((row) => {
-      const opt = document.createElement('option');
-      opt.value = row.slug;
-      opt.textContent = row.label;
-      select.appendChild(opt);
+    if (!select || select.dataset.regionsPopulated === '1') return;
+    LISTING_REGION_GROUPS.forEach(function (group) {
+      const optgroup = document.createElement('optgroup');
+      optgroup.label = group.label;
+      group.regions.forEach(function (row) {
+        const opt = document.createElement('option');
+        opt.value = row.slug;
+        opt.textContent = row.label;
+        optgroup.appendChild(opt);
+      });
+      select.appendChild(optgroup);
     });
+    select.dataset.regionsPopulated = '1';
   }
 
   function getSelectedTypes() {
@@ -766,7 +841,7 @@
     const msg = String(message || '').toLowerCase();
     let id = '';
     if (/territory|location|region/.test(msg)) id = 'oe-region';
-    else if (/logo|photo|cover|image/.test(msg)) id = 'oe-card-host';
+    else if (/logo|photo|cover|image/.test(msg)) id = 'oe-card-photo';
     else if (/commission/.test(msg)) id = 'oe-commission';
     else if (/promote/.test(msg)) id = 'oe-promote';
     else if (/investment/.test(msg)) id = 'oe-investment';
@@ -952,7 +1027,6 @@
 
   function stepMetaComplete() {
     if (!getSelectedListingRegion()) return false;
-    if (!(document.getElementById('oe-commitment')?.value.trim() || '')) return false;
     if (isAffiliateStyleListing()) {
       return (
         !!(document.getElementById('oe-commission')?.value.trim() || '') &&
@@ -970,7 +1044,6 @@
       if (key === 'submit') continue;
       oeStepsConfirmed[key] = false;
     }
-    if (stepKey === 'details') oeTitleConfirmed = false;
   }
 
   function updateOeStepSummaries() {
@@ -1055,22 +1128,14 @@
 
     const completeness = document.getElementById('oe-listing-completeness');
     if (completeness) {
-      completeness.hidden = revealAll ? false : !oeTitleConfirmed;
+      completeness.hidden = revealAll ? false : !stepTitleComplete();
     }
 
-    const panelRest = document.getElementById('oe-panel-details-rest');
-    const nextTitle = document.getElementById('oe-next-title');
     if (revealAll) {
-      oeTitleConfirmed = true;
       oeStepsConfirmed.details = true;
       oeStepsConfirmed.host = true;
       oeStepsConfirmed.meta = true;
       oeStepsConfirmed.photo = true;
-      if (panelRest) panelRest.hidden = false;
-      if (nextTitle) nextTitle.hidden = true;
-    } else {
-      if (panelRest) panelRest.hidden = !oeTitleConfirmed;
-      if (nextTitle) nextTitle.hidden = oeTitleConfirmed;
     }
 
     OE_STEP_ORDER.forEach(function (stepKey) {
@@ -1106,20 +1171,12 @@
   }
 
   function confirmOeStep(stepKey) {
-    if (stepKey === 'title') {
+    if (stepKey === 'details') {
       if (!stepTitleComplete()) {
         showAlert('Enter an opportunity title (at least 2 characters).');
         document.getElementById('oe-title')?.focus();
         return false;
       }
-      showAlert('');
-      oeTitleConfirmed = true;
-      syncOpportunitySteps();
-      document.getElementById('oe-field-type')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      return true;
-    }
-
-    if (stepKey === 'details') {
       if (!stepTypeComplete()) {
         showAlert('Select at least one opportunity type.');
         return false;
@@ -1152,9 +1209,9 @@
     if (stepKey === 'meta') {
       if (!stepMetaComplete()) {
         if (isAffiliateStyleListing()) {
-          showAlert('Enter commission, what you promote, region, and commitment.');
+          showAlert('Enter commission, what you promote, and region.');
         } else {
-          showAlert('Enter investment, region, and commitment.');
+          showAlert('Enter investment and region.');
         }
         return false;
       }
@@ -1178,19 +1235,12 @@
 
   function changeOeStep(stepKey) {
     resetOeStepsFrom(stepKey);
-    if (stepKey === 'details') {
-      oeTitleConfirmed = true;
-      oeStepsConfirmed.details = false;
-    }
     syncOpportunitySteps();
     const card = document.querySelector('.oe-step-card[data-oe-step="' + stepKey + '"]');
     if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   function bindOpportunitySteps() {
-    document.getElementById('oe-continue-title')?.addEventListener('click', function () {
-      confirmOeStep('title');
-    });
     document.getElementById('oe-continue-details')?.addEventListener('click', function () {
       confirmOeStep('details');
     });
@@ -1440,7 +1490,6 @@
     if (!getSelectedListingRegion()) {
       return 'Select the region where this opportunity is available.';
     }
-    if (!payload.meta.some((m) => /^commitment$/i.test(m.key))) return 'Select a commitment level.';
     if (!isDraft && !hasListingImage(payload)) {
       return 'Add a business logo or cover photo before submitting.';
     }
@@ -1646,8 +1695,23 @@
       'Submitted for review. We’ll email you when it’s approved — then you can pay via Stripe to go live.'
     );
     if (opportunity.id && !editId) {
-      location.href =
-        '/organiser/opportunity-edit?id=' + encodeURIComponent(opportunity.id) + '&submitted=1';
+      try {
+        sessionStorage.setItem(
+          'hub_opp_submitted_flash',
+          JSON.stringify({
+            id: opportunity.id,
+            title: opportunity.title || '',
+          })
+        );
+      } catch (e) {
+        /* ignore */
+      }
+      if (window.HubOrganiserActions && window.HubOrganiserActions.goToBusinessOpportunities) {
+        window.HubOrganiserActions.goToBusinessOpportunities();
+      } else {
+        location.href = '/organiser/#business-overview';
+      }
+      return;
     }
   }
 
@@ -1658,6 +1722,16 @@
     if (actions) {
       const loggedIn = await actions.requireLogin('/organiser/opportunity-edit' + location.search);
       if (!loggedIn) return;
+      try {
+        await fetch('/api/auth/hub-mode', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mode: 'organiser' }),
+        });
+      } catch (e) {
+        /* non-fatal */
+      }
     }
 
     bindLogoUpload();
@@ -1702,9 +1776,18 @@
     syncOpportunitySteps();
 
     const backLink = document.getElementById('oe-back-link');
-    if (backLink && editId) {
-      backLink.href = '/organiser/#business-overview';
-      backLink.textContent = '← Back to My business opportunities';
+    if (backLink) {
+      if (editId) {
+        backLink.textContent = '← Back to My business opportunities';
+      }
+      backLink.addEventListener('click', function (e) {
+        e.preventDefault();
+        if (window.HubOrganiserActions && window.HubOrganiserActions.goToBusinessOpportunities) {
+          window.HubOrganiserActions.goToBusinessOpportunities();
+        } else {
+          location.href = '/organiser/#business-overview';
+        }
+      });
     }
 
     updateListingPriceBreakdown();

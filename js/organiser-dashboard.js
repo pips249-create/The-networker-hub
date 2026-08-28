@@ -3684,6 +3684,26 @@
 
   const GROUP_SAVED_KEY = 'hub_group_last_saved';
   const GROUP_CONTINUE_KEY = 'hub_group_continue_to_event';
+  const OPP_SUBMITTED_FLASH_KEY = 'hub_opp_submitted_flash';
+
+  function applyPendingOpportunitySubmitFlash() {
+    try {
+      const raw = sessionStorage.getItem(OPP_SUBMITTED_FLASH_KEY);
+      if (!raw) return;
+      sessionStorage.removeItem(OPP_SUBMITTED_FLASH_KEY);
+      const parsed = JSON.parse(raw);
+      const title = String((parsed && parsed.title) || '').trim();
+      const msg =
+        '<strong>Submitted for review.</strong> ' +
+        (title ? esc(title) + ' is ' : 'Your listing is ') +
+        'with our team — we’ll email you when it’s approved, then you can pay via Stripe to go live.';
+      showOrganiserAlert(msg, false);
+      state.opportunitiesLoaded = false;
+      setRoute('business-overview', { skipEventsGuard: true });
+    } catch {
+      /* ignore */
+    }
+  }
 
   function applyPendingGroupSave() {
     try {
@@ -11248,19 +11268,22 @@
     const summary = document.getElementById('org-business-hub-summary');
     if (summary) summary.hidden = businessSubRoute === 'business-guide';
 
-    if (!bootstrapReady) return Promise.resolve();
+    return loadBusinessSubData(businessSubRoute);
+  }
 
-    if (businessSubRoute === 'business-enquiries') {
+  function loadBusinessSubData(sub) {
+    if (!bootstrapReady) return Promise.resolve();
+    if (sub === 'business-enquiries') {
       return loadOpportunityEnquiries().then(function () {
         renderOpportunityEnquiries();
       });
     }
-    if (businessSubRoute === 'business-listings') {
+    if (sub === 'business-listings') {
       return loadOpportunitiesList().then(function () {
         renderOpportunitiesList();
       });
     }
-    if (businessSubRoute === 'business-insights') {
+    if (sub === 'business-insights') {
       return loadOpportunitiesList().then(function () {
         renderOpportunityRoiInsights();
         renderOpportunityCompare();
@@ -11269,6 +11292,14 @@
       });
     }
     return Promise.resolve();
+  }
+
+  function ensureActiveBusinessOverviewLoaded() {
+    if (!bootstrapReady) return Promise.resolve();
+    if (!document.querySelector('[data-org-page="business-overview"].is-active')) {
+      return Promise.resolve();
+    }
+    return loadBusinessSubData(businessSubRoute);
   }
 
   function updateSharedEventFilterNotes() {
@@ -16769,6 +16800,7 @@
     showOrganiserEmailVerifyBanner();
 
     applyPendingGroupSave();
+    applyPendingOpportunitySubmitFlash();
     pruneStaleEventFilters();
     bootstrapReady = true;
     const groupDrawerOpen =
@@ -16806,6 +16838,7 @@
       if (parseRoute().page === 'communicate' || parseRoute().openAttendeeEmail) {
         ensureAttendeeEmailPanelReady(filters.attendeesEvent !== 'all' ? filters.attendeesEvent : '');
       }
+      ensureActiveBusinessOverviewLoaded();
       // Warm editor CSS and heavy workspace pages after first paint.
       if (typeof requestIdleCallback === 'function') {
         requestIdleCallback(function () {
@@ -18496,14 +18529,34 @@
     }
   }
 
-  const sessionFetcher =
-    typeof window.hubFetchSession === 'function'
-      ? window.hubFetchSession
-      : function () {
-          return fetch('/api/auth/session', { credentials: 'include' }).then(function (res) {
+  const sessionFetcher = function () {
+    var primary =
+      typeof window.hubFetchSession === 'function'
+        ? window.hubFetchSession()
+        : fetch('/api/auth/session', { credentials: 'include', cache: 'no-store' }).then(function (res) {
             return res.json();
           });
-        };
+    return primary.then(function (data) {
+      if (data && data.ok && data.user) return data;
+      return fetch('/api/auth/session', { credentials: 'include', cache: 'no-store' })
+        .then(function (res) {
+          return res.json();
+        })
+        .catch(function () {
+          return data || { ok: false };
+        });
+    });
+  };
+
+  const signinNext =
+    '/organiser/' + (window.location.hash || '#business-overview');
+  const signinLink = signin && signin.querySelector('a.org-btn-primary');
+  if (signinLink) {
+    signinLink.href =
+      '../login?next=' +
+      encodeURIComponent(signinNext) +
+      '&intent=organiser';
+  }
 
   sessionFetcher()
     .then((data) => {

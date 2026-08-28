@@ -279,6 +279,37 @@
     global.location.href = path('/organiser/opportunity-edit');
   }
 
+  async function ensureOpportunityDashboardAccess(nextPath) {
+    var data = await fetchSession();
+    if (!data.ok || !data.user) {
+      global.location.href = loginUrl(nextPath || '/organiser/#business-overview');
+      return null;
+    }
+    data = await restoreOrganiserUiIfHidden(data);
+    if (!organiserWorkspaceReady(data)) {
+      global.location.href = path('/organiser/enable');
+      return null;
+    }
+    try {
+      await fetch('/api/auth/hub-mode', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'organiser' }),
+      });
+    } catch (e) {
+      /* non-fatal */
+    }
+    return data;
+  }
+
+  async function goToBusinessOpportunities() {
+    saveBrowseReturn();
+    var data = await ensureOpportunityDashboardAccess('/organiser/#business-overview');
+    if (!data) return;
+    global.location.href = path('/organiser/#business-overview');
+  }
+
   function isLiveListingStatus(status) {
     var st = String(status || '').toLowerCase();
     return st === 'published' || st === 'live' || st === 'approved';
@@ -475,6 +506,8 @@
     goToGroupProfile: goToGroupProfile,
     goToAddEvent: goToAddEvent,
     goToAddOpportunity: goToAddOpportunity,
+    goToBusinessOpportunities: goToBusinessOpportunities,
+    ensureOpportunityDashboardAccess: ensureOpportunityDashboardAccess,
     goToBoostEvent: goToBoostEvent,
     goToBoostOpportunity: goToBoostOpportunity,
     spotlightBoostCardHtml: spotlightBoostCardHtml,

@@ -16,14 +16,19 @@
   /** Canonical category list — keep in sync with filter + add-listing selects. */
   var CATEGORY_OPTIONS = [
     { id: 'cleaning', label: 'Cleaning' },
+    { id: 'home-services', label: 'Home services & trades' },
     { id: 'food', label: 'Food & Drink' },
+    { id: 'retail', label: 'Retail & E-commerce' },
     { id: 'tech', label: 'Tech & Digital' },
     { id: 'health', label: 'Health & Fitness' },
     { id: 'beauty', label: 'Beauty & Wellness' },
     { id: 'property', label: 'Property' },
+    { id: 'automotive', label: 'Automotive' },
     { id: 'education', label: 'Education & Coaching' },
+    { id: 'childcare', label: 'Childcare & Family' },
     { id: 'finance', label: 'Finance & Admin' },
     { id: 'pets', label: 'Pets & Animals' },
+    { id: 'leisure', label: 'Leisure, travel & hospitality' },
     { id: 'mlm', label: 'Network marketing' },
     { id: 'general', label: 'Other' },
   ];
@@ -104,14 +109,19 @@
 
   var CATEGORY_KEYWORDS = {
     cleaning: /clean/i,
-    food: /food|kiosk|coffee|brew|drink/i,
-    tech: /web|digital|photo|software|tech/i,
-    health: /gym|fit|fitness|health/i,
-    beauty: /skin|beauty|tropic|cosmetic|wellness/i,
-    property: /property|maintenance|handyman/i,
-    education: /course|coach|training|academy|education/i,
-    pets: /dog|groom|pet|paw|animal/i,
-    finance: /book|ledger|finance|account/i,
+    'home-services': /plumb|electric|garden|landscap|handyman|trade|builder|roof|paint|decor/i,
+    food: /food|kiosk|coffee|brew|drink|restaurant|cafe|takeaway|franchise food/i,
+    retail: /retail|shop|store|convenience|e[\s-]?commerce|vending/i,
+    tech: /web|digital|photo|software|tech|it support/i,
+    health: /gym|fit|fitness|health|physio|wellbeing clinic/i,
+    beauty: /skin|beauty|tropic|cosmetic|wellness|salon|hair|nail/i,
+    property: /property|estate agent|lettings|mortgage broker/i,
+    automotive: /car|auto|mot|garage|vehicle|tyre|valet|car wash/i,
+    education: /course|coach|training|academy|education|tutor/i,
+    childcare: /child|nursery|babysit|family|parent|after school/i,
+    pets: /dog|groom|pet|paw|animal|kennel|cattery/i,
+    finance: /book|ledger|finance|account|payroll|tax/i,
+    leisure: /travel|hotel|hospitality|leisure|holiday|tourism|entertainment/i,
     mlm: /mlm|multi[\s-]?level|network marketing|direct sales|independent consultant|team build|downline|upline|ambassador/i,
     guaranteed_income: /guaranteed\s+(income|earnings|profit|return)|passive income|financial freedom|unlimited income|quit your job/i,
     unregulated_investment: /crypto(?:currency)?|forex|binary option|unregulated investment|high[\s-]?yield|hyip|ponzi/i,
@@ -141,6 +151,49 @@
   };
 
   var UMBRELLA_TO_SLUGS = {
+    england: [
+      'berkshire',
+      'buckinghamshire',
+      'cambridgeshire',
+      'cheshire',
+      'essex',
+      'hampshire',
+      'hertfordshire',
+      'kent',
+      'lancashire',
+      'oxfordshire',
+      'surrey',
+      'sussex',
+      'yorkshire',
+      'north-west',
+      'north-east',
+      'east-midlands',
+      'west-midlands',
+      'east-of-england',
+      'south-east',
+      'south-west',
+      'london',
+      'central-london',
+      'north-london',
+      'south-london',
+      'east-london',
+      'west-london',
+      'birmingham',
+      'bournemouth',
+      'brighton',
+      'bristol',
+      'cambridge',
+      'chester',
+      'leeds',
+      'leicester',
+      'liverpool',
+      'manchester',
+      'newcastle',
+      'nottingham',
+      'oxford',
+      'reading',
+      'sheffield',
+    ],
     yorkshire: ['leeds', 'sheffield'],
     'north england': ['manchester', 'liverpool', 'newcastle', 'leeds', 'sheffield'],
     'north west': ['manchester', 'liverpool'],
@@ -160,6 +213,7 @@
     ],
     scotland: ['glasgow', 'edinburgh'],
     wales: ['cardiff'],
+    'northern-ireland': ['belfast'],
     london: ['central-london', 'north-london', 'south-london', 'east-london', 'west-london'],
   };
 
@@ -232,7 +286,7 @@
     if (/uk-wide|uk wide|your area|various/.test(searchBlob)) tags.push('uk-wide');
     var comm = metaVal(item.meta, /^commitment$/i).toLowerCase();
     if (/full/.test(comm)) tags.push('full-time');
-    if (/part|flex/.test(comm)) tags.push('part-time');
+    if (/part|flex|side|hustle|few hour|no fixed|no minimum/.test(comm)) tags.push('part-time');
     if (/event/.test(comm)) tags.push('event-based');
     if (item.category && item.category !== 'general') tags.push('cat-' + item.category);
     item.filterTags = tags;

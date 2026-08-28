@@ -697,6 +697,11 @@ async function listOpportunitiesForSession(session) {
     .map(rowToListing);
 }
 
+async function countOwnedOpportunitiesForSession(session) {
+  const rows = await listOwnedOpportunityRowsForSession(session, 'id');
+  return rows.length;
+}
+
 function assertOpportunityListingCompliance() {
   // Earnings / return fields were removed from listing forms.
 }
@@ -1068,6 +1073,7 @@ module.exports = {
   getPublishedOpportunityBySlug,
   getOpportunityById,
   listOpportunitiesForSession,
+  countOwnedOpportunitiesForSession,
   opportunityOwnedBySession,
   createOpportunity,
   updateOpportunity,

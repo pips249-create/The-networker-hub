@@ -33,6 +33,15 @@ async function countPendingClaimGroups(session) {
   }
 }
 
+async function countOwnedOpportunities(session) {
+  try {
+    const { countOwnedOpportunitiesForSession } = require('./supabase-opportunities');
+    return await countOwnedOpportunitiesForSession(session);
+  } catch {
+    return 0;
+  }
+}
+
 async function getOrganiserAccessStatus(session) {
   const uid = String(session?.sub || '').trim();
   const email = String(session?.email || '').trim().toLowerCase();
@@ -48,23 +57,26 @@ async function getOrganiserAccessStatus(session) {
     };
   }
 
-  const [hub, organiserProfiles, pendingClaimCount] = await Promise.all([
+  const [hub, organiserProfiles, pendingClaimCount, ownedOpportunityCount] = await Promise.all([
     getHubAccount(uid),
     countOrganiserProfiles(uid, email),
     countPendingClaims(session),
+    countOwnedOpportunities(session),
   ]);
 
   const organiserAccess =
     admin ||
     Boolean(hub?.organiser_access_at) ||
     organiserProfiles > 0 ||
-    pendingClaimCount > 0;
+    pendingClaimCount > 0 ||
+    ownedOpportunityCount > 0;
 
   const organiserUiHidden = Boolean(hub?.organiser_ui_hidden_at);
   const organiserUiVisible =
     admin ||
     pendingClaimCount > 0 ||
     organiserProfiles > 0 ||
+    ownedOpportunityCount > 0 ||
     (Boolean(hub?.organiser_access_at) && !organiserUiHidden);
 
   const organiserEmailVerified = admin || isOrganiserEmailVerified(hub);
@@ -76,6 +88,7 @@ async function getOrganiserAccessStatus(session) {
     organiserEmailVerified,
     pendingClaimCount,
     organiserProfiles,
+    ownedOpportunityCount,
     organiserAccessAt: hub?.organiser_access_at || null,
     organiserEmailVerifiedAt: hub?.organiser_email_verified_at || null,
     organiserUiHiddenAt: hub?.organiser_ui_hidden_at || null,

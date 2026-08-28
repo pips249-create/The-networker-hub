@@ -159,6 +159,17 @@ module.exports = async function handler(req, res) {
 
     try {
       const opportunity = await createOpportunity(base);
+      if (auth.session.sub) {
+        try {
+          const { enableOrganiserAccess } = require('../supabase-auth');
+          await enableOrganiserAccess(auth.session.sub);
+        } catch (enableErr) {
+          console.warn(
+            '[organiser-opportunities] enable organiser access after create failed:',
+            enableErr && enableErr.message ? enableErr.message : enableErr
+          );
+        }
+      }
       return json(res, 200, { ok: true, opportunity });
     } catch (e) {
       return jsonPublicError(res, json, e, { code: 'opportunity_create_failed', logLabel: '[organiser-opportunities]' });
