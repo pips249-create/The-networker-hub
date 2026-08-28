@@ -11467,6 +11467,126 @@ body.org-event-drawer-open {
   background: rgba(13, 31, 60, 0.14);
 }
 
+.org-open-day-add {
+  margin: 0 0 24px;
+  padding: 18px 18px 16px;
+  border: 1px solid var(--od-border-soft, #e5e7eb);
+  border-radius: var(--od-radius-md, 12px);
+  background: var(--od-bg-elevated, #fff);
+}
+
+.org-open-day-add-title {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--opp-navy, #0d1f3c);
+}
+
+.org-open-day-add-no-listings {
+  margin: 12px 0 0;
+}
+
+.org-open-day-add-form {
+  margin-top: 14px;
+}
+
+.org-open-day-add-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 14px;
+}
+
+.org-open-day-add-field--listing,
+.org-open-day-add-field--address,
+.org-open-day-add-field--notes {
+  grid-column: 1 / -1;
+}
+
+.org-field-optional {
+  font-weight: 500;
+  color: var(--od-text-muted, #6b7280);
+}
+
+.org-open-day-add-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin-top: 4px;
+}
+
+.org-open-day-add-actions .org-field-hint {
+  margin: 0;
+}
+
+.org-open-day-add-actions .org-field-hint.is-error {
+  color: #b42318;
+}
+
+.org-open-day-add-actions .org-field-hint.is-success {
+  color: #067647;
+}
+
+.org-open-day-scheduled {
+  margin: 0 0 28px;
+}
+
+.org-open-day-scheduled-title,
+.org-open-day-interest-title {
+  margin: 0 0 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--opp-navy, #0d1f3c);
+}
+
+.org-open-day-scheduled-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.org-open-day-scheduled-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--od-border-soft, #e5e7eb);
+  border-radius: var(--od-radius-sm, 8px);
+  background: var(--od-bg-muted, #f8fafc);
+}
+
+.org-open-day-scheduled-main {
+  min-width: 0;
+}
+
+.org-open-day-scheduled-listing {
+  display: block;
+  font-weight: 600;
+  color: var(--opp-navy, #0d1f3c);
+}
+
+.org-open-day-scheduled-meta {
+  display: block;
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--od-text-muted, #6b7280);
+}
+
+.org-open-day-scheduled-edit {
+  flex-shrink: 0;
+  font-size: 13px;
+}
+
+@media (max-width: 640px) {
+  .org-open-day-add-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .org-opp-premium-upsell {
   border-color: rgba(201, 150, 31, 0.35);
   color: var(--opp-navy, #0d1f3c);

@@ -123,6 +123,7 @@
     opportunityOpenDayInterests: [],
     opportunityOpenDayInterestsNewCount: 0,
     opportunityOpenDayInterestsLoaded: false,
+    opportunityScheduledOpenDays: [],
     opportunities: [],
     opportunitiesLoaded: false,
     pendingClaimGroups: [],
@@ -11280,7 +11281,7 @@
       ],
       'business-open-days': [
         'Open day interest',
-        'People who want to attend your open days — confirm each visit by email.',
+        'Add open days linked to your listings, then confirm visitor interest by email.',
       ],
       'business-insights': [
         'Performance insights',
@@ -11310,9 +11311,18 @@
       });
     }
     if (sub === 'business-open-days') {
-      return loadOpportunityOpenDayInterests().then(function () {
-        renderOpportunityOpenDayInterests();
-      });
+      return loadOpportunitiesList()
+        .then(function () {
+          populateOpenDayAddListingSelect();
+          return loadOpportunityOpenDayInterests();
+        })
+        .then(function () {
+          renderOpportunityOpenDayInterests();
+          return loadScheduledOpportunityOpenDays();
+        })
+        .then(function () {
+          renderScheduledOpportunityOpenDays();
+        });
     }
     if (sub === 'business-listings') {
       return loadOpportunitiesList().then(function () {
@@ -16175,6 +16185,291 @@
     }
   }
 
+  function fromOpenDayDatetimeLocal(value) {
+    const raw = String(value || '').trim();
+    if (!raw) return '';
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime())) return '';
+    return d.toISOString();
+  }
+
+  function openDayToPutPayload(day) {
+    const d = day || {};
+    return {
+      id: d.id || undefined,
+      startsAt: d.startsAt || d.starts_at || null,
+      endsAt: d.endsAt || d.ends_at || null,
+      venueName: d.venueName || d.venue_name || '',
+      addressLine: d.addressLine || d.address_line || '',
+      city: d.city || '',
+      postcode: d.postcode || '',
+      notes: d.notes || '',
+      sortOrder: d.sortOrder != null ? d.sortOrder : d.sort_order,
+    };
+  }
+
+  function formatOpenDayScheduledSummary(day) {
+    if (!day || !day.startsAt) return '—';
+    try {
+      const start = new Date(day.startsAt);
+      if (Number.isNaN(start.getTime())) return String(day.startsAt);
+      const datePart = start.toLocaleDateString('en-GB', {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      });
+      const timePart = start.toLocaleTimeString('en-GB', {
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+      let when = datePart + ', ' + timePart;
+      if (day.endsAt) {
+        const end = new Date(day.endsAt);
+        if (!Number.isNaN(end.getTime())) {
+          when +=
+            '–' +
+            end.toLocaleTimeString('en-GB', {
+              hour: '2-digit',
+              minute: '2-digit',
+            });
+        }
+      }
+      const place = [day.venueName, day.addressLine, day.city, day.postcode]
+        .map(function (p) {
+          return String(p || '').trim();
+        })
+        .filter(Boolean)
+        .join(', ');
+      return place ? when + ' · ' + place : when;
+    } catch (e) {
+      return String(day.startsAt);
+    }
+  }
+
+  function populateOpenDayAddListingSelect() {
+    const select = document.getElementById('opp-open-day-listing');
+    const form = document.getElementById('form-opp-open-day-add');
+    const noListings = document.getElementById('opp-open-day-add-no-listings');
+    if (!select) return;
+    const list = (state.opportunities || []).slice().sort(function (a, b) {
+      return String(a.title || '').localeCompare(String(b.title || ''));
+    });
+    const previous = select.value;
+    select.innerHTML = '<option value="">Select a business opportunity…</option>';
+    list.forEach(function (o) {
+      const opt = document.createElement('option');
+      opt.value = o.id;
+      opt.textContent = o.title || 'Untitled listing';
+      select.appendChild(opt);
+    });
+    if (previous && list.some(function (o) {
+      return o.id === previous;
+    })) {
+      select.value = previous;
+    }
+    if (form) form.hidden = list.length === 0;
+    if (noListings) noListings.hidden = list.length > 0;
+  }
+
+  function setOpenDayAddStatus(message, kind) {
+    const el = document.getElementById('opp-open-day-add-status');
+    if (!el) return;
+    const text = String(message || '').trim();
+    if (!text) {
+      el.hidden = true;
+      el.textContent = '';
+      el.classList.remove('is-error', 'is-success');
+      return;
+    }
+    el.hidden = false;
+    el.textContent = text;
+    el.classList.toggle('is-error', kind === 'error');
+    el.classList.toggle('is-success', kind === 'success');
+  }
+
+  async function loadScheduledOpportunityOpenDays() {
+    const listings = state.opportunities || [];
+    if (!listings.length) {
+      state.opportunityScheduledOpenDays = [];
+      return;
+    }
+    try {
+      const results = await Promise.all(
+        listings.map(function (o) {
+          return api(
+            '/api/organiser/opportunity-open-days?opportunityId=' + encodeURIComponent(o.id)
+          ).then(function (res) {
+            const days = res.ok && res.data && Array.isArray(res.data.openDays) ? res.data.openDays : [];
+            return days.map(function (day) {
+              return Object.assign({}, day, {
+                opportunityId: o.id,
+                opportunityTitle: o.title || 'Business opportunity',
+              });
+            });
+          });
+        })
+      );
+      const flat = [];
+      results.forEach(function (chunk) {
+        chunk.forEach(function (day) {
+          flat.push(day);
+        });
+      });
+      flat.sort(function (a, b) {
+        return String(a.startsAt || '').localeCompare(String(b.startsAt || ''));
+      });
+      state.opportunityScheduledOpenDays = flat;
+    } catch (e) {
+      state.opportunityScheduledOpenDays = [];
+    }
+  }
+
+  function renderScheduledOpportunityOpenDays() {
+    const wrap = document.getElementById('opp-open-day-scheduled');
+    const listEl = document.getElementById('opp-open-day-scheduled-list');
+    if (!wrap || !listEl) return;
+    const list = state.opportunityScheduledOpenDays || [];
+    const upcoming = list.filter(function (day) {
+      const ms = Date.parse(day.startsAt || '');
+      return Number.isFinite(ms) ? ms >= Date.now() - 12 * 60 * 60 * 1000 : true;
+    });
+    if (!upcoming.length) {
+      wrap.hidden = true;
+      listEl.innerHTML = '';
+      return;
+    }
+    wrap.hidden = false;
+    listEl.innerHTML = upcoming
+      .map(function (day) {
+        const editUrl =
+          '/organiser/opportunity-edit?id=' + encodeURIComponent(day.opportunityId || '');
+        return (
+          '<li class="org-open-day-scheduled-item">' +
+          '<div class="org-open-day-scheduled-main">' +
+          '<span class="org-open-day-scheduled-listing">' +
+          esc(day.opportunityTitle || 'Business opportunity') +
+          '</span>' +
+          '<span class="org-open-day-scheduled-meta">' +
+          esc(formatOpenDayScheduledSummary(day)) +
+          (day.interestCount
+            ? ' · ' +
+              esc(String(day.interestCount)) +
+              ' interest' +
+              (Number(day.interestCount) === 1 ? '' : 's')
+            : '') +
+          '</span></div>' +
+          '<a class="org-open-day-scheduled-edit" href="' +
+          esc(editUrl) +
+          '">Edit on listing</a>' +
+          '</li>'
+        );
+      })
+      .join('');
+  }
+
+  async function submitAddOpportunityOpenDay(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    const form = document.getElementById('form-opp-open-day-add');
+    const submitBtn = document.getElementById('opp-open-day-add-submit');
+    if (!form) return;
+    const opportunityId = String(
+      (document.getElementById('opp-open-day-listing') || {}).value || ''
+    ).trim();
+    const startsAt = fromOpenDayDatetimeLocal(
+      (document.getElementById('opp-open-day-starts') || {}).value
+    );
+    const endsAt = fromOpenDayDatetimeLocal(
+      (document.getElementById('opp-open-day-ends') || {}).value
+    );
+    const addressLine = String(
+      (document.getElementById('opp-open-day-address') || {}).value || ''
+    ).trim();
+    if (!opportunityId) {
+      setOpenDayAddStatus('Select a business opportunity.', 'error');
+      return;
+    }
+    if (!startsAt) {
+      setOpenDayAddStatus('Choose a date and start time.', 'error');
+      return;
+    }
+    if (!addressLine) {
+      setOpenDayAddStatus('Enter an address for the open day.', 'error');
+      return;
+    }
+    if (endsAt && Date.parse(endsAt) < Date.parse(startsAt)) {
+      setOpenDayAddStatus('End time must be after the start time.', 'error');
+      return;
+    }
+
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Saving…';
+    }
+    setOpenDayAddStatus('Saving open day…', null);
+
+    try {
+      const existingRes = await api(
+        '/api/organiser/opportunity-open-days?opportunityId=' + encodeURIComponent(opportunityId)
+      );
+      if (!existingRes.ok) {
+        throw new Error(
+          (existingRes.data && (existingRes.data.message || existingRes.data.error)) ||
+            'load_failed'
+        );
+      }
+      const existing = (existingRes.data.openDays || []).map(openDayToPutPayload);
+      existing.push({
+        startsAt: startsAt,
+        endsAt: endsAt || null,
+        venueName: String((document.getElementById('opp-open-day-venue') || {}).value || '').trim(),
+        addressLine: addressLine,
+        city: String((document.getElementById('opp-open-day-city') || {}).value || '').trim(),
+        postcode: String((document.getElementById('opp-open-day-postcode') || {}).value || '').trim(),
+        notes: String((document.getElementById('opp-open-day-notes') || {}).value || '').trim(),
+        sortOrder: existing.length,
+      });
+      const saveRes = await api('/api/organiser/opportunity-open-days', {
+        method: 'PUT',
+        body: JSON.stringify({ opportunityId: opportunityId, openDays: existing }),
+      });
+      if (!saveRes.ok) {
+        throw new Error(
+          (saveRes.data && (saveRes.data.message || saveRes.data.error)) || 'save_failed'
+        );
+      }
+      form.reset();
+      populateOpenDayAddListingSelect();
+      const listingSelect = document.getElementById('opp-open-day-listing');
+      if (listingSelect) listingSelect.value = opportunityId;
+      setOpenDayAddStatus('Open day added — it will show on the public listing.', 'success');
+      await loadScheduledOpportunityOpenDays();
+      renderScheduledOpportunityOpenDays();
+    } catch (err) {
+      const msg = String((err && err.message) || '');
+      let friendly = 'Could not save this open day. Please try again.';
+      if (msg === 'missing_open_day_address') friendly = 'Enter an address for the open day.';
+      if (msg === 'missing_open_day_starts_at' || msg === 'invalid_open_day_starts_at') {
+        friendly = 'Choose a valid date and start time.';
+      }
+      if (msg === 'open_day_ends_before_start') {
+        friendly = 'End time must be after the start time.';
+      }
+      if (msg === 'too_many_open_days') {
+        friendly = 'This listing already has the maximum number of open days.';
+      }
+      if (msg === 'open_days_unavailable') {
+        friendly = 'Open days are not available yet — contact the Hub team.';
+      }
+      setOpenDayAddStatus(friendly, 'error');
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Add open day';
+      }
+    }
+  }
+
   function openDayInterestMailto(interest) {
     const subject = 'Re: Open day — ' + (interest.opportunityTitle || 'your visit');
     const body =
@@ -17533,6 +17828,13 @@
         goToAddOpportunityListing();
       });
     });
+
+    const openDayAddForm = document.getElementById('form-opp-open-day-add');
+    if (openDayAddForm) {
+      openDayAddForm.addEventListener('submit', function (e) {
+        submitAddOpportunityOpenDay(e);
+      });
+    }
 
     ['filter-events-status', 'filter-events-type', 'filter-events-search'].forEach((id) => {
       const el = document.getElementById(id);

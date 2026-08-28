@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260825adminbadge1" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260828sidebar1" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260828sidebar1" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260828oppstatus1" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260828openday2" />
     <!-- hub-mobile last so phone overrides win over dashboard table min-widths -->
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260812footer10" />
     <script src="../js/hub-defer-css.js?v=20260828perf2" data-hrefs="../css/organiser-event-edit.css?v=20260821ticketstep1|../css/organiser-flow-tour.css?v=20260716layout|../css/hubert-widget.css?v=20260805bottom2|../css/hub-ranking-badge.css?v=20260728lb2|../css/hub-partner-badge.css?v=20260820ticketembed1|../css/rankings-page.css?v=20260807rank|../css/organiser-opportunity-edit.css?v=20260716drawer|https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&family=Playfair+Display:wght@400;700&family=Source+Sans+3:wght@400;600;700&family=Oswald:wght@500;600&family=Nunito:wght@400;600;700&display=swap"></script>
@@ -559,7 +559,66 @@
           </div>
 
           <div class="org-sub-page org-sub-page--business" id="sub-business-open-days" role="tabpanel" data-business-panel="business-open-days" aria-labelledby="business-tab-open-days" hidden>
-            <p class="org-section-sub" style="margin-top:0">People who registered interest in your open days — reply by email to confirm the visit.</p>
+            <div class="org-open-day-add" id="opp-open-day-add-panel">
+              <div class="org-open-day-add-head">
+                <h2 class="org-open-day-add-title">Add an open day</h2>
+                <p class="org-section-sub" style="margin:0">Choose one of your business opportunities, set the date and address, then publish it so members can register interest.</p>
+              </div>
+              <p class="org-field-hint org-open-day-add-no-listings" id="opp-open-day-add-no-listings" hidden>
+                You need a business opportunity listing first.
+                <a href="/organiser/opportunity-edit">Add a listing</a>
+              </p>
+              <form id="form-opp-open-day-add" class="org-open-day-add-form" hidden>
+                <div class="org-open-day-add-grid">
+                  <div class="org-field org-open-day-add-field--listing">
+                    <label for="opp-open-day-listing">Business opportunity</label>
+                    <select id="opp-open-day-listing" name="opportunityId" required>
+                      <option value="">Select a business opportunity…</option>
+                    </select>
+                  </div>
+                  <div class="org-field">
+                    <label for="opp-open-day-starts">Date &amp; start time</label>
+                    <input type="datetime-local" id="opp-open-day-starts" name="startsAt" required />
+                  </div>
+                  <div class="org-field">
+                    <label for="opp-open-day-ends">End time <span class="org-field-optional">(optional)</span></label>
+                    <input type="datetime-local" id="opp-open-day-ends" name="endsAt" />
+                  </div>
+                  <div class="org-field">
+                    <label for="opp-open-day-venue">Venue name <span class="org-field-optional">(optional)</span></label>
+                    <input type="text" id="opp-open-day-venue" name="venueName" maxlength="120" placeholder="e.g. Head office" />
+                  </div>
+                  <div class="org-field org-open-day-add-field--address">
+                    <label for="opp-open-day-address">Address</label>
+                    <input type="text" id="opp-open-day-address" name="addressLine" maxlength="200" placeholder="Street address" required />
+                  </div>
+                  <div class="org-field">
+                    <label for="opp-open-day-city">City / town <span class="org-field-optional">(optional)</span></label>
+                    <input type="text" id="opp-open-day-city" name="city" maxlength="80" />
+                  </div>
+                  <div class="org-field">
+                    <label for="opp-open-day-postcode">Postcode <span class="org-field-optional">(optional)</span></label>
+                    <input type="text" id="opp-open-day-postcode" name="postcode" maxlength="20" />
+                  </div>
+                  <div class="org-field org-open-day-add-field--notes">
+                    <label for="opp-open-day-notes">Notes for visitors <span class="org-field-optional">(optional)</span></label>
+                    <input type="text" id="opp-open-day-notes" name="notes" maxlength="400" placeholder="e.g. Parking at rear, arrive 10 mins early" />
+                  </div>
+                </div>
+                <div class="org-open-day-add-actions">
+                  <button type="submit" class="org-btn org-btn-gold" id="opp-open-day-add-submit">Add open day</button>
+                  <p class="org-field-hint" id="opp-open-day-add-status" hidden role="status"></p>
+                </div>
+              </form>
+            </div>
+
+            <div class="org-open-day-scheduled" id="opp-open-day-scheduled" hidden>
+              <h3 class="org-open-day-scheduled-title">Your scheduled open days</h3>
+              <ul class="org-open-day-scheduled-list" id="opp-open-day-scheduled-list"></ul>
+            </div>
+
+            <h3 class="org-open-day-interest-title">Open day interest</h3>
+            <p class="org-section-sub" style="margin-top:0">People who registered interest — reply by email to confirm the visit.</p>
             <p class="org-load-hint" id="opp-open-days-load-hint" hidden>Loading open day interest…</p>
             <div class="org-table-wrap org-opp-enquiries-wrap org-stack-wrap">
               <table class="org-opp-enquiries-table org-stack-table">
@@ -580,7 +639,7 @@
                   <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
                 </div>
                 <h3 class="org-empty-state-title">No open day interest yet</h3>
-                <p class="org-empty-state-text">Add open days on your listing editor. When someone registers interest, they appear here so you can confirm by email.</p>
+                <p class="org-empty-state-text">Add an open day above and link it to a business opportunity. When someone registers interest, they appear here so you can confirm by email.</p>
               </div>
             </div>
           </div>
@@ -3827,7 +3886,7 @@
     <script src="../js/organiser-featured-duration.js?v=20260806onetime" defer></script>
     <script src="../js/hub-comms-pack.js?v=20260722share" defer></script>
     <script src="../js/hub-side-nav.js?v=20260805orgnav2" defer></script>
-    <script src="../js/organiser-dashboard.js?v=20260828openday1" defer></script>
+    <script src="../js/organiser-dashboard.js?v=20260828openday3" defer></script>
     <script src="../js/organiser-workspace-comfort.js?v=20260813noshow1" defer></script>
   </body>
 </html>
