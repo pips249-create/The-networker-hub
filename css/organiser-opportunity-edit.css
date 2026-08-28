@@ -147,6 +147,11 @@ body.hub-page-organiser.organiser-opportunity-edit-page {
 }
 
 .organiser-opportunity-edit-page .ee-status-badge.is-awaiting-approval {
+  background: #d6f4f0;
+  color: #0d6e7a;
+}
+
+.organiser-opportunity-edit-page .ee-status-badge.is-awaiting-payment {
   background: var(--opp-gold-pale);
   color: var(--opp-gold);
 }
@@ -455,6 +460,12 @@ body.hub-page-organiser.organiser-opportunity-edit-page {
 .oe-investment-chip:hover {
   border-color: rgba(201, 150, 31, 0.55);
   background: var(--opp-gold-pale);
+}
+
+.oe-investment-chip.is-active {
+  border-color: rgba(201, 150, 31, 0.7);
+  background: var(--opp-gold-pale);
+  color: var(--opp-navy, #0d1f3c);
 }
 
 .oe-location-shortcuts {

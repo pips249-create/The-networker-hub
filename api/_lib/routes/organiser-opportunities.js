@@ -31,6 +31,8 @@ function opportunityPayloadFromBody(body, session) {
     aboutText: body.aboutText,
     host: String(body.host || body.company || '').trim(),
     contactEmail: String(body.contactEmail || body.email || '').trim(),
+    location: String(body.location || body.territory || '').trim() || undefined,
+    regionSlug: String(body.regionSlug || body.region_slug || '').trim() || undefined,
     meta: body.meta,
     tags: body.tags,
     packageTier: body.packageTier,
@@ -38,6 +40,7 @@ function opportunityPayloadFromBody(body, session) {
     submitForReview:
       Boolean(body.submitForReview) || String(body.action || '').trim() === 'submit_for_review',
     action: String(body.action || '').trim() || undefined,
+    fcaDisclaimerAttested: Boolean(body.fcaDisclaimerAttested),
     ownerEmail: String(session?.email || '').toLowerCase(),
     ownerUserId: session?.sub || '',
     photoBase64: body.photoBase64 || body.imageBase64 || null,

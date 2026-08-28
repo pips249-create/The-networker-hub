@@ -5073,10 +5073,10 @@
     const cls =
       key === 'live'
         ? 'org-badge-green'
-        : key === 'upcoming'
+        : key === 'upcoming' || key === 'awaiting_payment'
           ? 'org-badge-gold'
-          : key === 'pending_approval'
-            ? 'org-badge-gold'
+          : key === 'pending_approval' || key === 'awaiting_approval'
+            ? 'org-badge-teal'
             : key === 'pending_review'
               ? 'org-badge-teal'
               : key === 'archived'
@@ -16390,23 +16390,31 @@
     if (paid && approval === 'Approved') current = 'live';
     else if (approval === 'Approved') current = 'approved';
     else if (/pending/i.test(approval) && submitted) current = 'submitted';
-    return steps
-      .map(function (step, index) {
-        const done =
-          steps.findIndex(function (s) {
-            return s.id === current;
-          }) > index;
-        const isCurrent = step.id === current;
-        return (
-          (index ? '<span class="org-opp-step-sep" aria-hidden="true">→</span>' : '') +
-          '<span class="org-opp-step' +
-          (isCurrent ? ' is-current' : done ? ' is-done' : '') +
-          '">' +
-          esc(step.label) +
-          '</span>'
-        );
-      })
-      .join('');
+    const tone =
+      current === 'approved' ? ' is-awaiting-payment' : current === 'submitted' ? ' is-awaiting-approval' : '';
+    return (
+      '<span class="org-opp-status-steps' +
+      tone +
+      '">' +
+      steps
+        .map(function (step, index) {
+          const done =
+            steps.findIndex(function (s) {
+              return s.id === current;
+            }) > index;
+          const isCurrent = step.id === current;
+          return (
+            (index ? '<span class="org-opp-step-sep" aria-hidden="true">→</span>' : '') +
+            '<span class="org-opp-step' +
+            (isCurrent ? ' is-current' : done ? ' is-done' : '') +
+            '">' +
+            esc(step.label) +
+            '</span>'
+          );
+        })
+        .join('') +
+      '</span>'
+    );
   }
 
   function opportunityRejectionNoteHtml(o) {
@@ -16426,12 +16434,12 @@
       return { key: 'live', label: 'Live' };
     }
     if (approval === 'Approved' && !paid) {
-      return { key: 'pending_approval', label: 'Approved — pay to go live' };
+      return { key: 'awaiting_payment', label: 'Approved — pay to go live' };
     }
     if (/pending/i.test(approval)) {
       const submitted = Boolean(o.reviewSubmittedAt || o.review_submitted_at);
       if (submitted) {
-        return { key: 'pending_approval', label: 'Awaiting approval' };
+        return { key: 'awaiting_approval', label: 'Awaiting approval' };
       }
       return { key: 'draft', label: 'Draft — not submitted' };
     }
@@ -16441,7 +16449,7 @@
     if (status === 'draft') return { key: 'draft', label: 'Draft' };
     if (status === 'unpublished') return { key: 'unpublished', label: 'Unpublished' };
     if (status === 'published' || status === 'live') {
-      return { key: 'pending_approval', label: approval || 'Pending review' };
+      return { key: 'awaiting_approval', label: approval || 'Pending review' };
     }
     return { key: 'draft', label: status ? status.charAt(0).toUpperCase() + status.slice(1) : 'Draft' };
   }

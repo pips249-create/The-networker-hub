@@ -11176,6 +11176,14 @@ body.org-event-drawer-open {
   font-weight: 700;
 }
 
+.org-opp-status-steps.is-awaiting-approval .org-opp-step.is-current {
+  color: #0d6e7a;
+}
+
+.org-opp-status-steps.is-awaiting-payment .org-opp-step.is-current {
+  color: var(--opp-gold, #c9961f);
+}
+
 .org-opp-step-sep {
   opacity: 0.45;
   font-size: 10px;

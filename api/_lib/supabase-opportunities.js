@@ -709,7 +709,21 @@ async function persistOpportunityReviewSubmission(sb, id, opts) {
     meta: mergeReviewSubmittedMeta(baseMeta, at),
     updated_at: at,
   };
-  return writeOpportunityRow(sb, 'update', patch, id);
+  const written = await writeOpportunityRow(sb, 'update', patch, id);
+  // When migration 266 is missing, the column is stripped but meta stamp must remain.
+  if (!effectiveReviewSubmittedAt(written)) {
+    const metaOnly = {
+      approval_status: 'Pending Review',
+      status: patch.status,
+      meta: mergeReviewSubmittedMeta(
+        Array.isArray(written && written.meta) ? written.meta : baseMeta,
+        at
+      ),
+      updated_at: at,
+    };
+    return writeOpportunityRow(sb, 'update', metaOnly, id);
+  }
+  return written;
 }
 
 async function listOwnedOpportunityRowsForSession(session, select) {

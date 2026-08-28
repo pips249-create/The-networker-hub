@@ -562,6 +562,45 @@
     if (submitBtn) submitBtn.textContent = primarySubmitLabel();
   }
 
+  function investmentHasVatSuffix(value) {
+    return /\b(\+|plus\s+)?vat\b/i.test(String(value || '')) || /\binc\.?\s*vat\b/i.test(String(value || ''));
+  }
+
+  function applyInvestmentVatSuffix(investmentEl) {
+    if (!investmentEl) return;
+    let value = String(investmentEl.value || '').trim();
+    if (!value) {
+      investmentEl.focus();
+      return;
+    }
+    if (/^(on request|£?\s*0|free|no upfront( cost)?)$/i.test(value)) {
+      investmentEl.focus();
+      return;
+    }
+    if (investmentHasVatSuffix(value)) {
+      investmentEl.focus();
+      return;
+    }
+    investmentEl.value = value + ' + VAT';
+  }
+
+  function syncInvestmentVatChip() {
+    const chip = document.getElementById('oe-investment-add-vat');
+    const investmentEl = document.getElementById('oe-investment');
+    if (!chip || !investmentEl) return;
+    const value = String(investmentEl.value || '').trim();
+    const hasVat = investmentHasVatSuffix(value);
+    const blocked = !value || /^(on request|£?\s*0|free|no upfront( cost)?)$/i.test(value);
+    chip.classList.toggle('is-active', hasVat);
+    chip.setAttribute('aria-pressed', hasVat ? 'true' : 'false');
+    chip.disabled = blocked && !hasVat;
+    chip.title = hasVat
+      ? 'VAT already noted on this figure'
+      : blocked
+        ? 'Enter an investment figure first'
+        : 'Append + VAT to this figure';
+  }
+
   function parseInvestmentFromForm() {
     const raw = document.getElementById('oe-investment')?.value.trim() || '';
     if (!raw) return null;
@@ -796,7 +835,7 @@
         cls = 'is-published';
       } else if (approval === 'Approved') {
         label = 'Approved — pay to go live';
-        cls = 'is-draft';
+        cls = 'is-awaiting-payment';
       } else if (approval === 'Rejected') {
         label = 'Not approved';
         cls = 'is-draft';
@@ -860,6 +899,7 @@
     document.getElementById('oe-email').value = opp.contactEmail || '';
     document.getElementById('oe-investment').value = metaValue(opp.meta, /^investment$/i);
     document.getElementById('oe-investment-includes').value = metaValue(opp.meta, /^investment includes$/i);
+    syncInvestmentVatChip();
     const commissionEl = document.getElementById('oe-commission');
     const promoteEl = document.getElementById('oe-promote');
     const suitsEl = document.getElementById('oe-suits');
@@ -2248,11 +2288,16 @@
       syncSavedOpportunityMedia(opportunity);
       syncListingStatusUi(opportunity);
 
-      if (publish && !hasActiveListing && !opportunity.reviewSubmittedAt) {
-        showAlert(
-          'Your listing saved but is not in the approval queue yet. Click Submit for approval again — if this keeps happening, contact support.'
-        );
-        return;
+      if (publish && !hasActiveListing) {
+        const queued =
+          Boolean(opportunity.reviewSubmittedAt) ||
+          String(opportunity.approvalStatus || '').trim() === 'Pending Review';
+        if (!queued) {
+          showAlert(
+            'Your listing saved but is not in the approval queue yet. Click Submit for approval again — if this keeps happening, contact support.'
+          );
+          return;
+        }
       }
 
       if (!publish) {
@@ -2321,12 +2366,15 @@
         return;
       }
 
-      if (opportunity.id && !editId) {
+      const submittedId = opportunity.id || editId;
+      if (submittedId) {
         oeSkipUnloadGuard = true;
+        redirecting = true;
         if (loading) loading.hide();
         location.replace(
           '/organiser/opportunity-edit?id=' +
-            encodeURIComponent(opportunity.id) +
+            encodeURIComponent(submittedId) +
+            '&submitted=1' +
             (isEmbedDrawer ? '&embed=1' : '')
         );
         return;
@@ -2377,22 +2425,31 @@
 
     const investmentEl = document.getElementById('oe-investment');
     if (investmentEl) {
-      investmentEl.addEventListener('input', updateFcaAttestVisibility);
+      investmentEl.addEventListener('input', function () {
+        updateFcaAttestVisibility();
+        syncInvestmentVatChip();
+      });
       investmentEl.addEventListener('change', updateFcaAttestVisibility);
     }
     document.querySelectorAll('.oe-investment-chip').forEach((btn) => {
       btn.addEventListener('click', function () {
         const investmentEl = document.getElementById('oe-investment');
-        const value = btn.getAttribute('data-investment-value') || '';
-        if (investmentEl && value) {
-          investmentEl.value = value;
-          investmentEl.dispatchEvent(new Event('input', { bubbles: true }));
-          investmentEl.focus();
+        if (!investmentEl) return;
+        const action = btn.getAttribute('data-investment-action') || '';
+        if (action === 'add-vat') {
+          applyInvestmentVatSuffix(investmentEl);
+        } else {
+          const value = btn.getAttribute('data-investment-value') || '';
+          if (value) investmentEl.value = value;
         }
+        investmentEl.dispatchEvent(new Event('input', { bubbles: true }));
+        investmentEl.focus();
         refreshCompleteness();
         updateFcaAttestVisibility();
+        syncInvestmentVatChip();
       });
     });
+    syncInvestmentVatChip();
     syncAffiliateFormMode();
     updateFcaAttestVisibility();
     syncOpportunitySteps();
@@ -2420,8 +2477,6 @@
       showAlert(
         'Checkout was cancelled. Your listing stays approved — pay via Stripe when you are ready to go live.'
       );
-    } else if (justSubmitted) {
-      showAlert(submittedApprovalMessage());
     }
 
     const loadWork = async () => {
@@ -2461,6 +2516,20 @@
     resetFormBaseline();
     refreshListingPreview();
     refreshSubmitSummary();
+
+    if (justSubmitted) {
+      showAlert(submittedApprovalMessage());
+      syncListingStatusUi(currentOpportunity);
+      try {
+        if (window.history && window.history.replaceState) {
+          const clean = new URL(window.location.href);
+          clean.searchParams.delete('submitted');
+          window.history.replaceState({}, '', clean.pathname + clean.search + clean.hash);
+        }
+      } catch (e) {
+        /* ignore */
+      }
+    }
 
     if (
       checkoutStart &&
