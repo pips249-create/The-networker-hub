@@ -189,6 +189,31 @@
   cursor: pointer;
 }
 
+.oe-type-mode-note {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--opp-border);
+  background: #f8f9fb;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--opp-text);
+}
+
+.oe-type-mode-note.is-affiliate {
+  border-color: rgba(201, 150, 31, 0.45);
+  background: var(--opp-gold-pale);
+}
+
+.oe-type-mode-note.is-mixed {
+  border-color: rgba(220, 38, 38, 0.28);
+  background: #fff5f5;
+}
+
+.oe-type-mode-note strong {
+  font-weight: 700;
+}
+
 .organiser-opportunity-edit-page .ee-field .hub-location-field.oe-location-field {
   position: relative;
   display: block;

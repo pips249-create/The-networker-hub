@@ -87,13 +87,18 @@
     return 1;
   }
 
-  function syncAffiliateFormMode() {
-    const affiliate = isAffiliateStyleListing();
+  function syncAffiliateFormMode(options) {
+    const opts = options || {};
+    const types = getSelectedTypes();
+    const affiliate = isAffiliateStyleListing(types);
+    const wasAffiliate = syncAffiliateFormMode.lastAffiliate === true;
     const capitalWrap = document.getElementById('oe-fields-capital');
     const affiliateWrap = document.getElementById('oe-fields-affiliate');
     const investmentEl = document.getElementById('oe-investment');
     const commissionEl = document.getElementById('oe-commission');
     const promoteEl = document.getElementById('oe-promote');
+    const metaHeading = document.getElementById('oe-card-meta-heading');
+    const metaLead = document.getElementById('oe-card-meta-lead');
     if (capitalWrap) capitalWrap.hidden = affiliate;
     if (affiliateWrap) affiliateWrap.hidden = !affiliate;
     if (investmentEl) {
@@ -108,8 +113,64 @@
       if (affiliate) promoteEl.setAttribute('required', 'required');
       else promoteEl.removeAttribute('required');
     }
+    if (metaHeading) metaHeading.textContent = affiliate ? 'Card highlights — affiliate' : 'Card highlights';
+    if (metaLead) {
+      metaLead.textContent = affiliate
+        ? 'Commission and what partners promote appear on your card — not franchise-style investment.'
+        : 'Investment, location, and commitment appear in the meta row on your listing card.';
+    }
+    updateTypeModeNote(types, affiliate);
     updateFcaAttestVisibility();
     refreshCompleteness();
+    syncAffiliateFormMode.lastAffiliate = affiliate;
+    if (opts.scroll && affiliate && !wasAffiliate) {
+      const card = document.getElementById('oe-card-meta');
+      if (card) {
+        window.requestAnimationFrame(function () {
+          card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      }
+    }
+  }
+
+  function updateTypeModeNote(types, affiliateMode) {
+    const note = document.getElementById('oe-type-mode-note');
+    if (!note) return;
+    const list = types || getSelectedTypes();
+    if (!list.length) {
+      note.hidden = true;
+      note.textContent = '';
+      note.className = 'oe-type-mode-note';
+      return;
+    }
+    const hasAffiliate = list.indexOf('affiliate') !== -1;
+    const hasCapital = list.some((type) => CAPITAL_TYPES.indexOf(type) !== -1);
+    const affiliate = affiliateMode != null ? affiliateMode : isAffiliateStyleListing(list);
+
+    if (affiliate) {
+      note.innerHTML =
+        '<strong>Affiliate fields unlocked.</strong> Scroll to <strong>Card highlights — affiliate</strong> below for commission and what you promote. Investment is not required.';
+      note.className = 'oe-type-mode-note is-affiliate';
+      note.hidden = false;
+      return;
+    }
+    if (hasAffiliate && hasCapital) {
+      note.innerHTML =
+        '<strong>Affiliate + investment-style types selected.</strong> We use investment fields (not commission) because franchise, partnership, and similar listings need upfront cost details. Your listing still appears under every type you ticked — pick types that truly match what you offer.';
+      note.className = 'oe-type-mode-note is-mixed';
+      note.hidden = false;
+      return;
+    }
+    if (list.length > 1) {
+      note.textContent =
+        'Multiple types selected — your listing appears under each filter. Make sure they all describe the same opportunity.';
+      note.className = 'oe-type-mode-note';
+      note.hidden = false;
+      return;
+    }
+    note.hidden = true;
+    note.textContent = '';
+    note.className = 'oe-type-mode-note';
   }
 
   function listingPaymentPanelVisible() {
@@ -633,6 +694,9 @@
       'oe-email',
       'oe-investment',
       'oe-investment-includes',
+      'oe-commission',
+      'oe-promote',
+      'oe-suits',
       'oe-location',
       'oe-commitment',
       'oe-companies-house',
@@ -1000,7 +1064,7 @@
     }
     document.querySelectorAll('#oe-type-group input[name="oe-type"]').forEach((input) => {
       input.addEventListener('change', function () {
-        syncAffiliateFormMode();
+        syncAffiliateFormMode({ scroll: true });
         updateFcaAttestVisibility();
       });
     });
