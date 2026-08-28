@@ -101,6 +101,12 @@ async function maybeAutoEnableOrganiserAccess(session, res) {
   };
 }
 
+function isPreservableOrganiserDeepLink(next) {
+  const path = organiserPathFromNext(next);
+  if (!path || path === '/organiser' || path === '/organiser/') return false;
+  return /^\/organiser(\/|$)/.test(path);
+}
+
 function redirectAfterOrganiserAuth({ next, intent, autoResult, defaultRedirect }) {
   if (!isOrganiserAuthIntent({ next, intent })) {
     return defaultRedirect;
@@ -114,6 +120,10 @@ function redirectAfterOrganiserAuth({ next, intent, autoResult, defaultRedirect 
   if (hasVerifyEmailToken(trimmedNext)) {
     return trimmedNext;
   }
+  // Pay links and other organiser deep links beat a generic /organiser/ redirect.
+  if (isPreservableOrganiserDeepLink(trimmedNext)) {
+    return trimmedNext;
+  }
   if (autoResult?.redirect) return autoResult.redirect;
   return trimmedNext || '/organiser/';
 }
@@ -121,6 +131,7 @@ function redirectAfterOrganiserAuth({ next, intent, autoResult, defaultRedirect 
 module.exports = {
   isOrganiserAuthIntent,
   isOrganiserClaimNext,
+  isPreservableOrganiserDeepLink,
   maybeAutoEnableOrganiserAccess,
   resolveOrganiserRedirect,
   redirectAfterOrganiserAuth,

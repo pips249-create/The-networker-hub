@@ -652,6 +652,10 @@
     grid-template-columns: 1fr;
   }
 
+  .auth-page--organiser-mobile-compact .auth-panel--brand {
+    display: none;
+  }
+
   .auth-panel--brand {
     padding: 28px 24px;
   }

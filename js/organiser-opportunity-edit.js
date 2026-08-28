@@ -24,6 +24,20 @@
 
   const LISTING_MONTHLY_EX_VAT = 25;
   const LISTING_VAT_RATE = 0.2;
+  const PAY_STRIPE_BUTTON_HTML =
+    '<span class="oe-pay-stripe-label">Pay with <img src="../assets/stripe-wordmark.png" alt="Stripe" width="56" height="24" decoding="async"></span>';
+
+  function setPayStripeButtonLoading(loading) {
+    const payStripeBtn = document.getElementById('oe-pay-stripe');
+    if (!payStripeBtn) return;
+    if (loading) {
+      payStripeBtn.disabled = true;
+      payStripeBtn.textContent = 'Opening secure checkout…';
+      return;
+    }
+    payStripeBtn.disabled = false;
+    payStripeBtn.innerHTML = PAY_STRIPE_BUTTON_HTML;
+  }
 
   const OPPORTUNITY_TYPES = [
     'franchise',
@@ -550,6 +564,29 @@
     return approval === 'Pending Review' && Boolean(opportunity.reviewSubmittedAt);
   }
 
+  function opportunityApprovalStatus(opportunity) {
+    return String(
+      (opportunity && (opportunity.approvalStatus || opportunity.approval_status)) || ''
+    ).trim();
+  }
+
+  function opportunityAwaitingListingPayment(opportunity) {
+    if (!opportunity) return false;
+    return opportunityApprovalStatus(opportunity) === 'Approved' && !opportunity.listingPaymentActive;
+  }
+
+  function clearCheckoutStartParam() {
+    try {
+      if (!window.history || !window.history.replaceState) return;
+      const clean = new URL(window.location.href);
+      if (!clean.searchParams.has('checkout')) return;
+      clean.searchParams.delete('checkout');
+      window.history.replaceState({}, '', clean.pathname + clean.search + clean.hash);
+    } catch {
+      /* ignore */
+    }
+  }
+
   function opportunityListingIsLive(opp) {
     if (!opp) return false;
     const status = String(opp.status || 'draft').toLowerCase();
@@ -778,13 +815,11 @@
 
   async function startListingCheckout(opportunityId) {
     const submitBtn = document.getElementById('oe-submit');
-    const payStripeBtn = document.getElementById('oe-pay-stripe');
-    [submitBtn, payStripeBtn].forEach(function (btn) {
-      if (btn) {
-        btn.disabled = true;
-        btn.textContent = 'Opening secure checkout…';
-      }
-    });
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Opening secure checkout…';
+    }
+    setPayStripeButtonLoading(true);
     const checkoutBody = { opportunityId: opportunityId };
     const approval = String(
       (currentOpportunity && currentOpportunity.approvalStatus) || ''
@@ -812,10 +847,10 @@
       submitBtn.disabled = false;
       submitBtn.textContent = primarySubmitLabel();
     }
-    if (payStripeBtn) {
-      payStripeBtn.disabled = false;
-      payStripeBtn.textContent = 'Pay via Stripe →';
-    }
+    setPayStripeButtonLoading(false);
+    document.body.classList.remove('oe-checkout-start');
+    const checkoutLoading = window.organiserPageLoading;
+    if (checkoutLoading && checkoutLoading.hide) checkoutLoading.hide();
   }
 
   async function api(path, opts) {
@@ -2685,29 +2720,17 @@
       return;
     }
 
-    if (publish && window.HubOrganiserTerms) {
-      try {
-        await window.HubOrganiserTerms.requireAcceptance();
-      } catch (e) {
-        return;
-      }
-    }
-
     const hasActiveListing =
       currentOpportunity && currentOpportunity.listingPaymentActive && editId;
-    const approval = String(
-      (currentOpportunity && currentOpportunity.approvalStatus) || ''
-    ).trim();
-    const awaitingPayment = approval === 'Approved' && !hasActiveListing;
+    const awaitingPayment = opportunityAwaitingListingPayment(currentOpportunity);
 
-    // Approved + unpaid → open Stripe. Otherwise submit for review (no charge yet).
+    // Approved + unpaid → Stripe checkout (no terms re-prompt — already accepted at submit).
     if (publish && awaitingPayment) {
       if (!editId && !(currentOpportunity && currentOpportunity.id)) {
         showAlert('Save your listing before starting checkout.');
         return;
       }
       const payloadCheck = buildPayload('draft');
-      // FCA was confirmed at submit-for-review; do not re-block payment on the checkbox.
       if (requiresFcaDisclaimer()) {
         payloadCheck.fcaDisclaimerAttested = true;
       }
@@ -2724,6 +2747,15 @@
       return;
     }
 
+    if (publish && window.HubOrganiserTerms) {
+      try {
+        await window.HubOrganiserTerms.requireAcceptance();
+      } catch (e) {
+        return;
+      }
+    }
+
+    // hasActiveListing already computed above
     const payload = buildPayload(publish && hasActiveListing ? 'published' : 'draft');
     appendListingMediaUrls(payload);
     if (publish && (!hasActiveListing || opportunityListingIsLive(currentOpportunity))) {
@@ -2959,6 +2991,14 @@
       }
     }
 
+    if (checkoutStart && editId) {
+      document.body.classList.add('oe-checkout-start');
+      const checkoutLoading = window.organiserPageLoading;
+      if (checkoutLoading && checkoutLoading.show) {
+        checkoutLoading.show('Opening secure checkout');
+      }
+    }
+
     bindLogoUpload();
     bindPhotoUpload();
     bindModerationScan();
@@ -3106,11 +3146,19 @@
     if (
       checkoutStart &&
       currentOpportunity &&
-      currentOpportunity.approvalStatus === 'Approved' &&
-      !currentOpportunity.listingPaymentActive
+      opportunityAwaitingListingPayment(currentOpportunity)
     ) {
+      clearCheckoutStartParam();
       await startListingCheckout(currentOpportunity.id || editId);
       return;
+    }
+
+    if (checkoutStart && editId && currentOpportunity) {
+      const checkoutLoading = window.organiserPageLoading;
+      if (checkoutLoading && checkoutLoading.hide) checkoutLoading.hide();
+      document.body.classList.remove('oe-checkout-start');
+      clearCheckoutStartParam();
+      showAlert('This listing is not ready for payment yet — check its status in My business opportunities.');
     }
 
     notifyEmbedDrawerReady();

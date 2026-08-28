@@ -1025,12 +1025,29 @@ body.hub-page-organiser.organiser-opportunity-edit-page {
   box-shadow: 0 4px 20px rgba(201, 150, 31, 0.18);
 }
 
+body.oe-checkout-start .ee-wrap {
+  visibility: hidden;
+}
+
 .oe-listing-pay-stripe {
   width: 100%;
   margin-top: 4px;
   font-size: 1rem;
   font-weight: 700;
   padding: 14px 20px;
+}
+
+.oe-pay-stripe-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4em;
+}
+
+.oe-pay-stripe-label img {
+  height: 1.15em;
+  width: auto;
+  display: block;
 }
 
 .oe-listing-payment-title {

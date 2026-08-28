@@ -73,6 +73,10 @@
     }
   }
 
+  function syncAuthOrganiserMobileLayout(isOrganiser) {
+    document.body.classList.toggle('auth-page--organiser-mobile-compact', Boolean(isOrganiser));
+  }
+
   function updateAuthLinks() {
     if (createAccountLink) {
       createAccountLink.setAttribute('href', withNextParam('/register'));
@@ -612,6 +616,8 @@
       panelProof.hidden = false;
     }
 
+    syncAuthOrganiserMobileLayout(true);
+
     var registerWizard = document.querySelector('.auth-wizard-step.is-current .auth-wizard-label');
     if (registerWizard) {
       registerWizard.textContent = 'Create account';
@@ -822,6 +828,8 @@
       if (createBtn) createBtn.textContent = content.createBtn;
       if (createHint) createHint.textContent = content.createHint;
       if (audienceNote) audienceNote.hidden = !content.showNote;
+
+      syncAuthOrganiserMobileLayout(audience === 'organiser');
 
       setToggleState(audience === 'organiser' ? 'organiser' : 'networker');
       startHeroRotation(content.rotate);

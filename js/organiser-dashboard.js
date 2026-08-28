@@ -11224,11 +11224,8 @@
     const listingsEl = document.getElementById('tab-count-opp-listings');
     const newBadge = document.getElementById('tab-badge-opp-enquiries-new');
     const openDaysBadge = document.getElementById('tab-badge-opp-open-days-new');
-    const liveListings = (state.opportunities || []).filter(function (o) {
-      const status = String(o.status || o.listingStatus || '').toLowerCase();
-      return status === 'published' || status === 'live';
-    }).length;
-    if (listingsEl) listingsEl.textContent = String(liveListings);
+    const listingCount = (state.opportunities || []).length;
+    if (listingsEl) listingsEl.textContent = String(listingCount);
     const newCount = Number(state.opportunityEnquiriesNewCount) || 0;
     if (newBadge) {
       newBadge.hidden = newCount < 1;
@@ -15840,16 +15837,6 @@
         const row = document.querySelector('[data-opp-renew="' + renewId + '"]');
         if (row) row.scrollIntoView({ behavior: 'smooth', block: 'center' });
       });
-      const approval = String(match.approvalStatus || match.approval_status || '').trim();
-      const paid = Boolean(match.listingPaymentActive);
-      if (approval === 'Approved' && !paid) {
-        // Prefer the listing editor checkout deep-link (same as the approved-pay email).
-        location.href =
-          '/organiser/opportunity-edit?id=' +
-          encodeURIComponent(renewId) +
-          '&checkout=start';
-        return;
-      }
       startOpportunityListingRenew(renewId, 1, null);
     } catch {
       /* ignore */
@@ -16990,50 +16977,6 @@
     updateBusinessIntroPanel();
   }
 
-  function opportunityStatusStepsHtml(o) {
-    const approval = String(o.approvalStatus || o.approval_status || '').trim();
-    const paid = Boolean(o.listingPaymentActive);
-    const submitted = Boolean(o.reviewSubmittedAt || o.review_submitted_at);
-    if (approval === 'Rejected') {
-      return '<span class="org-opp-status-steps is-rejected">Not approved — edit and resubmit</span>';
-    }
-    const steps = [
-      { id: 'draft', label: 'Draft' },
-      { id: 'submitted', label: 'Submitted' },
-      { id: 'approved', label: 'Approved' },
-      { id: 'live', label: 'Live' },
-    ];
-    let current = 'draft';
-    if (paid && approval === 'Approved') current = 'live';
-    else if (approval === 'Approved') current = 'approved';
-    else if (/pending/i.test(approval) && submitted) current = 'submitted';
-    const tone =
-      current === 'approved' ? ' is-awaiting-payment' : current === 'submitted' ? ' is-awaiting-approval' : '';
-    return (
-      '<span class="org-opp-status-steps' +
-      tone +
-      '">' +
-      steps
-        .map(function (step, index) {
-          const done =
-            steps.findIndex(function (s) {
-              return s.id === current;
-            }) > index;
-          const isCurrent = step.id === current;
-          return (
-            (index ? '<span class="org-opp-step-sep" aria-hidden="true">→</span>' : '') +
-            '<span class="org-opp-step' +
-            (isCurrent ? ' is-current' : done ? ' is-done' : '') +
-            '">' +
-            esc(step.label) +
-            '</span>'
-          );
-        })
-        .join('') +
-      '</span>'
-    );
-  }
-
   function opportunityRejectionNoteHtml(o) {
     const approval = String(o.approvalStatus || o.approval_status || '').trim();
     const note = String(o.rejectionNote || o.rejection_note || '').trim();
@@ -17251,14 +17194,14 @@
       return { key: 'unpublished', label: 'Unpublished' };
     }
     if (approval === 'Approved' && !paid) {
-      return { key: 'awaiting_payment', label: 'Approved — pay to go live' };
+      return { key: 'awaiting_payment', label: 'Pay to go live' };
     }
     if (/pending/i.test(approval)) {
       const submitted = Boolean(o.reviewSubmittedAt || o.review_submitted_at);
       if (submitted) {
         return { key: 'awaiting_approval', label: 'Awaiting approval' };
       }
-      return { key: 'draft', label: 'Draft — not submitted' };
+      return { key: 'draft', label: 'Not submitted' };
     }
     if (approval === 'Rejected') {
       return { key: 'unpublished', label: 'Not approved' };
@@ -17295,9 +17238,6 @@
         opportunityTitleLinkHtml(o) +
         '</td><td data-label="Status">' +
         statusBadgeHtml(st.key, st.label) +
-        '<div class="org-opp-status-steps-wrap">' +
-        opportunityStatusStepsHtml(o) +
-        '</div>' +
         opportunityRejectionNoteHtml(o) +
         '</td><td data-label="Premium">' +
         opportunityPremiumCellHtml(o) +
