@@ -3,80 +3,98 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<base href="/">
 <title>Page not found – The Networker UK</title>
 <meta name="description" content="This page could not be found on The Networker UK. Browse events, organiser profiles, and business opportunities instead.">
 <meta name="robots" content="noindex, nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/hub.css?v=20260825adminbadge1">
-<link rel="stylesheet" href="css/content-page.css?v=20260711e">
-<link rel="stylesheet" href="css/404-page.css?v=20260828">
+<link rel="stylesheet" href="/css/hub.css?v=20260825adminbadge1">
+<link rel="stylesheet" href="/css/home-page.css?v=20260825trust1">
+<link rel="stylesheet" href="/css/404-page.css?v=20260828b">
 <link rel="icon" href="/favicon.ico?v=20260823uk3" sizes="any">
 <link rel="icon" href="/assets/favicon.svg?v=20260823uk3" type="image/svg+xml">
 <link rel="icon" href="/assets/favicon-32.png?v=20260823uk" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png?v=20260823uk">
-<link rel="stylesheet" href="css/hub-mobile.css?v=20260825adminbadge1">
+<link rel="stylesheet" href="/css/hub-mobile.css?v=20260825adminbadge1">
 </head>
-<body class="error-page has-site-nav">
+<body class="error-page home-page has-site-nav">
 
 <div id="hub-site-nav"></div>
-<script src="js/site-nav.js?v=20260825navfull1" data-root=""></script>
+<script src="/js/site-nav.js?v=20260825navfull1" data-root="/" data-page=""></script>
 
-<main class="content-page-main error-page-main">
-  <header class="content-hero error-hero">
-    <div class="content-hero-inner">
-      <p class="error-code" aria-hidden="true">404</p>
-      <h1>Page not found</h1>
-      <p class="content-hero-lede">
-        We couldn&rsquo;t find that page. It may have moved, the link may be out of date,
-        or the address might be mistyped.
-      </p>
-      <div class="error-actions">
-        <a class="btn btn-primary" href="/">Back to home</a>
-        <a class="btn btn-secondary" href="/contact">Contact us</a>
+<main class="error-page-main">
+  <section class="error-hero home-hero" aria-labelledby="error-heading">
+    <span class="home-hero-orb home-hero-orb--1" aria-hidden="true"></span>
+    <span class="home-hero-orb home-hero-orb--2" aria-hidden="true"></span>
+    <span class="home-hero-orb home-hero-orb--3" aria-hidden="true"></span>
+
+    <div class="error-hero-inner home-flow-inner">
+      <a class="error-logo" href="/" aria-label="The Networker UK home">
+        <img src="/assets/logo-nav-on-light.png?v=20260824tnuklight" alt="The Networker UK" width="220" height="88" decoding="async">
+      </a>
+
+      <div class="error-hero-copy">
+        <p class="error-code" aria-hidden="true">404</p>
+        <p class="section-kicker">Page not found</p>
+        <h1 class="hero-title" id="error-heading">We couldn&rsquo;t find that page</h1>
+        <p class="error-lede">
+          The link may be out of date, the page may have moved, or the address might be mistyped.
+          Here are some good places to start instead.
+        </p>
+        <div class="error-actions">
+          <a class="btn btn-primary" href="/">Back to home</a>
+          <a class="btn btn-secondary" href="/contact">Contact us</a>
+        </div>
       </div>
     </div>
-  </header>
+  </section>
 
-  <section class="error-links content-body" aria-labelledby="error-links-heading">
-    <h2 id="error-links-heading">Try one of these instead</h2>
-    <ul class="error-link-grid">
-      <li>
-        <a class="error-link-card" href="/events/">
-          <strong>Browse events</strong>
-          <span>Find networking meetings, conferences, and exhibitions across the UK.</span>
-        </a>
-      </li>
-      <li>
-        <a class="error-link-card" href="/opportunities/">
-          <strong>Business opportunities</strong>
-          <span>Explore franchises, partnerships, and new ventures.</span>
-        </a>
-      </li>
-      <li>
-        <a class="error-link-card" href="/for-organisers">
-          <strong>For organisers</strong>
-          <span>List your group, publish events, and manage bookings.</span>
-        </a>
-      </li>
-      <li>
-        <a class="error-link-card" href="/faq">
-          <strong>FAQ &amp; help</strong>
-          <span>Answers about accounts, tickets, listings, and payouts.</span>
-        </a>
-      </li>
-    </ul>
-    <p class="error-note">
-      Looking for something from <strong>the-networker.co.uk</strong>?
-      The Networker UK is the new home for the brand — if a page is missing,
-      <a href="mailto:hi@thenetworkeruk.com">email us</a> and we&rsquo;ll point you in the right direction.
-    </p>
+  <section class="error-links" aria-labelledby="error-links-heading">
+    <div class="error-links-inner home-flow-inner">
+      <h2 class="error-links-title" id="error-links-heading">Try one of these instead</h2>
+      <ul class="error-link-grid">
+        <li>
+          <a class="error-link-card error-link-card--events" href="/events/">
+            <span class="error-link-kicker">Events</span>
+            <strong>Browse events</strong>
+            <span>Networking meetings, conferences, and exhibitions across the UK.</span>
+          </a>
+        </li>
+        <li>
+          <a class="error-link-card error-link-card--opps" href="/opportunities/">
+            <span class="error-link-kicker">Opportunities</span>
+            <strong>Business opportunities</strong>
+            <span>Franchises, partnerships, and new ventures.</span>
+          </a>
+        </li>
+        <li>
+          <a class="error-link-card error-link-card--orgs" href="/for-organisers">
+            <span class="error-link-kicker">Organisers</span>
+            <strong>For organisers</strong>
+            <span>List your group, publish events, and manage bookings.</span>
+          </a>
+        </li>
+        <li>
+          <a class="error-link-card error-link-card--help" href="/faq">
+            <span class="error-link-kicker">Help</span>
+            <strong>FAQ &amp; help</strong>
+            <span>Accounts, tickets, listings, and payouts.</span>
+          </a>
+        </li>
+      </ul>
+      <p class="error-note">
+        Looking for something from <strong>the-networker.co.uk</strong>?
+        The Networker UK is the new home for the brand — if a page is missing,
+        <a href="mailto:hi@thenetworkeruk.com">email us</a> and we&rsquo;ll point you in the right direction.
+      </p>
+    </div>
   </section>
 </main>
 
 <div id="hub-site-footer"></div>
-<script src="js/site-footer.js?v=20260825navfull1" data-root="" data-hubert="off"></script>
+<script src="/js/site-footer.js?v=20260825navfull1" data-root="/" data-hubert="off"></script>
 
 </body>
 </html>

@@ -1,24 +1,81 @@
+/* Branded 404 — root-relative assets + <base href="/"> in 404.html */
+
+.error-page {
+  --error-bg: #faf7f2;
+  --error-card: #ffffff;
+  --error-border: rgba(74, 68, 70, 0.12);
+  --error-muted: rgba(74, 68, 70, 0.72);
+  --error-accent: #9a7aa8;
+  --error-charcoal: #4a4446;
+  background: var(--error-bg);
+}
+
 .error-page-main {
   min-height: calc(100vh - 72px);
-  display: flex;
-  flex-direction: column;
 }
 
 .error-hero {
-  flex: 1;
+  position: relative;
+  min-height: clamp(420px, 62vh, 560px);
   display: flex;
   align-items: center;
-  padding-bottom: 72px;
+  padding: clamp(48px, 8vw, 88px) 0 clamp(56px, 7vw, 80px);
+  overflow: hidden;
+}
+
+.error-hero-inner {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 42rem;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.error-logo {
+  display: inline-flex;
+  margin-bottom: 28px;
+}
+
+.error-logo img {
+  display: block;
+  width: min(220px, 62vw);
+  height: auto;
+}
+
+.error-hero-copy {
+  color: var(--error-charcoal);
 }
 
 .error-code {
-  display: inline-block;
-  margin-bottom: 12px;
+  margin: 0 0 10px;
   font-family: 'DM Serif Display', 'DM Serif Display Fallback', Georgia, serif;
-  font-size: clamp(3rem, 10vw, 4.5rem);
-  line-height: 1;
-  color: var(--lavender-deep);
-  letter-spacing: -0.02em;
+  font-size: clamp(3.25rem, 12vw, 5rem);
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  color: var(--error-accent);
+  opacity: 0.92;
+}
+
+.error-hero .section-kicker {
+  margin-bottom: 10px;
+}
+
+.error-hero .hero-title {
+  font-family: 'DM Serif Display', 'DM Serif Display Fallback', Georgia, serif;
+  font-size: clamp(2rem, 5vw, 2.85rem);
+  font-weight: 400;
+  line-height: 1.12;
+  margin: 0 0 16px;
+  color: var(--error-charcoal);
+}
+
+.error-lede {
+  margin: 0 auto;
+  max-width: 34em;
+  font-size: 1.05rem;
+  line-height: 1.65;
+  color: var(--error-muted);
 }
 
 .error-actions {
@@ -30,18 +87,20 @@
 }
 
 .error-links {
-  max-width: 52rem;
-  padding-top: 0;
-  padding-bottom: 72px;
+  padding: 0 0 clamp(56px, 8vw, 88px);
 }
 
-.error-links h2 {
+.error-links-inner {
+  max-width: 980px;
+}
+
+.error-links-title {
+  margin: 0 0 22px;
   font-family: 'DM Serif Display', 'DM Serif Display Fallback', Georgia, serif;
-  font-size: 1.5rem;
+  font-size: clamp(1.45rem, 3vw, 1.75rem);
   font-weight: 400;
-  color: var(--charcoal);
   text-align: center;
-  margin-bottom: 20px;
+  color: var(--error-charcoal);
 }
 
 .error-link-grid {
@@ -49,56 +108,87 @@
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
 }
 
 .error-link-card {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 20px 22px;
-  border: 1px solid var(--border-soft);
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.82);
-  box-shadow: 0 10px 28px rgba(45, 42, 38, 0.04);
+  gap: 6px;
+  min-height: 100%;
+  padding: 22px 24px;
+  border: 1px solid var(--error-border);
+  border-radius: 18px;
+  background: var(--error-card);
+  box-shadow: 0 12px 32px rgba(45, 42, 38, 0.05);
+  text-decoration: none;
+  color: inherit;
   transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .error-link-card:hover {
-  border-color: rgba(194, 153, 209, 0.55);
   transform: translateY(-2px);
-  box-shadow: 0 14px 32px rgba(45, 42, 38, 0.08);
+  box-shadow: 0 16px 36px rgba(45, 42, 38, 0.08);
+  color: inherit;
+}
+
+.error-link-card--events:hover { border-color: rgba(154, 122, 168, 0.45); }
+.error-link-card--opps:hover { border-color: rgba(201, 162, 77, 0.55); }
+.error-link-card--orgs:hover { border-color: rgba(154, 122, 168, 0.45); }
+.error-link-card--help:hover { border-color: rgba(74, 68, 70, 0.22); }
+
+.error-link-kicker {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--error-accent);
 }
 
 .error-link-card strong {
-  font-size: 1.05rem;
-  color: var(--charcoal);
+  font-size: 1.08rem;
+  color: var(--error-charcoal);
 }
 
-.error-link-card span {
+.error-link-card span:last-child {
   font-size: 0.95rem;
   line-height: 1.55;
-  color: var(--text-muted);
+  color: var(--error-muted);
 }
 
 .error-link-card::after {
   content: '→';
   margin-top: auto;
-  font-weight: 600;
-  color: var(--lavender-deep);
+  padding-top: 8px;
+  font-weight: 700;
+  color: var(--error-accent);
 }
 
 .error-note {
-  max-width: 36em;
-  margin: 32px auto 0;
+  max-width: 38em;
+  margin: 28px auto 0;
   text-align: center;
   font-size: 0.95rem;
-  line-height: 1.6;
-  color: var(--text-muted);
+  line-height: 1.65;
+  color: var(--error-muted);
 }
 
 .error-note a {
-  color: var(--lavender-deep);
+  color: var(--error-accent);
   font-weight: 600;
+}
+
+.error-note a:hover {
+  color: var(--error-charcoal);
+}
+
+@media (max-width: 720px) {
+  .error-link-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .error-hero {
+    min-height: auto;
+  }
 }
