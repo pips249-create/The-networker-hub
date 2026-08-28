@@ -4,6 +4,16 @@
  */
 (function () {
   var BUILD = '20260828cmp1';
+  var FONT_SAFE = 'js/hub-fonts-safe.js?v=20260828fonts1';
+
+  function ensureFontSafety(root) {
+    if (window.__hubFontsSafe) return;
+    if (document.querySelector('[data-hub-compliance="' + FONT_SAFE + '"]')) return;
+    var s = document.createElement('script');
+    s.src = (root || '') + FONT_SAFE;
+    s.setAttribute('data-hub-compliance', FONT_SAFE);
+    document.head.appendChild(s);
+  }
 
   function isEmbedContext() {
     try {
@@ -42,7 +52,8 @@
 
     var embed = options.embed === true || (options.embed !== false && isEmbedContext());
 
-    loadAsset(root, 'js/hub-sentry.js?v=20260828sentry4', { defer: false });
+    ensureFontSafety(root);
+    loadAsset(root, 'js/hub-sentry.js?v=20260828sentry5', { defer: false });
 
     if (embed) {
       window.HubCookieConsent = window.HubCookieConsent || {

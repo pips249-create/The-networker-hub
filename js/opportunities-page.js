@@ -1442,32 +1442,38 @@
     refreshCompareTray();
     maybeShowCompareIntro();
 
-    els.mount.addEventListener('click', function (e) {
-      var removeChip = e.target.closest('[data-opp-compare-remove]');
-      if (removeChip) {
-        e.preventDefault();
-        var cmpRemove = window.HubOpportunityCompare;
-        var removeId = removeChip.getAttribute('data-opp-compare-remove');
-        if (cmpRemove && removeId) {
-          cmpRemove.toggle(removeId);
-          refreshCompareTray();
+    if (document.body.dataset.oppCompareClickBound !== '1') {
+      document.body.dataset.oppCompareClickBound = '1';
+      document.addEventListener('click', function (e) {
+        if (!document.body.classList.contains('opp-browse-page')) return;
+
+        var removeChip = e.target.closest('[data-opp-compare-remove]');
+        if (removeChip) {
+          e.preventDefault();
+          var cmpRemove = window.HubOpportunityCompare;
+          var removeId = removeChip.getAttribute('data-opp-compare-remove');
+          if (cmpRemove && removeId) {
+            cmpRemove.toggle(removeId);
+            refreshCompareTray();
+          }
+          return;
         }
-        return;
-      }
-      var btn = e.target.closest('[data-opp-compare-id]');
-      if (!btn) return;
-      e.preventDefault();
-      e.stopPropagation();
-      var cmp = window.HubOpportunityCompare;
-      var id = btn.getAttribute('data-opp-compare-id');
-      if (!cmp || !id) return;
-      if (!cmp.isSelected(id) && cmp.ids().length >= cmp.MAX) {
-        btn.blur();
-        return;
-      }
-      cmp.toggle(id);
-      refreshCompareTray();
-    });
+
+        var btn = e.target.closest('[data-opp-compare-id]');
+        if (!btn || !els.mount || !els.mount.contains(btn)) return;
+        e.preventDefault();
+        e.stopPropagation();
+        var cmp = window.HubOpportunityCompare;
+        var id = btn.getAttribute('data-opp-compare-id');
+        if (!cmp || !id) return;
+        if (!cmp.isSelected(id) && cmp.ids().length >= cmp.MAX) {
+          btn.blur();
+          return;
+        }
+        cmp.toggle(id);
+        refreshCompareTray();
+      });
+    }
 
     var openBtn = document.getElementById('bo-opp-compare-open');
     var clearBtn = document.getElementById('bo-opp-compare-clear');

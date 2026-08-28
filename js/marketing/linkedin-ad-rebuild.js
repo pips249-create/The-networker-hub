@@ -54,6 +54,8 @@
   if (isExport) {
     document.fonts.ready.then(function () {
       schedule(play, 120);
+    }).catch(function () {
+      schedule(play, 120);
     });
   } else {
     play();

@@ -3561,7 +3561,8 @@ body.nav-menu-open {
   }
 
   body.opp-browse-page.bo-opp-compare-tray-open {
-    overflow-x: clip;
+    overflow-x: visible;
+    overflow-y: visible;
   }
 
   body.opp-browse-page .bo-opp-compare-tray {

@@ -596,7 +596,7 @@
     if (bySlug) return bySlug;
     var catalog = loadCatalog();
     for (var i = 0; i < catalog.length; i++) {
-      if (catalog[i].id === key) return catalog[i];
+      if (String(catalog[i].id || '') === key) return catalog[i];
     }
     return null;
   }

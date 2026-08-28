@@ -7,6 +7,17 @@
     'https://ed87933e8496b3ed118c576494ab2376@o4511987677659136.ingest.de.sentry.io/4511987801260117';
   var BUNDLE_SRC = 'https://browser.sentry-cdn.com/10.71.0/bundle.min.js';
 
+  if (!window.__hubFontsSafe) {
+    try {
+      if (document.fonts && document.fonts.ready && document.fonts.ready.catch) {
+        document.fonts.ready.catch(function () {});
+      }
+      window.__hubFontsSafe = true;
+    } catch (_eFont) {
+      /* ignore */
+    }
+  }
+
   function isLocalHost() {
     var host = String(window.location.hostname || '').toLowerCase();
     return host === 'localhost' || host === '127.0.0.1' || host.endsWith('.local');
@@ -35,6 +46,30 @@
     return event;
   }
 
+  function breadcrumbsMentionFontFace(event) {
+    var crumbs = event && event.breadcrumbs;
+    if (!Array.isArray(crumbs)) return false;
+    for (var i = 0; i < crumbs.length; i++) {
+      var msg = String((crumbs[i] && crumbs[i].message) || '');
+      if (/FontFace/i.test(msg)) return true;
+    }
+    return false;
+  }
+
+  function isFontNetworkError(event, hint) {
+    var ex = hint && hint.originalException;
+    if (!ex) return false;
+    var name = String(ex.name || '');
+    var msg = String(ex.message || ex.toString ? ex.toString() : '');
+    if (name !== 'NetworkError' && !/network error occurred/i.test(msg)) return false;
+    return breadcrumbsMentionFontFace(event);
+  }
+
+  function beforeSend(event, hint) {
+    if (isFontNetworkError(event, hint)) return null;
+    return scrubEvent(event);
+  }
+
   function initSentry() {
     if (!window.Sentry || typeof window.Sentry.init !== 'function') return;
     if (window.Sentry.getClient && window.Sentry.getClient()) return;
@@ -48,7 +83,8 @@
       dsn: DSN,
       environment: env,
       sendDefaultPii: false,
-      beforeSend: scrubEvent,
+      ignoreErrors: ['NetworkError: A network error occurred.'],
+      beforeSend: beforeSend,
     });
   }
 

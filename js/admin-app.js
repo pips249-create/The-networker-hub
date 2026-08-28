@@ -9625,7 +9625,9 @@
         document.fonts.load('400 32px "DM Serif Display"'),
       ])
         .then(function () {
-          return document.fonts.ready;
+          return document.fonts.ready.catch(function () {
+            return null;
+          });
         })
         .catch(function () {
           return null;

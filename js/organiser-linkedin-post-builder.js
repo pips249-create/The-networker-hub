@@ -553,6 +553,23 @@
     return TYPE_STYLES[id] || TYPE_STYLES.classic;
   }
 
+  function waitForGoogleFontsStylesheet() {
+    var link = document.querySelector('link[href*="fonts.googleapis.com"]');
+    if (!link) return Promise.resolve();
+    if (link.sheet) return Promise.resolve();
+    return new Promise(function (resolve) {
+      var done = false;
+      function finish() {
+        if (done) return;
+        done = true;
+        resolve();
+      }
+      link.addEventListener('load', finish, { once: true });
+      link.addEventListener('error', finish, { once: true });
+      setTimeout(finish, 4000);
+    });
+  }
+
   function ensureTypeFonts(styleId) {
     var faces = typeFacesFor(styleId);
     if (!document.fonts || !document.fonts.load) return Promise.resolve();
@@ -563,12 +580,14 @@
     }
     var titleFamily = primaryFamily(faces.title);
     var bodyFamily = primaryFamily(faces.body);
-    return Promise.all([
-      document.fonts.load('400 72px "' + titleFamily + '"'),
-      document.fonts.load('700 28px "' + bodyFamily + '"'),
-      document.fonts.load('400 24px "' + bodyFamily + '"'),
-    ]).catch(function () {
-      return null;
+    return waitForGoogleFontsStylesheet().then(function () {
+      return Promise.all([
+        document.fonts.load('400 72px "' + titleFamily + '"'),
+        document.fonts.load('700 28px "' + bodyFamily + '"'),
+        document.fonts.load('400 24px "' + bodyFamily + '"'),
+      ]).catch(function () {
+        return null;
+      });
     });
   }
 

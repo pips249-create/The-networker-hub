@@ -166,6 +166,10 @@
   }
 
   function listingHref(item) {
+    var catalog = window.HubOpportunitiesCatalog;
+    if (catalog && typeof catalog.detailHref === 'function') {
+      return catalog.detailHref(item);
+    }
     if (item && item.slug) {
       return '/opportunities/' + encodeURIComponent(item.slug);
     }

@@ -2624,6 +2624,12 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.opp-browse-page .event-grid-card-link {
+  z-index: 0;
 }
 
 .opp-browse-page .bo-opp-compact .event-grid-body {
@@ -2686,6 +2692,9 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
   gap: 12px 18px;
   margin-top: auto;
   padding-top: 8px;
+  position: relative;
+  z-index: 2;
+  pointer-events: auto;
 }
 
 .opp-browse-page .bo-opp-primary-btn {
