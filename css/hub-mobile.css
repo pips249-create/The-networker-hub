@@ -3560,7 +3560,7 @@ body.nav-menu-open {
     bottom: calc(72px + env(safe-area-inset-bottom, 0px));
   }
 
-  body.opp-browse-page.bo-opp-compare-tray-open {
+  body.opp-browse-page.has-opp-compare-tray {
     overflow-x: visible;
     overflow-y: visible;
   }
@@ -3573,7 +3573,7 @@ body.nav-menu-open {
     bottom: max(24px, env(safe-area-inset-bottom));
   }
 
-  body.opp-browse-page.bo-opp-compare-tray-open .bo-opp-compare-intro {
+  body.opp-browse-page.has-opp-compare-tray .bo-opp-compare-intro {
     bottom: max(112px, calc(96px + env(safe-area-inset-bottom)));
   }
 }

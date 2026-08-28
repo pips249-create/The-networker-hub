@@ -1332,7 +1332,7 @@
       '<div class="bo-opp-compare-tray-chips" id="bo-opp-compare-tray-chips" hidden></div>' +
       '<div class="bo-opp-compare-tray-actions">' +
       '<button type="button" class="bo-opp-compare-tray-clear" id="bo-opp-compare-clear">Exit compare</button>' +
-      '<button type="button" class="bo-opp-compare-tray-open" id="bo-opp-compare-open" disabled>Compare now</button>' +
+      '<button type="button" class="bo-opp-compare-tray-cta" id="bo-opp-compare-open" disabled>Compare now</button>' +
       '</div></div>' +
       '</div>';
     document.body.appendChild(el);
@@ -1384,12 +1384,22 @@
     var countEl = document.getElementById('bo-opp-compare-count');
     var openBtn = document.getElementById('bo-opp-compare-open');
     var clearBtn = document.getElementById('bo-opp-compare-clear');
+    var hintEl = tray.querySelector('.bo-opp-compare-tray-hint');
     if (countEl) countEl.textContent = String(ids.length);
-    if (openBtn) openBtn.disabled = ids.length < 2;
+    if (openBtn) {
+      openBtn.disabled = ids.length < 2;
+      openBtn.textContent = ids.length < 2 ? 'Pick one more' : 'Compare now';
+    }
     if (clearBtn) clearBtn.disabled = !ids.length;
+    if (hintEl) {
+      hintEl.textContent =
+        ids.length < 2
+          ? 'Select another listing to compare side by side'
+          : 'Tap a chip to remove · Exit compare to leave';
+    }
     renderCompareTrayChips(ids);
     tray.hidden = ids.length === 0;
-    document.body.classList.toggle('bo-opp-compare-tray-open', ids.length > 0);
+    document.body.classList.toggle('has-opp-compare-tray', ids.length > 0);
     syncCompareButtons(els.mount || document);
     dismissCompareIntro();
   }
@@ -1477,8 +1487,14 @@
           btn.blur();
           return;
         }
+        var beforeCount = cmp.ids().length;
         cmp.toggle(id);
         refreshCompareTray();
+        var afterCount = cmp.ids().length;
+        // Open the side-by-side table as soon as 2 listings are selected.
+        if (beforeCount < 2 && afterCount >= 2) {
+          openBrowseCompare();
+        }
       });
     }
 

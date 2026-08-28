@@ -2782,7 +2782,7 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
   border-radius: 4px;
 }
 
-body.bo-opp-compare-tray-open {
+body.has-opp-compare-tray {
   padding-bottom: max(108px, calc(88px + env(safe-area-inset-bottom)));
 }
 
@@ -2793,6 +2793,7 @@ body.bo-opp-compare-tray-open {
   z-index: 1250;
   transform: translateX(-50%);
   width: min(94vw, 560px);
+  pointer-events: none;
 }
 
 .bo-opp-compare-tray[hidden] {
@@ -2807,6 +2808,7 @@ body.bo-opp-compare-tray-open {
   color: #fff;
   box-shadow: 0 16px 40px rgba(13, 31, 60, 0.28);
   border: 1px solid rgba(201, 150, 31, 0.35);
+  pointer-events: auto;
 }
 
 .bo-opp-compare-tray-main {
@@ -2866,7 +2868,7 @@ body.bo-opp-compare-tray-open {
   pointer-events: auto;
 }
 
-body.bo-opp-compare-tray-open .bo-opp-compare-intro {
+body.has-opp-compare-tray .bo-opp-compare-intro {
   bottom: max(112px, calc(96px + env(safe-area-inset-bottom)));
 }
 
@@ -2972,7 +2974,7 @@ body.bo-opp-compare-tray-open .bo-opp-compare-intro {
   cursor: default;
 }
 
-.bo-opp-compare-tray-open {
+.bo-opp-compare-tray-cta {
   min-height: 36px;
   padding: 0 14px;
   border: none;
@@ -2985,11 +2987,11 @@ body.bo-opp-compare-tray-open .bo-opp-compare-intro {
   cursor: pointer;
 }
 
-.bo-opp-compare-tray-open:hover:not(:disabled) {
+.bo-opp-compare-tray-cta:hover:not(:disabled) {
   filter: brightness(1.05);
 }
 
-.bo-opp-compare-tray-open:disabled {
+.bo-opp-compare-tray-cta:disabled {
   opacity: 0.45;
   cursor: default;
 }
@@ -3026,6 +3028,8 @@ body.opp-compare-modal-open {
   background: #fff;
   border-radius: 16px;
   box-shadow: 0 20px 50px rgba(13, 31, 60, 0.25);
+  color: var(--opp-navy, #0d1f3c);
+  font-family: 'DM Sans', 'DM Sans Fallback', system-ui, sans-serif;
 }
 
 .opp-compare-head {
