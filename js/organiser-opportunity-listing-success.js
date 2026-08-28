@@ -10,6 +10,7 @@
 
   var lede = document.getElementById('oe-listing-success-lede');
   var status = document.getElementById('oe-listing-success-status');
+  var receiptNote = document.getElementById('oe-listing-success-receipt');
   var actions = document.getElementById('oe-listing-success-actions');
   var viewDirectory = document.getElementById('oe-listing-view-directory');
   var viewYours = document.getElementById('oe-listing-view-yours');
@@ -320,6 +321,7 @@
       viewDirectory.textContent = 'Browse opportunities';
     }
     if (actions) actions.hidden = false;
+    if (receiptNote) receiptNote.hidden = false;
     if (opportunity) renderPremiumPreview(opportunity);
     showCommsPack(rejected || pendingReview ? null : opportunity);
   }
@@ -328,6 +330,7 @@
     if (lede) lede.textContent = 'We received your payment — finishing setup…';
     if (status) status.textContent = msg;
     if (actions) actions.hidden = false;
+    if (receiptNote) receiptNote.hidden = false;
   }
 
   if (viewYours && id) viewYours.href = listingUrl();

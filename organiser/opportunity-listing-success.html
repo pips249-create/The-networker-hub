@@ -16,7 +16,7 @@
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260825adminbadge1" />
     <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260608c" />
-    <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260714cls" />
+    <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260828receipt1" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260825adminbadge1" />
   </head>
   <body class="opportunities-page organiser-event-edit-page organiser-opportunity-edit-page oe-submitted-page">
@@ -29,6 +29,9 @@
         <h1 class="ee-title oe-submitted-title">Payment received</h1>
         <p class="ee-lead" id="oe-listing-success-lede">Activating your listing…</p>
         <p class="oe-premium-status" id="oe-listing-success-status" role="status"></p>
+        <p class="ee-hint oe-listing-success-receipt" id="oe-listing-success-receipt" hidden>
+          Your card receipt is emailed separately by Stripe.
+        </p>
         <div class="ee-actions oe-premium-success-actions" id="oe-listing-success-actions" hidden>
           <a class="ee-btn ee-btn-gold" href="../opportunities/" id="oe-listing-view-directory">Browse opportunities</a>
           <a class="ee-btn ee-btn-outline" href="/opportunities/opportunity" id="oe-listing-view-yours">View your listing</a>
@@ -106,6 +109,6 @@
 
     <script src="../js/opportunities-catalog.js?v=20260609" defer></script>
     <script src="../js/hub-comms-pack.js?v=20260730" defer></script>
-    <script src="../js/organiser-opportunity-listing-success.js?v=20260828csp1" defer></script>
+    <script src="../js/organiser-opportunity-listing-success.js?v=20260828receipt1" defer></script>
   </body>
 </html>
