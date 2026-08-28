@@ -2796,6 +2796,26 @@ a.admin-action-row:hover .admin-action-btn {
   margin-top: 0.85rem;
 }
 
+.opp-admin-open-day-format {
+  margin: 0 0 10px;
+  padding: 0;
+  border: 0;
+}
+
+.opp-admin-open-day-format-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #475569;
+  margin-bottom: 6px;
+}
+
+.opp-admin-open-day-format-option input {
+  margin-top: 2px;
+}
+
 .opp-admin-open-day-row {
   padding: 0.75rem;
   border: 1px solid #e2e8f0;

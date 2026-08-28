@@ -22929,6 +22929,13 @@
     }
   }
 
+  var adminOpenDayRowSeq = 0;
+
+  function nextAdminOpenDayRowKey() {
+    adminOpenDayRowSeq += 1;
+    return 'a' + adminOpenDayRowSeq;
+  }
+
   function toOpenDayDatetimeLocal(iso) {
     if (!iso) return '';
     var d = new Date(iso);
@@ -22949,42 +22956,137 @@
     );
   }
 
-  function fromOpenDayDatetimeLocal(value) {
-    var raw = String(value || '').trim();
-    if (!raw) return '';
-    var d = new Date(raw);
-    if (isNaN(d.getTime())) return '';
-    return d.toISOString();
+  function adminIsoToOpenDayParts(iso) {
+    var local = toOpenDayDatetimeLocal(iso);
+    if (!local) return { date: '', time: '' };
+    var split = local.split('T');
+    return { date: split[0] || '', time: String(split[1] || '').slice(0, 5) };
+  }
+
+  function adminCombineOpenDayDateAndTime(dateKeyStr, timeStr) {
+    var parts = String(dateKeyStr || '').trim().split('-').map(Number);
+    var y = parts[0];
+    var m = parts[1];
+    var d = parts[2];
+    if (!y || !m || !d) return '';
+    var qt = window.OrganiserQuarterTime;
+    var rounded = qt ? qt.roundToQuarterHour(timeStr) : String(timeStr || '10:00').trim() || '10:00';
+    var timeParts = rounded.split(':').map(Number);
+    var hh = timeParts[0] || 0;
+    var mm = timeParts[1] || 0;
+    var tz = window.HubEventTimezone;
+    if (tz && typeof tz.londonWallToUtcIso === 'function') {
+      return tz.londonWallToUtcIso(y, m, d, hh, mm);
+    }
+    return new Date(y, m - 1, d, hh, mm, 0).toISOString();
+  }
+
+  function adminOpenDayIsOnline(day) {
+    return String((day && day.addressLine) || '').trim().toLowerCase() === 'online';
+  }
+
+  function initAdminOpenDayRowTimeSelects(row) {
+    var qt = window.OrganiserQuarterTime;
+    if (!qt || !row) return;
+    var startEl = row.querySelector('.opp-admin-open-day-start-time');
+    var endEl = row.querySelector('.opp-admin-open-day-end-time');
+    if (!startEl || !endEl) return;
+    var startVal = startEl.getAttribute('data-time-value') || '10:00';
+    var endVal = endEl.getAttribute('data-time-value') || '';
+    qt.populateSelect(startEl, startVal);
+    qt.populateSelect(endEl, endVal || '12:00');
+    if (!endEl.querySelector('option[value=""]')) {
+      endEl.insertAdjacentHTML('afterbegin', '<option value="">No end time</option>');
+    }
+    endEl.value = endVal;
+    if (typeof endEl._quarterSyncUi === 'function') endEl._quarterSyncUi();
+  }
+
+  function syncAdminOpenDayRowFormat(row) {
+    if (!row) return;
+    var rowKey = row.getAttribute('data-row-key') || '';
+    var onlineRadio = row.querySelector(
+      'input[name="adminOpenDayFormat-' + rowKey + '"][value="online"]'
+    );
+    var online = onlineRadio && onlineRadio.checked;
+    var addressWrap = row.querySelector('.opp-admin-open-day-address-wrap');
+    var cityWrap = row.querySelector('.opp-admin-open-day-city-wrap');
+    var postcodeWrap = row.querySelector('.opp-admin-open-day-postcode-wrap');
+    var addressInput = row.querySelector('.opp-admin-open-day-address');
+    var venueInput = row.querySelector('.opp-admin-open-day-venue');
+    if (addressWrap) addressWrap.hidden = online;
+    if (cityWrap) cityWrap.hidden = online;
+    if (postcodeWrap) postcodeWrap.hidden = online;
+    if (addressInput) {
+      addressInput.required = !online;
+      if (online) addressInput.value = '';
+    }
+    if (venueInput) {
+      venueInput.placeholder = online ? 'e.g. Zoom intro call' : 'e.g. Head office';
+    }
+  }
+
+  function initAdminOpenDayRows(mount) {
+    if (!mount) return;
+    mount.querySelectorAll('.opp-admin-open-day-row').forEach(function (row) {
+      initAdminOpenDayRowTimeSelects(row);
+      syncAdminOpenDayRowFormat(row);
+    });
   }
 
   function opportunityAdminOpenDayRowHtml(day) {
     var d = day || {};
+    var rowKey = nextAdminOpenDayRowKey();
+    var online = adminOpenDayIsOnline(d);
+    var startParts = adminIsoToOpenDayParts(d.startsAt);
+    var endParts = adminIsoToOpenDayParts(d.endsAt);
     return (
       '<div class="opp-admin-open-day-row" data-open-day-id="' +
       attrEsc(d.id || '') +
+      '" data-row-key="' +
+      rowKey +
       '">' +
+      '<fieldset class="opp-admin-open-day-format">' +
+      '<legend class="text-xs font-semibold text-slate-500">Format</legend>' +
+      '<label class="opp-admin-open-day-format-option">' +
+      '<input type="radio" name="adminOpenDayFormat-' +
+      rowKey +
+      '" value="in-person"' +
+      (online ? '' : ' checked') +
+      ' required /> In-person open day / visit</label>' +
+      '<label class="opp-admin-open-day-format-option">' +
+      '<input type="radio" name="adminOpenDayFormat-' +
+      rowKey +
+      '" value="online"' +
+      (online ? ' checked' : '') +
+      ' /> Online talk / call</label>' +
+      '</fieldset>' +
       '<div class="opp-admin-open-day-grid">' +
-      '<label class="block text-xs font-semibold text-slate-500">Date &amp; start' +
-      '<input type="datetime-local" class="opp-admin-open-day-starts mt-1 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm" value="' +
-      attrEsc(toOpenDayDatetimeLocal(d.startsAt)) +
+      '<label class="block text-xs font-semibold text-slate-500">Date' +
+      '<input type="date" class="opp-admin-open-day-date mt-1 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm" value="' +
+      attrEsc(startParts.date) +
       '" required /></label>' +
+      '<label class="block text-xs font-semibold text-slate-500">Start time' +
+      '<select class="opp-admin-open-day-start-time mt-1 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm" data-time-value="' +
+      attrEsc(startParts.time || '10:00') +
+      '" required></select></label>' +
       '<label class="block text-xs font-semibold text-slate-500">End <span class="font-normal text-slate-400">(optional)</span>' +
-      '<input type="datetime-local" class="opp-admin-open-day-ends mt-1 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm" value="' +
-      attrEsc(toOpenDayDatetimeLocal(d.endsAt)) +
-      '" /></label>' +
+      '<select class="opp-admin-open-day-end-time mt-1 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm" data-time-value="' +
+      attrEsc(endParts.time) +
+      '"></select></label>' +
       '<label class="block text-xs font-semibold text-slate-500 sm:col-span-2">Venue <span class="font-normal text-slate-400">(optional)</span>' +
       '<input type="text" class="opp-admin-open-day-venue mt-1 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm" maxlength="120" value="' +
       attrEsc(d.venueName || '') +
       '" /></label>' +
-      '<label class="block text-xs font-semibold text-slate-500 sm:col-span-2">Address' +
+      '<label class="block text-xs font-semibold text-slate-500 sm:col-span-2 opp-admin-open-day-address-wrap">Address' +
       '<input type="text" class="opp-admin-open-day-address mt-1 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm" maxlength="200" value="' +
-      attrEsc(d.addressLine || '') +
+      attrEsc(online ? '' : d.addressLine || '') +
       '" required /></label>' +
-      '<label class="block text-xs font-semibold text-slate-500">City' +
+      '<label class="block text-xs font-semibold text-slate-500 opp-admin-open-day-city-wrap">City' +
       '<input type="text" class="opp-admin-open-day-city mt-1 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm" maxlength="80" value="' +
       attrEsc(d.city || '') +
       '" /></label>' +
-      '<label class="block text-xs font-semibold text-slate-500">Postcode' +
+      '<label class="block text-xs font-semibold text-slate-500 opp-admin-open-day-postcode-wrap">Postcode' +
       '<input type="text" class="opp-admin-open-day-postcode mt-1 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm" maxlength="20" value="' +
       attrEsc(d.postcode || '') +
       '" /></label>' +
@@ -22993,6 +23095,7 @@
       attrEsc(d.notes || '') +
       '" /></label>' +
       '</div>' +
+      '<p class="text-xs text-slate-500 mt-2">Times use 15-minute steps (UK local).</p>' +
       (d.interestCount
         ? '<p class="text-xs text-slate-500 mt-2">' +
           esc(String(d.interestCount)) +
@@ -23008,22 +23111,37 @@
   function collectAdminOpenDaysFromMount(mount) {
     if (!mount) return [];
     var out = [];
+    var qt = window.OrganiserQuarterTime;
     mount.querySelectorAll('.opp-admin-open-day-row').forEach(function (row, index) {
-      var startsAt = fromOpenDayDatetimeLocal(
-        (row.querySelector('.opp-admin-open-day-starts') || {}).value
+      var rowKey = row.getAttribute('data-row-key') || '';
+      var dateVal = String((row.querySelector('.opp-admin-open-day-date') || {}).value || '').trim();
+      var startEl = row.querySelector('.opp-admin-open-day-start-time');
+      var endEl = row.querySelector('.opp-admin-open-day-end-time');
+      if (qt && startEl && endEl) {
+        qt.syncPairFromUi(startEl.id, endEl.id);
+      }
+      var startTime = String((startEl || {}).value || '').trim();
+      var endTime = String((endEl || {}).value || '').trim();
+      var startsAt = adminCombineOpenDayDateAndTime(dateVal, startTime);
+      var endsAt = endTime ? adminCombineOpenDayDateAndTime(dateVal, endTime) : '';
+      var formatOnline = row.querySelector(
+        'input[name="adminOpenDayFormat-' + rowKey + '"][value="online"]'
       );
-      var endsAt = fromOpenDayDatetimeLocal(
-        (row.querySelector('.opp-admin-open-day-ends') || {}).value
-      );
+      var online = formatOnline && formatOnline.checked;
       var addressLine = String(
         (row.querySelector('.opp-admin-open-day-address') || {}).value || ''
       ).trim();
+      var venueName = String((row.querySelector('.opp-admin-open-day-venue') || {}).value || '').trim();
+      if (online) {
+        addressLine = 'Online';
+        if (!venueName) venueName = 'Online talk';
+      }
       if (!startsAt && !addressLine) return;
       out.push({
         id: String(row.getAttribute('data-open-day-id') || '').trim() || undefined,
         startsAt: startsAt,
         endsAt: endsAt || null,
-        venueName: String((row.querySelector('.opp-admin-open-day-venue') || {}).value || '').trim(),
+        venueName: venueName,
         addressLine: addressLine,
         city: String((row.querySelector('.opp-admin-open-day-city') || {}).value || '').trim(),
         postcode: String((row.querySelector('.opp-admin-open-day-postcode') || {}).value || '').trim(),
@@ -23037,12 +23155,22 @@
   function ensureOpportunityOpenDaysLoaded(id) {
     var mount = document.querySelector('[data-opp-open-days-for="' + id + '"]');
     if (!mount || mount.dataset.loaded === '1') return;
+    if (!window.__adminOpenDayFormatBound) {
+      window.__adminOpenDayFormatBound = true;
+      document.addEventListener('change', function (e) {
+        var input = e.target.closest('input[type="radio"][name^="adminOpenDayFormat-"]');
+        if (!input) return;
+        var row = input.closest('.opp-admin-open-day-row');
+        if (row) syncAdminOpenDayRowFormat(row);
+      });
+    }
     mount.dataset.loaded = '1';
     mount.innerHTML = '<p class="text-sm text-slate-500">Loading open days…</p>';
     adminGet('/api/admin/opportunities?open_days=1&id=' + encodeURIComponent(id))
       .then(function (data) {
         if (!data || !data.ok) throw new Error((data && data.message) || 'load_failed');
         var days = Array.isArray(data.openDays) ? data.openDays : [];
+        adminOpenDayRowSeq = 0;
         mount.innerHTML =
           '<p class="text-xs text-slate-500 mb-3">Add visit dates for this business opportunity only — does not change listing fields. Visitors register interest on the public page.</p>' +
           '<div class="opp-admin-open-days-list space-y-3">' +
@@ -23061,6 +23189,7 @@
           attrEsc(id) +
           '"></span>' +
           '</div>';
+        initAdminOpenDayRows(mount);
       })
       .catch(function (err) {
         mount.innerHTML =
@@ -23086,7 +23215,7 @@
       }
       if (!openDays[i].addressLine) {
         if (msg) {
-          msg.textContent = 'Each open day needs an address.';
+          msg.textContent = 'Each in-person open day needs an address.';
           msg.className = 'opp-admin-open-days-msg text-xs text-red-700 font-semibold';
         }
         return;
@@ -23108,7 +23237,11 @@
         }
         var saved = Array.isArray(data.openDays) ? data.openDays : [];
         var list = mount.querySelector('.opp-admin-open-days-list');
-        if (list) list.innerHTML = saved.map(opportunityAdminOpenDayRowHtml).join('');
+        if (list) {
+          adminOpenDayRowSeq = 0;
+          list.innerHTML = saved.map(opportunityAdminOpenDayRowHtml).join('');
+          initAdminOpenDayRows(mount);
+        }
         if (msg) {
           msg.textContent =
             'Saved ' +
@@ -24215,9 +24348,17 @@
         '[data-opp-open-days-for="' + openDayAddBtn.getAttribute('data-opp-open-day-add') + '"]'
       );
       var addList = addMount && addMount.querySelector('.opp-admin-open-days-list');
-      if (addList) addList.insertAdjacentHTML('beforeend', opportunityAdminOpenDayRowHtml({}));
+      if (addList) {
+        addList.insertAdjacentHTML('beforeend', opportunityAdminOpenDayRowHtml({}));
+        var newRow = addList.lastElementChild;
+        if (newRow) {
+          initAdminOpenDayRowTimeSelects(newRow);
+          syncAdminOpenDayRowFormat(newRow);
+        }
+      }
       return;
     }
+
     var openDayRemoveBtn = e.target.closest('.opp-admin-open-day-remove');
     if (openDayRemoveBtn) {
       var openDayRow = openDayRemoveBtn.closest('.opp-admin-open-day-row');

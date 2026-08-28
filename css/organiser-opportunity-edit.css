@@ -1826,8 +1826,52 @@ body.oe-opportunity-drawer-open {
   color: #2d2636;
 }
 
-.oe-open-day-label input {
+.oe-open-day-label input,
+.oe-open-day-label select {
   font-weight: 400;
+}
+
+.oe-open-day-format-fieldset {
+  margin: 0 0 12px;
+  padding: 0;
+  border: 0;
+}
+
+.oe-open-day-format-fieldset legend {
+  font-size: 13px;
+  font-weight: 600;
+  color: #2d2636;
+  margin-bottom: 8px;
+}
+
+.oe-open-day-format-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.45;
+  margin-bottom: 6px;
+}
+
+.oe-open-day-format-option input {
+  margin-top: 3px;
+}
+
+.oe-open-day-time-note {
+  margin: 4px 0 10px;
+}
+
+.oe-open-day-row .ee-quarter-time {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.oe-open-day-row .ee-quarter-time-hour,
+.oe-open-day-row .ee-quarter-time-min {
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 @media (max-width: 640px) {

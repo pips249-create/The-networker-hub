@@ -741,59 +741,160 @@
     );
   }
 
-  function fromDatetimeLocalValue(value) {
-    const raw = String(value || '').trim();
-    if (!raw) return '';
-    const d = new Date(raw);
-    if (Number.isNaN(d.getTime())) return '';
-    return d.toISOString();
+  let openDayRowSeq = 0;
+
+  function nextOpenDayRowKey() {
+    openDayRowSeq += 1;
+    return 'r' + openDayRowSeq;
+  }
+
+  function isoToOpenDayParts(iso) {
+    const local = toDatetimeLocalValue(iso);
+    if (!local) return { date: '', time: '' };
+    const split = local.split('T');
+    return {
+      date: split[0] || '',
+      time: String(split[1] || '').slice(0, 5),
+    };
+  }
+
+  function combineOpenDayDateAndTime(dateKeyStr, timeStr) {
+    const parts = String(dateKeyStr || '').trim().split('-').map(Number);
+    const y = parts[0];
+    const m = parts[1];
+    const d = parts[2];
+    if (!y || !m || !d) return '';
+    const qt = window.OrganiserQuarterTime;
+    const rounded = qt ? qt.roundToQuarterHour(timeStr) : String(timeStr || '10:00').trim() || '10:00';
+    const timeParts = rounded.split(':').map(Number);
+    const hh = timeParts[0] || 0;
+    const mm = timeParts[1] || 0;
+    const tz = window.HubEventTimezone;
+    if (tz && typeof tz.londonWallToUtcIso === 'function') {
+      return tz.londonWallToUtcIso(y, m, d, hh, mm);
+    }
+    return new Date(y, m - 1, d, hh, mm, 0).toISOString();
+  }
+
+  function openDayIsOnline(day) {
+    return String((day && day.addressLine) || '').trim().toLowerCase() === 'online';
+  }
+
+  function initOpenDayRowTimeSelects(row) {
+    const qt = window.OrganiserQuarterTime;
+    if (!qt || !row) return;
+    const startEl = row.querySelector('.oe-open-day-start-time');
+    const endEl = row.querySelector('.oe-open-day-end-time');
+    if (!startEl || !endEl) return;
+    const startVal = startEl.getAttribute('data-time-value') || '10:00';
+    const endVal = endEl.getAttribute('data-time-value') || '';
+    qt.populateSelect(startEl, startVal);
+    qt.populateSelect(endEl, endVal || '12:00');
+    if (!endEl.querySelector('option[value=""]')) {
+      endEl.insertAdjacentHTML('afterbegin', '<option value="">No end time</option>');
+    }
+    endEl.value = endVal;
+    if (typeof endEl._quarterSyncUi === 'function') endEl._quarterSyncUi();
+  }
+
+  function syncOpenDayRowFormatFields(row) {
+    if (!row) return;
+    const rowKey = row.getAttribute('data-row-key') || '';
+    const onlineRadio = row.querySelector(
+      'input[name="oeOpenDayFormat-' + rowKey + '"][value="online"]'
+    );
+    const online = onlineRadio && onlineRadio.checked;
+    const addressWrap = row.querySelector('.oe-open-day-address-wrap');
+    const cityWrap = row.querySelector('.oe-open-day-city-wrap');
+    const postcodeWrap = row.querySelector('.oe-open-day-postcode-wrap');
+    const addressInput = row.querySelector('.oe-open-day-address');
+    const venueInput = row.querySelector('.oe-open-day-venue');
+    if (addressWrap) addressWrap.hidden = online;
+    if (cityWrap) cityWrap.hidden = online;
+    if (postcodeWrap) postcodeWrap.hidden = online;
+    if (addressInput) {
+      addressInput.required = !online;
+      if (online) addressInput.value = '';
+    }
+    if (venueInput) {
+      venueInput.placeholder = online ? 'e.g. Zoom intro call' : 'e.g. Head office';
+    }
+  }
+
+  function initOpenDayRowsInList(list) {
+    if (!list) return;
+    list.querySelectorAll('.oe-open-day-row').forEach(function (row) {
+      initOpenDayRowTimeSelects(row);
+      syncOpenDayRowFormatFields(row);
+    });
   }
 
   function openDayRowHtml(day) {
     const d = day || {};
+    const rowKey = nextOpenDayRowKey();
+    const online = openDayIsOnline(d);
+    const startParts = isoToOpenDayParts(d.startsAt);
+    const endParts = isoToOpenDayParts(d.endsAt);
+    const esc = function (value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;');
+    };
     return (
       '<div class="oe-open-day-row" data-open-day-id="' +
-      String(d.id || '').replace(/"/g, '') +
+      esc(d.id) +
+      '" data-row-key="' +
+      rowKey +
       '">' +
+      '<fieldset class="oe-open-day-format-fieldset">' +
+      '<legend>Format</legend>' +
+      '<label class="oe-open-day-format-option">' +
+      '<input type="radio" name="oeOpenDayFormat-' +
+      rowKey +
+      '" value="in-person"' +
+      (online ? '' : ' checked') +
+      ' required /> In-person open day / visit</label>' +
+      '<label class="oe-open-day-format-option">' +
+      '<input type="radio" name="oeOpenDayFormat-' +
+      rowKey +
+      '" value="online"' +
+      (online ? ' checked' : '') +
+      ' /> Online talk / call</label>' +
+      '</fieldset>' +
       '<div class="oe-open-day-row-grid">' +
-      '<label class="oe-open-day-label">Date &amp; start time' +
-      '<input type="datetime-local" class="oe-open-day-starts" value="' +
-      String(toDatetimeLocalValue(d.startsAt) || '').replace(/"/g, '') +
+      '<label class="oe-open-day-label">Date' +
+      '<input type="date" class="oe-open-day-date" value="' +
+      esc(startParts.date) +
       '" required /></label>' +
+      '<label class="oe-open-day-label">Start time' +
+      '<select class="oe-open-day-start-time" data-time-value="' +
+      esc(startParts.time || '10:00') +
+      '" required></select></label>' +
       '<label class="oe-open-day-label">End time <span class="ee-optional">(optional)</span>' +
-      '<input type="datetime-local" class="oe-open-day-ends" value="' +
-      String(toDatetimeLocalValue(d.endsAt) || '').replace(/"/g, '') +
-      '" /></label>' +
+      '<select class="oe-open-day-end-time" data-time-value="' +
+      esc(endParts.time) +
+      '"></select></label>' +
       '<label class="oe-open-day-label">Venue name <span class="ee-optional">(optional)</span>' +
       '<input type="text" class="oe-open-day-venue" maxlength="120" placeholder="e.g. Head office" value="' +
-      String(d.venueName || '')
-        .replace(/&/g, '&amp;')
-        .replace(/"/g, '&quot;') +
+      esc(d.venueName) +
       '" /></label>' +
-      '<label class="oe-open-day-label">Address' +
+      '<label class="oe-open-day-label oe-open-day-address-wrap">Address' +
       '<input type="text" class="oe-open-day-address" maxlength="200" placeholder="Street address" value="' +
-      String(d.addressLine || '')
-        .replace(/&/g, '&amp;')
-        .replace(/"/g, '&quot;') +
+      esc(online ? '' : d.addressLine) +
       '" required /></label>' +
-      '<label class="oe-open-day-label">City / town <span class="ee-optional">(optional)</span>' +
+      '<label class="oe-open-day-label oe-open-day-city-wrap">City / town <span class="ee-optional">(optional)</span>' +
       '<input type="text" class="oe-open-day-city" maxlength="80" value="' +
-      String(d.city || '')
-        .replace(/&/g, '&amp;')
-        .replace(/"/g, '&quot;') +
+      esc(d.city) +
       '" /></label>' +
-      '<label class="oe-open-day-label">Postcode <span class="ee-optional">(optional)</span>' +
+      '<label class="oe-open-day-label oe-open-day-postcode-wrap">Postcode <span class="ee-optional">(optional)</span>' +
       '<input type="text" class="oe-open-day-postcode" maxlength="20" value="' +
-      String(d.postcode || '')
-        .replace(/&/g, '&amp;')
-        .replace(/"/g, '&quot;') +
+      esc(d.postcode) +
       '" /></label>' +
       '</div>' +
+      '<p class="ee-hint oe-open-day-time-note">Times use 15-minute steps (UK local).</p>' +
       '<label class="oe-open-day-label">Notes for visitors <span class="ee-optional">(optional)</span>' +
       '<input type="text" class="oe-open-day-notes" maxlength="400" placeholder="e.g. Parking at rear, arrive 10 mins early" value="' +
-      String(d.notes || '')
-        .replace(/&/g, '&amp;')
-        .replace(/"/g, '&quot;') +
+      esc(d.notes) +
       '" /></label>' +
       '<button type="button" class="ee-btn ee-btn-outline oe-open-day-remove" style="font-size:12px;padding:6px 10px;margin-top:8px">Remove</button>' +
       (d.interestCount
@@ -810,28 +911,49 @@
   function renderOpenDaysEditor(days) {
     const list = document.getElementById('oe-open-days-list');
     if (!list) return;
+    openDayRowSeq = 0;
     const rows = Array.isArray(days) ? days : [];
     list.innerHTML = rows.map(openDayRowHtml).join('');
+    initOpenDayRowsInList(list);
   }
 
   function collectOpenDaysFromForm() {
     const list = document.getElementById('oe-open-days-list');
     if (!list) return [];
+    const qt = window.OrganiserQuarterTime;
     const out = [];
     list.querySelectorAll('.oe-open-day-row').forEach(function (row, index) {
-      const startsAt = fromDatetimeLocalValue(row.querySelector('.oe-open-day-starts')?.value);
-      const endsAt = fromDatetimeLocalValue(row.querySelector('.oe-open-day-ends')?.value);
-      const addressLine = String(row.querySelector('.oe-open-day-address')?.value || '').trim();
+      const rowKey = row.getAttribute('data-row-key') || '';
+      const dateVal = String((row.querySelector('.oe-open-day-date') || {}).value || '').trim();
+      const startEl = row.querySelector('.oe-open-day-start-time');
+      const endEl = row.querySelector('.oe-open-day-end-time');
+      if (qt && startEl && endEl) {
+        qt.syncPairFromUi(startEl.id, endEl.id);
+      }
+      const startTime = String((startEl || {}).value || '').trim();
+      const endTime = String((endEl || {}).value || '').trim();
+      const startsAt = combineOpenDayDateAndTime(dateVal, startTime);
+      const endsAt = endTime ? combineOpenDayDateAndTime(dateVal, endTime) : '';
+      const formatOnline = row.querySelector(
+        'input[name="oeOpenDayFormat-' + rowKey + '"][value="online"]'
+      );
+      const online = formatOnline && formatOnline.checked;
+      let addressLine = String((row.querySelector('.oe-open-day-address') || {}).value || '').trim();
+      let venueName = String((row.querySelector('.oe-open-day-venue') || {}).value || '').trim();
+      if (online) {
+        addressLine = 'Online';
+        if (!venueName) venueName = 'Online talk';
+      }
       if (!startsAt && !addressLine) return;
       out.push({
         id: String(row.getAttribute('data-open-day-id') || '').trim() || undefined,
         startsAt: startsAt,
         endsAt: endsAt || null,
-        venueName: String(row.querySelector('.oe-open-day-venue')?.value || '').trim(),
+        venueName: venueName,
         addressLine: addressLine,
-        city: String(row.querySelector('.oe-open-day-city')?.value || '').trim(),
-        postcode: String(row.querySelector('.oe-open-day-postcode')?.value || '').trim(),
-        notes: String(row.querySelector('.oe-open-day-notes')?.value || '').trim(),
+        city: String((row.querySelector('.oe-open-day-city') || {}).value || '').trim(),
+        postcode: String((row.querySelector('.oe-open-day-postcode') || {}).value || '').trim(),
+        notes: String((row.querySelector('.oe-open-day-notes') || {}).value || '').trim(),
         sortOrder: index,
       });
     });
@@ -868,6 +990,11 @@
       addBtn.addEventListener('click', function () {
         if (!list) return;
         list.insertAdjacentHTML('beforeend', openDayRowHtml({}));
+        const row = list.lastElementChild;
+        if (row) {
+          initOpenDayRowTimeSelects(row);
+          syncOpenDayRowFormatFields(row);
+        }
       });
     }
     if (list) {
@@ -876,6 +1003,12 @@
         if (!btn) return;
         const row = btn.closest('.oe-open-day-row');
         if (row) row.remove();
+      });
+      list.addEventListener('change', function (e) {
+        const input = e.target.closest('input[type="radio"][name^="oeOpenDayFormat-"]');
+        if (!input) return;
+        const row = input.closest('.oe-open-day-row');
+        if (row) syncOpenDayRowFormatFields(row);
       });
     }
     if (saveOnlyBtn) {
@@ -930,7 +1063,7 @@
         return { ok: false, message: 'Each open day needs a date and start time.' };
       }
       if (!openDays[i].addressLine) {
-        return { ok: false, message: 'Each open day needs an address.' };
+        return { ok: false, message: 'Each in-person open day needs an address.' };
       }
     }
     const res = await api('/api/organiser/opportunity-open-days', {
