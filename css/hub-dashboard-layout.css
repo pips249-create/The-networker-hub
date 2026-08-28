@@ -200,8 +200,9 @@ body.hub-page-organiser.organiser-event-edit-page {
 }
 
 .organiser-dashboard-page .org-sidebar {
-  background: var(--od-purple-light, #d4f0f3);
-  border-right: 1px solid var(--od-border-soft, #cfe4ea);
+  background: linear-gradient(180deg, #b5e3ea 0%, #a0d8e2 100%);
+  border-right: 2px solid #6eb8c4;
+  box-shadow: 3px 0 16px rgba(13, 110, 122, 0.1);
 }
 
 .attendee-dashboard-page .ad-sidebar {

@@ -22045,6 +22045,175 @@
     });
   }
 
+  function adminContentRoot() {
+    return document.getElementById('admin-main') || document;
+  }
+
+  function findOpportunityCleanupRecord(id) {
+    var key = String(id || '');
+    if (!key) return null;
+    var rows = (opportunityCleanupCache && opportunityCleanupCache.opportunities) || [];
+    for (var i = 0; i < rows.length; i += 1) {
+      if (String(rows[i].id) === key) return rows[i];
+    }
+    return opportunityCleanupState.selected[key] || null;
+  }
+
+  function opportunityAdminViewHref(opp) {
+    if (!opp) return '';
+    var slug = String(opp.slug || '').trim();
+    var id = String(opp.id || '').trim();
+    var live =
+      String(opp.status || '').toLowerCase() === 'published' &&
+      opp.approval_status === 'Approved' &&
+      opp.listing_payment_active;
+    if (live && slug) {
+      return '../opportunities/' + encodeURIComponent(slug);
+    }
+    if (id) {
+      return '/organiser/opportunity-edit?id=' + encodeURIComponent(id);
+    }
+    if (slug) {
+      return '../opportunities/' + encodeURIComponent(slug);
+    }
+    return '';
+  }
+
+  function opportunityCleanupPanelEl(id) {
+    var key = String(id || '');
+    if (!key) return null;
+    var escKey =
+      typeof CSS !== 'undefined' && CSS.escape
+        ? CSS.escape(key)
+        : key.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    return document.querySelector('.opportunity-cleanup-panel[data-opp-panel-for="' + escKey + '"]');
+  }
+
+  function ensureOpportunityCleanupPanelLoaded(id) {
+    var panel = opportunityCleanupPanelEl(id);
+    if (!panel || panel.dataset.loaded === '1') return panel;
+    var opp = findOpportunityCleanupRecord(id);
+    var cell = panel.querySelector('td');
+    if (!opp || !cell) return panel;
+    try {
+      cell.innerHTML = opportunityCleanupEditFormHtml(opp);
+      bindAdminLogoZones(panel);
+      var form = panel.querySelector('.opportunity-cleanup-form');
+      if (form) syncOpportunityAdminAffiliateFields(form);
+      panel.dataset.loaded = '1';
+    } catch (err) {
+      cell.innerHTML =
+        '<p class="text-sm text-red-700">Could not open the edit form: ' +
+        esc(err && err.message ? err.message : 'unknown error') +
+        '</p>';
+      panel.dataset.loaded = '1';
+    }
+    return panel;
+  }
+
+  function opportunityCleanupDataRowHtml(opp) {
+    var publicHref = opportunityAdminViewHref(opp);
+    var isPending =
+      opp.approval_status === 'Pending Review' && Boolean(opp.review_submitted_at);
+    var awaitingPay = opp.approval_status === 'Approved' && !opp.listing_payment_active;
+    var rowClass = isPending
+      ? 'border-b border-amber-100 bg-amber-50/40'
+      : awaitingPay
+        ? 'border-b border-sky-100 bg-sky-50/40'
+        : 'border-b border-slate-100';
+    var isOpen = !!opportunityCleanupState.expanded[opp.id];
+    if (opportunityCleanupState.selected[opp.id]) rememberSelectedOpportunity(opp);
+    var checked = opportunityCleanupState.selected[opp.id] ? ' checked' : '';
+    var approveLabel = opp.listing_payment_active
+      ? 'Approve &amp; go live'
+      : 'Approve — email pay link';
+    return (
+      '<tr class="hover:bg-slate-50/80 ' +
+      rowClass +
+      '" data-opportunity-id-row="' +
+      attrEsc(opp.id) +
+      '" data-opp-paid="' +
+      (opp.listing_payment_active ? '1' : '0') +
+      '">' +
+      '<td class="py-2.5 pr-2 w-8">' +
+      '<input type="checkbox" class="opportunity-select-checkbox rounded border-slate-300" value="' +
+      attrEsc(opp.id) +
+      '"' +
+      checked +
+      ' aria-label="Select ' +
+      attrEsc(opp.title || 'listing') +
+      '">' +
+      '</td>' +
+      '<td class="py-2.5 pr-3 max-w-[14rem]"><div class="font-semibold text-brand-900 truncate" title="' +
+      attrEsc(opp.title || 'Untitled') +
+      '">' +
+      esc(opp.title || 'Untitled') +
+      '</div>' +
+      '<div class="text-[11px] text-slate-500 truncate">' +
+      esc(opp.host || '—') +
+      '</div></td>' +
+      '<td class="py-2.5 pr-3 text-xs text-slate-600 whitespace-nowrap">' +
+      esc(opportunityTypeLabel(opp.type)) +
+      '</td>' +
+      '<td class="py-2.5 pr-3"><div class="flex flex-wrap gap-1">' +
+      listingStatusBadge(opp.status) +
+      (opp.approval_status === 'Pending Review' && !opp.review_submitted_at
+        ? '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-slate-100 text-slate-600">Not submitted</span>'
+        : approvalStatusBadge(opp.approval_status)) +
+      (awaitingPay
+        ? '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-sky-100 text-sky-900">Awaiting payment</span>'
+        : '') +
+      (opp.featured
+        ? '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-violet-100 text-violet-800">Featured</span>'
+        : '') +
+      '</div></td>' +
+      '<td class="py-2.5 pr-3 text-xs text-slate-500 max-w-[10rem] truncate">' +
+      esc(opp.owner_email || '—') +
+      '</td>' +
+      '<td class="py-2.5 text-right whitespace-nowrap">' +
+      '<div class="flex flex-wrap justify-end gap-2">' +
+      (isPending
+        ? '<button type="button" data-opp-approve class="text-xs font-semibold rounded-lg bg-brand-700 text-white px-2.5 py-1 hover:bg-brand-900">' +
+          approveLabel +
+          '</button>' +
+          '<button type="button" data-opp-reject class="text-xs font-semibold rounded-lg border border-red-200 text-red-700 px-2.5 py-1 hover:bg-red-50">Reject</button>'
+        : '') +
+      (awaitingPay
+        ? '<button type="button" data-opp-resend-pay class="text-xs font-semibold rounded-lg border border-sky-300 text-sky-900 px-2.5 py-1 hover:bg-sky-50">Resend pay email</button>'
+        : '') +
+      (publicHref
+        ? '<a href="' +
+          attrEsc(publicHref) +
+          '" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-700 hover:underline">' +
+          (String(opp.status || '').toLowerCase() === 'published' &&
+          opp.approval_status === 'Approved' &&
+          opp.listing_payment_active
+            ? 'View'
+            : 'Preview') +
+          '</a>'
+        : '') +
+      '<button type="button" data-toggle-opp-edit class="text-xs font-semibold rounded-lg bg-brand-700 text-white px-2.5 py-1 hover:bg-brand-900">' +
+      (isOpen ? 'Close' : 'Edit') +
+      '</button>' +
+      '<button type="button" data-opp-delete="' +
+      attrEsc(opp.id) +
+      '" data-opp-delete-title="' +
+      attrEsc(opp.title || 'Untitled') +
+      '" class="text-xs font-semibold rounded-lg border border-red-200 text-red-700 px-2.5 py-1 hover:bg-red-50">Delete</button>' +
+      '</div></td></tr>' +
+      '<tr class="opportunity-cleanup-panel' +
+      (isOpen ? '' : ' hidden') +
+      ' border-b border-slate-200 bg-slate-50/80" data-opp-panel-for="' +
+      attrEsc(opp.id) +
+      '">' +
+      '<td colspan="6" class="p-4">' +
+      (isOpen
+        ? '<p class="text-sm text-slate-500">Loading edit form…</p>'
+        : '<p class="text-sm text-slate-400">Click Edit to load the listing form.</p>') +
+      '</td></tr>'
+    );
+  }
+
   function opportunityCleanupEditFormHtml(opp) {
     return (
       '<form class="opportunity-cleanup-form space-y-4" data-opportunity-id="' +
@@ -22148,7 +22317,7 @@
     }
     if (main) {
       var selectPage = document.getElementById('opportunity-cleanup-select-page');
-      var pageCbs = main.querySelectorAll('.opportunity-select-checkbox');
+      var pageCbs = adminContentRoot().querySelectorAll('.opportunity-select-checkbox');
       var allPageChecked = pageCbs.length > 0;
       pageCbs.forEach(function (cb) {
         if (!opportunityCleanupState.selected[cb.value]) allPageChecked = false;
@@ -22370,103 +22539,17 @@
       return;
     }
 
-    var rows = opportunities
-      .map(function (opp) {
-        var publicHref =
-          '../opportunities/' +
-          encodeURIComponent(opp.slug || opp.id);
-        var isPending =
-          opp.approval_status === 'Pending Review' && Boolean(opp.review_submitted_at);
-        var awaitingPay =
-          opp.approval_status === 'Approved' && !opp.listing_payment_active;
-        var rowClass = isPending
-          ? 'border-b border-amber-100 bg-amber-50/40'
-          : awaitingPay
-            ? 'border-b border-sky-100 bg-sky-50/40'
-            : 'border-b border-slate-100';
-        var isOpen = !!opportunityCleanupState.expanded[opp.id];
-        if (opportunityCleanupState.selected[opp.id]) rememberSelectedOpportunity(opp);
-        var checked = opportunityCleanupState.selected[opp.id] ? ' checked' : '';
-        var approveLabel = opp.listing_payment_active
-          ? 'Approve &amp; go live'
-          : 'Approve — email pay link';
-        return (
-          '<tr class="hover:bg-slate-50/80 ' +
-          rowClass +
-          '" data-opportunity-id-row="' +
-          attrEsc(opp.id) +
-          '" data-opp-paid="' +
-          (opp.listing_payment_active ? '1' : '0') +
-          '">' +
-          '<td class="py-2.5 pr-2 w-8">' +
-          '<input type="checkbox" class="opportunity-select-checkbox rounded border-slate-300" value="' +
-          attrEsc(opp.id) +
-          '"' +
-          checked +
-          ' aria-label="Select ' +
-          attrEsc(opp.title || 'listing') +
-          '">' +
-          '</td>' +
-          '<td class="py-2.5 pr-3 max-w-[14rem]"><div class="font-semibold text-brand-900 truncate" title="' +
-          attrEsc(opp.title || 'Untitled') +
-          '">' +
-          esc(opp.title || 'Untitled') +
-          '</div>' +
-          '<div class="text-[11px] text-slate-500 truncate">' +
-          esc(opp.host || '—') +
-          '</div></td>' +
-          '<td class="py-2.5 pr-3 text-xs text-slate-600 whitespace-nowrap">' +
-          esc(opportunityTypeLabel(opp.type)) +
-          '</td>' +
-          '<td class="py-2.5 pr-3"><div class="flex flex-wrap gap-1">' +
-          listingStatusBadge(opp.status) +
-          (opp.approval_status === 'Pending Review' && !opp.review_submitted_at
-            ? '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-slate-100 text-slate-600">Not submitted</span>'
-            : approvalStatusBadge(opp.approval_status)) +
-          (awaitingPay
-            ? '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-sky-100 text-sky-900">Awaiting payment</span>'
-            : '') +
-          (opp.featured
-            ? '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-violet-100 text-violet-800">Featured</span>'
-            : '') +
-          '</div></td>' +
-          '<td class="py-2.5 pr-3 text-xs text-slate-500 max-w-[10rem] truncate">' +
-          esc(opp.owner_email || '—') +
-          '</td>' +
-          '<td class="py-2.5 text-right whitespace-nowrap">' +
-          '<div class="flex flex-wrap justify-end gap-2">' +
-          (isPending
-            ? '<button type="button" data-opp-approve class="text-xs font-semibold rounded-lg bg-brand-700 text-white px-2.5 py-1 hover:bg-brand-900">' +
-              approveLabel +
-              '</button>' +
-              '<button type="button" data-opp-reject class="text-xs font-semibold rounded-lg border border-red-200 text-red-700 px-2.5 py-1 hover:bg-red-50">Reject</button>'
-            : '') +
-          (awaitingPay
-            ? '<button type="button" data-opp-resend-pay class="text-xs font-semibold rounded-lg border border-sky-300 text-sky-900 px-2.5 py-1 hover:bg-sky-50">Resend pay email</button>'
-            : '') +
-          '<a href="' +
-          attrEsc(publicHref) +
-          '" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-700 hover:underline">View</a>' +
-          '<button type="button" data-toggle-opp-edit class="text-xs font-semibold rounded-lg bg-brand-700 text-white px-2.5 py-1 hover:bg-brand-900">' +
-          (isOpen ? 'Close' : 'Edit') +
-          '</button>' +
-          '<button type="button" data-opp-delete="' +
-          attrEsc(opp.id) +
-          '" data-opp-delete-title="' +
-          attrEsc(opp.title || 'Untitled') +
-          '" class="text-xs font-semibold rounded-lg border border-red-200 text-red-700 px-2.5 py-1 hover:bg-red-50">Delete</button>' +
-          '</div></td></tr>' +
-          '<tr class="opportunity-cleanup-panel' +
-          (isOpen ? '' : ' hidden') +
-          ' border-b border-slate-200 bg-slate-50/80" data-opp-panel-for="' +
-          attrEsc(opp.id) +
-          '">' +
-          '<td colspan="6" class="p-4">' +
-          opportunityCleanupEditFormHtml(opp) +
-          '</td></tr>'
+    var rows = '';
+    var renderErrors = [];
+    opportunities.forEach(function (opp) {
+      try {
+        rows += opportunityCleanupDataRowHtml(opp);
+      } catch (err) {
+        renderErrors.push(
+          (opp && opp.title) || (opp && opp.id) || 'Listing ' + (renderErrors.length + 1)
         );
-      })
-      .join('');
+      }
+    });
 
     list.innerHTML =
       adminTableScroll(
@@ -22484,8 +22567,26 @@
           '</tbody></table>'
       ) +
       adminPaginationHtml(page, total, OPPORTUNITY_PAGE_SIZE, 'data-opp-page');
+
+    if (renderErrors.length) {
+      list.insertAdjacentHTML(
+        'beforeend',
+        '<p class="mt-3 text-sm text-red-700 rounded-lg border border-red-200 bg-red-50 px-3 py-2">Could not render ' +
+          renderErrors.length +
+          ' listing' +
+          (renderErrors.length === 1 ? '' : 's') +
+          ': ' +
+          esc(renderErrors.join(', ')) +
+          '.</p>'
+      );
+    }
+
+    Object.keys(opportunityCleanupState.expanded).forEach(function (id) {
+      if (opportunityCleanupState.expanded[id]) {
+        ensureOpportunityCleanupPanelLoaded(id);
+      }
+    });
     updateOpportunityBulkBar();
-    bindAdminLogoZones(list);
   }
 
   function renderOpportunityCleanup(fullHash) {
@@ -22913,7 +23014,7 @@
 
     if (e.target.closest('#opportunity-bulk-clear')) {
       clearSelectedOpportunities();
-      main.querySelectorAll('.opportunity-select-checkbox').forEach(function (cb) {
+      adminContentRoot().querySelectorAll('.opportunity-select-checkbox').forEach(function (cb) {
         cb.checked = false;
       });
       var selectPage = document.getElementById('opportunity-cleanup-select-page');
@@ -22925,7 +23026,7 @@
     if (unselectBtn) {
       var unselectId = unselectBtn.getAttribute('data-unselect-opp');
       forgetSelectedOpportunity(unselectId);
-      main.querySelectorAll('.opportunity-select-checkbox').forEach(function (cb) {
+      adminContentRoot().querySelectorAll('.opportunity-select-checkbox').forEach(function (cb) {
         if (String(cb.value) === String(unselectId)) cb.checked = false;
       });
       updateOpportunityBulkBar();
@@ -22967,16 +23068,21 @@
     if (toggle) {
       var row = toggle.closest('[data-opportunity-id-row]');
       var id = row && row.getAttribute('data-opportunity-id-row');
-      var panel = id && main.querySelector('.opportunity-cleanup-panel[data-opp-panel-for="' + id + '"]');
+      var panel = id && opportunityCleanupPanelEl(id);
       if (panel && id) {
         var opening = panel.classList.contains('hidden');
-        main.querySelectorAll('.opportunity-cleanup-panel').forEach(function (p) {
-          p.classList.add('hidden');
-        });
-        main.querySelectorAll('[data-toggle-opp-edit]').forEach(function (btn) {
-          btn.textContent = 'Edit';
-        });
+        adminContentRoot()
+          .querySelectorAll('.opportunity-cleanup-panel')
+          .forEach(function (p) {
+            p.classList.add('hidden');
+          });
+        adminContentRoot()
+          .querySelectorAll('[data-toggle-opp-edit]')
+          .forEach(function (btn) {
+            btn.textContent = 'Edit';
+          });
         if (opening) {
+          ensureOpportunityCleanupPanelLoaded(id);
           panel.classList.remove('hidden');
           opportunityCleanupState.expanded[id] = true;
           toggle.textContent = 'Close';
@@ -23156,7 +23262,7 @@
       }
       if (e.target.id === 'opportunity-cleanup-select-page' && main) {
         var pageOpportunities = (opportunityCleanupCache && opportunityCleanupCache.opportunities) || [];
-        main.querySelectorAll('.opportunity-select-checkbox').forEach(function (cb) {
+        adminContentRoot().querySelectorAll('.opportunity-select-checkbox').forEach(function (cb) {
           cb.checked = e.target.checked;
           if (e.target.checked) {
             var pageRow = pageOpportunities.find(function (o) {

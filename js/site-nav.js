@@ -44,8 +44,11 @@
             return res.json();
           })
           .then(function (data) {
-            if (data.ok && data.redirect) {
-              window.location.href = data.redirect.charAt(0) === '/' ? data.redirect : (root || '') + data.redirect;
+            if (data && data.redirect) {
+              window.location.href =
+                data.redirect.charAt(0) === '/'
+                  ? data.redirect
+                  : (root || '') + data.redirect;
             } else {
               btn.disabled = false;
             }
@@ -68,7 +71,7 @@
         return res.json();
       })
       .then(function (data) {
-        if (data.ok && data.redirect) {
+        if (data && data.redirect) {
           window.location.href =
             data.redirect.charAt(0) === '/' ? data.redirect : (root || '') + data.redirect;
         }

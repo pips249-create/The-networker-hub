@@ -18558,7 +18558,15 @@
       '&intent=organiser';
   }
 
-  sessionFetcher()
+  function initialSessionPromise() {
+    var cached = window.__hubOrganiserAuth;
+    if (cached && cached.ok && cached.user) {
+      return Promise.resolve(cached);
+    }
+    return sessionFetcher();
+  }
+
+  initialSessionPromise()
     .then((data) => {
       if (!data.ok || !data.user) {
         return;

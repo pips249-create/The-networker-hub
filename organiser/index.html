@@ -15,9 +15,9 @@
     <script src="../js/hub-session-prefetch.js?v=20260828perf1"></script>
     <link rel="stylesheet" href="../css/hub-loading.css?v=20260630e" />
     <link rel="stylesheet" href="../css/hub.css?v=20260825adminbadge1" />
-    <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260812ux2" />
-    <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260813help1" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260828polish1" />
+    <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260828sidebar1" />
+    <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260828sidebar1" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260828sidebar1" />
     <!-- hub-mobile last so phone overrides win over dashboard table min-widths -->
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260812footer10" />
     <script src="../js/hub-defer-css.js?v=20260828perf2" data-hrefs="../css/organiser-event-edit.css?v=20260821ticketstep1|../css/organiser-flow-tour.css?v=20260716layout|../css/hubert-widget.css?v=20260805bottom2|../css/hub-ranking-badge.css?v=20260728lb2|../css/hub-partner-badge.css?v=20260820ticketembed1|../css/rankings-page.css?v=20260807rank|../css/organiser-opportunity-edit.css?v=20260716drawer|https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&family=Playfair+Display:wght@400;700&family=Source+Sans+3:wght@400;600;700&family=Oswald:wght@500;600&family=Nunito:wght@400;600;700&display=swap"></script>
@@ -36,9 +36,9 @@
     </div>
 
     <div id="hub-site-nav"></div>
-    <script src="../js/site-nav.js?v=20260828oppdash1" data-root="../" data-page="organiser"></script>
+    <script src="../js/site-nav.js?v=20260828auth1" data-root="../" data-page="organiser"></script>
 
-    <div id="org-signin" class="org-signin">
+    <div id="org-signin" class="org-signin" hidden>
       <p class="org-section-sub">
         Sign in to your organiser workspace — organiser pages, events, business opportunities, reviews, revenue, and attendees. Use <strong>My account</strong> in the nav for bookings and reviews you leave as an attendee.
       </p>
@@ -46,6 +46,7 @@
         <a class="org-btn org-btn-primary" href="../login?next=/organiser/">Sign in</a>
       </p>
     </div>
+    <script src="../js/organiser-auth-gate.js?v=20260828auth1"></script>
 
     <div id="org-shell" hidden>
       <div class="org-dashboard-layout">
@@ -3786,7 +3787,7 @@
     <script src="../js/organiser-featured-duration.js?v=20260806onetime" defer></script>
     <script src="../js/hub-comms-pack.js?v=20260722share" defer></script>
     <script src="../js/hub-side-nav.js?v=20260805orgnav2" defer></script>
-    <script src="../js/organiser-dashboard.js?v=20260828oppfix1" defer></script>
+    <script src="../js/organiser-dashboard.js?v=20260828auth1" defer></script>
     <script src="../js/organiser-workspace-comfort.js?v=20260813noshow1" defer></script>
   </body>
 </html>
