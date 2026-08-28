@@ -22388,9 +22388,10 @@
         ? fmtTime(opp.updated_at)
         : '';
     var statusNote = isDraftNotSubmitted
-      ? 'Draft — not submitted for review yet. The lister can still edit before you approve.'
+      ? 'Draft — not submitted for approval yet. The lister can still edit before submitting.'
       : isPendingSubmitted
-        ? 'Submitted for review' + (submittedAt ? ' · ' + submittedAt : '')
+        ? 'Submitted for approval — lister can still edit and resubmit until you approve.' +
+          (submittedAt ? ' · ' + submittedAt : '')
         : awaitingPay
           ? 'Approved — awaiting listing payment before going live.'
           : 'Review what was submitted before making admin changes.';

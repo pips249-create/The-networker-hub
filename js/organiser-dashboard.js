@@ -3695,9 +3695,9 @@
       const title = String((parsed && parsed.title) || '').trim();
       const opp = parsed && parsed.opportunity;
       const msg =
-        '<strong>Submitted for review.</strong> ' +
+        '<strong>Submitted for approval.</strong> ' +
         (title ? esc(title) + ' is ' : 'Your listing is ') +
-        'with our team — we’ll email you when it’s approved, then you can pay via Stripe to go live.';
+        'with our team — you can keep editing until we approve it, then pay via Stripe to go live.';
       showOrganiserAlert(msg, false);
       if (opp && opp.id) {
         const idx = state.opportunities.findIndex(function (o) {
@@ -16413,7 +16413,7 @@
     if (/pending/i.test(approval)) {
       const submitted = Boolean(o.reviewSubmittedAt || o.review_submitted_at);
       if (submitted) {
-        return { key: 'pending_approval', label: 'Pending review' };
+        return { key: 'pending_approval', label: 'Awaiting approval' };
       }
       return { key: 'draft', label: 'Draft — not submitted' };
     }

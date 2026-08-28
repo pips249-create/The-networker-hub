@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260723" />
     <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260608c" />
-    <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260828review2" />
+    <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260828approval1" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260825adminbadge1" />
     <style>
       /* Prevent browse-page nav padding flash before organiser form CSS loads */
@@ -61,6 +61,12 @@
       </div>
 
       <div id="oe-alert" class="ee-alert" hidden></div>
+      <div id="oe-submitted-notice" class="oe-submitted-notice" hidden role="status">
+        <p>
+          <strong>Awaiting approval.</strong> You can still edit this listing until we approve it. Save changes
+          anytime, then <strong>Submit for approval</strong> again to send updates to the review team.
+        </p>
+      </div>
       <div id="oe-rejection-banner" class="oe-rejection-banner" hidden role="alert"></div>
       <div id="oe-moderation-warnings" class="oe-moderation-warnings" hidden role="status" aria-live="polite"></div>
 
@@ -334,7 +340,7 @@
           <p class="ee-step-label">Step 5</p>
           <div class="oe-submit-recap" id="oe-submit-recap" hidden>
             <div class="oe-submit-summary" id="oe-submit-summary">
-              <h3 class="oe-submit-summary-title">You&apos;re submitting</h3>
+              <h3 class="oe-submit-summary-title">Review everything before you submit</h3>
               <ul class="oe-submit-summary-list" id="oe-submit-summary-list"></ul>
             </div>
             <div class="oe-live-preview oe-live-preview--submit">
@@ -345,7 +351,7 @@
           <div class="oe-listing-payment" id="oe-listing-payment">
             <h2 class="oe-listing-payment-title">Listing fee</h2>
             <p class="oe-listing-payment-lead" id="oe-listing-payment-lead">
-              Submit your listing for review first — no charge yet. After we approve it, start a
+              Review everything below, then submit for approval — no charge yet. After we approve it, start a
               <strong>monthly subscription of £25 + VAT</strong> (£30 total) and it goes live immediately.
             </p>
             <dl class="oe-listing-price-breakdown" id="oe-listing-price-breakdown">
@@ -369,9 +375,9 @@
           </div>
           <div class="ee-actions ee-actions--split">
             <button type="button" class="ee-btn ee-btn-outline" id="oe-save-draft">Save as draft</button>
-            <button type="submit" class="ee-btn ee-btn-gold" id="oe-submit">Submit for review</button>
+            <button type="submit" class="ee-btn ee-btn-gold" id="oe-submit">Submit for approval</button>
           </div>
-          <p class="ee-hint ee-actions-note" id="oe-actions-note">We review listings before payment. Once approved, you’ll pay via Stripe and go live straight away.</p>
+          <p class="ee-hint ee-actions-note" id="oe-actions-note">Review your listing, then submit for approval. You can keep editing until we approve — submit again after any changes.</p>
         </div>
       </form>
     </div>
@@ -384,6 +390,6 @@
     <script src="../js/opportunity-moderation-scan.js?v=20260827aff2" defer></script>
     <script src="../js/opportunity-listing-quality.js?v=20260825aff1" defer></script>
     <script src="../js/opportunities-catalog.js?v=20260827aff2" defer></script>
-    <script src="../js/organiser-opportunity-edit.js?v=20260828review2" defer></script>
+    <script src="../js/organiser-opportunity-edit.js?v=20260828approval1" defer></script>
   </body>
 </html>

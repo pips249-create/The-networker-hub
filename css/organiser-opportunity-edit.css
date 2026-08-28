@@ -146,6 +146,11 @@ body.hub-page-organiser.organiser-opportunity-edit-page {
   color: var(--opp-gold);
 }
 
+.organiser-opportunity-edit-page .ee-status-badge.is-awaiting-approval {
+  background: var(--opp-gold-pale);
+  color: var(--opp-gold);
+}
+
 .organiser-opportunity-edit-page .ee-status-badge.is-published {
   background: #e6f7ee;
   color: #0d6e4a;
@@ -157,6 +162,21 @@ body.hub-page-organiser.organiser-opportunity-edit-page {
 
 .oe-region-specific-wrap {
   margin-top: 10px;
+}
+
+.oe-submitted-notice {
+  margin: 0 0 1rem;
+  padding: 0.875rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid #f0d78c;
+  background: #fffbeb;
+  color: #6b4e0a;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.oe-submitted-notice p {
+  margin: 0;
 }
 
 .oe-region-specific-label {

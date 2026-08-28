@@ -514,17 +514,36 @@
         note.textContent =
           'Billed monthly via Stripe — cancel any time from your Stripe customer portal or by contacting us.';
       }
-    } else {
+    } else if (isSubmittedAwaitingApproval(currentOpportunity)) {
       if (lead) {
         lead.innerHTML =
-          'Submit your listing for review first — no charge yet. After we approve it, start a <strong>monthly subscription of £25 + VAT</strong> (£30 total) and it goes live immediately.';
+          'Your listing is <strong>awaiting approval</strong>. You can still edit below — save changes and submit for approval again to send updates. After we approve it, start a <strong>monthly subscription of £25 + VAT</strong> (£30 total) and it goes live immediately.';
       }
       if (note) {
         note.textContent =
-          'We review listings before payment. Once approved, you’ll pay via Stripe and go live straight away.';
+          'No charge until approved. Keep editing as needed, then submit for approval again after changes.';
+      }
+    } else {
+      if (lead) {
+        lead.innerHTML =
+          'Review everything below, then submit for approval — no charge yet. After we approve it, start a <strong>monthly subscription of £25 + VAT</strong> (£30 total) and it goes live immediately.';
+      }
+      if (note) {
+        note.textContent =
+          'Review your listing, then submit for approval. You can keep editing until we approve — submit again after any changes.';
       }
     }
     return true;
+  }
+
+  function isSubmittedAwaitingApproval(opportunity) {
+    if (!opportunity) return false;
+    const approval = String(opportunity.approvalStatus || '').trim();
+    return approval === 'Pending Review' && Boolean(opportunity.reviewSubmittedAt);
+  }
+
+  function submittedApprovalMessage() {
+    return 'Submitted for approval. You can keep editing until we approve it — save changes and submit for approval again whenever you update it.';
   }
 
   function primarySubmitLabel() {
@@ -533,13 +552,9 @@
       (currentOpportunity && currentOpportunity.approvalStatus) || ''
     ).trim();
     if (approval === 'Approved') return 'Pay to go live';
-    if (approval === 'Rejected') return 'Resubmit for review';
-    if (approval === 'Pending Review') {
-      return currentOpportunity && currentOpportunity.reviewSubmittedAt
-        ? 'Update submission'
-        : 'Submit for review';
-    }
-    return 'Submit for review';
+    if (approval === 'Rejected') return 'Resubmit for approval';
+    if (isSubmittedAwaitingApproval(currentOpportunity)) return 'Save & submit for approval';
+    return 'Submit for approval';
   }
 
   function syncPrimarySubmitButton() {
@@ -761,36 +776,61 @@
     });
   }
 
-  function showStatusBadge(opportunity) {
+  function syncListingStatusUi(opportunity) {
+    if (opportunity) currentOpportunity = opportunity;
+    const opp = currentOpportunity;
     const badge = document.getElementById('oe-status-badge');
-    if (!badge || !opportunity) return;
-    const status = String(opportunity.status || 'draft').toLowerCase();
-    const approval = String(opportunity.approvalStatus || '').trim();
-    let label = 'Draft';
-    let cls = 'is-draft';
-    if (opportunity.listingPaymentActive && status === 'published' && approval === 'Approved') {
-      label = 'Live';
-      cls = 'is-published';
-    } else if (approval === 'Approved') {
-      label = 'Approved — pay to go live';
-      cls = 'is-draft';
-    } else if (approval === 'Rejected') {
-      label = 'Not approved';
-      cls = 'is-draft';
-    } else if (approval === 'Pending Review') {
-      if (opportunity.reviewSubmittedAt) {
-        label = 'Submitted — pending review';
-      } else {
+    if (badge && opp) {
+      const status = String(opp.status || 'draft').toLowerCase();
+      const approval = String(opp.approvalStatus || '').trim();
+      let label = 'Draft';
+      let cls = 'is-draft';
+      if (opp.listingPaymentActive && status === 'published' && approval === 'Approved') {
+        label = 'Live';
+        cls = 'is-published';
+      } else if (approval === 'Approved') {
+        label = 'Approved — pay to go live';
+        cls = 'is-draft';
+      } else if (approval === 'Rejected') {
+        label = 'Not approved';
+        cls = 'is-draft';
+      } else if (isSubmittedAwaitingApproval(opp)) {
+        label = 'Awaiting approval';
+        cls = 'is-awaiting-approval';
+      } else if (approval === 'Pending Review') {
         label = 'Draft — not submitted';
+        cls = 'is-draft';
+      } else if (status === 'published') {
+        label = 'Awaiting approval';
+        cls = 'is-awaiting-approval';
       }
-      cls = 'is-draft';
-    } else if (status === 'published') {
-      label = 'Pending review';
-      cls = 'is-draft';
+      badge.textContent = label;
+      badge.className = 'ee-status-badge ' + cls;
+      badge.hidden = false;
     }
-    badge.textContent = label;
-    badge.className = 'ee-status-badge ' + cls;
-    badge.hidden = false;
+
+    const notice = document.getElementById('oe-submitted-notice');
+    if (notice) notice.hidden = !isSubmittedAwaitingApproval(opp);
+
+    const submitted = isSubmittedAwaitingApproval(opp);
+    const draftLabel = submitted ? 'Save changes' : 'Save as draft';
+    ['oe-save-draft', 'oe-save-draft-sticky'].forEach(function (id) {
+      const btn = document.getElementById(id);
+      if (btn) btn.textContent = draftLabel;
+    });
+    const draftBarCopy = document.querySelector('#oe-draft-bar .oe-draft-bar-copy');
+    if (draftBarCopy) {
+      draftBarCopy.textContent = submitted
+        ? 'You can keep editing until we approve your listing. Save changes anytime, then submit for approval again to send updates.'
+        : 'Save your progress any time — only a title is needed for a draft.';
+    }
+
+    syncPrimarySubmitButton();
+    listingPaymentPanelVisible();
+  }
+
+  function showStatusBadge(opportunity) {
+    syncListingStatusUi(opportunity);
   }
 
   function metaValue(meta, keyRe) {
@@ -874,11 +914,8 @@
     showStatusBadge(opp);
     showRejectionBanner(opp);
     document.getElementById('oe-page-title').textContent = 'Edit opportunity';
-    listingPaymentPanelVisible();
     updateListingPriceBreakdown();
     refreshCompleteness();
-    syncPrimarySubmitButton();
-    oeFlowRevealAll = true;
     syncOpportunitySteps({ revealAll: true });
   }
 
@@ -2189,13 +2226,11 @@
       const opportunity = res.data.opportunity || {};
       currentOpportunity = opportunity;
       syncSavedOpportunityMedia(opportunity);
-      showStatusBadge(opportunity);
-      listingPaymentPanelVisible();
-      syncPrimarySubmitButton();
+      syncListingStatusUi(opportunity);
 
       if (publish && !hasActiveListing && !opportunity.reviewSubmittedAt) {
         showAlert(
-          'Your listing saved but is not in the review queue yet. Click Submit for review again — if this keeps happening, contact support.'
+          'Your listing saved but is not in the approval queue yet. Click Submit for approval again — if this keeps happening, contact support.'
         );
         return;
       }
@@ -2225,7 +2260,11 @@
           );
           return;
         }
-        showAlert('Draft saved.');
+        showAlert(
+          isSubmittedAwaitingApproval(opportunity)
+            ? 'Changes saved. Submit for approval again when you want to send updates to the review team.'
+            : 'Draft saved.'
+        );
         resetFormBaseline();
         return;
       }
@@ -2263,28 +2302,18 @@
       }
 
       if (opportunity.id && !editId) {
-        redirecting = true;
         oeSkipUnloadGuard = true;
-        if (loading) loading.show('Taking you to your listings…');
-        try {
-          sessionStorage.setItem(
-            'hub_opp_submitted_flash',
-            JSON.stringify({
-              id: opportunity.id,
-              title: opportunity.title || '',
-              opportunity: opportunity,
-            })
-          );
-        } catch (e) {
-          /* ignore */
-        }
-        location.href = '/organiser/#business-overview';
+        if (loading) loading.hide();
+        location.replace(
+          '/organiser/opportunity-edit?id=' +
+            encodeURIComponent(opportunity.id) +
+            (isEmbedDrawer ? '&embed=1' : '')
+        );
         return;
       }
 
-      showAlert(
-        'Submitted for review. We’ll email you when it’s approved — then you can pay via Stripe to go live.'
-      );
+      showAlert(submittedApprovalMessage());
+      resetFormBaseline();
     } finally {
       if (!redirecting) {
         if (loading) loading.hide();
@@ -2372,9 +2401,7 @@
         'Checkout was cancelled. Your listing stays approved — pay via Stripe when you are ready to go live.'
       );
     } else if (justSubmitted) {
-      showAlert(
-        'Submitted for review. We’ll email you when it’s approved — then you can pay via Stripe to go live.'
-      );
+      showAlert(submittedApprovalMessage());
     }
 
     const loadWork = async () => {
