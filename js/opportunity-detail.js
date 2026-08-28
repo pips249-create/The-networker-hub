@@ -272,18 +272,11 @@
   }
 
   function syncOpenDayRegistrationsFromSoftLaunch(meta) {
-    if (meta && typeof meta.openDayRegistrationsOpen === 'boolean') {
-      openDayRegistrationsOpen = meta.openDayRegistrationsOpen;
+    if (meta && meta.openDayRegistrationsOpen === false) {
+      openDayRegistrationsOpen = false;
       return;
     }
-    if (
-      window.HubSoftLaunch &&
-      typeof window.HubSoftLaunch.areOpenDayRegistrationsOpen === 'function'
-    ) {
-      openDayRegistrationsOpen = window.HubSoftLaunch.areOpenDayRegistrationsOpen();
-      return;
-    }
-    openDayRegistrationsOpen = Date.now() >= Date.parse('2026-08-25T00:00:00+01:00');
+    openDayRegistrationsOpen = true;
   }
 
   function openDayRegistrationsClosedCopy() {

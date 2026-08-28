@@ -64,16 +64,16 @@ function publicEnquiriesClosedMessage() {
 }
 
 /**
- * Open day interest registrations — open with public browse (25 Aug), before general enquiries.
+ * Open day interest registrations — open now (separate from 1 Sept listing enquiries).
  */
 function areOpenDayRegistrationsOpen(nowMs) {
   if (parseEnvFlag('PUBLIC_OPEN_DAY_REGISTRATIONS_FORCE_CLOSED')) return false;
   if (parseEnvFlag('PUBLIC_OPEN_DAY_REGISTRATIONS_FORCE_OPEN')) return true;
-  return isPublicBrowseOpen(nowMs);
+  return true;
 }
 
 function publicOpenDayRegistrationsClosedMessage() {
-  return 'Open day registration opens when public browsing starts on 25 August 2026. You can browse listings now.';
+  return 'Open day registration is temporarily unavailable. Please try again shortly.';
 }
 
 function softLaunchPublicMeta(nowMs) {

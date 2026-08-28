@@ -35,12 +35,11 @@
   }
 
   function areOpenDayRegistrationsOpen(nowMs) {
-    var now = nowMs == null ? Date.now() : Number(nowMs);
-    return now >= opensAtMs(PUBLIC_BROWSE_OPENS_AT);
+    return true;
   }
 
   function publicOpenDayRegistrationsClosedMessage() {
-    return 'Open day registration opens when public browsing starts on 25 August 2026. You can browse listings now.';
+    return 'Open day registration is temporarily unavailable. Please try again shortly.';
   }
 
   function softLaunchPublicMeta(nowMs) {
