@@ -1,6 +1,7 @@
 const { getOrganiserApi } = require('../organiser-provider');
 const { countSavesForOpportunityIds } = require('../supabase-opportunity-favourites');
 const { jsonPublicError } = require('../public-error');
+const { sendExclusiveBrandConflict } = require('../opportunity-brand-exclusivity');
 
 function parseBody(req) {
   let body = req.body;
@@ -146,6 +147,16 @@ module.exports = async function handler(req, res) {
       const opportunity = await updateOpportunity(opportunityId, base);
       return json(res, 200, { ok: true, opportunity });
     } catch (e) {
+      if (String(e && e.message) === 'live_listing_resubmit_required') {
+        return json(res, 409, {
+          error: 'live_listing_resubmit_required',
+          message:
+            'Live listings must be submitted for reapproval. Use Submit changes for reapproval — your subscription stays active.',
+        });
+      }
+      if (e && e.code === 'exclusive_brand_conflict') {
+        return sendExclusiveBrandConflict(res, json, e.conflict);
+      }
       return jsonPublicError(res, json, e, { code: 'opportunity_update_failed', logLabel: '[organiser-opportunities]' });
     }
   }
@@ -177,6 +188,9 @@ module.exports = async function handler(req, res) {
       }
       return json(res, 200, { ok: true, opportunity });
     } catch (e) {
+      if (e && e.code === 'exclusive_brand_conflict') {
+        return sendExclusiveBrandConflict(res, json, e.conflict);
+      }
       return jsonPublicError(res, json, e, { code: 'opportunity_create_failed', logLabel: '[organiser-opportunities]' });
     }
   }

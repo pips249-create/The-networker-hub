@@ -346,6 +346,7 @@
       title: 'How to review business opportunities',
       steps: [
         'Filter to Pending review to see new listings.',
+        'One listing per brand — Utility Warehouse, Arbonne, and BNI cannot be duplicated (Command Centre blocks create/save if one already exists).',
         'Open a row to read the full details.',
         'Approve — if unpaid, the owner gets a pay-to-go-live email; if already paid, it goes live now. Confirm dialog explains which.',
         'Reject if it does not meet standards (include a reason).',
@@ -603,6 +604,7 @@
   var groupSearchTimer = null;
   var eventSearchTimer = null;
   var opportunitySearchTimer = null;
+  var opportunityExclusiveBrandTimer = null;
 
   var NETWORKING_CITY_PARTNER_SLUGS = [
     { slug: 'central-london', name: 'Central London' },
@@ -948,6 +950,11 @@
     if (qIdx !== -1) {
       query = h.slice(qIdx);
       h = h.slice(0, qIdx);
+    }
+    h = h.replace(/\/+$/, '');
+    // Opportunities left Fix listings — keep old hashes working.
+    if (h === 'cleanup/opportunities' || h.indexOf('cleanup/opportunities/') === 0) {
+      return 'opportunities' + query;
     }
     var legacy = {
       'group-cleanup': 'cleanup/groups',
@@ -1320,6 +1327,16 @@
   function recalledHubTab(hub, fallback) {
     var state = readHubTabState();
     var value = state[String(hub || '')];
+    // Opportunities moved out of Fix listings — drop stale remembered tab.
+    if (String(hub || '') === 'cleanup' && String(value || '') === 'opportunities') {
+      try {
+        delete state.cleanup;
+        localStorage.setItem(ADMIN_HUB_TABS_KEY, JSON.stringify(state));
+      } catch (e) {
+        /* ignore */
+      }
+      return fallback;
+    }
     return value ? String(value) : fallback;
   }
 
@@ -22813,7 +22830,10 @@
       mount.innerHTML = opportunityCleanupEditFormHtml(opp);
       bindAdminLogoZones(mount);
       var form = mount.querySelector('.opportunity-cleanup-form');
-      if (form) bindOpportunityAdminListingFields(form, opp);
+      if (form) {
+        bindOpportunityAdminListingFields(form, opp);
+        bindOpportunityExclusiveBrandCheck(form, opp.id);
+      }
       mount.dataset.loaded = '1';
     } catch (err) {
       mount.innerHTML =
@@ -23183,6 +23203,7 @@
       '" class="rounded-lg border border-red-200 text-red-700 text-sm font-semibold px-4 py-2 hover:bg-red-50">Delete listing</button>' +
       '</div>' +
       '<span class="opportunity-cleanup-msg text-xs"></span></div>' +
+      '<p class="opportunity-exclusive-brand-msg hidden text-xs text-red-700 font-semibold"></p>' +
       '<div class="grid sm:grid-cols-2 gap-3">' +
       opportunityListingFieldsHtml(opp, {
         includeApproval: true,
@@ -23577,6 +23598,7 @@
       '<summary class="cursor-pointer list-none font-semibold text-brand-900 px-4 py-3 select-none">Create listing</summary>' +
       '<div class="px-4 pb-4 space-y-4 border-t border-brand-100">' +
       '<p class="text-xs text-slate-600 pt-3">Create a hub-owned business opportunity with image, description, and card details. It stays claimable until you assign an owner email (or someone requests a claim). Prefix the title with <code class="text-[11px]">[TEST]</code> for throwaway previews.</p>' +
+      '<p class="text-xs text-amber-900 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">One listing per brand on <code class="text-[11px]">/opportunities/</code> — Utility Warehouse, Arbonne, and BNI. Command Centre blocks a duplicate if one is already in the catalogue.</p>' +
       '<form class="opportunity-create-form grid sm:grid-cols-2 gap-3">' +
       opportunityListingFieldsHtml(
         { type: 'business-opportunity', status: 'published' },
@@ -23587,6 +23609,7 @@
       '<p class="text-xs text-slate-500">Leave blank to keep the listing hub-owned and claimable. Enter an email to open the in-dashboard claim prompt when that person signs in.</p>' +
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Owner / claimant email</label>' +
       '<input type="email" name="owner_email" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Leave blank for hub-owned"></div></div>' +
+      '<p id="opportunity-create-brand-conflict" class="sm:col-span-2 hidden text-xs text-red-700 font-semibold"></p>' +
       '<div class="sm:col-span-2 flex flex-wrap items-center gap-3">' +
       '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Create listing</button>' +
       '<span class="opportunity-create-msg text-xs"></span></div></form>' +
@@ -23683,6 +23706,7 @@
     syncOpportunityCleanupFilterUi();
     bindAdminLogoZones(main.querySelector('.opportunity-create-form'));
     bindOpportunityAdminListingFields(main.querySelector('.opportunity-create-form'));
+    bindOpportunityExclusiveBrandCheck(main.querySelector('.opportunity-create-form'));
     refreshOpportunityCleanupData();
   }
 
@@ -23772,6 +23796,56 @@
         }).join('\n') +
         '\n\nThese show on /opportunities/ cards and Quick look.'
     );
+  }
+
+  function bindOpportunityExclusiveBrandCheck(form, excludeId) {
+    if (!form) return;
+    var msgEl =
+      form.querySelector('.opportunity-exclusive-brand-msg') ||
+      (form.classList.contains('opportunity-create-form')
+        ? document.getElementById('opportunity-create-brand-conflict')
+        : null);
+    if (!msgEl) return;
+    if (form.dataset.exclusiveBrandBound === '1') return;
+    form.dataset.exclusiveBrandBound = '1';
+
+    function runCheck() {
+      var title = formFieldVal(form, 'title');
+      var host = formFieldVal(form, 'host');
+      var description = formFieldVal(form, 'description');
+      if (!title && !host && !description) {
+        msgEl.classList.add('hidden');
+        msgEl.textContent = '';
+        return;
+      }
+      var params = new URLSearchParams();
+      params.set('exclusive_brand_check', '1');
+      if (title) params.set('title', title);
+      if (host) params.set('host', host);
+      if (description) params.set('description', description);
+      if (excludeId) params.set('exclude_id', String(excludeId));
+      adminGet('/api/admin/opportunities?' + params.toString()).then(function (data) {
+        if (!data || !data.conflict) {
+          msgEl.classList.add('hidden');
+          msgEl.textContent = '';
+          return;
+        }
+        msgEl.textContent =
+          data.message ||
+          'An existing ' + (data.conflict.brand || 'brand') + ' listing is already on the catalogue.';
+        msgEl.classList.remove('hidden');
+      });
+    }
+
+    ['title', 'host', 'description'].forEach(function (name) {
+      var field = form.querySelector('[name="' + name + '"]');
+      if (!field) return;
+      field.addEventListener('input', function () {
+        clearTimeout(opportunityExclusiveBrandTimer);
+        opportunityExclusiveBrandTimer = setTimeout(runCheck, 350);
+      });
+    });
+    runCheck();
   }
 
   function createOpportunityCleanupForm(form) {
@@ -25541,6 +25615,13 @@
   bindEventIntakeDocClicks();
 
   function renderCleanupHub(fullHash) {
+    // Stale bookmarks / hub-tab memory may still ask for the old Opportunities tab.
+    if (hubHashTab(fullHash, '') === 'opportunities') {
+      var oppQuery = String(fullHash || '');
+      var oppQIdx = oppQuery.indexOf('?');
+      location.replace('#opportunities' + (oppQIdx !== -1 ? oppQuery.slice(oppQIdx) : ''));
+      return;
+    }
     var tab = resolveHubTab(
       fullHash,
       'cleanup',

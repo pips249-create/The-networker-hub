@@ -19,6 +19,7 @@ const {
 const { ensureOpportunitySlug, publicOpportunitySlug, slugMatchesPublicRow, isUuidSlug } =
   require('./opportunity-slug');
 const { scanOpportunityRedFlags, stripEarningsMeta, isNetworkMarketingType } = require('./opportunity-moderation');
+const { assertExclusiveBrandAvailable } = require('./opportunity-brand-exclusivity');
 const { isHubSeedOwnerEmail } = require('./opportunity-hub-seed');
 const { parseOutcode, resolveRegionSlug } = require('./uk-outcode');
 
@@ -213,6 +214,78 @@ function stripOpportunityReviewQueueFields(row) {
   return next;
 }
 
+function stripOpportunityPendingReviewFields(row) {
+  if (!row || typeof row !== 'object') return row;
+  const next = { ...row };
+  delete next.pending_review_payload;
+  return next;
+}
+
+function isMissingOpportunityPendingReviewColumnError(error) {
+  const msg = String((error && error.message) || error || '').toLowerCase();
+  if (!msg.includes('pending_review_payload')) return false;
+  return (
+    msg.includes('does not exist') ||
+    msg.includes('schema cache') ||
+    msg.includes('could not find') ||
+    msg.includes('unknown column')
+  );
+}
+
+function pickPendingReviewRowFields(row) {
+  if (!row || typeof row !== 'object') return {};
+  const keys = [
+    'type',
+    'category',
+    'title',
+    'description',
+    'about',
+    'host',
+    'host_initials',
+    'host_color',
+    'contact_email',
+    'meta',
+    'tags',
+    'image_url',
+    'logo_url',
+    'outcode',
+    'region_slug',
+    'package_tier',
+  ];
+  const out = {};
+  keys.forEach(function (key) {
+    if (row[key] !== undefined) out[key] = row[key];
+  });
+  return out;
+}
+
+function applyPendingReviewOverlay(listing, pendingPayload) {
+  if (!listing || !pendingPayload || !pendingPayload.row) return listing;
+  const p = pendingPayload.row;
+  const next = Object.assign({}, listing);
+  if (p.type) next.type = p.type;
+  if (p.category) next.category = p.category;
+  if (p.title) next.title = String(p.title).trim();
+  if (p.description != null) {
+    next.desc = String(p.description).trim();
+    next.description = next.desc;
+  }
+  if (Array.isArray(p.about)) next.about = p.about.slice();
+  if (p.host) next.host = String(p.host).trim();
+  if (p.host_initials) next.hostInitials = p.host_initials;
+  if (p.host_color) next.hostColor = p.host_color;
+  if (p.contact_email) next.contactEmail = String(p.contact_email).trim();
+  if (Array.isArray(p.meta)) next.meta = normalizeListingMeta(p.meta);
+  if (Array.isArray(p.tags)) next.tags = p.tags.slice();
+  if (p.image_url != null) next.imageUrl = String(p.image_url || '').trim();
+  if (p.logo_url != null) next.logoUrl = String(p.logo_url || '').trim();
+  if (p.outcode != null) next.outcode = String(p.outcode || '').trim();
+  if (p.region_slug != null) next.regionSlug = String(p.region_slug || '').trim();
+  next.hasPendingChanges = true;
+  next.pendingReviewSubmittedAt = pendingPayload.submittedAt || null;
+  return coerceLegacyAffiliateListing(next);
+}
+
 /** True when PostgREST/Postgres rejects outcode/region_slug (migration 207 not applied). */
 function isMissingOpportunityGeoColumnError(error) {
   const msg = String((error && error.message) || error || '').toLowerCase();
@@ -267,6 +340,12 @@ async function writeOpportunityRow(sb, mode, row, id) {
       '[opportunities] review queue columns missing — apply migration 266_opportunity_review_queue_and_pay_reminder.sql'
     );
     ({ data, error } = await run(stripOpportunityReviewQueueFields(row)));
+  }
+  if (error && isMissingOpportunityPendingReviewColumnError(error)) {
+    console.warn(
+      '[opportunities] pending_review_payload missing — apply migration 270_opportunity_pending_review_payload.sql'
+    );
+    ({ data, error } = await run(stripOpportunityPendingReviewFields(row)));
   }
   if (error) throw new Error(error.message);
   return data;
@@ -332,6 +411,9 @@ function rowToListing(row) {
     rejectionNote: row.rejection_note || null,
     publishedAt: row.published_at || null,
     viewCount: Number(row.view_count) || 0,
+    hasPendingChanges: Boolean(row.pending_review_payload && row.pending_review_payload.row),
+    pendingReviewSubmittedAt:
+      (row.pending_review_payload && row.pending_review_payload.submittedAt) || null,
   });
 }
 
@@ -693,6 +775,92 @@ async function getOpportunityById(id) {
   return rowToListing(await getOpportunityRowById(id));
 }
 
+async function getOpportunityForOrganiserEdit(id) {
+  const row = await getOpportunityRowById(id);
+  if (!row) return null;
+  const listing = rowToListing(row);
+  return applyPendingReviewOverlay(listing, row.pending_review_payload);
+}
+
+async function submitLiveListingPendingReview(sb, id, existingRow, payload) {
+  const row = await buildOpportunityRow(payload, id, 'update');
+  await assertExclusiveBrandAvailable(
+    sb,
+    {
+      title: row.title || existingRow?.title,
+      host: row.host || existingRow?.host,
+      description:
+        row.description != null && String(row.description).trim()
+          ? row.description
+          : existingRow?.description,
+      about:
+        Array.isArray(row.about) && row.about.length
+          ? row.about
+          : Array.isArray(existingRow?.about)
+            ? existingRow.about
+            : [],
+    },
+    id
+  );
+
+  const scan = scanOpportunityRedFlags(Object.assign({}, existingRow, row));
+  if (scan) {
+    const err = new Error('listing_content_rejected');
+    err.rejectionNote = scan.rejectionNote;
+    throw err;
+  }
+
+  const at = new Date().toISOString();
+  const patch = {
+    pending_review_payload: {
+      submittedAt: at,
+      row: pickPendingReviewRowFields(row),
+    },
+    review_submitted_at: at,
+    meta: mergeReviewSubmittedMeta(Array.isArray(existingRow?.meta) ? existingRow.meta : [], at),
+    updated_at: at,
+  };
+
+  const data = await writeOpportunityRow(sb, 'update', patch, id);
+  return rowToListing(data);
+}
+
+async function rejectPendingOpportunityChanges(opportunityId, rejectionNote) {
+  const id = String(opportunityId || '').trim();
+  if (!isUuid(id)) throw new Error('invalid_opportunity_id');
+  const note = String(rejectionNote || '').trim();
+  const sb = getSupabaseAdmin();
+  const patch = {
+    pending_review_payload: null,
+    review_submitted_at: null,
+    rejection_note: note || null,
+    updated_at: new Date().toISOString(),
+  };
+  const data = await writeOpportunityRow(sb, 'update', patch, id);
+  return rowToListing(data);
+}
+
+async function applyApprovedPendingReviewChanges(sb, id, current) {
+  const pending = current && current.pending_review_payload;
+  const pendingRow = pending && pending.row ? pending.row : null;
+  if (!pendingRow) return null;
+
+  const slug = await ensureOpportunitySlug(sb, {
+    title: pendingRow.title || current.title,
+    opportunityId: id,
+    currentSlug: current.slug,
+  });
+
+  const patch = Object.assign({}, pendingRow, {
+    slug,
+    pending_review_payload: null,
+    review_submitted_at: null,
+    rejection_note: null,
+    updated_at: new Date().toISOString(),
+  });
+  return writeOpportunityRow(sb, 'update', patch, id);
+}
+
 async function persistOpportunityReviewSubmission(sb, id, opts) {
   const existing = opts && opts.existing ? opts.existing : null;
   const saved = opts && opts.saved ? opts.saved : null;
@@ -816,6 +984,16 @@ async function createOpportunity(payload) {
     opportunityId: null,
     currentSlug: null,
   });
+  await assertExclusiveBrandAvailable(
+    sb,
+    {
+      title: row.title,
+      host: row.host,
+      description: row.description,
+      about: row.about,
+    },
+    null
+  );
   const data = await writeOpportunityRow(sb, 'insert', row);
   let saved = data;
   if (submitForReview) {
@@ -831,14 +1009,47 @@ async function updateOpportunity(id, payload) {
   const existingRow = await getOpportunityRowById(id);
   const existing = rowToListing(existingRow);
   const submitForReview = Boolean(payload.submitForReview || payload.action === 'submit_for_review');
+  const isLiveListing =
+    Boolean(existing?.listingPaymentActive) &&
+    String(existing?.approvalStatus || '').trim() === 'Approved' &&
+    ['published', 'live'].includes(String(existing?.status || '').toLowerCase());
+  if (isLiveListing && !submitForReview) {
+    throw new Error('live_listing_resubmit_required');
+  }
   const nextStatus = normalizeStatus(payload.listingStatus || payload.status || existing?.status);
   if (nextStatus === 'published' || submitForReview) assertOpportunityListingCompliance(payload);
+
+  if (isLiveListing && submitForReview) {
+    const hadPending = Boolean(existingRow?.pending_review_payload);
+    const listing = await submitLiveListingPendingReview(sb, id, existingRow, payload);
+    if (!hadPending) await sendPendingReviewEmailSafe(listing);
+    return listing;
+  }
+
   const row = await buildOpportunityRow(payload, id, 'update');
   row.slug = await ensureOpportunitySlug(sb, {
     title: row.title || existing?.title,
     opportunityId: id,
     currentSlug: existing?.slug,
   });
+  await assertExclusiveBrandAvailable(
+    sb,
+    {
+      title: row.title || existing?.title,
+      host: row.host || existing?.host,
+      description:
+        row.description != null && String(row.description).trim()
+          ? row.description
+          : existingRow?.description,
+      about:
+        Array.isArray(row.about) && row.about.length
+          ? row.about
+          : Array.isArray(existingRow?.about)
+            ? existingRow.about
+            : [],
+    },
+    id
+  );
   if (submitForReview) {
     row.status = existing?.listingPaymentActive ? 'published' : 'draft';
     row.approval_status = 'Pending Review';
@@ -1160,12 +1371,15 @@ module.exports = {
   getPublishedOpportunityById,
   getPublishedOpportunityBySlug,
   getOpportunityById,
+  getOpportunityForOrganiserEdit,
+  applyPendingReviewOverlay,
   listOpportunitiesForSession,
   countOwnedOpportunitiesForSession,
   opportunityOwnedBySession,
   createOpportunity,
   updateOpportunity,
   rejectOpportunityListing,
+  rejectPendingOpportunityChanges,
   maybeAutoRejectOpportunity,
   activateOpportunityPremium,
   activateOpportunityListingPayment,

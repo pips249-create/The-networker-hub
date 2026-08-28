@@ -124,6 +124,7 @@
     opportunityOpenDayInterestsNewCount: 0,
     opportunityOpenDayInterestsLoaded: false,
     opportunityScheduledOpenDays: [],
+    pendingOpenDayListingId: '',
     opportunities: [],
     opportunitiesLoaded: false,
     pendingClaimGroups: [],
@@ -11273,15 +11274,15 @@
     const titles = {
       'business-listings': [
         'My business opportunities',
-        'Listings you publish on the platform — edit, renew, or promote each one.',
+        'Live listings: add open days or talks anytime; edit listing copy via reapproval (subscription unchanged).',
       ],
       'business-enquiries': [
         'Enquiries received',
         'Messages from members — reply here or via your email app.',
       ],
       'business-open-days': [
-        'Open day interest',
-        'Add open days linked to your listings, then confirm visitor interest by email.',
+        'Open days &amp; talks',
+        'Add in-person visits or online intro sessions to live listings — without changing approved listing copy.',
       ],
       'business-insights': [
         'Performance insights',
@@ -11322,6 +11323,7 @@
         })
         .then(function () {
           renderScheduledOpportunityOpenDays();
+          focusPendingOpenDayAddForm();
         });
     }
     if (sub === 'business-listings') {
@@ -16342,8 +16344,6 @@
     wrap.hidden = false;
     listEl.innerHTML = upcoming
       .map(function (day) {
-        const editUrl =
-          '/organiser/opportunity-edit?id=' + encodeURIComponent(day.opportunityId || '');
         return (
           '<li class="org-open-day-scheduled-item">' +
           '<div class="org-open-day-scheduled-main">' +
@@ -16359,9 +16359,9 @@
               (Number(day.interestCount) === 1 ? '' : 's')
             : '') +
           '</span></div>' +
-          '<a class="org-open-day-scheduled-edit" href="' +
-          esc(editUrl) +
-          '">Edit on listing</a>' +
+          '<button type="button" class="org-open-day-scheduled-edit org-inline-link" data-opp-add-open-day="' +
+          esc(day.opportunityId || '') +
+          '">Add another</button>' +
           '</li>'
         );
       })
@@ -16393,8 +16393,16 @@
       setOpenDayAddStatus('Choose a date and start time.', 'error');
       return;
     }
-    if (!addressLine) {
-      setOpenDayAddStatus('Enter an address for the open day.', 'error');
+    const formatEl = document.getElementById('opp-open-day-format');
+    const format = formatEl ? String(formatEl.value || 'in-person').trim() : 'in-person';
+    const venueName = String((document.getElementById('opp-open-day-venue') || {}).value || '').trim();
+    let resolvedAddress = addressLine;
+    let resolvedVenue = venueName;
+    if (format === 'online') {
+      resolvedAddress = 'Online';
+      if (!resolvedVenue) resolvedVenue = 'Online talk';
+    } else if (!resolvedAddress) {
+      setOpenDayAddStatus('Enter an address for the in-person visit.', 'error');
       return;
     }
     if (endsAt && Date.parse(endsAt) < Date.parse(startsAt)) {
@@ -16422,8 +16430,8 @@
       existing.push({
         startsAt: startsAt,
         endsAt: endsAt || null,
-        venueName: String((document.getElementById('opp-open-day-venue') || {}).value || '').trim(),
-        addressLine: addressLine,
+        venueName: resolvedVenue,
+        addressLine: resolvedAddress,
         city: String((document.getElementById('opp-open-day-city') || {}).value || '').trim(),
         postcode: String((document.getElementById('opp-open-day-postcode') || {}).value || '').trim(),
         notes: String((document.getElementById('opp-open-day-notes') || {}).value || '').trim(),
@@ -16441,7 +16449,10 @@
       form.reset();
       populateOpenDayAddListingSelect();
       const listingSelect = document.getElementById('opp-open-day-listing');
+      const formatSelect = document.getElementById('opp-open-day-format');
       if (listingSelect) listingSelect.value = opportunityId;
+      if (formatSelect) formatSelect.value = 'in-person';
+      syncOpenDayFormatFields();
       setOpenDayAddStatus('Open day added — it will show on the public listing.', 'success');
       await loadScheduledOpportunityOpenDays();
       renderScheduledOpportunityOpenDays();
@@ -16465,7 +16476,7 @@
     } finally {
       if (submitBtn) {
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Add open day';
+        submitBtn.textContent = 'Add open day / talk';
       }
     }
   }
@@ -16743,15 +16754,15 @@
       const newCount = enquiries.filter((e) => String(e.status || '').toLowerCase() === 'new').length;
       const expiry = opportunityExpiryMeta(o);
       const premiumBadge = opportunityPremiumBadgeHtml(o);
-      const editUrl = '/organiser/opportunity-edit?id=' + encodeURIComponent(o.id);
-      const viewUrl = opportunityPublicUrl(o);
+      const viewUrl = opportunityViewUrl(o);
       const publicUrl = window.location.origin + viewUrl;
       const card = document.createElement('article');
       card.className = 'org-opp-listing-card';
       card.innerHTML =
         '<header class="org-opp-listing-card-head">' +
-        '<h3 class="org-opp-listing-card-title"><a href="' +
-        esc(editUrl) +
+        '<h3 class="org-opp-listing-card-title">' +
+        '<a href="' +
+        esc(opportunityEditUrl(o)) +
         '">' +
         esc(o.title || 'Untitled') +
         '</a></h3>' +
@@ -16780,9 +16791,7 @@
         opportunityFunnelHtml(o, enquiries.length) +
         opportunityRoiFootnoteHtml(o, enquiries.length) +
         '<div class="org-opp-listing-card-actions">' +
-        '<a class="org-btn org-btn-outline org-btn-sm" href="' +
-        esc(editUrl) +
-        '">Edit</a> ' +
+        opportunityPrimaryManageActionHtml(o) +
         '<a class="org-btn org-btn-outline org-btn-sm" href="' +
         esc(viewUrl) +
         '" target="_blank" rel="noopener">View live</a> ' +
@@ -16858,6 +16867,87 @@
     );
   }
 
+  function opportunityListingIsLive(o) {
+    return opportunityStatusForBadge(o).key === 'live';
+  }
+
+  function opportunityEditUrl(o) {
+    return '/organiser/opportunity-edit?id=' + encodeURIComponent(o.id);
+  }
+
+  function opportunityViewUrl(o) {
+    if (o.slug) return '/opportunities/' + encodeURIComponent(o.slug);
+    return '/opportunities/' + encodeURIComponent(o.id);
+  }
+
+  function opportunityTitleLinkHtml(o) {
+    const label = esc(o.title || 'Untitled');
+    return (
+      '<a class="org-td-name-click" href="' + esc(opportunityEditUrl(o)) + '">' + label + '</a>'
+    );
+  }
+
+  function opportunityPrimaryManageActionHtml(o) {
+    if (opportunityListingIsLive(o)) {
+      return (
+        '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-opp-add-open-day="' +
+        esc(o.id) +
+        '">Add open day / talk</button> ' +
+        '<a class="org-btn org-btn-outline org-btn-sm" href="' +
+        esc(opportunityEditUrl(o)) +
+        '">Edit listing</a> '
+      );
+    }
+    return (
+      '<a class="org-btn org-btn-outline org-btn-sm" href="' +
+      esc(opportunityEditUrl(o)) +
+      '">Edit</a> '
+    );
+  }
+
+  function openAddOpenDayTalkForListing(opportunityId) {
+    const id = String(opportunityId || '').trim();
+    if (!id) return;
+    state.pendingOpenDayListingId = id;
+    setRoute('business-open-days');
+  }
+
+  function focusPendingOpenDayAddForm() {
+    const id = state.pendingOpenDayListingId;
+    if (!id) return;
+    state.pendingOpenDayListingId = '';
+    const select = document.getElementById('opp-open-day-listing');
+    if (select) select.value = id;
+    syncOpenDayFormatFields();
+    const panel = document.getElementById('opp-open-day-add-panel');
+    if (panel && panel.scrollIntoView) {
+      requestAnimationFrame(function () {
+        panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+    const starts = document.getElementById('opp-open-day-starts');
+    if (starts) starts.focus();
+  }
+
+  function syncOpenDayFormatFields() {
+    const formatEl = document.getElementById('opp-open-day-format');
+    const addressWrap = document.getElementById('opp-open-day-address-wrap');
+    const addressInput = document.getElementById('opp-open-day-address');
+    const venueInput = document.getElementById('opp-open-day-venue');
+    if (!formatEl) return;
+    const online = formatEl.value === 'online';
+    if (addressWrap) addressWrap.hidden = online;
+    if (addressInput) {
+      addressInput.required = !online;
+      if (online) addressInput.value = '';
+    }
+    if (venueInput && online && !String(venueInput.value || '').trim()) {
+      venueInput.placeholder = 'e.g. Zoom intro call';
+    } else if (venueInput) {
+      venueInput.placeholder = 'e.g. Head office';
+    }
+  }
+
   function opportunityStatusForBadge(o) {
     const status = String(o.status || '').toLowerCase();
     const approval = String(o.approvalStatus || o.approval_status || '').trim();
@@ -16903,17 +16993,12 @@
       const st = opportunityStatusForBadge(o);
       const enquiries = opportunityEnquiriesForListing(o.id);
       const newCount = enquiries.filter((e) => String(e.status || '').toLowerCase() === 'new').length;
-      const viewUrl = o.slug
-        ? '/opportunities/' + encodeURIComponent(o.slug)
-        : '/opportunities/' + encodeURIComponent(o.id);
-      const editUrl = '/organiser/opportunity-edit?id=' + encodeURIComponent(o.id);
+      const viewUrl = opportunityViewUrl(o);
       const tr = document.createElement('tr');
       tr.innerHTML =
-        '<td class="org-td-name" data-label="Title"><a class="org-td-name-click" href="' +
-        esc(editUrl) +
-        '">' +
-        esc(o.title || 'Untitled') +
-        '</a></td><td data-label="Status">' +
+        '<td class="org-td-name" data-label="Title">' +
+        opportunityTitleLinkHtml(o) +
+        '</td><td data-label="Status">' +
         statusBadgeHtml(st.key, st.label) +
         '<div class="org-opp-status-steps-wrap">' +
         opportunityStatusStepsHtml(o) +
@@ -16942,9 +17027,7 @@
         '</td><td data-label="Expires">' +
         opportunityExpiryCellHtml(o) +
         '</td><td class="org-td-actions" data-label="Actions">' +
-        '<a class="org-btn org-btn-outline org-btn-sm" href="' +
-        esc(editUrl) +
-        '">Edit</a> ' +
+        opportunityPrimaryManageActionHtml(o) +
         '<a class="org-btn org-btn-outline org-btn-sm" href="' +
         esc(viewUrl) +
         '" target="_blank" rel="noopener">View</a> ' +
@@ -17835,6 +17918,11 @@
         submitAddOpportunityOpenDay(e);
       });
     }
+    const openDayFormat = document.getElementById('opp-open-day-format');
+    if (openDayFormat) {
+      openDayFormat.addEventListener('change', syncOpenDayFormatFields);
+      syncOpenDayFormatFields();
+    }
 
     ['filter-events-status', 'filter-events-type', 'filter-events-search'].forEach((id) => {
       const el = document.getElementById(id);
@@ -18349,6 +18437,13 @@
             Number(renewBtn.getAttribute('data-opp-renew-months')) || 3,
             renewBtn
           );
+          return;
+        }
+
+        const openDayAddBtn = e.target.closest('[data-opp-add-open-day]');
+        if (openDayAddBtn) {
+          e.preventDefault();
+          openAddOpenDayTalkForListing(openDayAddBtn.getAttribute('data-opp-add-open-day'));
           return;
         }
 

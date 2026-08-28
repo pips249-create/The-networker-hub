@@ -257,7 +257,7 @@
  * Opportunities — browse page with events-style filter bar, grid cards & map view.
  */
 (function () {
-  var PAGE_SIZE = 12;
+  var PAGE_SIZE = 16; /* 4-column grid × 4 rows — keeps last page full on desktop */
   var SEARCH_DEBOUNCE_MS = 200;
   var SPOTLIGHT_MAX = 12; /* sync with api/_lib/spotlight-carousel-limits.js */
   var SPOTLIGHT_AUTO_MS = 2800;
@@ -1247,12 +1247,16 @@
       hostLabel &&
       hostLabel.toLowerCase() !== 'provider' &&
       !hostsAreNearDuplicate(titleLabel, hostLabel);
+    var hasOpenDay =
+      !!(item && (item.hasOpenDay || (Array.isArray(item.openDays) && item.openDays.length)));
     var premiumBadge = item.featured ? '<span class="event-grid-premium">Premium</span>' : '';
+    var openDayBadge = hasOpenDay ? '<span class="event-grid-open-day">Open day</span>' : '';
     var saved = saves && saves.isSaved(item.id);
 
     return (
       '<article class="event-grid-card bo-opp-card' +
       (item.featured ? ' is-premium' : '') +
+      (hasOpenDay ? ' is-has-open-day' : '') +
       '" data-id="' +
       escapeHtml(item.id) +
       '">' +
@@ -1260,6 +1264,7 @@
       '<div class="event-grid-media">' +
       mediaHtml(item, thumb) +
       premiumBadge +
+      openDayBadge +
       '<span class="event-grid-category">' +
       escapeHtml(typeLabel) +
       '</span>' +

@@ -375,7 +375,7 @@ async function sendApprovedPayReminders(sb) {
 
 async function runOpportunityReminderMaintenance(sb) {
   const { sendDueSavedOpportunityClosingEmails } = require('./favourite-opportunity-emails');
-  const { sendDueSavedSearchMatchEmails } = require('./opportunity-saved-search-emails');
+  const { sendDueSavedSearchMatchEmails, sendOpenDaySavedSearchMatchEmails } = require('./opportunity-saved-search-emails');
   const { sendDueEventSavedSearchMatchEmails } = require('./event-saved-search-emails');
   const client = sb || getSupabaseAdmin();
   const listing = await sendListingExpiryReminders(client);
@@ -383,6 +383,7 @@ async function runOpportunityReminderMaintenance(sb) {
   const approvedPay = await sendApprovedPayReminders(client);
   const savedClosingSoon = await sendDueSavedOpportunityClosingEmails(client);
   const savedSearchMatches = await sendDueSavedSearchMatchEmails(client);
+  const openDaySavedSearchMatches = await sendOpenDaySavedSearchMatchEmails(client);
   const eventSavedSearchMatches = await sendDueEventSavedSearchMatchEmails(client);
   const listingExpired = await expireOpportunityListings(client);
   const premiumExpired = await expireOpportunityPremium(client);
@@ -394,6 +395,7 @@ async function runOpportunityReminderMaintenance(sb) {
     approvedPay,
     savedClosingSoon,
     savedSearchMatches,
+    openDaySavedSearchMatches,
     eventSavedSearchMatches,
     listingExpired,
     premiumExpired,

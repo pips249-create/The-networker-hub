@@ -4,6 +4,8 @@ const {
   normalizeType,
   normalizeMeta,
   rejectOpportunityListing,
+  rejectPendingOpportunityChanges,
+  applyApprovedPendingReviewChanges,
   rowToListing,
   deriveOpportunityGeo,
   writeOpportunityRow,
@@ -17,6 +19,8 @@ const { resolveOpportunityDisplayCover } = require('../opportunity-media');
 const {
   effectiveReviewSubmittedAt,
   isOpportunitySubmittedForReview,
+  hasPendingLiveListingUpdate,
+  applyPendingOpportunitiesAdminFilter,
 } = require('../opportunity-review-queue');
 
 const { HUB_SEED_OWNER_EMAIL, isHubSeedOwnerEmail } = require('../opportunity-hub-seed');
@@ -25,6 +29,12 @@ const {
   isOpportunityReviewQueueReady,
   applySubmittedReviewFilter,
 } = require('../opportunity-review-queue');
+const {
+  findExclusiveBrandConflict,
+  assertExclusiveBrandAvailable,
+  sendExclusiveBrandConflict,
+  exclusiveBrandConflictError,
+} = require('../opportunity-brand-exclusivity');
 
 const TEST_SAMPLE_LISTINGS = [
   {
@@ -250,6 +260,8 @@ function mapOpportunityRow(row) {
     updated_at: row.updated_at || '',
     published_at: row.published_at || '',
     rejection_note: row.rejection_note || null,
+    has_pending_live_update: hasPendingLiveListingUpdate(row),
+    pending_review_payload: row.pending_review_payload || null,
   };
   mapped.moderation_flags = moderationFlagsForAdminRow(mapped);
   return mapped;
@@ -384,10 +396,10 @@ async function listOpportunitiesForAdmin(query) {
   if (awaitingPayment) {
     dbQuery = dbQuery.eq('approval_status', 'Approved').is('listing_paid_at', null);
   } else if (approvalStatus) {
-    dbQuery = dbQuery.eq('approval_status', approvalStatus);
-    // Pending review queue = actually submitted, not incomplete drafts (migration 266).
     if (approvalStatus === 'Pending Review') {
-      dbQuery = applySubmittedReviewFilter(dbQuery, reviewQueueReady);
+      dbQuery = applyPendingOpportunitiesAdminFilter(dbQuery, reviewQueueReady);
+    } else {
+      dbQuery = dbQuery.eq('approval_status', approvalStatus);
     }
   }
   if (type) dbQuery = dbQuery.eq('type', normalizeType(type));
@@ -422,13 +434,12 @@ async function listOpportunitiesForAdmin(query) {
     total = res.count != null ? res.count : rows.length;
   }
 
-  let pendingCountQuery = sb
-    .from('business_opportunities')
-    .select('id', { count: 'exact', head: true })
-    .eq('approval_status', 'Pending Review');
-  pendingCountQuery = applySubmittedReviewFilter(pendingCountQuery, reviewQueueReady);
-  const pendingCountRes = await pendingCountQuery;
-  if (pendingCountRes.error) throw new Error(pendingCountRes.error.message);
+  const pendingCountRes = await applyPendingOpportunitiesAdminFilter(
+    sb.from('business_opportunities').select('id', { count: 'exact', head: true }),
+    reviewQueueReady
+  );
+  const pendingCountResult = await pendingCountRes;
+  if (pendingCountResult.error) throw new Error(pendingCountResult.error.message);
 
   return {
     opportunities: rows.map(mapOpportunityRow),
@@ -437,7 +448,7 @@ async function listOpportunitiesForAdmin(query) {
     offset,
     limit,
     hasMore: offset + rows.length < total,
-    pending_count: pendingCountRes.count || 0,
+    pending_count: pendingCountResult.count || 0,
     review_queue_ready: reviewQueueReady,
   };
 }
@@ -498,6 +509,17 @@ async function createAdminOpportunity(input) {
   const contactEmail = String(input.contact_email || input.contactEmail || '')
     .trim()
     .toLowerCase();
+
+  await assertExclusiveBrandAvailable(
+    sb,
+    {
+      title,
+      host,
+      description: input.description,
+      about,
+    },
+    null
+  );
 
   const row = {
     organiser_id: null,
@@ -614,6 +636,25 @@ module.exports = async function handler(req, res) {
         });
         return json(res, 200, { ok: true, openDays });
       }
+      if (String(q.exclusive_brand_check || '') === '1') {
+        const sb = getSupabaseAdmin();
+        const excludeId = String(q.exclude_id || q.excludeId || '').trim() || null;
+        const conflict = await findExclusiveBrandConflict(
+          sb,
+          {
+            title: q.title,
+            host: q.host,
+            description: q.description,
+            about_text: q.about_text || q.aboutText,
+          },
+          excludeId
+        );
+        return json(res, 200, {
+          ok: true,
+          conflict,
+          message: conflict ? exclusiveBrandConflictError(conflict) : null,
+        });
+      }
       const data = await listOpportunitiesForAdmin(q);
       return json(res, 200, { ok: true, ...data });
     } catch (e) {
@@ -681,6 +722,9 @@ module.exports = async function handler(req, res) {
         });
         return json(res, 201, { ok: true, opportunity });
       } catch (e) {
+        if (e.code === 'exclusive_brand_conflict') {
+          return sendExclusiveBrandConflict(res, json, e.conflict);
+        }
         return json(res, 500, { ok: false, error: 'create_failed', message: e.message });
       }
     }
@@ -761,6 +805,39 @@ module.exports = async function handler(req, res) {
         if (loadErr) throw new Error(loadErr.message);
         if (!current) {
           return json(res, 404, { ok: false, error: 'not_found', message: 'Listing not found.' });
+        }
+
+        const approveConflict = await findExclusiveBrandConflict(sb, current, id);
+        if (approveConflict) {
+          return sendExclusiveBrandConflict(res, json, approveConflict);
+        }
+
+        const alreadyLive =
+          Boolean(current.listing_paid_at) &&
+          listingPaymentCurrent(current) &&
+          String(current.approval_status || '') === 'Approved' &&
+          ['published', 'live'].includes(String(current.status || '').toLowerCase());
+
+        if (hasPendingLiveListingUpdate(current) && alreadyLive) {
+          const pendingRow = current.pending_review_payload.row;
+          const pendingConflict = await findExclusiveBrandConflict(
+            sb,
+            Object.assign({}, current, pendingRow),
+            id
+          );
+          if (pendingConflict) {
+            return sendExclusiveBrandConflict(res, json, pendingConflict);
+          }
+          const data = await applyApprovedPendingReviewChanges(sb, id, current);
+          if (!data) {
+            throw new Error('Approve pending update returned no row');
+          }
+          return json(res, 200, {
+            ok: true,
+            opportunity: mapOpportunityRow(data),
+            went_live: false,
+            applied_pending_update: true,
+          });
         }
 
         // Paid = Stripe listing_paid_at with a current term. Do not treat a bare
@@ -868,8 +945,27 @@ module.exports = async function handler(req, res) {
         return json(res, 400, { ok: false, error: 'missing_rejection_note' });
       }
       try {
-        await rejectOpportunityListing(id, rejectionNote);
         const sb = getSupabaseAdmin();
+        const { data: current, error: loadErr } = await sb
+          .from('business_opportunities')
+          .select('*')
+          .eq('id', id)
+          .maybeSingle();
+        if (loadErr) throw new Error(loadErr.message);
+
+        const alreadyLive =
+          current &&
+          Boolean(current.listing_paid_at) &&
+          listingPaymentCurrent(current) &&
+          String(current.approval_status || '') === 'Approved' &&
+          ['published', 'live'].includes(String(current.status || '').toLowerCase());
+
+        if (current && hasPendingLiveListingUpdate(current) && alreadyLive) {
+          await rejectPendingOpportunityChanges(id, rejectionNote);
+        } else {
+          await rejectOpportunityListing(id, rejectionNote);
+        }
+
         const { data, error } = await sb
           .from('business_opportunities')
           .select('*')
@@ -1107,6 +1203,40 @@ module.exports = async function handler(req, res) {
 
     try {
       const sb = getSupabaseAdmin();
+      if (
+        Object.prototype.hasOwnProperty.call(patch, 'title') ||
+        Object.prototype.hasOwnProperty.call(patch, 'host') ||
+        Object.prototype.hasOwnProperty.call(patch, 'description') ||
+        Object.prototype.hasOwnProperty.call(patch, 'about')
+      ) {
+        const { data: currentExclusiveRow, error: exclusiveLoadErr } = await sb
+          .from('business_opportunities')
+          .select('title, host, description, about')
+          .eq('id', id)
+          .maybeSingle();
+        if (exclusiveLoadErr) throw new Error(exclusiveLoadErr.message);
+        if (!currentExclusiveRow) {
+          return json(res, 404, { ok: false, error: 'not_found', message: 'Listing not found.' });
+        }
+        await assertExclusiveBrandAvailable(
+          sb,
+          {
+            title: Object.prototype.hasOwnProperty.call(patch, 'title')
+              ? patch.title
+              : currentExclusiveRow.title,
+            host: Object.prototype.hasOwnProperty.call(patch, 'host')
+              ? patch.host
+              : currentExclusiveRow.host,
+            description: Object.prototype.hasOwnProperty.call(patch, 'description')
+              ? patch.description
+              : currentExclusiveRow.description,
+            about: Object.prototype.hasOwnProperty.call(patch, 'about')
+              ? patch.about
+              : currentExclusiveRow.about,
+          },
+          id
+        );
+      }
       const now = new Date();
       if (patch.featured) {
         const { data: currentFeatured } = await sb
@@ -1135,6 +1265,9 @@ module.exports = async function handler(req, res) {
       const data = await writeOpportunityRow(sb, 'update', patch, id);
       return json(res, 200, { ok: true, opportunity: mapOpportunityRow(data) });
     } catch (e) {
+      if (e.code === 'exclusive_brand_conflict') {
+        return sendExclusiveBrandConflict(res, json, e.conflict);
+      }
       return json(res, 500, { ok: false, error: 'update_failed', message: e.message });
     }
   }

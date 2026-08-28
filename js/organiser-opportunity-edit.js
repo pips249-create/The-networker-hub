@@ -543,12 +543,38 @@
     return approval === 'Pending Review' && Boolean(opportunity.reviewSubmittedAt);
   }
 
+  function opportunityListingIsLive(opp) {
+    if (!opp) return false;
+    const status = String(opp.status || 'draft').toLowerCase();
+    const approval = String(opp.approvalStatus || '').trim();
+    return (
+      Boolean(opp.listingPaymentActive) &&
+      approval === 'Approved' &&
+      (status === 'published' || status === 'live')
+    );
+  }
+
+  function applyLiveListingResubmitUi() {
+    const live = opportunityListingIsLive(currentOpportunity);
+    document.body.classList.toggle('is-live-listing-resubmit', live);
+    const notice = document.getElementById('oe-live-listing-notice');
+    if (notice) notice.hidden = !live;
+    if (!live) return;
+
+    const actionsNote = document.getElementById('oe-actions-note');
+    if (actionsNote) {
+      actionsNote.textContent =
+        'Submit changes for reapproval when you are ready. Your monthly subscription stays active — no extra payment.';
+    }
+    setOpenDaysSaveOnlyVisible(true);
+  }
+
   function submittedApprovalMessage() {
     return 'Submitted for approval. You can keep editing until we approve it — save changes and submit for approval again whenever you update it.';
   }
 
   function primarySubmitLabel() {
-    if (currentOpportunity && currentOpportunity.listingPaymentActive) return 'Update listing';
+    if (opportunityListingIsLive(currentOpportunity)) return 'Submit changes for reapproval';
     const approval = String(
       (currentOpportunity && currentOpportunity.approvalStatus) || ''
     ).trim();
@@ -1099,6 +1125,7 @@
 
     syncPrimarySubmitButton();
     listingPaymentPanelVisible();
+    applyLiveListingResubmitUi();
   }
 
   function showStatusBadge(opportunity) {
@@ -2385,6 +2412,13 @@
     const publish = options && options.publish;
     showAlert('');
 
+    if (!publish && opportunityListingIsLive(currentOpportunity)) {
+      showAlert(
+        'Use Submit changes for reapproval when you are ready. Your monthly subscription stays active — no extra payment.'
+      );
+      return;
+    }
+
     if (publish && window.HubOrganiserTerms) {
       try {
         await window.HubOrganiserTerms.requireAcceptance();
@@ -2426,7 +2460,7 @@
 
     const payload = buildPayload(publish && hasActiveListing ? 'published' : 'draft');
     appendListingMediaUrls(payload);
-    if (publish && !hasActiveListing) {
+    if (publish && (!hasActiveListing || opportunityListingIsLive(currentOpportunity))) {
       payload.submitForReview = true;
       payload.action = 'submit_for_review';
     }
@@ -2454,7 +2488,7 @@
       loading.show(
         publish
           ? hasActiveListing
-            ? 'Updating listing'
+            ? 'Submitting changes for reapproval'
             : 'Preparing submission'
           : 'Saving draft'
       );
@@ -2473,7 +2507,11 @@
         payload.logoFilename = logoFile.name;
       }
 
-      if (loading && publish) loading.show(hasActiveListing ? 'Updating listing' : 'Submitting for review');
+      if (loading && publish) {
+        loading.show(
+          hasActiveListing ? 'Submitting changes for reapproval' : 'Submitting for review'
+        );
+      }
 
       const saveWork = async () => {
         if (editId) {
@@ -2505,7 +2543,9 @@
               ? 'Your cover photo could not be uploaded. Try a smaller JPG or PNG (under 2MB) and save again.'
               : err === 'review_submission_failed'
                 ? 'Your listing saved but could not be queued for review. Please try submitting again.'
-                : res.data.message || err || 'Could not save opportunity';
+                : err === 'live_listing_resubmit_required'
+                  ? 'Live listings must be submitted for reapproval. Use Submit changes for reapproval — your subscription stays active.'
+                  : res.data.message || err || 'Could not save opportunity';
         showAlert(msg);
         return;
       }
@@ -2576,6 +2616,7 @@
             {
               type: 'hub-opportunity-saved',
               draft: false,
+              pendingReview: true,
               id: opportunity.id || editId,
               title: opportunity.title || '',
             },
@@ -2583,8 +2624,11 @@
           );
           return;
         }
-        showAlert('Listing updated.');
+        showAlert(
+          'Changes submitted for reapproval. Your monthly subscription continues unchanged — we will email you when updates are approved.'
+        );
         resetFormBaseline();
+        syncListingStatusUi(opportunity);
         return;
       }
 

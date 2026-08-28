@@ -14,6 +14,11 @@ function hasTag(item, tag) {
   return tags.includes(tag) || item.type === tag;
 }
 
+function wantsOpenDayCriteria(criteria) {
+  const value = criteria && criteria.openDay;
+  return value === '1' || value === 1 || value === true || value === 'true';
+}
+
 function matchesSearchCriteria(item, criteria) {
   if (!item || !criteria) return false;
   const type = String(criteria.type || '').trim();
@@ -77,6 +82,9 @@ function matchesSearchCriteria(item, criteria) {
     const max = Number(criteria.maxInvest);
     if (!Number.isNaN(max) && (item.investAmount == null || item.investAmount > max)) return false;
   }
+
+  if (wantsOpenDayCriteria(criteria) && !item.hasOpenDay) return false;
+
   return true;
 }
 
@@ -94,6 +102,7 @@ function criteriaLabel(criteria) {
   if (criteria.location) parts.push(String(criteria.location).replace(/-/g, ' '));
   if (criteria.locationQuery) parts.push(String(criteria.locationQuery));
   if (criteria.q) parts.push(`"${criteria.q}"`);
+  if (wantsOpenDayCriteria(criteria)) parts.push('Has an open day');
   return parts.length ? parts.join(', ') : 'your saved search';
 }
 
@@ -102,6 +111,29 @@ function parseInvest(meta) {
   if (!row) return null;
   const num = parseInt(String(row.val || '').replace(/[^0-9]/g, ''), 10);
   return Number.isNaN(num) ? null : num;
+}
+
+function opportunityRowToSearchItem(row, hasOpenDay) {
+  return {
+    ...row,
+    desc: row.description,
+    tags: row.tags || [],
+    meta: row.meta || [],
+    filterTags: row.tags || [],
+    investAmount: parseInvest(row.meta),
+    hasOpenDay: !!hasOpenDay,
+  };
+}
+
+function isMissingOpenDayHitsTableError(error) {
+  const msg = String((error && error.message) || error || '').toLowerCase();
+  if (!msg.includes('opportunity_saved_search_open_day_hits')) return false;
+  return (
+    msg.includes('does not exist') ||
+    msg.includes('schema cache') ||
+    msg.includes('could not find') ||
+    msg.includes('undefined table')
+  );
 }
 
 async function sendDueSavedSearchMatchEmails(sb) {
@@ -136,14 +168,7 @@ async function sendDueSavedSearchMatchEmails(sb) {
     const criteria = search.criteria || {};
     const matches = [];
     for (const row of opportunities) {
-      const item = {
-        ...row,
-        desc: row.description,
-        tags: row.tags || [],
-        meta: row.meta || [],
-        filterTags: row.tags || [],
-        investAmount: parseInvest(row.meta),
-      };
+      const item = opportunityRowToSearchItem(row, true);
       if (!matchesSearchCriteria(item, criteria)) continue;
 
       const hitRes = await sb
@@ -206,7 +231,166 @@ async function sendDueSavedSearchMatchEmails(sb) {
   return result;
 }
 
+async function sendOpenDaySavedSearchMatchEmails(sb, options) {
+  const result = { sent: 0, skipped: 0, errors: [], checked: 0 };
+  const siteUrl = siteBase();
+  const since =
+    options && options.since
+      ? options.since
+      : new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+  const openDayIds =
+    options && Array.isArray(options.openDayIds)
+      ? options.openDayIds.map((id) => String(id || '').trim()).filter(Boolean)
+      : null;
+
+  let openDaysQuery = sb.from('opportunity_open_days').select('id, opportunity_id, starts_at, created_at');
+  if (openDayIds && openDayIds.length) {
+    openDaysQuery = openDaysQuery.in('id', openDayIds);
+  } else {
+    openDaysQuery = openDaysQuery
+      .gte('created_at', since)
+      .gte('starts_at', new Date(Date.now() - 60 * 60 * 1000).toISOString());
+  }
+  const { data: openDays, error: openDayErr } = await openDaysQuery;
+  if (openDayErr) {
+    const { isMissingOpenDaysTableError } = require('./opportunity-open-days');
+    if (typeof isMissingOpenDaysTableError === 'function' && isMissingOpenDaysTableError(openDayErr)) {
+      return result;
+    }
+    throw new Error(openDayErr.message);
+  }
+  if (!openDays || !openDays.length) return result;
+
+  const opportunityIds = [
+    ...new Set(openDays.map((row) => String(row.opportunity_id || '').trim()).filter(Boolean)),
+  ];
+  if (!opportunityIds.length) return result;
+
+  const { data: opportunities, error: oppErr } = await sb
+    .from('business_opportunities')
+    .select('id, title, slug, host, type, category, description, tags, meta, published_at, status, approval_status')
+    .in('id', opportunityIds)
+    .eq('status', 'published')
+    .eq('approval_status', 'Approved');
+  if (oppErr) throw new Error(oppErr.message);
+  const oppById = {};
+  (opportunities || []).forEach((row) => {
+    oppById[row.id] = row;
+  });
+
+  const { data: searches, error: searchErr } = await sb
+    .from('opportunity_saved_searches')
+    .select('id, label, criteria, notify_email, attendees(id, email, name)')
+    .eq('notify_email', true);
+  if (searchErr) throw new Error(searchErr.message);
+
+  const openDaySearches = (searches || []).filter((search) =>
+    wantsOpenDayCriteria(search.criteria || {})
+  );
+  result.checked = openDaySearches.length;
+  if (!openDaySearches.length) return result;
+
+  const { formatOpenDayWhen, openDayRowToDto } = require('./opportunity-open-days');
+
+  let hitsTableAvailable = true;
+
+  for (const search of openDaySearches) {
+    const attendee = search.attendees;
+    const email = String(attendee?.email || '').trim().toLowerCase();
+    if (!email) {
+      result.skipped += 1;
+      continue;
+    }
+
+    const criteria = search.criteria || {};
+    const matches = [];
+    for (const dayRow of openDays) {
+      const opportunity = oppById[dayRow.opportunity_id];
+      if (!opportunity) continue;
+      const item = opportunityRowToSearchItem(opportunity, true);
+      if (!matchesSearchCriteria(item, criteria)) continue;
+
+      if (hitsTableAvailable) {
+        const hitRes = await sb
+          .from('opportunity_saved_search_open_day_hits')
+          .select('search_id')
+          .eq('search_id', search.id)
+          .eq('open_day_id', dayRow.id)
+          .maybeSingle();
+        if (hitRes.error) {
+          if (isMissingOpenDayHitsTableError(hitRes.error)) hitsTableAvailable = false;
+          else throw new Error(hitRes.error.message);
+        } else if (hitRes.data) {
+          continue;
+        }
+      }
+      matches.push({ dayRow, opportunity });
+    }
+
+    if (!matches.length) {
+      result.skipped += 1;
+      continue;
+    }
+
+    const lead = matches[0];
+    const openDayDto = openDayRowToDto(lead.dayRow);
+    const whenLabel = formatOpenDayWhen(openDayDto);
+    try {
+      await sendTemplatedEmail({
+        slug: 'opportunity_saved_search_match',
+        to: email,
+        subject: 'New open day matching your saved search',
+        variables: {
+          user_name: String(attendee?.name || '').trim() || 'there',
+          user_email: email,
+          search_label: String(search.label || '').trim() || criteriaLabel(criteria),
+          match_count: String(matches.length),
+          opportunity_title: String(lead.opportunity.title || 'New opportunity').trim(),
+          opportunity_url: opportunityPublicUrl(lead.opportunity, siteUrl),
+          browse_opportunities_url: siteUrl + '/opportunities/',
+          hub_account_url: hubAccountUrl(siteUrl) + '#search-alerts',
+          contact_url: contactUrl(siteUrl),
+          privacy_url: legalPolicyUrl(siteUrl, 'privacy'),
+          terms_url: legalPolicyUrl(siteUrl, 'terms'),
+          site_url: siteUrl,
+          logo_url: logoNavUrl(siteUrl),
+          open_day_when: whenLabel,
+        },
+      });
+
+      const now = new Date().toISOString();
+      if (hitsTableAvailable) {
+        for (const match of matches) {
+          const insertRes = await sb.from('opportunity_saved_search_open_day_hits').insert({
+            search_id: search.id,
+            open_day_id: match.dayRow.id,
+            notified_at: now,
+          });
+          if (insertRes.error) {
+            if (isMissingOpenDayHitsTableError(insertRes.error)) {
+              hitsTableAvailable = false;
+              break;
+            }
+            throw new Error(insertRes.error.message);
+          }
+        }
+      }
+      await sb
+        .from('opportunity_saved_searches')
+        .update({ last_notified_at: now })
+        .eq('id', search.id);
+      result.sent += 1;
+    } catch (e) {
+      if (e.code === 'emails_disabled') result.skipped += 1;
+      else result.errors.push({ search_id: search.id, message: e.message || String(e) });
+    }
+  }
+
+  return result;
+}
+
 module.exports = {
   matchesSearchCriteria,
   sendDueSavedSearchMatchEmails,
+  sendOpenDaySavedSearchMatchEmails,
 };

@@ -1121,6 +1121,23 @@ body.opp-claim-invite-active .opp-detail-breadcrumb {
   border-top: none;
 }
 
+.opportunity-detail-page .opp-open-day-cal {
+  display: block;
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.opportunity-detail-page .opp-open-day-cal-link {
+  color: var(--opp-gold-deep, #9a7209);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.opportunity-detail-page .opp-open-day-cal-link:hover {
+  color: var(--opp-navy, #0d1f3c);
+}
+
 .opportunity-detail-page .opp-open-day-when {
   margin: 0 0 4px;
   font-size: 15px;

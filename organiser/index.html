@@ -561,8 +561,8 @@
           <div class="org-sub-page org-sub-page--business" id="sub-business-open-days" role="tabpanel" data-business-panel="business-open-days" aria-labelledby="business-tab-open-days" hidden>
             <div class="org-open-day-add" id="opp-open-day-add-panel">
               <div class="org-open-day-add-head">
-                <h2 class="org-open-day-add-title">Add an open day</h2>
-                <p class="org-section-sub" style="margin:0">Choose one of your business opportunities, set the date and address, then save — this does not change your listing details.</p>
+                <h2 class="org-open-day-add-title">Add an open day or talk</h2>
+                <p class="org-section-sub" style="margin:0">For live listings, this is how you add in-person visits or online intro calls — it does not change your approved listing details.</p>
               </div>
               <p class="org-field-hint org-open-day-add-no-listings" id="opp-open-day-add-no-listings" hidden>
                 You need a business opportunity listing first.
@@ -577,6 +577,13 @@
                     </select>
                   </div>
                   <div class="org-field">
+                    <label for="opp-open-day-format">Format</label>
+                    <select id="opp-open-day-format" name="format" required>
+                      <option value="in-person">In-person open day / visit</option>
+                      <option value="online">Online talk / call</option>
+                    </select>
+                  </div>
+                  <div class="org-field">
                     <label for="opp-open-day-starts">Date &amp; start time</label>
                     <input type="datetime-local" id="opp-open-day-starts" name="startsAt" required />
                   </div>
@@ -585,10 +592,10 @@
                     <input type="datetime-local" id="opp-open-day-ends" name="endsAt" />
                   </div>
                   <div class="org-field">
-                    <label for="opp-open-day-venue">Venue name <span class="org-field-optional">(optional)</span></label>
+                    <label for="opp-open-day-venue">Venue or session name <span class="org-field-optional">(optional)</span></label>
                     <input type="text" id="opp-open-day-venue" name="venueName" maxlength="120" placeholder="e.g. Head office" />
                   </div>
-                  <div class="org-field org-open-day-add-field--address">
+                  <div class="org-field org-open-day-add-field--address" id="opp-open-day-address-wrap">
                     <label for="opp-open-day-address">Address</label>
                     <input type="text" id="opp-open-day-address" name="addressLine" maxlength="200" placeholder="Street address" required />
                   </div>
@@ -606,7 +613,7 @@
                   </div>
                 </div>
                 <div class="org-open-day-add-actions">
-                  <button type="submit" class="org-btn org-btn-gold" id="opp-open-day-add-submit">Add open day</button>
+                  <button type="submit" class="org-btn org-btn-gold" id="opp-open-day-add-submit">Add open day / talk</button>
                   <p class="org-field-hint" id="opp-open-day-add-status" hidden role="status"></p>
                 </div>
               </form>
@@ -3886,7 +3893,7 @@
     <script src="../js/organiser-featured-duration.js?v=20260806onetime" defer></script>
     <script src="../js/hub-comms-pack.js?v=20260722share" defer></script>
     <script src="../js/hub-side-nav.js?v=20260805orgnav2" defer></script>
-    <script src="../js/organiser-dashboard.js?v=20260828openday4" defer></script>
+    <script src="../js/organiser-dashboard.js?v=20260828openday1" defer></script>
     <script src="../js/organiser-workspace-comfort.js?v=20260813noshow1" defer></script>
   </body>
 </html>

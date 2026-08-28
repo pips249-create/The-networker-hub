@@ -69,6 +69,20 @@ function applySubmittedReviewFilter(dbQuery, ready) {
   return dbQuery.not('review_submitted_at', 'is', null);
 }
 
+function hasPendingLiveListingUpdate(row) {
+  return Boolean(row && row.pending_review_payload && row.pending_review_payload.row);
+}
+
+/** Admin pending queue: new submissions + staged edits on live listings. */
+function applyPendingOpportunitiesAdminFilter(dbQuery, reviewQueueReady) {
+  if (reviewQueueReady) {
+    return dbQuery.or(
+      'and(approval_status.eq.Pending Review,review_submitted_at.not.is.null),pending_review_payload.not.is.null'
+    );
+  }
+  return dbQuery.not('pending_review_payload', 'is', null);
+}
+
 function resetOpportunityReviewQueueReadyCache() {
   reviewQueueReadyCache = null;
 }
@@ -82,4 +96,6 @@ module.exports = {
   resetOpportunityReviewQueueReadyCache,
   isOpportunityReviewQueueReady,
   applySubmittedReviewFilter,
+  hasPendingLiveListingUpdate,
+  applyPendingOpportunitiesAdminFilter,
 };

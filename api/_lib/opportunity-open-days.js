@@ -301,6 +301,7 @@ async function replaceOpenDaysForOpportunity(opportunityId, openDaysInput, sessi
   }
 
   const now = new Date().toISOString();
+  const newOpenDayIds = [];
   for (const row of parsed) {
     if (row.id) {
       const { error } = await sb
@@ -320,7 +321,7 @@ async function replaceOpenDaysForOpportunity(opportunityId, openDaysInput, sessi
         .eq('opportunity_id', id);
       if (error) throw new Error(error.message);
     } else {
-      const { error } = await sb.from('opportunity_open_days').insert({
+      const { data: inserted, error } = await sb.from('opportunity_open_days').insert({
         opportunity_id: id,
         starts_at: row.starts_at,
         ends_at: row.ends_at,
@@ -332,9 +333,24 @@ async function replaceOpenDaysForOpportunity(opportunityId, openDaysInput, sessi
         sort_order: row.sort_order,
         created_at: now,
         updated_at: now,
-      });
+      }).select('id');
       if (error) throw new Error(error.message);
+      if (inserted && inserted[0] && inserted[0].id) newOpenDayIds.push(inserted[0].id);
     }
+  }
+
+  if (newOpenDayIds.length) {
+    Promise.resolve()
+      .then(function () {
+        const { sendOpenDaySavedSearchMatchEmails } = require('./opportunity-saved-search-emails');
+        return sendOpenDaySavedSearchMatchEmails(sb, { openDayIds: newOpenDayIds });
+      })
+      .catch(function (err) {
+        console.warn(
+          '[open-days] saved search open day notify failed:',
+          err && err.message ? err.message : err
+        );
+      });
   }
 
   return listOpenDaysForOpportunity(id, { includeInterestCounts: true });
@@ -493,6 +509,7 @@ async function updateOpenDayInterestStatus(interestId, session, status) {
 }
 
 module.exports = {
+  isMissingOpenDaysTableError,
   openDayRowToDto,
   interestRowToDto,
   formatOpenDayAddress,

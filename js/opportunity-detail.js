@@ -345,6 +345,36 @@
       .join(', ');
   }
 
+  function openDayCalendarLinks(day, item) {
+    if (!day || !day.startsAt) return null;
+    if (!window.HubCalendarShare || typeof window.HubCalendarShare.buildCalendarLinks !== 'function') {
+      return null;
+    }
+    var where = formatOpenDayWhere(day);
+    var title = (item && item.title) || 'Open day';
+    return window.HubCalendarShare.buildCalendarLinks({
+      id: day.id,
+      title: title + ' — open day',
+      starts_at: day.startsAt,
+      ends_at: day.endsAt || null,
+      venue: where,
+      location: where,
+      description: 'Open day for ' + title + '. View listing: ' + window.location.href,
+    });
+  }
+
+  function openDayCalendarHtml(day, item) {
+    var cal = openDayCalendarLinks(day, item);
+    if (!cal || !cal.google) return '';
+    return (
+      '<span class="opp-open-day-cal">' +
+      '<a href="' +
+      escapeHtml(cal.google) +
+      '" target="_blank" rel="noopener" class="opp-open-day-cal-link">Add to calendar</a>' +
+      '</span>'
+    );
+  }
+
   function renderOpenDays(item) {
     if (!els.openDaysSection || !els.openDaysList) return;
     var days = Array.isArray(item && item.openDays) ? item.openDays.slice() : [];
@@ -381,6 +411,7 @@
           '<li class="opp-open-day-card">' +
           '<p class="opp-open-day-when">' +
           escapeHtml(when) +
+          openDayCalendarHtml(day, item) +
           '</p>' +
           (where ? '<p class="opp-open-day-where">' + escapeHtml(where) + '</p>' : '') +
           (day.notes

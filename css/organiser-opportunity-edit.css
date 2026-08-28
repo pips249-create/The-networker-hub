@@ -184,6 +184,31 @@ body.hub-page-organiser.organiser-opportunity-edit-page {
   margin: 0;
 }
 
+.oe-live-listing-notice {
+  margin: 0 0 20px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(201, 150, 31, 0.35);
+  background: #fff9ec;
+  color: #0d1f3c;
+}
+
+.oe-live-listing-notice p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.oe-live-listing-notice a {
+  color: #0d1f3c;
+  font-weight: 700;
+}
+
+.organiser-opportunity-edit-page.is-live-listing-resubmit .oe-draft-bar,
+.organiser-opportunity-edit-page.is-live-listing-resubmit #oe-save-draft,
+.organiser-opportunity-edit-page.is-live-listing-resubmit #oe-save-draft-sticky {
+  display: none !important;
+}
+
 .oe-region-specific-label {
   display: block;
   margin-bottom: 6px;
