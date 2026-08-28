@@ -623,7 +623,7 @@ async function activateOpportunityListingPayment(opportunityId, monthsOrOpts, se
   }
 
   const sid = opts.sessionId ? String(opts.sessionId).trim() : '';
-  const subscriptionId = opts.subscriptionId ? String(opts.subscriptionId).trim() : '';
+  let subscriptionId = opts.subscriptionId ? String(opts.subscriptionId).trim() : '';
   const periodEnd = opts.periodEndIso ? new Date(opts.periodEndIso) : null;
   const termMonths = normalizeListingMonths(opts.months != null ? opts.months : 1);
 
@@ -636,8 +636,25 @@ async function activateOpportunityListingPayment(opportunityId, monthsOrOpts, se
   if (loadErr) throw new Error(loadErr.message);
   if (!existing) throw new Error('not_found');
 
+  let resolvedSessionId = sid;
+  if (!resolvedSessionId && subscriptionId) {
+    const { getStripeClient, isStripeCheckoutConfigured } = require('./stripe-checkout');
+    const { resolveListingCheckoutSessionId } = require('./opportunity-listing-subscriptions');
+    if (isStripeCheckoutConfigured()) {
+      try {
+        resolvedSessionId = await resolveListingCheckoutSessionId(
+          getStripeClient(),
+          subscriptionId,
+          id
+        );
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
   // Stripe retries must not re-activate for the same checkout session.
-  if (sid && String(existing.listing_stripe_session_id || '').trim() === sid) {
+  if (resolvedSessionId && String(existing.listing_stripe_session_id || '').trim() === resolvedSessionId) {
     if (
       listingPaymentCurrent(existing) &&
       String(existing.status || '').toLowerCase() === 'published'
@@ -675,9 +692,9 @@ async function activateOpportunityListingPayment(opportunityId, monthsOrOpts, se
     slug,
     published_at: existing.published_at || now.toISOString(),
     listing_months: termMonths,
-    listing_paid_at: now.toISOString(),
+    listing_paid_at: existing.listing_paid_at || now.toISOString(),
     listing_expires_at: expiresAt.toISOString(),
-    listing_stripe_session_id: sid || existing.listing_stripe_session_id || null,
+    listing_stripe_session_id: resolvedSessionId || existing.listing_stripe_session_id || null,
     listing_expiry_reminder_sent_at: null,
     package_tier: 'standard',
     updated_at: now.toISOString(),
@@ -686,12 +703,17 @@ async function activateOpportunityListingPayment(opportunityId, monthsOrOpts, se
     patch.listing_stripe_subscription_id = subscriptionId;
   }
 
-  const { data, error } = await sb
-    .from('business_opportunities')
-    .update(patch)
-    .eq('id', id)
-    .select('*')
-    .single();
+  let data;
+  let error;
+  ({ data, error } = await sb.from('business_opportunities').update(patch).eq('id', id).select('*').single());
+  if (error && patch.listing_stripe_subscription_id && /listing_stripe_subscription_id/i.test(error.message || '')) {
+    delete patch.listing_stripe_subscription_id;
+    ({ data, error } = await sb.from('business_opportunities').update(patch).eq('id', id).select('*').single());
+  }
+  if (error && patch.listing_expiry_reminder_sent_at != null && /listing_expiry_reminder_sent_at/i.test(error.message || '')) {
+    delete patch.listing_expiry_reminder_sent_at;
+    ({ data, error } = await sb.from('business_opportunities').update(patch).eq('id', id).select('*').single());
+  }
   if (error) throw new Error(error.message);
 
   const autoReject = await maybeAutoRejectOpportunity(data);
@@ -1449,6 +1471,13 @@ async function isListingCheckoutSessionPaid(session) {
   return false;
 }
 
+function opportunityListingStripeIdsMissing(row) {
+  return (
+    !String(row?.listing_stripe_session_id || '').trim() &&
+    !String(row?.listing_stripe_subscription_id || '').trim()
+  );
+}
+
 async function syncOpportunityListingPayment(opportunityId, opts) {
   const options = opts && typeof opts === 'object' ? opts : {};
   const id = String(opportunityId || '').trim();
@@ -1463,7 +1492,7 @@ async function syncOpportunityListingPayment(opportunityId, opts) {
   if (loadErr) throw new Error(loadErr.message);
   if (!row) throw new Error('not_found');
 
-  if (listingPaymentCurrent(row)) {
+  if (listingPaymentCurrent(row) && !opportunityListingStripeIdsMissing(row)) {
     return { ok: true, alreadyPaid: true, opportunity: rowToListing(row) };
   }
 
@@ -1502,23 +1531,78 @@ async function syncOpportunityListingPayment(opportunityId, opts) {
   }
 
   if (isStripeCheckoutConfigured() && options.allowSearch !== false) {
+    const ownerEmail = String(row.owner_email || row.contact_email || '')
+      .trim()
+      .toLowerCase();
+    if (ownerEmail) {
+      try {
+        const stripe = getStripeClient();
+        const customers = await stripe.customers.search({
+          query: "email:'" + ownerEmail.replace(/'/g, '') + "'",
+          limit: 3,
+        });
+        for (const customer of customers.data || []) {
+          const sessions = await stripe.checkout.sessions.list({
+            customer: customer.id,
+            limit: 10,
+          });
+          for (const session of sessions.data || []) {
+            if (String(session.metadata?.opportunity_id || '').trim() !== id) continue;
+            if (String(session.metadata?.checkout_type || '').trim() !== 'opportunity_listing') continue;
+            if (String(session.status || '').trim() !== 'complete') continue;
+            const result = await handleOpportunityListingCheckout(session);
+            if (result.ok) {
+              const refreshed = await getOpportunityById(id);
+              return { ok: true, source: 'customer_checkout', result, opportunity: refreshed };
+            }
+          }
+        }
+      } catch (searchErr) {
+        console.warn(
+          '[opportunity] listing payment customer checkout lookup failed:',
+          searchErr.message || searchErr
+        );
+      }
+    }
+  }
+
+  const ownerEmail = String(row.owner_email || row.contact_email || '')
+    .trim()
+    .toLowerCase();
+  if (ownerEmail && isStripeCheckoutConfigured()) {
     try {
       const stripe = getStripeClient();
-      const search = await stripe.checkout.sessions.search({
-        query: "metadata['opportunity_id']:'" + id + "' AND status:'complete'",
-        limit: 5,
+      const customers = await stripe.customers.search({
+        query: "email:'" + ownerEmail.replace(/'/g, '') + "'",
+        limit: 3,
       });
-      for (const session of search.data || []) {
-        const result = await handleOpportunityListingCheckout(session);
-        if (result.ok) {
-          const refreshed = await getOpportunityById(id);
-          return { ok: true, source: 'stripe_search', result, opportunity: refreshed };
+      for (const customer of customers.data || []) {
+        const subs = await stripe.subscriptions.list({
+          customer: customer.id,
+          status: 'all',
+          limit: 10,
+        });
+        for (const subscription of subs.data || []) {
+          const meta = subscription.metadata || {};
+          if (String(meta.opportunity_id || '').trim() !== id) continue;
+          if (String(meta.checkout_type || '').trim() !== 'opportunity_listing') continue;
+          if (!['active', 'trialing', 'past_due'].includes(String(subscription.status || '').toLowerCase())) {
+            continue;
+          }
+          const result = await syncListingFromSubscription(subscription, {
+            sessionId: sessionId || null,
+            opportunityId: id,
+          });
+          if (result.ok) {
+            const refreshed = await getOpportunityById(id);
+            return { ok: true, source: 'customer_subscription', result, opportunity: refreshed };
+          }
         }
       }
-    } catch (searchErr) {
+    } catch (customerErr) {
       console.warn(
-        '[opportunity] listing payment stripe search failed:',
-        searchErr.message || searchErr
+        '[opportunity] listing payment customer subscription lookup failed:',
+        customerErr.message || customerErr
       );
     }
   }

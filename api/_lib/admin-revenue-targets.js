@@ -12,7 +12,10 @@ const PERIOD_END = '2027-09-01T00:00:00.000Z';
 const PREMIUM_OPPORTUNITY_MONTHLY_GBP = 55;
 
 function hasPaidOpportunityListing(row) {
-  return Boolean(String(row?.listing_stripe_session_id || '').trim());
+  return Boolean(
+    String(row?.listing_stripe_session_id || '').trim() ||
+      String(row?.listing_stripe_subscription_id || '').trim()
+  );
 }
 
 function hasPaidOpportunityPremium(row) {
@@ -168,7 +171,7 @@ async function fetchAutoRevenue(sb, startMs, endMs) {
     sb
       .from('business_opportunities')
       .select(
-        'id, title, tags, listing_months, listing_paid_at, listing_expires_at, listing_stripe_session_id, featured, featured_until, package_tier, premium_stripe_session_id, published_at, created_at'
+        'id, title, tags, listing_months, listing_paid_at, listing_expires_at, listing_stripe_session_id, listing_stripe_subscription_id, featured, featured_until, package_tier, premium_stripe_session_id, published_at, created_at'
       )
       .not('listing_paid_at', 'is', null),
     sb
@@ -197,8 +200,8 @@ async function fetchAutoRevenue(sb, startMs, endMs) {
   (oppsRes.data || []).forEach((row) => {
     if (isTestFixtureText(row.title) || isAdminCompedOpportunity(row)) return;
 
-    // Listing fee: only real Stripe checkouts. Admin comps set listing_paid_at
-    // without a session id and must not inflate Sales targets.
+    // Listing fee: only real Stripe checkouts (session or subscription id).
+    // Admin comps set listing_paid_at without Stripe ids and must not inflate Sales targets.
     if (hasPaidOpportunityListing(row) && inPeriod(row.listing_paid_at, startMs, endMs)) {
       const months = row.listing_months || 3;
       const totals = calculateOpportunityListingTotals(months);

@@ -13,7 +13,7 @@ const {
 const { stripEarningsMeta, isNetworkMarketingType, scanOpportunityRedFlags } = require('../opportunity-moderation');
 const { sendOpportunityListingLiveEmail, sendOpportunityListingApprovedPayEmail } = require('../opportunity-emails');
 const { ensureOpportunitySlug } = require('../opportunity-slug');
-const { addMonths, listingPaymentCurrent } = require('../opportunity-listing-pricing');
+const { addMonths, listingPaymentCurrent, listingPaymentLapsed, listingBillingMode } = require('../opportunity-listing-pricing');
 const { resolveImageUrl } = require('../supabase-storage');
 const { resolveOpportunityDisplayCover } = require('../opportunity-media');
 const {
@@ -251,6 +251,9 @@ function mapOpportunityRow(row) {
     review_submitted_at: effectiveReviewSubmittedAt(row),
     approved_at: row.approved_at || null,
     listing_payment_active: listingPaymentCurrent(row),
+    listing_payment_lapsed: listingPaymentLapsed(row),
+    listing_billing_mode: listingBillingMode(row),
+    listing_stripe_subscription_id: row.listing_stripe_subscription_id || '',
     featured: Boolean(row.featured),
     featured_until: row.featured_until || null,
     featuredUntil: row.featured_until || null,
@@ -384,8 +387,11 @@ async function listOpportunitiesForAdmin(query) {
     query.brand_duplicates === '1' || query.brand_duplicates === 'true';
   const awaitingPayment =
     query.awaiting_payment === '1' || query.awaiting_payment === 'true';
+  const paymentLapsed = query.payment_lapsed === '1' || query.payment_lapsed === 'true';
+  const unclaimed = query.unclaimed === '1' || query.unclaimed === 'true';
   const offset = Math.max(parseInt(String(query.offset || ''), 10) || 0, 0);
-  const limit = Math.min(Math.max(parseInt(String(query.limit || ''), 10) || 40, 1), 100);
+  // Keep Command Centre pages small — never return the full catalogue in one response.
+  const limit = Math.min(Math.max(parseInt(String(query.limit || ''), 10) || 15, 1), 50);
 
   let dbQuery = sb.from('business_opportunities').select('*', { count: 'exact' });
 
@@ -404,6 +410,10 @@ async function listOpportunitiesForAdmin(query) {
   if (status) dbQuery = dbQuery.eq('status', status);
   if (awaitingPayment) {
     dbQuery = dbQuery.eq('approval_status', 'Approved').is('listing_paid_at', null);
+  } else if (paymentLapsed) {
+    dbQuery = dbQuery.not('listing_paid_at', 'is', null);
+  } else if (unclaimed) {
+    dbQuery = dbQuery.eq('ownership_claim_status', 'pending');
   } else if (approvalStatus) {
     if (approvalStatus === 'Pending Review') {
       dbQuery = applyPendingOpportunitiesAdminFilter(dbQuery, reviewQueueReady);
@@ -447,10 +457,18 @@ async function listOpportunitiesForAdmin(query) {
   }
 
   if (awaitingPayment) {
-    const awaitingRes = await dbQuery.limit(200);
+    const awaitingRes = await dbQuery.limit(500);
     if (awaitingRes.error) throw new Error(awaitingRes.error.message);
     const filtered = (awaitingRes.data || []).filter(function (row) {
       return !listingPaymentCurrent(row);
+    });
+    total = filtered.length;
+    rows = filtered.slice(offset, offset + limit);
+  } else if (paymentLapsed) {
+    const lapsedRes = await dbQuery.limit(500);
+    if (lapsedRes.error) throw new Error(lapsedRes.error.message);
+    const filtered = (lapsedRes.data || []).filter(function (row) {
+      return listingPaymentLapsed(row);
     });
     total = filtered.length;
     rows = filtered.slice(offset, offset + limit);
@@ -459,7 +477,12 @@ async function listOpportunitiesForAdmin(query) {
     const res = await dbQuery;
     if (res.error) throw new Error(res.error.message);
     rows = res.data || [];
-    total = res.count != null ? res.count : rows.length;
+    total = typeof res.count === 'number' ? res.count : offset + rows.length;
+  }
+
+  // Hard cap — never trust the client/DB to over-return a full catalogue page.
+  if (rows.length > limit) {
+    rows = rows.slice(0, limit);
   }
 
   const pendingCountRes = await applyPendingOpportunitiesAdminFilter(
@@ -475,6 +498,8 @@ async function listOpportunitiesForAdmin(query) {
     total,
     offset,
     limit,
+    page: Math.floor(offset / limit),
+    pageSize: limit,
     hasMore: offset + rows.length < total,
     pending_count: pendingCountResult.count || 0,
     review_queue_ready: reviewQueueReady,

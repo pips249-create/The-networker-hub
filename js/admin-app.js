@@ -565,6 +565,8 @@
     featured: false,
     noImage: false,
     awaitingPayment: false,
+    paymentLapsed: false,
+    unclaimed: false,
     brandDuplicates: false,
     sort: 'recent',
     page: 0,
@@ -577,7 +579,7 @@
   };
   var GROUP_PAGE_SIZE = 30;
   var EVENT_PAGE_SIZE = 30;
-  var OPPORTUNITY_PAGE_SIZE = 30;
+  var OPPORTUNITY_PAGE_SIZE = 15;
   var eventOrganiserOptionsCache = null;
   var eventCreateOrganiserDocClickBound = false;
   var eventBulkOrganiserDocClickBound = false;
@@ -22333,6 +22335,8 @@
     if (opportunityCleanupState.featured) n += 1;
     if (opportunityCleanupState.noImage) n += 1;
     if (opportunityCleanupState.awaitingPayment) n += 1;
+    if (opportunityCleanupState.paymentLapsed) n += 1;
+    if (opportunityCleanupState.unclaimed) n += 1;
     return n;
   }
 
@@ -22373,6 +22377,8 @@
       else if (key === 'featured') active = opportunityCleanupState.featured;
       else if (key === 'no_image') active = opportunityCleanupState.noImage;
       else if (key === 'awaiting_payment') active = opportunityCleanupState.awaitingPayment;
+      else if (key === 'payment_lapsed') active = opportunityCleanupState.paymentLapsed;
+      else if (key === 'unclaimed') active = opportunityCleanupState.unclaimed;
       btn.classList.toggle('ring-2', active);
       btn.classList.toggle('ring-brand-700', active);
       btn.classList.toggle('bg-brand-50', active);
@@ -23371,18 +23377,45 @@
     return panel;
   }
 
+  function opportunityListingBillingBadgeHtml(opp) {
+    var mode = String(opp.listing_billing_mode || '').trim();
+    if (mode === 'monthly') {
+      return '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-indigo-100 text-indigo-900" title="£25/month + VAT directory listing">£25/mo</span>';
+    }
+    if (mode === 'legacy') {
+      return '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-slate-100 text-slate-700" title="Published before subscription billing">Legacy</span>';
+    }
+    return '';
+  }
+
+  function opportunityOwnershipBadgeHtml(opp) {
+    var claim = String(opp.ownership_claim_status || '').trim().toLowerCase();
+    if (claim === 'pending') {
+      return '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-amber-100 text-amber-900" title="Owner has not claimed this listing yet">Unclaimed</span>';
+    }
+    if (claim === 'disputed') {
+      return '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-red-100 text-red-900">Claim disputed</span>';
+    }
+    return '';
+  }
+
   function opportunityCleanupDataRowHtml(opp) {
     var publicHref = opportunityAdminViewHref(opp);
     var isPendingSubmitted =
       (opp.approval_status === 'Pending Review' && opportunityIsSubmittedForReview(opp)) ||
       opportunityHasPendingLiveUpdate(opp);
     var canApprove = opportunityCanApprove(opp);
-    var awaitingPay = opp.approval_status === 'Approved' && !opp.listing_payment_active;
+    var awaitingPay =
+      opp.approval_status === 'Approved' && !opp.listing_payment_active && !opp.listing_paid_at;
+    var paymentLapsed = opp.listing_payment_lapsed === true;
+    var needsPaymentSync = awaitingPay || paymentLapsed;
     var rowClass = isPendingSubmitted
       ? 'border-b border-amber-100 bg-amber-50/40'
-      : awaitingPay
-        ? 'border-b border-sky-100 bg-sky-50/40'
-        : 'border-b border-slate-100';
+      : paymentLapsed
+        ? 'border-b border-orange-100 bg-orange-50/40'
+        : awaitingPay
+          ? 'border-b border-sky-100 bg-sky-50/40'
+          : 'border-b border-slate-100';
     var isOpen = !!opportunityCleanupState.expanded[opp.id];
     if (opportunityCleanupState.selected[opp.id]) rememberSelectedOpportunity(opp);
     var checked = opportunityCleanupState.selected[opp.id] ? ' checked' : '';
@@ -23428,6 +23461,11 @@
       (awaitingPay
         ? '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-sky-100 text-sky-900">Awaiting payment</span>'
         : '') +
+      (paymentLapsed
+        ? '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-orange-100 text-orange-900" title="Subscription ended — hidden from directory until renewed">Payment lapsed</span>'
+        : '') +
+      opportunityListingBillingBadgeHtml(opp) +
+      opportunityOwnershipBadgeHtml(opp) +
       (opp.featured
         ? '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-violet-100 text-violet-800">Featured</span>'
         : '') +
@@ -23453,9 +23491,11 @@
           approveLabel +
           '</button>'
         : '') +
-      (awaitingPay
+      (needsPaymentSync
         ? '<button type="button" data-opp-sync-pay class="text-xs font-semibold rounded-lg border border-emerald-300 text-emerald-900 px-2.5 py-1 hover:bg-emerald-50">Sync payment</button>' +
-          '<button type="button" data-opp-resend-pay class="text-xs font-semibold rounded-lg border border-sky-300 text-sky-900 px-2.5 py-1 hover:bg-sky-50">Resend pay email</button>'
+          (awaitingPay
+            ? '<button type="button" data-opp-resend-pay class="text-xs font-semibold rounded-lg border border-sky-300 text-sky-900 px-2.5 py-1 hover:bg-sky-50">Resend pay email</button>'
+            : '') +
         : '') +
       (publicHref
         ? '<a href="' +
@@ -23687,6 +23727,8 @@
     if (opportunityCleanupState.featured) params.set('featured', '1');
     if (opportunityCleanupState.noImage) params.set('no_image', '1');
     if (opportunityCleanupState.awaitingPayment) params.set('awaiting_payment', '1');
+    if (opportunityCleanupState.paymentLapsed) params.set('payment_lapsed', '1');
+    if (opportunityCleanupState.unclaimed) params.set('unclaimed', '1');
     if (opportunityCleanupState.brandDuplicates) params.set('brand_duplicates', '1');
     if (opportunityCleanupState.sort) params.set('sort', opportunityCleanupState.sort);
     if (opportunityCleanupState.q) params.set('q', opportunityCleanupState.q);
@@ -23763,10 +23805,32 @@
 
     var opportunities = opportunityCleanupCache.opportunities || [];
     var page = opportunityCleanupState.page;
-    var pageStart = opportunities.length ? page * OPPORTUNITY_PAGE_SIZE + 1 : 0;
-    var pageEnd = page * OPPORTUNITY_PAGE_SIZE + opportunities.length;
-    var total = opportunityCleanupState.total || opportunities.length;
+    var pageSize =
+      Number(opportunityCleanupCache.pageSize) ||
+      Number(opportunityCleanupCache.limit) ||
+      OPPORTUNITY_PAGE_SIZE;
+    var pageStart = opportunities.length ? page * pageSize + 1 : 0;
+    var pageEnd = page * pageSize + opportunities.length;
+    var total =
+      typeof opportunityCleanupState.total === 'number'
+        ? opportunityCleanupState.total
+        : typeof opportunityCleanupCache.total === 'number'
+          ? opportunityCleanupCache.total
+          : opportunities.length;
     var pendingCount = opportunityCleanupCache.pending_count || 0;
+    var pager = adminPaginationHtml(page, total, pageSize, 'data-opp-page');
+    var pagerBar = pager
+      ? '<div class="opportunity-cleanup-pager flex flex-wrap items-center justify-between gap-2 py-2">' +
+        '<p class="text-xs text-slate-500">Page ' +
+        (page + 1) +
+        ' of ' +
+        Math.max(1, Math.ceil(total / pageSize)) +
+        ' · ' +
+        pageSize +
+        ' per page</p>' +
+        pager +
+        '</div>'
+      : '';
 
     if (status) {
       var parts = [
@@ -23795,8 +23859,12 @@
     }
 
     if (hint) {
-      if (total > OPPORTUNITY_PAGE_SIZE && !opportunityCleanupHasActiveFilters()) {
+      if (total > pageSize) {
         hint.classList.remove('hidden');
+        hint.textContent =
+          'Showing ' +
+          pageSize +
+          ' listings per page. Use Previous / Next or the page numbers to browse the full catalogue.';
       } else {
         hint.classList.add('hidden');
       }
@@ -23819,7 +23887,7 @@
           '<button type="button" data-opp-quick="pending" class="text-xs font-semibold rounded-full border border-amber-300 bg-white px-3 py-1.5 text-amber-950 hover:bg-amber-100">Show pending review</button>' +
           '</div>';
       }
-      list.innerHTML = emptyMsg + adminPaginationHtml(page, total, OPPORTUNITY_PAGE_SIZE, 'data-opp-page');
+      list.innerHTML = emptyMsg + pagerBar;
       return;
     }
 
@@ -23836,6 +23904,7 @@
     });
 
     list.innerHTML =
+      pagerBar +
       adminTableScroll(
         '<table class="w-full text-sm text-left border-collapse">' +
           '<thead class="text-xs uppercase tracking-wide text-slate-500 border-b border-slate-200">' +
@@ -23850,7 +23919,7 @@
           rows +
           '</tbody></table>'
       ) +
-      adminPaginationHtml(page, total, OPPORTUNITY_PAGE_SIZE, 'data-opp-page');
+      pagerBar;
 
     if (renderErrors.length) {
       list.insertAdjacentHTML(
@@ -24007,6 +24076,8 @@
       '<div class="flex flex-wrap gap-2">' +
       '<button type="button" data-opp-quick="pending" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Pending review</button>' +
       '<button type="button" data-opp-quick="awaiting_payment" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Awaiting payment</button>' +
+      '<button type="button" data-opp-quick="payment_lapsed" class="text-xs font-semibold rounded-full border border-orange-200 px-3 py-1 text-orange-900 hover:bg-orange-50">Payment lapsed</button>' +
+      '<button type="button" data-opp-quick="unclaimed" class="text-xs font-semibold rounded-full border border-amber-200 px-3 py-1 text-amber-900 hover:bg-amber-50">Unclaimed</button>' +
       '<button type="button" data-opp-quick="draft" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Draft</button>' +
       '<button type="button" data-opp-quick="published" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Published</button>' +
       '<button type="button" data-opp-quick="featured" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Featured</button>' +
@@ -24642,6 +24713,8 @@
         opportunityCleanupState.featured = false;
         opportunityCleanupState.noImage = false;
         opportunityCleanupState.awaitingPayment = false;
+        opportunityCleanupState.paymentLapsed = false;
+        opportunityCleanupState.unclaimed = false;
         opportunityCleanupState.brandDuplicates = false;
         opportunityCleanupState.q = '';
       } else if (key === 'pending') {
@@ -24657,6 +24730,20 @@
         if (opportunityCleanupState.awaitingPayment) {
           opportunityCleanupState.approval = '';
           opportunityCleanupState.status = '';
+          opportunityCleanupState.paymentLapsed = false;
+        }
+      } else if (key === 'payment_lapsed') {
+        opportunityCleanupState.paymentLapsed = !opportunityCleanupState.paymentLapsed;
+        if (opportunityCleanupState.paymentLapsed) {
+          opportunityCleanupState.approval = '';
+          opportunityCleanupState.status = '';
+          opportunityCleanupState.awaitingPayment = false;
+        }
+      } else if (key === 'unclaimed') {
+        opportunityCleanupState.unclaimed = !opportunityCleanupState.unclaimed;
+        if (opportunityCleanupState.unclaimed) {
+          opportunityCleanupState.awaitingPayment = false;
+          opportunityCleanupState.paymentLapsed = false;
         }
       } else if (key === 'draft') {
         opportunityCleanupState.status = opportunityCleanupState.status === 'draft' ? '' : 'draft';

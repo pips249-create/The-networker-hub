@@ -47,6 +47,28 @@ function listingPaymentCurrent(row) {
   return false;
 }
 
+/** Paid before but subscription/term has ended (needs renewal). */
+function listingPaymentLapsed(row, nowMs) {
+  if (!row || !row.listing_paid_at) return false;
+  return !listingPaymentCurrent(row, nowMs);
+}
+
+/** How the directory listing fee is billed — monthly subscription vs legacy prepaid. */
+function listingBillingMode(row) {
+  if (!row) return '';
+  if (String(row.listing_stripe_subscription_id || '').trim()) return 'monthly';
+  if (row.listing_paid_at || row.listing_expires_at) return 'monthly';
+  if (
+    listingPaymentCurrent(row) &&
+    String(row.status || '').toLowerCase() === 'published' &&
+    row.published_at &&
+    !row.listing_paid_at
+  ) {
+    return 'legacy';
+  }
+  return '';
+}
+
 module.exports = {
   OPPORTUNITY_LISTING_MONTHLY_EX_VAT_PENCE,
   OPPORTUNITY_LISTING_VAT_RATE,
@@ -56,4 +78,6 @@ module.exports = {
   calculateOpportunityListingTotals,
   addMonths,
   listingPaymentCurrent,
+  listingPaymentLapsed,
+  listingBillingMode,
 };

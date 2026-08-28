@@ -18,6 +18,44 @@ function subscriptionIdFromSession(session) {
   return String(sub?.id || '').trim();
 }
 
+async function resolveListingCheckoutSessionId(stripe, subscriptionId, opportunityId) {
+  const subId = String(subscriptionId || '').trim();
+  const oppId = String(opportunityId || '').trim();
+  if (!stripe || !subId) return '';
+
+  try {
+    const bySub = await stripe.checkout.sessions.list({ subscription: subId, limit: 5 });
+    for (const session of bySub.data || []) {
+      if (!oppId || String(session.metadata?.opportunity_id || '').trim() === oppId) {
+        return String(session.id || '').trim();
+      }
+    }
+  } catch {
+    /* fall through */
+  }
+
+  try {
+    const subscription = await stripe.subscriptions.retrieve(subId);
+    const customerId =
+      typeof subscription.customer === 'string'
+        ? subscription.customer
+        : subscription.customer?.id || '';
+    if (!customerId) return '';
+
+    const byCustomer = await stripe.checkout.sessions.list({ customer: customerId, limit: 10 });
+    for (const session of byCustomer.data || []) {
+      if (String(session.metadata?.checkout_type || '').trim() !== 'opportunity_listing') continue;
+      if (oppId && String(session.metadata?.opportunity_id || '').trim() !== oppId) continue;
+      const sessionSub = subscriptionIdFromSession(session);
+      if (!sessionSub || sessionSub === subId) return String(session.id || '').trim();
+    }
+  } catch {
+    /* ignore */
+  }
+
+  return '';
+}
+
 function periodEndIso(subscription) {
   const top = Number(subscription?.current_period_end);
   let ts = Number.isFinite(top) && top > 0 ? top : 0;
@@ -48,13 +86,21 @@ async function syncListingFromSubscription(subscription, options) {
 
   let id = opportunityId;
   if (!id && subscriptionId) {
-    const { data, error } = await sb
-      .from('business_opportunities')
-      .select('id')
-      .eq('listing_stripe_subscription_id', subscriptionId)
-      .maybeSingle();
-    if (error) throw new Error(error.message);
-    id = data?.id || '';
+    try {
+      const { data, error } = await sb
+        .from('business_opportunities')
+        .select('id')
+        .eq('listing_stripe_subscription_id', subscriptionId)
+        .maybeSingle();
+      if (error && !/listing_stripe_subscription_id/i.test(error.message || '')) {
+        throw new Error(error.message);
+      }
+      id = data?.id || '';
+    } catch (lookupErr) {
+      if (!/listing_stripe_subscription_id/i.test(lookupErr.message || '')) {
+        throw lookupErr;
+      }
+    }
   }
   if (!id) return { skipped: true, reason: 'missing_opportunity_id' };
 
@@ -76,8 +122,18 @@ async function syncListingFromSubscription(subscription, options) {
     return { ok: true, opportunityId: id, expired: true, listing: rowToListing(data) };
   }
 
+  let sessionId = options.sessionId ? String(options.sessionId).trim() : '';
+  if (!sessionId && subscriptionId) {
+    const { getStripeClient } = require('./stripe-checkout');
+    try {
+      sessionId = await resolveListingCheckoutSessionId(getStripeClient(), subscriptionId, id);
+    } catch {
+      /* ignore */
+    }
+  }
+
   const listing = await activateOpportunityListingPayment(id, {
-    sessionId: options.sessionId || null,
+    sessionId: sessionId || null,
     subscriptionId,
     periodEndIso: periodEnd,
   });
@@ -128,6 +184,7 @@ async function handleOpportunityListingInvoicePaid(invoice) {
 module.exports = {
   isOpportunityListingMetadata,
   subscriptionIdFromSession,
+  resolveListingCheckoutSessionId,
   periodEndIso,
   syncListingFromSubscription,
   handleOpportunityListingSubscriptionUpdated,
