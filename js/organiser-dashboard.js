@@ -12662,24 +12662,19 @@
   function bindTeamGroupPicker(allCheckbox, listEl) {
     if (!allCheckbox || !listEl || allCheckbox.dataset.teamPickerBound === '1') return;
     allCheckbox.dataset.teamPickerBound = '1';
-    const sync = function () {
+    const sync = function (fromUser) {
       const all = allCheckbox.checked;
       listEl.hidden = all;
-      if (!all) {
-        const boxes = listEl.querySelectorAll('input[type="checkbox"]');
-        if (
-          ![...boxes].some(function (box) {
-            return box.checked;
-          })
-        ) {
-          boxes.forEach(function (box) {
-            box.checked = true;
-          });
-        }
+      if (!all && fromUser) {
+        listEl.querySelectorAll('input[type="checkbox"]').forEach(function (box) {
+          box.checked = false;
+        });
       }
     };
-    allCheckbox.addEventListener('change', sync);
-    sync();
+    allCheckbox.addEventListener('change', function (e) {
+      sync(e.isTrusted);
+    });
+    sync(false);
   }
 
   function readTeamGroupSelection(allCheckbox, listEl) {
@@ -12697,10 +12692,7 @@
   function resetTeamInviteGroupPicker() {
     const allBox = document.getElementById('team-invite-all-groups');
     const listEl = document.getElementById('team-invite-group-list');
-    if (allBox) allBox.checked = true;
-    renderTeamGroupCheckboxes(listEl, (state.groups || []).map(function (g) {
-      return g.id;
-    }));
+    renderTeamGroupCheckboxes(listEl, []);
     if (allBox) {
       allBox.checked = true;
       allBox.dispatchEvent(new Event('change'));
