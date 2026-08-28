@@ -23626,7 +23626,7 @@
         ? '<button type="button" data-opp-sync-pay class="text-xs font-semibold rounded-lg border border-emerald-300 text-emerald-900 px-2.5 py-1 hover:bg-emerald-50">Sync payment</button>' +
           (awaitingPay
             ? '<button type="button" data-opp-resend-pay class="text-xs font-semibold rounded-lg border border-sky-300 text-sky-900 px-2.5 py-1 hover:bg-sky-50">Resend pay email</button>'
-            : '') +
+            : '')
         : '') +
       (publicHref
         ? '<a href="' +
