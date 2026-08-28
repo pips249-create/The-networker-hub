@@ -1,0 +1,104 @@
+.error-page-main {
+  min-height: calc(100vh - 72px);
+  display: flex;
+  flex-direction: column;
+}
+
+.error-hero {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  padding-bottom: 72px;
+}
+
+.error-code {
+  display: inline-block;
+  margin-bottom: 12px;
+  font-family: 'DM Serif Display', 'DM Serif Display Fallback', Georgia, serif;
+  font-size: clamp(3rem, 10vw, 4.5rem);
+  line-height: 1;
+  color: var(--lavender-deep);
+  letter-spacing: -0.02em;
+}
+
+.error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 28px;
+}
+
+.error-links {
+  max-width: 52rem;
+  padding-top: 0;
+  padding-bottom: 72px;
+}
+
+.error-links h2 {
+  font-family: 'DM Serif Display', 'DM Serif Display Fallback', Georgia, serif;
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: var(--charcoal);
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.error-link-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.error-link-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px 22px;
+  border: 1px solid var(--border-soft);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 10px 28px rgba(45, 42, 38, 0.04);
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.error-link-card:hover {
+  border-color: rgba(194, 153, 209, 0.55);
+  transform: translateY(-2px);
+  box-shadow: 0 14px 32px rgba(45, 42, 38, 0.08);
+}
+
+.error-link-card strong {
+  font-size: 1.05rem;
+  color: var(--charcoal);
+}
+
+.error-link-card span {
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+.error-link-card::after {
+  content: '→';
+  margin-top: auto;
+  font-weight: 600;
+  color: var(--lavender-deep);
+}
+
+.error-note {
+  max-width: 36em;
+  margin: 32px auto 0;
+  text-align: center;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+}
+
+.error-note a {
+  color: var(--lavender-deep);
+  font-weight: 600;
+}
