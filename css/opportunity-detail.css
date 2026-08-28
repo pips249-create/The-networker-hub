@@ -1121,40 +1121,71 @@ body.opp-claim-invite-active .opp-detail-breadcrumb {
   border-top: none;
 }
 
-.opportunity-detail-page .opp-open-day-cal {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px 6px;
+.opportunity-detail-page .opp-open-day-cal-wrap {
+  position: relative;
+  display: inline-block;
   margin-top: 8px;
-  font-size: 13px;
-  font-weight: 500;
 }
 
-.opportunity-detail-page .opp-open-day-cal-label {
+.opportunity-detail-page .opp-open-day-cal-btn {
+  appearance: none;
+  border: 1px solid rgba(201, 150, 31, 0.45);
+  background: rgba(201, 150, 31, 0.08);
+  color: var(--opp-gold-deep, #9a7209);
+  border-radius: 999px;
+  padding: 5px 12px;
   font-size: 12px;
   font-weight: 600;
-  color: #635c5e;
-  margin-right: 2px;
-}
-
-.opportunity-detail-page .opp-open-day-cal-sep {
-  color: rgba(28, 32, 64, 0.35);
-  user-select: none;
-}
-
-.opportunity-detail-page .opp-open-day-cal-link {
-  color: var(--opp-gold-deep, #9a7209);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  background: none;
-  border: none;
-  padding: 0;
-  font: inherit;
   cursor: pointer;
+  line-height: 1.3;
 }
 
-.opportunity-detail-page .opp-open-day-cal-link:hover {
+.opportunity-detail-page .opp-open-day-cal-btn:hover,
+.opportunity-detail-page .opp-open-day-cal-btn[aria-expanded='true'] {
+  background: rgba(201, 150, 31, 0.16);
+  border-color: rgba(201, 150, 31, 0.65);
+}
+
+.opportunity-detail-page .opp-open-day-cal-menu {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 13.5rem;
+  padding: 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(28, 32, 64, 0.12);
+  background: #fff;
+  box-shadow: 0 10px 28px rgba(28, 32, 64, 0.14);
+}
+
+.opportunity-detail-page .opp-open-day-cal-menu-label {
+  margin: 0 0 6px;
+  padding: 0 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #635c5e;
+}
+
+.opportunity-detail-page .opp-open-day-cal-menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  color: #1c2040;
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.opportunity-detail-page .opp-open-day-cal-menu-item:hover {
+  background: rgba(13, 31, 60, 0.06);
   color: var(--opp-navy, #0d1f3c);
 }
 
@@ -1209,16 +1240,24 @@ body.opp-claim-invite-active .opp-detail-breadcrumb {
 }
 
 .opportunity-detail-page .opp-open-day-status {
-  margin: 4px 0 0;
-  font-size: 12px;
+  margin: 8px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  line-height: 1.45;
+  font-weight: 500;
 }
 
 .opportunity-detail-page .opp-open-day-status.is-ok {
   color: #166534;
+  background: rgba(22, 101, 52, 0.08);
+  border: 1px solid rgba(22, 101, 52, 0.18);
 }
 
 .opportunity-detail-page .opp-open-day-status.is-error {
   color: #b91c1c;
+  background: rgba(185, 28, 28, 0.06);
+  border: 1px solid rgba(185, 28, 28, 0.16);
 }
 
 .opportunity-detail-page .opp-open-day-closed {

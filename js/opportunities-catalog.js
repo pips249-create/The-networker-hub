@@ -626,7 +626,12 @@
   }
 
   function fetchOpportunityRecord(lookup) {
-    return fetch('/api/opportunities?slug=' + encodeURIComponent(lookup), {
+    var key = String(lookup || '').trim();
+    if (!key) return Promise.resolve(null);
+    var query = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(key)
+      ? 'id=' + encodeURIComponent(key)
+      : 'slug=' + encodeURIComponent(key);
+    return fetch('/api/opportunities?' + query, {
       credentials: 'same-origin',
       cache: 'no-store',
     })
@@ -667,14 +672,18 @@
       });
   }
 
-  function fetchBySlugOrId(key) {
+  function fetchBySlugOrId(key, options) {
+    options = options || {};
     var lookup = String(key || '').trim();
     if (!lookup) return Promise.resolve(null);
-    var cached = getBySlug(lookup) || getById(lookup);
-    if (cached) return Promise.resolve(cached);
+    if (!options.forceFresh) {
+      var cached = getBySlug(lookup) || getById(lookup);
+      if (cached) return Promise.resolve(cached);
+    }
     return fetchOpportunityRecord(lookup)
       .then(function (item) {
         if (item) return item;
+        if (options.forceFresh) return null;
         return fetchOpportunityFromCatalog(lookup);
       })
       .catch(function () {
@@ -741,6 +750,7 @@
     getBySlug: getBySlug,
     fetchById: fetchById,
     fetchBySlugOrId: fetchBySlugOrId,
+    fetchOpportunityRecord: fetchOpportunityRecord,
     apiRowToSeed: apiRowToSeed,
     detailHref: detailHref,
     typeClass: typeClass,

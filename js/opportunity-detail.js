@@ -386,21 +386,47 @@
     if (!cal || !cal.google) return '';
     var dayId = escapeHtml(String(day.id || ''));
     return (
-      '<div class="opp-open-day-cal" aria-label="Add to calendar">' +
-      '<span class="opp-open-day-cal-label">Add to calendar</span>' +
+      '<div class="opp-open-day-cal-wrap">' +
+      '<button type="button" class="opp-open-day-cal-btn" aria-expanded="false" aria-haspopup="true" data-open-day-cal-toggle data-open-day-id="' +
+      dayId +
+      '">Add to calendar</button>' +
+      '<div class="opp-open-day-cal-menu" hidden role="menu">' +
+      '<p class="opp-open-day-cal-menu-label">Add to your calendar</p>' +
       '<a href="' +
       escapeHtml(cal.google) +
-      '" target="_blank" rel="noopener" class="opp-open-day-cal-link">Google</a>' +
-      '<span class="opp-open-day-cal-sep" aria-hidden="true">·</span>' +
+      '" target="_blank" rel="noopener" class="opp-open-day-cal-menu-item" role="menuitem">Google Calendar</a>' +
       '<a href="' +
       escapeHtml(cal.outlook) +
-      '" target="_blank" rel="noopener" class="opp-open-day-cal-link">Outlook</a>' +
-      '<span class="opp-open-day-cal-sep" aria-hidden="true">·</span>' +
-      '<button type="button" class="opp-open-day-cal-link opp-open-day-cal-ics" data-open-day-id="' +
+      '" target="_blank" rel="noopener" class="opp-open-day-cal-menu-item" role="menuitem">Outlook / Office 365</a>' +
+      '<button type="button" class="opp-open-day-cal-menu-item opp-open-day-cal-ics" role="menuitem" data-open-day-id="' +
       dayId +
-      '">Apple Calendar</button>' +
-      '</div>'
+      '">Download .ics (Apple Calendar)</button>' +
+      '</div></div>'
     );
+  }
+
+  function closeOpenDayCalendarMenus(exceptMenu) {
+    if (!els.openDaysList) return;
+    els.openDaysList.querySelectorAll('.opp-open-day-cal-menu').forEach(function (menu) {
+      if (menu === exceptMenu) return;
+      menu.hidden = true;
+      var wrap = menu.closest('.opp-open-day-cal-wrap');
+      var btn = wrap && wrap.querySelector('[data-open-day-cal-toggle]');
+      if (btn) btn.setAttribute('aria-expanded', 'false');
+    });
+  }
+
+  function showOpenDayFormStatus(form, message, kind) {
+    if (!form) return;
+    var statusEl = form.querySelector('.opp-open-day-status');
+    if (!statusEl) return;
+    statusEl.hidden = false;
+    statusEl.className =
+      'opp-open-day-status' + (kind === 'ok' ? ' is-ok' : kind === 'error' ? ' is-error' : '');
+    statusEl.textContent = message;
+    if (typeof statusEl.scrollIntoView === 'function') {
+      statusEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
   }
 
   function findOpenDayById(dayId) {
@@ -464,6 +490,18 @@
     if (!els.openDaysList || els.openDaysList.dataset.bound === '1') return;
     els.openDaysList.dataset.bound = '1';
     els.openDaysList.addEventListener('click', function (e) {
+      var toggle = e.target.closest('[data-open-day-cal-toggle]');
+      if (toggle) {
+        e.preventDefault();
+        var wrap = toggle.closest('.opp-open-day-cal-wrap');
+        var menu = wrap && wrap.querySelector('.opp-open-day-cal-menu');
+        if (!menu) return;
+        var willOpen = menu.hidden;
+        closeOpenDayCalendarMenus(willOpen ? menu : null);
+        menu.hidden = !willOpen;
+        toggle.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+        return;
+      }
       var icsBtn = e.target.closest('.opp-open-day-cal-ics');
       if (!icsBtn || !window.HubCalendarShare) return;
       var dayId = icsBtn.getAttribute('data-open-day-id');
@@ -472,30 +510,43 @@
       var links = openDayCalendarLinks(day, current);
       if (!links || !links.icsContent) return;
       HubCalendarShare.downloadIcs(links.icsContent, links.icsFilename);
+      closeOpenDayCalendarMenus(null);
+    });
+    document.addEventListener('click', function (e) {
+      if (!els.openDaysList || !els.openDaysList.contains(e.target)) {
+        closeOpenDayCalendarMenus(null);
+      }
     });
     els.openDaysList.addEventListener('submit', function (e) {
       var form = e.target.closest('.opp-open-day-form');
       if (!form) return;
       e.preventDefault();
-      if (!openDayRegistrationsOpen) return;
-      var openDayId = form.getAttribute('data-open-day-id');
+      if (!openDayRegistrationsOpen) {
+        showOpenDayFormStatus(form, openDayRegistrationsClosedCopy(), 'error');
+        return;
+      }
+      var openDayId = String(form.getAttribute('data-open-day-id') || '').trim();
       var name = String((form.querySelector('[name="name"]') || {}).value || '').trim();
       var email = String((form.querySelector('[name="email"]') || {}).value || '').trim();
       var phone = String((form.querySelector('[name="phone"]') || {}).value || '').trim();
-      var statusEl = form.querySelector('.opp-open-day-status');
       var btn = form.querySelector('button[type="submit"]');
+      if (!openDayId) {
+        showOpenDayFormStatus(
+          form,
+          'This open day is missing an ID — refresh the page and try again.',
+          'error'
+        );
+        return;
+      }
       if (!name || !email) {
-        if (statusEl) {
-          statusEl.hidden = false;
-          statusEl.className = 'opp-open-day-status is-error';
-          statusEl.textContent = 'Enter your name and email.';
-        }
+        showOpenDayFormStatus(form, 'Enter your name and email.', 'error');
         return;
       }
       if (btn) {
         btn.disabled = true;
         btn.textContent = 'Sending…';
       }
+      showOpenDayFormStatus(form, 'Sending your registration…', null);
       fetch('/api/opportunities', {
         method: 'POST',
         credentials: 'include',
@@ -509,18 +560,22 @@
         }),
       })
         .then(function (r) {
-          return r.json().then(function (data) {
-            return { ok: r.ok, data: data };
-          });
+          return r
+            .json()
+            .catch(function () {
+              return {};
+            })
+            .then(function (data) {
+              return { ok: r.ok, status: r.status, data: data };
+            });
         })
         .then(function (result) {
           if (result.ok) {
-            if (statusEl) {
-              statusEl.hidden = false;
-              statusEl.className = 'opp-open-day-status is-ok';
-              statusEl.textContent =
-                'Thanks — the team will confirm shortly. Check your email for a copy.';
-            }
+            showOpenDayFormStatus(
+              form,
+              'Thanks — you are registered. The lister will confirm by email shortly.',
+              'ok'
+            );
             form.reset();
             if (btn) {
               btn.disabled = false;
@@ -528,23 +583,21 @@
             }
             return;
           }
-          if (statusEl) {
-            statusEl.hidden = false;
-            statusEl.className = 'opp-open-day-status is-error';
-            if (
-              result.data &&
-              (result.data.error === 'open_day_registrations_closed' ||
-                result.data.error === 'enquiries_closed')
-            ) {
-              syncOpenDayRegistrationsFromSoftLaunch(result.data.softLaunch || null);
-              renderOpenDays(current);
-              statusEl.textContent = openDayRegistrationsClosedCopy();
-            } else {
-              statusEl.textContent =
-                (result.data && result.data.message) ||
+          if (
+            result.data &&
+            (result.data.error === 'open_day_registrations_closed' ||
+              result.data.error === 'enquiries_closed')
+          ) {
+            syncOpenDayRegistrationsFromSoftLaunch(result.data.softLaunch || null);
+            renderOpenDays(current);
+          } else {
+            showOpenDayFormStatus(
+              form,
+              (result.data && result.data.message) ||
                 (result.data && result.data.error) ||
-                'Could not register interest. Please try again.';
-            }
+                'Could not register interest. Please try again.',
+              'error'
+            );
           }
           if (btn) {
             btn.disabled = false;
@@ -552,11 +605,11 @@
           }
         })
         .catch(function () {
-          if (statusEl) {
-            statusEl.hidden = false;
-            statusEl.className = 'opp-open-day-status is-error';
-            statusEl.textContent = 'Could not register interest. Please try again.';
-          }
+          showOpenDayFormStatus(
+            form,
+            'Could not register interest. Check your connection and try again.',
+            'error'
+          );
           if (btn) {
             btn.disabled = false;
             btn.textContent = 'Register interest';
@@ -1373,25 +1426,28 @@
     }
 
     var slug = resolveSlug();
-    var item = catalog.getBySlug ? catalog.getBySlug(slug) : catalog.getById(slug);
-    if (item) {
-      finishInit(item);
-      return;
+    var cached = catalog.getBySlug ? catalog.getBySlug(slug) : catalog.getById(slug);
+    if (cached) {
+      finishInit(cached, cached._softLaunch || null);
     }
 
-    var fetcher = catalog.fetchBySlugOrId || catalog.fetchById;
-    if (fetcher) {
-      fetcher(slug).then(function (result) {
-        if (result && result.opportunity) {
-          finishInit(result.opportunity, result.softLaunch || null);
+    var fetchFresh =
+      catalog.fetchOpportunityRecord ||
+      function (key) {
+        return catalog.fetchBySlugOrId ? catalog.fetchBySlugOrId(key, { forceFresh: true }) : null;
+      };
+
+    Promise.resolve(fetchFresh(slug))
+      .then(function (item) {
+        if (item) {
+          finishInit(item, item._softLaunch || null);
           return;
         }
-        finishInit(result, result && result._softLaunch ? result._softLaunch : null);
+        if (!cached) showNotFound();
+      })
+      .catch(function () {
+        if (!cached) showNotFound();
       });
-      return;
-    }
-
-    showNotFound();
   }
 
   if (document.readyState === 'loading') {
