@@ -941,6 +941,38 @@ module.exports = async function handler(req, res) {
       }
     }
 
+    if (body.action === 'sync_listing_payment') {
+      try {
+        const { syncOpportunityListingPayment } = require('../supabase-opportunities');
+        const sessionId = String(body.session_id || body.sessionId || '').trim();
+        const result = await syncOpportunityListingPayment(id, {
+          sessionId: sessionId || undefined,
+        });
+        const sb = getSupabaseAdmin();
+        const { data: refreshed, error: reloadErr } = await sb
+          .from('business_opportunities')
+          .select('*')
+          .eq('id', id)
+          .single();
+        if (reloadErr) throw new Error(reloadErr.message);
+        return json(res, 200, {
+          ok: true,
+          alreadyPaid: result.alreadyPaid === true,
+          source: result.source || null,
+          opportunity: mapOpportunityRow(refreshed),
+        });
+      } catch (e) {
+        return json(res, 500, {
+          ok: false,
+          error: e.code || 'sync_listing_payment_failed',
+          message:
+            e.code === 'no_stripe_payment_found'
+              ? 'No completed Stripe checkout found for this listing yet. Wait a minute and try again, or paste the checkout session ID from Stripe.'
+              : e.message || 'Could not sync listing payment.',
+        });
+      }
+    }
+
     if (body.action === 'resend_pay_email') {
       try {
         const sb = getSupabaseAdmin();

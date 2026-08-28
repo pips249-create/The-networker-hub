@@ -10774,7 +10774,7 @@
       '<button type="button" id="sponsor-clicks-print" class="sponsor-pack-btn">Download PDF</button>' +
       '</div></form>' +
       '<p id="sponsor-clicks-status" class="sponsor-pack-status">Loading…</p>' +
-      '<p class="sponsor-pack-print-hint no-print">Download PDF creates a one-page Networker UK pack themed for Events (lavender), Organisers (blue), or Opportunities (gold). Pick a brand and optionally a hero or Page Partner placement, then Apply.</p>' +
+      '<p class="sponsor-pack-print-hint no-print">Choose a <strong>brand</strong> and date range, then Apply — the pack shows every part of the site where their logo was seen (page views, clicks, and emails). Optionally narrow with Placement. Download PDF needs a brand selected.</p>' +
       '</section>' +
       '<div id="sponsor-clicks-body" class="sponsor-pack-sheet"></div></div>';
 
@@ -10892,9 +10892,7 @@
           '<option value="' +
             attrEsc(n) +
             '"' +
-            (current && (current === n || n.toLowerCase().indexOf(current.toLowerCase()) === 0)
-              ? ' selected'
-              : '') +
+            (current && current === n ? ' selected' : '') +
             '>' +
             esc(n) +
             '</option>'
@@ -10902,23 +10900,63 @@
       });
       sel.innerHTML = opts.join('');
       if (current) {
-        var matched = false;
         for (var i = 0; i < sel.options.length; i++) {
           if (sel.options[i].value === current) {
             sel.selectedIndex = i;
-            matched = true;
             break;
           }
         }
-        if (!matched) {
-          for (var j = 0; j < sel.options.length; j++) {
-            if (sel.options[j].value.toLowerCase().indexOf(current.toLowerCase()) === 0) {
-              sel.selectedIndex = j;
-              break;
-            }
-          }
-        }
       }
+    }
+
+    function brandSurfacesHtml(surfaces, configuredPlacements) {
+      var rows = Array.isArray(surfaces) ? surfaces : [];
+      var configured = Array.isArray(configuredPlacements) ? configuredPlacements : [];
+      if (!rows.length && !configured.length) {
+        return (
+          '<p class="sponsor-pack-empty">Pick a brand and click Apply to see where their logo appeared on the site this period.</p>'
+        );
+      }
+      if (!rows.length && configured.length) {
+        return (
+          '<p class="sponsor-pack-empty">This brand is configured on the site (' +
+          esc(
+            configured
+              .slice(0, 4)
+              .map(function (p) {
+                return formatSponsorPlacementLabel(p);
+              })
+              .join(', ')
+          ) +
+          ') — figures will appear once the period has page views, clicks, or emails.</p>'
+        );
+      }
+      var body = rows
+        .map(function (row) {
+          return (
+            '<tr>' +
+            '<td>' +
+            esc(row.label || formatSponsorPlacementLabel(row.placement)) +
+            '</td>' +
+            '<td class="sponsor-pack-rank-count">' +
+            esc(formatSponsorPackNumber(row.pageViews || 0)) +
+            '</td>' +
+            '<td class="sponsor-pack-rank-count">' +
+            esc(formatSponsorPackNumber(row.clicks || 0)) +
+            '</td>' +
+            '<td class="sponsor-pack-rank-count">' +
+            esc(formatSponsorPackNumber(row.emails || 0)) +
+            '</td></tr>'
+          );
+        })
+        .join('');
+      return (
+        '<div class="sponsor-pack-table-wrap"><table class="sponsor-pack-table sponsor-pack-table--surfaces">' +
+        '<thead><tr><th>Where on the site</th><th>Page views</th><th>Clicks</th><th>Emails</th></tr></thead>' +
+        '<tbody>' +
+        body +
+        '</tbody></table></div>'
+      );
     }
 
     function renderReport(data) {
@@ -10938,6 +10976,9 @@
       var contact = data.contact || {};
       var brand = data.brand || {};
       var brandName = brand.company || (document.getElementById('sponsor-clicks-company') || {}).value || 'All sponsors';
+      var companyFilter = String(
+        (document.getElementById('sponsor-clicks-company') || {}).value || brand.company || ''
+      ).trim();
       var fromLabel = String(data.from || '').slice(0, 10);
       var toLabel = String(data.to || '').slice(0, 10);
       var hubLogo = data.hubLogoUrl || '/assets/logo-nav-transparent.png?v=20260823uk3';
@@ -11105,6 +11146,13 @@
         '<p class="sponsor-pack-email-eng-note">' +
         esc(eng.note || '') +
         '</p></section>' +
+        (companyFilter
+          ? '<section class="sponsor-pack-card sponsor-pack-card--wide">' +
+            '<div class="sponsor-pack-card-head"><h3>Where this brand was seen</h3>' +
+            '<p>Every site surface with logo views, outbound clicks, or emails in this period</p></div>' +
+            brandSurfacesHtml(data.brandSurfaces, data.configuredPlacements) +
+            '</section>'
+          : '') +
         '<section class="sponsor-pack-grid">' +
         '<div class="sponsor-pack-card"><h3>Clicks by placement</h3>' +
         rankListHtml(data.byPlacement, 'placement', 'No clicks in this range.') +
@@ -11194,6 +11242,12 @@
         e.preventDefault();
         load();
       });
+      var companySel = document.getElementById('sponsor-clicks-company');
+      if (companySel) {
+        companySel.addEventListener('change', function () {
+          if ((companySel.value || '').trim()) load();
+        });
+      }
     }
     if (printBtn) {
       printBtn.addEventListener('click', function () {
@@ -12318,6 +12372,7 @@
         out.push({
           id: prefix + (i + 1),
           slot_index: i,
+          company_name: '',
           logo_url: '',
           cta_url: '',
           active: false,
@@ -12349,10 +12404,14 @@
         '<input type="checkbox" class="event-carousel-ad-logo-dark rounded border-slate-300"' +
         (darkBand ? ' checked' : '') +
         '> Dark logo band</label></div></div>' +
-        '<p class="text-xs text-slate-500">Required for an active slot: logo + click-through link. Tick <strong>Dark logo band</strong> for cream/white logos. Prefer <strong>upload</strong> over Facebook/Instagram links — those expire.</p>' +
+        '<p class="text-xs text-slate-500">Required for an active slot: company name, logo + click-through link. Tick <strong>Dark logo band</strong> for cream/white logos. Prefer <strong>upload</strong> over Facebook/Instagram links — those expire.</p>' +
         (index === CAROUSEL_SIZE - 1
           ? '<p class="text-xs text-brand-800 bg-brand-50 border border-brand-100 rounded-lg px-3 py-2">When this slot is inactive and other slots are filled, the live site shows <strong>Advertise your business here</strong> as the last carousel slide.</p>'
           : '') +
+        '<div><label class="block text-xs font-semibold text-slate-600 mb-1">Company name <span class="text-brand-700">*</span></label>' +
+        '<input type="text" class="event-carousel-ad-company w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
+        attrEsc(ad.company_name || '') +
+        '" placeholder="Plate &amp; Post"></div>' +
         '<div><label class="block text-xs font-semibold text-slate-600 mb-1">Logo <span class="text-brand-700">*</span></label>' +
         '<input type="text" class="event-carousel-ad-logo-url w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
         attrEsc(pending ? '' : logo) +
@@ -12394,6 +12453,7 @@
         var id = row.getAttribute('data-carousel-ad-id') || 'event_carousel_' + (index + 1);
         var logoUrlEl = row.querySelector('.event-carousel-ad-logo-url');
         var linkUrlEl = row.querySelector('.event-carousel-ad-link-url');
+        var companyEl = row.querySelector('.event-carousel-ad-company');
         var endsAtEl = row.querySelector('.event-carousel-ad-ends-at');
         var activeCheckbox = row.querySelector('.event-carousel-ad-active');
         var darkCheckbox = row.querySelector('.event-carousel-ad-logo-dark');
@@ -12406,6 +12466,7 @@
         out.push({
           id: id,
           slot_index: index,
+          company_name: companyEl ? companyEl.value.trim() : existing ? existing.company_name || '' : '',
           logo_url: logoUrl,
           cta_url: linkUrlEl ? linkUrlEl.value.trim() : '',
           active: activeCheckbox ? activeCheckbox.checked : false,
@@ -12702,7 +12763,9 @@
             return r.json().then(function (data) {
               if (!r.ok || data.ok === false) {
                 var msg = data.message || data.error || 'Save failed';
-              if (data.error === 'missing_carousel_logo') {
+              if (data.error === 'missing_carousel_company') {
+                msg = 'Ad slot ' + data.slot + ' is active but missing a company name.';
+              } else if (data.error === 'missing_carousel_logo') {
                 msg = 'Ad slot ' + data.slot + ' is active but missing a logo.';
               } else if (data.error === 'missing_carousel_link') {
                 msg = 'Ad slot ' + data.slot + ' is active but missing a valid click-through link.';
@@ -23391,7 +23454,8 @@
           '</button>'
         : '') +
       (awaitingPay
-        ? '<button type="button" data-opp-resend-pay class="text-xs font-semibold rounded-lg border border-sky-300 text-sky-900 px-2.5 py-1 hover:bg-sky-50">Resend pay email</button>'
+        ? '<button type="button" data-opp-sync-pay class="text-xs font-semibold rounded-lg border border-emerald-300 text-emerald-900 px-2.5 py-1 hover:bg-emerald-50">Sync payment</button>' +
+          '<button type="button" data-opp-resend-pay class="text-xs font-semibold rounded-lg border border-sky-300 text-sky-900 px-2.5 py-1 hover:bg-sky-50">Resend pay email</button>'
         : '') +
       (publicHref
         ? '<a href="' +
@@ -24466,6 +24530,28 @@
         .catch(function (err) {
           window.alert(err.message || 'Could not approve listing.');
           approveBtn.disabled = false;
+        });
+      return;
+    }
+    var syncPayBtn = e.target.closest('[data-opp-sync-pay]');
+    if (syncPayBtn) {
+      var syncRow = syncPayBtn.closest('[data-opportunity-id-row]');
+      var syncId = syncRow && syncRow.getAttribute('data-opportunity-id-row');
+      if (!syncId) return;
+      syncPayBtn.disabled = true;
+      adminPost('/api/admin/opportunities', { id: syncId, action: 'sync_listing_payment' })
+        .then(function (data) {
+          if (!data.ok) throw new Error(data.message || data.error || 'Could not sync payment');
+          window.alert(
+            data.alreadyPaid
+              ? 'Listing already marked as paid.'
+              : 'Payment synced — listing should now be live.'
+          );
+          refreshOpportunityCleanupData();
+        })
+        .catch(function (err) {
+          window.alert(err.message || 'Could not sync payment from Stripe.');
+          syncPayBtn.disabled = false;
         });
       return;
     }

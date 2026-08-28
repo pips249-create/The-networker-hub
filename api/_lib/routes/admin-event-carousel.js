@@ -133,6 +133,9 @@ module.exports = async function handler(req, res) {
           if (!normalized.logo_url && prev?.logo_url) {
             normalized.logo_url = prev.logo_url;
           }
+          if (!normalized.company_name && prev?.company_name) {
+            normalized.company_name = prev.company_name;
+          }
           return normalized;
         }),
         slot
@@ -151,6 +154,14 @@ module.exports = async function handler(req, res) {
 
       for (const ad of ads) {
         if (!ad.active) continue;
+        if (!String(ad.company_name || '').trim()) {
+          return json(res, 400, {
+            ok: false,
+            error: 'missing_carousel_company',
+            slot: ad.slot_index + 1,
+            message: 'Add a company name for each active mini sponsor slot.',
+          });
+        }
         if (!hasValidCarouselLogo(ad.logo_url)) {
           return json(res, 400, {
             ok: false,

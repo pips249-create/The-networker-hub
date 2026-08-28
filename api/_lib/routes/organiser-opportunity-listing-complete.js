@@ -76,8 +76,19 @@ module.exports = async function handler(req, res) {
     }
 
     const result = await handleOpportunityListingCheckout(session);
-    const refreshed = await getOpportunityById(opportunityId);
-    return json(res, 200, { ok: true, result, opportunity: refreshed });
+    if (result.ok) {
+      const refreshed = await getOpportunityById(opportunityId);
+      return json(res, 200, { ok: true, result, opportunity: refreshed });
+    }
+    return json(res, 409, {
+      ok: false,
+      error: result.reason || 'listing_checkout_skipped',
+      message:
+        result.reason === 'payment_not_complete'
+          ? 'Stripe has not marked this checkout as paid yet — wait a moment and try again.'
+          : 'Could not confirm listing payment from this checkout session.',
+      result,
+    });
   } catch (e) {
     return jsonPublicError(res, json, e, { code: 'listing_complete_failed', logLabel: '[organiser-opportunity-listing-complete]' });
   }

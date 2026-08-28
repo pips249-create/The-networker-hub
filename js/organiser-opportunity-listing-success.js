@@ -392,7 +392,12 @@
         data = {};
       }
 
-      if (res.ok && data.ok) {
+      if (res.ok && data.ok && data.result && data.result.ok !== false && !data.result.skipped) {
+        showReady(data.opportunity);
+        return;
+      }
+
+      if (res.ok && data.ok && data.opportunity && data.opportunity.listingPaymentActive) {
         showReady(data.opportunity);
         return;
       }

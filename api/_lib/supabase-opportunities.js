@@ -638,7 +638,12 @@ async function activateOpportunityListingPayment(opportunityId, monthsOrOpts, se
 
   // Stripe retries must not re-activate for the same checkout session.
   if (sid && String(existing.listing_stripe_session_id || '').trim() === sid) {
-    return rowToListing(existing);
+    if (
+      listingPaymentCurrent(existing) &&
+      String(existing.status || '').toLowerCase() === 'published'
+    ) {
+      return rowToListing(existing);
+    }
   }
 
   const now = new Date();
@@ -1368,8 +1373,163 @@ async function handleOpportunityPremiumCheckout(session) {
   return { ok: true, opportunityId, featured: opportunity.featured };
 }
 
+async function resolveListingCheckoutMetadata(session) {
+  const meta = Object.assign({}, session?.metadata || {});
+  if (
+    String(meta.checkout_type || '').trim() === 'opportunity_listing' &&
+    String(meta.opportunity_id || '').trim()
+  ) {
+    return meta;
+  }
+
+  const {
+    subscriptionIdFromSession,
+    isOpportunityListingMetadata,
+  } = require('./opportunity-listing-subscriptions');
+  const { retrieveCheckoutSession, getStripeClient } = require('./stripe-checkout');
+
+  let subId = subscriptionIdFromSession(session);
+  let fullSession = session;
+
+  if (!subId && session?.id) {
+    try {
+      fullSession = await retrieveCheckoutSession(session.id);
+      Object.assign(meta, fullSession.metadata || {});
+      subId = subscriptionIdFromSession(fullSession);
+    } catch {
+      /* keep partial meta */
+    }
+  }
+
+  if (subId && !isOpportunityListingMetadata(meta)) {
+    try {
+      const stripe = getStripeClient();
+      const subscription = await stripe.subscriptions.retrieve(subId);
+      Object.assign(meta, subscription.metadata || {});
+    } catch {
+      /* ignore */
+    }
+  }
+
+  return meta;
+}
+
+async function isListingCheckoutSessionPaid(session) {
+  if (!session) return false;
+  if (
+    session.payment_status === 'paid' ||
+    session.payment_status === 'no_payment_required' ||
+    session.status === 'complete'
+  ) {
+    return true;
+  }
+
+  if (String(session.mode || '').trim() === 'subscription') {
+    const { subscriptionIdFromSession } = require('./opportunity-listing-subscriptions');
+    const { getStripeClient, retrieveCheckoutSession } = require('./stripe-checkout');
+    let subId = subscriptionIdFromSession(session);
+    if (!subId && session.id) {
+      try {
+        const full = await retrieveCheckoutSession(session.id);
+        subId = subscriptionIdFromSession(full);
+      } catch {
+        subId = '';
+      }
+    }
+    if (!subId) return session.status === 'complete';
+    try {
+      const subscription = await getStripeClient().subscriptions.retrieve(subId);
+      const st = String(subscription.status || '').toLowerCase();
+      return st === 'active' || st === 'trialing' || st === 'past_due';
+    } catch {
+      return session.status === 'complete';
+    }
+  }
+
+  return false;
+}
+
+async function syncOpportunityListingPayment(opportunityId, opts) {
+  const options = opts && typeof opts === 'object' ? opts : {};
+  const id = String(opportunityId || '').trim();
+  if (!isUuid(id)) throw new Error('invalid_opportunity_id');
+
+  const sb = getSupabaseAdmin();
+  const { data: row, error: loadErr } = await sb
+    .from('business_opportunities')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle();
+  if (loadErr) throw new Error(loadErr.message);
+  if (!row) throw new Error('not_found');
+
+  if (listingPaymentCurrent(row)) {
+    return { ok: true, alreadyPaid: true, opportunity: rowToListing(row) };
+  }
+
+  const { retrieveCheckoutSession, getStripeClient, isStripeCheckoutConfigured } = require('./stripe-checkout');
+  const { syncListingFromSubscription } = require('./opportunity-listing-subscriptions');
+
+  const sessionId = String(options.sessionId || row.listing_stripe_session_id || '').trim();
+  const subscriptionId = String(
+    options.subscriptionId || row.listing_stripe_subscription_id || ''
+  ).trim();
+
+  if (subscriptionId && isStripeCheckoutConfigured()) {
+    try {
+      const subscription = await getStripeClient().subscriptions.retrieve(subscriptionId);
+      const result = await syncListingFromSubscription(subscription, {
+        sessionId: sessionId || null,
+        opportunityId: id,
+      });
+      if (result.ok) {
+        const refreshed = await getOpportunityById(id);
+        return { ok: true, source: 'subscription', result, opportunity: refreshed };
+      }
+    } catch (e) {
+      if (!sessionId && !options.allowSearch) throw e;
+    }
+  }
+
+  if (sessionId && isStripeCheckoutConfigured()) {
+    const session = await retrieveCheckoutSession(sessionId);
+    const result = await handleOpportunityListingCheckout(session);
+    if (result.ok) {
+      const refreshed = await getOpportunityById(id);
+      return { ok: true, source: 'session', result, opportunity: refreshed };
+    }
+    if (!result.skipped) throw new Error(result.reason || 'checkout_sync_failed');
+  }
+
+  if (isStripeCheckoutConfigured() && options.allowSearch !== false) {
+    try {
+      const stripe = getStripeClient();
+      const search = await stripe.checkout.sessions.search({
+        query: "metadata['opportunity_id']:'" + id + "' AND status:'complete'",
+        limit: 5,
+      });
+      for (const session of search.data || []) {
+        const result = await handleOpportunityListingCheckout(session);
+        if (result.ok) {
+          const refreshed = await getOpportunityById(id);
+          return { ok: true, source: 'stripe_search', result, opportunity: refreshed };
+        }
+      }
+    } catch (searchErr) {
+      console.warn(
+        '[opportunity] listing payment stripe search failed:',
+        searchErr.message || searchErr
+      );
+    }
+  }
+
+  const err = new Error('no_stripe_payment_found');
+  err.code = 'no_stripe_payment_found';
+  throw err;
+}
+
 async function handleOpportunityListingCheckout(session) {
-  const metadata = session?.metadata || {};
+  const metadata = await resolveListingCheckoutMetadata(session);
   if (metadata.checkout_type !== 'opportunity_listing') {
     return { skipped: true, reason: 'not_opportunity_listing' };
   }
@@ -1377,10 +1537,7 @@ async function handleOpportunityListingCheckout(session) {
   const opportunityId = String(metadata.opportunity_id || '').trim();
   if (!opportunityId) return { skipped: true, reason: 'missing_opportunity_id' };
 
-  const paid =
-    session.payment_status === 'paid' ||
-    session.payment_status === 'no_payment_required' ||
-    session.status === 'complete';
+  const paid = await isListingCheckoutSessionPaid(session);
   if (!paid) return { skipped: true, reason: 'payment_not_complete' };
 
   const {
@@ -1452,6 +1609,7 @@ module.exports = {
   activateOpportunityListingPayment,
   handleOpportunityPremiumCheckout,
   handleOpportunityListingCheckout,
+  syncOpportunityListingPayment,
   createOpportunityEnquiry,
   listOpportunityEnquiriesForSession,
   listOpportunityEnquiriesSentBySession,

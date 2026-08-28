@@ -2,6 +2,14 @@
  * First-party sponsor performance metrics — clicks, page impressions, email logo sends.
  */
 const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
+const {
+  EVENT_PAGE_CAROUSEL_SLOT,
+  ORGANISER_PAGE_CAROUSEL_SLOT,
+  OPPORTUNITY_PAGE_CAROUSEL_SLOT,
+  parseCarouselBody,
+  normalizeCarouselAd,
+} = require('./event-page-carousel');
+const { HOME_PARTNERS_SLOT, parsePartnersBody } = require('./home-partners');
 
 const MAX_PLACEMENT = 64;
 const MAX_COMPANY = 120;
@@ -174,8 +182,253 @@ const SLOT_LOGO_PRIORITY = [
   'home_partners',
 ];
 
+function companyExactFilter(filter) {
+  return cleanText(filter, MAX_COMPANY).replace(/%/g, '');
+}
+
+/** @deprecated use companyExactFilter — fuzzy match mixed brands in reports */
 function companyIlike(filter) {
-  return '%' + cleanText(filter, MAX_COMPANY).replace(/%/g, '') + '%';
+  return '%' + companyExactFilter(filter) + '%';
+}
+
+const PAGE_CAROUSEL_SLOTS = [
+  EVENT_PAGE_CAROUSEL_SLOT,
+  ORGANISER_PAGE_CAROUSEL_SLOT,
+  OPPORTUNITY_PAGE_CAROUSEL_SLOT,
+];
+
+const PLACEMENT_SURFACE_LABELS = {
+  events_sponsor_hub: 'Events directory hero',
+  sponsor_hub: 'Events directory hero',
+  events_hero: 'Events directory hero',
+  organisers_sponsor_hub: 'Organisers directory hero',
+  organisers_hero: 'Organisers directory hero',
+  opportunities_sponsor_hub: 'Opportunities directory hero',
+  opportunities_hero: 'Opportunities directory hero',
+  events_page_partner: 'Event detail pages',
+  organisers_page_partner: 'Organiser detail pages',
+  opportunities_page_partner: 'Opportunity detail pages',
+  event_page_carousel_ads: 'Event detail pages',
+  organiser_page_carousel_ads: 'Organiser detail pages',
+  opportunity_page_carousel_ads: 'Opportunity detail pages',
+  opportunity_page_sidebar_ad: 'Opportunity sidebar',
+  home_partners: 'Home page partners strip',
+  booking_email_sponsor: 'Booking confirmation emails',
+  email_mini_sponsor: 'Page Partner emails',
+  events_email_mini: 'Event Page Partner emails',
+  organisers_email_mini: 'Organiser Page Partner emails',
+  opportunities_email_mini: 'Opportunity Page Partner emails',
+  email2_launch: 'Launch emails',
+  sponsor_sidebar: 'Sidebar sponsor',
+  city_partner: 'City partner placement',
+};
+
+function surfaceLabelForPlacement(placement) {
+  const key = normalizePlacement(placement);
+  if (PLACEMENT_SURFACE_LABELS[key]) return PLACEMENT_SURFACE_LABELS[key];
+  return key.replace(/_/g, ' ');
+}
+
+function pagePartnerPlacementForSlot(slot) {
+  const s = String(slot || '').toLowerCase();
+  if (s === ORGANISER_PAGE_CAROUSEL_SLOT || /organiser_page/.test(s)) {
+    return 'organisers_page_partner';
+  }
+  if (s === OPPORTUNITY_PAGE_CAROUSEL_SLOT || /opportunity_page/.test(s)) {
+    return 'opportunities_page_partner';
+  }
+  if (s === EVENT_PAGE_CAROUSEL_SLOT || /event_page/.test(s)) {
+    return 'events_page_partner';
+  }
+  return normalizePlacement(slot);
+}
+
+function upsertBrandEntry(map, name, entry) {
+  const company = cleanText(name, MAX_COMPANY);
+  if (!company) return;
+  const key = company.toLowerCase();
+  const score =
+    (entry.active === false ? 0 : 4) +
+    (entry.logoUrl ? 2 : 0) +
+    (entry.placements && entry.placements.length ? entry.placements.length : 0);
+  const existing = map.get(key);
+  if (!existing) {
+    map.set(key, {
+      company,
+      score,
+      logoUrl: entry.logoUrl || null,
+      logoBandDark: entry.logoBandDark === true,
+      slot: entry.slot || null,
+      directory: entry.directory || directoryFromSlot(entry.slot) || '',
+      placements: Array.isArray(entry.placements) ? entry.placements.slice() : [],
+      active: entry.active !== false,
+    });
+    return;
+  }
+  existing.score = Math.max(existing.score, score);
+  if (entry.logoUrl && !existing.logoUrl) existing.logoUrl = entry.logoUrl;
+  if (entry.logoBandDark) existing.logoBandDark = true;
+  if (entry.slot && !existing.slot) existing.slot = entry.slot;
+  if (entry.directory && !existing.directory) existing.directory = entry.directory;
+  if (entry.active !== false) existing.active = true;
+  const placements = Array.isArray(entry.placements) ? entry.placements : [];
+  placements.forEach(function (p) {
+    if (p && existing.placements.indexOf(p) === -1) existing.placements.push(p);
+  });
+}
+
+async function collectBrandCatalog(sb) {
+  const map = new Map();
+  const { data, error } = await sb
+    .from('cms_blocks')
+    .select('slot, company_name, logo_url, image_url, active, logo_band_dark, body, sponsor_available_from')
+    .limit(400);
+
+  if (error) return map;
+
+  const now = new Date();
+  for (const row of data || []) {
+    const slot = String(row.slot || '').trim();
+    const placementEnded =
+      row.sponsor_available_from &&
+      !Number.isNaN(new Date(row.sponsor_available_from).getTime()) &&
+      new Date(row.sponsor_available_from).getTime() <= now.getTime();
+    const rowActive = row.active !== false && !placementEnded;
+
+    const topName = cleanText(row.company_name, MAX_COMPANY);
+    if (topName) {
+      upsertBrandEntry(map, topName, {
+        logoUrl: String(row.logo_url || row.image_url || '').trim() || null,
+        logoBandDark: row.logo_band_dark === true,
+        slot,
+        directory: directoryFromSlot(slot),
+        placements: slot ? [normalizePlacement(slot)] : [],
+        active: rowActive,
+      });
+    }
+
+    if (slot === HOME_PARTNERS_SLOT) {
+      parsePartnersBody(row.body).forEach(function (partner, index) {
+        const ad = partner || {};
+        if (ad.active === false) return;
+        const name = cleanText(ad.company_name || ad.companyName, MAX_COMPANY);
+        if (!name) return;
+        upsertBrandEntry(map, name, {
+          logoUrl: String(ad.logo_url || ad.logoUrl || '').trim() || null,
+          logoBandDark: ad.logo_band_dark === true || ad.logoBandDark === true,
+          slot: HOME_PARTNERS_SLOT,
+          directory: 'events',
+          placements: ['home_partners'],
+          active: rowActive,
+        });
+      });
+      continue;
+    }
+
+    if (PAGE_CAROUSEL_SLOTS.indexOf(slot) !== -1) {
+      parseCarouselBody(row.body).forEach(function (adRaw, index) {
+        const ad = normalizeCarouselAd(adRaw, index, slot);
+        if (ad.active === false) return;
+        if (ad.ends_at) {
+          const ends = new Date(ad.ends_at);
+          if (!Number.isNaN(ends.getTime()) && ends.getTime() <= now.getTime()) return;
+        }
+        const name = cleanText(ad.company_name, MAX_COMPANY);
+        if (!name) return;
+        const trackPlacement = pagePartnerPlacementForSlot(slot);
+        upsertBrandEntry(map, name, {
+          logoUrl: String(ad.logo_url || '').trim() || null,
+          logoBandDark: ad.logo_band_dark === true,
+          slot,
+          directory: directoryFromSlot(slot) || directoryFromSlot(trackPlacement),
+          placements: [trackPlacement, normalizePlacement(slot)],
+          active: rowActive,
+        });
+      });
+    }
+  }
+
+  return map;
+}
+
+async function listMetricBrandNames(sb) {
+  const names = new Set();
+  const tables = [
+    ['sponsor_clicks', 'company_name'],
+    ['sponsor_impression_daily', 'company_name'],
+    ['sponsor_email_send_daily', 'company_name'],
+  ];
+  await Promise.all(
+    tables.map(async function ([table, column]) {
+      const res = await sb.from(table).select(column).not(column, 'is', null).limit(500);
+      if (res.error) return;
+      for (const row of res.data || []) {
+        const name = cleanText(row[column], MAX_COMPANY);
+        if (name && name !== '(blank)') names.add(name);
+      }
+    })
+  );
+  return Array.from(names);
+}
+
+function buildBrandSurfaces(companyFilter, catalogEntry, metrics) {
+  if (!companyFilter) return [];
+  const impressionBy = new Map(
+    (metrics.impressionRows || []).map(function (r) {
+      return [normalizePlacement(r.placement), Number(r.impressions) || 0];
+    })
+  );
+  const clicksBy = countBy(metrics.clickRows || [], function (r) {
+    return r.placement;
+  }).reduce(function (acc, row) {
+    acc.set(normalizePlacement(row.key), row.count);
+    return acc;
+  }, new Map());
+  const emailsBy = countBy(metrics.emailRows || [], function (r) {
+    return r.placement;
+  }, function (r) {
+    return r.send_count;
+  }).reduce(function (acc, row) {
+    acc.set(normalizePlacement(row.key), row.count);
+    return acc;
+  }, new Map());
+
+  const placementKeys = new Set();
+  if (catalogEntry && Array.isArray(catalogEntry.placements)) {
+    catalogEntry.placements.forEach(function (p) {
+      if (p) placementKeys.add(normalizePlacement(p));
+    });
+  }
+  impressionBy.forEach(function (_v, k) {
+    placementKeys.add(k);
+  });
+  clicksBy.forEach(function (_v, k) {
+    placementKeys.add(k);
+  });
+  emailsBy.forEach(function (_v, k) {
+    placementKeys.add(k);
+  });
+
+  return Array.from(placementKeys)
+    .map(function (placement) {
+      const pageViews = impressionBy.get(placement) || 0;
+      const clicks = clicksBy.get(placement) || 0;
+      const emails = emailsBy.get(placement) || 0;
+      return {
+        placement,
+        label: surfaceLabelForPlacement(placement),
+        pageViews,
+        clicks,
+        emails,
+        total: pageViews + clicks + emails,
+      };
+    })
+    .filter(function (row) {
+      return row.total > 0 || (catalogEntry && catalogEntry.placements.indexOf(row.placement) !== -1);
+    })
+    .sort(function (a, b) {
+      return b.total - a.total || a.label.localeCompare(b.label);
+    });
 }
 
 /** Which directory pack theme to use (events / organisers / opportunities). */
@@ -311,36 +564,6 @@ function scoreLogoCandidate(row, companyFilter) {
   const nameBoost = name === filter ? 15 : name.indexOf(filter) === 0 ? 8 : 0;
   const hasLogo = String(row.logo_url || row.image_url || '').trim() ? 5 : -20;
   return activeBoost + slotBoost + nameBoost + hasLogo;
-}
-
-async function lookupBrandLogo(sb, companyFilter) {
-  if (!companyFilter) return null;
-  const { data, error } = await sb
-    .from('cms_blocks')
-    .select('company_name, logo_url, image_url, slot, active, logo_band_dark')
-    .ilike('company_name', companyIlike(companyFilter))
-    .order('updated_at', { ascending: false })
-    .limit(12);
-
-  if (error || !data || !data.length) return null;
-
-  const ranked = data
-    .slice()
-    .sort((a, b) => scoreLogoCandidate(b, companyFilter) - scoreLogoCandidate(a, companyFilter));
-  const preferred = ranked[0];
-  const logo = String(preferred.logo_url || preferred.image_url || '').trim();
-  const company = String(preferred.company_name || '').trim() || companyFilter;
-  const logoBandDark = preferred.logo_band_dark === true;
-  const slot = String(preferred.slot || '').trim() || null;
-
-  if (!company && !logo) return null;
-  return {
-    company,
-    logoUrl: logo || null,
-    slot,
-    directory: directoryFromSlot(slot) || 'events',
-    logoBandDark,
-  };
 }
 
 /**
@@ -544,7 +767,10 @@ async function fetchPeriodMetrics(sb, { from, to, fromDay, toDay, companyFilter,
     .order('created_at', { ascending: false })
     .limit(REPORT_ROW_CAP);
 
-  if (companyFilter) clicksReq = clicksReq.ilike('company_name', companyIlike(companyFilter));
+  if (companyFilter) {
+    const exact = companyExactFilter(companyFilter);
+    clicksReq = clicksReq.ilike('company_name', exact);
+  }
   if (placementKeys.length === 1) {
     clicksReq = clicksReq.eq('placement', placementKeys[0]);
   } else if (placementKeys.length > 1) {
@@ -562,7 +788,10 @@ async function fetchPeriodMetrics(sb, { from, to, fromDay, toDay, companyFilter,
     .lte('day', toDay)
     .limit(REPORT_ROW_CAP);
 
-  if (companyFilter) impressionsReq = impressionsReq.ilike('company_name', companyIlike(companyFilter));
+  if (companyFilter) {
+    const exact = companyExactFilter(companyFilter);
+    impressionsReq = impressionsReq.ilike('company_name', exact);
+  }
   if (placementKeys.length === 1) {
     impressionsReq = impressionsReq.eq('placement', placementKeys[0]);
   } else if (placementKeys.length > 1) {
@@ -576,7 +805,10 @@ async function fetchPeriodMetrics(sb, { from, to, fromDay, toDay, companyFilter,
     .lte('day', toDay)
     .limit(REPORT_ROW_CAP);
 
-  if (companyFilter) emailsReq = emailsReq.ilike('company_name', companyIlike(companyFilter));
+  if (companyFilter) {
+    const exact = companyExactFilter(companyFilter);
+    emailsReq = emailsReq.ilike('company_name', exact);
+  }
   if (placementKeys.length === 1) {
     emailsReq = emailsReq.eq('placement', placementKeys[0]);
   } else if (placementKeys.length > 1) {
@@ -589,7 +821,10 @@ async function fetchPeriodMetrics(sb, { from, to, fromDay, toDay, companyFilter,
     .gte('day', fromDay)
     .lte('day', toDay)
     .limit(REPORT_ROW_CAP);
-  if (companyFilter) opensReq = opensReq.ilike('company_name', companyIlike(companyFilter));
+  if (companyFilter) {
+    const exact = companyExactFilter(companyFilter);
+    opensReq = opensReq.ilike('company_name', exact);
+  }
 
   let emailClicksReq = sb
     .from('sponsor_email_click_daily')
@@ -597,7 +832,10 @@ async function fetchPeriodMetrics(sb, { from, to, fromDay, toDay, companyFilter,
     .gte('day', fromDay)
     .lte('day', toDay)
     .limit(REPORT_ROW_CAP);
-  if (companyFilter) emailClicksReq = emailClicksReq.ilike('company_name', companyIlike(companyFilter));
+  if (companyFilter) {
+    const exact = companyExactFilter(companyFilter);
+    emailClicksReq = emailClicksReq.ilike('company_name', exact);
+  }
 
   const [clicksRes, impressionsRes, emailsRes, opensRes, emailClicksRes] = await Promise.all([
     clicksReq,
@@ -672,37 +910,71 @@ async function fetchPeriodMetrics(sb, { from, to, fromDay, toDay, companyFilter,
   };
 }
 
-async function listSponsorBrands() {
-  if (!isSupabaseConfigured()) return [];
-  const sb = getSupabaseAdmin();
-  const { data, error } = await sb
-    .from('cms_blocks')
-    .select('company_name, slot, active, logo_url, image_url')
-    .not('company_name', 'is', null)
-    .neq('company_name', '')
-    .order('company_name', { ascending: true })
-    .limit(200);
+async function listSponsorBrands(sb) {
+  if (!sb) {
+    if (!isSupabaseConfigured()) return [];
+    sb = getSupabaseAdmin();
+  }
+  const [catalog, metricNames] = await Promise.all([
+    collectBrandCatalog(sb),
+    listMetricBrandNames(sb),
+  ]);
+  metricNames.forEach(function (name) {
+    upsertBrandEntry(catalog, name, { active: true, placements: [] });
+  });
+  return Array.from(catalog.values())
+    .sort(function (a, b) {
+      if (a.active !== b.active) return a.active ? -1 : 1;
+      return a.company.localeCompare(b.company);
+    })
+    .map(function (b) {
+      return b.company;
+    });
+}
 
-  if (error) return [];
-
-  const map = new Map();
-  for (const row of data || []) {
-    const name = cleanText(row.company_name, MAX_COMPANY);
-    if (!name) continue;
-    const key = name.toLowerCase();
-    const existing = map.get(key);
-    const score =
-      (row.active === false ? 0 : 2) +
-      (/sponsor|partner/i.test(String(row.slot || '')) ? 2 : 0) +
-      (row.logo_url || row.image_url ? 1 : 0);
-    if (!existing || score > existing.score) {
-      map.set(key, { company: name, score });
-    }
+async function lookupBrandLogo(sb, companyFilter) {
+  if (!companyFilter) return null;
+  const exactKey = companyExactFilter(companyFilter).toLowerCase();
+  const catalog = await collectBrandCatalog(sb);
+  const fromCatalog = catalog.get(exactKey);
+  if (fromCatalog) {
+    return {
+      company: fromCatalog.company,
+      logoUrl: fromCatalog.logoUrl || null,
+      slot: fromCatalog.slot || null,
+      directory: fromCatalog.directory || directoryFromSlot(fromCatalog.slot) || 'events',
+      logoBandDark: fromCatalog.logoBandDark === true,
+      placements: fromCatalog.placements || [],
+    };
   }
 
-  return Array.from(map.values())
-    .map((b) => b.company)
-    .sort((a, b) => a.localeCompare(b));
+  const { data, error } = await sb
+    .from('cms_blocks')
+    .select('company_name, logo_url, image_url, slot, active, logo_band_dark')
+    .ilike('company_name', companyExactFilter(companyFilter))
+    .order('updated_at', { ascending: false })
+    .limit(12);
+
+  if (error || !data || !data.length) return null;
+
+  const ranked = data
+    .slice()
+    .sort((a, b) => scoreLogoCandidate(b, companyFilter) - scoreLogoCandidate(a, companyFilter));
+  const preferred = ranked[0];
+  const logo = String(preferred.logo_url || preferred.image_url || '').trim();
+  const company = String(preferred.company_name || '').trim() || companyFilter;
+  const logoBandDark = preferred.logo_band_dark === true;
+  const slot = String(preferred.slot || '').trim() || null;
+
+  if (!company && !logo) return null;
+  return {
+    company,
+    logoUrl: logo || null,
+    slot,
+    directory: directoryFromSlot(slot) || 'events',
+    logoBandDark,
+    placements: slot ? [normalizePlacement(slot)] : [],
+  };
 }
 
 async function getSponsorClicksReport(query) {
@@ -722,7 +994,8 @@ async function getSponsorClicksReport(query) {
 
   const sb = getSupabaseAdmin();
 
-  const [current, previousRaw, brand, brands] = await Promise.all([
+  const [catalog, current, previousRaw, brand, brands] = await Promise.all([
+    collectBrandCatalog(sb),
     fetchPeriodMetrics(sb, {
       from,
       to,
@@ -742,7 +1015,7 @@ async function getSponsorClicksReport(query) {
         }).catch(() => null)
       : Promise.resolve(null),
     lookupBrandLogo(sb, companyFilter),
-    listSponsorBrands(),
+    listSponsorBrands(sb),
   ]);
 
   const clickRows = current.clickRows;
@@ -791,8 +1064,14 @@ async function getSponsorClicksReport(query) {
           slot: null,
           directory,
           logoBandDark: false,
+          placements: [],
         }
       : null;
+
+  const catalogEntry = companyFilter
+    ? catalog.get(companyExactFilter(companyFilter).toLowerCase()) || null
+    : null;
+  const brandSurfaces = buildBrandSurfaces(companyFilter, catalogEntry, current);
 
   return {
     ok: true,
@@ -803,6 +1082,8 @@ async function getSponsorClicksReport(query) {
     placementFilter: placementFilter || '',
     brand: brandOut,
     brands,
+    brandSurfaces,
+    configuredPlacements: catalogEntry ? catalogEntry.placements || [] : [],
     hubLogoUrl: '/assets/logo-nav-transparent.png',
     contact: {
       name: 'Rosie McGilvray',
