@@ -139,6 +139,8 @@
   let opportunityClaimRejectMode = false;
   var CLAIM_MODAL_POSTPONE_KEY = 'hub_claim_modal_postponed_v1';
   var CLAIM_RESUME_BANNER_HIDDEN_KEY = 'hub_claim_resume_banner_hidden_v1';
+  var OPPORTUNITY_CLAIM_MODAL_POSTPONE_KEY = 'hub_opportunity_claim_modal_postponed_v1';
+  var OPPORTUNITY_CLAIM_RESUME_BANNER_HIDDEN_KEY = 'hub_opportunity_claim_resume_banner_hidden_v1';
 
   function isClaimModalPostponed() {
     try {
@@ -163,6 +165,40 @@
       sessionStorage.removeItem(CLAIM_RESUME_BANNER_HIDDEN_KEY);
     } catch (e) {
       /* ignore */
+    }
+  }
+
+  function isOpportunityClaimModalPostponed() {
+    try {
+      return sessionStorage.getItem(OPPORTUNITY_CLAIM_MODAL_POSTPONE_KEY) === '1';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function markOpportunityClaimModalPostponed() {
+    try {
+      sessionStorage.setItem(OPPORTUNITY_CLAIM_MODAL_POSTPONE_KEY, '1');
+      sessionStorage.removeItem(OPPORTUNITY_CLAIM_RESUME_BANNER_HIDDEN_KEY);
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function clearOpportunityClaimModalPostponed() {
+    try {
+      sessionStorage.removeItem(OPPORTUNITY_CLAIM_MODAL_POSTPONE_KEY);
+      sessionStorage.removeItem(OPPORTUNITY_CLAIM_RESUME_BANNER_HIDDEN_KEY);
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function isOpportunityClaimResumeBannerHidden() {
+    try {
+      return sessionStorage.getItem(OPPORTUNITY_CLAIM_RESUME_BANNER_HIDDEN_KEY) === '1';
+    } catch (e) {
+      return false;
     }
   }
 
@@ -13699,6 +13735,33 @@
       return;
     }
 
+    if ((state.pendingClaimOpportunities || []).length > 0) {
+      const dismissBtnOpp = document.getElementById('org-setup-resume-dismiss');
+      if (isOpportunityClaimModalPostponed() && !isOpportunityClaimResumeBannerHidden()) {
+        const titleElOpp = document.getElementById('org-setup-resume-title');
+        const bodyElOpp = document.getElementById('org-setup-resume-body');
+        const goBtnOpp = document.getElementById('org-setup-resume-go');
+        const pendingOppCount = state.pendingClaimOpportunities.length;
+        if (titleElOpp) {
+          titleElOpp.textContent =
+            pendingOppCount > 1
+              ? 'Confirm your business listings (' + pendingOppCount + ' waiting)'
+              : 'Confirm your business opportunity listing';
+        }
+        if (bodyElOpp) {
+          bodyElOpp.textContent =
+            'You postponed the listing check — continue when you are ready to confirm or decline.';
+        }
+        if (goBtnOpp) goBtnOpp.textContent = 'Continue listing claim →';
+        if (dismissBtnOpp) dismissBtnOpp.hidden = false;
+        banner.hidden = false;
+      } else {
+        banner.hidden = true;
+      }
+      syncOverviewSetupQuietMode();
+      return;
+    }
+
     const dismissBtnDefault = document.getElementById('org-setup-resume-dismiss');
     if (dismissBtnDefault) dismissBtnDefault.hidden = false;
 
@@ -13826,6 +13889,18 @@
           updateSetupResumeBanner();
           return;
         }
+        if (
+          (state.pendingClaimOpportunities || []).length > 0 &&
+          isOpportunityClaimModalPostponed()
+        ) {
+          try {
+            sessionStorage.setItem(OPPORTUNITY_CLAIM_RESUME_BANNER_HIDDEN_KEY, '1');
+          } catch (e) {
+            /* ignore */
+          }
+          updateSetupResumeBanner();
+          return;
+        }
         if (window.HubOrganiserOnboarding && window.HubOrganiserOnboarding.markResumeDismissed) {
           window.HubOrganiserOnboarding.markResumeDismissed();
         }
@@ -13840,6 +13915,15 @@
           } else {
             clearClaimModalPostponed();
             renderGroupClaimModal({ force: true });
+          }
+          return;
+        }
+        if ((state.pendingClaimOpportunities || []).length > 0) {
+          if (window.orgDashOpenClaimModal) {
+            window.orgDashOpenClaimModal({ force: true });
+          } else {
+            clearOpportunityClaimModalPostponed();
+            renderOpportunityClaimModal({ force: true });
           }
           return;
         }
@@ -13880,7 +13964,7 @@
       return;
     }
     if ((state.pendingClaimOpportunities || []).length > 0) {
-      renderOpportunityClaimModal();
+      renderOpportunityClaimModal({ force: Boolean(opts.force) });
     }
   };
 
@@ -14097,7 +14181,8 @@
     const quiet =
       !state.adminView &&
       (((state.pendingClaimGroups || []).length > 0 && !isClaimModalPostponed()) ||
-        (state.pendingClaimOpportunities || []).length > 0 ||
+        ((state.pendingClaimOpportunities || []).length > 0 &&
+          !isOpportunityClaimModalPostponed()) ||
         isLaunchSetupInProgress());
     document.body.classList.toggle('org-claim-setup-active', quiet);
     const portals = document.querySelector('.org-hub-portals');
@@ -15134,13 +15219,28 @@
       modal.hidden = true;
       modal.setAttribute('aria-hidden', 'true');
     }
-    if (!(state.pendingClaimGroups || []).length) {
+    const groupModal = document.getElementById('org-group-claim');
+    if (!groupModal || groupModal.hidden) {
       document.body.classList.remove('org-group-claim-active');
     }
     opportunityClaimRejectMode = false;
   }
 
-  function renderOpportunityClaimModal() {
+  function postponeOpportunityClaimModal() {
+    if (!(state.pendingClaimOpportunities || []).length) {
+      hideOpportunityClaimModal();
+      return;
+    }
+    markOpportunityClaimModalPostponed();
+    opportunityClaimRejectMode = false;
+    hideOpportunityClaimModal();
+    updateSetupResumeBanner();
+    updateGettingStartedPanel();
+    syncOverviewSetupQuietMode();
+  }
+
+  function renderOpportunityClaimModal(opts) {
+    opts = opts || {};
     const modal = document.getElementById('org-opportunity-claim');
     const list = state.pendingClaimOpportunities || [];
     syncPendingClaimFlag();
@@ -15148,8 +15248,18 @@
 
     if (!modal || !list.length || state.adminView || shouldDeferGroupClaimModal()) {
       if (modal) hideOpportunityClaimModal();
+      updateSetupResumeBanner();
       return;
     }
+
+    if (!opts.force && isOpportunityClaimModalPostponed()) {
+      hideOpportunityClaimModal();
+      updateSetupResumeBanner();
+      syncOverviewSetupQuietMode();
+      return;
+    }
+
+    if (opts.force) clearOpportunityClaimModalPostponed();
 
     const opportunity = list[0];
     const kicker = document.getElementById('org-opportunity-claim-kicker');
@@ -15244,6 +15354,7 @@
         return;
       }
 
+      clearOpportunityClaimModalPostponed();
       hideOpportunityClaimModal();
       await loadBootstrap();
       if (action === 'claim') {
@@ -15380,6 +15491,7 @@
 
     const oppAcceptBtn = document.getElementById('org-opportunity-claim-accept');
     const oppRejectBtn = document.getElementById('org-opportunity-claim-reject');
+    const oppCloseBtn = document.getElementById('org-opportunity-claim-close');
     if (oppAcceptBtn) {
       oppAcceptBtn.addEventListener('click', function () {
         if (opportunityClaimRejectMode) {
@@ -15400,6 +15512,18 @@
         submitOpportunityClaimAction('reject');
       });
     }
+    if (oppCloseBtn) {
+      oppCloseBtn.addEventListener('click', function () {
+        postponeOpportunityClaimModal();
+      });
+    }
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape') return;
+      const oppModal = document.getElementById('org-opportunity-claim');
+      if (!oppModal || oppModal.hidden) return;
+      e.preventDefault();
+      postponeOpportunityClaimModal();
+    });
   }
 
   function opportunityEnquiryNewCount(enquiries) {
