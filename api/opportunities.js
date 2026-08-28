@@ -247,9 +247,18 @@ module.exports = wrapHandler(async function handler(req, res) {
       } catch {
         opportunity.openDays = [];
       }
+      opportunity.hasOpenDay = Array.isArray(opportunity.openDays) && opportunity.openDays.length > 0;
       return json(res, 200, { ok: true, opportunity, softLaunch });
     }
     const opportunities = await listPublishedOpportunities();
+    try {
+      const { attachOpenDayFlagsToListings } = require('./_lib/opportunity-open-days');
+      await attachOpenDayFlagsToListings(opportunities);
+    } catch {
+      (opportunities || []).forEach((row) => {
+        if (row && typeof row === 'object') row.hasOpenDay = false;
+      });
+    }
     return json(res, 200, { ok: true, opportunities, softLaunch });
   } catch (e) {
     return json(res, 500, { error: 'opportunities_fetch_failed', message: e.message });

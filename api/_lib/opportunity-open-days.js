@@ -200,6 +200,44 @@ async function listUpcomingOpenDaysForOpportunity(opportunityId) {
   return listOpenDaysForOpportunity(opportunityId, { upcomingOnly: true });
 }
 
+/** Mark browse listings that have at least one upcoming open day. */
+async function attachOpenDayFlagsToListings(listings) {
+  const list = Array.isArray(listings) ? listings : [];
+  if (!list.length) return list;
+  const ids = list.map((l) => String((l && l.id) || '').trim()).filter((id) => isUuid(id));
+  if (!ids.length) {
+    list.forEach((listing) => {
+      if (listing && typeof listing === 'object') listing.hasOpenDay = false;
+    });
+    return list;
+  }
+
+  const sb = getSupabaseAdmin();
+  const { data, error } = await sb
+    .from('opportunity_open_days')
+    .select('opportunity_id')
+    .in('opportunity_id', ids)
+    .gte('starts_at', new Date().toISOString());
+  if (error) {
+    if (isMissingOpenDaysTableError(error)) {
+      list.forEach((listing) => {
+        if (listing && typeof listing === 'object') listing.hasOpenDay = false;
+      });
+      return list;
+    }
+    throw new Error(error.message);
+  }
+
+  const withOpenDay = new Set(
+    (data || []).map((row) => String(row.opportunity_id || '').trim()).filter(Boolean)
+  );
+  list.forEach((listing) => {
+    if (!listing || typeof listing !== 'object') return;
+    listing.hasOpenDay = withOpenDay.has(String(listing.id || '').trim());
+  });
+  return list;
+}
+
 async function getOpenDayById(openDayId) {
   const id = String(openDayId || '').trim();
   if (!isUuid(id)) return null;
@@ -461,6 +499,7 @@ module.exports = {
   formatOpenDayWhen,
   listOpenDaysForOpportunity,
   listUpcomingOpenDaysForOpportunity,
+  attachOpenDayFlagsToListings,
   getOpenDayById,
   replaceOpenDaysForOpportunity,
   createOpenDayInterest,

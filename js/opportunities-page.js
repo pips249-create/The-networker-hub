@@ -280,7 +280,7 @@
   var COMMITMENTS = [
     { id: 'full-time', label: 'Full-time' },
     { id: 'part-time', label: 'Part-time / Flexible' },
-    { id: 'event-based', label: 'Event-based' },
+    { id: 'event-based', label: 'Open days / visits' },
   ];
 
   var META_PIN_SVG =
@@ -322,6 +322,7 @@
   var viewMode = DEFAULT_VIEW_MODE;
   var minInvest = null;
   var maxInvest = null;
+  var hasOpenDayOnly = false;
   var currentPage = 1;
   var accumulatedCount = 0;
   var lastRenderedCount = 0;
@@ -443,6 +444,13 @@
     els.morePanel = document.getElementById('filter-more-panel');
     els.moreBadge = document.getElementById('filter-more-badge');
     els.clearBar = document.getElementById('clear-filters-bar');
+    els.clearResults = document.getElementById('btn-clear-filters-results');
+    els.hasOpenDay = document.getElementById('filter-has-open-day');
+    els.investGroup = document.getElementById('filter-opp-invest-group');
+    els.investHint = document.getElementById('filter-opp-invest-hint');
+    els.industryRow = document.getElementById('filter-industry-row');
+    els.industryEmpty = document.getElementById('filter-industry-empty');
+    els.industryLabel = document.getElementById('filter-industry-label');
     els.activeFiltersBar = document.getElementById('opp-active-filters-bar');
     els.activeFilters = document.getElementById('opp-active-filters');
     els.viewGrid = document.getElementById('opp-view-grid');
@@ -777,6 +785,9 @@
     if (els.clearBar) {
       els.clearBar.hidden = !active;
     }
+    if (els.clearResults) {
+      els.clearResults.hidden = !active;
+    }
   }
 
   function removeActiveFilter(key, value) {
@@ -813,11 +824,16 @@
     } else if (key === 'q') {
       searchQ = '';
       if (els.search) els.search.value = '';
+    } else if (key === 'openDay') {
+      hasOpenDayOnly = false;
+      if (els.hasOpenDay) els.hasOpenDay.checked = false;
     }
     syncTypeChipUi();
     syncCategorySelect();
     syncInvestPills();
+    syncInvestModeUi();
     syncCommitmentChecks();
+    syncOpenDayToggle();
     applyFilters();
   }
 
@@ -1098,6 +1114,7 @@
       if (!matchesCustomInvestRange(item)) return false;
     }
     if (!except.commitment && !matchesCommitments(item)) return false;
+    if (!except.openDay && hasOpenDayOnly && !item.hasOpenDay) return false;
     if (!except.location && !matchesLocation(item)) return false;
     if (!except.search && !matchesSearchQuery(item)) return false;
     return true;
@@ -1276,9 +1293,6 @@
       metaLine +
       '</p>' +
       '<div class="bo-opp-card-actions">' +
-      '<a class="bo-opp-primary-btn" href="' +
-      escapeHtml(href) +
-      '">View listing</a>' +
       '<button type="button" class="bo-opp-compare-btn' +
       (window.HubOpportunityCompare && window.HubOpportunityCompare.isSelected(item.id)
         ? ' is-active'
@@ -1294,12 +1308,13 @@
         ? 'Added'
         : 'Compare') +
       '</button>' +
+      '<span class="bo-opp-card-view-hint" aria-hidden="true">View listing</span>' +
       '</div></div></div>' +
       '<a class="event-grid-card-link" href="' +
       escapeHtml(href) +
       '" aria-label="View ' +
       escapeHtml(item.title) +
-      '" tabindex="-1"></a></article>'
+      '"></a></article>'
     );
   }
 
@@ -1893,6 +1908,7 @@
 
   function updateIndustryChipCounts() {
     if (!els.industryChipsRoot) return;
+    var anyCategoryVisible = false;
     els.industryChipsRoot.querySelectorAll('.event-type-chip[data-category]').forEach(function (chip) {
       var id = chip.getAttribute('data-category') || '';
       var countEl = chip.querySelector('.event-type-chip-count');
@@ -1907,7 +1923,20 @@
       var keepVisible = chip.classList.contains('is-active');
       chip.classList.toggle('is-zero', isZero);
       chip.hidden = isZero && !keepVisible;
+      if (id && !chip.hidden) anyCategoryVisible = true;
     });
+    if (els.industryEmpty) els.industryEmpty.hidden = anyCategoryVisible;
+    if (els.industryLabel) els.industryLabel.hidden = !anyCategoryVisible;
+    if (els.industryRow) els.industryRow.classList.toggle('is-empty', !anyCategoryVisible);
+    if (!anyCategoryVisible) {
+      els.industryChipsRoot.querySelectorAll('.event-type-chip[data-category=""]').forEach(function (chip) {
+        chip.hidden = true;
+      });
+    } else {
+      els.industryChipsRoot.querySelectorAll('.event-type-chip[data-category=""]').forEach(function (chip) {
+        chip.hidden = false;
+      });
+    }
   }
 
   function updateTypeChipCounts() {
@@ -1935,6 +1964,7 @@
     var n = 0;
     if (activeCategory) n += 1;
     if (activeCommitments.length) n += 1;
+    if (hasOpenDayOnly) n += 1;
     if (minInvest != null || maxInvest != null) n += 1;
     return n;
   }
@@ -2143,6 +2173,7 @@
     sortBy = els.sort ? els.sort.value : 'recommended';
     locationQ = els.postcode ? String(els.postcode.value || '').trim().toLowerCase() : '';
     activeCategory = els.filterCategory ? String(els.filterCategory.value || '').trim() : '';
+    if (els.hasOpenDay) hasOpenDayOnly = !!els.hasOpenDay.checked;
     readInvestRange();
   }
 
@@ -2151,6 +2182,17 @@
       var tier = input.getAttribute('data-invest-tier') || 'all';
       input.checked = tier === activeInvestTier;
     });
+    syncInvestModeUi();
+  }
+
+  function syncInvestModeUi() {
+    var custom = hasCustomInvestRange();
+    if (els.investGroup) els.investGroup.classList.toggle('has-custom-range', custom);
+    if (els.investHint) els.investHint.hidden = !custom;
+  }
+
+  function syncOpenDayToggle() {
+    if (els.hasOpenDay) els.hasOpenDay.checked = !!hasOpenDayOnly;
   }
 
   function syncCommitmentChecks() {
@@ -2166,10 +2208,11 @@
     return {
       type: activeTypes.length === 1 ? activeTypes[0] : activeTypes.length ? activeTypes.join(',') : 'all',
       category: activeCategory || '',
-      invest: activeInvestTier === 'all' ? '' : activeInvestTier,
+      invest: activeInvestTier === 'all' || hasCustomInvestRange() ? '' : activeInvestTier,
       location: activeLocationTag || '',
       locationQuery: locationQuery,
       commitment: activeCommitments.length === 1 ? activeCommitments[0] : activeCommitments.join(','),
+      openDay: hasOpenDayOnly ? '1' : '',
       q: searchQ || '',
       sort: sortBy || 'recommended',
       minInvest: minInvest != null ? minInvest : '',
@@ -2240,6 +2283,9 @@
     if (els.maxInvest && maxInvest != null) els.maxInvest.value = String(maxInvest);
     if (hasCustomInvestRange()) activeInvestTier = 'all';
 
+    hasOpenDayOnly = params.get('openDay') === '1' || params.get('open_day') === '1';
+    if (els.hasOpenDay) els.hasOpenDay.checked = hasOpenDayOnly;
+
     pendingResultsScroll = Boolean(searchQ || window.location.hash === '#results');
   }
 
@@ -2265,6 +2311,7 @@
     if (c.location) params.set('location', c.location);
     if (c.locationQuery) params.set('loc', c.locationQuery);
     if (c.commitment) params.set('commitment', c.commitment);
+    if (c.openDay) params.set('openDay', '1');
     if (c.q) params.set('q', c.q);
     if (c.sort && c.sort !== 'recommended') params.set('sort', c.sort);
     if (c.minInvest !== '' && c.minInvest != null) params.set('min', String(c.minInvest));
@@ -2299,6 +2346,7 @@
     syncTypeChipUi();
     syncInvestPills();
     syncCommitmentChecks();
+    syncOpenDayToggle();
     syncMoreFiltersBadge();
     syncClearFiltersVisibility();
     renderActiveFilters();
@@ -2344,6 +2392,7 @@
       category: activeCategory || '',
       invest: activeInvestTier || '',
       commitment: activeCommitments.join(','),
+      openDay: hasOpenDayOnly ? '1' : '',
       locationTag: activeLocationTag || '',
       sort: sortBy || '',
       resultCount: filtered.length,
@@ -2360,6 +2409,7 @@
       !activeTypes.length &&
       activeInvestTier === 'all' &&
       !activeCommitments.length &&
+      !hasOpenDayOnly &&
       !activeLocationTag
     ) {
       var hasExtra = minInvest !== null || maxInvest !== null || locationQ;
@@ -2373,6 +2423,7 @@
     activeInvestTier = 'all';
     activeCategory = '';
     activeCommitments = [];
+    hasOpenDayOnly = false;
     activeLocationTag = '';
     locationQ = '';
     searchQ = '';
@@ -2387,11 +2438,13 @@
     if (els.minInvest) els.minInvest.value = '';
     if (els.maxInvest) els.maxInvest.value = '';
     if (els.filterCategory) els.filterCategory.value = '';
+    if (els.hasOpenDay) els.hasOpenDay.checked = false;
 
     syncTypeChipUi();
     syncCategorySelect();
     syncInvestPills();
     syncCommitmentChecks();
+    syncOpenDayToggle();
     syncMoreFiltersBadge();
     syncClearFiltersVisibility();
     renderActiveFilters();
@@ -2442,6 +2495,7 @@
         criteria.location ||
         criteria.locationQuery ||
         criteria.commitment ||
+        criteria.openDay ||
         criteria.q ||
         (criteria.minInvest !== '' && criteria.minInvest != null) ||
         (criteria.maxInvest !== '' && criteria.maxInvest != null)
@@ -2505,6 +2559,9 @@
           chips.push({ key: 'commitment', value: id, label: commitmentChipLabel(id) });
         });
     }
+    if (criteria.openDay) {
+      chips.push({ key: 'openDay', value: '1', label: 'Has an open day' });
+    }
     if (criteria.location) {
       chips.push({
         key: 'location',
@@ -2551,7 +2608,7 @@
           return c !== value;
         });
       alertDraft.commitment = commitments.join(',');
-    } else if (key === 'category' || key === 'invest' || key === 'location' || key === 'locationQuery' || key === 'q') {
+    } else if (key === 'category' || key === 'invest' || key === 'location' || key === 'locationQuery' || key === 'q' || key === 'openDay') {
       alertDraft[key] = '';
     } else if (key === 'minInvest' || key === 'maxInvest') {
       alertDraft[key] = '';
@@ -2883,6 +2940,13 @@
       });
     });
 
+    if (els.hasOpenDay) {
+      els.hasOpenDay.addEventListener('change', function () {
+        hasOpenDayOnly = !!els.hasOpenDay.checked;
+        applyFilters();
+      });
+    }
+
     if (els.filterCategory) {
       els.filterCategory.addEventListener('change', applyFilters);
     }
@@ -2894,10 +2958,16 @@
     }
     [els.minInvest, els.maxInvest].forEach(function (input) {
       if (!input) return;
-      input.addEventListener('change', function () {
-        if (input.value !== '') activeInvestTier = 'all';
+      function onCustomInvestChange() {
+        readInvestRange();
+        if (hasCustomInvestRange()) activeInvestTier = 'all';
         syncInvestPills();
         applyFilters();
+      }
+      input.addEventListener('change', onCustomInvestChange);
+      input.addEventListener('input', function () {
+        clearTimeout(rangeTimer);
+        rangeTimer = setTimeout(onCustomInvestChange, SEARCH_DEBOUNCE_MS);
       });
     });
 
@@ -2911,6 +2981,7 @@
     }
 
     if (els.clearBar) els.clearBar.addEventListener('click', resetFilters);
+    if (els.clearResults) els.clearResults.addEventListener('click', resetFilters);
 
     if (window.HUB_initMobileFilterSheet) {
       var sheetCtrl = window.HUB_initMobileFilterSheet({
@@ -2941,12 +3012,14 @@
 
   function hasActiveOppMobileFilters() {
     readFiltersFromControls();
+    if (els.hasOpenDay) hasOpenDayOnly = !!els.hasOpenDay.checked;
     if (searchQ) return true;
     if (locationQ) return true;
     if (activeCategory) return true;
     if (activeTypes.length) return true;
     if (activeInvestTier && activeInvestTier !== 'all') return true;
     if (activeCommitments.length) return true;
+    if (hasOpenDayOnly) return true;
     if (minInvest != null || maxInvest != null) return true;
     if (activeLocationTag) return true;
     return false;
@@ -3056,6 +3129,7 @@
     syncTypeChipUi();
     syncInvestPills();
     syncCommitmentChecks();
+    syncOpenDayToggle();
     syncCategorySelect();
     // Drop legacy ?hideNm= from the address bar (opt-in is now ?type=network-marketing).
     writeFiltersToUrl();

@@ -502,6 +502,8 @@
       claimable: Boolean(row.claimable),
       publishedAt: row.publishedAt || row.createdAt || null,
       createdAt: row.createdAt || null,
+      hasOpenDay: Boolean(row.hasOpenDay || row.has_open_day),
+      openDays: Array.isArray(row.openDays) ? row.openDays : Array.isArray(row.open_days) ? row.open_days : [],
     };
   }
 
@@ -524,6 +526,8 @@
     item.locationLabel = locationLabel(item);
     item = enrichFilterTags(item);
     item.searchText = buildSearchText(item);
+    item.openDays = Array.isArray(seed.openDays) ? seed.openDays.slice() : [];
+    item.hasOpenDay = !!(seed.hasOpenDay || item.openDays.length);
     return item;
   }
 

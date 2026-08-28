@@ -27,7 +27,7 @@
     <script src="/js/hub-sponsor-prefetch.js?v=20260828perf2" data-slot="opportunities_sponsor_hub"></script>
     <link rel="stylesheet" href="/css/hub.css?v=20260825adminbadge1" />
     <link rel="stylesheet" href="/css/events-page.css?v=20260825sponsor2" />
-    <link rel="stylesheet" href="/css/opportunities-page.css?v=20260828filter2" />
+    <link rel="stylesheet" href="/css/opportunities-page.css?v=20260828cardclick1" />
     <link rel="stylesheet" href="/css/events-filter-bar.css?v=20260727sheet4" />
     <link rel="stylesheet" href="/css/hub-mobile.css?v=20260828compare3" />
     <link rel="icon" href="/favicon.ico?v=20260823uk3" sizes="any" />
@@ -190,7 +190,7 @@
                   </div>
                 </div>
                 <div class="filter-bar-primary">
-                  <fieldset class="filter-format-group filter-format-group--prominent filter-format-group--inline filter-opp-invest-group">
+                  <fieldset class="filter-format-group filter-format-group--prominent filter-format-group--inline filter-opp-invest-group" id="filter-opp-invest-group">
                     <legend class="filter-bar-chip-label">Investment</legend>
                     <div class="filter-format-pills">
                       <label class="filter-format-pill">
@@ -214,6 +214,7 @@
                         <span class="filter-format-pill-face">On request</span>
                       </label>
                     </div>
+                    <p class="filter-opp-invest-hint" id="filter-opp-invest-hint" hidden>Custom £ range is active — quick buckets are cleared.</p>
                   </fieldset>
                   <button type="button" class="filter-more-toggle" id="filter-more-toggle" aria-expanded="false" aria-controls="filter-more-panel">
                     <svg class="filter-more-toggle-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
@@ -223,9 +224,10 @@
                   </button>
                 </div>
                 <div class="filter-more-panel filter-opp-more-panel" id="filter-more-panel" hidden>
-                  <div class="filter-bar-row filter-bar-row-industries filter-bar-row-types--nested">
+                  <div class="filter-bar-row filter-bar-row-industries filter-bar-row-types--nested" id="filter-industry-row">
                     <div class="event-type-chips-wrap">
-                      <span class="filter-bar-chip-label filter-bar-chip-label--inline">Industry</span>
+                      <span class="filter-bar-chip-label filter-bar-chip-label--inline" id="filter-industry-label">Industry</span>
+                      <p class="filter-industry-empty" id="filter-industry-empty" hidden>No industries match your other filters.</p>
                       <nav class="event-type-chips" id="opp-industry-chips" aria-label="Industry"></nav>
                     </div>
                   </div>
@@ -262,12 +264,17 @@
                         </label>
                         <label class="filter-format-pill">
                           <input type="checkbox" data-commitment="event-based">
-                          <span class="filter-format-pill-face">Event-based</span>
+                          <span class="filter-format-pill-face">Open days / visits</span>
                         </label>
                       </div>
                     </fieldset>
+                    <label class="filter-opp-open-day-toggle" for="filter-has-open-day">
+                      <input type="checkbox" id="filter-has-open-day">
+                      <span>Has an open day</span>
+                    </label>
                     <div class="filter-price-range filter-price-range--inline filter-opp-custom-invest">
                       <span class="filter-bar-chip-label">Custom range</span>
+                      <p class="filter-opp-custom-hint">Replaces the Investment buckets above when set.</p>
                       <div class="filter-price-range-controls">
                         <div class="filter-price-bounds">
                           <label class="filter-price-bound">
@@ -360,6 +367,7 @@
         <span class="events-results-count" aria-live="polite">
           <span id="opp-results-loading">Browse UK business opportunities</span>
           <span id="opp-results-ready" hidden>Showing <strong id="opp-results-count">0</strong> results</span>
+          <button type="button" class="opp-results-clear" id="btn-clear-filters-results" hidden>Clear filters</button>
         </span>
         <div class="events-results-actions">
           <div class="opp-results-tools">
@@ -673,7 +681,7 @@
     <script src="/js/cms-ad-blocks.js?v=20260813pagepartner1" defer></script>
     <script src="/js/hub-organiser-actions.js?v=20260828listopp1" data-root="/" defer></script>
     <script src="/js/opportunity-listing-constants.js?v=20260828cookie1" defer></script>
-    <script src="/js/opportunities-catalog.js?v=20260828cookie1" defer></script>
+    <script src="/js/opportunities-catalog.js?v=20260828filter3" defer></script>
     <script src="/js/opportunity-listing-quality.js?v=20260825aff1" defer></script>
     <script src="/js/opportunity-investment-breakdown.js?v=20260710" defer></script>
     <script src="/js/opportunity-compare.js?v=20260828compare2" defer></script>
@@ -687,7 +695,7 @@
     <script src="/js/hub-spotlight-carousel.js?v=20260807fix3" defer></script>
     <script src="/js/browse-analytics-client.js?v=20260728browse2" defer></script>
     <script src="/js/hub-search-match.js?v=20260807search2" defer></script>
-    <script src="/js/opportunities-page.js?v=20260828filter2" defer></script>
+    <script src="/js/opportunities-page.js?v=20260828cardclick1" defer></script>
     <script src="/js/opportunities-map.js?v=20260827invest1" defer></script>
   </body>
 </html>
