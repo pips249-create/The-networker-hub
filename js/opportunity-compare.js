@@ -148,6 +148,30 @@
     );
   }
 
+  function isAffiliateItem(item, catalog) {
+    if (catalog && typeof catalog.isAffiliateStyleListing === 'function') {
+      return catalog.isAffiliateStyleListing(item);
+    }
+    var type = String((item && item.type) || '').toLowerCase();
+    if (type === 'affiliate') return true;
+    var tags = (item && item.tags) || [];
+    for (var i = 0; i < tags.length; i++) {
+      if (String(tags[i] || '').toLowerCase() === 'affiliate') return true;
+    }
+    return Boolean(metaVal((item && item.meta) || [], /^commission$/i));
+  }
+
+  function allAffiliateItems(items, catalog) {
+    return (items || []).length > 0 && items.every(function (item) {
+      return isAffiliateItem(item, catalog);
+    });
+  }
+
+  function cellOrDash(value) {
+    var text = String(value || '').trim();
+    return text ? escapeHtml(text) : '—';
+  }
+
   function mediaHtml(item) {
     var src = String((item && (item.imageUrl || item.logoUrl)) || '').trim();
     var letter = String((item && item.title) || '?').trim().charAt(0).toUpperCase() || '?';
@@ -201,48 +225,91 @@
       })
       .join('');
 
-    var rows = [
-      compareRow(
-        'Type',
-        items.map(function (item) {
-          return escapeHtml(typeLabels[item.type] || item.type || '—');
-        })
-      ),
-      compareRow(
-        'Investment',
-        items.map(function (item) {
-          return escapeHtml(
-            metaVal(item.meta, /^investment$/i) || item.investment || '—'
-          );
-        })
-      ),
-      compareRow(
-        'Location',
-        items.map(function (item) {
-          return escapeHtml(item.locationLabel || metaVal(item.meta, /^location$/i) || '—');
-        })
-      ),
-      compareRow(
-        'Commitment',
-        items.map(function (item) {
-          return escapeHtml(
-            metaVal(item.meta, /^commitment$/i) || item.commitment || '—'
-          );
-        })
-      ),
-      compareRow(
-        'Cost breakdown',
-        items.map(function (item) {
-          return q && q.hasCostBreakdown(item) ? 'Yes' : 'No';
-        })
-      ),
-      compareRow(
-        'Co. number listed',
-        items.map(function (item) {
-          return q && q.companiesHouseNumber(item) ? 'Yes' : 'No';
-        })
-      ),
-    ].join('');
+    var affiliateMode = allAffiliateItems(items, catalog);
+    var typeRow = compareRow(
+      'Type',
+      items.map(function (item) {
+        return escapeHtml(typeLabels[item.type] || item.type || '—');
+      })
+    );
+    var locationRow = compareRow(
+      'Location',
+      items.map(function (item) {
+        return cellOrDash(item.locationLabel || metaVal(item.meta, /^location$/i));
+      })
+    );
+    var companyRow = compareRow(
+      'Co. number listed',
+      items.map(function (item) {
+        return q && q.companiesHouseNumber(item) ? 'Yes' : 'No';
+      })
+    );
+
+    var rows;
+    var note;
+    if (affiliateMode) {
+      rows = [
+        typeRow,
+        compareRow(
+          'Commission',
+          items.map(function (item) {
+            return cellOrDash(metaVal(item.meta, /^commission$/i));
+          })
+        ),
+        compareRow(
+          'What you promote',
+          items.map(function (item) {
+            return cellOrDash(metaVal(item.meta, /^what you promote$/i));
+          })
+        ),
+        compareRow(
+          'Cookie window',
+          items.map(function (item) {
+            var cookie = metaVal(item.meta, /^cookie window$/i);
+            if (!cookie && catalog && typeof catalog.cookieWindowFromMeta === 'function') {
+              cookie = catalog.cookieWindowFromMeta(item.meta);
+            }
+            return cellOrDash(cookie);
+          })
+        ),
+        compareRow(
+          'Who it suits',
+          items.map(function (item) {
+            return cellOrDash(metaVal(item.meta, /^who it suits$/i));
+          })
+        ),
+        locationRow,
+        companyRow,
+      ].join('');
+      note =
+        'Affiliate listings are informational only — confirm commission, tracking, and terms with each programme.';
+    } else {
+      rows = [
+        typeRow,
+        compareRow(
+          'Investment',
+          items.map(function (item) {
+            return cellOrDash(metaVal(item.meta, /^investment$/i) || item.investment);
+          })
+        ),
+        locationRow,
+        compareRow(
+          'Commitment',
+          items.map(function (item) {
+            return cellOrDash(metaVal(item.meta, /^commitment$/i) || item.commitment);
+          })
+        ),
+        compareRow(
+          'Cost breakdown',
+          items.map(function (item) {
+            return q && q.hasCostBreakdown(item) ? 'Yes' : 'No';
+          })
+        ),
+        companyRow,
+      ].join('');
+      note =
+        'Listings are informational only — not investment advice. Confirm details with each lister.';
+    }
 
     return (
       '<div class="opp-compare-modal" id="opp-compare-modal" role="dialog" aria-labelledby="opp-compare-title" aria-modal="true">' +
@@ -251,7 +318,9 @@
       '<header class="opp-compare-head">' +
       '<div class="opp-compare-head-main">' +
       '<span class="opp-compare-sheet-handle" aria-hidden="true"></span>' +
-      '<h2 id="opp-compare-title">Compare opportunities</h2>' +
+      '<h2 id="opp-compare-title">' +
+      (affiliateMode ? 'Compare affiliate programmes' : 'Compare opportunities') +
+      '</h2>' +
       '</div>' +
       '<button type="button" class="opp-compare-close" data-opp-compare-close aria-label="Close comparison">' +
       '<span class="opp-compare-close-x" aria-hidden="true">×</span> Close' +
@@ -264,7 +333,9 @@
       rows +
       '</tbody></table></div>' +
       '<div class="opp-compare-foot">' +
-      '<p class="opp-compare-note">Listings are informational only — not investment advice. Confirm details with each lister.</p>' +
+      '<p class="opp-compare-note">' +
+      escapeHtml(note) +
+      '</p>' +
       '<button type="button" class="opp-compare-done" data-opp-compare-close>Done</button>' +
       '</div>' +
       '</div></div>'

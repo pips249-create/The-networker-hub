@@ -27,7 +27,7 @@
     <script src="/js/hub-sponsor-prefetch.js?v=20260828perf2" data-slot="opportunities_sponsor_hub"></script>
     <link rel="stylesheet" href="/css/hub.css?v=20260825adminbadge1" />
     <link rel="stylesheet" href="/css/events-page.css?v=20260825sponsor2" />
-    <link rel="stylesheet" href="/css/opportunities-page.css?v=20260828compare4" />
+    <link rel="stylesheet" href="/css/opportunities-page.css?v=20260828filter1" />
     <link rel="stylesheet" href="/css/events-filter-bar.css?v=20260727sheet4" />
     <link rel="stylesheet" href="/css/hub-mobile.css?v=20260828compare3" />
     <link rel="icon" href="/favicon.ico?v=20260823uk3" sizes="any" />
@@ -266,15 +266,15 @@
                           <input type="checkbox" data-commitment="event-based">
                           <span class="filter-format-pill-face">Open days / visits</span>
                         </label>
+                        <label class="filter-format-pill filter-opp-open-day-pill">
+                          <input type="checkbox" id="filter-has-open-day">
+                          <span class="filter-format-pill-face">Has a listed open day</span>
+                        </label>
                       </div>
                     </fieldset>
-                    <label class="filter-opp-open-day-toggle" for="filter-has-open-day">
-                      <input type="checkbox" id="filter-has-open-day">
-                      <span>Has an open day</span>
-                    </label>
                     <div class="filter-price-range filter-price-range--inline filter-opp-custom-invest">
                       <span class="filter-bar-chip-label">Custom range</span>
-                      <p class="filter-opp-custom-hint">Replaces the Investment buckets above when set.</p>
+                      <p class="filter-opp-custom-hint">Overrides the Investment buckets above when you set a min or max.</p>
                       <div class="filter-price-range-controls">
                         <div class="filter-price-bounds">
                           <label class="filter-price-bound">
@@ -695,7 +695,7 @@
     <script src="/js/hub-spotlight-carousel.js?v=20260807fix3" defer></script>
     <script src="/js/browse-analytics-client.js?v=20260728browse2" defer></script>
     <script src="/js/hub-search-match.js?v=20260807search2" defer></script>
-    <script src="/js/opportunities-page.js?v=20260828compare4" defer></script>
+    <script src="/js/opportunities-page.js?v=20260828filter1" defer></script>
     <script src="/js/opportunities-map.js?v=20260827invest1" defer></script>
   </body>
 </html>

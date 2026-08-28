@@ -2058,39 +2058,105 @@
   }
 
   function emptyListingsHtml(totalMatches) {
-    var tips = [];
-    if (searchQ) tips.push('check the spelling or try a shorter word');
-    if (locationQ || activeLocationTag) tips.push('widen or clear location');
-    if (activeInvestTier && activeInvestTier !== 'all') tips.push('try All budgets');
-    if (activeTypes.length) tips.push('browse all opportunity types');
-    if (activeCategory) tips.push('clear the industry');
-    if (!tips.length) tips.push('clear your filters');
+    var activeBits = [];
+    if (searchQ) activeBits.push('“' + searchQ + '”');
+    if (locationQ || activeLocationTag) activeBits.push(locationQ || activeLocationTag);
+    if (activeInvestTier && activeInvestTier !== 'all') {
+      var investEl = document.querySelector(
+        '[data-invest-tier="' + activeInvestTier + '"] + .filter-format-pill-face'
+      );
+      activeBits.push(
+        investEl ? investEl.textContent.trim() : activeInvestTier.replace(/-/g, ' ')
+      );
+    }
+    if (minInvest != null || maxInvest != null) {
+      var rangeBits = [];
+      if (minInvest != null) rangeBits.push('from £' + Number(minInvest).toLocaleString('en-GB'));
+      if (maxInvest != null) rangeBits.push('up to £' + Number(maxInvest).toLocaleString('en-GB'));
+      if (rangeBits.length) activeBits.push(rangeBits.join(' '));
+    }
+    if (activeTypes.length) {
+      activeTypes.forEach(function (id) {
+        activeBits.push(typeChipLabel(id) || id);
+      });
+    }
+    if (activeCategory) {
+      var indChip = document.querySelector(
+        '#opp-industry-chips [data-industry="' + activeCategory + '"]'
+      );
+      activeBits.push(
+        indChip ? String(indChip.textContent || '').replace(/\s*\(\d+\)\s*$/, '').trim() : activeCategory
+      );
+    }
+    if (activeCommitments.length) {
+      var commitMap = {
+        'full-time': 'Full-time',
+        'part-time': 'Part-time / Flexible',
+        'event-based': 'Open days / visits',
+      };
+      activeCommitments.forEach(function (id) {
+        activeBits.push(commitMap[id] || id);
+      });
+    }
+    if (hasOpenDayOnly) activeBits.push('Has a listed open day');
+
+    var uniqueBits = [];
+    activeBits.forEach(function (bit) {
+      var t = String(bit || '').trim();
+      if (t && uniqueBits.indexOf(t) === -1) uniqueBits.push(t);
+    });
 
     var emptyTitle = searchQ
-      ? 'No opportunities found for “' + escapeHtml(searchQ) + '”'
-      : 'No opportunities match these filters';
+      ? 'No opportunities for “' + escapeHtml(searchQ) + '”'
+      : uniqueBits.length === 1
+        ? 'No opportunities for ' + escapeHtml(uniqueBits[0])
+        : 'No opportunities match these filters';
+
     var emptyCopy = searchQ
-      ? 'Check the spelling, try a shorter word, or ' +
-        escapeHtml(tips.slice(1, 3).join(', or ') || 'clear your filters') +
-        '.'
-      : 'Try to ' + escapeHtml(tips.slice(0, 2).join(', or ')) + ' — or check back soon as new listings go live.';
+      ? 'Try a shorter word, clear location, or reset filters — new listings go live regularly.'
+      : uniqueBits.length
+        ? 'Nothing is live with that combination right now. Clear a filter above, or get an email when something new matches.'
+        : 'Nothing is listed yet for this view. Check back soon, or browse with fewer filters.';
+
+    var chipsHtml = uniqueBits.length
+      ? '<ul class="opp-empty-chips" aria-label="Active filters">' +
+        uniqueBits
+          .slice(0, 6)
+          .map(function (bit) {
+            return '<li class="opp-empty-chip">' + escapeHtml(bit) + '</li>';
+          })
+          .join('') +
+        (uniqueBits.length > 6
+          ? '<li class="opp-empty-chip opp-empty-chip--more">+' +
+            (uniqueBits.length - 6) +
+            ' more</li>'
+          : '') +
+        '</ul>'
+      : '';
 
     return (
       '<div class="events-empty opp-empty-state" role="status">' +
-      '<p class="opp-empty-title">' +
+      '<div class="opp-empty-icon" aria-hidden="true">' +
+      '<svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">' +
+      '<circle cx="11" cy="11" r="7"/>' +
+      '<path d="M20 20l-3-3" stroke-linecap="round"/>' +
+      '</svg></div>' +
+      '<h3 class="opp-empty-title">' +
       emptyTitle +
-      '</p>' +
+      '</h3>' +
+      chipsHtml +
       '<p class="opp-empty-copy">' +
       emptyCopy +
       '</p>' +
       '<div class="opp-empty-actions">' +
-      '<button type="button" class="opp-empty-btn" id="opp-clear-filters">Clear filters</button>' +
+      '<button type="button" class="opp-empty-btn" id="opp-clear-filters">Clear all filters</button>' +
       (locationQ || activeLocationTag
-        ? '<button type="button" class="clear-filters-link" id="opp-clear-location">Clear location only</button>'
+        ? '<button type="button" class="opp-empty-btn opp-empty-btn--ghost" id="opp-clear-location">Clear location only</button>'
         : '') +
-      '<button type="button" class="clear-filters-link" id="opp-empty-alert">Alert me for this search</button>' +
+      '<button type="button" class="opp-empty-btn opp-empty-btn--ghost" id="opp-empty-alert">Alert me when something matches</button>' +
       '</div>' +
-      emptyProviderCtaHtml() +
+      '<p class="opp-empty-provider">Listing a franchise or side hustle? ' +
+      '<a href="/organiser/opportunity-edit" data-hub-action="add-opportunity">Get your opportunity on the Hub</a></p>' +
       '</div>'
     );
   }
@@ -2570,7 +2636,7 @@
         });
     }
     if (criteria.openDay) {
-      chips.push({ key: 'openDay', value: '1', label: 'Has an open day' });
+      chips.push({ key: 'openDay', value: '1', label: 'Has a listed open day' });
     }
     if (criteria.location) {
       chips.push({

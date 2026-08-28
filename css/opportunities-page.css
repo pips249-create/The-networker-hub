@@ -2192,8 +2192,17 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
 }
 
 .opp-browse-page .events-filter-shell .filter-format-pill input:checked + .filter-format-pill-face {
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--opp-gold);
+  border-color: var(--opp-gold);
   color: var(--opp-navy);
+  box-shadow: none;
+}
+
+.opp-browse-page .events-filter-shell .filter-format-pill input[type='checkbox']:checked + .filter-format-pill-face::before {
+  border-color: var(--opp-navy);
+  background-color: #fff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%230d1f3c' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 8.2l2.8 2.8 6.2-6.2'/%3E%3C/svg%3E");
+  box-shadow: none;
 }
 
 .opp-browse-page .events-filter-shell .filter-more-toggle {
@@ -2262,12 +2271,12 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
 }
 
 .opp-browse-page .filter-opp-more-panel:not([hidden]) {
-  padding: 14px 0 2px;
+  padding: 18px 0 4px;
   border-top: 1px solid rgba(255, 255, 255, 0.16);
-  margin-top: 2px;
+  margin-top: 6px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
   width: 100%;
 }
 
@@ -2277,17 +2286,34 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
   padding: 0;
 }
 
+/* Type before Investment (shared filter bar puts type chips after primary by default). */
+.opp-browse-page .filter-bar-cluster > .filter-bar-row-types--primary {
+  order: 1;
+  flex: 1 1 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.opp-browse-page .filter-bar-cluster > .filter-bar-primary {
+  order: 2;
+  width: 100%;
+}
+
+.opp-browse-page .filter-bar-cluster > .filter-opp-more-panel:not([hidden]) {
+  order: 3;
+}
+
 .opp-browse-page .filter-bar-row-types--primary {
   width: 100%;
-  margin: 0 0 4px;
+  margin: 0;
   padding: 0;
 }
 
 .opp-browse-page .filter-opp-more-grid {
-  display: grid;
-  grid-template-columns: minmax(16rem, 1.4fr) auto;
-  gap: 14px 20px;
-  align-items: end;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   width: 100%;
 }
 
@@ -2302,11 +2328,21 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 8px;
+  gap: 10px;
   margin: 0;
   padding: 0;
   border: none;
   min-width: 0;
+}
+
+/* Match Type / Industry label treatment */
+.opp-browse-page .events-filter-shell .filter-format-group > legend.filter-bar-chip-label,
+.opp-browse-page .filter-opp-custom-invest > .filter-bar-chip-label {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.72);
 }
 
 /* class display:flex must not override the HTML hidden attribute */
@@ -2323,12 +2359,14 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
 
 .opp-browse-page .filter-opp-commitment-group .filter-format-pills {
   flex-wrap: wrap;
+  min-width: 0;
+  width: 100%;
 }
 
 .opp-browse-page .filter-opp-commitment-group .filter-format-pill-face {
   min-width: 0;
   padding-left: 12px;
-  padding-right: 12px;
+  padding-right: 14px;
 }
 
 .opp-browse-page .filter-opp-category-wrap select {
@@ -2419,23 +2457,15 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
   text-transform: uppercase;
 }
 
-@media (max-width: 1100px) {
-  .opp-browse-page .filter-opp-more-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .opp-browse-page .filter-opp-custom-invest {
-    grid-column: 1 / -1;
-  }
-}
-
 @media (max-width: 720px) {
-  .opp-browse-page .filter-opp-more-grid {
-    grid-template-columns: 1fr;
-  }
-
   .opp-browse-page .filter-opp-category-wrap select {
     max-width: none;
+  }
+
+  .opp-browse-page .filter-bar-row-industries .event-type-chips {
+    mask-image: none;
+    -webkit-mask-image: none;
+    padding-right: 0;
   }
 }
 
@@ -2457,8 +2487,9 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
 
 .opp-browse-page .filter-opp-commitment-group .filter-format-pill input[type='checkbox']:checked + .filter-format-pill-face::before {
   border-color: var(--opp-navy);
-  background-color: var(--opp-gold);
+  background-color: #fff;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%230d1f3c' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 8.2l2.8 2.8 6.2-6.2'/%3E%3C/svg%3E");
+  box-shadow: none;
 }
 
 .opp-browse-page .filter-mobile-sheet-body .filter-bar-row-types::before {
@@ -2550,7 +2581,7 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
 }
 
 .opp-browse-page .filter-mobile-sheet-body .filter-opp-open-day-toggle {
-  color: #fff;
+  display: none !important;
 }
 
 .opp-browse-page .events-results-meta {
@@ -2595,11 +2626,12 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
 .opp-browse-page .filter-opp-invest-hint,
 .opp-browse-page .filter-opp-custom-hint,
 .opp-browse-page .filter-industry-empty {
-  margin: 6px 0 0;
+  margin: 0;
   font-size: 0.82rem;
-  line-height: 1.35;
-  color: var(--opp-dark-gray);
-  opacity: 0.85;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.78);
+  opacity: 1;
+  max-width: 36rem;
 }
 
 .opp-browse-page .filter-opp-invest-hint[hidden],
@@ -2616,23 +2648,25 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
   display: none;
 }
 
-.opp-browse-page .filter-opp-open-day-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-  padding: 8px 0;
-  font-size: 0.92rem;
-  font-weight: 600;
-  color: var(--opp-navy);
-  cursor: pointer;
-  user-select: none;
+/* Soft edge when industry chips overflow horizontally */
+.opp-browse-page .filter-bar-row-industries .event-type-chips-wrap {
+  position: relative;
+  width: 100%;
+  min-width: 0;
 }
 
-.opp-browse-page .filter-opp-open-day-toggle input {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--opp-navy);
+.opp-browse-page .filter-bar-row-industries .event-type-chips {
+  mask-image: linear-gradient(90deg, #000 0%, #000 calc(100% - 2.5rem), transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 calc(100% - 2.5rem), transparent 100%);
+  padding-right: 1.25rem;
+}
+
+.opp-browse-page .filter-opp-open-day-toggle {
+  display: none !important;
+}
+
+.opp-browse-page .filter-opp-open-day-pill .filter-format-pill-face {
+  font-weight: 700;
 }
 
 .opp-browse-page .clear-filters-link {
@@ -5854,23 +5888,78 @@ body.opp-view-map.opp-browse-page .opp-listings-toolbar {
 
 .opp-browse-page .opp-empty-state {
   display: grid;
-  gap: 14px;
-  justify-items: start;
-  padding: 28px 8px;
+  gap: 12px;
+  justify-items: center;
+  text-align: center;
+  margin: 8px 0 24px;
+  padding: 36px 24px 32px;
+  border-radius: 18px;
+  border: 1px solid var(--opp-border, #dde3ed);
+  background:
+    linear-gradient(180deg, rgba(201, 162, 39, 0.08) 0%, transparent 42%),
+    var(--opp-off-white, #f8f9fb);
+  box-shadow: 0 1px 0 rgba(13, 31, 60, 0.04);
+}
+
+.opp-browse-page .opp-empty-icon {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid rgba(13, 31, 60, 0.1);
+  color: var(--opp-navy, #0d1f3c);
+  box-shadow: 0 6px 18px rgba(13, 31, 60, 0.08);
 }
 
 .opp-browse-page .opp-empty-title {
-  margin: 0;
-  font-size: 1.15rem;
-  font-weight: 700;
+  margin: 4px 0 0;
+  max-width: 28rem;
+  font-family: var(--font-display, Georgia, 'Times New Roman', serif);
+  font-size: clamp(1.35rem, 2.4vw, 1.7rem);
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
   color: var(--opp-navy, #0d1f3c);
+}
+
+.opp-browse-page .opp-empty-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+  max-width: 36rem;
+}
+
+.opp-browse-page .opp-empty-chip {
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(13, 31, 60, 0.14);
+  background: #fff;
+  color: var(--opp-navy, #0d1f3c);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.opp-browse-page .opp-empty-chip--more {
+  background: transparent;
+  border-style: dashed;
+  color: var(--opp-mid-gray, #8d99ae);
 }
 
 .opp-browse-page .opp-empty-copy {
   margin: 0;
-  max-width: 36rem;
-  font-size: 14px;
-  line-height: 1.5;
+  max-width: 32rem;
+  font-size: 15px;
+  line-height: 1.55;
   color: var(--opp-dark-gray, #3d4557);
 }
 
@@ -5878,18 +5967,56 @@ body.opp-view-map.opp-browse-page .opp-listings-toolbar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px 14px;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 4px;
 }
 
 .opp-browse-page .opp-empty-provider {
-  margin: 4px 0 0;
+  margin: 8px 0 0;
+  max-width: 28rem;
   font-size: 13px;
+  line-height: 1.45;
   color: var(--opp-mid-gray, #8d99ae);
 }
 
 .opp-browse-page .opp-empty-provider a {
   color: var(--opp-navy, #0d1f3c);
+  font-weight: 700;
+  text-underline-offset: 2px;
+}
+
+.opp-browse-page .opp-empty-btn {
+  border: 0;
+  border-radius: 999px;
+  background: var(--opp-navy, #0d1f3c);
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
   font-weight: 600;
+  padding: 11px 18px;
+  cursor: pointer;
+}
+
+.opp-browse-page .opp-empty-btn:hover {
+  background: var(--opp-navy-mid, #16325a);
+}
+
+.opp-browse-page .opp-empty-btn--ghost {
+  background: #fff;
+  color: var(--opp-navy, #0d1f3c);
+  border: 1.5px solid rgba(13, 31, 60, 0.22);
+}
+
+.opp-browse-page .opp-empty-btn--ghost:hover {
+  background: #fff;
+  border-color: var(--opp-gold, #c9a227);
+  color: var(--opp-navy, #0d1f3c);
+}
+
+/* Soften the always-on footnote when the empty state already has a provider CTA */
+.opp-browse-page #listings-view:has(.opp-empty-state) .events-organiser-footnote {
+  display: none;
 }
 
 .opp-browse-page .opp-low-results {
