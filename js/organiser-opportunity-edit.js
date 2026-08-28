@@ -34,6 +34,34 @@
 
   const CAPITAL_TYPES = ['franchise', 'distributorship', 'business-opportunity', 'network-marketing', 'partnership'];
 
+  const AFFILIATE_TYPE = 'affiliate';
+
+  const TYPE_LABELS = {
+    franchise: 'Franchise',
+    'side-hustle': 'Side hustle',
+    partnership: 'Partnership',
+    affiliate: 'Affiliate',
+    networking: 'Networking / Ambassador',
+    'network-marketing': 'Network marketing',
+    'business-opportunity': 'Business opportunity',
+    distributorship: 'Distributorship',
+  };
+
+  const TYPE_CATEGORY_HINTS = {
+    'network-marketing': 'mlm',
+  };
+
+  const OE_STEP_ORDER = ['details', 'host', 'meta', 'photo', 'submit'];
+
+  let oeTitleConfirmed = false;
+  let oeStepsConfirmed = {
+    details: false,
+    host: false,
+    meta: false,
+    photo: false,
+  };
+  let oeFlowRevealAll = false;
+
   const LISTING_REGIONS = [
     { slug: 'uk-wide', label: 'UK-wide' },
     { slug: 'remote', label: 'Remote / Online' },
@@ -135,6 +163,29 @@
     });
   }
 
+  function normalizeExclusiveTypes(types) {
+    const list = (types || []).filter(Boolean);
+    if (list.indexOf(AFFILIATE_TYPE) === -1) return list;
+    if (list.length === 1) return list;
+    const hasCapital = list.some((type) => CAPITAL_TYPES.indexOf(type) !== -1);
+    if (hasCapital) return list.filter((type) => type !== AFFILIATE_TYPE);
+    return [AFFILIATE_TYPE];
+  }
+
+  function reconcileTypeSelection(changedInput) {
+    if (!changedInput) return;
+    const value = changedInput.value;
+    const nowChecked = changedInput.checked;
+    if (value === AFFILIATE_TYPE && nowChecked) {
+      setSelectedTypes([AFFILIATE_TYPE]);
+      return;
+    }
+    if (value !== AFFILIATE_TYPE && nowChecked) {
+      const affiliateInput = document.querySelector('#oe-type-group input[value="' + AFFILIATE_TYPE + '"]');
+      if (affiliateInput && affiliateInput.checked) affiliateInput.checked = false;
+    }
+  }
+
   function isAffiliateStyleListing(types) {
     const list = types || getSelectedTypes();
     if (list.indexOf('affiliate') === -1) return false;
@@ -176,7 +227,6 @@
   }
 
   function syncAffiliateFormMode(options) {
-    const opts = options || {};
     const types = getSelectedTypes();
     const affiliate = isAffiliateStyleListing(types);
     const wasAffiliate = syncAffiliateFormMode.lastAffiliate === true;
@@ -185,6 +235,8 @@
     const investmentEl = document.getElementById('oe-investment');
     const commissionEl = document.getElementById('oe-commission');
     const promoteEl = document.getElementById('oe-promote');
+    const suitsEl = document.getElementById('oe-suits');
+    const investmentIncludesEl = document.getElementById('oe-investment-includes');
     const metaHeading = document.getElementById('oe-card-meta-heading');
     const metaLead = document.getElementById('oe-card-meta-lead');
     const investmentShortcuts = document.getElementById('oe-investment-shortcuts');
@@ -209,18 +261,20 @@
         ? 'Commission and what partners promote appear on your card — not franchise-style investment.'
         : 'Investment, region, and commitment appear in the meta row on your listing card.';
     }
+    if (wasAffiliate !== affiliate) {
+      if (affiliate) {
+        if (investmentEl) investmentEl.value = '';
+        if (investmentIncludesEl) investmentIncludesEl.value = '';
+      } else {
+        if (commissionEl) commissionEl.value = '';
+        if (promoteEl) promoteEl.value = '';
+        if (suitsEl) suitsEl.value = '';
+      }
+    }
     updateTypeModeNote(types, affiliate);
     updateFcaAttestVisibility();
     refreshCompleteness();
     syncAffiliateFormMode.lastAffiliate = affiliate;
-    if (opts.scroll && affiliate && !wasAffiliate) {
-      const card = document.getElementById('oe-card-meta');
-      if (card) {
-        window.requestAnimationFrame(function () {
-          card.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        });
-      }
-    }
   }
 
   function updateTypeModeNote(types, affiliateMode) {
@@ -239,14 +293,14 @@
 
     if (affiliate) {
       note.innerHTML =
-        '<strong>Affiliate fields unlocked.</strong> Scroll to <strong>Card highlights — affiliate</strong> below for commission and what you promote. Investment is not required.';
+        '<strong>Affiliate listing.</strong> Commission and what you promote go in <strong>Card highlights</strong> when that section appears — investment is not required.';
       note.className = 'oe-type-mode-note is-affiliate';
       note.hidden = false;
       return;
     }
     if (hasAffiliate && hasCapital) {
       note.innerHTML =
-        '<strong>Affiliate + investment-style types selected.</strong> We use investment fields (not commission) because franchise, partnership, and similar listings need upfront cost details. Your listing still appears under every type you ticked — pick types that truly match what you offer.';
+        '<strong>Affiliate cannot combine with other types.</strong> We kept your investment-style types — untick those if this is a pure affiliate programme.';
       note.className = 'oe-type-mode-note is-mixed';
       note.hidden = false;
       return;
@@ -453,7 +507,7 @@
     document.getElementById('oe-title').value = opp.title || '';
     const typeTags = (opp.tags || []).filter((tag) => OPPORTUNITY_TYPES.includes(tag));
     const initialTypes = typeTags.length ? typeTags : opp.type ? [opp.type] : [];
-    setSelectedTypes(coerceLegacyAffiliateTypes(initialTypes, opp.meta));
+    setSelectedTypes(normalizeExclusiveTypes(coerceLegacyAffiliateTypes(initialTypes, opp.meta)));
     document.getElementById('oe-category').value = opp.category || '';
     document.getElementById('oe-desc').value = opp.desc || '';
     document.getElementById('oe-about').value = (opp.about || []).join('\n\n');
@@ -525,6 +579,8 @@
     updateListingPriceBreakdown();
     refreshCompleteness();
     syncPrimarySubmitButton();
+    oeFlowRevealAll = true;
+    syncOpportunitySteps({ revealAll: true });
   }
 
   function logoSuggestsDarkPad(url) {
@@ -841,6 +897,366 @@
     };
   }
 
+  function escHtml(text) {
+    return String(text || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function typeLabelsList(types) {
+    return (types || [])
+      .map((type) => TYPE_LABELS[type] || type)
+      .filter(Boolean)
+      .join(', ');
+  }
+
+  function categoryLabel(value) {
+    const select = document.getElementById('oe-category');
+    if (!select || !value) return '';
+    const opt = select.querySelector('option[value="' + value + '"]');
+    return opt ? opt.textContent.trim() : value;
+  }
+
+  function maybeSuggestCategoryFromTypes() {
+    const categoryEl = document.getElementById('oe-category');
+    if (!categoryEl || categoryEl.value) return;
+    const types = getSelectedTypes();
+    for (let i = 0; i < types.length; i++) {
+      const hint = TYPE_CATEGORY_HINTS[types[i]];
+      if (hint) {
+        categoryEl.value = hint;
+        break;
+      }
+    }
+  }
+
+  function stepTitleComplete() {
+    return (document.getElementById('oe-title')?.value.trim() || '').length >= 2;
+  }
+
+  function stepTypeComplete() {
+    return getSelectedTypes().length > 0;
+  }
+
+  function stepDescComplete() {
+    return (document.getElementById('oe-desc')?.value.trim() || '').length >= 8;
+  }
+
+  function stepHostComplete() {
+    const host = document.getElementById('oe-host')?.value.trim() || '';
+    const email = document.getElementById('oe-email')?.value.trim() || '';
+    return host.length >= 2 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  }
+
+  function stepMetaComplete() {
+    if (!getSelectedListingRegion()) return false;
+    if (!(document.getElementById('oe-commitment')?.value.trim() || '')) return false;
+    if (isAffiliateStyleListing()) {
+      return (
+        !!(document.getElementById('oe-commission')?.value.trim() || '') &&
+        !!(document.getElementById('oe-promote')?.value.trim() || '')
+      );
+    }
+    return !!(document.getElementById('oe-investment')?.value.trim() || '');
+  }
+
+  function resetOeStepsFrom(stepKey) {
+    const idx = OE_STEP_ORDER.indexOf(stepKey);
+    if (idx === -1) return;
+    for (let i = idx; i < OE_STEP_ORDER.length; i++) {
+      const key = OE_STEP_ORDER[i];
+      if (key === 'submit') continue;
+      oeStepsConfirmed[key] = false;
+    }
+    if (stepKey === 'details') oeTitleConfirmed = false;
+  }
+
+  function updateOeStepSummaries() {
+    const title = document.getElementById('oe-title')?.value.trim() || '';
+    const types = getSelectedTypes();
+    const category = document.getElementById('oe-category')?.value.trim() || '';
+    const desc = document.getElementById('oe-desc')?.value.trim() || '';
+    const detailsText = document.getElementById('oe-summary-details-text');
+    if (detailsText) {
+      let html = '<strong>' + escHtml(title || 'Untitled') + '</strong>';
+      if (types.length) html += ' · ' + escHtml(typeLabelsList(types));
+      if (category) html += ' · ' + escHtml(categoryLabel(category));
+      if (desc) html += '<br><span>' + escHtml(desc.length > 120 ? desc.slice(0, 117) + '…' : desc) + '</span>';
+      detailsText.innerHTML = html;
+    }
+
+    const host = document.getElementById('oe-host')?.value.trim() || '';
+    const email = document.getElementById('oe-email')?.value.trim() || '';
+    const hostText = document.getElementById('oe-summary-host-text');
+    if (hostText) {
+      hostText.innerHTML =
+        '<strong>' +
+        escHtml(host || 'Company') +
+        '</strong> · ' +
+        escHtml(email || 'No email yet');
+    }
+
+    const region = getSelectedListingRegion();
+    const metaText = document.getElementById('oe-summary-meta-text');
+    if (metaText) {
+      const parts = [];
+      if (region) parts.push(region.label);
+      if (isAffiliateStyleListing()) {
+        const commission = document.getElementById('oe-commission')?.value.trim();
+        if (commission) parts.push(commission);
+      } else {
+        const investment = document.getElementById('oe-investment')?.value.trim();
+        if (investment) parts.push(investment);
+      }
+      const commitment = document.getElementById('oe-commitment')?.value.trim();
+      if (commitment) parts.push(commitment);
+      metaText.innerHTML =
+        parts.length > 0
+          ? '<strong>' + escHtml(parts[0]) + '</strong>' + (parts.slice(1).length ? ' · ' + escHtml(parts.slice(1).join(' · ')) : '')
+          : 'Card highlights added';
+    }
+
+    const photoText = document.getElementById('oe-summary-photo-text');
+    if (photoText) {
+      const hasLogo = hasListingImage(buildPayload('draft')) && (
+        logoFile ||
+        document.getElementById('oe-logo-url')?.value.trim() ||
+        (document.getElementById('oe-logo-preview') && !document.getElementById('oe-logo-preview').hidden)
+      );
+      const hasCover =
+        photoFile ||
+        document.getElementById('oe-photo-url')?.value.trim() ||
+        (document.getElementById('oe-photo-preview') && !document.getElementById('oe-photo-preview').hidden);
+      const bits = [];
+      if (hasLogo) bits.push('Logo');
+      if (hasCover) bits.push('Cover photo');
+      photoText.innerHTML =
+        bits.length > 0
+          ? '<strong>' + escHtml(bits.join(' + ')) + '</strong> added'
+          : '<strong>No cover photo</strong> — logo only is fine';
+    }
+  }
+
+  function setOeCardCollapsed(stepKey, collapsed) {
+    const card = document.querySelector('.oe-step-card[data-oe-step="' + stepKey + '"]');
+    const summary = document.getElementById('oe-summary-' + stepKey);
+    if (card) card.classList.toggle('is-collapsed', Boolean(collapsed));
+    if (summary) summary.hidden = !collapsed;
+  }
+
+  function syncOpportunitySteps(options) {
+    const revealAll = oeFlowRevealAll || Boolean(options && options.revealAll) || Boolean(editId);
+    updateOeStepSummaries();
+
+    const draftBar = document.getElementById('oe-draft-bar');
+    if (draftBar) draftBar.hidden = revealAll ? true : !stepTitleComplete();
+
+    const completeness = document.getElementById('oe-listing-completeness');
+    if (completeness) {
+      completeness.hidden = revealAll ? false : !oeTitleConfirmed;
+    }
+
+    const panelRest = document.getElementById('oe-panel-details-rest');
+    const nextTitle = document.getElementById('oe-next-title');
+    if (revealAll) {
+      oeTitleConfirmed = true;
+      oeStepsConfirmed.details = true;
+      oeStepsConfirmed.host = true;
+      oeStepsConfirmed.meta = true;
+      oeStepsConfirmed.photo = true;
+      if (panelRest) panelRest.hidden = false;
+      if (nextTitle) nextTitle.hidden = true;
+    } else {
+      if (panelRest) panelRest.hidden = !oeTitleConfirmed;
+      if (nextTitle) nextTitle.hidden = oeTitleConfirmed;
+    }
+
+    OE_STEP_ORDER.forEach(function (stepKey) {
+      const card = document.querySelector('.oe-step-card[data-oe-step="' + stepKey + '"]');
+      if (!card) return;
+
+      if (stepKey === 'details') {
+        card.hidden = false;
+        if (revealAll) {
+          setOeCardCollapsed('details', false);
+        } else {
+          setOeCardCollapsed('details', oeStepsConfirmed.details);
+        }
+        return;
+      }
+
+      if (stepKey === 'submit') {
+        card.hidden = revealAll ? false : !oeStepsConfirmed.photo;
+        return;
+      }
+
+      const stepIdx = OE_STEP_ORDER.indexOf(stepKey);
+      const prevKey = OE_STEP_ORDER[stepIdx - 1];
+      const prevConfirmed = revealAll || oeStepsConfirmed[prevKey];
+      card.hidden = !prevConfirmed;
+
+      if (revealAll) {
+        setOeCardCollapsed(stepKey, false);
+      } else {
+        setOeCardCollapsed(stepKey, oeStepsConfirmed[stepKey]);
+      }
+    });
+  }
+
+  function confirmOeStep(stepKey) {
+    if (stepKey === 'title') {
+      if (!stepTitleComplete()) {
+        showAlert('Enter an opportunity title (at least 2 characters).');
+        document.getElementById('oe-title')?.focus();
+        return false;
+      }
+      showAlert('');
+      oeTitleConfirmed = true;
+      syncOpportunitySteps();
+      document.getElementById('oe-field-type')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      return true;
+    }
+
+    if (stepKey === 'details') {
+      if (!stepTypeComplete()) {
+        showAlert('Select at least one opportunity type.');
+        return false;
+      }
+      if (!stepDescComplete()) {
+        showAlert('Add a short description (at least 8 characters) for the browse card.');
+        document.getElementById('oe-desc')?.focus();
+        return false;
+      }
+      oeStepsConfirmed.details = true;
+      showAlert('');
+      syncOpportunitySteps();
+      const hostCard = document.getElementById('oe-card-host');
+      if (hostCard) hostCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return true;
+    }
+
+    if (stepKey === 'host') {
+      if (!stepHostComplete()) {
+        showAlert('Enter your company name and a valid contact email.');
+        return false;
+      }
+      oeStepsConfirmed.host = true;
+      showAlert('');
+      syncOpportunitySteps();
+      document.getElementById('oe-card-meta')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return true;
+    }
+
+    if (stepKey === 'meta') {
+      if (!stepMetaComplete()) {
+        if (isAffiliateStyleListing()) {
+          showAlert('Enter commission, what you promote, region, and commitment.');
+        } else {
+          showAlert('Enter investment, region, and commitment.');
+        }
+        return false;
+      }
+      oeStepsConfirmed.meta = true;
+      showAlert('');
+      syncOpportunitySteps();
+      document.getElementById('oe-card-photo')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return true;
+    }
+
+    if (stepKey === 'photo') {
+      oeStepsConfirmed.photo = true;
+      showAlert('');
+      syncOpportunitySteps();
+      document.getElementById('oe-card-submit')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return true;
+    }
+
+    return false;
+  }
+
+  function changeOeStep(stepKey) {
+    resetOeStepsFrom(stepKey);
+    if (stepKey === 'details') {
+      oeTitleConfirmed = true;
+      oeStepsConfirmed.details = false;
+    }
+    syncOpportunitySteps();
+    const card = document.querySelector('.oe-step-card[data-oe-step="' + stepKey + '"]');
+    if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function bindOpportunitySteps() {
+    document.getElementById('oe-continue-title')?.addEventListener('click', function () {
+      confirmOeStep('title');
+    });
+    document.getElementById('oe-continue-details')?.addEventListener('click', function () {
+      confirmOeStep('details');
+    });
+    document.getElementById('oe-continue-host')?.addEventListener('click', function () {
+      confirmOeStep('host');
+    });
+    document.getElementById('oe-continue-meta')?.addEventListener('click', function () {
+      confirmOeStep('meta');
+    });
+    document.getElementById('oe-continue-photo')?.addEventListener('click', function () {
+      confirmOeStep('photo');
+    });
+
+    document.querySelectorAll('.oe-step-change').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        const stepKey = btn.getAttribute('data-oe-change');
+        if (stepKey) changeOeStep(stepKey);
+      });
+    });
+
+    const titleEl = document.getElementById('oe-title');
+    if (titleEl) {
+      titleEl.addEventListener('input', function () {
+        syncOpportunitySteps();
+      });
+    }
+
+    const summaryFields = [
+      'oe-desc',
+      'oe-about',
+      'oe-host',
+      'oe-email',
+      'oe-investment',
+      'oe-commission',
+      'oe-promote',
+      'oe-region',
+      'oe-commitment',
+      'oe-category',
+      'oe-logo-url',
+      'oe-photo-url',
+    ];
+    summaryFields.forEach(function (id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('input', syncOpportunitySteps);
+      el.addEventListener('change', syncOpportunitySteps);
+    });
+
+    document.querySelectorAll('#oe-type-group input[name="oe-type"]').forEach(function (input) {
+      input.addEventListener('change', function () {
+        reconcileTypeSelection(this);
+        maybeSuggestCategoryFromTypes();
+        syncAffiliateFormMode();
+        updateFcaAttestVisibility();
+        syncOpportunitySteps();
+      });
+    });
+
+    const stickyDraft = document.getElementById('oe-save-draft-sticky');
+    if (stickyDraft) {
+      stickyDraft.addEventListener('click', function () {
+        saveOpportunity({ publish: false });
+      });
+    }
+  }
+
   function refreshCompleteness() {
     const q = window.HubOpportunityQuality;
     const pctEl = document.getElementById('oe-completeness-pct');
@@ -861,6 +1277,7 @@
       }
     }
     syncVisualRequirement(false);
+    syncOpportunitySteps();
   }
 
   function bindCompletenessScan() {
@@ -1070,6 +1487,8 @@
       const validationError = validatePayload(payloadCheck, false);
       if (validationError) {
         showAlert(validationError);
+        oeFlowRevealAll = true;
+        syncOpportunitySteps({ revealAll: true });
         scrollToValidationField(validationError);
         syncVisualRequirement(true);
         return;
@@ -1085,6 +1504,8 @@
     const validationError = validatePayload(payload, !publish);
     if (validationError) {
       showAlert(validationError);
+      oeFlowRevealAll = true;
+      syncOpportunitySteps({ revealAll: true });
       scrollToValidationField(validationError);
       syncVisualRequirement(true);
       return;
@@ -1243,6 +1664,7 @@
     bindPhotoUpload();
     bindModerationScan();
     bindCompletenessScan();
+    bindOpportunitySteps();
     refreshModerationWarnings(false);
     refreshCompleteness();
 
@@ -1251,12 +1673,6 @@
       investmentEl.addEventListener('input', updateFcaAttestVisibility);
       investmentEl.addEventListener('change', updateFcaAttestVisibility);
     }
-    document.querySelectorAll('#oe-type-group input[name="oe-type"]').forEach((input) => {
-      input.addEventListener('change', function () {
-        syncAffiliateFormMode({ scroll: true });
-        updateFcaAttestVisibility();
-      });
-    });
     document.querySelectorAll('.oe-investment-chip').forEach((btn) => {
       btn.addEventListener('click', function () {
         const investmentEl = document.getElementById('oe-investment');
@@ -1283,6 +1699,7 @@
     }
     syncAffiliateFormMode();
     updateFcaAttestVisibility();
+    syncOpportunitySteps();
 
     const backLink = document.getElementById('oe-back-link');
     if (backLink && editId) {
@@ -1336,6 +1753,8 @@
         if (loading) loading.hide();
       }
     }
+
+    syncOpportunitySteps({ revealAll: !!editId });
 
     if (
       checkoutStart &&

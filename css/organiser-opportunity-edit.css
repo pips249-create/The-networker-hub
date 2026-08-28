@@ -1382,3 +1382,120 @@ body.oe-opportunity-drawer-open {
   font-size: 12px;
   color: #64748b;
 }
+
+@keyframes oe-step-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.oe-step-reveal {
+  animation: oe-step-in 0.28s ease;
+}
+
+.oe-step-next {
+  margin-top: 16px;
+  padding-top: 4px;
+}
+
+.oe-step-panel[hidden] {
+  display: none !important;
+}
+
+.oe-step-summary {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 0 0 4px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--opp-gold-pale);
+  border: 1px solid var(--opp-gold-border);
+}
+
+.oe-step-summary[hidden] {
+  display: none !important;
+}
+
+.oe-step-summary-copy {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--opp-text);
+  flex: 1 1 220px;
+}
+
+.oe-step-summary-copy strong {
+  font-weight: 700;
+  color: var(--opp-navy);
+}
+
+.oe-step-summary-copy span {
+  color: var(--opp-dark-gray);
+}
+
+.oe-step-card.is-collapsed > .ee-step-label,
+.oe-step-card.is-collapsed > h2,
+.oe-step-card.is-collapsed > .oe-step-body,
+.oe-step-card.is-collapsed > .oe-card-meta-lead {
+  display: none !important;
+}
+
+.oe-step-card.is-collapsed .oe-step-summary {
+  display: flex;
+  margin-bottom: 0;
+}
+
+.oe-step-body[hidden] {
+  display: none !important;
+}
+
+.oe-draft-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 0 0 16px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--opp-border);
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(13, 31, 60, 0.04);
+}
+
+.oe-draft-bar[hidden] {
+  display: none !important;
+}
+
+.oe-draft-bar-copy {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--opp-dark-gray);
+  flex: 1 1 200px;
+}
+
+.organiser-opportunity-edit-page .oe-step-card > .ee-step-label {
+  margin: 0 0 6px;
+  color: var(--opp-gold);
+}
+
+@media (max-width: 520px) {
+  .oe-draft-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .oe-draft-bar .ee-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}

@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260723" />
     <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260608c" />
-    <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260828regions1" />
+    <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260828flow1" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260825adminbadge1" />
   </head>
   <body class="opportunities-page organiser-event-edit-page organiser-opportunity-edit-page">
@@ -43,10 +43,16 @@
           For example, a Tropic Skincare ambassador role or a franchise territory.
         </p>
       </header>
+
+      <div class="oe-draft-bar" id="oe-draft-bar" hidden>
+        <p class="oe-draft-bar-copy">Save your progress any time — only a title is needed for a draft.</p>
+        <button type="button" class="ee-btn ee-btn-outline" id="oe-save-draft-sticky">Save draft</button>
+      </div>
+
       <div id="oe-alert" class="ee-alert" hidden></div>
       <div id="oe-moderation-warnings" class="oe-moderation-warnings" hidden role="status" aria-live="polite"></div>
 
-      <div class="oe-listing-completeness" id="oe-listing-completeness" aria-live="polite">
+      <div class="oe-listing-completeness" id="oe-listing-completeness" hidden aria-live="polite">
         <div class="oe-listing-completeness-head">
           <span class="oe-listing-completeness-label">Listing completeness</span>
           <strong class="oe-listing-completeness-pct" id="oe-completeness-pct">0%</strong>
@@ -58,195 +64,242 @@
       </div>
 
       <form id="oe-form">
-        <div class="ee-card" id="oe-card-details">
+        <div class="ee-card oe-step-card" id="oe-card-details" data-oe-step="details">
+          <p class="ee-step-label">Step 1</p>
           <h2>Opportunity details</h2>
-          <div class="ee-field">
-            <label for="oe-title">Opportunity title</label>
-            <input type="text" id="oe-title" required placeholder="e.g. Tropic Skincare — Ambassador Programme" />
+          <div class="oe-step-summary" id="oe-summary-details" hidden>
+            <p class="oe-step-summary-copy" id="oe-summary-details-text"></p>
+            <button type="button" class="ee-btn ee-btn-outline oe-step-change" data-oe-change="details">Change</button>
           </div>
-          <div class="ee-field">
-            <p class="ee-label-block" id="oe-type-label">Opportunity type</p>
-            <p class="ee-hint" id="oe-type-hint">Pick the type that best describes your listing. Tick more than one only if it genuinely fits multiple filters.</p>
-            <div class="oe-type-group" id="oe-type-group" role="group" aria-labelledby="oe-type-label" aria-describedby="oe-type-hint oe-type-mode-note">
-              <label class="oe-type-option"><input type="checkbox" name="oe-type" value="franchise" /> Franchise</label>
-              <label class="oe-type-option"><input type="checkbox" name="oe-type" value="side-hustle" /> Side hustle</label>
-              <label class="oe-type-option"><input type="checkbox" name="oe-type" value="partnership" /> Partnership</label>
-              <label class="oe-type-option"><input type="checkbox" name="oe-type" value="affiliate" /> Affiliate</label>
-              <label class="oe-type-option"><input type="checkbox" name="oe-type" value="networking" /> Networking group / Ambassador</label>
-              <label class="oe-type-option"><input type="checkbox" name="oe-type" value="network-marketing" /> Network marketing (product-selling only)</label>
-              <label class="oe-type-option"><input type="checkbox" name="oe-type" value="business-opportunity" /> Business opportunity</label>
-              <label class="oe-type-option"><input type="checkbox" name="oe-type" value="distributorship" /> Distributorship / Reseller</label>
+          <div class="oe-step-body" id="oe-body-details">
+            <div class="ee-field">
+              <label for="oe-title">Opportunity title</label>
+              <input type="text" id="oe-title" required placeholder="e.g. Tropic Skincare — Ambassador Programme" />
             </div>
-            <p class="oe-type-mode-note" id="oe-type-mode-note" hidden></p>
-          </div>
-          <div class="ee-field">
-            <label for="oe-category">Category</label>
-            <select id="oe-category">
-              <option value="">Select category…</option>
-              <option value="cleaning">Cleaning</option>
-              <option value="food">Food &amp; Drink</option>
-              <option value="tech">Tech &amp; Digital</option>
-              <option value="health">Health &amp; Fitness</option>
-              <option value="beauty">Beauty &amp; Wellness</option>
-              <option value="property">Property</option>
-              <option value="education">Education &amp; Coaching</option>
-              <option value="finance">Finance &amp; Admin</option>
-              <option value="pets">Pets &amp; Animals</option>
-              <option value="mlm">Network marketing</option>
-              <option value="general">Other</option>
-            </select>
-          </div>
-          <div class="ee-field">
-            <label for="oe-desc">Short description</label>
-            <p class="ee-hint">Shown on the browse card — keep it concise and keyword-rich.</p>
-            <textarea id="oe-desc" rows="4" maxlength="400" required placeholder="What the opportunity is and who it suits — e.g. Flexible skincare business you can run around family commitments."></textarea>
-          </div>
-          <div class="ee-field">
-            <label for="oe-about">Full description</label>
-            <p class="ee-hint">Shown on the detail page. Separate paragraphs with a blank line.</p>
-            <textarea id="oe-about" rows="6" maxlength="3000" placeholder="Tell people what's included, what support you offer, and what you're looking for in a partner or ambassador."></textarea>
+            <div class="oe-step-next" id="oe-next-title">
+              <button type="button" class="ee-btn ee-btn-gold" id="oe-continue-title">Continue →</button>
+            </div>
+            <div class="oe-step-panel" id="oe-panel-details-rest" hidden>
+              <div class="ee-field" id="oe-field-type">
+                <p class="ee-label-block" id="oe-type-label">Opportunity type</p>
+                <p class="ee-hint" id="oe-type-hint">Pick the type that best describes your listing. You can combine investment-style types (franchise, partnership, etc.) if they genuinely apply. <strong>Affiliate is a separate track</strong> — select it on its own.</p>
+                <div class="oe-type-group" id="oe-type-group" role="group" aria-labelledby="oe-type-label" aria-describedby="oe-type-hint oe-type-mode-note">
+                  <label class="oe-type-option"><input type="checkbox" name="oe-type" value="franchise" /> Franchise</label>
+                  <label class="oe-type-option"><input type="checkbox" name="oe-type" value="side-hustle" /> Side hustle</label>
+                  <label class="oe-type-option"><input type="checkbox" name="oe-type" value="partnership" /> Partnership</label>
+                  <label class="oe-type-option"><input type="checkbox" name="oe-type" value="affiliate" /> Affiliate</label>
+                  <label class="oe-type-option"><input type="checkbox" name="oe-type" value="networking" /> Networking group / Ambassador</label>
+                  <label class="oe-type-option"><input type="checkbox" name="oe-type" value="network-marketing" /> Network marketing (product-selling only)</label>
+                  <label class="oe-type-option"><input type="checkbox" name="oe-type" value="business-opportunity" /> Business opportunity</label>
+                  <label class="oe-type-option"><input type="checkbox" name="oe-type" value="distributorship" /> Distributorship / Reseller</label>
+                </div>
+                <p class="oe-type-mode-note" id="oe-type-mode-note" hidden></p>
+              </div>
+              <div class="ee-field" id="oe-field-category">
+                <label for="oe-category">Category</label>
+                <p class="ee-hint">Helps people find your listing in browse — optional but recommended.</p>
+                <select id="oe-category">
+                  <option value="">Select category…</option>
+                  <option value="cleaning">Cleaning</option>
+                  <option value="food">Food &amp; Drink</option>
+                  <option value="tech">Tech &amp; Digital</option>
+                  <option value="health">Health &amp; Fitness</option>
+                  <option value="beauty">Beauty &amp; Wellness</option>
+                  <option value="property">Property</option>
+                  <option value="education">Education &amp; Coaching</option>
+                  <option value="finance">Finance &amp; Admin</option>
+                  <option value="pets">Pets &amp; Animals</option>
+                  <option value="mlm">Network marketing</option>
+                  <option value="general">Other</option>
+                </select>
+              </div>
+              <div class="ee-field" id="oe-field-desc">
+                <label for="oe-desc">Short description</label>
+                <p class="ee-hint">Shown on the browse card — keep it concise and keyword-rich.</p>
+                <textarea id="oe-desc" rows="4" maxlength="400" required placeholder="What the opportunity is and who it suits — e.g. Flexible skincare business you can run around family commitments."></textarea>
+              </div>
+              <div class="ee-field" id="oe-field-about">
+                <label for="oe-about">Full description</label>
+                <p class="ee-hint">Shown on the detail page. Separate paragraphs with a blank line.</p>
+                <textarea id="oe-about" rows="6" maxlength="3000" placeholder="Tell people what's included, what support you offer, and what you're looking for in a partner or ambassador."></textarea>
+              </div>
+              <div class="oe-step-next">
+                <button type="button" class="ee-btn ee-btn-gold" id="oe-continue-details">Continue →</button>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div class="ee-card" id="oe-card-host">
+        <div class="ee-card oe-step-card" id="oe-card-host" data-oe-step="host" hidden>
+          <p class="ee-step-label">Step 2</p>
           <h2>Listed by</h2>
-          <div class="ee-field">
-            <label for="oe-host">Business / company name</label>
-            <input type="text" id="oe-host" required placeholder="e.g. Tropic Skincare" />
+          <div class="oe-step-summary" id="oe-summary-host" hidden>
+            <p class="oe-step-summary-copy" id="oe-summary-host-text"></p>
+            <button type="button" class="ee-btn ee-btn-outline oe-step-change" data-oe-change="host">Change</button>
           </div>
-          <div class="ee-field">
-            <label for="oe-companies-house">Companies House number <span class="ee-optional">(optional)</span></label>
-            <p class="ee-hint" style="margin: 0 0 8px">
-              If your business is registered, adding your company number helps browsers verify who they are enquiring with. The Networker UK does not verify company status.
-            </p>
-            <input type="text" id="oe-companies-house" maxlength="12" placeholder="e.g. 12345678" autocapitalize="characters" />
-          </div>
-          <div class="ee-field">
-            <label for="oe-email">Contact email for enquiries</label>
-            <input type="email" id="oe-email" required placeholder="you@company.co.uk" />
-            <p class="ee-hint">Interested members contact you directly at this address.</p>
-          </div>
-          <div class="ee-field" id="oe-visual-field">
-            <label>Business logo or cover photo</label>
-            <p class="ee-hint" id="oe-visual-hint">At least one image is required — a square logo, a cover photo, or both.</p>
-            <p class="oe-visual-requirement" id="oe-visual-requirement" hidden>Add a logo or cover photo before submitting.</p>
-          </div>
-          <div class="ee-field">
-            <label>Business logo</label>
-            <p class="ee-hint">Square logo shown beside your company name on cards and the detail page.</p>
-            <div class="ee-upload-zone oe-logo-upload" id="oe-logo-zone" tabindex="0" role="button" aria-label="Upload business logo">
-              <input type="file" id="oe-logo-file" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
-              <div class="ee-upload-preview" id="oe-logo-preview" hidden>
-                <img id="oe-logo-preview-img" alt="" width="72" height="72" />
-                <button type="button" class="ee-btn ee-btn-outline" id="oe-logo-clear" style="font-size: 11px; padding: 6px 10px">Remove</button>
-              </div>
-              <div class="ee-upload-placeholder" id="oe-logo-placeholder">
-                <strong>Upload business logo</strong>
-                <span>PNG or JPG — large files are compressed automatically — or paste a URL below</span>
-              </div>
-            </div>
-            <input type="url" id="oe-logo-url" placeholder="https://… (or upload above)" style="margin-top: 10px" />
-          </div>
-        </div>
-
-          <div class="ee-card" id="oe-card-meta">
-          <h2 id="oe-card-meta-heading">Card highlights</h2>
-          <p class="ee-hint" id="oe-card-meta-lead" style="margin-top: 0">These appear in the meta row on your listing card.</p>
-          <div id="oe-fields-capital">
+          <div class="oe-step-body" id="oe-body-host">
             <div class="ee-field">
-              <label for="oe-investment">Investment required</label>
-              <div class="oe-investment-shortcuts" id="oe-investment-shortcuts">
-                <button type="button" class="oe-investment-chip" data-investment-value="£0">No upfront cost</button>
-                <button type="button" class="oe-investment-chip" data-investment-value="On request">On request</button>
-              </div>
-              <input type="text" id="oe-investment" placeholder="e.g. £0 or £9,500" />
+              <label for="oe-host">Business / company name</label>
+              <input type="text" id="oe-host" required placeholder="e.g. Tropic Skincare" />
             </div>
             <div class="ee-field">
-              <label for="oe-investment-includes">What&apos;s included in this investment? <span class="ee-optional">(optional)</span></label>
+              <label for="oe-companies-house">Companies House number <span class="ee-optional">(optional)</span></label>
               <p class="ee-hint" style="margin: 0 0 8px">
-                Help browsers trust your listing — one item per line (e.g. training, starter kit, insurance registration).
-                The Networker UK does not verify this breakdown.
+                If your business is registered, adding your company number helps browsers verify who they are enquiring with. The Networker UK does not verify company status.
               </p>
-              <textarea
-                id="oe-investment-includes"
-                rows="4"
-                maxlength="600"
-                placeholder="Training&#10;Starter kit&#10;Insurance registration&#10;Marketing materials"
-              ></textarea>
-            </div>
-          </div>
-          <div id="oe-fields-affiliate" hidden>
-            <p class="ee-hint" style="margin-top: 0">
-              Affiliate listings focus on commission and what partners promote — not franchise-style investment.
-            </p>
-            <div class="ee-field">
-              <label for="oe-commission">Commission</label>
-              <input type="text" id="oe-commission" placeholder="e.g. 20% recurring, or £50 per sale" />
+              <input type="text" id="oe-companies-house" maxlength="12" placeholder="e.g. 12345678" autocapitalize="characters" />
             </div>
             <div class="ee-field">
-              <label for="oe-promote">What you promote</label>
-              <input type="text" id="oe-promote" maxlength="160" placeholder="e.g. White-label web &amp; SEO for SMEs" />
+              <label for="oe-email">Contact email for enquiries</label>
+              <input type="email" id="oe-email" required placeholder="you@company.co.uk" />
+              <p class="ee-hint">Interested members contact you directly at this address.</p>
+            </div>
+            <div class="ee-field" id="oe-visual-field">
+              <label>Business logo or cover photo</label>
+              <p class="ee-hint" id="oe-visual-hint">At least one image is required — a square logo, a cover photo, or both.</p>
+              <p class="oe-visual-requirement" id="oe-visual-requirement" hidden>Add a logo or cover photo before submitting.</p>
             </div>
             <div class="ee-field">
-              <label for="oe-suits">Who it suits <span class="ee-optional">(optional)</span></label>
-              <input type="text" id="oe-suits" maxlength="160" placeholder="e.g. Networkers who already introduce business owners" />
+              <label>Business logo</label>
+              <p class="ee-hint">Square logo shown beside your company name on cards and the detail page.</p>
+              <div class="ee-upload-zone oe-logo-upload" id="oe-logo-zone" tabindex="0" role="button" aria-label="Upload business logo">
+                <input type="file" id="oe-logo-file" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
+                <div class="ee-upload-preview" id="oe-logo-preview" hidden>
+                  <img id="oe-logo-preview-img" alt="" width="72" height="72" />
+                  <button type="button" class="ee-btn ee-btn-outline" id="oe-logo-clear" style="font-size: 11px; padding: 6px 10px">Remove</button>
+                </div>
+                <div class="ee-upload-placeholder" id="oe-logo-placeholder">
+                  <strong>Upload business logo</strong>
+                  <span>PNG or JPG — large files are compressed automatically — or paste a URL below</span>
+                </div>
+              </div>
+              <input type="url" id="oe-logo-url" placeholder="https://… (or upload above)" style="margin-top: 10px" />
             </div>
-          </div>
-          <div class="ee-field" id="oe-location-field">
-            <label for="oe-region">Region</label>
-            <p class="ee-hint">Required — matches how browsers filter opportunities. Pick the widest area that applies.</p>
-            <select id="oe-region" required>
-              <option value="">Select region…</option>
-            </select>
-          </div>
-          <div class="ee-field">
-            <label for="oe-location-detail">Specific area <span class="ee-optional">(optional)</span></label>
-            <p class="ee-hint">Add detail if needed — e.g. &ldquo;North Manchester only&rdquo; or &ldquo;3 territories left&rdquo;.</p>
-            <input
-              type="text"
-              id="oe-location-detail"
-              maxlength="120"
-              placeholder="e.g. North Manchester, or leave blank for the whole region"
-            />
-          </div>
-          <div class="ee-field">
-            <label for="oe-commitment">Commitment</label>
-            <select id="oe-commitment" required>
-              <option value="">Select…</option>
-              <option value="Full-time">Full-time</option>
-              <option value="Part-time / Flexible">Part-time / Flexible</option>
-              <option value="Event-based">Event-based</option>
-            </select>
-          </div>
-          <div class="ee-field">
-            <label for="oe-extra-key">Extra highlight (optional)</label>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px">
-              <input type="text" id="oe-extra-key" placeholder="e.g. Territories left" />
-              <input type="text" id="oe-extra-val" placeholder="e.g. 6" />
+            <div class="oe-step-next">
+              <button type="button" class="ee-btn ee-btn-gold" id="oe-continue-host">Continue →</button>
             </div>
           </div>
         </div>
 
-        <div class="ee-card" id="oe-card-photo">
+        <div class="ee-card oe-step-card" id="oe-card-meta" data-oe-step="meta" hidden>
+          <p class="ee-step-label">Step 3</p>
+          <h2 id="oe-card-meta-heading">Card highlights</h2>
+          <div class="oe-step-summary" id="oe-summary-meta" hidden>
+            <p class="oe-step-summary-copy" id="oe-summary-meta-text"></p>
+            <button type="button" class="ee-btn ee-btn-outline oe-step-change" data-oe-change="meta">Change</button>
+          </div>
+          <div class="oe-step-body" id="oe-body-meta">
+            <p class="ee-hint" id="oe-card-meta-lead" style="margin-top: 0">These appear in the meta row on your listing card.</p>
+            <div id="oe-fields-capital">
+              <div class="ee-field">
+                <label for="oe-investment">Investment required</label>
+                <div class="oe-investment-shortcuts" id="oe-investment-shortcuts">
+                  <button type="button" class="oe-investment-chip" data-investment-value="£0">No upfront cost</button>
+                  <button type="button" class="oe-investment-chip" data-investment-value="On request">On request</button>
+                </div>
+                <input type="text" id="oe-investment" placeholder="e.g. £0 or £9,500" />
+              </div>
+              <div class="ee-field">
+                <label for="oe-investment-includes">What&apos;s included in this investment? <span class="ee-optional">(optional)</span></label>
+                <p class="ee-hint" style="margin: 0 0 8px">
+                  Help browsers trust your listing — one item per line (e.g. training, starter kit, insurance registration).
+                  The Networker UK does not verify this breakdown.
+                </p>
+                <textarea
+                  id="oe-investment-includes"
+                  rows="4"
+                  maxlength="600"
+                  placeholder="Training&#10;Starter kit&#10;Insurance registration&#10;Marketing materials"
+                ></textarea>
+              </div>
+            </div>
+            <div id="oe-fields-affiliate" hidden>
+              <p class="ee-hint" style="margin-top: 0">
+                Affiliate listings focus on commission and what partners promote — not franchise-style investment.
+              </p>
+              <div class="ee-field">
+                <label for="oe-commission">Commission</label>
+                <input type="text" id="oe-commission" placeholder="e.g. 20% recurring, or £50 per sale" />
+              </div>
+              <div class="ee-field">
+                <label for="oe-promote">What you promote</label>
+                <input type="text" id="oe-promote" maxlength="160" placeholder="e.g. White-label web &amp; SEO for SMEs" />
+              </div>
+              <div class="ee-field">
+                <label for="oe-suits">Who it suits <span class="ee-optional">(optional)</span></label>
+                <input type="text" id="oe-suits" maxlength="160" placeholder="e.g. Networkers who already introduce business owners" />
+              </div>
+            </div>
+            <div class="ee-field" id="oe-location-field">
+              <label for="oe-region">Region</label>
+              <p class="ee-hint">Required — matches how browsers filter opportunities. Pick the widest area that applies.</p>
+              <select id="oe-region" required>
+                <option value="">Select region…</option>
+              </select>
+            </div>
+            <div class="ee-field">
+              <label for="oe-location-detail">Specific area <span class="ee-optional">(optional)</span></label>
+              <p class="ee-hint">Add detail if needed — e.g. &ldquo;North Manchester only&rdquo; or &ldquo;3 territories left&rdquo;.</p>
+              <input
+                type="text"
+                id="oe-location-detail"
+                maxlength="120"
+                placeholder="e.g. North Manchester, or leave blank for the whole region"
+              />
+            </div>
+            <div class="ee-field">
+              <label for="oe-commitment">Commitment</label>
+              <select id="oe-commitment" required>
+                <option value="">Select…</option>
+                <option value="Full-time">Full-time</option>
+                <option value="Part-time / Flexible">Part-time / Flexible</option>
+                <option value="Event-based">Event-based</option>
+              </select>
+            </div>
+            <div class="ee-field">
+              <label for="oe-extra-key">Extra highlight (optional)</label>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px">
+                <input type="text" id="oe-extra-key" placeholder="e.g. Territories left" />
+                <input type="text" id="oe-extra-val" placeholder="e.g. 6" />
+              </div>
+            </div>
+            <div class="oe-step-next">
+              <button type="button" class="ee-btn ee-btn-gold" id="oe-continue-meta">Continue →</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="ee-card oe-step-card" id="oe-card-photo" data-oe-step="photo" hidden>
+          <p class="ee-step-label">Step 4</p>
           <h2>Cover photo</h2>
-          <div class="ee-field">
-            <p class="auth-lede" style="margin: 0 0 8px; font-size: 13px">Large photo on your detail page and listing card — separate from your business logo. Logo or cover photo required (both is ideal).</p>
-            <div class="ee-upload-zone" id="oe-photo-zone" tabindex="0" role="button" aria-label="Upload opportunity image">
-              <input type="file" id="oe-photo-file" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
-              <div class="ee-upload-preview" id="oe-photo-preview" hidden>
-                <img id="oe-photo-preview-img" alt="" width="96" height="72" />
-                <button type="button" class="ee-btn ee-btn-outline" id="oe-photo-clear" style="font-size: 11px; padding: 6px 10px">Remove</button>
+          <div class="oe-step-summary" id="oe-summary-photo" hidden>
+            <p class="oe-step-summary-copy" id="oe-summary-photo-text"></p>
+            <button type="button" class="ee-btn ee-btn-outline oe-step-change" data-oe-change="photo">Change</button>
+          </div>
+          <div class="oe-step-body" id="oe-body-photo">
+            <div class="ee-field">
+              <p class="auth-lede" style="margin: 0 0 8px; font-size: 13px">Large photo on your detail page and listing card — separate from your business logo. Logo or cover photo required (both is ideal).</p>
+              <div class="ee-upload-zone" id="oe-photo-zone" tabindex="0" role="button" aria-label="Upload opportunity image">
+                <input type="file" id="oe-photo-file" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
+                <div class="ee-upload-preview" id="oe-photo-preview" hidden>
+                  <img id="oe-photo-preview-img" alt="" width="96" height="72" />
+                  <button type="button" class="ee-btn ee-btn-outline" id="oe-photo-clear" style="font-size: 11px; padding: 6px 10px">Remove</button>
+                </div>
+                <div class="ee-upload-placeholder" id="oe-photo-placeholder">
+                  <strong>Upload cover image</strong>
+                  <span>PNG or JPG — large files are compressed automatically — or paste a URL below</span>
+                </div>
               </div>
-              <div class="ee-upload-placeholder" id="oe-photo-placeholder">
-                <strong>Upload cover image</strong>
-                <span>PNG or JPG — large files are compressed automatically — or paste a URL below</span>
-              </div>
+              <input type="url" id="oe-photo-url" placeholder="https://… (optional if you uploaded a file)" style="margin-top: 10px" />
             </div>
-            <input type="url" id="oe-photo-url" placeholder="https://… (optional if you uploaded a file)" style="margin-top: 10px" />
+            <div class="oe-step-next">
+              <button type="button" class="ee-btn ee-btn-gold" id="oe-continue-photo">Continue →</button>
+            </div>
           </div>
         </div>
 
-        <div class="ee-card ee-card-actions">
+        <div class="ee-card ee-card-actions oe-step-card" id="oe-card-submit" data-oe-step="submit" hidden>
+          <p class="ee-step-label">Step 5</p>
           <div class="oe-listing-payment" id="oe-listing-payment">
             <h2 class="oe-listing-payment-title">Listing fee</h2>
             <p class="oe-listing-payment-lead" id="oe-listing-payment-lead">
@@ -288,6 +341,6 @@
     <script src="../js/organiser-terms.js?v=20260828oppterms1" data-root="../" data-context="opportunity" defer></script>
     <script src="../js/opportunity-moderation-scan.js?v=20260827aff2" defer></script>
     <script src="../js/opportunity-listing-quality.js?v=20260825aff1" defer></script>
-    <script src="../js/organiser-opportunity-edit.js?v=20260828regions2" defer></script>
+    <script src="../js/organiser-opportunity-edit.js?v=20260828flow1" defer></script>
   </body>
 </html>
