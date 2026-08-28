@@ -533,8 +533,12 @@
       (currentOpportunity && currentOpportunity.approvalStatus) || ''
     ).trim();
     if (approval === 'Approved') return 'Pay to go live';
-    if (approval === 'Pending Review') return 'Update submission';
     if (approval === 'Rejected') return 'Resubmit for review';
+    if (approval === 'Pending Review') {
+      return currentOpportunity && currentOpportunity.reviewSubmittedAt
+        ? 'Update submission'
+        : 'Submit for review';
+    }
     return 'Submit for review';
   }
 
@@ -2100,6 +2104,7 @@
     appendListingMediaUrls(payload);
     if (publish && !hasActiveListing) {
       payload.submitForReview = true;
+      payload.action = 'submit_for_review';
     }
     const validationError = validatePayload(payload, !publish);
     if (validationError) {
@@ -2174,7 +2179,9 @@
             ? 'Opportunity listings are not available yet — contact support if this persists.'
             : err === 'cover_upload_failed'
               ? 'Your cover photo could not be uploaded. Try a smaller JPG or PNG (under 2MB) and save again.'
-              : res.data.message || err || 'Could not save opportunity';
+              : err === 'review_submission_failed'
+                ? 'Your listing saved but could not be queued for review. Please try submitting again.'
+                : res.data.message || err || 'Could not save opportunity';
         showAlert(msg);
         return;
       }
@@ -2185,6 +2192,13 @@
       showStatusBadge(opportunity);
       listingPaymentPanelVisible();
       syncPrimarySubmitButton();
+
+      if (publish && !hasActiveListing && !opportunity.reviewSubmittedAt) {
+        showAlert(
+          'Your listing saved but is not in the review queue yet. Click Submit for review again — if this keeps happening, contact support.'
+        );
+        return;
+      }
 
       if (!publish) {
         if (!editId && opportunity.id) {

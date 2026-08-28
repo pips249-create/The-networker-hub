@@ -22551,7 +22551,7 @@
 
   function ensureOpportunityCleanupPanelLoaded(id) {
     var panel = opportunityCleanupPanelEl(id);
-    if (!panel || panel.dataset.loaded === '1') return panel;
+    if (!panel) return panel;
     var opp = findOpportunityCleanupRecord(id);
     var cell = panel.querySelector('td');
     if (!opp || !cell) return panel;
@@ -22560,9 +22560,12 @@
       bindOpportunityReviewCoverFallbacks(cell, opp);
       var adminEditDetails = panel.querySelector('.opp-review-admin-edit');
       if (adminEditDetails) {
-        adminEditDetails.addEventListener('toggle', function () {
-          if (adminEditDetails.open) ensureOpportunityAdminEditLoaded(id);
-        });
+        if (!adminEditDetails.dataset.boundReviewReload) {
+          adminEditDetails.dataset.boundReviewReload = '1';
+          adminEditDetails.addEventListener('toggle', function () {
+            if (adminEditDetails.open) ensureOpportunityAdminEditLoaded(id);
+          });
+        }
       }
       panel.dataset.loaded = '1';
     } catch (err) {

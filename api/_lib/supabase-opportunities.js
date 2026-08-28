@@ -8,6 +8,7 @@ const { resolveOrganiserAccess } = require('./supabase-organiser-access');
 const {
   effectiveReviewSubmittedAt,
   isOpportunitySubmittedForReview,
+  mergeReviewSubmittedMeta,
   stampOpportunityReviewSubmission,
 } = require('./opportunity-review-queue');
 const {
@@ -681,11 +682,29 @@ async function getPublishedOpportunityBySlug(slug) {
   return rowToListing(hit);
 }
 
-async function getOpportunityById(id) {
+async function getOpportunityRowById(id) {
   const sb = getSupabaseAdmin();
   const { data, error } = await sb.from('business_opportunities').select('*').eq('id', id).maybeSingle();
   if (error) throw new Error(error.message);
-  return rowToListing(data);
+  return data || null;
+}
+
+async function getOpportunityById(id) {
+  return rowToListing(await getOpportunityRowById(id));
+}
+
+async function persistOpportunityReviewSubmission(sb, id, opts) {
+  const existing = opts && opts.existing ? opts.existing : null;
+  const saved = opts && opts.saved ? opts.saved : null;
+  const at = new Date().toISOString();
+  const patch = {
+    review_submitted_at: at,
+    approval_status: 'Pending Review',
+    status: existing && existing.listingPaymentActive ? 'published' : 'draft',
+    meta: mergeReviewSubmittedMeta((saved && saved.meta) || [], at),
+    updated_at: at,
+  };
+  return writeOpportunityRow(sb, 'update', patch, id);
 }
 
 async function listOwnedOpportunityRowsForSession(session, select) {
@@ -779,15 +798,20 @@ async function createOpportunity(payload) {
     currentSlug: null,
   });
   const data = await writeOpportunityRow(sb, 'insert', row);
-  const listing = rowToListing(data);
+  let saved = data;
+  if (submitForReview) {
+    saved = await persistOpportunityReviewSubmission(sb, data.id, { saved: data });
+  }
+  const listing = rowToListing(saved);
   if (submitForReview) await sendPendingReviewEmailSafe(listing);
   return listing;
 }
 
 async function updateOpportunity(id, payload) {
   const sb = getSupabaseAdmin();
-  const existing = await getOpportunityById(id);
-  const submitForReview = Boolean(payload.submitForReview);
+  const existingRow = await getOpportunityRowById(id);
+  const existing = rowToListing(existingRow);
+  const submitForReview = Boolean(payload.submitForReview || payload.action === 'submit_for_review');
   const nextStatus = normalizeStatus(payload.listingStatus || payload.status || existing?.status);
   if (nextStatus === 'published' || submitForReview) assertOpportunityListingCompliance(payload);
   const row = await buildOpportunityRow(payload, id, 'update');
@@ -797,29 +821,33 @@ async function updateOpportunity(id, payload) {
     currentSlug: existing?.slug,
   });
   if (submitForReview) {
-    // Review-then-pay: queue for admin without publishing or charging.
     row.status = existing?.listingPaymentActive ? 'published' : 'draft';
     row.approval_status = 'Pending Review';
-    if (!effectiveReviewSubmittedAt(existing)) {
-      stampOpportunityReviewSubmission(row);
-    }
+    stampOpportunityReviewSubmission(row);
   } else if (row.status === 'published') {
     if (existing?.approvalStatus === 'Approved') {
       delete row.approval_status;
     } else {
       row.approval_status = 'Pending Review';
-      if (!effectiveReviewSubmittedAt(existing)) {
+      if (!effectiveReviewSubmittedAt(existingRow)) {
         stampOpportunityReviewSubmission(row);
       }
     }
   }
-  if (effectiveReviewSubmittedAt(existing) && !submitForReview) {
-    stampOpportunityReviewSubmission(row, effectiveReviewSubmittedAt(existing));
+  if (effectiveReviewSubmittedAt(existingRow) && !submitForReview) {
+    stampOpportunityReviewSubmission(row, effectiveReviewSubmittedAt(existingRow));
   }
   const wasAlreadyQueued =
     String(existing?.approvalStatus || '') === 'Pending Review' &&
-    isOpportunitySubmittedForReview(existing);
-  const data = await writeOpportunityRow(sb, 'update', row, id);
+    isOpportunitySubmittedForReview(existingRow);
+  let data = await writeOpportunityRow(sb, 'update', row, id);
+
+  if (submitForReview) {
+    data = await persistOpportunityReviewSubmission(sb, id, { existing, saved: data });
+    if (!effectiveReviewSubmittedAt(data)) {
+      throw new Error('review_submission_failed');
+    }
+  }
 
   if (data.status === 'published') {
     const autoReject = await maybeAutoRejectOpportunity(data);
