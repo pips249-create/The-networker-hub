@@ -357,10 +357,10 @@ async function replaceOpenDaysForOpportunity(opportunityId, openDaysInput, sessi
 }
 
 async function createOpenDayInterest(input) {
-  const { arePublicEnquiriesOpen } = require('./soft-launch');
-  if (!arePublicEnquiriesOpen()) {
-    const err = new Error('enquiries_closed');
-    err.code = 'enquiries_closed';
+  const { areOpenDayRegistrationsOpen } = require('./soft-launch');
+  if (!areOpenDayRegistrationsOpen()) {
+    const err = new Error('open_day_registrations_closed');
+    err.code = 'open_day_registrations_closed';
     throw err;
   }
 

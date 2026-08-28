@@ -11239,6 +11239,30 @@
       openDaysBadge.hidden = openDayNew < 1;
       openDaysBadge.textContent = String(openDayNew);
     }
+    const openDaysCard = document.getElementById('stat-opp-open-days-card');
+    if (openDaysCard) {
+      openDaysCard.classList.toggle('is-has-new', openDayNew > 0);
+      openDaysCard.setAttribute(
+        'aria-label',
+        openDayNew > 0
+          ? 'Open day registrations — ' + openDayNew + ' new. View open days.'
+          : 'Open day registrations — view open days.'
+      );
+    }
+  }
+
+  function bindBusinessHubSummaryNav() {
+    const summary = document.getElementById('org-business-hub-summary');
+    if (!summary || summary.dataset.boundStatNav === '1') return;
+    summary.dataset.boundStatNav = '1';
+    summary.addEventListener('click', function (e) {
+      const btn = e.target.closest('[data-business-stat-nav]');
+      if (!btn) return;
+      const sub = btn.getAttribute('data-business-stat-nav');
+      if (!sub) return;
+      setRoute('business-overview');
+      setBusinessSub(sub);
+    });
   }
 
   function renderOpportunityInsightsEmpty() {

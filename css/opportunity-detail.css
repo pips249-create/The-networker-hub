@@ -1122,16 +1122,36 @@ body.opp-claim-invite-active .opp-detail-breadcrumb {
 }
 
 .opportunity-detail-page .opp-open-day-cal {
-  display: block;
-  margin-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  margin-top: 8px;
   font-size: 13px;
   font-weight: 500;
+}
+
+.opportunity-detail-page .opp-open-day-cal-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #635c5e;
+  margin-right: 2px;
+}
+
+.opportunity-detail-page .opp-open-day-cal-sep {
+  color: rgba(28, 32, 64, 0.35);
+  user-select: none;
 }
 
 .opportunity-detail-page .opp-open-day-cal-link {
   color: var(--opp-gold-deep, #9a7209);
   text-decoration: underline;
   text-underline-offset: 2px;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
 }
 
 .opportunity-detail-page .opp-open-day-cal-link:hover {

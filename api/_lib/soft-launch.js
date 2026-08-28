@@ -7,6 +7,8 @@
  *   PUBLIC_TICKET_SALES_FORCE_CLOSED=true
  *   PUBLIC_ENQUIRIES_FORCE_OPEN=true
  *   PUBLIC_ENQUIRIES_FORCE_CLOSED=true
+ *   PUBLIC_OPEN_DAY_REGISTRATIONS_FORCE_OPEN=true
+ *   PUBLIC_OPEN_DAY_REGISTRATIONS_FORCE_CLOSED=true
  */
 
 const PUBLIC_BROWSE_OPENS_AT = '2026-08-25T00:00:00+01:00';
@@ -61,6 +63,19 @@ function publicEnquiriesClosedMessage() {
   return 'Opportunity enquiries open on 1 September 2026. You can browse listings now and enquire when they go live.';
 }
 
+/**
+ * Open day interest registrations — open with public browse (25 Aug), before general enquiries.
+ */
+function areOpenDayRegistrationsOpen(nowMs) {
+  if (parseEnvFlag('PUBLIC_OPEN_DAY_REGISTRATIONS_FORCE_CLOSED')) return false;
+  if (parseEnvFlag('PUBLIC_OPEN_DAY_REGISTRATIONS_FORCE_OPEN')) return true;
+  return isPublicBrowseOpen(nowMs);
+}
+
+function publicOpenDayRegistrationsClosedMessage() {
+  return 'Open day registration opens when public browsing starts on 25 August 2026. You can browse listings now.';
+}
+
 function softLaunchPublicMeta(nowMs) {
   const now = nowMs == null ? Date.now() : Number(nowMs);
   return {
@@ -70,6 +85,8 @@ function softLaunchPublicMeta(nowMs) {
     ticketSalesOpensAt: PUBLIC_TRANSACTIONS_OPENS_AT,
     enquiriesOpen: arePublicEnquiriesOpen(now),
     enquiriesOpensAt: PUBLIC_TRANSACTIONS_OPENS_AT,
+    openDayRegistrationsOpen: areOpenDayRegistrationsOpen(now),
+    openDayRegistrationsOpensAt: PUBLIC_BROWSE_OPENS_AT,
     transactionsOpensAt: PUBLIC_TRANSACTIONS_OPENS_AT,
   };
 }
@@ -84,5 +101,7 @@ module.exports = {
   publicTicketSalesClosedMessage,
   arePublicEnquiriesOpen,
   publicEnquiriesClosedMessage,
+  areOpenDayRegistrationsOpen,
+  publicOpenDayRegistrationsClosedMessage,
   softLaunchPublicMeta,
 };

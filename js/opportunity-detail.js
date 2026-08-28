@@ -7,6 +7,7 @@
   var current = null;
   var sessionUser = null;
   var enquiriesOpen = true;
+  var openDayRegistrationsOpen = true;
 
   var els = {
     notFound: document.getElementById('opp-not-found'),
@@ -262,13 +263,37 @@
   function syncEnquiriesOpenFromSoftLaunch(meta) {
     if (meta && typeof meta.enquiriesOpen === 'boolean') {
       enquiriesOpen = meta.enquiriesOpen;
-      return;
-    }
-    if (window.HubSoftLaunch && typeof window.HubSoftLaunch.arePublicEnquiriesOpen === 'function') {
+    } else if (window.HubSoftLaunch && typeof window.HubSoftLaunch.arePublicEnquiriesOpen === 'function') {
       enquiriesOpen = window.HubSoftLaunch.arePublicEnquiriesOpen();
+    } else {
+      enquiriesOpen = Date.now() >= Date.parse('2026-09-01T00:00:00+01:00');
+    }
+    syncOpenDayRegistrationsFromSoftLaunch(meta);
+  }
+
+  function syncOpenDayRegistrationsFromSoftLaunch(meta) {
+    if (meta && typeof meta.openDayRegistrationsOpen === 'boolean') {
+      openDayRegistrationsOpen = meta.openDayRegistrationsOpen;
       return;
     }
-    enquiriesOpen = Date.now() >= Date.parse('2026-09-01T00:00:00+01:00');
+    if (
+      window.HubSoftLaunch &&
+      typeof window.HubSoftLaunch.areOpenDayRegistrationsOpen === 'function'
+    ) {
+      openDayRegistrationsOpen = window.HubSoftLaunch.areOpenDayRegistrationsOpen();
+      return;
+    }
+    openDayRegistrationsOpen = Date.now() >= Date.parse('2026-08-25T00:00:00+01:00');
+  }
+
+  function openDayRegistrationsClosedCopy() {
+    if (
+      window.HubSoftLaunch &&
+      window.HubSoftLaunch.publicOpenDayRegistrationsClosedMessage
+    ) {
+      return window.HubSoftLaunch.publicOpenDayRegistrationsClosedMessage();
+    }
+    return 'Open day registration opens when public browsing starts on 25 August 2026. You can browse listings now.';
   }
 
   function enquiriesClosedCopy() {
@@ -366,13 +391,31 @@
   function openDayCalendarHtml(day, item) {
     var cal = openDayCalendarLinks(day, item);
     if (!cal || !cal.google) return '';
+    var dayId = escapeHtml(String(day.id || ''));
     return (
-      '<span class="opp-open-day-cal">' +
+      '<div class="opp-open-day-cal" aria-label="Add to calendar">' +
+      '<span class="opp-open-day-cal-label">Add to calendar</span>' +
       '<a href="' +
       escapeHtml(cal.google) +
-      '" target="_blank" rel="noopener" class="opp-open-day-cal-link">Add to calendar</a>' +
-      '</span>'
+      '" target="_blank" rel="noopener" class="opp-open-day-cal-link">Google</a>' +
+      '<span class="opp-open-day-cal-sep" aria-hidden="true">·</span>' +
+      '<a href="' +
+      escapeHtml(cal.outlook) +
+      '" target="_blank" rel="noopener" class="opp-open-day-cal-link">Outlook</a>' +
+      '<span class="opp-open-day-cal-sep" aria-hidden="true">·</span>' +
+      '<button type="button" class="opp-open-day-cal-link opp-open-day-cal-ics" data-open-day-id="' +
+      dayId +
+      '">Apple Calendar</button>' +
+      '</div>'
     );
+  }
+
+  function findOpenDayById(dayId) {
+    var days = current && Array.isArray(current.openDays) ? current.openDays : [];
+    for (var i = 0; i < days.length; i += 1) {
+      if (String(days[i].id) === String(dayId)) return days[i];
+    }
+    return null;
   }
 
   function renderOpenDays(item) {
@@ -388,15 +431,15 @@
     }
     els.openDaysSection.hidden = false;
     if (els.openDaysClosed) {
-      els.openDaysClosed.hidden = enquiriesOpen;
-      els.openDaysClosed.textContent = enquiriesClosedCopy();
+      els.openDaysClosed.hidden = openDayRegistrationsOpen;
+      els.openDaysClosed.textContent = openDayRegistrationsClosedCopy();
     }
-    if (els.openDaysLede) els.openDaysLede.hidden = !enquiriesOpen;
+    if (els.openDaysLede) els.openDaysLede.hidden = !openDayRegistrationsOpen;
     els.openDaysList.innerHTML = days
       .map(function (day) {
         var when = formatOpenDayWhen(day);
         var where = formatOpenDayWhere(day);
-        var formHtml = enquiriesOpen
+        var formHtml = openDayRegistrationsOpen
           ? '<form class="opp-open-day-form" data-open-day-id="' +
             escapeHtml(day.id) +
             '">' +
@@ -427,11 +470,21 @@
   function bindOpenDayForms() {
     if (!els.openDaysList || els.openDaysList.dataset.bound === '1') return;
     els.openDaysList.dataset.bound = '1';
+    els.openDaysList.addEventListener('click', function (e) {
+      var icsBtn = e.target.closest('.opp-open-day-cal-ics');
+      if (!icsBtn || !window.HubCalendarShare) return;
+      var dayId = icsBtn.getAttribute('data-open-day-id');
+      var day = findOpenDayById(dayId);
+      if (!day || !current) return;
+      var links = openDayCalendarLinks(day, current);
+      if (!links || !links.icsContent) return;
+      HubCalendarShare.downloadIcs(links.icsContent, links.icsFilename);
+    });
     els.openDaysList.addEventListener('submit', function (e) {
       var form = e.target.closest('.opp-open-day-form');
       if (!form) return;
       e.preventDefault();
-      if (!enquiriesOpen) return;
+      if (!openDayRegistrationsOpen) return;
       var openDayId = form.getAttribute('data-open-day-id');
       var name = String((form.querySelector('[name="name"]') || {}).value || '').trim();
       var email = String((form.querySelector('[name="email"]') || {}).value || '').trim();
@@ -485,10 +538,20 @@
           if (statusEl) {
             statusEl.hidden = false;
             statusEl.className = 'opp-open-day-status is-error';
-            statusEl.textContent =
-              (result.data && result.data.message) ||
-              (result.data && result.data.error) ||
-              'Could not register interest. Please try again.';
+            if (
+              result.data &&
+              (result.data.error === 'open_day_registrations_closed' ||
+                result.data.error === 'enquiries_closed')
+            ) {
+              syncOpenDayRegistrationsFromSoftLaunch(result.data.softLaunch || null);
+              renderOpenDays(current);
+              statusEl.textContent = openDayRegistrationsClosedCopy();
+            } else {
+              statusEl.textContent =
+                (result.data && result.data.message) ||
+                (result.data && result.data.error) ||
+                'Could not register interest. Please try again.';
+            }
           }
           if (btn) {
             btn.disabled = false;

@@ -119,6 +119,18 @@ module.exports = wrapHandler(async function handler(req, res) {
         return json(res, 200, { ok: true, interest });
       } catch (e) {
         const msg = e.message || String(e);
+        if (msg === 'open_day_registrations_closed') {
+          const {
+            publicOpenDayRegistrationsClosedMessage,
+            softLaunchPublicMeta,
+          } = require('./_lib/soft-launch');
+          return json(res, 403, {
+            ok: false,
+            error: 'open_day_registrations_closed',
+            message: publicOpenDayRegistrationsClosedMessage(),
+            softLaunch: softLaunchPublicMeta(),
+          });
+        }
         if (msg === 'enquiries_closed') {
           const { publicEnquiriesClosedMessage, softLaunchPublicMeta } = require('./_lib/soft-launch');
           return json(res, 403, {

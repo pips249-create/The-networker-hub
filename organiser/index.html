@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260825adminbadge1" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260828sidebar1" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260828sidebar1" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260828openday2" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260828openday4" />
     <!-- hub-mobile last so phone overrides win over dashboard table min-widths -->
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260812footer10" />
     <script src="../js/hub-defer-css.js?v=20260828perf2" data-hrefs="../css/organiser-event-edit.css?v=20260821ticketstep1|../css/organiser-flow-tour.css?v=20260716layout|../css/hubert-widget.css?v=20260805bottom2|../css/hub-ranking-badge.css?v=20260728lb2|../css/hub-partner-badge.css?v=20260820ticketembed1|../css/rankings-page.css?v=20260807rank|../css/organiser-opportunity-edit.css?v=20260716drawer|https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&family=Playfair+Display:wght@400;700&family=Source+Sans+3:wght@400;600;700&family=Oswald:wght@500;600&family=Nunito:wght@400;600;700&display=swap"></script>
@@ -454,22 +454,22 @@
           <div class="org-inline-banner org-inline-banner--warn" id="org-opp-load-error" hidden role="alert"></div>
 
           <div class="org-stats org-stats--four" id="org-business-hub-summary">
-            <div class="org-stat gold">
+            <button type="button" class="org-stat gold org-stat--nav" id="stat-opp-open-days-card" data-business-stat-nav="business-open-days">
               <div class="org-stat-label">Open day registrations</div>
               <div class="org-stat-value" id="stat-opp-open-days">0</div>
-            </div>
-            <div class="org-stat green">
+            </button>
+            <button type="button" class="org-stat green org-stat--nav" data-business-stat-nav="business-enquiries">
               <div class="org-stat-label">Enquiries received</div>
               <div class="org-stat-value" id="stat-opp-enquiries">0</div>
-            </div>
-            <div class="org-stat purple">
+            </button>
+            <button type="button" class="org-stat purple org-stat--nav" data-business-stat-nav="business-enquiries">
               <div class="org-stat-label">New enquiries</div>
               <div class="org-stat-value" id="stat-opp-enquiries-new">0</div>
-            </div>
-            <div class="org-stat gold">
+            </button>
+            <button type="button" class="org-stat gold org-stat--nav" data-business-stat-nav="business-insights">
               <div class="org-stat-label">Member saves</div>
               <div class="org-stat-value" id="stat-opp-saves">0</div>
-            </div>
+            </button>
           </div>
 
           <nav class="org-events-subnav org-events-subnav--business" id="org-business-subnav" role="tablist" aria-label="Business opportunity sections">
@@ -3907,7 +3907,7 @@
     <script src="../js/hub-comms-pack.js?v=20260722share" defer></script>
     <script src="../js/hub-side-nav.js?v=20260805orgnav2" defer></script>
     <script src="../js/organiser-quarter-time.js?v=20260828openday2" defer></script>
-    <script src="../js/organiser-dashboard.js?v=20260828openday3" defer></script>
+    <script src="../js/organiser-dashboard.js?v=20260828openday4" defer></script>
     <script src="../js/organiser-workspace-comfort.js?v=20260813noshow1" defer></script>
   </body>
 </html>

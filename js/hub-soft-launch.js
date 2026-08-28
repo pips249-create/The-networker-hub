@@ -34,6 +34,15 @@
     return 'Opportunity enquiries open on 1 September 2026. You can browse listings now and enquire when they go live.';
   }
 
+  function areOpenDayRegistrationsOpen(nowMs) {
+    var now = nowMs == null ? Date.now() : Number(nowMs);
+    return now >= opensAtMs(PUBLIC_BROWSE_OPENS_AT);
+  }
+
+  function publicOpenDayRegistrationsClosedMessage() {
+    return 'Open day registration opens when public browsing starts on 25 August 2026. You can browse listings now.';
+  }
+
   function softLaunchPublicMeta(nowMs) {
     var now = nowMs == null ? Date.now() : Number(nowMs);
     return {
@@ -43,6 +52,8 @@
       ticketSalesOpensAt: PUBLIC_TRANSACTIONS_OPENS_AT,
       enquiriesOpen: arePublicEnquiriesOpen(now),
       enquiriesOpensAt: PUBLIC_TRANSACTIONS_OPENS_AT,
+      openDayRegistrationsOpen: areOpenDayRegistrationsOpen(now),
+      openDayRegistrationsOpensAt: PUBLIC_BROWSE_OPENS_AT,
       transactionsOpensAt: PUBLIC_TRANSACTIONS_OPENS_AT,
     };
   }
@@ -142,6 +153,8 @@
     publicTicketSalesClosedMessage: publicTicketSalesClosedMessage,
     arePublicEnquiriesOpen: arePublicEnquiriesOpen,
     publicEnquiriesClosedMessage: publicEnquiriesClosedMessage,
+    areOpenDayRegistrationsOpen: areOpenDayRegistrationsOpen,
+    publicOpenDayRegistrationsClosedMessage: publicOpenDayRegistrationsClosedMessage,
     softLaunchPublicMeta: softLaunchPublicMeta,
     mountBrowseWeekBanner: mountBrowseWeekBanner,
   };
