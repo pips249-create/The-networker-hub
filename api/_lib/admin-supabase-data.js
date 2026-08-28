@@ -7,6 +7,10 @@ const {
   registrationHubPlatformFee,
 } = require('./booking-fees');
 const { isTestFixtureText, isTestRegistration } = require('./test-fixture-filters');
+const {
+  isOpportunityReviewQueueReady,
+  applySubmittedReviewFilter,
+} = require('./opportunity-review-queue');
 
 function round2(n) {
   return Math.round(Number(n) * 100) / 100;
@@ -51,14 +55,19 @@ const INCOMPLETE_ORGANISER_FILTER =
 /** Actionable admin queue totals — used for alerts, attention, and sidebar badge (excludes event-health scan). */
 async function fetchAdminActionCounts(sb, options) {
   const light = !!(options && options.light);
+  const reviewQueueReady = await isOpportunityReviewQueueReady(sb);
+  let pendingOpportunitiesQuery = sb
+    .from('business_opportunities')
+    .select('id', { count: 'exact', head: true })
+    .eq('approval_status', 'Pending Review');
+  pendingOpportunitiesQuery = applySubmittedReviewFilter(
+    pendingOpportunitiesQuery,
+    reviewQueueReady
+  );
   const baseQueries = [
     sb.from('listing_reports').select('id', { count: 'exact', head: true }).eq('status', 'open'),
     sb.from('review_reports').select('id', { count: 'exact', head: true }).eq('status', 'open'),
-    sb
-      .from('business_opportunities')
-      .select('id', { count: 'exact', head: true })
-      .eq('approval_status', 'Pending Review')
-      .not('review_submitted_at', 'is', null),
+    pendingOpportunitiesQuery,
     sb
       .from('organiser_claim_disputes')
       .select('id', { count: 'exact', head: true })
@@ -621,15 +630,24 @@ async function fetchAttentionQueueLight(sb, counts) {
 }
 
 async function fetchAttentionQueue(sb, counts) {
+  const reviewQueueReady = await isOpportunityReviewQueueReady(sb);
+  let pendingOppsQuery = sb
+    .from('business_opportunities')
+    .select(
+      reviewQueueReady
+        ? 'id, title, host, created_at, review_submitted_at'
+        : 'id, title, host, created_at'
+    )
+    .eq('approval_status', 'Pending Review');
+  pendingOppsQuery = applySubmittedReviewFilter(pendingOppsQuery, reviewQueueReady);
+  pendingOppsQuery = reviewQueueReady
+    ? pendingOppsQuery.order('review_submitted_at', { ascending: false })
+    : pendingOppsQuery.order('created_at', { ascending: false });
+  pendingOppsQuery = pendingOppsQuery.limit(10);
+
   const [pendingOppsRes, claimDisputesRes, claimRequestsRes, openReportsRes, reviewReportsRes, pendingClaimsRes] =
     await Promise.all([
-      sb
-        .from('business_opportunities')
-        .select('id, title, host, created_at, review_submitted_at')
-        .eq('approval_status', 'Pending Review')
-        .not('review_submitted_at', 'is', null)
-        .order('review_submitted_at', { ascending: false })
-        .limit(10),
+      pendingOppsQuery,
       sb
         .from('organiser_claim_disputes')
         .select('id, organiser_id, organiser_name, profile_email, reporter_email, notes, created_at')

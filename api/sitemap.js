@@ -3,8 +3,9 @@
  * Dedicated function so rewrite does not depend on /api/seo sub-route parsing.
  */
 const { buildSitemapXml } = require('./_lib/seo-sitemap');
+const { wrapHandler } = require('./_lib/sentry');
 
-module.exports = async function handler(req, res) {
+module.exports = wrapHandler(async function handler(req, res) {
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     res.statusCode = 405;
     return res.end('method_not_allowed');
@@ -26,4 +27,4 @@ module.exports = async function handler(req, res) {
     res.statusCode = 500;
     return res.end('sitemap_failed');
   }
-};
+});

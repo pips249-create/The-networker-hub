@@ -2,9 +2,10 @@
  * GET /api/public-config — non-secret client bootstrap (e.g. Turnstile site key).
  */
 const { json, setCors } = require('./_lib/auth');
+const { wrapHandler } = require('./_lib/sentry');
 const { turnstilePublicConfig } = require('./_lib/turnstile');
 
-module.exports = async function handler(req, res) {
+module.exports = wrapHandler(async function handler(req, res) {
   setCors(req, res);
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Cache-Control', 'public, max-age=60');
@@ -18,4 +19,4 @@ module.exports = async function handler(req, res) {
     ok: true,
     turnstile: turnstilePublicConfig(),
   });
-};
+});

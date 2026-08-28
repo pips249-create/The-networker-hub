@@ -5,6 +5,7 @@
  *   /api/sponsor-out?u=<https dest>&p=<placement>&c=<company>
  */
 const { setCors } = require('./_lib/auth');
+const { wrapHandler } = require('./_lib/sentry');
 const { enforceRateLimit } = require('./_lib/rate-limit');
 const { useSupabase } = require('./_lib/supabase');
 const { recordSponsorClick } = require('./_lib/sponsor-clicks');
@@ -32,7 +33,7 @@ function redirect(res, location) {
   return res.end();
 }
 
-module.exports = async function handler(req, res) {
+module.exports = wrapHandler(async function handler(req, res) {
   setCors(req, res);
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -72,4 +73,4 @@ module.exports = async function handler(req, res) {
   }
 
   return redirect(res, dest);
-};
+});

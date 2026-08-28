@@ -1100,7 +1100,21 @@
       });
   }
 
+  function initFooter() {
+    var yearEl = document.getElementById('intl-footer-year');
+    if (yearEl) yearEl.textContent = String(new Date().getFullYear());
+    var cookieBtn = document.getElementById('intl-footer-cookie-settings');
+    if (cookieBtn) {
+      cookieBtn.addEventListener('click', function () {
+        if (window.HubCookieConsent && window.HubCookieConsent.openSettings) {
+          window.HubCookieConsent.openSettings();
+        }
+      });
+    }
+  }
+
   function init() {
+    initFooter();
     els.canvas = byId('intl-map-canvas');
     els.mapWrap = byId('intl-map-wrap');
     els.svg = byId('intl-map-svg');

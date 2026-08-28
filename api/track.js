@@ -6,6 +6,7 @@
  * Looks up tokens on monthly group-update queue first, then attendee round-up recipients.
  */
 const { getSupabaseAdmin, useSupabase } = require('./_lib/supabase');
+const { wrapHandler } = require('./_lib/sentry');
 const { enforceRateLimit } = require('./_lib/rate-limit');
 
 const PIXEL_GIF = Buffer.from(
@@ -109,7 +110,7 @@ async function recordClick(sb, token, targetUrl) {
   await sb.from('event_connections_recipients').update(patch).eq('id', connRow.id);
 }
 
-module.exports = async function handler(req, res) {
+module.exports = wrapHandler(async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   if (req.method === 'OPTIONS') {
@@ -167,4 +168,4 @@ module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
   res.setHeader('Pragma', 'no-cache');
   return res.end(PIXEL_GIF);
-};
+});

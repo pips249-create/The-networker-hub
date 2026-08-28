@@ -2,6 +2,7 @@
  * Public advertising API — enquiry submission and slot availability.
  */
 const { json, setCors } = require('./_lib/auth');
+const { wrapHandler } = require('./_lib/sentry');
 const { enforceRateLimit, clientIp } = require('./_lib/rate-limit');
 const { useSupabase } = require('./_lib/supabase');
 const { submitAdvertisingEnquiry } = require('./_lib/advertising-enquiries');
@@ -20,7 +21,7 @@ function parseBody(req) {
   return body || {};
 }
 
-module.exports = async function handler(req, res) {
+module.exports = wrapHandler(async function handler(req, res) {
   setCors(req, res);
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -111,4 +112,4 @@ module.exports = async function handler(req, res) {
   }
 
   return json(res, 405, { ok: false, error: 'method_not_allowed' });
-};
+});

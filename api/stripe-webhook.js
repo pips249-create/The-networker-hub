@@ -8,6 +8,7 @@ const {
   handleCheckoutSessionCompleted,
   parseStripeEventBody,
 } = require('./_lib/supabase-registrations');
+const { wrapHandler } = require('./_lib/sentry');
 const { isSupabaseConfigured } = require('./_lib/supabase');
 const { handleOpportunityPremiumCheckout, handleOpportunityListingCheckout } = require('./_lib/supabase-opportunities');
 const { handleEventFeaturedCheckout } = require('./_lib/event-featured');
@@ -223,7 +224,7 @@ async function handler(req, res) {
   }
 }
 
-module.exports = handler;
+module.exports = wrapHandler(handler);
 module.exports.config = {
   api: {
     bodyParser: false,

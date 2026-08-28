@@ -3,6 +3,7 @@
  */
 const { getSubRoute } = require('./_lib/route-path');
 const { json, setCors } = require('./_lib/auth');
+const { wrapHandler } = require('./_lib/sentry');
 
 function requestPathname(req) {
   if (!req.url) return '';
@@ -55,7 +56,7 @@ const routes = {
   'site-access': require('./_lib/routes/site-access'),
 };
 
-module.exports = async function handler(req, res) {
+module.exports = wrapHandler(async function handler(req, res) {
   setCors(req, res);
 
   const pathname = requestPathname(req);
@@ -69,4 +70,4 @@ module.exports = async function handler(req, res) {
     return json(res, 404, { error: 'not_found', path: route || '(empty)' });
   }
   return fn(req, res);
-};
+});

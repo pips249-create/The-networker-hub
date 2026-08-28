@@ -196,6 +196,8 @@
         // Never set crossOrigin on the visible logo — external hosts without CORS
         // headers fail to render when anonymous mode is required.
         els.sponsorLogo.removeAttribute('crossOrigin');
+        els.sponsorLogo.setAttribute('decoding', 'async');
+        els.sponsorLogo.setAttribute('fetchpriority', 'high');
         els.sponsorLogo.src = url;
         els.sponsorLogo.hidden = false;
         if (window.CmsSponsorFields) {
@@ -387,11 +389,20 @@
     markSponsorLoading(els);
 
     try {
-      var res = await fetch('/api/cms-block?slot=' + encodeURIComponent(slotKey), {
-        cache: 'no-store',
-      });
-      if (generation !== loadGeneration) return;
-      var data = await res.json();
+      var data = null;
+      if (
+        window.hubSponsorBlockPromise &&
+        String(slotKey) === String(window.hubSponsorPrefetchSlot || '')
+      ) {
+        data = await window.hubSponsorBlockPromise;
+        window.hubSponsorBlockPromise = null;
+        if (generation !== loadGeneration) return;
+      }
+      if (!data) {
+        var res = await fetch('/api/cms-block?slot=' + encodeURIComponent(slotKey));
+        if (generation !== loadGeneration) return;
+        data = await res.json();
+      }
       if (generation !== loadGeneration) return;
       if (data && data.ok && data.block) {
         renderSponsorBlock(els, data.block);

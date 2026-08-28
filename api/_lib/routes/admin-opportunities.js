@@ -16,6 +16,10 @@ const { resolveImageUrl } = require('../supabase-storage');
 
 const { HUB_SEED_OWNER_EMAIL, isHubSeedOwnerEmail } = require('../opportunity-hub-seed');
 const { applyIlikeSearch } = require('../search-match');
+const {
+  isOpportunityReviewQueueReady,
+  applySubmittedReviewFilter,
+} = require('../opportunity-review-queue');
 
 const TEST_SAMPLE_LISTINGS = [
   {
@@ -288,6 +292,7 @@ function buildAdminOpportunityTags(type, category, existingTags, isTest) {
 
 async function listOpportunitiesForAdmin(query) {
   const sb = getSupabaseAdmin();
+  const reviewQueueReady = await isOpportunityReviewQueueReady(sb);
   const status = String(query.status || '').trim();
   const approvalStatus = normalizeApprovalStatus(query.approval_status || query.approval);
   const type = String(query.type || '').trim();
@@ -319,9 +324,9 @@ async function listOpportunitiesForAdmin(query) {
     dbQuery = dbQuery.eq('approval_status', 'Approved').is('listing_paid_at', null);
   } else if (approvalStatus) {
     dbQuery = dbQuery.eq('approval_status', approvalStatus);
-    // Pending review queue = actually submitted, not incomplete drafts.
+    // Pending review queue = actually submitted, not incomplete drafts (migration 266).
     if (approvalStatus === 'Pending Review') {
-      dbQuery = dbQuery.not('review_submitted_at', 'is', null);
+      dbQuery = applySubmittedReviewFilter(dbQuery, reviewQueueReady);
     }
   }
   if (type) dbQuery = dbQuery.eq('type', normalizeType(type));
@@ -356,11 +361,12 @@ async function listOpportunitiesForAdmin(query) {
     total = res.count != null ? res.count : rows.length;
   }
 
-  const pendingCountRes = await sb
+  let pendingCountQuery = sb
     .from('business_opportunities')
     .select('id', { count: 'exact', head: true })
-    .eq('approval_status', 'Pending Review')
-    .not('review_submitted_at', 'is', null);
+    .eq('approval_status', 'Pending Review');
+  pendingCountQuery = applySubmittedReviewFilter(pendingCountQuery, reviewQueueReady);
+  const pendingCountRes = await pendingCountQuery;
   if (pendingCountRes.error) throw new Error(pendingCountRes.error.message);
 
   return {
@@ -371,6 +377,7 @@ async function listOpportunitiesForAdmin(query) {
     limit,
     hasMore: offset + rows.length < total,
     pending_count: pendingCountRes.count || 0,
+    review_queue_ready: reviewQueueReady,
   };
 }
 
@@ -619,17 +626,24 @@ module.exports = async function handler(req, res) {
     if (body.action === 'approve') {
       try {
         const sb = getSupabaseAdmin();
+        const reviewQueueReady = await isOpportunityReviewQueueReady(sb);
         const now = new Date();
         const patch = {
           approval_status: 'Approved',
-          approved_at: now.toISOString(),
           rejection_note: null,
-          approved_pay_reminder_sent_at: null,
           updated_at: now.toISOString(),
         };
+        if (reviewQueueReady) {
+          patch.approved_at = now.toISOString();
+          patch.approved_pay_reminder_sent_at = null;
+        }
         const { data: current } = await sb
           .from('business_opportunities')
-          .select('status, published_at, listing_expires_at, listing_paid_at, review_submitted_at')
+          .select(
+            reviewQueueReady
+              ? 'status, published_at, listing_expires_at, listing_paid_at, review_submitted_at'
+              : 'status, published_at, listing_expires_at, listing_paid_at'
+          )
           .eq('id', id)
           .maybeSingle();
         const alreadyPaid = listingPaymentCurrent(current || {});
@@ -649,7 +663,7 @@ module.exports = async function handler(req, res) {
             patch.status = 'draft';
           }
         }
-        if (!current?.review_submitted_at) {
+        if (reviewQueueReady && !current?.review_submitted_at) {
           patch.review_submitted_at = now.toISOString();
         }
 

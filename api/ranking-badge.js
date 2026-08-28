@@ -12,6 +12,7 @@
  * Dashboard examples: ?demo=1 (sample plaques only).
  */
 const { isUuid } = require('./_lib/uuid');
+const { wrapHandler } = require('./_lib/sentry');
 const {
   buildRankingBadgeSvg,
   buildUnearnedRankingBadgeSvg,
@@ -72,7 +73,7 @@ function sendSvg(res, svg, cacheControl) {
   return res.end(svg);
 }
 
-module.exports = async function handler(req, res) {
+module.exports = wrapHandler(async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -163,4 +164,4 @@ module.exports = async function handler(req, res) {
   }
 
   return sendSvg(res, svg, cacheControl);
-};
+});

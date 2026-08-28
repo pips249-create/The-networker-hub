@@ -4,13 +4,14 @@
  * GET /api/rankings
  */
 const { json, setCors } = require('./_lib/auth');
+const { wrapHandler } = require('./_lib/sentry');
 const { isSupabaseConfigured, supabaseConfig } = require('./_lib/supabase');
 const {
   getPublicRankingLeaderboard,
   getBadgeImpressionCounts,
 } = require('./_lib/organiser-ranking-snapshot');
 
-module.exports = async function handler(req, res) {
+module.exports = wrapHandler(async function handler(req, res) {
   setCors(req, res);
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -57,4 +58,4 @@ module.exports = async function handler(req, res) {
       message: e.message || 'Could not load rankings.',
     });
   }
-};
+});

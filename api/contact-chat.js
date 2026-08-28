@@ -3,6 +3,7 @@
  * Body: { messages: [{ role: 'user'|'assistant', content: string }] }
  */
 const { json, setCors } = require('./_lib/auth');
+const { wrapHandler } = require('./_lib/sentry');
 const { enforceRateLimitAsync, clientIp } = require('./_lib/rate-limit');
 const { verifyTurnstileToken } = require('./_lib/turnstile');
 const {
@@ -86,7 +87,7 @@ async function openAiReply(messages, systemPrompt) {
   return reply && reply.content ? String(reply.content).trim() : null;
 }
 
-module.exports = async function handler(req, res) {
+module.exports = wrapHandler(async function handler(req, res) {
   setCors(req, res);
 
   if (req.method === 'OPTIONS') {
@@ -214,4 +215,4 @@ module.exports = async function handler(req, res) {
       warning: 'assistant_degraded',
     });
   }
-};
+});

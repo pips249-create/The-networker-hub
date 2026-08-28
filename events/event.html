@@ -6,32 +6,7 @@
     <title>Event – The Networker UK</title>
     <meta name="description" content="Networking event on The Networker UK — book tickets securely online." />
     <script src="../js/hub-seo-head.js?v=20260722opp"></script>
-    <script>
-      (function () {
-        var params = new URLSearchParams(window.location.search);
-        var path = (window.location.pathname || '').replace(/\/+$/, '');
-        var match = path.match(/\/events\/([^/]+)$/i);
-        var slug =
-          match && match[1] && match[1] !== 'event.html' && match[1] !== 'index.html'
-            ? decodeURIComponent(match[1])
-            : String(params.get('slug') || '').trim();
-        var id = String(params.get('id') || '').trim();
-        if (!id && !slug) return;
-        var apiUrl = id
-          ? '/api/hub-listings?id=' + encodeURIComponent(id)
-          : '/api/hub-listings?slug=' + encodeURIComponent(slug);
-        window.hubEventDetailPromise = fetch(apiUrl)
-          .then(function (res) {
-            return res.json();
-          })
-          .then(function (data) {
-            return { data: data };
-          })
-          .catch(function (error) {
-            return { error: error };
-          });
-      })();
-    </script>
+    <script src="../js/hub-event-prefetch.js?v=20260828csp1"></script>
     <!-- Stripe: set your Payment Link URL here and/or pass ?stripe=https://buy.stripe.com/... -->
     <meta name="stripe-payment-link" content="" />
     <!-- Optional theme (6-digit hex, # optional). URL query overrides: ?brand=5b2f99&bg=f5f0fb&accent=f5a623 -->

@@ -7,6 +7,7 @@
  * POST /api/organisers { action: 'claim_request', ... }
  */
 const { json, setCors } = require('./_lib/auth');
+const { wrapHandler } = require('./_lib/sentry');
 const { enforceRateLimitAsync } = require('./_lib/rate-limit');
 const { isSupabaseConfigured, supabaseConfig } = require('./_lib/supabase');
 const {
@@ -16,7 +17,7 @@ const {
   listPublicSiblingOrganisersByEmail,
 } = require('./_lib/supabase-organisers-browse');
 
-module.exports = async function handler(req, res) {
+module.exports = wrapHandler(async function handler(req, res) {
   setCors(req, res);
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -160,4 +161,4 @@ module.exports = async function handler(req, res) {
       organisers: [],
     });
   }
-};
+});

@@ -293,30 +293,4 @@
 </style>
 
 <!-- 3) JS — rotate words -->
-<script>
-(function () {
-  var WORDS = ["event", "opportunity", "group", "attendee", "connection"];
-  var word = document.getElementById("tnh-upgrade-banner-word");
-  if (!word || !WORDS.length) return;
-
-  var reduce = false;
-  try {
-    reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  } catch (e) {}
-  if (reduce) {
-    word.textContent = WORDS.join(", ");
-    word.classList.remove("is-fading");
-    return;
-  }
-  var i = 0;
-  word.textContent = WORDS[0];
-  window.setInterval(function () {
-    i = (i + 1) % WORDS.length;
-    word.classList.add("is-fading");
-    window.setTimeout(function () {
-      word.textContent = WORDS[i];
-      word.classList.remove("is-fading");
-    }, 120);
-  }, 2000);
-})();
-</script>
+<script src="../js/marketing/co-uk-upgrade-banner.js?v=20260828csp1"></script>

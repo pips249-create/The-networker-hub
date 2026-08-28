@@ -2,6 +2,7 @@
  * Single serverless function for all /api/organiser/* routes (Hobby plan function limit).
  */
 const { getSubRoute } = require('./_lib/route-path');
+const { wrapHandler } = require('./_lib/sentry');
 const { json, setCors } = require('./_lib/auth');
 
 const routes = {
@@ -49,7 +50,7 @@ const routes = {
   'promote-action': require('./_lib/routes/organiser-promote-action'),
 };
 
-module.exports = async function handler(req, res) {
+module.exports = wrapHandler(async function handler(req, res) {
   setCors(req, res);
   const route = getSubRoute(req, '/api/organiser');
   const fn = routes[route];
@@ -57,4 +58,4 @@ module.exports = async function handler(req, res) {
     return json(res, 404, { error: 'not_found', path: route || '(empty)' });
   }
   return fn(req, res);
-};
+});

@@ -9,15 +9,7 @@
     <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png?v=20260823uk" />
     <meta http-equiv="Cache-Control" content="no-cache" />
     <title>Membership – The Networker UK</title>
-    <script>
-      (function () {
-        var params = new URLSearchParams(location.search);
-        var id = params.get('id') || params.get('organiserId') || '';
-        var target = '/organiser/#memberships';
-        if (id) target += '?membershipGroup=' + encodeURIComponent(id);
-        location.replace(target);
-      })();
-    </script>
+    <script src="/js/organiser-member-roster-redirect.js?v=20260828csp1"></script>
   </head>
   <body>
     <p>Opening membership… <a href="/organiser/#memberships">Continue</a></p>

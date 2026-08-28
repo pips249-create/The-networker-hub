@@ -3,8 +3,9 @@
  * Safe to poll from UptimeRobot / Better Stack while the site gate is on.
  */
 const { isSupabaseConfigured } = require('./_lib/supabase');
+const { wrapHandler } = require('./_lib/sentry');
 
-module.exports = async function handler(req, res) {
+module.exports = wrapHandler(async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   res.setHeader('Content-Type', 'application/json');
 
@@ -24,4 +25,4 @@ module.exports = async function handler(req, res) {
   res.statusCode = 200;
   if (req.method === 'HEAD') return res.end();
   return res.end(JSON.stringify(body));
-};
+});

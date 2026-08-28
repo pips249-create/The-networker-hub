@@ -2,6 +2,7 @@
  * Single serverless function for SEO routes (Hobby plan function limit).
  */
 const { getSubRoute } = require('./_lib/route-path');
+const { wrapHandler } = require('./_lib/sentry');
 const { json, setCors } = require('./_lib/auth');
 
 const routes = {
@@ -19,7 +20,7 @@ function requestPathname(req) {
   }
 }
 
-module.exports = async function handler(req, res) {
+module.exports = wrapHandler(async function handler(req, res) {
   setCors(req, res);
   let route = getSubRoute(req, '/api/seo');
   // Rewrites: /sitemap.xml → /api/seo/sitemap or /api/seo?route=sitemap
@@ -40,4 +41,4 @@ module.exports = async function handler(req, res) {
     return json(res, 404, { error: 'not_found', path: route || '(empty)' });
   }
   return fn(req, res);
-};
+});

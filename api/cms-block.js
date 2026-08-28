@@ -4,6 +4,7 @@
  * GET /api/cms-block?slot=sponsor_hub
  */
 const { getSupabaseAdmin, isSupabaseConfigured, supabaseConfig } = require('./_lib/supabase');
+const { wrapHandler } = require('./_lib/sentry');
 const {
   normalizeSponsorBlock,
   isPublishableSponsorBlock,
@@ -66,7 +67,7 @@ async function fetchPublishableBlock(sb, slotKey) {
   return null;
 }
 
-module.exports = async function handler(req, res) {
+module.exports = wrapHandler(async function handler(req, res) {
   if (String(req.query?.route || '').trim() === 'city-partner') {
     return require('./_lib/routes/city-partner')(req, res);
   }
@@ -202,4 +203,4 @@ module.exports = async function handler(req, res) {
       message: e.message,
     });
   }
-};
+});

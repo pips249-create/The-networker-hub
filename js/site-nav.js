@@ -194,7 +194,8 @@
     return html;
   }
 
-  function loadComplianceAsset(path) {
+  function loadComplianceAsset(path, options) {
+    options = options || {};
     var full = root + path;
     if (document.querySelector('[data-hub-compliance="' + path + '"]')) return;
     if (path.indexOf('.css') !== -1) {
@@ -207,13 +208,14 @@
     }
     var s = document.createElement('script');
     s.src = full;
-    s.defer = true;
+    if (options.defer !== false) s.defer = true;
     s.setAttribute('data-hub-compliance', path);
     document.head.appendChild(s);
   }
 
   if (!window.__hubComplianceAssets) {
     window.__hubComplianceAssets = true;
+    loadComplianceAsset('js/hub-sentry.js?v=20260828sentry3', { defer: false });
     loadComplianceAsset('css/cookie-consent.css?v=20260609');
     loadComplianceAsset('js/hub-analytics.js?v=20260825ga4');
     loadComplianceAsset('js/cookie-consent.js?v=20260825ga4');
@@ -1334,14 +1336,21 @@
   var sessionPromise = null;
   window.hubFetchSession = function () {
     if (!sessionPromise) {
-      sessionPromise = fetch('/api/auth/session', { credentials: 'include' })
-        .then(function (res) {
-          return res.json();
-        })
-        .catch(function () {
-          sessionPromise = null;
-          return { ok: false };
+      if (window.hubSessionPrefetchPromise) {
+        sessionPromise = window.hubSessionPrefetchPromise.then(function (data) {
+          window.hubSessionPrefetchPromise = null;
+          return data && typeof data === 'object' ? data : { ok: false };
         });
+      } else {
+        sessionPromise = fetch('/api/auth/session', { credentials: 'include' })
+          .then(function (res) {
+            return res.json();
+          })
+          .catch(function () {
+            sessionPromise = null;
+            return { ok: false };
+          });
+      }
     }
     return sessionPromise;
   };

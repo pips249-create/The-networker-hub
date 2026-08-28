@@ -43,6 +43,14 @@ Works while the site gate is on (bypassed in middleware).
 
 Also in Vercel: **Project → Settings → Notifications** — enable deployment failure emails for the team.
 
+### Error monitoring (Sentry)
+
+Browser SDK loads via `js/hub-sentry.js` (EU region). Server routes use `@sentry/node` when `SENTRY_DSN` is set in Vercel.
+
+1. Sentry → **Alerts → Create Alert** → “When a new issue is created” → email **hi@thenetworkeruk.com**.
+2. Add `SENTRY_DSN` in Vercel (Production + Preview) — same DSN as the browser JavaScript project.
+3. After deploy, Sentry wizard **Verify** step: open any live page console and run `throw new Error('Sentry test')` (once).
+
 ---
 
 ## 2. Backups (Supabase)
@@ -109,6 +117,7 @@ When you have Pro backups:
 |--------|-------|-------|
 | `CRON_SECRET` | Vercel Production **and** Preview | Required on all hosted deploys; Vercel Cron sends `Authorization: Bearer …` |
 | `SESSION_SECRET` | Vercel | Rotate if leaked (logs everyone out) |
+| `SENTRY_DSN` | Vercel Production **and** Preview | Same DSN as browser project — server-side API/cron errors |
 | Supabase service role | Vercel only | Never in git / client |
 
 Manual cron test:

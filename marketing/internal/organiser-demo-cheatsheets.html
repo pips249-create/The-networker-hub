@@ -764,55 +764,6 @@
 
   </div>
 
-<script>
-(function () {
-  var buttons = document.querySelectorAll('[data-show]');
-  var sheets = document.querySelectorAll('.sheet');
-  var printBtn = document.getElementById('print-btn');
-  var current = 'all';
-
-  function show(who) {
-    current = who;
-    buttons.forEach(function (btn) {
-      btn.classList.toggle('is-active', btn.getAttribute('data-show') === who);
-    });
-    sheets.forEach(function (sheet) {
-      var match = who === 'all' || sheet.getAttribute('data-person') === who;
-      sheet.hidden = !match;
-      sheet.classList.toggle('is-print-target', match && who !== 'all');
-    });
-    document.body.classList.toggle('print-one', who !== 'all');
-  }
-
-  buttons.forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      var who = btn.getAttribute('data-show');
-      show(who);
-      if (who === 'all') {
-        if (location.hash) history.replaceState(null, '', location.pathname + location.search);
-      } else {
-        history.replaceState(null, '', '#' + who);
-      }
-    });
-  });
-
-  printBtn.addEventListener('click', function () {
-    window.print();
-  });
-
-  var hash = (location.hash || '').replace(/^#/, '').toLowerCase();
-  if (hash === 'catherine' || hash === 'rosie' || hash === 'jamie') {
-    show(hash);
-  } else {
-    show('all');
-  }
-
-  window.addEventListener('hashchange', function () {
-    var next = (location.hash || '').replace(/^#/, '').toLowerCase();
-    if (next === 'catherine' || next === 'rosie' || next === 'jamie') show(next);
-    else if (!next) show('all');
-  });
-})();
-</script>
+<script src="../../js/cheatsheet-tabs.js?v=20260828csp1"></script>
 </body>
 </html>

@@ -6,6 +6,8 @@
 const INTERNAL_MESSAGE_RE =
   /Cannot find module|Require stack|\/var\/task\/|ENOENT|ECONNREFUSED|ECONNRESET|ETIMEDOUT|EAI_AGAIN|at Object\.|at Module\.|node:internal|TypeError:|ReferenceError:|SyntaxError:|supabase\.co\/rest|JWT|api[_-]?key|secret|stack trace/i;
 
+const { captureServerException } = require('./sentry');
+
 const GENERIC =
   'Something went wrong on our side. Please try again in a moment. If it keeps happening, email hi@thenetworkeruk.com.';
 
@@ -50,6 +52,10 @@ function jsonPublicError(res, json, err, opts) {
       opts.code || payload.error,
       err && err.message ? err.message : err
     );
+    captureServerException(err, {
+      logLabel: opts.logLabel,
+      extra: Object.assign({ code: opts.code || payload.error }, opts.extra || {}),
+    });
   }
   return json(
     res,

@@ -277,7 +277,19 @@
     });
   }
 
+  function initFooter() {
+    var cookieBtn = document.getElementById('market-preview-cookie-settings');
+    if (cookieBtn) {
+      cookieBtn.addEventListener('click', function () {
+        if (window.HubCookieConsent && window.HubCookieConsent.openSettings) {
+          window.HubCookieConsent.openSettings();
+        }
+      });
+    }
+  }
+
   function init() {
+    initFooter();
     var market = detectMarket();
     applyMarket(market);
     initForm(market);

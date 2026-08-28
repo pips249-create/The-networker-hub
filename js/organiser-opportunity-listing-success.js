@@ -335,6 +335,37 @@
   if (editBtn && !id) editBtn.disabled = true;
   bindOpportunityEditorDrawer();
 
+  function bindPremiumCheckout() {
+    var premiumYes = document.getElementById('oe-premium-yes');
+    if (!premiumYes || !id) return;
+    premiumYes.addEventListener('click', function () {
+      premiumYes.disabled = true;
+      premiumYes.textContent = 'Opening secure checkout…';
+      fetch('/api/organiser/opportunity-premium-checkout', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ opportunityId: id }),
+      })
+        .then(function (r) {
+          return r.json();
+        })
+        .then(function (data) {
+          if (data.ok && data.url) {
+            location.href = data.url;
+            return;
+          }
+          throw new Error(data.message || data.error || 'Checkout failed');
+        })
+        .catch(function () {
+          premiumYes.disabled = false;
+          premiumYes.textContent = 'Upgrade to premium';
+        });
+    });
+  }
+
+  bindPremiumCheckout();
+
   async function confirmListing() {
     renderPremiumPreview(previewItemFromParams());
 

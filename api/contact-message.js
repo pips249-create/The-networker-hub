@@ -2,6 +2,7 @@
  * POST /api/contact-message — Contact page team form.
  */
 const { json, setCors } = require('./_lib/auth');
+const { wrapHandler } = require('./_lib/sentry');
 const { enforceRateLimit, clientIp } = require('./_lib/rate-limit');
 const { verifyTurnstileToken } = require('./_lib/turnstile');
 const { submitContactTeamMessage } = require('./_lib/contact-team-message');
@@ -19,7 +20,7 @@ function parseBody(req) {
   return body || {};
 }
 
-module.exports = async function handler(req, res) {
+module.exports = wrapHandler(async function handler(req, res) {
   setCors(req, res);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -77,4 +78,4 @@ module.exports = async function handler(req, res) {
       message: payload.message,
     });
   }
-};
+});

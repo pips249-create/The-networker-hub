@@ -5,6 +5,7 @@
  * default — first-50 homepage showcase while founding_homepage_until is active
  */
 const { json, setCors } = require('./_lib/auth');
+const { wrapHandler } = require('./_lib/sentry');
 const { getSupabaseAdmin } = require('./_lib/supabase');
 const { publicOrganiserSlug } = require('./_lib/organiser-slug');
 const { organiserDisplayPhotoUrl } = require('./_lib/supabase-organisers-browse');
@@ -52,7 +53,7 @@ function mapRow(row, { includeHubHref }) {
   };
 }
 
-module.exports = async function handler(req, res) {
+module.exports = wrapHandler(async function handler(req, res) {
   setCors(req, res);
   if (req.method === 'OPTIONS') {
     res.statusCode = 204;
@@ -89,4 +90,4 @@ module.exports = async function handler(req, res) {
     console.error('founding-organisers', e);
     return json(res, 500, { error: 'server_error', message: e.message || String(e) });
   }
-};
+});

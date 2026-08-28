@@ -2,10 +2,11 @@
  * Public business opportunities API — published listings only.
  */
 const { json, setCors, sessionFromRequest } = require('./_lib/auth');
+const { wrapHandler } = require('./_lib/sentry');
 const { enforceRateLimit, enforceRateLimitAsync } = require('./_lib/rate-limit');
 const { useSupabase } = require('./_lib/supabase');
 
-module.exports = async function handler(req, res) {
+module.exports = wrapHandler(async function handler(req, res) {
   setCors(req, res);
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -188,4 +189,4 @@ module.exports = async function handler(req, res) {
   } catch (e) {
     return json(res, 500, { error: 'opportunities_fetch_failed', message: e.message });
   }
-};
+});

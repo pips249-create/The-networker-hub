@@ -195,10 +195,37 @@ function stripOpportunityGeoFields(row) {
   return next;
 }
 
+function stripOpportunityReviewQueueFields(row) {
+  if (!row || typeof row !== 'object') return row;
+  const next = { ...row };
+  delete next.review_submitted_at;
+  delete next.approved_at;
+  delete next.approved_pay_reminder_sent_at;
+  return next;
+}
+
 /** True when PostgREST/Postgres rejects outcode/region_slug (migration 207 not applied). */
 function isMissingOpportunityGeoColumnError(error) {
   const msg = String((error && error.message) || error || '').toLowerCase();
   if (!msg.includes('outcode') && !msg.includes('region_slug')) return false;
+  return (
+    msg.includes('does not exist') ||
+    msg.includes('schema cache') ||
+    msg.includes('could not find') ||
+    msg.includes('unknown column')
+  );
+}
+
+/** True when review-then-pay columns are missing (migration 266 not applied). */
+function isMissingOpportunityReviewQueueColumnError(error) {
+  const msg = String((error && error.message) || error || '').toLowerCase();
+  if (
+    !msg.includes('review_submitted_at') &&
+    !msg.includes('approved_at') &&
+    !msg.includes('approved_pay_reminder_sent_at')
+  ) {
+    return false;
+  }
   return (
     msg.includes('does not exist') ||
     msg.includes('schema cache') ||
@@ -225,6 +252,12 @@ async function writeOpportunityRow(sb, mode, row, id) {
       '[opportunities] outcode/region_slug columns missing — apply migration 207_regional_index_captures.sql'
     );
     ({ data, error } = await run(stripOpportunityGeoFields(row)));
+  }
+  if (error && isMissingOpportunityReviewQueueColumnError(error)) {
+    console.warn(
+      '[opportunities] review queue columns missing — apply migration 266_opportunity_review_queue_and_pay_reminder.sql'
+    );
+    ({ data, error } = await run(stripOpportunityReviewQueueFields(row)));
   }
   if (error) throw new Error(error.message);
   return data;

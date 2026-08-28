@@ -5,6 +5,7 @@
  */
 const crypto = require('crypto');
 const { isSupabaseConfigured } = require('./_lib/supabase');
+const { wrapHandler } = require('./_lib/sentry');
 const {
   recordSponsorEmailOpen,
   recordSponsorEmailClick,
@@ -143,4 +144,4 @@ async function handler(req, res) {
   }
 }
 
-module.exports = handler;
+module.exports = wrapHandler(handler);

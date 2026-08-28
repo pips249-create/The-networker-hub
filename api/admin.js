@@ -2,6 +2,7 @@
  * Single serverless function for all /api/admin/* routes (Hobby plan function limit).
  */
 const { getSubRoute } = require('./_lib/route-path');
+const { wrapHandler } = require('./_lib/sentry');
 const { json, setCors, sessionFromRequest, requireAdminLive } = require('./_lib/auth');
 const { clientIp } = require('./_lib/rate-limit');
 
@@ -50,7 +51,7 @@ const routes = {
   activity: require('./_lib/routes/admin-activity'),
 };
 
-module.exports = async function handler(req, res) {
+module.exports = wrapHandler(async function handler(req, res) {
   try {
     setCors(req, res);
 
@@ -80,4 +81,4 @@ module.exports = async function handler(req, res) {
       message: e?.message || 'Admin request failed',
     });
   }
-};
+});

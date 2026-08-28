@@ -3,6 +3,7 @@
  * No cookies / no identity — aggregate monthly pack reporting only.
  */
 const { json, setCors } = require('./_lib/auth');
+const { wrapHandler } = require('./_lib/sentry');
 const { enforceRateLimit } = require('./_lib/rate-limit');
 const { useSupabase } = require('./_lib/supabase');
 const { recordSponsorClick, recordSponsorImpression } = require('./_lib/sponsor-clicks');
@@ -19,7 +20,7 @@ function parseBody(req) {
   return body || {};
 }
 
-module.exports = async function handler(req, res) {
+module.exports = wrapHandler(async function handler(req, res) {
   setCors(req, res);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -81,4 +82,4 @@ module.exports = async function handler(req, res) {
       message: e.message || 'Could not record sponsor analytics.',
     });
   }
-};
+});

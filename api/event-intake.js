@@ -2,6 +2,7 @@
  * Public event intake API — organisers send details for staff to list.
  */
 const { json, setCors } = require('./_lib/auth');
+const { wrapHandler } = require('./_lib/sentry');
 const { enforceRateLimit, clientIp } = require('./_lib/rate-limit');
 const { useSupabase } = require('./_lib/supabase');
 const { submitEventIntake } = require('./_lib/event-intake');
@@ -19,7 +20,7 @@ function parseBody(req) {
   return body || {};
 }
 
-module.exports = async function handler(req, res) {
+module.exports = wrapHandler(async function handler(req, res) {
   setCors(req, res);
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -83,4 +84,4 @@ module.exports = async function handler(req, res) {
       message: e.message || 'Could not send your event details.',
     });
   }
-};
+});
