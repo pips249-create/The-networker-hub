@@ -246,7 +246,9 @@
       '<div class="opp-compare-panel">' +
       '<header class="opp-compare-head">' +
       '<h2 id="opp-compare-title">Compare opportunities</h2>' +
-      '<button type="button" class="opp-compare-close" data-opp-compare-close aria-label="Close">×</button>' +
+      '<button type="button" class="opp-compare-close" data-opp-compare-close aria-label="Close compare">' +
+      '<span class="opp-compare-close-x" aria-hidden="true">×</span> Close' +
+      '</button>' +
       '</header>' +
       '<div class="opp-compare-scroll">' +
       '<table class="opp-compare-table"><thead><tr><th scope="col"></th>' +
@@ -261,13 +263,20 @@
 
   function bindModal(root) {
     if (!root) return;
+    function closeModal() {
+      var modal = document.getElementById('opp-compare-modal');
+      if (!modal) return;
+      modal.remove();
+      document.body.classList.remove('opp-compare-modal-open');
+      document.removeEventListener('keydown', onEscape);
+    }
+    function onEscape(e) {
+      if (e.key === 'Escape') closeModal();
+    }
     root.querySelectorAll('[data-opp-compare-close]').forEach(function (el) {
-      el.addEventListener('click', function () {
-        var modal = document.getElementById('opp-compare-modal');
-        if (modal) modal.remove();
-        document.body.classList.remove('opp-compare-modal-open');
-      });
+      el.addEventListener('click', closeModal);
     });
+    document.addEventListener('keydown', onEscape);
     document.body.classList.add('opp-compare-modal-open');
   }
 

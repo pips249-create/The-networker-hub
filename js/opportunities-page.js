@@ -1284,7 +1284,7 @@
         : 'false') +
       '">' +
       (window.HubOpportunityCompare && window.HubOpportunityCompare.isSelected(item.id)
-        ? 'In compare'
+        ? 'Added'
         : 'Compare') +
       '</button>' +
       '</div></div></div>' +
@@ -1304,7 +1304,7 @@
       var on = cmp.isSelected(id);
       btn.classList.toggle('is-active', on);
       btn.setAttribute('aria-pressed', on ? 'true' : 'false');
-      btn.textContent = on ? 'In compare' : 'Compare';
+      btn.textContent = on ? 'Added' : 'Compare';
     });
   }
 
@@ -1319,11 +1319,14 @@
     el.setAttribute('aria-label', 'Compare opportunities');
     el.innerHTML =
       '<div class="bo-opp-compare-tray-inner">' +
-      '<p class="bo-opp-compare-tray-text"><strong id="bo-opp-compare-count">0</strong> selected to compare <span class="bo-opp-compare-tray-hint">(max 3)</span></p>' +
+      '<p class="bo-opp-compare-tray-text"><strong id="bo-opp-compare-count">0</strong> selected to compare' +
+      '<span class="bo-opp-compare-tray-hint">Tap cards again to remove · Clear all or × to exit</span></p>' +
       '<div class="bo-opp-compare-tray-actions">' +
-      '<button type="button" class="bo-opp-compare-tray-clear" id="bo-opp-compare-clear">Clear</button>' +
-      '<button type="button" class="bo-opp-compare-tray-open" id="bo-opp-compare-open" disabled>Compare</button>' +
-      '</div></div>';
+      '<button type="button" class="bo-opp-compare-tray-clear" id="bo-opp-compare-clear">Clear all</button>' +
+      '<button type="button" class="bo-opp-compare-tray-open" id="bo-opp-compare-open" disabled>Compare now</button>' +
+      '</div>' +
+      '<button type="button" class="bo-opp-compare-tray-dismiss" id="bo-opp-compare-dismiss" aria-label="Exit compare">×</button>' +
+      '</div>';
     document.body.appendChild(el);
     return el;
   }
@@ -1380,6 +1383,7 @@
 
     var openBtn = document.getElementById('bo-opp-compare-open');
     var clearBtn = document.getElementById('bo-opp-compare-clear');
+    var dismissBtn = document.getElementById('bo-opp-compare-dismiss');
     if (openBtn && openBtn.dataset.bound !== '1') {
       openBtn.dataset.bound = '1';
       openBtn.addEventListener('click', function () {
@@ -1390,6 +1394,25 @@
       clearBtn.dataset.bound = '1';
       clearBtn.addEventListener('click', function () {
         window.HubOpportunityCompare.clear();
+        refreshCompareTray();
+      });
+    }
+    if (dismissBtn && dismissBtn.dataset.bound !== '1') {
+      dismissBtn.dataset.bound = '1';
+      dismissBtn.addEventListener('click', function () {
+        window.HubOpportunityCompare.clear();
+        refreshCompareTray();
+      });
+    }
+
+    if (document.body.dataset.oppCompareEscapeBound !== '1') {
+      document.body.dataset.oppCompareEscapeBound = '1';
+      document.addEventListener('keydown', function (e) {
+        if (e.key !== 'Escape') return;
+        if (document.getElementById('opp-compare-modal')) return;
+        var cmp = window.HubOpportunityCompare;
+        if (!cmp || !cmp.ids().length) return;
+        cmp.clear();
         refreshCompareTray();
       });
     }

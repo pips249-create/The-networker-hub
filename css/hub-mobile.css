@@ -3554,4 +3554,12 @@ body.nav-menu-open {
   .opp-browse-page .opp-compare-nudge {
     bottom: calc(72px + env(safe-area-inset-bottom, 0px));
   }
+
+  body.opp-browse-page.bo-opp-compare-tray-open {
+    overflow-x: clip;
+  }
+
+  body.opp-browse-page .bo-opp-compare-tray {
+    bottom: max(88px, calc(20px + env(safe-area-inset-bottom)));
+  }
 }
