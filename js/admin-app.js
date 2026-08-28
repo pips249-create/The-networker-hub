@@ -23753,7 +23753,15 @@
   function goToOpportunityPage(page) {
     var next = Math.max(0, page);
     var listEl = document.getElementById('opportunity-cleanup-list');
+    var statusEl = document.getElementById('opportunity-cleanup-status');
     opportunityCleanupState.expanded = {};
+    if (listEl) {
+      listEl.innerHTML =
+        '<p class="text-sm text-slate-500 rounded-xl border border-dashed border-slate-300 p-8 text-center">Loading page ' +
+        (next + 1) +
+        '…</p>';
+    }
+    if (statusEl) statusEl.textContent = 'Loading page ' + (next + 1) + '…';
     fetchOpportunityCleanup(next).then(function (data) {
       applyOpportunityCleanupData(data);
       if (listEl && listEl.scrollIntoView) {
@@ -24000,7 +24008,7 @@
       '<div id="opportunity-cleanup-status" class="text-sm text-slate-500">Loading business opportunities…</div>' +
       '<div id="opportunity-exclusive-brand-duplicates" class="hidden"></div>' +
       '<p id="opportunity-cleanup-hint" class="hidden text-xs text-amber-900 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">' +
-      'Large catalogue — use search and More filters. Type a page number below the table to jump ahead.</p>' +
+      'Listings load 15 at a time. Use Previous / Next under the table to browse.</p>' +
       '<div id="opportunity-cleanup-bulk" class="hidden rounded-xl border border-brand-200 bg-brand-50 p-4 shadow-sm space-y-3">' +
       '<div class="flex flex-wrap items-center justify-between gap-2">' +
       '<p class="text-sm font-semibold text-brand-900"><span id="opportunity-bulk-count">0</span> listings selected</p>' +
