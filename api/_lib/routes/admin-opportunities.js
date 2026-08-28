@@ -14,6 +14,10 @@ const { ensureOpportunitySlug } = require('../opportunity-slug');
 const { addMonths, listingPaymentCurrent } = require('../opportunity-listing-pricing');
 const { resolveImageUrl } = require('../supabase-storage');
 const { resolveOpportunityDisplayCover } = require('../opportunity-media');
+const {
+  effectiveReviewSubmittedAt,
+  isOpportunitySubmittedForReview,
+} = require('../opportunity-review-queue');
 
 const { HUB_SEED_OWNER_EMAIL, isHubSeedOwnerEmail } = require('../opportunity-hub-seed');
 const { applyIlikeSearch } = require('../search-match');
@@ -224,7 +228,7 @@ function mapOpportunityRow(row) {
     contact_email: String(row.contact_email || '').trim(),
     status: row.status || 'draft',
     approval_status: row.approval_status || 'Pending Review',
-    review_submitted_at: row.review_submitted_at || null,
+    review_submitted_at: effectiveReviewSubmittedAt(row),
     approved_at: row.approved_at || null,
     listing_payment_active: listingPaymentCurrent(row),
     featured: Boolean(row.featured),

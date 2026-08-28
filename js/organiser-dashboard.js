@@ -16411,7 +16411,11 @@
       return { key: 'pending_approval', label: 'Approved — pay to go live' };
     }
     if (/pending/i.test(approval)) {
-      return { key: 'pending_approval', label: 'Pending review' };
+      const submitted = Boolean(o.reviewSubmittedAt || o.review_submitted_at);
+      if (submitted) {
+        return { key: 'pending_approval', label: 'Pending review' };
+      }
+      return { key: 'draft', label: 'Draft — not submitted' };
     }
     if (approval === 'Rejected') {
       return { key: 'unpublished', label: 'Not approved' };

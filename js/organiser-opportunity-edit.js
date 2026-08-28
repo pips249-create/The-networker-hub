@@ -774,7 +774,11 @@
       label = 'Not approved';
       cls = 'is-draft';
     } else if (approval === 'Pending Review') {
-      label = 'Pending review';
+      if (opportunity.reviewSubmittedAt) {
+        label = 'Submitted — pending review';
+      } else {
+        label = 'Draft — not submitted';
+      }
       cls = 'is-draft';
     } else if (status === 'published') {
       label = 'Pending review';

@@ -22151,6 +22151,15 @@
     return Boolean(String(opp.commission || '').trim()) && !String(opp.investment || '').trim();
   }
 
+  function opportunityReviewSubmittedAt(opp) {
+    if (!opp) return '';
+    return String(opp.review_submitted_at || opp.reviewSubmittedAt || '').trim();
+  }
+
+  function opportunityIsSubmittedForReview(opp) {
+    return Boolean(opportunityReviewSubmittedAt(opp));
+  }
+
   function opportunityAboutParagraphs(opp) {
     if (!opp) return [];
     if (Array.isArray(opp.about) && opp.about.length) {
@@ -22365,16 +22374,16 @@
   function opportunityCleanupReviewPanelHtml(opp) {
     var id = String(opp.id || '');
     var isPendingSubmitted =
-      opp.approval_status === 'Pending Review' && Boolean(opp.review_submitted_at);
+      opp.approval_status === 'Pending Review' && opportunityIsSubmittedForReview(opp);
     var isDraftNotSubmitted =
-      opp.approval_status === 'Pending Review' && !opp.review_submitted_at;
+      opp.approval_status === 'Pending Review' && !opportunityIsSubmittedForReview(opp);
     var awaitingPay = opp.approval_status === 'Approved' && !opp.listing_payment_active;
     var previewHref = opportunityAdminViewHref(opp);
     var approveLabel = opp.listing_payment_active
       ? 'Approve &amp; go live'
       : 'Approve — email pay link';
-    var submittedAt = opp.review_submitted_at
-      ? fmtTime(opp.review_submitted_at)
+    var submittedAt = opportunityReviewSubmittedAt(opp)
+      ? fmtTime(opportunityReviewSubmittedAt(opp))
       : opp.updated_at
         ? fmtTime(opp.updated_at)
         : '';
@@ -22569,7 +22578,7 @@
   function opportunityCleanupDataRowHtml(opp) {
     var publicHref = opportunityAdminViewHref(opp);
     var isPending =
-      opp.approval_status === 'Pending Review' && Boolean(opp.review_submitted_at);
+      opp.approval_status === 'Pending Review' && opportunityIsSubmittedForReview(opp);
     var awaitingPay = opp.approval_status === 'Approved' && !opp.listing_payment_active;
     var rowClass = isPending
       ? 'border-b border-amber-100 bg-amber-50/40'
@@ -22612,7 +22621,7 @@
       '</td>' +
       '<td class="py-2.5 pr-3"><div class="flex flex-wrap gap-1">' +
       listingStatusBadge(opp.status) +
-      (opp.approval_status === 'Pending Review' && !opp.review_submitted_at
+      (opp.approval_status === 'Pending Review' && !opportunityIsSubmittedForReview(opp)
         ? '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-slate-100 text-slate-600">Not submitted</span>'
         : approvalStatusBadge(opp.approval_status)) +
       (awaitingPay

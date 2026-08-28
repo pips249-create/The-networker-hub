@@ -6,6 +6,11 @@ const { resolveImageUrl } = require('./supabase-storage');
 const { resolveOpportunityDisplayCover } = require('./opportunity-media');
 const { resolveOrganiserAccess } = require('./supabase-organiser-access');
 const {
+  effectiveReviewSubmittedAt,
+  isOpportunitySubmittedForReview,
+  stampOpportunityReviewSubmission,
+} = require('./opportunity-review-queue');
+const {
   normalizeListingMonths,
   addMonths,
   listingPaymentCurrent,
@@ -68,7 +73,9 @@ function normalizeMeta(meta) {
 }
 
 function normalizeListingMeta(meta) {
-  return stripEarningsMeta(normalizeMeta(meta));
+  return stripEarningsMeta(normalizeMeta(meta)).filter(function (m) {
+    return m.key && !String(m.key).startsWith('__');
+  });
 }
 
 function normalizeType(type) {
@@ -303,7 +310,7 @@ function rowToListing(row) {
     })(),
     status: row.status || 'draft',
     approvalStatus: row.approval_status || 'Pending Review',
-    reviewSubmittedAt: row.review_submitted_at || null,
+    reviewSubmittedAt: effectiveReviewSubmittedAt(row),
     approvedAt: row.approved_at || null,
     organiserId: row.organiser_id || '',
     ownerEmail: String(row.owner_email || '').toLowerCase(),
@@ -762,7 +769,7 @@ async function createOpportunity(payload) {
   if (submitForReview) {
     row.status = 'draft';
     row.approval_status = 'Pending Review';
-    row.review_submitted_at = new Date().toISOString();
+    stampOpportunityReviewSubmission(row);
   } else {
     row.review_submitted_at = null;
   }
@@ -793,22 +800,25 @@ async function updateOpportunity(id, payload) {
     // Review-then-pay: queue for admin without publishing or charging.
     row.status = existing?.listingPaymentActive ? 'published' : 'draft';
     row.approval_status = 'Pending Review';
-    if (!existing?.reviewSubmittedAt) {
-      row.review_submitted_at = new Date().toISOString();
+    if (!effectiveReviewSubmittedAt(existing)) {
+      stampOpportunityReviewSubmission(row);
     }
   } else if (row.status === 'published') {
     if (existing?.approvalStatus === 'Approved') {
       delete row.approval_status;
     } else {
       row.approval_status = 'Pending Review';
-      if (!existing?.reviewSubmittedAt) {
-        row.review_submitted_at = new Date().toISOString();
+      if (!effectiveReviewSubmittedAt(existing)) {
+        stampOpportunityReviewSubmission(row);
       }
     }
   }
+  if (effectiveReviewSubmittedAt(existing) && !submitForReview) {
+    stampOpportunityReviewSubmission(row, effectiveReviewSubmittedAt(existing));
+  }
   const wasAlreadyQueued =
     String(existing?.approvalStatus || '') === 'Pending Review' &&
-    Boolean(existing?.reviewSubmittedAt);
+    isOpportunitySubmittedForReview(existing);
   const data = await writeOpportunityRow(sb, 'update', row, id);
 
   if (data.status === 'published') {
