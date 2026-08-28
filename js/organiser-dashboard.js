@@ -18508,14 +18508,11 @@
   sessionFetcher()
     .then((data) => {
       if (!data.ok || !data.user) {
-        setDashboardLoading(false);
-        if (signin) signin.hidden = false;
         return;
       }
       const hasAccess =
         data.organiserUiVisible || data.user.role === 'admin' || data.impersonating;
       if (!hasAccess) {
-        setDashboardLoading(false);
         if (data.organiserAccess && !data.organiserUiVisible) {
           window.location.href = '../account/settings#organiser-workspace';
           return;
@@ -18523,12 +18520,12 @@
         window.location.href = '/organiser/enable';
         return;
       }
+      if (signin) signin.hidden = true;
       state.organiserAccess = data.organiserAccess === true;
       state.organiserEmailVerified = data.organiserEmailVerified === true;
       boot(data.user);
     })
     .catch(() => {
-      setDashboardLoading(false);
       if (signin) {
         signin.hidden = false;
         signin.querySelector('.org-section-sub').textContent =

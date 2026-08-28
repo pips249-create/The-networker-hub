@@ -4,6 +4,16 @@
 (function () {
   var STORAGE_KEY = 'hub_cookie_consent_v1';
 
+  function isEmbedContext() {
+    try {
+      if (new URLSearchParams(window.location.search).get('embed') === '1') return true;
+      if (window.self !== window.top) return true;
+    } catch (e) {
+      return true;
+    }
+    return false;
+  }
+
   function readConsent() {
     try {
       var raw = localStorage.getItem(STORAGE_KEY);
@@ -58,6 +68,13 @@
     else disableAnalytics();
     hideBanner();
     hideModal();
+    try {
+      document.dispatchEvent(
+        new CustomEvent('hub:cookie-consent-changed', { detail: prefs })
+      );
+    } catch (e) {
+      /* ignore */
+    }
   }
 
   var bannerEl;
@@ -156,6 +173,16 @@
   };
 
   function init() {
+    if (isEmbedContext()) {
+      window.HubCookieConsent = {
+        openSettings: function () {},
+        getConsent: readConsent,
+        hasAnalyticsConsent: function () {
+          return false;
+        },
+      };
+      return;
+    }
     buildUi();
     var existing = readConsent();
     if (existing) {

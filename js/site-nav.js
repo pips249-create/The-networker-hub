@@ -194,31 +194,16 @@
     return html;
   }
 
-  function loadComplianceAsset(path, options) {
-    options = options || {};
-    var full = root + path;
-    if (document.querySelector('[data-hub-compliance="' + path + '"]')) return;
-    if (path.indexOf('.css') !== -1) {
-      var link = document.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = full;
-      link.setAttribute('data-hub-compliance', path);
-      document.head.appendChild(link);
-      return;
+  if (!window.__hubComplianceAssets && !document.querySelector('script[data-hub-compliance-bootstrap]')) {
+    if (window.HubComplianceBootstrap && typeof window.HubComplianceBootstrap.load === 'function') {
+      window.HubComplianceBootstrap.load(root);
+    } else {
+      var complianceScript = document.createElement('script');
+      complianceScript.src = root + 'js/hub-compliance-bootstrap.js?v=20260828cmp1';
+      complianceScript.setAttribute('data-root', root);
+      complianceScript.setAttribute('data-hub-compliance-bootstrap', '1');
+      document.head.appendChild(complianceScript);
     }
-    var s = document.createElement('script');
-    s.src = full;
-    if (options.defer !== false) s.defer = true;
-    s.setAttribute('data-hub-compliance', path);
-    document.head.appendChild(s);
-  }
-
-  if (!window.__hubComplianceAssets) {
-    window.__hubComplianceAssets = true;
-    loadComplianceAsset('js/hub-sentry.js?v=20260828sentry3', { defer: false });
-    loadComplianceAsset('css/cookie-consent.css?v=20260609');
-    loadComplianceAsset('js/hub-analytics.js?v=20260825ga4');
-    loadComplianceAsset('js/cookie-consent.js?v=20260825ga4');
   }
 
   function mountBrowseWeekBannerWhenReady() {
@@ -1336,21 +1321,14 @@
   var sessionPromise = null;
   window.hubFetchSession = function () {
     if (!sessionPromise) {
-      if (window.hubSessionPrefetchPromise) {
-        sessionPromise = window.hubSessionPrefetchPromise.then(function (data) {
-          window.hubSessionPrefetchPromise = null;
-          return data && typeof data === 'object' ? data : { ok: false };
+      sessionPromise = fetch('/api/auth/session', { credentials: 'include' })
+        .then(function (res) {
+          return res.json();
+        })
+        .catch(function () {
+          sessionPromise = null;
+          return { ok: false };
         });
-      } else {
-        sessionPromise = fetch('/api/auth/session', { credentials: 'include' })
-          .then(function (res) {
-            return res.json();
-          })
-          .catch(function () {
-            sessionPromise = null;
-            return { ok: false };
-          });
-      }
     }
     return sessionPromise;
   };

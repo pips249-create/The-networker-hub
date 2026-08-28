@@ -1,11 +1,14 @@
 /**
  * Start hero sponsor CMS fetch early so LCP logo discovery happens before deferred JS runs.
- * Included only on /events/ browse page.
+ * Set data-slot on the script tag, or omit for /events/ browse (events vs organisers mode).
  */
 (function () {
-  var params = new URLSearchParams(window.location.search);
-  var slot =
-    params.get('mode') === 'organisers' ? 'organisers_sponsor_hub' : 'events_sponsor_hub';
+  var script = document.currentScript;
+  var slot = script && script.getAttribute('data-slot');
+  if (!slot) {
+    var params = new URLSearchParams(window.location.search);
+    slot = params.get('mode') === 'organisers' ? 'organisers_sponsor_hub' : 'events_sponsor_hub';
+  }
   window.hubSponsorPrefetchSlot = slot;
 
   window.hubSponsorBlockPromise = fetch('/api/cms-block?slot=' + encodeURIComponent(slot))

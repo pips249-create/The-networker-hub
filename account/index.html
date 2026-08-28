@@ -11,23 +11,21 @@
     <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png?v=20260823uk" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap"
-      rel="stylesheet"
-    />
+    <script src="../js/hub-session-prefetch.js?v=20260828perf1"></script>
+    <link rel="stylesheet" href="../css/hub-loading.css?v=20260630" />
     <link rel="stylesheet" href="../css/hub.css?v=20260825adminbadge1" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260812footer11" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260805mobile" />
-    <link rel="stylesheet" href="../css/hub-loading.css?v=20260630" />
     <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260807contrib" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260812footer10" />
+    <script src="../js/hub-defer-css.js?v=20260828perf2" data-hrefs="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap"></script>
 
   </head>
-  <body class="attendee-dashboard-page hub-page-account hub-is-page-loading">
+  <body class="attendee-dashboard-page hub-page-account">
     <div id="hub-site-nav"></div>
-    <script src="../js/site-nav.js?v=20260828nav1" data-root="../" data-page="account"></script>
+    <script src="../js/site-nav.js?v=20260828perf1" data-root="../" data-page="account"></script>
 
-    <div id="ad-signin" class="ad-signin" hidden>
+    <div id="ad-signin" class="ad-signin">
       <p>Sign in to see event tickets you have bought, reviews to leave, and business opportunity enquiries you have sent.</p>
       <p style="margin-top: 12px">
         <a class="ad-btn ad-btn-primary" href="../login?next=/account/">Sign in</a>
@@ -909,11 +907,11 @@
 
     <div
       id="ad-dash-loading"
-      class="hub-page-buffer hub-page-buffer--modal hub-page-buffer--dashboard is-active"
-      aria-hidden="false"
+      class="hub-page-buffer hub-page-buffer--modal hub-page-buffer--dashboard"
+      hidden
       role="status"
       aria-live="polite"
-      aria-busy="true"
+      aria-busy="false"
     >
       <div class="hub-page-buffer-card">
         <div class="hub-page-buffer-spinner" aria-hidden="true"></div>
@@ -922,18 +920,18 @@
       </div>
     </div>
 
-    <script src="../js/site-footer.js?v=20260825navfull1" data-root="../"></script>
-    <script src="../js/flexible-event-image.js?v=20260709"></script>
-    <script src="../js/hub-favourites.js?v=20260629"></script>
-    <script src="../js/hub-organiser-favourites.js?v=20260630"></script>
-    <script src="../js/opportunities-saves.js?v=20260714a"></script>
-    <script src="../js/opportunities-catalog.js?v=20260711a"></script>
-    <script src="../js/hub-search-match.js?v=20260807search2"></script>
-    <script src="../js/opportunity-listing-quality.js?v=20260807search2"></script>
-    <script src="../js/opportunity-compare.js?v=20260827browse1"></script>
-    <script src="../js/hub-calendar-share.js?v=20260609a"></script>
-    <script src="../js/hub-going-share.js?v=20260714share2"></script>
-    <script src="../js/hub-side-nav.js?v=20260805hubmobile2"></script>
-    <script src="../js/attendee-dashboard.js?v=20260813cap1"></script>
+    <script src="../js/site-footer.js?v=20260825navfull1" data-root="../" defer></script>
+    <script src="../js/flexible-event-image.js?v=20260709" defer></script>
+    <script src="../js/hub-favourites.js?v=20260629" defer></script>
+    <script src="../js/hub-organiser-favourites.js?v=20260630" defer></script>
+    <script src="../js/opportunities-saves.js?v=20260714a" defer></script>
+    <script src="../js/opportunities-catalog.js?v=20260711a" defer></script>
+    <script src="../js/hub-search-match.js?v=20260807search2" defer></script>
+    <script src="../js/opportunity-listing-quality.js?v=20260807search2" defer></script>
+    <script src="../js/opportunity-compare.js?v=20260827browse1" defer></script>
+    <script src="../js/hub-calendar-share.js?v=20260609a" defer></script>
+    <script src="../js/hub-going-share.js?v=20260714share2" defer></script>
+    <script src="../js/hub-side-nav.js?v=20260805hubmobile2" defer></script>
+    <script src="../js/attendee-dashboard.js?v=20260828perf1" defer></script>
   </body>
 </html>

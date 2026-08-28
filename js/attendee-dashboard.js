@@ -4424,13 +4424,18 @@
     });
     window.addEventListener('resize', closeUtilityMenus);
     setRoute(parseRoute());
-    setDashboardLoading(true);
 
-    const sessionRes = await fetch('/api/auth/session', { credentials: 'include' });
-    const sessionData = await sessionRes.json();
+    const sessionFetcher =
+      typeof window.hubFetchSession === 'function'
+        ? window.hubFetchSession
+        : function () {
+            return fetch('/api/auth/session', { credentials: 'include' }).then(function (res) {
+              return res.json();
+            });
+          };
+
+    const sessionData = await sessionFetcher();
     if (!sessionData.ok || !sessionData.user) {
-      setDashboardLoading(false);
-      if (signin) signin.hidden = false;
       if (shell) shell.hidden = true;
       const signInLink = signin && signin.querySelector('a.ad-btn-primary');
       if (signInLink) {
