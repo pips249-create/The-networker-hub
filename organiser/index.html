@@ -1886,6 +1886,9 @@
               <p class="org-section-sub org-team-editor-note" id="team-member-note" hidden>
                 You&apos;re signed in as a <strong>team member</strong>. You can manage events for your assigned organiser pages. Only the account owner can invite colleagues or change bank details.
               </p>
+              <p class="org-section-sub org-team-editor-note" id="team-marketing-note" hidden>
+                You&apos;re signed in with <strong>Marketing</strong> access — Promote tools only. Revenue, registrations, and attendee lists stay with the account owner.
+              </p>
             </div>
             <button type="button" class="org-btn org-btn-gold" id="btn-invite-team">Invite team member</button>
           </header>
@@ -1917,6 +1920,14 @@
                   <li>Create and edit events and tickets</li>
                   <li>View revenue, registrations, and reviews</li>
                   <li>Manage opportunity listings</li>
+                  <li>Use Promote tools (LinkedIn posts and graphics)</li>
+                </ul>
+              </div>
+              <div class="org-team-permissions-card org-team-permissions-card--marketing">
+                <p class="org-team-permissions-label">Marketing access can</p>
+                <ul class="org-team-permissions-list org-team-permissions-list--can">
+                  <li>Use Promote — LinkedIn posts, graphics, and share links</li>
+                  <li>See event titles, dates, and listing details needed for posts</li>
                 </ul>
               </div>
               <div class="org-team-permissions-card org-team-permissions-card--cannot">
@@ -1926,6 +1937,12 @@
                   <li>Create or duplicate pages</li>
                   <li>Add bank details or request payouts</li>
                   <li>Delete events</li>
+                </ul>
+                <p class="org-team-permissions-label org-team-permissions-label--sub">Marketing access cannot</p>
+                <ul class="org-team-permissions-list org-team-permissions-list--cannot">
+                  <li>View revenue or registrations</li>
+                  <li>Edit events, tickets, or attendee lists</li>
+                  <li>Send Communicate emails or manage memberships</li>
                 </ul>
               </div>
             </div>
@@ -2915,7 +2932,7 @@
       <div class="org-modal-backdrop" data-org-modal-close></div>
       <div class="org-modal-panel org-modal-panel--team-invite">
         <h2 id="modal-team-title">Invite team member</h2>
-        <p class="org-modal-lead">
+        <p class="org-modal-lead" id="modal-team-role-lead">
           They can create and edit events, manage attendees, and view revenue on the pages you choose.
           They cannot invite others, add bank details, request payouts, or delete events.
         </p>
@@ -2926,6 +2943,23 @@
             <input type="email" id="team-invite-email" required placeholder="colleague@company.com" autocomplete="email" />
             <p class="org-field-hint">They must sign in with this exact email to activate access.</p>
           </div>
+          <fieldset class="org-team-role-fieldset">
+            <legend class="org-team-group-legend">Access level</legend>
+            <label class="org-team-role-option">
+              <input type="radio" name="team-invite-role" value="editor" checked />
+              <span>
+                <strong>Team member</strong>
+                <span class="org-team-role-option-sub">Events, revenue, registrations, and Promote</span>
+              </span>
+            </label>
+            <label class="org-team-role-option">
+              <input type="radio" name="team-invite-role" value="marketing" />
+              <span>
+                <strong>Marketing</strong>
+                <span class="org-team-role-option-sub">Promote only — no revenue or registrations</span>
+              </span>
+            </label>
+          </fieldset>
           <fieldset class="org-team-group-fieldset" id="team-invite-groups-fieldset">
             <legend class="org-team-group-legend">Organiser page access</legend>
             <label class="org-team-group-all">

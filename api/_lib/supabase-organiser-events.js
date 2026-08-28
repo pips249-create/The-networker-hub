@@ -12,6 +12,11 @@ const { findUserByEmail } = require('./supabase-auth');
 const sbOrg = require('./supabase-organiser');
 const { geocodeUkPostcode } = require('./postcode-geocode');
 const { resolveOrganiserAccess, groupVisibleInOrganiserWorkspace, emailMatchedOrganiserIdsForSession, mergeEmailMatchedGroups } = require('./supabase-organiser-access');
+const {
+  sanitizeWorkspaceForMarketing,
+  isMarketingAccess,
+  stripEventSalesFields,
+} = require('./organiser-marketing-workspace');
 const { eventHasTicketsOnSale, resolveTierSaleEnd } = require('./ticket-sales');
 const { assertTicketsEditableForEvents, loadLockedOrActiveSaleEvents, lockEventOnFirstSale } = require('./event-sale-lock');
 const { applyListingLifecyclePreserve } = require('./listing-lifecycle');
@@ -2977,6 +2982,50 @@ async function mergeWorkspaceGroups(session, groups, access, adminView) {
   return mergeEmailMatchedGroups(session, groups, access);
 }
 
+function workspaceAccessFlags(access) {
+  if (!access) {
+    return {
+      organiserRole: null,
+      canManageTeam: true,
+      canDeleteEvents: true,
+      canManagePayments: true,
+      canCreateGroups: true,
+      canManageEvents: true,
+      canViewRevenue: true,
+      canViewRegistrations: true,
+      canAccessPromote: true,
+      canAccessCommunicate: true,
+      isMarketing: false,
+      useTeamWorkspace: false,
+    };
+  }
+  return {
+    organiserRole: access.role,
+    canManageTeam: access.canManageTeam,
+    canDeleteEvents: access.canDeleteEvents,
+    canManagePayments: access.canManagePayments,
+    canCreateGroups: access.canCreateGroups,
+    canManageEvents: access.canManageEvents,
+    canViewRevenue: access.canViewRevenue,
+    canViewRegistrations: access.canViewRegistrations,
+    canAccessPromote: access.canAccessPromote,
+    canAccessCommunicate: access.canAccessCommunicate,
+    isMarketing: access.isMarketing,
+    useTeamWorkspace: Boolean(access.useTeamWorkspace),
+  };
+}
+
+function finalizeOrganiserWorkspacePayload(payload, access) {
+  const next = {
+    ...payload,
+    ...workspaceAccessFlags(access),
+  };
+  if (isMarketingAccess(access)) {
+    return sanitizeWorkspaceForMarketing(next);
+  }
+  return next;
+}
+
 async function prepareOrganiserWorkspaceScope(session, adminView) {
   const { syncEmailMatchedOrganiserClaims } = require('./supabase-organiser-claims');
   if (!adminView) {
@@ -3112,47 +3161,44 @@ async function getLeanOrganiserWorkspace(req) {
     eventsTotal = eventSummaries.length;
   }
 
-  return {
-    ok: true,
-    session,
-    groups,
-    pendingClaimGroups,
-    pendingClaimOpportunities,
-    events: [],
-    upcomingEvents: [],
-    tickets: [],
-    eventsPagination: {
-      total: eventsTotal,
-      limit: eventSummaries.length,
-      offset: 0,
-      hasMore: eventsTotal > eventSummaries.length,
+  return finalizeOrganiserWorkspacePayload(
+    {
+      ok: true,
+      session,
+      groups,
+      pendingClaimGroups,
+      pendingClaimOpportunities,
+      events: [],
+      upcomingEvents: [],
+      tickets: [],
+      eventsPagination: {
+        total: eventsTotal,
+        limit: eventSummaries.length,
+        offset: 0,
+        hasMore: eventsTotal > eventSummaries.length,
+      },
+      workspaceSummary,
+      eventSummaries,
+      reviews: [],
+      groupRankings: {},
+      pendingApplications: { count: 0, preview: [] },
+      groupsError,
+      hubView: hubViewFromRequest(req),
+      adminView,
+      personalScope,
+      isAdmin,
+      canOrganise: groups.length > 0 || adminView,
+      accessStatus,
+      stripeConnectEnabled,
+      user: {
+        email: session.email,
+        name: session.name || '',
+        role: session.role,
+        sub: session.sub,
+      },
     },
-    workspaceSummary,
-    eventSummaries,
-    reviews: [],
-    groupRankings: {},
-    pendingApplications: { count: 0, preview: [] },
-    groupsError,
-    hubView: hubViewFromRequest(req),
-    adminView,
-    personalScope,
-    isAdmin,
-    canOrganise: groups.length > 0 || adminView,
-    organiserRole: access ? access.role : null,
-    canManageTeam: access ? access.canManageTeam : true,
-    canDeleteEvents: access ? access.canDeleteEvents : true,
-    canManagePayments: access ? access.canManagePayments : true,
-    canCreateGroups: access ? access.canCreateGroups : true,
-    useTeamWorkspace: access ? Boolean(access.useTeamWorkspace) : false,
-    accessStatus,
-    stripeConnectEnabled,
-    user: {
-      email: session.email,
-      name: session.name || '',
-      role: session.role,
-      sub: session.sub,
-    },
-  };
+    access
+  );
 }
 
 async function getOrganiserWorkspace(req) {
@@ -3211,15 +3257,18 @@ async function getOrganiserWorkspace(req) {
         adminView,
         eventsPaginationQuery
       );
-      return {
-        ok: true,
-        session,
-        groups: page.groups,
-        events: page.events,
-        upcomingEvents: page.upcomingEvents,
-        tickets: page.tickets,
-        eventsPagination: page.eventsPagination,
-      };
+      return finalizeOrganiserWorkspacePayload(
+        {
+          ok: true,
+          session,
+          groups: page.groups,
+          events: page.events,
+          upcomingEvents: page.upcomingEvents,
+          tickets: page.tickets,
+          eventsPagination: page.eventsPagination,
+        },
+        workspaceAccess
+      );
     } catch (e) {
       return { ok: false, status: 500, error: 'events_fetch_failed', message: e.message, groups };
     }
@@ -3264,6 +3313,8 @@ async function getOrganiserWorkspace(req) {
     }
   }
 
+  const marketingWorkspace = isMarketingAccess(access);
+
   let workspaceSalesCache = null;
   let eventSummaries = [];
   let reviews = [];
@@ -3277,14 +3328,16 @@ async function getOrganiserWorkspace(req) {
 
   const [salesResult, summariesResult, reviewsResult, rankingsResult, eventIdsResult] =
     await Promise.all([
-      (async () => {
-        try {
-          const { buildOrganiserWorkspaceSummary } = require('./supabase-organiser-payouts');
-          return await buildOrganiserWorkspaceSummary(groupIds, adminView);
-        } catch {
-          return null;
-        }
-      })(),
+      marketingWorkspace
+        ? Promise.resolve(null)
+        : (async () => {
+            try {
+              const { buildOrganiserWorkspaceSummary } = require('./supabase-organiser-payouts');
+              return await buildOrganiserWorkspaceSummary(groupIds, adminView);
+            } catch {
+              return null;
+            }
+          })(),
       listEventSummariesForOrganiserGroups(groupIds, adminView).catch(() => []),
       listReviewsForOrganiserGroups(
         groupIds,
@@ -3302,7 +3355,9 @@ async function getOrganiserWorkspace(req) {
   allEventIds = eventIdsResult || [];
 
   try {
-    pendingApplications = await summarizePendingApplicationsForEventIds(allEventIds);
+    if (!marketingWorkspace && allEventIds.length) {
+      pendingApplications = await summarizePendingApplicationsForEventIds(allEventIds);
+    }
   } catch {
     pendingApplications = { count: 0, preview: [] };
   }
@@ -3322,7 +3377,7 @@ async function getOrganiserWorkspace(req) {
   }
 
   try {
-    if (allEventIds.length) {
+    if (!marketingWorkspace && allEventIds.length) {
       const { enrichTicketsWithSales, listRegistrationsForEvents } = require('./supabase-organiser-payouts');
       const allTickets = await listTicketsForEventIds(allEventIds);
       const regs = workspaceSalesCache?.registrations?.length
@@ -3343,41 +3398,38 @@ async function getOrganiserWorkspace(req) {
     stripeConnectEnabled = false;
   }
 
-  return {
-    ok: true,
-    session,
-    groups: overviewGroups,
-    pendingClaimGroups,
-    pendingClaimOpportunities,
-    events,
-    upcomingEvents,
-    tickets,
-    eventsPagination,
-    workspaceSummary,
-    eventSummaries,
-    reviews,
-    groupRankings,
-    pendingApplications,
-    groupsError,
-    hubView: hubViewFromRequest(req),
-    adminView,
-    personalScope,
-    isAdmin,
-    canOrganise: groups.length > 0 || adminView,
-    organiserRole: access ? access.role : null,
-    canManageTeam: access ? access.canManageTeam : true,
-    canDeleteEvents: access ? access.canDeleteEvents : true,
-    canManagePayments: access ? access.canManagePayments : true,
-    canCreateGroups: access ? access.canCreateGroups : true,
-    useTeamWorkspace: access ? Boolean(access.useTeamWorkspace) : false,
-    stripeConnectEnabled,
-    user: {
-      email: session.email,
-      name: displayName,
-      role: session.role,
-      sub: session.sub,
+  return finalizeOrganiserWorkspacePayload(
+    {
+      ok: true,
+      session,
+      groups: overviewGroups,
+      pendingClaimGroups,
+      pendingClaimOpportunities,
+      events,
+      upcomingEvents,
+      tickets,
+      eventsPagination,
+      workspaceSummary,
+      eventSummaries,
+      reviews,
+      groupRankings,
+      pendingApplications,
+      groupsError,
+      hubView: hubViewFromRequest(req),
+      adminView,
+      personalScope,
+      isAdmin,
+      canOrganise: groups.length > 0 || adminView,
+      stripeConnectEnabled,
+      user: {
+        email: session.email,
+        name: displayName,
+        role: session.role,
+        sub: session.sub,
+      },
     },
-  };
+    access
+  );
 }
 
 function airtableSetupHint() {
@@ -3396,6 +3448,14 @@ async function getOrganiserWorkspaceStats(req) {
   const adminView = isAdmin && !personalScope;
 
   const access = await resolveOrganiserAccess(session).catch(() => null);
+  if (isMarketingAccess(access)) {
+    return {
+      ok: false,
+      status: 403,
+      error: 'marketing_read_only',
+      message: 'Marketing access cannot view revenue or registration totals.',
+    };
+  }
   let groups = [];
   try {
     groups = await sbOrg.listGroupsForSession(session, adminView, access);

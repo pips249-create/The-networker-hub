@@ -140,15 +140,33 @@ module.exports = async function handler(req, res) {
   async function sessionGroups() {
     const { adminView } = adminViewFromSession(auth.session, req);
     const scope = await resolveOrganiserGroupScope(auth.session, adminView);
-    return { groups: scope.groups, groupIds: scope.groupIds, adminView };
+    return {
+      groups: scope.groups,
+      groupIds: scope.groupIds,
+      adminView,
+      access: scope.access,
+    };
+  }
+
+  function stripEventsForAccess(events, access) {
+    const { isMarketingAccess, stripEventSalesFields } = require('../organiser-marketing-workspace');
+    if (!isMarketingAccess(access) || !Array.isArray(events)) return events;
+    return events.map(stripEventSalesFields);
+  }
+
+  async function requireManageEventsAccess() {
+    const { resolveOrganiserRoleAccess, assertCanManageEvents } = require('../organiser-role-guard');
+    const roleAccess = await resolveOrganiserRoleAccess(auth.session);
+    if (!roleAccess.ok) return roleAccess;
+    return assertCanManageEvents(roleAccess.access);
   }
 
   async function assertOwnsEventId(eventId) {
-    const { groups, groupIds, adminView } = await sessionGroups();
-    if (adminView) return { ok: true, groups, groupIds, adminView };
+    const { groups, groupIds, adminView, access } = await sessionGroups();
+    if (adminView) return { ok: true, groups, groupIds, adminView, access };
     const owned = await filterOwnedEventIds([eventId], groupIds, false);
-    if (!owned.length) return { ok: false, groups, groupIds, adminView };
-    return { ok: true, groups, groupIds, adminView };
+    if (!owned.length) return { ok: false, groups, groupIds, adminView, access };
+    return { ok: true, groups, groupIds, adminView, access };
   }
 
   if (req.method === 'GET') {
@@ -156,26 +174,36 @@ module.exports = async function handler(req, res) {
     const seriesGroupId = String(req.query?.seriesGroupId || req.query?.series_group_id || '').trim();
     try {
       if (seriesGroupId) {
-        const { groupIds } = await sessionGroups();
-        const events = await listEventsForSeriesGroup(groupIds, seriesGroupId);
+        const { groupIds, access } = await sessionGroups();
+        const events = stripEventsForAccess(
+          await listEventsForSeriesGroup(groupIds, seriesGroupId),
+          access
+        );
         return json(res, 200, { ok: true, events });
       }
       if (eventId) {
-        const access = await assertOwnsEventId(eventId);
-        if (!access.ok) return json(res, 403, EVENT_NOT_OWNED);
+        const ownership = await assertOwnsEventId(eventId);
+        if (!ownership.ok) return json(res, 403, EVENT_NOT_OWNED);
         const event = await getEventById(eventId);
         let enriched = event;
-        try {
-          const { enrichEventsWithRegistrationSales } = require('../supabase-organiser-payouts');
-          const [withSales] = await enrichEventsWithRegistrationSales([event]);
-          enriched = withSales || event;
-        } catch {
-          /* sales enrichment optional */
+        if (!require('../organiser-marketing-workspace').isMarketingAccess(ownership.access)) {
+          try {
+            const { enrichEventsWithRegistrationSales } = require('../supabase-organiser-payouts');
+            const [withSales] = await enrichEventsWithRegistrationSales([event]);
+            enriched = withSales || event;
+          } catch {
+            /* sales enrichment optional */
+          }
+        } else {
+          enriched = require('../organiser-marketing-workspace').stripEventSalesFields(event);
         }
         return json(res, 200, { ok: true, event: enriched });
       }
-      const { groups, groupIds } = await sessionGroups();
-      const events = await listEventsForSession(auth.session, groupIds, []);
+      const { groups, groupIds, access } = await sessionGroups();
+      const events = stripEventsForAccess(
+        await listEventsForSession(auth.session, groupIds, []),
+        access
+      );
       return json(res, 200, { ok: true, events, groups });
     } catch (e) {
       return jsonPublicError(res, json, e, { code: 'events_fetch_failed', logLabel: '[organiser-events]', extra: { airtable: airtableSetupHint('events') } });
@@ -183,6 +211,10 @@ module.exports = async function handler(req, res) {
   }
 
   if (req.method === 'PATCH') {
+    const manageGate = await requireManageEventsAccess();
+    if (!manageGate.ok) {
+      return json(res, manageGate.status, { error: manageGate.error, message: manageGate.message });
+    }
     const body = parseBody(req);
     const publishBlocked = await requireVerifiedForPublish(body);
     if (publishBlocked) return publishBlocked;
@@ -264,6 +296,10 @@ module.exports = async function handler(req, res) {
   }
 
   if (req.method === 'POST') {
+    const manageGate = await requireManageEventsAccess();
+    if (!manageGate.ok) {
+      return json(res, manageGate.status, { error: manageGate.error, message: manageGate.message });
+    }
     const body = parseBody(req);
     const publishBlocked = await requireVerifiedForPublish(body);
     if (publishBlocked) return publishBlocked;
@@ -422,6 +458,10 @@ module.exports = async function handler(req, res) {
   }
 
   if (req.method === 'DELETE') {
+    const manageGate = await requireManageEventsAccess();
+    if (!manageGate.ok) {
+      return json(res, manageGate.status, { error: manageGate.error, message: manageGate.message });
+    }
     const body = parseBody(req);
     const eventId = String(body.id || body.eventId || req.query?.id || '').trim();
     if (!eventId) return json(res, 400, { error: 'missing_event_id' });

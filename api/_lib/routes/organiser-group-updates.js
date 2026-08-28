@@ -66,6 +66,20 @@ module.exports = async function handler(req, res) {
 
   const auth = await requireOrganiserSession(req);
   if (!auth.ok) return json(res, auth.status, { error: auth.error });
+
+  const { resolveOrganiserRoleAccess, assertCanAccessCommunicate } = require('../organiser-role-guard');
+  const roleAccess = await resolveOrganiserRoleAccess(auth.session);
+  if (!roleAccess.ok) {
+    return json(res, roleAccess.status, { error: roleAccess.error, message: roleAccess.message });
+  }
+  const communicateGate = assertCanAccessCommunicate(roleAccess.access);
+  if (!communicateGate.ok) {
+    return json(res, communicateGate.status, {
+      error: communicateGate.error,
+      message: communicateGate.message,
+    });
+  }
+
   const api = getOrganiserApi();
 
   try {

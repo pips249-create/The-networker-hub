@@ -42,6 +42,16 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    const { assertCanViewRegistrations } = require('../organiser-role-guard');
+    const registrationGate = assertCanViewRegistrations(scope.access);
+    if (!registrationGate.ok) {
+      return json(res, registrationGate.status, {
+        error: registrationGate.error,
+        message: registrationGate.message,
+        attendees: [],
+      });
+    }
+
     const verified = await assertOrganiserEmailVerified(scope.session);
     if (!verified.ok) {
       return json(res, verified.status, {

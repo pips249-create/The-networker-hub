@@ -110,6 +110,12 @@
     canDeleteEvents: true,
     canManagePayments: true,
     canCreateGroups: true,
+    canManageEvents: true,
+    canViewRevenue: true,
+    canViewRegistrations: true,
+    canAccessPromote: true,
+    canAccessCommunicate: true,
+    isMarketing: false,
     organiserRole: 'owner',
     opportunityEnquiries: [],
     opportunityEnquiriesNewCount: 0,
@@ -2129,6 +2135,51 @@
       r === 'social-reach' ||
       r === 'reach'
     );
+  }
+
+  function isMarketingWorkspace() {
+    return state.organiserRole === 'marketing' || state.isMarketing === true;
+  }
+
+  function marketingAllowedRoute(route) {
+    const r = String(route || '').toLowerCase();
+    if (!r || r === 'dashboard') return false;
+    if (
+      r === 'visibility' ||
+      r === 'grow-visibility' ||
+      r === 'leaderboard' ||
+      r === 'rankings'
+    ) {
+      return true;
+    }
+    return isSocialRoute(r);
+  }
+
+  function applyMarketingWorkspaceUi() {
+    const marketing = isMarketingWorkspace();
+    document.body.classList.toggle('org-workspace--marketing', marketing);
+    document.querySelectorAll('[data-org-route]').forEach(function (el) {
+      const route = el.getAttribute('data-org-route');
+      if (!route) return;
+      el.hidden = marketing ? !marketingAllowedRoute(route) : false;
+    });
+    const notifNav = document.getElementById('org-notifications-nav');
+    if (notifNav) notifNav.hidden = marketing;
+    const notifMore = document.getElementById('org-more-notifications');
+    if (notifMore) notifMore.hidden = marketing;
+    const bottomMoreCount = document.getElementById('org-bottom-more-count');
+    if (bottomMoreCount && marketing) bottomMoreCount.hidden = true;
+    const memberNote = document.getElementById('team-member-note');
+    const marketingNote = document.getElementById('team-marketing-note');
+    if (memberNote) memberNote.hidden = marketing || state.organiserRole !== 'editor';
+    if (marketingNote) marketingNote.hidden = !marketing;
+    const pageTitle = document.getElementById('org-page-title');
+    if (pageTitle && marketing) pageTitle.textContent = 'Promote';
+    const pageLead = document.getElementById('org-page-lead');
+    if (pageLead && marketing) {
+      pageLead.textContent =
+        'Create LinkedIn posts and graphics for your assigned organiser pages. Revenue and registrations stay with the account owner.';
+    }
   }
 
   function socialTabFromRoute(route) {
@@ -11305,6 +11356,16 @@
   function setRoute(route, options) {
     options = options || {};
     const routeIn = route;
+    if (
+      bootstrapReady &&
+      isMarketingWorkspace() &&
+      !options.skipMarketingGuard &&
+      routeIn &&
+      !marketingAllowedRoute(routeIn)
+    ) {
+      setRoute('social', { ...options, skipMarketingGuard: true });
+      return;
+    }
     if (isAttendeeListEmailRoute(route)) {
       options.openAttendeeEmail = true;
       options.communicateHash = communicateToolHash(route);
@@ -12506,12 +12567,19 @@
   }
 
   function teamRoleLabel(role) {
-    return role === 'owner' ? 'Owner' : 'Team member';
+    if (role === 'owner') return 'Owner';
+    if (role === 'marketing') return 'Marketing';
+    return 'Team member';
   }
 
   function teamRoleBadgeHtml(role) {
     const label = teamRoleLabel(role);
-    const cls = role === 'owner' ? 'org-badge-purple' : 'org-badge-blue';
+    const cls =
+      role === 'owner'
+        ? 'org-badge-purple'
+        : role === 'marketing'
+          ? 'org-badge-gold'
+          : 'org-badge-blue';
     return '<span class="org-badge ' + cls + '">' + esc(label) + '</span>';
   }
 
@@ -12745,6 +12813,12 @@
     state.canDeleteEvents = data.canDeleteEvents !== false;
     state.canManagePayments = data.canManagePayments !== false;
     state.canCreateGroups = data.canCreateGroups !== false;
+    state.canManageEvents = data.canManageEvents !== false;
+    state.canViewRevenue = data.canViewRevenue !== false;
+    state.canViewRegistrations = data.canViewRegistrations !== false;
+    state.canAccessPromote = data.canAccessPromote !== false;
+    state.canAccessCommunicate = data.canAccessCommunicate !== false;
+    state.isMarketing = data.isMarketing === true || data.role === 'marketing';
     state.organiserRole = data.role || state.organiserRole;
     state.useTeamWorkspace = Boolean(data.useTeamWorkspace);
     state.teamMax = Number(data.teamMax) || 100;
@@ -12792,6 +12866,7 @@
     const r = String(role || '').toLowerCase();
     if (r === 'owner') return 'Owner';
     if (r === 'team' || r === 'editor') return 'Team member';
+    if (r === 'marketing') return 'Marketing';
     if (r === 'admin') return 'platform support';
     if (r === 'system') return 'System';
     return 'Unknown';
@@ -12990,6 +13065,20 @@
     updateTeamNavBadge();
   }
 
+  function updateTeamInviteRoleCopy() {
+    const lead = document.getElementById('modal-team-role-lead');
+    if (!lead) return;
+    const roleInput = document.querySelector('input[name="team-invite-role"]:checked');
+    const role = roleInput ? roleInput.value : 'editor';
+    if (role === 'marketing') {
+      lead.textContent =
+        'They can use Promote — LinkedIn posts, graphics, and share tools — for the pages you choose. They cannot see revenue, registrations, attendees, or edit events.';
+    } else {
+      lead.textContent =
+        'They can create and edit events, manage attendees, and view revenue on the pages you choose. They cannot invite others, add bank details, request payouts, or delete events.';
+    }
+  }
+
   function bindTeamUi() {
     bindTeamGroupPicker(
       document.getElementById('team-invite-all-groups'),
@@ -13009,8 +13098,12 @@
       }
       updateTeamLimitUi();
       resetTeamInviteGroupPicker();
+      updateTeamInviteRoleCopy();
       openModal('modal-team-invite');
     };
+    document.querySelectorAll('input[name="team-invite-role"]').forEach(function (input) {
+      input.addEventListener('change', updateTeamInviteRoleCopy);
+    });
     const inviteBtn = document.getElementById('btn-invite-team');
     if (inviteBtn) {
       inviteBtn.addEventListener('click', openInvite);
@@ -13024,6 +13117,8 @@
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const email = document.getElementById('team-invite-email').value.trim();
+        const roleInput = document.querySelector('input[name="team-invite-role"]:checked');
+        const inviteRole = roleInput ? roleInput.value : 'editor';
         const btn = e.submitter;
         const groupSelection = readTeamGroupSelection(
           document.getElementById('team-invite-all-groups'),
@@ -13038,7 +13133,7 @@
           method: 'POST',
           body: JSON.stringify({
             email,
-            role: 'editor',
+            role: inviteRole,
             allGroups: groupSelection.allGroups,
             groupIds: groupSelection.groupIds,
           }),
@@ -16628,11 +16723,24 @@
     state.canDeleteEvents = data.canDeleteEvents !== false;
     state.canManagePayments = data.canManagePayments !== false;
     state.canCreateGroups = data.canCreateGroups !== false;
+    state.canManageEvents = data.canManageEvents !== false;
+    state.canViewRevenue = data.canViewRevenue !== false;
+    state.canViewRegistrations = data.canViewRegistrations !== false;
+    state.canAccessPromote = data.canAccessPromote !== false;
+    state.canAccessCommunicate = data.canAccessCommunicate !== false;
+    state.isMarketing = data.isMarketing === true || data.organiserRole === 'marketing';
     state.organiserRole = data.organiserRole || 'owner';
     state.useTeamWorkspace = Boolean(data.useTeamWorkspace);
     state.stripeConnectEnabled = Boolean(data.stripeConnectEnabled);
     state.organiserAccess = data.organiserAccess === true;
     state.organiserEmailVerified = data.organiserEmailVerified === true;
+    applyMarketingWorkspaceUi();
+    if (isMarketingWorkspace()) {
+      const currentHash = (location.hash.replace('#', '') || '').trim().toLowerCase();
+      if (!marketingAllowedRoute(currentHash)) {
+        setRoute('social', { skipMarketingGuard: true, skipEventsGuard: true });
+      }
+    }
     updatePendingApplicationsNavBadge();
 
     if (data.adminView) {

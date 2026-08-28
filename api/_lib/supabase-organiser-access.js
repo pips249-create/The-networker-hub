@@ -447,20 +447,28 @@ async function resolveOrganiserAccess(session) {
   }
   const isLegacyOwner = legacyGroupIds.size > 0;
 
+  function normalizeTeamRole(rawRole) {
+    const r = String(rawRole || 'editor').toLowerCase();
+    if (r === 'owner') return 'owner';
+    if (r === 'marketing') return 'marketing';
+    return 'editor';
+  }
+
   let role = null;
   if (useTeamWorkspace) {
-    role = activeMembership.role === 'owner' ? 'owner' : 'editor';
+    role = normalizeTeamRole(activeMembership.role);
   } else if (isPersonalAccountOwner) {
     role = 'owner';
   } else if (activeMembership) {
-    role = activeMembership.role === 'owner' ? 'owner' : 'editor';
+    role = normalizeTeamRole(activeMembership.role);
   } else if (isLegacyOwner) {
     role = 'owner';
   }
 
   const isOwner = role === 'owner';
   const isEditor = role === 'editor';
-  const hasAccess = isOwner || isEditor;
+  const isMarketing = role === 'marketing';
+  const hasAccess = isOwner || isEditor || isMarketing;
 
   const groupIds = new Set();
   legacyGroupIds.forEach((id) => groupIds.add(id));
@@ -473,7 +481,7 @@ async function resolveOrganiserAccess(session) {
   }
 
   let editorScopedGroupIds = null;
-  if (isEditor && useTeamWorkspace && activeMembership) {
+  if ((isEditor || isMarketing) && useTeamWorkspace && activeMembership) {
     editorScopedGroupIds = await loadScopedGroupIdsForMember(sb, activeMembership.id);
     if (editorScopedGroupIds !== null) {
       // Ensure assigned pages are present even if account linkage was delayed.
@@ -503,11 +511,17 @@ async function resolveOrganiserAccess(session) {
     role: hasAccess ? role : null,
     isOwner,
     isEditor,
+    isMarketing,
     useTeamWorkspace: Boolean(useTeamWorkspace),
-    canManageTeam: isOwner && !isEditor,
-    canDeleteEvents: isOwner && !isEditor,
-    canManagePayments: isOwner && !isEditor,
-    canCreateGroups: isOwner && !isEditor,
+    canManageTeam: isOwner && !isEditor && !isMarketing,
+    canDeleteEvents: isOwner && !isEditor && !isMarketing,
+    canManagePayments: isOwner && !isEditor && !isMarketing,
+    canCreateGroups: isOwner && !isEditor && !isMarketing,
+    canManageEvents: isOwner || isEditor,
+    canViewRevenue: isOwner || isEditor,
+    canViewRegistrations: isOwner || isEditor,
+    canAccessPromote: isOwner || isEditor || isMarketing,
+    canAccessCommunicate: isOwner || isEditor,
     membership: membership ? rowToTeamMember(membership) : null,
     groupIds: [...groupIds],
     teamMax: ORGANISER_TEAM_MAX,
@@ -614,7 +628,8 @@ async function inviteTeamMember(session, { email, role, allGroups, groupIds }) {
     throw e;
   }
 
-  const memberRole = role === 'owner' ? 'editor' : 'editor';
+  const requestedRole = String(role || 'editor').toLowerCase();
+  const memberRole = requestedRole === 'marketing' ? 'marketing' : 'editor';
   const grantAllGroups = allGroups !== false && !(Array.isArray(groupIds) && groupIds.length);
   const resolvedGroupIds = grantAllGroups ? [] : [...new Set((groupIds || []).filter(Boolean))];
 
@@ -648,7 +663,7 @@ async function inviteTeamMember(session, { email, role, allGroups, groupIds }) {
     });
     const { data: refreshed, error: refreshErr } = await sb
       .from('organiser_team_members')
-      .update({ invited_at: new Date().toISOString() })
+      .update({ invited_at: new Date().toISOString(), role: memberRole })
       .eq('id', existing.id)
       .select('*')
       .single();

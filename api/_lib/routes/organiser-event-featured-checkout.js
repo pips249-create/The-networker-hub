@@ -58,6 +58,16 @@ module.exports = async function handler(req, res) {
   const auth = await requireOrganiserSession(req);
   if (!auth.ok) return json(res, auth.status, { error: auth.error });
 
+  const { resolveOrganiserRoleAccess, assertCanManagePayments } = require('../organiser-role-guard');
+  const roleAccess = await resolveOrganiserRoleAccess(auth.session);
+  if (!roleAccess.ok) {
+    return json(res, roleAccess.status, { error: roleAccess.error, message: roleAccess.message });
+  }
+  const paymentGate = assertCanManagePayments(roleAccess.access);
+  if (!paymentGate.ok && !isPlatformAdmin(auth.session)) {
+    return json(res, paymentGate.status, { error: paymentGate.error, message: paymentGate.message });
+  }
+
   if (!isStripeCheckoutConfigured()) {
     return json(res, 503, {
       ok: false,

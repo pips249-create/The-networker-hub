@@ -43,10 +43,12 @@ async function resolveOrganiserApiScope(req) {
 
   let groups = [];
   let groupIds = [];
+  let access = null;
   try {
     const scope = await resolveOrganiserGroupScope(session, adminView);
     groups = scope.groups;
     groupIds = scope.groupIds;
+    access = scope.access;
   } catch (e) {
     return {
       ok: false,
@@ -76,6 +78,7 @@ async function resolveOrganiserApiScope(req) {
     groups,
     groupIds,
     eventIds,
+    access,
     adminView,
     personalScope,
     isAdmin,

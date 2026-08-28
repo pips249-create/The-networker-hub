@@ -9129,7 +9129,7 @@ body.org-cancel-modal-open {
 
 .org-team-permissions-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 14px;
 }
 
@@ -9445,6 +9445,52 @@ body.org-cancel-modal-open {
   min-width: 0;
   overflow-wrap: anywhere;
   word-break: break-word;
+}
+
+.org-team-role-fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0 0 16px;
+}
+
+.org-team-role-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 14px;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.org-team-role-option input {
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+.org-team-role-option-sub {
+  display: block;
+  font-size: 13px;
+  color: var(--od-text-muted, #6b6568);
+  margin-top: 2px;
+}
+
+.org-team-permissions-card--marketing {
+  border-color: rgba(196, 165, 116, 0.35);
+  background: rgba(196, 165, 116, 0.06);
+}
+
+.org-team-permissions-label--sub {
+  margin-top: 14px;
+}
+
+body.org-workspace--marketing .org-hub-portals,
+body.org-workspace--marketing #org-page-guide-wrap,
+body.org-workspace--marketing .org-bottom-nav-link[data-org-route="dashboard"],
+body.org-workspace--marketing .org-bottom-nav-link[data-org-route="events-list"],
+body.org-workspace--marketing .org-bottom-nav-link[data-org-route="memberships"],
+body.org-workspace--marketing .org-bottom-nav-link[data-org-route="business-overview"] {
+  display: none !important;
 }
 
 .org-team-group-list {

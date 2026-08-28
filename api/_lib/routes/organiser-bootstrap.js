@@ -140,6 +140,12 @@ module.exports = async function handler(req, res) {
       canDeleteEvents: ws.canDeleteEvents,
       canManagePayments: ws.canManagePayments,
       canCreateGroups: ws.canCreateGroups,
+      canManageEvents: ws.canManageEvents,
+      canViewRevenue: ws.canViewRevenue,
+      canViewRegistrations: ws.canViewRegistrations,
+      canAccessPromote: ws.canAccessPromote,
+      canAccessCommunicate: ws.canAccessCommunicate,
+      isMarketing: ws.isMarketing,
       useTeamWorkspace: ws.useTeamWorkspace,
       stats: {
         groups: ws.groups.length,

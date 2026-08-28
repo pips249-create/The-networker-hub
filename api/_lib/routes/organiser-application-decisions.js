@@ -36,6 +36,19 @@ module.exports = async function handler(req, res) {
   const auth = await requireOrganiserSession(req);
   if (!auth.ok) return json(res, auth.status, { error: auth.error });
 
+  const { resolveOrganiserRoleAccess, assertCanViewRegistrations } = require('../organiser-role-guard');
+  const roleAccess = await resolveOrganiserRoleAccess(auth.session);
+  if (!roleAccess.ok) {
+    return json(res, roleAccess.status, { error: roleAccess.error, message: roleAccess.message });
+  }
+  const registrationGate = assertCanViewRegistrations(roleAccess.access);
+  if (!registrationGate.ok) {
+    return json(res, registrationGate.status, {
+      error: registrationGate.error,
+      message: registrationGate.message,
+    });
+  }
+
   if (!reviewApplicationForOrganiser) {
     return json(res, 501, {
       error: 'application_decisions_not_supported',
