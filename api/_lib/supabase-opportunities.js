@@ -141,6 +141,26 @@ function coerceLegacyAffiliateListing(listing) {
   return Object.assign({}, listing, { type: 'affiliate', tags });
 }
 
+/** Drop type pairs that must never share a listing (keeps earlier/primary type). */
+function dropIncompatibleOpportunityTypes(types) {
+  const incompatible = {
+    franchise: ['network-marketing'],
+    networking: ['network-marketing'],
+    'network-marketing': ['franchise', 'networking'],
+  };
+  const list = Array.isArray(types) ? types.filter(Boolean) : [];
+  if (list.length < 2) return list;
+  const keep = [];
+  list.forEach((type) => {
+    const blocked = incompatible[type] || [];
+    const conflicts = keep.some(
+      (kept) => blocked.includes(kept) || (incompatible[kept] || []).includes(type)
+    );
+    if (!conflicts) keep.push(type);
+  });
+  return keep;
+}
+
 function normalizeTypes(payload) {
   const raw = Array.isArray(payload?.types)
     ? payload.types
@@ -154,7 +174,21 @@ function normalizeTypes(payload) {
     const norm = normalizeType(t);
     if (VALID_TYPES.has(norm) && !out.includes(norm)) out.push(norm);
   });
-  return out;
+  // Affiliate is a separate track — never combine with other opportunity types.
+  if (out.includes('affiliate') && out.length > 1) {
+    const capital = [
+      'franchise',
+      'distributorship',
+      'business-opportunity',
+      'network-marketing',
+      'partnership',
+    ];
+    if (out.some((t) => capital.includes(t))) {
+      return dropIncompatibleOpportunityTypes(out.filter((t) => t !== 'affiliate'));
+    }
+    return ['affiliate'];
+  }
+  return dropIncompatibleOpportunityTypes(out);
 }
 
 function buildOpportunityTags(types, payload) {

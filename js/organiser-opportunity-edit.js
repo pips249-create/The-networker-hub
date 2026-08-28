@@ -54,6 +54,13 @@
 
   const AFFILIATE_TYPE = 'affiliate';
 
+  /** Types that must never appear together on one listing (last tick wins). Franchise + Side hustle is allowed. */
+  const TYPE_INCOMPATIBLE = {
+    franchise: ['network-marketing'],
+    networking: ['network-marketing'],
+    'network-marketing': ['franchise', 'networking'],
+  };
+
   const TYPE_LABELS = {
     franchise: 'Franchise',
     'side-hustle': 'Side hustle',
@@ -353,27 +360,106 @@
     });
   }
 
-  function normalizeExclusiveTypes(types) {
+  function dropIncompatibleTypes(types) {
     const list = (types || []).filter(Boolean);
-    if (list.indexOf(AFFILIATE_TYPE) === -1) return list;
-    if (list.length === 1) return list;
-    const hasCapital = list.some((type) => CAPITAL_TYPES.indexOf(type) !== -1);
-    if (hasCapital) return list.filter((type) => type !== AFFILIATE_TYPE);
-    return [AFFILIATE_TYPE];
+    if (list.length < 2) return list;
+    const keep = [];
+    list.forEach(function (type) {
+      const blocked = TYPE_INCOMPATIBLE[type] || [];
+      const conflicts = keep.some(function (kept) {
+        return blocked.indexOf(kept) !== -1 || (TYPE_INCOMPATIBLE[kept] || []).indexOf(type) !== -1;
+      });
+      if (conflicts) {
+        // Prefer the earlier (primary) type when loading legacy multi-selects.
+        return;
+      }
+      keep.push(type);
+    });
+    return keep;
+  }
+
+  function normalizeExclusiveTypes(types) {
+    let list = (types || []).filter(Boolean);
+    if (list.indexOf(AFFILIATE_TYPE) !== -1) {
+      if (list.length === 1) return list;
+      const hasCapital = list.some((type) => CAPITAL_TYPES.indexOf(type) !== -1);
+      if (hasCapital) list = list.filter((type) => type !== AFFILIATE_TYPE);
+      else return [AFFILIATE_TYPE];
+    }
+    return dropIncompatibleTypes(list);
+  }
+
+  function uncheckTypes(typeIds) {
+    const cleared = [];
+    (typeIds || []).forEach(function (id) {
+      const input = document.querySelector('#oe-type-group input[value="' + id + '"]');
+      if (input && input.checked) {
+        input.checked = false;
+        cleared.push(id);
+      }
+    });
+    return cleared;
   }
 
   function reconcileTypeSelection(changedInput) {
-    if (!changedInput) return;
+    if (!changedInput) return [];
     const value = changedInput.value;
     const nowChecked = changedInput.checked;
     if (value === AFFILIATE_TYPE && nowChecked) {
+      const before = getSelectedTypes().filter(function (t) {
+        return t !== AFFILIATE_TYPE;
+      });
       setSelectedTypes([AFFILIATE_TYPE]);
-      return;
+      return before;
     }
     if (value !== AFFILIATE_TYPE && nowChecked) {
+      const cleared = [];
       const affiliateInput = document.querySelector('#oe-type-group input[value="' + AFFILIATE_TYPE + '"]');
-      if (affiliateInput && affiliateInput.checked) affiliateInput.checked = false;
+      if (affiliateInput && affiliateInput.checked) {
+        affiliateInput.checked = false;
+        cleared.push(AFFILIATE_TYPE);
+      }
+      return cleared.concat(uncheckTypes(TYPE_INCOMPATIBLE[value] || []));
     }
+    return [];
+  }
+
+  function showClearedTypeConflictNote(keptType, clearedTypes) {
+    const note = document.getElementById('oe-type-mode-note');
+    if (!note || !clearedTypes || !clearedTypes.length) return;
+    const modelConflict = clearedTypes.some(function (t) {
+      return t === 'franchise' || t === 'networking' || t === 'network-marketing';
+    });
+    if (!modelConflict && clearedTypes.indexOf(AFFILIATE_TYPE) === -1) return;
+    if (clearedTypes.indexOf(AFFILIATE_TYPE) !== -1 && keptType !== AFFILIATE_TYPE) {
+      note.innerHTML =
+        '<strong>Affiliate cannot combine with other types.</strong> Affiliate was cleared so your investment-style types stay selected.';
+      note.className = 'oe-type-mode-note is-mixed';
+      note.hidden = false;
+      return;
+    }
+    if (keptType === AFFILIATE_TYPE) {
+      note.innerHTML =
+        '<strong>Affiliate listing.</strong> Other types were cleared — Affiliate is selected on its own.';
+      note.className = 'oe-type-mode-note is-affiliate';
+      note.hidden = false;
+      return;
+    }
+    const labels = clearedTypes
+      .filter(function (t) {
+        return t !== AFFILIATE_TYPE;
+      })
+      .map(function (t) {
+        return TYPE_LABELS[t] || t;
+      })
+      .join(', ');
+    if (!labels) return;
+    note.innerHTML =
+      '<strong>Those types can&rsquo;t be combined.</strong> Cleared ' +
+      labels +
+      '. Network marketing stays separate from Franchise and Networking / Ambassador.';
+    note.className = 'oe-type-mode-note is-mixed';
+    note.hidden = false;
   }
 
   function isAffiliateStyleListing(types) {
@@ -480,6 +566,9 @@
     const hasAffiliate = list.indexOf('affiliate') !== -1;
     const hasCapital = list.some((type) => CAPITAL_TYPES.indexOf(type) !== -1);
     const affiliate = affiliateMode != null ? affiliateMode : isAffiliateStyleListing(list);
+    const hasFranchise = list.indexOf('franchise') !== -1;
+    const hasNetworking = list.indexOf('networking') !== -1;
+    const hasNetworkMarketing = list.indexOf('network-marketing') !== -1;
 
     if (affiliate) {
       note.innerHTML =
@@ -491,6 +580,13 @@
     if (hasAffiliate && hasCapital) {
       note.innerHTML =
         '<strong>Affiliate cannot combine with other types.</strong> We kept your investment-style types — untick those if this is a pure affiliate programme.';
+      note.className = 'oe-type-mode-note is-mixed';
+      note.hidden = false;
+      return;
+    }
+    if (hasNetworkMarketing && (hasFranchise || hasNetworking)) {
+      note.innerHTML =
+        '<strong>Those types can&rsquo;t be combined.</strong> Network marketing stays separate from Franchise and Networking / Ambassador.';
       note.className = 'oe-type-mode-note is-mixed';
       note.hidden = false;
       return;
@@ -2585,9 +2681,10 @@
 
     document.querySelectorAll('#oe-type-group input[name="oe-type"]').forEach(function (input) {
       input.addEventListener('change', function () {
-        reconcileTypeSelection(this);
+        const cleared = reconcileTypeSelection(this);
         maybeSuggestCategoryFromTypes();
         syncAffiliateFormMode();
+        if (cleared && cleared.length) showClearedTypeConflictNote(this.value, cleared);
         updateFcaAttestVisibility();
         syncOpportunitySteps();
       });
