@@ -16226,6 +16226,42 @@
     updateBusinessIntroPanel();
   }
 
+  function opportunityStatusStepsHtml(o) {
+    const approval = String(o.approvalStatus || o.approval_status || '').trim();
+    const paid = Boolean(o.listingPaymentActive);
+    const submitted = Boolean(o.reviewSubmittedAt || o.review_submitted_at);
+    if (approval === 'Rejected') {
+      return '<span class="org-opp-status-steps is-rejected">Not approved — edit and resubmit</span>';
+    }
+    const steps = [
+      { id: 'draft', label: 'Draft' },
+      { id: 'submitted', label: 'Submitted' },
+      { id: 'approved', label: 'Approved' },
+      { id: 'live', label: 'Live' },
+    ];
+    let current = 'draft';
+    if (paid && approval === 'Approved') current = 'live';
+    else if (approval === 'Approved') current = 'approved';
+    else if (/pending/i.test(approval) && submitted) current = 'submitted';
+    return steps
+      .map(function (step, index) {
+        const done =
+          steps.findIndex(function (s) {
+            return s.id === current;
+          }) > index;
+        const isCurrent = step.id === current;
+        return (
+          (index ? '<span class="org-opp-step-sep" aria-hidden="true">→</span>' : '') +
+          '<span class="org-opp-step' +
+          (isCurrent ? ' is-current' : done ? ' is-done' : '') +
+          '">' +
+          esc(step.label) +
+          '</span>'
+        );
+      })
+      .join('');
+  }
+
   function opportunityStatusForBadge(o) {
     const status = String(o.status || '').toLowerCase();
     const approval = String(o.approvalStatus || o.approval_status || '').trim();
@@ -16279,7 +16315,9 @@
         esc(o.title || 'Untitled') +
         '</a></td><td data-label="Status">' +
         statusBadgeHtml(st.key, st.label) +
-        '</td><td data-label="Premium">' +
+        '<div class="org-opp-status-steps-wrap">' +
+        opportunityStatusStepsHtml(o) +
+        '</div></td><td data-label="Premium">' +
         opportunityPremiumCellHtml(o) +
         '</td><td data-label="Views">' +
         (opportunityViewCount(o)

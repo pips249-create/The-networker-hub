@@ -2798,6 +2798,105 @@ body.bo-opp-compare-tray-open {
   border: 1px solid rgba(201, 150, 31, 0.35);
 }
 
+.bo-opp-compare-tray-main {
+  min-width: 0;
+}
+
+.bo-opp-compare-tray-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0 10px;
+}
+
+.bo-opp-compare-tray-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.bo-opp-compare-tray-chip:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(201, 150, 31, 0.55);
+}
+
+.bo-opp-compare-tray-chip-x {
+  font-size: 14px;
+  line-height: 1;
+  opacity: 0.82;
+}
+
+.bo-opp-compare-intro {
+  position: fixed;
+  left: 50%;
+  bottom: max(24px, env(safe-area-inset-bottom));
+  z-index: 1240;
+  transform: translateX(-50%) translateY(12px);
+  width: min(92vw, 420px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.bo-opp-compare-intro.is-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  pointer-events: auto;
+}
+
+body.bo-opp-compare-tray-open .bo-opp-compare-intro {
+  bottom: max(112px, calc(96px + env(safe-area-inset-bottom)));
+}
+
+.bo-opp-compare-intro-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 12px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #fff;
+  color: var(--opp-navy, #0d1f3c);
+  box-shadow: 0 16px 40px rgba(13, 31, 60, 0.18);
+  border: 1px solid rgba(201, 150, 31, 0.45);
+}
+
+.bo-opp-compare-intro-text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  flex: 1 1 220px;
+}
+
+.bo-opp-compare-intro-dismiss {
+  min-height: 34px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 999px;
+  background: var(--opp-gold, #c9961f);
+  color: #0d1f3c;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.bo-opp-compare-intro-dismiss:hover {
+  filter: brightness(1.05);
+}
+
 .bo-opp-compare-tray-dismiss {
   grid-column: 2;
   grid-row: 1 / span 2;

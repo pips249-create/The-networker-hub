@@ -3562,4 +3562,12 @@ body.nav-menu-open {
   body.opp-browse-page .bo-opp-compare-tray {
     bottom: max(88px, calc(20px + env(safe-area-inset-bottom)));
   }
+
+  body.opp-browse-page .bo-opp-compare-intro {
+    bottom: max(24px, env(safe-area-inset-bottom));
+  }
+
+  body.opp-browse-page.bo-opp-compare-tray-open .bo-opp-compare-intro {
+    bottom: max(112px, calc(96px + env(safe-area-inset-bottom)));
+  }
 }

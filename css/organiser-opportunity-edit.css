@@ -214,6 +214,31 @@
   font-weight: 700;
 }
 
+.oe-investment-shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 8px;
+}
+
+.oe-investment-chip {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--opp-border);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--opp-text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.oe-investment-chip:hover {
+  border-color: rgba(201, 150, 31, 0.55);
+  background: var(--opp-gold-pale);
+}
+
 .organiser-opportunity-edit-page .ee-field .hub-location-field.oe-location-field {
   position: relative;
   display: block;

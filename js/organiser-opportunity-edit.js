@@ -99,8 +99,10 @@
     const promoteEl = document.getElementById('oe-promote');
     const metaHeading = document.getElementById('oe-card-meta-heading');
     const metaLead = document.getElementById('oe-card-meta-lead');
+    const investmentShortcuts = document.getElementById('oe-investment-shortcuts');
     if (capitalWrap) capitalWrap.hidden = affiliate;
     if (affiliateWrap) affiliateWrap.hidden = !affiliate;
+    if (investmentShortcuts) investmentShortcuts.hidden = affiliate;
     if (investmentEl) {
       if (affiliate) investmentEl.removeAttribute('required');
       else investmentEl.setAttribute('required', 'required');
@@ -1065,6 +1067,19 @@
     document.querySelectorAll('#oe-type-group input[name="oe-type"]').forEach((input) => {
       input.addEventListener('change', function () {
         syncAffiliateFormMode({ scroll: true });
+        updateFcaAttestVisibility();
+      });
+    });
+    document.querySelectorAll('.oe-investment-chip').forEach((btn) => {
+      btn.addEventListener('click', function () {
+        const investmentEl = document.getElementById('oe-investment');
+        const value = btn.getAttribute('data-investment-value') || '';
+        if (investmentEl && value) {
+          investmentEl.value = value;
+          investmentEl.dispatchEvent(new Event('input', { bubbles: true }));
+          investmentEl.focus();
+        }
+        refreshCompleteness();
         updateFcaAttestVisibility();
       });
     });

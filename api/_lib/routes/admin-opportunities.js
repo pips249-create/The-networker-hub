@@ -295,6 +295,8 @@ async function listOpportunitiesForAdmin(query) {
   const sort = String(query.sort || 'recent').trim().toLowerCase();
   const featuredOnly = query.featured === '1' || query.featured === 'true';
   const noImage = query.no_image === '1' || query.no_image === 'true';
+  const awaitingPayment =
+    query.awaiting_payment === '1' || query.awaiting_payment === 'true';
   const offset = Math.max(parseInt(String(query.offset || ''), 10) || 0, 0);
   const limit = Math.min(Math.max(parseInt(String(query.limit || ''), 10) || 40, 1), 100);
 
@@ -313,7 +315,9 @@ async function listOpportunitiesForAdmin(query) {
   }
 
   if (status) dbQuery = dbQuery.eq('status', status);
-  if (approvalStatus) {
+  if (awaitingPayment) {
+    dbQuery = dbQuery.eq('approval_status', 'Approved').is('listing_paid_at', null);
+  } else if (approvalStatus) {
     dbQuery = dbQuery.eq('approval_status', approvalStatus);
     // Pending review queue = actually submitted, not incomplete drafts.
     if (approvalStatus === 'Pending Review') {
@@ -333,13 +337,24 @@ async function listOpportunitiesForAdmin(query) {
     }
   }
 
-  dbQuery = dbQuery.range(offset, offset + limit - 1);
+  let rows = [];
+  let total = 0;
 
-  const res = await dbQuery;
-  if (res.error) throw new Error(res.error.message);
-
-  const rows = res.data || [];
-  const total = res.count != null ? res.count : rows.length;
+  if (awaitingPayment) {
+    const awaitingRes = await dbQuery.limit(200);
+    if (awaitingRes.error) throw new Error(awaitingRes.error.message);
+    const filtered = (awaitingRes.data || []).filter(function (row) {
+      return !listingPaymentCurrent(row);
+    });
+    total = filtered.length;
+    rows = filtered.slice(offset, offset + limit);
+  } else {
+    dbQuery = dbQuery.range(offset, offset + limit - 1);
+    const res = await dbQuery;
+    if (res.error) throw new Error(res.error.message);
+    rows = res.data || [];
+    total = res.count != null ? res.count : rows.length;
+  }
 
   const pendingCountRes = await sb
     .from('business_opportunities')

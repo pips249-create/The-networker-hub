@@ -1319,16 +1319,55 @@
     el.setAttribute('aria-label', 'Compare opportunities');
     el.innerHTML =
       '<div class="bo-opp-compare-tray-inner">' +
+      '<div class="bo-opp-compare-tray-main">' +
       '<p class="bo-opp-compare-tray-text"><strong id="bo-opp-compare-count">0</strong> selected to compare' +
       '<span class="bo-opp-compare-tray-hint">Tap cards again to remove · Clear all or × to exit</span></p>' +
+      '<div class="bo-opp-compare-tray-chips" id="bo-opp-compare-tray-chips" hidden></div>' +
       '<div class="bo-opp-compare-tray-actions">' +
       '<button type="button" class="bo-opp-compare-tray-clear" id="bo-opp-compare-clear">Clear all</button>' +
       '<button type="button" class="bo-opp-compare-tray-open" id="bo-opp-compare-open" disabled>Compare now</button>' +
-      '</div>' +
+      '</div></div>' +
       '<button type="button" class="bo-opp-compare-tray-dismiss" id="bo-opp-compare-dismiss" aria-label="Exit compare">×</button>' +
       '</div>';
     document.body.appendChild(el);
     return el;
+  }
+
+  function compareTitleForId(id) {
+    var item = findListingById(id);
+    if (item && item.title) return item.title;
+    var cmp = window.HubOpportunityCompare;
+    if (cmp && cmp.resolveItems && catalog) {
+      var resolved = cmp.resolveItems(catalog, [id], allListings);
+      if (resolved && resolved[0] && resolved[0].title) return resolved[0].title;
+    }
+    return 'Listing';
+  }
+
+  function renderCompareTrayChips(ids) {
+    var chipsEl = document.getElementById('bo-opp-compare-tray-chips');
+    if (!chipsEl) return;
+    if (!ids.length) {
+      chipsEl.innerHTML = '';
+      chipsEl.hidden = true;
+      return;
+    }
+    chipsEl.hidden = false;
+    chipsEl.innerHTML = ids
+      .map(function (id) {
+        var title = compareTitleForId(id);
+        var short = title.length > 30 ? title.slice(0, 28) + '…' : title;
+        return (
+          '<button type="button" class="bo-opp-compare-tray-chip" data-opp-compare-remove="' +
+          escapeHtml(id) +
+          '" title="Remove ' +
+          escapeHtml(title) +
+          ' from compare">' +
+          escapeHtml(short) +
+          '<span class="bo-opp-compare-tray-chip-x" aria-hidden="true">×</span></button>'
+        );
+      })
+      .join('');
   }
 
   function refreshCompareTray() {
@@ -1342,9 +1381,47 @@
     if (countEl) countEl.textContent = String(ids.length);
     if (openBtn) openBtn.disabled = ids.length < 2;
     if (clearBtn) clearBtn.disabled = !ids.length;
+    renderCompareTrayChips(ids);
     tray.hidden = ids.length === 0;
     document.body.classList.toggle('bo-opp-compare-tray-open', ids.length > 0);
     syncCompareButtons(els.mount || document);
+    dismissCompareIntro();
+  }
+
+  function dismissCompareIntro() {
+    var intro = document.getElementById('bo-opp-compare-intro');
+    if (intro) intro.remove();
+    try {
+      sessionStorage.setItem('hubOppCompareIntroSeen', '1');
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function maybeShowCompareIntro() {
+    var cmp = window.HubOpportunityCompare;
+    if (!cmp || cmp.ids().length) return;
+    try {
+      if (sessionStorage.getItem('hubOppCompareIntroSeen') === '1') return;
+    } catch (e) {
+      /* ignore */
+    }
+    if (document.getElementById('bo-opp-compare-intro')) return;
+    var el = document.createElement('div');
+    el.id = 'bo-opp-compare-intro';
+    el.className = 'bo-opp-compare-intro';
+    el.setAttribute('role', 'status');
+    el.innerHTML =
+      '<div class="bo-opp-compare-intro-inner">' +
+      '<p class="bo-opp-compare-intro-text"><strong>Compare opportunities</strong> — pick 2 or 3 listings with the Compare button, then open the bar at the bottom.</p>' +
+      '<button type="button" class="bo-opp-compare-intro-dismiss" id="bo-opp-compare-intro-dismiss">Got it</button>' +
+      '</div>';
+    document.body.appendChild(el);
+    var dismissBtn = document.getElementById('bo-opp-compare-intro-dismiss');
+    if (dismissBtn) dismissBtn.addEventListener('click', dismissCompareIntro);
+    window.setTimeout(function () {
+      el.classList.add('is-visible');
+    }, 20);
   }
 
   function openBrowseCompare(forceIds) {
@@ -1364,8 +1441,20 @@
 
     ensureCompareTray();
     refreshCompareTray();
+    maybeShowCompareIntro();
 
     els.mount.addEventListener('click', function (e) {
+      var removeChip = e.target.closest('[data-opp-compare-remove]');
+      if (removeChip) {
+        e.preventDefault();
+        var cmpRemove = window.HubOpportunityCompare;
+        var removeId = removeChip.getAttribute('data-opp-compare-remove');
+        if (cmpRemove && removeId) {
+          cmpRemove.toggle(removeId);
+          refreshCompareTray();
+        }
+        return;
+      }
       var btn = e.target.closest('[data-opp-compare-id]');
       if (!btn) return;
       e.preventDefault();

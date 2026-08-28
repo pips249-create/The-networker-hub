@@ -559,6 +559,7 @@
     type: '',
     featured: false,
     noImage: false,
+    awaitingPayment: false,
     sort: 'recent',
     page: 0,
     q: '',
@@ -21889,6 +21890,7 @@
     if (opportunityCleanupState.type) n += 1;
     if (opportunityCleanupState.featured) n += 1;
     if (opportunityCleanupState.noImage) n += 1;
+    if (opportunityCleanupState.awaitingPayment) n += 1;
     return n;
   }
 
@@ -21928,6 +21930,7 @@
       else if (key === 'published') active = opportunityCleanupState.status === 'published';
       else if (key === 'featured') active = opportunityCleanupState.featured;
       else if (key === 'no_image') active = opportunityCleanupState.noImage;
+      else if (key === 'awaiting_payment') active = opportunityCleanupState.awaitingPayment;
       btn.classList.toggle('ring-2', active);
       btn.classList.toggle('ring-brand-700', active);
       btn.classList.toggle('bg-brand-50', active);
@@ -22129,6 +22132,7 @@
     if (opportunityCleanupState.type) params.set('type', opportunityCleanupState.type);
     if (opportunityCleanupState.featured) params.set('featured', '1');
     if (opportunityCleanupState.noImage) params.set('no_image', '1');
+    if (opportunityCleanupState.awaitingPayment) params.set('awaiting_payment', '1');
     if (opportunityCleanupState.sort) params.set('sort', opportunityCleanupState.sort);
     if (opportunityCleanupState.q) params.set('q', opportunityCleanupState.q);
     return adminGet('/api/admin/opportunities?' + params.toString())
@@ -22502,6 +22506,7 @@
       '> No cover image</label></div>' +
       '<div class="flex flex-wrap gap-2">' +
       '<button type="button" data-opp-quick="pending" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Pending review</button>' +
+      '<button type="button" data-opp-quick="awaiting_payment" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Awaiting payment</button>' +
       '<button type="button" data-opp-quick="draft" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Draft</button>' +
       '<button type="button" data-opp-quick="published" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Published</button>' +
       '<button type="button" data-opp-quick="featured" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Featured</button>' +
@@ -22969,12 +22974,20 @@
         opportunityCleanupState.type = '';
         opportunityCleanupState.featured = false;
         opportunityCleanupState.noImage = false;
+        opportunityCleanupState.awaitingPayment = false;
         opportunityCleanupState.q = '';
       } else if (key === 'pending') {
         if (opportunityCleanupState.approval === 'Pending Review') {
           opportunityCleanupState.approval = '';
         } else {
           opportunityCleanupState.approval = 'Pending Review';
+          opportunityCleanupState.status = '';
+          opportunityCleanupState.awaitingPayment = false;
+        }
+      } else if (key === 'awaiting_payment') {
+        opportunityCleanupState.awaitingPayment = !opportunityCleanupState.awaitingPayment;
+        if (opportunityCleanupState.awaitingPayment) {
+          opportunityCleanupState.approval = '';
           opportunityCleanupState.status = '';
         }
       } else if (key === 'draft') {
