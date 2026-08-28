@@ -162,6 +162,8 @@
 
   const CHECKOUT_INTENT_KEY = 'hub_checkout_intent';
   let signInGateBound = false;
+  let profileGateBound = false;
+  let profileGateWaiter = null;
 
   function saveCheckoutIntent(ev, data) {
     if (!ev || !ev.id) return;
@@ -222,6 +224,7 @@
     }
     bindSignInGateOnce();
     if (show && config) {
+      showCheckoutProfileGate(false);
       const title = document.getElementById('checkout-signin-gate-title');
       const lead = document.getElementById('checkout-signin-gate-lead');
       const signIn = document.getElementById('checkout-signin-btn');
@@ -235,6 +238,8 @@
       const checkoutFlag = config.checkoutFlag !== false;
       if (signIn) signIn.href = authPageUrl('login', checkoutFlag);
       if (register) register.href = authPageUrl('register', checkoutFlag);
+    } else if (show) {
+      showCheckoutProfileGate(false);
     }
     gate.hidden = !show;
     if (panel) {
@@ -250,6 +255,124 @@
     }
     if (notice && show) notice.hidden = true;
     refreshTicketJumpVisibility();
+  }
+
+  function bindProfileGateOnce() {
+    if (profileGateBound) return;
+    profileGateBound = true;
+    const cancel = document.getElementById('checkout-profile-cancel');
+    const form = document.getElementById('checkout-profile-form');
+    const industry = document.getElementById('checkout-profile-industry');
+    if (window.HubProfileIndustries && industry) {
+      window.HubProfileIndustries.fillIndustrySelect(industry, '');
+    }
+    if (cancel) {
+      cancel.addEventListener('click', function () {
+        showCheckoutProfileGate(false);
+        if (profileGateWaiter) {
+          profileGateWaiter(false);
+          profileGateWaiter = null;
+        }
+      });
+    }
+    if (form) {
+      form.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const errEl = document.getElementById('checkout-profile-gate-error');
+        const submitBtn = document.getElementById('checkout-profile-submit');
+        const industryEl = document.getElementById('checkout-profile-industry');
+        const jobTitleEl = document.getElementById('checkout-profile-job-title');
+        const companyEl = document.getElementById('checkout-profile-company');
+        const err =
+          window.HubProfileCompletion &&
+          window.HubProfileCompletion.validateProfileForm(
+            industryEl && industryEl.value,
+            jobTitleEl && jobTitleEl.value
+          );
+        if (err) {
+          if (errEl) {
+            errEl.textContent = err;
+            errEl.hidden = false;
+          }
+          return;
+        }
+        if (errEl) errEl.hidden = true;
+        if (submitBtn) submitBtn.disabled = true;
+        try {
+          const result = await window.HubProfileCompletion.saveProfileFields({
+            businessSector: industryEl ? industryEl.value : '',
+            jobTitle: jobTitleEl ? jobTitleEl.value.trim() : '',
+            company: companyEl ? companyEl.value.trim() : '',
+          });
+          if (!result.ok) {
+            if (errEl) {
+              errEl.textContent = result.message || 'Could not save your details.';
+              errEl.hidden = false;
+            }
+            if (submitBtn) submitBtn.disabled = false;
+            return;
+          }
+          showCheckoutProfileGate(false);
+          if (profileGateWaiter) {
+            profileGateWaiter(true);
+            profileGateWaiter = null;
+          }
+        } catch (saveErr) {
+          if (errEl) {
+            errEl.textContent = 'Could not reach the server. Try again.';
+            errEl.hidden = false;
+          }
+          if (submitBtn) submitBtn.disabled = false;
+        }
+      });
+    }
+  }
+
+  function showCheckoutProfileGate(show) {
+    const gate = document.getElementById('checkout-profile-gate');
+    const panel = document.getElementById('tickets');
+    if (!gate) return;
+    bindProfileGateOnce();
+    if (show) {
+      showCheckoutSignInGate(false);
+      const industry = document.getElementById('checkout-profile-industry');
+      if (window.HubProfileIndustries && industry && !industry.options.length) {
+        window.HubProfileIndustries.fillIndustrySelect(industry, '');
+      }
+    }
+    gate.hidden = !show;
+    if (panel) {
+      panel.classList.toggle('show-profile-gate', show);
+      if (show) panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    const buyBtn = document.getElementById('buy-btn');
+    if (buyBtn && !show && !panel?.classList.contains('is-submitting')) {
+      buyBtn.disabled = false;
+      buyBtn.dataset.busy = '0';
+    }
+    refreshTicketJumpVisibility();
+  }
+
+  async function ensureAttendeeProfileComplete() {
+    if (!window.HubProfileCompletion) return true;
+    const res = await window.HubProfileCompletion.fetchProfile(false);
+    if (res.ok && window.HubProfileCompletion.isComplete(res.profile)) return true;
+    return new Promise(function (resolve) {
+      profileGateWaiter = resolve;
+      showCheckoutProfileGate(true);
+      const industry = document.getElementById('checkout-profile-industry');
+      const jobTitle = document.getElementById('checkout-profile-job-title');
+      const company = document.getElementById('checkout-profile-company');
+      if (window.HubProfileIndustries && industry) {
+        window.HubProfileIndustries.fillIndustrySelect(
+          industry,
+          res.profile && res.profile.businessSector
+        );
+      }
+      if (jobTitle && res.profile && res.profile.jobTitle) jobTitle.value = res.profile.jobTitle;
+      if (company && res.profile && res.profile.company) company.value = res.profile.company;
+      if (industry) industry.focus();
+    });
   }
 
   async function requireSignedInAttendee(options) {
@@ -1509,7 +1632,6 @@
     if (!list) return;
     list.innerHTML = '';
     const bullets = Array.isArray(ev.highlights) ? ev.highlights.filter(Boolean) : [];
-    if (ev.foodIncluded) bullets.push('Food or drink included with your ticket');
 
     if (bullets.length) {
       if (heading) heading.hidden = false;
@@ -5116,6 +5238,7 @@
             return;
           }
           await loadCheckoutSessionUser();
+          if (!(await ensureAttendeeProfileComplete())) return;
           if (needsCheckoutDetailsStep(evNow, qty)) {
             renderCheckoutGuestNames(qty);
             renderCheckoutAttendeeExtras(evNow);
@@ -5162,6 +5285,7 @@
           return;
         }
         await loadCheckoutSessionUser();
+        if (!(await ensureAttendeeProfileComplete())) return;
         syncPaidCheckoutPanel(label, qty, tierPrice * qty + (tierPrice > 0 ? tierPrice * qty * BOOKING_FEE_RATE + BOOKING_FEE_PER_TICKET * qty : 0));
 
         if (needsCheckoutDetailsStep(evNow, qty)) {
@@ -5206,6 +5330,7 @@
       showSeatApplication(false);
       showCheckoutDetails(false);
       showCheckoutSignInGate(false);
+      showCheckoutProfileGate(false);
       const selectedTier =
         document.querySelector('#ticket-tiers .tier.selected:not(.sold-out):not(.tier-disabled)') ||
         document.querySelector('#ticket-tiers .tier:not(.sold-out):not(.tier-disabled)');

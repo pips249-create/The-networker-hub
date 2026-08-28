@@ -56,7 +56,6 @@ function plainEventDescription(text) {
 function mapAttendeeExtrasToRow(extras) {
   if (!extras || typeof extras !== 'object') return {};
   return {
-    food_included: Boolean(extras.foodIncluded),
     collect_dietary: Boolean(extras.collectDietary),
     collect_accessibility: Boolean(extras.collectAccessibility),
   };
@@ -72,24 +71,30 @@ function attendeeExtrasFromRow(row) {
 }
 
 const ATTENDEE_EXTRA_NOTE_LINES = [
-  'Food & drink included at this event.',
   'Attendees will be asked about dietary requirements.',
   'Attendees will be asked about accessibility requirements.',
 ];
 
+const LEGACY_ATTENDEE_EXTRA_NOTE_LINES = ['Food & drink included at this event.'];
+
+function stripAttendeeExtraNotes(text) {
+  if (!text) return '';
+  return text
+    .split('\n')
+    .filter(
+      (line) =>
+        !ATTENDEE_EXTRA_NOTE_LINES.includes(String(line).trim()) &&
+        !LEGACY_ATTENDEE_EXTRA_NOTE_LINES.includes(String(line).trim())
+    )
+    .join('\n')
+    .trim();
+}
+
 function composeEventDescription(description, extras) {
-  let text = plainEventDescription(description);
-  if (text) {
-    const lines = text.split('\n');
-    text = lines
-      .filter((line) => !ATTENDEE_EXTRA_NOTE_LINES.includes(String(line).trim()))
-      .join('\n')
-      .trim();
-  }
+  let text = stripAttendeeExtraNotes(plainEventDescription(description));
   const notes = [];
-  if (extras && extras.foodIncluded) notes.push(ATTENDEE_EXTRA_NOTE_LINES[0]);
-  if (extras && extras.collectDietary) notes.push(ATTENDEE_EXTRA_NOTE_LINES[1]);
-  if (extras && extras.collectAccessibility) notes.push(ATTENDEE_EXTRA_NOTE_LINES[2]);
+  if (extras && extras.collectDietary) notes.push(ATTENDEE_EXTRA_NOTE_LINES[0]);
+  if (extras && extras.collectAccessibility) notes.push(ATTENDEE_EXTRA_NOTE_LINES[1]);
   if (notes.length) {
     text = (text ? text + '\n\n' : '') + notes.join(' ');
   }

@@ -4,6 +4,7 @@
 const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
 const { parseTypeCategory } = require('./event-types');
 const { isTestFixtureText, isTestRegistration } = require('./test-fixture-filters');
+const { normalizeIndustry } = require('./hub-profile-industries');
 
 function round2(n) {
   return Math.round(Number(n) * 100) / 100;
@@ -144,6 +145,86 @@ function aggregateUserLocations(attendees) {
     areas: Array.from(areas.values())
       .sort((a, b) => b.users - a.users || a.area.localeCompare(b.area, 'en-GB'))
       .slice(0, 15),
+  };
+}
+
+async function fetchAttendeeProfiles(sb) {
+  const rows = [];
+  const pageSize = 1000;
+
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await sb
+      .from('attendees')
+      .select('id, name, email, business_sector, job_title, professional_role, supabase_user_id')
+      .order('id', { ascending: true })
+      .range(from, from + pageSize - 1);
+    if (error) throw new Error(error.message);
+    rows.push(...(data || []));
+    if (!data || data.length < pageSize) break;
+  }
+
+  return rows.filter((row) => !isTestActivityText(row.name || row.email || ''));
+}
+
+function aggregateAttendeeProfiles(attendees) {
+  const industries = new Map();
+  const jobTitles = new Map();
+  const roles = new Map();
+  let withIndustry = 0;
+  let withJobTitle = 0;
+  let withBoth = 0;
+  let withAccount = 0;
+
+  (attendees || []).forEach((attendee) => {
+    if (attendee.supabase_user_id) withAccount += 1;
+    const industryRaw = String(attendee.business_sector || '').trim();
+    const jobTitleRaw = String(attendee.job_title || '').trim();
+    const industry = industryRaw ? normalizeIndustry(industryRaw) : '';
+    const jobTitle = jobTitleRaw.replace(/\s+/g, ' ');
+
+    if (industry) {
+      withIndustry += 1;
+      const key = industry.toLocaleLowerCase('en-GB');
+      const row = industries.get(key) || { label: industry, users: 0 };
+      row.users += 1;
+      industries.set(key, row);
+    }
+    if (jobTitle) {
+      withJobTitle += 1;
+      const key = jobTitle.toLocaleLowerCase('en-GB');
+      const row = jobTitles.get(key) || { label: jobTitle, users: 0 };
+      row.users += 1;
+      jobTitles.set(key, row);
+    }
+    if (industry && jobTitle) withBoth += 1;
+
+    const role = String(attendee.professional_role || '').trim();
+    if (role) {
+      const row = roles.get(role) || { label: role, users: 0 };
+      row.users += 1;
+      roles.set(role, row);
+    }
+  });
+
+  const total = (attendees || []).length;
+  return {
+    total,
+    withAccount,
+    withIndustry,
+    withJobTitle,
+    withBoth,
+    missingIndustry: Math.max(0, total - withIndustry),
+    missingJobTitle: Math.max(0, total - withJobTitle),
+    missingBoth: Math.max(0, total - withBoth),
+    industries: Array.from(industries.values())
+      .sort((a, b) => b.users - a.users || a.label.localeCompare(b.label, 'en-GB'))
+      .slice(0, 15),
+    jobTitles: Array.from(jobTitles.values())
+      .sort((a, b) => b.users - a.users || a.label.localeCompare(b.label, 'en-GB'))
+      .slice(0, 15),
+    professionalRoles: Array.from(roles.values())
+      .sort((a, b) => b.users - a.users || a.label.localeCompare(b.label, 'en-GB'))
+      .slice(0, 10),
   };
 }
 
@@ -472,6 +553,7 @@ async function getAdminInsights(periodRaw) {
     accounts7dRes,
     revenueRegsRes,
     attendeeLocations,
+    attendeeProfilesRaw,
   ] = await Promise.all([
     fetchRegistrations(sb, since),
     fetchAllRegistrationsFiltered(sb),
@@ -496,6 +578,7 @@ async function getAdminInsights(periodRaw) {
       .select('created_at, payment_status, amount_paid, attendees(name, email), events(title)')
       .gte('created_at', sixtyDaysAgo),
     fetchAttendeeLocations(sb),
+    fetchAttendeeProfiles(sb),
   ]);
 
   if (reviewsRes.error) throw new Error(reviewsRes.error.message);
@@ -592,6 +675,7 @@ async function getAdminInsights(periodRaw) {
     pitchPages,
     repeatAttendees: computeRepeatAttendees(allRegsFiltered),
     userLocations: aggregateUserLocations(attendeeLocations),
+    attendeeProfiles: aggregateAttendeeProfiles(attendeeProfilesRaw),
     growthPulse: {
       registrations7d: regs7dRes.count || 0,
       newOrganisers7d: orgs7dRes.count || 0,

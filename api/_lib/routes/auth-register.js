@@ -49,6 +49,11 @@ module.exports = async function handler(req, res) {
   const password = String(body.password || '');
   const name = String(body.name || '').trim();
   const marketingOptIn = Boolean(body.marketingOptIn ?? body.marketing_opt_in);
+  const termsAccepted =
+    body.termsAccepted === true ||
+    body.terms_accepted === true ||
+    body.terms === true ||
+    body.terms === 'true';
 
   if (!email || !password) {
     return json(res, 400, {
@@ -64,6 +69,12 @@ module.exports = async function handler(req, res) {
     return json(res, 400, {
       error: passwordCheck.error,
       message: passwordCheck.message,
+    });
+  }
+  if (!termsAccepted) {
+    return json(res, 400, {
+      error: 'terms_required',
+      message: 'Please agree to the Terms & conditions and Privacy policy.',
     });
   }
 

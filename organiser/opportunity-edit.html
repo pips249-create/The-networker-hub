@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260723" />
     <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260608c" />
-    <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260828opp1" />
+    <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260828regions1" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260825adminbadge1" />
   </head>
   <body class="opportunities-page organiser-event-edit-page organiser-opportunity-edit-page">
@@ -193,25 +193,21 @@
             </div>
           </div>
           <div class="ee-field" id="oe-location-field">
-            <label for="oe-location">Territory / location</label>
-            <p class="ee-hint">Required — where this opportunity is based or available. Use UK-wide or Remote if there is no fixed territory.</p>
-            <div class="oe-location-shortcuts">
-              <button type="button" class="oe-location-chip" data-location-value="UK-wide">UK-wide</button>
-              <button type="button" class="oe-location-chip" data-location-value="Remote">Remote</button>
-              <button type="button" class="oe-location-chip" data-location-value="Nationwide">Nationwide</button>
-            </div>
-            <div class="hub-location-field oe-location-field">
-              <span class="hub-location-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s7-5.4 7-11a7 7 0 1 0-14 0c0 5.6 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
-              </span>
-              <input
-                type="text"
-                id="oe-location"
-                required
-                placeholder="Postcode or city (e.g. M1, Manchester)"
-                autocomplete="off"
-              />
-            </div>
+            <label for="oe-region">Region</label>
+            <p class="ee-hint">Required — matches how browsers filter opportunities. Pick the widest area that applies.</p>
+            <select id="oe-region" required>
+              <option value="">Select region…</option>
+            </select>
+          </div>
+          <div class="ee-field">
+            <label for="oe-location-detail">Specific area <span class="ee-optional">(optional)</span></label>
+            <p class="ee-hint">Add detail if needed — e.g. &ldquo;North Manchester only&rdquo; or &ldquo;3 territories left&rdquo;.</p>
+            <input
+              type="text"
+              id="oe-location-detail"
+              maxlength="120"
+              placeholder="e.g. North Manchester, or leave blank for the whole region"
+            />
           </div>
           <div class="ee-field">
             <label for="oe-commitment">Commitment</label>
@@ -289,10 +285,9 @@
     <script src="../js/fact-loader.js?v=20260723" defer></script>
     <script src="../js/organiser-page-loading.js?v=20260608d" defer></script>
     <script src="../js/organiser-image-upload.js?v=20260605" defer></script>
-    <script src="../js/hub-location-autocomplete.js?v=20260609" defer></script>
-    <script src="../js/organiser-terms.js?v=20260828opp1" data-root="../" data-context="opportunity" defer></script>
+    <script src="../js/organiser-terms.js?v=20260828oppterms1" data-root="../" data-context="opportunity" defer></script>
     <script src="../js/opportunity-moderation-scan.js?v=20260827aff2" defer></script>
     <script src="../js/opportunity-listing-quality.js?v=20260825aff1" defer></script>
-    <script src="../js/organiser-opportunity-edit.js?v=20260828opp1" defer></script>
+    <script src="../js/organiser-opportunity-edit.js?v=20260828regions2" defer></script>
   </body>
 </html>

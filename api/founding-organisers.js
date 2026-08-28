@@ -14,7 +14,10 @@ const {
   listFoundingOrganisersForGateway,
   FOUNDING_HOMEPAGE_UNTIL,
   FOUNDING_HOMEPAGE_CAP,
+  isBmukName,
 } = require('./_lib/founding-organiser');
+
+const BMUK_WEBSITE = 'https://bmuklondon.co.uk/';
 
 function safeWebsite(url) {
   const raw = String(url || '').trim();
@@ -31,13 +34,14 @@ function safeWebsite(url) {
 function mapRow(row, { includeHubHref }) {
   const slug = publicOrganiserSlug(row) || '';
   const industries = Array.isArray(row.industries) ? row.industries.filter(Boolean) : [];
-  const website = safeWebsite(row.website);
+  const bmuk = isBmukName(row && row.name);
+  const website = bmuk ? BMUK_WEBSITE : safeWebsite(row.website);
   const hubHref = includeHubHref && slug ? '/organisers/' + encodeURIComponent(slug) : '';
   return {
     id: row.id,
     name: String(row.name || '').trim() || 'Organiser',
     slug,
-    href: hubHref || website,
+    href: website || hubHref,
     // Strip-sized CDN rewrite — full uploads were leaving blank marquee tiles for seconds.
     photoUrl: logoStripUrl(organiserDisplayPhotoUrl(row)),
     website,

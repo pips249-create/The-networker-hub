@@ -845,7 +845,6 @@
       alumniFastPass: alumniFastPass,
       vatTreatment: hasPaid ? String(refund?.vatTreatment || anchorEvent?.vatTreatment || '').trim() : '',
       attendeeExtras: {
-        foodIncluded: Boolean(anchorEvent?.foodIncluded),
         collectDietary: Boolean(anchorEvent?.collectDietary),
         collectAccessibility: Boolean(anchorEvent?.collectAccessibility),
       },

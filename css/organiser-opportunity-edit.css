@@ -280,7 +280,7 @@
   /* hint stays visible */
 }
 
-#oe-location-field.is-invalid .oe-location-field input {
+#oe-location-field.is-invalid select {
   border-color: #dc2626;
   box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.12);
 }

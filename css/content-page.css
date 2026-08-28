@@ -1101,6 +1101,19 @@
 }
 
 /* How-to guides hub */
+.hubert-disclosure {
+  margin: 0 0 0.65rem;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--text-muted, #64748b);
+}
+
+.hubert-disclosure a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .guides-hubert-callout p:last-of-type:not(:last-child) {
   margin-bottom: 12px;
 }

@@ -18,12 +18,12 @@ const MANUAL_GATES = [
   },
   {
     id: 'supabase_pro',
-    label: 'Supabase Pro (or plan with daily backups) — confirm in Dashboard → Billing',
+    label: 'Supabase Pro upgrade (Free tier today — no automated daily backups until Pro)',
     doc: 'docs/OPS-RELIABILITY.md §2',
   },
   {
     id: 'supabase_backups',
-    label: 'Supabase backup retention noted + last backup time recorded',
+    label: 'After Pro: note backup retention + last backup time in Dashboard → Database → Backups',
     doc: 'docs/OPS-RELIABILITY.md §2',
   },
   {

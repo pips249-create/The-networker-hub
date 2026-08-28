@@ -506,6 +506,32 @@
             <button type="button" class="checkout-signin-back" id="checkout-signin-cancel">← Back to tickets</button>
           </div>
 
+          <div class="checkout-profile-gate" id="checkout-profile-gate" hidden>
+            <h3 class="checkout-profile-gate-title">Almost there — tell us about your work</h3>
+            <p class="checkout-profile-gate-lead">
+              Organisers use this for name badges and attendee lists. Industry and job title stay private until you book.
+            </p>
+            <p class="checkout-profile-gate-error" id="checkout-profile-gate-error" hidden role="alert"></p>
+            <form id="checkout-profile-form" class="checkout-profile-form" novalidate>
+              <label class="checkout-profile-field">
+                <span>Industry</span>
+                <select id="checkout-profile-industry" name="businessSector" required>
+                  <option value="">Select your industry</option>
+                </select>
+              </label>
+              <label class="checkout-profile-field">
+                <span>Job title</span>
+                <input type="text" id="checkout-profile-job-title" name="jobTitle" required placeholder="e.g. Director" autocomplete="organization-title" />
+              </label>
+              <label class="checkout-profile-field">
+                <span>Company <em>(optional)</em></span>
+                <input type="text" id="checkout-profile-company" name="company" placeholder="e.g. Acme Ltd" autocomplete="organization" />
+              </label>
+              <button type="submit" class="cta-btn checkout-profile-submit" id="checkout-profile-submit">Save &amp; continue</button>
+            </form>
+            <button type="button" class="checkout-signin-back" id="checkout-profile-cancel">← Back to tickets</button>
+          </div>
+
           <p class="checkout-resume-notice" id="checkout-resume-notice" hidden role="status">
             <span id="checkout-resume-notice-text"></span>
           </p>
@@ -580,7 +606,9 @@
     <script src="../js/hub-public-urls.js?v=20260807fix3b"></script>
     <script src="../js/plain-text-format.js?v=20260728paras1"></script>
     <script src="../js/hub-soft-launch.js?v=20260827nudgepause"></script>
-    <script src="../js/event-detail.js?v=20260827nudgepause"></script>
+    <script src="../js/hub-profile-industries.js?v=20260828profile1"></script>
+    <script src="../js/hub-profile-completion.js?v=20260828profile1"></script>
+    <script src="../js/event-detail.js?v=20260828profile1"></script>
     <div id="hub-site-footer"></div>
 
     <div class="hub-modal application-success-modal" id="application-success-modal" role="dialog" aria-modal="true" aria-labelledby="application-success-title" hidden>

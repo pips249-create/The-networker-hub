@@ -305,7 +305,7 @@
             ok: Boolean(input.investmentIncludes),
             tip: 'Help browsers trust your listing',
           },
-      { key: 'location', label: 'Territory / location', weight: 10, ok: Boolean(input.location) },
+      { key: 'location', label: 'Region', weight: 10, ok: Boolean(input.location) },
       { key: 'commitment', label: 'Commitment', weight: 8, ok: Boolean(input.commitment) },
       { key: 'visual', label: 'Logo or cover photo', weight: 12, ok: Boolean(input.logoUrl || input.logoFile || input.imageUrl || input.imageFile) },
       {

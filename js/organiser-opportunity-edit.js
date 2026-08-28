@@ -34,6 +34,94 @@
 
   const CAPITAL_TYPES = ['franchise', 'distributorship', 'business-opportunity', 'network-marketing', 'partnership'];
 
+  const LISTING_REGIONS = [
+    { slug: 'uk-wide', label: 'UK-wide' },
+    { slug: 'remote', label: 'Remote / Online' },
+    { slug: 'london', label: 'London' },
+    { slug: 'manchester', label: 'Manchester' },
+    { slug: 'birmingham', label: 'Birmingham' },
+    { slug: 'leeds', label: 'Leeds' },
+    { slug: 'liverpool', label: 'Liverpool' },
+    { slug: 'newcastle', label: 'Newcastle' },
+    { slug: 'sheffield', label: 'Sheffield' },
+    { slug: 'nottingham', label: 'Nottingham' },
+    { slug: 'bristol', label: 'Bristol' },
+    { slug: 'brighton', label: 'Brighton' },
+    { slug: 'cambridge', label: 'Cambridge' },
+    { slug: 'oxford', label: 'Oxford' },
+    { slug: 'chester', label: 'Chester' },
+    { slug: 'cardiff', label: 'Cardiff & Wales' },
+    { slug: 'glasgow', label: 'Glasgow' },
+    { slug: 'edinburgh', label: 'Edinburgh' },
+    { slug: 'belfast', label: 'Belfast' },
+    { slug: 'yorkshire', label: 'Yorkshire (wider area)' },
+  ];
+
+  function listingRegionBySlug(slug) {
+    const key = String(slug || '').trim().toLowerCase();
+    return LISTING_REGIONS.find((row) => row.slug === key) || null;
+  }
+
+  function getSelectedListingRegion() {
+    const slug = String(document.getElementById('oe-region')?.value || '').trim();
+    return listingRegionBySlug(slug);
+  }
+
+  function formatListingLocation(region, detail) {
+    const row = region || null;
+    if (!row) return '';
+    const extra = String(detail || '').trim();
+    return extra ? row.label + ' — ' + extra : row.label;
+  }
+
+  function parseStoredListingLocation(stored, regionSlug) {
+    let slugFromRow = String(regionSlug || '').trim().toLowerCase();
+    if (slugFromRow === 'online') slugFromRow = 'remote';
+    const text = String(stored || '').trim();
+    if (slugFromRow && listingRegionBySlug(slugFromRow)) {
+      const row = listingRegionBySlug(slugFromRow);
+      if (text) {
+        const norm = text.toLowerCase();
+        const labelNorm = row.label.toLowerCase();
+        if (norm.startsWith(labelNorm + ' — ') || norm.startsWith(labelNorm + ' - ')) {
+          const sep = text.indexOf('—') >= 0 ? '—' : '-';
+          return { slug: slugFromRow, detail: text.slice(text.indexOf(sep) + 1).trim() };
+        }
+      }
+      return { slug: slugFromRow, detail: '' };
+    }
+    if (!text) return { slug: '', detail: '' };
+    const norm = text.toLowerCase();
+    if (/remote|online/.test(norm)) return { slug: 'remote', detail: '' };
+    if (/uk.?wide|nationwide/.test(norm)) return { slug: 'uk-wide', detail: '' };
+    for (let i = 0; i < LISTING_REGIONS.length; i++) {
+      const row = LISTING_REGIONS[i];
+      const labelNorm = row.label.toLowerCase();
+      if (norm === labelNorm || norm === row.slug) return { slug: row.slug, detail: '' };
+      if (norm.startsWith(labelNorm + ' — ') || norm.startsWith(labelNorm + ' - ')) {
+        return {
+          slug: row.slug,
+          detail: text.slice(text.indexOf('—') + 1).trim() || text.slice(text.indexOf('-') + 1).trim(),
+        };
+      }
+      if (norm.includes(row.slug) || norm.includes(labelNorm.split(' ')[0])) {
+        return { slug: row.slug, detail: '' };
+      }
+    }
+    return { slug: '', detail: text };
+  }
+
+  function populateListingRegionSelect() {
+    const select = document.getElementById('oe-region');
+    if (!select || select.options.length > 1) return;
+    LISTING_REGIONS.forEach((row) => {
+      const opt = document.createElement('option');
+      opt.value = row.slug;
+      opt.textContent = row.label;
+      select.appendChild(opt);
+    });
+  }
+
   function getSelectedTypes() {
     return Array.from(document.querySelectorAll('#oe-type-group input[name="oe-type"]:checked'))
       .map((input) => input.value.trim())
@@ -119,7 +207,7 @@
     if (metaLead) {
       metaLead.textContent = affiliate
         ? 'Commission and what partners promote appear on your card — not franchise-style investment.'
-        : 'Investment, location, and commitment appear in the meta row on your listing card.';
+        : 'Investment, region, and commitment appear in the meta row on your listing card.';
     }
     updateTypeModeNote(types, affiliate);
     updateFcaAttestVisibility();
@@ -380,8 +468,12 @@
     if (commissionEl) commissionEl.value = metaValue(opp.meta, /^commission$/i);
     if (promoteEl) promoteEl.value = metaValue(opp.meta, /^what you promote$/i);
     if (suitsEl) suitsEl.value = metaValue(opp.meta, /^who it suits$/i);
-    document.getElementById('oe-location').value =
-      metaValue(opp.meta, /^location$/i) || metaValue(opp.meta, /^territory$/i);
+    const parsed = parseStoredListingLocation(
+      metaValue(opp.meta, /^location$/i) || metaValue(opp.meta, /^territory$/i),
+      opp.regionSlug || opp.region_slug
+    );
+    document.getElementById('oe-location-detail').value = parsed.detail || '';
+    document.getElementById('oe-region').value = parsed.slug || '';
     document.getElementById('oe-commitment').value = metaValue(opp.meta, /^commitment$/i);
     syncAffiliateFormMode();
 
@@ -617,7 +709,7 @@
   function scrollToValidationField(message) {
     const msg = String(message || '').toLowerCase();
     let id = '';
-    if (/territory|location/.test(msg)) id = 'oe-location';
+    if (/territory|location|region/.test(msg)) id = 'oe-region';
     else if (/logo|photo|cover|image/.test(msg)) id = 'oe-card-host';
     else if (/commission/.test(msg)) id = 'oe-commission';
     else if (/promote/.test(msg)) id = 'oe-promote';
@@ -633,7 +725,7 @@
     if (focusable && typeof focusable.focus === 'function') {
       focusable.focus({ preventScroll: true });
     }
-    if (id === 'oe-location') {
+    if (id === 'oe-region') {
       document.getElementById('oe-location-field')?.classList.add('is-invalid');
     }
   }
@@ -641,7 +733,9 @@
   function buildMeta() {
     const meta = [];
     const affiliate = isAffiliateStyleListing();
-    const location = document.getElementById('oe-location').value.trim();
+    const region = getSelectedListingRegion();
+    const locationDetail = document.getElementById('oe-location-detail')?.value.trim() || '';
+    const location = formatListingLocation(region, locationDetail);
     const commitment = document.getElementById('oe-commitment').value.trim();
     const extraKey = document.getElementById('oe-extra-key').value.trim();
     const extraVal = document.getElementById('oe-extra-val').value.trim();
@@ -678,6 +772,8 @@
   function buildPayload(listingStatus) {
     const types = getSelectedTypes();
     const category = document.getElementById('oe-category').value.trim();
+    const region = getSelectedListingRegion();
+    const locationDetail = document.getElementById('oe-location-detail')?.value.trim() || '';
     const tags = types.slice();
     if (category && category !== 'general') tags.push('cat-' + category);
 
@@ -701,6 +797,8 @@
       aboutText,
       host: document.getElementById('oe-host').value.trim(),
       contactEmail: document.getElementById('oe-email').value.trim(),
+      location: formatListingLocation(region, locationDetail),
+      regionSlug: region ? region.slug : '',
       meta: buildMeta(),
       tags,
       listingStatus,
@@ -731,7 +829,8 @@
       commission: document.getElementById('oe-commission')?.value.trim(),
       promote: document.getElementById('oe-promote')?.value.trim(),
       suits: document.getElementById('oe-suits')?.value.trim(),
-      location: document.getElementById('oe-location')?.value.trim(),
+      location: formatListingLocation(getSelectedListingRegion(), document.getElementById('oe-location-detail')?.value.trim()),
+      regionSlug: getSelectedListingRegion()?.slug || '',
       commitment: document.getElementById('oe-commitment')?.value.trim(),
       investmentIncludes: document.getElementById('oe-investment-includes')?.value.trim(),
       companiesHouse: document.getElementById('oe-companies-house')?.value.trim(),
@@ -776,7 +875,8 @@
       'oe-commission',
       'oe-promote',
       'oe-suits',
-      'oe-location',
+      'oe-location-detail',
+      'oe-region',
       'oe-commitment',
       'oe-companies-house',
       'oe-logo-url',
@@ -878,7 +978,8 @@
       'oe-commission',
       'oe-promote',
       'oe-suits',
-      'oe-location',
+      'oe-location-detail',
+      'oe-region',
       'oe-commitment',
       'oe-companies-house',
       'oe-extra-key',
@@ -919,8 +1020,8 @@
     } else if (!payload.meta.some((m) => /^investment$/i.test(m.key))) {
       return 'Enter the investment required.';
     }
-    if (!payload.meta.some((m) => /^location$/i.test(m.key) || /^territory$/i.test(m.key))) {
-      return 'Enter the territory or location for this opportunity (e.g. UK-wide, Remote, or a city).';
+    if (!getSelectedListingRegion()) {
+      return 'Select the region where this opportunity is available.';
     }
     if (!payload.meta.some((m) => /^commitment$/i.test(m.key))) return 'Select a commitment level.';
     if (!isDraft && !hasListingImage(payload)) {
@@ -1130,6 +1231,8 @@
   }
 
   async function init() {
+    populateListingRegionSelect();
+
     const actions = window.HubOrganiserActions;
     if (actions) {
       const loggedIn = await actions.requireLogin('/organiser/opportunity-edit' + location.search);
@@ -1167,25 +1270,15 @@
         updateFcaAttestVisibility();
       });
     });
-    document.querySelectorAll('.oe-location-chip').forEach((btn) => {
-      btn.addEventListener('click', function () {
-        const locationEl = document.getElementById('oe-location');
-        const value = btn.getAttribute('data-location-value') || '';
-        if (locationEl && value) {
-          locationEl.value = value;
-          locationEl.dispatchEvent(new Event('input', { bubbles: true }));
-          locationEl.focus();
-        }
-        document.getElementById('oe-location-field')?.classList.remove('is-invalid');
-        refreshCompleteness();
-      });
-    });
-    const locationEl = document.getElementById('oe-location');
-    if (locationEl) {
-      locationEl.addEventListener('input', function () {
-        if (locationEl.value.trim()) {
+    populateListingRegionSelect();
+
+    const regionEl = document.getElementById('oe-region');
+    if (regionEl) {
+      regionEl.addEventListener('change', function () {
+        if (regionEl.value) {
           document.getElementById('oe-location-field')?.classList.remove('is-invalid');
         }
+        refreshCompleteness();
       });
     }
     syncAffiliateFormMode();
@@ -1205,16 +1298,10 @@
       showAlert(
         'Checkout was cancelled. Your listing stays approved — pay via Stripe when you are ready to go live.'
       );
-    } else if (justSubmitted) {
+    } else     if (justSubmitted) {
       showAlert(
         'Submitted for review. We’ll email you when it’s approved — then you can pay via Stripe to go live.'
       );
-    }
-
-    if (window.hubBindLocationAutocomplete) {
-      window.hubBindLocationAutocomplete(document.getElementById('oe-location'), {
-        listClass: 'hub-location-suggest oe-location-suggest',
-      });
     }
 
     const loadWork = async () => {

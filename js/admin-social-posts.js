@@ -686,7 +686,7 @@
       id: 'soft-launch-bmuk',
       name: 'Business Matching UK',
       photoUrl: '/assets/marketing/bmu-logo.png',
-      website: 'https://business-matching.co.uk/',
+      website: 'https://bmuklondon.co.uk/',
       foundingHomepage: true,
       softLaunch: true,
       softLaunchWordmark: false,

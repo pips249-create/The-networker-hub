@@ -4556,6 +4556,67 @@
     );
   }
 
+  function renderInsightsAttendeeProfiles(profileData) {
+    var data = profileData || {};
+    var rows = data.industries || [];
+    var titles = data.jobTitles || [];
+    if (!rows.length && !titles.length) {
+      return '<p class="text-sm text-slate-500">No industry or job title data yet — collected at welcome Step 3 and checkout.</p>';
+    }
+    var coverage =
+      '<p class="text-xs text-slate-500 mb-2">' +
+      esc(String(data.withBoth || 0)) +
+      ' of ' +
+      esc(String(data.total || 0)) +
+      ' attendee profiles have industry + job title · ' +
+      esc(String(data.withAccount || 0)) +
+      ' linked to accounts</p>';
+    var industryList = !rows.length
+      ? '<p class="text-sm text-slate-500">No industries recorded yet.</p>'
+      : insightsListScroll(
+          '<ul class="space-y-1.5">' +
+            rows
+              .map(function (row) {
+                return (
+                  '<li class="flex items-center justify-between text-sm gap-3"><span class="font-medium text-brand-900 min-w-0 truncate">' +
+                  esc(row.label) +
+                  '</span><span class="text-slate-500 shrink-0 tabular-nums">' +
+                  esc(String(row.users || 0)) +
+                  '</span></li>'
+                );
+              })
+              .join('') +
+            '</ul>'
+        );
+    var titleList = !titles.length
+      ? '<p class="text-sm text-slate-500">No job titles recorded yet.</p>'
+      : insightsListScroll(
+          '<ul class="space-y-1.5">' +
+            titles
+              .map(function (row) {
+                return (
+                  '<li class="flex items-center justify-between text-sm gap-3"><span class="font-medium text-brand-900 min-w-0 truncate">' +
+                  esc(row.label) +
+                  '</span><span class="text-slate-500 shrink-0 tabular-nums">' +
+                  esc(String(row.users || 0)) +
+                  '</span></li>'
+                );
+              })
+              .join('') +
+            '</ul>'
+        );
+    return (
+      coverage +
+      '<div class="grid gap-3 md:grid-cols-2">' +
+      '<div><h5 class="text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">Top industries</h5>' +
+      industryList +
+      '</div>' +
+      '<div><h5 class="text-xs font-bold uppercase tracking-wide text-slate-500 mb-2">Top job titles</h5>' +
+      titleList +
+      '</div></div>'
+    );
+  }
+
   function renderInsightsTypeMix(rows) {
     if (!rows.length) {
       return '<p class="text-sm text-slate-500">No registrations in this period yet.</p>';
@@ -4678,6 +4739,7 @@
       '<a href="#insights-promote" class="admin-insights-jump-link">Promote ROI</a>' +
       '<a href="#insights-pitches" class="admin-insights-jump-link">Sales pitches</a>' +
       '<a href="#insights-places" class="admin-insights-jump-link">Places &amp; ratings</a>' +
+      '<a href="#insights-demographics" class="admin-insights-jump-link">Member demographics</a>' +
       '</nav>' +
       '<section id="insights-tickets" class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3 scroll-mt-24">' +
       '<div><h3 class="font-bold text-brand-900">Tickets bought on The Networker UK</h3>' +
@@ -4886,6 +4948,38 @@
           ) +
           '</div>') +
       '</section>' +
+      '<section id="insights-demographics" class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3 scroll-mt-24">' +
+      '<div><h3 class="font-bold text-brand-900">Member demographics</h3>' +
+      '<p class="text-sm text-slate-500 mt-0.5">Industry and job title from account onboarding and checkout — for platform positioning and sales reporting.</p></div>' +
+      '<div class="admin-metric-grid admin-metric-grid--4">' +
+      card(
+        'Industry provided',
+        String((data.attendeeProfiles && data.attendeeProfiles.withIndustry) || 0),
+        String((data.attendeeProfiles && data.attendeeProfiles.missingIndustry) || 0) + ' missing',
+        'blue'
+      ) +
+      card(
+        'Job title provided',
+        String((data.attendeeProfiles && data.attendeeProfiles.withJobTitle) || 0),
+        String((data.attendeeProfiles && data.attendeeProfiles.missingJobTitle) || 0) + ' missing',
+        'violet'
+      ) +
+      card(
+        'Complete profiles',
+        String((data.attendeeProfiles && data.attendeeProfiles.withBoth) || 0),
+        'Industry + job title both set',
+        'brand'
+      ) +
+      card(
+        'Attendee records',
+        String((data.attendeeProfiles && data.attendeeProfiles.total) || 0),
+        String((data.attendeeProfiles && data.attendeeProfiles.withAccount) || 0) + ' with login',
+        'gold'
+      ) +
+      '</div>' +
+      '<div class="rounded-xl border border-slate-200 p-3">' +
+      renderInsightsAttendeeProfiles(data.attendeeProfiles || {}) +
+      '</div></section>' +
       '<section id="insights-places" class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3 scroll-mt-24">' +
       '<div><h3 class="font-bold text-brand-900">Places &amp; ratings</h3>' +
       '<p class="text-sm text-slate-500 mt-0.5">Longer lists stay in a fixed-height scroll so the page does not grow forever.</p></div>' +
@@ -6856,6 +6950,14 @@
         ? '<div class="flex justify-between gap-4"><dt class="text-slate-500 shrink-0">Organiser terms</dt><dd class="font-medium text-right text-xs">' +
           esc(formatAccountDate(u.organiserTermsAcceptedAt)) +
           (u.organiserTermsVersion ? ' · ' + esc(String(u.organiserTermsVersion)) : '') +
+          '</dd></div>'
+        : '') +
+      (u.organiserOpportunityTermsAcceptedAt
+        ? '<div class="flex justify-between gap-4"><dt class="text-slate-500 shrink-0">Business listing terms</dt><dd class="font-medium text-right text-xs">' +
+          esc(formatAccountDate(u.organiserOpportunityTermsAcceptedAt)) +
+          (u.organiserOpportunityTermsVersion
+            ? ' · ' + esc(String(u.organiserOpportunityTermsVersion))
+            : '') +
           '</dd></div>'
         : '') +
       '</dl>' +

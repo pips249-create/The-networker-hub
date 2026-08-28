@@ -13197,7 +13197,6 @@
 
   function readTicketModalAttendeeExtras() {
     return {
-      foodIncluded: Boolean(document.getElementById('ticket-food-included')?.checked),
       collectDietary: Boolean(document.getElementById('ticket-collect-dietary')?.checked),
       collectAccessibility: Boolean(document.getElementById('ticket-collect-access')?.checked),
     };
@@ -13206,10 +13205,8 @@
   function syncTicketModalAttendeeExtras(eventId) {
     const id = String(eventId || document.getElementById('ticket-event')?.value || '').trim();
     const ev = state.events.find((row) => row.id === id);
-    const food = document.getElementById('ticket-food-included');
     const dietary = document.getElementById('ticket-collect-dietary');
     const access = document.getElementById('ticket-collect-access');
-    if (food) food.checked = Boolean(ev?.foodIncluded);
     if (dietary) dietary.checked = Boolean(ev?.collectDietary);
     if (access) access.checked = Boolean(ev?.collectAccessibility);
   }
@@ -13250,7 +13247,6 @@
       };
     }
     const patch = {
-      foodIncluded: extras.foodIncluded,
       collectDietary: extras.collectDietary,
       collectAccessibility: extras.collectAccessibility,
     };
@@ -16944,8 +16940,6 @@
         message += extrasResult.ok
           ? ' Attendees will be asked about dietary or accessibility needs at checkout.'
           : ' Booking questions could not be saved — open the event tickets page and save again.';
-      } else if (extras.foodIncluded && extrasResult.ok) {
-        message += ' Food and drink is noted on your event listing.';
       }
       showOrganiserAlert(message, !extrasResult.ok);
       alertEl?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });

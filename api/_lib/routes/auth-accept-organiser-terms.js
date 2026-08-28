@@ -1,6 +1,11 @@
 const { sessionFromRequest, json, setCors } = require('../auth');
 const { isSupabaseConfigured } = require('../supabase');
-const { acceptOrganiserTerms, CURRENT_ORGANISER_TERMS_VERSION } = require('../supabase-auth');
+const {
+  acceptOrganiserTerms,
+  acceptOrganiserOpportunityTerms,
+  CURRENT_ORGANISER_TERMS_VERSION,
+  CURRENT_ORGANISER_OPPORTUNITY_TERMS_VERSION,
+} = require('../supabase-auth');
 
 function parseBody(req) {
   let body = req.body;
@@ -31,16 +36,36 @@ module.exports = async function handler(req, res) {
   }
 
   const body = parseBody(req);
-  const version = String(body.version || CURRENT_ORGANISER_TERMS_VERSION).trim();
+  const context = String(body.context || 'event').trim().toLowerCase();
+  const userId = session.userId || session.sub;
 
   try {
-    const userId = session.userId || session.sub;
+    if (context === 'opportunity') {
+      const version = String(body.version || CURRENT_ORGANISER_OPPORTUNITY_TERMS_VERSION).trim();
+      const result = await acceptOrganiserOpportunityTerms(userId, version);
+      return json(res, 200, {
+        ok: true,
+        context: 'opportunity',
+        organiserOpportunityTermsAccepted: true,
+        organiserOpportunityTermsVersion: result.organiser_opportunity_terms_version,
+        organiserOpportunityTermsAcceptedAt: result.organiser_opportunity_terms_accepted_at,
+        organiserTermsAccepted: Boolean(result.organiser_terms_accepted_at),
+        organiserTermsVersion: result.organiser_terms_version,
+        organiserTermsAcceptedAt: result.organiser_terms_accepted_at,
+      });
+    }
+
+    const version = String(body.version || CURRENT_ORGANISER_TERMS_VERSION).trim();
     const result = await acceptOrganiserTerms(userId, version);
     return json(res, 200, {
       ok: true,
+      context: 'event',
       organiserTermsAccepted: true,
       organiserTermsVersion: result.organiser_terms_version,
       organiserTermsAcceptedAt: result.organiser_terms_accepted_at,
+      organiserOpportunityTermsAccepted: Boolean(result.organiser_opportunity_terms_accepted_at),
+      organiserOpportunityTermsVersion: result.organiser_opportunity_terms_version,
+      organiserOpportunityTermsAcceptedAt: result.organiser_opportunity_terms_accepted_at,
     });
   } catch (e) {
     const msg = e.message || String(e);

@@ -278,6 +278,7 @@
             next: next,
             intent: getIntentParam(),
             marketingOptIn: marketingEl ? marketingEl.checked : false,
+            termsAccepted: true,
           };
           if (token) payload.turnstileToken = token;
           return fetch('/api/auth/register', {

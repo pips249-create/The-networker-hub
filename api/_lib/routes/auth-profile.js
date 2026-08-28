@@ -84,8 +84,8 @@ async function buildProfilePatch(user, body) {
 
 async function handleSupabase(req, res, session) {
   if (req.method === 'GET') {
-    const { profile, writable } = await sbProfile.getProfile(session);
-    return json(res, 200, { ok: true, profile, writable });
+    const { profile, writable, profileComplete } = await sbProfile.getProfile(session);
+    return json(res, 200, { ok: true, profile, writable, profileComplete: !!profileComplete });
   }
 
   if (req.method === 'PATCH') {
@@ -103,6 +103,7 @@ async function handleSupabase(req, res, session) {
       ok: true,
       profile: result.profile,
       writable: result.writable,
+      profileComplete: !!result.profileComplete,
       message: result.message,
     });
   }

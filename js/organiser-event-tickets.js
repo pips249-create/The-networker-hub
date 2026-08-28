@@ -3678,7 +3678,7 @@
   function openAttendeeExtrasIfNeeded() {
     const details = document.getElementById('ee-attendee-extras-details');
     if (!details) return;
-    const anyChecked = ['ee-food-included', 'ee-collect-dietary', 'ee-collect-access'].some(
+    const anyChecked = ['ee-collect-dietary', 'ee-collect-access'].some(
       function (id) {
         return Boolean(document.getElementById(id)?.checked);
       }
@@ -3687,10 +3687,8 @@
   }
 
   function hydrateAttendeeExtrasFromEvent(ev) {
-    const food = document.getElementById('ee-food-included');
     const dietary = document.getElementById('ee-collect-dietary');
     const access = document.getElementById('ee-collect-access');
-    if (food) food.checked = Boolean(ev.foodIncluded);
     if (dietary) dietary.checked = Boolean(ev.collectDietary);
     if (access) access.checked = Boolean(ev.collectAccessibility);
     openAttendeeExtrasIfNeeded();
@@ -3964,7 +3962,6 @@
         tiers: collectActiveTiers(),
         vatTreatment: collectVatTreatment(),
         refund: collectRefundPayload(),
-        foodOrDrinkIncluded: !!document.getElementById('ee-food-included')?.checked,
         askDietary: !!document.getElementById('ee-collect-dietary')?.checked,
         askAccessibility: !!document.getElementById('ee-collect-access')?.checked,
       };
@@ -4077,8 +4074,6 @@
         if (agree && draft.refund.refundTermsAgreed) agree.checked = true;
       }
     }
-    const food = document.getElementById('ee-food-included');
-    if (food) food.checked = !!draft.foodOrDrinkIncluded;
     const dietary = document.getElementById('ee-collect-dietary');
     if (dietary) dietary.checked = !!draft.askDietary;
     const access = document.getElementById('ee-collect-access');
@@ -4673,7 +4668,6 @@
 
   function attendeeExtras() {
     return {
-      foodIncluded: document.getElementById('ee-food-included').checked,
       collectDietary: document.getElementById('ee-collect-dietary').checked,
       collectAccessibility: document.getElementById('ee-collect-access').checked,
     };

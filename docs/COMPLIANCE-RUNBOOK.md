@@ -9,7 +9,10 @@ Internal checklist for items that cannot be fully automated in code. Review quar
 
 - [x] Legal policies page (`legal-policies.html`) — incl. copyright & content (July 2026)
 - [x] Cookie consent banner with analytics gating (PECR)
-- [x] Terms & Privacy checkbox at registration
+- [x] Terms & Privacy checkbox at registration (client + server validation)
+- [x] Hubert in-chat automated-assistant disclosure + updated privacy policy wording
+- [x] OpenAI double-gate (`OPENAI_API_KEY` + `HUBERT_OPENAI_ENABLED=true`) + PII redaction if ever enabled
+- [x] Optional admin IP allowlist (`ADMIN_IP_ALLOWLIST` env, comma-separated)
 - [x] Marketing email opt-in at registration (unchecked by default) + account settings
 - [x] Pre-checkout acknowledgement (organiser, price, refund policy, tick-box)
 - [x] Per-event refund policy (organiser tickets step + event page display)
@@ -45,9 +48,10 @@ Internal checklist for items that cannot be fully automated in code. Review quar
 | Solicitor review | UK lawyer review `legal-policies.html` before scaling paid ticketing | Catherine | ☑ Done (confirmed 6 Aug 2026) |
 | DPAs | Follow `docs/DPA-SUBPROCESSORS.md`; track in `docs/DPA-REGISTER.md`; run `npm run check:dpas` | Catherine | ☑ Filed 10 Jul 2026 |
 | RoPA | Maintain `docs/RoPA.md` when features or subprocessors change | Catherine | ☑ Updated 28 Aug 2026 (Brevo retired) |
-| Backups / monitoring | `docs/OPS-RELIABILITY.md` — Supabase Pro backups + UptimeRobot on `/api/health`; run `npm run check:ops` | Catherine | ☑ Health probe live · ☐ Confirm UptimeRobot + Supabase Pro in dashboards |
+| Backups / monitoring | `docs/OPS-RELIABILITY.md` — **Free tier today**; upgrade Supabase Pro before scale; UptimeRobot on `/api/health`; run `npm run check:ops` | Catherine | ☑ Health probe live · ☐ UptimeRobot · ☐ Supabase Pro upgrade |
 | Breach runbook | Named leads in `docs/DATA-BREACH-RESPONSE.md` | Catherine | ☑ |
 | GDPR requests | `docs/GDPR-SAR-PROCEDURE.md` — hello@ monitored | Catherine / Rosie | ☑ Procedure + owners |
+| Admin access hardening | Set `ADMIN_IP_ALLOWLIST` in Vercel for Command Centre; enable Supabase Auth MFA on admin accounts when ready | Catherine | ☐ Optional IP allowlist · ☐ MFA |
 | Complaints | `docs/COMPLAINTS-PROCEDURE.md` — log in Command Centre → Support → Complaints | Catherine Hancher | ☑ hi@thenetworkeruk.com monitored |
 | HMRC platform reporting | `docs/HMRC-PLATFORM-OPERATORS.md`; run `npm run export:hmrc-sellers`; accountant sign-off | Finance | ☑ Export script · ☐ Accountant confirmation |
 

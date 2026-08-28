@@ -207,6 +207,19 @@
   background: var(--surface-card, #fff);
 }
 
+.hubert-disclosure {
+  margin: 0 0 0.65rem;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--text-muted, #64748b);
+}
+
+.hubert-disclosure a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .hubert-form-compose {
   display: grid;
   grid-template-columns: 1fr auto;

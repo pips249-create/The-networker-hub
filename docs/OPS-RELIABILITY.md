@@ -45,18 +45,38 @@ Also in Vercel: **Project → Settings → Notifications** — enable deployment
 
 ---
 
-## 2. Backups (Supabase) — confirm before Wednesday
+## 2. Backups (Supabase)
+
+**Current plan (28 Aug 2026):** **Free tier** — not yet on Pro.
+
+| What Free gives you | What you do **not** have yet |
+|---------------------|------------------------------|
+| Live Postgres + Auth | Automated daily backups in the dashboard |
+| Manual SQL / migrations via SQL Editor | One-click restore to a point in time |
+| Project can **auto-pause** after inactivity | 7-day backup retention (Pro) |
+
+**Upgrade to Pro when:** you scale paid ticketing, hold large member lists, or want proper RPO/RTO. Pro is ~$25/month and adds daily backups + no auto-pause (confirm current pricing in Supabase Billing).
+
+### Checklist
 
 | Step | Action | Status |
 |------|--------|--------|
-| 1 | Supabase project → **Settings → Billing** → ensure **Pro** (or plan with daily backups) | ☐ Confirm in dashboard |
-| 2 | **Settings → Database → Backups** — note retention (e.g. 7 days) and last backup time | ☐ |
-| 3 | Confirm project is **not** on Free auto-pause | ☐ |
+| 1 | Confirm current tier: **Free** (Dashboard → Settings → Billing) | ☑ Aug 2026 |
+| 2 | **Upgrade to Pro** before busy ticket weekends or major launch | ☐ Planned |
+| 3 | After Pro: **Settings → Database → Backups** — note retention and last backup time | ☐ After upgrade |
 | 4 | Store project ref + dashboard URL in company password manager | ☐ |
 | 5 | Run `npm run check:ops` after UptimeRobot monitor is live | ☑ Script added 28 Aug 2026 |
 
-**RPO (current target):** up to ~24 hours (daily backups).  
-**RTO (current target):** same day, manual restore via Supabase support/dashboard.
+### Interim mitigations (while on Free)
+
+1. **Before risky migrations** (capacity, money, auth): take a manual [`pg_dump`](https://supabase.com/docs/guides/database/backups) via connection string, or export critical tables from SQL Editor — store in company folder, not git.
+2. **Keep migrations in git** (`supabase/migrations/`) so schema is reproducible.
+3. **Avoid experimental SQL on production** without a noted export first.
+4. **Watch auto-pause:** wake the project if the dashboard shows paused — `/api/health` will show `supabaseConfigured: false` if the DB is unreachable.
+
+**RPO (today, Free):** no guaranteed automatic backup — treat manual exports + migration discipline as your safety net.  
+**RPO (target after Pro):** up to ~24 hours (daily backups).  
+**RTO (target):** same day, manual restore via Supabase dashboard/support after Pro.
 
 ---
 
@@ -111,5 +131,6 @@ Infra outage (site down, payments failing): treat as P0 — check Vercel / Supab
 
 | Date | Note |
 |------|------|
+| 2026-08-28 | Documented Free tier (not Pro yet); interim backup mitigations |
 | 2026-08-28 | `npm run check:ops` added; production health probe verified |
 | 2026-08-13 | Created; health endpoint added; SurgoTech prep |

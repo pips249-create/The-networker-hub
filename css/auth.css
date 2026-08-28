@@ -949,6 +949,74 @@
   text-decoration: underline;
 }
 
+.auth-welcome-skip-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+}
+
+.auth-required {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--lavender-deep);
+}
+
+.auth-profile-form {
+  margin-top: 8px;
+  text-align: left;
+}
+
+.auth-profile-form .auth-field {
+  margin-bottom: 16px;
+}
+
+.auth-profile-form select {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  font: inherit;
+  font-size: 15px;
+  color: var(--charcoal);
+  background: #fff;
+}
+
+.auth-profile-form select:focus-visible,
+.auth-profile-form input:focus-visible {
+  outline: 2px solid var(--lavender-deep);
+  outline-offset: 2px;
+}
+
+.auth-actions--profile {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.auth-actions--profile .auth-welcome-skip-link {
+  text-align: center;
+}
+
+.auth-message--success {
+  color: #1f6b45;
+  background: #edf8f1;
+  border-color: #b8e0c8;
+}
+
+.auth-message--error {
+  color: #8b2942;
+  background: #fdf0f3;
+  border-color: #f0c4d0;
+}
+
+.auth-welcome-profile[hidden] {
+  display: none !important;
+}
+
 .auth-welcome-skip {
   margin-top: 22px;
   font-size: 13px;

@@ -18,6 +18,26 @@
     return d.innerHTML;
   }
 
+  function defaultPrivacyHref() {
+    var path = (global.location && global.location.pathname) || '';
+    return /\/organiser\//.test(path) ? '../legal-policies#privacy' : '/legal-policies#privacy';
+  }
+
+  function renderHubertDisclosure(formEl, options) {
+    if (!formEl || formEl.querySelector('.hubert-disclosure')) return;
+    var opts = options || {};
+    var privacyHref = opts.privacyHref || defaultPrivacyHref();
+    var note = document.createElement('p');
+    note.className = 'hubert-disclosure';
+    note.setAttribute('role', 'note');
+    note.innerHTML =
+      'Automated assistant — not human support. Don\u2019t share passwords or payment details. ' +
+      '<a href="' +
+      esc(privacyHref) +
+      '">Privacy policy</a>';
+    formEl.insertBefore(note, formEl.firstChild);
+  }
+
   function HubertChat(options) {
     this.messagesEl = options.messagesEl;
     this.formEl = options.formEl;
@@ -31,6 +51,7 @@
     this.greeting = options.greeting || HUBERT_GREETING;
     this.history = [];
     this.busy = false;
+    renderHubertDisclosure(this.formEl, options.disclosure || {});
     this.bind();
     this.showGreeting();
   }
@@ -184,4 +205,5 @@
   global.HubertChatGreeting = HUBERT_GREETING;
   global.HubertChatSuggestions = DEFAULT_SUGGESTIONS;
   global.HubertChatRenderSuggestions = renderSuggestions;
+  global.HubertChatRenderDisclosure = renderHubertDisclosure;
 })(window);

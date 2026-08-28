@@ -11,6 +11,11 @@ const {
   reviewerDisplayName,
   normalizeStoredPublicReviewName,
 } = require('./reviewer-display-name');
+const {
+  normalizeIndustry,
+  isKnownIndustry,
+  isAnalyticsProfileComplete,
+} = require('./hub-profile-industries');
 
 const WRITABLE = {
   name: true,
@@ -159,9 +164,11 @@ async function getProfile(session) {
   }
 
   const attendee = await findAttendeeRow(sb, uid, em);
+  const profile = rowToProfile(session, hubAccount, attendee);
   return {
-    profile: rowToProfile(session, hubAccount, attendee),
+    profile,
     writable: WRITABLE,
+    profileComplete: isAnalyticsProfileComplete(profile),
   };
 }
 
@@ -198,13 +205,27 @@ async function updateProfile(session, body) {
     attendeePatch.company = String(body.company || '').trim() || null;
   }
   if (body.jobTitle !== undefined) {
-    attendeePatch.job_title = String(body.jobTitle || '').trim() || null;
+    const titleRaw = String(body.jobTitle || '').trim();
+    if (titleRaw && titleRaw.length < 2) {
+      const e = new Error('Job title must be at least 2 characters.');
+      e.status = 400;
+      e.code = 'invalid_job_title';
+      throw e;
+    }
+    attendeePatch.job_title = titleRaw || null;
   }
   if (body.professionalRole !== undefined) {
     attendeePatch.professional_role = normalizeProfessionalRole(body.professionalRole);
   }
   if (body.businessSector !== undefined) {
-    attendeePatch.business_sector = String(body.businessSector || '').trim() || null;
+    const sectorRaw = String(body.businessSector || '').trim();
+    if (sectorRaw && !isKnownIndustry(sectorRaw)) {
+      const e = new Error('Please choose an industry from the list.');
+      e.status = 400;
+      e.code = 'invalid_industry';
+      throw e;
+    }
+    attendeePatch.business_sector = sectorRaw ? normalizeIndustry(sectorRaw) : null;
   }
   if (body.marketPreferences !== undefined) {
     const prefs = String(body.marketPreferences || '').trim();
@@ -320,9 +341,11 @@ async function updateProfile(session, body) {
     hubAccount = data;
   }
 
+  const profile = rowToProfile(session, hubAccount, attendee);
   return {
-    profile: rowToProfile(session, hubAccount, attendee),
+    profile,
     writable: WRITABLE,
+    profileComplete: isAnalyticsProfileComplete(profile),
     message: 'Your details were saved.',
   };
 }

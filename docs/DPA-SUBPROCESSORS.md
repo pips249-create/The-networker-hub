@@ -155,6 +155,7 @@ Keep this section for reference **only if** you later decide to enable third-par
 | Legal entity = **The Networker Group Ltd** | Must match ICO register and other DPAs |
 | Billing on company card / invoice | Keeps account in business mode |
 | `OPENAI_API_KEY` in **Vercel Production** (if Hubert should use AI) | Without a key, Hubert falls back to rule-based replies only |
+| `HUBERT_OPENAI_ENABLED=true` | **Also required** — prevents accidental third-party AI if a key is present in a non-production environment |
 
 ### Step 1 — Organisation ID
 

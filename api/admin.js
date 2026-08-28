@@ -3,6 +3,16 @@
  */
 const { getSubRoute } = require('./_lib/route-path');
 const { json, setCors, sessionFromRequest, requireAdminLive } = require('./_lib/auth');
+const { clientIp } = require('./_lib/rate-limit');
+
+function adminIpAllowed(req) {
+  const allowlist = String(process.env.ADMIN_IP_ALLOWLIST || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (!allowlist.length) return true;
+  return allowlist.includes(clientIp(req));
+}
 
 const routes = {
   metrics: require('./_lib/routes/admin-metrics'),
@@ -48,6 +58,12 @@ module.exports = async function handler(req, res) {
     const gate = await requireAdminLive(session);
     if (!gate.ok) {
       return json(res, gate.status, { error: gate.error, message: gate.message });
+    }
+    if (!adminIpAllowed(req)) {
+      return json(res, 403, {
+        error: 'admin_ip_blocked',
+        message: 'Admin access is restricted from this network.',
+      });
     }
 
     const route = getSubRoute(req, '/api/admin');

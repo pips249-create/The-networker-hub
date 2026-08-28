@@ -407,6 +407,9 @@ async function main() {
         intoHub.data.organiser_email_verified_at || fromHub.data.organiser_email_verified_at,
       organiser_terms_accepted_at:
         intoHub.data.organiser_terms_accepted_at || fromHub.data.organiser_terms_accepted_at,
+      organiser_opportunity_terms_accepted_at:
+        intoHub.data.organiser_opportunity_terms_accepted_at ||
+        fromHub.data.organiser_opportunity_terms_accepted_at,
       organiser_ui_hidden_at: null,
     };
     if (APPLY) {

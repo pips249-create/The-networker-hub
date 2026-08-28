@@ -73,6 +73,9 @@ module.exports = async function handler(req, res) {
 
       const organiserProfiles = await sbAuth.countOrganiserProfiles(fresh.sub, fresh.email);
       const organiserTermsAccepted = await sbAuth.hasOrganiserTermsAccepted(fresh.sub);
+      const organiserOpportunityTermsAccepted = await sbAuth.hasOrganiserOpportunityTermsAccepted(
+        fresh.sub
+      );
       const accessStatus = await getOrganiserAccessStatus(fresh);
       const impersonating = !!session.impersonator;
 
@@ -82,6 +85,7 @@ module.exports = async function handler(req, res) {
         hubView: hubViewFromRequest(req),
         organiserProfiles,
         organiserTermsAccepted,
+        organiserOpportunityTermsAccepted,
         organiserAccess: accessStatus.organiserAccess || impersonating,
         organiserUiVisible: accessStatus.organiserUiVisible || impersonating,
         organiserEmailVerified: accessStatus.organiserEmailVerified || impersonating,

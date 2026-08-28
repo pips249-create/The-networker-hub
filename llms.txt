@@ -4,39 +4,39 @@
 The Networker UK is the platform chapter of The Networker, run by Rosie McGilvray and Catherine Hancher at The Networker Group Ltd (Companies House 15252227, VAT No. 454 4092 94). Official company record: https://find-and-update.company-information.service.gov.uk/company/15252227. The original Networker directory was started by Rosie and Sue Turmel; Sue is no longer a company director. Not the same as similarly named companies such as NETWORKER UK LIMITED. Same brand as the established UK directory the-networker.co.uk. Across that brand last year: 27,000+ events listed and 17,000+ networkers found a meeting, group, or opportunity. Public browsing is open; ticket purchase and opportunity enquiries from 1 September 2026. Contact: hi@thenetworkeruk.com
 
 ## Canonical URLs
-- Home: https://www.thenetworkeruk.com/
-- Events: https://www.thenetworkeruk.com/events/
-- Business opportunities: https://www.thenetworkeruk.com/opportunities/
-- FAQ: https://www.thenetworkeruk.com/faq
-- Contact (Hubert assistant): https://www.thenetworkeruk.com/contact
-- About: https://www.thenetworkeruk.com/about
-- For Organisers: https://www.thenetworkeruk.com/for-organisers
-- For Networkers: https://www.thenetworkeruk.com/for-networkers
-- Organiser guides: https://www.thenetworkeruk.com/guides
-- Advertising & sponsorship: https://www.thenetworkeruk.com/advertising
-- Legal: https://www.thenetworkeruk.com/legal-policies
-- Organiser payouts: https://www.thenetworkeruk.com/help/organiser-payouts
-- Ticket pricing & fees: https://www.thenetworkeruk.com/help/pricing-fees
-- Sitemap: https://www.thenetworkeruk.com/sitemap.xml
+- Home: http://localhost:3000/
+- Events: http://localhost:3000/events/
+- Business opportunities: http://localhost:3000/opportunities/
+- FAQ: http://localhost:3000/faq
+- Contact (Hubert assistant): http://localhost:3000/contact
+- About: http://localhost:3000/about
+- For Organisers: http://localhost:3000/for-organisers
+- For Networkers: http://localhost:3000/for-networkers
+- Organiser guides: http://localhost:3000/guides
+- Advertising & sponsorship: http://localhost:3000/advertising
+- Legal: http://localhost:3000/legal-policies
+- Organiser payouts: http://localhost:3000/help/organiser-payouts
+- Ticket pricing & fees: http://localhost:3000/help/pricing-fees
+- Sitemap: http://localhost:3000/sitemap.xml
 
 ## Organiser help articles
 
 ### When do organisers receive payouts?
 Organisers receive the full ticket price they set. With Stripe Connect enabled, that revenue is collected in the organiser connected Stripe account when attendees pay; use Stripe Express for refunds, balance, and bank payouts. Legacy mode (Connect off): archive the event in /organiser/, wait 7 days after the event ends, then request payout from Revenue — requests are reviewed before transfer.
 
-Full page: https://www.thenetworkeruk.com/help/organiser-payouts
+Full page: http://localhost:3000/help/organiser-payouts
 
 ### What fees does The Networker UK charge on tickets?
 There is no monthly subscription to list events. For paid tickets, attendees pay one booking fee at checkout: 4.5% + 20p per ticket, shown before payment. Organisers receive the full ticket price they set. Free events do not require Stripe.
 
-Full page: https://www.thenetworkeruk.com/help/pricing-fees
+Full page: http://localhost:3000/help/pricing-fees
 
 ## Machine discovery
-- Sitemap: https://www.thenetworkeruk.com/sitemap.xml
-- AI crawler policy: https://www.thenetworkeruk.com/agents.txt
-- Dynamic page meta API: https://www.thenetworkeruk.com/api/seo-meta?type=event&slug={slug}
-- Organiser meta API: https://www.thenetworkeruk.com/api/seo-meta?type=organiser&slug={slug}
-- Opportunity meta API: https://www.thenetworkeruk.com/api/seo-meta?type=opportunity&slug={slug}
+- Sitemap: http://localhost:3000/sitemap.xml
+- AI crawler policy: http://localhost:3000/agents.txt
+- Dynamic page meta API: http://localhost:3000/api/seo-meta?type=event&slug={slug}
+- Organiser meta API: http://localhost:3000/api/seo-meta?type=organiser&slug={slug}
+- Opportunity meta API: http://localhost:3000/api/seo-meta?type=opportunity&slug={slug}
 
 ## Hubert — business butler & concierge
 Hubert is the on-site AI assistant. He answers questions about browsing, accounts, tickets, opportunities, and organiser tools. He can look up live published events and business opportunities when asked.
@@ -134,7 +134,7 @@ Application based (also called Category Exclusivity): prospective attendees appl
 Yes — sign in and tap the heart on any opportunity listing. Saved opportunities appear in My account (/account/). You can get an email when a saved listing is closing soon, save search alerts for new matching listings, and compare up to 3 saved opportunities side by side.
 
 ## What does the £25 business opportunity listing include?
-£25 per month + VAT is a monthly Stripe subscription for a standard directory listing — not a one-off and not Premium Spotlight. While subscribed, your opportunity appears on /opportunities/ browse and search results and has a public detail page where signed-in members can send you an enquiry. It does not include homepage placement, email/newsletter promotion, social posts, or Featured Opportunity Boost. Cancel any time in Stripe. Optional Featured Opportunity Boost is a separate £55 one-time fee for up to 30 days of pinned/highlighted placement. Details: /opportunities/list and /advertising.
+£25 per month + VAT is a monthly Stripe subscription for a standard directory listing — not a one-off and not Premium Spotlight. You submit for review first (no charge); after approval you pay and the listing goes live immediately. While subscribed, your opportunity appears on /opportunities/ browse and search results and has a public detail page where signed-in members can send you an enquiry. It does not include homepage placement, email/newsletter promotion, social posts, or Featured Opportunity Boost. Cancel any time in Stripe. Optional Featured Opportunity Boost is a separate £55 one-time fee for up to 30 days of pinned/highlighted placement. Details: /opportunities/list and /advertising.
 
 ## Is the £25 opportunity listing the same as Premium Spotlight?
 No. The £25/month + VAT fee is the standard business opportunity directory listing. Premium Spotlight / Featured Opportunity Boost is optional, costs £55 one-time for up to 30 days, and is never applied automatically. See /advertising#ad-pkg-opportunities-listing and /advertising#ad-pkg-opportunities-spotlight.

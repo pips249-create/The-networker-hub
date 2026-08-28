@@ -85,7 +85,12 @@
     fillReviewNameMode(profile);
     setFieldValue('as-company', profile.company || '');
     setFieldValue('as-job-title', profile.jobTitle || '');
-    setFieldValue('as-industry', profile.businessSector || '');
+    const industryEl = document.getElementById('as-industry');
+    if (window.HubProfileIndustries && industryEl) {
+      window.HubProfileIndustries.fillIndustrySelect(industryEl, profile.businessSector || '');
+    } else {
+      setFieldValue('as-industry', profile.businessSector || '');
+    }
     setFieldValue('as-professional-role', profile.professionalRole || '');
     setFieldValue('as-location', profile.location || '');
     fillEmailPrefs(profile);

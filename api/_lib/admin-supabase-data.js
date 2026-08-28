@@ -825,11 +825,19 @@ async function fetchActivity(sb) {
 }
 
 async function fetchUsers(sb) {
+  const accountsSelectWithOpportunity =
+    'user_id, role, display_name, hub_view, emails_enabled, email_pref_event_reminders, email_pref_organiser_alerts, email_pref_organiser_roundups, organiser_terms_accepted_at, organiser_terms_version, organiser_opportunity_terms_accepted_at, organiser_opportunity_terms_version, created_at';
   const accountsSelectWithRoundups =
     'user_id, role, display_name, hub_view, emails_enabled, email_pref_event_reminders, email_pref_organiser_alerts, email_pref_organiser_roundups, organiser_terms_accepted_at, organiser_terms_version, created_at';
   const accountsSelectFallback =
     'user_id, role, display_name, hub_view, emails_enabled, email_pref_event_reminders, email_pref_organiser_alerts, organiser_terms_accepted_at, organiser_terms_version, created_at';
-  let accountsRes = await sb.from('hub_accounts').select(accountsSelectWithRoundups);
+  let accountsRes = await sb.from('hub_accounts').select(accountsSelectWithOpportunity);
+  if (
+    accountsRes.error &&
+    /organiser_opportunity_terms/i.test(String(accountsRes.error.message || ''))
+  ) {
+    accountsRes = await sb.from('hub_accounts').select(accountsSelectWithRoundups);
+  }
   if (
     accountsRes.error &&
     /email_pref_organiser_roundups/i.test(String(accountsRes.error.message || ''))
@@ -889,6 +897,8 @@ async function fetchUsers(sb) {
       emailPrefOrganiserRoundups: acc.email_pref_organiser_roundups !== false,
       organiserTermsAcceptedAt: acc.organiser_terms_accepted_at || null,
       organiserTermsVersion: acc.organiser_terms_version || null,
+      organiserOpportunityTermsAcceptedAt: acc.organiser_opportunity_terms_accepted_at || null,
+      organiserOpportunityTermsVersion: acc.organiser_opportunity_terms_version || null,
       organiserListingStatus: org?.listing_status || null,
       accountCreatedAt: acc.created_at || auth?.created_at || null,
       lastSignInAt: auth?.last_sign_in_at || null,
@@ -919,6 +929,7 @@ async function fetchUsers(sb) {
       emailPrefOrganiserAlerts: true,
       emailPrefOrganiserRoundups: true,
       organiserTermsAcceptedAt: null,
+      organiserOpportunityTermsAcceptedAt: null,
       organiserListingStatus: null,
       accountCreatedAt: auth?.created_at || null,
       lastSignInAt: auth?.last_sign_in_at || null,

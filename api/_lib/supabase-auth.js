@@ -5,6 +5,7 @@ const { getSupabaseAdmin, getSupabaseAnon, isSupabaseConfigured } = require('./s
 
 const USER_ROLES = { ADMIN: 'admin', CLIENT: 'client' };
 const CURRENT_ORGANISER_TERMS_VERSION = 'v2';
+const CURRENT_ORGANISER_OPPORTUNITY_TERMS_VERSION = 'v1';
 
 /** Auth emails (password reset). Explicit false stays off; otherwise on when Resend is configured. */
 function authEmailsEnabled() {
@@ -31,6 +32,15 @@ async function getHubAccount(userId) {
 function organiserTermsAcceptedFromHub(hub, version = CURRENT_ORGANISER_TERMS_VERSION) {
   if (!hub?.organiser_terms_accepted_at) return false;
   const acceptedVersion = String(hub.organiser_terms_version || '').trim();
+  return !acceptedVersion || acceptedVersion === version;
+}
+
+function organiserOpportunityTermsAcceptedFromHub(
+  hub,
+  version = CURRENT_ORGANISER_OPPORTUNITY_TERMS_VERSION
+) {
+  if (!hub?.organiser_opportunity_terms_accepted_at) return false;
+  const acceptedVersion = String(hub.organiser_opportunity_terms_version || '').trim();
   return !acceptedVersion || acceptedVersion === version;
 }
 
@@ -150,6 +160,14 @@ async function hasOrganiserTermsAccepted(userId, version = CURRENT_ORGANISER_TER
   return organiserTermsAcceptedFromHub(hub, version);
 }
 
+async function hasOrganiserOpportunityTermsAccepted(
+  userId,
+  version = CURRENT_ORGANISER_OPPORTUNITY_TERMS_VERSION
+) {
+  const hub = await getHubAccount(userId);
+  return organiserOpportunityTermsAcceptedFromHub(hub, version);
+}
+
 async function acceptOrganiserTerms(userId, version = CURRENT_ORGANISER_TERMS_VERSION) {
   const sb = getSupabaseAdmin();
   const uid = String(userId || '').trim();
@@ -162,7 +180,41 @@ async function acceptOrganiserTerms(userId, version = CURRENT_ORGANISER_TERMS_VE
       organiser_terms_version: version,
     })
     .eq('user_id', uid)
-    .select('user_id, organiser_terms_accepted_at, organiser_terms_version')
+    .select(
+      'user_id, organiser_terms_accepted_at, organiser_terms_version, organiser_opportunity_terms_accepted_at, organiser_opportunity_terms_version'
+    )
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error('hub_account_not_found');
+  return data;
+}
+
+async function acceptOrganiserOpportunityTerms(
+  userId,
+  version = CURRENT_ORGANISER_OPPORTUNITY_TERMS_VERSION
+) {
+  const sb = getSupabaseAdmin();
+  const uid = String(userId || '').trim();
+  if (!uid) throw new Error('missing_user');
+
+  const hub = await getHubAccount(uid);
+  const now = new Date().toISOString();
+  const patch = {
+    organiser_opportunity_terms_accepted_at: now,
+    organiser_opportunity_terms_version: version,
+  };
+  if (!organiserTermsAcceptedFromHub(hub)) {
+    patch.organiser_terms_accepted_at = now;
+    patch.organiser_terms_version = CURRENT_ORGANISER_TERMS_VERSION;
+  }
+
+  const { data, error } = await sb
+    .from('hub_accounts')
+    .update(patch)
+    .eq('user_id', uid)
+    .select(
+      'user_id, organiser_terms_accepted_at, organiser_terms_version, organiser_opportunity_terms_accepted_at, organiser_opportunity_terms_version'
+    )
     .maybeSingle();
   if (error) throw new Error(error.message);
   if (!data) throw new Error('hub_account_not_found');
@@ -756,9 +808,11 @@ module.exports = {
   authEmailsEnabled,
   useSupabaseAuth,
   CURRENT_ORGANISER_TERMS_VERSION,
+  CURRENT_ORGANISER_OPPORTUNITY_TERMS_VERSION,
   findUserByEmail,
   getHubAccount,
   hasOrganiserTermsAccepted,
+  hasOrganiserOpportunityTermsAccepted,
   isOrganiserEmailVerified,
   hasOrganiserAccessFromHub,
   isOrganiserUiHidden,
@@ -767,6 +821,7 @@ module.exports = {
   hideOrganiserWorkspace,
   showOrganiserWorkspace,
   acceptOrganiserTerms,
+  acceptOrganiserOpportunityTerms,
   getEmailsEnabledForEmail,
   getHubAccountForEmail,
   hubPrefEnabled,

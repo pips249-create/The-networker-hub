@@ -119,11 +119,11 @@
 |------|--------|
 | **Purpose** | Answer visitor questions about events, opportunities, and platform use via `/contact` and the floating assistant |
 | **Data subjects** | Website visitors using Hubert chat |
-| **Categories of data** | Chat message content (only in the visitor’s browser session unless they email hello@ separately) |
+| **Categories of data** | Chat message content (processed in real time; session history in the visitor’s browser) |
 | **Lawful basis** | Legitimate interests — user-initiated help (Art. 6(1)(f)) |
 | **Recipients** | **None third-party** — replies from Hub FAQ knowledge (`api/_lib/hubert-knowledge.js`) and live event/opportunity lookups on Supabase; **no OpenAI API** in production |
 | **Retention** | Chat history in browser session only — **not stored** in Hub database |
-| **Notes** | Do not enter unnecessary personal data in chat. Optional OpenAI integration exists in code but is **disabled** (no `OPENAI_API_KEY`). |
+| **Notes** | Do not enter unnecessary personal data in chat. Optional OpenAI integration exists in code but requires both `OPENAI_API_KEY` and `HUBERT_OPENAI_ENABLED=true`; neither is set in production. |
 
 ### J. Organiser membership lists (rosters)
 

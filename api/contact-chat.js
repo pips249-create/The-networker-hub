@@ -21,6 +21,14 @@ const {
   buildOpportunityContextBlock,
 } = require('./_lib/hubert-opportunities');
 const { resolveHubertReply } = require('./_lib/hubert-reply');
+const { redactMessages } = require('./_lib/hubert-pii');
+
+function openAiEnabled() {
+  return (
+    Boolean(process.env.OPENAI_API_KEY) &&
+    String(process.env.HUBERT_OPENAI_ENABLED || '').trim().toLowerCase() === 'true'
+  );
+}
 
 function buildLiveContext(eventLookup, opportunityLookup) {
   return [
@@ -46,13 +54,15 @@ function sanitizeMessages(raw) {
 
 async function openAiReply(messages, systemPrompt) {
   const key = process.env.OPENAI_API_KEY;
-  if (!key) return null;
+  if (!key || !openAiEnabled()) return null;
 
   const payload = {
     model: process.env.OPENAI_CHAT_MODEL || 'gpt-4o-mini',
     temperature: 0.3,
     max_tokens: 600,
-    messages: [{ role: 'system', content: systemPrompt || SYSTEM_PROMPT }].concat(messages),
+    messages: [{ role: 'system', content: systemPrompt || SYSTEM_PROMPT }].concat(
+      redactMessages(messages)
+    ),
   };
 
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
