@@ -316,6 +316,8 @@
   var activeCommitments = [];
   var activeLocationTag = '';
   var locationQ = '';
+  var locationExpandTerms = [];
+  var locationExpandToken = 0;
   var FILTER_OPTION_LABELS = {};
   var searchQ = '';
   var sortBy = 'recommended';
@@ -1031,14 +1033,40 @@
       .filter(Boolean)
       .join(' ')
       .toLowerCase();
-    if (window.HubSearchMatch && typeof window.HubSearchMatch.haystackMatchesQuery === 'function') {
-      return window.HubSearchMatch.haystackMatchesQuery(hay, locationQ);
+    var terms = locationExpandTerms.length ? locationExpandTerms : [locationQ];
+    for (var t = 0; t < terms.length; t++) {
+      var term = String(terms[t] || '').trim().toLowerCase();
+      if (!term) continue;
+      if (window.HubSearchMatch && typeof window.HubSearchMatch.haystackMatchesQuery === 'function') {
+        if (window.HubSearchMatch.haystackMatchesQuery(hay, term)) return true;
+      } else if (hay.indexOf(term) !== -1) {
+        return true;
+      }
     }
-    var terms = locationQ.split(/\s+/).filter(Boolean);
-    for (var i = 0; i < terms.length; i++) {
-      if (hay.indexOf(terms[i]) === -1) return false;
+    return false;
+  }
+
+  function refreshLocationExpandTerms(thenApply) {
+    var query = locationQ;
+    if (!query) {
+      locationExpandTerms = [];
+      locationExpandToken += 1;
+      if (thenApply) thenApply();
+      return;
     }
-    return true;
+    var token = ++locationExpandToken;
+    var expandFn = window.hubExpandLocationQueryTerms;
+    if (typeof expandFn !== 'function') {
+      locationExpandTerms = [query];
+      if (thenApply) thenApply();
+      return;
+    }
+    expandFn(query).then(function (terms) {
+      if (token !== locationExpandToken) return;
+      if (String(locationQ || '') !== query) return;
+      locationExpandTerms = Array.isArray(terms) && terms.length ? terms : [query];
+      if (thenApply) thenApply();
+    });
   }
 
   function hasKnownInvestment(item) {
@@ -2089,13 +2117,8 @@
       );
     }
     if (activeCommitments.length) {
-      var commitMap = {
-        'full-time': 'Full-time',
-        'part-time': 'Part-time / Flexible',
-        'event-based': 'Open days / visits',
-      };
       activeCommitments.forEach(function (id) {
-        activeBits.push(commitMap[id] || id);
+        activeBits.push(commitmentChipLabel(id));
       });
     }
     if (hasOpenDayOnly) activeBits.push('Has a listed open day');
@@ -2443,13 +2466,19 @@
         if (token === applyFiltersToken) setOppListingsLoading(false);
       }
     }
-    /* Double rAF so the spinner can paint; setTimeout fallback if rAF is throttled/skipped. */
-    if (typeof window.requestAnimationFrame === 'function') {
-      window.requestAnimationFrame(function () {
-        window.requestAnimationFrame(runApply);
-      });
+    function scheduleApply() {
+      /* Double rAF so the spinner can paint; setTimeout fallback if rAF is throttled/skipped. */
+      if (typeof window.requestAnimationFrame === 'function') {
+        window.requestAnimationFrame(function () {
+          window.requestAnimationFrame(runApply);
+        });
+      }
+      window.setTimeout(runApply, 50);
     }
-    window.setTimeout(runApply, 50);
+    refreshLocationExpandTerms(function () {
+      if (token !== applyFiltersToken) return;
+      scheduleApply();
+    });
   }
 
   function logOpportunityBrowseSearch() {
@@ -2502,6 +2531,8 @@
     hasOpenDayOnly = false;
     activeLocationTag = '';
     locationQ = '';
+    locationExpandTerms = [];
+    locationExpandToken += 1;
     searchQ = '';
     sortBy = 'recommended';
     minInvest = null;

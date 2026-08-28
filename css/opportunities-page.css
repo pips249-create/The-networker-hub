@@ -6015,7 +6015,8 @@ body.opp-view-map.opp-browse-page .opp-listings-toolbar {
 }
 
 /* Soften the always-on footnote when the empty state already has a provider CTA */
-.opp-browse-page #listings-view:has(.opp-empty-state) .events-organiser-footnote {
+.opp-browse-page #listings-view:has(.opp-empty-state) .events-organiser-footnote,
+.opp-browse-page #listings-view:has(.opp-empty-state) .listings-header {
   display: none;
 }
 
@@ -6037,22 +6038,6 @@ body.opp-view-map.opp-browse-page .opp-listings-toolbar {
 .opp-browse-page .opp-low-results a {
   color: var(--opp-navy, #0d1f3c);
   font-weight: 600;
-}
-
-.opp-browse-page .opp-empty-btn {
-  border: 0;
-  border-radius: 999px;
-  background: var(--opp-navy, #0d1f3c);
-  color: #fff;
-  font: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  padding: 9px 16px;
-  cursor: pointer;
-}
-
-.opp-browse-page .opp-empty-btn:hover {
-  background: var(--opp-navy-mid, #16325a);
 }
 
 .opportunities-page .opp-save-search-status a {

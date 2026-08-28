@@ -216,4 +216,105 @@
   };
 
   window.hubLocationFilterCoords = null;
+
+  var placeExpandCache = Object.create(null);
+
+  /** Static town → county/region synonyms when the places API is slow or offline. */
+  var PLACE_EXPAND_FALLBACKS = {
+    ripon: ['north yorkshire', 'yorkshire', 'hg4'],
+    harrogate: ['north yorkshire', 'yorkshire', 'hg1', 'hg2', 'hg3'],
+    knaresborough: ['north yorkshire', 'yorkshire', 'hg5'],
+    york: ['north yorkshire', 'yorkshire', 'yo1', 'yo10', 'yo24', 'yo31'],
+    scarborough: ['north yorkshire', 'yorkshire', 'yo11', 'yo12'],
+    whitby: ['north yorkshire', 'yorkshire', 'yo21', 'yo22'],
+    selby: ['north yorkshire', 'yorkshire', 'yo8'],
+    leeds: ['west yorkshire', 'yorkshire', 'ls1'],
+    bradford: ['west yorkshire', 'yorkshire', 'bd1'],
+    halifax: ['west yorkshire', 'yorkshire', 'hx1'],
+    huddersfield: ['west yorkshire', 'yorkshire', 'hd1'],
+    sheffield: ['south yorkshire', 'yorkshire', 's1'],
+    doncaster: ['south yorkshire', 'yorkshire', 'dn1'],
+    barnsley: ['south yorkshire', 'yorkshire', 's70'],
+    manchester: ['greater manchester', 'north west'],
+    liverpool: ['merseyside', 'north west'],
+    newcastle: ['tyne and wear', 'north east'],
+    durham: ['county durham', 'north east'],
+  };
+
+  function uniqueLowerTerms(list) {
+    var out = [];
+    var seen = Object.create(null);
+    (list || []).forEach(function (term) {
+      var t = String(term || '')
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, ' ');
+      if (!t || seen[t]) return;
+      seen[t] = true;
+      out.push(t);
+    });
+    return out;
+  }
+
+  /**
+   * Expand a city/town query into related place terms (county, region, outcode)
+   * so "Ripon" also matches listings labelled "North Yorkshire".
+   */
+  window.hubExpandLocationQueryTerms = function (input) {
+    var raw = String(input || '').trim();
+    if (!raw) return Promise.resolve([]);
+    var key = raw.toLowerCase();
+    if (placeExpandCache[key] !== undefined) {
+      return Promise.resolve(placeExpandCache[key]);
+    }
+
+    var fallback = uniqueLowerTerms([key].concat(PLACE_EXPAND_FALLBACKS[key] || []));
+    if (raw.length < 3) {
+      placeExpandCache[key] = fallback;
+      return Promise.resolve(fallback);
+    }
+
+    /* Seed cache with local synonyms so Ripon → North Yorkshire works immediately. */
+    if (PLACE_EXPAND_FALLBACKS[key] && placeExpandCache[key] === undefined) {
+      placeExpandCache[key] = fallback;
+    }
+
+    var pending = fetch('https://api.postcodes.io/places?q=' + encodeURIComponent(raw) + '&limit=5')
+      .then(function (res) {
+        return res.json();
+      })
+      .then(function (data) {
+        var terms = [key];
+        var rows = (data && data.result) || [];
+        var needle = key.replace(/[^a-z0-9]+/g, '');
+        rows.forEach(function (row) {
+          if (!row) return;
+          var name = String(row.name_1 || '')
+            .trim()
+            .toLowerCase();
+          var nameKey = name.replace(/[^a-z0-9]+/g, '');
+          /* Prefer exact / prefix matches so short queries do not expand via unrelated places. */
+          if (nameKey && nameKey !== needle && nameKey.indexOf(needle) !== 0 && needle.indexOf(nameKey) !== 0) {
+            return;
+          }
+          terms.push(name);
+          terms.push(row.county_unitary);
+          terms.push(row.district_borough);
+          terms.push(row.region);
+          terms.push(row.outcode);
+        });
+        var merged = uniqueLowerTerms(terms.concat(PLACE_EXPAND_FALLBACKS[key] || []));
+        placeExpandCache[key] = merged;
+        return merged;
+      })
+      .catch(function () {
+        placeExpandCache[key] = fallback;
+        return fallback;
+      });
+
+    if (placeExpandCache[key] !== undefined) {
+      return Promise.resolve(placeExpandCache[key]);
+    }
+    return pending;
+  };
 })();
