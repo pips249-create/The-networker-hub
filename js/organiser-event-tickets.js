@@ -18,7 +18,11 @@
 
   let eventIds = idsParam
     .split(',')
-    .map((s) => s.trim())
+    .map((s) =>
+      window.HubEventWizard && typeof window.HubEventWizard.coerceEventId === 'function'
+        ? window.HubEventWizard.coerceEventId(s)
+        : String(s || '').split('?')[0].trim()
+    )
     .filter(Boolean);
   let seriesMeta = { title: '', events: [], eventFormat: '' };
   let attendanceMode = 'tickets';
@@ -567,7 +571,11 @@
       if (!raw) return;
       const parsed = JSON.parse(raw);
       const storedIds = (Array.isArray(parsed.eventIds) ? parsed.eventIds : [])
-        .map((id) => String(id).trim())
+        .map((id) =>
+          window.HubEventWizard && typeof window.HubEventWizard.coerceEventId === 'function'
+            ? window.HubEventWizard.coerceEventId(id)
+            : String(id || '').split('?')[0].trim()
+        )
         .filter(Boolean);
       if (!hadUrlIds) {
         seriesMeta = { ...seriesMeta, ...parsed };

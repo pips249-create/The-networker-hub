@@ -10,7 +10,10 @@
   const EDIT_AUTODRAFT_PREFIX = 'hub_event_edit_autodraft_v1:';
   const AUTODRAFT_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000;
   const params = new URLSearchParams(location.search);
-  let editId = params.get('id') || '';
+  let editId =
+    window.HubEventWizard && typeof window.HubEventWizard.coerceEventId === 'function'
+      ? window.HubEventWizard.coerceEventId(params.get('id') || '')
+      : String(params.get('id') || '').split('?')[0].trim();
   const isEmbedDrawer = params.get('embed') === '1' || window.self !== window.top;
   const SERVER_AUTODRAFT_DELAY_MS = 2500;
 
@@ -2052,7 +2055,13 @@
   }
 
   async function fetchEventsByIds(ids) {
-    const wanted = (ids || []).map(String).filter(Boolean);
+    const wanted = (ids || [])
+      .map(function (id) {
+        return window.HubEventWizard && typeof window.HubEventWizard.coerceEventId === 'function'
+          ? window.HubEventWizard.coerceEventId(id)
+          : String(id || '').split('?')[0].trim();
+      })
+      .filter(Boolean);
     if (!wanted.length) return [];
     const results = await Promise.all(
       wanted.map(function (id) {

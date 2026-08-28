@@ -18,7 +18,9 @@
   let eventIds = idsParam
     .split(',')
     .map(function (s) {
-      return s.trim();
+      return window.HubEventWizard && typeof window.HubEventWizard.coerceEventId === 'function'
+        ? window.HubEventWizard.coerceEventId(s)
+        : String(s || '').split('?')[0].trim();
     })
     .filter(Boolean);
   let seriesMeta = { title: '', events: [], eventFormat: '' };
@@ -112,7 +114,9 @@
       const parsed = JSON.parse(raw);
       const storedIds = (Array.isArray(parsed.eventIds) ? parsed.eventIds : [])
         .map(function (id) {
-          return String(id).trim();
+          return window.HubEventWizard && typeof window.HubEventWizard.coerceEventId === 'function'
+            ? window.HubEventWizard.coerceEventId(id)
+            : String(id || '').split('?')[0].trim();
         })
         .filter(Boolean);
       if (!hadUrlIds) {

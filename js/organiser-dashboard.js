@@ -8081,9 +8081,32 @@
     fillAttendeesEventFilter();
   }
 
+  function coerceEventId(value) {
+    const rawIn = Array.isArray(value) ? value[0] : value;
+    let raw = String(rawIn == null ? '' : rawIn).trim();
+    if (!raw) return '';
+    const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (uuidRe.test(raw)) return raw;
+    try {
+      const decoded = decodeURIComponent(raw.replace(/\+/g, ' ')).trim();
+      if (decoded) raw = decoded;
+    } catch {
+      /* keep raw */
+    }
+    if (uuidRe.test(raw)) return raw;
+    const cut = raw.search(/[?#]/);
+    if (cut > 0) {
+      const head = raw.slice(0, cut).trim();
+      if (uuidRe.test(head)) return head;
+    }
+    const match = raw.match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i);
+    return match ? match[0] : '';
+  }
+
   function eventEditorUrl(ev) {
-    if (!ev || !ev.id) return '/organiser/event-edit';
-    return '/organiser/event-edit?id=' + encodeURIComponent(ev.id);
+    const id = coerceEventId(ev && ev.id);
+    if (!id) return '/organiser/event-edit';
+    return '/organiser/event-edit?id=' + encodeURIComponent(id);
   }
 
   function goToEventEditor(ev, editorOpts) {
@@ -8094,7 +8117,8 @@
     const frameParams = new URLSearchParams();
     frameParams.set('embed', '1');
     if (opts && opts.editId) {
-      frameParams.set('id', opts.editId);
+      const id = coerceEventId(opts.editId);
+      if (id) frameParams.set('id', id);
       if (opts.seriesEdit) frameParams.set('seriesEdit', '1');
       if (opts.seriesDate) frameParams.set('seriesDate', '1');
     } else {
@@ -8243,9 +8267,8 @@
   }
 
   function eventTicketsFrameUrl(eventIds) {
-    return (
-      '/organiser/event-tickets?ids=' + encodeURIComponent((eventIds || []).join(',')) + '&embed=1'
-    );
+    const ids = (eventIds || []).map(coerceEventId).filter(Boolean);
+    return '/organiser/event-tickets?ids=' + encodeURIComponent(ids.join(',')) + '&embed=1';
   }
 
   function openEventDrawerFrame(frameUrl, titleText, eventForOverview, drawerUi) {
@@ -8400,7 +8423,8 @@
     const frameParams = new URLSearchParams();
     frameParams.set('embed', '1');
     if (opts && opts.editId) {
-      frameParams.set('id', opts.editId);
+      const id = coerceEventId(opts.editId);
+      if (id) frameParams.set('id', id);
       if (opts.seriesEdit) frameParams.set('seriesEdit', '1');
       if (opts.seriesDate) frameParams.set('seriesDate', '1');
     }
@@ -8412,10 +8436,11 @@
     const drawer = document.getElementById('org-event-drawer');
     const frame = document.getElementById('org-event-drawer-frame');
     const titleEl = document.getElementById('org-event-drawer-title');
-    const editId =
+    const editId = coerceEventId(
       typeof eventOrId === 'object' && eventOrId && eventOrId.id
         ? eventOrId.id
-        : eventOrId || '';
+        : eventOrId || ''
+    );
 
     if (!drawer || !frame) {
       if (editId) {
@@ -8454,12 +8479,13 @@
     const frame = document.getElementById('org-event-drawer-frame');
     const titleEl = document.getElementById('org-event-drawer-title');
     const isNew = Boolean(drawerOpts.isNew);
-    const editId =
+    const editId = coerceEventId(
       !isNew && typeof eventOrId === 'object' && eventOrId && eventOrId.id
         ? eventOrId.id
         : !isNew
           ? eventOrId || ''
-          : '';
+          : ''
+    );
 
     if (!drawer || !frame) {
       if (isNew) {
@@ -13452,7 +13478,7 @@
     if (!id) return { ok: true };
     let ev = state.events.find((row) => row.id === id);
     if (!ev) {
-      const res = await api('/api/organiser/events?id=' + encodeURIComponent(id));
+      const res = await api('/api/organiser/events?id=' + encodeURIComponent(coerceEventId(id) || id));
       if (!res.ok || !res.data.event) {
         return {
           ok: false,
