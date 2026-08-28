@@ -481,6 +481,10 @@
               <svg class="org-events-tab-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="m22 6-10 7L2 6"/></svg>
               <span class="org-events-tab-label">Enquiries <span class="org-events-tab-count" id="tab-badge-opp-enquiries-new" hidden>0</span></span>
             </button>
+            <button type="button" role="tab" class="org-events-tab" id="business-tab-open-days" data-business-tab="business-open-days" aria-controls="sub-business-open-days" aria-selected="false" tabindex="-1">
+              <svg class="org-events-tab-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+              <span class="org-events-tab-label">Open days <span class="org-events-tab-count" id="tab-badge-opp-open-days-new" hidden>0</span></span>
+            </button>
             <button type="button" role="tab" class="org-events-tab" id="business-tab-insights" data-business-tab="business-insights" aria-controls="sub-business-insights" aria-selected="false" tabindex="-1">
               <svg class="org-events-tab-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-6"/></svg>
               <span class="org-events-tab-label">Insights</span>
@@ -554,6 +558,33 @@
             </div>
           </div>
 
+          <div class="org-sub-page org-sub-page--business" id="sub-business-open-days" role="tabpanel" data-business-panel="business-open-days" aria-labelledby="business-tab-open-days" hidden>
+            <p class="org-section-sub" style="margin-top:0">People who registered interest in your open days — reply by email to confirm the visit.</p>
+            <p class="org-load-hint" id="opp-open-days-load-hint" hidden>Loading open day interest…</p>
+            <div class="org-table-wrap org-opp-enquiries-wrap org-stack-wrap">
+              <table class="org-opp-enquiries-table org-stack-table">
+                <thead>
+                  <tr>
+                    <th>Received</th>
+                    <th>Listing</th>
+                    <th>Open day</th>
+                    <th>From</th>
+                    <th>Status</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="opp-open-days-body"></tbody>
+              </table>
+              <div class="org-empty-state" id="opp-open-days-empty" hidden role="status">
+                <div class="org-empty-state-icon" aria-hidden="true">
+                  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                </div>
+                <h3 class="org-empty-state-title">No open day interest yet</h3>
+                <p class="org-empty-state-text">Add open days on your listing editor. When someone registers interest, they appear here so you can confirm by email.</p>
+              </div>
+            </div>
+          </div>
+
           <div class="org-sub-page org-sub-page--business" id="sub-business-insights" role="tabpanel" data-business-panel="business-insights" aria-labelledby="business-tab-insights" hidden>
             <p class="org-section-sub org-business-insights-lead">ROI summaries, comparisons between listings, and tips to convert views into enquiries.</p>
             <div class="org-opp-roi-insights" id="org-opp-roi-insights" hidden aria-live="polite"></div>
@@ -596,8 +627,8 @@
                 <li class="oe-intro-step">
                   <span class="oe-intro-step-num" aria-hidden="true">4</span>
                   <div>
-                    <strong>Respond to enquiries</strong>
-                    <span>When someone is interested, their message appears under <em>Enquiries</em> in this workspace.</span>
+                    <strong>Respond to enquiries &amp; open days</strong>
+                    <span>Messages and open day interest land in your Business opportunities workspace. Confirm visits by email.</span>
                   </div>
                 </li>
               </ol>
@@ -611,6 +642,7 @@
                     <ul class="oe-intro-price-list">
                       <li>Live in the business opportunities directory</li>
                       <li>Enquiry form on your business opportunity page</li>
+                      <li>Optional open days with interest lists in your workspace</li>
                       <li>Anonymous member save counts in your dashboard</li>
                     </ul>
                   </div>
@@ -3795,7 +3827,7 @@
     <script src="../js/organiser-featured-duration.js?v=20260806onetime" defer></script>
     <script src="../js/hub-comms-pack.js?v=20260722share" defer></script>
     <script src="../js/hub-side-nav.js?v=20260805orgnav2" defer></script>
-    <script src="../js/organiser-dashboard.js?v=20260828oppstatus1" defer></script>
+    <script src="../js/organiser-dashboard.js?v=20260828openday1" defer></script>
     <script src="../js/organiser-workspace-comfort.js?v=20260813noshow1" defer></script>
   </body>
 </html>

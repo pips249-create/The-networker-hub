@@ -120,6 +120,9 @@
     opportunityEnquiries: [],
     opportunityEnquiriesNewCount: 0,
     opportunityEnquiriesLoaded: false,
+    opportunityOpenDayInterests: [],
+    opportunityOpenDayInterestsNewCount: 0,
+    opportunityOpenDayInterestsLoaded: false,
     opportunities: [],
     opportunitiesLoaded: false,
     pendingClaimGroups: [],
@@ -5635,6 +5638,9 @@
     if (hash === 'business-list') return { page: 'business-list', sub: null };
     if (hash === 'opportunity-enquiries' || hash === 'business-enquiries') {
       return { page: 'business-overview', sub: 'business-enquiries' };
+    }
+    if (hash === 'business-open-days' || hash === 'opportunity-open-days') {
+      return { page: 'business-overview', sub: 'business-open-days' };
     }
     if (hash === 'business-insights') return { page: 'business-overview', sub: 'business-insights' };
     if (hash === 'business-guide') return { page: 'business-overview', sub: 'business-guide' };
@@ -11216,6 +11222,7 @@
   function updateBusinessTabCounts() {
     const listingsEl = document.getElementById('tab-count-opp-listings');
     const newBadge = document.getElementById('tab-badge-opp-enquiries-new');
+    const openDaysBadge = document.getElementById('tab-badge-opp-open-days-new');
     const liveListings = (state.opportunities || []).filter(function (o) {
       const status = String(o.status || o.listingStatus || '').toLowerCase();
       return status === 'published' || status === 'live';
@@ -11225,6 +11232,11 @@
     if (newBadge) {
       newBadge.hidden = newCount < 1;
       newBadge.textContent = String(newCount);
+    }
+    const openDayNew = Number(state.opportunityOpenDayInterestsNewCount) || 0;
+    if (openDaysBadge) {
+      openDaysBadge.hidden = openDayNew < 1;
+      openDaysBadge.textContent = String(openDayNew);
     }
   }
 
@@ -11266,6 +11278,10 @@
         'Enquiries received',
         'Messages from members — reply here or via your email app.',
       ],
+      'business-open-days': [
+        'Open day interest',
+        'People who want to attend your open days — confirm each visit by email.',
+      ],
       'business-insights': [
         'Performance insights',
         'ROI, comparisons between listings, and tips to turn views into enquiries.',
@@ -11291,6 +11307,11 @@
     if (sub === 'business-enquiries') {
       return loadOpportunityEnquiries().then(function () {
         renderOpportunityEnquiries();
+      });
+    }
+    if (sub === 'business-open-days') {
+      return loadOpportunityOpenDayInterests().then(function () {
+        renderOpportunityOpenDayInterests();
       });
     }
     if (sub === 'business-listings') {
@@ -11436,6 +11457,7 @@
     if (
       route === 'business-listings' ||
       route === 'business-enquiries' ||
+      route === 'business-open-days' ||
       route === 'business-insights' ||
       route === 'business-guide'
     ) {
@@ -11444,6 +11466,9 @@
     } else if (route === 'opportunity-enquiries') {
       page = 'business-overview';
       businessSub = 'business-enquiries';
+    } else if (route === 'opportunity-open-days') {
+      page = 'business-overview';
+      businessSub = 'business-open-days';
     } else if (route === 'business-overview') {
       page = 'business-overview';
       businessSub = 'business-listings';
@@ -11587,6 +11612,9 @@
         new Promise(function (resolve) {
           requestAnimationFrame(function () {
             Promise.resolve(loadOpportunityEnquiries())
+              .then(function () {
+                return loadOpportunityOpenDayInterests();
+              })
               .then(function () {
                 return loadOpportunityPremiumSlots();
               })
@@ -16125,6 +16153,115 @@
     updateOpportunityEnquiryUi();
   }
 
+  async function loadOpportunityOpenDayInterests() {
+    const hint = document.getElementById('opp-open-days-load-hint');
+    if (hint) hint.hidden = false;
+    try {
+      const { ok, data } = await api('/api/organiser/opportunity-open-days?interests=1');
+      if (!ok) throw new Error(data.message || data.error || 'load_failed');
+      state.opportunityOpenDayInterests = data.interests || [];
+      state.opportunityOpenDayInterestsNewCount = (state.opportunityOpenDayInterests || []).filter(
+        function (i) {
+          return String(i.status || '').toLowerCase() === 'new';
+        }
+      ).length;
+      state.opportunityOpenDayInterestsLoaded = true;
+    } catch (e) {
+      state.opportunityOpenDayInterests = [];
+      state.opportunityOpenDayInterestsNewCount = 0;
+    } finally {
+      if (hint) hint.hidden = true;
+      updateBusinessTabCounts();
+    }
+  }
+
+  function openDayInterestMailto(interest) {
+    const subject = 'Re: Open day — ' + (interest.opportunityTitle || 'your visit');
+    const body =
+      'Hi ' +
+      (interest.registrantName || 'there') +
+      ',\n\nThank you for your interest in our open day for "' +
+      (interest.opportunityTitle || 'our opportunity') +
+      '"' +
+      (interest.openDaySummary ? ' (' + interest.openDaySummary + ')' : '') +
+      '.\n\n';
+    return (
+      'mailto:' +
+      encodeURIComponent(interest.registrantEmail || '') +
+      '?subject=' +
+      encodeURIComponent(subject) +
+      '&body=' +
+      encodeURIComponent(body)
+    );
+  }
+
+  function renderOpportunityOpenDayInterests() {
+    const body = document.getElementById('opp-open-days-body');
+    const empty = document.getElementById('opp-open-days-empty');
+    if (!body) return;
+    const list = state.opportunityOpenDayInterests || [];
+    body.innerHTML = '';
+    if (!list.length) {
+      setOrgEmpty(empty, { show: true });
+      updateBusinessTabCounts();
+      return;
+    }
+    setOrgEmpty(empty, { show: false });
+    list.forEach(function (interest) {
+      const tr = document.createElement('tr');
+      const status = String(interest.status || 'new').toLowerCase();
+      const statusKey =
+        status === 'responded' ? 'live' : status === 'read' ? 'archived' : 'upcoming';
+      const age = formatRelativeAge(interest.createdAt);
+      tr.innerHTML =
+        '<td data-label="Received">' +
+        esc(formatDate(interest.createdAt)) +
+        (age ? '<br><span class="org-payout-muted">' + esc(age) + '</span>' : '') +
+        '</td><td class="org-td-name" data-label="Listing">' +
+        esc(interest.opportunityTitle || 'Business opportunity') +
+        '</td><td data-label="Open day">' +
+        esc(interest.openDaySummary || '—') +
+        '</td><td data-label="From">' +
+        esc(interest.registrantName || '—') +
+        '<br><span class="org-payout-muted">' +
+        esc(interest.registrantEmail || '') +
+        (interest.registrantPhone ? ' · ' + esc(interest.registrantPhone) : '') +
+        '</span></td><td data-label="Status">' +
+        statusBadgeHtml(statusKey, enquiryStatusLabel(status)) +
+        '</td><td class="org-td-actions org-td-actions--wrap" data-label="Actions">' +
+        '<a class="org-btn org-btn-gold org-btn-sm" href="' +
+        esc(openDayInterestMailto(interest)) +
+        '">Reply</a> ' +
+        (status === 'new'
+          ? '<button type="button" class="org-btn org-btn-outline org-btn-sm" data-opp-open-day-read="' +
+            esc(interest.id) +
+            '">Mark read</button>'
+          : '') +
+        '</td>';
+      body.appendChild(tr);
+    });
+    updateBusinessTabCounts();
+  }
+
+  async function markOpportunityOpenDayInterestRead(interestId) {
+    const { ok, data } = await api('/api/organiser/opportunity-open-days', {
+      method: 'PATCH',
+      body: JSON.stringify({ id: interestId, status: 'read' }),
+    });
+    if (!ok) throw new Error(data.message || data.error || 'update_failed');
+    const interest = data.interest;
+    const idx = state.opportunityOpenDayInterests.findIndex(function (i) {
+      return i.id === interest.id;
+    });
+    if (idx >= 0) state.opportunityOpenDayInterests[idx] = interest;
+    state.opportunityOpenDayInterestsNewCount = (state.opportunityOpenDayInterests || []).filter(
+      function (i) {
+        return String(i.status || '').toLowerCase() === 'new';
+      }
+    ).length;
+    renderOpportunityOpenDayInterests();
+  }
+
   function hasOpportunityListings() {
     return (state.opportunities || []).length > 0;
   }
@@ -16681,6 +16818,7 @@
       const labels = {
         'business-listings': 'Loading business opportunities…',
         'business-enquiries': 'Loading enquiries…',
+        'business-open-days': 'Loading open day interest…',
         'business-insights': 'Loading insights…',
         'business-guide': 'Loading guide…',
       };
@@ -17927,6 +18065,17 @@
               window.alert('Could not mark enquiry as read.');
             }
           );
+          return;
+        }
+
+        const openDayReadBtn = e.target.closest('[data-opp-open-day-read]');
+        if (openDayReadBtn) {
+          e.preventDefault();
+          markOpportunityOpenDayInterestRead(
+            openDayReadBtn.getAttribute('data-opp-open-day-read')
+          ).catch(function () {
+            window.alert('Could not mark open day interest as read.');
+          });
           return;
         }
 

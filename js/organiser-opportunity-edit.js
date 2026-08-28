@@ -20,6 +20,7 @@
   let oeFormBaseline = '';
   let oeFormDirty = false;
   let oeSkipUnloadGuard = false;
+  let openDaysBound = false;
 
   const LISTING_MONTHLY_EX_VAT = 25;
   const LISTING_VAT_RATE = 0.2;
@@ -691,6 +692,184 @@
       data = {};
     }
     return { ok: res.ok, status: res.status, data };
+  }
+
+  function toDatetimeLocalValue(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '';
+    const pad = function (n) {
+      return String(n).padStart(2, '0');
+    };
+    return (
+      d.getFullYear() +
+      '-' +
+      pad(d.getMonth() + 1) +
+      '-' +
+      pad(d.getDate()) +
+      'T' +
+      pad(d.getHours()) +
+      ':' +
+      pad(d.getMinutes())
+    );
+  }
+
+  function fromDatetimeLocalValue(value) {
+    const raw = String(value || '').trim();
+    if (!raw) return '';
+    const d = new Date(raw);
+    if (Number.isNaN(d.getTime())) return '';
+    return d.toISOString();
+  }
+
+  function openDayRowHtml(day) {
+    const d = day || {};
+    return (
+      '<div class="oe-open-day-row" data-open-day-id="' +
+      String(d.id || '').replace(/"/g, '') +
+      '">' +
+      '<div class="oe-open-day-row-grid">' +
+      '<label class="oe-open-day-label">Date &amp; start time' +
+      '<input type="datetime-local" class="oe-open-day-starts" value="' +
+      String(toDatetimeLocalValue(d.startsAt) || '').replace(/"/g, '') +
+      '" required /></label>' +
+      '<label class="oe-open-day-label">End time <span class="ee-optional">(optional)</span>' +
+      '<input type="datetime-local" class="oe-open-day-ends" value="' +
+      String(toDatetimeLocalValue(d.endsAt) || '').replace(/"/g, '') +
+      '" /></label>' +
+      '<label class="oe-open-day-label">Venue name <span class="ee-optional">(optional)</span>' +
+      '<input type="text" class="oe-open-day-venue" maxlength="120" placeholder="e.g. Head office" value="' +
+      String(d.venueName || '')
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;') +
+      '" /></label>' +
+      '<label class="oe-open-day-label">Address' +
+      '<input type="text" class="oe-open-day-address" maxlength="200" placeholder="Street address" value="' +
+      String(d.addressLine || '')
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;') +
+      '" required /></label>' +
+      '<label class="oe-open-day-label">City / town <span class="ee-optional">(optional)</span>' +
+      '<input type="text" class="oe-open-day-city" maxlength="80" value="' +
+      String(d.city || '')
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;') +
+      '" /></label>' +
+      '<label class="oe-open-day-label">Postcode <span class="ee-optional">(optional)</span>' +
+      '<input type="text" class="oe-open-day-postcode" maxlength="20" value="' +
+      String(d.postcode || '')
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;') +
+      '" /></label>' +
+      '</div>' +
+      '<label class="oe-open-day-label">Notes for visitors <span class="ee-optional">(optional)</span>' +
+      '<input type="text" class="oe-open-day-notes" maxlength="400" placeholder="e.g. Parking at rear, arrive 10 mins early" value="' +
+      String(d.notes || '')
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;') +
+      '" /></label>' +
+      '<button type="button" class="ee-btn ee-btn-outline oe-open-day-remove" style="font-size:12px;padding:6px 10px;margin-top:8px">Remove</button>' +
+      (d.interestCount
+        ? '<p class="ee-hint oe-open-day-interest-count" style="margin:8px 0 0">' +
+          String(d.interestCount) +
+          ' interest registration' +
+          (Number(d.interestCount) === 1 ? '' : 's') +
+          '</p>'
+        : '') +
+      '</div>'
+    );
+  }
+
+  function renderOpenDaysEditor(days) {
+    const list = document.getElementById('oe-open-days-list');
+    if (!list) return;
+    const rows = Array.isArray(days) ? days : [];
+    list.innerHTML = rows.map(openDayRowHtml).join('');
+  }
+
+  function collectOpenDaysFromForm() {
+    const list = document.getElementById('oe-open-days-list');
+    if (!list) return [];
+    const out = [];
+    list.querySelectorAll('.oe-open-day-row').forEach(function (row, index) {
+      const startsAt = fromDatetimeLocalValue(row.querySelector('.oe-open-day-starts')?.value);
+      const endsAt = fromDatetimeLocalValue(row.querySelector('.oe-open-day-ends')?.value);
+      const addressLine = String(row.querySelector('.oe-open-day-address')?.value || '').trim();
+      if (!startsAt && !addressLine) return;
+      out.push({
+        id: String(row.getAttribute('data-open-day-id') || '').trim() || undefined,
+        startsAt: startsAt,
+        endsAt: endsAt || null,
+        venueName: String(row.querySelector('.oe-open-day-venue')?.value || '').trim(),
+        addressLine: addressLine,
+        city: String(row.querySelector('.oe-open-day-city')?.value || '').trim(),
+        postcode: String(row.querySelector('.oe-open-day-postcode')?.value || '').trim(),
+        notes: String(row.querySelector('.oe-open-day-notes')?.value || '').trim(),
+        sortOrder: index,
+      });
+    });
+    return out;
+  }
+
+  function bindOpenDaysEditor() {
+    if (openDaysBound) return;
+    openDaysBound = true;
+    const addBtn = document.getElementById('oe-open-day-add');
+    const list = document.getElementById('oe-open-days-list');
+    if (addBtn) {
+      addBtn.addEventListener('click', function () {
+        if (!list) return;
+        list.insertAdjacentHTML('beforeend', openDayRowHtml({}));
+      });
+    }
+    if (list) {
+      list.addEventListener('click', function (e) {
+        const btn = e.target.closest('.oe-open-day-remove');
+        if (!btn) return;
+        const row = btn.closest('.oe-open-day-row');
+        if (row) row.remove();
+      });
+    }
+  }
+
+  async function loadOpenDaysForEdit(opportunityId) {
+    if (!opportunityId) {
+      renderOpenDaysEditor([]);
+      return;
+    }
+    const res = await api(
+      '/api/organiser/opportunity-open-days?opportunityId=' + encodeURIComponent(opportunityId)
+    );
+    if (res.ok && Array.isArray(res.data.openDays)) {
+      renderOpenDaysEditor(res.data.openDays);
+    } else {
+      renderOpenDaysEditor([]);
+    }
+  }
+
+  async function saveOpenDaysForOpportunity(opportunityId) {
+    if (!opportunityId) return { ok: true };
+    const openDays = collectOpenDaysFromForm();
+    for (let i = 0; i < openDays.length; i++) {
+      if (!openDays[i].startsAt) {
+        return { ok: false, message: 'Each open day needs a date and start time.' };
+      }
+      if (!openDays[i].addressLine) {
+        return { ok: false, message: 'Each open day needs an address.' };
+      }
+    }
+    const res = await api('/api/organiser/opportunity-open-days', {
+      method: 'PUT',
+      body: JSON.stringify({ opportunityId: opportunityId, openDays: openDays }),
+    });
+    if (!res.ok) {
+      return {
+        ok: false,
+        message: res.data.message || res.data.error || 'Could not save open days.',
+      };
+    }
+    if (Array.isArray(res.data.openDays)) renderOpenDaysEditor(res.data.openDays);
+    return { ok: true };
   }
 
   function syncSavedOpportunityMedia(opportunity) {
@@ -2288,6 +2467,15 @@
       syncSavedOpportunityMedia(opportunity);
       syncListingStatusUi(opportunity);
 
+      const openDaysSave = await saveOpenDaysForOpportunity(opportunity.id || editId);
+      if (!openDaysSave.ok) {
+        showAlert(
+          (openDaysSave.message || 'Open days could not be saved.') +
+            ' Your listing details were saved — fix open days and save again.'
+        );
+        return;
+      }
+
       if (publish && !hasActiveListing) {
         const queued =
           Boolean(opportunity.reviewSubmittedAt) ||
@@ -2480,17 +2668,20 @@
     }
 
     const loadWork = async () => {
+      bindOpenDaysEditor();
       if (editId) {
         document.getElementById('oe-page-title').textContent = 'Edit opportunity';
         const res = await api('/api/organiser/opportunities?id=' + encodeURIComponent(editId));
         if (res.ok && res.data.opportunity) {
           prefillFromOpportunity(res.data.opportunity);
+          await loadOpenDaysForEdit(editId);
         } else {
           showAlert('Could not load this opportunity. Check you have access to this listing.');
         }
         return;
       }
 
+      renderOpenDaysEditor([]);
       if (actions) {
         const session = await actions.fetchSession();
         const emailEl = document.getElementById('oe-email');

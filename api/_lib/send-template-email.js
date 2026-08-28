@@ -134,6 +134,8 @@ const TRANSACTIONAL_EMAIL_SLUGS = new Set([
   'opportunity_premium_live',
   'opportunity_enquiry_received',
   'opportunity_enquiry_sent',
+  'opportunity_open_day_interest_received',
+  'opportunity_open_day_interest_sent',
   'opportunity_listing_expired',
   'opportunity_premium_expired',
   'opportunity_listing_rejected',

@@ -95,6 +95,65 @@ module.exports = wrapHandler(async function handler(req, res) {
       }
     }
 
+    if (action === 'open_day_interest') {
+      const limited = await enforceRateLimitAsync(req, res, 'opportunity_open_day_interest', {
+        max: 8,
+        windowMs: 300_000,
+      });
+      if (!limited.allowed) {
+        return json(res, 429, {
+          ok: false,
+          error: 'rate_limited',
+          message: 'Too many open day registrations. Please wait a few minutes and try again.',
+          retryAfterSec: limited.retryAfterSec,
+        });
+      }
+      try {
+        const { createOpenDayInterest } = require('./_lib/opportunity-open-days');
+        const interest = await createOpenDayInterest({
+          openDayId: body.openDayId || body.open_day_id,
+          name: body.name || body.registrantName,
+          email: body.email || body.registrantEmail,
+          phone: body.phone || body.registrantPhone,
+        });
+        return json(res, 200, { ok: true, interest });
+      } catch (e) {
+        const msg = e.message || String(e);
+        if (msg === 'enquiries_closed') {
+          const { publicEnquiriesClosedMessage, softLaunchPublicMeta } = require('./_lib/soft-launch');
+          return json(res, 403, {
+            ok: false,
+            error: 'enquiries_closed',
+            message: publicEnquiriesClosedMessage(),
+            softLaunch: softLaunchPublicMeta(),
+          });
+        }
+        if (msg === 'not_found') return json(res, 404, { ok: false, error: 'not_found' });
+        if (msg === 'open_day_passed') {
+          return json(res, 400, {
+            ok: false,
+            error: 'open_day_passed',
+            message: 'That open day has already passed. Please choose another date.',
+          });
+        }
+        if (msg === 'open_days_unavailable') {
+          return json(res, 503, {
+            ok: false,
+            error: 'open_days_unavailable',
+            message: 'Open day registrations are not available yet. Please try again later.',
+          });
+        }
+        if (
+          msg === 'invalid_open_day_id' ||
+          msg === 'invalid_email' ||
+          msg === 'missing_name'
+        ) {
+          return json(res, 400, { ok: false, error: msg });
+        }
+        return json(res, 500, { ok: false, error: 'open_day_interest_failed', message: msg });
+      }
+    }
+
     const limited = await enforceRateLimitAsync(req, res, 'opportunity_enquiry', {
       max: 10,
       windowMs: 300_000,
@@ -182,6 +241,12 @@ module.exports = wrapHandler(async function handler(req, res) {
         ? await getPublishedOpportunityBySlug(slug)
         : await getPublishedOpportunityById(id);
       if (!opportunity) return json(res, 404, { error: 'not_found' });
+      try {
+        const { listUpcomingOpenDaysForOpportunity } = require('./_lib/opportunity-open-days');
+        opportunity.openDays = await listUpcomingOpenDaysForOpportunity(opportunity.id);
+      } catch {
+        opportunity.openDays = [];
+      }
       return json(res, 200, { ok: true, opportunity, softLaunch });
     }
     const opportunities = await listPublishedOpportunities();

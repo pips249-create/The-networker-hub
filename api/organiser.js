@@ -41,6 +41,7 @@ const routes = {
   'connections-credits-complete': require('./_lib/routes/organiser-connections-credits-complete'),
   'event-connections': require('./_lib/routes/organiser-event-connections'),
   'opportunity-enquiries': require('./_lib/routes/organiser-opportunity-enquiries'),
+  'opportunity-open-days': require('./_lib/routes/organiser-opportunity-open-days'),
   roster: require('./_lib/routes/organiser-roster'),
   'member-roster': require('./_lib/routes/organiser-roster'),
   'membership-plans': require('./_lib/routes/organiser-membership-plans'),

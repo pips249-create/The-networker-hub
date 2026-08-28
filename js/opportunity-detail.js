@@ -22,6 +22,10 @@
     affiliateCookie: document.getElementById('opp-affiliate-cookie'),
     desc: document.getElementById('opp-desc'),
     aboutExtra: document.getElementById('opp-about-extra'),
+    openDaysSection: document.getElementById('opp-open-days-section'),
+    openDaysList: document.getElementById('opp-open-days-list'),
+    openDaysClosed: document.getElementById('opp-open-days-closed'),
+    openDaysLede: document.getElementById('opp-open-days-lede'),
     cover: document.getElementById('opp-detail-cover'),
     coverImg: document.getElementById('opp-detail-cover-img'),
     posterLogo: document.getElementById('opp-poster-logo'),
@@ -304,6 +308,174 @@
       return;
     }
     els.desc.textContent = text;
+  }
+
+  function formatOpenDayWhen(day) {
+    if (!day || !day.startsAt) return '';
+    try {
+      var start = new Date(day.startsAt);
+      if (Number.isNaN(start.getTime())) return String(day.startsAt);
+      var datePart = start.toLocaleDateString('en-GB', {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      });
+      var timePart = start.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+      var out = datePart + ' · ' + timePart;
+      if (day.endsAt) {
+        var end = new Date(day.endsAt);
+        if (!Number.isNaN(end.getTime())) {
+          out +=
+            '–' + end.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+        }
+      }
+      return out;
+    } catch (e) {
+      return String(day.startsAt);
+    }
+  }
+
+  function formatOpenDayWhere(day) {
+    return [day.venueName, day.addressLine, day.city, day.postcode]
+      .map(function (p) {
+        return String(p || '').trim();
+      })
+      .filter(Boolean)
+      .join(', ');
+  }
+
+  function renderOpenDays(item) {
+    if (!els.openDaysSection || !els.openDaysList) return;
+    var days = Array.isArray(item && item.openDays) ? item.openDays.slice() : [];
+    days = days.filter(function (d) {
+      return d && d.startsAt && Date.parse(d.startsAt) >= Date.now() - 60 * 60 * 1000;
+    });
+    if (!days.length) {
+      els.openDaysSection.hidden = true;
+      els.openDaysList.innerHTML = '';
+      return;
+    }
+    els.openDaysSection.hidden = false;
+    if (els.openDaysClosed) {
+      els.openDaysClosed.hidden = enquiriesOpen;
+      els.openDaysClosed.textContent = enquiriesClosedCopy();
+    }
+    if (els.openDaysLede) els.openDaysLede.hidden = !enquiriesOpen;
+    els.openDaysList.innerHTML = days
+      .map(function (day) {
+        var when = formatOpenDayWhen(day);
+        var where = formatOpenDayWhere(day);
+        var formHtml = enquiriesOpen
+          ? '<form class="opp-open-day-form" data-open-day-id="' +
+            escapeHtml(day.id) +
+            '">' +
+            '<label><span>Your name</span><input type="text" name="name" required autocomplete="name" /></label>' +
+            '<label><span>Email</span><input type="email" name="email" required autocomplete="email" /></label>' +
+            '<label><span>Phone (optional)</span><input type="tel" name="phone" autocomplete="tel" /></label>' +
+            '<button type="submit" class="opp-detail-btn opp-detail-btn--gold">Register interest</button>' +
+            '<p class="opp-open-day-status" hidden></p>' +
+            '</form>'
+          : '';
+        return (
+          '<li class="opp-open-day-card">' +
+          '<p class="opp-open-day-when">' +
+          escapeHtml(when) +
+          '</p>' +
+          (where ? '<p class="opp-open-day-where">' + escapeHtml(where) + '</p>' : '') +
+          (day.notes
+            ? '<p class="opp-open-day-notes">' + escapeHtml(day.notes) + '</p>'
+            : '') +
+          formHtml +
+          '</li>'
+        );
+      })
+      .join('');
+  }
+
+  function bindOpenDayForms() {
+    if (!els.openDaysList || els.openDaysList.dataset.bound === '1') return;
+    els.openDaysList.dataset.bound = '1';
+    els.openDaysList.addEventListener('submit', function (e) {
+      var form = e.target.closest('.opp-open-day-form');
+      if (!form) return;
+      e.preventDefault();
+      if (!enquiriesOpen) return;
+      var openDayId = form.getAttribute('data-open-day-id');
+      var name = String((form.querySelector('[name="name"]') || {}).value || '').trim();
+      var email = String((form.querySelector('[name="email"]') || {}).value || '').trim();
+      var phone = String((form.querySelector('[name="phone"]') || {}).value || '').trim();
+      var statusEl = form.querySelector('.opp-open-day-status');
+      var btn = form.querySelector('button[type="submit"]');
+      if (!name || !email) {
+        if (statusEl) {
+          statusEl.hidden = false;
+          statusEl.className = 'opp-open-day-status is-error';
+          statusEl.textContent = 'Enter your name and email.';
+        }
+        return;
+      }
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Sending…';
+      }
+      fetch('/api/opportunities', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'open_day_interest',
+          openDayId: openDayId,
+          name: name,
+          email: email,
+          phone: phone,
+        }),
+      })
+        .then(function (r) {
+          return r.json().then(function (data) {
+            return { ok: r.ok, data: data };
+          });
+        })
+        .then(function (result) {
+          if (result.ok) {
+            if (statusEl) {
+              statusEl.hidden = false;
+              statusEl.className = 'opp-open-day-status is-ok';
+              statusEl.textContent =
+                'Thanks — the team will confirm shortly. Check your email for a copy.';
+            }
+            form.reset();
+            if (btn) {
+              btn.disabled = false;
+              btn.textContent = 'Register interest';
+            }
+            return;
+          }
+          if (statusEl) {
+            statusEl.hidden = false;
+            statusEl.className = 'opp-open-day-status is-error';
+            statusEl.textContent =
+              (result.data && result.data.message) ||
+              (result.data && result.data.error) ||
+              'Could not register interest. Please try again.';
+          }
+          if (btn) {
+            btn.disabled = false;
+            btn.textContent = 'Register interest';
+          }
+        })
+        .catch(function () {
+          if (statusEl) {
+            statusEl.hidden = false;
+            statusEl.className = 'opp-open-day-status is-error';
+            statusEl.textContent = 'Could not register interest. Please try again.';
+          }
+          if (btn) {
+            btn.disabled = false;
+            btn.textContent = 'Register interest';
+          }
+        });
+    });
   }
 
   function renderAbout(item) {
@@ -685,6 +857,8 @@
     renderCompaniesHouse(item);
     renderInvestmentBreakdown(item);
     renderAbout(item);
+    renderOpenDays(item);
+    bindOpenDayForms();
     renderSimilar(item);
     refreshSaveButton();
     applyClaimSection(item);

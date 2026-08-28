@@ -273,6 +273,94 @@ async function sendOpportunityEnquiryEmails(opportunity, enquiry) {
   return results;
 }
 
+async function sendOpportunityOpenDayInterestEmails(opportunity, openDay, interest) {
+  const siteUrl = siteBase();
+  const title = String(opportunity?.title || interest?.opportunityTitle || 'Opportunity').trim();
+  const ownerTo = String(
+    interest?.ownerEmail || opportunity?.ownerEmail || opportunity?.contactEmail || ''
+  )
+    .trim()
+    .toLowerCase();
+  const registrantTo = String(interest?.registrantEmail || '').trim().toLowerCase();
+  const registrantName = String(interest?.registrantName || 'there').trim();
+  const phone = String(interest?.registrantPhone || '').trim();
+  const { formatOpenDayWhen, formatOpenDayAddress } = require('./opportunity-open-days');
+  const whenLabel = formatOpenDayWhen(openDay);
+  const addressLabel = formatOpenDayAddress(openDay);
+  const summary =
+    String(interest?.openDaySummary || '').trim() ||
+    [whenLabel, addressLabel].filter(Boolean).join(' · ');
+  const replySubject = encodeURIComponent('Re: Open day — ' + title);
+  const replyBody = encodeURIComponent(
+    'Hi ' +
+      registrantName +
+      ',\n\nThank you for your interest in our open day for "' +
+      title +
+      '"' +
+      (whenLabel ? ' on ' + whenLabel : '') +
+      '.\n\n'
+  );
+  const replyMailto = registrantTo
+    ? 'mailto:' + encodeURIComponent(registrantTo) + '?subject=' + replySubject + '&body=' + replyBody
+    : '';
+
+  const results = { owner: null, registrant: null };
+
+  if (ownerTo) {
+    try {
+      await sendTemplatedEmail({
+        slug: 'opportunity_open_day_interest_received',
+        to: ownerTo,
+        replyTo: registrantTo || undefined,
+        variables: {
+          owner_name: ownerNameFromOpportunity(opportunity, ownerTo),
+          opportunity_title: title,
+          registrant_name: registrantName,
+          registrant_email: registrantTo,
+          registrant_phone: phone,
+          registrant_phone_line: phone ? ' · ' + phone : '',
+          open_day_summary: summary,
+          open_day_date: whenLabel,
+          open_day_address: addressLabel,
+          dashboard_url: siteUrl + '/organiser/#business-open-days',
+          reply_mailto_url: replyMailto,
+          opportunity_url: opportunityPublicUrl(opportunity, siteUrl),
+        },
+      });
+      results.owner = true;
+    } catch (e) {
+      results.owner = { error: e.message || String(e) };
+    }
+  } else {
+    results.owner = { skipped: true, reason: 'no_owner_email' };
+  }
+
+  if (registrantTo) {
+    try {
+      await sendTemplatedEmail({
+        slug: 'opportunity_open_day_interest_sent',
+        to: registrantTo,
+        variables: {
+          registrant_name: registrantName,
+          opportunity_title: title,
+          opportunity_url: opportunityPublicUrl(opportunity, siteUrl),
+          open_day_summary: summary,
+          open_day_date: whenLabel,
+          open_day_address: addressLabel,
+          lister_name: String(opportunity?.host || 'The team').trim(),
+        },
+      });
+      results.registrant = true;
+    } catch (e) {
+      results.registrant = { error: e.message || String(e) };
+    }
+  } else {
+    results.registrant = { skipped: true, reason: 'no_registrant_email' };
+  }
+
+  return results;
+}
+
 module.exports = {
   formatEmailDate,
   ownerNameFromOpportunity,
@@ -283,4 +371,5 @@ module.exports = {
   sendOpportunityListingApprovedPayEmail,
   sendOpportunityPremiumLiveEmail,
   sendOpportunityEnquiryEmails,
+  sendOpportunityOpenDayInterestEmails,
 };

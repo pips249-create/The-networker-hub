@@ -1077,3 +1077,80 @@ body.opp-claim-invite-active .opp-detail-breadcrumb {
 .opportunity-detail-page .opp-detail-type-notice strong {
   font-weight: 700;
 }
+
+.opportunity-detail-page .opp-open-days-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.opportunity-detail-page .opp-open-day-card {
+  padding: 16px 18px;
+  border-radius: 14px;
+  border: 1px solid rgba(28, 32, 64, 0.12);
+  background: linear-gradient(180deg, #fff 0%, #f8f6f2 100%);
+}
+
+.opportunity-detail-page .opp-open-day-when {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1c2040;
+}
+
+.opportunity-detail-page .opp-open-day-where {
+  margin: 0 0 8px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #4a4450;
+}
+
+.opportunity-detail-page .opp-open-day-notes {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: #6b6570;
+}
+
+.opportunity-detail-page .opp-open-day-form {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.opportunity-detail-page .opp-open-day-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #2d2636;
+}
+
+.opportunity-detail-page .opp-open-day-form input {
+  font-weight: 400;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(28, 32, 64, 0.16);
+}
+
+.opportunity-detail-page .opp-open-day-status {
+  margin: 8px 0 0;
+  font-size: 13px;
+}
+
+.opportunity-detail-page .opp-open-day-status.is-ok {
+  color: #166534;
+}
+
+.opportunity-detail-page .opp-open-day-status.is-error {
+  color: #b91c1c;
+}
+
+.opportunity-detail-page .opp-open-day-closed {
+  margin: 0;
+  font-size: 14px;
+  color: #6b6570;
+}
