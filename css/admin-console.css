@@ -2521,6 +2521,13 @@ a.admin-action-row:hover .admin-action-btn {
   background: linear-gradient(135deg, #fdf6e3, #f5e0a0);
 }
 
+.opp-review-card-cover--logo-fallback,
+.opp-review-detail-cover--logo-fallback {
+  object-fit: contain;
+  background: #fff;
+  padding: 0.75rem;
+}
+
 .opp-review-card-cover--empty,
 .opp-review-detail-cover--empty {
   display: flex;

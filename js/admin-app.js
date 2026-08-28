@@ -22100,9 +22100,20 @@
   function opportunityAdminMediaUrl(url) {
     var raw = String(url || '').trim();
     if (!raw) return '';
-    if (/^https?:\/\//i.test(raw)) return raw;
+    if (/^https?:\/\//i.test(raw) || /^data:image\//i.test(raw)) return raw;
     if (raw.charAt(0) === '/') return raw;
     return '/' + raw.replace(/^\.\//, '');
+  }
+
+  function opportunityCleanupCoverUrl(opp) {
+    if (!opp) return '';
+    var cover = opportunityAdminMediaUrl(opp.image_url);
+    if (cover) return cover;
+    return opportunityAdminMediaUrl(opp.logo_url);
+  }
+
+  function opportunityCleanupCoverUsesLogoFallback(opp) {
+    return !opportunityAdminMediaUrl(opp && opp.image_url) && !!opportunityAdminMediaUrl(opp && opp.logo_url);
   }
 
   function opportunityIsAffiliateStyle(opp) {
@@ -22144,7 +22155,8 @@
   }
 
   function opportunityCleanupReviewCardHtml(opp) {
-    var coverUrl = opportunityAdminMediaUrl(opp.image_url);
+    var coverUrl = opportunityCleanupCoverUrl(opp);
+    var coverUsesLogo = opportunityCleanupCoverUsesLogoFallback(opp);
     var logoUrl = opportunityAdminMediaUrl(opp.logo_url);
     var typeLabel = opportunityTypeLabel(opp.type);
     var affiliate = opportunityIsAffiliateStyle(opp);
@@ -22158,7 +22170,9 @@
     var mediaHtml = coverUrl
       ? '<img src="' +
         attrEsc(coverUrl) +
-        '" alt="" class="opp-review-card-cover" loading="lazy">'
+        '" alt="" class="opp-review-card-cover' +
+        (coverUsesLogo ? ' opp-review-card-cover--logo-fallback' : '') +
+        '" loading="lazy">'
       : '<div class="opp-review-card-cover opp-review-card-cover--empty">No cover image</div>';
     var logoHtml = logoUrl
       ? '<img src="' +
@@ -22197,14 +22211,17 @@
   }
 
   function opportunityCleanupReviewDetailHtml(opp) {
-    var coverUrl = opportunityAdminMediaUrl(opp.image_url);
+    var coverUrl = opportunityCleanupCoverUrl(opp);
+    var coverUsesLogo = opportunityCleanupCoverUsesLogoFallback(opp);
     var logoUrl = opportunityAdminMediaUrl(opp.logo_url);
     var paragraphs = opportunityAboutParagraphs(opp);
     var affiliate = opportunityIsAffiliateStyle(opp);
     var coverHtml = coverUrl
       ? '<img src="' +
         attrEsc(coverUrl) +
-        '" alt="" class="opp-review-detail-cover" loading="lazy">'
+        '" alt="" class="opp-review-detail-cover' +
+        (coverUsesLogo ? ' opp-review-detail-cover--logo-fallback' : '') +
+        '" loading="lazy">'
       : '<div class="opp-review-detail-cover opp-review-detail-cover--empty">No cover image uploaded</div>';
     var aboutHtml = paragraphs.length
       ? paragraphs
@@ -22409,12 +22426,14 @@
       '</dl>' +
       '<div class="opp-review-images">' +
       '<figure class="opp-review-image-block">' +
-      '<figcaption>Cover image</figcaption>' +
-      (opportunityAdminMediaUrl(opp.image_url)
+      '<figcaption>Cover image' +
+      (opportunityCleanupCoverUsesLogoFallback(opp) ? ' (using logo — no cover uploaded)' : '') +
+      '</figcaption>' +
+      (opportunityCleanupCoverUrl(opp)
         ? '<a href="' +
-          attrEsc(opportunityAdminMediaUrl(opp.image_url)) +
+          attrEsc(opportunityCleanupCoverUrl(opp)) +
           '" target="_blank" rel="noopener"><img src="' +
-          attrEsc(opportunityAdminMediaUrl(opp.image_url)) +
+          attrEsc(opportunityCleanupCoverUrl(opp)) +
           '" alt="Cover image" loading="lazy"></a>'
         : '<p class="opp-review-muted">No cover image</p>') +
       '</figure>' +

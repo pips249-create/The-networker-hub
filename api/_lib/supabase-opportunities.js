@@ -391,7 +391,18 @@ async function resolveOpportunityImage(payload, opportunityId) {
   }
   if (Object.prototype.hasOwnProperty.call(payload, 'photoUrl')) {
     const url = String(payload.photoUrl || '').trim();
-    if (url && /^https?:\/\//i.test(url)) return url;
+    if (!url) return undefined;
+    if (/^https?:\/\//i.test(url)) return url;
+    if (/^data:image\//i.test(url)) {
+      const uploaded = await resolveImageUrl({
+        folder: `opportunities/${opportunityId || 'new'}/cover`,
+        logoUrl: url,
+        logoBase64: url,
+        logoMime: payload.photoMime,
+        logoFilename: payload.photoFilename,
+      });
+      if (uploaded) return uploaded;
+    }
     return null;
   }
   return undefined;
@@ -410,7 +421,18 @@ async function resolveOpportunityLogo(payload, opportunityId) {
   }
   if (Object.prototype.hasOwnProperty.call(payload, 'logoUrl')) {
     const url = String(payload.logoUrl || '').trim();
-    if (url && /^https?:\/\//i.test(url)) return url;
+    if (!url) return undefined;
+    if (/^https?:\/\//i.test(url)) return url;
+    if (/^data:image\//i.test(url)) {
+      const uploaded = await resolveImageUrl({
+        folder: `opportunities/${opportunityId || 'new'}/logo`,
+        logoUrl: url,
+        logoBase64: url,
+        logoMime: payload.logoMime,
+        logoFilename: payload.logoFilename,
+      });
+      if (uploaded) return uploaded;
+    }
     return null;
   }
   return undefined;

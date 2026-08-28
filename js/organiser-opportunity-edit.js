@@ -629,6 +629,36 @@
     return { ok: res.ok, status: res.status, data };
   }
 
+  function syncSavedOpportunityMedia(opportunity) {
+    if (!opportunity) return;
+    if (opportunity.imageUrl) {
+      const photoUrlInput = document.getElementById('oe-photo-url');
+      if (photoUrlInput) photoUrlInput.value = opportunity.imageUrl;
+      const preview = document.getElementById('oe-photo-preview');
+      const placeholder = document.getElementById('oe-photo-placeholder');
+      const previewImg = document.getElementById('oe-photo-preview-img');
+      if (previewImg) previewImg.src = opportunity.imageUrl;
+      if (preview) preview.hidden = false;
+      if (placeholder) placeholder.hidden = true;
+      photoFile = null;
+    }
+    if (opportunity.logoUrl) {
+      const logoUrlInput = document.getElementById('oe-logo-url');
+      if (logoUrlInput) logoUrlInput.value = opportunity.logoUrl;
+      const logoPreview = document.getElementById('oe-logo-preview');
+      const logoPlaceholder = document.getElementById('oe-logo-placeholder');
+      const logoPreviewImg = document.getElementById('oe-logo-preview-img');
+      if (logoPreviewImg) {
+        logoPreviewImg.src = opportunity.logoUrl;
+        syncLogoPreviewContrast(logoPreviewImg, opportunity.logoUrl);
+      }
+      if (logoPreview) logoPreview.hidden = false;
+      if (logoPlaceholder) logoPlaceholder.hidden = true;
+      logoFile = null;
+    }
+    refreshListingPreview();
+  }
+
   function showAlert(msg) {
     const el = document.getElementById('oe-alert');
     if (!el) return;
@@ -2135,6 +2165,7 @@
 
       const opportunity = res.data.opportunity || {};
       currentOpportunity = opportunity;
+      syncSavedOpportunityMedia(opportunity);
       showStatusBadge(opportunity);
       listingPaymentPanelVisible();
       syncPrimarySubmitButton();

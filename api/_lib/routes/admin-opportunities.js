@@ -150,6 +150,7 @@ async function resolveAdminOpportunityImage(body, opportunityId) {
   }
   if (Object.prototype.hasOwnProperty.call(body, 'image_url') || Object.prototype.hasOwnProperty.call(body, 'photo_url')) {
     const url = String(body.image_url || body.photo_url || '').trim();
+    if (!url) return undefined;
     return url || null;
   }
   return undefined;
@@ -168,6 +169,7 @@ async function resolveAdminOpportunityLogo(body, opportunityId) {
   }
   if (Object.prototype.hasOwnProperty.call(body, 'logo_url') || Object.prototype.hasOwnProperty.call(body, 'logoUrl')) {
     const url = String(body.logo_url || body.logoUrl || '').trim();
+    if (!url) return undefined;
     return url || null;
   }
   return undefined;
