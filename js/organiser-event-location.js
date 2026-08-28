@@ -9,7 +9,10 @@
   const ORG_BOOTSTRAP_CACHE_KEY = 'hub_org_bootstrap_cache';
   const ORG_BOOTSTRAP_CACHE_MS = 120000;
   const params = new URLSearchParams(location.search);
-  const editId = params.get('id') || '';
+  const editId =
+    window.HubEventWizard && typeof window.HubEventWizard.coerceEventId === 'function'
+      ? window.HubEventWizard.coerceEventId(params.get('id') || '')
+      : String(params.get('id') || '').split('?')[0].trim();
   const isEmbedDrawer = params.get('embed') === '1' || window.self !== window.top;
 
   if (isEmbedDrawer) {
@@ -152,7 +155,11 @@
     if (idsParam) {
       return idsParam
         .split(',')
-        .map((s) => s.trim())
+        .map((s) =>
+          window.HubEventWizard && typeof window.HubEventWizard.coerceEventId === 'function'
+            ? window.HubEventWizard.coerceEventId(s)
+            : String(s || '').split('?')[0].trim()
+        )
         .filter(Boolean);
     }
     return editId ? [editId] : [];

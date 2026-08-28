@@ -80,7 +80,11 @@
   const params = new URLSearchParams(location.search);
   const eventIds = (params.get('ids') || '')
     .split(',')
-    .map((s) => s.trim())
+    .map((s) =>
+      window.HubEventWizard && typeof window.HubEventWizard.coerceEventId === 'function'
+        ? window.HubEventWizard.coerceEventId(s)
+        : String(s || '').split('?')[0].trim()
+    )
     .filter(Boolean);
   const primaryId = eventIds[0] || '';
   const previewStash = readPublishedPreview(eventIds);
