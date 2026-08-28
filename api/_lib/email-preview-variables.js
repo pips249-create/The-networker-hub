@@ -482,17 +482,15 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
   }
 
   if (slug === 'opportunity_listing_approved_pay') {
-    vars.pay_url = site + '/organiser/?renew=preview-opportunity#business-overview';
+    vars.pay_url = site + '/organiser/opportunity-edit?id=preview-opportunity&checkout=start';
     vars.checkout_url = vars.pay_url;
-    vars.opportunity_edit_url =
-      site + '/organiser/opportunity-edit?id=preview-opportunity&checkout=start';
+    vars.opportunity_edit_url = site + '/organiser/opportunity-edit?id=preview-opportunity';
   }
 
   if (slug === 'opportunity_listing_approved_pay_reminder') {
-    vars.pay_url = site + '/organiser/?renew=preview-opportunity#business-overview';
+    vars.pay_url = site + '/organiser/opportunity-edit?id=preview-opportunity&checkout=start';
     vars.checkout_url = vars.pay_url;
-    vars.opportunity_edit_url =
-      site + '/organiser/opportunity-edit?id=preview-opportunity&checkout=start';
+    vars.opportunity_edit_url = site + '/organiser/opportunity-edit?id=preview-opportunity';
   }
 
   if (slug && String(slug).startsWith('opportunity_')) {

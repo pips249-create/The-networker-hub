@@ -15750,10 +15750,22 @@
       const params = new URLSearchParams(window.location.search);
       const renewId = params.get('renew');
       if (!renewId) return;
+      if (handleBusinessRenewUrlParam._startedFor === String(renewId)) return;
       const match = (state.opportunities || []).find(function (o) {
         return String(o.id) === String(renewId);
       });
       if (!match) return;
+      handleBusinessRenewUrlParam._startedFor = String(renewId);
+      // Drop ?renew= so list re-renders / enquiry reloads do not fire checkout twice.
+      try {
+        params.delete('renew');
+        const qs = params.toString();
+        const next =
+          window.location.pathname + (qs ? '?' + qs : '') + (window.location.hash || '');
+        history.replaceState(null, '', next);
+      } catch {
+        /* ignore */
+      }
       requestAnimationFrame(function () {
         const row = document.querySelector('[data-opp-renew="' + renewId + '"]');
         if (row) row.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -15761,8 +15773,14 @@
       const approval = String(match.approvalStatus || match.approval_status || '').trim();
       const paid = Boolean(match.listingPaymentActive);
       if (approval === 'Approved' && !paid) {
-        startOpportunityListingRenew(renewId, 1, null);
+        // Prefer the listing editor checkout deep-link (same as the approved-pay email).
+        location.href =
+          '/organiser/opportunity-edit?id=' +
+          encodeURIComponent(renewId) +
+          '&checkout=start';
+        return;
       }
+      startOpportunityListingRenew(renewId, 1, null);
     } catch {
       /* ignore */
     }
@@ -18586,7 +18604,9 @@
   };
 
   const signinNext =
-    '/organiser/' + (window.location.hash || '#business-overview');
+    '/organiser/' +
+    (window.location.search || '') +
+    (window.location.hash || '#business-overview');
   const signinLink = signin && signin.querySelector('a.org-btn-primary');
   if (signinLink) {
     signinLink.href =

@@ -81,18 +81,23 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    const fcaAttestation = validateFcaDisclaimer({
-      type: opportunity.type,
-      types: opportunity.types,
-      meta: opportunity.meta,
-      fcaDisclaimerAttested: Boolean(body.fcaDisclaimerAttested),
-    });
-    if (fcaAttestation) {
-      return json(res, 400, {
-        ok: false,
-        error: fcaAttestation.code,
-        message: fcaAttestation.message,
+    // Approved listings already passed review (FCA attested at submit). Dashboard / email
+    // pay links call this without the form checkbox — do not block Stripe for those.
+    const skipFcaReattest = approval === 'Approved' || alreadyPaid;
+    if (!skipFcaReattest) {
+      const fcaAttestation = validateFcaDisclaimer({
+        type: opportunity.type,
+        types: opportunity.types,
+        meta: opportunity.meta,
+        fcaDisclaimerAttested: Boolean(body.fcaDisclaimerAttested),
       });
+      if (fcaAttestation) {
+        return json(res, 400, {
+          ok: false,
+          error: fcaAttestation.code,
+          message: fcaAttestation.message,
+        });
+      }
     }
 
     const siteUrl = siteBaseUrl();

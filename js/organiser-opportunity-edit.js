@@ -610,8 +610,14 @@
       submitBtn.textContent = 'Opening secure checkout…';
     }
     const checkoutBody = { opportunityId: opportunityId };
+    const approval = String(
+      (currentOpportunity && currentOpportunity.approvalStatus) || ''
+    ).trim();
+    // Approved listings: server skips FCA re-check. Still send the box if the user ticked it.
     if (requiresFcaDisclaimer()) {
-      checkoutBody.fcaDisclaimerAttested = Boolean(document.getElementById('oe-fca-attest')?.checked);
+      checkoutBody.fcaDisclaimerAttested =
+        approval === 'Approved' ||
+        Boolean(document.getElementById('oe-fca-attest')?.checked);
     }
     const res = await api('/api/organiser/opportunity-listing-checkout', {
       method: 'POST',
@@ -2134,6 +2140,10 @@
         return;
       }
       const payloadCheck = buildPayload('draft');
+      // FCA was confirmed at submit-for-review; do not re-block payment on the checkbox.
+      if (requiresFcaDisclaimer()) {
+        payloadCheck.fcaDisclaimerAttested = true;
+      }
       const validationError = validatePayload(payloadCheck, false);
       if (validationError) {
         showAlert(validationError);

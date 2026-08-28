@@ -18,11 +18,12 @@
   }
 
   function signinHref() {
-    return (
-      '../login?next=' +
-      encodeURIComponent('/organiser/' + (window.location.hash || '#business-overview')) +
-      '&intent=organiser'
-    );
+    // Keep ?renew= / other query params so pay-to-go-live email links still work after login.
+    var next =
+      '/organiser/' +
+      (window.location.search || '') +
+      (window.location.hash || '#business-overview');
+    return '../login?next=' + encodeURIComponent(next) + '&intent=organiser';
   }
 
   function updateSigninLink() {

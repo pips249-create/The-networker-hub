@@ -151,9 +151,12 @@ async function sendOpportunityListingApprovedPayEmail(opportunity, options) {
 
   const siteUrl = siteBase();
   const listing = buildOpportunityListingEmailVars(opportunity);
-  const checkoutUrl = organiserBusinessDashboardUrl(siteUrl, {
-    renewOpportunityId: opportunity.id,
-  });
+  const opportunityId = encodeURIComponent(String(opportunity.id || ''));
+  // Deep-link straight into listing checkout — more reliable than dashboard ?renew=
+  // (login redirects used to drop the renew query param).
+  const payUrl =
+    siteUrl + '/organiser/opportunity-edit?id=' + opportunityId + '&checkout=start';
+  const editUrl = siteUrl + '/organiser/opportunity-edit?id=' + opportunityId;
   const isReminder = options && options.reminder;
   await sendTemplatedEmail({
     slug: isReminder
@@ -164,17 +167,13 @@ async function sendOpportunityListingApprovedPayEmail(opportunity, options) {
       owner_name: ownerNameFromOpportunity(opportunity, to),
       ...listing,
       dashboard_url: organiserBusinessDashboardUrl(siteUrl),
-      checkout_url: checkoutUrl,
-      pay_url: checkoutUrl,
-      opportunity_edit_url:
-        siteUrl +
-        '/organiser/opportunity-edit?id=' +
-        encodeURIComponent(String(opportunity.id || '')) +
-        '&checkout=start',
+      checkout_url: payUrl,
+      pay_url: payUrl,
+      opportunity_edit_url: editUrl,
     },
     subject: isReminder
-      ? 'Reminder: pay to go live — ' + listing.opportunity_title
-      : 'Approved — pay to go live — ' + listing.opportunity_title,
+      ? "Reminder: You're Approved! — " + listing.opportunity_title
+      : "You're Approved! — " + listing.opportunity_title,
   });
   return { sent: true, to };
 }

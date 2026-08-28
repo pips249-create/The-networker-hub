@@ -60,12 +60,12 @@ const BRANDED_EMAIL_TEMPLATES = {
   opportunity_listing_approved_pay: {
     file: 'opportunity-listing-approved-pay.html',
     marker: 'hub-email-layout-v3-navy-gold-details',
-    subject: 'Approved — pay to go live — {{opportunity_title}}',
+    subject: "You're Approved! — {{opportunity_title}}",
   },
   opportunity_listing_approved_pay_reminder: {
     file: 'opportunity-listing-approved-pay-reminder.html',
     marker: 'hub-email-layout-v3-navy-gold-details',
-    subject: 'Reminder: pay to go live — {{opportunity_title}}',
+    subject: "Reminder: You're Approved! — {{opportunity_title}}",
   },
   opportunity_listing_expiry_reminder: {
     file: 'opportunity-listing-expiry-reminder.html',
