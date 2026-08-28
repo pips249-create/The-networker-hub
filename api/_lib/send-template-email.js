@@ -24,6 +24,7 @@ const {
   legalPolicyUrl,
   contactUrl,
   logoNavUrl,
+  logoEmailHeaderUrl,
   logoFooterUrl,
   hubertIconUrl,
   supportEmail,
@@ -273,6 +274,13 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
     templateSource = resolved.source || 'file';
   }
 
+  if (isBrandedEmailSlug(slug)) {
+    const brandedSubject = getBrandedEmailSubject(slug);
+    if (brandedSubject) {
+      template = { ...template, subject: brandedSubject };
+    }
+  }
+
   const siteUrl = emailSiteBase(process.env.SITE_URL);
   const usesBookingEmailDefaults =
     slug === 'booking_confirmation' ||
@@ -300,7 +308,7 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
 
   let merged = {
     site_url: siteUrl,
-    logo_url: logoNavUrl(siteUrl),
+    logo_url: logoEmailHeaderUrl(siteUrl),
     logo_footer_url: logoFooterUrl(siteUrl),
     hubert_icon_url: hubertIconUrl(siteUrl),
     privacy_url: legalPolicyUrl(siteUrl, 'privacy'),
@@ -356,7 +364,7 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
     if (greeting) merged.user_name = greeting;
   }
 
-  merged.logo_url = logoNavUrl(siteUrl);
+  merged.logo_url = logoEmailHeaderUrl(siteUrl);
   merged.logo_footer_url = logoFooterUrl(siteUrl);
   merged.hubert_icon_url = hubertIconUrl(siteUrl);
   // Prefer live CMS sponsors. If the slot is empty, keep any caller-provided row

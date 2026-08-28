@@ -5,10 +5,11 @@ const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
 const {
   buildSponsorSection,
   fetchSponsorBlockForSlot,
+  resolveBookingEmailSponsorBlock,
   EVENTS_SPONSOR_SLOT,
   isEmailSafeLogoUrl,
 } = require('./email-booking-defaults');
-const { hasSponsorLogo, sponsorLogoUrl, sponsorCompanyName } = require('./cms-sponsor-fields');
+const { hasSponsorLogo, sponsorLogoUrl, sponsorCompanyName, isEmailSponsorBlock } = require('./cms-sponsor-fields');
 const { toPublicAssetUrl } = require('./hub-email-urls');
 const { withSponsorUtm } = require('./sponsor-utm');
 const {
@@ -129,6 +130,10 @@ const OPPORTUNITY_MINI_SPONSOR_SLUGS = new Set([
   'opportunity_listing_expiry_reminder',
   'opportunity_premium_expiry_reminder',
   'opportunity_premium_live',
+  'opportunity_enquiry_received',
+  'opportunity_enquiry_sent',
+  'opportunity_open_day_interest_received',
+  'opportunity_open_day_interest_sent',
   'saved_opportunity_closing_soon',
   'opportunity_saved_search_match',
 ]);
@@ -303,13 +308,34 @@ async function resolveEventsMainSponsorBlock(sb) {
 }
 
 async function resolveOpportunitySponsorBlock(sb) {
-  const primary = await fetchSponsorBlockForSlot(sb, OPPORTUNITIES_SPONSOR_SLOT);
-  if (primary) {
-    if (primary.include_in_emails !== false && isRenderableEmailSponsor(primary)) return primary;
-  } else {
-    const legacy = await fetchSponsorBlockForSlot(sb, OPPORTUNITY_SIDEBAR_SLOT);
-    if (legacy && legacy.include_in_emails !== false && isRenderableEmailSponsor(legacy)) return legacy;
+  const slots = [OPPORTUNITIES_SPONSOR_SLOT, OPPORTUNITY_SIDEBAR_SLOT];
+  for (let i = 0; i < slots.length; i += 1) {
+    const block = await fetchSponsorBlockForSlot(sb, slots[i]);
+    if (block && block.include_in_emails !== false && isEmailSponsorBlock(block)) {
+      return block;
+    }
   }
+
+  try {
+    const { block: bookingBlock } = await resolveBookingEmailSponsorBlock(sb);
+    if (bookingBlock && isEmailSponsorBlock(bookingBlock)) return bookingBlock;
+  } catch {
+    /* fall through */
+  }
+
+  const eventsMain = await resolveEventsMainSponsorBlock(sb);
+  if (eventsMain && isEmailSponsorBlock(eventsMain)) return eventsMain;
+
+  try {
+    const ads = await fetchMiniSponsorAds(sb, OPPORTUNITY_PAGE_CAROUSEL_SLOT, 3);
+    for (let j = 0; j < ads.length; j += 1) {
+      const ad = ads[j];
+      if (ad && isEmailSponsorBlock(ad)) return ad;
+    }
+  } catch {
+    /* ignore */
+  }
+
   return null;
 }
 

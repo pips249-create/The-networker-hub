@@ -1089,6 +1089,70 @@ async function updateOpportunity(id, payload) {
   return listing;
 }
 
+function canOrganiserUnpublishOpportunityRow(row) {
+  if (!row) return false;
+  const status = String(row.status || '').toLowerCase();
+  if (status === 'unpublished') return false;
+  if (listingPaymentCurrent(row)) return true;
+  const approval = String(row.approval_status || '').trim();
+  if (approval === 'Approved') return true;
+  return status === 'published' || status === 'live';
+}
+
+function canOrganiserDeleteOpportunityDraftRow(row) {
+  if (!row) return false;
+  if (listingPaymentCurrent(row)) return false;
+  if (row.listing_paid_at) return false;
+  if (String(row.listing_stripe_subscription_id || '').trim()) return false;
+  return true;
+}
+
+async function unpublishOpportunityForOrganiser(id) {
+  const oppId = String(id || '').trim();
+  if (!isUuid(oppId)) throw new Error('invalid_opportunity_id');
+  const existingRow = await getOpportunityRowById(oppId);
+  if (!existingRow) throw new Error('not_found');
+  const status = String(existingRow.status || '').toLowerCase();
+  if (status === 'unpublished') {
+    return rowToListing(existingRow);
+  }
+  if (!canOrganiserUnpublishOpportunityRow(existingRow)) {
+    const err = new Error('cannot_unpublish_draft');
+    err.code = 'cannot_unpublish_draft';
+    throw err;
+  }
+  const now = new Date().toISOString();
+  const sb = getSupabaseAdmin();
+  const { data, error } = await sb
+    .from('business_opportunities')
+    .update({
+      status: 'unpublished',
+      featured: false,
+      updated_at: now,
+    })
+    .eq('id', oppId)
+    .select('*')
+    .single();
+  if (error) throw new Error(error.message);
+  return rowToListing(data);
+}
+
+async function deleteOpportunityDraftForOrganiser(id) {
+  const oppId = String(id || '').trim();
+  if (!isUuid(oppId)) throw new Error('invalid_opportunity_id');
+  const existingRow = await getOpportunityRowById(oppId);
+  if (!existingRow) throw new Error('not_found');
+  if (!canOrganiserDeleteOpportunityDraftRow(existingRow)) {
+    const err = new Error('cannot_delete_listing');
+    err.code = 'cannot_delete_listing';
+    throw err;
+  }
+  const sb = getSupabaseAdmin();
+  const { error } = await sb.from('business_opportunities').delete().eq('id', oppId);
+  if (error) throw new Error(error.message);
+  return { id: oppId, title: String(existingRow.title || '').trim() };
+}
+
 async function activateOpportunityPremium(opportunityId, sessionId) {
   const id = String(opportunityId || '').trim();
   const sid = sessionId ? String(sessionId).trim() : '';
@@ -1378,6 +1442,8 @@ module.exports = {
   opportunityOwnedBySession,
   createOpportunity,
   updateOpportunity,
+  unpublishOpportunityForOrganiser,
+  deleteOpportunityDraftForOrganiser,
   rejectOpportunityListing,
   rejectPendingOpportunityChanges,
   applyApprovedPendingReviewChanges,

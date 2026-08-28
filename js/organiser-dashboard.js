@@ -16967,6 +16967,7 @@
         opportunityRoiFootnoteHtml(o, enquiries.length) +
         '<div class="org-opp-listing-card-actions">' +
         opportunityPrimaryManageActionHtml(o) +
+        opportunityManageSecondaryActionHtml(o) +
         '<a class="org-btn org-btn-outline org-btn-sm" href="' +
         esc(viewUrl) +
         '" target="_blank" rel="noopener">View live</a> ' +
@@ -17044,6 +17045,95 @@
 
   function opportunityListingIsLive(o) {
     return opportunityStatusForBadge(o).key === 'live';
+  }
+
+  function opportunityCanUnpublish(o) {
+    if (!o) return false;
+    const status = String(o.status || '').toLowerCase();
+    if (status === 'unpublished') return false;
+    if (opportunityListingIsLive(o)) return true;
+    const approval = String(o.approvalStatus || o.approval_status || '').trim();
+    if (approval === 'Approved') return true;
+    return status === 'published' || status === 'live';
+  }
+
+  function opportunityCanDeleteDraft(o) {
+    if (!o) return false;
+    if (o.listingPaymentActive) return false;
+    if (o.listingPaidAt || o.listing_paid_at) return false;
+    if (o.listingStripeSubscriptionId || o.listing_stripe_subscription_id) return false;
+    return true;
+  }
+
+  async function confirmUnpublishOpportunityListing(opportunityId) {
+    const id = String(opportunityId || '').trim();
+    if (!id) return;
+    const o = (state.opportunities || []).find(function (item) {
+      return item.id === id;
+    }) || { id: id };
+    const label = o.title || 'this listing';
+    const ok = window.confirm(
+      'Unpublish "' +
+        label +
+        '"?\n\n' +
+        'It will be removed from the public directory immediately. Enquiries already received stay in your dashboard.\n\n' +
+        'Your monthly listing subscription is separate — cancel it in Stripe if you do not want further charges.'
+    );
+    if (!ok) return;
+    const res = await api('/api/organiser/opportunities', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'unpublish', id: id }),
+    });
+    if (!res.ok) {
+      window.alert(res.data.message || res.data.error || 'Could not unpublish this listing.');
+      return;
+    }
+    await loadOpportunitiesList({ force: true });
+    renderOpportunitiesList();
+    if (businessSubRoute === 'business-open-days') {
+      populateOpenDayAddListingSelect();
+    }
+  }
+
+  async function confirmDeleteOpportunityDraft(opportunityId) {
+    const id = String(opportunityId || '').trim();
+    if (!id) return;
+    const o = (state.opportunities || []).find(function (item) {
+      return item.id === id;
+    }) || { id: id };
+    const label = o.title || 'this draft';
+    const ok = window.confirm(
+      'Permanently delete "' + label + '"?\n\nThis cannot be undone. Only use this for unpaid drafts.'
+    );
+    if (!ok) return;
+    const res = await api('/api/organiser/opportunities', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'delete', id: id }),
+    });
+    if (!res.ok) {
+      window.alert(res.data.message || res.data.error || 'Could not delete this listing.');
+      return;
+    }
+    await loadOpportunitiesList({ force: true });
+    renderOpportunitiesList();
+  }
+
+  function opportunityManageSecondaryActionHtml(o) {
+    if (opportunityCanUnpublish(o)) {
+      return (
+        '<button type="button" class="org-btn org-btn-outline org-btn-sm" data-opp-unpublish="' +
+        esc(o.id) +
+        '">Unpublish</button> '
+      );
+    }
+    if (opportunityCanDeleteDraft(o)) {
+      return (
+        '<button type="button" class="org-btn org-btn-outline org-btn-sm org-btn-danger-text" data-opp-delete-draft="' +
+        esc(o.id) +
+        '">Delete draft</button> '
+      );
+    }
+    return '';
   }
 
   function opportunityEditUrl(o) {
@@ -17157,6 +17247,9 @@
       }
       return { key: 'live', label: 'Live' };
     }
+    if (status === 'unpublished') {
+      return { key: 'unpublished', label: 'Unpublished' };
+    }
     if (approval === 'Approved' && !paid) {
       return { key: 'awaiting_payment', label: 'Approved — pay to go live' };
     }
@@ -17230,6 +17323,7 @@
         opportunityExpiryCellHtml(o) +
         '</td><td class="org-td-actions" data-label="Actions">' +
         opportunityPrimaryManageActionHtml(o) +
+        opportunityManageSecondaryActionHtml(o) +
         '<a class="org-btn org-btn-outline org-btn-sm" href="' +
         esc(viewUrl) +
         '" target="_blank" rel="noopener">View</a> ' +
@@ -18649,6 +18743,20 @@
         if (openDayAddBtn) {
           e.preventDefault();
           openAddOpenDayTalkForListing(openDayAddBtn.getAttribute('data-opp-add-open-day'));
+          return;
+        }
+
+        const oppUnpublishBtn = e.target.closest('[data-opp-unpublish]');
+        if (oppUnpublishBtn) {
+          e.preventDefault();
+          confirmUnpublishOpportunityListing(oppUnpublishBtn.getAttribute('data-opp-unpublish'));
+          return;
+        }
+
+        const oppDeleteDraftBtn = e.target.closest('[data-opp-delete-draft]');
+        if (oppDeleteDraftBtn) {
+          e.preventDefault();
+          confirmDeleteOpportunityDraft(oppDeleteDraftBtn.getAttribute('data-opp-delete-draft'));
           return;
         }
 

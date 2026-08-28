@@ -1874,6 +1874,35 @@ body.oe-opportunity-drawer-open {
   min-width: 0;
 }
 
+.oe-danger-zone {
+  margin-top: 8px;
+  border-color: rgba(180, 35, 24, 0.18);
+}
+
+.oe-danger-zone-title {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #7a1c12;
+}
+
+.oe-danger-zone-lede {
+  margin: 0 0 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ee-text-mid, #5c5660);
+}
+
+.oe-danger-zone-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.oe-danger-zone-note {
+  margin: 10px 0 0;
+}
+
 @media (max-width: 640px) {
   .oe-open-day-row-grid {
     grid-template-columns: 1fr;

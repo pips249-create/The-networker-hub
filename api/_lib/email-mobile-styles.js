@@ -31,7 +31,18 @@ const LEGACY_MOBILE_MEDIA_RE =
 
 function patchEmailMobileStyles(html) {
   let out = String(html || '');
-  if (!out.includes('@media only screen and (max-width:600px)')) return out;
+  if (!out.includes('<head')) return out;
+
+  if (!/name=["']color-scheme["']/i.test(out)) {
+    out = out.replace(
+      /<head>/i,
+      '<head>\n  <meta name="color-scheme" content="light only">\n  <meta name="supported-color-schemes" content="light">'
+    );
+  }
+
+  if (!out.includes('@media only screen and (max-width:600px)')) {
+    return out;
+  }
 
   out = out.replace(LEGACY_MOBILE_MEDIA_RE, EMAIL_MOBILE_MEDIA_CSS);
 
@@ -64,12 +75,21 @@ function patchEmailMobileStyles(html) {
   );
 
   out = out.replace(
+    /alt="The Networker UK" width="240" style="height:auto;display:inline-block;margin:0 auto;border:0;max-width:240px;width:100%;"/g,
+    'alt="The Networker UK" width="220" height="102" class="email-logo-header" style="height:auto;display:inline-block;margin:0 auto;border:0;max-width:220px;width:100%;"'
+  );
+  out = out.replace(
     /alt="The Networker UK" width="240" style="height:auto;display:inline-block;margin:0 auto;border:0;max-width:240px;"/g,
-    'alt="The Networker UK" width="240" class="email-logo-header" style="height:auto;display:inline-block;margin:0 auto;border:0;max-width:240px;"'
+    'alt="The Networker UK" width="220" height="102" class="email-logo-header" style="height:auto;display:inline-block;margin:0 auto;border:0;max-width:220px;"'
   );
   out = out.replace(
     /alt="The Networker UK" width="200" style="height:auto;display:inline-block;margin:0 auto 16px;border:0;max-width:200px;"/g,
     'alt="The Networker UK" width="200" class="email-logo-footer" style="height:auto;display:inline-block;margin:0 auto 16px;border:0;max-width:200px;"'
+  );
+
+  out = out.replace(
+    /<td class="mobile-header-pad" style="background:#f5f0e8;padding:28px 40px 0;text-align:center;">/g,
+    '<td class="mobile-header-pad" style="background-color:#f5f0e8 !important;background-image:linear-gradient(#f5f0e8,#f5f0e8);padding:28px 40px 0;text-align:center;">'
   );
 
   return out;

@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260723" />
     <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260608c" />
-    <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260828openday5" />
+    <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260828oppmanage1" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260825adminbadge1" />
     <style>
       /* Prevent browse-page nav padding flash before organiser form CSS loads */
@@ -428,6 +428,16 @@
           </div>
           <p class="ee-hint ee-actions-note" id="oe-actions-note">Review your listing, then submit for approval. You can keep editing until we approve — submit again after any changes.</p>
         </div>
+
+        <div class="ee-card oe-danger-zone" id="oe-danger-zone" hidden>
+          <h2 class="oe-danger-zone-title">Manage listing</h2>
+          <p class="oe-danger-zone-lede" id="oe-danger-zone-lede"></p>
+          <div class="oe-danger-zone-actions">
+            <button type="button" class="ee-btn ee-btn-outline" id="oe-unpublish-listing" hidden>Unpublish listing</button>
+            <button type="button" class="ee-btn ee-btn-danger" id="oe-delete-draft" hidden>Delete draft</button>
+          </div>
+          <p class="ee-hint oe-danger-zone-note" id="oe-danger-zone-note" hidden></p>
+        </div>
       </form>
     </div>
 
@@ -442,6 +452,6 @@
     <script src="../js/opportunities-catalog.js?v=20260828cookie1" defer></script>
     <script src="../js/hub-event-timezone.js?v=20260812dst" defer></script>
     <script src="../js/organiser-quarter-time.js?v=20260828openday5" defer></script>
-    <script src="../js/organiser-opportunity-edit.js?v=20260828openday5" defer></script>
+    <script src="../js/organiser-opportunity-edit.js?v=20260828oppmanage1" defer></script>
   </body>
 </html>

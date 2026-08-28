@@ -554,6 +554,105 @@
     );
   }
 
+  function opportunityCanUnpublish(opp) {
+    if (!opp) return false;
+    const status = String(opp.status || '').toLowerCase();
+    if (status === 'unpublished') return false;
+    if (opportunityListingIsLive(opp)) return true;
+    const approval = String(opp.approvalStatus || '').trim();
+    if (approval === 'Approved') return true;
+    return status === 'published' || status === 'live';
+  }
+
+  function opportunityCanDeleteDraft(opp) {
+    if (!opp) return false;
+    if (opp.listingPaymentActive) return false;
+    if (opp.listingPaidAt) return false;
+    if (opp.listingStripeSubscriptionId) return false;
+    return true;
+  }
+
+  async function unpublishCurrentOpportunityListing() {
+    if (!editId || !currentOpportunity) return;
+    const label = currentOpportunity.title || 'this listing';
+    const ok = window.confirm(
+      'Unpublish "' +
+        label +
+        '"?\n\n' +
+        'It will be removed from the public business opportunities directory immediately. Existing enquiries stay in your dashboard.\n\n' +
+        'Your monthly listing subscription is separate — cancel it in Stripe (or email us) if you do not want further charges.'
+    );
+    if (!ok) return;
+    const res = await api('/api/organiser/opportunities', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'unpublish', id: editId }),
+    });
+    if (!res.ok) {
+      showAlert(res.data.message || res.data.error || 'Could not unpublish this listing.', true);
+      return;
+    }
+    showAlert(res.data.message || 'Listing unpublished.', false);
+    if (res.data.opportunity) syncListingStatusUi(res.data.opportunity);
+    syncDangerZoneUi();
+  }
+
+  async function deleteCurrentOpportunityDraft() {
+    if (!editId || !currentOpportunity) return;
+    const label = currentOpportunity.title || 'this draft';
+    const ok = window.confirm(
+      'Permanently delete "' +
+        label +
+        '"?\n\nThis cannot be undone. Use this only for drafts that have never been paid for.'
+    );
+    if (!ok) return;
+    const res = await api('/api/organiser/opportunities', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'delete', id: editId }),
+    });
+    if (!res.ok) {
+      showAlert(res.data.message || res.data.error || 'Could not delete this listing.', true);
+      return;
+    }
+    formDirty = false;
+    if (window.HubOrganiserActions && window.HubOrganiserActions.goToBusinessOpportunities) {
+      window.HubOrganiserActions.goToBusinessOpportunities();
+    } else {
+      location.href = '/organiser/#business-listings';
+    }
+  }
+
+  function syncDangerZoneUi() {
+    const zone = document.getElementById('oe-danger-zone');
+    const unpublishBtn = document.getElementById('oe-unpublish-listing');
+    const deleteBtn = document.getElementById('oe-delete-draft');
+    const lede = document.getElementById('oe-danger-zone-lede');
+    const note = document.getElementById('oe-danger-zone-note');
+    if (!zone || !editId || !currentOpportunity) {
+      if (zone) zone.hidden = true;
+      return;
+    }
+    const canUnpublish = opportunityCanUnpublish(currentOpportunity);
+    const canDelete = opportunityCanDeleteDraft(currentOpportunity);
+    if (!canUnpublish && !canDelete) {
+      zone.hidden = true;
+      return;
+    }
+    zone.hidden = false;
+    if (unpublishBtn) unpublishBtn.hidden = !canUnpublish;
+    if (deleteBtn) deleteBtn.hidden = !canDelete;
+    if (lede) {
+      lede.textContent = canUnpublish
+        ? 'Hide this listing from the public directory. Your subscription continues until you cancel it in Stripe.'
+        : 'Remove this unpaid draft permanently.';
+    }
+    if (note) {
+      note.hidden = !canUnpublish;
+      note.textContent = canUnpublish
+        ? 'Unpublishing does not cancel billing. Email hi@thenetworkeruk.com if you need help stopping your subscription.'
+        : '';
+    }
+  }
+
   function applyLiveListingResubmitUi() {
     const live = opportunityListingIsLive(currentOpportunity);
     document.body.classList.toggle('is-live-listing-resubmit', live);
@@ -1235,6 +1334,9 @@
       if (opp.listingPaymentActive && status === 'published' && approval === 'Approved') {
         label = 'Live';
         cls = 'is-published';
+      } else if (status === 'unpublished') {
+        label = 'Unpublished';
+        cls = 'is-draft';
       } else if (approval === 'Approved') {
         label = 'Approved — pay to go live';
         cls = 'is-awaiting-payment';
@@ -1275,6 +1377,7 @@
     syncPrimarySubmitButton();
     listingPaymentPanelVisible();
     applyLiveListingResubmitUi();
+    syncDangerZoneUi();
   }
 
   function showStatusBadge(opportunity) {
@@ -2945,6 +3048,17 @@
         if (loading) loading.hide();
       }
     }
+
+    document.getElementById('oe-unpublish-listing')?.addEventListener('click', function () {
+      unpublishCurrentOpportunityListing().catch(function (err) {
+        showAlert(String((err && err.message) || 'Could not unpublish listing.'), true);
+      });
+    });
+    document.getElementById('oe-delete-draft')?.addEventListener('click', function () {
+      deleteCurrentOpportunityDraft().catch(function (err) {
+        showAlert(String((err && err.message) || 'Could not delete draft.'), true);
+      });
+    });
 
     syncOpportunitySteps({ revealAll: !!editId });
     resetFormBaseline();

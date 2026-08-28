@@ -76,16 +76,16 @@ function buildSponsorSection(block, options) {
   if (!block) return '';
   const label = String(options?.label || '').trim() || 'Powered by';
   const rawLogo = sponsorLogoUrl(block);
-  if (!hasSponsorLogo(block) || !isEmailSafeLogoUrl(rawLogo)) return '';
-  const logo = toPublicAssetUrl(rawLogo, process.env.SITE_URL);
-  if (!logo) return '';
+  const hasLogo = hasSponsorLogo(block) && isEmailSafeLogoUrl(rawLogo);
+  const name = sponsorCompanyName(block) || 'Our sponsor';
+  if (!hasLogo && !sponsorCompanyName(block)) return '';
+  const logo = hasLogo ? toPublicAssetUrl(rawLogo, process.env.SITE_URL) : '';
   const site = String(options?.siteUrl || process.env.SITE_URL || 'https://www.thenetworkeruk.com').replace(
     /\/$/,
     ''
   );
   const placement = String(options?.placement || options?.slot || 'email_sponsor').trim() || 'email_sponsor';
   const rawUrl = String(block.cta_url || '').trim() || site + '/advertising';
-  const name = sponsorCompanyName(block) || 'Our sponsor';
   // Route via Hub click-through so Brevo / email logo taps appear in sponsor packs.
   const url = withSponsorClickThrough(rawUrl, placement, {
     campaign: String(options?.campaign || placement).trim() || placement,

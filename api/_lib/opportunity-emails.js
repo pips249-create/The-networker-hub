@@ -17,12 +17,25 @@ function formatEmailDate(iso) {
   });
 }
 
+const { emailGreetingName } = require('./email-display-name');
+
 function ownerNameFromOpportunity(opportunity, email) {
-  const host = String(opportunity?.host || '').trim();
-  if (host) return host.split(' ')[0] || host;
   const em = String(email || opportunity?.ownerEmail || opportunity?.contactEmail || '').trim();
-  if (!em) return 'there';
-  return em.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase()) || 'there';
+  if (em) {
+    const local = em.split('@')[0].replace(/[._-]+/g, ' ').trim();
+    const greeting = emailGreetingName(local);
+    if (greeting && greeting.toLowerCase() !== 'there') return greeting;
+  }
+  const host = String(opportunity?.host || '').trim();
+  if (host) {
+    const parts = host.split(/\s+/).filter(Boolean);
+    const meaningful = parts.filter(function (word) {
+      return !/^(the|a|an)$/i.test(word);
+    });
+    if (meaningful.length) return meaningful[0];
+    return parts[0] || host;
+  }
+  return 'there';
 }
 
 function ownerEmailForOpportunity(opportunity) {

@@ -83,6 +83,8 @@ module.exports = async function handler(req, res) {
     opportunityOwnedBySession,
     createOpportunity,
     updateOpportunity,
+    unpublishOpportunityForOrganiser,
+    deleteOpportunityDraftForOrganiser,
     airtableSetupHint,
   } = api;
 
@@ -100,6 +102,18 @@ module.exports = async function handler(req, res) {
       error: 'opportunities_unavailable',
       message: 'Opportunity listings require Supabase. Set DATA_PROVIDER=supabase.',
     });
+  }
+
+  async function assertOwnedOpportunity(opportunityId) {
+    const existing = await getOpportunityById(opportunityId);
+    if (!existing) return { ok: false, status: 404, error: 'not_found' };
+    if (
+      !isPlatformAdmin(auth.session) &&
+      !opportunityOwnedBySession(auth.session, existing)
+    ) {
+      return { ok: false, status: 403, error: 'opportunity_not_owned' };
+    }
+    return { ok: true, opportunity: existing };
   }
 
   async function ownedOpportunities() {
@@ -164,6 +178,53 @@ module.exports = async function handler(req, res) {
 
   if (req.method === 'POST') {
     const body = parseBody(req);
+    const action = String(body.action || '').trim();
+    if (action === 'unpublish' || action === 'delete') {
+      const opportunityId = String(body.id || body.opportunityId || '').trim();
+      if (!opportunityId) return json(res, 400, { error: 'missing_opportunity_id' });
+      const access = await assertOwnedOpportunity(opportunityId);
+      if (!access.ok) return json(res, access.status, { error: access.error });
+      try {
+        if (action === 'unpublish') {
+          const opportunity = await unpublishOpportunityForOrganiser(opportunityId);
+          return json(res, 200, {
+            ok: true,
+            opportunity,
+            message:
+              'Listing unpublished — it is hidden from the public directory. Cancel your monthly subscription in Stripe if you do not want further charges.',
+          });
+        }
+        const deleted = await deleteOpportunityDraftForOrganiser(opportunityId);
+        return json(res, 200, {
+          ok: true,
+          deleted: true,
+          id: deleted.id,
+          message: 'Draft listing deleted.',
+        });
+      } catch (e) {
+        const msg = String((e && e.message) || '');
+        if (msg === 'cannot_unpublish_draft') {
+          return json(res, 400, {
+            ok: false,
+            error: 'cannot_unpublish_draft',
+            message: 'Draft listings can be deleted instead of unpublished.',
+          });
+        }
+        if (msg === 'cannot_delete_listing') {
+          return json(res, 400, {
+            ok: false,
+            error: 'cannot_delete_listing',
+            message:
+              'Only unpaid drafts can be deleted. Unpublish live listings instead, then cancel your subscription if needed.',
+          });
+        }
+        return jsonPublicError(res, json, e, {
+          code: action === 'unpublish' ? 'opportunity_unpublish_failed' : 'opportunity_delete_failed',
+          logLabel: '[organiser-opportunities]',
+        });
+      }
+    }
+
     const base = opportunityPayloadFromBody(body, auth.session);
     if (!base.title) return json(res, 400, { error: 'missing_title' });
     if (!base.ownerEmail) return json(res, 400, { error: 'missing_email' });

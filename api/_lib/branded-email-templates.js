@@ -95,12 +95,12 @@ const BRANDED_EMAIL_TEMPLATES = {
   opportunity_open_day_interest_received: {
     file: 'opportunity-open-day-interest-received.html',
     marker: 'hub-email-layout-v3-navy-gold',
-    subject: 'Open day interest: {{registrant_name}} — {{opportunity_title}}',
+    subject: 'Someone wants your open day — {{opportunity_title}}',
   },
   opportunity_open_day_interest_sent: {
     file: 'opportunity-open-day-interest-sent.html',
     marker: 'hub-email-layout-v3-navy-gold',
-    subject: 'Thanks — we have received your open day interest — {{opportunity_title}}',
+    subject: 'Thanks — open day interest received — {{opportunity_title}}',
   },
   opportunity_listing_expired: {
     file: 'opportunity-listing-expired.html',

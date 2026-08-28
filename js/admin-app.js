@@ -22515,6 +22515,13 @@
     return Boolean(opportunityReviewSubmittedAt(opp));
   }
 
+  function opportunityHasPendingLiveUpdate(opp) {
+    if (!opp) return false;
+    if (opp.has_pending_live_update === true || opp.hasPendingLiveUpdate === true) return true;
+    var payload = opp.pending_review_payload || opp.pendingReviewPayload;
+    return Boolean(payload && payload.row);
+  }
+
   function opportunityCanApprove(opp) {
     return String((opp && opp.approval_status) || '') === 'Pending Review';
   }

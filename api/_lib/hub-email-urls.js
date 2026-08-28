@@ -157,6 +157,11 @@ function logoNavUrl(siteUrl) {
   return toPublicAssetUrl('/assets/logo-nav-transparent.png?v=' + LOGO_ASSET_VERSION, siteUrl);
 }
 
+/** Cream-header emails — full-colour logo sized for crisp display in Outlook/Gmail. */
+function logoEmailHeaderUrl(siteUrl) {
+  return toPublicAssetUrl('/assets/logo-nav-transparent.png?v=' + LOGO_ASSET_VERSION, siteUrl);
+}
+
 function logoFooterUrl(siteUrl) {
   return toPublicAssetUrl('/assets/logo-email-footer.png?v=' + LOGO_ASSET_VERSION, siteUrl);
 }
@@ -277,6 +282,7 @@ module.exports = {
   organiserBusinessDashboardUrl,
   opportunityPublicUrl,
   logoNavUrl,
+  logoEmailHeaderUrl,
   logoFooterUrl,
   hubertIconUrl,
   supportEmail,

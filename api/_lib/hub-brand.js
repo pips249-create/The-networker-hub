@@ -6,7 +6,7 @@ const DEFAULT_PUBLIC_SITE = 'https://www.thenetworkeruk.com';
 const SUPPORT_EMAIL = 'hi@thenetworkeruk.com';
 const MAIL_FROM_DOMAIN = 'mail.thenetworkeruk.com';
 const LEGACY_MAIL_FROM_DOMAINS = ['mail.thenetworkeruk.com', 'mail.thenetworkerhub.com'];
-const LOGO_ASSET_VERSION = '20260823uk3';
+const LOGO_ASSET_VERSION = '20260828email1';
 
 /** Legacy / future hosts — keep for redirects and platform URL detection. */
 const LEGACY_PUBLIC_HOSTS = [
