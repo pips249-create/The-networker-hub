@@ -27,7 +27,7 @@
     <script src="/js/hub-sponsor-prefetch.js?v=20260828perf2" data-slot="opportunities_sponsor_hub"></script>
     <link rel="stylesheet" href="/css/hub.css?v=20260825adminbadge1" />
     <link rel="stylesheet" href="/css/events-page.css?v=20260825sponsor2" />
-    <link rel="stylesheet" href="/css/opportunities-page.css?v=20260828compare3" />
+    <link rel="stylesheet" href="/css/opportunities-page.css?v=20260828filter2" />
     <link rel="stylesheet" href="/css/events-filter-bar.css?v=20260727sheet4" />
     <link rel="stylesheet" href="/css/hub-mobile.css?v=20260828compare3" />
     <link rel="icon" href="/favicon.ico?v=20260823uk3" sizes="any" />
@@ -183,6 +183,12 @@
             </div>
             <div class="filter-bar-row filter-bar-row-bottom" id="filter-bar-advanced">
               <div class="filter-bar-cluster">
+                <div class="filter-bar-row filter-bar-row-types filter-bar-row-types--nested filter-bar-row-types--primary">
+                  <div class="event-type-chips-wrap">
+                    <span class="filter-bar-chip-label filter-bar-chip-label--inline">Type</span>
+                    <nav class="event-type-chips" id="opp-type-chips" aria-label="Opportunity type"></nav>
+                  </div>
+                </div>
                 <div class="filter-bar-primary">
                   <fieldset class="filter-format-group filter-format-group--prominent filter-format-group--inline filter-opp-invest-group">
                     <legend class="filter-bar-chip-label">Investment</legend>
@@ -216,19 +222,13 @@
                     <span class="filter-more-chevron" aria-hidden="true">▾</span>
                   </button>
                 </div>
-                <div class="filter-bar-row filter-bar-row-types filter-bar-row-types--nested">
-                  <div class="event-type-chips-wrap">
-                    <span class="filter-bar-chip-label filter-bar-chip-label--inline">Type</span>
-                    <nav class="event-type-chips" id="opp-type-chips" aria-label="Opportunity type"></nav>
-                  </div>
-                </div>
-                <div class="filter-bar-row filter-bar-row-industries filter-bar-row-types--nested">
-                  <div class="event-type-chips-wrap">
-                    <span class="filter-bar-chip-label filter-bar-chip-label--inline">Industry</span>
-                    <nav class="event-type-chips" id="opp-industry-chips" aria-label="Industry"></nav>
-                  </div>
-                </div>
                 <div class="filter-more-panel filter-opp-more-panel" id="filter-more-panel" hidden>
+                  <div class="filter-bar-row filter-bar-row-industries filter-bar-row-types--nested">
+                    <div class="event-type-chips-wrap">
+                      <span class="filter-bar-chip-label filter-bar-chip-label--inline">Industry</span>
+                      <nav class="event-type-chips" id="opp-industry-chips" aria-label="Industry"></nav>
+                    </div>
+                  </div>
                   <div class="filter-opp-more-grid">
                     <div class="filter-opp-category-wrap" hidden>
                       <label class="filter-bar-select" for="opp-filter-category">
@@ -687,7 +687,7 @@
     <script src="/js/hub-spotlight-carousel.js?v=20260807fix3" defer></script>
     <script src="/js/browse-analytics-client.js?v=20260728browse2" defer></script>
     <script src="/js/hub-search-match.js?v=20260807search2" defer></script>
-    <script src="/js/opportunities-page.js?v=20260828compare3" defer></script>
+    <script src="/js/opportunities-page.js?v=20260828filter2" defer></script>
     <script src="/js/opportunities-map.js?v=20260827invest1" defer></script>
   </body>
 </html>

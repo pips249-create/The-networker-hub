@@ -2265,14 +2265,35 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
   padding: 14px 0 2px;
   border-top: 1px solid rgba(255, 255, 255, 0.16);
   margin-top: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.opp-browse-page .filter-opp-more-panel .filter-bar-row-industries {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.opp-browse-page .filter-bar-row-types--primary {
+  width: 100%;
+  margin: 0 0 4px;
+  padding: 0;
 }
 
 .opp-browse-page .filter-opp-more-grid {
   display: grid;
-  grid-template-columns: minmax(11rem, 1fr) minmax(16rem, 1.4fr) auto;
+  grid-template-columns: minmax(16rem, 1.4fr) auto;
   gap: 14px 20px;
   align-items: end;
   width: 100%;
+}
+
+/* Legacy industry <select> kept in DOM for sync; chips are the UI. */
+.opp-browse-page .filter-opp-more-grid > .filter-opp-category-wrap[hidden] {
+  display: none !important;
 }
 
 .opp-browse-page .filter-opp-category-wrap,
@@ -2286,6 +2307,14 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
   padding: 0;
   border: none;
   min-width: 0;
+}
+
+/* class display:flex must not override the HTML hidden attribute */
+.opp-browse-page .filter-opp-category-wrap[hidden],
+.opp-browse-page .filter-opp-commitment-group[hidden],
+.opp-browse-page .filter-opp-custom-invest[hidden],
+.opp-browse-page .filter-opp-more-panel[hidden] {
+  display: none !important;
 }
 
 .opp-browse-page .filter-opp-commitment-group {
@@ -2458,9 +2487,16 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
 
 .opp-browse-page .filter-mobile-sheet-body .filter-opp-more-panel,
 .opp-browse-page .filter-mobile-sheet-body .filter-opp-more-panel[hidden] {
+  display: flex !important;
+  flex-direction: column;
+  gap: 14px;
   padding-top: 0;
   border-top: none;
   margin-top: 0;
+}
+
+.opp-browse-page .filter-mobile-sheet-body .filter-more-toggle {
+  display: none !important;
 }
 
 .opp-browse-page .filter-mobile-sheet-body .filter-opp-more-grid {

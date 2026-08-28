@@ -1933,6 +1933,7 @@
 
   function countAdvancedFilters() {
     var n = 0;
+    if (activeCategory) n += 1;
     if (activeCommitments.length) n += 1;
     if (minInvest != null || maxInvest != null) n += 1;
     return n;
@@ -1950,6 +1951,14 @@
       els.moreBadge.setAttribute('aria-hidden', 'true');
       els.moreBadge.textContent = '';
     }
+  }
+
+  function openMoreFiltersIfNeeded() {
+    if (!els.moreToggle || !els.morePanel) return;
+    if (!countAdvancedFilters()) return;
+    if (!els.morePanel.hasAttribute('hidden')) return;
+    els.morePanel.removeAttribute('hidden');
+    els.moreToggle.setAttribute('aria-expanded', 'true');
   }
 
   function syncCategorySelect() {
@@ -3032,6 +3041,7 @@
     initFilterBar();
     bindActiveFilters();
     syncMoreFiltersBadge();
+    openMoreFiltersIfNeeded();
     syncClearFiltersVisibility();
     renderActiveFilters();
     initSearch();

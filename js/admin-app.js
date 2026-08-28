@@ -1175,7 +1175,16 @@
     document.getElementById('page-subtitle').textContent = subtitle;
     expandNavSectionForRoute(navKey);
     syncAdminPageGuide(route, fullHash || route);
+    syncOpportunitiesPitchPdfLink(navKey === 'opportunities' || route === 'opportunities');
     syncAdminLayoutOffset();
+  }
+
+  function syncOpportunitiesPitchPdfLink(show) {
+    var link = document.getElementById('admin-opportunities-pitch-pdf');
+    if (!link) return;
+    var on = !!show;
+    link.classList.toggle('hidden', !on);
+    link.hidden = !on;
   }
 
   function adminGuideKey(route, fullHash) {
