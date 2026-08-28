@@ -22363,11 +22363,23 @@
 
   function opportunityReviewSubmittedAt(opp) {
     if (!opp) return '';
-    return String(opp.review_submitted_at || opp.reviewSubmittedAt || '').trim();
+    var direct = String(opp.review_submitted_at || opp.reviewSubmittedAt || '').trim();
+    if (direct) return direct;
+    var meta = Array.isArray(opp.meta) ? opp.meta : [];
+    for (var i = 0; i < meta.length; i += 1) {
+      if (String(meta[i] && meta[i].key ? meta[i].key : '') !== '__review_submitted_at') continue;
+      var val = String(meta[i].val || '').trim();
+      if (val) return val;
+    }
+    return '';
   }
 
   function opportunityIsSubmittedForReview(opp) {
     return Boolean(opportunityReviewSubmittedAt(opp));
+  }
+
+  function opportunityCanApprove(opp) {
+    return String((opp && opp.approval_status) || '') === 'Pending Review';
   }
 
   function opportunityAboutParagraphs(opp) {
@@ -22588,6 +22600,7 @@
       opp.approval_status === 'Pending Review' && opportunityIsSubmittedForReview(opp);
     var isDraftNotSubmitted =
       opp.approval_status === 'Pending Review' && !opportunityIsSubmittedForReview(opp);
+    var canApprove = opportunityCanApprove(opp);
     var awaitingPay = opp.approval_status === 'Approved' && !opp.listing_payment_active;
     var previewHref = opportunityAdminViewHref(opp);
     var approveLabel = opp.listing_payment_active
@@ -22599,7 +22612,7 @@
         ? fmtTime(opp.updated_at)
         : '';
     var statusNote = isDraftNotSubmitted
-      ? 'Draft — not submitted for approval yet. The lister can still edit before submitting.'
+      ? 'Pending approval — submission stamp missing or not yet submitted. You can still approve if the listing looks complete.'
       : isPendingSubmitted
         ? 'Submitted for approval — lister can still edit and resubmit until you approve.' +
           (submittedAt ? ' · ' + submittedAt : '')
@@ -22634,8 +22647,10 @@
           attrEsc(previewHref) +
           '" target="_blank" rel="noopener" class="rounded-lg border border-slate-300 bg-white text-sm font-semibold px-3 py-2 hover:bg-slate-50">Open in workspace</a> '
         : '') +
-      (isPendingSubmitted
-        ? '<button type="button" data-opp-approve class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">' +
+      (canApprove
+        ? '<button type="button" data-opp-approve="' +
+          attrEsc(id) +
+          '" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">' +
           approveLabel +
           '</button> '
         : '') +
@@ -22711,7 +22726,7 @@
       '<h4 class="opp-review-preview-label">Listing page</h4>' +
       opportunityCleanupReviewDetailHtml(opp) +
       '</div></section></div>' +
-      (isPendingSubmitted
+      (canApprove
         ? '<section class="opp-review-decision" aria-labelledby="opp-review-decision-' +
           attrEsc(id) +
           '">' +
@@ -22727,7 +22742,9 @@
           '" data-opp-rejection-note rows="4" class="opp-review-deny-input" placeholder="e.g. Cover image is low quality, or the listing type should be Affiliate not Franchise…"></textarea>' +
           '<p class="opp-review-deny-msg text-xs" data-opp-rejection-msg hidden></p>' +
           '<div class="opp-review-decision-actions">' +
-          '<button type="button" data-opp-approve class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">' +
+          '<button type="button" data-opp-approve="' +
+          attrEsc(id) +
+          '" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">' +
           approveLabel +
           '</button>' +
           '<button type="button" data-opp-reject class="rounded-lg border border-red-300 bg-red-50 text-red-800 text-sm font-semibold px-4 py-2 hover:bg-red-100">Deny listing</button>' +
@@ -22793,10 +22810,11 @@
 
   function opportunityCleanupDataRowHtml(opp) {
     var publicHref = opportunityAdminViewHref(opp);
-    var isPending =
+    var isPendingSubmitted =
       opp.approval_status === 'Pending Review' && opportunityIsSubmittedForReview(opp);
+    var canApprove = opportunityCanApprove(opp);
     var awaitingPay = opp.approval_status === 'Approved' && !opp.listing_payment_active;
-    var rowClass = isPending
+    var rowClass = isPendingSubmitted
       ? 'border-b border-amber-100 bg-amber-50/40'
       : awaitingPay
         ? 'border-b border-sky-100 bg-sky-50/40'
@@ -22852,8 +22870,10 @@
       '</td>' +
       '<td class="py-2.5 text-right whitespace-nowrap">' +
       '<div class="flex flex-wrap justify-end gap-2">' +
-      (isPending
-        ? '<button type="button" data-opp-approve class="text-xs font-semibold rounded-lg bg-brand-700 text-white px-2.5 py-1 hover:bg-brand-900">' +
+      (canApprove
+        ? '<button type="button" data-opp-approve="' +
+          attrEsc(opp.id) +
+          '" class="text-xs font-semibold rounded-lg bg-brand-700 text-white px-2.5 py-1 hover:bg-brand-900">' +
           approveLabel +
           '</button>'
         : '') +
@@ -23791,9 +23811,13 @@
       var approveRow = approveBtn.closest('[data-opportunity-id-row]');
       var approvePanel = approveBtn.closest('.opportunity-cleanup-panel');
       var approveId =
+        String(approveBtn.getAttribute('data-opp-approve') || '').trim() ||
         (approveRow && approveRow.getAttribute('data-opportunity-id-row')) ||
         (approvePanel && approvePanel.getAttribute('data-opp-panel-for'));
-      if (!approveId) return;
+      if (!approveId) {
+        window.alert('Could not find that listing id. Refresh the page and try again.');
+        return;
+      }
       if (!approveRow && approvePanel) {
         var approveKey = String(approveId);
         var approveEsc =
@@ -23802,7 +23826,10 @@
             : approveKey.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
         approveRow = document.querySelector('[data-opportunity-id-row="' + approveEsc + '"]');
       }
-      var alreadyPaid = approveRow && approveRow.getAttribute('data-opp-paid') === '1';
+      var cachedOpp = findOpportunityCleanupRecord(approveId);
+      var alreadyPaid =
+        (approveRow && approveRow.getAttribute('data-opp-paid') === '1') ||
+        (cachedOpp && cachedOpp.listing_payment_active && cachedOpp.listing_paid_at);
       var confirmMsg = alreadyPaid
         ? 'Approve and go live now? Payment is already active — the listing will appear on /opportunities/ and the owner gets a “listing is live” email.'
         : 'Approve this listing? It will stay off the public site until they pay. The owner will get an email with a Stripe pay link.';
@@ -23810,11 +23837,22 @@
       approveBtn.disabled = true;
       adminPost('/api/admin/opportunities', { id: approveId, action: 'approve' })
         .then(function (data) {
-          if (!data.ok) throw new Error(data.message || data.error || 'Approve failed');
-          return refreshOpportunityCleanupData();
+          if (!data || !data.ok) {
+            throw new Error(
+              (data && (data.message || data.error)) || 'Approve failed'
+            );
+          }
+          return refreshOpportunityCleanupData().then(function () {
+            return data;
+          });
         })
-        .then(function () {
+        .then(function (data) {
           refreshAdminNotifications();
+          window.alert(
+            data && data.went_live
+              ? 'Approved — listing is live.'
+              : 'Approved — pay-to-go-live email sent to the owner.'
+          );
         })
         .catch(function (err) {
           window.alert(err.message || 'Could not approve listing.');

@@ -691,54 +691,59 @@ module.exports = async function handler(req, res) {
     if (body.action === 'approve') {
       try {
         const sb = getSupabaseAdmin();
-        const reviewQueueReady = await isOpportunityReviewQueueReady(sb);
         const now = new Date();
+        const { data: current, error: loadErr } = await sb
+          .from('business_opportunities')
+          .select('*')
+          .eq('id', id)
+          .maybeSingle();
+        if (loadErr) throw new Error(loadErr.message);
+        if (!current) {
+          return json(res, 404, { ok: false, error: 'not_found', message: 'Listing not found.' });
+        }
+
+        // Paid = Stripe listing_paid_at with a current term. Do not treat a bare
+        // listing_expires_at (without payment) as already paid — that blocked the
+        // review-then-pay path and confused Approve.
+        const alreadyPaid = Boolean(current.listing_paid_at) && listingPaymentCurrent(current);
+
         const patch = {
           approval_status: 'Approved',
           rejection_note: null,
+          approved_at: now.toISOString(),
+          approved_pay_reminder_sent_at: null,
           updated_at: now.toISOString(),
         };
-        if (reviewQueueReady) {
-          patch.approved_at = now.toISOString();
-          patch.approved_pay_reminder_sent_at = null;
-        }
-        const { data: current } = await sb
-          .from('business_opportunities')
-          .select(
-            reviewQueueReady
-              ? 'status, published_at, listing_expires_at, listing_paid_at, review_submitted_at'
-              : 'status, published_at, listing_expires_at, listing_paid_at'
-          )
-          .eq('id', id)
-          .maybeSingle();
-        const alreadyPaid = listingPaymentCurrent(current || {});
 
         if (alreadyPaid) {
           // Legacy / paid-while-pending: Approve goes live immediately.
-          if (String(current?.status || '').toLowerCase() !== 'published') {
+          if (String(current.status || '').toLowerCase() !== 'published') {
             patch.status = 'published';
           }
-          if (!current?.published_at) {
+          if (!current.published_at) {
             patch.published_at = now.toISOString();
           }
         } else {
           // Review-then-pay: stay off the public directory until Stripe payment.
           // Avoid published + published_at without expiry (legacy gate treats that as live).
-          if (String(current?.status || '').toLowerCase() === 'published') {
+          if (String(current.status || '').toLowerCase() === 'published') {
             patch.status = 'draft';
           }
+          // Clear a stale expiry left without payment so listingPaymentCurrent
+          // does not treat the listing as live before checkout.
+          if (current.listing_expires_at && !current.listing_paid_at) {
+            patch.listing_expires_at = null;
+          }
         }
-        if (reviewQueueReady && !current?.review_submitted_at) {
+
+        if (!effectiveReviewSubmittedAt(current)) {
           patch.review_submitted_at = now.toISOString();
         }
 
-        const { data, error } = await sb
-          .from('business_opportunities')
-          .update(patch)
-          .eq('id', id)
-          .select('*')
-          .single();
-        if (error) throw new Error(error.message);
+        const data = await writeOpportunityRow(sb, 'update', patch, id);
+        if (!data) {
+          throw new Error('Approve update returned no row');
+        }
 
         const listing = rowToListing(data);
         try {
@@ -757,7 +762,11 @@ module.exports = async function handler(req, res) {
           went_live: alreadyPaid,
         });
       } catch (e) {
-        return json(res, 500, { ok: false, error: 'approve_failed', message: e.message });
+        return json(res, 500, {
+          ok: false,
+          error: 'approve_failed',
+          message: e.message || 'Could not approve listing.',
+        });
       }
     }
 

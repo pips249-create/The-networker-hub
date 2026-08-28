@@ -697,11 +697,16 @@ async function persistOpportunityReviewSubmission(sb, id, opts) {
   const existing = opts && opts.existing ? opts.existing : null;
   const saved = opts && opts.saved ? opts.saved : null;
   const at = new Date().toISOString();
+  const baseMeta = Array.isArray(saved && saved.meta)
+    ? saved.meta
+    : Array.isArray(existing && existing.meta)
+      ? existing.meta
+      : [];
   const patch = {
     review_submitted_at: at,
     approval_status: 'Pending Review',
     status: existing && existing.listingPaymentActive ? 'published' : 'draft',
-    meta: mergeReviewSubmittedMeta((saved && saved.meta) || [], at),
+    meta: mergeReviewSubmittedMeta(baseMeta, at),
     updated_at: at,
   };
   return writeOpportunityRow(sb, 'update', patch, id);
