@@ -273,9 +273,10 @@
 
   async function goToAddOpportunity(options) {
     options = options || {};
-    var data = await ensureOrganiserAccess('/organiser/#business-list');
-    if (!data) return;
-    global.location.href = path('/organiser/#business-list');
+    saveBrowseReturn();
+    var loggedIn = await requireLogin('/organiser/opportunity-edit');
+    if (!loggedIn) return;
+    global.location.href = path('/organiser/opportunity-edit');
   }
 
   function isLiveListingStatus(status) {
