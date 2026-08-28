@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260825adminbadge1" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260828sidebar1" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260828sidebar1" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260828openday4" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260828openday7" />
     <!-- hub-mobile last so phone overrides win over dashboard table min-widths -->
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260812footer10" />
     <script src="../js/hub-defer-css.js?v=20260828perf2" data-hrefs="../css/organiser-event-edit.css?v=20260821ticketstep1|../css/organiser-flow-tour.css?v=20260716layout|../css/hubert-widget.css?v=20260805bottom2|../css/hub-ranking-badge.css?v=20260728lb2|../css/hub-partner-badge.css?v=20260820ticketembed1|../css/rankings-page.css?v=20260807rank|../css/organiser-opportunity-edit.css?v=20260716drawer|https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&family=Playfair+Display:wght@400;700&family=Source+Sans+3:wght@400;600;700&family=Oswald:wght@500;600&family=Nunito:wght@400;600;700&display=swap"></script>
@@ -593,74 +593,74 @@
             </div>
 
             <div class="org-open-day-add" id="opp-open-day-add-panel">
-              <div class="org-open-day-add-head">
-                <h2 class="org-open-day-add-title">Add an open day or talk</h2>
-                <p class="org-section-sub" style="margin:0">For live listings, schedule an in-person visit or online intro call — this does not change your approved listing details.</p>
-              </div>
               <p class="org-field-hint org-open-day-add-no-listings" id="opp-open-day-add-no-listings" hidden>
-                You need a business opportunity listing first.
+                You need a live business opportunity listing first.
                 <a href="/organiser/opportunity-edit">Add a listing</a>
               </p>
-              <form id="form-opp-open-day-add" class="org-open-day-add-form" hidden>
-                <div class="org-open-day-add-grid">
-                  <div class="org-field org-open-day-add-field--listing">
-                    <label for="opp-open-day-listing">Business opportunity</label>
-                    <select id="opp-open-day-listing" name="opportunityId" required>
-                      <option value="">Select a business opportunity…</option>
-                    </select>
-                  </div>
-                  <div class="org-field org-open-day-add-field--format">
-                    <fieldset class="org-open-day-format-fieldset">
-                      <legend>Format</legend>
-                      <label class="org-open-day-format-option">
-                        <input type="radio" name="openDayFormat" id="opp-open-day-format-in-person" value="in-person" checked required />
-                        In-person open day / visit
-                      </label>
-                      <label class="org-open-day-format-option">
-                        <input type="radio" name="openDayFormat" id="opp-open-day-format-online" value="online" />
-                        Online talk / call
-                      </label>
-                    </fieldset>
-                  </div>
-                  <div class="org-field">
-                    <label for="opp-open-day-date">Date</label>
-                    <input type="date" id="opp-open-day-date" name="openDayDate" required />
-                  </div>
-                  <div class="org-field">
-                    <label for="opp-open-day-start-time-hour">Start time</label>
-                    <select id="opp-open-day-start-time" required></select>
-                  </div>
-                  <div class="org-field">
-                    <label for="opp-open-day-end-time-hour">End time <span class="org-field-optional">(optional)</span></label>
-                    <select id="opp-open-day-end-time"></select>
-                  </div>
-                  <p class="org-field-hint org-open-day-time-note">Times use 15-minute steps (UK local).</p>
-                  <div class="org-field">
-                    <label for="opp-open-day-venue" id="opp-open-day-venue-label">Venue name <span class="org-field-optional">(optional)</span></label>
-                    <input type="text" id="opp-open-day-venue" name="venueName" maxlength="120" placeholder="e.g. Head office" />
-                  </div>
-                  <div class="org-field org-open-day-add-field--address" id="opp-open-day-address-wrap">
-                    <label for="opp-open-day-address">Address</label>
-                    <input type="text" id="opp-open-day-address" name="addressLine" maxlength="200" placeholder="Street address" required />
-                  </div>
-                  <div class="org-field org-open-day-add-field--city" id="opp-open-day-city-wrap">
-                    <label for="opp-open-day-city">City / town <span class="org-field-optional">(optional)</span></label>
-                    <input type="text" id="opp-open-day-city" name="city" maxlength="80" />
-                  </div>
-                  <div class="org-field org-open-day-add-field--postcode" id="opp-open-day-postcode-wrap">
-                    <label for="opp-open-day-postcode">Postcode <span class="org-field-optional">(optional)</span></label>
-                    <input type="text" id="opp-open-day-postcode" name="postcode" maxlength="20" />
-                  </div>
-                  <div class="org-field org-open-day-add-field--notes">
-                    <label for="opp-open-day-notes">Notes for visitors <span class="org-field-optional">(optional)</span></label>
-                    <input type="text" id="opp-open-day-notes" name="notes" maxlength="400" placeholder="e.g. Parking at rear, arrive 10 mins early" />
-                  </div>
+              <details class="org-open-day-add-details" id="opp-open-day-add-details" hidden>
+                <summary class="org-open-day-add-summary">Add an open day or talk</summary>
+                <div class="org-open-day-add-body">
+                  <p class="org-section-sub org-open-day-add-lede">For live listings, schedule an in-person visit or online intro call — this does not change your approved listing details.</p>
+                  <form id="form-opp-open-day-add" class="org-open-day-add-form" novalidate>
+                    <input type="hidden" id="opp-open-day-date" name="openDayDate" value="" />
+                    <div class="org-open-day-add-grid">
+                      <div class="org-field org-open-day-add-field--listing">
+                        <label for="opp-open-day-listing">Business opportunity</label>
+                        <select id="opp-open-day-listing" name="opportunityId" required>
+                          <option value="">Select a business opportunity…</option>
+                        </select>
+                      </div>
+                      <div class="org-field org-open-day-add-field--format">
+                        <label for="opp-open-day-format">Format</label>
+                        <select id="opp-open-day-format" name="openDayFormat">
+                          <option value="in-person">In-person open day / visit</option>
+                          <option value="online">Online talk / call</option>
+                        </select>
+                      </div>
+                      <div class="org-field org-open-day-add-field--calendar">
+                        <div class="org-open-day-date-head">
+                          <span class="org-open-day-date-label">Date</span>
+                          <span class="org-open-day-date-selected" id="opp-open-day-date-label" hidden></span>
+                        </div>
+                        <div id="opp-open-day-calendar" class="org-open-day-calendar-mount" tabindex="-1"></div>
+                      </div>
+                      <div class="org-field org-open-day-add-field--times">
+                        <label for="opp-open-day-start-time-hour">Start time</label>
+                        <select id="opp-open-day-start-time"></select>
+                      </div>
+                      <div class="org-field org-open-day-add-field--times">
+                        <label for="opp-open-day-end-time-hour">End time <span class="org-field-optional">(optional)</span></label>
+                        <select id="opp-open-day-end-time"></select>
+                      </div>
+                      <p class="org-field-hint org-open-day-time-note">Times use 15-minute steps (UK local).</p>
+                      <div class="org-field">
+                        <label for="opp-open-day-venue" id="opp-open-day-venue-label">Venue name <span class="org-field-optional">(optional)</span></label>
+                        <input type="text" id="opp-open-day-venue" name="venueName" maxlength="120" placeholder="e.g. Head office" />
+                      </div>
+                      <div class="org-field org-open-day-add-field--address" id="opp-open-day-address-wrap">
+                        <label for="opp-open-day-address">Address</label>
+                        <input type="text" id="opp-open-day-address" name="addressLine" maxlength="200" placeholder="Street address" />
+                      </div>
+                      <div class="org-field org-open-day-add-field--city" id="opp-open-day-city-wrap">
+                        <label for="opp-open-day-city">City / town <span class="org-field-optional">(optional)</span></label>
+                        <input type="text" id="opp-open-day-city" name="city" maxlength="80" />
+                      </div>
+                      <div class="org-field org-open-day-add-field--postcode" id="opp-open-day-postcode-wrap">
+                        <label for="opp-open-day-postcode">Postcode <span class="org-field-optional">(optional)</span></label>
+                        <input type="text" id="opp-open-day-postcode" name="postcode" maxlength="20" />
+                      </div>
+                      <div class="org-field org-open-day-add-field--notes">
+                        <label for="opp-open-day-notes">Notes for visitors <span class="org-field-optional">(optional)</span></label>
+                        <input type="text" id="opp-open-day-notes" name="notes" maxlength="400" placeholder="e.g. Parking at rear, arrive 10 mins early" />
+                      </div>
+                    </div>
+                    <div class="org-open-day-add-actions">
+                      <button type="submit" class="org-btn org-btn-gold" id="opp-open-day-add-submit">Add open day / talk</button>
+                      <p class="org-field-hint" id="opp-open-day-add-status" hidden role="status"></p>
+                    </div>
+                  </form>
                 </div>
-                <div class="org-open-day-add-actions">
-                  <button type="submit" class="org-btn org-btn-gold" id="opp-open-day-add-submit">Add open day / talk</button>
-                  <p class="org-field-hint" id="opp-open-day-add-status" hidden role="status"></p>
-                </div>
-              </form>
+              </details>
             </div>
           </div>
 
@@ -3906,8 +3906,9 @@
     <script src="../js/organiser-featured-duration.js?v=20260806onetime" defer></script>
     <script src="../js/hub-comms-pack.js?v=20260722share" defer></script>
     <script src="../js/hub-side-nav.js?v=20260805orgnav2" defer></script>
+    <script src="../js/organiser-single-date-calendar.js?v=20260828openday2" defer></script>
     <script src="../js/organiser-quarter-time.js?v=20260828openday2" defer></script>
-    <script src="../js/organiser-dashboard.js?v=20260828openday4" defer></script>
+    <script src="../js/organiser-dashboard.js?v=20260828openday7" defer></script>
     <script src="../js/organiser-workspace-comfort.js?v=20260813noshow1" defer></script>
   </body>
 </html>

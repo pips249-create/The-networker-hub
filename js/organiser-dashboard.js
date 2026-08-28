@@ -11338,8 +11338,7 @@
       return loadOpportunitiesList()
         .then(function () {
           populateOpenDayAddListingSelect();
-          initOpenDayTimeSelects();
-          syncOpenDayFormatFields();
+          bindOpenDayAddDetails();
           return loadOpportunityOpenDayInterests();
         })
         .then(function () {
@@ -16227,8 +16226,6 @@
     return d.toISOString();
   }
 
-  let openDayTimeSelectsReady = false;
-
   function combineOpenDayDateAndTime(dateKeyStr, timeStr) {
     const parts = String(dateKeyStr || '').trim().split('-').map(Number);
     const y = parts[0];
@@ -16247,13 +16244,20 @@
     return new Date(y, m - 1, d, hh, mm, 0).toISOString();
   }
 
+  function openDayTimeSelectsEnhanced() {
+    const startEl = document.getElementById('opp-open-day-start-time');
+    return Boolean(startEl && startEl.dataset.quarterEnhanced === '1');
+  }
+
   function initOpenDayTimeSelects() {
-    if (openDayTimeSelectsReady) return;
-    const qt = window.OrganiserQuarterTime;
-    if (!qt || typeof qt.initPair !== 'function') return;
-    qt.initPair('opp-open-day-start-time', 'opp-open-day-end-time', { start: '10:00', end: '12:00' });
+    if (openDayTimeSelectsEnhanced()) return true;
+    const startEl = document.getElementById('opp-open-day-start-time');
     const endEl = document.getElementById('opp-open-day-end-time');
-    if (endEl && !endEl.querySelector('option[value=""]')) {
+    if (!startEl || !endEl) return false;
+    const qt = window.OrganiserQuarterTime;
+    if (!qt || typeof qt.initPair !== 'function') return false;
+    qt.initPair('opp-open-day-start-time', 'opp-open-day-end-time', { start: '10:00', end: '12:00' });
+    if (!endEl.querySelector('option[value=""]')) {
       const empty = document.createElement('option');
       empty.value = '';
       empty.textContent = 'No end time';
@@ -16261,7 +16265,15 @@
       endEl.value = '';
       if (typeof endEl._quarterSyncUi === 'function') endEl._quarterSyncUi();
     }
-    openDayTimeSelectsReady = true;
+    return openDayTimeSelectsEnhanced();
+  }
+
+  function syncOpenDayTimeSelectValues() {
+    initOpenDayTimeSelects();
+    const qt = window.OrganiserQuarterTime;
+    if (qt && typeof qt.syncPairFromUi === 'function') {
+      qt.syncPairFromUi('opp-open-day-start-time', 'opp-open-day-end-time');
+    }
   }
 
   function resetOpenDayTimeSelects() {
@@ -16276,17 +16288,66 @@
   }
 
   function getOpenDayFormatValue() {
-    const checked = document.querySelector('input[name="openDayFormat"]:checked');
-    return checked ? String(checked.value || 'in-person').trim() : 'in-person';
+    const select = document.getElementById('opp-open-day-format');
+    return select ? String(select.value || 'in-person').trim() : 'in-person';
   }
 
   function setOpenDayFormatValue(format) {
-    const value = format === 'online' ? 'online' : 'in-person';
-    const input = document.getElementById(
-      value === 'online' ? 'opp-open-day-format-online' : 'opp-open-day-format-in-person'
-    );
-    if (input) input.checked = true;
+    const select = document.getElementById('opp-open-day-format');
+    if (select) select.value = format === 'online' ? 'online' : 'in-person';
     syncOpenDayFormatFields();
+  }
+
+  let openDayDateCalendar = null;
+
+  function ensureOpenDayDateCalendar(forceRender) {
+    if (!openDayDateCalendar) {
+      const Cal = window.OrganiserSingleDateCalendar;
+      if (!Cal || typeof Cal.init !== 'function') return null;
+      openDayDateCalendar = Cal.init({
+        containerId: 'opp-open-day-calendar',
+        inputId: 'opp-open-day-date',
+        labelId: 'opp-open-day-date-label',
+        onChange: function () {
+          setOpenDayAddStatus('', null);
+        },
+      });
+    }
+    if (forceRender && openDayDateCalendar && typeof openDayDateCalendar.render === 'function') {
+      openDayDateCalendar.render();
+    }
+    return openDayDateCalendar;
+  }
+
+  function prepareOpenDayAddFormUi() {
+    ensureOpenDayDateCalendar(true);
+    initOpenDayTimeSelects();
+    syncOpenDayFormatFields();
+  }
+
+  function bindOpenDayAddDetails() {
+    const details = document.getElementById('opp-open-day-add-details');
+    if (!details || details.dataset.boundToggle === '1') return;
+    details.dataset.boundToggle = '1';
+    details.addEventListener('toggle', function () {
+      if (!details.open) return;
+      prepareOpenDayAddFormUi();
+    });
+  }
+
+  function resetOpenDayDateCalendar() {
+    ensureOpenDayDateCalendar();
+    if (openDayDateCalendar && typeof openDayDateCalendar.clear === 'function') {
+      openDayDateCalendar.clear();
+    } else {
+      const input = document.getElementById('opp-open-day-date');
+      if (input) input.value = '';
+      const label = document.getElementById('opp-open-day-date-label');
+      if (label) {
+        label.textContent = '';
+        label.hidden = true;
+      }
+    }
   }
 
   function openDayToPutPayload(day) {
@@ -16345,12 +16406,17 @@
 
   function populateOpenDayAddListingSelect() {
     const select = document.getElementById('opp-open-day-listing');
-    const form = document.getElementById('form-opp-open-day-add');
+    const details = document.getElementById('opp-open-day-add-details');
     const noListings = document.getElementById('opp-open-day-add-no-listings');
     if (!select) return;
-    const list = (state.opportunities || []).slice().sort(function (a, b) {
-      return String(a.title || '').localeCompare(String(b.title || ''));
-    });
+    const list = (state.opportunities || [])
+      .filter(function (o) {
+        return opportunityListingIsLive(o);
+      })
+      .slice()
+      .sort(function (a, b) {
+        return String(a.title || '').localeCompare(String(b.title || ''));
+      });
     const previous = select.value;
     select.innerHTML = '<option value="">Select a business opportunity…</option>';
     list.forEach(function (o) {
@@ -16364,7 +16430,7 @@
     })) {
       select.value = previous;
     }
-    if (form) form.hidden = list.length === 0;
+    if (details) details.hidden = list.length === 0;
     if (noListings) noListings.hidden = list.length > 0;
   }
 
@@ -16473,10 +16539,7 @@
       (document.getElementById('opp-open-day-listing') || {}).value || ''
     ).trim();
     const dateVal = String((document.getElementById('opp-open-day-date') || {}).value || '').trim();
-    const qt = window.OrganiserQuarterTime;
-    if (qt && typeof qt.syncPairFromUi === 'function') {
-      qt.syncPairFromUi('opp-open-day-start-time', 'opp-open-day-end-time');
-    }
+    syncOpenDayTimeSelectValues();
     const startTime = String((document.getElementById('opp-open-day-start-time') || {}).value || '').trim();
     const endTime = String((document.getElementById('opp-open-day-end-time') || {}).value || '').trim();
     const startsAt = combineOpenDayDateAndTime(dateVal, startTime);
@@ -16486,6 +16549,10 @@
     ).trim();
     if (!opportunityId) {
       setOpenDayAddStatus('Select a business opportunity.', 'error');
+      return;
+    }
+    if (!initOpenDayTimeSelects()) {
+      setOpenDayAddStatus('Time pickers did not load — refresh the page and try again.', 'error');
       return;
     }
     if (!dateVal || !startTime) {
@@ -16553,9 +16620,8 @@
       const listingSelect = document.getElementById('opp-open-day-listing');
       if (listingSelect) listingSelect.value = opportunityId;
       setOpenDayFormatValue('in-person');
-      if (qt && typeof qt.setValues === 'function') {
-        qt.setValues('opp-open-day-start-time', 'opp-open-day-end-time', '10:00', '12:00');
-      }
+      resetOpenDayTimeSelects();
+      resetOpenDayDateCalendar();
       setOpenDayAddStatus('Open day added — it will show on the public listing.', 'success');
       await loadScheduledOpportunityOpenDays();
       renderScheduledOpportunityOpenDays();
@@ -17021,22 +17087,36 @@
     setRoute('business-open-days');
   }
 
-  function focusPendingOpenDayAddForm() {
-    const id = state.pendingOpenDayListingId;
-    if (!id) return;
-    state.pendingOpenDayListingId = '';
-    const select = document.getElementById('opp-open-day-listing');
-    if (select) select.value = id;
-    syncOpenDayFormatFields();
-    initOpenDayTimeSelects();
+  function openOpenDayAddPanel(options) {
+    options = options || {};
+    const details = document.getElementById('opp-open-day-add-details');
+    if (details) {
+      details.hidden = false;
+      details.open = true;
+    }
+    prepareOpenDayAddFormUi();
     const panel = document.getElementById('opp-open-day-add-panel');
-    if (panel && panel.scrollIntoView) {
+    if (options.scroll !== false && panel && panel.scrollIntoView) {
       requestAnimationFrame(function () {
         panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
     }
-    const dateInput = document.getElementById('opp-open-day-date');
-    if (dateInput) dateInput.focus();
+    if (options.focusDate) {
+      const calMount = document.getElementById('opp-open-day-calendar');
+      if (calMount && typeof calMount.focus === 'function') {
+        calMount.focus({ preventScroll: true });
+      }
+    }
+  }
+
+  function focusPendingOpenDayAddForm() {
+    const id = state.pendingOpenDayListingId;
+    if (!id) return;
+    state.pendingOpenDayListingId = '';
+    populateOpenDayAddListingSelect();
+    const select = document.getElementById('opp-open-day-listing');
+    if (select) select.value = id;
+    openOpenDayAddPanel({ focusDate: true });
   }
 
   function syncOpenDayFormatFields() {
@@ -18037,14 +18117,16 @@
     const openDayAddForm = document.getElementById('form-opp-open-day-add');
     if (openDayAddForm) {
       openDayAddForm.addEventListener('submit', function (e) {
+        e.preventDefault();
         submitAddOpportunityOpenDay(e);
       });
     }
-    document.querySelectorAll('input[name="openDayFormat"]').forEach(function (input) {
-      input.addEventListener('change', syncOpenDayFormatFields);
-    });
+    const formatSelect = document.getElementById('opp-open-day-format');
+    if (formatSelect) {
+      formatSelect.addEventListener('change', syncOpenDayFormatFields);
+    }
+    bindOpenDayAddDetails();
     syncOpenDayFormatFields();
-    initOpenDayTimeSelects();
     bindBusinessHubSummaryNav();
 
     ['filter-events-status', 'filter-events-type', 'filter-events-search'].forEach((id) => {

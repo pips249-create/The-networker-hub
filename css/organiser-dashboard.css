@@ -11468,22 +11468,13 @@ body.org-event-drawer-open {
 }
 
 .org-open-day-add {
-  margin: 0 0 24px;
-  padding: 18px 18px 16px;
-  border: 1px solid var(--od-border-soft, #e5e7eb);
-  border-radius: var(--od-radius-md, 12px);
-  background: var(--od-bg-elevated, #fff);
-}
-
-.org-open-day-add-title {
-  margin: 0 0 4px;
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--opp-navy, #0d1f3c);
+  margin: 8px 0 24px;
+  padding-top: 28px;
+  border-top: 1px solid var(--od-border, #e5e7eb);
 }
 
 .org-open-day-add-no-listings {
-  margin: 12px 0 0;
+  margin: 0 0 12px;
 }
 
 .org-open-day-add-form {
@@ -11553,43 +11544,211 @@ body.org-event-drawer-open {
   margin-top: 0;
 }
 
-.org-open-day-add {
-  margin-top: 8px;
-  padding-top: 28px;
-  border-top: 1px solid var(--od-border, #e5e7eb);
+.org-open-day-add-details {
+  border: 1px solid rgba(13, 31, 60, 0.12);
+  border-radius: var(--od-radius-md, 12px);
+  background: var(--od-bg-elevated, #fff);
+  overflow: hidden;
 }
 
-.org-open-day-format-fieldset {
-  margin: 0;
-  padding: 0;
-  border: 0;
+.org-open-day-add-details[hidden] {
+  display: none !important;
 }
 
-.org-open-day-format-fieldset legend {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--od-text, #1c2040);
-  margin-bottom: 8px;
+.org-open-day-add-form[hidden] {
+  display: none !important;
 }
 
-.org-open-day-format-option {
+.org-open-day-add-summary {
   display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  font-size: 14px;
-  line-height: 1.45;
-  color: var(--od-text, #1c2040);
-  margin-bottom: 8px;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--opp-navy, #0d1f3c);
   cursor: pointer;
+  list-style: none;
+  user-select: none;
 }
 
-.org-open-day-format-option input {
-  margin-top: 3px;
+.org-open-day-add-summary::-webkit-details-marker {
+  display: none;
+}
+
+.org-open-day-add-summary::before {
+  content: '▸';
   flex-shrink: 0;
+  width: 18px;
+  font-size: 14px;
+  color: var(--opp-gold, #c9961f);
+  transition: transform 0.15s ease;
+}
+
+.org-open-day-add-details[open] .org-open-day-add-summary::before {
+  transform: rotate(90deg);
+}
+
+.org-open-day-add-body {
+  padding: 0 16px 16px;
+}
+
+.org-open-day-add-lede {
+  margin: 0 0 14px;
+}
+
+.org-open-day-add-field--format select {
+  width: 100%;
 }
 
 .org-open-day-add-field--format {
   grid-column: 1 / -1;
+}
+
+.org-open-day-add-field--calendar {
+  grid-column: 1 / -1;
+}
+
+.org-open-day-date-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 6px 12px;
+  margin-bottom: 8px;
+}
+
+.org-open-day-date-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--od-text, #1c2040);
+}
+
+.org-open-day-date-selected {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--opp-gold, #c9961f);
+}
+
+.org-open-day-calendar-mount {
+  min-height: 280px;
+}
+
+.org-open-day-calendar-mount:empty::before {
+  content: 'Loading calendar…';
+  display: block;
+  padding: 24px 0;
+  font-size: 13px;
+  color: var(--od-text-muted, #6b7280);
+}
+
+.org-open-day-calendar-mount .org-cal {
+  width: 100%;
+  max-width: 360px;
+  padding: 12px;
+  border: 1px solid var(--od-border-soft, #e5e7eb);
+  border-radius: 10px;
+  background: linear-gradient(180deg, #faf8ff 0%, #fff 100%);
+}
+
+.org-cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.org-cal-nav {
+  flex-shrink: 0;
+  border: 1px solid var(--od-border-soft, #e5e7eb);
+  background: #fff;
+  border-radius: 8px;
+  width: 34px;
+  height: 34px;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--opp-navy, #0d1f3c);
+}
+
+.org-cal-nav:hover {
+  background: rgba(13, 31, 60, 0.04);
+}
+
+.org-cal-month {
+  flex: 1;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--opp-navy, #0d1f3c);
+}
+
+.org-cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.org-cal-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.org-cal-weekdays span {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--od-text-muted, #6b7280);
+  padding: 4px 0;
+}
+
+.org-cal-day {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 36px;
+  aspect-ratio: 1;
+  max-height: 42px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--od-text, #1c2040);
+  box-sizing: border-box;
+}
+
+.org-cal-day:hover:not(:disabled):not(.is-selected) {
+  background: rgba(201, 150, 31, 0.1);
+}
+
+.org-cal-day.is-other {
+  color: var(--od-text-muted, #6b7280);
+  opacity: 0.45;
+}
+
+.org-cal-day.is-past:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.org-cal-day.is-selected,
+.org-cal-day.is-selected:hover:not(:disabled),
+.org-cal-day.is-selected:focus-visible {
+  background: var(--opp-navy, #0d1f3c);
+  color: #fff;
+  border-color: var(--opp-navy, #0d1f3c);
+  font-weight: 700;
+}
+
+.org-open-day-add-field--times {
+  min-width: 0;
 }
 
 .org-open-day-time-note {
@@ -11615,6 +11774,19 @@ body.org-event-drawer-open {
   font-size: 16px;
   font-weight: 700;
   color: var(--od-text-muted, #6b7280);
+}
+
+.org-open-day-add .ee-quarter-time-value {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+  pointer-events: none;
 }
 
 .org-open-day-scheduled-format {
