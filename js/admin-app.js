@@ -5787,12 +5787,16 @@
 
   function revenueTargetStatusClass(status) {
     if (status === 'achieved' || status === 'on_track') return 'text-emerald-700 bg-emerald-50 border-emerald-200';
+    if (status === 'building') return 'text-sky-800 bg-sky-50 border-sky-200';
+    if (status === 'getting_started') return 'text-slate-700 bg-slate-50 border-slate-200';
     if (status === 'at_risk') return 'text-amber-800 bg-amber-50 border-amber-200';
     return 'text-red-800 bg-red-50 border-red-200';
   }
 
   function revenueTargetBarColor(status) {
     if (status === 'achieved' || status === 'on_track') return 'bg-emerald-500';
+    if (status === 'building') return 'bg-sky-500';
+    if (status === 'getting_started') return 'bg-slate-400';
     if (status === 'at_risk') return 'bg-amber-500';
     return 'bg-red-500';
   }
@@ -5810,11 +5814,103 @@
     var totals = targets.totals || {};
     var categories = targets.categories || [];
     var assessment = targets.assessment || {};
+    var monthlyPulse = targets.monthlyPulse || assessment.monthlyPulse || null;
+    var currentMonth = (monthlyPulse && monthlyPulse.currentMonth) || null;
+    var previousMonth = (monthlyPulse && monthlyPulse.previousMonth) || null;
+    var growthPct = monthlyPulse && monthlyPulse.growthPct != null ? Number(monthlyPulse.growthPct) : null;
+    var delta = monthlyPulse && monthlyPulse.delta != null ? Number(monthlyPulse.delta) : null;
+    var growthLabel =
+      !previousMonth
+        ? 'First month in period'
+        : previousMonth.actual === 0 && currentMonth && currentMonth.actual > 0
+          ? 'First revenue vs ' + (previousMonth.label || 'last month')
+          : growthPct == null
+            ? 'No change yet'
+            : growthPct > 0
+              ? '↑ ' + Math.round(growthPct) + '% vs ' + (previousMonth.label || 'last month')
+              : growthPct < 0
+                ? '↓ ' + Math.abs(Math.round(growthPct)) + '% vs ' + (previousMonth.label || 'last month')
+                : 'Flat vs ' + (previousMonth.label || 'last month');
+    var growthClass =
+      !previousMonth || (previousMonth.actual === 0 && currentMonth && currentMonth.actual > 0)
+        ? 'text-emerald-700'
+        : growthPct == null
+          ? 'text-slate-600'
+          : growthPct > 0
+            ? 'text-emerald-700'
+            : growthPct < 0
+              ? 'text-amber-800'
+              : 'text-slate-600';
+
+    var monthlyCompareHtml =
+      '<div class="grid sm:grid-cols-3 gap-3">' +
+      '<div class="rounded-xl border border-brand-200 bg-white p-4 shadow-sm">' +
+      '<p class="text-xs font-semibold uppercase tracking-wide text-brand-700">' +
+      esc((currentMonth && currentMonth.label) || 'This month') +
+      '</p>' +
+      '<p class="text-2xl font-bold text-brand-900 mt-1">' +
+      esc(fmtMoney((currentMonth && currentMonth.actual) || 0)) +
+      '</p>' +
+      '<p class="text-xs ' +
+      growthClass +
+      ' mt-1 font-semibold">' +
+      esc(growthLabel) +
+      '</p></div>' +
+      '<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">' +
+      '<p class="text-xs font-semibold uppercase tracking-wide text-slate-500">' +
+      esc((previousMonth && previousMonth.label) || 'Previous month') +
+      '</p>' +
+      '<p class="text-2xl font-bold text-brand-900 mt-1">' +
+      esc(fmtMoney((previousMonth && previousMonth.actual) || 0)) +
+      '</p>' +
+      '<p class="text-xs text-slate-500 mt-1">' +
+      (previousMonth
+        ? delta != null && delta !== 0
+          ? esc((delta > 0 ? '+' : '') + fmtMoney(delta) + ' month-on-month')
+          : 'Compare with current month'
+        : 'No prior month in this period yet') +
+      '</p></div>' +
+      '<div class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">' +
+      '<p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Period total</p>' +
+      '<p class="text-2xl font-bold text-brand-900 mt-1">' +
+      esc(fmtMoney(totals.actual || 0)) +
+      '</p>' +
+      '<p class="text-xs text-slate-500 mt-1">of ' +
+      esc(fmtMoney(totals.target || 0)) +
+      ' · ' +
+      esc(String(totals.progressPct || 0)) +
+      '%</p></div></div>';
+
+    if (monthlyPulse && monthlyPulse.recent && monthlyPulse.recent.length) {
+      monthlyCompareHtml +=
+        '<div class="rounded-xl border border-slate-200 bg-slate-50 p-4">' +
+        '<p class="text-xs font-semibold text-brand-900 mb-3">Recent months</p>' +
+        '<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">' +
+        monthlyPulse.recent
+          .map(function (m) {
+            return (
+              '<div class="rounded-lg border ' +
+              (m.isCurrent ? 'border-brand-300 bg-white' : 'border-slate-200 bg-white') +
+              ' px-3 py-2">' +
+              '<p class="text-[11px] font-semibold ' +
+              (m.isCurrent ? 'text-brand-700' : 'text-slate-500') +
+              '">' +
+              esc(m.label) +
+              (m.isCurrent ? ' · now' : '') +
+              '</p>' +
+              '<p class="text-sm font-bold text-brand-900 mt-0.5">' +
+              esc(fmtMoney(m.actual || 0)) +
+              '</p></div>'
+            );
+          })
+          .join('') +
+        '</div></div>';
+    }
 
     var summary =
-      '<div class="rounded-xl border border-brand-200 bg-gradient-to-r from-brand-50 to-white p-4 sm:p-5">' +
+      '<div class="rounded-xl border border-brand-200 bg-gradient-to-r from-brand-50 to-white p-4 sm:p-5 space-y-4">' +
       '<div class="flex flex-wrap items-start justify-between gap-3">' +
-      '<div><p class="text-xs font-semibold uppercase tracking-wide text-brand-700">Revenue targets</p>' +
+      '<div><p class="text-xs font-semibold uppercase tracking-wide text-brand-700">Monthly revenue</p>' +
       '<p class="text-lg font-bold text-brand-900 mt-1">' +
       esc(period.label || 'Target period') +
       '</p>' +
@@ -5825,36 +5921,26 @@
       ' days elapsed · ' +
       esc(String(period.daysRemaining || 0)) +
       ' days remaining</p></div>' +
-      '<div class="text-right"><p class="text-2xl font-bold text-brand-900">' +
-      esc(fmtMoney(totals.actual || 0)) +
-      '</p>' +
-      '<p class="text-xs text-slate-500">of ' +
-      esc(fmtMoney(totals.target || 0)) +
-      ' target</p>' +
-      '<span class="inline-block mt-2 text-xs font-semibold px-2 py-0.5 rounded-full border ' +
+      '<div class="text-right"><span class="inline-block text-xs font-semibold px-2 py-0.5 rounded-full border ' +
       revenueTargetStatusClass(totals.status) +
       '">' +
       esc(totals.statusLabel || '') +
-      '</span></div></div>' +
-      '<div class="mt-4"><div class="h-2.5 rounded-full bg-white/80 border border-brand-100 overflow-hidden">' +
+      '</span>' +
+      '<p class="text-xs text-slate-500 mt-2">Period progress</p>' +
+      '<p class="text-lg font-bold text-brand-900">' +
+      esc(String(totals.progressPct || 0)) +
+      '%</p></div></div>' +
+      monthlyCompareHtml +
+      '<div><div class="h-2.5 rounded-full bg-white/80 border border-brand-100 overflow-hidden">' +
       '<div class="h-full ' +
       revenueTargetBarColor(totals.status) +
       ' transition-all" style="width:' +
       Math.min(100, Number(totals.progressPct) || 0) +
-      '%"></div></div>' +
-      '<div class="flex flex-wrap justify-between gap-2 mt-2 text-xs text-slate-600">' +
-      '<span>' +
-      esc(String(totals.progressPct || 0)) +
-      '% achieved</span>' +
-      '<span>Forecast: ' +
-      esc(fmtMoney(totals.forecast || 0)) +
-      ' (' +
-      esc(String(totals.forecastPct || 0)) +
-      '%)</span></div></div></div>';
+      '%"></div></div></div></div>';
 
     var assessmentHtml =
       '<div class="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">' +
-      '<p class="font-semibold text-brand-900">Are these targets achievable?</p>' +
+      '<p class="font-semibold text-brand-900">How are we doing?</p>' +
       '<p class="mt-2">' +
       esc(assessment.headline || '') +
       '</p>' +
@@ -5927,12 +6013,15 @@
           esc(fmtMoney(cat.target || 0)) +
           '</p></div>' +
           '<div class="text-right text-xs text-slate-500">' +
-          '<p>Forecast ' +
-          esc(fmtMoney(cat.forecast || 0)) +
+          '<p>' +
+          esc(fmtMoney(cat.actual || 0)) +
+          ' of ' +
+          esc(fmtMoney(cat.target || 0)) +
           '</p>' +
-          '<p>Need ' +
-          esc(fmtMoney(cat.monthlyNeeded || 0)) +
-          '/mo</p></div></div>' +
+          (cat.actual > 0
+            ? '<p class="text-sky-700 font-medium mt-0.5">Revenue landing</p>'
+            : '<p class="mt-0.5">Ready for first deal</p>') +
+          '</div></div>' +
           '<div class="mt-2 h-1.5 rounded-full bg-slate-100 overflow-hidden">' +
           '<div class="h-full ' +
           revenueTargetBarColor(cat.status) +
@@ -6126,24 +6215,63 @@
     return new Promise(function (resolve, reject) {
       var existing = document.querySelector('script[data-revenue-chartjs]');
       if (existing) {
-        existing.addEventListener('load', function () {
+        if (window.Chart) {
+          resolve(window.Chart);
+          return;
+        }
+        var done = false;
+        function finishOk() {
+          if (done) return;
+          done = true;
           if (window.Chart) resolve(window.Chart);
           else reject(new Error('chart_unavailable'));
-        });
-        existing.addEventListener('error', reject);
+        }
+        function finishErr(err) {
+          if (done) return;
+          done = true;
+          reject(err || new Error('chart_load_failed'));
+        }
+        existing.addEventListener('load', finishOk);
+        existing.addEventListener('error', finishErr);
+        // Script may already have finished before listeners attached.
+        setTimeout(function () {
+          if (window.Chart) finishOk();
+        }, 0);
         return;
       }
-      var script = document.createElement('script');
-      // Must use unpkg — site CSP allows unpkg.com, not cdn.jsdelivr.net.
-      script.src = 'https://unpkg.com/chart.js@4.4.1/dist/chart.umd.min.js';
-      script.async = true;
-      script.setAttribute('data-revenue-chartjs', '1');
-      script.onload = function () {
-        if (window.Chart) resolve(window.Chart);
-        else reject(new Error('chart_unavailable'));
-      };
-      script.onerror = reject;
-      document.head.appendChild(script);
+
+      // Prefer self-hosted copy (CSP + offline-safe). Fall back to CDNs.
+      var sources = [
+        '/js/vendor/chart.umd.min.js',
+        'https://unpkg.com/chart.js@4.4.1/dist/chart.umd.min.js',
+      ];
+      var idx = 0;
+
+      function tryNext() {
+        if (window.Chart) {
+          resolve(window.Chart);
+          return;
+        }
+        if (idx >= sources.length) {
+          reject(new Error('chart_unavailable'));
+          return;
+        }
+        var script = document.createElement('script');
+        script.src = sources[idx++];
+        script.async = true;
+        script.setAttribute('data-revenue-chartjs', '1');
+        script.onload = function () {
+          if (window.Chart) resolve(window.Chart);
+          else tryNext();
+        };
+        script.onerror = function () {
+          script.remove();
+          tryNext();
+        };
+        document.head.appendChild(script);
+      }
+
+      tryNext();
     });
   }
 
@@ -6292,10 +6420,13 @@
       })
       .catch(function () {
         var wrap = canvas.parentElement;
-        if (wrap) {
-          wrap.innerHTML =
-            '<p class="text-sm text-red-700">Could not load chart library. Check your connection and refresh.</p>';
-        }
+        if (!wrap || wrap.querySelector('[data-chart-load-error]')) return;
+        var note = document.createElement('p');
+        note.className = 'text-sm text-red-700';
+        note.setAttribute('data-chart-load-error', '1');
+        note.textContent =
+          'Could not load chart library. Refresh the page — if it keeps failing, hard-reload to pick up the latest assets.';
+        wrap.appendChild(note);
       });
   }
 

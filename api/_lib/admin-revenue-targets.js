@@ -136,18 +136,30 @@ function monthlyPaceNeeded(target, actual, monthsRemaining) {
   return round2(remaining / monthsRemaining);
 }
 
-function onTrackStatus(actual, target, forecast) {
+function onTrackStatus(actual, target, forecast, period) {
   if (actual >= target) return 'achieved';
   if (forecast >= target * 0.95) return 'on_track';
+
+  // Early in the period, red "Behind pace" is demoralising and rarely useful —
+  // prefer constructive labels until there is a meaningful run rate.
+  const daysElapsed = Number(period?.daysElapsed) || 0;
+  if (daysElapsed < 90) {
+    if (actual > 0) return 'building';
+    return 'getting_started';
+  }
+
   if (forecast >= target * 0.7) return 'at_risk';
+  if (actual > 0) return 'building';
   return 'behind';
 }
 
 function statusLabel(status) {
   if (status === 'achieved') return 'On target';
   if (status === 'on_track') return 'On track';
-  if (status === 'at_risk') return 'At risk';
-  return 'Behind pace';
+  if (status === 'building') return 'Building momentum';
+  if (status === 'getting_started') return 'Getting started';
+  if (status === 'at_risk') return 'Needs a push';
+  return 'Below pace';
 }
 
 function addBreakdown(map, categoryId, item) {
@@ -392,16 +404,86 @@ function buildChartsFromCategories(categories, periodStartMs, periodEndMs, now =
   return { overall, byCategory };
 }
 
-function buildAssessment(categories, period, totals) {
+function buildMonthlyPulse(items, periodStartMs, periodEndMs, now = new Date()) {
+  const series = buildMonthlyChartSeries(items || [], 0, periodStartMs, periodEndMs, now);
+  const months = (series.months || []).filter((m) => !m.isFuture);
+  const current = months.find((m) => m.isCurrent) || months[months.length - 1] || null;
+  const currentIdx = current ? months.findIndex((m) => m.key === current.key) : -1;
+  const previous = currentIdx > 0 ? months[currentIdx - 1] : null;
+
+  const currentActual = current && current.actual != null ? Number(current.actual) || 0 : 0;
+  const previousActual = previous && previous.actual != null ? Number(previous.actual) || 0 : 0;
+  const delta = round2(currentActual - previousActual);
+  let growthPct = null;
+  if (previousActual > 0) growthPct = round2((delta / previousActual) * 100);
+  else if (currentActual > 0 && previous) growthPct = 100;
+
+  const recent = months.slice(-6).map((m) => ({
+    key: m.key,
+    label: m.label,
+    actual: m.actual == null ? 0 : Number(m.actual) || 0,
+    isCurrent: Boolean(m.isCurrent),
+  }));
+
+  return {
+    currentMonth: current
+      ? { key: current.key, label: current.label, actual: currentActual, forecast: current.forecast }
+      : null,
+    previousMonth: previous
+      ? { key: previous.key, label: previous.label, actual: previousActual }
+      : null,
+    delta,
+    growthPct,
+    recent,
+  };
+}
+
+function buildAssessment(categories, period, totals, monthlyPulse) {
   const totalTarget = totals.target;
   const totalForecast = totals.forecast;
   const monthlyNeeded = monthlyPaceNeeded(totalTarget, totals.actual, period.monthsRemaining);
   const monthlyActualPace =
     period.daysElapsed > 0 ? round2((totals.actual / period.daysElapsed) * 30.44) : 0;
 
+  const currentLabel = monthlyPulse?.currentMonth?.label || 'This month';
+  const previousLabel = monthlyPulse?.previousMonth?.label || 'last month';
+  const currentAmount = monthlyPulse?.currentMonth?.actual || 0;
+  const previousAmount = monthlyPulse?.previousMonth?.actual || 0;
+  const growthPct = monthlyPulse?.growthPct;
+
   let headline = '';
   if (totals.actual >= totalTarget) {
-    headline = 'Overall target already reached for this period.';
+    headline = 'Overall target already reached for this period — well done.';
+  } else if (currentAmount > 0 && previousAmount === 0 && monthlyPulse?.previousMonth) {
+    headline =
+      'Nice start — £' +
+      currentAmount.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) +
+      ' booked in ' +
+      currentLabel +
+      ' after a quieter ' +
+      previousLabel +
+      '.';
+  } else if (growthPct != null && growthPct > 0) {
+    headline =
+      currentLabel +
+      ' is up ' +
+      Math.round(growthPct) +
+      '% on ' +
+      previousLabel +
+      ' (£' +
+      currentAmount.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) +
+      ' so far vs £' +
+      previousAmount.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) +
+      '). Keep that momentum going.';
+  } else if (currentAmount > 0) {
+    headline =
+      currentLabel +
+      ' has brought in £' +
+      currentAmount.toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) +
+      ' so far — every listing and sponsor deal compounds from here.';
+  } else if (period.daysElapsed < 90) {
+    headline =
+      'Still early days in this target window. Focus on closing the next few deals — monthly comparisons will light up as revenue lands.';
   } else if (totalForecast >= totalTarget) {
     headline =
       'At the current run rate you are projected to hit £' +
@@ -409,18 +491,17 @@ function buildAssessment(categories, period, totals) {
       ' before September 2027.';
   } else {
     headline =
-      'You need roughly £' +
+      'Aim for roughly £' +
       monthlyNeeded.toLocaleString('en-GB') +
       '/month from here to hit the full £' +
       totalTarget.toLocaleString('en-GB') +
-      ' target (currently tracking ~£' +
-      monthlyActualPace.toLocaleString('en-GB') +
-      '/month).';
+      ' target.';
   }
 
   const notes = [
-    'Ticket sales (£2,500) is the most modest target — booking fees accrue automatically from paid event tickets and platform-billed memberships.',
-    'Events (£42,500) and opportunities (£48,000) are the stretch goals — they rely on closing directory sponsors and premium packages consistently.',
+    'Compare months side-by-side below — growth month-to-month matters more than the period-long pace this early on.',
+    'Ticket sales (£2,500) accrues automatically from paid event tickets and platform-billed memberships.',
+    'Events (£42,500) and opportunities (£48,000) move fastest when directory sponsors and premium packages close consistently.',
     'Browse organisers (£10,000) is achievable with one hero sponsor plus mini-sponsor inventory over the period.',
     'Awards (£5,000) is marked TBC — log revenue manually when sponsorship is confirmed.',
   ];
@@ -432,6 +513,7 @@ function buildAssessment(categories, period, totals) {
     monthlyActualPace,
     projectedTotal: totalForecast,
     gapToTarget: round2(Math.max(0, totalTarget - totals.actual)),
+    monthlyPulse: monthlyPulse || null,
   };
 }
 
@@ -470,7 +552,7 @@ async function getAdminRevenueTargets(sb) {
     const items = autoItems.concat(manualItems);
     const actual = sumBreakdown(items);
     const forecast = forecastAmount(actual, period);
-    const status = onTrackStatus(actual, cat.target, forecast);
+    const status = onTrackStatus(actual, cat.target, forecast, period);
 
     return {
       ...cat,
@@ -492,10 +574,12 @@ async function getAdminRevenueTargets(sb) {
   };
   totals.progressPct = totals.target ? round2((totals.actual / totals.target) * 100) : 0;
   totals.forecastPct = totals.target ? round2((totals.forecast / totals.target) * 100) : 0;
-  totals.status = onTrackStatus(totals.actual, totals.target, totals.forecast);
+  totals.status = onTrackStatus(totals.actual, totals.target, totals.forecast, period);
   totals.statusLabel = statusLabel(totals.status);
 
   const charts = buildChartsFromCategories(categories, startMs, endMs);
+  const allItems = categories.flatMap((cat) => cat.breakdown || []);
+  const monthlyPulse = buildMonthlyPulse(allItems, startMs, endMs);
 
   return {
     currency: 'GBP',
@@ -503,9 +587,10 @@ async function getAdminRevenueTargets(sb) {
     categories,
     totals,
     charts,
+    monthlyPulse,
     manualDeals: manualResult.deals || [],
     dealsTableMissing: manualResult.tableMissing,
-    assessment: buildAssessment(categories, period, totals),
+    assessment: buildAssessment(categories, period, totals, monthlyPulse),
     updatedAt: new Date().toISOString(),
   };
 }

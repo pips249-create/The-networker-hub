@@ -178,23 +178,61 @@
     return new Promise(function (resolve, reject) {
       var existing = document.querySelector('script[data-revenue-chartjs]');
       if (existing) {
-        existing.addEventListener('load', function () {
+        if (global.Chart) {
+          resolve(global.Chart);
+          return;
+        }
+        var done = false;
+        function finishOk() {
+          if (done) return;
+          done = true;
           if (global.Chart) resolve(global.Chart);
           else reject(new Error('chart_unavailable'));
-        });
-        existing.addEventListener('error', reject);
+        }
+        function finishErr(err) {
+          if (done) return;
+          done = true;
+          reject(err || new Error('chart_load_failed'));
+        }
+        existing.addEventListener('load', finishOk);
+        existing.addEventListener('error', finishErr);
+        setTimeout(function () {
+          if (global.Chart) finishOk();
+        }, 0);
         return;
       }
-      var script = document.createElement('script');
-      script.src = 'https://unpkg.com/chart.js@4.4.1/dist/chart.umd.min.js';
-      script.async = true;
-      script.setAttribute('data-revenue-chartjs', '1');
-      script.onload = function () {
-        if (global.Chart) resolve(global.Chart);
-        else reject(new Error('chart_unavailable'));
-      };
-      script.onerror = reject;
-      document.head.appendChild(script);
+
+      var sources = [
+        '/js/vendor/chart.umd.min.js',
+        'https://unpkg.com/chart.js@4.4.1/dist/chart.umd.min.js',
+      ];
+      var idx = 0;
+
+      function tryNext() {
+        if (global.Chart) {
+          resolve(global.Chart);
+          return;
+        }
+        if (idx >= sources.length) {
+          reject(new Error('chart_unavailable'));
+          return;
+        }
+        var script = document.createElement('script');
+        script.src = sources[idx++];
+        script.async = true;
+        script.setAttribute('data-revenue-chartjs', '1');
+        script.onload = function () {
+          if (global.Chart) resolve(global.Chart);
+          else tryNext();
+        };
+        script.onerror = function () {
+          script.remove();
+          tryNext();
+        };
+        document.head.appendChild(script);
+      }
+
+      tryNext();
     });
   }
 
