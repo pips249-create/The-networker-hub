@@ -5,7 +5,7 @@
 (function () {
   var DSN =
     'https://ed87933e8496b3ed118c576494ab2376@o4511987677659136.ingest.de.sentry.io/4511987801260117';
-  var BUNDLE_SRC = 'https://browser.sentry-cdn.com/8.55.0/bundle.min.js';
+  var BUNDLE_SRC = 'https://browser.sentry-cdn.com/10.71.0/bundle.min.js';
 
   function isLocalHost() {
     var host = String(window.location.hostname || '').toLowerCase();

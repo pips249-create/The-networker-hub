@@ -45,7 +45,7 @@
     "vercel-build": "npm run build"
   },
   "dependencies": {
-    "@sentry/node": "^8.55.2",
+    "@sentry/node": "^10.71.0",
     "@supabase/supabase-js": "^2.107.0",
     "@vercel/analytics": "^2.0.1",
     "dotenv": "^16.6.1",
