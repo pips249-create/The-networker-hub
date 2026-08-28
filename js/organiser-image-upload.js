@@ -4,8 +4,16 @@
  */
 (function (global) {
   const MAX_BYTES = 2 * 1024 * 1024;
+  const COMPRESS_ABOVE_BYTES = 350 * 1024;
   const MIN_LONG_EDGE = 800;
   const MIN_SHORT_EDGE = 400;
+
+  function isImageFile(file) {
+    if (!file) return false;
+    const type = String(file.type || '').toLowerCase();
+    if (type.startsWith('image/')) return true;
+    return /\.(heic|heif)$/i.test(String(file.name || ''));
+  }
 
   function logoResolutionWarning(width, height) {
     const w = Number(width) || 0;
@@ -220,21 +228,33 @@
     });
   }
 
-  async function acceptImageFile(file, onFile, qualityHintEl) {
-    if (!file || !String(file.type || '').startsWith('image/')) return false;
+  async function acceptImageFile(file, onFile, qualityHintEl, options) {
+    if (!isImageFile(file)) return false;
+    const maxBytes =
+      options && options.maxBytes != null ? Number(options.maxBytes) : MAX_BYTES;
+    const compressAbove =
+      options && options.compressAboveBytes != null
+        ? Number(options.compressAboveBytes)
+        : COMPRESS_ABOVE_BYTES;
     let ready = file;
-    if (file.size > MAX_BYTES) {
+    if (file.size > compressAbove) {
       try {
-        ready = await compressImageFile(file, MAX_BYTES);
+        ready = await compressImageFile(file, maxBytes);
       } catch {
+        const heic = /\.(heic|heif)$/i.test(String(file.name || ''));
         alert(
-          'This image is too large and could not be compressed automatically. Try a smaller file or paste a URL instead.'
+          heic
+            ? 'This iPhone photo could not be read here. On your iPhone go to Settings → Camera → Formats → Most Compatible, then take or choose a JPEG photo — or paste an image URL instead.'
+            : 'This image is too large and could not be compressed automatically. Try a smaller file or paste a URL instead.'
         );
         return false;
       }
     }
     onFile(ready);
-    if (qualityHintEl) checkLogoFileQuality(ready, qualityHintEl);
+    if (qualityHintEl) {
+      if (options && options.coverQuality) checkEventCoverFileQuality(ready, qualityHintEl);
+      else checkLogoFileQuality(ready, qualityHintEl);
+    }
     return true;
   }
 
@@ -250,13 +270,14 @@
   }
 
   /**
-   * @param {{ zone: HTMLElement, fileInput?: HTMLInputElement, onFile: (file: File) => void, qualityHintEl?: HTMLElement }} opts
+   * @param {{ zone: HTMLElement, fileInput?: HTMLInputElement, onFile: (file: File) => void, qualityHintEl?: HTMLElement, uploadOptions?: object }} opts
    */
   function bindImageUpload(opts) {
     const zone = opts.zone;
     const fileInput = opts.fileInput;
     const onFile = opts.onFile;
     const qualityHintEl = opts.qualityHintEl;
+    const uploadOptions = opts.uploadOptions || null;
     if (!zone || typeof onFile !== 'function') return;
 
     if (fileInput) {
@@ -265,7 +286,7 @@
       });
       fileInput.addEventListener('change', function () {
         const file = fileInput.files && fileInput.files[0];
-        if (file) void acceptImageFile(file, onFile, qualityHintEl);
+        if (file) void acceptImageFile(file, onFile, qualityHintEl, uploadOptions);
       });
     }
 
@@ -273,7 +294,7 @@
       const file = fileFromClipboardEvent(e);
       if (!file) return;
       e.preventDefault();
-      void acceptImageFile(file, onFile, qualityHintEl);
+      void acceptImageFile(file, onFile, qualityHintEl, uploadOptions);
     });
 
     zone.addEventListener('dragover', function (e) {
@@ -287,7 +308,7 @@
       e.preventDefault();
       zone.classList.remove('is-dragover');
       const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
-      if (file) void acceptImageFile(file, onFile, qualityHintEl);
+      if (file) void acceptImageFile(file, onFile, qualityHintEl, uploadOptions);
     });
   }
 
@@ -300,4 +321,6 @@
   global.hubCheckEventCoverFileQuality = checkEventCoverFileQuality;
   global.hubBindLogoUrlQualityCheck = bindLogoUrlQualityCheck;
   global.hubMeasureImageUrl = measureImageUrl;
+  global.hubPrepareImageFile = compressImageFile;
+  global.hubIsImageFile = isImageFile;
 })(window);

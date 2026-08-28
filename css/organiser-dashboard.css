@@ -11186,6 +11186,21 @@ body.org-event-drawer-open {
   font-weight: 600;
 }
 
+.org-opp-rejection-note {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(185, 28, 28, 0.25);
+  background: #fef2f2;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #7f1d1d;
+}
+
+.org-opp-rejection-note strong {
+  color: #991b1b;
+}
+
 .org-opp-listing-card-title {
   margin: 0;
   font-size: 1rem;

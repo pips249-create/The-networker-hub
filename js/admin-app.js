@@ -22252,6 +22252,72 @@
     );
   }
 
+  function opportunityCleanupModerationHtml(opp) {
+    var flags = (opp && opp.moderation_flags) || [];
+    if (!flags.length) return '';
+    return (
+      '<section class="opp-review-moderation" aria-labelledby="opp-review-moderation-' +
+      attrEsc(opp.id) +
+      '">' +
+      '<h3 class="opp-review-section-title" id="opp-review-moderation-' +
+      attrEsc(opp.id) +
+      '">Automated checks</h3>' +
+      '<p class="opp-review-section-lead">These are hints only — use your judgement before approving or denying.</p>' +
+      '<ul class="opp-review-moderation-list">' +
+      flags
+        .map(function (flag) {
+          return (
+            '<li><span class="opp-review-moderation-id">' +
+            esc(flag.id || 'check') +
+            '</span> ' +
+            esc(flag.label || '') +
+            '</li>'
+          );
+        })
+        .join('') +
+      '</ul></section>'
+    );
+  }
+
+  function openOpportunityReviewPanel(id, opts) {
+    opts = opts || {};
+    var key = String(id || '');
+    if (!key) return;
+    var panel = opportunityCleanupPanelEl(key);
+    var escKey =
+      typeof CSS !== 'undefined' && CSS.escape
+        ? CSS.escape(key)
+        : key.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    var row = document.querySelector('[data-opportunity-id-row="' + escKey + '"]');
+    if (!panel || !row) return;
+    ensureOpportunityCleanupPanelLoaded(key);
+    adminContentRoot()
+      .querySelectorAll('.opportunity-cleanup-panel')
+      .forEach(function (p) {
+        p.classList.add('hidden');
+      });
+    adminContentRoot()
+      .querySelectorAll('[data-toggle-opp-edit]')
+      .forEach(function (btn) {
+        btn.textContent = 'Review';
+      });
+    panel.classList.remove('hidden');
+    opportunityCleanupState.expanded[key] = true;
+    var toggle = row.querySelector('[data-toggle-opp-edit]');
+    if (toggle) toggle.textContent = 'Close';
+    if (opts.focusDeny) {
+      var noteEl = panel.querySelector('[data-opp-rejection-note]');
+      if (noteEl) {
+        noteEl.focus();
+        if (noteEl.scrollIntoView) {
+          noteEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }
+    } else if (panel.scrollIntoView) {
+      panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }
+
   function opportunityCleanupReviewPanelHtml(opp) {
     var id = String(opp.id || '');
     var isPendingSubmitted =
@@ -22275,10 +22341,19 @@
         : awaitingPay
           ? 'Approved — awaiting listing payment before going live.'
           : 'Review what was submitted before making admin changes.';
+    var priorRejection = String(opp.rejection_note || '').trim();
     return (
       '<div class="opp-review-panel" data-opp-review-for="' +
       attrEsc(id) +
       '">' +
+      opportunityCleanupModerationHtml(opp) +
+      (priorRejection && opp.approval_status !== 'Approved'
+        ? '<div class="opp-review-prior-rejection" role="note">' +
+          '<p class="opp-review-prior-rejection-label">Previous denial reason on file</p>' +
+          '<p class="opp-review-prior-rejection-text">' +
+          esc(priorRejection) +
+          '</p></div>'
+        : '') +
       '<div class="opp-review-toolbar">' +
       '<div class="opp-review-toolbar-note">' +
       '<p class="opp-review-toolbar-status">' +
@@ -22508,8 +22583,7 @@
       (isPending
         ? '<button type="button" data-opp-approve class="text-xs font-semibold rounded-lg bg-brand-700 text-white px-2.5 py-1 hover:bg-brand-900">' +
           approveLabel +
-          '</button>' +
-          '<button type="button" data-opp-reject class="text-xs font-semibold rounded-lg border border-red-200 text-red-700 px-2.5 py-1 hover:bg-red-50">Reject</button>'
+          '</button>'
         : '') +
       (awaitingPay
         ? '<button type="button" data-opp-resend-pay class="text-xs font-semibold rounded-lg border border-sky-300 text-sky-900 px-2.5 py-1 hover:bg-sky-50">Resend pay email</button>'
@@ -23505,20 +23579,15 @@
       var msgEl = rejectPanel && rejectPanel.querySelector('[data-opp-rejection-msg]');
       var rejectionNote = noteEl ? String(noteEl.value || '').trim() : '';
       if (!rejectionNote) {
-        rejectionNote = String(
-          window.prompt(
-            'Why is this listing being denied? This reason will be emailed to the lister.',
-            ''
-          ) || ''
-        ).trim();
-      }
-      if (!rejectionNote) {
+        if (rejectPanel) {
+          openOpportunityReviewPanel(rejectId, { focusDeny: true });
+        }
         if (msgEl) {
           msgEl.hidden = false;
           msgEl.textContent = 'Please enter a reason for denial so the lister knows what to fix.';
           msgEl.className = 'opp-review-deny-msg text-xs text-red-700 font-semibold';
         } else {
-          window.alert('Please enter a reason for denial so the lister knows what to fix.');
+          window.alert('Open Review and enter a denial reason before denying this listing.');
         }
         if (noteEl && noteEl.focus) noteEl.focus();
         return;

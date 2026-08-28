@@ -2742,3 +2742,55 @@ a.admin-action-row:hover .admin-action-btn {
 .opp-review-admin-edit-body {
   margin-top: 0.85rem;
 }
+
+.opp-review-moderation {
+  background: #fff7ed;
+  border: 1px solid #fdba74;
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+
+.opp-review-moderation-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.opp-review-moderation-list li {
+  font-size: 0.8125rem;
+  color: #9a3412;
+}
+
+.opp-review-moderation-id {
+  display: inline-block;
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #c2410c;
+  margin-right: 0.25rem;
+}
+
+.opp-review-prior-rejection {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 0.75rem;
+  padding: 0.85rem 1rem;
+}
+
+.opp-review-prior-rejection-label {
+  margin: 0 0 0.25rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #991b1b;
+}
+
+.opp-review-prior-rejection-text {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #7f1d1d;
+  white-space: pre-wrap;
+}

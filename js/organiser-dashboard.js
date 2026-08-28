@@ -16310,6 +16310,7 @@
         (premiumBadge ? ' ' + premiumBadge : '') +
         '</span>' +
         '</header>' +
+        opportunityRejectionNoteHtml(o) +
         '<div class="org-stats org-stats--four org-opp-listing-card-stats">' +
         '<div class="org-stat gold"><div class="org-stat-label">Enquiries</div><div class="org-stat-value">' +
         esc(String(enquiries.length)) +
@@ -16390,6 +16391,15 @@
       .join('');
   }
 
+  function opportunityRejectionNoteHtml(o) {
+    const approval = String(o.approvalStatus || o.approval_status || '').trim();
+    const note = String(o.rejectionNote || o.rejection_note || '').trim();
+    if (approval !== 'Rejected' || !note) return '';
+    return (
+      '<p class="org-opp-rejection-note"><strong>Why it was not approved:</strong> ' + esc(note) + '</p>'
+    );
+  }
+
   function opportunityStatusForBadge(o) {
     const status = String(o.status || '').toLowerCase();
     const approval = String(o.approvalStatus || o.approval_status || '').trim();
@@ -16445,7 +16455,9 @@
         statusBadgeHtml(st.key, st.label) +
         '<div class="org-opp-status-steps-wrap">' +
         opportunityStatusStepsHtml(o) +
-        '</div></td><td data-label="Premium">' +
+        '</div>' +
+        opportunityRejectionNoteHtml(o) +
+        '</td><td data-label="Premium">' +
         opportunityPremiumCellHtml(o) +
         '</td><td data-label="Views">' +
         (opportunityViewCount(o)

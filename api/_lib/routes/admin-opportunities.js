@@ -8,7 +8,7 @@ const {
   deriveOpportunityGeo,
   writeOpportunityRow,
 } = require('../supabase-opportunities');
-const { stripEarningsMeta, isNetworkMarketingType } = require('../opportunity-moderation');
+const { stripEarningsMeta, isNetworkMarketingType, scanOpportunityRedFlags } = require('../opportunity-moderation');
 const { sendOpportunityListingLiveEmail, sendOpportunityListingApprovedPayEmail } = require('../opportunity-emails');
 const { ensureOpportunitySlug } = require('../opportunity-slug');
 const { addMonths, listingPaymentCurrent } = require('../opportunity-listing-pricing');
@@ -173,9 +173,34 @@ async function resolveAdminOpportunityLogo(body, opportunityId) {
   return undefined;
 }
 
+function moderationFlagsForAdminRow(mapped) {
+  try {
+    const scan = scanOpportunityRedFlags({
+      title: mapped.title,
+      description: mapped.description,
+      about: mapped.about,
+      meta: mapped.meta,
+      type: mapped.type,
+      host: mapped.host,
+      category: mapped.category,
+    });
+    if (!scan || !Array.isArray(scan.reasons)) return [];
+    return scan.reasons.map(function (reason) {
+      return {
+        id: reason.id || 'flag',
+        label: String(reason.label || '').trim(),
+      };
+    }).filter(function (reason) {
+      return reason.label;
+    });
+  } catch {
+    return [];
+  }
+}
+
 function mapOpportunityRow(row) {
   const meta = normalizeMeta(row.meta);
-  return {
+  const mapped = {
     id: row.id,
     slug: row.slug || '',
     title: String(row.title || '').trim(),
@@ -213,7 +238,10 @@ function mapOpportunityRow(row) {
     created_at: row.created_at || '',
     updated_at: row.updated_at || '',
     published_at: row.published_at || '',
+    rejection_note: row.rejection_note || null,
   };
+  mapped.moderation_flags = moderationFlagsForAdminRow(mapped);
+  return mapped;
 }
 
 function isAffiliateStyleAdminType(type, meta) {

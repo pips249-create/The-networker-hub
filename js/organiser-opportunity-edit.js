@@ -17,6 +17,9 @@
   let photoFile = null;
   let logoFile = null;
   let currentOpportunity = null;
+  let oeFormBaseline = '';
+  let oeFormDirty = false;
+  let oeSkipUnloadGuard = false;
 
   const LISTING_MONTHLY_EX_VAT = 25;
   const LISTING_VAT_RATE = 0.2;
@@ -639,6 +642,25 @@
     el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
+  function showRejectionBanner(opportunity) {
+    const el = document.getElementById('oe-rejection-banner');
+    if (!el) return;
+    const approval = String((opportunity && opportunity.approvalStatus) || '').trim();
+    const note = String((opportunity && opportunity.rejectionNote) || '').trim();
+    if (approval !== 'Rejected' || !note) {
+      el.hidden = true;
+      el.innerHTML = '';
+      return;
+    }
+    el.innerHTML =
+      '<strong>This listing was not approved</strong>' +
+      '<p>Please update your listing to address the points below, then resubmit for review.</p>' +
+      '<p>' +
+      esc(note) +
+      '</p>';
+    el.hidden = false;
+  }
+
   function oeProgressiveFlowActive() {
     return !editId && !oeFlowRevealAll;
   }
@@ -812,6 +834,7 @@
     }
 
     showStatusBadge(opp);
+    showRejectionBanner(opp);
     document.getElementById('oe-page-title').textContent = 'Edit opportunity';
     listingPaymentPanelVisible();
     updateListingPriceBreakdown();
@@ -865,19 +888,31 @@
         previewImg.removeAttribute('src');
         previewImg.classList.remove('is-logo-dark');
       }
+      if (window.hubClearLogoQualityHint) {
+        window.hubClearLogoQualityHint(document.getElementById('oe-logo-quality-hint'));
+      }
+      refreshListingPreview();
     }
 
     function setLogoFile(file) {
       logoFile = file;
       const reader = new FileReader();
-      reader.onload = () => showPreview(reader.result);
+      reader.onload = function () {
+        showPreview(reader.result);
+        refreshListingPreview();
+      };
       reader.readAsDataURL(file);
       refreshCompleteness();
       syncVisualRequirement(false);
     }
 
     if (zone && window.hubBindImageUpload) {
-      window.hubBindImageUpload({ zone, fileInput, onFile: setLogoFile });
+      window.hubBindImageUpload({
+        zone,
+        fileInput,
+        onFile: setLogoFile,
+        qualityHintEl: document.getElementById('oe-logo-quality-hint'),
+      });
     }
     if (zone) {
       zone.addEventListener('keydown', (e) => {
@@ -897,11 +932,15 @@
       });
     }
     if (urlInput) {
-      urlInput.addEventListener('input', () => {
+      urlInput.addEventListener('input', function () {
         const url = String(urlInput.value || '').trim();
         if (url) showPreview(url);
         refreshCompleteness();
         syncVisualRequirement(false);
+        refreshListingPreview();
+        if (window.hubCheckLogoUrlQuality) {
+          window.hubCheckLogoUrlQuality(url, document.getElementById('oe-logo-quality-hint'));
+        }
       });
     }
   }
@@ -926,19 +965,34 @@
       if (preview) preview.hidden = true;
       if (placeholder) placeholder.hidden = false;
       if (previewImg) previewImg.removeAttribute('src');
+      const hint = document.getElementById('oe-photo-quality-hint');
+      if (hint) {
+        hint.hidden = true;
+        hint.textContent = '';
+      }
+      refreshListingPreview();
     }
 
     function setPhotoFile(file) {
       photoFile = file;
       const reader = new FileReader();
-      reader.onload = () => showPreview(reader.result);
+      reader.onload = function () {
+        showPreview(reader.result);
+        refreshListingPreview();
+      };
       reader.readAsDataURL(file);
       refreshCompleteness();
       syncVisualRequirement(false);
     }
 
     if (zone && window.hubBindImageUpload) {
-      window.hubBindImageUpload({ zone, fileInput, onFile: setPhotoFile });
+      window.hubBindImageUpload({
+        zone,
+        fileInput,
+        onFile: setPhotoFile,
+        qualityHintEl: document.getElementById('oe-photo-quality-hint'),
+        uploadOptions: { coverQuality: true },
+      });
     }
     if (zone) {
       zone.addEventListener('keydown', (e) => {
@@ -960,11 +1014,41 @@
     }
     const photoUrlInput = document.getElementById('oe-photo-url');
     if (photoUrlInput) {
-      photoUrlInput.addEventListener('input', () => {
+      photoUrlInput.addEventListener('input', function () {
         const url = String(photoUrlInput.value || '').trim();
+        const hint = document.getElementById('oe-photo-quality-hint');
         if (url) showPreview(url);
         refreshCompleteness();
         syncVisualRequirement(false);
+        refreshListingPreview();
+        if (!hint) return;
+        if (!url || !/^https?:\/\//i.test(url)) {
+          hint.hidden = true;
+          hint.textContent = '';
+          return;
+        }
+        if (!window.hubMeasureImageUrl) return;
+        window.hubMeasureImageUrl(url)
+          .then(function (dims) {
+            const longEdge = Math.max(dims.width, dims.height);
+            const shortEdge = Math.min(dims.width, dims.height);
+            if (longEdge >= 1200 && shortEdge >= 720) {
+              hint.hidden = true;
+              hint.textContent = '';
+              return;
+            }
+            hint.textContent =
+              'This image is ' +
+              dims.width +
+              '×' +
+              dims.height +
+              'px and may look soft on the browse page. Use a landscape photo at least 1200×750px for a sharp listing card.';
+            hint.hidden = false;
+          })
+          .catch(function () {
+            hint.hidden = true;
+            hint.textContent = '';
+          });
       });
     }
   }
@@ -1141,6 +1225,233 @@
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
+  }
+
+  function snapshotFormState() {
+    try {
+      return JSON.stringify(buildPayload('draft'));
+    } catch {
+      return '';
+    }
+  }
+
+  function resetFormBaseline() {
+    oeFormBaseline = snapshotFormState();
+    oeFormDirty = false;
+  }
+
+  function markFormDirty() {
+    oeFormDirty = true;
+  }
+
+  function hasUnsavedFormChanges() {
+    if (oeSkipUnloadGuard || !oeFormDirty) return false;
+    return snapshotFormState() !== oeFormBaseline;
+  }
+
+  function bindUnsavedGuard() {
+    window.addEventListener('beforeunload', function (e) {
+      if (!hasUnsavedFormChanges()) return;
+      e.preventDefault();
+      e.returnValue = '';
+    });
+    const form = document.getElementById('oe-form');
+    if (!form) return;
+    form.addEventListener('input', markFormDirty);
+    form.addEventListener('change', markFormDirty);
+  }
+
+  function previewCoverUrl() {
+    const photoImg = document.getElementById('oe-photo-preview-img');
+    if (photoImg && photoImg.getAttribute('src')) return photoImg.getAttribute('src');
+    const photoUrl = document.getElementById('oe-photo-url')?.value.trim();
+    if (photoUrl) return photoUrl;
+    const logoImg = document.getElementById('oe-logo-preview-img');
+    if (logoImg && logoImg.getAttribute('src')) return logoImg.getAttribute('src');
+    return document.getElementById('oe-logo-url')?.value.trim() || '';
+  }
+
+  function previewHostsNearDuplicate(title, host) {
+    const a = String(title || '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim();
+    const b = String(host || '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim();
+    if (!a || !b) return false;
+    if (a === b) return true;
+    return a.indexOf(b) !== -1 || b.indexOf(a) !== -1;
+  }
+
+  function previewItemFromForm() {
+    const payload = buildPayload('draft');
+    const seed = {
+      id: 'preview',
+      title: payload.title || 'Your opportunity title',
+      type: payload.type || payload.types[0] || 'franchise',
+      tags: payload.tags || payload.types || [],
+      host: payload.host || '',
+      desc: payload.description || '',
+      meta: payload.meta || [],
+      category: payload.category || 'general',
+      imageUrl: previewCoverUrl(),
+      logoUrl: payload.logoUrl || '',
+    };
+    const catalog = window.HubOpportunitiesCatalog;
+    if (catalog && catalog.normalizeListing) {
+      return catalog.normalizeListing(seed, 0);
+    }
+    return seed;
+  }
+
+  function previewInvestmentDisplay(item) {
+    const catalog = window.HubOpportunitiesCatalog;
+    if (isAffiliateStyleListing(item.tags || item.types || [])) {
+      const commission = (item.meta || []).find(function (m) {
+        return /^commission$/i.test(m.key);
+      });
+      return {
+        value: (commission && commission.val) || 'On request',
+        label: 'Commission',
+      };
+    }
+    const investment = (item.meta || []).find(function (m) {
+      return /^investment$/i.test(m.key);
+    });
+    if (investment && investment.val) {
+      return { value: investment.val, label: 'Investment' };
+    }
+    if (catalog && catalog.parseInvestmentAmount) {
+      const amount = catalog.parseInvestmentAmount(item.meta || []);
+      if (amount != null && amount > 0) {
+        return {
+          value: 'From £' + Number(amount).toLocaleString('en-GB'),
+          label: 'Investment',
+        };
+      }
+    }
+    return { value: 'On request', label: 'Investment' };
+  }
+
+  function buildBrowsePreviewHtml() {
+    const item = previewItemFromForm();
+    const catalog = window.HubOpportunitiesCatalog;
+    const typeLabels = catalog ? catalog.TYPE_LABELS : TYPE_LABELS;
+    const typeLabel = typeLabels[item.type] || item.type || 'Opportunity';
+    const thumb = item.thumb || { emoji: '✦', gradient: 'linear-gradient(135deg,#fdf6e3,#f5e0a0)' };
+    const cover = String(item.imageUrl || '').trim();
+    const logoUrl = String(item.logoUrl || '').trim();
+    const isLogoCover = Boolean(cover && logoUrl && cover === logoUrl);
+    const commitment =
+      document.getElementById('oe-commitment')?.value.trim() ||
+      (item.filterTags && item.filterTags.indexOf('full-time') !== -1 ? 'Full-time' : 'Flexible');
+    const price = previewInvestmentDisplay(item);
+    const host = String(item.host || '').trim();
+    const title = String(item.title || '').trim() || 'Your opportunity title';
+    const showHost =
+      host &&
+      host.toLowerCase() !== 'provider' &&
+      !previewHostsNearDuplicate(title, host);
+    const locationLabel = item.locationLabel || formatListingLocation(getSelectedListingRegion(), '') || 'UK';
+    const media = cover
+      ? '<img src="' +
+        escHtml(cover) +
+        '" alt="" class="' +
+        (isLogoCover ? 'is-logo-cover' : '') +
+        '" />'
+      : '<div class="oe-browse-preview-placeholder" style="background:' +
+        escHtml(thumb.gradient) +
+        '"><span aria-hidden="true">' +
+        escHtml(thumb.emoji || '✦') +
+        '</span></div>';
+
+    return (
+      '<article class="oe-browse-preview-card">' +
+      '<div class="oe-browse-preview-media">' +
+      media +
+      '<span class="oe-browse-preview-category">' +
+      escHtml(typeLabel) +
+      '</span></div>' +
+      '<div class="oe-browse-preview-body">' +
+      '<div class="oe-browse-preview-top">' +
+      '<span class="oe-browse-preview-commitment">' +
+      escHtml(commitment) +
+      '</span>' +
+      '<div class="oe-browse-preview-price"><strong>' +
+      escHtml(price.value) +
+      '</strong><span>' +
+      escHtml(price.label) +
+      '</span></div></div>' +
+      '<h3 class="oe-browse-preview-title">' +
+      escHtml(title) +
+      '</h3>' +
+      (showHost ? '<p class="oe-browse-preview-host">' + escHtml(host) + '</p>' : '') +
+      '<p class="oe-browse-preview-location">' +
+      escHtml(locationLabel) +
+      '</p></div></article>'
+    );
+  }
+
+  function refreshListingPreview() {
+    const show = stepTitleComplete();
+    const html = show ? buildBrowsePreviewHtml() : '';
+    document.querySelectorAll('[data-oe-preview-mount]').forEach(function (mount) {
+      mount.innerHTML = html;
+      mount.setAttribute('aria-hidden', show ? 'false' : 'true');
+    });
+    const photoWrap = document.getElementById('oe-live-preview-photo');
+    if (photoWrap) photoWrap.hidden = !show;
+  }
+
+  function refreshSubmitSummary() {
+    const recap = document.getElementById('oe-submit-recap');
+    const list = document.getElementById('oe-submit-summary-list');
+    const submitCard = document.getElementById('oe-card-submit');
+    const submitVisible = submitCard && !submitCard.hidden;
+    if (recap) recap.hidden = !submitVisible;
+    if (!list || !submitVisible) return;
+
+    const payload = buildPayload('draft');
+    const region = getSelectedListingRegion();
+    const rows = [
+      ['Title', payload.title || '—'],
+      ['Type', typeLabelsList(payload.types) || '—'],
+      ['Company', payload.host || '—'],
+      ['Region', region ? region.label : '—'],
+    ];
+    if (isAffiliateStyleListing()) {
+      const commission = (payload.meta || []).find(function (m) {
+        return /^commission$/i.test(m.key);
+      });
+      const promote = (payload.meta || []).find(function (m) {
+        return /^what you promote$/i.test(m.key);
+      });
+      rows.push(['Commission', (commission && commission.val) || '—']);
+      rows.push(['Promote', (promote && promote.val) || '—']);
+    } else {
+      const investment = (payload.meta || []).find(function (m) {
+        return /^investment$/i.test(m.key);
+      });
+      rows.push(['Investment', (investment && investment.val) || '—']);
+    }
+    const images = [];
+    if (logoFile || payload.logoUrl) images.push('Logo');
+    if (photoFile || payload.photoUrl) images.push('Cover photo');
+    rows.push(['Images', images.length ? images.join(' + ') : 'None yet']);
+
+    list.innerHTML = rows
+      .map(function (row) {
+        return (
+          '<li><dt>' +
+          escHtml(row[0]) +
+          '</dt><dd>' +
+          escHtml(row[1]) +
+          '</dd></li>'
+        );
+      })
+      .join('');
   }
 
   function typeLabelsList(types) {
@@ -1338,6 +1649,9 @@
         setOeCardCollapsed(stepKey, oeStepsConfirmed[stepKey]);
       }
     });
+
+    refreshListingPreview();
+    refreshSubmitSummary();
   }
 
   function confirmOeStep(stepKey) {
@@ -1851,6 +2165,7 @@
           return;
         }
         showAlert('Draft saved.');
+        resetFormBaseline();
         return;
       }
 
@@ -1868,6 +2183,7 @@
           return;
         }
         showAlert('Listing updated.');
+        resetFormBaseline();
         return;
       }
 
@@ -1887,6 +2203,7 @@
 
       if (opportunity.id && !editId) {
         redirecting = true;
+        oeSkipUnloadGuard = true;
         if (loading) loading.show('Taking you to your listings…');
         try {
           sessionStorage.setItem(
@@ -1944,6 +2261,7 @@
     bindCompletenessScan();
     bindStepFeedbackClear();
     bindOpportunitySteps();
+    bindUnsavedGuard();
     refreshModerationWarnings(true);
     refreshCompleteness();
 
@@ -1992,7 +2310,7 @@
       showAlert(
         'Checkout was cancelled. Your listing stays approved — pay via Stripe when you are ready to go live.'
       );
-    } else     if (justSubmitted) {
+    } else if (justSubmitted) {
       showAlert(
         'Submitted for review. We’ll email you when it’s approved — then you can pay via Stripe to go live.'
       );
@@ -2032,6 +2350,9 @@
     }
 
     syncOpportunitySteps({ revealAll: !!editId });
+    resetFormBaseline();
+    refreshListingPreview();
+    refreshSubmitSummary();
 
     if (
       checkoutStart &&
