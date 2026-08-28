@@ -1210,12 +1210,18 @@
       meta: buildMeta(),
       tags,
       listingStatus,
-      photoUrl: document.getElementById('oe-photo-url').value.trim(),
-      logoUrl: document.getElementById('oe-logo-url').value.trim(),
       fcaDisclaimerAttested: requiresFcaDisclaimer()
         ? Boolean(document.getElementById('oe-fca-attest')?.checked)
         : false,
     };
+  }
+
+  function appendListingMediaUrls(payload) {
+    const photoUrl = document.getElementById('oe-photo-url')?.value.trim();
+    const logoUrl = document.getElementById('oe-logo-url')?.value.trim();
+    if (photoUrl) payload.photoUrl = photoUrl;
+    if (logoUrl) payload.logoUrl = logoUrl;
+    return payload;
   }
 
   function moderationScanInput(payload, options) {
@@ -1296,6 +1302,9 @@
     if (photoImg && photoImg.getAttribute('src')) return photoImg.getAttribute('src');
     const photoUrl = document.getElementById('oe-photo-url')?.value.trim();
     if (photoUrl) return photoUrl;
+    if (currentOpportunity && currentOpportunity.displayCoverUrl) {
+      return currentOpportunity.displayCoverUrl;
+    }
     const logoImg = document.getElementById('oe-logo-preview-img');
     if (logoImg && logoImg.getAttribute('src')) return logoImg.getAttribute('src');
     return document.getElementById('oe-logo-url')?.value.trim() || '';
@@ -2084,6 +2093,7 @@
     }
 
     const payload = buildPayload(publish && hasActiveListing ? 'published' : 'draft');
+    appendListingMediaUrls(payload);
     if (publish && !hasActiveListing) {
       payload.submitForReview = true;
     }
@@ -2158,7 +2168,9 @@
         const msg =
           err === 'opportunities_unavailable'
             ? 'Opportunity listings are not available yet — contact support if this persists.'
-            : res.data.message || err || 'Could not save opportunity';
+            : err === 'cover_upload_failed'
+              ? 'Your cover photo could not be uploaded. Try a smaller JPG or PNG (under 2MB) and save again.'
+              : res.data.message || err || 'Could not save opportunity';
         showAlert(msg);
         return;
       }

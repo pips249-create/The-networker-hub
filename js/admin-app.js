@@ -22109,13 +22109,38 @@
 
   function opportunityCleanupCoverUrl(opp) {
     if (!opp) return '';
-    var cover = opportunityAdminMediaUrl(opp.image_url);
-    if (cover) return cover;
-    return opportunityAdminMediaUrl(opp.logo_url);
+    var fromApi = opportunityAdminMediaUrl(opp.cover_url || opp.displayCoverUrl);
+    if (fromApi) return fromApi;
+    var imageRaw = String(opp.image_url || opp.imageUrl || '').trim();
+    var logoRaw = String(opp.logo_url || opp.logoUrl || '').trim();
+    var cover = opportunityAdminMediaUrl(imageRaw);
+    if (cover && !/^blob:/i.test(imageRaw)) return cover;
+    return opportunityAdminMediaUrl(logoRaw);
   }
 
   function opportunityCleanupCoverUsesLogoFallback(opp) {
-    return !opportunityAdminMediaUrl(opp && opp.image_url) && !!opportunityAdminMediaUrl(opp && opp.logo_url);
+    if (!opp) return false;
+    if (opp.cover_is_logo_fallback != null) return Boolean(opp.cover_is_logo_fallback);
+    if (opp.coverIsLogoFallback != null) return Boolean(opp.coverIsLogoFallback);
+    var imageRaw = String(opp.image_url || opp.imageUrl || '').trim();
+    if (imageRaw && !/^blob:/i.test(imageRaw) && opportunityAdminMediaUrl(imageRaw)) return false;
+    return !!opportunityAdminMediaUrl(opp.logo_url || opp.logoUrl);
+  }
+
+  function bindOpportunityReviewCoverFallbacks(root, opp) {
+    if (!root || !opp) return;
+    var logoUrl = opportunityAdminMediaUrl(opp.logo_url || opp.logoUrl);
+    if (!logoUrl) return;
+    root.querySelectorAll(
+      '.opp-review-card-cover, .opp-review-detail-cover, .opp-review-image-block img[alt="Cover image"]'
+    ).forEach(function (img) {
+      img.addEventListener('error', function onCoverErr() {
+        img.removeEventListener('error', onCoverErr);
+        if (String(img.getAttribute('src') || '') === logoUrl) return;
+        img.src = logoUrl;
+        img.classList.add('opp-review-card-cover--logo-fallback', 'opp-review-detail-cover--logo-fallback');
+      });
+    });
   }
 
   function opportunityIsAffiliateStyle(opp) {
@@ -22159,7 +22184,7 @@
   function opportunityCleanupReviewCardHtml(opp) {
     var coverUrl = opportunityCleanupCoverUrl(opp);
     var coverUsesLogo = opportunityCleanupCoverUsesLogoFallback(opp);
-    var logoUrl = opportunityAdminMediaUrl(opp.logo_url);
+    var logoUrl = opportunityAdminMediaUrl(opp.logo_url || opp.logoUrl);
     var typeLabel = opportunityTypeLabel(opp.type);
     var affiliate = opportunityIsAffiliateStyle(opp);
     var priceFact = affiliate
@@ -22215,7 +22240,7 @@
   function opportunityCleanupReviewDetailHtml(opp) {
     var coverUrl = opportunityCleanupCoverUrl(opp);
     var coverUsesLogo = opportunityCleanupCoverUsesLogoFallback(opp);
-    var logoUrl = opportunityAdminMediaUrl(opp.logo_url);
+    var logoUrl = opportunityAdminMediaUrl(opp.logo_url || opp.logoUrl);
     var paragraphs = opportunityAboutParagraphs(opp);
     var affiliate = opportunityIsAffiliateStyle(opp);
     var coverHtml = coverUrl
@@ -22441,11 +22466,11 @@
       '</figure>' +
       '<figure class="opp-review-image-block">' +
       '<figcaption>Logo</figcaption>' +
-      (opportunityAdminMediaUrl(opp.logo_url)
+      (opportunityAdminMediaUrl(opp.logo_url || opp.logoUrl)
         ? '<a href="' +
-          attrEsc(opportunityAdminMediaUrl(opp.logo_url)) +
+          attrEsc(opportunityAdminMediaUrl(opp.logo_url || opp.logoUrl)) +
           '" target="_blank" rel="noopener"><img src="' +
-          attrEsc(opportunityAdminMediaUrl(opp.logo_url)) +
+          attrEsc(opportunityAdminMediaUrl(opp.logo_url || opp.logoUrl)) +
           '" alt="Logo" class="opp-review-logo-thumb" loading="lazy"></a>'
         : '<p class="opp-review-muted">No logo uploaded</p>') +
       '</figure></div></section>' +
@@ -22523,6 +22548,7 @@
     if (!opp || !cell) return panel;
     try {
       cell.innerHTML = opportunityCleanupReviewPanelHtml(opp);
+      bindOpportunityReviewCoverFallbacks(cell, opp);
       var adminEditDetails = panel.querySelector('.opp-review-admin-edit');
       if (adminEditDetails) {
         adminEditDetails.addEventListener('toggle', function () {

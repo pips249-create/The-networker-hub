@@ -13,6 +13,7 @@ const { sendOpportunityListingLiveEmail, sendOpportunityListingApprovedPayEmail 
 const { ensureOpportunitySlug } = require('../opportunity-slug');
 const { addMonths, listingPaymentCurrent } = require('../opportunity-listing-pricing');
 const { resolveImageUrl } = require('../supabase-storage');
+const { resolveOpportunityDisplayCover } = require('../opportunity-media');
 
 const { HUB_SEED_OWNER_EMAIL, isHubSeedOwnerEmail } = require('../opportunity-hub-seed');
 const { applyIlikeSearch } = require('../search-match');
@@ -234,6 +235,7 @@ function mapOpportunityRow(row) {
     organiser_id: row.organiser_id || '',
     image_url: row.image_url || '',
     logo_url: row.logo_url || '',
+    ...resolveOpportunityDisplayCover(row.image_url, row.logo_url),
     package_tier: row.package_tier || '',
     listing_expires_at: row.listing_expires_at || '',
     listing_paid_at: row.listing_paid_at || '',

@@ -3,6 +3,7 @@
  */
 const { getSupabaseAdmin } = require('./supabase');
 const { resolveImageUrl } = require('./supabase-storage');
+const { resolveOpportunityDisplayCover } = require('./opportunity-media');
 const { resolveOrganiserAccess } = require('./supabase-organiser-access');
 const {
   normalizeListingMonths,
@@ -293,6 +294,13 @@ function rowToListing(row) {
     contactEmail: String(row.contact_email || '').trim(),
     imageUrl: String(row.image_url || '').trim(),
     logoUrl: String(row.logo_url || '').trim(),
+    ...(() => {
+      const cover = resolveOpportunityDisplayCover(row.image_url, row.logo_url);
+      return {
+        displayCoverUrl: cover.cover_url,
+        coverIsLogoFallback: cover.cover_is_logo_fallback,
+      };
+    })(),
     status: row.status || 'draft',
     approvalStatus: row.approval_status || 'Pending Review',
     reviewSubmittedAt: row.review_submitted_at || null,
@@ -388,6 +396,7 @@ async function resolveOpportunityImage(payload, opportunityId) {
       logoFilename: payload.photoFilename,
     });
     if (url) return url;
+    throw new Error('cover_upload_failed');
   }
   if (Object.prototype.hasOwnProperty.call(payload, 'photoUrl')) {
     const url = String(payload.photoUrl || '').trim();
