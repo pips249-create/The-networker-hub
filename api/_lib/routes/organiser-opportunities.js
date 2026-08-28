@@ -79,6 +79,7 @@ module.exports = async function handler(req, res) {
     isPlatformAdmin,
     listOpportunitiesForSession,
     getOpportunityById,
+    getOpportunityForOrganiserEdit,
     opportunityOwnedBySession,
     createOpportunity,
     updateOpportunity,
@@ -114,7 +115,7 @@ module.exports = async function handler(req, res) {
         if (!isPlatformAdmin(auth.session) && !allowed.has(opportunityId)) {
           return json(res, 403, { error: 'opportunity_not_owned' });
         }
-        const opportunity = await getOpportunityById(opportunityId);
+        const opportunity = await getOpportunityForOrganiserEdit(opportunityId);
         if (!opportunity) return json(res, 404, { error: 'not_found' });
         const [enriched] = await attachSaveCounts([opportunity]);
         return json(res, 200, { ok: true, opportunity: enriched || opportunity });

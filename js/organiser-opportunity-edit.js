@@ -563,8 +563,9 @@
 
     const actionsNote = document.getElementById('oe-actions-note');
     if (actionsNote) {
-      actionsNote.textContent =
-        'Submit changes for reapproval when you are ready. Your monthly subscription stays active — no extra payment.';
+      actionsNote.textContent = currentOpportunity && currentOpportunity.hasPendingChanges
+        ? 'Changes are awaiting approval — your current listing stays live. You can keep editing and submit again.'
+        : 'Your current listing stays live until we approve edits. Submit changes for reapproval when you are ready — your monthly subscription stays active.';
     }
     setOpenDaysSaveOnlyVisible(true);
   }
@@ -994,18 +995,33 @@
     if (!el) return;
     const approval = String((opportunity && opportunity.approvalStatus) || '').trim();
     const note = String((opportunity && opportunity.rejectionNote) || '').trim();
-    if (approval !== 'Rejected' || !note) {
+    if (!note) {
       el.hidden = true;
       el.innerHTML = '';
       return;
     }
-    el.innerHTML =
-      '<strong>This listing was not approved</strong>' +
-      '<p>Please update your listing to address the points below, then resubmit for review.</p>' +
-      '<p>' +
-      esc(note) +
-      '</p>';
-    el.hidden = false;
+    if (approval === 'Rejected') {
+      el.innerHTML =
+        '<strong>This listing was not approved</strong>' +
+        '<p>Please update your listing to address the points below, then resubmit for review.</p>' +
+        '<p>' +
+        esc(note) +
+        '</p>';
+      el.hidden = false;
+      return;
+    }
+    if (opportunityListingIsLive(opportunity) && !opportunity.hasPendingChanges) {
+      el.innerHTML =
+        '<strong>Your proposed changes were not approved</strong>' +
+        '<p>Your live listing is unchanged. Update below and submit again if you would like.</p>' +
+        '<p>' +
+        esc(note) +
+        '</p>';
+      el.hidden = false;
+      return;
+    }
+    el.hidden = true;
+    el.innerHTML = '';
   }
 
   function oeProgressiveFlowActive() {
@@ -2625,7 +2641,7 @@
           return;
         }
         showAlert(
-          'Changes submitted for reapproval. Your monthly subscription continues unchanged — we will email you when updates are approved.'
+          'Changes submitted for reapproval. Your current listing stays live until we approve — your subscription continues unchanged.'
         );
         resetFormBaseline();
         syncListingStatusUi(opportunity);

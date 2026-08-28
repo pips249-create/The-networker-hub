@@ -249,9 +249,12 @@
       '<div class="opp-compare-backdrop" data-opp-compare-close></div>' +
       '<div class="opp-compare-panel">' +
       '<header class="opp-compare-head">' +
+      '<div class="opp-compare-head-main">' +
+      '<span class="opp-compare-sheet-handle" aria-hidden="true"></span>' +
       '<h2 id="opp-compare-title">Compare opportunities</h2>' +
-      '<button type="button" class="opp-compare-close" data-opp-compare-close data-opp-compare-exit aria-label="Exit compare">' +
-      '<span class="opp-compare-close-x" aria-hidden="true">×</span> Exit' +
+      '</div>' +
+      '<button type="button" class="opp-compare-close" data-opp-compare-close aria-label="Close comparison">' +
+      '<span class="opp-compare-close-x" aria-hidden="true">×</span> Close' +
       '</button>' +
       '</header>' +
       '<div class="opp-compare-scroll">' +
@@ -262,7 +265,7 @@
       '</tbody></table></div>' +
       '<div class="opp-compare-foot">' +
       '<p class="opp-compare-note">Listings are informational only — not investment advice. Confirm details with each lister.</p>' +
-      '<button type="button" class="opp-compare-done" data-opp-compare-close data-opp-compare-exit>Done</button>' +
+      '<button type="button" class="opp-compare-done" data-opp-compare-close>Done</button>' +
       '</div>' +
       '</div></div>'
     );
@@ -270,25 +273,36 @@
 
   function bindModal(root) {
     if (!root) return;
-    function closeModal(exitCompare) {
+    function closeModal(clearSelection) {
       var modal = document.getElementById('opp-compare-modal');
       if (!modal) return;
       modal.remove();
       document.body.classList.remove('opp-compare-modal-open');
       document.removeEventListener('keydown', onEscape);
-      if (exitCompare) {
+      if (clearSelection) {
         clear();
         try {
           document.dispatchEvent(new CustomEvent('hub-opp-compare-closed', { detail: { cleared: true } }));
         } catch (err) {
           /* ignore */
         }
+      } else {
+        try {
+          document.dispatchEvent(new CustomEvent('hub-opp-compare-closed', { detail: { cleared: false } }));
+        } catch (err) {
+          /* ignore */
+        }
       }
     }
     function onEscape(e) {
-      if (e.key === 'Escape') closeModal(true);
+      if (e.key === 'Escape') closeModal(false);
     }
     root.querySelectorAll('[data-opp-compare-close]').forEach(function (el) {
+      el.addEventListener('click', function () {
+        closeModal(false);
+      });
+    });
+    root.querySelectorAll('[data-opp-compare-exit]').forEach(function (el) {
       el.addEventListener('click', function () {
         closeModal(true);
       });

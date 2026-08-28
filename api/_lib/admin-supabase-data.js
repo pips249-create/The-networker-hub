@@ -9,7 +9,7 @@ const {
 const { isTestFixtureText, isTestRegistration } = require('./test-fixture-filters');
 const {
   isOpportunityReviewQueueReady,
-  applySubmittedReviewFilter,
+  applyPendingOpportunitiesAdminFilter,
 } = require('./opportunity-review-queue');
 
 function round2(n) {
@@ -56,12 +56,8 @@ const INCOMPLETE_ORGANISER_FILTER =
 async function fetchAdminActionCounts(sb, options) {
   const light = !!(options && options.light);
   const reviewQueueReady = await isOpportunityReviewQueueReady(sb);
-  let pendingOpportunitiesQuery = sb
-    .from('business_opportunities')
-    .select('id', { count: 'exact', head: true })
-    .eq('approval_status', 'Pending Review');
-  pendingOpportunitiesQuery = applySubmittedReviewFilter(
-    pendingOpportunitiesQuery,
+  const pendingOpportunitiesQuery = applyPendingOpportunitiesAdminFilter(
+    sb.from('business_opportunities').select('id', { count: 'exact', head: true }),
     reviewQueueReady
   );
   const baseQueries = [
@@ -631,15 +627,16 @@ async function fetchAttentionQueueLight(sb, counts) {
 
 async function fetchAttentionQueue(sb, counts) {
   const reviewQueueReady = await isOpportunityReviewQueueReady(sb);
-  let pendingOppsQuery = sb
-    .from('business_opportunities')
-    .select(
-      reviewQueueReady
-        ? 'id, title, host, created_at, review_submitted_at'
-        : 'id, title, host, created_at'
-    )
-    .eq('approval_status', 'Pending Review');
-  pendingOppsQuery = applySubmittedReviewFilter(pendingOppsQuery, reviewQueueReady);
+  let pendingOppsQuery = applyPendingOpportunitiesAdminFilter(
+    sb
+      .from('business_opportunities')
+      .select(
+        reviewQueueReady
+          ? 'id, title, host, created_at, review_submitted_at, approval_status, pending_review_payload'
+          : 'id, title, host, created_at, approval_status, pending_review_payload'
+      ),
+    reviewQueueReady
+  );
   pendingOppsQuery = reviewQueueReady
     ? pendingOppsQuery.order('review_submitted_at', { ascending: false })
     : pendingOppsQuery.order('created_at', { ascending: false });

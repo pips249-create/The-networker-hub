@@ -1511,9 +1511,14 @@
         cmp.toggle(id);
         refreshCompareTray();
         var afterCount = cmp.ids().length;
-        // Open the side-by-side table as soon as 2 listings are selected.
         if (beforeCount < 2 && afterCount >= 2) {
-          openBrowseCompare();
+          var openBtnReady = document.getElementById('bo-opp-compare-open');
+          if (openBtnReady) {
+            openBtnReady.classList.add('is-ready');
+            window.setTimeout(function () {
+              openBtnReady.classList.remove('is-ready');
+            }, 2400);
+          }
         }
       });
     }
