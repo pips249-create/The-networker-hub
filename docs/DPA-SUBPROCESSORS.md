@@ -225,27 +225,23 @@ Keep this section for reference **only if** you later decide to enable third-par
 
 ---
 
-## 7. Brevo (Sendinblue) — campaign / launch email (~10 minutes)
+## 7. Brevo (Sendinblue) — retired
 
-**When needed:** You export or import contact lists into Brevo for organiser launch campaigns (Email 1 / Email 2 tooling under `scripts/` and `data/*brevo*`). Platform transactional mail stays on **Resend**.
+**Status (Aug 2026):** Brevo is **no longer used**. All platform email goes through **Resend**.
 
-**Counterparty:** Sendinblue SAS (Brevo)
+If a Brevo account still exists:
 
-1. Log in to [Brevo](https://app.brevo.com).
-2. Open **Settings → GDPR / Data processing agreement** (or [Brevo DPA](https://www.brevo.com/legal/termsofuse/#data-processing-agreement)).
-3. Accept / download the executed DPA PDF.
-4. Save as `brevo-dpa-YYYY.pdf` in the company DPAs folder (not git).
-5. Update `docs/DPA-REGISTER.md` — Brevo row Status ☑, effective date, filename.
-6. Update `docs/RoPA.md` subprocessor table — Brevo DPA ☑.
-7. If you **stop** using Brevo entirely, delete remaining contact lists in Brevo, mark the register row “Retired”, and remove from the public privacy policy processors list.
+1. Delete remaining contact lists and campaigns.
+2. Close or downgrade the account if no longer needed.
+3. No DPA filing required while inactive — note “Retired” in `docs/DPA-REGISTER.md` (done).
 
-**Data hygiene:** Prefer one-way import CSVs that stay local (`data/` gitignored patterns). Do not commit full Brevo list exports with emails.
+Historical launch scripts under `scripts/build-email*-brevo.js` are kept for reference only.
 
 ---
 
 ## Privacy policy
 
-`legal-policies.html` lists Stripe, Supabase, Resend, Vercel, and Brevo (when used for campaign email), and describes Hubert as on-site help (no third-party AI). Update if you add new tools, enable OpenAI, or retire Brevo.
+`legal-policies.html` lists Stripe, Supabase, Resend, Vercel, and describes Hubert as on-site help (no third-party AI). Update if you add new tools or enable OpenAI.
 
 ---
 

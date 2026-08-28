@@ -7,7 +7,7 @@
     <link rel="icon" href="/assets/favicon.svg?v=20260823uk3" type="image/svg+xml" />
     <link rel="icon" href="/assets/favicon-32.png?v=20260823uk" type="image/png" sizes="32x32" />
     <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png?v=20260823uk" />
-    <title>Account settings – The Networker UK</title>
+    <title>Profile &amp; preferences – The Networker UK</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -16,7 +16,7 @@
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260825adminbadge1" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260626" />
-    <link rel="stylesheet" href="../css/account-settings.css?v=20260806formsm2" />
+    <link rel="stylesheet" href="../css/account-settings.css?v=20260828data1" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260825adminbadge1" />
 
   </head>
@@ -31,8 +31,8 @@
     </div>
 
     <main id="as-main" class="as-wrap">
-      <h1 class="as-title">Account settings</h1>
-      <p class="as-lead">Update your profile, company details and password.</p>
+      <h1 class="as-title">Profile &amp; preferences</h1>
+      <p class="as-lead">Your name, email preferences, password, and privacy options — separate from your bookings dashboard in My account.</p>
 
       <div id="as-alert" class="as-alert" hidden role="status"></div>
 
@@ -220,6 +220,22 @@
         </section>
       </form>
 
+      <section class="as-card" id="privacy-data">
+        <h2>Privacy &amp; your data</h2>
+        <p class="as-card-sub">
+          Download a copy of the personal data we hold about your account, bookings, reviews, saved items, and
+          preferences. For correction or deletion, contact
+          <a href="mailto:hi@thenetworkeruk.com?subject=Data%20request">hi@thenetworkeruk.com</a>.
+          See our <a href="../legal-policies#privacy">privacy policy</a> for your UK GDPR rights.
+        </p>
+        <div class="as-actions">
+          <button type="button" class="as-btn as-btn-outline" id="as-download-data">
+            Download my data
+          </button>
+        </div>
+        <p class="as-field-hint" id="as-download-data-hint" hidden role="status"></p>
+      </section>
+
       <section class="as-card" id="organiser-workspace">
         <h2>Organiser workspace</h2>
         <p class="as-card-sub" id="as-organiser-lede">
@@ -296,7 +312,7 @@
       </form>
     </main>
 
-    <script src="../js/site-nav.js?v=20260825navfull1" data-root="../" data-page="settings"></script>
-    <script src="../js/account-settings.js?v=20260827sec3"></script>
+    <script src="../js/site-nav.js?v=20260828nav1" data-root="../" data-page="settings"></script>
+    <script src="../js/account-settings.js?v=20260828data1"></script>
   </body>
 </html>

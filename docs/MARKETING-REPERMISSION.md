@@ -18,7 +18,7 @@ Writes `data/legacy-marketing-opt-in-audit.csv` (gitignored). Filter where `need
 
 ## If you later send a one-off re-permission email
 
-Use Resend (or Brevo if that list already lives there). Subject ideas:
+Use Resend for any one-off re-permission email. Subject ideas:
 
 - Stay on our tips & recommendations list?
 - Quick check: do you still want Networker emails?

@@ -1,11 +1,20 @@
 # Ops reliability — backups, restore, monitoring
 
 **Owner:** Catherine Hancher  
-**Last updated:** 13 August 2026  
+**Last updated:** 28 August 2026  
 
 *Operational checklist for SurgoTech / launch readiness. Not a full DR policy yet.*
 
 ---
+
+## Quick check
+
+```bash
+npm run check:ops
+npm run check:ops -- https://www.thenetworkeruk.com
+```
+
+Verifies `/api/health` returns `{ ok: true, supabaseConfigured: true }` and prints manual dashboard gates.
 
 ## 1. Health probe (done in code)
 
@@ -16,12 +25,21 @@
 Expect JSON `{ "ok": true, "supabaseConfigured": true, ... }`.  
 Works while the site gate is on (bypassed in middleware).
 
-### Turn on monitoring (do this week)
+**Verified 28 Aug 2026:** production `/api/health` returns 200 + `supabaseConfigured: true`.
 
-1. Create a free [UptimeRobot](https://uptimerobot.com) (or Better Stack) monitor.
-2. Type: **HTTP(s)** → URL above → every **5 minutes**.
-3. Alert to **hi@thenetworkeruk.com** (and a phone SMS if available).
-4. Optional second monitor: `https://www.thenetworkeruk.com/` (may 302/403 while gate is on — prefer `/api/health`).
+### Turn on monitoring (~5 minutes)
+
+1. Sign in at [UptimeRobot](https://uptimerobot.com) (free tier is fine).
+2. **Add New Monitor** → type **HTTP(s)**.
+3. **URL:** `https://www.thenetworkeruk.com/api/health`
+4. **Monitoring interval:** 5 minutes.
+5. **Monitor timeout:** 30 seconds.
+6. **Alert contacts:** add **hi@thenetworkeruk.com** (and SMS to Catherine’s mobile if available).
+7. Save — note the monitor name/ID below in the change log.
+
+**What “up” looks like:** HTTP 200 and JSON containing `"ok": true` and `"supabaseConfigured": true`.
+
+**What to do when down:** check [Vercel status](https://www.vercel-status.com/), [Supabase status](https://status.supabase.com/), then Stripe if checkout fails. See `docs/DATA-BREACH-RESPONSE.md` if personal data may be involved.
 
 Also in Vercel: **Project → Settings → Notifications** — enable deployment failure emails for the team.
 
@@ -31,10 +49,11 @@ Also in Vercel: **Project → Settings → Notifications** — enable deployment
 
 | Step | Action | Status |
 |------|--------|--------|
-| 1 | Supabase project → **Settings → Billing** → ensure **Pro** (or plan with daily backups) | ☐ |
+| 1 | Supabase project → **Settings → Billing** → ensure **Pro** (or plan with daily backups) | ☐ Confirm in dashboard |
 | 2 | **Settings → Database → Backups** — note retention (e.g. 7 days) and last backup time | ☐ |
 | 3 | Confirm project is **not** on Free auto-pause | ☐ |
 | 4 | Store project ref + dashboard URL in company password manager | ☐ |
+| 5 | Run `npm run check:ops` after UptimeRobot monitor is live | ☑ Script added 28 Aug 2026 |
 
 **RPO (current target):** up to ~24 hours (daily backups).  
 **RTO (current target):** same day, manual restore via Supabase support/dashboard.
@@ -92,4 +111,5 @@ Infra outage (site down, payments failing): treat as P0 — check Vercel / Supab
 
 | Date | Note |
 |------|------|
+| 2026-08-28 | `npm run check:ops` added; production health probe verified |
 | 2026-08-13 | Created; health endpoint added; SurgoTech prep |

@@ -41,6 +41,7 @@ const routes = {
   'event-saved-searches': require('./_lib/routes/auth-event-saved-searches'),
   'organiser-favourites': require('./_lib/routes/auth-organiser-favourites'),
   profile: require('./_lib/routes/auth-profile'),
+  'data-export': require('./_lib/routes/auth-data-export'),
   'stop-impersonate': require('./_lib/routes/auth-stop-impersonate'),
   'report-listing': require('./_lib/routes/auth-report-listing'),
   'report-review': require('./_lib/routes/auth-report-review'),

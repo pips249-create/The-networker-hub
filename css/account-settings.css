@@ -360,6 +360,10 @@
   color: var(--as-text-soft);
 }
 
+.as-field-hint.is-error {
+  color: #b42318;
+}
+
 .as-field-row {
   display: grid;
   grid-template-columns: 1fr 1fr;

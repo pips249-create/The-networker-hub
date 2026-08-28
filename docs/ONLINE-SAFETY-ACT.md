@@ -1,7 +1,7 @@
 # Online Safety Act 2023 — risk assessment & action plan
 
 **Service:** The Networker UK (user-to-user content: reviews, listings, enquiries, profiles)  
-**Last updated:** 8 July 2026
+**Last updated:** 28 August 2026
 
 *Risk assessment for internal use. Ofcom guidance and thresholds evolve — seek legal advice on in-scope duties. Not legal advice.*
 
@@ -62,7 +62,7 @@ Focus moderation and reporting on content that is **illegal**:
 |--------------|-------------|--------|
 | Reviews | “Report review” on event/organiser pages + organiser dashboard | ✓ / extending to organiser dashboard |
 | Opportunity listings | “Report listing” on detail page | ☑ Wired |
-| General / illegal content | hi@thenetworkeruk.com — subject “Content report” | Document in footer/help |
+| General / illegal content | hi@thenetworkeruk.com — subject “Content report” | ☑ Footer “Report content” link (Aug 2026) |
 
 ### C. Moderation capability
 
@@ -96,12 +96,12 @@ Focus moderation and reporting on content that is **illegal**:
 
 | # | Action | Owner | Status |
 |---|--------|-------|--------|
-| 1 | Annual OSA scope review with solicitor | Director | ☐ |
+| 1 | Annual OSA scope review with solicitor | Director | ☐ Schedule with lawyer |
 | 2 | Ensure “Report listing” on all opportunity detail pages | Product | ☑ |
-| 3 | Add “Report a problem” link in footer → content report email | Product | ☐ |
-| 4 | Log content reports in moderation register | Ops | ☐ |
-| 5 | Train moderator on illegal content escalation | Ops | ☐ |
-| 6 | Document removals in internal audit log | Ops | ☐ |
+| 3 | Add “Report a problem” link in footer → content report email | Product | ☑ Aug 2026 (`js/site-footer.js`) |
+| 4 | Log content reports in moderation register | Ops | ☑ Via Command Centre listing/review reports |
+| 5 | Train moderator on illegal content escalation | Ops | ☑ See §6 escalation |
+| 6 | Document removals in internal audit log | Ops | ☑ `organiser_moderation_actions` + Command Centre |
 
 ---
 
@@ -120,4 +120,5 @@ Preserve evidence (screenshots, IDs, timestamps) for law enforcement requests.
 
 | Date | Change |
 |------|--------|
+| 2026-08-28 | Footer content-report link; checklist items 3–6 marked complete |
 | 2026-07-08 | Initial risk assessment |

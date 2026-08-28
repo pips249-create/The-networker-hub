@@ -5,7 +5,7 @@
  * preview cookie unlocks catalogue APIs.
  */
 (function () {
-  var FOOTER_BUILD = '20260825navfull1';
+  var FOOTER_BUILD = '20260828report1';
   var PUBLIC_BROWSE_OPENS_AT_MS = Date.parse('2026-08-25T00:00:00+01:00');
   var script = document.currentScript;
   var root = (script && script.getAttribute('data-root')) || '';
@@ -158,6 +158,13 @@
         '</nav>' +
         '</div>';
     }
+    var contentReportHref =
+      'mailto:hi@thenetworkeruk.com?subject=' +
+      encodeURIComponent('Content report') +
+      '&body=' +
+      encodeURIComponent(
+        'Please describe the content you are reporting and include the page URL.\n\nURL:\nWhat is wrong:\n'
+      );
     var legalLinks = catalogueOpen
       ? '<a href="' +
         href('/legal-policies') +
@@ -177,6 +184,9 @@
         '<a href="' +
         href('/legal-policies#cookies') +
         '" data-footer-policy="cookies">Cookie policy</a>' +
+        '<a href="' +
+        contentReportHref +
+        '">Report content</a>' +
         '<button type="button" class="footer-cookie-settings" id="footer-cookie-settings">Cookie settings</button>'
       : '<a href="' +
         href('/legal-policies') +
@@ -184,6 +194,9 @@
         '<a href="' +
         href('/legal-policies#privacy') +
         '" data-footer-policy="privacy">Privacy policy</a>' +
+        '<a href="' +
+        contentReportHref +
+        '">Report content</a>' +
         '<button type="button" class="footer-cookie-settings" id="footer-cookie-settings">Cookie settings</button>';
 
     mount.innerHTML =

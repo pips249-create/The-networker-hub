@@ -85,9 +85,9 @@
 |------|--------|
 | **Purpose** | Transactional (bookings, reminders, password reset); optional marketing (tips, re-engagement); launch/organiser campaigns |
 | **Data subjects** | All members with email; campaign list contacts imported for launch waves |
-| **Categories of data** | Email address, name, email preference flags, send logs (Resend / Brevo) |
+| **Categories of data** | Email address, name, email preference flags, send logs (Resend) |
 | **Lawful basis** | Contract for transactional; **Consent** for marketing (PECR + UK GDPR Art. 6(1)(a)) |
-| **Recipients** | Resend; Brevo when campaign sends use that ESP |
+| **Recipients** | Resend |
 | **Retention** | Preferences until withdrawal; send metadata per ESP retention |
 | **Notes** | Pre-25 Aug 2026 registrations had a pre-ticked marketing checkbox; re-permission email **deferred** (25 Aug 2026) — see `docs/MARKETING-REPERMISSION.md` |
 
@@ -159,7 +159,8 @@
 | Stripe | Payments, Connect payouts | US/EU | ☑ Filed 10 Jul 2026 |
 | Resend | Transactional + Hub marketing email | US | ☑ Filed 10 Jul 2026 |
 | Vercel | Hosting, Web Analytics | US/EU | ☑ Filed 10 Jul 2026 |
-| Brevo (Sendinblue) | Launch / organiser campaign email (list import + sends) | EU | ☐ Pending — see `docs/DPA-SUBPROCESSORS.md` §7 |
+
+**Retired:** Brevo — launch campaigns no longer sent from Brevo (Aug 2026). All platform email via Resend.
 
 ---
 
@@ -200,6 +201,7 @@ Handled via procedure in `GDPR-SAR-PROCEDURE.md`. Contact: hi@thenetworkeruk.com
 
 | Date | Change | Author |
 |------|--------|--------|
+| 2026-08-28 | Brevo retired; all email via Resend | Catherine Hancher |
 | 2026-08-25 | International interest & group intake (Art. 30 §K); Brevo listed as campaign ESP (DPA pending) | Catherine Hancher |
 | 2026-08-13 | Membership roster/CSV processing (Art. 30 §J); security measures updated (admin live check, cron, capacity trigger) | Catherine Hancher |
 | 2026-07-10 | Hubert confirmed fallback-only (no OpenAI); complaints register; DPA filed dates | Catherine Hancher |

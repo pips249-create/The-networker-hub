@@ -16,10 +16,10 @@ Run `npm run check:dpas` to verify this register.
 | Vercel | Deemed signed on [Vercel Terms](https://vercel.com/legal/terms) acceptance | 2026-07-10 | Catherine Hancher | `Vercel_Customer_DPA__032923.pdf` | ☑ |
 | Resend | Executed on account signup — download from Settings → Documents | 2026-07-10 | Catherine Hancher | `resend-dpa-signed.pdf` | ☑ |
 | Supabase | PandaDoc / customer DPA template | 2026-07-10 | Catherine Hancher | `Template Supabase Customer DPA (June 1).pdf` | ☑ |
-| Brevo | Marketing / launch campaign email (Sendinblue) — execute DPA in Brevo account | — | — | — | ☐ Missing from folder — download from Brevo Settings → GDPR (see `docs/DPA-SUBPROCESSORS.md` §7) |
 
-**Core platform DPAs:** 4 / 4 on file (verified against Desktop folder 25 Aug 2026)  
-**Brevo (campaign ESP):** ☐ not in folder — download when still sending from Brevo (`docs/DPA-SUBPROCESSORS.md` §7)
+**Core platform DPAs:** 4 / 4 on file (verified against Desktop folder 25 Aug 2026)
+
+**Retired processors:** Brevo (Sendinblue) — no longer used (Aug 2026). Delete any remaining contact lists in Brevo if the account still exists; no DPA required while inactive.
 
 **Not in use:** OpenAI — Hubert runs on in-house FAQ + live listings (no `OPENAI_API_KEY`). See `docs/DPA-SUBPROCESSORS.md` §5 only if you enable third-party AI later.
 
@@ -35,4 +35,4 @@ Run `npm run check:dpas` to verify this register.
 
 ## Notes
 
-Folder checked 25 August 2026 — four PDFs present (Stripe, Vercel, Resend, Supabase); no Brevo PDF. **Hubert** uses built-in FAQ and live Supabase lookups only — no OpenAI API key in production. Customer on all agreements: **The Networker Group Ltd** (not the “The Networker UK” trading name).
+Folder checked 28 August 2026 — four PDFs present (Stripe, Vercel, Resend, Supabase). Brevo retired — not in use. **Hubert** uses built-in FAQ and live Supabase lookups only — no OpenAI API key in production. Customer on all agreements: **The Networker Group Ltd** (not the “The Networker UK” trading name).

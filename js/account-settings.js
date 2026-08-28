@@ -225,6 +225,60 @@
 
   document.getElementById('as-email-master')?.addEventListener('change', syncEmailPrefDisabled);
 
+  document.getElementById('as-download-data')?.addEventListener('click', async () => {
+    hideAlert();
+    const btn = document.getElementById('as-download-data');
+    const hint = document.getElementById('as-download-data-hint');
+    if (hint) {
+      hint.hidden = true;
+      hint.textContent = '';
+      hint.classList.remove('is-error');
+    }
+    if (btn) btn.disabled = true;
+    try {
+      const res = await fetch('/api/auth/data-export', { credentials: 'include', cache: 'no-store' });
+      if (!res.ok) {
+        let message = 'Could not download your data. Try again or email hi@thenetworkeruk.com.';
+        try {
+          const data = await res.json();
+          if (data.message) message = data.message;
+        } catch (_) {
+          /* binary or empty */
+        }
+        throw new Error(message);
+      }
+      const blob = await res.blob();
+      const disposition = res.headers.get('Content-Disposition') || '';
+      const match = disposition.match(/filename="([^"]+)"/);
+      const filename = match ? match[1] : 'thenetworker-uk-data-export.json';
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      link.rel = 'noopener';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      if (hint) {
+        hint.hidden = false;
+        hint.textContent =
+          'Download started. The file is JSON — open it in a text editor or import into a spreadsheet tool.';
+      }
+    } catch (err) {
+      const message = err.message || 'Could not download your data.';
+      if (hint) {
+        hint.hidden = false;
+        hint.textContent = message;
+        hint.classList.add('is-error');
+      } else {
+        showAlert(message, false);
+      }
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  });
+
   document.getElementById('as-email-prefs-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     hideAlert();
@@ -524,6 +578,10 @@
     renderOrganiserWorkspace(sessionData);
     if (window.location.hash === '#organiser-workspace') {
       const section = document.getElementById('organiser-workspace');
+      if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    if (window.location.hash === '#privacy-data') {
+      const section = document.getElementById('privacy-data');
       if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
     try {

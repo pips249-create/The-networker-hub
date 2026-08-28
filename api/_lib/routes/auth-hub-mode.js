@@ -57,7 +57,7 @@ module.exports = async function handler(req, res) {
         return json(res, 403, {
           error: 'organiser_access_required',
           message: accessStatus.organiserAccess
-            ? 'Restore organiser workspace in Account settings, or enable organiser access first.'
+            ? 'Restore organiser workspace in Profile & preferences, or enable organiser access first.'
             : 'Enable organiser access before opening the organiser workspace.',
           redirect: accessStatus.organiserAccess
             ? '/account/settings#organiser-workspace'

@@ -36,6 +36,7 @@ ops/organiser-outreach-tracker.csv
 ops/organiser-outreach-tracker.tsv
 ops/organiser-outreach-values.json
 ops/call-list-awaiting-claim.csv
+ops/hmrc-seller-report-*.csv
 ops/chunks/
 
 # LinkedIn ad export tooling

@@ -2,7 +2,7 @@
 
 **Entity:** The Networker Group Ltd  
 **Relevant rules:** Platform Operators (Due Diligence and Reporting) Regulations 2023  
-**Last updated:** 8 July 2026
+**Last updated:** 28 August 2026
 
 *Operational guidance. Confirm thresholds and reporting with your accountant or tax adviser — not legal advice.*
 
@@ -53,11 +53,12 @@ If an organiser exceeds reporting thresholds in a calendar year (consult current
 
 **Action:** Build an internal **seller report** (CSV) from Supabase + Stripe:
 
-- `organisers` / Stripe Connect account ID
-- Sum of paid registrations per organiser per calendar year
-- Payout totals from Stripe
+```bash
+npm run export:hmrc-sellers
+npm run export:hmrc-sellers -- --year 2025
+```
 
-Consider a scheduled admin export or SQL view before each January filing.
+Writes `ops/hmrc-seller-report-YYYY.csv` (gitignored) with organiser identity, Stripe Connect account ID, paid registration counts, and gross ticket revenue per calendar year. Map Stripe Connect KYC fields in the Dashboard export and confirm reporting thresholds with your accountant before filing.
 
 ### Step D — Privacy and terms
 
@@ -93,8 +94,8 @@ Do **not** assume Stripe’s reporting replaces yours — verify with adviser.
 |---|--------|-------|--------|
 | 1 | Accountant call: confirm platform operator status | Finance | ☐ |
 | 2 | Map Stripe Connect fields → HMRC due diligence | Ops + Tech | ☐ |
-| 3 | Add HMRC reporting clause to organiser terms (if advised) | Director | ☐ |
-| 4 | Build annual seller income export (Supabase + Stripe) | Tech | ☐ |
+| 3 | Add HMRC reporting clause to organiser terms (if advised) | Director | ☑ In organiser terms §2 (Jul 2026) |
+| 4 | Build annual seller income export (Supabase + Stripe) | Tech | ☑ `npm run export:hmrc-sellers` (Aug 2026) |
 | 5 | Calendar reminder: review reportable sellers each January | Finance | ☐ |
 | 6 | File first report if thresholds met in 2026 | Finance | ☐ |
 

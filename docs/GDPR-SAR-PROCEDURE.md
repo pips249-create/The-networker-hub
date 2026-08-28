@@ -68,7 +68,9 @@ Verify the requester controls the email address or account:
 
 ### Access / portability
 
-Export from Supabase (admin / SQL):
+**Self-service (preferred):** Signed-in members can download a JSON export from **Profile & preferences → Privacy & your data → Download my data** (`GET /api/auth/data-export`). Rate-limited to 3 downloads per hour per account.
+
+**Manual / email requests:** Export from Supabase (admin / SQL) when the requester cannot sign in or needs a human-reviewed pack:
 
 - `hub_accounts` — preferences, role, terms acceptance
 - `attendees` — name, email, location, profile fields
@@ -136,5 +138,6 @@ Review this procedure annually or after any ICO complaint. Update the change log
 
 | Date | Change |
 |------|--------|
+| 2026-08-28 | Self-service JSON export via Account settings (`/api/auth/data-export`) |
 | 2026-08-25 | Added international interest/intake + waitlist tables to access/erasure checklist |
 | 2026-07-08 | Formal procedure created |
