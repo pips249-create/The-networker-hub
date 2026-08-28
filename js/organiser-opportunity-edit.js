@@ -860,6 +860,8 @@
     if (commissionEl) commissionEl.value = metaValue(opp.meta, /^commission$/i);
     if (promoteEl) promoteEl.value = metaValue(opp.meta, /^what you promote$/i);
     if (suitsEl) suitsEl.value = metaValue(opp.meta, /^who it suits$/i);
+    const cookieWindowEl = document.getElementById('oe-cookie-window');
+    if (cookieWindowEl) cookieWindowEl.value = metaValue(opp.meta, /^cookie window$/i);
     const parsed = parseStoredListingLocation(
       metaValue(opp.meta, /^location$/i) || metaValue(opp.meta, /^territory$/i),
       opp.regionSlug || opp.region_slug
@@ -878,6 +880,7 @@
       'commission',
       'what you promote',
       'who it suits',
+      'cookie window',
     ]);
     const extra = (opp.meta || []).find((m) => {
       const k = String(m.key || '').toLowerCase();
@@ -916,6 +919,7 @@
     document.getElementById('oe-page-title').textContent = 'Edit opportunity';
     updateListingPriceBreakdown();
     refreshCompleteness();
+    oeFlowRevealAll = true;
     syncOpportunitySteps({ revealAll: true });
   }
 
@@ -1200,6 +1204,8 @@
       if (commission) meta.push({ key: 'Commission', val: commission });
       if (promote) meta.push({ key: 'What you promote', val: promote });
       if (suits) meta.push({ key: 'Who it suits', val: suits });
+      const cookieWindow = document.getElementById('oe-cookie-window')?.value.trim() || '';
+      if (cookieWindow) meta.push({ key: 'Cookie window', val: cookieWindow });
     } else {
       const investment = document.getElementById('oe-investment').value.trim();
       if (investment) meta.push({ key: 'Investment', val: investment });
@@ -1637,6 +1643,8 @@
       if (isAffiliateStyleListing()) {
         const commission = document.getElementById('oe-commission')?.value.trim();
         if (commission) parts.push(commission);
+        const cookieWindow = document.getElementById('oe-cookie-window')?.value.trim();
+        if (cookieWindow) parts.push(cookieWindow + ' cookie');
       } else {
         const investment = document.getElementById('oe-investment')?.value.trim();
         if (investment) parts.push(investment);
@@ -1848,6 +1856,7 @@
       'oe-investment',
       'oe-commission',
       'oe-promote',
+      'oe-cookie-window',
       'oe-region-broad',
       'oe-region',
       'oe-commitment',
@@ -2033,6 +2042,7 @@
       'oe-commission',
       'oe-promote',
       'oe-suits',
+      'oe-cookie-window',
       'oe-location-detail',
       'oe-region-broad',
       'oe-region',

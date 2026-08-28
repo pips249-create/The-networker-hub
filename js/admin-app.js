@@ -21723,14 +21723,32 @@
   }
 
   function opportunityCommitmentOptions(selected) {
-    return ['', 'Full-time', 'Part-time / Flexible', 'Event-based']
+    var C = window.HubOpportunityListingConstants;
+    var options = (C && C.COMMITMENT_OPTIONS) || [
+      '',
+      'Full-time',
+      'Part-time / Flexible',
+      'Side hustle — few hours a week',
+      'Flexible — no fixed hours',
+      'Event-based',
+      'Varies — discuss when you enquire',
+    ];
+    var selectedNorm = String(selected || '').trim();
+    if (
+      selectedNorm &&
+      !options.some(function (s) {
+        return s === selectedNorm || (s === 'Part-time / Flexible' && selectedNorm === 'Flexible');
+      })
+    ) {
+      options = options.concat([selectedNorm]);
+    }
+    return options
       .map(function (s) {
         var value = s;
-        var label = s || 'Select…';
-        // Map legacy "Flexible" stored values onto Part-time / Flexible.
+        var label = s || 'Select if relevant…';
         var isSelected =
-          selected === value ||
-          (value === 'Part-time / Flexible' && selected === 'Flexible');
+          selectedNorm === value ||
+          (value === 'Part-time / Flexible' && selectedNorm === 'Flexible');
         return (
           '<option value="' +
           attrEsc(value) +
@@ -21742,6 +21760,182 @@
         );
       })
       .join('');
+  }
+
+  function opportunityCookieWindowOptions(selected) {
+    var C = window.HubOpportunityListingConstants;
+    var options = (C && C.COOKIE_WINDOW_OPTIONS) || [
+      '',
+      '7 days',
+      '14 days',
+      '30 days',
+      '60 days',
+      '90 days',
+      '180 days',
+      '365 days',
+      'Session only',
+      'Lifetime',
+      'Varies — ask when you enquire',
+    ];
+    var selectedNorm = String(selected || '').trim();
+    if (selectedNorm && options.indexOf(selectedNorm) === -1) {
+      options = options.concat([selectedNorm]);
+    }
+    return options
+      .map(function (s) {
+        var label = s || 'Select cookie duration…';
+        return (
+          '<option value="' +
+          attrEsc(s) +
+          '"' +
+          (selectedNorm === s ? ' selected' : '') +
+          '>' +
+          esc(label) +
+          '</option>'
+        );
+      })
+      .join('');
+  }
+
+  function opportunityCookieWindowFromOpp(opp) {
+    opp = opp || {};
+    if (opp.cookie_window) return String(opp.cookie_window).trim();
+    var C = window.HubOpportunityListingConstants;
+    if (C && C.cookieWindowFromMeta) return C.cookieWindowFromMeta(opp.meta);
+    return '';
+  }
+
+  function opportunityExtraHighlightFromOpp(opp) {
+    opp = opp || {};
+    if (opp.extra_key || opp.extra_val) {
+      return { key: String(opp.extra_key || ''), val: String(opp.extra_val || '') };
+    }
+    var C = window.HubOpportunityListingConstants;
+    if (C && C.extraHighlightFromMeta) return C.extraHighlightFromMeta(opp.meta);
+    return { key: '', val: '' };
+  }
+
+  function opportunityAdminLocationFieldsHtml(opp) {
+    opp = opp || {};
+    var C = window.HubOpportunityListingConstants;
+    if (!C) {
+      return (
+        '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Territory / location</label>' +
+        '<input type="text" name="location" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+        attrEsc(opp.location || '') +
+        '" placeholder="e.g. Yorkshire / Remote / UK-wide"></div>'
+      );
+    }
+    return (
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Territory / location</label>' +
+      '<p class="text-[11px] text-slate-500 mb-2">Pick UK-wide, a nation, London, remote, or a specific city or county — same options as the organiser list form.</p>' +
+      '<div class="grid sm:grid-cols-2 gap-3">' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Area</label>' +
+      '<select name="region_broad" class="opp-admin-region-broad w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      '<option value="">Select coverage…</option></select></div>' +
+      '<div class="opp-admin-region-specific-wrap" hidden><label class="block text-xs font-semibold text-slate-500 mb-1">Choose area</label>' +
+      '<select name="region" class="opp-admin-region-specific w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      '<option value="">Select area…</option></select></div>' +
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Specific area <span class="font-normal">(optional)</span></label>' +
+      '<input type="text" name="location_detail" maxlength="120" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="e.g. North Manchester, or leave blank for the whole region"></div>' +
+      '</div></div>'
+    );
+  }
+
+  function initOpportunityAdminRegionFields(form) {
+    if (!form) return;
+    var C = window.HubOpportunityListingConstants;
+    if (!C) return;
+    var broad = form.querySelector('[name="region_broad"]');
+    var specific = form.querySelector('[name="region"]');
+    if (!broad || broad.dataset.regionsPopulated === '1') return;
+    C.LISTING_REGION_BROAD.forEach(function (row) {
+      var opt = document.createElement('option');
+      opt.value = row.slug;
+      opt.textContent = row.label;
+      broad.appendChild(opt);
+    });
+    var specificOpt = document.createElement('option');
+    specificOpt.value = C.LISTING_REGION_SPECIFIC_VALUE;
+    specificOpt.textContent = 'A specific city or county…';
+    broad.appendChild(specificOpt);
+    if (specific) {
+      C.LISTING_REGION_GROUPS.forEach(function (group) {
+        if (group.label === 'Nationwide') return;
+        var optgroup = document.createElement('optgroup');
+        optgroup.label = group.label;
+        group.regions.forEach(function (row) {
+          var opt = document.createElement('option');
+          opt.value = row.slug;
+          opt.textContent = row.label;
+          optgroup.appendChild(opt);
+        });
+        specific.appendChild(optgroup);
+      });
+    }
+    broad.dataset.regionsPopulated = '1';
+    syncOpportunityAdminRegionFields(form);
+  }
+
+  function syncOpportunityAdminRegionFields(form) {
+    if (!form) return;
+    var C = window.HubOpportunityListingConstants;
+    if (!C) return;
+    var broad = form.querySelector('[name="region_broad"]');
+    var wrap = form.querySelector('.opp-admin-region-specific-wrap');
+    if (!broad || !wrap) return;
+    wrap.hidden = broad.value !== C.LISTING_REGION_SPECIFIC_VALUE;
+  }
+
+  function applyOpportunityAdminRegionValues(form, opp) {
+    if (!form) return;
+    var C = window.HubOpportunityListingConstants;
+    if (!C) return;
+    initOpportunityAdminRegionFields(form);
+    var parsed = C.parseStoredListingLocation(
+      opp.location || '',
+      opp.region_slug || opp.regionSlug || ''
+    );
+    var broadEl = form.querySelector('[name="region_broad"]');
+    var regionEl = form.querySelector('[name="region"]');
+    var detailEl = form.querySelector('[name="location_detail"]');
+    if (detailEl) detailEl.value = parsed.detail || '';
+    if (parsed.slug && C.LISTING_REGION_BROAD_SLUGS.has(parsed.slug)) {
+      if (broadEl) broadEl.value = parsed.slug;
+    } else if (parsed.slug) {
+      if (broadEl) broadEl.value = C.LISTING_REGION_SPECIFIC_VALUE;
+      if (regionEl) regionEl.value = parsed.slug;
+    } else if (parsed.detail) {
+      if (broadEl) broadEl.value = C.LISTING_REGION_SPECIFIC_VALUE;
+    }
+    syncOpportunityAdminRegionFields(form);
+  }
+
+  function opportunityAdminLocationFromForm(form) {
+    var C = window.HubOpportunityListingConstants;
+    if (!C) {
+      return { location: formFieldVal(form, 'location') || null, region_slug: null };
+    }
+    var broad = formFieldVal(form, 'region_broad');
+    var regionSlug = '';
+    if (broad === C.LISTING_REGION_SPECIFIC_VALUE) {
+      regionSlug = formFieldVal(form, 'region');
+    } else {
+      regionSlug = broad;
+    }
+    var region = C.listingRegionBySlug(regionSlug);
+    var detail = formFieldVal(form, 'location_detail') || '';
+    return {
+      location: C.formatListingLocation(region, detail) || null,
+      region_slug: region ? region.slug : null,
+    };
+  }
+
+  function bindOpportunityAdminListingFields(form, opp) {
+    if (!form) return;
+    initOpportunityAdminRegionFields(form);
+    if (opp) applyOpportunityAdminRegionValues(form, opp);
+    syncOpportunityAdminAffiliateFields(form);
   }
 
   var OPPORTUNITY_CATEGORIES = [
@@ -21879,7 +22073,7 @@
           '<select name="approval_status" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
           '<option value="Pending Review"' +
           (opp.approval_status === 'Pending Review' ? ' selected' : '') +
-          '>Pending review</option>' +
+          '>Pending approval</option>' +
           '<option value="Approved"' +
           (opp.approval_status === 'Approved' ? ' selected' : '') +
           '>Approved</option>' +
@@ -21958,15 +22152,31 @@
       '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Who it suits <span class="font-normal">(optional)</span></label>' +
       '<input type="text" name="suits" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
       attrEsc(opp.suits || '') +
-      '" placeholder="e.g. Networkers who introduce business owners"></div></div></div>' +
-      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Territory / location</label>' +
-      '<input type="text" name="location" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
-      attrEsc(opp.location || '') +
-      '" placeholder="e.g. Yorkshire / Remote / UK-wide"></div>' +
-      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Commitment</label>' +
+      '" placeholder="e.g. Networkers who introduce business owners"></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Cookie window</label>' +
+      '<select name="cookie_window" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      opportunityCookieWindowOptions(opportunityCookieWindowFromOpp(opp)) +
+      '</select>' +
+      '<p class="text-[11px] text-slate-500 mt-1">How long tracking links credit a referral — shown on the public listing.</p></div></div></div>' +
+      opportunityAdminLocationFieldsHtml(opp) +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Commitment <span class="font-normal">(optional)</span></label>' +
       '<select name="commitment" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
       opportunityCommitmentOptions(opp.commitment || '') +
-      '</select></div></div>'
+      '</select></div>' +
+      (function () {
+        var extra = opportunityExtraHighlightFromOpp(opp);
+        return (
+          '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Extra highlight <span class="font-normal">(optional)</span></label>' +
+          '<div class="grid sm:grid-cols-2 gap-3">' +
+          '<input type="text" name="extra_key" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+          attrEsc(extra.key || '') +
+          '" placeholder="e.g. Territories left">' +
+          '<input type="text" name="extra_val" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+          attrEsc(extra.val || '') +
+          '" placeholder="e.g. 6"></div></div>'
+        );
+      })() +
+      '</div>'
     );
   }
 
@@ -22274,7 +22484,8 @@
       (affiliate
         ? opportunityCleanupReadonlyRow('Commission', opp.commission) +
           opportunityCleanupReadonlyRow('What you promote', opp.promote) +
-          opportunityCleanupReadonlyRow('Who it suits', opp.suits)
+          opportunityCleanupReadonlyRow('Who it suits', opp.suits) +
+          opportunityCleanupReadonlyRow('Cookie window', opportunityCookieWindowFromOpp(opp))
         : opportunityCleanupReadonlyRow('Investment', opp.investment) +
           opportunityCleanupReadonlyRow('What’s included', opp.investment_includes)) +
       opportunityCleanupReadonlyRow('Contact email', opp.contact_email || opp.owner_email);
@@ -22454,7 +22665,8 @@
       (opportunityIsAffiliateStyle(opp)
         ? opportunityCleanupReadonlyRow('Commission', opp.commission) +
           opportunityCleanupReadonlyRow('What you promote', opp.promote) +
-          opportunityCleanupReadonlyRow('Who it suits', opp.suits)
+          opportunityCleanupReadonlyRow('Who it suits', opp.suits) +
+          opportunityCleanupReadonlyRow('Cookie window', opportunityCookieWindowFromOpp(opp))
         : opportunityCleanupReadonlyRow('Investment', opp.investment) +
           opportunityCleanupReadonlyRow('What’s included', opp.investment_includes)) +
       opportunityCleanupReadonlyRow('Territory / location', opp.location) +
@@ -22539,7 +22751,7 @@
       mount.innerHTML = opportunityCleanupEditFormHtml(opp);
       bindAdminLogoZones(mount);
       var form = mount.querySelector('.opportunity-cleanup-form');
-      if (form) syncOpportunityAdminAffiliateFields(form);
+      if (form) bindOpportunityAdminListingFields(form, opp);
       mount.dataset.loaded = '1';
     } catch (err) {
       mount.innerHTML =
@@ -23195,7 +23407,7 @@
 
     syncOpportunityCleanupFilterUi();
     bindAdminLogoZones(main.querySelector('.opportunity-create-form'));
-    syncOpportunityAdminAffiliateFields(main.querySelector('.opportunity-create-form'));
+    bindOpportunityAdminListingFields(main.querySelector('.opportunity-create-form'));
     refreshOpportunityCleanupData();
   }
 
@@ -23218,9 +23430,11 @@
       el.classList.remove('hidden');
     });
     syncOpportunityAdminAffiliateFields(form);
+    syncOpportunityAdminRegionFields(form);
   }
 
   function opportunityFormPayload(form) {
+    var locationFields = opportunityAdminLocationFromForm(form);
     return {
       title: formFieldVal(form, 'title'),
       host: formFieldVal(form, 'host'),
@@ -23235,8 +23449,12 @@
       commission: formFieldVal(form, 'commission') || null,
       promote: formFieldVal(form, 'promote') || null,
       suits: formFieldVal(form, 'suits') || null,
-      location: formFieldVal(form, 'location') || null,
+      location: locationFields.location,
+      region_slug: locationFields.region_slug,
       commitment: formFieldVal(form, 'commitment') || null,
+      cookie_window: formFieldVal(form, 'cookie_window') || null,
+      extra_key: formFieldVal(form, 'extra_key') || null,
+      extra_val: formFieldVal(form, 'extra_val') || null,
       featured: !!(form.querySelector('[name="featured"]') && form.querySelector('[name="featured"]').checked),
       owner_email: formFieldVal(form, 'owner_email') || null,
     };
@@ -23745,6 +23963,13 @@
         var typeForm = e.target.closest('.opportunity-create-form, .opportunity-cleanup-form');
         if (typeForm) {
           syncOpportunityAdminAffiliateFields(typeForm);
+          return;
+        }
+      }
+      if (e.target.name === 'region_broad') {
+        var regionForm = e.target.closest('.opportunity-create-form, .opportunity-cleanup-form');
+        if (regionForm) {
+          syncOpportunityAdminRegionFields(regionForm);
           return;
         }
       }

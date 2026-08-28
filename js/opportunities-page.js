@@ -1217,6 +1217,13 @@
     var thumb = item.thumb || { emoji: '✦', gradient: 'linear-gradient(135deg,#fdf6e3,#f5e0a0)' };
     var commitment = commitmentLabel(item);
     var locationLabel = item.locationLabel || 'UK';
+    var metaLine = escapeHtml(locationLabel);
+    if (isAffiliateMoney(item) && catalog && catalog.cookieWindowFromMeta) {
+      var cookieVal = catalog.cookieWindowFromMeta(item.meta);
+      var cookieShort =
+        catalog.affiliateCookieShortLabel && catalog.affiliateCookieShortLabel(cookieVal);
+      if (cookieShort) metaLine += ' · ' + escapeHtml(cookieShort);
+    }
     var hostLabel = String(item.host || '').trim();
     var titleLabel = String(item.title || '').trim();
     var showHost =
@@ -1266,7 +1273,7 @@
         ? '<p class="event-grid-host">' + escapeHtml(hostLabel) + '</p>'
         : '') +
       '<p class="event-grid-meta">' +
-      escapeHtml(locationLabel) +
+      metaLine +
       '</p>' +
       '<div class="bo-opp-card-actions">' +
       '<a class="bo-opp-primary-btn" href="' +

@@ -222,6 +222,9 @@ function mapOpportunityRow(row) {
     suits: metaVal(meta, /^who it suits$/i),
     location: metaVal(meta, /^location$/i) || metaVal(meta, /territor/i),
     commitment: metaVal(meta, /^commitment$/i),
+    cookie_window: metaVal(meta, /^cookie window$/i),
+    region_slug: String(row.region_slug || '').trim(),
+    regionSlug: String(row.region_slug || '').trim(),
     host: String(row.host || '').trim(),
     type: row.type || '',
     category: row.category || '',
@@ -289,6 +292,9 @@ function buildMetaFromAdminInput(input, existingMeta) {
   const suits = String(input.suits || input.who_it_suits || '').trim();
   const location = String(input.location || '').trim();
   const commitment = String(input.commitment || '').trim();
+  const cookieWindow = String(input.cookie_window || input.cookieWindow || '').trim();
+  const extraKey = String(input.extra_key || input.extraKey || '').trim();
+  const extraVal = String(input.extra_val || input.extraVal || '').trim();
   if (affiliate) {
     if (commission) meta.push({ key: 'Commission', val: commission });
     if (promote) meta.push({ key: 'What you promote', val: promote });
@@ -299,11 +305,30 @@ function buildMetaFromAdminInput(input, existingMeta) {
   }
   if (location) meta.push({ key: 'Location', val: location });
   if (commitment) meta.push({ key: 'Commitment', val: commitment });
+  if (cookieWindow) meta.push({ key: 'Cookie window', val: cookieWindow });
+  if (
+    extraKey &&
+    extraVal &&
+    !/^(return|earnings|revenue|income|profit)/i.test(extraKey) &&
+    !/^(commission|what you promote|who it suits|investment)/i.test(extraKey)
+  ) {
+    meta.push({ key: extraKey, val: extraVal });
+  }
 
   const managed =
-    /^(investment|investment includes|commission|what you promote|who it suits|location|commitment)$/i;
+    /^(investment|investment includes|commission|what you promote|who it suits|location|commitment|cookie window)$/i;
+  const standardKeys =
+    /^(investment|investment includes|commission|what you promote|who it suits|location|commitment|cookie window|companies house)$/i;
+  const hasExtraInput =
+    Object.prototype.hasOwnProperty.call(input, 'extra_key') ||
+    Object.prototype.hasOwnProperty.call(input, 'extraKey') ||
+    Object.prototype.hasOwnProperty.call(input, 'extra_val') ||
+    Object.prototype.hasOwnProperty.call(input, 'extraVal');
   const preserved = normalizeMeta(existingMeta).filter(function (m) {
-    return m && m.key && !managed.test(String(m.key));
+    if (!m || !m.key) return false;
+    if (managed.test(String(m.key))) return false;
+    if (hasExtraInput && !standardKeys.test(String(m.key))) return false;
+    return true;
   });
   return stripEarningsMeta(normalizeMeta(meta.concat(preserved)));
 }
@@ -627,7 +652,11 @@ module.exports = async function handler(req, res) {
           promote: body.promote || body.what_you_promote,
           suits: body.suits || body.who_it_suits,
           location: body.location,
+          region_slug: body.region_slug || body.regionSlug,
           commitment: body.commitment,
+          cookie_window: body.cookie_window || body.cookieWindow,
+          extra_key: body.extra_key || body.extraKey,
+          extra_val: body.extra_val || body.extraVal,
           meta: body.meta,
           photo_base64: body.photo_base64 || body.photoBase64,
           photo_mime: body.photo_mime || body.photoMime,
@@ -886,7 +915,15 @@ module.exports = async function handler(req, res) {
       Object.prototype.hasOwnProperty.call(body, 'meta') ||
       Object.prototype.hasOwnProperty.call(body, 'investment') ||
       Object.prototype.hasOwnProperty.call(body, 'location') ||
+      Object.prototype.hasOwnProperty.call(body, 'region_slug') ||
+      Object.prototype.hasOwnProperty.call(body, 'regionSlug') ||
       Object.prototype.hasOwnProperty.call(body, 'commitment') ||
+      Object.prototype.hasOwnProperty.call(body, 'cookie_window') ||
+      Object.prototype.hasOwnProperty.call(body, 'cookieWindow') ||
+      Object.prototype.hasOwnProperty.call(body, 'extra_key') ||
+      Object.prototype.hasOwnProperty.call(body, 'extraKey') ||
+      Object.prototype.hasOwnProperty.call(body, 'extra_val') ||
+      Object.prototype.hasOwnProperty.call(body, 'extraVal') ||
       Object.prototype.hasOwnProperty.call(body, 'investment_includes') ||
       Object.prototype.hasOwnProperty.call(body, 'commission') ||
       Object.prototype.hasOwnProperty.call(body, 'promote') ||

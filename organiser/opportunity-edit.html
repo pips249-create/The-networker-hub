@@ -250,6 +250,23 @@
               <p class="ee-hint">Who should consider promoting this — e.g. networkers with a local business audience.</p>
               <input type="text" id="oe-suits" maxlength="160" placeholder="e.g. People who already introduce business owners locally" />
             </div>
+            <div class="ee-field">
+              <label for="oe-cookie-window">Cookie window</label>
+              <p class="ee-hint">How long your tracking link credits a referral — shown on your listing so partners know before they enquire.</p>
+              <select id="oe-cookie-window">
+                <option value="">Select cookie duration…</option>
+                <option value="7 days">7 days</option>
+                <option value="14 days">14 days</option>
+                <option value="30 days">30 days</option>
+                <option value="60 days">60 days</option>
+                <option value="90 days">90 days</option>
+                <option value="180 days">180 days</option>
+                <option value="365 days">365 days</option>
+                <option value="Session only">Session only</option>
+                <option value="Lifetime">Lifetime</option>
+                <option value="Varies — ask when you enquire">Varies — ask when you enquire</option>
+              </select>
+            </div>
             </div>
             <div class="ee-field" id="oe-location-field">
             <label for="oe-region-broad">Region</label>
@@ -389,7 +406,8 @@
     <script src="../js/organiser-terms.js?v=20260828oppterms1" data-root="../" data-context="opportunity" defer></script>
     <script src="../js/opportunity-moderation-scan.js?v=20260827aff2" defer></script>
     <script src="../js/opportunity-listing-quality.js?v=20260825aff1" defer></script>
-    <script src="../js/opportunities-catalog.js?v=20260827aff2" defer></script>
-    <script src="../js/organiser-opportunity-edit.js?v=20260828approval1" defer></script>
+    <script src="../js/opportunity-listing-constants.js?v=20260828cookie1" defer></script>
+    <script src="../js/opportunities-catalog.js?v=20260828cookie1" defer></script>
+    <script src="../js/organiser-opportunity-edit.js?v=20260828cookie1" defer></script>
   </body>
 </html>

@@ -264,6 +264,50 @@
   margin-bottom: 28px;
 }
 
+.opportunity-detail-page .opp-affiliate-cookie {
+  margin-bottom: 16px;
+}
+
+.opportunity-detail-page .opp-affiliate-cookie-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  max-width: 220px;
+  margin: 0 auto 4px;
+  padding: 20px 16px 18px;
+  background: #fff;
+  border: 2px solid #111;
+  border-radius: 12px;
+  box-shadow: 4px 4px 0 #111;
+  text-align: center;
+}
+
+.opportunity-detail-page .opp-affiliate-cookie-icon {
+  color: #111;
+  flex-shrink: 0;
+}
+
+.opportunity-detail-page .opp-affiliate-cookie-copy {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.45;
+  font-weight: 600;
+  color: #111;
+}
+
+@media (min-width: 600px) {
+  .opportunity-detail-page .opp-affiliate-cookie {
+    margin-bottom: 20px;
+  }
+
+  .opportunity-detail-page .opp-affiliate-cookie-card {
+    margin-left: 0;
+    margin-right: auto;
+  }
+}
+
 @media (min-width: 600px) {
   .opportunity-detail-page .opp-detail-meta-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));

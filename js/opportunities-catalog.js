@@ -431,6 +431,7 @@
     meta.forEach(function (m) {
       if (/^investment includes$/i.test(m.key)) return;
       if (/^companies house$/i.test(m.key)) return;
+      if (/^cookie window$/i.test(m.key)) return;
       if (/^(return(\s+est\.?)?|earnings|revenue|income|profit)$/i.test(m.key)) return;
       if (/^investment$/i.test(m.key)) investment = m;
       else if (/^commission$/i.test(m.key)) commission = m;
@@ -443,7 +444,14 @@
 
     if (affiliate) {
       var commitment = metaVal(meta, /^commitment$/i);
-      var rows = [commission, promote || suits, scarcity || location || (commitment ? { key: 'Commitment', val: commitment } : null)];
+      var cookieWindow = metaVal(meta, /^cookie window$/i);
+      var cookieRow = cookieWindow ? { key: 'Cookie window', val: cookieWindow } : null;
+      var rows = [
+        commission,
+        promote || suits,
+        cookieRow,
+        scarcity || location || (commitment ? { key: 'Commitment', val: commitment } : null),
+      ];
       return rows.filter(Boolean).slice(0, 4);
     }
 
@@ -696,6 +704,25 @@
     return map[type] || 'opp-type-franchise';
   }
 
+  function cookieWindowFromMeta(meta) {
+    var C = window.HubOpportunityListingConstants;
+    if (C && C.cookieWindowFromMeta) return C.cookieWindowFromMeta(meta);
+    return metaVal(meta, /^cookie window$/i);
+  }
+
+  function affiliateCookieShortLabel(val) {
+    var C = window.HubOpportunityListingConstants;
+    if (C && C.affiliateCookieShortLabel) return C.affiliateCookieShortLabel(val);
+    return String(val || '').trim();
+  }
+
+  function formatAffiliateCookieDisplay(val) {
+    var C = window.HubOpportunityListingConstants;
+    if (C && C.formatAffiliateCookieDisplay) return C.formatAffiliateCookieDisplay(val);
+    var v = String(val || '').trim();
+    return v ? 'Affiliate cookie window: ' + v + '.' : '';
+  }
+
   window.HubOpportunitiesCatalog = {
     TYPE_LABELS: TYPE_LABELS,
     CATEGORY_OPTIONS: CATEGORY_OPTIONS,
@@ -716,6 +743,9 @@
     cardDisplayMeta: cardDisplayMeta,
     isAffiliateStyleListing: isAffiliateStyleListing,
     formatMetaDisplayValue: formatMetaDisplayValue,
+    cookieWindowFromMeta: cookieWindowFromMeta,
+    affiliateCookieShortLabel: affiliateCookieShortLabel,
+    formatAffiliateCookieDisplay: formatAffiliateCookieDisplay,
     isScarcityMeta: isScarcityMeta,
     parseInvestmentAmount: parseInvestmentAmount,
     parseInvestmentIncludes: parseInvestmentIncludes,

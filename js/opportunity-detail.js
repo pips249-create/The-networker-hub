@@ -19,6 +19,7 @@
     hostName: document.getElementById('opp-host-name'),
     saveBtn: document.getElementById('opp-save-btn'),
     metaGrid: document.getElementById('opp-meta-grid'),
+    affiliateCookie: document.getElementById('opp-affiliate-cookie'),
     desc: document.getElementById('opp-desc'),
     aboutExtra: document.getElementById('opp-about-extra'),
     cover: document.getElementById('opp-detail-cover'),
@@ -238,11 +239,48 @@
     els.saveBtn.setAttribute('aria-label', saved ? 'Remove from saved' : 'Save opportunity');
   }
 
+  function affiliateCookieIconSvg() {
+    return (
+      '<svg class="opp-affiliate-cookie-icon" width="40" height="40" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
+      '<rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" stroke-width="1.75"></rect>' +
+      '<path d="M8 3v4M16 3v4M3 10h18" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"></path>' +
+      '<path d="M12 13.5l.9 1.8 2 .3-1.45 1.4.35 2-1.8-.95-1.8.95.35-2-1.45-1.4 2-.3.9-1.8z" fill="currentColor"></path>' +
+      '</svg>'
+    );
+  }
+
+  function renderAffiliateCookie(item) {
+    if (!els.affiliateCookie) return;
+    var isAffiliate = catalog && catalog.isAffiliateStyleListing && catalog.isAffiliateStyleListing(item);
+    var cookieVal =
+      catalog && catalog.cookieWindowFromMeta ? catalog.cookieWindowFromMeta(item.meta) : '';
+    if (!isAffiliate || !cookieVal) {
+      els.affiliateCookie.hidden = true;
+      els.affiliateCookie.innerHTML = '';
+      return;
+    }
+    var copy =
+      catalog && catalog.formatAffiliateCookieDisplay
+        ? catalog.formatAffiliateCookieDisplay(cookieVal)
+        : 'Affiliate cookie window: ' + cookieVal + '.';
+    els.affiliateCookie.innerHTML =
+      '<div class="opp-affiliate-cookie-card">' +
+      affiliateCookieIconSvg() +
+      '<p class="opp-affiliate-cookie-copy">' +
+      escapeHtml(copy) +
+      '</p></div>';
+    els.affiliateCookie.hidden = false;
+  }
+
   function renderMeta(item) {
     if (!els.metaGrid) return;
     els.metaGrid.innerHTML = (item.meta || [])
       .filter(function (m) {
-        return !/^investment includes$/i.test(m.key) && !/^companies house$/i.test(m.key);
+        return (
+          !/^investment includes$/i.test(m.key) &&
+          !/^companies house$/i.test(m.key) &&
+          !/^cookie window$/i.test(m.key)
+        );
       })
       .map(function (m) {
         var val = catalog && catalog.formatMetaDisplayValue ? catalog.formatMetaDisplayValue(m.key, m.val) : m.val;
@@ -451,6 +489,7 @@
     if (els.featuredPip) els.featuredPip.hidden = !item.featured;
 
     renderMeta(item);
+    renderAffiliateCookie(item);
     renderTypeNotice(item);
     if (window.HUB_applyDetailRegionCta) {
       var locMeta = '';
