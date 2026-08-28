@@ -18,18 +18,29 @@
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260723" />
     <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260608c" />
-    <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260828navfix1" />
+    <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260828ux2" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260825adminbadge1" />
+    <style>
+      /* Prevent browse-page nav padding flash before organiser form CSS loads */
+      body.opportunities-page.organiser-opportunity-edit-page {
+        padding-top: 0 !important;
+      }
+      body.opportunities-page.organiser-opportunity-edit-page .site-nav {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+    </style>
   </head>
-  <body class="opportunities-page organiser-event-edit-page organiser-opportunity-edit-page">
-    <div id="oe-page-loading" class="ee-page-loading" hidden role="status" aria-live="polite" aria-busy="false">
+  <body class="opportunities-page organiser-event-edit-page organiser-opportunity-edit-page hub-page-organiser">
+    <div id="ee-page-loading" class="ee-page-loading" hidden role="status" aria-live="polite" aria-busy="false">
       <div class="ee-page-loading-card">
         <div class="ee-page-loading-spinner" aria-hidden="true"></div>
         <p class="ee-page-loading-text"><span class="ee-page-loading-label">Loading</span><span class="ee-page-loading-dots" aria-hidden="true"></span></p>
       </div>
     </div>
     <div id="hub-site-nav"></div>
-    <script src="../js/site-nav.js?v=20260828oppdash1" data-root="../" data-page="opportunities"></script>
+    <script src="../js/site-nav.js?v=20260828navfix1" data-root="../" data-page="organiser"></script>
 
     <div class="ee-wrap">
       <header class="ee-page-head">
@@ -233,11 +244,17 @@
             </div>
             </div>
             <div class="ee-field" id="oe-location-field">
-            <label for="oe-region">Region</label>
-            <p class="ee-hint">Required — pick UK-wide, a UK nation, county, city, or wider area. Matches how browsers filter opportunities.</p>
-              <select id="oe-region" required>
-                <option value="">Select region…</option>
+            <label for="oe-region-broad">Region</label>
+            <p class="ee-hint">Required — pick UK-wide, a nation, London, or remote. Choose a specific city or county only if you need to narrow it down.</p>
+              <select id="oe-region-broad" required>
+                <option value="">Select coverage…</option>
               </select>
+              <div id="oe-region-specific-wrap" class="oe-region-specific-wrap" hidden>
+                <label for="oe-region" class="oe-region-specific-label">Choose area</label>
+                <select id="oe-region">
+                  <option value="">Select area…</option>
+                </select>
+              </div>
             </div>
             <div class="ee-field">
               <label for="oe-location-detail">Specific area <span class="ee-optional">(optional)</span></label>
@@ -344,11 +361,11 @@
 
     <script src="../js/hub-organiser-actions.js?v=20260828oppdash1" data-root="../" defer></script>
     <script src="../js/fact-loader.js?v=20260723" defer></script>
-    <script src="../js/organiser-page-loading.js?v=20260608d" defer></script>
+    <script src="../js/organiser-page-loading.js?v=20260828ux2" defer></script>
     <script src="../js/organiser-image-upload.js?v=20260605" defer></script>
     <script src="../js/organiser-terms.js?v=20260828oppterms1" data-root="../" data-context="opportunity" defer></script>
     <script src="../js/opportunity-moderation-scan.js?v=20260827aff2" defer></script>
     <script src="../js/opportunity-listing-quality.js?v=20260825aff1" defer></script>
-    <script src="../js/organiser-opportunity-edit.js?v=20260828regions2" defer></script>
+    <script src="../js/organiser-opportunity-edit.js?v=20260828ux2" defer></script>
   </body>
 </html>

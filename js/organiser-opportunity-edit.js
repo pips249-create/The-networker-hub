@@ -62,6 +62,24 @@
   };
   let oeFlowRevealAll = false;
 
+  const LISTING_REGION_BROAD = [
+    { slug: 'uk-wide', label: 'UK-wide' },
+    { slug: 'england', label: 'England' },
+    { slug: 'scotland', label: 'Scotland' },
+    { slug: 'wales', label: 'Wales' },
+    { slug: 'northern-ireland', label: 'Northern Ireland' },
+    { slug: 'remote', label: 'Remote / Online' },
+    { slug: 'london', label: 'London (all areas)' },
+  ];
+
+  const LISTING_REGION_BROAD_SLUGS = new Set(
+    LISTING_REGION_BROAD.map(function (row) {
+      return row.slug;
+    })
+  );
+
+  const LISTING_REGION_SPECIFIC_VALUE = '__specific__';
+
   const LISTING_REGION_GROUPS = [
     {
       label: 'Nationwide',
@@ -156,6 +174,10 @@
   }
 
   function getSelectedListingRegion() {
+    const broadEl = document.getElementById('oe-region-broad');
+    if (broadEl && broadEl.value && broadEl.value !== LISTING_REGION_SPECIFIC_VALUE) {
+      return listingRegionBySlug(broadEl.value);
+    }
     const slug = String(document.getElementById('oe-region')?.value || '').trim();
     return listingRegionBySlug(slug);
   }
@@ -208,21 +230,96 @@
     return { slug: '', detail: text };
   }
 
+  function populateListingRegionBroadSelect() {
+    const select = document.getElementById('oe-region-broad');
+    if (!select || select.dataset.regionsPopulated === '1') return;
+    LISTING_REGION_BROAD.forEach(function (row) {
+      const opt = document.createElement('option');
+      opt.value = row.slug;
+      opt.textContent = row.label;
+      select.appendChild(opt);
+    });
+    const specific = document.createElement('option');
+    specific.value = LISTING_REGION_SPECIFIC_VALUE;
+    specific.textContent = 'A specific city or county…';
+    select.appendChild(specific);
+    select.dataset.regionsPopulated = '1';
+  }
+
   function populateListingRegionSelect() {
     const select = document.getElementById('oe-region');
     if (!select || select.dataset.regionsPopulated === '1') return;
     LISTING_REGION_GROUPS.forEach(function (group) {
+      if (group.label === 'Nationwide') return;
       const optgroup = document.createElement('optgroup');
       optgroup.label = group.label;
       group.regions.forEach(function (row) {
+        if (group.label === 'London' && row.slug === 'london') return;
         const opt = document.createElement('option');
         opt.value = row.slug;
         opt.textContent = row.label;
         optgroup.appendChild(opt);
       });
-      select.appendChild(optgroup);
+      if (optgroup.children.length) select.appendChild(optgroup);
     });
     select.dataset.regionsPopulated = '1';
+  }
+
+  function syncListingRegionPickers() {
+    const broadEl = document.getElementById('oe-region-broad');
+    const specificWrap = document.getElementById('oe-region-specific-wrap');
+    const specificEl = document.getElementById('oe-region');
+    if (!broadEl) return;
+    const isSpecific = broadEl.value === LISTING_REGION_SPECIFIC_VALUE;
+    if (specificWrap) specificWrap.hidden = !isSpecific;
+    if (specificEl) {
+      if (isSpecific) specificEl.setAttribute('required', 'required');
+      else specificEl.removeAttribute('required');
+    }
+  }
+
+  function setListingRegionSlug(slug) {
+    const key = String(slug || '').trim().toLowerCase();
+    const broadEl = document.getElementById('oe-region-broad');
+    const specificEl = document.getElementById('oe-region');
+    if (!broadEl) return;
+    if (key && LISTING_REGION_BROAD_SLUGS.has(key)) {
+      broadEl.value = key;
+      if (specificEl) specificEl.value = '';
+    } else if (key) {
+      broadEl.value = LISTING_REGION_SPECIFIC_VALUE;
+      populateListingRegionSelect();
+      if (specificEl) specificEl.value = key;
+    } else {
+      broadEl.value = '';
+      if (specificEl) specificEl.value = '';
+    }
+    syncListingRegionPickers();
+  }
+
+  function bindListingRegionPickers() {
+    populateListingRegionBroadSelect();
+    populateListingRegionSelect();
+    const broadEl = document.getElementById('oe-region-broad');
+    if (broadEl) {
+      broadEl.addEventListener('change', function () {
+        syncListingRegionPickers();
+        if (broadEl.value !== LISTING_REGION_SPECIFIC_VALUE) {
+          const specificEl = document.getElementById('oe-region');
+          if (specificEl) specificEl.value = '';
+        }
+        document.getElementById('oe-location-field')?.classList.remove('is-invalid');
+        refreshCompleteness();
+      });
+    }
+    const specificEl = document.getElementById('oe-region');
+    if (specificEl) {
+      specificEl.addEventListener('change', function () {
+        document.getElementById('oe-location-field')?.classList.remove('is-invalid');
+        refreshCompleteness();
+      });
+    }
+    syncListingRegionPickers();
   }
 
   function getSelectedTypes() {
@@ -542,6 +639,72 @@
     el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
+  function oeProgressiveFlowActive() {
+    return !editId && !oeFlowRevealAll;
+  }
+
+  function oeShowGlobalHints() {
+    if (!oeProgressiveFlowActive()) return true;
+    return Boolean(oeStepsConfirmed.photo);
+  }
+
+  function clearStepErrors() {
+    document.querySelectorAll('.oe-step-error').forEach(function (el) {
+      el.hidden = true;
+      el.textContent = '';
+    });
+  }
+
+  function showStepError(stepKey, msg) {
+    showAlert('');
+    clearStepErrors();
+    if (!msg) return;
+    const card = document.querySelector('.oe-step-card[data-oe-step="' + stepKey + '"]');
+    if (!card) return;
+    let el = card.querySelector('.oe-step-error');
+    if (!el) {
+      el = document.createElement('p');
+      el.className = 'oe-step-error';
+      el.setAttribute('role', 'alert');
+      const body = card.querySelector('.oe-step-body') || card;
+      body.insertBefore(el, body.firstChild);
+    }
+    el.textContent = msg;
+    el.hidden = false;
+  }
+
+  function bindStepFeedbackClear() {
+    [
+      'oe-title',
+      'oe-desc',
+      'oe-about',
+      'oe-host',
+      'oe-email',
+      'oe-investment',
+      'oe-commission',
+      'oe-promote',
+      'oe-region-broad',
+      'oe-region',
+    ].forEach(function (id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('input', function () {
+        showAlert('');
+        clearStepErrors();
+      });
+      el.addEventListener('change', function () {
+        showAlert('');
+        clearStepErrors();
+      });
+    });
+    document.querySelectorAll('#oe-type-group input[name="oe-type"]').forEach(function (input) {
+      input.addEventListener('change', function () {
+        showAlert('');
+        clearStepErrors();
+      });
+    });
+  }
+
   function showStatusBadge(opportunity) {
     const badge = document.getElementById('oe-status-badge');
     if (!badge || !opportunity) return;
@@ -602,7 +765,7 @@
       opp.regionSlug || opp.region_slug
     );
     document.getElementById('oe-location-detail').value = parsed.detail || '';
-    document.getElementById('oe-region').value = parsed.slug || '';
+    setListingRegionSlug(parsed.slug || '');
     document.getElementById('oe-commitment').value = metaValue(opp.meta, /^commitment$/i);
     syncAffiliateFormMode();
 
@@ -840,7 +1003,7 @@
   function scrollToValidationField(message) {
     const msg = String(message || '').toLowerCase();
     let id = '';
-    if (/territory|location|region/.test(msg)) id = 'oe-region';
+    if (/territory|location|region/.test(msg)) id = 'oe-region-broad';
     else if (/logo|photo|cover|image/.test(msg)) id = 'oe-card-photo';
     else if (/commission/.test(msg)) id = 'oe-commission';
     else if (/promote/.test(msg)) id = 'oe-promote';
@@ -856,7 +1019,7 @@
     if (focusable && typeof focusable.focus === 'function') {
       focusable.focus({ preventScroll: true });
     }
-    if (id === 'oe-region') {
+    if (id === 'oe-region-broad' || id === 'oe-region') {
       document.getElementById('oe-location-field')?.classList.add('is-invalid');
     }
   }
@@ -1128,7 +1291,14 @@
 
     const completeness = document.getElementById('oe-listing-completeness');
     if (completeness) {
-      completeness.hidden = revealAll ? false : !stepTitleComplete();
+      const showProgress =
+        revealAll || (oeStepsConfirmed.details && stepTitleComplete());
+      completeness.hidden = !showProgress;
+    }
+
+    const moderationPanel = document.getElementById('oe-moderation-warnings');
+    if (moderationPanel && oeProgressiveFlowActive() && !oeShowGlobalHints()) {
+      moderationPanel.hidden = true;
     }
 
     if (revealAll) {
@@ -1173,21 +1343,24 @@
   function confirmOeStep(stepKey) {
     if (stepKey === 'details') {
       if (!stepTitleComplete()) {
-        showAlert('Enter an opportunity title (at least 2 characters).');
+        showStepError('details', 'Enter an opportunity title (at least 2 characters).');
         document.getElementById('oe-title')?.focus();
         return false;
       }
       if (!stepTypeComplete()) {
-        showAlert('Select at least one opportunity type.');
+        showStepError('details', 'Select at least one opportunity type.');
         return false;
       }
       if (!stepDescComplete()) {
-        showAlert('Add a short description (at least 8 characters) for the browse card.');
+        showStepError(
+          'details',
+          'Add a short description (at least 8 characters) for the browse card.'
+        );
         document.getElementById('oe-desc')?.focus();
         return false;
       }
       oeStepsConfirmed.details = true;
-      showAlert('');
+      clearStepErrors();
       syncOpportunitySteps();
       const hostCard = document.getElementById('oe-card-host');
       if (hostCard) hostCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1196,11 +1369,11 @@
 
     if (stepKey === 'host') {
       if (!stepHostComplete()) {
-        showAlert('Enter your company name and a valid contact email.');
+        showStepError('host', 'Enter your company name and a valid contact email.');
         return false;
       }
       oeStepsConfirmed.host = true;
-      showAlert('');
+      clearStepErrors();
       syncOpportunitySteps();
       document.getElementById('oe-card-meta')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       return true;
@@ -1209,14 +1382,14 @@
     if (stepKey === 'meta') {
       if (!stepMetaComplete()) {
         if (isAffiliateStyleListing()) {
-          showAlert('Enter commission, what you promote, and region.');
+          showStepError('meta', 'Enter commission, what you promote, and region.');
         } else {
-          showAlert('Enter investment and region.');
+          showStepError('meta', 'Enter investment and region.');
         }
         return false;
       }
       oeStepsConfirmed.meta = true;
-      showAlert('');
+      clearStepErrors();
       syncOpportunitySteps();
       document.getElementById('oe-card-photo')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       return true;
@@ -1224,8 +1397,9 @@
 
     if (stepKey === 'photo') {
       oeStepsConfirmed.photo = true;
-      showAlert('');
+      clearStepErrors();
       syncOpportunitySteps();
+      refreshModerationWarnings(false);
       document.getElementById('oe-card-submit')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
       return true;
     }
@@ -1276,6 +1450,7 @@
       'oe-investment',
       'oe-commission',
       'oe-promote',
+      'oe-region-broad',
       'oe-region',
       'oe-commitment',
       'oe-category',
@@ -1343,6 +1518,7 @@
       'oe-promote',
       'oe-suits',
       'oe-location-detail',
+      'oe-region-broad',
       'oe-region',
       'oe-commitment',
       'oe-companies-house',
@@ -1429,7 +1605,21 @@
 
   function refreshModerationWarnings(isDraft) {
     const payload = buildPayload(isDraft ? 'draft' : 'published');
-    const scan = moderationScanInput(payload, { includeMissingFields: !isDraft });
+    const progressive = oeProgressiveFlowActive();
+    const includeMissing = !progressive && !isDraft;
+    const scan = moderationScanInput(payload, { includeMissingFields: includeMissing });
+    if (
+      progressive &&
+      scan &&
+      scan.flagged &&
+      scan.reasons &&
+      scan.reasons.every(function (reason) {
+        return reason.id === 'missing_field';
+      })
+    ) {
+      renderModerationWarnings(null, isDraft);
+      return scan;
+    }
     renderModerationWarnings(scan, isDraft);
     return scan;
   }
@@ -1446,6 +1636,7 @@
       'oe-promote',
       'oe-suits',
       'oe-location-detail',
+      'oe-region-broad',
       'oe-region',
       'oe-commitment',
       'oe-companies-house',
@@ -1455,7 +1646,9 @@
 
     function scheduleScan() {
       if (moderationScanTimer) clearTimeout(moderationScanTimer);
-      moderationScanTimer = setTimeout(() => refreshModerationWarnings(false), 280);
+      moderationScanTimer = setTimeout(function () {
+        refreshModerationWarnings(!oeShowGlobalHints());
+      }, 280);
     }
 
     fields.forEach((id) => {
@@ -1560,112 +1753,130 @@
       return;
     }
 
-    if (photoFile) {
-      payload.photoBase64 = await readFileAsBase64(photoFile);
-      payload.photoMime = photoFile.type;
-      payload.photoFilename = photoFile.name;
-    }
-
-    if (logoFile) {
-      payload.logoBase64 = await readFileAsBase64(logoFile);
-      payload.logoMime = logoFile.type;
-      payload.logoFilename = logoFile.name;
-    }
-
     const submitBtn = document.getElementById('oe-submit');
     const draftBtn = document.getElementById('oe-save-draft');
     const loading = window.organiserPageLoading;
+    let redirecting = false;
+    const submitLabel = submitBtn ? submitBtn.textContent : '';
+
     [submitBtn, draftBtn].forEach((b) => {
       if (b) b.disabled = true;
     });
+    if (submitBtn && publish) submitBtn.textContent = 'Submitting…';
+    if (loading) {
+      loading.show(
+        publish
+          ? hasActiveListing
+            ? 'Updating listing'
+            : 'Preparing submission'
+          : 'Saving draft'
+      );
+    }
 
-    const saveWork = async () => {
-      if (editId) {
-        return api('/api/organiser/opportunities', {
-          method: 'PATCH',
-          body: JSON.stringify({ id: editId, ...payload }),
-        });
-      }
-      return api('/api/organiser/opportunities', {
-        method: 'POST',
-        body: JSON.stringify(payload),
-      });
-    };
-
-    let res;
     try {
-      if (loading && loading.run) {
-        res = await loading.run(
-          publish
-            ? hasActiveListing
-              ? 'Updating listing'
-              : 'Submitting for review'
-            : 'Saving draft',
-          saveWork
-        );
-      } else {
-        if (loading) loading.show(publish ? 'Saving listing' : 'Saving draft');
-        res = await saveWork();
-        if (loading) loading.hide();
+      if (photoFile) {
+        payload.photoBase64 = await readFileAsBase64(photoFile);
+        payload.photoMime = photoFile.type;
+        payload.photoFilename = photoFile.name;
       }
-    } finally {
-      [submitBtn, draftBtn].forEach((b) => {
-        if (b) b.disabled = false;
-      });
+
+      if (logoFile) {
+        payload.logoBase64 = await readFileAsBase64(logoFile);
+        payload.logoMime = logoFile.type;
+        payload.logoFilename = logoFile.name;
+      }
+
+      if (loading && publish) loading.show(hasActiveListing ? 'Updating listing' : 'Submitting for review');
+
+      const saveWork = async () => {
+        if (editId) {
+          return api('/api/organiser/opportunities', {
+            method: 'PATCH',
+            body: JSON.stringify({ id: editId, ...payload }),
+          });
+        }
+        return api('/api/organiser/opportunities', {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        });
+      };
+
+      let res;
+      try {
+        res = await saveWork();
+      } catch (e) {
+        showAlert((e && e.message) || 'Could not save opportunity');
+        return;
+      }
+
+      if (!res.ok) {
+        const err = res.data.error || '';
+        const msg =
+          err === 'opportunities_unavailable'
+            ? 'Opportunity listings are not available yet — contact support if this persists.'
+            : res.data.message || err || 'Could not save opportunity';
+        showAlert(msg);
+        return;
+      }
+
+      const opportunity = res.data.opportunity || {};
+      currentOpportunity = opportunity;
+      showStatusBadge(opportunity);
+      listingPaymentPanelVisible();
       syncPrimarySubmitButton();
-    }
 
-    if (!res.ok) {
-      const err = res.data.error || '';
-      const msg =
-        err === 'opportunities_unavailable'
-          ? 'Opportunity listings are not available yet — contact support if this persists.'
-          : res.data.message || err || 'Could not save opportunity';
-      showAlert(msg);
-      return;
-    }
-
-    const opportunity = res.data.opportunity || {};
-    currentOpportunity = opportunity;
-    showStatusBadge(opportunity);
-    listingPaymentPanelVisible();
-    syncPrimarySubmitButton();
-
-    if (!publish) {
-      if (!editId && opportunity.id) {
-        if (isEmbedDrawer && window.parent && window.parent !== window) {
-          window.parent.postMessage(
-            { type: 'hub-opportunity-saved', draft: true, id: opportunity.id, title: opportunity.title || '' },
-            window.location.origin
-          );
-          location.replace('/organiser/opportunity-edit?id=' + encodeURIComponent(opportunity.id) + '&embed=1');
+      if (!publish) {
+        if (!editId && opportunity.id) {
+          if (isEmbedDrawer && window.parent && window.parent !== window) {
+            window.parent.postMessage(
+              { type: 'hub-opportunity-saved', draft: true, id: opportunity.id, title: opportunity.title || '' },
+              window.location.origin
+            );
+            location.replace('/organiser/opportunity-edit?id=' + encodeURIComponent(opportunity.id) + '&embed=1');
+            return;
+          }
+          location.href = '/organiser/opportunity-edit?id=' + encodeURIComponent(opportunity.id);
           return;
         }
-        location.href = '/organiser/opportunity-edit?id=' + encodeURIComponent(opportunity.id);
+        if (isEmbedDrawer && window.parent && window.parent !== window) {
+          window.parent.postMessage(
+            {
+              type: 'hub-opportunity-saved',
+              draft: true,
+              id: opportunity.id || editId,
+              title: opportunity.title || '',
+            },
+            window.location.origin
+          );
+          return;
+        }
+        showAlert('Draft saved.');
         return;
       }
-      if (isEmbedDrawer && window.parent && window.parent !== window) {
-        window.parent.postMessage(
-          {
-            type: 'hub-opportunity-saved',
-            draft: true,
-            id: opportunity.id || editId,
-            title: opportunity.title || '',
-          },
-          window.location.origin
-        );
-        return;
-      }
-      showAlert('Draft saved.');
-      return;
-    }
 
-    if (hasActiveListing) {
+      if (hasActiveListing) {
+        if (isEmbedDrawer && window.parent && window.parent !== window) {
+          window.parent.postMessage(
+            {
+              type: 'hub-opportunity-saved',
+              draft: false,
+              id: opportunity.id || editId,
+              title: opportunity.title || '',
+            },
+            window.location.origin
+          );
+          return;
+        }
+        showAlert('Listing updated.');
+        return;
+      }
+
       if (isEmbedDrawer && window.parent && window.parent !== window) {
         window.parent.postMessage(
           {
             type: 'hub-opportunity-saved',
             draft: false,
+            pendingReview: true,
             id: opportunity.id || editId,
             title: opportunity.title || '',
           },
@@ -1673,50 +1884,43 @@
         );
         return;
       }
-      showAlert('Listing updated.');
-      return;
-    }
 
-    if (isEmbedDrawer && window.parent && window.parent !== window) {
-      window.parent.postMessage(
-        {
-          type: 'hub-opportunity-saved',
-          draft: false,
-          pendingReview: true,
-          id: opportunity.id || editId,
-          title: opportunity.title || '',
-        },
-        window.location.origin
-      );
-      return;
-    }
-
-    showAlert(
-      'Submitted for review. We’ll email you when it’s approved — then you can pay via Stripe to go live.'
-    );
-    if (opportunity.id && !editId) {
-      try {
-        sessionStorage.setItem(
-          'hub_opp_submitted_flash',
-          JSON.stringify({
-            id: opportunity.id,
-            title: opportunity.title || '',
-          })
-        );
-      } catch (e) {
-        /* ignore */
-      }
-      if (window.HubOrganiserActions && window.HubOrganiserActions.goToBusinessOpportunities) {
-        window.HubOrganiserActions.goToBusinessOpportunities();
-      } else {
+      if (opportunity.id && !editId) {
+        redirecting = true;
+        if (loading) loading.show('Taking you to your listings…');
+        try {
+          sessionStorage.setItem(
+            'hub_opp_submitted_flash',
+            JSON.stringify({
+              id: opportunity.id,
+              title: opportunity.title || '',
+              opportunity: opportunity,
+            })
+          );
+        } catch (e) {
+          /* ignore */
+        }
         location.href = '/organiser/#business-overview';
+        return;
       }
-      return;
+
+      showAlert(
+        'Submitted for review. We’ll email you when it’s approved — then you can pay via Stripe to go live.'
+      );
+    } finally {
+      if (!redirecting) {
+        if (loading) loading.hide();
+        [submitBtn, draftBtn].forEach((b) => {
+          if (b) b.disabled = false;
+        });
+        if (submitBtn) submitBtn.textContent = submitLabel;
+        syncPrimarySubmitButton();
+      }
     }
   }
 
   async function init() {
-    populateListingRegionSelect();
+    bindListingRegionPickers();
 
     const actions = window.HubOrganiserActions;
     if (actions) {
@@ -1738,8 +1942,9 @@
     bindPhotoUpload();
     bindModerationScan();
     bindCompletenessScan();
+    bindStepFeedbackClear();
     bindOpportunitySteps();
-    refreshModerationWarnings(false);
+    refreshModerationWarnings(true);
     refreshCompleteness();
 
     const investmentEl = document.getElementById('oe-investment');
@@ -1760,17 +1965,6 @@
         updateFcaAttestVisibility();
       });
     });
-    populateListingRegionSelect();
-
-    const regionEl = document.getElementById('oe-region');
-    if (regionEl) {
-      regionEl.addEventListener('change', function () {
-        if (regionEl.value) {
-          document.getElementById('oe-location-field')?.classList.remove('is-invalid');
-        }
-        refreshCompleteness();
-      });
-    }
     syncAffiliateFormMode();
     updateFcaAttestVisibility();
     syncOpportunitySteps();

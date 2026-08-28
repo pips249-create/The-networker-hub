@@ -296,6 +296,12 @@
         /\/peek\/for-networkers/.test(String(window.location.pathname || ''))
       );
     }
+    if (key === 'opportunities') {
+      return (
+        page === 'opportunities' ||
+        /\/organiser\/opportunity-edit/.test(String(window.location.pathname || ''))
+      );
+    }
     if (key === 'events') {
       if (page !== 'events') return false;
       try {

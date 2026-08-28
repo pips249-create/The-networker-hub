@@ -324,12 +324,17 @@
         <!-- Business opportunities: how it works + performance -->
         <section class="org-page org-page--business-ops organiser-opportunity-edit-page" id="org-page-business-list" data-org-page="business-list">
           <button type="button" class="org-hub-back" data-org-route="business-overview">← Back to My business opportunities</button>
-          <header class="org-hub-page-head">
-            <p class="org-page-kicker org-biz-kicker">Business opportunities</p>
-            <h1 class="org-page-title" id="org-business-list-title">List a business opportunity</h1>
-            <p class="org-page-lead" id="org-business-list-lead">
-              See how business opportunities work, what they cost, and start promoting a franchise, partnership, or side hustle on the platform.
-            </p>
+          <header class="org-page-head org-page-head--split org-hub-page-head">
+            <div class="org-page-head-text">
+              <p class="org-page-kicker org-biz-kicker">Business opportunities</p>
+              <h1 class="org-page-title" id="org-business-list-title">List a business opportunity</h1>
+              <p class="org-page-lead" id="org-business-list-lead">
+                See how business opportunities work, what they cost, and start promoting a franchise, partnership, or side hustle on the platform.
+              </p>
+            </div>
+            <div class="org-page-head-actions org-business-head-actions" id="org-business-list-head-actions" hidden>
+              <button type="button" class="org-btn org-btn-gold org-btn-sm" data-action="add-opportunity-listing">+ Add opportunity</button>
+            </div>
           </header>
 
           <div id="org-opp-performance-wrap" hidden>
@@ -338,7 +343,10 @@
                 <h2 class="org-section-title">How your business opportunities are doing</h2>
                 <p class="org-section-sub">Enquiries, member saves, expiry dates, and premium placement — at a glance before you add another.</p>
               </div>
-              <button type="button" class="org-btn org-btn-outline org-btn-sm" data-org-shortcut="business-overview-enquiries">View all enquiries →</button>
+              <div class="org-business-head-actions">
+                <button type="button" class="org-btn org-btn-gold org-btn-sm" data-action="add-opportunity-listing">+ Add opportunity</button>
+                <button type="button" class="org-btn org-btn-outline org-btn-sm" data-org-shortcut="business-overview-enquiries">View all enquiries →</button>
+              </div>
             </div>
             <div class="org-opp-listing-cards" id="org-opp-listing-cards" aria-live="polite"></div>
           </div>
@@ -3787,7 +3795,7 @@
     <script src="../js/organiser-featured-duration.js?v=20260806onetime" defer></script>
     <script src="../js/hub-comms-pack.js?v=20260722share" defer></script>
     <script src="../js/hub-side-nav.js?v=20260805orgnav2" defer></script>
-    <script src="../js/organiser-dashboard.js?v=20260828auth1" defer></script>
+    <script src="../js/organiser-dashboard.js?v=20260828ux2" defer></script>
     <script src="../js/organiser-workspace-comfort.js?v=20260813noshow1" defer></script>
   </body>
 </html>

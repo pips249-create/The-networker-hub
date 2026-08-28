@@ -31,8 +31,12 @@
     }
   }
 
+  function pageLoadingEl() {
+    return document.getElementById('ee-page-loading') || document.getElementById('oe-page-loading');
+  }
+
   function setPageLoading(on, message, progressStep) {
-    const el = document.getElementById('ee-page-loading');
+    const el = pageLoadingEl();
     notifyParentBusy(on, message, progressStep);
     if (!el) return;
     const label = el.querySelector('.ee-page-loading-label');
@@ -51,7 +55,7 @@
             return work;
           };
     // Organiser editor pages use a fast overlay — FactLoader's min display time slows wizards.
-    if (document.getElementById('ee-page-loading')) {
+    if (pageLoadingEl()) {
       setPageLoading(true, message, progressStep);
       return Promise.resolve()
         .then(fn)

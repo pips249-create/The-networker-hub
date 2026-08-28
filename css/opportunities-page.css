@@ -32,6 +32,11 @@
   padding-top: 72px;
 }
 
+body.opportunities-page.organiser-opportunity-edit-page.has-site-nav,
+body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav']) {
+  padding-top: 0;
+}
+
 .opportunities-page .opp-serif {
   font-family: 'DM Serif Display', Georgia, serif;
 }

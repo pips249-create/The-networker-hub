@@ -3693,12 +3693,27 @@
       sessionStorage.removeItem(OPP_SUBMITTED_FLASH_KEY);
       const parsed = JSON.parse(raw);
       const title = String((parsed && parsed.title) || '').trim();
+      const opp = parsed && parsed.opportunity;
       const msg =
         '<strong>Submitted for review.</strong> ' +
         (title ? esc(title) + ' is ' : 'Your listing is ') +
         'with our team — we’ll email you when it’s approved, then you can pay via Stripe to go live.';
       showOrganiserAlert(msg, false);
+      if (opp && opp.id) {
+        const idx = state.opportunities.findIndex(function (o) {
+          return o.id === opp.id;
+        });
+        if (idx >= 0) {
+          state.opportunities[idx] = Object.assign({}, state.opportunities[idx], opp);
+        } else {
+          state.opportunities.unshift(opp);
+        }
+        renderOpportunitiesList();
+        renderStats();
+        updateBusinessTabCounts();
+      }
       state.opportunitiesLoaded = false;
+      state.pendingOpportunityListRefresh = true;
       setRoute('business-overview', { skipEventsGuard: true });
     } catch {
       /* ignore */
@@ -16101,11 +16116,7 @@
     const addToggle = document.getElementById('org-add-toggle');
     if (addMenu) addMenu.hidden = true;
     if (addToggle) addToggle.setAttribute('aria-expanded', 'false');
-    if (hasOpportunityListings()) {
-      location.href = '/organiser/opportunity-edit';
-      return;
-    }
-    setRoute('business-list');
+    location.href = '/organiser/opportunity-edit';
   }
 
   function scrollToBusinessEnquiries(opportunityId) {
@@ -16117,15 +16128,18 @@
   function updateBusinessListPageHead() {
     const titleEl = document.getElementById('org-business-list-title');
     const leadEl = document.getElementById('org-business-list-lead');
+    const actionsEl = document.getElementById('org-business-list-head-actions');
     if (!titleEl || !leadEl) return;
     if (hasOpportunityListings()) {
       titleEl.textContent = 'Your business opportunities';
       leadEl.textContent =
         'See how your business opportunities are performing, then add another franchise, partnership, or side hustle when you are ready.';
+      if (actionsEl) actionsEl.hidden = false;
     } else {
       titleEl.textContent = 'List a business opportunity';
       leadEl.textContent =
         'See how business opportunities work, what they cost, and start promoting a franchise, partnership, or side hustle on the platform.';
+      if (actionsEl) actionsEl.hidden = true;
     }
   }
 
@@ -16479,8 +16493,9 @@
     handleBusinessRenewUrlParam();
   }
 
-  async function loadOpportunitiesList() {
-    if (state.opportunitiesLoaded) {
+  async function loadOpportunitiesList(opts) {
+    const force = opts && opts.force;
+    if (state.opportunitiesLoaded && !force) {
       renderOpportunitiesList();
       updateBusinessListPageHead();
       return;
@@ -16578,7 +16593,9 @@
     }
     updateOpportunityEnquiryUi();
     updateGettingStartedPanel();
-    if (state.opportunitiesLoaded) renderOpportunitiesList();
+    if (state.opportunitiesLoaded || (state.opportunities && state.opportunities.length)) {
+      renderOpportunitiesList();
+    }
     renderRevenueConnectCopy();
     // Promote LinkedIn builder may have hydrated before bootstrap — push fresh groups/events.
     refreshLinkedInPostBuilderFromState();
@@ -16839,6 +16856,10 @@
         ensureAttendeeEmailPanelReady(filters.attendeesEvent !== 'all' ? filters.attendeesEvent : '');
       }
       ensureActiveBusinessOverviewLoaded();
+      if (state.pendingOpportunityListRefresh) {
+        state.pendingOpportunityListRefresh = false;
+        loadOpportunitiesList({ force: true });
+      }
       // Warm editor CSS and heavy workspace pages after first paint.
       if (typeof requestIdleCallback === 'function') {
         requestIdleCallback(function () {

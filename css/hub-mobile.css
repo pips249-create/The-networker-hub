@@ -465,6 +465,11 @@ body.nav-menu-open {
     padding-top: calc(64px + var(--hub-browse-banner-h, 0px));
   }
 
+  body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav']),
+  body.opportunities-page.organiser-opportunity-edit-page.has-site-nav {
+    padding-top: 0;
+  }
+
   body.hub-page-organiser .site-nav,
   body.hub-page-account .site-nav {
     padding-top: 0;

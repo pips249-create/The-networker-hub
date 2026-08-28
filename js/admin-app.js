@@ -22089,6 +22089,336 @@
     return document.querySelector('.opportunity-cleanup-panel[data-opp-panel-for="' + escKey + '"]');
   }
 
+  function opportunityCategoryLabel(category) {
+    var current = String(category || 'general').trim() || 'general';
+    for (var i = 0; i < OPPORTUNITY_CATEGORIES.length; i += 1) {
+      if (OPPORTUNITY_CATEGORIES[i][0] === current) return OPPORTUNITY_CATEGORIES[i][1];
+    }
+    return current || 'Other';
+  }
+
+  function opportunityAdminMediaUrl(url) {
+    var raw = String(url || '').trim();
+    if (!raw) return '';
+    if (/^https?:\/\//i.test(raw)) return raw;
+    if (raw.charAt(0) === '/') return raw;
+    return '/' + raw.replace(/^\.\//, '');
+  }
+
+  function opportunityIsAffiliateStyle(opp) {
+    if (!opp) return false;
+    var type = String(opp.type || '');
+    if (type === 'affiliate') return true;
+    if (type !== 'partnership') return false;
+    return Boolean(String(opp.commission || '').trim()) && !String(opp.investment || '').trim();
+  }
+
+  function opportunityAboutParagraphs(opp) {
+    if (!opp) return [];
+    if (Array.isArray(opp.about) && opp.about.length) {
+      return opp.about.map(function (p) {
+        return String(p || '').trim();
+      }).filter(Boolean);
+    }
+    var text = String(opp.about_text || '').trim();
+    if (!text) return [];
+    return text
+      .split(/\n\s*\n/)
+      .map(function (p) {
+        return p.trim();
+      })
+      .filter(Boolean);
+  }
+
+  function opportunityCleanupReadonlyRow(label, value) {
+    var display = value != null && String(value).trim() ? String(value).trim() : '—';
+    return (
+      '<div class="opp-review-field">' +
+      '<dt class="opp-review-field-label">' +
+      esc(label) +
+      '</dt>' +
+      '<dd class="opp-review-field-value">' +
+      esc(display) +
+      '</dd></div>'
+    );
+  }
+
+  function opportunityCleanupReviewCardHtml(opp) {
+    var coverUrl = opportunityAdminMediaUrl(opp.image_url);
+    var logoUrl = opportunityAdminMediaUrl(opp.logo_url);
+    var typeLabel = opportunityTypeLabel(opp.type);
+    var affiliate = opportunityIsAffiliateStyle(opp);
+    var priceFact = affiliate
+      ? opp.commission
+        ? 'Commission: ' + opp.commission
+        : ''
+      : opp.investment
+        ? 'From ' + opp.investment
+        : '';
+    var mediaHtml = coverUrl
+      ? '<img src="' +
+        attrEsc(coverUrl) +
+        '" alt="" class="opp-review-card-cover" loading="lazy">'
+      : '<div class="opp-review-card-cover opp-review-card-cover--empty">No cover image</div>';
+    var logoHtml = logoUrl
+      ? '<img src="' +
+        attrEsc(logoUrl) +
+        '" alt="" class="opp-review-card-logo" loading="lazy">'
+      : '';
+    return (
+      '<article class="opp-review-card">' +
+      mediaHtml +
+      '<div class="opp-review-card-body">' +
+      '<div class="opp-review-card-top">' +
+      '<span class="opp-review-card-type">' +
+      esc(typeLabel) +
+      '</span>' +
+      (opp.commitment
+        ? '<span class="opp-review-card-commitment">' + esc(opp.commitment) + '</span>'
+        : '') +
+      '</div>' +
+      '<div class="opp-review-card-identity">' +
+      logoHtml +
+      '<div><h4 class="opp-review-card-title">' +
+      esc(opp.title || 'Untitled') +
+      '</h4>' +
+      (opp.host ? '<p class="opp-review-card-host">' + esc(opp.host) + '</p>' : '') +
+      '</div></div>' +
+      (opp.description
+        ? '<p class="opp-review-card-desc">' + esc(opp.description) + '</p>'
+        : '<p class="opp-review-card-desc opp-review-card-desc--empty">No short description</p>') +
+      '<div class="opp-review-card-facts">' +
+      (opp.location ? '<span>' + esc(opp.location) + '</span>' : '') +
+      (priceFact ? '<span>' + esc(priceFact) + '</span>' : '') +
+      '</div>' +
+      '<div class="opp-review-card-cta" aria-hidden="true">Enquire</div>' +
+      '</div></article>'
+    );
+  }
+
+  function opportunityCleanupReviewDetailHtml(opp) {
+    var coverUrl = opportunityAdminMediaUrl(opp.image_url);
+    var logoUrl = opportunityAdminMediaUrl(opp.logo_url);
+    var paragraphs = opportunityAboutParagraphs(opp);
+    var affiliate = opportunityIsAffiliateStyle(opp);
+    var coverHtml = coverUrl
+      ? '<img src="' +
+        attrEsc(coverUrl) +
+        '" alt="" class="opp-review-detail-cover" loading="lazy">'
+      : '<div class="opp-review-detail-cover opp-review-detail-cover--empty">No cover image uploaded</div>';
+    var aboutHtml = paragraphs.length
+      ? paragraphs
+          .map(function (p) {
+            return '<p>' + esc(p) + '</p>';
+          })
+          .join('')
+      : '<p class="opp-review-muted">No full description provided.</p>';
+    var metaRows =
+      opportunityCleanupReadonlyRow('Type', opportunityTypeLabel(opp.type)) +
+      opportunityCleanupReadonlyRow('Industry', opportunityCategoryLabel(opp.category)) +
+      opportunityCleanupReadonlyRow('Territory / location', opp.location) +
+      opportunityCleanupReadonlyRow('Commitment', opp.commitment) +
+      (affiliate
+        ? opportunityCleanupReadonlyRow('Commission', opp.commission) +
+          opportunityCleanupReadonlyRow('What you promote', opp.promote) +
+          opportunityCleanupReadonlyRow('Who it suits', opp.suits)
+        : opportunityCleanupReadonlyRow('Investment', opp.investment) +
+          opportunityCleanupReadonlyRow('What’s included', opp.investment_includes)) +
+      opportunityCleanupReadonlyRow('Contact email', opp.contact_email || opp.owner_email);
+    return (
+      '<div class="opp-review-detail">' +
+      coverHtml +
+      '<div class="opp-review-detail-main">' +
+      '<div class="opp-review-detail-head">' +
+      (logoUrl
+        ? '<img src="' +
+          attrEsc(logoUrl) +
+          '" alt="" class="opp-review-detail-logo" loading="lazy">'
+        : '') +
+      '<div><h4 class="opp-review-detail-title">' +
+      esc(opp.title || 'Untitled') +
+      '</h4>' +
+      (opp.host ? '<p class="opp-review-detail-host">' + esc(opp.host) + '</p>' : '') +
+      '</div></div>' +
+      (opp.description
+        ? '<p class="opp-review-detail-lead">' + esc(opp.description) + '</p>'
+        : '') +
+      '<div class="opp-review-detail-about">' +
+      aboutHtml +
+      '</div>' +
+      '<dl class="opp-review-detail-meta">' +
+      metaRows +
+      '</dl></div></div>'
+    );
+  }
+
+  function opportunityCleanupReviewPanelHtml(opp) {
+    var id = String(opp.id || '');
+    var isPendingSubmitted =
+      opp.approval_status === 'Pending Review' && Boolean(opp.review_submitted_at);
+    var isDraftNotSubmitted =
+      opp.approval_status === 'Pending Review' && !opp.review_submitted_at;
+    var awaitingPay = opp.approval_status === 'Approved' && !opp.listing_payment_active;
+    var previewHref = opportunityAdminViewHref(opp);
+    var approveLabel = opp.listing_payment_active
+      ? 'Approve &amp; go live'
+      : 'Approve — email pay link';
+    var submittedAt = opp.review_submitted_at
+      ? fmtTime(opp.review_submitted_at)
+      : opp.updated_at
+        ? fmtTime(opp.updated_at)
+        : '';
+    var statusNote = isDraftNotSubmitted
+      ? 'Draft — not submitted for review yet. The lister can still edit before you approve.'
+      : isPendingSubmitted
+        ? 'Submitted for review' + (submittedAt ? ' · ' + submittedAt : '')
+        : awaitingPay
+          ? 'Approved — awaiting listing payment before going live.'
+          : 'Review what was submitted before making admin changes.';
+    return (
+      '<div class="opp-review-panel" data-opp-review-for="' +
+      attrEsc(id) +
+      '">' +
+      '<div class="opp-review-toolbar">' +
+      '<div class="opp-review-toolbar-note">' +
+      '<p class="opp-review-toolbar-status">' +
+      esc(statusNote) +
+      '</p>' +
+      '<p class="opp-review-toolbar-owner">Owner: <strong>' +
+      esc(opp.owner_email || '—') +
+      '</strong></p>' +
+      '</div>' +
+      '<div class="opp-review-toolbar-actions">' +
+      (previewHref
+        ? '<a href="' +
+          attrEsc(previewHref) +
+          '" target="_blank" rel="noopener" class="rounded-lg border border-slate-300 bg-white text-sm font-semibold px-3 py-2 hover:bg-slate-50">Open in workspace</a> '
+        : '') +
+      (isPendingSubmitted
+        ? '<button type="button" data-opp-approve class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">' +
+          approveLabel +
+          '</button> '
+        : '') +
+      '<button type="button" data-opp-delete-form="' +
+      attrEsc(id) +
+      '" data-opp-delete-title="' +
+      attrEsc(opp.title || 'Untitled') +
+      '" class="rounded-lg border border-red-200 text-red-700 text-sm font-semibold px-3 py-2 hover:bg-red-50">Delete</button>' +
+      '</div></div>' +
+      '<div class="opp-review-layout">' +
+      '<section class="opp-review-section" aria-labelledby="opp-review-submitted-' +
+      attrEsc(id) +
+      '">' +
+      '<h3 class="opp-review-section-title" id="opp-review-submitted-' +
+      attrEsc(id) +
+      '">What they submitted</h3>' +
+      '<dl class="opp-review-fields">' +
+      opportunityCleanupReadonlyRow('Title', opp.title) +
+      opportunityCleanupReadonlyRow('Host / company', opp.host) +
+      opportunityCleanupReadonlyRow('Type', opportunityTypeLabel(opp.type)) +
+      opportunityCleanupReadonlyRow('Industry', opportunityCategoryLabel(opp.category)) +
+      opportunityCleanupReadonlyRow('Short description', opp.description) +
+      opportunityCleanupReadonlyRow(
+        'Full description',
+        opportunityAboutParagraphs(opp).join('\n\n') || ''
+      ) +
+      (opportunityIsAffiliateStyle(opp)
+        ? opportunityCleanupReadonlyRow('Commission', opp.commission) +
+          opportunityCleanupReadonlyRow('What you promote', opp.promote) +
+          opportunityCleanupReadonlyRow('Who it suits', opp.suits)
+        : opportunityCleanupReadonlyRow('Investment', opp.investment) +
+          opportunityCleanupReadonlyRow('What’s included', opp.investment_includes)) +
+      opportunityCleanupReadonlyRow('Territory / location', opp.location) +
+      opportunityCleanupReadonlyRow('Commitment', opp.commitment) +
+      opportunityCleanupReadonlyRow('Contact email', opp.contact_email || opp.owner_email) +
+      '</dl>' +
+      '<div class="opp-review-images">' +
+      '<figure class="opp-review-image-block">' +
+      '<figcaption>Cover image</figcaption>' +
+      (opportunityAdminMediaUrl(opp.image_url)
+        ? '<a href="' +
+          attrEsc(opportunityAdminMediaUrl(opp.image_url)) +
+          '" target="_blank" rel="noopener"><img src="' +
+          attrEsc(opportunityAdminMediaUrl(opp.image_url)) +
+          '" alt="Cover image" loading="lazy"></a>'
+        : '<p class="opp-review-muted">No cover image</p>') +
+      '</figure>' +
+      '<figure class="opp-review-image-block">' +
+      '<figcaption>Logo</figcaption>' +
+      (opportunityAdminMediaUrl(opp.logo_url)
+        ? '<a href="' +
+          attrEsc(opportunityAdminMediaUrl(opp.logo_url)) +
+          '" target="_blank" rel="noopener"><img src="' +
+          attrEsc(opportunityAdminMediaUrl(opp.logo_url)) +
+          '" alt="Logo" class="opp-review-logo-thumb" loading="lazy"></a>'
+        : '<p class="opp-review-muted">No logo uploaded</p>') +
+      '</figure></div></section>' +
+      '<section class="opp-review-section" aria-labelledby="opp-review-preview-' +
+      attrEsc(id) +
+      '">' +
+      '<h3 class="opp-review-section-title" id="opp-review-preview-' +
+      attrEsc(id) +
+      '">How it will look on the website</h3>' +
+      '<p class="opp-review-section-lead">Browse card and listing page preview — enquiry button is shown for layout only.</p>' +
+      '<div class="opp-review-preview-block">' +
+      '<h4 class="opp-review-preview-label">Browse card</h4>' +
+      opportunityCleanupReviewCardHtml(opp) +
+      '</div>' +
+      '<div class="opp-review-preview-block">' +
+      '<h4 class="opp-review-preview-label">Listing page</h4>' +
+      opportunityCleanupReviewDetailHtml(opp) +
+      '</div></section></div>' +
+      (isPendingSubmitted
+        ? '<section class="opp-review-decision" aria-labelledby="opp-review-decision-' +
+          attrEsc(id) +
+          '">' +
+          '<h3 class="opp-review-section-title" id="opp-review-decision-' +
+          attrEsc(id) +
+          '">Approve or deny</h3>' +
+          '<p class="opp-review-section-lead">If you deny this listing, explain what needs to change — we email your reason to the lister.</p>' +
+          '<label class="opp-review-deny-label" for="opp-rejection-note-' +
+          attrEsc(id) +
+          '">Reason for denial <span class="text-red-700">(required if denying)</span></label>' +
+          '<textarea id="opp-rejection-note-' +
+          attrEsc(id) +
+          '" data-opp-rejection-note rows="4" class="opp-review-deny-input" placeholder="e.g. Cover image is low quality, or the listing type should be Affiliate not Franchise…"></textarea>' +
+          '<p class="opp-review-deny-msg text-xs" data-opp-rejection-msg hidden></p>' +
+          '<div class="opp-review-decision-actions">' +
+          '<button type="button" data-opp-approve class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">' +
+          approveLabel +
+          '</button>' +
+          '<button type="button" data-opp-reject class="rounded-lg border border-red-300 bg-red-50 text-red-800 text-sm font-semibold px-4 py-2 hover:bg-red-100">Deny listing</button>' +
+          '</div></section>'
+        : '') +
+      '<details class="opp-review-admin-edit">' +
+      '<summary>Admin edit (fields, images &amp; owner)</summary>' +
+      '<div class="opp-review-admin-edit-body" data-opp-admin-edit-for="' +
+      attrEsc(id) +
+      '"><p class="text-sm text-slate-500">Loading admin edit form…</p></div></details>' +
+      '</div>'
+    );
+  }
+
+  function ensureOpportunityAdminEditLoaded(id) {
+    var mount = document.querySelector('[data-opp-admin-edit-for="' + id + '"]');
+    if (!mount || mount.dataset.loaded === '1') return;
+    var opp = findOpportunityCleanupRecord(id);
+    if (!opp) return;
+    try {
+      mount.innerHTML = opportunityCleanupEditFormHtml(opp);
+      bindAdminLogoZones(mount);
+      var form = mount.querySelector('.opportunity-cleanup-form');
+      if (form) syncOpportunityAdminAffiliateFields(form);
+      mount.dataset.loaded = '1';
+    } catch (err) {
+      mount.innerHTML =
+        '<p class="text-sm text-red-700">Could not load admin edit form: ' +
+        esc(err && err.message ? err.message : 'unknown error') +
+        '</p>';
+      mount.dataset.loaded = '1';
+    }
+  }
+
   function ensureOpportunityCleanupPanelLoaded(id) {
     var panel = opportunityCleanupPanelEl(id);
     if (!panel || panel.dataset.loaded === '1') return panel;
@@ -22096,14 +22426,17 @@
     var cell = panel.querySelector('td');
     if (!opp || !cell) return panel;
     try {
-      cell.innerHTML = opportunityCleanupEditFormHtml(opp);
-      bindAdminLogoZones(panel);
-      var form = panel.querySelector('.opportunity-cleanup-form');
-      if (form) syncOpportunityAdminAffiliateFields(form);
+      cell.innerHTML = opportunityCleanupReviewPanelHtml(opp);
+      var adminEditDetails = panel.querySelector('.opp-review-admin-edit');
+      if (adminEditDetails) {
+        adminEditDetails.addEventListener('toggle', function () {
+          if (adminEditDetails.open) ensureOpportunityAdminEditLoaded(id);
+        });
+      }
       panel.dataset.loaded = '1';
     } catch (err) {
       cell.innerHTML =
-        '<p class="text-sm text-red-700">Could not open the edit form: ' +
+        '<p class="text-sm text-red-700">Could not open the review panel: ' +
         esc(err && err.message ? err.message : 'unknown error') +
         '</p>';
       panel.dataset.loaded = '1';
@@ -22193,7 +22526,7 @@
           '</a>'
         : '') +
       '<button type="button" data-toggle-opp-edit class="text-xs font-semibold rounded-lg bg-brand-700 text-white px-2.5 py-1 hover:bg-brand-900">' +
-      (isOpen ? 'Close' : 'Edit') +
+      (isOpen ? 'Close' : 'Review') +
       '</button>' +
       '<button type="button" data-opp-delete="' +
       attrEsc(opp.id) +
@@ -22208,8 +22541,8 @@
       '">' +
       '<td colspan="6" class="p-4">' +
       (isOpen
-        ? '<p class="text-sm text-slate-500">Loading edit form…</p>'
-        : '<p class="text-sm text-slate-400">Click Edit to load the listing form.</p>') +
+        ? '<p class="text-sm text-slate-500">Loading review…</p>'
+        : '<p class="text-sm text-slate-400">Click Review to see what was submitted.</p>') +
       '</td></tr>'
     );
   }
@@ -23079,7 +23412,7 @@
         adminContentRoot()
           .querySelectorAll('[data-toggle-opp-edit]')
           .forEach(function (btn) {
-            btn.textContent = 'Edit';
+            btn.textContent = 'Review';
           });
         if (opening) {
           ensureOpportunityCleanupPanelLoaded(id);
@@ -23088,7 +23421,7 @@
           toggle.textContent = 'Close';
         } else {
           delete opportunityCleanupState.expanded[id];
-          toggle.textContent = 'Edit';
+          toggle.textContent = 'Review';
         }
       }
       return;
@@ -23104,9 +23437,20 @@
     var approveBtn = e.target.closest('[data-opp-approve]');
     if (approveBtn) {
       var approveRow = approveBtn.closest('[data-opportunity-id-row]');
-      var approveId = approveRow && approveRow.getAttribute('data-opportunity-id-row');
+      var approvePanel = approveBtn.closest('.opportunity-cleanup-panel');
+      var approveId =
+        (approveRow && approveRow.getAttribute('data-opportunity-id-row')) ||
+        (approvePanel && approvePanel.getAttribute('data-opp-panel-for'));
       if (!approveId) return;
-      var alreadyPaid = approveRow.getAttribute('data-opp-paid') === '1';
+      if (!approveRow && approvePanel) {
+        var approveKey = String(approveId);
+        var approveEsc =
+          typeof CSS !== 'undefined' && CSS.escape
+            ? CSS.escape(approveKey)
+            : approveKey.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+        approveRow = document.querySelector('[data-opportunity-id-row="' + approveEsc + '"]');
+      }
+      var alreadyPaid = approveRow && approveRow.getAttribute('data-opp-paid') === '1';
       var confirmMsg = alreadyPaid
         ? 'Approve and go live now? Payment is already active — the listing will appear on /opportunities/ and the owner gets a “listing is live” email.'
         : 'Approve this listing? It will stay off the public site until they pay. The owner will get an email with a Stripe pay link.';
@@ -23148,16 +23492,45 @@
     var rejectBtn = e.target.closest('[data-opp-reject]');
     if (rejectBtn) {
       var rejectRow = rejectBtn.closest('[data-opportunity-id-row]');
-      var rejectId = rejectRow && rejectRow.getAttribute('data-opportunity-id-row');
+      var rejectPanel = rejectBtn.closest('.opportunity-cleanup-panel');
+      var rejectId =
+        (rejectRow && rejectRow.getAttribute('data-opportunity-id-row')) ||
+        (rejectPanel &&
+          rejectPanel.getAttribute('data-opp-panel-for') &&
+          rejectPanel.getAttribute('data-opp-panel-for'));
       if (!rejectId) return;
-      var rejectionNote = window.prompt(
-        'Why is this listing being rejected? This reason will be emailed to the lister.',
-        ''
-      );
-      if (rejectionNote == null) return;
-      rejectionNote = String(rejectionNote).trim();
+      var noteEl =
+        (rejectPanel && rejectPanel.querySelector('[data-opp-rejection-note]')) ||
+        document.getElementById('opp-rejection-note-' + rejectId);
+      var msgEl = rejectPanel && rejectPanel.querySelector('[data-opp-rejection-msg]');
+      var rejectionNote = noteEl ? String(noteEl.value || '').trim() : '';
       if (!rejectionNote) {
-        window.alert('Please enter a rejection reason so the lister knows what to fix.');
+        rejectionNote = String(
+          window.prompt(
+            'Why is this listing being denied? This reason will be emailed to the lister.',
+            ''
+          ) || ''
+        ).trim();
+      }
+      if (!rejectionNote) {
+        if (msgEl) {
+          msgEl.hidden = false;
+          msgEl.textContent = 'Please enter a reason for denial so the lister knows what to fix.';
+          msgEl.className = 'opp-review-deny-msg text-xs text-red-700 font-semibold';
+        } else {
+          window.alert('Please enter a reason for denial so the lister knows what to fix.');
+        }
+        if (noteEl && noteEl.focus) noteEl.focus();
+        return;
+      }
+      if (
+        !window.confirm(
+          'Deny this listing and email the reason to the lister?\n\n“' +
+            rejectionNote.slice(0, 200) +
+            (rejectionNote.length > 200 ? '…' : '') +
+            '”'
+        )
+      ) {
         return;
       }
       rejectBtn.disabled = true;
@@ -23174,7 +23547,7 @@
           refreshAdminNotifications();
         })
         .catch(function (err) {
-          window.alert(err.message || 'Could not reject listing.');
+          window.alert(err.message || 'Could not deny listing.');
           rejectBtn.disabled = false;
         });
       return;
