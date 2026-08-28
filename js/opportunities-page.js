@@ -1321,13 +1321,12 @@
       '<div class="bo-opp-compare-tray-inner">' +
       '<div class="bo-opp-compare-tray-main">' +
       '<p class="bo-opp-compare-tray-text"><strong id="bo-opp-compare-count">0</strong> selected to compare' +
-      '<span class="bo-opp-compare-tray-hint">Tap cards again to remove · Clear all or × to exit</span></p>' +
+      '<span class="bo-opp-compare-tray-hint">Tap a chip to remove · Exit compare to leave</span></p>' +
       '<div class="bo-opp-compare-tray-chips" id="bo-opp-compare-tray-chips" hidden></div>' +
       '<div class="bo-opp-compare-tray-actions">' +
-      '<button type="button" class="bo-opp-compare-tray-clear" id="bo-opp-compare-clear">Clear all</button>' +
+      '<button type="button" class="bo-opp-compare-tray-clear" id="bo-opp-compare-clear">Exit compare</button>' +
       '<button type="button" class="bo-opp-compare-tray-open" id="bo-opp-compare-open" disabled>Compare now</button>' +
       '</div></div>' +
-      '<button type="button" class="bo-opp-compare-tray-dismiss" id="bo-opp-compare-dismiss" aria-label="Exit compare">×</button>' +
       '</div>';
     document.body.appendChild(el);
     return el;
@@ -1502,6 +1501,9 @@
         var cmp = window.HubOpportunityCompare;
         if (!cmp || !cmp.ids().length) return;
         cmp.clear();
+        refreshCompareTray();
+      });
+      document.addEventListener('hub-opp-compare-closed', function () {
         refreshCompareTray();
       });
     }

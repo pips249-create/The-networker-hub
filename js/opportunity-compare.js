@@ -246,8 +246,8 @@
       '<div class="opp-compare-panel">' +
       '<header class="opp-compare-head">' +
       '<h2 id="opp-compare-title">Compare opportunities</h2>' +
-      '<button type="button" class="opp-compare-close" data-opp-compare-close aria-label="Close compare">' +
-      '<span class="opp-compare-close-x" aria-hidden="true">×</span> Close' +
+      '<button type="button" class="opp-compare-close" data-opp-compare-close data-opp-compare-exit aria-label="Exit compare">' +
+      '<span class="opp-compare-close-x" aria-hidden="true">×</span> Exit' +
       '</button>' +
       '</header>' +
       '<div class="opp-compare-scroll">' +
@@ -256,25 +256,38 @@
       '</tr></thead><tbody>' +
       rows +
       '</tbody></table></div>' +
+      '<div class="opp-compare-foot">' +
       '<p class="opp-compare-note">Listings are informational only — not investment advice. Confirm details with each lister.</p>' +
+      '<button type="button" class="opp-compare-done" data-opp-compare-close data-opp-compare-exit>Done</button>' +
+      '</div>' +
       '</div></div>'
     );
   }
 
   function bindModal(root) {
     if (!root) return;
-    function closeModal() {
+    function closeModal(exitCompare) {
       var modal = document.getElementById('opp-compare-modal');
       if (!modal) return;
       modal.remove();
       document.body.classList.remove('opp-compare-modal-open');
       document.removeEventListener('keydown', onEscape);
+      if (exitCompare) {
+        clear();
+        try {
+          document.dispatchEvent(new CustomEvent('hub-opp-compare-closed', { detail: { cleared: true } }));
+        } catch (err) {
+          /* ignore */
+        }
+      }
     }
     function onEscape(e) {
-      if (e.key === 'Escape') closeModal();
+      if (e.key === 'Escape') closeModal(true);
     }
     root.querySelectorAll('[data-opp-compare-close]').forEach(function (el) {
-      el.addEventListener('click', closeModal);
+      el.addEventListener('click', function () {
+        closeModal(true);
+      });
     });
     document.addEventListener('keydown', onEscape);
     document.body.classList.add('opp-compare-modal-open');

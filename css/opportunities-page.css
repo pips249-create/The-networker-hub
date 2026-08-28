@@ -2786,10 +2786,7 @@ body.bo-opp-compare-tray-open {
 }
 
 .bo-opp-compare-tray-inner {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: start;
-  gap: 8px 12px;
+  display: block;
   padding: 14px 16px 14px 18px;
   border-radius: 14px;
   background: #0d1f3c;
@@ -2901,20 +2898,22 @@ body.bo-opp-compare-tray-open .bo-opp-compare-intro {
   grid-column: 2;
   grid-row: 1 / span 2;
   align-self: center;
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  border: 1px solid rgba(255, 255, 255, 0.22);
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
   border-radius: 999px;
-  background: transparent;
+  background: rgba(255, 255, 255, 0.1);
   color: #fff;
-  font-size: 22px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
   line-height: 1;
   cursor: pointer;
+  white-space: nowrap;
 }
 
 .bo-opp-compare-tray-dismiss:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.18);
 }
 
 .bo-opp-compare-tray-text {
@@ -2938,20 +2937,20 @@ body.bo-opp-compare-tray-open .bo-opp-compare-intro {
 }
 
 .bo-opp-compare-tray-clear {
-  min-height: 36px;
-  padding: 0 12px;
-  border: 1px solid rgba(255, 255, 255, 0.28);
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
   border-radius: 999px;
-  background: transparent;
+  background: rgba(255, 255, 255, 0.12);
   color: #fff;
   font: inherit;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
 }
 
 .bo-opp-compare-tray-clear:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .bo-opp-compare-tray-clear:disabled {
@@ -2989,7 +2988,7 @@ body.opp-compare-modal-open {
 .opp-compare-modal {
   position: fixed;
   inset: 0;
-  z-index: 1300;
+  z-index: 1400;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3146,10 +3145,38 @@ body.opp-compare-modal-open {
 
 .opp-compare-note {
   margin: 0;
-  padding: 12px 18px 16px;
+  flex: 1 1 220px;
   font-size: 12px;
   color: #64748b;
+}
+
+.opp-compare-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 18px 16px;
   border-top: 1px solid #eef2f7;
+  background: #fff;
+}
+
+.opp-compare-done {
+  min-height: 40px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 999px;
+  background: var(--opp-navy, #0d1f3c);
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.opp-compare-done:hover {
+  background: #162847;
 }
 
 .opp-browse-page .events-sort-wrap select {
