@@ -36,7 +36,7 @@ async function createOpportunityClaimRequest(input) {
     siteUrl +
     '/opportunities/' +
     encodeURIComponent(opportunity.slug || opportunity.id);
-  const adminUrl = siteUrl + '/admin/#cleanup/opportunities';
+  const adminUrl = siteUrl + '/admin/#opportunities';
   const to = supportEmail();
 
   const subject = 'Opportunity claim request — ' + String(opportunity.title || 'Listing').trim();

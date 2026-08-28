@@ -129,7 +129,7 @@
     },
     cleanup: {
       title: 'Fix listings',
-      subtitle: 'Edit group pages, events, event requests, and business opportunities',
+      subtitle: 'Edit group pages, events, and event requests',
     },
     'group-cleanup': {
       title: 'Fix listings',
@@ -143,8 +143,12 @@
       title: 'Fix listings',
       subtitle: 'Search events, then click a row to edit details',
     },
+    opportunities: {
+      title: 'Opportunities',
+      subtitle: 'Review and approve business opportunity listings',
+    },
     'opportunity-cleanup': {
-      title: 'Fix listings',
+      title: 'Opportunities',
       subtitle: 'Review and approve business opportunity listings',
     },
     accounts: {
@@ -494,7 +498,7 @@
   var ADMIN_HUB_TABS_KEY = 'tnh_admin_hub_tabs_v1';
   var NAV_SECTION_ROUTES = {
     platform: ['system', 'analytics', 'international', 'rankings', 'accounts', 'support'],
-    listings: ['cleanup', 'moderation'],
+    listings: ['cleanup', 'opportunities', 'moderation'],
     revenue: ['financials', 'revenue-mix', 'revenue-targets', 'sales-kit', 'spotlight', 'sponsorship'],
     comms: ['email', 'social', 'social-founding'],
   };
@@ -939,10 +943,17 @@
 
   function normalizeAdminHash(hash) {
     var h = String(hash || 'dashboard').replace(/^#/, '');
+    var query = '';
+    var qIdx = h.indexOf('?');
+    if (qIdx !== -1) {
+      query = h.slice(qIdx);
+      h = h.slice(0, qIdx);
+    }
     var legacy = {
       'group-cleanup': 'cleanup/groups',
       'event-cleanup': 'cleanup/events',
-      'opportunity-cleanup': 'cleanup/opportunities',
+      'opportunity-cleanup': 'opportunities',
+      'cleanup/opportunities': 'opportunities',
       'event-health': 'cleanup/issues',
       campaigns: 'email/campaigns',
       emails: 'email/templates',
@@ -951,7 +962,7 @@
       import: 'moderation/import',
       featured: 'spotlight/events',
     };
-    return legacy[h] || h;
+    return (legacy[h] || h) + query;
   }
 
   function navRouteKey(hash) {
@@ -960,11 +971,11 @@
     if (h === 'social/founding' || h.indexOf('social/founding/') === 0) {
       return 'social-founding';
     }
-    var key = h.split('/')[0];
+    var key = h.split('/')[0].split('?')[0];
     var parents = {
       'group-cleanup': 'cleanup',
       'event-cleanup': 'cleanup',
-      'opportunity-cleanup': 'cleanup',
+      'opportunity-cleanup': 'opportunities',
       'event-health': 'cleanup',
       campaigns: 'email',
       emails: 'email',
@@ -988,10 +999,10 @@
       if (hash.indexOf('events') !== -1 || hash === 'event-cleanup') {
         return PAGE_META['event-cleanup'].subtitle;
       }
-      if (hash.indexOf('opportunities') !== -1 || hash === 'opportunity-cleanup') {
-        return PAGE_META['opportunity-cleanup'].subtitle;
-      }
       return PAGE_META['group-cleanup'].subtitle;
+    }
+    if (route === 'opportunities') {
+      return PAGE_META.opportunities.subtitle;
     }
     if (route === 'accounts') {
       return hash.indexOf('impersonate') !== -1
@@ -1169,11 +1180,13 @@
 
   function adminGuideKey(route, fullHash) {
     var hash = String(fullHash || route || 'dashboard');
+    if (route === 'opportunities' || hash === 'opportunity-cleanup') {
+      return 'opportunity-cleanup';
+    }
     if (route === 'cleanup' || hash.indexOf('cleanup/') === 0) {
       if (hash.indexOf('issues') !== -1 || hash === 'event-health') return 'event-health';
       if (hash.indexOf('requests') !== -1) return 'event-intake';
       if (hash.indexOf('events') !== -1 || hash === 'event-cleanup') return 'event-cleanup';
-      if (hash.indexOf('opportunities') !== -1 || hash === 'opportunity-cleanup') return 'opportunity-cleanup';
       return 'group-cleanup';
     }
     if (route === 'accounts') {
@@ -1519,7 +1532,7 @@
     return { hate: hate, profanity: profanity };
   }
 
-  /** Fix listings sidebar badge — matches tab work (groups / requests / opps / urgent data). */
+  /** Fix listings sidebar badge — matches tab work (groups / requests / urgent data). */
   function listingFixSeverityCounts() {
     var counts =
       (adminMetricsCache && adminMetricsCache.actionCounts) ||
@@ -1527,9 +1540,7 @@
       {};
     var urgent = urgentEventHealthCount();
     var polish =
-      (Number(counts.incompleteOrganisers) || 0) +
-      (Number(counts.openEventRequests) || 0) +
-      (Number(counts.pendingOpportunities) || 0);
+      (Number(counts.incompleteOrganisers) || 0) + (Number(counts.openEventRequests) || 0);
     return { urgent: urgent, polish: polish, softEvents: softEventHealthCount() };
   }
 
@@ -1603,6 +1614,26 @@
     badge.setAttribute('aria-label', n + ' open report' + (n === 1 ? '' : 's'));
   }
 
+  function updateOpportunitiesNavBadge(data) {
+    var badge = document.getElementById('admin-opportunities-badge');
+    if (!badge) return;
+    var counts = (data && data.actionCounts) || {};
+    var n = Number(counts.pendingOpportunities) || 0;
+    if (n <= 0) {
+      badge.classList.add('hidden');
+      badge.textContent = '0';
+      return;
+    }
+    badge.textContent = n > 99 ? '99+' : String(n);
+    badge.classList.remove('hidden');
+    badge.classList.add('admin-nav-badge--polish');
+    badge.setAttribute(
+      'aria-label',
+      n + ' opportunit' + (n === 1 ? 'y' : 'ies') + ' pending review'
+    );
+    badge.title = n + ' business opportunit' + (n === 1 ? 'y' : 'ies') + ' waiting for approval';
+  }
+
   function updateSupportNavBadge(data) {
     var badge = document.getElementById('admin-support-badge');
     if (!badge) return;
@@ -1668,7 +1699,7 @@
         urgent +
         ' urgent data issues · ' +
         polish +
-        ' incomplete groups / open requests / pending opportunities';
+        ' incomplete groups / open requests';
     } else if (polish > 0) {
       badge.textContent = polish > 99 ? '99+' : String(polish);
       badge.classList.add('admin-nav-badge--polish');
@@ -1677,8 +1708,7 @@
         'aria-label',
         polish + ' Fix listings item' + (polish === 1 ? '' : 's') + ' need attention'
       );
-      badge.title =
-        polish + ' incomplete groups, open event requests, or pending opportunities';
+      badge.title = polish + ' incomplete groups or open event requests';
     } else {
       badge.classList.add('hidden');
       badge.setAttribute('aria-label', 'No open listing fixes');
@@ -1878,7 +1908,7 @@
       'amber'
     );
     push('medium', counts.openEventRequests, 'Event requests', '#cleanup/requests', 'amber');
-    push('medium', counts.pendingOpportunities, 'Opportunity reviews', '#cleanup/opportunities', 'amber');
+    push('medium', counts.pendingOpportunities, 'Opportunity reviews', '#opportunities?approval=pending', 'amber');
     push('medium', counts.stripeOnboarding, 'Stripe setup incomplete', '#financials/organisers', 'amber');
     var languageCounts = listingLanguageHealthCounts();
     push(
@@ -2113,6 +2143,7 @@
 
     updateHealthBadge();
     updateModerationNavBadge(data);
+    updateOpportunitiesNavBadge(data);
     updateSupportNavBadge(data);
     updatePaymentsNavBadge(data);
     var attentionTotal = adminAttentionTotal(data);
@@ -2511,7 +2542,7 @@
         );
       });
       parts.push(
-        '</ul><a href="#cleanup/opportunities?approval=pending" class="text-xs font-semibold text-amber-900 mt-3 inline-block hover:underline">Review opportunities →</a></div>'
+        '</ul><a href="#opportunities?approval=pending" class="text-xs font-semibold text-amber-900 mt-3 inline-block hover:underline">Review opportunities →</a></div>'
       );
     }
 
@@ -25268,21 +25299,19 @@
     var tab = resolveHubTab(
       fullHash,
       'cleanup',
-      ['groups', 'events', 'requests', 'opportunities', 'issues'],
+      ['groups', 'events', 'requests', 'issues'],
       'groups'
     );
     if (!tab) return;
 
     var incompleteBadge = hubTabBadge(actionCountValue('incompleteOrganisers'));
     var requestBadge = hubTabBadge(actionCountValue('openEventRequests'));
-    var oppBadge = hubTabBadge(actionCountValue('pendingOpportunities'));
     var urgentBadge = hubTabBadge(urgentEventHealthCount());
     var tabsHtml = adminHubTabsHtml(
       [
         { key: 'groups', label: 'Groups', href: '#cleanup/groups', badgeHtml: incompleteBadge, badgeKey: 'incompleteOrganisers' },
         { key: 'events', label: 'Events', href: '#cleanup/events' },
         { key: 'requests', label: 'Event requests', href: '#cleanup/requests', badgeHtml: requestBadge, badgeKey: 'openEventRequests' },
-        { key: 'opportunities', label: 'Opportunities', href: '#cleanup/opportunities', badgeHtml: oppBadge, badgeKey: 'pendingOpportunities' },
         { key: 'issues', label: 'Data issues', href: '#cleanup/issues', badgeHtml: urgentBadge },
       ],
       tab
@@ -25290,10 +25319,6 @@
 
     if (tab === 'events') withHubTabs(tabsHtml, renderEventCleanup);
     else if (tab === 'requests') withHubTabs(tabsHtml, renderEventIntakeAdmin);
-    else if (tab === 'opportunities')
-      withHubTabs(tabsHtml, function () {
-        renderOpportunityCleanup(fullHash);
-      });
     else if (tab === 'issues')
       withHubTabs(tabsHtml, function () {
         renderEventHealth(fullHash);
@@ -26569,6 +26594,7 @@
     system: renderSystem,
     rankings: renderRankingsHub,
     cleanup: renderCleanupHub,
+    opportunities: renderOpportunityCleanup,
     accounts: renderAccountsHub,
     email: renderEmailHub,
     social: renderSocialHub,
@@ -26591,7 +26617,7 @@
       location.replace('#cleanup/events');
     },
     'opportunity-cleanup': function () {
-      location.replace('#cleanup/opportunities');
+      location.replace('#opportunities');
     },
     impersonate: function () {
       location.replace('#accounts/impersonate');

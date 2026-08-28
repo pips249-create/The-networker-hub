@@ -167,7 +167,7 @@ function buildAlertsFromCounts(counts) {
       severity: 'medium',
       title: `${counts.pendingOpportunities} business opportunit${counts.pendingOpportunities === 1 ? 'y' : 'ies'} waiting for approval`,
       detail: 'Review and approve or reject each listing.',
-      href: '#cleanup/opportunities?approval=pending',
+      href: '#opportunities?approval=pending',
       time: new Date().toISOString(),
     });
   }
@@ -1017,7 +1017,7 @@ function mapListingReportRow(r, options = {}) {
     viewUrl = opportunitySlug
       ? `../opportunities/${encodeURIComponent(opportunitySlug)}`
       : `../opportunities/opportunity.html?id=${encodeURIComponent(opportunityId)}`;
-    adminUrl = `#cleanup/opportunities?q=${encodeURIComponent(title)}`;
+    adminUrl = `#opportunities?q=${encodeURIComponent(title)}`;
   }
   return {
     id: r.id,

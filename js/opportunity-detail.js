@@ -44,9 +44,14 @@
     claimForm: document.getElementById('opp-claim-form'),
     claimSubmit: document.getElementById('opp-claim-submit'),
     claimStatus: document.getElementById('opp-claim-status'),
-    claimInvite: document.getElementById('opp-claim-invite'),
-    claimInviteBtn: document.getElementById('opp-claim-invite-btn'),
-    claimInviteTitle: document.getElementById('opp-claim-invite-title'),
+    claimTop: document.getElementById('opp-claim-top'),
+    claimTopKicker: document.getElementById('opp-claim-top-kicker'),
+    claimTopTitle: document.getElementById('opp-claim-top-title'),
+    claimTopText: document.getElementById('opp-claim-top-text'),
+    claimTopBtn: document.getElementById('opp-claim-top-btn'),
+    claimSticky: document.getElementById('opp-claim-sticky'),
+    claimStickyCopy: document.getElementById('opp-claim-sticky-copy'),
+    claimStickyBtn: document.getElementById('opp-claim-sticky-btn'),
   };
 
   function claimInviteQuery() {
@@ -60,13 +65,106 @@
     };
   }
 
+  function bindClaimCtaBusy(btn) {
+    if (!btn || btn.dataset.claimBusyBound === '1') return;
+    btn.dataset.claimBusyBound = '1';
+    btn.addEventListener('click', function () {
+      if (btn.getAttribute('href') && btn.getAttribute('href').charAt(0) === '#') return;
+      if (btn.classList.contains('is-busy')) return;
+      btn.classList.add('is-busy');
+      btn.setAttribute('aria-busy', 'true');
+      var label = btn.querySelector('.opp-claim-cta-label');
+      if (label) {
+        label.textContent = 'Opening sign-up\u2026';
+      }
+    });
+  }
+
+  function scrollToClaimForm(e) {
+    if (e) e.preventDefault();
+    var section = els.claimSection;
+    if (!section) return;
+    section.hidden = false;
+    var navOffset = window.matchMedia('(max-width: 768px)').matches ? 72 : 88;
+    var top = section.getBoundingClientRect().top + window.scrollY - navOffset;
+    window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+    var nameInput = document.getElementById('opp-claim-name');
+    if (nameInput) {
+      try {
+        nameInput.focus({ preventScroll: true });
+      } catch (err) {
+        nameInput.focus();
+      }
+    }
+  }
+
+  function bindClaimStickyBar(ctaHref, isHashCta) {
+    var sticky = els.claimSticky;
+    var stickyBtn = els.claimStickyBtn;
+    var sentinel = document.getElementById('opp-claim-top-actions') || els.claimTopBtn;
+    if (!sticky) return;
+
+    if (stickyBtn) {
+      stickyBtn.setAttribute('href', ctaHref);
+      if (isHashCta) {
+        stickyBtn.onclick = scrollToClaimForm;
+      } else {
+        stickyBtn.onclick = null;
+        bindClaimCtaBusy(stickyBtn);
+      }
+    }
+
+    function setStickyVisible(visible) {
+      sticky.hidden = !visible;
+      document.body.classList.toggle('opp-claim-sticky-visible', visible);
+      refreshEnquireJumpVisibility();
+    }
+
+    if (!sentinel || typeof IntersectionObserver !== 'function') {
+      setStickyVisible(true);
+      return;
+    }
+
+    if (sticky._claimObserver) {
+      try {
+        sticky._claimObserver.disconnect();
+      } catch (e) {
+        /* ignore */
+      }
+    }
+
+    setStickyVisible(false);
+    var observer = new IntersectionObserver(
+      function (entries) {
+        var entry = entries && entries[0];
+        var topCtaVisible = !!(entry && entry.isIntersecting);
+        setStickyVisible(!topCtaVisible);
+      },
+      { threshold: 0.15, rootMargin: '0px 0px -8px 0px' }
+    );
+    observer.observe(sentinel);
+    sticky._claimObserver = observer;
+  }
+
+  function hideClaimUi() {
+    if (els.claimTop) els.claimTop.hidden = true;
+    if (els.claimSticky) {
+      els.claimSticky.hidden = true;
+      if (els.claimSticky._claimObserver) {
+        try {
+          els.claimSticky._claimObserver.disconnect();
+        } catch (e) {
+          /* ignore */
+        }
+      }
+    }
+    document.body.classList.remove('opp-claim-sticky-visible', 'opp-claim-invite-active');
+  }
+
   function initClaimInviteFromEmail(item) {
     var q = claimInviteQuery();
-    if (!q.isClaim || !els.claimInvite) return;
-    els.claimInvite.hidden = false;
-    if (els.claimInviteTitle && item && item.title) {
-      els.claimInviteTitle.textContent = 'This is a preview of ' + item.title;
-    }
+    if (!q.isClaim || !els.claimTop) return false;
+
     var safeNext = q.next && q.next.charAt(0) === '/' ? q.next : '/organiser/?onboard=opportunity-claim';
     var path = q.auth === 'login' ? '/login' : '/register';
     var href =
@@ -74,8 +172,87 @@
       '?intent=opportunity-claim&next=' +
       encodeURIComponent(safeNext) +
       (q.email ? '&email=' + encodeURIComponent(q.email) : '');
-    if (els.claimInviteBtn) els.claimInviteBtn.setAttribute('href', href);
+
+    els.claimTop.hidden = false;
+    if (els.claimTopKicker) els.claimTopKicker.textContent = 'Preview \u2014 claim to go live';
+    if (els.claimTopTitle) {
+      els.claimTopTitle.textContent = item && item.title
+        ? 'This is a preview of ' + item.title
+        : 'This is a preview of your listing';
+    }
+    if (els.claimTopText) {
+      els.claimTopText.textContent =
+        'Your opportunity is already on The Networker UK. Claim it with the email we invited, then keep it live for \u00a325/month + VAT (cancel any time). Enquiries come straight to you \u2014 no lead fees.';
+    }
+    if (els.claimTopBtn) {
+      els.claimTopBtn.setAttribute('href', href);
+      els.claimTopBtn.onclick = null;
+      var label = els.claimTopBtn.querySelector('.opp-claim-cta-label');
+      if (label) label.textContent = 'Claim & start receiving enquiries \u2192';
+      bindClaimCtaBusy(els.claimTopBtn);
+    }
+    var note = document.getElementById('opp-claim-top-note');
+    if (note) {
+      note.innerHTML =
+        'Invited to a different email, or not yours?' +
+        ' <a href="mailto:catherine@thenetworkeruk.com?subject=Help%20claiming%20my%20opportunity%20listing">Email Catherine</a>' +
+        ' and we\u2019ll sort it.';
+    }
+    if (els.claimStickyCopy) {
+      els.claimStickyCopy.textContent = 'Preview only \u2014 claim to manage this listing';
+    }
+    if (els.claimStickyBtn) {
+      var stickyLabel = els.claimStickyBtn.querySelector('.opp-claim-cta-label');
+      if (stickyLabel) stickyLabel.textContent = 'Claim listing';
+    }
+    bindClaimStickyBar(href, false);
+
     if (els.claimSection) els.claimSection.hidden = true;
+
+    document.body.classList.add('opp-claim-invite-active');
+    try {
+      document.title =
+        (item && item.title ? item.title + ' \u2014 ' : '') +
+        'Claim your listing \u2013 The Networker UK';
+    } catch (e) {
+      /* ignore */
+    }
+    return true;
+  }
+
+  function initClaimableBanner(item) {
+    if (!els.claimTop || !item || !item.claimable) return false;
+
+    els.claimTop.hidden = false;
+    if (els.claimTopKicker) els.claimTopKicker.textContent = 'Is this your listing?';
+    if (els.claimTopTitle) {
+      els.claimTopTitle.textContent = item.host
+        ? 'Claim ' + item.host + ' on The Networker UK'
+        : 'Claim it and take control';
+    }
+    if (els.claimTopText) {
+      els.claimTopText.textContent =
+        'We listed this opportunity so networkers can find it. If it\u2019s yours, claim it now \u2014 we\u2019ll verify you, then you manage enquiries and keep the page live for \u00a325/month + VAT.';
+    }
+    if (els.claimTopBtn) {
+      els.claimTopBtn.setAttribute('href', '#opp-claim-section');
+      els.claimTopBtn.onclick = scrollToClaimForm;
+      var label = els.claimTopBtn.querySelector('.opp-claim-cta-label');
+      if (label) label.textContent = 'Claim it now \u2192';
+    }
+    var note = document.getElementById('opp-claim-top-note');
+    if (note) {
+      note.innerHTML =
+        'Need a hand? <a href="/contact">Book a setup call</a> or email' +
+        ' <a href="mailto:catherine@thenetworkeruk.com?subject=Help%20claiming%20my%20opportunity%20listing">catherine@thenetworkeruk.com</a>.';
+    }
+    if (els.claimStickyCopy) els.claimStickyCopy.textContent = 'Is this your listing?';
+    if (els.claimStickyBtn) {
+      var stickyLabel = els.claimStickyBtn.querySelector('.opp-claim-cta-label');
+      if (stickyLabel) stickyLabel.textContent = 'Claim it now';
+    }
+    bindClaimStickyBar('#opp-claim-section', true);
+    return true;
   }
 
   function syncEnquiriesOpenFromSoftLaunch(meta) {
@@ -511,7 +688,10 @@
     renderSimilar(item);
     refreshSaveButton();
     applyClaimSection(item);
-    initClaimInviteFromEmail(item);
+    hideClaimUi();
+    if (!initClaimInviteFromEmail(item)) {
+      initClaimableBanner(item);
+    }
 
     if (els.notFound) els.notFound.hidden = true;
     if (els.layout) els.layout.hidden = false;
@@ -620,9 +800,19 @@
 
   function applyClaimSection(item) {
     if (!els.claimSection) return;
-    var claimable = Boolean(item && item.claimable);
+    var q = claimInviteQuery();
+    // Email-invite path uses the top banner CTA; request form is for hub-owned cold discovery only.
+    var claimable = Boolean(item && item.claimable) && !q.isClaim;
     els.claimSection.hidden = !claimable;
     if (!claimable) return;
+
+    var heading = document.getElementById('opp-claim-section-heading');
+    var lede = document.getElementById('opp-claim-section-lede');
+    if (heading) heading.textContent = 'Request to claim this listing';
+    if (lede) {
+      lede.textContent =
+        'This listing was added by The Networker UK to help people discover your opportunity. Tell us who you are \u2014 we\u2019ll verify your details, then email you a link to take over the listing.';
+    }
 
     var companyInput = document.getElementById('opp-claim-company');
     if (companyInput && item.host && !companyInput.value) {
@@ -853,7 +1043,10 @@
 
     var mobile = window.matchMedia('(max-width: 768px)').matches;
     var cardVisible = jump.dataset.cardVisible === '1';
-    var show = mobile && !cardVisible;
+    var claimMode =
+      document.body.classList.contains('opp-claim-sticky-visible') ||
+      document.body.classList.contains('opp-claim-invite-active');
+    var show = mobile && !cardVisible && !claimMode;
 
     jump.hidden = !show;
     jump.classList.toggle('is-visible', show);
