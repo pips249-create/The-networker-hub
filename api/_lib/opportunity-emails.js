@@ -4,6 +4,7 @@ const {
   siteBase,
   opportunityPublicUrl,
   organiserBusinessDashboardUrl,
+  organiserBusinessOpenDaysUrl,
 } = require('./hub-email-urls');
 
 function formatEmailDate(iso) {
@@ -39,7 +40,15 @@ function ownerNameFromOpportunity(opportunity, email) {
 }
 
 function ownerEmailForOpportunity(opportunity) {
-  return String(opportunity?.ownerEmail || opportunity?.contactEmail || '').trim().toLowerCase();
+  return String(
+    opportunity?.ownerEmail ||
+      opportunity?.contactEmail ||
+      opportunity?.owner_email ||
+      opportunity?.contact_email ||
+      ''
+  )
+    .trim()
+    .toLowerCase();
 }
 
 function truncateText(text, max) {
@@ -125,10 +134,14 @@ async function sendOpportunityListingLiveEmail(opportunity) {
       ...listing,
       opportunity_url: opportunityPublicUrl(opportunity, siteUrl),
       dashboard_url: organiserBusinessDashboardUrl(siteUrl),
+      open_days_url: organiserBusinessOpenDaysUrl(siteUrl),
+      business_opportunities_url: organiserBusinessDashboardUrl(siteUrl),
       expiry_date: listing.listing_until,
       expiry_note: listing.listing_until
-        ? 'Your listing is paid until ' + listing.listing_until + '.'
-        : 'Your listing is now visible in the business opportunities directory.',
+        ? 'Your listing is paid until ' +
+          listing.listing_until +
+          '. Cancel any time from Edit listing → Manage or cancel subscription.'
+        : 'Your listing is now visible in the business opportunities directory. Cancel any time from Edit listing → Manage or cancel subscription.',
     },
     subject: 'Your opportunity is live — ' + listing.opportunity_title,
   });

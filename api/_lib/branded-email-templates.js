@@ -49,7 +49,7 @@ const BRANDED_EMAIL_TEMPLATES = {
   },
   opportunity_listing_live: {
     file: 'opportunity-listing-live.html',
-    marker: 'hub-email-layout-v3-navy-gold-details',
+    marker: 'hub-email-layout-v3-navy-gold-details-openday',
     subject: 'Your opportunity is live — {{opportunity_title}}',
   },
   opportunity_listing_pending_review: {

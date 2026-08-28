@@ -507,13 +507,24 @@
     note.className = 'oe-type-mode-note';
   }
 
+  function listingHasStripeSubscription(opp) {
+    return Boolean(
+      String((opp && (opp.listingStripeSubscriptionId || opp.listing_stripe_subscription_id)) || '').trim()
+    );
+  }
+
   function listingPaymentPanelVisible() {
     const panel = document.getElementById('oe-listing-payment');
+    const billing = document.getElementById('oe-listing-billing');
     if (!panel) return false;
+
     if (currentOpportunity && currentOpportunity.listingPaymentActive) {
       panel.hidden = true;
+      syncListingBillingPanel(true);
       return false;
     }
+
+    if (billing) billing.hidden = true;
     panel.hidden = false;
     const lead = document.getElementById('oe-listing-payment-lead');
     const note = document.getElementById('oe-actions-note');
@@ -526,11 +537,11 @@
       if (payStripeBtn) payStripeBtn.hidden = false;
       if (lead) {
         lead.innerHTML =
-          'Your listing is <strong>approved</strong>. Pay via Stripe to start your <strong>monthly subscription of £25 + VAT</strong> (£30 total) — it goes live on the directory immediately.';
+          'Your listing is <strong>approved</strong>. Pay via Stripe to start your <strong>monthly subscription of £25 + VAT</strong> (£30 total) — it goes live on the directory immediately. You can cancel any time from this page after you subscribe.';
       }
       if (note) {
         note.textContent =
-          'Billed monthly via Stripe — cancel any time from your Stripe customer portal or by contacting us.';
+          'Billed monthly via Stripe — cancel any time with Manage or cancel subscription on this page.';
       }
     } else {
       panel.classList.remove('is-awaiting-payment');
@@ -547,7 +558,7 @@
       } else {
         if (lead) {
           lead.innerHTML =
-            'Review everything below, then submit for approval — no charge yet. After we approve it, start a <strong>monthly subscription of £25 + VAT</strong> (£30 total) and it goes live immediately.';
+            'Review everything below, then submit for approval — no charge yet. After we approve it, start a <strong>monthly subscription of £25 + VAT</strong> (£30 total) and it goes live immediately. You can cancel any time from this page once subscribed.';
         }
         if (note) {
           note.textContent =
@@ -556,6 +567,46 @@
       }
     }
     return true;
+  }
+
+  function syncListingBillingPanel(forceShow) {
+    const billing = document.getElementById('oe-listing-billing');
+    if (!billing) return;
+    const active = Boolean(forceShow || (currentOpportunity && currentOpportunity.listingPaymentActive));
+    billing.hidden = !active;
+    if (!active) return;
+
+    const lead = document.getElementById('oe-listing-billing-lead');
+    const expiry = document.getElementById('oe-listing-billing-expiry');
+    const manageBtn = document.getElementById('oe-manage-listing-billing');
+    const hasSub = listingHasStripeSubscription(currentOpportunity);
+
+    if (lead) {
+      lead.innerHTML = hasSub
+        ? 'Your listing is billed <strong>£25/month + VAT</strong> (£30) via Stripe until you cancel. Use the button below to update your card or cancel — same secure Stripe portal you paid with.'
+        : 'Your listing fee is marked paid. If you need to stop billing, email <a href="mailto:hi@thenetworkeruk.com">hi@thenetworkeruk.com</a> and we will help straight away.';
+    }
+    if (expiry) {
+      const until = currentOpportunity && currentOpportunity.listingExpiresAt;
+      if (until) {
+        expiry.hidden = false;
+        expiry.textContent =
+          'Current period covers you until ' +
+          new Date(until).toLocaleDateString('en-GB', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+          }) +
+          '.';
+      } else {
+        expiry.hidden = true;
+        expiry.textContent = '';
+      }
+    }
+    if (manageBtn) {
+      manageBtn.hidden = !hasSub;
+      manageBtn.disabled = !hasSub;
+    }
   }
 
   function isSubmittedAwaitingApproval(opportunity) {
@@ -616,15 +667,63 @@
     return true;
   }
 
+  async function openListingBillingPortal() {
+    if (!editId) {
+      showAlert('Save your listing before managing billing.', true);
+      return;
+    }
+    if (!listingHasStripeSubscription(currentOpportunity)) {
+      showAlert(
+        'No Stripe subscription is linked yet. Email hi@thenetworkeruk.com and we will help you cancel.',
+        true
+      );
+      return;
+    }
+
+    const manageBtn = document.getElementById('oe-manage-listing-billing');
+    const dangerBtn = document.getElementById('oe-manage-billing-danger');
+    const buttons = [manageBtn, dangerBtn].filter(Boolean);
+    buttons.forEach(function (btn) {
+      btn.disabled = true;
+      btn.dataset.prevLabel = btn.textContent;
+      btn.textContent = 'Opening Stripe…';
+    });
+
+    try {
+      const res = await api('/api/organiser/opportunity-listing-portal', {
+        method: 'POST',
+        body: JSON.stringify({
+          opportunityId: editId,
+          returnUrl: window.location.href,
+        }),
+      });
+      if (!res.ok || !res.data || !res.data.url) {
+        throw new Error(
+          (res.data && (res.data.message || res.data.error)) || 'Could not open billing portal.'
+        );
+      }
+      window.location.href = res.data.url;
+    } catch (err) {
+      showAlert(String((err && err.message) || 'Could not open billing portal.'), true);
+      buttons.forEach(function (btn) {
+        btn.disabled = false;
+        if (btn.dataset.prevLabel) btn.textContent = btn.dataset.prevLabel;
+      });
+    }
+  }
+
   async function unpublishCurrentOpportunityListing() {
     if (!editId || !currentOpportunity) return;
     const label = currentOpportunity.title || 'this listing';
+    const hasSub = listingHasStripeSubscription(currentOpportunity);
     const ok = window.confirm(
       'Unpublish "' +
         label +
         '"?\n\n' +
         'It will be removed from the public business opportunities directory immediately. Existing enquiries stay in your dashboard.\n\n' +
-        'Your monthly listing subscription is separate — cancel it in Stripe (or email us) if you do not want further charges.'
+        (hasSub
+          ? 'Unpublishing does not stop billing. Use “Manage or cancel subscription” on this page if you want to cancel charges.'
+          : 'If you were billed for this listing, email hi@thenetworkeruk.com to cancel.')
     );
     if (!ok) return;
     const res = await api('/api/organiser/opportunities', {
@@ -638,6 +737,7 @@
     showAlert(res.data.message || 'Listing unpublished.', false);
     if (res.data.opportunity) syncListingStatusUi(res.data.opportunity);
     syncDangerZoneUi();
+    syncListingBillingPanel();
   }
 
   async function deleteCurrentOpportunityDraft() {
@@ -669,6 +769,7 @@
     const zone = document.getElementById('oe-danger-zone');
     const unpublishBtn = document.getElementById('oe-unpublish-listing');
     const deleteBtn = document.getElementById('oe-delete-draft');
+    const billingBtn = document.getElementById('oe-manage-billing-danger');
     const lede = document.getElementById('oe-danger-zone-lede');
     const note = document.getElementById('oe-danger-zone-note');
     if (!zone || !editId || !currentOpportunity) {
@@ -677,23 +778,33 @@
     }
     const canUnpublish = opportunityCanUnpublish(currentOpportunity);
     const canDelete = opportunityCanDeleteDraft(currentOpportunity);
-    if (!canUnpublish && !canDelete) {
+    const canManageBilling = listingHasStripeSubscription(currentOpportunity);
+    if (!canUnpublish && !canDelete && !canManageBilling) {
       zone.hidden = true;
       return;
     }
     zone.hidden = false;
     if (unpublishBtn) unpublishBtn.hidden = !canUnpublish;
     if (deleteBtn) deleteBtn.hidden = !canDelete;
+    if (billingBtn) billingBtn.hidden = !canManageBilling;
     if (lede) {
-      lede.textContent = canUnpublish
-        ? 'Hide this listing from the public directory. Your subscription continues until you cancel it in Stripe.'
-        : 'Remove this unpaid draft permanently.';
+      if (canManageBilling && canUnpublish) {
+        lede.textContent =
+          'Cancel billing any time, or hide this listing from the public directory without stopping the subscription.';
+      } else if (canManageBilling) {
+        lede.textContent = 'Manage your card or cancel the monthly listing subscription.';
+      } else if (canUnpublish) {
+        lede.textContent = 'Hide this listing from the public directory.';
+      } else {
+        lede.textContent = 'Remove this unpaid draft permanently.';
+      }
     }
     if (note) {
-      note.hidden = !canUnpublish;
-      note.textContent = canUnpublish
-        ? 'Unpublishing does not cancel billing. Email hi@thenetworkeruk.com if you need help stopping your subscription.'
-        : '';
+      note.hidden = !(canUnpublish && canManageBilling);
+      note.textContent =
+        canUnpublish && canManageBilling
+          ? 'Unpublishing hides the listing but does not cancel billing — use Manage or cancel subscription to stop charges.'
+          : '';
     }
   }
 
@@ -3111,6 +3222,16 @@
     document.getElementById('oe-delete-draft')?.addEventListener('click', function () {
       deleteCurrentOpportunityDraft().catch(function (err) {
         showAlert(String((err && err.message) || 'Could not delete draft.'), true);
+      });
+    });
+    document.getElementById('oe-manage-listing-billing')?.addEventListener('click', function () {
+      openListingBillingPortal().catch(function (err) {
+        showAlert(String((err && err.message) || 'Could not open billing.'), true);
+      });
+    });
+    document.getElementById('oe-manage-billing-danger')?.addEventListener('click', function () {
+      openListingBillingPortal().catch(function (err) {
+        showAlert(String((err && err.message) || 'Could not open billing.'), true);
       });
     });
     document.getElementById('oe-pay-stripe')?.addEventListener('click', function () {

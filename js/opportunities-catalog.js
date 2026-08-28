@@ -499,6 +499,8 @@
       contactEmail: row.contactEmail || '',
       imageUrl: row.imageUrl || '',
       logoUrl: row.logoUrl || '',
+      displayCoverUrl: row.displayCoverUrl || '',
+      coverIsLogoFallback: Boolean(row.coverIsLogoFallback),
       claimable: Boolean(row.claimable),
       publishedAt: row.publishedAt || row.createdAt || null,
       createdAt: row.createdAt || null,
@@ -519,6 +521,13 @@
     var assetSlug = seedAssetSlug(seed);
     item.logoUrl = String(seed.logoUrl || seedLogoUrl(assetSlug) || '').trim();
     item.imageUrl = String(seed.imageUrl || seedCoverUrl(assetSlug) || '').trim();
+    item.displayCoverUrl = String(seed.displayCoverUrl || item.imageUrl || item.logoUrl || '').trim();
+    item.coverIsLogoFallback =
+      seed.coverIsLogoFallback === true ||
+      (!String(seed.imageUrl || '').trim() && Boolean(item.displayCoverUrl));
+    if (!item.imageUrl && item.displayCoverUrl) {
+      item.imageUrl = item.displayCoverUrl;
+    }
     item.investAmount = parseInvestmentAmount(item.meta);
     item.investmentIncludes = parseInvestmentIncludes(metaVal(item.meta, /^investment includes$/i));
     item.category = seed.category || inferCategory(item);

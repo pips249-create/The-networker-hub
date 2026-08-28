@@ -668,12 +668,20 @@
 
   function applyCoverImage(item) {
     if (!els.cover || !els.coverImg || !item) return;
-    if (item.imageUrl) {
-      els.coverImg.src = item.imageUrl;
+    var cover = String(
+      item.displayCoverUrl || item.imageUrl || item.logoUrl || ''
+    ).trim();
+    if (cover) {
+      els.coverImg.src = cover;
       els.coverImg.alt = item.title ? item.title + ' photo' : 'Opportunity photo';
+      els.cover.classList.toggle(
+        'opp-detail-cover--logo-fallback',
+        Boolean(item.coverIsLogoFallback) || (!item.imageUrl && !!item.logoUrl)
+      );
       els.cover.hidden = false;
       return;
     }
+    els.cover.classList.remove('opp-detail-cover--logo-fallback');
     els.cover.hidden = true;
     els.coverImg.removeAttribute('src');
     els.coverImg.alt = '';

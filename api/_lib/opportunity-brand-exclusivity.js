@@ -77,7 +77,8 @@ async function findExclusiveBrandDuplicateGroups(sb) {
   const { data, error } = await sb
     .from('business_opportunities')
     .select('id, title, host, description, about, status, approval_status')
-    .neq('status', 'archived');
+    .neq('status', 'archived')
+    .limit(500);
   if (error) throw new Error(error.message);
   return groupExclusiveBrandDuplicates(data || []);
 }

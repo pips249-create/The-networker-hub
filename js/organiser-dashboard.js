@@ -17132,6 +17132,41 @@
     return true;
   }
 
+  async function openOpportunityListingBillingPortal(opportunityId, triggerBtn) {
+    const id = String(opportunityId || '').trim();
+    if (!id) return;
+    const btn = triggerBtn || null;
+    const prev = btn ? btn.textContent : '';
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Opening…';
+    }
+    try {
+      const res = await api('/api/organiser/opportunity-listing-portal', {
+        method: 'POST',
+        body: JSON.stringify({
+          opportunityId: id,
+          returnUrl: window.location.origin + '/organiser/#business-listings',
+        }),
+      });
+      if (!res.ok || !res.data || !res.data.url) {
+        window.alert(
+          (res.data && (res.data.message || res.data.error)) ||
+            'Could not open billing. Email hi@thenetworkeruk.com if you need help cancelling.'
+        );
+        return;
+      }
+      window.location.href = res.data.url;
+    } catch (err) {
+      window.alert(String((err && err.message) || 'Could not open billing portal.'));
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = prev || 'Manage / cancel billing';
+      }
+    }
+  }
+
   async function confirmUnpublishOpportunityListing(opportunityId) {
     const id = String(opportunityId || '').trim();
     if (!id) return;
@@ -17144,7 +17179,7 @@
         label +
         '"?\n\n' +
         'It will be removed from the public directory immediately. Enquiries already received stay in your dashboard.\n\n' +
-        'Your monthly listing subscription is separate — cancel it in Stripe if you do not want further charges.'
+        'Unpublishing does not stop billing. Use Manage / cancel billing if you want to cancel the subscription.'
     );
     if (!ok) return;
     const res = await api('/api/organiser/opportunities', {
@@ -17186,21 +17221,26 @@
   }
 
   function opportunityManageSecondaryActionHtml(o) {
+    let html = '';
+    if (o.listingStripeSubscriptionId || o.listing_stripe_subscription_id) {
+      html +=
+        '<button type="button" class="org-btn org-btn-outline org-btn-sm" data-opp-manage-billing="' +
+        esc(o.id) +
+        '">Manage / cancel billing</button> ';
+    }
     if (opportunityCanUnpublish(o)) {
-      return (
+      html +=
         '<button type="button" class="org-btn org-btn-outline org-btn-sm" data-opp-unpublish="' +
         esc(o.id) +
-        '">Unpublish</button> '
-      );
+        '">Unpublish</button> ';
     }
     if (opportunityCanDeleteDraft(o)) {
-      return (
+      html +=
         '<button type="button" class="org-btn org-btn-outline org-btn-sm org-btn-danger-text" data-opp-delete-draft="' +
         esc(o.id) +
-        '">Delete draft</button> '
-      );
+        '">Delete draft</button> ';
     }
-    return '';
+    return html;
   }
 
   function opportunityEditUrl(o) {
@@ -18807,6 +18847,16 @@
         if (openDayAddBtn) {
           e.preventDefault();
           openAddOpenDayTalkForListing(openDayAddBtn.getAttribute('data-opp-add-open-day'));
+          return;
+        }
+
+        const oppManageBillingBtn = e.target.closest('[data-opp-manage-billing]');
+        if (oppManageBillingBtn) {
+          e.preventDefault();
+          openOpportunityListingBillingPortal(
+            oppManageBillingBtn.getAttribute('data-opp-manage-billing'),
+            oppManageBillingBtn
+          );
           return;
         }
 

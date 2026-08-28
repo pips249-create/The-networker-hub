@@ -184,6 +184,16 @@
   box-sizing: border-box;
 }
 
+.opportunity-detail-page .opp-detail-cover--logo-fallback {
+  background: #fff;
+}
+
+.opportunity-detail-page .opp-detail-cover--logo-fallback img {
+  object-fit: contain;
+  max-height: min(280px, 40vw);
+  padding: 28px 36px;
+}
+
 @media (min-width: 700px) {
   .opportunity-detail-page .opp-detail-cover img {
     max-height: 480px;

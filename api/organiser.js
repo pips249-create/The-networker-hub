@@ -32,6 +32,7 @@ const routes = {
   'opportunity-premium-waitlist': require('./_lib/routes/organiser-opportunity-premium-waitlist'),
   'opportunity-listing-checkout': require('./_lib/routes/organiser-opportunity-listing-checkout'),
   'opportunity-listing-complete': require('./_lib/routes/organiser-opportunity-listing-complete'),
+  'opportunity-listing-portal': require('./_lib/routes/organiser-opportunity-listing-portal'),
   'event-featured-checkout': require('./_lib/routes/organiser-event-featured-checkout'),
   'event-featured-complete': require('./_lib/routes/organiser-event-featured-complete'),
   'event-featured-quote': require('./_lib/routes/organiser-event-featured-quote'),

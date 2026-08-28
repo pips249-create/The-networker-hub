@@ -143,6 +143,11 @@ function organiserBusinessDashboardUrl(siteUrl, options = {}) {
   return base + hash;
 }
 
+/** Organiser business opportunities → Open days tab. */
+function organiserBusinessOpenDaysUrl(siteUrl) {
+  return siteBase(siteUrl) + '/organiser/#business-open-days';
+}
+
 function opportunityPublicUrl(opportunityRow, siteUrl) {
   const site = siteBase(siteUrl);
   const { publicOpportunitySlug } = require('./opportunity-slug');
@@ -280,6 +285,7 @@ module.exports = {
   organiserDashboardUrl,
   organiserGroupEditUrl,
   organiserBusinessDashboardUrl,
+  organiserBusinessOpenDaysUrl,
   opportunityPublicUrl,
   logoNavUrl,
   logoEmailHeaderUrl,
