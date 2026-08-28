@@ -1352,5 +1352,9 @@
   window.hubEventDetailHref = detailHref;
   window.hubSpotlightStep = advanceSpotlight;
   initListingsPagination();
-  load();
+  // Organiser directory uses /api/organisers via browse-mode — skip the events fetch.
+  var startInOrganisers =
+    location.hash === '#organisers' ||
+    (location.search && location.search.indexOf('mode=organisers') !== -1);
+  if (!startInOrganisers) load();
 })();

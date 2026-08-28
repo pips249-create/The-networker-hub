@@ -771,4 +771,9 @@
   window.hubRenderOrganiserSpotlight = renderSpotlight;
   window.hubStopOrganiserSpotlight = stopSpotlightAuto;
   initPagination();
+
+  // If browse-mode already flipped to organisers before this script ran, load now.
+  if (document.body.classList.contains('browse-mode-organisers')) {
+    loadOrganisers();
+  }
 })();
