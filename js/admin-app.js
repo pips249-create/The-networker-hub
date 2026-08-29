@@ -22711,6 +22711,13 @@
     return '';
   }
 
+  function opportunityIsHubOwned(opp) {
+    var email = String((opp && opp.owner_email) || '')
+      .trim()
+      .toLowerCase();
+    return email === 'catherine@thenetworkeruk.com';
+  }
+
   function opportunityIsSubmittedForReview(opp) {
     return Boolean(opportunityReviewSubmittedAt(opp));
   }
@@ -22723,7 +22730,18 @@
   }
 
   function opportunityCanApprove(opp) {
-    return String((opp && opp.approval_status) || '') === 'Pending Review';
+    if (!opp) return false;
+    // Staged edits on an already-live listing always need approve/deny.
+    if (opportunityHasPendingLiveUpdate(opp)) return true;
+    if (String(opp.approval_status || '') !== 'Pending Review') return false;
+    // Hub-owned or assigned-but-unclaimed listings are managed in Admin edit /
+    // claim invite — no approve/deny until someone owns and submits the listing.
+    var claim = String(opp.ownership_claim_status || '')
+      .trim()
+      .toLowerCase();
+    if (claim === 'pending' || claim === 'disputed') return false;
+    if (opportunityIsHubOwned(opp)) return false;
+    return opportunityIsSubmittedForReview(opp);
   }
 
   function opportunityAboutParagraphs(opp) {
@@ -22955,17 +22973,23 @@
       : opp.updated_at
         ? fmtTime(opp.updated_at)
         : '';
-    var statusNote = isDraftNotSubmitted
-      ? 'Pending approval — submission stamp missing or not yet submitted. You can still approve if the listing looks complete.'
-      : opportunityHasPendingLiveUpdate(opp)
-        ? 'Live listing — proposed changes awaiting approval. The current version stays public until you approve.' +
+    var statusNote = opportunityHasPendingLiveUpdate(opp)
+      ? 'Live listing — proposed changes awaiting approval. The current version stays public until you approve.' +
+        (submittedAt ? ' · ' + submittedAt : '')
+      : isPendingSubmitted
+        ? 'Submitted for approval — lister can still edit and resubmit until you approve.' +
           (submittedAt ? ' · ' + submittedAt : '')
-        : isPendingSubmitted
-          ? 'Submitted for approval — lister can still edit and resubmit until you approve.' +
-            (submittedAt ? ' · ' + submittedAt : '')
-          : awaitingPay
-            ? 'Approved — awaiting listing payment before going live.'
-            : 'Review what was submitted before making admin changes.';
+        : String(opp.ownership_claim_status || '')
+              .trim()
+              .toLowerCase() === 'pending'
+          ? 'Unclaimed — set the owner email and send the claim invite when ready. Approve/deny only appears after the listing is claimed and submitted.'
+          : opportunityIsHubOwned(opp)
+            ? 'Hub-owned listing — publish or edit under Admin edit. Approve/deny is only for organiser-submitted listings.'
+            : awaitingPay
+              ? 'Approved — awaiting listing payment before going live.'
+              : isDraftNotSubmitted
+                ? 'Not submitted for review. Use Admin edit to publish, or wait until the organiser submits.'
+                : 'Review what was submitted before making admin changes.';
     var priorRejection = String(opp.rejection_note || '').trim();
     return (
       '<div class="opp-review-panel" data-opp-review-for="' +
