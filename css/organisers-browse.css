@@ -728,6 +728,17 @@ body.browse-mode-organisers .events-hero-badge {
   border-color: rgba(96, 165, 250, 0.45);
 }
 
+@media (max-width: 768px) {
+  body.browse-mode-organisers .events-hero-badge {
+    border: none;
+    color: rgba(96, 165, 250, 0.95);
+  }
+
+  body.browse-mode-organisers .events-hero-badge::before {
+    box-shadow: none;
+  }
+}
+
 body.browse-mode-organisers .events-hero-badge::before {
   background: #60a5fa;
   box-shadow: 0 0 8px #60a5fa;
