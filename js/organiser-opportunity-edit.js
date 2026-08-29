@@ -778,8 +778,8 @@
     const approved = String(opp.approvalStatus || '').trim() === 'Approved';
     const missingSub = !listingHasStripeSubscription(opp);
     const unpaid = !opp.listingPaymentActive;
-    if (!approved && !opp.listingPaidAt) return opp;
-    if (!unpaid && !missingSub) return opp;
+    const hasStripeIds = listingHasStripeSubscription(opp) || listingHasStripeSession(opp);
+    if (!approved && !opp.listingPaidAt && !hasStripeIds) return opp;
     const res = await api('/api/organiser/opportunities', {
       method: 'POST',
       body: JSON.stringify({ action: 'sync_listing_payment', id: opp.id }),
@@ -789,7 +789,12 @@
       syncListingStatusUi(res.data.opportunity);
       syncDangerZoneUi();
       listingPaymentPanelVisible();
-      if (res.data.source && (unpaid || missingSub)) {
+      if (res.data.refunded && (opp.listingPaymentActive || opp.listingPaidAt)) {
+        showAlert(
+          'This listing payment was refunded, so the listing is not live. Pay again when you want it on the directory.',
+          false
+        );
+      } else if (res.data.source && (unpaid || missingSub) && res.data.opportunity.listingPaymentActive) {
         showAlert('Stripe payment found — your listing billing is linked.', false);
       }
       return res.data.opportunity;

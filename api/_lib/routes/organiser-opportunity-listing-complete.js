@@ -76,6 +76,17 @@ module.exports = async function handler(req, res) {
     }
 
     const result = await handleOpportunityListingCheckout(session);
+    if (result.refunded) {
+      const refreshed = await getOpportunityById(opportunityId);
+      return json(res, 200, {
+        ok: true,
+        refunded: true,
+        result,
+        opportunity: refreshed,
+        message:
+          'This listing payment was refunded, so the listing is not live. Pay again when you want it on the directory.',
+      });
+    }
     if (result.ok) {
       const refreshed = await getOpportunityById(opportunityId);
       return json(res, 200, { ok: true, result, opportunity: refreshed });

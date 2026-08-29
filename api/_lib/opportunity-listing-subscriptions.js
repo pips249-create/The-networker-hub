@@ -106,6 +106,21 @@ async function syncListingFromSubscription(subscription, options) {
 
   const status = String(subscription?.status || '').toLowerCase();
   const periodEnd = periodEndIso(subscription);
+  const {
+    isListingSubscriptionRefunded,
+    expireOpportunityListingForRefund,
+  } = require('./opportunity-listing-refunds');
+
+  if (await isListingSubscriptionRefunded(subscription)) {
+    const refunded = await expireOpportunityListingForRefund(id, { subscriptionId });
+    return {
+      ok: true,
+      refunded: true,
+      opportunityId: id,
+      expired: true,
+      listing: refunded.opportunity,
+    };
+  }
 
   if (status === 'canceled' || status === 'incomplete_expired' || status === 'unpaid') {
     const now = new Date().toISOString();
