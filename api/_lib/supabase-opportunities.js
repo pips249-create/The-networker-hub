@@ -332,6 +332,43 @@ function isMissingOpportunityGeoColumnError(error) {
   );
 }
 
+/** True when listing subscription id column is missing (migration 275 not applied / schema cache stale). */
+function isMissingListingStripeSubscriptionColumnError(error) {
+  const msg = String((error && error.message) || error || '').toLowerCase();
+  if (!msg.includes('listing_stripe_subscription_id')) return false;
+  return (
+    msg.includes('does not exist') ||
+    msg.includes('schema cache') ||
+    msg.includes('could not find') ||
+    msg.includes('unknown column')
+  );
+}
+
+function stripListingStripeSubscriptionFields(row) {
+  if (!row || typeof row !== 'object') return row;
+  const next = { ...row };
+  delete next.listing_stripe_subscription_id;
+  return next;
+}
+
+function isMissingListingExpiryReminderColumnError(error) {
+  const msg = String((error && error.message) || error || '').toLowerCase();
+  if (!msg.includes('listing_expiry_reminder_sent_at')) return false;
+  return (
+    msg.includes('does not exist') ||
+    msg.includes('schema cache') ||
+    msg.includes('could not find') ||
+    msg.includes('unknown column')
+  );
+}
+
+function stripListingExpiryReminderFields(row) {
+  if (!row || typeof row !== 'object') return row;
+  const next = { ...row };
+  delete next.listing_expiry_reminder_sent_at;
+  return next;
+}
+
 /** True when review-then-pay columns are missing (migration 266 not applied). */
 function isMissingOpportunityReviewQueueColumnError(error) {
   const msg = String((error && error.message) || error || '').toLowerCase();
@@ -380,6 +417,15 @@ async function writeOpportunityRow(sb, mode, row, id) {
       '[opportunities] pending_review_payload missing — apply migration 272_opportunity_pending_review_payload.sql'
     );
     ({ data, error } = await run(stripOpportunityPendingReviewFields(row)));
+  }
+  if (error && isMissingListingStripeSubscriptionColumnError(error)) {
+    console.warn(
+      '[opportunities] listing_stripe_subscription_id missing — apply migration 275_opportunity_listing_subscription.sql'
+    );
+    ({ data, error } = await run(stripListingStripeSubscriptionFields(row)));
+  }
+  if (error && isMissingListingExpiryReminderColumnError(error)) {
+    ({ data, error } = await run(stripListingExpiryReminderFields(row)));
   }
   if (error) throw new Error(error.message);
   return data;
@@ -437,6 +483,7 @@ function rowToListing(row) {
     listingPaidAt: row.listing_paid_at || null,
     listingExpiresAt: row.listing_expires_at || null,
     listingStripeSubscriptionId: row.listing_stripe_subscription_id || null,
+    listingStripeSessionId: row.listing_stripe_session_id || null,
     listingPaymentActive: listingPaymentCurrent(row),
     outcode: String(row.outcode || '').trim(),
     regionSlug: String(row.region_slug || '').trim(),
@@ -737,18 +784,7 @@ async function activateOpportunityListingPayment(opportunityId, monthsOrOpts, se
     patch.listing_stripe_subscription_id = subscriptionId;
   }
 
-  let data;
-  let error;
-  ({ data, error } = await sb.from('business_opportunities').update(patch).eq('id', id).select('*').single());
-  if (error && patch.listing_stripe_subscription_id && /listing_stripe_subscription_id/i.test(error.message || '')) {
-    delete patch.listing_stripe_subscription_id;
-    ({ data, error } = await sb.from('business_opportunities').update(patch).eq('id', id).select('*').single());
-  }
-  if (error && patch.listing_expiry_reminder_sent_at != null && /listing_expiry_reminder_sent_at/i.test(error.message || '')) {
-    delete patch.listing_expiry_reminder_sent_at;
-    ({ data, error } = await sb.from('business_opportunities').update(patch).eq('id', id).select('*').single());
-  }
-  if (error) throw new Error(error.message);
+  const data = await writeOpportunityRow(sb, 'update', patch, id);
 
   const autoReject = await maybeAutoRejectOpportunity(data);
   if (autoReject.rejected) {
@@ -1472,6 +1508,8 @@ async function resolveListingCheckoutMetadata(session) {
 
 async function isListingCheckoutSessionPaid(session) {
   if (!session) return false;
+  const { isListingCheckoutSessionRefunded } = require('./opportunity-listing-refunds');
+  if (await isListingCheckoutSessionRefunded(session)) return false;
   if (
     session.payment_status === 'paid' ||
     session.payment_status === 'no_payment_required' ||
@@ -1526,12 +1564,14 @@ async function syncOpportunityListingPayment(opportunityId, opts) {
   if (loadErr) throw new Error(loadErr.message);
   if (!row) throw new Error('not_found');
 
-  if (listingPaymentCurrent(row) && !opportunityListingStripeIdsMissing(row)) {
-    return { ok: true, alreadyPaid: true, opportunity: rowToListing(row) };
-  }
-
   const { retrieveCheckoutSession, getStripeClient, isStripeCheckoutConfigured } = require('./stripe-checkout');
   const { syncListingFromSubscription } = require('./opportunity-listing-subscriptions');
+  const {
+    isListingCheckoutSessionRefunded,
+    isListingSubscriptionRefunded,
+    expireOpportunityListingForRefund,
+    listingSubscriptionShouldExpire,
+  } = require('./opportunity-listing-refunds');
 
   const sessionId = String(options.sessionId || row.listing_stripe_session_id || '').trim();
   const subscriptionId = String(
@@ -1540,14 +1580,43 @@ async function syncOpportunityListingPayment(opportunityId, opts) {
 
   if (subscriptionId && isStripeCheckoutConfigured()) {
     try {
-      const subscription = await getStripeClient().subscriptions.retrieve(subscriptionId);
+      const subscription = await getStripeClient().subscriptions.retrieve(subscriptionId, {
+        expand: ['latest_invoice.charge', 'latest_invoice.payment_intent.latest_charge'],
+      });
+      const subscriptionRefunded = await isListingSubscriptionRefunded(subscription);
+      if (listingSubscriptionShouldExpire(subscription) || subscriptionRefunded) {
+        const expired = await expireOpportunityListingForRefund(id, {
+          subscriptionId,
+        });
+        const refreshed = expired.opportunity || (await getOpportunityById(id));
+        return {
+          ok: true,
+          refunded: subscriptionRefunded,
+          source: subscriptionRefunded ? 'refund' : 'subscription',
+          result: expired,
+          opportunity: refreshed,
+        };
+      }
+      if (
+        listingPaymentCurrent(row) &&
+        !opportunityListingStripeIdsMissing(row) &&
+        ['active', 'trialing', 'past_due'].includes(String(subscription.status || '').toLowerCase())
+      ) {
+        return { ok: true, alreadyPaid: true, opportunity: rowToListing(row) };
+      }
       const result = await syncListingFromSubscription(subscription, {
         sessionId: sessionId || null,
         opportunityId: id,
       });
       if (result.ok) {
         const refreshed = await getOpportunityById(id);
-        return { ok: true, source: 'subscription', result, opportunity: refreshed };
+        return {
+          ok: true,
+          source: 'subscription',
+          refunded: result.refunded === true,
+          result,
+          opportunity: refreshed,
+        };
       }
     } catch (e) {
       if (!sessionId && !options.allowSearch) throw e;
@@ -1556,10 +1625,29 @@ async function syncOpportunityListingPayment(opportunityId, opts) {
 
   if (sessionId && isStripeCheckoutConfigured()) {
     const session = await retrieveCheckoutSession(sessionId);
+    if (await isListingCheckoutSessionRefunded(session)) {
+      const expired = await expireOpportunityListingForRefund(id, {
+        subscriptionId: subscriptionId || undefined,
+      });
+      const refreshed = expired.opportunity || (await getOpportunityById(id));
+      return {
+        ok: true,
+        refunded: true,
+        source: 'refund',
+        result: expired,
+        opportunity: refreshed,
+      };
+    }
     const result = await handleOpportunityListingCheckout(session);
     if (result.ok) {
       const refreshed = await getOpportunityById(id);
-      return { ok: true, source: 'session', result, opportunity: refreshed };
+      return {
+        ok: true,
+        source: 'session',
+        refunded: result.refunded === true,
+        result,
+        opportunity: refreshed,
+      };
     }
     if (!result.skipped) throw new Error(result.reason || 'checkout_sync_failed');
   }
@@ -1575,6 +1663,7 @@ async function syncOpportunityListingPayment(opportunityId, opts) {
           query: "email:'" + ownerEmail.replace(/'/g, '') + "'",
           limit: 3,
         });
+        let sawRefundedCheckout = false;
         for (const customer of customers.data || []) {
           const sessions = await stripe.checkout.sessions.list({
             customer: customer.id,
@@ -1584,12 +1673,27 @@ async function syncOpportunityListingPayment(opportunityId, opts) {
             if (String(session.metadata?.opportunity_id || '').trim() !== id) continue;
             if (String(session.metadata?.checkout_type || '').trim() !== 'opportunity_listing') continue;
             if (String(session.status || '').trim() !== 'complete') continue;
+            if (await isListingCheckoutSessionRefunded(session)) {
+              sawRefundedCheckout = true;
+              continue;
+            }
             const result = await handleOpportunityListingCheckout(session);
             if (result.ok) {
               const refreshed = await getOpportunityById(id);
               return { ok: true, source: 'customer_checkout', result, opportunity: refreshed };
             }
           }
+        }
+        if (sawRefundedCheckout) {
+          const expired = await expireOpportunityListingForRefund(id);
+          const refreshed = expired.opportunity || (await getOpportunityById(id));
+          return {
+            ok: true,
+            refunded: true,
+            source: 'refund',
+            result: expired,
+            opportunity: refreshed,
+          };
         }
       } catch (searchErr) {
         console.warn(
@@ -1623,6 +1727,19 @@ async function syncOpportunityListingPayment(opportunityId, opts) {
           if (!['active', 'trialing', 'past_due'].includes(String(subscription.status || '').toLowerCase())) {
             continue;
           }
+          if (await isListingSubscriptionRefunded(subscription)) {
+            const expired = await expireOpportunityListingForRefund(id, {
+              subscriptionId: subscription.id,
+            });
+            const refreshed = expired.opportunity || (await getOpportunityById(id));
+            return {
+              ok: true,
+              refunded: true,
+              source: 'refund',
+              result: expired,
+              opportunity: refreshed,
+            };
+          }
           const result = await syncListingFromSubscription(subscription, {
             sessionId: sessionId || null,
             opportunityId: id,
@@ -1654,6 +1771,16 @@ async function handleOpportunityListingCheckout(session) {
 
   const opportunityId = String(metadata.opportunity_id || '').trim();
   if (!opportunityId) return { skipped: true, reason: 'missing_opportunity_id' };
+
+  const { isListingCheckoutSessionRefunded, expireOpportunityListingForRefund } = require(
+    './opportunity-listing-refunds'
+  );
+  if (await isListingCheckoutSessionRefunded(session)) {
+    const { subscriptionIdFromSession } = require('./opportunity-listing-subscriptions');
+    return expireOpportunityListingForRefund(opportunityId, {
+      subscriptionId: subscriptionIdFromSession(session) || undefined,
+    });
+  }
 
   const paid = await isListingCheckoutSessionPaid(session);
   if (!paid) return { skipped: true, reason: 'payment_not_complete' };

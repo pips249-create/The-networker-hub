@@ -8,7 +8,6 @@ const { jsonPublicError } = require('../public-error');
 const {
   isStripeCheckoutConfigured,
   createMembershipBillingPortalSession,
-  getStripeClient,
   siteBaseUrl,
 } = require('../stripe-checkout');
 
@@ -70,29 +69,16 @@ module.exports = async function handler(req, res) {
       return json(res, 403, { ok: false, error: 'opportunity_not_owned' });
     }
 
-    const subscriptionId = String(
-      opportunity.listingStripeSubscriptionId || opportunity.listing_stripe_subscription_id || ''
-    ).trim();
-    if (!subscriptionId) {
+    const { resolveListingBillingCustomer } = require('../opportunity-listing-subscriptions');
+    const billing = await resolveListingBillingCustomer(opportunity);
+    const customerId = billing && billing.customerId;
+    const subscription = billing && billing.subscription;
+    if (!customerId) {
       return json(res, 404, {
         ok: false,
         error: 'no_listing_subscription',
         message:
           'No active Stripe subscription found for this listing. If you were charged recently, email hi@thenetworkeruk.com and we will help you cancel.',
-      });
-    }
-
-    const stripe = getStripeClient();
-    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-    const customerId =
-      typeof subscription.customer === 'string'
-        ? subscription.customer
-        : String(subscription.customer?.id || '').trim();
-    if (!customerId) {
-      return json(res, 502, {
-        ok: false,
-        error: 'missing_stripe_customer',
-        message: 'Could not open billing for this subscription. Email hi@thenetworkeruk.com for help.',
       });
     }
 
@@ -108,8 +94,10 @@ module.exports = async function handler(req, res) {
     return json(res, 200, {
       ok: true,
       url: portal.url,
-      subscriptionStatus: String(subscription.status || '').toLowerCase() || null,
-      cancelAtPeriodEnd: Boolean(subscription.cancel_at_period_end),
+      subscriptionStatus: subscription
+        ? String(subscription.status || '').toLowerCase() || null
+        : null,
+      cancelAtPeriodEnd: Boolean(subscription && subscription.cancel_at_period_end),
     });
   } catch (e) {
     return jsonPublicError(res, json, e, {

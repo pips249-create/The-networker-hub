@@ -983,6 +983,7 @@ module.exports = async function handler(req, res) {
         return json(res, 200, {
           ok: true,
           alreadyPaid: result.alreadyPaid === true,
+          refunded: result.refunded === true,
           source: result.source || null,
           opportunity: mapOpportunityRow(refreshed),
         });

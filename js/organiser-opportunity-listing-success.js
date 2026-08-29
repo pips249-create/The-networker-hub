@@ -392,7 +392,14 @@
         data = {};
       }
 
-      if (res.ok && data.ok && data.result && data.result.ok !== false && !data.result.skipped) {
+      if (res.ok && data.refunded) {
+        showError(
+          'This listing payment was refunded, so the listing is not live. Pay again from the editor when you want it on the directory.'
+        );
+        return;
+      }
+
+      if (res.ok && data.ok && data.result && data.result.ok !== false && !data.result.skipped && !data.result.refunded) {
         showReady(data.opportunity);
         return;
       }

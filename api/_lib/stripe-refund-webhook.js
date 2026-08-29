@@ -6,12 +6,28 @@ async function handleChargeRefunded(charge) {
     return { skipped: true, reason: 'supabase_not_configured' };
   }
 
+  let listingResult = null;
+  try {
+    const { handleOpportunityListingChargeRefunded } = require('./opportunity-listing-refunds');
+    listingResult = await handleOpportunityListingChargeRefunded(charge);
+  } catch (listingErr) {
+    console.warn(
+      '[stripe-refund] opportunity listing refund handler failed:',
+      listingErr && listingErr.message ? listingErr.message : listingErr
+    );
+    listingResult = {
+      skipped: true,
+      reason: 'listing_refund_failed',
+      error: listingErr && listingErr.message ? listingErr.message : String(listingErr),
+    };
+  }
+
   const paymentIntentId =
     typeof charge.payment_intent === 'string'
       ? charge.payment_intent
       : charge.payment_intent?.id || null;
   if (!paymentIntentId) {
-    return { skipped: true, reason: 'missing_payment_intent' };
+    return { skipped: true, reason: 'missing_payment_intent', listingResult };
   }
 
   const sb = getSupabaseAdmin();
@@ -22,7 +38,7 @@ async function handleChargeRefunded(charge) {
     .maybeSingle();
   if (error) throw new Error(error.message);
   if (!registration?.id) {
-    return { skipped: true, reason: 'registration_not_found' };
+    return { skipped: true, reason: 'registration_not_found', listingResult };
   }
 
   const now = new Date().toISOString();
@@ -42,7 +58,7 @@ async function handleChargeRefunded(charge) {
   const refundAmount =
     charge.amount_refunded != null ? Number(charge.amount_refunded) / 100 : null;
   const result = await sendRefundProcessedEmail(sb, registration.id, refundAmount);
-  return { registrationId: registration.id, ...result };
+  return { registrationId: registration.id, ...result, listingResult };
 }
 
 module.exports = {

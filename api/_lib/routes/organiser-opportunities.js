@@ -179,6 +179,37 @@ module.exports = async function handler(req, res) {
   if (req.method === 'POST') {
     const body = parseBody(req);
     const action = String(body.action || '').trim();
+    if (action === 'sync_listing_payment') {
+      const opportunityId = String(body.id || body.opportunityId || '').trim();
+      if (!opportunityId) return json(res, 400, { error: 'missing_opportunity_id' });
+      const access = await assertOwnedOpportunity(opportunityId);
+      if (!access.ok) return json(res, access.status, { error: access.error });
+      try {
+        const { syncOpportunityListingPayment } = require('../supabase-opportunities');
+        const result = await syncOpportunityListingPayment(opportunityId, { allowSearch: true });
+        return json(res, 200, {
+          ok: true,
+          alreadyPaid: result.alreadyPaid === true,
+          refunded: result.refunded === true,
+          source: result.source || null,
+          opportunity: result.opportunity || access.opportunity,
+        });
+      } catch (e) {
+        if (e && e.code === 'no_stripe_payment_found') {
+          return json(res, 200, {
+            ok: true,
+            alreadyPaid: false,
+            source: null,
+            opportunity: access.opportunity,
+          });
+        }
+        return jsonPublicError(res, json, e, {
+          code: 'sync_listing_payment_failed',
+          logLabel: '[organiser-opportunities]',
+        });
+      }
+    }
+
     if (action === 'unpublish' || action === 'delete') {
       const opportunityId = String(body.id || body.opportunityId || '').trim();
       if (!opportunityId) return json(res, 400, { error: 'missing_opportunity_id' });
