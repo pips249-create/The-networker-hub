@@ -715,10 +715,11 @@ async function activateOpportunityListingPayment(opportunityId, monthsOrOpts, se
     currentSlug: existing.slug,
   });
 
+  const paymentWasCurrent = listingPaymentCurrent(existing);
   const wasLive =
     String(existing.approval_status || '') === 'Approved' &&
     String(existing.status || '').toLowerCase() === 'published' &&
-    listingPaymentCurrent(existing);
+    paymentWasCurrent;
 
   const patch = {
     status: 'published',
@@ -733,6 +734,11 @@ async function activateOpportunityListingPayment(opportunityId, monthsOrOpts, se
     package_tier: 'standard',
     updated_at: now.toISOString(),
   };
+  // Allow one fresh "live" email after payment lapses / renews. Do not clear when
+  // payment is already current (avoids racing admin Approve's send-once claim).
+  if (!paymentWasCurrent) {
+    patch.listing_live_email_sent_at = null;
+  }
   if (subscriptionId) {
     patch.listing_stripe_subscription_id = subscriptionId;
   }
@@ -746,6 +752,10 @@ async function activateOpportunityListingPayment(opportunityId, monthsOrOpts, se
   }
   if (error && patch.listing_expiry_reminder_sent_at != null && /listing_expiry_reminder_sent_at/i.test(error.message || '')) {
     delete patch.listing_expiry_reminder_sent_at;
+    ({ data, error } = await sb.from('business_opportunities').update(patch).eq('id', id).select('*').single());
+  }
+  if (error && 'listing_live_email_sent_at' in patch && /listing_live_email_sent_at/i.test(error.message || '')) {
+    delete patch.listing_live_email_sent_at;
     ({ data, error } = await sb.from('business_opportunities').update(patch).eq('id', id).select('*').single());
   }
   if (error) throw new Error(error.message);
