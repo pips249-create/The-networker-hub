@@ -43,9 +43,9 @@ const GUIDE_PAGES = {
       { id: 'new-listing', name: 'Start a new listing', text: 'Choose List a listing. Review how listings work, pricing, and what happens after submission, then open the listing form.' },
       { id: 'listing-form', name: 'Complete the listing form', text: 'Add title, opportunity type, summary, description, investment notes, location, industry, images, and contact details. Listings are reviewed before going live.' },
       { id: 'submit', name: 'Submit for review', text: 'Submit the listing. You receive email updates when it is approved, live, or if changes are needed.' },
-      { id: 'premium', name: 'Optional: premium placement', text: 'Featured carousel slots may be available for extra visibility on the opportunities browse page after submission.' },
+      { id: 'premium', name: 'Optional: premium placement', text: 'After the listing is live, add an optional £55 one-time Premium Spotlight for up to 30 days (maximum 12 in the carousel). Buy it from My business opportunities — not a subscription. See /advertising#ad-pkg-opportunities-spotlight.' },
       { id: 'enquiries', name: 'Manage enquiries', text: 'When someone enquires, you receive an email notification. Reply directly to the prospect and track enquiries from Business opportunities in the dashboard.' },
-      { id: 'renew', name: 'Renew or update', text: 'Listings run for a set period. Renew or edit from your dashboard before expiry to stay visible on Browse opportunities.' },
+      { id: 'renew', name: 'Renew or update', text: 'The directory listing is a monthly Stripe subscription (£25 + VAT). Cancel any time from the listing page. Stay in Premium Spotlight by buying another one-time boost. Edit from the dashboard — copy or image changes go live after review.' },
     ],
   },
   'invite-your-team': {
