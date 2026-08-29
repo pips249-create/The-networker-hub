@@ -1061,12 +1061,24 @@
   }
 
   async function api(path, opts) {
-    const res = await fetch(path, {
-      credentials: 'include',
-      cache: 'no-store',
-      headers: { 'Content-Type': 'application/json', ...(opts && opts.headers) },
-      ...opts,
-    });
+    let res;
+    try {
+      res = await fetch(path, {
+        credentials: 'include',
+        cache: 'no-store',
+        headers: { 'Content-Type': 'application/json', ...(opts && opts.headers) },
+        ...opts,
+      });
+    } catch {
+      return {
+        ok: false,
+        status: 0,
+        data: {
+          error: 'network_error',
+          message: 'Could not reach the server. Check your connection and try again.',
+        },
+      };
+    }
     let data = {};
     try {
       data = await res.json();

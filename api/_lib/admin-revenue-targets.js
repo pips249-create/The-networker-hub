@@ -185,7 +185,24 @@ async function fetchAutoRevenue(sb, startMs, endMs) {
       .select(
         'id, title, tags, listing_months, listing_paid_at, listing_expires_at, listing_stripe_session_id, listing_stripe_subscription_id, featured, featured_until, package_tier, premium_stripe_session_id, published_at, created_at'
       )
-      .not('listing_paid_at', 'is', null),
+      .not('listing_paid_at', 'is', null)
+      .then(function (res) {
+        if (
+          res.error &&
+          /listing_stripe_subscription_id/i.test(String(res.error.message || '')) &&
+          /schema cache|could not find|does not exist|unknown column/i.test(
+            String(res.error.message || '')
+          )
+        ) {
+          return sb
+            .from('business_opportunities')
+            .select(
+              'id, title, tags, listing_months, listing_paid_at, listing_expires_at, listing_stripe_session_id, featured, featured_until, package_tier, premium_stripe_session_id, published_at, created_at'
+            )
+            .not('listing_paid_at', 'is', null);
+        }
+        return res;
+      }),
     sb
       .from('events')
       .select('id, title, featured_plan, featured_paid_at, featured_amount_gbp')

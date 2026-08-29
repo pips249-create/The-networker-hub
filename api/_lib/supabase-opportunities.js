@@ -332,6 +332,43 @@ function isMissingOpportunityGeoColumnError(error) {
   );
 }
 
+/** True when listing subscription id column is missing (migration 275 not applied / schema cache stale). */
+function isMissingListingStripeSubscriptionColumnError(error) {
+  const msg = String((error && error.message) || error || '').toLowerCase();
+  if (!msg.includes('listing_stripe_subscription_id')) return false;
+  return (
+    msg.includes('does not exist') ||
+    msg.includes('schema cache') ||
+    msg.includes('could not find') ||
+    msg.includes('unknown column')
+  );
+}
+
+function stripListingStripeSubscriptionFields(row) {
+  if (!row || typeof row !== 'object') return row;
+  const next = { ...row };
+  delete next.listing_stripe_subscription_id;
+  return next;
+}
+
+function isMissingListingExpiryReminderColumnError(error) {
+  const msg = String((error && error.message) || error || '').toLowerCase();
+  if (!msg.includes('listing_expiry_reminder_sent_at')) return false;
+  return (
+    msg.includes('does not exist') ||
+    msg.includes('schema cache') ||
+    msg.includes('could not find') ||
+    msg.includes('unknown column')
+  );
+}
+
+function stripListingExpiryReminderFields(row) {
+  if (!row || typeof row !== 'object') return row;
+  const next = { ...row };
+  delete next.listing_expiry_reminder_sent_at;
+  return next;
+}
+
 /** True when review-then-pay columns are missing (migration 266 not applied). */
 function isMissingOpportunityReviewQueueColumnError(error) {
   const msg = String((error && error.message) || error || '').toLowerCase();
@@ -380,6 +417,15 @@ async function writeOpportunityRow(sb, mode, row, id) {
       '[opportunities] pending_review_payload missing — apply migration 272_opportunity_pending_review_payload.sql'
     );
     ({ data, error } = await run(stripOpportunityPendingReviewFields(row)));
+  }
+  if (error && isMissingListingStripeSubscriptionColumnError(error)) {
+    console.warn(
+      '[opportunities] listing_stripe_subscription_id missing — apply migration 275_opportunity_listing_subscription.sql'
+    );
+    ({ data, error } = await run(stripListingStripeSubscriptionFields(row)));
+  }
+  if (error && isMissingListingExpiryReminderColumnError(error)) {
+    ({ data, error } = await run(stripListingExpiryReminderFields(row)));
   }
   if (error) throw new Error(error.message);
   return data;
@@ -737,18 +783,7 @@ async function activateOpportunityListingPayment(opportunityId, monthsOrOpts, se
     patch.listing_stripe_subscription_id = subscriptionId;
   }
 
-  let data;
-  let error;
-  ({ data, error } = await sb.from('business_opportunities').update(patch).eq('id', id).select('*').single());
-  if (error && patch.listing_stripe_subscription_id && /listing_stripe_subscription_id/i.test(error.message || '')) {
-    delete patch.listing_stripe_subscription_id;
-    ({ data, error } = await sb.from('business_opportunities').update(patch).eq('id', id).select('*').single());
-  }
-  if (error && patch.listing_expiry_reminder_sent_at != null && /listing_expiry_reminder_sent_at/i.test(error.message || '')) {
-    delete patch.listing_expiry_reminder_sent_at;
-    ({ data, error } = await sb.from('business_opportunities').update(patch).eq('id', id).select('*').single());
-  }
-  if (error) throw new Error(error.message);
+  const data = await writeOpportunityRow(sb, 'update', patch, id);
 
   const autoReject = await maybeAutoRejectOpportunity(data);
   if (autoReject.rejected) {
