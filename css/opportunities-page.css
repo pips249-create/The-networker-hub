@@ -2767,7 +2767,11 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
-  word-break: break-word;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
 }
 
 .opp-browse-page .event-grid-media {
@@ -2783,12 +2787,23 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
   object-position: center;
 }
 
+/* Logo plates: solid near-white matte so white logo boxes blend in (no “box in a box”). */
+.opp-browse-page .event-grid-media.is-logo-cover-media,
+.opp-browse-page .event-grid-media:has(.event-grid-img.is-logo-cover) {
+  background:
+    linear-gradient(180deg, rgba(13, 31, 60, 0.04) 0%, rgba(13, 31, 60, 0.02) 100%),
+    #fff;
+  box-shadow: inset 0 0 0 1px rgba(13, 31, 60, 0.06);
+}
+
 .opp-browse-page .event-grid-img.is-logo-cover {
   object-fit: contain;
   object-position: center;
-  padding: 14% 16%;
+  padding: 18% 16%;
   box-sizing: border-box;
-  background: linear-gradient(145deg, #f7f4ec 0%, #eef2f6 100%);
+  background: transparent;
+  /* Soften hard white rectangles baked into many franchise logo assets */
+  mix-blend-mode: multiply;
 }
 
 .opp-browse-page .event-grid-img.is-placeholder {
