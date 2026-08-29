@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<title>List an Affiliate Opportunity · The Networker UK</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+  @page { size: A4; margin: 0; }
+
+  :root {
+    --navy: #0d1f3c;
+    --gold: #c9961f;
+    --gold-pale: #fdf6e3;
+    --bg: #f8f9fb;
+    --text: #1a2336;
+    --muted: #3d4557;
+    --soft: #8d99ae;
+    --border: #dde3ed;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', system-ui, sans-serif;
+    color: var(--text);
+    background: #fff;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .page {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 14mm 16mm 16mm;
+    page-break-after: always;
+    position: relative;
+    background: #fff;
+  }
+  .page:last-child { page-break-after: auto; }
+
+  .bar {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 6mm;
+    background: linear-gradient(90deg, var(--navy) 0%, var(--gold) 100%);
+  }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 8mm;
+    padding-top: 4mm;
+  }
+  .logo { width: 52mm; height: auto; }
+
+  .header-meta { text-align: right; }
+  .badge {
+    display: inline-block;
+    padding: 3mm 5mm;
+    border-radius: 6px;
+    background: var(--gold-pale);
+    color: #8a6a1a;
+    font-size: 9pt;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border: 1px solid rgba(201, 150, 31, 0.35);
+    margin-bottom: 3mm;
+  }
+  .header-url {
+    font-size: 10pt;
+    font-weight: 600;
+    color: var(--gold);
+  }
+
+  h1 {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 25pt;
+    font-weight: 400;
+    line-height: 1.12;
+    color: var(--navy);
+    margin-bottom: 3.5mm;
+  }
+  h1 .accent { color: var(--gold); font-style: normal; }
+
+  .lede {
+    font-size: 11.5pt;
+    line-height: 1.5;
+    color: var(--muted);
+    max-width: 168mm;
+    margin-bottom: 6mm;
+  }
+
+  h2 {
+    font-size: 12.5pt;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--navy);
+    margin-bottom: 4.5mm;
+    padding-bottom: 2mm;
+    border-bottom: 2px solid var(--gold-pale);
+  }
+
+  .kicker {
+    font-size: 9pt;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 2mm;
+  }
+
+  .alongside {
+    background: var(--gold-pale);
+    border: 1.5px solid rgba(201, 150, 31, 0.35);
+    border-radius: 10px;
+    padding: 5mm 6mm;
+    margin-bottom: 7mm;
+  }
+  .alongside strong {
+    display: block;
+    font-size: 12pt;
+    font-weight: 800;
+    color: var(--navy);
+    margin-bottom: 1.5mm;
+  }
+  .alongside p {
+    font-size: 10pt;
+    line-height: 1.45;
+    color: var(--muted);
+  }
+
+  .benefits {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3.5mm;
+    margin-bottom: 7mm;
+  }
+  .benefit {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 4.5mm;
+  }
+  .benefit-icon {
+    font-size: 15pt;
+    margin-bottom: 1.5mm;
+  }
+  .benefit h3 {
+    font-size: 10.5pt;
+    font-weight: 800;
+    color: var(--navy);
+    margin-bottom: 1.5mm;
+    line-height: 1.2;
+  }
+  .benefit p {
+    font-size: 9pt;
+    line-height: 1.45;
+    color: var(--muted);
+  }
+
+  .highlight {
+    background: linear-gradient(135deg, var(--navy) 0%, #162847 100%);
+    color: #fff;
+    border-radius: 10px;
+    padding: 5.5mm 6.5mm;
+  }
+  .highlight h2 {
+    color: #fff;
+    border-bottom-color: rgba(255,255,255,0.15);
+    margin-bottom: 4mm;
+  }
+  .highlight-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 4mm;
+  }
+  .highlight-stat b {
+    display: block;
+    font-size: 15pt;
+    font-weight: 800;
+    color: var(--gold);
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+    margin-bottom: 1mm;
+  }
+  .highlight-stat span {
+    font-size: 8.5pt;
+    line-height: 1.35;
+    color: rgba(255,255,255,0.85);
+  }
+
+  .fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3.5mm;
+    margin-bottom: 6mm;
+  }
+  .field {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 4mm 4.5mm;
+  }
+  .field h3 {
+    font-size: 10pt;
+    font-weight: 800;
+    color: var(--navy);
+    margin-bottom: 1mm;
+  }
+  .field p {
+    font-size: 8.5pt;
+    line-height: 1.4;
+    color: var(--muted);
+  }
+
+  .steps { list-style: none; counter-reset: step; }
+  .step {
+    counter-increment: step;
+    display: grid;
+    grid-template-columns: 11mm 1fr;
+    gap: 3.5mm;
+    padding: 3.2mm 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .step:last-child { border-bottom: none; }
+  .step-num {
+    width: 11mm; height: 11mm;
+    border-radius: 50%;
+    background: var(--navy);
+    color: #fff;
+    font-size: 10pt;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .step-num::before { content: counter(step); }
+  .step h3 {
+    font-size: 10.5pt;
+    font-weight: 800;
+    color: var(--navy);
+    margin-bottom: 1mm;
+  }
+  .step p {
+    font-size: 9pt;
+    line-height: 1.45;
+    color: var(--muted);
+  }
+
+  .pricing {
+    background: var(--gold-pale);
+    border: 1.5px solid rgba(201, 150, 31, 0.35);
+    border-radius: 10px;
+    padding: 5.5mm 6.5mm;
+    margin: 5.5mm 0;
+  }
+  .pricing-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 6mm;
+    margin-bottom: 3.5mm;
+  }
+  .pricing h3 {
+    font-size: 12.5pt;
+    font-weight: 800;
+    color: var(--navy);
+    margin-bottom: 1mm;
+  }
+  .pricing-tagline {
+    font-size: 9pt;
+    color: var(--muted);
+  }
+  .price {
+    text-align: right;
+    white-space: nowrap;
+  }
+  .price b {
+    display: block;
+    font-size: 22pt;
+    font-weight: 800;
+    color: var(--navy);
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+  .price span {
+    font-size: 9pt;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .pricing ul {
+    list-style: none;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2mm 4mm;
+  }
+  .pricing li {
+    font-size: 8.5pt;
+    color: var(--muted);
+    padding-left: 5mm;
+    position: relative;
+  }
+  .pricing li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: var(--gold);
+    font-weight: 800;
+  }
+
+  .footer {
+    margin-top: auto;
+    padding-top: 5mm;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6mm;
+  }
+  .cta-box {
+    background: var(--navy);
+    color: #fff;
+    border-radius: 10px;
+    padding: 5mm 7mm;
+    flex: 1;
+  }
+  .cta-box strong {
+    display: block;
+    font-size: 12pt;
+    margin-bottom: 1mm;
+  }
+  .cta-box span {
+    font-size: 10pt;
+    color: var(--gold);
+    font-weight: 600;
+  }
+  .footer-note {
+    font-size: 8pt;
+    color: var(--soft);
+    max-width: 70mm;
+    line-height: 1.4;
+  }
+
+  .page-num {
+    position: absolute;
+    bottom: 8mm;
+    right: 16mm;
+    font-size: 8pt;
+    color: var(--soft);
+  }
+</style>
+</head>
+<body>
+
+<!-- PAGE 1: Why list affiliate programmes -->
+<section class="page">
+  <div class="bar"></div>
+  <header class="header">
+    <img class="logo" src="../assets/logo-nav-transparent.png?v=20260823uk3" alt="The Networker UK" width="420" height="168">
+    <div class="header-meta">
+      <div class="badge">Affiliate programmes</div>
+      <p class="header-url">thenetworkeruk.com/opportunities</p>
+    </div>
+  </header>
+
+  <p class="kicker">For brands &amp; affiliate managers</p>
+  <h1>Recruit UK partners for your <span class="accent">affiliate programme</span></h1>
+  <p class="lede">
+    Reach business networkers who already introduce products and services locally.
+    List your commission, cookie window and what partners promote — then take enquiries direct.
+  </p>
+
+  <div class="alongside">
+    <strong>Keep Awin, Impact, CJ &amp; similar networks</strong>
+    <p>Listing on The Networker UK does not replace your existing partner platforms. Use us as an extra UK discovery channel — no exclusivity, no per-lead fees. Partners enquire with you; you share tracking or signup links after.</p>
+  </div>
+
+  <p class="kicker">Why list here</p>
+  <h2>Built for affiliate recruitment</h2>
+  <div class="benefits">
+    <div class="benefit">
+      <div class="benefit-icon">🔗</div>
+      <h3>Alongside your networks</h3>
+      <p>Stay on Awin, Impact or CJ. Add The Networker UK for UK networkers who browse opportunities next to events.</p>
+    </div>
+    <div class="benefit">
+      <div class="benefit-icon">✉️</div>
+      <h3>Direct partner enquiries</h3>
+      <p>Interested people contact you. You vet them and share affiliate or tracking links yourself — we never sit in the deal.</p>
+    </div>
+    <div class="benefit">
+      <div class="benefit-icon">💷</div>
+      <h3>Commission &amp; cookie upfront</h3>
+      <p>Show commission, cookie window and what partners promote on the listing so the right people enquire.</p>
+    </div>
+    <div class="benefit">
+      <div class="benefit-icon">🔍</div>
+      <h3>Filter &amp; compare</h3>
+      <p>Prospects filter by type and budget, then compare affiliate rows side by side before they reach out.</p>
+    </div>
+    <div class="benefit">
+      <div class="benefit-icon">👥</div>
+      <h3>UK networking audience</h3>
+      <p>Your programme appears where organisers and members already look for side income and partnership offers.</p>
+    </div>
+    <div class="benefit">
+      <div class="benefit-icon">⭐</div>
+      <h3>Premium Spotlight</h3>
+      <p>Optional one-time £55 boost (up to 30 days) for featured carousel placement — max 12 premium slots.</p>
+    </div>
+  </div>
+
+  <div class="highlight">
+    <h2>At a glance</h2>
+    <div class="highlight-grid">
+      <div class="highlight-stat">
+        <b>No exclusivity</b>
+        <span>Keep Awin / Impact / CJ. List here too.</span>
+      </div>
+      <div class="highlight-stat">
+        <b>Review → pay</b>
+        <span>Submit free. Pay only after we approve.</span>
+      </div>
+      <div class="highlight-stat">
+        <b>£25/mo</b>
+        <span>+ VAT · monthly · cancel anytime</span>
+      </div>
+    </div>
+  </div>
+
+  <p class="page-num">1 of 2</p>
+</section>
+
+<!-- PAGE 2: How to list -->
+<section class="page">
+  <div class="bar"></div>
+  <header class="header">
+    <img class="logo" src="../assets/logo-nav-transparent.png?v=20260823uk3" alt="The Networker UK" width="420" height="168">
+    <div class="header-meta">
+      <div class="badge">How to list</div>
+      <p class="header-url">thenetworkeruk.com/opportunities/list</p>
+    </div>
+  </header>
+
+  <p class="kicker">Affiliate listing fields</p>
+  <h1 style="font-size:22pt;margin-bottom:5mm;">What partners see before they <span class="accent">enquire</span></h1>
+
+  <div class="fields">
+    <div class="field">
+      <h3>Commission</h3>
+      <p>e.g. 20% recurring, or £50 per sale — shown clearly on the listing and in compare.</p>
+    </div>
+    <div class="field">
+      <h3>What you promote</h3>
+      <p>Plain-language product or service (not a raw tracking link). You share signup links after enquiry.</p>
+    </div>
+    <div class="field">
+      <h3>Cookie window</h3>
+      <p>7 days to lifetime — partners know how long referrals are credited before they apply.</p>
+    </div>
+    <div class="field">
+      <h3>Who it suits</h3>
+      <p>Optional — e.g. networkers with a local business audience — helps the right partners self-select.</p>
+    </div>
+  </div>
+
+  <p class="kicker">Step by step</p>
+  <h2>From listing to partner enquiry</h2>
+  <ol class="steps">
+    <li class="step">
+      <div class="step-num"></div>
+      <div>
+        <h3>Open Business opportunities</h3>
+        <p>Sign in and choose <strong>List a listing</strong>. Select opportunity type <strong>Affiliate</strong>.</p>
+      </div>
+    </li>
+    <li class="step">
+      <div class="step-num"></div>
+      <div>
+        <h3>Add programme details</h3>
+        <p>Title, summary, commission, what partners promote, cookie window, region and contact details. Keep claims factual.</p>
+      </div>
+    </li>
+    <li class="step">
+      <div class="step-num"></div>
+      <div>
+        <h3>Submit free → pay after approval</h3>
+        <p>No charge to submit. When approved, start the £25 + VAT monthly subscription via Stripe. Optional Premium Spotlight (£55 one-time).</p>
+      </div>
+    </li>
+    <li class="step">
+      <div class="step-num"></div>
+      <div>
+        <h3>Receive enquiries &amp; onboard partners</h3>
+        <p>Enquiries land in your inbox and workspace. Vet partners, then share your Awin / Impact / own tracking links yourself.</p>
+      </div>
+    </li>
+  </ol>
+
+  <div class="pricing">
+    <div class="pricing-top">
+      <div>
+        <h3>Simple listing fees</h3>
+        <p class="pricing-tagline">Same directory pricing as other opportunity types · cancel anytime</p>
+      </div>
+      <div class="price">
+        <b>£25</b>
+        <span>per month + VAT</span>
+      </div>
+    </div>
+    <ul>
+      <li>Works alongside Awin, Impact, CJ &amp; more</li>
+      <li>Pay only after approval</li>
+      <li>Commission &amp; cookie shown on listing</li>
+      <li>Direct enquiries — you share the links</li>
+      <li>Optional Premium Spotlight £55 one-time</li>
+      <li>Browsing &amp; enquiring free for members</li>
+    </ul>
+  </div>
+
+  <div class="footer">
+    <div class="cta-box">
+      <strong>Ready to list your affiliate programme?</strong>
+      <span>thenetworkeruk.com/opportunities/list</span>
+    </div>
+    <p class="footer-note">Listings are informational only, not FCA-regulated investment advice. We review submissions for completeness; always conduct your own due diligence.</p>
+  </div>
+
+  <p class="page-num">2 of 2</p>
+</section>
+
+</body>
+</html>

@@ -1191,11 +1191,13 @@
   }
 
   function syncOpportunitiesPitchPdfLink(show) {
-    var link = document.getElementById('admin-opportunities-pitch-pdf');
-    if (!link) return;
     var on = !!show;
-    link.classList.toggle('hidden', !on);
-    link.hidden = !on;
+    ['admin-opportunities-pitch-pdf', 'admin-opportunities-affiliate-pdf'].forEach(function (id) {
+      var link = document.getElementById(id);
+      if (!link) return;
+      link.classList.toggle('hidden', !on);
+      link.hidden = !on;
+    });
   }
 
   function adminGuideKey(route, fullHash) {

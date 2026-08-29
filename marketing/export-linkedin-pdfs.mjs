@@ -37,6 +37,11 @@ const LINKEDIN_PDFS = [
     file: 'list-business-opportunity-linkedin.pdf',
     download: 'Networker UK - How to List Business Opportunities (LinkedIn).pdf',
   },
+  {
+    html: 'list-affiliate-opportunity-linkedin.html',
+    file: 'list-affiliate-opportunity-linkedin.pdf',
+    download: 'Networker UK - List Affiliate Opportunity (LinkedIn).pdf',
+  },
 ];
 
 async function exportSquarePdf(browser, { html, file }) {
