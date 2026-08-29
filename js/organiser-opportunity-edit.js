@@ -2008,9 +2008,9 @@
     const region = getSelectedListingRegion();
     const locationDetail = document.getElementById('oe-location-detail')?.value.trim() || '';
     const location = formatListingLocation(region, locationDetail);
-    const commitment = document.getElementById('oe-commitment').value.trim();
-    const extraKey = document.getElementById('oe-extra-key').value.trim();
-    const extraVal = document.getElementById('oe-extra-val').value.trim();
+    const commitment = document.getElementById('oe-commitment')?.value.trim() || '';
+    const extraKey = document.getElementById('oe-extra-key')?.value.trim() || '';
+    const extraVal = document.getElementById('oe-extra-val')?.value.trim() || '';
 
     if (affiliate) {
       const commission = document.getElementById('oe-commission')?.value.trim() || '';
@@ -2022,9 +2022,9 @@
       const cookieWindow = document.getElementById('oe-cookie-window')?.value.trim() || '';
       if (cookieWindow) meta.push({ key: 'Cookie window', val: cookieWindow });
     } else {
-      const investment = document.getElementById('oe-investment').value.trim();
+      const investment = document.getElementById('oe-investment')?.value.trim() || '';
       if (investment) meta.push({ key: 'Investment', val: investment });
-      const includes = document.getElementById('oe-investment-includes').value.trim();
+      const includes = document.getElementById('oe-investment-includes')?.value.trim() || '';
       if (includes) meta.push({ key: 'Investment includes', val: includes });
     }
 
@@ -2684,9 +2684,17 @@
       }
     });
 
-    refreshListingPreview();
-    refreshSubmitSummary();
     renderOeWizard(options);
+    try {
+      refreshListingPreview();
+    } catch (e) {
+      /* non-fatal */
+    }
+    try {
+      refreshSubmitSummary();
+    } catch (e) {
+      /* non-fatal */
+    }
   }
 
   function confirmOeStep(stepKey) {
@@ -3360,8 +3368,19 @@
     bindStepFeedbackClear();
     bindOpportunitySteps();
     bindUnsavedGuard();
-    refreshModerationWarnings(true);
-    refreshCompleteness();
+    syncAffiliateFormMode();
+    updateFcaAttestVisibility();
+    syncOpportunitySteps();
+    try {
+      refreshModerationWarnings(true);
+    } catch (e) {
+      /* non-fatal — keep the step UI usable if a field probe fails */
+    }
+    try {
+      refreshCompleteness();
+    } catch (e) {
+      /* non-fatal */
+    }
 
     const investmentEl = document.getElementById('oe-investment');
     if (investmentEl) {
