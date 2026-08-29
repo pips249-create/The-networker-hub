@@ -518,20 +518,40 @@ body.networking-region-page .networking-region-intro {
     gap: 12px;
   }
 
+  /* City Sponsor sits with the city heading, not under the organiser link at the card foot. */
+  .networking-region-intro-copy {
+    display: contents;
+  }
+
+  .networking-region-intro-copy > .networking-region-kicker {
+    order: 1;
+  }
+
+  .networking-region-intro h2 {
+    order: 2;
+  }
+
   .networking-region-intro-actions {
+    order: 3;
     width: 100%;
     justify-content: stretch;
+  }
+
+  .networking-region-intro-copy > p:not(.networking-region-kicker),
+  .networking-region-organiser-link {
+    order: 4;
+  }
+
+  .networking-region-landmark,
+  .networking-region-skyline {
+    order: 5;
+    width: min(168px, 48vw);
+    justify-self: end;
   }
 
   .networking-region-city-partner,
   .networking-city-partner-ad {
     width: 100%;
-  }
-
-  .networking-region-landmark,
-  .networking-region-skyline {
-    width: min(168px, 48vw);
-    justify-self: end;
   }
 
   .networking-location-directory:not(.home-locations) {

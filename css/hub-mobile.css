@@ -602,7 +602,7 @@ body.nav-menu-open {
 /* ─── Events browse ─── */
 @media (max-width: 768px) {
   .events-page .events-hero {
-    padding: 16px 16px 20px;
+    padding: 28px 16px 22px;
   }
 
   .events-page .events-hero-copy h1 {
@@ -611,6 +611,21 @@ body.nav-menu-open {
 
   .events-page .events-hero-inner {
     text-align: center;
+  }
+
+  /* Soften the directory eyebrow so it reads with the headline, not as a floating chip under the nav. */
+  .events-page .events-hero-badge {
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    margin: 0 auto 10px;
+    letter-spacing: 0.12em;
+    color: rgba(212, 184, 232, 0.92);
+  }
+
+  .events-page .events-hero-badge::before {
+    box-shadow: none;
+    opacity: 0.9;
   }
 
   .events-page .events-hero-lede {
@@ -705,6 +720,18 @@ body.nav-menu-open {
 
   .events-page #networking-region-intro {
     order: 7;
+  }
+
+  /* City / county landings: keep the local intro + City Sponsor above the feed,
+     not buried under Browse by county at the bottom of the page. */
+  body.networking-region-page.events-page #networking-region-intro {
+    order: 0;
+    margin-top: 0;
+    margin-bottom: 14px;
+  }
+
+  body.networking-region-page.events-page #networking-location-directory {
+    order: 6;
   }
 
   .events-page .home-locations.networking-location-directory {
