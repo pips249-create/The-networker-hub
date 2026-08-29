@@ -834,9 +834,19 @@
       ? '/opportunities/' + encodeURIComponent(item.slug)
       : '/opportunities/opportunity?id=' + encodeURIComponent(item.id);
     var invest = '';
+    var isAffiliate = catalog && catalog.isAffiliateStyleListing && catalog.isAffiliateStyleListing(item);
     (item.meta || []).forEach(function (m) {
-      if (/^investment$/i.test(m.key)) invest = String(m.val || '').trim();
+      if (isAffiliate && /^commission$/i.test(m.key) && m.val) {
+        invest = String(m.val || '').trim();
+      } else if (!isAffiliate && /^investment$/i.test(m.key) && !invest) {
+        invest = String(m.val || '').trim();
+      }
     });
+    if (invest && catalog && catalog.formatMetaDisplayValue) {
+      invest = catalog.formatMetaDisplayValue(isAffiliate ? 'Commission' : 'Investment', invest);
+    } else if (invest && !isAffiliate && !/^£/.test(invest) && /\d/.test(invest)) {
+      invest = '£' + invest;
+    }
     return (
       '<a class="opp-similar-card" href="' +
       escapeHtml(href) +
