@@ -387,6 +387,63 @@ async function sendOpportunityOpenDayInterestEmails(opportunity, openDay, intere
   return results;
 }
 
+/**
+ * Email a claim invite for a hub/admin-assigned business opportunity listing.
+ * Does not change ownership fields — caller decides when to send.
+ */
+async function sendOpportunityClaimInviteEmail(opportunity) {
+  const ownerEmail = ownerEmailForOpportunity(opportunity);
+  if (!ownerEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(ownerEmail)) {
+    const err = new Error('invalid_owner_email');
+    err.code = 'invalid_owner_email';
+    throw err;
+  }
+  const { isHubSeedOwnerEmail } = require('./opportunity-hub-seed');
+  if (isHubSeedOwnerEmail(ownerEmail)) {
+    const err = new Error('hub_owned_listing');
+    err.code = 'hub_owned_listing';
+    throw err;
+  }
+  const claimStatus = String(
+    opportunity.ownershipClaimStatus || opportunity.ownership_claim_status || ''
+  )
+    .trim()
+    .toLowerCase();
+  if (claimStatus === 'claimed') {
+    const err = new Error('already_claimed');
+    err.code = 'already_claimed';
+    throw err;
+  }
+
+  const siteHost = siteBase();
+  const { resolveOpportunityClaimUrl } = require('./opportunity-claim-url');
+  const { campaignSiteVars } = require('./organiser-campaign-defaults');
+  const slugOrId = String(opportunity.slug || opportunity.id || '').trim();
+  const claimUrl = await resolveOpportunityClaimUrl(ownerEmail, siteHost, slugOrId);
+  const ownerName = ownerNameFromOpportunity(opportunity, ownerEmail);
+  const title = String(opportunity.title || 'your business opportunity').trim();
+
+  await sendTemplatedEmail({
+    slug: 'opportunity_claim_invite',
+    to: ownerEmail,
+    subject: 'Congratulations: ' + title + ' is ready — claim your listing',
+    variables: {
+      ...campaignSiteVars(siteHost),
+      owner_name: ownerName,
+      opportunity_title: title,
+      claim_url: claimUrl,
+    },
+    skipEmailCheck: true,
+  });
+
+  return {
+    ok: true,
+    email: ownerEmail,
+    claimUrl,
+    message: 'Claim invite emailed to ' + ownerEmail + '.',
+  };
+}
+
 module.exports = {
   formatEmailDate,
   ownerNameFromOpportunity,
@@ -398,4 +455,5 @@ module.exports = {
   sendOpportunityPremiumLiveEmail,
   sendOpportunityEnquiryEmails,
   sendOpportunityOpenDayInterestEmails,
+  sendOpportunityClaimInviteEmail,
 };

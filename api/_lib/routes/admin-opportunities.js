@@ -11,7 +11,11 @@ const {
   writeOpportunityRow,
 } = require('../supabase-opportunities');
 const { stripEarningsMeta, isNetworkMarketingType, scanOpportunityRedFlags } = require('../opportunity-moderation');
-const { sendOpportunityListingLiveEmail, sendOpportunityListingApprovedPayEmail } = require('../opportunity-emails');
+const {
+  sendOpportunityListingLiveEmail,
+  sendOpportunityListingApprovedPayEmail,
+  sendOpportunityClaimInviteEmail,
+} = require('../opportunity-emails');
 const { ensureOpportunitySlug } = require('../opportunity-slug');
 const { addMonths, listingPaymentCurrent, listingPaymentLapsed, listingBillingMode } = require('../opportunity-listing-pricing');
 const { resolveImageUrl } = require('../supabase-storage');
@@ -740,6 +744,81 @@ module.exports = async function handler(req, res) {
       }
     }
 
+    if (body.action === 'bulk_send_claim_invites') {
+      const ids = [
+        ...new Set(
+          (Array.isArray(body.ids) ? body.ids : [])
+            .map((rowId) => String(rowId || '').trim())
+            .filter(Boolean)
+        ),
+      ];
+      if (!ids.length) return json(res, 400, { error: 'missing_ids' });
+      if (ids.length > 50) {
+        return json(res, 400, {
+          ok: false,
+          error: 'too_many_ids',
+          message: 'Send at most 50 claim invites per batch.',
+        });
+      }
+      try {
+        const sb = getSupabaseAdmin();
+        const { data: rows, error } = await sb
+          .from('business_opportunities')
+          .select('*')
+          .in('id', ids);
+        if (error) throw new Error(error.message);
+        const byId = new Map((rows || []).map((row) => [String(row.id), row]));
+        const results = [];
+        let sent = 0;
+        let failed = 0;
+        for (const rowId of ids) {
+          const row = byId.get(String(rowId));
+          if (!row) {
+            results.push({ id: rowId, ok: false, error: 'not_found' });
+            failed += 1;
+            continue;
+          }
+          try {
+            const result = await sendOpportunityClaimInviteEmail(row);
+            results.push({
+              id: rowId,
+              ok: true,
+              email: result.email,
+              claimUrl: result.claimUrl,
+            });
+            sent += 1;
+          } catch (sendErr) {
+            results.push({
+              id: rowId,
+              ok: false,
+              error: (sendErr && sendErr.code) || sendErr.message || 'send_failed',
+              title: row.title || '',
+            });
+            failed += 1;
+          }
+        }
+        return json(res, 200, {
+          ok: true,
+          sent,
+          failed,
+          results,
+          message:
+            'Sent ' +
+            sent +
+            ' claim invite' +
+            (sent === 1 ? '' : 's') +
+            (failed ? ' · ' + failed + ' skipped or failed' : '') +
+            '.',
+        });
+      } catch (e) {
+        return json(res, 500, {
+          ok: false,
+          error: 'bulk_send_claim_invites_failed',
+          message: e.message,
+        });
+      }
+    }
+
     if (body.action === 'create') {
       const title = String(body.title || '').trim();
       if (!title) return json(res, 400, { error: 'missing_title' });
@@ -1105,51 +1184,88 @@ module.exports = async function handler(req, res) {
           .single();
         if (error) throw new Error(error.message);
 
-        let claimUrl = null;
-        let emailSent = false;
-        if (!isHubSeedOwnerEmail(ownerEmail) && patch.ownership_claim_status === 'pending') {
-          const siteHost = String(process.env.SITE_URL || 'https://www.thenetworkeruk.com').replace(
-            /\/$/,
-            ''
-          );
-          const { resolveOpportunityClaimUrl } = require('../opportunity-claim-url');
-          const { sendTemplatedEmail } = require('../send-template-email');
-          const { campaignSiteVars } = require('../organiser-campaign-defaults');
-          const slugOrId = String(data.slug || data.id || '').trim();
-          claimUrl = await resolveOpportunityClaimUrl(ownerEmail, siteHost, slugOrId);
-          const ownerName =
-            String(data.host || '').trim() ||
-            ownerEmail.split('@')[0] ||
-            'there';
-          await sendTemplatedEmail({
-            slug: 'opportunity_claim_invite',
-            to: ownerEmail,
-            subject:
-              'Congratulations: ' +
-              String(data.title || 'your opportunity') +
-              ' is ready — claim your listing',
-            variables: {
-              ...campaignSiteVars(siteHost),
-              owner_name: ownerName,
-              opportunity_title: String(data.title || 'your business opportunity'),
-              claim_url: claimUrl,
-            },
-            skipEmailCheck: true,
-          });
-          emailSent = true;
-        }
-
         return json(res, 200, {
           ok: true,
           opportunity: mapOpportunityRow(data),
-          claimUrl,
-          emailSent,
-          message: emailSent
-            ? 'Owner assigned and claim invite emailed to ' + ownerEmail + '.'
-            : 'Owner assigned.',
+          emailSent: false,
+          message: isHubSeedOwnerEmail(ownerEmail)
+            ? 'Owner set to hub-owned (no invite emailed).'
+            : 'Owner assigned — no email sent. Use Send claim invite when you are ready.',
         });
       } catch (e) {
         return json(res, 500, { ok: false, error: 'assign_owner_failed', message: e.message });
+      }
+    }
+
+    if (body.action === 'send_claim_invite') {
+      try {
+        const sb = getSupabaseAdmin();
+        const { data: existing, error: loadError } = await sb
+          .from('business_opportunities')
+          .select('*')
+          .eq('id', id)
+          .maybeSingle();
+        if (loadError) throw new Error(loadError.message);
+        if (!existing) return json(res, 404, { ok: false, error: 'not_found' });
+
+        let row = existing;
+        if (
+          Object.prototype.hasOwnProperty.call(body, 'owner_email') ||
+          Object.prototype.hasOwnProperty.call(body, 'ownerEmail')
+        ) {
+          try {
+            const ownerPatch = buildOwnerEmailSavePatch(
+              body.owner_email != null ? body.owner_email : body.ownerEmail,
+              existing.owner_email
+            );
+            ownerPatch.updated_at = new Date().toISOString();
+            const { data: updated, error: updateError } = await sb
+              .from('business_opportunities')
+              .update(ownerPatch)
+              .eq('id', id)
+              .select('*')
+              .single();
+            if (updateError) throw new Error(updateError.message);
+            row = updated;
+          } catch (ownerErr) {
+            if (ownerErr && ownerErr.code === 'invalid_owner_email') {
+              return json(res, 400, {
+                ok: false,
+                error: 'invalid_owner_email',
+                message: 'Enter a valid owner email before sending an invite.',
+              });
+            }
+            throw ownerErr;
+          }
+        }
+
+        const result = await sendOpportunityClaimInviteEmail(row);
+        return json(res, 200, {
+          ok: true,
+          opportunity: mapOpportunityRow(row),
+          emailSent: true,
+          claimUrl: result.claimUrl,
+          message: result.message,
+        });
+      } catch (e) {
+        const code = e && e.code;
+        if (
+          code === 'invalid_owner_email' ||
+          code === 'hub_owned_listing' ||
+          code === 'already_claimed'
+        ) {
+          return json(res, 400, {
+            ok: false,
+            error: code,
+            message:
+              code === 'hub_owned_listing'
+                ? 'Set a claimant email before sending an invite.'
+                : code === 'already_claimed'
+                  ? 'This listing is already claimed.'
+                  : 'Enter a valid owner email before sending an invite.',
+          });
+        }
+        return json(res, 500, { ok: false, error: 'send_claim_invite_failed', message: e.message });
       }
     }
 
