@@ -120,31 +120,111 @@ function buildOpportunityListingEmailVars(opportunity) {
   };
 }
 
-async function sendOpportunityListingLiveEmail(opportunity) {
+function listingLiveEmailIdempotencyKey(opportunity) {
+  const id = String(opportunity?.id || '').trim();
+  if (!id) return undefined;
+  const paidAt = String(opportunity?.listingPaidAt || opportunity?.listing_paid_at || '').trim();
+  const period = paidAt || 'nopay';
+  return ('opp-listing-live:' + id + ':' + period).slice(0, 256);
+}
+
+function isMissingListingLiveEmailColumnError(error) {
+  const msg = String((error && error.message) || error || '').toLowerCase();
+  if (!msg.includes('listing_live_email_sent_at')) return false;
+  return (
+    msg.includes('does not exist') ||
+    msg.includes('schema cache') ||
+    msg.includes('could not find') ||
+    msg.includes('unknown column')
+  );
+}
+
+/**
+ * Send "Your opportunity is live" at most once per paid period.
+ * Claim listing_live_email_sent_at before Resend; release on failure.
+ * Pass { force: true } only for deliberate admin resends.
+ */
+async function sendOpportunityListingLiveEmail(opportunity, options) {
   const to = ownerEmailForOpportunity(opportunity);
   if (!to) return { skipped: true, reason: 'no_owner_email' };
 
+  const opportunityId = String(opportunity?.id || '').trim();
+  const force = Boolean(options && options.force);
+  let claimedAt = null;
+  let sb = null;
+
+  if (!force && opportunityId) {
+    try {
+      const { getSupabaseAdmin } = require('./supabase');
+      const { claimRowTimestamp } = require('./email-send-claim');
+      sb = (options && options.sb) || getSupabaseAdmin();
+      claimedAt = new Date().toISOString();
+      const claimed = await claimRowTimestamp(sb, {
+        table: 'business_opportunities',
+        id: opportunityId,
+        column: 'listing_live_email_sent_at',
+        claimedAt,
+        previousValue: null,
+      });
+      if (!claimed) {
+        return { skipped: true, reason: 'already_sent' };
+      }
+    } catch (claimErr) {
+      if (isMissingListingLiveEmailColumnError(claimErr)) {
+        console.warn(
+          '[opportunity] listing_live_email_sent_at missing — apply migration 276_opportunity_listing_live_email_sent_at.sql'
+        );
+        claimedAt = null;
+      } else {
+        throw claimErr;
+      }
+    }
+  }
+
   const siteUrl = siteBase();
   const listing = buildOpportunityListingEmailVars(opportunity);
-  await sendTemplatedEmail({
-    slug: 'opportunity_listing_live',
-    to,
-    variables: {
-      owner_name: ownerNameFromOpportunity(opportunity, to),
-      ...listing,
-      opportunity_url: opportunityPublicUrl(opportunity, siteUrl),
-      dashboard_url: organiserBusinessDashboardUrl(siteUrl),
-      open_days_url: organiserBusinessOpenDaysUrl(siteUrl),
-      business_opportunities_url: organiserBusinessDashboardUrl(siteUrl),
-      expiry_date: listing.listing_until,
-      expiry_note: listing.listing_until
-        ? 'Your listing is paid until ' +
-          listing.listing_until +
-          '. Cancel any time from Edit listing → Manage or cancel subscription.'
-        : 'Your listing is now visible in the business opportunities directory. Cancel any time from Edit listing → Manage or cancel subscription.',
-    },
-    subject: 'Your opportunity is live — ' + listing.opportunity_title,
-  });
+  const send = (options && options.sendTemplatedEmail) || sendTemplatedEmail;
+  try {
+    await send({
+      slug: 'opportunity_listing_live',
+      to,
+      variables: {
+        owner_name: ownerNameFromOpportunity(opportunity, to),
+        ...listing,
+        opportunity_url: opportunityPublicUrl(opportunity, siteUrl),
+        dashboard_url: organiserBusinessDashboardUrl(siteUrl),
+        open_days_url: organiserBusinessOpenDaysUrl(siteUrl),
+        business_opportunities_url: organiserBusinessDashboardUrl(siteUrl),
+        expiry_date: listing.listing_until,
+        expiry_note: listing.listing_until
+          ? 'Your listing is paid until ' +
+            listing.listing_until +
+            '. Cancel any time from Edit listing → Manage or cancel subscription.'
+          : 'Your listing is now visible in the business opportunities directory. Cancel any time from Edit listing → Manage or cancel subscription.',
+      },
+      subject: 'Your opportunity is live — ' + listing.opportunity_title,
+      idempotencyKey: force ? undefined : listingLiveEmailIdempotencyKey(opportunity),
+      resendTags: [
+        { name: 'email_type', value: 'opportunity_listing_live' },
+        ...(opportunityId ? [{ name: 'opportunity_id', value: opportunityId.slice(0, 40) }] : []),
+      ],
+    });
+  } catch (sendErr) {
+    if (claimedAt && opportunityId && sb) {
+      try {
+        const { releaseRowTimestamp } = require('./email-send-claim');
+        await releaseRowTimestamp(sb, {
+          table: 'business_opportunities',
+          id: opportunityId,
+          column: 'listing_live_email_sent_at',
+          claimedAt,
+        });
+      } catch {
+        /* best-effort release */
+      }
+    }
+    throw sendErr;
+  }
   return { sent: true, to };
 }
 
@@ -392,6 +472,7 @@ module.exports = {
   ownerNameFromOpportunity,
   ownerEmailForOpportunity,
   buildOpportunityListingEmailVars,
+  listingLiveEmailIdempotencyKey,
   sendOpportunityListingLiveEmail,
   sendOpportunityListingPendingReviewEmail,
   sendOpportunityListingApprovedPayEmail,
