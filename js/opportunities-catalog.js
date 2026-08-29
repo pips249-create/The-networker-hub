@@ -365,7 +365,8 @@
         }
       }
       if (/^£/.test(v)) return v;
-      if (/\d/.test(v)) return '£' + v;
+      // Ranges like "5k–10k": add £ once. Don't prefix letter-led text ("From 5,000").
+      if (/\d/.test(v) && !/^[A-Za-z]/.test(v)) return '£' + v;
     }
     return v;
   }
