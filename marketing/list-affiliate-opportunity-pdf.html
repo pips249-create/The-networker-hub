@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="robots" content="noindex, nofollow">
-<title>List a Business Opportunity · The Networker UK</title>
+<title>List an Affiliate Opportunity · The Networker UK</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&family=DM+Serif+Display&display=swap" rel="stylesheet">
@@ -80,7 +80,7 @@
 
   h1 {
     font-family: 'DM Serif Display', Georgia, serif;
-    font-size: 26pt;
+    font-size: 25pt;
     font-weight: 400;
     line-height: 1.12;
     color: var(--navy);
@@ -92,8 +92,8 @@
     font-size: 11.5pt;
     line-height: 1.5;
     color: var(--muted);
-    max-width: 165mm;
-    margin-bottom: 7mm;
+    max-width: 168mm;
+    margin-bottom: 6mm;
   }
 
   h2 {
@@ -115,7 +115,26 @@
     margin-bottom: 2mm;
   }
 
-  /* Benefits */
+  .alongside {
+    background: var(--gold-pale);
+    border: 1.5px solid rgba(201, 150, 31, 0.35);
+    border-radius: 10px;
+    padding: 5mm 6mm;
+    margin-bottom: 7mm;
+  }
+  .alongside strong {
+    display: block;
+    font-size: 12pt;
+    font-weight: 800;
+    color: var(--navy);
+    margin-bottom: 1.5mm;
+  }
+  .alongside p {
+    font-size: 10pt;
+    line-height: 1.45;
+    color: var(--muted);
+  }
+
   .benefits {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -150,7 +169,6 @@
     color: #fff;
     border-radius: 10px;
     padding: 5.5mm 6.5mm;
-    margin-bottom: 6mm;
   }
   .highlight h2 {
     color: #fff;
@@ -164,11 +182,11 @@
   }
   .highlight-stat b {
     display: block;
-    font-size: 16pt;
+    font-size: 15pt;
     font-weight: 800;
     color: var(--gold);
     letter-spacing: -0.03em;
-    line-height: 1;
+    line-height: 1.1;
     margin-bottom: 1mm;
   }
   .highlight-stat span {
@@ -177,49 +195,37 @@
     color: rgba(255,255,255,0.85);
   }
 
-  .types {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 2mm;
-    margin-bottom: 4mm;
+  .fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3.5mm;
+    margin-bottom: 6mm;
   }
-  .type-tag {
-    padding: 1.5mm 3.5mm;
-    border-radius: 999px;
-    background: var(--navy);
-    color: #fff;
-    font-size: 8pt;
-    font-weight: 600;
-  }
-
-  .alongside {
+  .field {
     background: var(--bg);
     border: 1px solid var(--border);
-    border-left: 3.5px solid var(--gold);
     border-radius: 8px;
-    padding: 4mm 5mm;
+    padding: 4mm 4.5mm;
   }
-  .alongside strong {
-    display: block;
+  .field h3 {
     font-size: 10pt;
     font-weight: 800;
     color: var(--navy);
     margin-bottom: 1mm;
   }
-  .alongside p {
-    font-size: 9pt;
-    line-height: 1.45;
+  .field p {
+    font-size: 8.5pt;
+    line-height: 1.4;
     color: var(--muted);
   }
 
-  /* Steps */
   .steps { list-style: none; counter-reset: step; }
   .step {
     counter-increment: step;
     display: grid;
     grid-template-columns: 11mm 1fr;
     gap: 3.5mm;
-    padding: 3.5mm 0;
+    padding: 3.2mm 0;
     border-bottom: 1px solid var(--border);
   }
   .step:last-child { border-bottom: none; }
@@ -252,7 +258,7 @@
     border: 1.5px solid rgba(201, 150, 31, 0.35);
     border-radius: 10px;
     padding: 5.5mm 6.5mm;
-    margin: 6mm 0;
+    margin: 5.5mm 0;
   }
   .pricing-top {
     display: flex;
@@ -352,56 +358,61 @@
 </head>
 <body>
 
-<!-- PAGE 1: Benefits -->
+<!-- PAGE 1: Why list affiliate programmes -->
 <section class="page">
   <div class="bar"></div>
   <header class="header">
     <img class="logo" src="../assets/logo-nav-transparent.png?v=20260823uk3" alt="The Networker UK" width="420" height="168">
     <div class="header-meta">
-      <div class="badge">Coming 1st September</div>
+      <div class="badge">Affiliate programmes</div>
       <p class="header-url">thenetworkeruk.com/opportunities</p>
     </div>
   </header>
 
-  <p class="kicker">For providers &amp; franchisors</p>
-  <h1>List your <span class="accent">business opportunity</span> on The Networker UK</h1>
+  <p class="kicker">For brands &amp; affiliate managers</p>
+  <h1>Recruit UK partners for your <span class="accent">affiliate programme</span></h1>
   <p class="lede">
-    Reach UK business professionals who already browse networking events and opportunities in one place.
-    Franchises, affiliates, side hustles, partnerships, network marketing and more — with direct enquiries, open days, and compare tools built in.
+    Reach business networkers who already introduce products and services locally.
+    List your commission, cookie window and what partners promote — then take enquiries direct.
   </p>
 
+  <div class="alongside">
+    <strong>Keep Awin, Impact, CJ &amp; similar networks</strong>
+    <p>Listing on The Networker UK does not replace your existing partner platforms. Use us as an extra UK discovery channel — no exclusivity, no per-lead fees. Partners enquire with you; you share tracking or signup links after.</p>
+  </div>
+
   <p class="kicker">Why list here</p>
-  <h2>Benefits of listing on Business Opportunities</h2>
+  <h2>Built for affiliate recruitment</h2>
   <div class="benefits">
     <div class="benefit">
+      <div class="benefit-icon">🔗</div>
+      <h3>Alongside your networks</h3>
+      <p>Stay on Awin, Impact or CJ. Add The Networker UK for UK networkers who browse opportunities next to events.</p>
+    </div>
+    <div class="benefit">
       <div class="benefit-icon">✉️</div>
-      <h3>Direct enquiries</h3>
-      <p>Interested members contact you directly. No middlemen, no auctions, no per-lead fees.</p>
+      <h3>Direct partner enquiries</h3>
+      <p>Interested people contact you. You vet them and share affiliate or tracking links yourself — we never sit in the deal.</p>
     </div>
     <div class="benefit">
-      <div class="benefit-icon">👥</div>
-      <h3>Built-in UK audience</h3>
-      <p>Your listing appears where networkers already browse, alongside events and organiser communities.</p>
-    </div>
-    <div class="benefit">
-      <div class="benefit-icon">📅</div>
-      <h3>Open days &amp; visits</h3>
-      <p>Schedule open days or talks on your listing. Prospects register interest and you manage the list from your workspace.</p>
+      <div class="benefit-icon">💷</div>
+      <h3>Commission &amp; cookie upfront</h3>
+      <p>Show commission, cookie window and what partners promote on the listing so the right people enquire.</p>
     </div>
     <div class="benefit">
       <div class="benefit-icon">🔍</div>
       <h3>Filter &amp; compare</h3>
-      <p>Prospects filter by type, budget and location, then compare listings side by side — including affiliate commission details.</p>
+      <p>Prospects filter by type and budget, then compare affiliate rows side by side before they reach out.</p>
     </div>
     <div class="benefit">
-      <div class="benefit-icon">📊</div>
-      <h3>Organiser dashboard</h3>
-      <p>Manage listings, enquiries, open-day interest and edits from the same workspace you use for events.</p>
+      <div class="benefit-icon">👥</div>
+      <h3>UK networking audience</h3>
+      <p>Your programme appears where organisers and members already look for side income and partnership offers.</p>
     </div>
     <div class="benefit">
       <div class="benefit-icon">⭐</div>
       <h3>Premium Spotlight</h3>
-      <p>Optional one-time £55 boost (up to 30 days) for featured carousel placement — max 12 premium slots at a time.</p>
+      <p>Optional one-time £55 boost (up to 30 days) for featured carousel placement — max 12 premium slots.</p>
     </div>
   </div>
 
@@ -409,34 +420,18 @@
     <h2>At a glance</h2>
     <div class="highlight-grid">
       <div class="highlight-stat">
-        <b>Direct</b>
-        <span>Enquiries &amp; open-day interest go to your inbox and workspace.</span>
+        <b>No exclusivity</b>
+        <span>Keep Awin / Impact / CJ. List here too.</span>
       </div>
       <div class="highlight-stat">
         <b>Review → pay</b>
-        <span>Submit free. Pay the monthly fee only after we approve.</span>
+        <span>Submit free. Pay only after we approve.</span>
       </div>
       <div class="highlight-stat">
         <b>£25/mo</b>
-        <span>+ VAT · monthly subscription · cancel anytime</span>
+        <span>+ VAT · monthly · cancel anytime</span>
       </div>
     </div>
-  </div>
-
-  <p class="kicker" style="margin-bottom:2.5mm;">Opportunity types you can list</p>
-  <div class="types">
-    <span class="type-tag">Franchise</span>
-    <span class="type-tag">Affiliate</span>
-    <span class="type-tag">Side hustle</span>
-    <span class="type-tag">Partnership</span>
-    <span class="type-tag">Network marketing</span>
-    <span class="type-tag">Distributorship</span>
-    <span class="type-tag">Networking / Ambassador</span>
-  </div>
-
-  <div class="alongside">
-    <strong>Works alongside Awin, Impact &amp; similar networks</strong>
-    <p>Already recruiting or advertising through Awin, Impact, CJ or other partner platforms? Keep them. Listing here is an extra discovery channel for UK networkers — direct enquiries to you, no exclusivity required.</p>
   </div>
 
   <p class="page-num">1 of 2</p>
@@ -453,43 +448,57 @@
     </div>
   </header>
 
-  <p class="kicker">Step by step</p>
-  <h1 style="font-size:22pt;margin-bottom:5mm;">From listing to enquiry in <span class="accent">five steps</span></h1>
+  <p class="kicker">Affiliate listing fields</p>
+  <h1 style="font-size:22pt;margin-bottom:5mm;">What partners see before they <span class="accent">enquire</span></h1>
 
+  <div class="fields">
+    <div class="field">
+      <h3>Commission</h3>
+      <p>e.g. 20% recurring, or £50 per sale — shown clearly on the listing and in compare.</p>
+    </div>
+    <div class="field">
+      <h3>What you promote</h3>
+      <p>Plain-language product or service (not a raw tracking link). You share signup links after enquiry.</p>
+    </div>
+    <div class="field">
+      <h3>Cookie window</h3>
+      <p>7 days to lifetime — partners know how long referrals are credited before they apply.</p>
+    </div>
+    <div class="field">
+      <h3>Who it suits</h3>
+      <p>Optional — e.g. networkers with a local business audience — helps the right partners self-select.</p>
+    </div>
+  </div>
+
+  <p class="kicker">Step by step</p>
+  <h2>From listing to partner enquiry</h2>
   <ol class="steps">
     <li class="step">
       <div class="step-num"></div>
       <div>
-        <h3>Open the organiser dashboard</h3>
-        <p>Sign in at thenetworkeruk.com and go to <strong>Business opportunities</strong> in the sidebar. You need an organiser account — the same workspace used for events.</p>
+        <h3>Open Business opportunities</h3>
+        <p>Sign in and choose <strong>List a listing</strong>. Select opportunity type <strong>Affiliate</strong>.</p>
       </div>
     </li>
     <li class="step">
       <div class="step-num"></div>
       <div>
-        <h3>Create your listing</h3>
-        <p>Choose <strong>List a listing</strong> and complete the form: title, opportunity type(s), summary, description, investment notes, location, industry, images and contact details. Add open days or talks if you host visits.</p>
+        <h3>Add programme details</h3>
+        <p>Title, summary, commission, what partners promote, cookie window, region and contact details. Keep claims factual.</p>
       </div>
     </li>
     <li class="step">
       <div class="step-num"></div>
       <div>
-        <h3>Submit for review (no charge)</h3>
-        <p>Submit free of charge. You&rsquo;ll get email updates when approved or if changes are needed. Edit anytime while pending.</p>
+        <h3>Submit free → pay after approval</h3>
+        <p>No charge to submit. When approved, start the £25 + VAT monthly subscription via Stripe. Optional Premium Spotlight (£55 one-time).</p>
       </div>
     </li>
     <li class="step">
       <div class="step-num"></div>
       <div>
-        <h3>Pay after approval to go live</h3>
-        <p>When approved, you receive a Stripe link to start the monthly subscription (£25 + VAT). Your listing goes live on the directory immediately. Optional: add Premium Spotlight (£55 one-time, up to 30 days).</p>
-      </div>
-    </li>
-    <li class="step">
-      <div class="step-num"></div>
-      <div>
-        <h3>Manage enquiries &amp; open days</h3>
-        <p>Enquiries and open-day interest land in your workspace with email alerts. Reply directly, update details, or cancel the subscription anytime from your billing portal.</p>
+        <h3>Receive enquiries &amp; onboard partners</h3>
+        <p>Enquiries land in your inbox and workspace. Vet partners, then share your Awin / Impact / own tracking links yourself.</p>
       </div>
     </li>
   </ol>
@@ -497,8 +506,8 @@
   <div class="pricing">
     <div class="pricing-top">
       <div>
-        <h3>Simple, transparent listing fees</h3>
-        <p class="pricing-tagline">Monthly Stripe subscription · cancel anytime from your portal</p>
+        <h3>Simple listing fees</h3>
+        <p class="pricing-tagline">Same directory pricing as other opportunity types · cancel anytime</p>
       </div>
       <div class="price">
         <b>£25</b>
@@ -506,21 +515,21 @@
       </div>
     </div>
     <ul>
-      <li>Pay only after approval — no charge to submit</li>
-      <li>Cancel anytime · no minimum term</li>
-      <li>Optional Premium Spotlight £55 one-time (up to 30 days)</li>
-      <li>Open days, enquiries &amp; compare tools included</li>
-      <li>Works alongside Awin, Impact &amp; similar networks</li>
-      <li>Browsing &amp; enquiring is free for members</li>
+      <li>Works alongside Awin, Impact, CJ &amp; more</li>
+      <li>Pay only after approval</li>
+      <li>Commission &amp; cookie shown on listing</li>
+      <li>Direct enquiries — you share the links</li>
+      <li>Optional Premium Spotlight £55 one-time</li>
+      <li>Browsing &amp; enquiring free for members</li>
     </ul>
   </div>
 
   <div class="footer">
     <div class="cta-box">
-      <strong>Ready to list?</strong>
+      <strong>Ready to list your affiliate programme?</strong>
       <span>thenetworkeruk.com/opportunities/list</span>
     </div>
-    <p class="footer-note">Listings are informational only, not FCA-regulated investment advice. We review submissions for completeness and accuracy; always conduct your own due diligence.</p>
+    <p class="footer-note">Listings are informational only, not FCA-regulated investment advice. We review submissions for completeness; always conduct your own due diligence.</p>
   </div>
 
   <p class="page-num">2 of 2</p>

@@ -51,7 +51,23 @@ await exportPdf(browser, 'list-business-opportunity-pdf.html', 'list-business-op
   },
 });
 
+await exportPdf(browser, 'list-affiliate-opportunity-pdf.html', 'list-affiliate-opportunity-guide.pdf', {
+  pdf: {
+    format: 'A4',
+    margin: { top: '0', right: '0', bottom: '0', left: '0' },
+  },
+});
+
 await exportPdf(browser, 'list-business-opportunity-linkedin.html', 'list-business-opportunity-linkedin.pdf', {
+  viewport: { width: 1080, height: 1080 },
+  pdf: {
+    width: '1080px',
+    height: '1080px',
+    margin: { top: '0', right: '0', bottom: '0', left: '0' },
+  },
+});
+
+await exportPdf(browser, 'list-affiliate-opportunity-linkedin.html', 'list-affiliate-opportunity-linkedin.pdf', {
   viewport: { width: 1080, height: 1080 },
   pdf: {
     width: '1080px',
@@ -64,13 +80,15 @@ await browser.close();
 
 const downloads = [
   ['list-business-opportunity-guide.pdf', 'Networker UK - How to List Business Opportunities.pdf'],
+  ['list-affiliate-opportunity-guide.pdf', 'Networker UK - List Affiliate Opportunity.pdf'],
   ['list-business-opportunity-linkedin.pdf', 'Networker UK - How to List Business Opportunities (LinkedIn).pdf'],
+  ['list-affiliate-opportunity-linkedin.pdf', 'Networker UK - List Affiliate Opportunity (LinkedIn).pdf'],
 ];
 
-for (const [src, dest] of downloads) {
-  fs.copyFileSync(
-    path.join(exportsDir, src),
-    path.join(process.env.HOME || '', 'Downloads', dest)
-  );
-  console.log('Copied to Downloads:', dest);
+const downloadsDir = path.join(process.env.HOME || '', 'Downloads');
+if (fs.existsSync(downloadsDir)) {
+  for (const [src, dest] of downloads) {
+    fs.copyFileSync(path.join(exportsDir, src), path.join(downloadsDir, dest));
+    console.log('Copied to Downloads:', dest);
+  }
 }
