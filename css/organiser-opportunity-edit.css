@@ -1845,6 +1845,33 @@ body.oe-opportunity-drawer-open {
   color: var(--opp-gold);
 }
 
+.oe-wizard-mount {
+  margin: 0 0 20px;
+}
+
+.oe-wizard-mount .ee-wizard {
+  margin: 0;
+}
+
+.oe-wizard-mount button.ee-wizard-link {
+  width: 100%;
+  margin: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.oe-wizard-mount button.ee-wizard-link:focus-visible {
+  outline: 2px solid var(--opp-gold);
+  outline-offset: 2px;
+}
+
+.oe-wizard-mount .ee-wizard-step:not(.is-done):not(.is-current) .ee-wizard-link {
+  opacity: 0.72;
+}
+
 @media (max-width: 768px) {
   body.opportunities-page.organiser-opportunity-edit-page.has-site-nav,
   .organiser-opportunity-edit-page.has-site-nav {

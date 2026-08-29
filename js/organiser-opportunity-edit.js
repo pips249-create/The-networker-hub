@@ -78,6 +78,13 @@
   };
 
   const OE_STEP_ORDER = ['details', 'host', 'meta', 'photo', 'submit'];
+  const OE_STEP_META = [
+    { id: 'details', label: 'Opportunity details' },
+    { id: 'host', label: 'Listed by' },
+    { id: 'meta', label: 'Card highlights' },
+    { id: 'photo', label: 'Cover photo' },
+    { id: 'submit', label: 'Review & submit' },
+  ];
 
   let oeStepsConfirmed = {
     details: false,
@@ -2408,6 +2415,133 @@
     return !!(document.getElementById('oe-investment')?.value.trim() || '');
   }
 
+  function getCurrentOeStepKey(revealAll) {
+    if (revealAll) return 'submit';
+    for (let i = 0; i < OE_STEP_ORDER.length; i++) {
+      const key = OE_STEP_ORDER[i];
+      if (key === 'submit') return 'submit';
+      if (!oeStepsConfirmed[key]) return key;
+    }
+    return 'submit';
+  }
+
+  function isOeStepDone(stepKey, currentKey, revealAll) {
+    if (revealAll) return true;
+    const idx = OE_STEP_ORDER.indexOf(stepKey);
+    const currentIdx = OE_STEP_ORDER.indexOf(currentKey);
+    if (idx < 0 || currentIdx < 0) return false;
+    if (idx < currentIdx) return true;
+    return false;
+  }
+
+  function renderOeWizard(options) {
+    const mount = document.getElementById('oe-wizard-mount');
+    if (!mount) return;
+
+    const revealAll = oeFlowRevealAll || Boolean(options && options.revealAll) || Boolean(editId);
+    const currentKey = getCurrentOeStepKey(revealAll);
+    const currentIndex = OE_STEP_ORDER.indexOf(currentKey);
+    const total = OE_STEP_ORDER.length;
+    const stepNum = currentIndex + 1;
+    const remaining = Math.max(0, total - stepNum);
+    const currentLabel = (OE_STEP_META[currentIndex] && OE_STEP_META[currentIndex].label) || '';
+
+    let summaryHtml;
+    if (revealAll) {
+      summaryHtml =
+        '<span class="ee-wizard-step-count">Editing listing</span>' +
+        '<span class="ee-wizard-sep" aria-hidden="true">·</span>' +
+        '<span class="ee-wizard-remaining">All sections open</span>';
+    } else {
+      const remainingText =
+        currentKey === 'submit'
+          ? 'Ready to submit'
+          : remaining === 1
+            ? '1 step left'
+            : remaining + ' steps left';
+      summaryHtml =
+        '<span class="ee-wizard-step-count">Step ' +
+        String(stepNum) +
+        ' of ' +
+        String(total) +
+        '</span>' +
+        '<span class="ee-wizard-sep" aria-hidden="true">·</span>' +
+        '<span class="ee-wizard-current">' +
+        escHtml(currentLabel) +
+        '</span>' +
+        '<span class="ee-wizard-sep" aria-hidden="true">·</span>' +
+        '<span class="ee-wizard-remaining">' +
+        escHtml(remainingText) +
+        '</span>';
+    }
+
+    const parts = [
+      '<nav class="ee-wizard oe-wizard" aria-label="List opportunity progress">',
+      '<p class="ee-wizard-summary">',
+      summaryHtml,
+      '</p>',
+      '<ol class="ee-wizard-steps">',
+    ];
+
+    OE_STEP_META.forEach(function (step, i) {
+      const isCurrent = !revealAll && step.id === currentKey;
+      const isDone = isOeStepDone(step.id, currentKey, revealAll);
+      const canJump = revealAll || (isDone && !isCurrent);
+
+      let cls = 'ee-wizard-step';
+      if (isCurrent) cls += ' is-current';
+      if (isDone) cls += ' is-done';
+
+      const numContent = isDone ? '✓' : String(i + 1);
+
+      parts.push('<li class="' + cls + '"');
+      if (isCurrent) parts.push(' aria-current="step"');
+      parts.push('>');
+
+      if (canJump) {
+        parts.push(
+          '<button type="button" class="ee-wizard-link oe-wizard-jump" data-oe-jump="',
+          escHtml(step.id),
+          '"><span class="ee-wizard-num" aria-hidden="true">',
+          numContent,
+          '</span><span class="ee-wizard-label">',
+          escHtml(step.label),
+          '</span></button>'
+        );
+      } else {
+        parts.push(
+          '<span class="ee-wizard-link"><span class="ee-wizard-num" aria-hidden="true">',
+          numContent,
+          '</span><span class="ee-wizard-label">',
+          escHtml(step.label),
+          '</span></span>'
+        );
+      }
+
+      parts.push('</li>');
+    });
+
+    parts.push('</ol></nav>');
+    mount.innerHTML = parts.join('');
+  }
+
+  function jumpOeWizardStep(stepKey) {
+    if (!OE_STEP_ORDER.includes(stepKey)) return;
+    const revealAll = oeFlowRevealAll || Boolean(editId);
+    if (revealAll) {
+      const card = document.querySelector('.oe-step-card[data-oe-step="' + stepKey + '"]');
+      if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+    if (stepKey === 'submit') {
+      if (!oeStepsConfirmed.photo) return;
+      document.getElementById('oe-card-submit')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
+    if (!oeStepsConfirmed[stepKey] && stepKey !== getCurrentOeStepKey(false)) return;
+    changeOeStep(stepKey);
+  }
+
   function resetOeStepsFrom(stepKey) {
     const idx = OE_STEP_ORDER.indexOf(stepKey);
     if (idx === -1) return;
@@ -2552,6 +2686,7 @@
 
     refreshListingPreview();
     refreshSubmitSummary();
+    renderOeWizard(options);
   }
 
   function confirmOeStep(stepKey) {
@@ -2629,6 +2764,17 @@
   }
 
   function bindOpportunitySteps() {
+    const wizardMount = document.getElementById('oe-wizard-mount');
+    if (wizardMount && !wizardMount.dataset.oeWizardBound) {
+      wizardMount.dataset.oeWizardBound = '1';
+      wizardMount.addEventListener('click', function (e) {
+        const btn = e.target.closest('[data-oe-jump]');
+        if (!btn || !wizardMount.contains(btn)) return;
+        const stepKey = btn.getAttribute('data-oe-jump');
+        if (stepKey) jumpOeWizardStep(stepKey);
+      });
+    }
+
     document.getElementById('oe-continue-details')?.addEventListener('click', function () {
       confirmOeStep('details');
     });
