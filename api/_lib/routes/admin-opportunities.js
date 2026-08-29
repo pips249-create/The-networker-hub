@@ -244,6 +244,11 @@ function mapOpportunityRow(row) {
     regionSlug: String(source.region_slug || row.region_slug || '').trim(),
     host: String(source.host || '').trim(),
     type: source.type || row.type || '',
+    tags: Array.isArray(source.tags)
+      ? source.tags.slice()
+      : Array.isArray(row.tags)
+        ? row.tags.slice()
+        : [],
     category: source.category || row.category || '',
     contact_email: String(source.contact_email || row.contact_email || '').trim(),
     status: row.status || 'draft',

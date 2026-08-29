@@ -500,9 +500,16 @@
 
   function getSpotlightFeatured() {
     if (!spotlightFeaturedOrder) {
+      var now = Date.now();
       var featured = dedupeListingsById(
         allListings.filter(function (item) {
-          return item.featured && !isNetworkMarketingListing(item);
+          if (!item || !item.featured || isNetworkMarketingListing(item)) return false;
+          var untilIso = item.featuredUntil || item.featured_until;
+          if (untilIso) {
+            var untilMs = new Date(untilIso).getTime();
+            if (!isNaN(untilMs) && untilMs <= now) return false;
+          }
+          return true;
         })
       ).slice(0, SPOTLIGHT_MAX);
       spotlightFeaturedOrder = shuffleList(featured);
