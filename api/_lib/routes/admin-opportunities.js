@@ -23,7 +23,7 @@ const {
   applyPendingOpportunitiesAdminFilter,
 } = require('../opportunity-review-queue');
 
-const { HUB_SEED_OWNER_EMAIL, isHubSeedOwnerEmail } = require('../opportunity-hub-seed');
+const { HUB_SEED_OWNER_EMAIL, isHubSeedOwnerEmail, buildOwnerEmailSavePatch } = require('../opportunity-hub-seed');
 const { applyIlikeSearch } = require('../search-match');
 const {
   isOpportunityReviewQueueReady,
@@ -1218,6 +1218,31 @@ module.exports = async function handler(req, res) {
         .trim()
         .toLowerCase();
       patch.contact_email = contactEmail || null;
+    }
+    if (
+      Object.prototype.hasOwnProperty.call(body, 'owner_email') ||
+      Object.prototype.hasOwnProperty.call(body, 'ownerEmail')
+    ) {
+      const sbOwner = getSupabaseAdmin();
+      const { data: currentOwnerRow } = await sbOwner
+        .from('business_opportunities')
+        .select('owner_email')
+        .eq('id', id)
+        .maybeSingle();
+      try {
+        Object.assign(
+          patch,
+          buildOwnerEmailSavePatch(
+            body.owner_email != null ? body.owner_email : body.ownerEmail,
+            currentOwnerRow && currentOwnerRow.owner_email
+          )
+        );
+      } catch (ownerErr) {
+        if (ownerErr && ownerErr.code === 'invalid_owner_email') {
+          return json(res, 400, { error: 'invalid_owner_email' });
+        }
+        throw ownerErr;
+      }
     }
     if (
       Object.prototype.hasOwnProperty.call(body, 'type') ||

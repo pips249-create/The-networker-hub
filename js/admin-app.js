@@ -23685,10 +23685,10 @@
       }) +
       '<div class="sm:col-span-2 rounded-lg border border-slate-200 bg-white p-3 space-y-2">' +
       '<p class="text-xs font-semibold text-slate-600">Listing owner &amp; claim invite</p>' +
-      '<p class="text-xs text-slate-500">Platform-owned listings stay claimable until you assign a claimant email. Assigning emails them a claim link to the public listing, then Stripe monthly subscription (£25 + VAT).</p>' +
+      '<p class="text-xs text-slate-500">Save listing stores the owner email (blank keeps the listing hub-owned). Use Assign to email the claim invite — then Stripe monthly subscription (£25 + VAT) after they claim.</p>' +
       '<div class="flex flex-wrap gap-2 items-end">' +
       '<div class="flex-1 min-w-[12rem]"><label class="block text-xs font-semibold text-slate-500 mb-1">Owner email</label>' +
-      '<input type="email" name="owner_email" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+      '<input type="email" name="owner_email" autocomplete="off" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
       attrEsc(opp.owner_email || '') +
       '" placeholder="claimant@example.com"></div>' +
       '<button type="button" data-opp-assign-owner="' +
@@ -24125,7 +24125,7 @@
       '<p class="text-xs font-semibold text-slate-600">Claim later (optional)</p>' +
       '<p class="text-xs text-slate-500">Leave blank to keep the listing hub-owned and claimable. Enter an email to open the in-dashboard claim prompt when that person signs in.</p>' +
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Owner / claimant email</label>' +
-      '<input type="email" name="owner_email" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Leave blank for hub-owned"></div></div>' +
+      '<input type="email" name="owner_email" autocomplete="off" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Leave blank for hub-owned"></div></div>' +
       '<p id="opportunity-create-brand-conflict" class="sm:col-span-2 hidden text-xs text-red-700 font-semibold"></p>' +
       '<div class="sm:col-span-2 flex flex-wrap items-center gap-3">' +
       '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Create listing</button>' +
