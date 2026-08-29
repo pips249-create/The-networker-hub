@@ -23829,9 +23829,11 @@
       '</td>' +
       '<td class="py-2.5 pr-3 max-w-[14rem]"><div class="font-semibold text-brand-900 truncate" title="' +
       attrEsc(opp.title || 'Untitled') +
-      '">' +
+      '"><a href="' +
+      attrEsc(reviewHref) +
+      '" class="hover:underline text-brand-900">' +
       esc(opp.title || 'Untitled') +
-      '</div>' +
+      '</a></div>' +
       '<div class="text-[11px] text-slate-500 truncate">' +
       esc(opp.host || '—') +
       '</div></td>' +
