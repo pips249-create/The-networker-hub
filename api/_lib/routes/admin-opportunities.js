@@ -944,6 +944,42 @@ module.exports = async function handler(req, res) {
           return json(res, 404, { ok: false, error: 'not_found', message: 'Listing not found.' });
         }
 
+        const claimStatus = String(current.ownership_claim_status || '')
+          .trim()
+          .toLowerCase();
+        const approvingLiveUpdate =
+          hasPendingLiveListingUpdate(current) &&
+          String(current.approval_status || '') === 'Approved';
+        if (!approvingLiveUpdate) {
+          if (claimStatus === 'pending' || claimStatus === 'disputed') {
+            return json(res, 400, {
+              ok: false,
+              error: 'claim_pending',
+              message:
+                'This listing is still unclaimed. Send the claim invite first — approve/deny is only for organiser-submitted listings.',
+            });
+          }
+          if (isHubSeedOwnerEmail(current.owner_email)) {
+            return json(res, 400, {
+              ok: false,
+              error: 'hub_owned_listing',
+              message:
+                'Hub-owned listings do not need approve/deny. Publish or edit them under Admin edit.',
+            });
+          }
+          if (
+            String(current.approval_status || '') === 'Pending Review' &&
+            !effectiveReviewSubmittedAt(current)
+          ) {
+            return json(res, 400, {
+              ok: false,
+              error: 'not_submitted',
+              message:
+                'This listing has not been submitted for review. Use Admin edit to publish it, or wait for the organiser to submit.',
+            });
+          }
+        }
+
         const approveConflict = await findExclusiveBrandConflict(sb, current, id);
         if (approveConflict) {
           return sendExclusiveBrandConflict(res, json, approveConflict);
