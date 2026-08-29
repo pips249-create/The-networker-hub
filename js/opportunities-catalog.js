@@ -488,6 +488,7 @@
       type: row.type,
       tags: row.tags || [row.type],
       featured: Boolean(row.featured),
+      featuredUntil: row.featuredUntil || row.featured_until || null,
       host: row.host || '',
       hostInitials: row.hostInitials || '',
       hostColor: row.hostColor || '',

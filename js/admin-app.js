@@ -20274,6 +20274,7 @@
     if (spotlightSlotsCache) {
       el.innerHTML = spotlightSlotCardsHtml(spotlightSlotsCache);
       if (document.getElementById('featured-status')) paintFeaturedSpotlightTable();
+      if (document.getElementById('spotlight-opportunities-status')) paintSpotlightOpportunitiesTable();
       return;
     }
     adminGet('/api/admin/spotlight').then(function (data) {
@@ -20288,6 +20289,7 @@
       spotlightSlotsCache = data.slots;
       el.innerHTML = spotlightSlotCardsHtml(data.slots);
       if (document.getElementById('featured-status')) paintFeaturedSpotlightTable();
+      if (document.getElementById('spotlight-opportunities-status')) paintSpotlightOpportunitiesTable();
     });
   }
 
@@ -20320,8 +20322,27 @@
     return !!(row && row.featured && isSpotlightFeaturedUntilExpired(row));
   }
 
+  function isNetworkMarketingOpportunityRow(row) {
+    if (!row) return false;
+    if (String(row.type || '') === 'network-marketing') return true;
+    var tags = Array.isArray(row.tags) ? row.tags : [];
+    for (var i = 0; i < tags.length; i++) {
+      if (String(tags[i] || '') === 'network-marketing') return true;
+    }
+    return false;
+  }
+
+  function isSpotlightOpportunityActiveInCarousel(row) {
+    if (!row || !row.featured) return false;
+    if (String(row.status || '').toLowerCase() !== 'published') return false;
+    if (row.listing_payment_active === false) return false;
+    if (isSpotlightFeaturedUntilExpired(row)) return false;
+    if (isNetworkMarketingOpportunityRow(row)) return false;
+    return true;
+  }
+
   function isStaleSpotlightOpportunity(row) {
-    return !!(row && row.featured && isSpotlightFeaturedUntilExpired(row));
+    return !!(row && row.featured && !isSpotlightOpportunityActiveInCarousel(row));
   }
 
   function spotlightClearStaleBtnHtml(id) {
@@ -20514,6 +20535,7 @@
     var q = String(spotlightOpportunityState.q || '').trim();
     var featured = spotlightOpportunityState.featured;
     return (rows || []).filter(function (o) {
+      if (featured === 'active' && !isSpotlightOpportunityActiveInCarousel(o)) return false;
       if (featured === 'yes' && !o.featured) return false;
       if (featured === 'no' && o.featured) return false;
       if (!q) return true;
@@ -20522,15 +20544,38 @@
     });
   }
 
+  function spotlightOpportunitiesStatusText(allRows, rows, filterActive) {
+    var flaggedCount = (allRows || []).filter(function (o) {
+      return o.featured;
+    }).length;
+    var slot = spotlightSlotsCache && spotlightSlotsCache.opportunities;
+    var activeCount = slot && slot.used != null ? slot.used : null;
+    var slotMax = slot && slot.max != null ? slot.max : 12;
+    var countLabel =
+      activeCount != null
+        ? activeCount + ' active in carousel (max ' + slotMax + ')'
+        : flaggedCount + ' featured';
+    if (activeCount != null && flaggedCount !== activeCount) {
+      countLabel = flaggedCount + ' flagged · ' + countLabel;
+    }
+    return (
+      countLabel +
+      ' · ' +
+      (filterActive ? rows.length + ' shown · ' + allRows.length + ' loaded' : allRows.length + ' approved listings')
+    );
+  }
+
   function paintSpotlightOpportunitiesTable() {
     var tbody = document.getElementById('spotlight-opportunities-tbody');
     var status = document.getElementById('spotlight-opportunities-status');
     var rows = filterSpotlightOpportunities(featuredSpotlightOpportunities);
-    var featuredCount = featuredSpotlightOpportunities.filter(function (o) {
-      return o.featured;
-    }).length;
+    var filterActive = spotlightOpportunityState.q || spotlightOpportunityState.featured;
     if (status) {
-      status.textContent = featuredCount + ' featured · ' + rows.length + ' shown';
+      status.textContent = spotlightOpportunitiesStatusText(
+        featuredSpotlightOpportunities,
+        rows,
+        filterActive
+      );
     }
     if (!tbody) return;
     if (!featuredSpotlightOpportunities.length) {
@@ -20546,6 +20591,21 @@
         var viewUrl = o.slug
           ? '/opportunities/' + encodeURIComponent(o.slug)
           : '/opportunities/' + encodeURIComponent(o.id);
+        var active = isSpotlightOpportunityActiveInCarousel(o);
+        var staleNote = '';
+        if (o.featured && !active) {
+          if (isNetworkMarketingOpportunityRow(o)) {
+            staleNote = '<div class="text-[11px] text-amber-800 mt-1">Hidden on carousel (network marketing)</div>';
+          } else if (String(o.status || '').toLowerCase() !== 'published') {
+            staleNote = '<div class="text-[11px] text-amber-800 mt-1">Not published — not in carousel</div>';
+          } else if (o.listing_payment_active === false) {
+            staleNote = '<div class="text-[11px] text-amber-800 mt-1">Listing payment inactive — not in carousel</div>';
+          } else if (isSpotlightFeaturedUntilExpired(o)) {
+            staleNote = '<div class="text-[11px] text-amber-800 mt-1">Spotlight expired — not in carousel</div>';
+          } else {
+            staleNote = '<div class="text-[11px] text-amber-800 mt-1">Not shown in public carousel</div>';
+          }
+        }
         return (
           '<tr class="border-t border-slate-100' +
           (o.featured ? ' bg-amber-50/40' : '') +
@@ -20557,6 +20617,7 @@
           ' aria-label="Feature opportunity" /></td>' +
           '<td class="px-4 py-3 font-medium">' +
           esc(o.title) +
+          staleNote +
           '</td>' +
           '<td class="px-4 py-3">' +
           esc(o.host || '—') +
@@ -20735,16 +20796,22 @@
         window.alert(
           kind === 'event'
             ? 'No past or expired featured events to clear. Active carousel placements are left alone.'
-            : 'No expired featured ' + noun + ' to clear. Rows without an end date stay featured until you turn them off.'
+            : kind === 'opportunity'
+              ? 'No featured opportunities to clear. Only expired, unpaid, unpublished, or network-marketing placements are removed — active carousel rows stay featured.'
+              : 'No expired featured ' + noun + ' to clear. Rows without an end date stay featured until you turn them off.'
         );
         return;
       }
       var ok = window.confirm(
-        'Remove featured from ' +
-          stale.length +
-          ' past/expired ' +
-          noun +
-          '? Active carousel placements stay featured.'
+        kind === 'opportunity'
+          ? 'Remove featured from ' +
+              stale.length +
+              ' opportunities that cannot appear in the public carousel (expired, unpaid, unpublished, or network marketing)? Active carousel placements stay featured.'
+          : 'Remove featured from ' +
+              stale.length +
+              ' past/expired ' +
+              noun +
+              '? Active carousel placements stay featured.'
       );
       if (!ok) return;
 
@@ -21192,7 +21259,7 @@
     main.innerHTML =
       '<div class="space-y-4">' +
       '<div id="spotlight-slots-wrap" class="text-sm text-slate-500">Loading carousel slot usage…</div>' +
-      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Featured opportunities appear in the Premium Spotlight on <code class="text-[11px]">/opportunities/</code>. Set an end date when you feature a listing (or choose no end date).</p>' +
+      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Featured opportunities appear in the Premium Spotlight on <code class="text-[11px]">/opportunities/</code>. Slot usage matches the public carousel (Approved + live + paid; network marketing is never shown). Use <strong>Active in carousel</strong> to see only placements that show right now.</p>' +
       '<div class="flex flex-wrap items-center gap-2">' +
       '<p id="spotlight-opportunities-status" class="text-sm text-slate-500 flex-1 min-w-[12rem]">Loading opportunities…</p>' +
       spotlightClearStaleBtnHtml('spotlight-clear-stale-opportunities') +
@@ -21205,6 +21272,9 @@
       '<option value=""' +
       (spotlightOpportunityState.featured === '' ? ' selected' : '') +
       '>All listings</option>' +
+      '<option value="active"' +
+      (spotlightOpportunityState.featured === 'active' ? ' selected' : '') +
+      '>Active in carousel</option>' +
       '<option value="yes"' +
       (spotlightOpportunityState.featured === 'yes' ? ' selected' : '') +
       '>Featured only</option>' +
