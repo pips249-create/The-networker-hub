@@ -2,6 +2,7 @@
  * Organiser events + tickets + dashboard workspace — Supabase.
  */
 const crypto = require('crypto');
+const { coerceUuid } = require('./uuid');
 const { getSupabaseAdmin } = require('./supabase');
 const { normalizeTicketVisibility } = require('./ticket-visibility');
 const { formatTicketsSoldLabel } = require('./tickets-sold-label');
@@ -454,8 +455,8 @@ async function listEventIdsForOrganiserGroups(groupIds, allEvents) {
 }
 
 async function listEventsForSeriesGroup(groupIds, seriesGroupId) {
-  const groups = (groupIds || []).filter(Boolean);
-  const gid = String(seriesGroupId || '').trim();
+  const groups = (groupIds || []).map((id) => coerceUuid(id)).filter(Boolean);
+  const gid = coerceUuid(seriesGroupId);
   if (!groups.length || !gid) return [];
 
   const sb = getSupabaseAdmin();
@@ -757,8 +758,14 @@ async function listTicketsForSession(session, eventIds, adminView) {
 }
 
 async function getEventById(eventId) {
+  const id = coerceUuid(eventId);
+  if (!id) {
+    const e = new Error('Event not found');
+    e.status = 404;
+    throw e;
+  }
   const sb = getSupabaseAdmin();
-  const { data, error } = await sb.from('events').select('*').eq('id', eventId).maybeSingle();
+  const { data, error } = await sb.from('events').select('*').eq('id', id).maybeSingle();
   if (error) throw new Error(error.message);
   if (!data) {
     const e = new Error('Event not found');
@@ -2163,10 +2170,10 @@ async function saveAttendeeExtrasForEvents(eventIds, attendeeExtras) {
 
 /** Check ownership for specific event ids without loading the full organiser catalogue. */
 async function filterOwnedEventIds(eventIds, groupIds, adminView) {
-  const ids = [...new Set((eventIds || []).map((id) => String(id || '').trim()).filter(Boolean))];
+  const ids = [...new Set((eventIds || []).map((id) => coerceUuid(id)).filter(Boolean))];
   if (!ids.length) return [];
   if (adminView) return ids;
-  const groups = groupIds || [];
+  const groups = [...new Set((groupIds || []).map((id) => coerceUuid(id)).filter(Boolean))];
   if (!groups.length) return [];
 
   const sb = getSupabaseAdmin();

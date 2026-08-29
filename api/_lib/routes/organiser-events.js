@@ -3,6 +3,7 @@ const { assertOrganiserEmailVerified, isPublishIntent } = require('../organiser-
 const { assertDescriptionLimit } = require('../text-limits');
 const { adminViewFromSession, resolveOrganiserGroupScope } = require('../organiser-api-scope');
 const { jsonPublicError } = require('../public-error');
+const { coerceUuid, hasIdInput } = require('../uuid');
 
 function parseBody(req) {
   let body = req.body;
@@ -78,6 +79,22 @@ function validateEventDescription(body) {
   if (body.description !== undefined) {
     assertDescriptionLimit(body.description, 'Event description');
   }
+}
+
+const INVALID_EVENT_ID = {
+  error: 'invalid_event_id',
+  message: 'That event id is not valid.',
+};
+
+/** Read an event id from query/body, recovering glued "?id=" suffixes. */
+function readEventId(raw, opts) {
+  const required = Boolean(opts && opts.required);
+  if (!hasIdInput(raw)) {
+    return required ? { error: 'missing_event_id' } : { eventId: '' };
+  }
+  const eventId = coerceUuid(raw);
+  if (!eventId) return { error: 'invalid_event_id', body: INVALID_EVENT_ID };
+  return { eventId };
 }
 
 module.exports = async function handler(req, res) {
@@ -170,8 +187,14 @@ module.exports = async function handler(req, res) {
   }
 
   if (req.method === 'GET') {
-    const eventId = String(req.query?.id || req.query?.eventId || '').trim();
-    const seriesGroupId = String(req.query?.seriesGroupId || req.query?.series_group_id || '').trim();
+    const parsedEventId = readEventId(req.query?.id || req.query?.eventId);
+    const parsedSeriesId = readEventId(req.query?.seriesGroupId || req.query?.series_group_id);
+    if (parsedEventId.error === 'invalid_event_id') return json(res, 400, parsedEventId.body);
+    if (parsedSeriesId.error === 'invalid_event_id') {
+      return json(res, 400, { error: 'invalid_series_group_id', message: INVALID_EVENT_ID.message });
+    }
+    const eventId = parsedEventId.eventId;
+    const seriesGroupId = parsedSeriesId.eventId;
     try {
       if (seriesGroupId) {
         const { groupIds, access } = await sessionGroups();
@@ -218,8 +241,9 @@ module.exports = async function handler(req, res) {
     const body = parseBody(req);
     const publishBlocked = await requireVerifiedForPublish(body);
     if (publishBlocked) return publishBlocked;
-    const eventId = String(body.id || body.eventId || req.query?.id || '').trim();
-    if (!eventId) return json(res, 400, { error: 'missing_event_id' });
+    const parsedId = readEventId(body.id || body.eventId || req.query?.id, { required: true });
+    if (parsedId.error) return json(res, 400, parsedId.body || { error: parsedId.error });
+    const eventId = parsedId.eventId;
 
     try {
       const access = await assertOwnsEventId(eventId);
@@ -305,8 +329,9 @@ module.exports = async function handler(req, res) {
     if (publishBlocked) return publishBlocked;
 
     if (String(body.action || '').trim() === 'duplicate') {
-      const eventId = String(body.id || body.eventId || '').trim();
-      if (!eventId) return json(res, 400, { error: 'missing_event_id' });
+      const parsedId = readEventId(body.id || body.eventId, { required: true });
+      if (parsedId.error) return json(res, 400, parsedId.body || { error: parsedId.error });
+      const eventId = parsedId.eventId;
       try {
         const access = await assertOwnsEventId(eventId);
         if (!access.ok) return json(res, 403, EVENT_NOT_OWNED);
@@ -329,8 +354,9 @@ module.exports = async function handler(req, res) {
     }
 
     if (String(body.action || '').trim() === 'unpublish') {
-      const eventId = String(body.id || body.eventId || '').trim();
-      if (!eventId) return json(res, 400, { error: 'missing_event_id' });
+      const parsedId = readEventId(body.id || body.eventId, { required: true });
+      if (parsedId.error) return json(res, 400, parsedId.body || { error: parsedId.error });
+      const eventId = parsedId.eventId;
       try {
         const access = await assertOwnsEventId(eventId);
         if (!access.ok) return json(res, 403, EVENT_NOT_OWNED);
@@ -360,8 +386,9 @@ module.exports = async function handler(req, res) {
     }
 
     if (String(body.action || '').trim() === 'republish') {
-      const eventId = String(body.id || body.eventId || '').trim();
-      if (!eventId) return json(res, 400, { error: 'missing_event_id' });
+      const parsedId = readEventId(body.id || body.eventId, { required: true });
+      if (parsedId.error) return json(res, 400, parsedId.body || { error: parsedId.error });
+      const eventId = parsedId.eventId;
       try {
         const access = await assertOwnsEventId(eventId);
         if (!access.ok) return json(res, 403, EVENT_NOT_OWNED);
@@ -463,8 +490,9 @@ module.exports = async function handler(req, res) {
       return json(res, manageGate.status, { error: manageGate.error, message: manageGate.message });
     }
     const body = parseBody(req);
-    const eventId = String(body.id || body.eventId || req.query?.id || '').trim();
-    if (!eventId) return json(res, 400, { error: 'missing_event_id' });
+    const parsedId = readEventId(body.id || body.eventId || req.query?.id, { required: true });
+    if (parsedId.error) return json(res, 400, parsedId.body || { error: parsedId.error });
+    const eventId = parsedId.eventId;
 
     try {
       const eventAccess = await assertOwnsEventId(eventId);
