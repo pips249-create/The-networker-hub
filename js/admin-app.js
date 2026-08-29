@@ -347,9 +347,9 @@
       steps: [
         'Filter to Pending review to see new listings.',
         'One listing per brand — Utility Warehouse, Arbonne, and BNI cannot be duplicated (Command Centre blocks create/save if one already exists).',
-        'Open a row to read the full details.',
+        'Click Review to open the listing on its own page (submitted details, website preview, and admin edit).',
         'Approve — if unpaid, the owner gets a pay-to-go-live email; if already paid, it goes live now. Confirm dialog explains which.',
-        'Reject if it does not meet standards (include a reason).',
+        'Deny if it does not meet standards (include a reason) — then you return to the list.',
         'Use Resend pay email on Approved listings still awaiting Stripe.',
         'Toggle Featured only for Approved live listings in the opportunities carousel.',
       ],
@@ -576,7 +576,10 @@
     fetchToken: 0,
     expanded: {},
     selected: {},
+    listReturnHash: 'opportunities',
+    reviewFocusDeny: false,
   };
+  var opportunityReviewCache = null;
   var GROUP_PAGE_SIZE = 30;
   var EVENT_PAGE_SIZE = 30;
   var OPPORTUNITY_PAGE_SIZE = 15;
@@ -1181,6 +1184,10 @@
           subtitle = slot.help;
         }
       }
+    }
+    if (route === 'opportunities' && fullHash && fullHash.indexOf('opportunities/review/') === 0) {
+      title = 'Review listing';
+      subtitle = 'Full-page review — approve, deny, or edit without crowding the catalogue';
     }
     document.getElementById('page-title').textContent = title;
     document.getElementById('page-subtitle').textContent = subtitle;
@@ -22601,11 +22608,144 @@
   function findOpportunityCleanupRecord(id) {
     var key = String(id || '');
     if (!key) return null;
+    if (opportunityReviewCache && String(opportunityReviewCache.id) === key) {
+      return opportunityReviewCache;
+    }
     var rows = (opportunityCleanupCache && opportunityCleanupCache.opportunities) || [];
     for (var i = 0; i < rows.length; i += 1) {
       if (String(rows[i].id) === key) return rows[i];
     }
     return opportunityCleanupState.selected[key] || null;
+  }
+
+  function opportunityReviewHref(id, opts) {
+    opts = opts || {};
+    var href = 'opportunities/review/' + encodeURIComponent(String(id || '').trim());
+    if (opts.focusDeny) href += '?focus=deny';
+    return href;
+  }
+
+  function opportunityListReturnHash() {
+    return opportunityCleanupState.listReturnHash || 'opportunities';
+  }
+
+  function opportunityCleanupListQueryHash() {
+    var params = new URLSearchParams();
+    if (opportunityCleanupState.approval) params.set('approval', opportunityCleanupState.approval);
+    if (opportunityCleanupState.status) params.set('status', opportunityCleanupState.status);
+    if (opportunityCleanupState.type) params.set('type', opportunityCleanupState.type);
+    if (opportunityCleanupState.featured) params.set('featured', '1');
+    if (opportunityCleanupState.noImage) params.set('no_image', '1');
+    if (opportunityCleanupState.awaitingPayment) params.set('awaiting_payment', '1');
+    if (opportunityCleanupState.paymentLapsed) params.set('payment_lapsed', '1');
+    if (opportunityCleanupState.unclaimed) params.set('unclaimed', '1');
+    if (opportunityCleanupState.brandDuplicates) params.set('brand_duplicates', '1');
+    if (opportunityCleanupState.q) params.set('q', opportunityCleanupState.q);
+    if (opportunityCleanupState.sort && opportunityCleanupState.sort !== 'recent') {
+      params.set('sort', opportunityCleanupState.sort);
+    }
+    if (opportunityCleanupState.page > 0) params.set('page', String(opportunityCleanupState.page + 1));
+    var qs = params.toString();
+    return qs ? 'opportunities?' + qs : 'opportunities';
+  }
+
+  function rememberOpportunityListReturnHash() {
+    opportunityCleanupState.listReturnHash = opportunityCleanupListQueryHash();
+  }
+
+  function syncOpportunityListHashQuietly() {
+    var next = opportunityCleanupListQueryHash();
+    opportunityCleanupState.listReturnHash = next;
+    var current = String((location.hash || '').replace(/^#/, ''));
+    if (current.split('?')[0].split('/')[0] !== 'opportunities') return;
+    if (current.indexOf('opportunities/review/') === 0) return;
+    if (current === next) return;
+    if (history && history.replaceState) {
+      history.replaceState(null, '', '#' + next);
+    } else {
+      location.replace('#' + next);
+    }
+  }
+
+  function parseOpportunityRoute(fullHash) {
+    var raw = String(fullHash || 'opportunities').replace(/^#/, '');
+    var query = parseAdminHashQuery(raw);
+    var path = raw.split('?')[0].replace(/\/+$/, '');
+    var parts = path.split('/').filter(Boolean);
+    var focusDeny = String(query.get('focus') || '').toLowerCase() === 'deny';
+    if (parts[0] === 'opportunities' && parts[1] === 'review' && parts[2]) {
+      return {
+        mode: 'review',
+        id: decodeURIComponent(parts[2]),
+        focusDeny: focusDeny,
+        query: query,
+      };
+    }
+    return { mode: 'list', id: '', focusDeny: false, query: query };
+  }
+
+  function applyOpportunityListQuery(query) {
+    if (!query) return;
+    var approvalQ = String(query.get('approval') || '').trim().toLowerCase();
+    if (approvalQ === 'pending' || approvalQ === 'pending review') {
+      opportunityCleanupState.approval = 'Pending Review';
+    } else if (query.has('approval')) {
+      opportunityCleanupState.approval = String(query.get('approval') || '').trim();
+    }
+    if (query.has('status')) opportunityCleanupState.status = String(query.get('status') || '').trim();
+    if (query.has('type')) opportunityCleanupState.type = String(query.get('type') || '').trim();
+    if (query.has('q')) opportunityCleanupState.q = String(query.get('q') || '').trim();
+    if (query.has('sort')) opportunityCleanupState.sort = String(query.get('sort') || 'recent').trim() || 'recent';
+    if (query.has('featured')) {
+      opportunityCleanupState.featured =
+        query.get('featured') === '1' || query.get('featured') === 'true';
+    }
+    if (query.has('no_image')) {
+      opportunityCleanupState.noImage =
+        query.get('no_image') === '1' || query.get('no_image') === 'true';
+    }
+    if (query.has('awaiting_payment')) {
+      opportunityCleanupState.awaitingPayment =
+        query.get('awaiting_payment') === '1' || query.get('awaiting_payment') === 'true';
+    }
+    if (query.has('payment_lapsed')) {
+      opportunityCleanupState.paymentLapsed =
+        query.get('payment_lapsed') === '1' || query.get('payment_lapsed') === 'true';
+    }
+    if (query.has('unclaimed')) {
+      opportunityCleanupState.unclaimed =
+        query.get('unclaimed') === '1' || query.get('unclaimed') === 'true';
+    }
+    if (query.has('brand_duplicates')) {
+      opportunityCleanupState.brandDuplicates =
+        query.get('brand_duplicates') === '1' || query.get('brand_duplicates') === 'true';
+    }
+    if (query.has('page')) {
+      var pageNum = parseInt(String(query.get('page') || '1'), 10);
+      if (!isNaN(pageNum) && pageNum > 0) opportunityCleanupState.page = pageNum - 1;
+    }
+  }
+
+  function fetchOpportunityById(id) {
+    var key = String(id || '').trim();
+    if (!key) return Promise.resolve(null);
+    return adminGet('/api/admin/opportunities?id=' + encodeURIComponent(key) + '&limit=1').then(
+      function (data) {
+        if (!data || data.error || data.ok === false) return null;
+        var rows = data.opportunities || [];
+        var opp = rows[0] || null;
+        if (opp) opportunityReviewCache = opp;
+        return opp;
+      }
+    );
+  }
+
+  function isOpportunityReviewPage() {
+    return !!document.querySelector('.opp-review-page');
+  }
+
+  function leaveOpportunityReviewToList() {
+    location.hash = opportunityListReturnHash();
   }
 
   function opportunityAdminViewHref(opp) {
@@ -22903,42 +23043,14 @@
     opts = opts || {};
     var key = String(id || '');
     if (!key) return;
-    var panel = opportunityCleanupPanelEl(key);
-    var escKey =
-      typeof CSS !== 'undefined' && CSS.escape
-        ? CSS.escape(key)
-        : key.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-    var row = document.querySelector('[data-opportunity-id-row="' + escKey + '"]');
-    if (!panel || !row) return;
-    ensureOpportunityCleanupPanelLoaded(key);
-    adminContentRoot()
-      .querySelectorAll('.opportunity-cleanup-panel')
-      .forEach(function (p) {
-        p.classList.add('hidden');
-      });
-    adminContentRoot()
-      .querySelectorAll('[data-toggle-opp-edit]')
-      .forEach(function (btn) {
-        btn.textContent = 'Review';
-      });
-    panel.classList.remove('hidden');
-    opportunityCleanupState.expanded[key] = true;
-    var toggle = row.querySelector('[data-toggle-opp-edit]');
-    if (toggle) toggle.textContent = 'Close';
-    if (opts.focusDeny) {
-      var noteEl = panel.querySelector('[data-opp-rejection-note]');
-      if (noteEl) {
-        noteEl.focus();
-        if (noteEl.scrollIntoView) {
-          noteEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-      }
-    } else if (panel.scrollIntoView) {
-      panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
+    if (opts.focusDeny) opportunityCleanupState.reviewFocusDeny = true;
+    rememberOpportunityListReturnHash();
+    location.hash = opportunityReviewHref(key, { focusDeny: !!opts.focusDeny });
   }
 
-  function opportunityCleanupReviewPanelHtml(opp) {
+  function opportunityCleanupReviewPanelHtml(opp, opts) {
+    opts = opts || {};
+    var fullPage = !!opts.fullPage;
     var id = String(opp.id || '');
     var isPendingSubmitted =
       opp.approval_status === 'Pending Review' && opportunityIsSubmittedForReview(opp);
@@ -22967,6 +23079,28 @@
             ? 'Approved — awaiting listing payment before going live.'
             : 'Review what was submitted before making admin changes.';
     var priorRejection = String(opp.rejection_note || '').trim();
+    var adminEditBlock = fullPage
+      ? '<section class="opp-review-admin-edit opp-review-admin-edit--page">' +
+        '<h3 class="opp-review-section-title">Admin edit (fields, images &amp; owner)</h3>' +
+        '<div class="opp-review-admin-edit-body" data-opp-admin-edit-for="' +
+        attrEsc(id) +
+        '"><p class="text-sm text-slate-500">Loading admin edit form…</p></div></section>'
+      : '<details class="opp-review-admin-edit">' +
+        '<summary>Admin edit (fields, images &amp; owner)</summary>' +
+        '<div class="opp-review-admin-edit-body" data-opp-admin-edit-for="' +
+        attrEsc(id) +
+        '"><p class="text-sm text-slate-500">Loading admin edit form…</p></div></details>';
+    var openDaysBlock = fullPage
+      ? '<section class="opp-review-open-days opp-review-open-days--page">' +
+        '<h3 class="opp-review-section-title">Open days</h3>' +
+        '<div class="opp-review-open-days-body" data-opp-open-days-for="' +
+        attrEsc(id) +
+        '"><p class="text-sm text-slate-500">Loading open days…</p></div></section>'
+      : '<details class="opp-review-open-days">' +
+        '<summary>Open days</summary>' +
+        '<div class="opp-review-open-days-body" data-opp-open-days-for="' +
+        attrEsc(id) +
+        '"><p class="text-sm text-slate-500">Loading open days…</p></div></details>';
     return (
       '<div class="opp-review-panel" data-opp-review-for="' +
       attrEsc(id) +
@@ -23099,16 +23233,8 @@
           '</button>' +
           '</div></section>'
         : '') +
-      '<details class="opp-review-admin-edit">' +
-      '<summary>Admin edit (fields, images &amp; owner)</summary>' +
-      '<div class="opp-review-admin-edit-body" data-opp-admin-edit-for="' +
-      attrEsc(id) +
-      '"><p class="text-sm text-slate-500">Loading admin edit form…</p></div></details>' +
-      '<details class="opp-review-open-days">' +
-      '<summary>Open days</summary>' +
-      '<div class="opp-review-open-days-body" data-opp-open-days-for="' +
-      attrEsc(id) +
-      '"><p class="text-sm text-slate-500">Loading open days…</p></div></details>' +
+      adminEditBlock +
+      openDaysBlock +
       '</div>'
     );
   }
@@ -23470,41 +23596,169 @@
       });
   }
 
-  function ensureOpportunityCleanupPanelLoaded(id) {
-    var panel = opportunityCleanupPanelEl(id);
-    if (!panel) return panel;
-    var opp = findOpportunityCleanupRecord(id);
-    var cell = panel.querySelector('td');
-    if (!opp || !cell) return panel;
+  function mountOpportunityReviewContent(root, opp, opts) {
+    opts = opts || {};
+    if (!root || !opp) return;
+    var id = String(opp.id || '');
     try {
-      cell.innerHTML = opportunityCleanupReviewPanelHtml(opp);
-      bindOpportunityReviewCoverFallbacks(cell, opp);
-      var adminEditDetails = panel.querySelector('.opp-review-admin-edit');
-      if (adminEditDetails) {
-        if (!adminEditDetails.dataset.boundReviewReload) {
+      root.innerHTML = opportunityCleanupReviewPanelHtml(opp, { fullPage: !!opts.fullPage });
+      bindOpportunityReviewCoverFallbacks(root, opp);
+      if (opts.fullPage) {
+        ensureOpportunityAdminEditLoaded(id);
+        ensureOpportunityOpenDaysLoaded(id);
+      } else {
+        var adminEditDetails = root.querySelector('.opp-review-admin-edit');
+        if (adminEditDetails && !adminEditDetails.dataset.boundReviewReload) {
           adminEditDetails.dataset.boundReviewReload = '1';
           adminEditDetails.addEventListener('toggle', function () {
             if (adminEditDetails.open) ensureOpportunityAdminEditLoaded(id);
           });
         }
-      }
-      var openDaysDetails = panel.querySelector('.opp-review-open-days');
-      if (openDaysDetails) {
-        if (!openDaysDetails.dataset.boundOpenDaysReload) {
+        var openDaysDetails = root.querySelector('.opp-review-open-days');
+        if (openDaysDetails && !openDaysDetails.dataset.boundOpenDaysReload) {
           openDaysDetails.dataset.boundOpenDaysReload = '1';
           openDaysDetails.addEventListener('toggle', function () {
             if (openDaysDetails.open) ensureOpportunityOpenDaysLoaded(id);
           });
         }
       }
-      panel.dataset.loaded = '1';
+      if (opts.focusDeny) {
+        var noteEl = root.querySelector('[data-opp-rejection-note]');
+        if (noteEl) {
+          noteEl.focus();
+          if (noteEl.scrollIntoView) {
+            noteEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+        }
+      }
     } catch (err) {
-      cell.innerHTML =
+      root.innerHTML =
         '<p class="text-sm text-red-700">Could not open the review panel: ' +
         esc(err && err.message ? err.message : 'unknown error') +
         '</p>';
-      panel.dataset.loaded = '1';
     }
+  }
+
+  function renderOpportunityReviewPage(id, opts) {
+    opts = opts || {};
+    var key = String(id || '').trim();
+    if (!key) {
+      location.replace('#' + opportunityListReturnHash());
+      return;
+    }
+    rememberOpportunityListReturnHash();
+    main.innerHTML =
+      '<div class="opp-review-page space-y-4" data-opp-review-page="' +
+      attrEsc(key) +
+      '">' +
+      '<div class="opp-review-page-nav flex flex-wrap items-center justify-between gap-3">' +
+      '<a href="#' +
+      attrEsc(opportunityListReturnHash()) +
+      '" class="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700 hover:underline">' +
+      '<span aria-hidden="true">←</span> Back to Opportunities</a>' +
+      '<p class="text-xs text-slate-500">Full-page review — edits and decisions stay on this screen</p>' +
+      '</div>' +
+      '<div id="opp-review-page-heading" class="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">' +
+      '<p class="text-sm text-slate-500">Loading listing…</p></div>' +
+      '<div id="opp-review-page-body" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">' +
+      '<p class="text-sm text-slate-500">Loading review…</p></div></div>';
+
+    fetchOpportunityById(key).then(function (opp) {
+      var heading = document.getElementById('opp-review-page-heading');
+      var body = document.getElementById('opp-review-page-body');
+      if (!document.querySelector('[data-opp-review-page="' + key + '"]')) return;
+      if (!opp) {
+        if (heading) {
+          heading.innerHTML =
+            '<p class="text-sm font-semibold text-red-700">Listing not found</p>' +
+            '<p class="text-xs text-slate-500 mt-1">It may have been deleted. Return to the catalogue and try again.</p>';
+        }
+        if (body) {
+          body.innerHTML =
+            '<a href="#' +
+            attrEsc(opportunityListReturnHash()) +
+            '" class="text-sm font-semibold text-brand-700 hover:underline">← Back to Opportunities</a>';
+        }
+        return;
+      }
+      opportunityReviewCache = opp;
+      if (heading) {
+        var titleEl = document.getElementById('page-title');
+        if (titleEl) titleEl.textContent = opp.title || 'Review listing';
+        heading.innerHTML =
+          '<div class="flex flex-wrap items-start justify-between gap-3">' +
+          '<div class="min-w-0">' +
+          '<p class="text-lg font-bold text-brand-900 truncate">' +
+          esc(opp.title || 'Untitled') +
+          '</p>' +
+          '<p class="text-sm text-slate-500 mt-0.5">' +
+          esc(opp.host || '—') +
+          (opp.owner_email ? ' · ' + esc(opp.owner_email) : '') +
+          '</p></div>' +
+          '<div class="flex flex-wrap gap-1">' +
+          listingStatusBadge(opp.status) +
+          approvalStatusBadge(opp.approval_status) +
+          opportunityListingBillingBadgeHtml(opp) +
+          opportunityOwnershipBadgeHtml(opp) +
+          (opp.featured
+            ? '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-violet-100 text-violet-800">Featured</span>'
+            : '') +
+          '</div></div>';
+      }
+      if (body) {
+        mountOpportunityReviewContent(body, opp, {
+          fullPage: true,
+          focusDeny: !!opts.focusDeny || opportunityCleanupState.reviewFocusDeny,
+        });
+        opportunityCleanupState.reviewFocusDeny = false;
+      }
+    });
+  }
+
+  function refreshOpportunityReviewPage() {
+    var page = document.querySelector('.opp-review-page[data-opp-review-page]');
+    if (!page) return Promise.resolve();
+    var id = page.getAttribute('data-opp-review-page');
+    return fetchOpportunityById(id).then(function (opp) {
+      if (!opp || !document.querySelector('[data-opp-review-page="' + id + '"]')) return;
+      opportunityReviewCache = opp;
+      var heading = document.getElementById('opp-review-page-heading');
+      var body = document.getElementById('opp-review-page-body');
+      var titleEl = document.getElementById('page-title');
+      if (titleEl) titleEl.textContent = opp.title || 'Review listing';
+      if (heading) {
+        heading.innerHTML =
+          '<div class="flex flex-wrap items-start justify-between gap-3">' +
+          '<div class="min-w-0">' +
+          '<p class="text-lg font-bold text-brand-900 truncate">' +
+          esc(opp.title || 'Untitled') +
+          '</p>' +
+          '<p class="text-sm text-slate-500 mt-0.5">' +
+          esc(opp.host || '—') +
+          (opp.owner_email ? ' · ' + esc(opp.owner_email) : '') +
+          '</p></div>' +
+          '<div class="flex flex-wrap gap-1">' +
+          listingStatusBadge(opp.status) +
+          approvalStatusBadge(opp.approval_status) +
+          opportunityListingBillingBadgeHtml(opp) +
+          opportunityOwnershipBadgeHtml(opp) +
+          (opp.featured
+            ? '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-violet-100 text-violet-800">Featured</span>'
+            : '') +
+          '</div></div>';
+      }
+      if (body) mountOpportunityReviewContent(body, opp, { fullPage: true });
+    });
+  }
+
+  function ensureOpportunityCleanupPanelLoaded(id) {
+    var panel = opportunityCleanupPanelEl(id);
+    if (!panel) return panel;
+    var opp = findOpportunityCleanupRecord(id);
+    var cell = panel.querySelector('td');
+    if (!opp || !cell) return panel;
+    mountOpportunityReviewContent(cell, opp, { fullPage: false });
+    panel.dataset.loaded = '1';
     return panel;
   }
 
@@ -23547,7 +23801,8 @@
         : awaitingPay
           ? 'border-b border-sky-100 bg-sky-50/40'
           : 'border-b border-slate-100';
-    var isOpen = !!opportunityCleanupState.expanded[opp.id];
+    var brandDup = opportunityExclusiveBrandDuplicateMeta(opp.id);
+    var reviewHref = '#' + opportunityReviewHref(opp.id);
     if (opportunityCleanupState.selected[opp.id]) rememberSelectedOpportunity(opp);
     var checked = opportunityCleanupState.selected[opp.id] ? ' checked' : '';
     var approveLabel = opportunityHasPendingLiveUpdate(opp)
@@ -23555,7 +23810,6 @@
       : opp.listing_payment_active
         ? 'Approve &amp; go live'
         : 'Approve — email pay link';
-    var brandDup = opportunityExclusiveBrandDuplicateMeta(opp.id);
     return (
       '<tr class="hover:bg-slate-50/80 ' +
       rowClass +
@@ -23639,25 +23893,16 @@
             : 'Preview') +
           '</a>'
         : '') +
-      '<button type="button" data-toggle-opp-edit class="text-xs font-semibold rounded-lg bg-brand-700 text-white px-2.5 py-1 hover:bg-brand-900">' +
-      (isOpen ? 'Close' : 'Review') +
-      '</button>' +
+      '<a href="' +
+      attrEsc(reviewHref) +
+      '" class="text-xs font-semibold rounded-lg bg-brand-700 text-white px-2.5 py-1 hover:bg-brand-900">' +
+      'Review</a>' +
       '<button type="button" data-opp-delete="' +
       attrEsc(opp.id) +
       '" data-opp-delete-title="' +
       attrEsc(opp.title || 'Untitled') +
       '" class="text-xs font-semibold rounded-lg border border-red-200 text-red-700 px-2.5 py-1 hover:bg-red-50">Delete</button>' +
-      '</div></td></tr>' +
-      '<tr class="opportunity-cleanup-panel' +
-      (isOpen ? '' : ' hidden') +
-      ' border-b border-slate-200 bg-slate-50/80" data-opp-panel-for="' +
-      attrEsc(opp.id) +
-      '">' +
-      '<td colspan="6" class="p-4">' +
-      (isOpen
-        ? '<p class="text-sm text-slate-500">Loading review…</p>'
-        : '<p class="text-sm text-slate-400">Click Review to see what was submitted.</p>') +
-      '</td></tr>'
+      '</div></td></tr>'
     );
   }
 
@@ -23831,10 +24076,14 @@
         if (!data.ok) throw new Error(data.message || data.error || 'Delete failed');
         delete opportunityCleanupState.expanded[id];
         forgetSelectedOpportunity(id);
+        if (opportunityReviewCache && String(opportunityReviewCache.id) === String(id)) {
+          opportunityReviewCache = null;
+        }
         return refreshOpportunityCleanupData();
       })
       .then(function () {
         refreshAdminNotifications();
+        if (isOpportunityReviewPage()) leaveOpportunityReviewToList();
       })
       .catch(function (err) {
         window.alert(err.message || 'Could not delete listing.');
@@ -23886,6 +24135,8 @@
     var listEl = document.getElementById('opportunity-cleanup-list');
     var statusEl = document.getElementById('opportunity-cleanup-status');
     opportunityCleanupState.expanded = {};
+    opportunityCleanupState.page = next;
+    syncOpportunityListHashQuietly();
     if (listEl) {
       listEl.innerHTML =
         '<p class="text-sm text-slate-500 rounded-xl border border-dashed border-slate-300 p-8 text-center">Loading page ' +
@@ -23988,7 +24239,9 @@
       ];
       if (pendingCount) {
         parts.push(
-          '<span class="text-amber-800 font-semibold">' + pendingCount + ' pending review</span>'
+          '<a href="#opportunities?approval=pending" class="text-amber-800 font-semibold hover:underline">' +
+            pendingCount +
+            ' pending review</a>'
         );
       }
       if (opportunityCleanupState.loading) {
@@ -24082,7 +24335,14 @@
   }
 
   function renderOpportunityCleanup(fullHash) {
-    var query = parseAdminHashQuery(fullHash || (location.hash || '').replace('#', ''));
+    var routeInfo = parseOpportunityRoute(fullHash || (location.hash || '').replace('#', ''));
+    if (routeInfo.mode === 'review') {
+      renderOpportunityReviewPage(routeInfo.id, { focusDeny: routeInfo.focusDeny });
+      return;
+    }
+
+    var query = routeInfo.query || parseAdminHashQuery(fullHash || (location.hash || '').replace('#', ''));
+    applyOpportunityListQuery(query);
     var approvalQ = String(query.get('approval') || '').trim().toLowerCase();
     if (approvalQ === 'pending' || approvalQ === 'pending review') {
       opportunityCleanupState.approval = 'Pending Review';
@@ -24090,13 +24350,18 @@
       opportunityCleanupState.type = '';
       opportunityCleanupState.featured = false;
       opportunityCleanupState.noImage = false;
+      opportunityCleanupState.awaitingPayment = false;
+      opportunityCleanupState.paymentLapsed = false;
+      opportunityCleanupState.unclaimed = false;
+      opportunityCleanupState.brandDuplicates = false;
       opportunityCleanupState.q = '';
       opportunityCleanupState.page = 0;
     }
+    rememberOpportunityListReturnHash();
 
     main.innerHTML =
       '<div class="space-y-4">' +
-      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Manage business opportunity listings submitted by organisers. Approve pending listings (owner then pays via Stripe to go live), toggle <strong>featured</strong> for the Premium Spotlight carousel on <code class="text-[11px]">/opportunities/</code>, or expand a row to edit details.</p>' +
+      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Manage business opportunity listings submitted by organisers. Approve pending listings (owner then pays via Stripe to go live), toggle <strong>featured</strong> for the Premium Spotlight carousel on <code class="text-[11px]">/opportunities/</code>, or open <strong>Review</strong> for a full-page look at what was submitted.</p>' +
       '<div class="rounded-xl border border-brand-200 bg-brand-50/50 overflow-hidden">' +
       '<div class="px-4 py-3 border-b border-brand-100 space-y-3">' +
       '<div class="flex flex-wrap items-center justify-between gap-2">' +
@@ -24109,7 +24374,7 @@
       '<a href="/organiser/opportunity-edit" target="_blank" rel="noopener" class="inline-flex items-center rounded-lg border border-brand-200 bg-white px-3 py-1.5 text-xs font-semibold text-brand-900 hover:border-brand-400 hover:bg-brand-50">Organiser list form</a>' +
       '<a href="/guides/list-a-business-opportunity" target="_blank" rel="noopener" class="inline-flex items-center rounded-lg border border-brand-200 bg-white px-3 py-1.5 text-xs font-semibold text-brand-900 hover:border-brand-400 hover:bg-brand-50">Listing guide</a>' +
       '<a href="/advertising#ad-panel-opportunities" target="_blank" rel="noopener" class="inline-flex items-center rounded-lg border border-brand-200 bg-white px-3 py-1.5 text-xs font-semibold text-brand-900 hover:border-brand-400 hover:bg-brand-50">Advertising rate card</a>' +
-      '<button type="button" data-opp-quick="pending" class="inline-flex items-center rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-900 hover:bg-amber-100">Pending review</button>' +
+      '<a href="#opportunities?approval=pending" class="inline-flex items-center rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-900 hover:bg-amber-100">Pending review</a>' +
       '</div></div>' +
       '<details class="opportunity-cleanup-create group border-t border-brand-100">' +
       '<summary class="opportunity-cleanup-create-summary cursor-pointer list-none select-none flex flex-wrap items-center justify-between gap-2 px-4 py-3 bg-brand-700 text-white hover:bg-brand-900">' +
@@ -24503,7 +24768,9 @@
                 : 'Owner assigned — claim invite will appear when they sign in.'));
           msg.className = 'opportunity-cleanup-msg text-xs text-emerald-700 font-semibold';
         }
-        return refreshOpportunityCleanupPage();
+        return refreshOpportunityCleanupPage().then(function () {
+          if (isOpportunityReviewPage()) return refreshOpportunityReviewPage();
+        });
       })
       .then(function () {
         refreshAdminNotifications();
@@ -24553,6 +24820,7 @@
           msg.textContent = 'Saved.';
           msg.className = 'opportunity-cleanup-msg text-xs text-emerald-700 font-semibold';
         }
+        if (isOpportunityReviewPage()) return refreshOpportunityReviewPage();
         return refreshOpportunityCleanupPage();
       })
       .then(function () {
@@ -24662,35 +24930,19 @@
     if (toggle) {
       var row = toggle.closest('[data-opportunity-id-row]');
       var id = row && row.getAttribute('data-opportunity-id-row');
-      var panel = id && opportunityCleanupPanelEl(id);
-      if (panel && id) {
-        var opening = panel.classList.contains('hidden');
-        adminContentRoot()
-          .querySelectorAll('.opportunity-cleanup-panel')
-          .forEach(function (p) {
-            p.classList.add('hidden');
-          });
-        adminContentRoot()
-          .querySelectorAll('[data-toggle-opp-edit]')
-          .forEach(function (btn) {
-            btn.textContent = 'Review';
-          });
-        if (opening) {
-          ensureOpportunityCleanupPanelLoaded(id);
-          panel.classList.remove('hidden');
-          opportunityCleanupState.expanded[id] = true;
-          toggle.textContent = 'Close';
-        } else {
-          delete opportunityCleanupState.expanded[id];
-          toggle.textContent = 'Review';
-        }
+      if (id) {
+        rememberOpportunityListReturnHash();
+        location.hash = opportunityReviewHref(id);
       }
       return;
     }
     var assignOwnerBtn = e.target.closest('[data-opp-assign-owner]');
     if (assignOwnerBtn) {
-      var assignRow = assignOwnerBtn.closest('.opportunity-cleanup-panel');
-      var assignForm = assignRow && assignRow.querySelector('.opportunity-cleanup-form');
+      var assignScope =
+        assignOwnerBtn.closest('.opp-review-page') ||
+        assignOwnerBtn.closest('.opportunity-cleanup-panel') ||
+        assignOwnerBtn.closest('.opp-review-panel');
+      var assignForm = assignScope && assignScope.querySelector('.opportunity-cleanup-form');
       var assignId = assignOwnerBtn.getAttribute('data-opp-assign-owner');
       if (assignForm && assignId) assignOpportunityOwner(assignId, assignForm);
       return;
@@ -24699,15 +24951,19 @@
     if (approveBtn) {
       var approveRow = approveBtn.closest('[data-opportunity-id-row]');
       var approvePanel = approveBtn.closest('.opportunity-cleanup-panel');
+      var approvePage = approveBtn.closest('.opp-review-page');
+      var approveReview = approveBtn.closest('.opp-review-panel');
       var approveId =
         String(approveBtn.getAttribute('data-opp-approve') || '').trim() ||
         (approveRow && approveRow.getAttribute('data-opportunity-id-row')) ||
-        (approvePanel && approvePanel.getAttribute('data-opp-panel-for'));
+        (approvePanel && approvePanel.getAttribute('data-opp-panel-for')) ||
+        (approvePage && approvePage.getAttribute('data-opp-review-page')) ||
+        (approveReview && approveReview.getAttribute('data-opp-review-for'));
       if (!approveId) {
         window.alert('Could not find that listing id. Refresh the page and try again.');
         return;
       }
-      if (!approveRow && approvePanel) {
+      if (!approveRow && (approvePanel || approvePage || approveReview)) {
         var approveKey = String(approveId);
         var approveEsc =
           typeof CSS !== 'undefined' && CSS.escape
@@ -24742,6 +24998,7 @@
               ? 'Approved — listing is live.'
               : 'Approved — pay-to-go-live email sent to the owner.'
           );
+          if (isOpportunityReviewPage()) leaveOpportunityReviewToList();
         })
         .catch(function (err) {
           window.alert(err.message || 'Could not approve listing.');
@@ -24794,26 +25051,29 @@
     if (rejectBtn) {
       var rejectRow = rejectBtn.closest('[data-opportunity-id-row]');
       var rejectPanel = rejectBtn.closest('.opportunity-cleanup-panel');
+      var rejectPage = rejectBtn.closest('.opp-review-page');
+      var rejectReview = rejectBtn.closest('.opp-review-panel');
+      var rejectScope = rejectPanel || rejectPage || rejectReview;
       var rejectId =
         (rejectRow && rejectRow.getAttribute('data-opportunity-id-row')) ||
-        (rejectPanel &&
-          rejectPanel.getAttribute('data-opp-panel-for') &&
-          rejectPanel.getAttribute('data-opp-panel-for'));
+        (rejectPanel && rejectPanel.getAttribute('data-opp-panel-for')) ||
+        (rejectPage && rejectPage.getAttribute('data-opp-review-page')) ||
+        (rejectReview && rejectReview.getAttribute('data-opp-review-for'));
       if (!rejectId) return;
       var noteEl =
-        (rejectPanel && rejectPanel.querySelector('[data-opp-rejection-note]')) ||
+        (rejectScope && rejectScope.querySelector('[data-opp-rejection-note]')) ||
         document.getElementById('opp-rejection-note-' + rejectId);
-      var msgEl = rejectPanel && rejectPanel.querySelector('[data-opp-rejection-msg]');
+      var msgEl = rejectScope && rejectScope.querySelector('[data-opp-rejection-msg]');
       var rejectionNote = noteEl ? String(noteEl.value || '').trim() : '';
       if (!rejectionNote) {
-        if (rejectPanel) {
+        if (!isOpportunityReviewPage()) {
           openOpportunityReviewPanel(rejectId, { focusDeny: true });
         }
         if (msgEl) {
           msgEl.hidden = false;
           msgEl.textContent = 'Please enter a reason for denial so the lister knows what to fix.';
           msgEl.className = 'opp-review-deny-msg text-xs text-red-700 font-semibold';
-        } else {
+        } else if (!isOpportunityReviewPage()) {
           window.alert('Open Review and enter a denial reason before denying this listing.');
         }
         if (noteEl && noteEl.focus) noteEl.focus();
@@ -24841,6 +25101,7 @@
         })
         .then(function () {
           refreshAdminNotifications();
+          if (isOpportunityReviewPage()) leaveOpportunityReviewToList();
         })
         .catch(function (err) {
           window.alert(err.message || 'Could not deny listing.');
@@ -24850,6 +25111,7 @@
     }
     var quick = e.target.closest('[data-opp-quick]');
     if (quick) {
+      e.preventDefault();
       var key = quick.getAttribute('data-opp-quick');
       if (key === 'clear') {
         opportunityCleanupState.status = '';
@@ -24869,6 +25131,9 @@
           opportunityCleanupState.approval = 'Pending Review';
           opportunityCleanupState.status = '';
           opportunityCleanupState.awaitingPayment = false;
+          opportunityCleanupState.paymentLapsed = false;
+          opportunityCleanupState.unclaimed = false;
+          opportunityCleanupState.brandDuplicates = false;
         }
       } else if (key === 'awaiting_payment') {
         opportunityCleanupState.awaitingPayment = !opportunityCleanupState.awaitingPayment;
@@ -24902,7 +25167,9 @@
       } else if (key === 'brand_duplicates') {
         opportunityCleanupState.brandDuplicates = !opportunityCleanupState.brandDuplicates;
       }
+      opportunityCleanupState.page = 0;
       syncOpportunityCleanupFilterUi();
+      syncOpportunityListHashQuietly();
       refreshOpportunityCleanupData();
     }
   }
@@ -24973,36 +25240,50 @@
       }
       if (e.target.id === 'opportunity-cleanup-status-filter') {
         opportunityCleanupState.status = e.target.value || '';
+        opportunityCleanupState.page = 0;
         syncOpportunityCleanupFilterUi();
+        syncOpportunityListHashQuietly();
         refreshOpportunityCleanupData();
       }
       if (e.target.id === 'opportunity-cleanup-approval-filter') {
         opportunityCleanupState.approval = e.target.value || '';
+        opportunityCleanupState.page = 0;
         syncOpportunityCleanupFilterUi();
+        syncOpportunityListHashQuietly();
         refreshOpportunityCleanupData();
       }
       if (e.target.id === 'opportunity-cleanup-type-filter') {
         opportunityCleanupState.type = e.target.value || '';
+        opportunityCleanupState.page = 0;
         syncOpportunityCleanupFilterUi();
+        syncOpportunityListHashQuietly();
         refreshOpportunityCleanupData();
       }
       if (e.target.id === 'opportunity-cleanup-featured') {
         opportunityCleanupState.featured = e.target.checked;
+        opportunityCleanupState.page = 0;
         syncOpportunityCleanupFilterUi();
+        syncOpportunityListHashQuietly();
         refreshOpportunityCleanupData();
       }
       if (e.target.id === 'opportunity-cleanup-no-image') {
         opportunityCleanupState.noImage = e.target.checked;
+        opportunityCleanupState.page = 0;
         syncOpportunityCleanupFilterUi();
+        syncOpportunityListHashQuietly();
         refreshOpportunityCleanupData();
       }
       if (e.target.id === 'opportunity-cleanup-brand-duplicates') {
         opportunityCleanupState.brandDuplicates = e.target.checked;
+        opportunityCleanupState.page = 0;
         syncOpportunityCleanupFilterUi();
+        syncOpportunityListHashQuietly();
         refreshOpportunityCleanupData();
       }
       if (e.target.id === 'opportunity-cleanup-sort') {
         opportunityCleanupState.sort = e.target.value || 'recent';
+        opportunityCleanupState.page = 0;
+        syncOpportunityListHashQuietly();
         refreshOpportunityCleanupData();
       }
     });
@@ -25012,6 +25293,8 @@
       clearTimeout(opportunitySearchTimer);
       opportunitySearchTimer = setTimeout(function () {
         opportunityCleanupState.q = e.target.value || '';
+        opportunityCleanupState.page = 0;
+        syncOpportunityListHashQuietly();
         refreshOpportunityCleanupData();
       }, 300);
     });

@@ -376,6 +376,7 @@ function buildAdminOpportunityTags(type, category, existingTags, isTest) {
 async function listOpportunitiesForAdmin(query) {
   const sb = getSupabaseAdmin();
   const reviewQueueReady = await isOpportunityReviewQueueReady(sb);
+  const id = String(query.id || '').trim();
   const status = String(query.status || '').trim();
   const approvalStatus = normalizeApprovalStatus(query.approval_status || query.approval);
   const type = String(query.type || '').trim();
@@ -394,6 +395,31 @@ async function listOpportunitiesForAdmin(query) {
   const limit = Math.min(Math.max(parseInt(String(query.limit || ''), 10) || 15, 1), 50);
 
   let dbQuery = sb.from('business_opportunities').select('*', { count: 'exact' });
+
+  // Single-listing fetch for the Command Centre review page.
+  if (id) {
+    const res = await dbQuery.eq('id', id).limit(1);
+    if (res.error) throw new Error(res.error.message);
+    const rows = res.data || [];
+    const pendingCountRes = await applyPendingOpportunitiesAdminFilter(
+      sb.from('business_opportunities').select('id', { count: 'exact', head: true }),
+      reviewQueueReady
+    );
+    const pendingCountResult = await pendingCountRes;
+    if (pendingCountResult.error) throw new Error(pendingCountResult.error.message);
+    return {
+      opportunities: rows.map(mapOpportunityRow),
+      count: rows.length,
+      total: rows.length,
+      offset: 0,
+      limit: 1,
+      page: 0,
+      pageSize: 1,
+      hasMore: false,
+      pending_count: pendingCountResult.count || 0,
+      review_queue_ready: reviewQueueReady,
+    };
+  }
 
   dbQuery = dbQuery.order('featured', { ascending: false });
 

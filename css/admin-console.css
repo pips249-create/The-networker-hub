@@ -2905,3 +2905,42 @@ a.admin-action-row:hover .admin-action-btn {
 .opportunity-cleanup-create[open] > .opportunity-cleanup-create-summary .opportunity-cleanup-create-chevron {
   transform: rotate(180deg);
 }
+
+/* Opportunities — full-page review */
+.opp-review-page-nav {
+  position: sticky;
+  top: 0;
+  z-index: 15;
+  padding: 0.65rem 0;
+  background: rgba(248, 250, 252, 0.96);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.opp-review-admin-edit--page,
+.opp-review-open-days--page {
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 1rem 1.1rem;
+  background: #f8fafc;
+}
+
+.opp-review-open-days--page {
+  background: #fffbeb;
+  border-color: #fde68a;
+}
+
+.opp-review-admin-edit--page .opp-review-section-title,
+.opp-review-open-days--page .opp-review-section-title {
+  margin-top: 0;
+}
+
+.opp-review-page .opp-review-layout {
+  gap: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .opp-review-page .opp-review-layout {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  }
+}
