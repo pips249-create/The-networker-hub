@@ -418,9 +418,10 @@
     'spotlight-opportunities': {
       title: 'How to feature opportunities',
       steps: [
-        'Only approved opportunities can be featured.',
+        'Only approved live listings can appear in the public carousel.',
         'Toggle Featured and set an end date for the /opportunities/ carousel.',
-        'Edit Expires to extend or shorten the placement.',
+        'Network marketing listings never show in Premium Spotlight — clear them if they still count as featured.',
+        'Use Active in carousel to match what visitors see on /opportunities/.',
       ],
     },
     sponsorship: {
