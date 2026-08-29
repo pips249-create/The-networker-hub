@@ -2202,7 +2202,7 @@ window.HUB_SEO_DATA = {
               "@type": "HowToStep",
               "position": 5,
               "name": "Optional: premium placement",
-              "text": "Featured carousel slots may be available for extra visibility on the opportunities browse page after submission.",
+              "text": "After the listing is live, add an optional £55 one-time Premium Spotlight for up to 30 days (maximum 12 in the carousel). Buy it from My business opportunities — not a subscription. See /advertising#ad-pkg-opportunities-spotlight.",
               "url": "http://localhost:3000/guides/list-a-business-opportunity#premium"
             },
             {
@@ -2216,7 +2216,7 @@ window.HUB_SEO_DATA = {
               "@type": "HowToStep",
               "position": 7,
               "name": "Renew or update",
-              "text": "Listings run for a set period. Renew or edit from your dashboard before expiry to stay visible on Browse opportunities.",
+              "text": "The directory listing is a monthly Stripe subscription (£25 + VAT). Cancel any time from the listing page. Stay in Premium Spotlight by buying another one-time boost. Edit from the dashboard — copy or image changes go live after review.",
               "url": "http://localhost:3000/guides/list-a-business-opportunity#renew"
             }
           ]

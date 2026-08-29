@@ -11078,6 +11078,12 @@ body.org-event-drawer-open {
   color: var(--opp-dark-gray);
 }
 
+.org-page--business-ops .oe-intro-price-note a {
+  color: var(--opp-navy);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
 .org-page--business-ops .org-business-intro-actions {
   display: flex;
   flex-wrap: wrap;

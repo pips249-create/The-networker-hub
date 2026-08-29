@@ -1552,6 +1552,12 @@ body.oe-opportunity-drawer-open {
   color: var(--opp-dark-gray);
 }
 
+.oe-intro-price-note a {
+  color: var(--opp-navy);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
 .oe-intro-price-list {
   margin: 0;
   padding-left: 18px;
