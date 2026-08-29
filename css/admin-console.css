@@ -2886,3 +2886,22 @@ a.admin-action-row:hover .admin-action-btn {
   color: #7f1d1d;
   white-space: pre-wrap;
 }
+
+/* Opportunities — Create listing CTA (details summary) */
+.opportunity-cleanup-create > summary::-webkit-details-marker {
+  display: none;
+}
+
+.opportunity-cleanup-create-summary {
+  list-style: none;
+  transition: background-color 0.15s ease;
+}
+
+.opportunity-cleanup-create-chevron {
+  display: inline-block;
+  transition: transform 0.15s ease;
+}
+
+.opportunity-cleanup-create[open] > .opportunity-cleanup-create-summary .opportunity-cleanup-create-chevron {
+  transform: rotate(180deg);
+}

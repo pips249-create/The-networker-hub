@@ -24111,9 +24111,15 @@
       '<a href="/advertising#ad-panel-opportunities" target="_blank" rel="noopener" class="inline-flex items-center rounded-lg border border-brand-200 bg-white px-3 py-1.5 text-xs font-semibold text-brand-900 hover:border-brand-400 hover:bg-brand-50">Advertising rate card</a>' +
       '<button type="button" data-opp-quick="pending" class="inline-flex items-center rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-900 hover:bg-amber-100">Pending review</button>' +
       '</div></div>' +
-      '<details class="group">' +
-      '<summary class="cursor-pointer list-none font-semibold text-brand-900 px-4 py-3 select-none">Create listing</summary>' +
-      '<div class="px-4 pb-4 space-y-4 border-t border-brand-100">' +
+      '<details class="opportunity-cleanup-create group border-t border-brand-100">' +
+      '<summary class="opportunity-cleanup-create-summary cursor-pointer list-none select-none flex flex-wrap items-center justify-between gap-2 px-4 py-3 bg-brand-700 text-white hover:bg-brand-900">' +
+      '<span class="inline-flex items-center gap-2 text-sm font-semibold">' +
+      '<span aria-hidden="true" class="inline-flex h-6 w-6 items-center justify-center rounded-md bg-white/20 text-base leading-none font-bold">+</span>' +
+      'Create listing</span>' +
+      '<span class="inline-flex items-center gap-2 text-xs font-medium text-white/90">' +
+      '<span>Add a hub-owned opportunity</span>' +
+      '<span aria-hidden="true" class="opportunity-cleanup-create-chevron text-sm">▾</span></span></summary>' +
+      '<div class="px-4 pb-4 space-y-4 border-t border-brand-100 bg-white">' +
       '<p class="text-xs text-slate-600 pt-3">Create a hub-owned business opportunity with image, description, and card details. It stays claimable until you assign an owner email (or someone requests a claim). Prefix the title with <code class="text-[11px]">[TEST]</code> for throwaway previews.</p>' +
       '<p class="text-xs text-amber-900 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">One listing per brand on <code class="text-[11px]">/opportunities/</code> — Utility Warehouse, Arbonne, and BNI. Command Centre blocks a duplicate if one is already in the catalogue.</p>' +
       '<form class="opportunity-create-form grid sm:grid-cols-2 gap-3">' +
