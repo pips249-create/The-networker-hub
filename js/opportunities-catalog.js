@@ -348,10 +348,23 @@
   function formatMetaDisplayValue(key, val) {
     var v = String(val || '').trim();
     if (!v || v === '—') return v;
-    if (/^£/.test(v)) return v;
     var k = String(key || '').toLowerCase();
     if (/^investment/.test(k)) {
       if (/%/.test(v)) return v;
+      // Plain amounts (with or without £ / commas) → always £ + en-GB grouping
+      var stripped = v.replace(/^£\s*/, '').replace(/,/g, '').trim();
+      if (/^\d+(\.\d+)?$/.test(stripped)) {
+        var n = Number(stripped);
+        if (!isNaN(n) && isFinite(n)) {
+          return (
+            '£' +
+            n.toLocaleString('en-GB', {
+              maximumFractionDigits: stripped.indexOf('.') >= 0 ? 2 : 0,
+            })
+          );
+        }
+      }
+      if (/^£/.test(v)) return v;
       if (/\d/.test(v)) return '£' + v;
     }
     return v;
