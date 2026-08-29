@@ -2461,12 +2461,6 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
   .opp-browse-page .filter-opp-category-wrap select {
     max-width: none;
   }
-
-  .opp-browse-page .filter-bar-row-industries .event-type-chips {
-    mask-image: none;
-    -webkit-mask-image: none;
-    padding-right: 0;
-  }
 }
 
 @media (max-width: 900px) {
@@ -2648,17 +2642,38 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
   display: none;
 }
 
-/* Soft edge when industry chips overflow horizontally */
+/* Industry chips wrap — no horizontal scroll / fade edge */
 .opp-browse-page .filter-bar-row-industries .event-type-chips-wrap {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
   width: 100%;
   min-width: 0;
+  overflow: visible;
+}
+
+.opp-browse-page .filter-bar-row-industries .event-type-chips-wrap::after {
+  display: none;
+}
+
+.opp-browse-page .filter-bar-row-industries .filter-bar-chip-label--inline {
+  margin: 0;
 }
 
 .opp-browse-page .filter-bar-row-industries .event-type-chips {
-  mask-image: linear-gradient(90deg, #000 0%, #000 calc(100% - 2.5rem), transparent 100%);
-  -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 calc(100% - 2.5rem), transparent 100%);
-  padding-right: 1.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  overflow: visible;
+  padding-right: 0;
+  padding-bottom: 0;
+  mask-image: none;
+  -webkit-mask-image: none;
 }
 
 .opp-browse-page .filter-opp-open-day-toggle {
