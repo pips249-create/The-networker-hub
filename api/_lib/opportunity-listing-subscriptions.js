@@ -162,6 +162,78 @@ async function handleOpportunityListingSubscriptionDeleted(subscription) {
   );
 }
 
+/**
+ * Find the Stripe customer for a listing even when listing_stripe_subscription_id
+ * was never persisted (schema-cache miss after the £30 checkout).
+ */
+async function resolveListingBillingCustomer(opportunity) {
+  const { getStripeClient, retrieveCheckoutSession, isStripeCheckoutConfigured } = require('./stripe-checkout');
+  if (!isStripeCheckoutConfigured() || !opportunity) return null;
+  const stripe = getStripeClient();
+  const oppId = String(opportunity.id || '').trim();
+
+  const subId = String(
+    opportunity.listingStripeSubscriptionId || opportunity.listing_stripe_subscription_id || ''
+  ).trim();
+  if (subId) {
+    try {
+      const subscription = await stripe.subscriptions.retrieve(subId);
+      const customerId =
+        typeof subscription.customer === 'string'
+          ? subscription.customer
+          : String(subscription.customer?.id || '').trim();
+      if (customerId) return { customerId, subscription, source: 'subscription' };
+    } catch {
+      /* fall through */
+    }
+  }
+
+  const sessionId = String(
+    opportunity.listingStripeSessionId || opportunity.listing_stripe_session_id || ''
+  ).trim();
+  if (sessionId) {
+    try {
+      const session = await retrieveCheckoutSession(sessionId);
+      const customerId =
+        typeof session.customer === 'string'
+          ? session.customer
+          : String(session.customer?.id || '').trim();
+      let subscription = session.subscription;
+      if (typeof subscription === 'string' && subscription) {
+        try {
+          subscription = await stripe.subscriptions.retrieve(subscription);
+        } catch {
+          subscription = null;
+        }
+      }
+      if (customerId) return { customerId, subscription: subscription || null, source: 'session' };
+    } catch {
+      /* fall through */
+    }
+  }
+
+  if (oppId) {
+    try {
+      const found = await stripe.subscriptions.search({
+        query: "metadata['opportunity_id']:'" + oppId.replace(/'/g, '') + "' AND status:'active'",
+        limit: 1,
+      });
+      const subscription = (found.data || [])[0];
+      if (subscription) {
+        const customerId =
+          typeof subscription.customer === 'string'
+            ? subscription.customer
+            : String(subscription.customer?.id || '').trim();
+        if (customerId) return { customerId, subscription, source: 'metadata_search' };
+      }
+    } catch {
+      /* Search API may be unavailable — sync path still searches by customer email */
+    }
+  }
+
+  return null;
+}
+
 async function handleOpportunityListingInvoicePaid(invoice) {
   const meta = normalizeMeta(invoice?.subscription_details?.metadata || invoice?.metadata);
   const subId =
@@ -190,4 +262,5 @@ module.exports = {
   handleOpportunityListingSubscriptionUpdated,
   handleOpportunityListingSubscriptionDeleted,
   handleOpportunityListingInvoicePaid,
+  resolveListingBillingCustomer,
 };

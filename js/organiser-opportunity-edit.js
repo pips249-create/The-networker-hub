@@ -609,6 +609,16 @@
     );
   }
 
+  function listingHasStripeSession(opp) {
+    return Boolean(
+      String((opp && (opp.listingStripeSessionId || opp.listing_stripe_session_id)) || '').trim()
+    );
+  }
+
+  function listingCanManageBilling(opp) {
+    return listingHasStripeSubscription(opp) || listingHasStripeSession(opp);
+  }
+
   function listingPaymentPanelVisible() {
     const panel = document.getElementById('oe-listing-payment');
     const billing = document.getElementById('oe-listing-billing');
@@ -675,10 +685,10 @@
     const lead = document.getElementById('oe-listing-billing-lead');
     const expiry = document.getElementById('oe-listing-billing-expiry');
     const manageBtn = document.getElementById('oe-manage-listing-billing');
-    const hasSub = listingHasStripeSubscription(currentOpportunity);
+    const canManage = listingCanManageBilling(currentOpportunity);
 
     if (lead) {
-      lead.innerHTML = hasSub
+      lead.innerHTML = canManage
         ? 'Your listing is billed <strong>£25/month + VAT</strong> (£30) via Stripe until you cancel. Use the button below to update your card or cancel — same secure Stripe portal you paid with.'
         : 'Your listing fee is marked paid. If you need to stop billing, email <a href="mailto:hi@thenetworkeruk.com">hi@thenetworkeruk.com</a> and we will help straight away.';
     }
@@ -700,8 +710,8 @@
       }
     }
     if (manageBtn) {
-      manageBtn.hidden = !hasSub;
-      manageBtn.disabled = !hasSub;
+      manageBtn.hidden = !canManage;
+      manageBtn.disabled = !canManage;
     }
   }
 
@@ -763,12 +773,36 @@
     return true;
   }
 
+  async function recoverListingPaymentFromStripe(opp) {
+    if (!opp || !opp.id) return opp;
+    const approved = String(opp.approvalStatus || '').trim() === 'Approved';
+    const missingSub = !listingHasStripeSubscription(opp);
+    const unpaid = !opp.listingPaymentActive;
+    if (!approved && !opp.listingPaidAt) return opp;
+    if (!unpaid && !missingSub) return opp;
+    const res = await api('/api/organiser/opportunities', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'sync_listing_payment', id: opp.id }),
+    });
+    if (res.ok && res.data && res.data.opportunity) {
+      prefillFromOpportunity(res.data.opportunity);
+      syncListingStatusUi(res.data.opportunity);
+      syncDangerZoneUi();
+      listingPaymentPanelVisible();
+      if (res.data.source && (unpaid || missingSub)) {
+        showAlert('Stripe payment found — your listing billing is linked.', false);
+      }
+      return res.data.opportunity;
+    }
+    return opp;
+  }
+
   async function openListingBillingPortal() {
     if (!editId) {
       showAlert('Save your listing before managing billing.', true);
       return;
     }
-    if (!listingHasStripeSubscription(currentOpportunity)) {
+    if (!listingCanManageBilling(currentOpportunity)) {
       showAlert(
         'No Stripe subscription is linked yet. Email hi@thenetworkeruk.com and we will help you cancel.',
         true
@@ -811,13 +845,13 @@
   async function unpublishCurrentOpportunityListing() {
     if (!editId || !currentOpportunity) return;
     const label = currentOpportunity.title || 'this listing';
-    const hasSub = listingHasStripeSubscription(currentOpportunity);
+    const canManage = listingCanManageBilling(currentOpportunity);
     const ok = window.confirm(
       'Unpublish "' +
         label +
         '"?\n\n' +
         'It will be removed from the public business opportunities directory immediately. Existing enquiries stay in your dashboard.\n\n' +
-        (hasSub
+        (canManage
           ? 'Unpublishing does not stop billing. Use “Manage or cancel subscription” on this page if you want to cancel charges.'
           : 'If you were billed for this listing, email hi@thenetworkeruk.com to cancel.')
     );
@@ -874,7 +908,7 @@
     }
     const canUnpublish = opportunityCanUnpublish(currentOpportunity);
     const canDelete = opportunityCanDeleteDraft(currentOpportunity);
-    const canManageBilling = listingHasStripeSubscription(currentOpportunity);
+    const canManageBilling = listingCanManageBilling(currentOpportunity);
     if (!canUnpublish && !canDelete && !canManageBilling) {
       zone.hidden = true;
       return;
@@ -3293,6 +3327,7 @@
         const res = await api('/api/organiser/opportunities?id=' + encodeURIComponent(editId));
         if (res.ok && res.data.opportunity) {
           prefillFromOpportunity(res.data.opportunity);
+          await recoverListingPaymentFromStripe(res.data.opportunity);
           await loadOpenDaysForEdit(editId);
         } else {
           showAlert('Could not load this opportunity. Check you have access to this listing.');

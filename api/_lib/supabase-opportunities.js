@@ -483,6 +483,7 @@ function rowToListing(row) {
     listingPaidAt: row.listing_paid_at || null,
     listingExpiresAt: row.listing_expires_at || null,
     listingStripeSubscriptionId: row.listing_stripe_subscription_id || null,
+    listingStripeSessionId: row.listing_stripe_session_id || null,
     listingPaymentActive: listingPaymentCurrent(row),
     outcode: String(row.outcode || '').trim(),
     regionSlug: String(row.region_slug || '').trim(),
@@ -1561,7 +1562,8 @@ async function syncOpportunityListingPayment(opportunityId, opts) {
   if (loadErr) throw new Error(loadErr.message);
   if (!row) throw new Error('not_found');
 
-  if (listingPaymentCurrent(row) && !opportunityListingStripeIdsMissing(row)) {
+  const hasSubscriptionId = Boolean(String(row.listing_stripe_subscription_id || '').trim());
+  if (listingPaymentCurrent(row) && !opportunityListingStripeIdsMissing(row) && hasSubscriptionId) {
     return { ok: true, alreadyPaid: true, opportunity: rowToListing(row) };
   }
 
