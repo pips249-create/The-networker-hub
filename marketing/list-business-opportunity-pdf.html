@@ -53,7 +53,7 @@
     justify-content: space-between;
     align-items: flex-start;
     gap: 16px;
-    margin-bottom: 10mm;
+    margin-bottom: 8mm;
     padding-top: 4mm;
   }
   .logo { width: 52mm; height: auto; }
@@ -80,28 +80,28 @@
 
   h1 {
     font-family: 'DM Serif Display', Georgia, serif;
-    font-size: 28pt;
+    font-size: 26pt;
     font-weight: 400;
     line-height: 1.12;
     color: var(--navy);
-    margin-bottom: 4mm;
+    margin-bottom: 3.5mm;
   }
   h1 .accent { color: var(--gold); font-style: normal; }
 
   .lede {
-    font-size: 12pt;
+    font-size: 11.5pt;
     line-height: 1.5;
     color: var(--muted);
     max-width: 165mm;
-    margin-bottom: 9mm;
+    margin-bottom: 7mm;
   }
 
   h2 {
-    font-size: 13pt;
+    font-size: 12.5pt;
     font-weight: 800;
     letter-spacing: -0.02em;
     color: var(--navy);
-    margin-bottom: 5mm;
+    margin-bottom: 4.5mm;
     padding-bottom: 2mm;
     border-bottom: 2px solid var(--gold-pale);
   }
@@ -119,28 +119,28 @@
   .benefits {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 4mm;
-    margin-bottom: 9mm;
+    gap: 3.5mm;
+    margin-bottom: 7mm;
   }
   .benefit {
     background: var(--bg);
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 5mm;
+    padding: 4.5mm;
   }
   .benefit-icon {
-    font-size: 16pt;
-    margin-bottom: 2mm;
+    font-size: 15pt;
+    margin-bottom: 1.5mm;
   }
   .benefit h3 {
-    font-size: 11pt;
+    font-size: 10.5pt;
     font-weight: 800;
     color: var(--navy);
     margin-bottom: 1.5mm;
     line-height: 1.2;
   }
   .benefit p {
-    font-size: 9.5pt;
+    font-size: 9pt;
     line-height: 1.45;
     color: var(--muted);
   }
@@ -149,8 +149,8 @@
     background: linear-gradient(135deg, var(--navy) 0%, #162847 100%);
     color: #fff;
     border-radius: 10px;
-    padding: 6mm 7mm;
-    margin-bottom: 9mm;
+    padding: 5.5mm 6.5mm;
+    margin-bottom: 6mm;
   }
   .highlight h2 {
     color: #fff;
@@ -164,7 +164,7 @@
   }
   .highlight-stat b {
     display: block;
-    font-size: 18pt;
+    font-size: 16pt;
     font-weight: 800;
     color: var(--gold);
     letter-spacing: -0.03em;
@@ -172,9 +172,23 @@
     margin-bottom: 1mm;
   }
   .highlight-stat span {
-    font-size: 9pt;
+    font-size: 8.5pt;
     line-height: 1.35;
     color: rgba(255,255,255,0.85);
+  }
+
+  .types {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2mm;
+  }
+  .type-tag {
+    padding: 1.5mm 3.5mm;
+    border-radius: 999px;
+    background: var(--navy);
+    color: #fff;
+    font-size: 8pt;
+    font-weight: 600;
   }
 
   /* Steps */
@@ -182,18 +196,18 @@
   .step {
     counter-increment: step;
     display: grid;
-    grid-template-columns: 12mm 1fr;
-    gap: 4mm;
-    padding: 4mm 0;
+    grid-template-columns: 11mm 1fr;
+    gap: 3.5mm;
+    padding: 3.5mm 0;
     border-bottom: 1px solid var(--border);
   }
   .step:last-child { border-bottom: none; }
   .step-num {
-    width: 12mm; height: 12mm;
+    width: 11mm; height: 11mm;
     border-radius: 50%;
     background: var(--navy);
     color: #fff;
-    font-size: 11pt;
+    font-size: 10pt;
     font-weight: 800;
     display: flex;
     align-items: center;
@@ -201,13 +215,13 @@
   }
   .step-num::before { content: counter(step); }
   .step h3 {
-    font-size: 11pt;
+    font-size: 10.5pt;
     font-weight: 800;
     color: var(--navy);
-    margin-bottom: 1.5mm;
+    margin-bottom: 1mm;
   }
   .step p {
-    font-size: 9.5pt;
+    font-size: 9pt;
     line-height: 1.45;
     color: var(--muted);
   }
@@ -216,24 +230,24 @@
     background: var(--gold-pale);
     border: 1.5px solid rgba(201, 150, 31, 0.35);
     border-radius: 10px;
-    padding: 6mm 7mm;
-    margin: 8mm 0;
+    padding: 5.5mm 6.5mm;
+    margin: 6mm 0;
   }
   .pricing-top {
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
     gap: 6mm;
-    margin-bottom: 4mm;
+    margin-bottom: 3.5mm;
   }
   .pricing h3 {
-    font-size: 13pt;
+    font-size: 12.5pt;
     font-weight: 800;
     color: var(--navy);
     margin-bottom: 1mm;
   }
   .pricing-tagline {
-    font-size: 9.5pt;
+    font-size: 9pt;
     color: var(--muted);
   }
   .price {
@@ -260,7 +274,7 @@
     gap: 2mm 4mm;
   }
   .pricing li {
-    font-size: 9pt;
+    font-size: 8.5pt;
     color: var(--muted);
     padding-left: 5mm;
     position: relative;
@@ -275,7 +289,7 @@
 
   .footer {
     margin-top: auto;
-    padding-top: 6mm;
+    padding-top: 5mm;
     border-top: 1px solid var(--border);
     display: flex;
     justify-content: space-between;
@@ -332,7 +346,7 @@
   <h1>List your <span class="accent">business opportunity</span> on The Networker UK</h1>
   <p class="lede">
     Reach UK business professionals who already browse networking events and opportunities in one place.
-    Franchises, side hustles, partnerships, distributorships and more, with direct enquiries to your inbox.
+    Franchises, affiliates, side hustles, partnerships, network marketing and more — with direct enquiries, open days, and compare tools built in.
   </p>
 
   <p class="kicker">Why list here</p>
@@ -349,24 +363,24 @@
       <p>Your listing appears where networkers already browse, alongside events and organiser communities.</p>
     </div>
     <div class="benefit">
-      <div class="benefit-icon">🔍</div>
-      <h3>Filter-friendly listings</h3>
-      <p>Prospects search by type, investment level, and location, so your offer reaches the right people.</p>
+      <div class="benefit-icon">📅</div>
+      <h3>Open days &amp; visits</h3>
+      <p>Schedule open days or talks on your listing. Prospects register interest and you manage the list from your workspace.</p>
     </div>
     <div class="benefit">
-      <div class="benefit-icon">⚡</div>
-      <h3>Live within 24 hours</h3>
-      <p>Submit your listing for review. Most go live within one working day after approval.</p>
+      <div class="benefit-icon">🔍</div>
+      <h3>Filter &amp; compare</h3>
+      <p>Prospects filter by type, budget and location, then compare listings side by side — including affiliate commission details.</p>
     </div>
     <div class="benefit">
       <div class="benefit-icon">📊</div>
       <h3>Organiser dashboard</h3>
-      <p>Manage listings, track enquiries, and edit details from the same workspace you use for events.</p>
+      <p>Manage listings, enquiries, open-day interest and edits from the same workspace you use for events.</p>
     </div>
     <div class="benefit">
       <div class="benefit-icon">⭐</div>
-      <h3>Optional premium spotlight</h3>
-      <p>Upgrade for featured carousel placement on the opportunities browse page when slots are available.</p>
+      <h3>Premium Spotlight</h3>
+      <p>Optional one-time £55 boost (up to 30 days) for featured carousel placement — max 12 premium slots at a time.</p>
     </div>
   </div>
 
@@ -375,17 +389,28 @@
     <div class="highlight-grid">
       <div class="highlight-stat">
         <b>Direct</b>
-        <span>Enquiries go to your inbox. You reply on your terms.</span>
+        <span>Enquiries &amp; open-day interest go to your inbox and workspace.</span>
       </div>
       <div class="highlight-stat">
-        <b>24hrs</b>
-        <span>Typical review and publish time after submission</span>
+        <b>Review → pay</b>
+        <span>Submit free. Pay the monthly fee only after we approve.</span>
       </div>
       <div class="highlight-stat">
         <b>£25/mo</b>
-        <span>+ VAT · min 3 months · paid upfront via Stripe</span>
+        <span>+ VAT · monthly subscription · cancel anytime</span>
       </div>
     </div>
+  </div>
+
+  <p class="kicker" style="margin-bottom:2.5mm;">Opportunity types you can list</p>
+  <div class="types">
+    <span class="type-tag">Franchise</span>
+    <span class="type-tag">Affiliate</span>
+    <span class="type-tag">Side hustle</span>
+    <span class="type-tag">Partnership</span>
+    <span class="type-tag">Network marketing</span>
+    <span class="type-tag">Distributorship</span>
+    <span class="type-tag">Networking / Ambassador</span>
   </div>
 
   <p class="page-num">1 of 2</p>
@@ -403,42 +428,42 @@
   </header>
 
   <p class="kicker">Step by step</p>
-  <h1 style="font-size:24pt;margin-bottom:6mm;">From listing to enquiry in <span class="accent">four steps</span></h1>
+  <h1 style="font-size:22pt;margin-bottom:5mm;">From listing to enquiry in <span class="accent">five steps</span></h1>
 
   <ol class="steps">
     <li class="step">
       <div class="step-num"></div>
       <div>
         <h3>Open the organiser dashboard</h3>
-        <p>Sign in at thenetworkeruk.com and go to <strong>Business opportunities</strong> in the sidebar. You need an organiser account, the same workspace used for events.</p>
+        <p>Sign in at thenetworkeruk.com and go to <strong>Business opportunities</strong> in the sidebar. You need an organiser account — the same workspace used for events.</p>
       </div>
     </li>
     <li class="step">
       <div class="step-num"></div>
       <div>
         <h3>Create your listing</h3>
-        <p>Choose <strong>List a listing</strong> and complete the form: title, opportunity type (franchise, partnership, side hustle, etc.), summary, description, investment notes, location, industry, images, and contact details.</p>
+        <p>Choose <strong>List a listing</strong> and complete the form: title, opportunity type(s), summary, description, investment notes, location, industry, images and contact details. Add open days or talks if you host visits.</p>
       </div>
     </li>
     <li class="step">
       <div class="step-num"></div>
       <div>
-        <h3>Submit &amp; go live</h3>
-        <p>Submit for review. You'll receive email updates when approved or if changes are needed. Once live, your listing appears on the Business Opportunities browse page.</p>
+        <h3>Submit for review (no charge)</h3>
+        <p>Submit free of charge. You&rsquo;ll get email updates when approved or if changes are needed. Edit anytime while pending.</p>
       </div>
     </li>
     <li class="step">
       <div class="step-num"></div>
       <div>
-        <h3>Receive &amp; manage enquiries</h3>
-        <p>When someone enquires, you get an email notification. Reply directly to the prospect and track enquiries from <strong>Business opportunities → Overview</strong> in your dashboard.</p>
+        <h3>Pay after approval to go live</h3>
+        <p>When approved, you receive a Stripe link to start the monthly subscription (£25 + VAT). Your listing goes live on the directory immediately. Optional: add Premium Spotlight (£55 one-time, up to 30 days).</p>
       </div>
     </li>
     <li class="step">
       <div class="step-num"></div>
       <div>
-        <h3>Renew or update</h3>
-        <p>Listings run for your chosen term. You&rsquo;ll get reminder emails before expiry. Renew or edit from your dashboard to stay visible.</p>
+        <h3>Manage enquiries &amp; open days</h3>
+        <p>Enquiries and open-day interest land in your workspace with email alerts. Reply directly, update details, or cancel the subscription anytime from your billing portal.</p>
       </div>
     </li>
   </ol>
@@ -447,7 +472,7 @@
     <div class="pricing-top">
       <div>
         <h3>Simple, transparent listing fees</h3>
-        <p class="pricing-tagline">Paid upfront for your chosen term · secure payment via Stripe</p>
+        <p class="pricing-tagline">Monthly Stripe subscription · cancel anytime from your portal</p>
       </div>
       <div class="price">
         <b>£25</b>
@@ -455,9 +480,11 @@
       </div>
     </div>
     <ul>
-      <li>Minimum 3 months (e.g. £75 + £15 VAT = £90 total)</li>
-      <li>Enquiries direct to your inbox</li>
-      <li>Edit your listing any time during your term</li>
+      <li>Pay only after approval — no charge to submit</li>
+      <li>Cancel anytime · no minimum term</li>
+      <li>Optional Premium Spotlight £55 one-time (up to 30 days)</li>
+      <li>Open days, enquiries &amp; compare tools included</li>
+      <li>Edit your listing any time while live</li>
       <li>Browsing &amp; enquiring is free for members</li>
     </ul>
   </div>

@@ -67,10 +67,10 @@ const downloads = [
   ['list-business-opportunity-linkedin.pdf', 'Networker UK - How to List Business Opportunities (LinkedIn).pdf'],
 ];
 
-for (const [src, dest] of downloads) {
-  fs.copyFileSync(
-    path.join(exportsDir, src),
-    path.join(process.env.HOME || '', 'Downloads', dest)
-  );
-  console.log('Copied to Downloads:', dest);
+const downloadsDir = path.join(process.env.HOME || '', 'Downloads');
+if (fs.existsSync(downloadsDir)) {
+  for (const [src, dest] of downloads) {
+    fs.copyFileSync(path.join(exportsDir, src), path.join(downloadsDir, dest));
+    console.log('Copied to Downloads:', dest);
+  }
 }

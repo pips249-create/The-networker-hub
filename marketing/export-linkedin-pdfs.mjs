@@ -66,10 +66,12 @@ for (const item of LINKEDIN_PDFS) {
 }
 await browser.close();
 
-for (const item of LINKEDIN_PDFS) {
-  fs.copyFileSync(
-    path.join(exportsDir, item.file),
-    path.join(downloadsDir, item.download)
-  );
-  console.log('Downloads:', item.download);
+if (fs.existsSync(downloadsDir)) {
+  for (const item of LINKEDIN_PDFS) {
+    fs.copyFileSync(
+      path.join(exportsDir, item.file),
+      path.join(downloadsDir, item.download)
+    );
+    console.log('Downloads:', item.download);
+  }
 }
