@@ -941,6 +941,7 @@
           signOutBtn.addEventListener('click', function () {
             signOutBtn.disabled = true;
             fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
+              .catch(function () {})
               .finally(function () {
                 window.location.reload();
               });

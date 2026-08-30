@@ -83,7 +83,13 @@
       dsn: DSN,
       environment: env,
       sendDefaultPii: false,
-      ignoreErrors: ['NetworkError: A network error occurred.'],
+      ignoreErrors: [
+        'NetworkError: A network error occurred.',
+        'TypeError: Load failed',
+        'TypeError: Failed to fetch',
+        'Load failed',
+        'Failed to fetch',
+      ],
       beforeSend: beforeSend,
     });
   }
