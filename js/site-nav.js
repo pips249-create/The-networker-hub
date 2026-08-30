@@ -202,7 +202,7 @@
       window.HubComplianceBootstrap.load(root);
     } else {
       var complianceScript = document.createElement('script');
-      complianceScript.src = root + 'js/hub-compliance-bootstrap.js?v=20260828cmp1';
+      complianceScript.src = root + 'js/hub-compliance-bootstrap.js?v=20260830logout1';
       complianceScript.setAttribute('data-root', root);
       complianceScript.setAttribute('data-hub-compliance-bootstrap', '1');
       document.head.appendChild(complianceScript);
@@ -1001,9 +1001,11 @@
       mobileSignOut.addEventListener('click', function () {
         closeMenu();
         cacheUser(null);
-        fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).finally(function () {
-          window.location.href = href(signOutRedirectUrl());
-        });
+        fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
+          .catch(function () {})
+          .finally(function () {
+            window.location.href = href(signOutRedirectUrl());
+          });
       });
     }
 
@@ -1238,9 +1240,11 @@
     if (signOut) {
       signOut.addEventListener('click', function () {
         cacheUser(null);
-        fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).finally(function () {
-          window.location.href = href(signOutRedirectUrl());
-        });
+        fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
+          .catch(function () {})
+          .finally(function () {
+            window.location.href = href(signOutRedirectUrl());
+          });
       });
     }
 
