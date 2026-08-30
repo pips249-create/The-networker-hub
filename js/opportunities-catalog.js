@@ -467,12 +467,14 @@
   }
 
   function buildSearchText(item) {
-    return [item.title, item.host, item.desc, item.type, item.category]
+    /* Omit synthetic filterTags (yorkshire, low-invest, …) — they are for chips
+       only. Including them made "york" match any Leeds-tagged listing via "yorkshire". */
+    return [item.title, item.host, item.desc, item.type, item.category, item.locationLabel]
       .concat(item.tags || [])
-      .concat(item.filterTags || [])
       .concat((item.meta || []).map(function (m) {
         return m.key + ' ' + m.val;
       }))
+      .filter(Boolean)
       .join(' ')
       .toLowerCase();
   }

@@ -36,6 +36,12 @@ assert('multi-word AND', haystackMatchesQuery(hay, 'networking manchester'));
 assert('multi-word order independent', haystackMatchesQuery(hay, 'club breakfast'));
 assert('missing word fails', !haystackMatchesQuery(hay, 'networking london'));
 
+assert('short term whole word', haystackMatchesQuery('york open day north yorkshire', 'york'));
+assert('short term does not match longer place', !haystackMatchesQuery('yorkshire & the humber franchise', 'york'));
+assert('short term ignores synthetic yorkshire tag', !haystackMatchesQuery('business women connections leeds yorkshire franchise', 'york'));
+assert('longer place query still matches', haystackMatchesQuery('yorkshire & the humber franchise', 'yorkshire'));
+assert('short exact still whole-word at edge', haystackMatchesQuery('bath', 'bath'));
+
 assert('ampersand matches and', haystackMatchesQuery('Wine & Dine Networking', 'wine and dine'));
 assert('and matches ampersand', haystackMatchesQuery('Wine and Dine Networking', 'wine & dine'));
 assert('ampersand multi-word', haystackMatchesQuery('Marks & Spencer Business Club', 'marks spencer'));

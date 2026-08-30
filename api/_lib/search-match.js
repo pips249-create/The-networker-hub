@@ -76,12 +76,25 @@ function haystackWords(haystack) {
     });
 }
 
+function escapeRegExp(s) {
+  return String(s || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/** Whole-word match so short queries like "york" do not hit "yorkshire". */
+function termMatchesWholeWord(term, haystack) {
+  const re = new RegExp('(?:^|[^a-z0-9])' + escapeRegExp(term) + '(?:[^a-z0-9]|$)');
+  return re.test(haystack);
+}
+
 function termMatchesHaystack(term, haystack) {
   const t = sanitizeSearchTerm(term);
   if (!t || t === 'and') return true;
   const hay = normalizeAmpersands(String(haystack || '')).toLowerCase();
+  /* Short terms: whole-word only (york ≠ yorkshire). Longer: substring for progressive typing. */
+  if (t.length < FUZZY_MIN_LEN) {
+    return termMatchesWholeWord(t, hay);
+  }
   if (hay.indexOf(t) !== -1) return true;
-  if (t.length < FUZZY_MIN_LEN) return false;
 
   const words = haystackWords(hay);
   for (let i = 0; i < words.length; i++) {
