@@ -3488,7 +3488,8 @@ body.nav-menu-open {
     gap: 10px;
   }
 
-  .events-page .event-grid-card {
+  /* Events browse only — opportunity cards keep full-width covers (see opportunities-page.css) */
+  .events-page:not(.opp-browse-page) .event-grid-card {
     min-height: 0;
     padding: 10px;
     gap: 12px;
@@ -3497,7 +3498,7 @@ body.nav-menu-open {
   }
 
   /* Lock listing thumbs at ~140px (beats earlier page CSS / img height:auto conflicts) */
-  .events-page .event-grid-media {
+  .events-page:not(.opp-browse-page) .event-grid-media {
     flex: 0 0 140px !important;
     width: 140px !important;
     height: 140px !important;
@@ -3509,8 +3510,8 @@ body.nav-menu-open {
     align-self: center;
   }
 
-  .events-page .event-grid-media .event-grid-img,
-  .events-page .event-grid-img {
+  .events-page:not(.opp-browse-page) .event-grid-media .event-grid-img,
+  .events-page:not(.opp-browse-page) .event-grid-img {
     width: 100% !important;
     height: 100% !important;
     max-width: none !important;
@@ -3518,12 +3519,12 @@ body.nav-menu-open {
     object-fit: cover;
   }
 
-  .events-page .event-grid-body {
+  .events-page:not(.opp-browse-page) .event-grid-body {
     padding: 2px 2px 2px 0;
     justify-content: center;
   }
 
-  .events-page .event-grid-title {
+  .events-page:not(.opp-browse-page) .event-grid-title {
     font-size: 0.98rem;
     line-height: 1.25;
   }
