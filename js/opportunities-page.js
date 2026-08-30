@@ -917,8 +917,15 @@
     if (catalog && catalog.formatMetaDisplayValue) {
       return catalog.formatMetaDisplayValue(key, val) || val;
     }
+    if (/^investment/i.test(key || '') && catalog && catalog.formatInvestmentDisplay) {
+      return catalog.formatInvestmentDisplay(val);
+    }
     if (/^£/.test(val) || /%/.test(val)) return val;
-    if (/\d/.test(val) && /^investment/i.test(key || '')) return '£' + val;
+    if (/\d/.test(val) && /^investment/i.test(key || '')) {
+      var num = Number(String(val).replace(/[^0-9.]/g, ''));
+      if (isFinite(num) && num > 0) return '£' + num.toLocaleString('en-GB');
+      return '£' + val;
+    }
     return val;
   }
 
@@ -985,12 +992,20 @@
   }
 
   function isLogoCoverImage(item) {
-    var imageUrl = String((item && item.imageUrl) || '').trim();
-    var logoUrl = String((item && item.logoUrl) || '').trim();
+    if (!item) return false;
+    if (item.coverIsLogoFallback) return true;
+    var imageUrl = String(item.imageUrl || '').trim();
+    var logoUrl = String(item.logoUrl || '').trim();
     if (!imageUrl) return false;
     if (logoUrl && imageUrl === logoUrl) return true;
     if (/\/opportunities\/logos\//i.test(imageUrl)) return true;
-    if (/\.svg(?:$|\?)/i.test(imageUrl) && /logo/i.test(imageUrl)) return true;
+    if (/\/logos?\//i.test(imageUrl)) return true;
+    if (/(?:^|[\/_-])logo(?:[\/_.-]|$)/i.test(imageUrl)) return true;
+    if (/\.svg(?:$|\?)/i.test(imageUrl) && /logo|brand/i.test(imageUrl)) return true;
+    /* Franchise directory assets are almost always logo plates, not photography. */
+    if (/franchiseinfo\.co\.uk\/wp-content\/uploads\/.+\.(?:png|svg|webp)(?:$|\?)/i.test(imageUrl)) {
+      return true;
+    }
     return false;
   }
 
@@ -1012,7 +1027,8 @@
 
   function mediaHtml(item, thumb) {
     if (item.imageUrl) {
-      var logoClass = isLogoCoverImage(item) ? ' is-logo-cover' : '';
+      var logoCover = isLogoCoverImage(item);
+      var logoClass = logoCover ? ' is-logo-cover' : '';
       return (
         '<img class="event-grid-img' +
         logoClass +
@@ -1296,7 +1312,9 @@
       escapeHtml(item.id) +
       '">' +
       '<div class="bo-opp-compact">' +
-      '<div class="event-grid-media">' +
+      '<div class="event-grid-media' +
+      (isLogoCoverImage(item) ? ' is-logo-cover-media' : '') +
+      '">' +
       mediaHtml(item, thumb) +
       premiumBadge +
       openDayBadge +
@@ -2660,10 +2678,18 @@
       });
     }
     if (criteria.minInvest != null && criteria.minInvest !== '') {
-      chips.push({ key: 'minInvest', value: String(criteria.minInvest), label: 'Min £' + criteria.minInvest });
+      chips.push({
+        key: 'minInvest',
+        value: String(criteria.minInvest),
+        label: 'Min £' + Number(criteria.minInvest).toLocaleString('en-GB'),
+      });
     }
     if (criteria.maxInvest != null && criteria.maxInvest !== '') {
-      chips.push({ key: 'maxInvest', value: String(criteria.maxInvest), label: 'Max £' + criteria.maxInvest });
+      chips.push({
+        key: 'maxInvest',
+        value: String(criteria.maxInvest),
+        label: 'Max £' + Number(criteria.maxInvest).toLocaleString('en-GB'),
+      });
     }
     if (criteria.commitment) {
       String(criteria.commitment)

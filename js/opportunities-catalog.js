@@ -345,14 +345,34 @@
     return loc;
   }
 
+  /**
+   * Format investment-style amounts for cards/detail: £100001 → £100,001.
+   * Preserves suffixes like "+ VAT" / "+". Leaves % / enquire / on request alone.
+   */
+  function formatInvestmentDisplay(val) {
+    var v = String(val || '').trim();
+    if (!v || v === '—') return v;
+    if (/^enquire$/i.test(v) || /^on\s*request$/i.test(v)) return 'On request';
+    if (/%/.test(v) && !/£/.test(v) && !/^\s*[\d,]{4,}/.test(v)) return v;
+
+    var m = v.match(/^£?\s*([\d,]+(?:\.\d+)?)\s*(.*)$/);
+    if (!m) {
+      if (/\d/.test(v) && !/^£/.test(v)) return '£' + v;
+      return v;
+    }
+    var num = Number(String(m[1]).replace(/,/g, ''));
+    if (!isFinite(num)) return v;
+    var formatted = '£' + num.toLocaleString('en-GB');
+    var suffix = String(m[2] || '').trim();
+    return suffix ? formatted + ' ' + suffix : formatted;
+  }
+
   function formatMetaDisplayValue(key, val) {
     var v = String(val || '').trim();
     if (!v || v === '—') return v;
-    if (/^£/.test(v)) return v;
     var k = String(key || '').toLowerCase();
     if (/^investment/.test(k)) {
-      if (/%/.test(v)) return v;
-      if (/\d/.test(v)) return '£' + v;
+      return formatInvestmentDisplay(v);
     }
     return v;
   }
@@ -766,6 +786,7 @@
     typeClass: typeClass,
     cardDisplayMeta: cardDisplayMeta,
     isAffiliateStyleListing: isAffiliateStyleListing,
+    formatInvestmentDisplay: formatInvestmentDisplay,
     formatMetaDisplayValue: formatMetaDisplayValue,
     cookieWindowFromMeta: cookieWindowFromMeta,
     affiliateCookieShortLabel: affiliateCookieShortLabel,
