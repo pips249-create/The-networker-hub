@@ -703,11 +703,13 @@
       var x = projected[0];
       var y = projected[1];
       if (meta.iso2 === 'GB') {
-        x += 16;
-        y -= 18;
+        // Far enough right/up that the chip clears Ireland on phones.
+        x += 48;
+        y -= 34;
       } else if (meta.iso2 === 'IE') {
-        x -= 18;
-        y -= 12;
+        // Pull into the Atlantic so it does not stack on the UK chip.
+        x -= 80;
+        y += 18;
       } else if (meta.iso2 === 'US') {
         x -= 18;
         y += 8;

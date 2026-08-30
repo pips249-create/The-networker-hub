@@ -1532,11 +1532,12 @@
     inset: auto;
     flex: none;
     min-height: 0;
-    /* Match the SVG viewBox so the full world fills phone width without crop. */
+    /* Slightly taller than the SVG viewBox so floating labels above
+       northern countries are not clipped at the canvas edge. */
     width: 100%;
     height: auto;
-    aspect-ratio: 960 / 500;
-    max-height: min(52svh, 420px);
+    aspect-ratio: 960 / 680;
+    max-height: min(56svh, 460px);
     margin: 10px 0 0;
   }
 
