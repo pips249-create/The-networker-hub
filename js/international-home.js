@@ -699,12 +699,17 @@
       var projected = projection(centroid);
       if (!projected) return;
 
-      // Nudge UK label so it sits above the islands clearly.
+      // Nudge spotlight labels so neighbouring markets stay readable.
       var x = projected[0];
       var y = projected[1];
       if (meta.iso2 === 'GB') {
-        x += 8;
-        y -= 14;
+        // Far enough right/up that the chip clears Ireland on phones.
+        x += 48;
+        y -= 34;
+      } else if (meta.iso2 === 'IE') {
+        // Pull into the Atlantic so it does not stack on the UK chip.
+        x -= 80;
+        y += 18;
       } else if (meta.iso2 === 'US') {
         x -= 18;
         y += 8;
@@ -877,23 +882,11 @@
     pulseCountries('.intl-country--building', 'is-intro-pulse', 'is-active-glow');
   }
 
-  function isNarrowViewport() {
-    return window.matchMedia('(max-width: 720px)').matches;
-  }
-
   function buildProjection(world) {
     var land = window.topojson.feature(world, world.objects.countries);
-    var projection = window.d3.geoNaturalEarth1().fitSize([960, 500], land);
-
-    // On phones the wide world map letterboxes and looks tiny — zoom in
-    // so continents fill more of the screen (edges of ocean crop slightly).
-    if (isNarrowViewport()) {
-      var scale = projection.scale();
-      var translate = projection.translate();
-      projection.scale(scale * 1.55).translate([translate[0], translate[1] + 18]);
-    }
-
-    return projection;
+    // Always fit the full world into the SVG viewBox so no countries are
+    // cropped on narrow phones (a prior mobile zoom clipped Americas / Asia).
+    return window.d3.geoNaturalEarth1().fitSize([960, 500], land);
   }
 
   function renderMap(world) {
