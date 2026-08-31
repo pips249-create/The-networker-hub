@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260723" />
     <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260608c" />
-    <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260828billing1" />
+    <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260829stepprog1" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260825adminbadge1" />
     <style>
       /* Prevent browse-page nav padding flash before organiser form CSS loads */
@@ -54,6 +54,50 @@
           For example, a Tropic Skincare ambassador role or a franchise territory.
         </p>
       </header>
+
+      <div id="oe-wizard-mount" class="oe-wizard-mount" aria-live="polite">
+        <nav class="ee-wizard oe-wizard" aria-label="List opportunity progress">
+          <p class="ee-wizard-summary">
+            <span class="ee-wizard-step-count">Step 1 of 5</span>
+            <span class="ee-wizard-sep" aria-hidden="true">·</span>
+            <span class="ee-wizard-current">Opportunity details</span>
+            <span class="ee-wizard-sep" aria-hidden="true">·</span>
+            <span class="ee-wizard-remaining">4 steps left</span>
+          </p>
+          <ol class="ee-wizard-steps">
+            <li class="ee-wizard-step is-current" aria-current="step">
+              <span class="ee-wizard-link"
+                ><span class="ee-wizard-num" aria-hidden="true">1</span
+                ><span class="ee-wizard-label">Opportunity details</span></span
+              >
+            </li>
+            <li class="ee-wizard-step">
+              <span class="ee-wizard-link"
+                ><span class="ee-wizard-num" aria-hidden="true">2</span
+                ><span class="ee-wizard-label">Listed by</span></span
+              >
+            </li>
+            <li class="ee-wizard-step">
+              <span class="ee-wizard-link"
+                ><span class="ee-wizard-num" aria-hidden="true">3</span
+                ><span class="ee-wizard-label">Card highlights</span></span
+              >
+            </li>
+            <li class="ee-wizard-step">
+              <span class="ee-wizard-link"
+                ><span class="ee-wizard-num" aria-hidden="true">4</span
+                ><span class="ee-wizard-label">Cover photo</span></span
+              >
+            </li>
+            <li class="ee-wizard-step">
+              <span class="ee-wizard-link"
+                ><span class="ee-wizard-num" aria-hidden="true">5</span
+                ><span class="ee-wizard-label">Review &amp; submit</span></span
+              >
+            </li>
+          </ol>
+        </nav>
+      </div>
 
       <div class="oe-draft-bar" id="oe-draft-bar" hidden>
         <p class="oe-draft-bar-copy">Save your progress any time — only a title is needed for a draft.</p>
@@ -92,7 +136,7 @@
 
       <form id="oe-form">
         <div class="ee-card oe-step-card" id="oe-card-details" data-oe-step="details">
-          <p class="ee-step-label">Step 1</p>
+          <p class="ee-step-label" data-oe-step-label>Step 1 of 5</p>
           <h2>Opportunity details</h2>
           <div class="oe-step-summary" id="oe-summary-details" hidden>
             <p class="oe-step-summary-copy" id="oe-summary-details-text"></p>
@@ -158,7 +202,7 @@
         </div>
 
         <div class="ee-card oe-step-card" id="oe-card-host" data-oe-step="host" hidden>
-          <p class="ee-step-label">Step 2</p>
+          <p class="ee-step-label" data-oe-step-label>Step 2 of 5</p>
           <h2>Listed by</h2>
           <div class="oe-step-summary" id="oe-summary-host" hidden>
             <p class="oe-step-summary-copy" id="oe-summary-host-text"></p>
@@ -205,7 +249,7 @@
         </div>
 
         <div class="ee-card oe-step-card" id="oe-card-meta" data-oe-step="meta" hidden>
-          <p class="ee-step-label">Step 3</p>
+          <p class="ee-step-label" data-oe-step-label>Step 3 of 5</p>
           <h2 id="oe-card-meta-heading">Card highlights</h2>
           <div class="oe-step-summary" id="oe-summary-meta" hidden>
             <p class="oe-step-summary-copy" id="oe-summary-meta-text"></p>
@@ -350,7 +394,7 @@
         </div>
 
         <div class="ee-card oe-step-card" id="oe-card-photo" data-oe-step="photo" hidden>
-          <p class="ee-step-label">Step 4</p>
+          <p class="ee-step-label" data-oe-step-label>Step 4 of 5</p>
           <h2>Cover photo</h2>
           <div class="oe-step-summary" id="oe-summary-photo" hidden>
             <p class="oe-step-summary-copy" id="oe-summary-photo-text"></p>
@@ -386,7 +430,7 @@
         </div>
 
         <div class="ee-card ee-card-actions oe-step-card" id="oe-card-submit" data-oe-step="submit" hidden>
-          <p class="ee-step-label">Step 5</p>
+          <p class="ee-step-label" data-oe-step-label>Step 5 of 5</p>
           <div class="oe-submit-recap" id="oe-submit-recap" hidden>
             <div class="oe-submit-summary" id="oe-submit-summary">
               <h3 class="oe-submit-summary-title">Review everything before you submit</h3>
@@ -471,6 +515,6 @@
     <script src="../js/opportunities-catalog.js?v=20260828cookie1" defer></script>
     <script src="../js/hub-event-timezone.js?v=20260812dst" defer></script>
     <script src="../js/organiser-quarter-time.js?v=20260828openday5" defer></script>
-    <script src="../js/organiser-opportunity-edit.js?v=20260828types1" defer></script>
+    <script src="../js/organiser-opportunity-edit.js?v=20260829stepprog2" defer></script>
   </body>
 </html>
