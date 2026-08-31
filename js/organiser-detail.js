@@ -253,7 +253,7 @@
         escapeHtml(photo) +
         '" alt="' +
         escapeHtml(name) +
-        '" loading="lazy" decoding="async" onerror="this.remove();var s=document.createElement(\'span\');s.className=\'org-claim-peer-initial\';s.setAttribute(\'aria-hidden\',\'true\');s.textContent=this.alt?this.alt.charAt(0).toUpperCase():\'?\';this.parentElement.classList.add(\'org-claim-peer-item--fallback\');this.parentElement.classList.remove(\'org-claim-peer-item--dark\');this.parentElement.appendChild(s);" />';
+        '" loading="lazy" decoding="async" onerror="var p=this.parentElement;this.remove();if(!p)return;var s=document.createElement(\'span\');s.className=\'org-claim-peer-initial\';s.setAttribute(\'aria-hidden\',\'true\');s.textContent=this.alt?this.alt.charAt(0).toUpperCase():\'?\';p.classList.add(\'org-claim-peer-item--fallback\');p.classList.remove(\'org-claim-peer-item--dark\');p.appendChild(s);" />';
     } else {
       inner =
         '<span class="org-claim-peer-initial" aria-hidden="true">' +

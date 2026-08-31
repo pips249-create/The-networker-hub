@@ -71,7 +71,7 @@
         esc(photo) +
         '" alt="' +
         esc(name) +
-        '" loading="lazy" decoding="async" width="156" height="60" class="about-founding-logo" onerror="this.remove();var s=document.createElement(\'span\');s.className=\'about-founding-initial\';s.setAttribute(\'aria-hidden\',\'true\');s.textContent=this.alt?this.alt.charAt(0).toUpperCase():\'?\';this.parentElement.classList.add(\'about-founding-item--fallback\');this.parentElement.classList.remove(\'about-founding-item--dark-logo\');this.parentElement.appendChild(s);" />';
+        '" loading="lazy" decoding="async" width="156" height="60" class="about-founding-logo" onerror="var p=this.parentElement;this.remove();if(!p)return;var s=document.createElement(\'span\');s.className=\'about-founding-initial\';s.setAttribute(\'aria-hidden\',\'true\');s.textContent=this.alt?this.alt.charAt(0).toUpperCase():\'?\';p.classList.add(\'about-founding-item--fallback\');p.classList.remove(\'about-founding-item--dark-logo\');p.appendChild(s);" />';
     } else {
       inner =
         '<span class="about-founding-initial" aria-hidden="true">' + esc(initial) + '</span>';
