@@ -2572,7 +2572,7 @@
       already_going: "You're already going to this event. View your ticket in My account.",
       not_authenticated: 'Please sign in or create a free account to complete your booking.',
       ticket_sales_platform_closed:
-        'Ticket buying opens on 1 September 2026. You can browse events now — ticket interest alerts start then too.',
+        'Ticket buying opens at 9am on 1 September 2026. You can browse events now — ticket interest alerts start then too.',
     };
     if (data && data.message) return String(data.message);
     if (messages[code]) return messages[code];
@@ -4118,7 +4118,7 @@
           Date.parse(ev.ticketSalesOpensAt) > Date.parse(window.HubSoftLaunch.PUBLIC_TRANSACTIONS_OPENS_AT)
             ? ev.ticketSalesOpensAt
             : window.HubSoftLaunch.PUBLIC_TRANSACTIONS_OPENS_AT,
-        ticketSalesOpensLabel: ev.ticketSalesOpensLabel || '1 September 2026',
+        ticketSalesOpensLabel: ev.ticketSalesOpensLabel || '9am on 1 September 2026',
         salesClosedReason: ev.salesClosedReason || 'platform_soft_launch',
       });
     }

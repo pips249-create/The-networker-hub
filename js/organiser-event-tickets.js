@@ -46,7 +46,7 @@
     ) {
       return window.HubSoftLaunch.arePublicTicketSalesOpen();
     }
-    return Date.now() >= Date.parse('2026-09-01T00:00:00+01:00');
+    return Date.now() >= Date.parse('2026-09-01T09:00:00+01:00');
   }
   let organiserGroupName = '';
 
@@ -4682,7 +4682,7 @@
       '<strong>Ticket sales are off for this event</strong> — ' +
       (publicTicketBuyingOpen()
         ? 'visitors see a nudge instead of checkout. Turn sales on when you are ready.'
-        : 'public buying opens 1 September 2026. You can enable sales now so checkout is ready then; interest alerts to you stay paused until that date.') +
+        : 'public buying opens at 9am on 1 September 2026. You can enable sales now so checkout is ready then; interest alerts to you stay paused until that date.') +
       '<div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:8px;">' +
       '<button type="button" class="ee-btn ee-btn-primary" id="ee-enable-sales-btn">Enable ticket sales</button>' +
       '</div>';
@@ -5548,10 +5548,10 @@
       salesScheduled
         ? publicTicketBuyingOpen()
           ? 'Your event is live on the platform. Ticket sales will open on the date you set — saved attendees will be emailed when sales begin.'
-          : 'Your event is live on Browse events. Ticket sales will open on the date you set (public buying from 1 September 2026).'
+          : 'Your event is live on Browse events. Ticket sales will open on the date you set (public buying from 9am on 1 September 2026).'
         : publicTicketBuyingOpen()
           ? 'Your event is live on the platform and ticket sales are on.'
-          : 'Your event is live on Browse events. Public ticket buying opens 1 September 2026.',
+          : 'Your event is live on Browse events. Public ticket buying opens at 9am on 1 September 2026.',
       'ok'
     );
 

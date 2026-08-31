@@ -832,7 +832,7 @@
       done();
       if (publicListingLinkNeedsSoftLaunchNote(value)) {
         showOrganiserAlert(
-          'Link copied. Public browsing is open — share freely. Ticket buying and enquiries open 1 September.',
+          'Link copied. Public browsing is open — share freely. Ticket buying and enquiries open at 9am on 1 September.',
           false
         );
       }
@@ -855,7 +855,7 @@
     ) {
       return window.HubSoftLaunch.arePublicTicketSalesOpen();
     }
-    return Date.now() >= Date.parse('2026-09-01T00:00:00+01:00');
+    return Date.now() >= Date.parse('2026-09-01T09:00:00+01:00');
   }
 
   function publicListingLinkNeedsSoftLaunchNote(url) {
@@ -13801,7 +13801,7 @@
         }
         if (bodyEl) {
           bodyEl.textContent =
-            'Listings stay Draft until tickets + Confirm & publish. Public ticket buying opens 1 September.';
+            'Listings stay Draft until tickets + Confirm & publish. Public ticket buying opens at 9am on 1 September.';
         }
       }
       const goBtnLaunch = document.getElementById('org-setup-resume-go');
@@ -14462,13 +14462,13 @@
           '.';
       } else if (opts.fromPublish && nextLaunch && nextLaunch.kind === 'profile') {
         introEl.textContent =
-          'Your listing is live in the workspace. Public ticket buying opens 1 September. Next, review your other organiser page.';
+          'Your listing is live in the workspace. Public ticket buying opens at 9am on 1 September. Next, review your other organiser page.';
       } else if (opts.fromPublish && nextLaunch && nextLaunch.kind === 'event') {
         introEl.textContent =
-          'Your listing is live in the workspace. You still have draft events to publish on this page — continue when you are ready. Public buying opens 1 September.';
+          'Your listing is live in the workspace. You still have draft events to publish on this page — continue when you are ready. Public buying opens at 9am on 1 September.';
       } else if (opts.fromPublish) {
         introEl.textContent =
-          'Your listing is live in the workspace. Public ticket buying opens 1 September. Free tickets are fine without bank details; add them before you sell paid tickets.';
+          'Your listing is live in the workspace. Public ticket buying opens at 9am on 1 September. Free tickets are fine without bank details; add them before you sell paid tickets.';
       } else if (nextClaim) {
         introEl.textContent =
           'Great — this page is ready. Next we’ll ask about your other organiser page' +
@@ -14675,8 +14675,8 @@
       if (item.kind === 'profile') {
         introEl.textContent =
           (state.groups || []).length > 1
-            ? 'You have more than one organiser page. Review each in turn — logo, description, and complimentary guest visits (not always imported). Public ticket buying opens 1 September.'
-            : 'Confirm your profile now. Set complimentary guest visits (0–3) if you offer trial nights. Public ticket buying opens 1 September — until then, get everything ready in the workspace.';
+            ? 'You have more than one organiser page. Review each in turn — logo, description, and complimentary guest visits (not always imported). Public ticket buying opens at 9am on 1 September.'
+            : 'Confirm your profile now. Set complimentary guest visits (0–3) if you offer trial nights. Public ticket buying opens at 9am on 1 September — until then, get everything ready in the workspace.';
       } else if (item.hubListed) {
         introEl.textContent =
           'We listed this from your request. Check the details, then confirm tickets, refunds, VAT, and Stripe (if paid) so ticket sales can open.';
@@ -15049,7 +15049,7 @@
     if (introEl) {
       introEl.textContent = groupClaimRejectMode
         ? 'This will remove the page below from your dashboard and notify our team. Add an optional note if the email match looks wrong.'
-        : 'Confirm you manage this page, then use the full tools — events, LinkedIn, emails, memberships. Public browsing is open now; attendees can buy tickets on the public site from 1 September.';
+        : 'Confirm you manage this page, then use the full tools — events, LinkedIn, emails, memberships. Public browsing is open now; attendees can buy tickets on the public site from 9am on 1 September.';
     }
   }
 

@@ -40,7 +40,7 @@
     ) {
       return window.HubSoftLaunch.arePublicTicketSalesOpen();
     }
-    return Date.now() >= Date.parse('2026-09-01T00:00:00+01:00');
+    return Date.now() >= Date.parse('2026-09-01T09:00:00+01:00');
   }
 
   const REFUND_LABELS = {
@@ -337,7 +337,7 @@
       if (lede) {
         lede.textContent = publicTicketBuyingOpen()
           ? 'Check everything looks right. Once you publish, your listing goes live automatically and ticket sales can start straight away.'
-          : 'Check everything looks right. Once you publish, your listing goes live on Browse events. Public ticket buying opens 1 September 2026.';
+          : 'Check everything looks right. Once you publish, your listing goes live on Browse events. Public ticket buying opens at 9am on 1 September 2026.';
       }
       return;
     }
@@ -348,7 +348,7 @@
       title: 'Add bank details before publishing paid tickets',
       lead: publicTicketBuyingOpen()
         ? 'This listing has paid tickets. Connect your UK bank account via Stripe, then return here to publish. Free events do not need bank details.'
-        : 'This listing has paid tickets. Connect your UK bank account via Stripe before you publish — you can set tickets up now; public buying opens 1 September 2026. Free events do not need bank details.',
+        : 'This listing has paid tickets. Connect your UK bank account via Stripe before you publish — you can set tickets up now; public buying opens at 9am on 1 September 2026. Free events do not need bank details.',
       singleGroupOnly: true,
       onLinked: handleReviewPaymentLinked,
     });
@@ -710,7 +710,7 @@
     let text = 'Your listing goes live automatically on Browse events';
     if (!publicTicketBuyingOpen()) {
       text +=
-        '. Public ticket buying opens 1 September 2026' +
+        '. Public ticket buying opens at 9am on 1 September 2026' +
         (scheduled ? ' (or on your scheduled sale dates after that)' : '');
     } else if (scheduled) {
       text += ' and ticket sales open on the start dates you set';
