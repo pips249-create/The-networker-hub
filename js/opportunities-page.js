@@ -268,7 +268,6 @@
   var TYPE_CHIPS = [
     { id: 'all', label: 'All', shortLabel: 'All' },
     { id: 'franchise', label: 'Franchise', shortLabel: 'Franchise' },
-    { id: 'side-hustle', label: 'Side hustle', shortLabel: 'Side hustle' },
     { id: 'partnership', label: 'Partnership', shortLabel: 'Partnership' },
     { id: 'affiliate', label: 'Affiliate', shortLabel: 'Affiliate' },
     { id: 'networking', label: 'Ambassador', shortLabel: 'Ambassador' },
@@ -279,7 +278,7 @@
 
   var COMMITMENTS = [
     { id: 'full-time', label: 'Full-time' },
-    { id: 'part-time', label: 'Part-time / Flexible' },
+    { id: 'part-time', label: 'Part-time / Side hustle' },
     { id: 'event-based', label: 'Open days / visits' },
   ];
 
@@ -300,7 +299,6 @@
   var TAB_TYPES = [
     'all',
     'franchise',
-    'side-hustle',
     'partnership',
     'affiliate',
     'networking',
@@ -2331,16 +2329,16 @@
     syncRegionalLanding();
     var params = new URLSearchParams(window.location.search);
     var typeRaw = String(params.get('type') || '').trim();
-    activeTypes = typeRaw
-      ? typeRaw
-          .split(',')
-          .map(function (t) {
-            return String(t || '').trim();
-          })
-          .filter(function (t) {
-            return t && t !== 'all' && TAB_TYPES.indexOf(t) !== -1;
-          })
+    var typeTokens = typeRaw
+      ? typeRaw.split(',').map(function (t) {
+          return String(t || '').trim();
+        })
       : [];
+    // Legacy: Side hustle used to be a Format chip — map to Commitment.
+    var legacySideHustleType = typeTokens.indexOf('side-hustle') !== -1;
+    activeTypes = typeTokens.filter(function (t) {
+      return t && t !== 'all' && t !== 'side-hustle' && TAB_TYPES.indexOf(t) !== -1;
+    });
 
     // Legacy ?hideNm=0 meant “include network marketing” — map to the type chip once.
     if (!activeTypes.length && params.get('hideNm') === '0') {
@@ -2363,6 +2361,9 @@
     activeLocationTag = params.get('location') || '';
     var commitment = params.get('commitment') || '';
     activeCommitments = commitment ? commitment.split(',').filter(Boolean) : [];
+    if (legacySideHustleType && activeCommitments.indexOf('part-time') === -1) {
+      activeCommitments.push('part-time');
+    }
 
     if (els.search && searchQ) els.search.value = searchQ;
     if (els.sort) els.sort.value = sortBy;

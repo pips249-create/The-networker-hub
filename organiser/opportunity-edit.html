@@ -104,11 +104,10 @@
               <input type="text" id="oe-title" required placeholder="e.g. Tropic Skincare — Ambassador Programme" />
             </div>
             <div class="ee-field" id="oe-field-type">
-                <p class="ee-label-block" id="oe-type-label">Opportunity type</p>
-                <p class="ee-hint" id="oe-type-hint">Pick the type that best describes your listing. <strong>Side hustle</strong> means flexible / part-time alongside other work (low weekly hours — can pair with Franchise when that also fits). <strong>Affiliate is alone.</strong> Franchise and Networking / Ambassador cannot combine with Network marketing.</p>
+                <p class="ee-label-block" id="oe-type-label">Format</p>
+                <p class="ee-hint" id="oe-type-hint">Pick the business format that best describes your listing. You can combine compatible formats (e.g. Franchise + Partnership) if they genuinely apply. <strong>Affiliate is alone.</strong> Franchise and Networking / Ambassador cannot combine with Network marketing. For flexible hours, use <strong>Commitment</strong> (Side hustle) — not Format.</p>
                 <div class="oe-type-group" id="oe-type-group" role="group" aria-labelledby="oe-type-label" aria-describedby="oe-type-hint oe-type-mode-note">
                   <label class="oe-type-option"><input type="checkbox" name="oe-type" value="franchise" /> Franchise</label>
-                  <label class="oe-type-option"><input type="checkbox" name="oe-type" value="side-hustle" /> Side hustle</label>
                   <label class="oe-type-option"><input type="checkbox" name="oe-type" value="partnership" /> Partnership</label>
                   <label class="oe-type-option"><input type="checkbox" name="oe-type" value="affiliate" /> Affiliate</label>
                   <label class="oe-type-option"><input type="checkbox" name="oe-type" value="networking" /> Networking group / Ambassador</label>
@@ -306,7 +305,7 @@
             </div>
             <div class="ee-field">
               <label for="oe-commitment">Commitment <span class="ee-optional">(optional)</span></label>
-              <p class="ee-hint">Helps browsers filter — skip if it varies or isn&apos;t relevant (e.g. pure affiliate programmes).</p>
+              <p class="ee-hint">Hours / flexibility — use <strong>Side hustle — few hours a week</strong> for part-time alongside other work. Skip if it varies or isn&apos;t relevant (e.g. pure affiliate programmes).</p>
               <select id="oe-commitment">
                 <option value="">Select if relevant…</option>
                 <option value="Full-time">Full-time</option>
@@ -472,6 +471,6 @@
     <script src="../js/opportunities-catalog.js?v=20260831networking1" defer></script>
     <script src="../js/hub-event-timezone.js?v=20260812dst" defer></script>
     <script src="../js/organiser-quarter-time.js?v=20260828openday5" defer></script>
-    <script src="../js/organiser-opportunity-edit.js?v=20260831networking1" defer></script>
+    <script src="../js/organiser-opportunity-edit.js?v=20260831format1" defer></script>
   </body>
 </html>
