@@ -41,7 +41,6 @@
 
   const OPPORTUNITY_TYPES = [
     'franchise',
-    'side-hustle',
     'partnership',
     'affiliate',
     'networking',
@@ -50,11 +49,15 @@
     'distributorship',
   ];
 
+  /** Legacy type — kept for load/display only; new listings use Commitment instead. */
+  const LEGACY_SIDE_HUSTLE_TYPE = 'side-hustle';
+  const SIDE_HUSTLE_COMMITMENT = 'Side hustle — few hours a week';
+
   const CAPITAL_TYPES = ['franchise', 'distributorship', 'business-opportunity', 'network-marketing', 'partnership'];
 
   const AFFILIATE_TYPE = 'affiliate';
 
-  /** Types that must never appear together on one listing (last tick wins). Franchise + Side hustle is allowed. */
+  /** Types that must never appear together on one listing (last tick wins). */
   const TYPE_INCOMPATIBLE = {
     franchise: ['network-marketing'],
     networking: ['network-marketing'],
@@ -74,6 +77,7 @@
 
   const TYPE_CATEGORY_HINTS = {
     franchise: 'retail',
+    networking: 'networking',
     'network-marketing': 'mlm',
   };
 
@@ -1651,8 +1655,13 @@
     currentOpportunity = opp;
     document.getElementById('oe-title').value = opp.title || '';
     const typeTags = (opp.tags || []).filter((tag) => OPPORTUNITY_TYPES.includes(tag));
-    const initialTypes = typeTags.length ? typeTags : opp.type ? [opp.type] : [];
-    setSelectedTypes(normalizeExclusiveTypes(coerceLegacyAffiliateTypes(initialTypes, opp.meta)));
+    const rawTypes = typeTags.length ? typeTags : opp.type ? [opp.type] : [];
+    const hadSideHustle =
+      rawTypes.indexOf(LEGACY_SIDE_HUSTLE_TYPE) !== -1 ||
+      String(opp.type || '') === LEGACY_SIDE_HUSTLE_TYPE ||
+      (opp.tags || []).indexOf(LEGACY_SIDE_HUSTLE_TYPE) !== -1;
+    const formatTypes = rawTypes.filter((t) => t !== LEGACY_SIDE_HUSTLE_TYPE);
+    setSelectedTypes(normalizeExclusiveTypes(coerceLegacyAffiliateTypes(formatTypes, opp.meta)));
     document.getElementById('oe-category').value = opp.category || '';
     document.getElementById('oe-desc').value = opp.desc || '';
     document.getElementById('oe-about').value = (opp.about || []).join('\n\n');
@@ -1676,7 +1685,12 @@
     );
     document.getElementById('oe-location-detail').value = parsed.detail || '';
     setListingRegionSlug(parsed.slug || '');
-    document.getElementById('oe-commitment').value = metaValue(opp.meta, /^commitment$/i);
+    const commitmentEl = document.getElementById('oe-commitment');
+    let commitmentVal = metaValue(opp.meta, /^commitment$/i);
+    if (hadSideHustle && !String(commitmentVal || '').trim()) {
+      commitmentVal = SIDE_HUSTLE_COMMITMENT;
+    }
+    if (commitmentEl) commitmentEl.value = commitmentVal;
     syncAffiliateFormMode();
 
     const usedKeys = new Set([
@@ -2562,7 +2576,7 @@
         return false;
       }
       if (!stepTypeComplete()) {
-        showStepError('details', 'Select at least one opportunity type.');
+        showStepError('details', 'Select at least one format.');
         return false;
       }
       if (!stepDescComplete()) {
@@ -2785,7 +2799,7 @@
         ? 'Add these before publishing so browsers can compare your opportunity:'
         : 'Add these so your listing shows clearly on opportunity cards:';
       note =
-        'Investment, location, and opportunity type help people understand what you\u2019re offering.';
+        'Investment, location, and format help people understand what you\u2019re offering.';
       panelClass = 'oe-moderation-warnings is-incomplete';
     } else {
       title = 'Please review';
@@ -2883,7 +2897,7 @@
   function validatePayload(payload, isDraft) {
     if (!payload.title) return 'Enter an opportunity title.';
     if (isDraft) return '';
-    if (!payload.types || !payload.types.length) return 'Select at least one opportunity type.';
+    if (!payload.types || !payload.types.length) return 'Select at least one format.';
     if (!payload.description) return 'Add a short description for the card.';
     if (!payload.host) return 'Enter your business or company name.';
     if (!payload.contactEmail) return 'Enter a contact email for enquiries.';

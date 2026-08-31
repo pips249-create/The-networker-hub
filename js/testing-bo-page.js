@@ -10,7 +10,6 @@
   var TYPE_CHIPS = [
     { id: 'all', label: 'All' },
     { id: 'franchise', label: 'Franchise' },
-    { id: 'side-hustle', label: 'Side hustle' },
     { id: 'partnership', label: 'Partnership' },
     { id: 'affiliate', label: 'Affiliate' },
     { id: 'networking', label: 'Networking group / Ambassador' },
@@ -28,7 +27,7 @@
 
   var COMMITMENTS = [
     { id: 'full-time', label: 'Full-time' },
-    { id: 'part-time', label: 'Part-time / Flexible' },
+    { id: 'part-time', label: 'Part-time / Side hustle' },
     { id: 'event-based', label: 'Event-based' },
   ];
 

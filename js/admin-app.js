@@ -22009,7 +22009,6 @@
 
   var OPPORTUNITY_TYPES = [
     ['franchise', 'Franchise'],
-    ['side-hustle', 'Side hustle'],
     ['partnership', 'Partnership'],
     ['affiliate', 'Affiliate'],
     ['networking', 'Networking group / Ambassador'],
@@ -22019,6 +22018,7 @@
   ];
 
   function opportunityTypeLabel(type) {
+    if (type === 'side-hustle') return 'Side hustle';
     for (var i = 0; i < OPPORTUNITY_TYPES.length; i++) {
       if (OPPORTUNITY_TYPES[i][0] === type) return OPPORTUNITY_TYPES[i][1];
     }
@@ -22026,7 +22026,13 @@
   }
 
   function opportunityTypeOptions(selected) {
-    return OPPORTUNITY_TYPES.map(function (pair) {
+    var current = String(selected || '').trim();
+    var pairs = OPPORTUNITY_TYPES.slice();
+    // Legacy type — still show when editing an old listing so the value is not lost until they change it.
+    if (current === 'side-hustle') {
+      pairs = [['side-hustle', 'Side hustle (legacy — prefer Commitment)']].concat(pairs);
+    }
+    return pairs.map(function (pair) {
       return (
         '<option value="' +
         attrEsc(pair[0]) +
@@ -22286,6 +22292,7 @@
     ['finance', 'Finance & Admin'],
     ['pets', 'Pets & Animals'],
     ['leisure', 'Leisure, travel & hospitality'],
+    ['networking', 'Networking'],
     ['mlm', 'Network marketing'],
     ['general', 'Other'],
   ];
@@ -22385,7 +22392,7 @@
       '<input type="text" name="host" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
       attrEsc(opp.host || '') +
       '" placeholder="Acme Ltd"></div>' +
-      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Type</label>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Format</label>' +
       '<select name="type" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
       opportunityTypeOptions(
         String(opp.type || '') === 'partnership' && String(opp.commission || '').trim() && !String(opp.investment || '').trim()
