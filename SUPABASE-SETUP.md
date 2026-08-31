@@ -1,6 +1,6 @@
 # Supabase setup — linking Cursor & Vercel to your database
 
-You do **not** need a special “Cursor ↔ Supabase” integration. The agent works from **files in this repo** plus **environment variables** (local `.env` and Vercel). Follow these steps once; then we can migrate API routes off Airtable slice by slice.
+You do **not** need a special “Cursor ↔ Supabase” integration. The agent works from **files in this repo** plus **environment variables** (local `.env` and Vercel). The live Hub is Supabase-only (Airtable runtime removed).
 
 ---
 
@@ -43,7 +43,6 @@ Optional (recommended later):
 | Variable | Purpose |
 |----------|---------|
 | `SUPABASE_JWT_SECRET` | Only if you verify JWTs yourself |
-| `DATA_PROVIDER` | `supabase` or `airtable` (we’ll add a switch while migrating) |
 
 ### Local env (for Cursor terminal / local API tests)
 
@@ -53,16 +52,15 @@ In `The-networker-hub/.env` (create from `.env.example` — **do not commit**):
 SUPABASE_URL=https://xxxx.supabase.co
 SUPABASE_ANON_KEY=eyJ...
 SUPABASE_SERVICE_ROLE_KEY=eyJ...
-DATA_PROVIDER=supabase
 SESSION_SECRET=your-existing-secret
 SITE_URL=http://localhost:3000
 ```
 
 ### Vercel
 
-**Settings** → **Environment Variables** → add the same three `SUPABASE_*` vars for **Production** (and Preview if you use it) → **Redeploy**.
+**Settings** → **Environment Variables** → add the three `SUPABASE_*` vars for **Production** (and Preview if you use it) → **Redeploy**.
 
-Keep existing `AIRTABLE_*` vars during the transition; we’ll remove them when each feature is moved.
+Remove any leftover `AIRTABLE_*` variables from Vercel — they are unused by the app.
 
 ---
 
@@ -101,20 +99,15 @@ Then open `http://localhost:3000/api/auth/config-check`.
 
 ---
 
-## 6. Migration order (what we’ll build next)
+## 6. Status
 
-1. **Config + client** — `@supabase/supabase-js`, `api/_lib/supabase.js` ✅ (starter in repo)
-2. **Auth** — profiles + roles (replace Airtable Users)
-3. **Public events** — read listings + detail
-4. **Organiser writes** — groups, events, tickets
-5. **Attendee dashboard** — registrations, favourites
-6. **Admin metrics** — aggregate queries
-7. **Data import** — one-off script from Airtable → Supabase
-8. Remove `DATA_PROVIDER=airtable` and Airtable env vars
+Auth, public events, organiser writes, attendee dashboard, and admin metrics all use Supabase.
+
+Historical Airtable → Supabase import: `migrate.js` + `scripts/MIGRATE.md` (local one-off only).
 
 ---
 
-## 7. Import Airtable data
+## 7. Import Airtable data (historical)
 
 ```bash
 cd ~/Desktop/The-networker-hub

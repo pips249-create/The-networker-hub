@@ -105,7 +105,6 @@
     workspaceSummary: null,
     eventSummaries: [],
     groupsError: null,
-    airtable: null,
     canManageTeam: true,
     canDeleteEvents: true,
     canManagePayments: true,
@@ -17718,7 +17717,6 @@
       loadCancellationsAll().then(() => renderCancellations());
     }
     state.groupsError = data.groupsError;
-    state.airtable = data.airtable;
     state.adminView = data.adminView;
     state.personalScope = data.personalScope;
     state.isAdmin = data.isAdmin;

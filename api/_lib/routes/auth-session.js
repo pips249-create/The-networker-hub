@@ -105,66 +105,11 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    const { findUserByEmail } = require('../auth');
-    const { listGroupsForUser } = require('../organiser-provider').getOrganiserApi();
-    const user = await findUserByEmail(session.email);
-    if (!user || !user.passwordHash) {
-      if (session.impersonator) {
-        return json(res, 200, {
-          ok: true,
-          user: {
-            sub: session.sub,
-            email: session.email,
-            role: 'client',
-            name: session.name || '',
-          },
-          hubView: hubViewFromRequest(req),
-          organiserProfiles: 0,
-          canOrganise: true,
-          canToggleHubMode: false,
-          impersonating: true,
-          impersonatorEmail: session.impersonator.email || null,
-          organiserUiVisible: true,
-          organiserAccess: true,
-        });
-      }
-      clearSessionCookie(res);
-      return json(res, 200, { ok: false, user: null });
-    }
-
-    const role = session.impersonator ? 'client' : normalizeRole(user.role);
-    const fresh = {
-      sub: user.id,
-      email: user.email,
-      role,
-      name: user.name,
-    };
-    if (session.impersonator) {
-      applyImpersonationToSessionUser(fresh, session);
-    }
-
-    setSessionCookie(res, fresh);
-
-    let organiserProfiles = 0;
-    try {
-      const groups = await listGroupsForUser(fresh.sub, fresh.email);
-      organiserProfiles = groups.length;
-    } catch {
-      /* optional */
-    }
-
-    const impersonating = !!session.impersonator;
-    return json(res, 200, {
-      ok: true,
-      user: fresh,
-      hubView: hubViewFromRequest(req),
-      organiserProfiles,
-      canOrganise: organiserProfiles > 0 || isAdminRole(role) || impersonating,
-      canToggleHubMode: isClientRole(role) && !impersonating,
-      impersonating,
-      impersonatorEmail: session.impersonator ? session.impersonator.email : null,
-      organiserUiVisible: organiserProfiles > 0 || impersonating,
-      organiserAccess: organiserProfiles > 0 || impersonating,
+    return json(res, 503, {
+      ok: false,
+      user: null,
+      error: 'not_configured',
+      message: 'Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in Vercel.',
     });
   } catch {
     const impersonating = !!session.impersonator;

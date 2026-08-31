@@ -3432,9 +3432,6 @@ async function getOrganiserWorkspace(req) {
   );
 }
 
-function airtableSetupHint() {
-  return null;
-}
 
 /** Revenue/ticket totals for the signed-in workspace — deferred from lean bootstrap. */
 async function getOrganiserWorkspaceStats(req) {
@@ -3522,7 +3519,6 @@ module.exports = {
   getOrganiserWorkspaceStats,
   getOrganiserWorkspace,
   prepareOrganiserWorkspaceScope,
-  airtableSetupHint,
   rowToEvent,
   newSeriesGroupId,
   resolveSeriesGroupId,

@@ -593,12 +593,7 @@
       await loadProfile();
     } catch (err) {
       const msg = String(err.message || 'Could not load your profile.');
-      showAlert(
-        msg === 'airtable_not_configured'
-          ? 'Account settings could not load. Check Supabase is configured on the server.'
-          : msg,
-        false
-      );
+      showAlert(msg, false);
     }
   }
 

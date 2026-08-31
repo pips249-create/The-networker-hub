@@ -24,7 +24,7 @@ Copy [`.env.example`](.env.example) → `local.env`, fill secrets, then `npm run
 - **Payments:** Stripe (Connect destination charges)
 - **Email:** Resend (when `AUTH_SEND_EMAILS` / transactional mail is enabled)
 
-Airtable is legacy only. Do not use it for new work; see archived notes in `VERCEL-AIRTABLE.md` if you need history.
+The Hub runs on Supabase. One-off Airtable → Supabase import history lives in `migrate.js` and `scripts/MIGRATE.md`.
 
 ## What’s in this folder
 

@@ -51,7 +51,6 @@ module.exports = async function handler(req, res) {
     createTicketsForEvents,
     filterOwnedEventIds,
     enableTicketSalesForEvent,
-    airtableSetupHint,
   } = api;
 
   setCors(req, res);
@@ -97,7 +96,7 @@ module.exports = async function handler(req, res) {
       const tickets = await listTicketsForSession(auth.session, ids);
       return json(res, 200, { ok: true, tickets });
     } catch (e) {
-      return jsonPublicError(res, json, e, { code: 'tickets_fetch_failed', logLabel: '[organiser-tickets]', extra: { airtable: airtableSetupHint('tickets') } });
+      return jsonPublicError(res, json, e, { code: 'tickets_fetch_failed', logLabel: '[organiser-tickets]' });
     }
   }
 
@@ -247,7 +246,7 @@ module.exports = async function handler(req, res) {
         }
         return json(res, 201, { ok: true, published: publish, ...result });
       } catch (e) {
-        return jsonPublicError(res, json, e, { code: e.code || 'tickets_bulk_failed', logLabel: '[organiser-tickets]', extra: { airtable: airtableSetupHint('tickets') } });
+        return jsonPublicError(res, json, e, { code: e.code || 'tickets_bulk_failed', logLabel: '[organiser-tickets]' });
       }
     }
 
@@ -277,7 +276,7 @@ module.exports = async function handler(req, res) {
       });
       return json(res, 201, { ok: true, ticket });
     } catch (e) {
-      return jsonPublicError(res, json, e, { code: e.code || 'ticket_create_failed', logLabel: '[organiser-tickets]', extra: { airtable: airtableSetupHint('tickets') } });
+      return jsonPublicError(res, json, e, { code: e.code || 'ticket_create_failed', logLabel: '[organiser-tickets]' });
     }
   }
 

@@ -15,7 +15,6 @@ module.exports = async function handler(req, res) {
     listAttendeesForOrganiserEvents,
     listBookingCancellationsForOrganiserEvents,
     summarizePendingApplicationsForEventIds,
-    airtableSetupHint,
   } = api;
 
   setCors(req, res);
@@ -119,7 +118,6 @@ module.exports = async function handler(req, res) {
       blocks,
       view,
       eventCount: eventIds.length,
-      airtable: airtableSetupHint && airtableSetupHint('events'),
     });
   } catch (e) {
     return jsonPublicError(res, json, e, { code: 'server_error', logLabel: '[organiser-attendees]', extra: { attendees: [] } });

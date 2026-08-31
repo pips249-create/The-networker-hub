@@ -1,6 +1,6 @@
-# Fresh start — Supabase only (no Airtable)
+# Fresh start — Supabase only
 
-You can ignore Airtable, `migrate.js`, and any `AIRTABLE_*` env vars. The site uses **Supabase** for login, registration, and public events.
+The site uses **Supabase** for login, registration, and public events. Do not set Airtable env vars.
 
 ## 1. Database (once)
 
@@ -17,17 +17,14 @@ Edit **`local.env`** (visible in Finder) or hidden `.env`:
 SUPABASE_URL=https://uztgzbjrmjbonfniyqcu.supabase.co
 SUPABASE_ANON_KEY=<anon key>
 SUPABASE_SERVICE_ROLE_KEY=<service_role key>
-DATA_PROVIDER=supabase
 
 SESSION_SECRET=<any long random string>
 ADMIN_EMAIL=pips249@gmail.com
 ADMIN_INITIAL_PASSWORD=<your password>
-SITE_URL=https://the-networker-hub.vercel.app
+SITE_URL=https://www.thenetworkeruk.com
 ```
 
-**You do not need** `AIRTABLE_*` variables anymore.
-
-Same values in **Vercel → Environment Variables**, then **Redeploy**.
+Same values in **Vercel → Environment Variables**, then **Redeploy**. Remove any leftover `AIRTABLE_*` keys.
 
 ## 3. Create your admin account
 
@@ -72,5 +69,5 @@ node scripts/import-attendees-csv.js your-file.csv
 
 ## 8. Optional cleanup
 
-- Remove `AIRTABLE_*` from Vercel when you are confident
-- Delete or ignore `migrate.js` and Airtable migration docs
+- Confirm no `AIRTABLE_*` keys remain in Vercel
+- Keep `migrate.js` / `scripts/MIGRATE.md` only if you need historical re-import notes

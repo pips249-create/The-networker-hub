@@ -558,9 +558,6 @@ function isPlatformAdmin(session) {
   return isAdminRole(session.role);
 }
 
-function airtableSetupHint() {
-  return null;
-}
 
 module.exports = {
   listGroupsForSession,
@@ -573,7 +570,6 @@ module.exports = {
   enrichGroupForDashboard,
   groupOwnedBySession,
   isPlatformAdmin,
-  airtableSetupHint,
   rowToGroup,
   resolveOrganiserAccess,
 };

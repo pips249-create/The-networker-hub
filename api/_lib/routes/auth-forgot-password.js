@@ -1,13 +1,4 @@
-const crypto = require('crypto');
-const {
-  findUserByEmail,
-  updateUser,
-  json,
-  airtableConfig,
-  appendSystemLog,
-  USER_FIELDS,
-  setCors,
-} = require('../auth');
+const { json, setCors } = require('../auth');
 const { useSupabase } = require('../supabase');
 const sbAuth = require('../supabase-auth');
 const { enforceRateLimitAsync } = require('../rate-limit');
@@ -23,14 +14,6 @@ function shouldExposeResetLink() {
     process.env.AUTH_SHOW_RESET_LINK === 'true' ||
     process.env.AUTH_DEV_RESET_LINK === 'true'
   );
-}
-
-function fieldNameOnRecord(recordFields, candidates, fallback) {
-  const f = recordFields || {};
-  for (const key of candidates) {
-    if (Object.prototype.hasOwnProperty.call(f, key)) return key;
-  }
-  return fallback;
 }
 
 async function handleSupabaseForgot(email) {
@@ -149,88 +132,16 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  if (useSupabase()) {
-    try {
-      const result = await handleSupabaseForgot(email);
-      return json(res, result.status, result.body);
-    } catch (e) {
-      return json(res, 500, { error: 'server_error', message: e.message });
-    }
-  }
-
-  const { apiKey, baseId } = airtableConfig();
-  if (!apiKey || !baseId) {
-    return json(res, 503, { error: 'not_configured' });
+  if (!useSupabase()) {
+    return json(res, 503, {
+      error: 'not_configured',
+      message: 'Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in Vercel.',
+    });
   }
 
   try {
-    const user = await findUserByEmail(email);
-    if (!user) {
-      return json(res, 200, {
-        ok: true,
-        emailSent: false,
-        accountFound: false,
-        message:
-          'If that email is registered, you will receive reset instructions. No account was found for this email — your admin may need to create it first (see setup below).',
-      });
-    }
-
-    const token = crypto.randomBytes(32).toString('hex');
-    const expires = new Date(Date.now() + 15 * 60 * 1000).toISOString();
-
-    const resetTokenField = fieldNameOnRecord(
-      user.fields,
-      USER_FIELDS.resetToken,
-      'Reset Token'
-    );
-    const resetExpiresField = fieldNameOnRecord(
-      user.fields,
-      USER_FIELDS.resetExpires,
-      'Reset Token Expires'
-    );
-    await updateUser(user.id, {
-      [resetTokenField]: token,
-      [resetExpiresField]: expires,
-    });
-
-    const host = process.env.SITE_URL || 'https://the-networker-hub.vercel.app';
-    const resetUrl = `${host}/reset-password?token=${token}`;
-
-    await appendSystemLog(`Password reset requested for ${email}`, 'auth');
-
-    const resendKey = process.env.RESEND_API_KEY;
-    let emailSent = false;
-    if (resendKey && sbAuth.authEmailsEnabled()) {
-      try {
-        const { sendTemplatedEmail } = require('../send-template-email');
-        await sendTemplatedEmail({
-          slug: 'password_reset',
-          to: email,
-          variables: {
-            user_name: String(user.fields?.Name || user.fields?.name || email.split('@')[0]).trim(),
-            reset_url: resetUrl,
-          },
-          skipEmailCheck: true,
-        });
-        emailSent = true;
-      } catch {
-        emailSent = false;
-      }
-    }
-
-    const showLinkOnPage = !emailSent && shouldExposeResetLink();
-
-    return json(res, 200, {
-      ok: true,
-      emailSent,
-      accountFound: true,
-      message: emailSent
-        ? 'Check your email for a reset link (valid 15 minutes).'
-        : showLinkOnPage
-          ? 'Email is not configured yet — use the reset link shown below.'
-          : 'Password reset emails are turned off. Ask your admin to set a new password, or use account settings after signing in.',
-      ...(showLinkOnPage ? { resetUrl } : {}),
-    });
+    const result = await handleSupabaseForgot(email);
+    return json(res, result.status, result.body);
   } catch (e) {
     return json(res, 500, { error: 'server_error', message: e.message });
   }
