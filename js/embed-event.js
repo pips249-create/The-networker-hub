@@ -252,7 +252,7 @@
     if (ev.isEventPast) notice = 'This event has ended.';
     else if (ev.isSoldOut) notice = 'Tickets are sold out.';
     else if (platformTicketsClosed) {
-      notice = 'Ticket buying opens on 1 September 2026.';
+      notice = 'Ticket buying opens at 9am on 1 September 2026.';
     } else if (ev.isTicketSalesPending || ev.isTicketSalesScheduled) {
       notice = ev.ticketSalesOpensLabel
         ? 'Ticket sales open ' + ev.ticketSalesOpensLabel + '.'

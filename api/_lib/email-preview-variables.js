@@ -602,7 +602,7 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     vars.contact_name = vars.contact_name || 'Alex';
     vars.city_name = vars.city_name || 'York';
     vars.city_names = vars.city_names || 'York';
-    vars.available_from = vars.available_from || '1 September 2026';
+    vars.available_from = vars.available_from || '9am on 1 September 2026';
     vars.available_from_note = vars.available_from_note || ' — checkout is open now';
     vars.advertising_url = vars.advertising_url || site + '/advertising#city-partner-package';
     vars.creative_email = vars.creative_email || supportEmail();

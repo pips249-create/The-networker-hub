@@ -1,10 +1,10 @@
 /**
  * Soft-launch dates (client) — keep in sync with api/_lib/soft-launch.js.
- * Browse: 25 Aug 2026 · Tickets & opportunity enquiries: 1 Sep 2026 (Europe/London).
+ * Browse: 25 Aug 2026 · Tickets & opportunity enquiries: 9am 1 Sep 2026 (Europe/London).
  */
 (function (global) {
   var PUBLIC_BROWSE_OPENS_AT = '2026-08-25T00:00:00+01:00';
-  var PUBLIC_TRANSACTIONS_OPENS_AT = '2026-09-01T00:00:00+01:00';
+  var PUBLIC_TRANSACTIONS_OPENS_AT = '2026-09-01T09:00:00+01:00';
 
   function opensAtMs(iso) {
     var t = Date.parse(iso);
@@ -22,7 +22,7 @@
   }
 
   function publicTicketSalesClosedMessage() {
-    return 'Ticket buying opens on 1 September 2026. You can browse events now — ticket interest alerts start then too.';
+    return 'Ticket buying opens at 9am on 1 September 2026. You can browse events now — ticket interest alerts start then too.';
   }
 
   function arePublicEnquiriesOpen(nowMs) {
@@ -31,7 +31,7 @@
   }
 
   function publicEnquiriesClosedMessage() {
-    return 'Opportunity enquiries open on 1 September 2026. You can browse listings now and enquire when they go live.';
+    return 'Opportunity enquiries open at 9am on 1 September 2026. You can browse listings now and enquire when they go live.';
   }
 
   function areOpenDayRegistrationsOpen(nowMs) {
@@ -99,7 +99,7 @@
       '<p class="hub-browse-week-banner-text">' +
       '<strong>Looking around is open</strong>' +
       '<span class="hub-browse-week-banner-sep" aria-hidden="true">·</span>' +
-      'Booking &amp; enquiries from <strong>1 September</strong>' +
+      'Booking &amp; enquiries from <strong>9am, 1 September</strong>' +
       '</p>' +
       '<button type="button" class="hub-browse-week-banner-dismiss" aria-label="Dismiss notice">×</button>';
 

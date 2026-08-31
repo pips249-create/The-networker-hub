@@ -478,7 +478,7 @@ function buildLlmsTxt(origin) {
     'Not the same as similarly named companies such as NETWORKER UK LIMITED. ' +
     'Same brand as the established UK directory the-networker.co.uk. ' +
     'Across that brand last year: 27,000+ events listed and 17,000+ networkers found a meeting, group, or opportunity. ' +
-    'Public browsing is open; ticket purchase and opportunity enquiries from 1 September 2026. ' +
+    'Public browsing is open; ticket purchase and opportunity enquiries from 9am on 1 September 2026. ' +
     'Contact: hi@thenetworkeruk.com\n\n' +
     '## Canonical URLs\n' +
     '- Home: ' +

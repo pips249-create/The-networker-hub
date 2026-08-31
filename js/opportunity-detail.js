@@ -266,7 +266,7 @@
     } else if (window.HubSoftLaunch && typeof window.HubSoftLaunch.arePublicEnquiriesOpen === 'function') {
       enquiriesOpen = window.HubSoftLaunch.arePublicEnquiriesOpen();
     } else {
-      enquiriesOpen = Date.now() >= Date.parse('2026-09-01T00:00:00+01:00');
+      enquiriesOpen = Date.now() >= Date.parse('2026-09-01T09:00:00+01:00');
     }
     syncOpenDayRegistrationsFromSoftLaunch(meta);
   }
@@ -293,7 +293,7 @@
     if (window.HubSoftLaunch && window.HubSoftLaunch.publicEnquiriesClosedMessage) {
       return window.HubSoftLaunch.publicEnquiriesClosedMessage();
     }
-    return 'Opportunity enquiries open on 1 September 2026. You can browse listings now and enquire when they go live.';
+    return 'Opportunity enquiries open at 9am on 1 September 2026. You can browse listings now and enquire when they go live.';
   }
 
   function escapeHtml(s) {

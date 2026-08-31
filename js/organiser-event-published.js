@@ -12,7 +12,7 @@
       return !window.HubSoftLaunch.arePublicTicketSalesOpen();
     }
     // Europe/London midnight 1 Sep 2026 — public ticket buying / enquiries.
-    return Date.now() < Date.parse('2026-09-01T00:00:00+01:00');
+    return Date.now() < Date.parse('2026-09-01T09:00:00+01:00');
   }
 
   (function syncSoftLaunchShareNote() {
@@ -956,7 +956,7 @@
   document.getElementById('ep-copy-link')?.addEventListener('click', async () => {
     const feedback = document.getElementById('ep-copy-feedback');
     const softNote =
-      'Link copied. Public browsing is open — share freely. Ticket buying and enquiries open 1 September.';
+      'Link copied. Public browsing is open — share freely. Ticket buying and enquiries open at 9am on 1 September.';
     const okMsg = beforePublicTicketBuying() ? softNote : 'Link copied to clipboard';
     const copied = await copyText(listingUrl, feedback, '', okMsg);
     if (copied) markShareDone('copy_caption');
@@ -1217,7 +1217,7 @@
               ? 'Next: review “' + next.title + '” (profile + complimentary visits).'
               : 'Next: set tickets and Confirm & publish for “' +
                 next.title +
-                '” — it stays Draft until then. Public buying opens 1 September.';
+                '” — it stays Draft until then. Public buying opens at 9am on 1 September.';
         }
         banner.hidden = false;
       })

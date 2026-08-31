@@ -82,7 +82,7 @@ module.exports = async function handler(req, res) {
         error: 'ticket_sales_platform_closed',
         message:
           e.publicMessage ||
-          'Ticket interest alerts open when ticket buying starts on 1 September 2026.',
+          'Ticket interest alerts open when ticket buying starts at 9am on 1 September 2026.',
       });
     }
     if (msg === 'ticket_sales_scheduled') {

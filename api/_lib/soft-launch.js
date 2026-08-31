@@ -1,6 +1,6 @@
 /**
  * Soft-launch dates for public catalogue vs paid/enquiry actions.
- * Browse: 25 Aug 2026 · Tickets & opportunity enquiries: 1 Sep 2026 (Europe/London).
+ * Browse: 25 Aug 2026 · Tickets & opportunity enquiries: 9am 1 Sep 2026 (Europe/London).
  *
  * Override for staging/admin tests:
  *   PUBLIC_TICKET_SALES_FORCE_OPEN=true
@@ -12,7 +12,7 @@
  */
 
 const PUBLIC_BROWSE_OPENS_AT = '2026-08-25T00:00:00+01:00';
-const PUBLIC_TRANSACTIONS_OPENS_AT = '2026-09-01T00:00:00+01:00';
+const PUBLIC_TRANSACTIONS_OPENS_AT = '2026-09-01T09:00:00+01:00';
 
 function parseEnvFlag(name) {
   const raw = String(process.env[name] || '')
@@ -35,7 +35,7 @@ function isPublicBrowseOpen(nowMs) {
 }
 
 /**
- * Public ticket buying (paid + free). Opens 1 September 2026 unless forced.
+ * Public ticket buying (paid + free). Opens 9am on 1 September 2026 unless forced.
  * Browse stays available before then; ticket-interest nudges stay paused until buying opens.
  */
 function arePublicTicketSalesOpen(nowMs) {
@@ -46,11 +46,11 @@ function arePublicTicketSalesOpen(nowMs) {
 }
 
 function publicTicketSalesClosedMessage() {
-  return 'Ticket buying opens on 1 September 2026. You can browse events now — ticket interest alerts start then too.';
+  return 'Ticket buying opens at 9am on 1 September 2026. You can browse events now — ticket interest alerts start then too.';
 }
 
 /**
- * Opportunity enquiries. Opens 1 September 2026 unless forced open/closed via env.
+ * Opportunity enquiries. Opens 9am on 1 September 2026 unless forced open/closed via env.
  */
 function arePublicEnquiriesOpen(nowMs) {
   if (parseEnvFlag('PUBLIC_ENQUIRIES_FORCE_CLOSED')) return false;
@@ -60,7 +60,7 @@ function arePublicEnquiriesOpen(nowMs) {
 }
 
 function publicEnquiriesClosedMessage() {
-  return 'Opportunity enquiries open on 1 September 2026. You can browse listings now and enquire when they go live.';
+  return 'Opportunity enquiries open at 9am on 1 September 2026. You can browse listings now and enquire when they go live.';
 }
 
 /**
