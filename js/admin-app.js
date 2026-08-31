@@ -21874,14 +21874,14 @@
       '</ol>' +
       '<p class="text-xs text-amber-800">For Email 1 via Resend, verify <code class="text-xs">the-networker.co.uk</code> and set <code class="text-xs">RESEND_FROM_LEGACY</code> in Vercel, or send manually from your co.uk inbox.</p>' +
       '</div>' +
-      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Bulk send organiser campaigns (max <strong>50 per batch</strong>). Use the <strong>same email as the group profile</strong> on each line.</p>' +
+      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Bulk send organiser campaigns (max <strong>50 per batch</strong>). Use the <strong>same email as the group profile</strong> on each line. Pre-launch claim rematch: rebuild <code class="text-[11px]">npm run build:claim-rematch</code> (unclaimed networking groups only — not the ~3500 list), paste a batch CSV email column here, or run <code class="text-[11px]">npm run send:claim-rematch</code> via Resend for the full list.</p>' +
       '<p class="text-xs text-slate-500 rounded-lg border border-violet-100 bg-violet-50 px-4 py-3">Automated lifecycle emails are under <a href="#email/templates" class="font-semibold text-violet-800 underline">Templates &rarr; Automated</a>.</p>' +
       '<form id="campaign-form" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">' +
       '<label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="campaign-template">Email template</label>' +
       '<select id="campaign-template" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">' +
       '<option value="organiser_rebrand_announcement">Email 1 — Rebrand announcement (send first)</option>' +
       '<option value="organiser_launch_invite">Email 2 — Confirm organiser page (3–5 days later)</option>' +
-      '<option value="organiser_claim_invite">Short claim nudge (existing listing only)</option>' +
+      '<option value="organiser_claim_invite">Short claim nudge / pre-launch rematch</option>' +
       '</select>' +
       '<label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="campaign-recipients">Recipient emails</label>' +
       '<textarea id="campaign-recipients" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono min-h-[120px]" placeholder="organiser@example.com&#10;one per line"></textarea>' +

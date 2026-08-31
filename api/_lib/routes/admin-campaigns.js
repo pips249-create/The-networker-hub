@@ -1,5 +1,5 @@
 const { sessionFromRequest, requireAdmin, json, setCors } = require('../auth');
-const { isSupabaseConfigured } = require('../supabase');
+const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
 const { sendTemplatedEmail } = require('../send-template-email');
 const { parseCsv } = require('../admin-csv-import');
 const { resolveOrganiserClaimUrl } = require('../organiser-claim-url');
@@ -41,12 +41,51 @@ function normalizeEmails(raw) {
   return [...new Set(list)];
 }
 
-function organiserDisplayName(email, baseVars) {
+function organiserDisplayName(email, baseVars, nameByEmail) {
   if (baseVars.organiser_name) return baseVars.organiser_name;
+  if (baseVars.group_name) return baseVars.group_name;
+  const fromDb = nameByEmail && nameByEmail.get(String(email || '').trim().toLowerCase());
+  if (fromDb) return fromDb;
   return String(email)
     .split('@')[0]
     .replace(/[._]/g, ' ')
     .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+/**
+ * Prefer the public group listing name over the email local-part for claim/launch campaigns.
+ */
+async function fetchOrganiserNamesByEmail(emails) {
+  const map = new Map();
+  const list = [
+    ...new Set((emails || []).map((e) => String(e || '').trim().toLowerCase()).filter(Boolean)),
+  ];
+  if (!list.length || !isSupabaseConfigured()) return map;
+
+  const sb = getSupabaseAdmin();
+  const chunkSize = 80;
+  for (let i = 0; i < list.length; i += chunkSize) {
+    const chunk = list.slice(i, i + chunkSize);
+    const [byContact, byEmail] = await Promise.all([
+      sb.from('organisers').select('name, contact_email, email').in('contact_email', chunk),
+      sb.from('organisers').select('name, contact_email, email').in('email', chunk),
+    ]);
+    const rows = []
+      .concat(byContact.error ? [] : byContact.data || [])
+      .concat(byEmail.error ? [] : byEmail.data || []);
+    rows.forEach((row) => {
+      const name = String(row.name || '').trim();
+      if (!name) return;
+      [row.contact_email, row.email].forEach((raw) => {
+        const em = String(raw || '')
+          .trim()
+          .toLowerCase();
+        if (!em || !list.includes(em)) return;
+        if (!map.has(em)) map.set(em, name);
+      });
+    });
+  }
+  return map;
 }
 
 module.exports = async function handler(req, res) {
@@ -101,16 +140,23 @@ module.exports = async function handler(req, res) {
     body.variables && typeof body.variables === 'object' ? { ...body.variables } : {};
   const siteVars = campaignSiteVars(host);
   const rebrand = isRebrandCampaignSlug(slug);
+  const nameByEmail = await fetchOrganiserNamesByEmail(emails);
   const sent = [];
   const failed = [];
 
   for (const email of emails) {
-    const organiserName = organiserDisplayName(email, baseVars);
+    const organiserName = organiserDisplayName(email, baseVars, nameByEmail);
     const variables = {
       ...siteVars,
       organiser_name: organiserName,
+      group_name: organiserName,
       ...baseVars,
     };
+    // Keep DB/group name when caller did not pass an explicit organiser_name.
+    if (!baseVars.organiser_name && !baseVars.group_name) {
+      variables.organiser_name = organiserName;
+      variables.group_name = organiserName;
+    }
 
     if (!rebrand) {
       let claimUrl = baseVars.claim_url;
@@ -140,6 +186,8 @@ module.exports = async function handler(req, res) {
     if (rebrand) {
       sendOpts.from = baseVars.resend_from || legacyCampaignFrom();
       sendOpts.replyTo = baseVars.reply_to || LEGACY_REPLY_EMAIL;
+    } else if (slug === 'organiser_claim_invite' || slug === 'organiser_launch_invite') {
+      sendOpts.replyTo = baseVars.reply_to || 'catherine@thenetworkeruk.com';
     }
 
     try {
