@@ -129,10 +129,14 @@
   var logoutBtn = document.getElementById('logout-btn');
   if (logoutBtn) {
     logoutBtn.addEventListener('click', function () {
-      fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).finally(function () {
-        clearInterval(refreshTimer);
-        window.location.href = '../login';
-      });
+      fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
+        .catch(function () {
+          /* Network failures (e.g. Safari "Load failed") are fine — redirect anyway. */
+        })
+        .finally(function () {
+          clearInterval(refreshTimer);
+          window.location.href = '../login';
+        });
     });
   }
 })();

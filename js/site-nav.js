@@ -1001,9 +1001,13 @@
       mobileSignOut.addEventListener('click', function () {
         closeMenu();
         cacheUser(null);
-        fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).finally(function () {
-          window.location.href = href(signOutRedirectUrl());
-        });
+        fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
+          .catch(function () {
+            /* Network failures (e.g. Safari "Load failed") are fine — redirect anyway. */
+          })
+          .finally(function () {
+            window.location.href = href(signOutRedirectUrl());
+          });
       });
     }
 
@@ -1238,9 +1242,13 @@
     if (signOut) {
       signOut.addEventListener('click', function () {
         cacheUser(null);
-        fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).finally(function () {
-          window.location.href = href(signOutRedirectUrl());
-        });
+        fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
+          .catch(function () {
+            /* Network failures (e.g. Safari "Load failed") are fine — redirect anyway. */
+          })
+          .finally(function () {
+            window.location.href = href(signOutRedirectUrl());
+          });
       });
     }
 
