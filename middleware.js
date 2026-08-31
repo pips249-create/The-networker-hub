@@ -138,9 +138,12 @@ const GATE_BYPASS_PREFIXES = [
   '/assets/',
   '/data/',
   '/international',
+  '/ireland',
+  '/united-states',
   '/api/international-interest',
   '/api/international-group-intake',
   '/api/international-hub-stats',
+  '/api/international-interest-stats',
   // Non-secret client bootstrap (Turnstile site key) — needed on gated + early-access forms.
   '/api/public-config',
 ];
@@ -873,7 +876,7 @@ export const config = {
   // serve that while the preview gate is on.
   // international/index.html is excluded so middleware can safely fetch it for host rewrites.
   matcher: [
-    '/((?!api/stripe-webhook|api/resend-webhook|api/sponsor-out|api/health|_next/static|_next/image|favicon.ico|css/|js/|assets/|data/|international/index\\.html).*)',
+    '/((?!api/stripe-webhook|api/resend-webhook|api/sponsor-out|api/health|_next/static|_next/image|favicon.ico|css/|js/|assets/|data/|international/index\\.html|international/ireland/index\\.html|international/united-states/index\\.html).*)',
   ],
 };
 
@@ -1014,17 +1017,45 @@ export default async function middleware(request) {
       }
     }
 
+    const intlCountryPages = {
+      '/ireland': '/international/ireland',
+      '/united-states': '/international/united-states',
+    };
+    const countryPage = intlCountryPages[pathname];
+    if (countryPage) {
+      try {
+        const htmlRes = await fetch(new URL(countryPage, url.origin).toString(), {
+          headers: { 'x-intl-landing-fetch': '1' },
+        });
+        if (htmlRes.ok) {
+          return new Response(await htmlRes.text(), {
+            status: 200,
+            headers: {
+              'Content-Type': 'text/html; charset=utf-8',
+              'Cache-Control': 'public, max-age=60, must-revalidate',
+            },
+          });
+        }
+      } catch {
+        /* fall through */
+      }
+    }
+
     if (
       !pathname.startsWith('/api/international-') &&
       !pathname.startsWith('/css/') &&
       !pathname.startsWith('/js/') &&
       !pathname.startsWith('/assets/') &&
       !pathname.startsWith('/data/') &&
+      !pathname.startsWith('/international/ireland') &&
+      !pathname.startsWith('/international/united-states') &&
       pathname !== '/favicon.ico' &&
       pathname !== '/robots.txt' &&
       pathname !== '/sitemap.xml' &&
       pathname !== '/llms.txt' &&
-      pathname !== '/agents.txt'
+      pathname !== '/agents.txt' &&
+      pathname !== '/ireland' &&
+      pathname !== '/united-states'
     ) {
       const dest = new URL(request.url);
       dest.protocol = 'https:';

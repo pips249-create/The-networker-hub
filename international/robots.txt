@@ -3,9 +3,12 @@ User-agent: *
 Allow: /
 Disallow: /api/
 Allow: /api/international-hub-stats
+Allow: /api/international-interest-stats
 
 Sitemap: https://www.thenetworkerinternational.com/sitemap.xml
 
 # AI / answer-engine crawlers
 Allow: /llms.txt
 Allow: /agents.txt
+Allow: /ireland
+Allow: /united-states
