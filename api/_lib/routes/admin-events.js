@@ -106,12 +106,14 @@ async function fetchOrganiserOptions(sb) {
   return all.map(mapOrganiserOptionRow);
 }
 
-function mapEventRow(row, orgById, commerceStats, cancellationRow) {
+function mapEventRow(row, orgById, commerceStats, cancellationRow, ticketMeta) {
   const org = row.organiser_id ? orgById.get(row.organiser_id) : null;
   const stats = commerceStats && commerceStats[row.id] ? commerceStats[row.id] : null;
   const registrationCount = stats ? stats.registration_count : 0;
   const paidBookingCount = stats ? stats.paid_booking_count : 0;
   const reinstateEligibility = evaluateReinstateEligibility(row, cancellationRow || null, stats || null);
+  const ticketCount =
+    ticketMeta && ticketMeta[row.id] != null ? Number(ticketMeta[row.id]) || 0 : null;
   return {
     id: row.id,
     title: String(row.title || '').trim(),
@@ -141,6 +143,8 @@ function mapEventRow(row, orgById, commerceStats, cancellationRow) {
     locked: Boolean(row.locked),
     registration_count: registrationCount,
     paid_booking_count: paidBookingCount,
+    ticket_count: ticketCount,
+    has_ticket_tiers: ticketCount == null ? null : ticketCount > 0,
     cancellation_id: cancellationRow?.id || null,
     refunds_confirmed_at: cancellationRow?.refunds_confirmed_at || null,
     reinstated_at: cancellationRow?.reinstated_at || null,
@@ -150,53 +154,82 @@ function mapEventRow(row, orgById, commerceStats, cancellationRow) {
   };
 }
 
-async function listEventsForAdmin(query) {
-  const sb = getSupabaseAdmin();
-  const organiserId = String(query.organiser_id || '').trim();
-  const unlinked = query.unlinked === '1' || query.unlinked === 'true';
-  const noDate = query.no_date === '1' || query.no_date === 'true';
-  const whenRaw = String(query.when || '').trim().toLowerCase();
-  const when =
-    whenRaw === 'upcoming' || whenRaw === 'live'
-      ? 'upcoming'
-      : whenRaw === 'past'
-        ? 'past'
-        : '';
-  const status = String(query.status || '').trim();
-  const approvalStatus = String(query.approval_status || '').trim();
-  const search = String(query.q || '').trim();
-  const sort = String(query.sort || 'recent').trim().toLowerCase();
-  const featuredOnly = query.featured === '1' || query.featured === 'true';
-  const light =
-    query.light === '1' ||
-    query.light === 'true' ||
-    String(query.view || '').trim().toLowerCase() === 'spotlight';
-  const offset = Math.max(parseInt(String(query.offset || ''), 10) || 0, 0);
-  const limit = Math.min(Math.max(parseInt(String(query.limit || ''), 10) || 40, 1), 100);
-  const nowIso = new Date().toISOString();
+const EVENT_ID_PAGE_SIZE = 1000;
+const TICKET_LOOKUP_CHUNK = 80;
 
-  let dbQuery = sb.from('events').select(
-    light
-      ? 'id, title, organiser_id, starts_at, event_type, slug, city, featured, featured_until'
-      : 'id, title, description, image_url, photo_url, organiser_id, starts_at, ends_at, event_type, meeting_type, status, approval_status, vat_treatment, slug, city, venue, address, postcode, meeting_link, featured, featured_until, created_at, locked',
-    { count: 'exact' }
-  );
-
-  // Spotlight / light lists: featured rows first so admins can untick them.
-  if (light || featuredOnly) {
-    dbQuery = dbQuery.order('featured', { ascending: false });
-  }
-
-  if (sort === 'title') {
-    dbQuery = dbQuery.order('title', { ascending: true });
-  } else if (sort === 'date') {
-    dbQuery = dbQuery.order('starts_at', {
-      ascending: when === 'upcoming',
-      nullsFirst: false,
+async function fetchAllTicketEventIds(sb) {
+  const ids = new Set();
+  let from = 0;
+  while (true) {
+    const res = await sb
+      .from('tickets')
+      .select('event_id')
+      .order('event_id', { ascending: true })
+      .range(from, from + EVENT_ID_PAGE_SIZE - 1);
+    if (res.error) throw new Error(res.error.message);
+    const batch = res.data || [];
+    batch.forEach((row) => {
+      if (row.event_id) ids.add(row.event_id);
     });
-  } else {
-    dbQuery = dbQuery.order('created_at', { ascending: false });
+    if (batch.length < EVENT_ID_PAGE_SIZE) break;
+    from += EVENT_ID_PAGE_SIZE;
   }
+  return ids;
+}
+
+async function fetchTicketCountsByEventId(sb, eventIds) {
+  const unique = [...new Set((eventIds || []).filter(Boolean))];
+  const counts = {};
+  unique.forEach((id) => {
+    counts[id] = 0;
+  });
+  if (!unique.length) return counts;
+
+  for (let i = 0; i < unique.length; i += TICKET_LOOKUP_CHUNK) {
+    const chunk = unique.slice(i, i + TICKET_LOOKUP_CHUNK);
+    const res = await sb.from('tickets').select('event_id').in('event_id', chunk);
+    if (res.error) throw new Error(res.error.message);
+    (res.data || []).forEach((row) => {
+      if (!row.event_id) return;
+      counts[row.event_id] = (counts[row.event_id] || 0) + 1;
+    });
+  }
+  return counts;
+}
+
+async function fetchOrderedEventIds(sb, buildIdQuery) {
+  const ids = [];
+  let from = 0;
+  while (true) {
+    const res = await buildIdQuery(from, from + EVENT_ID_PAGE_SIZE - 1);
+    if (res.error) throw new Error(res.error.message);
+    const batch = res.data || [];
+    batch.forEach((row) => {
+      if (row.id) ids.push(row.id);
+    });
+    if (batch.length < EVENT_ID_PAGE_SIZE) break;
+    from += EVENT_ID_PAGE_SIZE;
+  }
+  return ids;
+}
+
+function orderRowsByIds(rows, ids) {
+  const byId = new Map((rows || []).map((row) => [row.id, row]));
+  return (ids || []).map((id) => byId.get(id)).filter(Boolean);
+}
+
+function applyEventListFilters(dbQuery, opts) {
+  const {
+    unlinked,
+    organiserId,
+    noDate,
+    when,
+    nowIso,
+    status,
+    approvalStatus,
+    featuredOnly,
+    search,
+  } = opts;
 
   if (unlinked) {
     dbQuery = dbQuery.is('organiser_id', null);
@@ -228,15 +261,112 @@ async function listEventsForAdmin(query) {
     dbQuery = applyIlikeSearch(dbQuery, search, ['title', 'city']);
   }
 
-  dbQuery = dbQuery.range(offset, offset + limit - 1);
+  return dbQuery;
+}
+
+function applyEventListOrdering(dbQuery, opts) {
+  const { light, featuredOnly, sort, when } = opts;
+
+  // Spotlight / light lists: featured rows first so admins can untick them.
+  if (light || featuredOnly) {
+    dbQuery = dbQuery.order('featured', { ascending: false });
+  }
+
+  if (sort === 'title') {
+    dbQuery = dbQuery.order('title', { ascending: true });
+  } else if (sort === 'date') {
+    dbQuery = dbQuery.order('starts_at', {
+      ascending: when === 'upcoming',
+      nullsFirst: false,
+    });
+  } else {
+    dbQuery = dbQuery.order('created_at', { ascending: false });
+  }
+
+  return dbQuery;
+}
+
+async function listEventsForAdmin(query) {
+  const sb = getSupabaseAdmin();
+  const organiserId = String(query.organiser_id || '').trim();
+  const unlinked = query.unlinked === '1' || query.unlinked === 'true';
+  const noDate = query.no_date === '1' || query.no_date === 'true';
+  const noTickets =
+    query.no_tickets === '1' ||
+    query.no_tickets === 'true' ||
+    query.listing_only === '1' ||
+    query.listing_only === 'true';
+  const whenRaw = String(query.when || '').trim().toLowerCase();
+  const when =
+    whenRaw === 'upcoming' || whenRaw === 'live'
+      ? 'upcoming'
+      : whenRaw === 'past'
+        ? 'past'
+        : '';
+  const status = String(query.status || '').trim();
+  const approvalStatus = String(query.approval_status || '').trim();
+  const search = String(query.q || '').trim();
+  const sort = String(query.sort || 'recent').trim().toLowerCase();
+  const featuredOnly = query.featured === '1' || query.featured === 'true';
+  const light =
+    query.light === '1' ||
+    query.light === 'true' ||
+    String(query.view || '').trim().toLowerCase() === 'spotlight';
+  const offset = Math.max(parseInt(String(query.offset || ''), 10) || 0, 0);
+  const limit = Math.min(Math.max(parseInt(String(query.limit || ''), 10) || 40, 1), 100);
+  const nowIso = new Date().toISOString();
+  const filterOpts = {
+    unlinked,
+    organiserId,
+    noDate,
+    when,
+    nowIso,
+    status,
+    approvalStatus,
+    featuredOnly,
+    search,
+    light,
+    sort,
+  };
+  const selectCols = light
+    ? 'id, title, organiser_id, starts_at, event_type, slug, city, featured, featured_until'
+    : 'id, title, description, image_url, photo_url, organiser_id, starts_at, ends_at, event_type, meeting_type, status, approval_status, vat_treatment, slug, city, venue, address, postcode, meeting_link, featured, featured_until, created_at, locked';
+
+  let rows = [];
+  let total = 0;
+
+  if (noTickets) {
+    const withTickets = await fetchAllTicketEventIds(sb);
+    const orderedIds = await fetchOrderedEventIds(sb, (from, to) => {
+      let idQuery = sb.from('events').select('id');
+      idQuery = applyEventListFilters(idQuery, filterOpts);
+      idQuery = applyEventListOrdering(idQuery, filterOpts);
+      return idQuery.range(from, to);
+    });
+    const ticketlessIds = orderedIds.filter((id) => !withTickets.has(id));
+    total = ticketlessIds.length;
+    const pageIds = ticketlessIds.slice(offset, offset + limit);
+
+    if (pageIds.length) {
+      const pageRes = await sb.from('events').select(selectCols).in('id', pageIds);
+      if (pageRes.error) throw new Error(pageRes.error.message);
+      rows = orderRowsByIds(pageRes.data || [], pageIds);
+    }
+  } else {
+    let dbQuery = sb.from('events').select(selectCols, { count: 'exact' });
+    dbQuery = applyEventListFilters(dbQuery, filterOpts);
+    dbQuery = applyEventListOrdering(dbQuery, filterOpts);
+    dbQuery = dbQuery.range(offset, offset + limit - 1);
+
+    const eventsRes = await dbQuery;
+    if (eventsRes.error) throw new Error(eventsRes.error.message);
+    rows = eventsRes.data || [];
+    total = eventsRes.count != null ? eventsRes.count : rows.length;
+  }
 
   const includeOrganisers =
     query.include_organisers === '1' || query.include_organisers === 'true';
 
-  const eventsRes = await dbQuery;
-  if (eventsRes.error) throw new Error(eventsRes.error.message);
-
-  const rows = eventsRes.data || [];
   const organisers = includeOrganisers
     ? await fetchOrganiserOptions(sb)
     : await fetchOrganisersByIds(
@@ -247,6 +377,7 @@ async function listEventsForAdmin(query) {
   const orgById = new Map(organisers.map((o) => [o.id, o]));
   let commerceStats = null;
   let cancellationsByEvent = null;
+  let ticketMeta = null;
   if (!light) {
     commerceStats = await fetchEventRegistrationStats(
       sb,
@@ -256,11 +387,22 @@ async function listEventsForAdmin(query) {
       sb,
       rows.map((row) => row.id)
     );
+    ticketMeta = noTickets
+      ? Object.fromEntries(rows.map((row) => [row.id, 0]))
+      : await fetchTicketCountsByEventId(
+          sb,
+          rows.map((row) => row.id)
+        );
   }
   const events = rows.map((row) =>
-    mapEventRow(row, orgById, commerceStats, cancellationsByEvent ? cancellationsByEvent[row.id] || null : null)
+    mapEventRow(
+      row,
+      orgById,
+      commerceStats,
+      cancellationsByEvent ? cancellationsByEvent[row.id] || null : null,
+      ticketMeta
+    )
   );
-  const total = eventsRes.count != null ? eventsRes.count : rows.length;
 
   let unlinkedCount = 0;
   if (!light) {
@@ -281,6 +423,8 @@ async function listEventsForAdmin(query) {
     limit,
     hasMore: offset + events.length < total,
     unlinked_count: unlinkedCount,
+    /** Present when filtering listing-only events (no ticket types). */
+    no_tickets_count: noTickets ? total : null,
   };
 }
 
@@ -546,7 +690,8 @@ async function applyEventPatch(sb, id, patch) {
   const orgById = new Map(organisers.map((o) => [o.id, o]));
   const commerceStats = await fetchEventRegistrationStats(sb, [data.id]);
   const cancellationsByEvent = await fetchLatestCancellationsByEventId(sb, [data.id]);
-  return mapEventRow(data, orgById, commerceStats, cancellationsByEvent[data.id] || null);
+  const ticketMeta = await fetchTicketCountsByEventId(sb, [data.id]);
+  return mapEventRow(data, orgById, commerceStats, cancellationsByEvent[data.id] || null, ticketMeta);
 }
 
 async function adminDeleteEvent(sb, eventId, opts) {
@@ -1129,7 +1274,8 @@ module.exports = async function handler(req, res) {
       }
       const commerceStats = await fetchEventRegistrationStats(sb, [id]);
       const cancellationsByEvent = await fetchLatestCancellationsByEventId(sb, [id]);
-      const event = mapEventRow(row, orgById, commerceStats, cancellationsByEvent[id] || null);
+      const ticketMeta = await fetchTicketCountsByEventId(sb, [id]);
+      const event = mapEventRow(row, orgById, commerceStats, cancellationsByEvent[id] || null, ticketMeta);
       try {
         const { logFromSession } = require('../entity-activity-log');
         const changed = Object.keys(patch || {});

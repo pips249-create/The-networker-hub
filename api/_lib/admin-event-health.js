@@ -18,6 +18,7 @@ const ISSUE_DEFS = {
   missing_organiser_logo: { label: 'Organiser has no logo', severity: 'medium' },
   missing_organiser_profile: { label: 'Organiser profile empty', severity: 'medium' },
   missing_vat: { label: 'VAT not set (paid tickets)', severity: 'medium' },
+  missing_tickets: { label: 'No ticket types (listing-only)', severity: 'medium' },
   off_platform_booking: {
     label: 'Off-platform booking (Eventbrite / Luma / Ticket Tailor / Net Hub / etc.)',
     severity: 'medium',
@@ -202,6 +203,15 @@ async function scanEventHealth() {
     const eventTix = tixByEvent.get(row.id) || [];
     const hasPaid = eventTix.some((t) => ticketPrice(t) > 0);
     if (hasPaid && !row.vat_treatment) codes.push('missing_vat');
+
+    // Listing-only: published on browse without ticket types. Skip past events —
+    // those already surface as stale_past_date and are not actionable for ticketing.
+    if (!eventTix.length) {
+      const startMs = row.starts_at ? new Date(row.starts_at).getTime() : NaN;
+      const isPast =
+        !Number.isNaN(startMs) && startMs < Date.now() - 86400000;
+      if (!isPast) codes.push('missing_tickets');
+    }
 
     if (!String(row.event_type || '').trim()) codes.push('missing_event_type');
     if (!String(row.meeting_type || '').trim()) codes.push('missing_meeting_type');
