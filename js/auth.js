@@ -941,6 +941,9 @@
           signOutBtn.addEventListener('click', function () {
             signOutBtn.disabled = true;
             fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
+              .catch(function () {
+                /* Network failures (e.g. Safari "Load failed") are fine — reload anyway. */
+              })
               .finally(function () {
                 window.location.reload();
               });

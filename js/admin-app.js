@@ -28034,9 +28034,13 @@
   });
 
   document.getElementById('admin-signout').addEventListener('click', function () {
-    fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }).finally(function () {
-      window.location.href = '../login';
-    });
+    fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
+      .catch(function () {
+        /* Network failures (e.g. Safari "Load failed") are fine — redirect anyway. */
+      })
+      .finally(function () {
+        window.location.href = '../login';
+      });
   });
 
   bindAdminPageGuides();
