@@ -547,6 +547,7 @@
     organiserId: '',
     unlinked: false,
     noDate: false,
+    noTickets: false,
     when: '',
     status: '',
     approval: '',
@@ -1548,6 +1549,21 @@
     return count;
   }
 
+  function missingTicketsHealthCount() {
+    var count = 0;
+    ((healthCache && healthCache.events) || []).forEach(function (ev) {
+      var issues = ev.issues || [];
+      if (
+        issues.some(function (issue) {
+          return issue && issue.code === 'missing_tickets';
+        })
+      ) {
+        count += 1;
+      }
+    });
+    return count;
+  }
+
   function listingLanguageHealthCounts() {
     var hate = 0;
     var profanity = 0;
@@ -1961,6 +1977,13 @@
       offPlatformBookingHealthCount(),
       'Off-platform booking mentions',
       '#cleanup/issues?issue=off_platform_booking',
+      'amber'
+    );
+    push(
+      'medium',
+      missingTicketsHealthCount(),
+      'Events without tickets',
+      '#cleanup/events?no_tickets=1&when=upcoming',
       'amber'
     );
     push('low', counts.incompleteOrganisers, 'Incomplete groups', '#cleanup/groups', 'slate');
@@ -3367,6 +3390,7 @@
       showEventType: codes.indexOf('missing_event_type') >= 0,
       showFormat: codes.indexOf('missing_meeting_type') >= 0,
       showVat: codes.indexOf('missing_vat') >= 0,
+      showMissingTickets: codes.indexOf('missing_tickets') >= 0,
       showOrgLogo: codes.indexOf('missing_organiser_logo') >= 0,
       showOrgBio: codes.indexOf('missing_organiser_profile') >= 0,
       showOffPlatform: codes.indexOf('off_platform_booking') >= 0,
@@ -4238,6 +4262,14 @@
               (vatVal === 'none' ? ' selected' : '') +
               '>Not VAT registered</option>' +
               '</select></div>';
+          }
+          if (fields.showMissingTickets) {
+            eventFieldsHtml +=
+              '<div class="sm:col-span-2 rounded-lg border border-amber-200 bg-amber-50/70 p-3">' +
+              '<p class="text-sm font-semibold text-brand-900">No ticket types yet</p>' +
+              '<p class="text-xs text-slate-600 mt-1">This listing can appear on browse as listing-only until the organiser adds tickets. Open ' +
+              '<a href="#cleanup/events?no_tickets=1" class="text-brand-700 font-semibold hover:underline">Fix listings → Events → No tickets</a>' +
+              ' to review all of them, or nudge the organiser from the public event page.</p></div>';
           }
 
           var orgFieldsHtml = '';
@@ -15047,6 +15079,7 @@
       eventCleanupState.organiserId ||
       eventCleanupState.unlinked ||
       eventCleanupState.noDate ||
+      eventCleanupState.noTickets ||
       eventCleanupState.when ||
       eventCleanupState.status ||
       eventCleanupState.approval
@@ -15061,6 +15094,7 @@
     if (eventCleanupState.when) n += 1;
     if (eventCleanupState.unlinked) n += 1;
     if (eventCleanupState.noDate) n += 1;
+    if (eventCleanupState.noTickets) n += 1;
     return n;
   }
 
@@ -15074,6 +15108,8 @@
     if (el) el.checked = !!eventCleanupState.unlinked;
     el = document.getElementById('event-cleanup-no-date');
     if (el) el.checked = !!eventCleanupState.noDate;
+    el = document.getElementById('event-cleanup-no-tickets');
+    if (el) el.checked = !!eventCleanupState.noTickets;
     el = document.getElementById('event-cleanup-when');
     if (el) el.value = eventCleanupState.when || '';
     el = document.getElementById('event-cleanup-status-filter');
@@ -15098,6 +15134,7 @@
       var active = false;
       if (key === 'unlinked') active = eventCleanupState.unlinked;
       else if (key === 'no_date') active = eventCleanupState.noDate;
+      else if (key === 'no_tickets') active = eventCleanupState.noTickets;
       else if (key === 'live') active = eventCleanupState.when === 'upcoming';
       else if (key === 'past') active = eventCleanupState.when === 'past';
       else if (key === 'draft') active = eventCleanupState.status === 'draft';
@@ -16154,6 +16191,7 @@
     if (eventCleanupState.organiserId) params.set('organiser_id', eventCleanupState.organiserId);
     if (eventCleanupState.unlinked) params.set('unlinked', '1');
     if (eventCleanupState.noDate) params.set('no_date', '1');
+    if (eventCleanupState.noTickets) params.set('no_tickets', '1');
     if (eventCleanupState.when) params.set('when', eventCleanupState.when);
     if (eventCleanupState.status) params.set('status', eventCleanupState.status);
     if (eventCleanupState.approval) params.set('approval_status', eventCleanupState.approval);
@@ -17666,6 +17704,7 @@
         eventCleanupState.organiserId = '';
         eventCleanupState.unlinked = false;
         eventCleanupState.noDate = false;
+        eventCleanupState.noTickets = false;
         eventCleanupState.when = '';
         eventCleanupState.status = '';
         eventCleanupState.approval = '';
@@ -17675,6 +17714,8 @@
       } else if (key === 'no_date') {
         eventCleanupState.noDate = !eventCleanupState.noDate;
         if (eventCleanupState.noDate) eventCleanupState.when = '';
+      } else if (key === 'no_tickets') {
+        eventCleanupState.noTickets = !eventCleanupState.noTickets;
       } else if (key === 'live') {
         eventCleanupState.when = eventCleanupState.when === 'upcoming' ? '' : 'upcoming';
         if (eventCleanupState.when) eventCleanupState.noDate = false;
@@ -17723,6 +17764,11 @@
       if (e.target.id === 'event-cleanup-no-date') {
         eventCleanupState.noDate = e.target.checked;
         if (eventCleanupState.noDate) eventCleanupState.when = '';
+        syncEventCleanupFilterUi();
+        refreshEventCleanupData();
+      }
+      if (e.target.id === 'event-cleanup-no-tickets') {
+        eventCleanupState.noTickets = e.target.checked;
         syncEventCleanupFilterUi();
         refreshEventCleanupData();
       }
@@ -18909,6 +18955,9 @@
       '<td class="py-2.5 pr-3"><div class="flex flex-wrap gap-1">' +
       listingStatusBadge(ev.status) +
       approvalStatusBadge(ev.approval_status) +
+      (ev.has_ticket_tiers === false
+        ? '<span class="inline-flex rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-900">No tickets</span>'
+        : '') +
       (Math.max(0, Number(ev.registration_count) || 0) > 0
         ? '<span class="inline-flex rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700">' +
           esc(String(ev.registration_count)) +
@@ -18965,6 +19014,11 @@
           ? ' · <span class="text-amber-800 font-semibold">' +
             data.unlinked_count +
             ' unlinked in catalogue</span>'
+          : '') +
+        (eventCleanupState.noTickets && data.no_tickets_count != null
+          ? ' · <span class="text-amber-800 font-semibold">' +
+            data.no_tickets_count +
+            ' without ticket types</span>'
           : '') +
         (eventCleanupState.loading ? ' · <span class="text-slate-400">Loading…</span>' : '');
     }
@@ -19120,12 +19174,17 @@
       '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">' +
       '<input type="checkbox" id="event-cleanup-no-date" class="rounded border-slate-300"' +
       (eventCleanupState.noDate ? ' checked' : '') +
-      '> No date</label></div>' +
+      '> No date</label>' +
+      '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">' +
+      '<input type="checkbox" id="event-cleanup-no-tickets" class="rounded border-slate-300"' +
+      (eventCleanupState.noTickets ? ' checked' : '') +
+      '> No tickets</label></div>' +
       '<div class="flex flex-wrap gap-2">' +
       '<button type="button" data-event-quick="live" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Live / upcoming</button>' +
       '<button type="button" data-event-quick="past" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Past</button>' +
       '<button type="button" data-event-quick="unlinked" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Unlinked</button>' +
       '<button type="button" data-event-quick="no_date" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">No date</button>' +
+      '<button type="button" data-event-quick="no_tickets" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">No tickets</button>' +
       '<button type="button" data-event-quick="draft" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Draft</button>' +
       '<button type="button" data-event-quick="pending" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Draft events</button>' +
       '<button type="button" data-event-quick="clear" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-500 hover:bg-slate-50">Clear filters</button></div>' +
@@ -19140,7 +19199,7 @@
   function eventCleanupHintHtml() {
     return (
       '<p id="event-cleanup-hint" class="hidden text-xs text-amber-900 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">' +
-      'Large catalogue — search by title or city, open More filters, or type a page number below the table to jump ahead.</p>'
+      'Large catalogue — search by title or city, open More filters (Unlinked, No date, No tickets), or type a page number below the table to jump ahead.</p>'
     );
   }
 
@@ -19200,7 +19259,53 @@
     );
   }
 
-  function renderEventCleanup() {
+  function applyEventCleanupListQuery(query) {
+    if (!query) return;
+    if (query.has('organiser') || query.has('organiser_id')) {
+      eventCleanupState.organiserId = String(
+        query.get('organiser') || query.get('organiser_id') || ''
+      ).trim();
+    }
+    if (query.has('status')) eventCleanupState.status = String(query.get('status') || '').trim();
+    if (query.has('approval') || query.has('approval_status')) {
+      var approvalQ = String(query.get('approval') || query.get('approval_status') || '').trim();
+      if (approvalQ.toLowerCase() === 'pending' || approvalQ.toLowerCase() === 'pending review') {
+        eventCleanupState.approval = 'Pending Review';
+      } else {
+        eventCleanupState.approval = approvalQ;
+      }
+    }
+    if (query.has('when')) eventCleanupState.when = String(query.get('when') || '').trim();
+    if (query.has('q')) eventCleanupState.q = String(query.get('q') || '').trim();
+    if (query.has('sort')) {
+      eventCleanupState.sort = String(query.get('sort') || 'recent').trim() || 'recent';
+    }
+    if (query.has('unlinked')) {
+      eventCleanupState.unlinked =
+        query.get('unlinked') === '1' || query.get('unlinked') === 'true';
+    }
+    if (query.has('no_date')) {
+      eventCleanupState.noDate =
+        query.get('no_date') === '1' || query.get('no_date') === 'true';
+      if (eventCleanupState.noDate) eventCleanupState.when = '';
+    }
+    if (query.has('no_tickets') || query.has('listing_only')) {
+      eventCleanupState.noTickets =
+        query.get('no_tickets') === '1' ||
+        query.get('no_tickets') === 'true' ||
+        query.get('listing_only') === '1' ||
+        query.get('listing_only') === 'true';
+    }
+    if (query.has('page')) {
+      var pageNum = parseInt(String(query.get('page') || '1'), 10);
+      if (!isNaN(pageNum) && pageNum > 0) eventCleanupState.page = pageNum - 1;
+    }
+  }
+
+  function renderEventCleanup(fullHash) {
+    applyEventCleanupListQuery(
+      parseAdminHashQuery(fullHash || (location.hash || '').replace(/^#/, ''))
+    );
     main.innerHTML =
       '<div class="event-cleanup-page space-y-3">' +
       eventCleanupCreateSectionHtml() +
@@ -26584,7 +26689,10 @@
       tab
     );
 
-    if (tab === 'events') withHubTabs(tabsHtml, renderEventCleanup);
+    if (tab === 'events')
+      withHubTabs(tabsHtml, function () {
+        renderEventCleanup(fullHash);
+      });
     else if (tab === 'requests') withHubTabs(tabsHtml, renderEventIntakeAdmin);
     else if (tab === 'issues')
       withHubTabs(tabsHtml, function () {
