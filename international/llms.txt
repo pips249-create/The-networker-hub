@@ -8,12 +8,15 @@ The Networker International is the global routing layer for The Networker. Peopl
 
 ## Current markets
 - United Kingdom — live: https://www.thenetworkeruk.com
-- Ireland — building (group / training organisation intake on this site)
-- Other countries — coming soon (register interest)
+- Ireland — building: https://www.thenetworkerinternational.com/ireland
+- United States — building: https://www.thenetworkerinternational.com/united-states
+- Other countries — coming soon (register interest on the world map)
 - Some markets are unavailable due to sanctions / compliance restrictions
 
 ## Canonical URLs
-- Home: https://www.thenetworkerinternational.com/
+- Home / world map: https://www.thenetworkerinternational.com/
+- Ireland: https://www.thenetworkerinternational.com/ireland
+- United States: https://www.thenetworkerinternational.com/united-states
 - UK platform: https://www.thenetworkeruk.com
 - Sitemap: https://www.thenetworkerinternational.com/sitemap.xml
 - AI crawler policy: https://www.thenetworkerinternational.com/agents.txt
@@ -24,7 +27,14 @@ The Networker International is the global routing layer for The Networker. Peopl
 - Partners / press: contact hi@thenetworkeruk.com — The Networker International is part of The Networker Group Limited.
 
 ## How markets launch
-We launch market by market. The UK is live first. Ireland is in building. Interest and intake forms help prioritise the next countries.
+We launch market by market. The UK is live first. Ireland and the United States are building. Interest and intake forms help prioritise the next countries.
+
+## FAQ
+- What is The Networker International? The global routing layer for The Networker — choose your country to enter a live site, join a building market, or register interest.
+- Is The Networker live in Ireland? Not yet; Ireland is building. Register at https://www.thenetworkerinternational.com/ireland
+- Is The Networker live in the United States? Not yet; the US is building. Register at https://www.thenetworkerinternational.com/united-states
+- How do I list a networking group? On a building-market page, choose “I want to list a group” and send your details.
+- Where can I see it working today? The UK is live at https://www.thenetworkeruk.com
 
 ## Machine discovery
 - Sitemap: https://www.thenetworkerinternational.com/sitemap.xml

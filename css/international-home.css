@@ -350,23 +350,65 @@
   line-height: 1.45;
 }
 
-.intl-intro-uk-btn {
+.intl-intro-actions {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.intl-intro-uk-btn,
+.intl-intro-interest-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  margin-top: 12px;
+  margin-top: 0;
   padding: 9px 14px;
   border-radius: 999px;
-  background: var(--charcoal);
-  color: #fff;
   font-size: 12.5px;
   font-weight: 700;
   text-decoration: none;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.intl-intro-uk-btn {
+  background: var(--charcoal);
+  color: #fff;
+  border: 0;
 }
 
 .intl-intro-uk-btn:hover {
   background: var(--charcoal-soft, #4a4448);
   color: #fff;
+}
+
+.intl-intro-interest-btn {
+  background: #fff;
+  color: var(--charcoal);
+  border: 1px solid rgba(184, 174, 166, 0.55);
+}
+
+.intl-intro-interest-btn:hover {
+  border-color: var(--charcoal);
+}
+
+.intl-intro-split {
+  margin: 10px 0 0;
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+.intl-intro-split a {
+  color: var(--charcoal);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.intl-intro-split a:hover {
+  text-decoration: underline;
 }
 
 .intl-map-ambient {
@@ -902,6 +944,9 @@
 }
 
 .intl-featured-country {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: 1px solid rgba(184, 174, 166, 0.45);
   background: #fff;
   color: var(--charcoal);
@@ -911,6 +956,11 @@
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
+  text-decoration: none;
+}
+
+.intl-featured-country:hover {
+  text-decoration: none;
 }
 
 .intl-featured-country--live {
@@ -1109,6 +1159,107 @@
 .intl-about {
   border-top: 1px solid rgba(184, 174, 166, 0.35);
   background: linear-gradient(180deg, rgba(250, 246, 238, 0.55) 0%, var(--cream) 100%);
+}
+
+.intl-markets {
+  border-top: 1px solid rgba(184, 174, 166, 0.35);
+  background: rgba(255, 255, 255, 0.42);
+}
+
+.intl-markets-inner {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 36px clamp(16px, 4vw, 28px) 12px;
+}
+
+.intl-markets-title {
+  margin: 0 0 8px;
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: clamp(1.35rem, 2.4vw, 1.75rem);
+  color: var(--charcoal);
+  font-weight: 400;
+}
+
+.intl-markets-lede {
+  margin: 0 0 18px;
+  color: var(--text-muted);
+  font-size: 0.98rem;
+  line-height: 1.5;
+  max-width: 42rem;
+}
+
+.intl-markets-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.intl-markets-list > li {
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid rgba(184, 174, 166, 0.35);
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.intl-markets-list a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.intl-markets-name {
+  font-weight: 700;
+  color: var(--charcoal);
+}
+
+.intl-markets-status {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  border-radius: 999px;
+}
+
+.intl-markets-status--live {
+  background: rgba(154, 122, 168, 0.16);
+  color: var(--lavender-deep);
+}
+
+.intl-markets-status--building {
+  background: rgba(201, 173, 122, 0.2);
+  color: #7a6238;
+}
+
+.intl-markets-status--soon {
+  background: rgba(184, 174, 166, 0.22);
+  color: var(--text-muted);
+}
+
+.intl-markets-list p {
+  margin: 8px 0 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+}
+
+.intl-markets-demand {
+  font-weight: 600;
+  color: var(--charcoal) !important;
+}
+
+.intl-markets-demand[hidden] {
+  display: none;
+}
+
+.intl-faq-list a {
+  color: var(--charcoal);
+  font-weight: 600;
 }
 
 .intl-about-inner {
@@ -1474,8 +1625,27 @@
     border-radius: 18px;
   }
 
-  .intl-intro-uk-btn {
+  .intl-intro-uk-btn,
+  .intl-intro-interest-btn {
     width: 100%;
+  }
+
+  .intl-map-canvas {
+    position: relative;
+    inset: auto;
+    flex: none;
+    min-height: 0;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 960 / 680;
+    max-height: min(56svh, 460px);
+    margin: 10px 0 0;
+  }
+
+  .intl-map-svg {
+    min-height: 0;
+    width: 100%;
+    height: 100%;
   }
 
   .intl-header-inner {
@@ -1525,20 +1695,6 @@
   .intl-map-shell,
   .intl-map-wrap {
     min-height: auto;
-  }
-
-  .intl-map-canvas {
-    position: relative;
-    inset: auto;
-    flex: none;
-    min-height: 0;
-    height: min(58svh, 460px);
-    margin: 10px 0 0;
-  }
-
-  .intl-map-svg {
-    min-height: 0;
-    height: 100%;
   }
 
   .intl-map-wrap {

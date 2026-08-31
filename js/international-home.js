@@ -17,10 +17,10 @@
     '840': { iso2: 'US', name: 'United States' },
   };
 
-  /** Coming-soon / building domains — map click opens the market preview gate. */
+  /** Building markets — stay on International SEO landings for conversion. */
   var MARKET_PREVIEW_URLS = {
-    '372': 'https://www.thenetworkerireland.com',
-    '840': 'https://www.thenetworkerusa.com',
+    '372': '/ireland',
+    '840': '/united-states',
   };
 
   /**
@@ -556,18 +556,78 @@
     if (els.featuredButtons.length) {
       els.featuredButtons.forEach(function (button) {
         button.addEventListener('click', function () {
+          var href = button.getAttribute('href') || '';
           var id = button.getAttribute('data-country-id');
-          var meta = state.countries.find(function (country) {
-            return country.numericId === id;
-          });
+          var meta = id
+            ? state.countries.find(function (country) {
+                return country.numericId === id;
+              })
+            : null;
           trackIntl('intl_featured_click', {
-            country: (meta && meta.iso2) || id || 'unknown',
-            status: (meta && meta.status) || 'unknown',
+            country: (meta && meta.iso2) || href || id || 'unknown',
+            status: (meta && meta.status) || 'link',
           });
+          // Anchor CTAs navigate to country landings / UK — do not intercept.
+          if (href) return;
           if (meta) handleCountryAction(meta);
         });
       });
     }
+  }
+
+  function focusCountrySearch() {
+    var target = null;
+    if (els.search && window.matchMedia('(max-width: 860px)').matches) {
+      target = els.search;
+      if (els.mobilePicker) {
+        els.mobilePicker.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    } else if (els.headerSearch) {
+      target = els.headerSearch;
+    } else if (els.search) {
+      target = els.search;
+      if (els.mobilePicker) {
+        els.mobilePicker.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+    if (!target) return;
+    window.setTimeout(function () {
+      target.focus();
+      if (typeof target.select === 'function') target.select();
+    }, 250);
+  }
+
+  function initRegisterInterestCta() {
+    var btn = byId('intl-register-interest-btn');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      trackIntl('intl_home_cta_click', { cta: 'register_interest' });
+      focusCountrySearch();
+    });
+  }
+
+  function loadInterestDemand() {
+    fetch('/api/international-interest-stats')
+      .then(function (res) {
+        return res.json();
+      })
+      .then(function (data) {
+        if (!data || !data.ok || !data.countries) return;
+        state.interestStats = data.countries;
+        document.querySelectorAll('[data-demand-country]').forEach(function (node) {
+          var code = String(node.getAttribute('data-demand-country') || '')
+            .trim()
+            .toUpperCase();
+          var row = data.countries[code];
+          if (!row || !row.display) return;
+          var label =
+            row.total.toLocaleString('en-GB') +
+            ' people already registered interest';
+          node.textContent = label;
+          node.hidden = false;
+        });
+      })
+      .catch(function () {});
   }
 
   function initLearnMorePanel() {
@@ -699,12 +759,15 @@
       var projected = projection(centroid);
       if (!projected) return;
 
-      // Nudge UK label so it sits above the islands clearly.
+      // Nudge spotlight labels so neighbouring markets stay readable.
       var x = projected[0];
       var y = projected[1];
       if (meta.iso2 === 'GB') {
-        x += 8;
-        y -= 14;
+        x += 48;
+        y -= 34;
+      } else if (meta.iso2 === 'IE') {
+        x -= 80;
+        y += 18;
       } else if (meta.iso2 === 'US') {
         x -= 18;
         y += 8;
@@ -877,23 +940,11 @@
     pulseCountries('.intl-country--building', 'is-intro-pulse', 'is-active-glow');
   }
 
-  function isNarrowViewport() {
-    return window.matchMedia('(max-width: 720px)').matches;
-  }
-
   function buildProjection(world) {
     var land = window.topojson.feature(world, world.objects.countries);
-    var projection = window.d3.geoNaturalEarth1().fitSize([960, 500], land);
-
-    // On phones the wide world map letterboxes and looks tiny — zoom in
-    // so continents fill more of the screen (edges of ocean crop slightly).
-    if (isNarrowViewport()) {
-      var scale = projection.scale();
-      var translate = projection.translate();
-      projection.scale(scale * 1.55).translate([translate[0], translate[1] + 18]);
-    }
-
-    return projection;
+    // Always fit the full world into the SVG viewBox so no countries are
+    // cropped on narrow phones (a prior mobile zoom clipped Americas / Asia).
+    return window.d3.geoNaturalEarth1().fitSize([960, 500], land);
   }
 
   function renderMap(world) {
@@ -1007,7 +1058,13 @@
           intent: state.selectedIntent,
         });
         els.form.hidden = true;
-        els.success.hidden = false;
+        if (els.success) {
+          els.success.innerHTML =
+            'You\u2019re on the list for ' +
+            state.selectedCountry.name +
+            '. We\u2019ll email you when we launch. Meanwhile, preview the live UK site at <a href="https://www.thenetworkeruk.com" rel="noopener noreferrer">thenetworkeruk.com</a>.';
+          els.success.hidden = false;
+        }
       })
       .catch(function (err) {
         els.error.textContent = err.message || 'Something went wrong. Please try again.';
@@ -1163,8 +1220,10 @@
 
     initModal();
     initLearnMorePanel();
+    initRegisterInterestCta();
     initCountryFinder();
     loadHubStats();
+    loadInterestDemand();
 
     window.addEventListener('resize', function () {
       positionMapLabels();

@@ -51,6 +51,9 @@ async function submitInternationalInterest(payload) {
 
   const allowedSources = new Set([
     'international_map',
+    'international_home_cta',
+    'international_country_ie',
+    'international_country_us',
     'market_preview_ie',
     'market_preview_us',
   ]);
