@@ -22922,6 +22922,13 @@
     return '';
   }
 
+  function opportunityIsHubOwned(opp) {
+    var email = String((opp && opp.owner_email) || '')
+      .trim()
+      .toLowerCase();
+    return email === 'catherine@thenetworkeruk.com';
+  }
+
   function opportunityIsSubmittedForReview(opp) {
     return Boolean(opportunityReviewSubmittedAt(opp));
   }
@@ -22934,7 +22941,18 @@
   }
 
   function opportunityCanApprove(opp) {
-    return String((opp && opp.approval_status) || '') === 'Pending Review';
+    if (!opp) return false;
+    // Staged edits on an already-live listing always need approve/deny.
+    if (opportunityHasPendingLiveUpdate(opp)) return true;
+    if (String(opp.approval_status || '') !== 'Pending Review') return false;
+    // Hub-owned or assigned-but-unclaimed listings are managed in Admin edit /
+    // claim invite — no approve/deny until someone owns and submits the listing.
+    var claim = String(opp.ownership_claim_status || '')
+      .trim()
+      .toLowerCase();
+    if (claim === 'pending' || claim === 'disputed') return false;
+    if (opportunityIsHubOwned(opp)) return false;
+    return opportunityIsSubmittedForReview(opp);
   }
 
   function opportunityAboutParagraphs(opp) {
@@ -23138,17 +23156,23 @@
       : opp.updated_at
         ? fmtTime(opp.updated_at)
         : '';
-    var statusNote = isDraftNotSubmitted
-      ? 'Pending approval — submission stamp missing or not yet submitted. You can still approve if the listing looks complete.'
-      : opportunityHasPendingLiveUpdate(opp)
-        ? 'Live listing — proposed changes awaiting approval. The current version stays public until you approve.' +
+    var statusNote = opportunityHasPendingLiveUpdate(opp)
+      ? 'Live listing — proposed changes awaiting approval. The current version stays public until you approve.' +
+        (submittedAt ? ' · ' + submittedAt : '')
+      : isPendingSubmitted
+        ? 'Submitted for approval — lister can still edit and resubmit until you approve.' +
           (submittedAt ? ' · ' + submittedAt : '')
-        : isPendingSubmitted
-          ? 'Submitted for approval — lister can still edit and resubmit until you approve.' +
-            (submittedAt ? ' · ' + submittedAt : '')
-          : awaitingPay
-            ? 'Approved — awaiting listing payment before going live.'
-            : 'Review what was submitted before making admin changes.';
+        : String(opp.ownership_claim_status || '')
+              .trim()
+              .toLowerCase() === 'pending'
+          ? 'Unclaimed — set the owner email and send the claim invite when ready. Approve/deny only appears after the listing is claimed and submitted.'
+          : opportunityIsHubOwned(opp)
+            ? 'Hub-owned listing — publish or edit under Admin edit. Approve/deny is only for organiser-submitted listings.'
+            : awaitingPay
+              ? 'Approved — awaiting listing payment before going live.'
+              : isDraftNotSubmitted
+                ? 'Not submitted for review. Use Admin edit to publish, or wait until the organiser submits.'
+                : 'Review what was submitted before making admin changes.';
     var priorRejection = String(opp.rejection_note || '').trim();
     var adminEditBlock = fullPage
       ? '<section class="opp-review-admin-edit opp-review-admin-edit--page">' +
@@ -24003,15 +24027,18 @@
       }) +
       '<div class="sm:col-span-2 rounded-lg border border-slate-200 bg-white p-3 space-y-2">' +
       '<p class="text-xs font-semibold text-slate-600">Listing owner &amp; claim invite</p>' +
-      '<p class="text-xs text-slate-500">Platform-owned listings stay claimable until you assign a claimant email. Assigning emails them a claim link to the public listing, then Stripe monthly subscription (£25 + VAT).</p>' +
+      '<p class="text-xs text-slate-500">Save listing stores the owner email without emailing anyone (blank keeps the listing hub-owned). Send claim invites only when you are ready — one listing below, or select several and use Send claim invites.</p>' +
       '<div class="flex flex-wrap gap-2 items-end">' +
       '<div class="flex-1 min-w-[12rem]"><label class="block text-xs font-semibold text-slate-500 mb-1">Owner email</label>' +
-      '<input type="email" name="owner_email" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+      '<input type="email" name="owner_email" autocomplete="off" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
       attrEsc(opp.owner_email || '') +
       '" placeholder="claimant@example.com"></div>' +
       '<button type="button" data-opp-assign-owner="' +
       attrEsc(opp.id) +
-      '" class="rounded-lg bg-amber-700 text-white text-sm font-semibold px-4 py-2 hover:bg-amber-800">Assign &amp; send claim invite</button>' +
+      '" class="rounded-lg border border-slate-300 bg-white text-slate-800 text-sm font-semibold px-4 py-2 hover:bg-slate-50">Assign owner</button>' +
+      '<button type="button" data-opp-send-claim-invite="' +
+      attrEsc(opp.id) +
+      '" class="rounded-lg bg-amber-700 text-white text-sm font-semibold px-4 py-2 hover:bg-amber-800">Send claim invite</button>' +
       '</div>' +
       (opp.ownership_claim_status
         ? '<p class="text-xs text-slate-500">Claim status: <span class="font-semibold">' +
@@ -24469,7 +24496,7 @@
       '<p class="text-xs font-semibold text-slate-600">Claim later (optional)</p>' +
       '<p class="text-xs text-slate-500">Leave blank to keep the listing hub-owned and claimable. Enter an email to open the in-dashboard claim prompt when that person signs in.</p>' +
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Owner / claimant email</label>' +
-      '<input type="email" name="owner_email" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Leave blank for hub-owned"></div></div>' +
+      '<input type="email" name="owner_email" autocomplete="off" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Leave blank for hub-owned"></div></div>' +
       '<p id="opportunity-create-brand-conflict" class="sm:col-span-2 hidden text-xs text-red-700 font-semibold"></p>' +
       '<div class="sm:col-span-2 flex flex-wrap items-center gap-3">' +
       '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Create listing</button>' +
@@ -24488,8 +24515,14 @@
       '<div class="flex flex-wrap items-center justify-between gap-2">' +
       '<p class="text-sm font-semibold text-brand-900"><span id="opportunity-bulk-count">0</span> listings selected</p>' +
       '<button type="button" id="opportunity-bulk-clear" class="text-xs font-semibold text-slate-600 hover:text-brand-900">Clear selection</button></div>' +
-      '<p class="text-xs text-slate-600">Use page numbers to browse — your selection is kept until you delete or clear.</p>' +
+      '<p class="text-xs text-slate-600">Use page numbers to browse — your selection is kept until you delete, send invites, or clear.</p>' +
       '<div id="opportunity-selected-chips" class="flex flex-wrap gap-1.5"></div>' +
+      '<div class="border-t border-brand-200 pt-4 space-y-3">' +
+      '<p class="text-sm font-semibold text-brand-900">Send claim invites</p>' +
+      '<p class="text-xs text-slate-600">Emails the claim invite to each selected listing’s owner email. Max 50 per batch. Does not change listing ownership.</p>' +
+      '<div class="flex flex-wrap items-center gap-3">' +
+      '<button type="button" id="opportunity-bulk-send-claim-btn" class="rounded-lg bg-amber-700 text-white text-sm font-semibold px-4 py-2 hover:bg-amber-800">Send claim invites</button>' +
+      '<span id="opportunity-bulk-send-claim-msg" class="text-xs"></span></div></div>' +
       '<div id="opportunity-delete-section" class="border-t border-brand-200 pt-4 space-y-3">' +
       '<p class="text-sm font-semibold text-brand-900">Delete selected listings</p>' +
       '<p class="text-xs text-slate-600">Permanently removes listings and related enquiries. This cannot be undone.</p>' +
@@ -24814,7 +24847,7 @@
       !window.confirm(
         'Assign “' +
           ownerEmail +
-          '” as owner and open the in-dashboard claim prompt when they sign in?'
+          '” as owner without sending an email? They will see the claim prompt when they sign in. Use Send claim invite when you want to email them.'
       )
     ) {
       return;
@@ -24834,11 +24867,7 @@
       .then(function (data) {
         if (!data.ok) throw new Error(data.message || data.error || 'Assign owner failed');
         if (msg) {
-          msg.textContent =
-            (data.message ||
-              (data.emailSent
-                ? 'Owner assigned — claim invite emailed.'
-                : 'Owner assigned — claim invite will appear when they sign in.'));
+          msg.textContent = data.message || 'Owner assigned — no email sent.';
           msg.className = 'opportunity-cleanup-msg text-xs text-emerald-700 font-semibold';
         }
         return refreshOpportunityCleanupPage().then(function () {
@@ -24852,6 +24881,102 @@
         if (msg) {
           msg.textContent = err.message || 'Could not assign owner';
           msg.className = 'opportunity-cleanup-msg text-xs text-red-700 font-semibold';
+        }
+      })
+      .finally(function () {
+        if (btn) btn.disabled = false;
+      });
+  }
+
+  function sendOpportunityClaimInvite(id, form) {
+    var ownerEmail = form ? formFieldVal(form, 'owner_email') : '';
+    if (
+      !window.confirm(
+        'Email the claim invite' +
+          (ownerEmail ? ' to “' + ownerEmail + '”' : '') +
+          ' now? Only do this when you are ready for them to claim.'
+      )
+    ) {
+      return;
+    }
+    var msg = form && form.querySelector('.opportunity-cleanup-msg');
+    var btn = form && form.querySelector('[data-opp-send-claim-invite]');
+    if (btn) btn.disabled = true;
+    if (msg) {
+      msg.textContent = 'Sending claim invite…';
+      msg.className = 'opportunity-cleanup-msg text-xs text-slate-500';
+    }
+    var payload = {
+      id: id,
+      action: 'send_claim_invite',
+    };
+    if (ownerEmail) payload.owner_email = ownerEmail;
+    adminPost('/api/admin/opportunities', payload)
+      .then(function (data) {
+        if (!data.ok) throw new Error(data.message || data.error || 'Send invite failed');
+        if (msg) {
+          msg.textContent = data.message || 'Claim invite emailed.';
+          msg.className = 'opportunity-cleanup-msg text-xs text-emerald-700 font-semibold';
+        }
+        return refreshOpportunityCleanupPage();
+      })
+      .then(function () {
+        refreshAdminNotifications();
+      })
+      .catch(function (err) {
+        if (msg) {
+          msg.textContent = err.message || 'Could not send claim invite';
+          msg.className = 'opportunity-cleanup-msg text-xs text-red-700 font-semibold';
+        }
+      })
+      .finally(function () {
+        if (btn) btn.disabled = false;
+      });
+  }
+
+  function bulkSendOpportunityClaimInvites() {
+    var ids = getSelectedOpportunityIds();
+    if (!ids.length) {
+      window.alert('Select at least one listing first.');
+      return;
+    }
+    if (ids.length > 50) {
+      window.alert('Send at most 50 claim invites per batch.');
+      return;
+    }
+    if (
+      !window.confirm(
+        'Email claim invites for ' +
+          ids.length +
+          ' selected listing' +
+          (ids.length === 1 ? '' : 's') +
+          '? Hub-owned or already-claimed listings will be skipped.'
+      )
+    ) {
+      return;
+    }
+    var btn = document.getElementById('opportunity-bulk-send-claim-btn');
+    var msg = document.getElementById('opportunity-bulk-send-claim-msg');
+    if (btn) btn.disabled = true;
+    if (msg) {
+      msg.textContent = 'Sending…';
+      msg.className = 'text-xs text-slate-500';
+    }
+    adminPost('/api/admin/opportunities', {
+      action: 'bulk_send_claim_invites',
+      ids: ids,
+    })
+      .then(function (data) {
+        if (!data.ok) throw new Error(data.message || data.error || 'Bulk send failed');
+        if (msg) {
+          msg.textContent = data.message || 'Claim invites sent.';
+          msg.className = 'text-xs text-emerald-700 font-semibold';
+        }
+      })
+      .catch(function (err) {
+        if (msg) {
+          msg.textContent = err.message || 'Could not send claim invites';
+          msg.className = 'text-xs text-red-700 font-semibold';
         }
       })
       .finally(function () {
@@ -24942,6 +25067,10 @@
       deleteSelectedOpportunities();
       return;
     }
+    if (e.target.closest('#opportunity-bulk-send-claim-btn')) {
+      bulkSendOpportunityClaimInvites();
+      return;
+    }
     if (e.target.closest('#opportunity-test-samples-btn')) {
       if (
         !window.confirm(
@@ -25018,6 +25147,14 @@
       var assignForm = assignScope && assignScope.querySelector('.opportunity-cleanup-form');
       var assignId = assignOwnerBtn.getAttribute('data-opp-assign-owner');
       if (assignForm && assignId) assignOpportunityOwner(assignId, assignForm);
+      return;
+    }
+    var sendClaimBtn = e.target.closest('[data-opp-send-claim-invite]');
+    if (sendClaimBtn) {
+      var sendRow = sendClaimBtn.closest('.opportunity-cleanup-panel');
+      var sendForm = sendRow && sendRow.querySelector('.opportunity-cleanup-form');
+      var sendId = sendClaimBtn.getAttribute('data-opp-send-claim-invite');
+      if (sendId) sendOpportunityClaimInvite(sendId, sendForm);
       return;
     }
     var approveBtn = e.target.closest('[data-opp-approve]');
