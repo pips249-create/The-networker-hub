@@ -1,4 +1,6 @@
-# Airtable → Supabase mapping
+# Legacy Airtable → Supabase mapping
+
+Historical mapping from the original Airtable base. The live Hub is **Supabase-only**.
 
 | Airtable (legacy) | Supabase table | Notes |
 |-------------------|----------------|-------|
@@ -11,15 +13,15 @@
 | Reviews | `reviews` | Rating trigger on `events` |
 | Training sessions | `workshops` | Training browse (later) |
 
+One-off import: `migrate.js` + `scripts/MIGRATE.md` (requires local `AIRTABLE_*` only for that script).
+
 ## Auth model
 
-Claude’s schema uses **[Supabase Auth](https://supabase.com/docs/guides/auth)** (`auth.users`), not a custom password table.
+Uses **[Supabase Auth](https://supabase.com/docs/guides/auth)** (`auth.users`), not a custom password table.
 
 - `organisers.supabase_user_id` → organiser dashboard
 - `attendees.supabase_user_id` → attendee dashboard
 - `hub_accounts` → platform admin + Attendee/Organiser nav toggle
-
-Until login is migrated, keep `DATA_PROVIDER=airtable` for auth and set `supabase` only when ready to test events reads.
 
 ## Event visibility
 
@@ -27,10 +29,3 @@ Until login is migrated, keep `DATA_PROVIDER=airtable` for auth and set `supabas
 |-------|--------|-------------|
 | Event | `approval_status` | `Approved` |
 | Organiser | `listing_status` | not `draft` / `unpublished` |
-
-## Env switch
-
-```env
-DATA_PROVIDER=supabase   # events API uses Postgres
-DATA_PROVIDER=airtable   # default if Supabase keys missing
-```

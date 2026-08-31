@@ -201,9 +201,9 @@
         .then(function (result) {
           if (!result.ok) {
             var errText = result.data.message || result.data.error || 'Sign in failed.';
-            if (/UNAUTHORIZED|authentication token|airtable/i.test(String(errText))) {
+            if (/UNAUTHORIZED|authentication token/i.test(String(errText))) {
               errText =
-                'The live site is not on Supabase auth yet. Add Supabase env vars in Vercel, redeploy, or sign in after the latest code is deployed.';
+                'Sign-in is not configured. Add Supabase env vars in Vercel and redeploy.';
             }
             showMessage(msg, errText, 'error');
             btn.disabled = false;

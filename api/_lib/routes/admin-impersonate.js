@@ -93,12 +93,14 @@ module.exports = async function handler(req, res) {
   try {
     let target = null;
 
-    if (useSupabase()) {
-      target = await sbAuth.findUserByEmail(email);
-    } else {
-      const { findUserByEmail } = require('../auth');
-      target = await findUserByEmail(email);
+    if (!useSupabase()) {
+      return json(res, 503, {
+        error: 'not_configured',
+        message: 'Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in Vercel.',
+      });
     }
+
+    target = await sbAuth.findUserByEmail(email);
 
     if (!target && body.provision !== false) {
       const provisioned = await sbAuth.provisionOrganiserLoginByEmail(email);

@@ -85,7 +85,6 @@ module.exports = async function handler(req, res) {
     updateOpportunity,
     unpublishOpportunityForOrganiser,
     deleteOpportunityDraftForOrganiser,
-    airtableSetupHint,
   } = api;
 
   setCors(req, res);
@@ -137,7 +136,7 @@ module.exports = async function handler(req, res) {
       const opportunities = await attachSaveCounts(await listOpportunitiesForSession(auth.session));
       return json(res, 200, { ok: true, opportunities });
     } catch (e) {
-      return jsonPublicError(res, json, e, { code: 'opportunities_fetch_failed', logLabel: '[organiser-opportunities]', extra: { airtable: airtableSetupHint ? airtableSetupHint('opportunities') : undefined } });
+      return jsonPublicError(res, json, e, { code: 'opportunities_fetch_failed', logLabel: '[organiser-opportunities]' });
     }
   }
 

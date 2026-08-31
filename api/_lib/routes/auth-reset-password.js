@@ -1,24 +1,7 @@
-const {
-  hashPassword,
-  findUserByResetToken,
-  updateUser,
-  json,
-  appendSystemLog,
-  airtableConfig,
-  USER_FIELDS,
-  setCors,
-} = require('../auth');
+const { json, appendSystemLog, setCors } = require('../auth');
 const { useSupabase, getSupabaseAdmin, getSupabaseAnon } = require('../supabase');
 const { enforceRateLimitAsync } = require('../rate-limit');
 const { validateNewPassword } = require('../password-policy');
-
-function fieldNameOnRecord(recordFields, candidates, fallback) {
-  const f = recordFields || {};
-  for (const key of candidates) {
-    if (Object.prototype.hasOwnProperty.call(f, key)) return key;
-  }
-  return fallback;
-}
 
 async function finishSupabasePasswordUpdate(userId, email, password) {
   const { error: updateError } = await getSupabaseAdmin().auth.admin.updateUserById(userId, {
@@ -100,7 +83,6 @@ module.exports = async function handler(req, res) {
 
   const accessToken = String(body.accessToken || body.access_token || '').trim();
   const tokenHash = String(body.token_hash || body.tokenHash || '').trim();
-  const token = String(body.token || '').trim();
   const password = String(body.password || '');
 
   if (!password) return json(res, 400, { error: 'missing_fields' });
@@ -125,81 +107,29 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  if (useSupabase()) {
-    if (!accessToken && !tokenHash) {
-      return json(res, 400, {
-        error: 'missing_token',
-        message: 'Missing reset token. Request a new link from Forgot password.',
-      });
-    }
-    try {
-      const result = tokenHash
-        ? await handleSupabaseResetWithTokenHash(tokenHash, password)
-        : await handleSupabaseReset(accessToken, password);
-      return json(res, result.status, result.body);
-    } catch (e) {
-      return json(res, 500, {
-        error: 'update_failed',
-        message: e.message || 'Could not update password.',
-      });
-    }
+  if (!useSupabase()) {
+    return json(res, 503, {
+      error: 'not_configured',
+      message: 'Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in Vercel.',
+    });
   }
 
-  const { apiKey, baseId } = airtableConfig();
-  if (!apiKey || !baseId) return json(res, 503, { error: 'not_configured' });
-
-  if (!token) return json(res, 400, { error: 'missing_fields' });
+  if (!accessToken && !tokenHash) {
+    return json(res, 400, {
+      error: 'missing_token',
+      message: 'Missing reset token. Request a new link from Forgot password.',
+    });
+  }
 
   try {
-    const user = await findUserByResetToken(token);
-    if (!user) {
-      return json(res, 400, { error: 'invalid_token', message: 'This reset link is invalid or expired.' });
-    }
-
-    const exp = user.resetExpires ? new Date(user.resetExpires).getTime() : 0;
-    if (!exp || Date.now() > exp) {
-      return json(res, 400, { error: 'expired_token', message: 'This reset link has expired.' });
-    }
-
-    const passwordField = fieldNameOnRecord(
-      user.fields,
-      USER_FIELDS.passwordHash,
-      'Password Hash'
-    );
-
-    await updateUser(user.id, {
-      [passwordField]: hashPassword(password),
-    });
-
-    try {
-      const resetTokenField = fieldNameOnRecord(
-        user.fields,
-        USER_FIELDS.resetToken,
-        'Reset Token'
-      );
-      const resetExpiresField = fieldNameOnRecord(
-        user.fields,
-        USER_FIELDS.resetExpires,
-        'Reset Token Expires'
-      );
-      await updateUser(user.id, {
-        [resetTokenField]: null,
-        [resetExpiresField]: null,
-      });
-    } catch {
-      /* password saved; clearing token fields is optional */
-    }
-
-    await appendSystemLog(`Password updated for ${user.email}`, 'auth');
-
-    return json(res, 200, { ok: true, message: 'Password updated. You can sign in now.' });
+    const result = tokenHash
+      ? await handleSupabaseResetWithTokenHash(tokenHash, password)
+      : await handleSupabaseReset(accessToken, password);
+    return json(res, result.status, result.body);
   } catch (e) {
-    const msg = e.message || 'Could not update password.';
     return json(res, 500, {
       error: 'update_failed',
-      message: msg.includes('update_failed')
-        ? 'Could not save to Airtable. Check Users table field names.'
-        : msg,
+      message: e.message || 'Could not update password.',
     });
   }
 };

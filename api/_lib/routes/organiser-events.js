@@ -100,7 +100,6 @@ module.exports = async function handler(req, res) {
     republishEvent,
     resolveSeriesGroupId,
     isPlatformAdmin,
-    airtableSetupHint,
   } = api;
 
   setCors(req, res);
@@ -206,7 +205,7 @@ module.exports = async function handler(req, res) {
       );
       return json(res, 200, { ok: true, events, groups });
     } catch (e) {
-      return jsonPublicError(res, json, e, { code: 'events_fetch_failed', logLabel: '[organiser-events]', extra: { airtable: airtableSetupHint('events') } });
+      return jsonPublicError(res, json, e, { code: 'events_fetch_failed', logLabel: '[organiser-events]' });
     }
   }
 
@@ -291,7 +290,7 @@ module.exports = async function handler(req, res) {
         needsTickets: synced.eventIds.length > 0,
       });
     } catch (e) {
-      return jsonPublicError(res, json, e, { code: e.code || 'event_update_failed', logLabel: '[organiser-events]', extra: { airtable: airtableSetupHint('events') } });
+      return jsonPublicError(res, json, e, { code: e.code || 'event_update_failed', logLabel: '[organiser-events]' });
     }
   }
 
@@ -453,7 +452,7 @@ module.exports = async function handler(req, res) {
         needsTickets: eventIds.length > 0,
       });
     } catch (e) {
-      return jsonPublicError(res, json, e, { code: e.code || 'event_create_failed', logLabel: '[organiser-events]', extra: { airtable: airtableSetupHint('events') } });
+      return jsonPublicError(res, json, e, { code: e.code || 'event_create_failed', logLabel: '[organiser-events]' });
     }
   }
 

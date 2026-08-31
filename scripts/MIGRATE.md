@@ -1,4 +1,6 @@
-# Airtable → Supabase migration (Phase 2)
+# Airtable → Supabase migration (historical one-off)
+
+> The live Hub no longer uses Airtable at runtime. Keep this script only if you need to re-import from a local Airtable export. Do **not** put `AIRTABLE_*` in Vercel.
 
 ## Before you run
 

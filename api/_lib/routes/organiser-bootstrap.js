@@ -11,7 +11,6 @@ module.exports = async function handler(req, res) {
     setCors,
     getLeanOrganiserWorkspace,
     getOrganiserWorkspace,
-    airtableSetupHint,
   } = api;
   setCors(req, res);
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -82,7 +81,6 @@ module.exports = async function handler(req, res) {
         error: ws.error,
         message: ws.message,
         groups: ws.groups,
-        airtable: airtableSetupHint('events'),
       });
     }
 
@@ -167,11 +165,6 @@ module.exports = async function handler(req, res) {
       },
       groupsError: ws.groupsError,
       stripeConnectEnabled: Boolean(ws.stripeConnectEnabled),
-      airtable: {
-        groups: airtableSetupHint && airtableSetupHint('groups'),
-        events: airtableSetupHint && airtableSetupHint('events'),
-        tickets: airtableSetupHint && airtableSetupHint('tickets'),
-      },
     });
   } catch (e) {
     return jsonPublicError(res, json, e, { code: 'server_error', logLabel: '[organiser-bootstrap]' });
