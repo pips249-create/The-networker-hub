@@ -74,6 +74,7 @@
 
   const TYPE_CATEGORY_HINTS = {
     franchise: 'retail',
+    networking: 'networking',
     'network-marketing': 'mlm',
   };
 

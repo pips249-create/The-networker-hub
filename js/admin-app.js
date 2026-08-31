@@ -22286,6 +22286,7 @@
     ['finance', 'Finance & Admin'],
     ['pets', 'Pets & Animals'],
     ['leisure', 'Leisure, travel & hospitality'],
+    ['networking', 'Networking'],
     ['mlm', 'Network marketing'],
     ['general', 'Other'],
   ];

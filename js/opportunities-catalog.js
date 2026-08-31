@@ -29,6 +29,7 @@
     { id: 'finance', label: 'Finance & Admin' },
     { id: 'pets', label: 'Pets & Animals' },
     { id: 'leisure', label: 'Leisure, travel & hospitality' },
+    { id: 'networking', label: 'Networking' },
     { id: 'mlm', label: 'Network marketing' },
     { id: 'general', label: 'Other' },
   ];
@@ -122,6 +123,8 @@
     pets: /dog|groom|pet|paw|animal|kennel|cattery/i,
     finance: /book|ledger|finance|account|payroll|tax/i,
     leisure: /travel|hotel|hospitality|leisure|holiday|tourism|entertainment/i,
+    networking:
+      /networking group|business networking|chamber of commerce|\bbni\b|networking club|referral group|networking (?:chapter|franchise)|ambassador programme|ambassador program/i,
     mlm: /mlm|multi[\s-]?level|network marketing|direct sales|independent consultant|team build|downline|upline|ambassador/i,
     guaranteed_income: /guaranteed\s+(income|earnings|profit|return)|passive income|financial freedom|unlimited income|quit your job/i,
     unregulated_investment: /crypto(?:currency)?|forex|binary option|unregulated investment|high[\s-]?yield|hyip|ponzi/i,

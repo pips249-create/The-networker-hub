@@ -370,6 +370,7 @@
         education: 'Education',
         finance: 'Finance',
         pets: 'Pets',
+        networking: 'Networking',
       };
       return {
         id: opt.id,
@@ -2590,6 +2591,7 @@
     education: 'Education & Coaching',
     pets: 'Pets & Animals',
     finance: 'Finance & Admin',
+    networking: 'Networking',
     mlm: 'MLM & Network Marketing',
   };
 
