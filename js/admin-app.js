@@ -6962,9 +6962,13 @@
       ' approved)</dd></div>' +
       '<div><dt>Member accounts</dt><dd>' +
       esc(String(m.accountsWithPassword || 0)) +
-      ' signed in (' +
+      ' signed in · ' +
+      esc(String(m.usersOnlineNow || 0)) +
+      ' online now (' +
+      esc(String(m.onlineWindowMinutes || 15)) +
+      ' min window) · ' +
       esc(String(m.attendees || 0)) +
-      ' emails on file)</dd></div>' +
+      ' emails on file</dd></div>' +
       '<div><dt>Claim outreach</dt><dd>' +
       esc(String(m.claimOutreach || 0)) +
       ' (' +
@@ -7424,6 +7428,13 @@
       '</dd></div>' +
       '<div class="flex justify-between gap-4"><dt class="text-slate-500 shrink-0">Last sign-in</dt><dd class="font-medium text-right text-xs">' +
       esc(formatAccountDate(u.lastSignInAt)) +
+      '</dd></div>' +
+      '<div class="flex justify-between gap-4"><dt class="text-slate-500 shrink-0">Last seen</dt><dd class="font-medium text-right text-xs">' +
+      esc(formatRelativeActivity(u.lastSeenAt)) +
+      (u.lastSeenAt ? '<span class="block text-slate-400 font-normal">' + esc(formatAccountDate(u.lastSeenAt)) + '</span>' : '') +
+      '</dd></div>' +
+      '<div class="flex justify-between gap-4"><dt class="text-slate-500 shrink-0">Status</dt><dd class="font-medium text-right text-xs">' +
+      userOnlineStatusHtml(u) +
       '</dd></div>' +
       '<div class="flex justify-between gap-4"><dt class="text-slate-500 shrink-0">Account created</dt><dd class="font-medium text-right text-xs">' +
       esc(formatAccountDate(u.accountCreatedAt || u.authCreatedAt)) +
