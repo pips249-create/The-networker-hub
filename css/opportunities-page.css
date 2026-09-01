@@ -2783,12 +2783,27 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
   object-position: center;
 }
 
+.opp-browse-page .event-grid-media--logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+}
+
+.opp-browse-page .event-grid-media--logo::before {
+  display: none;
+}
+
+.opp-browse-page .event-grid-media--logo .event-grid-img,
 .opp-browse-page .event-grid-img.is-logo-cover {
+  width: auto;
+  height: auto;
+  max-width: min(88%, 280px);
+  max-height: 72%;
   object-fit: contain;
   object-position: center;
-  padding: 14% 16%;
-  box-sizing: border-box;
-  background: linear-gradient(145deg, #f7f4ec 0%, #eef2f6 100%);
+  padding: 0;
+  background: transparent;
 }
 
 .opp-browse-page .event-grid-img.is-placeholder {

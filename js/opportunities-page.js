@@ -1286,6 +1286,7 @@
     var premiumBadge = item.featured ? '<span class="event-grid-premium">Premium</span>' : '';
     var openDayBadge = hasOpenDay ? '<span class="event-grid-open-day">Open day</span>' : '';
     var saved = saves && saves.isSaved(item.id);
+    var logoMedia = !!(item.imageUrl && isLogoCoverImage(item));
 
     return (
       '<article class="event-grid-card bo-opp-card' +
@@ -1295,7 +1296,9 @@
       escapeHtml(item.id) +
       '">' +
       '<div class="bo-opp-compact">' +
-      '<div class="event-grid-media">' +
+      '<div class="event-grid-media' +
+      (logoMedia ? ' event-grid-media--logo' : '') +
+      '">' +
       mediaHtml(item, thumb) +
       premiumBadge +
       openDayBadge +

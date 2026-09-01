@@ -256,10 +256,27 @@
   outline-color: var(--opp-gold);
 }
 
+.testing-bo-page .event-grid-media--logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+}
+
+.testing-bo-page .event-grid-media--logo::before {
+  display: none;
+}
+
+.testing-bo-page .event-grid-media--logo .event-grid-img,
 .testing-bo-page .event-grid-img.is-logo-cover {
+  width: auto;
+  height: auto;
+  max-width: min(88%, 280px);
+  max-height: 72%;
   object-fit: contain;
   object-position: center;
-  background: linear-gradient(145deg, var(--opp-gold-pale) 0%, var(--opp-light-gray) 100%);
+  padding: 0;
+  background: transparent;
 }
 
 .testing-bo-page .page-btn.is-active {

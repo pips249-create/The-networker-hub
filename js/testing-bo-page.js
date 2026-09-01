@@ -290,6 +290,7 @@
       .join(' · ');
     var premiumBadge = item.featured ? '<span class="event-grid-premium">Premium</span>' : '';
     var detailId = 'bo-opp-detail-' + String(item.id).replace(/[^a-z0-9_-]/gi, '');
+    var logoMedia = !!(item.imageUrl && item.logoUrl);
 
     return (
       '<article class="event-grid-card bo-opp-card' +
@@ -298,7 +299,9 @@
       escapeHtml(item.id) +
       '">' +
       '<div class="bo-opp-compact">' +
-      '<div class="event-grid-media">' +
+      '<div class="event-grid-media' +
+      (logoMedia ? ' event-grid-media--logo' : '') +
+      '">' +
       mediaHtml(item, thumb) +
       premiumBadge +
       '<span class="event-grid-category">' +
