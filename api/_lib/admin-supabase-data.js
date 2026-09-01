@@ -1238,14 +1238,27 @@ async function fetchModeration(sb) {
   };
 }
 
+async function fetchAllOrganisersForFinancials(sb) {
+  const select =
+    'id, name, stripe_account_id, stripe_charges_enabled, stripe_connect_details_submitted, stripe_payouts_enabled';
+  const pageSize = 1000;
+  const rows = [];
+  let from = 0;
+  while (true) {
+    const res = await sb.from('organisers').select(select).order('name').range(from, from + pageSize - 1);
+    if (res.error) throw new Error(res.error.message);
+    const batch = res.data || [];
+    rows.push(...batch);
+    if (batch.length < pageSize) break;
+    from += pageSize;
+  }
+  return rows;
+}
+
 async function fetchFinancials(sb) {
-  const [orgsRes, paidRegsRes, recentRegsRes, payoutsRes] = await Promise.all([
-    sb
-      .from('organisers')
-      .select(
-        'id, name, stripe_account_id, stripe_charges_enabled, stripe_connect_details_submitted, stripe_payouts_enabled'
-      )
-      .order('name'),
+  const [organisers, paidRegsRes, recentRegsRes, payoutsRes, stripeConnectedRes, stripeOnboardingRes, stripeNotConnectedRes] =
+    await Promise.all([
+    fetchAllOrganisersForFinancials(sb),
     sb
       .from('registrations')
       .select(
@@ -1266,9 +1279,19 @@ async function fetchFinancials(sb) {
       )
       .order('created_at', { ascending: false })
       .limit(100),
+    sb
+      .from('organisers')
+      .select('id', { count: 'exact', head: true })
+      .not('stripe_account_id', 'is', null)
+      .eq('stripe_charges_enabled', true),
+    sb
+      .from('organisers')
+      .select('id', { count: 'exact', head: true })
+      .not('stripe_account_id', 'is', null)
+      .eq('stripe_charges_enabled', false),
+    sb.from('organisers').select('id', { count: 'exact', head: true }).is('stripe_account_id', null),
   ]);
 
-  if (orgsRes.error) throw new Error(orgsRes.error.message);
   if (paidRegsRes.error) throw new Error(paidRegsRes.error.message);
   if (recentRegsRes.error) throw new Error(recentRegsRes.error.message);
 
@@ -1329,7 +1352,7 @@ async function fetchFinancials(sb) {
     }
   }
 
-  const stripeAccounts = (orgsRes.data || []).map((o) => {
+  const stripeAccounts = organisers.map((o) => {
     const earned = revenueByOrgId.get(o.id) || 0;
     return {
       organiserId: o.id,
@@ -1395,7 +1418,10 @@ async function fetchFinancials(sb) {
       paidRegistrationCount: (paidRegsRes.data || []).length,
       pendingPayoutCount: pendingPayouts,
       refundsPendingCount: refundsPending.length,
-      organiserCount: (orgsRes.data || []).length,
+      organiserCount: organisers.length,
+      stripeConnectedCount: stripeConnectedRes.error ? 0 : stripeConnectedRes.count || 0,
+      stripeOnboardingCount: stripeOnboardingRes.error ? 0 : stripeOnboardingRes.count || 0,
+      stripeNotConnectedCount: stripeNotConnectedRes.error ? 0 : stripeNotConnectedRes.count || 0,
     },
     stripeAccounts,
     payoutQueue,
