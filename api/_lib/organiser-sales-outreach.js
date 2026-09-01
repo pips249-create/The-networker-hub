@@ -7,8 +7,11 @@ const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
 const TEAM_BY_EMAIL = {
   'catherine@thenetworkeruk.com': 'Catherine',
   'catherine@the-networker.co.uk': 'Catherine',
+  'pips249@gmail.com': 'Catherine',
+  'hancher249@gmail.com': 'Catherine',
   'rosie@thenetworkeruk.com': 'Rosie',
   'rosie@the-networker.co.uk': 'Rosie',
+  'rosie.mcgilvray@yahoo.co.uk': 'Rosie',
   'jamie@thenetworkeruk.com': 'Jamie',
   'jamie.trickett01@gmail.com': 'Jamie',
 };

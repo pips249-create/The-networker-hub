@@ -438,8 +438,8 @@
     'sales-kit': {
       title: 'How to use the organiser sales kit',
       steps: [
-        'From group cleanup, click Organiser sales kit on a row — use the CRM dropdown to log a call or email.',
-        'Tap Called, Attempted call, or Emailed under Catherine, Rosie, or Jamie to log outreach in one click.',
+        'From group cleanup, click Organiser sales kit on a row — use the CRM dropdown to log a call or email under your login.',
+        'Tap Called, Attempted call, or Emailed to log outreach as yourself — you cannot log on behalf of Catherine, Rosie, or Jamie.',
         'Switch to Pitch deck for cheat sheets, sales decks, Loom script, and follow-up email copy.',
         'Pin one agreed demo organiser on the pitch deck tab — everyone impersonates that group for live walkthroughs.',
         'Check the CRM log before messaging so you do not double-contact the same group.',
@@ -971,7 +971,68 @@
   }
 
   var SALES_KIT_TOUCH_NOTES = ['Called', 'Attempted call', 'Emailed'];
-  var SALES_KIT_TEAM = ['Catherine', 'Rosie', 'Jamie'];
+  var SALES_KIT_EMAIL_TO_SHOWN_BY = {
+    'catherine@thenetworkeruk.com': 'Catherine',
+    'catherine@the-networker.co.uk': 'Catherine',
+    'pips249@gmail.com': 'Catherine',
+    'hancher249@gmail.com': 'Catherine',
+    'rosie@thenetworkeruk.com': 'Rosie',
+    'rosie@the-networker.co.uk': 'Rosie',
+    'rosie.mcgilvray@yahoo.co.uk': 'Rosie',
+    'jamie@thenetworkeruk.com': 'Jamie',
+    'jamie.trickett01@gmail.com': 'Jamie',
+  };
+
+  function salesKitActorFromEmail(email) {
+    var key = String(email || '')
+      .trim()
+      .toLowerCase();
+    if (SALES_KIT_EMAIL_TO_SHOWN_BY[key]) {
+      return { email: key, shownBy: SALES_KIT_EMAIL_TO_SHOWN_BY[key] };
+    }
+    if (key.indexOf('catherine@') === 0) return { email: key, shownBy: 'Catherine' };
+    if (key.indexOf('rosie@') === 0) return { email: key, shownBy: 'Rosie' };
+    if (key.indexOf('jamie@') === 0 || key.indexOf('jamie.') === 0) {
+      return { email: key, shownBy: 'Jamie' };
+    }
+    return { email: key, shownBy: 'Other' };
+  }
+
+  function salesKitActorFromCurrentUser() {
+    return salesKitActorFromEmail(currentUser && currentUser.email);
+  }
+
+  function salesKitActorLabel(actor) {
+    if (!actor || !actor.shownBy) return 'You';
+    return actor.shownBy === 'Other' ? 'You' : actor.shownBy;
+  }
+
+  function salesKitQuickLogButtonsHtml(focus, actor) {
+    actor = actor || salesKitActorFromCurrentUser();
+    var label = salesKitActorLabel(actor);
+    return (
+      '<div class="admin-sales-kit-menu-team">' +
+      '<p class="admin-sales-kit-menu-team-name">' +
+      esc(label) +
+      '</p><div class="admin-sales-kit-menu-touch-row">' +
+      SALES_KIT_TOUCH_NOTES.map(function (touch) {
+        return (
+          '<button type="button" class="admin-sales-kit-touch" role="menuitem" data-touch="' +
+          attrEsc(touch) +
+          '" data-org-id="' +
+          attrEsc(focus.id) +
+          '" data-org-name="' +
+          attrEsc(focus.name) +
+          '" data-org-email="' +
+          attrEsc(focus.email) +
+          '">' +
+          esc(touch) +
+          '</button>'
+        );
+      }).join('') +
+      '</div></div>'
+    );
+  }
 
   function salesKitFocusFromSource(source) {
     if (!source || typeof source !== 'object') return { id: '', name: '', email: '' };
@@ -990,32 +1051,7 @@
         ? 'rounded-lg border border-brand-200 bg-white text-sm font-semibold px-3 py-2 text-brand-800 hover:bg-brand-50'
         : 'text-xs font-semibold rounded-lg border border-brand-200 text-brand-800 px-2.5 py-1 hover:bg-brand-50';
     var focus = salesKitFocusFromSource(source);
-    var quickLog = SALES_KIT_TEAM.map(function (person) {
-      return (
-        '<div class="admin-sales-kit-menu-team">' +
-        '<p class="admin-sales-kit-menu-team-name">' +
-        esc(person) +
-        '</p><div class="admin-sales-kit-menu-touch-row">' +
-        SALES_KIT_TOUCH_NOTES.map(function (touch) {
-          return (
-            '<button type="button" class="admin-sales-kit-touch" role="menuitem" data-by="' +
-            attrEsc(person) +
-            '" data-touch="' +
-            attrEsc(touch) +
-            '" data-org-id="' +
-            attrEsc(focus.id) +
-            '" data-org-name="' +
-            attrEsc(focus.name) +
-            '" data-org-email="' +
-            attrEsc(focus.email) +
-            '">' +
-            esc(touch) +
-            '</button>'
-          );
-        }).join('') +
-        '</div></div>'
-      );
-    }).join('');
+    var quickLog = salesKitQuickLogButtonsHtml(focus);
 
     return (
       '<div class="admin-sales-kit-menu relative inline-block">' +
@@ -1043,7 +1079,7 @@
     var organiserName = String(btn.getAttribute('data-org-name') || '').trim();
     var organiserEmail = String(btn.getAttribute('data-org-email') || '').trim();
     var organiserId = String(btn.getAttribute('data-org-id') || '').trim();
-    var shownBy = String(btn.getAttribute('data-by') || '').trim();
+    var actor = salesKitActorFromCurrentUser();
     var touchType = String(btn.getAttribute('data-touch') || '').trim();
     if (!organiserName) {
       if (statusEl) statusEl.textContent = 'No contact name on this row.';
@@ -1054,7 +1090,6 @@
     return adminPost('/api/admin/sales-kit', {
       action: 'add_demo',
       shownAt: new Date().toISOString().slice(0, 10),
-      shownBy: shownBy,
       outcome: 'follow_up',
       organiserName: organiserName,
       organiserEmail: organiserEmail,
@@ -1066,7 +1101,9 @@
         if (statusEl) statusEl.textContent = (data && data.message) || 'Could not save.';
         return false;
       }
-      if (statusEl) statusEl.textContent = shownBy + ' — ' + touchType + ' logged.';
+      if (statusEl) {
+        statusEl.textContent = salesKitActorLabel(actor) + ' — ' + touchType + ' logged.';
+      }
       return true;
     });
   }
@@ -27794,7 +27831,6 @@
       event_create: 'Listed event',
     };
     var touchNotes = ['Called', 'Attempted call', 'Emailed'];
-    var salesKitTeam = ['Catherine', 'Rosie', 'Jamie'];
 
     function demoMatchesFocus(d, focus) {
       if (!focus) return true;
@@ -27826,6 +27862,7 @@
       search: [],
       tab: salesKitTab,
       focusOrganiser: salesKitFocus,
+      actor: salesKitActorFromCurrentUser(),
     };
 
     function copyText(text, statusEl, okMsg) {
@@ -27861,35 +27898,30 @@
       });
 
       function crmSectionHtml() {
-        var quickLogHtml = salesKitTeam
-          .map(function (person) {
-            return (
-              '<div class="rounded-xl border border-slate-200 bg-white p-3">' +
-              '<p class="text-sm font-semibold text-slate-900 mb-2">' +
-              esc(person) +
-              '</p><div class="flex flex-wrap gap-2">' +
-              touchNotes
-                .map(function (touch) {
-                  return (
-                    '<button type="button" class="sales-kit-log-touch rounded-lg border border-brand-200 text-brand-800 text-xs font-semibold px-2.5 py-1.5 hover:bg-brand-50" data-by="' +
-                    attrEsc(person) +
-                    '" data-touch="' +
-                    attrEsc(touch) +
-                    '">' +
-                    esc(touch) +
-                    '</button>'
-                  );
-                })
-                .join('') +
-              '</div></div>'
-            );
-          })
-          .join('');
+        var actor = state.actor || salesKitActorFromCurrentUser();
+        var actorLabel = salesKitActorLabel(actor);
+        var quickLogHtml =
+          '<div class="rounded-xl border border-slate-200 bg-white p-3 max-w-sm">' +
+          '<p class="text-sm font-semibold text-slate-900 mb-2">' +
+          esc(actorLabel) +
+          '</p><div class="flex flex-wrap gap-2">' +
+          touchNotes
+            .map(function (touch) {
+              return (
+                '<button type="button" class="sales-kit-log-touch rounded-lg border border-brand-200 text-brand-800 text-xs font-semibold px-2.5 py-1.5 hover:bg-brand-50" data-touch="' +
+                attrEsc(touch) +
+                '">' +
+                esc(touch) +
+                '</button>'
+              );
+            })
+            .join('') +
+          '</div></div>';
 
         return (
           '<section class="admin-dash-section" id="sales-kit-outreach">' +
           '<div class="admin-dash-section-head"><h3>Outreach CRM</h3>' +
-          '<p>Log calls and emails so Catherine, Rosie and Jamie do not double-message the same contact. Use the <strong>Organiser sales kit</strong> dropdown on a group or opportunity row.</p></div>' +
+          '<p>Log calls and emails under your login so Catherine, Rosie and Jamie do not double-message the same contact. Use the <strong>Organiser sales kit</strong> dropdown on a group or opportunity row.</p></div>' +
           '<div class="admin-dash-section-body space-y-4">' +
           (focus
             ? '<div class="rounded-xl border border-brand-200 bg-brand-50/70 p-4 flex flex-wrap items-start justify-between gap-3">' +
@@ -27914,10 +27946,10 @@
               '<p class="mt-1">Use the <strong>Organiser sales kit</strong> dropdown on a row in group cleanup or opportunities, or type the name in the manual log below.</p>' +
               '</div>') +
           '<div><p class="text-xs font-semibold text-slate-500 uppercase mb-2">Quick log</p>' +
-          '<div class="grid gap-3 sm:grid-cols-3">' +
           quickLogHtml +
-          '</div>' +
-          '<p class="text-xs text-slate-500 mt-2">One tap logs today’s date for the group above.</p>' +
+          '<p class="text-xs text-slate-500 mt-2">One tap logs today’s date for the group above, under <strong>' +
+          esc(actorLabel) +
+          '</strong>.</p>' +
           '<span id="sales-kit-touch-status" class="text-sm text-slate-500 ml-1" aria-live="polite"></span></div>' +
           '<details class="rounded-xl border border-slate-200 bg-slate-50/80 p-4">' +
           '<summary class="cursor-pointer text-sm font-semibold text-slate-800">Manual log with notes</summary>' +
@@ -27929,9 +27961,13 @@
           '<input id="sales-kit-shown-at" type="date" required class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white" value="' +
           attrEsc(today) +
           '" /></div>' +
-          '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="sales-kit-shown-by">Who spoke to them</label>' +
-          '<select id="sales-kit-shown-by" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white">' +
-          '<option>Catherine</option><option>Rosie</option><option>Jamie</option><option>Other</option></select></div>' +
+          '<input type="hidden" id="sales-kit-shown-by" value="' +
+          attrEsc(actor.shownBy) +
+          '" />' +
+          '<div><p class="block text-xs font-semibold text-slate-500 uppercase mb-1">Who spoke to them</p>' +
+          '<p class="text-sm text-slate-800 py-2">' +
+          esc(actorLabel) +
+          ' <span class="text-slate-500">(your login)</span></p></div>' +
           '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="sales-kit-outcome">Outcome</label>' +
           '<select id="sales-kit-outcome" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white">' +
           '<option value="follow_up">Follow up</option>' +
@@ -28207,8 +28243,10 @@
       );
     }
 
-    function logTouch(shownBy, touchType, btn) {
+    function logTouch(touchType, btn) {
       var statusEl = document.getElementById('sales-kit-touch-status');
+      var actor = state.actor || salesKitActorFromCurrentUser();
+      var actorLabel = salesKitActorLabel(actor);
       var focus = state.focusOrganiser;
       var nameEl = document.getElementById('sales-kit-org-name');
       var emailEl = document.getElementById('sales-kit-org-email');
@@ -28229,7 +28267,6 @@
       adminPost('/api/admin/sales-kit', {
         action: 'add_demo',
         shownAt: new Date().toISOString().slice(0, 10),
-        shownBy: shownBy,
         outcome: 'follow_up',
         organiserName: organiserName,
         organiserEmail: organiserEmail,
@@ -28241,7 +28278,7 @@
           if (statusEl) statusEl.textContent = (data && data.message) || 'Could not save.';
           return;
         }
-        if (statusEl) statusEl.textContent = shownBy + ' — ' + touchType + ' logged.';
+        if (statusEl) statusEl.textContent = actorLabel + ' — ' + touchType + ' logged.';
         load();
       });
     }
@@ -28364,7 +28401,7 @@
 
       root.querySelectorAll('.sales-kit-log-touch').forEach(function (btn) {
         btn.addEventListener('click', function () {
-          logTouch(btn.getAttribute('data-by'), btn.getAttribute('data-touch'), btn);
+          logTouch(btn.getAttribute('data-touch'), btn);
         });
       });
 
@@ -28376,7 +28413,6 @@
           var payload = {
             action: 'add_demo',
             shownAt: document.getElementById('sales-kit-shown-at').value,
-            shownBy: document.getElementById('sales-kit-shown-by').value,
             outcome: document.getElementById('sales-kit-outcome').value,
             organiserName: document.getElementById('sales-kit-org-name').value,
             organiserEmail: document.getElementById('sales-kit-org-email').value,
@@ -28455,6 +28491,7 @@
         state.demoOrganiser = data.demoOrganiser || null;
         state.internalCandidates = data.internalCandidates || [];
         state.demos = data.demos || [];
+        if (data.actor) state.actor = data.actor;
         paint();
       });
     }

@@ -7,6 +7,7 @@ const { json, sessionFromRequest } = require('../auth');
 const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
 const { publicOrganiserSlug } = require('../organiser-slug');
 const { applyIlikeSearch } = require('../search-match');
+const { shownByFromEmail } = require('../organiser-sales-outreach');
 
 const SHOWN_BY = new Set(['Catherine', 'Rosie', 'Jamie', 'Other']);
 const OUTCOMES = new Set(['interested', 'listed', 'follow_up', 'not_now', 'other']);
@@ -122,6 +123,14 @@ function sessionEmail(req) {
     .toLowerCase();
 }
 
+function actorFromRequest(req) {
+  const email = sessionEmail(req);
+  return {
+    email,
+    shownBy: shownByFromEmail(email),
+  };
+}
+
 module.exports = async function handler(req, res) {
   if (!isSupabaseConfigured()) {
     return json(res, 503, { error: 'supabase_not_configured' });
@@ -144,6 +153,7 @@ module.exports = async function handler(req, res) {
         internalCandidates,
         demos,
         search,
+        actor: actorFromRequest(req),
         migrationHint:
           'If this page errors about missing columns/tables, run supabase/migrations/252_organiser_sales_kit.sql in Supabase.',
       });
@@ -211,7 +221,8 @@ module.exports = async function handler(req, res) {
     }
 
     if (action === 'add_demo') {
-      const shownBy = String(body.shownBy || '').trim();
+      const actor = actorFromRequest(req);
+      const shownBy = actor.shownBy;
       const organiserName = String(body.organiserName || '').trim();
       const organiserEmail = String(body.organiserEmail || '')
         .trim()
@@ -224,7 +235,7 @@ module.exports = async function handler(req, res) {
       if (!SHOWN_BY.has(shownBy)) {
         return json(res, 400, {
           error: 'invalid_shown_by',
-          message: 'Choose Catherine, Rosie, Jamie, or Other.',
+          message: 'Your login is not mapped to a sales-kit user.',
         });
       }
       if (!organiserName) {
@@ -245,7 +256,7 @@ module.exports = async function handler(req, res) {
           outcome,
           notes: notes || null,
           source: 'manual',
-          created_by_email: sessionEmail(req) || null,
+          created_by_email: actor.email || sessionEmail(req) || null,
         })
         .select(
           'id, shown_at, shown_by, organiser_name, organiser_email, organiser_id, outcome, notes, source, created_by_email, created_at, updated_at'
@@ -259,13 +270,6 @@ module.exports = async function handler(req, res) {
       const id = String(body.id || '').trim();
       if (!id) return json(res, 400, { error: 'missing_id' });
       const patch = { updated_at: new Date().toISOString() };
-      if (body.shownBy != null) {
-        const shownBy = String(body.shownBy).trim();
-        if (!SHOWN_BY.has(shownBy)) {
-          return json(res, 400, { error: 'invalid_shown_by' });
-        }
-        patch.shown_by = shownBy;
-      }
       if (body.organiserName != null) {
         const name = String(body.organiserName).trim();
         if (!name) return json(res, 400, { error: 'missing_name' });
