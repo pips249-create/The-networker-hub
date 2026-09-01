@@ -16,6 +16,11 @@ const {
   countPendingOpportunitiesForAdmin,
 } = require('./opportunity-review-queue');
 const { listingPaymentCurrent } = require('./opportunity-listing-pricing');
+const {
+  isUserOnline,
+  countOnlineUsers,
+  ONLINE_WINDOW_MINUTES,
+} = require('./hub-last-seen');
 
 function round2(n) {
   return Math.round(Number(n) * 100) / 100;
@@ -456,6 +461,7 @@ async function fetchDashboardMetrics(sb) {
     liveDatedRes,
     liveUndatedRes,
     signedInCounts,
+    usersOnlineNow,
   ] = await Promise.all([
     sb.from('events').select('id', { count: 'exact', head: true }).eq('approval_status', 'Approved'),
     sb
@@ -493,6 +499,7 @@ async function fetchDashboardMetrics(sb) {
       .eq('approval_status', 'Approved')
       .is('starts_at', null),
     countSignedInAuthUsers(sb).catch(() => ({ signedIn: 0, authUsers: 0, signedInIds: new Set() })),
+    countOnlineUsers(sb),
   ]);
 
   if (approvedTotalRes.error) throw new Error(approvedTotalRes.error.message);
@@ -560,6 +567,9 @@ async function fetchDashboardMetrics(sb) {
     /** Auth users who have signed in at least once (know / have set a password). */
     accountsWithPassword: signedInCounts.signedIn || 0,
     authUsers: signedInCounts.authUsers || 0,
+    /** Signed-in members active within the online window (admin-only telemetry). */
+    usersOnlineNow: usersOnlineNow || 0,
+    onlineWindowMinutes: ONLINE_WINDOW_MINUTES,
     /** Upcoming catalogue size — matches the unfiltered /events/ browse total. */
     liveEvents,
     currency: 'GBP',
@@ -907,12 +917,22 @@ async function fetchActivity(sb) {
 
 async function fetchUsers(sb) {
   const accountsSelectWithOpportunity =
-    'user_id, role, display_name, hub_view, emails_enabled, email_pref_event_reminders, email_pref_organiser_alerts, email_pref_organiser_roundups, organiser_terms_accepted_at, organiser_terms_version, organiser_opportunity_terms_accepted_at, organiser_opportunity_terms_version, created_at';
+    'user_id, role, display_name, hub_view, emails_enabled, email_pref_event_reminders, email_pref_organiser_alerts, email_pref_organiser_roundups, organiser_terms_accepted_at, organiser_terms_version, organiser_opportunity_terms_accepted_at, organiser_opportunity_terms_version, created_at, last_seen_at';
   const accountsSelectWithRoundups =
-    'user_id, role, display_name, hub_view, emails_enabled, email_pref_event_reminders, email_pref_organiser_alerts, email_pref_organiser_roundups, organiser_terms_accepted_at, organiser_terms_version, created_at';
+    'user_id, role, display_name, hub_view, emails_enabled, email_pref_event_reminders, email_pref_organiser_alerts, email_pref_organiser_roundups, organiser_terms_accepted_at, organiser_terms_version, created_at, last_seen_at';
   const accountsSelectFallback =
-    'user_id, role, display_name, hub_view, emails_enabled, email_pref_event_reminders, email_pref_organiser_alerts, organiser_terms_accepted_at, organiser_terms_version, created_at';
+    'user_id, role, display_name, hub_view, emails_enabled, email_pref_event_reminders, email_pref_organiser_alerts, organiser_terms_accepted_at, organiser_terms_version, created_at, last_seen_at';
   let accountsRes = await sb.from('hub_accounts').select(accountsSelectWithOpportunity);
+  if (
+    accountsRes.error &&
+    /last_seen_at/i.test(String(accountsRes.error.message || ''))
+  ) {
+    accountsRes = await sb
+      .from('hub_accounts')
+      .select(
+        accountsSelectWithOpportunity.replace(', last_seen_at', '').replace('last_seen_at, ', '')
+      );
+  }
   if (
     accountsRes.error &&
     /organiser_opportunity_terms/i.test(String(accountsRes.error.message || ''))
@@ -983,6 +1003,8 @@ async function fetchUsers(sb) {
       organiserListingStatus: org?.listing_status || null,
       accountCreatedAt: acc.created_at || auth?.created_at || null,
       lastSignInAt: auth?.last_sign_in_at || null,
+      lastSeenAt: acc.last_seen_at || null,
+      isOnline: isUserOnline(acc.last_seen_at),
       authCreatedAt: auth?.created_at || null,
     });
     seen.add(acc.user_id);
@@ -1014,6 +1036,8 @@ async function fetchUsers(sb) {
       organiserListingStatus: null,
       accountCreatedAt: auth?.created_at || null,
       lastSignInAt: auth?.last_sign_in_at || null,
+      lastSeenAt: null,
+      isOnline: false,
       authCreatedAt: auth?.created_at || null,
     });
   }

@@ -59,6 +59,7 @@ function hubAccountExport(hub) {
     'email_pref_organiser_roundups',
     'organiser_terms_accepted_at',
     'created_at',
+    'last_seen_at',
   ]);
 }
 
@@ -86,9 +87,12 @@ async function buildUserDataExport(session) {
   const email = String(session.email || '').toLowerCase();
   const exportedAt = new Date().toISOString();
 
-  const [hubRes, attendee] = await Promise.all([
+  const [hubRes, attendee, authRes] = await Promise.all([
     sb.from('hub_accounts').select('*').eq('user_id', userId).maybeSingle(),
     findAttendee(sb, userId, email),
+    userId
+      ? sb.auth.admin.getUserById(userId)
+      : Promise.resolve({ data: { user: null }, error: null }),
   ]);
 
   const attendeeId = attendee?.id || null;
@@ -265,6 +269,12 @@ async function buildUserDataExport(session) {
     subject_email: email,
     privacy_contact: 'hi@thenetworkeruk.com',
     hub_account: hubAccountExport(hubRes.error ? null : hubRes.data),
+    auth_activity: authRes?.data?.user
+      ? {
+          last_sign_in_at: authRes.data.user.last_sign_in_at || null,
+          created_at: authRes.data.user.created_at || null,
+        }
+      : null,
     attendee_profile: attendeeExport(attendee),
     registrations: registrations.rows,
     reviews: reviews.rows,

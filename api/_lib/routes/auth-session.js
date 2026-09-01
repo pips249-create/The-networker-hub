@@ -13,6 +13,7 @@ const {
 const { useSupabase } = require('../supabase');
 const sbAuth = require('../supabase-auth');
 const { getOrganiserAccessStatus } = require('../organiser-access-guard');
+const { touchLastSeenFromSession } = require('../hub-last-seen');
 module.exports = async function handler(req, res) {
   setCors(req, res);
   res.setHeader('Cache-Control', 'no-store');
@@ -27,6 +28,8 @@ module.exports = async function handler(req, res) {
 
   const session = sessionFromRequest(req);
   if (!session) return json(res, 200, { ok: false, user: null });
+
+  touchLastSeenFromSession(session);
 
   try {
     if (useSupabase()) {

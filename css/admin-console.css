@@ -2944,3 +2944,98 @@ a.admin-action-row:hover .admin-action-btn {
     grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
   }
 }
+
+/* Organiser sales kit — inline CRM dropdown on group/opportunity rows */
+.admin-sales-kit-menu-panel {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  right: 0;
+  z-index: 40;
+  min-width: 15.5rem;
+  max-width: 18rem;
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.14);
+}
+
+.admin-sales-kit-menu-head {
+  margin-bottom: 0.65rem;
+  padding-bottom: 0.55rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.admin-sales-kit-menu-title {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.3;
+}
+
+.admin-sales-kit-menu-email {
+  margin-top: 0.2rem;
+  font-size: 0.75rem;
+  color: #475569;
+  word-break: break-word;
+}
+
+.admin-sales-kit-menu-email--muted {
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.admin-sales-kit-menu-kicker {
+  margin-bottom: 0.5rem;
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #b8860b;
+}
+
+.admin-sales-kit-menu-team + .admin-sales-kit-menu-team {
+  margin-top: 0.55rem;
+}
+
+.admin-sales-kit-menu-team-name {
+  margin-bottom: 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.admin-sales-kit-menu-touch-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.admin-sales-kit-touch {
+  border: 1px solid #dbeafe;
+  border-radius: 999px;
+  background: #fff;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #1e3a5f;
+  cursor: pointer;
+}
+
+.admin-sales-kit-touch:hover {
+  background: #eff6ff;
+}
+
+.admin-sales-kit-touch:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.admin-sales-kit-menu-status {
+  min-height: 1rem;
+  margin-top: 0.55rem;
+  padding-top: 0.45rem;
+  border-top: 1px solid #f1f5f9;
+  font-size: 0.6875rem;
+  color: #64748b;
+}

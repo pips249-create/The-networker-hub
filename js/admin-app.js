@@ -350,7 +350,7 @@
         'Click Review to open the listing on its own page (submitted details, website preview, and admin edit).',
         'Approve — if unpaid, the owner gets a pay-to-go-live email; if already paid, it goes live now. Confirm dialog explains which.',
         'Deny if it does not meet standards (include a reason) — then you return to the list.',
-        'Use Organiser sales kit on a row (or in Review) to log outreach in the shared CRM before you call or email the owner.',
+        'Use Organiser sales kit on a row (or in Review) — dropdown logs outreach in the shared CRM without leaving this page.',
         'Use Resend pay email on Approved listings still awaiting Stripe.',
         'Toggle Featured only for Approved live listings in the opportunities carousel.',
       ],
@@ -438,7 +438,7 @@
     'sales-kit': {
       title: 'How to use the organiser sales kit',
       steps: [
-        'From group cleanup, click Organiser sales kit on a row — CRM opens with that group pre-filled.',
+        'From group cleanup, click Organiser sales kit on a row — use the CRM dropdown to log a call or email.',
         'Tap Called, Attempted call, or Emailed under Catherine, Rosie, or Jamie to log outreach in one click.',
         'Switch to Pitch deck for cheat sheets, sales decks, Loom script, and follow-up email copy.',
         'Pin one agreed demo organiser on the pitch deck tab — everyone impersonates that group for live walkthroughs.',
@@ -967,6 +967,156 @@
       id: opp.organiser_id || '',
       name: opp.title || opp.host || '',
       email: opp.owner_email || opp.contact_email || '',
+    });
+  }
+
+  var SALES_KIT_TOUCH_NOTES = ['Called', 'Attempted call', 'Emailed'];
+  var SALES_KIT_TEAM = ['Catherine', 'Rosie', 'Jamie'];
+
+  function salesKitFocusFromSource(source) {
+    if (!source || typeof source !== 'object') return { id: '', name: '', email: '' };
+    return {
+      id: String(source.id || source.organiser_id || '').trim(),
+      name: String(source.name || source.title || source.host || '').trim(),
+      email: String(source.email || source.owner_email || source.contact_email || '').trim(),
+    };
+  }
+
+  function salesKitDropdownHtml(source, opts) {
+    opts = opts || {};
+    var size = opts.size === 'md' ? 'md' : 'sm';
+    var btnClass =
+      size === 'md'
+        ? 'rounded-lg border border-brand-200 bg-white text-sm font-semibold px-3 py-2 text-brand-800 hover:bg-brand-50'
+        : 'text-xs font-semibold rounded-lg border border-brand-200 text-brand-800 px-2.5 py-1 hover:bg-brand-50';
+    var focus = salesKitFocusFromSource(source);
+    var quickLog = SALES_KIT_TEAM.map(function (person) {
+      return (
+        '<div class="admin-sales-kit-menu-team">' +
+        '<p class="admin-sales-kit-menu-team-name">' +
+        esc(person) +
+        '</p><div class="admin-sales-kit-menu-touch-row">' +
+        SALES_KIT_TOUCH_NOTES.map(function (touch) {
+          return (
+            '<button type="button" class="admin-sales-kit-touch" role="menuitem" data-by="' +
+            attrEsc(person) +
+            '" data-touch="' +
+            attrEsc(touch) +
+            '" data-org-id="' +
+            attrEsc(focus.id) +
+            '" data-org-name="' +
+            attrEsc(focus.name) +
+            '" data-org-email="' +
+            attrEsc(focus.email) +
+            '">' +
+            esc(touch) +
+            '</button>'
+          );
+        }).join('') +
+        '</div></div>'
+      );
+    }).join('');
+
+    return (
+      '<div class="admin-sales-kit-menu relative inline-block">' +
+      '<button type="button" class="admin-sales-kit-menu-toggle ' +
+      btnClass +
+      ' inline-flex items-center gap-1" aria-expanded="false" aria-haspopup="menu">' +
+      'Organiser sales kit <span aria-hidden="true" class="text-[10px]">▾</span></button>' +
+      '<div class="admin-sales-kit-menu-panel hidden" role="menu">' +
+      '<div class="admin-sales-kit-menu-head">' +
+      '<p class="admin-sales-kit-menu-title">' +
+      esc(focus.name || 'Contact') +
+      '</p>' +
+      (focus.email
+        ? '<p class="admin-sales-kit-menu-email">' + esc(focus.email) + '</p>'
+        : '<p class="admin-sales-kit-menu-email admin-sales-kit-menu-email--muted">No email on file</p>') +
+      '</div>' +
+      '<p class="admin-sales-kit-menu-kicker">Quick log to CRM</p>' +
+      quickLog +
+      '<p class="admin-sales-kit-menu-status" aria-live="polite"></p>' +
+      '</div></div>'
+    );
+  }
+
+  function logSalesKitTouchFromButton(btn, statusEl) {
+    var organiserName = String(btn.getAttribute('data-org-name') || '').trim();
+    var organiserEmail = String(btn.getAttribute('data-org-email') || '').trim();
+    var organiserId = String(btn.getAttribute('data-org-id') || '').trim();
+    var shownBy = String(btn.getAttribute('data-by') || '').trim();
+    var touchType = String(btn.getAttribute('data-touch') || '').trim();
+    if (!organiserName) {
+      if (statusEl) statusEl.textContent = 'No contact name on this row.';
+      return Promise.resolve(false);
+    }
+    btn.disabled = true;
+    if (statusEl) statusEl.textContent = 'Saving…';
+    return adminPost('/api/admin/sales-kit', {
+      action: 'add_demo',
+      shownAt: new Date().toISOString().slice(0, 10),
+      shownBy: shownBy,
+      outcome: 'follow_up',
+      organiserName: organiserName,
+      organiserEmail: organiserEmail,
+      organiserId: organiserId || null,
+      notes: touchType,
+    }).then(function (data) {
+      btn.disabled = false;
+      if (!data || !data.ok) {
+        if (statusEl) statusEl.textContent = (data && data.message) || 'Could not save.';
+        return false;
+      }
+      if (statusEl) statusEl.textContent = shownBy + ' — ' + touchType + ' logged.';
+      return true;
+    });
+  }
+
+  function bindSalesKitMenus() {
+    if (window.__salesKitMenusBound) return;
+    window.__salesKitMenusBound = true;
+
+    function closeAllSalesKitMenus(exceptMenu) {
+      document.querySelectorAll('.admin-sales-kit-menu-panel').forEach(function (panel) {
+        var menu = panel.closest('.admin-sales-kit-menu');
+        if (exceptMenu && menu === exceptMenu) return;
+        panel.classList.add('hidden');
+        var toggle = menu && menu.querySelector('.admin-sales-kit-menu-toggle');
+        if (toggle) toggle.setAttribute('aria-expanded', 'false');
+      });
+    }
+
+    document.body.addEventListener('click', function (e) {
+      var toggle = e.target.closest('.admin-sales-kit-menu-toggle');
+      if (toggle) {
+        e.preventDefault();
+        e.stopPropagation();
+        var menu = toggle.closest('.admin-sales-kit-menu');
+        var panel = menu && menu.querySelector('.admin-sales-kit-menu-panel');
+        if (!panel) return;
+        var willOpen = panel.classList.contains('hidden');
+        closeAllSalesKitMenus();
+        if (willOpen) {
+          panel.classList.remove('hidden');
+          toggle.setAttribute('aria-expanded', 'true');
+        }
+        return;
+      }
+
+      var touchBtn = e.target.closest('.admin-sales-kit-touch');
+      if (touchBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        var menuRoot = touchBtn.closest('.admin-sales-kit-menu');
+        var statusEl = menuRoot && menuRoot.querySelector('.admin-sales-kit-menu-status');
+        logSalesKitTouchFromButton(touchBtn, statusEl);
+        return;
+      }
+
+      if (!e.target.closest('.admin-sales-kit-menu')) closeAllSalesKitMenus();
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeAllSalesKitMenus();
     });
   }
 
@@ -5526,7 +5676,10 @@
           card(
             'Member accounts',
             String(m.accountsWithPassword || 0),
-            'Created an account and signed in · ' + (m.attendees || 0) + ' emails on file',
+            (m.usersOnlineNow || 0) +
+              ' online now · ' +
+              (m.attendees || 0) +
+              ' emails on file',
             'blue'
           ) +
           card(
@@ -5869,7 +6022,10 @@
         card(
           'Member accounts',
           String(m.accountsWithPassword || 0),
-          'Created an account and signed in · ' + (m.attendees || 0) + ' emails on file'
+          (m.usersOnlineNow || 0) +
+            ' online now · ' +
+            (m.attendees || 0) +
+            ' emails on file'
         );
     }
 
@@ -6891,6 +7047,31 @@
     } catch (e) {
       return '—';
     }
+  }
+
+  function formatRelativeActivity(iso) {
+    if (!iso) return '—';
+    try {
+      var ms = Date.now() - new Date(iso).getTime();
+      if (!Number.isFinite(ms)) return '—';
+      if (ms < 60000) return 'Just now';
+      var mins = Math.floor(ms / 60000);
+      if (mins < 60) return mins + ' min ago';
+      var hrs = Math.floor(mins / 60);
+      if (hrs < 24) return hrs + ' hr' + (hrs === 1 ? '' : 's') + ' ago';
+      var days = Math.floor(hrs / 24);
+      if (days < 7) return days + ' day' + (days === 1 ? '' : 's') + ' ago';
+      return formatAccountDate(iso);
+    } catch (e) {
+      return '—';
+    }
+  }
+
+  function userOnlineStatusHtml(u) {
+    if (u && u.isOnline) {
+      return '<span class="inline-flex items-center gap-1.5 text-emerald-700 font-semibold"><span class="inline-block w-2 h-2 rounded-full bg-emerald-500" aria-hidden="true"></span>Online now</span>';
+    }
+    return '<span class="text-slate-500">Offline</span>';
   }
 
   function hubViewLabel(view) {
@@ -18179,9 +18360,7 @@
                 attrEsc(o.email || '') +
                 '" class="text-xs font-semibold rounded-lg border border-brand-700 text-brand-700 px-2.5 py-1 hover:bg-brand-50">Impersonate</button>'
               : '') +
-            '<a href="' +
-            attrEsc(salesKitHref(o)) +
-            '" class="text-xs font-semibold rounded-lg border border-brand-200 text-brand-800 px-2.5 py-1 hover:bg-brand-50">Organiser sales kit</a>' +
+            salesKitDropdownHtml(o) +
             '<button type="button" data-toggle-group-edit="1" class="text-xs font-semibold rounded-lg bg-brand-700 text-white px-2.5 py-1 hover:bg-brand-900">' +
             (isOpen ? 'Close' : 'Edit profile') +
             '</button>' +
@@ -20121,6 +20300,9 @@
             '<tr class="border-t border-slate-100">' +
             '<td class="px-4 py-3 font-medium">' +
             esc(u.name) +
+            (u.isOnline
+              ? ' <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 align-middle" title="Online now" aria-label="Online now"></span>'
+              : '') +
             '</td>' +
             '<td class="px-4 py-3">' +
             esc(u.email) +
@@ -23774,9 +23956,8 @@
           attrEsc(previewHref) +
           '" target="_blank" rel="noopener" class="rounded-lg border border-slate-300 bg-white text-sm font-semibold px-3 py-2 hover:bg-slate-50">Open in workspace</a> '
         : '') +
-      '<a href="' +
-      attrEsc(salesKitHrefFromOpportunity(opp)) +
-      '" class="rounded-lg border border-brand-200 bg-white text-sm font-semibold px-3 py-2 text-brand-800 hover:bg-brand-50">Organiser sales kit</a> ' +
+      salesKitDropdownHtml(opp, { size: 'md' }) +
+      ' ' +
       (canApprove
         ? '<button type="button" data-opp-approve="' +
           attrEsc(id) +
@@ -24354,9 +24535,7 @@
             ? '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-violet-100 text-violet-800">Featured</span>'
             : '') +
           '</div>' +
-          '<a href="' +
-          attrEsc(salesKitHrefFromOpportunity(opp)) +
-          '" class="rounded-lg border border-brand-200 bg-white text-sm font-semibold px-3 py-2 text-brand-800 hover:bg-brand-50">Organiser sales kit</a>' +
+          salesKitDropdownHtml(opp, { size: 'md' }) +
           '</div></div>';
       }
       if (body) {
@@ -24401,9 +24580,7 @@
             ? '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-violet-100 text-violet-800">Featured</span>'
             : '') +
           '</div>' +
-          '<a href="' +
-          attrEsc(salesKitHrefFromOpportunity(opp)) +
-          '" class="rounded-lg border border-brand-200 bg-white text-sm font-semibold px-3 py-2 text-brand-800 hover:bg-brand-50">Organiser sales kit</a>' +
+          salesKitDropdownHtml(opp, { size: 'md' }) +
           '</div></div>';
       }
       if (body) mountOpportunityReviewContent(body, opp, { fullPage: true });
@@ -24554,9 +24731,7 @@
             : 'Preview') +
           '</a>'
         : '') +
-      '<a href="' +
-      attrEsc(salesKitHrefFromOpportunity(opp)) +
-      '" class="text-xs font-semibold rounded-lg border border-brand-200 text-brand-800 px-2.5 py-1 hover:bg-brand-50">Organiser sales kit</a>' +
+      salesKitDropdownHtml(opp) +
       '<a href="' +
       attrEsc(reviewHref) +
       '" class="text-xs font-semibold rounded-lg bg-brand-700 text-white px-2.5 py-1 hover:bg-brand-900">' +
@@ -27703,7 +27878,7 @@
         return (
           '<section class="admin-dash-section" id="sales-kit-outreach">' +
           '<div class="admin-dash-section-head"><h3>Outreach CRM</h3>' +
-          '<p>Log calls and emails so Catherine, Rosie and Jamie do not double-message the same contact. Opens from <strong>Organiser sales kit</strong> on a group or opportunity row.</p></div>' +
+          '<p>Log calls and emails so Catherine, Rosie and Jamie do not double-message the same contact. Use the <strong>Organiser sales kit</strong> dropdown on a group or opportunity row.</p></div>' +
           '<div class="admin-dash-section-body space-y-4">' +
           (focus
             ? '<div class="rounded-xl border border-brand-200 bg-brand-50/70 p-4 flex flex-wrap items-start justify-between gap-3">' +
@@ -27725,7 +27900,7 @@
               '</div></div>'
             : '<div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">' +
               '<p class="font-semibold">Pick a group first</p>' +
-              '<p class="mt-1">Use <strong>Organiser sales kit</strong> on a row in group cleanup, or type the group name in the manual log below.</p>' +
+              '<p class="mt-1">Use the <strong>Organiser sales kit</strong> dropdown on a row in group cleanup or opportunities, or type the name in the manual log below.</p>' +
               '</div>') +
           '<div><p class="text-xs font-semibold text-slate-500 uppercase mb-2">Quick log</p>' +
           '<div class="grid gap-3 sm:grid-cols-3">' +
@@ -28731,6 +28906,7 @@
     bindGroupCleanupForms();
     bindEventCleanupForms();
     bindOpportunityCleanupForms();
+    bindSalesKitMenus();
     bindAdminPaginationGoto();
     // Metrics only after admin session is confirmed — never paint cache for guests
     adminMetricsCache = readCachedAdminMetrics();

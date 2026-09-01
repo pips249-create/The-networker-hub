@@ -28,8 +28,8 @@
 |------|--------|
 | **Purpose** | Create and manage Accounts; sign-in; attendee/organiser mode |
 | **Data subjects** | Registered members, organisers, admins |
-| **Categories of data** | Name, email, password hash (Supabase Auth), hub preferences, organiser access timestamps |
-| **Lawful basis** | Contract (Art. 6(1)(b)); Legitimate interests for security (Art. 6(1)(f)) |
+| **Categories of data** | Name, email, password hash (Supabase Auth), hub preferences, organiser access timestamps, last sign-in (Supabase Auth), last seen while signed in (`hub_accounts.last_seen_at`, admin-only) |
+| **Lawful basis** | Contract (Art. 6(1)(b)); Legitimate interests for security, fraud prevention, and admin support (Art. 6(1)(f)) |
 | **Recipients** | Supabase (processor) |
 | **Retention** | Life of account + up to 2 years after closure |
 | **International transfers** | Supabase may process in US/EU — UK IDTA / adequacy as applicable |

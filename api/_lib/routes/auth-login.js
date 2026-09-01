@@ -21,6 +21,7 @@ const {
   maybeAutoEnableOrganiserAccess,
   redirectAfterOrganiserAuth,
 } = require('../organiser-auth-intent');
+const { touchLastSeen } = require('../hub-last-seen');
 
 const LOGIN_FAIL_MAX = 8;
 const LOGIN_FAIL_WINDOW_MS = 900_000;
@@ -146,6 +147,7 @@ module.exports = async function handler(req, res) {
     }
 
     await sbAuth.backfillAttendeeUserId(sessionUser.sub, sessionUser.email);
+    await touchLastSeen(sessionUser.sub);
 
     try {
       const { getSupabaseAdmin } = require('../supabase');
