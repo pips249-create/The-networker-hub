@@ -1287,6 +1287,43 @@ module.exports = async function handler(req, res) {
       patch.contact_email = contactEmail || null;
     }
     if (
+      Object.prototype.hasOwnProperty.call(body, 'owner_email') ||
+      Object.prototype.hasOwnProperty.call(body, 'ownerEmail')
+    ) {
+      const ownerEmail = String(body.owner_email || body.ownerEmail || '')
+        .trim()
+        .toLowerCase();
+      patch.owner_email = ownerEmail || null;
+      const sbOwner = getSupabaseAdmin();
+      const { data: currentOwnerRow, error: ownerLoadErr } = await sbOwner
+        .from('business_opportunities')
+        .select('ownership_claim_status, owner_email')
+        .eq('id', id)
+        .maybeSingle();
+      if (ownerLoadErr) throw new Error(ownerLoadErr.message);
+      const prevEmail = String(currentOwnerRow?.owner_email || '')
+        .trim()
+        .toLowerCase();
+      const claim = String(currentOwnerRow?.ownership_claim_status || '')
+        .trim()
+        .toLowerCase();
+      if (ownerEmail !== prevEmail && claim !== 'claimed' && claim !== 'disputed') {
+        if (ownerEmail && !isHubSeedOwnerEmail(ownerEmail)) {
+          patch.ownership_claim_status = 'pending';
+          patch.supabase_user_id = null;
+          patch.ownership_claimed_at = null;
+          patch.ownership_disputed_at = null;
+          patch.ownership_disputed_by_email = null;
+        } else if (!ownerEmail || isHubSeedOwnerEmail(ownerEmail)) {
+          patch.ownership_claim_status = null;
+          patch.supabase_user_id = null;
+          patch.ownership_claimed_at = null;
+          patch.ownership_disputed_at = null;
+          patch.ownership_disputed_by_email = null;
+        }
+      }
+    }
+    if (
       Object.prototype.hasOwnProperty.call(body, 'type') ||
       Object.prototype.hasOwnProperty.call(body, 'category')
     ) {

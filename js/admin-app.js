@@ -24131,7 +24131,7 @@
       }) +
       '<div class="sm:col-span-2 rounded-lg border border-slate-200 bg-white p-3 space-y-2">' +
       '<p class="text-xs font-semibold text-slate-600">Listing owner &amp; claim invite</p>' +
-      '<p class="text-xs text-slate-500">Platform-owned listings stay claimable until you assign a claimant email. Assigning emails them a claim link to the public listing, then Stripe monthly subscription (£25 + VAT).</p>' +
+      '<p class="text-xs text-slate-500">Platform-owned listings stay claimable until you assign a claimant email. <strong>Save listing</strong> stores the owner email; <strong>Assign &amp; send claim invite</strong> emails the claim link (Stripe monthly subscription £25 + VAT).</p>' +
       '<div class="flex flex-wrap gap-2 items-end">' +
       '<div class="flex-1 min-w-[12rem]"><label class="block text-xs font-semibold text-slate-500 mb-1">Owner email</label>' +
       '<input type="email" name="owner_email" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
