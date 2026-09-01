@@ -126,6 +126,51 @@ function dedupeFeaturedRowsBySeries(rows) {
   return out;
 }
 
+/** Same bucket key as spotlight — one card per recurring listing on browse. */
+function seriesBrowseBucketKey(row) {
+  return seriesSpotlightBucketKey(row);
+}
+
+function countBrowseSeriesOccurrences(rows) {
+  const counts = new Map();
+  for (const row of rows || []) {
+    const key = seriesBrowseBucketKey(row);
+    counts.set(key, (counts.get(key) || 0) + 1);
+  }
+  return counts;
+}
+
+/** Rows must already be sorted — keeps the first (best) row per series for the active sort. */
+function dedupeBrowseRowsBySeries(rows) {
+  return dedupeFeaturedRowsBySeries(rows);
+}
+
+function seriesCountForRow(row, seriesCounts) {
+  if (!row || !seriesCounts) return 1;
+  return seriesCounts.get(seriesBrowseBucketKey(row)) || 1;
+}
+
+function idToSeriesCountMap(rows, seriesCounts) {
+  const out = new Map();
+  for (const row of rows || []) {
+    if (!row?.id) continue;
+    out.set(row.id, seriesCountForRow(row, seriesCounts));
+  }
+  return out;
+}
+
+function attachBrowseSeriesCounts(events, idToSeriesCount) {
+  if (!idToSeriesCount || !events?.length) return events;
+  for (const ev of events) {
+    const count = idToSeriesCount.get(ev.id);
+    if (count > 1) {
+      ev.seriesOccurrenceCount = count;
+      ev.isSeriesBrowse = true;
+    }
+  }
+  return events;
+}
+
 module.exports = {
   fetchSeriesPeerRows,
   upcomingBrowseRows,
@@ -133,5 +178,10 @@ module.exports = {
   isSeriesLiveOnBrowse,
   seriesFeaturedUntil,
   seriesSpotlightBucketKey,
+  seriesBrowseBucketKey,
   dedupeFeaturedRowsBySeries,
+  countBrowseSeriesOccurrences,
+  dedupeBrowseRowsBySeries,
+  idToSeriesCountMap,
+  attachBrowseSeriesCounts,
 };

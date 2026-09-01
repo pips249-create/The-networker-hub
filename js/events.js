@@ -664,6 +664,13 @@
   function premiumCard(ev) {
     const dateLabel = ev.date || 'Date TBC';
     const timeLabel = ev.time || '';
+    const seriesNote =
+      ev.isSeriesBrowse && Number(ev.seriesOccurrenceCount) > 1
+        ? ' · ' +
+          (Number(ev.seriesOccurrenceCount) - 1) +
+          ' more date' +
+          (Number(ev.seriesOccurrenceCount) - 1 === 1 ? '' : 's')
+        : '';
     return `
       <article class="premium-card" data-id="${escapeHtml(ev.id)}"
         data-type="${escapeHtml(ev.type)}"
@@ -684,7 +691,7 @@
             <h3 class="premium-card-title">${escapeHtml(ev.title)}</h3>
             <div class="premium-card-meta">
               <p class="premium-meta-row">${META_PIN_SVG}<span>${escapeHtml(cardLocation(ev))}</span></p>
-              <p class="premium-meta-row">${META_CAL_SVG}<span>${escapeHtml(dateLabel)}${timeLabel ? ' · ' + escapeHtml(timeLabel) : ''}</span></p>
+              <p class="premium-meta-row">${META_CAL_SVG}<span>Next: ${escapeHtml(dateLabel)}${timeLabel ? ' · ' + escapeHtml(timeLabel) : ''}${escapeHtml(seriesNote)}</span></p>
             </div>
           </div>
         </a>
@@ -701,6 +708,37 @@
     return raw.split('·')[0].trim();
   }
 
+  function seriesBrowseDateLine(ev, locationFn) {
+    const locFn = locationFn || cardLocation;
+    const baseLine =
+      ev.dateLine ||
+      [locFn(ev), ev.date || ev.dateFieldRaw, ev.time].filter(Boolean).join(' · ') ||
+      'Date TBC';
+    if (!ev.isSeriesBrowse || !(Number(ev.seriesOccurrenceCount) > 1)) {
+      return baseLine;
+    }
+    const more = Number(ev.seriesOccurrenceCount) - 1;
+    const nextParts = [ev.date || ev.dateFieldRaw, ev.time].filter(Boolean);
+    const nextLabel = nextParts.length ? nextParts.join(' · ') : 'Date TBC';
+    const parts = [];
+    const location = locFn(ev);
+    if (location) parts.push(location);
+    parts.push('Next: ' + nextLabel);
+    parts.push(more + ' more date' + (more === 1 ? '' : 's'));
+    return parts.join(' · ');
+  }
+
+  window.hubSeriesBrowseDateLine = seriesBrowseDateLine;
+
+  function seriesBrowseBadgeHtml(ev) {
+    if (!ev.isSeriesBrowse || !(Number(ev.seriesOccurrenceCount) > 1)) return '';
+    return (
+      '<span class="event-grid-series-badge">' +
+      escapeHtml(String(ev.seriesOccurrenceCount)) +
+      ' dates</span>'
+    );
+  }
+
   function gridCard(ev) {
     const fmtClass = formatTagClass(ev.format);
     const fmtLabel = formatTagLabel(ev.format);
@@ -708,10 +746,7 @@
     const rating = Number(ev.organiserRating) || Number(ev.rating) || 0;
     const hasRating = reviewCount > 0 && rating > 0;
     const meetingType = meetingTypeLabel(ev);
-    const dateLine =
-      ev.dateLine ||
-      [cardLocation(ev), ev.date || ev.dateFieldRaw, ev.time].filter(Boolean).join(' · ') ||
-      'Date TBC';
+    const dateLine = seriesBrowseDateLine(ev);
     const premiumBadge = ev.featured
       ? '<span class="event-grid-premium">Premium</span>'
       : '';
@@ -748,6 +783,7 @@
           ${premiumBadge}
           ${statusBadge}
           <span class="event-grid-category">${escapeHtml(meetingType)}</span>
+          ${seriesBrowseBadgeHtml(ev)}
         </div>
         <div class="event-grid-body">
           <div class="event-grid-body-top">

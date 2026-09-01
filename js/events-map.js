@@ -629,12 +629,19 @@
     });
   }
 
+  function browseDateLine(ev) {
+    if (window.hubSeriesBrowseDateLine) {
+      return window.hubSeriesBrowseDateLine(ev, locationLabel);
+    }
+    return ev.dateLine || ev.date || 'Date TBC';
+  }
+
   function popupHtml(ev, miles) {
     var fmtClass = formatClass(ev);
     var fmtLabel = formatLabel(ev);
     var loc = locationLabel(ev);
     var dist = distanceText(miles);
-    var dateLine = ev.dateLine || ev.date || 'Date TBC';
+    var dateLine = browseDateLine(ev);
     var premium = ev.featured
       ? '<span class="map-event-card-premium">Premium</span>'
       : '';
@@ -729,7 +736,7 @@
     var ev = item.ev;
     var dist = distanceText(item.miles);
     var loc = locationLabel(ev);
-    var parts = [ev.title, ev.dateLine || ev.date || 'Date TBC'];
+    var parts = [ev.title, browseDateLine(ev)];
     if (loc) parts.push(loc);
     if (dist) parts.push(dist);
     return parts.join(', ');
@@ -739,7 +746,7 @@
     var ev = item.ev;
     var dist = distanceText(item.miles);
     var loc = locationLabel(ev);
-    var meta = [ev.dateLine || ev.date || 'Date TBC'];
+    var meta = [browseDateLine(ev)];
     if (loc) meta.push(loc);
     if (dist) meta.push(dist);
     return (

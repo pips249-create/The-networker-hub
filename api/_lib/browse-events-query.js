@@ -3,7 +3,13 @@
  */
 const { isEventCurrentlyFeatured } = require('./event-featured-plans');
 const { SPOTLIGHT_CAROUSEL_MAX } = require('./spotlight-carousel-limits');
-const { dedupeFeaturedRowsBySeries } = require('./event-series-peers');
+const {
+  dedupeFeaturedRowsBySeries,
+  countBrowseSeriesOccurrences,
+  dedupeBrowseRowsBySeries,
+  idToSeriesCountMap,
+  attachBrowseSeriesCounts,
+} = require('./event-series-peers');
 const {
   sanitizeSearchTerm,
   tokenizeSearchQuery,
@@ -33,10 +39,12 @@ const MAX_PINS = 800;
 const GEO_MATCH_CAP = 1500;
 const IN_CHUNK = 80;
 const PIN_SELECT =
-  'id, slug, title, city, format_tab, latitude, longitude, starts_at, outcode, min_ticket_price, image_url, photo_url, image_position, event_type, type_tab, featured, featured_until, average_rating, review_count, organiser_id';
+  'id, slug, title, city, format_tab, latitude, longitude, starts_at, outcode, min_ticket_price, image_url, photo_url, image_position, event_type, type_tab, featured, featured_until, average_rating, review_count, organiser_id, series_group_id';
 
-const SLIM_RATING_SELECT =
-  'id, organiser_id, latitude, longitude, format_tab, starts_at, min_ticket_price, average_rating, review_count, featured, featured_until, created_at';
+const BROWSE_SLIM_SELECT =
+  'id, organiser_id, title, series_group_id, latitude, longitude, format_tab, type_tab, starts_at, min_ticket_price, average_rating, review_count, featured, featured_until, created_at';
+
+const SLIM_RATING_SELECT = BROWSE_SLIM_SELECT;
 
 /** Sorts / filters that must use organiser profile ratings (not per-event averages). */
 function needsOrganiserRatingSort(params) {
@@ -548,6 +556,19 @@ async function fetchBrowseTypeCounts(sb, params) {
   ];
   const base = { ...params, types: [] };
 
+  function tallyTypeCounts(rows) {
+    const deduped = dedupeBrowseRowsBySeries(rows);
+    const counts = { all: deduped.length };
+    types.forEach((type) => {
+      counts[type] = 0;
+    });
+    deduped.forEach((row) => {
+      const type = String(row.type_tab || 'meeting').toLowerCase();
+      if (counts[type] != null) counts[type] += 1;
+    });
+    return counts;
+  }
+
   // Geo radius needs haversine in Node — page past PostgREST max-rows (1000).
   if (hasGeoRadius(params)) {
     const pageSize = 1000;
@@ -557,7 +578,7 @@ async function fetchBrowseTypeCounts(sb, params) {
       const to = Math.min(from + pageSize - 1, GEO_MATCH_CAP - 1);
       let query = sb
         .from(BROWSE_VIEW)
-        .select('type_tab, latitude, longitude, format_tab')
+        .select('type_tab, latitude, longitude, format_tab, id, organiser_id, title, series_group_id')
         .order('starts_at', { ascending: true })
         .range(from, to);
       query = applyBrowseFilters(query, base);
@@ -569,33 +590,11 @@ async function fetchBrowseTypeCounts(sb, params) {
       from += pageSize;
     }
     const filtered = rows.filter((row) => rowPassesGeo(row, params));
-    const counts = { all: filtered.length };
-    types.forEach((type) => {
-      counts[type] = 0;
-    });
-    filtered.forEach((row) => {
-      const type = String(row.type_tab || 'meeting').toLowerCase();
-      if (counts[type] != null) counts[type] += 1;
-    });
-    return counts;
+    return tallyTypeCounts(filtered);
   }
 
-  // Exact SQL counts — avoids silent truncation once the catalogue exceeds max-rows.
-  async function countFor(typeList) {
-    let query = sb.from(BROWSE_VIEW).select('id', { count: 'exact', head: true });
-    query = applyBrowseFilters(query, { ...base, types: typeList });
-    const { count, error } = await query;
-    if (error) throw new Error(error.message);
-    return Number(count) || 0;
-  }
-
-  const counts = { all: await countFor([]) };
-  await Promise.all(
-    types.map(async (type) => {
-      counts[type] = await countFor([type]);
-    })
-  );
-  return counts;
+  const slim = await fetchAllMatchingSlim(sb, base, 'type_tab, id, organiser_id, title, series_group_id');
+  return tallyTypeCounts(slim);
 }
 
 /**
@@ -657,38 +656,28 @@ async function hydrateBrowseEvents(sb, rows) {
 }
 
 async function fetchBrowsePageIds(sb, params) {
-  const geo = hasGeoRadius(params);
-  const ratingSort = needsOrganiserRatingSort(params);
-
-  if (geo || ratingSort) {
-    const slim = await fetchAllMatchingSlim(sb, params, SLIM_RATING_SELECT);
-    let filtered = geo ? slim.filter((row) => rowPassesGeo(row, params)) : slim;
-    if (ratingSort) {
-      filtered = await attachOrganiserRatings(sb, filtered);
-      if (params.fiveStarsOnly) {
-        filtered = filtered.filter(rowPassesFiveStars);
-      }
+  let filtered = await fetchAllMatchingSlim(sb, params, BROWSE_SLIM_SELECT);
+  if (hasGeoRadius(params)) {
+    filtered = filtered.filter((row) => rowPassesGeo(row, params));
+  }
+  if (needsOrganiserRatingSort(params)) {
+    filtered = await attachOrganiserRatings(sb, filtered);
+    if (params.fiveStarsOnly) {
+      filtered = filtered.filter(rowPassesFiveStars);
     }
-    const sorted = sortRows(filtered, params.sort);
-    const total = sorted.length;
-    const slice = sorted.slice(params.offset, params.offset + params.limit);
-    return { ids: slice.map((r) => r.id), total, rows: slice };
   }
 
-  let query = sb.from(BROWSE_VIEW).select(
-    'id, starts_at, min_ticket_price, average_rating, featured, featured_until, created_at',
-    { count: 'exact' }
-  );
-  query = applyBrowseFilters(query, params);
-  query = applySqlSort(query, params.sort);
-  query = query.range(params.offset, params.offset + params.limit - 1);
+  const seriesCounts = countBrowseSeriesOccurrences(filtered);
+  const sorted = sortRows(filtered, params.sort);
+  const deduped = dedupeBrowseRowsBySeries(sorted);
+  const total = deduped.length;
+  const slice = deduped.slice(params.offset, params.offset + params.limit);
 
-  const { data, count, error } = await query;
-  if (error) throw new Error(error.message);
   return {
-    ids: (data || []).map((r) => r.id),
-    total: Number(count) || 0,
-    rows: data || [],
+    ids: slice.map((r) => r.id),
+    total,
+    rows: slice,
+    idToSeriesCount: idToSeriesCountMap(slice, seriesCounts),
   };
 }
 
@@ -718,13 +707,8 @@ async function fetchBrowseEventsPage(sb, rawQuery) {
         limit: Math.min(GEO_MATCH_CAP, MAX_PINS * 2),
       });
       slim = slim.filter((row) => rowPassesGeo(row, params));
-    } else if (ratingSort) {
-      slim = await fetchAllMatchingSlim(sb, pinParams, PIN_SELECT);
     } else {
-      slim = await fetchMatchingRows(sb, pinParams, PIN_SELECT, {
-        sort: params.sort,
-        limit: MAX_PINS,
-      });
+      slim = await fetchAllMatchingSlim(sb, pinParams, PIN_SELECT);
     }
     if (ratingSort) {
       slim = await attachOrganiserRatings(sb, slim);
@@ -732,11 +716,16 @@ async function fetchBrowseEventsPage(sb, rawQuery) {
         slim = slim.filter(rowPassesFiveStars);
       }
     }
-    const sorted = sortRows(slim, params.sort).slice(0, MAX_PINS);
-    const withModes = await attachAttendanceModes(sb, sorted);
+    const pinSeriesCounts = countBrowseSeriesOccurrences(slim);
+    const sorted = sortRows(slim, params.sort);
+    const deduped = dedupeBrowseRowsBySeries(sorted);
+    const pinSlice = deduped.slice(0, MAX_PINS);
+    const withModes = await attachAttendanceModes(sb, pinSlice);
+    const pinEvents = withModes.map(rowToBrowsePin);
+    attachBrowseSeriesCounts(pinEvents, idToSeriesCountMap(withModes, pinSeriesCounts));
     return {
-      events: withModes.map(rowToBrowsePin),
-      pagination: { total: withModes.length, page: 1, limit: MAX_PINS, totalPages: 1 },
+      events: pinEvents,
+      pagination: { total: deduped.length, page: 1, limit: MAX_PINS, totalPages: 1 },
       meta: null,
       featured: [],
     };
@@ -758,18 +747,22 @@ async function fetchBrowseEventsPage(sb, rawQuery) {
         fq = fq.order('starts_at', { ascending: true }).limit(SPOTLIGHT_CAROUSEL_MAX * 4);
         const { data: featuredRows, error: fErr } = await fq;
         if (fErr) throw new Error(fErr.message);
-        return dedupeFeaturedRowsBySeries(
-          (featuredRows || []).filter((row) => isEventCurrentlyFeatured(row))
-        ).slice(0, SPOTLIGHT_CAROUSEL_MAX);
+        const filtered = (featuredRows || []).filter((row) => isEventCurrentlyFeatured(row));
+        const featuredSeriesCounts = countBrowseSeriesOccurrences(filtered);
+        const deduped = dedupeFeaturedRowsBySeries(filtered).slice(0, SPOTLIGHT_CAROUSEL_MAX);
+        return {
+          rows: deduped,
+          idToSeriesCount: idToSeriesCountMap(deduped, featuredSeriesCounts),
+        };
       })()
-    : Promise.resolve([]);
+    : Promise.resolve({ rows: [], idToSeriesCount: new Map() });
 
   const typeCountsPromise = wantHeavyMeta ? fetchBrowseTypeCounts(sb, params) : Promise.resolve(null);
   const spotlightPromise = wantHeavyMeta
     ? require('./event-featured-slots').getFeaturedSpotlightSlotStatus()
     : Promise.resolve(null);
 
-  const [pageData, liveFeatured, typeCounts, spotlightSlots] = await Promise.all([
+  const [pageData, featuredPack, typeCounts, spotlightSlots] = await Promise.all([
     fetchBrowsePageIds(sb, params),
     featuredPromise,
     typeCountsPromise,
@@ -777,12 +770,16 @@ async function fetchBrowseEventsPage(sb, rawQuery) {
   ]);
 
   const pageRows = await fetchRowsByIds(sb, pageData.ids);
+  const liveFeatured = featuredPack.rows || [];
   const [events, featured] = await Promise.all([
     hydrateBrowseEvents(sb, pageRows).then(dedupeEventsById),
     liveFeatured.length
       ? hydrateBrowseEvents(sb, liveFeatured).then(dedupeEventsById)
       : Promise.resolve([]),
   ]);
+
+  attachBrowseSeriesCounts(events, pageData.idToSeriesCount);
+  attachBrowseSeriesCounts(featured, featuredPack.idToSeriesCount);
 
   const order = new Map(pageData.ids.map((id, i) => [id, i]));
   events.sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
