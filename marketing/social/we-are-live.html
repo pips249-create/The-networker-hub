@@ -57,16 +57,18 @@
   }
 
   .logo-wrap {
-    width: 820px;
+    width: 920px;
     max-width: 100%;
     margin-bottom: 36px;
     flex-shrink: 0;
+    padding: 8px 0;
   }
 
-  .logo-wrap svg {
+  .logo-wrap img {
     display: block;
     width: 100%;
     height: auto;
+    object-fit: contain;
   }
 
   .copy {
@@ -122,16 +124,13 @@
 </head>
 <body>
   <div id="canvas">
-    <div class="logo-wrap" aria-hidden="true">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 132" role="img" aria-label="The Networker UK">
-        <text x="170" y="28" text-anchor="middle" font-family="'DM Serif Display', Georgia, serif" font-size="26" fill="#f5f0e8">The</text>
-        <text x="32" y="88" font-family="'DM Serif Display', Georgia, serif" font-size="58" fill="#c299d1">Net</text>
-        <text x="119" y="88" font-family="'DM Serif Display', Georgia, serif" font-size="58" fill="#c299d1">w</text>
-        <circle cx="176" cy="72" r="11" fill="#faf6ee" stroke="#c299d1" stroke-width="2.5"/>
-        <circle cx="176" cy="72" r="17" fill="none" stroke="#c299d1" stroke-width="2"/>
-        <text x="193" y="88" font-family="'DM Serif Display', Georgia, serif" font-size="58" fill="#c299d1">rker</text>
-        <text x="170" y="124" text-anchor="middle" font-family="'DM Serif Display', Georgia, serif" font-size="26" fill="#f5f0e8">UK</text>
-      </svg>
+    <div class="logo-wrap">
+      <img
+        src="../../assets/logo-nav-on-light.png"
+        alt="The Networker UK"
+        width="920"
+        height="426"
+      >
     </div>
     <div class="copy">
       <h1 class="headline">We're live.</h1>

@@ -6,7 +6,7 @@
 - Feed post: `marketing/social/we-are-live-1080.png`
 - Source HTML: `marketing/social/we-are-live.html` (re-export: `node marketing/export-we-are-live-post.mjs`)
 
-Square 1080×1080: large UK logo, **We're live.**, browse · book · enquire line, 9am pill.
+Square 1080×1080: official UK logo (`assets/logo-nav-on-light.png`), **We're live.**, browse · book · enquire line, 9am pill.
 
 ---
 
