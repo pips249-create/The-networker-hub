@@ -12,6 +12,8 @@ const {
   applyPendingOpportunitiesAdminFilter,
   healOrphanedOpportunityReviewSubmissions,
   listRecentAutoRejectedOpportunities,
+  filterPendingOpportunityAdminRows,
+  countPendingOpportunitiesForAdmin,
 } = require('./opportunity-review-queue');
 const { listingPaymentCurrent } = require('./opportunity-listing-pricing');
 
@@ -74,14 +76,10 @@ async function fetchAdminActionCounts(sb, options) {
   const light = !!(options && options.light);
   await healOrphanedOpportunityReviewSubmissions(sb);
   const reviewQueueReady = await isOpportunityReviewQueueReady(sb);
-  const pendingOpportunitiesQuery = applyPendingOpportunitiesAdminFilter(
-    sb.from('business_opportunities').select('id', { count: 'exact', head: true }),
-    reviewQueueReady
-  );
   const baseQueries = [
     sb.from('listing_reports').select('id', { count: 'exact', head: true }).eq('status', 'open'),
     sb.from('review_reports').select('id', { count: 'exact', head: true }).eq('status', 'open'),
-    pendingOpportunitiesQuery,
+    Promise.resolve({ count: await countPendingOpportunitiesForAdmin(sb, reviewQueueReady), error: null }),
     sb
       .from('organiser_claim_disputes')
       .select('id', { count: 'exact', head: true })
@@ -685,8 +683,8 @@ async function fetchAttentionQueue(sb, counts) {
       .from('business_opportunities')
       .select(
         reviewQueueReady
-          ? 'id, title, host, created_at, review_submitted_at, approval_status, pending_review_payload'
-          : 'id, title, host, created_at, approval_status, pending_review_payload'
+          ? 'id, title, host, created_at, review_submitted_at, approval_status, pending_review_payload, meta'
+          : 'id, title, host, created_at, approval_status, pending_review_payload, meta, updated_at'
       ),
     reviewQueueReady
   );
@@ -731,7 +729,9 @@ async function fetchAttentionQueue(sb, counts) {
       listRecentAutoRejectedOpportunities(sb, { days: 7, limit: 10 }),
     ]);
 
-  const pendingOpportunities = (pendingOppsRes.data || []).map((o) => ({
+  const pendingOpportunities = filterPendingOpportunityAdminRows(pendingOppsRes.data || [])
+    .slice(0, 10)
+    .map((o) => ({
     id: o.id,
     title: String(o.title || '').trim(),
     host: String(o.host || '').trim() || '—',

@@ -24,6 +24,8 @@ const {
   isOpportunityReviewQueueReady,
   applySubmittedReviewFilter,
   healOrphanedOpportunityReviewSubmissions,
+  filterPendingOpportunityAdminRows,
+  countPendingOpportunitiesForAdmin,
 } = require('../opportunity-review-queue');
 
 const { HUB_SEED_OWNER_EMAIL, isHubSeedOwnerEmail } = require('../opportunity-hub-seed');
@@ -406,12 +408,7 @@ async function listOpportunitiesForAdmin(query) {
     const res = await dbQuery.eq('id', id).limit(1);
     if (res.error) throw new Error(res.error.message);
     const rows = res.data || [];
-    const pendingCountRes = await applyPendingOpportunitiesAdminFilter(
-      sb.from('business_opportunities').select('id', { count: 'exact', head: true }),
-      reviewQueueReady
-    );
-    const pendingCountResult = await pendingCountRes;
-    if (pendingCountResult.error) throw new Error(pendingCountResult.error.message);
+    const pendingCount = await countPendingOpportunitiesForAdmin(sb, reviewQueueReady);
     return {
       opportunities: rows.map(mapOpportunityRow),
       count: rows.length,
@@ -421,7 +418,7 @@ async function listOpportunitiesForAdmin(query) {
       page: 0,
       pageSize: 1,
       hasMore: false,
-      pending_count: pendingCountResult.count || 0,
+      pending_count: pendingCount,
       review_queue_ready: reviewQueueReady,
     };
   }
@@ -472,16 +469,11 @@ async function listOpportunitiesForAdmin(query) {
   if (brandDuplicatesOnly) {
     brandDuplicateIds = await findExclusiveBrandDuplicateListingIds(sb);
     if (!brandDuplicateIds.length) {
-      const pendingCountRes = await applyPendingOpportunitiesAdminFilter(
-        sb.from('business_opportunities').select('id', { count: 'exact', head: true }),
-        reviewQueueReady
-      );
-      const pendingCountResult = await pendingCountRes;
-      if (pendingCountResult.error) throw new Error(pendingCountResult.error.message);
+      const pendingCount = await countPendingOpportunitiesForAdmin(sb, reviewQueueReady);
       return {
         opportunities: [],
         total: 0,
-        pending_count: pendingCountResult.count || 0,
+        pending_count: pendingCount,
       };
     }
     dbQuery = dbQuery.in('id', brandDuplicateIds);
@@ -503,6 +495,16 @@ async function listOpportunitiesForAdmin(query) {
     });
     total = filtered.length;
     rows = filtered.slice(offset, offset + limit);
+  } else if (approvalStatus === 'Pending Review' && !reviewQueueReady) {
+    const pendingRes = await dbQuery.limit(500);
+    if (pendingRes.error) throw new Error(pendingRes.error.message);
+    const filtered = filterPendingOpportunityAdminRows(pendingRes.data || []).sort(function (a, b) {
+      return String(effectiveReviewSubmittedAt(b) || b.updated_at || '').localeCompare(
+        String(effectiveReviewSubmittedAt(a) || a.updated_at || '')
+      );
+    });
+    total = filtered.length;
+    rows = filtered.slice(offset, offset + limit);
   } else {
     dbQuery = dbQuery.range(offset, offset + limit - 1);
     const res = await dbQuery;
@@ -516,40 +518,41 @@ async function listOpportunitiesForAdmin(query) {
     rows = rows.slice(0, limit);
   }
 
-  const pendingCountRes = await applyPendingOpportunitiesAdminFilter(
-    sb.from('business_opportunities').select('id', { count: 'exact', head: true }),
-    reviewQueueReady
-  );
-  const pendingCountResult = await pendingCountRes;
-  if (pendingCountResult.error) throw new Error(pendingCountResult.error.message);
+  const pendingCount = await countPendingOpportunitiesForAdmin(sb, reviewQueueReady);
 
   let recentSubmissions = [];
-  const pendingCount = pendingCountResult.count || 0;
-  if (
-    pendingCount === 0 &&
-    approvalStatus === 'Pending Review' &&
-    reviewQueueReady &&
-    !search
-  ) {
-    const recentRes = await sb
-      .from('business_opportunities')
-      .select('id, title, host, owner_email, approval_status, review_submitted_at, updated_at')
-      .not('review_submitted_at', 'is', null)
-      .order('review_submitted_at', { ascending: false })
-      .limit(5);
-    if (!recentRes.error) {
-      recentSubmissions = (recentRes.data || []).map(function (row) {
-        return {
-          id: row.id,
-          title: String(row.title || '').trim() || 'Untitled',
-          host: String(row.host || '').trim(),
-          owner_email: String(row.owner_email || '').toLowerCase(),
-          approval_status: row.approval_status || '',
-          review_submitted_at: row.review_submitted_at || null,
-          updated_at: row.updated_at || null,
-        };
-      });
+  if (pendingCount === 0 && approvalStatus === 'Pending Review' && !search) {
+    let recentRows = [];
+    if (reviewQueueReady) {
+      const recentRes = await sb
+        .from('business_opportunities')
+        .select('id, title, host, owner_email, approval_status, review_submitted_at, updated_at')
+        .not('review_submitted_at', 'is', null)
+        .order('review_submitted_at', { ascending: false })
+        .limit(5);
+      if (!recentRes.error) recentRows = recentRes.data || [];
+    } else {
+      const recentRes = await sb
+        .from('business_opportunities')
+        .select('id, title, host, owner_email, approval_status, meta, updated_at')
+        .eq('approval_status', 'Pending Review')
+        .order('updated_at', { ascending: false })
+        .limit(50);
+      if (!recentRes.error) {
+        recentRows = filterPendingOpportunityAdminRows(recentRes.data || []).slice(0, 5);
+      }
     }
+    recentSubmissions = recentRows.map(function (row) {
+      return {
+        id: row.id,
+        title: String(row.title || '').trim() || 'Untitled',
+        host: String(row.host || '').trim(),
+        owner_email: String(row.owner_email || '').toLowerCase(),
+        approval_status: row.approval_status || '',
+        review_submitted_at: effectiveReviewSubmittedAt(row) || row.review_submitted_at || null,
+        updated_at: row.updated_at || null,
+      };
+    });
   }
 
   return {

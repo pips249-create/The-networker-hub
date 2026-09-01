@@ -120,6 +120,18 @@ function hasPendingLiveListingUpdate(row) {
   return Boolean(row && row.pending_review_payload && row.pending_review_payload.row);
 }
 
+/** True when a row belongs in the Command Centre review queue. */
+function isOpportunityInAdminReviewQueue(row) {
+  if (!row) return false;
+  if (hasPendingLiveListingUpdate(row)) return true;
+  if (String(row.approval_status || '').trim() !== 'Pending Review') return false;
+  return isOpportunitySubmittedForReview(row);
+}
+
+function filterPendingOpportunityAdminRows(rows) {
+  return (rows || []).filter(isOpportunityInAdminReviewQueue);
+}
+
 /** Admin pending queue: new submissions + staged edits on live listings. */
 function applyPendingOpportunitiesAdminFilter(dbQuery, reviewQueueReady) {
   if (reviewQueueReady) {
@@ -127,7 +139,27 @@ function applyPendingOpportunitiesAdminFilter(dbQuery, reviewQueueReady) {
       'and(approval_status.eq.Pending Review,review_submitted_at.not.is.null),pending_review_payload.not.is.null'
     );
   }
-  return dbQuery.not('pending_review_payload', 'is', null);
+  // Migration 266 missing — meta.__review_submitted_at is filtered in application code.
+  return dbQuery.eq('approval_status', 'Pending Review');
+}
+
+async function countPendingOpportunitiesForAdmin(sb, reviewQueueReady) {
+  if (!sb) return 0;
+  if (reviewQueueReady) {
+    const pendingRes = await applyPendingOpportunitiesAdminFilter(
+      sb.from('business_opportunities').select('id', { count: 'exact', head: true }),
+      true
+    );
+    const pendingResult = await pendingRes;
+    return pendingResult.error ? 0 : pendingResult.count || 0;
+  }
+  const { data, error } = await sb
+    .from('business_opportunities')
+    .select('id, meta, approval_status, pending_review_payload')
+    .eq('approval_status', 'Pending Review')
+    .limit(500);
+  if (error) return 0;
+  return filterPendingOpportunityAdminRows(data || []).length;
 }
 
 function resetOpportunityReviewQueueReadyCache() {
@@ -215,4 +247,7 @@ module.exports = {
   applyPendingOpportunitiesAdminFilter,
   healOrphanedOpportunityReviewSubmissions,
   listRecentAutoRejectedOpportunities,
+  isOpportunityInAdminReviewQueue,
+  filterPendingOpportunityAdminRows,
+  countPendingOpportunitiesForAdmin,
 };

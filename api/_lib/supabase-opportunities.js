@@ -1030,10 +1030,12 @@ function assertOpportunityListingCompliance() {
   // Earnings / return fields were removed from listing forms.
 }
 
-async function sendPendingReviewEmailSafe(listing) {
+async function sendPendingReviewEmailSafe(listing, options) {
   try {
-    const { sendOpportunityListingPendingReviewEmail } = require('./opportunity-emails');
+    const { sendOpportunityListingPendingReviewEmail, sendOpportunityListingSubmittedAdminEmail } =
+      require('./opportunity-emails');
     await sendOpportunityListingPendingReviewEmail(listing);
+    await sendOpportunityListingSubmittedAdminEmail(listing, options);
   } catch (emailErr) {
     console.warn(
       '[opportunity] pending review email failed:',
@@ -1102,7 +1104,7 @@ async function updateOpportunity(id, payload) {
   if (isLiveListing && submitForReview) {
     const hadPending = Boolean(existingRow?.pending_review_payload);
     const listing = await submitLiveListingPendingReview(sb, id, existingRow, payload);
-    if (!hadPending) await sendPendingReviewEmailSafe(listing);
+    if (!hadPending) await sendPendingReviewEmailSafe(listing, { resubmit: true });
     return listing;
   }
 
@@ -1165,7 +1167,7 @@ async function updateOpportunity(id, payload) {
   }
 
   const listing = rowToListing(data);
-  if (submitForReview && !wasAlreadyQueued) await sendPendingReviewEmailSafe(listing);
+  if (submitForReview && !wasAlreadyQueued) await sendPendingReviewEmailSafe(listing, { resubmit: wasAlreadyQueued });
   return listing;
 }
 

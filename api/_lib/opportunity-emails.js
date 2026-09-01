@@ -1,4 +1,4 @@
-const { sendTemplatedEmail } = require('./send-template-email');
+const { sendTemplatedEmail, sendViaResend } = require('./send-template-email');
 const { escapeHtml } = require('./event-refund-policy');
 const {
   siteBase,
@@ -169,6 +169,92 @@ async function sendOpportunityListingPendingReviewEmail(opportunity) {
     subject: 'Your listing is pending review — ' + listing.opportunity_title,
   });
   return { sent: true, to };
+}
+
+function opportunityReviewNotifyInboxes() {
+  const configured = String(process.env.OPPORTUNITY_REVIEW_NOTIFY_EMAILS || '').trim();
+  if (configured) {
+    return configured
+      .split(/[,;]+/)
+      .map(function (email) {
+        return String(email || '').trim().toLowerCase();
+      })
+      .filter(Boolean);
+  }
+  const inboxes = [];
+  const adminEmail = String(process.env.ADMIN_EMAIL || 'pips249@gmail.com')
+    .trim()
+    .toLowerCase();
+  const rosieEmail = String(
+    process.env.OPPORTUNITY_REVIEW_NOTIFY_ROSIE || 'rosie@thenetworkeruk.com'
+  )
+    .trim()
+    .toLowerCase();
+  if (adminEmail) inboxes.push(adminEmail);
+  if (rosieEmail && inboxes.indexOf(rosieEmail) === -1) inboxes.push(rosieEmail);
+  return inboxes;
+}
+
+async function sendOpportunityListingSubmittedAdminEmail(opportunity, options) {
+  const inboxes = opportunityReviewNotifyInboxes();
+  if (!inboxes.length) return { skipped: true, reason: 'no_inboxes' };
+
+  const siteUrl = siteBase();
+  const listing = buildOpportunityListingEmailVars(opportunity);
+  const ownerEmail = ownerEmailForOpportunity(opportunity);
+  const reviewId = String(opportunity.id || '').trim();
+  const reviewUrl =
+    siteUrl +
+    '/admin/#opportunities/review/' +
+    encodeURIComponent(reviewId);
+  const queueUrl = siteUrl + '/admin/#opportunities?approval=pending';
+  const isResubmit = Boolean(options && options.resubmit);
+  const subject =
+    (isResubmit ? 'Opportunity resubmitted — ' : 'Opportunity to review — ') +
+    listing.opportunity_title;
+  const html =
+    '<p>A business opportunity listing has been ' +
+    (isResubmit ? 'resubmitted for approval' : 'submitted for approval') +
+    '.</p>' +
+    '<table role="presentation" cellspacing="0" cellpadding="0" border="0">' +
+    '<tr><td style="padding:4px 12px 4px 0;color:#666;vertical-align:top;"><strong>Listing</strong></td><td style="padding:4px 0;">' +
+    escapeHtml(listing.opportunity_title || 'Untitled') +
+    '</td></tr>' +
+    '<tr><td style="padding:4px 12px 4px 0;color:#666;vertical-align:top;"><strong>Host</strong></td><td style="padding:4px 0;">' +
+    escapeHtml(String(opportunity.host || '').trim() || '—') +
+    '</td></tr>' +
+    '<tr><td style="padding:4px 12px 4px 0;color:#666;vertical-align:top;"><strong>Owner email</strong></td><td style="padding:4px 0;">' +
+    escapeHtml(ownerEmail || '—') +
+    '</td></tr>' +
+    '</table>' +
+    '<p style="margin:20px 0 0;">' +
+    '<a href="' +
+    escapeHtml(reviewUrl) +
+    '" style="display:inline-block;padding:12px 20px;background:#1c2040;color:#fff;text-decoration:none;border-radius:999px;font-weight:700;">Review listing</a>' +
+    ' &nbsp; ' +
+    '<a href="' +
+    escapeHtml(queueUrl) +
+    '">Open review queue</a></p>' +
+    '<p style="margin:16px 0 0;color:#666;font-size:13px;">Approve sends the owner a pay-to-go-live email. Deny if it does not meet standards.</p>';
+
+  const results = [];
+  for (const to of inboxes) {
+    try {
+      await sendViaResend({
+        to,
+        subject,
+        html,
+        replyTo: ownerEmail || undefined,
+        skipAllowlist: true,
+      });
+      results.push({ to, sent: true });
+    } catch (err) {
+      results.push({ to, error: err && err.message ? err.message : String(err) });
+    }
+  }
+  return { sent: results.some(function (r) {
+    return r.sent;
+  }), results };
 }
 
 async function sendOpportunityListingApprovedPayEmail(opportunity, options) {
@@ -394,6 +480,8 @@ module.exports = {
   buildOpportunityListingEmailVars,
   sendOpportunityListingLiveEmail,
   sendOpportunityListingPendingReviewEmail,
+  sendOpportunityListingSubmittedAdminEmail,
+  opportunityReviewNotifyInboxes,
   sendOpportunityListingApprovedPayEmail,
   sendOpportunityPremiumLiveEmail,
   sendOpportunityEnquiryEmails,
