@@ -509,7 +509,7 @@
   var adminNotificationsTimer = null;
   var groupCleanupCache = null;
   var eventCleanupCache = null;
-  var analyticsState = { period: '30d', demandCache: null, waitlistCache: null };
+  var analyticsState = { period: '30d', demandCache: null, waitlistCache: null, userEventsCache: null };
   var financialsState = {
     organisersPage: 0,
     organisersQ: '',
@@ -5417,11 +5417,7 @@
           card(
             'Events by users',
             String(m.userAddedEvents || 0),
-            (m.userAddedEventsApproved || 0) +
-              ' approved · ' +
-              (m.liveEvents || 0) +
-              ' on events browse',
-            'brand'
+            (m.userAddedEventsApproved || 0) + ' approved · see User events tab'
           ) +
           card(
             'Organiser accounts',
@@ -5487,7 +5483,7 @@
       '<ul id="analytics-activity" class="admin-activity-feed space-y-0 min-h-0 pr-1 -mr-1">' +
       '<li class="text-sm text-slate-500">Loading…</li></ul>' +
       '</aside></div>' +
-      '<p class="text-sm text-slate-500">Need deeper signals? Open <a href="#analytics/demand" class="font-semibold text-brand-700 hover:underline">Demand</a>, <a href="#analytics/insights" class="font-semibold text-brand-700 hover:underline">Insights</a>, or <a href="#analytics/waitlist" class="font-semibold text-brand-700 hover:underline">Waitlist</a>.</p>' +
+      '<p class="text-sm text-slate-500">Need deeper signals? Open <a href="#analytics/user-events" class="font-semibold text-brand-700 hover:underline">User events</a>, <a href="#analytics/demand" class="font-semibold text-brand-700 hover:underline">Demand</a>, <a href="#analytics/insights" class="font-semibold text-brand-700 hover:underline">Insights</a>, or <a href="#analytics/waitlist" class="font-semibold text-brand-700 hover:underline">Waitlist</a>.</p>' +
       '</div>';
     paintAnalyticsOverviewMetrics();
   }
@@ -5674,6 +5670,134 @@
     loadAnalyticsWaitlistPanel();
   }
 
+  function formatUserEventDate(iso) {
+    if (!iso) return 'TBC';
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return String(iso).slice(0, 10);
+    return d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+  }
+
+  function renderUserEventsPanel(data) {
+    if (!data || data.error || data.ok === false) {
+      return (
+        '<p class="text-sm text-red-700">' +
+        esc((data && (data.message || data.error)) || 'Could not load user events.') +
+        '</p>'
+      );
+    }
+    var s = data.summary || {};
+    var rows = data.events || [];
+    var cards =
+      card('External user publishes', String(s.externalUserPublished || 0), 'Hub-created · non-staff') +
+      card('Legacy import upcoming', String(s.importedUpcoming != null ? s.importedUpcoming : '—'), 'Airtable directory rows') +
+      card('Hub-created upcoming', String(s.hubCreatedUpcoming != null ? s.hubCreatedUpcoming : '—'), 'airtable_id empty') +
+      card('Excluded staff/internal', String(s.excludedStaffOrInternal || 0), 'Demo pages & team emails');
+
+    var table =
+      '<div class="overflow-x-auto rounded-xl border border-slate-200">' +
+      '<table class="min-w-full text-sm">' +
+      '<thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">' +
+      '<tr><th class="px-3 py-2">Date</th><th class="px-3 py-2">Event</th><th class="px-3 py-2">Organiser</th>' +
+      '<th class="px-3 py-2">Published by</th><th class="px-3 py-2">Tickets</th><th class="px-3 py-2">Link</th></tr></thead><tbody>';
+
+    if (!rows.length) {
+      table +=
+        '<tr><td colspan="6" class="px-3 py-6 text-slate-500">No external user-published events match this filter.</td></tr>';
+    } else {
+      rows.forEach(function (row) {
+        var eventUrl = row.slug ? 'https://www.thenetworkeruk.com/events/' + encodeURIComponent(row.slug) : '';
+        var pubBy = row.publishActorEmail || row.ownerEmail || '—';
+        table +=
+          '<tr class="border-t border-slate-100 hover:bg-slate-50/80">' +
+          '<td class="px-3 py-2 whitespace-nowrap text-slate-600">' +
+          esc(formatUserEventDate(row.startsAt)) +
+          '</td>' +
+          '<td class="px-3 py-2 font-medium text-brand-900">' +
+          esc(row.title || 'Untitled') +
+          '</td>' +
+          '<td class="px-3 py-2 text-slate-700">' +
+          esc(row.organiser || '—') +
+          (row.ownershipClaimStatus
+            ? ' <span class="text-[11px] text-slate-400">(' + esc(row.ownershipClaimStatus) + ')</span>'
+            : '') +
+          '</td>' +
+          '<td class="px-3 py-2 text-slate-600">' +
+          esc(pubBy) +
+          '</td>' +
+          '<td class="px-3 py-2">' +
+          (row.ticketSalesEnabled
+            ? '<span class="text-emerald-700 font-semibold">Live</span>'
+            : '<span class="text-slate-500">Listing</span>') +
+          '</td>' +
+          '<td class="px-3 py-2 whitespace-nowrap">' +
+          (eventUrl
+            ? '<a href="' +
+              attrEsc(eventUrl) +
+              '" target="_blank" rel="noopener noreferrer" class="font-semibold text-brand-700 hover:underline">View ↗</a>'
+            : '—') +
+          '</td></tr>';
+      });
+    }
+    table += '</tbody></table></div>';
+
+    return (
+      '<div class="space-y-4">' +
+      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">' +
+      'Shows events created on the Hub (<code class="text-xs">airtable_id</code> empty) and published by someone who is not Pip, Rosie, Jamie, Catherine, or another admin. ' +
+      'Most browse listings are still legacy imports — this list is the real organiser self-serve activity.' +
+      '</p>' +
+      '<div class="admin-metric-grid admin-metric-grid--4">' +
+      cards +
+      '</div>' +
+      table +
+      '</div>'
+    );
+  }
+
+  function loadAnalyticsUserEventsPanel() {
+    var panel = document.getElementById('analytics-user-events');
+    if (!panel) return;
+    panel.innerHTML = '<p class="text-sm text-slate-500">Loading user-published events…</p>';
+    var q = String((document.getElementById('user-events-search') || {}).value || '').trim();
+    var upcoming = (document.getElementById('user-events-upcoming') || {}).checked !== false;
+    var url =
+      '/api/admin/user-events?limit=500&upcoming=' +
+      (upcoming ? '1' : '0') +
+      (q ? '&q=' + encodeURIComponent(q) : '');
+    adminGet(url).then(function (data) {
+      analyticsState.userEventsCache = data;
+      if (panel) panel.innerHTML = renderUserEventsPanel(data);
+    });
+  }
+
+  function renderAnalyticsUserEvents() {
+    main.innerHTML =
+      '<div class="space-y-4 min-w-0">' +
+      '<div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">' +
+      '<p class="text-sm text-slate-500">Events organisers published themselves — excluding staff, admins, and legacy Airtable imports.</p>' +
+      '<div class="flex flex-wrap items-center gap-3">' +
+      '<label class="inline-flex items-center gap-2 text-sm text-slate-700">' +
+      '<input type="checkbox" id="user-events-upcoming" class="rounded border-slate-300" checked /> Upcoming only</label>' +
+      '<input type="search" id="user-events-search" placeholder="Search title, organiser, email…" class="rounded-lg border border-slate-200 px-3 py-2 text-sm min-w-[14rem]" />' +
+      '<button type="button" id="user-events-refresh" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-3.5 py-2 hover:bg-brand-900 transition">Refresh</button>' +
+      '</div></div>' +
+      '<div id="analytics-user-events"><p class="text-sm text-slate-500">Loading…</p></div></div>';
+
+    var searchEl = document.getElementById('user-events-search');
+    var upcomingEl = document.getElementById('user-events-upcoming');
+    var refreshBtn = document.getElementById('user-events-refresh');
+    var searchTimer = null;
+    if (searchEl) {
+      searchEl.addEventListener('input', function () {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(loadAnalyticsUserEventsPanel, 300);
+      });
+    }
+    if (upcomingEl) upcomingEl.addEventListener('change', loadAnalyticsUserEventsPanel);
+    if (refreshBtn) refreshBtn.addEventListener('click', loadAnalyticsUserEventsPanel);
+    loadAnalyticsUserEventsPanel();
+  }
+
   function renderAnalyticsInsights() {
     main.innerHTML =
       '<div class="space-y-4 min-w-0">' +
@@ -5687,18 +5811,25 @@
 
   function renderAnalyticsHub(fullHash) {
     bindAnalyticsControls();
-    var tab = resolveHubTab(fullHash, 'analytics', ['overview', 'demand', 'insights', 'waitlist'], 'overview');
+    var tab = resolveHubTab(
+      fullHash,
+      'analytics',
+      ['overview', 'user-events', 'demand', 'insights', 'waitlist'],
+      'overview'
+    );
     if (!tab) return;
     var tabsHtml = adminHubTabsHtml(
       [
         { key: 'overview', label: 'Overview', href: '#analytics/overview' },
+        { key: 'user-events', label: 'User events', href: '#analytics/user-events' },
         { key: 'demand', label: 'Demand', href: '#analytics/demand' },
         { key: 'insights', label: 'Insights', href: '#analytics/insights' },
         { key: 'waitlist', label: 'Waitlist', href: '#analytics/waitlist' },
       ],
       tab
     );
-    if (tab === 'demand') withHubTabs(tabsHtml, renderAnalyticsDemand);
+    if (tab === 'user-events') withHubTabs(tabsHtml, renderAnalyticsUserEvents);
+    else if (tab === 'demand') withHubTabs(tabsHtml, renderAnalyticsDemand);
     else if (tab === 'insights') withHubTabs(tabsHtml, renderAnalyticsInsights);
     else if (tab === 'waitlist') withHubTabs(tabsHtml, renderAnalyticsWaitlist);
     else withHubTabs(tabsHtml, renderAnalyticsOverview);

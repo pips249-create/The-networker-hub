@@ -49,6 +49,7 @@ const routes = {
   'revenue-deals': require('./_lib/routes/admin-revenue-deals'),
   'revenue-targets': require('./_lib/routes/admin-revenue-targets'),
   activity: require('./_lib/routes/admin-activity'),
+  'user-events': require('./_lib/routes/admin-user-events'),
 };
 
 module.exports = wrapHandler(async function handler(req, res) {
