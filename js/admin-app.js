@@ -942,6 +942,39 @@
     return organiserId ? '#cleanup/groups?organiser=' + encodeURIComponent(organiserId) : '#cleanup/groups';
   }
 
+  function salesKitHref(organiser) {
+    var id = '';
+    var name = '';
+    var email = '';
+    if (organiser && typeof organiser === 'object') {
+      id = String(organiser.id || '').trim();
+      name = String(organiser.name || '').trim();
+      email = String(organiser.email || '').trim();
+    } else {
+      id = String(organiser || '').trim();
+    }
+    var params = new URLSearchParams();
+    params.set('tab', 'crm');
+    if (id) params.set('organiser', id);
+    if (name) params.set('name', name);
+    if (email) params.set('email', email);
+    return '#sales-kit?' + params.toString();
+  }
+
+  function salesKitTabHref(tab, focus) {
+    var params = new URLSearchParams();
+    params.set('tab', tab === 'pitch' ? 'pitch' : 'crm');
+    if (focus) {
+      var id = String(focus.id || focus.organiserId || '').trim();
+      var name = String(focus.name || focus.organiserName || '').trim();
+      var email = String(focus.email || focus.organiserEmail || '').trim();
+      if (id) params.set('organiser', id);
+      if (name) params.set('name', name);
+      if (email) params.set('email', email);
+    }
+    return '#sales-kit?' + params.toString();
+  }
+
   function focusOrganiserInGroupCleanup(organiserId) {
     var id = String(organiserId || '').trim();
     if (!id) return;
@@ -17933,9 +17966,7 @@
             '<span class="text-xs text-emerald-700">Complete</span>';
           var loginBadge = !o.has_login
             ? '<span class="text-xs font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded">No login</span>'
-            : o.emails_enabled === false
-              ? '<span class="text-xs font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded">Emails off</span>'
-              : '<span class="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">Login ready</span>';
+            : '<span class="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">Login ready</span>';
           if (groupCleanupState.selected[o.id]) rememberSelectedGroup(o);
           var checked = groupCleanupState.selected[o.id] ? ' checked' : '';
           var incomplete = (o.missing || []).length > 0;
@@ -17998,15 +18029,9 @@
                 attrEsc(o.email || '') +
                 '" class="text-xs font-semibold rounded-lg border border-brand-700 text-brand-700 px-2.5 py-1 hover:bg-brand-50">Impersonate</button>'
               : '') +
-            (o.has_login
-              ? o.emails_enabled === false
-                ? '<button type="button" data-enable-group-emails="' +
-                  attrEsc(o.id) +
-                  '" class="text-xs font-semibold rounded-lg border border-emerald-200 text-emerald-800 px-2.5 py-1 hover:bg-emerald-50">Enable emails</button>'
-                : '<button type="button" data-disable-group-emails="' +
-                  attrEsc(o.id) +
-                  '" class="text-xs font-semibold rounded-lg border border-slate-200 text-slate-700 px-2.5 py-1 hover:bg-slate-50">Block emails</button>'
-              : '') +
+            '<a href="' +
+            attrEsc(salesKitHref(o)) +
+            '" class="text-xs font-semibold rounded-lg border border-brand-200 text-brand-800 px-2.5 py-1 hover:bg-brand-50">Organiser sales kit</a>' +
             '<button type="button" data-toggle-group-edit="1" class="text-xs font-semibold rounded-lg bg-brand-700 text-white px-2.5 py-1 hover:bg-brand-900">' +
             (isOpen ? 'Close' : 'Edit profile') +
             '</button>' +
@@ -27209,6 +27234,18 @@
   }
 
   function renderSalesKit() {
+    var salesKitQuery = parseAdminHashQuery(currentAdminHash());
+    var salesKitTab = String(salesKitQuery.get('tab') || 'crm').trim().toLowerCase();
+    if (salesKitTab !== 'pitch') salesKitTab = 'crm';
+    var salesKitFocus = {
+      id: String(salesKitQuery.get('organiser') || salesKitQuery.get('id') || '').trim(),
+      name: String(salesKitQuery.get('name') || '').trim(),
+      email: String(salesKitQuery.get('email') || '').trim(),
+    };
+    if (!salesKitFocus.id && !salesKitFocus.name && !salesKitFocus.email) {
+      salesKitFocus = null;
+    }
+
     var followUp =
       'Hi {{name}},\n\n' +
       'Lovely to show you around The Networker UK today.\n\n' +
@@ -27247,6 +27284,25 @@
       impersonate: 'Impersonated',
       event_create: 'Listed event',
     };
+    var touchNotes = ['Called', 'Attempted call', 'Emailed'];
+    var salesKitTeam = ['Catherine', 'Rosie', 'Jamie'];
+
+    function demoMatchesFocus(d, focus) {
+      if (!focus) return true;
+      if (focus.id && d.organiserId && String(d.organiserId) === String(focus.id)) return true;
+      var nameKey = String(focus.name || '').trim().toLowerCase();
+      if (nameKey && String(d.organiserName || '').trim().toLowerCase() === nameKey) return true;
+      var emailKey = String(focus.email || '').trim().toLowerCase();
+      if (emailKey && String(d.organiserEmail || '').trim().toLowerCase() === emailKey) return true;
+      return false;
+    }
+
+    function touchCellHtml(d) {
+      var note = String(d.notes || '').trim();
+      if (touchNotes.indexOf(note) !== -1) return esc(note);
+      if (note) return esc(note);
+      return esc(sourceLabels[d.source] || 'Typed in');
+    }
 
     main.innerHTML =
       '<div class="space-y-5" id="sales-kit-root">' +
@@ -27259,6 +27315,8 @@
       internalCandidates: [],
       demos: [],
       search: [],
+      tab: salesKitTab,
+      focusOrganiser: salesKitFocus,
     };
 
     function copyText(text, statusEl, okMsg) {
@@ -27285,89 +27343,167 @@
       var demos = state.demos || [];
       var today = new Date().toISOString().slice(0, 10);
 
-      function logSectionHtml() {
+      var focus = state.focusOrganiser;
+      var focusName = focus ? String(focus.name || '').trim() : '';
+      var focusEmail = focus ? String(focus.email || '').trim() : '';
+      var focusId = focus ? String(focus.id || '').trim() : '';
+      var visibleDemos = demos.filter(function (d) {
+        return demoMatchesFocus(d, focus);
+      });
+
+      function crmSectionHtml() {
+        var quickLogHtml = salesKitTeam
+          .map(function (person) {
+            return (
+              '<div class="rounded-xl border border-slate-200 bg-white p-3">' +
+              '<p class="text-sm font-semibold text-slate-900 mb-2">' +
+              esc(person) +
+              '</p><div class="flex flex-wrap gap-2">' +
+              touchNotes
+                .map(function (touch) {
+                  return (
+                    '<button type="button" class="sales-kit-log-touch rounded-lg border border-brand-200 text-brand-800 text-xs font-semibold px-2.5 py-1.5 hover:bg-brand-50" data-by="' +
+                    attrEsc(person) +
+                    '" data-touch="' +
+                    attrEsc(touch) +
+                    '">' +
+                    esc(touch) +
+                    '</button>'
+                  );
+                })
+                .join('') +
+              '</div></div>'
+            );
+          })
+          .join('');
+
         return (
-        '<section class="admin-dash-section" id="sales-kit-outreach">' +
-        '<div class="admin-dash-section-head"><h3>Who we spoke to</h3>' +
-        '<p>Type a note, or it logs itself when you impersonate a group or list an event for them — e.g. Jamie listed BMUK, so Rosie and Catherine can see it.</p></div>' +
-        '<div class="admin-dash-section-body space-y-4">' +
-        '<form id="sales-kit-demo-form" class="grid gap-3 md:grid-cols-2 lg:grid-cols-3 bg-slate-50 border border-slate-200 rounded-xl p-4">' +
-        '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="sales-kit-shown-at">Date</label>' +
-        '<input id="sales-kit-shown-at" type="date" required class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" value="' +
-        attrEsc(today) +
-        '" /></div>' +
-        '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="sales-kit-shown-by">Who spoke to them</label>' +
-        '<select id="sales-kit-shown-by" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">' +
-        '<option>Catherine</option><option>Rosie</option><option>Jamie</option><option>Other</option></select></div>' +
-        '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="sales-kit-outcome">Outcome</label>' +
-        '<select id="sales-kit-outcome" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">' +
-        '<option value="follow_up">Follow up</option>' +
-        '<option value="interested">Interested</option>' +
-        '<option value="listed">Listed / claimed</option>' +
-        '<option value="not_now">Not now</option>' +
-        '<option value="other">Other</option></select></div>' +
-        '<div class="md:col-span-2 lg:col-span-2"><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="sales-kit-org-name">Group / contact</label>' +
-        '<input id="sales-kit-org-name" required class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="e.g. BMUK" /></div>' +
-        '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="sales-kit-org-email">Email</label>' +
-        '<input id="sales-kit-org-email" type="email" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="optional" /></div>' +
-        '<div class="md:col-span-2 lg:col-span-3"><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="sales-kit-notes">Notes</label>' +
-        '<input id="sales-kit-notes" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Spoke to Sam — interested, sending PDF. Don’t contact again this week." /></div>' +
-        '<div class="md:col-span-2 lg:col-span-3 flex flex-wrap items-center gap-2">' +
-        '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-3 py-2 hover:bg-brand-900">Log conversation</button>' +
-        '<span id="sales-kit-log-status" class="text-sm text-slate-500" aria-live="polite"></span>' +
-        '</div></form>' +
-        '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="sales-kit-log-filter">Check before you message</label>' +
-        '<input id="sales-kit-log-filter" type="search" class="w-full max-w-md rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Search BMUK, a name, or email…" /></div>' +
-        (demos.length
-          ? adminTableScroll(
-              '<table class="w-full text-sm" id="sales-kit-log-table"><thead class="bg-slate-50 text-xs uppercase text-slate-500">' +
-                '<tr><th class="px-3 py-2 text-left">Date</th><th class="px-3 py-2 text-left">Who</th><th class="px-3 py-2 text-left">Group</th><th class="px-3 py-2 text-left">How</th><th class="px-3 py-2 text-left">Outcome</th><th class="px-3 py-2 text-left">Notes</th><th class="px-3 py-2"></th></tr></thead><tbody>' +
-                demos
-                  .map(function (d) {
-                    var hay = [d.organiserName, d.organiserEmail, d.shownBy, d.notes, d.outcome, d.source]
-                      .join(' ')
-                      .toLowerCase();
-                    return (
-                      '<tr class="border-t border-slate-100 align-top sales-kit-log-row" data-hay="' +
-                      attrEsc(hay) +
-                      '">' +
-                      '<td class="px-3 py-2 whitespace-nowrap">' +
-                      esc(d.shownAt || '—') +
-                      '</td>' +
-                      '<td class="px-3 py-2">' +
-                      esc(d.shownBy) +
-                      '</td>' +
-                      '<td class="px-3 py-2"><div class="font-medium">' +
-                      esc(d.organiserName) +
-                      '</div>' +
-                      (d.organiserEmail
-                        ? '<div class="text-xs text-slate-500">' + esc(d.organiserEmail) + '</div>'
-                        : '') +
-                      '</td>' +
-                      '<td class="px-3 py-2 text-slate-600">' +
-                      esc(sourceLabels[d.source] || 'Typed in') +
-                      '</td>' +
-                      '<td class="px-3 py-2">' +
-                      esc(outcomeLabels[d.outcome] || d.outcome) +
-                      '</td>' +
-                      '<td class="px-3 py-2 text-slate-600 max-w-[18rem]">' +
-                      esc(d.notes || '—') +
-                      '</td>' +
-                      '<td class="px-3 py-2 text-right"><button type="button" class="sales-kit-delete-demo text-xs font-semibold text-red-700 hover:underline" data-id="' +
-                      attrEsc(d.id) +
-                      '">Remove</button></td></tr>'
-                    );
-                  })
-                  .join('') +
-                '</tbody></table>'
-            )
-          : '<p class="text-sm text-slate-500">Nothing logged yet. Add BMUK (or anyone you have spoken to) so the others can see it.</p>') +
-        '</div></section>'
+          '<section class="admin-dash-section" id="sales-kit-outreach">' +
+          '<div class="admin-dash-section-head"><h3>Outreach CRM</h3>' +
+          '<p>Log calls and emails so Catherine, Rosie and Jamie do not double-message the same group. Opens from <strong>Organiser sales kit</strong> on a group row, or pick a group below.</p></div>' +
+          '<div class="admin-dash-section-body space-y-4">' +
+          (focus
+            ? '<div class="rounded-xl border border-brand-200 bg-brand-50/70 p-4 flex flex-wrap items-start justify-between gap-3">' +
+              '<div class="min-w-0"><p class="font-semibold text-brand-950">' +
+              esc(focusName || 'Selected group') +
+              '</p>' +
+              (focusEmail
+                ? '<p class="text-sm text-brand-900/80 mt-1">' + esc(focusEmail) + '</p>'
+                : '<p class="text-sm text-brand-900/80 mt-1">No email on profile</p>') +
+              '</div><div class="flex flex-wrap gap-2 shrink-0">' +
+              (focusId
+                ? '<a class="rounded-lg border border-brand-300 bg-white text-sm font-semibold px-3 py-2 text-brand-900 hover:bg-brand-100" href="' +
+                  attrEsc(groupCleanupHref(focusId)) +
+                  '">Open in group cleanup</a>'
+                : '') +
+              '<a class="rounded-lg border border-brand-300 bg-white text-sm font-semibold px-3 py-2 text-brand-900 hover:bg-brand-100" href="' +
+              attrEsc(salesKitTabHref('pitch', focus)) +
+              '">Open pitch deck</a>' +
+              '</div></div>'
+            : '<div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">' +
+              '<p class="font-semibold">Pick a group first</p>' +
+              '<p class="mt-1">Use <strong>Organiser sales kit</strong> on a row in group cleanup, or type the group name in the manual log below.</p>' +
+              '</div>') +
+          '<div><p class="text-xs font-semibold text-slate-500 uppercase mb-2">Quick log</p>' +
+          '<div class="grid gap-3 sm:grid-cols-3">' +
+          quickLogHtml +
+          '</div>' +
+          '<p class="text-xs text-slate-500 mt-2">One tap logs today’s date for the group above.</p>' +
+          '<span id="sales-kit-touch-status" class="text-sm text-slate-500 ml-1" aria-live="polite"></span></div>' +
+          '<details class="rounded-xl border border-slate-200 bg-slate-50/80 p-4">' +
+          '<summary class="cursor-pointer text-sm font-semibold text-slate-800">Manual log with notes</summary>' +
+          '<form id="sales-kit-demo-form" class="grid gap-3 md:grid-cols-2 lg:grid-cols-3 mt-4">' +
+          '<input type="hidden" id="sales-kit-org-id" value="' +
+          attrEsc(focusId) +
+          '" />' +
+          '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="sales-kit-shown-at">Date</label>' +
+          '<input id="sales-kit-shown-at" type="date" required class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white" value="' +
+          attrEsc(today) +
+          '" /></div>' +
+          '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="sales-kit-shown-by">Who spoke to them</label>' +
+          '<select id="sales-kit-shown-by" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white">' +
+          '<option>Catherine</option><option>Rosie</option><option>Jamie</option><option>Other</option></select></div>' +
+          '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="sales-kit-outcome">Outcome</label>' +
+          '<select id="sales-kit-outcome" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white">' +
+          '<option value="follow_up">Follow up</option>' +
+          '<option value="interested">Interested</option>' +
+          '<option value="listed">Listed / claimed</option>' +
+          '<option value="not_now">Not now</option>' +
+          '<option value="other">Other</option></select></div>' +
+          '<div class="md:col-span-2 lg:col-span-2"><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="sales-kit-org-name">Group / contact</label>' +
+          '<input id="sales-kit-org-name" required class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white" placeholder="e.g. BMUK" value="' +
+          attrEsc(focusName) +
+          '" /></div>' +
+          '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="sales-kit-org-email">Email</label>' +
+          '<input id="sales-kit-org-email" type="email" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white" placeholder="optional" value="' +
+          attrEsc(focusEmail) +
+          '" /></div>' +
+          '<div class="md:col-span-2 lg:col-span-3"><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="sales-kit-notes">Notes</label>' +
+          '<input id="sales-kit-notes" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white" placeholder="Spoke to Sam — interested, sending PDF." /></div>' +
+          '<div class="md:col-span-2 lg:col-span-3 flex flex-wrap items-center gap-2">' +
+          '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-3 py-2 hover:bg-brand-900">Log conversation</button>' +
+          '<span id="sales-kit-log-status" class="text-sm text-slate-500" aria-live="polite"></span>' +
+          '</div></form></details>' +
+          '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="sales-kit-log-filter">Check before you message</label>' +
+          '<input id="sales-kit-log-filter" type="search" class="w-full max-w-md rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Search BMUK, a name, or email…" value="' +
+          attrEsc(focusName || focusEmail) +
+          '" /></div>' +
+          (visibleDemos.length
+            ? adminTableScroll(
+                '<table class="w-full text-sm" id="sales-kit-log-table"><thead class="bg-slate-50 text-xs uppercase text-slate-500">' +
+                  '<tr><th class="px-3 py-2 text-left">Date</th><th class="px-3 py-2 text-left">Who</th><th class="px-3 py-2 text-left">Group</th><th class="px-3 py-2 text-left">Touch</th><th class="px-3 py-2 text-left">Outcome</th><th class="px-3 py-2 text-left">Extra notes</th><th class="px-3 py-2"></th></tr></thead><tbody>' +
+                  visibleDemos
+                    .map(function (d) {
+                      var note = String(d.notes || '').trim();
+                      var extraNotes = touchNotes.indexOf(note) !== -1 ? '—' : note || '—';
+                      var hay = [d.organiserName, d.organiserEmail, d.shownBy, d.notes, d.outcome, d.source]
+                        .join(' ')
+                        .toLowerCase();
+                      return (
+                        '<tr class="border-t border-slate-100 align-top sales-kit-log-row" data-hay="' +
+                        attrEsc(hay) +
+                        '">' +
+                        '<td class="px-3 py-2 whitespace-nowrap">' +
+                        esc(d.shownAt || '—') +
+                        '</td>' +
+                        '<td class="px-3 py-2">' +
+                        esc(d.shownBy) +
+                        '</td>' +
+                        '<td class="px-3 py-2"><div class="font-medium">' +
+                        esc(d.organiserName) +
+                        '</div>' +
+                        (d.organiserEmail
+                          ? '<div class="text-xs text-slate-500">' + esc(d.organiserEmail) + '</div>'
+                          : '') +
+                        '</td>' +
+                        '<td class="px-3 py-2 text-slate-600">' +
+                        touchCellHtml(d) +
+                        '</td>' +
+                        '<td class="px-3 py-2">' +
+                        esc(outcomeLabels[d.outcome] || d.outcome) +
+                        '</td>' +
+                        '<td class="px-3 py-2 text-slate-600 max-w-[18rem]">' +
+                        esc(extraNotes) +
+                        '</td>' +
+                        '<td class="px-3 py-2 text-right"><button type="button" class="sales-kit-delete-demo text-xs font-semibold text-red-700 hover:underline" data-id="' +
+                        attrEsc(d.id) +
+                        '">Remove</button></td></tr>'
+                      );
+                    })
+                    .join('') +
+                  '</tbody></table>'
+              )
+            : '<p class="text-sm text-slate-500">' +
+              (focus
+                ? 'Nothing logged for this group yet — tap a quick log above.'
+                : 'Nothing logged yet. Open a group from group cleanup or add a manual note.') +
+              '</p>') +
+          '</div></section>'
         );
       }
 
-      root.innerHTML =
-        logSectionHtml() +
+      function pitchSectionHtml() {
+        return (
         '<section class="admin-dash-section">' +
         '<div class="admin-dash-section-head"><h3>Agreed demo organiser</h3>' +
         '<p>One shared group for live walkthroughs — keep events, tickets, and Promote looking polished.</p></div>' +
@@ -27496,7 +27632,19 @@
         '</textarea>' +
         '<button type="button" id="sales-kit-copy-followup" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-3 py-2 hover:bg-brand-900">Copy follow-up email</button>' +
         '<span id="sales-kit-copy-status" class="text-sm text-slate-500 ml-2" aria-live="polite"></span>' +
-        '</div></section>';
+        '</div></section>'
+        );
+      }
+
+      root.innerHTML =
+        adminHubTabsHtml(
+          [
+            { key: 'crm', label: 'CRM', href: salesKitTabHref('crm', state.focusOrganiser) },
+            { key: 'pitch', label: 'Pitch deck', href: salesKitTabHref('pitch', state.focusOrganiser) },
+          ],
+          state.tab
+        ) +
+        (state.tab === 'pitch' ? pitchSectionHtml() : crmSectionHtml());
 
       bindPainted();
     }
@@ -27539,6 +27687,45 @@
           load();
         }
       );
+    }
+
+    function logTouch(shownBy, touchType, btn) {
+      var statusEl = document.getElementById('sales-kit-touch-status');
+      var focus = state.focusOrganiser;
+      var nameEl = document.getElementById('sales-kit-org-name');
+      var emailEl = document.getElementById('sales-kit-org-email');
+      var idEl = document.getElementById('sales-kit-org-id');
+      var organiserName = (focus && focus.name) || (nameEl && nameEl.value) || '';
+      var organiserEmail = (focus && focus.email) || (emailEl && emailEl.value) || '';
+      var organiserId = (focus && focus.id) || (idEl && idEl.value) || '';
+      organiserName = String(organiserName || '').trim();
+      if (!organiserName) {
+        if (statusEl) {
+          statusEl.textContent =
+            'Add a group name first — open Organiser sales kit from group cleanup, or type the name in manual log.';
+        }
+        return;
+      }
+      if (btn) btn.disabled = true;
+      if (statusEl) statusEl.textContent = 'Saving…';
+      adminPost('/api/admin/sales-kit', {
+        action: 'add_demo',
+        shownAt: new Date().toISOString().slice(0, 10),
+        shownBy: shownBy,
+        outcome: 'follow_up',
+        organiserName: organiserName,
+        organiserEmail: organiserEmail,
+        organiserId: organiserId || null,
+        notes: touchType,
+      }).then(function (data) {
+        if (btn) btn.disabled = false;
+        if (!data || !data.ok) {
+          if (statusEl) statusEl.textContent = (data && data.message) || 'Could not save.';
+          return;
+        }
+        if (statusEl) statusEl.textContent = shownBy + ' — ' + touchType + ' logged.';
+        load();
+      });
     }
 
     function bindPainted() {
@@ -27652,7 +27839,16 @@
             row.hidden = Boolean(q) && hay.indexOf(q) === -1;
           });
         });
+        if (String(filterInput.value || '').trim()) {
+          filterInput.dispatchEvent(new Event('input'));
+        }
       }
+
+      root.querySelectorAll('.sales-kit-log-touch').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          logTouch(btn.getAttribute('data-by'), btn.getAttribute('data-touch'), btn);
+        });
+      });
 
       var form = document.getElementById('sales-kit-demo-form');
       if (form) {
