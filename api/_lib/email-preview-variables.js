@@ -672,6 +672,9 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
 
   if (slug === 'organiser_claim_invite') {
     vars.claim_url = vars.claim_url || site + '/organiser/claim?token=preview-claim-token';
+    vars.organiser_name = vars.organiser_name || vars.group_name || 'your group';
+    vars.group_name = vars.group_name || vars.organiser_name;
+    vars.other_groups_note = vars.other_groups_note || '';
   }
 
   if (slug === 'organiser_claim_confirmed') {

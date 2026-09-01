@@ -30,6 +30,11 @@ npm-debug.log*
 data/launch-segment-*.csv
 data/brevo-full-list.csv
 data/legacy-marketing-opt-in-audit.csv
+data/Claim-Rematch-Resend.csv
+data/Claim-Rematch-Resend-batch-*.csv
+data/Claim-Rematch-Resend-summary.json
+data/Segment-A-Email2*.csv
+data/Email3-A-Segment*.csv
 
 # Ops outreach tracker (call notes / PII — regenerate via script)
 ops/organiser-outreach-tracker.csv

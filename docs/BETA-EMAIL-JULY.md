@@ -93,6 +93,8 @@ Middleware early-access + signed-in session bypass live in `middleware.js` (`ORG
 
 Send **Segment A first** (20–40). Fix friction. Then B.
 
+**Pre-launch claim rematch (31 Aug / 1 Sept):** Resend to **unclaimed networking groups only** — not the ~3,500 list. See `docs/SEGMENT-A-CLAIM-REMATCH.md` (`npm run build:claim-rematch` → `npm run send:claim-rematch`).
+
 ---
 
 ## Tracking spreadsheet

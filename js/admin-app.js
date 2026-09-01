@@ -536,6 +536,7 @@
     incomplete: false,
     excludeHidden: false,
     visibility: '',
+    claimStatus: '',
     total: 0,
     loading: false,
     selected: {},
@@ -16074,12 +16075,15 @@
     var n = 0;
     if (groupCleanupState.visibility) n += 1;
     if (groupCleanupState.incomplete) n += 1;
+    if (groupCleanupState.claimStatus) n += 1;
     return n;
   }
 
   function syncGroupCleanupFilterUi() {
     var el = document.getElementById('group-cleanup-visibility');
     if (el) el.value = groupCleanupState.visibility || '';
+    el = document.getElementById('group-cleanup-claim-status');
+    if (el) el.value = groupCleanupState.claimStatus || '';
     el = document.getElementById('group-cleanup-incomplete');
     if (el) el.checked = !!groupCleanupState.incomplete;
     el = document.getElementById('group-cleanup-exclude-hidden');
@@ -16103,6 +16107,8 @@
         active = groupCleanupState.visibility === key;
       } else if (key === 'incomplete') {
         active = !!groupCleanupState.incomplete;
+      } else if (key === 'claimed' || key === 'unclaimed') {
+        active = groupCleanupState.claimStatus === key;
       }
       btn.classList.toggle('ring-2', active);
       btn.classList.toggle('ring-brand-700', active);
@@ -16124,6 +16130,7 @@
     if (groupCleanupState.incomplete) params.set('incomplete', '1');
     if (groupCleanupState.visibility) params.set('visibility', groupCleanupState.visibility);
     else if (groupCleanupState.excludeHidden) params.set('exclude_hidden', '1');
+    if (groupCleanupState.claimStatus) params.set('claim_status', groupCleanupState.claimStatus);
     if (options.organiserId || groupCleanupState.focusOrganiserId) {
       params.set('id', String(options.organiserId || groupCleanupState.focusOrganiserId));
     }
@@ -16967,9 +16974,12 @@
         groupCleanupState.incomplete = false;
         groupCleanupState.excludeHidden = false;
         groupCleanupState.visibility = '';
+        groupCleanupState.claimStatus = '';
       } else if (gKey === 'browse' || gKey === 'draft' || gKey === 'unpublished') {
         groupCleanupState.visibility = groupCleanupState.visibility === gKey ? '' : gKey;
         if (groupCleanupState.visibility) groupCleanupState.excludeHidden = false;
+      } else if (gKey === 'claimed' || gKey === 'unclaimed') {
+        groupCleanupState.claimStatus = groupCleanupState.claimStatus === gKey ? '' : gKey;
       } else if (gKey === 'incomplete') {
         groupCleanupState.incomplete = !groupCleanupState.incomplete;
       }
@@ -17368,6 +17378,16 @@
       if (e.target.id === 'group-cleanup-visibility') {
         groupCleanupState.visibility = e.target.value || '';
         if (groupCleanupState.visibility) groupCleanupState.excludeHidden = false;
+        groupCleanupState.page = 0;
+        syncGroupCleanupFilterUi();
+        fetchGroupCleanup(0).then(function (data) {
+          renderGroupCleanupList(data);
+          bindGroupCleanupPageUi();
+        });
+        return;
+      }
+      if (e.target.id === 'group-cleanup-claim-status') {
+        groupCleanupState.claimStatus = e.target.value || '';
         groupCleanupState.page = 0;
         syncGroupCleanupFilterUi();
         fetchGroupCleanup(0).then(function (data) {
@@ -17802,12 +17822,22 @@
     var total = groupCleanupState.total || organisers.length;
 
     if (status) {
+      var claimLine = '';
+      if (data.claimCounts) {
+        claimLine =
+          ' <span class="text-slate-500">· <strong class="text-sky-800">' +
+          String(data.claimCounts.claimed || 0) +
+          ' claimed</strong> · ' +
+          String(data.claimCounts.unclaimed != null ? data.claimCounts.unclaimed : data.claimCounts.pending || 0) +
+          ' unclaimed</span>';
+      }
       status.innerHTML =
         '<span class="text-brand-900 font-semibold">' +
         (organisers.length
           ? 'Showing ' + pageStart + '–' + pageEnd + ' of ' + total + ' group' + (total === 1 ? '' : 's')
           : 'No groups on this page') +
         '</span>' +
+        claimLine +
         (data.incomplete
           ? ' <span class="text-slate-500">(' + data.incomplete + ' with missing profile data)</span>'
           : '') +
@@ -18040,6 +18070,22 @@
       '<option value="unpublished"' +
       (groupCleanupState.visibility === 'unpublished' ? ' selected' : '') +
       '>Unpublished / hidden</option></select>' +
+      '<select id="group-cleanup-claim-status" class="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white w-full sm:max-w-[12rem]" aria-label="Claim status">' +
+      '<option value=""' +
+      (groupCleanupState.claimStatus === '' ? ' selected' : '') +
+      '>Any claim status</option>' +
+      '<option value="claimed"' +
+      (groupCleanupState.claimStatus === 'claimed' ? ' selected' : '') +
+      '>Claimed</option>' +
+      '<option value="unclaimed"' +
+      (groupCleanupState.claimStatus === 'unclaimed' ? ' selected' : '') +
+      '>Unclaimed</option>' +
+      '<option value="pending"' +
+      (groupCleanupState.claimStatus === 'pending' ? ' selected' : '') +
+      '>Pending only</option>' +
+      '<option value="disputed"' +
+      (groupCleanupState.claimStatus === 'disputed' ? ' selected' : '') +
+      '>Disputed</option></select>' +
       '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">' +
       '<input type="checkbox" id="group-cleanup-incomplete" class="rounded border-slate-300"' +
       (groupCleanupState.incomplete ? ' checked' : '') +
@@ -18048,6 +18094,8 @@
       '<button type="button" data-group-quick="browse" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">On browse</button>' +
       '<button type="button" data-group-quick="draft" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Draft</button>' +
       '<button type="button" data-group-quick="unpublished" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Unpublished</button>' +
+      '<button type="button" data-group-quick="claimed" class="text-xs font-semibold rounded-full border border-sky-200 px-3 py-1 text-sky-900 hover:bg-sky-50">Claimed</button>' +
+      '<button type="button" data-group-quick="unclaimed" class="text-xs font-semibold rounded-full border border-amber-200 px-3 py-1 text-amber-900 hover:bg-amber-50">Unclaimed</button>' +
       '<button type="button" data-group-quick="incomplete" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Incomplete</button>' +
       '<button type="button" data-group-quick="clear" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-500 hover:bg-slate-50">Clear filters</button></div>' +
       '</div></details></div>' +
@@ -21874,14 +21922,14 @@
       '</ol>' +
       '<p class="text-xs text-amber-800">For Email 1 via Resend, verify <code class="text-xs">the-networker.co.uk</code> and set <code class="text-xs">RESEND_FROM_LEGACY</code> in Vercel, or send manually from your co.uk inbox.</p>' +
       '</div>' +
-      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Bulk send organiser campaigns (max <strong>50 per batch</strong>). Use the <strong>same email as the group profile</strong> on each line.</p>' +
+      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Bulk send organiser campaigns (max <strong>50 per batch</strong>). Use the <strong>same email as the group profile</strong> on each line. Pre-launch claim rematch: rebuild <code class="text-[11px]">npm run build:claim-rematch</code> (unclaimed networking groups only — not the ~3500 list), paste a batch CSV email column here, or run <code class="text-[11px]">npm run send:claim-rematch</code> via Resend for the full list.</p>' +
       '<p class="text-xs text-slate-500 rounded-lg border border-violet-100 bg-violet-50 px-4 py-3">Automated lifecycle emails are under <a href="#email/templates" class="font-semibold text-violet-800 underline">Templates &rarr; Automated</a>.</p>' +
       '<form id="campaign-form" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">' +
       '<label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="campaign-template">Email template</label>' +
       '<select id="campaign-template" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">' +
       '<option value="organiser_rebrand_announcement">Email 1 — Rebrand announcement (send first)</option>' +
       '<option value="organiser_launch_invite">Email 2 — Confirm organiser page (3–5 days later)</option>' +
-      '<option value="organiser_claim_invite">Short claim nudge (existing listing only)</option>' +
+      '<option value="organiser_claim_invite">Short claim nudge / pre-launch rematch</option>' +
       '</select>' +
       '<label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="campaign-recipients">Recipient emails</label>' +
       '<textarea id="campaign-recipients" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono min-h-[120px]" placeholder="organiser@example.com&#10;one per line"></textarea>' +
