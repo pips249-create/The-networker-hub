@@ -213,7 +213,7 @@
     },
     'sales-kit': {
       title: 'Organiser sales kit',
-      subtitle: 'Shared outreach log, cheat sheets, and walkthrough tools for Catherine, Rosie & Jamie',
+      subtitle: 'CRM outreach log, pitch decks, and walkthrough tools for Catherine, Rosie & Jamie',
     },
     sponsorship: {
       title: 'Ads & sponsors',
@@ -437,12 +437,11 @@
     'sales-kit': {
       title: 'How to use the organiser sales kit',
       steps: [
-        'Copy the leave-behind link or PDF after a chat — that is what organisers should receive, not the internal cheat sheets.',
-        'Pin one agreed demo organiser at the top — everyone impersonates that group for live walkthroughs.',
-        'Log outreach first — or impersonate / list an event and it appears automatically so the others do not message the same group.',
-        'Open your named cheat sheet before a walkthrough — print one A4 or keep it on your phone.',
-        'Copy the 60-second Loom script and record once while clicking; share the Loom for onboarding.',
-        'After the meeting, copy the follow-up email and include the leave-behind link.',
+        'From group cleanup, click Organiser sales kit on a row — CRM opens with that group pre-filled.',
+        'Tap Called, Attempted call, or Emailed under Catherine, Rosie, or Jamie to log outreach in one click.',
+        'Switch to Pitch deck for cheat sheets, sales decks, Loom script, and follow-up email copy.',
+        'Pin one agreed demo organiser on the pitch deck tab — everyone impersonates that group for live walkthroughs.',
+        'Check the CRM log before messaging so you do not double-contact the same group.',
       ],
     },
     campaigns: {
@@ -947,9 +946,9 @@
     var name = '';
     var email = '';
     if (organiser && typeof organiser === 'object') {
-      id = String(organiser.id || '').trim();
-      name = String(organiser.name || '').trim();
-      email = String(organiser.email || '').trim();
+      id = String(organiser.id || organiser.organiser_id || '').trim();
+      name = String(organiser.name || organiser.title || '').trim();
+      email = String(organiser.email || organiser.owner_email || '').trim();
     } else {
       id = String(organiser || '').trim();
     }
@@ -959,6 +958,15 @@
     if (name) params.set('name', name);
     if (email) params.set('email', email);
     return '#sales-kit?' + params.toString();
+  }
+
+  function salesKitHrefFromOpportunity(opp) {
+    if (!opp) return '#sales-kit?tab=crm';
+    return salesKitHref({
+      id: opp.organiser_id || '',
+      name: opp.title || opp.host || '',
+      email: opp.owner_email || opp.contact_email || '',
+    });
   }
 
   function salesKitTabHref(tab, focus) {
@@ -22968,6 +22976,278 @@
     return !!document.querySelector('.opp-review-page');
   }
 
+  function isOpportunityAdminContext() {
+    return !!(
+      document.getElementById('opportunity-cleanup-list') ||
+      document.querySelector('.opp-review-page') ||
+      document.querySelector('.opp-review-panel')
+    );
+  }
+
+  function resolveOpportunityModerationId(triggerEl) {
+    if (!triggerEl) return '';
+    var direct =
+      String(triggerEl.getAttribute('data-opp-approve') || '').trim() ||
+      String(triggerEl.getAttribute('data-opp-delete') || '').trim() ||
+      String(triggerEl.getAttribute('data-opp-delete-form') || '').trim();
+    if (direct) return direct;
+    var scopedBtn = triggerEl.closest('[data-opp-approve], [data-opp-delete], [data-opp-delete-form]');
+    if (scopedBtn) {
+      direct =
+        String(scopedBtn.getAttribute('data-opp-approve') || '').trim() ||
+        String(scopedBtn.getAttribute('data-opp-delete') || '').trim() ||
+        String(scopedBtn.getAttribute('data-opp-delete-form') || '').trim();
+      if (direct) return direct;
+    }
+    var row = triggerEl.closest('[data-opportunity-id-row]');
+    if (row) return String(row.getAttribute('data-opportunity-id-row') || '').trim();
+    var reviewPage = triggerEl.closest('.opp-review-page');
+    if (reviewPage) return String(reviewPage.getAttribute('data-opp-review-page') || '').trim();
+    var reviewPanel = triggerEl.closest('.opp-review-panel');
+    if (reviewPanel) return String(reviewPanel.getAttribute('data-opp-review-for') || '').trim();
+    var cleanupPanel = triggerEl.closest('.opportunity-cleanup-panel');
+    if (cleanupPanel) return String(cleanupPanel.getAttribute('data-opp-panel-for') || '').trim();
+    return '';
+  }
+
+  function opportunityModerationScopeFromTrigger(triggerEl) {
+    if (!triggerEl) return null;
+    return (
+      triggerEl.closest('.opportunity-cleanup-panel') ||
+      triggerEl.closest('.opp-review-page') ||
+      triggerEl.closest('.opp-review-panel')
+    );
+  }
+
+  function findOpportunityRowById(id) {
+    var key = String(id || '').trim();
+    if (!key) return null;
+    var esc =
+      typeof CSS !== 'undefined' && CSS.escape
+        ? CSS.escape(key)
+        : key.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    return document.querySelector('[data-opportunity-id-row="' + esc + '"]');
+  }
+
+  function runOpportunityApprove(approveBtn) {
+    var approveId = resolveOpportunityModerationId(approveBtn);
+    if (!approveId) {
+      reportAdminOpportunityIssue(
+        'opportunity_approve_missing_id',
+        'Approve clicked but listing id could not be resolved',
+        {}
+      );
+      window.alert('Could not find that listing id. Refresh the page and try again.');
+      return;
+    }
+    var approveRow = approveBtn.closest('[data-opportunity-id-row]') || findOpportunityRowById(approveId);
+    var cachedOpp =
+      findOpportunityCleanupRecord(approveId) ||
+      (opportunityReviewCache && String(opportunityReviewCache.id) === String(approveId)
+        ? opportunityReviewCache
+        : null);
+    var alreadyPaid =
+      (approveRow && approveRow.getAttribute('data-opp-paid') === '1') ||
+      (cachedOpp && cachedOpp.listing_payment_active && cachedOpp.listing_paid_at);
+    var confirmMsg = alreadyPaid
+      ? 'Approve and go live now? Payment is already active — the listing will appear on /opportunities/ and the owner gets a “listing is live” email.'
+      : 'Approve this listing? It will stay off the public site until they pay. The owner will get an email with a Stripe pay link.';
+    if (!window.confirm(confirmMsg)) return;
+    approveBtn.disabled = true;
+    adminPost('/api/admin/opportunities', { id: approveId, action: 'approve' })
+      .then(function (data) {
+        if (!data || !data.ok) {
+          throw new Error((data && (data.message || data.error)) || 'Approve failed');
+        }
+        if (isOpportunityReviewPage()) {
+          return refreshOpportunityReviewPage().then(function () {
+            return data;
+          });
+        }
+        return refreshOpportunityCleanupData().then(function () {
+          return data;
+        });
+      })
+      .then(function (data) {
+        refreshAdminNotifications();
+        window.alert(
+          data && data.went_live
+            ? 'Approved — listing is live.'
+            : 'Approved — pay-to-go-live email sent to the owner.'
+        );
+        if (isOpportunityReviewPage()) leaveOpportunityReviewToList();
+      })
+      .catch(function (err) {
+        reportAdminOpportunityError('opportunity_approve_failed', err, {
+          opportunity_id: approveId,
+        });
+        window.alert(err.message || 'Could not approve listing.');
+        approveBtn.disabled = false;
+      });
+  }
+
+  function runOpportunityReject(rejectBtn) {
+    var rejectRow = rejectBtn.closest('[data-opportunity-id-row]');
+    var rejectScope = opportunityModerationScopeFromTrigger(rejectBtn);
+    var rejectId =
+      (rejectRow && rejectRow.getAttribute('data-opportunity-id-row')) ||
+      resolveOpportunityModerationId(rejectBtn);
+    if (!rejectId) {
+      reportAdminOpportunityIssue(
+        'opportunity_reject_missing_id',
+        'Deny clicked but listing id could not be resolved',
+        {}
+      );
+      return;
+    }
+    var noteEl =
+      (rejectScope && rejectScope.querySelector('[data-opp-rejection-note]')) ||
+      document.getElementById('opp-rejection-note-' + rejectId);
+    var msgEl = rejectScope && rejectScope.querySelector('[data-opp-rejection-msg]');
+    var rejectionNote = noteEl ? String(noteEl.value || '').trim() : '';
+    if (!rejectionNote) {
+      if (!isOpportunityReviewPage()) {
+        openOpportunityReviewPanel(rejectId, { focusDeny: true });
+      }
+      if (msgEl) {
+        msgEl.hidden = false;
+        msgEl.textContent = 'Please enter a reason for denial so the lister knows what to fix.';
+        msgEl.className = 'opp-review-deny-msg text-xs text-red-700 font-semibold';
+      } else if (!isOpportunityReviewPage()) {
+        window.alert('Open Review and enter a denial reason before denying this listing.');
+      }
+      if (noteEl && noteEl.focus) noteEl.focus();
+      return;
+    }
+    if (
+      !window.confirm(
+        'Deny this listing and email the reason to the lister?\n\n“' +
+          rejectionNote.slice(0, 200) +
+          (rejectionNote.length > 200 ? '…' : '') +
+          '”'
+      )
+    ) {
+      return;
+    }
+    rejectBtn.disabled = true;
+    adminPost('/api/admin/opportunities', {
+      id: rejectId,
+      action: 'reject',
+      rejection_note: rejectionNote,
+    })
+      .then(function (data) {
+        if (!data.ok) throw new Error(data.message || data.error || 'Reject failed');
+        if (isOpportunityReviewPage()) return refreshOpportunityReviewPage();
+        return refreshOpportunityCleanupData();
+      })
+      .then(function () {
+        refreshAdminNotifications();
+        if (isOpportunityReviewPage()) leaveOpportunityReviewToList();
+      })
+      .catch(function (err) {
+        reportAdminOpportunityError('opportunity_reject_failed', err, {
+          opportunity_id: rejectId,
+        });
+        window.alert(err.message || 'Could not deny listing.');
+        rejectBtn.disabled = false;
+      });
+  }
+
+  function runOpportunitySyncPay(syncPayBtn) {
+    var syncId = resolveOpportunityModerationId(syncPayBtn);
+    if (!syncId) {
+      reportAdminOpportunityIssue(
+        'opportunity_sync_pay_missing_id',
+        'Sync payment clicked but listing id could not be resolved',
+        {}
+      );
+      return;
+    }
+    syncPayBtn.disabled = true;
+    adminPost('/api/admin/opportunities', { id: syncId, action: 'sync_listing_payment' })
+      .then(function (data) {
+        if (!data.ok) throw new Error(data.message || data.error || 'Could not sync payment');
+        window.alert(
+          data.alreadyPaid
+            ? 'Listing already marked as paid.'
+            : 'Payment synced — listing should now be live.'
+        );
+        if (isOpportunityReviewPage()) return refreshOpportunityReviewPage();
+        return refreshOpportunityCleanupData();
+      })
+      .catch(function (err) {
+        reportAdminOpportunityError('opportunity_sync_pay_failed', err, {
+          opportunity_id: syncId,
+        });
+        window.alert(err.message || 'Could not sync payment from Stripe.');
+        syncPayBtn.disabled = false;
+      });
+  }
+
+  function runOpportunityResendPay(resendPayBtn) {
+    var resendId = resolveOpportunityModerationId(resendPayBtn);
+    if (!resendId) {
+      reportAdminOpportunityIssue(
+        'opportunity_resend_pay_missing_id',
+        'Resend pay email clicked but listing id could not be resolved',
+        {}
+      );
+      return;
+    }
+    if (!window.confirm('Resend the “pay to go live” email to the listing owner?')) return;
+    resendPayBtn.disabled = true;
+    adminPost('/api/admin/opportunities', { id: resendId, action: 'resend_pay_email' })
+      .then(function (data) {
+        if (!data.ok) throw new Error(data.message || data.error || 'Could not resend email');
+        window.alert('Pay-to-go-live email sent.');
+        resendPayBtn.disabled = false;
+      })
+      .catch(function (err) {
+        reportAdminOpportunityError('opportunity_resend_pay_failed', err, {
+          opportunity_id: resendId,
+        });
+        window.alert(err.message || 'Could not resend pay email.');
+        resendPayBtn.disabled = false;
+      });
+  }
+
+  function opportunityModerationActionFromTarget(target) {
+    if (!target) return '';
+    if (target.closest('[data-opp-approve]')) return 'approve';
+    if (target.closest('[data-opp-reject]')) return 'reject';
+    if (target.closest('[data-opp-delete], [data-opp-delete-form]')) return 'delete';
+    if (target.closest('#opportunity-delete-btn')) return 'bulk_delete';
+    return '';
+  }
+
+  function reportAdminOpportunityIssue(code, message, extra) {
+    try {
+      if (window.HubSentry && typeof window.HubSentry.reportAdminIssue === 'function') {
+        window.HubSentry.reportAdminIssue(
+          code,
+          message,
+          Object.assign({ surface: location.hash || '' }, extra || {})
+        );
+      }
+    } catch (_eReport) {
+      /* ignore */
+    }
+  }
+
+  function reportAdminOpportunityError(code, err, extra) {
+    try {
+      if (window.HubSentry && typeof window.HubSentry.reportAdminError === 'function') {
+        window.HubSentry.reportAdminError(
+          code,
+          err,
+          Object.assign({ surface: location.hash || '' }, extra || {})
+        );
+      }
+    } catch (_eReport) {
+      /* ignore */
+    }
+  }
+
   function leaveOpportunityReviewToList() {
     location.hash = opportunityListReturnHash();
   }
@@ -23352,6 +23632,9 @@
           attrEsc(previewHref) +
           '" target="_blank" rel="noopener" class="rounded-lg border border-slate-300 bg-white text-sm font-semibold px-3 py-2 hover:bg-slate-50">Open in workspace</a> '
         : '') +
+      '<a href="' +
+      attrEsc(salesKitHrefFromOpportunity(opp)) +
+      '" class="rounded-lg border border-brand-200 bg-white text-sm font-semibold px-3 py-2 text-brand-800 hover:bg-brand-50">Organiser sales kit</a> ' +
       (canApprove
         ? '<button type="button" data-opp-approve="' +
           attrEsc(id) +
@@ -23919,6 +24202,7 @@
           esc(opp.host || '—') +
           (opp.owner_email ? ' · ' + esc(opp.owner_email) : '') +
           '</p></div>' +
+          '<div class="flex flex-wrap items-center gap-2 shrink-0">' +
           '<div class="flex flex-wrap gap-1">' +
           listingStatusBadge(opp.status) +
           approvalStatusBadge(opp.approval_status) +
@@ -23927,6 +24211,10 @@
           (opp.featured
             ? '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-violet-100 text-violet-800">Featured</span>'
             : '') +
+          '</div>' +
+          '<a href="' +
+          attrEsc(salesKitHrefFromOpportunity(opp)) +
+          '" class="rounded-lg border border-brand-200 bg-white text-sm font-semibold px-3 py-2 text-brand-800 hover:bg-brand-50">Organiser sales kit</a>' +
           '</div></div>';
       }
       if (body) {
@@ -24120,6 +24408,9 @@
           '</a>'
         : '') +
       '<a href="' +
+      attrEsc(salesKitHrefFromOpportunity(opp)) +
+      '" class="text-xs font-semibold rounded-lg border border-brand-200 text-brand-800 px-2.5 py-1 hover:bg-brand-50">Organiser sales kit</a>' +
+      '<a href="' +
       attrEsc(reviewHref) +
       '" class="text-xs font-semibold rounded-lg bg-brand-700 text-white px-2.5 py-1 hover:bg-brand-900">' +
       'Review</a>' +
@@ -24283,6 +24574,10 @@
         refreshAdminNotifications();
       })
       .catch(function (err) {
+        reportAdminOpportunityError('opportunity_bulk_delete_failed', err, {
+          opportunity_ids: ids.slice(0, 10),
+          opportunity_count: ids.length,
+        });
         if (msg) {
           msg.textContent = err.message || 'Could not delete';
           msg.className = 'text-xs text-red-700 font-semibold';
@@ -24294,7 +24589,14 @@
   }
 
   function deleteOpportunityListing(id, title) {
-    if (!id) return;
+    if (!id) {
+      reportAdminOpportunityIssue(
+        'opportunity_delete_missing_id',
+        'Delete clicked but listing id could not be resolved',
+        {}
+      );
+      return;
+    }
     var label = title || 'this listing';
     if (!window.confirm('Permanently delete “' + label + '”? This cannot be undone.')) return;
     adminPost('/api/admin/opportunities', { id: id, action: 'delete' })
@@ -24312,6 +24614,7 @@
         if (isOpportunityReviewPage()) leaveOpportunityReviewToList();
       })
       .catch(function (err) {
+        reportAdminOpportunityError('opportunity_delete_failed', err, { opportunity_id: id });
         window.alert(err.message || 'Could not delete listing.');
       });
   }
@@ -25125,7 +25428,55 @@
   }
 
   function handleOpportunityCleanupClick(e) {
-    if (!document.getElementById('opportunity-cleanup-list')) return;
+    var approveBtn = e.target.closest('[data-opp-approve]');
+    if (approveBtn) {
+      runOpportunityApprove(approveBtn);
+      return;
+    }
+    var rejectBtn = e.target.closest('[data-opp-reject]');
+    if (rejectBtn) {
+      runOpportunityReject(rejectBtn);
+      return;
+    }
+    var deleteFormBtn = e.target.closest('[data-opp-delete-form]');
+    if (deleteFormBtn) {
+      deleteOpportunityListing(
+        deleteFormBtn.getAttribute('data-opp-delete-form') ||
+          resolveOpportunityModerationId(deleteFormBtn),
+        deleteFormBtn.getAttribute('data-opp-delete-title')
+      );
+      return;
+    }
+    var deleteBtn = e.target.closest('[data-opp-delete]');
+    if (deleteBtn) {
+      deleteOpportunityListing(
+        deleteBtn.getAttribute('data-opp-delete') || resolveOpportunityModerationId(deleteBtn),
+        deleteBtn.getAttribute('data-opp-delete-title')
+      );
+      return;
+    }
+    var syncPayBtn = e.target.closest('[data-opp-sync-pay]');
+    if (syncPayBtn) {
+      runOpportunitySyncPay(syncPayBtn);
+      return;
+    }
+    var resendPayBtn = e.target.closest('[data-opp-resend-pay]');
+    if (resendPayBtn) {
+      runOpportunityResendPay(resendPayBtn);
+      return;
+    }
+
+    if (!isOpportunityAdminContext()) {
+      var moderationAction = opportunityModerationActionFromTarget(e.target);
+      if (moderationAction) {
+        reportAdminOpportunityIssue(
+          'opportunity_moderation_ignored',
+          'Opportunity moderation click ignored — admin surface not mounted',
+          { action: moderationAction }
+        );
+      }
+      return;
+    }
 
     var pageBtn = e.target.closest('[data-opp-page]');
     if (pageBtn) {
@@ -25167,22 +25518,6 @@
         return;
       }
       createOpportunityTestSamples();
-      return;
-    }
-    var deleteBtn = e.target.closest('[data-opp-delete]');
-    if (deleteBtn) {
-      deleteOpportunityListing(
-        deleteBtn.getAttribute('data-opp-delete'),
-        deleteBtn.getAttribute('data-opp-delete-title')
-      );
-      return;
-    }
-    var deleteFormBtn = e.target.closest('[data-opp-delete-form]');
-    if (deleteFormBtn) {
-      deleteOpportunityListing(
-        deleteFormBtn.getAttribute('data-opp-delete-form'),
-        deleteFormBtn.getAttribute('data-opp-delete-title')
-      );
       return;
     }
 
@@ -25236,168 +25571,9 @@
       if (assignForm && assignId) assignOpportunityOwner(assignId, assignForm);
       return;
     }
-    var approveBtn = e.target.closest('[data-opp-approve]');
-    if (approveBtn) {
-      var approveRow = approveBtn.closest('[data-opportunity-id-row]');
-      var approvePanel = approveBtn.closest('.opportunity-cleanup-panel');
-      var approvePage = approveBtn.closest('.opp-review-page');
-      var approveReview = approveBtn.closest('.opp-review-panel');
-      var approveId =
-        String(approveBtn.getAttribute('data-opp-approve') || '').trim() ||
-        (approveRow && approveRow.getAttribute('data-opportunity-id-row')) ||
-        (approvePanel && approvePanel.getAttribute('data-opp-panel-for')) ||
-        (approvePage && approvePage.getAttribute('data-opp-review-page')) ||
-        (approveReview && approveReview.getAttribute('data-opp-review-for'));
-      if (!approveId) {
-        window.alert('Could not find that listing id. Refresh the page and try again.');
-        return;
-      }
-      if (!approveRow && (approvePanel || approvePage || approveReview)) {
-        var approveKey = String(approveId);
-        var approveEsc =
-          typeof CSS !== 'undefined' && CSS.escape
-            ? CSS.escape(approveKey)
-            : approveKey.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-        approveRow = document.querySelector('[data-opportunity-id-row="' + approveEsc + '"]');
-      }
-      var cachedOpp = findOpportunityCleanupRecord(approveId);
-      var alreadyPaid =
-        (approveRow && approveRow.getAttribute('data-opp-paid') === '1') ||
-        (cachedOpp && cachedOpp.listing_payment_active && cachedOpp.listing_paid_at);
-      var confirmMsg = alreadyPaid
-        ? 'Approve and go live now? Payment is already active — the listing will appear on /opportunities/ and the owner gets a “listing is live” email.'
-        : 'Approve this listing? It will stay off the public site until they pay. The owner will get an email with a Stripe pay link.';
-      if (!window.confirm(confirmMsg)) return;
-      approveBtn.disabled = true;
-      adminPost('/api/admin/opportunities', { id: approveId, action: 'approve' })
-        .then(function (data) {
-          if (!data || !data.ok) {
-            throw new Error(
-              (data && (data.message || data.error)) || 'Approve failed'
-            );
-          }
-          return refreshOpportunityCleanupData().then(function () {
-            return data;
-          });
-        })
-        .then(function (data) {
-          refreshAdminNotifications();
-          window.alert(
-            data && data.went_live
-              ? 'Approved — listing is live.'
-              : 'Approved — pay-to-go-live email sent to the owner.'
-          );
-          if (isOpportunityReviewPage()) leaveOpportunityReviewToList();
-        })
-        .catch(function (err) {
-          window.alert(err.message || 'Could not approve listing.');
-          approveBtn.disabled = false;
-        });
-      return;
-    }
-    var syncPayBtn = e.target.closest('[data-opp-sync-pay]');
-    if (syncPayBtn) {
-      var syncRow = syncPayBtn.closest('[data-opportunity-id-row]');
-      var syncId = syncRow && syncRow.getAttribute('data-opportunity-id-row');
-      if (!syncId) return;
-      syncPayBtn.disabled = true;
-      adminPost('/api/admin/opportunities', { id: syncId, action: 'sync_listing_payment' })
-        .then(function (data) {
-          if (!data.ok) throw new Error(data.message || data.error || 'Could not sync payment');
-          window.alert(
-            data.alreadyPaid
-              ? 'Listing already marked as paid.'
-              : 'Payment synced — listing should now be live.'
-          );
-          refreshOpportunityCleanupData();
-        })
-        .catch(function (err) {
-          window.alert(err.message || 'Could not sync payment from Stripe.');
-          syncPayBtn.disabled = false;
-        });
-      return;
-    }
-    var resendPayBtn = e.target.closest('[data-opp-resend-pay]');
-    if (resendPayBtn) {
-      var resendRow = resendPayBtn.closest('[data-opportunity-id-row]');
-      var resendId = resendRow && resendRow.getAttribute('data-opportunity-id-row');
-      if (!resendId) return;
-      if (!window.confirm('Resend the “pay to go live” email to the listing owner?')) return;
-      resendPayBtn.disabled = true;
-      adminPost('/api/admin/opportunities', { id: resendId, action: 'resend_pay_email' })
-        .then(function (data) {
-          if (!data.ok) throw new Error(data.message || data.error || 'Could not resend email');
-          window.alert('Pay-to-go-live email sent.');
-          resendPayBtn.disabled = false;
-        })
-        .catch(function (err) {
-          window.alert(err.message || 'Could not resend pay email.');
-          resendPayBtn.disabled = false;
-        });
-      return;
-    }
-    var rejectBtn = e.target.closest('[data-opp-reject]');
-    if (rejectBtn) {
-      var rejectRow = rejectBtn.closest('[data-opportunity-id-row]');
-      var rejectPanel = rejectBtn.closest('.opportunity-cleanup-panel');
-      var rejectPage = rejectBtn.closest('.opp-review-page');
-      var rejectReview = rejectBtn.closest('.opp-review-panel');
-      var rejectScope = rejectPanel || rejectPage || rejectReview;
-      var rejectId =
-        (rejectRow && rejectRow.getAttribute('data-opportunity-id-row')) ||
-        (rejectPanel && rejectPanel.getAttribute('data-opp-panel-for')) ||
-        (rejectPage && rejectPage.getAttribute('data-opp-review-page')) ||
-        (rejectReview && rejectReview.getAttribute('data-opp-review-for'));
-      if (!rejectId) return;
-      var noteEl =
-        (rejectScope && rejectScope.querySelector('[data-opp-rejection-note]')) ||
-        document.getElementById('opp-rejection-note-' + rejectId);
-      var msgEl = rejectScope && rejectScope.querySelector('[data-opp-rejection-msg]');
-      var rejectionNote = noteEl ? String(noteEl.value || '').trim() : '';
-      if (!rejectionNote) {
-        if (!isOpportunityReviewPage()) {
-          openOpportunityReviewPanel(rejectId, { focusDeny: true });
-        }
-        if (msgEl) {
-          msgEl.hidden = false;
-          msgEl.textContent = 'Please enter a reason for denial so the lister knows what to fix.';
-          msgEl.className = 'opp-review-deny-msg text-xs text-red-700 font-semibold';
-        } else if (!isOpportunityReviewPage()) {
-          window.alert('Open Review and enter a denial reason before denying this listing.');
-        }
-        if (noteEl && noteEl.focus) noteEl.focus();
-        return;
-      }
-      if (
-        !window.confirm(
-          'Deny this listing and email the reason to the lister?\n\n“' +
-            rejectionNote.slice(0, 200) +
-            (rejectionNote.length > 200 ? '…' : '') +
-            '”'
-        )
-      ) {
-        return;
-      }
-      rejectBtn.disabled = true;
-      adminPost('/api/admin/opportunities', {
-        id: rejectId,
-        action: 'reject',
-        rejection_note: rejectionNote,
-      })
-        .then(function (data) {
-          if (!data.ok) throw new Error(data.message || data.error || 'Reject failed');
-          return refreshOpportunityCleanupData();
-        })
-        .then(function () {
-          refreshAdminNotifications();
-          if (isOpportunityReviewPage()) leaveOpportunityReviewToList();
-        })
-        .catch(function (err) {
-          window.alert(err.message || 'Could not deny listing.');
-          rejectBtn.disabled = false;
-        });
-      return;
-    }
+
+    if (!document.getElementById('opportunity-cleanup-list')) return;
+
     var quick = e.target.closest('[data-opp-quick]');
     if (quick) {
       e.preventDefault();
@@ -27504,6 +27680,15 @@
 
       function pitchSectionHtml() {
         return (
+        (focus
+          ? '<div class="rounded-xl border border-brand-200 bg-brand-50/70 p-4 flex flex-wrap items-center justify-between gap-3">' +
+            '<p class="text-sm text-brand-950">Pitch materials for <strong>' +
+            esc(focusName || 'this group') +
+            '</strong></p>' +
+            '<a class="rounded-lg border border-brand-300 bg-white text-sm font-semibold px-3 py-2 text-brand-900 hover:bg-brand-100" href="' +
+            attrEsc(salesKitTabHref('crm', focus)) +
+            '">Back to CRM</a></div>'
+          : '') +
         '<section class="admin-dash-section">' +
         '<div class="admin-dash-section-head"><h3>Agreed demo organiser</h3>' +
         '<p>One shared group for live walkthroughs — keep events, tickets, and Promote looking polished.</p></div>' +
@@ -27862,6 +28047,9 @@
             outcome: document.getElementById('sales-kit-outcome').value,
             organiserName: document.getElementById('sales-kit-org-name').value,
             organiserEmail: document.getElementById('sales-kit-org-email').value,
+            organiserId: document.getElementById('sales-kit-org-id')
+              ? document.getElementById('sales-kit-org-id').value
+              : null,
             notes: document.getElementById('sales-kit-notes').value,
           };
           var nameKey = String(payload.organiserName || '').trim().toLowerCase();

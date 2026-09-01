@@ -90,6 +90,46 @@
     }
   }
 
+  function captureAdminReport(level, code, message, extra, err) {
+    if (isLocalHost()) return;
+    if (!isRealSentrySdk()) return;
+    try {
+      if (!window.Sentry.getClient()) initSentry();
+      if (!window.Sentry.getClient()) return;
+      window.Sentry.withScope(function (scope) {
+        scope.setTag('hub_report', 'admin');
+        scope.setTag('admin_action', String(code || 'unknown'));
+        if (extra && typeof extra === 'object') {
+          Object.keys(extra).forEach(function (key) {
+            scope.setExtra(key, extra[key]);
+          });
+        }
+        if (err) {
+          window.Sentry.captureException(err instanceof Error ? err : new Error(String(err)), {
+            level: level || 'error',
+          });
+        } else {
+          window.Sentry.captureMessage(String(message || code || 'Admin action issue'), {
+            level: level || 'warning',
+          });
+        }
+      });
+    } catch (_eCap) {
+      /* ignore */
+    }
+  }
+
+  window.HubSentry = {
+    reportAdminIssue: function (code, message, extra) {
+      captureAdminReport('warning', code, message, extra, null);
+    },
+    reportAdminError: function (code, err, extra) {
+      var msg =
+        err && err.message ? String(err.message) : String(err || 'Admin action failed');
+      captureAdminReport('error', code, msg, extra, err);
+    },
+  };
+
   function initSentry() {
     if (!isRealSentrySdk()) return;
     if (window.Sentry.getClient()) return;
