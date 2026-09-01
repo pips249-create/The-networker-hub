@@ -101,6 +101,14 @@ module.exports = async function handler(req, res) {
       if (msg === 'opportunity_not_owned') {
         return json(res, 403, { ok: false, error: 'opportunity_not_owned' });
       }
+      if (msg === 'pending_review_locked' || (e && e.code) === 'pending_review_locked') {
+        return json(res, 409, {
+          ok: false,
+          error: 'pending_review_locked',
+          message:
+            'This listing is locked while we review it. You cannot change open days until we approve or deny it.',
+        });
+      }
       if (
         msg === 'missing_open_day_starts_at' ||
         msg === 'invalid_open_day_starts_at' ||

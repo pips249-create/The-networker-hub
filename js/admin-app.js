@@ -350,6 +350,7 @@
         'Click Review to open the listing on its own page (submitted details, website preview, and admin edit).',
         'Approve — if unpaid, the owner gets a pay-to-go-live email; if already paid, it goes live now. Confirm dialog explains which.',
         'Deny if it does not meet standards (include a reason) — then you return to the list.',
+        'Use Organiser sales kit on a row (or in Review) to log outreach in the shared CRM before you call or email the owner.',
         'Use Resend pay email on Approved listings still awaiting Stripe.',
         'Toggle Featured only for Approved live listings in the opportunities carousel.',
       ],
@@ -1103,7 +1104,7 @@
     }
     if (route === 'financials') {
       if (hash.indexOf('organisers') !== -1) {
-        return 'Ticket revenue and Stripe Connect status by organiser.';
+        return 'Stripe Connect setup and ticket revenue for each organiser group.';
       }
       if (hash.indexOf('payouts') !== -1) {
         return 'Payout queue and refunds that need attention.';
@@ -7829,32 +7830,92 @@
     return true;
   }
 
+  var FINANCIALS_CONNECT_ORDER = { Connected: 0, Onboarding: 1, 'Not connected': 2 };
+
+  function financialsSortOrganisers(rows) {
+    return (rows || []).slice().sort(function (a, b) {
+      var orderA = FINANCIALS_CONNECT_ORDER[a.status];
+      var orderB = FINANCIALS_CONNECT_ORDER[b.status];
+      if (orderA == null) orderA = 9;
+      if (orderB == null) orderB = 9;
+      if (orderA !== orderB) return orderA - orderB;
+      return (b.balanceNum || 0) - (a.balanceNum || 0);
+    });
+  }
+
+  function financialsConnectStatusLabel(status) {
+    if (status === 'Connected') return 'Connected — can sell paid tickets';
+    if (status === 'Onboarding') return 'Onboarding — setup started, not finished';
+    return 'Not connected — bank details not added yet';
+  }
+
+  function financialsConnectSummaryHtml(summary, activeFilter) {
+    var connected = Number(summary.stripeConnectedCount) || 0;
+    var onboarding = Number(summary.stripeOnboardingCount) || 0;
+    var notConnected = Number(summary.stripeNotConnectedCount) || 0;
+    function chip(status, count, label, desc, cls) {
+      var active = activeFilter === status;
+      return (
+        '<button type="button" class="fin-connect-chip rounded-xl border p-3 text-left transition ' +
+        (active ? 'border-brand-400 bg-brand-50 ring-2 ring-brand-200 ' : 'border-slate-200 bg-white hover:border-brand-300 ') +
+        cls +
+        '" data-fin-connect-filter="' +
+        attrEsc(status) +
+        '" aria-pressed="' +
+        (active ? 'true' : 'false') +
+        '">' +
+        '<p class="text-xs font-semibold uppercase tracking-wide ' +
+        (active ? 'text-brand-800' : 'text-slate-500') +
+        '">' +
+        esc(label) +
+        '</p>' +
+        '<p class="text-2xl font-bold text-brand-900 mt-1">' +
+        String(count) +
+        '</p>' +
+        '<p class="text-xs text-slate-500 mt-1">' +
+        esc(desc) +
+        '</p></button>'
+      );
+    }
+    return (
+      '<div class="grid grid-cols-1 sm:grid-cols-3 gap-3">' +
+      chip('Connected', connected, 'Connected', 'Bank linked — paid tickets can go live', '') +
+      chip('Onboarding', onboarding, 'Onboarding', 'Started Stripe setup — not finished yet', '') +
+      chip('Not connected', notConnected, 'Not connected', 'No bank details — paid tickets stay closed', '') +
+      '</div>' +
+      '<p class="text-xs text-slate-500">Click a card to filter the table. Adding paid ticket prices alone does not connect Stripe — organisers must finish bank setup under Revenue.</p>'
+    );
+  }
+
   function financialsOrganiserRowsHtml(rows) {
     if (!rows.length) {
       return '<tr><td colspan="4" class="px-4 py-6 text-slate-500">No matching organisers.</td></tr>';
     }
     return rows
       .map(function (s) {
-        var statusCls =
+        var statusBadgeCls =
           s.status === 'Connected'
-            ? 'text-emerald-600'
+            ? 'text-emerald-700 bg-emerald-50'
             : s.status === 'Onboarding'
-              ? 'text-amber-700'
-              : 'text-slate-500';
-                return (
+              ? 'text-amber-800 bg-amber-50'
+              : 'text-slate-600 bg-slate-100';
+        return (
           '<tr class="border-t border-slate-100"><td class="px-4 py-3 font-medium">' +
           esc(s.organiser) +
           '</td><td class="px-4 py-3">' +
+          '<span class="text-xs font-semibold px-2 py-0.5 rounded ' +
+          statusBadgeCls +
+          '" title="' +
+          attrEsc(financialsConnectStatusLabel(s.status)) +
+          '">' +
+          esc(s.status) +
+          '</span></td><td class="px-4 py-3">' +
           esc(s.balance) +
           '</td><td class="px-4 py-3">' +
           esc(s.lastPayout) +
-          '</td><td class="px-4 py-3 font-medium ' +
-          statusCls +
-          '">' +
-          esc(s.status) +
-                  '</td></tr>'
-                );
-              })
+          '</td></tr>'
+        );
+      })
       .join('');
   }
 
@@ -7959,6 +8020,7 @@
   function paintFinancialsOrganisersTable(data) {
     var stripeEl = document.getElementById('financials-stripe');
     var pagerEl = document.getElementById('financials-organisers-pager');
+    var summaryEl = document.getElementById('financials-connect-summary');
     var statusEl = document.getElementById('financials-status');
     if (!stripeEl) return;
     if (!paintFinancialsSummary(data, null, statusEl)) {
@@ -7966,9 +8028,21 @@
         '<tr><td colspan="4" class="px-4 py-6 text-slate-500">Could not load organisers.</td></tr>';
       return;
     }
-    var stripe = data.stripeAccounts || [];
-    var q = String(financialsState.organisersQ || '').trim();
+    var summary = data.summary || {};
     var statusFilter = String(financialsState.organisersStatus || '').trim();
+    if (statusFilter === 'Not started') {
+      statusFilter = 'Not connected';
+      financialsState.organisersStatus = statusFilter;
+    }
+    if (summaryEl) {
+      summaryEl.innerHTML = financialsConnectSummaryHtml(summary, statusFilter);
+    }
+    var statusSelectEl = document.getElementById('financials-org-status');
+    if (statusSelectEl && statusSelectEl.value !== statusFilter) {
+      statusSelectEl.value = statusFilter;
+    }
+    var stripe = financialsSortOrganisers(data.stripeAccounts || []);
+    var q = String(financialsState.organisersQ || '').trim();
     var filtered = stripe.filter(function (s) {
       if (statusFilter && String(s.status || '') !== statusFilter) return false;
       if (!q) return true;
@@ -7977,13 +8051,37 @@
     var pageData = paginateRows(filtered, financialsState.organisersPage, FINANCIALS_PAGE_SIZE);
     financialsState.organisersPage = pageData.page;
     stripeEl.innerHTML = financialsOrganiserRowsHtml(pageData.rows);
+    if (statusEl) {
+      statusEl.textContent =
+        String(summary.stripeConnectedCount || 0) +
+        ' connected · ' +
+        String(summary.stripeOnboardingCount || 0) +
+        ' onboarding · ' +
+        String(summary.stripeNotConnectedCount || 0) +
+        ' not connected · ' +
+        financialsMoney(summary.totalTicketRevenue || 0) +
+        ' ticket revenue';
+    }
     if (pagerEl) {
+      var filterBits = [];
+      if (statusFilter) filterBits.push('Stripe: ' + statusFilter);
+      if (q) filterBits.push('search: “' + q + '”');
+      var filterNote = '';
+      if (filterBits.length > 0) {
+        filterNote =
+          ' · Filtered by ' + filterBits.join(', ') + ' — <button type="button" class="fin-connect-clear text-brand-700 font-semibold hover:underline">Clear filters</button>';
+      } else {
+        filterNote = ' · Sorted by Connect status, then revenue';
+      }
       pagerEl.innerHTML =
         '<p class="text-xs text-slate-500 mb-2">' +
+        'Showing ' +
+        esc(String(pageData.rows.length)) +
+        ' of ' +
         esc(String(pageData.total)) +
         ' organiser' +
         (pageData.total === 1 ? '' : 's') +
-        (q || statusFilter ? ' matching filters' : '') +
+        filterNote +
         '</p>' +
         adminPaginationHtml(pageData.page, pageData.total, FINANCIALS_PAGE_SIZE, 'data-fin-org-page');
     }
@@ -8030,7 +8128,7 @@
       '<div id="financials-summary" class="grid grid-cols-2 lg:grid-cols-4 gap-3"></div>' +
       '<div class="grid gap-3 sm:grid-cols-3">' +
       '<a href="#revenue-mix" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-brand-300 transition"><p class="font-bold text-brand-900">Revenue mix</p><p class="text-xs text-slate-500 mt-1">Sponsorship vs ticketing model</p></a>' +
-      '<a href="#financials/organisers" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-brand-300 transition"><p class="font-bold text-brand-900">Organisers</p><p class="text-xs text-slate-500 mt-1">Revenue and Stripe Connect</p></a>' +
+      '<a href="#financials/organisers" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-brand-300 transition"><p class="font-bold text-brand-900">Organisers</p><p class="text-xs text-slate-500 mt-1">Stripe Connect status and ticket revenue</p></a>' +
       '<a href="#financials/payouts" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-brand-300 transition"><p class="font-bold text-brand-900">Payouts</p><p class="text-xs text-slate-500 mt-1">Queue and refunds pending</p></a>' +
       '<a href="#financials/activity" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-brand-300 transition"><p class="font-bold text-brand-900">Activity</p><p class="text-xs text-slate-500 mt-1">Recent registrations</p></a>' +
       '</div></div>';
@@ -8046,6 +8144,11 @@
   function bindFinancialsOrganisersFilters() {
     var searchEl = document.getElementById('financials-org-search');
     var statusEl = document.getElementById('financials-org-status');
+    var summaryEl = document.getElementById('financials-connect-summary');
+    var pagerEl = document.getElementById('financials-organisers-pager');
+    if (financialsState.organisersStatus === 'Not started') {
+      financialsState.organisersStatus = 'Not connected';
+    }
     if (searchEl) {
       searchEl.value = financialsState.organisersQ || '';
       searchEl.addEventListener('input', function () {
@@ -8062,10 +8165,32 @@
         if (financialsState.cache) paintFinancialsOrganisersTable(financialsState.cache);
       });
     }
-    var pager = document.getElementById('financials-organisers-pager');
-    if (pager && !pager.dataset.bound) {
-      pager.dataset.bound = '1';
-      pager.addEventListener('click', function (e) {
+    if (summaryEl && !summaryEl.dataset.bound) {
+      summaryEl.dataset.bound = '1';
+      summaryEl.addEventListener('click', function (e) {
+        var chip = e.target.closest('[data-fin-connect-filter]');
+        if (!chip) return;
+        var next = chip.getAttribute('data-fin-connect-filter') || '';
+        financialsState.organisersStatus =
+          financialsState.organisersStatus === next ? '' : next;
+        financialsState.organisersPage = 0;
+        if (statusEl) statusEl.value = financialsState.organisersStatus;
+        if (financialsState.cache) paintFinancialsOrganisersTable(financialsState.cache);
+      });
+    }
+    if (pagerEl && !pagerEl.dataset.bound) {
+      pagerEl.dataset.bound = '1';
+      pagerEl.addEventListener('click', function (e) {
+        var clearBtn = e.target.closest('.fin-connect-clear');
+        if (clearBtn) {
+          financialsState.organisersQ = '';
+          financialsState.organisersStatus = '';
+          financialsState.organisersPage = 0;
+          if (searchEl) searchEl.value = '';
+          if (statusEl) statusEl.value = '';
+          if (financialsState.cache) paintFinancialsOrganisersTable(financialsState.cache);
+          return;
+        }
         var btn = e.target.closest('[data-fin-org-page]');
         if (!btn) return;
         financialsState.organisersPage = Number(btn.getAttribute('data-fin-org-page')) || 0;
@@ -8078,20 +8203,21 @@
     main.innerHTML =
       '<div class="space-y-4">' +
       '<p id="financials-status" class="text-sm text-slate-500">Loading…</p>' +
+      '<div id="financials-connect-summary" class="space-y-2">Loading Connect summary…</div>' +
       '<div class="admin-filter-bar flex flex-wrap gap-3 items-center">' +
-      '<input type="search" id="financials-org-search" class="rounded-lg border border-slate-200 px-3 py-2 text-sm min-w-[200px]" placeholder="Search organiser" />' +
+      '<input type="search" id="financials-org-search" class="rounded-lg border border-slate-200 px-3 py-2 text-sm min-w-[200px]" placeholder="Search organiser name" />' +
       '<select id="financials-org-status" class="rounded-lg border border-slate-200 px-3 py-2 text-sm">' +
-      '<option value="">All Stripe statuses</option>' +
+      '<option value="">All Connect statuses</option>' +
       '<option value="Connected">Connected</option>' +
       '<option value="Onboarding">Onboarding</option>' +
-      '<option value="Not started">Not started</option>' +
+      '<option value="Not connected">Not connected</option>' +
       '</select></div>' +
       '<section class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">' +
-      '<div class="px-4 py-3 border-b border-slate-100"><h3 class="font-bold text-brand-900">Organiser ticket revenue</h3>' +
-      '<p class="text-xs text-slate-500 mt-0.5">Total paid ticket revenue per organiser (all time).</p></div>' +
+      '<div class="px-4 py-3 border-b border-slate-100"><h3 class="font-bold text-brand-900">Organiser payment setup</h3>' +
+      '<p class="text-xs text-slate-500 mt-0.5">Stripe Connect status for every group, plus all-time paid ticket revenue where sales have completed.</p></div>' +
       adminTableScroll(
         '<table class="w-full text-sm"><thead class="bg-slate-50 text-xs uppercase text-slate-500">' +
-          '<tr><th class="px-4 py-3 text-left">Organiser</th><th class="px-4 py-3">Ticket revenue</th><th class="px-4 py-3">Last payout</th><th class="px-4 py-3">Stripe Connect</th></tr></thead>' +
+          '<tr><th class="px-4 py-3 text-left">Organiser</th><th class="px-4 py-3">Stripe Connect</th><th class="px-4 py-3">Ticket revenue</th><th class="px-4 py-3">Last payout</th></tr></thead>' +
           '<tbody id="financials-stripe"><tr><td colspan="4" class="px-4 py-6 text-slate-500">Loading…</td></tr></tbody></table>'
       ) +
       '</section>' +
@@ -15135,6 +15261,22 @@
       esc(s) +
       '</span>'
     );
+  }
+
+  function opportunityListingStatusBadge(opp) {
+    if (!opp) return listingStatusBadge('draft');
+    var approval = String(opp.approval_status || '').trim();
+    if (approval === 'Pending Review' && opportunityIsSubmittedForReview(opp)) {
+      return (
+        '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-sky-100 text-sky-900" title="Submitted for review — organiser cannot edit until you approve or deny">Submitted for review</span>'
+      );
+    }
+    if (approval === 'Pending Review' && !opportunityIsSubmittedForReview(opp)) {
+      return (
+        '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-slate-100 text-slate-700" title="Draft saved but not yet submitted by the organiser">Draft — not submitted</span>'
+      );
+    }
+    return listingStatusBadge(opp.status);
   }
 
   function approvalStatusBadge(status) {
@@ -24204,7 +24346,7 @@
           '</p></div>' +
           '<div class="flex flex-wrap items-center gap-2 shrink-0">' +
           '<div class="flex flex-wrap gap-1">' +
-          listingStatusBadge(opp.status) +
+          opportunityListingStatusBadge(opp) +
           approvalStatusBadge(opp.approval_status) +
           opportunityListingBillingBadgeHtml(opp) +
           opportunityOwnershipBadgeHtml(opp) +
@@ -24249,14 +24391,19 @@
           esc(opp.host || '—') +
           (opp.owner_email ? ' · ' + esc(opp.owner_email) : '') +
           '</p></div>' +
+          '<div class="flex flex-wrap items-center gap-2 shrink-0">' +
           '<div class="flex flex-wrap gap-1">' +
-          listingStatusBadge(opp.status) +
+          opportunityListingStatusBadge(opp) +
           approvalStatusBadge(opp.approval_status) +
           opportunityListingBillingBadgeHtml(opp) +
           opportunityOwnershipBadgeHtml(opp) +
           (opp.featured
             ? '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-violet-100 text-violet-800">Featured</span>'
             : '') +
+          '</div>' +
+          '<a href="' +
+          attrEsc(salesKitHrefFromOpportunity(opp)) +
+          '" class="rounded-lg border border-brand-200 bg-white text-sm font-semibold px-3 py-2 text-brand-800 hover:bg-brand-50">Organiser sales kit</a>' +
           '</div></div>';
       }
       if (body) mountOpportunityReviewContent(body, opp, { fullPage: true });
@@ -24353,7 +24500,7 @@
       esc(opportunityTypeLabel(opp.type)) +
       '</td>' +
       '<td class="py-2.5 pr-3"><div class="flex flex-wrap gap-1">' +
-      listingStatusBadge(opp.status) +
+      opportunityListingStatusBadge(opp) +
       (opp.approval_status === 'Pending Review' && !opportunityIsSubmittedForReview(opp)
         ? '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-slate-100 text-slate-600">Not submitted</span>'
         : approvalStatusBadge(opp.approval_status)) +
@@ -27556,7 +27703,7 @@
         return (
           '<section class="admin-dash-section" id="sales-kit-outreach">' +
           '<div class="admin-dash-section-head"><h3>Outreach CRM</h3>' +
-          '<p>Log calls and emails so Catherine, Rosie and Jamie do not double-message the same group. Opens from <strong>Organiser sales kit</strong> on a group row, or pick a group below.</p></div>' +
+          '<p>Log calls and emails so Catherine, Rosie and Jamie do not double-message the same contact. Opens from <strong>Organiser sales kit</strong> on a group or opportunity row.</p></div>' +
           '<div class="admin-dash-section-body space-y-4">' +
           (focus
             ? '<div class="rounded-xl border border-brand-200 bg-brand-50/70 p-4 flex flex-wrap items-start justify-between gap-3">' +

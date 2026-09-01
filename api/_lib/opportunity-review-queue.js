@@ -135,6 +135,33 @@ function isOpportunityInAdminReviewQueue(row) {
   return isOpportunitySubmittedForReview(row);
 }
 
+/** True when an organiser must not edit listing fields until admin approves or denies. */
+function isOpportunityLockedForOrganiserEdit(row) {
+  if (!row) return false;
+  const approval = String(row.approval_status || row.approvalStatus || '').trim();
+  if (approval === 'Rejected') return false;
+  if (approval !== 'Pending Review') return false;
+  if (hasPendingLiveListingUpdate(row)) return true;
+  if (effectiveReviewSubmittedAt(row)) return true;
+  return isOpportunitySubmittedForReview(row);
+}
+
+function isOpportunityLockedForOrganiserEditListing(listing) {
+  if (!listing) return false;
+  const approval = String(listing.approvalStatus || listing.approval_status || '').trim();
+  if (approval === 'Rejected') return false;
+  if (approval !== 'Pending Review') return false;
+  if (listing.hasPendingChanges || listing.has_pending_live_update) return true;
+  if (listing.reviewSubmittedAt || listing.review_submitted_at) return true;
+  const meta = Array.isArray(listing.meta) ? listing.meta : [];
+  for (let i = 0; i < meta.length; i += 1) {
+    const item = meta[i] || {};
+    if (String(item.key || '') !== REVIEW_SUBMITTED_META_KEY) continue;
+    if (String(item.val || '').trim()) return true;
+  }
+  return false;
+}
+
 function filterPendingOpportunityAdminRows(rows) {
   return (rows || []).filter(isOpportunityInAdminReviewQueue);
 }
@@ -248,6 +275,8 @@ module.exports = {
   healOrphanedOpportunityReviewSubmissions,
   listRecentAutoRejectedOpportunities,
   isOpportunityInAdminReviewQueue,
+  isOpportunityLockedForOrganiserEdit,
+  isOpportunityLockedForOrganiserEditListing,
   filterPendingOpportunityAdminRows,
   countPendingOpportunitiesForAdmin,
 };

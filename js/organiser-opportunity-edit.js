@@ -649,11 +649,11 @@
       if (isSubmittedAwaitingApproval(currentOpportunity)) {
         if (lead) {
           lead.innerHTML =
-            'Your listing is <strong>awaiting approval</strong>. You can still edit below — save changes and submit for approval again to send updates. After we approve it, start a <strong>monthly subscription of £25 + VAT</strong> (£30 total) and it goes live immediately.';
+            'Your listing is <strong>awaiting approval</strong> and is locked while we review it. You cannot change it until we approve or deny it. After we approve, start a <strong>monthly subscription of £25 + VAT</strong> (£30 total) and it goes live immediately.';
         }
         if (note) {
           note.textContent =
-            'No charge until approved. Keep editing as needed, then submit for approval again after changes.';
+            'No charge until approved. If we ask for changes, you can edit and resubmit after denial.';
         }
       } else {
         if (lead) {
@@ -662,7 +662,7 @@
         }
         if (note) {
           note.textContent =
-            'Review your listing, then submit for approval. You can keep editing until we approve — submit again after any changes.';
+            'Review your listing, then submit for approval. Once submitted, it locks until we approve or deny.';
         }
       }
     }
@@ -713,6 +713,48 @@
     if (!opportunity) return false;
     const approval = String(opportunity.approvalStatus || '').trim();
     return approval === 'Pending Review' && Boolean(opportunity.reviewSubmittedAt);
+  }
+
+  function isPendingReviewLocked(opportunity) {
+    if (!opportunity) return false;
+    if (opportunityListingIsLive(opportunity)) return false;
+    return isSubmittedAwaitingApproval(opportunity);
+  }
+
+  function applyPendingReviewLockedUi() {
+    const locked = isPendingReviewLocked(currentOpportunity);
+    document.body.classList.toggle('is-pending-review-locked', locked);
+    ['oe-save-draft', 'oe-save-draft-sticky', 'oe-submit'].forEach(function (id) {
+      const btn = document.getElementById(id);
+      if (!btn) return;
+      if (locked) {
+        btn.disabled = true;
+        if (id === 'oe-submit') btn.hidden = true;
+      } else {
+        btn.disabled = false;
+        if (id === 'oe-submit') btn.hidden = false;
+      }
+    });
+    const form = document.getElementById('oe-form');
+    if (!form) return;
+    form.querySelectorAll('input, textarea, select, button').forEach(function (el) {
+      if (
+        el.id === 'oe-submit' ||
+        el.id === 'oe-save-draft' ||
+        el.id === 'oe-save-draft-sticky' ||
+        el.closest('.oe-danger-zone') ||
+        el.closest('.oe-page-nav')
+      ) {
+        return;
+      }
+      if (locked) {
+        el.disabled = true;
+        el.setAttribute('data-locked-by-review', '1');
+      } else if (el.getAttribute('data-locked-by-review') === '1') {
+        el.disabled = false;
+        el.removeAttribute('data-locked-by-review');
+      }
+    });
   }
 
   function opportunityApprovalStatus(opportunity) {
@@ -925,7 +967,7 @@
   }
 
   function submittedApprovalMessage() {
-    return 'Submitted for approval. You can keep editing until we approve it — save changes and submit for approval again whenever you update it.';
+    return 'Submitted for approval. Your listing is locked while we review it — we will email you when it is approved or if changes are needed.';
   }
 
   function primarySubmitLabel() {
@@ -935,7 +977,7 @@
     ).trim();
     if (approval === 'Approved') return 'Pay via Stripe →';
     if (approval === 'Rejected') return 'Resubmit for approval';
-    if (isSubmittedAwaitingApproval(currentOpportunity)) return 'Save & submit for approval';
+    if (isSubmittedAwaitingApproval(currentOpportunity)) return 'Awaiting approval';
     return 'Submit for approval';
   }
 
@@ -1622,7 +1664,7 @@
     if (notice) notice.hidden = !isSubmittedAwaitingApproval(opp);
 
     const submitted = isSubmittedAwaitingApproval(opp);
-    const draftLabel = submitted ? 'Save changes' : 'Save as draft';
+    const draftLabel = submitted ? 'Locked while reviewing' : 'Save as draft';
     ['oe-save-draft', 'oe-save-draft-sticky'].forEach(function (id) {
       const btn = document.getElementById(id);
       if (btn) btn.textContent = draftLabel;
@@ -1630,13 +1672,14 @@
     const draftBarCopy = document.querySelector('#oe-draft-bar .oe-draft-bar-copy');
     if (draftBarCopy) {
       draftBarCopy.textContent = submitted
-        ? 'You can keep editing until we approve your listing. Save changes anytime, then submit for approval again to send updates.'
+        ? 'Your listing is locked while we review it. If we deny it, you can edit and resubmit.'
         : 'Save your progress any time — only a title is needed for a draft.';
     }
 
     syncPrimarySubmitButton();
     listingPaymentPanelVisible();
     applyLiveListingResubmitUi();
+    applyPendingReviewLockedUi();
     syncDangerZoneUi();
   }
 
@@ -2977,6 +3020,13 @@
       }
     }
 
+    if (isPendingReviewLocked(currentOpportunity)) {
+      showAlert(
+        'This listing is locked while we review it. You cannot change it until we approve or deny it.'
+      );
+      return;
+    }
+
     // hasActiveListing already computed above
     const payload = buildPayload(publish && hasActiveListing ? 'published' : 'draft');
     appendListingMediaUrls(payload);
@@ -3065,7 +3115,9 @@
                 ? 'Your listing saved but could not be queued for review. Please try submitting again.'
                 : err === 'live_listing_resubmit_required'
                   ? 'Live listings must be submitted for reapproval. Use Submit changes for reapproval — your subscription stays active.'
-                  : res.data.message || err || 'Could not save opportunity';
+                  : err === 'pending_review_locked'
+                    ? 'This listing is locked while we review it. You cannot change it until we approve or deny it.'
+                    : res.data.message || err || 'Could not save opportunity';
         showAlert(msg);
         return;
       }

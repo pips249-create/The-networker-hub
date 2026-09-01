@@ -950,14 +950,35 @@ async function persistOpportunityReviewSubmission(sb, id, opts) {
     : Array.isArray(existing && existing.meta)
       ? existing.meta
       : [];
+  const snapshotSource = saved || existing || {};
   const patch = {
     review_submitted_at: at,
     approval_status: 'Pending Review',
     status: existing && existing.listingPaymentActive ? 'published' : 'draft',
     meta: mergeReviewSubmittedMeta(baseMeta, at),
+    pending_review_payload: {
+      submittedAt: at,
+      row: pickPendingReviewRowFields(snapshotSource),
+    },
     updated_at: at,
   };
-  const written = await writeOpportunityRow(sb, 'update', patch, id);
+  let written = await writeOpportunityRow(sb, 'update', patch, id);
+  if (
+    written &&
+    (!written.pending_review_payload || !written.pending_review_payload.row) &&
+    patch.pending_review_payload
+  ) {
+    try {
+      written = await writeOpportunityRow(
+        sb,
+        'update',
+        { pending_review_payload: patch.pending_review_payload, updated_at: at },
+        id
+      );
+    } catch (_payloadErr) {
+      /* migration 272 may be missing — review stamp still applies */
+    }
+  }
   // When migration 266 is missing, the column is stripped but meta stamp must remain.
   if (!effectiveReviewSubmittedAt(written)) {
     const metaOnly = {
@@ -1095,6 +1116,14 @@ async function updateOpportunity(id, payload) {
     Boolean(existing?.listingPaymentActive) &&
     String(existing?.approvalStatus || '').trim() === 'Approved' &&
     ['published', 'live'].includes(String(existing?.status || '').toLowerCase());
+  const {
+    isOpportunityLockedForOrganiserEdit,
+  } = require('./opportunity-review-queue');
+  if (isOpportunityLockedForOrganiserEdit(existingRow) && !isLiveListing) {
+    const err = new Error('pending_review_locked');
+    err.code = 'pending_review_locked';
+    throw err;
+  }
   if (isLiveListing && !submitForReview) {
     throw new Error('live_listing_resubmit_required');
   }

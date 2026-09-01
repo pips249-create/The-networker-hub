@@ -168,6 +168,13 @@ module.exports = async function handler(req, res) {
             'Live listings must be submitted for reapproval. Use Submit changes for reapproval — your subscription stays active.',
         });
       }
+      if (String(e && e.message) === 'pending_review_locked' || (e && e.code) === 'pending_review_locked') {
+        return json(res, 409, {
+          error: 'pending_review_locked',
+          message:
+            'This listing is locked while we review it. You cannot change it until we approve or deny it.',
+        });
+      }
       if (e && e.code === 'exclusive_brand_conflict') {
         return sendExclusiveBrandConflict(res, json, e.conflict);
       }

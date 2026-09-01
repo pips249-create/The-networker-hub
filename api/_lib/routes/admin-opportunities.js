@@ -962,6 +962,27 @@ module.exports = async function handler(req, res) {
           });
         }
 
+        if (
+          current.pending_review_payload &&
+          current.pending_review_payload.row &&
+          !alreadyLive
+        ) {
+          const pendingRow = current.pending_review_payload.row;
+          const pendingConflict = await findExclusiveBrandConflict(
+            sb,
+            Object.assign({}, current, pendingRow),
+            id
+          );
+          if (pendingConflict) {
+            return sendExclusiveBrandConflict(res, json, pendingConflict);
+          }
+          const applied = await applyApprovedPendingReviewChanges(sb, id, current);
+          if (!applied) {
+            throw new Error('Approve submitted snapshot returned no row');
+          }
+          current = applied;
+        }
+
         // Paid = Stripe listing_paid_at with a current term. Do not treat a bare
         // listing_expires_at (without payment) as already paid — that blocked the
         // review-then-pay path and confused Approve.

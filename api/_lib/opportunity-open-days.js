@@ -273,6 +273,16 @@ async function replaceOpenDaysForOpportunity(opportunityId, openDaysInput, sessi
   ) {
     throw new Error('opportunity_not_owned');
   }
+  const { isOpportunityLockedForOrganiserEditListing } = require('./opportunity-review-queue');
+  if (
+    sessionContext &&
+    !isPlatformAdmin(sessionContext) &&
+    isOpportunityLockedForOrganiserEditListing(opportunity)
+  ) {
+    const err = new Error('pending_review_locked');
+    err.code = 'pending_review_locked';
+    throw err;
+  }
 
   const list = Array.isArray(openDaysInput) ? openDaysInput : [];
   if (list.length > 40) throw new Error('too_many_open_days');

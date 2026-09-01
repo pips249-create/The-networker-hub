@@ -203,6 +203,16 @@ body.hub-page-organiser.organiser-opportunity-edit-page {
   font-weight: 700;
 }
 
+.organiser-opportunity-edit-page.is-pending-review-locked #oe-save-draft,
+.organiser-opportunity-edit-page.is-pending-review-locked #oe-save-draft-sticky,
+.organiser-opportunity-edit-page.is-pending-review-locked #oe-draft-bar {
+  display: none !important;
+}
+
+.organiser-opportunity-edit-page.is-pending-review-locked #oe-form .oe-flow-fields {
+  opacity: 0.88;
+}
+
 .organiser-opportunity-edit-page.is-live-listing-resubmit .oe-draft-bar,
 .organiser-opportunity-edit-page.is-live-listing-resubmit #oe-save-draft,
 .organiser-opportunity-edit-page.is-live-listing-resubmit #oe-save-draft-sticky {
