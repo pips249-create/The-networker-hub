@@ -24,7 +24,14 @@ function effectiveReviewSubmittedAt(row) {
 }
 
 function isOpportunitySubmittedForReview(row) {
-  return Boolean(effectiveReviewSubmittedAt(row));
+  if (!row) return false;
+  const meta = Array.isArray(row.meta) ? row.meta : [];
+  for (let i = 0; i < meta.length; i += 1) {
+    const item = meta[i] || {};
+    if (String(item.key || '') !== REVIEW_SUBMITTED_META_KEY) continue;
+    if (String(item.val || '').trim()) return true;
+  }
+  return false;
 }
 
 function effectiveRejectionAutomatedAt(row) {
@@ -144,18 +151,11 @@ function applyPendingOpportunitiesAdminFilter(dbQuery, reviewQueueReady) {
 }
 
 async function countPendingOpportunitiesForAdmin(sb, reviewQueueReady) {
+  void reviewQueueReady;
   if (!sb) return 0;
-  if (reviewQueueReady) {
-    const pendingRes = await applyPendingOpportunitiesAdminFilter(
-      sb.from('business_opportunities').select('id', { count: 'exact', head: true }),
-      true
-    );
-    const pendingResult = await pendingRes;
-    return pendingResult.error ? 0 : pendingResult.count || 0;
-  }
   const { data, error } = await sb
     .from('business_opportunities')
-    .select('id, meta, approval_status, pending_review_payload')
+    .select('id, meta, approval_status, pending_review_payload, review_submitted_at, updated_at')
     .eq('approval_status', 'Pending Review')
     .limit(500);
   if (error) return 0;

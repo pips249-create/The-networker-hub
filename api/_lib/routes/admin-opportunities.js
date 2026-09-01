@@ -495,7 +495,7 @@ async function listOpportunitiesForAdmin(query) {
     });
     total = filtered.length;
     rows = filtered.slice(offset, offset + limit);
-  } else if (approvalStatus === 'Pending Review' && !reviewQueueReady) {
+  } else if (approvalStatus === 'Pending Review') {
     const pendingRes = await dbQuery.limit(500);
     if (pendingRes.error) throw new Error(pendingRes.error.message);
     const filtered = filterPendingOpportunityAdminRows(pendingRes.data || []).sort(function (a, b) {

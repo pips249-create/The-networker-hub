@@ -24508,6 +24508,9 @@
           '<button type="button" data-opp-quick="awaiting_payment" class="text-xs font-semibold rounded-full border border-sky-300 bg-sky-50 px-3 py-1.5 text-sky-900 hover:bg-sky-100">Awaiting payment</button>' +
           '</div></div>';
       } else if (pendingCount > 0 && opportunityCleanupHasActiveFilters()) {
+        var searchHint = opportunityCleanupState.q
+          ? ' Your search for “' + esc(opportunityCleanupState.q) + '” does not match any of them.'
+          : '';
         emptyMsg =
           '<div class="rounded-xl border border-amber-200 bg-amber-50 p-6 text-center space-y-3">' +
           '<p class="text-sm text-amber-950 font-semibold">' +
@@ -24516,10 +24519,14 @@
           (pendingCount === 1 ? ' is' : 's are') +
           ' awaiting review, but ' +
           (pendingCount === 1 ? 'it is' : 'they are') +
-          ' hidden by your current filters.</p>' +
-          '<p class="text-sm text-amber-900/90">Pending listings are usually drafts — try clearing filters or use the Pending review shortcut.</p>' +
-          '<button type="button" data-opp-quick="pending" class="text-xs font-semibold rounded-full border border-amber-300 bg-white px-3 py-1.5 text-amber-950 hover:bg-amber-100">Show pending review</button>' +
-          '</div>';
+          ' hidden by your current filters.' +
+          searchHint +
+          '</p>' +
+          '<p class="text-sm text-amber-900/90">Clear search and other filters to see the full review queue.</p>' +
+          '<div class="flex flex-wrap justify-center gap-2">' +
+          '<button type="button" data-opp-quick="show-pending" class="text-xs font-semibold rounded-full border border-amber-300 bg-white px-3 py-1.5 text-amber-950 hover:bg-amber-100">Show all pending review</button>' +
+          '<button type="button" data-opp-quick="clear" class="text-xs font-semibold rounded-full border border-slate-300 bg-white px-3 py-1.5 text-slate-700 hover:bg-slate-50">Clear all filters</button>' +
+          '</div></div>';
       }
       list.innerHTML = emptyMsg + pagerBar;
       return;
@@ -25381,12 +25388,25 @@
         opportunityCleanupState.unclaimed = false;
         opportunityCleanupState.brandDuplicates = false;
         opportunityCleanupState.q = '';
+      } else if (key === 'show-pending') {
+        opportunityCleanupState.approval = 'Pending Review';
+        opportunityCleanupState.status = '';
+        opportunityCleanupState.type = '';
+        opportunityCleanupState.featured = false;
+        opportunityCleanupState.noImage = false;
+        opportunityCleanupState.awaitingPayment = false;
+        opportunityCleanupState.paymentLapsed = false;
+        opportunityCleanupState.unclaimed = false;
+        opportunityCleanupState.brandDuplicates = false;
+        opportunityCleanupState.q = '';
+        opportunityCleanupState.page = 0;
       } else if (key === 'pending') {
         if (opportunityCleanupState.approval === 'Pending Review') {
           opportunityCleanupState.approval = '';
         } else {
           opportunityCleanupState.approval = 'Pending Review';
           opportunityCleanupState.status = '';
+          opportunityCleanupState.q = '';
           opportunityCleanupState.awaitingPayment = false;
           opportunityCleanupState.paymentLapsed = false;
           opportunityCleanupState.unclaimed = false;
