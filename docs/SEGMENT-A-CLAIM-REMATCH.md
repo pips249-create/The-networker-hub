@@ -1,12 +1,13 @@
 # Segment A — Claim rematch (pre-launch via Resend)
 
-**When:** evening of **31 Aug** / early **1 Sept 2026** (before 9am ticket buying)  
+**When:** evening of **31 Aug** / morning of **1 Sept 2026** (ticket buying from 9am)  
 **Audience:** **Unclaimed networking group** organiser profiles only (Segment A rules)  
 **Not included:** the ~3,500 Brevo/attendee contact list, claimed groups, exhibitions, internal/test, launch exclusions  
 **Send via:** **Resend** (`RESEND_FROM` / `hello@mail.thenetworkeruk.com`)  
 **Reply-to:** `catherine@thenetworkeruk.com`  
 **Template:** `organiser_claim_invite`  
-**Subject (rematch override):** `Claim {{organiser_name}} before launch — Founding Organiser · 2026`
+**Subject (1 Sept remainder):** `It's FREE to claim {{organiser_name}} — tickets go live this morning`  
+**Copy focus:** FREE callout + short social proof (groups already claimed) — not a repeat of Email 2. Do **not** promise Founding Organiser after midnight 1 Sept.
 
 ### Why this list (not 3,500)
 

@@ -29,9 +29,9 @@ const SITE = 'https://www.thenetworkeruk.com';
 const CSV = path.join(root, 'data/Claim-Rematch-Resend.csv');
 const SLUG = 'organiser_claim_invite';
 const REPLY_TO = 'catherine@thenetworkeruk.com';
-/** Launch-eve subject — Founding Organiser window closes on claim before 1 Sept. */
+/** Launch-morning subject — tickets go live today. */
 const REMATCH_SUBJECT =
-  'Claim {{organiser_name}} before launch — Founding Organiser · 2026';
+  "It's FREE to claim {{organiser_name}} — tickets go live this morning";
 
 const args = process.argv.slice(2);
 const doSend = args.includes('--send');

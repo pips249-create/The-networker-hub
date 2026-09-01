@@ -63,7 +63,14 @@ function parseListQuery(query) {
       : '';
   const organiserId = String(query?.id || query?.organiser || '').trim();
   const featuredOnly = query?.featured === '1' || query?.featured === 'true';
-  return { offset, limit, q, incomplete, excludeHidden, visibility, organiserId, featuredOnly };
+  const claimStatusRaw = String(query?.claim_status || query?.claim || '').trim().toLowerCase();
+  const claimStatus =
+    claimStatusRaw === 'claimed' || claimStatusRaw === 'pending' || claimStatusRaw === 'disputed'
+      ? claimStatusRaw
+      : claimStatusRaw === 'unclaimed' || claimStatusRaw === 'not_claimed'
+        ? 'unclaimed'
+        : '';
+  return { offset, limit, q, incomplete, excludeHidden, visibility, organiserId, featuredOnly, claimStatus };
 }
 
 async function eventCountsForOrganisers(sb, organiserIds) {
@@ -359,10 +366,24 @@ function buildOrganiserPatch(body, photo_url) {
   return patch;
 }
 
+async function getClaimStatusCounts(sb) {
+  const [claimedRes, pendingRes, disputedRes, totalRes] = await Promise.all([
+    sb.from('organisers').select('id', { count: 'exact', head: true }).eq('ownership_claim_status', 'claimed'),
+    sb.from('organisers').select('id', { count: 'exact', head: true }).eq('ownership_claim_status', 'pending'),
+    sb.from('organisers').select('id', { count: 'exact', head: true }).eq('ownership_claim_status', 'disputed'),
+    sb.from('organisers').select('id', { count: 'exact', head: true }),
+  ]);
+  const claimed = claimedRes.error ? 0 : claimedRes.count || 0;
+  const pending = pendingRes.error ? 0 : pendingRes.count || 0;
+  const disputed = disputedRes.error ? 0 : disputedRes.count || 0;
+  const total = totalRes.error ? 0 : totalRes.count || 0;
+  return { claimed, pending, disputed, unclaimed: Math.max(0, total - claimed), total };
+}
+
 async function listOrganisersForAdmin(query) {
   const sb = getSupabaseAdmin();
   const { applyPublicOrganiserBrowseFilter } = require('../supabase-organisers-browse');
-  const { offset, limit, q, incomplete, excludeHidden, visibility, organiserId, featuredOnly } =
+  const { offset, limit, q, incomplete, excludeHidden, visibility, organiserId, featuredOnly, claimStatus } =
     parseListQuery(query);
 
   let dbQuery = sb
@@ -391,6 +412,17 @@ async function listOrganisersForAdmin(query) {
     } else if (excludeHidden) {
       dbQuery = dbQuery.neq('listing_status', 'unpublished');
     }
+    if (claimStatus === 'claimed') {
+      dbQuery = dbQuery.eq('ownership_claim_status', 'claimed');
+    } else if (claimStatus === 'pending') {
+      dbQuery = dbQuery.eq('ownership_claim_status', 'pending');
+    } else if (claimStatus === 'disputed') {
+      dbQuery = dbQuery.eq('ownership_claim_status', 'disputed');
+    } else if (claimStatus === 'unclaimed') {
+      dbQuery = dbQuery.or(
+        'ownership_claim_status.is.null,ownership_claim_status.eq.pending,ownership_claim_status.eq.disputed'
+      );
+    }
   }
 
   const res = organiserId ? await dbQuery.limit(1) : await dbQuery.range(offset, offset + limit - 1);
@@ -416,6 +448,7 @@ async function listOrganisersForAdmin(query) {
   const total = organiserId ? rows.length : res.count != null ? res.count : rows.length;
 
   const incompleteCount = await getIncompleteOrganiserCount(sb);
+  const claimCounts = await getClaimStatusCounts(sb);
 
   return {
     organisers: rows.map((row) =>
@@ -432,6 +465,7 @@ async function listOrganisersForAdmin(query) {
     limit,
     hasMore: offset + rows.length < total,
     incomplete: incompleteCount,
+    claimCounts,
   };
 }
 
