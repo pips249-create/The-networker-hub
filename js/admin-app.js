@@ -19725,10 +19725,18 @@
           (hints.checkoutWebhookReady
             ? '<p class="text-xs text-emerald-800 mt-2">' + esc(hints.checkoutWebhookReady) + '</p>'
             : '') +
+          (hints.stripeWebhookEndpoint
+            ? '<p class="text-xs text-amber-800 mt-2">' + esc(hints.stripeWebhookEndpoint) + '</p>'
+            : '') +
+          (hints.stripeWebhookUrlWarning
+            ? '<p class="text-xs text-amber-800 mt-2">' + esc(hints.stripeWebhookUrlWarning) + '</p>'
+            : '') +
           (hints.checkoutEmailReady
             ? '<p class="text-xs text-slate-600 mt-2">' + esc(hints.checkoutEmailReady) + '</p>'
             : '') +
-          '<p class="text-xs text-slate-500 mt-3">Webhook endpoint: <code class="text-[11px]">/api/stripe-webhook</code> · Event: <code class="text-[11px]">checkout.session.completed</code>. See <code class="text-[11px]">CHECKOUT-SETUP.md</code>.</p>' +
+          '<p class="text-xs text-slate-500 mt-3">Webhook endpoint: <code class="text-[11px]">' +
+          esc(env.stripeWebhookEndpointUrl || '/api/stripe-webhook') +
+          '</code> · Event: <code class="text-[11px]">checkout.session.completed</code>. See <code class="text-[11px]">CHECKOUT-SETUP.md</code>.</p>' +
           '</section>' +
           '<section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
           '<h3 class="font-bold text-brand-900 mb-2">Supabase connection</h3>' +
