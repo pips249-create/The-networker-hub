@@ -3039,3 +3039,78 @@ a.admin-action-row:hover .admin-action-btn {
   font-size: 0.6875rem;
   color: #64748b;
 }
+
+.admin-opp-action-banners {
+  margin-top: 0.25rem;
+}
+
+.admin-opp-action-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem 1rem;
+  padding: 0.9rem 1rem;
+  border-radius: 0.85rem;
+  border: 1px solid transparent;
+}
+
+.admin-opp-action-banner--amber {
+  border-color: #fcd34d;
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.admin-opp-action-banner--sky {
+  border-color: #7dd3fc;
+  background: #f0f9ff;
+  color: #0c4a6e;
+}
+
+.admin-opp-action-banner-main {
+  flex: 1 1 14rem;
+  min-width: 0;
+}
+
+.admin-opp-action-banner-title {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.admin-opp-action-banner-detail {
+  margin: 0.25rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  opacity: 0.92;
+}
+
+.admin-opp-action-banner-btn {
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 999px;
+  padding: 0.55rem 0.95rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.admin-opp-action-banner--amber .admin-opp-action-banner-btn {
+  background: #92400e;
+  color: #fff;
+}
+
+.admin-opp-action-banner--amber .admin-opp-action-banner-btn:hover {
+  background: #78350f;
+}
+
+.admin-opp-action-banner--sky .admin-opp-action-banner-btn {
+  background: #0369a1;
+  color: #fff;
+}
+
+.admin-opp-action-banner--sky .admin-opp-action-banner-btn:hover {
+  background: #075985;
+}

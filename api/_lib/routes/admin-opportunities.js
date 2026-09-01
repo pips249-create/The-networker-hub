@@ -39,6 +39,19 @@ const {
   exclusiveBrandConflictError,
 } = require('../opportunity-brand-exclusivity');
 
+async function countAwaitingPayOpportunities(sb) {
+  const { data, error } = await sb
+    .from('business_opportunities')
+    .select('id, status, published_at, listing_expires_at, listing_paid_at, approval_status')
+    .eq('approval_status', 'Approved')
+    .is('listing_paid_at', null)
+    .limit(500);
+  if (error) return 0;
+  return (data || []).filter(function (row) {
+    return !listingPaymentCurrent(row);
+  }).length;
+}
+
 const TEST_SAMPLE_LISTINGS = [
   {
     title: '[TEST] Café franchise — Yorkshire territory',
@@ -408,7 +421,10 @@ async function listOpportunitiesForAdmin(query) {
     const res = await dbQuery.eq('id', id).limit(1);
     if (res.error) throw new Error(res.error.message);
     const rows = res.data || [];
-    const pendingCount = await countPendingOpportunitiesForAdmin(sb, reviewQueueReady);
+    const [pendingCount, awaitingPayCount] = await Promise.all([
+      countPendingOpportunitiesForAdmin(sb, reviewQueueReady),
+      countAwaitingPayOpportunities(sb),
+    ]);
     return {
       opportunities: rows.map(mapOpportunityRow),
       count: rows.length,
@@ -419,6 +435,7 @@ async function listOpportunitiesForAdmin(query) {
       pageSize: 1,
       hasMore: false,
       pending_count: pendingCount,
+      awaiting_pay_count: awaitingPayCount,
       review_queue_ready: reviewQueueReady,
     };
   }
@@ -469,11 +486,15 @@ async function listOpportunitiesForAdmin(query) {
   if (brandDuplicatesOnly) {
     brandDuplicateIds = await findExclusiveBrandDuplicateListingIds(sb);
     if (!brandDuplicateIds.length) {
-      const pendingCount = await countPendingOpportunitiesForAdmin(sb, reviewQueueReady);
+      const [pendingCount, awaitingPayCount] = await Promise.all([
+        countPendingOpportunitiesForAdmin(sb, reviewQueueReady),
+        countAwaitingPayOpportunities(sb),
+      ]);
       return {
         opportunities: [],
         total: 0,
         pending_count: pendingCount,
+        awaiting_pay_count: awaitingPayCount,
       };
     }
     dbQuery = dbQuery.in('id', brandDuplicateIds);
@@ -518,7 +539,10 @@ async function listOpportunitiesForAdmin(query) {
     rows = rows.slice(0, limit);
   }
 
-  const pendingCount = await countPendingOpportunitiesForAdmin(sb, reviewQueueReady);
+  const [pendingCount, awaitingPayCount] = await Promise.all([
+    countPendingOpportunitiesForAdmin(sb, reviewQueueReady),
+    countAwaitingPayOpportunities(sb),
+  ]);
 
   let recentSubmissions = [];
   if (pendingCount === 0 && approvalStatus === 'Pending Review' && !search) {
@@ -565,6 +589,7 @@ async function listOpportunitiesForAdmin(query) {
     pageSize: limit,
     hasMore: offset + rows.length < total,
     pending_count: pendingCount,
+    awaiting_pay_count: awaitingPayCount,
     recent_submissions: recentSubmissions,
     review_queue_ready: reviewQueueReady,
   };

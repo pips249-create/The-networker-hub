@@ -1929,6 +1929,9 @@
         (awaitingPay === 1 ? '' : 's') +
         ' waiting for owner payment';
     }
+    if (document.getElementById('opportunity-action-banner')) {
+      renderOpportunityActionBanner();
+    }
   }
 
   function updateSupportNavBadge(data) {
@@ -23058,6 +23061,91 @@
     });
   }
 
+  function opportunityActionCounts() {
+    var cache = opportunityCleanupCache || {};
+    var metrics = (adminMetricsCache && adminMetricsCache.actionCounts) || {};
+    return {
+      pending:
+        Number(cache.pending_count != null ? cache.pending_count : metrics.pendingOpportunities) ||
+        0,
+      awaitingPay:
+        Number(
+          cache.awaiting_pay_count != null ? cache.awaiting_pay_count : metrics.awaitingPayOpportunities
+        ) || 0,
+    };
+  }
+
+  function renderOpportunityActionBanner() {
+    var el = document.getElementById('opportunity-action-banner');
+    if (!el) return;
+
+    var counts = opportunityActionCounts();
+    var pending = counts.pending;
+    var awaitingPay = counts.awaitingPay;
+    var onPending = opportunityCleanupState.approval === 'Pending Review';
+    var onAwaiting = opportunityCleanupState.awaitingPayment;
+    var blocks = [];
+
+    if (pending > 0 && !onPending) {
+      blocks.push({
+        tone: 'amber',
+        title:
+          pending +
+          ' listing' +
+          (pending === 1 ? '' : 's') +
+          ' waiting for your review',
+        detail: 'Approve or deny each submission from the review queue.',
+        actionKey: 'show-pending',
+        actionLabel: 'Show pending review',
+      });
+    }
+    if (awaitingPay > 0 && !onAwaiting) {
+      blocks.push({
+        tone: 'sky',
+        title:
+          awaitingPay +
+          ' approved listing' +
+          (awaitingPay === 1 ? '' : 's') +
+          ' awaiting payment',
+        detail: 'These are approved but the owner has not paid via Stripe yet — nothing for you to review.',
+        actionKey: 'show-awaiting_payment',
+        actionLabel: 'Show awaiting payment',
+      });
+    }
+
+    if (!blocks.length) {
+      el.innerHTML = '';
+      el.hidden = true;
+      return;
+    }
+
+    el.hidden = false;
+    el.innerHTML =
+      '<div class="admin-opp-action-banners space-y-3">' +
+      blocks
+        .map(function (block) {
+          return (
+            '<div class="admin-opp-action-banner admin-opp-action-banner--' +
+            esc(block.tone) +
+            '" role="status">' +
+            '<div class="admin-opp-action-banner-main">' +
+            '<p class="admin-opp-action-banner-title">' +
+            esc(block.title) +
+            '</p>' +
+            '<p class="admin-opp-action-banner-detail">' +
+            esc(block.detail) +
+            '</p></div>' +
+            '<button type="button" data-opp-quick="' +
+            attrEsc(block.actionKey) +
+            '" class="admin-opp-action-banner-btn">' +
+            esc(block.actionLabel) +
+            '</button></div>'
+          );
+        })
+        .join('') +
+      '</div>';
+  }
+
   function opportunityCleanupHasActiveFilters() {
     return !!(
       opportunityCleanupState.q ||
@@ -25064,6 +25152,7 @@
     }
     opportunityCleanupCache = data;
     renderOpportunityCleanupList();
+    renderOpportunityActionBanner();
   }
 
   function refreshOpportunityCleanupData() {
@@ -25107,6 +25196,7 @@
           ? opportunityCleanupCache.total
           : opportunities.length;
     var pendingCount = opportunityCleanupCache.pending_count || 0;
+    var awaitingPayCount = opportunityCleanupCache.awaiting_pay_count || 0;
     var recentSubmissions = opportunityCleanupCache.recent_submissions || [];
     var pager = adminPaginationHtml(page, total, pageSize, 'data-opp-page');
     var pagerBar = pager
@@ -25142,6 +25232,13 @@
           '<a href="#opportunities?approval=pending" class="text-amber-800 font-semibold hover:underline">' +
             pendingCount +
             ' pending review</a>'
+        );
+      }
+      if (awaitingPayCount) {
+        parts.push(
+          '<a href="#opportunities?awaiting_payment=1" class="text-sky-800 font-semibold hover:underline">' +
+            awaitingPayCount +
+            ' awaiting payment</a>'
         );
       }
       if (opportunityCleanupState.loading) {
@@ -25369,6 +25466,7 @@
       '<div class="flex flex-wrap items-center gap-3">' +
       '<button type="button" id="opportunity-test-samples-btn" class="rounded-lg border border-brand-300 bg-white text-brand-900 text-sm font-semibold px-4 py-2 hover:bg-brand-50">Add 3 sample test listings</button>' +
       '<span id="opportunity-test-samples-msg" class="text-xs"></span></div></div></div></details></div>' +
+      '<div id="opportunity-action-banner" hidden></div>' +
       '<div id="opportunity-cleanup-status" class="text-sm text-slate-500">Loading business opportunities…</div>' +
       '<div id="opportunity-exclusive-brand-duplicates" class="hidden"></div>' +
       '<p id="opportunity-cleanup-hint" class="hidden text-xs text-amber-900 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">' +
@@ -25966,6 +26064,18 @@
         opportunityCleanupState.featured = false;
         opportunityCleanupState.noImage = false;
         opportunityCleanupState.awaitingPayment = false;
+        opportunityCleanupState.paymentLapsed = false;
+        opportunityCleanupState.unclaimed = false;
+        opportunityCleanupState.brandDuplicates = false;
+        opportunityCleanupState.q = '';
+        opportunityCleanupState.page = 0;
+      } else if (key === 'show-awaiting_payment') {
+        opportunityCleanupState.awaitingPayment = true;
+        opportunityCleanupState.approval = '';
+        opportunityCleanupState.status = '';
+        opportunityCleanupState.type = '';
+        opportunityCleanupState.featured = false;
+        opportunityCleanupState.noImage = false;
         opportunityCleanupState.paymentLapsed = false;
         opportunityCleanupState.unclaimed = false;
         opportunityCleanupState.brandDuplicates = false;
