@@ -389,11 +389,12 @@ async function listOrganisersForAdmin(query) {
   let dbQuery = sb
     .from('organisers')
     .select(
-      'id, name, email, contact_email, supabase_user_id, description, photo_url, website, instagram_url, facebook_url, linkedin_url, x_url, listing_status, ownership_claim_status, slug, featured, featured_until, created_at',
+      'id, name, email, contact_email, supabase_user_id, description, photo_url, website, instagram_url, facebook_url, linkedin_url, x_url, listing_status, ownership_claim_status, slug, featured, featured_until, created_at, updated_at',
       { count: 'exact' }
     )
     .order('featured', { ascending: false })
-    .order('name', { ascending: true });
+    .order('updated_at', { ascending: false })
+    .order('created_at', { ascending: false });
 
   if (organiserId) dbQuery = dbQuery.eq('id', organiserId);
   else {
