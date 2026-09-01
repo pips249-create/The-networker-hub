@@ -163,6 +163,9 @@
       }
     }
     window.hubBrowseTotal = data.pagination ? Number(data.pagination.total) || 0 : window.hubBrowseEvents.length;
+    window.hubBrowseListingTotal = data.pagination
+      ? Number(data.pagination.listingTotal != null ? data.pagination.listingTotal : data.pagination.total) || 0
+      : window.hubBrowseEvents.length;
     window.hubBrowsePagination = data.pagination || null;
     if (data.meta && data.meta.typeCounts) {
       lastTypeCounts = data.meta.typeCounts;
@@ -219,6 +222,7 @@
     window.hubBrowseEvents = [];
     window.hubBrowseFeatured = [];
     window.hubBrowseTotal = 0;
+    window.hubBrowseListingTotal = 0;
     window.hubBrowsePagination = null;
     if (window.hubRefreshListings) window.hubRefreshListings();
     var status = document.getElementById('load-status');

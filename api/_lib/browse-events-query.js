@@ -557,12 +557,11 @@ async function fetchBrowseTypeCounts(sb, params) {
   const base = { ...params, types: [] };
 
   function tallyTypeCounts(rows) {
-    const deduped = dedupeBrowseRowsBySeries(rows);
-    const counts = { all: deduped.length };
+    const counts = { all: rows.length };
     types.forEach((type) => {
       counts[type] = 0;
     });
-    deduped.forEach((row) => {
+    rows.forEach((row) => {
       const type = String(row.type_tab || 'meeting').toLowerCase();
       if (counts[type] != null) counts[type] += 1;
     });
@@ -669,13 +668,15 @@ async function fetchBrowsePageIds(sb, params) {
 
   const seriesCounts = countBrowseSeriesOccurrences(filtered);
   const sorted = sortRows(filtered, params.sort);
+  const dateTotal = sorted.length;
   const deduped = dedupeBrowseRowsBySeries(sorted);
-  const total = deduped.length;
+  const listingTotal = deduped.length;
   const slice = deduped.slice(params.offset, params.offset + params.limit);
 
   return {
     ids: slice.map((r) => r.id),
-    total,
+    total: dateTotal,
+    listingTotal,
     rows: slice,
     idToSeriesCount: idToSeriesCountMap(slice, seriesCounts),
   };
@@ -718,6 +719,7 @@ async function fetchBrowseEventsPage(sb, rawQuery) {
     }
     const pinSeriesCounts = countBrowseSeriesOccurrences(slim);
     const sorted = sortRows(slim, params.sort);
+    const dateTotal = sorted.length;
     const deduped = dedupeBrowseRowsBySeries(sorted);
     const pinSlice = deduped.slice(0, MAX_PINS);
     const withModes = await attachAttendanceModes(sb, pinSlice);
@@ -725,7 +727,13 @@ async function fetchBrowseEventsPage(sb, rawQuery) {
     attachBrowseSeriesCounts(pinEvents, idToSeriesCountMap(withModes, pinSeriesCounts));
     return {
       events: pinEvents,
-      pagination: { total: deduped.length, page: 1, limit: MAX_PINS, totalPages: 1 },
+      pagination: {
+        total: dateTotal,
+        listingTotal: deduped.length,
+        page: 1,
+        limit: MAX_PINS,
+        totalPages: 1,
+      },
       meta: null,
       featured: [],
     };
@@ -794,13 +802,15 @@ async function fetchBrowseEventsPage(sb, rawQuery) {
   }
 
   const total = pageData.total;
-  const totalPages = Math.max(1, Math.ceil(total / params.limit));
+  const listingTotal = pageData.listingTotal != null ? pageData.listingTotal : total;
+  const totalPages = Math.max(1, Math.ceil(listingTotal / params.limit));
 
   return {
     events,
     featured: params.mode === 'featured' ? featured : featured,
     pagination: {
       total,
+      listingTotal,
       page: params.page,
       limit: params.limit,
       offset: params.offset,

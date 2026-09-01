@@ -881,19 +881,32 @@
     return window.hubGetFilteredEvents ? window.hubGetFilteredEvents(events) : events.slice();
   }
 
-  function browseTotalCount() {
+  function browseListingCount() {
+    if (window.hubServerBrowse && window.hubBrowseListingTotal != null) {
+      return Number(window.hubBrowseListingTotal) || 0;
+    }
     if (window.hubServerBrowse && window.hubBrowseTotal != null) {
-      // Trust the paginated API total — do not substitute chip counts when
-      // a type tab is selected but the request has not applied types yet.
       return Number(window.hubBrowseTotal) || 0;
     }
     return getFilteredList().length;
   }
 
+  function browseDateCount() {
+    if (window.hubServerBrowse && window.hubBrowseTotal != null) {
+      return Number(window.hubBrowseTotal) || 0;
+    }
+    return getFilteredList().length;
+  }
+
+  function browseTotalCount() {
+    return browseListingCount();
+  }
+
   function renderGridPage(list) {
     const rows = list;
-    const totalItems = window.hubServerBrowse ? browseTotalCount() : rows.length;
-    const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE));
+    const listingTotal = window.hubServerBrowse ? browseListingCount() : rows.length;
+    const dateTotal = window.hubServerBrowse ? browseDateCount() : rows.length;
+    const totalPages = Math.max(1, Math.ceil(listingTotal / PAGE_SIZE));
     const page = window.hubServerBrowse ? window.hubBrowseCurrentPage || currentPage : currentPage;
 
     if (page > totalPages) {
@@ -909,7 +922,7 @@
 
     if (!els.listings) return;
 
-    if (!totalItems && !rows.length) {
+    if (!listingTotal && !rows.length) {
       const searchInput = document.getElementById('search');
       const searchQ = searchInput ? String(searchInput.value || '').trim() : '';
       const regional = window.hubRegionalLanding;
@@ -966,17 +979,17 @@
       return;
     }
 
-    const rangeStart = totalItems ? start + 1 : 0;
-    const rangeEnd = Math.min(start + pageItems.length, totalItems);
+    const rangeStart = listingTotal ? start + 1 : 0;
+    const rangeEnd = Math.min(start + pageItems.length, listingTotal);
     const rangeHtml =
-      totalItems > PAGE_SIZE
+      listingTotal > PAGE_SIZE
         ? '<p class="listings-range">Showing ' +
           rangeStart +
           '–' +
           rangeEnd +
           ' of ' +
-          totalItems +
-          '</p>'
+          listingTotal +
+          ' listings</p>'
         : '';
 
     els.listings.innerHTML =
@@ -986,7 +999,7 @@
       '</div>' +
       paginationHtml(currentPage, totalPages);
 
-    updateResultsSummary(totalItems);
+    updateResultsSummary(dateTotal);
 
     if (window.HubFavourites) window.HubFavourites.refreshButtons(els.listings);
   }
