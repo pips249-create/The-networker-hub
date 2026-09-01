@@ -714,15 +714,16 @@
 
   function viewBoxToCanvasPoint(x, y) {
     if (!els.svg || !els.canvas) return null;
-    var svgRect = els.svg.getBoundingClientRect();
+    var point = els.svg.createSVGPoint();
+    point.x = x;
+    point.y = y;
+    var matrix = els.svg.getScreenCTM();
+    if (!matrix) return null;
+    var screen = point.matrixTransform(matrix);
     var canvasRect = els.canvas.getBoundingClientRect();
-    if (!svgRect.width || !svgRect.height) return null;
-    var scale = Math.min(svgRect.width / 960, svgRect.height / 500);
-    var offsetX = (svgRect.width - 960 * scale) / 2;
-    var offsetY = (svgRect.height - 500 * scale) / 2;
     return {
-      x: svgRect.left - canvasRect.left + offsetX + x * scale,
-      y: svgRect.top - canvasRect.top + offsetY + y * scale,
+      x: screen.x - canvasRect.left,
+      y: screen.y - canvasRect.top,
     };
   }
 
@@ -743,7 +744,35 @@
     });
   }
 
-  function renderMapLabels(projection, features) {
+  function mapLabelAnchor(projection, pathGen, feature, meta) {
+    var bounds = pathGen.bounds(feature);
+    if (!bounds) return null;
+
+    var x = (bounds[0][0] + bounds[1][0]) / 2;
+    var y = bounds[0][1];
+
+    // Alaska/Hawaii skew the US bbox — anchor on the lower 48 instead.
+    if (meta.iso2 === 'US') {
+      var continental = projection([-98, 39]);
+      if (continental) {
+        x = continental[0];
+        y = continental[1];
+      }
+    }
+
+    // Keep UK / Ireland labels readable when they sit close together.
+    if (meta.iso2 === 'GB') {
+      x += 10;
+      y -= 6;
+    } else if (meta.iso2 === 'IE') {
+      x -= 14;
+      y += 4;
+    }
+
+    return { x: x, y: y };
+  }
+
+  function renderMapLabels(projection, features, pathGen) {
     if (!els.labels) return;
     els.labels.innerHTML = '';
     state.labelItems = [];
@@ -755,27 +784,11 @@
     spotlight.forEach(function (meta) {
       var feature = featureByNumericId(features, meta.numericId);
       if (!feature) return;
-      var centroid = window.d3.geoCentroid(feature);
-      var projected = projection(centroid);
-      if (!projected) return;
+      var anchor = mapLabelAnchor(projection, pathGen, feature, meta);
+      if (!anchor) return;
 
-      // Nudge spotlight labels so neighbouring markets stay readable.
-      var x = projected[0];
-      var y = projected[1];
-      if (meta.iso2 === 'GB') {
-        x += 48;
-        y -= 34;
-      } else if (meta.iso2 === 'IE') {
-        x -= 80;
-        y += 18;
-      } else if (meta.iso2 === 'US') {
-        x -= 18;
-        y += 8;
-      } else if (meta.iso2 === 'AU') {
-        y += 6;
-      } else if (meta.iso2 === 'CA') {
-        y += 10;
-      }
+      var x = anchor.x;
+      var y = anchor.y;
 
       var button = document.createElement('button');
       button.type = 'button';
@@ -975,7 +988,7 @@
 
     els.svg.appendChild(countriesGroup);
     renderNetworkArcs(projection, features);
-    renderMapLabels(projection, features);
+    renderMapLabels(projection, features, pathGen);
 
     els.loading.hidden = true;
     state.mapReady = true;
