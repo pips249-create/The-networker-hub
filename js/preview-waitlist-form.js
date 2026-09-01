@@ -30,11 +30,27 @@
     return 'Something went wrong. Please try again.';
   }
 
+  function findMessageEl(form) {
+    var el = form.querySelector('[data-preview-waitlist-message]');
+    if (el) return el;
+    var messageId = form.getAttribute('aria-describedby');
+    if (messageId) {
+      el = document.getElementById(messageId);
+      if (el) return el;
+    }
+    var parent = form.parentElement;
+    if (parent) {
+      el = parent.querySelector('[data-preview-waitlist-message]');
+      if (el) return el;
+    }
+    return null;
+  }
+
   function bindForm(form) {
     if (!form || form.getAttribute('data-preview-waitlist-bound') === '1') return;
     form.setAttribute('data-preview-waitlist-bound', '1');
 
-    var msg = form.querySelector('[data-preview-waitlist-message]');
+    var msg = findMessageEl(form);
     var emailInput = form.querySelector('input[type="email"]');
     var honeypot = form.querySelector('[data-preview-waitlist-honeypot]');
     var btn = form.querySelector('[type="submit"]');
