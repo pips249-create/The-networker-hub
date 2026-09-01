@@ -477,14 +477,30 @@ async function rejectOpportunityListing(opportunityId, rejectionNote, options) {
 
   const note = String(rejectionNote || '').trim();
   const sb = getSupabaseAdmin();
+  let baseMeta = options && options.existingRow && Array.isArray(options.existingRow.meta)
+    ? options.existingRow.meta
+    : null;
+  if (!baseMeta) {
+    const { data: existing } = await sb
+      .from('business_opportunities')
+      .select('meta')
+      .eq('id', id)
+      .maybeSingle();
+    baseMeta = Array.isArray(existing && existing.meta) ? existing.meta : [];
+  }
+  const patch = {
+    approval_status: 'Rejected',
+    status: 'unpublished',
+    rejection_note: note || null,
+    updated_at: new Date().toISOString(),
+  };
+  if (options && options.automated) {
+    const { mergeRejectionAutomatedMeta } = require('./opportunity-review-queue');
+    patch.meta = mergeRejectionAutomatedMeta(baseMeta);
+  }
   const { data, error } = await sb
     .from('business_opportunities')
-    .update({
-      approval_status: 'Rejected',
-      status: 'unpublished',
-      rejection_note: note || null,
-      updated_at: new Date().toISOString(),
-    })
+    .update(patch)
     .eq('id', id)
     .select('*')
     .single();
@@ -506,7 +522,10 @@ async function maybeAutoRejectOpportunity(row) {
   if (!row) return { rejected: false };
   const scan = scanOpportunityRedFlags(row);
   if (!scan) return { rejected: false };
-  const listing = await rejectOpportunityListing(row.id, scan.rejectionNote, { automated: true });
+  const listing = await rejectOpportunityListing(row.id, scan.rejectionNote, {
+    automated: true,
+    existingRow: row,
+  });
   return { rejected: true, listing, scan };
 }
 

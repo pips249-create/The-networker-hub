@@ -508,6 +508,7 @@
   var METRICS_POLL_MS = 90000;
   var adminNotificationsTimer = null;
   var groupCleanupCache = null;
+  var groupCleanupFetchGen = 0;
   var eventCleanupCache = null;
   var analyticsState = { period: '30d', demandCache: null, waitlistCache: null };
   var financialsState = {
@@ -1657,7 +1658,9 @@
     var badge = document.getElementById('admin-opportunities-badge');
     if (!badge) return;
     var counts = (data && data.actionCounts) || {};
-    var n = Number(counts.pendingOpportunities) || 0;
+    var pending = Number(counts.pendingOpportunities) || 0;
+    var awaitingPay = Number(counts.awaitingPayOpportunities) || 0;
+    var n = pending + awaitingPay;
     if (n <= 0) {
       badge.classList.add('hidden');
       badge.textContent = '0';
@@ -1665,12 +1668,38 @@
     }
     badge.textContent = n > 99 ? '99+' : String(n);
     badge.classList.remove('hidden');
-    badge.classList.add('admin-nav-badge--polish');
-    badge.setAttribute(
-      'aria-label',
-      n + ' opportunit' + (n === 1 ? 'y' : 'ies') + ' pending review'
-    );
-    badge.title = n + ' business opportunit' + (n === 1 ? 'y' : 'ies') + ' waiting for approval';
+    badge.classList.toggle('admin-nav-badge--polish', pending === 0 && awaitingPay > 0);
+    if (pending > 0 && awaitingPay > 0) {
+      badge.setAttribute(
+        'aria-label',
+        pending +
+          ' pending review, ' +
+          awaitingPay +
+          ' awaiting payment'
+      );
+      badge.title =
+        pending +
+        ' waiting for approval · ' +
+        awaitingPay +
+        ' approved — awaiting Stripe payment';
+    } else if (pending > 0) {
+      badge.setAttribute(
+        'aria-label',
+        pending + ' opportunit' + (pending === 1 ? 'y' : 'ies') + ' pending review'
+      );
+      badge.title =
+        pending + ' business opportunit' + (pending === 1 ? 'y' : 'ies') + ' waiting for approval';
+    } else {
+      badge.setAttribute(
+        'aria-label',
+        awaitingPay + ' approved listing' + (awaitingPay === 1 ? '' : 's') + ' awaiting payment'
+      );
+      badge.title =
+        awaitingPay +
+        ' approved listing' +
+        (awaitingPay === 1 ? '' : 's') +
+        ' waiting for owner payment';
+    }
   }
 
   function updateSupportNavBadge(data) {
@@ -1948,6 +1977,20 @@
     );
     push('medium', counts.openEventRequests, 'Event requests', '#cleanup/requests', 'amber');
     push('medium', counts.pendingOpportunities, 'Opportunity reviews', '#opportunities?approval=pending', 'amber');
+    push(
+      'low',
+      counts.awaitingPayOpportunities,
+      'Approved — awaiting pay',
+      '#opportunities?awaiting_payment=1',
+      'sky'
+    );
+    push(
+      'medium',
+      counts.recentAutoRejectedOpportunities,
+      'Auto-rejected listings',
+      '#opportunities?approval=Rejected',
+      'violet'
+    );
     push('medium', counts.stripeOnboarding, 'Stripe setup incomplete', '#financials/organisers', 'amber');
     var languageCounts = listingLanguageHealthCounts();
     push(
@@ -2582,6 +2625,35 @@
       });
       parts.push(
         '</ul><a href="#opportunities?approval=pending" class="text-xs font-semibold text-amber-900 mt-3 inline-block hover:underline">Review opportunities →</a></div>'
+      );
+    }
+
+    var autoRejected = attention.recentAutoRejectedOpportunities || [];
+    var autoRejectedTotal =
+      attention.recentAutoRejectedOpportunitiesTotal || autoRejected.length;
+    if (autoRejectedTotal > 0) {
+      parts.push(
+        '<div class="rounded-lg border border-violet-200 bg-violet-50 p-4">' +
+          '<p class="text-xs font-semibold uppercase tracking-wide text-violet-800/80">Auto-rejected listings this week (' +
+          autoRejectedTotal +
+          ')</p>' +
+          '<p class="text-xs text-violet-900/90 mt-1">Automated checks blocked prohibited content or missing fields. Override manually if a listing looks legitimate.</p>' +
+          '<ul class="mt-2 space-y-1.5">'
+      );
+      autoRejected.slice(0, 6).forEach(function (o) {
+        parts.push(
+          '<li class="text-sm text-violet-900"><a href="#opportunities/review/' +
+            encodeURIComponent(o.id) +
+            '" class="font-medium hover:underline">' +
+            esc(o.title) +
+            '</a> <span class="text-xs text-violet-800/80">· ' +
+            esc(o.host) +
+            (o.ownerEmail ? ' · ' + esc(o.ownerEmail) : '') +
+            '</span></li>'
+        );
+      });
+      parts.push(
+        '</ul><a href="#opportunities?approval=Rejected" class="text-xs font-semibold text-violet-900 mt-3 inline-block hover:underline">View rejected listings →</a></div>'
       );
     }
 
@@ -16118,7 +16190,7 @@
 
   function fetchGroupCleanup(pageIndex, options) {
     options = options || {};
-    if (groupCleanupState.loading) return Promise.resolve(groupCleanupCache);
+    var fetchGen = ++groupCleanupFetchGen;
     groupCleanupState.loading = true;
     var page =
       typeof pageIndex === 'number' && !isNaN(pageIndex) ? Math.max(0, pageIndex) : groupCleanupState.page;
@@ -16136,6 +16208,7 @@
     }
     return adminGet('/api/admin/organisers?' + params.toString())
       .then(function (data) {
+        if (fetchGen !== groupCleanupFetchGen) return groupCleanupCache;
         groupCleanupState.loading = false;
         if (!data || data.error) return data;
         groupCleanupCache = data;
@@ -16143,7 +16216,7 @@
         return groupCleanupCache;
       })
       .catch(function () {
-        groupCleanupState.loading = false;
+        if (fetchGen === groupCleanupFetchGen) groupCleanupState.loading = false;
         return { error: 'network_error' };
       });
   }
@@ -24336,6 +24409,7 @@
           ? opportunityCleanupCache.total
           : opportunities.length;
     var pendingCount = opportunityCleanupCache.pending_count || 0;
+    var recentSubmissions = opportunityCleanupCache.recent_submissions || [];
     var pager = adminPaginationHtml(page, total, pageSize, 'data-opp-page');
     var pagerBar = pager
       ? '<div class="opportunity-cleanup-pager flex flex-wrap items-center justify-between gap-2 py-2">' +
@@ -24393,7 +24467,47 @@
     if (!opportunities.length) {
       var emptyMsg =
         '<p class="text-sm text-slate-500 rounded-xl border border-dashed border-slate-300 p-8 text-center">No business opportunities match your filters.</p>';
-      if (pendingCount > 0 && opportunityCleanupHasActiveFilters()) {
+      if (opportunityCleanupState.approval === 'Pending Review' && !pendingCount) {
+        var recentHtml = '';
+        if (recentSubmissions.length) {
+          recentHtml =
+            '<div class="rounded-lg border border-amber-200 bg-amber-50/60 p-4 text-left">' +
+            '<p class="text-sm font-semibold text-amber-950">Recently submitted (may already be approved or denied)</p>' +
+            '<ul class="mt-2 space-y-2">';
+          recentSubmissions.forEach(function (item) {
+            var statusLabel = String(item.approval_status || 'Unknown');
+            if (statusLabel === 'Approved') statusLabel = 'Approved — awaiting payment or live';
+            recentHtml +=
+              '<li class="text-sm text-amber-950 flex flex-wrap items-center gap-x-2 gap-y-1">' +
+              '<a href="#opportunities/review/' +
+              encodeURIComponent(item.id) +
+              '" class="font-semibold hover:underline">' +
+              esc(item.title || 'Untitled') +
+              '</a>' +
+              '<span class="text-xs text-amber-900/80">' +
+              esc(statusLabel) +
+              (item.owner_email ? ' · ' + esc(item.owner_email) : '') +
+              '</span></li>';
+          });
+          recentHtml += '</ul></div>';
+        }
+        emptyMsg =
+          '<div class="rounded-xl border border-slate-200 bg-slate-50 p-6 space-y-4">' +
+          '<p class="text-sm text-slate-800 font-semibold text-center">No listings are waiting for review right now.</p>' +
+          recentHtml +
+          '<div class="text-sm text-slate-600 space-y-2">' +
+          '<p class="font-medium text-slate-700">Looking for a specific submission (e.g. Janet)?</p>' +
+          '<ul class="list-disc pl-5 space-y-1.5">' +
+          '<li>Search by <strong>owner email</strong> in the box above — clear the Pending review filter first, then search <code class="text-[11px]">janet_ewens@yahoo.co.uk</code>.</li>' +
+          '<li>If you already <strong>approved</strong> it, use the <button type="button" data-opp-quick="awaiting_payment" class="font-semibold text-sky-800 underline">Awaiting payment</button> filter — the owner gets a pay-to-go-live email after approval.</li>' +
+          '<li><strong>Rejected</strong> listings appear under Any approval → Rejected.</li>' +
+          '<li>The Resend “pending review” email is sent to the <em>lister</em> when they submit — it is not an admin task reminder.</li>' +
+          '</ul></div>' +
+          '<div class="flex flex-wrap justify-center gap-2 pt-1">' +
+          '<button type="button" data-opp-quick="clear" class="text-xs font-semibold rounded-full border border-slate-300 bg-white px-3 py-1.5 text-slate-800 hover:bg-slate-100">Clear all filters</button>' +
+          '<button type="button" data-opp-quick="awaiting_payment" class="text-xs font-semibold rounded-full border border-sky-300 bg-sky-50 px-3 py-1.5 text-sky-900 hover:bg-sky-100">Awaiting payment</button>' +
+          '</div></div>';
+      } else if (pendingCount > 0 && opportunityCleanupHasActiveFilters()) {
         emptyMsg =
           '<div class="rounded-xl border border-amber-200 bg-amber-50 p-6 text-center space-y-3">' +
           '<p class="text-sm text-amber-950 font-semibold">' +
@@ -24484,12 +24598,27 @@
       opportunityCleanupState.brandDuplicates = false;
       opportunityCleanupState.q = '';
       opportunityCleanupState.page = 0;
+    } else if (
+      query.get('awaiting_payment') === '1' ||
+      query.get('awaiting_payment') === 'true'
+    ) {
+      opportunityCleanupState.awaitingPayment = true;
+      opportunityCleanupState.approval = '';
+      opportunityCleanupState.status = '';
+      opportunityCleanupState.type = '';
+      opportunityCleanupState.featured = false;
+      opportunityCleanupState.noImage = false;
+      opportunityCleanupState.paymentLapsed = false;
+      opportunityCleanupState.unclaimed = false;
+      opportunityCleanupState.brandDuplicates = false;
+      opportunityCleanupState.q = '';
+      opportunityCleanupState.page = 0;
     }
     rememberOpportunityListReturnHash();
 
     main.innerHTML =
       '<div class="space-y-4">' +
-      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Manage business opportunity listings submitted by organisers. Approve pending listings (owner then pays via Stripe to go live), toggle <strong>featured</strong> for the Premium Spotlight carousel on <code class="text-[11px]">/opportunities/</code>, or open <strong>Review</strong> for a full-page look at what was submitted.</p>' +
+      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3"><strong>Review workflow:</strong> Listings appear under <strong>Pending review</strong> when the organiser submits. Click <strong>Review</strong> on a row (or open the full review page) → <strong>Approve</strong> (owner gets a pay-to-go-live email) or <strong>Deny</strong> (with a reason). After they pay via Stripe, the listing goes live on <code class="text-[11px]">/opportunities/</code>. Use <strong>Awaiting payment</strong> to find approved listings still waiting on checkout.</p>' +
       '<div class="rounded-xl border border-brand-200 bg-brand-50/50 overflow-hidden">' +
       '<div class="px-4 py-3 border-b border-brand-100 space-y-3">' +
       '<div class="flex flex-wrap items-center justify-between gap-2">' +

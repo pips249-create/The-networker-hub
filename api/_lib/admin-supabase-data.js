@@ -10,7 +10,10 @@ const { isTestFixtureText, isTestRegistration } = require('./test-fixture-filter
 const {
   isOpportunityReviewQueueReady,
   applyPendingOpportunitiesAdminFilter,
+  healOrphanedOpportunityReviewSubmissions,
+  listRecentAutoRejectedOpportunities,
 } = require('./opportunity-review-queue');
+const { listingPaymentCurrent } = require('./opportunity-listing-pricing');
 
 function round2(n) {
   return Math.round(Number(n) * 100) / 100;
@@ -52,9 +55,24 @@ async function fetchAllRows(sb, table, select, options = {}) {
 const INCOMPLETE_ORGANISER_FILTER =
   'description.is.null,description.eq.,photo_url.is.null,photo_url.eq.,website.is.null,website.eq.';
 
+/** Approved listings waiting for the owner to pay before going live. */
+async function countAwaitingPayOpportunities(sb) {
+  const { data, error } = await sb
+    .from('business_opportunities')
+    .select('id, status, published_at, listing_expires_at, listing_paid_at, approval_status')
+    .eq('approval_status', 'Approved')
+    .is('listing_paid_at', null)
+    .limit(500);
+  if (error) return 0;
+  return (data || []).filter(function (row) {
+    return !listingPaymentCurrent(row);
+  }).length;
+}
+
 /** Actionable admin queue totals — used for alerts, attention, and sidebar badge (excludes event-health scan). */
 async function fetchAdminActionCounts(sb, options) {
   const light = !!(options && options.light);
+  await healOrphanedOpportunityReviewSubmissions(sb);
   const reviewQueueReady = await isOpportunityReviewQueueReady(sb);
   const pendingOpportunitiesQuery = applyPendingOpportunitiesAdminFilter(
     sb.from('business_opportunities').select('id', { count: 'exact', head: true }),
@@ -123,18 +141,31 @@ async function fetchAdminActionCounts(sb, options) {
   }
 
   if (light) {
-    const parts = await Promise.all(baseQueries);
-    return mapCounts(parts, 0);
+    const [parts, awaitingPayOpportunities, recentAutoRejectedRows] = await Promise.all([
+      Promise.all(baseQueries),
+      countAwaitingPayOpportunities(sb),
+      listRecentAutoRejectedOpportunities(sb, { days: 7, limit: 50 }),
+    ]);
+    return Object.assign(mapCounts(parts, 0), {
+      awaitingPayOpportunities,
+      recentAutoRejectedOpportunities: recentAutoRejectedRows.length,
+    });
   }
 
-  const [parts, recentReviewsRes] = await Promise.all([
-    Promise.all(baseQueries),
-    sb.from('reviews').select('review_text').order('created_at', { ascending: false }).limit(50),
-  ]);
+  const [parts, recentReviewsRes, awaitingPayOpportunities, recentAutoRejectedRows] =
+    await Promise.all([
+      Promise.all(baseQueries),
+      sb.from('reviews').select('review_text').order('created_at', { ascending: false }).limit(50),
+      countAwaitingPayOpportunities(sb),
+      listRecentAutoRejectedOpportunities(sb, { days: 7, limit: 50 }),
+    ]);
 
   const spamReviews = (recentReviewsRes.data || []).filter((r) => isSpamReview(r.review_text)).length;
 
-  return mapCounts(parts, spamReviews);
+  return Object.assign(mapCounts(parts, spamReviews), {
+    awaitingPayOpportunities,
+    recentAutoRejectedOpportunities: recentAutoRejectedRows.length,
+  });
 }
 
 function sumAdminNotificationCounts(counts) {
@@ -164,6 +195,28 @@ function buildAlertsFromCounts(counts) {
       title: `${counts.pendingOpportunities} business opportunit${counts.pendingOpportunities === 1 ? 'y' : 'ies'} waiting for approval`,
       detail: 'Review and approve or reject each listing.',
       href: '#opportunities?approval=pending',
+      time: new Date().toISOString(),
+    });
+  }
+
+  if (counts.awaitingPayOpportunities > 0) {
+    alerts.push({
+      id: 'awaiting-pay-opportunities',
+      severity: 'low',
+      title: `${counts.awaitingPayOpportunities} approved listing${counts.awaitingPayOpportunities === 1 ? '' : 's'} awaiting payment`,
+      detail: 'These were approved but the owner has not paid yet. Search by email if you need to resend the pay link.',
+      href: '#opportunities?awaiting_payment=1',
+      time: new Date().toISOString(),
+    });
+  }
+
+  if (counts.recentAutoRejectedOpportunities > 0) {
+    alerts.push({
+      id: 'auto-rejected-opportunities',
+      severity: 'medium',
+      title: `${counts.recentAutoRejectedOpportunities} listing${counts.recentAutoRejectedOpportunities === 1 ? '' : 's'} auto-rejected this week`,
+      detail: 'Automated checks blocked prohibited content or missing fields. Review in case a legitimate listing needs a manual override.',
+      href: '#opportunities?approval=Rejected',
       time: new Date().toISOString(),
     });
   }
@@ -642,7 +695,7 @@ async function fetchAttentionQueue(sb, counts) {
     : pendingOppsQuery.order('created_at', { ascending: false });
   pendingOppsQuery = pendingOppsQuery.limit(10);
 
-  const [pendingOppsRes, claimDisputesRes, claimRequestsRes, openReportsRes, reviewReportsRes, pendingClaimsRes] =
+  const [pendingOppsRes, claimDisputesRes, claimRequestsRes, openReportsRes, reviewReportsRes, pendingClaimsRes, recentAutoRejectedRows] =
     await Promise.all([
       pendingOppsQuery,
       sb
@@ -675,6 +728,7 @@ async function fetchAttentionQueue(sb, counts) {
         .from('organisers')
         .select('id', { count: 'exact', head: true })
         .eq('ownership_claim_status', 'pending'),
+      listRecentAutoRejectedOpportunities(sb, { days: 7, limit: 10 }),
     ]);
 
   const pendingOpportunities = (pendingOppsRes.data || []).map((o) => ({
@@ -723,10 +777,22 @@ async function fetchAttentionQueue(sb, counts) {
   }));
   const pendingOwnershipClaims = pendingClaimsRes.error ? 0 : pendingClaimsRes.count || 0;
   const action = counts || {};
+  const recentAutoRejectedOpportunities = (recentAutoRejectedRows || []).map(function (o) {
+    return {
+      id: o.id,
+      title: String(o.title || '').trim(),
+      host: String(o.host || '').trim() || '—',
+      ownerEmail: String(o.owner_email || '').toLowerCase(),
+      rejectionNote: String(o.rejection_note || '').trim(),
+      updatedAt: o.updated_at,
+    };
+  });
 
   return {
     pendingOpportunities,
     pendingOpportunitiesTotal: action.pendingOpportunities || 0,
+    recentAutoRejectedOpportunities,
+    recentAutoRejectedOpportunitiesTotal: action.recentAutoRejectedOpportunities || recentAutoRejectedOpportunities.length,
     incompleteOrganisers: action.incompleteOrganisers || 0,
     spamReviews: action.spamReviews || 0,
     openClaimDisputes,

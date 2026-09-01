@@ -21,14 +21,13 @@ const {
   isOpportunitySubmittedForReview,
   hasPendingLiveListingUpdate,
   applyPendingOpportunitiesAdminFilter,
+  isOpportunityReviewQueueReady,
+  applySubmittedReviewFilter,
+  healOrphanedOpportunityReviewSubmissions,
 } = require('../opportunity-review-queue');
 
 const { HUB_SEED_OWNER_EMAIL, isHubSeedOwnerEmail } = require('../opportunity-hub-seed');
 const { applyIlikeSearch } = require('../search-match');
-const {
-  isOpportunityReviewQueueReady,
-  applySubmittedReviewFilter,
-} = require('../opportunity-review-queue');
 const {
   findExclusiveBrandConflict,
   findExclusiveBrandDuplicateGroups,
@@ -380,6 +379,7 @@ function buildAdminOpportunityTags(type, category, existingTags, isTest) {
 
 async function listOpportunitiesForAdmin(query) {
   const sb = getSupabaseAdmin();
+  await healOrphanedOpportunityReviewSubmissions(sb);
   const reviewQueueReady = await isOpportunityReviewQueueReady(sb);
   const id = String(query.id || '').trim();
   const status = String(query.status || '').trim();
@@ -523,6 +523,35 @@ async function listOpportunitiesForAdmin(query) {
   const pendingCountResult = await pendingCountRes;
   if (pendingCountResult.error) throw new Error(pendingCountResult.error.message);
 
+  let recentSubmissions = [];
+  const pendingCount = pendingCountResult.count || 0;
+  if (
+    pendingCount === 0 &&
+    approvalStatus === 'Pending Review' &&
+    reviewQueueReady &&
+    !search
+  ) {
+    const recentRes = await sb
+      .from('business_opportunities')
+      .select('id, title, host, owner_email, approval_status, review_submitted_at, updated_at')
+      .not('review_submitted_at', 'is', null)
+      .order('review_submitted_at', { ascending: false })
+      .limit(5);
+    if (!recentRes.error) {
+      recentSubmissions = (recentRes.data || []).map(function (row) {
+        return {
+          id: row.id,
+          title: String(row.title || '').trim() || 'Untitled',
+          host: String(row.host || '').trim(),
+          owner_email: String(row.owner_email || '').toLowerCase(),
+          approval_status: row.approval_status || '',
+          review_submitted_at: row.review_submitted_at || null,
+          updated_at: row.updated_at || null,
+        };
+      });
+    }
+  }
+
   return {
     opportunities: rows.map(mapOpportunityRow),
     count: rows.length,
@@ -532,7 +561,8 @@ async function listOpportunitiesForAdmin(query) {
     page: Math.floor(offset / limit),
     pageSize: limit,
     hasMore: offset + rows.length < total,
-    pending_count: pendingCountResult.count || 0,
+    pending_count: pendingCount,
+    recent_submissions: recentSubmissions,
     review_queue_ready: reviewQueueReady,
   };
 }

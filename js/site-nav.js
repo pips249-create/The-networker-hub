@@ -202,7 +202,7 @@
       window.HubComplianceBootstrap.load(root);
     } else {
       var complianceScript = document.createElement('script');
-      complianceScript.src = root + 'js/hub-compliance-bootstrap.js?v=20260828cmp1';
+      complianceScript.src = root + 'js/hub-compliance-bootstrap.js?v=20260901cmp2';
       complianceScript.setAttribute('data-root', root);
       complianceScript.setAttribute('data-hub-compliance-bootstrap', '1');
       document.head.appendChild(complianceScript);

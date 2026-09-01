@@ -70,9 +70,29 @@
     return scrubEvent(event);
   }
 
+  function removeDeprecatedLoader() {
+    document.querySelectorAll('script[data-hub-sentry-loader="1"]').forEach(function (el) {
+      el.parentNode.removeChild(el);
+    });
+  }
+
+  function isRealSentrySdk() {
+    return !!(window.Sentry && typeof window.Sentry.init === 'function' && typeof window.Sentry.getClient === 'function');
+  }
+
+  function clearNoopSentryStub() {
+    if (isRealSentrySdk()) return;
+    if (!window.Sentry) return;
+    try {
+      delete window.Sentry;
+    } catch (_eDel) {
+      window.Sentry = undefined;
+    }
+  }
+
   function initSentry() {
-    if (!window.Sentry || typeof window.Sentry.init !== 'function') return;
-    if (window.Sentry.getClient && window.Sentry.getClient()) return;
+    if (!isRealSentrySdk()) return;
+    if (window.Sentry.getClient()) return;
     var env = 'production';
     try {
       if (window.location.hostname.indexOf('vercel.app') !== -1) env = 'preview';
@@ -89,9 +109,16 @@
   }
 
   if (isLocalHost()) return;
-  if (document.querySelector('script[data-hub-sentry-bundle="1"]')) return;
 
-  if (window.Sentry && typeof window.Sentry.init === 'function') {
+  removeDeprecatedLoader();
+  clearNoopSentryStub();
+
+  if (document.querySelector('script[data-hub-sentry-bundle="1"]')) {
+    if (isRealSentrySdk()) initSentry();
+    return;
+  }
+
+  if (isRealSentrySdk()) {
     initSentry();
     return;
   }
