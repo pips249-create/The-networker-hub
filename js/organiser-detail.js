@@ -301,9 +301,9 @@
     if (lede) {
       lede.textContent =
         list.length === 1
-          ? 'Another group has already confirmed their page ahead of launch.'
+          ? 'Another group has already confirmed their page on The Networker UK.'
           : list.length +
-            ' groups have already confirmed their pages ahead of launch.';
+            ' groups have already confirmed their pages on The Networker UK.';
     }
 
     var items = list.map(claimPeerItemHtml).join('');

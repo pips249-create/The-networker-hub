@@ -557,30 +557,6 @@ body.org-claim-invite-active .how-reviews-trigger {
   margin-bottom: 14px;
 }
 
-.org-claim-founding {
-  margin: 0 0 14px;
-  padding: 12px 14px;
-  border-radius: 12px;
-  background: #1c2040;
-  color: #fff;
-}
-
-.org-claim-founding-kicker {
-  margin: 0 0 4px;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #c4a574;
-}
-
-.org-claim-founding-lede {
-  margin: 0;
-  font-size: 14px;
-  line-height: 1.5;
-  color: rgba(255, 255, 255, 0.9);
-}
-
 .org-claim-peers {
   margin: 0 0 14px;
   padding: 12px 0 4px;
