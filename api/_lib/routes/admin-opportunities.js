@@ -1148,21 +1148,24 @@ module.exports = async function handler(req, res) {
           const { campaignSiteVars } = require('../organiser-campaign-defaults');
           const slugOrId = String(data.slug || data.id || '').trim();
           claimUrl = await resolveOpportunityClaimUrl(ownerEmail, siteHost, slugOrId);
-          const ownerName =
-            String(data.host || '').trim() ||
-            ownerEmail.split('@')[0] ||
-            'there';
-          await sendTemplatedEmail({
-            slug: 'opportunity_claim_invite',
-            to: ownerEmail,
-            subject:
-              'Congratulations: ' +
+          const title = String(data.title || 'your business opportunity').trim();
+          const isAffiliate = String(data.type || '').trim().toLowerCase() === 'affiliate';
+          const ownerName = isAffiliate ? title : String(data.host || '').trim() || ownerEmail.split('@')[0] || 'there';
+          const inviteSlug = isAffiliate ? 'affiliate_claim_invite' : 'opportunity_claim_invite';
+          const inviteSubject = isAffiliate
+            ? String(data.title || 'Your affiliate programme') +
+              ' — claim your affiliate programme listing'
+            : 'Congratulations: ' +
               String(data.title || 'your opportunity') +
-              ' is ready — claim your listing',
+              ' is ready — claim your listing';
+          await sendTemplatedEmail({
+            slug: inviteSlug,
+            to: ownerEmail,
+            subject: inviteSubject,
             variables: {
               ...campaignSiteVars(siteHost),
               owner_name: ownerName,
-              opportunity_title: String(data.title || 'your business opportunity'),
+              opportunity_title: title,
               claim_url: claimUrl,
             },
             skipEmailCheck: true,

@@ -33,6 +33,10 @@ data/legacy-marketing-opt-in-audit.csv
 data/Claim-Rematch-Resend.csv
 data/Claim-Rematch-Resend-batch-*.csv
 data/Claim-Rematch-Resend-summary.json
+data/Affiliate-Claim-Resend.csv
+data/Affiliate-Claim-Resend-batch-*.csv
+data/Affiliate-Claim-Resend-summary.json
+data/affiliate-claim-invite-preview.html
 data/Segment-A-Email2*.csv
 data/Email3-A-Segment*.csv
 

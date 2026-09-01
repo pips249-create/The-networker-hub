@@ -14,8 +14,13 @@ const BRANDED_EMAIL_TEMPLATES = {
   },
   opportunity_claim_invite: {
     file: 'opportunity-claim-invite.html',
-    marker: 'hub-email-layout-v3-purple',
+    marker: 'hub-email-layout-v3-navy-gold-details',
     subject: 'Congratulations: {{opportunity_title}} is ready — claim your listing',
+  },
+  affiliate_claim_invite: {
+    file: 'affiliate-claim-invite.html',
+    marker: 'hub-email-layout-v3-navy-gold-details',
+    subject: '{{opportunity_title}} — claim your affiliate programme listing',
   },
   organiser_claim_confirmed: {
     file: 'organiser-claim-confirmed.html',

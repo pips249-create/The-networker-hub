@@ -121,6 +121,7 @@ const TRANSACTIONAL_EMAIL_SLUGS = new Set([
   'organiser_featured_expiry_reminder',
   'organiser_claim_invite',
   'opportunity_claim_invite',
+  'affiliate_claim_invite',
   'organiser_claim_confirmed',
   'organiser_launch_invite',
   'organiser_call_followup',
@@ -697,6 +698,7 @@ function shouldSkipEmailAllowlist(slug) {
     slug === 'organiser_call_followup' ||
     slug === 'organiser_claim_invite' ||
     slug === 'opportunity_claim_invite' ||
+    slug === 'affiliate_claim_invite' ||
     slug === 'organiser_claim_confirmed'
   ) {
     return true;
@@ -718,6 +720,7 @@ function shouldAttachListUnsubscribe(slug) {
     s === 'organiser_call_followup' ||
     s === 'organiser_claim_invite' ||
     s === 'opportunity_claim_invite' ||
+    s === 'affiliate_claim_invite' ||
     s === 'organiser_monthly_group_update' ||
     s === 'member_roster_new_event' ||
     s === 'saved_organiser_new_listing'
