@@ -17,6 +17,13 @@
     '840': { iso2: 'US', name: 'United States' },
   };
 
+  /** [lon, lat] anchors for spotlight map labels — projected inside the SVG. */
+  var SPOTLIGHT_LABEL_GEO = {
+    '826': [-2.2, 54.8],
+    '372': [-7.8, 53.2],
+    '840': [-98, 39],
+  };
+
   /** Building markets — stay on International SEO landings for conversion. */
   var MARKET_PREVIEW_URLS = {
     '372': '/ireland',
@@ -101,7 +108,6 @@
     hubStats: {},
     activeModal: null,
     labelItems: [],
-    projection: null,
   };
 
   var els = {};
@@ -198,12 +204,18 @@
       : 'Register your interest →';
   }
 
+  function mapLabelButtons() {
+    return els.svg
+      ? Array.prototype.slice.call(els.svg.querySelectorAll('.intl-map-label'))
+      : [];
+  }
+
   function clearActiveLabels() {
-    if (els.labels) {
-      els.labels.querySelectorAll('.intl-map-label.is-active').forEach(function (node) {
+    mapLabelButtons().forEach(function (node) {
+      if (node.classList.contains('is-active')) {
         node.classList.remove('is-active');
-      });
-    }
+      }
+    });
   }
 
   function hideCountryPopup() {
@@ -244,8 +256,9 @@
         ? Math.min(canvasRect.height - 8, centerY + pathRect.height / 2 + 8)
         : Math.max(8 + popupHeight, centerY - pathRect.height / 2);
     } else {
-      var activeLabel =
-        els.labels && els.labels.querySelector('.intl-map-label.is-active');
+      var activeLabel = mapLabelButtons().find(function (node) {
+        return node.classList.contains('is-active');
+      });
       if (!activeLabel) return;
       var labelRect = activeLabel.getBoundingClientRect();
       centerX = labelRect.left + labelRect.width / 2 - canvasRect.left;
@@ -349,11 +362,9 @@
     clearHover();
     if (path) path.classList.add('is-hovered');
     showCountryPopup(path, meta);
-    if (els.labels) {
-      els.labels.querySelectorAll('.intl-map-label').forEach(function (node) {
-        node.classList.toggle('is-active', node.getAttribute('data-country-id') === meta.numericId);
-      });
-    }
+    mapLabelButtons().forEach(function (node) {
+      node.classList.toggle('is-active', node.getAttribute('data-country-id') === meta.numericId);
+    });
   }
 
   function onCountryActivate(path, meta) {
@@ -684,13 +695,11 @@
       if (isCoarsePointer()) return;
       path.classList.remove('is-hovered');
       hideCountryPopup();
-      if (els.labels) {
-        els.labels.querySelectorAll('.intl-map-label.is-active').forEach(function (node) {
-          if (node.getAttribute('data-country-id') === meta.numericId) {
-            node.classList.remove('is-active');
-          }
-        });
-      }
+      mapLabelButtons().forEach(function (node) {
+        if (node.getAttribute('data-country-id') === meta.numericId) {
+          node.classList.remove('is-active');
+        }
+      });
     }
 
     path.addEventListener('mouseenter', onEnter);
@@ -728,65 +737,26 @@
     );
   }
 
-  /**
-   * Anchor labels to the rendered country path (canvas pixels), not projected
-   * centroids with manual nudges — those drifted Ireland into the Atlantic.
-   */
-  function mapLabelCanvasPoint(meta, path) {
-    if (!els.canvas || !path) return null;
-    var canvasRect = els.canvas.getBoundingClientRect();
-    if (!canvasRect.width || !canvasRect.height) return null;
-
-    // USA path bbox includes Alaska/Hawaii — pin to lower-48 via SVG matrix.
-    if (meta.iso2 === 'US' && state.projection) {
-      var continental = state.projection([-98, 39]);
-      if (continental && els.svg.createSVGPoint) {
-        var point = els.svg.createSVGPoint();
-        point.x = continental[0];
-        point.y = continental[1];
-        var matrix = els.svg.getScreenCTM();
-        if (matrix) {
-          var screen = point.matrixTransform(matrix);
-          return {
-            x: screen.x - canvasRect.left,
-            y: screen.y - canvasRect.top,
-          };
-        }
-      }
+  function spotlightLabelPoint(projection, meta) {
+    var coords = SPOTLIGHT_LABEL_GEO[meta.numericId];
+    if (!coords) return null;
+    var projected = projection(coords);
+    if (!projected || !Number.isFinite(projected[0]) || !Number.isFinite(projected[1])) {
+      return null;
     }
-
-    var pathRect = path.getBoundingClientRect();
-    if (!pathRect.width && !pathRect.height) return null;
-
-    var x = pathRect.left + pathRect.width / 2 - canvasRect.left;
-    var y = pathRect.top - canvasRect.top;
-
-    // Tiny separation so UK / Ireland pills don't stack.
-    if (meta.iso2 === 'GB') {
-      x += 8;
-    } else if (meta.iso2 === 'IE') {
-      x -= 6;
-    }
-
-    return { x: x, y: y };
-  }
-
-  function positionMapLabels() {
-    if (!state.labelItems.length) return;
-    state.labelItems.forEach(function (item) {
-      var path = labelPathFor(item.meta);
-      var point = mapLabelCanvasPoint(item.meta, path);
-      if (!point) return;
-      item.el.style.left = point.x + 'px';
-      item.el.style.top = point.y + 'px';
-    });
+    return { x: projected[0], y: projected[1] };
   }
 
   function renderMapLabels(projection) {
-    if (!els.labels) return;
-    els.labels.innerHTML = '';
+    if (!els.svg) return;
+
+    var existing = els.svg.querySelector('#intl-map-labels');
+    if (existing) existing.remove();
+
+    var labelsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    labelsGroup.setAttribute('id', 'intl-map-labels');
+    labelsGroup.setAttribute('class', 'intl-map-labels-svg');
     state.labelItems = [];
-    state.projection = projection;
 
     var spotlight = state.countries.filter(function (meta) {
       return meta.live || meta.building;
@@ -794,11 +764,30 @@
 
     spotlight.forEach(function (meta) {
       if (!labelPathFor(meta)) return;
+      var point = spotlightLabelPoint(projection, meta);
+      if (!point) return;
+
+      var anchor = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      anchor.setAttribute('class', 'intl-map-label-anchor');
+      anchor.setAttribute('data-country-id', meta.numericId);
+      anchor.setAttribute('transform', 'translate(' + point.x + ' ' + point.y + ')');
+
+      var host = document.createElementNS('http://www.w3.org/2000/svg', 'foreignObject');
+      host.setAttribute('class', 'intl-map-label-fo');
+      host.setAttribute('x', -56);
+      host.setAttribute('y', -54);
+      host.setAttribute('width', 112);
+      host.setAttribute('height', 54);
+
+      var wrapper = document.createElement('div');
+      wrapper.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml');
+      wrapper.className = 'intl-map-label-host';
 
       var button = document.createElement('button');
       button.type = 'button';
       button.className =
-        'intl-map-label intl-map-label--' + (meta.live ? 'live' : 'building');
+        'intl-map-label intl-map-label--svg intl-map-label--' +
+        (meta.live ? 'live' : 'building');
       button.setAttribute('data-country-id', meta.numericId);
       button.setAttribute(
         'aria-label',
@@ -831,15 +820,14 @@
         button.classList.remove('is-active');
       });
 
-      els.labels.appendChild(button);
+      wrapper.appendChild(button);
+      host.appendChild(wrapper);
+      anchor.appendChild(host);
+      labelsGroup.appendChild(anchor);
       state.labelItems.push({ el: button, meta: meta });
     });
 
-    // Layout may still be settling after SVG paths are inserted.
-    window.requestAnimationFrame(function () {
-      positionMapLabels();
-      window.requestAnimationFrame(positionMapLabels);
-    });
+    els.svg.appendChild(labelsGroup);
   }
 
   function featureByNumericId(features, numericId) {
@@ -1189,7 +1177,6 @@
     els.mapWrap = byId('intl-map-wrap');
     els.svg = byId('intl-map-svg');
     els.loading = byId('intl-map-loading');
-    els.labels = byId('intl-map-labels');
     els.mobilePicker = byId('intl-mobile-picker');
     els.search = byId('intl-country-search');
     els.results = byId('intl-country-results');
@@ -1239,7 +1226,6 @@
     loadInterestDemand();
 
     window.addEventListener('resize', function () {
-      positionMapLabels();
       var hovered = els.svg && els.svg.querySelector('.intl-country.is-hovered');
       if (hovered) positionCountryPopup(hovered);
     });
