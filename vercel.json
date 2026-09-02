@@ -98,8 +98,6 @@
     { "source": "/p/tnh-bmu-onboard-k7m2", "destination": "/p-tnh-bmu-onboard-k7m2", "permanent": true },
     { "source": "/p-tnh-wibn-onboard-w9m3.html", "destination": "/p-tnh-wibn-onboard-w9m3", "permanent": true },
     { "source": "/p/tnh-wibn-onboard-w9m3", "destination": "/p-tnh-wibn-onboard-w9m3", "permanent": true },
-    { "source": "/p-tnh-intl-overview-i8n2.html", "destination": "/p-tnh-intl-overview-i8n2", "permanent": true },
-    { "source": "/p/tnh-intl-overview-i8n2", "destination": "/p-tnh-intl-overview-i8n2", "permanent": true },
     { "source": "/faq.html", "destination": "/faq", "permanent": true },
     { "source": "/about.html", "destination": "/about", "permanent": true },
     { "source": "/rankings.html", "destination": "/rankings", "permanent": true },
@@ -140,6 +138,10 @@
     { "source": "/guides/claim-your-organiser-page.html", "destination": "/guides/claim-your-organiser-page", "permanent": true },
     { "source": "/guides/export-attendees-and-visits.html", "destination": "/guides/export-attendees-and-visits", "permanent": true },
     { "source": "/guides/organiser-leavebehind.html", "destination": "/guides/organiser-leavebehind", "permanent": true },
+    { "source": "/guides/international-overview.html", "destination": "/guides/international-overview", "permanent": true },
+    { "source": "/p-tnh-intl-overview-i8n2", "destination": "/guides/international-overview", "permanent": false },
+    { "source": "/p-tnh-intl-overview-i8n2.html", "destination": "/guides/international-overview", "permanent": false },
+    { "source": "/p/tnh-intl-overview-i8n2", "destination": "/guides/international-overview", "permanent": false },
     { "source": "/help/organiser-payouts.html", "destination": "/help/organiser-payouts", "permanent": true },
     { "source": "/help/pricing-fees.html", "destination": "/help/pricing-fees", "permanent": true },
     { "source": "/embed/event.html", "destination": "/embed/event", "permanent": true },
@@ -413,10 +415,6 @@
     {
       "source": "/p-tnh-wibn-onboard-w9m3",
       "destination": "/p-tnh-wibn-onboard-w9m3.html"
-    },
-    {
-      "source": "/p-tnh-intl-overview-i8n2",
-      "destination": "/p-tnh-intl-overview-i8n2.html"
     },
     {
       "source": "/p-tnh-bmu-onboard-k7m2",

@@ -59,6 +59,43 @@
     }
   }
 
+  function industryEls() {
+    return {
+      select: document.getElementById('welcome-profile-industry'),
+      otherField: document.getElementById('welcome-profile-industry-other-field'),
+      otherInput: document.getElementById('welcome-profile-industry-other'),
+    };
+  }
+
+  function bindWelcomeIndustryOther() {
+    var els = industryEls();
+    if (!window.HubProfileIndustries || !els.select) return;
+    window.HubProfileIndustries.bindIndustryOther(els.select, els.otherField, els.otherInput, {
+      required: true,
+    });
+  }
+
+  function applyWelcomeIndustry(selectedValue) {
+    var els = industryEls();
+    if (!window.HubProfileIndustries || !els.select) return;
+    bindWelcomeIndustryOther();
+    window.HubProfileIndustries.applyIndustrySelection(
+      els.select,
+      els.otherField,
+      els.otherInput,
+      selectedValue,
+      { required: true }
+    );
+  }
+
+  function resolvedWelcomeIndustry() {
+    var els = industryEls();
+    if (window.HubProfileIndustries && window.HubProfileIndustries.resolveIndustryValue) {
+      return window.HubProfileIndustries.resolveIndustryValue(els.select, els.otherInput);
+    }
+    return els.select ? els.select.value : '';
+  }
+
   function showProfileStep() {
     var pathPanel = document.getElementById('welcome-step-path');
     var profilePanel = document.getElementById('welcome-step-profile');
@@ -66,13 +103,8 @@
     if (profilePanel) profilePanel.hidden = false;
     setWizardStep(3);
     showMessage('', '');
+    applyWelcomeIndustry(cachedProfile && cachedProfile.businessSector);
     var industry = document.getElementById('welcome-profile-industry');
-    if (window.HubProfileIndustries && industry) {
-      window.HubProfileIndustries.fillIndustrySelect(
-        industry,
-        cachedProfile && cachedProfile.businessSector
-      );
-    }
     var jobTitle = document.getElementById('welcome-profile-job-title');
     var company = document.getElementById('welcome-profile-company');
     if (jobTitle && cachedProfile && cachedProfile.jobTitle) jobTitle.value = cachedProfile.jobTitle;
@@ -138,10 +170,7 @@
         }
       }
 
-      var industry = document.getElementById('welcome-profile-industry');
-      if (window.HubProfileIndustries && industry) {
-        window.HubProfileIndustries.fillIndustrySelect(industry, cachedProfile && cachedProfile.businessSector);
-      }
+      applyWelcomeIndustry(cachedProfile && cachedProfile.businessSector);
 
       return data;
     } catch (e) {
@@ -158,27 +187,31 @@
 
   var profileForm = document.getElementById('welcome-profile-form');
   if (profileForm) {
+    bindWelcomeIndustryOther();
     profileForm.addEventListener('submit', function (e) {
       e.preventDefault();
-      var industry = document.getElementById('welcome-profile-industry');
+      var industryValue = resolvedWelcomeIndustry();
       var jobTitle = document.getElementById('welcome-profile-job-title');
       var company = document.getElementById('welcome-profile-company');
       var submitBtn = document.getElementById('welcome-profile-submit');
       var err = window.HubProfileCompletion
         ? window.HubProfileCompletion.validateProfileForm(
-            industry && industry.value,
+            industryValue,
             jobTitle && jobTitle.value
           )
         : '';
       if (err) {
         showMessage(err, 'error');
+        if (document.getElementById('welcome-profile-industry')?.value === 'Other') {
+          document.getElementById('welcome-profile-industry-other')?.focus();
+        }
         return;
       }
       if (submitBtn) submitBtn.disabled = true;
       showMessage('Saving…', 'success');
       window.HubProfileCompletion
         .saveProfileFields({
-          businessSector: industry ? industry.value : '',
+          businessSector: industryValue,
           jobTitle: jobTitle ? jobTitle.value.trim() : '',
           company: company ? company.value.trim() : '',
         })

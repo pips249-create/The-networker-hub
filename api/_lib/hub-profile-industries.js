@@ -40,16 +40,20 @@ function isKnownIndustry(raw) {
   return INDUSTRY_LOOKUP.has(trimmed.toLocaleLowerCase('en-GB'));
 }
 
+function isBareOther(raw) {
+  return normalizeIndustry(raw).toLocaleLowerCase('en-GB') === 'other';
+}
+
 function isAnalyticsProfileComplete(profile) {
-  return (
-    String(profile?.businessSector || profile?.business_sector || '').trim().length >= 2 &&
-    String(profile?.jobTitle || profile?.job_title || '').trim().length >= 2
-  );
+  const sector = String(profile?.businessSector || profile?.business_sector || '').trim();
+  const title = String(profile?.jobTitle || profile?.job_title || '').trim();
+  return sector.length >= 2 && !isBareOther(sector) && title.length >= 2;
 }
 
 module.exports = {
   HUB_PROFILE_INDUSTRIES,
   normalizeIndustry,
   isKnownIndustry,
+  isBareOther,
   isAnalyticsProfileComplete,
 };

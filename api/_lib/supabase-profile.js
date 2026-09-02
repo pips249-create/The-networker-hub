@@ -13,7 +13,7 @@ const {
 } = require('./reviewer-display-name');
 const {
   normalizeIndustry,
-  isKnownIndustry,
+  isBareOther,
   isAnalyticsProfileComplete,
 } = require('./hub-profile-industries');
 
@@ -53,14 +53,48 @@ const PROFESSIONAL_ROLES = new Set([
   'other',
 ]);
 
-function normalizeProfessionalRole(raw) {
+const PROFESSIONAL_ROLE_MAX_LEN = 80;
+
+function isListedProfessionalRole(raw) {
   const s = String(raw || '')
     .trim()
     .toLowerCase()
     .replace(/\s+/g, '_');
-  if (!s) return null;
-  if (PROFESSIONAL_ROLES.has(s)) return s;
-  return null;
+  return PROFESSIONAL_ROLES.has(s) && s !== 'other';
+}
+
+function isBareProfessionalOther(raw) {
+  const s = String(raw || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '_');
+  return s === 'other';
+}
+
+function normalizeProfessionalRole(raw) {
+  const trimmed = String(raw || '').trim();
+  if (!trimmed) return null;
+  const slug = trimmed.toLowerCase().replace(/\s+/g, '_');
+  if (PROFESSIONAL_ROLES.has(slug) && slug !== 'other') return slug;
+  if (slug === 'other') {
+    const e = new Error('Please enter your role.');
+    e.status = 400;
+    e.code = 'invalid_professional_role';
+    throw e;
+  }
+  if (trimmed.length < 2) {
+    const e = new Error('Role must be at least 2 characters.');
+    e.status = 400;
+    e.code = 'invalid_professional_role';
+    throw e;
+  }
+  if (trimmed.length > PROFESSIONAL_ROLE_MAX_LEN) {
+    const e = new Error('Role must be 80 characters or fewer.');
+    e.status = 400;
+    e.code = 'invalid_professional_role';
+    throw e;
+  }
+  return trimmed.replace(/\s+/g, ' ');
 }
 
 function interestsToPreferences(interests) {
@@ -219,11 +253,25 @@ async function updateProfile(session, body) {
   }
   if (body.businessSector !== undefined) {
     const sectorRaw = String(body.businessSector || '').trim();
-    if (sectorRaw && !isKnownIndustry(sectorRaw)) {
-      const e = new Error('Please choose an industry from the list.');
-      e.status = 400;
-      e.code = 'invalid_industry';
-      throw e;
+    if (sectorRaw) {
+      if (sectorRaw.length < 2) {
+        const e = new Error('Industry must be at least 2 characters.');
+        e.status = 400;
+        e.code = 'invalid_industry';
+        throw e;
+      }
+      if (isBareOther(sectorRaw)) {
+        const e = new Error('Please enter your industry.');
+        e.status = 400;
+        e.code = 'invalid_industry';
+        throw e;
+      }
+      if (sectorRaw.length > 80) {
+        const e = new Error('Industry must be 80 characters or fewer.');
+        e.status = 400;
+        e.code = 'invalid_industry';
+        throw e;
+      }
     }
     attendeePatch.business_sector = sectorRaw ? normalizeIndustry(sectorRaw) : null;
   }
@@ -381,4 +429,6 @@ module.exports = {
   WRITABLE,
   PROFESSIONAL_ROLES,
   normalizeProfessionalRole,
+  isListedProfessionalRole,
+  isBareProfessionalOther,
 };

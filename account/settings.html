@@ -118,6 +118,17 @@
               <option value="">Select your industry</option>
             </select>
           </div>
+          <div class="as-field" id="as-industry-other-field" hidden>
+            <label for="as-industry-other">Your industry</label>
+            <input
+              type="text"
+              id="as-industry-other"
+              name="businessSectorOther"
+              maxlength="80"
+              placeholder="e.g. Aerospace"
+              autocomplete="organization-title"
+            />
+          </div>
           <div class="as-field">
             <div class="as-field-label-row">
               <label for="as-professional-role">Your role</label>
@@ -145,6 +156,17 @@
               <option value="investor">Investor</option>
               <option value="other">Other</option>
             </select>
+          </div>
+          <div class="as-field" id="as-professional-role-other-field" hidden>
+            <label for="as-professional-role-other">Your role</label>
+            <input
+              type="text"
+              id="as-professional-role-other"
+              name="professionalRoleOther"
+              maxlength="80"
+              placeholder="e.g. Non-executive director"
+              autocomplete="organization-title"
+            />
           </div>
           <div class="as-field">
             <div class="as-field-label-row">
@@ -309,7 +331,7 @@
     </main>
 
     <script src="../js/site-nav.js?v=20260828nav1" data-root="../" data-page="settings"></script>
-    <script src="../js/hub-profile-industries.js?v=20260828profile1"></script>
-    <script src="../js/account-settings.js?v=20260828profile1"></script>
+    <script src="../js/hub-profile-industries.js?v=20260902other2"></script>
+    <script src="../js/account-settings.js?v=20260902other2"></script>
   </body>
 </html>

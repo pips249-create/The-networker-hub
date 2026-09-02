@@ -35,6 +35,77 @@
     });
   }
 
+  const LISTED_PROFESSIONAL_ROLES = {
+    founder: true,
+    director: true,
+    employee: true,
+    freelancer: true,
+    investor: true,
+  };
+
+  function professionalRoleEls() {
+    return {
+      select: document.getElementById('as-professional-role'),
+      otherField: document.getElementById('as-professional-role-other-field'),
+      otherInput: document.getElementById('as-professional-role-other'),
+    };
+  }
+
+  function syncProfessionalRoleOther(options) {
+    const els = professionalRoleEls();
+    if (!els.select) return;
+    const show = els.select.value === 'other';
+    if (els.otherField) els.otherField.hidden = !show;
+    if (els.otherInput) {
+      els.otherInput.disabled = !show || (options && options.writable === false);
+      if (!show && !(options && options.clear === false)) els.otherInput.value = '';
+    }
+  }
+
+  function bindProfessionalRoleOther() {
+    const els = professionalRoleEls();
+    if (!els.select || els.select.dataset.roleOtherBound === '1') return;
+    els.select.dataset.roleOtherBound = '1';
+    els.select.addEventListener('change', () => {
+      syncProfessionalRoleOther();
+      if (els.select.value === 'other' && els.otherInput) els.otherInput.focus();
+    });
+  }
+
+  function applyProfessionalRoleSelection(savedValue) {
+    const els = professionalRoleEls();
+    if (!els.select) return;
+    bindProfessionalRoleOther();
+    const raw = String(savedValue || '').trim();
+    const slug = raw.toLowerCase().replace(/\s+/g, '_');
+    if (!raw) {
+      els.select.value = '';
+      syncProfessionalRoleOther({ clear: false });
+      if (els.otherInput) els.otherInput.value = '';
+      return;
+    }
+    if (LISTED_PROFESSIONAL_ROLES[slug]) {
+      els.select.value = slug;
+      syncProfessionalRoleOther({ clear: false });
+      if (els.otherInput) els.otherInput.value = '';
+      return;
+    }
+    els.select.value = 'other';
+    syncProfessionalRoleOther({ clear: false });
+    if (els.otherInput) els.otherInput.value = slug === 'other' ? '' : raw;
+  }
+
+  function resolvedProfessionalRole() {
+    const els = professionalRoleEls();
+    if (!els.select) return '';
+    const selected = els.select.value.trim();
+    if (selected === 'other') {
+      const custom = (els.otherInput && els.otherInput.value.trim()) || '';
+      return custom || 'other';
+    }
+    return selected;
+  }
+
   function applyWritable(writable) {
     const w = writable || {};
     setFieldWritable('as-name', w.name !== false);
@@ -43,7 +114,29 @@
     setFieldWritable('as-company', w.company !== false);
     setFieldWritable('as-job-title', w.jobTitle !== false);
     setFieldWritable('as-industry', w.businessSector !== false);
+    const industryWritable = w.businessSector !== false;
+    const industryOtherInput = document.getElementById('as-industry-other');
+    const industryOtherField = document.getElementById('as-industry-other-field');
+    if (industryOtherInput) industryOtherInput.disabled = !industryWritable;
+    if (!industryWritable && industryOtherField) industryOtherField.hidden = true;
+    else if (
+      industryWritable &&
+      window.HubProfileIndustries &&
+      window.HubProfileIndustries.syncIndustryOther
+    ) {
+      window.HubProfileIndustries.syncIndustryOther(
+        document.getElementById('as-industry'),
+        industryOtherField,
+        industryOtherInput,
+        { clear: false }
+      );
+    }
     setFieldWritable('as-professional-role', w.professionalRole !== false);
+    const roleWritable = w.professionalRole !== false;
+    const roleEls = professionalRoleEls();
+    if (!roleWritable && roleEls.otherField) roleEls.otherField.hidden = true;
+    else if (roleWritable) syncProfessionalRoleOther({ clear: false, writable: true });
+    if (roleEls.otherInput && !roleWritable) roleEls.otherInput.disabled = true;
     setFieldWritable('as-location', w.location !== false);
   }
 
@@ -86,12 +179,20 @@
     setFieldValue('as-company', profile.company || '');
     setFieldValue('as-job-title', profile.jobTitle || '');
     const industryEl = document.getElementById('as-industry');
+    const industryOtherField = document.getElementById('as-industry-other-field');
+    const industryOtherEl = document.getElementById('as-industry-other');
     if (window.HubProfileIndustries && industryEl) {
-      window.HubProfileIndustries.fillIndustrySelect(industryEl, profile.businessSector || '');
+      window.HubProfileIndustries.bindIndustryOther(industryEl, industryOtherField, industryOtherEl);
+      window.HubProfileIndustries.applyIndustrySelection(
+        industryEl,
+        industryOtherField,
+        industryOtherEl,
+        profile.businessSector || ''
+      );
     } else {
       setFieldValue('as-industry', profile.businessSector || '');
     }
-    setFieldValue('as-professional-role', profile.professionalRole || '');
+    applyProfessionalRoleSelection(profile.professionalRole || '');
     setFieldValue('as-location', profile.location || '');
     fillEmailPrefs(profile);
     rememberProfileBaseline();
@@ -320,16 +421,24 @@
 
   let profileBaseline = '';
 
+  function resolvedIndustry() {
+    if (window.HubProfileIndustries && window.HubProfileIndustries.resolveIndustryValue) {
+      return window.HubProfileIndustries.resolveIndustryValue(
+        document.getElementById('as-industry'),
+        document.getElementById('as-industry-other')
+      );
+    }
+    return document.getElementById('as-industry')?.value.trim() || '';
+  }
+
   function profileSnapshot() {
     return JSON.stringify({
       name: document.getElementById('as-name')?.value.trim() || '',
       reviewNameMode: selectedReviewNameMode(),
       company: document.getElementById('as-company')?.value.trim() || '',
       jobTitle: document.getElementById('as-job-title')?.value.trim() || '',
-      businessSector: document.getElementById('as-industry')?.value.trim() || '',
-      professionalRole: document.getElementById('as-professional-role')
-        ? document.getElementById('as-professional-role').value.trim()
-        : '',
+      businessSector: resolvedIndustry(),
+      professionalRole: resolvedProfessionalRole(),
       location: document.getElementById('as-location')?.value.trim() || '',
     });
   }
@@ -372,6 +481,24 @@
   document.getElementById('as-profile-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     hideAlert();
+    const industryValue = resolvedIndustry();
+    const roleValue = resolvedProfessionalRole();
+    if (
+      window.HubProfileIndustries &&
+      window.HubProfileIndustries.isBareOther &&
+      window.HubProfileIndustries.isBareOther(industryValue)
+    ) {
+      showAlert('Please enter your industry.', false);
+      scrollAlertIntoView();
+      document.getElementById('as-industry-other')?.focus();
+      return;
+    }
+    if (/^other$/i.test(roleValue)) {
+      showAlert('Please enter your role.', false);
+      scrollAlertIntoView();
+      document.getElementById('as-professional-role-other')?.focus();
+      return;
+    }
     const btn = document.getElementById('as-save-profile');
     const stickyBtn = document.getElementById('as-sticky-save-btn');
     if (btn) {
@@ -389,10 +516,8 @@
           reviewNameMode: selectedReviewNameMode(),
           company: document.getElementById('as-company').value.trim(),
           jobTitle: document.getElementById('as-job-title').value.trim(),
-          businessSector: document.getElementById('as-industry').value.trim(),
-          professionalRole: document.getElementById('as-professional-role')
-            ? document.getElementById('as-professional-role').value.trim()
-            : '',
+          businessSector: industryValue,
+          professionalRole: roleValue,
           location: document.getElementById('as-location').value.trim(),
         }),
       });

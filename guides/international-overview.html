@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="index, follow">
+<meta name="description" content="What is The Networker International? Trusted business networking country by country — live markets, markets we’re building, and a waitlist for launch.">
+<title>What is The Networker International?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<link rel="icon" href="/favicon.ico?v=20260823uk3" sizes="any">
+<link rel="icon" href="/assets/favicon.svg?v=20260823uk3" type="image/svg+xml">
+<style>
+  @page { size: A4; margin: 0; }
+
+  :root {
+    --plum: #7a5f88;
+    --plum-deep: #5f486b;
+    --ink: #3a3438;
+    --muted: #5c5458;
+    --line: #e4d8c8;
+    --pale: #f3ebf5;
+    --bg: #faf6f0;
+    --gold: #c9ad7a;
+    --live: #9a7aa8;
+    --building: #c9ad7a;
+    --soon: #b8aea3;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', system-ui, sans-serif;
+    color: var(--ink);
+    background: #e8e0d6;
+    line-height: 1.35;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .screen-bar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 16px;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    background: var(--ink);
+    color: #fff;
+    font-size: 13px;
+  }
+  .screen-bar a,
+  .screen-bar button {
+    appearance: none;
+    border: 0;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    background: #fff;
+    color: var(--ink);
+  }
+  .screen-bar .print { background: #e0c4e8; }
+  .screen-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+  .wrap {
+    padding: 24px 16px 48px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .page {
+    width: 210mm;
+    min-height: 297mm;
+    background:
+      radial-gradient(ellipse 60% 40% at 100% 0%, rgba(154,122,168,.14), transparent 55%),
+      linear-gradient(180deg, #fff 0%, var(--bg) 100%);
+    border: 1px solid #d4c9bc;
+    border-radius: 4px;
+    box-shadow: 0 10px 30px rgba(58, 52, 56, .12);
+    padding: 12mm 14mm 11mm;
+    position: relative;
+    overflow: hidden;
+  }
+  .page::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 5mm;
+    background: var(--plum);
+  }
+
+  .top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin: 0 0 12px 2mm;
+    padding: 10px 14px;
+    background: linear-gradient(180deg, #423c40 0%, #3a3438 100%);
+    border-radius: 12px;
+    box-shadow: 0 8px 20px rgba(58, 52, 56, 0.14);
+  }
+  .logo-link {
+    display: inline-block;
+    line-height: 0;
+  }
+  .logo {
+    width: 44mm;
+    height: auto;
+    display: block;
+  }
+  .badge {
+    display: inline-block;
+    background: rgba(224, 196, 232, 0.18);
+    color: #f5e9f8;
+    border: 1px solid rgba(224, 196, 232, 0.35);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: 5px 9px;
+    border-radius: 6px;
+    margin-bottom: 5px;
+  }
+  .url {
+    font-size: 12px;
+    font-weight: 600;
+    color: #f0d9a8;
+    text-align: right;
+  }
+  .url a {
+    color: inherit;
+    text-decoration: none;
+  }
+  .url a:hover { text-decoration: underline; }
+
+  .markets a,
+  .cta a,
+  .note a,
+  .foot a {
+    color: inherit;
+  }
+  .markets a { color: var(--plum); font-weight: 700; text-decoration: none; }
+  .markets a:hover { text-decoration: underline; }
+  .note a { color: var(--ink); font-weight: 700; }
+  .foot a { color: var(--muted); text-decoration: none; }
+  .cta small a {
+    color: rgba(255,255,255,.92);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  h1 {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 27px;
+    color: var(--ink);
+    line-height: 1.12;
+    margin: 6px 0 6px;
+    padding-left: 2mm;
+    max-width: 170mm;
+  }
+  h1 em { color: var(--plum); font-style: normal; }
+  .lede {
+    font-size: 13.5px;
+    color: var(--muted);
+    margin-bottom: 12px;
+    padding-left: 2mm;
+    max-width: 175mm;
+  }
+
+  .status {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 7px;
+    margin-bottom: 12px;
+    padding-left: 2mm;
+  }
+  .status-card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 9px 10px;
+    border-top: 3px solid var(--soon);
+  }
+  .status-card--live { border-top-color: var(--live); }
+  .status-card--building { border-top-color: var(--building); }
+  .status-card strong {
+    display: block;
+    font-size: 12.5px;
+    color: var(--ink);
+    margin-bottom: 3px;
+  }
+  .status-card a {
+    color: var(--plum);
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .status-card a:hover { text-decoration: underline; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 7px;
+    margin-bottom: 10px;
+    padding-left: 2mm;
+  }
+  .item {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 9px 10px;
+  }
+  .item strong {
+    display: block;
+    font-size: 12.5px;
+    color: var(--ink);
+    margin-bottom: 3px;
+  }
+  .item span { font-size: 11px; color: var(--muted); line-height: 1.35; }
+
+  .markets {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 10px 12px;
+    margin-bottom: 9px;
+    margin-left: 2mm;
+  }
+  .markets h2 {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: var(--plum);
+    margin-bottom: 7px;
+  }
+  .markets ul {
+    list-style: none;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px 14px;
+  }
+  .markets li {
+    font-size: 11.5px;
+    color: var(--ink);
+    line-height: 1.35;
+  }
+  .markets li strong { color: var(--ink); }
+
+  .note {
+    background: var(--pale);
+    border: 1px solid rgba(122, 95, 136, 0.18);
+    border-radius: 10px;
+    padding: 9px 11px;
+    margin: 0 0 10px 2mm;
+    font-size: 11.5px;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+  .note strong { color: var(--ink); }
+
+  .cta {
+    background: var(--plum);
+    color: #fff;
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    margin-left: 2mm;
+  }
+  .cta strong { display: block; font-size: 16px; margin-bottom: 3px; }
+  .cta a {
+    color: #f0d9a8;
+    font-weight: 700;
+    font-size: 13px;
+    text-decoration: none;
+  }
+  .cta small {
+    display: block;
+    font-size: 11px;
+    color: rgba(255,255,255,.82);
+    text-align: right;
+    line-height: 1.35;
+    max-width: 58mm;
+  }
+
+  .foot {
+    margin-top: 8px;
+    padding-left: 2mm;
+    font-size: 9.5px;
+    color: var(--muted);
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  @media print {
+    body { background: #fff; }
+    .screen-bar { display: none !important; }
+    .wrap { padding: 0; }
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      overflow: visible;
+    }
+    a[href^="http"],
+    a[href^="mailto:"] {
+      /* Keep URLs clickable in the downloaded PDF */
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+  }
+
+  @media screen and (max-width: 900px) {
+    .page { width: min(100%, 210mm); min-height: auto; }
+    .markets ul { grid-template-columns: 1fr; }
+    .cta { flex-direction: column; align-items: flex-start; }
+    .cta small { text-align: left; max-width: none; }
+  }
+</style>
+<script src="/js/hub-compliance-bootstrap.js?v=20260828cmp1" data-root="/"></script>
+</head>
+<body>
+  <div class="screen-bar">
+    <div><strong>The Networker International</strong> — one-pager you can email or attach</div>
+    <div class="screen-actions">
+      <a class="print" href="/assets/guides/international-overview.pdf" download>Download PDF</a>
+      <button type="button" id="leavebehind-print">Print page</button>
+      <a href="https://www.thenetworkerinternational.com/" target="_blank" rel="noopener">Open world map</a>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <article class="page">
+      <header class="top">
+        <a class="logo-link" href="https://www.thenetworkerinternational.com/" target="_blank" rel="noopener">
+          <img class="logo" src="../assets/logo-networker-international.png?v=20260902intl2" alt="The Networker International" width="220" height="102">
+        </a>
+        <div>
+          <div class="badge">What it is</div>
+          <p class="url"><a href="https://www.thenetworkerinternational.com/" target="_blank" rel="noopener">thenetworkerinternational.com</a></p>
+        </div>
+      </header>
+
+      <h1>Trusted business networking, <em>country by country</em></h1>
+      <p class="lede">
+        The Networker International is how people find The Networker in their country —
+        one world map that opens a live local site, a market we&rsquo;re building, or a waitlist where we haven&rsquo;t launched yet.
+      </p>
+
+      <div class="status">
+        <div class="status-card status-card--live">
+          <strong>Live</strong>
+          <span>Open the local Networker site to browse events, organisers, and opportunities. The <a href="https://www.thenetworkeruk.com/" target="_blank" rel="noopener">UK is live today</a>.</span>
+        </div>
+        <div class="status-card status-card--building">
+          <strong>Building</strong>
+          <span>Register interest to attend, or list your networking group so you&rsquo;re ready at launch. <a href="https://www.thenetworkerinternational.com/ireland" target="_blank" rel="noopener">Ireland</a> and the <a href="https://www.thenetworkerinternational.com/united-states" target="_blank" rel="noopener">USA</a>.</span>
+        </div>
+        <div class="status-card">
+          <strong>Coming soon</strong>
+          <span><a href="https://www.thenetworkerinternational.com/" target="_blank" rel="noopener">Join the waitlist</a> for your country. Interest helps decide what launches next.</span>
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="item">
+          <strong>For people looking to network</strong>
+          <span>Find trusted communities in live markets, or register interest where we&rsquo;re coming next. See the UK live if you want a working example.</span>
+        </div>
+        <div class="item">
+          <strong>For networking groups</strong>
+          <span>Get discovered when a market launches. In Ireland and the USA, share your group details now. Elsewhere, register list interest on the map.</span>
+        </div>
+        <div class="item">
+          <strong>One company, local markets</strong>
+          <span>Part of The Networker Group Limited — the same team behind The Networker UK, expanding country by country.</span>
+        </div>
+        <div class="item">
+          <strong>Not a generic global dump</strong>
+          <span>Each market gets its own trusted local experience when we&rsquo;re ready to support it properly.</span>
+        </div>
+      </div>
+
+      <div class="markets">
+        <h2>Markets today</h2>
+        <ul>
+          <li><strong>United Kingdom</strong> — live at <a href="https://www.thenetworkeruk.com/" target="_blank" rel="noopener">thenetworkeruk.com</a></li>
+          <li><strong>Ireland</strong> — building · <a href="https://www.thenetworkerinternational.com/ireland" target="_blank" rel="noopener">interest &amp; group intake</a></li>
+          <li><strong>United States</strong> — building · <a href="https://www.thenetworkerinternational.com/united-states" target="_blank" rel="noopener">interest &amp; group intake</a></li>
+          <li><strong>Other countries</strong> — coming soon via the <a href="https://www.thenetworkerinternational.com/" target="_blank" rel="noopener">world map</a></li>
+        </ul>
+      </div>
+
+      <p class="note">
+        <strong>Name check:</strong> The Networker International is a business networking events platform.
+        It is not affiliated with unrelated &ldquo;Networkers International&rdquo; recruitment or training brands.
+      </p>
+
+      <div class="cta">
+        <div>
+          <strong>Explore your country</strong>
+          <a href="https://www.thenetworkerinternational.com/" target="_blank" rel="noopener">thenetworkerinternational.com</a>
+          <br>
+          <a href="https://www.thenetworkeruk.com/" target="_blank" rel="noopener">See the UK live →</a>
+        </div>
+        <small>Questions?<br><a href="mailto:hi@thenetworkeruk.com">hi@thenetworkeruk.com</a></small>
+      </div>
+
+      <footer class="foot">
+        <span><a href="https://www.thenetworkerinternational.com/" target="_blank" rel="noopener">The Networker International · thenetworkerinternational.com</a></span>
+        <span>The Networker Group Limited · Company No. 15252227</span>
+      </footer>
+    </article>
+  </div>
+
+<script src="/js/guides-leavebehind.js?v=20260828csp1"></script>
+</body>
+</html>

@@ -100,6 +100,14 @@
     var sector = String(industry || '').trim();
     var title = String(jobTitle || '').trim();
     if (!sector) return 'Please select your industry.';
+    if (
+      global.HubProfileIndustries &&
+      global.HubProfileIndustries.isBareOther &&
+      global.HubProfileIndustries.isBareOther(sector)
+    ) {
+      return 'Please enter your industry.';
+    }
+    if (sector.length < 2) return 'Industry must be at least 2 characters.';
     if (!title) return 'Please enter your job title.';
     if (title.length < 2) return 'Job title must be at least 2 characters.';
     return '';

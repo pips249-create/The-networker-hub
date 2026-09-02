@@ -257,15 +257,49 @@
     refreshTicketJumpVisibility();
   }
 
+  function checkoutIndustryEls() {
+    return {
+      select: document.getElementById('checkout-profile-industry'),
+      otherField: document.getElementById('checkout-profile-industry-other-field'),
+      otherInput: document.getElementById('checkout-profile-industry-other'),
+    };
+  }
+
+  function bindCheckoutIndustryOther() {
+    const els = checkoutIndustryEls();
+    if (!window.HubProfileIndustries || !els.select) return;
+    window.HubProfileIndustries.bindIndustryOther(els.select, els.otherField, els.otherInput, {
+      required: true,
+    });
+  }
+
+  function applyCheckoutIndustry(selectedValue) {
+    const els = checkoutIndustryEls();
+    if (!window.HubProfileIndustries || !els.select) return;
+    bindCheckoutIndustryOther();
+    window.HubProfileIndustries.applyIndustrySelection(
+      els.select,
+      els.otherField,
+      els.otherInput,
+      selectedValue || '',
+      { required: true }
+    );
+  }
+
+  function resolvedCheckoutIndustry() {
+    const els = checkoutIndustryEls();
+    if (window.HubProfileIndustries && window.HubProfileIndustries.resolveIndustryValue) {
+      return window.HubProfileIndustries.resolveIndustryValue(els.select, els.otherInput);
+    }
+    return els.select ? els.select.value : '';
+  }
+
   function bindProfileGateOnce() {
     if (profileGateBound) return;
     profileGateBound = true;
     const cancel = document.getElementById('checkout-profile-cancel');
     const form = document.getElementById('checkout-profile-form');
-    const industry = document.getElementById('checkout-profile-industry');
-    if (window.HubProfileIndustries && industry) {
-      window.HubProfileIndustries.fillIndustrySelect(industry, '');
-    }
+    applyCheckoutIndustry('');
     if (cancel) {
       cancel.addEventListener('click', function () {
         showCheckoutProfileGate(false);
@@ -280,13 +314,13 @@
         e.preventDefault();
         const errEl = document.getElementById('checkout-profile-gate-error');
         const submitBtn = document.getElementById('checkout-profile-submit');
-        const industryEl = document.getElementById('checkout-profile-industry');
+        const industryValue = resolvedCheckoutIndustry();
         const jobTitleEl = document.getElementById('checkout-profile-job-title');
         const companyEl = document.getElementById('checkout-profile-company');
         const err =
           window.HubProfileCompletion &&
           window.HubProfileCompletion.validateProfileForm(
-            industryEl && industryEl.value,
+            industryValue,
             jobTitleEl && jobTitleEl.value
           );
         if (err) {
@@ -294,13 +328,16 @@
             errEl.textContent = err;
             errEl.hidden = false;
           }
+          if (document.getElementById('checkout-profile-industry')?.value === 'Other') {
+            document.getElementById('checkout-profile-industry-other')?.focus();
+          }
           return;
         }
         if (errEl) errEl.hidden = true;
         if (submitBtn) submitBtn.disabled = true;
         try {
           const result = await window.HubProfileCompletion.saveProfileFields({
-            businessSector: industryEl ? industryEl.value : '',
+            businessSector: industryValue,
             jobTitle: jobTitleEl ? jobTitleEl.value.trim() : '',
             company: companyEl ? companyEl.value.trim() : '',
           });
@@ -337,7 +374,7 @@
       showCheckoutSignInGate(false);
       const industry = document.getElementById('checkout-profile-industry');
       if (window.HubProfileIndustries && industry && !industry.options.length) {
-        window.HubProfileIndustries.fillIndustrySelect(industry, '');
+        applyCheckoutIndustry('');
       }
     }
     gate.hidden = !show;
@@ -363,12 +400,7 @@
       const industry = document.getElementById('checkout-profile-industry');
       const jobTitle = document.getElementById('checkout-profile-job-title');
       const company = document.getElementById('checkout-profile-company');
-      if (window.HubProfileIndustries && industry) {
-        window.HubProfileIndustries.fillIndustrySelect(
-          industry,
-          res.profile && res.profile.businessSector
-        );
-      }
+      applyCheckoutIndustry(res.profile && res.profile.businessSector);
       if (jobTitle && res.profile && res.profile.jobTitle) jobTitle.value = res.profile.jobTitle;
       if (company && res.profile && res.profile.company) company.value = res.profile.company;
       if (industry) industry.focus();
