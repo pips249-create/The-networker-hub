@@ -99,6 +99,7 @@
     selectedCountry: null,
     mapReady: false,
     hubStats: {},
+    interestStats: {},
     activeModal: null,
   };
 
@@ -172,6 +173,29 @@
     return n.toLocaleString('en-GB');
   }
 
+  function interestRowFor(meta) {
+    if (!meta || !meta.iso2 || !state.interestStats) return null;
+    return state.interestStats[String(meta.iso2).toUpperCase()] || null;
+  }
+
+  function formatInterestDemand(total) {
+    var n = Number(total);
+    if (!Number.isFinite(n) || n < 1) return '';
+    return (
+      n.toLocaleString('en-GB') +
+      (n === 1 ? ' person has registered interest' : ' people have registered interest')
+    );
+  }
+
+  function formatMarketsDemand(total) {
+    var n = Number(total);
+    if (!Number.isFinite(n) || n < 1) return '';
+    return (
+      n.toLocaleString('en-GB') +
+      (n === 1 ? ' person already registered interest' : ' people already registered interest')
+    );
+  }
+
   function isCoarsePointer() {
     return window.matchMedia('(hover: none), (pointer: coarse)').matches;
   }
@@ -199,6 +223,10 @@
   function hideCountryPopup() {
     if (!els.popup) return;
     els.popup.hidden = true;
+    if (els.popupDemand) {
+      els.popupDemand.textContent = '';
+      els.popupDemand.hidden = true;
+    }
     els.popup.classList.remove(
       'is-visible',
       'is-below',
@@ -261,6 +289,17 @@
     els.popupAction.textContent = popupActionText(meta);
 
     els.popupName.textContent = meta.name;
+
+    if (els.popupDemand) {
+      var demandRow = !meta.live ? interestRowFor(meta) : null;
+      if (demandRow && demandRow.total >= 1) {
+        els.popupDemand.textContent = formatInterestDemand(demandRow.total);
+        els.popupDemand.hidden = false;
+      } else {
+        els.popupDemand.textContent = '';
+        els.popupDemand.hidden = true;
+      }
+    }
 
     if (hasStats) {
       els.popupStats.hidden = false;
@@ -475,9 +514,19 @@
       button.type = 'button';
       button.className = 'intl-country-result intl-country-result--' + meta.status;
       button.setAttribute('role', 'option');
+      var demandRow = !meta.live ? interestRowFor(meta) : null;
+      var demandHtml =
+        demandRow && demandRow.total >= 1
+          ? '<span class="intl-country-result-demand">' +
+            formatCount(demandRow.total) +
+            ' registered</span>'
+          : '';
       button.innerHTML =
+        '<span class="intl-country-result-copy">' +
         '<span class="intl-country-result-name">' +
         meta.name +
+        '</span>' +
+        demandHtml +
         '</span>' +
         '<span class="intl-country-result-status">' +
         statusBadge(meta) +
@@ -570,25 +619,37 @@
   }
 
   function loadInterestDemand() {
-    fetch('/api/international-interest-stats')
+    return fetch('/api/international-interest-stats')
       .then(function (res) {
         return res.json();
       })
       .then(function (data) {
         if (!data || !data.ok || !data.countries) return;
         state.interestStats = data.countries;
+
         document.querySelectorAll('[data-demand-country]').forEach(function (node) {
           var code = String(node.getAttribute('data-demand-country') || '')
             .trim()
             .toUpperCase();
           var row = data.countries[code];
           if (!row || !row.display) return;
-          var label =
-            row.total.toLocaleString('en-GB') +
-            ' people already registered interest';
-          node.textContent = label;
+          node.textContent = formatMarketsDemand(row.total);
           node.hidden = false;
         });
+
+        if (els.results) renderCountryResults(els.search ? els.search.value : '', els.results);
+        if (els.headerSearch && els.headerResults) {
+          renderCountryResults(els.headerSearch.value, els.headerResults, { hideWhenEmpty: true });
+        }
+
+        var hovered = els.svg && els.svg.querySelector('.intl-country.is-hovered');
+        if (hovered) {
+          var id = hovered.getAttribute('data-country-id');
+          var meta = state.countries.find(function (c) {
+            return c.numericId === id;
+          });
+          if (meta) showCountryPopup(hovered, meta);
+        }
       })
       .catch(function () {});
   }
@@ -1026,6 +1087,7 @@
     els.popup = byId('intl-country-popup');
     els.popupKicker = byId('intl-popup-kicker');
     els.popupName = byId('intl-popup-name');
+    els.popupDemand = byId('intl-popup-demand');
     els.popupStats = byId('intl-popup-stats');
     els.popupEvents = byId('intl-popup-events');
     els.popupOrganisers = byId('intl-popup-organisers');
