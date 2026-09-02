@@ -4976,41 +4976,6 @@ body.opp-compare-modal-open .bo-opp-compare-tray {
   margin: 0 0 14px;
 }
 
-.opp-browse-page .opp-load-more-wrap {
-  display: flex;
-  justify-content: center;
-  margin-top: 20px;
-}
-
-.opp-browse-page .opp-load-more-btn {
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--opp-navy);
-  background: var(--opp-gold-pale);
-  border: 1px solid var(--opp-gold-border);
-  border-radius: 10px;
-  padding: 11px 20px;
-  cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
-}
-
-.opp-browse-page .opp-load-more-btn:hover:not(:disabled) {
-  background: #fff;
-  border-color: var(--opp-gold);
-}
-
-.opp-browse-page .opp-load-more-btn:disabled {
-  opacity: 0.55;
-  cursor: default;
-}
-
-.opp-browse-page .opp-load-sentinel {
-  width: 100%;
-  height: 1px;
-  pointer-events: none;
-}
-
 .opp-browse-page .opp-pagination {
   display: flex;
   justify-content: center;

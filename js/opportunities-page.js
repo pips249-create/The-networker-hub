@@ -324,11 +324,6 @@
   var maxInvest = null;
   var hasOpenDayOnly = false;
   var currentPage = 1;
-  var accumulatedCount = 0;
-  var lastRenderedCount = 0;
-  var visibleRangeStart = 1;
-  var loadingMore = false;
-  var lazyObserver = null;
   var searchTimer = null;
   var rangeTimer = null;
   var spotlightFeaturedOrder = null;
@@ -1619,6 +1614,11 @@
         ' aria-label="Previous page">‹</button>'
     );
 
+    if (start > 1) {
+      items.push('<button type="button" class="page-btn" data-page="1">1</button>');
+      if (start > 2) items.push('<span class="page-ellipsis" aria-hidden="true">…</span>');
+    }
+
     for (var p = start; p <= end; p++) {
       items.push(
         '<button type="button" class="page-btn' +
@@ -1630,6 +1630,13 @@
           '>' +
           p +
           '</button>'
+      );
+    }
+
+    if (end < totalPages) {
+      if (end < totalPages - 1) items.push('<span class="page-ellipsis" aria-hidden="true">…</span>');
+      items.push(
+        '<button type="button" class="page-btn" data-page="' + totalPages + '">' + totalPages + '</button>'
       );
     }
 
@@ -1645,19 +1652,7 @@
   }
 
   function resetListingPagination() {
-    accumulatedCount = 0;
-    lastRenderedCount = 0;
-    visibleRangeStart = 1;
-    loadingMore = false;
     currentPage = 1;
-    disconnectLazyObserver();
-  }
-
-  function disconnectLazyObserver() {
-    if (lazyObserver) {
-      lazyObserver.disconnect();
-      lazyObserver = null;
-    }
   }
 
   function getListingSlice(filtered) {
@@ -1667,17 +1662,6 @@
     if (currentPage > totalPages) currentPage = totalPages;
     if (currentPage < 1) currentPage = 1;
 
-    if (accumulatedCount > 0) {
-      var accEnd = Math.min(accumulatedCount, total);
-      return {
-        items: filtered.slice(0, accEnd),
-        rangeStart: total ? 1 : 0,
-        rangeEnd: accEnd,
-        totalPages: totalPages,
-        hasMore: accEnd < total,
-      };
-    }
-
     var start = (currentPage - 1) * PAGE_SIZE;
     var end = Math.min(start + PAGE_SIZE, total);
     return {
@@ -1685,7 +1669,6 @@
       rangeStart: total ? start + 1 : 0,
       rangeEnd: end,
       totalPages: totalPages,
-      hasMore: end < total,
     };
   }
 
@@ -1702,23 +1685,6 @@
     );
   }
 
-  function loadMoreHtml(filtered, shown) {
-    var remaining = filtered.length - shown;
-    if (remaining <= 0) return '';
-    var batch = Math.min(PAGE_SIZE, remaining);
-    return (
-      '<div class="opp-load-more-wrap">' +
-      '<button type="button" class="opp-load-more-btn" id="opp-load-more-btn">' +
-      'Load more (' +
-      batch +
-      ' of ' +
-      remaining +
-      ' remaining)' +
-      '</button></div>' +
-      '<div class="opp-load-sentinel" id="opp-load-sentinel" aria-hidden="true"></div>'
-    );
-  }
-
   function updateResultsCount(total) {
     if (!els.resultsCount) return;
     els.resultsCount.textContent = String(total);
@@ -1731,99 +1697,6 @@
         (total === 1 ? '' : 's');
       els.resultsCount = document.getElementById('opp-results-count');
     }
-  }
-
-  function updateLoadMoreControls(filtered, shown, hasMore) {
-    var wrap = els.mount && els.mount.querySelector('.opp-load-more-wrap');
-    var btn = document.getElementById('opp-load-more-btn');
-    var sentinel = document.getElementById('opp-load-sentinel');
-
-    if (!hasMore) {
-      if (wrap) wrap.remove();
-      if (sentinel) sentinel.remove();
-      disconnectLazyObserver();
-      return;
-    }
-
-    var remaining = filtered.length - shown;
-    var batch = Math.min(PAGE_SIZE, remaining);
-    if (btn) {
-      btn.disabled = loadingMore;
-      btn.textContent = 'Load more (' + batch + ' of ' + remaining + ' remaining)';
-    }
-    observeLazySentinel();
-  }
-
-  function observeLazySentinel() {
-    disconnectLazyObserver();
-    if (!els.mount) return;
-    var sentinel = els.mount.querySelector('.opp-load-sentinel');
-    if (!sentinel || typeof IntersectionObserver === 'undefined') return;
-
-    lazyObserver = new IntersectionObserver(
-      function (entries) {
-        if (!entries[0] || !entries[0].isIntersecting || loadingMore) return;
-        loadMoreListings();
-      },
-      { rootMargin: '280px 0px' }
-    );
-    lazyObserver.observe(sentinel);
-  }
-
-  function loadMoreListings() {
-    if (loadingMore || !els.mount) return;
-
-    var filtered = sortListings(getGridListings());
-    var slice = getListingSlice(filtered);
-    if (!slice.hasMore) return;
-
-    loadingMore = true;
-    var prevShown = lastRenderedCount || slice.rangeEnd;
-    var nextShown = Math.min(prevShown + PAGE_SIZE, filtered.length);
-
-    if (!accumulatedCount) {
-      accumulatedCount = nextShown;
-    } else {
-      accumulatedCount = nextShown;
-    }
-
-    var newItems = filtered.slice(prevShown, nextShown);
-    var grid = els.mount.querySelector('.event-grid');
-
-    if (grid && newItems.length) {
-      grid.insertAdjacentHTML('beforeend', newItems.map(gridCard).join(''));
-      lastRenderedCount = nextShown;
-      if (saves) saves.refreshButtons(els.mount);
-
-      var rangeEl = els.mount.querySelector('.opp-listings-range');
-      if (rangeEl) {
-        rangeEl.textContent =
-          'Showing ' + visibleRangeStart + '–' + nextShown + ' of ' + filtered.length;
-      } else if (filtered.length > PAGE_SIZE) {
-        var gridEl = els.mount.querySelector('.event-grid');
-        if (gridEl) {
-          gridEl.insertAdjacentHTML(
-            'beforebegin',
-            '<p class="opp-listings-range">Showing ' +
-              visibleRangeStart +
-              '–' +
-              nextShown +
-              ' of ' +
-              filtered.length +
-              '</p>'
-          );
-        }
-      }
-
-      updateResultsCount(filtered.length);
-      updateLoadMoreControls(filtered, nextShown, nextShown < filtered.length);
-      refreshCompareTray();
-      loadingMore = false;
-      return;
-    }
-
-    loadingMore = false;
-    renderListings();
   }
 
   function syncTypeChipUi() {
@@ -2058,7 +1931,6 @@
     }
 
     if (!filtered.length) {
-      disconnectLazyObserver();
       els.mount.innerHTML = emptyListingsHtml(totalMatches.length);
       updateResultsCount(totalMatches.length);
       updateTypeChipCounts();
@@ -2080,16 +1952,12 @@
       '<div class="event-grid">' +
       slice.items.map(gridCard).join('') +
       '</div>' +
-      (slice.hasMore ? loadMoreHtml(filtered, slice.rangeEnd) : '') +
       paginationHtml(currentPage, slice.totalPages) +
       lowResultsHtml;
 
-    lastRenderedCount = slice.rangeEnd;
     updateResultsCount(totalMatches.length);
     updateTypeChipCounts();
     if (saves) saves.refreshButtons(els.mount);
-    if (slice.hasMore) observeLazySentinel();
-    else disconnectLazyObserver();
     refreshCompareTray();
     bindEmptyStateActions();
   }
@@ -3187,22 +3055,13 @@
     els.mount.addEventListener('click', function (e) {
       if (e.target.closest('.opp-fav-btn')) return;
 
-      var loadBtn = e.target.closest('.opp-load-more-btn');
-      if (loadBtn) {
-        loadMoreListings();
-        return;
-      }
-
       var btn = e.target.closest('.page-btn');
       if (!btn || btn.disabled) return;
       var filtered = getGridListings();
       var totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
       var p = parseInt(btn.getAttribute('data-page'), 10);
       if (!p || p === currentPage || p < 1 || p > totalPages) return;
-      accumulatedCount = 0;
-      lastRenderedCount = 0;
       currentPage = p;
-      visibleRangeStart = (p - 1) * PAGE_SIZE + 1;
       renderListings();
       var block = document.getElementById('listings-view');
       if (block) block.scrollIntoView({ behavior: 'smooth', block: 'start' });
