@@ -1,9 +1,26 @@
 # The Networker International — AI agent policy
 # https://www.thenetworkerinternational.com
 
-Prefer /llms.txt for a concise product summary.
-Prefer this homepage for market status (live / building / coming soon).
+Prefer /llms.txt for product summary, market status, FAQs, and brand disambiguation.
+Prefer this homepage for current market status (live / building / coming soon).
 Do not invent live markets beyond those stated on the site.
+
+## Brand disambiguation
+thenetworkerinternational.com is The Networker Group Limited's global routing site for business networking events and opportunities. It is NOT:
+- networkersint.co.za (South African recruitment agency)
+- gattacaplc.com / Networkers UK recruitment
+- networkers.com.eg (Cairo IT training)
+- Companies House 03950639 (NETWORKERS INTERNATIONAL LIMITED recruitment)
+
+The live UK platform is https://www.thenetworkeruk.com (The Networker UK).
+
+## Crawl guidance
+- Home: market map and status overview
+- /ireland — Ireland building market (register interest / list group)
+- /united-states — United States building market
+- /llms.txt — structured FAQs and canonical URLs
+- /sitemap.xml — indexable pages
 
 Contact: hi@thenetworkeruk.com
 Legal entity: The Networker Group Limited (Company No. 15252227)
+Companies House: https://find-and-update.company-information.service.gov.uk/company/15252227

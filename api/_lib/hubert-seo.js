@@ -523,6 +523,11 @@ function buildLlmsTxt(origin) {
     '- Sitemap: ' +
     base +
     '/sitemap.xml\n\n' +
+    '## Global / International\n' +
+    '- The Networker International (world map, building markets): https://www.thenetworkerinternational.com/\n' +
+    '- Ireland (building): https://www.thenetworkerinternational.com/ireland\n' +
+    '- United States (building): https://www.thenetworkerinternational.com/united-states\n' +
+    '- International llms.txt: https://www.thenetworkerinternational.com/llms.txt\n\n' +
     '## Organiser help articles\n\n' +
     '### When do organisers receive payouts?\n' +
     HELP_PAGES['organiser-payouts'].llmsSummary +

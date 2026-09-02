@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<title>UK Open Graph image</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    width: 100%; height: 100%;
+    background: #111;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #canvas {
+    width: 1200px;
+    height: 630px;
+    background: #0a0a0a;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 36px;
+    flex-shrink: 0;
+    padding: 56px 72px;
+  }
+  .logo {
+    width: 920px;
+    height: auto;
+    display: block;
+  }
+  #canvas p {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 32px;
+    font-weight: 400;
+    color: #d4c4e0;
+    letter-spacing: 0.01em;
+    text-align: center;
+    line-height: 1.3;
+    max-width: 920px;
+  }
+</style>
+</head>
+<body>
+  <div id="canvas">
+    <!-- Vector wordmark — sharp at any size; cream "The"/"UK" for contrast on black -->
+    <svg class="logo" viewBox="0 0 340 132" role="img" aria-label="The Networker UK">
+      <text x="170" y="28" text-anchor="middle" font-family="'DM Serif Display', Georgia, serif" font-size="26" fill="#f2ebe3">The</text>
+      <text x="32" y="88" font-family="'DM Serif Display', Georgia, serif" font-size="58" fill="#c9a3cf">Net</text>
+      <text x="119" y="88" font-family="'DM Serif Display', Georgia, serif" font-size="58" fill="#c9a3cf">w</text>
+      <!-- Softer mark — avoids white flare when LinkedIn compresses -->
+      <circle cx="176" cy="72" r="17" fill="none" stroke="#c9a3cf" stroke-width="2.25"/>
+      <circle cx="176" cy="72" r="10" fill="none" stroke="#c9a3cf" stroke-width="2"/>
+      <circle cx="176" cy="72" r="3.5" fill="#c9a3cf"/>
+      <text x="193" y="88" font-family="'DM Serif Display', Georgia, serif" font-size="58" fill="#c9a3cf">rker</text>
+      <text x="170" y="124" text-anchor="middle" font-family="'DM Serif Display', Georgia, serif" font-size="26" fill="#f2ebe3">UK</text>
+    </svg>
+    <p>Find your next event, organiser &amp; opportunity</p>
+  </div>
+</body>
+</html>

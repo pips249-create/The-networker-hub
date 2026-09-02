@@ -79,7 +79,7 @@
   if (!cfg) return;
 
   var canonical = absoluteUrl(cfg.path);
-  var image = absoluteUrl(cfg.image || '/assets/logo.png');
+  var image = absoluteUrl(cfg.image || '/assets/logo-networker-uk-og.png');
 
   if (cfg.title) document.title = cfg.title;
   upsertMeta('name', 'description', cfg.description);

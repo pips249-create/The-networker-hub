@@ -19,6 +19,7 @@ const { getNetworkingRegion } = require('./networking-regions');
 const { buildNetworkingRegionSsr } = require('./networking-region-ssr');
 const { getPublicRankingLeaderboard } = require('./organiser-ranking-snapshot');
 const { rankingBadgeImageUrl } = require('./ranking-badge-svg');
+const { OG_SHARE_IMAGE } = require('./hub-brand');
 
 function buildRankingBadgeImageUrl(origin, opts) {
   const o = opts || {};
@@ -318,7 +319,7 @@ async function buildEventMeta(slug, origin) {
     ? ev.photo.startsWith('http')
       ? ev.photo
       : absoluteUrl(origin, ev.photo.startsWith('/') ? ev.photo : '/' + ev.photo)
-    : absoluteUrl(origin, '/assets/logo.png');
+    : absoluteUrl(origin, OG_SHARE_IMAGE);
 
   const meta = {
     title,
@@ -410,7 +411,7 @@ async function buildOpportunityMeta(slug, origin) {
     ? item.imageUrl.startsWith('http')
       ? item.imageUrl
       : absoluteUrl(origin, item.imageUrl.startsWith('/') ? item.imageUrl : '/' + item.imageUrl)
-    : absoluteUrl(origin, '/assets/logo.png');
+    : absoluteUrl(origin, OG_SHARE_IMAGE);
 
   const meta = {
     title,
@@ -451,7 +452,7 @@ async function buildOrganiserMeta(slug, origin) {
     `${org.name} on The Networker UK — browse upcoming networking events and book tickets.`;
 
   const canonical = absoluteUrl(origin, '/organisers/' + encodeURIComponent(org.slug));
-  const image = org.photoUrl || absoluteUrl(origin, '/assets/logo.png');
+  const image = org.photoUrl || absoluteUrl(origin, OG_SHARE_IMAGE);
 
   const meta = {
     title,
@@ -487,7 +488,7 @@ function buildStaticPageMeta(pageKey, origin) {
   if (!cfg) return null;
 
   const canonical = absoluteUrl(origin, cfg.path);
-  const image = absoluteUrl(origin, cfg.image || '/assets/logo.png');
+  const image = absoluteUrl(origin, cfg.image || OG_SHARE_IMAGE);
   const meta = {
     title: cfg.title,
     description: trimText(cfg.description, 160),
@@ -512,7 +513,7 @@ async function buildNetworkingRegionMeta(slug, origin) {
 
   const year = new Date().getFullYear();
   const canonical = absoluteUrl(origin, region.path);
-  const image = absoluteUrl(origin, '/assets/logo.png');
+  const image = absoluteUrl(origin, OG_SHARE_IMAGE);
   const ssr = await buildNetworkingRegionSsr(slug, origin);
   const eventCount = Number(ssr.total) || 0;
   let description = trimText(
@@ -619,7 +620,7 @@ async function buildRankingBadgeMeta(lookup, origin) {
       title,
       description,
       canonical,
-      image: absoluteUrl(origin, '/assets/logo.png'),
+      image: absoluteUrl(origin, OG_SHARE_IMAGE),
       ogType: 'website',
     };
     return { ...meta, openGraph: buildOpenGraphTags(meta) };

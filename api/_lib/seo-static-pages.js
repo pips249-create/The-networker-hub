@@ -2,6 +2,7 @@
  * Canonical meta for public static pages (home, browse, content).
  */
 const { siteOrigin } = require('./hubert-seo');
+const { OG_SHARE_IMAGE } = require('./hub-brand');
 const { GUIDE_PAGES, GUIDES_HUB, getGuidePageKeys, guideSchemaKey } = require('./guide-pages');
 
 const STATIC_PAGES = {
@@ -10,7 +11,7 @@ const STATIC_PAGES = {
     title: 'The Networker UK: Find Your Next… Event, Organiser & Opportunity',
     description:
       'Browse UK networking events, organiser pages, and business opportunities in one place. Free on The Networker UK; sign up when you\'re ready to book or enquire.',
-    image: '/assets/logo.png',
+    image: OG_SHARE_IMAGE,
     ogType: 'website',
   },
   events: {
@@ -18,7 +19,7 @@ const STATIC_PAGES = {
     title: 'Find your next event – The Networker UK',
     description:
       'Find meetings, webinars, workshops, exhibitions, and awards across the UK. Search by breakfast, women only, location, organiser, and more.',
-    image: '/assets/logo.png',
+    image: OG_SHARE_IMAGE,
     ogType: 'website',
   },
   opportunities: {
@@ -26,7 +27,7 @@ const STATIC_PAGES = {
     title: 'Find your next business opportunity – The Networker UK',
     description:
       'Find your next franchise, side hustle, or partnership across the UK. Browse free on The Networker UK and enquire directly with providers.',
-    image: '/assets/logo.png',
+    image: OG_SHARE_IMAGE,
     ogType: 'website',
   },
   faq: {
@@ -34,7 +35,7 @@ const STATIC_PAGES = {
     title: 'FAQ & Help – The Networker UK',
     description:
       'Frequently asked questions about The Networker UK — finding events, accounts, organisers, and bookings. Search FAQs or ask Hubert instantly.',
-    image: '/assets/logo.png',
+    image: OG_SHARE_IMAGE,
     ogType: 'website',
   },
   'help-organiser-payouts': {
@@ -42,7 +43,7 @@ const STATIC_PAGES = {
     title: 'Organiser payouts – The Networker UK',
     description:
       'When organisers receive ticket payouts on The Networker UK — 7-day settlement, Stripe Connect, archiving events, and requesting payouts from your dashboard.',
-    image: '/assets/logo.png',
+    image: OG_SHARE_IMAGE,
     ogType: 'article',
   },
   'help-pricing-fees': {
@@ -50,7 +51,7 @@ const STATIC_PAGES = {
     title: 'Ticket pricing & fees – The Networker UK',
     description:
       'How The Networker UK ticket fees work — 4.5% + 20p booking fee paid by attendees, organisers receive the full ticket price, with worked examples.',
-    image: '/assets/logo.png',
+    image: OG_SHARE_IMAGE,
     ogType: 'article',
   },
   about: {
@@ -58,7 +59,7 @@ const STATIC_PAGES = {
     title: 'About us – The Networker UK',
     description:
       'Learn about The Networker UK — the UK platform for networking events, exhibitions, and business opportunities.',
-    image: '/assets/logo.png',
+    image: OG_SHARE_IMAGE,
     ogType: 'website',
   },
   rankings: {
@@ -66,7 +67,7 @@ const STATIC_PAGES = {
     title: 'Networking group leaderboard – The Networker UK',
     description:
       'See the Top 10, Top 25 and Top 50 networking groups on The Networker UK — ranked by attendee ratings and review rate each month.',
-    image: '/assets/logo.png',
+    image: OG_SHARE_IMAGE,
     ogType: 'website',
   },
   'for-organisers': {
@@ -74,7 +75,7 @@ const STATIC_PAGES = {
     title: 'Find your next attendees – For organisers – The Networker UK',
     description:
       'Find your next attendees, bookings, and discovery on The Networker UK. Ticketing built for UK networking groups with tools generic platforms do not offer.',
-    image: '/assets/logo.png',
+    image: OG_SHARE_IMAGE,
     ogType: 'website',
   },
   'add-your-event': {
@@ -82,7 +83,7 @@ const STATIC_PAGES = {
     title: 'Send us your event details – The Networker UK',
     description:
       'Send your networking event details to The Networker UK — Catherine and Jamie will list it for you.',
-    image: '/assets/logo.png',
+    image: OG_SHARE_IMAGE,
     ogType: 'website',
   },
   'for-networkers': {
@@ -90,7 +91,7 @@ const STATIC_PAGES = {
     title: 'Events, Organisers & Business Opportunities – For networkers – The Networker UK',
     description:
       'UK Events, Organiser pages, and Business Opportunities in one place. Free to join — My account, smart alerts, member rates, and booking reminders.',
-    image: '/assets/logo.png',
+    image: OG_SHARE_IMAGE,
     ogType: 'website',
   },
   /** Legacy key — path redirects to /for-networkers; keep for old data-page attrs. */
@@ -99,7 +100,7 @@ const STATIC_PAGES = {
     title: 'Events, Organisers & Business Opportunities – For networkers – The Networker UK',
     description:
       'UK Events, Organiser pages, and Business Opportunities in one place. Free to join — My account, smart alerts, member rates, and booking reminders.',
-    image: '/assets/logo.png',
+    image: OG_SHARE_IMAGE,
     ogType: 'website',
   },
   contact: {
@@ -107,7 +108,7 @@ const STATIC_PAGES = {
     title: 'Contact us – The Networker UK',
     description:
       'Get in touch with The Networker UK — chat with Hubert, your business butler and concierge, or email the team.',
-    image: '/assets/logo.png',
+    image: OG_SHARE_IMAGE,
     ogType: 'website',
   },
   advertising: {
@@ -115,7 +116,7 @@ const STATIC_PAGES = {
     title: 'Advertising & sponsorship – The Networker UK',
     description:
       'Promote your brand on The Networker UK — sponsor the events directory, business opportunities, and event page placements.',
-    image: '/assets/logo.png',
+    image: OG_SHARE_IMAGE,
     ogType: 'website',
   },
   legal: {
@@ -123,14 +124,14 @@ const STATIC_PAGES = {
     title: 'Legal & policies – The Networker UK',
     description:
       'Privacy policy, terms and conditions, refunds, cookie policy and legal information for The Networker UK — operated by The Networker Group Ltd.',
-    image: '/assets/logo.png',
+    image: OG_SHARE_IMAGE,
     ogType: 'website',
   },
   guides: {
     path: GUIDES_HUB.path,
     title: GUIDES_HUB.title,
     description: GUIDES_HUB.description,
-    image: '/assets/logo.png',
+    image: OG_SHARE_IMAGE,
     ogType: 'website',
   },
 };
@@ -141,7 +142,7 @@ getGuidePageKeys().forEach(function (guideKey) {
     path: guide.path,
     title: guide.title,
     description: guide.description,
-    image: '/assets/logo.png',
+    image: OG_SHARE_IMAGE,
     ogType: 'article',
   };
 });

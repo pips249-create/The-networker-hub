@@ -1,13 +1,15 @@
 /**
  * Public help articles — SEO/AEO landing pages for high-intent organiser queries.
  */
+const { OG_SHARE_IMAGE } = require('./hub-brand');
+
 const HELP_PAGES = {
   'organiser-payouts': {
     path: '/help/organiser-payouts',
     title: 'Organiser payouts – The Networker UK',
     description:
       'When organisers receive ticket payouts on The Networker UK — 7-day settlement, Stripe Connect, archiving events, and requesting payouts from your dashboard.',
-    image: '/assets/logo.png',
+    image: OG_SHARE_IMAGE,
     ogType: 'article',
     faqQuestion: 'When do organisers receive payouts for ticket sales?',
     faqAnswer:
@@ -20,7 +22,7 @@ const HELP_PAGES = {
     title: 'Ticket pricing & fees – The Networker UK',
     description:
       'How The Networker UK ticket fees work — 4.5% + 20p booking fee paid by attendees, organisers receive the full ticket price, with worked examples.',
-    image: '/assets/logo.png',
+    image: OG_SHARE_IMAGE,
     ogType: 'article',
     faqQuestion: 'What fees does The Networker UK charge on tickets?',
     faqAnswer:

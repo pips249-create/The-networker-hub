@@ -4,154 +4,154 @@ window.HUB_SEO_STATIC = {
     "path": "/",
     "title": "The Networker UK: Find Your Next… Event, Organiser & Opportunity",
     "description": "Browse UK networking events, organiser pages, and business opportunities in one place. Free on The Networker UK; sign up when you're ready to book or enquire.",
-    "image": "/assets/logo.png",
+    "image": "/assets/logo-networker-uk-og.png?v=20260902og2",
     "ogType": "website"
   },
   "events": {
     "path": "/events/",
     "title": "Find your next event – The Networker UK",
     "description": "Find meetings, webinars, workshops, exhibitions, and awards across the UK. Search by breakfast, women only, location, organiser, and more.",
-    "image": "/assets/logo.png",
+    "image": "/assets/logo-networker-uk-og.png?v=20260902og2",
     "ogType": "website"
   },
   "opportunities": {
     "path": "/opportunities/",
     "title": "Find your next business opportunity – The Networker UK",
     "description": "Find your next franchise, side hustle, or partnership across the UK. Browse free on The Networker UK and enquire directly with providers.",
-    "image": "/assets/logo.png",
+    "image": "/assets/logo-networker-uk-og.png?v=20260902og2",
     "ogType": "website"
   },
   "faq": {
     "path": "/faq",
     "title": "FAQ & Help – The Networker UK",
     "description": "Frequently asked questions about The Networker UK — finding events, accounts, organisers, and bookings. Search FAQs or ask Hubert instantly.",
-    "image": "/assets/logo.png",
+    "image": "/assets/logo-networker-uk-og.png?v=20260902og2",
     "ogType": "website"
   },
   "help-organiser-payouts": {
     "path": "/help/organiser-payouts",
     "title": "Organiser payouts – The Networker UK",
     "description": "When organisers receive ticket payouts on The Networker UK — 7-day settlement, Stripe Connect, archiving events, and requesting payouts from your dashboard.",
-    "image": "/assets/logo.png",
+    "image": "/assets/logo-networker-uk-og.png?v=20260902og2",
     "ogType": "article"
   },
   "help-pricing-fees": {
     "path": "/help/pricing-fees",
     "title": "Ticket pricing & fees – The Networker UK",
     "description": "How The Networker UK ticket fees work — 4.5% + 20p booking fee paid by attendees, organisers receive the full ticket price, with worked examples.",
-    "image": "/assets/logo.png",
+    "image": "/assets/logo-networker-uk-og.png?v=20260902og2",
     "ogType": "article"
   },
   "about": {
     "path": "/about",
     "title": "About us – The Networker UK",
     "description": "Learn about The Networker UK — the UK platform for networking events, exhibitions, and business opportunities.",
-    "image": "/assets/logo.png",
+    "image": "/assets/logo-networker-uk-og.png?v=20260902og2",
     "ogType": "website"
   },
   "rankings": {
     "path": "/rankings",
     "title": "Networking group leaderboard – The Networker UK",
     "description": "See the Top 10, Top 25 and Top 50 networking groups on The Networker UK — ranked by attendee ratings and review rate each month.",
-    "image": "/assets/logo.png",
+    "image": "/assets/logo-networker-uk-og.png?v=20260902og2",
     "ogType": "website"
   },
   "for-organisers": {
     "path": "/for-organisers",
     "title": "Find your next attendees – For organisers – The Networker UK",
     "description": "Find your next attendees, bookings, and discovery on The Networker UK. Ticketing built for UK networking groups with tools generic platforms do not offer.",
-    "image": "/assets/logo.png",
+    "image": "/assets/logo-networker-uk-og.png?v=20260902og2",
     "ogType": "website"
   },
   "add-your-event": {
     "path": "/add-your-event",
     "title": "Send us your event details – The Networker UK",
     "description": "Send your networking event details to The Networker UK — Catherine and Jamie will list it for you.",
-    "image": "/assets/logo.png",
+    "image": "/assets/logo-networker-uk-og.png?v=20260902og2",
     "ogType": "website"
   },
   "for-networkers": {
     "path": "/for-networkers",
     "title": "Events, Organisers & Business Opportunities – For networkers – The Networker UK",
     "description": "UK Events, Organiser pages, and Business Opportunities in one place. Free to join — My account, smart alerts, member rates, and booking reminders.",
-    "image": "/assets/logo.png",
+    "image": "/assets/logo-networker-uk-og.png?v=20260902og2",
     "ogType": "website"
   },
   "for-attendees": {
     "path": "/for-networkers",
     "title": "Events, Organisers & Business Opportunities – For networkers – The Networker UK",
     "description": "UK Events, Organiser pages, and Business Opportunities in one place. Free to join — My account, smart alerts, member rates, and booking reminders.",
-    "image": "/assets/logo.png",
+    "image": "/assets/logo-networker-uk-og.png?v=20260902og2",
     "ogType": "website"
   },
   "contact": {
     "path": "/contact",
     "title": "Contact us – The Networker UK",
     "description": "Get in touch with The Networker UK — chat with Hubert, your business butler and concierge, or email the team.",
-    "image": "/assets/logo.png",
+    "image": "/assets/logo-networker-uk-og.png?v=20260902og2",
     "ogType": "website"
   },
   "advertising": {
     "path": "/advertising",
     "title": "Advertising & sponsorship – The Networker UK",
     "description": "Promote your brand on The Networker UK — sponsor the events directory, business opportunities, and event page placements.",
-    "image": "/assets/logo.png",
+    "image": "/assets/logo-networker-uk-og.png?v=20260902og2",
     "ogType": "website"
   },
   "legal": {
     "path": "/legal-policies",
     "title": "Legal & policies – The Networker UK",
     "description": "Privacy policy, terms and conditions, refunds, cookie policy and legal information for The Networker UK — operated by The Networker Group Ltd.",
-    "image": "/assets/logo.png",
+    "image": "/assets/logo-networker-uk-og.png?v=20260902og2",
     "ogType": "website"
   },
   "guides": {
     "path": "/guides",
     "title": "Organiser guides – The Networker UK",
     "description": "Step-by-step onboarding checklists for organisers — list events, publish business opportunities, invite team members, and manage attendees on The Networker UK.",
-    "image": "/assets/logo.png",
+    "image": "/assets/logo-networker-uk-og.png?v=20260902og2",
     "ogType": "website"
   },
   "guide-list-an-event": {
     "path": "/guides/list-an-event",
     "title": "List an event – How-to guides – The Networker UK",
     "description": "Start listing events on The Networker UK — sign in to the organiser dashboard for a guided setup checklist and Hubert walkthrough.",
-    "image": "/assets/logo.png",
+    "image": "/assets/logo-networker-uk-og.png?v=20260902og2",
     "ogType": "article"
   },
   "guide-list-a-conference-or-exhibition": {
     "path": "/guides/list-a-conference-or-exhibition",
     "title": "List a conference or exhibition – How-to guides – The Networker UK",
     "description": "Guide for organisers listing conferences, exhibitions, awards dinners and summits on The Networker UK — free listings, optional paid tickets, and visibility.",
-    "image": "/assets/logo.png",
+    "image": "/assets/logo-networker-uk-og.png?v=20260902og2",
     "ogType": "article"
   },
   "guide-list-a-business-opportunity": {
     "path": "/guides/list-a-business-opportunity",
     "title": "List a business opportunity – How-to guides – The Networker UK",
     "description": "How organisers list a business opportunity on The Networker UK — create a listing, submit for review, and manage enquiries.",
-    "image": "/assets/logo.png",
+    "image": "/assets/logo-networker-uk-og.png?v=20260902og2",
     "ogType": "article"
   },
   "guide-invite-your-team": {
     "path": "/guides/invite-your-team",
     "title": "Invite team members – How-to guides – The Networker UK",
     "description": "How to invite team members to your organiser workspace on The Networker UK — permissions, group access, limits, and accept flow.",
-    "image": "/assets/logo.png",
+    "image": "/assets/logo-networker-uk-og.png?v=20260902og2",
     "ogType": "article"
   },
   "guide-claim-your-organiser-page": {
     "path": "/guides/claim-your-organiser-page",
     "title": "Claim your organiser page – How-to guides – The Networker UK",
     "description": "How to find and claim your networking group on The Networker UK — verify ownership, update your profile, and start listing events.",
-    "image": "/assets/logo.png",
+    "image": "/assets/logo-networker-uk-og.png?v=20260902og2",
     "ogType": "article"
   },
   "guide-export-attendees-and-visits": {
     "path": "/guides/export-attendees-and-visits",
     "title": "Export attendees & track visits – How-to guides – The Networker UK",
     "description": "How to download attendee lists, filter by visit count, export name badges, and use the guest visit programme on The Networker UK.",
-    "image": "/assets/logo.png",
+    "image": "/assets/logo-networker-uk-og.png?v=20260902og2",
     "ogType": "article"
   }
 };
