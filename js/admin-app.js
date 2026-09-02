@@ -1245,8 +1245,32 @@
     ensureSalesKitOutreachCache(false);
   }
 
+  function ensureSalesKitMenuContactSlots(menu) {
+    if (!menu) return;
+    var panel = menu.querySelector('.admin-sales-kit-menu-panel');
+    if (!panel) return;
+    var kicker = panel.querySelector('.admin-sales-kit-menu-kicker');
+    if (!panel.querySelector('[data-sales-kit-last-contact]')) {
+      var lastWrap = document.createElement('div');
+      lastWrap.setAttribute('data-sales-kit-last-contact', '');
+      if (kicker) panel.insertBefore(lastWrap, kicker);
+      else panel.appendChild(lastWrap);
+    }
+    if (!panel.querySelector('[data-sales-kit-house-contact]')) {
+      var houseWrap = document.createElement('div');
+      houseWrap.setAttribute('data-sales-kit-house-contact', '');
+      if (kicker) panel.insertBefore(houseWrap, kicker);
+      else {
+        var lastSlot = panel.querySelector('[data-sales-kit-last-contact]');
+        if (lastSlot && lastSlot.nextSibling) panel.insertBefore(houseWrap, lastSlot.nextSibling);
+        else panel.appendChild(houseWrap);
+      }
+    }
+  }
+
   function refreshSalesKitContactBlocks(menu) {
     if (!menu) return;
+    ensureSalesKitMenuContactSlots(menu);
     var lastSlot = menu.querySelector('[data-sales-kit-last-contact]');
     var houseSlot = menu.querySelector('[data-sales-kit-house-contact]');
     if (!lastSlot && !houseSlot) return;
