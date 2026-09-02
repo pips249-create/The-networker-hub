@@ -23437,7 +23437,7 @@
     ['automotive', 'Automotive'],
     ['education', 'Education & Coaching'],
     ['childcare', 'Childcare & Family'],
-    ['finance', 'Finance & Admin'],
+    ['finance', 'Finance, legal & admin'],
     ['pets', 'Pets & Animals'],
     ['leisure', 'Leisure, travel & hospitality'],
     ['networking', 'Networking'],
@@ -23790,6 +23790,22 @@
     return n;
   }
 
+  function opportunityQuickFilterCount(key) {
+    var cache = opportunityCleanupCache || {};
+    if (key === 'pending') return Number(cache.pending_count) || 0;
+    if (key === 'awaiting_payment') return Number(cache.awaiting_pay_count) || 0;
+    if (key === 'paid') return Number(cache.paid_count) || 0;
+    if (key === 'unclaimed') return Number(cache.unclaimed_count) || 0;
+    if (key === 'payment_lapsed') return Number(cache.payment_lapsed_count) || 0;
+    return null;
+  }
+
+  function opportunityQuickFilterLabel(key, baseLabel) {
+    var count = opportunityQuickFilterCount(key);
+    if (count == null) return baseLabel;
+    return baseLabel + ' (' + count + ')';
+  }
+
   function syncOpportunityCleanupFilterUi() {
     var el;
     el = document.getElementById('opportunity-cleanup-search');
@@ -23833,6 +23849,8 @@
       btn.classList.toggle('ring-2', active);
       btn.classList.toggle('ring-brand-700', active);
       btn.classList.toggle('bg-brand-50', active);
+      var base = btn.getAttribute('data-opp-quick-label');
+      if (base) btn.textContent = opportunityQuickFilterLabel(key, base);
     });
   }
 
@@ -23999,6 +24017,20 @@
   }
 
   function applyOpportunityListQuery(query) {
+    // Hash is the source of truth — always reset, then re-apply params.
+    opportunityCleanupState.status = '';
+    opportunityCleanupState.approval = '';
+    opportunityCleanupState.type = '';
+    opportunityCleanupState.featured = false;
+    opportunityCleanupState.noImage = false;
+    opportunityCleanupState.awaitingPayment = false;
+    opportunityCleanupState.paymentLapsed = false;
+    opportunityCleanupState.paid = false;
+    opportunityCleanupState.unclaimed = false;
+    opportunityCleanupState.brandDuplicates = false;
+    opportunityCleanupState.sort = 'recent';
+    opportunityCleanupState.q = '';
+    opportunityCleanupState.page = 0;
     if (!query) return;
     var approvalQ = String(query.get('approval') || '').trim().toLowerCase();
     if (approvalQ === 'pending' || approvalQ === 'pending review') {
@@ -24009,7 +24041,9 @@
     if (query.has('status')) opportunityCleanupState.status = String(query.get('status') || '').trim();
     if (query.has('type')) opportunityCleanupState.type = String(query.get('type') || '').trim();
     if (query.has('q')) opportunityCleanupState.q = String(query.get('q') || '').trim();
-    if (query.has('sort')) opportunityCleanupState.sort = String(query.get('sort') || 'recent').trim() || 'recent';
+    if (query.has('sort')) {
+      opportunityCleanupState.sort = String(query.get('sort') || 'recent').trim() || 'recent';
+    }
     if (query.has('featured')) {
       opportunityCleanupState.featured =
         query.get('featured') === '1' || query.get('featured') === 'true';
@@ -25784,6 +25818,7 @@
     }
     opportunityCleanupCache = data;
     renderOpportunityCleanupList();
+    syncOpportunityCleanupFilterUi();
     renderOpportunityActionBanner();
   }
 
@@ -26019,37 +26054,6 @@
 
     var query = routeInfo.query || parseAdminHashQuery(fullHash || (location.hash || '').replace('#', ''));
     applyOpportunityListQuery(query);
-    var approvalQ = String(query.get('approval') || '').trim().toLowerCase();
-    if (approvalQ === 'pending' || approvalQ === 'pending review') {
-      opportunityCleanupState.approval = 'Pending Review';
-      opportunityCleanupState.status = '';
-      opportunityCleanupState.type = '';
-      opportunityCleanupState.featured = false;
-      opportunityCleanupState.noImage = false;
-      opportunityCleanupState.awaitingPayment = false;
-      opportunityCleanupState.paymentLapsed = false;
-      opportunityCleanupState.paid = false;
-      opportunityCleanupState.unclaimed = false;
-      opportunityCleanupState.brandDuplicates = false;
-      opportunityCleanupState.q = '';
-      opportunityCleanupState.page = 0;
-    } else if (
-      query.get('awaiting_payment') === '1' ||
-      query.get('awaiting_payment') === 'true'
-    ) {
-      opportunityCleanupState.awaitingPayment = true;
-      opportunityCleanupState.approval = '';
-      opportunityCleanupState.status = '';
-      opportunityCleanupState.type = '';
-      opportunityCleanupState.featured = false;
-      opportunityCleanupState.noImage = false;
-      opportunityCleanupState.paymentLapsed = false;
-      opportunityCleanupState.paid = false;
-      opportunityCleanupState.unclaimed = false;
-      opportunityCleanupState.brandDuplicates = false;
-      opportunityCleanupState.q = '';
-      opportunityCleanupState.page = 0;
-    }
     rememberOpportunityListReturnHash();
 
     main.innerHTML =
@@ -26141,11 +26145,11 @@
       (opportunityCleanupState.sort === 'host' ? ' selected' : '') +
       '>Host A–Z</option></select></div>' +
       '<div class="flex flex-wrap gap-2">' +
-      '<button type="button" data-opp-quick="pending" class="text-xs font-semibold rounded-full border border-amber-200 px-3 py-1 text-amber-900 hover:bg-amber-50">Pending review</button>' +
-      '<button type="button" data-opp-quick="unclaimed" class="text-xs font-semibold rounded-full border border-amber-200 px-3 py-1 text-amber-900 hover:bg-amber-50">Unclaimed</button>' +
-      '<button type="button" data-opp-quick="paid" class="text-xs font-semibold rounded-full border border-emerald-200 px-3 py-1 text-emerald-900 hover:bg-emerald-50">Paid</button>' +
-      '<button type="button" data-opp-quick="awaiting_payment" class="text-xs font-semibold rounded-full border border-sky-200 px-3 py-1 text-sky-900 hover:bg-sky-50">Awaiting payment</button>' +
-      '<button type="button" data-opp-quick="payment_lapsed" class="text-xs font-semibold rounded-full border border-orange-200 px-3 py-1 text-orange-900 hover:bg-orange-50">Payment lapsed</button>' +
+      '<button type="button" data-opp-quick="pending" data-opp-quick-label="Pending review" class="text-xs font-semibold rounded-full border border-amber-200 px-3 py-1 text-amber-900 hover:bg-amber-50">Pending review</button>' +
+      '<button type="button" data-opp-quick="unclaimed" data-opp-quick-label="Unclaimed" class="text-xs font-semibold rounded-full border border-amber-200 px-3 py-1 text-amber-900 hover:bg-amber-50">Unclaimed</button>' +
+      '<button type="button" data-opp-quick="paid" data-opp-quick-label="Paid (Stripe)" title="Active Stripe £25/mo subscribers only — not complimentary directory listings" class="text-xs font-semibold rounded-full border border-emerald-200 px-3 py-1 text-emerald-900 hover:bg-emerald-50">Paid (Stripe)</button>' +
+      '<button type="button" data-opp-quick="awaiting_payment" data-opp-quick-label="Awaiting payment" class="text-xs font-semibold rounded-full border border-sky-200 px-3 py-1 text-sky-900 hover:bg-sky-50">Awaiting payment</button>' +
+      '<button type="button" data-opp-quick="payment_lapsed" data-opp-quick-label="Payment lapsed" class="text-xs font-semibold rounded-full border border-orange-200 px-3 py-1 text-orange-900 hover:bg-orange-50">Payment lapsed</button>' +
       '<button type="button" data-opp-quick="clear" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-500 hover:bg-slate-50">Clear</button></div>' +
       '<details class="admin-filter-more"' +
       (opportunityCleanupActiveFilterCount() > 2 ? ' open' : '') +
@@ -26711,6 +26715,7 @@
         opportunityCleanupState.unclaimed = false;
         opportunityCleanupState.brandDuplicates = false;
         opportunityCleanupState.q = '';
+        opportunityCleanupState.sort = 'recent';
       } else if (key === 'show-pending') {
         opportunityCleanupState.approval = 'Pending Review';
         opportunityCleanupState.status = '';

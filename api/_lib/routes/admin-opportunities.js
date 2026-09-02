@@ -52,6 +52,61 @@ async function countAwaitingPayOpportunities(sb) {
   }).length;
 }
 
+async function countStripePaidOpportunities(sb) {
+  const { data, error } = await sb
+    .from('business_opportunities')
+    .select('id, status, published_at, listing_expires_at, listing_paid_at, listing_stripe_subscription_id')
+    .not('listing_stripe_subscription_id', 'is', null)
+    .neq('listing_stripe_subscription_id', '')
+    .limit(500);
+  if (error) return 0;
+  return (data || []).filter(function (row) {
+    return (
+      Boolean(String(row.listing_stripe_subscription_id || '').trim()) &&
+      listingPaymentCurrent(row)
+    );
+  }).length;
+}
+
+async function countUnclaimedOpportunities(sb) {
+  const { count, error } = await sb
+    .from('business_opportunities')
+    .select('id', { count: 'exact', head: true })
+    .eq('ownership_claim_status', 'pending');
+  if (error) return 0;
+  return typeof count === 'number' ? count : 0;
+}
+
+async function countPaymentLapsedOpportunities(sb) {
+  const { data, error } = await sb
+    .from('business_opportunities')
+    .select('id, status, published_at, listing_expires_at, listing_paid_at')
+    .not('listing_paid_at', 'is', null)
+    .limit(500);
+  if (error) return 0;
+  return (data || []).filter(function (row) {
+    return listingPaymentLapsed(row);
+  }).length;
+}
+
+async function opportunityAdminFilterCounts(sb, reviewQueueReady) {
+  const [pendingCount, awaitingPayCount, paidCount, unclaimedCount, paymentLapsedCount] =
+    await Promise.all([
+      countPendingOpportunitiesForAdmin(sb, reviewQueueReady),
+      countAwaitingPayOpportunities(sb),
+      countStripePaidOpportunities(sb),
+      countUnclaimedOpportunities(sb),
+      countPaymentLapsedOpportunities(sb),
+    ]);
+  return {
+    pending_count: pendingCount,
+    awaiting_pay_count: awaitingPayCount,
+    paid_count: paidCount,
+    unclaimed_count: unclaimedCount,
+    payment_lapsed_count: paymentLapsedCount,
+  };
+}
+
 const TEST_SAMPLE_LISTINGS = [
   {
     title: '[TEST] Café franchise — Yorkshire territory',
@@ -424,10 +479,7 @@ async function listOpportunitiesForAdmin(query) {
     const res = await dbQuery.eq('id', id).limit(1);
     if (res.error) throw new Error(res.error.message);
     const rows = res.data || [];
-    const [pendingCount, awaitingPayCount] = await Promise.all([
-      countPendingOpportunitiesForAdmin(sb, reviewQueueReady),
-      countAwaitingPayOpportunities(sb),
-    ]);
+    const filterCounts = await opportunityAdminFilterCounts(sb, reviewQueueReady);
     return {
       opportunities: rows.map(mapOpportunityRow),
       count: rows.length,
@@ -437,8 +489,7 @@ async function listOpportunitiesForAdmin(query) {
       page: 0,
       pageSize: 1,
       hasMore: false,
-      pending_count: pendingCount,
-      awaiting_pay_count: awaitingPayCount,
+      ...filterCounts,
       review_queue_ready: reviewQueueReady,
     };
   }
@@ -464,7 +515,11 @@ async function listOpportunitiesForAdmin(query) {
   } else if (paymentLapsed) {
     dbQuery = dbQuery.not('listing_paid_at', 'is', null);
   } else if (paid) {
-    dbQuery = dbQuery.not('listing_paid_at', 'is', null);
+    // Stripe subscribers only — hub-seeded complimentary terms set listing_paid_at
+    // without a subscription and must not fill the Paid filter.
+    dbQuery = dbQuery
+      .not('listing_stripe_subscription_id', 'is', null)
+      .neq('listing_stripe_subscription_id', '');
   } else if (unclaimed) {
     dbQuery = dbQuery.eq('ownership_claim_status', 'pending');
   } else if (approvalStatus) {
@@ -494,15 +549,11 @@ async function listOpportunitiesForAdmin(query) {
   if (brandDuplicatesOnly) {
     brandDuplicateIds = await findExclusiveBrandDuplicateListingIds(sb);
     if (!brandDuplicateIds.length) {
-      const [pendingCount, awaitingPayCount] = await Promise.all([
-        countPendingOpportunitiesForAdmin(sb, reviewQueueReady),
-        countAwaitingPayOpportunities(sb),
-      ]);
+      const filterCounts = await opportunityAdminFilterCounts(sb, reviewQueueReady);
       return {
         opportunities: [],
         total: 0,
-        pending_count: pendingCount,
-        awaiting_pay_count: awaitingPayCount,
+        ...filterCounts,
       };
     }
     dbQuery = dbQuery.in('id', brandDuplicateIds);
@@ -528,7 +579,10 @@ async function listOpportunitiesForAdmin(query) {
     const paidRes = await dbQuery.limit(500);
     if (paidRes.error) throw new Error(paidRes.error.message);
     const filtered = (paidRes.data || []).filter(function (row) {
-      return Boolean(row.listing_paid_at) && listingPaymentCurrent(row);
+      return (
+        Boolean(String(row.listing_stripe_subscription_id || '').trim()) &&
+        listingPaymentCurrent(row)
+      );
     });
     total = filtered.length;
     rows = filtered.slice(offset, offset + limit);
@@ -597,10 +651,8 @@ async function listOpportunitiesForAdmin(query) {
     rows = rows.slice(0, limit);
   }
 
-  const [pendingCount, awaitingPayCount] = await Promise.all([
-    countPendingOpportunitiesForAdmin(sb, reviewQueueReady),
-    countAwaitingPayOpportunities(sb),
-  ]);
+  const filterCounts = await opportunityAdminFilterCounts(sb, reviewQueueReady);
+  const pendingCount = filterCounts.pending_count;
 
   let recentSubmissions = [];
   if (pendingCount === 0 && approvalStatus === 'Pending Review' && !search) {
@@ -646,8 +698,11 @@ async function listOpportunitiesForAdmin(query) {
     page: Math.floor(offset / limit),
     pageSize: limit,
     hasMore: offset + rows.length < total,
-    pending_count: pendingCount,
-    awaiting_pay_count: awaitingPayCount,
+    pending_count: filterCounts.pending_count,
+    awaiting_pay_count: filterCounts.awaiting_pay_count,
+    paid_count: filterCounts.paid_count,
+    unclaimed_count: filterCounts.unclaimed_count,
+    payment_lapsed_count: filterCounts.payment_lapsed_count,
     recent_submissions: recentSubmissions,
     review_queue_ready: reviewQueueReady,
   };
