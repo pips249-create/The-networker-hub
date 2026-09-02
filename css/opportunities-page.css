@@ -2806,6 +2806,56 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
   background: transparent;
 }
 
+/* Mobile: full-bleed covers (override shared events 140px thumbs) */
+@media (max-width: 768px) {
+  .opp-browse-page .event-grid-card.bo-opp-card {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0;
+    gap: 0;
+  }
+
+  .opp-browse-page .event-grid-media {
+    flex: none;
+    width: 100%;
+    height: auto;
+    min-width: 0;
+    min-height: 0;
+    max-width: none;
+    max-height: none;
+    aspect-ratio: 16 / 10;
+    align-self: stretch;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .opp-browse-page .event-grid-media .event-grid-img,
+  .opp-browse-page .event-grid-img {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    min-height: 0;
+  }
+
+  .opp-browse-page .event-grid-img.is-logo-cover {
+    padding: 8% 10%;
+  }
+
+  .opp-browse-page .bo-opp-compact .event-grid-body {
+    padding: 12px 14px 8px;
+    justify-content: flex-start;
+  }
+
+  .opp-browse-page .bo-opp-card-actions {
+    padding: 0 14px 14px;
+  }
+
+  .opp-browse-page .bo-opp-card .event-grid-media .opp-fav-btn {
+    bottom: 8px;
+    right: 8px;
+  }
+}
+
 .opp-browse-page .event-grid-img.is-placeholder {
   object-fit: cover;
 }
