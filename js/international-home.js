@@ -17,7 +17,11 @@
     '840': { iso2: 'US', name: 'United States' },
   };
 
-  /** Building markets — stay on International SEO landings for conversion. */
+  /**
+   * Building markets with a dedicated International URL.
+   * Everything else is map-only (interest modal) — no thin per-country pages.
+   * Regional hubs (e.g. /south-america) only when a cluster is ready to launch.
+   */
   var MARKET_PREVIEW_URLS = {
     '372': '/ireland',
     '840': '/united-states',
@@ -100,6 +104,9 @@
     mapReady: false,
     hubStats: {},
     interestStats: {},
+    regionStats: [],
+    countryToRegion: {},
+    regionMeta: {},
     activeModal: null,
   };
 
@@ -194,6 +201,44 @@
       n.toLocaleString('en-GB') +
       (n === 1 ? ' person already registered interest' : ' people already registered interest')
     );
+  }
+
+  function regionMetaForCountry(iso2) {
+    var code = String(iso2 || '').toUpperCase();
+    var regionId = state.countryToRegion[code];
+    if (!regionId) return null;
+    var fromStats = (state.regionStats || []).find(function (r) {
+      return r.id === regionId;
+    });
+    if (fromStats) return fromStats;
+    return state.regionMeta[regionId] || null;
+  }
+
+  function formatPopupDemand(meta) {
+    if (!meta || meta.live) return '';
+    var demandRow = interestRowFor(meta);
+    var countryTotal = demandRow && demandRow.total >= 1 ? demandRow.total : 0;
+    var region = regionMetaForCountry(meta.iso2);
+    var regionTotal = region && region.total >= 1 ? region.total : 0;
+
+    if (countryTotal >= 1 && regionTotal > countryTotal && region && region.name) {
+      return (
+        formatInterestDemand(countryTotal) +
+        ' · ' +
+        regionTotal.toLocaleString('en-GB') +
+        ' across ' +
+        region.name
+      );
+    }
+    if (countryTotal >= 1) return formatInterestDemand(countryTotal);
+    if (regionTotal >= 1 && region && region.name) {
+      return (
+        regionTotal.toLocaleString('en-GB') +
+        ' people have registered interest across ' +
+        region.name
+      );
+    }
+    return '';
   }
 
   function isCoarsePointer() {
@@ -291,9 +336,9 @@
     els.popupName.textContent = meta.name;
 
     if (els.popupDemand) {
-      var demandRow = !meta.live ? interestRowFor(meta) : null;
-      if (demandRow && demandRow.total >= 1) {
-        els.popupDemand.textContent = formatInterestDemand(demandRow.total);
+      var demandCopy = formatPopupDemand(meta);
+      if (demandCopy) {
+        els.popupDemand.textContent = demandCopy;
         els.popupDemand.hidden = false;
       } else {
         els.popupDemand.textContent = '';
@@ -521,11 +566,17 @@
             formatCount(demandRow.total) +
             ' registered</span>'
           : '';
+      var region = !meta.live && !meta.building ? regionMetaForCountry(meta.iso2) : null;
+      var regionHtml =
+        region && region.name
+          ? '<span class="intl-country-result-region">' + region.name + '</span>'
+          : '';
       button.innerHTML =
         '<span class="intl-country-result-copy">' +
         '<span class="intl-country-result-name">' +
         meta.name +
         '</span>' +
+        regionHtml +
         demandHtml +
         '</span>' +
         '<span class="intl-country-result-status">' +
@@ -618,6 +669,52 @@
     });
   }
 
+  function renderRegionMarkets() {
+    var host = byId('intl-markets-regions');
+    if (!host) return;
+    host.innerHTML = '';
+
+    var regions = (state.regionStats || [])
+      .filter(function (region) {
+        return region.marketsList && region.display && region.listTotal >= 1;
+      })
+      .slice()
+      .sort(function (a, b) {
+        return (b.listTotal || 0) - (a.listTotal || 0);
+      });
+
+    if (!regions.length) {
+      var empty = document.createElement('li');
+      empty.className = 'intl-markets-region intl-markets-region--empty';
+      empty.innerHTML =
+        '<span class="intl-markets-name">Other countries</span>' +
+        '<span class="intl-markets-status intl-markets-status--soon">Coming soon</span>' +
+        '<p>Use the map or search above to register interest for your country. Small markets share a region until we launch a local hub.</p>';
+      host.appendChild(empty);
+      return;
+    }
+
+    regions.forEach(function (region) {
+      var item = document.createElement('li');
+      item.className = 'intl-markets-region';
+      item.innerHTML =
+        '<div class="intl-markets-region-head">' +
+        '<span class="intl-markets-name">' +
+        region.name +
+        '</span>' +
+        '<span class="intl-markets-status intl-markets-status--soon">Coming soon</span>' +
+        '</div>' +
+        '<p>' +
+        (region.blurb ||
+          'Register interest for your country on the map — no separate page yet.') +
+        '</p>' +
+        '<p class="intl-markets-demand">' +
+        formatMarketsDemand(region.listTotal) +
+        ' across this region</p>';
+      host.appendChild(item);
+    });
+  }
+
   function loadInterestDemand() {
     return fetch('/api/international-interest-stats')
       .then(function (res) {
@@ -626,6 +723,13 @@
       .then(function (data) {
         if (!data || !data.ok || !data.countries) return;
         state.interestStats = data.countries;
+        state.regionStats = Array.isArray(data.regions) ? data.regions : [];
+        state.countryToRegion = data.countryToRegion || {};
+        state.regionMeta = {};
+        (data.regionMeta || state.regionStats).forEach(function (row) {
+          if (!row || !row.id) return;
+          state.regionMeta[row.id] = row;
+        });
 
         document.querySelectorAll('[data-demand-country]').forEach(function (node) {
           var code = String(node.getAttribute('data-demand-country') || '')
@@ -636,6 +740,8 @@
           node.textContent = formatMarketsDemand(row.total);
           node.hidden = false;
         });
+
+        renderRegionMarkets();
 
         if (els.results) renderCountryResults(els.search ? els.search.value : '', els.results);
         if (els.headerSearch && els.headerResults) {

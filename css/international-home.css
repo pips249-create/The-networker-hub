@@ -977,6 +977,11 @@
   color: var(--text-muted);
 }
 
+.intl-country-result-region {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
 .intl-country-result-status {
   font-size: 11px;
   font-weight: 700;
@@ -1182,6 +1187,26 @@
 .intl-markets-status--soon {
   background: rgba(184, 174, 166, 0.22);
   color: var(--text-muted);
+}
+
+.intl-markets-regions-title {
+  margin: 28px 0 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--charcoal);
+}
+
+.intl-markets-region-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.intl-markets-region--empty .intl-markets-name {
+  display: inline-block;
+  margin-right: 10px;
 }
 
 .intl-markets-list p {

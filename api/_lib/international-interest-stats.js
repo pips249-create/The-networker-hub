@@ -2,15 +2,27 @@
  * Public aggregate demand counts for international markets (no PII).
  */
 const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
+const {
+  buildRegionAggregates,
+  COUNTRY_TO_REGION,
+  REGIONS,
+} = require('./international-regions');
 
 /** Only surface marketing copy once demand looks meaningful. */
 const DISPLAY_THRESHOLD = 5;
 
-/** Markets we actively promote on the International site. */
+/** Markets we actively promote with dedicated International URLs. */
 const SPOTLIGHT_CODES = ['IE', 'US'];
 
 function emptyStats() {
-  return { ok: true, configured: false, threshold: DISPLAY_THRESHOLD, countries: {} };
+  return {
+    ok: true,
+    configured: false,
+    threshold: DISPLAY_THRESHOLD,
+    countries: {},
+    regions: [],
+    countryToRegion: COUNTRY_TO_REGION,
+  };
 }
 
 function normalizeCountryCode(code) {
@@ -52,11 +64,13 @@ function mergeCountryCounts(interestCounts, groupCounts) {
     const interest = interestCounts[code] || 0;
     const groups = groupCounts[code] || 0;
     const total = interest + groups;
+    const regionId = COUNTRY_TO_REGION[code] || null;
     countries[code] = {
       interest: interest,
       groups: groups,
       total: total,
       display: total >= DISPLAY_THRESHOLD,
+      regionId: regionId,
     };
   });
 
@@ -72,11 +86,19 @@ async function getInternationalInterestStats() {
     aggregateCountryCounts(sb, 'international_group_intake'),
   ]);
 
+  const countries = mergeCountryCounts(interestCounts, groupCounts);
+  const regions = buildRegionAggregates(countries, DISPLAY_THRESHOLD);
+
   return {
     ok: true,
     configured: true,
     threshold: DISPLAY_THRESHOLD,
-    countries: mergeCountryCounts(interestCounts, groupCounts),
+    countries: countries,
+    regions: regions,
+    countryToRegion: COUNTRY_TO_REGION,
+    regionMeta: REGIONS.map(function (r) {
+      return { id: r.id, name: r.name, marketsList: r.marketsList };
+    }),
   };
 }
 
