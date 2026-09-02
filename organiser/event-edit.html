@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260825adminbadge1" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260723" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260812uxfix1" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260902photosize1" />
     <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260716layout" />
     <link rel="stylesheet" href="../css/hub-field-tip.css?v=20260716tips" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260612" />
@@ -117,6 +117,7 @@
               <input type="file" id="ee-photo-file" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
               <div class="ee-upload-placeholder" id="ee-photo-placeholder">
                 <strong>Upload cover image</strong>
+                <span>Landscape recommended — at least <strong>1200 × 750 px</strong> (width × height)</span>
                 <span>PNG or JPG — large files are compressed automatically — or paste a URL below</span>
               </div>
             </div>
@@ -142,6 +143,9 @@
               </p>
             </div>
             <input type="url" id="ee-photo-url" placeholder="https://… (optional if you uploaded a file)" style="margin-top:10px" />
+            <p class="ee-hint ee-photo-size-hint" id="ee-photo-size-hint">
+              Recommended size: <strong>1200 × 750 px</strong> (width × height), landscape. Larger images are fine.
+            </p>
             <p class="ee-field-hint ee-photo-quality-hint" id="ee-photo-quality-hint" hidden>
               Use a landscape photo at least 1200×750px so your listing looks sharp on the browse page.
             </p>

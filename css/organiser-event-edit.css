@@ -648,8 +648,14 @@ a.ee-wizard-link:hover {
 }
 
 .ee-upload-placeholder span {
+  display: block;
   font-size: 11px;
   color: var(--ee-text-soft);
+  margin-top: 4px;
+}
+
+.ee-photo-size-hint {
+  margin-top: 8px;
 }
 
 .ee-calendar {

@@ -42,7 +42,7 @@
       <div id="ee-wizard-mount"></div>
       <h1 class="ee-title">Set up tickets</h1>
       <p class="ee-lead" id="ee-tickets-lead">
-        Choose how people get in, then add tickets and/or monthly membership. Free trial visits are optional.
+        Choose how people book this date. A free workshop needs a Free ticket — complimentary visits are a limited trial for networking groups, not free entry for everyone.
       </p>
       <div id="ee-tickets-alert" class="ee-alert" hidden></div>
       <div class="ee-lock-banner" id="ee-tickets-lock-banner" hidden role="status">
@@ -118,7 +118,7 @@
             >
               <span class="ee-attendance-card-icon" aria-hidden="true">🎟</span>
               <strong>Ticket for this event</strong>
-              <span>Everyone books a ticket. You can offer a free ticket and a paid ticket. First visit still free? Tick complimentary visits.</span>
+              <span>Free or paid for this date. Use this for workshops and one-off events — set the ticket to Free if everyone can attend free.</span>
             </button>
             <button
               type="button"
@@ -131,7 +131,7 @@
             >
               <span class="ee-attendance-card-icon" aria-hidden="true">🪪</span>
               <strong data-hub-tip="pay-how-membership">Free visits, then membership</strong>
-              <span>New group: try a meeting free, then join.</span>
+              <span>Recurring networking groups only — limited trial visits (1–3), then people join your membership. Not a free ticket for everyone.</span>
             </button>
             <button
               type="button"
@@ -144,7 +144,7 @@
             >
               <span class="ee-attendance-card-icon" aria-hidden="true">✨</span>
               <strong data-hub-tip="pay-how-both">Ticket and membership</strong>
-              <span>Guests buy a ticket. Members pay less, or nothing.</span>
+              <span>Guests buy a ticket. Members pay less, or nothing. Optional limited trial visits.</span>
             </button>
           </div>
           <p class="ee-hint" id="ee-pay-how-hint" role="status" hidden>Choose how people book before publishing.</p>
@@ -253,7 +253,7 @@
           <p class="ee-step-label" data-ee-step-label>Step 2</p>
           <h2 id="ee-tickets-panel-title">Your ticket</h2>
           <p class="ee-hint" id="ee-tickets-panel-lead" style="margin-top:0">
-            Give it a name and choose free or a price. Most organisers only need one ticket.
+            Give it a name and choose Free or a price. Most organisers only need one ticket — use Free if everyone can attend free.
           </p>
 
           <div class="ee-members-only-event-toggle" id="ee-members-only-event-toggle" data-hub-tip="members-only-event-listing">
@@ -268,7 +268,7 @@
 
           <div id="ee-public-tickets-wrap">
             <p class="ee-hint" style="margin-top:0">
-              Add a paid ticket if people pay per meeting. You can also add a free ticket. If the first visit is free, tick complimentary visits below — do not name a ticket First Meeting.
+              Add a Free ticket if everyone can attend free, or a paid ticket if they pay per meeting. Complimentary visits (below) are optional limited trials for networking groups — not a substitute for a Free ticket.
             </p>
             <div class="ee-info-box ee-complimentary-visit-banner" id="ee-complimentary-visit-banner" hidden>
               <strong>First visit should be complimentary visits</strong>
@@ -486,14 +486,14 @@
               <span class="ee-addon-toggle-copy">
                 <strong data-hub-tip="guest-visit-programme">Complimentary visits</strong>
                 <span class="ee-addon-summary" id="ee-guest-programme-summary"
-                  >Let visitors try your group — then they book a ticket or join</span
+                  >Optional limited trial (1–3) — not a Free ticket for everyone</span
                 >
               </span>
             </label>
             <div class="ee-addon-body" id="ee-guest-programme-fields" hidden>
               <p class="ee-hint ee-guest-how-short" id="ee-guest-programme-note">
                 <span id="ee-guest-programme-note-text"
-                  >Up to 3 complimentary visits, then they use your tickets or join. You keep 100% of membership fees.</span
+                  >Visitors get up to 3 complimentary trial visits, then they need your ticket or membership. For a free event for everyone, use a Free ticket instead.</span
                 >
               </p>
               <div class="ee-field ee-guest-visits-field">
@@ -705,9 +705,9 @@
     <script src="../js/organiser-quarter-time.js?v=20260714time" defer></script>
     <script src="../js/organiser-terms.js?v=20260828oppterms1" data-root="../" defer></script>
     <script src="../js/organiser-payment-setup.js?v=20260811seriesux" defer></script>
-    <script src="../js/organiser-field-tips.js?v=20260825alumni1" defer></script>
+    <script src="../js/organiser-field-tips.js?v=20260902compvisits1" defer></script>
     <script src="../js/hub-field-tip.js?v=20260711" defer></script>
     <script src="../js/organiser-launch-setup.js?v=20260820hubreview1" defer></script>
-    <script src="../js/organiser-event-tickets.js?v=20260827nudgepause" defer></script>
+    <script src="../js/organiser-event-tickets.js?v=20260902compvisits1" defer></script>
   </body>
 </html>

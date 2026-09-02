@@ -66,25 +66,25 @@
     'guest-visit-programme': {
       title: 'Complimentary visits',
       body:
-        'Visitors try your group with a complimentary visit (up to 3). After that they book your ticket, or join membership if you offer it. You can still have a free ticket and a paid ticket. Do not add a ticket named First Meeting for a first visit — that can be booked on every remaining date with no visit limit.',
+        'A limited trial for newcomers (1–3 visits) — not a Free ticket for everyone. After visits are used, people book your ticket or join membership. For a free workshop or one-off event, choose Ticket for this event and set the ticket to Free instead.',
       hubertPrompt: 'What are complimentary visits?',
     },
     'pay-how': {
       title: 'How will people book?',
       body:
-        '1 = everyone books a ticket. 2 = new group: try free, then join. 3 = already have members: guest ticket, members pay less or nothing. Open “How do these booking options work?” for examples.',
+        '1 = free or paid ticket for this date (workshops and one-off events). 2 = networking groups: limited trial visits, then membership. 3 = guest ticket plus member price. Open “How do these booking options work?” for examples.',
       hubertPrompt: 'Should I use tickets or membership for my networking event?',
     },
     'pay-how-membership': {
       title: 'Free visits, then membership',
       body:
-        'New group. People try a meeting free, then join. You stay on this option when they become members.',
+        'For recurring networking groups only. Newcomers get limited trial visits (1–3), then join your membership. This is not a Free ticket for a one-off event — use Ticket for this event → Free for that.',
       hubertPrompt: 'How does Free visits, then membership work?',
     },
     'pay-how-both': {
       title: 'Ticket and membership',
       body:
-        'You already have members. Guests buy a ticket. Members pay a different price, or nothing.',
+        'You already have members. Guests buy a ticket. Members pay a different price, or nothing. Optional limited trial visits are separate from a Free ticket.',
       hubertPrompt: 'When should I offer both tickets and membership?',
     },
     'member-only-event': {

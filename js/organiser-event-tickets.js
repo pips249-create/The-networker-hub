@@ -226,6 +226,20 @@
     }
   }
 
+  function complimentaryVisitsNeedAfterPathBlocker() {
+    if (
+      !(
+        isMembershipMeetingMode() ||
+        (isMembershipOnlyPayHow() && guestProgrammeEnabled())
+      )
+    ) {
+      return '';
+    }
+    if (hubMembershipIsPaid()) return '';
+    if (memberRosterLoadState === 'ready' && Number(memberRosterActiveCount) > 0) return '';
+    return 'Complimentary visits are a limited trial for networking groups — set a membership fee (£1+), or switch to Ticket for this event and add a Free ticket if everyone can attend free';
+  }
+
   function getPublishBlockers(tiers, options) {
     const opts = options || {};
     const includeBankDetails = opts.includeBankDetails !== false;
@@ -308,6 +322,8 @@
     if (guestProgrammeEnabled() && !payHowIncludesTickets() && !payHowIncludesMembership()) {
       blockers.push('After complimentary visits, people need tickets or membership — choose one above');
     }
+    const visitsAfter = complimentaryVisitsNeedAfterPathBlocker();
+    if (visitsAfter) blockers.push(visitsAfter);
     const alumni = collectAlumniFastPass();
     if (alumni.enabled && !alumni.saleEnd) {
       blockers.push('Choose a sale end for the previous attendee ticket');
@@ -368,6 +384,8 @@
     if (unpaidNamed) {
       blockers.push('Enter a price for each paid ticket');
     }
+    const visitsAfter = complimentaryVisitsNeedAfterPathBlocker();
+    if (visitsAfter) blockers.push(visitsAfter);
     return blockers;
   }
 
@@ -1604,7 +1622,7 @@
       if (isMembershipMeetingMode()) {
         panelLead.hidden = false;
         panelLead.textContent =
-          'Free visits stay as you set them in Step 2. Here, set the member ticket for this meeting and the fee to join your group.';
+          'Complimentary visits from Step 2 are a limited trial — not a Free ticket. Here, set the member ticket for this meeting and a membership fee (£1+) so people have somewhere to go after visits.';
       } else {
         panelLead.hidden = membersOnlyEventEnabled() || isMembershipMeetingMode();
       }
@@ -1655,8 +1673,8 @@
           ? 'Free trial visits, then join monthly membership (no ticket required)'
           : 'Let visitors take a free visit — they still apply for a Category Exclusivity seat'
         : isMembershipMeeting || isMembershipOnlyPayHow()
-          ? 'Let visitors try your group free — then join your membership at your price'
-          : 'Let visitors try a complimentary visit before they buy a ticket';
+          ? 'Limited trial (1–3), then join membership — not a Free ticket for everyone'
+          : 'Optional limited trial (1–3) before they buy a ticket — not a Free ticket for everyone';
     }
     if (isCategory) {
       if (hubMembershipEnabled()) {
@@ -1675,16 +1693,16 @@
     if (isMembershipMeeting || (isMembershipOnlyPayHow() && guestProgrammeEnabled())) {
       note.textContent =
         scope === 'across_groups'
-          ? 'Visitors get free trial visits shared across your organiser pages (up to 3), then we invite them to join. You keep 100% of the membership fee.'
-          : 'Visitors get free trial visits on this organiser page (up to 3), then we invite them to join. You keep 100% of the membership fee.';
+          ? 'Limited trial visits (up to 3) shared across your organiser pages, then people join your membership. Not a Free ticket for a one-off event — set a membership fee, or switch to Ticket for this event.'
+          : 'Limited trial visits (up to 3) on this organiser page, then people join your membership. Not a Free ticket for a one-off event — set a membership fee, or switch to Ticket for this event.';
       return;
     }
     if (scope === 'across_groups') {
       note.textContent =
-        'Visitors get up to 3 free trial visits shared across your organiser pages. After that, they need a paid member ticket to keep attending.';
+        'Optional limited trial (up to 3) shared across your organiser pages. After that they need a ticket. For a free event for everyone, use a Free ticket instead.';
     } else {
       note.textContent =
-        'Visitors get up to 3 free trial visits on this organiser page. After that, they need a paid member ticket to keep attending.';
+        'Optional limited trial (up to 3) on this organiser page. After that they need a ticket. For a free event for everyone, use a Free ticket instead.';
     }
   }
 
@@ -1760,7 +1778,7 @@
       '<button type="button" class="ee-tier-price-mode-btn is-active" data-price-mode="free" aria-pressed="true">Free</button>' +
       '<button type="button" class="ee-tier-price-mode-btn" data-price-mode="paid" aria-pressed="false">Paid</button>' +
       '</div>' +
-      '<p class="ee-hint ee-hint--below ee-tier-price-mode-hint">You can have a free ticket and a paid ticket. First visit still free? Tick complimentary visits below — do not name a ticket First Meeting.</p>' +
+      '<p class="ee-hint ee-hint--below ee-tier-price-mode-hint">You can have a Free ticket and a paid ticket. Complimentary visits below are an optional limited trial (1–3) for networking groups — not a Free ticket for everyone.</p>' +
       '<p class="ee-hint ee-hint-warn ee-complimentary-visit-hint" hidden></p>' +
       '</div>' +
       '<div class="ee-field ee-tier-price-field" hidden>' +
@@ -2638,12 +2656,12 @@
       if (membershipMeeting) {
         panelLead.hidden = false;
         panelLead.textContent =
-          'Free visits stay as you set them in Step 2. Here, set the member ticket for this meeting and the fee to join your group.';
+          'Complimentary visits from Step 2 are a limited trial — not a Free ticket. Here, set the member ticket for this meeting and a membership fee (£1+) so people have somewhere to go after visits.';
       } else {
         panelLead.hidden = on;
         if (!on) {
           panelLead.textContent =
-            'Give it a name and choose free or a price. Most organisers only need one ticket.';
+            'Give it a name and choose Free or a price. Most organisers only need one ticket — use Free if everyone can attend free.';
         }
       }
     }
@@ -2727,11 +2745,13 @@
     const scopeLabel =
       scope === 'across_groups' ? 'across all your organiser pages' : 'on this organiser page';
     text.innerHTML =
-      '<strong>Free trial visits</strong> — ' +
+      '<strong>Complimentary visits</strong> — ' +
       esc(String(visits)) +
+      ' limited trial visit' +
+      (Number(visits) === 1 ? '' : 's') +
       ' per visitor ' +
       esc(scopeLabel) +
-      ' (set in Step 2).';
+      ' (not a Free ticket for everyone). Then they join membership.';
   }
 
   function bindMembershipVisitsChange() {
@@ -2861,7 +2881,11 @@
 
   /** Wait for an in-flight roster check (or start one) before publish/continue. */
   async function ensureMemberRosterStatus() {
-    if (!membersOnlyEventEnabled()) return;
+    const needsRoster =
+      membersOnlyEventEnabled() ||
+      isMembershipMeetingMode() ||
+      (isMembershipOnlyPayHow() && guestProgrammeEnabled());
+    if (!needsRoster) return;
     if (memberRosterLoadState === 'ready' || memberRosterLoadState === 'error') return;
     await loadMemberRosterStatus();
   }
@@ -2977,14 +3001,15 @@
         outcome.textContent = includesTickets && includesMembership
           ? 'Next: ticket price after approval, then your join fee.'
           : includesMembership
-            ? 'Next: free visits, then your join fee.'
+            ? 'Next: limited trial visits, then your join fee (£1+). Not a free ticket for everyone.'
             : 'Next: ticket price after you approve.';
       } else if (includesTickets && includesMembership) {
-        outcome.textContent = 'Next: visitor tickets, then member price, join fee, and optional free visits.';
+        outcome.textContent = 'Next: visitor tickets, then member price, join fee, and optional trial visits.';
       } else if (includesMembership) {
-        outcome.textContent = 'Next: free visits, then member ticket and join fee.';
+        outcome.textContent =
+          'Next: limited trial visits (1–3), then membership fee. For a free event, go back and choose Ticket for this event → Free.';
       } else {
-        outcome.textContent = 'Next: ticket name and price.';
+        outcome.textContent = 'Next: ticket name — choose Free if everyone can attend free.';
       }
     }
 
@@ -4231,7 +4256,12 @@
       return;
     }
     try {
-      if (membersOnlyEventEnabled() && memberRosterLoadState === 'idle') {
+      if (
+        (membersOnlyEventEnabled() ||
+          isMembershipMeetingMode() ||
+          (isMembershipOnlyPayHow() && guestProgrammeEnabled())) &&
+        memberRosterLoadState === 'idle'
+      ) {
         loadMemberRosterStatus();
       }
       const tiers = collectActiveTiers();
