@@ -375,7 +375,7 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
 
   merged.logo_url = logoEmailHeaderUrl(siteUrl);
   merged.logo_footer_url = logoFooterUrl(siteUrl);
-  if (slug === 'franchise_claim_invite') {
+  if (slug === 'franchise_claim_invite' || slug === 'opportunity_claim_invite') {
     merged.logo_footer_light_url = franchiseEmailFooterLogoDataUri;
   }
   merged.hubert_icon_url = hubertIconUrl(siteUrl);

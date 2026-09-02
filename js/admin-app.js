@@ -26355,54 +26355,130 @@
     var btn = form.querySelector('[type="submit"]');
     var basePayload = opportunityFormPayload(form);
     if (!confirmOpportunityCardGaps(basePayload, form, 'Create')) return;
-    if (btn) btn.disabled = true;
+    var ownerEmail = String(basePayload.owner_email || '')
+      .trim()
+      .toLowerCase();
+    var title = String(basePayload.title || '').trim();
+    var host = String(basePayload.host || '').trim();
+
+    function runCreate() {
+      if (btn) btn.disabled = true;
+      if (msg) {
+        msg.textContent = 'Creating…';
+        msg.className = 'opportunity-create-msg text-xs text-slate-500';
+      }
+      var coverKey =
+        (form.querySelector('[data-admin-logo-url-name="image_url"]') &&
+          form.querySelector('[data-admin-logo-url-name="image_url"]').getAttribute('data-admin-logo-key')) ||
+        'opp-create-cover';
+      var logoKey =
+        (form.querySelector('[data-admin-logo-url-name="logo_url"]') &&
+          form.querySelector('[data-admin-logo-url-name="logo_url"]').getAttribute('data-admin-logo-key')) ||
+        'opp-create-logo';
+      Promise.all([
+        opportunityImagePayloadForKey(coverKey, form, 'image_url', 'photo'),
+        opportunityImagePayloadForKey(logoKey, form, 'logo_url', 'logo'),
+      ])
+        .then(function (parts) {
+          var payload = Object.assign({ action: 'create' }, basePayload, parts[0], parts[1]);
+          return adminPost('/api/admin/opportunities', payload);
+        })
+        .then(function (data) {
+          if (!data.ok) throw new Error(data.message || data.error || 'Create failed');
+          if (msg) {
+            var existing = data.existingOwnerListings || [];
+            var similar = data.similarNameListings || [];
+            var warnDuplicate = existing.length > 0 || similar.length > 0 || data.rateLimited;
+            msg.textContent =
+              data.message ||
+              (data.emailSent
+                ? 'New listing created — claim invite emailed.'
+                : data.rateLimited
+                  ? 'New listing created. Claim invite was not emailed again — that address already received one in the last 24 hours (not a duplicate-listing block).'
+                  : payloadOwnerClaimMsg(data.opportunity) || 'Listing created.');
+            msg.className =
+              'opportunity-create-msg text-xs font-semibold ' +
+              (warnDuplicate ? 'text-amber-800' : 'text-emerald-700');
+          }
+          resetOpportunityCreateForm(form);
+          if (btn) btn.disabled = false;
+          return refreshOpportunityCleanupData();
+        })
+        .then(function () {
+          refreshAdminNotifications();
+        })
+        .catch(function (err) {
+          if (msg) {
+            msg.textContent = err.message || 'Could not create listing';
+            msg.className = 'opportunity-create-msg text-xs text-red-700 font-semibold';
+          }
+          if (btn) btn.disabled = false;
+        });
+    }
+
     if (msg) {
-      msg.textContent = 'Creating…';
+      msg.textContent = 'Checking for possible duplicate listings…';
       msg.className = 'opportunity-create-msg text-xs text-slate-500';
     }
-    var coverKey =
-      (form.querySelector('[data-admin-logo-url-name="image_url"]') &&
-        form.querySelector('[data-admin-logo-url-name="image_url"]').getAttribute('data-admin-logo-key')) ||
-      'opp-create-cover';
-    var logoKey =
-      (form.querySelector('[data-admin-logo-url-name="logo_url"]') &&
-        form.querySelector('[data-admin-logo-url-name="logo_url"]').getAttribute('data-admin-logo-key')) ||
-      'opp-create-logo';
-    Promise.all([
-      opportunityImagePayloadForKey(coverKey, form, 'image_url', 'photo'),
-      opportunityImagePayloadForKey(logoKey, form, 'logo_url', 'logo'),
-    ])
-      .then(function (parts) {
-        var payload = Object.assign({ action: 'create' }, basePayload, parts[0], parts[1]);
-        return adminPost('/api/admin/opportunities', payload);
-      })
+    var checkParams = new URLSearchParams();
+    checkParams.set('duplicate_check', '1');
+    if (title) checkParams.set('title', title);
+    if (host) checkParams.set('host', host);
+    if (ownerEmail) checkParams.set('owner_email', ownerEmail);
+
+    adminGet('/api/admin/opportunities?' + checkParams.toString())
       .then(function (data) {
-        if (!data.ok) throw new Error(data.message || data.error || 'Create failed');
-        if (msg) {
-          msg.textContent =
-            data.message ||
-            (data.emailSent
-              ? 'Listing created — claim invite emailed.'
-              : data.rateLimited
-                ? 'Listing created — claim invite already sent to this email in the last 24 hours.'
-                : payloadOwnerClaimMsg(data.opportunity) || 'Listing created.');
-          msg.className =
-            'opportunity-create-msg text-xs font-semibold ' +
-            (data.rateLimited ? 'text-amber-800' : 'text-emerald-700');
+        var byEmail = (data && data.byEmail) || [];
+        var byName = (data && data.byName) || [];
+        if (!byEmail.length && !byName.length) {
+          runCreate();
+          return;
         }
-        resetOpportunityCreateForm(form);
-        if (btn) btn.disabled = false;
-        return refreshOpportunityCleanupData();
-      })
-      .then(function () {
-        refreshAdminNotifications();
-      })
-      .catch(function (err) {
-        if (msg) {
-          msg.textContent = err.message || 'Could not create listing';
-          msg.className = 'opportunity-create-msg text-xs text-red-700 font-semibold';
+        var lines = [];
+        if (byEmail.length) {
+          lines.push(
+            'Same email is already on ' +
+              byEmail.length +
+              ' listing' +
+              (byEmail.length === 1 ? '' : 's') +
+              ': ' +
+              byEmail
+                .map(function (row) {
+                  return String(row.title || 'Untitled').trim();
+                })
+                .slice(0, 3)
+                .join('; ') +
+              (byEmail.length > 3 ? '; …' : '')
+          );
         }
-        if (btn) btn.disabled = false;
+        if (byName.length) {
+          lines.push(
+            'Similar title/host already exists on ' +
+              byName.length +
+              ' listing' +
+              (byName.length === 1 ? '' : 's') +
+              ': ' +
+              byName
+                .map(function (row) {
+                  return String(row.title || 'Untitled').trim();
+                })
+                .slice(0, 3)
+                .join('; ') +
+              (byName.length > 3 ? '; …' : '')
+          );
+        }
+        var ok = window.confirm(
+          lines.join('\n\n') +
+            '\n\nCreate another listing anyway? This will add a new row — it does not merge with the existing one.'
+        );
+        if (ok) runCreate();
+        else if (msg) {
+          msg.textContent = 'Create cancelled — existing listing(s) left unchanged.';
+          msg.className = 'opportunity-create-msg text-xs text-amber-800 font-semibold';
+        }
+      })
+      .catch(function () {
+        runCreate();
       });
   }
 
@@ -26480,7 +26556,7 @@
               (data.emailSent
                 ? 'Owner assigned — claim invite emailed.'
                 : data.rateLimited
-                  ? 'Owner assigned — claim invite already sent to this email in the last 24 hours.'
+                  ? 'Owner assigned. Claim invite was not emailed again — that address already received one in the last 24 hours (not a duplicate-listing block).'
                   : 'Owner assigned — claim invite will appear when they sign in.'));
           msg.className =
             'opportunity-cleanup-msg text-xs font-semibold ' +

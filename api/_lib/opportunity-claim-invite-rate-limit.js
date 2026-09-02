@@ -16,6 +16,7 @@ const WINDOW_MS = 24 * 60 * 60 * 1000;
 /** Fixed subjects we can match in Resend history when the log table is not migrated yet. */
 const FIXED_SUBJECTS = {
   franchise_claim_invite: 'Franchise Listing Invitation',
+  opportunity_claim_invite: 'Business Opportunity Listing Invitation',
 };
 
 function isOpportunityClaimInviteSlug(slug) {

@@ -760,8 +760,12 @@ async function sendOpportunityClaimInviteEmail(row, options) {
   const claimUrl = await resolveOpportunityClaimUrl(ownerEmail, siteHost, slugOrId);
   const title = String((row && row.title) || 'your business opportunity').trim();
   const listingType = String((row && row.type) || '').trim().toLowerCase();
+  const titleHost = title + ' ' + String((row && row.host) || '');
   const isAffiliate = listingType === 'affiliate';
-  const isFranchise = listingType === 'franchise';
+  // Titles like "EweMove Franchise" were sometimes saved as business-opportunity —
+  // still send the franchise claim invite + subject.
+  const isFranchise =
+    listingType === 'franchise' || (!isAffiliate && /\bfranchise\b/i.test(titleHost));
   const ownerName =
     isAffiliate || isFranchise
       ? title
@@ -776,9 +780,7 @@ async function sendOpportunityClaimInviteEmail(row, options) {
       ' — claim your affiliate programme listing'
     : isFranchise
       ? 'Franchise Listing Invitation'
-      : 'Congratulations: ' +
-        String((row && row.title) || 'your opportunity') +
-        ' is ready — claim your listing';
+      : 'Business Opportunity Listing Invitation';
 
   try {
     await sendTemplatedEmail({
@@ -802,6 +804,253 @@ async function sendOpportunityClaimInviteEmail(row, options) {
     }
     throw e;
   }
+}
+
+async function findOtherListingsForOwnerEmail(ownerEmail, excludeId) {
+  const email = String(ownerEmail || '')
+    .trim()
+    .toLowerCase();
+  if (!email || !email.includes('@')) return [];
+  try {
+    const sb = getSupabaseAdmin();
+    let q = sb
+      .from('business_opportunities')
+      .select('id, title, host, slug, type, ownership_claim_status, status, owner_email')
+      .eq('owner_email', email)
+      .order('updated_at', { ascending: false })
+      .limit(8);
+    const exclude = String(excludeId || '').trim();
+    if (exclude) q = q.neq('id', exclude);
+    const { data, error } = await q;
+    if (error) {
+      console.warn('[owner-listings]', error.message);
+      return [];
+    }
+    return (data || []).map(mapDuplicateListingRow);
+  } catch (e) {
+    console.warn('[owner-listings]', e && e.message ? e.message : e);
+    return [];
+  }
+}
+
+function mapDuplicateListingRow(row) {
+  return {
+    id: row.id,
+    title: String(row.title || '').trim() || 'Untitled',
+    host: String(row.host || '').trim() || null,
+    slug: row.slug || null,
+    type: row.type || null,
+    ownership_claim_status: row.ownership_claim_status || null,
+    status: row.status || null,
+    owner_email: String(row.owner_email || '').trim().toLowerCase() || null,
+  };
+}
+
+function normalizeListingNameForDup(value) {
+  return String(value || '')
+    .toLowerCase()
+    .replace(/^\[test\]\s*/i, '')
+    .replace(/&/g, ' and ')
+    .replace(/[^a-z0-9\s]+/g, ' ')
+    .replace(
+      /\b(ltd|limited|llc|inc|plc|uk|the|a|an|and|franchise|franchising|group|company|co)\b/g,
+      ' '
+    )
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function listingNameSearchTokens(value) {
+  return normalizeListingNameForDup(value)
+    .split(' ')
+    .filter(function (token) {
+      return token.length >= 4;
+    })
+    .slice(0, 4);
+}
+
+function listingNamesLikelyDuplicate(left, right) {
+  const a = normalizeListingNameForDup(left);
+  const b = normalizeListingNameForDup(right);
+  if (!a || !b) return false;
+  if (a === b) return true;
+  if (a.length >= 5 && b.length >= 5 && (a.includes(b) || b.includes(a))) return true;
+  const tokensA = a.split(' ').filter(function (t) {
+    return t.length >= 3;
+  });
+  const setB = new Set(
+    b.split(' ').filter(function (t) {
+      return t.length >= 3;
+    })
+  );
+  const shared = tokensA.filter(function (t) {
+    return setB.has(t);
+  });
+  if (shared.some(function (t) {
+    return t.length >= 6;
+  })) {
+    return true;
+  }
+  return shared.length >= 2;
+}
+
+function rowMatchesListingNames(row, title, host) {
+  const candidates = [title, host].map(normalizeListingNameForDup).filter(Boolean);
+  if (!candidates.length) return false;
+  const rowNames = [row.title, row.host];
+  for (let i = 0; i < candidates.length; i += 1) {
+    for (let j = 0; j < rowNames.length; j += 1) {
+      if (listingNamesLikelyDuplicate(candidates[i], rowNames[j])) return true;
+    }
+  }
+  return false;
+}
+
+async function findSimilarListingsByName(title, host, excludeId) {
+  const titleNorm = String(title || '').trim();
+  const hostNorm = String(host || '').trim();
+  const tokens = []
+    .concat(listingNameSearchTokens(titleNorm))
+    .concat(listingNameSearchTokens(hostNorm));
+  const uniqueTokens = [...new Set(tokens)].slice(0, 4);
+  if (!uniqueTokens.length && !titleNorm && !hostNorm) return [];
+
+  try {
+    const sb = getSupabaseAdmin();
+    const exclude = String(excludeId || '').trim();
+    let rows = [];
+
+    if (uniqueTokens.length) {
+      const orParts = [];
+      uniqueTokens.forEach(function (token) {
+        const term = '%' + token.replace(/[%_,]/g, '') + '%';
+        if (term.length < 5) return;
+        orParts.push('title.ilike.' + term);
+        orParts.push('host.ilike.' + term);
+      });
+      if (orParts.length) {
+        let q = sb
+          .from('business_opportunities')
+          .select('id, title, host, slug, type, ownership_claim_status, status, owner_email')
+          .or(orParts.join(','))
+          .neq('status', 'archived')
+          .limit(40);
+        if (exclude) q = q.neq('id', exclude);
+        const { data, error } = await q;
+        if (error) {
+          console.warn('[name-listings]', error.message);
+        } else {
+          rows = data || [];
+        }
+      }
+    }
+
+    return rows
+      .filter(function (row) {
+        if (exclude && String(row.id) === exclude) return false;
+        return rowMatchesListingNames(row, titleNorm, hostNorm);
+      })
+      .slice(0, 8)
+      .map(mapDuplicateListingRow);
+  } catch (e) {
+    console.warn('[name-listings]', e && e.message ? e.message : e);
+    return [];
+  }
+}
+
+async function findLikelyDuplicateListings(opts) {
+  const options = opts || {};
+  const excludeId = options.excludeId || null;
+  const ownerEmail = String(options.ownerEmail || '').trim().toLowerCase();
+  const [byEmail, byName] = await Promise.all([
+    ownerEmail && !isHubSeedOwnerEmail(ownerEmail)
+      ? findOtherListingsForOwnerEmail(ownerEmail, excludeId)
+      : Promise.resolve([]),
+    findSimilarListingsByName(options.title, options.host, excludeId),
+  ]);
+  const seen = Object.create(null);
+  const all = [];
+  function pushAll(list, matchReason) {
+    (list || []).forEach(function (row) {
+      const id = String(row.id || '');
+      if (!id || seen[id]) {
+        if (id && seen[id] && matchReason && !seen[id].matchReasons.includes(matchReason)) {
+          seen[id].matchReasons.push(matchReason);
+        }
+        return;
+      }
+      const item = Object.assign({}, row, { matchReasons: [matchReason] });
+      seen[id] = item;
+      all.push(item);
+    });
+  }
+  pushAll(byEmail, 'email');
+  pushAll(byName, 'name');
+  return { byEmail, byName, all };
+}
+
+function buildAdminCreateClaimMessage(opts) {
+  const options = opts || {};
+  const opportunity = options.opportunity || {};
+  const email = String(opportunity.owner_email || '').trim();
+  const existing = Array.isArray(options.existingForOwner) ? options.existingForOwner : [];
+  const similar = Array.isArray(options.similarByName) ? options.similarByName : [];
+
+  function titlesNote(rows, lead) {
+    const titles = rows
+      .map(function (row) {
+        return String(row.title || '').trim();
+      })
+      .filter(Boolean)
+      .slice(0, 3);
+    if (!titles.length) return '';
+    return (
+      ' ' +
+      lead +
+      ' ' +
+      rows.length +
+      ' other listing' +
+      (rows.length === 1 ? '' : 's') +
+      ' (' +
+      titles.join('; ') +
+      (rows.length > titles.length ? '; …' : '') +
+      ').'
+    );
+  }
+
+  // Prefer name matches that aren't already covered by the email note.
+  const emailIds = Object.create(null);
+  existing.forEach(function (row) {
+    emailIds[String(row.id)] = true;
+  });
+  const nameOnly = similar.filter(function (row) {
+    return !emailIds[String(row.id)];
+  });
+
+  const existingNote =
+    titlesNote(existing, 'Same email is already on') +
+    titlesNote(nameOnly, 'Similar title/host already exists on');
+  const createdSuffix = existingNote
+    ? existingNote + ' This new row was still created.'
+    : '';
+
+  if (options.emailSent) {
+    return 'New listing created and claim invite emailed to ' + email + '.' + createdSuffix;
+  }
+  if (options.rateLimited) {
+    return (
+      'New listing created. Claim invite was not emailed again — ' +
+      email +
+      ' already received one in the last 24 hours (this is not a duplicate-listing block).' +
+      createdSuffix
+    );
+  }
+  if (email && opportunity.ownership_claim_status === 'pending') {
+    return 'New listing created for ' + email + '.' + createdSuffix;
+  }
+  return createdSuffix
+    ? 'New listing created.' + createdSuffix
+    : 'New listing created — hub-owned and claimable.';
 }
 
 async function createAdminOpportunity(input) {
@@ -982,6 +1231,23 @@ module.exports = async function handler(req, res) {
         const groups = await findExclusiveBrandDuplicateGroups(sb);
         return json(res, 200, { ok: true, groups });
       }
+      if (String(q.duplicate_check || '') === '1') {
+        const ownerEmail = String(q.owner_email || q.ownerEmail || '')
+          .trim()
+          .toLowerCase();
+        const dupes = await findLikelyDuplicateListings({
+          title: q.title,
+          host: q.host,
+          ownerEmail,
+          excludeId: String(q.exclude_id || q.excludeId || '').trim() || null,
+        });
+        return json(res, 200, {
+          ok: true,
+          byEmail: dupes.byEmail,
+          byName: dupes.byName,
+          matches: dupes.all,
+        });
+      }
       const data = await listOpportunitiesForAdmin(q);
       return json(res, 200, { ok: true, ...data });
     } catch (e) {
@@ -1050,6 +1316,8 @@ module.exports = async function handler(req, res) {
         let emailSent = false;
         let rateLimited = false;
         let claimUrl = null;
+        let existingForOwner = [];
+        let similarByName = [];
         if (
           opportunity &&
           opportunity.ownership_claim_status === 'pending' &&
@@ -1063,17 +1331,35 @@ module.exports = async function handler(req, res) {
           rateLimited = Boolean(invite.rateLimited);
           claimUrl = invite.claimUrl || null;
         }
+        if (opportunity) {
+          const dupes = await findLikelyDuplicateListings({
+            title: opportunity.title,
+            host: opportunity.host,
+            ownerEmail:
+              opportunity.owner_email && !isHubSeedOwnerEmail(opportunity.owner_email)
+                ? opportunity.owner_email
+                : '',
+            excludeId: opportunity.id,
+          });
+          existingForOwner = dupes.byEmail;
+          similarByName = dupes.byName;
+        }
+        const message = buildAdminCreateClaimMessage({
+          opportunity,
+          emailSent,
+          rateLimited,
+          existingForOwner,
+          similarByName,
+        });
         return json(res, 201, {
           ok: true,
           opportunity,
           emailSent,
           rateLimited,
           claimUrl,
-          message: emailSent
-            ? 'Listing created and claim invite emailed to ' + opportunity.owner_email + '.'
-            : rateLimited
-              ? 'Listing created — claim invite already sent to this email in the last 24 hours.'
-              : undefined,
+          existingOwnerListings: existingForOwner,
+          similarNameListings: similarByName,
+          message,
         });
       } catch (e) {
         if (e.code === 'exclusive_brand_conflict') {
@@ -1443,7 +1729,9 @@ module.exports = async function handler(req, res) {
           message: emailSent
             ? 'Owner assigned and claim invite emailed to ' + ownerEmail + '.'
             : rateLimited
-              ? 'Owner assigned, but a claim invite was already emailed to this address in the last 24 hours — not sent again.'
+              ? 'Owner assigned. Claim invite was not emailed again — ' +
+                ownerEmail +
+                ' already received one in the last 24 hours (this is not a duplicate-listing block).'
               : 'Owner assigned.',
         });
       } catch (e) {

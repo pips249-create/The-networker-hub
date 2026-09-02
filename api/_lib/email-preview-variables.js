@@ -678,12 +678,15 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
   }
 
   if (slug === 'opportunity_claim_invite') {
+    const franchiseEmailFooterLogoDataUri = require('./franchise-email-footer-logo-datauri');
     vars.claim_url =
       vars.claim_url ||
       opportunityPublicUrl({ slug: 'marketing-agency-partnership', id: opportunityId }, site) +
         '?email=alex@example.com&intent=opportunity-claim&auth=register';
     vars.opportunity_title = vars.opportunity_title || 'Marketing agency partnership';
-    vars.owner_name = vars.owner_name || 'Jordan';
+    vars.owner_name = vars.owner_name || vars.opportunity_title;
+    vars.logo_footer_light_url = franchiseEmailFooterLogoDataUri;
+    vars.support_email = vars.support_email || 'hi@thenetworkeruk.com';
   }
 
   if (slug === 'affiliate_claim_invite') {

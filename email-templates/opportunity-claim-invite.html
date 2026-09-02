@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="x-apple-disable-message-reformatting">
   <meta name="format-detection" content="telephone=no,date=no,address=no,email=no,url=no">
-  <title>Claim your listing</title>
+  <title>Business Opportunity Listing Invitation</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap');
     body, table, td, p, a { margin:0; padding:0; border:0; font-size:100%; font:inherit; vertical-align:top; }
@@ -23,7 +23,7 @@
         box-shadow:none !important;
         overflow:visible !important;
       }
-      .hero-title { font-size:24px !important; line-height:1.2 !important; }
+      .hero-title { font-size:26px !important; line-height:1.25 !important; }
       .mobile-pad { padding-left:16px !important; padding-right:16px !important; }
       .mobile-header-pad { padding:24px 16px 0 !important; }
       .mobile-footer-pad { padding:24px 16px 30px !important; }
@@ -31,15 +31,16 @@
       .email-logo-footer { max-width:168px !important; width:168px !important; height:auto !important; }
       .benefit-cell { display:block !important; width:100% !important; padding:14px 0 !important; border-top:1px solid rgba(255,255,255,0.12) !important; }
       .benefit-cell:first-child { border-top:none !important; padding-top:0 !important; }
+      .section-card { display:block !important; width:100% !important; margin-bottom:12px !important; }
       .email-cta a { display:block !important; width:100% !important; box-sizing:border-box !important; text-align:center !important; }
     }
   </style>
 </head>
 <body id="body" style="margin:0;padding:0;background:#e8ecf5;font-family:'DM Sans',system-ui,sans-serif;">
 <div style="display:none;font-size:1px;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;mso-hide:all;">
-  Your business opportunity listing is on The Networker UK — claim it to manage enquiries from UK networkers.&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
+  Your business opportunity is now listed on The Networker UK&rsquo;s Business Opportunities Directory.&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
 </div>
-<!-- hub-email-layout-v3-navy-gold-details -->
+<!-- hub-email-layout-v3-navy-gold-details-bo-invite -->
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#e8ecf5;">
   <tr>
     <td class="email-outer-pad" align="center" style="padding:32px 16px 56px;">
@@ -66,37 +67,44 @@
 
         <tr>
           <td class="mobile-pad" style="padding:28px 40px 12px;text-align:center;">
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:#b8860b;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px;">Business opportunity listing</p>
-            <h1 class="hero-title" style="font-family:'DM Sans',system-ui,sans-serif;font-size:28px;font-weight:600;color:#1c2040;margin:0 0 10px;line-height:1.15;">{{opportunity_title}} is on The Networker UK</h1>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:0;">Hi {{owner_name}}. We&rsquo;ve published a draft listing for your opportunity on our business opportunities directory. Claim it to manage enquiries from UK networkers.</p>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:12px;font-weight:700;color:#b8860b;text-transform:uppercase;letter-spacing:1.2px;margin:0 0 10px;">{{opportunity_title}}</p>
+            <h1 class="hero-title" style="font-family:'DM Sans',system-ui,sans-serif;font-size:28px;font-weight:600;color:#1c2040;margin:0 0 16px;line-height:1.3;">Your business opportunity is now on the UK&rsquo;s Business Opportunities Directory</h1>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:0 0 14px;"><strong style="color:#1c2040;">The Networker UK</strong> is where UK business owners and professionals discover networking events, exhibitions, conferences, and business opportunities. Established in 2023, <strong style="color:#1c2040;">17,000+ networkers</strong> used the platform last year.</p>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:0;">We&rsquo;ve added your listing. Have a look at how your page appears on our website &mdash; then sign in with this email to manage enquiries and add open days.</p>
           </td>
         </tr>
 
         <tr>
-          <td class="mobile-pad" style="padding:8px 40px 20px;">
-            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#1c2040;border-radius:16px;">
+          <td class="mobile-pad email-cta" style="padding:0 40px 8px;text-align:center;">
+            <a href="{{claim_url}}" style="display:inline-block;text-align:center;padding:16px 32px;background:#c9961f;border-radius:999px;color:#1c2040;font-size:17px;font-weight:700;text-decoration:none;margin:0 0 12px;box-shadow:0 4px 18px rgba(201,150,31,0.45);">View your page on our website &rarr;</a>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;line-height:1.55;color:#8a8486;margin:0;">Opens your public listing &mdash; no password needed to preview.</p>
+          </td>
+        </tr>
+
+        <tr>
+          <td class="mobile-pad" style="padding:8px 40px 16px;text-align:center;">
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;line-height:1.55;color:#8a8486;margin:0;">This invite stays open until <strong style="color:#635c5e;">30 September 2026</strong>.</p>
+          </td>
+        </tr>
+
+        <tr>
+          <td class="mobile-pad" style="padding:8px 40px 24px;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f4f6fa;border:1px solid #e2e8f0;border-radius:16px;">
               <tr>
-                <td style="padding:24px;">
-                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:1px;margin:0 0 8px;">What you get</p>
-                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:19px;font-weight:600;color:#ffffff;margin:0 0 18px;line-height:1.3;">When you claim your listing</p>
+                <td style="padding:20px 22px;">
+                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:12px;font-weight:700;color:#b8860b;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">What you get</p>
                   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
                     <tr>
-                      <td class="benefit-cell" style="padding:0 0 16px;vertical-align:top;">
-                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:700;color:#e8b84b;margin:0 0 4px;line-height:1.3;">Seen by UK networkers</p>
-                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:14px;line-height:1.55;color:rgba(255,255,255,0.82);margin:0;"><strong style="color:#ffffff;">{{opportunity_title}}</strong> appears in browse and search on a directory used by <strong style="color:#ffffff;">17,000+</strong> networkers last year.</p>
-                      </td>
+                      <td style="padding:0 0 10px;vertical-align:top;width:22px;font-size:16px;line-height:1.4;color:#c9961f;">&#10003;</td>
+                      <td style="padding:0 0 10px;font-family:'DM Sans',system-ui,sans-serif;font-size:14px;line-height:1.55;color:#635c5e;"><strong style="color:#1c2040;">Enquiries straight to you</strong> &mdash; no portal middlemen and no per-enquiry fees</td>
                     </tr>
                     <tr>
-                      <td class="benefit-cell" style="padding:16px 0;border-top:1px solid rgba(255,255,255,0.12);vertical-align:top;">
-                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:700;color:#e8b84b;margin:0 0 4px;line-height:1.3;">Direct enquiries &mdash; no lead fees</p>
-                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:14px;line-height:1.55;color:rgba(255,255,255,0.82);margin:0;">Interested people contact you directly. No middlemen, no auctions, no per-lead charges.</p>
-                      </td>
+                      <td style="padding:0 0 10px;vertical-align:top;width:22px;font-size:16px;line-height:1.4;color:#c9961f;">&#10003;</td>
+                      <td style="padding:0 0 10px;font-family:'DM Sans',system-ui,sans-serif;font-size:14px;line-height:1.55;color:#635c5e;"><strong style="color:#1c2040;">Open days &amp; talks</strong> &mdash; add for free on your listing, with registration tracking in your workspace</td>
                     </tr>
                     <tr>
-                      <td class="benefit-cell" style="padding:16px 0 0;border-top:1px solid rgba(255,255,255,0.12);vertical-align:top;">
-                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:700;color:#e8b84b;margin:0 0 4px;line-height:1.3;">Your listing, your control</p>
-                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:14px;line-height:1.55;color:rgba(255,255,255,0.82);margin:0;">Edit your page, update details, or unpublish any time from your dashboard.</p>
-                      </td>
+                      <td style="padding:0;vertical-align:top;width:22px;font-size:16px;line-height:1.4;color:#c9961f;">&#10003;</td>
+                      <td style="padding:0;font-family:'DM Sans',system-ui,sans-serif;font-size:14px;line-height:1.55;color:#635c5e;"><strong style="color:#1c2040;">Your dashboard</strong> &mdash; manage your listing, add team members, enquiries, and open-day registrations in one place</td>
                     </tr>
                   </table>
                 </td>
@@ -106,40 +114,28 @@
         </tr>
 
         <tr>
-          <td class="mobile-pad" style="padding:0 40px 20px;">
-            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#fff8e8;border:1px solid #f0d78c;border-radius:16px;">
-              <tr>
-                <td style="padding:18px 20px;">
-                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:700;color:#8a6a12;margin:0 0 6px;">Keeping it live</p>
-                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:14px;line-height:1.6;color:#635c5e;margin:0;">Sign in with <strong style="color:#1c2040;">this email address</strong>. The listing stays visible for <strong style="color:#1c2040;">£25/month + VAT</strong> via Stripe &mdash; cancel any time.</p>
-                </td>
-              </tr>
-            </table>
+          <td class="mobile-pad" style="padding:0 40px 8px;text-align:left;">
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.65;color:#635c5e;margin:0;">Want more detail? <a href="{{site_url}}/assets/guides/list-business-opportunity-guide.pdf" style="color:#1c2040;text-decoration:underline;font-weight:600;">Download our business opportunity listing guide (PDF)</a> &mdash; step-by-step instructions, benefits, and pricing.</p>
           </td>
         </tr>
 
         <tr>
-          <td class="mobile-pad email-cta" style="padding:0 40px 8px;text-align:center;">
-            <a href="{{claim_url}}" style="display:inline-block;text-align:center;padding:16px 32px;background:#c9961f;border-radius:999px;color:#1c2040;font-size:17px;font-weight:700;text-decoration:none;margin:0 0 12px;box-shadow:0 4px 18px rgba(201,150,31,0.45);">Preview listing &amp; claim &rarr;</a>
+          <td class="mobile-pad" style="padding:0 40px 28px;text-align:left;">
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.65;color:#635c5e;margin:0 0 20px;">Questions? Reply to this email, or <a href="https://savvycal.com/rosiemcgilvray/meet" style="color:#1c2040;text-decoration:underline;font-weight:600;">book a call with Rosie</a>.</p>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.65;color:#635c5e;margin:0;">Rosie McGilvray<br><span style="color:#8a8486;">Founder of The Networker UK &amp; The Networker International</span></p>
           </td>
         </tr>
 
-        <tr>
-          <td class="mobile-pad" style="padding:0 40px 24px;text-align:left;">
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.65;color:#635c5e;margin:0 0 10px;">Questions? Just reply to this email.</p>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;line-height:1.65;color:#635c5e;margin:0;">Rosie &amp; Catherine<br><span style="color:#8a8486;">The Networker UK</span></p>
-          </td>
-        </tr>
-
-        <!-- hub-email-layout-v3-navy-gold-details -->
+        {{mini_sponsors_row}}
+        <!-- hub-email-layout-v3-navy-gold-details-bo-invite -->
         <tr>
           <td class="mobile-footer-pad" style="background:#1c2040;padding:28px 40px 40px;text-align:center;border-radius:0 0 20px 20px;">
             <a href="{{site_url}}/" style="text-decoration:none;display:inline-block;">
-              <img src="{{logo_footer_url}}" alt="The Networker UK" width="200" class="email-logo-footer" style="height:auto;display:inline-block;margin:0 auto 16px;border:0;max-width:200px;">
+              <img src="{{logo_footer_light_url}}" alt="The Networker UK" width="200" class="email-logo-footer" style="height:auto;display:inline-block;margin:0 auto 16px;border:0;max-width:200px;">
             </a>
             <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:400;color:rgba(255,255,255,0.55);line-height:1.7;margin:0 0 10px;">
               Operated by The Networker Group Ltd &nbsp;&middot;&nbsp; Company No. 15252227<br>
-              <a href="mailto:{{support_email}}" style="color:#4aa8f0;text-decoration:none;">{{support_email}}</a>
+              <a href="mailto:hi@thenetworkeruk.com" style="color:#4aa8f0;text-decoration:none;">hi@thenetworkeruk.com</a>
             </p>
             <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:400;color:rgba(255,255,255,0.55);margin:0;line-height:1.8;">
               <a href="{{privacy_url}}" style="color:#4aa8f0;text-decoration:none;">Privacy</a>
@@ -150,7 +146,7 @@
               &nbsp;&middot;&nbsp;
               <a href="{{contact_url}}" style="color:#4aa8f0;text-decoration:none;">Contact</a>
               &nbsp;&middot;&nbsp;
-              <a href="{{unsubscribe_url}}" style="color:#e8b84b;text-decoration:none;">Unsubscribe</a>
+              <a href="{{unsubscribe_url}}" style="color:#4aa8f0;text-decoration:none;">Unsubscribe</a>
             </p>
           </td>
         </tr>
