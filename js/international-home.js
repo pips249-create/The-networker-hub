@@ -712,21 +712,6 @@
     });
   }
 
-  function viewBoxToCanvasPoint(x, y) {
-    if (!els.svg || !els.canvas) return null;
-    var point = els.svg.createSVGPoint();
-    point.x = x;
-    point.y = y;
-    var matrix = els.svg.getScreenCTM();
-    if (!matrix) return null;
-    var screen = point.matrixTransform(matrix);
-    var canvasRect = els.canvas.getBoundingClientRect();
-    return {
-      x: screen.x - canvasRect.left,
-      y: screen.y - canvasRect.top,
-    };
-  }
-
   function shortLabelName(meta) {
     if (meta.iso2 === 'GB') return 'UK';
     if (meta.iso2 === 'IE') return 'Ireland';
@@ -734,61 +719,81 @@
     return meta.name;
   }
 
+  function labelPathFor(meta) {
+    return (
+      els.svg &&
+      els.svg.querySelector(
+        '.intl-country[data-country-id="' + meta.numericId + '"]'
+      )
+    );
+  }
+
+  /**
+   * Anchor labels to the rendered country path (canvas pixels), not projected
+   * centroids with manual nudges — those drifted Ireland into the Atlantic.
+   */
+  function mapLabelCanvasPoint(meta, path) {
+    if (!els.canvas || !path) return null;
+    var canvasRect = els.canvas.getBoundingClientRect();
+    if (!canvasRect.width || !canvasRect.height) return null;
+
+    // USA path bbox includes Alaska/Hawaii — pin to lower-48 via SVG matrix.
+    if (meta.iso2 === 'US' && state.projection) {
+      var continental = state.projection([-98, 39]);
+      if (continental && els.svg.createSVGPoint) {
+        var point = els.svg.createSVGPoint();
+        point.x = continental[0];
+        point.y = continental[1];
+        var matrix = els.svg.getScreenCTM();
+        if (matrix) {
+          var screen = point.matrixTransform(matrix);
+          return {
+            x: screen.x - canvasRect.left,
+            y: screen.y - canvasRect.top,
+          };
+        }
+      }
+    }
+
+    var pathRect = path.getBoundingClientRect();
+    if (!pathRect.width && !pathRect.height) return null;
+
+    var x = pathRect.left + pathRect.width / 2 - canvasRect.left;
+    var y = pathRect.top - canvasRect.top;
+
+    // Tiny separation so UK / Ireland pills don't stack.
+    if (meta.iso2 === 'GB') {
+      x += 8;
+    } else if (meta.iso2 === 'IE') {
+      x -= 6;
+    }
+
+    return { x: x, y: y };
+  }
+
   function positionMapLabels() {
     if (!state.labelItems.length) return;
     state.labelItems.forEach(function (item) {
-      var point = viewBoxToCanvasPoint(item.x, item.y);
+      var path = labelPathFor(item.meta);
+      var point = mapLabelCanvasPoint(item.meta, path);
       if (!point) return;
       item.el.style.left = point.x + 'px';
       item.el.style.top = point.y + 'px';
     });
   }
 
-  function mapLabelAnchor(projection, pathGen, feature, meta) {
-    var bounds = pathGen.bounds(feature);
-    if (!bounds) return null;
-
-    var x = (bounds[0][0] + bounds[1][0]) / 2;
-    var y = bounds[0][1];
-
-    // Alaska/Hawaii skew the US bbox — anchor on the lower 48 instead.
-    if (meta.iso2 === 'US') {
-      var continental = projection([-98, 39]);
-      if (continental) {
-        x = continental[0];
-        y = continental[1];
-      }
-    }
-
-    // Keep UK / Ireland labels readable when they sit close together.
-    if (meta.iso2 === 'GB') {
-      x += 10;
-      y -= 6;
-    } else if (meta.iso2 === 'IE') {
-      x -= 14;
-      y += 4;
-    }
-
-    return { x: x, y: y };
-  }
-
-  function renderMapLabels(projection, features, pathGen) {
+  function renderMapLabels(projection) {
     if (!els.labels) return;
     els.labels.innerHTML = '';
     state.labelItems = [];
+    state.projection = projection;
 
     var spotlight = state.countries.filter(function (meta) {
       return meta.live || meta.building;
     });
 
     spotlight.forEach(function (meta) {
-      var feature = featureByNumericId(features, meta.numericId);
-      if (!feature) return;
-      var anchor = mapLabelAnchor(projection, pathGen, feature, meta);
-      if (!anchor) return;
-
-      var x = anchor.x;
-      var y = anchor.y;
+      if (!labelPathFor(meta)) return;
 
       var button = document.createElement('button');
       button.type = 'button';
@@ -807,39 +812,34 @@
         (meta.live ? 'Live' : 'Building') +
         '</span>';
 
-      function labelPath() {
-        return (
-          els.svg &&
-          els.svg.querySelector(
-            '.intl-country[data-country-id="' + meta.numericId + '"]'
-          )
-        );
-      }
-
       button.addEventListener('click', function (event) {
         event.preventDefault();
         event.stopPropagation();
-        onCountryActivate(labelPath(), meta);
+        onCountryActivate(labelPathFor(meta), meta);
       });
 
       button.addEventListener('mouseenter', function () {
         if (isCoarsePointer()) return;
-        selectCountry(labelPath(), meta, { arm: false });
+        selectCountry(labelPathFor(meta), meta, { arm: false });
       });
 
       button.addEventListener('mouseleave', function () {
         if (isCoarsePointer()) return;
-        var path = labelPath();
+        var path = labelPathFor(meta);
         if (path) path.classList.remove('is-hovered');
         hideCountryPopup();
         button.classList.remove('is-active');
       });
 
       els.labels.appendChild(button);
-      state.labelItems.push({ el: button, x: x, y: y, meta: meta });
+      state.labelItems.push({ el: button, meta: meta });
     });
 
-    positionMapLabels();
+    // Layout may still be settling after SVG paths are inserted.
+    window.requestAnimationFrame(function () {
+      positionMapLabels();
+      window.requestAnimationFrame(positionMapLabels);
+    });
   }
 
   function featureByNumericId(features, numericId) {
@@ -988,7 +988,7 @@
 
     els.svg.appendChild(countriesGroup);
     renderNetworkArcs(projection, features);
-    renderMapLabels(projection, features, pathGen);
+    renderMapLabels(projection);
 
     els.loading.hidden = true;
     state.mapReady = true;
