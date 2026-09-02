@@ -1,5 +1,6 @@
 /**
  * Edge middleware: pre-launch site access gate + server-side SEO meta for event/organiser URLs.
+ * Unknown listing slugs (event / organiser / opportunity / networking region) return a real HTTP 404.
  * Uses Web Standard APIs only (no Next.js dependency).
  */
 
@@ -767,7 +768,9 @@ async function maybeGateSiteAccess(request, url) {
     pathname === '/events/organiser' ||
     pathname === '/opportunities/opportunity' ||
     pathname === '/rankings/badge' ||
-    pathname === '/rankings/badge.html';
+    pathname === '/rankings/badge.html' ||
+    pathname === '/404' ||
+    pathname === '/404.html';
   if (
     previewInternalSeo &&
     (
@@ -855,6 +858,42 @@ async function maybeGateSiteAccess(request, url) {
 function passThroughIfGated(gated) {
   if (!gated) return;
   // Continue to static asset / rewrite; noindex is enforced on blocked paths and SEO responses.
+}
+
+/** Listing types that must not soft-404 (HTTP 200 + client “not found”). */
+const HARD_404_SEO_TYPES = new Set(['event', 'organiser', 'opportunity', 'networking-region']);
+
+async function serveHard404(url, internalHeaders) {
+  const headers = {
+    'Content-Type': 'text/html; charset=utf-8',
+    'Cache-Control': 'public, max-age=60, must-revalidate',
+    'X-Robots-Tag': NOINDEX_HEADER,
+  };
+  const candidates = ['/404.html', '/404'];
+  for (const path of candidates) {
+    try {
+      const htmlRes = await fetch(new URL(path, url.origin).toString(), {
+        headers: internalHeaders || {},
+      });
+      // Direct /404.html is usually 200; some hosts serve the error document as 404.
+      if (htmlRes.status === 200 || htmlRes.status === 404) {
+        const text = await htmlRes.text();
+        if (text && /<\/html>/i.test(text)) {
+          return new Response(text, { status: 404, headers });
+        }
+      }
+    } catch {
+      /* try next candidate */
+    }
+  }
+  return new Response('Not Found', {
+    status: 404,
+    headers: {
+      'Content-Type': 'text/plain; charset=utf-8',
+      'Cache-Control': 'public, max-age=60, must-revalidate',
+      'X-Robots-Tag': NOINDEX_HEADER,
+    },
+  });
 }
 
 export const config = {
@@ -1093,28 +1132,58 @@ export default async function middleware(request) {
   let type;
   let slug;
   let templatePath;
+  /** True when request is a legacy shell (?slug=) rather than a pretty /type/slug URL. */
+  let shellQuery = false;
 
   const eventMatch = pathname.match(/^\/events\/([^/]+)$/);
   const orgMatch = pathname.match(/^\/organisers\/([^/]+)$/);
   const oppMatch = pathname.match(/^\/opportunities\/([^/]+)$/);
   const networkingMatch = pathname.match(/^\/networking\/([^/]+)$/);
   const rankingBadgePath = pathname === '/rankings/badge';
+  const qSlug = String(url.searchParams.get('slug') || '').trim();
 
   if (eventMatch) {
-    slug = decodeURIComponent(eventMatch[1]);
-    if (SKIP_EVENT_SLUGS.has(slug)) return passThroughIfGated(siteGated);
-    type = 'event';
-    templatePath = '/events/event';
+    const pathSlug = decodeURIComponent(eventMatch[1]);
+    if (pathSlug === 'event' || pathSlug === 'event.html') {
+      if (!qSlug) return passThroughIfGated(siteGated);
+      type = 'event';
+      slug = qSlug;
+      templatePath = '/events/event';
+      shellQuery = true;
+    } else if (pathSlug === 'organiser' || pathSlug === 'organiser.html') {
+      if (!qSlug) return passThroughIfGated(siteGated);
+      type = 'organiser';
+      slug = qSlug;
+      templatePath = '/events/organiser';
+      shellQuery = true;
+    } else if (SKIP_EVENT_SLUGS.has(pathSlug)) {
+      return passThroughIfGated(siteGated);
+    } else {
+      type = 'event';
+      slug = pathSlug;
+      templatePath = '/events/event';
+    }
   } else if (orgMatch) {
-    slug = decodeURIComponent(orgMatch[1]);
-    if (slug === 'organiser.html') return passThroughIfGated(siteGated);
+    const pathSlug = decodeURIComponent(orgMatch[1]);
+    if (pathSlug === 'organiser.html') return passThroughIfGated(siteGated);
     type = 'organiser';
+    slug = pathSlug;
     templatePath = '/events/organiser';
   } else if (oppMatch) {
-    slug = decodeURIComponent(oppMatch[1]);
-    if (SKIP_OPPORTUNITY_SLUGS.has(slug)) return passThroughIfGated(siteGated);
-    type = 'opportunity';
-    templatePath = '/opportunities/opportunity';
+    const pathSlug = decodeURIComponent(oppMatch[1]);
+    if (pathSlug === 'opportunity' || pathSlug === 'opportunity.html') {
+      if (!qSlug) return passThroughIfGated(siteGated);
+      type = 'opportunity';
+      slug = qSlug;
+      templatePath = '/opportunities/opportunity';
+      shellQuery = true;
+    } else if (SKIP_OPPORTUNITY_SLUGS.has(pathSlug)) {
+      return passThroughIfGated(siteGated);
+    } else {
+      type = 'opportunity';
+      slug = pathSlug;
+      templatePath = '/opportunities/opportunity';
+    }
   } else if (networkingMatch) {
     slug = decodeURIComponent(networkingMatch[1]);
     type = 'networking-region';
@@ -1153,16 +1222,39 @@ export default async function middleware(request) {
         headers: internalHeaders,
       }),
     ]);
-    if (!metaRes.ok) return passThroughIfGated(siteGated);
+
+    // Unknown listing slug: real HTTP 404 (not the detail shell with client-side “not found”).
+    if (metaRes.status === 404 && HARD_404_SEO_TYPES.has(type)) {
+      return serveHard404(url, internalHeaders);
+    }
+    // API/gate failures: serve the shell HTML when we have it so brief outages do not
+    // fall through to Vercel’s filesystem 404 for valid pretty URLs.
+    if (!metaRes.ok) {
+      if (htmlRes.ok && HARD_404_SEO_TYPES.has(type) && !shellQuery) {
+        return new Response(await htmlRes.text(), {
+          status: 200,
+          headers: {
+            'Content-Type': 'text/html; charset=utf-8',
+            'Cache-Control': 'public, max-age=30, must-revalidate',
+            ...(siteGated ? { 'X-Robots-Tag': NOINDEX_HEADER } : {}),
+          },
+        });
+      }
+      return passThroughIfGated(siteGated);
+    }
 
     const meta = await metaRes.json();
+    if ((!meta || !meta.ok) && HARD_404_SEO_TYPES.has(type)) {
+      return serveHard404(url, internalHeaders);
+    }
     if (!meta || !meta.ok) return passThroughIfGated(siteGated);
 
-    if (meta.canonical && type === 'opportunity') {
+    if (meta.canonical && HARD_404_SEO_TYPES.has(type) && type !== 'networking-region') {
       try {
         const canonicalPath = new URL(meta.canonical).pathname.replace(/\/$/, '') || '/';
         const currentPath = pathname.replace(/\/$/, '') || '/';
-        if (canonicalPath !== currentPath) {
+        // Collapse legacy ?slug= shells (and mismatched opportunity paths) onto the canonical URL.
+        if (shellQuery || canonicalPath !== currentPath) {
           return Response.redirect(meta.canonical, 301);
         }
       } catch {
