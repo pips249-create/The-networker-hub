@@ -92,6 +92,7 @@ async function sendOne(row, toOverride) {
     variables: vars,
     skipEmailCheck: true,
     replyTo: REPLY_TO,
+    claimInviteSource: toOverride ? 'franchise_claim_test' : 'franchise_claim_batch',
     resendTags: [
       { name: 'campaign', value: 'opportunity_claim_franchise' },
       { name: 'segment', value: 'franchise_unclaimed' },
@@ -137,6 +138,7 @@ function sleep(ms) {
 
   let sent = 0;
   let failed = 0;
+  let skippedRateLimit = 0;
   for (const row of slice) {
     try {
       await sendOne(row);
@@ -144,9 +146,14 @@ function sleep(ms) {
       console.log('Sent', sent + '/' + slice.length, row.email, '—', row.title);
       await sleep(600);
     } catch (err) {
+      if (err && err.code === 'claim_invite_rate_limited') {
+        skippedRateLimit += 1;
+        console.warn('Skipped (already sent in last 24h)', row.email, '—', row.title);
+        continue;
+      }
       failed += 1;
       console.error('Failed', row.email, err.message || err);
     }
   }
-  console.log('Done. Sent:', sent, 'Failed:', failed);
+  console.log('Done. Sent:', sent, 'Failed:', failed, 'Skipped (24h limit):', skippedRateLimit);
 })();

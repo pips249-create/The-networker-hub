@@ -78,6 +78,11 @@ const {
 } = require('./event-removed-by-hub-sections');
 const { patchEmailMobileStyles } = require('./email-mobile-styles');
 const franchiseEmailFooterLogoDataUri = require('./franchise-email-footer-logo-datauri');
+const {
+  isOpportunityClaimInviteSlug,
+  assertOpportunityClaimInviteAllowed,
+  logOpportunityClaimInviteSent,
+} = require('./opportunity-claim-invite-rate-limit');
 
 const PLACEHOLDER_RE = /\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g;
 
@@ -749,7 +754,19 @@ async function sendTemplatedEmail({
   from,
   idempotencyKey,
   attachments,
+  opportunityId,
+  skipClaimInviteRateLimit,
+  forceClaimInvite,
+  claimInviteSource,
 }) {
+  if (isOpportunityClaimInviteSlug(slug)) {
+    await assertOpportunityClaimInviteAllowed({
+      slug,
+      to,
+      force: forceClaimInvite,
+      skipClaimInviteRateLimit,
+    });
+  }
   if (!skipEmailCheck) {
     if (TRANSACTIONAL_EMAIL_SLUGS.has(slug)) {
       if (PREFERENCE_EMAIL_SLUGS[slug]) {
@@ -803,6 +820,15 @@ async function sendTemplatedEmail({
   const mergedTags = []
     .concat(Array.isArray(resendTags) ? resendTags : [])
     .concat(sponsorTags);
+  let claimInviteIdempotency = String(idempotencyKey || '').trim();
+  if (!claimInviteIdempotency && isOpportunityClaimInviteSlug(slug)) {
+    const day = new Date().toISOString().slice(0, 10);
+    const emailKey = String(to || '')
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9@._+-]+/g, '-');
+    claimInviteIdempotency = ('claim-' + slug + '-' + emailKey + '-' + day).slice(0, 256);
+  }
   const result = await sendViaResend({
     to,
     subject: subject || built.subject,
@@ -812,7 +838,7 @@ async function sendTemplatedEmail({
     from,
     skipAllowlist: shouldSkipEmailAllowlist(slug),
     listUnsubscribeUrl: shouldAttachListUnsubscribe(slug) ? unsubscribeUrl(siteUrl) : '',
-    idempotencyKey,
+    idempotencyKey: claimInviteIdempotency || idempotencyKey,
     attachments,
   });
   if (Array.isArray(built.sponsorTracked) && built.sponsorTracked.length) {
@@ -824,6 +850,25 @@ async function sendTemplatedEmail({
       );
     } catch (_e) {
       /* reporting must not block email delivery */
+    }
+  }
+  if (isOpportunityClaimInviteSlug(slug)) {
+    try {
+      const vars = variables && typeof variables === 'object' ? variables : {};
+      await logOpportunityClaimInviteSent({
+        slug,
+        to,
+        opportunityId:
+          opportunityId ||
+          vars.opportunity_id ||
+          vars.opportunityId ||
+          null,
+        opportunityTitle: vars.opportunity_title || vars.opportunityTitle || null,
+        source: claimInviteSource || null,
+        resendId: result && result.id,
+      });
+    } catch (_e) {
+      /* rate-limit log must not block delivery */
     }
   }
   return {

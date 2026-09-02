@@ -209,7 +209,7 @@
     },
     'revenue-mix': {
       title: 'Revenue mix',
-      subtitle: 'Model sponsorship, ticketing, and upsells — see when each stream matters',
+      subtitle: 'Actual sales from Sales targets, plus rate-card scenarios for planning',
     },
     'sales-kit': {
       title: 'Organiser sales kit',
@@ -394,10 +394,10 @@
     'revenue-mix': {
       title: 'How to use the revenue mix model',
       steps: [
-        'Tap Launch, Growth, or Scale — totals update instantly.',
-        'Drag paid tickets / month to see when fees catch up with sponsorship.',
+        'Actual sales is on by default — charts pull this month from Sales targets.',
+        'Switch to Model, then tap Launch / Growth / Scale to plan inventory and ticket volume.',
         'Open Sponsorship inventory only when you need to tweak slot fill (or Load live slots).',
-        'Charts and break-even tables stay collapsed until you need them — Sales targets holds actuals.',
+        'Scenario comparison always includes an Actual bar once sales data has loaded.',
       ],
     },
     spotlight: {
@@ -571,6 +571,7 @@
     noImage: false,
     awaitingPayment: false,
     paymentLapsed: false,
+    paid: false,
     unclaimed: false,
     brandDuplicates: false,
     sort: 'recent',
@@ -862,7 +863,13 @@
   }
 
   function fmtMoney(n) {
-    return '£' + Number(n).toLocaleString('en-GB', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    var value = Number(n);
+    if (!Number.isFinite(value)) value = 0;
+    var formatted = Math.abs(value).toLocaleString('en-GB', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+    return (value < 0 ? '-£' : '£') + formatted;
   }
 
   function fmtTime(iso) {
@@ -6560,6 +6567,72 @@
         '</div></div>';
     }
 
+    var refunds = targets.refunds || null;
+    var refundsHtml = '';
+    if (refunds) {
+      var pending = refunds.pending || {};
+      var pendingFee = Number(pending.estimatedHubFee) || 0;
+      var pendingBookings = Number(pending.paidBookings) || 0;
+      var completedFee = Number(refunds.completedHubFee) || 0;
+      var completedCount = Number(refunds.completedCount) || 0;
+      var salesFee = Number(refunds.salesHubFee) || 0;
+      var netFee = Number(refunds.netHubFee) || 0;
+      var hasPending = pendingBookings > 0 || (Number(pending.eventCount) || 0) > 0;
+      refundsHtml =
+        '<div class="rounded-xl border ' +
+        (hasPending ? 'border-amber-200 bg-amber-50' : 'border-slate-200 bg-white') +
+        ' p-4 shadow-sm">' +
+        '<div class="flex flex-wrap items-start justify-between gap-3">' +
+        '<div><p class="text-xs font-semibold uppercase tracking-wide ' +
+        (hasPending ? 'text-amber-800' : 'text-slate-500') +
+        '">Ticket refunds</p>' +
+        '<p class="text-sm text-slate-700 mt-1">Sales targets ticket fees are net of completed refunds. Pending Stripe refunds stay counted until confirmed.</p></div>' +
+        '<a href="#financials/payouts" class="text-xs font-semibold text-brand-700 hover:underline shrink-0">Open refunds queue →</a></div>' +
+        '<div class="mt-3 grid sm:grid-cols-3 gap-3">' +
+        '<div class="rounded-lg border border-slate-200 bg-white px-3 py-2">' +
+        '<p class="text-[11px] font-semibold text-slate-500">Gross ticket fees</p>' +
+        '<p class="text-base font-bold text-brand-900 mt-0.5">' +
+        esc(fmtMoney(salesFee)) +
+        '</p>' +
+        '<p class="text-[11px] text-slate-500 mt-0.5">' +
+        esc(String(refunds.salesCount || 0)) +
+        ' paid booking' +
+        ((refunds.salesCount || 0) === 1 ? '' : 's') +
+        '</p></div>' +
+        '<div class="rounded-lg border border-slate-200 bg-white px-3 py-2">' +
+        '<p class="text-[11px] font-semibold text-slate-500">Refunds completed</p>' +
+        '<p class="text-base font-bold ' +
+        (completedFee > 0 ? 'text-amber-800' : 'text-brand-900') +
+        ' mt-0.5">' +
+        esc(completedFee > 0 ? fmtMoney(-completedFee) : fmtMoney(0)) +
+        '</p>' +
+        '<p class="text-[11px] text-slate-500 mt-0.5">' +
+        esc(String(completedCount)) +
+        ' refund' +
+        (completedCount === 1 ? '' : 's') +
+        '</p></div>' +
+        '<div class="rounded-lg border border-slate-200 bg-white px-3 py-2">' +
+        '<p class="text-[11px] font-semibold text-slate-500">Net ticket fees</p>' +
+        '<p class="text-base font-bold text-brand-900 mt-0.5">' +
+        esc(fmtMoney(netFee)) +
+        '</p>' +
+        '<p class="text-[11px] text-slate-500 mt-0.5">Included in period total</p></div></div>' +
+        (hasPending
+          ? '<p class="mt-3 text-xs font-semibold text-amber-900">' +
+            esc(String(pendingBookings)) +
+            ' paid booking' +
+            (pendingBookings === 1 ? '' : 's') +
+            ' across ' +
+            esc(String(pending.eventCount || 0)) +
+            ' cancelled event' +
+            ((pending.eventCount || 0) === 1 ? '' : 's') +
+            ' still await refund confirmation' +
+            (pendingFee > 0 ? ' (~' + esc(fmtMoney(pendingFee)) + ' Hub fee at risk)' : '') +
+            '.</p>'
+          : '<p class="mt-3 text-xs text-slate-500">No cancelled-event refunds waiting on Stripe confirmation.</p>') +
+        '</div>';
+    }
+
     var summary =
       '<div class="rounded-xl border border-brand-200 bg-gradient-to-r from-brand-50 to-white p-4 sm:p-5 space-y-4">' +
       '<div class="flex flex-wrap items-start justify-between gap-3">' +
@@ -6589,7 +6662,8 @@
       revenueTargetBarColor(totals.status) +
       ' transition-all" style="width:' +
       Math.min(100, Number(totals.progressPct) || 0) +
-      '%"></div></div></div></div>';
+      '%"></div></div></div></div>' +
+      (refundsHtml || '');
 
     var assessmentHtml =
       '<div class="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">' +
@@ -6691,16 +6765,21 @@
                 .slice(0, 12)
                 .map(function (item) {
                   var canRemove = item.type === 'manual' && item.id;
+                  var isRefund = item.kind === 'refund' || Number(item.amount) < 0;
                   return (
                     '<li class="flex justify-between gap-2 items-start">' +
                     '<span>' +
                     esc(item.source) +
-                    (item.type === 'manual'
-                      ? ' <span class="text-slate-400">(manual)</span>'
-                      : item.type === 'stripe'
-                        ? ' <span class="text-slate-400">(Stripe)</span>'
-                        : '') +
-                    '</span><span class="font-medium shrink-0 text-right">' +
+                    (isRefund
+                      ? ' <span class="text-amber-700">(refund)</span>'
+                      : item.type === 'manual'
+                        ? ' <span class="text-slate-400">(manual)</span>'
+                        : item.type === 'stripe'
+                          ? ' <span class="text-slate-400">(Stripe)</span>'
+                          : '') +
+                    '</span><span class="font-medium shrink-0 text-right' +
+                    (isRefund ? ' text-amber-800' : '') +
+                    '">' +
                     esc(fmtMoney(item.amount || 0)) +
                     (canRemove
                       ? '<button type="button" class="block text-[11px] text-red-700 hover:underline mt-0.5 ml-auto" data-delete-revenue-deal="' +
@@ -7204,7 +7283,11 @@
 
   function renderRevenueMix() {
     if (window.AdminRevenueMix && window.AdminRevenueMix.render) {
-      window.AdminRevenueMix.render(main, { esc: esc, attrEsc: attrEsc });
+      window.AdminRevenueMix.render(main, {
+        esc: esc,
+        attrEsc: attrEsc,
+        adminGet: adminGet,
+      });
       return;
     }
     main.innerHTML =
@@ -23702,6 +23785,7 @@
     if (opportunityCleanupState.noImage) n += 1;
     if (opportunityCleanupState.awaitingPayment) n += 1;
     if (opportunityCleanupState.paymentLapsed) n += 1;
+    if (opportunityCleanupState.paid) n += 1;
     if (opportunityCleanupState.unclaimed) n += 1;
     return n;
   }
@@ -23744,6 +23828,7 @@
       else if (key === 'no_image') active = opportunityCleanupState.noImage;
       else if (key === 'awaiting_payment') active = opportunityCleanupState.awaitingPayment;
       else if (key === 'payment_lapsed') active = opportunityCleanupState.paymentLapsed;
+      else if (key === 'paid') active = opportunityCleanupState.paid;
       else if (key === 'unclaimed') active = opportunityCleanupState.unclaimed;
       btn.classList.toggle('ring-2', active);
       btn.classList.toggle('ring-brand-700', active);
@@ -23866,6 +23951,7 @@
     if (opportunityCleanupState.noImage) params.set('no_image', '1');
     if (opportunityCleanupState.awaitingPayment) params.set('awaiting_payment', '1');
     if (opportunityCleanupState.paymentLapsed) params.set('payment_lapsed', '1');
+    if (opportunityCleanupState.paid) params.set('paid', '1');
     if (opportunityCleanupState.unclaimed) params.set('unclaimed', '1');
     if (opportunityCleanupState.brandDuplicates) params.set('brand_duplicates', '1');
     if (opportunityCleanupState.q) params.set('q', opportunityCleanupState.q);
@@ -23939,6 +24025,9 @@
     if (query.has('payment_lapsed')) {
       opportunityCleanupState.paymentLapsed =
         query.get('payment_lapsed') === '1' || query.get('payment_lapsed') === 'true';
+    }
+    if (query.has('paid')) {
+      opportunityCleanupState.paid = query.get('paid') === '1' || query.get('paid') === 'true';
     }
     if (query.has('unclaimed')) {
       opportunityCleanupState.unclaimed =
@@ -25271,12 +25360,18 @@
   }
 
   function opportunityListingBillingBadgeHtml(opp) {
-    var mode = String(opp.listing_billing_mode || '').trim();
-    if (mode === 'monthly') {
-      return '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-indigo-100 text-indigo-900" title="£25/month + VAT directory listing">£25/mo</span>';
+    var hasActiveSub = Boolean(String(opp.listing_stripe_subscription_id || '').trim());
+    // Only show £25/mo when they are actually on a live Stripe subscription — not for
+    // hub-seeded / unclaimed listings that happen to have listing_paid_at set.
+    if (hasActiveSub && opp.listing_payment_active !== false && !opp.listing_payment_lapsed) {
+      return '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-indigo-100 text-indigo-900" title="Active Stripe subscription — £25/month + VAT">Paying £25/mo</span>';
     }
+    if (hasActiveSub && opp.listing_payment_lapsed) {
+      return '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-orange-100 text-orange-900" title="Stripe subscription ended">Sub ended</span>';
+    }
+    var mode = String(opp.listing_billing_mode || '').trim();
     if (mode === 'legacy') {
-      return '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-slate-100 text-slate-700" title="Published before subscription billing">Legacy</span>';
+      return '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-slate-100 text-slate-700" title="Published before subscription billing — not on £25/mo Stripe">Legacy</span>';
     }
     return '';
   }
@@ -25631,6 +25726,7 @@
     if (opportunityCleanupState.noImage) params.set('no_image', '1');
     if (opportunityCleanupState.awaitingPayment) params.set('awaiting_payment', '1');
     if (opportunityCleanupState.paymentLapsed) params.set('payment_lapsed', '1');
+    if (opportunityCleanupState.paid) params.set('paid', '1');
     if (opportunityCleanupState.unclaimed) params.set('unclaimed', '1');
     if (opportunityCleanupState.brandDuplicates) params.set('brand_duplicates', '1');
     if (opportunityCleanupState.sort) params.set('sort', opportunityCleanupState.sort);
@@ -25932,6 +26028,7 @@
       opportunityCleanupState.noImage = false;
       opportunityCleanupState.awaitingPayment = false;
       opportunityCleanupState.paymentLapsed = false;
+      opportunityCleanupState.paid = false;
       opportunityCleanupState.unclaimed = false;
       opportunityCleanupState.brandDuplicates = false;
       opportunityCleanupState.q = '';
@@ -25947,6 +26044,7 @@
       opportunityCleanupState.featured = false;
       opportunityCleanupState.noImage = false;
       opportunityCleanupState.paymentLapsed = false;
+      opportunityCleanupState.paid = false;
       opportunityCleanupState.unclaimed = false;
       opportunityCleanupState.brandDuplicates = false;
       opportunityCleanupState.q = '';
@@ -25957,10 +26055,18 @@
     main.innerHTML =
       '<div class="space-y-4">' +
       '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3"><strong>Review workflow:</strong> Listings appear under <strong>Pending review</strong> when the organiser submits. Click <strong>Review</strong> on a row (or open the full review page) → <strong>Approve</strong> (owner gets a pay-to-go-live email) or <strong>Deny</strong> (with a reason). After they pay via Stripe, the listing goes live on <code class="text-[11px]">/opportunities/</code>. Use <strong>Awaiting payment</strong> to find approved listings still waiting on checkout.</p>' +
-      '<div class="rounded-xl border border-brand-200 bg-brand-50/50 overflow-hidden">' +
+      '<details class="opportunity-cleanup-create group rounded-xl border border-brand-200 bg-brand-50/50 overflow-hidden">' +
+      '<summary class="opportunity-cleanup-create-summary cursor-pointer list-none select-none flex flex-wrap items-center justify-between gap-2 px-4 py-3 bg-brand-700 text-white hover:bg-brand-900">' +
+      '<span class="inline-flex items-center gap-2 text-sm font-semibold">' +
+      '<span aria-hidden="true" class="inline-flex h-6 w-6 items-center justify-center rounded-md bg-white/20 text-base leading-none font-bold">+</span>' +
+      'Create listing &amp; tools</span>' +
+      '<span class="inline-flex items-center gap-2 text-xs font-medium text-white/90">' +
+      '<span>Hub-owned create, guides, ads</span>' +
+      '<span aria-hidden="true" class="opportunity-cleanup-create-chevron text-sm">▾</span></span></summary>' +
+      '<div class="bg-white border-t border-brand-100">' +
       '<div class="px-4 py-3 border-b border-brand-100 space-y-3">' +
       '<div class="flex flex-wrap items-center justify-between gap-2">' +
-      '<p class="text-sm font-semibold text-brand-900">Create listing &amp; related pages</p>' +
+      '<p class="text-sm font-semibold text-brand-900">Related pages</p>' +
       '<a href="/opportunities/" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-700 hover:underline">Open live browse →</a></div>' +
       '<div class="flex flex-wrap gap-2">' +
       '<a href="#spotlight/opportunities" class="inline-flex items-center rounded-lg border border-brand-200 bg-white px-3 py-1.5 text-xs font-semibold text-brand-900 hover:border-brand-400 hover:bg-brand-50">Premium Spotlight</a>' +
@@ -25971,15 +26077,7 @@
       '<a href="/advertising#ad-panel-opportunities" target="_blank" rel="noopener" class="inline-flex items-center rounded-lg border border-brand-200 bg-white px-3 py-1.5 text-xs font-semibold text-brand-900 hover:border-brand-400 hover:bg-brand-50">Advertising rate card</a>' +
       '<a href="#opportunities?approval=pending" class="inline-flex items-center rounded-lg border border-amber-300 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-900 hover:bg-amber-100">Pending review</a>' +
       '</div></div>' +
-      '<details class="opportunity-cleanup-create group border-t border-brand-100">' +
-      '<summary class="opportunity-cleanup-create-summary cursor-pointer list-none select-none flex flex-wrap items-center justify-between gap-2 px-4 py-3 bg-brand-700 text-white hover:bg-brand-900">' +
-      '<span class="inline-flex items-center gap-2 text-sm font-semibold">' +
-      '<span aria-hidden="true" class="inline-flex h-6 w-6 items-center justify-center rounded-md bg-white/20 text-base leading-none font-bold">+</span>' +
-      'Create listing</span>' +
-      '<span class="inline-flex items-center gap-2 text-xs font-medium text-white/90">' +
-      '<span>Add a hub-owned opportunity</span>' +
-      '<span aria-hidden="true" class="opportunity-cleanup-create-chevron text-sm">▾</span></span></summary>' +
-      '<div class="px-4 pb-4 space-y-4 border-t border-brand-100 bg-white">' +
+      '<div class="px-4 pb-4 space-y-4">' +
       '<p class="text-xs text-slate-600 pt-3">Create a hub-owned business opportunity with image, description, and card details. It stays claimable until you assign an owner email (or someone requests a claim). Prefix the title with <code class="text-[11px]">[TEST]</code> for throwaway previews.</p>' +
       '<p class="text-xs text-amber-900 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">One listing per brand on <code class="text-[11px]">/opportunities/</code> — Utility Warehouse, Arbonne, and BNI. Command Centre blocks a duplicate if one is already in the catalogue.</p>' +
       '<form class="opportunity-create-form grid sm:grid-cols-2 gap-3">' +
@@ -25988,8 +26086,8 @@
         { coverKey: 'opp-create-cover', logoKey: 'opp-create-logo' }
       ) +
       '<div class="sm:col-span-2 rounded-lg border border-slate-200 bg-white p-3 space-y-2">' +
-      '<p class="text-xs font-semibold text-slate-600">Claim later (optional)</p>' +
-      '<p class="text-xs text-slate-500">Leave blank to keep the listing hub-owned and claimable. Enter an email to open the in-dashboard claim prompt when that person signs in.</p>' +
+      '<p class="text-xs font-semibold text-slate-600">Claim invite (optional)</p>' +
+      '<p class="text-xs text-slate-500">Leave blank to keep the listing hub-owned and claimable. Enter an email to assign them as claimant and <strong>email the listing claim invite</strong> now (also shows in their dashboard when they sign in).</p>' +
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Owner / claimant email</label>' +
       '<input type="email" name="owner_email" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Leave blank for hub-owned"></div></div>' +
       '<p id="opportunity-create-brand-conflict" class="sm:col-span-2 hidden text-xs text-red-700 font-semibold"></p>' +
@@ -26001,7 +26099,7 @@
       '<p class="text-xs text-slate-600">Add 3 sample <code class="text-[11px]">[TEST]</code> listings with stock images for previewing /opportunities/ — delete them from the table when done.</p>' +
       '<div class="flex flex-wrap items-center gap-3">' +
       '<button type="button" id="opportunity-test-samples-btn" class="rounded-lg border border-brand-300 bg-white text-brand-900 text-sm font-semibold px-4 py-2 hover:bg-brand-50">Add 3 sample test listings</button>' +
-      '<span id="opportunity-test-samples-msg" class="text-xs"></span></div></div></div></details></div>' +
+      '<span id="opportunity-test-samples-msg" class="text-xs"></span></div></div></div></div></details>' +
       '<div id="opportunity-action-banner" hidden></div>' +
       '<div id="opportunity-cleanup-status" class="text-sm text-slate-500">Loading business opportunities…</div>' +
       '<div id="opportunity-exclusive-brand-duplicates" class="hidden"></div>' +
@@ -26024,10 +26122,16 @@
       '<input type="search" id="opportunity-cleanup-search" placeholder="Search title, host, or owner email…" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full sm:flex-1 bg-white" value="' +
       attrEsc(opportunityCleanupState.q) +
       '">' +
-      '<select id="opportunity-cleanup-sort" class="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white w-full sm:w-44">' +
+      '<select id="opportunity-cleanup-sort" class="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white w-full sm:w-56">' +
       '<option value="recent"' +
       (opportunityCleanupState.sort === 'recent' ? ' selected' : '') +
       '>Recently updated</option>' +
+      '<option value="created"' +
+      (opportunityCleanupState.sort === 'created' ? ' selected' : '') +
+      '>Recently added</option>' +
+      '<option value="communicated"' +
+      (opportunityCleanupState.sort === 'communicated' ? ' selected' : '') +
+      '>Recently communicated</option>' +
       '<option value="published"' +
       (opportunityCleanupState.sort === 'published' ? ' selected' : '') +
       '>Recently published</option>' +
@@ -26037,8 +26141,15 @@
       '<option value="host"' +
       (opportunityCleanupState.sort === 'host' ? ' selected' : '') +
       '>Host A–Z</option></select></div>' +
+      '<div class="flex flex-wrap gap-2">' +
+      '<button type="button" data-opp-quick="pending" class="text-xs font-semibold rounded-full border border-amber-200 px-3 py-1 text-amber-900 hover:bg-amber-50">Pending review</button>' +
+      '<button type="button" data-opp-quick="unclaimed" class="text-xs font-semibold rounded-full border border-amber-200 px-3 py-1 text-amber-900 hover:bg-amber-50">Unclaimed</button>' +
+      '<button type="button" data-opp-quick="paid" class="text-xs font-semibold rounded-full border border-emerald-200 px-3 py-1 text-emerald-900 hover:bg-emerald-50">Paid</button>' +
+      '<button type="button" data-opp-quick="awaiting_payment" class="text-xs font-semibold rounded-full border border-sky-200 px-3 py-1 text-sky-900 hover:bg-sky-50">Awaiting payment</button>' +
+      '<button type="button" data-opp-quick="payment_lapsed" class="text-xs font-semibold rounded-full border border-orange-200 px-3 py-1 text-orange-900 hover:bg-orange-50">Payment lapsed</button>' +
+      '<button type="button" data-opp-quick="clear" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-500 hover:bg-slate-50">Clear</button></div>' +
       '<details class="admin-filter-more"' +
-      (opportunityCleanupActiveFilterCount() ? ' open' : '') +
+      (opportunityCleanupActiveFilterCount() > 2 ? ' open' : '') +
       '>' +
       '<summary><span>More filters</span>' +
       '<span id="opportunity-cleanup-filter-count" class="admin-filter-more-count' +
@@ -26080,16 +26191,11 @@
       (opportunityCleanupState.brandDuplicates ? ' checked' : '') +
       '> Brand duplicates only</label></div>' +
       '<div class="flex flex-wrap gap-2">' +
-      '<button type="button" data-opp-quick="pending" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Pending review</button>' +
-      '<button type="button" data-opp-quick="awaiting_payment" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Awaiting payment</button>' +
-      '<button type="button" data-opp-quick="payment_lapsed" class="text-xs font-semibold rounded-full border border-orange-200 px-3 py-1 text-orange-900 hover:bg-orange-50">Payment lapsed</button>' +
-      '<button type="button" data-opp-quick="unclaimed" class="text-xs font-semibold rounded-full border border-amber-200 px-3 py-1 text-amber-900 hover:bg-amber-50">Unclaimed</button>' +
       '<button type="button" data-opp-quick="draft" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Draft</button>' +
       '<button type="button" data-opp-quick="published" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Published</button>' +
       '<button type="button" data-opp-quick="featured" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Featured</button>' +
       '<button type="button" data-opp-quick="no_image" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">No image</button>' +
-      '<button type="button" data-opp-quick="brand_duplicates" class="text-xs font-semibold rounded-full border border-red-200 px-3 py-1 text-red-800 hover:bg-red-50">Brand duplicates</button>' +
-      '<button type="button" data-opp-quick="clear" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-500 hover:bg-slate-50">Clear filters</button></div>' +
+      '<button type="button" data-opp-quick="brand_duplicates" class="text-xs font-semibold rounded-full border border-red-200 px-3 py-1 text-red-800 hover:bg-red-50">Brand duplicates</button></div>' +
       '</div></details>' +
       '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer border-t border-slate-100 pt-2">' +
       '<input type="checkbox" id="opportunity-cleanup-select-page" class="rounded border-slate-300"> Select all on page</label></div>' +
@@ -26269,8 +26375,16 @@
       .then(function (data) {
         if (!data.ok) throw new Error(data.message || data.error || 'Create failed');
         if (msg) {
-          msg.textContent = payloadOwnerClaimMsg(data.opportunity) || 'Listing created.';
-          msg.className = 'opportunity-create-msg text-xs text-emerald-700 font-semibold';
+          msg.textContent =
+            data.message ||
+            (data.emailSent
+              ? 'Listing created — claim invite emailed.'
+              : data.rateLimited
+                ? 'Listing created — claim invite already sent to this email in the last 24 hours.'
+                : payloadOwnerClaimMsg(data.opportunity) || 'Listing created.');
+          msg.className =
+            'opportunity-create-msg text-xs font-semibold ' +
+            (data.rateLimited ? 'text-amber-800' : 'text-emerald-700');
         }
         resetOpportunityCreateForm(form);
         if (btn) btn.disabled = false;
@@ -26291,7 +26405,7 @@
   function payloadOwnerClaimMsg(opportunity) {
     if (!opportunity) return '';
     if (opportunity.ownership_claim_status === 'pending' && opportunity.owner_email) {
-      return 'Listing created — claim invite will appear when ' + opportunity.owner_email + ' signs in.';
+      return 'Listing created — claim invite emailed to ' + opportunity.owner_email + '.';
     }
     return 'Listing created — hub-owned and claimable.';
   }
@@ -26361,8 +26475,12 @@
             (data.message ||
               (data.emailSent
                 ? 'Owner assigned — claim invite emailed.'
-                : 'Owner assigned — claim invite will appear when they sign in.'));
-          msg.className = 'opportunity-cleanup-msg text-xs text-emerald-700 font-semibold';
+                : data.rateLimited
+                  ? 'Owner assigned — claim invite already sent to this email in the last 24 hours.'
+                  : 'Owner assigned — claim invite will appear when they sign in.'));
+          msg.className =
+            'opportunity-cleanup-msg text-xs font-semibold ' +
+            (data.rateLimited ? 'text-amber-800' : 'text-emerald-700');
         }
         return refreshOpportunityCleanupPage().then(function () {
           if (isOpportunityReviewPage()) return refreshOpportunityReviewPage();
@@ -26590,6 +26708,7 @@
         opportunityCleanupState.noImage = false;
         opportunityCleanupState.awaitingPayment = false;
         opportunityCleanupState.paymentLapsed = false;
+        opportunityCleanupState.paid = false;
         opportunityCleanupState.unclaimed = false;
         opportunityCleanupState.brandDuplicates = false;
         opportunityCleanupState.q = '';
@@ -26601,6 +26720,7 @@
         opportunityCleanupState.noImage = false;
         opportunityCleanupState.awaitingPayment = false;
         opportunityCleanupState.paymentLapsed = false;
+        opportunityCleanupState.paid = false;
         opportunityCleanupState.unclaimed = false;
         opportunityCleanupState.brandDuplicates = false;
         opportunityCleanupState.q = '';
@@ -26613,6 +26733,7 @@
         opportunityCleanupState.featured = false;
         opportunityCleanupState.noImage = false;
         opportunityCleanupState.paymentLapsed = false;
+        opportunityCleanupState.paid = false;
         opportunityCleanupState.unclaimed = false;
         opportunityCleanupState.brandDuplicates = false;
         opportunityCleanupState.q = '';
@@ -26626,6 +26747,7 @@
           opportunityCleanupState.q = '';
           opportunityCleanupState.awaitingPayment = false;
           opportunityCleanupState.paymentLapsed = false;
+          opportunityCleanupState.paid = false;
           opportunityCleanupState.unclaimed = false;
           opportunityCleanupState.brandDuplicates = false;
         }
@@ -26635,6 +26757,7 @@
           opportunityCleanupState.approval = '';
           opportunityCleanupState.status = '';
           opportunityCleanupState.paymentLapsed = false;
+          opportunityCleanupState.paid = false;
         }
       } else if (key === 'payment_lapsed') {
         opportunityCleanupState.paymentLapsed = !opportunityCleanupState.paymentLapsed;
@@ -26642,12 +26765,23 @@
           opportunityCleanupState.approval = '';
           opportunityCleanupState.status = '';
           opportunityCleanupState.awaitingPayment = false;
+          opportunityCleanupState.paid = false;
+        }
+      } else if (key === 'paid') {
+        opportunityCleanupState.paid = !opportunityCleanupState.paid;
+        if (opportunityCleanupState.paid) {
+          opportunityCleanupState.approval = '';
+          opportunityCleanupState.status = '';
+          opportunityCleanupState.awaitingPayment = false;
+          opportunityCleanupState.paymentLapsed = false;
+          opportunityCleanupState.unclaimed = false;
         }
       } else if (key === 'unclaimed') {
         opportunityCleanupState.unclaimed = !opportunityCleanupState.unclaimed;
         if (opportunityCleanupState.unclaimed) {
           opportunityCleanupState.awaitingPayment = false;
           opportunityCleanupState.paymentLapsed = false;
+          opportunityCleanupState.paid = false;
         }
       } else if (key === 'draft') {
         opportunityCleanupState.status = opportunityCleanupState.status === 'draft' ? '' : 'draft';

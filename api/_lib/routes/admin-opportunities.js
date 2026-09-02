@@ -411,6 +411,7 @@ async function listOpportunitiesForAdmin(query) {
   const awaitingPayment =
     query.awaiting_payment === '1' || query.awaiting_payment === 'true';
   const paymentLapsed = query.payment_lapsed === '1' || query.payment_lapsed === 'true';
+  const paid = query.paid === '1' || query.paid === 'true';
   const unclaimed = query.unclaimed === '1' || query.unclaimed === 'true';
   const offset = Math.max(parseInt(String(query.offset || ''), 10) || 0, 0);
   // Keep Command Centre pages small — never return the full catalogue in one response.
@@ -450,7 +451,10 @@ async function listOpportunitiesForAdmin(query) {
     dbQuery = dbQuery.order('host', { ascending: true });
   } else if (sort === 'published') {
     dbQuery = dbQuery.order('published_at', { ascending: false, nullsFirst: false });
+  } else if (sort === 'created' || sort === 'added') {
+    dbQuery = dbQuery.order('created_at', { ascending: false });
   } else {
+    // recent | communicated (communicated re-sorted in memory below)
     dbQuery = dbQuery.order('updated_at', { ascending: false });
   }
 
@@ -458,6 +462,8 @@ async function listOpportunitiesForAdmin(query) {
   if (awaitingPayment) {
     dbQuery = dbQuery.eq('approval_status', 'Approved').is('listing_paid_at', null);
   } else if (paymentLapsed) {
+    dbQuery = dbQuery.not('listing_paid_at', 'is', null);
+  } else if (paid) {
     dbQuery = dbQuery.not('listing_paid_at', 'is', null);
   } else if (unclaimed) {
     dbQuery = dbQuery.eq('ownership_claim_status', 'pending');
@@ -515,6 +521,56 @@ async function listOpportunitiesForAdmin(query) {
     if (lapsedRes.error) throw new Error(lapsedRes.error.message);
     const filtered = (lapsedRes.data || []).filter(function (row) {
       return listingPaymentLapsed(row);
+    });
+    total = filtered.length;
+    rows = filtered.slice(offset, offset + limit);
+  } else if (paid) {
+    const paidRes = await dbQuery.limit(500);
+    if (paidRes.error) throw new Error(paidRes.error.message);
+    const filtered = (paidRes.data || []).filter(function (row) {
+      return Boolean(row.listing_paid_at) && listingPaymentCurrent(row);
+    });
+    total = filtered.length;
+    rows = filtered.slice(offset, offset + limit);
+  } else if (sort === 'communicated') {
+    const commRes = await dbQuery.limit(500);
+    if (commRes.error) throw new Error(commRes.error.message);
+    const candidates = commRes.data || [];
+    const ids = candidates.map(function (row) {
+      return row.id;
+    }).filter(Boolean);
+    const lastEnquiryByOpp = Object.create(null);
+    if (ids.length) {
+      const enqRes = await sb
+        .from('opportunity_enquiries')
+        .select('opportunity_id, created_at')
+        .in('opportunity_id', ids)
+        .order('created_at', { ascending: false })
+        .limit(3000);
+      if (!enqRes.error) {
+        (enqRes.data || []).forEach(function (enq) {
+          const oppId = String(enq.opportunity_id || '');
+          if (oppId && !lastEnquiryByOpp[oppId]) {
+            lastEnquiryByOpp[oppId] = enq.created_at;
+          }
+        });
+      }
+    }
+    function communicatedAt(row) {
+      const id = String(row.id || '');
+      return (
+        lastEnquiryByOpp[id] ||
+        row.approved_pay_reminder_sent_at ||
+        row.listing_expiry_reminder_sent_at ||
+        row.ownership_claimed_at ||
+        row.approved_at ||
+        row.updated_at ||
+        row.created_at ||
+        ''
+      );
+    }
+    const filtered = candidates.slice().sort(function (a, b) {
+      return String(communicatedAt(b) || '').localeCompare(String(communicatedAt(a) || ''));
     });
     total = filtered.length;
     rows = filtered.slice(offset, offset + limit);
@@ -623,6 +679,73 @@ function applyPublishedListingPayment(patch, row, now) {
   if (!listingPaymentActive(row, now)) {
     patch.listing_paid_at = row.listing_paid_at || now.toISOString();
     patch.listing_expires_at = addMonths(now, 12).toISOString();
+  }
+}
+
+async function sendOpportunityClaimInviteEmail(row, options) {
+  const opts = options || {};
+  const ownerEmail = String((row && row.owner_email) || opts.ownerEmail || '')
+    .trim()
+    .toLowerCase();
+  if (!ownerEmail || isHubSeedOwnerEmail(ownerEmail)) {
+    return { emailSent: false, claimUrl: null, rateLimited: false };
+  }
+  if (String((row && row.ownership_claim_status) || '').trim().toLowerCase() !== 'pending') {
+    return { emailSent: false, claimUrl: null, rateLimited: false };
+  }
+
+  const siteHost = String(process.env.SITE_URL || 'https://www.thenetworkeruk.com').replace(
+    /\/$/,
+    ''
+  );
+  const { resolveOpportunityClaimUrl } = require('../opportunity-claim-url');
+  const { sendTemplatedEmail } = require('../send-template-email');
+  const { campaignSiteVars } = require('../organiser-campaign-defaults');
+  const slugOrId = String((row && (row.slug || row.id)) || '').trim();
+  const claimUrl = await resolveOpportunityClaimUrl(ownerEmail, siteHost, slugOrId);
+  const title = String((row && row.title) || 'your business opportunity').trim();
+  const listingType = String((row && row.type) || '').trim().toLowerCase();
+  const isAffiliate = listingType === 'affiliate';
+  const isFranchise = listingType === 'franchise';
+  const ownerName =
+    isAffiliate || isFranchise
+      ? title
+      : String((row && row.host) || '').trim() || ownerEmail.split('@')[0] || 'there';
+  const inviteSlug = isAffiliate
+    ? 'affiliate_claim_invite'
+    : isFranchise
+      ? 'franchise_claim_invite'
+      : 'opportunity_claim_invite';
+  const inviteSubject = isAffiliate
+    ? String((row && row.title) || 'Your affiliate programme') +
+      ' — claim your affiliate programme listing'
+    : isFranchise
+      ? 'Franchise Listing Invitation'
+      : 'Congratulations: ' +
+        String((row && row.title) || 'your opportunity') +
+        ' is ready — claim your listing';
+
+  try {
+    await sendTemplatedEmail({
+      slug: inviteSlug,
+      to: ownerEmail,
+      subject: inviteSubject,
+      variables: {
+        ...campaignSiteVars(siteHost),
+        owner_name: ownerName,
+        opportunity_title: title,
+        claim_url: claimUrl,
+      },
+      skipEmailCheck: true,
+      opportunityId: row && row.id,
+      claimInviteSource: opts.source || 'admin_claim_invite',
+    });
+    return { emailSent: true, claimUrl, rateLimited: false };
+  } catch (e) {
+    if (e && e.code === 'claim_invite_rate_limited') {
+      return { emailSent: false, claimUrl, rateLimited: true, hoursRemaining: e.hoursRemaining };
+    }
+    throw e;
   }
 }
 
@@ -869,7 +992,34 @@ module.exports = async function handler(req, res) {
           logo_filename: body.logo_filename || body.logoFilename,
           is_test: body.is_test,
         });
-        return json(res, 201, { ok: true, opportunity });
+        let emailSent = false;
+        let rateLimited = false;
+        let claimUrl = null;
+        if (
+          opportunity &&
+          opportunity.ownership_claim_status === 'pending' &&
+          opportunity.owner_email &&
+          !isHubSeedOwnerEmail(opportunity.owner_email)
+        ) {
+          const invite = await sendOpportunityClaimInviteEmail(opportunity, {
+            source: 'admin_create',
+          });
+          emailSent = Boolean(invite.emailSent);
+          rateLimited = Boolean(invite.rateLimited);
+          claimUrl = invite.claimUrl || null;
+        }
+        return json(res, 201, {
+          ok: true,
+          opportunity,
+          emailSent,
+          rateLimited,
+          claimUrl,
+          message: emailSent
+            ? 'Listing created and claim invite emailed to ' + opportunity.owner_email + '.'
+            : rateLimited
+              ? 'Listing created — claim invite already sent to this email in the last 24 hours.'
+              : undefined,
+        });
       } catch (e) {
         if (e.code === 'exclusive_brand_conflict') {
           return sendExclusiveBrandConflict(res, json, e.conflict);
@@ -1219,50 +1369,14 @@ module.exports = async function handler(req, res) {
 
         let claimUrl = null;
         let emailSent = false;
+        let rateLimited = false;
         if (!isHubSeedOwnerEmail(ownerEmail) && patch.ownership_claim_status === 'pending') {
-          const siteHost = String(process.env.SITE_URL || 'https://www.thenetworkeruk.com').replace(
-            /\/$/,
-            ''
-          );
-          const { resolveOpportunityClaimUrl } = require('../opportunity-claim-url');
-          const { sendTemplatedEmail } = require('../send-template-email');
-          const { campaignSiteVars } = require('../organiser-campaign-defaults');
-          const slugOrId = String(data.slug || data.id || '').trim();
-          claimUrl = await resolveOpportunityClaimUrl(ownerEmail, siteHost, slugOrId);
-          const title = String(data.title || 'your business opportunity').trim();
-          const listingType = String(data.type || '').trim().toLowerCase();
-          const isAffiliate = listingType === 'affiliate';
-          const isFranchise = listingType === 'franchise';
-          const ownerName =
-            isAffiliate || isFranchise
-              ? title
-              : String(data.host || '').trim() || ownerEmail.split('@')[0] || 'there';
-          const inviteSlug = isAffiliate
-            ? 'affiliate_claim_invite'
-            : isFranchise
-              ? 'franchise_claim_invite'
-              : 'opportunity_claim_invite';
-          const inviteSubject = isAffiliate
-            ? String(data.title || 'Your affiliate programme') +
-              ' — claim your affiliate programme listing'
-            : isFranchise
-              ? 'Franchise Listing Invitation'
-              : 'Congratulations: ' +
-                String(data.title || 'your opportunity') +
-                ' is ready — claim your listing';
-          await sendTemplatedEmail({
-            slug: inviteSlug,
-            to: ownerEmail,
-            subject: inviteSubject,
-            variables: {
-              ...campaignSiteVars(siteHost),
-              owner_name: ownerName,
-              opportunity_title: title,
-              claim_url: claimUrl,
-            },
-            skipEmailCheck: true,
+          const invite = await sendOpportunityClaimInviteEmail(data, {
+            source: 'admin_assign_owner',
           });
-          emailSent = true;
+          claimUrl = invite.claimUrl || null;
+          emailSent = Boolean(invite.emailSent);
+          rateLimited = Boolean(invite.rateLimited);
         }
 
         return json(res, 200, {
@@ -1270,9 +1384,12 @@ module.exports = async function handler(req, res) {
           opportunity: mapOpportunityRow(data),
           claimUrl,
           emailSent,
+          rateLimited,
           message: emailSent
             ? 'Owner assigned and claim invite emailed to ' + ownerEmail + '.'
-            : 'Owner assigned.',
+            : rateLimited
+              ? 'Owner assigned, but a claim invite was already emailed to this address in the last 24 hours — not sent again.'
+              : 'Owner assigned.',
         });
       } catch (e) {
         return json(res, 500, { ok: false, error: 'assign_owner_failed', message: e.message });
