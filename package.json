@@ -43,6 +43,8 @@
     "send:claim-rematch": "node scripts/send-claim-rematch-resend.js",
     "build:affiliate-claim": "node scripts/build-affiliate-claim-resend.js",
     "send:affiliate-claim": "node scripts/send-affiliate-claim-resend.js",
+    "build:franchise-claim": "node scripts/build-franchise-claim-resend.js",
+    "send:franchise-claim": "node scripts/send-franchise-claim-resend.js",
     "seed-ranking-demo": "node scripts/seed-ranking-demo-reviews.js",
     "import-attendees": "node scripts/import-attendees-csv.js",
     "build-admin-css": "tailwindcss -c tailwind.admin.config.js -i ./css/admin-tailwind.src.css -o ./css/admin-tailwind.css --minify",

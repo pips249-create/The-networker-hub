@@ -1228,15 +1228,26 @@ module.exports = async function handler(req, res) {
           const slugOrId = String(data.slug || data.id || '').trim();
           claimUrl = await resolveOpportunityClaimUrl(ownerEmail, siteHost, slugOrId);
           const title = String(data.title || 'your business opportunity').trim();
-          const isAffiliate = String(data.type || '').trim().toLowerCase() === 'affiliate';
-          const ownerName = isAffiliate ? title : String(data.host || '').trim() || ownerEmail.split('@')[0] || 'there';
-          const inviteSlug = isAffiliate ? 'affiliate_claim_invite' : 'opportunity_claim_invite';
+          const listingType = String(data.type || '').trim().toLowerCase();
+          const isAffiliate = listingType === 'affiliate';
+          const isFranchise = listingType === 'franchise';
+          const ownerName =
+            isAffiliate || isFranchise
+              ? title
+              : String(data.host || '').trim() || ownerEmail.split('@')[0] || 'there';
+          const inviteSlug = isAffiliate
+            ? 'affiliate_claim_invite'
+            : isFranchise
+              ? 'franchise_claim_invite'
+              : 'opportunity_claim_invite';
           const inviteSubject = isAffiliate
             ? String(data.title || 'Your affiliate programme') +
               ' — claim your affiliate programme listing'
-            : 'Congratulations: ' +
-              String(data.title || 'your opportunity') +
-              ' is ready — claim your listing';
+            : isFranchise
+              ? String(data.title || 'Your franchise') + ' — claim your franchise listing'
+              : 'Congratulations: ' +
+                String(data.title || 'your opportunity') +
+                ' is ready — claim your listing';
           await sendTemplatedEmail({
             slug: inviteSlug,
             to: ownerEmail,

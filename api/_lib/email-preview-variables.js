@@ -695,6 +695,15 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     vars.owner_name = vars.owner_name || vars.opportunity_title;
   }
 
+  if (slug === 'franchise_claim_invite') {
+    vars.claim_url =
+      vars.claim_url ||
+      opportunityPublicUrl({ slug: 'auditel-franchise', id: opportunityId }, site) +
+        '?email=franchising@example.com&intent=opportunity-claim&auth=register';
+    vars.opportunity_title = vars.opportunity_title || 'Auditel Franchise';
+    vars.owner_name = vars.owner_name || vars.opportunity_title;
+  }
+
   if (slug === 'organiser_claim_confirmed') {
     const previewGroup = {
       id: '00000000-0000-4000-8000-000000000020',
