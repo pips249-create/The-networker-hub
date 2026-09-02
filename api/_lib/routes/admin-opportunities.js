@@ -269,6 +269,8 @@ function mapOpportunityRow(row) {
     approval_status: row.approval_status || 'Pending Review',
     review_submitted_at: effectiveReviewSubmittedAt(row),
     approved_at: row.approved_at || null,
+    approved_pay_reminder_sent_at: row.approved_pay_reminder_sent_at || null,
+    listing_expiry_reminder_sent_at: row.listing_expiry_reminder_sent_at || null,
     listing_payment_active: listingPaymentCurrent(row),
     listing_payment_lapsed: listingPaymentLapsed(row),
     listing_billing_mode: listingBillingMode(row),

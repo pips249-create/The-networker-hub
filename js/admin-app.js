@@ -972,6 +972,8 @@
   }
 
   var SALES_KIT_TOUCH_NOTES = ['Called', 'Attempted call', 'Emailed'];
+  var SALES_KIT_OUTREACH_CACHE_MS = 120000;
+  var salesKitOutreachCache = { demos: [], loadedAt: 0, loading: null };
   var SALES_KIT_EMAIL_TO_SHOWN_BY = {
     'catherine@thenetworkeruk.com': 'Catherine',
     'catherine@the-networker.co.uk': 'Catherine',
@@ -1006,6 +1008,277 @@
   function salesKitActorLabel(actor) {
     if (!actor || !actor.shownBy) return 'You';
     return actor.shownBy === 'Other' ? 'You' : actor.shownBy;
+  }
+
+  function salesKitDemoMatchesFocus(d, focus) {
+    if (!focus || !d) return false;
+    if (focus.id && d.organiserId && String(d.organiserId) === String(focus.id)) return true;
+    var emailKey = String(focus.email || '')
+      .trim()
+      .toLowerCase();
+    if (emailKey && String(d.organiserEmail || '').trim().toLowerCase() === emailKey) return true;
+    var nameKey = String(focus.name || '')
+      .trim()
+      .toLowerCase();
+    if (nameKey && String(d.organiserName || '').trim().toLowerCase() === nameKey) return true;
+    return false;
+  }
+
+  function isManualSalesKitDemo(demo) {
+    if (!demo) return false;
+    var note = String(demo.notes || '').trim();
+    return SALES_KIT_TOUCH_NOTES.indexOf(note) !== -1;
+  }
+
+  function isHouseSalesKitDemo(demo) {
+    if (!demo || isManualSalesKitDemo(demo)) return false;
+    var source = String(demo.source || '').trim().toLowerCase();
+    if (source && source !== 'manual') return true;
+    return /:\s*(Impersonated workspace|Listed an event)/i.test(String(demo.notes || ''));
+  }
+
+  function findLastManualSalesKitContact(focus, demos) {
+    if (!focus || !demos || !demos.length) return null;
+    for (var i = 0; i < demos.length; i++) {
+      if (salesKitDemoMatchesFocus(demos[i], focus) && isManualSalesKitDemo(demos[i])) {
+        return demos[i];
+      }
+    }
+    return null;
+  }
+
+  function findLastHouseSalesKitDemo(focus, demos) {
+    if (!focus || !demos || !demos.length) return null;
+    for (var i = 0; i < demos.length; i++) {
+      if (salesKitDemoMatchesFocus(demos[i], focus) && isHouseSalesKitDemo(demos[i])) {
+        return demos[i];
+      }
+    }
+    return null;
+  }
+
+  function houseContactLabelFromDemo(demo) {
+    if (!demo) return 'Platform activity';
+    var source = String(demo.source || '').trim().toLowerCase();
+    if (source === 'impersonate') return 'Impersonated workspace';
+    if (source === 'event_create') return 'Listed an event';
+    var lines = String(demo.notes || '')
+      .split('\n')
+      .map(function (line) {
+        return String(line || '').trim();
+      })
+      .filter(Boolean);
+    for (var i = lines.length - 1; i >= 0; i--) {
+      var match = lines[i].match(/^\d{4}-\d{2}-\d{2}:\s*(.+)$/);
+      if (!match) continue;
+      var bit = match[1].trim();
+      if (SALES_KIT_TOUCH_NOTES.indexOf(bit) !== -1) continue;
+      return bit.replace(/\s*—.*$/, '').trim() || 'Platform activity';
+    }
+    return 'Platform activity';
+  }
+
+  function salesKitHouseContactsFromSource(source) {
+    if (!source || typeof source !== 'object') return [];
+    var contacts = [];
+    if (source.claim_invite_sent_at) {
+      contacts.push({ at: source.claim_invite_sent_at, label: 'Claim invite sent' });
+    }
+    if (source.approved_at) {
+      contacts.push({ at: source.approved_at, label: 'Approved — pay-to-go-live email' });
+    }
+    if (source.approved_pay_reminder_sent_at) {
+      contacts.push({ at: source.approved_pay_reminder_sent_at, label: 'Pay reminder email' });
+    }
+    if (source.published_at && source.listing_payment_active) {
+      contacts.push({ at: source.published_at, label: 'Listing live email' });
+    }
+    if (source.listing_expiry_reminder_sent_at) {
+      contacts.push({ at: source.listing_expiry_reminder_sent_at, label: 'Listing expiry reminder' });
+    }
+    return contacts;
+  }
+
+  function parseSalesKitHouseContactsJson(raw) {
+    if (!raw) return [];
+    try {
+      var parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function contactIsoMs(iso) {
+    if (!iso) return 0;
+    var ms = Date.parse(String(iso));
+    return isNaN(ms) ? 0 : ms;
+  }
+
+  function findLatestHouseContact(focus, demos, platformHints) {
+    var candidates = [];
+    var demo = findLastHouseSalesKitDemo(focus, demos);
+    if (demo) {
+      candidates.push({
+        at: demo.shownAt || demo.createdAt,
+        label: houseContactLabelFromDemo(demo),
+        who: demo.shownBy || 'Platform',
+      });
+    }
+    (platformHints || []).forEach(function (hint) {
+      if (!hint || !hint.at) return;
+      candidates.push({
+        at: hint.at,
+        label: hint.label || 'Platform email',
+        who: 'Platform',
+      });
+    });
+    candidates.sort(function (a, b) {
+      return contactIsoMs(b.at) - contactIsoMs(a.at);
+    });
+    return candidates[0] || null;
+  }
+
+  function formatSalesKitContactDate(demo) {
+    var iso = demo && (demo.shownAt || demo.createdAt || demo.at);
+    if (!iso) return '';
+    try {
+      var d = new Date(iso);
+      if (isNaN(d.getTime())) return '';
+      var today = new Date();
+      today.setHours(0, 0, 0, 0);
+      var shown = new Date(d);
+      shown.setHours(0, 0, 0, 0);
+      var diffDays = Math.round((today.getTime() - shown.getTime()) / 86400000);
+      if (diffDays === 0) return 'Today';
+      if (diffDays === 1) return 'Yesterday';
+      if (diffDays < 7) return diffDays + ' days ago';
+      return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function salesKitContactTouchLabel(demo) {
+    var note = String(demo.notes || '').trim();
+    if (SALES_KIT_TOUCH_NOTES.indexOf(note) !== -1) return note;
+    return note || 'Contact';
+  }
+
+  function salesKitLastContactSummary(demo) {
+    if (!demo) return '';
+    var parts = [demo.shownBy || 'Team', salesKitContactTouchLabel(demo)];
+    var when = formatSalesKitContactDate(demo);
+    if (when) parts.push(when);
+    return parts.join(' · ');
+  }
+
+  function salesKitLastContactBlockHtml(lastDemo) {
+    if (!lastDemo) {
+      return (
+        '<div class="admin-sales-kit-menu-last admin-sales-kit-menu-last--empty">' +
+        '<p class="admin-sales-kit-menu-last-label">Last contact</p>' +
+        '<p class="admin-sales-kit-menu-last-value">No outreach logged yet</p></div>'
+      );
+    }
+    return (
+      '<div class="admin-sales-kit-menu-last">' +
+      '<p class="admin-sales-kit-menu-last-label">Last contact</p>' +
+      '<p class="admin-sales-kit-menu-last-value">' +
+      esc(salesKitLastContactSummary(lastDemo)) +
+      '</p></div>'
+    );
+  }
+
+  function salesKitHouseContactSummary(contact) {
+    if (!contact) return '';
+    var parts = [contact.who || 'Platform', contact.label || 'Platform activity'];
+    var when = formatSalesKitContactDate(contact);
+    if (when) parts.push(when);
+    return parts.join(' · ');
+  }
+
+  function salesKitHouseContactBlockHtml(houseContact) {
+    if (!houseContact) {
+      return (
+        '<div class="admin-sales-kit-menu-house admin-sales-kit-menu-house--empty">' +
+        '<p class="admin-sales-kit-menu-house-label">House contact</p>' +
+        '<p class="admin-sales-kit-menu-house-value">No automated outreach yet</p></div>'
+      );
+    }
+    return (
+      '<div class="admin-sales-kit-menu-house">' +
+      '<p class="admin-sales-kit-menu-house-label">House contact</p>' +
+      '<p class="admin-sales-kit-menu-house-value">' +
+      esc(salesKitHouseContactSummary(houseContact)) +
+      '</p></div>'
+    );
+  }
+
+  function ensureSalesKitOutreachCache(force) {
+    var now = Date.now();
+    if (
+      !force &&
+      salesKitOutreachCache.loadedAt &&
+      now - salesKitOutreachCache.loadedAt < SALES_KIT_OUTREACH_CACHE_MS
+    ) {
+      return Promise.resolve(salesKitOutreachCache.demos);
+    }
+    if (salesKitOutreachCache.loading) return salesKitOutreachCache.loading;
+    salesKitOutreachCache.loading = adminGet('/api/admin/sales-kit')
+      .then(function (data) {
+        salesKitOutreachCache.loading = null;
+        if (data && data.ok !== false && Array.isArray(data.demos)) {
+          salesKitOutreachCache.demos = data.demos;
+          salesKitOutreachCache.loadedAt = Date.now();
+        }
+        return salesKitOutreachCache.demos;
+      })
+      .catch(function () {
+        salesKitOutreachCache.loading = null;
+        return salesKitOutreachCache.demos;
+      });
+    return salesKitOutreachCache.loading;
+  }
+
+  function prefetchSalesKitOutreachCache() {
+    ensureSalesKitOutreachCache(false);
+  }
+
+  function refreshSalesKitContactBlocks(menu) {
+    if (!menu) return;
+    var lastSlot = menu.querySelector('[data-sales-kit-last-contact]');
+    var houseSlot = menu.querySelector('[data-sales-kit-house-contact]');
+    if (!lastSlot && !houseSlot) return;
+    var focus = {
+      id: menu.getAttribute('data-org-id') || '',
+      name: menu.getAttribute('data-org-name') || '',
+      email: menu.getAttribute('data-org-email') || '',
+    };
+    var platformHints = parseSalesKitHouseContactsJson(menu.getAttribute('data-house-contacts'));
+    if (lastSlot) {
+      lastSlot.innerHTML =
+        '<div class="admin-sales-kit-menu-last admin-sales-kit-menu-last--loading">' +
+        '<p class="admin-sales-kit-menu-last-label">Last contact</p>' +
+        '<p class="admin-sales-kit-menu-last-value">Loading…</p></div>';
+    }
+    if (houseSlot) {
+      houseSlot.innerHTML =
+        '<div class="admin-sales-kit-menu-house admin-sales-kit-menu-house--loading">' +
+        '<p class="admin-sales-kit-menu-house-label">House contact</p>' +
+        '<p class="admin-sales-kit-menu-house-value">Loading…</p></div>';
+    }
+    ensureSalesKitOutreachCache(false).then(function (demos) {
+      if (!menu.isConnected) return;
+      if (lastSlot) {
+        lastSlot.innerHTML = salesKitLastContactBlockHtml(findLastManualSalesKitContact(focus, demos));
+      }
+      if (houseSlot) {
+        houseSlot.innerHTML = salesKitHouseContactBlockHtml(
+          findLatestHouseContact(focus, demos, platformHints)
+        );
+      }
+    });
   }
 
   function salesKitQuickLogButtonsHtml(focus, actor) {
@@ -1053,9 +1326,21 @@
         : 'text-xs font-semibold rounded-lg border border-brand-200 text-brand-800 px-2.5 py-1 hover:bg-brand-50';
     var focus = salesKitFocusFromSource(source);
     var quickLog = salesKitQuickLogButtonsHtml(focus);
+    var lastContact = findLastManualSalesKitContact(focus, salesKitOutreachCache.demos);
+    var houseContacts = salesKitHouseContactsFromSource(source);
+    var houseContact = findLatestHouseContact(focus, salesKitOutreachCache.demos, houseContacts);
 
     return (
-      '<div class="admin-sales-kit-menu relative inline-block">' +
+      '<div class="admin-sales-kit-menu relative inline-block"' +
+      ' data-org-id="' +
+      attrEsc(focus.id) +
+      '" data-org-name="' +
+      attrEsc(focus.name) +
+      '" data-org-email="' +
+      attrEsc(focus.email) +
+      '" data-house-contacts="' +
+      attrEsc(JSON.stringify(houseContacts)) +
+      '">' +
       '<button type="button" class="admin-sales-kit-menu-toggle ' +
       btnClass +
       ' inline-flex items-center gap-1" aria-expanded="false" aria-haspopup="menu">' +
@@ -1068,6 +1353,12 @@
       (focus.email
         ? '<p class="admin-sales-kit-menu-email">' + esc(focus.email) + '</p>'
         : '<p class="admin-sales-kit-menu-email admin-sales-kit-menu-email--muted">No email on file</p>') +
+      '</div>' +
+      '<div data-sales-kit-last-contact>' +
+      salesKitLastContactBlockHtml(lastContact) +
+      '</div>' +
+      '<div data-sales-kit-house-contact>' +
+      salesKitHouseContactBlockHtml(houseContact) +
       '</div>' +
       '<p class="admin-sales-kit-menu-kicker">Quick log to CRM</p>' +
       quickLog +
@@ -1101,6 +1392,13 @@
       if (!data || !data.ok) {
         if (statusEl) statusEl.textContent = (data && data.message) || 'Could not save.';
         return false;
+      }
+      var menuRoot = btn.closest('.admin-sales-kit-menu');
+      if (data.demo) {
+        salesKitOutreachCache.demos.unshift(data.demo);
+        salesKitOutreachCache.loadedAt = Date.now();
+        var lastSlot = menuRoot && menuRoot.querySelector('[data-sales-kit-last-contact]');
+        if (lastSlot) lastSlot.innerHTML = salesKitLastContactBlockHtml(data.demo);
       }
       if (statusEl) {
         statusEl.textContent = salesKitActorLabel(actor) + ' — ' + touchType + ' logged.';
@@ -1136,6 +1434,7 @@
         if (willOpen) {
           panel.classList.remove('hidden');
           toggle.setAttribute('aria-expanded', 'true');
+          refreshSalesKitContactBlocks(menu);
         }
         return;
       }
@@ -29291,6 +29590,7 @@
     bindEventCleanupForms();
     bindOpportunityCleanupForms();
     bindSalesKitMenus();
+    prefetchSalesKitOutreachCache();
     bindAdminPaginationGoto();
     // Metrics only after admin session is confirmed — never paint cache for guests
     adminMetricsCache = readCachedAdminMetrics();

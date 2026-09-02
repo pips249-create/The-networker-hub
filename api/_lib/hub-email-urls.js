@@ -171,9 +171,9 @@ function logoFooterUrl(siteUrl) {
   return toPublicAssetUrl('/assets/logo-email-footer.png?v=' + LOGO_ASSET_VERSION, siteUrl);
 }
 
-/** Cream/white wordmark for navy email footers (#1c2040). */
+/** Cream/lavender wordmark for navy email footers (#1c2040). */
 function logoFooterLightUrl(siteUrl) {
-  return toPublicAssetUrl('/assets/logo-email-footer-light.png?v=' + LOGO_ASSET_VERSION, siteUrl);
+  return toPublicAssetUrl('/assets/logo-email-footer-navy.png?v=' + LOGO_ASSET_VERSION, siteUrl);
 }
 
 function hubertIconUrl(siteUrl) {
