@@ -26054,7 +26054,6 @@
 
     main.innerHTML =
       '<div class="space-y-4">' +
-      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3"><strong>Review workflow:</strong> Listings appear under <strong>Pending review</strong> when the organiser submits. Click <strong>Review</strong> on a row (or open the full review page) → <strong>Approve</strong> (owner gets a pay-to-go-live email) or <strong>Deny</strong> (with a reason). After they pay via Stripe, the listing goes live on <code class="text-[11px]">/opportunities/</code>. Use <strong>Awaiting payment</strong> to find approved listings still waiting on checkout.</p>' +
       '<details class="opportunity-cleanup-create group rounded-xl border border-brand-200 bg-brand-50/50 overflow-hidden">' +
       '<summary class="opportunity-cleanup-create-summary cursor-pointer list-none select-none flex flex-wrap items-center justify-between gap-2 px-4 py-3 bg-brand-700 text-white hover:bg-brand-900">' +
       '<span class="inline-flex items-center gap-2 text-sm font-semibold">' +
