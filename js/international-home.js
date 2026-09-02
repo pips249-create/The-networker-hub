@@ -17,13 +17,6 @@
     '840': { iso2: 'US', name: 'United States' },
   };
 
-  /** [lon, lat] anchors for spotlight map labels — projected inside the SVG. */
-  var SPOTLIGHT_LABEL_GEO = {
-    '826': [-2.2, 54.8],
-    '372': [-7.8, 53.2],
-    '840': [-98, 39],
-  };
-
   /** Building markets — stay on International SEO landings for conversion. */
   var MARKET_PREVIEW_URLS = {
     '372': '/ireland',
@@ -107,7 +100,6 @@
     mapReady: false,
     hubStats: {},
     activeModal: null,
-    labelItems: [],
   };
 
   var els = {};
@@ -204,20 +196,6 @@
       : 'Register your interest →';
   }
 
-  function mapLabelButtons() {
-    return els.svg
-      ? Array.prototype.slice.call(els.svg.querySelectorAll('.intl-map-label'))
-      : [];
-  }
-
-  function clearActiveLabels() {
-    mapLabelButtons().forEach(function (node) {
-      if (node.classList.contains('is-active')) {
-        node.classList.remove('is-active');
-      }
-    });
-  }
-
   function hideCountryPopup() {
     if (!els.popup) return;
     els.popup.hidden = true;
@@ -232,44 +210,22 @@
   }
 
   function positionCountryPopup(path) {
-    if (!els.popup || !els.canvas) return;
+    if (!els.popup || !els.canvas || !path) return;
 
     var canvasRect = els.canvas.getBoundingClientRect();
     var popupWidth = els.popup.offsetWidth || 220;
     var popupHeight = els.popup.offsetHeight || 140;
-    var centerX;
-    var centerY;
-    var placeBelow;
-    var x;
-    var y;
-
-    if (path) {
-      var pathRect = path.getBoundingClientRect();
-      centerX = pathRect.left + pathRect.width / 2 - canvasRect.left;
-      centerY = pathRect.top + pathRect.height / 2 - canvasRect.top;
-      placeBelow = centerY - popupHeight - 20 < 8;
-      x = Math.max(
-        16 + popupWidth / 2,
-        Math.min(canvasRect.width - 16 - popupWidth / 2, centerX)
-      );
-      y = placeBelow
-        ? Math.min(canvasRect.height - 8, centerY + pathRect.height / 2 + 8)
-        : Math.max(8 + popupHeight, centerY - pathRect.height / 2);
-    } else {
-      var activeLabel = mapLabelButtons().find(function (node) {
-        return node.classList.contains('is-active');
-      });
-      if (!activeLabel) return;
-      var labelRect = activeLabel.getBoundingClientRect();
-      centerX = labelRect.left + labelRect.width / 2 - canvasRect.left;
-      centerY = labelRect.bottom - canvasRect.top + 14;
-      placeBelow = true;
-      x = Math.max(
-        16 + popupWidth / 2,
-        Math.min(canvasRect.width - 16 - popupWidth / 2, centerX)
-      );
-      y = Math.min(canvasRect.height - 8, centerY + popupHeight);
-    }
+    var pathRect = path.getBoundingClientRect();
+    var centerX = pathRect.left + pathRect.width / 2 - canvasRect.left;
+    var centerY = pathRect.top + pathRect.height / 2 - canvasRect.top;
+    var placeBelow = centerY - popupHeight - 20 < 8;
+    var x = Math.max(
+      16 + popupWidth / 2,
+      Math.min(canvasRect.width - 16 - popupWidth / 2, centerX)
+    );
+    var y = placeBelow
+      ? Math.min(canvasRect.height - 8, centerY + pathRect.height / 2 + 8)
+      : Math.max(8 + popupHeight, centerY - pathRect.height / 2);
 
     els.popup.style.left = x + 'px';
     els.popup.style.top = y + 'px';
@@ -354,7 +310,6 @@
       node.classList.remove('is-hovered');
     });
     hideCountryPopup();
-    clearActiveLabels();
   }
 
   function selectCountry(path, meta, options) {
@@ -362,9 +317,6 @@
     clearHover();
     if (path) path.classList.add('is-hovered');
     showCountryPopup(path, meta);
-    mapLabelButtons().forEach(function (node) {
-      node.classList.toggle('is-active', node.getAttribute('data-country-id') === meta.numericId);
-    });
   }
 
   function onCountryActivate(path, meta) {
@@ -695,11 +647,6 @@
       if (isCoarsePointer()) return;
       path.classList.remove('is-hovered');
       hideCountryPopup();
-      mapLabelButtons().forEach(function (node) {
-        if (node.getAttribute('data-country-id') === meta.numericId) {
-          node.classList.remove('is-active');
-        }
-      });
     }
 
     path.addEventListener('mouseenter', onEnter);
@@ -719,115 +666,6 @@
         handleCountryAction(meta);
       }
     });
-  }
-
-  function shortLabelName(meta) {
-    if (meta.iso2 === 'GB') return 'UK';
-    if (meta.iso2 === 'IE') return 'Ireland';
-    if (meta.iso2 === 'US') return 'USA';
-    return meta.name;
-  }
-
-  function labelPathFor(meta) {
-    return (
-      els.svg &&
-      els.svg.querySelector(
-        '.intl-country[data-country-id="' + meta.numericId + '"]'
-      )
-    );
-  }
-
-  function spotlightLabelPoint(projection, meta) {
-    var coords = SPOTLIGHT_LABEL_GEO[meta.numericId];
-    if (!coords) return null;
-    var projected = projection(coords);
-    if (!projected || !Number.isFinite(projected[0]) || !Number.isFinite(projected[1])) {
-      return null;
-    }
-    return { x: projected[0], y: projected[1] };
-  }
-
-  function renderMapLabels(projection) {
-    if (!els.svg) return;
-
-    var existing = els.svg.querySelector('#intl-map-labels');
-    if (existing) existing.remove();
-
-    var labelsGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    labelsGroup.setAttribute('id', 'intl-map-labels');
-    labelsGroup.setAttribute('class', 'intl-map-labels-svg');
-    state.labelItems = [];
-
-    var spotlight = state.countries.filter(function (meta) {
-      return meta.live || meta.building;
-    });
-
-    spotlight.forEach(function (meta) {
-      if (!labelPathFor(meta)) return;
-      var point = spotlightLabelPoint(projection, meta);
-      if (!point) return;
-
-      var anchor = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-      anchor.setAttribute('class', 'intl-map-label-anchor');
-      anchor.setAttribute('data-country-id', meta.numericId);
-      anchor.setAttribute('transform', 'translate(' + point.x + ' ' + point.y + ')');
-
-      var host = document.createElementNS('http://www.w3.org/2000/svg', 'foreignObject');
-      host.setAttribute('class', 'intl-map-label-fo');
-      host.setAttribute('x', -56);
-      host.setAttribute('y', -54);
-      host.setAttribute('width', 112);
-      host.setAttribute('height', 54);
-
-      var wrapper = document.createElement('div');
-      wrapper.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml');
-      wrapper.className = 'intl-map-label-host';
-
-      var button = document.createElement('button');
-      button.type = 'button';
-      button.className =
-        'intl-map-label intl-map-label--svg intl-map-label--' +
-        (meta.live ? 'live' : 'building');
-      button.setAttribute('data-country-id', meta.numericId);
-      button.setAttribute(
-        'aria-label',
-        meta.name + countryStatusLabel(meta)
-      );
-      button.innerHTML =
-        '<span class="intl-map-label-name">' +
-        shortLabelName(meta) +
-        '</span>' +
-        '<span class="intl-map-label-status">' +
-        (meta.live ? 'Live' : 'Building') +
-        '</span>';
-
-      button.addEventListener('click', function (event) {
-        event.preventDefault();
-        event.stopPropagation();
-        onCountryActivate(labelPathFor(meta), meta);
-      });
-
-      button.addEventListener('mouseenter', function () {
-        if (isCoarsePointer()) return;
-        selectCountry(labelPathFor(meta), meta, { arm: false });
-      });
-
-      button.addEventListener('mouseleave', function () {
-        if (isCoarsePointer()) return;
-        var path = labelPathFor(meta);
-        if (path) path.classList.remove('is-hovered');
-        hideCountryPopup();
-        button.classList.remove('is-active');
-      });
-
-      wrapper.appendChild(button);
-      host.appendChild(wrapper);
-      anchor.appendChild(host);
-      labelsGroup.appendChild(anchor);
-      state.labelItems.push({ el: button, meta: meta });
-    });
-
-    els.svg.appendChild(labelsGroup);
   }
 
   function featureByNumericId(features, numericId) {
@@ -976,7 +814,6 @@
 
     els.svg.appendChild(countriesGroup);
     renderNetworkArcs(projection, features);
-    renderMapLabels(projection);
 
     els.loading.hidden = true;
     state.mapReady = true;
@@ -1233,7 +1070,7 @@
     if (els.canvas) {
       els.canvas.addEventListener('click', function (event) {
         if (!isCoarsePointer()) return;
-        if (event.target.closest('.intl-country, .intl-map-label, .intl-country-popup')) {
+        if (event.target.closest('.intl-country, .intl-country-popup')) {
           return;
         }
         clearHover();
