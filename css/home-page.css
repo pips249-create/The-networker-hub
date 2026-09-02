@@ -2481,6 +2481,76 @@ html:has(.home-page) {
   text-underline-offset: 2px;
 }
 
+/* ─── International strip — quiet below-the-fold CTA ─── */
+.home-intl-strip {
+  padding: 0 0 28px;
+}
+
+.home-intl-strip-panel {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 24px;
+  padding: 18px clamp(18px, 4vw, 26px);
+  border-radius: 16px;
+  border: 1px solid rgba(154, 122, 168, 0.28);
+  border-left: 5px solid #9a7aa8;
+  background:
+    linear-gradient(135deg, #fff 0%, rgba(244, 236, 246, 0.55) 70%, rgba(253, 243, 223, 0.28) 100%);
+  box-shadow: 0 10px 28px rgba(74, 68, 70, 0.06);
+}
+
+.home-intl-strip-kicker {
+  margin: 0 0 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #6e5578;
+}
+
+.home-intl-strip-title {
+  margin: 0 0 4px;
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: clamp(1.2rem, 2.2vw, 1.45rem);
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--charcoal, #4a4446);
+}
+
+.home-intl-strip-lede {
+  margin: 0;
+  max-width: 36rem;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: var(--text-muted, #635c5e);
+}
+
+.home-intl-strip-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+}
+
+.home-intl-strip-btn {
+  white-space: nowrap;
+}
+
+.home-intl-strip-link {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #6e5578;
+  text-decoration: none;
+}
+
+.home-intl-strip-link:hover {
+  color: var(--charcoal, #4a4446);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 /* ─── Closing CTA + FAQs ─── */
 .home-cta {
   padding: 64px 0 80px;
@@ -2736,6 +2806,15 @@ html:has(.home-page) {
   }
 
   .home-org-banner-actions {
+    width: 100%;
+  }
+
+  .home-intl-strip-panel {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .home-intl-strip-actions {
     width: 100%;
   }
 
