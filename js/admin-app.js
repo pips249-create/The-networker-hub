@@ -23438,6 +23438,7 @@
     ['education', 'Education & Coaching'],
     ['childcare', 'Childcare & Family'],
     ['finance', 'Finance, legal & admin'],
+    ['recruitment', 'Recruitment & staffing'],
     ['pets', 'Pets & Animals'],
     ['leisure', 'Leisure, travel & hospitality'],
     ['networking', 'Networking'],

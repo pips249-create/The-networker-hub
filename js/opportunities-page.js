@@ -348,6 +348,7 @@
           { id: 'property', label: 'Property' },
           { id: 'education', label: 'Education & Coaching' },
           { id: 'finance', label: 'Finance, legal & admin' },
+          { id: 'recruitment', label: 'Recruitment & staffing' },
           { id: 'pets', label: 'Pets & Animals' },
         ]
   )
@@ -362,6 +363,7 @@
         beauty: 'Beauty',
         education: 'Education',
         finance: 'Finance',
+        recruitment: 'Recruitment',
         pets: 'Pets',
         networking: 'Networking',
       };
@@ -2463,6 +2465,7 @@
     education: 'Education & Coaching',
     pets: 'Pets & Animals',
     finance: 'Finance, legal & admin',
+    recruitment: 'Recruitment & staffing',
     networking: 'Networking',
     mlm: 'MLM & Network Marketing',
   };

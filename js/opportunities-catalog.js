@@ -27,6 +27,7 @@
     { id: 'education', label: 'Education & Coaching' },
     { id: 'childcare', label: 'Childcare & Family' },
     { id: 'finance', label: 'Finance, legal & admin' },
+    { id: 'recruitment', label: 'Recruitment & staffing' },
     { id: 'pets', label: 'Pets & Animals' },
     { id: 'leisure', label: 'Leisure, travel & hospitality' },
     { id: 'networking', label: 'Networking' },
