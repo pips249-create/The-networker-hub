@@ -901,6 +901,7 @@
     const remaining = eligibility?.remaining || 0;
     const isCategory = Boolean(opts && opts.isCategoryExclusivity);
     const isMembershipMeeting = Boolean(opts && opts.isMembershipMeeting);
+    const hasPaidTickets = Boolean(opts && opts.hasPaidTickets);
     let html =
       '<div class="guest-visit-tier-card' +
       (soldOut ? ' is-sold-out' : '') +
@@ -921,7 +922,9 @@
         ? 'After your free visits, join this group\u2019s membership to keep attending.'
         : isCategory
           ? 'No application needed for a free visit. Or apply below for a full Category Exclusivity place.'
-          : 'Paid tickets unlock after you use your free visits.') +
+          : hasPaidTickets
+            ? 'Paid tickets unlock after you use your free visits.'
+            : 'Tickets unlock after you use your free visits.') +
       '</p>' +
       '<div class="guest-visit-tier-price-row">' +
       '<span class="guest-visit-tier-price-label">Today</span>' +
@@ -2958,6 +2961,18 @@
       tier.innerHTML = guestVisitTierCardHtml(t, guestVisitEligibility, soldOut, {
         isCategoryExclusivity: isCategoryExclusivity,
         isMembershipMeeting: membershipAfterVisits,
+        hasPaidTickets: tiers.some(function (tierRow) {
+          if (
+            !tierRow ||
+            tierRow.isGuestVisit ||
+            tierRow.isAlumni ||
+            tierRow.isMembersOnly ||
+            tierRow.categoryExclusivity
+          ) {
+            return false;
+          }
+          return tierPriceNum(tierRow) > 0;
+        }),
       });
       tiersEl.appendChild(tier);
     }

@@ -3008,9 +3008,9 @@
       setHubMembershipEnabled(true);
     } else {
       setHubMembershipEnabled(false);
-      // General tickets-only: free visits belong with membership.
-      // Application door keeps CE guest visits available on the CE panel.
-      if (!isApplication && guestProgrammeEnabled()) setGuestProgrammeEnabled(false);
+      // Tickets-only can still use complimentary visits (see syncGuestProgrammeMount).
+      // Do not clear the checkbox here — that hid an active guest programme on load
+      // while the public listing kept showing Free visit.
     }
 
     // Membership path: default free trial visits on once (user can untick).
@@ -5369,6 +5369,14 @@
           return;
         }
       }
+    }
+
+    // Checkbox is source of truth — keep attendanceMode aligned before persist
+    // (avoids Free visit lingering when Complimentary visits looks unticked).
+    if (attendanceDoor === 'application') {
+      attendanceMode = 'category_exclusivity';
+    } else {
+      setAttendanceMode(resolveModeFromDoorAndPayHow());
     }
 
     const body = {
