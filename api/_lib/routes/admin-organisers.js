@@ -126,6 +126,7 @@ function mapOrganiserRow(row, eventCount, loginMeta, moderation) {
     listing_status: row.listing_status || '',
     ownership_claim_status: String(row.ownership_claim_status || '').trim().toLowerCase(),
     claim_invite_sent_at: row.claim_invite_sent_at || null,
+    has_stripe_connect: Boolean(String(row.stripe_account_id || '').trim()),
     featured: Boolean(row.featured),
     featured_until: row.featured_until || null,
     featuredUntil: row.featured_until || null,
@@ -389,7 +390,7 @@ async function listOrganisersForAdmin(query) {
   let dbQuery = sb
     .from('organisers')
     .select(
-      'id, name, email, contact_email, supabase_user_id, description, photo_url, website, instagram_url, facebook_url, linkedin_url, x_url, listing_status, ownership_claim_status, slug, featured, featured_until, created_at, updated_at',
+      'id, name, email, contact_email, supabase_user_id, description, photo_url, website, instagram_url, facebook_url, linkedin_url, x_url, listing_status, ownership_claim_status, stripe_account_id, slug, featured, featured_until, created_at, updated_at',
       { count: 'exact' }
     )
     .order('featured', { ascending: false })
@@ -592,6 +593,319 @@ async function collectOwnersFromOrganiser(sb, organiser, accountId, primaryOwner
       ownersToAdd.push({ email: tmEmail, supabase_user_id: tm.supabase_user_id || null });
     }
   }
+}
+
+/**
+ * Admin: move one group profile (and its events) to a new owner email.
+ * Does not rewrite other groups on the previous organiser account.
+ */
+async function transferOrganiserOwnership(body, session) {
+  const organiserId = String(body.id || body.organiserId || '').trim();
+  const newEmail = String(body.newEmail || body.email || '')
+    .trim()
+    .toLowerCase();
+  const stripeAction = String(body.stripeAction || 'clear').trim().toLowerCase() === 'keep' ? 'keep' : 'clear';
+  const claimMode =
+    String(body.claimMode || 'pending_invite').trim().toLowerCase() === 'immediate'
+      ? 'immediate'
+      : 'pending_invite';
+  const keepPreviousOwnerAsEditor = body.keepPreviousOwnerAsEditor !== false;
+
+  if (!organiserId) {
+    const err = new Error('missing_id');
+    err.status = 400;
+    throw err;
+  }
+  if (!newEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
+    const err = new Error('invalid_email');
+    err.status = 400;
+    err.message = 'Enter a valid new owner email.';
+    throw err;
+  }
+
+  const sb = getSupabaseAdmin();
+  const { data: organiser, error: loadErr } = await sb
+    .from('organisers')
+    .select(
+      'id, name, email, contact_email, supabase_user_id, organiser_account_id, ownership_claim_status, stripe_account_id, stripe_charges_enabled, stripe_payouts_enabled, stripe_connect_details_submitted, stripe_connect_onboarded_at, payout_email'
+    )
+    .eq('id', organiserId)
+    .maybeSingle();
+  if (loadErr) throw new Error(loadErr.message);
+  if (!organiser) {
+    const err = new Error('organiser_not_found');
+    err.status = 404;
+    throw err;
+  }
+
+  const previousEmail = String(organiser.contact_email || organiser.email || '')
+    .trim()
+    .toLowerCase();
+  const previousUserId = organiser.supabase_user_id || null;
+  const previousAccountId = organiser.organiser_account_id || null;
+
+  if (previousEmail && previousEmail === newEmail) {
+    const err = new Error('same_owner');
+    err.status = 400;
+    err.message = 'That email already owns this group.';
+    throw err;
+  }
+
+  let previousAccountEmail = previousEmail;
+  if (previousAccountId) {
+    const { data: prevAcc } = await sb
+      .from('organiser_accounts')
+      .select('id, email, supabase_user_id')
+      .eq('id', previousAccountId)
+      .maybeSingle();
+    if (prevAcc) {
+      previousAccountEmail =
+        String(prevAcc.email || '')
+          .trim()
+          .toLowerCase() || previousEmail;
+    }
+  }
+
+  let user = await sbAuth.findUserByEmail(newEmail);
+  let createdAuth = false;
+  if (!user?.id) {
+    const created = await sbAuth.createUserSilent({
+      email: newEmail,
+      name: String(organiser.name || '').trim() || undefined,
+      metadata: { full_name: String(organiser.name || '').trim(), transferred_organiser_id: organiserId },
+    });
+    user = { id: created.id, email: newEmail };
+    createdAuth = !created.existed;
+  }
+  const newUserId = user.id;
+
+  const existingHub = await sbAuth.getHubAccount(newUserId).catch(() => null);
+  const now = new Date().toISOString();
+  const hubPatch = {
+    user_id: newUserId,
+    role: existingHub?.role === sbAuth.USER_ROLES.ADMIN ? sbAuth.USER_ROLES.ADMIN : sbAuth.USER_ROLES.CLIENT,
+    hub_view: 'organiser',
+    display_name: String(organiser.name || '').trim() || existingHub?.display_name || null,
+  };
+  if (createdAuth) {
+    hubPatch.emails_enabled = false;
+    hubPatch.organiser_access_at = now;
+    hubPatch.organiser_email_verified_at = now;
+  } else {
+    if (!existingHub) hubPatch.emails_enabled = false;
+    if (!existingHub?.organiser_access_at) hubPatch.organiser_access_at = now;
+    if (!existingHub?.organiser_email_verified_at) hubPatch.organiser_email_verified_at = now;
+  }
+
+  const { error: hubErr } = await sb.from('hub_accounts').upsert(hubPatch, { onConflict: 'user_id' });
+  if (hubErr) {
+    if (/emails_enabled/i.test(hubErr.message || '')) {
+      const fallback = { ...hubPatch };
+      delete fallback.emails_enabled;
+      const retry = await sb.from('hub_accounts').upsert(fallback, { onConflict: 'user_id' });
+      if (retry.error) throw new Error(retry.error.message);
+    } else {
+      throw new Error(hubErr.message);
+    }
+  }
+
+  await sb.from('attendees').upsert(
+    { email: newEmail, name: String(organiser.name || '').trim() || null, supabase_user_id: newUserId },
+    { onConflict: 'email' }
+  );
+
+  let newAccount = null;
+  const { data: byUser } = await sb
+    .from('organiser_accounts')
+    .select('*')
+    .eq('supabase_user_id', newUserId)
+    .maybeSingle();
+  newAccount = byUser;
+  if (!newAccount) {
+    const { data: byEmail } = await sb.from('organiser_accounts').select('*').eq('email', newEmail).maybeSingle();
+    newAccount = byEmail;
+  }
+  if (!newAccount) {
+    const { data: createdAccount, error: accErr } = await sb
+      .from('organiser_accounts')
+      .insert({ email: newEmail, supabase_user_id: newUserId })
+      .select('*')
+      .single();
+    if (accErr) throw new Error(accErr.message);
+    newAccount = createdAccount;
+  } else {
+    const accountPatch = {};
+    if (!newAccount.supabase_user_id) accountPatch.supabase_user_id = newUserId;
+    if (!String(newAccount.email || '').trim()) accountPatch.email = newEmail;
+    if (Object.keys(accountPatch).length) {
+      const { error: accUpdErr } = await sb
+        .from('organiser_accounts')
+        .update(accountPatch)
+        .eq('id', newAccount.id);
+      if (accUpdErr) throw new Error(accUpdErr.message);
+      newAccount = { ...newAccount, ...accountPatch };
+    }
+  }
+
+  // organisers.email is unique — if the new owner already has another group with that
+  // primary email, keep contact_email only so matching still works.
+  const { data: emailClash } = await sb
+    .from('organisers')
+    .select('id')
+    .eq('email', newEmail)
+    .neq('id', organiserId)
+    .maybeSingle();
+
+  const patch = {
+    contact_email: newEmail,
+    email: emailClash ? null : newEmail,
+    supabase_user_id: newUserId,
+    organiser_account_id: newAccount.id,
+    ownership_disputed_at: null,
+    ownership_disputed_by_email: null,
+  };
+
+  if (claimMode === 'immediate') {
+    patch.ownership_claim_status = 'claimed';
+    patch.ownership_claimed_at = now;
+  } else {
+    patch.ownership_claim_status = 'pending';
+    patch.ownership_claimed_at = null;
+  }
+
+  const hadStripe = Boolean(String(organiser.stripe_account_id || '').trim());
+  if (stripeAction === 'clear' && hadStripe) {
+    patch.stripe_account_id = null;
+    patch.stripe_charges_enabled = false;
+    patch.stripe_payouts_enabled = false;
+    patch.stripe_connect_details_submitted = false;
+    patch.stripe_connect_onboarded_at = null;
+    patch.payout_email = null;
+  }
+
+  const { data: updated, error: updateErr } = await sb
+    .from('organisers')
+    .update(patch)
+    .eq('id', organiserId)
+    .select('*')
+    .single();
+  if (updateErr) {
+    if (/unique|duplicate/i.test(updateErr.message || '')) {
+      const err = new Error('email_in_use');
+      err.status = 409;
+      err.message =
+        'That email is already used as the primary email on another group. Merge the groups first, or use a different email.';
+      throw err;
+    }
+    throw new Error(updateErr.message);
+  }
+
+  // New owner should not remain an editor on the previous account.
+  if (previousAccountId && previousAccountId !== newAccount.id) {
+    await sb
+      .from('organiser_team_members')
+      .delete()
+      .eq('organiser_account_id', previousAccountId)
+      .eq('email', newEmail);
+  }
+
+  let previousOwnerKeptAsEditor = false;
+  if (
+    keepPreviousOwnerAsEditor &&
+    previousAccountEmail &&
+    previousAccountEmail !== newEmail
+  ) {
+    previousOwnerKeptAsEditor = await addTeamMemberIfNeeded(
+      sb,
+      newAccount.id,
+      { email: previousAccountEmail, supabase_user_id: previousUserId },
+      new Set([newEmail])
+    );
+    // Scope previous owner to this group only when we (re)activated them.
+    const { data: editorRow } = await sb
+      .from('organiser_team_members')
+      .select('id')
+      .eq('organiser_account_id', newAccount.id)
+      .eq('email', previousAccountEmail)
+      .maybeSingle();
+    if (editorRow?.id) {
+      await sb.from('organiser_team_member_groups').delete().eq('team_member_id', editorRow.id);
+      const { error: scopeErr } = await sb.from('organiser_team_member_groups').insert({
+        team_member_id: editorRow.id,
+        organiser_id: organiserId,
+      });
+      if (scopeErr) throw new Error(scopeErr.message);
+      previousOwnerKeptAsEditor = true;
+    }
+  }
+
+  let claimUrl = null;
+  let claimInviteSent = false;
+  if (claimMode === 'pending_invite') {
+    try {
+      const host = String(process.env.SITE_URL || 'https://www.thenetworkeruk.com').replace(/\/$/, '');
+      claimUrl = await resolveOrganiserClaimUrl(newEmail, host);
+      const { sendTemplatedEmail } = require('../send-template-email');
+      const { campaignSiteVars } = require('../organiser-campaign-defaults');
+      await sendTemplatedEmail({
+        slug: 'organiser_claim_invite',
+        to: newEmail,
+        variables: {
+          ...campaignSiteVars(host),
+          organiser_name: String(organiser.name || 'your group').trim() || 'your group',
+          claim_url: claimUrl,
+        },
+        skipEmailCheck: true,
+      });
+      claimInviteSent = true;
+    } catch (inviteErr) {
+      console.error('[admin-transfer-ownership-invite]', inviteErr.message || inviteErr);
+    }
+  }
+
+  try {
+    const { logFromSession } = require('../entity-activity-log');
+    await logFromSession(session, null, {
+      entity_type: 'organiser',
+      entity_id: organiserId,
+      organiser_id: organiserId,
+      action: 'admin_ownership_transfer',
+      summary:
+        'platform admin transferred ownership' +
+        (organiser.name ? ' of ' + String(organiser.name).slice(0, 60) : '') +
+        ' to ' +
+        newEmail,
+      metadata: {
+        fromEmail: previousEmail || null,
+        fromAccountEmail: previousAccountEmail || null,
+        toEmail: newEmail,
+        previousAccountId,
+        newAccountId: newAccount.id,
+        claimMode,
+        stripeAction,
+        hadStripe,
+        keepPreviousOwnerAsEditor: previousOwnerKeptAsEditor,
+        source: 'admin',
+      },
+    });
+  } catch {
+    /* ignore */
+  }
+
+  return {
+    organiser: mapOrganiserRow(updated, undefined),
+    fromEmail: previousEmail || null,
+    toEmail: newEmail,
+    claimMode,
+    stripeAction,
+    stripeCleared: stripeAction === 'clear' && hadStripe,
+    hadStripe,
+    previousOwnerKeptAsEditor,
+    claimUrl,
+    claimInviteSent,
+    createdAuth,
+    emailPrimaryClearedForUnique: Boolean(emailClash),
+  };
 }
 
 const ORGANISER_REF_TABLES = [
@@ -1369,6 +1683,53 @@ module.exports = async function handler(req, res) {
         ok: false,
         error: e.message || 'approve_claim_request_failed',
         message: messages[e.message] || e.message || 'Could not approve claim request.',
+      });
+    }
+  }
+
+  if (body.action === 'transfer_ownership') {
+    try {
+      const result = await transferOrganiserOwnership(body, session);
+      invalidateIncompleteOrganiserCount();
+      const parts = [
+        'Ownership transferred to ' + result.toEmail + '.',
+        result.claimMode === 'immediate'
+          ? 'Claimed immediately.'
+          : result.claimInviteSent
+            ? 'Claim invite sent.'
+            : 'Set to pending claim (invite email may have failed — use Copy claim link).',
+      ];
+      if (result.stripeCleared) parts.push('Stripe Connect cleared — new owner must re-onboard.');
+      else if (result.hadStripe && result.stripeAction === 'keep') {
+        parts.push('Stripe Connect kept on this group.');
+      }
+      if (result.previousOwnerKeptAsEditor) {
+        parts.push('Previous owner kept as editor for this group.');
+      }
+      if (result.emailPrimaryClearedForUnique) {
+        parts.push(
+          'Primary email left blank because that address is already used on another group; contact email was updated.'
+        );
+      }
+      return json(res, 200, {
+        ok: true,
+        ...result,
+        message: parts.join(' '),
+      });
+    } catch (e) {
+      const status = e.status || 500;
+      const messages = {
+        missing_id: 'Missing group id.',
+        organiser_not_found: 'Group not found.',
+        invalid_email: 'Enter a valid new owner email.',
+        same_owner: 'That email already owns this group.',
+        email_in_use:
+          'That email is already used as the primary email on another group. Merge the groups first, or use a different email.',
+      };
+      return json(res, status, {
+        ok: false,
+        error: e.message || 'transfer_ownership_failed',
+        message: messages[e.message] || e.message || 'Could not transfer ownership.',
       });
     }
   }

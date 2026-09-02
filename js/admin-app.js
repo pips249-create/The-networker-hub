@@ -311,6 +311,7 @@
         'Add a logo URL, description, and website, then Save.',
         'Use Fill from website if the group already has a site listed.',
         'Use Email organiser after a listing change to tell them what you updated.',
+        'To hand a group to a new person, use Transfer ownership in the expanded row (choose Stripe clear/keep and whether to keep the previous owner as editor).',
       ],
     },
     'event-intake': {
@@ -16388,6 +16389,40 @@
       attrEsc(o.email || '') +
       '">Full editor</button>' +
       '<span class="group-cleanup-msg text-xs text-center"></span></div></form>' +
+      '<div class="group-transfer-panel mt-3 rounded-lg border border-slate-200 bg-white p-3 space-y-2" data-organiser-id="' +
+      attrEsc(o.id) +
+      '">' +
+      '<p class="text-xs font-semibold text-brand-900">Transfer ownership</p>' +
+      '<p class="text-[11px] text-slate-500">Moves this group and its events to a new owner. Other groups on the previous account stay put.</p>' +
+      (o.has_stripe_connect
+        ? '<p class="text-[11px] text-amber-800 font-semibold">This group has Stripe Connect set up — choose whether to clear it below.</p>'
+        : '') +
+      '<div><label class="block text-[11px] font-semibold text-slate-500 mb-1">New owner email</label>' +
+      '<input type="email" class="group-transfer-email w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" autocomplete="email" placeholder="successor@company.com"></div>' +
+      '<label class="flex items-start gap-2 text-[11px] text-slate-700 cursor-pointer">' +
+      '<input type="checkbox" class="group-transfer-keep-editor rounded border-slate-300 mt-0.5" checked>' +
+      '<span>Keep previous owner as an editor on this group only</span></label>' +
+      '<fieldset class="space-y-1">' +
+      '<legend class="text-[11px] font-semibold text-slate-500">Stripe Connect</legend>' +
+      '<label class="flex items-start gap-2 text-[11px] text-slate-700 cursor-pointer">' +
+      '<input type="radio" name="group-transfer-stripe-' +
+      attrEsc(o.id) +
+      '" class="group-transfer-stripe mt-0.5" value="clear" checked>' +
+      '<span>Clear Connect — new owner re-onboards (recommended)</span></label>' +
+      '<label class="flex items-start gap-2 text-[11px] text-slate-700 cursor-pointer">' +
+      '<input type="radio" name="group-transfer-stripe-' +
+      attrEsc(o.id) +
+      '" class="group-transfer-stripe mt-0.5" value="keep"' +
+      (o.has_stripe_connect ? '' : ' disabled') +
+      '>' +
+      '<span>Keep Connect on this group (only if same business / bank)</span></label>' +
+      '</fieldset>' +
+      '<label class="flex items-start gap-2 text-[11px] text-slate-700 cursor-pointer">' +
+      '<input type="checkbox" class="group-transfer-immediate rounded border-slate-300 mt-0.5">' +
+      '<span>Grant ownership immediately (skip claim invite)</span></label>' +
+      '<div class="flex flex-wrap items-center gap-2">' +
+      '<button type="button" class="group-transfer-submit rounded-lg border border-amber-300 bg-amber-50 text-amber-950 text-xs font-semibold px-3 py-1.5 hover:bg-amber-100">Transfer ownership</button>' +
+      '<span class="group-transfer-msg text-xs"></span></div></div>' +
       groupModerationPanelHtml(o) +
       entityActivityPanelHtml({
         entityType: 'organiser',
@@ -16466,6 +16501,73 @@
         if (msgEl) {
           msgEl.textContent = err.message || 'Could not reinstate';
           msgEl.className = 'group-moderation-msg text-xs text-red-700 font-semibold';
+        }
+        if (triggerBtn) triggerBtn.disabled = false;
+      });
+  }
+
+  function transferGroupOwnership(panel, triggerBtn) {
+    if (!panel) return;
+    var organiserId = panel.getAttribute('data-organiser-id');
+    var emailInput = panel.querySelector('.group-transfer-email');
+    var keepEditor = panel.querySelector('.group-transfer-keep-editor');
+    var immediate = panel.querySelector('.group-transfer-immediate');
+    var stripeRadio = panel.querySelector('.group-transfer-stripe:checked');
+    var msgEl = panel.querySelector('.group-transfer-msg');
+    var newEmail = emailInput ? String(emailInput.value || '').trim().toLowerCase() : '';
+    if (!organiserId) return;
+    if (!newEmail || newEmail.indexOf('@') < 1) {
+      if (msgEl) {
+        msgEl.textContent = 'Enter the new owner email.';
+        msgEl.className = 'group-transfer-msg text-xs text-red-700 font-semibold';
+      }
+      if (emailInput) emailInput.focus();
+      return;
+    }
+    var stripeAction = stripeRadio && stripeRadio.value === 'keep' ? 'keep' : 'clear';
+    var claimMode = immediate && immediate.checked ? 'immediate' : 'pending_invite';
+    var confirmLines = [
+      'Transfer ownership of this group to ' + newEmail + '?',
+      '',
+      claimMode === 'immediate'
+        ? '• Ownership will be granted immediately'
+        : '• They will get a claim invite email',
+      keepEditor && keepEditor.checked
+        ? '• Previous owner kept as editor on this group'
+        : '• Previous owner will lose access to this group',
+      stripeAction === 'keep'
+        ? '• Stripe Connect will stay on this group'
+        : '• Stripe Connect will be cleared (new owner re-onboards)',
+      '',
+      'Other groups on the previous account are not moved.',
+    ];
+    if (!window.confirm(confirmLines.join('\n'))) return;
+
+    if (triggerBtn) triggerBtn.disabled = true;
+    if (msgEl) {
+      msgEl.textContent = 'Transferring…';
+      msgEl.className = 'group-transfer-msg text-xs text-slate-500';
+    }
+    adminPost('/api/admin/organisers', {
+      action: 'transfer_ownership',
+      id: organiserId,
+      newEmail: newEmail,
+      keepPreviousOwnerAsEditor: keepEditor ? keepEditor.checked : true,
+      stripeAction: stripeAction,
+      claimMode: claimMode,
+    })
+      .then(function (data) {
+        if (!data || !data.ok) throw new Error((data && data.message) || data.error || 'Transfer failed');
+        if (msgEl) {
+          msgEl.textContent = data.message || 'Ownership transferred.';
+          msgEl.className = 'group-transfer-msg text-xs text-emerald-700 font-semibold';
+        }
+        return refreshGroupCleanupPage();
+      })
+      .catch(function (err) {
+        if (msgEl) {
+          msgEl.textContent = err.message || 'Could not transfer ownership';
+          msgEl.className = 'group-transfer-msg text-xs text-red-700 font-semibold';
         }
         if (triggerBtn) triggerBtn.disabled = false;
       });
@@ -17689,6 +17791,12 @@
     if (reinstateBtn) {
       var reinstatePanel = reinstateBtn.closest('.group-moderation-panel');
       reinstateGroup(reinstateBtn.getAttribute('data-organiser-id'), reinstatePanel, reinstateBtn);
+      return;
+    }
+
+    var transferBtn = e.target.closest('.group-transfer-submit');
+    if (transferBtn) {
+      transferGroupOwnership(transferBtn.closest('.group-transfer-panel'), transferBtn);
       return;
     }
 
@@ -28224,7 +28332,7 @@
         '</div></section>' +
         '<section class="admin-dash-section">' +
         '<div class="admin-dash-section-head"><h3>Send after the chat</h3>' +
-        '<p>Clean one-pager for organisers — no internal notes. Email the link, or attach the PDF.</p></div>' +
+        '<p>Clean one-pagers — no internal notes. Email the link, or attach the PDF.</p></div>' +
         '<div class="admin-dash-section-body space-y-3">' +
         '<div class="rounded-xl border border-emerald-200 bg-emerald-50 p-4 flex flex-wrap items-start justify-between gap-3">' +
         '<div class="min-w-0">' +
@@ -28235,6 +28343,16 @@
         '<button type="button" id="sales-kit-copy-leavebehind" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-3 py-2 hover:bg-brand-900">Copy link</button>' +
         '<a class="rounded-lg border border-emerald-300 bg-white text-sm font-semibold px-3 py-2 text-emerald-950 hover:bg-emerald-100" href="/assets/guides/organiser-leavebehind.pdf" download>Download PDF</a>' +
         '<a class="rounded-lg border border-emerald-300 bg-white text-sm font-semibold px-3 py-2 text-emerald-950 hover:bg-emerald-100" href="/guides/organiser-leavebehind" target="_blank" rel="noopener">Open page</a>' +
+        '</div></div>' +
+        '<div class="rounded-xl border border-violet-200 bg-violet-50 p-4 flex flex-wrap items-start justify-between gap-3">' +
+        '<div class="min-w-0">' +
+        '<p class="font-semibold text-violet-950">International overview</p>' +
+        '<p class="text-sm text-violet-900/80 mt-1 break-all">thenetworkeruk.com/guides/international-overview</p>' +
+        '</div>' +
+        '<div class="flex flex-wrap gap-2">' +
+        '<button type="button" id="sales-kit-copy-intl-overview" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-3 py-2 hover:bg-brand-900">Copy link</button>' +
+        '<a class="rounded-lg border border-violet-300 bg-white text-sm font-semibold px-3 py-2 text-violet-950 hover:bg-violet-100" href="/assets/guides/international-overview.pdf" download>Download PDF</a>' +
+        '<a class="rounded-lg border border-violet-300 bg-white text-sm font-semibold px-3 py-2 text-violet-950 hover:bg-violet-100" href="/guides/international-overview" target="_blank" rel="noopener">Open page</a>' +
         '</div></div>' +
         '<span id="sales-kit-leavebehind-status" class="text-sm text-slate-500" aria-live="polite"></span>' +
         '</div></section>' +
@@ -28252,7 +28370,8 @@
         '<p>Longer pitch decks and the PDF to send after the meeting.</p></div>' +
         '<div class="admin-dash-section-body"><div class="admin-shortcut-grid">' +
         '<a class="admin-shortcut" href="/p-tnh-org-onboard-x4n7" target="_blank" rel="noopener"><span class="admin-shortcut-label">Standard sales deck</span><span class="admin-shortcut-desc">Present fullscreen</span></a>' +
-        '<a class="admin-shortcut" href="/p-tnh-intl-overview-i8n2" target="_blank" rel="noopener"><span class="admin-shortcut-label">International deck</span><span class="admin-shortcut-desc">What The Networker International is</span></a>' +
+        '<a class="admin-shortcut" href="/guides/international-overview" target="_blank" rel="noopener"><span class="admin-shortcut-label">International overview</span><span class="admin-shortcut-desc">What it is · printable PDF</span></a>' +
+        '<a class="admin-shortcut" href="/assets/guides/international-overview.pdf" target="_blank" rel="noopener"><span class="admin-shortcut-label">International PDF</span><span class="admin-shortcut-desc">Download / attach</span></a>' +
         '<a class="admin-shortcut" href="/p-tnh-bmu-onboard-k7m2" target="_blank" rel="noopener"><span class="admin-shortcut-label">BMU deck</span><span class="admin-shortcut-desc">Business Mentoring University</span></a>' +
         '<a class="admin-shortcut" href="/p-tnh-wibn-onboard-w9m3" target="_blank" rel="noopener"><span class="admin-shortcut-label">WIBN deck</span><span class="admin-shortcut-desc">Women in Business Network</span></a>' +
         '<a class="admin-shortcut" href="/assets/guides/organiser-leavebehind.pdf" target="_blank" rel="noopener"><span class="admin-shortcut-label">Leave-behind PDF</span><span class="admin-shortcut-desc">Send after the chat</span></a>' +
@@ -28404,6 +28523,16 @@
             'https://www.thenetworkeruk.com/guides/organiser-leavebehind',
             leaveStatus,
             'Link copied — paste into email or WhatsApp.'
+          );
+        });
+      }
+      var intlBtn = document.getElementById('sales-kit-copy-intl-overview');
+      if (intlBtn) {
+        intlBtn.addEventListener('click', function () {
+          copyText(
+            'https://www.thenetworkeruk.com/guides/international-overview',
+            leaveStatus,
+            'International overview link copied — paste into email or WhatsApp.'
           );
         });
       }
