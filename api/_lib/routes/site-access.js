@@ -32,13 +32,18 @@ function safeNextPath(raw) {
   return redirect;
 }
 
-/** Banner soft-preview may only land inside the closed /peek mini-site. */
+/** Map retired /peek URLs (and defaults) onto live marketing pages. */
 function safePeekNextPath(raw) {
   const next = safeNextPath(raw);
-  if (next === '/peek' || next.startsWith('/peek/') || next.startsWith('/peek?')) {
-    return next;
+  const pathOnly = next.split(/[?#]/)[0].replace(/\/$/, '') || '/';
+  if (pathOnly === '/peek' || pathOnly === '/peek/index') return '/';
+  if (pathOnly === '/peek/about-us') return '/about';
+  if (pathOnly === '/peek/for-organisers') return '/for-organisers';
+  if (pathOnly === '/peek/for-networkers' || pathOnly === '/peek/for-attendees') {
+    return '/for-networkers';
   }
-  return '/peek';
+  if (pathOnly.indexOf('/peek/') === 0 || pathOnly === '/peek') return '/';
+  return next;
 }
 
 function matchesTeamPassword(password) {
@@ -152,7 +157,7 @@ async function handlePasswordUnlock(req, res, body) {
           ok: true,
           peekOnly: true,
           redirect: safePeekNextPath(body.next),
-          message: 'Soft preview opens the Peek pages only — not the full Hub.',
+          message: 'Opening The Networker UK.',
         });
       }
       return json(res, 401, {
@@ -199,7 +204,7 @@ async function handlePeekUnlockGet(req, res) {
   }
 
   const peek = String(url.searchParams.get('peek') || '').trim();
-  const nextRaw = url.searchParams.get('next') || '/peek';
+  const nextRaw = url.searchParams.get('next') || '/';
 
   if (!isSiteAccessRequired()) {
     res.statusCode = 302;
@@ -213,7 +218,7 @@ async function handlePeekUnlockGet(req, res) {
     return res.end();
   }
 
-  // Public banner token → /peek only (no full-site cookie).
+  // Public banner token → live site (peek mini-site retired).
   if (matchesBannerPeek(peek)) {
     res.statusCode = 302;
     res.setHeader('Location', safePeekNextPath(nextRaw));

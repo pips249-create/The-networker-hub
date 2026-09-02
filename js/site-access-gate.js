@@ -91,11 +91,11 @@
     });
   }
 
-  // co.uk banner soft unlock — opens /peek only (not the full gated Hub)
+  // co.uk banner soft unlock — peek mini-site retired; land on the live home.
   if (peekToken && !lockRequested) {
     var peekMsg = document.getElementById('site-access-message');
-    showAlert(peekMsg, 'Opening Peek preview…', 'success');
-    postSiteAccess({ peek: peekToken, next: '/peek' })
+    showAlert(peekMsg, 'Opening The Networker UK…', 'success');
+    postSiteAccess({ peek: peekToken, next: '/' })
       .then(function (result) {
         if (!result.ok) {
           showAlert(
@@ -108,14 +108,14 @@
           } catch (err) {}
           return;
         }
-        window.location.replace(result.data.redirect || '/peek');
+        window.location.replace(result.data.redirect || '/');
       })
       .catch(function () {
         window.location.replace(
           '/api/auth/site-access?peek=' +
             encodeURIComponent(peekToken) +
             '&next=' +
-            encodeURIComponent('/peek')
+            encodeURIComponent('/')
         );
       });
   } else if (peekError) {

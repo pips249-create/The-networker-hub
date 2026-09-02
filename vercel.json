@@ -98,6 +98,8 @@
     { "source": "/p/tnh-bmu-onboard-k7m2", "destination": "/p-tnh-bmu-onboard-k7m2", "permanent": true },
     { "source": "/p-tnh-wibn-onboard-w9m3.html", "destination": "/p-tnh-wibn-onboard-w9m3", "permanent": true },
     { "source": "/p/tnh-wibn-onboard-w9m3", "destination": "/p-tnh-wibn-onboard-w9m3", "permanent": true },
+    { "source": "/p-tnh-intl-overview-i8n2.html", "destination": "/p-tnh-intl-overview-i8n2", "permanent": true },
+    { "source": "/p/tnh-intl-overview-i8n2", "destination": "/p-tnh-intl-overview-i8n2", "permanent": true },
     { "source": "/faq.html", "destination": "/faq", "permanent": true },
     { "source": "/about.html", "destination": "/about", "permanent": true },
     { "source": "/rankings.html", "destination": "/rankings", "permanent": true },
@@ -117,10 +119,15 @@
     { "source": "/forgot-password.html", "destination": "/forgot-password", "permanent": true },
     { "source": "/reset-password.html", "destination": "/reset-password", "permanent": true },
     { "source": "/site-access.html", "destination": "/site-access", "permanent": true },
-    { "source": "/peek/index.html", "destination": "/peek", "permanent": true },
-    { "source": "/peek/about-us.html", "destination": "/peek/about-us", "permanent": true },
-    { "source": "/peek/for-organisers.html", "destination": "/peek/for-organisers", "permanent": true },
-    { "source": "/peek/for-networkers.html", "destination": "/peek/for-networkers", "permanent": true },
+    { "source": "/peek", "destination": "/", "permanent": true },
+    { "source": "/peek/", "destination": "/", "permanent": true },
+    { "source": "/peek/index.html", "destination": "/", "permanent": true },
+    { "source": "/peek/about-us", "destination": "/about", "permanent": true },
+    { "source": "/peek/about-us.html", "destination": "/about", "permanent": true },
+    { "source": "/peek/for-organisers", "destination": "/for-organisers", "permanent": true },
+    { "source": "/peek/for-organisers.html", "destination": "/for-organisers", "permanent": true },
+    { "source": "/peek/for-networkers", "destination": "/for-networkers", "permanent": true },
+    { "source": "/peek/for-networkers.html", "destination": "/for-networkers", "permanent": true },
     { "source": "/home2.5.html", "destination": "/home2.5", "permanent": true },
     { "source": "/international.html", "destination": "/international", "permanent": true },
     { "source": "/opportunities/list.html", "destination": "/opportunities/list", "permanent": true },
@@ -406,6 +413,10 @@
     {
       "source": "/p-tnh-wibn-onboard-w9m3",
       "destination": "/p-tnh-wibn-onboard-w9m3.html"
+    },
+    {
+      "source": "/p-tnh-intl-overview-i8n2",
+      "destination": "/p-tnh-intl-overview-i8n2.html"
     },
     {
       "source": "/p-tnh-bmu-onboard-k7m2",

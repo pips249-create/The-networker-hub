@@ -27908,11 +27908,12 @@
       'Quick recap:\n' +
       '• Free to list — you keep 100% of the ticket price (attendees pay 4.5% + 20p)\n' +
       '• Built for networking groups — guest visits, member rates, visit tracking, attendee round-ups\n' +
-      '• List autumn dates now; public browsing 25 August, ticket buying 1 September\n' +
-      '• Claim before 1 Sept → Founding Organiser · 2026\n\n' +
+      '• Browse and ticket buying are live on The Networker UK\n' +
+      '• Easy start — claim your page, list yourself, or send us the details and we’ll help\n\n' +
       'Benefits one-pager: https://thenetworkeruk.com/guides/organiser-leavebehind\n' +
       'PDF: https://thenetworkeruk.com/assets/guides/organiser-leavebehind.pdf\n' +
       'For organisers: https://thenetworkeruk.com/for-organisers\n' +
+      'Send an event: https://thenetworkeruk.com/add-your-event\n' +
       'Get in touch: https://www.thenetworkeruk.com/contact\n\n' +
       'Happy to list your next 2–3 meetings with you whenever suits.\n\n' +
       'Best wishes,\n{{sender}}';
@@ -27925,8 +27926,8 @@
       '4. Open an event page — guest visit + members-only tickets (no access codes).\n' +
       '5. Impersonate the pinned demo organiser → organiser dashboard.\n' +
       '6. Show Attendees (visit tracking), Promote (LinkedIn post), then mention attendee round-up.\n' +
-      '7. Close (say): “List autumn dates now. Browsing opens 25 August; buying opens 1 September. Claim before 1 September for Founding Organiser · 2026.”\n' +
-      '8. CTA: claim page + next 2–3 dates, or contact us.';
+      '7. Close (say): “Browse and tickets are live — list your next meetings today, or send us the details and we’ll help.”\n' +
+      '8. CTA: claim page + next 2–3 dates, or add-your-event / contact us.';
 
     var outcomeLabels = {
       interested: 'Interested',
@@ -28251,6 +28252,7 @@
         '<p>Longer pitch decks and the PDF to send after the meeting.</p></div>' +
         '<div class="admin-dash-section-body"><div class="admin-shortcut-grid">' +
         '<a class="admin-shortcut" href="/p-tnh-org-onboard-x4n7" target="_blank" rel="noopener"><span class="admin-shortcut-label">Standard sales deck</span><span class="admin-shortcut-desc">Present fullscreen</span></a>' +
+        '<a class="admin-shortcut" href="/p-tnh-intl-overview-i8n2" target="_blank" rel="noopener"><span class="admin-shortcut-label">International deck</span><span class="admin-shortcut-desc">What The Networker International is</span></a>' +
         '<a class="admin-shortcut" href="/p-tnh-bmu-onboard-k7m2" target="_blank" rel="noopener"><span class="admin-shortcut-label">BMU deck</span><span class="admin-shortcut-desc">Business Mentoring University</span></a>' +
         '<a class="admin-shortcut" href="/p-tnh-wibn-onboard-w9m3" target="_blank" rel="noopener"><span class="admin-shortcut-label">WIBN deck</span><span class="admin-shortcut-desc">Women in Business Network</span></a>' +
         '<a class="admin-shortcut" href="/assets/guides/organiser-leavebehind.pdf" target="_blank" rel="noopener"><span class="admin-shortcut-label">Leave-behind PDF</span><span class="admin-shortcut-desc">Send after the chat</span></a>' +
@@ -28276,7 +28278,7 @@
         '<li><strong>Event page</strong> — guest visits + members-only tickets.</li>' +
         '<li><strong>Workspace</strong> — impersonate the pinned demo organiser.</li>' +
         '<li><strong>Engage</strong> — visit tracking, LinkedIn Promote, attendee round-up.</li>' +
-        '<li><strong>Close</strong> — list now; 1 Sept public buying; Founding Organiser · 2026.</li>' +
+        '<li><strong>Close</strong> — browse &amp; tickets live; list now or send us your event.</li>' +
         '</ol></div></section>' +
         '<section class="admin-dash-section">' +
         '<div class="admin-dash-section-head"><h3>Lines to remember</h3>' +

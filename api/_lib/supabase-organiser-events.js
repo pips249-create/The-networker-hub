@@ -880,10 +880,21 @@ async function buildEventRow(payload, eventId, mode) {
   const approval_status =
     listingStatus != null ? mapApprovalStatus(listingStatus) : undefined;
 
-  const row = {
-    title: payload.title,
-    organiser_id: payload.groupId || null,
-  };
+  // Never default organiser_id to null on update — status-only writes (e.g. a
+  // mistaken listingStatus patch) must not unlink the event from its group.
+  const row = {};
+  if (mode === 'create' || payload.title !== undefined) {
+    row.title = payload.title;
+  }
+  const groupId =
+    payload.groupId != null && String(payload.groupId).trim()
+      ? String(payload.groupId).trim()
+      : null;
+  if (mode === 'create') {
+    row.organiser_id = groupId;
+  } else if (groupId) {
+    row.organiser_id = groupId;
+  }
 
   if (Object.prototype.hasOwnProperty.call(payload, 'description')) {
     row.description = plainEventDescription(payload.description) || null;
@@ -899,7 +910,20 @@ async function buildEventRow(payload, eventId, mode) {
     }
   }
 
-  if (!isLocked) {
+  const touchesListingShape =
+    mode === 'create' ||
+    payload.type != null ||
+    payload.eventFormat != null ||
+    payload.venue != null ||
+    payload.addressLine1 != null ||
+    payload.fullAddress != null ||
+    payload.location != null ||
+    payload.city != null ||
+    payload.postcode != null ||
+    payload.onlineLink != null ||
+    payload.onlinePlatform != null;
+
+  if (!isLocked && touchesListingShape) {
     row.event_type = mapEventType(payload.type);
     row.meeting_type = mapMeetingType(payload.eventFormat);
     const isOnlineMeeting = String(row.meeting_type || '').toLowerCase() === 'online';
@@ -983,7 +1007,10 @@ async function buildEventRow(payload, eventId, mode) {
     }
   }
 
-  if (mode === 'create' || Object.prototype.hasOwnProperty.call(payload, 'onlineLink')) {
+  if (
+    touchesListingShape &&
+    (mode === 'create' || Object.prototype.hasOwnProperty.call(payload, 'onlineLink'))
+  ) {
     row.meeting_link = payload.onlineLink || null;
   }
   if (Object.prototype.hasOwnProperty.call(payload, 'onlinePlatform')) {
@@ -2668,6 +2695,76 @@ async function createTicketsForEvents({
 }
 
 /**
+ * Hide an event from Browse without rewriting listing details.
+ * Must not go through buildEventRow — a listingStatus-only updateEvent used to
+ * wipe organiser_id / venue fields and leave the dashboard looking unchanged.
+ */
+async function unpublishEvent(eventId) {
+  const sb = getSupabaseAdmin();
+  const id = String(eventId || '').trim();
+  const { data: existing, error } = await sb
+    .from('events')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!existing) {
+    const e = new Error('Event not found');
+    e.status = 404;
+    e.code = 'event_not_found';
+    throw e;
+  }
+
+  const status = String(existing.status || '').toLowerCase();
+  if (status === 'cancelled') {
+    const e = new Error('Cancelled events cannot be unpublished. Use reinstate first if needed.');
+    e.status = 400;
+    e.code = 'event_cancelled';
+    throw e;
+  }
+  if (status === 'draft') {
+    const e = new Error('Draft events are already hidden. Publish first, or delete the draft.');
+    e.status = 400;
+    e.code = 'event_draft';
+    throw e;
+  }
+  if (status === 'unpublished') {
+    return rowToEvent(existing);
+  }
+
+  const ids = new Set([id]);
+  const seriesGroupId = String(existing.series_group_id || '').trim();
+  if (seriesGroupId) {
+    const { data: peers, error: peerErr } = await sb
+      .from('events')
+      .select('id, status')
+      .eq('series_group_id', seriesGroupId)
+      .eq('status', 'published');
+    if (peerErr) throw new Error(peerErr.message);
+    (peers || []).forEach((peer) => {
+      if (peer && peer.id) ids.add(peer.id);
+    });
+  }
+
+  const idList = [...ids];
+  const { error: updateErr } = await sb
+    .from('events')
+    .update({ status: 'unpublished', ticket_sales_enabled: false })
+    .in('id', idList);
+  if (updateErr) throw new Error(updateErr.message);
+
+  const { data: updated, error: reloadErr } = await sb
+    .from('events')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle();
+  if (reloadErr) throw new Error(reloadErr.message);
+  const event = rowToEvent(updated || { ...existing, status: 'unpublished', ticket_sales_enabled: false });
+  event.unpublishedIds = idList;
+  return event;
+}
+
+/**
  * Restore an organiser-unpublished (or hub-unpublished) event to the public directory.
  * Re-runs the same publish gates as a first publish: date, tickets, and paid-ticket setup.
  */
@@ -3508,6 +3605,7 @@ module.exports = {
   syncSeriesOccurrencesForEvent,
   deleteEventForSession,
   enableTicketSalesForEvent,
+  unpublishEvent,
   republishEvent,
   createTicket,
   createTicketsForEvents,

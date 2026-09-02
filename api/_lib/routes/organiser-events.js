@@ -97,6 +97,7 @@ module.exports = async function handler(req, res) {
     deleteEventForSession,
     duplicateEventForSession,
     getEventById,
+    unpublishEvent,
     republishEvent,
     resolveSeriesGroupId,
     isPlatformAdmin,
@@ -333,7 +334,7 @@ module.exports = async function handler(req, res) {
       try {
         const access = await assertOwnsEventId(eventId);
         if (!access.ok) return json(res, 403, EVENT_NOT_OWNED);
-        const updated = await updateEvent(eventId, { listingStatus: 'unpublished' });
+        const updated = await unpublishEvent(eventId);
         try {
           const { resolveOrganiserAccess } = require('../supabase-organiser-access');
           const { logFromSession } = require('../entity-activity-log');
@@ -351,6 +352,7 @@ module.exports = async function handler(req, res) {
         return json(res, 200, {
           ok: true,
           event: updated,
+          unpublishedIds: updated?.unpublishedIds || [eventId],
           message: 'Event unpublished — it is hidden from Browse events.',
         });
       } catch (e) {

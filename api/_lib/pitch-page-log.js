@@ -14,6 +14,7 @@ const PITCH_LABELS = {
   '/p-tnh-org-cheats-c8r3': 'Organiser demo cheat sheets',
   '/p-tnh-bmu-onboard-k7m2': 'BMU onboarding pitch',
   '/p-tnh-wibn-onboard-w9m3': 'WIBN onboarding pitch',
+  '/p-tnh-intl-overview-i8n2': 'The Networker International — what it is',
 };
 
 function cleanText(value, max) {

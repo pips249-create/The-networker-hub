@@ -162,6 +162,8 @@ const INTERNAL_SALES_PREFIXES = [
   '/p/tnh-bmu-onboard-k7m2',
   '/p-tnh-wibn-onboard-w9m3',
   '/p/tnh-wibn-onboard-w9m3',
+  '/p-tnh-intl-overview-i8n2',
+  '/p/tnh-intl-overview-i8n2',
   '/p-tnh-embed-events-k1',
   '/p-tnh-embed-org-k2',
   '/p-tnh-embed-dash-k3',
@@ -174,8 +176,7 @@ const INTERNAL_SALES_PREFIXES = [
 /**
  * Organiser early-access paths — reachable while the public site gate is on.
  * Email 1/2: claim, auth, organiser workspace, trust pages, and setup guides only.
- * Soft-launch marketing for the co.uk banner lives under /peek (GATE_BYPASS), not here.
- * /about and /for-networkers redirect anonymous visitors into /peek while gated.
+ * Soft-launch /peek mini-site is retired (301 → live pages).
  * Public catalogue stays gated until SITE_ACCESS_PASSWORD is removed at launch.
  * Signed-in claim sessions unlock the organiser workspace only — not public browse.
  */
@@ -219,18 +220,13 @@ function isPublicOrganiserProfilePath(pathname) {
   return /^\/organisers\/[^/]+$/i.test(String(pathname || ''));
 }
 
-/** Old soft-launch URLs → closed /peek mini-site (banner + accidental deep links). */
-function softLaunchPeekRedirectPath(pathname) {
+/** Soft-launch /peek mini-site → live marketing pages (retired after public launch). */
+function retiredPeekRedirectPath(pathname) {
   const path = String(pathname || '').replace(/\/$/, '') || '/';
-  if (path === '/about' || path === '/about.html') return '/peek/about-us';
-  if (
-    path === '/for-networkers' ||
-    path === '/for-networkers.html' ||
-    path === '/for-attendees' ||
-    path === '/for-attendees.html'
-  ) {
-    return '/peek/for-networkers';
-  }
+  if (path === '/peek' || path === '/peek/index') return '/';
+  if (path === '/peek/about-us') return '/about';
+  if (path === '/peek/for-organisers') return '/for-organisers';
+  if (path === '/peek/for-networkers' || path === '/peek/for-attendees') return '/for-networkers';
   return null;
 }
 
@@ -694,15 +690,6 @@ async function maybeGateSiteAccess(request, url) {
 
   if (isGateBypassPath(pathname)) return null;
 
-  // Anonymous visitors: send legacy soft-launch URLs into the closed /peek bubble
-  // (preview cookie / signed-in sessions still reach the real pages below).
-  const peekDest = softLaunchPeekRedirectPath(pathname);
-  if (peekDest && !(await hasSiteAccess(request)) && !(await hasValidSession(request))) {
-    const dest = new URL(peekDest, url.origin);
-    dest.search = search || '';
-    return Response.redirect(dest.toString(), 302);
-  }
-
   // Public opportunities API: reachable by preview-cookie holders and signed-in
   // organisers/members only — never anonymously while the gate is on. This keeps the
   // organiser premium-slots flow working without exposing the catalogue to the public.
@@ -932,6 +919,14 @@ export default async function middleware(request) {
   }
 
   const pathname = url.pathname.replace(/\/$/, '') || '/';
+
+  // Soft-launch /peek mini-site retired — send bookmarks and co.uk banner links live.
+  const peekLive = retiredPeekRedirectPath(pathname);
+  if (peekLive) {
+    const dest = new URL(peekLive, url.origin);
+    dest.search = url.search || '';
+    return Response.redirect(dest.toString(), 301);
+  }
 
   // Market preview domains (Ireland / USA): always serve the coming-soon gate.
   if (isMarketPreviewHost(host) && request.headers.get('x-market-preview-fetch') !== '1') {

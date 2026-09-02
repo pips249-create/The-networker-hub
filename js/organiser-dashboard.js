@@ -9345,13 +9345,27 @@
 
   async function confirmUnpublishEvent(eventId) {
     if (!eventId) return;
-    const ev = (state.events || []).find((e) => e.id === eventId) || { id: eventId };
+    const ev = findEventById(eventId) || { id: eventId };
+    const peers = resolveSeriesPeersForEvent(ev);
+    const seriesCount =
+      ev.isSeries && ev.seriesCount > 1
+        ? ev.seriesCount
+        : peers.eventIds && peers.eventIds.length > 1
+          ? peers.eventIds.length
+          : 0;
     const label = ev.title || 'this event';
     const ok = window.confirm(
-      'Unpublish "' +
-        label +
-        '"?\n\n' +
-        'This event will be removed from Browse events immediately. Existing bookings stay in your dashboard.'
+      seriesCount > 1
+        ? 'Unpublish "' +
+            label +
+            '" (' +
+            seriesCount +
+            ' dates)?\n\n' +
+            'All dates in this series will be removed from Browse events immediately. Existing bookings stay in your dashboard.'
+        : 'Unpublish "' +
+            label +
+            '"?\n\n' +
+            'This event will be removed from Browse events immediately. Existing bookings stay in your dashboard.'
     );
     if (!ok) return;
 
@@ -9363,13 +9377,24 @@
       window.alert(res.data.message || res.data.error || 'Could not unpublish this event.');
       return;
     }
-    await loadBootstrap();
-    renderAll();
+    // Keep the row visible with an Unpublished badge — "Hide unpublished" would
+    // make it look like the event vanished from My events.
+    filters.eventsHideUnpublished = false;
+    const hideUnpublishedEl = document.getElementById('filter-events-hide-unpublished');
+    if (hideUnpublishedEl) hideUnpublishedEl.checked = false;
+    const revHideUnpublishedEl = document.getElementById('filter-revenue-hide-unpublished');
+    if (revHideUnpublishedEl) revHideUnpublishedEl.checked = false;
+    await refreshEventsWorkspaceAfterMutation({ route: 'events-list' });
+    showOrganiserAlert(
+      res.data.message ||
+        'Event unpublished — hidden from Browse events. It stays here with status Unpublished.',
+      false
+    );
   }
 
   async function confirmRepublishEvent(eventId) {
     if (!eventId) return;
-    const ev = (state.events || []).find((e) => e.id === eventId) || { id: eventId };
+    const ev = findEventById(eventId) || { id: eventId };
     const label = ev.title || 'this event';
     const ok = window.confirm(
       'Republish "' +
@@ -9387,8 +9412,8 @@
       window.alert(res.data.message || res.data.error || 'Could not republish this event.');
       return;
     }
-    await loadBootstrap();
-    renderAll();
+    await refreshEventsWorkspaceAfterMutation({ route: 'events-list' });
+    showOrganiserAlert(res.data.message || 'Event republished — live on Browse events again.', false);
   }
 
   function closeAllActionMenus() {
