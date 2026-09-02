@@ -823,11 +823,30 @@
 
 .opportunity-detail-page .opp-claim-top-kicker {
   margin: 0 0 4px;
+  font-family: 'DM Sans', 'DM Sans Fallback', system-ui, sans-serif;
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: #8a6b3d;
+}
+
+.opportunity-detail-page .opp-claim-top-deadline {
+  display: inline-block;
+  margin: 0 0 12px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(201, 150, 31, 0.16);
+  border: 1px solid rgba(138, 107, 61, 0.28);
+  font-family: 'DM Sans', 'DM Sans Fallback', system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #6b4e1f;
+}
+
+.opportunity-detail-page .opp-claim-top-deadline[hidden] {
+  display: none !important;
 }
 
 .opportunity-detail-page .opp-claim-top-title {
@@ -890,16 +909,25 @@
 .opportunity-detail-page .opp-claim-sticky-copy {
   margin: 0;
   flex: 1 1 auto;
-  font-size: 13px;
+  min-width: 0;
+  font-family: 'DM Sans', 'DM Sans Fallback', system-ui, sans-serif;
+  font-size: 14px;
   font-weight: 600;
-  line-height: 1.35;
+  line-height: 1.4;
   color: #fff;
 }
 
 .opportunity-detail-page .opp-claim-sticky .opp-detail-btn--gold {
   flex: 0 0 auto;
+  width: auto;
+  max-width: 48%;
   white-space: nowrap;
   margin: 0;
+  padding: 11px 16px;
+  font-family: 'DM Sans', 'DM Sans Fallback', system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.2;
 }
 
 body.opp-claim-sticky-visible {
@@ -913,6 +941,23 @@ body.opp-claim-invite-active .opp-enquire-jump {
 
 body.opp-claim-invite-active .opp-detail-breadcrumb {
   display: none;
+}
+
+@media (max-width: 719px) {
+  .opportunity-detail-page .opp-claim-sticky {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .opportunity-detail-page .opp-claim-sticky-copy {
+    text-align: center;
+  }
+
+  .opportunity-detail-page .opp-claim-sticky .opp-detail-btn--gold {
+    max-width: none;
+    width: 100%;
+  }
 }
 
 @media (min-width: 720px) {

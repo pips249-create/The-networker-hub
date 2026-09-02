@@ -27,7 +27,8 @@ const SITE = 'https://www.thenetworkeruk.com';
 const CSV = path.join(root, 'data/Franchise-Claim-Resend.csv');
 const SLUG = 'franchise_claim_invite';
 const REPLY_TO = 'catherine@thenetworkeruk.com';
-const SUBJECT = '{{opportunity_title}} — claim your franchise listing';
+const FOOTER_EMAIL = 'hi@thenetworkeruk.com';
+const SUBJECT = 'Franchise Listing Invitation';
 
 const args = process.argv.slice(2);
 const doSend = args.includes('--send');
@@ -80,15 +81,14 @@ async function sendOne(row, toOverride) {
       owner_name: row.title || row.ownerName || 'there',
       opportunity_title: title,
       claim_url: row.claimUrl,
-      support_email: REPLY_TO,
-      logo_url: SITE + '/assets/logo-nav-transparent.png?v=20260823uk3',
+      support_email: FOOTER_EMAIL,
     },
     SITE
   );
   return sendTemplatedEmail({
     slug: SLUG,
     to,
-    subject: SUBJECT.replace(/\{\{opportunity_title\}\}/g, title),
+    subject: SUBJECT,
     variables: vars,
     skipEmailCheck: true,
     replyTo: REPLY_TO,

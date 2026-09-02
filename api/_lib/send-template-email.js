@@ -26,6 +26,7 @@ const {
   logoNavUrl,
   logoEmailHeaderUrl,
   logoFooterUrl,
+  logoFooterLightUrl,
   hubertIconUrl,
   supportEmail,
   unsubscribeUrl,
@@ -76,6 +77,7 @@ const {
   stripEventRemovedByHubPlaceholders,
 } = require('./event-removed-by-hub-sections');
 const { patchEmailMobileStyles } = require('./email-mobile-styles');
+const franchiseEmailFooterLogoDataUri = require('./franchise-email-footer-logo-datauri');
 
 const PLACEHOLDER_RE = /\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g;
 
@@ -368,6 +370,9 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
 
   merged.logo_url = logoEmailHeaderUrl(siteUrl);
   merged.logo_footer_url = logoFooterUrl(siteUrl);
+  if (slug === 'franchise_claim_invite') {
+    merged.logo_footer_light_url = franchiseEmailFooterLogoDataUri;
+  }
   merged.hubert_icon_url = hubertIconUrl(siteUrl);
   // Prefer live CMS sponsors. If the slot is empty, keep any caller-provided row
   // (admin preview samples); live sends do not pass sample sponsors.

@@ -1244,7 +1244,7 @@ module.exports = async function handler(req, res) {
             ? String(data.title || 'Your affiliate programme') +
               ' — claim your affiliate programme listing'
             : isFranchise
-              ? String(data.title || 'Your franchise') + ' — claim your franchise listing'
+              ? 'Franchise Listing Invitation'
               : 'Congratulations: ' +
                 String(data.title || 'your opportunity') +
                 ' is ready — claim your listing';

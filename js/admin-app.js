@@ -10003,11 +10003,51 @@
     var c = Number(clicks) || 0;
     var v = Number(pageViews) || 0;
     if (v < 1) return { label: '—', hint: 'Needs page views to calculate' };
+    if (c < 1) return { label: '—', hint: formatSponsorPackNumber(v) + ' views · no site click-throughs yet' };
     var pct = Math.round((c / v) * 1000) / 10;
     return {
       label: String(pct) + '%',
-      hint: formatSponsorPackNumber(c) + ' clicks ÷ ' + formatSponsorPackNumber(v) + ' views',
+      hint: formatSponsorPackNumber(c) + ' site clicks ÷ ' + formatSponsorPackNumber(v) + ' views',
     };
+  }
+
+  function resolveSponsorPackSiteClicks(summary) {
+    var s = summary && typeof summary === 'object' ? summary : {};
+    if (s.siteClicks != null && s.siteClicks !== '') return Number(s.siteClicks) || 0;
+    var total = Number(s.clicks) || 0;
+    var logo =
+      s.emailLogoClicks != null && s.emailLogoClicks !== ''
+        ? Number(s.emailLogoClicks) || 0
+        : s.emailClicks != null && s.emailClicks !== ''
+          ? Number(s.emailClicks) || 0
+          : null;
+    if (logo != null) return Math.max(0, total - logo);
+    return 0;
+  }
+
+  function sponsorPackOutboundHint(summary, eng) {
+    var total = Number(summary && summary.clicks) || 0;
+    var site = resolveSponsorPackSiteClicks(summary);
+    var logo = resolveSponsorPackLogoClicks(summary, eng);
+    if (total < 1) return 'Site hero + logo email clicks to their website';
+    if (site > 0 && logo > 0) {
+      return (
+        formatSponsorPackNumber(site) +
+        ' site · ' +
+        formatSponsorPackNumber(logo) +
+        ' logo email'
+      );
+    }
+    if (logo > 0) return formatSponsorPackNumber(logo) + ' logo email click' + (logo === 1 ? '' : 's');
+    if (site > 0) return formatSponsorPackNumber(site) + ' site hero click' + (site === 1 ? '' : 's');
+    return 'Clicks through to their website';
+  }
+
+  function resolveSponsorPackLogoClicks(summary, eng) {
+    if (eng && eng.logoClicks != null) return Number(eng.logoClicks) || 0;
+    if (summary && summary.emailLogoClicks != null) return Number(summary.emailLogoClicks) || 0;
+    if (summary && summary.emailClicks != null) return Number(summary.emailClicks) || 0;
+    return 0;
   }
 
   function formatSponsorPackMomDelta(pct) {
@@ -10232,23 +10272,32 @@
 
   function buildSponsorPackHighlight(summary, brandName, ctr, theme) {
     var views = Number(summary.pageVisits) || 0;
-    var clicks = Number(summary.clicks) || 0;
+    var siteClicks = resolveSponsorPackSiteClicks(summary);
+    var totalClicks = Number(summary.clicks) || 0;
+    var logoClicks = resolveSponsorPackLogoClicks(summary);
     var emails = Number(summary.emailSends) || 0;
     var opens = Number(summary.emailOpens) || 0;
     var name = brandName || 'This partner';
     var directoryWord = (theme && theme.directoryWord) || 'Events';
-    if (views > 0 && clicks > 0 && ctr && ctr.label && ctr.label !== '—') {
+    if (views > 0 && siteClicks > 0 && ctr && ctr.label && ctr.label !== '—') {
       return (
         (/s$/i.test(name) ? name + "'" : name + '’s') +
         ' ' +
         directoryWord +
-        ' placement delivered a ' +
+        ' hero delivered a ' +
         ctr.label +
-        ' click-through rate — ' +
-        formatSponsorPackNumber(clicks) +
+        ' site click-through rate — ' +
+        formatSponsorPackNumber(siteClicks) +
         ' of ' +
         formatSponsorPackNumber(views) +
-        ' directory viewers went through to your website.' +
+        ' directory viewers clicked through to your website.' +
+        (logoClicks > 0
+          ? ' Another ' +
+            formatSponsorPackNumber(logoClicks) +
+            ' click' +
+            (logoClicks === 1 ? '' : 's') +
+            ' came from logo taps in email.'
+          : '') +
         (emails > 0
           ? ' Your logo also appeared in ' +
             formatSponsorPackNumber(emails) +
@@ -10256,6 +10305,22 @@
             (emails === 1 ? '' : 's') +
             (opens > 0 ? ' (' + formatSponsorPackNumber(opens) + ' opens).' : '.')
           : '')
+      );
+    }
+    if (logoClicks > 0 && emails > 0) {
+      return (
+        ( /s$/i.test(name) ? name + "'" : name + '’s' ) +
+        ' logo drove ' +
+        formatSponsorPackNumber(logoClicks) +
+        ' email click' +
+        (logoClicks === 1 ? '' : 's') +
+        ' from ' +
+        formatSponsorPackNumber(emails) +
+        ' platform email' +
+        (emails === 1 ? '' : 's') +
+        (totalClicks > logoClicks
+          ? ' (' + formatSponsorPackNumber(totalClicks) + ' outbound clicks in total).'
+          : '.')
       );
     }
     if (views > 0) {
@@ -10379,9 +10444,11 @@
     var feeLabel = resolveSponsorPackFeeLabel(brandName, theme, placementFilter);
     var pageViews = Number(summary.pageVisits) || 0;
     var clicks = Number(summary.clicks) || 0;
+    var siteClicks = resolveSponsorPackSiteClicks(summary);
+    var logoClicks = resolveSponsorPackLogoClicks(summary, eng);
     var emails = Number(summary.emailSends) || 0;
     var opens = Number(eng.opens != null ? eng.opens : summary.emailOpens) || 0;
-    var ctr = formatSponsorPackCtr(clicks, pageViews);
+    var ctr = formatSponsorPackCtr(siteClicks, pageViews);
     var prepared = new Date().toLocaleString('en-GB', {
       day: 'numeric',
       month: 'short',
@@ -10395,6 +10462,8 @@
       {
         pageVisits: pageViews,
         clicks: clicks,
+        siteClicks: siteClicks,
+        emailLogoClicks: logoClicks,
         emailSends: emails,
         emailOpens: opens,
       },
@@ -10414,9 +10483,13 @@
       emails < 1 ? 'No logo emails yet' : opens < 1 ? 'No opens yet' : 'Opens ÷ emails sent';
     var emailCtrLabel =
       emails < 1 ? '—' : eng.ctrPct != null ? String(eng.ctrPct) + '%' : '0%';
-    var siteCtrLabel = pageViews < 1 ? '—' : ctr.label;
+    var siteCtrLabel = pageViews < 1 || siteClicks < 1 ? '—' : ctr.label;
     var siteCtrHint =
-      pageViews < 1 ? 'Awaiting directory views' : formatSponsorPackEngagementHint(clicks, pageViews);
+      pageViews < 1
+        ? 'Awaiting directory views'
+        : siteClicks < 1
+          ? formatSponsorPackNumber(pageViews) + ' views · no site click-throughs yet'
+          : formatSponsorPackEngagementHint(siteClicks, pageViews);
 
     var fontSans = '\'DM Sans\',Helvetica,Arial,sans-serif';
     var fontSerif = '\'DM Serif Display\',Georgia,serif';
@@ -10596,9 +10669,9 @@
       kpiCell(
         'Site visits driven',
         formatSponsorPackNumber(clicks),
-        momHint('Clicks through to your website', deltas.clicksPct)
+        momHint(sponsorPackOutboundHint(summary, eng), deltas.clicksPct)
       ) +
-      kpiCell('Click-through rate', siteCtrLabel, siteCtrHint, true) +
+      kpiCell('Site CTR', siteCtrLabel, siteCtrHint, true) +
       kpiCell(
         'Emails with logo',
         formatSponsorPackNumber(emails),
@@ -10613,16 +10686,16 @@
       ';font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#4a4446;">Email engagement</div>' +
       '<div style="font-family:' +
       fontSans +
-      ';font-size:11px;color:#635c5e;margin-top:2px;">Opens and clicks from platform emails that included your logo</div></div>' +
+      ';font-size:11px;color:#635c5e;margin-top:2px;">Opens and logo taps from platform emails that included your logo</div></div>' +
       '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;"><tr>' +
       emailMetric('Opens', formatSponsorPackNumber(opens), momHint('Email opens', deltas.emailOpensPct)) +
       emailMetric('Open rate', openRateLabel, openRateHint) +
       emailMetric(
-        'Email clicks',
-        formatSponsorPackNumber(eng.clicks || 0),
-        'Clicks from email placements'
+        'Logo clicks',
+        formatSponsorPackNumber(logoClicks),
+        'Taps on the sponsor logo in email'
       ) +
-      emailMetric('Email CTR', emailCtrLabel, emails < 1 ? 'No logo emails yet' : 'Clicks ÷ emails sent') +
+      emailMetric('Logo CTR', emailCtrLabel, emails < 1 ? 'No logo emails yet' : 'Logo taps ÷ emails sent') +
       '</tr></table></td></tr></table>' +
       // Placements
       '<table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-bottom:12px;"><tr>' +
@@ -10908,9 +10981,11 @@
     var feeLabel = resolveSponsorPackFeeLabel(brandName, theme, placementFilter);
     var pageViews = Number(summary.pageVisits) || 0;
     var clicks = Number(summary.clicks) || 0;
+    var siteClicks = resolveSponsorPackSiteClicks(summary);
+    var logoClicks = resolveSponsorPackLogoClicks(summary, eng);
     var emails = Number(summary.emailSends) || 0;
     var opens = Number(eng.opens != null ? eng.opens : summary.emailOpens) || 0;
-    var ctr = formatSponsorPackCtr(clicks, pageViews);
+    var ctr = formatSponsorPackCtr(siteClicks, pageViews);
     var prepared = new Date().toLocaleString('en-GB', {
       day: 'numeric',
       month: 'short',
@@ -10922,6 +10997,8 @@
       {
         pageVisits: pageViews,
         clicks: clicks,
+        siteClicks: siteClicks,
+        emailLogoClicks: logoClicks,
         emailSends: emails,
         emailOpens: opens,
       },
@@ -10941,9 +11018,13 @@
       emails < 1 ? 'No logo emails yet' : opens < 1 ? 'No opens yet' : 'Opens ÷ emails sent';
     var emailCtrLabel =
       emails < 1 ? '—' : eng.ctrPct != null ? String(eng.ctrPct) + '%' : '0%';
-    var siteCtrLabel = pageViews < 1 ? '—' : ctr.label;
+    var siteCtrLabel = pageViews < 1 || siteClicks < 1 ? '—' : ctr.label;
     var siteCtrHint =
-      pageViews < 1 ? 'Awaiting directory views' : formatSponsorPackEngagementHint(clicks, pageViews);
+      pageViews < 1
+        ? 'Awaiting directory views'
+        : siteClicks < 1
+          ? formatSponsorPackNumber(pageViews) + ' views · no site click-throughs yet'
+          : formatSponsorPackEngagementHint(siteClicks, pageViews);
 
     return Promise.all([
       fetchImageAsDataUrl(hubUrl)
@@ -11118,11 +11199,11 @@
             kpiH,
             'Site visits driven',
             formatSponsorPackNumber(clicks),
-            momHint('Clicks through to your website', deltas.clicksPct),
+            momHint(sponsorPackOutboundHint(summary, eng), deltas.clicksPct),
             false
           );
           y += kpiH + gap;
-          drawKpi(m, y, kpiW, kpiH, 'Click-through rate', siteCtrLabel, siteCtrHint, true);
+          drawKpi(m, y, kpiW, kpiH, 'Site CTR', siteCtrLabel, siteCtrHint, true);
           drawKpi(
             m + kpiW + gap,
             y,
@@ -11136,7 +11217,7 @@
           y += kpiH + 5;
 
           // Email engagement
-          var emailSub = 'Opens and clicks from platform emails that included your logo';
+          var emailSub = 'Opens and logo taps from platform emails that included your logo';
           var emailH = 34;
           doc.setFillColor.apply(doc, WHITE);
           doc.setDrawColor.apply(doc, LAV);
@@ -11156,14 +11237,14 @@
             { label: 'OPENS', value: formatSponsorPackNumber(opens), hint: momHint('Email opens', deltas.emailOpensPct) },
             { label: 'OPEN RATE', value: openRateLabel, hint: openRateHint },
             {
-              label: 'EMAIL CLICKS',
-              value: formatSponsorPackNumber(eng.clicks || 0),
-              hint: 'Clicks from email placements',
+              label: 'LOGO CLICKS',
+              value: formatSponsorPackNumber(logoClicks),
+              hint: 'Taps on the sponsor logo in email',
             },
             {
-              label: 'EMAIL CTR',
+              label: 'LOGO CTR',
               value: emailCtrLabel,
-              hint: emails < 1 ? 'No logo emails yet' : 'Clicks ÷ emails sent',
+              hint: emails < 1 ? 'No logo emails yet' : 'Logo taps ÷ emails sent',
             },
           ];
           var colW = contentW / 4;
@@ -11598,8 +11679,12 @@
       var hubLogo = data.hubLogoUrl || '/assets/logo-nav-transparent.png?v=20260823uk3';
       var brandLogo = brand.logoUrl || '';
       var brandDark = brand.logoBandDark === true;
-      var ctrInfo = formatSponsorPackCtr(summary.clicks || 0, summary.pageVisits || 0);
+      var ctrInfo = formatSponsorPackCtr(
+        resolveSponsorPackSiteClicks(summary),
+        summary.pageVisits || 0
+      );
       var ctrLabel = ctrInfo.label;
+      var logoClicks = resolveSponsorPackLogoClicks(summary, eng);
       var execLine = String(data.executiveSummary || '').trim();
       var generated = new Date().toLocaleString('en-GB', {
         day: 'numeric',
@@ -11732,7 +11817,9 @@
         '<div class="sponsor-pack-kpi"><p class="sponsor-pack-kpi-label">Outbound clicks</p>' +
         '<p class="sponsor-pack-kpi-value">' +
         esc(formatSponsorPackNumber(summary.clicks || 0)) +
-        '</p><p class="sponsor-pack-kpi-hint">Clicks through to their website</p>' +
+        '</p><p class="sponsor-pack-kpi-hint">' +
+        esc(sponsorPackOutboundHint(summary, eng)) +
+        '</p>' +
         sponsorPackMomDeltaHtml(deltas.clicksPct) +
         '</div>' +
         '<div class="sponsor-pack-kpi sponsor-pack-kpi--accent"><p class="sponsor-pack-kpi-label">Site CTR</p>' +
@@ -11754,7 +11841,10 @@
         '<div><p class="sponsor-pack-email-eng-label">Open rate</p><p class="sponsor-pack-email-eng-value">' +
         esc(openRateLabel) +
         '</p></div>' +
-        '<div><p class="sponsor-pack-email-eng-label">Email CTR</p><p class="sponsor-pack-email-eng-value">' +
+        '<div><p class="sponsor-pack-email-eng-label">Logo clicks</p><p class="sponsor-pack-email-eng-value">' +
+        esc(formatSponsorPackNumber(logoClicks)) +
+        '</p></div>' +
+        '<div><p class="sponsor-pack-email-eng-label">Logo CTR</p><p class="sponsor-pack-email-eng-value">' +
         esc(emailCtrLabel) +
         '</p></div></div>' +
         '<p class="sponsor-pack-email-eng-note">' +
@@ -11797,9 +11887,12 @@
           ? '<li><strong>Page views</strong> count logo impressions on detail pages (Event / Organiser / Opportunity Page Partner slots). Filter by placement to isolate one package.</li>' +
             '<li><strong>Clicks by placement</strong> splits on-page Page Partners from Page Partner emails so renewals can see which surface drove traffic.</li>'
           : '<li><strong>Page views</strong> count each visit to the sponsored directory while their hero is live (Events, Organisers, or Opportunities).</li>') +
-        '<li><strong>Email opens &amp; CTR</strong> come from Resend (opens + link clicks). platform email-placement clicks are also included in Email CTR.</li>' +
+        '<li><strong>Site CTR</strong> is directory hero clicks only (clicks on /events/, /organisers/, or /opportunities/ ÷ page views). It does not include email logo taps.</li>' +
+        '<li><strong>Logo CTR</strong> counts taps on the sponsor logo in email (tracked via /api/sponsor-out) — not booking buttons or other email links.</li>' +
+        '<li><strong>Outbound clicks</strong> is the total of site hero clicks plus logo email clicks.</li>' +
+        '<li><strong>Email opens</strong> come from Resend. Other link clicks in the same email are not counted in Logo CTR.</li>' +
         '<li><strong>Leads &amp; form fills</strong> show up in <strong>their</strong> Google Analytics / CRM as traffic from The Networker UK.</li>' +
-        '<li><strong>Suggestion:</strong> lead with Site CTR + email volume on the renewal call; ask them to filter sessions from The Networker UK in GA as proof of pipeline.</li>' +
+        '<li><strong>Suggestion:</strong> lead with email volume + Logo CTR on the renewal call; use Site CTR for hero performance on the directory page.</li>' +
         '</ul></section>' +
         '<section class="sponsor-pack-contact">' +
         '<p class="sponsor-pack-contact-label">' +
@@ -11922,10 +12015,12 @@
         rows.push(['page_visits_total', '', '', '', summary.pageVisits || 0]);
         rows.push(['email_sends_total', '', '', '', summary.emailSends || 0]);
         rows.push(['clicks_total', '', '', '', summary.clicks || 0]);
-        rows.push(['ctr', '', '', '', summary.ctrPct == null ? '' : summary.ctrPct]);
+        rows.push(['site_clicks_total', '', '', '', summary.siteClicks == null ? '' : summary.siteClicks]);
+        rows.push(['logo_email_clicks_total', '', '', '', summary.emailLogoClicks == null ? '' : summary.emailLogoClicks]);
+        rows.push(['site_ctr_pct', '', '', '', summary.siteCtrPct == null ? '' : summary.siteCtrPct]);
         rows.push(['email_opens_total', '', '', '', summary.emailOpens || 0]);
         rows.push(['email_open_rate_pct', '', '', '', summary.emailOpenRatePct == null ? '' : summary.emailOpenRatePct]);
-        rows.push(['email_ctr_pct', '', '', '', summary.emailCtrPct == null ? '' : summary.emailCtrPct]);
+        rows.push(['logo_email_ctr_pct', '', '', '', summary.emailCtrPct == null ? '' : summary.emailCtrPct]);
         if (lastReport.previous && lastReport.previous.deltas) {
           var dlt = lastReport.previous.deltas;
           rows.push(['mom_page_visits_pct', '', '', '', dlt.pageVisitsPct == null ? '' : dlt.pageVisitsPct]);

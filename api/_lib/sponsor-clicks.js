@@ -714,31 +714,52 @@ function isEmailPlacement(placement) {
   return /email/i.test(p);
 }
 
+function isEmailClickRow(row) {
+  if (!row) return false;
+  if (isEmailPlacement(row.placement)) return true;
+  const path = String(row.path || '')
+    .trim()
+    .toLowerCase();
+  return path === '/email' || path.startsWith('/email/') || path.startsWith('/email?');
+}
+
 function buildExecutiveSummary(summary, previous, brandName) {
   const name = brandName || 'This partner';
   const views = Number(summary.pageVisits) || 0;
-  const clicks = Number(summary.clicks) || 0;
+  const siteClicks = Number(summary.siteClicks) || 0;
+  const totalClicks = Number(summary.clicks) || 0;
+  const logoClicks = Number(summary.emailLogoClicks) || 0;
   const emails = Number(summary.emailSends) || 0;
-  const ctr = views > 0 ? Math.round((clicks / views) * 1000) / 10 : null;
+  const siteCtr = views > 0 && siteClicks > 0 ? Math.round((siteClicks / views) * 1000) / 10 : null;
   const parts = [];
   parts.push(
     formatNum(views) +
       ' directory page view' +
-      (views === 1 ? '' : 's') +
-      ' · ' +
-      formatNum(clicks) +
-      ' outbound click' +
-      (clicks === 1 ? '' : 's')
+      (views === 1 ? '' : 's')
   );
-  if (ctr != null) parts.push(ctr + '% site CTR');
-  else parts.push('CTR pending more page views');
+  if (totalClicks > 0) {
+    parts.push(
+      formatNum(totalClicks) +
+        ' outbound click' +
+        (totalClicks === 1 ? '' : 's')
+    );
+  }
+  if (siteCtr != null) parts.push(siteCtr + '% site CTR');
+  else if (views > 0 && siteClicks === 0) parts.push('site CTR pending hero clicks');
+  if (logoClicks > 0) {
+    parts.push(
+      formatNum(logoClicks) +
+        ' logo email click' +
+        (logoClicks === 1 ? '' : 's')
+    );
+  }
   if (emails > 0) {
     parts.push(formatNum(emails) + ' email' + (emails === 1 ? '' : 's') + ' carried their logo');
   }
   let line = name + ': ' + parts.join(' · ') + '.';
   if (previous && previous.summary) {
     const dViews = deltaPct(views, previous.summary.pageVisits);
-    const dClicks = deltaPct(clicks, previous.summary.clicks);
+    const dClicks = deltaPct(totalClicks, previous.summary.clicks);
     const mom = [];
     if (dViews != null) mom.push((dViews >= 0 ? '+' : '') + dViews + '% page views');
     if (dClicks != null) mom.push((dClicks >= 0 ? '+' : '') + dClicks + '% clicks');
@@ -873,12 +894,12 @@ async function fetchPeriodMetrics(sb, { from, to, fromDay, toDay, companyFilter,
   const pageVisits = impressionRows.reduce((n, r) => n + (Number(r.impressions) || 0), 0);
   const emailSends = emailRows.reduce((n, r) => n + (Number(r.send_count) || 0), 0);
   const clicks = clickRows.length;
-  const hubEmailClicks = clickRows.filter((r) => isEmailPlacement(r.placement)).length;
+  const emailLogoClicks = clickRows.filter((r) => isEmailClickRow(r)).length;
+  const siteClicks = clicks - emailLogoClicks;
   const resendOpens = openRows.reduce((n, r) => n + (Number(r.open_count) || 0), 0);
-  const resendEmailClicks = emailClickRows.reduce((n, r) => n + (Number(r.click_count) || 0), 0);
-  const emailClicks = Math.max(hubEmailClicks, resendEmailClicks);
-  const ctr = pageVisits > 0 ? clicks / pageVisits : null;
-  const emailCtr = emailSends > 0 ? emailClicks / emailSends : null;
+  const resendAnyLinkClicks = emailClickRows.reduce((n, r) => n + (Number(r.click_count) || 0), 0);
+  const siteCtr = pageVisits > 0 && siteClicks > 0 ? siteClicks / pageVisits : null;
+  const emailCtr = emailSends > 0 && emailLogoClicks > 0 ? emailLogoClicks / emailSends : null;
   const openRate = emailSends > 0 && resendOpens > 0 ? resendOpens / emailSends : null;
 
   return {
@@ -898,9 +919,13 @@ async function fetchPeriodMetrics(sb, { from, to, fromDay, toDay, companyFilter,
       pageVisits,
       emailSends,
       clicks,
-      ctr,
-      ctrPct: ctr == null ? null : Math.round(ctr * 10000) / 100,
-      emailClicks,
+      siteClicks,
+      emailLogoClicks,
+      emailAnyLinkClicks: resendAnyLinkClicks,
+      siteCtr,
+      siteCtrPct: siteCtr == null ? null : Math.round(siteCtr * 10000) / 100,
+      ctrPct: siteCtr == null ? null : Math.round(siteCtr * 10000) / 100,
+      emailClicks: emailLogoClicks,
       emailCtr,
       emailCtrPct: emailCtr == null ? null : Math.round(emailCtr * 10000) / 100,
       emailOpens: resendOpens,
@@ -1073,6 +1098,30 @@ async function getSponsorClicksReport(query) {
     : null;
   const brandSurfaces = buildBrandSurfaces(companyFilter, catalogEntry, current);
 
+  const logoClicks = current.summary.emailLogoClicks;
+  const anyLinkClicks = current.summary.emailAnyLinkClicks;
+  const emailEngagementNote = (function () {
+    const logoNote =
+      'Logo CTR counts taps on the sponsor logo in email (via /api/sponsor-out) — not booking buttons or other links.';
+    if (!current.emailOpensAvailable) {
+      return logoNote + ' Open rates need the Resend webhook at /api/resend-webhook.';
+    }
+    if (anyLinkClicks > logoClicks) {
+      return (
+        logoNote +
+        ' Resend logged ' +
+        formatNum(anyLinkClicks) +
+        ' click' +
+        (anyLinkClicks === 1 ? '' : 's') +
+        ' on any email link — those are not included in Logo CTR.'
+      );
+    }
+    if (current.summary.emailOpens > 0) {
+      return logoNote + ' Opens come from Resend open tracking.';
+    }
+    return logoNote + ' Opens and logo taps update as sponsored emails go out.';
+  })();
+
   return {
     ok: true,
     configured: true,
@@ -1097,16 +1146,14 @@ async function getSponsorClicksReport(query) {
       sends: emailSends,
       opens: current.summary.emailOpens,
       openRatePct: current.summary.emailOpenRatePct,
-      clicks: current.summary.emailClicks,
+      logoClicks,
+      clicks: logoClicks,
+      anyLinkClicks,
       ctrPct: current.summary.emailCtrPct,
+      logoCtrPct: current.summary.emailCtrPct,
       opensConfigured: current.emailOpensAvailable === true,
       clicksConfigured: current.emailClicksAvailable === true,
-      note:
-        current.emailOpensAvailable && current.summary.emailOpens > 0
-          ? 'Opens and link clicks from Resend · platform email-placement clicks are included in Email CTR.'
-          : current.emailOpensAvailable
-            ? 'Resend open tracking is live. Numbers update as sponsored emails are opened and clicked.'
-            : 'Email clicks include platform-tracked email placements. Open rates need the Resend webhook at /api/resend-webhook.',
+      note: emailEngagementNote,
     },
     tablesPartial: current.tablesPartial,
     total: clicks,

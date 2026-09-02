@@ -1930,7 +1930,7 @@ a.admin-action-row:hover .admin-action-btn {
 
 @media (min-width: 700px) {
   .sponsor-pack-email-eng-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 }
 

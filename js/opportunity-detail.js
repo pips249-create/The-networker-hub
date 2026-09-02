@@ -54,6 +54,7 @@
     claimTopTitle: document.getElementById('opp-claim-top-title'),
     claimTopText: document.getElementById('opp-claim-top-text'),
     claimTopBtn: document.getElementById('opp-claim-top-btn'),
+    claimTopDeadline: document.getElementById('opp-claim-top-deadline'),
     claimSticky: document.getElementById('opp-claim-sticky'),
     claimStickyCopy: document.getElementById('opp-claim-sticky-copy'),
     claimStickyBtn: document.getElementById('opp-claim-sticky-btn'),
@@ -153,6 +154,7 @@
 
   function hideClaimUi() {
     if (els.claimTop) els.claimTop.hidden = true;
+    if (els.claimTopDeadline) els.claimTopDeadline.hidden = true;
     if (els.claimSticky) {
       els.claimSticky.hidden = true;
       if (els.claimSticky._claimObserver) {
@@ -164,6 +166,10 @@
       }
     }
     document.body.classList.remove('opp-claim-sticky-visible', 'opp-claim-invite-active');
+  }
+
+  function claimInviteDeadlineLabel() {
+    return 'Respond by 30 September 2026';
   }
 
   function initClaimInviteFromEmail(item) {
@@ -179,36 +185,41 @@
       (q.email ? '&email=' + encodeURIComponent(q.email) : '');
 
     els.claimTop.hidden = false;
-    if (els.claimTopKicker) els.claimTopKicker.textContent = 'Preview \u2014 claim to go live';
+    if (els.claimTopKicker) els.claimTopKicker.textContent = 'Your listing is already live';
+    if (els.claimTopDeadline) {
+      els.claimTopDeadline.hidden = false;
+      els.claimTopDeadline.textContent = claimInviteDeadlineLabel();
+    }
     if (els.claimTopTitle) {
       els.claimTopTitle.textContent = item && item.title
-        ? 'This is a preview of ' + item.title
-        : 'This is a preview of your listing';
+        ? 'Preview of ' + item.title
+        : 'Preview of your listing';
     }
     if (els.claimTopText) {
       els.claimTopText.textContent =
-        'Your opportunity is already on The Networker UK. Claim it with the email we invited, then keep it live for \u00a325/month + VAT (cancel any time). Enquiries come straight to you \u2014 no lead fees.';
+        'This is how your franchise appears on our business opportunities directory (17,000+ networkers used the platform last year). Sign in with the email we invited you on to manage enquiries, add open days, and track registrations. One flat fee of \u00a325/month + VAT \u2014 not per enquiry.';
     }
     if (els.claimTopBtn) {
       els.claimTopBtn.setAttribute('href', href);
       els.claimTopBtn.onclick = null;
       var label = els.claimTopBtn.querySelector('.opp-claim-cta-label');
-      if (label) label.textContent = 'Claim & start receiving enquiries \u2192';
+      if (label) label.textContent = 'View your page on our website \u2192';
       bindClaimCtaBusy(els.claimTopBtn);
     }
     var note = document.getElementById('opp-claim-top-note');
     if (note) {
       note.innerHTML =
-        'Invited to a different email, or not yours?' +
-        ' <a href="mailto:catherine@thenetworkeruk.com?subject=Help%20claiming%20my%20opportunity%20listing">Email Catherine</a>' +
+        claimInviteDeadlineLabel() +
+        '. Invited to a different email, or not yours?' +
+        ' <a href="mailto:catherine@thenetworkeruk.com?subject=Help%20with%20my%20opportunity%20listing">Email Catherine</a>' +
         ' and we\u2019ll sort it.';
     }
     if (els.claimStickyCopy) {
-      els.claimStickyCopy.textContent = 'Preview only \u2014 claim to manage this listing';
+      els.claimStickyCopy.textContent = 'See your listing \u2014 sign in to manage';
     }
     if (els.claimStickyBtn) {
       var stickyLabel = els.claimStickyBtn.querySelector('.opp-claim-cta-label');
-      if (stickyLabel) stickyLabel.textContent = 'Claim listing';
+      if (stickyLabel) stickyLabel.textContent = 'View your page \u2192';
     }
     bindClaimStickyBar(href, false);
 
@@ -218,7 +229,7 @@
     try {
       document.title =
         (item && item.title ? item.title + ' \u2014 ' : '') +
-        'Claim your listing \u2013 The Networker UK';
+        'Your listing on The Networker UK';
     } catch (e) {
       /* ignore */
     }
@@ -229,6 +240,7 @@
     if (!els.claimTop || !item || !item.claimable) return false;
 
     els.claimTop.hidden = false;
+    if (els.claimTopDeadline) els.claimTopDeadline.hidden = true;
     if (els.claimTopKicker) els.claimTopKicker.textContent = 'Is this your listing?';
     if (els.claimTopTitle) {
       els.claimTopTitle.textContent = item.host

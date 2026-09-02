@@ -25,7 +25,7 @@ const BRANDED_EMAIL_TEMPLATES = {
   franchise_claim_invite: {
     file: 'franchise-claim-invite.html',
     marker: 'hub-email-layout-v3-navy-gold-details',
-    subject: '{{opportunity_title}} — claim your franchise listing',
+    subject: 'Franchise Listing Invitation',
   },
   organiser_claim_confirmed: {
     file: 'organiser-claim-confirmed.html',
