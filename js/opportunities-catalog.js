@@ -26,7 +26,7 @@
     { id: 'automotive', label: 'Automotive' },
     { id: 'education', label: 'Education & Coaching' },
     { id: 'childcare', label: 'Childcare & Family' },
-    { id: 'finance', label: 'Finance & Admin' },
+    { id: 'finance', label: 'Finance, legal & admin' },
     { id: 'pets', label: 'Pets & Animals' },
     { id: 'leisure', label: 'Leisure, travel & hospitality' },
     { id: 'networking', label: 'Networking' },

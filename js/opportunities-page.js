@@ -347,7 +347,7 @@
           { id: 'beauty', label: 'Beauty & Wellness' },
           { id: 'property', label: 'Property' },
           { id: 'education', label: 'Education & Coaching' },
-          { id: 'finance', label: 'Finance & Admin' },
+          { id: 'finance', label: 'Finance, legal & admin' },
           { id: 'pets', label: 'Pets & Animals' },
         ]
   )
@@ -2462,7 +2462,7 @@
     property: 'Property',
     education: 'Education & Coaching',
     pets: 'Pets & Animals',
-    finance: 'Finance & Admin',
+    finance: 'Finance, legal & admin',
     networking: 'Networking',
     mlm: 'MLM & Network Marketing',
   };
