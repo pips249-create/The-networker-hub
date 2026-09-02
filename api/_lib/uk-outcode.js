@@ -92,6 +92,30 @@ const CITY_ALIASES = {
   ...NETWORKING_COUNTY_ALIASES,
 };
 
+/**
+ * Large metros: city name searches use a mile radius (suburbs / neighbouring towns).
+ * Smaller cities stay on postcode sectors so e.g. Chester does not pull Liverpool.
+ * Keep in sync with js/postcode-outcode.js METRO_RADIUS_REGIONS.
+ */
+const METRO_RADIUS_REGIONS = new Set([
+  'london',
+  'manchester',
+  'birmingham',
+  'leeds',
+  'liverpool',
+  'glasgow',
+  'edinburgh',
+  'bristol',
+  'newcastle',
+  'sheffield',
+  'nottingham',
+  'cardiff',
+]);
+
+function isMetroRadiusRegion(region) {
+  return METRO_RADIUS_REGIONS.has(String(region || '').trim().toLowerCase());
+}
+
 const COUNTY_SLUG_SET = new Set(NETWORKING_COUNTY_SLUGS);
 
 const UK_OUTCODE_RE = /\b([A-Z]{1,2}\d{1,2}[A-Z]?)/i;
@@ -345,5 +369,7 @@ module.exports = {
   haversineMiles,
   bboxForRadiusMiles,
   cityRegionFromInput,
+  isMetroRadiusRegion,
+  METRO_RADIUS_REGIONS,
   REGION_SECTORS,
 };

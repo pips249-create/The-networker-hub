@@ -232,6 +232,26 @@
 
   window.hubParseOutcode = parseOutcode;
 
+  /**
+   * Large metros: city name searches use a mile radius (suburbs / neighbouring towns).
+   * Smaller cities stay on postcode sectors so e.g. Chester does not pull Liverpool.
+   * Keep in sync with api/_lib/uk-outcode.js METRO_RADIUS_REGIONS.
+   */
+  var METRO_RADIUS_REGIONS = {
+    london: true,
+    manchester: true,
+    birmingham: true,
+    leeds: true,
+    liverpool: true,
+    glasgow: true,
+    edinburgh: true,
+    bristol: true,
+    newcastle: true,
+    sheffield: true,
+    nottingham: true,
+    cardiff: true,
+  };
+
   var CITY_ALIASES = {
     manchester: 'manchester',
     mcr: 'manchester',
@@ -417,7 +437,20 @@
   }
 
   window.hubPrefersGeoRadiusForLocation = function (input) {
-    return !!parseFullUkPostcode(String(input || '').trim());
+    var raw = String(input || '').trim();
+    if (!raw) return false;
+    if (parseFullUkPostcode(raw)) return true;
+    var region = cityRegionFromInput(raw);
+    return !!(region && METRO_RADIUS_REGIONS[region]);
+  };
+
+  /** Smaller cities / counties / outcodes — match sectors, not a mile-radius circle. */
+  window.hubPrefersOutcodeForLocation = function (input) {
+    var raw = String(input || '').trim();
+    if (!raw) return false;
+    if (window.hubPrefersGeoRadiusForLocation(raw)) return false;
+    var outcodes = window.hubAllowedOutcodesForQuery(raw);
+    return !!(outcodes && outcodes.length);
   };
 
   window.hubResolveLocationFilter = function (input) {

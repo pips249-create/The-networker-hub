@@ -507,12 +507,7 @@
 
   /** True when the location query has an outcode/city sector list (prefer that over miles). */
   function locationHasOutcodeFilter(pc) {
-    if (!pc || !window.hubAllowedOutcodesForQuery) return false;
-    if (window.hubPrefersGeoRadiusForLocation && window.hubPrefersGeoRadiusForLocation(pc)) {
-      return false;
-    }
-    var outcodes = window.hubAllowedOutcodesForQuery(pc);
-    return !!(outcodes && outcodes.length);
+    return !!(window.hubPrefersOutcodeForLocation && window.hubPrefersOutcodeForLocation(pc));
   }
 
   function getNearRadiusMiles() {
@@ -596,8 +591,9 @@
     var pc = (postcodeInput && postcodeInput.value) || '';
     pc = pc.trim();
     var enabled = pc.length > 0 || isNearMeActive();
-    if (locationRadius) locationRadius.disabled = !enabled;
-    if (locationRadiusWrap) locationRadiusWrap.hidden = false;
+    var useOutcode = pc.length > 0 && locationHasOutcodeFilter(pc) && !isNearMeActive();
+    if (locationRadius) locationRadius.disabled = !enabled || useOutcode;
+    if (locationRadiusWrap) locationRadiusWrap.hidden = useOutcode;
   }
 
   var profileLocationPromise = null;
@@ -686,7 +682,12 @@
       return !center;
     }
 
-    /* Prefer mile radius whenever we have a geocoded centre (city or postcode). */
+    // Known city/county/outcode: match by sector (Chester ≠ Liverpool).
+    if (pc && locationHasOutcodeFilter(pc) && window.hubMatchOutcode) {
+      return window.hubMatchOutcode(pc, ev);
+    }
+
+    /* Mile radius for full postcodes and unmapped place names. */
     var geoCenter = center || locationFilterCenter();
     var evCoords = eventCoords(ev);
     if (geoCenter && evCoords && window.hubDistanceMiles) {
@@ -700,11 +701,6 @@
       /* Centre known but event has no coords — fall back to outcode/sector match. */
       if (pc && window.hubMatchOutcode) return window.hubMatchOutcode(pc, ev);
       return false;
-    }
-
-    // No geocode yet: city names / outcodes match by sector.
-    if (pc && locationHasOutcodeFilter(pc) && window.hubMatchOutcode) {
-      return window.hubMatchOutcode(pc, ev);
     }
 
     if (pc && window.hubMatchOutcode) return window.hubMatchOutcode(pc, ev);
@@ -722,8 +718,11 @@
       window.hubLocationFilterCoords = null;
       return Promise.resolve(null);
     }
-    /* Always geocode so the mile-radius control works for cities and postcodes.
-       Outcode matching remains a fallback when geocoding fails. */
+    /* Sector filters skip geocode; metros and postcodes use mile radius. */
+    if (locationHasOutcodeFilter(value)) {
+      window.hubLocationFilterCoords = null;
+      return Promise.resolve(null);
+    }
     if (window.hubGeocodeLocationQuery) {
       return window.hubGeocodeLocationQuery(value).then(function (coords) {
         window.hubLocationFilterCoords = coords;

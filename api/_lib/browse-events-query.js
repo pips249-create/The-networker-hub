@@ -21,6 +21,8 @@ const {
   bboxForRadiusMiles,
   cityRegionFromInput,
   regionLocationTextFilters,
+  parseFullUkPostcode,
+  isMetroRadiusRegion,
 } = require('./uk-outcode');
 const { geocodeUkLocation } = require('./postcode-geocode');
 const {
@@ -143,9 +145,21 @@ function hasGeoRadius(params) {
   );
 }
 
+/** Smaller cities / counties / outcodes — match sectors, not a mile-radius circle. */
+function prefersOutcodeLocation(params) {
+  const raw = String(params.location || '').trim();
+  if (!raw) return false;
+  if (parseFullUkPostcode(raw)) return false;
+  const region = cityRegionFromInput(raw);
+  if (region && isMetroRadiusRegion(region)) return false;
+  const list = outcodeListForLocation(raw, params.outcodes);
+  return !!(list && list.length);
+}
+
 /** When radius is set without lat/lng, geocode location (full postcode, outcode, or city). */
 async function enrichGeoParams(params) {
   if (hasGeoRadius(params)) return params;
+  if (prefersOutcodeLocation(params)) return params;
   const radiusMi =
     Number.isFinite(params.radiusMi) && params.radiusMi > 0 ? params.radiusMi : null;
   if (!radiusMi || !params.location) return params;
@@ -219,7 +233,7 @@ function applySearchFilter(query, params) {
 }
 
 function applyOutcodeFilter(query, params) {
-  if (hasGeoRadius(params)) return query;
+  if (hasGeoRadius(params) && !prefersOutcodeLocation(params)) return query;
   const outcodes = outcodeListForLocation(params.location, params.outcodes);
   if (outcodes && outcodes.length) {
     const ocList = outcodes.length <= 120 ? outcodes : outcodes.slice(0, 120);
@@ -263,7 +277,7 @@ function applyOutcodeFilter(query, params) {
 }
 
 function applyGeoBboxFilter(query, params) {
-  if (!hasGeoRadius(params)) return query;
+  if (!hasGeoRadius(params) || prefersOutcodeLocation(params)) return query;
   const box = bboxForRadiusMiles(params.lat, params.lng, params.radiusMi);
   const minLat = box.minLat.toFixed(6);
   const maxLat = box.maxLat.toFixed(6);
@@ -470,7 +484,7 @@ function applySqlSort(query, sort) {
 }
 
 function rowPassesGeo(row, params) {
-  if (!hasGeoRadius(params)) return true;
+  if (!hasGeoRadius(params) || prefersOutcodeLocation(params)) return true;
   if (row.format_tab === 'online') return true;
   const lat = row.latitude != null ? Number(row.latitude) : null;
   const lng = row.longitude != null ? Number(row.longitude) : null;
