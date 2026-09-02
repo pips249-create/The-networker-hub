@@ -24,6 +24,7 @@ dotenv.config({ path: path.join(root, '.env') });
 const { sendTemplatedEmail } = require('../api/_lib/send-template-email');
 const { mergeEmailPreviewVariables } = require('../api/_lib/email-preview-variables');
 const { campaignSiteVars } = require('../api/_lib/organiser-campaign-defaults');
+const { logClaimInviteSent } = require('../api/_lib/organiser-claim-invite-log');
 
 const SITE = 'https://www.thenetworkeruk.com';
 const CSV = path.join(root, 'data/Claim-Rematch-Resend.csv');
@@ -151,6 +152,13 @@ function sleep(ms) {
       const result = await sendOne(row);
       ok += 1;
       console.log('OK', row.email, result && result.id);
+      await logClaimInviteSent({
+        email: row.email,
+        organiserName: row.name,
+        slug: SLUG,
+        source: 'claim_rematch_script',
+        campaign: 'claim_rematch_prelaunch',
+      });
       await sleep(120);
     } catch (e) {
       fail += 1;

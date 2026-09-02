@@ -502,7 +502,8 @@
   var NAV_SECTION_ROUTES = {
     platform: ['system', 'analytics', 'international', 'rankings', 'accounts', 'support'],
     listings: ['cleanup', 'opportunities', 'moderation'],
-    revenue: ['financials', 'revenue-mix', 'revenue-targets', 'sales-kit', 'spotlight', 'sponsorship'],
+    revenue: ['financials', 'revenue-mix', 'revenue-targets'],
+    crm: ['sales-kit', 'spotlight', 'sponsorship'],
     comms: ['email', 'social', 'social-founding'],
   };
   var HEALTH_STALE_MS = 5 * 60 * 1000;
@@ -1082,7 +1083,16 @@
     if (!source || typeof source !== 'object') return [];
     var contacts = [];
     if (source.claim_invite_sent_at) {
-      contacts.push({ at: source.claim_invite_sent_at, label: 'Claim invite sent' });
+      contacts.push({
+        at: source.claim_invite_sent_at,
+        label: 'Claim invite emailed',
+      });
+    }
+    if (source.claim_link_copied_at) {
+      contacts.push({
+        at: source.claim_link_copied_at,
+        label: 'Claim link copied',
+      });
     }
     if (source.approved_at) {
       contacts.push({ at: source.approved_at, label: 'Approved — pay-to-go-live email' });

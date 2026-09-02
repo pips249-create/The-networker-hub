@@ -126,6 +126,8 @@ function mapOrganiserRow(row, eventCount, loginMeta, moderation) {
     listing_status: row.listing_status || '',
     ownership_claim_status: String(row.ownership_claim_status || '').trim().toLowerCase(),
     claim_invite_sent_at: row.claim_invite_sent_at || null,
+    claim_link_copied_at: row.claim_link_copied_at || null,
+    claim_invite_source: row.claim_invite_source || null,
     has_stripe_connect: Boolean(String(row.stripe_account_id || '').trim()),
     featured: Boolean(row.featured),
     featured_until: row.featured_until || null,
@@ -224,16 +226,26 @@ async function claimInviteSentAtForOrganisers(sb, ids) {
   try {
     const { data, error } = await sb
       .from('entity_activity_log')
-      .select('organiser_id, created_at, action')
+      .select('organiser_id, created_at, action, metadata')
       .in('action', ['admin_claim_invite', 'admin_claim_url'])
       .in('organiser_id', unique)
       .order('created_at', { ascending: false })
-      .limit(Math.min(unique.length * 5, 200));
+      .limit(Math.min(unique.length * 8, 400));
     if (error) throw error;
     (data || []).forEach((row) => {
       const id = String(row.organiser_id || '').trim();
-      if (!id || map.has(id)) return;
-      map.set(id, row.created_at || null);
+      if (!id) return;
+      const action = String(row.action || '').trim();
+      const existing = map.get(id) || {};
+      if (action === 'admin_claim_invite' && !existing.claim_invite_sent_at) {
+        existing.claim_invite_sent_at = row.created_at || null;
+        existing.claim_invite_source =
+          (row.metadata && (row.metadata.campaign || row.metadata.source)) || 'claim_invite';
+      }
+      if (action === 'admin_claim_url' && !existing.claim_link_copied_at) {
+        existing.claim_link_copied_at = row.created_at || null;
+      }
+      map.set(id, existing);
     });
   } catch {
     /* activity log optional */
@@ -453,14 +465,20 @@ async function listOrganisersForAdmin(query) {
   const claimCounts = await getClaimStatusCounts(sb);
 
   return {
-    organisers: rows.map((row) =>
-      mapOrganiserRow(
-        { ...row, claim_invite_sent_at: claimInviteSentAt.get(row.id) || null },
+    organisers: rows.map((row) => {
+      const claim = claimInviteSentAt.get(row.id) || {};
+      return mapOrganiserRow(
+        {
+          ...row,
+          claim_invite_sent_at: claim.claim_invite_sent_at || null,
+          claim_link_copied_at: claim.claim_link_copied_at || null,
+          claim_invite_source: claim.claim_invite_source || null,
+        },
         counts[row.id] || 0,
         loginMeta.get(row.id),
         moderationById.get(row.id)
-      )
-    ),
+      );
+    }),
     count: rows.length,
     total,
     offset,
@@ -858,6 +876,20 @@ async function transferOrganiserOwnership(body, session) {
         skipEmailCheck: true,
       });
       claimInviteSent = true;
+      try {
+        const { logClaimInviteSent } = require('../organiser-claim-invite-log');
+        await logClaimInviteSent({
+          email: newEmail,
+          organiserId: organiserId,
+          organiserName: organiser.name,
+          slug: 'organiser_claim_invite',
+          source: 'admin_ownership_transfer',
+          campaign: 'ownership_transfer_invite',
+          actorEmail: session && session.email,
+        });
+      } catch {
+        /* ignore */
+      }
     } catch (inviteErr) {
       console.error('[admin-transfer-ownership-invite]', inviteErr.message || inviteErr);
     }

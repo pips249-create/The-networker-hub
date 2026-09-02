@@ -3,6 +3,7 @@ const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
 const { sendTemplatedEmail } = require('../send-template-email');
 const { parseCsv } = require('../admin-csv-import');
 const { resolveOrganiserClaimUrl } = require('../organiser-claim-url');
+const { isClaimInviteSlug, logClaimInviteSent } = require('../organiser-claim-invite-log');
 const {
   campaignSiteVars,
   legacyCampaignFrom,
@@ -193,6 +194,16 @@ module.exports = async function handler(req, res) {
     try {
       await sendTemplatedEmail(sendOpts);
       sent.push(email);
+      if (isClaimInviteSlug(slug)) {
+        await logClaimInviteSent({
+          email,
+          organiserName,
+          slug,
+          source: 'admin_campaign',
+          campaign: slug,
+          actorEmail: session && session.email,
+        });
+      }
     } catch (e) {
       failed.push({ email, message: e.message || String(e.code || 'send_failed') });
     }

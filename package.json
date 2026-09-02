@@ -41,6 +41,7 @@
     "build:launch-segments": "node scripts/build-launch-list-segments.js",
     "build:claim-rematch": "node scripts/build-claim-rematch-resend.js",
     "send:claim-rematch": "node scripts/send-claim-rematch-resend.js",
+    "backfill:claim-invite-activity": "node scripts/backfill-claim-invite-activity.js",
     "build:affiliate-claim": "node scripts/build-affiliate-claim-resend.js",
     "send:affiliate-claim": "node scripts/send-affiliate-claim-resend.js",
     "build:franchise-claim": "node scripts/build-franchise-claim-resend.js",
