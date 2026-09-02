@@ -4,6 +4,17 @@
 (function (global) {
   var STORAGE_KEY = 'admin-revenue-mix-v1';
 
+  /** Sales-targets categories that count as sponsorship / ads inventory. */
+  var ACTUAL_SPONSORSHIP_IDS = {
+    events: true,
+    browse_organisers: true,
+    awards: true,
+  };
+  /** Listings + premium packages. */
+  var ACTUAL_UPSELL_IDS = { opportunities: true };
+  /** Hub platform cut on tickets / memberships. */
+  var ACTUAL_FEE_IDS = { ticket_sales: true };
+
   var PRICING = {
     headline: { events: 2000, organisers: 1000, opportunities: 2000 },
     pagePartner: { events: 600, organisers: 300, opportunities: 600 },
@@ -70,9 +81,14 @@
   };
 
   var chartInstances = { mix: null, crossover: null, scenarios: null };
+  var actualSalesCache = null;
 
   function defaultState() {
-    return { scenario: 'launch', inputs: SCENARIOS.launch };
+    return {
+      scenario: 'launch',
+      inputs: Object.assign({}, SCENARIOS.launch),
+      chartSource: 'actual',
+    };
   }
 
   function loadState() {
@@ -84,6 +100,7 @@
       return {
         scenario: parsed.scenario || 'custom',
         inputs: Object.assign({}, SCENARIOS.launch, parsed.inputs),
+        chartSource: parsed.chartSource === 'model' ? 'model' : 'actual',
       };
     } catch (_e) {
       return defaultState();
@@ -92,10 +109,113 @@
 
   function saveState(state) {
     try {
-      global.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      global.localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          scenario: state.scenario,
+          inputs: state.inputs,
+          chartSource: state.chartSource === 'model' ? 'model' : 'actual',
+        })
+      );
     } catch (_e) {
       /* ignore */
     }
+  }
+
+  function monthActualFromSeries(series) {
+    if (!series || !Array.isArray(series.months)) return 0;
+    var current = null;
+    for (var i = 0; i < series.months.length; i++) {
+      if (series.months[i] && series.months[i].isCurrent) {
+        current = series.months[i];
+        break;
+      }
+    }
+    if (!current) {
+      for (var j = series.months.length - 1; j >= 0; j--) {
+        if (series.months[j] && !series.months[j].isFuture) {
+          current = series.months[j];
+          break;
+        }
+      }
+    }
+    if (!current || current.actual == null) return 0;
+    return Number(current.actual) || 0;
+  }
+
+  function buildActualSalesSnapshot(payload) {
+    if (!payload || typeof payload !== 'object') return null;
+    var charts = payload.charts || {};
+    var byCatCharts = charts.byCategory || {};
+    var categories = Array.isArray(payload.categories) ? payload.categories : [];
+    var pulse = payload.monthlyPulse || {};
+    var monthLabel =
+      (pulse.currentMonth && pulse.currentMonth.label) ||
+      (charts.overall && charts.overall.currentKey) ||
+      'This month';
+
+    var byCategory = categories.map(function (cat) {
+      var series = byCatCharts[cat.id];
+      var amount = series ? monthActualFromSeries(series) : 0;
+      return {
+        id: cat.id,
+        label: cat.label || cat.id,
+        amount: Math.round(amount * 100) / 100,
+      };
+    });
+
+    var sponsorship = 0;
+    var organiserUpsells = 0;
+    var ticketFees = 0;
+    byCategory.forEach(function (row) {
+      if (ACTUAL_SPONSORSHIP_IDS[row.id]) sponsorship += row.amount;
+      else if (ACTUAL_UPSELL_IDS[row.id]) organiserUpsells += row.amount;
+      else if (ACTUAL_FEE_IDS[row.id]) ticketFees += row.amount;
+      else sponsorship += row.amount;
+    });
+
+    var total = sponsorship + organiserUpsells + ticketFees;
+    var periodActual = payload.totals && payload.totals.actual != null ? Number(payload.totals.actual) : 0;
+    var daysElapsed =
+      payload.period && payload.period.daysElapsed != null ? Number(payload.period.daysElapsed) : 0;
+    var monthlyPace = daysElapsed > 0 ? Math.round((periodActual / daysElapsed) * 30.44 * 100) / 100 : 0;
+
+    return {
+      monthLabel: monthLabel,
+      periodLabel: (payload.period && payload.period.label) || '',
+      byCategory: byCategory,
+      periodActual: periodActual,
+      monthlyPace: monthlyPace,
+      mix: {
+        sponsorship: Math.round(sponsorship * 100) / 100,
+        organiserUpsells: Math.round(organiserUpsells * 100) / 100,
+        listings: Math.round(organiserUpsells * 100) / 100,
+        boosts: 0,
+        credits: 0,
+        ticketFees: Math.round(ticketFees * 100) / 100,
+        membershipFees: 0,
+        transactionFees: Math.round(ticketFees * 100) / 100,
+        total: Math.round(total * 100) / 100,
+      },
+    };
+  }
+
+  function displayRevenue(state) {
+    if (state.chartSource === 'actual') {
+      if (actualSalesCache && actualSalesCache.mix) return actualSalesCache.mix;
+      return {
+        sponsorship: 0,
+        organiserUpsells: 0,
+        listings: 0,
+        boosts: 0,
+        credits: 0,
+        ticketFees: 0,
+        membershipFees: 0,
+        transactionFees: 0,
+        total: 0,
+      };
+    }
+    return computeRevenue(state.inputs);
   }
 
   function clampInt(value, fallback, min, max) {
@@ -283,6 +403,31 @@
   }
 
   function renderInsight(state, revenue, esc) {
+    var usingActual = state.chartSource === 'actual' && actualSalesCache;
+    if (usingActual) {
+      var model = computeRevenue(state.inputs);
+      var actualTotal = revenue.total || 0;
+      var modelTotal = model.total || 0;
+      var pace = actualSalesCache.monthlyPace || 0;
+      return (
+        '<div class="rounded-lg border border-brand-200 bg-brand-50 p-4 text-sm text-slate-700">' +
+        '<p class="font-semibold text-brand-900">What this means</p>' +
+        '<p class="mt-2 leading-relaxed">' +
+        '<strong>' +
+        esc(actualSalesCache.monthLabel || 'This month') +
+        '</strong> has booked <strong>' +
+        gbp(actualTotal, esc) +
+        '</strong> so far (ex-VAT, from Sales targets). ' +
+        (pace > 0
+          ? 'Period pace is about <strong>' +
+            gbp(pace, esc) +
+            '/mo</strong>. '
+          : '') +
+        'Your open scenario models <strong>' +
+        gbp(modelTotal, esc) +
+        '/mo</strong> — use the Model toggle to stress-test ticket volume against that plan.</p></div>'
+      );
+    }
     var ticketsNeeded = ticketsToMatchSponsorship(revenue.sponsorship, state.inputs.avgTicketPrice);
     return (
       '<div class="rounded-lg border border-brand-200 bg-brand-50 p-4 text-sm text-slate-700">' +
@@ -300,31 +445,48 @@
     );
   }
 
-  function renderStats(revenue, esc) {
+  function renderStats(state, revenue, esc) {
+    var usingActual = state.chartSource === 'actual' && actualSalesCache;
+    var totalSub = usingActual
+      ? esc(actualSalesCache.monthLabel || 'This month') + ' · Sales targets'
+      : 'ex-VAT model';
+    var feeSub = usingActual
+      ? gbp(revenue.transactionFees, esc) + ' this month'
+      : gbp(revenue.transactionFees, esc) + '/mo · 3% net';
+    var upsellSub = usingActual
+      ? gbp(revenue.organiserUpsells, esc) + ' this month'
+      : gbp(revenue.organiserUpsells, esc) + '/mo';
+    var sponsorSub = usingActual
+      ? gbp(revenue.sponsorship, esc) + ' this month'
+      : gbp(revenue.sponsorship, esc) + '/mo';
     return (
       '<div class="admin-stat-grid admin-stat-grid--4">' +
-      '<article class="admin-stat-card"><p class="admin-stat-card-label">Total monthly revenue</p>' +
+      '<article class="admin-stat-card"><p class="admin-stat-card-label">' +
+      (usingActual ? 'Actual revenue' : 'Total monthly revenue') +
+      '</p>' +
       '<p class="admin-stat-card-value">' +
       gbp(revenue.total, esc) +
-      '</p><p class="admin-stat-card-sub">ex-VAT model</p></article>' +
+      '</p><p class="admin-stat-card-sub">' +
+      totalSub +
+      '</p></article>' +
       '<article class="admin-stat-card"><p class="admin-stat-card-label">Sponsorship</p>' +
       '<p class="admin-stat-card-value">' +
       esc(pct(revenue.sponsorship, revenue.total)) +
       '</p><p class="admin-stat-card-sub">' +
-      gbp(revenue.sponsorship, esc) +
-      '/mo</p></article>' +
+      sponsorSub +
+      '</p></article>' +
       '<article class="admin-stat-card"><p class="admin-stat-card-label">Transaction fees</p>' +
       '<p class="admin-stat-card-value">' +
       esc(pct(revenue.transactionFees, revenue.total)) +
       '</p><p class="admin-stat-card-sub">' +
-      gbp(revenue.transactionFees, esc) +
-      '/mo · 3% net</p></article>' +
+      feeSub +
+      '</p></article>' +
       '<article class="admin-stat-card"><p class="admin-stat-card-label">Organiser upsells</p>' +
       '<p class="admin-stat-card-value">' +
       esc(pct(revenue.organiserUpsells, revenue.total)) +
       '</p><p class="admin-stat-card-sub">' +
-      gbp(revenue.organiserUpsells, esc) +
-      '/mo</p></article></div>'
+      upsellSub +
+      '</p></article></div>'
     );
   }
 
@@ -381,7 +543,8 @@
   }
 
   function renderShell(state, esc) {
-    var revenue = computeRevenue(state.inputs);
+    var revenue = displayRevenue(state);
+    var usingActual = state.chartSource === 'actual';
     var scenarioOptions = [
       { id: 'launch', label: 'Launch', hint: 'Months 1–3' },
       { id: 'growth', label: 'Growth', hint: 'Months 4–12' },
@@ -392,7 +555,15 @@
     return (
       '<div class="revenue-mix space-y-4" id="revenue-mix-root">' +
       '<div class="rounded-xl border border-brand-200 bg-gradient-to-r from-brand-50 to-white p-4 sm:p-5">' +
-      '<p class="text-sm text-slate-600 max-w-3xl">Plan monthly Hub revenue (ex-VAT rate card). Pick a scenario, then tweak ticket volume — advanced slots stay tucked away.</p>' +
+      '<p class="text-sm text-slate-600 max-w-3xl">Compare live Sales targets with the rate-card model. Actuals feed the charts; scenarios stay for planning ticket volume and inventory.</p>' +
+      '<div class="mt-4 flex flex-wrap gap-2" role="group" aria-label="Chart data source">' +
+      '<button type="button" class="revenue-mix-scenario-btn' +
+      (usingActual ? ' is-active' : '') +
+      '" data-mix-source="actual">Actual sales<span class="block text-[10px] font-semibold opacity-80">This month from Sales targets</span></button>' +
+      '<button type="button" class="revenue-mix-scenario-btn' +
+      (!usingActual ? ' is-active' : '') +
+      '" data-mix-source="model">Model<span class="block text-[10px] font-semibold opacity-80">Rate card scenarios</span></button>' +
+      '</div>' +
       '<div class="mt-4 flex flex-wrap gap-2" role="group" aria-label="Scenario">' +
       scenarioOptions
         .map(function (opt) {
@@ -411,6 +582,7 @@
         .join('') +
       '</div>' +
       '<div class="mt-3 flex flex-wrap items-center gap-2">' +
+      '<button type="button" id="revenue-mix-refresh-actuals" class="rounded-lg border border-slate-200 bg-white text-sm font-semibold px-3 py-2 hover:bg-slate-50">Refresh actual sales</button>' +
       '<button type="button" id="revenue-mix-load-slots" class="rounded-lg border border-slate-200 bg-white text-sm font-semibold px-3 py-2 hover:bg-slate-50">Load live sponsor slots</button>' +
       '<button type="button" id="revenue-mix-reset" class="rounded-lg border border-slate-200 bg-white text-sm font-semibold px-3 py-2 hover:bg-slate-50">Reset to Launch</button>' +
       '<p id="revenue-mix-status" class="text-xs text-slate-500" role="status"></p>' +
@@ -418,14 +590,14 @@
       '<a href="#financials" class="text-xs font-semibold text-brand-700 hover:underline">Payments →</a>' +
       '</div></div>' +
       '<div id="revenue-mix-stats">' +
-      renderStats(revenue, esc) +
+      renderStats(state, revenue, esc) +
       '</div>' +
       '<div id="revenue-mix-insight">' +
       renderInsight(state, revenue, esc) +
       '</div>' +
       '<section class="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
       '<h3 class="font-bold text-brand-900">Ticket volume (biggest lever)</h3>' +
-      '<p class="text-xs text-slate-500 mt-1">Drag to see when fees start to matter vs sponsorship.</p>' +
+      '<p class="text-xs text-slate-500 mt-1">Drag to see when fees start to matter vs sponsorship. Affects the Model view.</p>' +
       '<div class="mt-4 grid sm:grid-cols-2 gap-4">' +
       fieldSlider(
         'paidTicketsPerMonth',
@@ -521,20 +693,28 @@
       '<div class="mt-4 grid lg:grid-cols-2 gap-4">' +
       '<div>' +
       '<h3 class="font-bold text-brand-900 text-sm">Revenue mix</h3>' +
-      '<p class="text-xs text-slate-500 mt-1">Monthly split · ex-VAT</p>' +
+      '<p class="text-xs text-slate-500 mt-1" id="revenue-mix-pie-caption">' +
+      (usingActual
+        ? esc(actualSalesCache && actualSalesCache.monthLabel
+            ? actualSalesCache.monthLabel + ' · Sales targets'
+            : 'This month · Sales targets')
+        : 'Monthly split · ex-VAT model') +
+      '</p>' +
       '<div class="relative h-64 mt-3"><canvas id="revenue-mix-chart-pie" aria-label="Revenue mix pie chart"></canvas></div></div>' +
       '<div>' +
       '<h3 class="font-bold text-brand-900 text-sm">Sponsorship vs ticketing as volume grows</h3>' +
-      '<p class="text-xs text-slate-500 mt-1">X-axis: paid tickets per month</p>' +
+      '<p class="text-xs text-slate-500 mt-1">Model projection · X-axis: paid tickets per month</p>' +
       '<div class="relative h-64 mt-3"><canvas id="revenue-mix-chart-crossover" aria-label="Revenue crossover line chart"></canvas></div></div></div>' +
       '<div class="mt-4">' +
       '<h3 class="font-bold text-brand-900 text-sm">Scenario comparison</h3>' +
-      '<p class="text-xs text-slate-500 mt-1">Launch · Growth · Scale presets</p>' +
+      '<p class="text-xs text-slate-500 mt-1">Launch · Growth · Scale' +
+      (actualSalesCache ? ' · Actual (' + esc(actualSalesCache.monthLabel || 'this month') + ')' : '') +
+      '</p>' +
       '<div class="relative h-64 mt-3"><canvas id="revenue-mix-chart-scenarios" aria-label="Scenario comparison bar chart"></canvas></div></div></details>' +
       '<details class="revenue-mix-details bg-white rounded-xl border border-slate-200 p-5 shadow-sm">' +
       '<summary>Break-even table</summary>' +
       '<div class="mt-4" id="revenue-mix-breakeven">' +
-      renderBreakEvenTable(state, revenue, esc) +
+      renderBreakEvenTable(state, computeRevenue(state.inputs), esc) +
       '</div></details></div>'
     );
   }
@@ -564,13 +744,30 @@
   }
 
   function paintDynamicSections(root, state, esc) {
-    var revenue = computeRevenue(state.inputs);
+    var revenue = displayRevenue(state);
     var statsWrap = root.querySelector('#revenue-mix-stats');
-    if (statsWrap) statsWrap.innerHTML = renderStats(revenue, esc);
+    if (statsWrap) statsWrap.innerHTML = renderStats(state, revenue, esc);
     var insightWrap = root.querySelector('#revenue-mix-insight');
     if (insightWrap) insightWrap.innerHTML = renderInsight(state, revenue, esc);
     var breakEvenWrap = root.querySelector('#revenue-mix-breakeven');
-    if (breakEvenWrap) breakEvenWrap.innerHTML = renderBreakEvenTable(state, revenue, esc);
+    if (breakEvenWrap) {
+      breakEvenWrap.innerHTML = renderBreakEvenTable(state, computeRevenue(state.inputs), esc);
+    }
+    var pieCaption = root.querySelector('#revenue-mix-pie-caption');
+    if (pieCaption) {
+      pieCaption.textContent =
+        state.chartSource === 'actual'
+          ? (actualSalesCache && actualSalesCache.monthLabel
+              ? actualSalesCache.monthLabel + ' · Sales targets'
+              : 'This month · Sales targets')
+          : 'Monthly split · ex-VAT model';
+    }
+    root.querySelectorAll('[data-mix-source]').forEach(function (btn) {
+      btn.classList.toggle(
+        'is-active',
+        btn.getAttribute('data-mix-source') === state.chartSource
+      );
+    });
     root.querySelectorAll('[data-mix-slider-value]').forEach(function (el) {
       var key = el.getAttribute('data-mix-slider-value');
       if (key && key in state.inputs) el.textContent = String(state.inputs[key]);
@@ -598,26 +795,49 @@
     if (!global.Chart) return;
     destroyCharts();
 
-    var revenue = computeRevenue(state.inputs);
+    var modelRevenue = computeRevenue(state.inputs);
+    var usingActual = state.chartSource === 'actual' && actualSalesCache;
     var mixCanvas = document.getElementById('revenue-mix-chart-pie');
     if (mixCanvas) {
-      var mixData = [
-        revenue.sponsorship,
-        revenue.listings,
-        revenue.boosts,
-        revenue.credits,
-        revenue.ticketFees,
-        revenue.membershipFees,
-      ].filter(function (v) {
-        return v > 0;
-      });
+      var mixData = [];
       var mixLabels = [];
-      if (revenue.sponsorship > 0) mixLabels.push('Sponsorship');
-      if (revenue.listings > 0) mixLabels.push('Listings');
-      if (revenue.boosts > 0) mixLabels.push('Featured boosts');
-      if (revenue.credits > 0) mixLabels.push('Credit packs');
-      if (revenue.ticketFees > 0) mixLabels.push('Ticket fees');
-      if (revenue.membershipFees > 0) mixLabels.push('Membership fees');
+      var mixColors = [];
+      if (usingActual) {
+        var categoryColors = {
+          events: '#1e3a5f',
+          opportunities: '#6366f1',
+          ticket_sales: '#059669',
+          browse_organisers: '#0891b2',
+          awards: '#d97706',
+        };
+        (actualSalesCache.byCategory || []).forEach(function (row) {
+          if (!(row.amount > 0)) return;
+          mixLabels.push(row.label);
+          mixData.push(row.amount);
+          mixColors.push(categoryColors[row.id] || '#64748b');
+        });
+        if (!mixData.length) {
+          mixLabels = ['No sales logged this month'];
+          mixData = [1];
+          mixColors = ['#e2e8f0'];
+        }
+      } else {
+        var revenue = modelRevenue;
+        var pieces = [
+          { label: 'Sponsorship', value: revenue.sponsorship, color: '#1e3a5f' },
+          { label: 'Listings', value: revenue.listings, color: '#6366f1' },
+          { label: 'Featured boosts', value: revenue.boosts, color: '#0891b2' },
+          { label: 'Credit packs', value: revenue.credits, color: '#0d9488' },
+          { label: 'Ticket fees', value: revenue.ticketFees, color: '#059669' },
+          { label: 'Membership fees', value: revenue.membershipFees, color: '#65a30d' },
+        ];
+        pieces.forEach(function (piece) {
+          if (!(piece.value > 0)) return;
+          mixLabels.push(piece.label);
+          mixData.push(piece.value);
+          mixColors.push(piece.color);
+        });
+      }
 
       chartInstances.mix = new global.Chart(mixCanvas, {
         type: 'doughnut',
@@ -626,27 +846,33 @@
           datasets: [
             {
               data: mixData,
-              backgroundColor: [
-                '#1e3a5f',
-                '#6366f1',
-                '#0891b2',
-                '#0d9488',
-                '#059669',
-                '#65a30d',
-              ],
+              backgroundColor: mixColors,
             },
           ],
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { position: 'bottom' } },
+          plugins: {
+            legend: { position: 'bottom' },
+            tooltip: {
+              callbacks: {
+                label: function (ctx) {
+                  var v = ctx.raw;
+                  if (usingActual && mixLabels[0] === 'No sales logged this month') {
+                    return ' £0 this month';
+                  }
+                  return ' £' + Math.round(Number(v) || 0).toLocaleString('en-GB');
+                },
+              },
+            },
+          },
         },
       });
     }
 
     var ticketVolumes = [0, 500, 1000, 2500, 5000, 10000, 15000, 20000];
-    var flat = revenue.sponsorship + revenue.organiserUpsells;
+    var flat = modelRevenue.sponsorship + modelRevenue.organiserUpsells;
     var crossoverCanvas = document.getElementById('revenue-mix-chart-crossover');
     if (crossoverCanvas) {
       chartInstances.crossover = new global.Chart(crossoverCanvas, {
@@ -700,30 +926,41 @@
 
     var scenariosCanvas = document.getElementById('revenue-mix-chart-scenarios');
     if (scenariosCanvas) {
+      var scenarioKeys = ['launch', 'growth', 'scale'];
+      var scenarioLabels = ['Launch', 'Growth', 'Scale'];
+      var sponsorshipData = scenarioKeys.map(function (k) {
+        return computeRevenue(SCENARIOS[k]).sponsorship;
+      });
+      var upsellData = scenarioKeys.map(function (k) {
+        return computeRevenue(SCENARIOS[k]).organiserUpsells;
+      });
+      var feeData = scenarioKeys.map(function (k) {
+        return computeRevenue(SCENARIOS[k]).transactionFees;
+      });
+      if (actualSalesCache && actualSalesCache.mix) {
+        scenarioLabels.push('Actual');
+        sponsorshipData.push(actualSalesCache.mix.sponsorship);
+        upsellData.push(actualSalesCache.mix.organiserUpsells);
+        feeData.push(actualSalesCache.mix.transactionFees);
+      }
       chartInstances.scenarios = new global.Chart(scenariosCanvas, {
         type: 'bar',
         data: {
-          labels: ['Launch', 'Growth', 'Scale'],
+          labels: scenarioLabels,
           datasets: [
             {
               label: 'Sponsorship',
-              data: ['launch', 'growth', 'scale'].map(function (k) {
-                return computeRevenue(SCENARIOS[k]).sponsorship;
-              }),
+              data: sponsorshipData,
               backgroundColor: '#1e3a5f',
             },
             {
               label: 'Organiser upsells',
-              data: ['launch', 'growth', 'scale'].map(function (k) {
-                return computeRevenue(SCENARIOS[k]).organiserUpsells;
-              }),
+              data: upsellData,
               backgroundColor: '#d97706',
             },
             {
               label: 'Transaction fees',
-              data: ['launch', 'growth', 'scale'].map(function (k) {
-                return computeRevenue(SCENARIOS[k]).transactionFees;
-              }),
+              data: feeData,
               backgroundColor: '#059669',
             },
           ],
@@ -757,12 +994,34 @@
     return inputs;
   }
 
+  function fetchActualSales(helpers) {
+    var getter =
+      helpers && typeof helpers.adminGet === 'function'
+        ? helpers.adminGet
+        : function (url) {
+            return fetch(url, { credentials: 'include', cache: 'no-store' }).then(function (res) {
+              return res.json();
+            });
+          };
+    return getter('/api/admin/revenue-targets').then(function (data) {
+      if (!data || data.ok === false) {
+        throw new Error((data && data.message) || 'Could not load Sales targets');
+      }
+      var payload = data.revenueTargets || data;
+      var snapshot = buildActualSalesSnapshot(payload);
+      if (!snapshot) throw new Error('Sales targets returned no data');
+      actualSalesCache = snapshot;
+      return snapshot;
+    });
+  }
+
   function bindEvents(main, helpers) {
     var root = main.querySelector('#revenue-mix-root');
     if (!root) return;
 
     var esc = helpers.esc;
     var state = loadState();
+    if (!state.chartSource) state.chartSource = 'actual';
 
     function refresh(fromDom) {
       if (fromDom) {
@@ -773,6 +1032,29 @@
       saveState(state);
       paintDynamicSections(root, state, esc);
       renderCharts(state);
+    }
+
+    function setStatus(msg) {
+      var statusEl = document.getElementById('revenue-mix-status');
+      if (statusEl) statusEl.textContent = msg || '';
+    }
+
+    function loadActuals(showStatus) {
+      if (showStatus) setStatus('Loading actual sales…');
+      return fetchActualSales(helpers)
+        .then(function (snapshot) {
+          setStatus(
+            'Linked to Sales targets — ' +
+              (snapshot.monthLabel || 'this month') +
+              ' · £' +
+              Math.round(snapshot.mix.total || 0).toLocaleString('en-GB') +
+              ' booked'
+          );
+          refresh(false);
+        })
+        .catch(function (err) {
+          setStatus((err && err.message) || 'Could not load actual sales.');
+        });
     }
 
     root.addEventListener('input', function (e) {
@@ -786,6 +1068,21 @@
     });
 
     root.addEventListener('click', function (e) {
+      var sourceBtn = e.target.closest('[data-mix-source]');
+      if (sourceBtn && root.contains(sourceBtn)) {
+        var source = sourceBtn.getAttribute('data-mix-source');
+        if (source === 'actual' || source === 'model') {
+          state.chartSource = source;
+          saveState(state);
+          if (source === 'actual' && !actualSalesCache) {
+            loadActuals(true);
+            return;
+          }
+          refresh(false);
+        }
+        return;
+      }
+
       var btn = e.target.closest('[data-mix-scenario]');
       if (!btn || !root.contains(btn)) return;
       var id = btn.getAttribute('data-mix-scenario');
@@ -811,7 +1108,11 @@
     if (resetBtn) {
       resetBtn.addEventListener('click', function () {
         destroyCharts();
-        state = { scenario: 'launch', inputs: Object.assign({}, SCENARIOS.launch) };
+        state = {
+          scenario: 'launch',
+          inputs: Object.assign({}, SCENARIOS.launch),
+          chartSource: state.chartSource || 'actual',
+        };
         saveState(state);
         main.innerHTML = renderShell(state, esc);
         bindEvents(main, helpers);
@@ -822,15 +1123,25 @@
           .catch(function () {
             /* charts optional */
           });
+        if (!actualSalesCache) loadActuals(false);
+      });
+    }
+
+    var refreshActualsBtn = document.getElementById('revenue-mix-refresh-actuals');
+    if (refreshActualsBtn) {
+      refreshActualsBtn.addEventListener('click', function () {
+        refreshActualsBtn.disabled = true;
+        loadActuals(true).finally(function () {
+          refreshActualsBtn.disabled = false;
+        });
       });
     }
 
     var loadBtn = document.getElementById('revenue-mix-load-slots');
-    var statusEl = document.getElementById('revenue-mix-status');
     if (loadBtn) {
       loadBtn.addEventListener('click', function () {
         loadBtn.disabled = true;
-        if (statusEl) statusEl.textContent = 'Loading sponsor slot fill…';
+        setStatus('Loading sponsor slot fill…');
         fetch('/api/advertising?route=availability')
           .then(function (res) {
             return res.json();
@@ -844,21 +1155,19 @@
             applyInputsToDom(root, state.inputs);
             syncScenarioButtons(root, 'custom');
             refresh(false);
-            if (statusEl) {
-              statusEl.textContent = 'Updated Headline and Page Partner counts from live CMS slots.';
-            }
+            setStatus('Updated Headline and Page Partner counts from live CMS slots.');
           })
           .catch(function (err) {
-            if (statusEl) {
-              statusEl.textContent =
-                (err && err.message) || 'Could not load slot availability.';
-            }
+            setStatus((err && err.message) || 'Could not load slot availability.');
           })
           .finally(function () {
             loadBtn.disabled = false;
           });
       });
     }
+
+    // Always pull latest actuals when the page opens so charts stay linked.
+    loadActuals(true);
   }
 
   function render(main, helpers) {
@@ -867,6 +1176,7 @@
       return String(s == null ? '' : s);
     };
     var state = loadState();
+    if (!state.chartSource) state.chartSource = 'actual';
     main.innerHTML = renderShell(state, esc);
     bindEvents(main, helpers);
     ensureChartJs()

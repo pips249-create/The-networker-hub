@@ -6,6 +6,7 @@ const { registrationHubPlatformFee } = require('./booking-fees');
 const { calculateOpportunityListingTotals } = require('./opportunity-listing-pricing');
 const { FEATURED_PLANS } = require('./event-featured-plans');
 const { isTestRegistration, isTestFixtureText } = require('./test-fixture-filters');
+const { listRefundsPendingEvents } = require('./admin-refunds-pending');
 
 const PERIOD_START = '2026-07-03T00:00:00.000Z';
 const PERIOD_END = '2027-09-01T00:00:00.000Z';
@@ -47,7 +48,8 @@ const TARGET_CATEGORIES = [
   {
     id: 'ticket_sales',
     label: 'Ticket sales (booking fees)',
-    description: 'Hub platform cut on paid event tickets and organiser memberships (Stripe excluded)',
+    description:
+      'Hub platform cut on paid event tickets and organiser memberships, net of completed refunds (Stripe excluded)',
     target: 2500,
   },
   {
@@ -167,19 +169,125 @@ function addBreakdown(map, categoryId, item) {
   map.get(categoryId).push(item);
 }
 
+function refundRecordedAt(reg) {
+  return reg?.cancelled_at || reg?.refund_email_sent_at || null;
+}
+
+function mergeRegistrationRows(rows) {
+  const byId = new Map();
+  (rows || []).forEach((row) => {
+    if (!row || !row.id) return;
+    byId.set(row.id, row);
+  });
+  return [...byId.values()];
+}
+
+async function fetchRegistrationsForRevenue(sb, startMs, endMs) {
+  const startIso = new Date(startMs).toISOString();
+  const endIso = new Date(endMs).toISOString();
+  const cols =
+    'id, created_at, cancelled_at, refund_email_sent_at, payment_status, amount_paid, quantity, events(title), attendees(name, email), organisers(name)';
+
+  const [createdRes, cancelledRes, refundEmailRes] = await Promise.all([
+    sb
+      .from('registrations')
+      .select(cols)
+      .in('payment_status', ['Paid', 'Refunded'])
+      .gte('created_at', startIso)
+      .lt('created_at', endIso),
+    sb
+      .from('registrations')
+      .select(cols)
+      .eq('payment_status', 'Refunded')
+      .not('cancelled_at', 'is', null)
+      .gte('cancelled_at', startIso)
+      .lt('cancelled_at', endIso),
+    sb
+      .from('registrations')
+      .select(cols)
+      .eq('payment_status', 'Refunded')
+      .is('cancelled_at', null)
+      .not('refund_email_sent_at', 'is', null)
+      .gte('refund_email_sent_at', startIso)
+      .lt('refund_email_sent_at', endIso),
+  ]);
+
+  if (createdRes.error) throw new Error(createdRes.error.message);
+  if (cancelledRes.error) throw new Error(cancelledRes.error.message);
+  if (refundEmailRes.error) throw new Error(refundEmailRes.error.message);
+
+  return mergeRegistrationRows([
+    ...(createdRes.data || []),
+    ...(cancelledRes.data || []),
+    ...(refundEmailRes.data || []),
+  ]);
+}
+
+async function fetchPendingRefundExposure(sb) {
+  let pendingEvents = [];
+  try {
+    pendingEvents = await listRefundsPendingEvents(sb, 50);
+  } catch (err) {
+    return {
+      eventCount: 0,
+      paidBookings: 0,
+      estimatedHubFee: 0,
+      events: [],
+      warning: err?.message || String(err),
+    };
+  }
+
+  const eventIds = pendingEvents.map((e) => e.eventId).filter(Boolean);
+  if (!eventIds.length) {
+    return { eventCount: 0, paidBookings: 0, estimatedHubFee: 0, events: [], warning: null };
+  }
+
+  const { data, error } = await sb
+    .from('registrations')
+    .select(
+      'id, event_id, amount_paid, quantity, payment_status, events(title), attendees(name, email), organisers(name)'
+    )
+    .in('event_id', eventIds)
+    .eq('payment_status', 'Paid');
+  if (error) throw new Error(error.message);
+
+  let estimatedHubFee = 0;
+  let paidBookings = 0;
+  (data || []).forEach((reg) => {
+    if (isTestRegistration(reg)) return;
+    const fee = registrationHubPlatformFee(reg);
+    if (fee <= 0) return;
+    estimatedHubFee = round2(estimatedHubFee + fee);
+    paidBookings += 1;
+  });
+
+  return {
+    eventCount: pendingEvents.length,
+    paidBookings,
+    estimatedHubFee,
+    events: pendingEvents.slice(0, 8).map((e) => ({
+      eventId: e.eventId,
+      title: e.title,
+      paidBookings: e.paidBookings,
+      cancelledAt: e.cancelledAt,
+    })),
+    warning: null,
+  };
+}
+
 async function fetchAutoRevenue(sb, startMs, endMs) {
   const breakdown = new Map();
   TARGET_CATEGORIES.forEach((c) => breakdown.set(c.id, []));
 
-  const [regsRes, oppsRes, eventsRes] = await Promise.all([
-    sb
-      .from('registrations')
-      .select(
-        'id, created_at, payment_status, amount_paid, quantity, events(title), attendees(name, email), organisers(name)'
-      )
-      .eq('payment_status', 'Paid')
-      .gte('created_at', new Date(startMs).toISOString())
-      .lt('created_at', new Date(endMs).toISOString()),
+  const refunds = {
+    completedCount: 0,
+    completedHubFee: 0,
+    salesCount: 0,
+    salesHubFee: 0,
+  };
+
+  const [regs, oppsRes, eventsRes, pendingRefunds] = await Promise.all([
+    fetchRegistrationsForRevenue(sb, startMs, endMs),
     sb
       .from('business_opportunities')
       .select(
@@ -190,23 +298,49 @@ async function fetchAutoRevenue(sb, startMs, endMs) {
       .from('events')
       .select('id, title, featured_plan, featured_paid_at, featured_amount_gbp')
       .not('featured_paid_at', 'is', null),
+    fetchPendingRefundExposure(sb),
   ]);
 
-  if (regsRes.error) throw new Error(regsRes.error.message);
   if (oppsRes.error) throw new Error(oppsRes.error.message);
   if (eventsRes.error) throw new Error(eventsRes.error.message);
 
-  (regsRes.data || []).forEach((reg) => {
-    if (!inPeriod(reg.created_at, startMs, endMs)) return;
+  regs.forEach((reg) => {
     if (isTestRegistration(reg)) return;
     const fee = registrationHubPlatformFee(reg);
     if (fee <= 0) return;
-    addBreakdown(breakdown, 'ticket_sales', {
-      type: 'auto',
-      source: 'Hub platform fee — ' + String(reg.events?.title || 'registration').trim(),
-      amount: fee,
-      recordedAt: reg.created_at,
-    });
+    const status = String(reg.payment_status || '').trim();
+    const eventTitle = String(reg.events?.title || 'registration').trim();
+
+    if (inPeriod(reg.created_at, startMs, endMs) && (status === 'Paid' || status === 'Refunded')) {
+      refunds.salesCount += 1;
+      refunds.salesHubFee = round2(refunds.salesHubFee + fee);
+      addBreakdown(breakdown, 'ticket_sales', {
+        type: 'auto',
+        kind: 'sale',
+        source: 'Hub platform fee — ' + eventTitle,
+        amount: fee,
+        recordedAt: reg.created_at,
+      });
+    }
+
+    if (status === 'Refunded') {
+      let refundAt = refundRecordedAt(reg);
+      // If refund timestamp is missing, reverse in the sale month so net stays honest.
+      if (!refundAt && inPeriod(reg.created_at, startMs, endMs)) {
+        refundAt = reg.created_at;
+      }
+      if (refundAt && inPeriod(refundAt, startMs, endMs)) {
+        refunds.completedCount += 1;
+        refunds.completedHubFee = round2(refunds.completedHubFee + fee);
+        addBreakdown(breakdown, 'ticket_sales', {
+          type: 'auto',
+          kind: 'refund',
+          source: 'Refund — Hub platform fee reversed — ' + eventTitle,
+          amount: round2(-fee),
+          recordedAt: refundAt,
+        });
+      }
+    }
   });
 
   (oppsRes.data || []).forEach((row) => {
@@ -255,7 +389,14 @@ async function fetchAutoRevenue(sb, startMs, endMs) {
     });
   });
 
-  return breakdown;
+  return {
+    breakdown,
+    refunds: {
+      ...refunds,
+      netHubFee: round2(refunds.salesHubFee - refunds.completedHubFee),
+      pending: pendingRefunds,
+    },
+  };
 }
 
 async function fetchManualDeals(sb, startMs, endMs) {
@@ -438,7 +579,7 @@ function buildMonthlyPulse(items, periodStartMs, periodEndMs, now = new Date()) 
   };
 }
 
-function buildAssessment(categories, period, totals, monthlyPulse) {
+function buildAssessment(categories, period, totals, monthlyPulse, refunds) {
   const totalTarget = totals.target;
   const totalForecast = totals.forecast;
   const monthlyNeeded = monthlyPaceNeeded(totalTarget, totals.actual, period.monthsRemaining);
@@ -500,11 +641,39 @@ function buildAssessment(categories, period, totals, monthlyPulse) {
 
   const notes = [
     'Compare months side-by-side below — growth month-to-month matters more than the period-long pace this early on.',
-    'Ticket sales (£2,500) accrues automatically from paid event tickets and platform-billed memberships.',
+    'Ticket sales (£2,500) accrues automatically from paid event tickets and platform-billed memberships, net of completed refunds.',
     'Events (£42,500) and opportunities (£48,000) move fastest when directory sponsors and premium packages close consistently.',
     'Browse organisers (£10,000) is achievable with one hero sponsor plus mini-sponsor inventory over the period.',
     'Awards (£5,000) is marked TBC — log revenue manually when sponsorship is confirmed.',
   ];
+
+  if (refunds && refunds.completedCount > 0) {
+    notes.unshift(
+      refunds.completedCount +
+        ' completed ticket refund' +
+        (refunds.completedCount === 1 ? '' : 's') +
+        ' reversed £' +
+        Number(refunds.completedHubFee || 0).toLocaleString('en-GB', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }) +
+        ' of Hub platform fee in this period.'
+    );
+  }
+
+  if (refunds?.pending?.paidBookings > 0) {
+    notes.unshift(
+      refunds.pending.paidBookings +
+        ' paid booking' +
+        (refunds.pending.paidBookings === 1 ? '' : 's') +
+        ' on cancelled events still await Stripe refund confirmation (~£' +
+        Number(refunds.pending.estimatedHubFee || 0).toLocaleString('en-GB', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }) +
+        ' Hub fee still counted until refunded).'
+    );
+  }
 
   return {
     headline,
@@ -522,10 +691,13 @@ async function getAdminRevenueTargets(sb) {
   const startMs = parseMs(PERIOD_START);
   const endMs = parseMs(PERIOD_END);
 
-  const [autoBreakdown, manualResult] = await Promise.all([
+  const [autoResult, manualResult] = await Promise.all([
     fetchAutoRevenue(sb, startMs, endMs),
     fetchManualDeals(sb, startMs, endMs),
   ]);
+
+  const autoBreakdown = autoResult.breakdown;
+  const refunds = autoResult.refunds || null;
 
   const manualByCategory = new Map();
   TARGET_CATEGORIES.forEach((c) => manualByCategory.set(c.id, []));
@@ -588,9 +760,10 @@ async function getAdminRevenueTargets(sb) {
     totals,
     charts,
     monthlyPulse,
+    refunds,
     manualDeals: manualResult.deals || [],
     dealsTableMissing: manualResult.tableMissing,
-    assessment: buildAssessment(categories, period, totals, monthlyPulse),
+    assessment: buildAssessment(categories, period, totals, monthlyPulse, refunds),
     updatedAt: new Date().toISOString(),
   };
 }
