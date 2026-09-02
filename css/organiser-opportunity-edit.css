@@ -447,6 +447,12 @@ body.hub-page-organiser.organiser-opportunity-edit-page {
   cursor: pointer;
 }
 
+.oe-type-option-note {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--opp-mid-gray, #635c5e);
+}
+
 .oe-type-mode-note {
   margin: 10px 0 0;
   padding: 10px 12px;

@@ -27,7 +27,7 @@ const KNOWLEDGE_SECTIONS = [
     title: 'TWO PILLARS',
     body:
       'EVENTS (Live) — meetings, webinars, workshops, exhibitions, conferences, and awards across the UK. Browse at /events/ with filters for type, date, industry, and location, plus map view. Stripe checkout for paid tickets; many events are free. ' +
-      'BUSINESS OPPORTUNITIES (Live) — franchises, side hustles, partnerships, distributorships, referral deals, and white-label arrangements. Browse free at /opportunities/; filter and map view available.',
+      'BUSINESS OPPORTUNITIES (Live) — franchises, side hustles, partnerships, distributorships / reseller rights (people buying into or taking on a territory — not hiring wholesale logistics), referral deals, and white-label arrangements. Browse free at /opportunities/; filter and map view available.',
   },
   {
     title: 'KEY PAGES',
@@ -66,7 +66,7 @@ const KNOWLEDGE_SECTIONS = [
   {
     title: 'BUSINESS OPPORTUNITIES',
     body:
-      'Browse free at /opportunities/. Types: franchise, side hustle, partnership, distributorship, networking/referral. Not FCA-regulated; not investment advice; due diligence is your responsibility. ' +
+      'Browse free at /opportunities/. Types: franchise, side hustle, partnership, distributorship / reseller (take on territory or brand rights as your own venture — not wholesale logistics hiring), networking/referral. Not FCA-regulated; not investment advice; due diligence is your responsibility. ' +
       'To enquire: free account → open listing → send enquiry from the page. ' +
       'SAVE & ALERTS: signed-in members can heart-save listings in My account → Saved Opportunities, get email when a saved listing is closing soon, and save search criteria for email alerts when new matching listings publish. Compare up to 3 saved opportunities side by side. ' +
       'To list an opportunity as an organiser: /opportunities/list or /organiser/.',
