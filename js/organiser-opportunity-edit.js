@@ -472,6 +472,11 @@
     return !list.some((type) => CAPITAL_TYPES.indexOf(type) !== -1);
   }
 
+  function isDistributorshipListing(types) {
+    const list = types || getSelectedTypes();
+    return list.indexOf('distributorship') !== -1 && !isAffiliateStyleListing(list);
+  }
+
   function coerceLegacyAffiliateTypes(types, meta) {
     const list = (types || []).slice();
     if (list.indexOf('affiliate') !== -1) return list;
@@ -509,9 +514,11 @@
   function syncAffiliateFormMode(options) {
     const types = getSelectedTypes();
     const affiliate = isAffiliateStyleListing(types);
+    const distributorship = isDistributorshipListing(types);
     const wasAffiliate = syncAffiliateFormMode.lastAffiliate === true;
     const capitalWrap = document.getElementById('oe-fields-capital');
     const affiliateWrap = document.getElementById('oe-fields-affiliate');
+    const distWrap = document.getElementById('oe-fields-distributorship');
     const investmentEl = document.getElementById('oe-investment');
     const commissionEl = document.getElementById('oe-commission');
     const promoteEl = document.getElementById('oe-promote');
@@ -520,12 +527,73 @@
     const metaHeading = document.getElementById('oe-card-meta-heading');
     const metaLead = document.getElementById('oe-card-meta-lead');
     const investmentShortcuts = document.getElementById('oe-investment-shortcuts');
+    const capitalModeHint = document.getElementById('oe-capital-mode-hint');
+    const investmentLabel = document.getElementById('oe-investment-label');
+    const investmentHint = document.getElementById('oe-investment-hint');
+    const includesLabel = document.getElementById('oe-investment-includes-label');
+    const includesHint = document.getElementById('oe-investment-includes-hint');
+    const locationDetailLabel = document.getElementById('oe-location-detail-label');
+    const locationDetailHint = document.getElementById('oe-location-detail-hint');
+    const locationDetailEl = document.getElementById('oe-location-detail');
+    const extraKeyEl = document.getElementById('oe-extra-key');
+    const extraValEl = document.getElementById('oe-extra-val');
     if (capitalWrap) capitalWrap.hidden = affiliate;
     if (affiliateWrap) affiliateWrap.hidden = !affiliate;
+    if (distWrap) distWrap.hidden = !distributorship;
+    if (capitalModeHint) capitalModeHint.hidden = !distributorship;
     if (investmentShortcuts) investmentShortcuts.hidden = affiliate;
     if (investmentEl) {
       if (affiliate) investmentEl.removeAttribute('required');
       else investmentEl.setAttribute('required', 'required');
+      investmentEl.placeholder = distributorship
+        ? 'e.g. £2,500 opening stock + VAT, or £5,000 package'
+        : 'e.g. £9,500 + VAT or £12,000 total';
+    }
+    if (investmentLabel) {
+      investmentLabel.textContent = distributorship
+        ? 'Startup cost / stock deposit'
+        : 'Investment required';
+    }
+    if (investmentHint) {
+      investmentHint.innerHTML = distributorship
+        ? 'What someone pays to start as a distributor or reseller — stock deposit, territory fee, starter kit, or package total. Use <strong>+ VAT</strong> when tax is extra.'
+        : 'Enter the figure you show to prospects. Use <strong>+ VAT</strong> if tax is extra, or write <strong>inc VAT</strong> / <strong>total package</strong> when that&apos;s clearer — e.g. <strong>£9,500 + VAT</strong> or <strong>£12,000 total</strong>. We don&apos;t add VAT automatically.';
+    }
+    if (includesLabel) {
+      includesLabel.innerHTML = distributorship
+        ? 'What&apos;s included in this startup cost? <span class="ee-optional">(optional)</span>'
+        : 'What&apos;s included in this investment? <span class="ee-optional">(optional)</span>';
+    }
+    if (includesHint) {
+      includesHint.textContent = distributorship
+        ? 'One item per line — e.g. opening stock, samples, POS, training, exclusive territory rights. The Networker UK does not verify this breakdown.'
+        : 'Help browsers trust your listing — one item per line (e.g. training, starter kit, insurance registration). The Networker UK does not verify this breakdown.';
+    }
+    if (investmentIncludesEl) {
+      investmentIncludesEl.placeholder = distributorship
+        ? 'Opening stock\nSamples / demo kit\nPOS materials\nTerritory rights\nTraining'
+        : 'Training\nStarter kit\nInsurance registration\nMarketing materials';
+    }
+    if (locationDetailLabel) {
+      locationDetailLabel.innerHTML = distributorship
+        ? 'Territory detail <span class="ee-optional">(optional)</span>'
+        : 'Specific area <span class="ee-optional">(optional)</span>';
+    }
+    if (locationDetailHint) {
+      locationDetailHint.textContent = distributorship
+        ? 'Which counties, postcodes, or channels they can cover — e.g. “North West exclusive” or “UK online only”.'
+        : 'Add detail if needed — e.g. “North Manchester only” or “3 territories left”.';
+    }
+    if (locationDetailEl) {
+      locationDetailEl.placeholder = distributorship
+        ? 'e.g. North West exclusive, or leave blank for the whole region'
+        : 'e.g. North Manchester, or leave blank for the whole region';
+    }
+    if (extraKeyEl) {
+      extraKeyEl.placeholder = distributorship ? 'e.g. Territories available' : 'e.g. Territories left';
+    }
+    if (extraValEl) {
+      extraValEl.placeholder = distributorship ? 'e.g. 4 regions left' : 'e.g. 6';
     }
     if (commissionEl) {
       if (affiliate) commissionEl.setAttribute('required', 'required');
@@ -535,11 +603,19 @@
       if (affiliate) promoteEl.setAttribute('required', 'required');
       else promoteEl.removeAttribute('required');
     }
-    if (metaHeading) metaHeading.textContent = affiliate ? 'Card highlights — affiliate' : 'Card highlights';
+    if (metaHeading) {
+      metaHeading.textContent = affiliate
+        ? 'Card highlights — affiliate'
+        : distributorship
+          ? 'Card highlights — distributorship'
+          : 'Card highlights';
+    }
     if (metaLead) {
       metaLead.textContent = affiliate
         ? 'Commission and what partners promote appear on your card — not franchise-style investment.'
-        : 'Investment, region, and commitment appear in the meta row on your listing card.';
+        : distributorship
+          ? 'Startup cost, territory, and stock terms appear on your listing card.'
+          : 'Investment, region, and commitment appear in the meta row on your listing card.';
     }
     if (wasAffiliate !== affiliate) {
       if (affiliate) {
@@ -578,6 +654,13 @@
       note.innerHTML =
         '<strong>Affiliate listing.</strong> Commission and what you promote go in <strong>Card highlights</strong> when that section appears — investment is not required.';
       note.className = 'oe-type-mode-note is-affiliate';
+      note.hidden = false;
+      return;
+    }
+    if (list.indexOf('distributorship') !== -1 && list.length === 1) {
+      note.innerHTML =
+        '<strong>Distributorship / reseller.</strong> Use Card highlights for startup cost, stock, and territory rights someone can take on — not for selling an existing distribution company.';
+      note.className = 'oe-type-mode-note';
       note.hidden = false;
       return;
     }
@@ -1714,6 +1797,10 @@
     document.getElementById('oe-investment').value = metaValue(opp.meta, /^investment$/i);
     document.getElementById('oe-investment-includes').value = metaValue(opp.meta, /^investment includes$/i);
     syncInvestmentVatChip();
+    const exclusivityEl = document.getElementById('oe-territory-exclusivity');
+    const moqEl = document.getElementById('oe-moq');
+    if (exclusivityEl) exclusivityEl.value = metaValue(opp.meta, /^territory exclusivity$/i);
+    if (moqEl) moqEl.value = metaValue(opp.meta, /^minimum order$/i);
     const commissionEl = document.getElementById('oe-commission');
     const promoteEl = document.getElementById('oe-promote');
     const suitsEl = document.getElementById('oe-suits');
@@ -1746,6 +1833,8 @@
       'what you promote',
       'who it suits',
       'cookie window',
+      'territory exclusivity',
+      'minimum order',
     ]);
     const extra = (opp.meta || []).find((m) => {
       const k = String(m.key || '').toLowerCase();
@@ -2076,6 +2165,12 @@
       if (investment) meta.push({ key: 'Investment', val: investment });
       const includes = document.getElementById('oe-investment-includes').value.trim();
       if (includes) meta.push({ key: 'Investment includes', val: includes });
+      if (isDistributorshipListing()) {
+        const exclusivity = document.getElementById('oe-territory-exclusivity')?.value.trim() || '';
+        const moq = document.getElementById('oe-moq')?.value.trim() || '';
+        if (exclusivity) meta.push({ key: 'Territory exclusivity', val: exclusivity });
+        if (moq) meta.push({ key: 'Minimum order', val: moq });
+      }
     }
 
     const companiesHouse = document.getElementById('oe-companies-house')?.value.trim() || '';
@@ -2085,7 +2180,7 @@
       extraKey &&
       extraVal &&
       !/^(return|earnings|revenue|income|profit)/i.test(extraKey) &&
-      !/^(commission|what you promote|who it suits|investment)/i.test(extraKey)
+      !/^(commission|what you promote|who it suits|investment|territory exclusivity|minimum order)/i.test(extraKey)
     ) {
       meta.push({ key: extraKey, val: extraVal });
     }

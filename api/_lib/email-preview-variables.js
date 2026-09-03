@@ -710,6 +710,18 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     vars.support_email = vars.support_email || 'hi@thenetworkeruk.com';
   }
 
+  if (slug === 'distributorship_claim_invite') {
+    const franchiseEmailFooterLogoDataUri = require('./franchise-email-footer-logo-datauri');
+    vars.claim_url =
+      vars.claim_url ||
+      opportunityPublicUrl({ slug: 'premium-coffee-distributorship', id: opportunityId }, site) +
+        '?email=sales@example.com&intent=opportunity-claim&auth=register';
+    vars.opportunity_title = vars.opportunity_title || 'Premium coffee capsule distributorship';
+    vars.owner_name = vars.owner_name || vars.opportunity_title;
+    vars.logo_footer_light_url = franchiseEmailFooterLogoDataUri;
+    vars.support_email = vars.support_email || 'hi@thenetworkeruk.com';
+  }
+
   if (slug === 'organiser_claim_confirmed') {
     const previewGroup = {
       id: '00000000-0000-4000-8000-000000000020',

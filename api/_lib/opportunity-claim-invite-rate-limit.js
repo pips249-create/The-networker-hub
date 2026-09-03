@@ -9,6 +9,7 @@ const CLAIM_INVITE_SLUGS = new Set([
   'franchise_claim_invite',
   'affiliate_claim_invite',
   'opportunity_claim_invite',
+  'distributorship_claim_invite',
 ]);
 
 const WINDOW_MS = 24 * 60 * 60 * 1000;
@@ -17,6 +18,7 @@ const WINDOW_MS = 24 * 60 * 60 * 1000;
 const FIXED_SUBJECTS = {
   franchise_claim_invite: 'Franchise Listing Invitation',
   opportunity_claim_invite: 'Business Opportunity Listing Invitation',
+  distributorship_claim_invite: 'Distributorship Listing Invitation',
 };
 
 function isOpportunityClaimInviteSlug(slug) {

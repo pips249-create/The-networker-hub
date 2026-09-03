@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260723" />
     <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260608c" />
-    <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260902dist1" />
+    <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260902dist2" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260825adminbadge1" />
     <style>
       /* Prevent browse-page nav padding flash before organiser form CSS loads */
@@ -217,9 +217,12 @@
           <div class="oe-step-body" id="oe-body-meta">
             <p class="ee-hint" id="oe-card-meta-lead" style="margin-top: 0">These appear in the meta row on your listing card.</p>
             <div id="oe-fields-capital">
+              <p class="ee-hint" id="oe-capital-mode-hint" hidden style="margin-top: 0">
+                Distributorship listings should describe <strong>territory or reseller rights</strong> someone can take on — not the sale of an existing distribution company.
+              </p>
               <div class="ee-field">
-                <label for="oe-investment">Investment required</label>
-                <p class="ee-hint" style="margin: 0 0 8px">
+                <label for="oe-investment" id="oe-investment-label">Investment required</label>
+                <p class="ee-hint" id="oe-investment-hint" style="margin: 0 0 8px">
                   Enter the figure you show to prospects. Use <strong>+ VAT</strong> if tax is extra, or write
                   <strong>inc VAT</strong> / <strong>total package</strong> when that&apos;s clearer — e.g.
                   <strong>£9,500 + VAT</strong> or <strong>£12,000 total</strong>. We don&apos;t add VAT automatically.
@@ -234,8 +237,10 @@
                 <input type="text" id="oe-investment" placeholder="e.g. £9,500 + VAT or £12,000 total" />
               </div>
               <div class="ee-field">
-                <label for="oe-investment-includes">What&apos;s included in this investment? <span class="ee-optional">(optional)</span></label>
-                <p class="ee-hint" style="margin: 0 0 8px">
+                <label for="oe-investment-includes" id="oe-investment-includes-label"
+                  >What&apos;s included in this investment? <span class="ee-optional">(optional)</span></label
+                >
+                <p class="ee-hint" id="oe-investment-includes-hint" style="margin: 0 0 8px">
                   Help browsers trust your listing — one item per line (e.g. training, starter kit, insurance registration).
                   The Networker UK does not verify this breakdown.
                 </p>
@@ -245,6 +250,33 @@
                   maxlength="600"
                   placeholder="Training&#10;Starter kit&#10;Insurance registration&#10;Marketing materials"
                 ></textarea>
+              </div>
+              <div id="oe-fields-distributorship" hidden>
+                <div class="ee-field">
+                  <label for="oe-territory-exclusivity">Territory exclusivity <span class="ee-optional">(optional)</span></label>
+                  <p class="ee-hint" style="margin: 0 0 8px">
+                    Shown on the card when set — exclusive, protected, or non-exclusive reseller rights.
+                  </p>
+                  <select id="oe-territory-exclusivity">
+                    <option value="">Select if relevant…</option>
+                    <option value="Exclusive territory">Exclusive territory</option>
+                    <option value="Protected territory">Protected territory</option>
+                    <option value="Non-exclusive">Non-exclusive</option>
+                    <option value="Varies by region — ask when you enquire">Varies by region — ask when you enquire</option>
+                  </select>
+                </div>
+                <div class="ee-field">
+                  <label for="oe-moq">Minimum order / stock commitment <span class="ee-optional">(optional)</span></label>
+                  <p class="ee-hint" style="margin: 0 0 8px">
+                    Opening stock, MOQ, or first order expectation — e.g. &ldquo;£2,500 opening stock&rdquo; or &ldquo;24 units&rdquo;.
+                  </p>
+                  <input
+                    type="text"
+                    id="oe-moq"
+                    maxlength="120"
+                    placeholder="e.g. £2,500 opening stock, or 24-unit MOQ"
+                  />
+                </div>
               </div>
             </div>
             <div id="oe-fields-affiliate" hidden>
@@ -297,8 +329,8 @@
               </div>
             </div>
             <div class="ee-field">
-              <label for="oe-location-detail">Specific area <span class="ee-optional">(optional)</span></label>
-              <p class="ee-hint">Add detail if needed — e.g. &ldquo;North Manchester only&rdquo; or &ldquo;3 territories left&rdquo;.</p>
+              <label for="oe-location-detail" id="oe-location-detail-label">Specific area <span class="ee-optional">(optional)</span></label>
+              <p class="ee-hint" id="oe-location-detail-hint">Add detail if needed — e.g. &ldquo;North Manchester only&rdquo; or &ldquo;3 territories left&rdquo;.</p>
               <input
                 type="text"
                 id="oe-location-detail"
@@ -320,7 +352,7 @@
               </select>
             </div>
             <div class="ee-field">
-              <label for="oe-extra-key">Extra highlight (optional)</label>
+              <label for="oe-extra-key" id="oe-extra-key-label">Extra highlight (optional)</label>
               <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px">
                 <input type="text" id="oe-extra-key" placeholder="e.g. Territories left" />
                 <input type="text" id="oe-extra-val" placeholder="e.g. 6" />
@@ -474,6 +506,6 @@
     <script src="../js/opportunities-catalog.js?v=20260902caremed1" defer></script>
     <script src="../js/hub-event-timezone.js?v=20260812dst" defer></script>
     <script src="../js/organiser-quarter-time.js?v=20260828openday5" defer></script>
-    <script src="../js/organiser-opportunity-edit.js?v=20260901opplock1" defer></script>
+    <script src="../js/organiser-opportunity-edit.js?v=20260902dist2" defer></script>
   </body>
 </html>

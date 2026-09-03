@@ -766,21 +766,28 @@ async function sendOpportunityClaimInviteEmail(row, options) {
   // still send the franchise claim invite + subject.
   const isFranchise =
     listingType === 'franchise' || (!isAffiliate && /\bfranchise\b/i.test(titleHost));
+  const isDistributorship =
+    listingType === 'distributorship' ||
+    (!isAffiliate && !isFranchise && /\bdistribut/i.test(titleHost));
   const ownerName =
-    isAffiliate || isFranchise
+    isAffiliate || isFranchise || isDistributorship
       ? title
       : String((row && row.host) || '').trim() || ownerEmail.split('@')[0] || 'there';
   const inviteSlug = isAffiliate
     ? 'affiliate_claim_invite'
     : isFranchise
       ? 'franchise_claim_invite'
-      : 'opportunity_claim_invite';
+      : isDistributorship
+        ? 'distributorship_claim_invite'
+        : 'opportunity_claim_invite';
   const inviteSubject = isAffiliate
     ? String((row && row.title) || 'Your affiliate programme') +
       ' — claim your affiliate programme listing'
     : isFranchise
       ? 'Franchise Listing Invitation'
-      : 'Business Opportunity Listing Invitation';
+      : isDistributorship
+        ? 'Distributorship Listing Invitation'
+        : 'Business Opportunity Listing Invitation';
 
   try {
     await sendTemplatedEmail({

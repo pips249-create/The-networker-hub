@@ -440,7 +440,7 @@
       title: 'How to use the organiser sales kit',
       steps: [
         'From group cleanup, click Organiser sales kit on a row — use the CRM dropdown to log a call or email under your login.',
-        'Tap Called, Attempted call, or Emailed to log outreach as yourself — you cannot log on behalf of Catherine, Rosie, or Jamie.',
+        'Tap Called, Attempted call, Emailed, Meeting, or LinkedIn to log outreach as yourself — you cannot log on behalf of Catherine, Rosie, or Jamie.',
         'Switch to Pitch deck for cheat sheets, sales decks, Loom script, and follow-up email copy.',
         'Pin one agreed demo organiser on the pitch deck tab — everyone impersonates that group for live walkthroughs.',
         'Check the CRM log before messaging so you do not double-contact the same group.',
@@ -979,7 +979,7 @@
     });
   }
 
-  var SALES_KIT_TOUCH_NOTES = ['Called', 'Attempted call', 'Emailed'];
+  var SALES_KIT_TOUCH_NOTES = ['Called', 'Attempted call', 'Emailed', 'Meeting', 'LinkedIn'];
   var SALES_KIT_OUTREACH_CACHE_MS = 120000;
   var salesKitOutreachCache = { demos: [], loadedAt: 0, loading: null };
   var SALES_KIT_EMAIL_TO_SHOWN_BY = {
@@ -23613,13 +23613,30 @@
         ? ' hidden'
         : '') +
       '>' +
+      (String(opp.type || '') === 'distributorship'
+        ? '<p class="text-xs text-slate-500 mb-2">Distributorship — startup cost / stock and territory rights someone can take on (not selling an existing company).</p>'
+        : '') +
       '<div class="grid sm:grid-cols-2 gap-3">' +
-      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Investment required</label>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">' +
+      (String(opp.type || '') === 'distributorship' ? 'Startup cost / stock deposit' : 'Investment required') +
+      '</label>' +
       '<input type="text" name="investment" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
       attrEsc(opp.investment || '') +
-      '" placeholder="e.g. £0 or £9,500"></div>' +
-      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">What’s included in this investment? <span class="font-normal">(optional)</span></label>' +
-      '<textarea name="investment_includes" rows="2" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Training, starter kit, marketing materials…">' +
+      '" placeholder="' +
+      (String(opp.type || '') === 'distributorship'
+        ? 'e.g. £2,500 opening stock + VAT'
+        : 'e.g. £0 or £9,500') +
+      '"></div>' +
+      '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">' +
+      (String(opp.type || '') === 'distributorship'
+        ? 'What’s included in this startup cost?'
+        : 'What’s included in this investment?') +
+      ' <span class="font-normal">(optional)</span></label>' +
+      '<textarea name="investment_includes" rows="2" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="' +
+      (String(opp.type || '') === 'distributorship'
+        ? 'Opening stock, samples, POS, training, territory rights…'
+        : 'Training, starter kit, marketing materials…') +
+      '">' +
       esc(opp.investment_includes || '') +
       '</textarea></div></div></div>' +
       '<div class="sm:col-span-2 opp-admin-affiliate-fields"' +
@@ -23674,9 +23691,46 @@
   function syncOpportunityAdminAffiliateFields(form) {
     if (!form) return;
     var typeField = form.querySelector('[name="type"]');
-    var affiliate = typeField && String(typeField.value || '') === 'affiliate';
+    var type = typeField ? String(typeField.value || '') : '';
+    var affiliate = type === 'affiliate';
+    var distributorship = type === 'distributorship';
     form.querySelectorAll('.opp-admin-capital-fields').forEach(function (el) {
       el.hidden = !!affiliate;
+      var hint = el.querySelector('.opp-admin-dist-hint');
+      if (!hint) {
+        hint = document.createElement('p');
+        hint.className = 'opp-admin-dist-hint text-xs text-slate-500 mb-2';
+        hint.textContent =
+          'Distributorship — startup cost / stock and territory rights someone can take on (not selling an existing company).';
+        el.insertBefore(hint, el.firstChild);
+      }
+      hint.hidden = !distributorship;
+      var investInput = el.querySelector('[name="investment"]');
+      var includesInput = el.querySelector('[name="investment_includes"]');
+      var investWrap = investInput && investInput.closest('div');
+      var includesWrap = includesInput && includesInput.closest('div');
+      var investLabel = investWrap && investWrap.querySelector('label');
+      var includesLabel = includesWrap && includesWrap.querySelector('label');
+      if (investLabel) {
+        investLabel.textContent = distributorship
+          ? 'Startup cost / stock deposit'
+          : 'Investment required';
+      }
+      if (includesLabel) {
+        includesLabel.innerHTML = distributorship
+          ? 'What’s included in this startup cost? <span class="font-normal">(optional)</span>'
+          : 'What’s included in this investment? <span class="font-normal">(optional)</span>';
+      }
+      if (investInput) {
+        investInput.placeholder = distributorship
+          ? 'e.g. £2,500 opening stock + VAT'
+          : 'e.g. £0 or £9,500';
+      }
+      if (includesInput) {
+        includesInput.placeholder = distributorship
+          ? 'Opening stock, samples, POS, training, territory rights…'
+          : 'Training, starter kit, marketing materials…';
+      }
     });
     form.querySelectorAll('.opp-admin-affiliate-fields').forEach(function (el) {
       el.hidden = !affiliate;
@@ -28694,7 +28748,7 @@
       impersonate: 'Impersonated',
       event_create: 'Listed event',
     };
-    var touchNotes = ['Called', 'Attempted call', 'Emailed'];
+    var touchNotes = ['Called', 'Attempted call', 'Emailed', 'Meeting', 'LinkedIn'];
 
     function demoMatchesFocus(d, focus) {
       if (!focus) return true;

@@ -62,6 +62,7 @@ const ORGANISER_EMAIL_SLUGS = new Set([
   'opportunity_claim_invite',
   'affiliate_claim_invite',
   'franchise_claim_invite',
+  'distributorship_claim_invite',
   'organiser_claim_confirmed',
   'organiser_launch_invite',
   'organiser_team_invite',
@@ -362,7 +363,7 @@ async function getEmailSponsorVars(slug) {
 
   try {
     // Email 2 / claim campaigns always use My Medical Cover (not organisers-directory sponsor).
-    if (slug === 'organiser_launch_invite' || slug === 'organiser_claim_invite' || slug === 'opportunity_claim_invite' || slug === 'affiliate_claim_invite' || slug === 'franchise_claim_invite') {
+    if (slug === 'organiser_launch_invite' || slug === 'organiser_claim_invite' || slug === 'opportunity_claim_invite' || slug === 'affiliate_claim_invite' || slug === 'franchise_claim_invite' || slug === 'distributorship_claim_invite') {
       const { buildEmail2SponsorVars } = require('./email2-sponsor');
       return await buildEmail2SponsorVars({ wrapRow: true });
     }

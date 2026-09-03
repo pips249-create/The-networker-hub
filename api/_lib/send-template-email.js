@@ -130,6 +130,7 @@ const TRANSACTIONAL_EMAIL_SLUGS = new Set([
   'opportunity_claim_invite',
   'affiliate_claim_invite',
   'franchise_claim_invite',
+  'distributorship_claim_invite',
   'organiser_claim_confirmed',
   'organiser_launch_invite',
   'organiser_call_followup',
@@ -375,7 +376,7 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
 
   merged.logo_url = logoEmailHeaderUrl(siteUrl);
   merged.logo_footer_url = logoFooterUrl(siteUrl);
-  if (slug === 'franchise_claim_invite' || slug === 'opportunity_claim_invite') {
+  if (slug === 'franchise_claim_invite' || slug === 'opportunity_claim_invite' || slug === 'distributorship_claim_invite') {
     merged.logo_footer_light_url = franchiseEmailFooterLogoDataUri;
   }
   merged.hubert_icon_url = hubertIconUrl(siteUrl);
@@ -711,6 +712,7 @@ function shouldSkipEmailAllowlist(slug) {
     slug === 'opportunity_claim_invite' ||
     slug === 'affiliate_claim_invite' ||
     slug === 'franchise_claim_invite' ||
+    slug === 'distributorship_claim_invite' ||
     slug === 'organiser_claim_confirmed'
   ) {
     return true;
@@ -734,6 +736,7 @@ function shouldAttachListUnsubscribe(slug) {
     s === 'opportunity_claim_invite' ||
     s === 'affiliate_claim_invite' ||
     s === 'franchise_claim_invite' ||
+    s === 'distributorship_claim_invite' ||
     s === 'organiser_monthly_group_update' ||
     s === 'member_roster_new_event' ||
     s === 'saved_organiser_new_listing'
