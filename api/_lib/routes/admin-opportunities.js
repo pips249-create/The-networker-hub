@@ -458,7 +458,7 @@ async function listOpportunitiesForAdmin(query) {
   const approvalStatus = normalizeApprovalStatus(query.approval_status || query.approval);
   const type = String(query.type || '').trim();
   const search = String(query.q || '').trim();
-  const sort = String(query.sort || 'recent').trim().toLowerCase();
+  const sort = String(query.sort || 'created').trim().toLowerCase();
   const featuredOnly = query.featured === '1' || query.featured === 'true';
   const noImage = query.no_image === '1' || query.no_image === 'true';
   const brandDuplicatesOnly =
@@ -494,19 +494,24 @@ async function listOpportunitiesForAdmin(query) {
     };
   }
 
-  dbQuery = dbQuery.order('featured', { ascending: false });
-
+  // Honour the admin sort exactly — do not pin Featured rows to the top.
+  // (Featured-first made "Recently added" look broken and buried new listings.)
   if (sort === 'title') {
-    dbQuery = dbQuery.order('title', { ascending: true });
+    dbQuery = dbQuery.order('title', { ascending: true }).order('created_at', { ascending: false });
   } else if (sort === 'host') {
-    dbQuery = dbQuery.order('host', { ascending: true });
+    dbQuery = dbQuery.order('host', { ascending: true }).order('created_at', { ascending: false });
   } else if (sort === 'published') {
-    dbQuery = dbQuery.order('published_at', { ascending: false, nullsFirst: false });
+    dbQuery = dbQuery
+      .order('published_at', { ascending: false, nullsFirst: false })
+      .order('created_at', { ascending: false });
   } else if (sort === 'created' || sort === 'added') {
     dbQuery = dbQuery.order('created_at', { ascending: false });
-  } else {
-    // recent | communicated (communicated re-sorted in memory below)
+  } else if (sort === 'communicated') {
+    // Re-sorted in memory below; updated_at is a reasonable DB pre-order.
     dbQuery = dbQuery.order('updated_at', { ascending: false });
+  } else {
+    // recent (default)
+    dbQuery = dbQuery.order('updated_at', { ascending: false }).order('created_at', { ascending: false });
   }
 
   if (status) dbQuery = dbQuery.eq('status', status);
@@ -1052,6 +1057,16 @@ function buildAdminCreateClaimMessage(opts) {
       createdSuffix
     );
   }
+  if (options.emailError) {
+    return (
+      'New listing created for ' +
+      (email || 'the owner') +
+      ', but the claim invite email failed to send (' +
+      String(options.emailError) +
+      '). Open the row and use Assign & send, or Copy claim link.' +
+      createdSuffix
+    );
+  }
   if (email && opportunity.ownership_claim_status === 'pending') {
     return 'New listing created for ' + email + '.' + createdSuffix;
   }
@@ -1322,6 +1337,7 @@ module.exports = async function handler(req, res) {
         });
         let emailSent = false;
         let rateLimited = false;
+        let emailError = null;
         let claimUrl = null;
         let existingForOwner = [];
         let similarByName = [];
@@ -1331,12 +1347,21 @@ module.exports = async function handler(req, res) {
           opportunity.owner_email &&
           !isHubSeedOwnerEmail(opportunity.owner_email)
         ) {
-          const invite = await sendOpportunityClaimInviteEmail(opportunity, {
-            source: 'admin_create',
-          });
-          emailSent = Boolean(invite.emailSent);
-          rateLimited = Boolean(invite.rateLimited);
-          claimUrl = invite.claimUrl || null;
+          try {
+            const invite = await sendOpportunityClaimInviteEmail(opportunity, {
+              source: 'admin_create',
+            });
+            emailSent = Boolean(invite.emailSent);
+            rateLimited = Boolean(invite.rateLimited);
+            claimUrl = invite.claimUrl || null;
+          } catch (inviteErr) {
+            emailError =
+              (inviteErr && inviteErr.message) || 'Claim invite email could not be sent';
+            console.error(
+              '[admin-opportunities] claim invite after create failed',
+              inviteErr && inviteErr.message ? inviteErr.message : inviteErr
+            );
+          }
         }
         if (opportunity) {
           const dupes = await findLikelyDuplicateListings({
@@ -1355,6 +1380,7 @@ module.exports = async function handler(req, res) {
           opportunity,
           emailSent,
           rateLimited,
+          emailError,
           existingForOwner,
           similarByName,
         });
@@ -1363,6 +1389,7 @@ module.exports = async function handler(req, res) {
           opportunity,
           emailSent,
           rateLimited,
+          emailError,
           claimUrl,
           existingOwnerListings: existingForOwner,
           similarNameListings: similarByName,
@@ -1718,13 +1745,23 @@ module.exports = async function handler(req, res) {
         let claimUrl = null;
         let emailSent = false;
         let rateLimited = false;
+        let emailError = null;
         if (!isHubSeedOwnerEmail(ownerEmail) && patch.ownership_claim_status === 'pending') {
-          const invite = await sendOpportunityClaimInviteEmail(data, {
-            source: 'admin_assign_owner',
-          });
-          claimUrl = invite.claimUrl || null;
-          emailSent = Boolean(invite.emailSent);
-          rateLimited = Boolean(invite.rateLimited);
+          try {
+            const invite = await sendOpportunityClaimInviteEmail(data, {
+              source: 'admin_assign_owner',
+            });
+            claimUrl = invite.claimUrl || null;
+            emailSent = Boolean(invite.emailSent);
+            rateLimited = Boolean(invite.rateLimited);
+          } catch (inviteErr) {
+            emailError =
+              (inviteErr && inviteErr.message) || 'Claim invite email could not be sent';
+            console.error(
+              '[admin-opportunities] claim invite after assign_owner failed',
+              inviteErr && inviteErr.message ? inviteErr.message : inviteErr
+            );
+          }
         }
 
         return json(res, 200, {
@@ -1733,13 +1770,18 @@ module.exports = async function handler(req, res) {
           claimUrl,
           emailSent,
           rateLimited,
+          emailError,
           message: emailSent
             ? 'Owner assigned and claim invite emailed to ' + ownerEmail + '.'
             : rateLimited
               ? 'Owner assigned. Claim invite was not emailed again — ' +
                 ownerEmail +
                 ' already received one in the last 24 hours (this is not a duplicate-listing block).'
-              : 'Owner assigned.',
+              : emailError
+                ? 'Owner assigned, but the claim invite email failed (' +
+                  emailError +
+                  '). Use Copy claim link or try Assign & send again.'
+                : 'Owner assigned.',
         });
       } catch (e) {
         return json(res, 500, { ok: false, error: 'assign_owner_failed', message: e.message });
