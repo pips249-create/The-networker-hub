@@ -237,6 +237,7 @@
     }
     if (hubMembershipIsPaid()) return '';
     if (hubMembershipTypeIsFree()) return ''; // free join is a valid after-visit path
+    if (!hubMembershipIsPaid()) return ''; // blank/£0 price also means free — no blocker
     if (memberRosterLoadState === 'ready' && Number(memberRosterActiveCount) > 0) return '';
     return 'Complimentary visits are a limited trial for networking groups — set a membership fee (£1+) or choose "Free to join", or switch to Ticket for this event and add a Free ticket if everyone can attend free';
   }
