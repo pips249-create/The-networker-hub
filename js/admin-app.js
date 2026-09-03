@@ -574,7 +574,7 @@
     paid: false,
     unclaimed: false,
     brandDuplicates: false,
-    sort: 'recent',
+    sort: 'created',
     page: 0,
     q: '',
     total: 0,
@@ -23868,7 +23868,7 @@
     el = document.getElementById('opportunity-cleanup-search');
     if (el) el.value = opportunityCleanupState.q || '';
     el = document.getElementById('opportunity-cleanup-sort');
-    if (el) el.value = opportunityCleanupState.sort || 'recent';
+    if (el) el.value = opportunityCleanupState.sort || 'created';
     el = document.getElementById('opportunity-cleanup-status-filter');
     if (el) el.value = opportunityCleanupState.status || '';
     el = document.getElementById('opportunity-cleanup-approval-filter');
@@ -24030,7 +24030,7 @@
     if (opportunityCleanupState.unclaimed) params.set('unclaimed', '1');
     if (opportunityCleanupState.brandDuplicates) params.set('brand_duplicates', '1');
     if (opportunityCleanupState.q) params.set('q', opportunityCleanupState.q);
-    if (opportunityCleanupState.sort && opportunityCleanupState.sort !== 'recent') {
+    if (opportunityCleanupState.sort && opportunityCleanupState.sort !== 'created') {
       params.set('sort', opportunityCleanupState.sort);
     }
     if (opportunityCleanupState.page > 0) params.set('page', String(opportunityCleanupState.page + 1));
@@ -24085,7 +24085,7 @@
     opportunityCleanupState.paid = false;
     opportunityCleanupState.unclaimed = false;
     opportunityCleanupState.brandDuplicates = false;
-    opportunityCleanupState.sort = 'recent';
+    opportunityCleanupState.sort = 'created';
     opportunityCleanupState.q = '';
     opportunityCleanupState.page = 0;
     if (!query) return;
@@ -24099,7 +24099,7 @@
     if (query.has('type')) opportunityCleanupState.type = String(query.get('type') || '').trim();
     if (query.has('q')) opportunityCleanupState.q = String(query.get('q') || '').trim();
     if (query.has('sort')) {
-      opportunityCleanupState.sort = String(query.get('sort') || 'recent').trim() || 'recent';
+      opportunityCleanupState.sort = String(query.get('sort') || 'created').trim() || 'created';
     }
     if (query.has('featured')) {
       opportunityCleanupState.featured =
@@ -26183,12 +26183,12 @@
       attrEsc(opportunityCleanupState.q) +
       '">' +
       '<select id="opportunity-cleanup-sort" class="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white w-full sm:w-56">' +
-      '<option value="recent"' +
-      (opportunityCleanupState.sort === 'recent' ? ' selected' : '') +
-      '>Recently updated</option>' +
       '<option value="created"' +
       (opportunityCleanupState.sort === 'created' ? ' selected' : '') +
       '>Recently added</option>' +
+      '<option value="recent"' +
+      (opportunityCleanupState.sort === 'recent' ? ' selected' : '') +
+      '>Recently updated</option>' +
       '<option value="communicated"' +
       (opportunityCleanupState.sort === 'communicated' ? ' selected' : '') +
       '>Recently communicated</option>' +
@@ -26444,20 +26444,39 @@
           if (msg) {
             var existing = data.existingOwnerListings || [];
             var similar = data.similarNameListings || [];
-            var warnDuplicate = existing.length > 0 || similar.length > 0 || data.rateLimited;
+            var warnDuplicate =
+              existing.length > 0 || similar.length > 0 || data.rateLimited || data.emailError;
             msg.textContent =
               data.message ||
               (data.emailSent
                 ? 'New listing created — claim invite emailed.'
                 : data.rateLimited
                   ? 'New listing created. Claim invite was not emailed again — that address already received one in the last 24 hours (not a duplicate-listing block).'
-                  : payloadOwnerClaimMsg(data.opportunity) || 'Listing created.');
+                  : data.emailError
+                    ? 'New listing created, but the claim invite email failed. Open the row to resend or copy the claim link.'
+                    : payloadOwnerClaimMsg(data.opportunity) || 'Listing created.');
             msg.className =
               'opportunity-create-msg text-xs font-semibold ' +
               (warnDuplicate ? 'text-amber-800' : 'text-emerald-700');
           }
           resetOpportunityCreateForm(form);
           if (btn) btn.disabled = false;
+          // Jump to newest-first so the listing is on page 1 (filters that hide it are cleared).
+          opportunityCleanupState.sort = 'created';
+          opportunityCleanupState.page = 0;
+          opportunityCleanupState.approval = '';
+          opportunityCleanupState.status = '';
+          opportunityCleanupState.type = '';
+          opportunityCleanupState.featured = false;
+          opportunityCleanupState.noImage = false;
+          opportunityCleanupState.awaitingPayment = false;
+          opportunityCleanupState.paymentLapsed = false;
+          opportunityCleanupState.paid = false;
+          opportunityCleanupState.unclaimed = false;
+          opportunityCleanupState.brandDuplicates = false;
+          opportunityCleanupState.q = '';
+          syncOpportunityCleanupFilterUi();
+          syncOpportunityListHashQuietly();
           return refreshOpportunityCleanupData();
         })
         .then(function () {
@@ -26608,15 +26627,17 @@
         if (!data.ok) throw new Error(data.message || data.error || 'Assign owner failed');
         if (msg) {
           msg.textContent =
-            (data.message ||
-              (data.emailSent
-                ? 'Owner assigned — claim invite emailed.'
-                : data.rateLimited
-                  ? 'Owner assigned. Claim invite was not emailed again — that address already received one in the last 24 hours (not a duplicate-listing block).'
-                  : 'Owner assigned — claim invite will appear when they sign in.'));
+            data.message ||
+            (data.emailSent
+              ? 'Owner assigned — claim invite emailed.'
+              : data.rateLimited
+                ? 'Owner assigned. Claim invite was not emailed again — that address already received one in the last 24 hours (not a duplicate-listing block).'
+                : data.emailError
+                  ? 'Owner assigned, but the claim invite email failed. Use Copy claim link or try again.'
+                  : 'Owner assigned — claim invite will appear when they sign in.');
           msg.className =
             'opportunity-cleanup-msg text-xs font-semibold ' +
-            (data.rateLimited ? 'text-amber-800' : 'text-emerald-700');
+            (data.rateLimited || data.emailError ? 'text-amber-800' : 'text-emerald-700');
         }
         return refreshOpportunityCleanupPage().then(function () {
           if (isOpportunityReviewPage()) return refreshOpportunityReviewPage();
@@ -26848,7 +26869,7 @@
         opportunityCleanupState.unclaimed = false;
         opportunityCleanupState.brandDuplicates = false;
         opportunityCleanupState.q = '';
-        opportunityCleanupState.sort = 'recent';
+        opportunityCleanupState.sort = 'created';
       } else if (key === 'show-pending') {
         opportunityCleanupState.approval = 'Pending Review';
         opportunityCleanupState.status = '';
@@ -27046,7 +27067,7 @@
         refreshOpportunityCleanupData();
       }
       if (e.target.id === 'opportunity-cleanup-sort') {
-        opportunityCleanupState.sort = e.target.value || 'recent';
+        opportunityCleanupState.sort = e.target.value || 'created';
         opportunityCleanupState.page = 0;
         syncOpportunityListHashQuietly();
         refreshOpportunityCleanupData();
