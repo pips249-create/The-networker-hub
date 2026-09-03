@@ -422,15 +422,26 @@
               <p class="ee-hint ee-hub-membership-lead" id="ee-hub-membership-lead">
                 What people pay to belong to your group. Separate from the member ticket for this meeting.
               </p>
-              <div class="ee-hub-membership-amounts">
+              <fieldset class="ee-field" aria-label="Membership pricing type">
+                <legend class="ee-label-block">Membership cost</legend>
+                <label class="ee-check">
+                  <input type="radio" name="ee-hub-membership-type" id="ee-hub-membership-type-paid" value="paid" checked />
+                  <span>Paid membership (£1+/month)</span>
+                </label>
+                <label class="ee-check">
+                  <input type="radio" name="ee-hub-membership-type" id="ee-hub-membership-type-free" value="free" />
+                  <span>Free to join — members tracked via your member list</span>
+                </label>
+              </fieldset>
+              <div class="ee-hub-membership-amounts" id="ee-hub-membership-amounts">
                 <div class="ee-field">
                   <label for="ee-hub-membership-monthly">Monthly (&pound;)</label>
                   <input
                     type="number"
                     id="ee-hub-membership-monthly"
-                    min="0"
+                    min="1"
                     step="0.01"
-                    placeholder="Blank = free, or from 1"
+                    placeholder="From £1"
                     inputmode="decimal"
                   />
                 </div>
@@ -439,17 +450,15 @@
                   <input
                     type="number"
                     id="ee-hub-membership-annual"
-                    min="0"
+                    min="1"
                     step="0.01"
                     placeholder="Optional, from 1"
                     inputmode="decimal"
                   />
                 </div>
               </div>
-              <p class="ee-hint" id="ee-hub-membership-free-hint">
-                Leave blank (or 0) if joining is free via your member list. platform-billed memberships start from £1.
-              </p>
-              <fieldset class="ee-field" aria-label="VAT on membership">
+              <p class="ee-hint" id="ee-hub-membership-free-hint"></p>
+              <fieldset class="ee-field" id="ee-hub-membership-vat-fieldset" aria-label="VAT on membership">
                 <legend class="ee-label-block">VAT on membership</legend>
                 <label class="ee-check">
                   <input type="radio" name="ee-hub-membership-vat" value="included" checked />

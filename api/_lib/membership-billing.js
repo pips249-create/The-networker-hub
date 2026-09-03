@@ -127,6 +127,7 @@ function planRowToClient(row) {
     active && annualPence != null
       ? planIntervalClient(annualPence, vatTreatment, 'year', 'Annually')
       : null;
+  const freeJoinFlag = Boolean(row.free_join);
   return {
     id: row.id,
     organiserId: row.organiser_id,
@@ -136,7 +137,8 @@ function planRowToClient(row) {
     annualAmountPence: annualPence,
     monthly,
     annual,
-    offered: Boolean(monthly || annual),
+    freeJoin: freeJoinFlag,
+    offered: Boolean(monthly || annual || (active && freeJoinFlag)),
     paid: Boolean(
       isPaidMembershipAmountPence(monthlyPence) || isPaidMembershipAmountPence(annualPence)
     ),
@@ -222,6 +224,13 @@ async function upsertMembershipPlan(organiserId, payload) {
     annualPence = penceFromPounds(pounds);
   }
 
+  const freeJoin = Boolean(
+    payload.freeJoin === true ||
+    payload.free_join === true ||
+    (hasMonthlyKey && monthlyRaw === 0) ||
+    (hasAnnualKey && annualRaw === 0)
+  );
+
   const active =
     payload.active === false
       ? false
@@ -238,7 +247,7 @@ async function upsertMembershipPlan(organiserId, payload) {
     ? normalizeVatTreatment(payload.vatTreatment ?? payload.vat_treatment)
     : normalizeVatTreatment(existing?.vat_treatment);
 
-  if (active && monthlyPence == null && annualPence == null) {
+  if (active && !freeJoin && monthlyPence == null && annualPence == null) {
     const err = new Error('missing_membership_price');
     err.status = 400;
     throw err;
@@ -256,7 +265,7 @@ async function upsertMembershipPlan(organiserId, payload) {
         : null;
   }
 
-  if (!active && monthlyPence == null && annualPence == null) {
+  if (!active && !freeJoin && monthlyPence == null && annualPence == null) {
     // Nothing to store — treat as delete of offer.
     if (existing?.id) {
       const { error: delError } = await sb
@@ -272,10 +281,11 @@ async function upsertMembershipPlan(organiserId, payload) {
   const now = new Date().toISOString();
   const row = {
     organiser_id: orgId,
-    monthly_amount_pence: monthlyPence,
-    annual_amount_pence: annualPence,
+    monthly_amount_pence: freeJoin ? null : monthlyPence,
+    annual_amount_pence: freeJoin ? null : annualPence,
+    free_join: freeJoin,
     vat_treatment: vatTreatment,
-    active: active && (monthlyPence != null || annualPence != null),
+    active: active && (freeJoin || monthlyPence != null || annualPence != null),
     updated_at: now,
   };
 

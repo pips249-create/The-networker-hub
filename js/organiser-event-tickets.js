@@ -236,8 +236,9 @@
       return '';
     }
     if (hubMembershipIsPaid()) return '';
+    if (hubMembershipTypeIsFree()) return ''; // free join is a valid after-visit path
     if (memberRosterLoadState === 'ready' && Number(memberRosterActiveCount) > 0) return '';
-    return 'Complimentary visits are a limited trial for networking groups — set a membership fee (£1+), or switch to Ticket for this event and add a Free ticket if everyone can attend free';
+    return 'Complimentary visits are a limited trial for networking groups — set a membership fee (£1+) or choose "Free to join", or switch to Ticket for this event and add a Free ticket if everyone can attend free';
   }
 
   function getPublishBlockers(tiers, options) {
@@ -3155,6 +3156,25 @@
     return 'included';
   }
 
+  function hubMembershipTypeIsFree() {
+    const el = document.getElementById('ee-hub-membership-type-free');
+    return Boolean(el && el.checked);
+  }
+
+  function syncHubMembershipTypeFields() {
+    const isFree = hubMembershipTypeIsFree();
+    const amountsEl = document.getElementById('ee-hub-membership-amounts');
+    const vatFieldset = document.getElementById('ee-hub-membership-vat-fieldset');
+    if (amountsEl) amountsEl.hidden = isFree;
+    if (vatFieldset) vatFieldset.hidden = isFree;
+    const freeHint = document.getElementById('ee-hub-membership-free-hint');
+    if (freeHint) {
+      freeHint.textContent = isFree
+        ? 'Members join via your member list — no charge through the platform.'
+        : 'Platform-billed memberships start from £1/month.';
+    }
+  }
+
   function readHubMembershipAmounts() {
     const monthlyRaw = String(document.getElementById('ee-hub-membership-monthly')?.value || '').trim();
     const annualRaw = String(document.getElementById('ee-hub-membership-annual')?.value || '').trim();
@@ -3164,6 +3184,7 @@
   }
 
   function hubMembershipIsPaid() {
+    if (hubMembershipTypeIsFree()) return false;
     const amounts = readHubMembershipAmounts();
     return (
       (amounts.monthly != null && Number.isFinite(amounts.monthly) && amounts.monthly >= 1) ||
@@ -3173,10 +3194,14 @@
 
   function collectHubMembershipPayload() {
     if (!hubMembershipEnabled()) return null;
+    if (hubMembershipTypeIsFree()) {
+      return { active: true, freeJoin: true, clearMonthly: true, clearAnnual: true };
+    }
     if (!hubMembershipIsPaid()) return null;
     const amounts = readHubMembershipAmounts();
     return {
       active: true,
+      freeJoin: false,
       vatTreatment: readHubMembershipVat(),
       monthlyAmountPounds: amounts.monthly != null && amounts.monthly >= 1 ? amounts.monthly : null,
       annualAmountPounds: amounts.annual != null && amounts.annual >= 1 ? amounts.annual : null,
@@ -3186,12 +3211,13 @@
   }
 
   function hubMembershipHasPrice() {
+    if (hubMembershipTypeIsFree()) return true; // free join is a valid configured state
     const amounts = readHubMembershipAmounts();
     if (amounts.monthlyRaw !== '' && !Number.isFinite(amounts.monthly)) return false;
     if (amounts.annualRaw !== '' && !Number.isFinite(amounts.annual)) return false;
     if (amounts.monthly != null && amounts.monthly < 0) return false;
     if (amounts.annual != null && amounts.annual < 0) return false;
-    // platform billing stores £1+ only. Blank or 0 = free join via member list (no plan row).
+    // platform billing stores £1+ only.
     if (amounts.monthly != null && amounts.monthly > 0 && amounts.monthly < 1) return false;
     if (amounts.annual != null && amounts.annual > 0 && amounts.annual < 1) return false;
     return true;
@@ -3236,6 +3262,16 @@
     }
     if (plan && plan.offered) {
       setHubMembershipEnabled(true);
+      const freeRadio = document.getElementById('ee-hub-membership-type-free');
+      const paidRadio = document.getElementById('ee-hub-membership-type-paid');
+      if (plan.freeJoin) {
+        if (freeRadio) freeRadio.checked = true;
+        if (paidRadio) paidRadio.checked = false;
+      } else {
+        if (paidRadio) paidRadio.checked = true;
+        if (freeRadio) freeRadio.checked = false;
+      }
+      syncHubMembershipTypeFields();
       setHubMembershipStatus(
         plan.paid
           ? 'Membership fees loaded from your Memberships settings.'
@@ -3265,13 +3301,15 @@
           'Membership prices must be blank/£0 (free via member list) or at least £1 for platform billing.',
       };
     }
-    // Free join — no organiser_membership_plans row (database only allows £1+).
+    // Free join — save plan row with freeJoin=true.
     if (!hubMembershipIsPaid()) {
-      setHubMembershipStatus(
-        'Joining stays free via your member list — no membership charge to save.',
-        'ok'
-      );
-      return { ok: true };
+      if (!hubMembershipTypeIsFree()) {
+        setHubMembershipStatus(
+          'Enter a monthly fee (£1+) or select "Free to join".',
+          'warn'
+        );
+        return { ok: false, message: 'Enter a monthly fee (£1+) or select "Free to join".' };
+      }
     }
     const payload = collectHubMembershipPayload();
     if (!payload) return { ok: true };
@@ -3313,6 +3351,16 @@
         updatePublishButton();
       });
     }
+    document.querySelectorAll('input[name="ee-hub-membership-type"]').forEach(function (radio) {
+      if (radio.dataset.boundHubMembershipType) return;
+      radio.dataset.boundHubMembershipType = '1';
+      radio.addEventListener('change', function () {
+        syncHubMembershipTypeFields();
+        updatePublishButton();
+      });
+    });
+    syncHubMembershipTypeFields();
+
     ['ee-hub-membership-monthly', 'ee-hub-membership-annual'].forEach(function (id) {
       const el = document.getElementById(id);
       if (!el || el.dataset.boundHubMembershipInput) return;
