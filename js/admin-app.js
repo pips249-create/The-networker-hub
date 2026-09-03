@@ -14498,7 +14498,14 @@
       'event_connections_list',
       'event_details_updated',
     ];
-    var ORGANISER_EMAIL_SLUGS = ['organiser_new_registration', 'organiser_claim_invite', 'organiser_launch_invite', 'organiser_rebrand_announcement'];
+    var ORGANISER_EMAIL_SLUGS = [
+      'organiser_new_registration',
+      'organiser_claim_invite',
+      'organiser_launch_invite',
+      'organiser_rebrand_announcement',
+      'event_intake_received',
+      'event_intake_listed',
+    ];
 
     function emailTemplateCategory(t) {
       var slug = String((t && t.slug) || '');
@@ -28033,6 +28040,7 @@
               max_attendees: maxPlaces,
               tickets: tickets,
               photo_url: formFieldVal(form, 'photo_url'),
+              intake_id: intakeId || undefined,
             },
             eventDetailsPayloadFromForm(form)
           )
@@ -28040,16 +28048,24 @@
       })
       .then(function (data) {
         if (!data || !data.ok) throw new Error((data && data.message) || data.error || 'Create failed');
-        if (!intakeId) return data;
+        // Server marks intake done + emails submitter when intake_id was sent.
+        if (!intakeId || (data.intakeNotify && data.intakeNotify.statusUpdated)) return data;
         return adminPatch('/api/admin/event-intake', { id: intakeId, status: 'done' }).then(function () {
           return data;
         });
       })
       .then(function (data) {
         var count = Array.isArray(data.events) ? data.events.length : 1;
+        var emailed =
+          data.intakeNotify && data.intakeNotify.emailSent
+            ? ' Review email sent to the requester.'
+            : data.intakeNotify
+              ? ' Listing created — review email could not be sent (check logs).'
+              : '';
         setMsg(
           (count > 1 ? count + ' dates listed. ' : 'Listing created. ') +
-            'They still need to review tickets, add Stripe if paid, VAT, refunds, and terms.',
+            'They still need to review tickets, add Stripe if paid, VAT, refunds, and terms.' +
+            emailed,
           true
         );
         if (btn) btn.disabled = false;

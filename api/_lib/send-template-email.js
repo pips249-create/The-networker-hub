@@ -163,6 +163,7 @@ const TRANSACTIONAL_EMAIL_SLUGS = new Set([
   'password_reset',
   'organiser_email_verify',
   'event_intake_received',
+  'event_intake_listed',
   'post_event_review_request',
   'post_event_review_reminder',
   'event_saved_search_match',
@@ -705,6 +706,7 @@ function shouldSkipEmailAllowlist(slug) {
     slug === 'password_reset' ||
     slug === 'organiser_email_verify' ||
     slug === 'event_intake_received' ||
+    slug === 'event_intake_listed' ||
     slug === 'account_welcome' ||
     slug === 'organiser_launch_invite' ||
     slug === 'organiser_call_followup' ||

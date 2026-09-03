@@ -3,7 +3,12 @@
  */
 const { getSupabaseAdmin } = require('./supabase');
 const { sendViaResend, sendTemplatedEmail } = require('./send-template-email');
-const { supportEmail, emailSiteBase } = require('./hub-email-urls');
+const {
+  supportEmail,
+  emailSiteBase,
+  eventPublicUrl,
+  organiserDashboardUrl,
+} = require('./hub-email-urls');
 
 function staffInbox() {
   const configured = String(process.env.EVENT_INTAKE_EMAIL || '').trim();
@@ -399,8 +404,126 @@ async function submitEventIntake(body) {
   };
 }
 
+function locationLineFromEvent(event) {
+  if (!event) return 'To be confirmed';
+  const format = String(event.eventFormat || event.meeting_type || '').toLowerCase();
+  if (format.includes('online')) return 'Online';
+  const precise = [event.venue, event.city, event.postcode]
+    .map(function (v) {
+      return String(v || '').trim();
+    })
+    .filter(Boolean);
+  if (precise.length) return precise.join(', ');
+  const label = String(event.location || '').trim();
+  return label || 'To be confirmed';
+}
+
+function formatEventWhen(event, fallbackDates) {
+  const fallback = String(fallbackDates || '').trim();
+  if (fallback) return fallback;
+  const raw = String((event && (event.date || event.starts_at)) || '').trim();
+  if (!raw) return 'Date to be confirmed';
+  const d = new Date(raw);
+  if (Number.isNaN(d.getTime())) return raw;
+  try {
+    return new Intl.DateTimeFormat('en-GB', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZone: 'Europe/London',
+    }).format(d);
+  } catch {
+    return raw;
+  }
+}
+
+/**
+ * After admin creates a listing from /add-your-event: email the submitter to review it,
+ * then mark the intake request done.
+ */
+async function notifyEventIntakeListed({ intakeId, event, eventsCount, session }) {
+  const id = String(intakeId || '').trim();
+  if (!id) return { ok: false, reason: 'missing_intake_id' };
+
+  const sb = getSupabaseAdmin();
+  let { data: submission, error } = await sb
+    .from('event_intake_submissions')
+    .select(
+      'id, contact_name, email, group_name, event_title, event_dates, format, venue, city, postcode, status'
+    )
+    .eq('id', id)
+    .maybeSingle();
+
+  if (error) {
+    if (/event_intake_submissions/i.test(error.message || '')) {
+      return { ok: false, reason: 'not_configured' };
+    }
+    throw new Error(error.message || 'Could not load intake submission');
+  }
+  if (!submission) return { ok: false, reason: 'not_found' };
+
+  const to = normalizeEmail(submission.email);
+  const site = emailSiteBase(process.env.SITE_URL);
+  const eventRow = event || {};
+  const eventId = String(eventRow.id || '').trim();
+  let locationLine = locationLineFromEvent(eventRow);
+  if (locationLine === 'To be confirmed') {
+    locationLine = locationLineFromInput({
+      format: submission.format,
+      venue: submission.venue,
+      city: submission.city,
+      postcode: submission.postcode,
+    });
+  }
+
+  let emailSent = false;
+  if (isValidEmail(to)) {
+    try {
+      await sendTemplatedEmail({
+        slug: 'event_intake_listed',
+        to,
+        variables: {
+          contact_name: String(submission.contact_name || '').trim() || 'there',
+          event_title:
+            String(eventRow.title || submission.event_title || '').trim() || 'your event',
+          group_name: String(submission.group_name || '').trim() || 'Your group',
+          event_dates: formatEventWhen(eventRow, submission.event_dates),
+          location_line: locationLine,
+          event_url: eventPublicUrl(eventRow, site),
+          dashboard_url: organiserDashboardUrl(site, eventId ? { eventId } : {}),
+          events_count: Math.max(1, Number(eventsCount) || 1),
+        },
+        replyTo: staffInbox(),
+        skipEmailCheck: true,
+      });
+      emailSent = true;
+    } catch (e) {
+      console.error('[event-intake-listed-email]', e.message || e);
+    }
+  }
+
+  const resolvedBy = String(
+    (session && (session.email || session.userEmail || session.sub)) || 'admin'
+  ).trim();
+  const patch = {
+    status: 'done',
+    resolved_at: new Date().toISOString(),
+    resolved_by: resolvedBy,
+  };
+  const { error: upErr } = await sb.from('event_intake_submissions').update(patch).eq('id', id);
+  if (upErr) {
+    console.warn('[event-intake-listed-status]', upErr.message || upErr);
+  }
+
+  return { ok: true, emailSent, statusUpdated: !upErr };
+}
+
 module.exports = {
   submitEventIntake,
+  notifyEventIntakeListed,
   normalizeIntakeInput,
   validateIntake,
   staffInbox,

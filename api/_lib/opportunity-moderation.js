@@ -127,11 +127,31 @@ function stripEarningsMeta(meta) {
   return normalizeMeta(meta).filter((m) => !isEarningsMetaKey(m.key));
 }
 
+function parseMoneyNumbers(raw) {
+  const text = String(raw || '');
+  if (!text.trim()) return [];
+  const matches = text.match(/\d[\d,]*(?:\.\d+)?\s*[kKmMbB]?/g) || [];
+  const nums = [];
+  for (let i = 0; i < matches.length; i++) {
+    const token = String(matches[i] || '').replace(/,/g, '').trim();
+    const m = token.match(/^(\d+(?:\.\d+)?)\s*([kKmMbB])?$/);
+    if (!m) continue;
+    let n = parseFloat(m[1], 10);
+    if (!Number.isFinite(n)) continue;
+    const suffix = String(m[2] || '').toLowerCase();
+    if (suffix === 'k') n *= 1000;
+    else if (suffix === 'm') n *= 1000000;
+    else if (suffix === 'b') n *= 1000000000;
+    nums.push(Math.round(n));
+  }
+  return nums;
+}
+
 function parseInvestmentAmount(meta) {
   const raw = metaValue(normalizeMeta(meta), /^investment$/i);
   if (!raw) return null;
-  const num = parseInt(String(raw).replace(/[^0-9]/g, ''), 10);
-  return Number.isNaN(num) ? null : num;
+  const nums = parseMoneyNumbers(raw);
+  return nums.length ? nums[0] : null;
 }
 
 const CAPITAL_OPPORTUNITY_TYPES = new Set([

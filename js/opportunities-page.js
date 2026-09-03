@@ -1180,10 +1180,10 @@
         return listingRecency(b) - listingRecency(a);
       }
       if (sortBy === 'invest-asc') {
-        return (a.investAmount || 0) - (b.investAmount || 0);
+        return sortInvestValue(a, 'asc') - sortInvestValue(b, 'asc');
       }
       if (sortBy === 'invest-desc') {
-        return (b.investAmount || 0) - (a.investAmount || 0);
+        return sortInvestValue(b, 'desc') - sortInvestValue(a, 'desc');
       }
       if (sortBy === 'alpha') {
         return a.title.localeCompare(b.title, 'en-GB');
@@ -1191,6 +1191,18 @@
       return 0;
     });
     return sorted;
+  }
+
+  /** Low→high uses starting investment; high→low uses the range upper bound when present. */
+  function sortInvestValue(item, direction) {
+    if (!item) return 0;
+    if (direction === 'desc') {
+      var max = item.investAmountMax;
+      if (max != null && !isNaN(max) && max > 0) return Number(max);
+    }
+    var min = item.investAmount;
+    if (min != null && !isNaN(min) && min > 0) return Number(min);
+    return 0;
   }
 
   function listingRecency(item) {

@@ -67,6 +67,7 @@ const ORGANISER_EMAIL_SLUGS = new Set([
   'organiser_launch_invite',
   'organiser_team_invite',
   'organiser_email_verify',
+  'event_intake_listed',
   'member_roster_payment_failed_organiser',
   'stripe_connect_nudge',
   'payout_requested',

@@ -382,6 +382,11 @@ const BRANDED_EMAIL_TEMPLATES = {
     marker: 'hub-email-layout-v3-purple',
     subject: 'We received your event details — The Networker UK',
   },
+  event_intake_listed: {
+    file: 'event-intake-listed.html',
+    marker: 'hub-email-layout-v3-purple',
+    subject: 'Your event is listed — please review it — The Networker UK',
+  },
 };
 
 const cache = new Map();

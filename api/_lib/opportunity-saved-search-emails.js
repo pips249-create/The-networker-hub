@@ -109,8 +109,19 @@ function criteriaLabel(criteria) {
 function parseInvest(meta) {
   const row = (meta || []).find((m) => /^investment$/i.test(m.key));
   if (!row) return null;
-  const num = parseInt(String(row.val || '').replace(/[^0-9]/g, ''), 10);
-  return Number.isNaN(num) ? null : num;
+  const text = String(row.val || '');
+  const matches = text.match(/\d[\d,]*(?:\.\d+)?\s*[kKmMbB]?/g) || [];
+  if (!matches.length) return null;
+  const token = String(matches[0] || '').replace(/,/g, '').trim();
+  const m = token.match(/^(\d+(?:\.\d+)?)\s*([kKmMbB])?$/);
+  if (!m) return null;
+  let n = parseFloat(m[1], 10);
+  if (!Number.isFinite(n)) return null;
+  const suffix = String(m[2] || '').toLowerCase();
+  if (suffix === 'k') n *= 1000;
+  else if (suffix === 'm') n *= 1000000;
+  else if (suffix === 'b') n *= 1000000000;
+  return Math.round(n);
 }
 
 function opportunityRowToSearchItem(row, hasOpenDay) {

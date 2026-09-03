@@ -874,6 +874,26 @@ module.exports = async function handler(req, res) {
           }
         }
 
+        let intakeNotify = null;
+        const intakeId = String(body.intake_id || body.intakeId || '').trim();
+        if (intakeId && events.length) {
+          try {
+            const { notifyEventIntakeListed } = require('../event-intake');
+            intakeNotify = await notifyEventIntakeListed({
+              intakeId,
+              event: events[0],
+              eventsCount: events.length,
+              session: sessionFromRequest(req),
+            });
+          } catch (intakeErr) {
+            console.warn(
+              '[admin-events] intake listed email',
+              intakeErr && intakeErr.message ? intakeErr.message : intakeErr
+            );
+            intakeNotify = { ok: false, reason: 'notify_failed' };
+          }
+        }
+
         return json(res, 201, {
           ok: true,
           event: events[0],
@@ -881,6 +901,7 @@ module.exports = async function handler(req, res) {
           eventIds: events.map((e) => e.id),
           seriesGroupId: seriesGroupId || events[0]?.seriesGroupId || null,
           ticketsCreated,
+          intakeNotify,
         });
       } catch (e) {
         return json(res, 500, { ok: false, error: 'create_failed', message: e.message });

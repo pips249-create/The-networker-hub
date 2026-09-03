@@ -230,11 +230,42 @@
     return '';
   }
 
+  function parseMoneyNumbers(raw) {
+    var text = String(raw || '');
+    if (!text.trim()) return [];
+    var matches = text.match(/\d[\d,]*(?:\.\d+)?\s*[kKmMbB]?/g) || [];
+    var nums = [];
+    for (var i = 0; i < matches.length; i++) {
+      var token = String(matches[i] || '').replace(/,/g, '').trim();
+      var suffix = '';
+      var m = token.match(/^(\d+(?:\.\d+)?)\s*([kKmMbB])?$/);
+      if (!m) continue;
+      var n = parseFloat(m[1], 10);
+      if (!Number.isFinite(n)) continue;
+      suffix = String(m[2] || '').toLowerCase();
+      if (suffix === 'k') n *= 1000;
+      else if (suffix === 'm') n *= 1000000;
+      else if (suffix === 'b') n *= 1000000000;
+      nums.push(Math.round(n));
+    }
+    return nums;
+  }
+
+  /** Starting / minimum investment from Investment meta (first figure in a range). */
   function parseInvestmentAmount(meta) {
     var raw = metaVal(meta, /^investment$/i);
     if (!raw) return null;
-    var num = parseInt(raw.replace(/[^0-9]/g, ''), 10);
-    return isNaN(num) ? null : num;
+    var nums = parseMoneyNumbers(raw);
+    return nums.length ? nums[0] : null;
+  }
+
+  /** Upper bound when Investment is a range; otherwise same as minimum. */
+  function parseInvestmentAmountMax(meta) {
+    var raw = metaVal(meta, /^investment$/i);
+    if (!raw) return null;
+    var nums = parseMoneyNumbers(raw);
+    if (!nums.length) return null;
+    return nums.length > 1 ? nums[nums.length - 1] : nums[0];
   }
 
   function parseInvestmentIncludes(raw) {
@@ -538,6 +569,7 @@
       item.imageUrl = item.displayCoverUrl;
     }
     item.investAmount = parseInvestmentAmount(item.meta);
+    item.investAmountMax = parseInvestmentAmountMax(item.meta);
     item.investmentIncludes = parseInvestmentIncludes(metaVal(item.meta, /^investment includes$/i));
     item.category = seed.category || inferCategory(item);
     item.thumb = thumbFor(item);
@@ -562,6 +594,7 @@
         }
         item.featured = i < 3;
         item.investAmount = parseInvestmentAmount(item.meta);
+        item.investAmountMax = parseInvestmentAmountMax(item.meta);
         item.locationLabel = locationLabel(item);
         item = enrichFilterTags(item);
         item.searchText = buildSearchText(item);
@@ -780,6 +813,7 @@
     formatAffiliateCookieDisplay: formatAffiliateCookieDisplay,
     isScarcityMeta: isScarcityMeta,
     parseInvestmentAmount: parseInvestmentAmount,
+    parseInvestmentAmountMax: parseInvestmentAmountMax,
     parseInvestmentIncludes: parseInvestmentIncludes,
     CATEGORY_KEYWORDS: CATEGORY_KEYWORDS,
   };
