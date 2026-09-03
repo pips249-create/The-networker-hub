@@ -5024,7 +5024,16 @@
     });
     bindAttendanceStep1Ui();
     parkStep2Panels();
-    if (restoredDraft || (loaded.tickets && loaded.tickets.length)) {
+    const hasExistingSetup =
+      restoredDraft ||
+      (loaded.tickets && loaded.tickets.length) ||
+      (loaded.event && loaded.event.attendanceMode && loaded.event.attendanceMode !== 'tickets');
+    if (hasExistingSetup) {
+      step2Confirmed = true;
+      payHowConfirmed = true;
+      revealPostStep2();
+    } else if (loaded.event && loaded.event.attendanceMode === 'tickets') {
+      // Event created via admin with a known mode — skip straight to ticket setup
       step2Confirmed = true;
       payHowConfirmed = true;
       revealPostStep2();
