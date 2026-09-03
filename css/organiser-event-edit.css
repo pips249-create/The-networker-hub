@@ -502,6 +502,12 @@ a.ee-wizard-link:hover {
   gap: 14px;
 }
 
+.ee-membership-type-fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
 .ee-upload-zone {
   border: 2px dashed var(--ee-border);
   border-radius: 8px;
