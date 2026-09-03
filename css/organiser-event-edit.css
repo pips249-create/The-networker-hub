@@ -807,6 +807,11 @@ a.ee-wizard-link:hover {
   margin-top: 0;
 }
 
+.ee-actions--split #ee-submit {
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
 .ee-card-actions {
   padding-top: 20px;
 }
