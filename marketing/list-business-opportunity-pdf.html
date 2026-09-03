@@ -33,18 +33,19 @@
 
   .page {
     width: 210mm;
-    min-height: 297mm;
-    padding: 14mm 16mm 16mm;
-    page-break-after: always;
+    height: 297mm;
+    padding: 10mm 13mm 9mm;
     position: relative;
     background: #fff;
+    overflow: hidden;
+    page-break-after: avoid;
+    page-break-inside: avoid;
   }
-  .page:last-child { page-break-after: auto; }
 
   .bar {
     position: absolute;
     top: 0; left: 0;
-    width: 100%; height: 6mm;
+    width: 100%; height: 4mm;
     background: linear-gradient(90deg, var(--navy) 0%, var(--gold) 100%);
   }
 
@@ -52,278 +53,242 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    gap: 16px;
-    margin-bottom: 8mm;
-    padding-top: 4mm;
+    gap: 12px;
+    margin-bottom: 4mm;
+    padding-top: 2.5mm;
   }
-  .logo { width: 52mm; height: auto; }
-
-  .header-meta { text-align: right; }
+  .logo { width: 40mm; height: auto; }
   .badge {
     display: inline-block;
-    padding: 3mm 5mm;
+    padding: 1.8mm 3.5mm;
     border-radius: 6px;
     background: var(--gold-pale);
     color: #8a6a1a;
-    font-size: 9pt;
+    font-size: 8pt;
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     border: 1px solid rgba(201, 150, 31, 0.35);
-    margin-bottom: 3mm;
+    margin-bottom: 1.5mm;
   }
   .header-url {
-    font-size: 10pt;
+    font-size: 9.5pt;
     font-weight: 600;
     color: var(--gold);
+    text-align: right;
+  }
+  .header-url a { color: inherit; text-decoration: none; }
+
+  .kicker {
+    font-size: 8pt;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 1.5mm;
   }
 
   h1 {
     font-family: 'DM Serif Display', Georgia, serif;
-    font-size: 27pt;
+    font-size: 21pt;
     font-weight: 400;
-    line-height: 1.1;
+    line-height: 1.12;
     color: var(--navy);
-    margin-bottom: 4mm;
-    max-width: 175mm;
+    margin-bottom: 2.5mm;
   }
   h1 .accent { color: var(--gold); font-style: normal; }
 
   .lede {
-    font-size: 12pt;
-    line-height: 1.5;
+    font-size: 10pt;
+    line-height: 1.35;
     color: var(--muted);
-    max-width: 170mm;
-    margin-bottom: 7mm;
+    margin-bottom: 3mm;
   }
 
   .chip-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 2.5mm;
-    margin-bottom: 7mm;
+    gap: 1.8mm;
+    margin-bottom: 4mm;
   }
   .chip {
-    padding: 2mm 4mm;
+    padding: 1.4mm 3.2mm;
     border-radius: 999px;
     background: var(--navy);
     color: #fff;
-    font-size: 8.5pt;
+    font-size: 7.5pt;
     font-weight: 700;
   }
 
   h2 {
-    font-size: 12pt;
+    font-size: 10.5pt;
     font-weight: 800;
-    letter-spacing: -0.02em;
     color: var(--navy);
-    margin-bottom: 4mm;
-    padding-bottom: 2mm;
+    margin-bottom: 2.5mm;
+    padding-bottom: 1mm;
     border-bottom: 2px solid var(--gold-pale);
   }
 
-  .kicker {
-    font-size: 9pt;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--gold);
-    margin-bottom: 2mm;
-  }
-
-  .pain-grid {
+  .pain-grid,
+  .benefits {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
-    gap: 3.5mm;
-    margin-bottom: 7mm;
+    gap: 2.5mm;
+    margin-bottom: 4mm;
   }
   .pain {
     background: #fff5f5;
     border: 1px solid #f0d4d4;
     border-radius: 8px;
-    padding: 4.5mm;
+    padding: 3mm;
   }
   .pain strong {
     display: block;
-    font-size: 10pt;
-    color: #8b2e2e;
-    margin-bottom: 1.5mm;
-  }
-  .pain p {
     font-size: 9pt;
-    line-height: 1.4;
-    color: var(--muted);
+    color: #8b2e2e;
+    margin-bottom: 1mm;
   }
-
-  .benefits {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 3.5mm;
-    margin-bottom: 7mm;
+  .pain p,
+  .benefit p {
+    font-size: 8.5pt;
+    line-height: 1.3;
+    color: var(--muted);
   }
   .benefit {
     background: var(--bg);
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 5mm;
+    padding: 3mm;
   }
   .benefit-tag {
-    display: inline-block;
-    font-size: 8pt;
+    display: block;
+    font-size: 7pt;
     font-weight: 800;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--gold);
-    margin-bottom: 2mm;
+    margin-bottom: 1mm;
   }
   .benefit h3 {
-    font-size: 11pt;
+    font-size: 9.5pt;
     font-weight: 800;
     color: var(--navy);
-    margin-bottom: 1.5mm;
+    margin-bottom: 1mm;
     line-height: 1.2;
-  }
-  .benefit p {
-    font-size: 9.5pt;
-    line-height: 1.45;
-    color: var(--muted);
-  }
-
-  .quote {
-    background: linear-gradient(135deg, var(--navy) 0%, #162847 100%);
-    color: #fff;
-    border-radius: 10px;
-    padding: 6mm 7mm;
-    margin-bottom: 7mm;
-  }
-  .quote blockquote {
-    font-family: 'DM Serif Display', Georgia, serif;
-    font-size: 13pt;
-    line-height: 1.35;
-    font-weight: 400;
-    margin-bottom: 3mm;
-  }
-  .quote cite {
-    font-style: normal;
-    font-size: 9pt;
-    color: rgba(255,255,255,0.75);
-  }
-  .quote cite strong {
-    color: var(--gold);
-    font-weight: 700;
   }
 
   .highlight {
     background: var(--gold-pale);
     border: 1.5px solid rgba(201, 150, 31, 0.35);
     border-radius: 10px;
-    padding: 5mm 6mm;
+    padding: 3.5mm 4.5mm;
+    margin-bottom: 4mm;
   }
   .highlight-grid {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
-    gap: 4mm;
+    gap: 3mm;
   }
   .highlight-stat b {
     display: block;
-    font-size: 17pt;
+    font-size: 14pt;
     font-weight: 800;
     color: var(--navy);
-    letter-spacing: -0.03em;
     line-height: 1;
     margin-bottom: 1mm;
   }
   .highlight-stat span {
-    font-size: 9pt;
-    line-height: 1.35;
+    font-size: 8pt;
+    line-height: 1.25;
     color: var(--muted);
   }
 
-  .steps { list-style: none; counter-reset: step; margin-bottom: 6mm; }
+  .mid {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 3.5mm;
+    margin-bottom: 4mm;
+  }
+
+  .steps { list-style: none; counter-reset: step; }
   .step {
     counter-increment: step;
     display: grid;
-    grid-template-columns: 12mm 1fr;
-    gap: 4mm;
-    padding: 3.5mm 0;
+    grid-template-columns: 7mm 1fr;
+    gap: 2.5mm;
+    padding: 2mm 0;
     border-bottom: 1px solid var(--border);
   }
-  .step:last-child { border-bottom: none; }
+  .step:first-child { padding-top: 0; }
+  .step:last-child { border-bottom: none; padding-bottom: 0; }
   .step-num {
-    width: 12mm; height: 12mm;
+    width: 7mm; height: 7mm;
     border-radius: 50%;
     background: var(--navy);
     color: #fff;
-    font-size: 11pt;
+    font-size: 8.5pt;
     font-weight: 800;
     display: flex;
     align-items: center;
     justify-content: center;
+    margin-top: 0.3mm;
   }
   .step-num::before { content: counter(step); }
   .step h3 {
-    font-size: 11pt;
+    font-size: 9pt;
     font-weight: 800;
     color: var(--navy);
-    margin-bottom: 1mm;
+    margin-bottom: 0.4mm;
   }
   .step p {
-    font-size: 9.5pt;
-    line-height: 1.45;
+    font-size: 8pt;
+    line-height: 1.3;
     color: var(--muted);
-  }
-
-  .split {
-    display: grid;
-    grid-template-columns: 1.1fr 0.9fr;
-    gap: 5mm;
-    margin-bottom: 6mm;
   }
 
   .pricing {
     background: var(--gold-pale);
     border: 1.5px solid rgba(201, 150, 31, 0.35);
     border-radius: 10px;
-    padding: 5mm 6mm;
+    padding: 3.5mm 4mm;
   }
   .pricing h3 {
-    font-size: 12pt;
+    font-size: 10.5pt;
     font-weight: 800;
     color: var(--navy);
-    margin-bottom: 1mm;
+    margin-bottom: 0.5mm;
   }
   .pricing-tagline {
-    font-size: 9pt;
+    font-size: 7.5pt;
     color: var(--muted);
-    margin-bottom: 3mm;
+    margin-bottom: 2mm;
   }
   .price-row {
     display: flex;
     align-items: baseline;
     gap: 2mm;
-    margin-bottom: 3mm;
+    margin-bottom: 2mm;
   }
   .price-row b {
-    font-size: 24pt;
+    font-size: 18pt;
     font-weight: 800;
     color: var(--navy);
-    letter-spacing: -0.03em;
     line-height: 1;
   }
   .price-row span {
-    font-size: 9.5pt;
+    font-size: 8pt;
     color: var(--muted);
     font-weight: 600;
+    line-height: 1.25;
   }
-  .pricing ul {
-    list-style: none;
-  }
+  .pricing ul { list-style: none; }
   .pricing li {
-    font-size: 9pt;
+    font-size: 8pt;
     color: var(--muted);
-    padding-left: 5mm;
+    padding-left: 4mm;
     position: relative;
-    margin-bottom: 1.5mm;
+    margin-bottom: 0.8mm;
+    line-height: 1.25;
   }
   .pricing li::before {
     content: '✓';
@@ -333,105 +298,79 @@
     font-weight: 800;
   }
   .pricing-note {
-    margin-top: 3mm;
-    padding-top: 3mm;
+    margin-top: 2mm;
+    padding-top: 2mm;
     border-top: 1px solid rgba(201, 150, 31, 0.25);
-    font-size: 8.5pt;
-    line-height: 1.4;
+    font-size: 7pt;
+    line-height: 1.3;
     color: var(--muted);
     font-style: italic;
   }
 
-  .faq {
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    overflow: hidden;
-  }
-  .faq-item {
-    padding: 3.5mm 4.5mm;
-    border-bottom: 1px solid var(--border);
-  }
-  .faq-item:last-child { border-bottom: none; }
-  .faq-item h4 {
-    font-size: 9.5pt;
-    font-weight: 800;
-    color: var(--navy);
-    margin-bottom: 1mm;
-  }
-  .faq-item p {
-    font-size: 9pt;
-    line-height: 1.4;
-    color: var(--muted);
-  }
-
   .footer {
-    margin-top: 6mm;
-    padding-top: 5mm;
-    border-top: 1px solid var(--border);
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    gap: 6mm;
+    align-items: stretch;
+    gap: 3.5mm;
   }
   .cta-box {
     background: var(--navy);
     color: #fff;
     border-radius: 10px;
-    padding: 5mm 7mm;
+    padding: 3.5mm 5mm;
     flex: 1;
   }
   .cta-box strong {
     display: block;
-    font-size: 12pt;
+    font-size: 10.5pt;
     margin-bottom: 1mm;
   }
-  .cta-box span {
+  .cta-box a {
     display: block;
-    font-size: 10pt;
+    font-size: 9.5pt;
     color: var(--gold);
     font-weight: 600;
+    text-decoration: none;
   }
   .cta-box em {
     display: block;
     font-style: normal;
-    font-size: 9pt;
+    font-size: 8pt;
     color: rgba(255,255,255,0.75);
-    margin-top: 2mm;
+    margin-top: 1.5mm;
+  }
+  .cta-box em a {
+    display: inline;
+    color: rgba(255,255,255,0.92);
+    font-size: inherit;
+    text-decoration: underline;
   }
   .footer-note {
-    font-size: 7.5pt;
+    font-size: 7pt;
     color: var(--soft);
-    max-width: 65mm;
-    line-height: 1.4;
-  }
-
-  .page-num {
-    position: absolute;
-    bottom: 8mm;
-    right: 16mm;
-    font-size: 8pt;
-    color: var(--soft);
+    max-width: 55mm;
+    line-height: 1.3;
+    align-self: center;
   }
 </style>
 </head>
 <body>
 
-<!-- PAGE 1: Why list -->
 <section class="page">
   <div class="bar"></div>
   <header class="header">
     <img class="logo" src="../assets/logo-nav-transparent.png?v=20260823uk3" alt="The Networker UK" width="420" height="168">
-    <div class="header-meta">
+    <div>
       <div class="badge">Live now</div>
-      <p class="header-url">thenetworkeruk.com/opportunities</p>
+      <p class="header-url"><a href="https://www.thenetworkeruk.com/opportunities/">thenetworkeruk.com/opportunities</a></p>
     </div>
   </header>
 
   <p class="kicker">For franchisors, brand owners &amp; opportunity providers</p>
   <h1>Reach <span class="accent">17,000+ UK business owners</span> — without paying per lead</h1>
   <p class="lede">
-    The Networker UK is where UK networkers already browse events and business opportunities in one place.
-    List your franchise, affiliate programme, partnership or distributorship — and receive enquiries directly, with no middlemen and no auction fees.
+    List your franchise, affiliate programme, partnership or distributorship where UK networkers already browse —
+    and receive enquiries directly. No middlemen. No auction fees.
   </p>
 
   <div class="chip-row">
@@ -444,19 +383,19 @@
   </div>
 
   <p class="kicker">Sound familiar?</p>
-  <h2>Why most listing sites disappoint providers</h2>
+  <h2>Why most listing sites disappoint</h2>
   <div class="pain-grid">
     <div class="pain">
       <strong>Per-lead fees</strong>
-      <p>Franchise portals charge hundreds per enquiry — or auction your territory to the highest bidder.</p>
+      <p>Portals charge hundreds per enquiry — or auction your territory to the highest bidder.</p>
     </div>
     <div class="pain">
       <strong>Wrong audience</strong>
-      <p>LinkedIn and general job boards reach job-seekers and browsers, not business owners ready to invest.</p>
+      <p>LinkedIn and job boards reach job-seekers, not business owners ready to invest.</p>
     </div>
     <div class="pain">
       <strong>Pay before you know</strong>
-      <p>Many directories take payment upfront with no quality check — and no guarantee anyone will see your listing.</p>
+      <p>Upfront payment with no quality check — and no guarantee anyone will see you.</p>
     </div>
   </div>
 
@@ -466,121 +405,82 @@
     <div class="benefit">
       <div class="benefit-tag">Audience</div>
       <h3>Business owners, not browsers</h3>
-      <p>17,000+ UK professionals used the directory last year — people who attend networking events and are actively looking for their next move.</p>
+      <p>17,000+ UK professionals used the directory last year — people already looking for their next move.</p>
     </div>
     <div class="benefit">
       <div class="benefit-tag">Economics</div>
       <h3>Direct enquiries, flat fee</h3>
-      <p>Enquiries go straight to your inbox. £25/month + VAT — no per-lead charges, no commission on deals you close.</p>
+      <p>£25/month + VAT. Enquiries go to your inbox. No per-lead charges, no commission on deals.</p>
     </div>
     <div class="benefit">
       <div class="benefit-tag">Low risk</div>
-        <h3>Submit for review — no charge yet</h3>
-        <p>We review your listing first. Only start your £25/month + VAT subscription once it&rsquo;s approved and ready to go live. Cancel any time from your listing page.</p>
+      <h3>Review first — then pay</h3>
+      <p>Submit free. Start the subscription only once approved. Cancel any time.</p>
     </div>
   </div>
 
   <div class="highlight">
     <div class="highlight-grid">
-      <div class="highlight-stat">
-        <b>17,000+</b>
-        <span>Used the directory last year — events, groups &amp; opportunities</span>
-      </div>
-      <div class="highlight-stat">
-        <b>£0</b>
-        <span>To submit for review — pay only when approved &amp; ready to go live</span>
-      </div>
-      <div class="highlight-stat">
-        <b>£25/mo</b>
-        <span>+ VAT · flat fee · no per-lead charges · cancel any time</span>
-      </div>
+      <div class="highlight-stat"><b>17,000+</b><span>Used the directory last year</span></div>
+      <div class="highlight-stat"><b>£0</b><span>To submit for review</span></div>
+      <div class="highlight-stat"><b>£25/mo</b><span>+ VAT · no per-lead fees · cancel any time</span></div>
     </div>
   </div>
 
-  <p class="page-num">1 of 2</p>
-</section>
-
-<!-- PAGE 2: How to start -->
-<section class="page">
-  <div class="bar"></div>
-  <header class="header">
-    <img class="logo" src="../assets/logo-nav-transparent.png?v=20260823uk3" alt="The Networker UK" width="420" height="168">
-    <div class="header-meta">
-      <div class="badge">Get started</div>
-      <p class="header-url">thenetworkeruk.com/opportunities/list</p>
+  <div class="mid">
+    <div>
+      <p class="kicker">Three steps</p>
+      <h2>From submission to first enquiry</h2>
+      <ol class="steps">
+        <li class="step">
+          <div class="step-num"></div>
+          <div>
+            <h3>Create &amp; submit for review</h3>
+            <p>Complete the listing form in your organiser dashboard. No charge — most reviews within one working day.</p>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num"></div>
+          <div>
+            <h3>Go live after approval</h3>
+            <p>Start £25 + VAT/month via Stripe. Your listing appears on browse immediately.</p>
+          </div>
+        </li>
+        <li class="step">
+          <div class="step-num"></div>
+          <div>
+            <h3>Receive enquiries directly</h3>
+            <p>Members enquire from your page. You get the email and reply on your terms.</p>
+          </div>
+        </li>
+      </ol>
     </div>
-  </header>
 
-  <p class="kicker">Three steps</p>
-  <h1 style="font-size:24pt;margin-bottom:5mm;">From submission to <span class="accent">first enquiry</span></h1>
-
-  <ol class="steps">
-    <li class="step">
-      <div class="step-num"></div>
-      <div>
-        <h3>Create &amp; submit for review</h3>
-        <p>Sign in, open <strong>Business opportunities</strong> in your organiser dashboard, and complete the listing form. Submit for review at no charge — most listings are reviewed within one working day.</p>
-      </div>
-    </li>
-    <li class="step">
-      <div class="step-num"></div>
-      <div>
-        <h3>Go live after approval</h3>
-        <p>When approved, start your monthly subscription (£25 + VAT, £30 total) via Stripe. Your listing appears on the opportunities browse page immediately — filterable by type, investment level, and location.</p>
-      </div>
-    </li>
-    <li class="step">
-      <div class="step-num"></div>
-      <div>
-        <h3>Receive enquiries directly</h3>
-        <p>Interested members enquire from your listing page. You get an email notification and reply on your terms. Add open days or discovery visits so prospects can register interest straight from your page.</p>
-      </div>
-    </li>
-  </ol>
-
-  <div class="split">
     <div class="pricing">
-      <h3>Standard directory listing</h3>
-      <p class="pricing-tagline">Everything you need to be discovered and receive enquiries</p>
+      <h3>Standard listing</h3>
+      <p class="pricing-tagline">Be discovered and receive enquiries</p>
       <div class="price-row">
         <b>£25</b>
-        <span>per month + VAT (£30 total)<br>Cancel any time</span>
+        <span>per month + VAT<br>(£30 total) · cancel any time</span>
       </div>
       <ul>
-        <li>Live on browse, search &amp; your detail page</li>
+        <li>Live on browse, search &amp; detail page</li>
         <li>Direct enquiries — no per-lead fees</li>
         <li>Open days &amp; visit registration</li>
-        <li>Edit or unpublish from your dashboard</li>
+        <li>Edit or unpublish from dashboard</li>
       </ul>
-      <p class="pricing-note">Optional Premium Spotlight: £55 one-time for 30 days featured placement on the browse page.</p>
-    </div>
-
-    <div class="faq">
-      <div class="faq-item">
-        <h4>What if I get no enquiries?</h4>
-        <p>Cancel any time from your listing page. You&rsquo;re never locked in — and you only pay once your listing is approved and live.</p>
-      </div>
-      <div class="faq-item">
-        <h4>Who sees my listing?</h4>
-        <p>UK business professionals browsing The Networker UK — the same people who book networking events on the platform. Filter by franchise, affiliate, partnership, investment level, and location.</p>
-      </div>
-      <div class="faq-item">
-        <h4>Do I need to run events too?</h4>
-        <p>No. You can list an opportunity on its own — no group profile or event history required.</p>
-      </div>
+      <p class="pricing-note">Optional Premium Spotlight: £55 one-time for 30 days featured placement.</p>
     </div>
   </div>
 
   <div class="footer">
     <div class="cta-box">
       <strong>Start your listing — no charge until approved</strong>
-      <span>thenetworkeruk.com/opportunities/list</span>
-      <em>Questions? hi@thenetworkeruk.com</em>
+      <a href="https://www.thenetworkeruk.com/opportunities/list">thenetworkeruk.com/opportunities/list</a>
+      <em>Questions? <a href="mailto:hi@thenetworkeruk.com">hi@thenetworkeruk.com</a> · Cancel any time · No events required</em>
     </div>
     <p class="footer-note">Listings are informational only, not FCA-regulated investment advice. We review submissions for completeness and accuracy.</p>
   </div>
-
-  <p class="page-num">2 of 2</p>
 </section>
 
 </body>
