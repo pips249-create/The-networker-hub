@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260825adminbadge1" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260828sidebar1" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260828sidebar1" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260829premium1" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260903claimall1" />
     <!-- hub-mobile last so phone overrides win over dashboard table min-widths -->
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260812footer10" />
     <script src="../js/hub-defer-css.js?v=20260828perf2" data-hrefs="../css/organiser-event-edit.css?v=20260821ticketstep1|../css/organiser-flow-tour.css?v=20260716layout|../css/hubert-widget.css?v=20260805bottom2|../css/hub-ranking-badge.css?v=20260728lb2|../css/hub-partner-badge.css?v=20260820ticketembed1|../css/rankings-page.css?v=20260807rank|../css/organiser-opportunity-edit.css?v=20260829premium1|https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&family=Playfair+Display:wght@400;700&family=Source+Sans+3:wght@400;600;700&family=Oswald:wght@500;600&family=Nunito:wght@400;600;700&display=swap"></script>
@@ -3501,6 +3501,7 @@
           </div>
           <p class="org-group-claim-desc" id="org-group-claim-desc"></p>
         </div>
+        <p class="org-group-claim-more" id="org-group-claim-more" hidden></p>
 
         <label class="org-group-claim-notes" id="org-group-claim-notes-wrap" hidden>
           <span>Optional note for our team</span>
@@ -3514,9 +3515,12 @@
 
         <p class="org-group-claim-error" id="org-group-claim-error" hidden></p>
 
-        <div class="org-group-claim-actions">
+        <div class="org-group-claim-actions" id="org-group-claim-actions">
           <button type="button" class="org-btn org-btn-outline" id="org-group-claim-reject">
             No, this isn&apos;t mine
+          </button>
+          <button type="button" class="org-btn org-btn-outline" id="org-group-claim-accept-one" hidden>
+            Just this page
           </button>
           <button type="button" class="org-btn org-btn-gold" id="org-group-claim-accept">
             Yes — continue setup
@@ -3911,7 +3915,7 @@
     <script src="../js/hub-side-nav.js?v=20260805orgnav2" defer></script>
     <script src="../js/organiser-single-date-calendar.js?v=20260828openday2" defer></script>
     <script src="../js/organiser-quarter-time.js?v=20260828openday2" defer></script>
-    <script src="../js/organiser-dashboard.js?v=20260828billing1" defer></script>
+    <script src="../js/organiser-dashboard.js?v=20260903claimall1" defer></script>
     <script src="../js/organiser-workspace-comfort.js?v=20260813noshow1" defer></script>
   </body>
 </html>

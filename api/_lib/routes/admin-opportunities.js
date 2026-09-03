@@ -540,8 +540,7 @@ async function listOpportunitiesForAdmin(query) {
 
   if (search) {
     if (search.includes('@')) {
-      const term = `%${search.toLowerCase()}%`;
-      dbQuery = dbQuery.or(`owner_email.ilike.${term}`);
+      dbQuery = applyIlikeSearch(dbQuery, search, ['owner_email']);
     } else {
       dbQuery = applyIlikeSearch(dbQuery, search, ['title', 'host', 'owner_email']);
     }

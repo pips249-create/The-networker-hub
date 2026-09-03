@@ -21,6 +21,7 @@ module.exports = async function handler(req, res) {
     setCors,
     requireOrganiserSession,
     claimGroupForSession,
+    claimAllPendingGroupsForSession,
     rejectGroupForSession,
   } = api;
 
@@ -50,7 +51,7 @@ module.exports = async function handler(req, res) {
     });
   }
 
-  if (!claimGroupForSession || !rejectGroupForSession) {
+  if (!claimGroupForSession || !rejectGroupForSession || !claimAllPendingGroupsForSession) {
     return json(res, 503, {
       error: 'claims_unavailable',
       message: 'Group claim flow requires Supabase.',
@@ -62,12 +63,48 @@ module.exports = async function handler(req, res) {
   const action = String(body.action || '').trim().toLowerCase();
   const notes = String(body.notes || body.message || '').trim();
 
-  if (!groupId) return json(res, 400, { error: 'missing_group_id' });
-  if (!['claim', 'reject'].includes(action)) {
+  if (!['claim', 'claim_all', 'reject'].includes(action)) {
     return json(res, 400, { error: 'invalid_action' });
+  }
+  if (action !== 'claim_all' && !groupId) {
+    return json(res, 400, { error: 'missing_group_id' });
   }
 
   try {
+    if (action === 'claim_all') {
+      const verified = await assertOrganiserEmailVerified(auth.session);
+      if (!verified.ok) {
+        return json(res, verified.status, {
+          error: verified.error,
+          message: verified.message,
+        });
+      }
+      const result = await claimAllPendingGroupsForSession(auth.session);
+      const count = (result.groups || []).length;
+      if (!count && (result.failures || []).length) {
+        return json(res, 500, {
+          ok: false,
+          error: 'claim_all_failed',
+          message: result.failures[0].message || 'Could not claim your organiser pages.',
+          failures: result.failures,
+        });
+      }
+      return json(res, 200, {
+        ok: true,
+        action: 'claim_all',
+        groups: result.groups || [],
+        failures: result.failures || [],
+        attempted: result.attempted || 0,
+        message:
+          count === 1
+            ? 'Organiser page claimed. You can now manage events and tickets for ' +
+              (result.groups[0].name || 'your group') +
+              '.'
+            : count +
+              ' organiser pages claimed. You can manage events and tickets for each from your dashboard.',
+      });
+    }
+
     if (action === 'claim') {
       const verified = await assertOrganiserEmailVerified(auth.session);
       if (!verified.ok) {

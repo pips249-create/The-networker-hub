@@ -9830,6 +9830,23 @@ body.org-group-claim-active {
   box-sizing: border-box;
 }
 
+.org-group-claim-more {
+  margin: 12px 0 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--org-muted, #5c6478);
+}
+
+.org-group-claim-actions--multi {
+  flex-direction: column-reverse;
+  align-items: stretch;
+}
+
+.org-group-claim-actions--multi .org-btn {
+  width: 100%;
+  justify-content: center;
+}
+
 @media (max-width: 520px) {
   .org-group-claim-actions {
     flex-direction: column-reverse;

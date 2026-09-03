@@ -34,6 +34,7 @@ function getOrganiserApi() {
     confirmRefundsIssued: cancellations.confirmRefundsIssued,
     listPendingClaimGroupsForSession: claims.listPendingClaimGroupsForSession,
     claimGroupForSession: claims.claimGroupForSession,
+    claimAllPendingGroupsForSession: claims.claimAllPendingGroupsForSession,
     rejectGroupForSession: claims.rejectGroupForSession,
     listPendingClaimOpportunitiesForSession: opportunityClaims.listPendingClaimOpportunitiesForSession,
     claimOpportunityForSession: opportunityClaims.claimOpportunityForSession,

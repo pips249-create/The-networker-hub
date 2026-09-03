@@ -2,10 +2,14 @@
  * Browse / admin search matching — word-split AND, substring, light typo tolerance.
  * Treats "&" and "and" as the same connector. Typos (edit distance ≤ 1) only apply
  * to terms of 5+ characters.
+ *
+ * Email queries (containing @) keep dots and skip fuzzy variants so admin
+ * "search by email" matches contact_email / email columns via PostgREST.
  */
 
 const FUZZY_MIN_LEN = 5;
 const MAX_TERM_LEN = 48;
+const MAX_EMAIL_LEN = 120;
 
 /** "&" and "and" are interchangeable connectors in group/event names. */
 function normalizeAmpersands(text) {
@@ -15,12 +19,25 @@ function normalizeAmpersands(text) {
     .trim();
 }
 
+function looksLikeEmailQuery(query) {
+  return String(query || '').includes('@');
+}
+
 function sanitizeSearchTerm(term) {
   return String(term || '')
     .trim()
     .toLowerCase()
     .replace(/[%_,.()\\]/g, '')
     .slice(0, MAX_TERM_LEN);
+}
+
+/** Keep email shape (dots, +, etc.); only strip LIKE wildcards. */
+function sanitizeEmailSearchTerm(term) {
+  return String(term || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[%]/g, '')
+    .slice(0, MAX_EMAIL_LEN);
 }
 
 function tokenizeSearchQuery(query) {
@@ -106,6 +123,13 @@ function termMatchesHaystack(term, haystack) {
 }
 
 function haystackMatchesQuery(haystack, query) {
+  if (looksLikeEmailQuery(query)) {
+    const email = sanitizeEmailSearchTerm(query);
+    if (!email) return true;
+    return String(haystack || '')
+      .toLowerCase()
+      .includes(email);
+  }
   const terms = tokenizeSearchQuery(query);
   if (!terms.length) return true;
   const hay = normalizeAmpersands(String(haystack || '')).toLowerCase();
@@ -164,24 +188,54 @@ function searchTermIlikePatterns(term, options) {
 }
 
 /**
+ * PostgREST reserved chars in filter values (.,,:*() ) must be double-quoted.
+ * @see https://docs.postgrest.org/en/stable/references/api/url_grammar.html
+ */
+function formatIlikeFilter(field, pattern) {
+  const col = String(field || '').trim();
+  const p = String(pattern || '');
+  if (!col) return '';
+  if (/[,.:*()]/.test(p) || p.includes('"') || p.includes('\\')) {
+    const escaped = p.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    return col + '.ilike."' + escaped + '"';
+  }
+  return col + '.ilike.' + p;
+}
+
+/**
  * Build PostgREST `.or(...)` filter strings (one per query term; AND them together).
  * Returns null when there is nothing to filter.
  */
 function buildIlikeOrFilters(query, fields) {
-  const terms = tokenizeSearchQuery(query);
   const fieldList = (fields || []).filter(Boolean);
-  if (!terms.length || !fieldList.length) return null;
+  if (!fieldList.length) return null;
 
-  return terms.map(function (term) {
-    const patterns = searchTermIlikePatterns(term);
-    const parts = [];
-    for (let i = 0; i < patterns.length; i++) {
-      for (let j = 0; j < fieldList.length; j++) {
-        parts.push(fieldList[j] + '.ilike.' + patterns[i]);
+  if (looksLikeEmailQuery(query)) {
+    const email = sanitizeEmailSearchTerm(query);
+    if (!email) return null;
+    const pattern = '%' + email + '%';
+    const parts = fieldList.map(function (field) {
+      return formatIlikeFilter(field, pattern);
+    }).filter(Boolean);
+    return parts.length ? [parts.join(',')] : null;
+  }
+
+  const terms = tokenizeSearchQuery(query);
+  if (!terms.length) return null;
+
+  return terms
+    .map(function (term) {
+      const patterns = searchTermIlikePatterns(term);
+      const parts = [];
+      for (let i = 0; i < patterns.length; i++) {
+        for (let j = 0; j < fieldList.length; j++) {
+          const part = formatIlikeFilter(fieldList[j], patterns[i]);
+          if (part) parts.push(part);
+        }
       }
-    }
-    return parts.join(',');
-  }).filter(Boolean);
+      return parts.join(',');
+    })
+    .filter(Boolean);
 }
 
 /** Apply word-split + fuzzy ilike filters to a Supabase/PostgREST query builder. */
@@ -198,13 +252,16 @@ function applyIlikeSearch(dbQuery, query, fields) {
 module.exports = {
   FUZZY_MIN_LEN,
   normalizeAmpersands,
+  looksLikeEmailQuery,
   sanitizeSearchTerm,
+  sanitizeEmailSearchTerm,
   tokenizeSearchQuery,
   levenshtein,
   termMatchesHaystack,
   haystackMatchesQuery,
   typoVariantTerms,
   searchTermIlikePatterns,
+  formatIlikeFilter,
   buildIlikeOrFilters,
   applyIlikeSearch,
 };

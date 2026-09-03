@@ -15792,6 +15792,26 @@
     });
   }
 
+  function syncEventCreateTicketFields(form) {
+    if (!form) return;
+    var pay = String(formFieldVal(form, 'ticket_pay') || '').trim();
+    var fields = form.querySelector('.event-create-ticket-fields');
+    var priceWrap = form.querySelector('.event-create-ticket-price');
+    if (fields) fields.classList.toggle('hidden', !pay);
+    if (priceWrap) priceWrap.classList.toggle('hidden', pay !== 'paid');
+  }
+
+  function bindEventCreateTicketFields() {
+    var form = document.querySelector('.event-create-form');
+    var paySel = document.getElementById('event-create-ticket-pay');
+    if (!form || !paySel || paySel.dataset.bound === '1') return;
+    paySel.dataset.bound = '1';
+    paySel.addEventListener('change', function () {
+      syncEventCreateTicketFields(form);
+    });
+    syncEventCreateTicketFields(form);
+  }
+
   function defaultEventCreateEndTime(startTime) {
     var parts = String(startTime || '10:00').split(':');
     var hour = parseInt(parts[0], 10);
@@ -15851,6 +15871,7 @@
     }
     if (photoPlaceholder) photoPlaceholder.classList.remove('hidden');
     syncEventCreateLocationVisibility(form);
+    syncEventCreateTicketFields(form);
     if (eventCleanupState.organiserId) {
       var match = findOrganiserOptionById(eventOrganiserOptionsCache || [], eventCleanupState.organiserId);
       if (match) {
@@ -18007,6 +18028,10 @@
     var organiserId = formFieldVal(form, 'organiser_id');
     var occurrences = collectEventCreateOccurrences(form);
     var status = formFieldVal(form, 'status') || 'draft';
+    var ticketPay = String(formFieldVal(form, 'ticket_pay') || '').trim();
+    var door = formFieldVal(form, 'attendance_door') || 'general';
+    var maxPlaces = formFieldVal(form, 'max_places');
+    var tickets = [];
     if (!organiserId) {
       if (msg) {
         msg.textContent = 'Choose an organiser / group first.';
@@ -18021,6 +18046,28 @@
       }
       return;
     }
+    if (ticketPay === 'free' || ticketPay === 'paid') {
+      var paid = ticketPay === 'paid';
+      var price = paid ? Number(formFieldVal(form, 'ticket_price')) : 0;
+      if (paid && (!Number.isFinite(price) || price < 0)) {
+        if (msg) {
+          msg.textContent = 'Enter a ticket price (0 is allowed).';
+          msg.className = 'event-create-msg text-xs text-red-700 font-semibold';
+        }
+        return;
+      }
+      var ticketName =
+        formFieldVal(form, 'ticket_name') || (paid ? 'Standard ticket' : 'Free ticket');
+      tickets = [
+        {
+          name: ticketName,
+          price: paid ? price : 0,
+          quantityAvailable: maxPlaces || null,
+          categoryExclusivity: door === 'category_exclusivity',
+          ticketType: door === 'category_exclusivity' ? 'Application-based' : 'Standard',
+        },
+      ];
+    }
     if (btn) btn.disabled = true;
     if (msg) {
       msg.textContent = 'Creating…';
@@ -18028,28 +18075,38 @@
     }
     eventPhotoPayloadForKey('event-create-photo', form)
       .then(function (photoPayload) {
-        return adminPost('/api/admin/events', Object.assign(
-          {
-            action: 'create',
-            title: formFieldVal(form, 'title'),
-            organiser_id: organiserId,
-            occurrences: occurrences,
-            event_type: formFieldVal(form, 'event_type') || 'Meeting',
-            meeting_type: formFieldVal(form, 'meeting_type') || 'In person',
-            status: status,
-          },
-          eventDetailsPayloadFromForm(form),
-          photoPayload
-        ));
+        return adminPost(
+          '/api/admin/events',
+          Object.assign(
+            {
+              action: 'create',
+              title: formFieldVal(form, 'title'),
+              organiser_id: organiserId,
+              occurrences: occurrences,
+              event_type: formFieldVal(form, 'event_type') || 'Meeting',
+              meeting_type: formFieldVal(form, 'meeting_type') || 'In person',
+              status: status,
+              attendance_mode: door === 'category_exclusivity' ? 'category_exclusivity' : 'tickets',
+              max_attendees: maxPlaces || undefined,
+              tickets: tickets.length ? tickets : undefined,
+            },
+            eventDetailsPayloadFromForm(form),
+            photoPayload
+          )
+        );
       })
       .then(function (data) {
         if (!data.ok) throw new Error(data.message || data.error || 'Create failed');
         var count = Array.isArray(data.events) ? data.events.length : 1;
+        var ticketNote =
+          data.ticketsCreated > 0
+            ? ' Ticket type added (sales stay closed until the organiser confirms).'
+            : '';
         if (msg) {
           msg.textContent =
-            count > 1
+            (count > 1
               ? count + ' events created as a date series.'
-              : 'Event created.';
+              : 'Event created.') + ticketNote;
           msg.className = 'event-create-msg text-xs text-emerald-700 font-semibold';
         }
         resetEventCreateForm(form);
@@ -20167,7 +20224,7 @@
       '<details class="event-cleanup-create rounded-xl border border-brand-200 bg-brand-50/50 shadow-sm group">' +
       '<summary class="cursor-pointer list-none font-semibold text-brand-900 px-4 py-3 select-none">Create event for a group</summary>' +
       '<div class="px-4 pb-4 space-y-3 border-t border-brand-100 event-cleanup-create-body">' +
-      '<p class="text-xs text-slate-600 pt-3">Add an event under an existing organiser profile with the core listing details. You can publish as a listing without tickets — visitors can nudge the organiser to add them. Organisers finish tickets and enable sales when ready.</p>' +
+      '<p class="text-xs text-slate-600 pt-3">Add an event under an existing organiser profile. Optionally set a ticket (free or paid). Leave VAT, refunds, and Stripe for the organiser — sales stay closed until they confirm.</p>' +
       '<form class="event-create-form grid sm:grid-cols-2 gap-3">' +
       '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Title</label>' +
       '<input type="text" name="title" required class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Monthly networking breakfast"></div>' +
@@ -20198,11 +20255,32 @@
       '</select></div>' +
       eventLocationFieldsHtml({ meeting_type: 'In person' }) +
       eventPhotoFieldHtml('event-create-photo', '') +
+      '<div class="sm:col-span-2 rounded-lg border border-slate-200 bg-white p-3 space-y-3">' +
+      '<p class="text-xs font-semibold text-brand-900">Tickets (optional)</p>' +
+      '<p class="text-[11px] text-slate-500">Skip to publish a listing-only event. Visitors can nudge the organiser to add tickets later.</p>' +
+      '<div class="grid sm:grid-cols-2 gap-3">' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Ticket type</label>' +
+      '<select name="ticket_pay" id="event-create-ticket-pay" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      '<option value="">No ticket yet</option>' +
+      '<option value="free">Free ticket</option>' +
+      '<option value="paid">Paid ticket</option></select></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">How people get in</label>' +
+      '<select name="attendance_door" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
+      '<option value="general">General ticketing</option>' +
+      '<option value="category_exclusivity">Application based</option></select></div>' +
+      '<div class="event-create-ticket-fields hidden sm:col-span-2 grid sm:grid-cols-2 gap-3">' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Ticket name</label>' +
+      '<input type="text" name="ticket_name" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="General admission"></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Max places</label>' +
+      '<input type="number" name="max_places" min="1" step="1" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Optional"></div>' +
+      '<div class="event-create-ticket-price hidden"><label class="block text-xs font-semibold text-slate-500 mb-1">Ticket price (£)</label>' +
+      '<input type="number" name="ticket_price" min="0" step="0.01" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="e.g. 25">' +
+      '<p class="text-[11px] text-slate-500 mt-1">Organiser still needs Stripe for paid sales to open.</p></div></div></div></div>' +
       '<div><label class="block text-xs font-semibold text-slate-500 mb-1">Status</label>' +
       '<select name="status" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm">' +
       eventStatusOptions('published') +
       '</select>' +
-      '<p class="text-[11px] text-slate-500 mt-1">Published events go live on browse (listing-only until tickets are added).</p></div>' +
+      '<p class="text-[11px] text-slate-500 mt-1">Published events go live on browse. Ticket sales stay closed until the organiser confirms.</p></div>' +
       '<div class="sm:col-span-2 flex flex-wrap items-center gap-3">' +
       '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Create event</button>' +
       '<span class="event-create-msg text-xs"></span></div></form></div></details>'
@@ -20367,6 +20445,7 @@
     bindEventCreateOrganiserPicker();
     bindEventBulkOrganiserPicker();
     bindEventCreateDatesSection();
+    bindEventCreateTicketFields();
     bindEventFormLocationToggle(main);
     bindAdminLogoZones(main.querySelector('.event-create-form'));
     refreshEventCleanupData();

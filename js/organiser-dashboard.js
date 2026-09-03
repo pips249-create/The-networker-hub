@@ -14995,21 +14995,32 @@
     if (opts.force) clearClaimModalPostponed();
 
     const group = list[0];
+    const multi = list.length > 1;
     const kicker = document.getElementById('org-group-claim-kicker');
+    const titleEl = document.getElementById('org-group-claim-title');
     const nameEl = document.getElementById('org-group-claim-name');
     const emailEl = document.getElementById('org-group-claim-email');
     const descEl = document.getElementById('org-group-claim-desc');
+    const moreEl = document.getElementById('org-group-claim-more');
     const avatarEl = document.getElementById('org-group-claim-avatar');
     const notesWrap = document.getElementById('org-group-claim-notes-wrap');
     const errEl = document.getElementById('org-group-claim-error');
+    const actionsEl = document.getElementById('org-group-claim-actions');
     const acceptBtn = document.getElementById('org-group-claim-accept');
+    const acceptOneBtn = document.getElementById('org-group-claim-accept-one');
     const rejectBtn = document.getElementById('org-group-claim-reject');
 
     if (kicker) {
-      kicker.textContent =
-        list.length > 1
-          ? 'Exclusive invite — profile 1 of ' + list.length
-          : 'Exclusive organiser invite';
+      kicker.textContent = multi
+        ? 'Exclusive invite — ' + list.length + ' pages on your email'
+        : 'Exclusive organiser invite';
+    }
+    if (titleEl) {
+      titleEl.textContent = groupClaimRejectMode
+        ? 'Remove this organiser page?'
+        : multi
+          ? 'Are these your organiser pages?'
+          : 'Is this your organiser page?';
     }
     if (nameEl) nameEl.textContent = group.name || 'Organiser page';
     if (emailEl) {
@@ -15019,6 +15030,25 @@
       const desc = String(group.description || '').trim();
       descEl.textContent = desc || 'No description yet — you can complete this after claiming the profile.';
       descEl.hidden = false;
+    }
+    if (moreEl) {
+      if (multi && !groupClaimRejectMode) {
+        const extras = list
+          .slice(1, 6)
+          .map(function (g) {
+            return g.name || 'Organiser page';
+          });
+        const leftover = list.length - 1 - extras.length;
+        moreEl.hidden = false;
+        moreEl.textContent =
+          'Also linked to this email: ' +
+          extras.join(', ') +
+          (leftover > 0 ? ', and ' + leftover + ' more' : '') +
+          '. Claim all in one go, or confirm just this page.';
+      } else {
+        moreEl.hidden = true;
+        moreEl.textContent = '';
+      }
     }
     if (avatarEl) {
       if (group.imageUrl) {
@@ -15030,6 +15060,9 @@
     }
     if (notesWrap) notesWrap.hidden = !groupClaimRejectMode;
     if (errEl) errEl.hidden = true;
+    if (actionsEl) {
+      actionsEl.classList.toggle('org-group-claim-actions--multi', multi && !groupClaimRejectMode);
+    }
     // In decline-confirm mode the primary (right) control must confirm decline —
     // previously gold "Back" sat on the right and habitually claimed via Yes next.
     if (acceptBtn) {
@@ -15041,10 +15074,29 @@
         acceptBtn.textContent = 'Confirm — not my group';
         acceptBtn.classList.add('org-btn-danger');
         acceptBtn.classList.remove('org-btn-gold', 'org-btn-outline');
+        acceptBtn.hidden = false;
+      } else if (multi) {
+        acceptBtn.textContent = 'Yes — claim all ' + list.length + ' pages';
+        acceptBtn.classList.add('org-btn-gold');
+        acceptBtn.classList.remove('org-btn-danger', 'org-btn-outline');
+        acceptBtn.hidden = false;
       } else {
         acceptBtn.textContent = 'Yes — set up this page';
         acceptBtn.classList.add('org-btn-gold');
         acceptBtn.classList.remove('org-btn-danger', 'org-btn-outline');
+        acceptBtn.hidden = false;
+      }
+    }
+    if (acceptOneBtn) {
+      if (multi && !groupClaimRejectMode) {
+        acceptOneBtn.hidden = false;
+        acceptOneBtn.disabled = false;
+        acceptOneBtn.classList.remove('is-busy');
+        acceptOneBtn.removeAttribute('aria-busy');
+        delete acceptOneBtn.dataset.idleLabel;
+        acceptOneBtn.textContent = 'Just this page';
+      } else {
+        acceptOneBtn.hidden = true;
       }
     }
     if (rejectBtn) {
@@ -15073,7 +15125,9 @@
     if (introEl) {
       introEl.textContent = groupClaimRejectMode
         ? 'This will remove the page below from your dashboard and notify our team. Add an optional note if the email match looks wrong.'
-        : 'Confirm you manage this page, then use the full tools — events, LinkedIn, emails, memberships. Public browsing is open now; attendees can buy tickets on the public site from 9am on 1 September.';
+        : multi
+          ? 'Confirm you manage these pages, then use the full tools — events, LinkedIn, emails, memberships. You can claim every page linked to your email in one step.'
+          : 'Confirm you manage this page, then use the full tools — events, LinkedIn, emails, memberships. Public browsing is open now; attendees can buy tickets on the public site from 9am on 1 September.';
     }
   }
 
@@ -15102,24 +15156,35 @@
     const group = list[0];
     const errEl = document.getElementById('org-group-claim-error');
     const acceptBtn = document.getElementById('org-group-claim-accept');
+    const acceptOneBtn = document.getElementById('org-group-claim-accept-one');
     const rejectBtn = document.getElementById('org-group-claim-reject');
     const notesEl = document.getElementById('org-group-claim-notes');
-    if (!group) return;
-
-    const normalisedAction = action === 'reject' ? 'reject' : 'claim';
+    const claimAll = action === 'claim_all';
+    const normalisedAction = action === 'reject' ? 'reject' : claimAll ? 'claim_all' : 'claim';
+    if (!claimAll && !group) return;
+    if (claimAll && !list.length) return;
 
     groupClaimSubmitInFlight = true;
     if (errEl) errEl.hidden = true;
-    if (normalisedAction === 'claim') {
-      setGroupClaimBtnBusy(acceptBtn, true, 'Setting up…');
+    if (normalisedAction === 'claim_all') {
+      setGroupClaimBtnBusy(acceptBtn, true, 'Claiming all…');
+      if (acceptOneBtn) acceptOneBtn.disabled = true;
+      if (rejectBtn) rejectBtn.disabled = true;
+    } else if (normalisedAction === 'claim') {
+      setGroupClaimBtnBusy(acceptOneBtn && !acceptOneBtn.hidden ? acceptOneBtn : acceptBtn, true, 'Setting up…');
+      if (acceptBtn && acceptOneBtn && !acceptOneBtn.hidden) acceptBtn.disabled = true;
       if (rejectBtn) rejectBtn.disabled = true;
     } else {
       setGroupClaimBtnBusy(acceptBtn, true, 'Removing…');
+      if (acceptOneBtn) acceptOneBtn.disabled = true;
       if (rejectBtn) rejectBtn.disabled = true;
     }
 
     try {
-      const body = { groupId: group.id, action: normalisedAction };
+      const body =
+        normalisedAction === 'claim_all'
+          ? { action: 'claim_all' }
+          : { groupId: group.id, action: normalisedAction };
       if (normalisedAction === 'reject' && notesEl && notesEl.value.trim()) {
         body.notes = notesEl.value.trim();
       }
@@ -15128,6 +15193,67 @@
         body: JSON.stringify(body),
       });
       if (!ok) throw new Error(data.message || data.error || 'claim_action_failed');
+
+      if (normalisedAction === 'claim_all') {
+        const claimed = Array.isArray(data.groups) ? data.groups : [];
+        const claimedIds = {};
+        claimed.forEach(function (g) {
+          if (g && g.id) claimedIds[g.id] = true;
+        });
+        state.pendingClaimGroups = list.filter(function (g) {
+          return g && g.id && !claimedIds[g.id];
+        });
+        claimed.forEach(function (g) {
+          if (!g || !g.id) return;
+          state.groups = [g].concat(state.groups.filter(function (x) {
+            return x.id !== g.id;
+          }));
+          rememberClaimedGroupOrder(g.id);
+        });
+        groupClaimRejectMode = false;
+        if (notesEl) notesEl.value = '';
+        syncPendingClaimFlag();
+        trackClaimFunnel('claim_all_accepted', String(claimed.length));
+        clearClaimModalPostponed();
+        hideGroupClaimModal();
+        document.body.classList.remove('org-group-claim-active');
+
+        if (window.HubOrganiserOnboarding && window.HubOrganiserOnboarding.clearProfileReviewDone) {
+          window.HubOrganiserOnboarding.clearProfileReviewDone();
+        }
+        if (window.HubOrganiserLaunchSetup && window.HubOrganiserLaunchSetup.prepareClaimOnboarding) {
+          window.HubOrganiserLaunchSetup.prepareClaimOnboarding(
+            claimed
+              .map(function (g) {
+                return g && g.id;
+              })
+              .filter(Boolean)
+          );
+        }
+
+        showOrganiserAlert(
+          data.message ||
+            claimed.length + ' organiser pages claimed. Review profiles from Overview when you are ready.',
+          false
+        );
+
+        await loadBootstrap({ silent: true, skipClaimUi: true });
+        updateSetupResumeBanner();
+        updateGettingStartedPanel();
+        syncOverviewSetupQuietMode();
+
+        if (state.pendingClaimGroups.length) {
+          renderGroupClaimModal({ force: true });
+          return;
+        }
+        if ((state.pendingClaimOpportunities || []).length) {
+          renderOpportunityClaimModal();
+          return;
+        }
+        if (showLaunchSetupPrompt()) return;
+        continueOnboardingAfterClaim();
+        return;
+      }
 
       state.pendingClaimGroups = list.filter((g) => g.id !== group.id);
       groupClaimRejectMode = false;
@@ -15231,6 +15357,9 @@
         errEl.hidden = false;
       }
       setGroupClaimBtnBusy(acceptBtn, false);
+      setGroupClaimBtnBusy(acceptOneBtn, false);
+      if (acceptBtn) acceptBtn.disabled = false;
+      if (acceptOneBtn) acceptOneBtn.disabled = false;
       if (rejectBtn) rejectBtn.disabled = false;
     } finally {
       groupClaimSubmitInFlight = false;
@@ -15477,6 +15606,7 @@
 
   function bindGroupClaimUi() {
     const acceptBtn = document.getElementById('org-group-claim-accept');
+    const acceptOneBtn = document.getElementById('org-group-claim-accept-one');
     const rejectBtn = document.getElementById('org-group-claim-reject');
     const closeBtn = document.getElementById('org-group-claim-close');
     if (acceptBtn) {
@@ -15486,6 +15616,13 @@
           submitGroupClaimAction('reject');
           return;
         }
+        const pendingCount = (state.pendingClaimGroups || []).length;
+        submitGroupClaimAction(pendingCount > 1 ? 'claim_all' : 'claim');
+      });
+    }
+    if (acceptOneBtn) {
+      acceptOneBtn.addEventListener('click', function () {
+        if (groupClaimRejectMode) return;
         submitGroupClaimAction('claim');
       });
     }

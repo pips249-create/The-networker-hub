@@ -249,6 +249,36 @@ async function claimGroupForSession(session, groupId) {
   return group;
 }
 
+/**
+ * Claim every pending organiser page matched to this session (same email / user id).
+ * Used when a contact owns many franchise/network pages and should not click Yes 25 times.
+ */
+async function claimAllPendingGroupsForSession(session) {
+  const pending = await listPendingClaimGroupsForSession(session);
+  const groups = [];
+  const failures = [];
+
+  for (const row of pending || []) {
+    const id = String(row?.id || '').trim();
+    if (!id) continue;
+    try {
+      const group = await claimGroupForSession(session, id);
+      if (group) groups.push(group);
+    } catch (e) {
+      const msg = e && e.message ? e.message : String(e);
+      if (msg === 'claim_not_available') continue;
+      failures.push({ id, message: msg });
+    }
+  }
+
+  return {
+    groups,
+    failures,
+    attempted: (pending || []).length,
+    remainingPending: Math.max(0, (pending || []).length - groups.length - failures.length),
+  };
+}
+
 async function rejectGroupForSession(session, groupId, notes) {
   const organiser = await getPendingClaimGroupForSession(session, groupId);
   const sb = getSupabaseAdmin();
@@ -410,6 +440,7 @@ async function syncEmailMatchedOrganiserClaims() {
 module.exports = {
   listPendingClaimGroupsForSession,
   claimGroupForSession,
+  claimAllPendingGroupsForSession,
   rejectGroupForSession,
   notifyAdminOfClaimDispute,
   bootstrapOrganiserFromPendingClaims,
