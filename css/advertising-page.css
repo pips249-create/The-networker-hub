@@ -6047,6 +6047,38 @@ body.nav-menu-open .ad-sticky-cta {
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
+.industry-sponsor-city {
+  align-items: flex-start;
+}
+
+.industry-sponsor-icon {
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  color: #7668ce;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.industry-sponsor-icon svg,
+.industry-sponsor-icon .industry-line-chip,
+.industry-sponsor-icon .region-landmark-chip {
+  display: block;
+  width: 28px;
+  height: 28px;
+}
+
+.industry-sponsor-industry-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (min-width: 720px) {
+  .industry-sponsor-industry-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 .city-partner-city:has(input:checked) {
   border-color: rgba(109, 92, 232, 0.45);
   box-shadow: 0 0 0 2px rgba(109, 92, 232, 0.12);

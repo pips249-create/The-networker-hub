@@ -522,6 +522,26 @@
   transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
 
+.event-type-chip-icon {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  color: currentColor;
+  flex: 0 0 auto;
+}
+
+.event-type-chip-icon svg,
+.event-type-chip-icon .industry-line-chip,
+.event-type-chip-icon .region-landmark-chip {
+  display: block;
+  width: 18px;
+  height: 18px;
+}
+
+.event-type-chip--with-icon {
+  padding-left: 10px;
+}
+
 .event-type-chip:hover {
   border-color: var(--lavender-soft);
   color: var(--charcoal);

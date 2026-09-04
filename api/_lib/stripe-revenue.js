@@ -49,6 +49,8 @@ const PLACEMENT_CATEGORIES = {
   city_partner_single: 'events',
   city_partner_bundle_3: 'events',
   county_partner: 'events',
+  industry_sponsor: 'opportunities',
+  opportunity_industry_sponsor: 'opportunities',
   opportunity_page_partner: 'opportunities',
   awards_sponsor: 'awards',
   awards: 'awards',
@@ -71,6 +73,7 @@ function cmsSlotCategory(slot) {
   if (CMS_SLOT_CATEGORIES[key]) return CMS_SLOT_CATEGORIES[key];
   if (/^networking_city_partner_/i.test(key)) return 'events';
   if (/^networking_county_partner_/i.test(key)) return 'events';
+  if (/^opportunity_industry_sponsor_/i.test(key)) return 'opportunities';
   return null;
 }
 

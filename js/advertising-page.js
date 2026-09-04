@@ -182,6 +182,7 @@
     'ad-pkg-organisers-spotlight': 'organisers',
     'ad-pkg-opportunities-main': 'opportunities',
     'ad-pkg-opportunities-mini': 'opportunities',
+    'industry-sponsor-package': 'opportunities',
     'ad-pkg-opportunities-listing': 'opportunities',
     'ad-pkg-opportunities-spotlight': 'opportunities',
   };
@@ -213,6 +214,7 @@
     opportunities: [
       'Headline Sponsor',
       'Opportunity Page Partner',
+      'Industry Sponsor',
       'Directory Listing',
       'Featured Opportunity Boost',
       'Not sure yet',
@@ -951,6 +953,16 @@
         if (oppCheckout) {
           window.setTimeout(function () {
             oppCheckout.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 280);
+        }
+      }
+      if (id === 'industry-sponsor-package') {
+        var industryCheckout = document.getElementById('industry-sponsor-checkout');
+        var industryPanel = document.getElementById('industry-sponsor-available-panel');
+        if (industryPanel) industryPanel.open = true;
+        if (industryCheckout) {
+          window.setTimeout(function () {
+            industryCheckout.scrollIntoView({ behavior: 'smooth', block: 'center' });
           }, 280);
         }
       }

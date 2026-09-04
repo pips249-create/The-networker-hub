@@ -32,6 +32,11 @@ const {
   handleOpportunityPagePartnerSubscriptionDeleted,
 } = require('./_lib/opportunity-page-partner-subscriptions');
 const {
+  handleIndustrySponsorCheckoutCompleted,
+  handleIndustrySponsorSubscriptionUpdated,
+  handleIndustrySponsorSubscriptionDeleted,
+} = require('./_lib/industry-sponsor-subscriptions');
+const {
   handleOpportunityListingSubscriptionUpdated,
   handleOpportunityListingSubscriptionDeleted,
   handleOpportunityListingInvoicePaid,
@@ -165,6 +170,7 @@ async function handler(req, res) {
       const opportunityPagePartnerResult = await handleOpportunityPagePartnerCheckoutCompleted(
         session
       );
+      const industrySponsorResult = await handleIndustrySponsorCheckoutCompleted(session);
       const membershipResult = await handleMembershipCheckoutCompleted(session);
       const premiumResult = await handleOpportunityPremiumCheckout(session);
       const listingResult = await handleOpportunityListingCheckout(session);
@@ -180,6 +186,7 @@ async function handler(req, res) {
           cityPartnerResult,
           countyPartnerResult,
           opportunityPagePartnerResult,
+          industrySponsorResult,
           membershipResult,
           premiumResult,
           listingResult,
@@ -197,6 +204,7 @@ async function handler(req, res) {
       const countyPartnerResult = await handleCountyPartnerSubscriptionUpdated(subscription);
       const opportunityPagePartnerResult =
         await handleOpportunityPagePartnerSubscriptionUpdated(subscription);
+      const industrySponsorResult = await handleIndustrySponsorSubscriptionUpdated(subscription);
       const membershipResult = await handleMembershipSubscriptionUpdated(subscription);
       const listingResult = await handleOpportunityListingSubscriptionUpdated(subscription);
       res.statusCode = 200;
@@ -206,6 +214,7 @@ async function handler(req, res) {
           cityPartnerResult,
           countyPartnerResult,
           opportunityPagePartnerResult,
+          industrySponsorResult,
           membershipResult,
           listingResult,
         })
@@ -218,6 +227,7 @@ async function handler(req, res) {
       const countyPartnerResult = await handleCountyPartnerSubscriptionDeleted(subscription);
       const opportunityPagePartnerResult =
         await handleOpportunityPagePartnerSubscriptionDeleted(subscription);
+      const industrySponsorResult = await handleIndustrySponsorSubscriptionDeleted(subscription);
       const membershipResult = await handleMembershipSubscriptionDeleted(subscription);
       const listingResult = await handleOpportunityListingSubscriptionDeleted(subscription);
       res.statusCode = 200;
@@ -227,6 +237,7 @@ async function handler(req, res) {
           cityPartnerResult,
           countyPartnerResult,
           opportunityPagePartnerResult,
+          industrySponsorResult,
           membershipResult,
           listingResult,
         })

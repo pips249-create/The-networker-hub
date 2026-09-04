@@ -332,6 +332,7 @@
     { "source": "/api/city-partner", "destination": "/api/cms-block?route=city-partner" },
     { "source": "/api/county-partner", "destination": "/api/cms-block?route=county-partner" },
     { "source": "/api/opportunity-page-partner", "destination": "/api/cms-block?route=opportunity-page-partner" },
+    { "source": "/api/industry-sponsor", "destination": "/api/cms-block?route=industry-sponsor" },
     {
       "source": "/events/booking-success",
       "destination": "/events/booking-success.html"

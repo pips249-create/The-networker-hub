@@ -514,15 +514,19 @@
   }
 
   function regionPartnerBadge(slot) {
-    return String(slot || '').indexOf('networking_county_partner_') === 0
-      ? 'County Sponsor'
-      : 'City Sponsor';
+    var key = String(slot || '');
+    if (key.indexOf('networking_county_partner_') === 0) return 'County Sponsor';
+    if (key.indexOf('opportunity_industry_sponsor_') === 0) return 'Industry Sponsor';
+    return 'City Sponsor';
   }
 
   function regionPartnerAdvertiseHref(slot) {
-    return String(slot || '').indexOf('networking_county_partner_') === 0
-      ? '/advertising#county-partner-package'
-      : '/advertising#city-partner-package';
+    var key = String(slot || '');
+    if (key.indexOf('networking_county_partner_') === 0) return '/advertising#county-partner-package';
+    if (key.indexOf('opportunity_industry_sponsor_') === 0) {
+      return '/advertising#industry-sponsor-package';
+    }
+    return '/advertising#city-partner-package';
   }
 
   function loadCarouselAds(slot) {

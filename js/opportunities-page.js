@@ -1796,6 +1796,25 @@
     activeCategory = !id || activeCategory === id ? '' : id;
     syncCategorySelect();
     syncIndustryChipUi();
+    syncIndustrySponsorAd();
+  }
+
+  function syncIndustrySponsorAd() {
+    var shell = document.getElementById('opp-industry-sponsor');
+    if (!shell) return;
+    if (!activeCategory) {
+      shell.hidden = true;
+      shell.innerHTML = '';
+      return;
+    }
+    if (!window.CmsAdBlocks || !window.CmsAdBlocks.mountCityPartnerSlot) {
+      shell.hidden = true;
+      return;
+    }
+    var slot = 'opportunity_industry_sponsor_' + activeCategory;
+    window.CmsAdBlocks.mountCityPartnerSlot(shell, slot).then(function (ok) {
+      shell.hidden = !ok;
+    });
   }
 
   function buildIndustryChips() {
@@ -1811,9 +1830,18 @@
     );
     els.industryChipsRoot.innerHTML = chips
       .map(function (chip, index) {
+        var iconHtml = '';
+        if (chip.id && window.HUB_INDUSTRY_ICONS && window.HUB_INDUSTRY_ICONS.iconForIndustry) {
+          var mark = window.HUB_INDUSTRY_ICONS.iconForIndustry(chip.id);
+          if (mark && mark.chip) {
+            iconHtml =
+              '<span class="event-type-chip-icon" aria-hidden="true">' + mark.chip + '</span>';
+          }
+        }
         return (
           '<button type="button" class="event-type-chip' +
           (index === 0 ? ' is-active' : '') +
+          (iconHtml ? ' event-type-chip--with-icon' : '') +
           '" data-category="' +
           escapeHtml(chip.id) +
           '" aria-pressed="' +
@@ -1821,6 +1849,7 @@
           '" title="' +
           escapeHtml(chip.label) +
           '">' +
+          iconHtml +
           '<span class="event-type-chip-label-full">' +
           escapeHtml(chip.label) +
           '</span>' +

@@ -543,6 +543,99 @@ async function createCountyPartnerCheckoutSession(opts) {
 }
 
 /**
+ * Industry Sponsor — monthly subscription or prepaid 6 / 12 months.
+ */
+async function createIndustrySponsorCheckoutSession(opts) {
+  const stripe = getStripeClient();
+  const industries = Array.isArray(opts.industries) ? opts.industries : [];
+  if (!industries.length) throw new Error('missing_industries');
+
+  const {
+    normalizeIndustrySponsorTerm,
+    calculateIndustrySponsorQuote,
+    listIndustrySponsorCategories,
+  } = require('./opportunity-industry-sponsors');
+
+  const term = normalizeIndustrySponsorTerm(opts.termMonths != null ? opts.termMonths : opts.term);
+  const quote = calculateIndustrySponsorQuote(
+    industries.length,
+    new Date(),
+    term.termMonths || 'monthly'
+  );
+  const prepaid = quote.billingMode === 'prepaid';
+  const industryNames = industries
+    .map((slug) => {
+      const match = listIndustrySponsorCategories().find((r) => r.slug === slug);
+      return match ? match.name : slug;
+    })
+    .join(', ');
+
+  const launchNote = quote.isLaunch ? ' Launch rate until 1 Dec 2026.' : '';
+  const termLabel = prepaid
+    ? quote.termMonths === 12
+      ? '1 year prepaid'
+      : quote.termMonths + ' month' + (quote.termMonths === 1 ? '' : 's') + ' prepaid'
+    : 'monthly';
+  const discountNote =
+    prepaid && quote.discountPercent > 0
+      ? ' Includes ' + quote.discountPercent + '% prepaid discount.'
+      : '';
+  const vatNote =
+    quote.vatPence > 0
+      ? ' Includes 20% VAT (£' + (quote.vatPence / 100).toFixed(2) + ').'
+      : '';
+
+  const lineItems = [
+    {
+      price_data: {
+        currency: 'gbp',
+        product_data: {
+          name: 'Industry Sponsor — ' + industryNames + (prepaid ? ' (' + termLabel + ')' : ''),
+          description:
+            'Exclusive logo on Opportunities browse when that industry is filtered. Website only.' +
+            launchNote +
+            discountNote +
+            vatNote +
+            (prepaid ? '' : ' Renews monthly until cancelled.'),
+        },
+        unit_amount: quote.totalPence,
+        ...(prepaid ? {} : { recurring: { interval: 'month' } }),
+      },
+      quantity: 1,
+    },
+  ];
+
+  const metadata = {
+    checkout_type: 'hub_sponsorship',
+    revenue_category: 'opportunities',
+    placement: 'industry_sponsor',
+    opportunity_industries: industries.join(','),
+    package_name: 'Industry Sponsor — ' + industryNames,
+    billing_mode: quote.billingMode,
+    term_months: prepaid ? String(quote.termMonths) : 'monthly',
+    discount_percent: String(quote.discountPercent || 0),
+    amount_ex_vat_pence: String(quote.subtotalExVatPence),
+    vat_pence: String(quote.vatPence),
+  };
+
+  const sessionParams = {
+    mode: prepaid ? 'payment' : 'subscription',
+    customer_email: opts.email,
+    client_reference_id: 'industry-sponsor-' + industries.join('-').slice(0, 100),
+    metadata,
+    success_url: opts.successUrl,
+    cancel_url: opts.cancelUrl,
+    line_items: lineItems,
+  };
+
+  if (!prepaid) {
+    sessionParams.subscription_data = { metadata };
+  }
+
+  return stripe.checkout.sessions.create(sessionParams);
+}
+
+/**
  * Opportunity Page Partner — £600/slot/mo, monthly or prepaid 1 / 3 / 6 / 12 months.
  */
 async function createOpportunityPagePartnerCheckoutSession(opts) {
@@ -770,6 +863,7 @@ module.exports = {
   createConnectionsCreditsCheckoutSession,
   createCityPartnerCheckoutSession,
   createCountyPartnerCheckoutSession,
+  createIndustrySponsorCheckoutSession,
   createOpportunityPagePartnerCheckoutSession,
   createMembershipCheckoutSession,
   createMembershipBillingPortalSession,

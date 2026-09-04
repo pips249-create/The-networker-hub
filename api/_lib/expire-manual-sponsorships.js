@@ -80,6 +80,8 @@ async function expireTimedSponsorBlocks(sb, now = new Date()) {
     const slot = String(row.slot || '');
     if (String(row.sponsor_subscription_id || '').toLowerCase().startsWith('prepaid:')) continue;
     if (slot.startsWith('networking_city_partner_')) continue;
+    if (slot.startsWith('networking_county_partner_')) continue;
+    if (slot.startsWith('opportunity_industry_sponsor_')) continue;
     if (!sponsorPlacementEnded(row, now)) continue;
 
     const { error: updateError } = await sb

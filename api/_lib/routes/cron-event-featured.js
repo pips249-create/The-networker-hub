@@ -5,6 +5,7 @@ const { runFeaturedListingMaintenance } = require('../event-featured');
 const { expireFeaturedOrganisers } = require('../admin-spotlight-data');
 const { expirePrepaidCityPartnerSlots } = require('../city-partner-subscriptions');
 const { expirePrepaidCountyPartnerSlots } = require('../county-partner-subscriptions');
+const { expirePrepaidIndustrySponsorSlots } = require('../industry-sponsor-subscriptions');
 const { expireManualSponsorshipPlacements } = require('../expire-manual-sponsorships');
 
 module.exports = async function handler(req, res) {
@@ -25,12 +26,14 @@ module.exports = async function handler(req, res) {
       organisersExpired,
       cityPartnersExpired,
       countyPartnersExpired,
+      industrySponsorsExpired,
       manualSponsorshipsExpired,
     ] = await Promise.all([
       runFeaturedListingMaintenance(sb),
       expireFeaturedOrganisers(sb),
       expirePrepaidCityPartnerSlots(sb),
       expirePrepaidCountyPartnerSlots(sb),
+      expirePrepaidIndustrySponsorSlots(sb),
       expireManualSponsorshipPlacements(sb),
     ]);
     return json(res, 200, {
@@ -39,6 +42,7 @@ module.exports = async function handler(req, res) {
       organisersExpired,
       cityPartnersExpired,
       countyPartnersExpired,
+      industrySponsorsExpired,
       manualSponsorshipsExpired,
     });
   } catch (e) {

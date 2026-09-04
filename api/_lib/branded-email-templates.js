@@ -147,6 +147,11 @@ const BRANDED_EMAIL_TEMPLATES = {
     marker: 'hub-email-layout-v3-purple',
     subject: 'Opportunity Page Partner confirmed — send your logo & link',
   },
+  industry_sponsor_payment_welcome: {
+    file: 'industry-sponsor-payment-welcome.html',
+    marker: 'hub-email-layout-v3-purple',
+    subject: 'Industry Sponsor confirmed — send your logo & link',
+  },
   city_partner_slot_open: {
     file: 'city-partner-slot-open.html',
     marker: 'hub-email-layout-v3-purple',
