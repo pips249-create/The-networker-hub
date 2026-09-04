@@ -122,6 +122,7 @@ module.exports = async function handler(req, res) {
       stripeConnectEnabled: stripe.stripeConnectEnabled,
       stripeMode: stripe.stripeMode,
       checkoutReady: stripe.checkoutReady,
+      stripeWebhookEndpointUrl: stripe.webhookEndpointUrl,
     },
     hints: {
       missingSessionSecret: !env.hasSessionSecret
@@ -162,6 +163,14 @@ module.exports = async function handler(req, res) {
       checkoutWebhookReady:
         stripe.checkoutReady
           ? 'Stripe checkout + webhook env vars are set. Run one test purchase on production to confirm webhook → registration row in Supabase (email optional until Resend domain is verified).'
+          : null,
+      stripeWebhookEndpoint:
+        stripe.checkoutReady && cron.isProduction
+          ? `Stripe Dashboard webhook URL must be ${stripe.webhookEndpointUrl}. Stripe does not follow redirects — the-networker-hub.vercel.app 308-redirects to www.thenetworkeruk.com and webhooks there fail.`
+          : null,
+      stripeWebhookUrlWarning:
+        stripe.siteUrlUsesVercelPreviewHost && cron.isProduction
+          ? 'SITE_URL still uses the-networker-hub.vercel.app. Set SITE_URL=https://www.thenetworkeruk.com in Vercel Production, redeploy, and update the Stripe webhook endpoint URL to match.'
           : null,
       checkoutEmailReady:
         stripe.checkoutReady && email.emailSendingConfigured

@@ -7,12 +7,6 @@
   "redirects": [
     {
       "source": "/:path*",
-      "has": [{ "type": "host", "value": "thenetworkeruk.com" }],
-      "destination": "https://www.thenetworkeruk.com/:path*",
-      "permanent": true
-    },
-    {
-      "source": "/:path*",
       "has": [{ "type": "host", "value": "thenetworkerinternational.com" }],
       "destination": "https://www.thenetworkerinternational.com/:path*",
       "permanent": true

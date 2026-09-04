@@ -6,7 +6,7 @@ Sponsorship and advertising deals invoiced through Stripe are logged automatical
 
 1. Run migration `107_hub_revenue_stripe.sql` in Supabase (after `105_hub_revenue_deals.sql`).
 2. In [Stripe Dashboard → Webhooks](https://dashboard.stripe.com/webhooks), add **`invoice.paid`** to your existing endpoint:
-   - `https://the-networker-hub.vercel.app/api/stripe-webhook`
+   - `https://www.thenetworkeruk.com/api/stripe-webhook`
 3. Redeploy so the updated webhook handler is live.
 4. **Sync Stripe products & prices** (automated — run once per Stripe mode):
 

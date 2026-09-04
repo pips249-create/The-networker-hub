@@ -23,7 +23,7 @@ Run once in [Supabase SQL Editor](https://supabase.com/dashboard):
 | `SUPABASE_SERVICE_ROLE_KEY` | Yes | Webhook inserts registrations |
 | `SUPABASE_ANON_KEY` | Yes | Sign-in before checkout |
 | `SESSION_SECRET` | Yes | Auth cookies |
-| `SITE_URL` | Yes | Email links, e.g. `https://the-networker-hub.vercel.app` |
+| `SITE_URL` | Yes | Email links, e.g. `https://www.thenetworkeruk.com` |
 | `STRIPE_SECRET_KEY` | **Yes (paid checkout)** | `sk_test_…` or `sk_live_…` — creates Checkout with booking fee |
 | `STRIPE_CONNECT_ENABLED` | No (off by default) | Set `true` to route ticket revenue to organiser Connect accounts (destination charges) |
 | `STRIPE_WEBHOOK_SECRET` | **Yes (prod)** | From Stripe webhook endpoint |
@@ -47,9 +47,9 @@ Redeploy after changing env vars.
 ## 3. Stripe webhook
 
 1. [Stripe Dashboard](https://dashboard.stripe.com) → **Developers → Webhooks**
-2. **Add endpoint:** `https://the-networker-hub.vercel.app/api/stripe-webhook`
+2. **Add endpoint:** `https://www.thenetworkeruk.com/api/stripe-webhook` (use the production domain — **not** `the-networker-hub.vercel.app`, which 308-redirects and Stripe will not follow)
 3. Events: **`checkout.session.completed`**, **`customer.subscription.updated`**, **`customer.subscription.deleted`**, **`invoice.paid`**, and **`charge.refunded`**
-4. Copy **Signing secret** → `STRIPE_WEBHOOK_SECRET` in Vercel
+4. Copy **Signing secret** → `STRIPE_WEBHOOK_SECRET` in Vercel (must match this live endpoint; trim whitespace when pasting)
 
 `customer.subscription.updated` / `customer.subscription.deleted` drive City Partner slot release, waitlist emails, and scheduled open dates when a sponsor cancels at period end. The same events (plus `checkout.session.completed` / `invoice.paid`) sync platform-billed organiser memberships on the member roster (`checkout_type=organiser_membership`).
 
@@ -150,7 +150,8 @@ Run in **test** and **live** modes separately (`sk_test_…` vs `sk_live_…` in
 
 | Symptom | Fix |
 |---------|-----|
-| Webhook 400 `invalid_signature` | Check `STRIPE_WEBHOOK_SECRET`; redeploy |
+| Stripe email: webhook delivery failures / "other errors" | Confirm endpoint URL is `https://www.thenetworkeruk.com/api/stripe-webhook` (not `the-networker-hub.vercel.app` — that host 308-redirects and Stripe will not follow). Then confirm `STRIPE_WEBHOOK_SECRET` matches the **live** endpoint signing secret and redeploy. Resend failed events after fixing. |
+| Webhook 400 `invalid_signature` | Check `STRIPE_WEBHOOK_SECRET` matches the live endpoint (not test); remove quotes/newlines; redeploy |
 | Webhook `missing_event_id_metadata` | Add `event_id` metadata on Payment Link, or use hub Buy button |
 | Buy button shows hint | Set `stripe_payment_link` on event/ticket, meta tag, or `?stripe=` |
 | No confirmation email | Set `RESEND_API_KEY` + `RESEND_FROM`; run migration `027` |
