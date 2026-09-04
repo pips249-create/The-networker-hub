@@ -27,6 +27,11 @@ const {
   handleCountyPartnerSubscriptionDeleted,
 } = require('./_lib/county-partner-subscriptions');
 const {
+  handleOpportunityPagePartnerCheckoutCompleted,
+  handleOpportunityPagePartnerSubscriptionUpdated,
+  handleOpportunityPagePartnerSubscriptionDeleted,
+} = require('./_lib/opportunity-page-partner-subscriptions');
+const {
   handleOpportunityListingSubscriptionUpdated,
   handleOpportunityListingSubscriptionDeleted,
   handleOpportunityListingInvoicePaid,
@@ -157,6 +162,9 @@ async function handler(req, res) {
       const sponsorshipResult = await handleSponsorshipCheckoutCompleted(session);
       const cityPartnerResult = await handleCityPartnerCheckoutCompleted(session);
       const countyPartnerResult = await handleCountyPartnerCheckoutCompleted(session);
+      const opportunityPagePartnerResult = await handleOpportunityPagePartnerCheckoutCompleted(
+        session
+      );
       const membershipResult = await handleMembershipCheckoutCompleted(session);
       const premiumResult = await handleOpportunityPremiumCheckout(session);
       const listingResult = await handleOpportunityListingCheckout(session);
@@ -171,6 +179,7 @@ async function handler(req, res) {
           sponsorshipResult,
           cityPartnerResult,
           countyPartnerResult,
+          opportunityPagePartnerResult,
           membershipResult,
           premiumResult,
           listingResult,
@@ -186,11 +195,20 @@ async function handler(req, res) {
       const subscription = event.data.object || {};
       const cityPartnerResult = await handleCityPartnerSubscriptionUpdated(subscription);
       const countyPartnerResult = await handleCountyPartnerSubscriptionUpdated(subscription);
+      const opportunityPagePartnerResult =
+        await handleOpportunityPagePartnerSubscriptionUpdated(subscription);
       const membershipResult = await handleMembershipSubscriptionUpdated(subscription);
       const listingResult = await handleOpportunityListingSubscriptionUpdated(subscription);
       res.statusCode = 200;
       return res.end(
-        JSON.stringify({ ok: true, cityPartnerResult, countyPartnerResult, membershipResult, listingResult })
+        JSON.stringify({
+          ok: true,
+          cityPartnerResult,
+          countyPartnerResult,
+          opportunityPagePartnerResult,
+          membershipResult,
+          listingResult,
+        })
       );
     }
 
@@ -198,11 +216,20 @@ async function handler(req, res) {
       const subscription = event.data.object || {};
       const cityPartnerResult = await handleCityPartnerSubscriptionDeleted(subscription);
       const countyPartnerResult = await handleCountyPartnerSubscriptionDeleted(subscription);
+      const opportunityPagePartnerResult =
+        await handleOpportunityPagePartnerSubscriptionDeleted(subscription);
       const membershipResult = await handleMembershipSubscriptionDeleted(subscription);
       const listingResult = await handleOpportunityListingSubscriptionDeleted(subscription);
       res.statusCode = 200;
       return res.end(
-        JSON.stringify({ ok: true, cityPartnerResult, countyPartnerResult, membershipResult, listingResult })
+        JSON.stringify({
+          ok: true,
+          cityPartnerResult,
+          countyPartnerResult,
+          opportunityPagePartnerResult,
+          membershipResult,
+          listingResult,
+        })
       );
     }
 

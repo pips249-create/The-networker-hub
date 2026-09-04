@@ -632,6 +632,15 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
       'Your subscription renews monthly until cancelled. We publish your logo once creative is approved.';
   }
 
+  if (slug === 'opportunity_page_partner_payment_welcome') {
+    vars.contact_name = vars.contact_name || 'Alex';
+    vars.advertising_url = vars.advertising_url || site + '/advertising#ad-pkg-opportunities-mini';
+    vars.creative_email = vars.creative_email || supportEmail();
+    vars.monthly_note =
+      vars.monthly_note ||
+      'Your Page Partner slot is reserved. We publish your logo on opportunity pages and emails once creative is approved.';
+  }
+
   if (slug === 'event_details_updated') {
     vars.changes_section =
       vars.changes_section ||

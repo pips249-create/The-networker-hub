@@ -74,6 +74,9 @@ module.exports = wrapHandler(async function handler(req, res) {
   if (String(req.query?.route || '').trim() === 'county-partner') {
     return require('./_lib/routes/county-partner')(req, res);
   }
+  if (String(req.query?.route || '').trim() === 'opportunity-page-partner') {
+    return require('./_lib/routes/opportunity-page-partner')(req, res);
+  }
 
   res.setHeader('Access-Control-Allow-Origin', '*');
   // Keep short: Command Centre sponsor edits must appear on browse heroes quickly.

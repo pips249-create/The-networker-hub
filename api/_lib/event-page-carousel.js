@@ -79,6 +79,18 @@ function normalizeCarouselAd(raw, index, slot) {
     logo_band_dark: raw?.logo_band_dark === true || raw?.logoBandDark === true,
     active: raw?.active !== false,
     ends_at: endsAt,
+    sponsor_subscription_id: String(
+      raw?.sponsor_subscription_id || raw?.sponsorSubscriptionId || ''
+    ).trim() || null,
+    sponsor_email: String(raw?.sponsor_email || raw?.sponsorEmail || '')
+      .trim()
+      .toLowerCase() || null,
+    reserved_at: (() => {
+      const rawTs = raw?.reserved_at || raw?.reservedAt || '';
+      if (!rawTs) return null;
+      const d = new Date(rawTs);
+      return Number.isNaN(d.getTime()) ? null : d.toISOString();
+    })(),
   };
 }
 
@@ -134,6 +146,23 @@ function isPublishableCarouselAd(ad, now = new Date()) {
   return hasValidCarouselLogo(ad.logo_url) && hasValidCarouselCta(ad.cta_url);
 }
 
+/** Slot taken by live creative or an unpaid-creative paid hold. */
+function isCarouselAdHeld(ad, now = new Date()) {
+  if (!ad) return false;
+  if (isPublishableCarouselAd(ad, now)) return true;
+  const subId = String(ad.sponsor_subscription_id || '').trim();
+  if (!subId) return false;
+  if (ad.ends_at) {
+    const ends = new Date(ad.ends_at);
+    if (!Number.isNaN(ends.getTime()) && ends.getTime() <= now.getTime()) return false;
+  }
+  return true;
+}
+
+function heldCarouselAds(ads, slot, now = new Date()) {
+  return normalizeCarouselAdsList(ads, slot).filter((ad) => isCarouselAdHeld(ad, now));
+}
+
 function publishableCarouselAds(ads, slot) {
   return normalizeCarouselAdsList(ads, slot).filter(isPublishableCarouselAd);
 }
@@ -154,7 +183,9 @@ module.exports = {
   normalizeCarouselAd,
   normalizeCarouselAdsList,
   publishableCarouselAds,
+  heldCarouselAds,
   isPublishableCarouselAd,
+  isCarouselAdHeld,
   hasValidCarouselLogo,
   hasValidCarouselCta,
   sanitizeCtaColor,

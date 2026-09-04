@@ -9,6 +9,7 @@ const {
   OPPORTUNITY_PAGE_CAROUSEL_SLOT,
   parseCarouselBody,
   publishableCarouselAds,
+  heldCarouselAds,
 } = require('./event-page-carousel');
 
 const HEADLINE_SLOTS = {
@@ -34,10 +35,11 @@ function headlineAvailability(row, slot) {
 }
 
 function pagePartnerAvailability(row, slot, max) {
-  if (!row || row.active === false) {
+  if (!row) {
     return { max, taken: 0, available: max };
   }
-  const taken = publishableCarouselAds(parseCarouselBody(row.body), slot).length;
+  // Count paid holds even without logo, so self-serve checkout cannot double-book.
+  const taken = heldCarouselAds(parseCarouselBody(row.body), slot).length;
   return {
     max,
     taken,
