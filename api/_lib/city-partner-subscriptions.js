@@ -1,7 +1,6 @@
 /**
  * City Partner Stripe subscriptions — reserve cms_blocks slots and release on cancel.
  */
-const { getSupabaseAdmin } = require('./supabase');
 const {
   normalizeCitySlugs,
   cityPartnerSlotKey,
@@ -11,7 +10,14 @@ const {
   notifyCityPartnerWaitlistForSlug,
   notifyCityPartnerWaitlistOpeningSoon,
 } = require('./city-partner-waitlist');
-const { sendCityPartnerPaymentWelcome } = require('./city-partner-emails');
+
+function adminSb() {
+  return require('./supabase').getSupabaseAdmin();
+}
+
+function sendWelcome(opts) {
+  return require('./city-partner-emails').sendCityPartnerPaymentWelcome(opts);
+}
 
 function normalizeMeta(metadata) {
   return metadata && typeof metadata === 'object' ? metadata : {};
@@ -69,9 +75,51 @@ function periodEndIso(subscription) {
   return new Date(ts * 1000).toISOString();
 }
 
+/**
+ * Ensure placeholder cms_blocks rows exist for City Partner slots.
+ * Many cities were added to the region list after migration 167, and production
+ * is missing rows (e.g. Chester). UPDATE-only reservation then silently no-ops
+ * after a successful Stripe payment (including Apple Pay).
+ */
+async function ensureCityPartnerSlotRows(sb, cities) {
+  const slugs = normalizeCitySlugs(cities);
+  const ensured = [];
+
+  for (const slug of slugs) {
+    const slot = cityPartnerSlotKey(slug);
+    const { data: existing, error: selectError } = await sb
+      .from('cms_blocks')
+      .select('id')
+      .eq('slot', slot)
+      .maybeSingle();
+    if (selectError) throw new Error(selectError.message);
+    if (existing?.id) continue;
+
+    const { error: insertError } = await sb.from('cms_blocks').insert({
+      slot,
+      title: '',
+      body: '',
+      cta_label: 'Find out more',
+      cta_url: 'https://',
+      active: false,
+      include_in_emails: false,
+    });
+    if (insertError) {
+      // Concurrent insert is fine — reservation will update the row.
+      if (!/duplicate|unique/i.test(String(insertError.message || ''))) {
+        throw new Error(insertError.message);
+      }
+    }
+    ensured.push({ slug, slot });
+  }
+
+  return ensured;
+}
+
 async function reserveCityPartnerSlots(sb, cities, fields) {
   const now = new Date().toISOString();
   const results = [];
+  await ensureCityPartnerSlotRows(sb, cities);
 
   for (const slug of cities) {
     const slot = cityPartnerSlotKey(slug);
@@ -81,8 +129,15 @@ async function reserveCityPartnerSlots(sb, cities, fields) {
       sponsor_available_from: fields.availableFrom || null,
       updated_at: now,
     };
-    const { error } = await sb.from('cms_blocks').update(patch).eq('slot', slot);
+    const { data: updated, error } = await sb
+      .from('cms_blocks')
+      .update(patch)
+      .eq('slot', slot)
+      .select('id');
     if (error) throw new Error(error.message);
+    if (!updated || !updated.length) {
+      throw new Error('city_partner_slot_missing:' + slot);
+    }
     results.push({ slug, slot });
   }
 
@@ -179,7 +234,22 @@ async function handleCityPartnerCheckoutCompleted(session) {
     availableFrom = addMonthsUtc(new Date(), months).toISOString();
   }
 
-  const sb = getSupabaseAdmin();
+  const sb = adminSb();
+  const slots = cities.map((slug) => cityPartnerSlotKey(slug));
+  const { data: existingRows, error: existingError } = await sb
+    .from('cms_blocks')
+    .select('slot, sponsor_subscription_id')
+    .in('slot', slots);
+  if (existingError) throw new Error(existingError.message);
+
+  const bySlot = new Map((existingRows || []).map((row) => [row.slot, row]));
+  const alreadyFinalized =
+    cities.length > 0 &&
+    cities.every((slug) => {
+      const row = bySlot.get(cityPartnerSlotKey(slug));
+      return row && String(row.sponsor_subscription_id || '').trim() === subscriptionId;
+    });
+
   const reserved = await reserveCityPartnerSlots(sb, cities, {
     subscriptionId,
     email: email || null,
@@ -187,9 +257,11 @@ async function handleCityPartnerCheckoutCompleted(session) {
   });
 
   let welcomeEmail = { skipped: true, reason: 'missing_email' };
-  if (email) {
+  if (alreadyFinalized) {
+    welcomeEmail = { skipped: true, reason: 'already_finalized' };
+  } else if (email) {
     try {
-      welcomeEmail = await sendCityPartnerPaymentWelcome({ email, cities });
+      welcomeEmail = await sendWelcome({ email, cities });
     } catch (e) {
       /* Slot reservation succeeds even if welcome email fails */
       welcomeEmail = { ok: false, error: e.message || String(e) };
@@ -202,6 +274,7 @@ async function handleCityPartnerCheckoutCompleted(session) {
     subscriptionId,
     cities,
     welcomeEmail,
+    alreadyFinalized,
     billingMode: prepaid ? 'prepaid' : 'monthly',
     availableFrom,
   };
@@ -266,7 +339,7 @@ async function handleCityPartnerSubscriptionUpdated(subscription) {
     return { skipped: true, reason: 'missing_subscription' };
   }
 
-  const sb = getSupabaseAdmin();
+  const sb = adminSb();
   const metadata = normalizeMeta(subscription.metadata);
   if (!isCityPartnerMetadata(metadata)) {
     const linked = await citiesForSubscription(sb, subscription);
@@ -318,14 +391,14 @@ async function handleCityPartnerSubscriptionDeleted(subscription) {
     return { skipped: true, reason: 'missing_subscription' };
   }
   if (!isCityPartnerMetadata(metadata)) {
-    const sb = getSupabaseAdmin();
+    const sb = adminSb();
     const cities = await citiesForSubscription(sb, subscription);
     if (!cities.length) {
       return { skipped: true, reason: 'not_city_partner' };
     }
   }
 
-  const sb = getSupabaseAdmin();
+  const sb = adminSb();
   const availableFrom = periodEndIso(subscription) || new Date().toISOString();
   return releaseCityPartnerSlotsBySubscription(sb, subscriptionId, {
     availableFrom,
@@ -335,6 +408,10 @@ async function handleCityPartnerSubscriptionDeleted(subscription) {
 
 module.exports = {
   isCityPartnerMetadata,
+  citiesFromMetadata,
+  ensureCityPartnerSlotRows,
+  reserveCityPartnerSlots,
+  releaseCityPartnerSlotsBySubscription,
   handleCityPartnerCheckoutCompleted,
   handleCityPartnerSubscriptionUpdated,
   handleCityPartnerSubscriptionDeleted,

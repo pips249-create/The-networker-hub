@@ -385,7 +385,6 @@ async function createCityPartnerCheckoutSession(opts) {
     .join(', ');
 
   const lineItems = [];
-  const pricing = quote.pricing;
   const launchNote = quote.isLaunch ? ' Launch rate until 1 Dec 2026.' : '';
   const termLabel = prepaid
     ? quote.termMonths === 12
@@ -396,74 +395,31 @@ async function createCityPartnerCheckoutSession(opts) {
     prepaid && quote.discountPercent > 0
       ? ' Includes ' + quote.discountPercent + '% prepaid discount.'
       : '';
+  const vatNote =
+    quote.vatPence > 0
+      ? ' Includes 20% VAT (£' + (quote.vatPence / 100).toFixed(2) + ').'
+      : '';
 
-  if (prepaid) {
-    lineItems.push({
-      price_data: {
-        currency: 'gbp',
-        product_data: {
-          name: 'City Partner — ' + cityNames + ' (' + termLabel + ')',
-          description:
-            'Logo + CTA on regional networking pages. Website only — not in hub emails.' +
-            launchNote +
-            discountNote,
-        },
-        unit_amount: quote.subtotalExVatPence,
+  // Single line item (VAT inclusive) so Apple Pay / wallets show one clear total.
+  // Separate "VAT (20%)" recurring products previously left orphan payments when
+  // cms_blocks rows were missing, and made wallet checkout totals harder to read.
+  lineItems.push({
+    price_data: {
+      currency: 'gbp',
+      product_data: {
+        name: 'City Partner — ' + cityNames + (prepaid ? ' (' + termLabel + ')' : ''),
+        description:
+          'Logo + CTA on regional networking pages. Website only — not in hub emails.' +
+          launchNote +
+          discountNote +
+          vatNote +
+          (prepaid ? '' : ' Renews monthly until cancelled.'),
       },
-      quantity: 1,
-    });
-  } else {
-    if (quote.bundles > 0) {
-      lineItems.push({
-        price_data: {
-          currency: 'gbp',
-          product_data: {
-            name: 'City Partner — 3-city pack',
-            description:
-              'Logo + CTA on three regional networking pages. Website only — not in hub emails.' +
-              launchNote,
-          },
-          unit_amount: pricing.bundle3MonthlyPence,
-          recurring: { interval: 'month' },
-        },
-        quantity: quote.bundles,
-      });
-    }
-
-    if (quote.singles > 0) {
-      lineItems.push({
-        price_data: {
-          currency: 'gbp',
-          product_data: {
-            name: 'City Partner — single city',
-            description:
-              'Logo + CTA on one regional networking page. Website only — not in hub emails.' +
-              launchNote,
-          },
-          unit_amount: pricing.singleMonthlyPence,
-          recurring: { interval: 'month' },
-        },
-        quantity: quote.singles,
-      });
-    }
-  }
-
-  if (quote.vatPence > 0) {
-    lineItems.push({
-      price_data: {
-        currency: 'gbp',
-        product_data: {
-          name: 'VAT (20%)',
-          description: prepaid
-            ? 'VAT on City Partner (' + termLabel + ')'
-            : 'VAT on City Partner (monthly)',
-        },
-        unit_amount: quote.vatPence,
-        ...(prepaid ? {} : { recurring: { interval: 'month' } }),
-      },
-      quantity: 1,
-    });
-  }
+      unit_amount: quote.totalPence,
+      ...(prepaid ? {} : { recurring: { interval: 'month' } }),
+    },
+    quantity: 1,
+  });
 
   const metadata = {
     checkout_type: 'hub_sponsorship',
@@ -476,6 +432,8 @@ async function createCityPartnerCheckoutSession(opts) {
     billing_mode: quote.billingMode,
     term_months: prepaid ? String(quote.termMonths) : 'monthly',
     discount_percent: String(quote.discountPercent || 0),
+    amount_ex_vat_pence: String(quote.subtotalExVatPence),
+    vat_pence: String(quote.vatPence),
   };
 
   const sessionParams = {

@@ -30,6 +30,7 @@
     "check:organiser-journey": "node scripts/smoke-test-organiser-journey.js",
     "reset:email2-claim-retest": "node scripts/reset-email2-claim-retest.js",
     "test:refund-policy": "node scripts/test-refund-policy-compliance.js",
+    "test:city-partner-checkout": "node scripts/test-city-partner-checkout.js",
     "test:opportunity-live-email": "node scripts/test-opportunity-live-email-dedupe.js",
     "test:opportunity-spotlight-slots": "node scripts/test-opportunity-spotlight-slots.js",
     "check:business-ops": "node scripts/check-business-ops-readiness.js",

@@ -542,6 +542,14 @@
                 'Payment could not be verified'
             );
           }
+          if (result.data.finalized === false) {
+            setStatus(
+              'Payment received, but your city could not be reserved automatically. Email rosie@thenetworkeruk.com with your Stripe receipt and we will activate your cities straight away.',
+              'error'
+            );
+            focusCityPartnerPackage();
+            return;
+          }
           setStatus(
             'Thanks — payment confirmed. Your cities are reserved and we have emailed next steps. Send logo and link to rosie@thenetworkeruk.com and we will publish once creative is approved.',
             'ok'

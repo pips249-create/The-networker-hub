@@ -18,7 +18,11 @@ const {
   siteBaseUrl,
 } = require('../stripe-checkout');
 const { joinCityPartnerWaitlist, cityPartnerWaitlistStatus } = require('../city-partner-waitlist');
-const { isCityPartnerMetadata } = require('../city-partner-subscriptions');
+const {
+  isCityPartnerMetadata,
+  ensureCityPartnerSlotRows,
+  handleCityPartnerCheckoutCompleted,
+} = require('../city-partner-subscriptions');
 const { enforceRateLimit } = require('../rate-limit');
 
 function parseBody(req) {
@@ -77,7 +81,11 @@ module.exports = async function handler(req, res) {
           return res.status(409).json({ ok: false, error: 'payment_not_completed' });
         }
 
-        const cities = normalizeCitySlugs(metadata.networking_cities || metadata.networkingCities || '');
+        // Webhook may have failed (e.g. vercel.app 308 redirect). Finalize on return.
+        const finalized = await handleCityPartnerCheckoutCompleted(session);
+        const cities = Array.isArray(finalized?.cities) && finalized.cities.length
+          ? finalized.cities
+          : normalizeCitySlugs(metadata.networking_cities || metadata.networkingCities || '');
         const email = String(
           session.customer_details?.email || session.customer_email || metadata.sponsor_email || ''
         )
@@ -87,6 +95,8 @@ module.exports = async function handler(req, res) {
         return res.status(200).json({
           ok: true,
           verified: true,
+          finalized: Boolean(finalized?.ok),
+          alreadyFinalized: Boolean(finalized?.alreadyFinalized),
           cities,
           email,
           sessionId,
@@ -166,6 +176,9 @@ module.exports = async function handler(req, res) {
           message: validation.message || 'Selected cities are not available',
         });
       }
+
+      // Create missing slot rows before Stripe redirect so reservation cannot no-op.
+      await ensureCityPartnerSlotRows(sb, validation.cities);
 
       const base = siteBaseUrl();
       const session = await createCityPartnerCheckoutSession({
