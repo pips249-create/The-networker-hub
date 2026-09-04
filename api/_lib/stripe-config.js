@@ -1,4 +1,10 @@
 const { getStripeSecretKey } = require('./stripe-checkout');
+const { DEFAULT_PUBLIC_SITE } = require('./hub-brand');
+
+function stripeWebhookEndpointUrl() {
+  const site = String(process.env.SITE_URL || DEFAULT_PUBLIC_SITE).replace(/\/$/, '');
+  return `${site}/api/stripe-webhook`;
+}
 
 function stripeConfigStatus() {
   const secretKey = getStripeSecretKey();
@@ -19,9 +25,14 @@ function stripeConfigStatus() {
     stripeConnectEnabled,
     stripeMode,
     checkoutReady: hasStripeSecretKey && hasStripeWebhookSecret,
+    webhookEndpointUrl: stripeWebhookEndpointUrl(),
+    siteUrlUsesVercelPreviewHost: String(process.env.SITE_URL || '').includes(
+      'the-networker-hub.vercel.app'
+    ),
   };
 }
 
 module.exports = {
   stripeConfigStatus,
+  stripeWebhookEndpointUrl,
 };
