@@ -137,6 +137,11 @@ const BRANDED_EMAIL_TEMPLATES = {
     marker: 'hub-email-layout-v3-purple',
     subject: 'City Partner confirmed — send your logo & link',
   },
+  county_partner_payment_welcome: {
+    file: 'county-partner-payment-welcome.html',
+    marker: 'hub-email-layout-v3-purple',
+    subject: 'County Sponsor confirmed — send your logo & link',
+  },
   city_partner_slot_open: {
     file: 'city-partner-slot-open.html',
     marker: 'hub-email-layout-v3-purple',

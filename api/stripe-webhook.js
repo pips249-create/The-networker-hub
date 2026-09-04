@@ -22,6 +22,11 @@ const {
   handleCityPartnerSubscriptionDeleted,
 } = require('./_lib/city-partner-subscriptions');
 const {
+  handleCountyPartnerCheckoutCompleted,
+  handleCountyPartnerSubscriptionUpdated,
+  handleCountyPartnerSubscriptionDeleted,
+} = require('./_lib/county-partner-subscriptions');
+const {
   handleOpportunityListingSubscriptionUpdated,
   handleOpportunityListingSubscriptionDeleted,
   handleOpportunityListingInvoicePaid,
@@ -151,6 +156,7 @@ async function handler(req, res) {
       const session = event.data.object || {};
       const sponsorshipResult = await handleSponsorshipCheckoutCompleted(session);
       const cityPartnerResult = await handleCityPartnerCheckoutCompleted(session);
+      const countyPartnerResult = await handleCountyPartnerCheckoutCompleted(session);
       const membershipResult = await handleMembershipCheckoutCompleted(session);
       const premiumResult = await handleOpportunityPremiumCheckout(session);
       const listingResult = await handleOpportunityListingCheckout(session);
@@ -164,6 +170,7 @@ async function handler(req, res) {
           ok: true,
           sponsorshipResult,
           cityPartnerResult,
+          countyPartnerResult,
           membershipResult,
           premiumResult,
           listingResult,
@@ -178,19 +185,25 @@ async function handler(req, res) {
     if (event.type === 'customer.subscription.updated') {
       const subscription = event.data.object || {};
       const cityPartnerResult = await handleCityPartnerSubscriptionUpdated(subscription);
+      const countyPartnerResult = await handleCountyPartnerSubscriptionUpdated(subscription);
       const membershipResult = await handleMembershipSubscriptionUpdated(subscription);
       const listingResult = await handleOpportunityListingSubscriptionUpdated(subscription);
       res.statusCode = 200;
-      return res.end(JSON.stringify({ ok: true, cityPartnerResult, membershipResult, listingResult }));
+      return res.end(
+        JSON.stringify({ ok: true, cityPartnerResult, countyPartnerResult, membershipResult, listingResult })
+      );
     }
 
     if (event.type === 'customer.subscription.deleted') {
       const subscription = event.data.object || {};
       const cityPartnerResult = await handleCityPartnerSubscriptionDeleted(subscription);
+      const countyPartnerResult = await handleCountyPartnerSubscriptionDeleted(subscription);
       const membershipResult = await handleMembershipSubscriptionDeleted(subscription);
       const listingResult = await handleOpportunityListingSubscriptionDeleted(subscription);
       res.statusCode = 200;
-      return res.end(JSON.stringify({ ok: true, cityPartnerResult, membershipResult, listingResult }));
+      return res.end(
+        JSON.stringify({ ok: true, cityPartnerResult, countyPartnerResult, membershipResult, listingResult })
+      );
     }
 
     if (event.type === 'invoice.paid') {

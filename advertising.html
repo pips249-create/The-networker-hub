@@ -284,15 +284,18 @@
             <p class="ad-package-placement">Own a full county territory page — built for franchise networks and county-wide meeting programmes.</p>
             <p class="ad-package-pitch">Groups used to pay hundreds for a couple of county email blasts. County Sponsor puts your brand on the county networking hub year-round — beside local intro copy, exclusive to one partner per county.</p>
             <p class="ad-package-price">£49 <span>/ county / month + VAT</span> <span class="ad-package-price-note">launch</span> · £99 <span>standard + VAT</span></p>
-            <p class="ad-package-term-note">Monthly, 6 months or yearly · enquire to book · save 10% / 15% on prepaid terms</p>
+            <p class="ad-package-term-note">Monthly, 6 months or yearly · checkout online · save 10% / 15% on prepaid terms</p>
             <ul>
               <li><strong>County exclusivity:</strong> One partner per county on the county networking hub (/networking/:county).</li>
               <li><strong>Franchise-ready reach:</strong> Match how networks like WIBN already buy and think — by territory, not just a single city.</li>
               <li><strong>Better than a one-off blast:</strong> Ongoing presence undercuts typical £250 county email campaigns.</li>
+              <li><strong>Flexible billing:</strong> Pay monthly and cancel any time, or prepay 6 or 12 months and save 10% / 15%.</li>
               <li><strong>Website only:</strong> Logo + link on the county hub — not included in hub emails.</li>
             </ul>
-            <p class="ad-package-note">Launch counties: Berkshire, Buckinghamshire, Cambridgeshire, Cheshire, Essex, Hampshire, Hertfordshire, Kent, Lancashire, Oxfordshire, Surrey, Sussex.</p>
-            <a class="ad-package-cta ad-enquiry-jump" href="#ad-enquiry" data-ad-enquiry-section="Events" data-ad-enquiry-package="County Sponsor">Enquire about a county →</a>
+            <div class="city-partner-exclusivity-summary" id="county-partner-booked-summary" hidden>
+              <p class="city-partner-exclusivity-heading"><strong>Exclusivity status: claimed counties</strong></p>
+              <ul class="city-partner-booked-list" id="county-partner-booked-summary-list"></ul>
+            </div>
           </div>
           <div class="ad-package-preview ad-package-preview--city-partner">
             <p class="ad-preview-label">Example</p>
@@ -314,6 +317,68 @@
                 </div>
               </div>
             </div>
+            <p class="ad-preview-label ad-preview-label--checkout">Checkout</p>
+            <p class="city-partner-vat-note">Prices ex-VAT · 20% VAT added at checkout · monthly, 6 months or yearly (10% / 15% off prepaid terms).</p>
+            <div class="city-partner-checkout" id="county-partner-checkout">
+              <details class="city-partner-available-panel" id="county-partner-available-panel" open>
+                <summary class="city-partner-city-picker-trigger">
+                  <span class="city-partner-city-picker-copy">
+                    <strong>Select your counties</strong>
+                    <span class="city-partner-city-picker-hint">Click to browse, select one or more, then see pricing below</span>
+                  </span>
+                  <span class="city-partner-available-count" id="county-partner-available-count-checkout">…</span>
+                  <span class="city-partner-city-picker-chevron" aria-hidden="true"></span>
+                </summary>
+                <div class="city-partner-city-grid" id="county-partner-county-list"></div>
+              </details>
+              <fieldset class="city-partner-term-fieldset">
+                <legend class="city-partner-section-label">Billing</legend>
+                <div class="city-partner-term-options" id="county-partner-term-options">
+                  <label class="city-partner-term-option">
+                    <input type="radio" name="county-partner-term" value="monthly" checked>
+                    <span class="city-partner-term-option-copy">
+                      <strong>Monthly</strong>
+                      <em>Cancel any time</em>
+                    </span>
+                  </label>
+                  <label class="city-partner-term-option">
+                    <input type="radio" name="county-partner-term" value="6">
+                    <span class="city-partner-term-option-copy">
+                      <strong>6 months</strong>
+                      <em>Prepaid · save 10%</em>
+                    </span>
+                  </label>
+                  <label class="city-partner-term-option">
+                    <input type="radio" name="county-partner-term" value="12">
+                    <span class="city-partner-term-option-copy">
+                      <strong>Yearly</strong>
+                      <em>Prepaid · save 15%</em>
+                    </span>
+                  </label>
+                </div>
+              </fieldset>
+              <div class="city-partner-quote" id="county-partner-quote">
+                <p class="city-partner-quote-empty">Select one or more available counties to see the price (+ VAT).</p>
+              </div>
+              <label class="ad-enquiry-field city-partner-email-field">
+                <span>Work email</span>
+                <input type="email" id="county-partner-email" placeholder="you@company.com" autocomplete="email">
+              </label>
+              <p class="ad-enquiry-privacy-note">
+                Used for checkout receipts. See our <a href="/legal-policies#privacy">privacy policy</a>.
+              </p>
+              <button type="button" class="ad-package-cta city-partner-submit" id="county-partner-submit" disabled>Checkout securely →</button>
+              <div class="city-partner-booked-wrap" id="county-partner-booked-wrap" hidden>
+                <p class="city-partner-section-label">Claimed counties</p>
+                <ul class="city-partner-booked-list" id="county-partner-booked-list"></ul>
+                <p class="city-partner-booked-note">Slot taken? <a class="ad-enquiry-jump" href="#ad-enquiry" data-ad-enquiry-section="Events" data-ad-enquiry-package="County Sponsor">Enquire</a> and we will add you to the waitlist when a county opens.</p>
+              </div>
+              <p class="city-partner-status" id="county-partner-status" role="status"></p>
+            </div>
+          </div>
+          <div class="ad-package-span-full ad-package-note ad-package-note--launch" id="county-partner-launch-note" hidden>
+            <p class="city-partner-launch-kicker"><strong>Launch offer</strong> until <span id="county-partner-launch-end">1 Dec 2026</span></p>
+            <p class="city-partner-launch-footnote">£49 / county / month (+ VAT) until <span id="county-partner-launch-end-foot">1 Dec 2026</span>, then £99. Prepaid 6 / 12 month terms save 10% / 15%.</p>
           </div>
         </article>
 
@@ -1519,15 +1584,15 @@
       <div class="ad-faq-list">
         <details class="ad-faq-item">
           <summary>What is the minimum term?</summary>
-          <p>Most packages can run monthly (cancel any time) or as a prepaid 1, 3, 6 or 12 month term — prepaid 3 months saves 5%, 6 months saves 10%, and yearly saves 15%. City and County Sponsor are monthly, 6 months (10% off), or yearly (15% off). Business opportunity directory listings are a monthly subscription (£25 + VAT). City Sponsor checkout lets you pick the term before you pay.</p>
+          <p>Most packages can run monthly (cancel any time) or as a prepaid 1, 3, 6 or 12 month term — prepaid 3 months saves 5%, 6 months saves 10%, and yearly saves 15%. City and County Sponsor are monthly, 6 months (10% off), or yearly (15% off). Business opportunity directory listings are a monthly subscription (£25 + VAT). City and County Sponsor checkout lets you pick the term before you pay.</p>
         </details>
         <details class="ad-faq-item">
           <summary>Can I pay yearly?</summary>
-          <p>Yes. Choose the yearly (12 month) prepaid option for City Sponsor at checkout, or select Yearly on the enquiry form for Headline Sponsor, Page Partner, and other packages. Yearly prepaid saves 15% versus paying month by month.</p>
+          <p>Yes. Choose the yearly (12 month) prepaid option for City or County Sponsor at checkout, or select Yearly on the enquiry form for Headline Sponsor, Page Partner, and other packages. Yearly prepaid saves 15% versus paying month by month.</p>
         </details>
         <details class="ad-faq-item">
           <summary>How quickly can my placement go live?</summary>
-          <p>City Sponsor usually goes live within a few working days once payment is confirmed and we have your logo and link. Headline Sponsor and Page Partner dates are held on enquiry — send creative and we typically publish within 3–5 working days after approval.</p>
+          <p>City and County Sponsor usually go live within a few working days once payment is confirmed and we have your logo and link. Headline Sponsor and Page Partner dates are held on enquiry — send creative and we typically publish within 3–5 working days after approval.</p>
         </details>
         <details class="ad-faq-item">
           <summary>What creative do you need from me?</summary>
@@ -1539,7 +1604,7 @@
         </details>
         <details class="ad-faq-item">
           <summary>Can I pause or cancel?</summary>
-          <p>City Sponsor can be a monthly subscription (cancel any time in Stripe after the current billing period) or prepaid for 6 or 12 months. Headline Sponsor and Page Partner can also run monthly or as a prepaid 1, 3, 6 or 12 month term when you enquire.</p>
+          <p>City and County Sponsor can be a monthly subscription (cancel any time in Stripe after the current billing period) or prepaid for 6 or 12 months. Headline Sponsor and Page Partner can also run monthly or as a prepaid 1, 3, 6 or 12 month term when you enquire.</p>
         </details>
       </div>
     </section>
@@ -1632,8 +1697,9 @@
 <script src="js/cms-sponsor-fields.js?v=20260609c"></script>
 <script src="js/cms-ad-blocks.js?v=20260722cp12"></script>
 <script src="js/hub-turnstile.js?v=20260827sec1"></script>
-<script src="js/advertising-page.js?v=20260827sec1"></script>
+<script src="js/advertising-page.js?v=20260904county1"></script>
 <script src="js/city-partner-advertising.js?v=20260818terms1"></script>
+<script src="js/county-partner-advertising.js?v=20260904county1"></script>
 
 </body>
 </html>

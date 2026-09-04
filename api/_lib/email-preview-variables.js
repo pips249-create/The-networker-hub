@@ -622,6 +622,16 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
       'Your subscription renews monthly until cancelled. We publish your logo once creative is approved.';
   }
 
+  if (slug === 'county_partner_payment_welcome') {
+    vars.contact_name = vars.contact_name || 'Alex';
+    vars.county_names = vars.county_names || 'Cheshire';
+    vars.advertising_url = vars.advertising_url || site + '/advertising#county-partner-package';
+    vars.creative_email = vars.creative_email || supportEmail();
+    vars.monthly_note =
+      vars.monthly_note ||
+      'Your subscription renews monthly until cancelled. We publish your logo once creative is approved.';
+  }
+
   if (slug === 'event_details_updated') {
     vars.changes_section =
       vars.changes_section ||
