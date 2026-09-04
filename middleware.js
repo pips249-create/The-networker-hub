@@ -927,6 +927,9 @@ export default async function middleware(request) {
     dest.port = '';
     return Response.redirect(dest.toString(), 308);
   }
+  // Host redirects for thenetworkeruk.com apex live here (not vercel.json) so
+  // /api/stripe-webhook and /api/resend-webhook can stay reachable on apex —
+  // Stripe does not follow 308 redirects and would mark deliveries as failed.
   if (host === 'thenetworkeruk.com') {
     const dest = new URL(request.url);
     dest.protocol = 'https:';

@@ -2,13 +2,16 @@
  * Stripe webhook — creates registrations after checkout.session.completed.
  * Set STRIPE_WEBHOOK_SECRET in env. Payment links must include metadata:
  *   event_id (required), ticket_id (optional)
+ *
+ * Stripe signs the exact raw request bytes. Never JSON.parse + JSON.stringify
+ * the body before verifying — that changes whitespace and fails every delivery.
  */
-const crypto = require('crypto');
+const Stripe = require('stripe');
 const {
   handleCheckoutSessionCompleted,
   parseStripeEventBody,
 } = require('./_lib/supabase-registrations');
-const { wrapHandler } = require('./_lib/sentry');
+const { wrapHandler, captureServerException } = require('./_lib/sentry');
 const { isSupabaseConfigured } = require('./_lib/supabase');
 const { handleOpportunityPremiumCheckout, handleOpportunityListingCheckout } = require('./_lib/supabase-opportunities');
 const { handleEventFeaturedCheckout } = require('./_lib/event-featured');
@@ -41,44 +44,19 @@ const {
 
 const STRIPE_WEBHOOK_TOLERANCE_SEC = 300;
 
-function verifyStripeSignature(rawBody, signatureHeader, secret, toleranceSec = STRIPE_WEBHOOK_TOLERANCE_SEC) {
-  if (!signatureHeader || !secret) return false;
-  const parts = String(signatureHeader).split(',');
-  let timestamp = '';
-  const signatures = [];
-  for (const part of parts) {
-    const eq = part.indexOf('=');
-    if (eq < 0) continue;
-    const k = part.slice(0, eq).trim();
-    const v = part.slice(eq + 1).trim();
-    if (k === 't') timestamp = v;
-    if (k === 'v1' && v) signatures.push(v);
-  }
-  if (!timestamp || !signatures.length) return false;
-
-  const ts = parseInt(timestamp, 10);
-  if (!Number.isFinite(ts)) return false;
-  const ageSec = Math.abs(Math.floor(Date.now() / 1000) - ts);
-  if (ageSec > toleranceSec) return false;
-
-  const payload = `${timestamp}.${rawBody}`;
-  const expected = crypto.createHmac('sha256', secret).update(payload).digest('hex');
-  const expectedBuf = Buffer.from(expected, 'hex');
-  for (const signature of signatures) {
-    try {
-      const sigBuf = Buffer.from(signature, 'hex');
-      if (sigBuf.length === expectedBuf.length && crypto.timingSafeEqual(sigBuf, expectedBuf)) {
-        return true;
-      }
-    } catch {
-      /* try next v1 */
-    }
-  }
-  return false;
-}
-
+/**
+ * Read the exact bytes Stripe signed. Do not re-serialize parsed JSON.
+ */
 function readRawBody(req) {
   return new Promise(function (resolve, reject) {
+    if (typeof req.rawBody === 'string') {
+      resolve(req.rawBody);
+      return;
+    }
+    if (Buffer.isBuffer(req.rawBody)) {
+      resolve(req.rawBody.toString('utf8'));
+      return;
+    }
     if (typeof req.body === 'string') {
       resolve(req.body);
       return;
@@ -87,20 +65,48 @@ function readRawBody(req) {
       resolve(req.body.toString('utf8'));
       return;
     }
+    // Parsed object means bodyParser ran — original signed bytes are gone.
     if (req.body && typeof req.body === 'object') {
-      resolve(JSON.stringify(req.body));
+      const err = new Error('parsed_body_not_raw');
+      err.code = 'parsed_body_not_raw';
+      reject(err);
       return;
     }
 
     const chunks = [];
     req.on('data', function (chunk) {
-      chunks.push(chunk);
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
     });
     req.on('end', function () {
       resolve(Buffer.concat(chunks).toString('utf8'));
     });
     req.on('error', reject);
   });
+}
+
+function verifyAndParseStripeEvent(rawBody, signatureHeader, secret) {
+  try {
+    return Stripe.webhooks.constructEvent(
+      rawBody,
+      signatureHeader,
+      secret,
+      STRIPE_WEBHOOK_TOLERANCE_SEC
+    );
+  } catch (err) {
+    const e = new Error(err && err.message ? err.message : 'invalid_signature');
+    e.code = 'invalid_signature';
+    throw e;
+  }
+}
+
+async function runHandler(label, fn) {
+  try {
+    return await fn();
+  } catch (err) {
+    console.error('[stripe-webhook]', label, err && err.message ? err.message : err);
+    captureServerException(err, { route: '/api/stripe-webhook', logLabel: label });
+    return { ok: false, error: err && err.message ? err.message : String(err) };
+  }
 }
 
 async function handler(req, res) {
@@ -114,7 +120,7 @@ async function handler(req, res) {
     return res.end('supabase_not_configured');
   }
 
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  const webhookSecret = String(process.env.STRIPE_WEBHOOK_SECRET || '').trim();
   const skipVerify =
     process.env.STRIPE_WEBHOOK_SKIP_VERIFY === '1' ||
     process.env.STRIPE_WEBHOOK_SKIP_VERIFY === 'local-dev';
@@ -130,22 +136,30 @@ async function handler(req, res) {
   try {
     rawBody = await readRawBody(req);
   } catch (e) {
+    if (e && e.code === 'parsed_body_not_raw') {
+      res.statusCode = 500;
+      return res.end('raw_body_unavailable');
+    }
     res.statusCode = 400;
     return res.end('invalid_body');
   }
 
+  let event = null;
   if (webhookSecret) {
     const sig = req.headers['stripe-signature'];
-    if (!verifyStripeSignature(rawBody, sig, webhookSecret)) {
+    try {
+      event = verifyAndParseStripeEvent(rawBody, sig, webhookSecret);
+    } catch {
       res.statusCode = 400;
       return res.end('invalid_signature');
     }
   } else if (!skipVerify) {
     res.statusCode = 503;
     return res.end('webhook_secret_not_configured');
+  } else {
+    event = parseStripeEventBody(rawBody);
   }
 
-  const event = parseStripeEventBody(rawBody);
   if (!event || !event.type) {
     res.statusCode = 400;
     return res.end('invalid_payload');
@@ -154,16 +168,36 @@ async function handler(req, res) {
   try {
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object || {};
-      const sponsorshipResult = await handleSponsorshipCheckoutCompleted(session);
-      const cityPartnerResult = await handleCityPartnerCheckoutCompleted(session);
-      const countyPartnerResult = await handleCountyPartnerCheckoutCompleted(session);
-      const membershipResult = await handleMembershipCheckoutCompleted(session);
-      const premiumResult = await handleOpportunityPremiumCheckout(session);
-      const listingResult = await handleOpportunityListingCheckout(session);
-      const featuredResult = await handleEventFeaturedCheckout(session);
-      const groupUpdateCreditsResult = await handleGroupUpdateCreditsCheckout(session);
-      const connectionsCreditsResult = await handleConnectionsCreditsCheckout(session);
-      const registrationResult = await handleCheckoutSessionCompleted(session);
+      const sponsorshipResult = await runHandler('sponsorship', () =>
+        handleSponsorshipCheckoutCompleted(session)
+      );
+      const cityPartnerResult = await runHandler('city_partner', () =>
+        handleCityPartnerCheckoutCompleted(session)
+      );
+      const countyPartnerResult = await runHandler('county_partner', () =>
+        handleCountyPartnerCheckoutCompleted(session)
+      );
+      const membershipResult = await runHandler('membership', () =>
+        handleMembershipCheckoutCompleted(session)
+      );
+      const premiumResult = await runHandler('opportunity_premium', () =>
+        handleOpportunityPremiumCheckout(session)
+      );
+      const listingResult = await runHandler('opportunity_listing', () =>
+        handleOpportunityListingCheckout(session)
+      );
+      const featuredResult = await runHandler('event_featured', () =>
+        handleEventFeaturedCheckout(session)
+      );
+      const groupUpdateCreditsResult = await runHandler('group_update_credits', () =>
+        handleGroupUpdateCreditsCheckout(session)
+      );
+      const connectionsCreditsResult = await runHandler('connections_credits', () =>
+        handleConnectionsCreditsCheckout(session)
+      );
+      const registrationResult = await runHandler('registration', () =>
+        handleCheckoutSessionCompleted(session)
+      );
       res.statusCode = 200;
       return res.end(
         JSON.stringify({
@@ -184,10 +218,18 @@ async function handler(req, res) {
 
     if (event.type === 'customer.subscription.updated') {
       const subscription = event.data.object || {};
-      const cityPartnerResult = await handleCityPartnerSubscriptionUpdated(subscription);
-      const countyPartnerResult = await handleCountyPartnerSubscriptionUpdated(subscription);
-      const membershipResult = await handleMembershipSubscriptionUpdated(subscription);
-      const listingResult = await handleOpportunityListingSubscriptionUpdated(subscription);
+      const cityPartnerResult = await runHandler('city_partner_sub_updated', () =>
+        handleCityPartnerSubscriptionUpdated(subscription)
+      );
+      const countyPartnerResult = await runHandler('county_partner_sub_updated', () =>
+        handleCountyPartnerSubscriptionUpdated(subscription)
+      );
+      const membershipResult = await runHandler('membership_sub_updated', () =>
+        handleMembershipSubscriptionUpdated(subscription)
+      );
+      const listingResult = await runHandler('listing_sub_updated', () =>
+        handleOpportunityListingSubscriptionUpdated(subscription)
+      );
       res.statusCode = 200;
       return res.end(
         JSON.stringify({ ok: true, cityPartnerResult, countyPartnerResult, membershipResult, listingResult })
@@ -196,10 +238,18 @@ async function handler(req, res) {
 
     if (event.type === 'customer.subscription.deleted') {
       const subscription = event.data.object || {};
-      const cityPartnerResult = await handleCityPartnerSubscriptionDeleted(subscription);
-      const countyPartnerResult = await handleCountyPartnerSubscriptionDeleted(subscription);
-      const membershipResult = await handleMembershipSubscriptionDeleted(subscription);
-      const listingResult = await handleOpportunityListingSubscriptionDeleted(subscription);
+      const cityPartnerResult = await runHandler('city_partner_sub_deleted', () =>
+        handleCityPartnerSubscriptionDeleted(subscription)
+      );
+      const countyPartnerResult = await runHandler('county_partner_sub_deleted', () =>
+        handleCountyPartnerSubscriptionDeleted(subscription)
+      );
+      const membershipResult = await runHandler('membership_sub_deleted', () =>
+        handleMembershipSubscriptionDeleted(subscription)
+      );
+      const listingResult = await runHandler('listing_sub_deleted', () =>
+        handleOpportunityListingSubscriptionDeleted(subscription)
+      );
       res.statusCode = 200;
       return res.end(
         JSON.stringify({ ok: true, cityPartnerResult, countyPartnerResult, membershipResult, listingResult })
@@ -208,23 +258,29 @@ async function handler(req, res) {
 
     if (event.type === 'invoice.paid') {
       const invoice = event.data.object || {};
-      const revenueResult = await handleInvoicePaid(invoice);
-      const membershipResult = await handleMembershipInvoicePaid(invoice);
-      const listingResult = await handleOpportunityListingInvoicePaid(invoice);
+      const revenueResult = await runHandler('invoice_revenue', () => handleInvoicePaid(invoice));
+      const membershipResult = await runHandler('membership_invoice_paid', () =>
+        handleMembershipInvoicePaid(invoice)
+      );
+      const listingResult = await runHandler('listing_invoice_paid', () =>
+        handleOpportunityListingInvoicePaid(invoice)
+      );
       res.statusCode = 200;
       return res.end(JSON.stringify({ ok: true, revenueResult, membershipResult, listingResult }));
     }
 
     if (event.type === 'invoice.payment_failed') {
       const invoice = event.data.object || {};
-      const membershipResult = await handleMembershipInvoicePaymentFailed(invoice);
+      const membershipResult = await runHandler('membership_invoice_failed', () =>
+        handleMembershipInvoicePaymentFailed(invoice)
+      );
       res.statusCode = 200;
       return res.end(JSON.stringify({ ok: true, membershipResult }));
     }
 
     if (event.type === 'charge.refunded') {
       const charge = event.data.object || {};
-      const refundResult = await handleChargeRefunded(charge);
+      const refundResult = await runHandler('charge_refunded', () => handleChargeRefunded(charge));
       res.statusCode = 200;
       return res.end(JSON.stringify({ ok: true, refundResult }));
     }
@@ -232,14 +288,16 @@ async function handler(req, res) {
     res.statusCode = 200;
     return res.end(JSON.stringify({ ok: true, ignored: event.type }));
   } catch (e) {
+    captureServerException(e, { route: '/api/stripe-webhook', logLabel: 'unhandled' });
     res.statusCode = 500;
     return res.end(JSON.stringify({ ok: false, error: e.message || String(e) }));
   }
 }
 
-module.exports = wrapHandler(handler);
-module.exports.config = {
+const wrapped = wrapHandler(handler);
+wrapped.config = {
   api: {
     bodyParser: false,
   },
 };
+module.exports = wrapped;

@@ -30,7 +30,7 @@ Organisers do **not** sign up for a separate Stripe product or paste API keys. T
 
 4. **Webhook endpoint** (if not already done)  
    - **Developers → Webhooks → Add endpoint**  
-   - URL: `https://<your-production-domain>/api/stripe-webhook`  
+   - URL: `https://www.thenetworkeruk.com/api/stripe-webhook` (production domain — not `the-networker-hub.vercel.app`, which redirects)  
    - Events: at minimum **`checkout.session.completed`**; also **`charge.refunded`** if you want refund confirmation emails  
    - Copy the **Signing secret**
 
@@ -41,7 +41,7 @@ Organisers do **not** sign up for a separate Stripe product or paste API keys. T
 | `STRIPE_SECRET_KEY` | **Yes** | Platform secret key (`sk_test_…` or `sk_live_…`) from **your** Stripe account |
 | `STRIPE_WEBHOOK_SECRET` | **Yes (production)** | From the webhook above |
 | `STRIPE_CONNECT_ENABLED` | **Yes** | Set to `true` to turn on Connect checkout and organiser onboarding |
-| `SITE_URL` | **Yes** | Used for return URLs after Stripe onboarding, e.g. `https://the-networker-hub.vercel.app` |
+| `SITE_URL` | **Yes** | Used for return URLs after Stripe onboarding, e.g. `https://www.thenetworkeruk.com` |
 
 Redeploy after changing env vars.
 

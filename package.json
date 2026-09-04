@@ -12,6 +12,8 @@
     "sync-stripe": "node scripts/sync-stripe-pricing.js",
     "deploy": "npx vercel --prod",
     "check:api": "node scripts/smoke-test-api.js",
+    "check:stripe-webhook": "node scripts/test-stripe-webhook-signature.js && node scripts/smoke-test-stripe-webhook.js",
+    "test:stripe-webhook-signature": "node scripts/test-stripe-webhook-signature.js",
     "check:opportunities": "node scripts/smoke-test-opportunities.js",
     "check:opportunities:live": "node scripts/smoke-test-opportunities.js https://www.thenetworkeruk.com",
     "check:local": "node scripts/smoke-test-site.js http://localhost:3000",

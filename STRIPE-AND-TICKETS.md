@@ -73,7 +73,7 @@ If you still use Payment Link fallback (no `STRIPE_SECRET_KEY`), each paid event
 
 ## Webhook (required)
 
-Endpoint: `https://the-networker-hub.vercel.app/api/stripe-webhook`
+Endpoint: `https://www.thenetworkeruk.com/api/stripe-webhook` (production domain — do not use `the-networker-hub.vercel.app`; it redirects and Stripe will not deliver)
 
 Event: `checkout.session.completed`
 
