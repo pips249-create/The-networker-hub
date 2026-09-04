@@ -32,6 +32,12 @@ City Partner checkout supports two billing modes:
 | **Monthly** (default) | `mode: subscription` | Rolling monthly until cancelled |
 | **Prepaid 1 / 3 / 6 / 12 months** | `mode: payment` | One-time charge; slot held until term end |
 
+Checkout creates **one VAT-inclusive line item** (so Apple Pay / wallets show a single clear total). Slot reservation **creates missing `cms_blocks` rows** if needed — cities like Chester were previously payable but never reserved because no CMS row existed for `UPDATE`.
+
+After payment, slots are reserved by `checkout.session.completed` **and** again on the advertising success-page verify (`GET /api/city-partner?action=verify`) so a missed webhook cannot leave a paid sponsor unreserved.
+
+**Webhook URL:** use `https://www.thenetworkeruk.com/api/stripe-webhook` (not `*.vercel.app` — that host 308-redirects and Stripe will not follow redirects).
+
 Enable these webhook events on the same endpoint:
 
 | Event | Purpose |
@@ -44,7 +50,7 @@ Prepaid holds use `sponsor_subscription_id` prefixed with `prepaid:` and `sponso
 
 Prepaid discounts: **5% off 3 months**, **10% off 6 months**, **15% off yearly (12 months)** (monthly and 1-month prepaid stay full rate).
 
-Run Supabase migrations `189_city_partner_waitlist.sql` and `190_city_partner_emails.sql` before go-live.
+Run Supabase migrations `189_city_partner_waitlist.sql`, `190_city_partner_emails.sql`, and `283_city_partner_slot_rows.sql` before go-live (283 re-seeds missing city slots such as Chester).
 
 Checkout metadata uses `placement=city_partner`, `networking_cities` (comma-separated slugs), `billing_mode` (`monthly` \| `prepaid`), and `term_months` (`monthly` or `1`/`3`/`6`/`12`). Slot state is stored on `cms_blocks` (`sponsor_subscription_id`, `sponsor_email`, `sponsor_available_from`).
 
