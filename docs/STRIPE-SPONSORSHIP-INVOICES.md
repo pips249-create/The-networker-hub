@@ -80,6 +80,20 @@ Same billing pattern as City Partner: monthly subscription or prepaid **1 / 3 / 
 
 Paid holds store `sponsor_subscription_id` / `sponsor_email` / `reserved_at` on the carousel ad (creative stays inactive until admin uploads logo + link). Availability counts holds, not only live logos. Success-page verify: `?opportunity-page-partner=success&session_id=…`. Expired prepaid `ends_at` values are cleared by the manual-sponsorship cron.
 
+### Industry Sponsor (self-serve)
+
+Exclusive logo on Opportunities browse when that industry filter is selected. Same billing as County Sponsor (monthly or prepaid 6 / 12 months). Launch **£49/mo + VAT** per industry until 1 Dec 2026, then **£99**. Eighteen sellable categories (excludes Network marketing + Other).
+
+| Piece | Detail |
+|------|--------|
+| API | `GET/POST /api/industry-sponsor` |
+| Metadata | `placement=industry_sponsor`, `opportunity_industries` |
+| Slots | `opportunity_industry_sponsor_{slug}` |
+| Migration | `287_industry_sponsor_slots.sql` |
+| Icons | City-style stroke chips in `js/industry-line-icons.js` |
+
+Success-page verify: `?industry-sponsor=success&session_id=…`. Creative goes live after admin uploads logo + link.
+
 ### Manual placements (Headline / other Page Partners)
 
 In Command Centre → **Ads & sponsors**:

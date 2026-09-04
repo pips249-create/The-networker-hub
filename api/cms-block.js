@@ -77,6 +77,9 @@ module.exports = wrapHandler(async function handler(req, res) {
   if (String(req.query?.route || '').trim() === 'opportunity-page-partner') {
     return require('./_lib/routes/opportunity-page-partner')(req, res);
   }
+  if (String(req.query?.route || '').trim() === 'industry-sponsor') {
+    return require('./_lib/routes/industry-sponsor')(req, res);
+  }
 
   res.setHeader('Access-Control-Allow-Origin', '*');
   // Keep short: Command Centre sponsor edits must appear on browse heroes quickly.
@@ -86,6 +89,7 @@ module.exports = wrapHandler(async function handler(req, res) {
   const isRegionPartnerRequest =
     slotHint.indexOf('networking_city_partner_') === 0 ||
     slotHint.indexOf('networking_county_partner_') === 0 ||
+    slotHint.indexOf('opportunity_industry_sponsor_') === 0 ||
     slotHint === 'networking_city_partner' ||
     Boolean(regionHint);
   res.setHeader(

@@ -33,6 +33,7 @@
     "test:city-partner-checkout": "node scripts/test-city-partner-checkout.js",
     "test:county-partner-checkout": "node scripts/test-county-partner-checkout.js",
     "test:opportunity-page-partner-checkout": "node scripts/test-opportunity-page-partner-checkout.js",
+    "test:industry-sponsor-checkout": "node scripts/test-industry-sponsor-checkout.js",
     "test:opportunity-live-email": "node scripts/test-opportunity-live-email-dedupe.js",
     "test:opportunity-spotlight-slots": "node scripts/test-opportunity-spotlight-slots.js",
     "check:business-ops": "node scripts/check-business-ops-readiness.js",
