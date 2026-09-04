@@ -54,6 +54,19 @@ Run Supabase migrations `189_city_partner_waitlist.sql`, `190_city_partner_email
 
 Checkout metadata uses `placement=city_partner`, `networking_cities` (comma-separated slugs), `billing_mode` (`monthly` \| `prepaid`), and `term_months` (`monthly` or `1`/`3`/`6`/`12`). Slot state is stored on `cms_blocks` (`sponsor_subscription_id`, `sponsor_email`, `sponsor_available_from`).
 
+### County Sponsor (self-serve)
+
+Same billing modes as City Partner (monthly subscription or prepaid 6 / 12 months). Launch rate **£49/mo + VAT** per county until 1 Dec 2026, then **£99**. No multi-county pack.
+
+| Piece | Detail |
+|------|--------|
+| API | `GET/POST /api/county-partner` |
+| Metadata | `placement=county_partner`, `networking_counties` |
+| Slots | `networking_county_partner_{slug}` |
+| Migration | `284_county_partner_slot_rows.sql` |
+
+Reservation also finalizes on success-page verify (`?county-partner=success&session_id=…`). Creative still goes live after admin uploads logo + link.
+
 ### Manual placements (Headline / Page Partner)
 
 In Command Centre → **Ads & sponsors**:

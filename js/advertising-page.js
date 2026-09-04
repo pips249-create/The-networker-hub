@@ -936,6 +936,16 @@
           }, 280);
         }
       }
+      if (id === 'county-partner-package') {
+        var countyCheckout = document.getElementById('county-partner-checkout');
+        var countyPanel = document.getElementById('county-partner-available-panel');
+        if (countyPanel) countyPanel.open = true;
+        if (countyCheckout) {
+          window.setTimeout(function () {
+            countyCheckout.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 280);
+        }
+      }
     }, panelName ? 80 : 0);
   }
 

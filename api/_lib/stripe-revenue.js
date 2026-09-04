@@ -48,6 +48,7 @@ const PLACEMENT_CATEGORIES = {
   city_partner: 'events',
   city_partner_single: 'events',
   city_partner_bundle_3: 'events',
+  county_partner: 'events',
   awards_sponsor: 'awards',
   awards: 'awards',
 };
@@ -68,6 +69,7 @@ function cmsSlotCategory(slot) {
   const key = String(slot || '').trim();
   if (CMS_SLOT_CATEGORIES[key]) return CMS_SLOT_CATEGORIES[key];
   if (/^networking_city_partner_/i.test(key)) return 'events';
+  if (/^networking_county_partner_/i.test(key)) return 'events';
   return null;
 }
 

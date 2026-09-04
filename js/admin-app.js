@@ -10201,7 +10201,7 @@
       sponsorshipBackLinkHtml() +
       '<section class="space-y-3">' +
       '<h3 class="font-bold text-brand-900">County Partner placements</h3>' +
-      '<p class="text-sm text-slate-600">Logo + link on launch county networking hubs (/networking/:county). Place manually after an advertising enquiry — Stripe self-serve can come later. Website only — never included in hub emails.</p>' +
+      '<p class="text-sm text-slate-600">Logo + link on launch county networking hubs (/networking/:county). Sponsors can check out online on /advertising — upload logo + link here to publish. Website only — never included in hub emails.</p>' +
       '<p class="text-xs text-slate-500">Launch counties: Berkshire, Buckinghamshire, Cambridgeshire, Cheshire, Essex, Hampshire, Hertfordshire, Kent, Lancashire, Oxfordshire, Surrey, Sussex.</p>' +
       '</section>' +
       '<div class="admin-ad-picker-grid">' +

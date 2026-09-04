@@ -1,43 +1,39 @@
 /**
- * City Partner Stripe subscriptions — reserve cms_blocks slots and release on cancel.
+ * County Partner Stripe subscriptions — reserve cms_blocks slots and release on cancel.
  */
 const {
-  normalizeCitySlugs,
-  cityPartnerSlotKey,
-  parseCityPartnerSlot,
-} = require('./networking-city-partners');
-const {
-  notifyCityPartnerWaitlistForSlug,
-  notifyCityPartnerWaitlistOpeningSoon,
-} = require('./city-partner-waitlist');
+  normalizeCountySlugs,
+  countyPartnerSlotKey,
+  parseCountyPartnerSlot,
+} = require('./networking-county-partners');
 
 function adminSb() {
   return require('./supabase').getSupabaseAdmin();
 }
 
 function sendWelcome(opts) {
-  return require('./city-partner-emails').sendCityPartnerPaymentWelcome(opts);
+  return require('./county-partner-emails').sendCountyPartnerPaymentWelcome(opts);
 }
 
 function normalizeMeta(metadata) {
   return metadata && typeof metadata === 'object' ? metadata : {};
 }
 
-function isCityPartnerMetadata(metadata) {
+function isCountyPartnerMetadata(metadata) {
   const meta = normalizeMeta(metadata);
   const placement = String(meta.placement || '').trim().toLowerCase();
-  if (placement === 'county_partner') return false;
-  if (placement === 'city_partner') return true;
-  return Boolean(String(meta.networking_cities || meta.networkingCities || '').trim());
+  if (placement === 'county_partner') return true;
+  if (placement === 'city_partner') return false;
+  return Boolean(String(meta.networking_counties || meta.networkingCounties || '').trim());
 }
 
-function citiesFromMetadata(metadata) {
+function countiesFromMetadata(metadata) {
   const meta = normalizeMeta(metadata);
-  return normalizeCitySlugs(meta.networking_cities || meta.networkingCities || '');
+  return normalizeCountySlugs(meta.networking_counties || meta.networkingCounties || '');
 }
 
-async function citiesForSubscription(sb, subscription) {
-  const fromMeta = citiesFromMetadata(subscription.metadata);
+async function countiesForSubscription(sb, subscription) {
+  const fromMeta = countiesFromMetadata(subscription.metadata);
   if (fromMeta.length) return fromMeta;
 
   const subId = String(subscription.id || '').trim();
@@ -50,7 +46,7 @@ async function citiesForSubscription(sb, subscription) {
   if (error) throw new Error(error.message);
 
   return (rows || [])
-    .map((row) => parseCityPartnerSlot(row.slot))
+    .map((row) => parseCountyPartnerSlot(row.slot))
     .filter(Boolean)
     .map((parsed) => parsed.slug);
 }
@@ -77,18 +73,12 @@ function periodEndIso(subscription) {
   return new Date(ts * 1000).toISOString();
 }
 
-/**
- * Ensure placeholder cms_blocks rows exist for City Partner slots.
- * Many cities were added to the region list after migration 167, and production
- * is missing rows (e.g. Chester). UPDATE-only reservation then silently no-ops
- * after a successful Stripe payment (including Apple Pay).
- */
-async function ensureCityPartnerSlotRows(sb, cities) {
-  const slugs = normalizeCitySlugs(cities);
+async function ensureCountyPartnerSlotRows(sb, counties) {
+  const slugs = normalizeCountySlugs(counties);
   const ensured = [];
 
   for (const slug of slugs) {
-    const slot = cityPartnerSlotKey(slug);
+    const slot = countyPartnerSlotKey(slug);
     const { data: existing, error: selectError } = await sb
       .from('cms_blocks')
       .select('id')
@@ -107,7 +97,6 @@ async function ensureCityPartnerSlotRows(sb, cities) {
       include_in_emails: false,
     });
     if (insertError) {
-      // Concurrent insert is fine — reservation will update the row.
       if (!/duplicate|unique/i.test(String(insertError.message || ''))) {
         throw new Error(insertError.message);
       }
@@ -118,13 +107,13 @@ async function ensureCityPartnerSlotRows(sb, cities) {
   return ensured;
 }
 
-async function reserveCityPartnerSlots(sb, cities, fields) {
+async function reserveCountyPartnerSlots(sb, counties, fields) {
   const now = new Date().toISOString();
   const results = [];
-  await ensureCityPartnerSlotRows(sb, cities);
+  await ensureCountyPartnerSlotRows(sb, counties);
 
-  for (const slug of cities) {
-    const slot = cityPartnerSlotKey(slug);
+  for (const slug of counties) {
+    const slot = countyPartnerSlotKey(slug);
     const patch = {
       sponsor_subscription_id: fields.subscriptionId || null,
       sponsor_email: fields.email || null,
@@ -138,7 +127,7 @@ async function reserveCityPartnerSlots(sb, cities, fields) {
       .select('id');
     if (error) throw new Error(error.message);
     if (!updated || !updated.length) {
-      throw new Error('city_partner_slot_missing:' + slot);
+      throw new Error('county_partner_slot_missing:' + slot);
     }
     results.push({ slug, slot });
   }
@@ -146,7 +135,7 @@ async function reserveCityPartnerSlots(sb, cities, fields) {
   return results;
 }
 
-async function releaseCityPartnerSlotsBySubscription(sb, subscriptionId, options) {
+async function releaseCountyPartnerSlotsBySubscription(sb, subscriptionId, options) {
   const subId = String(subscriptionId || '').trim();
   if (!subId) return { released: [] };
 
@@ -158,7 +147,7 @@ async function releaseCityPartnerSlotsBySubscription(sb, subscriptionId, options
 
   const slugs = [];
   for (const row of rows || []) {
-    const parsed = parseCityPartnerSlot(row.slot);
+    const parsed = parseCountyPartnerSlot(row.slot);
     if (!parsed) continue;
     slugs.push(parsed.slug);
   }
@@ -167,10 +156,9 @@ async function releaseCityPartnerSlotsBySubscription(sb, subscriptionId, options
 
   const now = new Date().toISOString();
   for (const row of rows || []) {
-    const parsed = parseCityPartnerSlot(row.slot);
+    const parsed = parseCountyPartnerSlot(row.slot);
     if (!parsed) continue;
-    const slug = parsed.slug;
-    const slot = cityPartnerSlotKey(slug);
+    const slot = countyPartnerSlotKey(parsed.slug);
     const { error: updateError } = await sb
       .from('cms_blocks')
       .update({
@@ -182,36 +170,29 @@ async function releaseCityPartnerSlotsBySubscription(sb, subscriptionId, options
       })
       .eq('slot', slot);
     if (updateError) throw new Error(updateError.message);
-
-    if (options?.notifyWaitlist !== false) {
-      await notifyCityPartnerWaitlistForSlug(slug, {
-        sb,
-        availableFrom: options?.availableFrom || row.sponsor_available_from || now,
-      });
-    }
   }
 
-  return { released: slugs };
+  return { released: slugs, availableFrom: options?.availableFrom || null };
 }
 
-async function handleCityPartnerCheckoutCompleted(session) {
+async function handleCountyPartnerCheckoutCompleted(session) {
   const metadata = normalizeMeta(session.metadata);
-  if (!isCityPartnerMetadata(metadata)) {
-    return { skipped: true, reason: 'not_city_partner' };
+  if (!isCountyPartnerMetadata(metadata)) {
+    return { skipped: true, reason: 'not_county_partner' };
   }
 
-  const cities = citiesFromMetadata(metadata);
-  if (!cities.length) {
-    return { skipped: true, reason: 'no_cities' };
+  const counties = countiesFromMetadata(metadata);
+  if (!counties.length) {
+    return { skipped: true, reason: 'no_counties' };
   }
 
   const {
-    normalizeCityPartnerTerm,
+    normalizeCountyPartnerTerm,
     addMonthsUtc,
-    isPrepaidCityPartnerHoldId,
-  } = require('./networking-city-partners');
+    isPrepaidCountyPartnerHoldId,
+  } = require('./networking-county-partners');
 
-  const term = normalizeCityPartnerTerm(metadata.term_months || metadata.billing_mode);
+  const term = normalizeCountyPartnerTerm(metadata.term_months || metadata.billing_mode);
   const prepaid =
     term.billingMode === 'prepaid' ||
     String(metadata.billing_mode || '').toLowerCase() === 'prepaid';
@@ -231,13 +212,13 @@ async function handleCityPartnerCheckoutCompleted(session) {
     .toLowerCase();
 
   let availableFrom = null;
-  if (prepaid || isPrepaidCityPartnerHoldId(subscriptionId)) {
+  if (prepaid || isPrepaidCountyPartnerHoldId(subscriptionId)) {
     const months = term.termMonths || parseInt(String(metadata.term_months || '1'), 10) || 1;
     availableFrom = addMonthsUtc(new Date(), months).toISOString();
   }
 
   const sb = adminSb();
-  const slots = cities.map((slug) => cityPartnerSlotKey(slug));
+  const slots = counties.map((slug) => countyPartnerSlotKey(slug));
   const { data: existingRows, error: existingError } = await sb
     .from('cms_blocks')
     .select('slot, sponsor_subscription_id')
@@ -246,13 +227,13 @@ async function handleCityPartnerCheckoutCompleted(session) {
 
   const bySlot = new Map((existingRows || []).map((row) => [row.slot, row]));
   const alreadyFinalized =
-    cities.length > 0 &&
-    cities.every((slug) => {
-      const row = bySlot.get(cityPartnerSlotKey(slug));
+    counties.length > 0 &&
+    counties.every((slug) => {
+      const row = bySlot.get(countyPartnerSlotKey(slug));
       return row && String(row.sponsor_subscription_id || '').trim() === subscriptionId;
     });
 
-  const reserved = await reserveCityPartnerSlots(sb, cities, {
+  const reserved = await reserveCountyPartnerSlots(sb, counties, {
     subscriptionId,
     email: email || null,
     availableFrom,
@@ -263,9 +244,8 @@ async function handleCityPartnerCheckoutCompleted(session) {
     welcomeEmail = { skipped: true, reason: 'already_finalized' };
   } else if (email) {
     try {
-      welcomeEmail = await sendWelcome({ email, cities });
+      welcomeEmail = await sendWelcome({ email, counties });
     } catch (e) {
-      /* Slot reservation succeeds even if welcome email fails */
       welcomeEmail = { ok: false, error: e.message || String(e) };
     }
   }
@@ -274,7 +254,7 @@ async function handleCityPartnerCheckoutCompleted(session) {
     ok: true,
     reserved,
     subscriptionId,
-    cities,
+    counties,
     welcomeEmail,
     alreadyFinalized,
     billingMode: prepaid ? 'prepaid' : 'monthly',
@@ -282,13 +262,14 @@ async function handleCityPartnerCheckoutCompleted(session) {
   };
 }
 
-/**
- * Clear prepaid City Partner holds whose term has ended (sponsor_available_from ≤ now).
- */
-async function expirePrepaidCityPartnerSlots(sb, now = new Date()) {
-  const { listCityPartnerRegions, cityPartnerSlotKey, isPrepaidCityPartnerHoldId, parseAvailableFrom } =
-    require('./networking-city-partners');
-  const slots = listCityPartnerRegions().map((r) => r.slot);
+async function expirePrepaidCountyPartnerSlots(sb, now = new Date()) {
+  const {
+    listCountyPartnerRegions,
+    countyPartnerSlotKey: slotKey,
+    isPrepaidCountyPartnerHoldId,
+    parseAvailableFrom,
+  } = require('./networking-county-partners');
+  const slots = listCountyPartnerRegions().map((r) => r.slot);
   const { data: rows, error } = await sb
     .from('cms_blocks')
     .select('slot, sponsor_subscription_id, sponsor_available_from, active')
@@ -301,11 +282,11 @@ async function expirePrepaidCityPartnerSlots(sb, now = new Date()) {
 
   for (const row of rows || []) {
     const holdId = String(row.sponsor_subscription_id || '').trim();
-    if (!isPrepaidCityPartnerHoldId(holdId)) continue;
+    if (!isPrepaidCountyPartnerHoldId(holdId)) continue;
     const availableFrom = parseAvailableFrom(row);
     if (!availableFrom || availableFrom.getTime() > nowMs) continue;
 
-    const parsed = parseCityPartnerSlot(row.slot);
+    const parsed = parseCountyPartnerSlot(row.slot);
     if (!parsed) continue;
 
     const { error: updateError } = await sb
@@ -317,17 +298,8 @@ async function expirePrepaidCityPartnerSlots(sb, now = new Date()) {
         active: false,
         updated_at: nowIso,
       })
-      .eq('slot', cityPartnerSlotKey(parsed.slug));
+      .eq('slot', slotKey(parsed.slug));
     if (updateError) throw new Error(updateError.message);
-
-    try {
-      await notifyCityPartnerWaitlistForSlug(parsed.slug, {
-        sb,
-        availableFrom: nowIso,
-      });
-    } catch (_) {
-      /* Waitlist notify is best-effort after expiry cleanup */
-    }
 
     expired.push(parsed.slug);
   }
@@ -335,7 +307,7 @@ async function expirePrepaidCityPartnerSlots(sb, now = new Date()) {
   return { expired, count: expired.length };
 }
 
-async function handleCityPartnerSubscriptionUpdated(subscription) {
+async function handleCountyPartnerSubscriptionUpdated(subscription) {
   const subscriptionId = String(subscription.id || '').trim();
   if (!subscriptionId) {
     return { skipped: true, reason: 'missing_subscription' };
@@ -343,79 +315,72 @@ async function handleCityPartnerSubscriptionUpdated(subscription) {
 
   const sb = adminSb();
   const metadata = normalizeMeta(subscription.metadata);
-  if (!isCityPartnerMetadata(metadata)) {
-    const linked = await citiesForSubscription(sb, subscription);
+  if (!isCountyPartnerMetadata(metadata)) {
+    const linked = await countiesForSubscription(sb, subscription);
     if (!linked.length) {
-      return { skipped: true, reason: 'not_city_partner' };
+      return { skipped: true, reason: 'not_county_partner' };
     }
   }
 
-  const cities = await citiesForSubscription(sb, subscription);
-  if (!cities.length) {
-    return { skipped: true, reason: 'no_cities' };
+  const counties = await countiesForSubscription(sb, subscription);
+  if (!counties.length) {
+    return { skipped: true, reason: 'no_counties' };
   }
 
   const periodEnd = periodEndIso(subscription);
   const cancelAtPeriodEnd = Boolean(subscription.cancel_at_period_end);
   const status = String(subscription.status || '').trim().toLowerCase();
 
-  if (status === 'active' && cancelAtPeriodEnd && periodEnd) {
-    await reserveCityPartnerSlots(sb, cities, {
+  if (cancelAtPeriodEnd && periodEnd) {
+    await reserveCountyPartnerSlots(sb, counties, {
       subscriptionId,
+      email: String(subscription.metadata?.sponsor_email || '').trim().toLowerCase() || null,
       availableFrom: periodEnd,
     });
-    const openingSoon = [];
-    for (const slug of cities) {
-      try {
-        openingSoon.push(await notifyCityPartnerWaitlistOpeningSoon(slug, { sb, availableFrom: periodEnd }));
-      } catch (e) {
-        openingSoon.push({ citySlug: slug, error: e.message });
-      }
-    }
-    return { ok: true, action: 'scheduled_release', availableFrom: periodEnd, cities, openingSoon };
+    return { ok: true, action: 'cancel_at_period_end', counties, availableFrom: periodEnd };
   }
 
-  if (status === 'active' && !cancelAtPeriodEnd) {
-    await reserveCityPartnerSlots(sb, cities, {
+  if (status === 'active' || status === 'trialing') {
+    await reserveCountyPartnerSlots(sb, counties, {
       subscriptionId,
+      email: String(subscription.metadata?.sponsor_email || '').trim().toLowerCase() || null,
       availableFrom: null,
     });
-    return { ok: true, action: 'renewed', cities };
+    return { ok: true, action: 'active', counties };
   }
 
   return { skipped: true, reason: 'no_action', status };
 }
 
-async function handleCityPartnerSubscriptionDeleted(subscription) {
+async function handleCountyPartnerSubscriptionDeleted(subscription) {
   const metadata = normalizeMeta(subscription.metadata);
   const subscriptionId = String(subscription.id || '').trim();
   if (!subscriptionId) {
     return { skipped: true, reason: 'missing_subscription' };
   }
-  if (!isCityPartnerMetadata(metadata)) {
+  if (!isCountyPartnerMetadata(metadata)) {
     const sb = adminSb();
-    const cities = await citiesForSubscription(sb, subscription);
-    if (!cities.length) {
-      return { skipped: true, reason: 'not_city_partner' };
+    const counties = await countiesForSubscription(sb, subscription);
+    if (!counties.length) {
+      return { skipped: true, reason: 'not_county_partner' };
     }
   }
 
   const sb = adminSb();
   const availableFrom = periodEndIso(subscription) || new Date().toISOString();
-  return releaseCityPartnerSlotsBySubscription(sb, subscriptionId, {
+  return releaseCountyPartnerSlotsBySubscription(sb, subscriptionId, {
     availableFrom,
-    notifyWaitlist: true,
   });
 }
 
 module.exports = {
-  isCityPartnerMetadata,
-  citiesFromMetadata,
-  ensureCityPartnerSlotRows,
-  reserveCityPartnerSlots,
-  releaseCityPartnerSlotsBySubscription,
-  handleCityPartnerCheckoutCompleted,
-  handleCityPartnerSubscriptionUpdated,
-  handleCityPartnerSubscriptionDeleted,
-  expirePrepaidCityPartnerSlots,
+  isCountyPartnerMetadata,
+  countiesFromMetadata,
+  ensureCountyPartnerSlotRows,
+  reserveCountyPartnerSlots,
+  releaseCountyPartnerSlotsBySubscription,
+  handleCountyPartnerCheckoutCompleted,
+  handleCountyPartnerSubscriptionUpdated,
+  handleCountyPartnerSubscriptionDeleted,
+  expirePrepaidCountyPartnerSlots,
 };
