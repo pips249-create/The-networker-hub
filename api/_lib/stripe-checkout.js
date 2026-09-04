@@ -543,6 +543,89 @@ async function createCountyPartnerCheckoutSession(opts) {
 }
 
 /**
+ * Opportunity Page Partner — £600/slot/mo, monthly or prepaid 1 / 3 / 6 / 12 months.
+ */
+async function createOpportunityPagePartnerCheckoutSession(opts) {
+  const stripe = getStripeClient();
+  const {
+    normalizeOpportunityPagePartnerTerm,
+    calculateOpportunityPagePartnerQuote,
+    OPPORTUNITY_PAGE_CAROUSEL_SLOT,
+  } = require('./opportunity-page-partner');
+
+  const term = normalizeOpportunityPagePartnerTerm(
+    opts.termMonths != null ? opts.termMonths : opts.term
+  );
+  const quote = calculateOpportunityPagePartnerQuote(1, new Date(), term.termMonths || 'monthly');
+  const prepaid = quote.billingMode === 'prepaid';
+
+  const termLabel = prepaid
+    ? quote.termMonths === 12
+      ? '1 year prepaid'
+      : quote.termMonths + ' month' + (quote.termMonths === 1 ? '' : 's') + ' prepaid'
+    : 'monthly';
+  const discountNote =
+    prepaid && quote.discountPercent > 0
+      ? ' Includes ' + quote.discountPercent + '% prepaid discount.'
+      : '';
+  const vatNote =
+    quote.vatPence > 0
+      ? ' Includes 20% VAT (£' + (quote.vatPence / 100).toFixed(2) + ').'
+      : '';
+
+  const lineItems = [
+    {
+      price_data: {
+        currency: 'gbp',
+        product_data: {
+          name: 'Opportunity Page Partner' + (prepaid ? ' (' + termLabel + ')' : ''),
+          description:
+            'Logo + link on every opportunity detail page (3 slots max).' +
+            discountNote +
+            vatNote +
+            (prepaid ? '' : ' Renews monthly until cancelled.'),
+        },
+        unit_amount: quote.totalPence,
+        ...(prepaid ? {} : { recurring: { interval: 'month' } }),
+      },
+      quantity: 1,
+    },
+  ];
+
+  const metadata = {
+    checkout_type: 'hub_sponsorship',
+    revenue_category: 'opportunities',
+    placement: 'opportunity_page_partner',
+    cms_slot: OPPORTUNITY_PAGE_CAROUSEL_SLOT,
+    package_name: 'Opportunity Page Partner',
+    billing_mode: quote.billingMode,
+    term_months: prepaid ? String(quote.termMonths) : 'monthly',
+    discount_percent: String(quote.discountPercent || 0),
+    amount_ex_vat_pence: String(quote.subtotalExVatPence),
+    vat_pence: String(quote.vatPence),
+    sponsor_email: String(opts.email || '')
+      .trim()
+      .toLowerCase(),
+  };
+
+  const sessionParams = {
+    mode: prepaid ? 'payment' : 'subscription',
+    customer_email: opts.email,
+    client_reference_id: 'opportunity-page-partner',
+    metadata,
+    success_url: opts.successUrl,
+    cancel_url: opts.cancelUrl,
+    line_items: lineItems,
+  };
+
+  if (!prepaid) {
+    sessionParams.subscription_data = { metadata };
+  }
+
+  return stripe.checkout.sessions.create(sessionParams);
+}
+
+/**
  * Membership dues subscription — membership (+ optional organiser VAT) + booking fee (4.5% + 20p).
  */
 async function createMembershipCheckoutSession(opts) {
@@ -687,6 +770,7 @@ module.exports = {
   createConnectionsCreditsCheckoutSession,
   createCityPartnerCheckoutSession,
   createCountyPartnerCheckoutSession,
+  createOpportunityPagePartnerCheckoutSession,
   createMembershipCheckoutSession,
   createMembershipBillingPortalSession,
   retrieveCheckoutSession,

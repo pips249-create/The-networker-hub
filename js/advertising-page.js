@@ -946,6 +946,14 @@
           }, 280);
         }
       }
+      if (id === 'ad-pkg-opportunities-mini') {
+        var oppCheckout = document.getElementById('opportunity-page-partner-checkout');
+        if (oppCheckout) {
+          window.setTimeout(function () {
+            oppCheckout.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 280);
+        }
+      }
     }, panelName ? 80 : 0);
   }
 

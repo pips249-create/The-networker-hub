@@ -31,12 +31,20 @@ async function expirePagePartnerCarouselAds(sb, now = new Date()) {
     const ads = normalizeCarouselAdsList(parseCarouselBody(row.body), row.slot);
     let changed = false;
     const nextAds = ads.map((ad) => {
-      if (!ad.ends_at || ad.active === false) return ad;
+      if (!ad.ends_at) return ad;
       const ends = new Date(ad.ends_at);
       if (Number.isNaN(ends.getTime()) || ends.getTime() > nowMs) return ad;
+      const hadHold = ad.active !== false || ad.sponsor_subscription_id;
+      if (!hadHold) return ad;
       changed = true;
       expired.push({ slot: row.slot, adId: ad.id, endsAt: ad.ends_at });
-      return { ...ad, active: false };
+      return {
+        ...ad,
+        active: false,
+        sponsor_subscription_id: null,
+        sponsor_email: null,
+        reserved_at: null,
+      };
     });
     if (!changed) continue;
 

@@ -67,7 +67,20 @@ Same billing modes as City Partner (monthly subscription or prepaid 6 / 12 month
 
 Reservation also finalizes on success-page verify (`?county-partner=success&session_id=…`). Creative still goes live after admin uploads logo + link.
 
-### Manual placements (Headline / Page Partner)
+### Opportunity Page Partner (self-serve)
+
+Same billing pattern as City Partner: monthly subscription or prepaid **1 / 3 / 6 / 12 months** (5% / 10% / 15% off longer prepaid terms). **£600/slot/mo + VAT**, max **3** carousel slots on opportunity detail pages.
+
+| Piece | Detail |
+|------|--------|
+| API | `GET/POST /api/opportunity-page-partner` |
+| Metadata | `placement=opportunity_page_partner`, `cms_slot=opportunity_page_carousel_ads` |
+| Inventory | Carousel ads in `cms_blocks.opportunity_page_carousel_ads` (`opportunity_carousel_1..3`) |
+| Migration | `286_opportunity_page_partner_emails.sql` |
+
+Paid holds store `sponsor_subscription_id` / `sponsor_email` / `reserved_at` on the carousel ad (creative stays inactive until admin uploads logo + link). Availability counts holds, not only live logos. Success-page verify: `?opportunity-page-partner=success&session_id=…`. Expired prepaid `ends_at` values are cleared by the manual-sponsorship cron.
+
+### Manual placements (Headline / other Page Partners)
 
 In Command Centre → **Ads & sponsors**:
 

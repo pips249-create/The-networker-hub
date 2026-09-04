@@ -49,6 +49,7 @@ const PLACEMENT_CATEGORIES = {
   city_partner_single: 'events',
   city_partner_bundle_3: 'events',
   county_partner: 'events',
+  opportunity_page_partner: 'opportunities',
   awards_sponsor: 'awards',
   awards: 'awards',
 };
