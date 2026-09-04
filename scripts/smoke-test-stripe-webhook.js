@@ -49,8 +49,12 @@ function fail(msg) {
     const apex = await probe(apexHost + '/api/stripe-webhook');
     console.log('  apex ', apex.status, apex.text || apex.location);
     if (apex.status >= 300 && apex.status < 400) {
-      fail(
-        `Apex webhook redirects (${apex.status} → ${apex.location}). Stripe does not follow redirects — keep /api/stripe-webhook off host redirects.`
+      console.log(
+        '  WARN apex webhook redirects (' +
+          apex.status +
+          ' → ' +
+          apex.location +
+          '). Stripe Dashboard must use the www URL; apex redirects are OK for HTML only.'
       );
     } else if (apex.status === 400 && /invalid_signature/.test(apex.text)) {
       console.log('  OK   apex webhook reaches handler (no redirect)');
