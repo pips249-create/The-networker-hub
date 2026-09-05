@@ -305,7 +305,7 @@ const BRANDED_EMAIL_TEMPLATES = {
   organiser_low_upcoming_events: {
     file: 'organiser-low-upcoming-events.html',
     marker: 'hub-email-layout-v3-purple',
-    subject: 'Only {{upcoming_count}} events left on your calendar',
+    subject: "It's been a while — add your next event",
   },
   organiser_post_event_checklist: {
     file: 'organiser-post-event-checklist.html',
