@@ -313,9 +313,16 @@ async function sendDueAttendeeReengagementEmails(sb) {
 
   const { data: attendees, error: attErr } = await sb
     .from('attendees')
-    .select('id, email, name, location, reengagement_email_sent_at')
+    .select('id, email, name, location, supabase_user_id, reengagement_email_sent_at')
     .in('id', eligibleIds);
   if (attErr) throw new Error(attErr.message);
+
+  let organiserKeys = { organiserUserIds: new Set(), organiserEmails: new Set() };
+  try {
+    organiserKeys = await loadOrganiserRecipientKeys(sb, attendees || []);
+  } catch (e) {
+    result.errors.push({ error: 'organiser_lookup_failed', message: e.message || String(e) });
+  }
 
   const siteUrl = siteBase();
   const cooldownBefore = daysAgo(REENGAGEMENT_COOLDOWN_DAYS);
@@ -325,6 +332,11 @@ async function sendDueAttendeeReengagementEmails(sb) {
 
     const email = String(attendee.email || '').trim().toLowerCase();
     if (!email) {
+      result.skipped += 1;
+      continue;
+    }
+
+    if (isOrganiserAttendee(attendee, organiserKeys)) {
       result.skipped += 1;
       continue;
     }
@@ -414,11 +426,23 @@ async function sendDueSignupEventsNudgeEmails(sb) {
 
   const { data: attendees, error: attErr } = await sb
     .from('attendees')
-    .select('id, email, name, location, created_at, signup_events_nudge_sent_at')
+    .select('id, email, name, location, created_at, supabase_user_id, signup_events_nudge_sent_at')
     .lte('created_at', eligibleAfter)
     .gte('created_at', eligibleBefore)
     .is('signup_events_nudge_sent_at', null);
   if (attErr) throw new Error(attErr.message);
+
+  const candidates = (attendees || []).filter((attendee) => {
+    if (bookedAttendeeIds.has(String(attendee.id))) return false;
+    return Boolean(String(attendee.email || '').trim());
+  });
+
+  let organiserKeys = { organiserUserIds: new Set(), organiserEmails: new Set() };
+  try {
+    organiserKeys = await loadOrganiserRecipientKeys(sb, candidates);
+  } catch (e) {
+    result.errors.push({ error: 'organiser_lookup_failed', message: e.message || String(e) });
+  }
 
   const siteUrl = siteBase();
 
@@ -430,6 +454,11 @@ async function sendDueSignupEventsNudgeEmails(sb) {
 
     const email = String(attendee.email || '').trim().toLowerCase();
     if (!email) {
+      result.skipped += 1;
+      continue;
+    }
+
+    if (isOrganiserAttendee(attendee, organiserKeys)) {
       result.skipped += 1;
       continue;
     }
@@ -547,6 +576,29 @@ async function loadOrganiserRecipientKeys(sb, attendees) {
       const em = String(row.email || '').trim().toLowerCase();
       if (em) organiserEmails.add(em);
     });
+
+    // Claimed/unclaimed group profiles often store contact on organisers only
+    // (no organiser_accounts row) — still treat those inboxes as organiser.
+    const addOrganiserProfileEmails = (rows) => {
+      (rows || []).forEach((row) => {
+        for (const key of ['email', 'contact_email']) {
+          const em = String(row[key] || '').trim().toLowerCase();
+          if (em) organiserEmails.add(em);
+        }
+      });
+    };
+    const { data: byEmail, error: emailErr } = await sb
+      .from('organisers')
+      .select('email, contact_email')
+      .in('email', emails);
+    if (emailErr) throw new Error(emailErr.message);
+    addOrganiserProfileEmails(byEmail);
+    const { data: byContact, error: contactErr } = await sb
+      .from('organisers')
+      .select('email, contact_email')
+      .in('contact_email', emails);
+    if (contactErr) throw new Error(contactErr.message);
+    addOrganiserProfileEmails(byContact);
   }
 
   return { organiserUserIds, organiserEmails };
@@ -1718,7 +1770,7 @@ async function sendDueHubertEventConciergeEmails(sb) {
   const { data: attendees, error } = await sb
     .from('attendees')
     .select(
-      'id, email, name, location, hubert_event_concierge_sent_at, signup_events_nudge_sent_at, signup_events_nudge_followup_sent_at'
+      'id, email, name, location, supabase_user_id, hubert_event_concierge_sent_at, signup_events_nudge_sent_at, signup_events_nudge_followup_sent_at'
     )
     .not('email', 'is', null)
     .order('hubert_event_concierge_sent_at', { ascending: true, nullsFirst: true })
@@ -1728,6 +1780,13 @@ async function sendDueHubertEventConciergeEmails(sb) {
       return { sent: 0, skipped: 0, errors: [], unavailable: true };
     }
     throw new Error(error.message);
+  }
+
+  let organiserKeys = { organiserUserIds: new Set(), organiserEmails: new Set() };
+  try {
+    organiserKeys = await loadOrganiserRecipientKeys(sb, attendees || []);
+  } catch (e) {
+    result.errors.push({ error: 'organiser_lookup_failed', message: e.message || String(e) });
   }
 
   for (const attendee of attendees || []) {
@@ -1745,6 +1804,12 @@ async function sendDueHubertEventConciergeEmails(sb) {
 
     const email = String(attendee.email || '').trim().toLowerCase();
     if (!email) {
+      result.skipped += 1;
+      continue;
+    }
+
+    // Dual-role accounts have attendee rows; keep monthly picks off organiser inboxes.
+    if (isOrganiserAttendee(attendee, organiserKeys)) {
       result.skipped += 1;
       continue;
     }
@@ -1851,4 +1916,6 @@ module.exports = {
   runEngagementEmailMaintenance,
   buildRecommendationsHtml,
   buildSignupNudgeEventsHtml,
+  isOrganiserAttendee,
+  isDueForHubertConcierge,
 };
