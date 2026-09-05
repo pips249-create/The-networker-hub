@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 /**
- * Hubert / attendee nurture must skip organiser inboxes (dual-role accounts).
+ * Hubert / member nurture must skip organiser inboxes.
+ * Organisers still have attendees rows (shared person table) but must not get
+ * member recommendation digests.
  * Usage: node scripts/test-hubert-organiser-exclusion.js
  */
 const {

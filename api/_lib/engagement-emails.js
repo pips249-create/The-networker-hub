@@ -519,8 +519,10 @@ async function sendDueSignupEventsNudgeEmails(sb) {
 }
 
 /**
- * Accounts with organiser workspace enabled, plus emails linked to an
- * organiser profile — used to keep attendee nurture mail off organiser inboxes.
+ * Organiser identities (workspace enabled, linked profile, or profile email).
+ * Every Hub login also gets an `attendees` row — that table is the person /
+ * email record, not “people who attend events”. Use this so member nurture
+ * (Hubert picks, signup nudges, reengagement) never hits organiser inboxes.
  */
 async function loadOrganiserRecipientKeys(sb, attendees) {
   const userIds = [
