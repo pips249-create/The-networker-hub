@@ -1470,7 +1470,9 @@ module.exports = async function handler(req, res) {
       try {
         const sb = getSupabaseAdmin();
         const now = new Date();
-        const { data: current, error: loadErr } = await sb
+        // `current` is reassigned when a submitted snapshot is applied before the
+        // final approve patch — must be `let`, not `const`.
+        let { data: current, error: loadErr } = await sb
           .from('business_opportunities')
           .select('*')
           .eq('id', id)
