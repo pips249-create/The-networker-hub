@@ -7,7 +7,7 @@ const { eventImageUrl, normalizeEventImagePosition } = require('./event-image');
 const { eventHasTicketsOnSale, resolveTicketSalesEnabled, earliestTicketSaleStart, formatTicketSalesOpensLabel, formatTicketSalesOpensShort, isEventPublishedForSale } = require('./ticket-sales');
 const { connectRequiredForPaidCheckout } = require('./stripe-connect');
 const { publicOrganiserSlug } = require('./organiser-slug');
-const { isMembersOnlyTicket } = require('./ticket-visibility');
+const { isMembersOnlyTicket, isClosedMembersOnlyEvent } = require('./ticket-visibility');
 const {
   formatTimeRange,
   formatDateOnly,
@@ -354,12 +354,16 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
     (t) => !t.isGuestVisit && !t.isAlumni && !t.isMembersOnly
   );
   const membersOnlyTierCount = tiers.filter((t) => t.isMembersOnly).length;
+  const hasGuestVisitTier = tiers.some((t) => t.isGuestVisit);
   const pricedTiers = publicTiers.length ? publicTiers : [];
   const attendanceMode = normalizeAttendanceMode(row.attendance_mode);
-  const isMembersOnlyEvent =
-    membersOnlyTierCount > 0 &&
-    pricedTiers.length === 0 &&
-    attendanceMode !== 'category_exclusivity';
+  // Guest visits / membership-after-visits are not closed members-only listings.
+  const isMembersOnlyEvent = isClosedMembersOnlyEvent({
+    attendanceMode,
+    membersOnlyTierCount,
+    publicTiersCount: pricedTiers.length,
+    hasGuestVisitTier,
+  });
   pricedTiers.sort((a, b) => {
     if (a.soldOut !== b.soldOut) return a.soldOut ? 1 : -1;
     return a.priceNum - b.priceNum;

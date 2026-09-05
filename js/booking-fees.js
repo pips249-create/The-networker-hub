@@ -73,20 +73,27 @@
 
   function isMembersOnlyListing(ev) {
     const mode = String(ev?.attendanceMode || '').trim();
-    if (mode === 'category_exclusivity' || mode === 'osop') return false;
+    // Guest visits / free membership-after-visits are open to newcomers.
+    if (
+      mode === 'category_exclusivity' ||
+      mode === 'osop' ||
+      mode === 'guest_programme' ||
+      mode === 'membership_meeting'
+    ) {
+      return false;
+    }
+    if (ev?.guestVisitTier || (Number(ev?.complimentaryVisitsAllowed) > 0 && !ev?.guestPassesDisabled)) {
+      return false;
+    }
     return Boolean(ev?.isMembersOnlyEvent);
   }
 
   function listingPriceLabel(ev, options) {
     const opts = options || {};
     const withFrom = opts.withFrom !== false;
-    if (isMembersOnlyListing(ev)) {
-      return 'Members only';
-    }
-    if (
-      String(ev?.attendanceMode || '') === 'guest_programme' ||
-      String(ev?.attendanceMode || '') === 'membership_meeting'
-    ) {
+    const mode = String(ev?.attendanceMode || '').trim();
+    // Prefer guest-visit copy before the closed members-only badge.
+    if (mode === 'guest_programme' || mode === 'membership_meeting') {
       const member =
         ev.priceKey === 'free' || /^free$/i.test(String(ev.price || ''))
           ? 'Free'
@@ -95,6 +102,9 @@
             : formatPounds(listingPriceNum(ev));
       const trial = guestVisitTrialSuffix(ev, opts);
       return trial ? member + ' · ' + trial : member;
+    }
+    if (isMembersOnlyListing(ev)) {
+      return 'Members only';
     }
     if (!ev || ev.priceKey === 'free' || /^free$/i.test(String(ev.price || ''))) {
       return 'Free';
