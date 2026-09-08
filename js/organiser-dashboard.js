@@ -11361,7 +11361,7 @@
         'Messages from members — reply here or via your email app.',
       ],
       'business-open-days': [
-        'Open days &amp; talks',
+        'Open days & talks',
         'Add in-person visits or online intro sessions to live listings — without changing approved listing copy.',
       ],
       'business-insights': [

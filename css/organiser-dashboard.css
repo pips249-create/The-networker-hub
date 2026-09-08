@@ -10970,8 +10970,8 @@ body.org-event-drawer-open {
 }
 
 .org-page--business-ops .org-page-title {
-  font-family: 'DM Serif Display', Georgia, serif;
-  font-weight: 400;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-weight: 700;
   font-size: clamp(1.75rem, 3.5vw, 2.25rem);
   color: var(--opp-navy);
 }
@@ -10987,8 +10987,8 @@ body.org-event-drawer-open {
 
 .org-page--business-ops .org-section-title,
 .org-page--business-ops .org-overview-head .org-section-title {
-  font-family: 'DM Serif Display', Georgia, serif;
-  font-weight: 400;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-weight: 700;
   color: var(--opp-navy);
 }
 
@@ -11063,8 +11063,8 @@ body.org-event-drawer-open {
 .org-page--business-ops .oe-intro-pricing h2,
 .org-page--business-ops .oe-intro-faq h2 {
   margin: 0 0 14px;
-  font-family: 'DM Serif Display', Georgia, serif;
-  font-weight: 400;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-weight: 700;
   font-size: 1.1rem;
   color: var(--opp-navy);
   text-transform: none;
