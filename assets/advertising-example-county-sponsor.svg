@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 120" role="img" aria-label="Cheshire County Sponsor example">
+  <rect width="320" height="120" rx="12" fill="#f4f1ec"/>
+  <rect x="18" y="28" width="8" height="64" rx="4" fill="#1c2040"/>
+  <text x="40" y="58" font-family="Georgia, 'Times New Roman', serif" font-size="26" font-weight="700" fill="#1c2040">Cheshire</text>
+  <text x="40" y="86" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="600" letter-spacing="0.08em" fill="#6b5b95">COUNTY SPONSOR</text>
+</svg>

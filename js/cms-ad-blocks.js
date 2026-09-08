@@ -316,7 +316,9 @@
       esc(href) +
       '">' +
       '<div class="networking-city-partner-logo-placeholder">Get your business seen here</div>' +
-      '<span class="networking-city-partner-placeholder-price">From £29 / month + VAT</span>' +
+      '<span class="networking-city-partner-placeholder-price">' +
+      esc(regionPartnerPlaceholderPrice(slot)) +
+      '</span>' +
       '</a>' +
       '</aside>';
     return true;
@@ -514,15 +516,32 @@
   }
 
   function regionPartnerBadge(slot) {
-    return String(slot || '').indexOf('networking_county_partner_') === 0
-      ? 'County Sponsor'
-      : 'City Sponsor';
+    var key = String(slot || '');
+    if (key.indexOf('opportunity_industry_sponsor_') === 0) return 'Industry Sponsor';
+    if (key.indexOf('networking_county_partner_') === 0) return 'County Sponsor';
+    return 'City Sponsor';
   }
 
   function regionPartnerAdvertiseHref(slot) {
-    return String(slot || '').indexOf('networking_county_partner_') === 0
-      ? '/advertising#county-partner-package'
-      : '/advertising#city-partner-package';
+    var key = String(slot || '');
+    if (key.indexOf('opportunity_industry_sponsor_') === 0) {
+      return '/advertising#industry-partner-package';
+    }
+    if (key.indexOf('networking_county_partner_') === 0) {
+      return '/advertising#county-partner-package';
+    }
+    return '/advertising#city-partner-package';
+  }
+
+  function regionPartnerPlaceholderPrice(slot) {
+    var key = String(slot || '');
+    if (
+      key.indexOf('opportunity_industry_sponsor_') === 0 ||
+      key.indexOf('networking_county_partner_') === 0
+    ) {
+      return 'From £49 / month + VAT';
+    }
+    return 'From £29 / month + VAT';
   }
 
   function loadCarouselAds(slot) {

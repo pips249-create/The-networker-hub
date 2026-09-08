@@ -72,8 +72,12 @@ function isCountyPartnerSlot(slot) {
   return String(slot || '').trim().startsWith('networking_county_partner_');
 }
 
+function isIndustrySponsorSlot(slot) {
+  return String(slot || '').trim().startsWith('opportunity_industry_sponsor_');
+}
+
 function isRegionPartnerSlot(slot) {
-  return isCityPartnerSlot(slot) || isCountyPartnerSlot(slot);
+  return isCityPartnerSlot(slot) || isCountyPartnerSlot(slot) || isIndustrySponsorSlot(slot);
 }
 
 /**
@@ -110,7 +114,7 @@ function isPublishableSponsorBlock(block, slot) {
   const ctaUrl = String(block.cta_url || '').trim();
   if (!hasValidCtaUrl(ctaUrl)) return false;
 
-  // City/county partners + opportunity sidebar: logo + website only (no on-page button).
+  // City/county/industry partners + opportunity sidebar: logo + website only (no on-page button).
   if (isRegionPartnerSlot(key) || key.endsWith('_sidebar_ad')) return hasSponsorLogo(block);
 
   // Browse heroes: logo-only when a logo is set; otherwise tagline/company + CTA.
@@ -197,6 +201,7 @@ module.exports = {
   isCompactSponsorSlot,
   isCityPartnerSlot,
   isCountyPartnerSlot,
+  isIndustrySponsorSlot,
   isRegionPartnerSlot,
   sponsorPlacementEnded,
   isEmailSponsorBlock,

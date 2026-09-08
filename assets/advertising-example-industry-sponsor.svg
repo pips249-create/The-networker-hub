@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 120" role="img" aria-label="Hospitality Industry Sponsor example">
+  <rect width="320" height="120" rx="12" fill="#1c2040"/>
+  <circle cx="44" cy="60" r="18" fill="none" stroke="#c9a227" stroke-width="3"/>
+  <circle cx="44" cy="60" r="7" fill="#c9a227"/>
+  <text x="78" y="56" font-family="Georgia, 'Times New Roman', serif" font-size="24" font-weight="700" fill="#f7f4ef">Hospitality</text>
+  <text x="78" y="84" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="14" font-weight="600" letter-spacing="0.08em" fill="#c9a227">INDUSTRY SPONSOR</text>
+</svg>

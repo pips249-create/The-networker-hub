@@ -2,6 +2,7 @@
  * City/county landing pages for business opportunities — /opportunities/networking/:region
  * (rewrites to /opportunities/?city=:region). Mirrors js/networking-regions.js.
  * County Sponsor ads are Events-only (/networking/:county) — not sold on Opportunities.
+ * Industry Sponsor (opportunity_industry_sponsor_*) mounts from opportunities-page.js when ?category= is set.
  */
 (function () {
   var REGIONS = window.HUB_NETWORKING_REGIONS || {};

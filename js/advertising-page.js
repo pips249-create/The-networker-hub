@@ -1,5 +1,5 @@
 (function () {
-  var DEMO_HUB_LOGO = '/assets/advertising-example-hub-logo.png';
+  var DEMO_BRAND_LOGO = '/assets/logo-nav-transparent.png';
 
   var LOREM_SHORT =
     'Lorem ipsum dolor sit amet, consectetur adipiscing elit.';
@@ -26,16 +26,24 @@
     cta_url: DEMO_SPONSOR.cta_url,
   };
 
-  var DEMO_MINI_SPONSORS = [
-    DEMO_SPONSOR,
-    {
-      active: true,
-      logo_url: '/assets/advertising-example-hub-logo.png',
-      company_name: 'North West IT',
-      cta_label: 'Find out more →',
-      cta_url: 'https://example.com',
-    },
-  ];
+  var DEMO_COUNTY_SPONSOR = {
+    active: true,
+    logo_url: '/assets/advertising-example-county-sponsor.svg',
+    company_name: 'Cheshire County Sponsor',
+    cta_label: 'Find out more →',
+    cta_url: 'https://example.com',
+  };
+
+  var DEMO_INDUSTRY_SPONSOR = {
+    active: true,
+    logo_url: '/assets/advertising-example-industry-sponsor.svg',
+    company_name: 'Hospitality Industry Sponsor',
+    cta_label: 'Find out more →',
+    cta_url: 'https://example.com',
+  };
+
+  var DEMO_MINI_SPONSORS = [DEMO_SPONSOR, DEMO_INDUSTRY_SPONSOR];
+  var DEMO_OPPORTUNITY_MINI_SPONSORS = [DEMO_COUNTY_SPONSOR, DEMO_INDUSTRY_SPONSOR];
 
   var EVENT_MAIN_EMAIL_PREVIEWS = {
     booking: {
@@ -181,6 +189,7 @@
     'ad-pkg-organisers-mini': 'organisers',
     'ad-pkg-organisers-spotlight': 'organisers',
     'ad-pkg-opportunities-main': 'opportunities',
+    'industry-partner-package': 'opportunities',
     'ad-pkg-opportunities-mini': 'opportunities',
     'ad-pkg-opportunities-listing': 'opportunities',
     'ad-pkg-opportunities-spotlight': 'opportunities',
@@ -195,7 +204,10 @@
   var STICKY_CTA_BY_SECTION = {
     events: { href: '#city-partner-package', text: 'City Sponsor · from £29/mo' },
     organisers: { href: '#ad-pkg-organisers-main', text: 'Headline · from £1,000/mo' },
-    opportunities: { href: '#ad-pkg-opportunities-listing', text: 'List from £25/mo + VAT' },
+    opportunities: {
+      href: '#industry-partner-package',
+      text: 'Industry Sponsor · from £49/mo',
+    },
   };
 
   var activeAdSection = 'events';
@@ -212,6 +224,7 @@
     organisers: ['Headline Sponsor', 'Organiser Page Partner', 'Featured Organiser Boost', 'Not sure yet'],
     opportunities: [
       'Headline Sponsor',
+      'Industry Sponsor',
       'Opportunity Page Partner',
       'Directory Listing',
       'Featured Opportunity Boost',
@@ -790,8 +803,9 @@
     updateBar();
   }
 
-  function buildMiniSponsorsRowHtml() {
-    return DEMO_MINI_SPONSORS.slice()
+  function buildMiniSponsorsRowHtml(sponsors) {
+    return (Array.isArray(sponsors) ? sponsors : DEMO_MINI_SPONSORS)
+      .slice()
       .map(function (item) {
         var logo = String(item.logo_url || '').trim();
         var company = String(item.company_name || '').trim();
@@ -815,13 +829,14 @@
 
   function renderMiniSponsorsRowEmailShell(container, config) {
     if (!container) return;
+    var sponsors = (config && config.sponsors) || DEMO_MINI_SPONSORS;
     renderSponsorEmailPreview(container, null, Object.assign({}, config, {
       skipMainSponsor: true,
       beforeFooterHtml:
         '<div class="ad-full-email-mini-row">' +
         '<p class="ad-full-email-mini-row-label">Powered by</p>' +
         '<div class="ad-full-email-mini-row-logos">' +
-        buildMiniSponsorsRowHtml() +
+        buildMiniSponsorsRowHtml(sponsors) +
         '</div>' +
         '</div>',
     }));
@@ -873,6 +888,7 @@
   function renderOpportunityMiniSponsorEmailPreview(container) {
     if (!container) return;
     renderMiniSponsorsRowEmailShell(container, {
+      sponsors: DEMO_OPPORTUNITY_MINI_SPONSORS,
       kicker: 'Listing live',
       title: 'Your opportunity is now live',
       lede:
@@ -1203,7 +1219,7 @@
       '<div class="ad-full-email-card">' +
       '<div class="ad-full-email-header">' +
       '<img src="' +
-      DEMO_HUB_LOGO +
+      DEMO_BRAND_LOGO +
       '" alt="" class="ad-full-email-hub-logo">' +
       sponsorRow +
       '<div class="ad-full-email-wave" aria-hidden="true"></div>' +
@@ -1230,7 +1246,7 @@
       '</div>' +
       '<div class="ad-full-email-brand">' +
       '<img src="' +
-      DEMO_HUB_LOGO +
+      DEMO_BRAND_LOGO +
       '" alt="" class="ad-full-email-hub-logo ad-full-email-hub-logo--sm">' +
       '<p class="ad-full-email-brand-name">The Networker UK</p>' +
       '</div>' +
@@ -1321,7 +1337,7 @@
   function loadOpportunitySidebarPreview() {
     renderMiniInShell(
       document.getElementById('ad-live-mini-opportunity'),
-      DEMO_MINI_SPONSORS,
+      DEMO_OPPORTUNITY_MINI_SPONSORS,
       'opportunity_page_carousel_ads'
     );
     renderOpportunityMiniSponsorEmailPreview(

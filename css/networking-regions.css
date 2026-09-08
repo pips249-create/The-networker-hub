@@ -640,6 +640,40 @@ body.networking-region-page .networking-region-intro {
   border-top: 1px solid rgba(50, 43, 120, 0.12);
 }
 
+.networking-industry-directory {
+  margin-bottom: 0.5rem;
+}
+
+.home-locations-track--industries {
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.home-location-chip--industry {
+  min-height: 2.6rem;
+  padding: 0.45rem 0.9rem;
+  background: #f3f7fb;
+  border: 1px solid rgba(40, 90, 140, 0.14);
+}
+
+.home-location-chip--industry:hover,
+.home-location-chip--industry:focus-visible {
+  border-color: rgba(40, 90, 140, 0.35);
+  background: #eaf2f9;
+}
+
+.home-location-chip--industry.is-active {
+  border-color: #2f6f9f;
+  background: #e4f0f8;
+  box-shadow: 0 0 0 2px rgba(47, 111, 159, 0.18);
+}
+
+.opp-industry-sponsor-intro {
+  --region-accent: #2f6f9f;
+  --region-accent-soft: rgba(47, 111, 159, 0.1);
+  --region-accent-border: rgba(47, 111, 159, 0.22);
+}
+
 .networking-county-directory-heading {
   margin: 0 0 0.35rem;
   font-size: 1.05rem;

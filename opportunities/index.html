@@ -15,7 +15,7 @@
 <meta property="og:title" content="Find your next business opportunity – The Networker UK">
 <meta property="og:description" content="Find your next franchise, side hustle, or partnership across the UK. Browse free on The Networker UK and enquire directly with providers.">
 <meta property="og:url" content="https://www.thenetworkeruk.com/opportunities/">
-<meta property="og:image" content="https://www.thenetworkeruk.com/assets/logo-networker-uk-og.png?v=20260902og2">
+<meta property="og:image" content="https://www.thenetworkeruk.com/assets/logo-networker-uk-og.png?v=20260908og">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="The Networker UK">
@@ -37,7 +37,7 @@
     <link rel="icon" href="/assets/favicon.svg?v=20260823uk3" type="image/svg+xml" />
     <link rel="icon" href="/assets/favicon-32.png?v=20260823uk" type="image/png" sizes="32x32" />
     <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png?v=20260823uk" />
-    <script src="/js/hub-defer-css.js?v=20260828perf2" data-hrefs="/css/networking-regions.css?v=20260829pill1"></script>
+    <script src="/js/hub-defer-css.js?v=20260828perf2" data-hrefs="/css/networking-regions.css?v=20260908industry1"></script>
     <script src="/js/hub-lazy-vendor.js?v=20260726m" defer></script>
     <script src="/js/hub-seo-static-config.js?v=20260612" defer></script>
     <script src="/js/hub-seo-static.js?v=20260612" data-page="opportunities" defer></script>
@@ -130,12 +130,26 @@
                 <span class="networking-city-partner-badge">County Sponsor</span>
                 <a class="networking-city-partner-logo-link" href="/advertising#county-partner-package">
                   <div class="networking-city-partner-logo-placeholder">Get your business seen here</div>
-                  <span class="networking-city-partner-placeholder-price">From £29 / month + VAT</span>
+                  <span class="networking-city-partner-placeholder-price">From £49 / month + VAT</span>
                 </a>
               </aside>
             </div>
           </div>
           <div class="networking-region-landmark" id="networking-region-skyline" hidden aria-hidden="true"></div>
+        </div>
+      </section>
+
+      <section class="networking-region-intro opp-industry-sponsor-intro" id="opp-industry-sponsor-intro" hidden aria-labelledby="opp-industry-sponsor-heading">
+        <div class="networking-region-intro-accent" aria-hidden="true"></div>
+        <div class="networking-region-intro-inner">
+          <div class="networking-region-intro-copy">
+            <p class="networking-region-kicker">Industry directory</p>
+            <h2 id="opp-industry-sponsor-heading">Business opportunities by industry</h2>
+            <p id="opp-industry-sponsor-copy">Browse franchises, side hustles, and partnerships in this sector.</p>
+          </div>
+          <div class="networking-region-intro-actions">
+            <div class="networking-region-city-partner" id="opp-industry-sponsor-slot"></div>
+          </div>
         </div>
       </section>
 
@@ -192,6 +206,13 @@
                     <nav class="event-type-chips" id="opp-type-chips" aria-label="Opportunity format"></nav>
                   </div>
                 </div>
+                <div class="filter-bar-row filter-bar-row-industries filter-bar-row-types--nested" id="filter-industry-row">
+                  <div class="event-type-chips-wrap">
+                    <span class="filter-bar-chip-label filter-bar-chip-label--inline" id="filter-industry-label">Industry</span>
+                    <p class="filter-industry-empty" id="filter-industry-empty" hidden>No industries match your other filters.</p>
+                    <nav class="event-type-chips" id="opp-industry-chips" aria-label="Industry"></nav>
+                  </div>
+                </div>
                 <div class="filter-bar-primary">
                   <fieldset class="filter-format-group filter-format-group--prominent filter-format-group--inline filter-opp-invest-group" id="filter-opp-invest-group">
                     <legend class="filter-bar-chip-label">Investment</legend>
@@ -227,13 +248,6 @@
                   </button>
                 </div>
                 <div class="filter-more-panel filter-opp-more-panel" id="filter-more-panel" hidden>
-                  <div class="filter-bar-row filter-bar-row-industries filter-bar-row-types--nested" id="filter-industry-row">
-                    <div class="event-type-chips-wrap">
-                      <span class="filter-bar-chip-label filter-bar-chip-label--inline" id="filter-industry-label">Industry</span>
-                      <p class="filter-industry-empty" id="filter-industry-empty" hidden>No industries match your other filters.</p>
-                      <nav class="event-type-chips" id="opp-industry-chips" aria-label="Industry"></nav>
-                    </div>
-                  </div>
                   <div class="filter-opp-more-grid">
                     <div class="filter-opp-category-wrap" hidden>
                       <label class="filter-bar-select" for="opp-filter-category">
@@ -486,6 +500,38 @@
         </div>
       </div>
 
+      <section class="home-locations networking-industry-directory" id="networking-industry-directory" aria-labelledby="networking-industry-directory-heading">
+        <div class="home-flow-inner">
+          <header class="home-flow-head">
+            <p class="section-kicker">Popular industries</p>
+            <h2 class="section-title" id="networking-industry-directory-heading">Browse by industry</h2>
+            <p class="home-flow-lede home-locations-lede">
+              Jump into franchises and deals by sector — one Industry Sponsor per category
+            </p>
+          </header>
+          <div class="home-locations-track home-locations-track--industries" id="opp-industry-directory-track" role="list">
+            <a class="home-location-chip home-location-chip--industry" href="?category=cleaning" data-category="cleaning" role="listitem"><span class="home-location-chip-name">Cleaning</span></a>
+            <a class="home-location-chip home-location-chip--industry" href="?category=home-services" data-category="home-services" role="listitem"><span class="home-location-chip-name home-location-chip-name--stacked"><span class="home-location-chip-name-line">Home</span><span class="home-location-chip-name-line">services</span></span></a>
+            <a class="home-location-chip home-location-chip--industry" href="?category=food" data-category="food" role="listitem"><span class="home-location-chip-name">Food &amp; Drink</span></a>
+            <a class="home-location-chip home-location-chip--industry" href="?category=retail" data-category="retail" role="listitem"><span class="home-location-chip-name">Retail</span></a>
+            <a class="home-location-chip home-location-chip--industry" href="?category=tech" data-category="tech" role="listitem"><span class="home-location-chip-name">Tech</span></a>
+            <a class="home-location-chip home-location-chip--industry" href="?category=health" data-category="health" role="listitem"><span class="home-location-chip-name">Health</span></a>
+            <a class="home-location-chip home-location-chip--industry" href="?category=medical" data-category="medical" role="listitem"><span class="home-location-chip-name">Medical</span></a>
+            <a class="home-location-chip home-location-chip--industry" href="?category=beauty" data-category="beauty" role="listitem"><span class="home-location-chip-name">Beauty</span></a>
+            <a class="home-location-chip home-location-chip--industry" href="?category=property" data-category="property" role="listitem"><span class="home-location-chip-name">Property</span></a>
+            <a class="home-location-chip home-location-chip--industry" href="?category=automotive" data-category="automotive" role="listitem"><span class="home-location-chip-name">Automotive</span></a>
+            <a class="home-location-chip home-location-chip--industry" href="?category=education" data-category="education" role="listitem"><span class="home-location-chip-name">Education</span></a>
+            <a class="home-location-chip home-location-chip--industry" href="?category=childcare" data-category="childcare" role="listitem"><span class="home-location-chip-name">Childcare</span></a>
+            <a class="home-location-chip home-location-chip--industry" href="?category=care" data-category="care" role="listitem"><span class="home-location-chip-name">Care</span></a>
+            <a class="home-location-chip home-location-chip--industry" href="?category=finance" data-category="finance" role="listitem"><span class="home-location-chip-name">Finance</span></a>
+            <a class="home-location-chip home-location-chip--industry" href="?category=recruitment" data-category="recruitment" role="listitem"><span class="home-location-chip-name">Recruitment</span></a>
+            <a class="home-location-chip home-location-chip--industry" href="?category=pets" data-category="pets" role="listitem"><span class="home-location-chip-name">Pets</span></a>
+            <a class="home-location-chip home-location-chip--industry" href="?category=leisure" data-category="leisure" role="listitem"><span class="home-location-chip-name">Leisure</span></a>
+            <a class="home-location-chip home-location-chip--industry" href="?category=networking" data-category="networking" role="listitem"><span class="home-location-chip-name">Networking</span></a>
+          </div>
+        </div>
+      </section>
+
       <section class="home-locations networking-location-directory" id="networking-location-directory" aria-labelledby="networking-location-directory-heading">
         <div class="home-flow-inner">
           <header class="home-flow-head">
@@ -685,7 +731,7 @@
     <div id="hub-site-footer"></div>
     <script src="/js/site-footer.js?v=20260825navfull1" data-root="/" defer></script>
 
-    <script src="/js/cms-ad-blocks.js?v=20260813pagepartner1" defer></script>
+    <script src="/js/cms-ad-blocks.js?v=20260908industry1" defer></script>
     <script src="/js/hub-organiser-actions.js?v=20260828listopp1" data-root="/" defer></script>
     <script src="/js/opportunity-listing-constants.js?v=20260828cookie1" defer></script>
     <script src="/js/opportunities-catalog.js?v=20260903investsort1" defer></script>
@@ -702,7 +748,7 @@
     <script src="/js/hub-spotlight-carousel.js?v=20260807fix3" defer></script>
     <script src="/js/browse-analytics-client.js?v=20260728browse2" defer></script>
     <script src="/js/hub-search-match.js?v=20260829search1" defer></script>
-    <script src="/js/opportunities-page.js?v=20260903investsort1" defer></script>
+    <script src="/js/opportunities-page.js?v=20260908industry1" defer></script>
     <script src="/js/opportunities-map.js?v=20260827invest1" defer></script>
   </body>
 </html>

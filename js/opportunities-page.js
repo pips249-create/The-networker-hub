@@ -1789,6 +1789,81 @@
       chip.classList.toggle('is-active', active);
       chip.setAttribute('aria-pressed', active ? 'true' : 'false');
     });
+    syncIndustryDirectoryUi();
+  }
+
+  function industryLabelForId(id) {
+    var key = String(id || '').trim();
+    if (!key) return '';
+    for (var i = 0; i < INDUSTRY_CHIPS.length; i++) {
+      if (INDUSTRY_CHIPS[i].id === key) return INDUSTRY_CHIPS[i].label;
+    }
+    if (catalog && catalog.CATEGORY_LABELS && catalog.CATEGORY_LABELS[key]) {
+      return catalog.CATEGORY_LABELS[key];
+    }
+    return key;
+  }
+
+  function syncIndustryDirectoryUi() {
+    var track = document.getElementById('opp-industry-directory-track');
+    if (!track) return;
+    track.querySelectorAll('.home-location-chip--industry[data-category]').forEach(function (chip) {
+      var id = chip.getAttribute('data-category') || '';
+      var on = Boolean(activeCategory) && activeCategory === id;
+      chip.classList.toggle('is-active', on);
+      if (on) chip.setAttribute('aria-current', 'page');
+      else chip.removeAttribute('aria-current');
+    });
+  }
+
+  var mountedIndustrySponsorSlot = '';
+
+  function syncIndustrySponsorIntro() {
+    var intro = document.getElementById('opp-industry-sponsor-intro');
+    var slotEl = document.getElementById('opp-industry-sponsor-slot');
+    var heading = document.getElementById('opp-industry-sponsor-heading');
+    var copy = document.getElementById('opp-industry-sponsor-copy');
+    if (!intro) return;
+
+    if (!activeCategory) {
+      intro.hidden = true;
+      if (slotEl) slotEl.innerHTML = '';
+      mountedIndustrySponsorSlot = '';
+      return;
+    }
+
+    var label = industryLabelForId(activeCategory);
+    intro.hidden = false;
+    if (heading) {
+      heading.innerHTML =
+        'Business opportunities in <span class="networking-region-name-accent"></span>';
+      var accent = heading.querySelector('.networking-region-name-accent');
+      if (accent) accent.textContent = label;
+    }
+    if (copy) {
+      copy.textContent =
+        'Browse franchises, side hustles, and partnerships in ' +
+        label +
+        '. One Industry Sponsor owns this category.';
+    }
+
+    var slotKey = 'opportunity_industry_sponsor_' + activeCategory;
+    if (!slotEl) return;
+    if (mountedIndustrySponsorSlot === slotKey && slotEl.querySelector('.networking-city-partner-ad')) {
+      return;
+    }
+    mountedIndustrySponsorSlot = slotKey;
+    if (window.CmsAdBlocks && typeof window.CmsAdBlocks.mountCityPartnerSlot === 'function') {
+      window.CmsAdBlocks.mountCityPartnerSlot(slotEl, slotKey);
+    } else {
+      slotEl.innerHTML =
+        '<aside class="networking-city-partner-ad networking-city-partner-ad--available" aria-label="Industry Sponsor slot available">' +
+        '<span class="networking-city-partner-badge">Industry Sponsor</span>' +
+        '<a class="networking-city-partner-logo-link" href="/advertising#industry-partner-package">' +
+        '<div class="networking-city-partner-logo-placeholder">Get your business seen here</div>' +
+        '<span class="networking-city-partner-placeholder-price">From £49 / month + VAT</span>' +
+        '</a></aside>';
+    }
   }
 
   function setIndustry(id) {
@@ -1900,7 +1975,6 @@
 
   function countAdvancedFilters() {
     var n = 0;
-    if (activeCategory) n += 1;
     if (activeCommitments.length) n += 1;
     if (hasOpenDayOnly) n += 1;
     if (minInvest != null || maxInvest != null) n += 1;
@@ -2347,6 +2421,7 @@
     syncMoreFiltersBadge();
     syncClearFiltersVisibility();
     renderActiveFilters();
+    syncIndustrySponsorIntro();
     resetListingPagination();
     writeFiltersToUrl();
     setOppListingsLoading(true);
@@ -3098,6 +3173,29 @@
     renderListings();
   }
 
+  function bindIndustryDirectoryClicks() {
+    var track = document.getElementById('opp-industry-directory-track');
+    if (!track || track.dataset.bound === '1') return;
+    track.dataset.bound = '1';
+    track.addEventListener('click', function (e) {
+      var chip = e.target.closest('.home-location-chip--industry[data-category]');
+      if (!chip) return;
+      e.preventDefault();
+      var id = chip.getAttribute('data-category') || '';
+      if (activeCategory === id) {
+        activeCategory = '';
+      } else {
+        activeCategory = id;
+      }
+      syncCategorySelect();
+      applyFilters();
+      var intro = document.getElementById('opp-industry-sponsor-intro');
+      if (intro && !intro.hidden && typeof intro.scrollIntoView === 'function') {
+        intro.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    });
+  }
+
   function init() {
     cacheEls();
     readFiltersFromUrl();
@@ -3113,6 +3211,7 @@
     updateFilterCounts();
     initFilterBar();
     bindActiveFilters();
+    bindIndustryDirectoryClicks();
     syncMoreFiltersBadge();
     openMoreFiltersIfNeeded();
     syncClearFiltersVisibility();
@@ -3131,6 +3230,7 @@
     syncCommitmentChecks();
     syncOpenDayToggle();
     syncCategorySelect();
+    syncIndustrySponsorIntro();
     // Drop legacy ?hideNm= from the address bar (opt-in is now ?type=network-marketing).
     writeFiltersToUrl();
     resetSpotlightOrder();
