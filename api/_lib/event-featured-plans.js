@@ -1,5 +1,6 @@
 const { isEventStarted } = require('./event-timezone');
 const { applyPrepaidTermDiscount } = require('./sponsorship-term-discounts');
+const { upcomingBrowseRows } = require('./event-series-peers');
 
 const FEATURED_MONTH_DAYS = 30;
 const FEATURED_DEFAULT_MONTHLY_PENCE = 5500;
@@ -119,12 +120,85 @@ function resolveOfferablePlanId(planId, eventStartsAt) {
   return '1month';
 }
 
-function isEventCurrentlyFeatured(row) {
+/**
+ * Featured placement still within its paid/admin window (ignores event start).
+ * Used to roll Premium Spotlight forward onto the next date in a series.
+ */
+function isFeaturedPlacementUnexpired(row, at) {
   if (!row || !row.featured) return false;
-  if (isEventStarted(row)) return false;
   if (!row.featured_until) return true;
-  const until = new Date(row.featured_until);
-  return !Number.isNaN(until.getTime()) && until > new Date();
+  const until = new Date(row.featured_until).getTime();
+  if (Number.isNaN(until)) return false;
+  const now = at instanceof Date ? at.getTime() : Date.now();
+  return until > now;
+}
+
+function isEventCurrentlyFeatured(row, at) {
+  if (!row || !row.featured) return false;
+  if (isEventStarted(row, at)) return false;
+  return isFeaturedPlacementUnexpired(row, at);
+}
+
+/**
+ * Decide how to keep a series visible in Premium Spotlight while its placement
+ * window is still active. Pure helper for cron sync + unit tests.
+ *
+ * @returns {{ patch: object, featureIds: string[], clearStartedIds: string[] } | null}
+ */
+function planSeriesFeaturedRollForward(peers, at) {
+  const rows = peers || [];
+  const now = at instanceof Date ? at : new Date();
+  const unexpired = rows.filter((row) => isFeaturedPlacementUnexpired(row, now));
+  if (!unexpired.length) return null;
+
+  const anchor =
+    [...unexpired]
+      .filter((row) => row.featured_until)
+      .sort((a, b) => new Date(b.featured_until) - new Date(a.featured_until))[0] || unexpired[0];
+
+  const upcoming = upcomingBrowseRows(rows, now);
+  if (!upcoming.length) return null;
+
+  const patch = {
+    featured: true,
+    featured_until: anchor.featured_until == null ? null : anchor.featured_until,
+    featured_plan: anchor.featured_plan == null ? null : anchor.featured_plan,
+    featured_paid_at: anchor.featured_paid_at == null ? null : anchor.featured_paid_at,
+    featured_amount_gbp:
+      anchor.featured_amount_gbp == null ? null : anchor.featured_amount_gbp,
+  };
+
+  const sameMeta = (peer) => {
+    const untilA = peer.featured_until == null ? null : String(peer.featured_until);
+    const untilB = patch.featured_until == null ? null : String(patch.featured_until);
+    const amountA =
+      peer.featured_amount_gbp == null || peer.featured_amount_gbp === ''
+        ? null
+        : Number(peer.featured_amount_gbp);
+    const amountB =
+      patch.featured_amount_gbp == null || patch.featured_amount_gbp === ''
+        ? null
+        : Number(patch.featured_amount_gbp);
+    return (
+      !!peer.featured &&
+      untilA === untilB &&
+      String(peer.featured_plan || '') === String(patch.featured_plan || '') &&
+      String(peer.featured_paid_at || '') === String(patch.featured_paid_at || '') &&
+      amountA === amountB
+    );
+  };
+
+  const featureIds = upcoming
+    .filter((peer) => !sameMeta(peer))
+    .map((peer) => peer.id)
+    .filter(Boolean);
+
+  // Keep started peers featured while the window is open so admin lists still show
+  // the series as featured; public browse ignores started rows via isEventCurrentlyFeatured.
+  const clearStartedIds = [];
+
+  if (!featureIds.length && !clearStartedIds.length) return null;
+  return { patch, featureIds, clearStartedIds, anchorId: anchor.id };
 }
 
 function computeFeaturedUntil(currentUntil, planDays, eventStartsAt) {
@@ -262,7 +336,9 @@ module.exports = {
   normalizePlanId,
   resolveOfferablePlanId,
   OFFERABLE_FEATURED_PLAN_IDS,
+  isFeaturedPlacementUnexpired,
   isEventCurrentlyFeatured,
+  planSeriesFeaturedRollForward,
   computeFeaturedUntil,
   previewFeaturedPlacement,
   calculateFeaturedListingQuote,
