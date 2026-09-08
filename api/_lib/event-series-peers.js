@@ -74,9 +74,9 @@ async function fetchSeriesPeerRows(sb, row) {
   return [...byId.values()];
 }
 
-function upcomingBrowseRows(rows) {
+function upcomingBrowseRows(rows, at) {
   return (rows || []).filter(
-    (row) => isPublishedApprovedRow(row) && row.starts_at && !isEventStarted(row)
+    (row) => isPublishedApprovedRow(row) && row.starts_at && !isEventStarted(row, at)
   );
 }
 

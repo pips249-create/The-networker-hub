@@ -8,13 +8,14 @@ const {
   FEATURED_PLANS,
   normalizePlanId,
   isEventCurrentlyFeatured,
+  isFeaturedPlacementUnexpired,
+  planSeriesFeaturedRollForward,
   computeFeaturedUntil,
   previewFeaturedPlacement,
   calculateFeaturedListingQuote,
 } = require('./event-featured-plans');
 const {
   fetchSeriesPeerRows,
-  upcomingBrowseRows,
   seriesFeaturedStartCap,
   isSeriesLiveOnBrowse,
   seriesFeaturedUntil,
@@ -109,6 +110,60 @@ async function activateEventFeatured(eventId, planId, opts = {}) {
     plan: planId,
     seriesEventIds: targetIds,
   };
+}
+
+/**
+ * Admin / ops: turn Premium Spotlight on for an event and every published,
+ * approved peer in its series (same shape as paid activate, without Stripe).
+ */
+async function setEventFeaturedPlacement(eventId, opts = {}) {
+  const id = String(eventId || '').trim();
+  if (!isUuid(id)) throw new Error('invalid_event_id');
+
+  const sb = getSupabaseAdmin();
+  const current = await getEventRow(id);
+  if (!current) throw new Error('event_not_found');
+
+  const peers = await fetchSeriesPeerRows(sb, current);
+  const hasUntil =
+    Object.prototype.hasOwnProperty.call(opts, 'featured_until') ||
+    Object.prototype.hasOwnProperty.call(opts, 'featuredUntil');
+  const featured_until = hasUntil
+    ? opts.featured_until !== undefined
+      ? opts.featured_until
+      : opts.featuredUntil
+    : current.featured_until || null;
+
+  const patch = {
+    featured: true,
+    featured_until: featured_until == null || featured_until === '' ? null : featured_until,
+    featured_expiry_reminder_sent_at: null,
+  };
+  if (Object.prototype.hasOwnProperty.call(opts, 'featured_plan')) {
+    patch.featured_plan = opts.featured_plan;
+  }
+  if (Object.prototype.hasOwnProperty.call(opts, 'featured_paid_at')) {
+    patch.featured_paid_at = opts.featured_paid_at;
+  }
+  if (Object.prototype.hasOwnProperty.call(opts, 'featured_amount_gbp')) {
+    patch.featured_amount_gbp = opts.featured_amount_gbp;
+  }
+
+  const targetIds = [
+    ...new Set(
+      peers
+        .filter((row) => isPublishedApprovedRow(row) || row.id === id)
+        .map((row) => row.id)
+        .filter(Boolean)
+    ),
+  ];
+  if (!targetIds.length) targetIds.push(id);
+
+  const { data, error } = await sb.from('events').update(patch).in('id', targetIds).select('*');
+  if (error) throw new Error(error.message);
+  const anchor =
+    (data || []).find((row) => row.id === id) || (data || [])[0] || { ...current, ...patch };
+  return { event: anchor, seriesEventIds: targetIds };
 }
 
 function isPublishedApprovedRow(row) {
@@ -209,6 +264,7 @@ async function syncSeriesFeaturedPeers(sb) {
 
   const processed = new Set();
   let synced = 0;
+  let rolled = 0;
 
   for (const row of data || []) {
     const bucket = seriesSpotlightBucketKey(row);
@@ -216,37 +272,25 @@ async function syncSeriesFeaturedPeers(sb) {
     processed.add(bucket);
 
     const peers = await fetchSeriesPeerRows(client, row);
-    const anchor =
-      [...peers]
-        .filter((peer) => peer.featured && peer.featured_until)
-        .sort((a, b) => new Date(b.featured_until) - new Date(a.featured_until))[0] || row;
+    // Prefer an unexpired placement even when the featured row has already started,
+    // so recurring listings keep their Premium Spotlight slot on the next date.
+    // Clearing a series still goes through clearEventFeaturedPlacement (all peers).
+    const plan = planSeriesFeaturedRollForward(peers);
+    if (!plan || !plan.featureIds.length) continue;
 
-    if (!isEventCurrentlyFeatured(anchor)) continue;
-
-    const patch = {
-      featured: true,
-      featured_until: anchor.featured_until,
-      featured_plan: anchor.featured_plan,
-      featured_paid_at: anchor.featured_paid_at,
-      featured_amount_gbp: anchor.featured_amount_gbp,
-    };
-
-    const upcomingIds = upcomingBrowseRows(peers).map((peer) => peer.id);
-    // Only refresh paid metadata on peers that are already featured.
-    // Never re-feature an occurrence an admin (or expiry job) has cleared.
-    const needSync = upcomingIds.filter((peerId) => {
-      const peer = peers.find((item) => item.id === peerId);
-      return peer?.featured && peer.featured_until !== anchor.featured_until;
-    });
-
-    if (!needSync.length) continue;
-
-    const { error: updateError } = await client.from('events').update(patch).in('id', needSync);
+    const { error: updateError } = await client
+      .from('events')
+      .update(plan.patch)
+      .in('id', plan.featureIds);
     if (updateError) throw new Error(updateError.message);
-    synced += needSync.length;
+    synced += plan.featureIds.length;
+    rolled += plan.featureIds.filter((peerId) => {
+      const peer = peers.find((item) => item.id === peerId);
+      return peer && !peer.featured;
+    }).length;
   }
 
-  return { synced };
+  return { synced, rolled };
 }
 
 /** Clear Premium Spotlight on an event and every peer in its series. */
@@ -412,10 +456,13 @@ module.exports = {
   FEATURED_PLANS,
   normalizePlanId,
   isEventCurrentlyFeatured,
+  isFeaturedPlacementUnexpired,
+  planSeriesFeaturedRollForward,
   computeFeaturedUntil,
   previewFeaturedPlacement,
   calculateFeaturedListingQuote,
   activateEventFeatured,
+  setEventFeaturedPlacement,
   clearEventFeaturedPlacement,
   handleEventFeaturedCheckout,
   deactivateFeaturedForStartedEvents,

@@ -624,14 +624,28 @@ async function bulkUpdateEvents(ids, body) {
 
   for (const id of ids) {
     try {
+      const rowPatch = { ...patch };
       if (clearFeatured) {
         const { clearEventFeaturedPlacement } = require('../event-featured');
         await clearEventFeaturedPlacement(id);
       }
-      if (Object.keys(patch).length) {
-        const event = await applyEventPatch(sb, id, { ...patch });
+      const setFeatured =
+        Object.prototype.hasOwnProperty.call(rowPatch, 'featured') && rowPatch.featured === true;
+      if (setFeatured) {
+        const { setEventFeaturedPlacement } = require('../event-featured');
+        await setEventFeaturedPlacement(id, {
+          featured_until: Object.prototype.hasOwnProperty.call(rowPatch, 'featured_until')
+            ? rowPatch.featured_until
+            : undefined,
+        });
+        delete rowPatch.featured;
+        delete rowPatch.featured_until;
+        delete rowPatch.featured_expiry_reminder_sent_at;
+      }
+      if (Object.keys(rowPatch).length) {
+        const event = await applyEventPatch(sb, id, rowPatch);
         updated.push(event);
-      } else if (clearFeatured) {
+      } else if (clearFeatured || setFeatured) {
         const { data: row, error } = await sb.from('events').select('*').eq('id', id).maybeSingle();
         if (error) throw new Error(error.message);
         if (!row) throw new Error('not_found');
@@ -1120,6 +1134,23 @@ module.exports = async function handler(req, res) {
             return json(res, 404, { error: 'not_found' });
           }
           throw clearErr;
+        }
+        delete patch.featured;
+        delete patch.featured_until;
+        delete patch.featured_expiry_reminder_sent_at;
+      } else if (Object.prototype.hasOwnProperty.call(patch, 'featured') && patch.featured === true) {
+        const { setEventFeaturedPlacement } = require('../event-featured');
+        try {
+          await setEventFeaturedPlacement(id, {
+            featured_until: Object.prototype.hasOwnProperty.call(patch, 'featured_until')
+              ? patch.featured_until
+              : undefined,
+          });
+        } catch (setErr) {
+          if (setErr.message === 'event_not_found') {
+            return json(res, 404, { error: 'not_found' });
+          }
+          throw setErr;
         }
         delete patch.featured;
         delete patch.featured_until;
