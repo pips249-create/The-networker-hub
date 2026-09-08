@@ -10,7 +10,7 @@ const LOGO_ASSET_VERSION = '20260828email1';
 /** Square logo — schema.org Organization.logo, favicons, UI. */
 const LOGO_ASSET = '/assets/logo.png';
 /** 1200×630 share card — og:image / twitter:image (not the square logo). */
-const OG_SHARE_IMAGE = '/assets/logo-networker-uk-og.png?v=20260902og2';
+const OG_SHARE_IMAGE = '/assets/logo-networker-uk-og.png?v=20260908og';
 
 /** Legacy / future hosts — keep for redirects and platform URL detection. */
 const LEGACY_PUBLIC_HOSTS = [
