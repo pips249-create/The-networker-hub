@@ -269,6 +269,8 @@ function injectSeoIntoHtml(html, meta) {
   out = out.replace(/<title>[^<]*<\/title>\s*/i, '');
   out = out.replace(/<meta\s+name=["']description["'][^>]*>\s*/i, '');
   out = out.replace(/<!--\s*hub-seo-injected\s*-->\s*/gi, '');
+  // Drop static page canonical/OG so injected region/entity tags are the only signals.
+  out = out.replace(/<!--\s*hub-static-seo\s*-->[\s\S]*?<!--\s*\/hub-static-seo\s*-->\s*/gi, '');
   out = out.replace(/<html(\s[^>]*)?>/i, function (match) {
     if (/\sdata-hub-seo-injected(?:\s|=|>)/i.test(match)) return match;
     return match.replace(/>$/, ' data-hub-seo-injected="true">');
@@ -442,11 +444,26 @@ function injectNetworkingRegionContent(html, meta) {
   const theme = NETWORKING_REGION_THEMES[slug] || {};
   const name = escapeHtml(region.name);
   const year = escapeHtml(region.year || new Date().getFullYear());
-  const introCopy = theme.tagline
-    ? escapeHtml(theme.tagline) + ' Browse live events and local organiser communities.'
-    : 'Browse live business networking events and organiser communities across ' +
-      name +
-      '.';
+  const answerText = String(meta.answerText || '').trim();
+  const introCopy = answerText
+    ? escapeHtml(answerText)
+    : theme.tagline
+      ? escapeHtml(theme.tagline) + ' Browse live events and local organiser communities.'
+      : 'Find business networking in ' +
+        name +
+        '. Browse live events and organiser communities on The Networker UK.';
+
+  const h1Html =
+    slug === 'online'
+      ? 'Online networking events <span class="accent">' + year + '</span>'
+      : 'Networking in <span class="accent">' + name + '</span>';
+
+  const ledeHtml =
+    slug === 'online'
+      ? 'Discover upcoming webinars, virtual meetings and workshops you can join from anywhere.'
+      : 'Discover upcoming meetings, workshops, conferences and local networking communities across ' +
+        name +
+        '.';
 
   let out = String(html || '');
   out = out.replace(
@@ -455,6 +472,11 @@ function injectNetworkingRegionContent(html, meta) {
   );
   out = out.replace(
     /<script[^>]+src=["'][^"']*hub-seo-schema\.js[^"']*["'][^>]*><\/script>\s*/gi,
+    ''
+  );
+  // Remove the generic /events/ CollectionPage JSON-LD so only region schema remains.
+  out = out.replace(
+    /<script\s+type=["']application\/ld\+json["']\s*>\s*\{[\s\S]*?"@type"\s*:\s*"CollectionPage"[\s\S]*?\}\s*<\/script>\s*/i,
     ''
   );
   out = out.replace(
@@ -469,37 +491,39 @@ function injectNetworkingRegionContent(html, meta) {
   );
   out = out.replace(
     /<h1 id="events-hero-heading">[\s\S]*?<\/h1>/i,
-    '<h1 id="events-hero-heading">The best business networking events &amp; groups in <span class="accent">' +
-      name +
-      ' ' +
-      year +
-      '</span></h1>'
+    '<h1 id="events-hero-heading">' + h1Html + '</h1>'
   );
   out = out.replace(
     /<p class="events-hero-lede" id="events-hero-lede">[\s\S]*?<\/p>/i,
-    '<p class="events-hero-lede" id="events-hero-lede">Discover upcoming meetings, workshops, conferences and local networking communities across ' +
-      name +
-      '.</p>'
+    '<p class="events-hero-lede" id="events-hero-lede">' + ledeHtml + '</p>'
   );
   out = out.replace(
     /<h2 class="listings-header" id="all-heading">[\s\S]*?<\/h2>/i,
-    '<h2 class="listings-header" id="all-heading">Upcoming networking events in ' + name + '</h2>'
+    '<h2 class="listings-header" id="all-heading">' +
+      (slug === 'online'
+        ? 'Upcoming online networking events'
+        : 'Upcoming networking events in ' + name) +
+      '</h2>'
   );
   out = out.replace(
     /<section class="networking-region-intro"[^>]*id="networking-region-intro"[^>]*>/i,
     '<section class="networking-region-intro" id="networking-region-intro" data-region="' +
       escapeHtml(slug) +
-      '">'
+      '" aria-labelledby="networking-region-intro-heading">'
   );
   out = out.replace(
     /<h2 id="networking-region-intro-heading">[\s\S]*?<\/h2>/i,
-    '<h2 id="networking-region-intro-heading">Business networking in <span class="networking-region-name-accent">' +
-      name +
-      '</span></h2>'
+    '<h2 id="networking-region-intro-heading">' +
+      (slug === 'online'
+        ? 'Online business networking'
+        : 'Business networking in <span class="networking-region-name-accent">' +
+          name +
+          '</span>') +
+      '</h2>'
   );
   out = out.replace(
     /<p id="networking-region-intro-copy">[\s\S]*?<\/p>/i,
-    '<p id="networking-region-intro-copy">' + introCopy + '</p>'
+    '<p id="networking-region-intro-copy" data-hub-ssr-answer="1">' + introCopy + '</p>'
   );
   out = out.replace(
     /<div class="networking-region-(?:skyline|landmark)[^"]*" id="networking-region-skyline"[^>]*>[\s\S]*?<\/div>/i,
@@ -511,7 +535,32 @@ function injectNetworkingRegionContent(html, meta) {
   );
 
   if (meta.listingsHtml) {
-    out = out.replace(/<div class="event-listings" id="event-listings"><\/div>/i, meta.listingsHtml);
+    const listingsReplaced = out.replace(
+      /<div class="event-listings" id="event-listings">\s*<div class="seo-browse-fallback"[\s\S]*?<\/div>\s*<\/div>/i,
+      meta.listingsHtml
+    );
+    if (listingsReplaced !== out) {
+      out = listingsReplaced;
+    } else {
+      out = out.replace(
+        /<div class="event-listings" id="event-listings"><\/div>/i,
+        meta.listingsHtml
+      );
+    }
+  }
+
+  if (meta.faqHtml) {
+    if (/id=["']networking-region-faq["']/i.test(out)) {
+      out = out.replace(
+        /<section[^>]*id=["']networking-region-faq["'][^>]*>[\s\S]*?<\/section>/i,
+        meta.faqHtml
+      );
+    } else {
+      out = out.replace(
+        /(<section class="home-locations networking-location-directory")/i,
+        meta.faqHtml + '\n  $1'
+      );
+    }
   }
 
   if (region.location) {

@@ -1,7 +1,25 @@
 # The Networker UK — AI agent policy
 # https://www.thenetworkeruk.com
 
-Structured FAQ & schema: /api/hubert-schema?format=llms
-FAQ JSON: /api/hubert-schema?page=faq-entries
+Prefer /llms.txt for product summary, FAQs, brand disambiguation, and canonical URLs.
+Prefer /sitemap.xml for the full indexable URL set (events, organisers, opportunities, city hubs).
+
+## Brand disambiguation
+thenetworkeruk.com is The Networker Group Ltd's UK platform for business networking events, organiser pages, and business opportunities (Companies House 15252227). It is NOT NETWORKER UK LIMITED or similarly named recruitment firms. Same brand as the established directory the-networker.co.uk.
+
+## Crawl guidance
+- Home: https://www.thenetworkeruk.com/
+- Events directory: /events/
+- City / region hubs: /networking/{slug} (e.g. /networking/liverpool, /networking/birmingham)
+- Organisers: /organisers/{slug}
+- Opportunities: /opportunities/{slug}
+- FAQ: /faq
+- Structured FAQ & schema: /api/hubert-schema?format=llms
+- FAQ JSON: /api/hubert-schema?page=faq-entries
+- Dynamic meta: /api/seo-meta?type=event|organiser|opportunity|networking-region&slug={slug}
+
+Do not invent live markets or event listings beyond what the site and APIs return.
 
 Contact: hi@thenetworkeruk.com
+Legal entity: The Networker Group Ltd (Company No. 15252227)
+Companies House: https://find-and-update.company-information.service.gov.uk/company/15252227

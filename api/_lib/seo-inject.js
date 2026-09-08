@@ -40,6 +40,8 @@ function injectSeoIntoHtml(html, meta) {
   out = out.replace(/<title>[^<]*<\/title>\s*/i, '');
   out = out.replace(/<meta\s+name=["']description["'][^>]*>\s*/i, '');
   out = out.replace(/<!--\s*hub-seo-injected\s*-->\s*/gi, '');
+  // Drop static page canonical/OG so injected region/entity tags are the only signals.
+  out = out.replace(/<!--\s*hub-static-seo\s*-->[\s\S]*?<!--\s*\/hub-static-seo\s*-->\s*/gi, '');
 
   if (/<\/head>/i.test(out)) {
     return out.replace(/<\/head>/i, headTags + '</head>');

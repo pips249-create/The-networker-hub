@@ -47,22 +47,40 @@
   );
   var heading = document.getElementById('events-hero-heading');
   if (heading) {
-    heading.innerHTML =
-      'The best business networking events &amp; groups in <span class="accent"></span>';
-    var accent = heading.querySelector('.accent');
-    if (accent) {
-      accent.textContent = region.name + ' ' + year;
-      if (theme.accentHero) accent.style.color = theme.accentHero;
+    if (slug === 'online') {
+      heading.innerHTML = 'Online networking events <span class="accent"></span>';
+      var onlineAccent = heading.querySelector('.accent');
+      if (onlineAccent) {
+        onlineAccent.textContent = String(year);
+        if (theme.accentHero) onlineAccent.style.color = theme.accentHero;
+      }
+    } else {
+      heading.innerHTML = 'Networking in <span class="accent"></span>';
+      var accent = heading.querySelector('.accent');
+      if (accent) {
+        accent.textContent = region.name;
+        if (theme.accentHero) accent.style.color = theme.accentHero;
+      }
     }
   }
   var lede = document.getElementById('events-hero-lede');
   if (lede) {
-    lede.innerHTML =
-      'Discover upcoming meetings, workshops, conferences and local networking communities across ' +
-      region.name +
-      '.<br>Filter by online/in person, date, location and price.';
+    if (slug === 'online') {
+      lede.textContent =
+        'Discover upcoming webinars, virtual meetings and workshops you can join from anywhere.';
+    } else {
+      lede.innerHTML =
+        'Discover upcoming meetings, workshops, conferences and local networking communities across ' +
+        region.name +
+        '.<br>Filter by online/in person, date, location and price.';
+    }
   }
-  setText('all-heading', 'Upcoming networking events in ' + region.name);
+  setText(
+    'all-heading',
+    slug === 'online'
+      ? 'Upcoming online networking events'
+      : 'Upcoming networking events in ' + region.name
+  );
 
   var intro = document.getElementById('networking-region-intro');
   if (intro) {
@@ -73,18 +91,97 @@
 
   var introHeading = document.getElementById('networking-region-intro-heading');
   if (introHeading) {
-    introHeading.innerHTML =
-      'Business networking in <span class="networking-region-name-accent"></span>';
-    var nameAccent = introHeading.querySelector('.networking-region-name-accent');
-    if (nameAccent) nameAccent.textContent = region.name;
+    if (slug === 'online') {
+      introHeading.textContent = 'Online business networking';
+    } else {
+      introHeading.innerHTML =
+        'Business networking in <span class="networking-region-name-accent"></span>';
+      var nameAccent = introHeading.querySelector('.networking-region-name-accent');
+      if (nameAccent) nameAccent.textContent = region.name;
+    }
   }
 
-  var introCopy = theme.tagline
-    ? theme.tagline + ' Browse live events and local organiser communities.'
-    : 'Browse live business networking events and organiser communities across ' +
-      region.name +
-      '.';
-  setText('networking-region-intro-copy', introCopy);
+  var introCopyEl = document.getElementById('networking-region-intro-copy');
+  var ssrAnswer = introCopyEl && introCopyEl.getAttribute('data-hub-ssr-answer');
+  if (introCopyEl && !ssrAnswer) {
+    var introCopy = theme.tagline
+      ? theme.tagline +
+        ' Find business networking ' +
+        (slug === 'online' ? 'online' : 'in ' + region.name) +
+        ' — browse live events and organiser communities on The Networker UK.'
+      : 'Find business networking ' +
+        (slug === 'online' ? 'online' : 'in ' + region.name) +
+        '. Browse live events and organiser communities on The Networker UK.';
+    setText('networking-region-intro-copy', introCopy);
+  }
+
+  var faqSection = document.getElementById('networking-region-faq');
+  if (faqSection && !faqSection.getAttribute('data-hub-ssr-faq')) {
+    faqSection.hidden = false;
+    var faqHeading = document.getElementById('networking-region-faq-heading');
+    if (faqHeading) {
+      faqHeading.textContent =
+        slug === 'online'
+          ? 'Online networking — FAQs'
+          : 'Networking in ' + region.name + ' — FAQs';
+    }
+    var faqList = document.getElementById('networking-region-faq-list');
+    if (faqList && !faqList.children.length) {
+      var place = slug === 'online' ? 'online' : 'in ' + region.name;
+      var faqs = [
+        {
+          q:
+            slug === 'online'
+              ? 'Where can I find online networking events?'
+              : 'Where can I find networking events ' + place + '?',
+          a:
+            'Browse upcoming business networking events on this page, then open a listing to book. You can also visit organiser pages to see their next meetings.',
+        },
+        {
+          q:
+            slug === 'online'
+              ? 'Are there free online networking events?'
+              : 'Are there free networking events ' + place + '?',
+          a: 'Many organisers list free events or guest-visit options. Use filters to spot free and low-cost meetings.',
+        },
+        {
+          q:
+            slug === 'online'
+              ? 'How do I list an online networking event?'
+              : 'How do I list my networking group ' + place + '?',
+          a: 'Claim a free organiser page and publish your meetings from the organiser dashboard. Start at /for-organisers.',
+        },
+        {
+          q:
+            slug === 'online'
+              ? 'What types of online networking are listed?'
+              : 'What types of networking happen ' + place + '?',
+          a:
+            slug === 'online'
+              ? 'Webinars, virtual meetings, workshops and hybrid events you can join from anywhere.'
+              : 'Breakfast meetings, evening mixers, workshops, conferences and industry groups — plus online options.',
+        },
+      ];
+      faqList.innerHTML = faqs
+        .map(function (item) {
+          return (
+            '<details class="networking-region-faq-item">' +
+            '<summary class="networking-region-faq-q"></summary>' +
+            '<p class="networking-region-faq-a"></p>' +
+            '</details>'
+          );
+        })
+        .join('');
+      Array.prototype.forEach.call(faqList.querySelectorAll('.networking-region-faq-item'), function (el, i) {
+        var q = el.querySelector('.networking-region-faq-q');
+        var a = el.querySelector('.networking-region-faq-a');
+        if (q) q.textContent = faqs[i].q;
+        if (a) a.textContent = faqs[i].a;
+      });
+    }
+  } else if (faqSection && faqSection.getAttribute('data-hub-ssr-faq')) {
+    faqSection.hidden = false;
+  }
 
   var landmark = document.getElementById('networking-region-skyline');
   if (landmark) {

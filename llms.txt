@@ -43,6 +43,19 @@ Full page: https://www.thenetworkeruk.com/help/pricing-fees
 - Dynamic page meta API: https://www.thenetworkeruk.com/api/seo-meta?type=event&slug={slug}
 - Organiser meta API: https://www.thenetworkeruk.com/api/seo-meta?type=organiser&slug={slug}
 - Opportunity meta API: https://www.thenetworkeruk.com/api/seo-meta?type=opportunity&slug={slug}
+- City / region meta API: https://www.thenetworkeruk.com/api/seo-meta?type=networking-region&slug={slug}
+
+## City & region networking hubs
+Programmatic local directories for business networking events and groups. Prefer these URLs for “networking in [city]” style queries:
+- Liverpool: https://www.thenetworkeruk.com/networking/liverpool
+- Birmingham: https://www.thenetworkeruk.com/networking/birmingham
+- Manchester: https://www.thenetworkeruk.com/networking/manchester
+- Leeds: https://www.thenetworkeruk.com/networking/leeds
+- Central London: https://www.thenetworkeruk.com/networking/central-london
+- Bristol: https://www.thenetworkeruk.com/networking/bristol
+- Glasgow: https://www.thenetworkeruk.com/networking/glasgow
+- Edinburgh: https://www.thenetworkeruk.com/networking/edinburgh
+- Full list: see /sitemap.xml (paths under /networking/)
 
 ## Hubert — business butler & concierge
 Hubert is the on-site AI assistant. He answers questions about browsing, accounts, tickets, opportunities, and organiser tools. He can look up live published events and business opportunities when asked.

@@ -17,6 +17,10 @@ const { publicOpportunitySlug } = require('./opportunity-slug');
 const { eventImageUrl } = require('./event-image');
 const { getNetworkingRegion } = require('./networking-regions');
 const { buildNetworkingRegionSsr } = require('./networking-region-ssr');
+const {
+  buildNetworkingRegionSeoCopy,
+  buildNetworkingRegionFaqSchema,
+} = require('./networking-region-content');
 const { getPublicRankingLeaderboard } = require('./organiser-ranking-snapshot');
 const { rankingBadgeImageUrl } = require('./ranking-badge-svg');
 const { OG_SHARE_IMAGE } = require('./hub-brand');
@@ -516,19 +520,30 @@ async function buildNetworkingRegionMeta(slug, origin) {
   const image = absoluteUrl(origin, OG_SHARE_IMAGE);
   const ssr = await buildNetworkingRegionSsr(slug, origin);
   const eventCount = Number(ssr.total) || 0;
-  let description = trimText(
-    `Find business networking events, meetings and organiser groups in ${region.name}. Browse upcoming local listings and book your next event on The Networker UK.`,
-    160
-  );
-  if (eventCount > 0) {
+  const copy = buildNetworkingRegionSeoCopy(region, eventCount);
+
+  let description = trimText(copy.answerText, 160);
+  if (eventCount > 0 && region.slug !== 'online') {
     description = trimText(
-      `Browse ${eventCount} upcoming business networking events in ${region.name}. Find meetings, workshops and conferences — book on The Networker UK.`,
+      `Networking in ${region.name}: browse ${eventCount} upcoming business networking events, meetings and groups. Book on The Networker UK.`,
+      160
+    );
+  } else if (eventCount > 0 && region.slug === 'online') {
+    description = trimText(
+      `Browse ${eventCount} upcoming online networking events and webinars. Book on The Networker UK.`,
       160
     );
   }
-  const title = `Business Networking Events in ${region.name} ${year} – The Networker UK`;
+
+  const title =
+    region.slug === 'online'
+      ? `Online Networking Events ${year} | The Networker UK`
+      : `Networking in ${region.name} ${year} | The Networker UK`;
   const meta = { title, description, canonical, image, ogType: 'website' };
-  const pageName = `The best business networking events and groups in ${region.name} ${year}`;
+  const pageName =
+    region.slug === 'online'
+      ? `Online networking events ${year}`
+      : `Networking in ${region.name} ${year}`;
   const about =
     region.areaType === 'county'
       ? {
@@ -573,6 +588,8 @@ async function buildNetworkingRegionMeta(slug, origin) {
 
   const schemaParts = [collectionPage, breadcrumbs];
   if (ssr.itemList) schemaParts.push(ssr.itemList);
+  const faqSchema = buildNetworkingRegionFaqSchema(copy.faqs, canonical);
+  if (faqSchema) schemaParts.push(faqSchema);
 
   return {
     ok: true,
@@ -588,6 +605,8 @@ async function buildNetworkingRegionMeta(slug, origin) {
     },
     listingsHtml: ssr.listingsHtml,
     listingsTotal: eventCount,
+    answerText: copy.answerText,
+    faqHtml: copy.faqHtml,
     ...meta,
     openGraph: buildOpenGraphTags(meta),
     schema: buildSchemaGraphFromParts(schemaParts, origin),

@@ -8,9 +8,9 @@ const { GUIDE_PAGES, GUIDES_HUB, getGuidePageKeys, guideSchemaKey } = require('.
 const STATIC_PAGES = {
   home: {
     path: '/',
-    title: 'The Networker UK: Find Your Next… Event, Organiser & Opportunity',
+    title: 'The Networker UK – Business Opportunities, Networking Events & Groups',
     description:
-      'Browse UK networking events, organiser pages, and business opportunities in one place. Free on The Networker UK; sign up when you\'re ready to book or enquire.',
+      'Find business networking events and groups across the UK — London, Manchester, Birmingham, Liverpool and more. Browse free; book when you\'re ready.',
     image: OG_SHARE_IMAGE,
     ogType: 'website',
   },

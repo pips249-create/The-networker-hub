@@ -2,8 +2,8 @@
 window.HUB_SEO_STATIC = {
   "home": {
     "path": "/",
-    "title": "The Networker UK: Find Your Next… Event, Organiser & Opportunity",
-    "description": "Browse UK networking events, organiser pages, and business opportunities in one place. Free on The Networker UK; sign up when you're ready to book or enquire.",
+    "title": "The Networker UK – Business Opportunities, Networking Events & Groups",
+    "description": "Find business networking events and groups across the UK — London, Manchester, Birmingham, Liverpool and more. Browse free; book when you're ready.",
     "image": "/assets/logo-networker-uk-og.png?v=20260908og",
     "ogType": "website"
   },
