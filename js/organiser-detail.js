@@ -284,14 +284,17 @@
     );
   }
 
-  function renderClaimPeerStrip(list) {
+  function renderClaimPeerStrip(list, totalCount) {
     var wrap = document.getElementById('org-claim-peers');
     var track = document.getElementById('org-claim-peers-track');
     var marquee = document.getElementById('org-claim-peers-marquee');
     var lede = document.getElementById('org-claim-peers-lede');
     if (!wrap || !track) return;
 
-    if (!list || list.length < CLAIM_PEERS_MIN) {
+    var count =
+      typeof totalCount === 'number' && totalCount >= 0 ? totalCount : list.length;
+
+    if (!list || list.length < CLAIM_PEERS_MIN || count < CLAIM_PEERS_MIN) {
       wrap.hidden = true;
       track.innerHTML = '';
       return;
@@ -300,9 +303,9 @@
     wrap.hidden = false;
     if (lede) {
       lede.textContent =
-        list.length === 1
+        count === 1
           ? 'Another group has already confirmed their page on The Networker UK.'
-          : list.length +
+          : count +
             ' groups have already confirmed their pages on The Networker UK.';
     }
 
@@ -356,7 +359,7 @@
           return String(row.photoUrl || row.photo_url || '').trim();
         });
         var pool = withLogo.length >= CLAIM_PEERS_MIN ? withLogo : filtered;
-        renderClaimPeerStrip(pool.slice(0, 24));
+        renderClaimPeerStrip(pool.slice(0, 24), filtered.length);
       })
       .catch(function () {
         renderClaimPeerStrip([]);
