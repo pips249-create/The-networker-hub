@@ -167,6 +167,7 @@ async function listEventsForAdmin(query) {
   const search = String(query.q || '').trim();
   const sort = String(query.sort || 'recent').trim().toLowerCase();
   const featuredOnly = query.featured === '1' || query.featured === 'true';
+  const eventType = String(query.event_type || query.type || '').trim();
   const light =
     query.light === '1' ||
     query.light === 'true' ||
@@ -224,8 +225,12 @@ async function listEventsForAdmin(query) {
     dbQuery = dbQuery.eq('featured', true);
   }
 
+  if (eventType) {
+    dbQuery = dbQuery.eq('event_type', eventType);
+  }
+
   if (search) {
-    dbQuery = applyIlikeSearch(dbQuery, search, ['title', 'city']);
+    dbQuery = applyIlikeSearch(dbQuery, search, ['title', 'city', 'slug', 'venue']);
   }
 
   dbQuery = dbQuery.range(offset, offset + limit - 1);
