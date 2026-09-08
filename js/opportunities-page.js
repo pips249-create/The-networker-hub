@@ -1868,7 +1868,9 @@
 
   function setIndustry(id) {
     id = String(id || '').trim();
-    activeCategory = !id || activeCategory === id ? '' : id;
+    var next = !id || activeCategory === id ? '' : id;
+    activeCategory = next;
+    if (next) pendingIndustryScroll = true;
     syncCategorySelect();
     syncIndustryChipUi();
   }
@@ -2004,8 +2006,43 @@
   }
 
   function syncCategorySelect() {
+    ensureCategorySelectOptions();
     if (els.filterCategory) els.filterCategory.value = activeCategory || '';
     syncIndustryChipUi();
+  }
+
+  function ensureCategorySelectOptions() {
+    if (!els.filterCategory || els.filterCategory.dataset.industryOptionsReady === '1') return;
+    var select = els.filterCategory;
+    var existing = {};
+    Array.prototype.forEach.call(select.options, function (opt) {
+      existing[String(opt.value || '')] = true;
+    });
+    INDUSTRY_CHIPS.forEach(function (opt) {
+      if (!opt.id || existing[opt.id]) return;
+      var option = document.createElement('option');
+      option.value = opt.id;
+      option.setAttribute('data-count-category', opt.id);
+      option.textContent = opt.label;
+      select.appendChild(option);
+      existing[opt.id] = true;
+    });
+    els.filterCategory.dataset.industryOptionsReady = '1';
+  }
+
+  function syncListingsHeading() {
+    var heading = document.getElementById('opp-listings-heading');
+    if (!heading) return;
+    if (window.hubOppRegionalLanding && window.hubOppRegionalLanding.name) {
+      var place = window.hubOppRegionalLanding.name;
+      heading.textContent = activeCategory
+        ? industryLabelForId(activeCategory) + ' opportunities in ' + place
+        : 'Business opportunities in ' + place;
+      return;
+    }
+    heading.textContent = activeCategory
+      ? industryLabelForId(activeCategory) + ' opportunities'
+      : 'All opportunities';
   }
 
   function renderListings() {
@@ -2240,7 +2277,8 @@
     searchQ = els.search ? String(els.search.value || '').trim().toLowerCase() : '';
     sortBy = els.sort ? els.sort.value : 'recommended';
     locationQ = els.postcode ? String(els.postcode.value || '').trim().toLowerCase() : '';
-    activeCategory = els.filterCategory ? String(els.filterCategory.value || '').trim() : '';
+    // Category is owned by industry chips / URL / directory — not the hidden select.
+    // Reading the select here wiped categories missing from its <option> list (e.g. home-services).
     if (els.hasOpenDay) hasOpenDayOnly = !!els.hasOpenDay.checked;
     readInvestRange();
   }
@@ -2433,8 +2471,15 @@
       try {
         renderListings();
         renderSpotlight();
+        syncListingsHeading();
         if (window.hubSyncMobileFilterToggle) window.hubSyncMobileFilterToggle();
         logOpportunityBrowseSearch();
+        if (pendingIndustryScroll) {
+          pendingIndustryScroll = false;
+          window.requestAnimationFrame(function () {
+            scrollToIndustryResults();
+          });
+        }
       } finally {
         if (token === applyFiltersToken) setOppListingsLoading(false);
       }
@@ -3032,7 +3077,11 @@
     }
 
     if (els.filterCategory) {
-      els.filterCategory.addEventListener('change', applyFilters);
+      els.filterCategory.addEventListener('change', function () {
+        activeCategory = String(els.filterCategory.value || '').trim();
+        syncIndustryChipUi();
+        applyFilters();
+      });
     }
     if (els.postcode) {
       els.postcode.addEventListener('input', function () {
@@ -3173,6 +3222,20 @@
     renderListings();
   }
 
+  var pendingIndustryScroll = false;
+
+  function scrollToIndustryResults() {
+    var intro = document.getElementById('opp-industry-sponsor-intro');
+    var target =
+      intro && !intro.hidden
+        ? intro
+        : document.getElementById('events-filter-heading') ||
+          document.getElementById('results') ||
+          document.getElementById('listings-view');
+    if (!target || typeof target.scrollIntoView !== 'function') return;
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
   function bindIndustryDirectoryClicks() {
     var track = document.getElementById('opp-industry-directory-track');
     if (!track || track.dataset.bound === '1') return;
@@ -3184,15 +3247,13 @@
       var id = chip.getAttribute('data-category') || '';
       if (activeCategory === id) {
         activeCategory = '';
+        pendingIndustryScroll = false;
       } else {
         activeCategory = id;
+        pendingIndustryScroll = true;
       }
       syncCategorySelect();
       applyFilters();
-      var intro = document.getElementById('opp-industry-sponsor-intro');
-      if (intro && !intro.hidden && typeof intro.scrollIntoView === 'function') {
-        intro.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      }
     });
   }
 
