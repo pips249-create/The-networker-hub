@@ -306,7 +306,8 @@
     'group-cleanup': {
       title: 'How to fix group pages',
       steps: [
-        'Find the group — search by name or filter to incomplete profiles.',
+        'Find the group — search by name, or filter by claim status / incomplete / last communication.',
+        'Sort by last communication (oldest first) to work a follow-up queue; each row shows last CRM touch or claim invite.',
         'Click the row to expand it.',
         'Add a logo URL, description, and website, then Save.',
         'Use Fill from website if the group already has a site listed.',

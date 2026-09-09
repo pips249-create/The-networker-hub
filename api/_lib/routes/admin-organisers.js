@@ -8,6 +8,16 @@ const { createGroup } = require('../supabase-organiser');
 const { resolveOrganiserClaimUrl } = require('../organiser-claim-url');
 const { resolveClaimDispute, clearDisputedProfileEmail, resolveOrganiserClaimRequest, approveOrganiserClaimRequest } = require('../admin-supabase-data');
 const { applyIlikeSearch } = require('../search-match');
+const {
+  parseLastContactFilter,
+  parseLastContactSort,
+  needsLastContactPass,
+  buildLastCommunicationIndex,
+  attachLastCommunication,
+  matchesLastContactFilter,
+  sortByLastContact,
+  resolveLastCommunication,
+} = require('../organiser-last-communication');
 
 const INCOMPLETE_FILTER =
   'description.is.null,description.eq.,photo_url.is.null,photo_url.eq.,website.is.null,website.eq.,email.is.null,email.eq.,contact_email.is.null,contact_email.eq.';
@@ -70,7 +80,30 @@ function parseListQuery(query) {
       : claimStatusRaw === 'unclaimed' || claimStatusRaw === 'not_claimed'
         ? 'unclaimed'
         : '';
-  return { offset, limit, q, incomplete, excludeHidden, visibility, organiserId, featuredOnly, claimStatus };
+  const lastContact = parseLastContactFilter(
+    query?.last_contact || query?.last_communication || query?.communication
+  );
+  const sortRaw = String(query?.sort || '').trim().toLowerCase();
+  const sort =
+    parseLastContactSort(sortRaw) ||
+    (sortRaw === 'created' || sortRaw === 'created_at'
+      ? 'created'
+      : sortRaw === 'updated' || sortRaw === 'updated_at' || sortRaw === 'recent' || !sortRaw
+        ? 'updated'
+        : 'updated');
+  return {
+    offset,
+    limit,
+    q,
+    incomplete,
+    excludeHidden,
+    visibility,
+    organiserId,
+    featuredOnly,
+    claimStatus,
+    lastContact,
+    sort,
+  };
 }
 
 async function eventCountsForOrganisers(sb, organiserIds) {
@@ -141,6 +174,10 @@ function mapOrganiserRow(row, eventCount, loginMeta, moderation) {
     warning_count: mod.warning_count,
     warning_limit: mod.warning_limit,
     hub_suspended: mod.hub_suspended,
+    last_communication_at: row.last_communication_at || null,
+    last_communication_label: row.last_communication_label || null,
+    last_communication_who: row.last_communication_who || null,
+    last_communication_kind: row.last_communication_kind || null,
   };
 }
 
@@ -416,56 +453,62 @@ async function getClaimStatusCounts(sb) {
   return { claimed, pending, disputed, unclaimed: Math.max(0, total - claimed), total };
 }
 
-async function listOrganisersForAdmin(query) {
-  const sb = getSupabaseAdmin();
-  const { applyPublicOrganiserBrowseFilter } = require('../supabase-organisers-browse');
-  const { offset, limit, q, incomplete, excludeHidden, visibility, organiserId, featuredOnly, claimStatus } =
-    parseListQuery(query);
-
-  let dbQuery = sb
-    .from('organisers')
-    .select(
-      'id, name, email, contact_email, supabase_user_id, description, photo_url, website, instagram_url, facebook_url, linkedin_url, x_url, listing_status, hide_from_browse_reason, ownership_claim_status, stripe_account_id, slug, featured, featured_until, created_at, updated_at',
-      { count: 'exact' }
-    )
-    .order('featured', { ascending: false })
-    .order('updated_at', { ascending: false })
-    .order('created_at', { ascending: false });
-
-  if (organiserId) dbQuery = dbQuery.eq('id', organiserId);
-  else {
-    if (featuredOnly) dbQuery = dbQuery.eq('featured', true);
-    if (q) {
-      // Name or contact email — word-split, &/and synonym, light typo tolerance.
-      dbQuery = applyIlikeSearch(dbQuery, q, ['name', 'email', 'contact_email']);
-    }
-    if (incomplete) dbQuery = dbQuery.or(INCOMPLETE_FILTER);
-    if (visibility === 'browse') {
-      dbQuery = applyPublicOrganiserBrowseFilter(dbQuery);
-    } else if (visibility === 'draft') {
-      dbQuery = dbQuery.or('listing_status.eq.draft,listing_status.is.null');
-    } else if (visibility === 'unpublished') {
-      dbQuery = dbQuery.eq('listing_status', 'unpublished');
-    } else if (excludeHidden) {
-      dbQuery = dbQuery.neq('listing_status', 'unpublished');
-    }
-    if (claimStatus === 'claimed') {
-      dbQuery = dbQuery.eq('ownership_claim_status', 'claimed');
-    } else if (claimStatus === 'pending') {
-      dbQuery = dbQuery.eq('ownership_claim_status', 'pending');
-    } else if (claimStatus === 'disputed') {
-      dbQuery = dbQuery.eq('ownership_claim_status', 'disputed');
-    } else if (claimStatus === 'unclaimed') {
-      dbQuery = dbQuery.or(
-        'ownership_claim_status.is.null,ownership_claim_status.eq.pending,ownership_claim_status.eq.disputed'
-      );
-    }
+async function fetchAllOrganiserRows(sb, buildBaseQuery) {
+  const pageSize = 1000;
+  let offset = 0;
+  const rows = [];
+  for (;;) {
+    const res = await buildBaseQuery().range(offset, offset + pageSize - 1);
+    if (res.error) throw new Error(res.error.message);
+    const chunk = res.data || [];
+    rows.push(...chunk);
+    if (chunk.length < pageSize) break;
+    offset += pageSize;
   }
+  return rows;
+}
 
-  const res = organiserId ? await dbQuery.limit(1) : await dbQuery.range(offset, offset + limit - 1);
-  if (res.error) throw new Error(res.error.message);
+function applyOrganiserListFilters(dbQuery, opts) {
+  const {
+    applyPublicOrganiserBrowseFilter,
+    organiserId,
+    featuredOnly,
+    q,
+    incomplete,
+    visibility,
+    excludeHidden,
+    claimStatus,
+  } = opts;
+  if (organiserId) return dbQuery.eq('id', organiserId);
+  if (featuredOnly) dbQuery = dbQuery.eq('featured', true);
+  if (q) {
+    dbQuery = applyIlikeSearch(dbQuery, q, ['name', 'email', 'contact_email']);
+  }
+  if (incomplete) dbQuery = dbQuery.or(INCOMPLETE_FILTER);
+  if (visibility === 'browse') {
+    dbQuery = applyPublicOrganiserBrowseFilter(dbQuery);
+  } else if (visibility === 'draft') {
+    dbQuery = dbQuery.or('listing_status.eq.draft,listing_status.is.null');
+  } else if (visibility === 'unpublished') {
+    dbQuery = dbQuery.eq('listing_status', 'unpublished');
+  } else if (excludeHidden) {
+    dbQuery = dbQuery.neq('listing_status', 'unpublished');
+  }
+  if (claimStatus === 'claimed') {
+    dbQuery = dbQuery.eq('ownership_claim_status', 'claimed');
+  } else if (claimStatus === 'pending') {
+    dbQuery = dbQuery.eq('ownership_claim_status', 'pending');
+  } else if (claimStatus === 'disputed') {
+    dbQuery = dbQuery.eq('ownership_claim_status', 'disputed');
+  } else if (claimStatus === 'unclaimed') {
+    dbQuery = dbQuery.or(
+      'ownership_claim_status.is.null,ownership_claim_status.eq.pending,ownership_claim_status.eq.disputed'
+    );
+  }
+  return dbQuery;
+}
 
-  const rows = res.data || [];
+async function enrichOrganiserListRows(sb, rows, communicationIndex) {
   const { moderationSummariesForOrganisers } = require('../organiser-moderation');
   const [counts, loginMeta, moderationById, claimInviteSentAt] = await Promise.all([
     eventCountsForOrganisers(
@@ -482,33 +525,139 @@ async function listOrganisersForAdmin(query) {
       rows.map((r) => r.id)
     ),
   ]);
-  const total = organiserId ? rows.length : res.count != null ? res.count : rows.length;
 
+  return rows.map((row) => {
+    const claim = claimInviteSentAt.get(row.id) || {};
+    const withClaim = {
+      ...row,
+      claim_invite_sent_at: claim.claim_invite_sent_at || null,
+      claim_link_copied_at: claim.claim_link_copied_at || null,
+      claim_invite_source: claim.claim_invite_source || null,
+    };
+    if (communicationIndex && claim.claim_invite_sent_at) {
+      const id = String(row.id || '').trim();
+      const existing = communicationIndex.claimById.get(id);
+      const existingMs = existing ? Date.parse(String(existing)) || 0 : 0;
+      const claimMs = Date.parse(String(claim.claim_invite_sent_at)) || 0;
+      if (!existing || claimMs >= existingMs) {
+        communicationIndex.claimById.set(id, claim.claim_invite_sent_at);
+      }
+    }
+    const withComm = communicationIndex
+      ? attachLastCommunication(withClaim, communicationIndex)
+      : withClaim;
+    return mapOrganiserRow(
+      withComm,
+      counts[row.id] || 0,
+      loginMeta.get(row.id),
+      moderationById.get(row.id)
+    );
+  });
+}
+
+async function listOrganisersForAdmin(query) {
+  const sb = getSupabaseAdmin();
+  const { applyPublicOrganiserBrowseFilter } = require('../supabase-organisers-browse');
+  const {
+    offset,
+    limit,
+    q,
+    incomplete,
+    excludeHidden,
+    visibility,
+    organiserId,
+    featuredOnly,
+    claimStatus,
+    lastContact,
+    sort,
+  } = parseListQuery(query);
+
+  const selectCols =
+    'id, name, email, contact_email, supabase_user_id, description, photo_url, website, instagram_url, facebook_url, linkedin_url, x_url, listing_status, hide_from_browse_reason, ownership_claim_status, stripe_account_id, slug, featured, featured_until, created_at, updated_at';
+  const filterOpts = {
+    applyPublicOrganiserBrowseFilter,
+    organiserId,
+    featuredOnly,
+    q,
+    incomplete,
+    visibility,
+    excludeHidden,
+    claimStatus,
+  };
+  const contactPass = !organiserId && needsLastContactPass(lastContact, sort);
+
+  let rows = [];
+  let total = 0;
+  let communicationIndex = null;
+
+  if (contactPass) {
+    communicationIndex = await buildLastCommunicationIndex(sb);
+    const allRows = await fetchAllOrganiserRows(sb, () =>
+      applyOrganiserListFilters(sb.from('organisers').select(selectCols), filterOpts)
+    );
+    let enriched = allRows.map((row) => attachLastCommunication(row, communicationIndex));
+    if (lastContact) {
+      enriched = enriched.filter((row) =>
+        matchesLastContactFilter(resolveLastCommunication(row, communicationIndex), lastContact)
+      );
+    }
+    if (parseLastContactSort(sort)) {
+      enriched = sortByLastContact(enriched, sort);
+    } else if (sort === 'created') {
+      enriched = [...enriched].sort((a, b) => {
+        const am = Date.parse(a.created_at || '') || 0;
+        const bm = Date.parse(b.created_at || '') || 0;
+        return bm - am;
+      });
+    } else {
+      enriched = [...enriched].sort((a, b) => {
+        const af = a.featured ? 1 : 0;
+        const bf = b.featured ? 1 : 0;
+        if (af !== bf) return bf - af;
+        const am = Date.parse(a.updated_at || '') || 0;
+        const bm = Date.parse(b.updated_at || '') || 0;
+        return bm - am;
+      });
+    }
+    total = enriched.length;
+    rows = enriched.slice(offset, offset + limit);
+  } else {
+    let dbQuery = sb.from('organisers').select(selectCols, { count: 'exact' });
+    if (sort === 'created') {
+      dbQuery = dbQuery.order('created_at', { ascending: false });
+    } else {
+      dbQuery = dbQuery
+        .order('featured', { ascending: false })
+        .order('updated_at', { ascending: false })
+        .order('created_at', { ascending: false });
+    }
+    dbQuery = applyOrganiserListFilters(dbQuery, filterOpts);
+    const res = organiserId ? await dbQuery.limit(1) : await dbQuery.range(offset, offset + limit - 1);
+    if (res.error) throw new Error(res.error.message);
+    rows = res.data || [];
+    total = organiserId ? rows.length : res.count != null ? res.count : rows.length;
+    communicationIndex = await buildLastCommunicationIndex(sb, {
+      organisers: rows,
+      organiserIds: rows.map((r) => r.id),
+    });
+    // Still need sales demos matched by email for page rows — scoped load above.
+  }
+
+  const organisers = await enrichOrganiserListRows(sb, rows, communicationIndex);
   const incompleteCount = await getIncompleteOrganiserCount(sb);
   const claimCounts = await getClaimStatusCounts(sb);
 
   return {
-    organisers: rows.map((row) => {
-      const claim = claimInviteSentAt.get(row.id) || {};
-      return mapOrganiserRow(
-        {
-          ...row,
-          claim_invite_sent_at: claim.claim_invite_sent_at || null,
-          claim_link_copied_at: claim.claim_link_copied_at || null,
-          claim_invite_source: claim.claim_invite_source || null,
-        },
-        counts[row.id] || 0,
-        loginMeta.get(row.id),
-        moderationById.get(row.id)
-      );
-    }),
-    count: rows.length,
+    organisers,
+    count: organisers.length,
     total,
     offset,
     limit,
-    hasMore: offset + rows.length < total,
+    hasMore: offset + organisers.length < total,
     incomplete: incompleteCount,
     claimCounts,
+    sort,
+    lastContact: lastContact || '',
   };
 }
 
