@@ -150,6 +150,7 @@ function basePreviewVars(siteUrl) {
     price_if_approved: '£25.00',
     application_status: 'Pending',
     upcoming_count: '3',
+    inactive_months: '4',
     attendee_count: '12',
     attendees_url: organiserDashboardUrl(site, { panel: 'events-attendees' }),
     roundup_url: organiserDashboardUrl(site, { panel: 'communicate' }),

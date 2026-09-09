@@ -76,8 +76,11 @@ function hubertLocationFooterHtml(siteUrl, location) {
 
 const REENGAGEMENT_INACTIVE_DAYS = 30;
 const REENGAGEMENT_COOLDOWN_DAYS = 60;
-const LOW_EVENTS_MAX_UPCOMING = 1;
-const LOW_EVENTS_NUDGE_COOLDOWN_DAYS = 30;
+/** Nudge organisers who have not created an event for this long. */
+const NO_RECENT_EVENT_INACTIVE_DAYS = 120;
+/** Do not re-send the no-recent-event nudge more often than this. */
+const NO_RECENT_EVENT_NUDGE_COOLDOWN_DAYS = 120;
+const NO_RECENT_EVENT_NUDGE_BATCH_LIMIT = 25;
 const POST_EVENT_REVIEW_HOURS = 24;
 // Catch up missed sends (e.g. if cron skipped a day) up to this age.
 const POST_EVENT_REVIEW_MAX_AGE_DAYS = 14;
@@ -313,9 +316,16 @@ async function sendDueAttendeeReengagementEmails(sb) {
 
   const { data: attendees, error: attErr } = await sb
     .from('attendees')
-    .select('id, email, name, location, reengagement_email_sent_at')
+    .select('id, email, name, location, supabase_user_id, reengagement_email_sent_at')
     .in('id', eligibleIds);
   if (attErr) throw new Error(attErr.message);
+
+  let organiserKeys = { organiserUserIds: new Set(), organiserEmails: new Set() };
+  try {
+    organiserKeys = await loadOrganiserRecipientKeys(sb, attendees || []);
+  } catch (e) {
+    result.errors.push({ error: 'organiser_lookup_failed', message: e.message || String(e) });
+  }
 
   const siteUrl = siteBase();
   const cooldownBefore = daysAgo(REENGAGEMENT_COOLDOWN_DAYS);
@@ -325,6 +335,11 @@ async function sendDueAttendeeReengagementEmails(sb) {
 
     const email = String(attendee.email || '').trim().toLowerCase();
     if (!email) {
+      result.skipped += 1;
+      continue;
+    }
+
+    if (isOrganiserAttendee(attendee, organiserKeys)) {
       result.skipped += 1;
       continue;
     }
@@ -414,11 +429,23 @@ async function sendDueSignupEventsNudgeEmails(sb) {
 
   const { data: attendees, error: attErr } = await sb
     .from('attendees')
-    .select('id, email, name, location, created_at, signup_events_nudge_sent_at')
+    .select('id, email, name, location, created_at, supabase_user_id, signup_events_nudge_sent_at')
     .lte('created_at', eligibleAfter)
     .gte('created_at', eligibleBefore)
     .is('signup_events_nudge_sent_at', null);
   if (attErr) throw new Error(attErr.message);
+
+  const candidates = (attendees || []).filter((attendee) => {
+    if (bookedAttendeeIds.has(String(attendee.id))) return false;
+    return Boolean(String(attendee.email || '').trim());
+  });
+
+  let organiserKeys = { organiserUserIds: new Set(), organiserEmails: new Set() };
+  try {
+    organiserKeys = await loadOrganiserRecipientKeys(sb, candidates);
+  } catch (e) {
+    result.errors.push({ error: 'organiser_lookup_failed', message: e.message || String(e) });
+  }
 
   const siteUrl = siteBase();
 
@@ -430,6 +457,11 @@ async function sendDueSignupEventsNudgeEmails(sb) {
 
     const email = String(attendee.email || '').trim().toLowerCase();
     if (!email) {
+      result.skipped += 1;
+      continue;
+    }
+
+    if (isOrganiserAttendee(attendee, organiserKeys)) {
       result.skipped += 1;
       continue;
     }
@@ -490,8 +522,10 @@ async function sendDueSignupEventsNudgeEmails(sb) {
 }
 
 /**
- * Accounts with organiser workspace enabled, plus emails linked to an
- * organiser profile — used to keep attendee nurture mail off organiser inboxes.
+ * Organiser identities (workspace enabled, linked profile, or profile email).
+ * Every Hub login also gets an `attendees` row — that table is the person /
+ * email record, not “people who attend events”. Use this so member nurture
+ * (Hubert picks, signup nudges, reengagement) never hits organiser inboxes.
  */
 async function loadOrganiserRecipientKeys(sb, attendees) {
   const userIds = [
@@ -547,6 +581,29 @@ async function loadOrganiserRecipientKeys(sb, attendees) {
       const em = String(row.email || '').trim().toLowerCase();
       if (em) organiserEmails.add(em);
     });
+
+    // Claimed/unclaimed group profiles often store contact on organisers only
+    // (no organiser_accounts row) — still treat those inboxes as organiser.
+    const addOrganiserProfileEmails = (rows) => {
+      (rows || []).forEach((row) => {
+        for (const key of ['email', 'contact_email']) {
+          const em = String(row[key] || '').trim().toLowerCase();
+          if (em) organiserEmails.add(em);
+        }
+      });
+    };
+    const { data: byEmail, error: emailErr } = await sb
+      .from('organisers')
+      .select('email, contact_email')
+      .in('email', emails);
+    if (emailErr) throw new Error(emailErr.message);
+    addOrganiserProfileEmails(byEmail);
+    const { data: byContact, error: contactErr } = await sb
+      .from('organisers')
+      .select('email, contact_email')
+      .in('contact_email', emails);
+    if (contactErr) throw new Error(contactErr.message);
+    addOrganiserProfileEmails(byContact);
   }
 
   return { organiserUserIds, organiserEmails };
@@ -680,46 +737,53 @@ async function sendDueSignupEventsNudgeFollowupEmails(sb) {
   return result;
 }
 
-async function sendOrganiserLowUpcomingEventsNudges(sb) {
-  const now = new Date().toISOString();
-  const cooldownBefore = daysAgo(LOW_EVENTS_NUDGE_COOLDOWN_DAYS);
+async function sendOrganiserNoRecentEventNudges(sb) {
+  const inactiveBefore = daysAgo(NO_RECENT_EVENT_INACTIVE_DAYS);
+  const cooldownBefore = daysAgo(NO_RECENT_EVENT_NUDGE_COOLDOWN_DAYS);
   const result = { sent: 0, skipped: 0, errors: [] };
 
-  const { data: events, error } = await sb
-    .from('events')
-    .select('id, organiser_id, starts_at, status, approval_status, published_at')
-    .eq('status', 'published')
-    .eq('approval_status', 'Approved')
-    .gt('starts_at', now);
-  if (error) throw new Error(error.message);
-
-  const counts = new Map();
-  (events || []).filter(isEventPublishedForSale).forEach((row) => {
-    const oid = String(row.organiser_id || '').trim();
-    if (!oid) return;
-    counts.set(oid, (counts.get(oid) || 0) + 1);
-  });
-
-  const eligibleOrganiserIds = [...counts.entries()]
-    .filter(([, count]) => count > 0 && count <= LOW_EVENTS_MAX_UPCOMING)
-    .map(([id]) => id);
-
-  if (!eligibleOrganiserIds.length) return result;
-
+  // Claimed / linked organiser pages only — avoid mailing unclaimed directory rows.
   const { data: organisers, error: orgErr } = await sb
     .from('organisers')
-    .select('id, low_upcoming_events_nudge_sent_at')
-    .in('id', eligibleOrganiserIds);
-  if (orgErr) throw new Error(orgErr.message);
+    .select('id, created_at, low_upcoming_events_nudge_sent_at, supabase_user_id')
+    .not('supabase_user_id', 'is', null)
+    .order('low_upcoming_events_nudge_sent_at', { ascending: true, nullsFirst: true })
+    .limit(250);
+  if (orgErr) {
+    if (/low_upcoming_events_nudge_sent_at|column/.test(String(orgErr.message || ''))) {
+      return { sent: 0, skipped: 0, errors: [], unavailable: true };
+    }
+    throw new Error(orgErr.message);
+  }
+
+  const organiserIds = (organisers || []).map((row) => row.id).filter(Boolean);
+  if (!organiserIds.length) return result;
+
+  const lastCreatedByOrganiser = new Map();
+  // Page through events for these organisers to find the newest created_at.
+  const chunkSize = 50;
+  for (let i = 0; i < organiserIds.length; i += chunkSize) {
+    const chunk = organiserIds.slice(i, i + chunkSize);
+    const { data: events, error } = await sb
+      .from('events')
+      .select('organiser_id, created_at')
+      .in('organiser_id', chunk)
+      .order('created_at', { ascending: false });
+    if (error) throw new Error(error.message);
+    (events || []).forEach((row) => {
+      const oid = String(row.organiser_id || '').trim();
+      const created = row.created_at || '';
+      if (!oid || !created) return;
+      const prev = lastCreatedByOrganiser.get(oid);
+      if (!prev || created > prev) lastCreatedByOrganiser.set(oid, created);
+    });
+  }
 
   const siteUrl = siteBase();
+  const emailedThisRun = new Set();
 
   for (const organiser of organisers || []) {
-    const upcomingCount = counts.get(organiser.id) || 0;
-    if (!upcomingCount) {
-      result.skipped += 1;
-      continue;
-    }
+    if (result.sent >= NO_RECENT_EVENT_NUDGE_BATCH_LIMIT) break;
 
     const sentAt = organiser.low_upcoming_events_nudge_sent_at;
     if (sentAt && sentAt > cooldownBefore) {
@@ -727,8 +791,22 @@ async function sendOrganiserLowUpcomingEventsNudges(sb) {
       continue;
     }
 
+    const lastEventAt = lastCreatedByOrganiser.get(String(organiser.id)) || null;
+    const activityAt = lastEventAt || organiser.created_at || null;
+    // Still active (event added within 4 months), or brand-new page with no events yet.
+    if (activityAt && activityAt > inactiveBefore) {
+      result.skipped += 1;
+      continue;
+    }
+
     const contact = await resolveOrganiserNotificationEmail(sb, organiser.id);
     if (!contact.email) {
+      result.skipped += 1;
+      continue;
+    }
+
+    const emailKey = String(contact.email).trim().toLowerCase();
+    if (emailedThisRun.has(emailKey)) {
       result.skipped += 1;
       continue;
     }
@@ -754,10 +832,11 @@ async function sendOrganiserLowUpcomingEventsNudges(sb) {
           variables: {
             ...baseEmailVars(siteUrl),
             organiser_name: contact.name || 'there',
-            upcoming_count: String(upcomingCount),
+            inactive_months: '4',
             create_event_url: siteUrl + '/organiser/event-format',
             dashboard_url: organiserDashboardUrl(siteUrl),
           },
+          subject: "It's been a while — add your next event",
         });
       } catch (sendErr) {
         await releaseRowTimestamp(sb, {
@@ -775,6 +854,7 @@ async function sendOrganiserLowUpcomingEventsNudges(sb) {
         }
         throw sendErr;
       }
+      emailedThisRun.add(emailKey);
       result.sent += 1;
     } catch (e) {
       if (e.code === 'emails_disabled') result.skipped += 1;
@@ -784,6 +864,7 @@ async function sendOrganiserLowUpcomingEventsNudges(sb) {
 
   return result;
 }
+
 
 function eventLocationLabel(eventRow) {
   return (
@@ -1718,7 +1799,7 @@ async function sendDueHubertEventConciergeEmails(sb) {
   const { data: attendees, error } = await sb
     .from('attendees')
     .select(
-      'id, email, name, location, hubert_event_concierge_sent_at, signup_events_nudge_sent_at, signup_events_nudge_followup_sent_at'
+      'id, email, name, location, supabase_user_id, hubert_event_concierge_sent_at, signup_events_nudge_sent_at, signup_events_nudge_followup_sent_at'
     )
     .not('email', 'is', null)
     .order('hubert_event_concierge_sent_at', { ascending: true, nullsFirst: true })
@@ -1728,6 +1809,13 @@ async function sendDueHubertEventConciergeEmails(sb) {
       return { sent: 0, skipped: 0, errors: [], unavailable: true };
     }
     throw new Error(error.message);
+  }
+
+  let organiserKeys = { organiserUserIds: new Set(), organiserEmails: new Set() };
+  try {
+    organiserKeys = await loadOrganiserRecipientKeys(sb, attendees || []);
+  } catch (e) {
+    result.errors.push({ error: 'organiser_lookup_failed', message: e.message || String(e) });
   }
 
   for (const attendee of attendees || []) {
@@ -1745,6 +1833,13 @@ async function sendDueHubertEventConciergeEmails(sb) {
 
     const email = String(attendee.email || '').trim().toLowerCase();
     if (!email) {
+      result.skipped += 1;
+      continue;
+    }
+
+    // Organiser-only accounts still have an attendees row (shared person table).
+    // Skip them — this digest is for members, not organisers.
+    if (isOrganiserAttendee(attendee, organiserKeys)) {
       result.skipped += 1;
       continue;
     }
@@ -1821,9 +1916,7 @@ async function runEngagementEmailMaintenance(sb) {
   const signupEventsNudge = await sendDueSignupEventsNudgeEmails(sb);
   const signupEventsNudgeFollowup = await sendDueSignupEventsNudgeFollowupEmails(sb);
   const hubertConcierge = await sendDueHubertEventConciergeEmails(sb);
-  // Disabled: "Only N events left on your calendar" was flooding organisers
-  // (one email per group contact; shared contacts got many in one run).
-  const lowEvents = { sent: 0, skipped: 0, errors: [], disabled: true };
+  const lowEvents = await sendOrganiserNoRecentEventNudges(sb);
   const stripeConnect = await sendDueStripeConnectNudges(sb);
   return {
     guestVisitFollowup,
@@ -1842,7 +1935,8 @@ module.exports = {
   sendDueSignupEventsNudgeEmails,
   sendDueSignupEventsNudgeFollowupEmails,
   sendDueHubertEventConciergeEmails,
-  sendOrganiserLowUpcomingEventsNudges,
+  sendOrganiserNoRecentEventNudges,
+  sendOrganiserLowUpcomingEventsNudges: sendOrganiserNoRecentEventNudges,
   sendDueGuestVisitFollowupEmails,
   sendDuePostEventReviewEmails,
   sendDuePostEventReviewReminderEmails,
@@ -1851,4 +1945,6 @@ module.exports = {
   runEngagementEmailMaintenance,
   buildRecommendationsHtml,
   buildSignupNudgeEventsHtml,
+  isOrganiserAttendee,
+  isDueForHubertConcierge,
 };

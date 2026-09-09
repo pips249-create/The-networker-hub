@@ -149,9 +149,9 @@ const templates = [
     'Hi {{user_name}}, it has been a while since your last booking on The Networker UK. Here are some popular organisers and upcoming events you might like.') +
     cardBlock('{{recommendations_html}}') +
     ctaRow(btn('{{browse_events_url}}', 'Browse all events &rarr;', '#1c2040'))],
-  ['organiser-low-upcoming-events.html', 'Add more events', hero('&#128197;', '#daeeff', '#4aa8f0', 'Your calendar', '#4aa8f0', 'Only {{upcoming_count}} events left on your calendar',
-    'Hi {{organiser_name}}, you have <strong>{{upcoming_count}}</strong> upcoming events listed. Keeping a fuller calendar helps members discover your group.') +
-    ctaRow(btn('{{create_event_url}}', 'Add another event &rarr;', '#1c2040') + btn('{{dashboard_url}}', 'Open dashboard', '#4aa8f0'))],
+  ['organiser-low-upcoming-events.html', 'Add your next event', hero('&#128197;', '#daeeff', '#4aa8f0', 'Keeping your calendar live', '#4aa8f0', "It's been a while — add your next event",
+    'Hi {{organiser_name}}, you haven\'t added an event for about <strong>{{inactive_months}} months</strong>. Listing your next date helps members find your group again.') +
+    ctaRow(btn('{{create_event_url}}', 'Add an event &rarr;', '#1c2040') + btn('{{dashboard_url}}', 'Open dashboard', '#4aa8f0'))],
   ['saved-organiser-new-listing.html', 'New listing alert', hero('&#9733;', '#ebe0f0', '#9a7aa8', 'New listing', '#9a7aa8', '{{organiser_name}} has a new event',
     'Hi {{user_name}}, <strong style="color:#1c2040;">{{organiser_name}}</strong> just published a new listing you might like.') +
     cardBlock(navyCard('<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:17px;font-weight:600;color:#ffffff;margin:0 0 8px;line-height:1.35;">{{event_name}}</p><p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;color:rgba(255,255,255,0.75);margin:0;">{{event_date}}{{event_time}} &middot; {{event_location}}</p>')) +
