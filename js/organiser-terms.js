@@ -229,8 +229,17 @@
     }
   }
 
+  function isAdminImpersonating() {
+    return Boolean(
+      document.getElementById('hub-impersonation-banner') ||
+        document.getElementById('hub-stop-impersonating')
+    );
+  }
+
   window.HubOrganiserTerms = {
     requireAcceptance: function () {
+      // Admins finishing setup while impersonating must not accept T&Cs as the organiser.
+      if (isAdminImpersonating()) return Promise.resolve();
       var context = termsContext();
       return checkServerAccepted(context).then(function (accepted) {
         if (accepted) return Promise.resolve();
@@ -252,5 +261,6 @@
         });
       });
     },
+    isAdminImpersonating: isAdminImpersonating,
   };
 })();

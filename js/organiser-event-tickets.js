@@ -297,7 +297,7 @@
     if (hasPaid && !refund.refundPolicy) {
       blockers.push('Select a refund policy');
     }
-    if (hasPaid && !refund.refundTermsAgreed && !refundTermsAlreadyAgreed()) {
+    if (hasPaid && !refund.refundTermsAgreed && !refundTermsSatisfied()) {
       blockers.push('Tick the refund responsibility checkbox');
     }
     if (includeBankDetails && needsBankDetailsSetup(list)) {
@@ -4067,13 +4067,29 @@
     return document.querySelector('input[name="vat-treatment"]:checked')?.value || '';
   }
 
+  function isAdminImpersonating() {
+    if (window.HubOrganiserTerms && typeof window.HubOrganiserTerms.isAdminImpersonating === 'function') {
+      return window.HubOrganiserTerms.isAdminImpersonating();
+    }
+    return Boolean(
+      document.getElementById('hub-impersonation-banner') ||
+        document.getElementById('hub-stop-impersonating')
+    );
+  }
+
+  function refundTermsSatisfied() {
+    if (refundTermsAlreadyAgreed()) return true;
+    if (Boolean(document.getElementById('refund-terms-agreed')?.checked)) return true;
+    // Admin finishing setup while impersonating — do not force accepting as the organiser.
+    return isAdminImpersonating();
+  }
+
   function collectRefundPayload() {
     const presetKey =
       selectedRefundPolicy ||
       document.querySelector('input[name="refund-policy"]:checked')?.value ||
       '';
-    const agreed =
-      refundTermsAlreadyAgreed() || Boolean(document.getElementById('refund-terms-agreed')?.checked);
+    const agreed = refundTermsSatisfied();
     const preset = REFUND_PRESETS[presetKey];
     return {
       ...(preset || {}),
@@ -4623,6 +4639,13 @@
     });
     const agree = document.getElementById('refund-terms-agreed');
     if (agree) agree.addEventListener('change', updatePublishButton);
+    const impersonationNote = document.getElementById('ee-refund-impersonation-note');
+    const impersonating = isAdminImpersonating();
+    if (impersonationNote) impersonationNote.hidden = !impersonating;
+    if (impersonating && agree) {
+      const checkLabel = agree.closest('.ee-refund-check');
+      if (checkLabel) checkLabel.hidden = true;
+    }
   }
 
   function formatCloseLabel(iso) {

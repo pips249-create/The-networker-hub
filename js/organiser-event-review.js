@@ -1169,11 +1169,21 @@
         return;
       }
       if (hasPaid && !body.refundTermsAgreed) {
-        showAlert(
-          'Go back to ticket setup, choose your refund policy, and tick the refund responsibility checkbox — then return here to publish.',
-          'warn'
+        const impersonating = Boolean(
+          document.getElementById('hub-impersonation-banner') ||
+            document.getElementById('hub-stop-impersonating') ||
+            (window.HubOrganiserTerms &&
+              typeof window.HubOrganiserTerms.isAdminImpersonating === 'function' &&
+              window.HubOrganiserTerms.isAdminImpersonating())
         );
-        return;
+        if (!impersonating) {
+          showAlert(
+            'Go back to ticket setup, choose your refund policy, and tick the refund responsibility checkbox — then return here to publish.',
+            'warn'
+          );
+          return;
+        }
+        body.refundTermsAgreed = true;
       }
 
       const publishWork = function () {
