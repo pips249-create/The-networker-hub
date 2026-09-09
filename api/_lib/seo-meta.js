@@ -21,6 +21,12 @@ const {
   buildNetworkingRegionSeoCopy,
   buildNetworkingRegionFaqSchema,
 } = require('./networking-region-content');
+const { getOpportunityIndustry } = require('./opportunity-industries');
+const { countPublishedOpportunitiesByCategory } = require('./opportunity-industry-ssr');
+const {
+  buildOpportunityIndustrySeoCopy,
+  buildOpportunityIndustryFaqSchema,
+} = require('./opportunity-industry-content');
 const { getPublicRankingLeaderboard } = require('./organiser-ranking-snapshot');
 const { rankingBadgeImageUrl } = require('./ranking-badge-svg');
 const { OG_SHARE_IMAGE } = require('./hub-brand');
@@ -614,6 +620,75 @@ async function buildNetworkingRegionMeta(slug, origin) {
   };
 }
 
+async function buildOpportunityIndustryMeta(slug, origin) {
+  const industry = getOpportunityIndustry(slug);
+  if (!industry) return null;
+
+  const year = new Date().getFullYear();
+  const canonical = absoluteUrl(origin, industry.path);
+  const image = absoluteUrl(origin, OG_SHARE_IMAGE);
+  const listingCount = await countPublishedOpportunitiesByCategory(industry.id);
+  const copy = buildOpportunityIndustrySeoCopy(industry, listingCount);
+
+  let description = trimText(copy.answerText, 160);
+  if (listingCount > 0) {
+    description = trimText(
+      `${industry.label} business opportunities: browse ${listingCount} live franchises, side hustles and partnerships on The Networker UK.`,
+      160
+    );
+  }
+
+  const title = `${industry.label} Business Opportunities ${year} | The Networker UK`;
+  const meta = { title, description, canonical, image, ogType: 'website' };
+  const collectionPage = {
+    '@type': 'CollectionPage',
+    '@id': canonical + '#directory',
+    url: canonical,
+    name: `${industry.label} business opportunities ${year}`,
+    description,
+    isPartOf: {
+      '@type': 'WebSite',
+      name: 'The Networker UK',
+      url: absoluteUrl(origin, '/'),
+    },
+    about: {
+      '@type': 'Thing',
+      name: industry.label,
+    },
+  };
+  const breadcrumbs = buildBreadcrumbListSchema(
+    [
+      { name: 'Home', path: '/' },
+      { name: 'Business opportunities', path: '/opportunities/' },
+      { name: industry.label, path: industry.path },
+    ],
+    origin
+  );
+
+  const schemaParts = [collectionPage, breadcrumbs];
+  const faqSchema = buildOpportunityIndustryFaqSchema(copy.faqs, canonical);
+  if (faqSchema) schemaParts.push(faqSchema);
+
+  return {
+    ok: true,
+    type: 'opportunity-industry',
+    slug: industry.id,
+    industry: {
+      id: industry.id,
+      label: industry.label,
+      path: industry.path,
+      year,
+    },
+    listingsTotal: listingCount,
+    answerText: copy.answerText,
+    faqHtml: copy.faqHtml,
+    ...meta,
+    openGraph: buildOpenGraphTags(meta),
+    schema: buildSchemaGraphFromParts(schemaParts, origin),
+    breadcrumbs: breadcrumbs.itemListElement,
+  };
+}
+
 async function buildRankingBadgeMeta(lookup, origin) {
   const key = String(lookup || '').trim();
   const base = siteOrigin(origin);
@@ -689,6 +764,7 @@ async function buildSeoMeta(type, slug, origin) {
   if (t === 'organiser') return buildOrganiserMeta(s, origin);
   if (t === 'opportunity') return buildOpportunityMeta(s, origin);
   if (t === 'networking-region') return await buildNetworkingRegionMeta(s, origin);
+  if (t === 'opportunity-industry') return await buildOpportunityIndustryMeta(s, origin);
   return null;
 }
 
@@ -700,6 +776,7 @@ module.exports = {
   buildOpportunityMeta,
   buildStaticPageMeta,
   buildNetworkingRegionMeta,
+  buildOpportunityIndustryMeta,
   buildRankingBadgeMeta,
   absoluteUrl,
   trimText,

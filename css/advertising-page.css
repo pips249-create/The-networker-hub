@@ -966,12 +966,10 @@ body.nav-menu-open .ad-sticky-cta {
 
 /* ─── Section navigation (single control — not duplicated tabs) ─── */
 .ad-section-nav {
-  position: sticky;
-  top: 72px;
-  z-index: 10;
+  position: relative;
+  z-index: 1;
   margin-bottom: 1rem;
   padding: 0 0 8px;
-  background: linear-gradient(180deg, var(--ad-canvas) 90%, transparent);
   scroll-margin-top: 88px;
 }
 
@@ -6397,10 +6395,6 @@ body.nav-menu-open .ad-sticky-cta {
 
   .ad-trust-metric {
     padding: 0;
-  }
-
-  .ad-section-nav {
-    top: 64px;
   }
 
   .ad-partners-strip {

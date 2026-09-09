@@ -1830,6 +1830,94 @@
 
   var mountedIndustrySponsorSlot = '';
 
+  function buildIndustryFaqs(label) {
+    var path = '/opportunities/industry/' + encodeURIComponent(activeCategories[0] || '');
+    return [
+      {
+        q: 'Where can I find ' + label + ' business opportunities?',
+        a:
+          'Browse franchises, side hustles and partnerships in ' +
+          label +
+          ' on The Networker UK at ' +
+          path +
+          '. Open a listing to enquire directly with the provider.',
+      },
+      {
+        q: 'How do I enquire about a ' + label + ' franchise or partnership?',
+        a: 'Open any listing on this page, then send an enquiry from the opportunity page. Browsing is free — you only need a free account to enquire.',
+      },
+      {
+        q: 'How do I list a ' + label + ' opportunity on The Networker UK?',
+        a:
+          'Create a free organiser account, then publish your franchise, partnership or side hustle from the organiser dashboard. Listings can appear in the ' +
+          label +
+          ' industry directory so buyers can find and enquire. Start at /for-organisers.',
+      },
+      {
+        q: 'What types of ' + label + ' opportunities are listed?',
+        a:
+          'Franchises, side hustles, partnerships, affiliates and other business opportunities in ' +
+          label +
+          '. Use the filters on this page to narrow by investment level, commitment and location.',
+      },
+    ];
+  }
+
+  function syncIndustryFaq(label) {
+    var faqSection = document.getElementById('networking-region-faq');
+    if (!faqSection) return;
+
+    if (activeCategories.length !== 1) {
+      faqSection.hidden = true;
+      faqSection.removeAttribute('data-hub-ssr-faq');
+      var listClear = document.getElementById('networking-region-faq-list');
+      if (listClear) listClear.innerHTML = '';
+      return;
+    }
+
+    var ssrIndustry = String(
+      document.body.getAttribute('data-industry') ||
+        (document.getElementById('opp-industry-sponsor-intro') &&
+          document.getElementById('opp-industry-sponsor-intro').getAttribute('data-industry')) ||
+        ''
+    )
+      .trim()
+      .toLowerCase();
+    var activeId = String(activeCategories[0] || '')
+      .trim()
+      .toLowerCase();
+    var ssrMatches = faqSection.getAttribute('data-hub-ssr-faq') && ssrIndustry && ssrIndustry === activeId;
+
+    if (ssrMatches) {
+      faqSection.hidden = false;
+      return;
+    }
+
+    faqSection.removeAttribute('data-hub-ssr-faq');
+    faqSection.hidden = false;
+    var faqHeading = document.getElementById('networking-region-faq-heading');
+    if (faqHeading) faqHeading.textContent = label + ' opportunities — FAQ';
+    var faqList = document.getElementById('networking-region-faq-list');
+    if (!faqList) return;
+    var faqs = buildIndustryFaqs(label);
+    faqList.innerHTML = faqs
+      .map(function () {
+        return (
+          '<details class="networking-region-faq-item">' +
+          '<summary class="networking-region-faq-q"></summary>' +
+          '<p class="networking-region-faq-a"></p>' +
+          '</details>'
+        );
+      })
+      .join('');
+    Array.prototype.forEach.call(faqList.querySelectorAll('.networking-region-faq-item'), function (el, i) {
+      var q = el.querySelector('.networking-region-faq-q');
+      var a = el.querySelector('.networking-region-faq-a');
+      if (q) q.textContent = faqs[i].q;
+      if (a) a.textContent = faqs[i].a;
+    });
+  }
+
   function syncIndustrySponsorIntro() {
     var intro = document.getElementById('opp-industry-sponsor-intro');
     var slotEl = document.getElementById('opp-industry-sponsor-slot');
@@ -1842,11 +1930,23 @@
       intro.hidden = true;
       if (slotEl) slotEl.innerHTML = '';
       mountedIndustrySponsorSlot = '';
+      if (copy) copy.removeAttribute('data-hub-ssr-answer');
+      syncIndustryFaq('');
       return;
     }
 
     var activeCategory = activeCategories[0];
     var label = industryLabelForId(activeCategory);
+    var ssrIndustry = String(intro.getAttribute('data-industry') || document.body.getAttribute('data-industry') || '')
+      .trim()
+      .toLowerCase();
+    var ssrMatches =
+      copy &&
+      copy.getAttribute('data-hub-ssr-answer') &&
+      ssrIndustry &&
+      ssrIndustry === String(activeCategory).toLowerCase();
+    if (copy && !ssrMatches) copy.removeAttribute('data-hub-ssr-answer');
+
     intro.hidden = false;
     if (heading) {
       heading.innerHTML =
@@ -1854,12 +1954,13 @@
       var accent = heading.querySelector('.networking-region-name-accent');
       if (accent) accent.textContent = label;
     }
-    if (copy) {
+    if (copy && !copy.getAttribute('data-hub-ssr-answer')) {
       copy.textContent =
-        'Browse franchises, side hustles, and partnerships in ' +
+        'Find ' +
         label +
-        '. Enquire directly with providers.';
+        ' franchises, side hustles and partnerships on The Networker UK. Browse live business opportunities in this sector and enquire directly with providers.';
     }
+    syncIndustryFaq(label);
 
     var slotKey = 'opportunity_industry_sponsor_' + activeCategory;
     if (!slotEl) return;
@@ -2382,6 +2483,18 @@
         return String(c || '').trim();
       })
       .filter(Boolean);
+    if (!activeCategories.length) {
+      var industryPath = String(window.location.pathname || '').match(
+        /^\/opportunities\/industry\/([^/]+)\/?$/i
+      );
+      if (industryPath && industryPath[1]) {
+        try {
+          activeCategories = [decodeURIComponent(industryPath[1])];
+        } catch (e) {
+          activeCategories = [industryPath[1]];
+        }
+      }
+    }
     searchQ = String(params.get('q') || '').trim().toLowerCase();
     sortBy = params.get('sort') || 'recommended';
     activeInvestTier = params.get('invest') || 'all';
@@ -2451,7 +2564,6 @@
     var params = new URLSearchParams();
     var c = currentFilterCriteria();
     if (c.type && c.type !== 'all') params.set('type', c.type);
-    if (c.category) params.set('category', c.category);
     if (c.invest) params.set('invest', c.invest);
     if (c.location) params.set('location', c.location);
     if (c.locationQuery) params.set('loc', c.locationQuery);
@@ -2464,10 +2576,18 @@
     if (activeCitySlug) params.set('city', activeCitySlug);
     if (viewMode && viewMode !== DEFAULT_VIEW_MODE) params.set('view', viewMode);
 
+    var path;
+    if (activeCitySlug) {
+      path = '/opportunities/networking/' + encodeURIComponent(activeCitySlug);
+      if (c.category) params.set('category', c.category);
+    } else if (activeCategories.length === 1) {
+      path = '/opportunities/industry/' + encodeURIComponent(activeCategories[0]);
+    } else {
+      path = '/opportunities/';
+      if (c.category) params.set('category', c.category);
+    }
+
     var qs = params.toString();
-    var path = activeCitySlug
-      ? '/opportunities/networking/' + encodeURIComponent(activeCitySlug)
-      : window.location.pathname;
     var next = path + (qs ? '?' + qs : '') + (window.location.hash || '');
     var current = window.location.pathname + window.location.search + (window.location.hash || '');
     if (next !== current) {

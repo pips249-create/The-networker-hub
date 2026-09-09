@@ -354,6 +354,10 @@
       "destination": "/opportunities/?city=:slug"
     },
     {
+      "source": "/opportunities/industry/:slug",
+      "destination": "/opportunities/?category=:slug"
+    },
+    {
       "source": "/opportunities/:slug",
       "destination": "/opportunities/opportunity.html?slug=:slug"
     },

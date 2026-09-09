@@ -398,11 +398,11 @@
     if (!showListEventCta(user)) return '';
     var eventExtra = mobileExtraClass ? mobileExtraClass + ' nav-mobile-list-event' : '';
     var oppExtra = mobileExtraClass ? mobileExtraClass + ' nav-mobile-list-opportunity' : '';
-    // Match the section: opportunity CTA on Opportunities, event CTA elsewhere.
+    // Opportunities section: opportunity first; elsewhere event first.
     if (isOpportunitiesSection()) {
-      return listOpportunityCta(oppExtra);
+      return listOpportunityCta(oppExtra) + listEventCta(user, eventExtra);
     }
-    return listEventCta(user, eventExtra);
+    return listEventCta(user, eventExtra) + listOpportunityCta(oppExtra);
   }
 
   function isOpportunitiesSection() {

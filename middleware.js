@@ -20,6 +20,8 @@ const SKIP_OPPORTUNITY_SLUGS = new Set([
   'opportunity',
   'browse',
   'list',
+  'networking',
+  'industry',
 ]);
 const SITE_ACCESS_COOKIE = 'hub_site_preview';
 const SITE_PREVIEW_TOKEN_TYPE = 'site_preview';
@@ -114,6 +116,7 @@ function isPublicListingPath(pathname, searchParams) {
   if (oppMatch && !SKIP_OPPORTUNITY_SLUGS.has(decodeURIComponent(oppMatch[1]))) return true;
   if (/^\/networking\/[^/]+$/.test(path)) return true;
   if (/^\/opportunities\/networking\/[^/]+$/.test(path)) return true;
+  if (/^\/opportunities\/industry\/[^/]+$/.test(path)) return true;
   if (path === '/rankings/badge') return true;
   return false;
 }
@@ -584,6 +587,71 @@ function injectNetworkingRegionContent(html, meta) {
   return out;
 }
 
+function injectOpportunityIndustryContent(html, meta) {
+  const industry = meta && meta.industry;
+  if (!industry || !industry.label) return html;
+
+  const slug = String(meta.slug || industry.id || '').trim().toLowerCase();
+  const label = escapeHtml(industry.label);
+  const answerText = String(meta.answerText || '').trim();
+  const introCopy = answerText
+    ? escapeHtml(answerText)
+    : 'Find ' +
+      label +
+      ' franchises, side hustles and partnerships on The Networker UK. Browse live business opportunities in this sector and enquire directly with providers.';
+
+  let out = String(html || '');
+  out = out.replace(
+    /<script[^>]+src=["'][^"']*hub-seo-static\.js[^"']*["'][^>]*><\/script>\s*/gi,
+    ''
+  );
+  out = out.replace(
+    /<script[^>]+src=["'][^"']*hub-seo-schema\.js[^"']*["'][^>]*><\/script>\s*/gi,
+    ''
+  );
+  // Remove the generic /opportunities/ CollectionPage JSON-LD so industry schema remains.
+  out = out.replace(
+    /<script\s+type=["']application\/ld\+json["']\s*>\s*\{[\s\S]*?"@type"\s*:\s*"CollectionPage"[\s\S]*?\}\s*<\/script>\s*/i,
+    ''
+  );
+  out = out.replace(
+    /<body([^>]*)class=["']([^"']*)["']([^>]*)>/i,
+    '<body$1class="$2 opp-industry-page"$3 data-industry="' + escapeHtml(slug) + '">'
+  );
+  out = out.replace(
+    /<section class="networking-region-intro opp-industry-sponsor-intro"[^>]*id="opp-industry-sponsor-intro"[^>]*>/i,
+    '<section class="networking-region-intro opp-industry-sponsor-intro" id="opp-industry-sponsor-intro" data-industry="' +
+      escapeHtml(slug) +
+      '" aria-labelledby="opp-industry-sponsor-heading">'
+  );
+  out = out.replace(
+    /<h2 id="opp-industry-sponsor-heading">[\s\S]*?<\/h2>/i,
+    '<h2 id="opp-industry-sponsor-heading">Business opportunities in <span class="networking-region-name-accent">' +
+      label +
+      '</span></h2>'
+  );
+  out = out.replace(
+    /<p id="opp-industry-sponsor-copy">[\s\S]*?<\/p>/i,
+    '<p id="opp-industry-sponsor-copy" data-hub-ssr-answer="1">' + introCopy + '</p>'
+  );
+
+  if (meta.faqHtml) {
+    if (/id=["']networking-region-faq["']/i.test(out)) {
+      out = out.replace(
+        /<section[^>]*id=["']networking-region-faq["'][^>]*>[\s\S]*?<\/section>/i,
+        meta.faqHtml
+      );
+    } else {
+      out = out.replace(
+        /(<div class="events-filter-wrap">)/i,
+        meta.faqHtml + '\n      $1'
+      );
+    }
+  }
+
+  return out;
+}
+
 function parseCookies(request) {
   const raw = request.headers.get('cookie') || '';
   const out = {};
@@ -910,7 +978,13 @@ function passThroughIfGated(gated) {
 }
 
 /** Listing types that must not soft-404 (HTTP 200 + client “not found”). */
-const HARD_404_SEO_TYPES = new Set(['event', 'organiser', 'opportunity', 'networking-region']);
+const HARD_404_SEO_TYPES = new Set([
+  'event',
+  'organiser',
+  'opportunity',
+  'networking-region',
+  'opportunity-industry',
+]);
 
 async function serveHard404(url, internalHeaders) {
   const headers = {
@@ -1189,6 +1263,7 @@ export default async function middleware(request) {
 
   const eventMatch = pathname.match(/^\/events\/([^/]+)$/);
   const orgMatch = pathname.match(/^\/organisers\/([^/]+)$/);
+  const oppIndustryMatch = pathname.match(/^\/opportunities\/industry\/([^/]+)$/);
   const oppMatch = pathname.match(/^\/opportunities\/([^/]+)$/);
   const networkingMatch = pathname.match(/^\/networking\/([^/]+)$/);
   const rankingBadgePath = pathname === '/rankings/badge';
@@ -1221,6 +1296,10 @@ export default async function middleware(request) {
     type = 'organiser';
     slug = pathSlug;
     templatePath = '/events/organiser';
+  } else if (oppIndustryMatch) {
+    slug = decodeURIComponent(oppIndustryMatch[1]);
+    type = 'opportunity-industry';
+    templatePath = '/opportunities/';
   } else if (oppMatch) {
     const pathSlug = decodeURIComponent(oppMatch[1]);
     if (pathSlug === 'opportunity' || pathSlug === 'opportunity.html') {
@@ -1301,7 +1380,7 @@ export default async function middleware(request) {
     }
     if (!meta || !meta.ok) return passThroughIfGated(siteGated);
 
-    if (meta.canonical && HARD_404_SEO_TYPES.has(type) && type !== 'networking-region') {
+    if (meta.canonical && HARD_404_SEO_TYPES.has(type) && type !== 'networking-region' && type !== 'opportunity-industry') {
       try {
         const canonicalPath = new URL(meta.canonical).pathname.replace(/\/$/, '') || '/';
         const currentPath = pathname.replace(/\/$/, '') || '/';
@@ -1319,6 +1398,8 @@ export default async function middleware(request) {
     let html = injectSeoIntoHtml(await htmlRes.text(), meta);
     if (type === 'networking-region') {
       html = injectNetworkingRegionContent(html, meta);
+    } else if (type === 'opportunity-industry') {
+      html = injectOpportunityIndustryContent(html, meta);
     }
 
     const seoHeaders = {

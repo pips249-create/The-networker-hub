@@ -31,8 +31,6 @@
   var launchNoteEl = document.getElementById('county-partner-launch-note');
   var availableCountCheckoutEl = document.getElementById('county-partner-available-count-checkout');
   var availablePanelEl = document.getElementById('county-partner-available-panel');
-  var bookedSummaryEl = document.getElementById('county-partner-booked-summary');
-  var bookedSummaryListEl = document.getElementById('county-partner-booked-summary-list');
   var bookedWrapEl = document.getElementById('county-partner-booked-wrap');
   var bookedListEl = document.getElementById('county-partner-booked-list');
   var termOptionsEl = document.getElementById('county-partner-term-options');
@@ -273,10 +271,8 @@
       })
     );
     var hasBooked = booked.length > 0;
-    if (bookedSummaryEl) bookedSummaryEl.hidden = !hasBooked;
     if (bookedWrapEl) bookedWrapEl.hidden = !hasBooked;
     if (!hasBooked) return;
-    if (bookedSummaryListEl) bookedSummaryListEl.innerHTML = booked.map(bookedCardHtml).join('');
     if (bookedListEl) bookedListEl.innerHTML = booked.map(bookedCardHtml).join('');
   }
 

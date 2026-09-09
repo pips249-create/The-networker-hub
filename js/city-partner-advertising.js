@@ -35,8 +35,6 @@
   var launchNoteEl = document.getElementById('city-partner-launch-note');
   var availableCountCheckoutEl = document.getElementById('city-partner-available-count-checkout');
   var availablePanelEl = document.getElementById('city-partner-available-panel');
-  var bookedSummaryEl = document.getElementById('city-partner-booked-summary');
-  var bookedSummaryListEl = document.getElementById('city-partner-booked-summary-list');
   var bookedWrapEl = document.getElementById('city-partner-booked-wrap');
   var bookedListEl = document.getElementById('city-partner-booked-list');
   var termOptionsEl = document.getElementById('city-partner-term-options');
@@ -325,15 +323,8 @@
     );
     var hasBooked = booked.length > 0;
 
-    if (bookedSummaryEl) bookedSummaryEl.hidden = !hasBooked;
     if (bookedWrapEl) bookedWrapEl.hidden = !hasBooked;
-
     if (!hasBooked) return;
-
-    if (bookedSummaryListEl) {
-      bookedSummaryListEl.innerHTML = booked.map(bookedCityCardHtml).join('');
-      bindWaitlistButtons(bookedSummaryListEl);
-    }
 
     if (bookedListEl) {
       bookedListEl.innerHTML = booked.map(bookedCityCardHtml).join('');

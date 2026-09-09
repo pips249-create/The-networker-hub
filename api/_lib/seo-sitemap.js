@@ -8,6 +8,7 @@ const { publicEventSlug } = require('./event-slug');
 const { publicOrganiserSlug } = require('./organiser-slug');
 const { publicOpportunitySlug } = require('./opportunity-slug');
 const { NETWORKING_REGION_SLUGS } = require('./networking-regions');
+const { OPPORTUNITY_INDUSTRY_SLUGS } = require('./opportunity-industries');
 
 const STATIC_PATHS = [
   '/',
@@ -32,6 +33,7 @@ const STATIC_PATHS = [
   '/advertising',
   '/legal-policies',
   ...NETWORKING_REGION_SLUGS.map((slug) => '/networking/' + slug),
+  ...OPPORTUNITY_INDUSTRY_SLUGS.map((slug) => '/opportunities/industry/' + slug),
 ];
 
 function xmlEscape(value) {
