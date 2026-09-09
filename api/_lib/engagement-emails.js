@@ -491,7 +491,8 @@ async function sendDueSignupEventsNudgeEmails(sb) {
 
 /**
  * Accounts with organiser workspace enabled, plus emails linked to an
- * organiser profile — used to keep attendee nurture mail off organiser inboxes.
+ * organiser profile — used to keep attendee nurture / Hubert picks off
+ * organiser and group-contact inboxes.
  */
 async function loadOrganiserRecipientKeys(sb, attendees) {
   const userIds = [
@@ -546,6 +547,26 @@ async function loadOrganiserRecipientKeys(sb, attendees) {
     (orgAccounts || []).forEach((row) => {
       const em = String(row.email || '').trim().toLowerCase();
       if (em) organiserEmails.add(em);
+    });
+
+    // Group profile contact emails (may differ from the account login).
+    const { data: byEmail, error: byEmailErr } = await sb
+      .from('organisers')
+      .select('email, contact_email')
+      .in('email', emails);
+    if (byEmailErr) throw new Error(byEmailErr.message);
+    const { data: byContact, error: byContactErr } = await sb
+      .from('organisers')
+      .select('email, contact_email')
+      .in('contact_email', emails);
+    if (byContactErr && !/contact_email|column/i.test(String(byContactErr.message || ''))) {
+      throw new Error(byContactErr.message);
+    }
+    [...(byEmail || []), ...(byContactErr ? [] : byContact || [])].forEach((row) => {
+      const em1 = String(row.email || '').trim().toLowerCase();
+      const em2 = String(row.contact_email || '').trim().toLowerCase();
+      if (em1) organiserEmails.add(em1);
+      if (em2) organiserEmails.add(em2);
     });
   }
 
@@ -1712,13 +1733,14 @@ function hubertConciergeMonthLabel(date) {
 async function sendDueHubertEventConciergeEmails(sb) {
   const result = { sent: 0, skipped: 0, errors: [] };
   const now = new Date();
+  const claimedAt = now.toISOString();
   const monthLabel = hubertConciergeMonthLabel(now);
   const siteUrl = siteBase();
 
   const { data: attendees, error } = await sb
     .from('attendees')
     .select(
-      'id, email, name, location, hubert_event_concierge_sent_at, signup_events_nudge_sent_at, signup_events_nudge_followup_sent_at'
+      'id, email, name, location, supabase_user_id, hubert_event_concierge_sent_at, signup_events_nudge_sent_at, signup_events_nudge_followup_sent_at'
     )
     .not('email', 'is', null)
     .order('hubert_event_concierge_sent_at', { ascending: true, nullsFirst: true })
@@ -1728,6 +1750,19 @@ async function sendDueHubertEventConciergeEmails(sb) {
       return { sent: 0, skipped: 0, errors: [], unavailable: true };
     }
     throw new Error(error.message);
+  }
+
+  const dueCandidates = (attendees || []).filter((attendee) => {
+    if (!isDueForHubertConcierge(attendee.hubert_event_concierge_sent_at)) return false;
+    if (recentlyReceivedSignupNurture(attendee, HUBERT_AFTER_NURTURE_COOLDOWN_DAYS)) return false;
+    return Boolean(String(attendee.email || '').trim());
+  });
+
+  let organiserKeys = { organiserUserIds: new Set(), organiserEmails: new Set() };
+  try {
+    organiserKeys = await loadOrganiserRecipientKeys(sb, dueCandidates);
+  } catch (e) {
+    result.errors.push({ error: 'organiser_lookup_failed', message: e.message || String(e) });
   }
 
   for (const attendee of attendees || []) {
@@ -1749,6 +1784,20 @@ async function sendDueHubertEventConciergeEmails(sb) {
       continue;
     }
 
+    // Attendee nurture — keep Hubert's picks off organiser / group-contact inboxes.
+    // Stamp the month so organisers do not keep consuming the monthly batch.
+    if (isOrganiserAttendee(attendee, organiserKeys)) {
+      await claimRowTimestamp(sb, {
+        table: 'attendees',
+        id: attendee.id,
+        column: 'hubert_event_concierge_sent_at',
+        claimedAt,
+        previousValue: attendee.hubert_event_concierge_sent_at || null,
+      });
+      result.skipped += 1;
+      continue;
+    }
+
     try {
       const eventSections = await buildSignupNudgeEventsHtml(sb, attendee.location);
       if (!eventSections.nearby_events_html && !eventSections.popular_events_html) {
@@ -1756,7 +1805,6 @@ async function sendDueHubertEventConciergeEmails(sb) {
         continue;
       }
 
-      const claimedAt = now.toISOString();
       const claimed = await claimRowTimestamp(sb, {
         table: 'attendees',
         id: attendee.id,
