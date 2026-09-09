@@ -38,6 +38,14 @@ module.exports = async function handler(req, res) {
   const auth = await requireOrganiserSession(req);
   if (!auth.ok) return json(res, auth.status, { error: auth.error });
 
+  if (auth.session && auth.session.impersonator) {
+    return json(res, 403, {
+      error: 'impersonation_stripe_blocked',
+      message:
+        'Stop impersonating — only the organiser can add bank details on their account.',
+    });
+  }
+
   const verified = await assertOrganiserEmailVerified(auth.session);
   if (!verified.ok) {
     return json(res, verified.status, {

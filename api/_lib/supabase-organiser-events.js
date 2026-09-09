@@ -266,6 +266,7 @@ function rowToEvent(row) {
     refundCutoffDays: row.refund_cutoff_days != null ? Number(row.refund_cutoff_days) : null,
     refundTermsAgreed: Boolean(row.refund_terms_agreed || row.refund_terms_agreed_at),
     refundTermsAgreedAt: row.refund_terms_agreed_at || null,
+    needsOrganiserSetupReview: Boolean(row.needs_organiser_setup_review),
     vatTreatment: row.vat_treatment || null,
     lat: row.latitude != null ? Number(row.latitude) : null,
     lng: row.longitude != null ? Number(row.longitude) : null,
@@ -2463,6 +2464,7 @@ async function createTicketsForEvents({
   guestPassesDisabled,
   enableGuestVisits,
   maxAttendees,
+  flagOrganiserSetupReview,
 }) {
   const sb = getSupabaseAdmin();
   const ids = await expandEventIdsToSeriesPeers(sb, eventIds);
@@ -2656,10 +2658,14 @@ async function createTicketsForEvents({
 
   const hasCategoryExclusivity = effectiveMode === 'category_exclusivity' || hasCeTiers;
   const resolvedMode = hasCategoryExclusivity ? 'category_exclusivity' : effectiveMode;
-  const { error: approvalErr } = await sb
-    .from('events')
-    .update({ auto_approve: !hasCategoryExclusivity, attendance_mode: resolvedMode })
-    .in('id', ids);
+  const modePatch = {
+    auto_approve: !hasCategoryExclusivity,
+    attendance_mode: resolvedMode,
+  };
+  if (flagOrganiserSetupReview) {
+    modePatch.needs_organiser_setup_review = true;
+  }
+  const { error: approvalErr } = await sb.from('events').update(modePatch).in('id', ids);
   if (approvalErr) throw new Error(approvalErr.message);
 
   let publishedEvents = null;
@@ -3258,6 +3264,16 @@ async function getLeanOrganiserWorkspace(req) {
     eventsTotal = eventSummaries.length;
   }
 
+  let pendingSetupReviews = [];
+  if (!adminView && groupIds.length) {
+    try {
+      const { listOrganiserSetupReviews } = require('./organiser-setup-review');
+      pendingSetupReviews = await listOrganiserSetupReviews(groupIds);
+    } catch {
+      pendingSetupReviews = [];
+    }
+  }
+
   return finalizeOrganiserWorkspacePayload(
     {
       ok: true,
@@ -3265,6 +3281,7 @@ async function getLeanOrganiserWorkspace(req) {
       groups,
       pendingClaimGroups,
       pendingClaimOpportunities,
+      pendingSetupReviews,
       events: [],
       upcomingEvents: [],
       tickets: [],
@@ -3340,6 +3357,17 @@ async function getOrganiserWorkspace(req) {
       /* pending claims optional */
     }
   }
+
+  let pendingSetupReviews = [];
+  if (!adminView && groupIds.length) {
+    try {
+      const { listOrganiserSetupReviews } = require('./organiser-setup-review');
+      pendingSetupReviews = await listOrganiserSetupReviews(groupIds);
+    } catch {
+      pendingSetupReviews = [];
+    }
+  }
+
   const eventsOnly = String(req.query?.eventsOnly || '') === '1';
 
   if (eventsOnly) {
@@ -3359,6 +3387,7 @@ async function getOrganiserWorkspace(req) {
           ok: true,
           session,
           groups: page.groups,
+          pendingSetupReviews,
           events: page.events,
           upcomingEvents: page.upcomingEvents,
           tickets: page.tickets,
@@ -3502,6 +3531,7 @@ async function getOrganiserWorkspace(req) {
       groups: overviewGroups,
       pendingClaimGroups,
       pendingClaimOpportunities,
+      pendingSetupReviews,
       events,
       upcomingEvents,
       tickets,
@@ -3618,6 +3648,8 @@ module.exports = {
   getOrganiserWorkspace,
   prepareOrganiserWorkspaceScope,
   rowToEvent,
+  normalizeAttendanceMode,
+  expandEventIdsToSeriesPeers,
   newSeriesGroupId,
   resolveSeriesGroupId,
 };

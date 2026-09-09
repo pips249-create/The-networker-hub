@@ -43,6 +43,39 @@
     return Date.now() >= Date.parse('2026-09-01T09:00:00+01:00');
   }
 
+  function isAdminImpersonating() {
+    if (
+      window.HubOrganiserTerms &&
+      typeof window.HubOrganiserTerms.isAdminImpersonating === 'function'
+    ) {
+      return window.HubOrganiserTerms.isAdminImpersonating();
+    }
+    return Boolean(
+      document.getElementById('hub-impersonation-banner') ||
+        document.getElementById('hub-stop-impersonating')
+    );
+  }
+
+  function applyImpersonationPublishBlock() {
+    const confirmBtn = document.getElementById('ee-review-confirm');
+    const lede = document.querySelector('.ee-publish-review-lede');
+    if (!isAdminImpersonating()) return false;
+    if (confirmBtn) {
+      confirmBtn.disabled = true;
+      confirmBtn.setAttribute('aria-disabled', 'true');
+      confirmBtn.textContent = 'Organiser must publish';
+      confirmBtn.title =
+        'Stop impersonating — the organiser must review this setup and accept terms before publishing.';
+      confirmBtn.dataset.bankBlocked = '';
+      confirmBtn.dataset.impersonationBlocked = '1';
+    }
+    if (lede) {
+      lede.textContent =
+        'Ticket setup is saved. Stop impersonating so the organiser can review prices, refund policy, and accept terms — then they can publish from here.';
+    }
+    return true;
+  }
+
   const REFUND_LABELS = {
     flexible: 'Flexible',
     standard: 'Standard',
@@ -313,6 +346,7 @@
     const payment = window.HubOrganiserPaymentSetup;
     const confirmBtn = document.getElementById('ee-review-confirm');
     const lede = document.querySelector('.ee-publish-review-lede');
+    if (applyImpersonationPublishBlock()) return;
     if (!mount || !payment || !paymentSetupState) {
       if (confirmBtn) {
         confirmBtn.disabled = false;
@@ -1109,6 +1143,15 @@
     if (publishInFlight) return;
     showAlert('');
 
+    if (isAdminImpersonating()) {
+      showAlert(
+        'Stop impersonating so the organiser can review this setup, accept terms, and publish.',
+        'warn'
+      );
+      applyImpersonationPublishBlock();
+      return;
+    }
+
     if (!loadedTickets.length) {
       showAlert('No ticket types found — go back and set up tickets before publishing.', 'warn');
       return;
@@ -1169,21 +1212,11 @@
         return;
       }
       if (hasPaid && !body.refundTermsAgreed) {
-        const impersonating = Boolean(
-          document.getElementById('hub-impersonation-banner') ||
-            document.getElementById('hub-stop-impersonating') ||
-            (window.HubOrganiserTerms &&
-              typeof window.HubOrganiserTerms.isAdminImpersonating === 'function' &&
-              window.HubOrganiserTerms.isAdminImpersonating())
+        showAlert(
+          'Go back to ticket setup, choose your refund policy, and tick the refund responsibility checkbox — then return here to publish.',
+          'warn'
         );
-        if (!impersonating) {
-          showAlert(
-            'Go back to ticket setup, choose your refund policy, and tick the refund responsibility checkbox — then return here to publish.',
-            'warn'
-          );
-          return;
-        }
-        body.refundTermsAgreed = true;
+        return;
       }
 
       const publishWork = function () {

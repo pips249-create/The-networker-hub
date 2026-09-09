@@ -297,10 +297,15 @@
     if (hasPaid && !refund.refundPolicy) {
       blockers.push('Select a refund policy');
     }
-    if (hasPaid && !refund.refundTermsAgreed && !refundTermsSatisfied()) {
+    if (
+      hasPaid &&
+      !refund.refundTermsAgreed &&
+      !refundTermsSatisfied() &&
+      !(isAdminImpersonating() && !includeBankDetails)
+    ) {
       blockers.push('Tick the refund responsibility checkbox');
     }
-    if (includeBankDetails && needsBankDetailsSetup(list)) {
+    if (includeBankDetails && needsBankDetailsSetup(list) && !isAdminImpersonating()) {
       blockers.push('Add bank details for paid tickets');
     }
     if (privateTicketEnabled() && !collectMembersOnlyTicket()) {
@@ -1165,9 +1170,8 @@
     if (!options.keepPayHow) {
       if (attendanceDoor === 'application') {
         setPayHow('membership');
-        setGuestProgrammeEnabled(true);
-        const visits = document.getElementById('ee-guest-visits-allowed');
-        if (visits && !visits.dataset.touched) visits.value = '2';
+        // Do not auto-enable complimentary visits on CE; organiser opts in.
+        setGuestProgrammeEnabled(false);
         setMembersOnlyEventEnabled(false);
       } else {
         setPayHow('tickets');
@@ -4079,9 +4083,7 @@
 
   function refundTermsSatisfied() {
     if (refundTermsAlreadyAgreed()) return true;
-    if (Boolean(document.getElementById('refund-terms-agreed')?.checked)) return true;
-    // Admin finishing setup while impersonating — do not force accepting as the organiser.
-    return isAdminImpersonating();
+    return Boolean(document.getElementById('refund-terms-agreed')?.checked);
   }
 
   function collectRefundPayload() {
@@ -4314,9 +4316,12 @@
     payment.renderInto(mount, paymentSetupState, group, {
       returnPath: paymentSetupReturnPath(),
       buttonClass: 'hub-payment-setup-btn ee-btn ee-btn-primary',
-      title: 'Add bank details before publishing paid tickets',
-      lead:
-        'You can set prices now, but Confirm & publish stays blocked until Stripe has your UK bank details. Free events do not need bank details.',
+      title: isAdminImpersonating()
+        ? 'Bank details — organiser adds these later'
+        : 'Add bank details before publishing paid tickets',
+      lead: isAdminImpersonating()
+        ? 'Finish ticket prices and refund policy here. When the organiser logs in they add bank details, accept terms, and publish.'
+        : 'You can set prices now, but Confirm & publish stays blocked until Stripe has your UK bank details. Free events do not need bank details.',
       singleGroupOnly: true,
       onLinked: handlePaymentSetupLinked,
     });
@@ -5494,6 +5499,15 @@
         'This event has ticket sales — ticket types and refund terms cannot be changed. Cancel the event from the event editor if you need to make changes.',
         'warn'
       );
+      return;
+    }
+
+    if (publish && isAdminImpersonating()) {
+      showAlert(
+        'Stop impersonating so the organiser can review this setup, accept terms, and publish.',
+        'warn'
+      );
+      updatePublishButton();
       return;
     }
 

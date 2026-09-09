@@ -258,8 +258,8 @@ body.nav-menu-open .opp-enquire-jump {
   font-weight: 500;
 }
 
-.nav-mobile-links a.nav-mobile-list-event {
-  margin-top: 10px;
+.nav-mobile-links a.nav-mobile-list-cta {
+  margin-top: 4px;
   text-align: center;
   background: linear-gradient(180deg, #faf3e8 0%, #f5ead8 100%);
   border: 1px solid rgba(184, 149, 106, 0.5);
@@ -267,8 +267,11 @@ body.nav-menu-open .opp-enquire-jump {
   color: var(--charcoal);
   box-shadow: 0 2px 8px rgba(184, 149, 106, 0.12);
 }
-
-.nav-mobile-links a.nav-mobile-list-event[aria-current='page'] {
+.nav-mobile-links a.nav-mobile-list-cta:first-of-type,
+.nav-mobile-links .nav-mobile-section-label + a.nav-mobile-list-cta {
+  margin-top: 10px;
+}
+.nav-mobile-links a.nav-mobile-list-cta[aria-current='page'] {
   background: var(--gold, #d4a853);
   border-color: var(--gold, #d4a853);
   color: var(--brand-black, #1a1a2e);

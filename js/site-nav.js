@@ -105,7 +105,7 @@
  * NAV_BUILD=20260709h — transparent nav logo (from logo-nav.png).
  */
 (function () {
-  var NAV_BUILD = '20260909navlist2';
+  var NAV_BUILD = '20260909listmenu1';
   var LOGO_SRC = '/assets/logo-nav-transparent.png?v=20260823uk3';
   var SESSION_KEY = 'hub_nav_session_v1';
   var SESSION_TTL_MS = 5 * 60 * 1000;
@@ -358,60 +358,93 @@
     return true;
   }
 
-  function listEventCta(user, extraClass) {
-    var canSelfServe = !!(user && user.organiserUiVisible);
-    var path = canSelfServe ? '/organiser/event-edit' : '/add-your-event';
-    var loc = String(window.location.pathname || '').toLowerCase();
-    var isActive = canSelfServe
-      ? loc.indexOf('/organiser/event-edit') !== -1
-      : page === 'add-your-event' || loc.indexOf('/add-your-event') !== -1;
-    var active = isActive ? ' aria-current="page"' : '';
-    var cls = 'nav-organiser nav-list-event' + (extraClass ? ' ' + extraClass : '');
-    return (
-      '<a href="' +
-      href(path) +
-      '" class="' +
-      cls +
-      '"' +
-      active +
-      '>List your event</a>'
-    );
+  function listEventPath(user) {
+    return user && user.organiserUiVisible ? '/organiser/event-edit' : '/add-your-event';
   }
 
-  function listOpportunityCta(extraClass) {
+  function isListEventActive(user) {
     var loc = String(window.location.pathname || '').toLowerCase();
-    var isActive = loc.indexOf('/organiser/opportunity-edit') !== -1;
-    var active = isActive ? ' aria-current="page"' : '';
-    var cls = 'nav-organiser nav-list-opportunity' + (extraClass ? ' ' + extraClass : '');
-    return (
-      '<a href="' +
-      href('/organiser/opportunity-edit') +
-      '" class="' +
-      cls +
-      '" data-hub-action="add-opportunity"' +
-      active +
-      '>List your opportunity</a>'
-    );
+    if (user && user.organiserUiVisible) {
+      return loc.indexOf('/organiser/event-edit') !== -1;
+    }
+    return page === 'add-your-event' || loc.indexOf('/add-your-event') !== -1;
+  }
+
+  function isListOrganiserActive() {
+    var loc = String(window.location.pathname || '').toLowerCase();
+    return loc.indexOf('/organiser/group-edit') !== -1 || loc.indexOf('/organiser/enable') !== -1;
+  }
+
+  function isListOpportunityActive() {
+    var loc = String(window.location.pathname || '').toLowerCase();
+    return loc.indexOf('/organiser/opportunity-edit') !== -1;
+  }
+
+  function isListMenuActive(user) {
+    return isListEventActive(user) || isListOrganiserActive() || isListOpportunityActive();
+  }
+
+  function listMenuItemAttrs(isActive) {
+    return isActive ? ' aria-current="page"' : '';
   }
 
   function listCtasHtml(user, mobileExtraClass) {
     if (!showListEventCta(user)) return '';
-    var eventExtra = mobileExtraClass ? mobileExtraClass + ' nav-mobile-list-event' : '';
-    var oppExtra = mobileExtraClass ? mobileExtraClass + ' nav-mobile-list-opportunity' : '';
-    // Opportunities section: opportunity first; elsewhere event first.
-    if (isOpportunitiesSection()) {
-      return listOpportunityCta(oppExtra) + listEventCta(user, eventExtra);
-    }
-    return listEventCta(user, eventExtra) + listOpportunityCta(oppExtra);
-  }
+    var eventPath = listEventPath(user);
+    var eventActive = listMenuItemAttrs(isListEventActive(user));
+    var organiserActive = listMenuItemAttrs(isListOrganiserActive());
+    var opportunityActive = listMenuItemAttrs(isListOpportunityActive());
 
-  function isOpportunitiesSection() {
-    var loc = String(window.location.pathname || '').toLowerCase();
+    if (mobileExtraClass) {
+      return (
+        '<p class="nav-mobile-section-label">List your</p>' +
+        '<a href="' +
+        href(eventPath) +
+        '" class="' +
+        mobileExtraClass +
+        ' nav-list-event nav-mobile-list-cta"' +
+        eventActive +
+        '>Event</a>' +
+        '<a href="' +
+        href('/organiser/group-edit') +
+        '" class="' +
+        mobileExtraClass +
+        ' nav-list-organiser nav-mobile-list-cta" data-hub-action="add-group"' +
+        organiserActive +
+        '>Organiser</a>' +
+        '<a href="' +
+        href('/organiser/opportunity-edit') +
+        '" class="' +
+        mobileExtraClass +
+        ' nav-list-opportunity nav-mobile-list-cta" data-hub-action="add-opportunity"' +
+        opportunityActive +
+        '>Opportunity</a>'
+      );
+    }
+
     return (
-      page === 'opportunities' ||
-      loc.indexOf('/opportunities') === 0 ||
-      loc.indexOf('/organiser/opportunity-edit') !== -1 ||
-      loc.indexOf('/organiser/opportunity-submitted') !== -1
+      '<div class="nav-dropdown nav-list-dropdown" id="nav-list-your">' +
+      '<button type="button" class="nav-dropdown-toggle nav-organiser nav-list-toggle' +
+      (isListMenuActive(user) ? ' is-active' : '') +
+      '" id="nav-list-your-toggle" aria-expanded="false" aria-haspopup="true" aria-controls="nav-list-your-menu">' +
+      'List your <span class="nav-dropdown-chev" aria-hidden="true">▾</span></button>' +
+      '<div class="nav-dropdown-menu" id="nav-list-your-menu" role="menu" hidden>' +
+      '<a role="menuitem" class="nav-dropdown-item nav-list-event" href="' +
+      href(eventPath) +
+      '"' +
+      eventActive +
+      '>Event</a>' +
+      '<a role="menuitem" class="nav-dropdown-item nav-list-organiser" href="' +
+      href('/organiser/group-edit') +
+      '" data-hub-action="add-group"' +
+      organiserActive +
+      '>Organiser</a>' +
+      '<a role="menuitem" class="nav-dropdown-item nav-list-opportunity" href="' +
+      href('/organiser/opportunity-edit') +
+      '" data-hub-action="add-opportunity"' +
+      opportunityActive +
+      '>Opportunity</a>' +
+      '</div></div>'
     );
   }
 
@@ -1117,6 +1150,10 @@
     bindNavDropdown(nav, 'nav-more', 'nav-more-toggle', 'nav-more-menu');
   }
 
+  function bindListYourDropdown(nav) {
+    bindNavDropdown(nav, 'nav-list-your', 'nav-list-your-toggle', 'nav-list-your-menu');
+  }
+
   function bindListEventCta() {
     mount.querySelectorAll('a.nav-list-event').forEach(function (a) {
       a.addEventListener('click', function (e) {
@@ -1134,6 +1171,17 @@
         ) {
           e.preventDefault();
           window.HubOrganiserActions.goToAddEvent();
+        }
+      });
+    });
+    mount.querySelectorAll('a.nav-list-organiser').forEach(function (a) {
+      a.addEventListener('click', function (e) {
+        if (
+          window.HubOrganiserActions &&
+          typeof window.HubOrganiserActions.goToGroupProfile === 'function'
+        ) {
+          e.preventDefault();
+          window.HubOrganiserActions.goToGroupProfile();
         }
       });
     });
@@ -1299,6 +1347,7 @@
 
     bindMyHubDropdown(nav);
     bindMoreDropdown(nav);
+    bindListYourDropdown(nav);
     bindListEventCta();
     bindOrgTodoListener();
     bindAdminAttentionListener();

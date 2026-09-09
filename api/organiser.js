@@ -13,6 +13,7 @@ const routes = {
   'opportunity-claims': require('./_lib/routes/organiser-opportunity-claims'),
   events: require('./_lib/routes/organiser-events'),
   tickets: require('./_lib/routes/organiser-tickets'),
+  'setup-review': require('./_lib/routes/organiser-setup-review'),
   attendees: require('./_lib/routes/organiser-attendees'),
   'attendee-blocks': require('./_lib/routes/organiser-attendee-blocks'),
   'attendee-attendance': require('./_lib/routes/organiser-attendee-attendance'),

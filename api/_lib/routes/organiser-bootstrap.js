@@ -121,6 +121,7 @@ module.exports = async function handler(req, res) {
       groups: ws.groups,
       pendingClaimGroups: ws.pendingClaimGroups || [],
       pendingClaimOpportunities: ws.pendingClaimOpportunities || [],
+      pendingSetupReviews: ws.pendingSetupReviews || [],
       events: ws.events,
       upcomingEvents: ws.upcomingEvents || [],
       tickets: ws.tickets,

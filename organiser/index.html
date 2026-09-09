@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260909navlist2" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260828sidebar1" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260828sidebar1" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260903claimall1" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260909setupreview1" />
     <!-- hub-mobile last so phone overrides win over dashboard table min-widths -->
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260812footer10" />
     <script src="../js/hub-defer-css.js?v=20260828perf2" data-hrefs="../css/organiser-event-edit.css?v=20260821ticketstep1|../css/organiser-flow-tour.css?v=20260716layout|../css/hubert-widget.css?v=20260805bottom2|../css/hub-ranking-badge.css?v=20260728lb2|../css/hub-partner-badge.css?v=20260820ticketembed1|../css/rankings-page.css?v=20260807rank|../css/organiser-opportunity-edit.css?v=20260829premium1|https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&family=Playfair+Display:wght@400;700&family=Source+Sans+3:wght@400;600;700&family=Oswald:wght@500;600&family=Nunito:wght@400;600;700&display=swap"></script>
@@ -3529,6 +3529,43 @@
       </div>
     </div>
 
+    <div id="org-setup-review" class="org-group-claim" hidden aria-hidden="true">
+      <div class="org-group-claim-backdrop"></div>
+      <div
+        class="org-group-claim-panel org-setup-review-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="org-setup-review-title"
+      >
+        <p class="org-group-claim-kicker">Review your listing</p>
+        <h2 class="org-group-claim-title" id="org-setup-review-title">Your event</h2>
+        <p class="org-group-claim-intro" id="org-setup-review-intro">
+          We&apos;ve added an event for you — please review the information below.
+        </p>
+        <p class="org-setup-review-queue" id="org-setup-review-queue" hidden></p>
+        <div class="org-setup-review-body" id="org-setup-review-body"></div>
+        <label class="org-group-claim-notes org-setup-review-terms">
+          <span
+            ><input type="checkbox" id="org-setup-review-terms" />
+            I agree to the
+            <a href="/legal-policies#organisers" target="_blank" rel="noopener noreferrer">Organiser terms</a>
+            and
+            <a href="/legal-policies#terms" target="_blank" rel="noopener noreferrer">Terms &amp; conditions</a>,
+            and I will honour the refund policy shown above.</span
+          >
+        </label>
+        <p class="org-group-claim-error" id="org-setup-review-error" hidden></p>
+        <div class="org-group-claim-actions">
+          <a class="org-btn org-btn-outline" id="org-setup-review-edit" href="/organiser/event-tickets"
+            >Edit ticket setup</a
+          >
+          <button type="button" class="org-btn org-btn-gold" id="org-setup-review-accept" disabled>
+            Accept terms
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div id="org-opportunity-claim" class="org-group-claim" hidden aria-hidden="true">
       <div class="org-group-claim-backdrop"></div>
       <div
@@ -3907,7 +3944,7 @@
     <script src="../js/organiser-onboarding.js?v=20260825tourheal1" defer></script>
     <script src="../js/organiser-launch-setup.js?v=20260820hubreview1" defer></script>
     <script src="../js/organiser-group-edit.js?v=20260813drawer1" defer></script>
-    <script src="../js/organiser-payment-setup.js?v=20260811claimflow2" defer></script>
+    <script src="../js/organiser-payment-setup.js?v=20260909impersonate1" defer></script>
     <script src="../js/review-report.js?v=20260708" defer></script>
     <script src="../js/hub-event-timezone.js?v=20260812dst" defer></script>
     <script src="../js/organiser-featured-duration.js?v=20260806onetime" defer></script>
@@ -3915,7 +3952,8 @@
     <script src="../js/hub-side-nav.js?v=20260805orgnav2" defer></script>
     <script src="../js/organiser-single-date-calendar.js?v=20260828openday2" defer></script>
     <script src="../js/organiser-quarter-time.js?v=20260828openday2" defer></script>
-    <script src="../js/organiser-dashboard.js?v=20260909draftbadge1" defer></script>
+    <script src="../js/organiser-setup-review.js?v=20260909setupreview1" defer></script>
+    <script src="../js/organiser-dashboard.js?v=20260909setupreview1" defer></script>
     <script src="../js/organiser-workspace-comfort.js?v=20260813noshow1" defer></script>
   </body>
 </html>

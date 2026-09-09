@@ -8631,6 +8631,10 @@ a.hub-payment-setup-btn {
   padding: 16px 12px 8px;
 }
 
+.org-pagination[hidden] {
+  display: none !important;
+}
+
 .org-pagination-meta {
   width: 100%;
   text-align: center;
@@ -13080,4 +13084,82 @@ body.org-more-sheet-open {
   .org-more-sheet {
     display: none !important;
   }
+}
+
+.org-setup-review-panel {
+  max-width: 560px;
+}
+
+.org-setup-review-body {
+  margin: 12px 0 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--od-border);
+  border-radius: 10px;
+  background: #faf9f7;
+  max-height: min(52vh, 420px);
+  overflow: auto;
+}
+
+.org-setup-review-block h3 {
+  margin: 0 0 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--od-purple, #9a7aa8);
+}
+
+.org-setup-review-block + .org-setup-review-block,
+.org-setup-review-path,
+.org-setup-review-meta {
+  margin-top: 14px;
+}
+
+.org-setup-review-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.org-setup-review-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.org-setup-review-list li:last-child {
+  border-bottom: none;
+}
+
+.org-setup-review-item-name {
+  font-weight: 600;
+}
+
+.org-setup-review-item-price {
+  white-space: nowrap;
+  color: var(--od-text-mid);
+}
+
+.org-setup-review-refund-label {
+  margin: 0 0 6px;
+  font-weight: 600;
+}
+
+.org-setup-review-refund-text {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--od-text-mid);
+}
+
+.org-setup-review-queue {
+  margin: 0 0 8px;
+  font-size: 0.85rem;
+  color: var(--od-text-muted, #6b7280);
+}
+
+.org-setup-review-terms {
+  margin-top: 4px;
 }

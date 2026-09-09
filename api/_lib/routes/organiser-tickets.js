@@ -115,6 +115,16 @@ module.exports = async function handler(req, res) {
         if (!ids.length || ids.length !== requested.length) {
           return json(res, 403, EVENT_NOT_OWNED);
         }
+
+        const publish = Boolean(body.publish);
+        const impersonating = Boolean(auth.session && auth.session.impersonator);
+        if (publish && impersonating) {
+          return json(res, 403, {
+            error: 'impersonation_publish_blocked',
+            message:
+              'Stop impersonating so the organiser can review this setup, accept terms, and publish.',
+          });
+        }
         const tiers = tickets
           .map((t, idx) => ({
             name: String(t.name || '').trim(),
@@ -134,7 +144,6 @@ module.exports = async function handler(req, res) {
           .filter((t) => t.name);
         if (!tiers.length) return json(res, 400, { error: 'missing_ticket_types' });
 
-        const publish = Boolean(body.publish);
         const publicTiers = tiers.filter((t) => !isMembersOnlyTicket(t));
         const memberTiers = tiers.filter((t) => isMembersOnlyTicket(t));
         const membersOnlyEvent = memberTiers.length > 0 && publicTiers.length === 0;
@@ -226,6 +235,7 @@ module.exports = async function handler(req, res) {
               ? body.attendeeExtras
               : null,
           refund: publish ? refundPayload || {} : refundPayload,
+          flagOrganiserSetupReview: impersonating && !publish,
         });
         try {
           const { logFromSession } = require('../entity-activity-log');

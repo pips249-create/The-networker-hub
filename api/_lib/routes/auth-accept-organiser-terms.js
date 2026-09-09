@@ -31,6 +31,15 @@ module.exports = async function handler(req, res) {
   const session = sessionFromRequest(req);
   if (!session) return json(res, 401, { ok: false, error: 'not_authenticated' });
 
+  if (session.impersonator) {
+    return json(res, 403, {
+      ok: false,
+      error: 'impersonation_terms_blocked',
+      message:
+        'Stop impersonating — only the organiser can accept terms on their account.',
+    });
+  }
+
   if (!isSupabaseConfigured()) {
     return json(res, 503, { ok: false, error: 'not_configured' });
   }

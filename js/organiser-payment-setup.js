@@ -4,6 +4,43 @@
  * never embedded in the organiser tickets drawer iframe.
  */
 (function (global) {
+  function isAdminImpersonating() {
+    if (
+      global.HubOrganiserTerms &&
+      typeof global.HubOrganiserTerms.isAdminImpersonating === 'function'
+    ) {
+      return global.HubOrganiserTerms.isAdminImpersonating();
+    }
+    return Boolean(
+      document.getElementById('hub-impersonation-banner') ||
+        document.getElementById('hub-stop-impersonating')
+    );
+  }
+
+  function impersonationBlockedHtml(options) {
+    const opts = options || {};
+    const compact = Boolean(opts.compact);
+    const title = opts.title || 'Bank details — organiser only';
+    const lead =
+      opts.lead ||
+      'You are impersonating this account. Finish ticket setup and save — the organiser adds bank details and accepts terms when they log in.';
+    return (
+      '<div class="hub-payment-setup-card hub-payment-setup-card--impersonation' +
+      (compact ? ' hub-payment-setup-card--compact' : '') +
+      '" role="status">' +
+      '<div class="hub-payment-setup-icon" aria-hidden="true">🏦</div>' +
+      '<div class="hub-payment-setup-body">' +
+      '<h2 class="hub-payment-setup-title">' +
+      esc(title) +
+      '</h2>' +
+      '<p class="hub-payment-setup-lead">' +
+      esc(lead) +
+      '</p>' +
+      '<p class="hub-payment-setup-note hub-payment-setup-note--info">Stripe Connect and organiser terms cannot be completed while impersonating.</p>' +
+      '</div></div>'
+    );
+  }
+
   function esc(value) {
     const d = document.createElement('div');
     d.textContent = value == null ? '' : String(value);
@@ -97,6 +134,12 @@
   }
 
   function startSetup(groupId, returnPath) {
+    if (isAdminImpersonating()) {
+      alert(
+        'Stop impersonating — only the organiser can add bank details on their account.'
+      );
+      return false;
+    }
     const gid = String(groupId || '').trim();
     if (!gid) {
       alert('No organiser profile found.');
@@ -503,6 +546,12 @@
   }
 
   async function linkSetup(groupId, sourceGroupId, options) {
+    if (isAdminImpersonating()) {
+      alert(
+        'Stop impersonating — only the organiser can add bank details on their account.'
+      );
+      return false;
+    }
     const opts = options || {};
     const gid = String(groupId || '').trim();
     const sourceId = String(sourceGroupId || '').trim();
@@ -619,6 +668,10 @@
     }
 
     container.hidden = false;
+    if (isAdminImpersonating()) {
+      container.innerHTML = impersonationBlockedHtml(opts);
+      return true;
+    }
     const renderOpts = { ...opts, state: state };
     if (!opts.singleGroupOnly && pending.length > 1) {
       container.innerHTML = checklistHtml(state, renderOpts);
@@ -630,6 +683,12 @@
   }
 
   async function openDashboard(groupId, options) {
+    if (isAdminImpersonating()) {
+      alert(
+        'Stop impersonating — only the organiser can open the Stripe dashboard on their account.'
+      );
+      return false;
+    }
     const opts = options || {};
     const gid = String(groupId || '').trim();
     if (!gid) {
@@ -718,6 +777,7 @@
   }
 
   global.HubOrganiserPaymentSetup = {
+    isAdminImpersonating: isAdminImpersonating,
     fetchState: fetchState,
     groupForEvent: groupForEvent,
     groupNeedsSetup: groupNeedsSetup,

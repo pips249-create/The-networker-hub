@@ -12,8 +12,18 @@
     /* cross-origin */
   }
 
-  const ORG_PAGE_SIZE = 10;
+  const ORG_PAGE_SIZE_DESKTOP = 8;
+  const ORG_PAGE_SIZE_MOBILE = 4;
   const EVENTS_FETCH_SIZE = 100;
+
+  function orgPageSize() {
+    if (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) {
+      return ORG_PAGE_SIZE_MOBILE;
+    }
+    return ORG_PAGE_SIZE_DESKTOP;
+  }
+
+  let orgPageSizeLast = orgPageSize();
   const DESCRIPTION_MAX_WORDS = 500;
   const listPages = { groups: 1, events: 1, tickets: 1, attendees: 1, cancellations: 1, reviews: 1, revenue: 1 };
   let eventsSubRoute = 'events-list';
@@ -128,6 +138,7 @@
     opportunitiesLoaded: false,
     pendingClaimGroups: [],
     pendingClaimOpportunities: [],
+    pendingSetupReviews: [],
     organiserAccess: false,
     organiserEmailVerified: false,
     dashboardScope: null,
@@ -8980,7 +8991,7 @@
   }
 
   function eventsChunkOffsetForUiPage(uiPage) {
-    return Math.floor(((uiPage - 1) * ORG_PAGE_SIZE) / EVENTS_FETCH_SIZE) * EVENTS_FETCH_SIZE;
+    return Math.floor(((uiPage - 1) * orgPageSize()) / EVENTS_FETCH_SIZE) * EVENTS_FETCH_SIZE;
   }
 
   function eventsFiltersActive() {
@@ -9028,34 +9039,35 @@
   }
 
   function paginateList(items, page) {
+    const pageSize = orgPageSize();
     const total = items.length;
-    const totalPages = Math.max(1, Math.ceil(total / ORG_PAGE_SIZE));
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
     const p = Math.min(Math.max(1, page), totalPages);
-    const start = (p - 1) * ORG_PAGE_SIZE;
+    const start = (p - 1) * pageSize;
     return {
-      items: items.slice(start, start + ORG_PAGE_SIZE),
+      items: items.slice(start, start + pageSize),
       page: p,
       totalPages,
       total,
       start: total ? start + 1 : 0,
-      end: Math.min(start + ORG_PAGE_SIZE, total),
+      end: Math.min(start + pageSize, total),
     };
   }
 
   function paginationNavHtml(page, totalPages) {
-    if (totalPages <= 1) return '';
-
+    const pages = Math.max(1, totalPages || 1);
+    const current = Math.min(Math.max(1, page || 1), pages);
     const items = [];
     const maxVisible = 5;
-    let start = Math.max(1, page - 2);
-    let end = Math.min(totalPages, start + maxVisible - 1);
+    let start = Math.max(1, current - 2);
+    let end = Math.min(pages, start + maxVisible - 1);
     start = Math.max(1, end - maxVisible + 1);
 
     items.push(
       '<button type="button" class="org-page-btn page-prev" data-page="' +
-        (page - 1) +
+        (current - 1) +
         '" ' +
-        (page <= 1 ? 'disabled' : '') +
+        (current <= 1 ? 'disabled' : '') +
         ' aria-label="Previous page">‹</button>'
     );
 
@@ -9067,31 +9079,31 @@
     for (let p = start; p <= end; p++) {
       items.push(
         '<button type="button" class="org-page-btn' +
-          (p === page ? ' is-active' : '') +
+          (p === current ? ' is-active' : '') +
           '" data-page="' +
           p +
           '"' +
-          (p === page ? ' aria-current="page"' : '') +
+          (p === current ? ' aria-current="page"' : '') +
           '>' +
           p +
           '</button>'
       );
     }
 
-    if (end < totalPages) {
-      if (end < totalPages - 1) {
+    if (end < pages) {
+      if (end < pages - 1) {
         items.push('<span class="org-page-ellipsis" aria-hidden="true">…</span>');
       }
       items.push(
-        '<button type="button" class="org-page-btn" data-page="' + totalPages + '">' + totalPages + '</button>'
+        '<button type="button" class="org-page-btn" data-page="' + pages + '">' + pages + '</button>'
       );
     }
 
     items.push(
       '<button type="button" class="org-page-btn page-next" data-page="' +
-        (page + 1) +
+        (current + 1) +
         '" ' +
-        (page >= totalPages ? 'disabled' : '') +
+        (current >= pages ? 'disabled' : '') +
         ' aria-label="Next page">›</button>'
     );
 
@@ -9101,7 +9113,8 @@
   function updatePaginationNav(listKey, pageInfo) {
     const nav = document.getElementById('pagination-' + listKey);
     if (!nav) return;
-    if (pageInfo.totalPages <= 1) {
+    const total = Number(pageInfo && pageInfo.total) || 0;
+    if (total <= 0) {
       nav.hidden = true;
       nav.innerHTML = '';
       return;
@@ -14034,7 +14047,11 @@
       modal.setAttribute('aria-hidden', 'true');
     }
     const oppModal = document.getElementById('org-opportunity-claim');
-    if (!oppModal || oppModal.hidden) {
+    const setupModal = document.getElementById('org-setup-review');
+    if (
+      (!oppModal || oppModal.hidden) &&
+      (!setupModal || setupModal.hidden)
+    ) {
       document.body.classList.remove('org-group-claim-active');
     }
     groupClaimRejectMode = false;
@@ -14277,6 +14294,9 @@
     if (!(state.groups || []).length) return;
     if (!hasListedEvents()) {
       showReadyForEventPrompt();
+      return;
+    }
+    if (renderOrganiserSetupReviewModal()) {
       return;
     }
     // No claim / profile / event queue left — Overview tour next.
@@ -14999,6 +15019,7 @@
     if (!modal || !list.length || state.adminView || shouldDeferGroupClaimModal()) {
       if (modal) hideGroupClaimModal();
       updateSetupResumeBanner();
+      renderOrganiserSetupReviewModal();
       return;
     }
 
@@ -15390,10 +15411,24 @@
       modal.setAttribute('aria-hidden', 'true');
     }
     const groupModal = document.getElementById('org-group-claim');
-    if (!groupModal || groupModal.hidden) {
+    const setupModal = document.getElementById('org-setup-review');
+    if (
+      (!groupModal || groupModal.hidden) &&
+      (!setupModal || setupModal.hidden)
+    ) {
       document.body.classList.remove('org-group-claim-active');
     }
     opportunityClaimRejectMode = false;
+  }
+
+  function renderOrganiserSetupReviewModal() {
+    if (
+      !window.HubOrganiserSetupReview ||
+      typeof window.HubOrganiserSetupReview.render !== 'function'
+    ) {
+      return false;
+    }
+    return window.HubOrganiserSetupReview.render(state, api);
   }
 
   function postponeOpportunityClaimModal() {
@@ -15419,6 +15454,7 @@
     if (!modal || !list.length || state.adminView || shouldDeferGroupClaimModal()) {
       if (modal) hideOpportunityClaimModal();
       updateSetupResumeBanner();
+      renderOrganiserSetupReviewModal();
       return;
     }
 
@@ -17856,6 +17892,7 @@
     state.groups = dedupeGroupsById(data.groups || []);
     state.pendingClaimGroups = sortPendingClaimGroups(data.pendingClaimGroups || []);
     state.pendingClaimOpportunities = data.pendingClaimOpportunities || [];
+    state.pendingSetupReviews = data.pendingSetupReviews || [];
     state.events = data.events || [];
     state.upcomingEvents = data.upcomingEvents || [];
     state.eventsTotal = data.eventsPagination?.total ?? state.events.length;
@@ -17968,6 +18005,7 @@
       if (!skipClaimUi) {
         renderGroupClaimModal();
         renderOpportunityClaimModal();
+        renderOrganiserSetupReviewModal();
         if (window.HubOrganiserOnboarding && window.HubOrganiserOnboarding.initAfterDashboardReady) {
           window.HubOrganiserOnboarding.initAfterDashboardReady();
         }
@@ -18235,6 +18273,23 @@
     });
   }
 
+  function bindOrgPageSizeResizeOnce() {
+    if (window.__hubOrgPageSizeResizeBound) return;
+    window.__hubOrgPageSizeResizeBound = true;
+
+    window.addEventListener('resize', function () {
+      const size = orgPageSize();
+      if (size === orgPageSizeLast) return;
+      orgPageSizeLast = size;
+      if (document.querySelector('[data-org-page="groups"].is-active')) {
+        renderGroups();
+      }
+      if (document.querySelector('[data-org-page="events"].is-active') && state.eventsLoaded) {
+        renderMyEventsHub();
+      }
+    });
+  }
+
   function bindMobileFilterTogglesOnce() {
     if (window.__hubOrgMobileFiltersBound) return;
     window.__hubOrgMobileFiltersBound = true;
@@ -18282,6 +18337,7 @@
     bindOrgMoreSheetOnce();
     bindScopeButtonOnce();
     bindMobileFilterTogglesOnce();
+    bindOrgPageSizeResizeOnce();
 
     if (!window.__hubPaymentSetupLinkedBound) {
       window.__hubPaymentSetupLinkedBound = true;
