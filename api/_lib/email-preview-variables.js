@@ -719,7 +719,7 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     vars.owner_name = vars.owner_name || vars.opportunity_title;
   }
 
-  if (slug === 'franchise_claim_invite') {
+  if (slug === 'franchise_claim_invite' || slug === 'franchise_claim_invite_followup') {
     const franchiseEmailFooterLogoDataUri = require('./franchise-email-footer-logo-datauri');
     vars.claim_url =
       vars.claim_url ||

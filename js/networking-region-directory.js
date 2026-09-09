@@ -206,7 +206,11 @@
   }
 
   function ensureChip() {
-    var track = document.querySelector('#networking-location-directory .home-locations-track');
+    var directory = document.getElementById('networking-location-directory');
+    if (!directory || directory.classList.contains('networking-location-directory--counties-only')) {
+      return null;
+    }
+    var track = directory.querySelector('.home-locations-track:not(.home-locations-track--counties)');
     if (!track) return null;
     var chip = document.getElementById(CHIP_ID);
     if (chip) return chip;

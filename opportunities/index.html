@@ -30,14 +30,14 @@
     <script src="/js/hub-sponsor-prefetch.js?v=20260828perf2" data-slot="opportunities_sponsor_hub"></script>
     <link rel="stylesheet" href="/css/hub.css?v=20260825adminbadge1" />
     <link rel="stylesheet" href="/css/events-page.css?v=20260825sponsor2" />
-    <link rel="stylesheet" href="/css/opportunities-page.css?v=20260902page1" />
+    <link rel="stylesheet" href="/css/opportunities-page.css?v=20260909filters1" />
     <link rel="stylesheet" href="/css/events-filter-bar.css?v=20260727sheet4" />
     <link rel="stylesheet" href="/css/hub-mobile.css?v=20260828compare3" />
     <link rel="icon" href="/favicon.ico?v=20260823uk3" sizes="any" />
     <link rel="icon" href="/assets/favicon.svg?v=20260823uk3" type="image/svg+xml" />
     <link rel="icon" href="/assets/favicon-32.png?v=20260823uk" type="image/png" sizes="32x32" />
     <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png?v=20260823uk" />
-    <script src="/js/hub-defer-css.js?v=20260828perf2" data-hrefs="/css/networking-regions.css?v=20260908industry1"></script>
+    <script src="/js/hub-defer-css.js?v=20260828perf2" data-hrefs="/css/networking-regions.css?v=20260909icons1"></script>
     <script src="/js/hub-lazy-vendor.js?v=20260726m" defer></script>
     <script src="/js/hub-seo-static-config.js?v=20260612" defer></script>
     <script src="/js/hub-seo-static.js?v=20260612" data-page="opportunities" defer></script>
@@ -128,7 +128,7 @@
             <div class="networking-region-city-partner" id="networking-region-city-partner" hidden>
               <aside class="networking-city-partner-ad networking-city-partner-ad--available" aria-label="County Sponsor slot available">
                 <span class="networking-city-partner-badge">County Sponsor</span>
-                <a class="networking-city-partner-logo-link" href="/advertising#county-partner-package">
+                <a class="networking-city-partner-logo-link" href="/advertising#opportunity-county-partner-package">
                   <div class="networking-city-partner-logo-placeholder">Get your business seen here</div>
                   <span class="networking-city-partner-placeholder-price">From £49 / month + VAT</span>
                 </a>
@@ -237,8 +237,25 @@
                         <input type="radio" name="invest-tier" data-invest-tier="on-request">
                         <span class="filter-format-pill-face">On request</span>
                       </label>
+                      <label class="filter-format-pill">
+                        <input type="radio" name="invest-tier" data-invest-tier="custom">
+                        <span class="filter-format-pill-face">Custom</span>
+                      </label>
                     </div>
-                    <p class="filter-opp-invest-hint" id="filter-opp-invest-hint" hidden>Custom £ range is active — quick buckets are cleared.</p>
+                    <div class="filter-price-range filter-price-range--inline filter-opp-custom-invest" id="filter-opp-custom-invest" hidden>
+                      <div class="filter-price-range-controls">
+                        <div class="filter-price-bounds">
+                          <label class="filter-price-bound">
+                            <span class="filter-price-bound-label">Min (£)</span>
+                            <input type="number" id="opp-min-invest" class="filter-price-bound-input" min="0" step="100" inputmode="numeric" placeholder="Any" aria-label="Minimum investment in pounds">
+                          </label>
+                          <label class="filter-price-bound">
+                            <span class="filter-price-bound-label">Max (£)</span>
+                            <input type="number" id="opp-max-invest" class="filter-price-bound-input" min="0" step="100" inputmode="numeric" placeholder="Any" aria-label="Maximum investment in pounds">
+                          </label>
+                        </div>
+                      </div>
+                    </div>
                   </fieldset>
                   <button type="button" class="filter-more-toggle" id="filter-more-toggle" aria-expanded="false" aria-controls="filter-more-panel">
                     <svg class="filter-more-toggle-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
@@ -293,22 +310,6 @@
                         </label>
                       </div>
                     </fieldset>
-                    <div class="filter-price-range filter-price-range--inline filter-opp-custom-invest">
-                      <span class="filter-bar-chip-label">Custom range</span>
-                      <p class="filter-opp-custom-hint">Overrides the Investment buckets above when you set a min or max.</p>
-                      <div class="filter-price-range-controls">
-                        <div class="filter-price-bounds">
-                          <label class="filter-price-bound">
-                            <span class="filter-price-bound-label">Min (£)</span>
-                            <input type="number" id="opp-min-invest" class="filter-price-bound-input" min="0" step="100" inputmode="numeric" placeholder="Any" aria-label="Minimum investment in pounds">
-                          </label>
-                          <label class="filter-price-bound">
-                            <span class="filter-price-bound-label">Max (£)</span>
-                            <input type="number" id="opp-max-invest" class="filter-price-bound-input" min="0" step="100" inputmode="numeric" placeholder="Any" aria-label="Maximum investment in pounds">
-                          </label>
-                        </div>
-                      </div>
-                    </div>
                   </div>
                 </div>
                 <div class="filter-bar-actions">
@@ -509,212 +510,161 @@
               Jump into franchises and deals by sector — one Industry Sponsor per category
             </p>
           </header>
-          <div class="home-locations-track home-locations-track--industries" id="opp-industry-directory-track" role="list">
-            <a class="home-location-chip home-location-chip--industry" href="?category=cleaning" data-category="cleaning" role="listitem"><span class="home-location-chip-name">Cleaning</span></a>
-            <a class="home-location-chip home-location-chip--industry" href="?category=home-services" data-category="home-services" role="listitem"><span class="home-location-chip-name home-location-chip-name--stacked"><span class="home-location-chip-name-line">Home</span><span class="home-location-chip-name-line">services</span></span></a>
-            <a class="home-location-chip home-location-chip--industry" href="?category=food" data-category="food" role="listitem"><span class="home-location-chip-name">Food &amp; Drink</span></a>
-            <a class="home-location-chip home-location-chip--industry" href="?category=retail" data-category="retail" role="listitem"><span class="home-location-chip-name">Retail</span></a>
-            <a class="home-location-chip home-location-chip--industry" href="?category=tech" data-category="tech" role="listitem"><span class="home-location-chip-name">Tech</span></a>
-            <a class="home-location-chip home-location-chip--industry" href="?category=health" data-category="health" role="listitem"><span class="home-location-chip-name">Health</span></a>
-            <a class="home-location-chip home-location-chip--industry" href="?category=medical" data-category="medical" role="listitem"><span class="home-location-chip-name">Medical</span></a>
-            <a class="home-location-chip home-location-chip--industry" href="?category=beauty" data-category="beauty" role="listitem"><span class="home-location-chip-name">Beauty</span></a>
-            <a class="home-location-chip home-location-chip--industry" href="?category=property" data-category="property" role="listitem"><span class="home-location-chip-name">Property</span></a>
-            <a class="home-location-chip home-location-chip--industry" href="?category=automotive" data-category="automotive" role="listitem"><span class="home-location-chip-name">Automotive</span></a>
-            <a class="home-location-chip home-location-chip--industry" href="?category=education" data-category="education" role="listitem"><span class="home-location-chip-name">Education</span></a>
-            <a class="home-location-chip home-location-chip--industry" href="?category=childcare" data-category="childcare" role="listitem"><span class="home-location-chip-name">Childcare</span></a>
-            <a class="home-location-chip home-location-chip--industry" href="?category=care" data-category="care" role="listitem"><span class="home-location-chip-name">Care</span></a>
-            <a class="home-location-chip home-location-chip--industry" href="?category=finance" data-category="finance" role="listitem"><span class="home-location-chip-name">Finance</span></a>
-            <a class="home-location-chip home-location-chip--industry" href="?category=recruitment" data-category="recruitment" role="listitem"><span class="home-location-chip-name">Recruitment</span></a>
-            <a class="home-location-chip home-location-chip--industry" href="?category=pets" data-category="pets" role="listitem"><span class="home-location-chip-name">Pets</span></a>
-            <a class="home-location-chip home-location-chip--industry" href="?category=leisure" data-category="leisure" role="listitem"><span class="home-location-chip-name">Leisure</span></a>
-            <a class="home-location-chip home-location-chip--industry" href="?category=networking" data-category="networking" role="listitem"><span class="home-location-chip-name">Networking</span></a>
+          <div class="home-locations-scroller" tabindex="0" role="region" aria-label="Industries">
+            <div class="home-locations-track home-locations-track--industries" id="opp-industry-directory-track" role="list">
+              <a class="home-location-chip home-location-chip--industry" href="?category=cleaning" data-category="cleaning" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
+                <span class="home-location-chip-name">Cleaning</span>
+              </a>
+              <a class="home-location-chip home-location-chip--industry" href="?category=home-services" data-category="home-services" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
+                <span class="home-location-chip-name home-location-chip-name--stacked">
+                  <span class="home-location-chip-name-line">Home</span>
+                  <span class="home-location-chip-name-line">services</span>
+                </span>
+              </a>
+              <a class="home-location-chip home-location-chip--industry home-location-chip--compact-label" href="?category=food" data-category="food" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
+                <span class="home-location-chip-name home-location-chip-name--stacked">
+                  <span class="home-location-chip-name-line">Food &amp;</span>
+                  <span class="home-location-chip-name-line">Drink</span>
+                </span>
+              </a>
+              <a class="home-location-chip home-location-chip--industry" href="?category=retail" data-category="retail" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
+                <span class="home-location-chip-name">Retail</span>
+              </a>
+              <a class="home-location-chip home-location-chip--industry" href="?category=tech" data-category="tech" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
+                <span class="home-location-chip-name">Tech</span>
+              </a>
+              <a class="home-location-chip home-location-chip--industry" href="?category=health" data-category="health" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
+                <span class="home-location-chip-name">Health</span>
+              </a>
+              <a class="home-location-chip home-location-chip--industry" href="?category=medical" data-category="medical" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
+                <span class="home-location-chip-name">Medical</span>
+              </a>
+              <a class="home-location-chip home-location-chip--industry" href="?category=beauty" data-category="beauty" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
+                <span class="home-location-chip-name">Beauty</span>
+              </a>
+              <a class="home-location-chip home-location-chip--industry" href="?category=property" data-category="property" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
+                <span class="home-location-chip-name">Property</span>
+              </a>
+              <a class="home-location-chip home-location-chip--industry home-location-chip--compact-label" href="?category=automotive" data-category="automotive" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
+                <span class="home-location-chip-name">Automotive</span>
+              </a>
+              <a class="home-location-chip home-location-chip--industry" href="?category=education" data-category="education" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
+                <span class="home-location-chip-name">Education</span>
+              </a>
+              <a class="home-location-chip home-location-chip--industry" href="?category=childcare" data-category="childcare" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
+                <span class="home-location-chip-name">Childcare</span>
+              </a>
+              <a class="home-location-chip home-location-chip--industry" href="?category=care" data-category="care" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
+                <span class="home-location-chip-name">Care</span>
+              </a>
+              <a class="home-location-chip home-location-chip--industry" href="?category=finance" data-category="finance" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
+                <span class="home-location-chip-name">Finance</span>
+              </a>
+              <a class="home-location-chip home-location-chip--industry home-location-chip--compact-label" href="?category=recruitment" data-category="recruitment" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
+                <span class="home-location-chip-name">Recruitment</span>
+              </a>
+              <a class="home-location-chip home-location-chip--industry" href="?category=pets" data-category="pets" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
+                <span class="home-location-chip-name">Pets</span>
+              </a>
+              <a class="home-location-chip home-location-chip--industry" href="?category=leisure" data-category="leisure" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
+                <span class="home-location-chip-name">Leisure</span>
+              </a>
+              <a class="home-location-chip home-location-chip--industry home-location-chip--compact-label" href="?category=networking" data-category="networking" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
+                <span class="home-location-chip-name">Networking</span>
+              </a>
+            </div>
           </div>
         </div>
       </section>
 
-      <section class="home-locations networking-location-directory" id="networking-location-directory" aria-labelledby="networking-location-directory-heading">
+      <section class="home-locations networking-location-directory networking-location-directory--counties-only" id="networking-location-directory" aria-labelledby="networking-location-directory-heading">
         <div class="home-flow-inner">
           <header class="home-flow-head">
-            <p class="section-kicker">Explore by location</p>
-            <h2 class="section-title" id="networking-location-directory-heading">Business opportunities across the UK</h2>
+            <p class="section-kicker">Explore by county</p>
+            <h2 class="section-title" id="networking-location-directory-heading">Browse by county</h2>
             <p class="home-flow-lede home-locations-lede">
-              Jump straight into opportunities by popular location
+              Wider territory pages for franchise networks and county-wide opportunities.
             </p>
           </header>
-          <div class="home-locations-scroller" tabindex="0" role="region" aria-label="Locations">
-            <div class="home-locations-track" role="list">
-              <a class="home-location-chip home-location-chip--online" href="/opportunities/?location=remote" data-region="online" role="listitem" aria-label="Browse remote and online opportunities">
-                <span class="home-location-chip-icon" aria-hidden="true"></span>
-                <span class="home-location-chip-name home-location-chip-name--stacked">
-                  <span class="home-location-chip-name-line">Remote</span>
-                  <span class="home-location-chip-name-line">/ Online</span>
-                </span>
-              </a>
-              <a class="home-location-chip" href="/opportunities/networking/belfast" data-region="belfast" role="listitem">
-                <span class="home-location-chip-icon" aria-hidden="true"></span>
-                <span class="home-location-chip-name">Belfast</span>
-              </a>
-              <a class="home-location-chip home-location-chip--compact-label" href="/opportunities/networking/birmingham" data-region="birmingham" role="listitem">
-                <span class="home-location-chip-icon" aria-hidden="true"></span>
-                <span class="home-location-chip-name">Birmingham</span>
-              </a>
-              <a class="home-location-chip" href="/opportunities/networking/brighton" data-region="brighton" role="listitem">
-                <span class="home-location-chip-icon" aria-hidden="true"></span>
-                <span class="home-location-chip-name">Brighton</span>
-              </a>
-              <a class="home-location-chip" href="/opportunities/networking/bournemouth" data-region="bournemouth" role="listitem">
-                <span class="home-location-chip-icon" aria-hidden="true"></span>
-                <span class="home-location-chip-name home-location-chip-name--stacked">
-                  <span class="home-location-chip-name-line">Bourne-</span>
-                  <span class="home-location-chip-name-line">mouth</span>
-                </span>
-              </a>
-              <a class="home-location-chip" href="/opportunities/networking/bristol" data-region="bristol" role="listitem">
-                <span class="home-location-chip-icon" aria-hidden="true"></span>
-                <span class="home-location-chip-name">Bristol</span>
-              </a>
-              <a class="home-location-chip" href="/opportunities/networking/cambridge" data-region="cambridge" role="listitem">
-                <span class="home-location-chip-icon" aria-hidden="true"></span>
-                <span class="home-location-chip-name">Cambridge</span>
-              </a>
-              <a class="home-location-chip" href="/opportunities/networking/cardiff" data-region="cardiff" role="listitem">
-                <span class="home-location-chip-icon" aria-hidden="true"></span>
-                <span class="home-location-chip-name">Cardiff</span>
-              </a>
-              <a class="home-location-chip" href="/opportunities/networking/central-london" data-region="central-london" role="listitem">
-                <span class="home-location-chip-icon" aria-hidden="true"></span>
-                <span class="home-location-chip-name home-location-chip-name--stacked">
-                  <span class="home-location-chip-name-line">Central</span>
-                  <span class="home-location-chip-name-line">London</span>
-                </span>
-              </a>
-              <a class="home-location-chip" href="/opportunities/networking/chester" data-region="chester" role="listitem">
-                <span class="home-location-chip-icon" aria-hidden="true"></span>
-                <span class="home-location-chip-name">Chester</span>
-              </a>
-              <a class="home-location-chip" href="/opportunities/networking/east-london" data-region="east-london" role="listitem">
-                <span class="home-location-chip-icon" aria-hidden="true"></span>
-                <span class="home-location-chip-name home-location-chip-name--stacked">
-                  <span class="home-location-chip-name-line">East</span>
-                  <span class="home-location-chip-name-line">London</span>
-                </span>
-              </a>
-              <a class="home-location-chip" href="/opportunities/networking/edinburgh" data-region="edinburgh" role="listitem">
-                <span class="home-location-chip-icon" aria-hidden="true"></span>
-                <span class="home-location-chip-name">Edinburgh</span>
-              </a>
-              <a class="home-location-chip" href="/opportunities/networking/glasgow" data-region="glasgow" role="listitem">
-                <span class="home-location-chip-icon" aria-hidden="true"></span>
-                <span class="home-location-chip-name">Glasgow</span>
-              </a>
-              <a class="home-location-chip" href="/opportunities/networking/leeds" data-region="leeds" role="listitem">
-                <span class="home-location-chip-icon" aria-hidden="true"></span>
-                <span class="home-location-chip-name">Leeds</span>
-              </a>
-              <a class="home-location-chip" href="/opportunities/networking/leicester" data-region="leicester" role="listitem">
-                <span class="home-location-chip-icon" aria-hidden="true"></span>
-                <span class="home-location-chip-name">Leicester</span>
-              </a>
-              <a class="home-location-chip" href="/opportunities/networking/liverpool" data-region="liverpool" role="listitem">
-                <span class="home-location-chip-icon" aria-hidden="true"></span>
-                <span class="home-location-chip-name">Liverpool</span>
-              </a>
-              <a class="home-location-chip" href="/opportunities/networking/manchester" data-region="manchester" role="listitem">
-                <span class="home-location-chip-icon" aria-hidden="true"></span>
-                <span class="home-location-chip-name">Manchester</span>
-              </a>
-              <a class="home-location-chip" href="/opportunities/networking/newcastle" data-region="newcastle" role="listitem">
-                <span class="home-location-chip-icon" aria-hidden="true"></span>
-                <span class="home-location-chip-name">Newcastle</span>
-              </a>
-              <a class="home-location-chip" href="/opportunities/networking/north-london" data-region="north-london" role="listitem">
-                <span class="home-location-chip-icon" aria-hidden="true"></span>
-                <span class="home-location-chip-name home-location-chip-name--stacked">
-                  <span class="home-location-chip-name-line">North</span>
-                  <span class="home-location-chip-name-line">London</span>
-                </span>
-              </a>
-              <a class="home-location-chip" href="/opportunities/networking/nottingham" data-region="nottingham" role="listitem">
-                <span class="home-location-chip-icon" aria-hidden="true"></span>
-                <span class="home-location-chip-name">Nottingham</span>
-              </a>
-              <a class="home-location-chip" href="/opportunities/networking/oxford" data-region="oxford" role="listitem">
-                <span class="home-location-chip-icon" aria-hidden="true"></span>
-                <span class="home-location-chip-name">Oxford</span>
-              </a>
-              <a class="home-location-chip" href="/opportunities/networking/reading" data-region="reading" role="listitem">
-                <span class="home-location-chip-icon" aria-hidden="true"></span>
-                <span class="home-location-chip-name">Reading</span>
-              </a>
-              <a class="home-location-chip" href="/opportunities/networking/sheffield" data-region="sheffield" role="listitem">
-                <span class="home-location-chip-icon" aria-hidden="true"></span>
-                <span class="home-location-chip-name">Sheffield</span>
-              </a>
-              <a class="home-location-chip" href="/opportunities/networking/south-london" data-region="south-london" role="listitem">
-                <span class="home-location-chip-icon" aria-hidden="true"></span>
-                <span class="home-location-chip-name home-location-chip-name--stacked">
-                  <span class="home-location-chip-name-line">South</span>
-                  <span class="home-location-chip-name-line">London</span>
-                </span>
-              </a>
-              <a class="home-location-chip" href="/opportunities/networking/west-london" data-region="west-london" role="listitem">
-                <span class="home-location-chip-icon" aria-hidden="true"></span>
-                <span class="home-location-chip-name home-location-chip-name--stacked">
-                  <span class="home-location-chip-name-line">West</span>
-                  <span class="home-location-chip-name-line">London</span>
-                </span>
-              </a>
-            </div>
-          </div>
           <div class="home-locations-county-block" id="networking-county-directory">
-            <h3 class="networking-county-directory-heading" id="networking-county-directory-heading">Browse by county</h3>
-            <p class="networking-county-directory-lede">Wider territory pages for franchise networks and county-wide opportunities.</p>
+            <div class="home-locations-scroller" tabindex="0" role="region" aria-label="Counties">
             <div class="home-locations-track home-locations-track--counties" role="list">
               <a class="home-location-chip home-location-chip--county" href="/opportunities/networking/berkshire" data-region="berkshire" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
                 <span class="home-location-chip-name">Berkshire</span>
               </a>
               <a class="home-location-chip home-location-chip--county" href="/opportunities/networking/buckinghamshire" data-region="buckinghamshire" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
                 <span class="home-location-chip-name home-location-chip-name--stacked">
                   <span class="home-location-chip-name-line">Buckingham-</span>
                   <span class="home-location-chip-name-line">shire</span>
                 </span>
               </a>
               <a class="home-location-chip home-location-chip--county" href="/opportunities/networking/cambridgeshire" data-region="cambridgeshire" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
                 <span class="home-location-chip-name home-location-chip-name--stacked">
                   <span class="home-location-chip-name-line">Cambridge-</span>
                   <span class="home-location-chip-name-line">shire</span>
                 </span>
               </a>
               <a class="home-location-chip home-location-chip--county" href="/opportunities/networking/cheshire" data-region="cheshire" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
                 <span class="home-location-chip-name">Cheshire</span>
               </a>
               <a class="home-location-chip home-location-chip--county" href="/opportunities/networking/essex" data-region="essex" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
                 <span class="home-location-chip-name">Essex</span>
               </a>
               <a class="home-location-chip home-location-chip--county" href="/opportunities/networking/hampshire" data-region="hampshire" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
                 <span class="home-location-chip-name">Hampshire</span>
               </a>
               <a class="home-location-chip home-location-chip--county" href="/opportunities/networking/hertfordshire" data-region="hertfordshire" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
                 <span class="home-location-chip-name home-location-chip-name--stacked">
                   <span class="home-location-chip-name-line">Hertford-</span>
                   <span class="home-location-chip-name-line">shire</span>
                 </span>
               </a>
               <a class="home-location-chip home-location-chip--county" href="/opportunities/networking/kent" data-region="kent" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
                 <span class="home-location-chip-name">Kent</span>
               </a>
               <a class="home-location-chip home-location-chip--county" href="/opportunities/networking/lancashire" data-region="lancashire" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
                 <span class="home-location-chip-name">Lancashire</span>
               </a>
               <a class="home-location-chip home-location-chip--county" href="/opportunities/networking/oxfordshire" data-region="oxfordshire" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
                 <span class="home-location-chip-name">Oxfordshire</span>
               </a>
               <a class="home-location-chip home-location-chip--county" href="/opportunities/networking/surrey" data-region="surrey" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
                 <span class="home-location-chip-name">Surrey</span>
               </a>
               <a class="home-location-chip home-location-chip--county" href="/opportunities/networking/sussex" data-region="sussex" role="listitem">
+                <span class="home-location-chip-icon" aria-hidden="true"></span>
                 <span class="home-location-chip-name">Sussex</span>
               </a>
+            </div>
             </div>
           </div>
         </div>
@@ -731,7 +681,7 @@
     <div id="hub-site-footer"></div>
     <script src="/js/site-footer.js?v=20260825navfull1" data-root="/" defer></script>
 
-    <script src="/js/cms-ad-blocks.js?v=20260908industry1" defer></script>
+    <script src="/js/cms-ad-blocks.js?v=20260909oppcounty1" defer></script>
     <script src="/js/hub-organiser-actions.js?v=20260828listopp1" data-root="/" defer></script>
     <script src="/js/opportunity-listing-constants.js?v=20260828cookie1" defer></script>
     <script src="/js/opportunities-catalog.js?v=20260903investsort1" defer></script>
@@ -740,15 +690,16 @@
     <script src="/js/opportunity-compare.js?v=20260828compare4" defer></script>
     <script src="/js/opportunities-saves.js?v=20260827browse1" defer></script>
     <script src="/js/region-landmark-icons.js?v=20260729county" defer></script>
-    <script src="/js/networking-region-directory.js?v=20260811perf1" defer></script>
+    <script src="/js/networking-region-directory.js?v=20260909oppcounties1" defer></script>
     <script src="/js/networking-region-themes.js?v=20260729county" defer></script>
-    <script src="/js/home-location-chips.js?v=20260723hyphen" defer></script>
-    <script src="/js/opportunities-regions.js?v=20260807county12" defer></script>
+    <script src="/js/home-location-chips.js?v=20260909icons1" defer></script>
+    <script src="/js/opportunity-industry-icons.js?v=20260909icons1" defer></script>
+    <script src="/js/opportunities-regions.js?v=20260909oppcounty2" defer></script>
     <script src="/js/postcode-geo.js?v=20260828place1" defer></script>
     <script src="/js/hub-spotlight-carousel.js?v=20260807fix3" defer></script>
     <script src="/js/browse-analytics-client.js?v=20260728browse2" defer></script>
     <script src="/js/hub-search-match.js?v=20260829search1" defer></script>
-    <script src="/js/opportunities-page.js?v=20260908industry2" defer></script>
+    <script src="/js/opportunities-page.js?v=20260909filters1" defer></script>
     <script src="/js/opportunities-map.js?v=20260827invest1" defer></script>
   </body>
 </html>

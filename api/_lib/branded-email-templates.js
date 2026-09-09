@@ -27,6 +27,11 @@ const BRANDED_EMAIL_TEMPLATES = {
     marker: 'hub-email-layout-v3-navy-gold-details',
     subject: 'Franchise Listing Invitation',
   },
+  franchise_claim_invite_followup: {
+    file: 'franchise-claim-invite-followup.html',
+    marker: 'hub-email-layout-v3-navy-gold-details-franchise-e2',
+    subject: 'Quick follow-up: Franchise Listing Invitation',
+  },
   distributorship_claim_invite: {
     file: 'distributorship-claim-invite.html',
     marker: 'hub-email-layout-v3-navy-gold-details-dist-invite',

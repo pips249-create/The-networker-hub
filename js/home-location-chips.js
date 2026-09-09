@@ -48,7 +48,22 @@
     var slug = chip.getAttribute('data-region');
     var theme = themes[slug];
     if (applyAccent) applyAccent(chip, theme);
+
+    var isCounty = chip.classList.contains('home-location-chip--county');
+    var circularCounties = Boolean(chip.closest('.networking-location-directory--counties-only'));
+    // Events keeps compact text-only county pills; Opportunities uses circular landmark chips.
+    if (isCounty && !circularCounties) {
+      syncCompactLabel(chip);
+      return;
+    }
+
     var icon = chip.querySelector('.home-location-chip-icon');
+    if (!icon) {
+      icon = document.createElement('span');
+      icon.className = 'home-location-chip-icon';
+      icon.setAttribute('aria-hidden', 'true');
+      chip.insertBefore(icon, chip.firstChild);
+    }
     injectIcon(icon, theme, slug);
     syncCompactLabel(chip);
   }

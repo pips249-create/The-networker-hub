@@ -697,32 +697,28 @@ body.networking-region-page .networking-region-intro {
   border-top: 1px solid rgba(50, 43, 120, 0.12);
 }
 
+.networking-location-directory--counties-only .home-locations-county-block {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
 .networking-industry-directory {
   margin-bottom: 0.5rem;
 }
 
+.networking-industry-directory .home-locations-scroller {
+  position: relative;
+}
+
 .home-locations-track--industries {
-  gap: 0.55rem;
-  flex-wrap: wrap;
-}
-
-.home-location-chip--industry {
-  min-height: 2.6rem;
-  padding: 0.45rem 0.9rem;
-  background: #f3f7fb;
-  border: 1px solid rgba(40, 90, 140, 0.14);
-}
-
-.home-location-chip--industry:hover,
-.home-location-chip--industry:focus-visible {
-  border-color: rgba(40, 90, 140, 0.35);
-  background: #eaf2f9;
+  flex-wrap: nowrap;
 }
 
 .home-location-chip--industry.is-active {
-  border-color: #2f6f9f;
-  background: #e4f0f8;
-  box-shadow: 0 0 0 2px rgba(47, 111, 159, 0.18);
+  border-color: color-mix(in srgb, var(--chip-accent) 48%, transparent);
+  background: color-mix(in srgb, var(--chip-accent) 16%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--chip-accent) 22%, transparent);
 }
 
 .opp-industry-sponsor-intro {
@@ -749,6 +745,7 @@ body.networking-region-page .networking-region-intro {
   gap: 0.55rem;
 }
 
+/* Events browse: compact county pills (text only) */
 .home-location-chip--county {
   min-height: 2.6rem;
   padding: 0.45rem 0.9rem;
@@ -760,6 +757,29 @@ body.networking-region-page .networking-region-intro {
 .home-location-chip--county:focus-visible {
   background: #eeecf8;
   border-color: rgba(50, 43, 120, 0.28);
+}
+
+/* Opportunities: circular county chips with landmark icons (match cities) */
+.networking-location-directory--counties-only .home-locations-track--counties {
+  gap: 14px;
+}
+
+.networking-location-directory--counties-only .home-location-chip--county {
+  width: 104px;
+  height: 104px;
+  min-height: 0;
+  padding: 12px 10px 10px;
+  border-radius: 50%;
+  flex-direction: column;
+  gap: 7px;
+  background: color-mix(in srgb, var(--chip-accent) 7%, transparent);
+  border: 1px solid color-mix(in srgb, var(--chip-accent) 16%, transparent);
+}
+
+.networking-location-directory--counties-only .home-location-chip--county:hover,
+.networking-location-directory--counties-only .home-location-chip--county:focus-visible {
+  background: color-mix(in srgb, var(--chip-accent) 12%, transparent);
+  border-color: color-mix(in srgb, var(--chip-accent) 32%, transparent);
 }
 
 .networking-county-page .home-locations-county-block {

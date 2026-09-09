@@ -83,6 +83,8 @@ module.exports = wrapHandler(async function handler(req, res) {
   const isRegionPartnerRequest =
     slotHint.indexOf('networking_city_partner_') === 0 ||
     slotHint.indexOf('networking_county_partner_') === 0 ||
+    slotHint.indexOf('opportunity_county_sponsor_') === 0 ||
+    slotHint.indexOf('opportunity_industry_sponsor_') === 0 ||
     slotHint === 'networking_city_partner' ||
     Boolean(regionHint);
   res.setHeader(

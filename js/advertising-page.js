@@ -189,6 +189,7 @@
     'ad-pkg-organisers-mini': 'organisers',
     'ad-pkg-organisers-spotlight': 'organisers',
     'ad-pkg-opportunities-main': 'opportunities',
+    'opportunity-county-partner-package': 'opportunities',
     'industry-partner-package': 'opportunities',
     'ad-pkg-opportunities-mini': 'opportunities',
     'ad-pkg-opportunities-listing': 'opportunities',
@@ -224,6 +225,7 @@
     organisers: ['Headline Sponsor', 'Organiser Page Partner', 'Featured Organiser Boost', 'Not sure yet'],
     opportunities: [
       'Headline Sponsor',
+      'County Sponsor',
       'Industry Sponsor',
       'Opportunity Page Partner',
       'Directory Listing',

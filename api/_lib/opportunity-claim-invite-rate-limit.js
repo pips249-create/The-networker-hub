@@ -7,6 +7,7 @@ const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
 
 const CLAIM_INVITE_SLUGS = new Set([
   'franchise_claim_invite',
+  'franchise_claim_invite_followup',
   'affiliate_claim_invite',
   'opportunity_claim_invite',
   'distributorship_claim_invite',
@@ -17,6 +18,7 @@ const WINDOW_MS = 24 * 60 * 60 * 1000;
 /** Fixed subjects we can match in Resend history when the log table is not migrated yet. */
 const FIXED_SUBJECTS = {
   franchise_claim_invite: 'Franchise Listing Invitation',
+  franchise_claim_invite_followup: 'Quick follow-up: Franchise Listing Invitation',
   opportunity_claim_invite: 'Business Opportunity Listing Invitation',
   distributorship_claim_invite: 'Distributorship Listing Invitation',
 };

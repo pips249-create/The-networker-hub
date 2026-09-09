@@ -2095,7 +2095,7 @@
     var activeBits = [];
     if (searchQ) activeBits.push('“' + searchQ + '”');
     if (locationQ || activeLocationTag) activeBits.push(locationQ || activeLocationTag);
-    if (activeInvestTier && activeInvestTier !== 'all') {
+    if (activeInvestTier && activeInvestTier !== 'all' && activeInvestTier !== 'custom') {
       var investEl = document.querySelector(
         '[data-invest-tier="' + activeInvestTier + '"] + .filter-format-pill-face'
       );
@@ -2103,11 +2103,16 @@
         investEl ? investEl.textContent.trim() : activeInvestTier.replace(/-/g, ' ')
       );
     }
-    if (minInvest != null || maxInvest != null) {
+    if (activeInvestTier === 'custom' && (minInvest != null || maxInvest != null)) {
       var rangeBits = [];
       if (minInvest != null) rangeBits.push('from £' + Number(minInvest).toLocaleString('en-GB'));
       if (maxInvest != null) rangeBits.push('up to £' + Number(maxInvest).toLocaleString('en-GB'));
       if (rangeBits.length) activeBits.push(rangeBits.join(' '));
+    } else if (activeInvestTier !== 'custom' && (minInvest != null || maxInvest != null)) {
+      var legacyRange = [];
+      if (minInvest != null) legacyRange.push('from £' + Number(minInvest).toLocaleString('en-GB'));
+      if (maxInvest != null) legacyRange.push('up to £' + Number(maxInvest).toLocaleString('en-GB'));
+      if (legacyRange.length) activeBits.push(legacyRange.join(' '));
     }
     if (activeTypes.length) {
       activeTypes.forEach(function (id) {

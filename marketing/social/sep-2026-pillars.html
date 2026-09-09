@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Sep 2026 pillar posts · The Networker UK</title>
+<style>
+  @font-face {
+    font-family: 'DM Serif Display';
+    src: url('./fonts/dm-serif-display.woff2') format('woff2');
+    font-weight: 400;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: 'DM Sans';
+    src: url('./fonts/dm-sans-600.woff2') format('woff2');
+    font-weight: 600;
+    font-style: normal;
+  }
+  @font-face {
+    font-family: 'DM Sans';
+    src: url('./fonts/dm-sans-700.woff2') format('woff2');
+    font-weight: 700;
+    font-style: normal;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    background: #111;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'DM Sans', system-ui, sans-serif;
+  }
+
+  #canvas {
+    width: 1080px;
+    height: 1080px;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+    background:
+      radial-gradient(ellipse 75% 55% at 18% 8%, rgba(194, 153, 209, 0.22), transparent 58%),
+      radial-gradient(ellipse 65% 50% at 92% 88%, rgba(184, 149, 106, 0.12), transparent 52%),
+      linear-gradient(165deg, #faf6ee 0%, #f5f0e8 48%, #ebe4f2 100%);
+    color: #4a4446;
+    display: flex;
+    flex-direction: column;
+    padding: 64px 72px 56px;
+  }
+
+  .logo {
+    width: 340px;
+    height: auto;
+    display: block;
+    margin-bottom: 48px;
+  }
+
+  .kicker {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #8a6a98;
+    margin-bottom: 22px;
+  }
+
+  .headline {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 64px;
+    line-height: 1.08;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    color: #2f2a2c;
+    max-width: 920px;
+    margin-bottom: 20px;
+  }
+
+  .headline em {
+    font-style: normal;
+    color: #9a7aa8;
+  }
+
+  .sub {
+    font-size: 26px;
+    line-height: 1.4;
+    font-weight: 600;
+    color: #635c5e;
+    max-width: 860px;
+    margin-bottom: 28px;
+  }
+
+  .points {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-top: auto;
+    margin-bottom: 40px;
+  }
+
+  .points li {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 24px;
+    font-weight: 600;
+    color: #4a4446;
+  }
+
+  .points li::before {
+    content: '';
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #b189b8;
+    flex-shrink: 0;
+  }
+
+  .logo-grid {
+    display: none;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    margin-top: auto;
+    margin-bottom: 36px;
+    width: 100%;
+  }
+
+  .logo-grid.is-on {
+    display: grid;
+  }
+
+  .logo-tile {
+    background: #fff;
+    border-radius: 18px;
+    border: 1px solid rgba(74, 68, 70, 0.08);
+    box-shadow: 0 8px 24px rgba(47, 42, 44, 0.06);
+    height: 148px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px 20px;
+  }
+
+  .logo-tile img {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+  }
+
+  .footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin-top: auto;
+  }
+
+  .cta {
+    display: inline-flex;
+    align-items: center;
+    padding: 18px 34px;
+    border-radius: 999px;
+    background: #2f2a2c;
+    color: #faf6ee;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+
+  .url {
+    font-size: 20px;
+    font-weight: 600;
+    color: #8a6a98;
+    letter-spacing: 0.02em;
+  }
+</style>
+</head>
+<body>
+  <div id="canvas">
+    <img class="logo" src="../../assets/logo-networker-uk-transparent.png" alt="The Networker UK" width="340" height="140">
+    <p class="kicker" id="kicker">For networkers</p>
+    <h1 class="headline" id="headline">Looking for a <em>networking breakfast?</em></h1>
+    <p class="sub" id="sub">Near you — without hunting through Eventbrite, LinkedIn and half a dozen WhatsApps.</p>
+    <ul class="points" id="points"></ul>
+    <div class="logo-grid" id="logoGrid" aria-label="Organiser logos"></div>
+    <div class="footer">
+      <span class="cta" id="cta">Browse free</span>
+      <span class="url">thenetworkeruk.com</span>
+    </div>
+  </div>
+  <script>
+    const LOGO_BASE = './sep-2026-posts/logos/';
+    const BREAKFAST_LOGOS = [
+      'get-connected.jpg',
+      'top-networking.png',
+      'better-business-network.png',
+      'circle-networks.png',
+      'fore-business.png',
+      'city-ladies.png',
+    ];
+
+    const VARIANTS = {
+      breakfast: {
+        kicker: 'Find your next',
+        headline: 'Looking for a <em>networking breakfast?</em>',
+        sub: 'Real groups already listed on The Networker UK — browse by city and book when you\'re ready.',
+        logos: BREAKFAST_LOGOS,
+        cta: 'Browse events',
+      },
+      networkers: {
+        kicker: 'The Networker UK',
+        headline: 'Find your next <em>networking event</em>',
+        sub: 'Breakfasts, lunches, exhibitions, awards and online rooms — UK-wide.',
+        logos: BREAKFAST_LOGOS,
+        cta: 'Browse free',
+      },
+      pillars: {
+        kicker: 'One place',
+        headline: 'Events. Organisers. <em>Opportunities.</em>',
+        sub: 'Where useful business conversations begin — and where organisers get discovered.',
+        points: ['Browse events near you', 'Follow groups you like', 'Explore franchises & side hustles'],
+        cta: 'Start here',
+      },
+      organisers: {
+        kicker: 'For organisers',
+        headline: 'Built for networking groups — <em>not generic ticketing</em>',
+        sub: 'List free. Keep 100% of the ticket price. Get found where networkers already browse.',
+        points: ['Guest visits & memberships', 'Promote graphics for LinkedIn', 'Category exclusivity & rankings'],
+        cta: 'See what\'s included',
+      },
+      ticketing: {
+        kicker: 'Organiser tools',
+        headline: 'Free to list. <em>You keep 100%.</em>',
+        sub: 'Attendees pay a small booking fee. Your ticket price stays yours.',
+        points: ['Members-only tickets', 'Renewals & reminders', 'Dashboard built for groups'],
+        cta: 'List your events',
+      },
+      opportunities: {
+        kicker: 'Business Opportunities',
+        headline: 'Franchises, side hustles & <em>partnerships</em>',
+        sub: 'Browse free. Filter by type, budget and location. Enquire when you\'re ready.',
+        points: ['No per-lead fees for browsers', 'UK-focused listings', 'Providers from £25/month + VAT'],
+        cta: 'Browse opportunities',
+      },
+      guestVisits: {
+        kicker: 'Try before you join',
+        headline: 'Guest visits, <em>sorted</em>',
+        sub: 'Find rooms that welcome guests — then book through The Networker UK.',
+        logos: BREAKFAST_LOGOS,
+        cta: 'Find a guest visit',
+      },
+      promote: {
+        kicker: 'For hosts',
+        headline: 'Fill the room without a <em>blank LinkedIn post</em>',
+        sub: 'Every listing comes with easy Promote graphics and captions ready to share.',
+        points: ['One click from your dashboard', 'On-brand for your group', 'Built into The Networker UK'],
+        cta: 'For organisers',
+      },
+      exhibition: {
+        kicker: 'Exhibitions & conferences',
+        headline: 'Get your show in front of <em>UK networkers</em>',
+        sub: 'List exhibitions, conferences and awards where people already browse for their next event.',
+        points: ['Free to list', 'Keep 100% of ticket price', 'Discovery beyond your own list'],
+        cta: 'List your event',
+      },
+      founding: {
+        kicker: 'Founding Organisers · 2026',
+        headline: 'Thank you to the groups who <em>claimed early</em>',
+        sub: 'Founding logos on the homepage. Weekly shoutouts. Shape what we build next.',
+        logos: BREAKFAST_LOGOS,
+        cta: 'Browse groups',
+      },
+      masterclass: {
+        kicker: 'October programme',
+        headline: 'Calling masterclass & workshop <em>hosts</em>',
+        sub: 'List free on The Networker UK. Keep 100% of ticket price. Reach people already browsing.',
+        points: ['Workshops & masterclasses', 'In person or online', 'rosie@thenetworkeruk.com'],
+        cta: 'List your session',
+      },
+    };
+
+    const params = new URLSearchParams(location.search);
+    const key = params.get('v') || 'breakfast';
+    const v = VARIANTS[key] || VARIANTS.breakfast;
+
+    document.getElementById('kicker').textContent = v.kicker;
+    document.getElementById('headline').innerHTML = v.headline;
+    document.getElementById('sub').textContent = v.sub;
+    document.getElementById('cta').textContent = v.cta;
+
+    const ul = document.getElementById('points');
+    const grid = document.getElementById('logoGrid');
+    ul.innerHTML = '';
+    grid.innerHTML = '';
+    grid.classList.remove('is-on');
+
+    if (v.logos && v.logos.length) {
+      ul.style.display = 'none';
+      grid.classList.add('is-on');
+      v.logos.forEach((file) => {
+        const tile = document.createElement('div');
+        tile.className = 'logo-tile';
+        const img = document.createElement('img');
+        img.src = LOGO_BASE + file;
+        img.alt = '';
+        tile.appendChild(img);
+        grid.appendChild(tile);
+      });
+    } else {
+      ul.style.display = '';
+      (v.points || []).forEach((p) => {
+        const li = document.createElement('li');
+        li.textContent = p;
+        ul.appendChild(li);
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Wed 16 Sep · Women in business · The Networker UK</title>
+<style>
+  @font-face {
+    font-family: 'DM Serif Display';
+    src: url('./fonts/dm-serif-display.woff2') format('woff2');
+    font-weight: 400;
+  }
+  @font-face {
+    font-family: 'DM Sans';
+    src: url('./fonts/dm-sans-600.woff2') format('woff2');
+    font-weight: 600;
+  }
+  @font-face {
+    font-family: 'DM Sans';
+    src: url('./fonts/dm-sans-700.woff2') format('woff2');
+    font-weight: 700;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    background: #111;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'DM Sans', system-ui, sans-serif;
+  }
+
+  #canvas {
+    width: 1080px;
+    height: 1080px;
+    flex-shrink: 0;
+    overflow: hidden;
+    background:
+      radial-gradient(ellipse 75% 55% at 18% 8%, rgba(194, 153, 209, 0.26), transparent 58%),
+      radial-gradient(ellipse 65% 50% at 92% 88%, rgba(184, 149, 106, 0.12), transparent 52%),
+      linear-gradient(165deg, #faf6ee 0%, #f5f0e8 48%, #ebe4f2 100%);
+    color: #4a4446;
+    display: flex;
+    flex-direction: column;
+    padding: 56px 64px 52px;
+  }
+
+  .brand {
+    width: 300px;
+    height: auto;
+    margin-bottom: 36px;
+  }
+
+  .kicker {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #8a6a98;
+    margin-bottom: 16px;
+  }
+
+  .headline {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 56px;
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    color: #2f2a2c;
+    max-width: 920px;
+    margin-bottom: 16px;
+  }
+
+  .headline em {
+    font-style: normal;
+    color: #9a7aa8;
+  }
+
+  .sub {
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 1.4;
+    color: #635c5e;
+    max-width: 880px;
+    margin-bottom: 36px;
+  }
+
+  .logo-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+    margin-top: auto;
+    margin-bottom: 36px;
+  }
+
+  .logo-tile {
+    background: #fff;
+    border-radius: 18px;
+    border: 1px solid rgba(74, 68, 70, 0.08);
+    box-shadow: 0 8px 24px rgba(47, 42, 44, 0.06);
+    height: 148px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 18px 20px;
+    overflow: hidden;
+  }
+
+  .logo-tile img {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+  }
+
+  .logo-tile--dark {
+    background: #111;
+  }
+
+  .logo-tile--photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+  }
+
+  .footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+  }
+
+  .cta {
+    display: inline-flex;
+    padding: 16px 30px;
+    border-radius: 999px;
+    background: #2f2a2c;
+    color: #faf6ee;
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  .url {
+    font-size: 18px;
+    font-weight: 600;
+    color: #8a6a98;
+  }
+</style>
+</head>
+<body>
+  <div id="canvas">
+    <img class="brand" src="../../assets/logo-networker-uk-transparent.png" alt="The Networker UK" width="300" height="124">
+    <p class="kicker">Women in business</p>
+    <h1 class="headline">The diary’s full — <em>if you know where to look</em></h1>
+    <p class="sub">City Ladies, WIBN, Women Ahead, Women in Property, Women in the Law and more — breakfasts through to galas, across the UK.</p>
+    <div class="logo-grid">
+      <div class="logo-tile"><img src="./sep-2026-posts/logos-women/city-ladies.png" alt="City Ladies Networking"></div>
+      <div class="logo-tile"><img src="./sep-2026-posts/logos-women/wibn.svg" alt="Women In Business Network"></div>
+      <div class="logo-tile logo-tile--dark"><img src="./sep-2026-posts/logos-women/women-ahead.webp" alt="Women Ahead"></div>
+      <div class="logo-tile"><img src="./sep-2026-posts/logos-women/women-in-property.svg" alt="Women in Property"></div>
+      <div class="logo-tile logo-tile--photo"><img src="./sep-2026-posts/logos-women/women-ahead-event.jpg" alt="Women Ahead events"></div>
+      <div class="logo-tile"><img src="./sep-2026-posts/logos-women/women-in-the-law.png" alt="Women in the Law UK"></div>
+    </div>
+    <div class="footer">
+      <span class="cta">Browse events</span>
+      <span class="url">thenetworkeruk.com/events</span>
+    </div>
+  </div>
+</body>
+</html>

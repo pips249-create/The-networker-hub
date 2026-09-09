@@ -105,7 +105,7 @@
  * NAV_BUILD=20260709h — transparent nav logo (from logo-nav.png).
  */
 (function () {
-  var NAV_BUILD = '20260828nav1';
+  var NAV_BUILD = '20260909advis1';
   var LOGO_SRC = '/assets/logo-nav-transparent.png?v=20260823uk3';
   var SESSION_KEY = 'hub_nav_session_v1';
   var SESSION_TTL_MS = 5 * 60 * 1000;
@@ -302,6 +302,12 @@
         /\/organiser\/opportunity-edit/.test(String(window.location.pathname || ''))
       );
     }
+    if (key === 'advertising') {
+      return (
+        page === 'advertising' ||
+        String(window.location.pathname || '').indexOf('/advertising') === 0
+      );
+    }
     if (key === 'events') {
       if (page !== 'events') return false;
       try {
@@ -378,11 +384,13 @@
       page === 'account' ||
       page === 'settings' ||
       page === 'admin' ||
+      page === 'advertising' ||
       page === 'contact';
     var organiserActive = page === 'organiser' ? ' aria-current="page"' : '';
     var accountActive = page === 'account' ? ' aria-current="page"' : '';
     var settingsActive = page === 'settings' ? ' aria-current="page"' : '';
     var adminActive = page === 'admin' ? ' aria-current="page"' : '';
+    var advertisingActive = page === 'advertising' ? ' aria-current="page"' : '';
     var contactActive = page === 'contact' ? ' aria-current="page"' : '';
     var showOrganiserLink = user && user.organiserUiVisible;
     var organiserItem = '';
@@ -421,6 +429,11 @@
       '"' +
       settingsActive +
       '>Profile &amp; preferences</a>' +
+      '<a role="menuitem" class="nav-dropdown-item" href="' +
+      href('/advertising') +
+      '"' +
+      advertisingActive +
+      '>Advertising &amp; sponsorship</a>' +
       '<a role="menuitem" class="nav-dropdown-item" href="' +
       href('/contact') +
       '"' +
@@ -647,6 +660,7 @@
       isLinkActive('organisers') ||
       isLinkActive('rankings') ||
       isLinkActive('faq') ||
+      isLinkActive('advertising') ||
       isLinkActive('contact')
     );
   }
@@ -656,8 +670,8 @@
     var organiserActive = isLinkActive('organisers') ? ' aria-current="page"' : '';
     var rankingsActive = isLinkActive('rankings') ? ' aria-current="page"' : '';
     var faqActive = isLinkActive('faq') ? ' aria-current="page"' : '';
+    var advertisingActive = isLinkActive('advertising') ? ' aria-current="page"' : '';
     var contactActive = isLinkActive('contact') ? ' aria-current="page"' : '';
-    var guidesActive = isLinkActive('guides') ? ' aria-current="page"' : '';
     var items = '';
     if (early) {
       items +=
@@ -683,7 +697,12 @@
         href('/faq') +
         '"' +
         faqActive +
-        '>Help</a>';
+        '>Help</a>' +
+        '<a role="menuitem" class="nav-dropdown-item" href="' +
+        href('/advertising') +
+        '"' +
+        advertisingActive +
+        '>Advertising &amp; sponsorship</a>';
     }
     items +=
       '<a role="menuitem" class="nav-dropdown-item" href="' +
@@ -832,6 +851,12 @@
       html += buildMobileDrawerCities();
       html += '<p class="nav-mobile-section-label">Help &amp; info</p>';
       html += link('/faq', 'Help', 'faq', 'nav-mobile-item');
+      html += link(
+        '/advertising',
+        'Advertising &amp; sponsorship',
+        'advertising',
+        'nav-mobile-item'
+      );
       html += link('/contact', 'Contact', 'contact', 'nav-mobile-item');
       html +=
         '<a class="nav-mobile-item" href="https://www.thenetworkerinternational.com/" rel="noopener noreferrer">International</a>';
@@ -860,6 +885,12 @@
         );
       }
       html += link('/account/settings', 'Profile & preferences', 'settings', 'nav-mobile-item');
+      html += link(
+        '/advertising',
+        'Advertising &amp; sponsorship',
+        'advertising',
+        'nav-mobile-item'
+      );
       html += link('/contact', 'Contact us', 'contact', 'nav-mobile-item');
       if (user.role === 'admin') {
         html += link('/admin/', 'Command Center', 'admin', 'nav-mobile-item nav-admin-cc');

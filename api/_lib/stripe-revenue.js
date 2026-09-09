@@ -70,6 +70,8 @@ function cmsSlotCategory(slot) {
   if (CMS_SLOT_CATEGORIES[key]) return CMS_SLOT_CATEGORIES[key];
   if (/^networking_city_partner_/i.test(key)) return 'events';
   if (/^networking_county_partner_/i.test(key)) return 'events';
+  if (/^opportunity_county_sponsor_/i.test(key)) return 'opportunities';
+  if (/^opportunity_industry_sponsor_/i.test(key)) return 'opportunities';
   return null;
 }
 

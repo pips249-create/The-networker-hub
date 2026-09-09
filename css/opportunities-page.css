@@ -2140,7 +2140,31 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
   display: none !important;
 }
 
-/* Filter bar — navy shell, gold accents (matches hero palette) */
+/* Filter bar — Hub type + navy shell, gold accents */
+.opp-browse-page,
+.opp-browse-page .events-filter-shell,
+.opp-browse-page .events-filter-bar,
+.opp-browse-page .filter-mobile-sheet,
+.opp-browse-page .filter-format-pill-face,
+.opp-browse-page .event-type-chip,
+.opp-browse-page .filter-more-toggle,
+.opp-browse-page .filter-bar-chip-label,
+.opp-browse-page .filter-field input,
+.opp-browse-page .filter-price-bound-input,
+.opp-browse-page .opp-results-meta,
+.opp-browse-page .opp-active-filters {
+  font-family: 'DM Sans', 'DM Sans Fallback', system-ui, sans-serif;
+}
+
+.opp-browse-page .events-filter-heading,
+.opp-browse-page .listings-header,
+.opp-browse-page .opp-browse-hero h1,
+.opp-browse-page .section-title,
+.opp-browse-page .networking-region-intro h2,
+.opp-browse-page .opp-cta-strip h2 {
+  font-family: 'DM Serif Display', 'DM Serif Display Fallback', Georgia, serif;
+}
+
 .opp-browse-page .events-filter-heading {
   color: var(--opp-navy);
 }
@@ -2270,6 +2294,30 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
   justify-content: center;
 }
 
+.opp-browse-page .filter-bar-primary .filter-opp-invest-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  align-self: flex-start;
+  flex-wrap: nowrap;
+  gap: 0;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.opp-browse-page .filter-bar-primary .filter-opp-invest-group > legend {
+  width: 100%;
+  margin: 0 0 6px;
+}
+
+.opp-browse-page .filter-bar-primary .filter-opp-invest-group > .filter-format-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+}
+
 .opp-browse-page .filter-opp-more-panel:not([hidden]) {
   padding: 18px 0 4px;
   border-top: 1px solid rgba(255, 255, 255, 0.16);
@@ -2323,8 +2371,7 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
 }
 
 .opp-browse-page .filter-opp-category-wrap,
-.opp-browse-page .filter-opp-commitment-group,
-.opp-browse-page .filter-opp-custom-invest {
+.opp-browse-page .filter-opp-commitment-group {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -2336,8 +2383,7 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
 }
 
 /* Match Type / Industry label treatment */
-.opp-browse-page .events-filter-shell .filter-format-group > legend.filter-bar-chip-label,
-.opp-browse-page .filter-opp-custom-invest > .filter-bar-chip-label {
+.opp-browse-page .events-filter-shell .filter-format-group > legend.filter-bar-chip-label {
   text-transform: uppercase;
   letter-spacing: 0.06em;
   font-size: 0.72rem;
@@ -2381,12 +2427,25 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
 }
 
 .opp-browse-page .filter-opp-custom-invest {
-  flex: 0 0 auto;
-  width: auto;
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
 }
 
 .opp-browse-page .filter-opp-custom-invest .filter-price-range-controls {
-  width: auto;
+  width: 100%;
+  margin: 0;
+}
+
+.opp-browse-page .filter-opp-custom-invest .filter-price-bounds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .opp-browse-page .events-filter-shell .event-type-chip.is-zero:not(.is-active),
@@ -2619,12 +2678,10 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
   display: none !important;
 }
 
-.opp-browse-page .filter-opp-invest-group.has-custom-range .filter-format-pills {
-  opacity: 0.55;
+.opp-browse-page .filter-opp-invest-group.is-custom-invest .filter-format-pills {
+  opacity: 1;
 }
 
-.opp-browse-page .filter-opp-invest-hint,
-.opp-browse-page .filter-opp-custom-hint,
 .opp-browse-page .filter-industry-empty {
   margin: 0;
   font-size: 0.82rem;
@@ -2634,7 +2691,6 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
   max-width: 36rem;
 }
 
-.opp-browse-page .filter-opp-invest-hint[hidden],
 .opp-browse-page .filter-industry-empty[hidden] {
   display: none !important;
 }

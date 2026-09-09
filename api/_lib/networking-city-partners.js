@@ -1,7 +1,8 @@
 /**
  * City Partner placements on Events regional landing pages (/networking/:region).
- * Logo + CTA only — website placement, not included in hub emails.
- * County Sponsor uses networking_county_partner_* on Events county hubs.
+ * Logo + CTA only — website placement, not included in emails.
+ * Events County Sponsor uses networking_county_partner_* on /networking/:county.
+ * Opportunities County Sponsor uses opportunity_county_sponsor_* on /opportunities/networking/:county.
  */
 const { NETWORKING_REGIONS } = require('./networking-regions');
 const { isPublishableSponsorBlock } = require('./cms-sponsor-fields');

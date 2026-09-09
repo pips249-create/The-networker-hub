@@ -1,0 +1,54 @@
+{
+  "built_at": "2026-09-09T08:51:47.968Z",
+  "audience": "franchise_email2_unclaimed_from_email1",
+  "email1_csv": "data/Franchise-Claim-Resend.csv",
+  "email1_recipients": 293,
+  "skip_csv": null,
+  "skip_replies": 0,
+  "recipients": 279,
+  "batch_size": 50,
+  "batch_files": [
+    "data/Franchise-Claim-Followup-batch-01.csv",
+    "data/Franchise-Claim-Followup-batch-02.csv",
+    "data/Franchise-Claim-Followup-batch-03.csv",
+    "data/Franchise-Claim-Followup-batch-04.csv",
+    "data/Franchise-Claim-Followup-batch-05.csv",
+    "data/Franchise-Claim-Followup-batch-06.csv"
+  ],
+  "skipped": {
+    "no_email": 5,
+    "internal_or_reply_skip": 0,
+    "test_title": 0,
+    "not_approved": 1,
+    "claimed_or_paid_or_not_pending": 4,
+    "not_in_email1": 44,
+    "duplicate_title_email": 3
+  },
+  "sample": [
+    {
+      "email": "luke@anytimefitness.co.uk",
+      "title": "Anytime Fitness - Nationwide Franchise",
+      "claim_url": "https://www.thenetworkeruk.com/opportunities/antyime-fitness-nationwide-franchise?email=luke%40anytimefitness.co.uk&intent=opportunity-claim&auth=register&next=%2Forganiser%2F%3Fonboard%3Dopportunity-claim"
+    },
+    {
+      "email": "info@apollocare.co.uk",
+      "title": "Apollo Care Franchise",
+      "claim_url": "https://www.thenetworkeruk.com/opportunities/apollo-care-franchise?email=info%40apollocare.co.uk&intent=opportunity-claim&auth=register&next=%2Forganiser%2F%3Fonboard%3Dopportunity-claim"
+    },
+    {
+      "email": "intl.franchising@dinebrands.com",
+      "title": "Applebee's Grill + Bar Franchise",
+      "claim_url": "https://www.thenetworkeruk.com/opportunities/applebee-s-grill-bar-franchise?email=intl.franchising%40dinebrands.com&intent=opportunity-claim&auth=register&next=%2Forganiser%2F%3Fonboard%3Dopportunity-claim"
+    },
+    {
+      "email": "james@aspray.com",
+      "title": "Aspray Franchise",
+      "claim_url": "https://www.thenetworkeruk.com/opportunities/aspray-franchise?email=james%40aspray.com&intent=opportunity-claim&auth=register&next=%2Forganiser%2F%3Fonboard%3Dopportunity-claim"
+    },
+    {
+      "email": "nick.tubb@auditel.co.uk",
+      "title": "Auditel Franchise",
+      "claim_url": "https://www.thenetworkeruk.com/opportunities/auditel-franchise?email=nick.tubb%40auditel.co.uk&intent=opportunity-claim&auth=register&next=%2Forganiser%2F%3Fonboard%3Dopportunity-claim"
+    }
+  ]
+}

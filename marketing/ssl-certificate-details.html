@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow">
+<title>SSL certificate details · The Networker UK</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+  @page { size: A4; margin: 0; }
+  :root {
+    --teal: #0d6e7a;
+    --teal-pale: #e8f6f8;
+    --bg: #f4f8fa;
+    --text: #1a2e3b;
+    --muted: #4a6272;
+    --border: #cfe4ea;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    width: 210mm;
+    height: 297mm;
+    overflow: hidden;
+    font-family: 'DM Sans', system-ui, sans-serif;
+    color: var(--text);
+    background: #fff;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .page {
+    width: 210mm;
+    height: 297mm;
+    max-height: 297mm;
+    padding: 11mm 13mm 9mm 17mm;
+    position: relative;
+    background:
+      radial-gradient(ellipse 70% 35% at 100% 0%, rgba(13, 110, 122, .1), transparent 55%),
+      linear-gradient(165deg, #fff 0%, var(--teal-pale) 35%, var(--bg) 100%);
+  }
+  .bar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 5px;
+    height: 100%;
+    background: var(--teal);
+  }
+  .top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .logo { width: 165px; height: auto; }
+  .meta {
+    text-align: right;
+    font-size: 9px;
+    color: var(--muted);
+    line-height: 1.35;
+  }
+  .meta strong { color: var(--text); }
+  h1 {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 20px;
+    line-height: 1.1;
+    color: #1e3a4f;
+    margin-bottom: 5px;
+  }
+  h1 span { color: var(--teal); font-style: normal; }
+  .lede {
+    font-size: 10.5px;
+    line-height: 1.32;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .panel {
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin-bottom: 7px;
+  }
+  .panel h2 {
+    font-size: 8.5px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--teal);
+    margin-bottom: 5px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 9.5px;
+  }
+  th, td {
+    text-align: left;
+    vertical-align: top;
+    padding: 3px 0;
+    border-bottom: 1px solid #e8f2f5;
+    line-height: 1.25;
+  }
+  tr:last-child th, tr:last-child td { border-bottom: none; }
+  th {
+    width: 28%;
+    font-weight: 600;
+    color: #1e3a4f;
+    padding-right: 6px;
+  }
+  td { color: var(--muted); }
+  td code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 8px;
+    color: #234;
+    word-break: break-all;
+  }
+  .notes {
+    font-size: 9px;
+    line-height: 1.32;
+    color: var(--muted);
+  }
+  .notes strong { color: var(--text); }
+  .notes p + p { margin-top: 4px; }
+  .foot {
+    margin-top: 7px;
+    padding-top: 6px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 8.5px;
+    color: var(--muted);
+  }
+  .foot a { color: var(--teal); text-decoration: none; font-weight: 600; }
+</style>
+</head>
+<body>
+<div class="page">
+  <span class="bar" aria-hidden="true"></span>
+
+  <div class="top">
+    <img class="logo" src="../assets/logo-nav-transparent.png?v=20260823uk3" alt="The Networker UK" width="165">
+    <div class="meta">
+      <strong>The Networker Group Ltd</strong><br>
+      Certificate summary for IT review · 9 September 2026
+    </div>
+  </div>
+
+  <h1>SSL / TLS certificate — <span>www.thenetworkeruk.com</span></h1>
+  <p class="lede">
+    Confirms The Networker UK is served over HTTPS with a valid, publicly trusted certificate — for IT teams verifying or whitelisting access.
+  </p>
+
+  <div class="panel">
+    <h2>Certificate summary</h2>
+    <table>
+      <tr>
+        <th>Website URL</th>
+        <td><strong style="color:#1e3a4f">https://www.thenetworkeruk.com</strong></td>
+      </tr>
+      <tr>
+        <th>Type</th>
+        <td>Domain Validated (DV) SSL/TLS · Issued to www.thenetworkeruk.com</td>
+      </tr>
+      <tr>
+        <th>Issued by</th>
+        <td>Let's Encrypt (CN=YR2)</td>
+      </tr>
+      <tr>
+        <th>Valid</th>
+        <td>24 August 2026 – 22 November 2026</td>
+      </tr>
+      <tr>
+        <th>Serial</th>
+        <td><code>066A2EB9784C5757294705711AEB0C3B2BBE</code></td>
+      </tr>
+      <tr>
+        <th>SHA-256</th>
+        <td><code>11:49:36:5C:90:5B:00:A3:71:24:66:79:98:6F:7D:19:8C:DB:F8:85:1A:D2:CF:C3:4F:19:54:24:65:60:40:78</code></td>
+      </tr>
+      <tr>
+        <th>Hosting</th>
+        <td>Vercel (automatic issue &amp; renewal) · Contact: hi@thenetworkeruk.com</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="panel notes">
+    <h2>Verification &amp; IT access</h2>
+    <p><strong>Verify:</strong> open https://www.thenetworkeruk.com and click the padlock in the address bar. thenetworkeruk.com and the-networker.co.uk redirect to www over HTTPS.</p>
+    <p><strong>Whitelist:</strong> allow HTTPS to www.thenetworkeruk.com (and optionally thenetworkeruk.com). No client-side certificate install is required.</p>
+  </div>
+
+  <div class="foot">
+    <span>The Networker UK · The Networker Group Ltd</span>
+    <span><a href="https://www.thenetworkeruk.com">www.thenetworkeruk.com</a></span>
+  </div>
+</div>
+</body>
+</html>

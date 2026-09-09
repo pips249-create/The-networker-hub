@@ -41,6 +41,9 @@
     var key = String(slotOrSubject || '').trim().toLowerCase();
     if (PLACEMENT_AD_PATHS[key]) return PLACEMENT_AD_PATHS[key];
     if (key.indexOf('networking_county_partner_') === 0) return '/advertising#county-partner-package';
+    if (key.indexOf('opportunity_county_sponsor_') === 0) {
+      return '/advertising#opportunity-county-partner-package';
+    }
     if (key.indexOf('networking_city_partner_') === 0) return '/advertising#city-partner-package';
     var subject = String(slotOrSubject || '');
     if (/organiser/i.test(subject)) return PLACEMENT_AD_PATHS.organiser_page_carousel_ads;
@@ -518,6 +521,7 @@
   function regionPartnerBadge(slot) {
     var key = String(slot || '');
     if (key.indexOf('opportunity_industry_sponsor_') === 0) return 'Industry Sponsor';
+    if (key.indexOf('opportunity_county_sponsor_') === 0) return 'County Sponsor';
     if (key.indexOf('networking_county_partner_') === 0) return 'County Sponsor';
     return 'City Sponsor';
   }
@@ -526,6 +530,9 @@
     var key = String(slot || '');
     if (key.indexOf('opportunity_industry_sponsor_') === 0) {
       return '/advertising#industry-partner-package';
+    }
+    if (key.indexOf('opportunity_county_sponsor_') === 0) {
+      return '/advertising#opportunity-county-partner-package';
     }
     if (key.indexOf('networking_county_partner_') === 0) {
       return '/advertising#county-partner-package';
@@ -537,6 +544,7 @@
     var key = String(slot || '');
     if (
       key.indexOf('opportunity_industry_sponsor_') === 0 ||
+      key.indexOf('opportunity_county_sponsor_') === 0 ||
       key.indexOf('networking_county_partner_') === 0
     ) {
       return 'From £49 / month + VAT';

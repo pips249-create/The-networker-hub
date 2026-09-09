@@ -688,12 +688,21 @@
     return String(key || '').indexOf('networking_county_partner_') === 0;
   }
 
+  function isOpportunityCountySponsorSlotKey(key) {
+    return String(key || '').indexOf('opportunity_county_sponsor_') === 0;
+  }
+
   function isIndustrySponsorSlotKey(key) {
     return String(key || '').indexOf('opportunity_industry_sponsor_') === 0;
   }
 
   function isRegionPartnerSlotKey(key) {
-    return isCityPartnerSlotKey(key) || isCountyPartnerSlotKey(key) || isIndustrySponsorSlotKey(key);
+    return (
+      isCityPartnerSlotKey(key) ||
+      isCountyPartnerSlotKey(key) ||
+      isOpportunityCountySponsorSlotKey(key) ||
+      isIndustrySponsorSlotKey(key)
+    );
   }
 
   function cityPartnerSlugFromSlot(slotKey) {
@@ -702,6 +711,10 @@
 
   function countyPartnerSlugFromSlot(slotKey) {
     return String(slotKey || '').replace(/^networking_county_partner_/, '');
+  }
+
+  function opportunityCountySponsorSlugFromSlot(slotKey) {
+    return String(slotKey || '').replace(/^opportunity_county_sponsor_/, '');
   }
 
   function industrySponsorSlugFromSlot(slotKey) {
@@ -716,6 +729,10 @@
     return 'networking_county_partner_' + String(slug || '').trim();
   }
 
+  function opportunityCountySponsorSlotFromSlug(slug) {
+    return 'opportunity_county_sponsor_' + String(slug || '').trim();
+  }
+
   function industrySponsorSlotFromSlug(slug) {
     return 'opportunity_industry_sponsor_' + String(slug || '').trim();
   }
@@ -726,6 +743,10 @@
 
   function countyPartnerPlacementPaths(slug) {
     return '/networking/' + slug;
+  }
+
+  function opportunityCountySponsorPlacementPaths(slug) {
+    return '/opportunities/networking/' + slug;
   }
 
   function industrySponsorPlacementPaths(slug) {
@@ -843,12 +864,36 @@
       return {
         key: key,
         group: 'County pages',
-        label: 'County Partner — ' + (county ? county.name : countySlug),
+        label: 'Events County Sponsor — ' + (county ? county.name : countySlug),
         preview: 'city_partner',
         help:
           'Logo + link on ' +
           countyPartnerPlacementPaths(countySlug) +
-          ' — website only, not in emails. Manual placement from enquiry for launch counties.',
+          ' — Events only. Separate from Opportunities County Sponsor.',
+        tagline: '',
+        ctaLabel: 'Find out more',
+        ctaUrl: 'https://',
+        ctaColor: '#2d2636',
+      };
+    }
+    if (isOpportunityCountySponsorSlotKey(key)) {
+      var oppCountySlug = opportunityCountySponsorSlugFromSlot(key);
+      var oppCounty = null;
+      for (var oc = 0; oc < NETWORKING_COUNTY_PARTNER_SLUGS.length; oc++) {
+        if (NETWORKING_COUNTY_PARTNER_SLUGS[oc].slug === oppCountySlug) {
+          oppCounty = NETWORKING_COUNTY_PARTNER_SLUGS[oc];
+          break;
+        }
+      }
+      return {
+        key: key,
+        group: 'Opportunities counties',
+        label: 'Opportunities County Sponsor — ' + (oppCounty ? oppCounty.name : oppCountySlug),
+        preview: 'city_partner',
+        help:
+          'Logo + link on ' +
+          opportunityCountySponsorPlacementPaths(oppCountySlug) +
+          ' — Opportunities only. Separate from Events County Sponsor.',
         tagline: '',
         ctaLabel: 'Find out more',
         ctaUrl: 'https://',
@@ -1720,7 +1765,7 @@
       return 'Progress against your sales targets.';
     }
     if (route === 'sponsorship') {
-      if (hash.indexOf('partners') !== -1 || hash.indexOf('home-partners') !== -1 || hash.indexOf('city-partners') !== -1 || hash.indexOf('county-partners') !== -1 || hash.indexOf('industry-partners') !== -1) {
+      if (hash.indexOf('partners') !== -1 || hash.indexOf('home-partners') !== -1 || hash.indexOf('city-partners') !== -1 || hash.indexOf('county-partners') !== -1 || hash.indexOf('opportunity-county-partners') !== -1 || hash.indexOf('industry-partners') !== -1) {
         return 'Home, city, county, and industry partner placements.';
       }
       if (hash.indexOf('enquir') !== -1) return 'Advertising enquiries from the public form.';
@@ -1796,9 +1841,13 @@
         subtitle =
           'Logo + link on /networking/:city — website only, not in hub emails. Opportunities industry filters use Industry Sponsor.';
       } else if (fullHash === 'sponsorship/county-partners') {
-        title = 'County Partner placements';
+        title = 'Events County Sponsor placements';
         subtitle =
-          'Logo + link on /networking/:county — website only. Place manually from advertising enquiries.';
+          'Logo + link on /networking/:county (Events) — separate from Opportunities county pages. Place from checkout or enquiries.';
+      } else if (fullHash === 'sponsorship/opportunity-county-partners') {
+        title = 'Opportunities County Sponsor placements';
+        subtitle =
+          'Logo + link on /opportunities/networking/:county — separate from Events County Sponsor. Place manually from advertising enquiries.';
       } else if (fullHash === 'sponsorship/industry-partners') {
         title = 'Industry Sponsor placements';
         subtitle =
@@ -9448,6 +9497,7 @@
       hash === 'sponsorship/partners' ||
       hash.indexOf('home-partners') !== -1 ||
       hash.indexOf('city-partners') !== -1 ||
+      hash.indexOf('opportunity-county-partners') !== -1 ||
       hash.indexOf('county-partners') !== -1 ||
       hash.indexOf('industry-partners') !== -1
     ) {
@@ -9493,6 +9543,10 @@
         withHubTabs(tabsHtml, renderCityPartnersPage);
         return;
       }
+      if (hash.indexOf('opportunity-county-partners') !== -1) {
+        withHubTabs(tabsHtml, renderOpportunityCountyPartnersPage);
+        return;
+      }
       if (hash.indexOf('county-partners') !== -1) {
         withHubTabs(tabsHtml, renderCountyPartnersPage);
         return;
@@ -9507,7 +9561,8 @@
           '<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">' +
           '<a href="#sponsorship/home-partners" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-brand-300 transition"><p class="font-bold text-brand-900">Home partners</p><p class="text-xs text-slate-500 mt-1">Logos on the home page partners strip</p></a>' +
           '<a href="#sponsorship/city-partners" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-brand-300 transition"><p class="font-bold text-brand-900">City partners</p><p class="text-xs text-slate-500 mt-1">City exclusivity waitlist and slots</p></a>' +
-          '<a href="#sponsorship/county-partners" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-brand-300 transition"><p class="font-bold text-brand-900">County partners</p><p class="text-xs text-slate-500 mt-1">Twelve launch counties — enquiry + manual logo</p></a>' +
+          '<a href="#sponsorship/county-partners" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-brand-300 transition"><p class="font-bold text-brand-900">Events county sponsors</p><p class="text-xs text-slate-500 mt-1">/networking/:county — separate from Opportunities</p></a>' +
+          '<a href="#sponsorship/opportunity-county-partners" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-brand-300 transition"><p class="font-bold text-brand-900">Opportunities county sponsors</p><p class="text-xs text-slate-500 mt-1">/opportunities/networking/:county</p></a>' +
           '<a href="#sponsorship/industry-partners" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-brand-300 transition"><p class="font-bold text-brand-900">Industry sponsors</p><p class="text-xs text-slate-500 mt-1">Opportunities categories — enquiry + manual logo</p></a>' +
           '</div></div>';
       });
@@ -9535,6 +9590,10 @@
     }
     if (hash === 'sponsorship/county-partners') {
       renderCountyPartnersPage();
+      return;
+    }
+    if (hash === 'sponsorship/opportunity-county-partners') {
+      renderOpportunityCountyPartnersPage();
       return;
     }
     if (hash === 'sponsorship/industry-partners') {
@@ -9696,15 +9755,24 @@
       '</a></div></section>' +
       '<section class="admin-ad-picker-group">' +
       '<h3 class="admin-ad-picker-group-title">County pages</h3>' +
-      '<div class="admin-ad-picker-grid admin-ad-picker-grid--single">' +
+      '<div class="admin-ad-picker-grid">' +
       '<a href="#sponsorship/county-partners" class="admin-ad-picker-card admin-ad-picker-card--county-partners">' +
       '<div class="admin-ad-picker-card-head">' +
-      '<span class="admin-ad-picker-type">Regional</span>' +
+      '<span class="admin-ad-picker-type">Events</span>' +
       '<span class="admin-ad-picker-status" id="county-partners-picker-status">…</span>' +
       '</div>' +
-      '<p class="admin-ad-picker-label">County Partner placements</p>' +
-      '<p class="admin-ad-picker-help">Twelve launch counties — logo + link on county networking hubs. Place from enquiries.</p>' +
-      '<span class="admin-ad-picker-action">Manage counties →</span>' +
+      '<p class="admin-ad-picker-label">Events County Sponsor</p>' +
+      '<p class="admin-ad-picker-help">Logo + link on /networking/:county — separate inventory from Opportunities.</p>' +
+      '<span class="admin-ad-picker-action">Manage Events counties →</span>' +
+      '</a>' +
+      '<a href="#sponsorship/opportunity-county-partners" class="admin-ad-picker-card admin-ad-picker-card--opp-county-partners">' +
+      '<div class="admin-ad-picker-card-head">' +
+      '<span class="admin-ad-picker-type">Opportunities</span>' +
+      '<span class="admin-ad-picker-status" id="opportunity-county-partners-picker-status">…</span>' +
+      '</div>' +
+      '<p class="admin-ad-picker-label">Opportunities County Sponsor</p>' +
+      '<p class="admin-ad-picker-help">Logo + link on /opportunities/networking/:county — separate inventory from Events.</p>' +
+      '<span class="admin-ad-picker-action">Manage Opportunities counties →</span>' +
       '</a></div></section>' +
       '<section class="admin-ad-picker-group">' +
       '<h3 class="admin-ad-picker-group-title">Opportunities industries</h3>' +
@@ -9882,6 +9950,30 @@
         if (row.data && row.data.block && row.data.block.active !== false) live += 1;
       });
       var el = document.getElementById('county-partners-picker-status');
+      if (!el) return;
+      el.innerHTML =
+        live > 0
+          ? '<span class="admin-ad-picker-badge admin-ad-picker-badge--live">' + live + ' live</span>'
+          : '<span class="admin-ad-picker-badge admin-ad-picker-badge--empty">Not set yet</span>';
+    });
+
+    Promise.all(
+      NETWORKING_COUNTY_PARTNER_SLUGS.map(function (region) {
+        var slotKey = opportunityCountySponsorSlotFromSlug(region.slug);
+        return adminGet('/api/admin/sponsor?slot=' + encodeURIComponent(slotKey))
+          .then(function (data) {
+            return { slotKey: slotKey, data: data };
+          })
+          .catch(function () {
+            return { slotKey: slotKey, data: null };
+          });
+      })
+    ).then(function (rows) {
+      var live = 0;
+      rows.forEach(function (row) {
+        if (row.data && row.data.block && row.data.block.active !== false) live += 1;
+      });
+      var el = document.getElementById('opportunity-county-partners-picker-status');
       if (!el) return;
       el.innerHTML =
         live > 0
@@ -10240,7 +10332,7 @@
       sponsorshipBackLinkHtml() +
       '<section class="space-y-3">' +
       '<h3 class="font-bold text-brand-900">City Partner placements</h3>' +
-      '<p class="text-sm text-slate-600">Logo + link on Events regional landing pages (/networking/:city). Website only — never included in hub emails. Business opportunities use County Sponsor on county pages instead. When a city is live, the organiser CTA stays as a text link under the intro copy.</p>' +
+      '<p class="text-sm text-slate-600">Logo + link on Events regional landing pages (/networking/:city). Website only — never included in emails. Opportunities counties use a separate Opportunities County Sponsor inventory. When a city is live, the organiser CTA stays as a text link under the intro copy.</p>' +
       '</section>' +
       '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-3" id="city-partner-waitlist-admin">' +
       '<div class="flex flex-wrap items-start justify-between gap-3">' +
@@ -10292,7 +10384,7 @@
         attrEsc(slotKey) +
         '">' +
         '<div class="admin-ad-picker-card-head">' +
-        '<span class="admin-ad-picker-type">County</span>' +
+        '<span class="admin-ad-picker-type">Events</span>' +
         '<span class="admin-ad-picker-status" data-county-partner-status="' +
         attrEsc(slotKey) +
         '">…</span>' +
@@ -10312,8 +10404,8 @@
       '<div class="space-y-6">' +
       sponsorshipBackLinkHtml() +
       '<section class="space-y-3">' +
-      '<h3 class="font-bold text-brand-900">County Partner placements</h3>' +
-      '<p class="text-sm text-slate-600">Logo + link on launch county networking hubs (/networking/:county). Sponsors can check out online on /advertising — upload logo + link here to publish. Website only — never included in hub emails.</p>' +
+      '<h3 class="font-bold text-brand-900">Events County Sponsor placements</h3>' +
+      '<p class="text-sm text-slate-600">Logo + link on Events county pages (/networking/:county). Separate from Opportunities County Sponsor. Sponsors can check out online on /advertising — upload logo + link here to publish.</p>' +
       '<p class="text-xs text-slate-500">Launch counties: Berkshire, Buckinghamshire, Cambridgeshire, Cheshire, Essex, Hampshire, Hertfordshire, Kent, Lancashire, Oxfordshire, Surrey, Sussex.</p>' +
       '</section>' +
       '<div class="admin-ad-picker-grid">' +
@@ -10335,6 +10427,71 @@
         })
         .catch(function () {
           var el = document.querySelector('[data-county-partner-status="' + slotKey + '"]');
+          if (el) {
+            el.innerHTML =
+              '<span class="admin-ad-picker-badge admin-ad-picker-badge--error">Could not load</span>';
+          }
+        });
+    });
+  }
+
+  function renderOpportunityCountyPartnersPage() {
+    var cards = NETWORKING_COUNTY_PARTNER_SLUGS.map(function (region) {
+      var slotKey = opportunityCountySponsorSlotFromSlug(region.slug);
+      return (
+        '<a href="#sponsorship/' +
+        esc(slotKey) +
+        '" class="admin-ad-picker-card" data-opportunity-county-partner-slot="' +
+        attrEsc(slotKey) +
+        '">' +
+        '<div class="admin-ad-picker-card-head">' +
+        '<span class="admin-ad-picker-type">Opportunities</span>' +
+        '<span class="admin-ad-picker-status" data-opportunity-county-partner-status="' +
+        attrEsc(slotKey) +
+        '">…</span>' +
+        '</div>' +
+        '<p class="admin-ad-picker-label">' +
+        esc(region.name) +
+        '</p>' +
+        '<p class="admin-ad-picker-help">/opportunities/networking/' +
+        esc(region.slug) +
+        '</p>' +
+        '<span class="admin-ad-picker-action">Edit placement →</span>' +
+        '</a>'
+      );
+    }).join('');
+
+    main.innerHTML =
+      '<div class="space-y-6">' +
+      sponsorshipBackLinkHtml() +
+      '<section class="space-y-3">' +
+      '<h3 class="font-bold text-brand-900">Opportunities County Sponsor placements</h3>' +
+      '<p class="text-sm text-slate-600">Logo + link on Opportunities county pages (/opportunities/networking/:county). Separate inventory from Events County Sponsor — place manually after an advertising enquiry.</p>' +
+      '<p class="text-xs text-slate-500">Launch counties: Berkshire, Buckinghamshire, Cambridgeshire, Cheshire, Essex, Hampshire, Hertfordshire, Kent, Lancashire, Oxfordshire, Surrey, Sussex.</p>' +
+      '</section>' +
+      '<div class="admin-ad-picker-grid">' +
+      cards +
+      '</div></div>';
+
+    NETWORKING_COUNTY_PARTNER_SLUGS.forEach(function (region) {
+      var slotKey = opportunityCountySponsorSlotFromSlug(region.slug);
+      adminGet('/api/admin/sponsor?slot=' + encodeURIComponent(slotKey))
+        .then(function (data) {
+          var el = document.querySelector(
+            '[data-opportunity-county-partner-status="' + slotKey + '"]'
+          );
+          if (!el) return;
+          if (!data || data.error) {
+            el.innerHTML =
+              '<span class="admin-ad-picker-badge admin-ad-picker-badge--error">Could not load</span>';
+            return;
+          }
+          el.innerHTML = sponsorSlotStatusBadge(data.block);
+        })
+        .catch(function () {
+          var el = document.querySelector(
+            '[data-opportunity-county-partner-status="' + slotKey + '"]'
+          );
           if (el) {
             el.innerHTML =
               '<span class="admin-ad-picker-badge admin-ad-picker-badge--error">Could not load</span>';
@@ -12917,9 +13074,11 @@
         if (requiredCopy) {
           requiredCopy.textContent = isIndustrySponsorSlotKey(currentSlotKey)
             ? 'Required: company logo and website link. Live industry sponsor block is logo + link only (no button or colour).'
-            : isCountyPartnerSlotKey(currentSlotKey)
-              ? 'Required: company logo and website link. Live county partner block is logo + link only (no button or colour).'
-              : 'Required: company logo and website link. Live city partner block is logo + link only (no button or colour).';
+            : isOpportunityCountySponsorSlotKey(currentSlotKey)
+              ? 'Required: company logo and website link. Live Opportunities County Sponsor block is logo + link only (no button or colour).'
+              : isCountyPartnerSlotKey(currentSlotKey)
+                ? 'Required: company logo and website link. Live Events County Sponsor block is logo + link only (no button or colour).'
+                : 'Required: company logo and website link. Live city partner block is logo + link only (no button or colour).';
         }
       } else {
         // compact sidebar — logo + link only
@@ -12942,13 +13101,19 @@
             ? 'Logo + link — matches the Industry Sponsor block on ' +
               industrySponsorPlacementPaths(industrySponsorSlugFromSlot(currentSlotKey)) +
               ' (not included in emails).'
-            : isCountyPartnerSlotKey(currentSlotKey)
-              ? 'Logo + link — matches the County Sponsor block on ' +
-                countyPartnerPlacementPaths(countyPartnerSlugFromSlot(currentSlotKey)) +
+            : isOpportunityCountySponsorSlotKey(currentSlotKey)
+              ? 'Logo + link — matches the Opportunities County Sponsor block on ' +
+                opportunityCountySponsorPlacementPaths(
+                  opportunityCountySponsorSlugFromSlot(currentSlotKey)
+                ) +
                 ' (not included in emails).'
-              : 'Logo + link — matches the City Partner block on ' +
-                cityPartnerPlacementPaths(cityPartnerSlugFromSlot(currentSlotKey)) +
-                ' (not included in emails).';
+              : isCountyPartnerSlotKey(currentSlotKey)
+                ? 'Logo + link — matches the Events County Sponsor block on ' +
+                  countyPartnerPlacementPaths(countyPartnerSlugFromSlot(currentSlotKey)) +
+                  ' (not included in emails).'
+                : 'Logo + link — matches the City Partner block on ' +
+                  cityPartnerPlacementPaths(cityPartnerSlugFromSlot(currentSlotKey)) +
+                  ' (not included in emails).';
         } else {
           previewHint.textContent =
             slot.preview === 'compact'
@@ -13035,7 +13200,8 @@
           slot.preview === 'city_partner'
             ? isIndustrySponsorSlotKey(currentSlotKey)
               ? 'Industry Sponsor'
-              : isCountyPartnerSlotKey(currentSlotKey)
+              : isOpportunityCountySponsorSlotKey(currentSlotKey) ||
+                  isCountyPartnerSlotKey(currentSlotKey)
                 ? 'County Sponsor'
                 : 'City Sponsor'
             : 'Sponsored';
@@ -13234,9 +13400,11 @@
         setSponsorStatus(
           isIndustrySponsorSlotKey(currentSlotKey)
             ? 'Upload or paste a logo before publishing an active industry sponsor ad.'
-            : isCountyPartnerSlotKey(currentSlotKey)
-              ? 'Upload or paste a logo before publishing an active county partner ad.'
-              : 'Upload or paste a logo before publishing an active city partner ad.',
+            : isOpportunityCountySponsorSlotKey(currentSlotKey)
+              ? 'Upload or paste a logo before publishing an active Opportunities County Sponsor ad.'
+              : isCountyPartnerSlotKey(currentSlotKey)
+                ? 'Upload or paste a logo before publishing an active Events County Sponsor ad.'
+                : 'Upload or paste a logo before publishing an active city partner ad.',
           'error'
         );
         return;
@@ -22086,44 +22254,23 @@
     var whenEl = document.getElementById('featured-spotlight-when');
     var clearBtn = document.getElementById('featured-spotlight-clear');
 
-    function syncFromControls(opts) {
+    function syncFromControls() {
       featuredSpotlightState.q = searchEl ? searchEl.value : '';
       featuredSpotlightState.featured = featuredEl ? featuredEl.value : '';
       featuredSpotlightState.eventType = typeEl ? typeEl.value : '';
       featuredSpotlightState.when = whenEl ? whenEl.value : '';
-      // Name / date / type filters must hit the server — the page only keeps a
-      // small upcoming window locally, so November events never matched before.
-      if (opts && opts.paintOnly) {
-        paintFeaturedSpotlightTable();
-        return;
-      }
-      loadFeaturedSpotlightEvents();
+      paintFeaturedSpotlightTable();
     }
 
     if (searchEl) {
       searchEl.addEventListener('input', function () {
         if (featuredSpotlightSearchTimer) clearTimeout(featuredSpotlightSearchTimer);
-        featuredSpotlightSearchTimer = setTimeout(function () {
-          syncFromControls();
-        }, 280);
-      });
-      searchEl.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          if (featuredSpotlightSearchTimer) clearTimeout(featuredSpotlightSearchTimer);
-          syncFromControls();
-        }
+        featuredSpotlightSearchTimer = setTimeout(syncFromControls, 200);
       });
     }
-    if (featuredEl) featuredEl.addEventListener('change', function () {
-      syncFromControls();
-    });
-    if (typeEl) typeEl.addEventListener('change', function () {
-      syncFromControls();
-    });
-    if (whenEl) whenEl.addEventListener('change', function () {
-      syncFromControls();
-    });
+    if (featuredEl) featuredEl.addEventListener('change', syncFromControls);
+    if (typeEl) typeEl.addEventListener('change', syncFromControls);
+    if (whenEl) whenEl.addEventListener('change', syncFromControls);
     if (clearBtn) {
       clearBtn.addEventListener('click', function () {
         featuredSpotlightState.q = '';
@@ -22134,7 +22281,7 @@
         if (featuredEl) featuredEl.value = '';
         if (typeEl) typeEl.value = '';
         if (whenEl) whenEl.value = 'upcoming';
-        loadFeaturedSpotlightEvents();
+        paintFeaturedSpotlightTable();
       });
     }
   }
@@ -22511,13 +22658,7 @@
     var loadGen = ++featuredSpotlightLoadGen;
     var tbody = document.getElementById('featured-tbody');
     var status = document.getElementById('featured-status');
-    var q = String(featuredSpotlightState.q || '').trim();
-    var when = String(featuredSpotlightState.when || '').trim();
-    var eventType = String(featuredSpotlightState.eventType || '').trim();
-    var featuredFilter = String(featuredSpotlightState.featured || '').trim();
-    if (status) {
-      status.textContent = q ? 'Searching events…' : 'Loading approved events…';
-    }
+    if (status) status.textContent = 'Loading approved events…';
     if (tbody) {
       tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-6 text-slate-500">Loading…</td></tr>';
     }
@@ -22535,58 +22676,25 @@
       return Array.from(byId.values());
     }
 
-    function spotlightEventsQuery(extra) {
-      var params = new URLSearchParams();
-      params.set('approval_status', 'Approved');
-      params.set('limit', '100');
-      params.set('sort', 'date');
-      params.set('light', '1');
-      var opts = extra || {};
-      if (q) params.set('q', q);
-      var whenParam = Object.prototype.hasOwnProperty.call(opts, 'when') ? opts.when : when;
-      if (whenParam) params.set('when', whenParam);
-      var typeParam = Object.prototype.hasOwnProperty.call(opts, 'event_type')
-        ? opts.event_type
-        : eventType;
-      if (typeParam) params.set('event_type', typeParam);
-      Object.keys(opts).forEach(function (key) {
-        if (key === 'when' || key === 'event_type') return;
-        if (opts[key] != null && opts[key] !== '') params.set(key, String(opts[key]));
-      });
-      return '/api/admin/events?' + params.toString();
-    }
-
-    var requests;
-    if (featuredFilter === 'yes' || featuredFilter === 'active') {
-      // Active carousel rows are a client-side subset of featured=true.
-      requests = [adminGet(spotlightEventsQuery({ featured: '1' }))];
-    } else if (q) {
-      // Name search must query the full catalogue — not the first 100 upcoming only.
-      requests = [adminGet(spotlightEventsQuery({}))];
-    } else {
-      requests = [
-        // Keep every featured row visible for untick / clear-past, regardless of When.
-        adminGet(spotlightEventsQuery({ featured: '1', when: '' })),
-        adminGet(
-          spotlightEventsQuery({
-            when: when || 'upcoming',
-          })
-        ),
-      ];
-    }
-
-    Promise.all(requests)
+    Promise.all([
+      adminGet('/api/admin/events?approval_status=Approved&featured=1&limit=100&sort=date&light=1'),
+      adminGet('/api/admin/events?approval_status=Approved&limit=100&sort=date&light=1&when=upcoming'),
+    ])
       .then(function (results) {
         if (loadGen !== featuredSpotlightLoadGen) return;
         if (!document.getElementById('featured-tbody')) return;
-        var ok = (results || []).some(function (data) {
-          return data && data.ok;
-        });
+        var featuredData = results[0];
+        var upcomingData = results[1];
+        var ok = (featuredData && featuredData.ok) || (upcomingData && upcomingData.ok);
         if (!ok) {
-          var first = (results && results[0]) || {};
           if (status) {
             status.textContent =
-              'Could not load events.' + (first.message ? ' ' + first.message : '');
+              'Could not load events.' +
+              (featuredData && featuredData.message
+                ? ' ' + featuredData.message
+                : upcomingData && upcomingData.message
+                  ? ' ' + upcomingData.message
+                  : '');
           }
           if (tbody) {
             tbody.innerHTML =
@@ -22594,11 +22702,10 @@
           }
           return;
         }
-        var merged = [];
-        (results || []).forEach(function (data) {
-          if (data && data.ok) merged = mergeSpotlightRows(merged, data.events || []);
-        });
-        featuredSpotlightEvents = merged;
+        featuredSpotlightEvents = mergeSpotlightRows(
+          featuredData && featuredData.ok ? featuredData.events : [],
+          upcomingData && upcomingData.ok ? upcomingData.events : []
+        );
         try {
           paintFeaturedSpotlightTable();
         } catch (err) {
@@ -22647,9 +22754,9 @@
       '</div>' +
       '<div class="admin-filter-bar rounded-xl border border-slate-200 bg-white p-4 space-y-3 shadow-sm">' +
       '<div class="flex flex-col gap-3 sm:flex-row sm:items-center">' +
-      '<input type="search" id="featured-spotlight-search" placeholder="Search by event name, city, or venue…" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full sm:flex-1 bg-white" value="' +
+      '<input type="search" id="featured-spotlight-search" placeholder="Search event, organiser, or city…" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full sm:flex-1 bg-white" value="' +
       attrEsc(featuredSpotlightState.q) +
-      '" autocomplete="off">' +
+      '">' +
       '<select id="featured-spotlight-featured" class="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white w-full sm:w-44">' +
       '<option value=""' +
       (featuredSpotlightState.featured === '' ? ' selected' : '') +
@@ -25187,9 +25294,7 @@
             (submittedAt ? ' · ' + submittedAt : '')
           : awaitingPay
             ? 'Approved — awaiting listing payment before going live.'
-            : String(opp.status || '').toLowerCase() === 'unpublished'
-              ? 'Hidden from browse — not on the public directory or listing page. Use Show on browse to put it back.'
-              : 'Review what was submitted before making admin changes.';
+            : 'Review what was submitted before making admin changes.';
     var priorRejection = String(opp.rejection_note || '').trim();
     var adminEditBlock = fullPage
       ? '<section class="opp-review-admin-edit opp-review-admin-edit--page">' +
@@ -26576,7 +26681,8 @@
       '<div class="flex flex-wrap gap-2">' +
       '<a href="#spotlight/opportunities" class="inline-flex items-center rounded-lg border border-brand-200 bg-white px-3 py-1.5 text-xs font-semibold text-brand-900 hover:border-brand-400 hover:bg-brand-50">Premium Spotlight</a>' +
       '<a href="#sponsorship/placements" class="inline-flex items-center rounded-lg border border-brand-200 bg-white px-3 py-1.5 text-xs font-semibold text-brand-900 hover:border-brand-400 hover:bg-brand-50">Ads &amp; sponsors</a>' +
-      '<a href="#sponsorship/county-partners" class="inline-flex items-center rounded-lg border border-brand-200 bg-white px-3 py-1.5 text-xs font-semibold text-brand-900 hover:border-brand-400 hover:bg-brand-50">County partners</a>' +
+      '<a href="#sponsorship/county-partners" class="inline-flex items-center rounded-lg border border-brand-200 bg-white px-3 py-1.5 text-xs font-semibold text-brand-900 hover:border-brand-400 hover:bg-brand-50">Events county sponsors</a>' +
+      '<a href="#sponsorship/opportunity-county-partners" class="inline-flex items-center rounded-lg border border-brand-200 bg-white px-3 py-1.5 text-xs font-semibold text-brand-900 hover:border-brand-400 hover:bg-brand-50">Opportunities county sponsors</a>' +
       '<a href="#sponsorship/industry-partners" class="inline-flex items-center rounded-lg border border-brand-200 bg-white px-3 py-1.5 text-xs font-semibold text-brand-900 hover:border-brand-400 hover:bg-brand-50">Industry sponsors</a>' +
       '<a href="/organiser/opportunity-edit" target="_blank" rel="noopener" class="inline-flex items-center rounded-lg border border-brand-200 bg-white px-3 py-1.5 text-xs font-semibold text-brand-900 hover:border-brand-400 hover:bg-brand-50">Organiser list form</a>' +
       '<a href="/guides/list-a-business-opportunity" target="_blank" rel="noopener" class="inline-flex items-center rounded-lg border border-brand-200 bg-white px-3 py-1.5 text-xs font-semibold text-brand-900 hover:border-brand-400 hover:bg-brand-50">Listing guide</a>' +

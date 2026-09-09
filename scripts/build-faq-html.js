@@ -70,9 +70,7 @@ function buildFaqItemHtml(item) {
     escapeHtml(searchText) +
     '">\n' +
     '                <details class="faq-item">\n' +
-    '                  <summary><span class="faq-item-icon" aria-hidden="true">' +
-    escapeHtml(item.icon || '') +
-    '</span><span class="faq-item-text">' +
+    '                  <summary><span class="faq-item-text">' +
     escapeHtml(item.question) +
     '</span></summary>\n' +
     '                  <div class="faq-answer">\n' +

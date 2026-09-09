@@ -72,12 +72,21 @@ function isCountyPartnerSlot(slot) {
   return String(slot || '').trim().startsWith('networking_county_partner_');
 }
 
+function isOpportunityCountySponsorSlot(slot) {
+  return String(slot || '').trim().startsWith('opportunity_county_sponsor_');
+}
+
 function isIndustrySponsorSlot(slot) {
   return String(slot || '').trim().startsWith('opportunity_industry_sponsor_');
 }
 
 function isRegionPartnerSlot(slot) {
-  return isCityPartnerSlot(slot) || isCountyPartnerSlot(slot) || isIndustrySponsorSlot(slot);
+  return (
+    isCityPartnerSlot(slot) ||
+    isCountyPartnerSlot(slot) ||
+    isOpportunityCountySponsorSlot(slot) ||
+    isIndustrySponsorSlot(slot)
+  );
 }
 
 /**
@@ -201,6 +210,7 @@ module.exports = {
   isCompactSponsorSlot,
   isCityPartnerSlot,
   isCountyPartnerSlot,
+  isOpportunityCountySponsorSlot,
   isIndustrySponsorSlot,
   isRegionPartnerSlot,
   sponsorPlacementEnded,

@@ -1,8 +1,9 @@
 /**
  * City/county landing pages for business opportunities — /opportunities/networking/:region
  * (rewrites to /opportunities/?city=:region). Mirrors js/networking-regions.js.
- * County Sponsor ads are Events-only (/networking/:county) — not sold on Opportunities.
- * Industry Sponsor (opportunity_industry_sponsor_*) mounts from opportunities-page.js when ?category= is set.
+ * Opportunities County Sponsor uses opportunity_county_sponsor_* — separate from Events
+ * networking_county_partner_* slots. City Sponsor stays Events-only.
+ * Industry Sponsor mounts from opportunities-page.js when ?category= is set.
  */
 (function () {
   var REGIONS = window.HUB_NETWORKING_REGIONS || {};
@@ -27,6 +28,8 @@
   var theme = themes[slug] || {};
   var applyAccent = window.HUB_applyRegionAccentVars;
   var year = new Date().getFullYear();
+  var isCounty = region.areaType === 'county';
+  var countySponsorSlot = 'opportunity_county_sponsor_' + slug;
 
   window.hubOppRegionalLanding = {
     slug: slug,
@@ -40,7 +43,7 @@
   document.body.classList.add('opp-regional-landing');
   document.body.setAttribute('data-opp-region', slug);
   document.body.setAttribute('data-region', slug);
-  if (region.areaType === 'county') {
+  if (isCounty) {
     document.body.classList.add('networking-county-page');
     document.body.setAttribute('data-area-type', 'county');
   }
@@ -50,7 +53,7 @@
     if (el) el.textContent = text;
   }
 
-  setText('opp-hero-badge', region.areaType === 'county' ? 'County opportunity directory' : 'Local opportunity directory');
+  setText('opp-hero-badge', isCounty ? 'County opportunity directory' : 'Local opportunity directory');
   var heading = document.getElementById('opp-hero-heading');
   if (heading) {
     heading.innerHTML =
@@ -98,13 +101,14 @@
     landmark.className = 'networking-region-landmark';
     landmark.style.removeProperty('--skyline-image');
     landmark.innerHTML = theme.landmark || '';
-    landmark.hidden = !theme.landmark;
+    // County pages prefer the County Sponsor slot over the landmark mark.
+    landmark.hidden = isCounty || !theme.landmark;
   }
 
   var directory = document.getElementById('networking-location-directory');
   if (directory) {
     directory.classList.add('is-regional-landing');
-    setText('networking-location-directory-heading', 'Other UK locations');
+    setText('networking-location-directory-heading', 'Other UK counties');
   }
 
   var currentLink = document.querySelector(
@@ -119,7 +123,18 @@
 
   var partnerShell = document.getElementById('networking-region-city-partner');
   if (partnerShell) {
-    partnerShell.hidden = true;
-    partnerShell.innerHTML = '';
+    if (isCounty && window.CmsAdBlocks && window.CmsAdBlocks.mountCityPartnerSlot) {
+      partnerShell.hidden = false;
+      partnerShell.removeAttribute('hidden');
+      window.CmsAdBlocks.mountCityPartnerSlot(partnerShell, countySponsorSlot);
+    } else if (isCounty && window.CmsAdBlocks && window.CmsAdBlocks.renderCityPartnerPlaceholder) {
+      partnerShell.hidden = false;
+      partnerShell.removeAttribute('hidden');
+      window.CmsAdBlocks.renderCityPartnerPlaceholder(partnerShell, countySponsorSlot);
+    } else {
+      // City Sponsor is Events-only — leave opportunities city pages without a region ad.
+      partnerShell.hidden = true;
+      partnerShell.innerHTML = '';
+    }
   }
 })();

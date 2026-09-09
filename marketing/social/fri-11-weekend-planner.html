@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Weekend planner · Fri 11 Sep · The Networker UK</title>
+<style>
+  @font-face {
+    font-family: 'DM Serif Display';
+    src: url('./fonts/dm-serif-display.woff2') format('woff2');
+    font-weight: 400;
+  }
+  @font-face {
+    font-family: 'DM Sans';
+    src: url('./fonts/dm-sans-600.woff2') format('woff2');
+    font-weight: 600;
+  }
+  @font-face {
+    font-family: 'DM Sans';
+    src: url('./fonts/dm-sans-700.woff2') format('woff2');
+    font-weight: 700;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    width: 100%;
+    height: 100%;
+    background: #111;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'DM Sans', system-ui, sans-serif;
+  }
+
+  #canvas {
+    width: 1080px;
+    height: 1080px;
+    flex-shrink: 0;
+    overflow: hidden;
+    position: relative;
+    background:
+      radial-gradient(ellipse 75% 55% at 18% 8%, rgba(194, 153, 209, 0.22), transparent 58%),
+      radial-gradient(ellipse 65% 50% at 92% 88%, rgba(184, 149, 106, 0.12), transparent 52%),
+      linear-gradient(165deg, #faf6ee 0%, #f5f0e8 48%, #ebe4f2 100%);
+    color: #4a4446;
+    display: flex;
+    flex-direction: column;
+    padding: 52px 56px 48px;
+  }
+
+  .brand {
+    width: 280px;
+    height: auto;
+    display: block;
+    margin-bottom: 28px;
+  }
+
+  .kicker {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #8a6a98;
+    margin-bottom: 14px;
+  }
+
+  .headline {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 52px;
+    line-height: 1.08;
+    letter-spacing: -0.02em;
+    color: #2f2a2c;
+    margin-bottom: 12px;
+    max-width: 920px;
+  }
+
+  .headline em {
+    font-style: normal;
+    color: #9a7aa8;
+  }
+
+  .sub {
+    font-size: 22px;
+    font-weight: 600;
+    line-height: 1.35;
+    color: #635c5e;
+    margin-bottom: 28px;
+    max-width: 900px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 16px;
+    flex: 1;
+    min-height: 0;
+    margin-bottom: 28px;
+  }
+
+  .card {
+    position: relative;
+    border-radius: 20px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 10px 28px rgba(47, 42, 44, 0.08);
+  }
+
+  .card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .card .shade {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 35%, rgba(20, 16, 24, 0.78) 100%);
+    pointer-events: none;
+  }
+
+  .card .meta {
+    position: absolute;
+    left: 18px;
+    right: 18px;
+    bottom: 16px;
+    color: #faf6ee;
+    z-index: 1;
+  }
+
+  .card .date {
+    display: inline-block;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #e4d0ea;
+    margin-bottom: 6px;
+  }
+
+  .card .title {
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-size: 26px;
+    line-height: 1.15;
+    font-weight: 400;
+  }
+
+  .footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+  }
+
+  .cta {
+    display: inline-flex;
+    padding: 16px 30px;
+    border-radius: 999px;
+    background: #2f2a2c;
+    color: #faf6ee;
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  .url {
+    font-size: 18px;
+    font-weight: 600;
+    color: #8a6a98;
+  }
+</style>
+</head>
+<body>
+  <div id="canvas">
+    <img class="brand" src="../../assets/logo-networker-uk-transparent.png" alt="The Networker UK" width="280" height="116">
+    <p class="kicker">This weekend · plan ahead</p>
+    <h1 class="headline">What’s on <em>next week?</em></h1>
+    <p class="sub">A few already on our radar — full UK diary free to browse.</p>
+    <div class="grid">
+      <article class="card">
+        <img src="./sep-2026-posts/06-tue-15-bita-liverpool-expo.jpg" alt="BITA Liverpool Networking EXPO">
+        <div class="shade"></div>
+        <div class="meta">
+          <div class="date">Tue 15 Sep · Liverpool</div>
+          <div class="title">BITA Networking EXPO</div>
+        </div>
+      </article>
+      <article class="card">
+        <img src="./sep-2026-posts/06b-aberdeen-business-show.png" alt="Aberdeen Business Show">
+        <div class="shade"></div>
+        <div class="meta">
+          <div class="date">Tue 15 Sep · Aberdeen</div>
+          <div class="title">Aberdeen Business Show</div>
+        </div>
+      </article>
+      <article class="card">
+        <img src="./sep-2026-posts/08-thu-17-get-connected-reading.jpg" alt="Get Connected Reading">
+        <div class="shade"></div>
+        <div class="meta">
+          <div class="date">Thu 17 Sep · Reading</div>
+          <div class="title">Get Connected (free)</div>
+        </div>
+      </article>
+      <article class="card">
+        <img src="./sep-2026-posts/10-mon-21-circle-networks-birmingham.png" alt="Circle Networks Live Birmingham">
+        <div class="shade"></div>
+        <div class="meta">
+          <div class="date">Mon 21 Sep · Birmingham</div>
+          <div class="title">Circle Networks Live</div>
+        </div>
+      </article>
+    </div>
+    <div class="footer">
+      <span class="cta">Browse the diary</span>
+      <span class="url">thenetworkeruk.com/events</span>
+    </div>
+  </div>
+</body>
+</html>
