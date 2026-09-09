@@ -588,6 +588,7 @@
   var opportunityReviewCache = null;
   var GROUP_PAGE_SIZE = 30;
   var EVENT_PAGE_SIZE = 30;
+  var SPOTLIGHT_EVENT_PAGE_SIZE = 50;
   var OPPORTUNITY_PAGE_SIZE = 15;
   var eventOrganiserOptionsCache = null;
   var eventCreateOrganiserDocClickBound = false;
@@ -601,6 +602,8 @@
     featured: '',
     eventType: '',
     when: 'upcoming',
+    page: 0,
+    total: 0,
   };
   var featuredSpotlightLoadGen = 0;
   var featuredSpotlightSearchTimer = null;
@@ -21788,35 +21791,20 @@
   }
 
   function filterFeaturedSpotlightEvents(events) {
-    var q = String(featuredSpotlightState.q || '').trim();
     var featured = featuredSpotlightState.featured;
     var type = featuredSpotlightState.eventType;
-    var when = featuredSpotlightState.when;
-    var now = Date.now();
+    // Name / when filters are applied on the server with pagination.
     return (events || []).filter(function (ev) {
       if (featured === 'active' && !isSpotlightEventActiveInCarousel(ev)) return false;
       if (featured === 'yes' && !ev.featured) return false;
       if (featured === 'no' && ev.featured) return false;
       if (type && String(ev.event_type || '') !== type) return false;
-      if (when === 'upcoming') {
-        if (!ev.starts_at) return false;
-        if (new Date(ev.starts_at).getTime() < now) return false;
-      } else if (when === 'past') {
-        if (!ev.starts_at) return false;
-        if (new Date(ev.starts_at).getTime() >= now) return false;
-      }
-      if (!q) return true;
-      var hay =
-        String(ev.title || '') +
-        ' ' +
-        String(ev.organiser_name || '') +
-        ' ' +
-        String(ev.city || '');
-      return adminTextMatchesSearch(hay, q);
+      return true;
     });
   }
 
-  function featuredSpotlightStatusText(events, rows, filterActive) {
+  function featuredSpotlightStatusText(events, rows) {
+    var q = String(featuredSpotlightState.q || '').trim();
     var flaggedCount = (events || []).filter(function (e) {
       return e.featured;
     }).length;
@@ -21830,26 +21818,34 @@
     if (activeCount != null && flaggedCount !== activeCount) {
       countLabel = flaggedCount + ' flagged · ' + countLabel;
     }
-    return (
-      countLabel +
-      ' · ' +
-      (filterActive ? rows.length + ' shown · ' + events.length + ' loaded' : events.length + ' approved events') +
-      ' (upcoming first)'
-    );
+    var total = featuredSpotlightState.total || rows.length;
+    var page = featuredSpotlightState.page || 0;
+    var shown = rows.length;
+    var pageStart = shown ? page * SPOTLIGHT_EVENT_PAGE_SIZE + 1 : 0;
+    var pageEnd = page * SPOTLIGHT_EVENT_PAGE_SIZE + shown;
+    var rangeLabel = shown
+      ? 'Showing ' + pageStart + '–' + pageEnd + ' of ' + total
+      : 'No events match';
+    if (q) rangeLabel += ' (name search)';
+    return countLabel + ' · ' + rangeLabel;
   }
 
   function paintFeaturedSpotlightTable() {
     var tbody = document.getElementById('featured-tbody');
     var status = document.getElementById('featured-status');
+    var pager = document.getElementById('featured-spotlight-pagination');
     var events = featuredSpotlightEvents || [];
     var rows = filterFeaturedSpotlightEvents(events);
     if (status) {
-      var filterActive =
-        featuredSpotlightState.q ||
-        featuredSpotlightState.featured ||
-        featuredSpotlightState.eventType ||
-        featuredSpotlightState.when;
-      status.textContent = featuredSpotlightStatusText(events, rows, filterActive);
+      status.textContent = featuredSpotlightStatusText(events, rows);
+    }
+    if (pager) {
+      pager.innerHTML = adminPaginationHtml(
+        featuredSpotlightState.page || 0,
+        featuredSpotlightState.total || rows.length,
+        SPOTLIGHT_EVENT_PAGE_SIZE,
+        'data-spotlight-event-page'
+      );
     }
     if (!tbody) return;
     if (!events.length) {
@@ -22086,8 +22082,7 @@
       featuredSpotlightState.featured = featuredEl ? featuredEl.value : '';
       featuredSpotlightState.eventType = typeEl ? typeEl.value : '';
       featuredSpotlightState.when = whenEl ? whenEl.value : '';
-      // Name / date / type filters must hit the server — the page only keeps a
-      // small upcoming window locally, so November events never matched before.
+      if (!(opts && opts.keepPage)) featuredSpotlightState.page = 0;
       if (opts && opts.paintOnly) {
         paintFeaturedSpotlightTable();
         return;
@@ -22125,6 +22120,7 @@
         featuredSpotlightState.featured = '';
         featuredSpotlightState.eventType = '';
         featuredSpotlightState.when = 'upcoming';
+        featuredSpotlightState.page = 0;
         if (searchEl) searchEl.value = '';
         if (featuredEl) featuredEl.value = '';
         if (typeEl) typeEl.value = '';
@@ -22132,6 +22128,16 @@
         loadFeaturedSpotlightEvents();
       });
     }
+  }
+
+  function goToSpotlightEventPage(page) {
+    featuredSpotlightState.page = Math.max(0, page);
+    return loadFeaturedSpotlightEvents().then(function () {
+      var list = document.getElementById('featured-tbody');
+      if (list && typeof list.scrollIntoView === 'function') {
+        list.scrollIntoView({ block: 'start', behavior: 'auto' });
+      }
+    });
   }
 
   function bindSpotlightOrganiserFilters() {
@@ -22340,6 +22346,12 @@
     }
 
     document.body.addEventListener('click', function (e) {
+      var spotlightPageBtn = e.target.closest('[data-spotlight-event-page]');
+      if (spotlightPageBtn) {
+        var spotlightPage = parseInt(spotlightPageBtn.getAttribute('data-spotlight-event-page'), 10);
+        if (!isNaN(spotlightPage)) goToSpotlightEventPage(spotlightPage);
+        return;
+      }
       if (e.target.closest('#spotlight-clear-stale-events')) {
         clearStaleSpotlightFeatured('event');
         return;
@@ -22506,82 +22518,46 @@
     var loadGen = ++featuredSpotlightLoadGen;
     var tbody = document.getElementById('featured-tbody');
     var status = document.getElementById('featured-status');
+    var pager = document.getElementById('featured-spotlight-pagination');
     var q = String(featuredSpotlightState.q || '').trim();
     var when = String(featuredSpotlightState.when || '').trim();
     var eventType = String(featuredSpotlightState.eventType || '').trim();
     var featuredFilter = String(featuredSpotlightState.featured || '').trim();
+    var page = Math.max(0, featuredSpotlightState.page || 0);
     if (status) {
-      status.textContent = q ? 'Searching events…' : 'Loading approved events…';
+      status.textContent = q ? 'Searching all approved events…' : 'Loading approved events…';
     }
     if (tbody) {
       tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-6 text-slate-500">Loading…</td></tr>';
     }
+    if (pager) pager.innerHTML = '';
 
-    function mergeSpotlightRows(primary, secondary) {
-      var byId = new Map();
-      (primary || []).forEach(function (row) {
-        if (row && row.id != null) byId.set(String(row.id), row);
-      });
-      (secondary || []).forEach(function (row) {
-        if (!row || row.id == null) return;
-        var key = String(row.id);
-        if (!byId.has(key)) byId.set(key, row);
-      });
-      return Array.from(byId.values());
+    var params = new URLSearchParams();
+    params.set('approval_status', 'Approved');
+    params.set('sort', 'date');
+    params.set('light', '1');
+    params.set('limit', String(SPOTLIGHT_EVENT_PAGE_SIZE));
+    params.set('offset', String(page * SPOTLIGHT_EVENT_PAGE_SIZE));
+    if (q) {
+      params.set('q', q);
+      params.set('q_mode', 'simple');
+      // Name search ignores the Upcoming/Past window so any approved event is findable.
+    } else if (when) {
+      params.set('when', when);
     }
-
-    function spotlightEventsQuery(extra) {
-      var params = new URLSearchParams();
-      params.set('approval_status', 'Approved');
-      params.set('limit', '100');
-      params.set('sort', 'date');
-      params.set('light', '1');
-      var opts = extra || {};
-      if (q) params.set('q', q);
-      var whenParam = Object.prototype.hasOwnProperty.call(opts, 'when') ? opts.when : when;
-      if (whenParam) params.set('when', whenParam);
-      var typeParam = Object.prototype.hasOwnProperty.call(opts, 'event_type')
-        ? opts.event_type
-        : eventType;
-      if (typeParam) params.set('event_type', typeParam);
-      Object.keys(opts).forEach(function (key) {
-        if (key === 'when' || key === 'event_type') return;
-        if (opts[key] != null && opts[key] !== '') params.set(key, String(opts[key]));
-      });
-      return '/api/admin/events?' + params.toString();
-    }
-
-    var requests;
     if (featuredFilter === 'yes' || featuredFilter === 'active') {
-      // Active carousel rows are a client-side subset of featured=true.
-      requests = [adminGet(spotlightEventsQuery({ featured: '1' }))];
-    } else if (q) {
-      // Name search must query the full catalogue — not the first 100 upcoming only.
-      requests = [adminGet(spotlightEventsQuery({}))];
-    } else {
-      requests = [
-        // Keep every featured row visible for untick / clear-past, regardless of When.
-        adminGet(spotlightEventsQuery({ featured: '1', when: '' })),
-        adminGet(
-          spotlightEventsQuery({
-            when: when || 'upcoming',
-          })
-        ),
-      ];
+      params.set('featured', '1');
     }
+    if (eventType) params.set('event_type', eventType);
 
-    Promise.all(requests)
-      .then(function (results) {
+    return adminGet('/api/admin/events?' + params.toString())
+      .then(function (data) {
         if (loadGen !== featuredSpotlightLoadGen) return;
         if (!document.getElementById('featured-tbody')) return;
-        var ok = (results || []).some(function (data) {
-          return data && data.ok;
-        });
-        if (!ok) {
-          var first = (results && results[0]) || {};
+        if (!data || !data.ok) {
           if (status) {
             status.textContent =
-              'Could not load events.' + (first.message ? ' ' + first.message : '');
+              'Could not load events.' + (data && data.message ? ' ' + data.message : '');
           }
           if (tbody) {
             tbody.innerHTML =
@@ -22589,11 +22565,17 @@
           }
           return;
         }
-        var merged = [];
-        (results || []).forEach(function (data) {
-          if (data && data.ok) merged = mergeSpotlightRows(merged, data.events || []);
-        });
-        featuredSpotlightEvents = merged;
+        featuredSpotlightEvents = data.events || [];
+        featuredSpotlightState.total =
+          data.total != null ? data.total : featuredSpotlightEvents.length;
+        var maxPage = Math.max(
+          0,
+          Math.ceil((featuredSpotlightState.total || 0) / SPOTLIGHT_EVENT_PAGE_SIZE) - 1
+        );
+        if (featuredSpotlightState.page > maxPage) {
+          featuredSpotlightState.page = maxPage;
+          if (page !== maxPage) return loadFeaturedSpotlightEvents();
+        }
         try {
           paintFeaturedSpotlightTable();
         } catch (err) {
@@ -22635,14 +22617,14 @@
     main.innerHTML =
       '<div class="space-y-4">' +
       '<div id="spotlight-slots-wrap" class="text-sm text-slate-500">Loading carousel slot usage…</div>' +
-      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Toggle featured events for the <strong>Premium Spotlight</strong> on <code class="text-[11px]">/events/</code>. Set an end date when you feature something (or choose no end date). You can change the date anytime under Expires.</p>' +
+      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Toggle featured events for the <strong>Premium Spotlight</strong> on <code class="text-[11px]">/events/</code>. Browse with page controls, or search by name to find any approved event. Set an end date when you feature something (or choose no end date).</p>' +
       '<div class="flex flex-wrap items-center gap-2">' +
       '<p id="featured-status" class="text-sm text-slate-500 flex-1 min-w-[12rem]">Loading approved events…</p>' +
       spotlightClearStaleBtnHtml('spotlight-clear-stale-events') +
       '</div>' +
       '<div class="admin-filter-bar rounded-xl border border-slate-200 bg-white p-4 space-y-3 shadow-sm">' +
       '<div class="flex flex-col gap-3 sm:flex-row sm:items-center">' +
-      '<input type="search" id="featured-spotlight-search" placeholder="Search by event name, city, or venue…" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full sm:flex-1 bg-white" value="' +
+      '<input type="search" id="featured-spotlight-search" placeholder="Search all events by name…" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full sm:flex-1 bg-white" value="' +
       attrEsc(featuredSpotlightState.q) +
       '" autocomplete="off">' +
       '<select id="featured-spotlight-featured" class="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white w-full sm:w-44">' +
@@ -22679,11 +22661,13 @@
           '<tr><th class="px-4 py-3 text-left">Featured</th><th class="px-4 py-3 text-left">Event</th><th class="px-4 py-3">Organiser</th><th class="px-4 py-3">Date</th><th class="px-4 py-3">City</th><th class="px-4 py-3">Expires</th><th class="px-4 py-3"></th></tr></thead>' +
           '<tbody id="featured-tbody"><tr><td colspan="7" class="px-4 py-6 text-slate-500">Loading…</td></tr></tbody></table>'
       ) +
+      '<div id="featured-spotlight-pagination"></div>' +
       '</div>';
 
     loadSpotlightSlotBanner();
     bindFeaturedSpotlightFilters();
     bindSpotlightToggleHandlers();
+    bindAdminPaginationGoto();
     loadFeaturedSpotlightEvents();
   }
 

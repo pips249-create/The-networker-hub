@@ -249,6 +249,41 @@ function applyIlikeSearch(dbQuery, query, fields) {
   return next;
 }
 
+const ADMIN_NAME_STOPWORDS = new Set(['a', 'an', 'the', 'and', 'or', 'of', 'for', 'at', 'to', 'in', 'on']);
+
+/**
+ * Admin name search — exact substring matching only (no fuzzy typo ORs).
+ * Safer for Command Centre queries and avoids PostgREST URL blow-ups.
+ * Significant words are ANDed; each word may match title, slug, city, or venue.
+ */
+function applySimpleNameSearch(dbQuery, query, fields) {
+  const fieldList = (fields || []).filter(Boolean);
+  if (!fieldList.length) return dbQuery;
+  const raw = String(query || '').trim();
+  if (!raw) return dbQuery;
+
+  let terms = tokenizeSearchQuery(raw).filter(function (t) {
+    return t.length >= 2 && !ADMIN_NAME_STOPWORDS.has(t);
+  });
+  if (!terms.length) {
+    const phrase = sanitizeSearchTerm(raw);
+    if (!phrase || phrase.length < 2) return dbQuery;
+    terms = [phrase];
+  }
+
+  let next = dbQuery;
+  for (let i = 0; i < terms.length; i++) {
+    const parts = fieldList
+      .map(function (field) {
+        return formatIlikeFilter(field, '%' + terms[i] + '%');
+      })
+      .filter(Boolean);
+    if (parts.length) next = next.or(parts.join(','));
+  }
+
+  return next;
+}
+
 module.exports = {
   FUZZY_MIN_LEN,
   normalizeAmpersands,
@@ -264,4 +299,5 @@ module.exports = {
   formatIlikeFilter,
   buildIlikeOrFilters,
   applyIlikeSearch,
+  applySimpleNameSearch,
 };
