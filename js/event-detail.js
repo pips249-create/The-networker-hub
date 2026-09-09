@@ -67,7 +67,9 @@
       if (
         ev?.isMembersOnlyEvent &&
         mode !== 'category_exclusivity' &&
-        mode !== 'osop'
+        mode !== 'osop' &&
+        mode !== 'guest_programme' &&
+        mode !== 'membership_meeting'
       ) {
         return 'Members only';
       }
@@ -1119,7 +1121,11 @@
         priceNum > 0 ? publicListingPriceLabel(ev, { withFrom: false }) : 'Free';
       return;
     }
-    if (ev.isMembersOnlyEvent) {
+    if (
+      ev.isMembersOnlyEvent &&
+      !eventIsGuestProgramme(ev) &&
+      !eventAllowsGuestPasses(ev)
+    ) {
       if (isRosterMemberForEvent()) {
         const memberOnly = (rosterMemberTickets || []).find(function (t) {
           return t.isMembersOnly;
@@ -2746,7 +2752,11 @@
   function ticketTiersForEvent(ev) {
     // Closed listing = member tiers only (no public ticket). A member price alongside
     // public tickets must still show public rates to visitors.
-    const membersOnlyListing = Boolean(ev && ev.isMembersOnlyEvent);
+    // Guest-visit / membership-after-visits modes are not closed listings.
+    const membersOnlyListing =
+      Boolean(ev && ev.isMembersOnlyEvent) &&
+      !eventIsGuestProgramme(ev) &&
+      !eventAllowsGuestPasses(ev);
     // Never invent a public "Standard ticket" for closed / member-list listings —
     // those tiers stay hidden until roster eligibility returns the real member rates.
     let base;

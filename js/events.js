@@ -414,8 +414,12 @@
 
   function priceBadgeLabel(ev) {
     const mode = String(ev?.attendanceMode || '').trim();
-    const isCe = mode === 'category_exclusivity' || mode === 'osop';
-    if (!isCe && ev?.isMembersOnlyEvent) {
+    const isOpenGuestMode =
+      mode === 'category_exclusivity' ||
+      mode === 'osop' ||
+      mode === 'guest_programme' ||
+      mode === 'membership_meeting';
+    if (!isOpenGuestMode && ev?.isMembersOnlyEvent) {
       return 'Members only';
     }
     if (window.HubBookingFees) {
