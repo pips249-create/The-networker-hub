@@ -16231,6 +16231,11 @@
         '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-slate-100 text-slate-700" title="Draft saved but not yet submitted by the organiser">Draft — not submitted</span>'
       );
     }
+    if (String(opp.status || '').toLowerCase() === 'unpublished') {
+      return (
+        '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-slate-200 text-slate-800" title="Hidden from public browse and the listing page">Hidden from browse</span>'
+      );
+    }
     return listingStatusBadge(opp.status);
   }
 
@@ -23532,6 +23537,12 @@
   }
 
   function opportunityStatusOptions(selected) {
+    var labels = {
+      draft: 'draft',
+      published: 'published',
+      unpublished: 'unpublished — hidden from browse',
+      archived: 'archived',
+    };
     return ['draft', 'published', 'unpublished', 'archived']
       .map(function (s) {
         return (
@@ -23540,7 +23551,7 @@
           '"' +
           (selected === s ? ' selected' : '') +
           '>' +
-          esc(s) +
+          esc(labels[s] || s) +
           '</option>'
         );
       })
@@ -23761,6 +23772,37 @@
     initOpportunityAdminRegionFields(form);
     if (opp) applyOpportunityAdminRegionValues(form, opp);
     syncOpportunityAdminAffiliateFields(form);
+    bindOpportunityHideFromBrowseFields(form);
+  }
+
+  function bindOpportunityHideFromBrowseFields(form) {
+    if (!form || form.dataset.hideBrowseBound === '1') return;
+    var statusField = form.querySelector('[name="status"]');
+    var hideInput = form.querySelector('[name="hide_from_browse"]');
+    if (!statusField || !hideInput) return;
+    form.dataset.hideBrowseBound = '1';
+
+    function syncFromStatus() {
+      var status = String(statusField.value || '').toLowerCase();
+      var disabled = status === 'draft' || status === 'archived';
+      hideInput.disabled = disabled;
+      hideInput.checked = status === 'unpublished';
+      var wrap = hideInput.closest('label');
+      if (wrap) {
+        wrap.classList.toggle('opacity-60', disabled);
+        wrap.classList.toggle('cursor-not-allowed', disabled);
+        wrap.classList.toggle('cursor-pointer', !disabled);
+      }
+    }
+
+    statusField.addEventListener('change', syncFromStatus);
+    hideInput.addEventListener('change', function () {
+      if (hideInput.disabled) return;
+      statusField.value = hideInput.checked ? 'unpublished' : 'published';
+      var featuredInput = form.querySelector('[name="featured"]');
+      if (hideInput.checked && featuredInput) featuredInput.checked = false;
+    });
+    syncFromStatus();
   }
 
   var OPPORTUNITY_CATEGORIES = [
@@ -23872,6 +23914,9 @@
     opts = opts || {};
     var coverKey = opts.coverKey || 'opp-cover';
     var logoKey = opts.logoKey || 'opp-logo';
+    var statusNorm = String(opp.status || 'published').toLowerCase();
+    var hiddenFromBrowse = statusNorm === 'unpublished';
+    var browseHideDisabled = statusNorm === 'draft' || statusNorm === 'archived';
     return (
       '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Title</label>' +
       '<input type="text" name="title" required class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
@@ -23914,6 +23959,19 @@
       '<input type="checkbox" name="featured" class="rounded border-slate-300"' +
       (opp.featured ? ' checked' : '') +
       '> Featured in spotlight <span class="text-xs text-slate-500">(not for network marketing)</span></label></div>' +
+      '<div class="sm:col-span-2"><label class="flex items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 cursor-pointer' +
+      (browseHideDisabled ? ' opacity-60 cursor-not-allowed' : '') +
+      '">' +
+      '<input type="checkbox" name="hide_from_browse" class="rounded border-slate-300 mt-0.5"' +
+      (hiddenFromBrowse ? ' checked' : '') +
+      (browseHideDisabled ? ' disabled' : '') +
+      '>' +
+      '<span class="min-w-0"><span class="block text-sm font-semibold text-brand-900">Hide from browse</span>' +
+      '<span class="block text-[11px] text-slate-500 mt-0.5">Removes this listing from public browse and the listing page. Approval and payment stay intact — show it again anytime.</span>' +
+      (browseHideDisabled
+        ? '<span class="block text-[11px] text-amber-800 font-semibold mt-1">Set status to published or unpublished to use this toggle.</span>'
+        : '') +
+      '</span></label></div>' +
       '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Short description</label>' +
       '<textarea name="description" rows="2" maxlength="400" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Shown on listing cards — what it is and who it suits">' +
       esc(opp.description || '') +
@@ -24725,10 +24783,44 @@
       });
   }
 
+  function runOpportunityHideFromBrowse(btn, hide) {
+    var id =
+      (btn &&
+        (btn.getAttribute(hide ? 'data-opp-hide-browse' : 'data-opp-show-browse') ||
+          resolveOpportunityModerationId(btn))) ||
+      '';
+    var title =
+      (btn &&
+        btn.getAttribute(hide ? 'data-opp-hide-browse-title' : 'data-opp-show-browse-title')) ||
+      'this listing';
+    if (!id) return;
+    var confirmMsg = hide
+      ? 'Hide "' +
+        title +
+        '" from browse?\n\nIt will leave public browse and the listing page. Approval and payment stay intact — you can show it again anytime.'
+      : 'Show "' + title + '" on browse again?\n\nIt will return to public browse (if approved and payment is current).';
+    if (!window.confirm(confirmMsg)) return;
+    if (btn) btn.disabled = true;
+    adminPost('/api/admin/opportunities', { id: id, hide_from_browse: !!hide })
+      .then(function (data) {
+        if (!data || !data.ok) throw new Error((data && (data.message || data.error)) || 'Update failed');
+        if (isOpportunityReviewPage()) return refreshOpportunityReviewPage();
+        return refreshOpportunityCleanupPage();
+      })
+      .then(function () {
+        refreshAdminNotifications();
+      })
+      .catch(function (err) {
+        window.alert(err.message || 'Could not update browse visibility.');
+        if (btn) btn.disabled = false;
+      });
+  }
+
   function opportunityModerationActionFromTarget(target) {
     if (!target) return '';
     if (target.closest('[data-opp-approve]')) return 'approve';
     if (target.closest('[data-opp-reject]')) return 'reject';
+    if (target.closest('[data-opp-hide-browse], [data-opp-show-browse]')) return 'hide_from_browse';
     if (target.closest('[data-opp-delete], [data-opp-delete-form]')) return 'delete';
     if (target.closest('#opportunity-delete-btn')) return 'bulk_delete';
     return '';
@@ -25095,7 +25187,9 @@
             (submittedAt ? ' · ' + submittedAt : '')
           : awaitingPay
             ? 'Approved — awaiting listing payment before going live.'
-            : 'Review what was submitted before making admin changes.';
+            : String(opp.status || '').toLowerCase() === 'unpublished'
+              ? 'Hidden from browse — not on the public directory or listing page. Use Show on browse to put it back.'
+              : 'Review what was submitted before making admin changes.';
     var priorRejection = String(opp.rejection_note || '').trim();
     var adminEditBlock = fullPage
       ? '<section class="opp-review-admin-edit opp-review-admin-edit--page">' +
@@ -25148,6 +25242,19 @@
         : '') +
       salesKitDropdownHtml(opp, { size: 'md' }) +
       ' ' +
+      (String(opp.status || '').toLowerCase() === 'published'
+        ? '<button type="button" data-opp-hide-browse="' +
+          attrEsc(id) +
+          '" data-opp-hide-browse-title="' +
+          attrEsc(opp.title || 'Untitled') +
+          '" class="rounded-lg border border-slate-300 bg-white text-slate-800 text-sm font-semibold px-3 py-2 hover:bg-slate-50" title="Remove from public browse and the listing page">Hide from browse</button> '
+        : String(opp.status || '').toLowerCase() === 'unpublished'
+          ? '<button type="button" data-opp-show-browse="' +
+            attrEsc(id) +
+            '" data-opp-show-browse-title="' +
+            attrEsc(opp.title || 'Untitled') +
+            '" class="rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-900 text-sm font-semibold px-3 py-2 hover:bg-emerald-100" title="Put this listing back on public browse">Show on browse</button> '
+          : '') +
       (canApprove
         ? '<button type="button" data-opp-approve="' +
           attrEsc(id) +
@@ -26631,12 +26738,21 @@
 
   function opportunityFormPayload(form) {
     var locationFields = opportunityAdminLocationFromForm(form);
+    var status = formFieldVal(form, 'status') || 'published';
+    var hideInput = form.querySelector('[name="hide_from_browse"]');
+    if (hideInput && !hideInput.disabled) {
+      if (hideInput.checked) status = 'unpublished';
+      else if (String(status).toLowerCase() === 'unpublished') status = 'published';
+    }
+    var featured =
+      !!(form.querySelector('[name="featured"]') && form.querySelector('[name="featured"]').checked) &&
+      String(status).toLowerCase() !== 'unpublished';
     return {
       title: formFieldVal(form, 'title'),
       host: formFieldVal(form, 'host'),
       type: formFieldVal(form, 'type') || 'business-opportunity',
       category: formFieldVal(form, 'category') || 'general',
-      status: formFieldVal(form, 'status') || 'published',
+      status: status,
       description: formFieldVal(form, 'description') || null,
       about_text: formFieldVal(form, 'about_text') || null,
       contact_email: formFieldVal(form, 'contact_email') || null,
@@ -26651,7 +26767,7 @@
       cookie_window: formFieldVal(form, 'cookie_window') || null,
       extra_key: formFieldVal(form, 'extra_key') || null,
       extra_val: formFieldVal(form, 'extra_val') || null,
-      featured: !!(form.querySelector('[name="featured"]') && form.querySelector('[name="featured"]').checked),
+      featured: featured,
       owner_email: formFieldVal(form, 'owner_email') || null,
     };
   }
@@ -27081,6 +27197,16 @@
     var resendPayBtn = e.target.closest('[data-opp-resend-pay]');
     if (resendPayBtn) {
       runOpportunityResendPay(resendPayBtn);
+      return;
+    }
+    var hideBrowseBtn = e.target.closest('[data-opp-hide-browse]');
+    if (hideBrowseBtn) {
+      runOpportunityHideFromBrowse(hideBrowseBtn, true);
+      return;
+    }
+    var showBrowseBtn = e.target.closest('[data-opp-show-browse]');
+    if (showBrowseBtn) {
+      runOpportunityHideFromBrowse(showBrowseBtn, false);
       return;
     }
 

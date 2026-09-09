@@ -1918,7 +1918,17 @@ module.exports = async function handler(req, res) {
     if (imageUrl !== undefined) patch.image_url = imageUrl;
     const logoUrl = await resolveAdminOpportunityLogo(body, id);
     if (logoUrl !== undefined) patch.logo_url = logoUrl;
-    if (Object.prototype.hasOwnProperty.call(body, 'status')) {
+    if (Object.prototype.hasOwnProperty.call(body, 'hide_from_browse')) {
+      const hide = !!body.hide_from_browse;
+      patch.status = hide ? 'unpublished' : 'published';
+      if (hide) {
+        patch.featured = false;
+        patch.package_tier = 'standard';
+      } else {
+        patch.approval_status = 'Approved';
+        patch.published_at = new Date().toISOString();
+      }
+    } else if (Object.prototype.hasOwnProperty.call(body, 'status')) {
       const status = String(body.status || '').trim();
       if (status && !['draft', 'published', 'unpublished', 'archived'].includes(status)) {
         return json(res, 400, { error: 'invalid_status' });
@@ -1929,6 +1939,9 @@ module.exports = async function handler(req, res) {
         patch.published_at = new Date().toISOString();
       } else if (status === 'draft') {
         patch.approval_status = 'Pending Review';
+      } else if (status === 'unpublished') {
+        patch.featured = false;
+        patch.package_tier = 'standard';
       }
     }
     if (Object.prototype.hasOwnProperty.call(body, 'approval_status')) {
