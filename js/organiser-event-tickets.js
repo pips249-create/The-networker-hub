@@ -1573,6 +1573,7 @@
       if (ticketsPanel) ticketsPanel.hidden = !openBooking;
       if (optionalExtras) {
         optionalExtras.hidden =
+          isCategory ||
           (!openBooking && !isCategory) ||
           (membersOnlyEventEnabled() && !isMembershipMeetingMode()) ||
           !payHowIncludesMembership();
@@ -2343,13 +2344,66 @@
   }
 
   function memberTicketConfigMount() {
-    if (membersOnlyEventEnabled()) {
-      return document.getElementById('ee-members-only-event-fields-mount');
-    }
-    if (Boolean(document.getElementById('ee-private-ticket-enabled')?.checked)) {
+    // Open booking + tickets + membership: price fields belong in the visible
+    // member-ticket addon — never leave them parked in the hidden members-only wrap.
+    const bothOpen =
+      payHowIncludesTickets() &&
+      payHowIncludesMembership() &&
+      !membersOnlyEventEnabled() &&
+      !isMembershipMeetingMode() &&
+      attendanceMode !== 'category_exclusivity';
+    if (bothOpen || Boolean(document.getElementById('ee-private-ticket-enabled')?.checked)) {
       return document.getElementById('ee-private-ticket-fields-mount');
     }
+    if (membersOnlyEventEnabled() || isMembershipMeetingMode() || isMembershipOnlyPayHow()) {
+      return document.getElementById('ee-members-only-event-fields-mount');
+    }
     return document.getElementById('ee-members-only-event-fields-mount');
+  }
+
+  function ensureBothPathMemberTicketUi() {
+    const both =
+      payHowIncludesTickets() &&
+      payHowIncludesMembership() &&
+      !membersOnlyEventEnabled() &&
+      !isMembershipMeetingMode();
+    if (!both) return;
+    if (attendanceMode === 'category_exclusivity') {
+      const ceMember = document.getElementById('ee-ce-member-ticket-enabled');
+      if (ceMember && !ceMember.checked) {
+        ceMember.checked = true;
+        syncCeMemberTicketFields();
+      }
+      return;
+    }
+    const enabledEl = document.getElementById('ee-private-ticket-enabled');
+    if (enabledEl && !enabledEl.checked) {
+      enabledEl.checked = true;
+    }
+    const privateAddon = document.getElementById('ee-private-ticket-addon');
+    if (privateAddon) {
+      privateAddon.hidden = false;
+      privateAddon.classList.add('is-locked', 'is-enabled');
+    }
+    const addonMount = document.getElementById('ee-private-ticket-fields-mount');
+    if (addonMount) {
+      addonMount.hidden = false;
+      addonMount.removeAttribute('hidden');
+    }
+    const config = document.getElementById('ee-member-ticket-config');
+    const target = document.getElementById('ee-private-ticket-fields-mount');
+    if (config && target && config.parentElement !== target) {
+      target.appendChild(config);
+    }
+    const priceEl = document.getElementById('ee-private-ticket-price');
+    if (priceEl && (priceEl.value === '' || priceEl.value == null)) priceEl.value = '0';
+    const nameEl = document.getElementById('ee-private-ticket-name');
+    if (nameEl) {
+      const n = String(nameEl.value || '').trim();
+      if (!n || /^general admission$/i.test(n) || LEGACY_MEMBER_TICKET_NAME_RE.test(n)) {
+        nameEl.value = DEFAULT_MEMBER_BOOKING_NAME;
+      }
+    }
   }
 
   function handleMembersOnlyEventToggle() {
@@ -2615,10 +2669,15 @@
         attendanceMode === 'category_exclusivity' ||
         membershipMeeting ||
         membershipOnlyPay ||
-        !payHowIncludesMembership();
+        !payHowIncludesMembership() ||
+        !payHowIncludesTickets();
     }
+    ensureBothPathMemberTicketUi();
     if (optionalExtras) {
       if (!step2Confirmed || !payHowConfirmed) {
+        optionalExtras.hidden = true;
+      } else if (attendanceMode === 'category_exclusivity') {
+        // CE already has member ticket + membership + visits in its own panel.
         optionalExtras.hidden = true;
       } else if (membershipMeeting || membershipOnlyPay) {
         // Membership path: member ticket + join fee live in the tickets panel.
@@ -2627,8 +2686,6 @@
         // Plain tickets path — skip "Members pay less" to keep the happy path simple.
         optionalExtras.hidden = true;
       } else if (isOpenBookingMode(attendanceMode)) {
-        optionalExtras.hidden = on;
-      } else if (attendanceMode === 'category_exclusivity') {
         optionalExtras.hidden = on;
       }
     }
@@ -2685,9 +2742,25 @@
     if (config && targetMount && config.parentElement !== targetMount) {
       targetMount.appendChild(config);
     }
-    if (addonMount) addonMount.hidden = !addonOnly;
+    if (addonMount) {
+      const bothOpen =
+        payHowIncludesTickets() &&
+        payHowIncludesMembership() &&
+        !on &&
+        attendanceMode !== 'category_exclusivity';
+      addonMount.hidden = !(addonOnly || bothOpen);
+    }
     const privateHow = document.getElementById('ee-private-ticket-how');
-    if (privateHow) privateHow.hidden = !addonOnly;
+    if (privateHow) {
+      const bothOpen =
+        payHowIncludesTickets() &&
+        payHowIncludesMembership() &&
+        !on &&
+        attendanceMode !== 'category_exclusivity';
+      privateHow.hidden = !(addonOnly || bothOpen);
+    }
+
+    ensureBothPathMemberTicketUi();
 
     const rosterLink = document.getElementById('ee-members-only-roster-link');
     const groupId = String(seriesMeta.organiserGroupId || '').trim();
@@ -4395,9 +4468,15 @@
     const nextSteps = document.getElementById('ee-tickets-next-steps');
     const actions = document.getElementById('ee-tickets-actions');
     const ready = ticketsSetupReadyForReview(tiers);
-    // Keep Save / Continue visible whenever the footer is open. Hiding it when
-    // setup was incomplete made the primary action look like it had vanished.
-    if (btn) btn.hidden = Boolean(actions && actions.hidden);
+    // Always show Save / Continue once the footer is open.
+    if (btn) {
+      const show = !(actions && actions.hidden);
+      btn.hidden = !show;
+      if (show) {
+        btn.removeAttribute('hidden');
+        btn.style.removeProperty('display');
+      }
+    }
     if (nextSteps && !ready) nextSteps.hidden = true;
   }
 
@@ -4405,9 +4484,11 @@
     const btn = document.getElementById('ee-tickets-submit');
     const warn = document.getElementById('ee-publish-warn');
     if (!btn) return;
+    ensureBothPathMemberTicketUi();
     if (ticketsLocked) {
       btn.disabled = true;
       btn.hidden = false;
+      btn.removeAttribute('hidden');
       const saveBtn = document.getElementById('ee-tickets-save');
       if (saveBtn) saveBtn.disabled = true;
       if (warn) warn.hidden = true;
