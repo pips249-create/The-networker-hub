@@ -397,7 +397,7 @@
 
     if (mobileExtraClass) {
       return (
-        '<p class="nav-mobile-section-label">List your</p>' +
+        '<p class="nav-mobile-section-label">List your…</p>' +
         '<a href="' +
         href(eventPath) +
         '" class="' +
@@ -427,7 +427,7 @@
       '<button type="button" class="nav-dropdown-toggle nav-organiser nav-list-toggle' +
       (isListMenuActive(user) ? ' is-active' : '') +
       '" id="nav-list-your-toggle" aria-expanded="false" aria-haspopup="true" aria-controls="nav-list-your-menu">' +
-      'List your <span class="nav-dropdown-chev" aria-hidden="true">▾</span></button>' +
+      'List your… <span class="nav-dropdown-chev" aria-hidden="true">▾</span></button>' +
       '<div class="nav-dropdown-menu" id="nav-list-your-menu" role="menu" hidden>' +
       '<a role="menuitem" class="nav-dropdown-item nav-list-event" href="' +
       href(eventPath) +
