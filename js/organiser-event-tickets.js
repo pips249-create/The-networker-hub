@@ -283,6 +283,7 @@
       payHowIncludesTickets() &&
       payHowIncludesMembership() &&
       !privateTicketEnabled() &&
+      !(attendanceMode === 'category_exclusivity' && ceMemberTicketEnabled()) &&
       !membersOnlyEventEnabled() &&
       !isMembershipMeetingMode()
     ) {
@@ -3040,6 +3041,14 @@
 
     if (includesMembership) {
       setHubMembershipEnabled(true);
+      // Application + membership: list members need a booking price (usually £0).
+      if (isApplication) {
+        const ceMember = document.getElementById('ee-ce-member-ticket-enabled');
+        if (ceMember && !ceMember.checked) {
+          ceMember.checked = true;
+          syncCeMemberTicketFields();
+        }
+      }
     } else {
       setHubMembershipEnabled(false);
       // Tickets-only can still use complimentary visits (see syncGuestProgrammeMount).
@@ -4384,8 +4393,11 @@
   function syncContinueToReviewVisibility(tiers) {
     const btn = document.getElementById('ee-tickets-submit');
     const nextSteps = document.getElementById('ee-tickets-next-steps');
+    const actions = document.getElementById('ee-tickets-actions');
     const ready = ticketsSetupReadyForReview(tiers);
-    if (btn) btn.hidden = !ready;
+    // Keep Save / Continue visible whenever the footer is open. Hiding it when
+    // setup was incomplete made the primary action look like it had vanished.
+    if (btn) btn.hidden = Boolean(actions && actions.hidden);
     if (nextSteps && !ready) nextSteps.hidden = true;
   }
 
@@ -4920,6 +4932,25 @@
     syncAttendanceStepUi();
   }
 
+  function bindNumberInputScrollFriendly() {
+    const root = document.getElementById('ee-tickets-form') || document.querySelector('.ee-wrap');
+    if (!root || root.dataset.numberWheelBound === '1') return;
+    root.dataset.numberWheelBound = '1';
+    // Number inputs hijack the scroll wheel to change value — blur so the page can scroll.
+    root.addEventListener(
+      'wheel',
+      function (e) {
+        const t = e.target;
+        if (!t || !t.matches || !t.matches('input[type="number"]')) return;
+        if (document.activeElement === t) {
+          e.preventDefault();
+          t.blur();
+        }
+      },
+      { passive: false }
+    );
+  }
+
   async function init() {
     loadSeriesMeta();
     bindGuestPassesFields();
@@ -5204,6 +5235,7 @@
     bindCeMemberTicketFields();
     bindPayHowFields();
     bindHubMembershipFields();
+    bindNumberInputScrollFriendly();
     document.getElementById('ee-ce-price')?.addEventListener('input', updatePublishButton);
     document.getElementById('ee-ce-price')?.addEventListener('change', updatePublishButton);
     syncPayHowUi();

@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260909navlist2" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260723" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260909ticketvat1" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260909savebtn1" />
     <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260701" />
     <link rel="stylesheet" href="../css/hub-field-tip.css?v=20260711" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260612" />
@@ -646,7 +646,6 @@
               <input type="checkbox" id="refund-terms-agreed" />
               <span>I understand I am responsible for honouring refunds via my connected Stripe account</span>
             </label>
-            <p class="ee-alert ee-alert-warn" id="ee-publish-warn" hidden>Before this event can go live: add a ticket type and complete any paid-ticket setup (VAT, refund policy, bank details).</p>
           </div>
         </div>
 
@@ -698,12 +697,16 @@
           <p class="ee-next-steps-body" id="ee-tickets-next-steps-body"></p>
         </div>
 
+        <p class="ee-alert ee-alert-warn" id="ee-publish-warn" hidden>
+          Before this event can go live: add a ticket type and complete any paid-ticket setup (VAT, refund policy, bank details).
+        </p>
+
         <div class="ee-actions ee-actions--split" id="ee-tickets-actions" hidden>
           <a class="ee-btn ee-btn-outline ee-fullpage-back" href="/organiser/#events-tickets">Back to dashboard</a>
           <button type="button" class="ee-btn ee-btn-outline ee-embed-back" id="ee-tickets-back-edit" hidden>
             ← Event details
           </button>
-          <button type="submit" class="ee-btn ee-btn-gold" id="ee-tickets-submit" hidden>Continue to review →</button>
+          <button type="submit" class="ee-btn ee-btn-gold" id="ee-tickets-submit">Continue to review →</button>
         </div>
       </form>
     </div>
@@ -722,6 +725,6 @@
     <script src="../js/organiser-field-tips.js?v=20260902compvisits1" defer></script>
     <script src="../js/hub-field-tip.js?v=20260711" defer></script>
     <script src="../js/organiser-launch-setup.js?v=20260820hubreview1" defer></script>
-    <script src="../js/organiser-event-tickets.js?v=20260909ticketvat1" defer></script>
+    <script src="../js/organiser-event-tickets.js?v=20260909savebtn1" defer></script>
   </body>
 </html>

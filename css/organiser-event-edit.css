@@ -449,6 +449,18 @@ a.ee-wizard-link:hover {
   box-sizing: border-box;
 }
 
+/* Hide number spinners — they steal scroll-wheel on ticket/membership prices. */
+.ee-wrap input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.ee-wrap input[type='number']::-webkit-outer-spin-button,
+.ee-wrap input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
 .ee-quarter-time {
   position: relative;
   display: flex;
@@ -813,9 +825,14 @@ a.ee-wizard-link:hover {
   margin-top: 0;
 }
 
-.ee-actions--split #ee-submit {
+.ee-actions--split #ee-submit,
+.ee-actions--split #ee-tickets-submit {
   flex-shrink: 0;
   margin-left: auto;
+}
+
+#ee-publish-warn {
+  margin: 12px 0 8px;
 }
 
 .ee-card-actions {

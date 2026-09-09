@@ -4772,6 +4772,46 @@
     return upcoming || sorted[0];
   }
 
+  function firstSeriesImageUrl(members) {
+    const list = members || [];
+    for (let i = 0; i < list.length; i++) {
+      const src = String(list[i].imageUrl || list[i].photo || '').trim();
+      if (src) return src;
+    }
+    return '';
+  }
+
+  function eventThumbSrc(item) {
+    if (!item) return '';
+    let src = String(item.imageUrl || item.photo || '').trim();
+    if (!src && item.isSeries && Array.isArray(item.seriesEvents)) {
+      src = firstSeriesImageUrl(item.seriesEvents);
+    }
+    if (!src) {
+      const gid =
+        item.organiserGroupId ||
+        (Array.isArray(item.organiserGroupIds) ? item.organiserGroupIds[0] : '');
+      if (gid && Array.isArray(state.groups)) {
+        const g = state.groups.find(function (row) {
+          return row && row.id === gid;
+        });
+        if (g) src = String(g.imageUrl || g.photo || g.logoUrl || '').trim();
+      }
+    }
+    return src;
+  }
+
+  function isThumbableImageUrl(src) {
+    const value = String(src || '').trim();
+    if (!value) return false;
+    if (/event-placeholder/i.test(value)) return false;
+    if (/\/assets\/placeholders\//i.test(value)) return false;
+    if (/^(https?:)?\/\//i.test(value)) return true;
+    if (value.startsWith('/')) return true;
+    if (/^data:image\//i.test(value)) return true;
+    return false;
+  }
+
   function seriesStatusFromMembers(members) {
     const order = { live: 0, upcoming: 1, draft: 2, archived: 3, unpublished: 4, cancelled: 5 };
     let best = members[0];
@@ -4815,6 +4855,8 @@
       seriesCount: sorted.length,
       seriesEventIds: sorted.map((m) => m.id),
       seriesEvents: sorted,
+      // Prefer any date's cover — primary (next upcoming) may not have the photo yet.
+      imageUrl: firstSeriesImageUrl(sorted) || primary.imageUrl || '',
       // Date column uses the earliest occurrence; Time must use that occurrence's
       // real end — never the last child's start (that made 10:00 – 10:00).
       date: sorted[0].date || primary.date,
@@ -5096,8 +5138,8 @@
 
   function thumbHtml(item) {
     const name = item.name || item.title || '?';
-    const imgSrc = item.imageUrl || item.photo || '';
-    if (imgSrc && /^https?:\/\//i.test(imgSrc)) {
+    const imgSrc = eventThumbSrc(item);
+    if (isThumbableImageUrl(imgSrc)) {
       return (
         '<img class="org-thumb" src="' +
         esc(imgSrc) +
@@ -12119,35 +12161,10 @@
     const revenueNum = Number(ev.revenueNum) || 0;
     const revClass = revenueNum > 0 ? 'org-revenue' : 'org-revenue muted';
 
-    // If this event is in the launch review queue (needs tickets/setup), show Pending review.
+    // Keep the real listing status (Draft / Live / etc.). Do not relabel launch-setup
+    // queue items as "Pending review" — that hid autodrafts and unfinished drafts.
     var evStatusKey = ev.statusKey || 'draft';
     var evStatusLabel = ev.statusLabel || 'Draft';
-    if (
-      window.HubOrganiserLaunchSetup &&
-      window.HubOrganiserLaunchSetup.buildQueue &&
-      typeof window.orgDashLaunchSetupInput === 'function'
-    ) {
-      try {
-        var _launch = window.HubOrganiserLaunchSetup.buildQueue(window.orgDashLaunchSetupInput());
-        if (!_launch.stored.dismissed) {
-          var _evId = String(ev.id || '');
-          var _inQueue = (_launch.queue || []).some(function (item) {
-            if (item.kind !== 'event') return false;
-            var fam = item.family;
-            if (!fam) return false;
-            return (fam.events || []).some(function (e) {
-              return String(e.id || '') === _evId;
-            });
-          });
-          if (_inQueue) {
-            evStatusKey = 'pending_review';
-            evStatusLabel = 'Pending review';
-          }
-        }
-      } catch (e) {
-        /* non-fatal */
-      }
-    }
 
     tr.innerHTML =
       '<td class="org-td-thumb" data-label="">' +
