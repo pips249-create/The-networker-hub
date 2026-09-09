@@ -24,9 +24,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/hub.css?v=20260909social1">
+<link rel="stylesheet" href="css/hub.css?v=20260909navlist2">
 <link rel="stylesheet" href="css/content-page.css">
-<link rel="stylesheet" href="css/advertising-page.css?v=20260818terms1">
+<link rel="stylesheet" href="css/advertising-page.css?v=20260909tabs1">
 <link rel="stylesheet" href="css/cms-carousel-ad.css?v=20260612f">
 <link rel="icon" href="/favicon.ico?v=20260823uk3" sizes="any">
 <link rel="icon" href="/assets/favicon.svg?v=20260823uk3" type="image/svg+xml">
@@ -41,7 +41,7 @@
 <body class="advertising-page">
 
 <div id="hub-site-nav"></div>
-<script src="js/site-nav.js?v=20260825navfull1" data-root="" data-page="advertising"></script>
+<script src="js/site-nav.js?v=20260909navlist2" data-root="" data-page="advertising"></script>
 
 <main class="content-page-main advertising-page-main">
   <header class="ad-page-header" aria-label="Advertising and sponsorship">
@@ -1331,7 +1331,7 @@
             <h3 class="ad-package-title">Industry Sponsor</h3>
             <p class="ad-package-placement">Own a sector on the Opportunities directory — Property, Cleaning, Food &amp; Drink, and more.</p>
             <p class="ad-package-pitch">When someone filters by your industry, your brand is the only sponsor they see. One partner per category — exclusive category authority where founders and franchise buyers are already browsing deals.</p>
-            <p class="ad-package-price">£49 <span>/ industry / month + VAT</span> <span class="ad-package-price-note">launch</span> · £99 <span>standard + VAT</span></p>
+            <p class="ad-package-price" id="industry-partner-price" role="text">£49 <span>/ industry / month + VAT</span> <span class="ad-package-price-note">launch</span> · £99 <span>standard + VAT</span></p>
             <p class="ad-package-term-note">Monthly, 6 months or yearly · enquire to book · save 10% / 15% on prepaid terms</p>
             <ul>
               <li><strong>Category exclusivity:</strong> Lock in the only sponsor slot for your industry — competitors stay out of that filter.</li>
@@ -1340,8 +1340,28 @@
               <li><strong>Flexible billing:</strong> Pay monthly and cancel at any time, or prepay 6 or 12 months and save 10% / 15%.</li>
               <li><strong>Website placement:</strong> Logo + link only — not included in opportunity emails (Headline Sponsor covers inbox).</li>
             </ul>
-            <p class="ad-package-note">Launch industries: Cleaning, Home services, Food &amp; Drink, Retail, Tech, Health, Medical, Beauty, Property, Automotive, Education, Childcare, Care, Finance, Recruitment, Pets, Leisure, Networking.</p>
-            <a class="ad-package-cta ad-enquiry-jump" href="#ad-enquiry" data-ad-enquiry-section="Opportunities" data-ad-enquiry-package="Industry Sponsor">Enquire about an industry →</a>
+            <div class="city-partner-checkout" id="industry-partner-checkout">
+              <details class="city-partner-available-panel" id="industry-partner-available-panel" open>
+                <summary class="city-partner-city-picker-trigger">
+                  <span class="city-partner-city-picker-copy">
+                    <strong>Select your industry</strong>
+                    <span class="city-partner-city-picker-hint">Choose a sector, then enquire — one Industry Sponsor per category</span>
+                  </span>
+                  <span class="city-partner-available-count" id="industry-partner-available-count">18</span>
+                  <span class="city-partner-city-picker-chevron" aria-hidden="true"></span>
+                </summary>
+                <div class="city-partner-city-grid" id="industry-partner-industry-list" role="list"></div>
+              </details>
+              <p class="city-partner-status" id="industry-partner-status" role="status">Pick an industry above to enquire.</p>
+              <a
+                class="ad-package-cta"
+                id="industry-partner-enquire-btn"
+                href="#ad-enquiry"
+                data-ad-enquiry-section="Opportunities"
+                data-ad-enquiry-package="Industry Sponsor"
+                >Enquire about an industry →</a
+              >
+            </div>
           </div>
           <div class="ad-package-preview ad-package-preview--city-partner">
             <p class="ad-preview-label">Example</p>
@@ -1352,7 +1372,7 @@
                   <div class="ad-mock-city-partner-copy">
                     <span class="ad-mock-city-partner-kicker">Industry directory</span>
                     <p class="ad-mock-city-partner-title">Business opportunities in <em>Property</em></p>
-                    <p class="ad-mock-city-partner-copyline">Browse franchises, side hustles, and partnerships in Property. One Industry Sponsor owns this category.</p>
+                    <p class="ad-mock-city-partner-copyline">Browse franchises, side hustles, and partnerships in Property. Enquire directly with providers.</p>
                   </div>
                   <aside class="ad-mock-city-partner-ad">
                     <span class="ad-mock-city-partner-badge">Industry Sponsor</span>
@@ -1780,7 +1800,7 @@
 <script src="js/cms-sponsor-fields.js?v=20260609c"></script>
 <script src="js/cms-ad-blocks.js?v=20260908industry1"></script>
 <script src="js/hub-turnstile.js?v=20260827sec1"></script>
-<script src="js/advertising-page.js?v=20260908industry1"></script>
+<script src="js/advertising-page.js?v=20260909industry2"></script>
 <script src="js/city-partner-advertising.js?v=20260818terms1"></script>
 <script src="js/county-partner-advertising.js?v=20260904county1"></script>
 

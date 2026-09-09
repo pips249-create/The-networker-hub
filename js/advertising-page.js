@@ -381,7 +381,7 @@
     packageEl.dispatchEvent(new Event('change'));
   }
 
-  function prefillEnquiryForm(sectionLabel, packageName) {
+  function prefillEnquiryForm(sectionLabel, packageName, messageText) {
     var sectionEl = document.getElementById('ad-enquiry-section');
     var packageEl = document.getElementById('ad-enquiry-package');
     if (!sectionEl || !packageEl) return;
@@ -414,6 +414,16 @@
     if (packageEl) {
       packageEl.dispatchEvent(new Event('change'));
     }
+
+    if (messageText) {
+      var form = document.getElementById('ad-enquiry-form');
+      var messageEl = form && form.elements && form.elements.namedItem('message');
+      if (messageEl) {
+        var existing = String(messageEl.value || '').trim();
+        if (!existing) messageEl.value = messageText;
+        else if (existing.indexOf(messageText) === -1) messageEl.value = existing + '\n\n' + messageText;
+      }
+    }
   }
 
   function setEnquiryStatus(message, type) {
@@ -436,12 +446,99 @@
       link.addEventListener('click', function (e) {
         var section = link.getAttribute('data-ad-enquiry-section');
         var pkg = link.getAttribute('data-ad-enquiry-package');
+        var industry = link.getAttribute('data-ad-enquiry-industry');
         if (!section && !pkg) return;
         e.preventDefault();
-        prefillEnquiryForm(section, pkg);
+        var msg = industry
+          ? 'I am interested in Industry Sponsor for ' + industry + '.'
+          : '';
+        prefillEnquiryForm(section, pkg, msg);
         scrollToAnchor('ad-enquiry');
       });
     });
+  }
+
+  var INDUSTRY_SPONSOR_OPTIONS = [
+    { slug: 'cleaning', name: 'Cleaning' },
+    { slug: 'home-services', name: 'Home services & trades' },
+    { slug: 'food', name: 'Food & Drink' },
+    { slug: 'retail', name: 'Retail & E-commerce' },
+    { slug: 'tech', name: 'Tech & Digital' },
+    { slug: 'health', name: 'Health & Fitness' },
+    { slug: 'medical', name: 'Medical & clinical' },
+    { slug: 'beauty', name: 'Beauty & Wellness' },
+    { slug: 'property', name: 'Property' },
+    { slug: 'automotive', name: 'Automotive' },
+    { slug: 'education', name: 'Education & Coaching' },
+    { slug: 'childcare', name: 'Childcare & Family' },
+    { slug: 'care', name: 'Care & support' },
+    { slug: 'finance', name: 'Finance, legal & admin' },
+    { slug: 'recruitment', name: 'Recruitment & staffing' },
+    { slug: 'pets', name: 'Pets & Animals' },
+    { slug: 'leisure', name: 'Leisure, travel & hospitality' },
+    { slug: 'networking', name: 'Networking' },
+  ];
+
+  function initIndustryPartnerPicker() {
+    var list = document.getElementById('industry-partner-industry-list');
+    var status = document.getElementById('industry-partner-status');
+    var countEl = document.getElementById('industry-partner-available-count');
+    var enquireBtn = document.getElementById('industry-partner-enquire-btn');
+    if (!list || !enquireBtn) return;
+
+    var selectedSlug = '';
+    var selectedName = '';
+
+    if (countEl) countEl.textContent = String(INDUSTRY_SPONSOR_OPTIONS.length);
+
+    list.innerHTML = INDUSTRY_SPONSOR_OPTIONS.map(function (industry) {
+      return (
+        '<label class="city-partner-city" data-industry-slug="' +
+        esc(industry.slug) +
+        '">' +
+        '<input type="radio" name="industry-partner-industry" value="' +
+        esc(industry.slug) +
+        '" data-industry-name="' +
+        esc(industry.name) +
+        '">' +
+        '<span>' +
+        esc(industry.name) +
+        '</span>' +
+        '</label>'
+      );
+    }).join('');
+
+    function syncEnquire() {
+      var checked = list.querySelector('input[name="industry-partner-industry"]:checked');
+      selectedSlug = checked ? String(checked.value || '') : '';
+      selectedName = checked ? String(checked.getAttribute('data-industry-name') || '') : '';
+      if (selectedName) {
+        enquireBtn.textContent = 'Enquire about ' + selectedName + ' →';
+        enquireBtn.setAttribute('data-ad-enquiry-industry', selectedName);
+        if (status) {
+          status.textContent =
+            selectedName +
+            ' selected — send an enquiry and we will confirm availability.';
+        }
+      } else {
+        enquireBtn.textContent = 'Enquire about an industry →';
+        enquireBtn.removeAttribute('data-ad-enquiry-industry');
+        if (status) status.textContent = 'Pick an industry above to enquire.';
+      }
+    }
+
+    list.addEventListener('change', syncEnquire);
+
+    enquireBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      var msg = selectedName
+        ? 'I am interested in Industry Sponsor for ' + selectedName + '.'
+        : 'I am interested in Industry Sponsor — please advise available industries.';
+      prefillEnquiryForm('Opportunities', 'Industry Sponsor', msg);
+      scrollToAnchor('ad-enquiry');
+    });
+
+    syncEnquire();
   }
 
   function setQuickEnquiryStatus(message, type) {
@@ -961,6 +1058,16 @@
         if (countyCheckout) {
           window.setTimeout(function () {
             countyCheckout.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 280);
+        }
+      }
+      if (id === 'industry-partner-package') {
+        var industryCheckout = document.getElementById('industry-partner-checkout');
+        var industryPanel = document.getElementById('industry-partner-available-panel');
+        if (industryPanel) industryPanel.open = true;
+        if (industryCheckout) {
+          window.setTimeout(function () {
+            industryCheckout.scrollIntoView({ behavior: 'smooth', block: 'center' });
           }, 280);
         }
       }
@@ -1545,6 +1652,7 @@
       initPackageReveal();
       initTabJumpLinks();
       initEnquiryJumps();
+      initIndustryPartnerPicker();
       initQuickEnquiry();
       initEnquiryForm();
       initStickyCta();
@@ -1559,6 +1667,7 @@
     initPackageReveal();
     initTabJumpLinks();
     initEnquiryJumps();
+    initIndustryPartnerPicker();
     initQuickEnquiry();
     initEnquiryForm();
     initStickyCta();

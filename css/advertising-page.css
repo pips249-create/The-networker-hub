@@ -1247,6 +1247,11 @@ body.nav-menu-open .ad-sticky-cta {
   background: linear-gradient(90deg, var(--ad-opportunities-accent) 0%, #e8b84a 100%);
 }
 
+/* Six opportunity packages — two neat rows, no sideways scroll */
+.ad-tab-panel--opportunities .ad-package-tabs {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .ad-tab-panel--organisers .ad-package-tab.is-active::after {
   background: var(--ad-organisers-accent);
 }
@@ -1874,13 +1879,12 @@ body.nav-menu-open .ad-sticky-cta {
 }
 
 .ad-package-tabs {
-  display: flex;
-  gap: 4px;
-  padding: 8px 8px 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9.75rem, 1fr));
+  gap: 6px;
+  padding: 8px;
   background: var(--ad-section-tab-bar, var(--ad-section-accent));
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
+  overflow: visible;
 }
 
 .ad-package-tabs::-webkit-scrollbar {
@@ -1889,17 +1893,16 @@ body.nav-menu-open .ad-sticky-cta {
 
 .ad-package-tab {
   position: relative;
-  display: inline-flex;
+  display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 4px;
-  flex: 1 1 0;
-  min-width: max-content;
-  padding: 12px 14px 14px;
+  min-width: 0;
+  width: 100%;
+  padding: 11px 10px 13px;
   border: 1px solid rgba(255, 255, 255, 0.14);
-  border-bottom: none;
-  border-radius: 12px 12px 0 0;
+  border-radius: 10px;
   background: rgba(255, 255, 255, 0.1);
   color: rgba(255, 255, 255, 0.88);
   cursor: pointer;
@@ -1928,7 +1931,7 @@ body.nav-menu-open .ad-sticky-cta {
   background: var(--surface);
   color: var(--ad-ink);
   border-color: rgba(255, 255, 255, 0.55);
-  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
   transform: none;
   font-weight: 700;
 }
@@ -1936,19 +1939,20 @@ body.nav-menu-open .ad-sticky-cta {
 .ad-package-tab.is-active::after {
   content: '';
   position: absolute;
-  left: 14px;
-  right: 14px;
-  bottom: 0;
+  left: 12px;
+  right: 12px;
+  bottom: 2px;
   height: 3px;
-  border-radius: 3px 3px 0 0;
+  border-radius: 3px;
   background: var(--ad-section-accent);
 }
 
 .ad-package-tab-label {
-  font-size: 0.86rem;
+  font-size: 0.82rem;
   font-weight: 700;
   line-height: 1.2;
-  white-space: nowrap;
+  white-space: normal;
+  text-wrap: balance;
 }
 
 .ad-package-tab-price {
@@ -6194,7 +6198,8 @@ body.nav-menu-open .ad-sticky-cta {
   }
 
   /* Package tabs: wrap grid, no horizontal scroll */
-  .ad-package-tabs {
+  .ad-package-tabs,
+  .ad-tab-panel--opportunities .ad-package-tabs {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 6px;

@@ -122,8 +122,8 @@
     if (faqHeading) {
       faqHeading.textContent =
         slug === 'online'
-          ? 'Online networking — FAQs'
-          : 'Networking in ' + region.name + ' — FAQs';
+          ? 'Online networking — FAQ'
+          : 'Networking in ' + region.name + ' — FAQ';
     }
     var faqList = document.getElementById('networking-region-faq-list');
     if (faqList && !faqList.children.length) {

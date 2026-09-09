@@ -1423,6 +1423,8 @@
           /* Always show catalog total for All — not the active-type filtered total */
           if (counts && counts.all != null) {
             count = Number(counts.all) || 0;
+          } else if (selectedTypes.length === 0 && window.hubBrowseListingTotal != null) {
+            count = Number(window.hubBrowseListingTotal) || 0;
           } else if (selectedTypes.length === 0 && window.hubBrowseTotal != null) {
             count = Number(window.hubBrowseTotal) || 0;
           } else {

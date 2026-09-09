@@ -885,13 +885,11 @@
     if (window.hubServerBrowse && window.hubBrowseListingTotal != null) {
       return Number(window.hubBrowseListingTotal) || 0;
     }
-    if (window.hubServerBrowse && window.hubBrowseTotal != null) {
-      return Number(window.hubBrowseTotal) || 0;
+    // Stale cached browse-api.js may omit hubBrowseListingTotal while still
+    // storing pagination.listingTotal from the API — prefer that over date total.
+    if (window.hubServerBrowse && window.hubBrowsePagination && window.hubBrowsePagination.listingTotal != null) {
+      return Number(window.hubBrowsePagination.listingTotal) || 0;
     }
-    return getFilteredList().length;
-  }
-
-  function browseDateCount() {
     if (window.hubServerBrowse && window.hubBrowseTotal != null) {
       return Number(window.hubBrowseTotal) || 0;
     }
@@ -905,7 +903,6 @@
   function renderGridPage(list) {
     const rows = list;
     const listingTotal = window.hubServerBrowse ? browseListingCount() : rows.length;
-    const dateTotal = window.hubServerBrowse ? browseDateCount() : rows.length;
     const totalPages = Math.max(1, Math.ceil(listingTotal / PAGE_SIZE));
     const page = window.hubServerBrowse ? window.hubBrowseCurrentPage || currentPage : currentPage;
 
@@ -999,7 +996,9 @@
       '</div>' +
       paginationHtml(currentPage, totalPages);
 
-    updateResultsSummary(dateTotal);
+    // Grid cards are unique listings (multi-date series collapsed); keep the
+    // header count aligned with pagination so empty trailing pages cannot appear.
+    updateResultsSummary(listingTotal);
 
     if (window.HubFavourites) window.HubFavourites.refreshButtons(els.listings);
   }

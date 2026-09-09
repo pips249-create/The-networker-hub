@@ -540,6 +540,8 @@
     excludeHidden: false,
     visibility: '',
     claimStatus: '',
+    lastContact: '',
+    sort: 'updated',
     total: 0,
     loading: false,
     selected: {},
@@ -17254,8 +17256,11 @@
       '<textarea name="description" rows="3" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Short intro for this networking group">' +
       esc(o.description || '') +
       '</textarea></div>' +
-      '<label class="flex items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 cursor-pointer' +
-      (browseHiddenDisabled ? ' opacity-60 cursor-not-allowed' : '') +
+      '<div class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 space-y-2' +
+      (browseHiddenDisabled ? ' opacity-60' : '') +
+      '">' +
+      '<label class="flex items-start gap-2' +
+      (browseHiddenDisabled ? ' cursor-not-allowed' : ' cursor-pointer') +
       '">' +
       '<input type="checkbox" name="hide_from_browse" class="rounded border-slate-300 mt-0.5"' +
       (hiddenFromBrowse ? ' checked' : '') +
@@ -17266,7 +17271,18 @@
       (browseHiddenDisabled
         ? '<span class="block text-[11px] text-amber-800 font-semibold mt-1">Suspended — use Reinstate profile to publish again.</span>'
         : '') +
-      '</span></label></div>' +
+      '</span></label>' +
+      '<div class="group-hide-browse-reason-wrap' +
+      (hiddenFromBrowse ? '' : ' hidden') +
+      '">' +
+      '<label class="block text-[11px] font-semibold text-slate-500 mb-1">Reason</label>' +
+      '<input type="text" name="hide_from_browse_reason" maxlength="500" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
+      attrEsc(o.hide_from_browse_reason || '') +
+      '" placeholder="e.g. requested removal — Name"' +
+      (browseHiddenDisabled ? ' disabled' : '') +
+      (hiddenFromBrowse ? ' required' : '') +
+      '>' +
+      '<p class="text-[11px] text-slate-500 mt-1">Internal note — who asked and why (not shown publicly).</p></div></div></div>' +
       '<div class="group-cleanup-quick-actions flex flex-col items-stretch gap-2 shrink-0">' +
       '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900 whitespace-nowrap">Save</button>' +
       '<button type="button" class="group-message-organiser rounded-lg border border-slate-300 bg-white text-slate-800 text-xs font-semibold px-3 py-1.5 hover:bg-slate-50" data-organiser-id="' +
@@ -17560,6 +17576,8 @@
     if (groupCleanupState.visibility) n += 1;
     if (groupCleanupState.incomplete) n += 1;
     if (groupCleanupState.claimStatus) n += 1;
+    if (groupCleanupState.lastContact) n += 1;
+    if (groupCleanupState.sort && groupCleanupState.sort !== 'updated') n += 1;
     return n;
   }
 
@@ -17568,6 +17586,10 @@
     if (el) el.value = groupCleanupState.visibility || '';
     el = document.getElementById('group-cleanup-claim-status');
     if (el) el.value = groupCleanupState.claimStatus || '';
+    el = document.getElementById('group-cleanup-last-contact');
+    if (el) el.value = groupCleanupState.lastContact || '';
+    el = document.getElementById('group-cleanup-sort');
+    if (el) el.value = groupCleanupState.sort || 'updated';
     el = document.getElementById('group-cleanup-incomplete');
     if (el) el.checked = !!groupCleanupState.incomplete;
     el = document.getElementById('group-cleanup-exclude-hidden');
@@ -17593,6 +17615,10 @@
         active = !!groupCleanupState.incomplete;
       } else if (key === 'claimed' || key === 'unclaimed') {
         active = groupCleanupState.claimStatus === key;
+      } else if (key === 'never' || key === 'stale_30') {
+        active = groupCleanupState.lastContact === key;
+      } else if (key === 'last_contact_asc') {
+        active = groupCleanupState.sort === 'last_contact_asc';
       }
       btn.classList.toggle('ring-2', active);
       btn.classList.toggle('ring-brand-700', active);
@@ -17615,6 +17641,8 @@
     if (groupCleanupState.visibility) params.set('visibility', groupCleanupState.visibility);
     else if (groupCleanupState.excludeHidden) params.set('exclude_hidden', '1');
     if (groupCleanupState.claimStatus) params.set('claim_status', groupCleanupState.claimStatus);
+    if (groupCleanupState.lastContact) params.set('last_contact', groupCleanupState.lastContact);
+    if (groupCleanupState.sort) params.set('sort', groupCleanupState.sort);
     if (options.organiserId || groupCleanupState.focusOrganiserId) {
       params.set('id', String(options.organiserId || groupCleanupState.focusOrganiserId));
     }
@@ -17842,6 +17870,7 @@
     logoPayloadForKey(id, form)
       .then(function (logoPayload) {
         var hideInput = form.querySelector('[name="hide_from_browse"]');
+        var reasonInput = form.querySelector('[name="hide_from_browse_reason"]');
         var payload = {
           id: id,
           name: formFieldVal(form, 'name'),
@@ -17855,6 +17884,13 @@
         };
         if (hideInput && !hideInput.disabled) {
           payload.hide_from_browse = hideInput.checked;
+          if (hideInput.checked) {
+            var reason = reasonInput ? String(reasonInput.value || '').trim() : '';
+            if (!reason) {
+              throw new Error('Add a reason when hiding from browse (e.g. requested removal — Name).');
+            }
+            payload.hide_from_browse_reason = reason;
+          }
         }
         return adminPost('/api/admin/organisers', payload);
       })
@@ -18226,6 +18262,20 @@
         : '');
     if (!window.confirm(confirmMsg)) return;
 
+    var hideReason = '';
+    if (hide) {
+      hideReason = String(
+        window.prompt(
+          'Reason for hiding from browse (required):\n\ne.g. requested removal — Name',
+          'requested removal — '
+        ) || ''
+      ).trim();
+      if (!hideReason) {
+        window.alert('Add a reason when hiding from browse (e.g. requested removal — Name).');
+        return;
+      }
+    }
+
     var msgEl = document.getElementById('group-browse-msg');
     var hideBtn = document.getElementById('group-hide-browse-btn');
     var showBtn = document.getElementById('group-show-browse-btn');
@@ -18236,7 +18286,9 @@
       msgEl.className = 'text-xs text-slate-500';
     }
 
-    adminPost('/api/admin/organisers', { action: 'bulk_update', ids: ids, hide_from_browse: hide })
+    var bulkPayload = { action: 'bulk_update', ids: ids, hide_from_browse: hide };
+    if (hide) bulkPayload.hide_from_browse_reason = hideReason;
+    adminPost('/api/admin/organisers', bulkPayload)
       .then(function (data) {
         if (!data.ok) throw new Error(data.message || data.error || 'Bulk update failed');
         clearSelectedGroups();
@@ -18496,11 +18548,18 @@
         groupCleanupState.excludeHidden = false;
         groupCleanupState.visibility = '';
         groupCleanupState.claimStatus = '';
+        groupCleanupState.lastContact = '';
+        groupCleanupState.sort = 'updated';
       } else if (gKey === 'browse' || gKey === 'draft' || gKey === 'unpublished') {
         groupCleanupState.visibility = groupCleanupState.visibility === gKey ? '' : gKey;
         if (groupCleanupState.visibility) groupCleanupState.excludeHidden = false;
       } else if (gKey === 'claimed' || gKey === 'unclaimed') {
         groupCleanupState.claimStatus = groupCleanupState.claimStatus === gKey ? '' : gKey;
+      } else if (gKey === 'never' || gKey === 'stale_30') {
+        groupCleanupState.lastContact = groupCleanupState.lastContact === gKey ? '' : gKey;
+      } else if (gKey === 'last_contact_asc') {
+        groupCleanupState.sort =
+          groupCleanupState.sort === 'last_contact_asc' ? 'updated' : 'last_contact_asc';
       } else if (gKey === 'incomplete') {
         groupCleanupState.incomplete = !groupCleanupState.incomplete;
       }
@@ -18923,6 +18982,26 @@
         });
         return;
       }
+      if (e.target.id === 'group-cleanup-last-contact') {
+        groupCleanupState.lastContact = e.target.value || '';
+        groupCleanupState.page = 0;
+        syncGroupCleanupFilterUi();
+        fetchGroupCleanup(0).then(function (data) {
+          renderGroupCleanupList(data);
+          bindGroupCleanupPageUi();
+        });
+        return;
+      }
+      if (e.target.id === 'group-cleanup-sort') {
+        groupCleanupState.sort = e.target.value || 'updated';
+        groupCleanupState.page = 0;
+        syncGroupCleanupFilterUi();
+        fetchGroupCleanup(0).then(function (data) {
+          renderGroupCleanupList(data);
+          bindGroupCleanupPageUi();
+        });
+        return;
+      }
       if (e.target.id === 'group-cleanup-exclude-hidden') {
         groupCleanupState.excludeHidden = e.target.checked;
         if (groupCleanupState.excludeHidden) groupCleanupState.visibility = '';
@@ -18958,6 +19037,23 @@
           } else forgetSelectedGroup(cb.value);
         });
         updateGroupBulkBar();
+        return;
+      }
+      if (e.target.name === 'hide_from_browse' && e.target.closest('.group-cleanup-form')) {
+        var hideForm = e.target.closest('.group-cleanup-form');
+        var reasonWrap = hideForm && hideForm.querySelector('.group-hide-browse-reason-wrap');
+        var reasonField = hideForm && hideForm.querySelector('[name="hide_from_browse_reason"]');
+        if (reasonWrap) reasonWrap.classList.toggle('hidden', !e.target.checked);
+        if (reasonField) {
+          reasonField.required = !!e.target.checked;
+          if (e.target.checked) {
+            reasonField.focus();
+            if (!String(reasonField.value || '').trim()) {
+              reasonField.value = 'requested removal — ';
+              reasonField.setSelectionRange(reasonField.value.length, reasonField.value.length);
+            }
+          }
+        }
       }
     });
 
@@ -19326,6 +19422,21 @@
     document.body.addEventListener('click', handleEventCleanupClick);
   }
 
+  function formatGroupLastCommunication(o) {
+    if (!o || !o.last_communication_at) {
+      return '<span class="text-slate-400">Never contacted</span>';
+    }
+    var parts = [];
+    if (o.last_communication_who) parts.push(String(o.last_communication_who));
+    if (o.last_communication_label) parts.push(String(o.last_communication_label));
+    var when = formatSalesKitContactDate({
+      at: o.last_communication_at,
+      shownAt: o.last_communication_at,
+    });
+    if (when) parts.push(when);
+    return '<span class="text-slate-600">Last: ' + esc(parts.join(' · ') || 'Contacted') + '</span>';
+  }
+
   function renderGroupCleanupList(data) {
     var list = document.getElementById('group-cleanup-list');
     var status = document.getElementById('group-cleanup-status');
@@ -19417,7 +19528,11 @@
               ? '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-sky-100 text-sky-900">Claimed</span>'
               : '') +
             (String(o.listing_status || '').toLowerCase() === 'unpublished' && !o.hub_suspended
-              ? '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-slate-100 text-slate-700 border border-slate-200">Hidden from browse</span>'
+              ? '<span class="inline-flex items-center max-w-[18rem] rounded-full text-[10px] font-semibold px-2 py-0.5 bg-slate-100 text-slate-700 border border-slate-200 truncate" title="' +
+                attrEsc(o.hide_from_browse_reason || 'Hidden from browse') +
+                '">Hidden' +
+                (o.hide_from_browse_reason ? ' · ' + esc(o.hide_from_browse_reason) : ' from browse') +
+                '</span>'
               : '') +
             moderationBadge(o) +
             loginBadge +
@@ -19430,6 +19545,9 @@
             ' · ' +
             missingHtml +
             (o.website && !isOpen ? ' · ' + esc(o.website) : '') +
+            '</p>' +
+            '<p class="text-[11px] mt-0.5">' +
+            formatGroupLastCommunication(o) +
             '</p></div></div>' +
             '<div class="flex flex-wrap gap-1.5 shrink-0">' +
             (publicHref
@@ -19607,6 +19725,45 @@
       '<input type="checkbox" id="group-cleanup-incomplete" class="rounded border-slate-300"' +
       (groupCleanupState.incomplete ? ' checked' : '') +
       '> Show incomplete only</label></div>' +
+      '<div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">' +
+      '<select id="group-cleanup-last-contact" class="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white w-full sm:max-w-[14rem]" aria-label="Last communication">' +
+      '<option value=""' +
+      (groupCleanupState.lastContact === '' ? ' selected' : '') +
+      '>Any last communication</option>' +
+      '<option value="never"' +
+      (groupCleanupState.lastContact === 'never' ? ' selected' : '') +
+      '>Never contacted</option>' +
+      '<option value="any"' +
+      (groupCleanupState.lastContact === 'any' ? ' selected' : '') +
+      '>Contacted (any time)</option>' +
+      '<option value="stale_7"' +
+      (groupCleanupState.lastContact === 'stale_7' ? ' selected' : '') +
+      '>Not in last 7 days</option>' +
+      '<option value="stale_30"' +
+      (groupCleanupState.lastContact === 'stale_30' ? ' selected' : '') +
+      '>Not in last 30 days</option>' +
+      '<option value="stale_90"' +
+      (groupCleanupState.lastContact === 'stale_90' ? ' selected' : '') +
+      '>Not in last 90 days</option>' +
+      '<option value="recent_7"' +
+      (groupCleanupState.lastContact === 'recent_7' ? ' selected' : '') +
+      '>Contacted in last 7 days</option>' +
+      '<option value="recent_30"' +
+      (groupCleanupState.lastContact === 'recent_30' ? ' selected' : '') +
+      '>Contacted in last 30 days</option></select>' +
+      '<select id="group-cleanup-sort" class="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white w-full sm:max-w-[14rem]" aria-label="Sort groups">' +
+      '<option value="updated"' +
+      (groupCleanupState.sort === 'updated' ? ' selected' : '') +
+      '>Sort: Recently updated</option>' +
+      '<option value="created"' +
+      (groupCleanupState.sort === 'created' ? ' selected' : '') +
+      '>Sort: Newest created</option>' +
+      '<option value="last_contact_asc"' +
+      (groupCleanupState.sort === 'last_contact_asc' ? ' selected' : '') +
+      '>Sort: Last communication (oldest)</option>' +
+      '<option value="last_contact_desc"' +
+      (groupCleanupState.sort === 'last_contact_desc' ? ' selected' : '') +
+      '>Sort: Last communication (newest)</option></select></div>' +
       '<div class="flex flex-wrap gap-2">' +
       '<button type="button" data-group-quick="browse" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">On browse</button>' +
       '<button type="button" data-group-quick="draft" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Draft</button>' +
@@ -19614,9 +19771,12 @@
       '<button type="button" data-group-quick="claimed" class="text-xs font-semibold rounded-full border border-sky-200 px-3 py-1 text-sky-900 hover:bg-sky-50">Claimed</button>' +
       '<button type="button" data-group-quick="unclaimed" class="text-xs font-semibold rounded-full border border-amber-200 px-3 py-1 text-amber-900 hover:bg-amber-50">Unclaimed</button>' +
       '<button type="button" data-group-quick="incomplete" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Incomplete</button>' +
+      '<button type="button" data-group-quick="never" class="text-xs font-semibold rounded-full border border-rose-200 px-3 py-1 text-rose-900 hover:bg-rose-50">Never contacted</button>' +
+      '<button type="button" data-group-quick="stale_30" class="text-xs font-semibold rounded-full border border-amber-200 px-3 py-1 text-amber-900 hover:bg-amber-50">Stale 30d+</button>' +
+      '<button type="button" data-group-quick="last_contact_asc" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Oldest contact first</button>' +
       '<button type="button" data-group-quick="clear" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-500 hover:bg-slate-50">Clear filters</button></div>' +
       '</div></details></div>' +
-      '<p class="text-xs text-slate-500">Compact rows — click <strong>Edit profile</strong> to expand. Use page numbers or Go to below to browse.</p>' +
+      '<p class="text-xs text-slate-500">Compact rows — click <strong>Edit profile</strong> to expand. Last communication uses sales-kit CRM touches and claim-invite emails. Use page numbers or Go to below to browse.</p>' +
       '<div id="group-cleanup-list" class="space-y-2"></div></div>';
 
     groupCleanupState.page = 0;

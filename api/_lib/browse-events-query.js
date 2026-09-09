@@ -571,11 +571,13 @@ async function fetchBrowseTypeCounts(sb, params) {
   const base = { ...params, types: [] };
 
   function tallyTypeCounts(rows) {
-    const counts = { all: rows.length };
+    // Match grid pagination: one chip count per series, not per date row.
+    const deduped = dedupeBrowseRowsBySeries(rows || []);
+    const counts = { all: deduped.length };
     types.forEach((type) => {
       counts[type] = 0;
     });
-    rows.forEach((row) => {
+    deduped.forEach((row) => {
       const type = String(row.type_tab || 'meeting').toLowerCase();
       if (counts[type] != null) counts[type] += 1;
     });

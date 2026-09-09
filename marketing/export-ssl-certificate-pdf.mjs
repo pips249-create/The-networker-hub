@@ -6,9 +6,14 @@ import { chromium } from 'playwright';
 import { pathToFileURL } from 'url';
 import path from 'path';
 import fs from 'fs';
+import os from 'os';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const defaultBrowsersPath = path.join(os.homedir(), 'Library', 'Caches', 'ms-playwright');
+if (!process.env.PLAYWRIGHT_BROWSERS_PATH && fs.existsSync(defaultBrowsersPath)) {
+  process.env.PLAYWRIGHT_BROWSERS_PATH = defaultBrowsersPath;
+}
 const htmlPath = path.join(__dirname, 'ssl-certificate-details.html');
 const exportsDir = path.join(__dirname, 'exports');
 const assetsDir = path.join(__dirname, '..', 'assets', 'guides');

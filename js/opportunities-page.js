@@ -310,7 +310,7 @@
   var allListings = [];
   var activeTypes = [];
   var activeInvestTier = 'all';
-  var activeCategory = '';
+  var activeCategories = [];
   var activeCommitments = [];
   var activeLocationTag = '';
   var locationQ = '';
@@ -450,6 +450,7 @@
     els.hasOpenDay = document.getElementById('filter-has-open-day');
     els.investGroup = document.getElementById('filter-opp-invest-group');
     els.investHint = document.getElementById('filter-opp-invest-hint');
+    els.customInvestPanel = document.getElementById('filter-opp-custom-invest');
     els.industryRow = document.getElementById('filter-industry-row');
     els.industryEmpty = document.getElementById('filter-industry-empty');
     els.industryLabel = document.getElementById('filter-industry-label');
@@ -805,16 +806,24 @@
         return t !== value;
       });
     } else if (key === 'category') {
-      activeCategory = '';
-      if (els.filterCategory) els.filterCategory.value = '';
+      activeCategories = activeCategories.filter(function (c) {
+        return c !== value;
+      });
+      if (els.filterCategory) els.filterCategory.value = activeCategories[0] || '';
     } else if (key === 'invest') {
       activeInvestTier = 'all';
+      minInvest = null;
+      maxInvest = null;
+      if (els.minInvest) els.minInvest.value = '';
+      if (els.maxInvest) els.maxInvest.value = '';
     } else if (key === 'minInvest') {
       minInvest = null;
       if (els.minInvest) els.minInvest.value = '';
+      if (!hasCustomInvestRange() && activeInvestTier === 'custom') activeInvestTier = 'all';
     } else if (key === 'maxInvest') {
       maxInvest = null;
       if (els.maxInvest) els.maxInvest.value = '';
+      if (!hasCustomInvestRange() && activeInvestTier === 'custom') activeInvestTier = 'all';
     } else if (key === 'commitment') {
       activeCommitments = activeCommitments.filter(function (c) {
         return c !== value;
@@ -1081,7 +1090,7 @@
   }
 
   function matchesInvestTier(item) {
-    if (!activeInvestTier || activeInvestTier === 'all') return true;
+    if (!activeInvestTier || activeInvestTier === 'all' || activeInvestTier === 'custom') return true;
     if (activeInvestTier === 'on-request') {
       return !hasKnownInvestment(item) || hasTag(item, 'on-request');
     }
@@ -1143,7 +1152,9 @@
     except = except || {};
     if (activeCitySlug && !matchesCityRegion(item)) return false;
     if (!except.type && activeTypes.length && !matchesTypes(item)) return false;
-    if (!except.category && activeCategory && item.category !== activeCategory) return false;
+    if (!except.category && activeCategories.length && activeCategories.indexOf(item.category) === -1) {
+      return false;
+    }
     if (!except.invest) {
       if (!matchesInvestTier(item)) return false;
       if (!matchesCustomInvestRange(item)) return false;
@@ -1783,9 +1794,10 @@
 
   function syncIndustryChipUi() {
     if (!els.industryChipsRoot) return;
+    var hasSelection = activeCategories.length > 0;
     els.industryChipsRoot.querySelectorAll('.event-type-chip[data-category]').forEach(function (chip) {
       var id = chip.getAttribute('data-category') || '';
-      var active = id === '' ? !activeCategory : activeCategory === id;
+      var active = id === '' ? !hasSelection : activeCategories.indexOf(id) !== -1;
       chip.classList.toggle('is-active', active);
       chip.setAttribute('aria-pressed', active ? 'true' : 'false');
     });
@@ -1809,9 +1821,9 @@
     if (!track) return;
     track.querySelectorAll('.home-location-chip--industry[data-category]').forEach(function (chip) {
       var id = chip.getAttribute('data-category') || '';
-      var on = Boolean(activeCategory) && activeCategory === id;
+      var on = activeCategories.indexOf(id) !== -1;
       chip.classList.toggle('is-active', on);
-      if (on) chip.setAttribute('aria-current', 'page');
+      if (on) chip.setAttribute('aria-current', 'true');
       else chip.removeAttribute('aria-current');
     });
   }
@@ -1825,13 +1837,15 @@
     var copy = document.getElementById('opp-industry-sponsor-copy');
     if (!intro) return;
 
-    if (!activeCategory) {
+    // Sponsor slot is exclusive per industry — show only when exactly one is selected.
+    if (activeCategories.length !== 1) {
       intro.hidden = true;
       if (slotEl) slotEl.innerHTML = '';
       mountedIndustrySponsorSlot = '';
       return;
     }
 
+    var activeCategory = activeCategories[0];
     var label = industryLabelForId(activeCategory);
     intro.hidden = false;
     if (heading) {
@@ -1844,7 +1858,7 @@
       copy.textContent =
         'Browse franchises, side hustles, and partnerships in ' +
         label +
-        '. One Industry Sponsor owns this category.';
+        '. Enquire directly with providers.';
     }
 
     var slotKey = 'opportunity_industry_sponsor_' + activeCategory;
@@ -1866,11 +1880,16 @@
     }
   }
 
-  function setIndustry(id) {
+  function toggleIndustry(id) {
     id = String(id || '').trim();
-    var next = !id || activeCategory === id ? '' : id;
-    activeCategory = next;
-    if (next) pendingIndustryScroll = true;
+    if (!id) {
+      activeCategories = [];
+    } else {
+      var idx = activeCategories.indexOf(id);
+      if (idx >= 0) activeCategories.splice(idx, 1);
+      else activeCategories.push(id);
+      if (activeCategories.length) pendingIndustryScroll = true;
+    }
     syncCategorySelect();
     syncIndustryChipUi();
   }
@@ -1897,6 +1916,7 @@
           (index === 0 ? 'true' : 'false') +
           '" title="' +
           escapeHtml(chip.label) +
+          (chip.id ? ' — click to multi-select' : '') +
           '">' +
           '<span class="event-type-chip-label-full">' +
           escapeHtml(chip.label) +
@@ -1910,7 +1930,7 @@
       .join('');
     els.industryChipsRoot.querySelectorAll('.event-type-chip[data-category]').forEach(function (chip) {
       chip.addEventListener('click', function () {
-        setIndustry(chip.getAttribute('data-category') || '');
+        toggleIndustry(chip.getAttribute('data-category') || '');
         applyFilters();
       });
     });
@@ -1935,7 +1955,7 @@
         : countMatching(null, { category: true });
       countEl.textContent = '(' + n + ')';
       var isZero = Boolean(id) && n === 0;
-      var keepVisible = chip.classList.contains('is-active');
+      var keepVisible = !id || activeCategories.indexOf(id) !== -1 || chip.classList.contains('is-active');
       chip.classList.toggle('is-zero', isZero);
       chip.hidden = isZero && !keepVisible;
       if (id && !chip.hidden) anyCategoryVisible = true;
@@ -2007,7 +2027,7 @@
 
   function syncCategorySelect() {
     ensureCategorySelectOptions();
-    if (els.filterCategory) els.filterCategory.value = activeCategory || '';
+    if (els.filterCategory) els.filterCategory.value = activeCategories[0] || '';
     syncIndustryChipUi();
   }
 
@@ -2033,16 +2053,20 @@
   function syncListingsHeading() {
     var heading = document.getElementById('opp-listings-heading');
     if (!heading) return;
+    var industryHeading = '';
+    if (activeCategories.length === 1) {
+      industryHeading = industryLabelForId(activeCategories[0]) + ' opportunities';
+    } else if (activeCategories.length > 1) {
+      industryHeading = activeCategories.length + ' industries';
+    }
     if (window.hubOppRegionalLanding && window.hubOppRegionalLanding.name) {
       var place = window.hubOppRegionalLanding.name;
-      heading.textContent = activeCategory
-        ? industryLabelForId(activeCategory) + ' opportunities in ' + place
+      heading.textContent = industryHeading
+        ? industryHeading + ' in ' + place
         : 'Business opportunities in ' + place;
       return;
     }
-    heading.textContent = activeCategory
-      ? industryLabelForId(activeCategory) + ' opportunities'
-      : 'All opportunities';
+    heading.textContent = industryHeading || 'All opportunities';
   }
 
   function renderListings() {
@@ -2119,13 +2143,10 @@
         activeBits.push(typeChipLabel(id) || id);
       });
     }
-    if (activeCategory) {
-      var indChip = document.querySelector(
-        '#opp-industry-chips [data-industry="' + activeCategory + '"]'
-      );
-      activeBits.push(
-        indChip ? String(indChip.textContent || '').replace(/\s*\(\d+\)\s*$/, '').trim() : activeCategory
-      );
+    if (activeCategories.length) {
+      activeCategories.forEach(function (id) {
+        activeBits.push(industryLabelForId(id) || id);
+      });
     }
     if (activeCommitments.length) {
       activeCommitments.forEach(function (id) {
@@ -2297,9 +2318,13 @@
   }
 
   function syncInvestModeUi() {
-    var custom = hasCustomInvestRange();
-    if (els.investGroup) els.investGroup.classList.toggle('has-custom-range', custom);
-    if (els.investHint) els.investHint.hidden = !custom;
+    var isCustomMode = activeInvestTier === 'custom';
+    if (els.customInvestPanel) els.customInvestPanel.hidden = !isCustomMode;
+    if (els.investGroup) {
+      els.investGroup.classList.toggle('is-custom-invest', isCustomMode);
+      els.investGroup.classList.toggle('has-custom-range', hasCustomInvestRange());
+    }
+    if (els.investHint) els.investHint.hidden = !isCustomMode;
   }
 
   function syncOpenDayToggle() {
@@ -2318,8 +2343,8 @@
     if (/^remote$/i.test(locationQuery) && activeLocationTag === 'remote') locationQuery = '';
     return {
       type: activeTypes.length === 1 ? activeTypes[0] : activeTypes.length ? activeTypes.join(',') : 'all',
-      category: activeCategory || '',
-      invest: activeInvestTier === 'all' || hasCustomInvestRange() ? '' : activeInvestTier,
+      category: activeCategories.length ? activeCategories.join(',') : '',
+      invest: activeInvestTier === 'all' ? '' : activeInvestTier,
       location: activeLocationTag || '',
       locationQuery: locationQuery,
       commitment: activeCommitments.length === 1 ? activeCommitments[0] : activeCommitments.join(','),
@@ -2351,7 +2376,12 @@
       activeTypes = ['network-marketing'];
     }
 
-    activeCategory = params.get('category') || '';
+    activeCategories = String(params.get('category') || '')
+      .split(',')
+      .map(function (c) {
+        return String(c || '').trim();
+      })
+      .filter(Boolean);
     searchQ = String(params.get('q') || '').trim().toLowerCase();
     sortBy = params.get('sort') || 'recommended';
     activeInvestTier = params.get('invest') || 'all';
@@ -2360,7 +2390,8 @@
       activeInvestTier !== 'low-invest' &&
       activeInvestTier !== 'mid-invest' &&
       activeInvestTier !== 'high-invest' &&
-      activeInvestTier !== 'on-request'
+      activeInvestTier !== 'on-request' &&
+      activeInvestTier !== 'custom'
     ) {
       activeInvestTier = 'all';
     }
@@ -2373,7 +2404,7 @@
 
     if (els.search && searchQ) els.search.value = searchQ;
     if (els.sort) els.sort.value = sortBy;
-    if (els.filterCategory && activeCategory) els.filterCategory.value = activeCategory;
+    if (els.filterCategory && activeCategories.length) els.filterCategory.value = activeCategories[0];
     if (params.get('location') === 'remote' && els.postcode && !params.get('loc') && !params.get('q')) {
       els.postcode.value = 'Remote';
     }
@@ -2395,7 +2426,7 @@
     if (isNaN(maxInvest)) maxInvest = null;
     if (els.minInvest && minInvest != null) els.minInvest.value = String(minInvest);
     if (els.maxInvest && maxInvest != null) els.maxInvest.value = String(maxInvest);
-    if (hasCustomInvestRange()) activeInvestTier = 'all';
+    if (hasCustomInvestRange() && activeInvestTier === 'all') activeInvestTier = 'custom';
 
     hasOpenDayOnly = params.get('openDay') === '1' || params.get('open_day') === '1';
     if (els.hasOpenDay) els.hasOpenDay.checked = hasOpenDayOnly;
@@ -2517,7 +2548,7 @@
       location: locationQ || activeLocationTag || (regional && (regional.location || regional.name)) || '',
       regionSlug: (regional && regional.slug) || activeLocationTag || '',
       types: activeTypes.join(','),
-      category: activeCategory || '',
+      category: activeCategories.length ? activeCategories.join(',') : '',
       invest: activeInvestTier || '',
       commitment: activeCommitments.join(','),
       openDay: hasOpenDayOnly ? '1' : '',
@@ -2533,7 +2564,7 @@
       regional &&
       regional.slug &&
       !searchQ &&
-      !activeCategory &&
+      !activeCategories.length &&
       !activeTypes.length &&
       activeInvestTier === 'all' &&
       !activeCommitments.length &&
@@ -2549,7 +2580,7 @@
 
     activeTypes = [];
     activeInvestTier = 'all';
-    activeCategory = '';
+    activeCategories = [];
     activeCommitments = [];
     hasOpenDayOnly = false;
     activeLocationTag = '';
@@ -2618,6 +2649,7 @@
     'mid-invest': '£2.5k–£10k',
     'high-invest': '£10k+',
     'on-request': 'On request',
+    custom: 'Custom range',
   };
 
   function criteriaHasAlertableFilter(criteria) {
@@ -2666,11 +2698,16 @@
         });
     }
     if (criteria.category) {
-      chips.push({
-        key: 'category',
-        value: criteria.category,
-        label: CATEGORY_LABELS[criteria.category] || criteria.category,
-      });
+      String(criteria.category)
+        .split(',')
+        .filter(Boolean)
+        .forEach(function (id) {
+          chips.push({
+            key: 'category',
+            value: id,
+            label: CATEGORY_LABELS[id] || industryLabelForId(id) || id,
+          });
+        });
     }
     if (criteria.invest) {
       chips.push({
@@ -2742,7 +2779,15 @@
           return c !== value;
         });
       alertDraft.commitment = commitments.join(',');
-    } else if (key === 'category' || key === 'invest' || key === 'location' || key === 'locationQuery' || key === 'q' || key === 'openDay') {
+    } else if (key === 'category') {
+      var cats = String(alertDraft.category || '')
+        .split(',')
+        .filter(Boolean)
+        .filter(function (c) {
+          return c !== value;
+        });
+      alertDraft.category = cats.join(',');
+    } else if (key === 'invest' || key === 'location' || key === 'locationQuery' || key === 'q' || key === 'openDay') {
       alertDraft[key] = '';
     } else if (key === 'minInvest' || key === 'maxInvest') {
       alertDraft[key] = '';
@@ -3055,12 +3100,23 @@
       input.addEventListener('change', function () {
         if (!input.checked) return;
         activeInvestTier = input.getAttribute('data-invest-tier') || 'all';
-        if (els.minInvest) els.minInvest.value = '';
-        if (els.maxInvest) els.maxInvest.value = '';
-        minInvest = null;
-        maxInvest = null;
+        if (activeInvestTier !== 'custom') {
+          if (els.minInvest) els.minInvest.value = '';
+          if (els.maxInvest) els.maxInvest.value = '';
+          minInvest = null;
+          maxInvest = null;
+        }
         syncInvestPills();
         applyFilters();
+        if (activeInvestTier === 'custom' && els.minInvest) {
+          window.setTimeout(function () {
+            try {
+              els.minInvest.focus();
+            } catch (e) {
+              /* ignore */
+            }
+          }, 0);
+        }
       });
     });
 
@@ -3083,7 +3139,8 @@
 
     if (els.filterCategory) {
       els.filterCategory.addEventListener('change', function () {
-        activeCategory = String(els.filterCategory.value || '').trim();
+        var id = String(els.filterCategory.value || '').trim();
+        activeCategories = id ? [id] : [];
         syncIndustryChipUi();
         applyFilters();
       });
@@ -3098,7 +3155,7 @@
       if (!input) return;
       function onCustomInvestChange() {
         readInvestRange();
-        if (hasCustomInvestRange()) activeInvestTier = 'all';
+        activeInvestTier = 'custom';
         syncInvestPills();
         applyFilters();
       }
@@ -3153,7 +3210,7 @@
     if (els.hasOpenDay) hasOpenDayOnly = !!els.hasOpenDay.checked;
     if (searchQ) return true;
     if (locationQ) return true;
-    if (activeCategory) return true;
+    if (activeCategories.length) return true;
     if (activeTypes.length) return true;
     if (activeInvestTier && activeInvestTier !== 'all') return true;
     if (activeCommitments.length) return true;
@@ -3250,12 +3307,18 @@
       if (!chip) return;
       e.preventDefault();
       var id = chip.getAttribute('data-category') || '';
-      if (activeCategory === id) {
-        activeCategory = '';
+      if (!id) {
+        activeCategories = [];
         pendingIndustryScroll = false;
       } else {
-        activeCategory = id;
-        pendingIndustryScroll = true;
+        var idx = activeCategories.indexOf(id);
+        if (idx >= 0) {
+          activeCategories.splice(idx, 1);
+          pendingIndustryScroll = false;
+        } else {
+          activeCategories.push(id);
+          pendingIndustryScroll = true;
+        }
       }
       syncCategorySelect();
       applyFilters();

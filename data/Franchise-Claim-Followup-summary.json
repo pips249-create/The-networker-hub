@@ -1,11 +1,11 @@
 {
-  "built_at": "2026-09-09T08:51:47.968Z",
+  "built_at": "2026-09-09T09:35:09.958Z",
   "audience": "franchise_email2_unclaimed_from_email1",
   "email1_csv": "data/Franchise-Claim-Resend.csv",
   "email1_recipients": 293,
   "skip_csv": null,
   "skip_replies": 0,
-  "recipients": 279,
+  "recipients": 278,
   "batch_size": 50,
   "batch_files": [
     "data/Franchise-Claim-Followup-batch-01.csv",

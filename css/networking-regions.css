@@ -565,8 +565,8 @@ body.networking-region-page .networking-region-intro {
 
 /* City / county FAQ block (SSR + AEO) */
 .networking-region-faq {
-  margin: 28px 0 8px;
-  padding: 0 20px;
+  margin: 20px 0 12px;
+  padding: 0;
 }
 
 .networking-region-faq[hidden] {
@@ -574,22 +574,28 @@ body.networking-region-page .networking-region-intro {
 }
 
 .networking-region-faq-inner {
-  max-width: 720px;
-  margin: 0 auto;
+  margin: 0;
+  padding: 18px 20px 8px;
+  border: 1px solid rgba(50, 43, 120, 0.14);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 8px 22px rgba(31, 28, 70, 0.05);
 }
 
 .networking-region-faq h2 {
-  margin: 0 0 14px;
+  margin: 0 0 6px;
   font-family: 'DM Serif Display', Georgia, serif;
-  font-size: clamp(1.35rem, 2.4vw, 1.75rem);
+  font-size: clamp(1.25rem, 2.2vw, 1.55rem);
   font-weight: 400;
+  line-height: 1.25;
   color: var(--ink, #1c2040);
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
+  font-kerning: normal;
 }
 
 .networking-region-faq-list {
   display: grid;
-  gap: 8px;
+  gap: 0;
 }
 
 .networking-region-faq-item {
@@ -598,25 +604,58 @@ body.networking-region-page .networking-region-intro {
   border-bottom: 1px solid rgba(28, 32, 64, 0.1);
 }
 
+.networking-region-faq-item:last-child {
+  border-bottom: none;
+}
+
 .networking-region-faq-q {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
   cursor: pointer;
   list-style: none;
-  padding: 12px 0;
+  padding: 16px 2px;
   font-family: 'DM Sans', system-ui, sans-serif;
   font-size: 0.98rem;
   font-weight: 600;
+  line-height: 1.4;
   color: var(--ink, #1c2040);
+  transition: color 0.15s ease;
 }
 
 .networking-region-faq-q::-webkit-details-marker {
   display: none;
 }
 
+.networking-region-faq-q::after {
+  content: '';
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  margin-top: 5px;
+  border-right: 2px solid rgba(50, 43, 120, 0.4);
+  border-bottom: 2px solid rgba(50, 43, 120, 0.4);
+  transform: rotate(45deg);
+  transition: transform 0.18s ease, border-color 0.15s ease;
+}
+
+.networking-region-faq-item[open] .networking-region-faq-q::after {
+  margin-top: 8px;
+  transform: rotate(225deg);
+  border-color: #322b78;
+}
+
+.networking-region-faq-q:hover {
+  color: #322b78;
+}
+
 .networking-region-faq-a {
-  margin: 0 0 14px;
+  margin: 0;
+  padding: 0 28px 16px 2px;
   font-family: 'DM Sans', system-ui, sans-serif;
   font-size: 0.95rem;
-  line-height: 1.55;
+  line-height: 1.6;
   color: rgba(28, 32, 64, 0.78);
 }
 

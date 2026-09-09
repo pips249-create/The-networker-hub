@@ -127,8 +127,8 @@ function buildNetworkingRegionFaqHtml(faqs, region) {
   const name = escapeHtml(region.name);
   const heading =
     region.slug === 'online'
-      ? 'Online networking — FAQs'
-      : 'Networking in ' + name + ' — FAQs';
+      ? 'Online networking — FAQ'
+      : 'Networking in ' + name + ' — FAQ';
 
   const items = faqs
     .map(function (item) {

@@ -2334,11 +2334,38 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
   padding: 0;
 }
 
+.opp-browse-page .events-filter-shell,
+.opp-browse-page .filter-bar-row-bottom,
+.opp-browse-page .filter-bar-cluster {
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.opp-browse-page .filter-bar-cluster {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
 /* Type before Investment (shared filter bar puts type chips after primary by default). */
 .opp-browse-page .filter-bar-cluster > .filter-bar-row-types--primary {
   order: 1;
   flex: 1 1 100%;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.opp-browse-page .filter-bar-cluster > .filter-bar-row-industries {
+  order: 0;
+  flex: 1 1 100%;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   margin: 0;
   padding: 0;
 }
@@ -2346,6 +2373,8 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
 .opp-browse-page .filter-bar-cluster > .filter-bar-primary {
   order: 2;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .opp-browse-page .filter-bar-cluster > .filter-opp-more-panel:not([hidden]) {
@@ -2519,12 +2548,6 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
 @media (max-width: 720px) {
   .opp-browse-page .filter-opp-category-wrap select {
     max-width: none;
-  }
-
-  .opp-browse-page .filter-bar-row-industries .event-type-chips {
-    mask-image: none;
-    -webkit-mask-image: none;
-    padding-right: 0;
   }
 }
 
@@ -2704,17 +2727,48 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
   display: none;
 }
 
-/* Soft edge when industry chips overflow horizontally */
+/* Industry chips wrap so every sector is visible — no sideways scroll */
 .opp-browse-page .filter-bar-row-industries .event-type-chips-wrap {
   position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 8px;
   width: 100%;
+  max-width: 100%;
   min-width: 0;
+  overflow: visible;
+}
+
+.opp-browse-page .filter-bar-row-industries .event-type-chips-wrap::after {
+  display: none !important;
+}
+
+.opp-browse-page .filter-bar-row-industries .filter-bar-chip-label--inline {
+  flex: 0 0 auto;
+  width: 100%;
+  margin: 0 0 2px;
 }
 
 .opp-browse-page .filter-bar-row-industries .event-type-chips {
-  mask-image: linear-gradient(90deg, #000 0%, #000 calc(100% - 2.5rem), transparent 100%);
-  -webkit-mask-image: linear-gradient(90deg, #000 0%, #000 calc(100% - 2.5rem), transparent 100%);
-  padding-right: 1.25rem;
+  display: flex;
+  flex: 1 1 100%;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow: visible;
+  overflow-x: visible;
+  mask-image: none !important;
+  -webkit-mask-image: none !important;
+  padding-right: 0;
+  row-gap: 8px;
+}
+
+.opp-browse-page .filter-bar-row-industries .event-type-chip {
+  flex: 0 0 auto;
 }
 
 .opp-browse-page .filter-opp-open-day-toggle {

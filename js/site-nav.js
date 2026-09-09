@@ -105,7 +105,7 @@
  * NAV_BUILD=20260709h — transparent nav logo (from logo-nav.png).
  */
 (function () {
-  var NAV_BUILD = '20260909advis2';
+  var NAV_BUILD = '20260909navlist2';
   var LOGO_SRC = '/assets/logo-nav-transparent.png?v=20260823uk3';
   var SESSION_KEY = 'hub_nav_session_v1';
   var SESSION_TTL_MS = 5 * 60 * 1000;
@@ -366,7 +366,7 @@
       ? loc.indexOf('/organiser/event-edit') !== -1
       : page === 'add-your-event' || loc.indexOf('/add-your-event') !== -1;
     var active = isActive ? ' aria-current="page"' : '';
-    var cls = 'nav-organiser' + (extraClass ? ' ' + extraClass : '');
+    var cls = 'nav-organiser nav-list-event' + (extraClass ? ' ' + extraClass : '');
     return (
       '<a href="' +
       href(path) +
@@ -375,6 +375,43 @@
       '"' +
       active +
       '>List your event</a>'
+    );
+  }
+
+  function listOpportunityCta(extraClass) {
+    var loc = String(window.location.pathname || '').toLowerCase();
+    var isActive = loc.indexOf('/organiser/opportunity-edit') !== -1;
+    var active = isActive ? ' aria-current="page"' : '';
+    var cls = 'nav-organiser nav-list-opportunity' + (extraClass ? ' ' + extraClass : '');
+    return (
+      '<a href="' +
+      href('/organiser/opportunity-edit') +
+      '" class="' +
+      cls +
+      '" data-hub-action="add-opportunity"' +
+      active +
+      '>List your opportunity</a>'
+    );
+  }
+
+  function listCtasHtml(user, mobileExtraClass) {
+    if (!showListEventCta(user)) return '';
+    var eventExtra = mobileExtraClass ? mobileExtraClass + ' nav-mobile-list-event' : '';
+    var oppExtra = mobileExtraClass ? mobileExtraClass + ' nav-mobile-list-opportunity' : '';
+    // Match the section: opportunity CTA on Opportunities, event CTA elsewhere.
+    if (isOpportunitiesSection()) {
+      return listOpportunityCta(oppExtra);
+    }
+    return listEventCta(user, eventExtra);
+  }
+
+  function isOpportunitiesSection() {
+    var loc = String(window.location.pathname || '').toLowerCase();
+    return (
+      page === 'opportunities' ||
+      loc.indexOf('/opportunities') === 0 ||
+      loc.indexOf('/organiser/opportunity-edit') !== -1 ||
+      loc.indexOf('/organiser/opportunity-submitted') !== -1
     );
   }
 
@@ -757,8 +794,8 @@
       html += moreNavDropdownHtml({ earlyAccess: false });
     }
     var actions = '';
-    if (showListEventCta(user) && catalogueOpen !== false) {
-      actions += listEventCta(user);
+    if (catalogueOpen !== false) {
+      actions += listCtasHtml(user);
     }
     if (user) {
       actions += myHubDropdownHtml(user);
@@ -857,8 +894,8 @@
         '</span>';
       return html;
     }
-    if (showListEventCta(user) && catalogueOpen !== false) {
-      html += listEventCta(user, 'nav-mobile-item nav-mobile-list-event');
+    if (catalogueOpen !== false) {
+      html += listCtasHtml(user, 'nav-mobile-item');
     }
     if (user) {
       // Same mobile account section for everyone; optional links only when relevant.
@@ -1081,7 +1118,7 @@
   }
 
   function bindListEventCta() {
-    mount.querySelectorAll('a.nav-organiser').forEach(function (a) {
+    mount.querySelectorAll('a.nav-list-event').forEach(function (a) {
       a.addEventListener('click', function (e) {
         var dashBtn = document.getElementById('btn-new-event');
         if (dashBtn) {
@@ -1097,6 +1134,17 @@
         ) {
           e.preventDefault();
           window.HubOrganiserActions.goToAddEvent();
+        }
+      });
+    });
+    mount.querySelectorAll('a.nav-list-opportunity').forEach(function (a) {
+      a.addEventListener('click', function (e) {
+        if (
+          window.HubOrganiserActions &&
+          typeof window.HubOrganiserActions.goToAddOpportunity === 'function'
+        ) {
+          e.preventDefault();
+          window.HubOrganiserActions.goToAddOpportunity();
         }
       });
     });

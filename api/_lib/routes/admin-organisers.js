@@ -124,6 +124,7 @@ function mapOrganiserRow(row, eventCount, loginMeta, moderation) {
     linkedin_url: String(row.linkedin_url || '').trim(),
     x_url: String(row.x_url || '').trim(),
     listing_status: row.listing_status || '',
+    hide_from_browse_reason: String(row.hide_from_browse_reason || '').trim(),
     ownership_claim_status: String(row.ownership_claim_status || '').trim().toLowerCase(),
     claim_invite_sent_at: row.claim_invite_sent_at || null,
     claim_link_copied_at: row.claim_link_copied_at || null,
@@ -370,11 +371,33 @@ function buildOrganiserPatch(body, photo_url) {
   }
   if (Object.prototype.hasOwnProperty.call(body, 'hide_from_browse')) {
     patch.listing_status = body.hide_from_browse ? 'unpublished' : 'published';
+    if (body.hide_from_browse) {
+      const reason = String(
+        body.hide_from_browse_reason || body.hideFromBrowseReason || body.reason || ''
+      ).trim();
+      if (!reason) {
+        const err = new Error('Add a reason when hiding from browse (e.g. requested removal — Name).');
+        err.status = 400;
+        throw err;
+      }
+      patch.hide_from_browse_reason = reason.slice(0, 500);
+    } else {
+      patch.hide_from_browse_reason = null;
+    }
   } else if (Object.prototype.hasOwnProperty.call(body, 'listing_status')) {
     const status = String(body.listing_status || '').trim().toLowerCase();
     if (status === 'draft' || status === 'published' || status === 'unpublished') {
       patch.listing_status = status;
+      if (status === 'published' || status === 'draft') {
+        patch.hide_from_browse_reason = null;
+      }
     }
+  } else if (
+    Object.prototype.hasOwnProperty.call(body, 'hide_from_browse_reason') ||
+    Object.prototype.hasOwnProperty.call(body, 'hideFromBrowseReason')
+  ) {
+    const reason = String(body.hide_from_browse_reason || body.hideFromBrowseReason || '').trim();
+    patch.hide_from_browse_reason = reason ? reason.slice(0, 500) : null;
   }
   return patch;
 }
@@ -402,7 +425,7 @@ async function listOrganisersForAdmin(query) {
   let dbQuery = sb
     .from('organisers')
     .select(
-      'id, name, email, contact_email, supabase_user_id, description, photo_url, website, instagram_url, facebook_url, linkedin_url, x_url, listing_status, ownership_claim_status, stripe_account_id, slug, featured, featured_until, created_at, updated_at',
+      'id, name, email, contact_email, supabase_user_id, description, photo_url, website, instagram_url, facebook_url, linkedin_url, x_url, listing_status, hide_from_browse_reason, ownership_claim_status, stripe_account_id, slug, featured, featured_until, created_at, updated_at',
       { count: 'exact' }
     )
     .order('featured', { ascending: false })
@@ -1191,7 +1214,12 @@ async function bulkUpdateOrganisers(body) {
   }
 
   const photo_url = await resolveOrganiserPhotoUrl(body, 'organisers/bulk');
-  const patch = buildOrganiserPatch(body, photo_url);
+  let patch;
+  try {
+    patch = buildOrganiserPatch(body, photo_url);
+  } catch (patchErr) {
+    throw patchErr;
+  }
   if (!Object.keys(patch).length) {
     const err = new Error('no_fields');
     err.status = 400;

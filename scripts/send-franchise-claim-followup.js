@@ -92,6 +92,10 @@ async function sendOne(row, toOverride) {
     variables: vars,
     skipEmailCheck: true,
     replyTo: REPLY_TO,
+    forceClaimInvite: Boolean(toOverride),
+    idempotencyKey: toOverride
+      ? ('claim-test-' + SLUG + '-' + Date.now()).slice(0, 256)
+      : undefined,
     claimInviteSource: toOverride ? 'franchise_claim_followup_test' : 'franchise_claim_followup_batch',
     resendTags: [
       { name: 'campaign', value: 'opportunity_claim_franchise_e2' },
