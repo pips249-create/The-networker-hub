@@ -13,7 +13,7 @@ const { deriveLocationFields, resolveRegionSlug } = require('../uk-outcode');
 const { geocodeUkPostcode } = require('../postcode-geocode');
 const { profileEmail } = require('../supabase-organiser-profile-email');
 const { parseEventDateInputToUtcIso } = require('../event-timezone');
-const { applyIlikeSearch } = require('../search-match');
+const { applyIlikeSearch, applySimpleNameSearch } = require('../search-match');
 
 function parseBody(req) {
   let body = req.body;
@@ -173,8 +173,10 @@ async function listEventsForAdmin(query) {
     query.light === 'true' ||
     String(query.view || '').trim().toLowerCase() === 'spotlight';
   const offset = Math.max(parseInt(String(query.offset || ''), 10) || 0, 0);
-  const limit = Math.min(Math.max(parseInt(String(query.limit || ''), 10) || 40, 1), 100);
+  const limit = Math.min(Math.max(parseInt(String(query.limit || ''), 10) || 40, 1), 500);
   const nowIso = new Date().toISOString();
+  const simpleSearch =
+    String(query.q_mode || query.search_mode || '').trim().toLowerCase() === 'simple';
 
   let dbQuery = sb.from('events').select(
     light
@@ -230,7 +232,10 @@ async function listEventsForAdmin(query) {
   }
 
   if (search) {
-    dbQuery = applyIlikeSearch(dbQuery, search, ['title', 'city', 'slug', 'venue']);
+    const searchFields = ['title', 'city', 'slug', 'venue'];
+    dbQuery = simpleSearch
+      ? applySimpleNameSearch(dbQuery, search, searchFields)
+      : applyIlikeSearch(dbQuery, search, searchFields);
   }
 
   dbQuery = dbQuery.range(offset, offset + limit - 1);

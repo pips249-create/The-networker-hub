@@ -21793,30 +21793,29 @@
     var type = featuredSpotlightState.eventType;
     var when = featuredSpotlightState.when;
     var now = Date.now();
+    // Name search is server-side across the full catalogue — don't re-narrow by the
+    // "Upcoming" window or a second client text pass (that was hiding November events).
+    var serverNameSearch = !!q;
     return (events || []).filter(function (ev) {
       if (featured === 'active' && !isSpotlightEventActiveInCarousel(ev)) return false;
       if (featured === 'yes' && !ev.featured) return false;
       if (featured === 'no' && ev.featured) return false;
       if (type && String(ev.event_type || '') !== type) return false;
-      if (when === 'upcoming') {
-        if (!ev.starts_at) return false;
-        if (new Date(ev.starts_at).getTime() < now) return false;
-      } else if (when === 'past') {
-        if (!ev.starts_at) return false;
-        if (new Date(ev.starts_at).getTime() >= now) return false;
+      if (!serverNameSearch) {
+        if (when === 'upcoming') {
+          if (!ev.starts_at) return false;
+          if (new Date(ev.starts_at).getTime() < now) return false;
+        } else if (when === 'past') {
+          if (!ev.starts_at) return false;
+          if (new Date(ev.starts_at).getTime() >= now) return false;
+        }
       }
-      if (!q) return true;
-      var hay =
-        String(ev.title || '') +
-        ' ' +
-        String(ev.organiser_name || '') +
-        ' ' +
-        String(ev.city || '');
-      return adminTextMatchesSearch(hay, q);
+      return true;
     });
   }
 
   function featuredSpotlightStatusText(events, rows, filterActive) {
+    var q = String(featuredSpotlightState.q || '').trim();
     var flaggedCount = (events || []).filter(function (e) {
       return e.featured;
     }).length;
@@ -21830,11 +21829,21 @@
     if (activeCount != null && flaggedCount !== activeCount) {
       countLabel = flaggedCount + ' flagged · ' + countLabel;
     }
+    if (q) {
+      return (
+        countLabel +
+        ' · ' +
+        rows.length +
+        ' match' +
+        (rows.length === 1 ? '' : 'es') +
+        ' across all approved events'
+      );
+    }
     return (
       countLabel +
       ' · ' +
       (filterActive ? rows.length + ' shown · ' + events.length + ' loaded' : events.length + ' approved events') +
-      ' (upcoming first)'
+      ' (upcoming first — search by name to find any event)'
     );
   }
 
@@ -22511,7 +22520,7 @@
     var eventType = String(featuredSpotlightState.eventType || '').trim();
     var featuredFilter = String(featuredSpotlightState.featured || '').trim();
     if (status) {
-      status.textContent = q ? 'Searching events…' : 'Loading approved events…';
+      status.textContent = q ? 'Searching all approved events…' : 'Loading approved events…';
     }
     if (tbody) {
       tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-6 text-slate-500">Loading…</td></tr>';
@@ -22533,11 +22542,16 @@
     function spotlightEventsQuery(extra) {
       var params = new URLSearchParams();
       params.set('approval_status', 'Approved');
-      params.set('limit', '100');
       params.set('sort', 'date');
       params.set('light', '1');
       var opts = extra || {};
-      if (q) params.set('q', q);
+      var pageLimit = opts.limit != null ? opts.limit : q ? 200 : 100;
+      params.set('limit', String(pageLimit));
+      if (opts.offset != null) params.set('offset', String(opts.offset));
+      if (q) {
+        params.set('q', q);
+        params.set('q_mode', 'simple');
+      }
       var whenParam = Object.prototype.hasOwnProperty.call(opts, 'when') ? opts.when : when;
       if (whenParam) params.set('when', whenParam);
       var typeParam = Object.prototype.hasOwnProperty.call(opts, 'event_type')
@@ -22545,26 +22559,55 @@
         : eventType;
       if (typeParam) params.set('event_type', typeParam);
       Object.keys(opts).forEach(function (key) {
-        if (key === 'when' || key === 'event_type') return;
+        if (key === 'when' || key === 'event_type' || key === 'limit' || key === 'offset') return;
         if (opts[key] != null && opts[key] !== '') params.set(key, String(opts[key]));
       });
       return '/api/admin/events?' + params.toString();
     }
 
+    /** Page through admin events until every matching row is loaded (cap 2k). */
+    function fetchAllMatchingEvents(extra) {
+      var pageSize = 200;
+      var all = [];
+      var offset = 0;
+      var maxRows = 2000;
+
+      function page() {
+        return adminGet(
+          spotlightEventsQuery(
+            Object.assign({}, extra || {}, { limit: pageSize, offset: offset })
+          )
+        ).then(function (data) {
+          if (!data || !data.ok) return data;
+          var batch = data.events || [];
+          all = mergeSpotlightRows(all, batch);
+          var hasMore = data.hasMore === true || (data.total != null && all.length < data.total);
+          if (hasMore && batch.length && all.length < maxRows) {
+            offset += pageSize;
+            return page();
+          }
+          return { ok: true, events: all, total: data.total != null ? data.total : all.length };
+        });
+      }
+
+      return page();
+    }
+
     var requests;
     if (featuredFilter === 'yes' || featuredFilter === 'active') {
-      // Active carousel rows are a client-side subset of featured=true.
-      requests = [adminGet(spotlightEventsQuery({ featured: '1' }))];
+      requests = q
+        ? [fetchAllMatchingEvents({ featured: '1', when: '' })]
+        : [adminGet(spotlightEventsQuery({ featured: '1' }))];
     } else if (q) {
-      // Name search must query the full catalogue — not the first 100 upcoming only.
-      requests = [adminGet(spotlightEventsQuery({}))];
+      // Search every approved event by name — not the first 100 upcoming only.
+      requests = [fetchAllMatchingEvents({ when: '' })];
     } else {
       requests = [
-        // Keep every featured row visible for untick / clear-past, regardless of When.
-        adminGet(spotlightEventsQuery({ featured: '1', when: '' })),
+        adminGet(spotlightEventsQuery({ featured: '1', when: '', limit: 100 })),
         adminGet(
           spotlightEventsQuery({
             when: when || 'upcoming',
+            limit: 100,
           })
         ),
       ];
@@ -22635,14 +22678,14 @@
     main.innerHTML =
       '<div class="space-y-4">' +
       '<div id="spotlight-slots-wrap" class="text-sm text-slate-500">Loading carousel slot usage…</div>' +
-      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Toggle featured events for the <strong>Premium Spotlight</strong> on <code class="text-[11px]">/events/</code>. Set an end date when you feature something (or choose no end date). You can change the date anytime under Expires.</p>' +
+      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Toggle featured events for the <strong>Premium Spotlight</strong> on <code class="text-[11px]">/events/</code>. Use the search box to find <strong>any</strong> approved event by name (not just the first 100 upcoming). Set an end date when you feature something (or choose no end date).</p>' +
       '<div class="flex flex-wrap items-center gap-2">' +
       '<p id="featured-status" class="text-sm text-slate-500 flex-1 min-w-[12rem]">Loading approved events…</p>' +
       spotlightClearStaleBtnHtml('spotlight-clear-stale-events') +
       '</div>' +
       '<div class="admin-filter-bar rounded-xl border border-slate-200 bg-white p-4 space-y-3 shadow-sm">' +
       '<div class="flex flex-col gap-3 sm:flex-row sm:items-center">' +
-      '<input type="search" id="featured-spotlight-search" placeholder="Search by event name, city, or venue…" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full sm:flex-1 bg-white" value="' +
+      '<input type="search" id="featured-spotlight-search" placeholder="Search all events by name…" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full sm:flex-1 bg-white" value="' +
       attrEsc(featuredSpotlightState.q) +
       '" autocomplete="off">' +
       '<select id="featured-spotlight-featured" class="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white w-full sm:w-44">' +
