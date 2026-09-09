@@ -4,7 +4,6 @@ const { jsonPublicError } = require('../public-error');
 const {
   getMembershipPlanForOrganiser,
   upsertMembershipPlan,
-  isPaidMembershipAmountPence,
   MEMBERSHIP_FEE_LABEL,
   MEMBERSHIP_FEE_EXPLANATION,
 } = require('../membership-billing');
@@ -92,33 +91,16 @@ module.exports = async function handler(req, res) {
     }
 
     if (req.method === 'PUT' || req.method === 'PATCH') {
-      if (connectRequiredForPaidCheckout()) {
+      // Allow saving membership prices before Stripe Connect — checkout and
+      // Confirm & publish still require bank details before anyone can pay.
+      let connectReady = !connectRequiredForPaidCheckout();
+      if (isSupabaseConfigured() && connectRequiredForPaidCheckout()) {
         const connect = await getOrganiserConnectById(getSupabaseAdmin(), organiserId);
-        const monthlyRaw = body.monthlyAmountPounds ?? body.monthly_amount_pounds;
-        const annualRaw = body.annualAmountPounds ?? body.annual_amount_pounds;
-        const monthlyPence =
-          monthlyRaw === '' || monthlyRaw == null
-            ? null
-            : Math.round(Number(String(monthlyRaw).replace(/[£,\s]/g, '')) * 100);
-        const annualPence =
-          annualRaw === '' || annualRaw == null
-            ? null
-            : Math.round(Number(String(annualRaw).replace(/[£,\s]/g, '')) * 100);
-        const enablingPaid =
-          body.active !== false &&
-          (isPaidMembershipAmountPence(monthlyPence) || isPaidMembershipAmountPence(annualPence));
-        if (enablingPaid && !connect?.ready) {
-          return json(res, 400, {
-            ok: false,
-            error: 'stripe_connect_required',
-            message:
-              'Add your bank details (Stripe Connect) before offering paid memberships through The Networker UK.',
-          });
-        }
+        connectReady = Boolean(connect?.ready);
       }
 
       const plan = await upsertMembershipPlan(organiserId, body);
-      return json(res, 200, { ok: true, plan });
+      return json(res, 200, { ok: true, plan, connectReady });
     }
 
     return json(res, 405, { ok: false, error: 'method_not_allowed' });

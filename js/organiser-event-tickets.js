@@ -1081,7 +1081,14 @@
 
     const paidWrap = document.getElementById('ee-paid-setup-wrap');
     const vatCard = document.getElementById('ee-vat-card');
-    if (paidWrap && !paidWrap.hidden && vatCard && !vatCard.hidden) {
+    // Only count VAT as its own step when it still lives in the bottom paid-setup block.
+    if (
+      paidWrap &&
+      !paidWrap.hidden &&
+      vatCard &&
+      !vatCard.hidden &&
+      vatCard.closest('#ee-paid-setup-wrap')
+    ) {
       sections.push({ el: vatCard, optional: false });
     }
 
@@ -3302,14 +3309,13 @@
           'Membership prices must be blank/£0 (free via member list) or at least £1 for platform billing.',
       };
     }
-    // Free join — save plan row with freeJoin=true.
+    // Paid selected but amounts blank — do not block ticket save; organiser can finish later.
     if (!hubMembershipIsPaid()) {
       if (!hubMembershipTypeIsFree()) {
-        setHubMembershipStatus(
-          'Enter a monthly fee (£1+) or select "Free to join".',
-          'warn'
-        );
-        return { ok: false, message: 'Enter a monthly fee (£1+) or select "Free to join".' };
+        const warning =
+          'Membership fee not saved — enter £1+/month or select "Free to join".';
+        setHubMembershipStatus(warning, 'warn');
+        return { ok: true, skipped: true, warning: warning };
       }
     }
     const payload = collectHubMembershipPayload();
@@ -3319,13 +3325,38 @@
       body: JSON.stringify(Object.assign({ organiserId: groupId }, payload)),
     });
     if (!ok) {
+      // Never block ticket types on bank details — Stripe can be added later.
+      if (
+        data?.error === 'stripe_connect_required' ||
+        /connect stripe|bank details/i.test(String(data?.message || ''))
+      ) {
+        const connectNote = document.getElementById('ee-hub-membership-connect');
+        if (connectNote) connectNote.hidden = false;
+        const warning =
+          data?.message ||
+          'Membership prices need bank details before members can pay — tickets can still save.';
+        setHubMembershipStatus(warning, 'warn');
+        return { ok: true, skipped: true, warning: warning, connectPending: true };
+      }
       return {
         ok: false,
         message: data?.message || data?.error || 'Could not save membership fees.',
       };
     }
-    setHubMembershipStatus('Membership fees saved.', 'ok');
-    return { ok: true };
+    const connectNote = document.getElementById('ee-hub-membership-connect');
+    if (connectNote) {
+      connectNote.hidden = data?.connectReady !== false || !hubMembershipIsPaid();
+    }
+    setHubMembershipStatus(
+      data?.connectReady === false && hubMembershipIsPaid()
+        ? 'Membership fees saved. Add bank details before members can pay.'
+        : 'Membership fees saved.',
+      'ok'
+    );
+    return {
+      ok: true,
+      connectPending: data?.connectReady === false && hubMembershipIsPaid(),
+    };
   }
 
   function bindHubMembershipFields() {
@@ -4255,16 +4286,82 @@
     paymentSetupState = await window.HubOrganiserPaymentSetup.fetchState(options || {});
   }
 
+  function vatMountTarget(hasPaid) {
+    if (!hasPaid) return document.getElementById('ee-vat-mount-home');
+    const ceMount = document.getElementById('ee-vat-mount-ce');
+    const ticketsMount = document.getElementById('ee-vat-mount-tickets');
+    const membersMount = document.getElementById('ee-vat-mount-members');
+    const categoryPanel = document.getElementById('ee-panel-category-exclusivity');
+    const publicWrap = document.getElementById('ee-public-tickets-wrap');
+    const membersWrap = document.getElementById('ee-members-only-event-wrap');
+    if (
+      attendanceMode === 'category_exclusivity' &&
+      ceChargeTicketEnabled() &&
+      categoryPanel &&
+      !categoryPanel.hidden &&
+      ceMount
+    ) {
+      return ceMount;
+    }
+    if (publicWrap && !publicWrap.hidden && ticketsMount) {
+      return ticketsMount;
+    }
+    if (membersWrap && !membersWrap.hidden && membersMount) {
+      return membersMount;
+    }
+    return document.getElementById('ee-vat-mount-home');
+  }
+
+  function syncVatMount(tiers) {
+    const hasPaid = tiersHavePaidPrice(tiers || collectActiveTiers());
+    const card = document.getElementById('ee-vat-card');
+    const home = document.getElementById('ee-vat-mount-home');
+    const ceMount = document.getElementById('ee-vat-mount-ce');
+    const ticketsMount = document.getElementById('ee-vat-mount-tickets');
+    const membersMount = document.getElementById('ee-vat-mount-members');
+    if (!card || !home) return;
+
+    const target = vatMountTarget(hasPaid) || home;
+    if (card.parentElement !== target) target.appendChild(card);
+
+    const inline = target !== home;
+    card.classList.toggle('ee-vat-inline', inline);
+    card.classList.toggle('ee-card', !inline);
+
+    if (ceMount) ceMount.hidden = !(hasPaid && target === ceMount);
+    if (ticketsMount) ticketsMount.hidden = !(hasPaid && target === ticketsMount);
+    if (membersMount) membersMount.hidden = !(hasPaid && target === membersMount);
+
+    const lead = document.getElementById('ee-vat-lead');
+    if (lead) {
+      lead.textContent = inline
+        ? 'Choose how VAT applies to this ticket price — shown on your public listing.'
+        : 'Required for paid tickets — choose one option shown under tickets on your public listing.';
+    }
+    const stepLabel = card.querySelector('[data-ee-step-label]');
+    if (stepLabel) stepLabel.hidden = inline;
+  }
+
   function syncPaidOnlySections(tiers) {
     const hasPaid = tiersHavePaidPrice(tiers);
     const paidWrap = document.getElementById('ee-paid-setup-wrap');
     const vatCard = document.getElementById('ee-vat-card');
     const refundCard = document.getElementById('ee-refund-card');
     const freeNote = document.getElementById('ee-free-tickets-note');
+    syncVatMount(tiers);
+    // Keep bank details + refund in the bottom block; VAT may be mounted under the price.
+    const vatInline = Boolean(vatCard && vatCard.classList.contains('ee-vat-inline'));
     if (paidWrap) paidWrap.hidden = !hasPaid;
     if (vatCard) vatCard.hidden = !hasPaid;
     if (refundCard) refundCard.hidden = !hasPaid;
     if (freeNote) freeNote.hidden = hasPaid;
+    // When VAT is inline under the ticket price, the bottom wrap may only hold refund/bank —
+    // still show it when paid. Hide empty visual gap if VAT was the only child and moved out:
+    if (paidWrap && hasPaid && vatInline) {
+      paidWrap.classList.add('ee-paid-setup-after-inline-vat');
+    } else if (paidWrap) {
+      paidWrap.classList.remove('ee-paid-setup-after-inline-vat');
+    }
     document.querySelectorAll('input[name="vat-treatment"]').forEach(function (radio) {
       radio.required = hasPaid;
     });
@@ -5227,6 +5324,7 @@
       }
     }
 
+    // Invalid membership amounts block save; blank paid fields are allowed (save tickets, warn on membership).
     if (hubMembershipEnabled() && !hubMembershipHasPrice()) {
       showAlert(
         'Membership must be blank/£0 (free via member list) or at least £1 for platform billing.',
@@ -5239,7 +5337,7 @@
 
     if (needsBankDetailsSetup(tiers)) {
       showAlert(
-        'Add bank details before you can publish paid tickets. You can continue to review now, but Confirm & publish will stay blocked until Stripe setup is finished — use Add bank details on this page or on the next step.',
+        'Add bank details before you can publish paid tickets. You can save tickets and continue to review now — Confirm & publish stays blocked until Stripe setup is finished.',
         'warn'
       );
       document.getElementById('ee-payment-setup-mount')?.scrollIntoView({
@@ -5395,6 +5493,29 @@
             showAlert(membershipSaved.message || 'Could not save membership prices.', 'warn');
             return;
           }
+          if (membershipSaved.warning || membershipSaved.skipped) {
+            showAlert(
+              (isExistingPublicListing()
+                ? 'Tickets are already saved on this listing. '
+                : 'Tickets already saved. ') +
+                (membershipSaved.warning ||
+                  'Membership fee not saved — enter £1+/month or select "Free to join".'),
+              'warn'
+            );
+            notifyEmbedDrawerReady();
+            return;
+          }
+          if (membershipSaved.connectPending) {
+            showAlert(
+              (isExistingPublicListing()
+                ? 'Tickets are already saved on this listing. '
+                : 'Tickets already saved. ') +
+                'Membership fees saved — add bank details before members can pay.',
+              'ok'
+            );
+            notifyEmbedDrawerReady();
+            return;
+          }
         } catch (err) {
           console.error(err);
           showAlert('Could not save membership prices. Check your connection and try again.', 'warn');
@@ -5538,13 +5659,13 @@
       reenableSaveButtons();
     }
 
-    if (!membershipSaved.ok) {
-      showAlert(membershipSaved.message || 'Could not save membership prices.', 'warn');
-      return;
-    }
-
     if (!result) {
-      showAlert('Could not save tickets. Check your connection and try again.', 'warn');
+      showAlert(
+        membershipSaved.ok
+          ? 'Could not save tickets. Check your connection and try again.'
+          : membershipSaved.message || 'Could not save tickets or membership prices.',
+        'warn'
+      );
       return;
     }
 
@@ -5569,6 +5690,20 @@
         );
         return;
       }
+      // Draft/live ticket edits must not hard-fail on Stripe — only publish needs bank details.
+      if (
+        !publish &&
+        (data.error === 'stripe_connect_required' ||
+          /connect stripe|bank details/i.test(String(data.message || '')))
+      ) {
+        refreshPaymentSetupCard(collectActiveTiers());
+        showAlert(
+          (data.message || 'Bank details are needed before paid tickets can go live.') +
+            ' Your ticket edits may still need another save after that is fixed — try Save tickets again.',
+          'warn'
+        );
+        return;
+      }
       if (data.error === 'stripe_connect_required' || /connect stripe|bank details/i.test(String(data.message || ''))) {
         refreshPaymentSetupCard(collectActiveTiers());
         showAlert(
@@ -5579,6 +5714,20 @@
         return;
       }
       showAlert(data.message || data.error || 'Could not save tickets');
+      return;
+    }
+
+    // Tickets saved — membership issues should warn, not look like a full failure.
+    if (!membershipSaved.ok) {
+      showAlert(
+        (isExistingPublicListing() ? 'Tickets saved on this listing. ' : 'Tickets saved. ') +
+          (membershipSaved.message || 'Membership prices could not be saved — try again from Memberships.'),
+        'warn'
+      );
+      captureSavedTicketsSnapshot(tiers);
+      lastPersistedTicketSignature = ticketsChangeSignature(tiers);
+      existingTicketsLoaded = true;
+      notifyEmbedDrawerReady();
       return;
     }
 
@@ -5627,12 +5776,27 @@
         location.href = reviewPageUrl();
         return;
       }
-      showAlert(
-        isExistingPublicListing()
-          ? 'Tickets saved on this listing.'
-          : 'Tickets saved as draft. Your event is not on Browse events yet — finish ticket setup below, then click Continue to review.',
-        'ok'
-      );
+      if (membershipSaved.warning || membershipSaved.skipped) {
+        showAlert(
+          (isExistingPublicListing() ? 'Tickets saved on this listing. ' : 'Tickets saved. ') +
+            (membershipSaved.warning ||
+              'Membership fee not saved — enter £1+/month or select "Free to join".'),
+          'warn'
+        );
+      } else if (membershipSaved.connectPending) {
+        showAlert(
+          (isExistingPublicListing() ? 'Tickets saved on this listing. ' : 'Tickets saved. ') +
+            'Membership fees saved — add bank details before members can pay.',
+          'ok'
+        );
+      } else {
+        showAlert(
+          isExistingPublicListing()
+            ? 'Tickets saved on this listing.'
+            : 'Tickets saved as draft. Your event is not on Browse events yet — finish ticket setup below, then click Continue to review.',
+          'ok'
+        );
+      }
       notifyEmbedDrawerReady();
       if (tiersHavePaidPrice(collectActiveTiers())) {
         document.getElementById('ee-vat-card')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });

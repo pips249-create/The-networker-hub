@@ -2888,6 +2888,33 @@ body.organiser-booking-options-page {
   gap: 12px;
 }
 
+#ee-paid-setup-wrap.ee-paid-setup-after-inline-vat {
+  margin-top: 8px;
+}
+
+.ee-vat-mount {
+  margin-top: 12px;
+}
+
+#ee-vat-card.ee-vat-inline {
+  margin: 0;
+  padding: 14px 0 4px;
+  border: none;
+  border-top: 1px solid var(--ee-border);
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+#ee-vat-card.ee-vat-inline h2 {
+  font-size: 15px;
+  margin: 0 0 4px;
+}
+
+#ee-vat-card.ee-vat-inline .ee-vat-options {
+  margin-top: 8px;
+}
+
 @media (max-width: 900px) {
   .ee-attendance-options,
   .ee-pay-how-options.ee-attendance-options {
