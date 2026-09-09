@@ -105,7 +105,7 @@
  * NAV_BUILD=20260709h — transparent nav logo (from logo-nav.png).
  */
 (function () {
-  var NAV_BUILD = '20260909advis1';
+  var NAV_BUILD = '20260909advis2';
   var LOGO_SRC = '/assets/logo-nav-transparent.png?v=20260823uk3';
   var SESSION_KEY = 'hub_nav_session_v1';
   var SESSION_TTL_MS = 5 * 60 * 1000;
@@ -660,7 +660,6 @@
       isLinkActive('organisers') ||
       isLinkActive('rankings') ||
       isLinkActive('faq') ||
-      isLinkActive('advertising') ||
       isLinkActive('contact')
     );
   }
@@ -670,7 +669,6 @@
     var organiserActive = isLinkActive('organisers') ? ' aria-current="page"' : '';
     var rankingsActive = isLinkActive('rankings') ? ' aria-current="page"' : '';
     var faqActive = isLinkActive('faq') ? ' aria-current="page"' : '';
-    var advertisingActive = isLinkActive('advertising') ? ' aria-current="page"' : '';
     var contactActive = isLinkActive('contact') ? ' aria-current="page"' : '';
     var items = '';
     if (early) {
@@ -697,12 +695,7 @@
         href('/faq') +
         '"' +
         faqActive +
-        '>Help</a>' +
-        '<a role="menuitem" class="nav-dropdown-item" href="' +
-        href('/advertising') +
-        '"' +
-        advertisingActive +
-        '>Advertising &amp; sponsorship</a>';
+        '>Help</a>';
     }
     items +=
       '<a role="menuitem" class="nav-dropdown-item" href="' +
@@ -748,8 +741,8 @@
       }
       if (user) {
         html += link('/events/?mode=organisers', 'Organisers', 'organisers');
-        html += link('/faq', 'Help', 'faq');
       }
+      html += link('/advertising', 'Advertise', 'advertising');
     }
     if (pending && !user) {
       html +=
@@ -847,16 +840,11 @@
       html += link('/opportunities/', 'Opportunities', 'opportunities', 'nav-mobile-item');
       html += link('/events/?mode=organisers', 'Organisers', 'organisers', 'nav-mobile-item');
       html += link('/for-organisers', 'For organisers', 'for-organisers', 'nav-mobile-item');
+      html += link('/advertising', 'Advertise', 'advertising', 'nav-mobile-item');
       html += link('/rankings', 'Top groups', 'rankings', 'nav-mobile-item');
       html += buildMobileDrawerCities();
       html += '<p class="nav-mobile-section-label">Help &amp; info</p>';
       html += link('/faq', 'Help', 'faq', 'nav-mobile-item');
-      html += link(
-        '/advertising',
-        'Advertising &amp; sponsorship',
-        'advertising',
-        'nav-mobile-item'
-      );
       html += link('/contact', 'Contact', 'contact', 'nav-mobile-item');
       html +=
         '<a class="nav-mobile-item" href="https://www.thenetworkerinternational.com/" rel="noopener noreferrer">International</a>';

@@ -72,6 +72,10 @@
   font-weight: 600;
 }
 
+.contact-detail-card a + a {
+  margin-top: 2px;
+}
+
 .contact-detail-card > span:not(.contact-details-label):not(.contact-details-note) {
   font-size: 0.95rem;
   line-height: 1.55;

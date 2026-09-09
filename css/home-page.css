@@ -1764,15 +1764,24 @@ html:has(.home-page) {
   font-size: 0.9375rem;
 }
 
-.home-partners-cta a {
+.home-partners-cta a:not(.btn) {
   color: #5b2f99;
   font-weight: 600;
   text-decoration: none;
 }
 
-.home-partners-cta a:hover {
+.home-partners-cta a:not(.btn):hover {
   text-decoration: underline;
   text-underline-offset: 0.15em;
+}
+
+.home-partners-cta .btn {
+  text-decoration: none;
+}
+
+.home-advertise-strip-panel {
+  border-color: rgba(194, 153, 209, 0.35);
+  background: linear-gradient(135deg, rgba(237, 225, 245, 0.55) 0%, rgba(255, 252, 248, 0.95) 100%);
 }
 
 .home-partners-marquee {

@@ -566,6 +566,23 @@ body.nav-menu-open {
     text-align: left;
   }
 
+  .footer-social {
+    width: 100%;
+    text-align: center;
+  }
+
+  .footer-brand-block {
+    width: 100%;
+    align-items: center;
+  }
+
+  .footer-social-list {
+    flex-direction: row;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px 18px;
+  }
+
   .footer-col {
     min-width: 0;
   }

@@ -5,10 +5,50 @@
  * preview cookie unlocks catalogue APIs.
  */
 (function () {
-  var FOOTER_BUILD = '20260909advis1';
+  var FOOTER_BUILD = '20260909social1';
   var PUBLIC_BROWSE_OPENS_AT_MS = Date.parse('2026-08-25T00:00:00+01:00');
   var script = document.currentScript;
   var root = (script && script.getAttribute('data-root')) || '';
+  var SOCIAL_LINKS = [
+    {
+      label: 'LinkedIn',
+      href: 'https://www.linkedin.com/company/the-networker-group-ltd/',
+      icon:
+        '<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M20.45 20.45h-3.55v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28zM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12zM7.12 20.45H3.56V9h3.56v11.45zM22.23 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.23 0z"/></svg>',
+    },
+    {
+      label: 'Facebook',
+      href: 'https://www.facebook.com/profile.php?id=61556836190159',
+      icon:
+        '<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M22.68 0H1.32A1.32 1.32 0 0 0 0 1.32v21.36A1.32 1.32 0 0 0 1.32 24h11.5v-9.29H9.69v-3.62h3.13V8.41c0-3.1 1.89-4.79 4.66-4.79 1.33 0 2.47.1 2.8.14v3.24h-1.92c-1.5 0-1.8.72-1.8 1.76v2.31h3.6l-.47 3.62h-3.13V24h6.12A1.32 1.32 0 0 0 24 22.68V1.32A1.32 1.32 0 0 0 22.68 0z"/></svg>',
+    },
+  ];
+
+  function socialLinksHtml() {
+    return (
+      '<nav class="footer-social" aria-label="Follow The Networker UK">' +
+      '<p class="footer-social-label">Follow us</p>' +
+      '<ul class="footer-social-list">' +
+      SOCIAL_LINKS.map(function (item) {
+        return (
+          '<li>' +
+          '<a class="footer-social-link" href="' +
+          item.href +
+          '" target="_blank" rel="noopener noreferrer">' +
+          '<span class="footer-social-icon">' +
+          item.icon +
+          '</span>' +
+          '<span>' +
+          item.label +
+          '</span>' +
+          '</a>' +
+          '</li>'
+        );
+      }).join('') +
+      '</ul>' +
+      '</nav>'
+    );
+  }
 
   function isPublicBrowseDateOpen() {
     if (window.HubSoftLaunch && typeof window.HubSoftLaunch.isPublicBrowseOpen === 'function') {
@@ -205,6 +245,7 @@
     mount.innerHTML =
       '<footer class="site-footer">' +
       '<div class="footer-inner">' +
+      '<div class="footer-brand-block">' +
       '<a href="' +
       homeHref +
       '" class="footer-brand" aria-label="Home">' +
@@ -212,6 +253,8 @@
       href('/assets/logo-nav-transparent.png?v=20260823uk3') +
       '" alt="" width="550" height="255" aria-hidden="true">' +
       '</a>' +
+      socialLinksHtml() +
+      '</div>' +
       '<div class="footer-columns">' +
       '<div class="footer-col">' +
       '<p class="footer-col-title">Explore</p>' +

@@ -1208,6 +1208,18 @@ body.hub-page-account .site-nav {
   color: inherit;
 }
 
+.footer-brand-block {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.footer-social {
+  min-width: 0;
+}
+
 .footer-wordmark {
   display: flex;
   flex-direction: column;
@@ -1272,6 +1284,58 @@ body.hub-page-account .site-nav {
   display: block;
   object-fit: contain;
   object-position: left center;
+}
+
+.footer-social {
+  min-width: 0;
+}
+
+.footer-social-label {
+  margin: 0 0 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--charcoal, #4a4446);
+}
+
+.footer-social-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.footer-social-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.footer-social-link:hover {
+  color: var(--charcoal, #4a4446);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.footer-social-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  color: inherit;
+  flex-shrink: 0;
+}
+
+.footer-social-icon svg {
+  display: block;
 }
 .footer-columns {
   display: flex;

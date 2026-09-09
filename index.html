@@ -24,14 +24,14 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Serif+Display&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/hub.css?v=20260825adminbadge1">
-<link rel="stylesheet" href="css/home-page.css?v=20260902intl1">
+<link rel="stylesheet" href="css/hub.css?v=20260909social1">
+<link rel="stylesheet" href="css/home-page.css?v=20260909advis2">
 <link rel="stylesheet" href="css/hubert-widget.css?v=20260711">
 <link rel="icon" href="/favicon.ico?v=20260823uk3" sizes="any">
 <link rel="icon" href="/assets/favicon.svg?v=20260823uk3" type="image/svg+xml">
 <link rel="icon" href="/assets/favicon-32.png?v=20260823uk" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png?v=20260823uk">
-<link rel="stylesheet" href="css/hub-mobile.css?v=20260825guestnav1" />
+<link rel="stylesheet" href="css/hub-mobile.css?v=20260909social1" />
 <script src="js/hub-seo-static-config.js?v=20260721"></script>
 <script src="js/hub-seo-static.js?v=20260612" data-page="home"></script>
 <script src="js/hub-seo-data.js?v=20260721" defer></script>
@@ -40,7 +40,7 @@
 <body class="home-page">
 
 <div id="hub-site-nav"></div>
-<script src="js/site-nav.js?v=20260909advis1" data-root="" data-page="home"></script>
+<script src="js/site-nav.js?v=20260909advis2" data-root="" data-page="home"></script>
 
 <main class="home-flow">
 
@@ -129,7 +129,11 @@
     <div class="home-partners-band">
       <div class="home-flow-inner home-partners-panel">
         <header class="home-flow-head home-flow-head--center">
-          <h2 class="section-kicker home-partners-kicker" id="home-partners-heading">Trusted by our partners &amp; sponsors</h2>
+          <p class="section-kicker home-partners-kicker">Advertising &amp; sponsorship</p>
+          <h2 class="section-title" id="home-partners-heading">Put your brand in front of UK networkers</h2>
+          <p class="home-flow-lede home-flow-lede--center">
+            Sponsor the events directory, organiser browse, or business opportunities — reach founders and directors already looking for their next meeting.
+          </p>
         </header>
         <div class="home-partners-marquee" id="home-partners-marquee" tabindex="-1" aria-label="Partner and sponsor logos">
           <div class="home-partners-track home-partners-track--loading" id="home-partners-logos" aria-live="polite" aria-busy="true">
@@ -140,7 +144,7 @@
           </div>
         </div>
         <p class="home-partners-cta">
-          <a href="/advertising">Advertise or sponsor →</a>
+          <a class="btn btn-primary" href="/advertising">View advertising options</a>
         </p>
       </div>
     </div>
@@ -317,6 +321,26 @@
     </div>
   </section>
 
+  <section class="home-intl-strip home-reveal" aria-labelledby="home-advertise-heading">
+    <div class="home-flow-inner">
+      <div class="home-intl-strip-panel home-advertise-strip-panel home-reveal-child">
+        <div class="home-intl-strip-copy">
+          <p class="home-intl-strip-kicker">For brands &amp; sponsors</p>
+          <h2 class="home-intl-strip-title" id="home-advertise-heading">Advertise on The Networker UK</h2>
+          <p class="home-intl-strip-lede">
+            Hero placements, city partners, and industry sponsorships — priced monthly or prepaid with savings on longer terms.
+          </p>
+        </div>
+        <div class="home-intl-strip-actions">
+          <a class="btn btn-primary home-intl-strip-btn" href="/advertising">See packages &amp; pricing</a>
+          <a class="home-intl-strip-link" href="/advertising#ad-panel-events">Events</a>
+          <a class="home-intl-strip-link" href="/advertising#ad-panel-opportunities">Opportunities</a>
+          <a class="home-intl-strip-link" href="/advertising#ad-panel-organisers">Organisers</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <section class="home-cta home-reveal" aria-labelledby="home-faq-heading">
     <div class="home-flow-inner home-cta-panel">
       <div class="home-cta-top">
@@ -363,6 +387,10 @@
             <p><a href="/register">Create a free account</a> first (about 2 minutes), then open an event, choose your ticket type, and complete secure Stripe checkout. Add guest names at checkout and view bookings in <a href="/account/">My account</a>.</p>
           </article>
           <article class="home-faq-box home-reveal-child">
+            <h3>How can I advertise my business?</h3>
+            <p>Paid placements sit on the events directory, organiser browse, and business opportunities — clearly labelled. See packages and guide pricing on the <a href="/advertising">advertising &amp; sponsorship</a> page, or email <a href="mailto:rosie@thenetworkeruk.com">rosie@thenetworkeruk.com</a>.</p>
+          </article>
+          <article class="home-faq-box home-reveal-child">
             <h3>I&rsquo;m an organiser — how do I list an event?</h3>
             <p><a href="/register?intent=organiser">Create a free account</a> — we enable organiser access automatically. Confirm your email, then publish events or <a href="/login?next=/organiser/?onboard=claim&amp;intent=organiser-claim">claim your page</a> if your group is already listed. <a href="/for-organisers">See what&rsquo;s included for organisers</a> · <a href="/login?next=/organiser/&amp;intent=organiser">Sign in to your dashboard</a>. The setup checklist and Hubert guide you through the rest. Outside the UK? <a href="https://www.thenetworkerinternational.com/" rel="noopener noreferrer">Register on The Networker International</a>.</p>
           </article>
@@ -393,7 +421,7 @@
     </div>
   </footer>
 </div>
-<script src="js/site-footer.js?v=20260909advis1" data-root=""></script>
+<script src="js/site-footer.js?v=20260909social1" data-root=""></script>
 <script src="js/region-landmark-icons.js?v=20260729county"></script>
 <script src="js/networking-region-themes.js?v=20260729county"></script>
 <script src="js/home-location-chips.js?v=20260723hyphen"></script>
