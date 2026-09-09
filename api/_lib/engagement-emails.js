@@ -508,6 +508,7 @@ async function loadOrganiserRecipientKeys(sb, attendees) {
         .filter(Boolean)
     ),
   ];
+  const emailSet = new Set(emails);
 
   const organiserUserIds = new Set();
   const organiserEmails = new Set();
@@ -547,6 +548,25 @@ async function loadOrganiserRecipientKeys(sb, attendees) {
       const em = String(row.email || '').trim().toLowerCase();
       if (em) organiserEmails.add(em);
     });
+
+    // Group profile contact addresses (often chapter inboxes) without an account login.
+    const { data: byProfileEmail, error: profileEmailErr } = await sb
+      .from('organisers')
+      .select('email, contact_email')
+      .in('email', emails);
+    if (profileEmailErr) throw new Error(profileEmailErr.message);
+    const { data: byContactEmail, error: contactEmailErr } = await sb
+      .from('organisers')
+      .select('email, contact_email')
+      .in('contact_email', emails);
+    if (contactEmailErr) throw new Error(contactEmailErr.message);
+
+    for (const row of [...(byProfileEmail || []), ...(byContactEmail || [])]) {
+      const profileEmail = String(row.email || '').trim().toLowerCase();
+      const contactEmail = String(row.contact_email || '').trim().toLowerCase();
+      if (profileEmail && emailSet.has(profileEmail)) organiserEmails.add(profileEmail);
+      if (contactEmail && emailSet.has(contactEmail)) organiserEmails.add(contactEmail);
+    }
   }
 
   return { organiserUserIds, organiserEmails };
@@ -1718,7 +1738,7 @@ async function sendDueHubertEventConciergeEmails(sb) {
   const { data: attendees, error } = await sb
     .from('attendees')
     .select(
-      'id, email, name, location, hubert_event_concierge_sent_at, signup_events_nudge_sent_at, signup_events_nudge_followup_sent_at'
+      'id, email, name, location, supabase_user_id, hubert_event_concierge_sent_at, signup_events_nudge_sent_at, signup_events_nudge_followup_sent_at'
     )
     .not('email', 'is', null)
     .order('hubert_event_concierge_sent_at', { ascending: true, nullsFirst: true })
@@ -1728,6 +1748,13 @@ async function sendDueHubertEventConciergeEmails(sb) {
       return { sent: 0, skipped: 0, errors: [], unavailable: true };
     }
     throw new Error(error.message);
+  }
+
+  let organiserKeys = { organiserUserIds: new Set(), organiserEmails: new Set() };
+  try {
+    organiserKeys = await loadOrganiserRecipientKeys(sb, attendees || []);
+  } catch (e) {
+    result.errors.push({ error: 'organiser_lookup_failed', message: e.message || String(e) });
   }
 
   for (const attendee of attendees || []) {
@@ -1745,6 +1772,11 @@ async function sendDueHubertEventConciergeEmails(sb) {
 
     const email = String(attendee.email || '').trim().toLowerCase();
     if (!email) {
+      result.skipped += 1;
+      continue;
+    }
+
+    if (isOrganiserAttendee(attendee, organiserKeys)) {
       result.skipped += 1;
       continue;
     }
