@@ -76,6 +76,7 @@
       "destination": "/assets/guides/business-opportunities-explainer-linkedin.pdf",
       "permanent": true
     },
+    { "source": "/partners/kit.html", "destination": "/partners/kit", "permanent": true },
     { "source": "/advertising.html", "destination": "/advertising", "permanent": true },
     { "source": "/advertising-cta-preview.html", "destination": "/advertising-cta-preview", "permanent": true },
     { "source": "/p-tnh-ev-hub-k7m2.html", "destination": "/p-tnh-ev-hub-k7m2", "permanent": true },
@@ -380,6 +381,10 @@
     {
       "source": "/advertising-cta-preview",
       "destination": "/advertising-cta-preview.html"
+    },
+    {
+      "source": "/partners/kit",
+      "destination": "/partners/kit.html"
     },
     {
       "source": "/advertising",

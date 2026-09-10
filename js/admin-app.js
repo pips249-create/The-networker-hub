@@ -10905,7 +10905,7 @@
       '<div class="space-y-6">' +
       '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">' +
       '<div><h3 class="font-bold text-brand-900">Referral partners</h3>' +
-      '<p class="text-xs text-slate-500 mt-1">Invite-only partner programme — 20% on opportunity listings and sponsorship. Links use <code class="text-[11px]">?ref=CODE</code> (30-day cookie). Inbox: partnerships@thenetworkeruk.com</p></div>' +
+      '<p class="text-xs text-slate-500 mt-1">Invite-only partner programme — 20% on opportunity listings and sponsorship. After create, use <strong>Email invite</strong> for the media kit (logos + copy + links). Inbox: partnerships@thenetworkeruk.com · Kit: <a class="text-brand-700 hover:underline" href="/partners/kit" target="_blank" rel="noopener">/partners/kit</a></p></div>' +
       '<form id="affiliate-partner-form" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 items-end">' +
       '<label class="text-xs font-semibold text-slate-600">Code<input id="aff-code" name="code" required maxlength="32" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono uppercase" placeholder="JOE" /></label>' +
       '<label class="text-xs font-semibold text-slate-600">Display name<input id="aff-name" name="displayName" required class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Joe Bloggs" /></label>' +
@@ -11007,6 +11007,12 @@
             '<button type="button" class="block text-left text-brand-700 hover:underline" data-aff-copy="' +
             attrEsc(row.linkOpportunityList || '') +
             '">Copy list-an-opportunity link</button>' +
+            '<button type="button" class="block text-left text-brand-700 hover:underline" data-aff-copy="' +
+            attrEsc('https://www.thenetworkeruk.com/partners/kit?ref=' + encodeURIComponent(row.code || '')) +
+            '">Copy media kit link</button>' +
+            '<button type="button" class="block text-left text-brand-700 hover:underline" data-aff-invite="' +
+            attrEsc(row.id || '') +
+            '">Email invite</button>' +
             '</td>' +
             '<td class="px-3 py-2 text-sm">' +
             '<button type="button" class="text-xs font-semibold ' +
@@ -11033,6 +11039,27 @@
         btn.addEventListener('click', function () {
           copyText(btn.getAttribute('data-aff-copy'));
           setStatus(statusEl, 'Link copied.', 'ok');
+        });
+      });
+      bodyEl.querySelectorAll('[data-aff-invite]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var id = btn.getAttribute('data-aff-invite');
+          btn.disabled = true;
+          adminPost('/api/admin/affiliate-partners', { action: 'send_invite', id: id })
+            .then(function (res) {
+              if (!res || !res.ok) throw new Error((res && res.message) || res.error || 'invite_failed');
+              setStatus(
+                statusEl,
+                'Invite emailed to ' + ((res.sent && res.sent.to) || (res.partner && res.partner.email) || 'partner') + '.',
+                'ok'
+              );
+            })
+            .catch(function (err) {
+              setStatus(statusEl, (err && err.message) || 'Could not send invite', 'error');
+            })
+            .finally(function () {
+              btn.disabled = false;
+            });
         });
       });
       bodyEl.querySelectorAll('[data-aff-toggle]').forEach(function (btn) {

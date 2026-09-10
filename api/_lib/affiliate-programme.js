@@ -87,6 +87,7 @@ function mapPartnerRow(row) {
     linkAdvertising: 'https://www.thenetworkeruk.com/advertising?ref=' + encodeURIComponent(row.code),
     linkOpportunityList:
       'https://www.thenetworkeruk.com/opportunities/list?ref=' + encodeURIComponent(row.code),
+    linkMediaKit: 'https://www.thenetworkeruk.com/partners/kit?ref=' + encodeURIComponent(row.code),
   };
 }
 

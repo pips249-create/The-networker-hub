@@ -80,8 +80,9 @@ Earn **20%** when you introduce brands and opportunity providers who pay to list
 
 **What you get**
 - Unique link + code
+- Partner media kit: logos, suggested copy, rate card (`/partners/kit?ref=CODE`)
+- Branded invite email from Command Centre
 - Visibility of referrals and earnings (live page when built; monthly statement from launch)
-- This rate card + suggested copy
 - A named inbox: partnerships@thenetworkeruk.com
 
 **Important**

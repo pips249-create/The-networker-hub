@@ -15,6 +15,7 @@ const {
   mapCommissionRow,
   isAffiliateEligibleProduct,
 } = require('../affiliate-commissions');
+const { sendPartnerInviteEmail } = require('../partner-invite-email');
 
 function parseBody(req) {
   let body = req.body;
@@ -207,6 +208,34 @@ module.exports = async function handler(req, res) {
       if (error) throw new Error(error.message);
       if (!data) return json(res, 404, { ok: false, error: 'not_found' });
       return json(res, 200, { ok: true, partner: mapPartnerRow(data) });
+    }
+
+    if (action === 'send_invite') {
+      const id = String(body.id || '').trim();
+      const code = normalizeAffiliateCode(body.code);
+      if (!id && !code) {
+        return json(res, 400, { ok: false, error: 'missing_partner', message: 'Choose a partner.' });
+      }
+
+      let query = sb
+        .from('affiliate_partners')
+        .select('id, code, display_name, email, active, notes, created_at, updated_at');
+      if (id) query = query.eq('id', id);
+      else query = query.eq('code', code);
+
+      const { data, error } = await query.maybeSingle();
+      if (error) throw new Error(error.message);
+      if (!data) return json(res, 404, { ok: false, error: 'not_found' });
+      if (data.active === false) {
+        return json(res, 400, {
+          ok: false,
+          error: 'partner_inactive',
+          message: 'Activate the partner before sending an invite.',
+        });
+      }
+
+      const sent = await sendPartnerInviteEmail(data);
+      return json(res, 200, { ok: true, sent, partner: mapPartnerRow(data) });
     }
 
     if (action === 'create_commission' || action === 'manual_attribute') {
