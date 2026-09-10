@@ -11151,13 +11151,21 @@
           renderPartners(data);
           var total = Number(data.total) || 0;
           var active = Number(data.activeCount) || 0;
-          setStatus(
-            statusEl,
-            total
-              ? total + ' partner' + (total === 1 ? '' : 's') + ' · ' + active + ' active'
-              : 'No partners yet.',
-            'ok'
-          );
+          if (data.clicksTableMissing) {
+            setStatus(
+              statusEl,
+              'Click tracking is off — run migration 290_affiliate_clicks.sql in Supabase, then hard-refresh and open a ?ref= link again.',
+              'error'
+            );
+          } else {
+            setStatus(
+              statusEl,
+              total
+                ? total + ' partner' + (total === 1 ? '' : 's') + ' · ' + active + ' active'
+                : 'No partners yet.',
+              'ok'
+            );
+          }
           return data;
         })
         .catch(function (err) {

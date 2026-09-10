@@ -71,12 +71,7 @@
       path: String(location.pathname || '').slice(0, 240),
       landingUrl: String(location.href || '').slice(0, 500),
     });
-    try {
-      if (navigator.sendBeacon) {
-        var blob = new Blob([payload], { type: 'application/json' });
-        if (navigator.sendBeacon('/api/affiliate-click', blob)) return;
-      }
-    } catch (e) {}
+    // Prefer fetch: sendBeacon + application/json is unreliable on some hosts.
     try {
       fetch('/api/affiliate-click', {
         method: 'POST',
@@ -84,8 +79,20 @@
         body: payload,
         keepalive: true,
         credentials: 'same-origin',
-      }).catch(function () {});
+      }).catch(function () {
+        try {
+          if (navigator.sendBeacon) {
+            navigator.sendBeacon('/api/affiliate-click', new Blob([payload], { type: 'application/json' }));
+          }
+        } catch (e) {}
+      });
+      return;
     } catch (e2) {}
+    try {
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon('/api/affiliate-click', new Blob([payload], { type: 'application/json' }));
+      }
+    } catch (e3) {}
   }
 
   function captureFromUrl() {

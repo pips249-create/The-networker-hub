@@ -112,7 +112,7 @@ async function recordAffiliateClick(opts) {
 
 async function clickCountsByPartnerIds(partnerIds) {
   const ids = Array.isArray(partnerIds) ? partnerIds.filter(Boolean) : [];
-  const empty = { total: {}, last7: {}, last30: {} };
+  const empty = { total: {}, last7: {}, last30: {}, tableMissing: false };
   if (!ids.length) return empty;
 
   const sb = getSupabaseAdmin();
@@ -136,7 +136,9 @@ async function clickCountsByPartnerIds(partnerIds) {
     .limit(100000);
 
   if (error) {
-    if (/affiliate_clicks/i.test(error.message || '')) return empty;
+    if (/affiliate_clicks|Could not find the table|schema cache/i.test(error.message || '')) {
+      return { total, last7, last30, tableMissing: true };
+    }
     throw new Error(error.message || 'affiliate_clicks_load_failed');
   }
 
@@ -149,7 +151,7 @@ async function clickCountsByPartnerIds(partnerIds) {
     if (at >= since7) last7[id] = (last7[id] || 0) + 1;
   });
 
-  return { total, last7, last30 };
+  return { total, last7, last30, tableMissing: false };
 }
 
 function mapPartnerRow(row, clickStats) {

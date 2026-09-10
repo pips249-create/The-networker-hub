@@ -59,13 +59,16 @@ async function listPartners(sb) {
     throw new Error(error.message);
   }
   const rows = data || [];
-  let clickStats = { total: {}, last7: {}, last30: {} };
+  let clickStats = { total: {}, last7: {}, last30: {}, tableMissing: false };
   try {
     clickStats = await clickCountsByPartnerIds(rows.map((r) => r.id));
   } catch (e) {
     console.error('[affiliate-partners] click counts', e.message || e);
   }
-  return rows.map((row) => mapPartnerRow(row, clickStats));
+  return {
+    partners: rows.map((row) => mapPartnerRow(row, clickStats)),
+    clicksTableMissing: !!clickStats.tableMissing,
+  };
 }
 
 async function listCommissions(sb, limit) {
@@ -112,11 +115,13 @@ module.exports = async function handler(req, res) {
         return json(res, 200, { ok: true, configured: true, ...overview });
       }
 
-      const partners = await listPartners(sb);
+      const listed = await listPartners(sb);
+      const partners = listed.partners || [];
       return json(res, 200, {
         ok: true,
         configured: true,
         partners,
+        clicksTableMissing: !!listed.clicksTableMissing,
         total: partners.length,
         activeCount: partners.filter(function (p) {
           return p.active;
