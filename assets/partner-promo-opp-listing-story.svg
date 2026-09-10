@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1920" role="img" aria-label="List your business opportunity for &#163;25 a month — Instagram Story">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1c2040"/>
+      <stop offset="55%" stop-color="#2f2750"/>
+      <stop offset="100%" stop-color="#4a3560"/>
+    </linearGradient>
+  </defs>
+  <rect width="1080" height="1920" fill="url(#bg)"/>
+  <circle cx="900" cy="220" r="280" fill="#b992be" fill-opacity="0.2"/>
+  <circle cx="140" cy="1700" r="320" fill="#e8b84b" fill-opacity="0.12"/>
+  <text x="80" y="220" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="700" letter-spacing="0.2em" fill="#e8b84b">THE NETWORKER UK</text>
+  <text x="80" y="520" font-family="Georgia, 'Times New Roman', serif" font-size="78" fill="#faf6ee">List your</text>
+  <text x="80" y="620" font-family="Georgia, 'Times New Roman', serif" font-size="78" fill="#faf6ee">business</text>
+  <text x="80" y="720" font-family="Georgia, 'Times New Roman', serif" font-size="78" fill="#faf6ee">opportunity</text>
+  <text x="80" y="860" font-family="Georgia, 'Times New Roman', serif" font-size="64" fill="#b992be">for &#163;25 a month</text>
+  <text x="80" y="980" font-family="Arial, Helvetica, sans-serif" font-size="36" fill="#f5f0e8">on the UKs networking</text>
+  <text x="80" y="1040" font-family="Arial, Helvetica, sans-serif" font-size="36" fill="#f5f0e8">platform</text>
+  <text x="80" y="1160" font-family="Arial, Helvetica, sans-serif" font-size="30" fill="#d8d0d4">Reach founders and organisers</text>
+  <text x="80" y="1210" font-family="Arial, Helvetica, sans-serif" font-size="30" fill="#d8d0d4">already browsing for their next move.</text>
+  <rect x="80" y="1400" width="520" height="88" rx="44" fill="#e8b84b"/>
+  <text x="340" y="1456" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="700" fill="#1c2040">Ask for my partner link</text>
+  <text x="80" y="1580" font-family="Arial, Helvetica, sans-serif" font-size="26" fill="#b0a8ac">Swipe up / link in bio</text>
+  <text x="80" y="1780" font-family="Arial, Helvetica, sans-serif" font-size="24" fill="#b992be">thenetworkeruk.com</text>
+</svg>

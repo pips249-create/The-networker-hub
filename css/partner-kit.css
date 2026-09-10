@@ -1,4 +1,4 @@
-/* Partner media kit — /partners/kit */
+/* Partner hub — /partners/earnings (kit redirects here) */
 
 .partner-kit-page {
   background: linear-gradient(180deg, #f7f4fb 0%, #fffdf9 42%, #ffffff 100%);
@@ -48,6 +48,10 @@
   margin: 0;
   font-size: 0.95rem;
   color: #635c5e;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
 }
 
 .partner-kit-inbox a {
@@ -61,6 +65,94 @@
   padding: 32px 24px 72px;
   display: grid;
   gap: 20px;
+}
+
+.partner-hub-nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 4px;
+  justify-content: center;
+  padding: 10px 16px;
+  background: rgba(255, 253, 249, 0.92);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(28, 32, 64, 0.08);
+}
+
+.partner-hub-nav a {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  color: #1c2040;
+  padding: 0.4rem 0.7rem;
+  border-radius: 999px;
+}
+
+.partner-hub-nav a:hover {
+  background: rgba(185, 146, 190, 0.22);
+}
+
+.partner-earnings-totals {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0 0 18px;
+}
+
+@media (min-width: 720px) {
+  .partner-earnings-totals {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.partner-earnings-stat {
+  padding: 14px 14px 12px;
+  border-radius: 12px;
+  background: #faf6ee;
+  border: 1px solid rgba(28, 32, 64, 0.08);
+}
+
+.partner-earnings-stat-label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #7a4f82;
+  margin-bottom: 4px;
+}
+
+.partner-earnings-stat-value {
+  display: block;
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: 1.55rem;
+  color: #1c2040;
+  line-height: 1.2;
+}
+
+.partner-earnings-stat-note {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.75rem;
+  color: #635c5e;
+  line-height: 1.35;
+}
+
+.partner-earnings-subhead {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #1c2040;
+  margin: 0 0 10px;
+}
+
+.partner-earnings-activity {
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #fffdf9;
+  border: 1px dashed rgba(28, 32, 64, 0.14);
 }
 
 .partner-kit-card {
@@ -172,6 +264,24 @@
   color: #fff;
 }
 
+.partner-kit-download--solid {
+  background: #1c2040;
+  color: #fff;
+  margin-right: 0.75rem;
+}
+
+.partner-kit-download--solid:hover {
+  background: #b992be;
+  border-color: #b992be;
+  color: #1c2040;
+}
+
+.partner-kit-dl-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
 .partner-kit-code-line {
   margin: 14px 0 0;
   font-size: 0.95rem;
@@ -182,6 +292,17 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 14px;
+}
+
+.partner-kit-logo-grid--stories {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 240px));
+}
+
+.partner-kit-logo-tile--story img {
+  width: 100%;
+  max-width: 216px;
+  height: auto;
+  border-radius: 8px;
 }
 
 .partner-kit-logo-tile {

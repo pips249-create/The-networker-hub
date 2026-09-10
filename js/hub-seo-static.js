@@ -39,6 +39,7 @@
     if (/\/for-networkers(?:\.html)?\/?$/.test(path)) return 'for-networkers';
     if (/\/for-attendees(?:\.html)?\/?$/.test(path)) return 'for-networkers';
     if (/\/advertising(?:\.html)?\/?$/.test(path)) return 'advertising';
+    if (/\/partners(?:\.html)?\/?$/.test(path) && !/\/partners\/(kit|earnings)/.test(path)) return 'partners';
     if (/\/legal-policies(?:\.html)?\/?$/.test(path)) return 'legal';
     if (/index\.html$/.test(path) || /\/$/.test(path)) return 'home';
     return '';

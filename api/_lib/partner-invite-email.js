@@ -19,10 +19,11 @@ function buildPartnerInviteHtml(partner) {
   const logo = logoEmailHeaderUrl(site);
   const code = String(mapped.code || partner.code || '').trim().toUpperCase();
   const name = String(mapped.displayName || partner.display_name || code || 'there').trim();
+  const home = mapped.linkHome || site + '/?ref=' + encodeURIComponent(code);
   const ads = mapped.linkAdvertising || site + '/advertising?ref=' + encodeURIComponent(code);
   const opp =
     mapped.linkOpportunityList || site + '/opportunities/list?ref=' + encodeURIComponent(code);
-  const kit = site + '/partners/kit?ref=' + encodeURIComponent(code);
+  const kit = mapped.linkPartnerHub || site + '/partners/earnings?ref=' + encodeURIComponent(code);
 
   return (
     '<div style="font-family:DM Sans,Arial,sans-serif;line-height:1.55;color:#2d2636;max-width:560px;margin:0 auto;">' +
@@ -38,6 +39,11 @@ function buildPartnerInviteHtml(partner) {
     '<p style="margin:0 0 8px;"><strong>Your code:</strong> ' +
     escHtml(code) +
     '</p>' +
+    '<p style="margin:0 0 6px;"><strong>Homepage (general intros)</strong><br><a href="' +
+    escHtml(home) +
+    '">' +
+    escHtml(home) +
+    '</a></p>' +
     '<p style="margin:0 0 6px;"><strong>Advertising link</strong><br><a href="' +
     escHtml(ads) +
     '">' +
@@ -51,9 +57,9 @@ function buildPartnerInviteHtml(partner) {
     '<p style="margin:0 0 18px;">' +
     '<a href="' +
     escHtml(kit) +
-    '" style="display:inline-block;background:#1c2040;color:#ffffff;text-decoration:none;font-weight:700;padding:12px 18px;border-radius:999px;">Open your media kit</a>' +
+    '" style="display:inline-block;background:#1c2040;color:#ffffff;text-decoration:none;font-weight:700;padding:12px 18px;border-radius:999px;">Open your partner hub</a>' +
     '</p>' +
-    '<p style="margin:0 0 12px;font-size:14px;color:#635c5e;">The media kit has official logos, suggested copy, and the rate card. Share your links only — buyers don’t need to type a code.</p>' +
+    '<p style="margin:0 0 12px;font-size:14px;color:#635c5e;">Your hub has earnings, tracking links, official logos (PNG + SVG), Instagram Story creatives, suggested copy, and a one-page rate card PDF. Share your links only — buyers don’t need to type a code.</p>' +
     '<p style="margin:0;">Questions? Reply to this email or write to <a href="mailto:partnerships@thenetworkeruk.com">partnerships@thenetworkeruk.com</a>.</p>' +
     '<p style="margin:16px 0 0;">The Networker UK</p>' +
     '</div>'
@@ -71,7 +77,7 @@ async function sendPartnerInviteEmail(partner) {
   const code = String(partner.code || '').trim().toUpperCase();
   await sendViaResend({
     to,
-    subject: 'Your Networker UK partner kit · code ' + code,
+    subject: 'Your Networker UK partner hub · code ' + code,
     html: buildPartnerInviteHtml(partner),
     replyTo: 'partnerships@thenetworkeruk.com',
     skipAllowlist: true,

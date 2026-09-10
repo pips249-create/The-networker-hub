@@ -16,7 +16,8 @@ Invite-only referral partners who introduce paying customers for:
 1. **Business opportunity** products (directory listing, Featured Opportunity Boost)
 2. **Advertising & sponsorship** packages (all paid sponsor / placement slots on `/advertising`)
 
-Not in scope (for now): event ticket booking fees, organiser acquisition bounties, or public self-serve partner signup.
+Public enquire page: [`/partners`](https://www.thenetworkeruk.com/partners) (applications reviewed — not self-serve signup).  
+Not in scope (for now): event ticket booking fees or organiser acquisition bounties.
 
 ---
 
@@ -80,9 +81,10 @@ Earn **20%** when you introduce brands and opportunity providers who pay to list
 
 **What you get**
 - Unique link + code
-- Partner media kit: logos, suggested copy, rate card (`/partners/kit?ref=CODE`)
+- Partner hub: earnings + logos, square/landscape/Story creatives (SVG + PNG), suggested copy, one-pager rate card PDF (`/partners/earnings?ref=CODE`)
+- `/partners/kit` redirects to the hub
 - Branded invite email from Command Centre
-- Visibility of referrals and earnings (live page when built; monthly statement from launch)
+- Visibility of referrals and earnings on `/partners/earnings` (live ledger API next; monthly statement from Phase 4)
 - A named inbox: partnerships@thenetworkeruk.com
 
 **Important**
@@ -115,6 +117,19 @@ Earn **20%** when you introduce brands and opportunity providers who pay to list
 
 Prepaid terms (1 / 3 / 6 / 12 months) may include discounts — commission is **20% of the net invoice ex-VAT**, once.
 
+**One-pager PDF** (email attachments): `/assets/guides/partner-rate-card.pdf` — regenerate with `npm run build:partner-kit` after editing rates.
+
+### Creative assets
+
+| Asset | Size | Formats |
+|-------|------|---------|
+| Opportunity / sponsor square | 1080×1080 | PNG + SVG |
+| Opportunity landscape | 1200×628 | PNG + SVG |
+| Opportunity / sponsor Story | 1080×1920 | PNG + SVG |
+| Partner badges / lockup | various | PNG + SVG |
+
+All live on `/partners/earnings` (media kit + earnings in one page). `/partners/kit` redirects there.
+
 ### Suggested outreach (short)
 
 > Just a quick one — The Networker UK is where UK founders and networking organisers find events and business opportunities. If you (or a client) want a listing or a sponsorship placement, I can introduce you. Here’s my partner link: [LINK]
@@ -135,9 +150,13 @@ Prepaid terms (1 / 3 / 6 / 12 months) may include discounts — commission is **
 
 ### Links (replace CODE when partner is created)
 
+- Homepage (general intros): `https://www.thenetworkeruk.com/?ref=CODE`
 - Advertising: `https://www.thenetworkeruk.com/advertising?ref=CODE`
 - List an opportunity: `https://www.thenetworkeruk.com/opportunities/list?ref=CODE`
+- Partner hub: `https://www.thenetworkeruk.com/partners/earnings?ref=CODE`
 - Code fallback: tell the buyer to enter **CODE** at checkout / enquiry
+
+Prefer the **homepage** link when the intro is open-ended; use advertising / list links when you already know the product. The 30-day cookie attributes whichever path they take next.
 
 ---
 
@@ -170,7 +189,7 @@ Prepaid terms (1 / 3 / 6 / 12 months) may include discounts — commission is **
 | 0 | Mailbox + this doc + accountant sign-off | Mailbox + doc done · accountant pending |
 | 1 | DB partners · codes · 30-day cookie · checkout + enquiry attribution · Command Centre **Referral partners** | **Built** — run migration `289_affiliate_partners.sql` |
 | 2 | Stripe webhook → ledger · first-3 cap · clawbacks · manual attribute · hold cron · referral email | **Built** — cron `/api/cron/affiliate-commissions` daily 06:15 |
-| 3 | Partner earnings page · optional weekly digest | 1–2 days |
+| 3 | Partner hub `/partners/earnings` (earnings + media kit) · optional weekly digest | Hub shell built · live ledger API next |
 | 4 | Admin statements / payouts · monthly statement email | 2–3 days |
 
 MVP = Phases 1–3 · Full ops = + Phase 4.
@@ -180,7 +199,7 @@ MVP = Phases 1–3 · Full ops = + Phase 4.
 ## 9. Pilot launch (ops)
 
 1. Accountant ticks §7  
-2. Invite **3–5** known partners (invite-only)  
+2. Invite **3–5** known partners (and triage `/partners` enquiries)
 3. Issue code + link + this one-pager from partnerships@  
 4. Track sales in ledger until Phase 1–2 ships  
 5. First payout month: statement + bank transfer + accountant pack  

@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 628" role="img" aria-label="List your business opportunity for £25 per month on The Networker UK">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 628" role="img" aria-label="List your business opportunity for &#163;25 per month on The Networker UK">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#1c2040"/>
@@ -10,9 +10,9 @@
   <circle cx="80" cy="560" r="160" fill="#e8b84b" fill-opacity="0.12"/>
   <text x="64" y="90" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" letter-spacing="0.16em" fill="#e8b84b">THE NETWORKER UK</text>
   <text x="64" y="210" font-family="Georgia, 'Times New Roman', serif" font-size="52" fill="#faf6ee">List your business opportunity</text>
-  <text x="64" y="280" font-family="Georgia, 'Times New Roman', serif" font-size="52" fill="#b992be">for £25 a month</text>
-  <text x="64" y="360" font-family="Arial, Helvetica, sans-serif" font-size="28" fill="#f5f0e8">on the UKs networking platform</text>
-  <text x="64" y="410" font-family="Arial, Helvetica, sans-serif" font-size="24" fill="#d8d0d4">Franchises, partnerships and side hustles  in front of people already looking.</text>
+  <text x="64" y="280" font-family="Georgia, 'Times New Roman', serif" font-size="52" fill="#b992be">for &#163;25 a month</text>
+  <text x="64" y="360" font-family="Arial, Helvetica, sans-serif" font-size="28" fill="#f5f0e8">on the UKs networking platform</text>
+  <text x="64" y="410" font-family="Arial, Helvetica, sans-serif" font-size="24" fill="#d8d0d4">Franchises, partnerships and side hustles  in front of people already looking.</text>
   <rect x="64" y="480" width="360" height="64" rx="32" fill="#e8b84b"/>
   <text x="244" y="520" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="700" fill="#1c2040">Ask for my partner link</text>
 </svg>

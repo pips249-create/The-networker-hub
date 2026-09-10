@@ -34,16 +34,22 @@
       }
     }
 
+    var homeBase = 'https://www.thenetworkeruk.com/';
     var adsBase = 'https://www.thenetworkeruk.com/advertising';
     var oppBase = 'https://www.thenetworkeruk.com/opportunities/list';
+    var home = code ? homeBase + '?ref=' + encodeURIComponent(code) : homeBase;
     var ads = code ? adsBase + '?ref=' + encodeURIComponent(code) : adsBase;
     var opp = code ? oppBase + '?ref=' + encodeURIComponent(code) : oppBase;
+    setLink('partner-kit-link-home', home, code ? 'thenetworkeruk.com/?ref=' + code : 'thenetworkeruk.com');
     setLink('partner-kit-link-ads', ads);
     setLink('partner-kit-link-opp', opp);
 
     var codeLine = document.getElementById('partner-kit-code-line');
     var codeEl = document.getElementById('partner-kit-code');
     var hint = document.getElementById('partner-kit-links-hint');
+    var earnCodeLine = document.getElementById('partner-earnings-code-line');
+    var earnCodeEl = document.getElementById('partner-earnings-code');
+    var earnHint = document.getElementById('partner-earnings-hint');
     if (code && codeLine && codeEl) {
       codeEl.textContent = code;
       codeLine.hidden = false;
@@ -51,10 +57,20 @@
         hint.textContent = 'These links are tagged with your partner code so referrals attribute to you.';
       }
     }
+    if (code && earnCodeLine && earnCodeEl) {
+      earnCodeEl.textContent = code;
+      earnCodeLine.hidden = false;
+      if (earnHint) {
+        earnHint.textContent =
+          'Commission totals for code ' +
+          code +
+          ' will appear here once referred sales pay. Share your links and creatives below in the meantime.';
+      }
+    }
 
     var short = document.getElementById('partner-kit-copy-short');
     if (short && code) {
-      short.textContent = String(short.textContent || '').replace('[LINK]', ads);
+      short.textContent = String(short.textContent || '').replace('[LINK]', home);
     }
   }
 

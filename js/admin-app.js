@@ -10905,7 +10905,7 @@
       '<div class="space-y-6">' +
       '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">' +
       '<div><h3 class="font-bold text-brand-900">Referral partners</h3>' +
-      '<p class="text-xs text-slate-500 mt-1">Invite-only partner programme — 20% on opportunity listings and sponsorship. After create, use <strong>Email invite</strong> for the media kit (logos + copy + links). Inbox: partnerships@thenetworkeruk.com · Kit: <a class="text-brand-700 hover:underline" href="/partners/kit" target="_blank" rel="noopener">/partners/kit</a></p></div>' +
+          '<p class="text-xs text-slate-500 mt-1">Invite-only partner programme — 20% on opportunity listings and sponsorship. Public enquire: <a class="text-brand-700 hover:underline" href="/partners" target="_blank" rel="noopener">/partners</a>. After create, use <strong>Email invite</strong> for the partner hub (earnings + media kit). Inbox: partnerships@thenetworkeruk.com · Hub: <a class="text-brand-700 hover:underline" href="/partners/earnings" target="_blank" rel="noopener">/partners/earnings</a></p></div>' +
       '<form id="affiliate-partner-form" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 items-end">' +
       '<label class="text-xs font-semibold text-slate-600">Code<input id="aff-code" name="code" required maxlength="32" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono uppercase" placeholder="JOE" /></label>' +
       '<label class="text-xs font-semibold text-slate-600">Display name<input id="aff-name" name="displayName" required class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Joe Bloggs" /></label>' +
@@ -11002,14 +11002,17 @@
             '</td>' +
             '<td class="px-3 py-2 text-xs space-y-1">' +
             '<button type="button" class="block text-left text-brand-700 hover:underline" data-aff-copy="' +
+            attrEsc(row.linkHome || 'https://www.thenetworkeruk.com/?ref=' + encodeURIComponent(row.code || '')) +
+            '">Copy homepage link</button>' +
+            '<button type="button" class="block text-left text-brand-700 hover:underline" data-aff-copy="' +
             attrEsc(row.linkAdvertising || '') +
             '">Copy advertising link</button>' +
             '<button type="button" class="block text-left text-brand-700 hover:underline" data-aff-copy="' +
             attrEsc(row.linkOpportunityList || '') +
             '">Copy list-an-opportunity link</button>' +
             '<button type="button" class="block text-left text-brand-700 hover:underline" data-aff-copy="' +
-            attrEsc('https://www.thenetworkeruk.com/partners/kit?ref=' + encodeURIComponent(row.code || '')) +
-            '">Copy media kit link</button>' +
+            attrEsc(row.linkPartnerHub || row.linkMediaKit || 'https://www.thenetworkeruk.com/partners/earnings?ref=' + encodeURIComponent(row.code || '')) +
+            '">Copy partner hub link</button>' +
             '<button type="button" class="block text-left text-brand-700 hover:underline" data-aff-invite="' +
             attrEsc(row.id || '') +
             '">Email invite</button>' +

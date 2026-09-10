@@ -84,10 +84,14 @@ function mapPartnerRow(row) {
     notes: row.notes || null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    linkHome: 'https://www.thenetworkeruk.com/?ref=' + encodeURIComponent(row.code),
     linkAdvertising: 'https://www.thenetworkeruk.com/advertising?ref=' + encodeURIComponent(row.code),
     linkOpportunityList:
       'https://www.thenetworkeruk.com/opportunities/list?ref=' + encodeURIComponent(row.code),
-    linkMediaKit: 'https://www.thenetworkeruk.com/partners/kit?ref=' + encodeURIComponent(row.code),
+    linkMediaKit:
+      'https://www.thenetworkeruk.com/partners/earnings?ref=' + encodeURIComponent(row.code),
+    linkPartnerHub:
+      'https://www.thenetworkeruk.com/partners/earnings?ref=' + encodeURIComponent(row.code),
   };
 }
 
