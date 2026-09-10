@@ -57,6 +57,16 @@ body.hub-page-organiser.organiser-event-edit-page {
   margin: 0 0 20px;
 }
 
+/* Light progress stays visible while scrolling ticket steps */
+.organiser-event-edit-page #ee-wizard-mount {
+  position: sticky;
+  top: 72px;
+  z-index: 40;
+  background: var(--ee-bg, #f7f4f8);
+  padding: 6px 0 10px;
+  margin: 0 0 12px;
+}
+
 .ee-wizard-summary {
   margin: 0 0 10px;
   font-size: 15px;

@@ -30,6 +30,8 @@
   let paymentSetupState = null;
   let returnedFromStripe = false;
   let ticketsLocked = false;
+  /** False until init finishes — blocks opportunistic scrolls (e.g. bank card) on first land. */
+  let ticketsUiReady = false;
   let lastPersistedTicketSignature = '';
   let organiserComplimentaryVisits = 0;
   let organiserComplimentaryVisitsScope = 'per_group';
@@ -1210,7 +1212,7 @@
       if (payHowPanel) payHowPanel.hidden = true;
       syncPayHowStepUi();
       syncTicketStepLabels();
-      wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      scrollStepIntoView(wrap);
     });
     return summary;
   }
@@ -1341,11 +1343,7 @@
       syncPayHowStepUi();
       syncPayHowUi();
       syncTicketStepLabels();
-      try {
-        payHowPanel?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      } catch {
-        /* ignore */
-      }
+      scrollStepIntoView(payHowPanel);
     });
   }
 
@@ -1372,6 +1370,7 @@
   /** After Step 1 door choice — show pay-how only (ticket types wait for Step 2 continue). */
   function confirmStep1AndRevealSteps() {
     showAlert('');
+    ticketsUiReady = true;
     step2Confirmed = true;
     payHowConfirmed = false;
     applyModeFromDoorAndPayHow();
@@ -1388,8 +1387,9 @@
     return h;
   }
 
+  /** Smooth-scroll to a step after the user acts (Continue / Change / validation). */
   function scrollStepIntoView(el) {
-    if (!el) return;
+    if (!el || !ticketsUiReady) return;
     const run = function () {
       const offset = stickyChromeOffset();
       const rect = el.getBoundingClientRect();
@@ -1418,8 +1418,25 @@
     });
   }
 
+  /** First paint stays at the top so the progress bar + Step 1 read as orientation. */
+  function landTicketsAtTop() {
+    try {
+      if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+    } catch {
+      /* ignore */
+    }
+    try {
+      window.scrollTo(0, 0);
+      if (document.documentElement) document.documentElement.scrollTop = 0;
+      if (document.body) document.body.scrollTop = 0;
+    } catch {
+      /* ignore */
+    }
+  }
+
   function confirmPayHowAndRevealRest() {
     showAlert('');
+    ticketsUiReady = true;
     payHowConfirmed = true;
     applyModeFromDoorAndPayHow();
     revealPostStep2();
@@ -2128,11 +2145,7 @@
     updateTierSummary();
     updatePublishButton();
     const guestAddon = document.getElementById('ee-guest-addon');
-    try {
-      guestAddon?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    } catch {
-      /* ignore */
-    }
+    scrollStepIntoView(guestAddon);
     showAlert(
       'Complimentary visits are on. Visitors get a limited number of complimentary first visits, then they use your tickets. Review the visit count, then save.',
       'ok'
@@ -2854,12 +2867,7 @@
       syncPayHowStepUi();
       syncPayHowUi();
       syncTicketStepLabels();
-      try {
-        const guest = document.getElementById('ee-general-guest-mount') || payHowPanel;
-        guest?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      } catch {
-        /* ignore */
-      }
+      scrollStepIntoView(document.getElementById('ee-general-guest-mount') || payHowPanel);
     });
   }
 
@@ -4333,8 +4341,8 @@
         saveTicketDraft();
       });
     });
-    if (wasHidden) {
-      mount.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    if (wasHidden && ticketsUiReady) {
+      scrollStepIntoView(mount);
     }
   }
 
@@ -5061,11 +5069,13 @@
   }
 
   async function init() {
+    landTicketsAtTop();
     loadSeriesMeta();
     bindGuestPassesFields();
     bindAttendanceStep1Ui();
     if (!eventIds.length) {
       showAlert('No events in this series. Go back and save your event dates first.', 'warn');
+      ticketsUiReady = true;
       return;
     }
 
@@ -5136,7 +5146,10 @@
       loaded = await bootWork();
       if (loading) loading.hide();
     }
-    if (!loaded || loaded.authFailed) return;
+    if (!loaded || loaded.authFailed) {
+      ticketsUiReady = true;
+      return;
+    }
 
     if (!loaded.event && eventIds.length && !loaded.notOwned) {
       try {
@@ -5149,6 +5162,7 @@
         'warn'
       );
       notifyEmbedDrawerReady();
+      ticketsUiReady = true;
       return;
     }
 
@@ -5362,9 +5376,12 @@
     }
 
     if (!loaded.tickets.length && window.HubFlowTour && !isEmbedDrawer) {
-      window.HubFlowTour.startEventTicketsTour({ isEdit: false, delay: 0 });
+      // Delay so first paint stays at the top with the progress bar visible.
+      window.HubFlowTour.startEventTicketsTour({ isEdit: false, delay: 400 });
     }
 
+    landTicketsAtTop();
+    ticketsUiReady = true;
     notifyEmbedDrawerReady();
   }
 
@@ -5388,10 +5405,7 @@
       } else {
         revealPayHowStep();
         showAlert('Choose tickets or membership, then continue to ticket types.', 'warn');
-        document.getElementById('ee-panel-pay-how')?.scrollIntoView({
-          behavior: 'smooth',
-          block: 'nearest',
-        });
+        scrollStepIntoView(document.getElementById('ee-panel-pay-how'));
         return;
       }
     }
@@ -5415,7 +5429,7 @@
           : attendanceMode === 'guest_programme'
             ? 'ee-guest-programme-fields'
             : 'ee-panel-tickets';
-      document.getElementById(panelId)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      scrollStepIntoView(document.getElementById(panelId));
       const warn = document.getElementById('ee-publish-warn');
       if (warn) warn.hidden = false;
       updatePublishButton();
@@ -5481,10 +5495,7 @@
         'Add bank details before you can publish paid tickets. You can save tickets and continue to review now — Confirm & publish stays blocked until Stripe setup is finished.',
         'warn'
       );
-      document.getElementById('ee-payment-setup-mount')?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest',
-      });
+      scrollStepIntoView(document.getElementById('ee-payment-setup-mount'));
     }
 
     await saveTickets(false, { redirectToReview: !isExistingPublicListing() });
@@ -5549,7 +5560,7 @@
             : attendanceMode === 'guest_programme'
               ? 'ee-guest-programme-fields'
               : 'ee-panel-tickets';
-        document.getElementById(panelId)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        scrollStepIntoView(document.getElementById(panelId));
         const warn = document.getElementById('ee-publish-warn');
         if (warn) warn.hidden = false;
       }
@@ -5567,10 +5578,7 @@
         if (option !== 'custom') return !computeSaleEndIso(option, null, seriesMeta.events?.[0]?.date);
         return !row.querySelector('.ee-tier-sale-custom-date')?.value;
       });
-      (missing || document.getElementById('ee-panel-tickets'))?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'nearest',
-      });
+      scrollStepIntoView(missing || document.getElementById('ee-panel-tickets'));
       updatePublishButton();
       return;
     }
@@ -5586,17 +5594,14 @@
         if (warn) {
           warn.hidden = false;
           warn.textContent = 'Before this event can go live: ' + blockers.join('; ') + '.';
-          warn.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          scrollStepIntoView(warn);
         }
         if (blockers.some((b) => /VAT/i.test(b))) {
-          document.getElementById('ee-vat-card')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          scrollStepIntoView(document.getElementById('ee-vat-card'));
         } else if (blockers.some((b) => /refund/i.test(b))) {
-          document.getElementById('ee-refund-card')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          scrollStepIntoView(document.getElementById('ee-refund-card'));
         } else if (blockers.some((b) => /bank details/i.test(b))) {
-          document.getElementById('ee-payment-setup-mount')?.scrollIntoView({
-            behavior: 'smooth',
-            block: 'nearest',
-          });
+          scrollStepIntoView(document.getElementById('ee-payment-setup-mount'));
         }
         updatePublishButton();
         return;
@@ -5949,7 +5954,7 @@
       }
       notifyEmbedDrawerReady();
       if (tiersHavePaidPrice(collectActiveTiers())) {
-        document.getElementById('ee-vat-card')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        scrollStepIntoView(document.getElementById('ee-vat-card'));
       }
       return;
     }
