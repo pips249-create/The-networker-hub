@@ -400,7 +400,7 @@ const BRANDED_EMAIL_TEMPLATES = {
   partner_programme_invite: {
     file: 'partner-programme-invite.html',
     marker: 'hub-email-layout-v3-purple',
-    subject: 'Your Networker UK partner hub · code {{partner_code}}',
+    subject: 'Your Networker UK partner workspace · code {{partner_code}}',
   },
 };
 

@@ -111,7 +111,7 @@
         earnHint.textContent =
           'Commission totals for code ' +
           code +
-          ' will fill in once referred sales pay. Until then, share your links from the Share tab.';
+          ' will fill in once referred sales pay. Until then, copy your tracking links from Your links.';
       }
     }
     if (code && heroLine && heroCode) {

@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Partner hub – The Networker UK</title>
-<meta name="description" content="Your Networker UK partner earnings, tracking links, logos, creatives, and rate card — in one place.">
+<title>Partner workspace – The Networker UK</title>
+<meta name="description" content="Your Networker UK partner workspace — earnings, tracking links, logos, creatives, and rate card.">
 <meta name="robots" content="noindex,nofollow">
 <link rel="canonical" href="https://www.thenetworkeruk.com/partners/kit">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="The Networker UK">
-<meta property="og:title" content="Partner hub – The Networker UK">
+<meta property="og:title" content="Partner workspace – The Networker UK">
 <meta property="og:description" content="Earnings, tracking links, logos, creatives, and rate card for referral partners.">
 <meta property="og:url" content="https://www.thenetworkeruk.com/partners/kit">
 <meta property="og:image" content="https://www.thenetworkeruk.com/assets/logo-networker-uk-og.png?v=20260908og">
@@ -19,7 +19,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/hub.css?v=20260909listmenu1">
 <link rel="stylesheet" href="/css/content-page.css?v=20260711e">
-<link rel="stylesheet" href="/css/partner-kit.css?v=20260910hub3">
+<link rel="stylesheet" href="/css/partner-kit.css?v=20260910ws1">
 <link rel="icon" href="/favicon.ico?v=20260823uk3" sizes="any">
 <link rel="icon" href="/assets/favicon.svg?v=20260823uk3" type="image/svg+xml">
 <link rel="icon" href="/assets/favicon-32.png?v=20260823uk" type="image/png" sizes="32x32">
@@ -32,34 +32,52 @@
 <script src="/js/site-nav.js?v=20260910aff1" data-root="/" data-page="partners"></script>
 
 <main class="content-page-main partner-kit-main">
-  <header class="partner-kit-hero partner-kit-hero--hub" aria-label="Partner hub">
+  <header class="partner-kit-hero partner-kit-hero--hub" aria-label="Partner workspace">
     <div class="partner-kit-hero-grid">
       <div class="partner-kit-hero-copy">
         <p class="partner-kit-kicker">Referral partners</p>
-        <h1>Your partner hub</h1>
+        <h1>Your partner workspace</h1>
         <p class="partner-kit-lede">
-          Track what you’ve earned, grab your links, and download posts &amp; badges — without scrolling forever.
+          Track earnings, copy your links, and download posts &amp; badges — pick a section below.
         </p>
         <p class="partner-kit-code-pill" id="partner-hero-code-line" hidden>
           Partner code <strong id="partner-hero-code"></strong>
         </p>
         <div class="partner-kit-hero-actions">
           <a class="partner-kit-download partner-kit-download--solid" href="#panel-earn" data-partner-tab="earn">View earnings</a>
-          <a class="partner-kit-download" href="/assets/guides/partner-rate-card.pdf?v=20260910hub3" download="networker-uk-partner-rate-card.pdf">Rate card PDF</a>
+          <a class="partner-kit-download" href="/assets/guides/partner-rate-card.pdf?v=20260910ws1" download="networker-uk-partner-rate-card.pdf">Rate card PDF</a>
         </div>
       </div>
       <div class="partner-kit-hero-visual" aria-hidden="true">
-        <img src="/assets/logo-networker-uk-partner-lockup.png?v=20260910earn2" alt="" width="420" height="158" loading="eager">
+        <img src="/assets/logo-networker-uk-partner-lockup.png?v=20260910ws1" alt="" width="480" height="180" loading="eager">
       </div>
     </div>
   </header>
 
-  <nav class="partner-hub-nav" aria-label="Partner hub sections" id="partner-hub-nav">
-    <button type="button" class="partner-hub-nav-btn is-active" data-partner-tab="earn" aria-controls="panel-earn" aria-selected="true">Earn</button>
-    <button type="button" class="partner-hub-nav-btn" data-partner-tab="share" aria-controls="panel-share" aria-selected="false">Share</button>
-    <button type="button" class="partner-hub-nav-btn" data-partner-tab="creatives" aria-controls="panel-creatives" aria-selected="false">Creatives</button>
-    <button type="button" class="partner-hub-nav-btn" data-partner-tab="brand" aria-controls="panel-brand" aria-selected="false">Brand</button>
-    <button type="button" class="partner-hub-nav-btn" data-partner-tab="rates" aria-controls="panel-rates" aria-selected="false">Rates</button>
+  <nav class="partner-hub-nav" aria-label="Workspace sections" id="partner-hub-nav">
+    <p class="partner-hub-nav-label">Workspace menu</p>
+    <div class="partner-hub-nav-row" role="tablist" aria-label="Sections">
+      <button type="button" class="partner-hub-nav-btn is-active" data-partner-tab="earn" aria-controls="panel-earn" aria-selected="true">
+        <span class="partner-hub-nav-title">Earnings</span>
+        <span class="partner-hub-nav-desc">Totals &amp; activity</span>
+      </button>
+      <button type="button" class="partner-hub-nav-btn" data-partner-tab="share" aria-controls="panel-share" aria-selected="false">
+        <span class="partner-hub-nav-title">Your links</span>
+        <span class="partner-hub-nav-desc">Copy tracking URLs</span>
+      </button>
+      <button type="button" class="partner-hub-nav-btn" data-partner-tab="creatives" aria-controls="panel-creatives" aria-selected="false">
+        <span class="partner-hub-nav-title">Posts &amp; Stories</span>
+        <span class="partner-hub-nav-desc">Ready-made creatives</span>
+      </button>
+      <button type="button" class="partner-hub-nav-btn" data-partner-tab="brand" aria-controls="panel-brand" aria-selected="false">
+        <span class="partner-hub-nav-title">Logos</span>
+        <span class="partner-hub-nav-desc">Badges &amp; rules</span>
+      </button>
+      <button type="button" class="partner-hub-nav-btn" data-partner-tab="rates" aria-controls="panel-rates" aria-selected="false">
+        <span class="partner-hub-nav-title">Rate card</span>
+        <span class="partner-hub-nav-desc">Prices &amp; your 20%</span>
+      </button>
+    </div>
   </nav>
 
   <div class="partner-kit-body content-body">
@@ -103,7 +121,7 @@
         <h3 class="partner-earnings-subhead">Activity</h3>
         <div id="partner-earnings-activity" class="partner-earnings-activity">
           <p class="partner-kit-muted" style="margin:0;">
-            No commission lines yet. Switch to <button type="button" class="partner-kit-text-btn" data-partner-tab="share">Share</button> to copy your links — when a referred customer pays, the sale shows up here.
+            No commission lines yet. Switch to <button type="button" class="partner-kit-text-btn" data-partner-tab="share">Your links</button> to copy tracking URLs — when a referred customer pays, the sale shows up here.
           </p>
         </div>
       </div>
@@ -185,30 +203,30 @@ I partner with The Networker UK — the UK hub for networking events, exhibition
     <section class="partner-hub-panel" id="panel-creatives" data-partner-panel="creatives" aria-labelledby="promos-title" hidden>
       <div class="partner-kit-card">
         <h2 id="promos-title">Ready-made posts</h2>
-        <p class="partner-kit-muted">Download PNG for Instagram / LinkedIn. Always send people to <strong>your</strong> tracking link from the Share tab.</p>
+        <p class="partner-kit-muted">Download PNG for Instagram / LinkedIn. Always send people to <strong>your</strong> tracking link from Your links.</p>
         <div class="partner-kit-logo-grid">
           <figure class="partner-kit-logo-tile partner-kit-logo-tile--dark">
-            <img src="/assets/partner-promo-opp-listing-square.png?v=20260910hub3" alt="Square advert: list your business opportunity for £25 a month" width="280" height="280" loading="lazy">
+            <img src="/assets/partner-promo-opp-listing-square.png?v=20260910ws1" alt="Square advert: list your business opportunity for £25 a month" width="280" height="280" loading="lazy">
             <figcaption>Opportunity · square 1080×1080</figcaption>
             <div class="partner-kit-dl-row">
-              <a class="partner-kit-download" href="/assets/partner-promo-opp-listing-square.png?v=20260910hub3" download="networker-uk-promo-opportunity-square.png">PNG</a>
-              <a class="partner-kit-download" href="/assets/partner-promo-opp-listing-square.svg?v=20260910hub3" download="networker-uk-promo-opportunity-square.svg">SVG</a>
+              <a class="partner-kit-download" href="/assets/partner-promo-opp-listing-square.png?v=20260910ws1" download="networker-uk-promo-opportunity-square.png">PNG</a>
+              <a class="partner-kit-download" href="/assets/partner-promo-opp-listing-square.svg?v=20260910ws1" download="networker-uk-promo-opportunity-square.svg">SVG</a>
             </div>
           </figure>
           <figure class="partner-kit-logo-tile partner-kit-logo-tile--dark">
-            <img src="/assets/partner-promo-opp-listing-landscape.png?v=20260910hub3" alt="Landscape advert: list your business opportunity for £25 a month" width="300" height="157" loading="lazy">
+            <img src="/assets/partner-promo-opp-listing-landscape.png?v=20260910ws1" alt="Landscape advert: list your business opportunity for £25 a month" width="300" height="157" loading="lazy">
             <figcaption>Opportunity · landscape 1200×628</figcaption>
             <div class="partner-kit-dl-row">
-              <a class="partner-kit-download" href="/assets/partner-promo-opp-listing-landscape.png?v=20260910hub3" download="networker-uk-promo-opportunity-landscape.png">PNG</a>
-              <a class="partner-kit-download" href="/assets/partner-promo-opp-listing-landscape.svg?v=20260910hub3" download="networker-uk-promo-opportunity-landscape.svg">SVG</a>
+              <a class="partner-kit-download" href="/assets/partner-promo-opp-listing-landscape.png?v=20260910ws1" download="networker-uk-promo-opportunity-landscape.png">PNG</a>
+              <a class="partner-kit-download" href="/assets/partner-promo-opp-listing-landscape.svg?v=20260910ws1" download="networker-uk-promo-opportunity-landscape.svg">SVG</a>
             </div>
           </figure>
           <figure class="partner-kit-logo-tile partner-kit-logo-tile--light">
-            <img src="/assets/partner-promo-sponsor-square.png?v=20260910hub3" alt="Square advert: sponsorship from £25 a month" width="280" height="280" loading="lazy">
+            <img src="/assets/partner-promo-sponsor-square.png?v=20260910ws1" alt="Square advert: sponsorship from £25 a month" width="280" height="280" loading="lazy">
             <figcaption>Sponsorship · square 1080×1080</figcaption>
             <div class="partner-kit-dl-row">
-              <a class="partner-kit-download" href="/assets/partner-promo-sponsor-square.png?v=20260910hub3" download="networker-uk-promo-sponsor-square.png">PNG</a>
-              <a class="partner-kit-download" href="/assets/partner-promo-sponsor-square.svg?v=20260910hub3" download="networker-uk-promo-sponsor-square.svg">SVG</a>
+              <a class="partner-kit-download" href="/assets/partner-promo-sponsor-square.png?v=20260910ws1" download="networker-uk-promo-sponsor-square.png">PNG</a>
+              <a class="partner-kit-download" href="/assets/partner-promo-sponsor-square.svg?v=20260910ws1" download="networker-uk-promo-sponsor-square.svg">SVG</a>
             </div>
           </figure>
         </div>
@@ -230,19 +248,19 @@ Message me for my partner link and I’ll get you started.
         <p class="partner-kit-muted">Vertical 1080×1920. Add your tracking link as a sticker or in bio.</p>
         <div class="partner-kit-logo-grid partner-kit-logo-grid--stories">
           <figure class="partner-kit-logo-tile partner-kit-logo-tile--dark partner-kit-logo-tile--story">
-            <img src="/assets/partner-promo-opp-listing-story.png?v=20260910hub3" alt="Story advert: list your business opportunity for £25 a month" width="216" height="384" loading="lazy">
+            <img src="/assets/partner-promo-opp-listing-story.png?v=20260910ws1" alt="Story advert: list your business opportunity for £25 a month" width="216" height="384" loading="lazy">
             <figcaption>Opportunity · Story</figcaption>
             <div class="partner-kit-dl-row">
-              <a class="partner-kit-download" href="/assets/partner-promo-opp-listing-story.png?v=20260910hub3" download="networker-uk-promo-opportunity-story.png">PNG</a>
-              <a class="partner-kit-download" href="/assets/partner-promo-opp-listing-story.svg?v=20260910hub3" download="networker-uk-promo-opportunity-story.svg">SVG</a>
+              <a class="partner-kit-download" href="/assets/partner-promo-opp-listing-story.png?v=20260910ws1" download="networker-uk-promo-opportunity-story.png">PNG</a>
+              <a class="partner-kit-download" href="/assets/partner-promo-opp-listing-story.svg?v=20260910ws1" download="networker-uk-promo-opportunity-story.svg">SVG</a>
             </div>
           </figure>
           <figure class="partner-kit-logo-tile partner-kit-logo-tile--light partner-kit-logo-tile--story">
-            <img src="/assets/partner-promo-sponsor-story.png?v=20260910hub3" alt="Story advert: sponsorship from £25 a month" width="216" height="384" loading="lazy">
+            <img src="/assets/partner-promo-sponsor-story.png?v=20260910ws1" alt="Story advert: sponsorship from £25 a month" width="216" height="384" loading="lazy">
             <figcaption>Sponsorship · Story</figcaption>
             <div class="partner-kit-dl-row">
-              <a class="partner-kit-download" href="/assets/partner-promo-sponsor-story.png?v=20260910hub3" download="networker-uk-promo-sponsor-story.png">PNG</a>
-              <a class="partner-kit-download" href="/assets/partner-promo-sponsor-story.svg?v=20260910hub3" download="networker-uk-promo-sponsor-story.svg">SVG</a>
+              <a class="partner-kit-download" href="/assets/partner-promo-sponsor-story.png?v=20260910ws1" download="networker-uk-promo-sponsor-story.png">PNG</a>
+              <a class="partner-kit-download" href="/assets/partner-promo-sponsor-story.svg?v=20260910ws1" download="networker-uk-promo-sponsor-story.svg">SVG</a>
             </div>
           </figure>
         </div>
@@ -265,27 +283,27 @@ DM me for my partner link.
         <p class="partner-kit-muted">Official files only — don’t stretch, recolour, or add effects. Prefer Partner badges when you mention the programme.</p>
         <div class="partner-kit-logo-grid">
           <figure class="partner-kit-logo-tile partner-kit-logo-tile--lavender">
-            <img src="/assets/logo-networker-uk-partner-lockup.png?v=20260910earn2" alt="The Networker UK Referral Partner lockup on lavender" width="320" height="120" loading="lazy">
+            <img src="/assets/logo-networker-uk-partner-lockup.png?v=20260910ws1" alt="The Networker UK Referral Partner lockup on lavender" width="320" height="120" loading="lazy">
             <figcaption>Referral Partner lockup</figcaption>
             <div class="partner-kit-dl-row">
-              <a class="partner-kit-download" href="/assets/logo-networker-uk-partner-lockup.png?v=20260910earn2" download="networker-uk-referral-partner.png">PNG</a>
-              <a class="partner-kit-download" href="/assets/logo-networker-uk-partner-lockup.svg?v=20260910earn2" download="networker-uk-referral-partner.svg">SVG</a>
+              <a class="partner-kit-download" href="/assets/logo-networker-uk-partner-lockup.png?v=20260910ws1" download="networker-uk-referral-partner.png">PNG</a>
+              <a class="partner-kit-download" href="/assets/logo-networker-uk-partner-lockup.svg?v=20260910ws1" download="networker-uk-referral-partner.svg">SVG</a>
             </div>
           </figure>
           <figure class="partner-kit-logo-tile partner-kit-logo-tile--light">
-            <img src="/assets/logo-networker-uk-partner-light.png?v=20260910earn2" alt="The Networker UK Partner badge on light" width="280" height="158" loading="lazy">
+            <img src="/assets/logo-networker-uk-partner-light.png?v=20260910ws1" alt="The Networker UK Partner badge on light" width="280" height="158" loading="lazy">
             <figcaption>Partner badge · light</figcaption>
             <div class="partner-kit-dl-row">
-              <a class="partner-kit-download" href="/assets/logo-networker-uk-partner-light.png?v=20260910earn2" download="networker-uk-partner-light.png">PNG</a>
-              <a class="partner-kit-download" href="/assets/logo-networker-uk-partner-light.svg?v=20260910earn2" download="networker-uk-partner-light.svg">SVG</a>
+              <a class="partner-kit-download" href="/assets/logo-networker-uk-partner-light.png?v=20260910ws1" download="networker-uk-partner-light.png">PNG</a>
+              <a class="partner-kit-download" href="/assets/logo-networker-uk-partner-light.svg?v=20260910ws1" download="networker-uk-partner-light.svg">SVG</a>
             </div>
           </figure>
           <figure class="partner-kit-logo-tile partner-kit-logo-tile--dark">
-            <img src="/assets/logo-networker-uk-partner-dark.png?v=20260910earn2" alt="The Networker UK Partner badge on dark" width="280" height="158" loading="lazy">
+            <img src="/assets/logo-networker-uk-partner-dark.png?v=20260910ws1" alt="The Networker UK Partner badge on dark" width="280" height="158" loading="lazy">
             <figcaption>Partner badge · dark</figcaption>
             <div class="partner-kit-dl-row">
-              <a class="partner-kit-download" href="/assets/logo-networker-uk-partner-dark.png?v=20260910earn2" download="networker-uk-partner-dark.png">PNG</a>
-              <a class="partner-kit-download" href="/assets/logo-networker-uk-partner-dark.svg?v=20260910earn2" download="networker-uk-partner-dark.svg">SVG</a>
+              <a class="partner-kit-download" href="/assets/logo-networker-uk-partner-dark.png?v=20260910ws1" download="networker-uk-partner-dark.png">PNG</a>
+              <a class="partner-kit-download" href="/assets/logo-networker-uk-partner-dark.svg?v=20260910ws1" download="networker-uk-partner-dark.svg">SVG</a>
             </div>
           </figure>
           <figure class="partner-kit-logo-tile partner-kit-logo-tile--light">
@@ -325,7 +343,7 @@ DM me for my partner link.
       <div class="partner-kit-card">
         <h2 id="rates-title">Guide rates (ex-VAT)</h2>
         <p class="partner-kit-muted">Confirm live pricing on <a href="/advertising">/advertising</a>. Your cut is 20% of the net amount charged.</p>
-        <p><a class="partner-kit-download partner-kit-download--solid" href="/assets/guides/partner-rate-card.pdf?v=20260910hub3" download="networker-uk-partner-rate-card.pdf">Download rate card PDF</a></p>
+        <p><a class="partner-kit-download partner-kit-download--solid" href="/assets/guides/partner-rate-card.pdf?v=20260910ws1" download="networker-uk-partner-rate-card.pdf">Download rate card PDF</a></p>
         <div class="partner-kit-table-wrap">
           <table class="partner-kit-table">
             <thead>
@@ -352,6 +370,6 @@ DM me for my partner link.
 
 <div id="hub-site-footer"></div>
 <script src="/js/site-footer.js?v=20260910pp1" data-root="/"></script>
-<script src="/js/partner-kit.js?v=20260910hub3"></script>
+<script src="/js/partner-kit.js?v=20260910ws1"></script>
 </body>
 </html>
