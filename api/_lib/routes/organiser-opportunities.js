@@ -21,12 +21,18 @@ function opportunityPayloadFromBody(body, session) {
     : body.type
       ? [String(body.type || '').trim()].filter(Boolean)
       : [];
+  const categories = Array.isArray(body.categories)
+    ? body.categories.map((c) => String(c || '').trim()).filter(Boolean).slice(0, 2)
+    : body.category
+      ? [String(body.category || '').trim()].filter(Boolean)
+      : [];
 
   return {
     title: String(body.title || '').trim(),
     type: types[0] || String(body.type || '').trim(),
     types,
-    category: String(body.category || '').trim(),
+    category: categories[0] || String(body.category || '').trim(),
+    categories,
     description: String(body.description || body.desc || '').trim(),
     about: body.about,
     aboutText: body.aboutText,

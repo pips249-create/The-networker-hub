@@ -81,6 +81,31 @@
     'network-marketing': 'mlm',
   };
 
+  const MAX_CATEGORIES = 2;
+
+  const CATEGORY_LABELS = {
+    cleaning: 'Cleaning',
+    'home-services': 'Home services & trades',
+    food: 'Food & Drink',
+    retail: 'Retail & E-commerce',
+    tech: 'Tech & Digital',
+    health: 'Health & Fitness',
+    medical: 'Medical & clinical',
+    beauty: 'Beauty & Wellness',
+    property: 'Property',
+    automotive: 'Automotive',
+    education: 'Education & Coaching',
+    childcare: 'Childcare & Family',
+    care: 'Care & support',
+    finance: 'Finance, legal & admin',
+    recruitment: 'Recruitment & staffing',
+    pets: 'Pets & Animals',
+    leisure: 'Leisure, travel & hospitality',
+    networking: 'Networking',
+    mlm: 'Network marketing',
+    general: 'Other',
+  };
+
   const OE_STEP_ORDER = ['details', 'host', 'meta', 'photo', 'submit'];
 
   let oeStepsConfirmed = {
@@ -362,6 +387,64 @@
     document.querySelectorAll('#oe-type-group input[name="oe-type"]').forEach((input) => {
       input.checked = selected.has(input.value);
     });
+  }
+
+  function getSelectedCategories() {
+    return Array.from(document.querySelectorAll('#oe-category-group input[name="oe-category"]:checked'))
+      .map((input) => input.value.trim())
+      .filter(Boolean)
+      .slice(0, MAX_CATEGORIES);
+  }
+
+  function setSelectedCategories(categories) {
+    const selected = (categories || []).filter(Boolean).slice(0, MAX_CATEGORIES);
+    const selectedSet = new Set(selected);
+    document.querySelectorAll('#oe-category-group input[name="oe-category"]').forEach((input) => {
+      input.checked = selectedSet.has(input.value);
+    });
+    syncCategoryLimitHint(false);
+  }
+
+  function categoriesFromOpportunity(opp) {
+    const ordered = [];
+    const seen = {};
+    function add(raw) {
+      const id = String(raw || '').trim();
+      if (!id || seen[id]) return;
+      seen[id] = true;
+      ordered.push(id);
+    }
+    if (Array.isArray(opp && opp.categories)) {
+      opp.categories.forEach(add);
+    }
+    add(opp && opp.category);
+    (opp && opp.tags ? opp.tags : []).forEach(function (tag) {
+      const t = String(tag || '').trim();
+      if (/^cat-/.test(t)) add(t.slice(4));
+    });
+    return ordered.slice(0, MAX_CATEGORIES);
+  }
+
+  function syncCategoryLimitHint(show) {
+    const hint = document.getElementById('oe-category-limit-hint');
+    if (hint) hint.hidden = !show;
+  }
+
+  function reconcileCategorySelection(changedInput) {
+    if (!changedInput) return;
+    if (!changedInput.checked) {
+      syncCategoryLimitHint(false);
+      return;
+    }
+    const checkedCount = document.querySelectorAll(
+      '#oe-category-group input[name="oe-category"]:checked'
+    ).length;
+    if (checkedCount <= MAX_CATEGORIES) {
+      syncCategoryLimitHint(false);
+      return;
+    }
+    changedInput.checked = false;
+    syncCategoryLimitHint(true);
   }
 
   function dropIncompatibleTypes(types) {
@@ -1788,7 +1871,7 @@
       (opp.tags || []).indexOf(LEGACY_SIDE_HUSTLE_TYPE) !== -1;
     const formatTypes = rawTypes.filter((t) => t !== LEGACY_SIDE_HUSTLE_TYPE);
     setSelectedTypes(normalizeExclusiveTypes(coerceLegacyAffiliateTypes(formatTypes, opp.meta)));
-    document.getElementById('oe-category').value = opp.category || '';
+    setSelectedCategories(categoriesFromOpportunity(opp));
     document.getElementById('oe-desc').value = opp.desc || '';
     document.getElementById('oe-about').value = (opp.about || []).join('\n\n');
     document.getElementById('oe-host').value = opp.host || '';
@@ -2190,11 +2273,17 @@
 
   function buildPayload(listingStatus) {
     const types = getSelectedTypes();
-    const category = document.getElementById('oe-category').value.trim();
+    const categories = getSelectedCategories();
+    const category = categories[0] || '';
     const region = getSelectedListingRegion();
     const locationDetail = document.getElementById('oe-location-detail')?.value.trim() || '';
     const tags = types.slice();
-    if (category && category !== 'general') tags.push('cat-' + category);
+    categories.forEach(function (cat) {
+      if (cat && cat !== 'general') {
+        const tag = 'cat-' + cat;
+        if (tags.indexOf(tag) === -1) tags.push(tag);
+      }
+    });
 
     const aboutText = document.getElementById('oe-about').value.trim();
     const aboutBlocks = aboutText
@@ -2211,6 +2300,7 @@
       type: types[0] || '',
       types,
       category,
+      categories,
       description: document.getElementById('oe-desc').value.trim(),
       about: aboutBlocks,
       aboutText,
@@ -2346,6 +2436,7 @@
       desc: payload.description || '',
       meta: payload.meta || [],
       category: payload.category || 'general',
+      categories: payload.categories || [],
       imageUrl: previewCoverUrl(),
       logoUrl: payload.logoUrl || '',
     };
@@ -2468,6 +2559,7 @@
     const rows = [
       ['Title', payload.title || '—'],
       ['Type', typeLabelsList(payload.types) || '—'],
+      ['Category', categoryLabelsList(payload.categories) || '—'],
       ['Company', payload.host || '—'],
       ['Region', region ? region.label : '—'],
     ];
@@ -2512,20 +2604,31 @@
   }
 
   function categoryLabel(value) {
-    const select = document.getElementById('oe-category');
-    if (!select || !value) return '';
-    const opt = select.querySelector('option[value="' + value + '"]');
-    return opt ? opt.textContent.trim() : value;
+    const id = String(value || '').trim();
+    if (!id) return '';
+    if (CATEGORY_LABELS[id]) return CATEGORY_LABELS[id];
+    const input = document.querySelector('#oe-category-group input[name="oe-category"][value="' + id + '"]');
+    if (input && input.closest('label')) {
+      return input.closest('label').textContent.replace(/\s+/g, ' ').trim();
+    }
+    return id;
+  }
+
+  function categoryLabelsList(categories) {
+    return (categories || [])
+      .map((id) => categoryLabel(id))
+      .filter(Boolean)
+      .join(', ');
   }
 
   function maybeSuggestCategoryFromTypes() {
-    const categoryEl = document.getElementById('oe-category');
-    if (!categoryEl || categoryEl.value) return;
+    const selected = getSelectedCategories();
+    if (selected.length) return;
     const types = getSelectedTypes();
     for (let i = 0; i < types.length; i++) {
       const hint = TYPE_CATEGORY_HINTS[types[i]];
       if (hint) {
-        categoryEl.value = hint;
+        setSelectedCategories([hint]);
         break;
       }
     }
@@ -2573,13 +2676,13 @@
   function updateOeStepSummaries() {
     const title = document.getElementById('oe-title')?.value.trim() || '';
     const types = getSelectedTypes();
-    const category = document.getElementById('oe-category')?.value.trim() || '';
+    const categories = getSelectedCategories();
     const desc = document.getElementById('oe-desc')?.value.trim() || '';
     const detailsText = document.getElementById('oe-summary-details-text');
     if (detailsText) {
       let html = '<strong>' + escHtml(title || 'Untitled') + '</strong>';
       if (types.length) html += ' · ' + escHtml(typeLabelsList(types));
-      if (category) html += ' · ' + escHtml(categoryLabel(category));
+      if (categories.length) html += ' · ' + escHtml(categoryLabelsList(categories));
       if (desc) html += '<br><span>' + escHtml(desc.length > 120 ? desc.slice(0, 117) + '…' : desc) + '</span>';
       detailsText.innerHTML = html;
     }
@@ -2820,7 +2923,6 @@
       'oe-region-broad',
       'oe-region',
       'oe-commitment',
-      'oe-category',
       'oe-logo-url',
       'oe-photo-url',
     ];
@@ -2829,6 +2931,13 @@
       if (!el) return;
       el.addEventListener('input', syncOpportunitySteps);
       el.addEventListener('change', syncOpportunitySteps);
+    });
+
+    document.querySelectorAll('#oe-category-group input[name="oe-category"]').forEach(function (input) {
+      input.addEventListener('change', function () {
+        reconcileCategorySelection(this);
+        syncOpportunitySteps();
+      });
     });
 
     document.querySelectorAll('#oe-type-group input[name="oe-type"]').forEach(function (input) {
@@ -2900,6 +3009,9 @@
       el.addEventListener('change', refreshCompleteness);
     });
     document.querySelectorAll('#oe-type-group input[name="oe-type"]').forEach((input) => {
+      input.addEventListener('change', refreshCompleteness);
+    });
+    document.querySelectorAll('#oe-category-group input[name="oe-category"]').forEach((input) => {
       input.addEventListener('change', refreshCompleteness);
     });
   }

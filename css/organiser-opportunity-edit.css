@@ -453,6 +453,11 @@ body.hub-page-organiser.organiser-opportunity-edit-page {
   color: var(--opp-mid-gray, #635c5e);
 }
 
+#oe-category-limit-hint:not([hidden]) {
+  color: #b45309;
+  margin-top: 8px;
+}
+
 .oe-type-mode-note {
   margin: 10px 0 0;
   padding: 10px 12px;

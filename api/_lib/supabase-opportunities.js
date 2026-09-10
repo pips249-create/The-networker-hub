@@ -193,15 +193,51 @@ function normalizeTypes(payload) {
 
 function buildOpportunityTags(types, payload) {
   const tags = types.slice();
-  const category = String(payload.category || '').trim();
-  if (category && category !== 'general') tags.push('cat-' + category);
+  const categories = normalizeCategories(payload);
+  categories.forEach((category) => {
+    if (category && category !== 'general') {
+      const tag = 'cat-' + category;
+      if (!tags.includes(tag)) tags.push(tag);
+    }
+  });
   if (Array.isArray(payload.tags)) {
     payload.tags.forEach((tag) => {
       const t = String(tag || '').trim();
+      if (!t || /^cat-/.test(t)) return;
       if (t && !tags.includes(t)) tags.push(t);
     });
   }
   return tags;
+}
+
+function normalizeCategories(payload) {
+  const ordered = [];
+  const seen = {};
+  function add(raw) {
+    const id = String(raw || '').trim();
+    if (!id || seen[id]) return;
+    seen[id] = true;
+    ordered.push(id);
+  }
+  if (Array.isArray(payload && payload.categories)) {
+    payload.categories.forEach(add);
+  }
+  add(payload && payload.category);
+  if (Array.isArray(payload && payload.tags)) {
+    payload.tags.forEach((tag) => {
+      const t = String(tag || '').trim();
+      if (/^cat-/.test(t)) add(t.slice(4));
+    });
+  }
+  return ordered.slice(0, 2);
+}
+
+function categoriesFromRow(row) {
+  return normalizeCategories({
+    category: row && row.category,
+    categories: row && row.categories,
+    tags: row && row.tags,
+  });
 }
 
 function metaValue(meta, keyRe) {
@@ -299,6 +335,25 @@ function applyPendingReviewOverlay(listing, pendingPayload) {
   const next = Object.assign({}, listing);
   if (p.type) next.type = p.type;
   if (p.category) next.category = p.category;
+  if (Array.isArray(p.tags)) {
+    const cats = [];
+    const seen = {};
+    function addCat(raw) {
+      const id = String(raw || '').trim();
+      if (!id || seen[id]) return;
+      seen[id] = true;
+      cats.push(id);
+    }
+    addCat(p.category || next.category);
+    p.tags.forEach(function (tag) {
+      const t = String(tag || '').trim();
+      if (/^cat-/.test(t)) addCat(t.slice(4));
+    });
+    next.categories = cats.slice(0, 2);
+    if (next.categories[0]) next.category = next.categories[0];
+  } else if (p.category) {
+    next.categories = [p.category];
+  }
   if (p.title) next.title = String(p.title).trim();
   if (p.description != null) {
     next.desc = String(p.description).trim();
@@ -397,6 +452,7 @@ function normalizeStatus(input) {
 function rowToListing(row) {
   if (!row) return null;
   const meta = normalizeListingMeta(row.meta);
+  const categories = categoriesFromRow(row);
   return coerceLegacyAffiliateListing({
     id: row.id,
     slug: publicOpportunitySlug(row),
@@ -411,7 +467,8 @@ function rowToListing(row) {
     desc: String(row.description || '').trim(),
     about: Array.isArray(row.about) ? row.about.map(String) : [],
     meta,
-    category: row.category || 'general',
+    category: categories[0] || row.category || 'general',
+    categories,
     contactEmail: String(row.contact_email || '').trim(),
     imageUrl: String(row.image_url || '').trim(),
     logoUrl: String(row.logo_url || '').trim(),
@@ -609,10 +666,11 @@ async function buildOpportunityRow(payload, opportunityId, mode) {
   const host = String(payload.host || payload.company || '').trim();
   const status = normalizeStatus(payload.listingStatus || payload.status);
   const types = normalizeTypes(payload);
+  const categories = normalizeCategories(payload);
   const row = {
     organiser_id: null,
     type: types[0] || normalizeType(payload.type),
-    category: String(payload.category || '').trim() || null,
+    category: categories[0] || String(payload.category || '').trim() || null,
     title: String(payload.title || '').trim(),
     description: String(payload.description || payload.desc || '').trim() || null,
     about: Array.isArray(payload.about)
@@ -1785,6 +1843,7 @@ module.exports = {
   incrementOpportunityViewCount,
   normalizeType,
   normalizeTypes,
+  normalizeCategories,
   normalizeMeta,
   deriveOpportunityGeo,
   writeOpportunityRow,

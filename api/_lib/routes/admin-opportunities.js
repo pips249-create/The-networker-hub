@@ -431,12 +431,35 @@ function buildMetaFromAdminInput(input, existingMeta) {
   return stripEarningsMeta(normalizeMeta(meta.concat(preserved)));
 }
 
-function buildAdminOpportunityTags(type, category, existingTags, isTest) {
+function buildAdminOpportunityTags(type, category, existingTags, isTest, options) {
   const tags = [];
   const typeNorm = normalizeType(type || 'business-opportunity');
   if (typeNorm) tags.push(typeNorm);
   const cat = String(category || '').trim();
-  if (cat && cat !== 'general') tags.push('cat-' + cat);
+  const prevCat = String((options && options.previousCategory) || '').trim();
+  const catTags = [];
+  const seenCat = {};
+  function addCatTag(rawCat) {
+    const id = String(rawCat || '').trim();
+    if (!id || id === 'general' || seenCat[id]) return;
+    seenCat[id] = true;
+    catTags.push('cat-' + id);
+  }
+  if (Array.isArray(options && options.categories) && options.categories.length) {
+    options.categories.slice(0, 2).forEach(addCatTag);
+  } else {
+    addCatTag(cat);
+    (Array.isArray(existingTags) ? existingTags : []).forEach(function (tag) {
+      const t = String(tag || '').trim();
+      if (!/^cat-/.test(t)) return;
+      const id = t.slice(4);
+      if (prevCat && id === prevCat && id !== cat) return;
+      addCatTag(id);
+    });
+  }
+  catTags.slice(0, 2).forEach(function (tag) {
+    if (!tags.includes(tag)) tags.push(tag);
+  });
   if (isTest || (Array.isArray(existingTags) && existingTags.includes('admin-test'))) {
     if (!tags.includes('admin-test')) tags.push('admin-test');
   }
@@ -1911,7 +1934,10 @@ module.exports = async function handler(req, res) {
         nextType,
         nextCategory,
         currentTagRow && currentTagRow.tags,
-        false
+        false,
+        {
+          previousCategory: (currentTagRow && currentTagRow.category) || '',
+        }
       );
     }
     const imageUrl = await resolveAdminOpportunityImage(body, id);

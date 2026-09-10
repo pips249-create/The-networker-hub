@@ -325,9 +325,40 @@
     if (/full/.test(comm)) tags.push('full-time');
     if (/part|flex|side|hustle|few hour|no fixed|no minimum/.test(comm)) tags.push('part-time');
     if (/event/.test(comm)) tags.push('event-based');
-    if (item.category && item.category !== 'general') tags.push('cat-' + item.category);
+    listingCategories(item).forEach(function (cat) {
+      if (cat && cat !== 'general') {
+        var tag = 'cat-' + cat;
+        if (tags.indexOf(tag) === -1) tags.push(tag);
+      }
+    });
     item.filterTags = tags;
     return deriveCitySlugs(item);
+  }
+
+  function listingCategories(item) {
+    var ordered = [];
+    var seen = {};
+    function add(raw) {
+      var id = String(raw || '').trim();
+      if (!id || seen[id]) return;
+      seen[id] = true;
+      ordered.push(id);
+    }
+    if (Array.isArray(item && item.categories)) {
+      item.categories.forEach(add);
+    }
+    add(item && item.category);
+    (item && item.tags ? item.tags : []).forEach(function (tag) {
+      var t = String(tag || '').trim();
+      if (/^cat-/.test(t)) add(t.slice(4));
+    });
+    return ordered.slice(0, 2);
+  }
+
+  function listingHasCategory(item, categoryId) {
+    var id = String(categoryId || '').trim();
+    if (!id) return false;
+    return listingCategories(item).indexOf(id) !== -1;
   }
 
   function deriveCitySlugs(item) {
@@ -507,6 +538,7 @@
     /* Omit synthetic filterTags (yorkshire, low-invest, …) — they are for chips
        only. Including them made "york" match any Leeds-tagged listing via "yorkshire". */
     return [item.title, item.host, item.desc, item.type, item.category, item.locationLabel]
+      .concat(item.categories || [])
       .concat(item.tags || [])
       .concat((item.meta || []).map(function (m) {
         return m.key + ' ' + m.val;
@@ -536,6 +568,7 @@
       about: row.about || [],
       meta: row.meta || [],
       category: row.category || 'general',
+      categories: Array.isArray(row.categories) ? row.categories.slice() : undefined,
       contactEmail: row.contactEmail || '',
       imageUrl: row.imageUrl || '',
       logoUrl: row.logoUrl || '',
@@ -571,7 +604,17 @@
     item.investAmount = parseInvestmentAmount(item.meta);
     item.investAmountMax = parseInvestmentAmountMax(item.meta);
     item.investmentIncludes = parseInvestmentIncludes(metaVal(item.meta, /^investment includes$/i));
-    item.category = seed.category || inferCategory(item);
+    item.categories = listingCategories({
+      category: seed.category,
+      categories: seed.categories,
+      tags: item.tags,
+    });
+    if (!item.categories.length) {
+      item.category = inferCategory(item);
+      if (item.category) item.categories = [item.category];
+    } else {
+      item.category = item.categories[0];
+    }
     item.thumb = thumbFor(item);
     item.locationLabel = locationLabel(item);
     item = enrichFilterTags(item);
@@ -815,6 +858,8 @@
     parseInvestmentAmount: parseInvestmentAmount,
     parseInvestmentAmountMax: parseInvestmentAmountMax,
     parseInvestmentIncludes: parseInvestmentIncludes,
+    listingCategories: listingCategories,
+    listingHasCategory: listingHasCategory,
     CATEGORY_KEYWORDS: CATEGORY_KEYWORDS,
   };
 

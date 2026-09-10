@@ -54,7 +54,30 @@ function matchesSearchCriteria(item, criteria) {
   if (commitment && !hasTag(item, commitment)) return false;
 
   const category = String(criteria.category || '').trim();
-  if (category && item.category !== category) return false;
+  if (category) {
+    const wanted = category
+      .split(',')
+      .map((c) => String(c || '').trim())
+      .filter(Boolean);
+    if (wanted.length) {
+      const listingCats = [];
+      const seen = {};
+      function addCat(raw) {
+        const id = String(raw || '').trim();
+        if (!id || seen[id]) return;
+        seen[id] = true;
+        listingCats.push(id);
+      }
+      if (Array.isArray(item.categories)) item.categories.forEach(addCat);
+      addCat(item.category);
+      (item.tags || []).forEach((tag) => {
+        const t = String(tag || '').trim();
+        if (/^cat-/.test(t)) addCat(t.slice(4));
+      });
+      const hit = wanted.some((id) => listingCats.indexOf(id) !== -1);
+      if (!hit) return false;
+    }
+  }
 
   const q = String(criteria.q || '')
     .trim()

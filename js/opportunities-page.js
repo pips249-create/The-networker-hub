@@ -1148,11 +1148,25 @@
     return true;
   }
 
+  function matchesCategories(item) {
+    if (!activeCategories.length) return true;
+    var catalog = window.HubOpportunitiesCatalog;
+    for (var i = 0; i < activeCategories.length; i++) {
+      var id = activeCategories[i];
+      if (catalog && catalog.listingHasCategory) {
+        if (catalog.listingHasCategory(item, id)) return true;
+      } else if (item.category === id || hasTag(item, 'cat-' + id)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   function matchesFilterExcept(item, except) {
     except = except || {};
     if (activeCitySlug && !matchesCityRegion(item)) return false;
     if (!except.type && activeTypes.length && !matchesTypes(item)) return false;
-    if (!except.category && activeCategories.length && activeCategories.indexOf(item.category) === -1) {
+    if (!except.category && activeCategories.length && !matchesCategories(item)) {
       return false;
     }
     if (!except.invest) {
@@ -1268,7 +1282,11 @@
       if (key === 'all') n = allListings.length;
       else if (categoryKey) {
         n = countMatching(function (item) {
-          return item.category === categoryKey;
+          var catalog = window.HubOpportunitiesCatalog;
+          if (catalog && catalog.listingHasCategory) {
+            return catalog.listingHasCategory(item, categoryKey);
+          }
+          return item.category === categoryKey || hasTag(item, 'cat-' + categoryKey);
         }, { category: true });
         key = categoryKey;
       } else if (key) {
@@ -2051,7 +2069,11 @@
       if (!countEl) return;
       var n = id
         ? countMatching(function (item) {
-            return item.category === id;
+            var catalog = window.HubOpportunitiesCatalog;
+            if (catalog && catalog.listingHasCategory) {
+              return catalog.listingHasCategory(item, id);
+            }
+            return item.category === id || hasTag(item, 'cat-' + id);
           }, { category: true })
         : countMatching(null, { category: true });
       countEl.textContent = '(' + n + ')';

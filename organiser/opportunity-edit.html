@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
     <link rel="stylesheet" href="../css/fact-loader.css?v=20260723" />
     <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260608c" />
-    <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260902dist2" />
+    <link rel="stylesheet" href="../css/organiser-opportunity-edit.css?v=20260910cat2" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260909listmenu1" />
     <style>
       /* Prevent browse-page nav padding flash before organiser form CSS loads */
@@ -63,8 +63,8 @@
       <div id="oe-alert" class="ee-alert" hidden></div>
       <div id="oe-submitted-notice" class="oe-submitted-notice" hidden role="status">
         <p>
-          <strong>Awaiting approval.</strong> You can still edit this listing until we approve it. Save changes
-          anytime, then <strong>Submit for approval</strong> again to send updates to the review team.
+          <strong>Awaiting approval.</strong> This listing is locked while we review it. You cannot edit it until we
+          approve or deny it. If we deny it, you can update and resubmit.
         </p>
       </div>
       <div id="oe-live-listing-notice" class="oe-live-listing-notice" hidden role="status">
@@ -111,38 +111,38 @@
                   <label class="oe-type-option"><input type="checkbox" name="oe-type" value="partnership" /> Partnership</label>
                   <label class="oe-type-option"><input type="checkbox" name="oe-type" value="affiliate" /> Affiliate</label>
                   <label class="oe-type-option"><input type="checkbox" name="oe-type" value="networking" /> Networking group / Ambassador</label>
-                  <label class="oe-type-option"><input type="checkbox" name="oe-type" value="network-marketing" /> Network marketing (product-selling only)</label>
+                  <label class="oe-type-option"><input type="checkbox" name="oe-type" value="network-marketing" /> Network marketing</label>
                   <label class="oe-type-option"><input type="checkbox" name="oe-type" value="business-opportunity" /> Business opportunity</label>
                   <label class="oe-type-option"><input type="checkbox" name="oe-type" value="distributorship" /> Distributorship / Reseller <span class="oe-type-option-note">(territory / buy-into rights)</span></label>
                 </div>
                 <p class="oe-type-mode-note" id="oe-type-mode-note" hidden></p>
               </div>
               <div class="ee-field" id="oe-field-category">
-                <label for="oe-category">Category</label>
-                <p class="ee-hint">Helps people find your listing in browse — optional but recommended.</p>
-                <select id="oe-category">
-                  <option value="">Select category…</option>
-                  <option value="cleaning">Cleaning</option>
-                  <option value="home-services">Home services &amp; trades</option>
-                  <option value="food">Food &amp; Drink</option>
-                  <option value="retail">Retail &amp; E-commerce</option>
-                  <option value="tech">Tech &amp; Digital</option>
-                  <option value="health">Health &amp; Fitness</option>
-                  <option value="medical">Medical &amp; clinical</option>
-                  <option value="beauty">Beauty &amp; Wellness</option>
-                  <option value="property">Property</option>
-                  <option value="automotive">Automotive</option>
-                  <option value="education">Education &amp; Coaching</option>
-                  <option value="childcare">Childcare &amp; Family</option>
-                  <option value="care">Care &amp; support</option>
-                  <option value="finance">Finance, legal &amp; admin</option>
-                  <option value="recruitment">Recruitment &amp; staffing</option>
-                  <option value="pets">Pets &amp; Animals</option>
-                  <option value="leisure">Leisure, travel &amp; hospitality</option>
-                  <option value="networking">Networking</option>
-                  <option value="mlm">Network marketing</option>
-                  <option value="general">Other</option>
-                </select>
+                <label id="oe-category-label">Category</label>
+                <p class="ee-hint">Helps people find your listing in browse — optional but recommended. Pick up to 2.</p>
+                <div class="oe-type-group" id="oe-category-group" role="group" aria-labelledby="oe-category-label">
+                  <label class="oe-type-option"><input type="checkbox" name="oe-category" value="cleaning" /> Cleaning</label>
+                  <label class="oe-type-option"><input type="checkbox" name="oe-category" value="home-services" /> Home services &amp; trades</label>
+                  <label class="oe-type-option"><input type="checkbox" name="oe-category" value="food" /> Food &amp; Drink</label>
+                  <label class="oe-type-option"><input type="checkbox" name="oe-category" value="retail" /> Retail &amp; E-commerce</label>
+                  <label class="oe-type-option"><input type="checkbox" name="oe-category" value="tech" /> Tech &amp; Digital</label>
+                  <label class="oe-type-option"><input type="checkbox" name="oe-category" value="health" /> Health &amp; Fitness</label>
+                  <label class="oe-type-option"><input type="checkbox" name="oe-category" value="medical" /> Medical &amp; clinical</label>
+                  <label class="oe-type-option"><input type="checkbox" name="oe-category" value="beauty" /> Beauty &amp; Wellness</label>
+                  <label class="oe-type-option"><input type="checkbox" name="oe-category" value="property" /> Property</label>
+                  <label class="oe-type-option"><input type="checkbox" name="oe-category" value="automotive" /> Automotive</label>
+                  <label class="oe-type-option"><input type="checkbox" name="oe-category" value="education" /> Education &amp; Coaching</label>
+                  <label class="oe-type-option"><input type="checkbox" name="oe-category" value="childcare" /> Childcare &amp; Family</label>
+                  <label class="oe-type-option"><input type="checkbox" name="oe-category" value="care" /> Care &amp; support</label>
+                  <label class="oe-type-option"><input type="checkbox" name="oe-category" value="finance" /> Finance, legal &amp; admin</label>
+                  <label class="oe-type-option"><input type="checkbox" name="oe-category" value="recruitment" /> Recruitment &amp; staffing</label>
+                  <label class="oe-type-option"><input type="checkbox" name="oe-category" value="pets" /> Pets &amp; Animals</label>
+                  <label class="oe-type-option"><input type="checkbox" name="oe-category" value="leisure" /> Leisure, travel &amp; hospitality</label>
+                  <label class="oe-type-option"><input type="checkbox" name="oe-category" value="networking" /> Networking</label>
+                  <label class="oe-type-option"><input type="checkbox" name="oe-category" value="mlm" /> Network marketing</label>
+                  <label class="oe-type-option"><input type="checkbox" name="oe-category" value="general" /> Other</label>
+                </div>
+                <p class="ee-hint" id="oe-category-limit-hint" hidden>You can select a maximum of 2 categories.</p>
               </div>
               <div class="ee-field" id="oe-field-desc">
                 <label for="oe-desc">Short description</label>
@@ -479,7 +479,7 @@
             <button type="button" class="ee-btn ee-btn-outline" id="oe-save-draft">Save as draft</button>
             <button type="submit" class="ee-btn ee-btn-gold" id="oe-submit">Submit for approval</button>
           </div>
-          <p class="ee-hint ee-actions-note" id="oe-actions-note">Review your listing, then submit for approval. You can keep editing until we approve — submit again after any changes.</p>
+          <p class="ee-hint ee-actions-note" id="oe-actions-note">Review your listing, then submit for approval. Once submitted, it locks until we approve or deny.</p>
         </div>
 
         <div class="ee-card oe-danger-zone" id="oe-danger-zone" hidden>
@@ -503,9 +503,9 @@
     <script src="../js/opportunity-moderation-scan.js?v=20260827aff2" defer></script>
     <script src="../js/opportunity-listing-quality.js?v=20260825aff1" defer></script>
     <script src="../js/opportunity-listing-constants.js?v=20260828cookie1" defer></script>
-    <script src="../js/opportunities-catalog.js?v=20260902caremed1" defer></script>
+    <script src="../js/opportunities-catalog.js?v=20260910cat2" defer></script>
     <script src="../js/hub-event-timezone.js?v=20260812dst" defer></script>
     <script src="../js/organiser-quarter-time.js?v=20260828openday5" defer></script>
-    <script src="../js/organiser-opportunity-edit.js?v=20260902dist2" defer></script>
+    <script src="../js/organiser-opportunity-edit.js?v=20260910cat2" defer></script>
   </body>
 </html>
