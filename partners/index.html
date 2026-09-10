@@ -26,7 +26,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/hub.css?v=20260909listmenu1">
 <link rel="stylesheet" href="/css/content-page.css?v=20260711e">
-<link rel="stylesheet" href="/css/partner-programme.css?v=20260910pp1">
+<link rel="stylesheet" href="/css/partner-programme.css?v=20260910pp2">
 <link rel="icon" href="/favicon.ico?v=20260823uk3" sizes="any">
 <link rel="icon" href="/assets/favicon.svg?v=20260823uk3" type="image/svg+xml">
 <link rel="icon" href="/assets/favicon-32.png?v=20260823uk" type="image/png" sizes="32x32">
@@ -42,39 +42,82 @@
 <div id="hub-site-nav"></div>
 <script src="/js/site-nav.js?v=20260910aff1" data-root="/" data-page="partners"></script>
 
-<main class="content-page-main">
+<main class="content-page-main partner-programme-main">
   <header class="partner-programme-hero" aria-label="Partner Programme">
-    <div class="partner-programme-hero-inner">
-      <p class="partner-programme-kicker">The Networker UK</p>
-      <h1>Partner Programme</h1>
-      <p class="partner-programme-lede">
-        Earn <strong>20%</strong> when you introduce brands and opportunity providers who pay to list or advertise on The Networker UK.
-      </p>
-      <div class="partner-programme-hero-actions">
-        <a class="btn btn-primary" href="#apply">Apply or enquire</a>
-        <a class="btn btn-secondary" href="/advertising">View rate card</a>
+    <div class="partner-programme-hero-grid">
+      <div class="partner-programme-hero-copy">
+        <p class="partner-programme-brand">The Networker UK</p>
+        <h1>Partner Programme</h1>
+        <p class="partner-programme-lede">
+          Earn 20% when you introduce brands and opportunity providers who pay to list or advertise with us.
+        </p>
+        <div class="partner-programme-hero-actions">
+          <a class="partner-programme-btn partner-programme-btn--solid" href="#apply">Apply or enquire</a>
+          <a class="partner-programme-btn" href="/advertising">View rate card</a>
+        </div>
+      </div>
+      <div class="partner-programme-hero-visual" aria-hidden="true">
+        <img
+          src="/assets/logo-networker-uk-partner-lockup.png?v=20260910ws3"
+          alt=""
+          width="960"
+          height="360"
+          loading="eager"
+        >
       </div>
     </div>
   </header>
 
+  <section class="partner-programme-commission" aria-labelledby="commission-title">
+    <div class="partner-programme-commission-inner">
+      <p class="partner-programme-commission-figure" aria-hidden="true">20%</p>
+      <div>
+        <h2 id="commission-title">Your cut of every qualifying sale</h2>
+        <p>
+          Commission is 20% of the sale ex-VAT on opportunity listings, Featured Boost, and sponsorship —
+          paid monthly after a 14-day hold (minimum £25).
+        </p>
+      </div>
+    </div>
+  </section>
+
   <div class="partner-programme-body">
     <section class="partner-programme-section" aria-labelledby="how-title">
       <h2 id="how-title">How it works</h2>
-      <p>
-        We approve a small number of referral partners. If we take you on, you get a unique link and code, a partner hub (earnings + media kit), and commission on qualifying sales.
+      <p class="partner-programme-section-lede">
+        Invite-only. If we take you on, you get a tracking code, a partner hub, and ready-made logos &amp; posts.
       </p>
-      <ul class="partner-programme-list">
-        <li><strong>What counts:</strong> business opportunity listings, Featured Opportunity Boost, and <a href="/advertising">advertising &amp; sponsorship</a> packages</li>
-        <li><strong>Commission:</strong> 20% of the sale ex-VAT — first 3 paid months on recurring; prepaid invoices and one-offs once</li>
-        <li><strong>Paid:</strong> monthly after a 14-day hold · minimum payout £25</li>
-        <li><strong>Not automatic:</strong> we review every application — this is not self-serve signup</li>
-      </ul>
+      <ol class="partner-programme-steps">
+        <li>
+          <span class="partner-programme-step-num">1</span>
+          <div>
+            <h3>Apply</h3>
+            <p>Tell us who you can introduce — we review every enquiry.</p>
+          </div>
+        </li>
+        <li>
+          <span class="partner-programme-step-num">2</span>
+          <div>
+            <h3>Share your links</h3>
+            <p>Send your unique URLs for advertising and opportunity listings.</p>
+          </div>
+        </li>
+        <li>
+          <span class="partner-programme-step-num">3</span>
+          <div>
+            <h3>Earn when they pay</h3>
+            <p>First three paid months on recurring; prepaid and one-offs once.</p>
+          </div>
+        </li>
+      </ol>
     </section>
 
     <section class="partner-programme-section partner-programme-form-wrap" id="apply" aria-labelledby="apply-title">
       <h2 id="apply-title">Apply or enquire</h2>
       <p>
-        Tell us who you can introduce. We reply from <a href="mailto:partnerships@thenetworkeruk.com">partnerships@thenetworkeruk.com</a> if we can move forward.
+        Tell us who you can introduce. We reply from
+        <a href="mailto:partnerships@thenetworkeruk.com">partnerships@thenetworkeruk.com</a>
+        if we can move forward.
       </p>
 
       <form id="partner-enquire-form" class="partner-enquire-form" novalidate>
@@ -105,7 +148,7 @@
         </div>
         <p id="partner-enquire-status" class="partner-enquire-status" hidden role="status"></p>
         <div class="partner-enquire-actions">
-          <button type="submit" class="btn btn-primary">Send enquiry</button>
+          <button type="submit" class="partner-programme-btn partner-programme-btn--solid">Send enquiry</button>
         </div>
         <p class="partner-enquire-alt">
           Prefer email? Write to <a href="mailto:partnerships@thenetworkeruk.com">partnerships@thenetworkeruk.com</a>
