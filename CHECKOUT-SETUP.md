@@ -151,6 +151,7 @@ Run in **test** and **live** modes separately (`sk_test_…` vs `sk_live_…` in
 | Symptom | Fix |
 |---------|-----|
 | Stripe email: webhook delivery failures / "other errors" | Confirm endpoint URL is `https://www.thenetworkeruk.com/api/stripe-webhook` (not `the-networker-hub.vercel.app` — that host 308-redirects and Stripe will not follow). Then confirm `STRIPE_WEBHOOK_SECRET` matches the **live** endpoint signing secret and redeploy. Resend failed events after fixing. |
+| Webhook 500 `raw_body_unavailable` | Handler could not read Stripe's signed bytes (usually a regression in raw-body handling). Redeploy the latest `api/stripe-webhook.js`, run `npm run check:stripe-webhook`, then **Enable** the endpoint again in Stripe Dashboard → Webhooks. |
 | Webhook 400 `invalid_signature` | Check `STRIPE_WEBHOOK_SECRET` matches the live endpoint (not test); remove quotes/newlines; redeploy |
 | Webhook `missing_event_id_metadata` | Add `event_id` metadata on Payment Link, or use hub Buy button |
 | Buy button shows hint | Set `stripe_payment_link` on event/ticket, meta tag, or `?stripe=` |
