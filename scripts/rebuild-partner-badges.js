@@ -74,7 +74,8 @@ async function main() {
 </svg>
 `;
 
-  fs.writeFileSync(path.join(ASSETS, 'logo-networker-uk-partner-lockup.svg'), lockup);
+  // lockup PNG/SVG are hand-authored — do not overwrite
+  // fs.writeFileSync(path.join(ASSETS, 'logo-networker-uk-partner-lockup.svg'), lockup);
   fs.writeFileSync(path.join(ASSETS, 'logo-networker-uk-partner-light.svg'), lightBadge);
   fs.writeFileSync(path.join(ASSETS, 'logo-networker-uk-partner-dark.svg'), darkBadge);
   console.log('wrote partner badge SVGs');

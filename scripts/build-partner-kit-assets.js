@@ -17,7 +17,7 @@ const SVG_TO_PNG = [
   { svg: 'partner-promo-sponsor-square.svg', png: 'partner-promo-sponsor-square.png', width: 1080 },
   { svg: 'partner-promo-opp-listing-story.svg', png: 'partner-promo-opp-listing-story.png', width: 1080 },
   { svg: 'partner-promo-sponsor-story.svg', png: 'partner-promo-sponsor-story.png', width: 1080 },
-  { svg: 'logo-networker-uk-partner-lockup.svg', png: 'logo-networker-uk-partner-lockup.png', width: 1920 },
+  // lockup PNG is hand-authored — do not regenerate from SVG
   { svg: 'logo-networker-uk-partner-light.svg', png: 'logo-networker-uk-partner-light.png', width: 1280 },
   { svg: 'logo-networker-uk-partner-dark.svg', png: 'logo-networker-uk-partner-dark.png', width: 1280 },
 ];
