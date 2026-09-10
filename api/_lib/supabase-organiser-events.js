@@ -3265,7 +3265,8 @@ async function getLeanOrganiserWorkspace(req) {
   }
 
   let pendingSetupReviews = [];
-  if (!adminView && groupIds.length) {
+  // Setup review is for the real organiser — skip while admin is impersonating.
+  if (!adminView && !session.impersonator && groupIds.length) {
     try {
       const { listOrganiserSetupReviews } = require('./organiser-setup-review');
       pendingSetupReviews = await listOrganiserSetupReviews(groupIds);
@@ -3359,7 +3360,8 @@ async function getOrganiserWorkspace(req) {
   }
 
   let pendingSetupReviews = [];
-  if (!adminView && groupIds.length) {
+  // Setup review is for the real organiser — skip while admin is impersonating.
+  if (!adminView && !session.impersonator && groupIds.length) {
     try {
       const { listOrganiserSetupReviews } = require('./organiser-setup-review');
       pendingSetupReviews = await listOrganiserSetupReviews(groupIds);

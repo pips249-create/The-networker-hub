@@ -83,8 +83,23 @@
     return parts.join('');
   }
 
+  function isAdminImpersonating() {
+    if (
+      window.HubOrganiserTerms &&
+      typeof window.HubOrganiserTerms.isAdminImpersonating === 'function'
+    ) {
+      return window.HubOrganiserTerms.isAdminImpersonating();
+    }
+    return Boolean(
+      document.getElementById('hub-impersonation-banner') ||
+        document.getElementById('hub-stop-impersonating')
+    );
+  }
+
   function shouldDeferModal(state) {
     if (!state || state.adminView) return true;
+    // Admin impersonation: organiser must review and accept terms themselves.
+    if (isAdminImpersonating()) return true;
     if ((state.pendingClaimGroups || []).length > 0) return true;
     if ((state.pendingClaimOpportunities || []).length > 0) return true;
     return false;
