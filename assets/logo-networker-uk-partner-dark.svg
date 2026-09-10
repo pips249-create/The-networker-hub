@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 200" role="img" aria-label="The Networker UK Partner">
+  <title>The Networker UK Partner</title>
+  <rect width="520" height="200" rx="16" fill="#1c2040"/>
+  <rect x="1.5" y="1.5" width="517" height="197" rx="14.5" fill="none" stroke="#e8b84b" stroke-opacity="0.45"/>
+  <text x="260" y="48" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="22" fill="#f5f0e8">The</text>
+  <text x="78" y="112" font-family="Georgia, 'Times New Roman', serif" font-size="54" fill="#b992be">Net</text>
+  <text x="168" y="112" font-family="Georgia, 'Times New Roman', serif" font-size="54" fill="#b992be">w</text>
+  <circle cx="228" cy="96" r="11" fill="#1c2040" stroke="#b992be" stroke-width="2.5"/>
+  <circle cx="228" cy="96" r="17" fill="none" stroke="#b992be" stroke-width="2"/>
+  <text x="248" y="112" font-family="Georgia, 'Times New Roman', serif" font-size="54" fill="#b992be">rker</text>
+  <text x="260" y="148" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="22" fill="#f5f0e8">UK</text>
+  <rect x="160" y="164" width="200" height="22" rx="11" fill="#e8b84b"/>
+  <text x="260" y="179" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="700" letter-spacing="0.16em" fill="#1c2040">PARTNER</text>
+</svg>

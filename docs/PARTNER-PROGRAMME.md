@@ -117,11 +117,11 @@ Prepaid terms (1 / 3 / 6 / 12 months) may include discounts — commission is **
 
 ### Suggested outreach (short)
 
-> Quick one — The Networker UK reaches UK founders and networking organisers. If you (or a client) want a business opportunity listing or a sponsor slot on the site/emails, I can introduce you. Happy to share the rate card — my partner link is: [LINK]
+> Just a quick one — The Networker UK is where UK founders and networking organisers find events and business opportunities. If you (or a client) want a listing or a sponsorship placement, I can introduce you. Here’s my partner link: [LINK]
 
-### Suggested LinkedIn
+### Suggested email / LinkedIn
 
-> If you promote franchises, partnerships or B2B services to UK networkers, The Networker UK has paid listings and sponsor placements in front of that audience. I partner with them — message me if you want an intro.
+> I partner with The Networker UK — the UK hub for networking events, exhibitions and business opportunities. If you promote franchises, partnerships or B2B services and want to reach that audience through a directory listing or sponsorship, I’m happy to make an introduction. Message me and I’ll send the details.
 
 ### Do / don’t
 

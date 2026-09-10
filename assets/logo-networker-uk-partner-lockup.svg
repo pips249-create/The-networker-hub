@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 160" role="img" aria-label="The Networker UK Partner">
+  <title>The Networker UK Partner</title>
+  <rect width="640" height="160" rx="14" fill="#ffffff"/>
+  <rect x="1" y="1" width="638" height="158" rx="13" fill="none" stroke="#1c2040" stroke-opacity="0.1"/>
+  <text x="36" y="58" font-family="Georgia, 'Times New Roman', serif" font-size="18" fill="#5c5557">The</text>
+  <text x="36" y="108" font-family="Georgia, 'Times New Roman', serif" font-size="42" fill="#b992be">Networker</text>
+  <text x="268" y="108" font-family="Georgia, 'Times New Roman', serif" font-size="42" fill="#5c5557">UK</text>
+  <line x1="360" y1="40" x2="360" y2="120" stroke="#1c2040" stroke-opacity="0.15" stroke-width="1.5"/>
+  <text x="392" y="78" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="700" letter-spacing="0.18em" fill="#7a4f82">REFERRAL</text>
+  <text x="392" y="108" font-family="Georgia, 'Times New Roman', serif" font-size="36" fill="#1c2040">Partner</text>
+</svg>
