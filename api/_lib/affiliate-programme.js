@@ -73,8 +73,89 @@ async function recordAffiliateAttribution(opts) {
   return data;
 }
 
-function mapPartnerRow(row) {
+async function recordAffiliateClick(opts) {
+  opts = opts || {};
+  const code = normalizeAffiliateCode(opts.code);
+  if (!code) return { ok: false, reason: 'invalid_code' };
+
+  const partner = await getActivePartnerByCode(code);
+  if (!partner) return { ok: false, reason: 'unknown_partner' };
+
+  let path = String(opts.path || '').trim().slice(0, 240);
+  if (!path && opts.landingUrl) {
+    try {
+      path = new URL(String(opts.landingUrl)).pathname.slice(0, 240);
+    } catch {
+      path = '';
+    }
+  }
+  const landingUrl = String(opts.landingUrl || opts.url || '')
+    .trim()
+    .slice(0, 500);
+
+  const sb = getSupabaseAdmin();
+  const { error } = await sb.from('affiliate_clicks').insert({
+    partner_id: partner.id,
+    code: partner.code,
+    path: path || null,
+    landing_url: landingUrl || null,
+  });
+  if (error) {
+    if (/affiliate_clicks/i.test(error.message || '')) {
+      return { ok: false, reason: 'table_missing' };
+    }
+    console.error('[affiliate-click]', error.message || error);
+    return { ok: false, reason: 'insert_failed' };
+  }
+  return { ok: true, partnerId: partner.id, code: partner.code };
+}
+
+async function clickCountsByPartnerIds(partnerIds) {
+  const ids = Array.isArray(partnerIds) ? partnerIds.filter(Boolean) : [];
+  const empty = { total: {}, last7: {}, last30: {} };
+  if (!ids.length) return empty;
+
+  const sb = getSupabaseAdmin();
+  const since30 = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const since7 = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+  const total = {};
+  const last7 = {};
+  const last30 = {};
+  ids.forEach((id) => {
+    total[id] = 0;
+    last7[id] = 0;
+    last30[id] = 0;
+  });
+
+  const { data, error } = await sb
+    .from('affiliate_clicks')
+    .select('partner_id, created_at')
+    .in('partner_id', ids)
+    .order('created_at', { ascending: false })
+    .limit(100000);
+
+  if (error) {
+    if (/affiliate_clicks/i.test(error.message || '')) return empty;
+    throw new Error(error.message || 'affiliate_clicks_load_failed');
+  }
+
+  (data || []).forEach((row) => {
+    const id = row.partner_id;
+    if (!id) return;
+    total[id] = (total[id] || 0) + 1;
+    const at = row.created_at || '';
+    if (at >= since30) last30[id] = (last30[id] || 0) + 1;
+    if (at >= since7) last7[id] = (last7[id] || 0) + 1;
+  });
+
+  return { total, last7, last30 };
+}
+
+function mapPartnerRow(row, clickStats) {
   if (!row) return null;
+  const stats = clickStats || {};
+  const id = row.id;
   return {
     id: row.id,
     code: row.code,
@@ -84,6 +165,9 @@ function mapPartnerRow(row) {
     notes: row.notes || null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    clicksTotal: Number(stats.total && stats.total[id]) || 0,
+    clicks7d: Number(stats.last7 && stats.last7[id]) || 0,
+    clicks30d: Number(stats.last30 && stats.last30[id]) || 0,
     linkHome: 'https://www.thenetworkeruk.com/?ref=' + encodeURIComponent(row.code),
     linkAdvertising: 'https://www.thenetworkeruk.com/advertising?ref=' + encodeURIComponent(row.code),
     linkOpportunityList:
@@ -105,5 +189,7 @@ module.exports = {
   withAffiliateMetadata,
   getActivePartnerByCode,
   recordAffiliateAttribution,
+  recordAffiliateClick,
+  clickCountsByPartnerIds,
   mapPartnerRow,
 };

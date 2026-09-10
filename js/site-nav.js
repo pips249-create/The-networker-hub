@@ -7,7 +7,7 @@
       var navScript = document.querySelector('script[src*="site-nav"]');
       var root = (navScript && navScript.getAttribute('data-root')) || '';
       var aff = document.createElement('script');
-      aff.src = root + 'js/affiliate-ref.js?v=20260910aff1';
+      aff.src = root + 'js/affiliate-ref.js?v=20260910clk1';
       aff.async = false;
       if (navScript && navScript.parentNode) {
         navScript.parentNode.insertBefore(aff, navScript.nextSibling);

@@ -8,6 +8,7 @@ const {
   mapPartnerRow,
   getActivePartnerByCode,
   recordAffiliateAttribution,
+  clickCountsByPartnerIds,
 } = require('../affiliate-programme');
 const {
   createAffiliateCommission,
@@ -57,7 +58,14 @@ async function listPartners(sb) {
     }
     throw new Error(error.message);
   }
-  return (data || []).map(mapPartnerRow);
+  const rows = data || [];
+  let clickStats = { total: {}, last7: {}, last30: {} };
+  try {
+    clickStats = await clickCountsByPartnerIds(rows.map((r) => r.id));
+  } catch (e) {
+    console.error('[affiliate-partners] click counts', e.message || e);
+  }
+  return rows.map((row) => mapPartnerRow(row, clickStats));
 }
 
 async function listCommissions(sb, limit) {

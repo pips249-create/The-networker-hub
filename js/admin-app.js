@@ -10983,6 +10983,9 @@
       var rows = partners
         .map(function (row) {
           var active = row.active !== false;
+          var clicksTotal = Number(row.clicksTotal) || 0;
+          var clicks7d = Number(row.clicks7d) || 0;
+          var clicks30d = Number(row.clicks30d) || 0;
           return (
             '<tr class="border-t border-slate-100 align-top">' +
             '<td class="px-3 py-2 text-sm font-mono font-semibold">' +
@@ -11000,6 +11003,15 @@
               ? '<span class="text-emerald-700 font-semibold">Active</span>'
               : '<span class="text-slate-500">Inactive</span>') +
             '</td>' +
+            '<td class="px-3 py-2 text-sm tabular-nums">' +
+            '<strong>' +
+            esc(String(clicksTotal)) +
+            '</strong>' +
+            '<div class="text-xs text-slate-500 mt-0.5">7d ' +
+            esc(String(clicks7d)) +
+            ' · 30d ' +
+            esc(String(clicks30d)) +
+            '</div></td>' +
             '<td class="px-3 py-2 text-xs space-y-1">' +
             '<button type="button" class="block text-left text-brand-700 hover:underline" data-aff-copy="' +
             attrEsc(row.linkHome || 'https://www.thenetworkeruk.com/?ref=' + encodeURIComponent(row.code || '')) +
@@ -11033,7 +11045,7 @@
       bodyEl.innerHTML =
         '<table class="min-w-full text-left">' +
         '<thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">' +
-        '<tr><th class="px-3 py-2">Code</th><th class="px-3 py-2">Partner</th><th class="px-3 py-2">Status</th><th class="px-3 py-2">Links</th><th class="px-3 py-2"></th></tr>' +
+        '<tr><th class="px-3 py-2">Code</th><th class="px-3 py-2">Partner</th><th class="px-3 py-2">Status</th><th class="px-3 py-2">Clicks</th><th class="px-3 py-2">Links</th><th class="px-3 py-2"></th></tr>' +
         '</thead><tbody>' +
         rows +
         '</tbody></table>';

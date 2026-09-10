@@ -1,9 +1,11 @@
 /**
- * Partner programme — capture ?ref= / ?code= into a 30-day first-party cookie.
+ * Partner programme — capture ?ref= / ?code= into a 30-day first-party cookie
+ * and beacon a click when the code arrives via the URL (not cookie-only pageviews).
  */
 (function (global) {
   var COOKIE_NAME = 'tnu_aff_ref';
   var COOKIE_DAYS = 30;
+  var CLICK_DEDUP_MS = 30 * 60 * 1000;
 
   function normalizeCode(raw) {
     var code = String(raw || '')
@@ -48,10 +50,49 @@
     }
   }
 
+  function shouldRecordClick(code) {
+    if (!code || typeof sessionStorage === 'undefined') return true;
+    try {
+      var key = 'tnu_aff_click_' + code;
+      var prev = Number(sessionStorage.getItem(key) || 0);
+      var now = Date.now();
+      if (prev && now - prev < CLICK_DEDUP_MS) return false;
+      sessionStorage.setItem(key, String(now));
+      return true;
+    } catch (e) {
+      return true;
+    }
+  }
+
+  function recordClick(code) {
+    if (!code || !shouldRecordClick(code)) return;
+    var payload = JSON.stringify({
+      code: code,
+      path: String(location.pathname || '').slice(0, 240),
+      landingUrl: String(location.href || '').slice(0, 500),
+    });
+    try {
+      if (navigator.sendBeacon) {
+        var blob = new Blob([payload], { type: 'application/json' });
+        if (navigator.sendBeacon('/api/affiliate-click', blob)) return;
+      }
+    } catch (e) {}
+    try {
+      fetch('/api/affiliate-click', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: payload,
+        keepalive: true,
+        credentials: 'same-origin',
+      }).catch(function () {});
+    } catch (e2) {}
+  }
+
   function captureFromUrl() {
     var code = codeFromUrl();
     if (!code) return getCode();
     writeCookie(COOKIE_NAME, code, COOKIE_DAYS);
+    recordClick(code);
     return code;
   }
 
