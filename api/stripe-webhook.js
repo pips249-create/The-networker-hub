@@ -51,6 +51,10 @@ const STRIPE_WEBHOOK_TOLERANCE_SEC = 300;
 
 /**
  * Read the exact bytes Stripe signed. Do not re-serialize parsed JSON.
+ *
+ * On Vercel Node serverless, helpers may parse JSON into `req.body` while
+ * still restoring the original bytes onto the request stream (PassThrough).
+ * Prefer stream / rawBody over any parsed object — never JSON.stringify.
  */
 function readRawBody(req) {
   return new Promise(function (resolve, reject) {
@@ -70,22 +74,37 @@ function readRawBody(req) {
       resolve(req.body.toString('utf8'));
       return;
     }
-    // Parsed object means bodyParser ran — original signed bytes are gone.
-    if (req.body && typeof req.body === 'object') {
-      const err = new Error('parsed_body_not_raw');
-      err.code = 'parsed_body_not_raw';
-      reject(err);
-      return;
-    }
 
     const chunks = [];
+    let settled = false;
+    function done(err, value) {
+      if (settled) return;
+      settled = true;
+      if (err) reject(err);
+      else resolve(value);
+    }
+
     req.on('data', function (chunk) {
       chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
     });
     req.on('end', function () {
-      resolve(Buffer.concat(chunks).toString('utf8'));
+      const raw = Buffer.concat(chunks).toString('utf8');
+      if (raw) {
+        done(null, raw);
+        return;
+      }
+      // Empty stream + parsed object ⇒ original signed bytes are gone.
+      if (req.body && typeof req.body === 'object') {
+        const err = new Error('parsed_body_not_raw');
+        err.code = 'parsed_body_not_raw';
+        done(err);
+        return;
+      }
+      done(null, '');
     });
-    req.on('error', reject);
+    req.on('error', function (err) {
+      done(err);
+    });
   });
 }
 
@@ -311,10 +330,17 @@ async function handler(req, res) {
   }
 }
 
-const wrapped = wrapHandler(handler);
-wrapped.config = {
+module.exports = wrapHandler(handler);
+// Next.js Pages-style hint (ignored by plain Vercel Node helpers, kept for clarity).
+// Raw bytes still come from the restored request stream in readRawBody above.
+module.exports.config = {
   api: {
     bodyParser: false,
   },
 };
-module.exports = wrapped;
+
+// Exported for unit tests (Vercel stream-restore behaviour).
+module.exports._test = {
+  readRawBody,
+  verifyAndParseStripeEvent,
+};

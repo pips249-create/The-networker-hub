@@ -39,7 +39,13 @@ function fail(msg) {
   const www = await probe(baseArg + '/api/stripe-webhook');
   console.log('  www  ', www.status, www.text || www.location);
   if (www.status !== 400 || !/invalid_signature/.test(www.text)) {
-    fail(`Expected 400 invalid_signature on ${baseArg}/api/stripe-webhook, got ${www.status} ${www.text}`);
+    if (www.status === 500 && /raw_body_unavailable/.test(www.text)) {
+      fail(
+        `${baseArg}/api/stripe-webhook returned 500 raw_body_unavailable — Vercel parsed the JSON body and the handler could not recover Stripe's signed bytes. Fix readRawBody / redeploy before re-enabling the Stripe endpoint.`
+      );
+    } else {
+      fail(`Expected 400 invalid_signature on ${baseArg}/api/stripe-webhook, got ${www.status} ${www.text}`);
+    }
   } else {
     console.log('  OK   canonical webhook handler reachable');
   }
