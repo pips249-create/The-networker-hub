@@ -1146,10 +1146,34 @@
     return false;
   }
 
+  function salesKitParseTouchNotes(notes) {
+    var note = String(notes || '').trim();
+    if (!note) return { touch: '', message: '' };
+    for (var i = 0; i < SALES_KIT_TOUCH_NOTES.length; i++) {
+      var touch = SALES_KIT_TOUCH_NOTES[i];
+      if (note === touch) return { touch: touch, message: '' };
+      var prefix = touch + ' — ';
+      if (note.indexOf(prefix) === 0) {
+        return { touch: touch, message: note.slice(prefix.length).trim() };
+      }
+    }
+    return { touch: '', message: note };
+  }
+
+  function salesKitComposeTouchNotes(touchType, message) {
+    var touch = String(touchType || '').trim();
+    var msg = String(message || '')
+      .trim()
+      .replace(/\s+/g, ' ');
+    if (msg.length > 200) msg = msg.slice(0, 200);
+    if (!touch) return msg;
+    if (!msg) return touch;
+    return touch + ' — ' + msg;
+  }
+
   function isManualSalesKitDemo(demo) {
     if (!demo) return false;
-    var note = String(demo.notes || '').trim();
-    return SALES_KIT_TOUCH_NOTES.indexOf(note) !== -1;
+    return Boolean(salesKitParseTouchNotes(demo.notes).touch);
   }
 
   function isHouseSalesKitDemo(demo) {
@@ -1194,7 +1218,7 @@
       var match = lines[i].match(/^\d{4}-\d{2}-\d{2}:\s*(.+)$/);
       if (!match) continue;
       var bit = match[1].trim();
-      if (SALES_KIT_TOUCH_NOTES.indexOf(bit) !== -1) continue;
+      if (salesKitParseTouchNotes(bit).touch) continue;
       return bit.replace(/\s*—.*$/, '').trim() || 'Platform activity';
     }
     return 'Platform activity';
@@ -1291,9 +1315,11 @@
   }
 
   function salesKitContactTouchLabel(demo) {
-    var note = String(demo.notes || '').trim();
-    if (SALES_KIT_TOUCH_NOTES.indexOf(note) !== -1) return note;
-    return note || 'Contact';
+    var parsed = salesKitParseTouchNotes(demo && demo.notes);
+    if (parsed.touch) {
+      return parsed.message ? parsed.touch + ' — ' + parsed.message : parsed.touch;
+    }
+    return String((demo && demo.notes) || '').trim() || 'Contact';
   }
 
   function salesKitLastContactSummary(demo) {
@@ -1459,7 +1485,11 @@
           '</button>'
         );
       }).join('') +
-      '</div></div>'
+      '</div>' +
+      '<label class="admin-sales-kit-menu-note-wrap">' +
+      '<span class="admin-sales-kit-menu-note-label">Optional note</span>' +
+      '<input type="text" class="admin-sales-kit-menu-note" maxlength="200" placeholder="e.g. left voicemail" autocomplete="off" />' +
+      '</label></div>'
     );
   }
 
@@ -1528,6 +1558,10 @@
     var organiserId = String(btn.getAttribute('data-org-id') || '').trim();
     var actor = salesKitActorFromCurrentUser();
     var touchType = String(btn.getAttribute('data-touch') || '').trim();
+    var menuRoot = btn.closest('.admin-sales-kit-menu');
+    var noteInput = menuRoot && menuRoot.querySelector('.admin-sales-kit-menu-note');
+    var noteMessage = noteInput ? noteInput.value : '';
+    var notes = salesKitComposeTouchNotes(touchType, noteMessage);
     if (!organiserName) {
       if (statusEl) statusEl.textContent = 'No contact name on this row.';
       return Promise.resolve(false);
@@ -1541,14 +1575,14 @@
       organiserName: organiserName,
       organiserEmail: organiserEmail,
       organiserId: organiserId || null,
-      notes: touchType,
+      notes: notes,
     }).then(function (data) {
       btn.disabled = false;
       if (!data || !data.ok) {
         if (statusEl) statusEl.textContent = (data && data.message) || 'Could not save.';
         return false;
       }
-      var menuRoot = btn.closest('.admin-sales-kit-menu');
+      if (noteInput) noteInput.value = '';
       if (data.demo) {
         salesKitOutreachCache.demos.unshift(data.demo);
         salesKitOutreachCache.loadedAt = Date.now();
@@ -1556,7 +1590,12 @@
         if (lastSlot) lastSlot.innerHTML = salesKitLastContactBlockHtml(data.demo);
       }
       if (statusEl) {
-        statusEl.textContent = salesKitActorLabel(actor) + ' — ' + touchType + ' logged.';
+        statusEl.textContent =
+          salesKitActorLabel(actor) +
+          ' — ' +
+          touchType +
+          (String(noteMessage || '').trim() ? ' + note' : '') +
+          ' logged.';
       }
       return true;
     });
@@ -1601,6 +1640,11 @@
         var menuRoot = touchBtn.closest('.admin-sales-kit-menu');
         var statusEl = menuRoot && menuRoot.querySelector('.admin-sales-kit-menu-status');
         logSalesKitTouchFromButton(touchBtn, statusEl);
+        return;
+      }
+
+      if (e.target.closest('.admin-sales-kit-menu-note')) {
+        e.stopPropagation();
         return;
       }
 
@@ -30030,8 +30074,9 @@
     }
 
     function touchCellHtml(d) {
+      var parsed = salesKitParseTouchNotes(d.notes);
+      if (parsed.touch) return esc(parsed.touch);
       var note = String(d.notes || '').trim();
-      if (touchNotes.indexOf(note) !== -1) return esc(note);
       if (note) return esc(note);
       return esc(sourceLabels[d.source] || 'Typed in');
     }
@@ -30103,7 +30148,11 @@
               );
             })
             .join('') +
-          '</div></div>';
+          '</div>' +
+          '<label class="block mt-2">' +
+          '<span class="block text-[11px] font-semibold text-slate-500 mb-1">Optional note</span>' +
+          '<input type="text" id="sales-kit-touch-note" maxlength="200" class="w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-sm bg-white" placeholder="e.g. left voicemail" autocomplete="off" />' +
+          '</label></div>';
 
         return (
           '<section class="admin-dash-section" id="sales-kit-outreach">' +
@@ -30136,7 +30185,7 @@
           quickLogHtml +
           '<p class="text-xs text-slate-500 mt-2">One tap logs today’s date for the group above, under <strong>' +
           esc(actorLabel) +
-          '</strong>.</p>' +
+          '</strong>. Add an optional note first if you want a short reminder on the log.</p>' +
           '<span id="sales-kit-touch-status" class="text-sm text-slate-500 ml-1" aria-live="polite"></span></div>' +
           '<details class="rounded-xl border border-slate-200 bg-slate-50/80 p-4">' +
           '<summary class="cursor-pointer text-sm font-semibold text-slate-800">Manual log with notes</summary>' +
@@ -30186,8 +30235,10 @@
                   '<tr><th class="px-3 py-2 text-left">Date</th><th class="px-3 py-2 text-left">Who</th><th class="px-3 py-2 text-left">Group</th><th class="px-3 py-2 text-left">Touch</th><th class="px-3 py-2 text-left">Outcome</th><th class="px-3 py-2 text-left">Extra notes</th><th class="px-3 py-2"></th></tr></thead><tbody>' +
                   visibleDemos
                     .map(function (d) {
-                      var note = String(d.notes || '').trim();
-                      var extraNotes = touchNotes.indexOf(note) !== -1 ? '—' : note || '—';
+                      var parsed = salesKitParseTouchNotes(d.notes);
+                      var extraNotes = parsed.touch
+                        ? parsed.message || '—'
+                        : String(d.notes || '').trim() || '—';
                       var hay = [d.organiserName, d.organiserEmail, d.shownBy, d.notes, d.outcome, d.source]
                         .join(' ')
                         .toLowerCase();
@@ -30450,9 +30501,11 @@
       var nameEl = document.getElementById('sales-kit-org-name');
       var emailEl = document.getElementById('sales-kit-org-email');
       var idEl = document.getElementById('sales-kit-org-id');
+      var noteEl = document.getElementById('sales-kit-touch-note');
       var organiserName = (focus && focus.name) || (nameEl && nameEl.value) || '';
       var organiserEmail = (focus && focus.email) || (emailEl && emailEl.value) || '';
       var organiserId = (focus && focus.id) || (idEl && idEl.value) || '';
+      var noteMessage = noteEl ? noteEl.value : '';
       organiserName = String(organiserName || '').trim();
       if (!organiserName) {
         if (statusEl) {
@@ -30470,14 +30523,22 @@
         organiserName: organiserName,
         organiserEmail: organiserEmail,
         organiserId: organiserId || null,
-        notes: touchType,
+        notes: salesKitComposeTouchNotes(touchType, noteMessage),
       }).then(function (data) {
         if (btn) btn.disabled = false;
         if (!data || !data.ok) {
           if (statusEl) statusEl.textContent = (data && data.message) || 'Could not save.';
           return;
         }
-        if (statusEl) statusEl.textContent = actorLabel + ' — ' + touchType + ' logged.';
+        if (noteEl) noteEl.value = '';
+        if (statusEl) {
+          statusEl.textContent =
+            actorLabel +
+            ' — ' +
+            touchType +
+            (String(noteMessage || '').trim() ? ' + note' : '') +
+            ' logged.';
+        }
         load();
       });
     }

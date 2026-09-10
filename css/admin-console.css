@@ -2951,9 +2951,9 @@ a.admin-action-row:hover .admin-action-btn {
   top: calc(100% + 0.35rem);
   right: 0;
   z-index: 40;
-  min-width: 15.5rem;
-  max-width: 18rem;
-  max-height: min(70vh, 24rem);
+  min-width: 16.5rem;
+  max-width: 19rem;
+  max-height: min(70vh, 28rem);
   overflow-y: auto;
   padding: 0.75rem;
   border: 1px solid #e2e8f0;
@@ -3109,6 +3109,43 @@ a.admin-action-row:hover .admin-action-btn {
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem;
+}
+
+.admin-sales-kit-menu-note-wrap {
+  display: block;
+  margin-top: 0.45rem;
+}
+
+.admin-sales-kit-menu-note-label {
+  display: block;
+  margin-bottom: 0.2rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.admin-sales-kit-menu-note {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  background: #fff;
+  padding: 0.35rem 0.55rem;
+  font-size: 0.75rem;
+  line-height: 1.3;
+  color: #1e293b;
+}
+
+.admin-sales-kit-menu-note::placeholder {
+  color: #94a3b8;
+}
+
+.admin-sales-kit-menu-note:focus {
+  outline: none;
+  border-color: #93c5fd;
+  box-shadow: 0 0 0 2px rgba(147, 197, 253, 0.35);
 }
 
 .admin-sales-kit-touch {

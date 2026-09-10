@@ -57,9 +57,27 @@ function contactMs(value) {
   return Number.isFinite(ms) ? ms : 0;
 }
 
+function parseManualTouchNotes(notes) {
+  const note = String(notes || '').trim();
+  if (!note) return { touch: '', message: '' };
+  for (let i = 0; i < MANUAL_TOUCH_NOTES.length; i++) {
+    const touch = MANUAL_TOUCH_NOTES[i];
+    if (note === touch) return { touch, message: '' };
+    const prefix = touch + ' — ';
+    if (note.indexOf(prefix) === 0) {
+      return { touch, message: note.slice(prefix.length).trim() };
+    }
+  }
+  return { touch: '', message: note };
+}
+
 function isManualDemo(demo) {
   if (!demo) return false;
-  return MANUAL_TOUCH_NOTES.indexOf(String(demo.notes || '').trim()) !== -1;
+  return Boolean(parseManualTouchNotes(demo.notes).touch);
+}
+
+function isManualTouchBit(bit) {
+  return Boolean(parseManualTouchNotes(bit).touch);
 }
 
 function houseLabelFromDemo(demo) {
@@ -77,7 +95,7 @@ function houseLabelFromDemo(demo) {
     const match = lines[i].match(/^\d{4}-\d{2}-\d{2}:\s*(.+)$/);
     if (!match) continue;
     const bit = match[1].trim();
-    if (MANUAL_TOUCH_NOTES.indexOf(bit) !== -1) continue;
+    if (isManualTouchBit(bit)) continue;
     return bit.replace(/\s*—.*$/, '').trim() || 'Platform activity';
   }
   return 'Platform activity';
@@ -88,9 +106,15 @@ function demoToContact(demo) {
   const at = demo.shown_at || demo.shownAt || demo.created_at || demo.createdAt || null;
   if (!at) return null;
   const manual = isManualDemo(demo);
+  const parsed = parseManualTouchNotes(demo.notes);
+  const label = manual
+    ? parsed.message
+      ? parsed.touch + ' — ' + parsed.message
+      : parsed.touch || 'Contact'
+    : houseLabelFromDemo(demo);
   return {
     at,
-    label: manual ? String(demo.notes || '').trim() || 'Contact' : houseLabelFromDemo(demo),
+    label,
     who: String(demo.shown_by || demo.shownBy || (manual ? 'Team' : 'Platform')).trim() || 'Team',
     kind: manual ? 'manual' : 'house',
   };
@@ -405,6 +429,7 @@ function sortByLastContact(rows, sort) {
 
 module.exports = {
   MANUAL_TOUCH_NOTES,
+  parseManualTouchNotes,
   parseLastContactFilter,
   parseLastContactSort,
   needsLastContactPass,

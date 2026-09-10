@@ -13,6 +13,7 @@ const {
   sortByLastContact,
   attachLastCommunication,
   resolveLastCommunication,
+  parseManualTouchNotes,
 } = require('../api/_lib/organiser-last-communication');
 
 assert.strictEqual(parseLastContactFilter('never'), 'never');
@@ -32,6 +33,18 @@ const manual = demoToContact({
 });
 assert.strictEqual(manual.kind, 'manual');
 assert.strictEqual(manual.label, 'Emailed');
+
+const manualWithNote = demoToContact({
+  notes: 'Attempted call — left voicemail',
+  shown_at: '2026-09-02',
+  shown_by: 'Catherine',
+  source: 'manual',
+});
+assert.strictEqual(manualWithNote.kind, 'manual');
+assert.strictEqual(manualWithNote.label, 'Attempted call — left voicemail');
+assert.strictEqual(parseManualTouchNotes('Called — no answer').touch, 'Called');
+assert.strictEqual(parseManualTouchNotes('Called — no answer').message, 'no answer');
+assert.strictEqual(parseManualTouchNotes('Random note').touch, '');
 
 const house = demoToContact({
   notes: '2026-08-01: Impersonated workspace',
