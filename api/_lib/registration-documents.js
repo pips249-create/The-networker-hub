@@ -115,8 +115,22 @@ function buildDocumentContext(registration) {
       '—';
   }
 
-  const ticketRevenue = registrationTicketRevenue(registration);
-  const bookingFee = registrationBookingFee(registration);
+  const ticketRevenue = registrationTicketRevenue({
+    ...registration,
+    event_vat_treatment: booked.eventRow?.vat_treatment || booked.eventRow?.vatTreatment || null,
+    ticket_unit_price:
+      booked.ticketRow?.price != null
+        ? Number(String(booked.ticketRow.price).replace(/[£,\s]/g, ''))
+        : null,
+  });
+  const bookingFee = registrationBookingFee({
+    ...registration,
+    event_vat_treatment: booked.eventRow?.vat_treatment || booked.eventRow?.vatTreatment || null,
+    ticket_unit_price:
+      booked.ticketRow?.price != null
+        ? Number(String(booked.ticketRow.price).replace(/[£,\s]/g, ''))
+        : null,
+  });
   const amountPaidNum = Number(booked.amountPaid) || 0;
 
   return {

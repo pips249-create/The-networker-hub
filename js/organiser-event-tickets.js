@@ -3935,6 +3935,134 @@
     return { tickets, event, authFailed: false };
   }
 
+  /** True when this date already has its own attendance / ticket setup. */
+  function eventHasOwnTicketSetup(eventRow, tickets) {
+    if (Array.isArray(tickets) && tickets.length) return true;
+    const mode = String(eventRow?.attendanceMode || '').trim();
+    return Boolean(mode && mode !== 'tickets');
+  }
+
+  function inferAttendanceModeFromTickets(tickets) {
+    const list = Array.isArray(tickets) ? tickets : [];
+    if (list.some(isCategoryExclusivityTicket)) return 'category_exclusivity';
+    if (ticketsAreMembersOnlyEvent(list)) return 'membership_meeting';
+    if (list.some(isGuestVisitTicket)) return 'guest_programme';
+    return list.length ? 'tickets' : '';
+  }
+
+  /** Prefer Application / membership sibling setup over bare general ticketing. */
+  function scoreSeriesTicketSetup(eventRow, tickets) {
+    const list = Array.isArray(tickets) ? tickets : [];
+    const mode = String(eventRow?.attendanceMode || '').trim() || inferAttendanceModeFromTickets(list);
+    if (!list.length && (!mode || mode === 'tickets')) return 0;
+    let score = list.length ? 10 : 1;
+    if (mode === 'category_exclusivity' || list.some(isCategoryExclusivityTicket)) score += 100;
+    if (mode === 'membership_meeting' || ticketsAreMembersOnlyEvent(list)) score += 50;
+    if (mode === 'guest_programme' || list.some(isGuestVisitTicket)) score += 40;
+    if (list.some(isMembersOnlyTicket)) score += 20;
+    return score;
+  }
+
+  /**
+   * New series dates often keep default attendance_mode=tickets with no tiers.
+   * Copy door / pay-how / tiers from the best sibling that already has setup.
+   */
+  async function inheritTicketSetupFromSeriesSibling(loaded) {
+    if (!loaded || loaded.authFailed || loaded.notOwned || !loaded.event) return loaded;
+    if (eventHasOwnTicketSetup(loaded.event, loaded.tickets)) return loaded;
+
+    const anchorId = String(loaded.event.id || eventIds[0] || '').trim();
+    const siblingIds = eventIds.filter((id) => id && id !== anchorId);
+    if (!siblingIds.length) return loaded;
+
+    const results = await Promise.all(
+      siblingIds.map(async (id) => {
+        try {
+          const [ticketsRes, eventRes] = await Promise.all([
+            api('/api/organiser/tickets?eventId=' + encodeURIComponent(id)),
+            api('/api/organiser/events?id=' + encodeURIComponent(id)),
+          ]);
+          const tickets =
+            ticketsRes.ok && Array.isArray(ticketsRes.data.tickets) ? ticketsRes.data.tickets : [];
+          const event = eventRes.ok && eventRes.data.event ? eventRes.data.event : null;
+          return { id, tickets, event };
+        } catch {
+          return { id, tickets: [], event: null };
+        }
+      })
+    );
+
+    const best = results
+      .map(function (row) {
+        return {
+          id: row.id,
+          tickets: row.tickets,
+          event: row.event,
+          score: scoreSeriesTicketSetup(row.event, row.tickets),
+        };
+      })
+      .filter(function (row) {
+        return row.score > 0;
+      })
+      .sort(function (a, b) {
+        return b.score - a.score;
+      })[0];
+
+    if (!best) return loaded;
+
+    const siblingMode =
+      String(best.event?.attendanceMode || '').trim() ||
+      inferAttendanceModeFromTickets(best.tickets) ||
+      loaded.event.attendanceMode;
+    const mergedEvent = {
+      ...loaded.event,
+      attendanceMode: siblingMode,
+    };
+    if (best.event) {
+      if (mergedEvent.guestPassesDisabled == null && best.event.guestPassesDisabled != null) {
+        mergedEvent.guestPassesDisabled = best.event.guestPassesDisabled;
+      }
+      if (!mergedEvent.refundPolicy && best.event.refundPolicy) {
+        mergedEvent.refundPolicy = best.event.refundPolicy;
+        mergedEvent.refundPolicyDetails =
+          best.event.refundPolicyDetails || mergedEvent.refundPolicyDetails;
+        mergedEvent.refundCutoffDays =
+          best.event.refundCutoffDays != null
+            ? best.event.refundCutoffDays
+            : mergedEvent.refundCutoffDays;
+      }
+      if (
+        (mergedEvent.maxAttendees == null || mergedEvent.maxAttendees === '') &&
+        best.event.maxAttendees != null &&
+        best.event.maxAttendees !== ''
+      ) {
+        mergedEvent.maxAttendees = best.event.maxAttendees;
+      }
+      if (!mergedEvent.alumniFastPassEnabled && best.event.alumniFastPassEnabled) {
+        mergedEvent.alumniFastPassEnabled = best.event.alumniFastPassEnabled;
+        mergedEvent.alumniSourceEventId =
+          best.event.alumniSourceEventId || mergedEvent.alumniSourceEventId;
+      }
+      if (mergedEvent.collectDietary == null && best.event.collectDietary != null) {
+        mergedEvent.collectDietary = best.event.collectDietary;
+      }
+      if (mergedEvent.collectAccessibility == null && best.event.collectAccessibility != null) {
+        mergedEvent.collectAccessibility = best.event.collectAccessibility;
+      }
+      if (!mergedEvent.vatTreatment && best.event.vatTreatment) {
+        mergedEvent.vatTreatment = best.event.vatTreatment;
+      }
+    }
+
+    return {
+      ...loaded,
+      tickets: best.tickets.slice(),
+      event: mergedEvent,
+      inheritedFromSibling: true,
+      inheritedFromEventId: best.id,
+    };
+  }
+
   function collectActiveTiers() {
     if (attendanceMode === 'category_exclusivity') return collectCategoryExclusivityTiers();
     return collectTiers();
@@ -5105,18 +5233,19 @@
         ? loadOrganiserGuestVisitSetting(earlyGroupId)
         : Promise.resolve();
 
-      const loaded = await loadExistingData();
-      if (loaded.authFailed) {
+      const loadedRaw = await loadExistingData();
+      if (loadedRaw.authFailed) {
         await Promise.allSettled([paymentPromise, guestPromise]);
-        return loaded;
+        return loadedRaw;
       }
 
-      if (loaded.event) {
-        seedSeriesMetaFromLoadedEvent(loaded.event);
+      if (loadedRaw.event) {
+        seedSeriesMetaFromLoadedEvent(loadedRaw.event);
       }
 
-      await expandSeriesEventIds(loaded.event);
-      await hydrateSeriesEvents(loaded.event);
+      await expandSeriesEventIds(loadedRaw.event);
+      await hydrateSeriesEvents(loadedRaw.event);
+      const loaded = await inheritTicketSetupFromSeriesSibling(loadedRaw);
 
       // Do not block first paint on payment/roster — refresh UI when they finish.
       const secondary = [paymentPromise, guestPromise];
@@ -5219,7 +5348,14 @@
 
     if (restoredDraft) {
       showAlert('Restored your ticket details from before bank setup. Review them, then publish when ready.', 'ok');
-    } else if (loaded.tickets.length) {
+    } else if (loaded.inheritedFromSibling) {
+      showAlert(
+        'Suggested from another date in this series — confirm how people get in below.',
+        'ok'
+      );
+    }
+
+    if (!restoredDraft && loaded.tickets.length) {
       const categoryExclusivityTicket = loaded.tickets.find(isCategoryExclusivityTicket);
       const memberTickets = loaded.tickets.filter(
         (t) => !isGuestVisitTicket(t) && !isAlumniTicket(t) && !isMembersOnlyTicket(t)
@@ -5257,9 +5393,19 @@
           prefillMembersOnlyTicket(loaded.tickets);
         }
       }
-    } else {
-      addTierRow();
-      // Keep free trial visits opt-in for new General ticketing events.
+    } else if (!restoredDraft) {
+      if (loaded.event && loaded.event.attendanceMode === 'category_exclusivity') {
+        setAttendanceMode('category_exclusivity');
+      } else if (loaded.event && loaded.event.attendanceMode === 'membership_meeting') {
+        setAttendanceMode('membership_meeting');
+        prefillMembersOnlyTicket([]);
+      } else if (loaded.event && loaded.event.attendanceMode === 'guest_programme') {
+        setAttendanceMode('guest_programme');
+        addTierRow();
+      } else {
+        addTierRow();
+        // Keep free trial visits opt-in for new General ticketing events.
+      }
     }
 
     // Do not overwrite a restored draft's pay-how / door with server inference.
@@ -5275,23 +5421,24 @@
     });
     bindAttendanceStep1Ui();
     parkStep2Panels();
-    const hasExistingSetup =
+    // Only skip Steps 1–2 when THIS date already has its own saved setup.
+    // Do not auto-confirm defaults or sibling suggestions as "chosen".
+    const hasOwnPersistedSetup =
       restoredDraft ||
-      (loaded.tickets && loaded.tickets.length) ||
-      (loaded.event && loaded.event.attendanceMode && loaded.event.attendanceMode !== 'tickets');
-    if (hasExistingSetup) {
-      step2Confirmed = true;
-      payHowConfirmed = true;
-      revealPostStep2();
-    } else if (loaded.event && loaded.event.attendanceMode === 'tickets') {
-      // Event created via admin with a known mode — skip straight to ticket setup
+      (!loaded.inheritedFromSibling &&
+        Boolean(loaded.tickets && loaded.tickets.length));
+    if (hasOwnPersistedSetup) {
       step2Confirmed = true;
       payHowConfirmed = true;
       revealPostStep2();
     } else {
+      step2Confirmed = false;
+      payHowConfirmed = false;
       hideLaterTicketSteps();
-      syncPayHowStepUi();
+      syncPayHowUi();
       syncAttendanceStepUi();
+      syncPayHowStepUi();
+      syncTicketStepLabels();
     }
     bindPrivateTicketFields();
     bindMembersOnlyEventToggle();
@@ -5371,7 +5518,7 @@
     syncEventCapacityCard();
     updatePublishButton();
     captureSavedTicketsSnapshot(collectActiveTiers());
-    if (loaded.tickets.length && !restoredDraft) {
+    if (loaded.tickets.length && !restoredDraft && !loaded.inheritedFromSibling) {
       lastPersistedTicketSignature = ticketsChangeSignature(collectActiveTiers());
     }
 

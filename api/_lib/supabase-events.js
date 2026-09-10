@@ -87,6 +87,14 @@ function normalizePrice(priceNum) {
   return { display: `£${priceNum.toFixed(2)}`, priceKey: 'paid' };
 }
 
+/** True when public paid tiers have more than one distinct face price (browse "from £X"). */
+function publicPaidPricesVary(pricedTiers) {
+  const cents = (pricedTiers || [])
+    .map((t) => Math.round((Number(t.priceNum) || 0) * 100))
+    .filter((c) => c > 0);
+  return new Set(cents).size > 1;
+}
+
 const {
   normalizeEventType,
   slugForEventType,
@@ -372,6 +380,7 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
   const { display: price, priceKey } = normalizePrice(priceNum);
   const hasFreeTickets = pricedTiers.some((t) => t.priceNum === 0);
   const hasPaidTickets = pricedTiers.some((t) => t.priceNum > 0);
+  const priceVaries = publicPaidPricesVary(pricedTiers);
 
   const hasTicketTiers = eventTickets.length > 0;
   const eventCapRaw = row.max_attendees != null ? Number(row.max_attendees) : null;
@@ -525,6 +534,7 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
     price,
     priceKey,
     priceNum,
+    priceVaries,
     photo: eventImageUrl(row),
     photoPosition: normalizeEventImagePosition(row.image_position),
     organiser: orgName,

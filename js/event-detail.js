@@ -73,7 +73,12 @@
       }
       return 'Free';
     }
-    const withFrom = !options || options.withFrom !== false;
+    const withFrom =
+      options && options.withFrom === true
+        ? true
+        : options && options.withFrom === false
+          ? false
+          : Boolean(ev.priceVaries);
     const display = ev.price || '—';
     return withFrom ? 'from ' + display : display;
   }
@@ -989,7 +994,6 @@
 
   function categoryExclusivityTierCardHtml(t, soldOut) {
     const priceNum = t.priceKey === 'free' ? 0 : Number(t.priceNum) || 0;
-    const priceDisplay = priceNum > 0 ? t.price || fmt(priceNum) : 'Free';
     const remainingLabel = soldOut ? '' : tierRemainingLabel(t);
     const closeDate = t.saleEnd ? formatCategoryExclusivityCloseDate(t.saleEnd) : '';
     const bookStep =
@@ -1019,14 +1023,82 @@
       html += '<p class="category-exclusivity-tier-meta">Applications close ' + escapeHtml(closeDate) + '</p>';
     }
     if (!soldOut) {
-      html +=
+      html += categoryExclusivityPriceBreakdownHtml(priceNum);
+    }
+    html += '</div>';
+    return html;
+  }
+
+  function categoryExclusivityPriceBreakdownHtml(priceNum) {
+    if (!(priceNum > 0)) {
+      return (
         '<div class="category-exclusivity-tier-price-row">' +
+        '<span class="category-exclusivity-tier-price-label">Ticket charge</span>' +
+        '<span class="category-exclusivity-tier-price">Free</span></div>'
+      );
+    }
+
+    const vatTreatment =
+      window.HubBookingFees && typeof window.HubBookingFees.eventVatTreatment === 'function'
+        ? window.HubBookingFees.eventVatTreatment(currentEvent || {})
+        : String((currentEvent && (currentEvent.vatTreatment || currentEvent.vat_treatment)) || '')
+            .trim()
+            .toLowerCase() || 'included';
+    const totals =
+      window.HubBookingFees && typeof window.HubBookingFees.calculateCheckoutTotals === 'function'
+        ? window.HubBookingFees.calculateCheckoutTotals(priceNum, 1, vatTreatment)
+        : {
+            subtotal: priceNum,
+            vat: vatTreatment === 'added' ? Math.round(priceNum * 0.2 * 100) / 100 : 0,
+            fee:
+              Math.round((priceNum * BOOKING_FEE_RATE + BOOKING_FEE_PER_TICKET) * 100) / 100,
+            total: 0,
+          };
+    if (!totals.total) {
+      totals.total = Math.round((totals.subtotal + totals.vat + totals.fee) * 100) / 100;
+    }
+
+    const feeLabel =
+      (window.HubBookingFees && window.HubBookingFees.BOOKING_FEE_LABEL) ||
+      'Booking fee (4.5% + 20p per ticket)';
+    const vatLabel =
+      (window.HubBookingFees && window.HubBookingFees.ORGANISER_VAT_LABEL) || 'VAT (20%)';
+
+    let html = '<div class="category-exclusivity-price-breakdown">';
+    html +=
+      '<div class="category-exclusivity-tier-price-row category-exclusivity-tier-price-row--line">' +
+      '<span class="category-exclusivity-tier-price-label">Ticket</span>' +
+      '<span class="category-exclusivity-tier-price">' +
+      escapeHtml(fmt(totals.subtotal)) +
+      '</span></div>';
+    if (totals.vat > 0) {
+      html +=
+        '<div class="category-exclusivity-tier-price-row category-exclusivity-tier-price-row--line">' +
         '<span class="category-exclusivity-tier-price-label">' +
-        (priceNum > 0 ? 'If approved' : 'Ticket charge') +
+        escapeHtml(vatLabel) +
         '</span>' +
         '<span class="category-exclusivity-tier-price">' +
-        escapeHtml(priceDisplay) +
+        escapeHtml(fmt(totals.vat)) +
         '</span></div>';
+    }
+    html +=
+      '<div class="category-exclusivity-tier-price-row category-exclusivity-tier-price-row--line">' +
+      '<span class="category-exclusivity-tier-price-label">' +
+      escapeHtml(feeLabel) +
+      '</span>' +
+      '<span class="category-exclusivity-tier-price">' +
+      escapeHtml(fmt(totals.fee)) +
+      '</span></div>';
+    html +=
+      '<div class="category-exclusivity-tier-price-row category-exclusivity-tier-price-row--total">' +
+      '<span class="category-exclusivity-tier-price-label">If approved</span>' +
+      '<span class="category-exclusivity-tier-price">' +
+      escapeHtml(fmt(totals.total)) +
+      '</span></div>';
+    if (vatTreatment === 'included') {
+      html += '<p class="category-exclusivity-tier-vat-note">Prices include VAT</p>';
+    } else if (vatTreatment === 'none') {
+      html += '<p class="category-exclusivity-tier-vat-note">No VAT charged</p>';
     }
     html += '</div>';
     return html;
@@ -1093,7 +1165,14 @@
         }
         return;
       }
-      labelEl.textContent = 'Tickets from';
+      labelEl.textContent =
+        window.HubBookingFees && typeof window.HubBookingFees.listingShowsFrom === 'function'
+          ? window.HubBookingFees.listingShowsFrom(ev)
+            ? 'Tickets from'
+            : 'Ticket'
+          : ev.priceVaries
+            ? 'Tickets from'
+            : 'Ticket';
       priceEl.textContent = memberTicketPriceLabel(ev);
       return;
     }
@@ -1158,7 +1237,14 @@
       }
       return;
     }
-    labelEl.textContent = 'Tickets from';
+    labelEl.textContent =
+      window.HubBookingFees && typeof window.HubBookingFees.listingShowsFrom === 'function'
+        ? window.HubBookingFees.listingShowsFrom(ev)
+          ? 'Tickets from'
+          : 'Ticket'
+        : ev.priceVaries
+          ? 'Tickets from'
+          : 'Ticket';
     priceEl.textContent =
       ev.priceKey === 'free' ? 'Free' : publicListingPriceLabel(ev, { withFrom: false });
   }
@@ -4904,6 +4990,9 @@
     const sumSubtotal = document.getElementById('sum-subtotal');
     const sumFee = document.getElementById('sum-fee');
     const sumFeeRow = sumFee ? sumFee.closest('.summary-row') : null;
+    const sumVat = document.getElementById('sum-vat');
+    const sumVatRow = document.getElementById('sum-vat-row');
+    const sumVatLabel = document.getElementById('sum-vat-label');
     const summaryFeeNote = document.getElementById('summary-fee-note');
     const sumTotal = document.getElementById('sum-total');
     const qtyHint = document.getElementById('qty-avail-hint');
@@ -4933,6 +5022,16 @@
       maxQty = maxQtyForTier(sel);
     }
 
+    function checkoutVatTreatment() {
+      const evNow = activeEvent() || ev;
+      if (window.HubBookingFees && typeof window.HubBookingFees.eventVatTreatment === 'function') {
+        return window.HubBookingFees.eventVatTreatment(evNow || {});
+      }
+      return String((evNow && (evNow.vatTreatment || evNow.vat_treatment)) || '')
+        .trim()
+        .toLowerCase() || 'included';
+    }
+
     function update() {
       const evNow = activeEvent();
       if (eventIsCategoryExclusivity(evNow) || eventIsGuestProgramme(evNow)) {
@@ -4955,10 +5054,27 @@
           : passSelected
             ? 1
             : qty;
-      const subtotal = price * billQty;
-      const fee =
-        subtotal > 0 ? subtotal * BOOKING_FEE_RATE + BOOKING_FEE_PER_TICKET * billQty : 0;
-      const total = subtotal + fee;
+      const vatTreatment = checkoutVatTreatment();
+      const totals =
+        window.HubBookingFees && typeof window.HubBookingFees.calculateCheckoutTotals === 'function'
+          ? window.HubBookingFees.calculateCheckoutTotals(price, billQty, vatTreatment)
+          : (function () {
+              const subtotal = price * billQty;
+              const vat =
+                vatTreatment === 'added' && subtotal > 0
+                  ? Math.round(subtotal * 0.2 * 100) / 100
+                  : 0;
+              const fee =
+                subtotal > 0
+                  ? subtotal * BOOKING_FEE_RATE + BOOKING_FEE_PER_TICKET * billQty
+                  : 0;
+              return {
+                subtotal: subtotal,
+                vat: vat,
+                fee: fee,
+                total: subtotal + vat + fee,
+              };
+            })();
       if (sumLabel) {
         sumLabel.textContent = bundleSelected
           ? label + ' · all dates'
@@ -4967,11 +5083,17 @@
             : label;
       }
       if (sumQty) sumQty.textContent = String(billQty);
-      if (sumSubtotal) sumSubtotal.textContent = fmt(subtotal);
-      if (sumFee) sumFee.textContent = fmt(fee);
-      if (sumFeeRow) sumFeeRow.hidden = subtotal <= 0;
-      if (summaryFeeNote) summaryFeeNote.hidden = subtotal <= 0;
-      if (sumTotal) sumTotal.textContent = fmt(total);
+      if (sumSubtotal) sumSubtotal.textContent = fmt(totals.subtotal);
+      if (sumVat) sumVat.textContent = fmt(totals.vat || 0);
+      if (sumVatLabel) {
+        sumVatLabel.textContent =
+          (window.HubBookingFees && window.HubBookingFees.ORGANISER_VAT_LABEL) || 'VAT (20%)';
+      }
+      if (sumVatRow) sumVatRow.hidden = !(totals.vat > 0);
+      if (sumFee) sumFee.textContent = fmt(totals.fee);
+      if (sumFeeRow) sumFeeRow.hidden = totals.subtotal <= 0;
+      if (summaryFeeNote) summaryFeeNote.hidden = totals.subtotal <= 0;
+      if (sumTotal) sumTotal.textContent = fmt(totals.total);
       if (qtyValue) qtyValue.textContent = String(qty);
       qtyDown.disabled = qty <= 1 || bundleSelected || passSelected;
       qtyUp.disabled = qty >= maxQty || bundleSelected || passSelected;
@@ -4994,7 +5116,7 @@
           qtyHint.textContent = '';
         }
       }
-      syncPaidCheckoutPanel(label, billQty, total);
+      syncPaidCheckoutPanel(label, billQty, totals.total);
       if (evNow) applyTicketPanelState(evNow);
     }
 
@@ -5143,9 +5265,30 @@
       const tierEl = getSelectedTierEl();
       const ticketId = tierEl ? tierEl.getAttribute('data-ticket-id') : null;
       const tierPrice = tierEl ? parseFloat(tierEl.getAttribute('data-price')) || 0 : price;
-      const subtotal = tierPrice * qty;
-      const fee = subtotal > 0 ? subtotal * BOOKING_FEE_RATE + BOOKING_FEE_PER_TICKET * qty : 0;
-      const total = subtotal + fee;
+      const vatTreatment =
+        window.HubBookingFees && typeof window.HubBookingFees.eventVatTreatment === 'function'
+          ? window.HubBookingFees.eventVatTreatment(ev || {})
+          : String((ev && (ev.vatTreatment || ev.vat_treatment)) || '')
+              .trim()
+              .toLowerCase() || 'included';
+      const paidTotals =
+        window.HubBookingFees && typeof window.HubBookingFees.calculateCheckoutTotals === 'function'
+          ? window.HubBookingFees.calculateCheckoutTotals(tierPrice, qty, vatTreatment)
+          : {
+              subtotal: tierPrice * qty,
+              vat:
+                vatTreatment === 'added' && tierPrice > 0
+                  ? Math.round(tierPrice * qty * 0.2 * 100) / 100
+                  : 0,
+              fee:
+                tierPrice > 0
+                  ? tierPrice * qty * BOOKING_FEE_RATE + BOOKING_FEE_PER_TICKET * qty
+                  : 0,
+              total: 0,
+            };
+      if (!paidTotals.total) {
+        paidTotals.total = paidTotals.subtotal + paidTotals.vat + paidTotals.fee;
+      }
       const paid = isPaid != null ? isPaid : tierPrice > 0;
 
       let attendee;
@@ -5333,7 +5476,26 @@
         }
         await loadCheckoutSessionUser();
         if (!(await ensureAttendeeProfileComplete())) return;
-        syncPaidCheckoutPanel(label, qty, tierPrice * qty + (tierPrice > 0 ? tierPrice * qty * BOOKING_FEE_RATE + BOOKING_FEE_PER_TICKET * qty : 0));
+        const vatTreatment =
+          window.HubBookingFees && typeof window.HubBookingFees.eventVatTreatment === 'function'
+            ? window.HubBookingFees.eventVatTreatment(evNow || {})
+            : String((evNow && (evNow.vatTreatment || evNow.vat_treatment)) || '')
+                .trim()
+                .toLowerCase() || 'included';
+        const previewTotals =
+          window.HubBookingFees && typeof window.HubBookingFees.calculateCheckoutTotals === 'function'
+            ? window.HubBookingFees.calculateCheckoutTotals(tierPrice, qty, vatTreatment)
+            : {
+                total:
+                  tierPrice * qty +
+                  (tierPrice > 0
+                    ? tierPrice * qty * BOOKING_FEE_RATE + BOOKING_FEE_PER_TICKET * qty
+                    : 0) +
+                  (vatTreatment === 'added' && tierPrice > 0
+                    ? Math.round(tierPrice * qty * 0.2 * 100) / 100
+                    : 0),
+              };
+        syncPaidCheckoutPanel(label, qty, previewTotals.total);
 
         if (needsCheckoutDetailsStep(evNow, qty)) {
           renderCheckoutGuestNames(qty);

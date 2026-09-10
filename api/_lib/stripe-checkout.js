@@ -23,10 +23,11 @@ function getStripeClient() {
 }
 
 /**
- * Checkout with ticket line item(s) plus a separate booking-fee line item.
+ * Checkout with ticket line item(s), optional organiser VAT, plus booking-fee line item.
  */
 async function createPaidCheckoutSession(opts) {
   const stripe = getStripeClient();
+  const { ORGANISER_VAT_LABEL } = require('./booking-fees');
   const qty = opts.qty || 1;
   const unitAmount = Math.round((Number(opts.unitPricePounds) || 0) * 100);
   if (unitAmount <= 0) throw new Error('invalid_ticket_price');
@@ -43,6 +44,21 @@ async function createPaidCheckoutSession(opts) {
       quantity: qty,
     },
   ];
+
+  const vatPence = Math.round((Number(opts.organiserVatPounds) || 0) * 100);
+  if (vatPence > 0) {
+    lineItems.push({
+      price_data: {
+        currency: 'gbp',
+        product_data: {
+          name: ORGANISER_VAT_LABEL,
+          description: 'VAT on ticket price (charged by the event organiser)',
+        },
+        unit_amount: vatPence,
+      },
+      quantity: 1,
+    });
+  }
 
   const feePence = Math.round((Number(opts.bookingFeePounds) || 0) * 100);
   if (feePence > 0) {
@@ -79,6 +95,9 @@ async function createPaidCheckoutSession(opts) {
       quantity: String(opts.qty || 1),
       bundle_event_ids: String(opts.bundleEventIds || '').slice(0, 500),
       bundle_ticket_ids: String(opts.bundleTicketIds || '').slice(0, 500),
+      vat_treatment: String(opts.vatTreatment || '').trim().slice(0, 20),
+      organiser_vat_pence: String(Math.max(0, vatPence)),
+      booking_fee_pence: String(Math.max(0, feePence)),
     },
     success_url: opts.successUrl,
     cancel_url: opts.cancelUrl,

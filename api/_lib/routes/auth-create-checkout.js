@@ -178,7 +178,7 @@ module.exports = async function handler(req, res) {
     const evRes = await sb
       .from('events')
       .select(
-        'id, title, slug, status, approval_status, ticket_sales_enabled, organiser_id, attendance_mode, guest_passes_disabled, refund_policy, refund_policy_details, refund_terms_agreed, refund_terms_agreed_at, collect_dietary, collect_accessibility, starts_at, ends_at'
+        'id, title, slug, status, approval_status, ticket_sales_enabled, organiser_id, attendance_mode, guest_passes_disabled, refund_policy, refund_policy_details, refund_terms_agreed, refund_terms_agreed_at, collect_dietary, collect_accessibility, starts_at, ends_at, vat_treatment'
       )
       .eq('id', eventId)
       .maybeSingle();
@@ -705,7 +705,13 @@ module.exports = async function handler(req, res) {
         ? 1
         : requestedQty;
 
-    const totals = calculateCheckoutTotals(checkoutUnitPrice, checkoutRequestedQty, maxQty);
+    const vatTreatment = String(evRes.data.vat_treatment || '').trim() || 'included';
+    const totals = calculateCheckoutTotals(
+      checkoutUnitPrice,
+      checkoutRequestedQty,
+      maxQty,
+      vatTreatment
+    );
     const qty = totals.qty;
     const guestNames = normalizeGuestNames(
       body.guestNames || body.guest_names,
@@ -732,7 +738,8 @@ module.exports = async function handler(req, res) {
             'This organiser has not finished Stripe Connect setup. Ticket sales are temporarily unavailable.',
         });
       }
-      const ticketSubtotalPence = Math.round(checkoutUnitPrice * 100) * qty;
+      // Organiser receives ticket face + organiser VAT; Hub keeps the booking fee only.
+      const ticketSubtotalPence = Math.round((Number(totals.organiserGross) || 0) * 100);
       const bookingFeePence = Math.round(totals.fee * 100);
       const connectParams = buildConnectCheckoutParams({
         connect,
@@ -767,7 +774,9 @@ module.exports = async function handler(req, res) {
           : seriesMultiDate.ticketName + ' — all ' + qty + ' dates'
         : ticketName,
       unitPricePounds: checkoutUnitPrice,
+      organiserVatPounds: totals.vat,
       bookingFeePounds: totals.fee,
+      vatTreatment: totals.vatTreatment,
       successUrl: `${siteUrl}/events/booking-success?session_id={CHECKOUT_SESSION_ID}`,
       cancelUrl: `${siteUrl}${cancelPath}`,
       clientReferenceId: buildClientReferenceId(

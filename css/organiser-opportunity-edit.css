@@ -55,6 +55,37 @@ body.hub-page-organiser.organiser-opportunity-edit-page {
   color: var(--opp-navy);
 }
 
+.oe-pricing-callout {
+  margin: 1rem 0 0;
+  padding: 0.875rem 1rem;
+  max-width: 40rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--opp-gold-border);
+  background: var(--opp-gold-pale);
+  color: var(--opp-navy);
+}
+
+.oe-pricing-callout-amount,
+.oe-pricing-callout-note {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.oe-pricing-callout-amount {
+  font-size: 1.0625rem;
+}
+
+.oe-pricing-callout-amount span {
+  font-weight: 500;
+  color: var(--opp-dark-gray);
+}
+
+.oe-pricing-callout-note {
+  margin-top: 0.25rem;
+  font-size: 0.9375rem;
+  color: var(--opp-dark-gray);
+}
+
 .organiser-opportunity-edit-page .ee-title {
   font-family: 'DM Serif Display', Georgia, serif;
   font-size: clamp(1.75rem, 3.5vw, 2.25rem);

@@ -429,7 +429,7 @@
     const n = Number(ev.priceNum);
     if (n > 0) {
       const amt = n % 1 === 0 ? '£' + n.toFixed(0) : '£' + n.toFixed(2);
-      return 'from ' + amt;
+      return ev.priceVaries ? 'from ' + amt : amt;
     }
     return ev.price;
   }

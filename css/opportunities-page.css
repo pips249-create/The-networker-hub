@@ -2411,13 +2411,13 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
   min-width: 0;
 }
 
-/* Match Type / Industry label treatment */
+/* Match Industry / Format labels (events-filter-bar sets --filter-label on the shell) */
 .opp-browse-page .events-filter-shell .filter-format-group > legend.filter-bar-chip-label {
   text-transform: uppercase;
   letter-spacing: 0.06em;
   font-size: 0.72rem;
   font-weight: 700;
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--filter-label);
 }
 
 /* class display:flex must not override the HTML hidden attribute */
@@ -2534,11 +2534,11 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
   opacity: 0.9;
 }
 
-.opp-browse-page .filter-bar-chip-label--inline {
+.opp-browse-page .events-filter-shell .filter-bar-chip-label--inline {
   flex: 0 0 auto;
   margin: 0;
   white-space: nowrap;
-  color: rgba(255, 255, 255, 0.72);
+  color: var(--filter-label);
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.04em;

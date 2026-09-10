@@ -2293,6 +2293,45 @@ a:hover {
   border-top: 1px solid var(--border);
 }
 
+.category-exclusivity-price-breakdown {
+  margin-top: 14px;
+  padding-top: 4px;
+  border-top: 1px solid var(--border);
+}
+
+.category-exclusivity-price-breakdown .category-exclusivity-tier-price-row {
+  margin-top: 0;
+  padding-top: 8px;
+  border-top: none;
+}
+
+.category-exclusivity-price-breakdown .category-exclusivity-tier-price-row--line .category-exclusivity-tier-price {
+  font-size: 15px;
+  font-weight: 650;
+  color: var(--ink-soft);
+}
+
+.category-exclusivity-price-breakdown .category-exclusivity-tier-price-row--line .category-exclusivity-tier-price-label {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 500;
+  color: var(--ink-muted);
+}
+
+.category-exclusivity-price-breakdown .category-exclusivity-tier-price-row--total {
+  margin-top: 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.category-exclusivity-tier-vat-note {
+  margin: 8px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  text-align: right;
+}
+
 .category-exclusivity-tier-price-label {
   font-size: 12px;
   font-weight: 600;

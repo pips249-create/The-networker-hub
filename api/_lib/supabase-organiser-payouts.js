@@ -73,7 +73,22 @@ function buildRevenueContext(ev, eventCancellation) {
   return {
     eventRow: eventRowForRefundChecks(ev),
     eventCancellation: eventCancellation || null,
+    vatTreatment: ev?.vat_treatment || ev?.vatTreatment || null,
   };
+}
+
+function registrationForRevenue(row, context) {
+  if (!row) return row;
+  const vat =
+    row.vat_treatment ||
+    row.vatTreatment ||
+    row.event_vat_treatment ||
+    (context &&
+      (context.vatTreatment ||
+        context.eventRow?.vat_treatment ||
+        context.eventRow?.vatTreatment));
+  if (!vat) return row;
+  return Object.assign({}, row, { event_vat_treatment: vat });
 }
 
 function mapLatestCancellationsByEvent(cancellations) {
@@ -132,7 +147,8 @@ function enrichTicketsWithSales(tickets, registrations, revenueContextByEventId)
     if (isRevenueCountableRegistration(row, revenueContext)) {
       revenueByTicket.set(
         row.ticket_id,
-        (revenueByTicket.get(row.ticket_id) || 0) + registrationTicketRevenue(row)
+        (revenueByTicket.get(row.ticket_id) || 0) +
+          registrationTicketRevenue(registrationForRevenue(row, revenueContext))
       );
     }
   });
@@ -155,8 +171,9 @@ function calculatePayoutBreakdown(registrations, revenueContext) {
   const intentIds = [];
   (registrations || []).forEach((row) => {
     if (!isRevenueCountableRegistration(row, revenueContext || {})) return;
-    amount_gross += registrationTicketRevenue(row);
-    booking_fee_collected += registrationBookingFee(row);
+    const hinted = registrationForRevenue(row, revenueContext || {});
+    amount_gross += registrationTicketRevenue(hinted);
+    booking_fee_collected += registrationBookingFee(hinted);
     if (row.stripe_payment_intent_id) intentIds.push(row.stripe_payment_intent_id);
   });
   const total_transactions = new Set(intentIds).size;
@@ -467,7 +484,7 @@ async function buildOrganiserWorkspaceSummary(groupIds, adminView) {
 
   const events = [];
   if (adminView) {
-    const { data, error } = await sb.from('events').select('id, organiser_id');
+    const { data, error } = await sb.from('events').select('id, organiser_id, vat_treatment');
     if (error) throw new Error(error.message);
     if (data?.length) events.push(...data);
   } else {
@@ -476,7 +493,7 @@ async function buildOrganiserWorkspaceSummary(groupIds, adminView) {
       let query = sb
         .from('events')
         .select(
-          'id, organiser_id, status, payout_held, refund_policy, starts_at, refund_cutoff_days, refund_policy_details'
+          'id, organiser_id, status, payout_held, refund_policy, starts_at, refund_cutoff_days, refund_policy_details, vat_treatment'
         );
       if (chunk.length === 1) query = query.eq('organiser_id', chunk[0]);
       else query = query.in('organiser_id', chunk);
@@ -511,7 +528,9 @@ async function buildOrganiserWorkspaceSummary(groupIds, adminView) {
     totalTicketsSold += qty;
     ticketsSoldByGroupId[groupId] = (ticketsSoldByGroupId[groupId] || 0) + qty;
     if (isRevenueCountableRegistration(row, revenueContextByEventId[row.event_id] || {})) {
-      const amount = registrationTicketRevenue(row);
+      const amount = registrationTicketRevenue(
+        registrationForRevenue(row, revenueContextByEventId[row.event_id] || {})
+      );
       totalRevenue += amount;
       revenueByGroupId[groupId] = (revenueByGroupId[groupId] || 0) + amount;
     }
