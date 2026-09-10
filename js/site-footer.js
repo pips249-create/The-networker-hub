@@ -162,9 +162,6 @@
         href('/guides') +
         '">Organiser guides</a>' +
         '<a href="' +
-        href('/advertising') +
-        '">Advertising &amp; sponsorship</a>' +
-        '<a href="' +
         href('/contact') +
         '">Contact us</a>'
       );
@@ -188,7 +185,12 @@
         : '') +
       '<a href="https://www.thenetworkerinternational.com/">The Networker International</a>' +
       (catalogueOpen
-        ? '<a href="' + href('/advertising') + '">Advertising &amp; sponsorship</a>'
+        ? '<a href="' +
+          href('/advertising') +
+          '">Advertising &amp; sponsorship</a>' +
+          '<a href="' +
+          href('/partners') +
+          '">Partner Programme</a>'
         : '') +
       '</nav>' +
       '</div>';

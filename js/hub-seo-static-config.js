@@ -98,6 +98,13 @@ window.HUB_SEO_STATIC = {
     "image": "/assets/logo-networker-uk-og.png?v=20260908og",
     "ogType": "website"
   },
+  "partners": {
+    "path": "/partners",
+    "title": "Partner Programme – The Networker UK",
+    "description": "Earn 20% referring opportunity listings and sponsorship on The Networker UK. Apply or enquire about the Partner Programme.",
+    "image": "/assets/logo-networker-uk-og.png?v=20260908og",
+    "ogType": "website"
+  },
   "legal": {
     "path": "/legal-policies",
     "title": "Legal & policies – The Networker UK",

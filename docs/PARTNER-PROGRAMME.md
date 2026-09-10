@@ -186,7 +186,7 @@ Prefer the **homepage** link when the intro is open-ended; use advertising / lis
 | Phase | Deliverable | Est. |
 |-------|-------------|------|
 | 0 | Mailbox + this doc + accountant sign-off | Mailbox + doc done · accountant pending |
-| 1 | DB partners · codes · 30-day cookie · checkout + enquiry attribution · Command Centre **Referral partners** | **Built** — run migration `289_affiliate_partners.sql` |
+| 1 | DB partners · codes · 30-day cookie · checkout + enquiry attribution · Command Centre **Referral partners** · link click counts | **Built** — run migrations `289_affiliate_partners.sql` + `290_affiliate_clicks.sql` |
 | 2 | Stripe webhook → ledger · first-3 cap · clawbacks · manual attribute · hold cron · referral email | **Built** — cron `/api/cron/affiliate-commissions` daily 06:15 |
 | 3 | Partner hub `/partners/earnings` (earnings + media kit) · optional weekly digest | Hub shell built · live ledger API next |
 | 4 | Admin statements / payouts · monthly statement email | 2–3 days |

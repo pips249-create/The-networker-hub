@@ -419,6 +419,16 @@ function buildSchemaGraph(page, origin) {
         'Sponsor placements and advertising rates for the events directory and business opportunities on The Networker UK.',
       about: buildOrganizationSchema(base),
     });
+  } else if (page === 'partners') {
+    graph.push({
+      '@context': 'https://schema.org',
+      '@type': 'WebPage',
+      url: base + '/partners',
+      name: 'Partner Programme – The Networker UK',
+      description:
+        'Earn 20% referring opportunity listings and sponsorship on The Networker UK. Apply or enquire about the Partner Programme.',
+      about: buildOrganizationSchema(base),
+    });
   } else if (page === 'events') {
     graph.push(
       buildCollectionPageSchema(
@@ -511,6 +521,9 @@ function buildLlmsTxt(origin) {
     '- Advertising & sponsorship: ' +
     base +
     '/advertising\n' +
+    '- Partner Programme: ' +
+    base +
+    '/partners\n' +
     '- Legal: ' +
     base +
     '/legal-policies\n' +

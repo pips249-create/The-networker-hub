@@ -31,6 +31,7 @@ const STATIC_PATHS = [
   '/add-your-event',
   '/for-networkers',
   '/advertising',
+  '/partners',
   '/legal-policies',
   ...NETWORKING_REGION_SLUGS.map((slug) => '/networking/' + slug),
   ...OPPORTUNITY_INDUSTRY_SLUGS.map((slug) => '/opportunities/industry/' + slug),

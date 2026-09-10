@@ -119,6 +119,14 @@ const STATIC_PAGES = {
     image: OG_SHARE_IMAGE,
     ogType: 'website',
   },
+  partners: {
+    path: '/partners',
+    title: 'Partner Programme – The Networker UK',
+    description:
+      'Earn 20% referring opportunity listings and sponsorship on The Networker UK. Apply or enquire about the Partner Programme.',
+    image: OG_SHARE_IMAGE,
+    ogType: 'website',
+  },
   legal: {
     path: '/legal-policies',
     title: 'Legal & policies – The Networker UK',
