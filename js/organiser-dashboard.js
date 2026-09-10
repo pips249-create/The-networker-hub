@@ -15,6 +15,8 @@
   const ORG_PAGE_SIZE_DESKTOP = 8;
   const ORG_PAGE_SIZE_MOBILE = 4;
   const EVENTS_FETCH_SIZE = 100;
+  /** Avoid freezing the tab by paging an entire franchise catalogue into memory. */
+  const EVENTS_FULL_LOAD_MAX = 200;
 
   function orgPageSize() {
     if (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) {
@@ -60,6 +62,7 @@
     eventsStatus: 'all',
     eventsType: 'all',
     eventsSearch: '',
+    eventsGroup: 'all',
     eventsHideArchived: true,
     eventsHideUnpublished: false,
     eventsSortColumn: 'date',
@@ -4650,7 +4653,27 @@
   }
 
   function eventOrganiserGroupId(ev) {
-    return String(ev.organiserGroupId || (ev.organiserGroupIds && ev.organiserGroupIds[0]) || '').trim();
+    return String(
+      ev.organiserGroupId ||
+        ev.organiserId ||
+        ev.organiser_id ||
+        ev.groupId ||
+        (ev.organiserGroupIds && ev.organiserGroupIds[0]) ||
+        ''
+    ).trim();
+  }
+
+  function eventBelongsToGroup(ev, groupId) {
+    const gid = String(groupId || '').trim();
+    if (!gid || !ev) return false;
+    if (eventOrganiserGroupId(ev) === gid) return true;
+    const ids = ev.organiserGroupIds;
+    if (Array.isArray(ids) && ids.some(function (id) {
+      return String(id || '').trim() === gid;
+    })) {
+      return true;
+    }
+    return false;
   }
 
   function titleSeriesBucketKey(ev) {
@@ -4662,6 +4685,7 @@
     const groupId = eventOrganiserGroupId(ev);
     const title = String(ev.title || '').trim().toLowerCase();
     const allEvents = (context && context.allEvents) || state.events || [];
+    const titlePeerCounts = context && context.titlePeerCounts;
 
     const seriesGroupId = String(ev.seriesGroupId || '').trim();
     if (seriesGroupId) {
@@ -4674,6 +4698,13 @@
     const endDate = String(ev.recurrenceEndDate || '').trim().slice(0, 10);
     if (pattern && endDate) {
       return 'rec:' + groupId + '\0' + title + '\0' + pattern + '\0' + endDate;
+    }
+    if (titlePeerCounts) {
+      const peerKey = groupId + '\0' + title;
+      if ((titlePeerCounts.get(peerKey) || 0) > 1) {
+        return titleSeriesBucketKey(ev);
+      }
+      return 'solo:' + String(ev.id || '');
     }
     const sameTitlePeers = allEvents.filter(function (peer) {
       if (eventOrganiserGroupId(peer) !== groupId) return false;
@@ -4887,9 +4918,18 @@
 
   function groupEventsIntoSeries(events) {
     const all = events || [];
+    // Precompute title peer counts once — per-event filters were O(n²) and froze franchise workspaces.
+    const titlePeerCounts = new Map();
+    all.forEach(function (ev) {
+      if (String(ev.seriesGroupId || '').trim()) return;
+      if (String(ev.duplicatedFromEventId || '').trim()) return;
+      const peerKey =
+        eventOrganiserGroupId(ev) + '\0' + String(ev.title || '').trim().toLowerCase();
+      titlePeerCounts.set(peerKey, (titlePeerCounts.get(peerKey) || 0) + 1);
+    });
     const buckets = new Map();
     all.forEach((ev) => {
-      const key = eventSeriesBucketKey(ev, { allEvents: all });
+      const key = eventSeriesBucketKey(ev, { allEvents: all, titlePeerCounts: titlePeerCounts });
       if (!buckets.has(key)) buckets.set(key, []);
       buckets.get(key).push(ev);
     });
@@ -5362,6 +5402,9 @@
         '<a class="org-action-item" href="' +
         esc(groupPublicProfileUrl(id, item && item.slug)) +
         '" target="_blank" rel="noopener noreferrer"><span class="org-action-icon">↗</span><span class="org-action-text"><strong>View public profile</strong><span>See your group page and ranking badge</span></span></a>' +
+        '<button type="button" class="org-action-item" data-org-goto-events="' +
+        esc(id) +
+        '"><span class="org-action-icon">📋</span><span class="org-action-text"><strong>View events</strong><span>See listings for this organiser page</span></span></button>' +
         '<button type="button" class="org-action-item" data-org-goto-memberships="' +
         esc(id) +
         '"><span class="org-action-icon">👥</span><span class="org-action-text"><strong>Membership</strong><span>Upload members for members-only tickets</span></span></button>' +
@@ -5764,6 +5807,41 @@
     return { page: hash, sub: null };
   }
 
+  function myEventsLeadForSub(sub, defaultLead) {
+    const groupId =
+      filters.eventsGroup && filters.eventsGroup !== 'all' ? filters.eventsGroup : '';
+    const group =
+      groupId && (sub === 'events-list' || sub === 'events-revenue')
+        ? findGroupById(groupId)
+        : null;
+    if (group && sub === 'events-list') {
+      return (
+        'Showing listings for ' +
+        group.name +
+        '. Change the organiser page filter to see all events.'
+      );
+    }
+    if (group && sub === 'events-revenue') {
+      return (
+        'Revenue for ' + group.name + '. Change the organiser page filter to see all events.'
+      );
+    }
+    return defaultLead;
+  }
+
+  function refreshMyEventsPageLead() {
+    const subEl = document.getElementById('my-events-sub');
+    if (!subEl) return;
+    const defaults = {
+      'events-list': 'Open a listing to edit details, or list a new event.',
+      'events-revenue': usesConnectPayoutFlow()
+        ? 'Ticket sales per event. Paid tickets are collected in your connected Stripe account — open Stripe Express for balance and bank payouts.'
+        : 'Ticket sales and payout status per event. Request a payout after an event has finished and been archived.',
+    };
+    const fallback = defaults[eventsSubRoute] || defaults['events-list'];
+    subEl.textContent = myEventsLeadForSub(eventsSubRoute, fallback);
+  }
+
   function setEventsSub(sub, options) {
     options = options || {};
     eventsSubRoute = sub || 'events-list';
@@ -5804,7 +5882,7 @@
     const titleEl = document.getElementById('my-events-title');
     const subEl = document.getElementById('my-events-sub');
     if (titleEl) titleEl.textContent = t[0];
-    if (subEl) subEl.textContent = t[1];
+    if (subEl) subEl.textContent = myEventsLeadForSub(eventsSubRoute, t[1]);
 
     if (!bootstrapReady) return Promise.resolve();
 
@@ -7958,12 +8036,16 @@
           ev.city,
           ev.postcode,
           ev.description,
+          groupNameForEvent(ev),
         ]
           .filter(Boolean)
           .join(' ')
           .toLowerCase();
         return hay.includes(q);
       });
+    }
+    if (filters.eventsGroup && filters.eventsGroup !== 'all') {
+      list = list.filter((ev) => eventBelongsToGroup(ev, filters.eventsGroup));
     }
     if (filters.eventsStatus !== 'all') {
       list = list.filter((ev) => (ev.statusKey || '') === filters.eventsStatus);
@@ -7988,9 +8070,13 @@
   }
 
   async function ensureAllEventsForGrouping() {
-    if (eventsFiltersActive() || state.eventsFullyLoaded) return;
+    if (state.eventsFullyLoaded) return;
     if (!state.eventsHasMore) {
       state.eventsFullyLoaded = true;
+      return;
+    }
+    // Large franchise catalogues: keep the loaded page only — full fetch freezes the tab.
+    if ((state.eventsTotal || 0) > EVENTS_FULL_LOAD_MAX) {
       return;
     }
     if (eventsGroupingPromise) return eventsGroupingPromise;
@@ -7999,7 +8085,10 @@
       state.eventsLoading = true;
       try {
         let offset = state.events.length;
-        while (offset < (state.eventsTotal || 0)) {
+        let pages = 0;
+        const maxPages = Math.ceil(EVENTS_FULL_LOAD_MAX / EVENTS_FETCH_SIZE) + 1;
+        while (offset < (state.eventsTotal || 0) && pages < maxPages) {
+          pages += 1;
           const liteQs = eventsNeedFullEnrichment() ? '' : '&eventsLite=1';
           const { ok, data } = await api(
             '/api/organiser/bootstrap?eventsOnly=1&eventsLimit=' +
@@ -8018,8 +8107,9 @@
           state.eventsTotal = data.eventsPagination?.total ?? state.events.length;
           state.eventsHasMore = Boolean(data.eventsPagination?.hasMore);
           if (!state.eventsHasMore) break;
+          if (state.events.length >= EVENTS_FULL_LOAD_MAX) break;
         }
-        state.eventsFullyLoaded = true;
+        state.eventsFullyLoaded = !state.eventsHasMore;
       } finally {
         state.eventsLoading = false;
         eventsGroupingPromise = null;
@@ -8090,6 +8180,8 @@
       typeSel.value = filters.eventsType;
     }
 
+    fillEventsGroupFilter();
+
     const ticketEventSel = document.getElementById('filter-tickets-event');
     if (ticketEventSel) {
       ticketEventSel.innerHTML = '<option value="all">All events</option>';
@@ -8131,6 +8223,33 @@
     }
 
     fillAttendeesEventFilter();
+  }
+
+  function fillEventsGroupFilter() {
+    const sels = [
+      document.getElementById('filter-events-group'),
+      document.getElementById('filter-revenue-group'),
+    ].filter(Boolean);
+    if (!sels.length) return;
+    const prev = filters.eventsGroup || 'all';
+    sels.forEach(function (sel) {
+      sel.innerHTML = '<option value="all">All organiser pages</option>';
+      (state.groups || []).forEach(function (g) {
+        const opt = document.createElement('option');
+        opt.value = g.id;
+        opt.textContent = g.name;
+        sel.appendChild(opt);
+      });
+      const hasPrev =
+        prev === 'all' ||
+        (state.groups || []).some(function (g) {
+          return String(g.id) === String(prev);
+        });
+      sel.value = hasPrev ? prev : 'all';
+    });
+    if (sels[0] && sels[0].value !== prev) {
+      filters.eventsGroup = sels[0].value || 'all';
+    }
   }
 
   function eventEditorUrl(ev) {
@@ -8998,7 +9117,8 @@
     return (
       filters.eventsSearch.trim() !== '' ||
       filters.eventsStatus !== 'all' ||
-      filters.eventsType !== 'all'
+      filters.eventsType !== 'all' ||
+      (filters.eventsGroup && filters.eventsGroup !== 'all')
     );
   }
 
@@ -9345,6 +9465,29 @@
   function goToAddEventForGroup(groupId) {
     if (!groupId) return;
     openNewEventEditorDrawer({ groupId: groupId });
+  }
+
+  function goToEventsForGroup(groupId) {
+    const gid = String(groupId || '').trim();
+    if (!gid) return;
+    filters.eventsGroup = gid;
+    listPages.events = 1;
+    listPages.revenue = 1;
+    setRoute('events-list');
+    ensureAllEventsForGrouping()
+      .then(function () {
+        fillMyEventsFilters();
+        syncSharedEventFiltersUi();
+        refreshMyEventsPageLead();
+        renderEvents();
+        updateMyEventsTabCounts();
+      })
+      .catch(function () {
+        fillMyEventsFilters();
+        syncSharedEventFiltersUi();
+        refreshMyEventsPageLead();
+        renderEvents();
+      });
   }
 
   function publishedEventsWithRegistrationsForGroup(groupId) {
@@ -9771,6 +9914,16 @@
       const groupId = membershipsBtn.getAttribute('data-org-goto-memberships');
       if (groupId) filters.membershipsGroup = groupId;
       setRoute('memberships');
+      return true;
+    }
+
+    const eventsGroupBtn = e.target.closest('[data-org-goto-events]');
+    if (eventsGroupBtn && !eventsGroupBtn.disabled) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeAllActionMenus();
+      const groupId = eventsGroupBtn.getAttribute('data-org-goto-events');
+      if (groupId) goToEventsForGroup(groupId);
       return true;
     }
 
@@ -12127,6 +12280,7 @@
     updatePaginationNav('groups', pageInfo);
     pageInfo.items.forEach((g) => {
       const tr = document.createElement('tr');
+      const eventsCount = Number(g.eventsListed != null ? g.eventsListed : 0) || 0;
       tr.innerHTML =
         '<td>' +
         thumbHtml(g) +
@@ -12137,7 +12291,11 @@
         '</button>' +
         groupRankingBadgeHtml(g.id) +
         '</td><td>' +
-        esc(String(g.eventsListed != null ? g.eventsListed : 0)) +
+        '<button type="button" class="org-td-events-click" data-org-goto-events="' +
+        esc(g.id) +
+        '" title="View events for this organiser page">' +
+        esc(String(eventsCount)) +
+        '</button>' +
         '</td><td class="org-revenue">' +
         esc(g.revenueDisplay || '£0') +
         '</td><td>' +
@@ -12386,18 +12544,22 @@
   function syncSharedEventFiltersUi() {
     const statusEl = document.getElementById('filter-events-status');
     const searchEl = document.getElementById('filter-events-search');
+    const groupEl = document.getElementById('filter-events-group');
     const hideArchivedEl = document.getElementById('filter-events-hide-archived');
     const hideUnpublishedEl = document.getElementById('filter-events-hide-unpublished');
     const revStatusEl = document.getElementById('filter-revenue-status');
     const revSearchEl = document.getElementById('filter-revenue-search');
+    const revGroupEl = document.getElementById('filter-revenue-group');
     const revHideArchivedEl = document.getElementById('filter-revenue-hide-archived');
     const revHideUnpublishedEl = document.getElementById('filter-revenue-hide-unpublished');
     if (statusEl) statusEl.value = filters.eventsStatus;
     if (searchEl) searchEl.value = filters.eventsSearch;
+    if (groupEl) groupEl.value = filters.eventsGroup || 'all';
     if (hideArchivedEl) hideArchivedEl.checked = filters.eventsHideArchived !== false;
     if (hideUnpublishedEl) hideUnpublishedEl.checked = Boolean(filters.eventsHideUnpublished);
     if (revStatusEl) revStatusEl.value = filters.eventsStatus;
     if (revSearchEl) revSearchEl.value = filters.eventsSearch;
+    if (revGroupEl) revGroupEl.value = filters.eventsGroup || 'all';
     if (revHideArchivedEl) revHideArchivedEl.checked = filters.eventsHideArchived !== false;
     if (revHideUnpublishedEl) revHideUnpublishedEl.checked = Boolean(filters.eventsHideUnpublished);
     updateSharedEventFilterNotes();
@@ -18560,7 +18722,7 @@
     syncOpenDayFormatFields();
     bindBusinessHubSummaryNav();
 
-    ['filter-events-status', 'filter-events-type', 'filter-events-search'].forEach((id) => {
+    ['filter-events-status', 'filter-events-type', 'filter-events-search', 'filter-events-group'].forEach((id) => {
       const el = document.getElementById(id);
       if (!el) return;
       const evt = id === 'filter-events-search' ? 'input' : 'change';
@@ -18568,24 +18730,48 @@
         if (id === 'filter-events-status') filters.eventsStatus = el.value;
         if (id === 'filter-events-type') filters.eventsType = el.value;
         if (id === 'filter-events-search') filters.eventsSearch = el.value;
+        if (id === 'filter-events-group') filters.eventsGroup = el.value || 'all';
         listPages.events = 1;
         listPages.revenue = 1;
+        syncSharedEventFiltersUi();
+        refreshMyEventsPageLead();
         renderEvents();
         if (eventsSubRoute === 'events-revenue') renderRevenue();
+        ensureAllEventsForGrouping()
+          .then(function () {
+            if (eventsSubRoute === 'events-list') renderEvents();
+            if (eventsSubRoute === 'events-revenue') renderRevenue();
+            updateMyEventsTabCounts();
+          })
+          .catch(function () {
+            /* non-fatal */
+          });
       });
     });
 
-    ['filter-revenue-status', 'filter-revenue-search'].forEach((id) => {
+    ['filter-revenue-status', 'filter-revenue-search', 'filter-revenue-group'].forEach((id) => {
       const el = document.getElementById(id);
       if (!el) return;
       const evt = id === 'filter-revenue-search' ? 'input' : 'change';
       el.addEventListener(evt, () => {
         if (id === 'filter-revenue-status') filters.eventsStatus = el.value;
         if (id === 'filter-revenue-search') filters.eventsSearch = el.value;
+        if (id === 'filter-revenue-group') filters.eventsGroup = el.value || 'all';
         listPages.events = 1;
         listPages.revenue = 1;
+        syncSharedEventFiltersUi();
+        refreshMyEventsPageLead();
         renderRevenue();
         if (eventsSubRoute === 'events-list') renderEvents();
+        ensureAllEventsForGrouping()
+          .then(function () {
+            if (eventsSubRoute === 'events-list') renderEvents();
+            if (eventsSubRoute === 'events-revenue') renderRevenue();
+            updateMyEventsTabCounts();
+          })
+          .catch(function () {
+            /* non-fatal */
+          });
       });
     });
 

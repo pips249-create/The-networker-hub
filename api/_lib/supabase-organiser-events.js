@@ -3074,14 +3074,48 @@ function workspaceGroupIds(groups, access) {
 
 async function resolveWorkspaceGroupIds(session, groups, access, adminView) {
   if (adminView) return (groups || []).map((g) => g.id).filter(Boolean);
+  // Admin opened a specific group — keep the workspace on that page only
+  // (franchise inboxes like Pro5 otherwise pull every sibling location).
+  const pinned = impersonatedOrganiserIdsFromSession(session);
+  if (pinned.length) return pinned.slice();
   const ids = new Set(workspaceGroupIds(groups, access));
-  (await emailMatchedOrganiserIdsForSession(session)).forEach((id) => ids.add(id));
-  impersonatedOrganiserIdsFromSession(session).forEach((id) => ids.add(id));
+  // While impersonating by email, do not expand to every email-matched profile.
+  if (!session?.impersonator) {
+    (await emailMatchedOrganiserIdsForSession(session)).forEach((id) => ids.add(id));
+  }
   return [...ids];
 }
 
 async function mergeWorkspaceGroups(session, groups, access, adminView) {
   if (adminView) return groups || [];
+  const pinned = impersonatedOrganiserIdsFromSession(session);
+  if (pinned.length) {
+    const have = new Set();
+    const merged = [];
+    (groups || []).forEach((g) => {
+      if (!g || !g.id || !pinned.includes(g.id) || have.has(g.id)) return;
+      merged.push(g);
+      have.add(g.id);
+    });
+    const missing = pinned.filter((id) => !have.has(id));
+    if (!missing.length) return merged;
+    try {
+      const sb = getSupabaseAdmin();
+      const { data, error } = await sb.from('organisers').select('*').in('id', missing);
+      if (!error && data && data.length) {
+        data.forEach((row) => {
+          const g = sbOrg.rowToGroup(row);
+          if (!g?.id || have.has(g.id)) return;
+          merged.push(g);
+          have.add(g.id);
+        });
+      }
+    } catch {
+      /* pinned ids still work even if a row fetch fails */
+    }
+    return merged;
+  }
+  if (session?.impersonator) return groups || [];
   return mergeEmailMatchedGroups(session, groups, access);
 }
 
@@ -3142,6 +3176,19 @@ async function prepareOrganiserWorkspaceScope(session, adminView) {
     access = null;
   }
 
+  const pinned = !adminView ? impersonatedOrganiserIdsFromSession(session) : [];
+  if (pinned.length) {
+    // Fast path: only the group(s) the admin chose to open — never the whole franchise.
+    let groups = [];
+    let groupsError = null;
+    try {
+      groups = await mergeWorkspaceGroups(session, [], access, adminView);
+    } catch (e) {
+      groupsError = e.message;
+    }
+    return { groups, groupIds: pinned.slice(), access, groupsError };
+  }
+
   let groups = [];
   let groupsError = null;
   try {
@@ -3154,22 +3201,6 @@ async function prepareOrganiserWorkspaceScope(session, adminView) {
   }
 
   const groupIds = await resolveWorkspaceGroupIds(session, groups, access, adminView);
-  if (!adminView) {
-    const missing = impersonatedOrganiserIdsFromSession(session).filter(
-      (id) => !groups.some((g) => g.id === id)
-    );
-    if (missing.length) {
-      try {
-        const sb = getSupabaseAdmin();
-        const { data, error } = await sb.from('organisers').select('*').in('id', missing);
-        if (!error && data && data.length) {
-          groups = dedupeGroupsById(groups.concat(data.map((row) => sbOrg.rowToGroup(row))));
-        }
-      } catch {
-        /* workspace still works with ids even if extra group rows fail to load */
-      }
-    }
-  }
   return { groups, groupIds, access, groupsError };
 }
 

@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260909navlist2" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260828sidebar1" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260828sidebar1" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260909setupreview1" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260910pro5scope1" />
     <!-- hub-mobile last so phone overrides win over dashboard table min-widths -->
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260812footer10" />
     <script src="../js/hub-defer-css.js?v=20260828perf2" data-hrefs="../css/organiser-event-edit.css?v=20260821ticketstep1|../css/organiser-flow-tour.css?v=20260716layout|../css/hubert-widget.css?v=20260805bottom2|../css/hub-ranking-badge.css?v=20260728lb2|../css/hub-partner-badge.css?v=20260820ticketembed1|../css/rankings-page.css?v=20260807rank|../css/organiser-opportunity-edit.css?v=20260829premium1|https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&family=Playfair+Display:wght@400;700&family=Source+Sans+3:wght@400;600;700&family=Oswald:wght@500;600&family=Nunito:wght@400;600;700&display=swap"></script>
@@ -2451,7 +2451,7 @@
 
           <!-- All events -->
           <div class="org-sub-page is-active" id="sub-events-list" role="tabpanel" data-events-panel="events-list" aria-labelledby="events-tab-list">
-            <p class="org-filter-linked-note">Status and search filters apply to both Events and Revenue.</p>
+            <p class="org-filter-linked-note">Status, organiser page, and search filters apply to both Events and Revenue.</p>
             <p class="org-status-glossary">
               <strong>Statuses:</strong> Draft — not finished yet · Unpublished — was live, now hidden · Live — on the platform · Archived — event ended
             </p>
@@ -2462,6 +2462,9 @@
                 <option value="upcoming">Upcoming</option>
                 <option value="draft">Draft</option>
                 <option value="unpublished">Unpublished</option>
+              </select>
+              <select id="filter-events-group" aria-label="Filter by organiser page">
+                <option value="all">All organiser pages</option>
               </select>
               <select id="filter-events-type" aria-label="Filter by type">
                 <option value="all">All types</option>
@@ -2859,7 +2862,7 @@
                 <div class="org-stat-value" id="rev-stat-held">0</div>
               </div>
             </div>
-            <p class="org-filter-linked-note">Status and search filters apply to both Events and Revenue.</p>
+            <p class="org-filter-linked-note">Status, organiser page, and search filters apply to both Events and Revenue.</p>
             <div class="org-filter-bar">
               <select id="filter-revenue-status" aria-label="Filter by status">
                 <option value="all">All events</option>
@@ -2867,6 +2870,9 @@
                 <option value="upcoming">Upcoming</option>
                 <option value="draft">Draft</option>
                 <option value="unpublished">Unpublished</option>
+              </select>
+              <select id="filter-revenue-group" aria-label="Filter by organiser page">
+                <option value="all">All organiser pages</option>
               </select>
               <input
                 type="search"
@@ -3953,7 +3959,7 @@
     <script src="../js/organiser-single-date-calendar.js?v=20260828openday2" defer></script>
     <script src="../js/organiser-quarter-time.js?v=20260828openday2" defer></script>
     <script src="../js/organiser-setup-review.js?v=20260910impersonate1" defer></script>
-    <script src="../js/organiser-dashboard.js?v=20260909setupreview1" defer></script>
+    <script src="../js/organiser-dashboard.js?v=20260910pro5scope1" defer></script>
     <script src="../js/organiser-workspace-comfort.js?v=20260813noshow1" defer></script>
   </body>
 </html>

@@ -113,13 +113,14 @@ module.exports = async function handler(req, res) {
           organiserIdsToClaim = await sbAuth.findOrganiserIdsByEmail(email);
         }
       }
-    } else if (target && body.provision !== false && organiserIdsToClaim.length) {
+    } else if (target && body.provision !== false && organiserId) {
+      // Only link the group being opened — never every franchise sibling.
       try {
         const sb = getSupabaseAdmin();
         await sb
           .from('organisers')
           .update({ supabase_user_id: target.id })
-          .in('id', organiserIdsToClaim)
+          .eq('id', String(organiserId).trim())
           .is('supabase_user_id', null);
       } catch {
         /* workspace still opens via impersonated ids */
@@ -160,6 +161,16 @@ module.exports = async function handler(req, res) {
       name: session.name || '',
     };
 
+    // Pin only the group the admin opened. Putting every email-matched franchise
+    // location in the session (e.g. Pro5) freezes the organiser workspace.
+    const pinnedOrganiserIds = [
+      ...new Set(
+        [organiserId]
+          .map((id) => String(id || '').trim())
+          .filter(Boolean)
+      ),
+    ];
+
     const sessionUser = {
       sub: target.id,
       email: target.email,
@@ -167,14 +178,7 @@ module.exports = async function handler(req, res) {
       role: 'client',
       name: target.name || '',
       impersonator,
-      impersonatedOrganiserIds: [
-        ...new Set(
-          (organiserIdsToClaim || [])
-            .concat(organiserId || [])
-            .map((id) => String(id || '').trim())
-            .filter(Boolean)
-        ),
-      ],
+      impersonatedOrganiserIds: pinnedOrganiserIds,
     };
 
     await appendSystemLog(

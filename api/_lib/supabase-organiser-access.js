@@ -328,6 +328,33 @@ function workspaceGroupIds(groups, access) {
 
 /** Include email-matched profiles that bootstrap already shows in the workspace. */
 async function mergeEmailMatchedGroups(session, groups, access) {
+  const { impersonatedOrganiserIdsFromSession } = require('./auth');
+  const pinned = impersonatedOrganiserIdsFromSession(session);
+  if (pinned.length) {
+    const have = new Set();
+    const merged = [];
+    (groups || []).forEach((g) => {
+      if (!g || !g.id || !pinned.includes(g.id) || have.has(g.id)) return;
+      merged.push(g);
+      have.add(g.id);
+    });
+    const missing = pinned.filter((id) => !have.has(id));
+    if (!missing.length) return merged;
+    const sb = getSupabaseAdmin();
+    const { rowToGroup } = require('./supabase-organiser');
+    const { data, error } = await sb.from('organisers').select('*').in('id', missing);
+    if (error) throw new Error(error.message);
+    (data || []).forEach((row) => {
+      const g = rowToGroup(row);
+      if (!g?.id || have.has(g.id)) return;
+      merged.push(g);
+      have.add(g.id);
+    });
+    return merged;
+  }
+  // Impersonating a franchise login by email must not pull every sibling location page.
+  if (session?.impersonator) return [...(groups || [])];
+
   const merged = [...(groups || [])];
   const have = new Set(merged.map((g) => g.id));
   const missingIds = workspaceGroupIds(groups, access).filter((id) => !have.has(id));

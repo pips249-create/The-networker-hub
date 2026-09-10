@@ -24,7 +24,8 @@ module.exports = async function handler(req, res) {
     const groupsOnly = String(req.query?.groupsOnly || '') === '1';
 
     if (groupsOnly) {
-      const { requireOrganiserSession, listGroupsForSession } = api;
+      const { requireOrganiserSession } = api;
+      const { prepareOrganiserWorkspaceScope } = require('../supabase-organiser-events');
       const wsAuth = await requireOrganiserSession(req);
       if (!wsAuth.ok) {
         return json(res, wsAuth.status || 401, { error: wsAuth.error });
@@ -36,7 +37,10 @@ module.exports = async function handler(req, res) {
       let groups = [];
       let groupsError = null;
       try {
-        groups = await listGroupsForSession(session, adminView);
+        // Same scope as full bootstrap (honours impersonated group pins).
+        const scope = await prepareOrganiserWorkspaceScope(session, adminView);
+        groups = scope.groups || [];
+        groupsError = scope.groupsError || null;
       } catch (e) {
         groupsError = e.message;
       }
