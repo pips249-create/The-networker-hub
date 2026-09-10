@@ -1301,33 +1301,20 @@
     const chip = document.getElementById('ee-photo-frame-hint');
     const help = document.getElementById('ee-photo-preview-hint');
     if (!frame || !img) return;
-    const { ox, oy } = getPhotoCoverOverflow(frame, img);
-    const canPan = ox > 1 || oy > 1;
-    frame.classList.toggle('is-locked', !canPan);
-    frame.tabIndex = canPan ? 0 : -1;
-    let chipText = 'Drag to reposition';
-    let helpText =
-      'This is the same crop used on browse cards. Drag the photo to choose what stays in frame.';
-    if (!img.naturalWidth) {
-      chipText = 'Loading photo…';
-      helpText = 'Loading your photo for the listing card crop.';
-    } else if (!canPan) {
-      chipText = '';
-      helpText = 'This photo already fills the listing card crop, so there is nothing to drag.';
-    } else if (ox > 1 && oy <= 1) {
-      chipText = 'Drag sideways';
-      helpText =
-        'This wide photo is cropped at the sides. Drag left or right to choose what stays centred on browse cards.';
-    } else if (oy > 1 && ox <= 1) {
-      chipText = 'Drag up or down';
-      helpText =
-        'This tall photo is cropped top and bottom. Drag up or down to choose what stays on browse cards.';
-    }
+    // Cover photos stay centred — no side-to-side / up-down drag.
+    frame.classList.add('is-locked');
+    frame.removeAttribute('tabindex');
     if (chip) {
-      chip.textContent = chipText;
-      chip.hidden = !chipText;
+      chip.textContent = '';
+      chip.hidden = true;
     }
-    if (help) help.textContent = helpText;
+    if (!help) return;
+    if (!img.naturalWidth) {
+      help.textContent = 'Loading your photo for the listing card crop.';
+      return;
+    }
+    help.textContent =
+      'This is the same crop used on browse cards. Wide photos are cropped evenly from both sides — the centre stays in frame.';
   }
 
   function bindPhotoReposition() {
@@ -1335,69 +1322,15 @@
     const img = document.getElementById('ee-photo-preview-img');
     if (!frame || frame.dataset.repositionBound === '1') return;
     frame.dataset.repositionBound = '1';
-    const clamp = (n) => Math.min(100, Math.max(0, Math.round(n)));
-    let dragging = false;
-    let moved = false;
-    let start = null;
-
+    // Drag-to-reposition removed — keep cover photos centred.
     if (img) {
       img.addEventListener('load', () => {
         applyPhotoPosition();
         updatePhotoCropHint();
       });
     }
-
-    frame.addEventListener('pointerdown', (e) => {
-      if (currentEventLocked || frame.classList.contains('is-locked')) return;
-      if (e.button != null && e.button !== 0) return;
-      const overflow = getPhotoCoverOverflow(frame, img);
-      if (overflow.ox <= 1 && overflow.oy <= 1) return;
-      dragging = true;
-      moved = false;
-      start = { x: e.clientX, y: e.clientY, pos: parsePhotoPosition(), overflow };
-      frame.classList.add('is-dragging');
-      try {
-        frame.setPointerCapture(e.pointerId);
-      } catch (_) {
-        /* older browsers */
-      }
-      e.preventDefault();
-    });
-    frame.addEventListener('pointermove', (e) => {
-      if (!dragging || !start) return;
-      const dx = e.clientX - start.x;
-      const dy = e.clientY - start.y;
-      if (!moved && dx * dx + dy * dy < 9) return;
-      moved = true;
-      // Convert pointer movement into object-position using the real cover overflow,
-      // so the photo tracks the finger/cursor 1:1 instead of jumping.
-      const ox = Math.max(start.overflow.ox, 1);
-      const oy = Math.max(start.overflow.oy, 1);
-      const nx = start.overflow.ox > 1 ? clamp(start.pos.x - (dx / ox) * 100) : 50;
-      const ny = start.overflow.oy > 1 ? clamp(start.pos.y - (dy / oy) * 100) : 50;
-      setPhotoPosition(nx + '% ' + ny + '%');
-    });
-    const endDrag = (e) => {
-      if (!dragging) return;
-      dragging = false;
-      start = null;
-      frame.classList.remove('is-dragging');
-      if (e && e.pointerId != null) {
-        try {
-          if (frame.hasPointerCapture(e.pointerId)) frame.releasePointerCapture(e.pointerId);
-        } catch (_) {
-          /* ignore */
-        }
-      }
-    };
-    frame.addEventListener('pointerup', endDrag);
-    frame.addEventListener('pointercancel', endDrag);
-    frame.addEventListener('lostpointercapture', () => {
-      dragging = false;
-      start = null;
-      frame.classList.remove('is-dragging');
-    });
     window.addEventListener('resize', () => updatePhotoCropHint());
+    updatePhotoCropHint();
   }
 
   function bindPhotoUpload() {
@@ -2249,7 +2182,7 @@
       if (zone) zone.hidden = true;
       if (placeholder) placeholder.hidden = true;
       document.getElementById('ee-photo-url').value = ev.imageUrl;
-      setPhotoPosition(ev.imagePosition || '');
+      setPhotoPosition('');
       updatePhotoCropHint();
     }
     selectedDates.clear();
@@ -2671,6 +2604,8 @@
     }
   }
 
+  let saveEventInFlight = null;
+
   async function flushServerAutodraft() {
     window.clearTimeout(serverAutodraftTimer);
     if (serverAutodraftInFlight) {
@@ -2685,175 +2620,230 @@
 
   async function saveEvent(options) {
     const publish = options && options.publish;
-    showAlert('');
+    // One tap only — ignore repeat submits while the first Continue/Save is running.
+    if (saveEventInFlight) return saveEventInFlight;
 
-    await flushServerAutodraft();
-
-    const built = buildEventSavePayload({ quiet: false });
-    if (!built.ok) {
-      showAlert(built.error || 'Could not save event');
-      const err = String(built.error || '');
-      if (err.includes('event title')) {
-        const titleEl = document.getElementById('ee-title');
-        if (titleEl) titleEl.focus();
-      } else if (err.includes('organiser page')) {
-        const groupEl = document.getElementById('ee-group');
-        if (groupEl && !groupEl.disabled) groupEl.focus();
-      }
-      return;
-    }
-
-    if (publish && !built.timeCheck.ok) {
-      showAlert(built.timeCheck.message);
-      return;
-    }
-    if (publish && !built.dateKeys.length) {
-      showAlert('Select at least one date on the calendar before continuing.');
-      return;
-    }
-    if (
-      publish &&
-      eventFormat === 'in-person' &&
-      !currentEventLocked &&
-      !currentSeriesDateOnly
-    ) {
-      if (!built.payload.postcode) {
-        showAlert('Enter a postcode before continuing — we use it to place your event on the map.');
-        const postcodeEl = document.getElementById('ee-postcode');
-        if (postcodeEl) postcodeEl.focus();
-        return;
-      }
-    }
-
-    let payload = built.payload;
-    if (!currentEventLocked && photoFile && !options.quiet) {
-      payload = { ...payload };
-      payload.photoBase64 = await readFileAsBase64(photoFile);
-      payload.photoMime = photoFile.type;
-      payload.photoFilename = photoFile.name;
-    }
-
-    const organiserGroupId = built.organiserGroupId;
-    const title = built.title;
     const submitBtn = document.getElementById('ee-submit');
     const draftBtn = document.getElementById('ee-save-draft');
-    const loading = window.organiserPageLoading;
-    [submitBtn, draftBtn].forEach((b) => {
-      if (b) b.disabled = true;
-    });
-
-    const saveWork = async () => persistEventPayload(payload);
-
-    const saveLabel = publish
-      ? 'Continuing to tickets'
-      : editId
-        ? 'Saving draft'
-        : 'Saving draft';
-
-    let res;
-    try {
-      if (loading && loading.run) {
-        res = await loading.run(saveLabel, saveWork);
-      } else {
-        if (loading) loading.show(saveLabel);
-        res = await saveWork();
-        if (loading) loading.hide();
-      }
-    } finally {
+    const setBusy = (busy) => {
       [submitBtn, draftBtn].forEach((b) => {
-        if (b) b.disabled = false;
+        if (b) b.disabled = Boolean(busy);
       });
-    }
+    };
 
-    if (!res.ok) {
-      const err = res.data.error || '';
-      const msg =
-        err === 'missing_dates'
-          ? 'Select at least one date on the calendar before publishing.'
-          : err === 'listing_hate_speech_blocked'
-            ? res.data.message ||
-              'This listing can’t go live because it includes language that isn’t allowed. Please remove it and try again.'
-            : err === 'duplicate_title_matches_source'
-              ? res.data.message ||
-                'This draft copy must keep “(copy)” in the title or use a new name — it cannot match the original event title.'
-              : err === 'event_not_owned'
-                ? res.data.message ||
-                  'You do not have access to this event. Open it from My Events, or start a new listing under an organiser page you own.'
-                : err === 'group_not_owned'
-                  ? 'Pick an organiser page you own before saving.'
-                  : res.data.message || err || 'Could not save event';
-      showAlert(msg);
-      return;
-    }
+    const run = (async () => {
+      showAlert('');
+      setBusy(true);
+      if (publish) {
+        setAutodraftStatus('Continuing to tickets…', 'saving');
+      }
 
-    autodraftDisabled = true;
-    clearAutodraft(organiserGroupId);
-    const savedEvent = res.data.event || {};
-    if (!editId && savedEvent.id) promoteToSavedEventId(savedEvent.id);
-    showAttendeeUpdateAlerts(savedEvent);
+      // Wait for any in-flight autosave, but skip a second PATCH — Continue/Save
+      // persists the form below. A flush save here left "Saving to your account…"
+      // on screen and made the first tap feel like it did nothing.
+      window.clearTimeout(serverAutodraftTimer);
+      if (serverAutodraftInFlight) {
+        try {
+          await serverAutodraftInFlight;
+        } catch {
+          /* ignore */
+        }
+      }
 
-    if (!publish) {
-      if (isEmbedDrawer && window.parent && window.parent !== window) {
-        window.parent.postMessage({ type: 'hub-event-saved', draft: true }, window.location.origin);
+      const built = buildEventSavePayload({ quiet: false });
+      if (!built.ok) {
+        setAutodraftStatus('');
+        showAlert(built.error || 'Could not save event');
+        const err = String(built.error || '');
+        if (err.includes('event title')) {
+          const titleEl = document.getElementById('ee-title');
+          if (titleEl) titleEl.focus();
+        } else if (err.includes('organiser page')) {
+          const groupEl = document.getElementById('ee-group');
+          if (groupEl && !groupEl.disabled) groupEl.focus();
+        }
         return;
       }
-      location.href = '/organiser/#events-list';
-      return;
-    }
 
-    const events = res.data.events || (res.data.event ? [res.data.event] : []);
-    const eventIds =
-      res.data.eventIds || events.map((ev) => ev.id).filter(Boolean);
-    if (publish && !eventIds.length) {
-      showAlert('Event saved but could not open ticket setup. Try Edit from My Events.');
-      return;
-    }
-    const leadImage =
-      (events[0] && events[0].imageUrl) ||
-      document.getElementById('ee-photo-preview-img')?.src ||
-      document.getElementById('ee-photo-url')?.value.trim() ||
-      '';
-    const leadImagePosition =
-      (events[0] && events[0].imagePosition) || photoPosition || '';
-    const locationMeta = {
-      title,
-      organiserGroupId,
-      eventFormat,
-      eventIds,
-      imageUrl: leadImage,
-      imagePosition: leadImagePosition,
-      events: events.map((ev) => ({
-        id: ev.id,
-        title: ev.title,
-        date: ev.date,
-        endDate: ev.endDate || '',
-        imageUrl: ev.imageUrl || leadImage,
-        imagePosition: ev.imagePosition || leadImagePosition,
-      })),
-    };
-    if (isEmbedDrawer && window.parent && window.parent !== window) {
+      if (publish && !built.timeCheck.ok) {
+        setAutodraftStatus('');
+        showAlert(built.timeCheck.message);
+        return;
+      }
+      if (publish && !built.dateKeys.length) {
+        setAutodraftStatus('');
+        showAlert('Select at least one date on the calendar before continuing.');
+        return;
+      }
+      if (
+        publish &&
+        eventFormat === 'in-person' &&
+        !currentEventLocked &&
+        !currentSeriesDateOnly
+      ) {
+        if (!built.payload.postcode) {
+          setAutodraftStatus('');
+          showAlert('Enter a postcode before continuing — we use it to place your event on the map.');
+          const postcodeEl = document.getElementById('ee-postcode');
+          if (postcodeEl) postcodeEl.focus();
+          return;
+        }
+      }
+
+      let payload = built.payload;
+      if (!currentEventLocked && photoFile && !options.quiet) {
+        payload = { ...payload };
+        payload.photoBase64 = await readFileAsBase64(photoFile);
+        payload.photoMime = photoFile.type;
+        payload.photoFilename = photoFile.name;
+      }
+
+      const organiserGroupId = built.organiserGroupId;
+      const title = built.title;
+      const loading = window.organiserPageLoading;
+
+      const saveWork = async () => persistEventPayload(payload);
+
+      const saveLabel = publish
+        ? 'Continuing to tickets'
+        : editId
+          ? 'Saving draft'
+          : 'Saving draft';
+
+      let res;
+      try {
+        if (loading && loading.run) {
+          res = await loading.run(saveLabel, saveWork);
+        } else {
+          if (loading) loading.show(saveLabel);
+          res = await saveWork();
+          if (loading) loading.hide();
+        }
+      } catch (err) {
+        setAutodraftStatus('');
+        showAlert((err && err.message) || 'Could not save event. Try again.');
+        return;
+      }
+
+      if (!res || !res.ok) {
+        setAutodraftStatus('');
+        const err = (res && res.data && res.data.error) || '';
+        const msg =
+          err === 'missing_dates'
+            ? 'Select at least one date on the calendar before publishing.'
+            : err === 'listing_hate_speech_blocked'
+              ? (res.data && res.data.message) ||
+                'This listing can’t go live because it includes language that isn’t allowed. Please remove it and try again.'
+              : err === 'duplicate_title_matches_source'
+                ? (res.data && res.data.message) ||
+                  'This draft copy must keep “(copy)” in the title or use a new name — it cannot match the original event title.'
+                : err === 'event_not_owned'
+                  ? (res.data && res.data.message) ||
+                    'You do not have access to this event. Open it from My Events, or start a new listing under an organiser page you own.'
+                  : err === 'group_not_owned'
+                    ? 'Pick an organiser page you own before saving.'
+                    : (res && res.data && res.data.message) || err || 'Could not save event';
+        showAlert(msg);
+        return;
+      }
+
+      autodraftDisabled = true;
+      clearAutodraft(organiserGroupId);
+      const savedEvent = res.data.event || {};
+      if (!editId && savedEvent.id) promoteToSavedEventId(savedEvent.id);
+      showAttendeeUpdateAlerts(savedEvent);
+
+      if (!publish) {
+        if (isEmbedDrawer && window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: 'hub-event-saved', draft: true }, window.location.origin);
+          return;
+        }
+        location.href = '/organiser/#events-list';
+        return;
+      }
+
+      const events = res.data.events || (res.data.event ? [res.data.event] : []);
+      const eventIds =
+        res.data.eventIds || events.map((ev) => ev.id).filter(Boolean);
+      if (publish && !eventIds.length) {
+        showAlert('Event saved but could not open ticket setup. Try Edit from My Events.');
+        return;
+      }
+      const leadImage =
+        (events[0] && events[0].imageUrl) ||
+        document.getElementById('ee-photo-preview-img')?.src ||
+        document.getElementById('ee-photo-url')?.value.trim() ||
+        '';
+      const leadImagePosition =
+        (events[0] && events[0].imagePosition) || photoPosition || '';
+      const locationMeta = {
+        title,
+        organiserGroupId,
+        eventFormat,
+        eventIds,
+        imageUrl: leadImage,
+        imagePosition: leadImagePosition,
+        events: events.map((ev) => ({
+          id: ev.id,
+          title: ev.title,
+          date: ev.date,
+          endDate: ev.endDate || '',
+          imageUrl: ev.imageUrl || leadImage,
+          imagePosition: ev.imagePosition || leadImagePosition,
+        })),
+      };
+      if (isEmbedDrawer && window.parent && window.parent !== window) {
+        goToTicketSetup(locationMeta);
+        window.parent.postMessage(
+          {
+            type: 'hub-event-goto-tickets',
+            eventIds,
+            title,
+          },
+          window.location.origin
+        );
+        return;
+      }
       goToTicketSetup(locationMeta);
-      window.parent.postMessage(
-        {
-          type: 'hub-event-goto-tickets',
-          eventIds,
-          title,
-        },
-        window.location.origin
-      );
-      return;
+    })();
+
+    saveEventInFlight = run;
+    try {
+      await run;
+    } finally {
+      if (saveEventInFlight === run) saveEventInFlight = null;
+      // Stay disabled if we navigated away; otherwise re-enable after errors / draft stays.
+      if (!autodraftDisabled) setBusy(false);
     }
-    goToTicketSetup(locationMeta);
   }
 
-  document.getElementById('ee-form').addEventListener('submit', (e) => {
-    e.preventDefault();
-    saveEvent({ publish: true });
-  });
+  const eeForm = document.getElementById('ee-form');
+  if (eeForm) {
+    eeForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      saveEvent({ publish: true });
+    });
+  }
 
   const draftBtn = document.getElementById('ee-save-draft');
   if (draftBtn) {
     draftBtn.addEventListener('click', () => saveEvent({ publish: false }));
+  }
+
+  // Mobile: first tap often only dismisses the keyboard / moves the sticky bar.
+  // Capture touchend on Continue so one tap submits at the contact point.
+  const continueBtn = document.getElementById('ee-submit');
+  if (continueBtn) {
+    continueBtn.addEventListener(
+      'touchend',
+      (e) => {
+        if (continueBtn.disabled || saveEventInFlight) return;
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+        e.preventDefault();
+        saveEvent({ publish: true });
+      },
+      { passive: false }
+    );
   }
 
   function initPage() {

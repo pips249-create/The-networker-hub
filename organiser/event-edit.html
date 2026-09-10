@@ -124,22 +124,20 @@
             <div class="ee-photo-preview" id="ee-photo-preview" hidden>
               <p class="ee-photo-crop-label">Listing card crop</p>
               <div
-                class="ee-photo-frame"
+                class="ee-photo-frame is-locked"
                 id="ee-photo-frame"
-                role="application"
-                aria-label="Drag to reposition how the photo is cropped on listing cards"
-                tabindex="0"
+                aria-label="Listing card photo preview"
               >
                 <img id="ee-photo-preview-img" alt="" draggable="false" />
-                <span class="ee-photo-frame-hint" id="ee-photo-frame-hint" aria-hidden="true">Drag to reposition</span>
+                <span class="ee-photo-frame-hint" id="ee-photo-frame-hint" aria-hidden="true" hidden></span>
               </div>
               <div class="ee-photo-preview-actions">
                 <button type="button" class="ee-btn ee-btn-outline" id="ee-photo-change">Change photo</button>
-                <button type="button" class="ee-btn ee-btn-outline" id="ee-photo-recentre">Centre photo</button>
+                <button type="button" class="ee-btn ee-btn-outline" id="ee-photo-recentre" hidden>Centre photo</button>
                 <button type="button" class="ee-btn ee-btn-outline" id="ee-photo-clear">Remove</button>
               </div>
               <p class="ee-hint ee-photo-preview-hint" id="ee-photo-preview-hint">
-                This is the same crop used on browse cards. Drag the photo to choose what stays in frame.
+                This is the same crop used on browse cards. Wide photos are cropped evenly from both sides — the centre stays in frame.
               </p>
             </div>
             <input type="url" id="ee-photo-url" placeholder="https://… (optional if you uploaded a file)" style="margin-top:10px" />
@@ -280,6 +278,6 @@
     <script src="../js/postcode-outcode.js?v=20260716loc" defer></script>
     <script src="../js/organiser-field-tips.js?v=20260806dst" defer></script>
     <script src="../js/hub-field-tip.js?v=20260716tips" defer></script>
-    <script src="../js/organiser-event-edit.js?v=20260813drawer1" defer></script>
+    <script src="../js/organiser-event-edit.js?v=20260910continue1" defer></script>
   </body>
 </html>
