@@ -101,7 +101,7 @@ async function recordAffiliateClick(opts) {
     landing_url: landingUrl || null,
   });
   if (error) {
-    if (/affiliate_clicks/i.test(error.message || '')) {
+    if (/affiliate_clicks|Could not find the table|schema cache/i.test(error.message || '')) {
       return { ok: false, reason: 'table_missing' };
     }
     console.error('[affiliate-click]', error.message || error);
