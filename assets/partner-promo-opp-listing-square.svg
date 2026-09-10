@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 1080" role="img" aria-label="List your business opportunity for £25 per month on The Networker UK">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1c2040"/>
+      <stop offset="55%" stop-color="#2a2450"/>
+      <stop offset="100%" stop-color="#4a3560"/>
+    </linearGradient>
+  </defs>
+  <rect width="1080" height="1080" fill="url(#bg)"/>
+  <circle cx="920" cy="160" r="220" fill="#b992be" fill-opacity="0.18"/>
+  <circle cx="120" cy="980" r="260" fill="#e8b84b" fill-opacity="0.12"/>
+  <text x="80" y="120" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700" letter-spacing="0.18em" fill="#e8b84b">THE NETWORKER UK</text>
+  <text x="80" y="280" font-family="Georgia, 'Times New Roman', serif" font-size="72" fill="#faf6ee">List your business</text>
+  <text x="80" y="370" font-family="Georgia, 'Times New Roman', serif" font-size="72" fill="#faf6ee">opportunity</text>
+  <text x="80" y="480" font-family="Georgia, 'Times New Roman', serif" font-size="56" fill="#b992be">for £25 a month</text>
+  <text x="80" y="580" font-family="Arial, Helvetica, sans-serif" font-size="34" fill="#f5f0e8">on the UKs networking platform</text>
+  <text x="80" y="650" font-family="Arial, Helvetica, sans-serif" font-size="28" fill="#d8d0d4">Reach founders, directors and event organisers</text>
+  <text x="80" y="700" font-family="Arial, Helvetica, sans-serif" font-size="28" fill="#d8d0d4">already browsing for their next move.</text>
+  <rect x="80" y="800" width="420" height="72" rx="36" fill="#e8b84b"/>
+  <text x="290" y="846" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700" fill="#1c2040">thenetworkeruk.com</text>
+  <text x="80" y="940" font-family="Arial, Helvetica, sans-serif" font-size="22" fill="#b0a8ac">Ask me for my partner link</text>
+</svg>
