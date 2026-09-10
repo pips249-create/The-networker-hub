@@ -137,6 +137,7 @@ const TRANSACTIONAL_EMAIL_SLUGS = new Set([
   'organiser_call_followup',
   'organiser_rebrand_announcement',
   'organiser_team_invite',
+  'partner_programme_invite',
   'opportunity_listing_live',
   'opportunity_listing_pending_review',
   'opportunity_listing_approved_pay',
@@ -722,7 +723,8 @@ function shouldSkipEmailAllowlist(slug) {
     slug === 'franchise_claim_invite' ||
     slug === 'franchise_claim_invite_followup' ||
     slug === 'distributorship_claim_invite' ||
-    slug === 'organiser_claim_confirmed'
+    slug === 'organiser_claim_confirmed' ||
+    slug === 'partner_programme_invite'
   ) {
     return true;
   }

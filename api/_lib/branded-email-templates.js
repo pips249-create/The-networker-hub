@@ -397,6 +397,11 @@ const BRANDED_EMAIL_TEMPLATES = {
     marker: 'hub-email-layout-v3-purple',
     subject: 'Your event is listed — please review it — The Networker UK',
   },
+  partner_programme_invite: {
+    file: 'partner-programme-invite.html',
+    marker: 'hub-email-layout-v3-purple',
+    subject: 'Your Networker UK partner hub · code {{partner_code}}',
+  },
 };
 
 const cache = new Map();
