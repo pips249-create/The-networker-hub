@@ -1,7 +1,12 @@
 /**
  * Auth via Supabase (hub_accounts + auth.users). No Airtable.
  */
-const { getSupabaseAdmin, getSupabaseAnon, isSupabaseConfigured } = require('./supabase');
+const {
+  getSupabaseAdmin,
+  getSupabaseAnon,
+  isSupabaseConfigured,
+  supabaseConfig,
+} = require('./supabase');
 
 const USER_ROLES = { ADMIN: 'admin', CLIENT: 'client' };
 const CURRENT_ORGANISER_TERMS_VERSION = 'v2';
@@ -309,6 +314,60 @@ async function authUserRecordToAppUser(authUser, em) {
   };
 }
 
+/**
+ * Resolve Auth user by email without paging the whole Auth directory.
+ * supabase-js has no getUserByEmail — listUsers-for-all was timing out Vercel
+ * on impersonate (especially franchise inboxes with many group profiles).
+ */
+async function findAuthUserIdByEmail(email) {
+  const em = String(email || '').trim().toLowerCase();
+  if (!em) return null;
+
+  const sb = getSupabaseAdmin();
+
+  const [attendeeRes, organiserRes] = await Promise.all([
+    sb.from('attendees').select('supabase_user_id').eq('email', em).not('supabase_user_id', 'is', null).limit(1),
+    sb
+      .from('organisers')
+      .select('supabase_user_id')
+      .or(`email.eq.${em},contact_email.eq.${em}`)
+      .not('supabase_user_id', 'is', null)
+      .limit(1),
+  ]);
+
+  const fromProfile =
+    (attendeeRes.data && attendeeRes.data[0] && attendeeRes.data[0].supabase_user_id) ||
+    (organiserRes.data && organiserRes.data[0] && organiserRes.data[0].supabase_user_id) ||
+    null;
+  if (fromProfile) return String(fromProfile);
+
+  // GoTrue Admin API supports exact email filter (not exposed on supabase-js admin client).
+  try {
+    const { url, serviceKey } = supabaseConfig();
+    if (url && serviceKey) {
+      const endpoint =
+        url.replace(/\/$/, '') + '/auth/v1/admin/users?email=' + encodeURIComponent(em);
+      const res = await fetch(endpoint, {
+        headers: {
+          Authorization: 'Bearer ' + serviceKey,
+          apikey: serviceKey,
+        },
+      });
+      if (res.ok) {
+        const body = await res.json();
+        const users = Array.isArray(body?.users) ? body.users : Array.isArray(body) ? body : [];
+        const match = users.find((u) => String(u?.email || '').toLowerCase() === em);
+        if (match?.id) return String(match.id);
+        if (users.length === 1 && users[0]?.id) return String(users[0].id);
+      }
+    }
+  } catch {
+    /* fall through */
+  }
+
+  return null;
+}
+
 async function findUserByEmail(email) {
   const em = String(email || '').trim().toLowerCase();
   if (!em) return null;
@@ -322,10 +381,23 @@ async function findUserByEmail(email) {
         return authUserRecordToAppUser(data.user, em);
       }
     } catch {
+      /* fall through */
+    }
+  }
+
+  const knownId = await findAuthUserIdByEmail(em);
+  if (knownId) {
+    try {
+      const { data, error } = await sb.auth.admin.getUserById(knownId);
+      if (!error && data?.user) {
+        return authUserRecordToAppUser(data.user, em);
+      }
+    } catch {
       /* fall through to listUsers */
     }
   }
 
+  // Last resort only — never call this in a loop (impersonate / provision).
   let page = 1;
   const perPage = 1000;
   while (page <= 20) {

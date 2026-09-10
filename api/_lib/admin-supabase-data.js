@@ -1772,58 +1772,298 @@ async function getAdminDashboard(options) {
   };
 }
 
+function normalizeAdminUsersPaging(options = {}) {
+  const q = String(options.q || '').trim();
+  const role = String(options.role || '').trim();
+  const hasPaging =
+    options.limit != null && options.limit !== '' && Number.isFinite(Number(options.limit));
+  // Always page — unbounded /api/admin/users used to load every Auth user and hit
+  // Vercel FUNCTION_INVOCATION_TIMEOUT (15s) on the Impersonate tab.
+  const limit = Math.min(Math.max(parseInt(String(options.limit), 10) || (hasPaging ? 30 : 50), 1), 100);
+  const offset = Math.max(parseInt(String(options.offset), 10) || 0, 0);
+  return { q, role, limit, offset };
+}
+
+function mapHubAccountRowToAdminUser(acc, auth, org, att) {
+  const orgPlace = String(org?.outcode || '').trim() || null;
+  let role = 'Attendee';
+  if (acc.role === 'admin') role = 'Admin';
+  else if (org) role = 'Organiser';
+  else if (acc.hub_view === 'organiser') role = 'Organiser';
+
+  return {
+    id: acc.user_id,
+    organiserId: org?.id || null,
+    name: acc.display_name || org?.name || att?.name || auth?.user_metadata?.full_name || '—',
+    email: auth?.email || att?.email || org?.email || org?.contact_email || '—',
+    role,
+    city: orgPlace || att?.location || '—',
+    location: att?.location || orgPlace || '—',
+    postcode: '—',
+    status: 'Active',
+    featured: Boolean(org?.featured),
+    emailsEnabled: acc.emails_enabled !== false,
+    hubView: acc.hub_view || 'attendee',
+    displayName: acc.display_name || null,
+    emailPrefEventReminders: acc.email_pref_event_reminders !== false,
+    emailPrefOrganiserAlerts: acc.email_pref_organiser_alerts !== false,
+    emailPrefOrganiserRoundups: acc.email_pref_organiser_roundups !== false,
+    organiserTermsAcceptedAt: acc.organiser_terms_accepted_at || null,
+    organiserTermsVersion: acc.organiser_terms_version || null,
+    organiserOpportunityTermsAcceptedAt: acc.organiser_opportunity_terms_accepted_at || null,
+    organiserOpportunityTermsVersion: acc.organiser_opportunity_terms_version || null,
+    organiserListingStatus: org?.listing_status || null,
+    accountCreatedAt: acc.created_at || auth?.created_at || null,
+    lastSignInAt: auth?.last_sign_in_at || null,
+    lastSeenAt: acc.last_seen_at || null,
+    isOnline: isUserOnline(acc.last_seen_at),
+    authCreatedAt: auth?.created_at || null,
+  };
+}
+
+async function fetchAuthUsersByIds(sb, ids) {
+  const unique = [...new Set((ids || []).map((id) => String(id || '').trim()).filter(Boolean))];
+  const map = new Map();
+  const chunkSize = 20;
+  for (let i = 0; i < unique.length; i += chunkSize) {
+    const chunk = unique.slice(i, i + chunkSize);
+    await Promise.all(
+      chunk.map(async (id) => {
+        try {
+          const { data, error } = await sb.auth.admin.getUserById(id);
+          if (!error && data?.user) map.set(id, data.user);
+        } catch {
+          /* skip missing auth rows */
+        }
+      })
+    );
+  }
+  return map;
+}
+
+function postgrestIlikeOr(columns, needle) {
+  const escaped = String(needle || '')
+    .replace(/\\/g, '\\\\')
+    .replace(/%/g, '\\%')
+    .replace(/_/g, '\\_')
+    .replace(/"/g, '""');
+  const pattern = `%${escaped}%`;
+  return columns.map((col) => `${col}.ilike."${pattern}"`).join(',');
+}
+
+async function resolveAdminUserSearchIds(sb, q) {
+  const needle = String(q || '').trim();
+  if (!needle) return null;
+  const ids = new Set();
+  const like = `%${needle}%`;
+
+  if (needle.includes('@')) {
+    try {
+      // Prefer profile / Auth email lookup — avoid full Auth dumps.
+      const sbAuth = require('./supabase-auth');
+      const user = await sbAuth.findUserByEmail(needle.toLowerCase());
+      if (user?.id) ids.add(user.id);
+    } catch {
+      /* fall through to profile search */
+    }
+  }
+
+  const [byDisplay, attendees, organisers] = await Promise.all([
+    sb.from('hub_accounts').select('user_id').ilike('display_name', like).limit(200),
+    sb
+      .from('attendees')
+      .select('supabase_user_id')
+      .or(postgrestIlikeOr(['name', 'email'], needle))
+      .not('supabase_user_id', 'is', null)
+      .limit(200),
+    sb
+      .from('organisers')
+      .select('supabase_user_id')
+      .or(postgrestIlikeOr(['name', 'email', 'contact_email'], needle))
+      .not('supabase_user_id', 'is', null)
+      .limit(200),
+  ]);
+
+  (byDisplay.data || []).forEach((row) => {
+    if (row.user_id) ids.add(row.user_id);
+  });
+  (attendees.data || []).forEach((row) => {
+    if (row.supabase_user_id) ids.add(row.supabase_user_id);
+  });
+  (organisers.data || []).forEach((row) => {
+    if (row.supabase_user_id) ids.add(row.supabase_user_id);
+  });
+
+  return [...ids];
+}
+
+async function fetchUsersPageFast(sb, options = {}) {
+  const { q, role, limit, offset } = normalizeAdminUsersPaging(options);
+  const accountsSelectWithOpportunity =
+    'user_id, role, display_name, hub_view, emails_enabled, email_pref_event_reminders, email_pref_organiser_alerts, email_pref_organiser_roundups, organiser_terms_accepted_at, organiser_terms_version, organiser_opportunity_terms_accepted_at, organiser_opportunity_terms_version, created_at, last_seen_at';
+  const accountsSelectWithRoundups =
+    'user_id, role, display_name, hub_view, emails_enabled, email_pref_event_reminders, email_pref_organiser_alerts, email_pref_organiser_roundups, organiser_terms_accepted_at, organiser_terms_version, created_at, last_seen_at';
+  const accountsSelectFallback =
+    'user_id, role, display_name, hub_view, emails_enabled, email_pref_event_reminders, email_pref_organiser_alerts, organiser_terms_accepted_at, organiser_terms_version, created_at, last_seen_at';
+
+  let filterIds = null;
+  if (q) {
+    filterIds = await resolveAdminUserSearchIds(sb, q);
+    if (!filterIds.length) {
+      return { users: [], total: 0, limit, offset };
+    }
+  }
+
+  async function runSelect(selectCols) {
+    let query = sb.from('hub_accounts').select(selectCols, { count: 'exact' });
+    if (filterIds) query = query.in('user_id', filterIds.slice(0, 200));
+    if (role === 'Admin') query = query.eq('role', 'admin');
+    else if (role === 'Organiser') query = query.neq('role', 'admin').eq('hub_view', 'organiser');
+    else if (role === 'Attendee') query = query.neq('role', 'admin').eq('hub_view', 'attendee');
+    return query.order('display_name', { ascending: true, nullsFirst: false }).range(offset, offset + limit - 1);
+  }
+
+  let accountsRes = await runSelect(accountsSelectWithOpportunity);
+  if (accountsRes.error && /last_seen_at/i.test(String(accountsRes.error.message || ''))) {
+    accountsRes = await runSelect(accountsSelectWithOpportunity.replace(', last_seen_at', ''));
+  }
+  if (
+    accountsRes.error &&
+    /organiser_opportunity_terms/i.test(String(accountsRes.error.message || ''))
+  ) {
+    accountsRes = await runSelect(accountsSelectWithRoundups.replace(', last_seen_at', ''));
+  }
+  if (
+    accountsRes.error &&
+    /email_pref_organiser_roundups/i.test(String(accountsRes.error.message || ''))
+  ) {
+    accountsRes = await runSelect(accountsSelectFallback.replace(', last_seen_at', ''));
+  }
+  if (accountsRes.error) throw new Error(accountsRes.error.message);
+
+  const accounts = accountsRes.data || [];
+  const userIds = accounts.map((a) => a.user_id).filter(Boolean);
+  const [authById, organisersRes, attendeesRes] = await Promise.all([
+    fetchAuthUsersByIds(sb, userIds),
+    userIds.length
+      ? sb
+          .from('organisers')
+          .select('id, supabase_user_id, name, email, contact_email, outcode, featured, listing_status')
+          .in('supabase_user_id', userIds)
+      : Promise.resolve({ data: [], error: null }),
+    userIds.length
+      ? sb
+          .from('attendees')
+          .select('id, supabase_user_id, name, email, location')
+          .in('supabase_user_id', userIds)
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+  if (organisersRes.error) throw new Error(organisersRes.error.message);
+  if (attendeesRes.error) throw new Error(attendeesRes.error.message);
+
+  const organiserByUser = new Map();
+  (organisersRes.data || []).forEach((o) => {
+    if (o.supabase_user_id && !organiserByUser.has(o.supabase_user_id)) {
+      organiserByUser.set(o.supabase_user_id, o);
+    }
+  });
+  const attendeeByUser = new Map();
+  (attendeesRes.data || []).forEach((a) => {
+    if (a.supabase_user_id && !attendeeByUser.has(a.supabase_user_id)) {
+      attendeeByUser.set(a.supabase_user_id, a);
+    }
+  });
+
+  let users = accounts.map((acc) =>
+    mapHubAccountRowToAdminUser(
+      acc,
+      authById.get(acc.user_id),
+      organiserByUser.get(acc.user_id),
+      attendeeByUser.get(acc.user_id)
+    )
+  );
+
+  // Organiser/Attendee filters above are approximate (hub_view only). Tighten using profiles.
+  if (role === 'Organiser') {
+    users = users.filter((u) => u.role === 'Organiser');
+  } else if (role === 'Attendee') {
+    users = users.filter((u) => u.role === 'Attendee');
+  }
+
+  users.sort((a, b) =>
+    String(a.name || '').localeCompare(String(b.name || ''), undefined, { sensitivity: 'base' })
+  );
+
+  return {
+    users,
+    total: accountsRes.count != null ? Number(accountsRes.count) : users.length,
+    limit,
+    offset,
+  };
+}
+
+async function getAdminUsersViaRpc(sb, options = {}) {
+  const { q, role, limit, offset } = normalizeAdminUsersPaging(options);
+  const { data, error } = await sb.rpc('admin_list_hub_users', {
+    p_q: q,
+    p_role: role === 'All' ? '' : role,
+    p_limit: limit,
+    p_offset: offset,
+  });
+  if (error) throw error;
+  const payload = data && typeof data === 'object' ? data : {};
+  const users = Array.isArray(payload.users)
+    ? payload.users.map((u) => ({
+        ...u,
+        isOnline: isUserOnline(u.lastSeenAt),
+        emailPrefEventReminders: u.emailPrefEventReminders !== false,
+        emailPrefOrganiserAlerts: u.emailPrefOrganiserAlerts !== false,
+        emailPrefOrganiserRoundups: u.emailPrefOrganiserRoundups !== false,
+        emailsEnabled: u.emailsEnabled !== false,
+      }))
+    : [];
+  return {
+    users,
+    total: Number(payload.total) || users.length,
+    limit,
+    offset,
+  };
+}
+
 async function getAdminUsers(options = {}) {
   if (!isSupabaseConfigured()) {
     return { configured: false, provider: 'supabase', users: [], total: 0 };
   }
   const sb = getSupabaseAdmin();
-  let users = await fetchUsers(sb);
+  const paging = normalizeAdminUsersPaging(options);
 
-  const q = String(options.q || '')
-    .trim()
-    .toLowerCase();
-  const role = String(options.role || '').trim();
-  if (q) {
-    users = users.filter((u) => {
-      const name = String(u.name || '').toLowerCase();
-      const email = String(u.email || '').toLowerCase();
-      return name.includes(q) || email.includes(q);
-    });
-  }
-  if (role) {
-    users = users.filter((u) => String(u.role || '') === role);
-  }
-
-  users.sort((a, b) =>
-    String(a.name || '')
-      .localeCompare(String(b.name || ''), undefined, { sensitivity: 'base' })
-  );
-
-  const total = users.length;
-  const hasPaging =
-    options.limit != null &&
-    options.limit !== '' &&
-    Number.isFinite(Number(options.limit));
-
-  if (!hasPaging) {
+  try {
+    const page = await getAdminUsersViaRpc(sb, options);
     return {
       configured: true,
       provider: 'supabase',
-      users,
-      total,
+      users: page.users,
+      total: page.total,
+      offset: page.offset,
+      limit: page.limit,
       updatedAt: new Date().toISOString(),
     };
+  } catch (rpcErr) {
+    const msg = String((rpcErr && rpcErr.message) || rpcErr || '');
+    // Migration 288 not applied yet — use paged JS path (still avoids full Auth dump).
+    if (!/could not find the function|schema cache|pgrst202|404/i.test(msg)) {
+      // Unexpected RPC error: still try the fast fallback before failing hard.
+    }
   }
 
-  const limit = Math.min(Math.max(parseInt(String(options.limit), 10) || 30, 1), 100);
-  const offset = Math.max(parseInt(String(options.offset), 10) || 0, 0);
+  const page = await fetchUsersPageFast(sb, options);
   return {
     configured: true,
     provider: 'supabase',
-    users: users.slice(offset, offset + limit),
-    total,
-    offset,
-    limit,
+    users: page.users,
+    total: page.total,
+    offset: paging.offset,
+    limit: paging.limit,
     updatedAt: new Date().toISOString(),
   };
 }

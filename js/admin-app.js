@@ -161,7 +161,7 @@
     },
     impersonate: {
       title: 'Impersonate user',
-      subtitle: 'Browse Supabase accounts and sign in as any non-admin user to debug on The Networker UK',
+      subtitle: 'Search for one account, group, or opportunity, then sign in as them to debug on The Networker UK',
     },
     users: {
       title: 'Users & accounts',
@@ -280,7 +280,7 @@
     impersonate: {
       title: 'How to sign in as another user',
       steps: [
-        'Search for the account you need to debug.',
+        'Search for the account, group, or opportunity you need to debug.',
         'Click Impersonate — you will be signed in as that user on the public site.',
         'When finished, stop impersonating from the banner at the top of the site.',
         'Never impersonate without a clear support reason.',
@@ -7672,10 +7672,11 @@
       callback(liveUsers);
       return;
     }
-    adminGet('/api/admin/users').then(function (data) {
+    adminGet('/api/admin/users?limit=50&offset=0').then(function (data) {
       if (data && !data.error && data.configured !== false) {
         liveUsers = data.users || [];
-        liveUsersComplete = true;
+        // Paged response — do not treat as a complete directory.
+        liveUsersComplete = false;
       }
       callback(liveUsers);
     });
@@ -7705,35 +7706,43 @@
   }
 
   function renderImpersonate() {
-    var roleOpts = ['All', 'Admin', 'Organiser', 'Attendee'];
     main.innerHTML =
       '<div class="space-y-6 max-w-4xl">' +
       '<div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">' +
       '<p class="font-semibold">Support &amp; debugging only</p>' +
-      '<p class="mt-1 opacity-90">You will be signed in as the chosen user on the site. A banner lets you return to your admin account at any time. Admin accounts cannot be impersonated. Networking group profiles get a silent login if needed (no email sent). Choose <strong>Organiser dashboard</strong> to add events on that group&apos;s profile.</p>' +
+      '<p class="mt-1 opacity-90">Search for the person, group, or opportunity you need, then impersonate that match only. A banner lets you return to your admin account at any time. Admin accounts cannot be impersonated.</p>' +
       '</div>' +
-      '<form id="impersonate-form" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-5">' +
-      '<div><label class="text-xs font-semibold text-slate-500 uppercase" for="impersonate-email">User email</label>' +
-      '<input type="email" id="impersonate-email" list="impersonate-email-list" required placeholder="user@company.com" autocomplete="off" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500">' +
-      '<datalist id="impersonate-email-list"></datalist>' +
-      '<p id="impersonate-user-hint" class="text-xs text-slate-500 mt-2">Enter a networking group email or any user email. Group profiles are linked automatically so new events attach to that organiser page.</p></div>' +
-      '<div><label class="text-xs font-semibold text-slate-500 uppercase" for="impersonate-view">Open as them in</label>' +
-      '<select id="impersonate-view" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">' +
+      '<div class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-3">' +
+      '<label class="text-xs font-semibold text-slate-500 uppercase" for="impersonate-view">Open as them in</label>' +
+      '<select id="impersonate-view" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm">' +
       '<option value="account">Attendee account</option>' +
       '<option value="organiser">Organiser dashboard</option>' +
       '<option value="events">Events browse</option>' +
-      '</select></div>' +
-      '<div id="impersonate-message" class="hidden text-sm rounded-lg px-3 py-2"></div>' +
-      '<button type="submit" class="w-full rounded-lg bg-brand-700 text-white py-3 text-sm font-semibold hover:bg-brand-900 disabled:opacity-60" id="impersonate-submit">Impersonate user</button>' +
-      '</form>' +
+      '</select>' +
+      '<p class="text-xs text-slate-500">Applies when you impersonate a login account from the search below.</p>' +
+      '</div>' +
       '<div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">' +
       '<div class="px-4 py-3 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">' +
-      '<div><h3 class="text-sm font-bold text-slate-700">Networking groups</h3>' +
-      '<p class="text-xs text-slate-500 mt-0.5">Search ~1,000+ group profiles by name or email — opens the organiser dashboard so you can add events.</p></div>' +
+      '<div><h3 class="text-sm font-bold text-slate-700">Find a login account</h3>' +
+      '<p class="text-xs text-slate-500 mt-0.5">Search by name or exact email — then impersonate that person only.</p></div>' +
+      '<p id="impersonate-directory-status" class="text-xs text-slate-500">Search to find someone</p></div>' +
+      '<div class="px-4 py-3 border-b border-slate-100">' +
+      '<label class="text-xs font-semibold text-slate-500 uppercase" for="impersonate-directory-search">Search</label>' +
+      '<input type="search" id="impersonate-directory-search" placeholder="Full email or name…" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" autocomplete="off"></div>' +
+      adminTableScroll(
+        '<table class="w-full text-sm text-left"><thead class="bg-slate-50 text-xs uppercase text-slate-500">' +
+          '<tr><th class="px-4 py-3">Name</th><th class="px-4 py-3">Email</th><th class="px-4 py-3">Role</th><th class="px-4 py-3">City</th><th class="px-4 py-3"></th></tr></thead>' +
+          '<tbody id="impersonate-directory-body"><tr><td colspan="5" class="px-4 py-6 text-slate-500">Type a name or email to search.</td></tr></tbody></table>'
+      ) +
+      '</div>' +
+      '<div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">' +
+      '<div class="px-4 py-3 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">' +
+      '<div><h3 class="text-sm font-bold text-slate-700">Find a networking group</h3>' +
+      '<p class="text-xs text-slate-500 mt-0.5">Search by group name or email — opens their organiser dashboard.</p></div>' +
       '<p id="impersonate-groups-status" class="text-xs text-slate-500">Search to find a group</p></div>' +
       '<div class="px-4 py-3 border-b border-slate-100">' +
-      '<label class="text-xs font-semibold text-slate-500 uppercase">Search groups</label>' +
-      '<input type="search" id="impersonate-groups-search" placeholder="Group name or email…" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"></div>' +
+      '<label class="text-xs font-semibold text-slate-500 uppercase" for="impersonate-groups-search">Search groups</label>' +
+      '<input type="search" id="impersonate-groups-search" placeholder="Group name or email…" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" autocomplete="off"></div>' +
       adminTableScroll(
         '<table class="w-full text-sm text-left"><thead class="bg-slate-50 text-xs uppercase text-slate-500">' +
           '<tr><th class="px-4 py-3">Group</th><th class="px-4 py-3">Email</th><th class="px-4 py-3">Events</th><th class="px-4 py-3"></th></tr></thead>' +
@@ -7742,56 +7751,93 @@
       '</div>' +
       '<div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">' +
       '<div class="px-4 py-3 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">' +
-      '<div><h3 class="text-sm font-bold text-slate-700">Browse login accounts</h3>' +
-      '<p class="text-xs text-slate-500 mt-0.5">People with sign-ins — not every networking group profile.</p></div>' +
-      '<p id="impersonate-directory-status" class="text-xs text-slate-500">Loading…</p></div>' +
-      '<div class="px-4 py-3 border-b border-slate-100 flex flex-wrap gap-3 items-end">' +
-      '<div class="flex-1 min-w-[200px]"><label class="text-xs font-semibold text-slate-500 uppercase">Search</label>' +
-      '<input type="search" id="impersonate-directory-search" placeholder="Name or email…" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"></div>' +
-      '<div><label class="text-xs font-semibold text-slate-500 uppercase">Role</label>' +
-      '<select id="impersonate-directory-role" class="mt-1 rounded-lg border border-slate-300 px-3 py-2 text-sm">' +
-      roleOpts.map(function (r) {
-        return '<option>' + esc(r) + '</option>';
-      }).join('') +
-      '</select></div></div>' +
+      '<div><h3 class="text-sm font-bold text-slate-700">Find an opportunity</h3>' +
+      '<p class="text-xs text-slate-500 mt-0.5">Search by listing title, host, or owner email — opens that listing as the owner.</p></div>' +
+      '<p id="impersonate-opportunities-status" class="text-xs text-slate-500">Search to find a listing</p></div>' +
+      '<div class="px-4 py-3 border-b border-slate-100">' +
+      '<label class="text-xs font-semibold text-slate-500 uppercase" for="impersonate-opportunities-search">Search opportunities</label>' +
+      '<input type="search" id="impersonate-opportunities-search" placeholder="Listing title, host, or email…" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" autocomplete="off"></div>' +
       adminTableScroll(
         '<table class="w-full text-sm text-left"><thead class="bg-slate-50 text-xs uppercase text-slate-500">' +
-          '<tr><th class="px-4 py-3">Name</th><th class="px-4 py-3">Email</th><th class="px-4 py-3">Role</th><th class="px-4 py-3">City</th><th class="px-4 py-3"></th></tr></thead>' +
-          '<tbody id="impersonate-directory-body"><tr><td colspan="5" class="px-4 py-6 text-slate-500">Loading…</td></tr></tbody></table>'
+          '<tr><th class="px-4 py-3">Listing</th><th class="px-4 py-3">Owner email</th><th class="px-4 py-3">Status</th><th class="px-4 py-3"></th></tr></thead>' +
+          '<tbody id="impersonate-opportunities-body"><tr><td colspan="4" class="px-4 py-6 text-slate-500">Type a title, host, or email to search.</td></tr></tbody></table>'
       ) +
       '</div></div>';
 
-    var form = document.getElementById('impersonate-form');
-    var emailInput = document.getElementById('impersonate-email');
-    var datalist = document.getElementById('impersonate-email-list');
     var directoryBody = document.getElementById('impersonate-directory-body');
     var directoryStatus = document.getElementById('impersonate-directory-status');
     var directorySearch = document.getElementById('impersonate-directory-search');
-    var directoryRole = document.getElementById('impersonate-directory-role');
-    var messageEl = document.getElementById('impersonate-message');
-    var hintEl = document.getElementById('impersonate-user-hint');
     var impersonateView = document.getElementById('impersonate-view');
     var groupsBody = document.getElementById('impersonate-groups-body');
     var groupsStatus = document.getElementById('impersonate-groups-status');
     var groupsSearch = document.getElementById('impersonate-groups-search');
+    var opportunitiesBody = document.getElementById('impersonate-opportunities-body');
+    var opportunitiesStatus = document.getElementById('impersonate-opportunities-status');
+    var opportunitiesSearch = document.getElementById('impersonate-opportunities-search');
     var groupsSearchTimer = null;
+    var directorySearchTimer = null;
+    var opportunitiesSearchTimer = null;
+    var directoryUsers = [];
 
-    function showImpersonateMessage(text, isError) {
-      if (!messageEl) return;
-      messageEl.textContent = text;
-      messageEl.classList.remove('hidden', 'bg-red-50', 'text-red-800', 'bg-emerald-50', 'text-emerald-800');
-      messageEl.classList.add(isError ? 'bg-red-50' : 'bg-emerald-50', isError ? 'text-red-800' : 'text-emerald-800');
+    function preferExactEmailMatches(rows, query) {
+      var q = String(query || '').trim().toLowerCase();
+      if (!q || q.indexOf('@') === -1) return rows || [];
+      var exact = (rows || []).filter(function (u) {
+        return String(u.email || '').trim().toLowerCase() === q;
+      });
+      return exact.length ? exact : [];
     }
 
-    function impersonateFromForm(email, view) {
-      var btn = document.getElementById('impersonate-submit');
-      if (btn) btn.disabled = true;
-      showImpersonateMessage('Switching session…', false);
-      adminPost('/api/admin/impersonate', { email: email, view: view, provision: true })
+    function preferExactGroupEmailMatches(rows, query) {
+      var q = String(query || '').trim().toLowerCase();
+      if (!q || q.indexOf('@') === -1) return rows || [];
+      var exact = (rows || []).filter(function (o) {
+        return String(o.email || '').trim().toLowerCase() === q;
+      });
+      return exact.length ? exact : [];
+    }
+
+    function preferExactOpportunityEmailMatches(rows, query) {
+      var q = String(query || '').trim().toLowerCase();
+      if (!q || q.indexOf('@') === -1) return rows || [];
+      var exact = (rows || []).filter(function (o) {
+        return String(o.owner_email || o.contact_email || '')
+          .trim()
+          .toLowerCase() === q;
+      });
+      return exact.length ? exact : [];
+    }
+
+    function opportunityOwnerEmail(o) {
+      return String((o && (o.owner_email || o.contact_email)) || '')
+        .trim()
+        .toLowerCase();
+    }
+
+    function impersonateOpportunityOwner(o) {
+      var email = opportunityOwnerEmail(o);
+      var organiserId = String((o && o.organiser_id) || '').trim();
+      var opportunityId = String((o && o.id) || '').trim();
+      var redirect = opportunityId
+        ? '/organiser/opportunity-edit?id=' + encodeURIComponent(opportunityId)
+        : '/organiser/';
+      if (!email && !organiserId) {
+        window.alert('This listing has no owner email. Add an owner email first.');
+        return;
+      }
+      if (organiserId) {
+        impersonateOrganiserGroup(organiserId, email, redirect);
+        return;
+      }
+      adminPost('/api/admin/impersonate', {
+        email: email,
+        view: 'organiser',
+        provision: true,
+        redirect: redirect,
+      })
         .then(function (data) {
           if (!data.ok) {
-            showImpersonateMessage(data.message || data.error || 'Could not impersonate user.', true);
-            if (btn) btn.disabled = false;
+            window.alert(data.message || data.error || 'Could not impersonate listing owner.');
             return;
           }
           try {
@@ -7799,11 +7845,99 @@
           } catch (e) {
             /* ignore */
           }
-          window.location.href = (String(data.redirect || '/account/').charAt(0) === '/' ? String(data.redirect || '/account/') : ('../' + String(data.redirect || '/account/')));
+          window.location.href =
+            '../' + String(data.redirect || redirect || '/organiser/').replace(/^\//, '');
         })
         .catch(function () {
-          showImpersonateMessage('Request failed. Try again.', true);
-          if (btn) btn.disabled = false;
+          window.alert('Request failed. Try again.');
+        });
+    }
+
+    function paintOpportunityRows(rows) {
+      if (!opportunitiesBody) return;
+      if (!rows.length) {
+        opportunitiesBody.innerHTML =
+          '<tr><td colspan="4" class="px-4 py-6 text-slate-500">No opportunity matches that search.</td></tr>';
+        return;
+      }
+      opportunitiesBody.innerHTML = rows
+        .map(function (o) {
+          var email = opportunityOwnerEmail(o);
+          var canImpersonate = Boolean(email || o.organiser_id);
+          var host = String(o.host || '').trim();
+          var title = String(o.title || 'Untitled').trim();
+          var statusLabel = String(o.approval_status || o.status || '—').trim();
+          return (
+            '<tr class="border-t border-slate-100">' +
+            '<td class="px-4 py-3">' +
+            '<p class="font-medium">' +
+            esc(title) +
+            '</p>' +
+            (host ? '<p class="text-xs text-slate-500 mt-0.5">' + esc(host) + '</p>' : '') +
+            '</td>' +
+            '<td class="px-4 py-3 text-slate-600">' +
+            (email ? esc(email) : '<span class="text-slate-400">No owner email</span>') +
+            '</td>' +
+            '<td class="px-4 py-3">' +
+            esc(statusLabel) +
+            '</td>' +
+            '<td class="px-4 py-3 text-right">' +
+            (canImpersonate
+              ? '<button type="button" class="impersonate-opportunity-btn text-xs font-semibold text-brand-700 hover:underline" data-opportunity-id="' +
+                attrEsc(o.id) +
+                '" data-organiser-id="' +
+                attrEsc(o.organiser_id || '') +
+                '" data-email="' +
+                attrEsc(email) +
+                '">Impersonate</button>'
+              : '<span class="text-xs text-slate-400">Add owner email first</span>') +
+            '</td></tr>'
+          );
+        })
+        .join('');
+      opportunitiesBody.querySelectorAll('.impersonate-opportunity-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          impersonateOpportunityOwner({
+            id: btn.getAttribute('data-opportunity-id'),
+            organiser_id: btn.getAttribute('data-organiser-id'),
+            owner_email: btn.getAttribute('data-email'),
+          });
+        });
+      });
+    }
+
+    function loadImpersonateOpportunities(query) {
+      var q = String(query || '').trim();
+      if (!q) {
+        if (opportunitiesStatus) opportunitiesStatus.textContent = 'Search to find a listing';
+        if (opportunitiesBody) {
+          opportunitiesBody.innerHTML =
+            '<tr><td colspan="4" class="px-4 py-6 text-slate-500">Type a title, host, or email to search.</td></tr>';
+        }
+        return;
+      }
+      if (opportunitiesStatus) opportunitiesStatus.textContent = 'Searching…';
+      adminGet('/api/admin/opportunities?q=' + encodeURIComponent(q) + '&limit=50&sort=title')
+        .then(function (data) {
+          var rows = preferExactOpportunityEmailMatches((data && data.opportunities) || [], q);
+          if (opportunitiesStatus) {
+            opportunitiesStatus.textContent =
+              rows.length === 1
+                ? '1 listing match — impersonate below'
+                : rows.length
+                  ? rows.length + ' listings matching your search'
+                  : q.indexOf('@') !== -1
+                    ? 'No exact owner email match'
+                    : 'No matches';
+          }
+          paintOpportunityRows(rows);
+        })
+        .catch(function () {
+          if (opportunitiesStatus) opportunitiesStatus.textContent = 'Search failed';
+          if (opportunitiesBody) {
+            opportunitiesBody.innerHTML =
+              '<tr><td colspan="4" class="px-4 py-6 text-red-600">Could not load opportunities. Try again.</td></tr>';
+          }
         });
     }
 
@@ -7811,7 +7945,7 @@
       if (!groupsBody) return;
       if (!groups.length) {
         groupsBody.innerHTML =
-          '<tr><td colspan="4" class="px-4 py-6 text-slate-500">No networking groups match that search.</td></tr>';
+          '<tr><td colspan="4" class="px-4 py-6 text-slate-500">No networking group matches that search.</td></tr>';
         return;
       }
       groupsBody.innerHTML = groups
@@ -7854,7 +7988,6 @@
       var q = String(query || '').trim();
       if (!q) {
         if (groupsStatus) groupsStatus.textContent = 'Search to find a group';
-        paintGroupsRows([]);
         if (groupsBody) {
           groupsBody.innerHTML =
             '<tr><td colspan="4" class="px-4 py-6 text-slate-500">Type a group name or email to search.</td></tr>';
@@ -7864,10 +7997,12 @@
       if (groupsStatus) groupsStatus.textContent = 'Searching…';
       adminGet('/api/admin/organisers?q=' + encodeURIComponent(q) + '&limit=50')
         .then(function (data) {
-          var groups = (data && data.organisers) || [];
+          var groups = preferExactGroupEmailMatches((data && data.organisers) || [], q);
           if (groupsStatus) {
             groupsStatus.textContent =
-              groups.length + ' group' + (groups.length === 1 ? '' : 's') + ' shown';
+              groups.length === 1
+                ? '1 group match — impersonate below'
+                : groups.length + ' group' + (groups.length === 1 ? '' : 's') + ' matching your search';
           }
           paintGroupsRows(groups);
         })
@@ -7880,22 +8015,12 @@
         });
     }
 
-    function filterDirectoryUsers() {
-      var q = (directorySearch && directorySearch.value || '').toLowerCase();
-      var role = directoryRole ? directoryRole.value : 'All';
-      return liveUsers.filter(function (u) {
-        if (role !== 'All' && u.role !== role) return false;
-        if (q && !adminTextMatchesSearch(u.name + ' ' + u.email, q)) return false;
-        return true;
-      });
-    }
-
     function paintDirectory() {
       if (!directoryBody) return;
-      var rows = sortUsersAlphabetically(filterDirectoryUsers());
+      var rows = sortUsersAlphabetically(directoryUsers);
       if (!rows.length) {
         directoryBody.innerHTML =
-          '<tr><td colspan="5" class="px-4 py-6 text-slate-500">No accounts match your filters.</td></tr>';
+          '<tr><td colspan="5" class="px-4 py-6 text-slate-500">No login account matches that search.</td></tr>';
         return;
       }
       directoryBody.innerHTML = rows
@@ -7928,36 +8053,67 @@
       directoryBody.querySelectorAll('.impersonate-directory-btn').forEach(function (btn) {
         btn.addEventListener('click', function () {
           var email = btn.getAttribute('data-email');
-          if (emailInput) emailInput.value = email;
           if (email) submitImpersonation(email, impersonateView ? impersonateView.value : 'account');
         });
       });
     }
 
-    loadUsersDirectory(function (users) {
-      if (datalist) {
-        datalist.innerHTML = users
-          .map(function (u) {
-            return '<option value="' + attrEsc(u.email) + '">' + attrEsc(u.name || u.email) + '</option>';
-          })
-          .join('');
+    function loadImpersonateDirectory() {
+      var q = (directorySearch && directorySearch.value || '').trim();
+      if (!q) {
+        directoryUsers = [];
+        if (directoryStatus) directoryStatus.textContent = 'Search to find someone';
+        if (directoryBody) {
+          directoryBody.innerHTML =
+            '<tr><td colspan="5" class="px-4 py-6 text-slate-500">Type a name or email to search.</td></tr>';
+        }
+        return;
       }
-      if (hintEl) {
-        hintEl.textContent =
-          users.length +
-          ' login account' +
-          (users.length === 1 ? '' : 's') +
-          ' loaded. Search networking groups below, or enter any group email above.';
-      }
-      if (directoryStatus) {
-        directoryStatus.textContent =
-          users.length + ' account' + (users.length === 1 ? '' : 's') + ' loaded';
-      }
-      paintDirectory();
-    });
+      if (directoryStatus) directoryStatus.textContent = 'Searching…';
+      var params = new URLSearchParams();
+      params.set('limit', '50');
+      params.set('offset', '0');
+      params.set('q', q);
+      adminGet('/api/admin/users?' + params.toString())
+        .then(function (data) {
+          if (!data || data.error || data.configured === false) {
+            directoryUsers = [];
+            if (directoryStatus) directoryStatus.textContent = 'Could not load accounts';
+            if (directoryBody) {
+              directoryBody.innerHTML =
+                '<tr><td colspan="5" class="px-4 py-6 text-red-600">Could not load accounts. Try again.</td></tr>';
+            }
+            return;
+          }
+          directoryUsers = preferExactEmailMatches(data.users || [], q);
+          if (directoryStatus) {
+            directoryStatus.textContent =
+              directoryUsers.length === 1
+                ? '1 match — impersonate below'
+                : directoryUsers.length
+                  ? directoryUsers.length + ' matching your search'
+                  : q.indexOf('@') !== -1
+                    ? 'No exact email match'
+                    : 'No matches';
+          }
+          paintDirectory();
+        })
+        .catch(function () {
+          directoryUsers = [];
+          if (directoryStatus) directoryStatus.textContent = 'Search failed';
+          if (directoryBody) {
+            directoryBody.innerHTML =
+              '<tr><td colspan="5" class="px-4 py-6 text-red-600">Could not load accounts. Try again.</td></tr>';
+          }
+        });
+    }
 
-    if (directorySearch) directorySearch.addEventListener('input', paintDirectory);
-    if (directoryRole) directoryRole.addEventListener('change', paintDirectory);
+    if (directorySearch) {
+      directorySearch.addEventListener('input', function () {
+        clearTimeout(directorySearchTimer);
+        directorySearchTimer = setTimeout(loadImpersonateDirectory, 280);
+      });
+    }
     if (groupsSearch) {
       groupsSearch.addEventListener('input', function () {
         clearTimeout(groupsSearchTimer);
@@ -7966,17 +8122,12 @@
         }, 280);
       });
     }
-
-    if (form) {
-      form.addEventListener('submit', function (e) {
-        e.preventDefault();
-        var email = (emailInput && emailInput.value || '').trim();
-        var view = document.getElementById('impersonate-view').value;
-        if (!email) {
-          showImpersonateMessage('Enter an email address.', true);
-          return;
-        }
-        impersonateFromForm(email, view);
+    if (opportunitiesSearch) {
+      opportunitiesSearch.addEventListener('input', function () {
+        clearTimeout(opportunitiesSearchTimer);
+        opportunitiesSearchTimer = setTimeout(function () {
+          loadImpersonateOpportunities(opportunitiesSearch.value);
+        }, 280);
       });
     }
   }

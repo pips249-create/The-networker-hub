@@ -59,10 +59,6 @@ module.exports = async function handler(req, res) {
         });
       }
 
-      if (body.provision !== false) {
-        await sbAuth.provisionOrganiserLogin(organiserId);
-      }
-
       email = String(organiser.contact_email || organiser.email || email || '')
         .trim()
         .toLowerCase();
@@ -102,19 +98,38 @@ module.exports = async function handler(req, res) {
 
     target = await sbAuth.findUserByEmail(email);
 
+    if (!organiserIdsToClaim.length && email) {
+      organiserIdsToClaim = await sbAuth.findOrganiserIdsByEmail(email);
+    }
+
+    // One silent provision for this email (links sibling group profiles in bulk).
+    // Never loop provisionOrganiserLogin per group — that re-scanned Auth users and
+    // hit FUNCTION_INVOCATION_TIMEOUT for franchise inboxes (e.g. Pro5).
     if (!target && body.provision !== false) {
       const provisioned = await sbAuth.provisionOrganiserLoginByEmail(email);
       if (provisioned) {
         target = await sbAuth.findUserByEmail(email);
+        if (!organiserIdsToClaim.length) {
+          organiserIdsToClaim = await sbAuth.findOrganiserIdsByEmail(email);
+        }
+      }
+    } else if (target && body.provision !== false && organiserIdsToClaim.length) {
+      try {
+        const sb = getSupabaseAdmin();
+        await sb
+          .from('organisers')
+          .update({ supabase_user_id: target.id })
+          .in('id', organiserIdsToClaim)
+          .is('supabase_user_id', null);
+      } catch {
+        /* workspace still opens via impersonated ids */
       }
     }
 
-    if (!organiserIdsToClaim.length && email && useSupabase()) {
-      organiserIdsToClaim = await sbAuth.findOrganiserIdsByEmail(email);
-    }
-
     if (!target) {
-      const organiserIds = await sbAuth.findOrganiserIdsByEmail(email);
+      const organiserIds = organiserIdsToClaim.length
+        ? organiserIdsToClaim
+        : await sbAuth.findOrganiserIdsByEmail(email);
       return json(res, 404, {
         error: 'user_not_found',
         message: organiserIds.length
@@ -137,15 +152,6 @@ module.exports = async function handler(req, res) {
     // Do not auto-claim on Impersonate. Workspace scope already includes
     // impersonatedOrganiserIds, and claiming falsely marks pages as owned
     // (blocks Email 2 / claim links) when staff only previewed.
-    if (body.provision !== false && organiserIdsToClaim.length && useSupabase()) {
-      for (const oid of organiserIdsToClaim) {
-        try {
-          await sbAuth.provisionOrganiserLogin(oid);
-        } catch {
-          /* login may already exist; workspace still opens via impersonated ids */
-        }
-      }
-    }
 
     const impersonator = {
       sub: session.sub,
