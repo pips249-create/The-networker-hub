@@ -77,7 +77,7 @@
       "permanent": true
     },
     { "source": "/partners/index.html", "destination": "/partners", "permanent": true },
-    { "source": "/partners/kit.html", "destination": "/partners/earnings", "permanent": true },
+    { "source": "/partners/kit.html", "destination": "/partners/kit", "permanent": true },
     { "source": "/partners/earnings.html", "destination": "/partners/earnings", "permanent": true },
     { "source": "/advertising.html", "destination": "/advertising", "permanent": true },
     { "source": "/advertising-cta-preview.html", "destination": "/advertising-cta-preview", "permanent": true },
@@ -395,8 +395,7 @@
     },
     {
       "source": "/partners/kit",
-      "destination": "/partners/earnings",
-      "permanent": true
+      "destination": "/partners/earnings.html"
     },
     {
       "source": "/partners/earnings",

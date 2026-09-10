@@ -81,8 +81,7 @@ Earn **20%** when you introduce brands and opportunity providers who pay to list
 
 **What you get**
 - Unique link + code
-- Partner hub: earnings + logos, square/landscape/Story creatives (SVG + PNG), suggested copy, one-pager rate card PDF (`/partners/earnings?ref=CODE`)
-- `/partners/kit` redirects to the hub
+- Partner hub: earnings platform + share links + creatives + brand kit (`/partners/kit?ref=CODE` or `/partners/earnings?ref=CODE`)
 - Branded invite email from Command Centre
 - Visibility of referrals and earnings on `/partners/earnings` (live ledger API next; monthly statement from Phase 4)
 - A named inbox: partnerships@thenetworkeruk.com
@@ -128,7 +127,7 @@ Prepaid terms (1 / 3 / 6 / 12 months) may include discounts — commission is **
 | Opportunity / sponsor Story | 1080×1920 | PNG + SVG |
 | Partner badges / lockup | various | PNG + SVG |
 
-All live on `/partners/earnings` (media kit + earnings in one page). `/partners/kit` redirects there.
+All live on `/partners/kit` and `/partners/earnings` (same hub: Earn · Share · Creatives · Brand · Rates).
 
 ### Suggested outreach (short)
 

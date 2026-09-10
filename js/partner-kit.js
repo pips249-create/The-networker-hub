@@ -1,7 +1,9 @@
 /**
- * Partner media kit — personalise links from ?ref= / cookie.
+ * Partner hub — tabs + personalise links from ?ref= / cookie.
  */
 (function () {
+  var TAB_IDS = ['earn', 'share', 'creatives', 'brand', 'rates'];
+
   function copyValue(value) {
     var text = String(value || '');
     if (!text) return;
@@ -17,6 +19,47 @@
     if (!el) return;
     el.href = href;
     el.textContent = label || href.replace(/^https?:\/\//, '');
+  }
+
+  function showTab(tabId, opts) {
+    var id = TAB_IDS.indexOf(tabId) >= 0 ? tabId : 'earn';
+    var replace = opts && opts.replace;
+    document.querySelectorAll('[data-partner-panel]').forEach(function (panel) {
+      var on = panel.getAttribute('data-partner-panel') === id;
+      panel.classList.toggle('is-active', on);
+      if (on) panel.removeAttribute('hidden');
+      else panel.setAttribute('hidden', '');
+    });
+    document.querySelectorAll('[data-partner-tab]').forEach(function (btn) {
+      var on = btn.getAttribute('data-partner-tab') === id;
+      btn.classList.toggle('is-active', on);
+      if (btn.tagName === 'BUTTON') {
+        btn.setAttribute('aria-selected', on ? 'true' : 'false');
+      }
+    });
+    try {
+      var url = new URL(window.location.href);
+      url.hash = id === 'earn' ? '' : id;
+      if (replace) history.replaceState(null, '', url.pathname + url.search + (url.hash || ''));
+      else history.pushState(null, '', url.pathname + url.search + (url.hash || ''));
+    } catch (e) {}
+    var nav = document.getElementById('partner-hub-nav');
+    if (nav && opts && opts.scroll) {
+      nav.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  function tabFromHash() {
+    var raw = String(window.location.hash || '')
+      .replace(/^#/, '')
+      .toLowerCase();
+    if (raw === 'earnings' || raw === 'panel-earn') return 'earn';
+    if (raw === 'your-links' || raw === 'links') return 'share';
+    if (raw === 'promos-title' || raw === 'posts' || raw === 'stories-title') return 'creatives';
+    if (raw === 'logos-title' || raw === 'copy-title') return 'brand';
+    if (raw === 'rates-title') return 'rates';
+    if (TAB_IDS.indexOf(raw) >= 0) return raw;
+    return 'earn';
   }
 
   function personalise() {
@@ -50,11 +93,15 @@
     var earnCodeLine = document.getElementById('partner-earnings-code-line');
     var earnCodeEl = document.getElementById('partner-earnings-code');
     var earnHint = document.getElementById('partner-earnings-hint');
+    var heroLine = document.getElementById('partner-hero-code-line');
+    var heroCode = document.getElementById('partner-hero-code');
+
     if (code && codeLine && codeEl) {
       codeEl.textContent = code;
       codeLine.hidden = false;
       if (hint) {
-        hint.textContent = 'These links are tagged with your partner code so referrals attribute to you.';
+        hint.textContent =
+          'These links are tagged with your partner code so referrals attribute to you. Cookie lasts 30 days.';
       }
     }
     if (code && earnCodeLine && earnCodeEl) {
@@ -64,8 +111,12 @@
         earnHint.textContent =
           'Commission totals for code ' +
           code +
-          ' will appear here once referred sales pay. Share your links and creatives below in the meantime.';
+          ' will fill in once referred sales pay. Until then, share your links from the Share tab.';
       }
+    }
+    if (code && heroLine && heroCode) {
+      heroCode.textContent = code;
+      heroLine.hidden = false;
     }
 
     var short = document.getElementById('partner-kit-copy-short');
@@ -74,35 +125,59 @@
     }
   }
 
-  document.querySelectorAll('[data-copy-target]').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      var target = document.getElementById(btn.getAttribute('data-copy-target'));
-      if (!target) return;
-      copyValue(target.href || target.textContent);
-      btn.textContent = 'Copied';
-      setTimeout(function () {
-        btn.textContent = 'Copy';
-      }, 1200);
+  function bindCopies() {
+    document.querySelectorAll('[data-copy-target]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var target = document.getElementById(btn.getAttribute('data-copy-target'));
+        if (!target) return;
+        copyValue(target.href || target.textContent);
+        var prev = btn.textContent;
+        btn.textContent = 'Copied';
+        setTimeout(function () {
+          btn.textContent = prev || 'Copy';
+        }, 1200);
+      });
     });
-  });
 
-  document.querySelectorAll('[data-copy-text-target]').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      var target = document.getElementById(btn.getAttribute('data-copy-text-target'));
-      if (!target) return;
-      copyValue(target.textContent);
-      btn.textContent = 'Copied';
-      setTimeout(function () {
-        btn.textContent = 'Copy text';
-      }, 1200);
+    document.querySelectorAll('[data-copy-text-target]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var target = document.getElementById(btn.getAttribute('data-copy-text-target'));
+        if (!target) return;
+        copyValue(target.textContent);
+        var prev = btn.textContent;
+        btn.textContent = 'Copied';
+        setTimeout(function () {
+          btn.textContent = prev || 'Copy text';
+        }, 1200);
+      });
     });
-  });
+  }
+
+  function bindTabs() {
+    document.addEventListener('click', function (ev) {
+      var el = ev.target.closest('[data-partner-tab]');
+      if (!el) return;
+      if (el.tagName === 'A' && el.getAttribute('href') && el.getAttribute('href').charAt(0) === '#') {
+        ev.preventDefault();
+      }
+      showTab(el.getAttribute('data-partner-tab'), { scroll: true });
+    });
+    window.addEventListener('hashchange', function () {
+      showTab(tabFromHash(), { replace: true });
+    });
+    showTab(tabFromHash(), { replace: true });
+  }
+
+  function init() {
+    bindTabs();
+    bindCopies();
+    personalise();
+    setTimeout(personalise, 300);
+  }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', personalise);
+    document.addEventListener('DOMContentLoaded', init);
   } else {
-    personalise();
+    init();
   }
-  // HubAffiliate may load just after site-nav
-  setTimeout(personalise, 300);
 })();

@@ -3,15 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Partner hub – earnings &amp; media kit – The Networker UK</title>
+<title>Partner hub – The Networker UK</title>
 <meta name="description" content="Your Networker UK partner earnings, tracking links, logos, creatives, and rate card — in one place.">
 <meta name="robots" content="noindex,nofollow">
-<link rel="canonical" href="https://www.thenetworkeruk.com/partners/earnings">
+<link rel="canonical" href="https://www.thenetworkeruk.com/partners/kit">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="The Networker UK">
 <meta property="og:title" content="Partner hub – The Networker UK">
 <meta property="og:description" content="Earnings, tracking links, logos, creatives, and rate card for referral partners.">
-<meta property="og:url" content="https://www.thenetworkeruk.com/partners/earnings">
+<meta property="og:url" content="https://www.thenetworkeruk.com/partners/kit">
 <meta property="og:image" content="https://www.thenetworkeruk.com/assets/logo-networker-uk-og.png?v=20260908og">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19,7 +19,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/hub.css?v=20260909listmenu1">
 <link rel="stylesheet" href="/css/content-page.css?v=20260711e">
-<link rel="stylesheet" href="/css/partner-kit.css?v=20260910earn1">
+<link rel="stylesheet" href="/css/partner-kit.css?v=20260910hub3">
 <link rel="icon" href="/favicon.ico?v=20260823uk3" sizes="any">
 <link rel="icon" href="/assets/favicon.svg?v=20260823uk3" type="image/svg+xml">
 <link rel="icon" href="/assets/favicon-32.png?v=20260823uk" type="image/png" sizes="32x32">
@@ -32,282 +32,318 @@
 <script src="/js/site-nav.js?v=20260910aff1" data-root="/" data-page="partners"></script>
 
 <main class="content-page-main partner-kit-main">
-  <header class="partner-kit-hero" aria-label="Partner hub">
-    <div class="partner-kit-hero-inner">
-      <p class="partner-kit-kicker">Referral partners</p>
-      <h1>Your partner hub</h1>
-      <p class="partner-kit-lede">
-        Earnings, tracking links, logos, Stories, and the rate card — everything you need to introduce listings and sponsors.
-      </p>
-      <p class="partner-kit-inbox">
-        <a class="partner-kit-download partner-kit-download--solid" href="/assets/guides/partner-rate-card.pdf?v=20260910kit5" download="networker-uk-partner-rate-card.pdf">Download rate card PDF</a>
-        Questions: <a href="mailto:partnerships@thenetworkeruk.com">partnerships@thenetworkeruk.com</a> · Not a partner yet? <a href="/partners">Apply or enquire</a>
-      </p>
+  <header class="partner-kit-hero partner-kit-hero--hub" aria-label="Partner hub">
+    <div class="partner-kit-hero-grid">
+      <div class="partner-kit-hero-copy">
+        <p class="partner-kit-kicker">Referral partners</p>
+        <h1>Your partner hub</h1>
+        <p class="partner-kit-lede">
+          Track what you’ve earned, grab your links, and download posts &amp; badges — without scrolling forever.
+        </p>
+        <p class="partner-kit-code-pill" id="partner-hero-code-line" hidden>
+          Partner code <strong id="partner-hero-code"></strong>
+        </p>
+        <div class="partner-kit-hero-actions">
+          <a class="partner-kit-download partner-kit-download--solid" href="#panel-earn" data-partner-tab="earn">View earnings</a>
+          <a class="partner-kit-download" href="/assets/guides/partner-rate-card.pdf?v=20260910hub3" download="networker-uk-partner-rate-card.pdf">Rate card PDF</a>
+        </div>
+      </div>
+      <div class="partner-kit-hero-visual" aria-hidden="true">
+        <img src="/assets/logo-networker-uk-partner-lockup.png?v=20260910earn2" alt="" width="420" height="158" loading="eager">
+      </div>
     </div>
   </header>
 
-  <nav class="partner-hub-nav" aria-label="On this page">
-    <a href="#earnings">Earnings</a>
-    <a href="#your-links">Your links</a>
-    <a href="#promos-title">Posts</a>
-    <a href="#stories-title">Stories</a>
-    <a href="#logos-title">Logos</a>
-    <a href="#rates-title">Rates</a>
+  <nav class="partner-hub-nav" aria-label="Partner hub sections" id="partner-hub-nav">
+    <button type="button" class="partner-hub-nav-btn is-active" data-partner-tab="earn" aria-controls="panel-earn" aria-selected="true">Earn</button>
+    <button type="button" class="partner-hub-nav-btn" data-partner-tab="share" aria-controls="panel-share" aria-selected="false">Share</button>
+    <button type="button" class="partner-hub-nav-btn" data-partner-tab="creatives" aria-controls="panel-creatives" aria-selected="false">Creatives</button>
+    <button type="button" class="partner-hub-nav-btn" data-partner-tab="brand" aria-controls="panel-brand" aria-selected="false">Brand</button>
+    <button type="button" class="partner-hub-nav-btn" data-partner-tab="rates" aria-controls="panel-rates" aria-selected="false">Rates</button>
   </nav>
 
   <div class="partner-kit-body content-body">
-    <section class="partner-kit-card" id="earnings" aria-labelledby="earnings-title">
-      <h2 id="earnings-title">Your earnings</h2>
-      <p class="partner-kit-muted" id="partner-earnings-hint">
-        Open this page from your invite email (<code>?ref=YOURCODE</code>) to personalise links. Live commission totals connect once your first referred sale pays — until then you’ll see zeros here.
-      </p>
-      <p class="partner-kit-code-line" id="partner-earnings-code-line" hidden>
-        Viewing as: <strong id="partner-earnings-code"></strong>
-      </p>
-      <div class="partner-earnings-totals" aria-label="Commission totals">
-        <div class="partner-earnings-stat">
-          <span class="partner-earnings-stat-label">On hold</span>
-          <span class="partner-earnings-stat-value" id="partner-earn-hold">£0.00</span>
-          <span class="partner-earnings-stat-note">14-day refund window</span>
+    <section class="partner-hub-panel is-active" id="panel-earn" data-partner-panel="earn" aria-labelledby="earnings-title">
+      <div class="partner-kit-card partner-kit-card--feature">
+        <div class="partner-kit-card-head">
+          <div>
+            <h2 id="earnings-title">Your earnings</h2>
+            <p class="partner-kit-muted" id="partner-earnings-hint" style="margin-bottom:0;">
+              Live totals for referred sales. Open this page with <code>?ref=YOURCODE</code> (or from your invite) so we know who you are.
+            </p>
+          </div>
+          <p class="partner-kit-code-line" id="partner-earnings-code-line" hidden style="margin:0;">
+            Viewing <strong id="partner-earnings-code"></strong>
+          </p>
         </div>
-        <div class="partner-earnings-stat">
-          <span class="partner-earnings-stat-label">Ready to pay</span>
-          <span class="partner-earnings-stat-value" id="partner-earn-eligible">£0.00</span>
-          <span class="partner-earnings-stat-note">Next monthly payout · min £25</span>
+
+        <div class="partner-earnings-totals" aria-label="Commission totals">
+          <div class="partner-earnings-stat">
+            <span class="partner-earnings-stat-label">On hold</span>
+            <span class="partner-earnings-stat-value" id="partner-earn-hold">£0.00</span>
+            <span class="partner-earnings-stat-note">14-day refund window</span>
+          </div>
+          <div class="partner-earnings-stat partner-earnings-stat--accent">
+            <span class="partner-earnings-stat-label">Ready to pay</span>
+            <span class="partner-earnings-stat-value" id="partner-earn-eligible">£0.00</span>
+            <span class="partner-earnings-stat-note">Next monthly payout · min £25</span>
+          </div>
+          <div class="partner-earnings-stat">
+            <span class="partner-earnings-stat-label">Paid to date</span>
+            <span class="partner-earnings-stat-value" id="partner-earn-paid">£0.00</span>
+            <span class="partner-earnings-stat-note">Bank transfers received</span>
+          </div>
+          <div class="partner-earnings-stat">
+            <span class="partner-earnings-stat-label">This month</span>
+            <span class="partner-earnings-stat-value" id="partner-earn-month">£0.00</span>
+            <span class="partner-earnings-stat-note">Became eligible this month</span>
+          </div>
         </div>
-        <div class="partner-earnings-stat">
-          <span class="partner-earnings-stat-label">Paid to date</span>
-          <span class="partner-earnings-stat-value" id="partner-earn-paid">£0.00</span>
-          <span class="partner-earnings-stat-note">Bank transfers received</span>
-        </div>
-        <div class="partner-earnings-stat">
-          <span class="partner-earnings-stat-label">This month</span>
-          <span class="partner-earnings-stat-value" id="partner-earn-month">£0.00</span>
-          <span class="partner-earnings-stat-note">Became eligible this month</span>
+
+        <h3 class="partner-earnings-subhead">Activity</h3>
+        <div id="partner-earnings-activity" class="partner-earnings-activity">
+          <p class="partner-kit-muted" style="margin:0;">
+            No commission lines yet. Switch to <button type="button" class="partner-kit-text-btn" data-partner-tab="share">Share</button> to copy your links — when a referred customer pays, the sale shows up here.
+          </p>
         </div>
       </div>
-      <h3 class="partner-earnings-subhead">Activity</h3>
-      <div id="partner-earnings-activity" class="partner-earnings-activity">
-        <p class="partner-kit-muted" style="margin:0;">
-          No commission lines yet. Share <a href="#your-links">your tracking links</a> or the creatives below — when a referred customer pays, the sale appears here after attribution.
+
+      <div class="partner-kit-card">
+        <h2 id="earn-title">How commission works</h2>
+        <div class="partner-earn-rules">
+          <div class="partner-earn-rule">
+            <span class="partner-earn-rule-num">20%</span>
+            <p>of the sale ex-VAT on opportunity listings, Featured Boost, and sponsorship</p>
+          </div>
+          <div class="partner-earn-rule">
+            <span class="partner-earn-rule-num">3 mo</span>
+            <p>first three paid months on recurring · prepaid &amp; one-offs once</p>
+          </div>
+          <div class="partner-earn-rule">
+            <span class="partner-earn-rule-num">14 d</span>
+            <p>hold after payment, then eligible for the next monthly payout</p>
+          </div>
+          <div class="partner-earn-rule">
+            <span class="partner-earn-rule-num">£25</span>
+            <p>minimum payout · clawbacks appear as negative lines if a sale refunds</p>
+          </div>
+        </div>
+        <p class="partner-kit-muted" style="margin-bottom:0;">
+          Questions: <a href="mailto:partnerships@thenetworkeruk.com">partnerships@thenetworkeruk.com</a>
+          · Not a partner yet? <a href="/partners">Apply or enquire</a>
         </p>
       </div>
-      <p class="partner-kit-muted" style="margin-top:14px;margin-bottom:0;">
-        20% ex-VAT · first 3 paid months on recurring · clawbacks show as negative lines if a sale refunds.
-      </p>
     </section>
 
-    <section class="partner-kit-card" id="your-links" aria-labelledby="your-links-title">
-      <h2 id="your-links-title">Your tracking links</h2>
-      <p class="partner-kit-muted" id="partner-kit-links-hint">
-        Open this page from your invite email, or add <code>?ref=YOURCODE</code> to personalise the links below.
-      </p>
-      <div class="partner-kit-links" id="partner-kit-links">
-        <div class="partner-kit-link-row">
-          <span class="partner-kit-link-label">Homepage (general intro)</span>
-          <a class="partner-kit-link" id="partner-kit-link-home" href="https://www.thenetworkeruk.com/">thenetworkeruk.com</a>
-          <button type="button" class="partner-kit-copy" data-copy-target="partner-kit-link-home">Copy</button>
+    <section class="partner-hub-panel" id="panel-share" data-partner-panel="share" aria-labelledby="your-links-title" hidden>
+      <div class="partner-kit-card">
+        <h2 id="your-links-title">Your tracking links</h2>
+        <p class="partner-kit-muted" id="partner-kit-links-hint">
+          Use the homepage link for open-ended intros. Use ads / list links when you already know the product. Cookie lasts 30 days.
+        </p>
+        <div class="partner-kit-links" id="partner-kit-links">
+          <div class="partner-kit-link-row">
+            <span class="partner-kit-link-label">Homepage · general intro</span>
+            <a class="partner-kit-link" id="partner-kit-link-home" href="https://www.thenetworkeruk.com/">thenetworkeruk.com</a>
+            <button type="button" class="partner-kit-copy" data-copy-target="partner-kit-link-home">Copy</button>
+          </div>
+          <div class="partner-kit-link-row">
+            <span class="partner-kit-link-label">Advertising &amp; sponsorship</span>
+            <a class="partner-kit-link" id="partner-kit-link-ads" href="https://www.thenetworkeruk.com/advertising">thenetworkeruk.com/advertising</a>
+            <button type="button" class="partner-kit-copy" data-copy-target="partner-kit-link-ads">Copy</button>
+          </div>
+          <div class="partner-kit-link-row">
+            <span class="partner-kit-link-label">List a business opportunity</span>
+            <a class="partner-kit-link" id="partner-kit-link-opp" href="https://www.thenetworkeruk.com/opportunities/list">thenetworkeruk.com/opportunities/list</a>
+            <button type="button" class="partner-kit-copy" data-copy-target="partner-kit-link-opp">Copy</button>
+          </div>
         </div>
-        <div class="partner-kit-link-row">
-          <span class="partner-kit-link-label">Advertising &amp; sponsorship</span>
-          <a class="partner-kit-link" id="partner-kit-link-ads" href="https://www.thenetworkeruk.com/advertising">thenetworkeruk.com/advertising</a>
-          <button type="button" class="partner-kit-copy" data-copy-target="partner-kit-link-ads">Copy</button>
+        <p class="partner-kit-code-line" id="partner-kit-code-line" hidden>
+          Your code: <strong id="partner-kit-code"></strong>
+        </p>
+      </div>
+
+      <div class="partner-kit-card">
+        <h2 id="copy-title">Suggested copy</h2>
+        <div class="partner-kit-copy-block">
+          <h3>Short message</h3>
+          <blockquote id="partner-kit-copy-short">
+Just a quick one — The Networker UK is where UK founders and networking organisers find events and business opportunities. If you (or a client) want a listing or a sponsorship placement, I can introduce you. Here’s my partner link: [LINK]
+          </blockquote>
+          <button type="button" class="partner-kit-copy" data-copy-text-target="partner-kit-copy-short">Copy text</button>
         </div>
-        <div class="partner-kit-link-row">
-          <span class="partner-kit-link-label">List a business opportunity</span>
-          <a class="partner-kit-link" id="partner-kit-link-opp" href="https://www.thenetworkeruk.com/opportunities/list">thenetworkeruk.com/opportunities/list</a>
-          <button type="button" class="partner-kit-copy" data-copy-target="partner-kit-link-opp">Copy</button>
+        <div class="partner-kit-copy-block">
+          <h3>Email / LinkedIn</h3>
+          <blockquote id="partner-kit-copy-li">
+I partner with The Networker UK — the UK hub for networking events, exhibitions and business opportunities. If you promote franchises, partnerships or B2B services and want to reach that audience through a directory listing or sponsorship, I’m happy to make an introduction. Message me and I’ll send the details.
+          </blockquote>
+          <button type="button" class="partner-kit-copy" data-copy-text-target="partner-kit-copy-li">Copy text</button>
         </div>
       </div>
-      <p class="partner-kit-code-line" id="partner-kit-code-line" hidden>
-        Your code: <strong id="partner-kit-code"></strong> · 30-day cookie when someone uses your link
-      </p>
     </section>
 
-    <section class="partner-kit-card" aria-labelledby="earn-title">
-      <h2 id="earn-title">How you earn</h2>
-      <ul class="partner-kit-list">
-        <li><strong>20%</strong> of the sale (ex-VAT) on opportunity listings, Featured Opportunity Boost, and sponsorship packages</li>
-        <li>Recurring: first <strong>3 paid months</strong> only · prepaid invoices: 20% once · one-offs: 20% once</li>
-        <li>Paid monthly after a <strong>14-day</strong> hold · minimum payout £25</li>
-        <li>Commission only after the customer <strong>pays</strong> (opportunity listings must also pass review)</li>
-      </ul>
-    </section>
-
-    <section class="partner-kit-card" aria-labelledby="promos-title">
-      <h2 id="promos-title">Ready-made posts</h2>
-      <p class="partner-kit-muted">Download, post, and point people to <strong>your</strong> tracking link (not the plain website). Prefer <strong>PNG</strong> for Instagram / most social apps; SVG if you need to resize cleanly.</p>
-      <div class="partner-kit-logo-grid">
-        <figure class="partner-kit-logo-tile partner-kit-logo-tile--dark">
-          <img src="/assets/partner-promo-opp-listing-square.png?v=20260910kit5" alt="Square advert: list your business opportunity for £25 a month" width="280" height="280" loading="lazy">
-          <figcaption>Opportunity listing · square 1080×1080</figcaption>
-          <div class="partner-kit-dl-row">
-            <a class="partner-kit-download" href="/assets/partner-promo-opp-listing-square.png?v=20260910kit5" download="networker-uk-promo-opportunity-square.png">PNG</a>
-            <a class="partner-kit-download" href="/assets/partner-promo-opp-listing-square.svg?v=20260910kit5" download="networker-uk-promo-opportunity-square.svg">SVG</a>
-          </div>
-        </figure>
-        <figure class="partner-kit-logo-tile partner-kit-logo-tile--dark">
-          <img src="/assets/partner-promo-opp-listing-landscape.png?v=20260910kit5" alt="Landscape advert: list your business opportunity for £25 a month" width="300" height="157" loading="lazy">
-          <figcaption>Opportunity listing · landscape 1200×628</figcaption>
-          <div class="partner-kit-dl-row">
-            <a class="partner-kit-download" href="/assets/partner-promo-opp-listing-landscape.png?v=20260910kit5" download="networker-uk-promo-opportunity-landscape.png">PNG</a>
-            <a class="partner-kit-download" href="/assets/partner-promo-opp-listing-landscape.svg?v=20260910kit5" download="networker-uk-promo-opportunity-landscape.svg">SVG</a>
-          </div>
-        </figure>
-        <figure class="partner-kit-logo-tile partner-kit-logo-tile--light">
-          <img src="/assets/partner-promo-sponsor-square.png?v=20260910kit5" alt="Square advert: sponsorship from £25 a month" width="280" height="280" loading="lazy">
-          <figcaption>Sponsorship · square 1080×1080</figcaption>
-          <div class="partner-kit-dl-row">
-            <a class="partner-kit-download" href="/assets/partner-promo-sponsor-square.png?v=20260910kit5" download="networker-uk-promo-sponsor-square.png">PNG</a>
-            <a class="partner-kit-download" href="/assets/partner-promo-sponsor-square.svg?v=20260910kit5" download="networker-uk-promo-sponsor-square.svg">SVG</a>
-          </div>
-        </figure>
-      </div>
-      <div class="partner-kit-copy-block">
-        <h3>Caption to go with the £25 listing post</h3>
-        <blockquote id="partner-kit-copy-promo">
+    <section class="partner-hub-panel" id="panel-creatives" data-partner-panel="creatives" aria-labelledby="promos-title" hidden>
+      <div class="partner-kit-card">
+        <h2 id="promos-title">Ready-made posts</h2>
+        <p class="partner-kit-muted">Download PNG for Instagram / LinkedIn. Always send people to <strong>your</strong> tracking link from the Share tab.</p>
+        <div class="partner-kit-logo-grid">
+          <figure class="partner-kit-logo-tile partner-kit-logo-tile--dark">
+            <img src="/assets/partner-promo-opp-listing-square.png?v=20260910hub3" alt="Square advert: list your business opportunity for £25 a month" width="280" height="280" loading="lazy">
+            <figcaption>Opportunity · square 1080×1080</figcaption>
+            <div class="partner-kit-dl-row">
+              <a class="partner-kit-download" href="/assets/partner-promo-opp-listing-square.png?v=20260910hub3" download="networker-uk-promo-opportunity-square.png">PNG</a>
+              <a class="partner-kit-download" href="/assets/partner-promo-opp-listing-square.svg?v=20260910hub3" download="networker-uk-promo-opportunity-square.svg">SVG</a>
+            </div>
+          </figure>
+          <figure class="partner-kit-logo-tile partner-kit-logo-tile--dark">
+            <img src="/assets/partner-promo-opp-listing-landscape.png?v=20260910hub3" alt="Landscape advert: list your business opportunity for £25 a month" width="300" height="157" loading="lazy">
+            <figcaption>Opportunity · landscape 1200×628</figcaption>
+            <div class="partner-kit-dl-row">
+              <a class="partner-kit-download" href="/assets/partner-promo-opp-listing-landscape.png?v=20260910hub3" download="networker-uk-promo-opportunity-landscape.png">PNG</a>
+              <a class="partner-kit-download" href="/assets/partner-promo-opp-listing-landscape.svg?v=20260910hub3" download="networker-uk-promo-opportunity-landscape.svg">SVG</a>
+            </div>
+          </figure>
+          <figure class="partner-kit-logo-tile partner-kit-logo-tile--light">
+            <img src="/assets/partner-promo-sponsor-square.png?v=20260910hub3" alt="Square advert: sponsorship from £25 a month" width="280" height="280" loading="lazy">
+            <figcaption>Sponsorship · square 1080×1080</figcaption>
+            <div class="partner-kit-dl-row">
+              <a class="partner-kit-download" href="/assets/partner-promo-sponsor-square.png?v=20260910hub3" download="networker-uk-promo-sponsor-square.png">PNG</a>
+              <a class="partner-kit-download" href="/assets/partner-promo-sponsor-square.svg?v=20260910hub3" download="networker-uk-promo-sponsor-square.svg">SVG</a>
+            </div>
+          </figure>
+        </div>
+        <div class="partner-kit-copy-block">
+          <h3>Caption for the £25 listing post</h3>
+          <blockquote id="partner-kit-copy-promo">
 Looking to list a franchise, partnership or side hustle in front of UK networkers?
 
 The Networker UK has business opportunity listings from £25 a month (+ VAT) — on the UK’s networking platform, where founders and organisers already browse.
 
 Message me for my partner link and I’ll get you started.
-        </blockquote>
-        <button type="button" class="partner-kit-copy" data-copy-text-target="partner-kit-copy-promo">Copy text</button>
+          </blockquote>
+          <button type="button" class="partner-kit-copy" data-copy-text-target="partner-kit-copy-promo">Copy text</button>
+        </div>
       </div>
-    </section>
 
-    <section class="partner-kit-card" aria-labelledby="stories-title">
-      <h2 id="stories-title">Instagram Stories / Reels</h2>
-      <p class="partner-kit-muted">Vertical 1080×1920 creatives. Stick your tracking link in the Story link sticker or bio.</p>
-      <div class="partner-kit-logo-grid partner-kit-logo-grid--stories">
-        <figure class="partner-kit-logo-tile partner-kit-logo-tile--dark partner-kit-logo-tile--story">
-          <img src="/assets/partner-promo-opp-listing-story.png?v=20260910kit5" alt="Story advert: list your business opportunity for £25 a month" width="216" height="384" loading="lazy">
-          <figcaption>Opportunity listing · Story 1080×1920</figcaption>
-          <div class="partner-kit-dl-row">
-            <a class="partner-kit-download" href="/assets/partner-promo-opp-listing-story.png?v=20260910kit5" download="networker-uk-promo-opportunity-story.png">PNG</a>
-            <a class="partner-kit-download" href="/assets/partner-promo-opp-listing-story.svg?v=20260910kit5" download="networker-uk-promo-opportunity-story.svg">SVG</a>
-          </div>
-        </figure>
-        <figure class="partner-kit-logo-tile partner-kit-logo-tile--light partner-kit-logo-tile--story">
-          <img src="/assets/partner-promo-sponsor-story.png?v=20260910kit5" alt="Story advert: sponsorship from £25 a month" width="216" height="384" loading="lazy">
-          <figcaption>Sponsorship · Story 1080×1920</figcaption>
-          <div class="partner-kit-dl-row">
-            <a class="partner-kit-download" href="/assets/partner-promo-sponsor-story.png?v=20260910kit5" download="networker-uk-promo-sponsor-story.png">PNG</a>
-            <a class="partner-kit-download" href="/assets/partner-promo-sponsor-story.svg?v=20260910kit5" download="networker-uk-promo-sponsor-story.svg">SVG</a>
-          </div>
-        </figure>
-      </div>
-      <div class="partner-kit-copy-block">
-        <h3>Story caption</h3>
-        <blockquote id="partner-kit-copy-story">
+      <div class="partner-kit-card">
+        <h2 id="stories-title">Instagram Stories / Reels</h2>
+        <p class="partner-kit-muted">Vertical 1080×1920. Add your tracking link as a sticker or in bio.</p>
+        <div class="partner-kit-logo-grid partner-kit-logo-grid--stories">
+          <figure class="partner-kit-logo-tile partner-kit-logo-tile--dark partner-kit-logo-tile--story">
+            <img src="/assets/partner-promo-opp-listing-story.png?v=20260910hub3" alt="Story advert: list your business opportunity for £25 a month" width="216" height="384" loading="lazy">
+            <figcaption>Opportunity · Story</figcaption>
+            <div class="partner-kit-dl-row">
+              <a class="partner-kit-download" href="/assets/partner-promo-opp-listing-story.png?v=20260910hub3" download="networker-uk-promo-opportunity-story.png">PNG</a>
+              <a class="partner-kit-download" href="/assets/partner-promo-opp-listing-story.svg?v=20260910hub3" download="networker-uk-promo-opportunity-story.svg">SVG</a>
+            </div>
+          </figure>
+          <figure class="partner-kit-logo-tile partner-kit-logo-tile--light partner-kit-logo-tile--story">
+            <img src="/assets/partner-promo-sponsor-story.png?v=20260910hub3" alt="Story advert: sponsorship from £25 a month" width="216" height="384" loading="lazy">
+            <figcaption>Sponsorship · Story</figcaption>
+            <div class="partner-kit-dl-row">
+              <a class="partner-kit-download" href="/assets/partner-promo-sponsor-story.png?v=20260910hub3" download="networker-uk-promo-sponsor-story.png">PNG</a>
+              <a class="partner-kit-download" href="/assets/partner-promo-sponsor-story.svg?v=20260910hub3" download="networker-uk-promo-sponsor-story.svg">SVG</a>
+            </div>
+          </figure>
+        </div>
+        <div class="partner-kit-copy-block">
+          <h3>Story caption</h3>
+          <blockquote id="partner-kit-copy-story">
 Want your franchise / partnership in front of UK founders &amp; organisers?
 
 List on The Networker UK from £25/mo (+ VAT).
 DM me for my partner link.
-        </blockquote>
-        <button type="button" class="partner-kit-copy" data-copy-text-target="partner-kit-copy-story">Copy text</button>
-      </div>
-    </section>
-
-    <section class="partner-kit-card" aria-labelledby="logos-title">
-      <h2 id="logos-title">Logos &amp; partner badge</h2>
-      <p class="partner-kit-muted">Use these official files only — they include the real Networker UK wordmark. Don’t stretch, recolour, or add effects. Prefer the <strong>Partner</strong> badges when you mention the programme.</p>
-      <div class="partner-kit-logo-grid">
-        <figure class="partner-kit-logo-tile partner-kit-logo-tile--lavender">
-          <img src="/assets/logo-networker-uk-partner-lockup.png?v=20260910earn2" alt="The Networker UK Referral Partner lockup on lavender" width="320" height="120" loading="lazy">
-          <figcaption>Referral Partner lockup · lavender</figcaption>
-          <div class="partner-kit-dl-row">
-            <a class="partner-kit-download" href="/assets/logo-networker-uk-partner-lockup.png?v=20260910earn2" download="networker-uk-referral-partner.png">PNG</a>
-            <a class="partner-kit-download" href="/assets/logo-networker-uk-partner-lockup.svg?v=20260910earn2" download="networker-uk-referral-partner.svg">SVG</a>
-          </div>
-        </figure>
-        <figure class="partner-kit-logo-tile partner-kit-logo-tile--light">
-          <img src="/assets/logo-networker-uk-partner-light.png?v=20260910earn2" alt="The Networker UK Partner badge on light" width="280" height="158" loading="lazy">
-          <figcaption>Partner badge · light</figcaption>
-          <div class="partner-kit-dl-row">
-            <a class="partner-kit-download" href="/assets/logo-networker-uk-partner-light.png?v=20260910earn2" download="networker-uk-partner-light.png">PNG</a>
-            <a class="partner-kit-download" href="/assets/logo-networker-uk-partner-light.svg?v=20260910earn2" download="networker-uk-partner-light.svg">SVG</a>
-          </div>
-        </figure>
-        <figure class="partner-kit-logo-tile partner-kit-logo-tile--dark">
-          <img src="/assets/logo-networker-uk-partner-dark.png?v=20260910earn2" alt="The Networker UK Partner badge on dark" width="280" height="158" loading="lazy">
-          <figcaption>Partner badge · dark</figcaption>
-          <div class="partner-kit-dl-row">
-            <a class="partner-kit-download" href="/assets/logo-networker-uk-partner-dark.png?v=20260910earn2" download="networker-uk-partner-dark.png">PNG</a>
-            <a class="partner-kit-download" href="/assets/logo-networker-uk-partner-dark.svg?v=20260910earn2" download="networker-uk-partner-dark.svg">SVG</a>
-          </div>
-        </figure>
-        <figure class="partner-kit-logo-tile partner-kit-logo-tile--light">
-          <img src="/assets/logo-networker-uk-transparent.png" alt="The Networker UK primary logo" width="280" height="90" loading="lazy">
-          <figcaption>Primary logo · brand mark alone</figcaption>
-          <a class="partner-kit-download" href="/assets/logo-networker-uk-transparent.png" download="networker-uk-logo-transparent.png">Download</a>
-        </figure>
-      </div>
-    </section>
-
-    <section class="partner-kit-card" aria-labelledby="copy-title">
-      <h2 id="copy-title">Suggested copy</h2>
-      <div class="partner-kit-copy-block">
-        <h3>Short message</h3>
-        <blockquote id="partner-kit-copy-short">
-Just a quick one — The Networker UK is where UK founders and networking organisers find events and business opportunities. If you (or a client) want a listing or a sponsorship placement, I can introduce you. Here’s my partner link: [LINK]
-        </blockquote>
-        <button type="button" class="partner-kit-copy" data-copy-text-target="partner-kit-copy-short">Copy text</button>
-      </div>
-      <div class="partner-kit-copy-block">
-        <h3>Email / LinkedIn</h3>
-        <blockquote id="partner-kit-copy-li">
-I partner with The Networker UK — the UK hub for networking events, exhibitions and business opportunities. If you promote franchises, partnerships or B2B services and want to reach that audience through a directory listing or sponsorship, I’m happy to make an introduction. Message me and I’ll send the details.
-        </blockquote>
-        <button type="button" class="partner-kit-copy" data-copy-text-target="partner-kit-copy-li">Copy text</button>
-      </div>
-    </section>
-
-    <section class="partner-kit-card" aria-labelledby="rates-title">
-      <h2 id="rates-title">Guide rates (ex-VAT)</h2>
-      <p class="partner-kit-muted">Always confirm live pricing on <a href="/advertising">/advertising</a>. Your cut is 20% of the net amount charged. For email attachments, use the one-pager PDF.</p>
-      <p><a class="partner-kit-download partner-kit-download--solid" href="/assets/guides/partner-rate-card.pdf?v=20260910kit5" download="networker-uk-partner-rate-card.pdf">Download rate card PDF</a></p>
-      <div class="partner-kit-table-wrap">
-        <table class="partner-kit-table">
-          <thead>
-            <tr><th>Product</th><th>Guide price</th><th>Your 20%</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>Opportunity listing</td><td>£25 / month</td><td>£5 × first 3 months</td></tr>
-            <tr><td>Featured Opportunity Boost</td><td>£55 one-time</td><td>£11 once</td></tr>
-            <tr><td>City Partner</td><td>from £29 / city / month</td><td>20% × first 3 (or prepaid once)</td></tr>
-            <tr><td>County / Industry Partner</td><td>from £49 / month (launch)</td><td>20% × first 3</td></tr>
-            <tr><td>Events Headline Sponsor</td><td>£2,000 / month</td><td>£400 × first 3</td></tr>
-            <tr><td>Events Mini Sponsor</td><td>£600 / slot / month</td><td>£120 × first 3</td></tr>
-            <tr><td>Organisers Headline</td><td>£1,000 / month</td><td>£200 × first 3</td></tr>
-            <tr><td>Organisers Mini</td><td>£300 / slot / month</td><td>£60 × first 3</td></tr>
-            <tr><td>Opportunities Headline</td><td>£2,000 / month</td><td>£400 × first 3</td></tr>
-            <tr><td>Opportunities Mini</td><td>£600 / slot / month</td><td>£120 × first 3</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <section class="partner-kit-card" aria-labelledby="rules-title">
-      <h2 id="rules-title">Do / don’t</h2>
-      <div class="partner-kit-rules">
-        <div>
-          <h3>Do</h3>
-          <ul>
-            <li>Use official prices from /advertising</li>
-            <li>Send serious, relevant intros</li>
-            <li>Disclose you’re a partner if asked</li>
-            <li>CC partnerships@ on warm intros</li>
-          </ul>
+          </blockquote>
+          <button type="button" class="partner-kit-copy" data-copy-text-target="partner-kit-copy-story">Copy text</button>
         </div>
-        <div>
-          <h3>Don’t</h3>
-          <ul>
-            <li>Promise exclusivity or inventory you haven’t checked</li>
-            <li>Spam or use bought email lists</li>
-            <li>Claim guaranteed ROI or fake audience numbers</li>
-            <li>Offer unauthorised discounts</li>
-          </ul>
+      </div>
+    </section>
+
+    <section class="partner-hub-panel" id="panel-brand" data-partner-panel="brand" aria-labelledby="logos-title" hidden>
+      <div class="partner-kit-card">
+        <h2 id="logos-title">Logos &amp; partner badge</h2>
+        <p class="partner-kit-muted">Official files only — don’t stretch, recolour, or add effects. Prefer Partner badges when you mention the programme.</p>
+        <div class="partner-kit-logo-grid">
+          <figure class="partner-kit-logo-tile partner-kit-logo-tile--lavender">
+            <img src="/assets/logo-networker-uk-partner-lockup.png?v=20260910earn2" alt="The Networker UK Referral Partner lockup on lavender" width="320" height="120" loading="lazy">
+            <figcaption>Referral Partner lockup</figcaption>
+            <div class="partner-kit-dl-row">
+              <a class="partner-kit-download" href="/assets/logo-networker-uk-partner-lockup.png?v=20260910earn2" download="networker-uk-referral-partner.png">PNG</a>
+              <a class="partner-kit-download" href="/assets/logo-networker-uk-partner-lockup.svg?v=20260910earn2" download="networker-uk-referral-partner.svg">SVG</a>
+            </div>
+          </figure>
+          <figure class="partner-kit-logo-tile partner-kit-logo-tile--light">
+            <img src="/assets/logo-networker-uk-partner-light.png?v=20260910earn2" alt="The Networker UK Partner badge on light" width="280" height="158" loading="lazy">
+            <figcaption>Partner badge · light</figcaption>
+            <div class="partner-kit-dl-row">
+              <a class="partner-kit-download" href="/assets/logo-networker-uk-partner-light.png?v=20260910earn2" download="networker-uk-partner-light.png">PNG</a>
+              <a class="partner-kit-download" href="/assets/logo-networker-uk-partner-light.svg?v=20260910earn2" download="networker-uk-partner-light.svg">SVG</a>
+            </div>
+          </figure>
+          <figure class="partner-kit-logo-tile partner-kit-logo-tile--dark">
+            <img src="/assets/logo-networker-uk-partner-dark.png?v=20260910earn2" alt="The Networker UK Partner badge on dark" width="280" height="158" loading="lazy">
+            <figcaption>Partner badge · dark</figcaption>
+            <div class="partner-kit-dl-row">
+              <a class="partner-kit-download" href="/assets/logo-networker-uk-partner-dark.png?v=20260910earn2" download="networker-uk-partner-dark.png">PNG</a>
+              <a class="partner-kit-download" href="/assets/logo-networker-uk-partner-dark.svg?v=20260910earn2" download="networker-uk-partner-dark.svg">SVG</a>
+            </div>
+          </figure>
+          <figure class="partner-kit-logo-tile partner-kit-logo-tile--light">
+            <img src="/assets/logo-networker-uk-transparent.png" alt="The Networker UK primary logo" width="280" height="90" loading="lazy">
+            <figcaption>Primary logo alone</figcaption>
+            <a class="partner-kit-download" href="/assets/logo-networker-uk-transparent.png" download="networker-uk-logo-transparent.png">PNG</a>
+          </figure>
+        </div>
+      </div>
+
+      <div class="partner-kit-card">
+        <h2 id="rules-title">Do / don’t</h2>
+        <div class="partner-kit-rules">
+          <div>
+            <h3>Do</h3>
+            <ul>
+              <li>Use official prices from /advertising</li>
+              <li>Send serious, relevant intros</li>
+              <li>Disclose you’re a partner if asked</li>
+              <li>CC partnerships@ on warm intros</li>
+            </ul>
+          </div>
+          <div>
+            <h3>Don’t</h3>
+            <ul>
+              <li>Promise exclusivity or inventory you haven’t checked</li>
+              <li>Spam or use bought email lists</li>
+              <li>Claim guaranteed ROI or fake audience numbers</li>
+              <li>Offer unauthorised discounts</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="partner-hub-panel" id="panel-rates" data-partner-panel="rates" aria-labelledby="rates-title" hidden>
+      <div class="partner-kit-card">
+        <h2 id="rates-title">Guide rates (ex-VAT)</h2>
+        <p class="partner-kit-muted">Confirm live pricing on <a href="/advertising">/advertising</a>. Your cut is 20% of the net amount charged.</p>
+        <p><a class="partner-kit-download partner-kit-download--solid" href="/assets/guides/partner-rate-card.pdf?v=20260910hub3" download="networker-uk-partner-rate-card.pdf">Download rate card PDF</a></p>
+        <div class="partner-kit-table-wrap">
+          <table class="partner-kit-table">
+            <thead>
+              <tr><th>Product</th><th>Guide price</th><th>Your 20%</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>Opportunity listing</td><td>£25 / month</td><td>£5 × first 3 months</td></tr>
+              <tr><td>Featured Opportunity Boost</td><td>£55 one-time</td><td>£11 once</td></tr>
+              <tr><td>City Partner</td><td>from £29 / city / month</td><td>20% × first 3 (or prepaid once)</td></tr>
+              <tr><td>County / Industry Partner</td><td>from £49 / month (launch)</td><td>20% × first 3</td></tr>
+              <tr><td>Events Headline Sponsor</td><td>£2,000 / month</td><td>£400 × first 3</td></tr>
+              <tr><td>Events Mini Sponsor</td><td>£600 / slot / month</td><td>£120 × first 3</td></tr>
+              <tr><td>Organisers Headline</td><td>£1,000 / month</td><td>£200 × first 3</td></tr>
+              <tr><td>Organisers Mini</td><td>£300 / slot / month</td><td>£60 × first 3</td></tr>
+              <tr><td>Opportunities Headline</td><td>£2,000 / month</td><td>£400 × first 3</td></tr>
+              <tr><td>Opportunities Mini</td><td>£600 / slot / month</td><td>£120 × first 3</td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </section>
@@ -316,6 +352,6 @@ I partner with The Networker UK — the UK hub for networking events, exhibition
 
 <div id="hub-site-footer"></div>
 <script src="/js/site-footer.js?v=20260910pp1" data-root="/"></script>
-<script src="/js/partner-kit.js?v=20260910earn2"></script>
+<script src="/js/partner-kit.js?v=20260910hub3"></script>
 </body>
 </html>
