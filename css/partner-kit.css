@@ -199,8 +199,12 @@
   background: #fffdf9;
 }
 
-.partner-kit-logo-tile--dark {
-  background: #1c2040;
+.partner-kit-logo-tile--lavender {
+  background: #b992be;
+}
+
+.partner-kit-logo-tile--lavender figcaption {
+  color: rgba(28, 32, 64, 0.75);
 }
 
 .partner-kit-logo-tile img {
