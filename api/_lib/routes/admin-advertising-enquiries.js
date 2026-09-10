@@ -29,6 +29,7 @@ function mapRow(row) {
     preferredTerm: preferredTermFromRow(row),
     budget: row.budget || null,
     message: messageWithoutPreferredTermPrefix(row.message),
+    referredBy: row.referred_by || null,
     source: row.source || 'advertising_page',
     createdAt: row.created_at,
   };
@@ -40,10 +41,20 @@ async function listAdvertisingEnquiries(limit) {
   let res = await sb
     .from('advertising_enquiries')
     .select(
-      'id, company_name, contact_name, email, section, package_name, preferred_term, budget, message, source, created_at'
+      'id, company_name, contact_name, email, section, package_name, preferred_term, budget, message, referred_by, source, created_at'
     )
     .order('created_at', { ascending: false })
     .limit(max);
+
+  if (res.error && /referred_by/i.test(res.error.message || '')) {
+    res = await sb
+      .from('advertising_enquiries')
+      .select(
+        'id, company_name, contact_name, email, section, package_name, preferred_term, budget, message, source, created_at'
+      )
+      .order('created_at', { ascending: false })
+      .limit(max);
+  }
 
   if (res.error && /preferred_term/i.test(res.error.message || '')) {
     res = await sb

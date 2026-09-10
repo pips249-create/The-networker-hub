@@ -3,8 +3,18 @@
  */
 const { getSupabaseAdmin } = require('./supabase');
 const { sendViaResend } = require('./send-template-email');
+const {
+  affiliateCodeFromBody,
+  getActivePartnerByCode,
+  recordAffiliateAttribution,
+} = require('./affiliate-programme');
 
 const ROSIE_EMAIL = String(process.env.ADVERTISING_ENQUIRY_EMAIL || 'rosie@thenetworkeruk.com')
+  .trim()
+  .toLowerCase();
+const PARTNERSHIPS_EMAIL = String(
+  process.env.PARTNERSHIPS_EMAIL || 'partnerships@thenetworkeruk.com'
+)
   .trim()
   .toLowerCase();
 
@@ -36,6 +46,7 @@ function normalizeEnquiryInput(body) {
     budget: String(body.budget || '').trim() || null,
     message: String(body.message || '').trim() || null,
     website: String(body.website || '').trim(),
+    referredBy: affiliateCodeFromBody(body),
   };
 }
 
@@ -83,6 +94,11 @@ function buildStaffEmailHtml(input) {
       ? '<tr><td style="padding:4px 12px 4px 0;color:#666;">Budget</td><td>' +
         escHtml(input.budget) +
         '</td></tr>'
+      : '') +
+    (input.referredBy
+      ? '<tr><td style="padding:4px 12px 4px 0;color:#666;">Referred by</td><td><strong>' +
+        escHtml(input.referredBy) +
+        '</strong></td></tr>'
       : '') +
     '</table>' +
     (input.message
@@ -134,6 +150,7 @@ async function submitAdvertisingEnquiry(body) {
     preferred_term: input.duration,
     budget: input.budget,
     message: input.message,
+    referred_by: input.referredBy || null,
   };
   let { data, error } = await sb
     .from('advertising_enquiries')
@@ -141,11 +158,26 @@ async function submitAdvertisingEnquiry(body) {
     .select('id, created_at')
     .single();
 
-  // Older DBs without preferred_term: fall back to prefixing the message.
+  // Older DBs without preferred_term / referred_by: fall back gracefully.
+  if (error && /referred_by/i.test(error.message || '')) {
+    delete insertPayload.referred_by;
+    const withoutRef = await sb
+      .from('advertising_enquiries')
+      .insert(insertPayload)
+      .select('id, created_at')
+      .single();
+    data = withoutRef.data;
+    error = withoutRef.error;
+  }
+
   if (error && /preferred_term/i.test(error.message || '')) {
     const messageWithTerm = input.duration
-      ? 'Preferred term: ' + input.duration + (input.message ? '\n\n' + input.message : '')
-      : input.message;
+      ? 'Preferred term: ' +
+        input.duration +
+        (input.referredBy ? '\nReferred by: ' + input.referredBy : '') +
+        (input.message ? '\n\n' + input.message : '')
+      : (input.referredBy ? 'Referred by: ' + input.referredBy + (input.message ? '\n\n' : '') : '') +
+        (input.message || '');
     const legacy = await sb
       .from('advertising_enquiries')
       .insert({
@@ -155,7 +187,7 @@ async function submitAdvertisingEnquiry(body) {
         section: input.section,
         package_name: input.packageName,
         budget: input.budget,
-        message: messageWithTerm,
+        message: messageWithTerm || null,
       })
       .select('id, created_at')
       .single();
@@ -172,7 +204,34 @@ async function submitAdvertisingEnquiry(body) {
     throw new Error(error.message || 'Could not save enquiry');
   }
 
-  const subject = 'Advertising enquiry — ' + input.packageName + ' (' + input.section + ')';
+  if (input.referredBy) {
+    try {
+      const partner = await getActivePartnerByCode(input.referredBy);
+      if (partner) {
+        await recordAffiliateAttribution({
+          partner,
+          email: input.email,
+          source: 'enquiry',
+          context: 'advertising_enquiry',
+          metadata: {
+            section: input.section,
+            package: input.packageName,
+            enquiry_id: data && data.id,
+          },
+        });
+      }
+    } catch (e) {
+      console.error('[advertising-enquiry-attribution]', e.message || e);
+    }
+  }
+
+  const subject =
+    'Advertising enquiry — ' +
+    input.packageName +
+    ' (' +
+    input.section +
+    ')' +
+    (input.referredBy ? ' · ref ' + input.referredBy : '');
 
   try {
     await sendViaResend({
@@ -184,6 +243,20 @@ async function submitAdvertisingEnquiry(body) {
     });
   } catch (e) {
     console.error('[advertising-enquiry-staff-email]', e.message || e);
+  }
+
+  if (input.referredBy && PARTNERSHIPS_EMAIL && PARTNERSHIPS_EMAIL !== ROSIE_EMAIL) {
+    try {
+      await sendViaResend({
+        to: PARTNERSHIPS_EMAIL,
+        subject,
+        html: buildStaffEmailHtml(input),
+        replyTo: input.email,
+        skipAllowlist: true,
+      });
+    } catch (e) {
+      console.error('[advertising-enquiry-partnerships-email]', e.message || e);
+    }
   }
 
   try {

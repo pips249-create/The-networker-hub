@@ -656,6 +656,9 @@
         message: 'Quick enquiry from advertising page.',
         website: String(fd.get('website') || '').trim(),
       };
+      if (window.HubAffiliate && typeof window.HubAffiliate.withCode === 'function') {
+        window.HubAffiliate.withCode(payload);
+      }
 
       if (submitBtn) {
         submitBtn.disabled = true;
@@ -747,6 +750,9 @@
         message: String(fd.get('message') || '').trim(),
         website: String(fd.get('website') || '').trim(),
       };
+      if (window.HubAffiliate && typeof window.HubAffiliate.withCode === 'function') {
+        window.HubAffiliate.withCode(payload);
+      }
 
       if (submitBtn) {
         submitBtn.disabled = true;

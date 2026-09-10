@@ -136,13 +136,18 @@ async function createOpportunityListingCheckoutSession(opts) {
 
   const totals = calculateOpportunityListingTotals(1);
   const title = String(opts.opportunityTitle || 'Business opportunity').trim();
-  const metadata = {
-    opportunity_id: opportunityId,
-    checkout_type: 'opportunity_listing',
-    billing_mode: 'subscription',
-    listing_months: '1',
-    owner_email: String(opts.email || '').toLowerCase(),
-  };
+  const { withAffiliateMetadata } = require('./affiliate-programme');
+  const metadata = withAffiliateMetadata(
+    {
+      opportunity_id: opportunityId,
+      checkout_type: 'opportunity_listing',
+      billing_mode: 'subscription',
+      listing_months: '1',
+      owner_email: String(opts.email || '').toLowerCase(),
+      amount_ex_vat_pence: String(totals.monthlyExVatPence || totals.subtotalExVatPence || 2500),
+    },
+    opts.affiliateCode
+  );
 
   return stripe.checkout.sessions.create({
     mode: 'subscription',
@@ -194,17 +199,23 @@ async function createOpportunityPremiumCheckoutSession(opts) {
 
   const amountPence = 5500;
   const title = String(opts.opportunityTitle || 'Business opportunity').trim();
+  const { withAffiliateMetadata } = require('./affiliate-programme');
+  const metadata = withAffiliateMetadata(
+    {
+      opportunity_id: opportunityId,
+      checkout_type: 'opportunity_premium',
+      featured_amount_pence: String(amountPence),
+      amount_ex_vat_pence: String(amountPence),
+      owner_email: String(opts.email || '').toLowerCase(),
+    },
+    opts.affiliateCode
+  );
 
   return stripe.checkout.sessions.create({
     mode: 'payment',
     customer_email: opts.email,
     client_reference_id: 'opp-premium-' + opportunityId,
-    metadata: {
-      opportunity_id: opportunityId,
-      checkout_type: 'opportunity_premium',
-      featured_amount_pence: String(amountPence),
-      owner_email: String(opts.email || '').toLowerCase(),
-    },
+    metadata,
     success_url: opts.successUrl,
     cancel_url: opts.cancelUrl,
     line_items: [
@@ -454,19 +465,21 @@ async function createCityPartnerCheckoutSession(opts) {
     amount_ex_vat_pence: String(quote.subtotalExVatPence),
     vat_pence: String(quote.vatPence),
   };
+  const { withAffiliateMetadata } = require('./affiliate-programme');
+  const metaWithAffiliate = withAffiliateMetadata(metadata, opts.affiliateCode);
 
   const sessionParams = {
     mode: prepaid ? 'payment' : 'subscription',
     customer_email: opts.email,
     client_reference_id: 'city-partner-' + cities.join('-').slice(0, 100),
-    metadata,
+    metadata: metaWithAffiliate,
     success_url: opts.successUrl,
     cancel_url: opts.cancelUrl,
     line_items: lineItems,
   };
 
   if (!prepaid) {
-    sessionParams.subscription_data = { metadata };
+    sessionParams.subscription_data = { metadata: metaWithAffiliate };
   }
 
   return stripe.checkout.sessions.create(sessionParams);
@@ -543,19 +556,21 @@ async function createCountyPartnerCheckoutSession(opts) {
     amount_ex_vat_pence: String(quote.subtotalExVatPence),
     vat_pence: String(quote.vatPence),
   };
+  const { withAffiliateMetadata } = require('./affiliate-programme');
+  const metaWithAffiliate = withAffiliateMetadata(metadata, opts.affiliateCode);
 
   const sessionParams = {
     mode: prepaid ? 'payment' : 'subscription',
     customer_email: opts.email,
     client_reference_id: 'county-partner-' + counties.join('-').slice(0, 100),
-    metadata,
+    metadata: metaWithAffiliate,
     success_url: opts.successUrl,
     cancel_url: opts.cancelUrl,
     line_items: lineItems,
   };
 
   if (!prepaid) {
-    sessionParams.subscription_data = { metadata };
+    sessionParams.subscription_data = { metadata: metaWithAffiliate };
   }
 
   return stripe.checkout.sessions.create(sessionParams);

@@ -335,6 +335,9 @@
   var activeCitySlug = '';
   var activeCityName = '';
   var applyFiltersToken = 0;
+  /** How many industry chips (besides All) to show before “Show more”. */
+  var INDUSTRY_COLLAPSE_VISIBLE = 5;
+  var industryChipsExpanded = false;
 
   var INDUSTRY_CHIPS = (
     catalog && catalog.CATEGORY_OPTIONS
@@ -454,6 +457,7 @@
     els.industryRow = document.getElementById('filter-industry-row');
     els.industryEmpty = document.getElementById('filter-industry-empty');
     els.industryLabel = document.getElementById('filter-industry-label');
+    els.industryMore = document.getElementById('opp-industry-more');
     els.activeFiltersBar = document.getElementById('opp-active-filters-bar');
     els.activeFilters = document.getElementById('opp-active-filters');
     els.viewGrid = document.getElementById('opp-view-grid');
@@ -2054,6 +2058,7 @@
       });
     });
     updateIndustryChipCounts();
+    bindIndustryMore();
   }
 
   function visibleListingCountForAllChip() {
@@ -2081,6 +2086,7 @@
       var keepVisible = !id || activeCategories.indexOf(id) !== -1 || chip.classList.contains('is-active');
       chip.classList.toggle('is-zero', isZero);
       chip.hidden = isZero && !keepVisible;
+      chip.classList.remove('is-industry-overflow');
       if (id && !chip.hidden) anyCategoryVisible = true;
     });
     if (els.industryEmpty) els.industryEmpty.hidden = anyCategoryVisible;
@@ -2095,6 +2101,86 @@
         chip.hidden = false;
       });
     }
+    syncIndustryCollapse();
+  }
+
+  function chipCountValue(chip) {
+    var countEl = chip.querySelector('.event-type-chip-count');
+    if (!countEl) return 0;
+    var n = parseInt(String(countEl.textContent || '').replace(/[^\d]/g, ''), 10);
+    return isFinite(n) ? n : 0;
+  }
+
+  function syncIndustryCollapse() {
+    if (!els.industryChipsRoot) return;
+    var moreBtn = els.industryMore;
+    var industryChips = Array.prototype.slice.call(
+      els.industryChipsRoot.querySelectorAll('.event-type-chip[data-category]')
+    ).filter(function (chip) {
+      var id = chip.getAttribute('data-category') || '';
+      return Boolean(id) && (!chip.classList.contains('is-zero') || chip.classList.contains('is-active'));
+    });
+
+    if (industryChipsExpanded || industryChips.length <= INDUSTRY_COLLAPSE_VISIBLE) {
+      industryChips.forEach(function (chip) {
+        chip.classList.remove('is-industry-overflow');
+        if (!chip.classList.contains('is-zero') || chip.classList.contains('is-active')) {
+          chip.hidden = false;
+        }
+      });
+      if (moreBtn) {
+        if (industryChips.length <= INDUSTRY_COLLAPSE_VISIBLE) {
+          moreBtn.hidden = true;
+          moreBtn.setAttribute('aria-expanded', 'false');
+          industryChipsExpanded = false;
+        } else {
+          moreBtn.hidden = false;
+          moreBtn.setAttribute('aria-expanded', 'true');
+          moreBtn.textContent = 'Show fewer';
+        }
+      }
+      if (els.industryRow) els.industryRow.classList.toggle('is-industry-expanded', industryChipsExpanded);
+      return;
+    }
+
+    var selected = [];
+    var rest = [];
+    industryChips.forEach(function (chip) {
+      if (chip.classList.contains('is-active')) selected.push(chip);
+      else rest.push(chip);
+    });
+    rest.sort(function (a, b) {
+      return chipCountValue(b) - chipCountValue(a);
+    });
+    var slotsLeft = Math.max(0, INDUSTRY_COLLAPSE_VISIBLE - selected.length);
+    var keep = selected.concat(rest.slice(0, slotsLeft));
+    var keepSet = {};
+    keep.forEach(function (chip) {
+      keepSet[chip.getAttribute('data-category') || ''] = true;
+    });
+    var overflow = 0;
+    industryChips.forEach(function (chip) {
+      var id = chip.getAttribute('data-category') || '';
+      var show = Boolean(keepSet[id]);
+      chip.classList.toggle('is-industry-overflow', !show);
+      chip.hidden = !show;
+      if (!show) overflow += 1;
+    });
+    if (moreBtn) {
+      moreBtn.hidden = overflow <= 0;
+      moreBtn.setAttribute('aria-expanded', 'false');
+      moreBtn.textContent = overflow === 1 ? '1 more' : overflow + ' more';
+    }
+    if (els.industryRow) els.industryRow.classList.remove('is-industry-expanded');
+  }
+
+  function bindIndustryMore() {
+    if (!els.industryMore || els.industryMore.dataset.bound) return;
+    els.industryMore.dataset.bound = '1';
+    els.industryMore.addEventListener('click', function () {
+      industryChipsExpanded = !industryChipsExpanded;
+      syncIndustryCollapse();
+    });
   }
 
   function updateTypeChipCounts() {
@@ -2122,7 +2208,13 @@
     var n = 0;
     if (activeCommitments.length) n += 1;
     if (hasOpenDayOnly) n += 1;
-    if (minInvest != null || maxInvest != null) n += 1;
+    if (
+      (activeInvestTier && activeInvestTier !== 'all') ||
+      minInvest != null ||
+      maxInvest != null
+    ) {
+      n += 1;
+    }
     return n;
   }
 
@@ -2723,6 +2815,7 @@
     activeTypes = [];
     activeInvestTier = 'all';
     activeCategories = [];
+    industryChipsExpanded = false;
     activeCommitments = [];
     hasOpenDayOnly = false;
     activeLocationTag = '';

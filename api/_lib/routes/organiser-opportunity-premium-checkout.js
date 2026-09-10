@@ -7,6 +7,11 @@ const {
 } = require('../stripe-checkout');
 const { assertPremiumSpotlightSlotAvailable } = require('../opportunity-premium-slots');
 const { isNetworkMarketingType } = require('../opportunity-moderation');
+const {
+  affiliateCodeFromBody,
+  getActivePartnerByCode,
+  recordAffiliateAttribution,
+} = require('../affiliate-programme');
 
 function parseBody(req) {
   let body = req.body;
@@ -114,10 +119,24 @@ module.exports = async function handler(req, res) {
 
     const siteUrl = siteBaseUrl();
     const title = encodeURIComponent(opportunity.title || '');
+    const affiliateCode = affiliateCodeFromBody(body);
+    if (affiliateCode) {
+      const partner = await getActivePartnerByCode(affiliateCode);
+      if (partner) {
+        await recordAffiliateAttribution({
+          partner,
+          email: auth.session.email,
+          source: 'checkout',
+          context: 'opportunity_premium',
+          metadata: { opportunity_id: opportunityId },
+        });
+      }
+    }
     const checkoutSession = await createOpportunityPremiumCheckoutSession({
       email: auth.session.email,
       opportunityId,
       opportunityTitle: opportunity.title,
+      affiliateCode,
       successUrl:
         siteUrl +
         '/organiser/opportunity-premium-success?session_id={CHECKOUT_SESSION_ID}&id=' +

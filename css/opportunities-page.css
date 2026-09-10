@@ -2294,23 +2294,30 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
   justify-content: center;
 }
 
-.opp-browse-page .filter-bar-primary .filter-opp-invest-group {
+.opp-browse-page .filter-bar-primary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.opp-browse-page .filter-opp-more-grid .filter-opp-invest-group {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  align-self: flex-start;
   flex-wrap: nowrap;
   gap: 0;
   min-width: 0;
   max-width: 100%;
+  width: 100%;
 }
 
-.opp-browse-page .filter-bar-primary .filter-opp-invest-group > legend {
+.opp-browse-page .filter-opp-more-grid .filter-opp-invest-group > legend {
   width: 100%;
   margin: 0 0 6px;
 }
 
-.opp-browse-page .filter-bar-primary .filter-opp-invest-group > .filter-format-pills {
+.opp-browse-page .filter-opp-more-grid .filter-opp-invest-group > .filter-format-pills {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
@@ -2349,9 +2356,9 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
   width: 100%;
 }
 
-/* Type before Investment (shared filter bar puts type chips after primary by default). */
+/* Format first, then Industry (collapsed), then More panel. */
 .opp-browse-page .filter-bar-cluster > .filter-bar-row-types--primary {
-  order: 1;
+  order: 0;
   flex: 1 1 100%;
   width: 100%;
   max-width: 100%;
@@ -2361,7 +2368,7 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
 }
 
 .opp-browse-page .filter-bar-cluster > .filter-bar-row-industries {
-  order: 0;
+  order: 1;
   flex: 1 1 100%;
   width: 100%;
   max-width: 100%;
@@ -2375,6 +2382,10 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
   width: 100%;
   max-width: 100%;
   min-width: 0;
+}
+
+.opp-browse-page .filter-bar-cluster > .filter-bar-primary[hidden] {
+  display: none !important;
 }
 
 .opp-browse-page .filter-bar-cluster > .filter-opp-more-panel:not([hidden]) {
@@ -2579,26 +2590,15 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
 }
 
 .opp-browse-page .filter-mobile-sheet-body .filter-bar-primary {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 8px;
-  width: 100%;
-  order: 10;
-  margin: 0;
-  padding: 14px 0 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.18);
+  display: none !important;
 }
 
-.opp-browse-page .filter-mobile-sheet-body .filter-bar-primary::before {
-  content: 'Investment';
-  display: block;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.78);
-  margin: 0 0 2px;
+.opp-browse-page .filter-mobile-sheet-body .filter-opp-format-wrap .filter-more-toggle {
+  display: none !important;
+}
+
+.opp-browse-page .filter-mobile-sheet-body .filter-industry-more {
+  min-height: 44px;
 }
 
 .opp-browse-page .filter-mobile-sheet-body .filter-bar-row-industries::before {
@@ -2632,9 +2632,11 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
   display: flex !important;
   flex-direction: column;
   gap: 14px;
-  padding-top: 0;
-  border-top: none;
+  order: 10;
+  margin: 0;
   margin-top: 0;
+  padding: 14px 0 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.18);
 }
 
 .opp-browse-page .filter-mobile-sheet-body .filter-more-toggle {
@@ -2727,12 +2729,12 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
   display: none;
 }
 
-/* Industry chips wrap so every sector is visible — no sideways scroll */
+/* Industry: one compact row by default; expand for the rest */
 .opp-browse-page .filter-bar-row-industries .event-type-chips-wrap {
   position: relative;
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: center;
   gap: 8px;
   width: 100%;
   max-width: 100%;
@@ -2746,17 +2748,17 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
 
 .opp-browse-page .filter-bar-row-industries .filter-bar-chip-label--inline {
   flex: 0 0 auto;
-  width: 100%;
-  margin: 0 0 2px;
+  width: auto;
+  margin: 0;
 }
 
 .opp-browse-page .filter-bar-row-industries .event-type-chips {
   display: flex;
-  flex: 1 1 100%;
+  flex: 1 1 auto;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  width: 100%;
+  width: auto;
   max-width: 100%;
   min-width: 0;
   overflow: visible;
@@ -2769,6 +2771,58 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
 
 .opp-browse-page .filter-bar-row-industries .event-type-chip {
   flex: 0 0 auto;
+}
+
+.opp-browse-page .filter-bar-row-industries .event-type-chip.is-industry-overflow,
+.opp-browse-page .filter-bar-row-industries .event-type-chip[hidden] {
+  display: none !important;
+}
+
+.opp-browse-page .filter-industry-more {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1.5px dashed rgba(255, 255, 255, 0.45);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.92);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+}
+
+.opp-browse-page .filter-industry-more:hover,
+.opp-browse-page .filter-industry-more:focus-visible {
+  border-color: var(--opp-gold-border, #c9a227);
+  color: #fff;
+  outline: none;
+}
+
+.opp-browse-page .filter-industry-more[hidden] {
+  display: none !important;
+}
+
+.opp-browse-page .filter-opp-format-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.opp-browse-page .filter-opp-format-wrap .event-type-chips {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.opp-browse-page .filter-opp-format-wrap .filter-more-toggle {
+  flex: 0 0 auto;
+  margin-left: auto;
 }
 
 .opp-browse-page .filter-opp-open-day-toggle {

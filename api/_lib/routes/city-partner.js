@@ -24,6 +24,11 @@ const {
   handleCityPartnerCheckoutCompleted,
 } = require('../city-partner-subscriptions');
 const { enforceRateLimit } = require('../rate-limit');
+const {
+  affiliateCodeFromBody,
+  getActivePartnerByCode,
+  recordAffiliateAttribution,
+} = require('../affiliate-programme');
 
 function parseBody(req) {
   let body = req.body;
@@ -180,11 +185,26 @@ module.exports = async function handler(req, res) {
       // Create missing slot rows before Stripe redirect so reservation cannot no-op.
       await ensureCityPartnerSlotRows(sb, validation.cities);
 
+      const affiliateCode = affiliateCodeFromBody(body);
+      if (affiliateCode) {
+        const partner = await getActivePartnerByCode(affiliateCode);
+        if (partner) {
+          await recordAffiliateAttribution({
+            partner,
+            email,
+            source: 'checkout',
+            context: 'city_partner',
+            metadata: { cities: validation.cities },
+          });
+        }
+      }
+
       const base = siteBaseUrl();
       const session = await createCityPartnerCheckoutSession({
         email,
         cities: validation.cities,
         termMonths: term,
+        affiliateCode,
         successUrl:
           base +
           '/advertising?city-partner=success&session_id={CHECKOUT_SESSION_ID}',

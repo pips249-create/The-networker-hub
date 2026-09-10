@@ -21,6 +21,7 @@ const routes = {
   'organiser-rankings': require('./_lib/routes/cron-organiser-rankings'),
   'roster-emails': require('./_lib/routes/cron-roster-emails'),
   'group-updates': require('./_lib/routes/cron-group-updates'),
+  'affiliate-commissions': require('./_lib/routes/cron-affiliate-commissions'),
 };
 
 module.exports = wrapHandler(async function handler(req, res) {

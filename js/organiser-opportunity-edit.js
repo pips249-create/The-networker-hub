@@ -1240,6 +1240,10 @@
     }
     setPayStripeButtonLoading(true);
     const checkoutBody = { opportunityId: opportunityId };
+    if (window.HubAffiliate && typeof window.HubAffiliate.getCode === 'function') {
+      const affCode = window.HubAffiliate.getCode();
+      if (affCode) checkoutBody.affiliateCode = affCode;
+    }
     const approval = String(
       (currentOpportunity && currentOpportunity.approvalStatus) || ''
     ).trim();

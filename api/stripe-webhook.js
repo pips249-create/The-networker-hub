@@ -20,6 +20,11 @@ const { handleConnectionsCreditsCheckout } = require('./_lib/connections-credits
 const { handleChargeRefunded } = require('./_lib/stripe-refund-webhook');
 const { handleInvoicePaid, handleSponsorshipCheckoutCompleted } = require('./_lib/stripe-revenue');
 const {
+  maybeCreateCommissionFromCheckoutSession,
+  maybeCreateCommissionFromInvoice,
+  clawbackAffiliateCommissionFromCharge,
+} = require('./_lib/affiliate-commissions');
+const {
   handleCityPartnerCheckoutCompleted,
   handleCityPartnerSubscriptionUpdated,
   handleCityPartnerSubscriptionDeleted,
@@ -198,6 +203,9 @@ async function handler(req, res) {
       const registrationResult = await runHandler('registration', () =>
         handleCheckoutSessionCompleted(session)
       );
+      const affiliateResult = await runHandler('affiliate_commission', () =>
+        maybeCreateCommissionFromCheckoutSession(session)
+      );
       res.statusCode = 200;
       return res.end(
         JSON.stringify({
@@ -212,6 +220,7 @@ async function handler(req, res) {
           groupUpdateCreditsResult,
           connectionsCreditsResult,
           registrationResult,
+          affiliateResult,
         })
       );
     }
@@ -265,8 +274,13 @@ async function handler(req, res) {
       const listingResult = await runHandler('listing_invoice_paid', () =>
         handleOpportunityListingInvoicePaid(invoice)
       );
+      const affiliateResult = await runHandler('affiliate_commission_invoice', () =>
+        maybeCreateCommissionFromInvoice(invoice)
+      );
       res.statusCode = 200;
-      return res.end(JSON.stringify({ ok: true, revenueResult, membershipResult, listingResult }));
+      return res.end(
+        JSON.stringify({ ok: true, revenueResult, membershipResult, listingResult, affiliateResult })
+      );
     }
 
     if (event.type === 'invoice.payment_failed') {
@@ -281,8 +295,11 @@ async function handler(req, res) {
     if (event.type === 'charge.refunded') {
       const charge = event.data.object || {};
       const refundResult = await runHandler('charge_refunded', () => handleChargeRefunded(charge));
+      const affiliateClawbackResult = await runHandler('affiliate_clawback', () =>
+        clawbackAffiliateCommissionFromCharge(charge)
+      );
       res.statusCode = 200;
-      return res.end(JSON.stringify({ ok: true, refundResult }));
+      return res.end(JSON.stringify({ ok: true, refundResult, affiliateClawbackResult }));
     }
 
     res.statusCode = 200;

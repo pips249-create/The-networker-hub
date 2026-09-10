@@ -15748,9 +15748,14 @@
               'Listing claimed — opening Stripe to start your £25/month + VAT subscription…',
               false
             );
+            const listingCheckoutBody = { opportunityId: opportunity.id };
+            if (window.HubAffiliate && typeof window.HubAffiliate.getCode === 'function') {
+              const affCode = window.HubAffiliate.getCode();
+              if (affCode) listingCheckoutBody.affiliateCode = affCode;
+            }
             const checkout = await api('/api/organiser/opportunity-listing-checkout', {
               method: 'POST',
-              body: JSON.stringify({ opportunityId: opportunity.id }),
+              body: JSON.stringify(listingCheckoutBody),
             });
             if (checkout.ok && checkout.data && checkout.data.url) {
               location.href = checkout.data.url;
@@ -16251,9 +16256,14 @@
       btn.textContent = 'Opening checkout…';
     }
     try {
+      const listingBody = { opportunityId: opportunityId };
+      if (window.HubAffiliate && typeof window.HubAffiliate.getCode === 'function') {
+        const affCode = window.HubAffiliate.getCode();
+        if (affCode) listingBody.affiliateCode = affCode;
+      }
       const { ok, data } = await api('/api/organiser/opportunity-listing-checkout', {
         method: 'POST',
-        body: JSON.stringify({ opportunityId: opportunityId }),
+        body: JSON.stringify(listingBody),
       });
       if (ok && data.ok && data.url) {
         location.href = data.url;
@@ -16407,9 +16417,14 @@
       btn.textContent = 'Opening checkout…';
     }
     try {
+      const premiumBody = { opportunityId: opportunityId };
+      if (window.HubAffiliate && typeof window.HubAffiliate.getCode === 'function') {
+        const affCode = window.HubAffiliate.getCode();
+        if (affCode) premiumBody.affiliateCode = affCode;
+      }
       const { ok, data } = await api('/api/organiser/opportunity-premium-checkout', {
         method: 'POST',
-        body: JSON.stringify({ opportunityId: opportunityId }),
+        body: JSON.stringify(premiumBody),
       });
       if (ok && data.ok && data.url) {
         location.href = data.url;

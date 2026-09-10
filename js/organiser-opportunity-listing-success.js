@@ -348,7 +348,11 @@
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ opportunityId: id }),
+        body: JSON.stringify(
+          window.HubAffiliate && typeof window.HubAffiliate.withCode === 'function'
+            ? window.HubAffiliate.withCode({ opportunityId: id })
+            : { opportunityId: id }
+        ),
       })
         .then(function (r) {
           return r.json();

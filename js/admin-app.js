@@ -219,6 +219,10 @@
       title: 'Ads & sponsors',
       subtitle: 'Manage sponsor logos and advert placements',
     },
+    'referral-partners': {
+      title: 'Referral partners',
+      subtitle: 'Partner programme codes and links — opportunity listings and sponsorship referrals',
+    },
     emails: {
       title: 'Email templates',
       subtitle: 'Edit transactional copy in Supabase · test sends need Resend configured',
@@ -504,7 +508,7 @@
     platform: ['system', 'analytics', 'international', 'rankings', 'accounts', 'support'],
     listings: ['cleanup', 'opportunities', 'moderation'],
     revenue: ['financials', 'revenue-mix', 'revenue-targets'],
-    crm: ['sales-kit', 'spotlight', 'sponsorship'],
+    crm: ['sales-kit', 'spotlight', 'sponsorship', 'referral-partners'],
     comms: ['email', 'social', 'social-founding'],
   };
   var HEALTH_STALE_MS = 5 * 60 * 1000;
@@ -1768,7 +1772,7 @@
       return 'Progress against your sales targets.';
     }
     if (route === 'sponsorship') {
-      if (hash.indexOf('partners') !== -1 || hash.indexOf('home-partners') !== -1 || hash.indexOf('city-partners') !== -1 || hash.indexOf('county-partners') !== -1 || hash.indexOf('opportunity-county-partners') !== -1 || hash.indexOf('industry-partners') !== -1) {
+      if (hash.indexOf('home-partners') !== -1 || hash.indexOf('city-partners') !== -1 || hash.indexOf('county-partners') !== -1 || hash.indexOf('opportunity-county-partners') !== -1 || hash.indexOf('industry-partners') !== -1 || hash === 'sponsorship/partners') {
         return 'Home, city, county, and industry partner placements.';
       }
       if (hash.indexOf('enquir') !== -1) return 'Advertising enquiries from the public form.';
@@ -1776,6 +1780,9 @@
         return 'Outbound sponsor clicks by brand and placement — for monthly packs.';
       }
       return 'Choose an ad placement to edit creatives and booking windows.';
+    }
+    if (route === 'referral-partners') {
+      return 'Invite-only partner programme — codes, links, and 20% referral commission tracking.';
     }
     return null;
   }
@@ -9633,6 +9640,15 @@
 
   function renderSponsorshipHub(fullHash) {
     var hash = String(fullHash || 'sponsorship');
+    if (
+      hash === 'sponsorship/referral-partners' ||
+      hash === 'sponsorship/affiliate-partners' ||
+      hash.indexOf('sponsorship/referral-partners') === 0 ||
+      hash.indexOf('sponsorship/affiliate-partners') === 0
+    ) {
+      location.replace('#referral-partners');
+      return;
+    }
     var topTabs = ['placements', 'partners', 'enquiries', 'report'];
     var sponsorshipPaths = {
       pathFor: function (t) {
@@ -10775,6 +10791,9 @@
             '<td class="px-3 py-2 text-sm whitespace-nowrap">' +
             esc(row.budget || '—') +
             '</td>' +
+            '<td class="px-3 py-2 text-sm whitespace-nowrap font-mono text-xs">' +
+            esc(row.referredBy || '—') +
+            '</td>' +
             '<td class="px-3 py-2 text-sm text-slate-600 max-w-xs">' +
             messageCell +
             '</td></tr>'
@@ -10785,7 +10804,7 @@
       bodyEl.innerHTML =
         '<table class="min-w-full text-left">' +
         '<thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">' +
-        '<tr><th class="px-3 py-2">Submitted</th><th class="px-3 py-2">Company</th><th class="px-3 py-2">Email</th><th class="px-3 py-2">Section / package</th><th class="px-3 py-2">Preferred term</th><th class="px-3 py-2">Budget</th><th class="px-3 py-2">Message</th></tr>' +
+        '<tr><th class="px-3 py-2">Submitted</th><th class="px-3 py-2">Company</th><th class="px-3 py-2">Email</th><th class="px-3 py-2">Section / package</th><th class="px-3 py-2">Preferred term</th><th class="px-3 py-2">Budget</th><th class="px-3 py-2">Ref</th><th class="px-3 py-2">Message</th></tr>' +
         '</thead><tbody>' +
         rows +
         '</tbody></table>';
@@ -10835,6 +10854,343 @@
       '</section></div>';
 
     initAdvertisingEnquiriesAdmin();
+  }
+
+  function renderAffiliatePartnersPage() {
+    main.innerHTML =
+      '<div class="space-y-6">' +
+      '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">' +
+      '<div><h3 class="font-bold text-brand-900">Referral partners</h3>' +
+      '<p class="text-xs text-slate-500 mt-1">Invite-only partner programme — 20% on opportunity listings and sponsorship. Links use <code class="text-[11px]">?ref=CODE</code> (30-day cookie). Inbox: partnerships@thenetworkeruk.com</p></div>' +
+      '<form id="affiliate-partner-form" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 items-end">' +
+      '<label class="text-xs font-semibold text-slate-600">Code<input id="aff-code" name="code" required maxlength="32" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono uppercase" placeholder="JOE" /></label>' +
+      '<label class="text-xs font-semibold text-slate-600">Display name<input id="aff-name" name="displayName" required class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Joe Bloggs" /></label>' +
+      '<label class="text-xs font-semibold text-slate-600">Email<input id="aff-email" name="email" type="email" required class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="joe@example.com" /></label>' +
+      '<button type="submit" class="rounded-lg bg-brand-800 text-white text-sm font-semibold px-4 py-2.5 hover:bg-brand-900">Create partner</button>' +
+      '</form>' +
+      '<p id="affiliate-partners-status" class="text-sm text-slate-500">Loading partners…</p>' +
+      '<div id="affiliate-partners-body" class="overflow-x-auto"></div>' +
+      '</section>' +
+      '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">' +
+      '<div class="flex flex-wrap items-start justify-between gap-3">' +
+      '<div><h3 class="font-bold text-brand-900">Commissions ledger</h3>' +
+      '<p class="text-xs text-slate-500 mt-1">Auto-created from Stripe when a referred sale pays. Hold = 14-day refund window, then Eligible for the next monthly payout.</p></div>' +
+      '<button type="button" id="aff-promote-eligible" class="text-xs font-semibold text-brand-700 hover:underline">Run hold → eligible now</button>' +
+      '</div>' +
+      '<form id="affiliate-manual-form" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-5 items-end rounded-lg border border-slate-100 bg-slate-50 p-3">' +
+      '<label class="text-xs font-semibold text-slate-600">Partner code<input id="aff-manual-code" required maxlength="32" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono uppercase" placeholder="JOE" /></label>' +
+      '<label class="text-xs font-semibold text-slate-600">Product<select id="aff-manual-product" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"><option value="hub_sponsorship">Sponsorship / ads</option><option value="opportunity_listing">Opportunity listing</option><option value="opportunity_premium">Featured boost</option></select></label>' +
+      '<label class="text-xs font-semibold text-slate-600">Sale ex-VAT (£)<input id="aff-manual-amount" required inputmode="decimal" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="2000" /></label>' +
+      '<label class="text-xs font-semibold text-slate-600">Customer email<input id="aff-manual-email" type="email" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="optional" /></label>' +
+      '<button type="submit" class="rounded-lg border border-brand-800 text-brand-900 text-sm font-semibold px-4 py-2.5 hover:bg-brand-50">Attribute sale</button>' +
+      '</form>' +
+      '<p id="affiliate-commissions-status" class="text-sm text-slate-500">Loading commissions…</p>' +
+      '<div id="affiliate-commissions-body" class="overflow-x-auto"></div>' +
+      '</section></div>';
+
+    initAffiliatePartnersAdmin();
+  }
+
+  function initAffiliatePartnersAdmin() {
+    var statusEl = document.getElementById('affiliate-partners-status');
+    var bodyEl = document.getElementById('affiliate-partners-body');
+    var form = document.getElementById('affiliate-partner-form');
+    var commissionsStatusEl = document.getElementById('affiliate-commissions-status');
+    var commissionsBodyEl = document.getElementById('affiliate-commissions-body');
+    var manualForm = document.getElementById('affiliate-manual-form');
+    var promoteBtn = document.getElementById('aff-promote-eligible');
+
+    function setStatus(el, text, tone) {
+      if (!el) return;
+      el.textContent = text || '';
+      el.className =
+        'text-sm ' +
+        (tone === 'error'
+          ? 'text-red-700 font-semibold'
+          : tone === 'ok'
+            ? 'text-emerald-700 font-semibold'
+            : 'text-slate-500');
+    }
+
+    function money(pence) {
+      var n = Number(pence) || 0;
+      var sign = n < 0 ? '-' : '';
+      return sign + '£' + (Math.abs(n) / 100).toFixed(2);
+    }
+
+    function copyText(value) {
+      var text = String(value || '');
+      if (!text) return;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).catch(function () {});
+        return;
+      }
+      window.prompt('Copy link', text);
+    }
+
+    function renderPartners(data) {
+      if (!bodyEl) return;
+      var partners = Array.isArray(data.partners) ? data.partners : [];
+      if (!partners.length) {
+        bodyEl.innerHTML =
+          '<p class="text-sm text-slate-500">No partners yet. Create a code above, then send their advertising + list links from partnerships@.</p>';
+        return;
+      }
+      var rows = partners
+        .map(function (row) {
+          var active = row.active !== false;
+          return (
+            '<tr class="border-t border-slate-100 align-top">' +
+            '<td class="px-3 py-2 text-sm font-mono font-semibold">' +
+            esc(row.code || '') +
+            '</td>' +
+            '<td class="px-3 py-2 text-sm"><strong>' +
+            esc(row.displayName || '—') +
+            '</strong><br><a class="text-brand-700 hover:underline break-all" href="mailto:' +
+            attrEsc(row.email || '') +
+            '">' +
+            esc(row.email || '—') +
+            '</a></td>' +
+            '<td class="px-3 py-2 text-sm">' +
+            (active
+              ? '<span class="text-emerald-700 font-semibold">Active</span>'
+              : '<span class="text-slate-500">Inactive</span>') +
+            '</td>' +
+            '<td class="px-3 py-2 text-xs space-y-1">' +
+            '<button type="button" class="block text-left text-brand-700 hover:underline" data-aff-copy="' +
+            attrEsc(row.linkAdvertising || '') +
+            '">Copy advertising link</button>' +
+            '<button type="button" class="block text-left text-brand-700 hover:underline" data-aff-copy="' +
+            attrEsc(row.linkOpportunityList || '') +
+            '">Copy list-an-opportunity link</button>' +
+            '</td>' +
+            '<td class="px-3 py-2 text-sm">' +
+            '<button type="button" class="text-xs font-semibold ' +
+            (active ? 'text-amber-800' : 'text-emerald-800') +
+            ' hover:underline" data-aff-toggle="' +
+            attrEsc(row.id || '') +
+            '" data-aff-active="' +
+            (active ? 'false' : 'true') +
+            '">' +
+            (active ? 'Deactivate' : 'Activate') +
+            '</button></td></tr>'
+          );
+        })
+        .join('');
+      bodyEl.innerHTML =
+        '<table class="min-w-full text-left">' +
+        '<thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">' +
+        '<tr><th class="px-3 py-2">Code</th><th class="px-3 py-2">Partner</th><th class="px-3 py-2">Status</th><th class="px-3 py-2">Links</th><th class="px-3 py-2"></th></tr>' +
+        '</thead><tbody>' +
+        rows +
+        '</tbody></table>';
+
+      bodyEl.querySelectorAll('[data-aff-copy]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          copyText(btn.getAttribute('data-aff-copy'));
+          setStatus(statusEl, 'Link copied.', 'ok');
+        });
+      });
+      bodyEl.querySelectorAll('[data-aff-toggle]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var id = btn.getAttribute('data-aff-toggle');
+          var nextActive = btn.getAttribute('data-aff-active') === 'true';
+          adminPost('/api/admin/affiliate-partners', {
+            action: 'set_active',
+            id: id,
+            active: nextActive,
+          })
+            .then(function (res) {
+              if (!res || !res.ok) throw new Error((res && res.message) || res.error || 'update_failed');
+              return loadPartners();
+            })
+            .catch(function (err) {
+              setStatus(statusEl, (err && err.message) || 'Could not update partner', 'error');
+            });
+        });
+      });
+    }
+
+    function renderCommissions(data) {
+      if (!commissionsBodyEl) return;
+      var rowsData = Array.isArray(data.commissions) ? data.commissions : [];
+      if (!rowsData.length) {
+        commissionsBodyEl.innerHTML =
+          '<p class="text-sm text-slate-500">No commissions yet. They appear when a referred Stripe payment succeeds, or when you attribute a sale manually above.</p>';
+        return;
+      }
+      var rows = rowsData
+        .map(function (row) {
+          return (
+            '<tr class="border-t border-slate-100 align-top">' +
+            '<td class="px-3 py-2 text-sm whitespace-nowrap">' +
+            esc(formatAdminDateTime(row.paymentAt)) +
+            '</td>' +
+            '<td class="px-3 py-2 text-sm font-mono font-semibold">' +
+            esc(row.code || '—') +
+            '</td>' +
+            '<td class="px-3 py-2 text-sm">' +
+            esc(row.productLabel || row.productType || '—') +
+            '</td>' +
+            '<td class="px-3 py-2 text-sm whitespace-nowrap">' +
+            esc(money(row.saleNetExVatPence)) +
+            '</td>' +
+            '<td class="px-3 py-2 text-sm whitespace-nowrap font-semibold">' +
+            esc(money(row.commissionNetPence)) +
+            '</td>' +
+            '<td class="px-3 py-2 text-sm">' +
+            esc(row.status || '—') +
+            '</td>' +
+            '<td class="px-3 py-2 text-sm break-all">' +
+            esc(row.customerEmail || '—') +
+            '</td></tr>'
+          );
+        })
+        .join('');
+      commissionsBodyEl.innerHTML =
+        '<table class="min-w-full text-left">' +
+        '<thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">' +
+        '<tr><th class="px-3 py-2">Paid</th><th class="px-3 py-2">Code</th><th class="px-3 py-2">Product</th><th class="px-3 py-2">Sale</th><th class="px-3 py-2">Commission</th><th class="px-3 py-2">Status</th><th class="px-3 py-2">Customer</th></tr>' +
+        '</thead><tbody>' +
+        rows +
+        '</tbody></table>';
+    }
+
+    function loadPartners() {
+      return adminGet('/api/admin/affiliate-partners')
+        .then(function (data) {
+          if (!data || data.error) {
+            throw new Error((data && data.message) || data.error || 'partners_load_failed');
+          }
+          renderPartners(data);
+          var total = Number(data.total) || 0;
+          var active = Number(data.activeCount) || 0;
+          setStatus(
+            statusEl,
+            total
+              ? total + ' partner' + (total === 1 ? '' : 's') + ' · ' + active + ' active'
+              : 'No partners yet.',
+            'ok'
+          );
+          return data;
+        })
+        .catch(function (err) {
+          if (bodyEl) {
+            bodyEl.innerHTML =
+              '<p class="text-sm text-red-700">' +
+              esc((err && err.message) || 'Could not load partners') +
+              '</p>';
+          }
+          setStatus(statusEl, (err && err.message) || 'Could not load partners', 'error');
+        });
+    }
+
+    function loadCommissions() {
+      return adminGet('/api/admin/affiliate-partners?view=commissions&limit=100')
+        .then(function (data) {
+          if (!data || data.error) {
+            throw new Error((data && data.message) || data.error || 'commissions_load_failed');
+          }
+          renderCommissions(data);
+          setStatus(
+            commissionsStatusEl,
+            (Number(data.total) || 0) +
+              ' rows · ' +
+              (Number(data.hold) || 0) +
+              ' hold · ' +
+              (Number(data.eligible) || 0) +
+              ' eligible · ' +
+              (Number(data.paid) || 0) +
+              ' paid',
+            'ok'
+          );
+          return data;
+        })
+        .catch(function (err) {
+          if (commissionsBodyEl) {
+            commissionsBodyEl.innerHTML =
+              '<p class="text-sm text-red-700">' +
+              esc((err && err.message) || 'Could not load commissions') +
+              '</p>';
+          }
+          setStatus(
+            commissionsStatusEl,
+            (err && err.message) || 'Could not load commissions',
+            'error'
+          );
+        });
+    }
+
+    if (form) {
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var codeEl = document.getElementById('aff-code');
+        var nameEl = document.getElementById('aff-name');
+        var emailEl = document.getElementById('aff-email');
+        adminPost('/api/admin/affiliate-partners', {
+          action: 'create',
+          code: codeEl ? codeEl.value : '',
+          displayName: nameEl ? nameEl.value : '',
+          email: emailEl ? emailEl.value : '',
+        })
+          .then(function (res) {
+            if (!res || !res.ok) throw new Error((res && res.message) || res.error || 'create_failed');
+            form.reset();
+            setStatus(statusEl, 'Partner ' + ((res.partner && res.partner.code) || '') + ' created.', 'ok');
+            return loadPartners();
+          })
+          .catch(function (err) {
+            setStatus(statusEl, (err && err.message) || 'Could not create partner', 'error');
+          });
+      });
+    }
+
+    if (manualForm) {
+      manualForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        adminPost('/api/admin/affiliate-partners', {
+          action: 'manual_attribute',
+          code: (document.getElementById('aff-manual-code') || {}).value || '',
+          productType: (document.getElementById('aff-manual-product') || {}).value || '',
+          saleExVat: (document.getElementById('aff-manual-amount') || {}).value || '',
+          customerEmail: (document.getElementById('aff-manual-email') || {}).value || '',
+        })
+          .then(function (res) {
+            if (!res || !res.ok) throw new Error((res && res.message) || res.error || 'attribute_failed');
+            manualForm.reset();
+            setStatus(commissionsStatusEl, 'Commission attributed and partner emailed (if address on file).', 'ok');
+            return loadCommissions();
+          })
+          .catch(function (err) {
+            setStatus(commissionsStatusEl, (err && err.message) || 'Could not attribute sale', 'error');
+          });
+      });
+    }
+
+    if (promoteBtn) {
+      promoteBtn.addEventListener('click', function () {
+        promoteBtn.disabled = true;
+        adminPost('/api/admin/affiliate-partners', { action: 'promote_eligible' })
+          .then(function (res) {
+            if (!res || !res.ok) throw new Error((res && res.message) || res.error || 'promote_failed');
+            setStatus(
+              commissionsStatusEl,
+              'Promoted ' + (Number(res.promoted) || 0) + ' commission(s) to eligible.',
+              'ok'
+            );
+            return loadCommissions();
+          })
+          .catch(function (err) {
+            setStatus(commissionsStatusEl, (err && err.message) || 'Could not promote', 'error');
+          })
+          .finally(function () {
+            promoteBtn.disabled = false;
+          });
+      });
+    }
+
+    loadPartners();
+    loadCommissions();
   }
 
   function loadHtml2PdfLibrary() {
@@ -30685,6 +31041,10 @@
     featured: renderFeatured,
     support: renderSupportHub,
     sponsorship: renderSponsorshipHub,
+    'referral-partners': renderAffiliatePartnersPage,
+    'affiliate-partners': function () {
+      location.replace('#referral-partners');
+    },
     'event-health': function () {
       location.replace('#cleanup/issues');
     },

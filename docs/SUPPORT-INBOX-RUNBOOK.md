@@ -28,7 +28,8 @@
 - [ ] Escalate **Complaint** or **Privacy** subjects to Catherine same day
 - [ ] Log every **Complaint** in Command Centre → **Support → Complaints** (see `docs/COMPLAINTS-PROCEDURE.md`)
 
-**Sales / sponsorship enquiries** → forward or cc `rosie@thenetworkeruk.com`
+**Sales / sponsorship enquiries** → forward or cc `rosie@thenetworkeruk.com`  
+**Partner programme / affiliate referrals** → `partnerships@thenetworkeruk.com` (forwards to Catherine; see `docs/PARTNER-PROGRAMME.md`)
 
 ---
 

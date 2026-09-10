@@ -31,7 +31,7 @@
     <link rel="stylesheet" href="/css/hub.css?v=20260909listmenu1" />
     <link rel="stylesheet" href="/css/events-page.css?v=20260825sponsor2" />
     <link rel="stylesheet" href="/css/events-filter-bar.css?v=20260727sheet4" />
-    <link rel="stylesheet" href="/css/opportunities-page.css?v=20260910labelfix1" />
+    <link rel="stylesheet" href="/css/opportunities-page.css?v=20260910compact1" />
     <link rel="stylesheet" href="/css/hub-mobile.css?v=20260909listmenu1" />
     <link rel="icon" href="/favicon.ico?v=20260823uk3" sizes="any" />
     <link rel="icon" href="/assets/favicon.svg?v=20260823uk3" type="image/svg+xml" />
@@ -60,7 +60,7 @@
   </head>
   <body class="events-page opportunities-page opp-browse-page">
     <div id="hub-site-nav"></div>
-    <script src="/js/site-nav.js?v=20260909listellipsis1" data-root="/" data-page="opportunities"></script>
+    <script src="/js/site-nav.js?v=20260910aff1" data-root="/" data-page="opportunities"></script>
 
     <main class="opp-browse" id="browse" tabindex="-1">
     <section class="opp-browse-hero" aria-labelledby="opp-hero-heading">
@@ -208,9 +208,15 @@
             <div class="filter-bar-row filter-bar-row-bottom" id="filter-bar-advanced">
               <div class="filter-bar-cluster">
                 <div class="filter-bar-row filter-bar-row-types filter-bar-row-types--nested filter-bar-row-types--primary">
-                  <div class="event-type-chips-wrap">
+                  <div class="event-type-chips-wrap filter-opp-format-wrap">
                     <span class="filter-bar-chip-label filter-bar-chip-label--inline">Format</span>
                     <nav class="event-type-chips" id="opp-type-chips" aria-label="Opportunity format"></nav>
+                    <button type="button" class="filter-more-toggle" id="filter-more-toggle" aria-expanded="false" aria-controls="filter-more-panel">
+                      <svg class="filter-more-toggle-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+                      More filters
+                      <span class="filter-more-badge" id="filter-more-badge" hidden aria-hidden="true"></span>
+                      <span class="filter-more-chevron" aria-hidden="true">▾</span>
+                    </button>
                   </div>
                 </div>
                 <div class="filter-bar-row filter-bar-row-industries filter-bar-row-types--nested" id="filter-industry-row">
@@ -218,59 +224,12 @@
                     <span class="filter-bar-chip-label filter-bar-chip-label--inline" id="filter-industry-label">Industry</span>
                     <p class="filter-industry-empty" id="filter-industry-empty" hidden>No industries match your other filters.</p>
                     <nav class="event-type-chips" id="opp-industry-chips" aria-label="Industry"></nav>
+                    <button type="button" class="filter-industry-more" id="opp-industry-more" hidden aria-expanded="false">
+                      Show more
+                    </button>
                   </div>
                 </div>
-                <div class="filter-bar-primary">
-                  <fieldset class="filter-format-group filter-format-group--prominent filter-format-group--inline filter-opp-invest-group" id="filter-opp-invest-group">
-                    <legend class="filter-bar-chip-label">Investment</legend>
-                    <div class="filter-format-pills">
-                      <label class="filter-format-pill">
-                        <input type="radio" name="invest-tier" data-invest-tier="all" checked>
-                        <span class="filter-format-pill-face">All budgets</span>
-                      </label>
-                      <label class="filter-format-pill">
-                        <input type="radio" name="invest-tier" data-invest-tier="low-invest">
-                        <span class="filter-format-pill-face">Under £2.5k</span>
-                      </label>
-                      <label class="filter-format-pill">
-                        <input type="radio" name="invest-tier" data-invest-tier="mid-invest">
-                        <span class="filter-format-pill-face">£2.5k–£10k</span>
-                      </label>
-                      <label class="filter-format-pill">
-                        <input type="radio" name="invest-tier" data-invest-tier="high-invest">
-                        <span class="filter-format-pill-face">£10k+</span>
-                      </label>
-                      <label class="filter-format-pill">
-                        <input type="radio" name="invest-tier" data-invest-tier="on-request">
-                        <span class="filter-format-pill-face">On request</span>
-                      </label>
-                      <label class="filter-format-pill">
-                        <input type="radio" name="invest-tier" data-invest-tier="custom">
-                        <span class="filter-format-pill-face">Custom</span>
-                      </label>
-                    </div>
-                    <div class="filter-price-range filter-price-range--inline filter-opp-custom-invest" id="filter-opp-custom-invest" hidden>
-                      <div class="filter-price-range-controls">
-                        <div class="filter-price-bounds">
-                          <label class="filter-price-bound">
-                            <span class="filter-price-bound-label">Min (£)</span>
-                            <input type="number" id="opp-min-invest" class="filter-price-bound-input" min="0" step="100" inputmode="numeric" placeholder="Any" aria-label="Minimum investment in pounds">
-                          </label>
-                          <label class="filter-price-bound">
-                            <span class="filter-price-bound-label">Max (£)</span>
-                            <input type="number" id="opp-max-invest" class="filter-price-bound-input" min="0" step="100" inputmode="numeric" placeholder="Any" aria-label="Maximum investment in pounds">
-                          </label>
-                        </div>
-                      </div>
-                    </div>
-                  </fieldset>
-                  <button type="button" class="filter-more-toggle" id="filter-more-toggle" aria-expanded="false" aria-controls="filter-more-panel">
-                    <svg class="filter-more-toggle-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
-                    More filters
-                    <span class="filter-more-badge" id="filter-more-badge" hidden aria-hidden="true"></span>
-                    <span class="filter-more-chevron" aria-hidden="true">▾</span>
-                  </button>
-                </div>
+                <div class="filter-bar-primary" hidden aria-hidden="true"></div>
                 <div class="filter-more-panel filter-opp-more-panel" id="filter-more-panel" hidden>
                   <div class="filter-opp-more-grid">
                     <div class="filter-opp-category-wrap" hidden>
@@ -296,6 +255,49 @@
                         </select>
                       </label>
                     </div>
+                    <fieldset class="filter-format-group filter-format-group--prominent filter-format-group--inline filter-opp-invest-group" id="filter-opp-invest-group">
+                      <legend class="filter-bar-chip-label">Investment</legend>
+                      <div class="filter-format-pills">
+                        <label class="filter-format-pill">
+                          <input type="radio" name="invest-tier" data-invest-tier="all" checked>
+                          <span class="filter-format-pill-face">All budgets</span>
+                        </label>
+                        <label class="filter-format-pill">
+                          <input type="radio" name="invest-tier" data-invest-tier="low-invest">
+                          <span class="filter-format-pill-face">Under £2.5k</span>
+                        </label>
+                        <label class="filter-format-pill">
+                          <input type="radio" name="invest-tier" data-invest-tier="mid-invest">
+                          <span class="filter-format-pill-face">£2.5k–£10k</span>
+                        </label>
+                        <label class="filter-format-pill">
+                          <input type="radio" name="invest-tier" data-invest-tier="high-invest">
+                          <span class="filter-format-pill-face">£10k+</span>
+                        </label>
+                        <label class="filter-format-pill">
+                          <input type="radio" name="invest-tier" data-invest-tier="on-request">
+                          <span class="filter-format-pill-face">On request</span>
+                        </label>
+                        <label class="filter-format-pill">
+                          <input type="radio" name="invest-tier" data-invest-tier="custom">
+                          <span class="filter-format-pill-face">Custom</span>
+                        </label>
+                      </div>
+                      <div class="filter-price-range filter-price-range--inline filter-opp-custom-invest" id="filter-opp-custom-invest" hidden>
+                        <div class="filter-price-range-controls">
+                          <div class="filter-price-bounds">
+                            <label class="filter-price-bound">
+                              <span class="filter-price-bound-label">Min (£)</span>
+                              <input type="number" id="opp-min-invest" class="filter-price-bound-input" min="0" step="100" inputmode="numeric" placeholder="Any" aria-label="Minimum investment in pounds">
+                            </label>
+                            <label class="filter-price-bound">
+                              <span class="filter-price-bound-label">Max (£)</span>
+                              <input type="number" id="opp-max-invest" class="filter-price-bound-input" min="0" step="100" inputmode="numeric" placeholder="Any" aria-label="Maximum investment in pounds">
+                            </label>
+                          </div>
+                        </div>
+                      </div>
+                    </fieldset>
                     <fieldset class="filter-format-group filter-format-group--inline filter-opp-commitment-group">
                       <legend class="filter-bar-chip-label">Commitment</legend>
                       <div class="filter-format-pills">
@@ -706,7 +708,7 @@
     <script src="/js/hub-spotlight-carousel.js?v=20260807fix3" defer></script>
     <script src="/js/browse-analytics-client.js?v=20260728browse2" defer></script>
     <script src="/js/hub-search-match.js?v=20260829search1" defer></script>
-    <script src="/js/opportunities-page.js?v=20260909indmulti2" defer></script>
+    <script src="/js/opportunities-page.js?v=20260910compact1" defer></script>
     <script src="/js/opportunities-map.js?v=20260827invest1" defer></script>
   </body>
 </html>

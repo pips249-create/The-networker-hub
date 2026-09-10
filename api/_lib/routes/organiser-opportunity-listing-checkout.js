@@ -7,6 +7,11 @@ const {
 } = require('../stripe-checkout');
 const { calculateOpportunityListingTotals } = require('../opportunity-listing-pricing');
 const { validateFcaDisclaimer } = require('../opportunity-moderation');
+const {
+  affiliateCodeFromBody,
+  getActivePartnerByCode,
+  recordAffiliateAttribution,
+} = require('../affiliate-programme');
 
 function parseBody(req) {
   let body = req.body;
@@ -103,10 +108,24 @@ module.exports = async function handler(req, res) {
     const siteUrl = siteBaseUrl();
     const title = encodeURIComponent(opportunity.title || '');
     const totals = calculateOpportunityListingTotals(1);
+    const affiliateCode = affiliateCodeFromBody(body);
+    if (affiliateCode) {
+      const partner = await getActivePartnerByCode(affiliateCode);
+      if (partner) {
+        await recordAffiliateAttribution({
+          partner,
+          email: auth.session.email,
+          source: 'checkout',
+          context: 'opportunity_listing',
+          metadata: { opportunity_id: opportunityId },
+        });
+      }
+    }
     const checkoutSession = await createOpportunityListingCheckoutSession({
       email: auth.session.email,
       opportunityId,
       opportunityTitle: opportunity.title,
+      affiliateCode,
       successUrl:
         siteUrl +
         '/organiser/opportunity-listing-success?session_id={CHECKOUT_SESSION_ID}&id=' +

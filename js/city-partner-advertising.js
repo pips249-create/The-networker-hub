@@ -480,7 +480,11 @@
       fetch('/api/city-partner', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email, cities: slugs, termMonths: term }),
+        body: JSON.stringify(
+          window.HubAffiliate && typeof window.HubAffiliate.withCode === 'function'
+            ? window.HubAffiliate.withCode({ email: email, cities: slugs, termMonths: term })
+            : { email: email, cities: slugs, termMonths: term }
+        ),
       })
         .then(readJsonResponse)
         .then(function (result) {

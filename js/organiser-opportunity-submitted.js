@@ -57,11 +57,16 @@
     if (premiumError) premiumError.hidden = true;
 
     try {
+      var premiumBody = { opportunityId: id };
+      if (window.HubAffiliate && typeof window.HubAffiliate.getCode === 'function') {
+        var affCode = window.HubAffiliate.getCode();
+        if (affCode) premiumBody.affiliateCode = affCode;
+      }
       var res = await fetch('/api/organiser/opportunity-premium-checkout', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ opportunityId: id }),
+        body: JSON.stringify(premiumBody),
       });
       var data = {};
       try {

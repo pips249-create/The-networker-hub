@@ -21,6 +21,11 @@ const {
   ensureCountyPartnerSlotRows,
   handleCountyPartnerCheckoutCompleted,
 } = require('../county-partner-subscriptions');
+const {
+  affiliateCodeFromBody,
+  getActivePartnerByCode,
+  recordAffiliateAttribution,
+} = require('../affiliate-programme');
 
 function parseBody(req) {
   let body = req.body;
@@ -140,11 +145,26 @@ module.exports = async function handler(req, res) {
 
       await ensureCountyPartnerSlotRows(sb, validation.counties);
 
+      const affiliateCode = affiliateCodeFromBody(body);
+      if (affiliateCode) {
+        const partner = await getActivePartnerByCode(affiliateCode);
+        if (partner) {
+          await recordAffiliateAttribution({
+            partner,
+            email,
+            source: 'checkout',
+            context: 'county_partner',
+            metadata: { counties: validation.counties },
+          });
+        }
+      }
+
       const base = siteBaseUrl();
       const session = await createCountyPartnerCheckoutSession({
         email,
         counties: validation.counties,
         termMonths: term,
+        affiliateCode,
         successUrl:
           base + '/advertising?county-partner=success&session_id={CHECKOUT_SESSION_ID}',
         cancelUrl: base + '/advertising?county-partner=cancelled',
