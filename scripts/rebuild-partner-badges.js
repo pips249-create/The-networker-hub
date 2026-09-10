@@ -48,9 +48,9 @@ async function main() {
   <title>The Networker UK Referral Partner</title>
   <rect width="960" height="360" rx="24" fill="#b992be"/>
   <image xlink:href="${uriLight}" x="40" y="72" width="420" height="195" preserveAspectRatio="xMidYMid meet"/>
-  <line x1="500" y1="88" x2="500" y2="272" stroke="#1c2040" stroke-opacity="0.28" stroke-width="2"/>
-  <text x="540" y="150" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" letter-spacing="0.12em" fill="#1c2040">REFERRAL</text>
-  <text x="540" y="230" font-family="Georgia, 'Times New Roman', serif" font-size="58" fill="#faf6ee">Partner</text>
+  <line x1="500" y1="88" x2="500" y2="272" stroke="#1c2040" stroke-opacity="0.35" stroke-width="2"/>
+  <text x="540" y="148" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="600" letter-spacing="0.04em" fill="#faf6ee">Referral</text>
+  <text x="540" y="228" font-family="Georgia, 'Times New Roman', serif" font-size="58" fill="#faf6ee">Partner</text>
 </svg>
 `;
 
@@ -74,11 +74,12 @@ async function main() {
 </svg>
 `;
 
-  // lockup PNG/SVG are hand-authored — do not overwrite
-  // fs.writeFileSync(path.join(ASSETS, 'logo-networker-uk-partner-lockup.svg'), lockup);
+  const lockupPath = path.join(ASSETS, 'logo-networker-uk-partner-lockup.svg');
+  fs.writeFileSync(lockupPath, lockup);
   fs.writeFileSync(path.join(ASSETS, 'logo-networker-uk-partner-light.svg'), lightBadge);
   fs.writeFileSync(path.join(ASSETS, 'logo-networker-uk-partner-dark.svg'), darkBadge);
-  console.log('wrote partner badge SVGs');
+  await sharp(Buffer.from(lockup)).resize(1920).png().toFile(path.join(ASSETS, 'logo-networker-uk-partner-lockup.png'));
+  console.log('wrote partner badge SVGs + lockup PNG');
 }
 
 main().catch((err) => {
