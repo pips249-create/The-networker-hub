@@ -187,6 +187,7 @@ const TRANSACTIONAL_EMAIL_SLUGS = new Set([
   'refund_processed',
   'booking_cancelled',
   'event_cancelled',
+  'account_welcome',
 ]);
 
 const { escapeHtml } = require('./event-refund-policy');

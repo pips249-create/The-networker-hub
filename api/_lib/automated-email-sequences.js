@@ -3,7 +3,8 @@
  * Resumes 5 September 2026 (Europe/London) unless overridden.
  *
  * Does NOT block transactional mail triggered by user actions
- * (booking confirmations, password reset, claim invites, etc.).
+ * (account welcome, booking confirmations, password reset, claim invites, etc.).
+ * Those send from auth/checkout/organiser routes — not from the nurture crons below.
  *
  * Override:
  *   AUTOMATED_EMAIL_SEQUENCES_FORCE_ON=true
