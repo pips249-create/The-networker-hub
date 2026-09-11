@@ -358,15 +358,21 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
   const tiers = eventTickets.map((t) =>
     ticketRowToTier(t, t._registrationCount != null ? t._registrationCount : 0)
   );
-  const publicTiers = tiers.filter(
-    (t) => !t.isGuestVisit && !t.isAlumni && !t.isMembersOnly
-  );
+  // Guest visits count as public access (not a closed members-only listing).
+  // Listing price still prefers general-admission sale tiers so Free guest +
+  // paid Standard does not collapse the card to "Free".
+  const publicAccessTiers = tiers.filter((t) => !t.isAlumni && !t.isMembersOnly);
+  const publicSaleTiers = publicAccessTiers.filter((t) => !t.isGuestVisit);
   const membersOnlyTierCount = tiers.filter((t) => t.isMembersOnly).length;
-  const pricedTiers = publicTiers.length ? publicTiers : [];
+  const pricedTiers = publicSaleTiers.length
+    ? publicSaleTiers.slice()
+    : publicAccessTiers.length
+      ? publicAccessTiers.slice()
+      : [];
   const attendanceMode = normalizeAttendanceMode(row.attendance_mode);
   const isMembersOnlyEvent =
     membersOnlyTierCount > 0 &&
-    pricedTiers.length === 0 &&
+    publicAccessTiers.length === 0 &&
     attendanceMode !== 'category_exclusivity';
   pricedTiers.sort((a, b) => {
     if (a.soldOut !== b.soldOut) return a.soldOut ? 1 : -1;

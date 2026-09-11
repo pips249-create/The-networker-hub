@@ -2354,8 +2354,9 @@
     const list = tickets || [];
     if (!list.length) return false;
     const hasMember = list.some(isMembersOnlyTicket);
+    // Guest visits count as public access — not a closed members-only event.
     const hasPublic = list.some(function (t) {
-      return !isMembersOnlyTicket(t) && !isGuestVisitTicket(t) && !isAlumniTicket(t);
+      return !isMembersOnlyTicket(t) && !isAlumniTicket(t);
     });
     return hasMember && !hasPublic;
   }
@@ -5024,13 +5025,13 @@
     const publicTiers = (tickets || []).filter(function (t) {
       return (
         t &&
-        !isGuestVisitTicket(t) &&
         !isAlumniTicket(t) &&
         String(t.visibility || '').toLowerCase() !== 'members_only' &&
         !t.categoryExclusivity &&
         !/application/i.test(String(t.ticketType || ''))
       );
     });
+    // Guest visits count as public access for pay-how / mode inference.
     const hasPublic = publicTiers.length > 0;
     const hasMembersOnlyTier = (tickets || []).some(isMembersOnlyTicket);
 

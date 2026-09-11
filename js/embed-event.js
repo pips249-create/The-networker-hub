@@ -75,9 +75,9 @@
     var tickets = Array.isArray(ev.tickets) ? ev.tickets.slice() : [];
     tickets = tickets.filter(function (t) {
       if (!t) return false;
-      if (t.isMembersOnly || t.isGuestVisit || t.isAlumni) return false;
+      if (t.isMembersOnly || t.isAlumni) return false;
       var type = String(t.ticketType || t.ticket_type || '').toLowerCase();
-      if (type === 'guest-visit' || type === 'alumni') return false;
+      if (type === 'alumni') return false;
       if (/application/i.test(type) || /application/i.test(String(t.name || ''))) return false;
       return true;
     });

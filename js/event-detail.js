@@ -3483,7 +3483,6 @@
   function showCheckoutDetails(show) {
     const panel = document.getElementById('tickets');
     const form = document.getElementById('checkout-details-form');
-    const secureFoot = document.getElementById('ticket-secure-foot');
     if (panel) {
       panel.classList.toggle('show-checkout', show);
       if (show) panel.classList.remove('show-application');
@@ -3494,7 +3493,7 @@
     }
     const freeDataSharingNote = document.getElementById('checkout-free-data-sharing-note');
     if (freeDataSharingNote && !show) freeDataSharingNote.hidden = true;
-    if (secureFoot && !show) secureFoot.hidden = false;
+    // Paid/free visibility for #ticket-secure-foot is owned by syncPaidCheckoutPanel.
     if (!show) setCheckoutSubmitting(false);
     refreshTicketJumpVisibility();
   }
@@ -4265,6 +4264,8 @@
       'is-sales-pending',
       'is-sales-scheduled',
       'is-approval-mode',
+      'is-free-booking',
+      'is-qty-locked',
       'show-application',
       'show-checkout'
     );
@@ -5097,9 +5098,24 @@
       if (qtyValue) qtyValue.textContent = String(qty);
       qtyDown.disabled = qty <= 1 || bundleSelected || passSelected;
       qtyUp.disabled = qty >= maxQty || bundleSelected || passSelected;
-      if (qtyRow) qtyRow.hidden = bundleSelected || passSelected;
+
+      // Free bookings: no fee breakdown / "Secure checkout" until payment is required.
+      // Guest visits (and other qty-locked free tiers) also hide the quantity stepper.
+      const isFreeBooking = !(totals.total > 0);
+      const freeVisitSelected = Boolean(evNow && showGuestVisitSelected(evNow));
+      const hideFreeQty =
+        isFreeBooking && (freeVisitSelected || maxQty <= 1);
+      const summaryEl = document.querySelector('#tickets .summary');
+      if (summaryEl) summaryEl.hidden = isFreeBooking;
+      if (qtyRow) {
+        qtyRow.hidden = bundleSelected || passSelected || hideFreeQty;
+      }
+
       if (qtyHint) {
-        if (bundleSelected) {
+        if (hideFreeQty) {
+          qtyHint.hidden = true;
+          qtyHint.textContent = '';
+        } else if (bundleSelected) {
           qtyHint.hidden = false;
           qtyHint.textContent = 'Booking all remaining dates in one checkout.';
         } else if (passSelected) {
@@ -5116,8 +5132,15 @@
           qtyHint.textContent = '';
         }
       }
-      syncPaidCheckoutPanel(label, billQty, totals.total);
+
+      // Panel state resets checkout form / classes first — restore free-booking UI after.
       if (evNow) applyTicketPanelState(evNow);
+      const panel = document.getElementById('tickets');
+      if (panel) {
+        panel.classList.toggle('is-free-booking', isFreeBooking);
+        panel.classList.toggle('is-qty-locked', hideFreeQty);
+      }
+      syncPaidCheckoutPanel(label, billQty, totals.total);
     }
 
     if (bundleCheck && !bundleCheck.dataset.bound) {

@@ -146,7 +146,7 @@ function buildEventAvailability(ev, ticketSoldOut) {
 function buildEventOffers(ev, url) {
   const validFrom = isoDateValue(ev.ticketSalesOpensAt);
   const publicTickets = Array.isArray(ev.tickets)
-    ? ev.tickets.filter((t) => t && !t.isGuestVisit && !t.isAlumni)
+    ? ev.tickets.filter((t) => t && !t.isAlumni)
     : [];
 
   if (publicTickets.length > 1) {
