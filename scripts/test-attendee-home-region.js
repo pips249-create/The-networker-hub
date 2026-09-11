@@ -20,6 +20,8 @@ function assert(label, cond) {
 assert('normalises manchester slug', normalizeHomeRegionSlug(' Manchester ') === 'manchester');
 assert('rejects unknown slug', normalizeHomeRegionSlug('narnia') === '');
 assert('label for cheshire', homeRegionLabel('cheshire') === 'Cheshire');
+assert('label for profile-only county', homeRegionLabel('norfolk') === 'Norfolk');
+assert('accepts profile-only slug', normalizeHomeRegionSlug('devon') === 'devon');
 assert('hasHomeBase with slug', hasHomeBase({ homeRegionSlug: 'kent' }));
 assert('hasHomeBase with legacy location', hasHomeBase({ location: 'York' }));
 assert(

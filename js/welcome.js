@@ -111,8 +111,9 @@
       var meta = regions[slug];
       if (!meta) return;
       if (meta.areaType === 'London area') groups.london.slugs.push(slug);
-      else if (meta.areaType === 'county') groups.county.slugs.push(slug);
-      else groups.city.slugs.push(slug);
+      else if (meta.areaType === 'county') {
+        /* Counties come from HUB_UK_PROFILE_COUNTY_GROUPS below */
+      } else groups.city.slugs.push(slug);
     });
 
     function sortSlugs(slugs) {
@@ -122,7 +123,7 @@
     }
 
     var html = '<option value="">Select your area</option>';
-    ['london', 'city', 'county'].forEach(function (key) {
+    ['london', 'city'].forEach(function (key) {
       var slugs = sortSlugs(groups[key].slugs);
       if (!slugs.length) return;
       html += '<optgroup label="' + groups[key].label.replace(/"/g, '&quot;') + '">';
@@ -141,13 +142,55 @@
       html += '</optgroup>';
     });
 
+    var countyGroups = window.HUB_UK_PROFILE_COUNTY_GROUPS || [];
+    countyGroups.forEach(function (group) {
+      var names = (group.names || []).slice().sort(function (a, b) {
+        return String(a).localeCompare(String(b));
+      });
+      if (!names.length) return;
+      html += '<optgroup label="' + String(group.nation || 'Counties').replace(/"/g, '&quot;') + '">';
+      names.forEach(function (name) {
+        var slug = String(name || '')
+          .trim()
+          .toLowerCase()
+          .replace(/['’]/g, '')
+          .replace(/&/g, 'and')
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '');
+        var sel = slug === selectedSlug ? ' selected' : '';
+        html +=
+          '<option value="' +
+          slug.replace(/"/g, '&quot;') +
+          '"' +
+          sel +
+          '>' +
+          String(name).replace(/</g, '&lt;') +
+          '</option>';
+      });
+      html += '</optgroup>';
+    });
+
     select.innerHTML = html;
   }
 
   function resolvedHomeRegionSlug(profile) {
     if (profile && profile.homeRegionSlug) return String(profile.homeRegionSlug).trim();
     if (window.HUB_resolveNetworkingRegionSlug && profile && profile.location) {
-      return window.HUB_resolveNetworkingRegionSlug(profile.location) || '';
+      var fromNetworking = window.HUB_resolveNetworkingRegionSlug(profile.location) || '';
+      if (fromNetworking) return fromNetworking;
+    }
+    if (window.HUB_getProfileCounty && profile && profile.location) {
+      var slugify = function (name) {
+        return String(name || '')
+          .trim()
+          .toLowerCase()
+          .replace(/['’]/g, '')
+          .replace(/&/g, 'and')
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '');
+      };
+      var want = slugify(profile.location);
+      if (window.HUB_getProfileCounty(want)) return want;
     }
     return '';
   }
@@ -309,6 +352,13 @@
           showMessage('Could not reach the server. Try again.', 'error');
           if (submitBtn) submitBtn.disabled = false;
         });
+    });
+  }
+
+  var skipProfile = document.getElementById('welcome-profile-skip');
+  if (skipProfile) {
+    skipProfile.addEventListener('click', function () {
+      finishAndGo();
     });
   }
 
