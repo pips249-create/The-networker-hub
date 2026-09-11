@@ -11,10 +11,10 @@
 .hubert-launcher {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
   border: 0;
-  border-radius: 999px;
-  padding: 6px 14px 6px 6px;
+  border-radius: 50%;
+  padding: 6px;
   background: linear-gradient(135deg, #c8b4f0 0%, #7ec8f0 100%);
   color: #2d2340;
   box-shadow: 0 8px 24px rgba(91, 47, 153, 0.26);
@@ -43,9 +43,7 @@
 }
 
 .hubert-launcher-label {
-  font-size: 0.875rem;
-  font-weight: 700;
-  letter-spacing: 0.01em;
+  display: none;
 }
 
 .hubert-panel {
@@ -344,15 +342,6 @@ body.opp-enquire-jump-active .hubert-launcher-icon {
 }
 
 @media (max-width: 640px) {
-  .hubert-launcher-label {
-    display: none;
-  }
-
-  .hubert-launcher {
-    padding: 6px;
-    border-radius: 50%;
-  }
-
   .hubert-launcher-icon {
     width: 48px;
     height: 48px;

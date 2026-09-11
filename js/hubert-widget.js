@@ -72,7 +72,6 @@
     '<img class="hubert-launcher-icon" src="' +
     href('assets/hubert-icon.png') +
     '" alt="" width="52" height="52">' +
-    '<span class="hubert-launcher-label">Hubert</span>' +
     '</button>' +
     '<div class="hubert-panel" id="hubert-panel" role="dialog" aria-labelledby="hubert-panel-title" hidden>' +
     '<header class="hubert-panel-head">' +
