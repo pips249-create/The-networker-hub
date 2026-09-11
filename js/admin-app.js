@@ -5937,43 +5937,22 @@
         '</p>'
       : '<p class="text-xs text-slate-500">Logged when visitors accept analytics cookies and use search or filters on Events, Organisers, or Opportunities.</p>';
 
-    var regionRows = browse.topRegions || [];
     var sourceRows = browse.bySource || [];
-    var regionBlock =
-      regionRows.length || sourceRows.length
-        ? '<div class="grid sm:grid-cols-2 gap-4">' +
-          '<div><h4 class="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">Top regions</h4>' +
-          (regionRows.length
-            ? '<ul class="text-sm space-y-1">' +
-              regionRows
-                .map(
-                  (r) =>
-                    '<li class="flex justify-between gap-2"><span>' +
-                    esc(r.region) +
-                    '</span><span class="text-slate-500">' +
-                    esc(String(r.count)) +
-                    '</span></li>'
-                )
-                .join('') +
-              '</ul>'
-            : '<p class="text-sm text-slate-400">No region-matched searches yet.</p>') +
-          '</div><div><h4 class="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">By browse page</h4>' +
-          (sourceRows.length
-            ? '<ul class="text-sm space-y-1">' +
-              sourceRows
-                .map(
-                  (r) =>
-                    '<li class="flex justify-between gap-2"><span>' +
-                    esc(String(r.source || '').replace(/_/g, ' ')) +
-                    '</span><span class="text-slate-500">' +
-                    esc(String(r.count)) +
-                    '</span></li>'
-                )
-                .join('') +
-              '</ul>'
-            : '<p class="text-sm text-slate-400">No source breakdown yet.</p>') +
-          '</div></div>'
-        : '';
+    var regionBlock = sourceRows.length
+      ? '<div><h4 class="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">By browse page</h4>' +
+        '<ul class="text-sm space-y-1">' +
+        sourceRows
+          .map(
+            (r) =>
+              '<li class="flex justify-between gap-2"><span>' +
+              esc(String(r.source || '').replace(/_/g, ' ')) +
+              '</span><span class="text-slate-500">' +
+              esc(String(r.count)) +
+              '</span></li>'
+          )
+          .join('') +
+        '</ul></div>'
+      : '';
 
     return (
       '<section class="bg-white rounded-xl border border-slate-200 p-4 lg:p-5 shadow-sm space-y-4">' +
@@ -6015,11 +5994,34 @@
       '</div>' +
       searchNote +
       regionBlock +
-      '<div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">' +
-      '<div class="rounded-xl border border-slate-200 p-4"><h4 class="text-sm font-bold text-brand-900 mb-1">Top event searches</h4>' +
-      '<p class="text-xs text-slate-500 mb-3">Free-text queries on /events</p>' +
-      renderDemandRankList(browse.topQueries || [], 'query', 'count', 'No search terms logged in this period yet.') +
+      '<div class="grid gap-5 md:grid-cols-2 xl:grid-cols-4">' +
+      '<div class="rounded-xl border border-slate-200 p-4"><h4 class="text-sm font-bold text-brand-900 mb-1">Top cities</h4>' +
+      '<p class="text-xs text-slate-500 mb-3">From location filters, postcodes, and city landings (Events, Organisers, Opportunities)</p>' +
+      renderDemandRankList(browse.topCities || [], 'name', 'count', 'No city-level search intent in this period yet.') +
       '</div>' +
+      '<div class="rounded-xl border border-slate-200 p-4"><h4 class="text-sm font-bold text-brand-900 mb-1">Top counties</h4>' +
+      '<p class="text-xs text-slate-500 mb-3">County landings and area names matched to a county slug</p>' +
+      renderDemandRankList(browse.topCounties || [], 'name', 'count', 'No county-level search intent in this period yet.') +
+      '</div>' +
+      '<div class="rounded-xl border border-slate-200 p-4"><h4 class="text-sm font-bold text-brand-900 mb-1">Opportunity industries</h4>' +
+      '<p class="text-xs text-slate-500 mb-3">Industry filters on /opportunities</p>' +
+      renderDemandRankList(
+        browse.topOpportunityIndustries || [],
+        'label',
+        'count',
+        'No opportunity industry filters in this period yet.'
+      ) +
+      '</div>' +
+      '<div class="rounded-xl border border-slate-200 p-4"><h4 class="text-sm font-bold text-brand-900 mb-1">Other search words</h4>' +
+      '<p class="text-xs text-slate-500 mb-3">Free-text terms (not cities/counties/postcodes) logged more than 3 times</p>' +
+      renderDemandRankList(
+        browse.otherSearchTerms || [],
+        'term',
+        'count',
+        'No repeated free-text terms yet (need more than 3 searches each).'
+      ) +
+      '</div></div>' +
+      '<div class="grid gap-5 md:grid-cols-2 xl:grid-cols-2">' +
       '<div class="rounded-xl border border-slate-200 p-4"><h4 class="text-sm font-bold text-brand-900 mb-1">Zero-result searches</h4>' +
       '<p class="text-xs text-slate-500 mb-3">Demand with no matching inventory — seed an organiser or event here next</p>' +
       renderDemandRankList(
@@ -6036,15 +6038,16 @@
           '</div>'
         : '') +
       '</div>' +
-      '<div class="rounded-xl border border-slate-200 p-4"><h4 class="text-sm font-bold text-brand-900 mb-1">Locations searched</h4>' +
-      '<p class="text-xs text-slate-500 mb-3">Postcode / area filter text</p>' +
+      '<div class="rounded-xl border border-slate-200 p-4"><h4 class="text-sm font-bold text-brand-900 mb-1">Raw location text</h4>' +
+      '<p class="text-xs text-slate-500 mb-3">Exact postcode / area strings typed in the location box</p>' +
       renderDemandRankList(
         browse.topLocations || [],
         'location',
         'count',
         'No location filters logged in this period yet.'
       ) +
-      '</div>' +
+      '</div></div>' +
+      '<div class="grid gap-5 md:grid-cols-2 xl:grid-cols-3">' +
       '<div class="rounded-xl border border-slate-200 p-4"><h4 class="text-sm font-bold text-brand-900 mb-1">Most saved events</h4>' +
       '<p class="text-xs text-slate-500 mb-3">Attendee favourites</p>' +
       renderDemandRankList(favs.topEvents || [], 'title', 'saves', 'No event favourites in this period yet.') +
@@ -6109,14 +6112,23 @@
   function exportDemandSearchesCsv(data) {
     var browse = (data && data.browseSearches) || {};
     var rows = [['type', 'term', 'count']];
-    (browse.topQueries || []).forEach(function (row) {
-      rows.push(['top_search', row.query || '', row.count || 0]);
+    (browse.topCities || []).forEach(function (row) {
+      rows.push(['city', row.name || row.slug || '', row.count || 0]);
+    });
+    (browse.topCounties || []).forEach(function (row) {
+      rows.push(['county', row.name || row.slug || '', row.count || 0]);
+    });
+    (browse.topOpportunityIndustries || []).forEach(function (row) {
+      rows.push(['opportunity_industry', row.label || row.industry || '', row.count || 0]);
+    });
+    (browse.otherSearchTerms || []).forEach(function (row) {
+      rows.push(['other_term', row.term || '', row.count || 0]);
     });
     (browse.zeroResultQueries || []).forEach(function (row) {
       rows.push(['zero_result', row.query || '', row.count || 0]);
     });
     (browse.topLocations || []).forEach(function (row) {
-      rows.push(['location', row.location || '', row.count || 0]);
+      rows.push(['location_raw', row.location || '', row.count || 0]);
     });
     if (rows.length === 1) {
       window.alert('No search terms to export for this period yet.');
