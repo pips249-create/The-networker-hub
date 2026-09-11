@@ -3,7 +3,8 @@
  * Resumes 5 September 2026 (Europe/London) unless overridden.
  *
  * Does NOT block transactional mail triggered by user actions
- * (booking confirmations, password reset, claim invites, etc.).
+ * (account welcome, booking confirmations, password reset, claim invites, etc.).
+ * Those send from auth/checkout/organiser routes — not from the nurture crons below.
  *
  * Override:
  *   AUTOMATED_EMAIL_SEQUENCES_FORCE_ON=true
@@ -39,6 +40,26 @@ function areAutomatedEmailSequencesEnabled(nowMs) {
   if (parseEnvFlag('AUTOMATED_EMAIL_SEQUENCES_FORCE_ON')) return true;
   const now = nowMs == null ? Date.now() : Number(nowMs);
   return now >= automatedEmailSequencesResumeAtMs();
+}
+
+/**
+ * Hubert monthly event picks — opt-in only. The engagement cron can run other
+ * nurture mail while this stays off during soft launch.
+ *
+ *   HUBERT_EVENT_CONCIERGE_EMAILS_ENABLED=true
+ *   HUBERT_EVENT_CONCIERGE_EMAILS_FORCE_OFF=true  (explicit kill switch)
+ */
+function areHubertEventConciergeEmailsEnabled() {
+  if (parseEnvFlag('HUBERT_EVENT_CONCIERGE_EMAILS_FORCE_OFF')) return false;
+  return parseEnvFlag('HUBERT_EVENT_CONCIERGE_EMAILS_ENABLED');
+}
+
+function hubertEventConciergeEmailsStatus() {
+  const enabled = areHubertEventConciergeEmailsEnabled();
+  return {
+    hubertEventConciergeEmailsEnabled: enabled,
+    hubertEventConciergeEmailsPaused: !enabled,
+  };
 }
 
 /**
@@ -97,6 +118,8 @@ module.exports = {
   automatedEmailSequencesResumeAt,
   automatedEmailSequencesResumeAtMs,
   areAutomatedEmailSequencesEnabled,
+  areHubertEventConciergeEmailsEnabled,
+  hubertEventConciergeEmailsStatus,
   isAutomatedSequenceCronRoute,
   automatedEmailSequencesStatus,
   respondIfAutomatedSequencesPaused,

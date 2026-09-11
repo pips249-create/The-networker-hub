@@ -15406,7 +15406,7 @@
     // Cron/marketing emails the platform sends on its own schedule (no admin action needed).
     var AUTOMATED_EMAIL_INFO = {
       attendee_hubert_event_concierge:
-        'Monthly digest to members with marketing emails on — nearby and popular event picks. Skips organiser / group-contact accounts.',
+        'Monthly digest to signed-in member accounts (attendee linked to login) with marketing emails on — nearby and popular event picks. Skips checkout-only contacts, organisers, and group-profile emails. Cron sends only when HUBERT_EVENT_CONCIERGE_EMAILS_ENABLED=true in Vercel.',
       attendee_reengagement:
         'Sends after 30 days without a booking (60-day cooldown), marketing opt-in only.',
       attendee_signup_events_nudge:

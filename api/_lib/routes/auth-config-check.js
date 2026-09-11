@@ -116,6 +116,7 @@ module.exports = async function handler(req, res) {
       emailAllowlistCount: email.emailAllowlistCount,
       automatedEmailSequencesEnabled: email.automatedEmailSequencesEnabled,
       automatedEmailSequencesResumesAt: email.automatedEmailSequencesResumesAt,
+      hubertEventConciergeEmailsEnabled: email.hubertEventConciergeEmailsEnabled,
       cronReady: cron.cronReady,
       hasStripeSecretKey: stripe.hasStripeSecretKey,
       hasStripeWebhookSecret: stripe.hasStripeWebhookSecret,
@@ -182,7 +183,11 @@ module.exports = async function handler(req, res) {
           : null,
       automatedEmailSequences:
         email.automatedEmailSequencesPaused
-          ? `Automated email sequences are PAUSED until ${email.automatedEmailSequencesResumesAt}. Nurture/digest crons skip; booking confirmations and auth mail still send. Set AUTOMATED_EMAIL_SEQUENCES_FORCE_ON=true to resume early.`
+          ? `Nurture/digest crons are PAUSED until ${email.automatedEmailSequencesResumesAt} (engagement-emails, saved-event alerts, post-event reviews, etc.). Account welcome, password reset, booking confirmations, and claim invites still send. Set AUTOMATED_EMAIL_SEQUENCES_FORCE_ON=true to resume nurture crons early.`
+          : null,
+      hubertEventConcierge:
+        !email.hubertEventConciergeEmailsEnabled
+          ? 'Hubert monthly event picks are OFF until HUBERT_EVENT_CONCIERGE_EMAILS_ENABLED=true. This only affects that digest — not account welcome or other transactional mail. When on, sends to linked member accounts only; organisers and group contact emails are skipped.'
           : null,
       siteAccessGate:
         siteAccess.siteAccessRequired && !siteAccess.siteAccessReady

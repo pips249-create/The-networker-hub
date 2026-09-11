@@ -26,6 +26,8 @@ const {
 } = require('./nearby-events');
 const { escapeHtml } = require('./event-refund-policy');
 const { claimRowTimestamp, releaseRowTimestamp } = require('./email-send-claim');
+const { areHubertEventConciergeEmailsEnabled } = require('./automated-email-sequences');
+const { hasLinkedAttendeeAccount } = require('./attendee-member-account');
 
 function accountSettingsUrl(siteUrl) {
   return String(siteUrl || siteBase()).replace(/\/$/, '') + '/account/settings/';
@@ -1732,6 +1734,9 @@ function hubertConciergeMonthLabel(date) {
 
 async function sendDueHubertEventConciergeEmails(sb) {
   const result = { sent: 0, skipped: 0, errors: [] };
+  if (!areHubertEventConciergeEmailsEnabled()) {
+    return { ...result, disabled: true, reason: 'hubert_event_concierge_not_enabled' };
+  }
   const now = new Date();
   const claimedAt = now.toISOString();
   const monthLabel = hubertConciergeMonthLabel(now);
@@ -1743,6 +1748,7 @@ async function sendDueHubertEventConciergeEmails(sb) {
       'id, email, name, location, supabase_user_id, hubert_event_concierge_sent_at, signup_events_nudge_sent_at, signup_events_nudge_followup_sent_at'
     )
     .not('email', 'is', null)
+    .not('supabase_user_id', 'is', null)
     .order('hubert_event_concierge_sent_at', { ascending: true, nullsFirst: true })
     .limit(250);
   if (error) {
@@ -1753,6 +1759,7 @@ async function sendDueHubertEventConciergeEmails(sb) {
   }
 
   const dueCandidates = (attendees || []).filter((attendee) => {
+    if (!hasLinkedAttendeeAccount(attendee)) return false;
     if (!isDueForHubertConcierge(attendee.hubert_event_concierge_sent_at)) return false;
     if (recentlyReceivedSignupNurture(attendee, HUBERT_AFTER_NURTURE_COOLDOWN_DAYS)) return false;
     return Boolean(String(attendee.email || '').trim());
@@ -1767,6 +1774,11 @@ async function sendDueHubertEventConciergeEmails(sb) {
 
   for (const attendee of attendees || []) {
     if (result.sent >= HUBERT_CONCIERGE_BATCH_LIMIT) break;
+
+    if (!hasLinkedAttendeeAccount(attendee)) {
+      result.skipped += 1;
+      continue;
+    }
 
     if (!isDueForHubertConcierge(attendee.hubert_event_concierge_sent_at)) {
       result.skipped += 1;
