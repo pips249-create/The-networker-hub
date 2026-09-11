@@ -96,6 +96,62 @@
     return els.select ? els.select.value : '';
   }
 
+  function fillHomeRegionSelect(selectedSlug) {
+    var select = document.getElementById('welcome-profile-home-region');
+    var regions = window.HUB_NETWORKING_REGIONS;
+    if (!select || !regions) return;
+
+    var groups = {
+      london: { label: 'London areas', slugs: [] },
+      city: { label: 'Cities', slugs: [] },
+      county: { label: 'Counties', slugs: [] },
+    };
+
+    Object.keys(regions).forEach(function (slug) {
+      var meta = regions[slug];
+      if (!meta) return;
+      if (meta.areaType === 'London area') groups.london.slugs.push(slug);
+      else if (meta.areaType === 'county') groups.county.slugs.push(slug);
+      else groups.city.slugs.push(slug);
+    });
+
+    function sortSlugs(slugs) {
+      return slugs.sort(function (a, b) {
+        return String(regions[a].name).localeCompare(String(regions[b].name));
+      });
+    }
+
+    var html = '<option value="">Select your area</option>';
+    ['london', 'city', 'county'].forEach(function (key) {
+      var slugs = sortSlugs(groups[key].slugs);
+      if (!slugs.length) return;
+      html += '<optgroup label="' + groups[key].label.replace(/"/g, '&quot;') + '">';
+      slugs.forEach(function (slug) {
+        var name = regions[slug].name;
+        var sel = slug === selectedSlug ? ' selected' : '';
+        html +=
+          '<option value="' +
+          slug.replace(/"/g, '&quot;') +
+          '"' +
+          sel +
+          '>' +
+          name.replace(/</g, '&lt;') +
+          '</option>';
+      });
+      html += '</optgroup>';
+    });
+
+    select.innerHTML = html;
+  }
+
+  function resolvedHomeRegionSlug(profile) {
+    if (profile && profile.homeRegionSlug) return String(profile.homeRegionSlug).trim();
+    if (window.HUB_resolveNetworkingRegionSlug && profile && profile.location) {
+      return window.HUB_resolveNetworkingRegionSlug(profile.location) || '';
+    }
+    return '';
+  }
+
   function showProfileStep() {
     var pathPanel = document.getElementById('welcome-step-path');
     var profilePanel = document.getElementById('welcome-step-profile');
@@ -103,13 +159,16 @@
     if (profilePanel) profilePanel.hidden = false;
     setWizardStep(3);
     showMessage('', '');
+    fillHomeRegionSelect(resolvedHomeRegionSlug(cachedProfile));
     applyWelcomeIndustry(cachedProfile && cachedProfile.businessSector);
+    var homeRegion = document.getElementById('welcome-profile-home-region');
     var industry = document.getElementById('welcome-profile-industry');
     var jobTitle = document.getElementById('welcome-profile-job-title');
     var company = document.getElementById('welcome-profile-company');
     if (jobTitle && cachedProfile && cachedProfile.jobTitle) jobTitle.value = cachedProfile.jobTitle;
     if (company && cachedProfile && cachedProfile.company) company.value = cachedProfile.company;
-    if (industry) industry.focus();
+    if (homeRegion) homeRegion.focus();
+    else if (industry) industry.focus();
   }
 
   function finishAndGo() {
@@ -148,6 +207,15 @@
     nameEl.textContent = name || 'there';
   }
 
+  async function loadProfileState() {
+    if (!window.HubProfileCompletion) return;
+    var profileRes = await window.HubProfileCompletion.fetchProfile(false);
+    if (profileRes.ok && profileRes.profile) {
+      cachedProfile = profileRes.profile;
+      profileComplete = window.HubProfileCompletion.isComplete(profileRes.profile);
+    }
+  }
+
   async function ensureSignedIn() {
     try {
       var res = await fetch('/api/auth/session', { credentials: 'include' });
@@ -156,21 +224,29 @@
         window.location.href = '/register';
         return null;
       }
-      if (isWelcomeDone()) {
+
+      personalizeWelcome(data.user);
+      await loadProfileState();
+
+      if (profileComplete) {
+        if (!isWelcomeDone()) markWelcomeDone();
         window.location.href = '/events/';
         return null;
       }
-      personalizeWelcome(data.user);
 
-      if (window.HubProfileCompletion) {
-        var profileRes = await window.HubProfileCompletion.fetchProfile(false);
-        if (profileRes.ok && profileRes.profile) {
-          cachedProfile = profileRes.profile;
-          profileComplete = window.HubProfileCompletion.isComplete(profileRes.profile);
+      if (isWelcomeDone()) {
+        pendingDestination = '/events/';
+        showProfileStep();
+        var s2 = document.getElementById('welcome-wizard-step-2');
+        if (s2) {
+          s2.classList.add('is-done');
+          s2.classList.remove('is-current');
         }
+        return data;
       }
 
       applyWelcomeIndustry(cachedProfile && cachedProfile.businessSector);
+      fillHomeRegionSelect(resolvedHomeRegionSlug(cachedProfile));
 
       return data;
     } catch (e) {
@@ -191,18 +267,22 @@
     profileForm.addEventListener('submit', function (e) {
       e.preventDefault();
       var industryValue = resolvedWelcomeIndustry();
+      var homeRegion = document.getElementById('welcome-profile-home-region');
       var jobTitle = document.getElementById('welcome-profile-job-title');
       var company = document.getElementById('welcome-profile-company');
       var submitBtn = document.getElementById('welcome-profile-submit');
       var err = window.HubProfileCompletion
         ? window.HubProfileCompletion.validateProfileForm(
             industryValue,
-            jobTitle && jobTitle.value
+            jobTitle && jobTitle.value,
+            homeRegion && homeRegion.value
           )
         : '';
       if (err) {
         showMessage(err, 'error');
-        if (document.getElementById('welcome-profile-industry')?.value === 'Other') {
+        if (!homeRegion || !homeRegion.value) {
+          homeRegion && homeRegion.focus();
+        } else if (document.getElementById('welcome-profile-industry')?.value === 'Other') {
           document.getElementById('welcome-profile-industry-other')?.focus();
         }
         return;
@@ -211,6 +291,7 @@
       showMessage('Saving…', 'success');
       window.HubProfileCompletion
         .saveProfileFields({
+          homeRegionSlug: homeRegion ? homeRegion.value.trim() : '',
           businessSector: industryValue,
           jobTitle: jobTitle ? jobTitle.value.trim() : '',
           company: company ? company.value.trim() : '',
@@ -228,13 +309,6 @@
           showMessage('Could not reach the server. Try again.', 'error');
           if (submitBtn) submitBtn.disabled = false;
         });
-    });
-  }
-
-  var skipProfile = document.getElementById('welcome-profile-skip');
-  if (skipProfile) {
-    skipProfile.addEventListener('click', function () {
-      finishAndGo();
     });
   }
 

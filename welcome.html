@@ -119,14 +119,25 @@
               <p class="auth-welcome-kicker">Step 3 of 3 — almost done</p>
               <h1>Tell us about your work</h1>
               <p class="auth-lede auth-lede--welcome">
-                This helps organisers print name badges and helps us understand who networks on The Networker UK.
-                Your industry and job title are not shown publicly unless you book an event.
+                This helps organisers print name badges, picks events near you, and helps us understand who networks
+                on The Networker UK. Your industry and job title are not shown publicly unless you book an event.
               </p>
             </header>
 
             <div id="welcome-profile-message" class="auth-message" role="alert" hidden></div>
 
             <form id="welcome-profile-form" class="auth-profile-form" novalidate>
+              <div class="auth-field">
+                <label for="welcome-profile-home-region"
+                  >Where are you usually based? <span class="auth-required">(required)</span></label
+                >
+                <select id="welcome-profile-home-region" name="homeRegionSlug" required autocomplete="address-level2">
+                  <option value="">Select your area</option>
+                </select>
+                <p class="auth-optional" style="margin: 0.35rem 0 0">
+                  Choose the city, county, or London area closest to you.
+                </p>
+              </div>
               <div class="auth-field">
                 <label for="welcome-profile-industry">Industry <span class="auth-required">(required)</span></label>
                 <select id="welcome-profile-industry" name="businessSector" required autocomplete="organization-title">
@@ -169,9 +180,6 @@
               </div>
               <div class="auth-actions auth-actions--profile">
                 <button type="submit" class="auth-submit" id="welcome-profile-submit">Continue →</button>
-                <button type="button" class="auth-welcome-skip-link auth-welcome-skip-btn" id="welcome-profile-skip">
-                  Skip for now
-                </button>
               </div>
             </form>
           </div>
@@ -180,8 +188,9 @@
     </main>
 
     <script src="js/hub-organiser-actions.js?v=20260605" data-root=""></script>
-    <script src="js/hub-profile-industries.js?v=20260902other1"></script>
-    <script src="js/hub-profile-completion.js?v=20260902other1"></script>
-    <script src="js/welcome.js?v=20260902other1"></script>
+    <script src="js/networking-region-directory.js?v=20260911home1"></script>
+    <script src="js/hub-profile-industries.js?v=20260911home1"></script>
+    <script src="js/hub-profile-completion.js?v=20260911home1"></script>
+    <script src="js/welcome.js?v=20260911home1"></script>
   </body>
 </html>
