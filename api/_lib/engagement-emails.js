@@ -26,6 +26,7 @@ const {
 } = require('./nearby-events');
 const { escapeHtml } = require('./event-refund-policy');
 const { claimRowTimestamp, releaseRowTimestamp } = require('./email-send-claim');
+const { areHubertEventConciergeEmailsEnabled } = require('./automated-email-sequences');
 
 function accountSettingsUrl(siteUrl) {
   return String(siteUrl || siteBase()).replace(/\/$/, '') + '/account/settings/';
@@ -1732,6 +1733,9 @@ function hubertConciergeMonthLabel(date) {
 
 async function sendDueHubertEventConciergeEmails(sb) {
   const result = { sent: 0, skipped: 0, errors: [] };
+  if (!areHubertEventConciergeEmailsEnabled()) {
+    return { ...result, disabled: true, reason: 'hubert_event_concierge_not_enabled' };
+  }
   const now = new Date();
   const claimedAt = now.toISOString();
   const monthLabel = hubertConciergeMonthLabel(now);

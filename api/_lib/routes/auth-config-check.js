@@ -116,6 +116,7 @@ module.exports = async function handler(req, res) {
       emailAllowlistCount: email.emailAllowlistCount,
       automatedEmailSequencesEnabled: email.automatedEmailSequencesEnabled,
       automatedEmailSequencesResumesAt: email.automatedEmailSequencesResumesAt,
+      hubertEventConciergeEmailsEnabled: email.hubertEventConciergeEmailsEnabled,
       cronReady: cron.cronReady,
       hasStripeSecretKey: stripe.hasStripeSecretKey,
       hasStripeWebhookSecret: stripe.hasStripeWebhookSecret,
@@ -183,6 +184,10 @@ module.exports = async function handler(req, res) {
       automatedEmailSequences:
         email.automatedEmailSequencesPaused
           ? `Automated email sequences are PAUSED until ${email.automatedEmailSequencesResumesAt}. Nurture/digest crons skip; booking confirmations and auth mail still send. Set AUTOMATED_EMAIL_SEQUENCES_FORCE_ON=true to resume early.`
+          : null,
+      hubertEventConcierge:
+        !email.hubertEventConciergeEmailsEnabled
+          ? 'Hubert monthly event picks are OFF until HUBERT_EVENT_CONCIERGE_EMAILS_ENABLED=true in Vercel (or set HUBERT_EVENT_CONCIERGE_EMAILS_FORCE_OFF=true to keep them off). Other engagement cron mail can still run.'
           : null,
       siteAccessGate:
         siteAccess.siteAccessRequired && !siteAccess.siteAccessReady
