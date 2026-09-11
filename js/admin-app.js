@@ -358,6 +358,7 @@
         'Deny if it does not meet standards (include a reason) — then you return to the list.',
         'Use Organiser sales kit on a row (or in Review) — dropdown logs outreach in the shared CRM without leaving this page.',
         'Use Resend pay email on Approved listings still awaiting Stripe.',
+        'Use Grant free listing to give someone a complimentary term (no Stripe) — goes live immediately for 12 months.',
         'Toggle Featured only for Approved live listings in the opportunities carousel.',
       ],
     },
@@ -25625,6 +25626,45 @@
       });
   }
 
+  function runOpportunityGrantComplimentary(grantBtn) {
+    var grantId =
+      (grantBtn && grantBtn.getAttribute('data-opp-grant-complimentary')) ||
+      resolveOpportunityModerationId(grantBtn);
+    if (!grantId) {
+      reportAdminOpportunityIssue(
+        'opportunity_grant_complimentary_missing_id',
+        'Grant complimentary clicked but listing id could not be resolved',
+        {}
+      );
+      return;
+    }
+    if (
+      !window.confirm(
+        'Grant a complimentary 12-month listing (no Stripe charge)?\n\nThe listing will go live immediately and the owner will receive the usual “listing live” email if this is their first time publishing.'
+      )
+    ) {
+      return;
+    }
+    grantBtn.disabled = true;
+    adminPost('/api/admin/opportunities', { id: grantId, action: 'grant_complimentary_listing', months: 12 })
+      .then(function (data) {
+        if (!data.ok) throw new Error(data.message || data.error || 'Could not grant complimentary listing');
+        window.alert(data.message || 'Complimentary listing granted.');
+        if (isOpportunityReviewPage()) return refreshOpportunityReviewPage();
+        return refreshOpportunityCleanupData();
+      })
+      .then(function () {
+        refreshAdminNotifications();
+      })
+      .catch(function (err) {
+        reportAdminOpportunityError('opportunity_grant_complimentary_failed', err, {
+          opportunity_id: grantId,
+        });
+        window.alert(err.message || 'Could not grant complimentary listing.');
+        grantBtn.disabled = false;
+      });
+  }
+
   function runOpportunityResendPay(resendPayBtn) {
     var resendId = resolveOpportunityModerationId(resendPayBtn);
     if (!resendId) {
@@ -25843,6 +25883,49 @@
 
   function opportunityCanApprove(opp) {
     return String((opp && opp.approval_status) || '') === 'Pending Review';
+  }
+
+  function opportunityCanGrantComplimentaryListing(opp) {
+    if (!opp || opportunityHasPendingLiveUpdate(opp)) return false;
+    var approval = String(opp.approval_status || '').trim();
+    if (approval === 'Rejected') return false;
+    var stripeSub = String(opp.listing_stripe_subscription_id || '').trim();
+    if (stripeSub && opp.listing_payment_active && !opp.listing_payment_lapsed) return false;
+    if (opp.listing_payment_active && !opp.listing_payment_lapsed) return false;
+    return approval === 'Approved' || approval === 'Pending Review';
+  }
+
+  function opportunityPaymentActionsHtml(opp, btnClass) {
+    if (!opp) return '';
+    btnClass = btnClass || 'text-xs font-semibold rounded-lg px-2.5 py-1';
+    var awaitingPay =
+      opp.approval_status === 'Approved' && !opp.listing_payment_active && !opp.listing_paid_at;
+    var paymentLapsed = opp.listing_payment_lapsed === true;
+    var needsPaymentSync = awaitingPay || paymentLapsed;
+    var canGrant = opportunityCanGrantComplimentaryListing(opp);
+    if (!needsPaymentSync && !canGrant) return '';
+    var html = '';
+    if (canGrant) {
+      html +=
+        '<button type="button" data-opp-grant-complimentary="' +
+        attrEsc(opp.id) +
+        '" class="' +
+        btnClass +
+        ' border border-violet-300 bg-violet-50 text-violet-900 hover:bg-violet-100" title="Publish without Stripe — 12-month complimentary term">Grant free listing</button> ';
+    }
+    if (needsPaymentSync) {
+      html +=
+        '<button type="button" data-opp-sync-pay class="' +
+        btnClass +
+        ' border border-emerald-300 text-emerald-900 hover:bg-emerald-50">Sync payment</button> ';
+      if (awaitingPay) {
+        html +=
+          '<button type="button" data-opp-resend-pay class="' +
+          btnClass +
+          ' border border-sky-300 text-sky-900 hover:bg-sky-50">Resend pay email</button> ';
+      }
+    }
+    return html;
   }
 
   function opportunityAboutParagraphs(opp) {
@@ -26135,6 +26218,17 @@
       attrEsc(opp.title || 'Untitled') +
       '" class="rounded-lg border border-red-200 text-red-700 text-sm font-semibold px-3 py-2 hover:bg-red-50">Delete</button>' +
       '</div></div>' +
+      (function () {
+        var paymentToolbar = opportunityPaymentActionsHtml(
+          opp,
+          'rounded-lg border text-sm font-semibold px-3 py-2'
+        );
+        return paymentToolbar
+          ? '<div class="opp-review-payment-actions flex flex-wrap gap-2 mt-3 pt-3 border-t border-slate-200">' +
+              paymentToolbar +
+              '</div>'
+          : '';
+      })() +
       '<div class="opp-review-layout">' +
       '<section class="opp-review-section" aria-labelledby="opp-review-submitted-' +
       attrEsc(id) +
@@ -26772,6 +26866,14 @@
     if (hasActiveSub && opp.listing_payment_lapsed) {
       return '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-orange-100 text-orange-900" title="Stripe subscription ended">Sub ended</span>';
     }
+    if (
+      opp.listing_payment_active &&
+      opp.listing_paid_at &&
+      !hasActiveSub &&
+      opp.listing_billing_mode !== 'legacy'
+    ) {
+      return '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-violet-100 text-violet-900" title="Complimentary listing term granted in Command Centre (no Stripe subscription)">Complimentary</span>';
+    }
     var mode = String(opp.listing_billing_mode || '').trim();
     if (mode === 'legacy') {
       return '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-slate-100 text-slate-700" title="Published before subscription billing — not on £25/mo Stripe">Legacy</span>';
@@ -26799,7 +26901,6 @@
     var awaitingPay =
       opp.approval_status === 'Approved' && !opp.listing_payment_active && !opp.listing_paid_at;
     var paymentLapsed = opp.listing_payment_lapsed === true;
-    var needsPaymentSync = awaitingPay || paymentLapsed;
     var rowClass = isPendingSubmitted
       ? 'border-b border-amber-100 bg-amber-50/40'
       : paymentLapsed
@@ -26884,12 +26985,7 @@
           approveLabel +
           '</button>'
         : '') +
-      (needsPaymentSync
-        ? '<button type="button" data-opp-sync-pay class="text-xs font-semibold rounded-lg border border-emerald-300 text-emerald-900 px-2.5 py-1 hover:bg-emerald-50">Sync payment</button>' +
-          (awaitingPay
-            ? '<button type="button" data-opp-resend-pay class="text-xs font-semibold rounded-lg border border-sky-300 text-sky-900 px-2.5 py-1 hover:bg-sky-50">Resend pay email</button>'
-            : '')
-        : '') +
+      opportunityPaymentActionsHtml(opp) +
       (publicHref
         ? '<a href="' +
           attrEsc(publicHref) +
@@ -28065,6 +28161,11 @@
     var resendPayBtn = e.target.closest('[data-opp-resend-pay]');
     if (resendPayBtn) {
       runOpportunityResendPay(resendPayBtn);
+      return;
+    }
+    var grantBtn = e.target.closest('[data-opp-grant-complimentary]');
+    if (grantBtn) {
+      runOpportunityGrantComplimentary(grantBtn);
       return;
     }
     var hideBrowseBtn = e.target.closest('[data-opp-hide-browse]');

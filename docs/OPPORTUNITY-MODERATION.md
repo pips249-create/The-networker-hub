@@ -77,6 +77,7 @@ The platform already shows disclaimers and blocks some MLM patterns in `js/oppor
    - [ ] Images do not infringe copyright (see legal policies)
 4. **Approve (unpaid)** → `Approved` + `opportunity_listing_approved_pay` email (Stripe link) — not public yet  
    **Approve (already paid)** → live + `opportunity_listing_live` email  
+   **Grant free listing** (Command Centre) → complimentary 12-month term, no Stripe — goes live + `opportunity_listing_live` when first published  
    **Reject** → reason recorded + `opportunity_listing_rejected` email  
    **After Stripe payment on Approved listing** → published live + `opportunity_listing_live`
 5. Log decision in internal register (date, listing ID, moderator, outcome).
