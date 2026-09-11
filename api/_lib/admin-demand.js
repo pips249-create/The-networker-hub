@@ -2,6 +2,10 @@
  * Command Centre Demand insights — browse intent + favourites + opportunities + guest visits.
  */
 const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
+const {
+  buildSearchIntentRollups,
+  OTHER_SEARCH_MIN_COUNT,
+} = require('./admin-demand-search-intent');
 
 function parsePeriod(raw) {
   const p = String(raw || '30d').trim().toLowerCase();
@@ -125,6 +129,8 @@ async function aggregateBrowseSearches(sb, since) {
     .slice(0, 10)
     .map(([query, stats]) => ({ query, count: stats.zeroCount }));
 
+  const intent = buildSearchIntentRollups(rows);
+
   return {
     totalLogged: rows.length,
     withQuery,
@@ -135,6 +141,11 @@ async function aggregateBrowseSearches(sb, since) {
     topRegions: topFromMap(regionCounts, 10).map((r) => ({ region: r.key, count: r.count })),
     bySource: topFromMap(sourceCounts, 10).map((r) => ({ source: r.key, count: r.count })),
     topTypes: topFromMap(typeCounts, 10).map((r) => ({ type: r.key, count: r.count })),
+    topCities: intent.topCities,
+    topCounties: intent.topCounties,
+    topOpportunityIndustries: intent.topOpportunityIndustries,
+    otherSearchTerms: intent.otherSearchTerms,
+    otherSearchMinCount: OTHER_SEARCH_MIN_COUNT,
   };
 }
 
@@ -365,6 +376,11 @@ async function getAdminDemand(periodRaw) {
           zeroResultQueries: [],
           topLocations: [],
           topTypes: [],
+          topCities: [],
+          topCounties: [],
+          topOpportunityIndustries: [],
+          otherSearchTerms: [],
+          otherSearchMinCount: OTHER_SEARCH_MIN_COUNT,
           unavailable: true,
           message: 'Run migration 204_browse_search_analytics.sql to enable search logging.',
         };
