@@ -5406,18 +5406,88 @@
     );
   }
 
+  function renderMemberProfileSummary(report) {
+    if (!report || report.configured === false) {
+      return (
+        '<p class="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">Could not load profile summary.</p>'
+      );
+    }
+    var p = (report.profiles || {});
+    var loc = (report.locations || {});
+    var complete = Number(p.profileComplete || 0);
+    var incomplete = Number(p.profileIncomplete || 0);
+    var total = Number(p.total || 0);
+    return (
+      '<section class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-4">' +
+      '<div><h2 class="text-lg font-bold text-brand-900">Member profile coverage</h2>' +
+      '<p class="text-sm text-slate-500 mt-0.5">Hub accounts with an attendee row — industry, job title, and home base from welcome onboarding and account settings.</p></div>' +
+      '<div class="admin-metric-grid admin-metric-grid--4">' +
+      card(
+        'Complete profiles',
+        String(complete),
+        incomplete +
+          ' incomplete (' +
+          String(p.profileIncompletePct != null ? p.profileIncompletePct : 0) +
+          '%) · ' +
+          complete +
+          ' complete (' +
+          String(p.profileCompletePct != null ? p.profileCompletePct : 0) +
+          '%)',
+        'brand'
+      ) +
+      card(
+        'Home base known',
+        String(p.withHomeBase || 0),
+        String(p.missingHomeBase || 0) + ' missing · ' + String(loc.providedPct != null ? loc.providedPct : 0) + '%',
+        'gold'
+      ) +
+      card(
+        'Industry provided',
+        String(p.withIndustry || 0),
+        String(p.missingIndustry || 0) + ' missing',
+        'blue'
+      ) +
+      card(
+        'Job title provided',
+        String(p.withJobTitle || 0),
+        String(p.missingJobTitle || 0) + ' missing',
+        'violet'
+      ) +
+      '</div>' +
+      '<div class="grid gap-3 lg:grid-cols-3">' +
+      '<div class="rounded-xl border border-slate-200 p-3 min-h-0"><h3 class="text-sm font-bold text-brand-900 mb-1">Where members are based</h3>' +
+      renderInsightsUserLocations(loc) +
+      '</div>' +
+      '<div class="rounded-xl border border-slate-200 p-3 min-h-0"><h3 class="text-sm font-bold text-brand-900 mb-1">Top industries</h3>' +
+      renderInsightsAttendeeProfiles(Object.assign({}, p, { jobTitles: [] })) +
+      '</div>' +
+      '<div class="rounded-xl border border-slate-200 p-3 min-h-0"><h3 class="text-sm font-bold text-brand-900 mb-1">Top job titles</h3>' +
+      renderInsightsAttendeeProfiles(Object.assign({}, p, { industries: [] })) +
+      '</div></div>' +
+      '<p class="text-xs text-slate-400">Updated ' +
+      esc(report.updatedAt ? new Date(report.updatedAt).toLocaleString('en-GB') : '—') +
+      ' · Full breakdown also under <a class="text-brand-700 font-semibold hover:underline" href="#insights">Platform insights</a>.</p></section>'
+    );
+  }
+
   function renderInsightsUserLocations(locationData) {
     var data = locationData || {};
     var rows = data.areas || [];
     if (!rows.length) {
       return '<p class="text-sm text-slate-500">No members have added a location yet.</p>';
     }
+    var pctNote =
+      data.providedPct != null
+        ? ' (' + esc(String(data.providedPct)) + '%)'
+        : '';
     return (
       '<p class="text-xs text-slate-500 mb-2">' +
       esc(String(data.provided || 0)) +
       ' of ' +
       esc(String(data.total || 0)) +
-      ' profiles provided a location · ' +
+      ' profiles provided a location' +
+      pctNote +
+      ' · ' +
       esc(String(data.missing || 0)) +
       ' not provided</p>' +
       insightsListScroll(
@@ -5449,12 +5519,18 @@
     }
     var coverage =
       '<p class="text-xs text-slate-500 mb-2">' +
+      (data.profileComplete != null
+        ? esc(String(data.profileComplete || 0)) +
+          ' complete (' +
+          esc(String(data.profileCompletePct != null ? data.profileCompletePct : 0)) +
+          '%) · ' +
+          esc(String(data.profileIncomplete || 0)) +
+          ' incomplete · '
+        : '') +
       esc(String(data.withBoth || 0)) +
-      ' of ' +
-      esc(String(data.total || 0)) +
-      ' attendee profiles have industry + job title · ' +
-      esc(String(data.withAccount || 0)) +
-      ' linked to accounts</p>';
+      ' with industry + job title · ' +
+      esc(String(data.withHomeBase || 0)) +
+      ' with home base</p>';
     var industryList = !rows.length
       ? '<p class="text-sm text-slate-500">No industries recorded yet.</p>'
       : insightsListScroll(
@@ -5834,7 +5910,7 @@
       '</section>' +
       '<section id="insights-demographics" class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3 scroll-mt-24">' +
       '<div><h3 class="font-bold text-brand-900">Member demographics</h3>' +
-      '<p class="text-sm text-slate-500 mt-0.5">Industry and job title from account onboarding and checkout — for platform positioning and sales reporting.</p></div>' +
+      '<p class="text-sm text-slate-500 mt-0.5">All attendee rows (including guest checkout). For signed-up hub members, see the hub member block below.</p></div>' +
       '<div class="admin-metric-grid admin-metric-grid--4">' +
       card(
         'Industry provided',
@@ -5851,7 +5927,7 @@
       card(
         'Complete profiles',
         String((data.attendeeProfiles && data.attendeeProfiles.withBoth) || 0),
-        'Industry + job title both set',
+        'Industry + job title both set (legacy metric)',
         'brand'
       ) +
       card(
@@ -5864,6 +5940,41 @@
       '<div class="rounded-xl border border-slate-200 p-3">' +
       renderInsightsAttendeeProfiles(data.attendeeProfiles || {}) +
       '</div></section>' +
+      '<section id="insights-hub-members" class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3 scroll-mt-24">' +
+      '<div><h3 class="font-bold text-brand-900">Hub member profiles</h3>' +
+      '<p class="text-sm text-slate-500 mt-0.5">Accounts with a login — complete means industry, job title, and home base.</p></div>' +
+      (function () {
+        var hm = data.hubMemberProfiles || {};
+        var hp = hm.profiles || {};
+        var hl = hm.locations || {};
+        return (
+          '<div class="admin-metric-grid admin-metric-grid--4">' +
+          card(
+            'Complete',
+            String(hp.profileComplete || 0),
+            String(hp.profileIncomplete || 0) +
+              ' incomplete (' +
+              String(hp.profileIncompletePct != null ? hp.profileIncompletePct : 0) +
+              '%)',
+            'brand'
+          ) +
+          card('Home base', String(hp.withHomeBase || 0), String(hp.missingHomeBase || 0) + ' missing', 'gold') +
+          card('Industry', String(hp.withIndustry || 0), String(hp.missingIndustry || 0) + ' missing', 'blue') +
+          card('Job title', String(hp.withJobTitle || 0), String(hp.missingJobTitle || 0) + ' missing', 'violet') +
+          '</div>' +
+          '<div class="grid gap-3 md:grid-cols-3">' +
+          '<div class="rounded-xl border border-slate-200 p-3"><h4 class="text-sm font-bold text-brand-900 mb-1">Where they are based</h4>' +
+          renderInsightsUserLocations(hl) +
+          '</div>' +
+          '<div class="rounded-xl border border-slate-200 p-3"><h4 class="text-sm font-bold text-brand-900 mb-1">Industries</h4>' +
+          renderInsightsAttendeeProfiles(Object.assign({}, hp, { jobTitles: [] })) +
+          '</div>' +
+          '<div class="rounded-xl border border-slate-200 p-3"><h4 class="text-sm font-bold text-brand-900 mb-1">Job titles</h4>' +
+          renderInsightsAttendeeProfiles(Object.assign({}, hp, { industries: [] })) +
+          '</div></div>'
+        );
+      })() +
+      '</section>' +
       '<section id="insights-places" class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3 scroll-mt-24">' +
       '<div><h3 class="font-bold text-brand-900">Places &amp; ratings</h3>' +
       '<p class="text-sm text-slate-500 mt-0.5">Longer lists stay in a fixed-height scroll so the page does not grow forever.</p></div>' +
@@ -8200,8 +8311,19 @@
       '<div class="flex justify-between gap-4"><dt class="text-slate-500 shrink-0">Public view</dt><dd class="font-medium text-right">' +
       esc(hubViewLabel(u.hubView)) +
       '</dd></div>' +
+      '<div class="flex justify-between gap-4"><dt class="text-slate-500 shrink-0">Profile</dt><dd class="font-medium text-right">' +
+      (u.profileComplete
+        ? '<span class="text-emerald-700">Complete</span>'
+        : '<span class="text-amber-700">Incomplete</span>') +
+      '</dd></div>' +
       '<div class="flex justify-between gap-4"><dt class="text-slate-500 shrink-0">Location</dt><dd class="font-medium text-right">' +
       esc(u.location || u.city || '—') +
+      '</dd></div>' +
+      '<div class="flex justify-between gap-4"><dt class="text-slate-500 shrink-0">Industry</dt><dd class="font-medium text-right">' +
+      esc(u.businessSector || '—') +
+      '</dd></div>' +
+      '<div class="flex justify-between gap-4"><dt class="text-slate-500 shrink-0">Job title</dt><dd class="font-medium text-right">' +
+      esc(u.jobTitle || '—') +
       '</dd></div>' +
       '<div class="flex justify-between gap-4"><dt class="text-slate-500 shrink-0">Last sign-in</dt><dd class="font-medium text-right text-xs">' +
       esc(formatAccountDate(u.lastSignInAt)) +
@@ -22130,6 +22252,7 @@
   function renderUsers() {
     main.innerHTML =
       '<div class="space-y-4">' +
+      '<div id="users-profile-summary"><p class="text-sm text-slate-500">Loading profile coverage…</p></div>' +
       '<p id="users-page-status" class="text-sm text-slate-500">Loading accounts from Supabase…</p>' +
       '<div class="admin-filter-bar">' +
       '<input type="search" id="users-page-search" class="rounded-lg border border-slate-200 px-3 py-2 text-sm min-w-[200px]" placeholder="Search name or email" />' +
@@ -22138,8 +22261,8 @@
       '</select></div>' +
       adminTableScroll(
         '<table class="w-full text-sm"><thead class="bg-slate-50 text-xs uppercase text-slate-500">' +
-          '<tr><th class="px-4 py-3 text-left">Name</th><th class="px-4 py-3 text-left">Email</th><th class="px-4 py-3">Role</th><th class="px-4 py-3">Emails</th><th class="px-4 py-3">Featured</th><th class="px-4 py-3"></th></tr></thead>' +
-          '<tbody id="users-page-tbody"><tr><td colspan="6" class="px-4 py-6 text-slate-500">Loading…</td></tr></tbody></table>'
+          '<tr><th class="px-4 py-3 text-left">Name</th><th class="px-4 py-3 text-left">Email</th><th class="px-4 py-3">Role</th><th class="px-4 py-3">Profile</th><th class="px-4 py-3">Emails</th><th class="px-4 py-3">Featured</th><th class="px-4 py-3"></th></tr></thead>' +
+          '<tbody id="users-page-tbody"><tr><td colspan="7" class="px-4 py-6 text-slate-500">Loading…</td></tr></tbody></table>'
       ) +
       '<div id="users-page-pager"></div></div>';
 
@@ -22174,10 +22297,13 @@
       }
       if (!tbody) return;
       if (!rows.length) {
-        tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-6 text-slate-500">No matching accounts.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-6 text-slate-500">No matching accounts.</td></tr>';
       } else {
       tbody.innerHTML = rows
         .map(function (u) {
+          var profileBadge = u.profileComplete
+            ? '<span class="text-emerald-700 font-semibold">Complete</span>'
+            : '<span class="text-amber-700 font-semibold">Incomplete</span>';
           return (
             '<tr class="border-t border-slate-100">' +
             '<td class="px-4 py-3 font-medium">' +
@@ -22191,6 +22317,9 @@
             '</td>' +
             '<td class="px-4 py-3 text-center">' +
             esc(u.role) +
+            '</td>' +
+            '<td class="px-4 py-3 text-center text-xs">' +
+            profileBadge +
             '</td>' +
             '<td class="px-4 py-3 text-center text-xs">' +
             (u.emailsEnabled === false
@@ -22354,6 +22483,19 @@
         }
       });
     }
+
+    fetch('/api/admin/users?report=profiles', { credentials: 'include' })
+      .then(function (res) {
+        return res.json();
+      })
+      .then(function (data) {
+        var el = document.getElementById('users-profile-summary');
+        if (el) el.innerHTML = renderMemberProfileSummary(data);
+      })
+      .catch(function () {
+        var el = document.getElementById('users-profile-summary');
+        if (el) el.innerHTML = '';
+      });
 
     fetchUsersPage();
   }
