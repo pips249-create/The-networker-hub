@@ -42,6 +42,26 @@ function areAutomatedEmailSequencesEnabled(nowMs) {
 }
 
 /**
+ * Hubert monthly event picks — opt-in only. The engagement cron can run other
+ * nurture mail while this stays off during soft launch.
+ *
+ *   HUBERT_EVENT_CONCIERGE_EMAILS_ENABLED=true
+ *   HUBERT_EVENT_CONCIERGE_EMAILS_FORCE_OFF=true  (explicit kill switch)
+ */
+function areHubertEventConciergeEmailsEnabled() {
+  if (parseEnvFlag('HUBERT_EVENT_CONCIERGE_EMAILS_FORCE_OFF')) return false;
+  return parseEnvFlag('HUBERT_EVENT_CONCIERGE_EMAILS_ENABLED');
+}
+
+function hubertEventConciergeEmailsStatus() {
+  const enabled = areHubertEventConciergeEmailsEnabled();
+  return {
+    hubertEventConciergeEmailsEnabled: enabled,
+    hubertEventConciergeEmailsPaused: !enabled,
+  };
+}
+
+/**
  * Cron routes that send nurture / digest / sequence mail.
  * Booking + online-join reminders stay on (transactional for people who booked).
  * event-featured stays on for listing expiry maintenance (emails gated separately if needed).
@@ -97,6 +117,8 @@ module.exports = {
   automatedEmailSequencesResumeAt,
   automatedEmailSequencesResumeAtMs,
   areAutomatedEmailSequencesEnabled,
+  areHubertEventConciergeEmailsEnabled,
+  hubertEventConciergeEmailsStatus,
   isAutomatedSequenceCronRoute,
   automatedEmailSequencesStatus,
   respondIfAutomatedSequencesPaused,
