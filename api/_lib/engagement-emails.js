@@ -1593,15 +1593,26 @@ async function sendDueStripeConnectNudges(sb) {
   const now = new Date().toISOString();
   const result = { sent: 0, skipped: 0, errors: [] };
 
+  // Only claimed organiser pages — hub-seeded / unclaimed profiles get events
+  // listed for them before they log in; do not email contact addresses asking
+  // for bank details until they have claimed the page.
   const { data: organisers, error: orgErr } = await sb
     .from('organisers')
-    .select('id, name, stripe_charges_enabled, stripe_connect_details_submitted, stripe_connect_nudge_sent_at')
+    .select(
+      'id, name, ownership_claim_status, stripe_charges_enabled, stripe_connect_details_submitted, stripe_connect_nudge_sent_at'
+    )
+    .eq('ownership_claim_status', 'claimed')
     .or('stripe_charges_enabled.is.false,stripe_connect_details_submitted.is.false');
   if (orgErr) throw new Error(orgErr.message);
 
   const siteUrl = siteBase();
 
   for (const organiser of organisers || []) {
+    if (String(organiser.ownership_claim_status || '').toLowerCase() !== 'claimed') {
+      result.skipped += 1;
+      continue;
+    }
+
     if (organiser.stripe_charges_enabled && organiser.stripe_connect_details_submitted) {
       result.skipped += 1;
       continue;

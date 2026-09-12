@@ -175,6 +175,7 @@ const BRANDED_EMAIL_TEMPLATES = {
   stripe_connect_nudge: {
     file: 'stripe-connect-nudge.html',
     marker: 'hub-email-layout-v3-purple',
+    // Claimed organisers only — see sendDueStripeConnectNudges claim gate.
     subject: 'Add your bank details to receive payouts',
   },
   meeting_link_added: {
