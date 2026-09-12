@@ -4,8 +4,13 @@
 
 **Do first:** rename pages, update logo/cover, point links to thenetworkeruk.com — then post once and pin.
 
-**Image for the announcement post (Catherine + Rosie — same graphic):**
-- Feed post (use this): `marketing/social/going-bigger-uk-intl-1080.png`
+**Launch day (1 September) — use this instead:**
+- Feed post: `marketing/social/we-are-live-1080.png`
+- Copy: `marketing/social/we-are-live-post.md`
+- Re-export: `node marketing/export-we-are-live-post.mjs`
+
+**Earlier “going bigger” post (browse week — archived):**
+- Feed post: `marketing/social/going-bigger-uk-intl-1080.png`
 - Source HTML: `marketing/social/going-bigger-uk-intl.html` (re-export: `node marketing/export-going-bigger-post.mjs`)
 
 Square 1080×1080: UK | International logos, “We’re going bigger.”, worldwide opportunities line, both URLs.
