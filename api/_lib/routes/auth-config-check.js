@@ -183,7 +183,11 @@ module.exports = async function handler(req, res) {
           : null,
       automatedEmailSequences:
         email.automatedEmailSequencesPaused
-          ? `Nurture/digest crons are PAUSED until ${email.automatedEmailSequencesResumesAt} (engagement-emails, saved-event alerts, post-event reviews, etc.). Account welcome, password reset, booking confirmations, and claim invites still send. Set AUTOMATED_EMAIL_SEQUENCES_FORCE_ON=true to resume nurture crons early.`
+          ? `Nurture/digest crons are PAUSED${
+              email.automatedEmailSequencesResumesAt
+                ? ` until ${email.automatedEmailSequencesResumesAt}`
+                : ' (set AUTOMATED_EMAIL_SEQUENCES_FORCE_ON=true to resume)'
+            } — engagement-emails, saved-event alerts, post-event reviews, etc. Account welcome, password reset, booking confirmations, and claim invites still send.`
           : null,
       hubertEventConcierge:
         !email.hubertEventConciergeEmailsEnabled
