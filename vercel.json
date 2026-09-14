@@ -247,10 +247,6 @@
       "schedule": "30 9 * * *"
     },
     {
-      "path": "/api/cron/engagement-emails",
-      "schedule": "0 10 * * *"
-    },
-    {
       "path": "/api/cron/post-event-reviews",
       "schedule": "5 10 * * *"
     },

@@ -49,11 +49,14 @@ assert(m.areAutomatedEmailSequencesEnabled() === false, 'future RESUME_AT stays 
 clearFlags();
 process.env.HUBERT_EVENT_CONCIERGE_EMAILS_ENABLED = 'true';
 m = loadFresh();
-assert(m.areHubertEventConciergeEmailsEnabled() === true, 'Hubert enables with opt-in flag');
+assert(
+  m.areHubertEventConciergeEmailsEnabled() === false,
+  'Hubert stays hard-disabled even when ENABLED env is set'
+);
 
 process.env.HUBERT_EVENT_CONCIERGE_EMAILS_FORCE_OFF = 'true';
 m = loadFresh();
-assert(m.areHubertEventConciergeEmailsEnabled() === false, 'Hubert FORCE_OFF wins');
+assert(m.areHubertEventConciergeEmailsEnabled() === false, 'Hubert stays hard-disabled with FORCE_OFF');
 
 assert(m.isAutomatedSequenceCronRoute('engagement-emails') === true, 'engagement cron gated');
 assert(m.isAutomatedSequenceCronRoute('booking-reminders') === false, 'booking reminders stay ungated');

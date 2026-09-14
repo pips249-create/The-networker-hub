@@ -191,7 +191,7 @@ module.exports = async function handler(req, res) {
           : null,
       hubertEventConcierge:
         !email.hubertEventConciergeEmailsEnabled
-          ? 'Hubert monthly event picks are OFF until HUBERT_EVENT_CONCIERGE_EMAILS_ENABLED=true. This only affects that digest — not account welcome or other transactional mail. When on, sends to linked member accounts only; organisers and group contact emails are skipped.'
+          ? 'Hubert monthly event picks are HARD DISABLED in code after the Sep 2026 Resend flood. Env flags cannot turn them back on. The engagement-emails cron schedule was also removed from vercel.json.'
           : null,
       siteAccessGate:
         siteAccess.siteAccessRequired && !siteAccess.siteAccessReady
