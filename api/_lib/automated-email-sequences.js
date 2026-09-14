@@ -1,17 +1,24 @@
 /**
- * Soft-launch pause for automated / nurture email sequences.
- * Resumes 5 September 2026 (Europe/London) unless overridden.
+ * Pause for automated / nurture email sequences.
+ *
+ * Soft-launch used to auto-resume on 5 September 2026. That silent turn-on
+ * flooded Resend after the date passed — default is now PAUSED until you
+ * explicitly set AUTOMATED_EMAIL_SEQUENCES_FORCE_ON=true in Vercel.
  *
  * Does NOT block transactional mail triggered by user actions
- * (booking confirmations, password reset, claim invites, etc.).
+ * (account welcome, booking confirmations, password reset, claim invites, etc.).
+ * Those send from auth/checkout/organiser routes — not from the nurture crons below.
  *
  * Override:
- *   AUTOMATED_EMAIL_SEQUENCES_FORCE_ON=true
- *   AUTOMATED_EMAIL_SEQUENCES_FORCE_OFF=true
- *   AUTOMATED_EMAIL_SEQUENCES_RESUME_AT=2026-09-05T00:00:00+01:00
+ *   AUTOMATED_EMAIL_SEQUENCES_FORCE_ON=true   — resume nurture/digest crons
+ *   AUTOMATED_EMAIL_SEQUENCES_FORCE_OFF=true  — hard kill even if FORCE_ON
+ *   AUTOMATED_EMAIL_SEQUENCES_RESUME_AT=ISO   — optional date gate (only when set)
+ *
+ * Hubert monthly picks stay separately gated:
+ *   HUBERT_EVENT_CONCIERGE_EMAILS_ENABLED=true
  */
 
-const DEFAULT_RESUME_AT = '2026-09-05T00:00:00+01:00';
+const DEFAULT_RESUME_AT = null;
 
 function parseEnvFlag(name) {
   const raw = String(process.env[name] || '')
@@ -31,14 +38,40 @@ function automatedEmailSequencesResumeAt() {
 }
 
 function automatedEmailSequencesResumeAtMs() {
-  return Date.parse(automatedEmailSequencesResumeAt());
+  const iso = automatedEmailSequencesResumeAt();
+  return iso ? Date.parse(iso) : NaN;
 }
 
 function areAutomatedEmailSequencesEnabled(nowMs) {
   if (parseEnvFlag('AUTOMATED_EMAIL_SEQUENCES_FORCE_OFF')) return false;
   if (parseEnvFlag('AUTOMATED_EMAIL_SEQUENCES_FORCE_ON')) return true;
-  const now = nowMs == null ? Date.now() : Number(nowMs);
-  return now >= automatedEmailSequencesResumeAtMs();
+  const resumeMs = automatedEmailSequencesResumeAtMs();
+  if (Number.isFinite(resumeMs)) {
+    const now = nowMs == null ? Date.now() : Number(nowMs);
+    return now >= resumeMs;
+  }
+  // No FORCE_ON and no explicit RESUME_AT — stay paused.
+  return false;
+}
+
+/**
+ * Hubert monthly event picks — opt-in only. The engagement cron can run other
+ * nurture mail while this stays off.
+ *
+ *   HUBERT_EVENT_CONCIERGE_EMAILS_ENABLED=true
+ *   HUBERT_EVENT_CONCIERGE_EMAILS_FORCE_OFF=true  (explicit kill switch)
+ */
+function areHubertEventConciergeEmailsEnabled() {
+  if (parseEnvFlag('HUBERT_EVENT_CONCIERGE_EMAILS_FORCE_OFF')) return false;
+  return parseEnvFlag('HUBERT_EVENT_CONCIERGE_EMAILS_ENABLED');
+}
+
+function hubertEventConciergeEmailsStatus() {
+  const enabled = areHubertEventConciergeEmailsEnabled();
+  return {
+    hubertEventConciergeEmailsEnabled: enabled,
+    hubertEventConciergeEmailsPaused: !enabled,
+  };
 }
 
 /**
@@ -78,13 +111,16 @@ function automatedEmailSequencesStatus(nowMs) {
 function respondIfAutomatedSequencesPaused(res, json) {
   if (areAutomatedEmailSequencesEnabled()) return false;
   const status = automatedEmailSequencesStatus();
+  const resumeHint = status.automatedEmailSequencesResumesAt
+    ? 'until ' + status.automatedEmailSequencesResumesAt
+    : 'until AUTOMATED_EMAIL_SEQUENCES_FORCE_ON=true';
   json(res, 200, {
     ok: true,
     skipped: true,
     reason: 'automated_email_sequences_paused',
     message:
-      'Automated email sequences are paused until ' +
-      status.automatedEmailSequencesResumesAt +
+      'Automated email sequences are paused ' +
+      resumeHint +
       '. Transactional emails (bookings, auth, claim invites) still send.',
     ...status,
   });
@@ -97,6 +133,8 @@ module.exports = {
   automatedEmailSequencesResumeAt,
   automatedEmailSequencesResumeAtMs,
   areAutomatedEmailSequencesEnabled,
+  areHubertEventConciergeEmailsEnabled,
+  hubertEventConciergeEmailsStatus,
   isAutomatedSequenceCronRoute,
   automatedEmailSequencesStatus,
   respondIfAutomatedSequencesPaused,

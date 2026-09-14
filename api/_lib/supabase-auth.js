@@ -250,7 +250,11 @@ async function getEmailsEnabledForEmail(email) {
 /** @param {'event_reminders'|'organiser_alerts'|'marketing'|'organiser_roundups'} category */
 async function canSendEmailCategory(email, category) {
   const hub = await getHubAccountForEmail(email);
-  if (!hub) return true;
+  if (!hub) {
+    // Marketing requires a signed-in hub account with explicit opt-in (PECR).
+    if (category === 'marketing') return false;
+    return true;
+  }
   if (category === 'event_reminders') {
     return hubPrefEnabled(hub, 'email_pref_event_reminders');
   }

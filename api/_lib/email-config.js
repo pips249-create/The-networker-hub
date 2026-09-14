@@ -1,5 +1,8 @@
 const { emailAllowlistStatus } = require('./email-allowlist');
-const { automatedEmailSequencesStatus } = require('./automated-email-sequences');
+const {
+  automatedEmailSequencesStatus,
+  hubertEventConciergeEmailsStatus,
+} = require('./automated-email-sequences');
 
 function emailConfigStatus() {
   const hasResendApiKey = Boolean(String(process.env.RESEND_API_KEY || '').trim());
@@ -12,6 +15,7 @@ function emailConfigStatus() {
     emailSendingConfigured: hasResendApiKey && hasResendFrom,
     ...emailAllowlistStatus(),
     ...automatedEmailSequencesStatus(),
+    ...hubertEventConciergeEmailsStatus(),
   };
 }
 
