@@ -2,7 +2,8 @@
 
 **Purpose:** Introduce The Networker UK to a Birmingham / West Midlands contact list — browse first, optional free account, soft ask for missing groups and exhibitions/conferences.
 
-**HTML:** `data/birmingham-intro-brevo-ready.html` (Brevo paste, or Resend Broadcast body)
+**HTML (Resend Broadcast — use this):** `data/birmingham-intro-resend-broadcast.html`  
+**HTML (Brevo):** `data/birmingham-intro-brevo-ready.html`
 
 **Resend contact list (Excel → CSV):** `docs/RESEND-CONTACT-IMPORT-EXCEL.md` · template `data/birmingham-intro-resend-import-template.csv`
 
@@ -44,7 +45,7 @@ No partner-programme or organiser-claim language in this send — keep it attend
 1. [ ] Build list in Excel using columns in `data/birmingham-intro-resend-import-template.csv`
 2. [ ] Dedupe on `email`, export **CSV UTF-8**
 3. [ ] Resend → Contacts → Import CSV → map columns → segment e.g. `Birmingham intro`
-4. [ ] Create Broadcast with HTML (adjust unsubscribe merge tag for Resend if needed)
+4. [ ] Create Broadcast — paste **`data/birmingham-intro-resend-broadcast.html`** (includes `{{{FIRST_NAME|there}}}` and `{{{RESEND_UNSUBSCRIBE_URL}}}`)
 5. [ ] Test send, then send to segment
 
 Full Excel/export rules: `docs/RESEND-CONTACT-IMPORT-EXCEL.md`.

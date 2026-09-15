@@ -65,14 +65,9 @@ Existing emails **upsert** (update) by default.
 
 ## After import — send the Birmingham intro
 
-1. Create a **Broadcast** (or use your existing send flow) with HTML from `data/birmingham-intro-brevo-ready.html` — replace Brevo’s `{{ unsubscribe }}` with Resend’s broadcast unsubscribe placeholder if Resend uses a different merge tag (check the Broadcast editor).
+1. Create a **Broadcast** and paste HTML from **`data/birmingham-intro-resend-broadcast.html`** (designed for Resend; unsubscribe + first name already wired).
 2. Audience = segment from step above.
-3. In the HTML footer, replace Brevo’s `{{ unsubscribe }}` with Resend’s link:
-
-   `<a href="{{{RESEND_UNSUBSCRIBE_URL}}}">Unsubscribe</a>`
-
-   Optional greeting: `Hi {{{FIRST_NAME|there}}},` (triple braces).
-
+3. Suggested subject: `Networking in Birmingham — one place to browse what's on`
 4. Test send to your team first.
 
 See also: `docs/BIRMINGHAM-INTRO-EMAIL.md` (subject lines and message structure).
