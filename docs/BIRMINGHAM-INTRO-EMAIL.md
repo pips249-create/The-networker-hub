@@ -47,7 +47,7 @@ No partner-programme or organiser-claim language in this send — keep it attend
 2. [ ] Dedupe on `email`, export **CSV UTF-8**
 3. [ ] Resend → Contacts → Import CSV → map columns → segment e.g. `Birmingham intro`
 4. [ ] In Resend, create contact property **`company_name`** (string) if you don’t have it; map CSV column on import
-5. [ ] Create Broadcast — paste **`data/birmingham-intro-resend-broadcast.html`** (uses `{{{company_name|there}}}`, light logo on dark header, `{{{RESEND_UNSUBSCRIBE_URL}}}`)
+5. [ ] Create Broadcast — **replace all HTML** with **`data/birmingham-intro-resend-broadcast.html`**. Confirm the source contains `<!-- birmingham-resend-v4` (if you still see dark plum header or “On your Birmingham page” 1-2-3 cards, the old HTML is still loaded).
 6. [ ] Test send, then send to segment
 7. [ ] **Before each send:** refresh the four Birmingham event cards (live listings):
 

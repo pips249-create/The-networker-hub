@@ -13,7 +13,7 @@ const path = require('path');
 const SITE = 'https://www.thenetworkeruk.com';
 const HTML = path.join(__dirname, '../data/birmingham-intro-resend-broadcast.html');
 const MARK_START = '<!-- Birmingham event cards';
-const MARK_END = '<!-- Feature stack -->';
+const MARK_END = '<!-- Free browse pill -->';
 
 function isBirmingham(ev) {
   const blob = [ev.city, ev.location, ev.locationSlug, ev.venueName]
@@ -35,45 +35,44 @@ function escHtml(s) {
     .replace(/"/g, '&quot;');
 }
 
-function cardHtml(ev) {
+function cardHtml(ev, isLast) {
   const slug = ev.slug;
   const title = escHtml(ev.title);
   const price = escHtml(ev.price || 'See site');
-  const time = escHtml(ev.time || '');
+  const time = escHtml(ev.time || '').replace(/ – /g, '&ndash;');
   const venue = escHtml(ev.venueName || ev.venue || 'Birmingham');
   const when = escHtml(shortDate(ev.dateRaw || ev.nextDate || ev.date));
   const href =
     SITE +
     '/events/' +
     encodeURIComponent(slug) +
-    '?utm_source=resend&utm_medium=email&utm_campaign=birmingham-intro&utm_content=event-' +
+    '?utm_source=resend&amp;utm_medium=email&amp;utm_campaign=birmingham-intro&amp;utm_content=event-' +
     encodeURIComponent(slug.slice(0, 24));
+  const margin = isLast ? 'margin:0;' : 'margin:0 0 10px;';
   return (
-    '        <tr>\n' +
-    '          <td class="mobile-pad" style="padding:0 32px 10px;">\n' +
-    '            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#ffffff;border:1px solid #d9c4e0;border-radius:12px;border-left:4px solid #9a7aa8;">\n' +
-    '              <tr>\n' +
-    '                <td style="padding:16px 18px;">\n' +
-    '                  <p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:12px;font-weight:700;color:#9a7aa8;margin:0 0 6px;">' +
+    '                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#ffffff;border:1px solid #d9c4e0;border-radius:10px;border-left:4px solid #9a7aa8;' +
+    margin +
+    '">\n' +
+    '                    <tr>\n' +
+    '                      <td style="padding:14px 16px;">\n' +
+    '                        <p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:12px;font-weight:700;color:#9a7aa8;margin:0 0 6px;">' +
     when +
     ' &middot; ' +
     time +
     ' &middot; ' +
     price +
     '</p>\n' +
-    '                  <p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#1c2040;margin:0 0 4px;line-height:1.35;"><a href="' +
+    '                        <p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#1c2040;margin:0 0 4px;line-height:1.35;"><a href="' +
     href +
     '" style="color:#1c2040;text-decoration:none;">' +
     title +
     '</a></p>\n' +
-    '                  <p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;line-height:1.5;color:#635c5e;margin:0;">' +
+    '                        <p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;line-height:1.5;color:#635c5e;margin:0;">' +
     venue +
     '</p>\n' +
-    '                </td>\n' +
-    '              </tr>\n' +
-    '            </table>\n' +
-    '          </td>\n' +
-    '        </tr>\n'
+    '                      </td>\n' +
+    '                    </tr>\n' +
+    '                  </table>\n'
   );
 }
 
@@ -95,13 +94,21 @@ async function main() {
     today +
     ' -->\n' +
     '        <tr>\n' +
-    '          <td class="mobile-pad" style="padding:4px 32px 8px;">\n' +
-    '            <p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#9a7aa8;margin:0 0 12px;">Coming up in Birmingham</p>\n' +
+    '          <td class="mobile-pad" style="padding:0 32px 20px;">\n' +
+    '            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border-radius:14px;overflow:hidden;border:2px solid #9a7aa8;">\n' +
+    '              <tr>\n' +
+    '                <td bgcolor="#9a7aa8" style="background-color:#9a7aa8;padding:14px 18px;text-align:center;">\n' +
+    '                  <p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:13px;font-weight:700;color:#ffffff;text-transform:uppercase;letter-spacing:0.1em;margin:0;">Live in Birmingham on The Networker UK</p>\n' +
+    '                </td>\n' +
+    '              </tr>\n' +
+    '              <tr>\n' +
+    '                <td bgcolor="#f5f0e8" style="background-color:#f5f0e8;padding:14px;">\n' +
+    picks.map((ev, i) => cardHtml(ev, i === picks.length - 1)).join('') +
+    '                </td>\n' +
+    '              </tr>\n' +
+    '            </table>\n' +
     '          </td>\n' +
-    '        </tr>\n' +
-    picks
-      .map((ev, i) => cardHtml(ev).replace('padding:0 32px 10px', i === picks.length - 1 ? 'padding:0 32px 20px' : 'padding:0 32px 10px'))
-      .join('');
+    '        </tr>\n';
 
   const html = fs.readFileSync(HTML, 'utf8');
   const start = html.indexOf(MARK_START);
