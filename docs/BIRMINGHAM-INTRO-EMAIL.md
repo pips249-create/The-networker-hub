@@ -13,15 +13,26 @@
 
 ---
 
-## Suggested subject lines (pick one)
+## Subject lines (A/B friendly)
+
+**Variant A — growth / events (pairs with v8 hero subline in HTML)**
+
+- `Looking to grow your business in Birmingham? Check out these events`
+- `Growing in Birmingham? Events worth a look`
+
+**Variant B — invitation / calendar (softer cold open)**
 
 - `An invitation — find Birmingham networking & events in one place`
 - `Networking in Birmingham — one place to browse what's on`
 - `Birmingham business events & groups on The Networker UK`
-- `Breakfasts, groups & trade shows around Birmingham (free to browse)`
 
-## Preheader (matches HTML hidden text)
+**Tip:** Send variant A to ~15–20% of the segment first; compare click rate on `utm_content=cta-hero` and Birmingham page UTMs. Keep variant B for the rest if A feels too “marketing” in replies.
 
+## Preheader (matches HTML hidden text in v8)
+
+`Networking, workshops and trade shows in Birmingham — see what's on, free on The Networker UK.`
+
+For variant B subjects only, you can override preheader in Resend to:  
 `Breakfasts, groups, exhibitions and conferences around Birmingham — browse free on The Networker UK.`
 
 ---
@@ -30,10 +41,10 @@
 
 | Block | Intent |
 |-------|--------|
-| Hero + intro | What TN UK is; Birmingham relevance |
-| Feature band | Groups, exhibitions/conferences, free account when booking |
-| **Primary CTA** | `/networking/birmingham` |
-| **Secondary CTA** | `/register?next=/networking/birmingham` |
+| Hero + intro | Headline + growth subline; what TN UK is; Birmingham relevance |
+| Gold “free browse” band | Groups, exhibitions/conferences — no sign-up |
+| **Primary CTA** | `/networking/birmingham` (above event cards) |
+| Live event cards | Four Birmingham listings with images |
 | Purple “missing listing” box | Reply with name / introduce us to organiser |
 | Sign-off | Rosie & Catherine · reply or `hi@thenetworkeruk.com` |
 
@@ -47,10 +58,10 @@ No partner-programme or organiser-claim language in this send — keep it attend
 2. [ ] Dedupe on `email`, export **CSV UTF-8**
 3. [ ] Resend → Contacts → Import CSV → map columns → segment e.g. `Birmingham intro`
 4. [ ] In Resend, create contact property **`company_name`** (string) if you don’t have it; map CSV column on import
-5. [ ] Create Broadcast — **replace all HTML** with **`data/birmingham-intro-resend-broadcast.html`**. Confirm the source contains `<!-- birmingham-resend-v7` (lavender logo, CTA above event cards).
+5. [ ] Create Broadcast — **replace all HTML** with **`data/birmingham-intro-resend-broadcast.html`**. Confirm the source contains `<!-- birmingham-resend-v8` (growth subline, CTA above event cards).
 6. [ ] **Logo URL:** Until the PR that adds `assets/logo-networker-uk-email-header.png` is deployed, the HTML uses a GitHub raw image URL so Resend preview works. After deploy, switch the header `img src` to `https://www.thenetworkeruk.com/assets/logo-networker-uk-email-header.png?v=20260915tnuk` (better for deliverability).
-6. [ ] Test send, then send to segment
-7. [ ] **Before each send:** refresh the four Birmingham event cards (live listings):
+7. [ ] Test send, then send to segment
+8. [ ] **Before each send:** refresh the four Birmingham event cards (live listings):
 
 ```bash
 node scripts/build-birmingham-intro-resend-events.js
