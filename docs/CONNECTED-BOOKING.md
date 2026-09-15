@@ -4,7 +4,7 @@ Organisers on a **Connected** monthly plan list events on The Networker UK and t
 
 ## Enable in production
 
-1. Run migration `290_external_connected_booking.sql`.
+1. Run migration `292_external_connected_booking.sql`.
 2. Set `CONNECTED_BOOKING_ENABLED=true` on Vercel.
 3. Activate an organiser account (admin PATCH `/api/organiser/connected-booking`: `connectedBookingStatus: active`, `connectedBookingPlan: starter|growth|scale|enterprise`).
 4. Organiser rotates webhook secret on `/organiser/connected-booking`.
