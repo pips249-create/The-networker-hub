@@ -71,6 +71,15 @@ function eventPayloadFromBody(body, email) {
   } else if (body.publish === true || body.publish === 'true') {
     payload.listingStatus = 'published';
   }
+  if (Object.prototype.hasOwnProperty.call(body, 'checkoutMode') || Object.prototype.hasOwnProperty.call(body, 'checkout_mode')) {
+    payload.checkoutMode = body.checkoutMode || body.checkout_mode;
+  }
+  if (Object.prototype.hasOwnProperty.call(body, 'externalBookingUrl') || Object.prototype.hasOwnProperty.call(body, 'external_booking_url')) {
+    payload.externalBookingUrl = body.externalBookingUrl || body.external_booking_url;
+  }
+  if (Object.prototype.hasOwnProperty.call(body, 'externalPriceLabel') || Object.prototype.hasOwnProperty.call(body, 'external_price_label')) {
+    payload.externalPriceLabel = body.externalPriceLabel || body.external_price_label;
+  }
   return payload;
 }
 

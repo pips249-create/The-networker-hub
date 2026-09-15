@@ -284,6 +284,9 @@ function rowToEvent(row) {
     featuredUntil: row.featured_until || null,
     connectionsEmailSentAt: row.connections_email_sent_at || null,
     connectionsEmailSentCount: Number(row.connections_email_sent_count) || 0,
+    checkoutMode: String(row.checkout_mode || 'hub').trim(),
+    externalBookingUrl: String(row.external_booking_url || '').trim(),
+    externalPriceLabel: String(row.external_price_label || '').trim(),
   };
 }
 
@@ -1061,6 +1064,46 @@ async function buildEventRow(payload, eventId, mode) {
     if (['included', 'added', 'none'].includes(vat)) row.vat_treatment = vat;
   }
 
+  const {
+    connectedBookingFeatureEnabled,
+    CHECKOUT_EXTERNAL,
+    CHECKOUT_HUB,
+    normalizeExternalBookingUrl,
+    normalizeExternalPriceLabel,
+    assertConnectedBookingEntitlement,
+  } = require('./connected-booking');
+
+  if (
+    Object.prototype.hasOwnProperty.call(payload, 'checkoutMode') ||
+    Object.prototype.hasOwnProperty.call(payload, 'checkout_mode')
+  ) {
+    const rawMode = String(payload.checkoutMode || payload.checkout_mode || CHECKOUT_HUB).trim();
+    if (connectedBookingFeatureEnabled() && rawMode === CHECKOUT_EXTERNAL) {
+      row.checkout_mode = CHECKOUT_EXTERNAL;
+    } else {
+      row.checkout_mode = CHECKOUT_HUB;
+    }
+  } else if (mode === 'create') {
+    row.checkout_mode = CHECKOUT_HUB;
+  }
+
+  if (
+    Object.prototype.hasOwnProperty.call(payload, 'externalBookingUrl') ||
+    Object.prototype.hasOwnProperty.call(payload, 'external_booking_url')
+  ) {
+    row.external_booking_url = normalizeExternalBookingUrl(
+      payload.externalBookingUrl || payload.external_booking_url
+    );
+  }
+  if (
+    Object.prototype.hasOwnProperty.call(payload, 'externalPriceLabel') ||
+    Object.prototype.hasOwnProperty.call(payload, 'external_price_label')
+  ) {
+    row.external_price_label = normalizeExternalPriceLabel(
+      payload.externalPriceLabel || payload.external_price_label
+    );
+  }
+
   if (!isLocked && touchDate) {
     const dates = parseDateIso(payload.date, payload.endDate);
     row.starts_at = dates.starts_at;
@@ -1109,6 +1152,29 @@ async function buildEventRow(payload, eventId, mode) {
     if (mode === 'create') {
       row.published_at = new Date().toISOString();
     }
+  }
+
+  const effectiveCheckoutMode = String(row.checkout_mode || CHECKOUT_HUB).trim();
+  if (effectiveCheckoutMode === CHECKOUT_EXTERNAL && row.status === 'published') {
+    const organiserId = row.organiser_id || payload.groupId || null;
+    if (!row.external_booking_url) {
+      const e = new Error('Add your booking page URL before publishing with Connected booking.');
+      e.status = 400;
+      e.code = 'missing_external_booking_url';
+      throw e;
+    }
+    if (!row.external_price_label) {
+      const e = new Error('Add a price label for the listing (e.g. Free or £15) before publishing.');
+      e.status = 400;
+      e.code = 'missing_external_price_label';
+      throw e;
+    }
+    if (connectedBookingFeatureEnabled() && organiserId) {
+      const sbEnt = getSupabaseAdmin();
+      await assertConnectedBookingEntitlement(sbEnt, organiserId, { skipGroupLimit: true });
+    }
+    row.ticket_sales_enabled = true;
+    row.attendance_mode = 'tickets';
   }
 
   return row;
@@ -2000,10 +2066,22 @@ async function saveRefundPolicyForEvents(eventIds, refundPayload) {
 async function assertEventsHaveTicketsForPublish(sb, eventIds) {
   const ids = (eventIds || []).filter(Boolean);
   if (!ids.length) return;
-  const { data, error } = await sb.from('tickets').select('event_id').in('event_id', ids);
+  const { data: events, error: evErr } = await sb
+    .from('events')
+    .select('id, checkout_mode')
+    .in('id', ids);
+  if (evErr) throw new Error(evErr.message);
+  const externalIds = new Set(
+    (events || [])
+      .filter((row) => String(row.checkout_mode || 'hub') === 'external_connected')
+      .map((row) => row.id)
+  );
+  const needsTickets = ids.filter((id) => !externalIds.has(id));
+  if (!needsTickets.length) return;
+  const { data, error } = await sb.from('tickets').select('event_id').in('event_id', needsTickets);
   if (error) throw new Error(error.message);
   const withTickets = new Set((data || []).map((row) => row.event_id));
-  for (const id of ids) {
+  for (const id of needsTickets) {
     if (!withTickets.has(id)) {
       const e = new Error('Add at least one ticket type before publishing this event.');
       e.status = 400;

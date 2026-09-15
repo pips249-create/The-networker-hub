@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>Connected booking – Organiser – The Networker UK</title>
+    <link rel="stylesheet" href="../css/hub.css?v=20260909navlist2" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260910tickets1" />
+  </head>
+  <body class="organiser-booking-options-page">
+    <div id="hub-site-nav"></div>
+    <script src="../js/site-nav.js?v=20260910aff1" data-root="../" data-page="organiser" defer></script>
+
+    <div class="ee-booking-help ee-wrap">
+      <p><a href="/organiser/">← Organiser workspace</a></p>
+      <h1>Connected booking</h1>
+      <p class="ee-hint">
+        List events on The Networker UK, take payment on your own site, and sync registrations for verified reviews,
+        attendee lists, and round-up emails.
+      </p>
+
+      <h2>Hub checkout vs Connected booking</h2>
+      <table class="ee-booking-help-table">
+        <thead>
+          <tr>
+            <th></th>
+            <th>Hub checkout (default)</th>
+            <th>Connected booking</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Listing</td>
+            <td>Free</td>
+            <td>From £39/mo (1 group) — see plans below</td>
+          </tr>
+          <tr>
+            <td>Where people pay</td>
+            <td>The Networker UK</td>
+            <td>Your website / booking system</td>
+          </tr>
+          <tr>
+            <td>Your cost</td>
+            <td>Buyers pay 4.5% + 20p booking fee on top; you keep 100% of ticket price</td>
+            <td>Monthly plan only — you keep 100% of ticket money</td>
+          </tr>
+          <tr>
+            <td>Verified post-event reviews</td>
+            <td>Yes</td>
+            <td>Yes (real-time webhook required)</td>
+          </tr>
+          <tr>
+            <td>Membership / guest visits / application seating</td>
+            <td>Yes</td>
+            <td>Not on Connected events — use Hub checkout</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>Plans (ex VAT)</h2>
+      <ul>
+        <li><strong>Starter — £39/mo</strong> — 1 group, unlimited events</li>
+        <li><strong>Growth — £99/mo</strong> — up to 5 groups, unlimited events</li>
+        <li><strong>Scale — £199/mo</strong> — up to 20 groups, unlimited events</li>
+        <li><strong>20+ groups</strong> — POA: email Rosie and Catherine</li>
+      </ul>
+
+      <h2>Webhook (for your developer)</h2>
+      <p class="ee-hint">
+        When a ticket is sold on your site, POST JSON to
+        <code id="cb-webhook-url">/api/integrations/booking</code> with header
+        <code>X-Networker-Signature: &lt;HMAC-SHA256 of raw body&gt;</code> and
+        <code>X-Organiser-Account-Id: &lt;your account id&gt;</code>.
+      </p>
+      <pre id="cb-sample" style="background:#f4f4f5;padding:12px;border-radius:8px;overflow:auto"></pre>
+      <p class="ee-hint">
+        Manage your webhook secret and view recent sync attempts in the organiser API panel below (sign in required).
+      </p>
+
+      <div id="cb-admin-panel" hidden>
+        <h2>Your connection</h2>
+        <p id="cb-plan-status"></p>
+        <button type="button" class="ee-btn ee-btn-outline" id="cb-rotate-secret">Generate new webhook secret</button>
+        <p class="ee-hint" id="cb-secret-reveal" hidden></p>
+        <h3>Recent sync</h3>
+        <ul id="cb-sync-log"></ul>
+      </div>
+      <p id="cb-signin-hint"><a href="/login?next=/organiser/connected-booking">Sign in</a> to manage API settings.</p>
+    </div>
+
+    <script>
+      (function () {
+        var site = location.origin;
+        var urlEl = document.getElementById('cb-webhook-url');
+        if (urlEl) urlEl.textContent = site + '/api/integrations/booking';
+        var sample = {
+          eventId: 'YOUR_EVENT_UUID',
+          orderId: 'ORDER-12345',
+          email: 'buyer@example.com',
+          name: 'Alex Smith',
+          quantity: 1,
+          amountPaid: 15,
+          status: 'confirmed',
+        };
+        var pre = document.getElementById('cb-sample');
+        if (pre) pre.textContent = JSON.stringify(sample, null, 2);
+
+        fetch('/api/organiser/connected-booking', { credentials: 'include' })
+          .then(function (r) { return r.json(); })
+          .then(function (data) {
+            if (!data.ok) return;
+            document.getElementById('cb-signin-hint').hidden = true;
+            var panel = document.getElementById('cb-admin-panel');
+            panel.hidden = false;
+            document.getElementById('cb-plan-status').textContent =
+              'Plan: ' + (data.plan || 'none') + ' — ' + (data.active ? 'active' : 'inactive') +
+              (data.groupLimit != null ? ' (' + data.groupCount + '/' + data.groupLimit + ' groups)' : '');
+            var log = document.getElementById('cb-sync-log');
+            (data.recentSync || []).forEach(function (row) {
+              var li = document.createElement('li');
+              li.textContent = row.created_at + ' — ' + row.outcome + ' — ' + (row.message || '');
+              log.appendChild(li);
+            });
+            document.getElementById('cb-rotate-secret').onclick = function () {
+              fetch('/api/organiser/connected-booking', {
+                method: 'PATCH',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'rotate_webhook_secret' }),
+              })
+                .then(function (r) { return r.json(); })
+                .then(function (res) {
+                  if (res.webhookSecret) {
+                    var el = document.getElementById('cb-secret-reveal');
+                    el.hidden = false;
+                    el.textContent = 'New secret (copy now): ' + res.webhookSecret;
+                  }
+                });
+            };
+          })
+          .catch(function () {});
+      })();
+    </script>
+  </body>
+</html>

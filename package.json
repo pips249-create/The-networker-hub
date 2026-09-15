@@ -25,6 +25,7 @@
     "seed-sample-event": "node scripts/seed-sample-event.js",
     "seed-browse-events": "node scripts/seed-browse-events.js",
     "delete-seed-events": "node scripts/delete-seed-events.js",
+    "test-external-booking-webhook": "node scripts/test-external-booking-webhook.js",
     "test-review-e2e": "node scripts/review-e2e-test.js",
     "test-guest-visit-e2e": "node scripts/guest-visit-e2e-test.js",
     "test-category-exclusivity-e2e": "node scripts/category-exclusivity-e2e-test.js",

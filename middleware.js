@@ -124,6 +124,7 @@ function isPublicListingPath(pathname, searchParams) {
 // Keep discovery files (llms.txt / agents.txt / sitemap) gated until public launch.
 const GATE_BYPASS_PREFIXES = [
   '/api/stripe-webhook',
+  '/api/integrations',
   '/api/resend-webhook',
   '/api/cron/',
   '/api/health',

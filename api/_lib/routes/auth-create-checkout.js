@@ -178,12 +178,19 @@ module.exports = async function handler(req, res) {
     const evRes = await sb
       .from('events')
       .select(
-        'id, title, slug, status, approval_status, ticket_sales_enabled, organiser_id, attendance_mode, guest_passes_disabled, refund_policy, refund_policy_details, refund_terms_agreed, refund_terms_agreed_at, collect_dietary, collect_accessibility, starts_at, ends_at, vat_treatment'
+        'id, title, slug, status, approval_status, ticket_sales_enabled, organiser_id, attendance_mode, guest_passes_disabled, refund_policy, refund_policy_details, refund_terms_agreed, refund_terms_agreed_at, collect_dietary, collect_accessibility, starts_at, ends_at, vat_treatment, checkout_mode, external_booking_url'
       )
       .eq('id', eventId)
       .maybeSingle();
     if (evRes.error) throw new Error(evRes.error.message);
     if (!evRes.data) return json(res, 404, { ok: false, error: 'event_not_found' });
+    if (String(evRes.data.checkout_mode || 'hub') === 'external_connected') {
+      return json(res, 400, {
+        ok: false,
+        error: 'external_checkout',
+        message: 'This event uses the organiser’s own booking system. Use the Book button on the event page.',
+      });
+    }
     if (String(evRes.data.status || '').toLowerCase() !== 'published') {
       return json(res, 400, { ok: false, error: 'event_not_published' });
     }
