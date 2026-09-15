@@ -5415,3 +5415,88 @@ a.ee-btn.ee-btn-primary {
   margin-bottom: 4px;
 }
 
+/* Connected booking organiser page (/organiser/connected-booking) */
+.cb-plan-list li {
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(13, 110, 122, 0.14);
+  background: #f6fafb;
+  list-style: none;
+}
+
+.cb-plan-list {
+  margin: 0;
+  padding: 0;
+}
+
+.cb-webhook-card {
+  margin-top: 4px;
+}
+
+.cb-webhook-url {
+  margin: 6px 0 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #f0f4f5;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 13px;
+  word-break: break-all;
+  color: var(--ee-purple-dark);
+}
+
+.cb-meta-list {
+  margin: 6px 0 0;
+  padding-left: 1.2em;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.cb-meta-list code {
+  font-size: 13px;
+}
+
+.cb-code-block {
+  margin: 8px 0 0;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: #1a2e3b;
+  color: #e8f0f2;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.45;
+  overflow: auto;
+  max-height: 280px;
+}
+
+.cb-plan-status {
+  margin: 0 0 12px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--ee-purple-dark);
+}
+
+.cb-sync-title {
+  margin: 20px 0 8px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.cb-sync-log {
+  margin: 0;
+  padding-left: 1.2em;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ee-text-mid);
+}
+
+.cb-sync-empty {
+  list-style: none;
+  margin-left: -1.2em;
+  color: var(--ee-text-soft);
+}
+
+.cb-secret-reveal {
+  margin-top: 12px;
+  word-break: break-all;
+}
+
