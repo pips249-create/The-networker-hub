@@ -58,13 +58,13 @@ No partner-programme or organiser-claim language in this send — keep it attend
 2. [ ] Dedupe on `email`, export **CSV UTF-8**
 3. [ ] Resend → Contacts → Import CSV → map columns → segment e.g. `Birmingham intro`
 4. [ ] In Resend, create contact property **`company_name`** (string) if you don’t have it; map CSV column on import
-5. [ ] Create Broadcast — **delete existing HTML and paste the entire file** `data/birmingham-intro-resend-broadcast.html`. Confirm `<!-- birmingham-resend-v12`.
+5. [ ] Create Broadcast — **delete existing HTML and paste the entire file** `data/birmingham-intro-resend-broadcast.html`. Confirm `<!-- birmingham-resend-v13` (West Midlands growth hero, updated footer copy).
 6. [ ] **Logo:** Transparent PNG only (`logo-networker-uk-email-header-transparent.png`). Cache-bust query `?v=20260915trans2`. If you still see a white box, you are on an old paste or old `logo-networker-uk-email-header.png` URL.
 7. [ ] Test send, then send to segment
 8. [ ] **Before each send:** refresh the four Birmingham event cards (live listings):
 
 ```bash
-node scripts/build-birmingham-intro-resend-events.js
+node scripts/build-city-intro-resend-events.js birmingham
 ```
 
 Then re-paste HTML into Resend (or update the draft).
