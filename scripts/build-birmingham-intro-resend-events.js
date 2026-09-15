@@ -104,7 +104,7 @@ function cardHtml(ev, isLast) {
   const margin = isLast ? 'margin:0;' : 'margin:0 0 10px;';
 
   const imageCell = img
-    ? '                      <td width="112" valign="top" style="padding:0 14px 0 0;width:112px;">\n' +
+    ? '                      <td width="112" valign="middle" style="padding:0 14px 0 0;width:112px;">\n' +
       '                        <a href="' +
       href +
       '" style="text-decoration:none;"><img src="' +
@@ -121,7 +121,7 @@ function cardHtml(ev, isLast) {
     '">\n' +
     '                    <tr>\n' +
     imageCell +
-    '                      <td valign="top" style="padding:14px 16px 14px ' +
+    '                      <td valign="middle" style="padding:14px 16px 14px ' +
     (img ? '0' : '16px') +
     ';"' +
     textColspan +
