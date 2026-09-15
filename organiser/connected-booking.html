@@ -16,7 +16,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260909listmenu1" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260915cbpage1" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260915cbpage3" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260812doors2" />
   </head>
   <body class="organiser-booking-options-page">
@@ -37,48 +37,64 @@
             reviews, attendee lists, and round-up emails.
           </p>
           <p class="ee-booking-help-lede ee-booking-help-lede--quiet">
-            Use <a href="/organiser/booking-options">Hub checkout</a> instead if you want tickets, membership, and guest
-            visits on The Networker UK (free listing; 4.5% + 20p booking fee per ticket).
+            Prefer tickets and membership on The Networker UK?
+            <a href="/organiser/booking-options">Hub checkout</a> is free to list (4.5% + 20p booking fee per ticket).
           </p>
         </header>
 
         <section class="ee-booking-help-table-wrap" aria-labelledby="cb-compare-title">
           <h2 id="cb-compare-title">Hub checkout vs Connected booking</h2>
           <p class="ee-booking-help-table-lede">Pick one model per event — you cannot mix both on the same listing.</p>
-          <div class="ee-booking-help-table-scroll">
-            <table class="ee-booking-help-table">
+          <div class="cb-compare-wrap ee-booking-help-table-scroll">
+            <table class="cb-compare-table">
               <thead>
                 <tr>
-                  <th scope="col"></th>
-                  <th scope="col">Hub checkout (default)</th>
-                  <th scope="col">Connected booking</th>
+                  <th scope="col" class="cb-compare-feature-col"></th>
+                  <th scope="col" class="cb-compare-hub-col">
+                    <span class="cb-compare-col-title">Hub checkout</span>
+                    <span class="cb-compare-col-sub">Default · free listing</span>
+                  </th>
+                  <th scope="col" class="cb-compare-connected-col">
+                    <span class="cb-compare-col-title">Connected booking</span>
+                    <span class="cb-compare-col-sub">Your website · monthly plan</span>
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td>Listing on The Networker UK</td>
+                  <th scope="row">Listing on The Networker UK</th>
                   <td>Free</td>
-                  <td>From £39/mo (see plans)</td>
+                  <td class="cb-compare-connected-cell">Included in plan (from £39/mo)</td>
                 </tr>
                 <tr>
-                  <td>Where people pay</td>
+                  <th scope="row">Where people pay</th>
                   <td>On The Networker UK</td>
-                  <td>Your website / booking system</td>
+                  <td class="cb-compare-connected-cell">Your website / booking system</td>
                 </tr>
                 <tr>
-                  <td>Your cost</td>
-                  <td>Buyers pay 4.5% + 20p booking fee; you keep 100% of ticket price</td>
-                  <td>Monthly plan only — you keep 100% of ticket money</td>
+                  <th scope="row">What you pay</th>
+                  <td>Nothing — buyers pay 4.5% + 20p booking fee on top of ticket price</td>
+                  <td class="cb-compare-connected-cell">Monthly plan only — you keep 100% of ticket money</td>
                 </tr>
                 <tr>
-                  <td>Verified post-event reviews</td>
+                  <th scope="row">You receive</th>
+                  <td>100% of ticket price (via Stripe Connect)</td>
+                  <td class="cb-compare-connected-cell">100% of ticket price (on your system)</td>
+                </tr>
+                <tr>
+                  <th scope="row">Verified post-event reviews</th>
                   <td>Yes</td>
-                  <td>Yes — real-time webhook required</td>
+                  <td class="cb-compare-connected-cell">Yes — real-time webhook required</td>
                 </tr>
                 <tr>
-                  <td>Membership, guest visits, application seating</td>
+                  <th scope="row">Attendee list &amp; round-up emails</th>
                   <td>Yes</td>
-                  <td>No — use Hub checkout for those events</td>
+                  <td class="cb-compare-connected-cell">Yes — when webhook syncs bookings</td>
+                </tr>
+                <tr>
+                  <th scope="row">Membership, guest visits, application seating</th>
+                  <td>Yes</td>
+                  <td class="cb-compare-connected-cell">No — use Hub checkout for those events</td>
                 </tr>
               </tbody>
             </table>
@@ -87,35 +103,55 @@
 
         <section class="ee-booking-help-section ee-booking-help-section--accent" aria-labelledby="cb-plans-title">
           <div class="ee-booking-help-section-head">
-            <p class="ee-booking-help-kicker">Pricing</p>
+            <p class="ee-booking-help-kicker">Connected booking</p>
             <h2 id="cb-plans-title">Monthly plans (ex VAT)</h2>
-            <p class="ee-booking-help-pick">Unlimited events on each plan. Unlimited groups on Enterprise (POA).</p>
+            <p class="ee-booking-help-pick">Unlimited events on every plan.</p>
           </div>
-          <ul class="ee-booking-help-chooser-list cb-plan-list">
-            <li>
-              <span class="ee-booking-help-chooser-q">Starter — £39/mo</span>
-              <span class="ee-booking-help-chooser-a">1 group profile</span>
-            </li>
-            <li>
-              <span class="ee-booking-help-chooser-q">Growth — £99/mo</span>
-              <span class="ee-booking-help-chooser-a">Up to 5 group profiles</span>
-            </li>
-            <li>
-              <span class="ee-booking-help-chooser-q">Scale — £199/mo</span>
-              <span class="ee-booking-help-chooser-a">Up to 20 group profiles</span>
-            </li>
-            <li>
-              <span class="ee-booking-help-chooser-q">20+ groups</span>
-              <span class="ee-booking-help-chooser-a"
-                >POA — email <a href="mailto:rosie@thenetworkeruk.com">Rosie</a> and
-                <a href="mailto:hi@thenetworkeruk.com">Catherine</a></span
-              >
-            </li>
-          </ul>
-          <p class="ee-booking-help-table-tip">
-            To subscribe or start a pilot, contact
-            <a href="mailto:hi@thenetworkeruk.com">hi@thenetworkeruk.com</a>. Self-serve billing is coming soon.
-          </p>
+          <div class="cb-pricing-wrap">
+            <table class="cb-pricing-table">
+              <thead>
+                <tr>
+                  <th scope="col">Plan</th>
+                  <th scope="col">Group profiles</th>
+                  <th scope="col">Price</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="cb-pricing-plan">Starter</td>
+                  <td>1</td>
+                  <td class="cb-pricing-price">£39 / month</td>
+                </tr>
+                <tr>
+                  <td class="cb-pricing-plan">Growth</td>
+                  <td>Up to 5</td>
+                  <td class="cb-pricing-price">£99 / month</td>
+                </tr>
+                <tr>
+                  <td class="cb-pricing-plan">Scale</td>
+                  <td>Up to 20</td>
+                  <td class="cb-pricing-price">£199 / month</td>
+                </tr>
+                <tr>
+                  <td class="cb-pricing-plan">Enterprise</td>
+                  <td>20+ groups</td>
+                  <td class="cb-pricing-price cb-pricing-poa-cell">
+                    <a
+                      class="ee-btn ee-btn-gold cb-poa-btn"
+                      href="mailto:rosie@thenetworkeruk.com,hi@thenetworkeruk.com?subject=Connected%20booking%20%E2%80%94%2020%2B%20groups%20(POA)&amp;body=Hi%20Rosie%20and%20Catherine%2C%0A%0AI%20would%20like%20Connected%20booking%20for%20____%20group%20profile(s).%0A%0AOrganisation%20name%3A%20%0AContact%20email%3A%20%0A%0AThank%20you."
+                      >Email Rosie &amp; Catherine (POA)</a
+                    >
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="cb-poa-actions">
+            <a class="ee-btn ee-btn-outline" href="mailto:hi@thenetworkeruk.com?subject=Connected%20booking%20pilot"
+              >Ask about Starter / Growth / Scale</a
+            >
+          </div>
+          <p class="ee-booking-help-table-tip">Self-serve checkout for plans is coming soon.</p>
         </section>
 
         <section class="ee-booking-help-section" aria-labelledby="cb-webhook-title">
@@ -123,8 +159,7 @@
             <p class="ee-booking-help-kicker">For your developer</p>
             <h2 id="cb-webhook-title">Real-time registration webhook</h2>
             <p class="ee-booking-help-pick">
-              When someone buys on your site, your system sends one HTTPS POST so we can create the registration
-              (reviews and attendee tools work the same as Hub checkout).
+              When someone buys on your site, your system sends one HTTPS POST so we create the registration.
             </p>
           </div>
           <div class="ee-card cb-webhook-card">
@@ -169,6 +204,6 @@
       </div>
     </div>
 
-    <script src="../js/organiser-connected-booking-page.js?v=20260915cbpage1" defer></script>
+    <script src="../js/organiser-connected-booking-page.js?v=20260915cbpage3" defer></script>
   </body>
 </html>
