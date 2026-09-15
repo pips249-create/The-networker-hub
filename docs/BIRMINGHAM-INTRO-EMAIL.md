@@ -49,6 +49,13 @@ No partner-programme or organiser-claim language in this send — keep it attend
 4. [ ] In Resend, create contact property **`company_name`** (string) if you don’t have it; map CSV column on import
 5. [ ] Create Broadcast — paste **`data/birmingham-intro-resend-broadcast.html`** (uses `{{{company_name|there}}}`, light logo on dark header, `{{{RESEND_UNSUBSCRIBE_URL}}}`)
 6. [ ] Test send, then send to segment
+7. [ ] **Before each send:** refresh the four Birmingham event cards (live listings):
+
+```bash
+node scripts/build-birmingham-intro-resend-events.js
+```
+
+Then re-paste HTML into Resend (or update the draft).
 
 Full Excel/export rules: `docs/RESEND-CONTACT-IMPORT-EXCEL.md`.
 
