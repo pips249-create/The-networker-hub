@@ -1,3 +1,3 @@
-email,first_name,last_name,city,company,source,unsubscribed
-jane.smith@example.com,Jane,Smith,Birmingham,Example Ltd,linkedin-birmingham,false
-info@example-venue.co.uk,,,Birmingham,Example Venue,web-directory,false
+email,company_name,city,source,unsubscribed
+jane.smith@example.com,Example Ltd,Birmingham,linkedin-birmingham,false
+info@example-venue.co.uk,Example Venue,Birmingham,web-directory,false

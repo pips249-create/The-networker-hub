@@ -13,10 +13,8 @@ Use **one row per person** (dedupe emails). Header row must be plain text — no
 | Column (Excel header) | Maps in Resend | Required | Notes |
 |----------------------|----------------|----------|--------|
 | `email` | **email** | Yes | Lowercase header `email` auto-maps without extra steps |
-| `first_name` | first name | No | For `{{first_name}}` in broadcasts if you use it |
-| `last_name` | last name | No | Optional |
+| `company_name` | custom property | Recommended | Used in the Birmingham broadcast: `Hello {{{company_name\|there}}},` — create property **`company_name`** in Resend before import |
 | `city` | custom property | No | e.g. `Birmingham`, `Solihull` — create/map on import |
-| `company` | custom property | No | Business name if you have it |
 | `source` | custom property | No | Where you found them: `linkedin`, `chamber`, `manual` |
 | `unsubscribed` | unsubscribed | No | `false` or leave blank for mailable contacts |
 

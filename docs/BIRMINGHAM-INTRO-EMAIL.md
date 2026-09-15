@@ -15,6 +15,7 @@
 
 ## Suggested subject lines (pick one)
 
+- `An invitation — find Birmingham networking & events in one place`
 - `Networking in Birmingham — one place to browse what's on`
 - `Birmingham business events & groups on The Networker UK`
 - `Breakfasts, groups & trade shows around Birmingham (free to browse)`
@@ -45,8 +46,9 @@ No partner-programme or organiser-claim language in this send — keep it attend
 1. [ ] Build list in Excel using columns in `data/birmingham-intro-resend-import-template.csv`
 2. [ ] Dedupe on `email`, export **CSV UTF-8**
 3. [ ] Resend → Contacts → Import CSV → map columns → segment e.g. `Birmingham intro`
-4. [ ] Create Broadcast — paste **`data/birmingham-intro-resend-broadcast.html`** (includes `{{{FIRST_NAME|there}}}` and `{{{RESEND_UNSUBSCRIBE_URL}}}`)
-5. [ ] Test send, then send to segment
+4. [ ] In Resend, create contact property **`company_name`** (string) if you don’t have it; map CSV column on import
+5. [ ] Create Broadcast — paste **`data/birmingham-intro-resend-broadcast.html`** (uses `{{{company_name|there}}}`, light logo on dark header, `{{{RESEND_UNSUBSCRIBE_URL}}}`)
+6. [ ] Test send, then send to segment
 
 Full Excel/export rules: `docs/RESEND-CONTACT-IMPORT-EXCEL.md`.
 
