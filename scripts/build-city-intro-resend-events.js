@@ -18,9 +18,18 @@ const CITIES = {
     markStart: '<!-- Birmingham event cards',
     markEnd: '<!-- Free browse pill -->',
     apiLocation: 'birmingham',
+    trustApiLocation: true,
     campaign: 'birmingham-intro',
     liveHeader: 'Live in Birmingham on The Networker UK',
     defaultVenue: 'Birmingham',
+    excludeSlugs: ['coffee-cannoli-with-gusto-birmingham'],
+    /** Fixed card order (must have images); slot 3 ≈ one week out instead of Gusto */
+    fixedSlugs: [
+      'the-business-network-birmingham-live-event',
+      'property-poppadoms-birmingham',
+      'non-league-networking-lunch-halesowen-town-fc',
+      'bpc-a-premium-networking-event-for-ambitious-professionals',
+    ],
     match(ev) {
       const blob = [ev.city, ev.location, ev.locationSlug, ev.venueName]
         .map((v) => String(v || '').toLowerCase())
@@ -95,8 +104,12 @@ function sortScore(ev, claimed) {
   return { score, ts };
 }
 
-async function pickEvents(events, matchFn) {
-  const local = events.filter(matchFn);
+async function pickEvents(events, matchFn, excludeSlugs = [], trustApiLocation = false) {
+  const exclude = new Set((excludeSlugs || []).map((s) => String(s).toLowerCase()));
+  const local = events.filter((ev) => {
+    if (exclude.has(String(ev.slug || '').toLowerCase())) return false;
+    return trustApiLocation || matchFn(ev);
+  });
   const scored = [];
   for (const ev of local) {
     const claimed = await isOrganiserClaimed(ev.organiserSlug);
@@ -107,7 +120,30 @@ async function pickEvents(events, matchFn) {
 
   const withImage = scored.filter((r) => eventImage(r.ev));
   const pool = withImage.length >= 4 ? withImage : scored;
-  return pool.slice(0, 4).map((r) => ({ ...r.ev, _claimed: r.claimed }));
+  return { picks: pool.slice(0, 4).map((r) => ({ ...r.ev, _claimed: r.claimed })), scored };
+}
+
+function applyFixedSlugs(result, fixedSlugs) {
+  if (!fixedSlugs || !fixedSlugs.length || !result.scored.length) return result.picks;
+  const picks = [];
+  const seen = new Set();
+  for (const slug of fixedSlugs) {
+    const want = String(slug || '').toLowerCase();
+    if (!want || seen.has(want)) continue;
+    const row = result.scored.find((r) => String(r.ev.slug || '').toLowerCase() === want);
+    if (!row) continue;
+    seen.add(want);
+    picks.push({ ...row.ev, _claimed: row.claimed });
+  }
+  if (picks.length >= 4) return picks.slice(0, 4);
+  for (const row of result.scored) {
+    const k = String(row.ev.slug || '').toLowerCase();
+    if (seen.has(k)) continue;
+    seen.add(k);
+    picks.push({ ...row.ev, _claimed: row.claimed });
+    if (picks.length >= 4) break;
+  }
+  return picks;
 }
 
 function cardHtml(ev, isLast, cfg) {
@@ -182,7 +218,13 @@ async function run(cityKey, dryRun) {
   const res = await fetch(url);
   if (!res.ok) throw new Error('API ' + res.status);
   const data = await res.json();
-  const picks = await pickEvents(data.events || [], cfg.match);
+  const picked = await pickEvents(
+    data.events || [],
+    cfg.match,
+    cfg.excludeSlugs,
+    cfg.trustApiLocation
+  );
+  let picks = cfg.fixedSlugs ? applyFixedSlugs(picked, cfg.fixedSlugs) : picked.picks;
   if (picks.length < 4) {
     console.warn('Only found', picks.length, cityKey, 'events for cards.');
   }
