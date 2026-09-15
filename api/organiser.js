@@ -51,6 +51,7 @@ const routes = {
   'website-brand': require('./_lib/routes/organiser-website-brand'),
   'group-updates': require('./_lib/routes/organiser-group-updates'),
   'promote-action': require('./_lib/routes/organiser-promote-action'),
+  'connected-booking': require('./_lib/routes/organiser-connected-booking'),
 };
 
 module.exports = wrapHandler(async function handler(req, res) {

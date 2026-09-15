@@ -1249,6 +1249,14 @@
       ev.priceKey === 'free' ? 'Free' : publicListingPriceLabel(ev, { withFrom: false });
   }
 
+  function eventIsExternalConnected(ev) {
+    return Boolean(
+      ev &&
+        String(ev.checkoutMode || '').trim() === 'external_connected' &&
+        String(ev.externalBookingUrl || '').trim()
+    );
+  }
+
   function normalizeEventFlags(ev, params) {
     const p = params || new URLSearchParams(window.location.search);
     const approvalFromTickets = (ev.tickets || []).some(tierIsApplication);
@@ -2996,6 +3004,26 @@
     const urgencyEl = document.getElementById('ev-urgency');
     if (!tiersEl) return;
 
+    if (eventIsExternalConnected(ev)) {
+      tiersEl.innerHTML = '';
+      const note = document.createElement('p');
+      note.className = 'ticket-load-hint';
+      note.textContent =
+        ev.externalBookingDisclaimer ||
+        'Tickets are sold on the organiser\u2019s website. The Networker UK does not process payment for this event.';
+      tiersEl.appendChild(note);
+      if (urgencyEl) urgencyEl.textContent = '';
+      const buy = document.getElementById('buy-btn');
+      const organiserName = ev.organiser || ev.organiserName || 'the organiser';
+      if (buy && !ev.isEventPast && ev.ticketSalesEnabled !== false) {
+        buy.disabled = false;
+        buy.classList.remove('cta-btn-disabled');
+        buy.textContent = 'Book on ' + organiserName + '\u2019s website';
+      }
+      syncPaidCheckoutPanel('', 1, 0);
+      return;
+    }
+
     const tiers = ticketTiersForEvent(ev);
     const salesPending = Boolean(ev.isTicketSalesPending || ev.isTicketSalesScheduled);
     const panelClosed = ev.isSoldOut || (ev.isSalesClosed && !salesPending);
@@ -4538,6 +4566,7 @@
       else if (showAlumniTierSelected(ev)) labelText = 'Previous attendee ticket';
       else labelText = 'Apply for a seat';
     }
+    else if (eventIsExternalConnected(ev)) labelText = 'Book on organiser site';
     else if (ev.priceKey === 'free') labelText = 'Get free ticket';
     else labelText = 'Buy ticket';
 
@@ -5361,6 +5390,11 @@
         buy.disabled = true;
 
         try {
+        if (eventIsExternalConnected(evNow)) {
+          const url = String(evNow.externalBookingUrl || '').trim();
+          if (url) window.open(url, '_blank', 'noopener,noreferrer');
+          return;
+        }
         if (registrationIsConfirmedGoing(eventApplicationState)) {
           await refreshEventApplicationUi(evNow);
           return;

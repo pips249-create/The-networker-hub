@@ -5241,6 +5241,13 @@
 
       if (loadedRaw.event) {
         seedSeriesMetaFromLoadedEvent(loadedRaw.event);
+        try {
+          window.dispatchEvent(
+            new CustomEvent('ee-event-loaded', { detail: { event: loadedRaw.event } })
+          );
+        } catch {
+          /* ignore */
+        }
       }
 
       await expandSeriesEventIds(loadedRaw.event);
