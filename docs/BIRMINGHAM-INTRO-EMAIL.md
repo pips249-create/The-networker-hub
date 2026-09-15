@@ -47,7 +47,8 @@ No partner-programme or organiser-claim language in this send — keep it attend
 2. [ ] Dedupe on `email`, export **CSV UTF-8**
 3. [ ] Resend → Contacts → Import CSV → map columns → segment e.g. `Birmingham intro`
 4. [ ] In Resend, create contact property **`company_name`** (string) if you don’t have it; map CSV column on import
-5. [ ] Create Broadcast — **replace all HTML** with **`data/birmingham-intro-resend-broadcast.html`**. Confirm the source contains `<!-- birmingham-resend-v5` (cream header `#f5f0e8`, four event cards with images; no “more easily” in headline).
+5. [ ] Create Broadcast — **replace all HTML** with **`data/birmingham-intro-resend-broadcast.html`**. Confirm the source contains `<!-- birmingham-resend-v7` (lavender logo, CTA above event cards).
+6. [ ] **Logo URL:** Until the PR that adds `assets/logo-networker-uk-email-header.png` is deployed, the HTML uses a GitHub raw image URL so Resend preview works. After deploy, switch the header `img src` to `https://www.thenetworkeruk.com/assets/logo-networker-uk-email-header.png?v=20260915tnuk` (better for deliverability).
 6. [ ] Test send, then send to segment
 7. [ ] **Before each send:** refresh the four Birmingham event cards (live listings):
 
