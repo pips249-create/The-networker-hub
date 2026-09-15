@@ -15,12 +15,12 @@
 
 ## Subject lines (A/B friendly)
 
-**Variant A — growth / events (pairs with v8 hero subline in HTML)**
+**Variant A — growth / events (subject only; not in email body)**
 
 - `Looking to grow your business in Birmingham? Check out these events`
 - `Growing in Birmingham? Events worth a look`
 
-**Variant B — invitation / calendar (softer cold open)**
+**Variant B — invitation / calendar (matches hero headline)**
 
 - `An invitation — find Birmingham networking & events in one place`
 - `Networking in Birmingham — one place to browse what's on`
@@ -41,7 +41,7 @@ For variant B subjects only, you can override preheader in Resend to:
 
 | Block | Intent |
 |-------|--------|
-| Hero + intro | Headline + growth subline; what TN UK is; Birmingham relevance |
+| Hero + intro | Headline; what TN UK is; Birmingham relevance |
 | Gold “free browse” band | Groups, exhibitions/conferences — no sign-up |
 | **Primary CTA** | `/networking/birmingham` (above event cards) |
 | Live event cards | Four Birmingham listings with images |
@@ -58,7 +58,7 @@ No partner-programme or organiser-claim language in this send — keep it attend
 2. [ ] Dedupe on `email`, export **CSV UTF-8**
 3. [ ] Resend → Contacts → Import CSV → map columns → segment e.g. `Birmingham intro`
 4. [ ] In Resend, create contact property **`company_name`** (string) if you don’t have it; map CSV column on import
-5. [ ] Create Broadcast — **delete existing HTML and paste the entire file** `data/birmingham-intro-resend-broadcast.html` (partial edits leave old logo URL / missing growth line). Confirm `<!-- birmingham-resend-v10` and the line *Looking to grow your business in Birmingham?* under the headline.
+5. [ ] Create Broadcast — **delete existing HTML and paste the entire file** `data/birmingham-intro-resend-broadcast.html`. Confirm `<!-- birmingham-resend-v11`.
 6. [ ] **Logo:** Transparent PNG only (`logo-networker-uk-email-header-transparent.png`). Cache-bust query `?v=20260915trans2`. If you still see a white box, you are on an old paste or old `logo-networker-uk-email-header.png` URL.
 7. [ ] Test send, then send to segment
 8. [ ] **Before each send:** refresh the four Birmingham event cards (live listings):
