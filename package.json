@@ -54,6 +54,7 @@
     "build:franchise-claim-followup": "node scripts/build-franchise-claim-followup.js",
     "send:franchise-claim-followup": "node scripts/send-franchise-claim-followup.js",
     "seed-ranking-demo": "node scripts/seed-ranking-demo-reviews.js",
+    "delete-ranking-demo-attendees": "node scripts/delete-ranking-demo-attendees.js",
     "import-attendees": "node scripts/import-attendees-csv.js",
     "build:partner-kit": "node scripts/build-partner-kit-assets.js",
     "build-admin-css": "tailwindcss -c tailwind.admin.config.js -i ./css/admin-tailwind.src.css -o ./css/admin-tailwind.css --minify",
