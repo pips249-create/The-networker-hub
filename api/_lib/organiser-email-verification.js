@@ -22,6 +22,18 @@ function newVerifyCode() {
   return String(crypto.randomInt(0, 1000000)).padStart(6, '0');
 }
 
+function buildOrganiserVerifyEmailPath(code, email) {
+  const address = String(email || '')
+    .trim()
+    .toLowerCase();
+  let path =
+    '/organiser/verify-email?code=' + encodeURIComponent(String(code || '').trim());
+  if (address) {
+    path += '&email=' + encodeURIComponent(address);
+  }
+  return path;
+}
+
 function newLegacyLinkToken() {
   return crypto.randomBytes(32).toString('base64url');
 }
@@ -88,10 +100,8 @@ async function sendOrganiserEmailVerification({ userId, email, name }) {
   const code = newVerifyCode();
   await storeVerifyToken(userId, code);
 
-  const verifyUrl =
-    siteHost() +
-    '/organiser/verify-email?email=' +
-    encodeURIComponent(address);
+  const verifyPath = buildOrganiserVerifyEmailPath(code, address);
+  const verifyUrl = siteHost() + verifyPath;
   const displayName = String(name || '').trim() || address.split('@')[0];
 
   try {
@@ -106,7 +116,7 @@ async function sendOrganiserEmailVerification({ userId, email, name }) {
       },
       skipEmailCheck: true,
     });
-    return { ok: true, emailSent: true, verifyUrl: null, ...result };
+    return { ok: true, emailSent: true, verifyUrl: null, verifyPath, ...result };
   } catch (e) {
     const errCode = e.code || '';
     if (errCode === 'resend_not_configured') {
@@ -161,5 +171,6 @@ module.exports = {
   sendOrganiserEmailVerification,
   verifyOrganiserEmailToken,
   markOrganiserEmailVerified,
+  buildOrganiserVerifyEmailPath,
   newLegacyLinkToken,
 };

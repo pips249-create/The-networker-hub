@@ -539,8 +539,8 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
   }
 
   if (slug === 'organiser_email_verify') {
-    vars.verify_url = site + '/organiser/verify-email';
     vars.verify_code = '482917';
+    vars.verify_url = site + '/organiser/verify-email?code=482917&email=organiser%40example.com';
   }
 
   if (slug === 'member_roster_invite' || slug === 'member_roster_existing' || slug === 'member_roster_pay_invite') {

@@ -67,6 +67,7 @@ module.exports = async function handler(req, res) {
         ok: true,
         emailSent: true,
         message: 'Check your inbox for a confirmation code.',
+        redirect: result.verifyPath || '/organiser/verify-email',
         ...result,
       });
     } catch (e) {
@@ -179,19 +180,26 @@ module.exports = async function handler(req, res) {
     let devVerifyCode = null;
     let verifyMessage = null;
 
+    let verifyPath = null;
     if (!before.organiserEmailVerified) {
       try {
-        await sendOrganiserEmailVerification({
+        const sent = await sendOrganiserEmailVerification({
           userId: session.sub,
           email: session.email,
           name: session.name,
         });
         emailSent = true;
+        verifyPath = sent.verifyPath || null;
         verifyMessage = 'We sent a confirmation code to ' + session.email + '.';
       } catch (e) {
         if (e.code === 'email_not_configured' && (e.verifyUrl || e.verifyCode)) {
           devVerifyUrl = e.verifyUrl || null;
           devVerifyCode = e.verifyCode || null;
+          verifyPath = devVerifyUrl
+            ? String(devVerifyUrl).replace(/^https?:\/\/[^/]+/i, '')
+            : devVerifyCode
+              ? '/organiser/verify-email?code=' + encodeURIComponent(String(devVerifyCode))
+              : null;
           verifyMessage = e.verifyCode
             ? 'Email is not configured on this server — enter the confirmation code on the next screen.'
             : 'Email is not configured on this server — use the verification link on the next screen.';
@@ -202,7 +210,8 @@ module.exports = async function handler(req, res) {
     }
 
     const status = await getOrganiserAccessStatus(session);
-    const redirect = emailSent || devVerifyUrl || devVerifyCode ? '/organiser/verify-email' : '/organiser/';
+    const redirect =
+      verifyPath || (emailSent || devVerifyUrl || devVerifyCode ? '/organiser/verify-email' : '/organiser/');
 
     return json(res, 200, {
       ok: true,
