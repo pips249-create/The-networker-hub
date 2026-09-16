@@ -696,6 +696,102 @@ async function createMembershipCheckoutSession(opts) {
 }
 
 /**
+ * Connected booking — monthly plan on platform Stripe (ex VAT + VAT line items).
+ */
+async function createConnectedBookingCheckoutSession(opts) {
+  const stripe = getStripeClient();
+  const {
+    connectedBookingPlanTotals,
+    isSelfServeConnectedPlan,
+  } = require('./connected-booking-pricing');
+  const { CONNECTED_BOOKING_CHECKOUT_TYPE } = require('./connected-booking-subscriptions');
+
+  const plan = String(opts.plan || '').trim().toLowerCase();
+  if (!isSelfServeConnectedPlan(plan)) throw new Error('invalid_connected_booking_plan');
+
+  const accountId = String(opts.organiserAccountId || '').trim();
+  if (!accountId) throw new Error('missing_organiser_account_id');
+
+  const totals = connectedBookingPlanTotals(plan);
+  const catalogKey = 'connected_booking_' + plan;
+  const exVatPriceId = getCatalogPriceId(catalogKey);
+
+  const metadata = {
+    checkout_type: CONNECTED_BOOKING_CHECKOUT_TYPE,
+    connected_booking_plan: plan,
+    organiser_account_id: accountId,
+    billing_mode: 'subscription',
+    amount_ex_vat_pence: String(totals.monthlyExVatPence),
+    owner_email: String(opts.email || '').toLowerCase(),
+  };
+
+  const lineItems = [];
+  if (exVatPriceId) {
+    lineItems.push({ price: exVatPriceId, quantity: 1 });
+  } else {
+    lineItems.push({
+      price_data: {
+        currency: 'gbp',
+        product_data: {
+          name: 'Connected booking — ' + totals.label,
+          description:
+            totals.label +
+            ' plan — list events on The Networker UK, take payment on your website (£' +
+            (totals.monthlyExVatPence / 100).toFixed(0) +
+            '/month ex VAT)',
+        },
+        unit_amount: totals.monthlyExVatPence,
+        recurring: { interval: 'month' },
+      },
+      quantity: 1,
+    });
+  }
+
+  lineItems.push({
+    price_data: {
+      currency: 'gbp',
+      product_data: {
+        name: 'VAT (20%)',
+        description: 'VAT on Connected booking — ' + totals.label,
+      },
+      unit_amount: totals.monthlyVatPence,
+      recurring: { interval: 'month' },
+    },
+    quantity: 1,
+  });
+
+  const site = siteBaseUrl();
+  const successUrl =
+    String(opts.successUrl || '').trim() ||
+    site + '/organiser/connected-booking?checkout=success&session_id={CHECKOUT_SESSION_ID}';
+  const cancelUrl =
+    String(opts.cancelUrl || '').trim() || site + '/organiser/connected-booking?checkout=cancel';
+
+  return stripe.checkout.sessions.create({
+    mode: 'subscription',
+    customer_email: opts.email,
+    client_reference_id: ('connected-booking-' + accountId).slice(0, 200),
+    metadata,
+    subscription_data: { metadata },
+    success_url: successUrl,
+    cancel_url: cancelUrl,
+    line_items: lineItems,
+  });
+}
+
+async function createConnectedBookingBillingPortalSession(opts) {
+  const stripe = getStripeClient();
+  const customerId = String(opts.customerId || '').trim();
+  if (!customerId) throw new Error('missing_customer');
+  const returnUrl =
+    String(opts.returnUrl || '').trim() || siteBaseUrl() + '/organiser/connected-booking';
+  return stripe.billingPortal.sessions.create({
+    customer: customerId,
+    return_url: returnUrl,
+  });
+}
+
+/**
  * Member self-serve cancel / update card — Stripe Billing Portal on the platform customer.
  */
 async function createMembershipBillingPortalSession(opts) {
@@ -722,6 +818,8 @@ module.exports = {
   createCityPartnerCheckoutSession,
   createCountyPartnerCheckoutSession,
   createMembershipCheckoutSession,
+  createConnectedBookingCheckoutSession,
+  createConnectedBookingBillingPortalSession,
   createMembershipBillingPortalSession,
   retrieveCheckoutSession,
   siteBaseUrl,

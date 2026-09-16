@@ -5686,3 +5686,30 @@ a.ee-btn.ee-btn-primary {
   align-items: center;
 }
 
+.cb-pricing-action-col {
+  min-width: 8.5rem;
+}
+
+.cb-pricing-action-cell {
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.cb-subscribe-btn {
+  padding: 8px 14px;
+  font-size: 14px;
+}
+
+.cb-subscribe-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.cb-checkout-banner {
+  margin: 0 0 14px;
+}
+
+.cb-pricing-table tr.cb-plan-current td {
+  background: rgba(189, 147, 46, 0.08);
+}
+

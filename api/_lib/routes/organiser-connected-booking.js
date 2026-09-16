@@ -11,6 +11,12 @@ const {
   groupLimitForPlan,
   PLAN_GROUP_LIMITS,
 } = require('../connected-booking');
+const { isSelfServeConnectedPlan } = require('../connected-booking-pricing');
+const {
+  isStripeCheckoutConfigured,
+  createConnectedBookingCheckoutSession,
+  createConnectedBookingBillingPortalSession,
+} = require('../stripe-checkout');
 
 function parseBody(req) {
   let body = req.body;
@@ -73,7 +79,7 @@ module.exports = async function handler(req, res) {
     const { data: account, error: accErr } = await sb
       .from('organiser_accounts')
       .select(
-        'id, connected_booking_plan, connected_booking_status, connected_booking_webhook_secret, connected_booking_stripe_subscription_id'
+        'id, connected_booking_plan, connected_booking_status, connected_booking_webhook_secret, connected_booking_stripe_subscription_id, connected_booking_stripe_customer_id'
       )
       .eq('id', accountId)
       .maybeSingle();
@@ -91,17 +97,29 @@ module.exports = async function handler(req, res) {
         .limit(15);
 
       const site = String(process.env.SITE_URL || 'https://www.thenetworkeruk.com').replace(/\/$/, '');
+      const stripeCheckout = isStripeCheckoutConfigured();
+      const hasCustomer = Boolean(String(account.connected_booking_stripe_customer_id || '').trim());
+      const status = account.connected_booking_status || 'inactive';
+      const canStartCheckout =
+        stripeCheckout && (status === 'inactive' || status === 'cancelled' || status === 'past_due');
+
       return json(res, 200, {
         ok: true,
         featureEnabled: true,
         plan: account.connected_booking_plan || null,
-        status: account.connected_booking_status || 'inactive',
+        status,
         active: isConnectedPlanActive(account),
         groupCount,
         groupLimit: limit,
         hasWebhookSecret: Boolean(String(account.connected_booking_webhook_secret || '').trim()),
         webhookUrl: site + '/api/integrations/booking',
         accountId: account.id,
+        billing: {
+          stripeCheckoutConfigured: stripeCheckout,
+          canSubscribe: canStartCheckout,
+          canManageBilling: stripeCheckout && hasCustomer && Boolean(account.connected_booking_stripe_subscription_id),
+          selfServePlans: ['starter', 'growth', 'scale'],
+        },
         pricing: {
           starter: { groups: PLAN_GROUP_LIMITS.starter, monthlyExVat: 39 },
           growth: { groups: PLAN_GROUP_LIMITS.growth, monthlyExVat: 99 },
@@ -160,6 +178,58 @@ module.exports = async function handler(req, res) {
 
     if (req.method === 'POST') {
       const body = parseBody(req);
+      const email = String(auth.session.email || '').trim().toLowerCase();
+      if (!email) {
+        return json(res, 403, { ok: false, error: 'missing_email' });
+      }
+
+      if (body.action === 'create_checkout') {
+        if (!isStripeCheckoutConfigured()) {
+          return json(res, 503, { ok: false, error: 'stripe_not_configured' });
+        }
+        const plan = String(body.plan || body.connectedBookingPlan || '').trim().toLowerCase();
+        if (!isSelfServeConnectedPlan(plan)) {
+          return json(res, 400, { ok: false, error: 'invalid_plan' });
+        }
+        const st = String(account.connected_booking_status || 'inactive');
+        if (st === 'active' && isConnectedPlanActive(account)) {
+          const hasCustomer = Boolean(String(account.connected_booking_stripe_customer_id || '').trim());
+          if (hasCustomer) {
+            try {
+              const portal = await createConnectedBookingBillingPortalSession({
+                customerId: account.connected_booking_stripe_customer_id,
+              });
+              return json(res, 200, {
+                ok: true,
+                alreadySubscribed: true,
+                url: portal.url,
+              });
+            } catch (e) {
+              return json(res, 409, { ok: false, error: 'already_subscribed' });
+            }
+          }
+          return json(res, 409, { ok: false, error: 'already_subscribed' });
+        }
+        const session = await createConnectedBookingCheckoutSession({
+          plan,
+          organiserAccountId: accountId,
+          email,
+        });
+        return json(res, 200, { ok: true, url: session.url, sessionId: session.id });
+      }
+
+      if (body.action === 'billing_portal') {
+        if (!isStripeCheckoutConfigured()) {
+          return json(res, 503, { ok: false, error: 'stripe_not_configured' });
+        }
+        const customerId = String(account.connected_booking_stripe_customer_id || '').trim();
+        if (!customerId) {
+          return json(res, 400, { ok: false, error: 'no_billing_customer' });
+        }
+        const portal = await createConnectedBookingBillingPortalSession({ customerId });
+        return json(res, 200, { ok: true, url: portal.url });
+      }
+
       if (body.action === 'test_signature') {
         const secret = String(account.connected_booking_webhook_secret || '').trim();
         if (!secret) {

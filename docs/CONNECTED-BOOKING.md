@@ -4,11 +4,18 @@ Organisers on a **Connected** monthly plan list events on The Networker UK and t
 
 ## Enable in production
 
-1. Run migration `292_external_connected_booking.sql`.
+1. Run migrations `292_external_connected_booking.sql` and `293_connected_booking_stripe_customer.sql`.
 2. Set `CONNECTED_BOOKING_ENABLED=true` on Vercel.
-3. Activate an organiser account (admin PATCH `/api/organiser/connected-booking`: `connectedBookingStatus: active`, `connectedBookingPlan: starter|growth|scale|enterprise`).
-4. Organiser rotates webhook secret on `/organiser/connected-booking`.
-5. Event: **Set up tickets** → Connected booking card, or PATCH event with `checkoutMode: external_connected`.
+3. Ensure `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` are set (same webhook endpoint as Hub checkout).
+4. Optional: `npm run sync-stripe` to create Connected booking prices and set `STRIPE_CONNECTED_BOOKING_*_PRICE_ID` env vars (checkout works without them using dynamic prices).
+5. Organiser signs in → `/organiser/connected-booking` → **Subscribe** (Starter / Growth / Scale). VAT is added at checkout.
+6. After payment, Stripe webhook activates the account (`connected_booking_status=active`, plan set). A webhook secret is created automatically on first activation if missing.
+7. Organiser rotates webhook secret if needed on the same page; **Manage billing** opens Stripe Customer Portal.
+8. Event: **Set up tickets** → Connected booking card, or PATCH event with `checkoutMode: external_connected`.
+
+**Enterprise (20+ groups)** remains POA — email Rosie & Catherine from the pricing table.
+
+**Manual pilot (no Stripe):** admin PATCH `/api/organiser/connected-booking` with `connectedBookingStatus: active` and `connectedBookingPlan`.
 
 ## Webhook
 
@@ -27,4 +34,5 @@ Hub checkout remains free to list; booking fee 4.5% + 20p per ticket.
 
 ## Tests
 
-`npm run test-external-booking-webhook`
+- `npm run test-external-booking-webhook`
+- `npm run test-connected-booking-subscriptions`

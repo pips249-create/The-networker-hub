@@ -16,7 +16,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260909listmenu1" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260915cbpage3" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260916cbbill1" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260812doors2" />
   </head>
   <body class="organiser-booking-options-page">
@@ -105,37 +105,55 @@
           <div class="ee-booking-help-section-head">
             <p class="ee-booking-help-kicker">Connected booking</p>
             <h2 id="cb-plans-title">Monthly plans (ex VAT)</h2>
-            <p class="ee-booking-help-pick">Unlimited events on every plan.</p>
+            <p class="ee-booking-help-pick">Unlimited events on every plan. Prices ex VAT — 20% VAT added at checkout.</p>
           </div>
+          <p class="ee-alert ee-alert-ok cb-checkout-banner" id="cb-checkout-banner" hidden role="status"></p>
           <div class="cb-pricing-wrap">
-            <table class="cb-pricing-table">
+            <table class="cb-pricing-table" id="cb-pricing-table">
               <thead>
                 <tr>
                   <th scope="col">Plan</th>
                   <th scope="col">Group profiles</th>
-                  <th scope="col">Price</th>
+                  <th scope="col">Price (ex VAT)</th>
+                  <th scope="col" class="cb-pricing-action-col">Subscribe</th>
                 </tr>
               </thead>
               <tbody>
-                <tr>
+                <tr data-cb-plan="starter">
                   <td class="cb-pricing-plan">Starter</td>
                   <td>1</td>
                   <td class="cb-pricing-price">£39 / month</td>
+                  <td class="cb-pricing-action-cell">
+                    <button type="button" class="ee-btn ee-btn-gold cb-subscribe-btn" data-cb-plan="starter">
+                      Subscribe
+                    </button>
+                  </td>
                 </tr>
-                <tr>
+                <tr data-cb-plan="growth">
                   <td class="cb-pricing-plan">Growth</td>
                   <td>Up to 5</td>
                   <td class="cb-pricing-price">£99 / month</td>
+                  <td class="cb-pricing-action-cell">
+                    <button type="button" class="ee-btn ee-btn-gold cb-subscribe-btn" data-cb-plan="growth">
+                      Subscribe
+                    </button>
+                  </td>
                 </tr>
-                <tr>
+                <tr data-cb-plan="scale">
                   <td class="cb-pricing-plan">Scale</td>
                   <td>Up to 20</td>
                   <td class="cb-pricing-price">£199 / month</td>
+                  <td class="cb-pricing-action-cell">
+                    <button type="button" class="ee-btn ee-btn-gold cb-subscribe-btn" data-cb-plan="scale">
+                      Subscribe
+                    </button>
+                  </td>
                 </tr>
                 <tr>
                   <td class="cb-pricing-plan">Enterprise</td>
                   <td>20+ groups</td>
-                  <td class="cb-pricing-price cb-pricing-poa-cell">
+                  <td class="cb-pricing-price">POA</td>
+                  <td class="cb-pricing-action-cell cb-pricing-poa-cell">
                     <a
                       class="ee-btn ee-btn-gold cb-poa-btn"
                       href="mailto:rosie@thenetworkeruk.com,hi@thenetworkeruk.com?subject=Connected%20booking%20%E2%80%94%2020%2B%20groups%20(POA)&amp;body=Hi%20Rosie%20and%20Catherine%2C%0A%0AI%20would%20like%20Connected%20booking%20for%20____%20group%20profile(s).%0A%0AOrganisation%20name%3A%20%0AContact%20email%3A%20%0A%0AThank%20you."
@@ -147,11 +165,16 @@
             </table>
           </div>
           <div class="cb-poa-actions">
-            <a class="ee-btn ee-btn-outline" href="mailto:hi@thenetworkeruk.com?subject=Connected%20booking%20pilot"
-              >Ask about Starter / Growth / Scale</a
+            <button type="button" class="ee-btn ee-btn-outline" id="cb-manage-billing" hidden>
+              Manage billing
+            </button>
+            <a class="ee-btn ee-btn-outline" href="mailto:hi@thenetworkeruk.com?subject=Connected%20booking%20question"
+              >Questions? Email us</a
             >
           </div>
-          <p class="ee-booking-help-table-tip">Self-serve checkout for plans is coming soon.</p>
+          <p class="ee-booking-help-table-tip" id="cb-billing-tip">
+            Sign in to subscribe. Payment is handled securely by Stripe.
+          </p>
         </section>
 
         <section class="ee-booking-help-section" aria-labelledby="cb-webhook-title">
@@ -187,6 +210,9 @@
               Account id for headers: <code id="cb-account-id"></code>
             </p>
             <div class="ee-card-actions">
+              <button type="button" class="ee-btn ee-btn-outline" id="cb-manage-billing-panel" hidden>
+                Manage billing
+              </button>
               <button type="button" class="ee-btn ee-btn-gold" id="cb-rotate-secret">Generate new webhook secret</button>
             </div>
             <p class="ee-alert ee-alert-warn cb-secret-reveal" id="cb-secret-reveal" hidden role="status"></p>
@@ -204,6 +230,6 @@
       </div>
     </div>
 
-    <script src="../js/organiser-connected-booking-page.js?v=20260915cbpage3" defer></script>
+    <script src="../js/organiser-connected-booking-page.js?v=20260916cbbill1" defer></script>
   </body>
 </html>
