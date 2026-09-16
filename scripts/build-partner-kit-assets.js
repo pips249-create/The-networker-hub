@@ -17,9 +17,7 @@ const SVG_TO_PNG = [
   { svg: 'partner-promo-sponsor-square.svg', png: 'partner-promo-sponsor-square.png', width: 1080 },
   { svg: 'partner-promo-opp-listing-story.svg', png: 'partner-promo-opp-listing-story.png', width: 1080 },
   { svg: 'partner-promo-sponsor-story.svg', png: 'partner-promo-sponsor-story.png', width: 1080 },
-  { svg: 'logo-networker-uk-partner-lockup.svg', png: 'logo-networker-uk-partner-lockup.png', width: 1920 },
-  { svg: 'logo-networker-uk-partner-light.svg', png: 'logo-networker-uk-partner-light.png', width: 1280 },
-  { svg: 'logo-networker-uk-partner-dark.svg', png: 'logo-networker-uk-partner-dark.png', width: 1280 },
+  // Partner logos: run node scripts/rebuild-partner-badges.js (PNG from *-source.png, not SVG approximations)
 ];
 
 async function exportPngs() {
@@ -195,8 +193,18 @@ function syncPartnerBadgeEmailAsset() {
   console.log('email-asset networker-uk-partner-badge-light.png');
 }
 
+async function rebuildPartnerLogosFromSources() {
+  const rebuild = path.join(__dirname, 'rebuild-partner-badges.js');
+  if (!fs.existsSync(rebuild)) return;
+  require('child_process').execSync('node "' + rebuild + '"', {
+    cwd: ROOT,
+    stdio: 'inherit',
+  });
+}
+
 async function main() {
   await exportPngs();
+  await rebuildPartnerLogosFromSources();
   syncPartnerBadgeEmailAsset();
   await drawRateCardPdf();
 }

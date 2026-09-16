@@ -9,6 +9,7 @@ const {
   getActivePartnerByCode,
   recordAffiliateAttribution,
   clickCountsByPartnerIds,
+  referralActivityForPartner,
 } = require('../affiliate-programme');
 const {
   createAffiliateCommission,
@@ -113,6 +114,31 @@ module.exports = async function handler(req, res) {
       if (view === 'commissions') {
         const overview = await listCommissions(sb, req.query && req.query.limit);
         return json(res, 200, { ok: true, configured: true, ...overview });
+      }
+
+      if (view === 'referral_activity' || view === 'activity') {
+        const partnerId = String((req.query && req.query.partnerId) || '').trim();
+        const code = normalizeAffiliateCode(req.query && req.query.code);
+        let resolvedId = partnerId;
+        if (!resolvedId && code) {
+          const { data: partnerRow } = await sb
+            .from('affiliate_partners')
+            .select('id')
+            .eq('code', code)
+            .maybeSingle();
+          resolvedId = (partnerRow && partnerRow.id) || '';
+        }
+        if (!resolvedId) {
+          return json(res, 400, {
+            ok: false,
+            error: 'missing_partner',
+            message: 'Pass partnerId or code.',
+          });
+        }
+        const activity = await referralActivityForPartner(resolvedId, {
+          limit: req.query && req.query.limit,
+        });
+        return json(res, 200, { ok: true, configured: true, partnerId: resolvedId, code: code || null, ...activity });
       }
 
       const listed = await listPartners(sb);

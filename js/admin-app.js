@@ -11073,7 +11073,7 @@
       '<div class="space-y-6">' +
       '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">' +
       '<div><h3 class="font-bold text-brand-900">Referral partners</h3>' +
-          '<p class="text-xs text-slate-500 mt-1">Invite-only partner programme — 20% on opportunity listings and sponsorship. Public enquire: <a class="text-brand-700 hover:underline" href="/partners" target="_blank" rel="noopener">/partners</a>. After create, use <strong>Email invite</strong> for the partner hub (earnings + media kit). Clicks count when someone lands with <code>?ref=CODE</code> (deduped ~30 mins per browser). Inbox: partnerships@thenetworkeruk.com · Hub: <a class="text-brand-700 hover:underline" href="/partners/kit" target="_blank" rel="noopener">/partners/kit</a></p></div>' +
+          '<p class="text-xs text-slate-500 mt-1">Invite-only partner programme — 20% on opportunity listings and sponsorship. Public enquire: <a class="text-brand-700 hover:underline" href="/partners" target="_blank" rel="noopener">/partners</a>. After create, use <strong>Email invite</strong> for the partner hub. <strong>Clicks</strong> = anonymous link landings with <code>?ref=CODE</code> (deduped ~30 mins per browser) — they do <em>not</em> show names. <strong>Known people</strong> appear when they submit an advertising enquiry, start checkout, or pay (see <strong>Activity</strong> per partner and the commissions ledger below). Inbox: partnerships@thenetworkeruk.com · Hub: <a class="text-brand-700 hover:underline" href="/partners/kit" target="_blank" rel="noopener">/partners/kit</a> (same page as <code>/partners/earnings</code>)</p></div>' +
       '<form id="affiliate-partner-form" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 items-end">' +
       '<label class="text-xs font-semibold text-slate-600">Code<input id="aff-code" name="code" required maxlength="32" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono uppercase" placeholder="JOE" /></label>' +
       '<label class="text-xs font-semibold text-slate-600">Display name<input id="aff-name" name="displayName" required class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Joe Bloggs" /></label>' +
@@ -11082,6 +11082,7 @@
       '</form>' +
       '<p id="affiliate-partners-status" class="text-sm text-slate-500">Loading partners…</p>' +
       '<div id="affiliate-partners-body" class="overflow-x-auto"></div>' +
+      '<div id="affiliate-activity-panel" class="hidden rounded-lg border border-brand-100 bg-brand-50/40 p-4 space-y-4"></div>' +
       '</section>' +
       '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">' +
       '<div class="flex flex-wrap items-start justify-between gap-3">' +
@@ -11111,6 +11112,7 @@
     var commissionsBodyEl = document.getElementById('affiliate-commissions-body');
     var manualForm = document.getElementById('affiliate-manual-form');
     var promoteBtn = document.getElementById('aff-promote-eligible');
+    var activityPanel = document.getElementById('affiliate-activity-panel');
 
     function setStatus(el, text, tone) {
       if (!el) return;
@@ -11196,6 +11198,13 @@
             '<button type="button" class="block text-left text-brand-700 hover:underline" data-aff-invite="' +
             attrEsc(row.id || '') +
             '">Email invite</button>' +
+            '<button type="button" class="block text-left text-brand-700 hover:underline" data-aff-activity="' +
+            attrEsc(row.id || '') +
+            '" data-aff-activity-code="' +
+            attrEsc(row.code || '') +
+            '" data-aff-activity-name="' +
+            attrEsc(row.displayName || '') +
+            '">Activity (who converted)</button>' +
             '</td>' +
             '<td class="px-3 py-2 text-sm">' +
             '<button type="button" class="text-xs font-semibold ' +
@@ -11263,6 +11272,138 @@
             });
         });
       });
+      bodyEl.querySelectorAll('[data-aff-activity]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          loadPartnerActivity(
+            btn.getAttribute('data-aff-activity'),
+            btn.getAttribute('data-aff-activity-code'),
+            btn.getAttribute('data-aff-activity-name')
+          );
+        });
+      });
+    }
+
+    function loadPartnerActivity(partnerId, code, displayName) {
+      if (!activityPanel || !partnerId) return;
+      activityPanel.classList.remove('hidden');
+      activityPanel.innerHTML =
+        '<p class="text-sm text-slate-600">Loading activity for <strong>' +
+        esc(displayName || code || 'partner') +
+        '</strong> (<span class="font-mono">' +
+        esc(code || '') +
+        '</span>)…</p>';
+      activityPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+      adminGet(
+        '/api/admin/affiliate-partners?view=referral_activity&partnerId=' + encodeURIComponent(partnerId)
+      )
+        .then(function (data) {
+          if (!data || !data.ok) {
+            throw new Error((data && data.message) || (data && data.error) || 'activity_load_failed');
+          }
+          renderPartnerActivityPanel(data, displayName, code);
+        })
+        .catch(function (err) {
+          activityPanel.innerHTML =
+            '<p class="text-sm text-red-700">' +
+            esc((err && err.message) || 'Could not load referral activity') +
+            '</p>';
+        });
+    }
+
+    function renderPartnerActivityPanel(data, displayName, code) {
+      if (!activityPanel) return;
+      var clicks = Array.isArray(data.clicks) ? data.clicks : [];
+      var attributions = Array.isArray(data.attributions) ? data.attributions : [];
+      var identified = attributions.filter(function (row) {
+        return row.customerEmail;
+      });
+
+      var clickRows = clicks
+        .map(function (row) {
+          var page = row.path || '—';
+          var url = row.landingUrl ? String(row.landingUrl) : '';
+          return (
+            '<tr class="border-t border-slate-100">' +
+            '<td class="px-2 py-1.5 text-xs whitespace-nowrap">' +
+            esc(formatAdminDateTime(row.createdAt)) +
+            '</td>' +
+            '<td class="px-2 py-1.5 text-xs font-mono">' +
+            esc(page) +
+            '</td>' +
+            '<td class="px-2 py-1.5 text-xs break-all">' +
+            (url
+              ? '<a class="text-brand-700 hover:underline" href="' +
+                attrEsc(url) +
+                '" target="_blank" rel="noopener">' +
+                esc(url.length > 72 ? url.slice(0, 72) + '…' : url) +
+                '</a>'
+              : '—') +
+            '</td></tr>'
+          );
+        })
+        .join('');
+
+      var attrRows = attributions
+        .map(function (row) {
+          return (
+            '<tr class="border-t border-slate-100">' +
+            '<td class="px-2 py-1.5 text-xs whitespace-nowrap">' +
+            esc(formatAdminDateTime(row.createdAt)) +
+            '</td>' +
+            '<td class="px-2 py-1.5 text-xs break-all">' +
+            (row.customerEmail
+              ? '<a class="text-brand-700 hover:underline" href="mailto:' +
+                attrEsc(row.customerEmail) +
+                '">' +
+                esc(row.customerEmail) +
+                '</a>'
+              : '<span class="text-slate-400">(no email)</span>') +
+            '</td>' +
+            '<td class="px-2 py-1.5 text-xs">' +
+            esc(row.context || row.source || '—') +
+            '</td></tr>'
+          );
+        })
+        .join('');
+
+      activityPanel.innerHTML =
+        '<div class="flex flex-wrap items-start justify-between gap-2">' +
+        '<div><h4 class="font-bold text-brand-900 text-sm">Referral activity — ' +
+        esc(displayName || code || 'Partner') +
+        '</h4>' +
+        '<p class="text-xs text-slate-600 mt-1 max-w-2xl">Clicks are anonymous visits (e.g. ' +
+        esc(String(clicks.length)) +
+        ' shown). Rows with an email are enquiry/checkout attributions — that is how you know <em>who</em> came through with this code. Paid sales also show in the commissions ledger.</p></div>' +
+        '<button type="button" id="aff-activity-close" class="text-xs font-semibold text-slate-500 hover:text-slate-800">Close</button></div>' +
+        (data.clicksTableMissing
+          ? '<p class="text-xs text-red-700 font-semibold">Click log missing — run migration 290_affiliate_clicks.sql.</p>'
+          : '') +
+        '<div class="grid gap-4 lg:grid-cols-2">' +
+        '<div><p class="text-xs font-semibold text-slate-700 mb-1">Recent link landings (anonymous)</p>' +
+        (clickRows
+          ? '<div class="overflow-x-auto rounded border border-slate-200 bg-white"><table class="min-w-full text-left"><thead class="bg-slate-50 text-[10px] uppercase text-slate-500"><tr><th class="px-2 py-1">When</th><th class="px-2 py-1">Path</th><th class="px-2 py-1">URL</th></tr></thead><tbody>' +
+            clickRows +
+            '</tbody></table></div>'
+          : '<p class="text-xs text-slate-500">No clicks logged yet.</p>') +
+        '</div>' +
+        '<div><p class="text-xs font-semibold text-slate-700 mb-1">Identified leads (' +
+        esc(String(identified.length)) +
+        ' with email)</p>' +
+        (attrRows
+          ? '<div class="overflow-x-auto rounded border border-slate-200 bg-white"><table class="min-w-full text-left"><thead class="bg-slate-50 text-[10px] uppercase text-slate-500"><tr><th class="px-2 py-1">When</th><th class="px-2 py-1">Email</th><th class="px-2 py-1">Context</th></tr></thead><tbody>' +
+            attrRows +
+            '</tbody></table></div>'
+          : '<p class="text-xs text-slate-500">No enquiry or checkout attributions yet — only anonymous clicks so far.</p>') +
+        '</div></div>';
+
+      var closeBtn = document.getElementById('aff-activity-close');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', function () {
+          activityPanel.classList.add('hidden');
+          activityPanel.innerHTML = '';
+        });
+      }
     }
 
     function renderCommissions(data) {

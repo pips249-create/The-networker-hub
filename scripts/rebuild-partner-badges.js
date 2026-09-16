@@ -1,7 +1,13 @@
 #!/usr/bin/env node
 /**
- * Rebuild partner badge SVGs with correct contrast.
- * Lavender "Networker" disappears on lavender/navy — lockup + dark use a cream wordmark.
+ * Rebuild partner badge PNGs + download SVGs from hand-authored sources.
+ *
+ * Sources (do not auto-generate lockup/dark — replace these files from design):
+ *   assets/logo-networker-uk-partner-lockup-source.png
+ *   assets/logo-networker-uk-partner-dark-source.png
+ *
+ * Light badge: prefer assets/logo-networker-uk-partner-light-source.png from design;
+ *   otherwise composited from logo-networker-uk-transparent.png on cream.
  * Run: node scripts/rebuild-partner-badges.js && npm run build:partner-kit
  */
 const fs = require('fs');
@@ -9,77 +15,105 @@ const path = require('path');
 const sharp = require('sharp');
 
 const ASSETS = path.join(__dirname, '..', 'assets');
-const SRC = path.join(ASSETS, 'logo-networker-uk-transparent.png');
+const LOCKUP_SOURCE = path.join(ASSETS, 'logo-networker-uk-partner-lockup-source.png');
+const DARK_SOURCE = path.join(ASSETS, 'logo-networker-uk-partner-dark-source.png');
+const LIGHT_SOURCE = path.join(ASSETS, 'logo-networker-uk-partner-light-source.png');
+const WORDMARK = path.join(ASSETS, 'logo-networker-uk-transparent.png');
+const OUT_LIGHT = path.join(ASSETS, 'logo-networker-uk-partner-light.png');
 
-async function creamWordmark() {
-  const { data, info } = await sharp(SRC).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
-  for (let i = 0; i < data.length; i += 4) {
-    const r = data[i];
-    const g = data[i + 1];
-    const b = data[i + 2];
-    const a = data[i + 3];
-    if (a < 12) continue;
-    const isLavender = r > 140 && b > 140 && g > 100 && Math.abs(r - b) < 50 && r > g;
-    const isDark = r < 120 && g < 120 && b < 120;
-    if (isLavender || isDark || (r + g + b) / 3 < 200) {
-      data[i] = 250;
-      data[i + 1] = 246;
-      data[i + 2] = 238;
-    }
-  }
-  const outPath = path.join(ASSETS, 'logo-networker-uk-on-dark.png');
-  await sharp(data, { raw: { width: info.width, height: info.height, channels: 4 } })
-    .png()
-    .toFile(outPath);
-  console.log('wrote', path.basename(outPath));
-  return outPath;
+function writeSvgWrapper(pngName, label, outSvgName) {
+  const pngPath = path.join(ASSETS, pngName);
+  if (!fs.existsSync(pngPath)) return;
+  const b64 = fs.readFileSync(pngPath).toString('base64');
+  const meta = require('child_process')
+    .execSync(
+      `python3 -c "from PIL import Image; im=Image.open('${pngPath.replace(/'/g, "'\\''")}'); print(im.size[0], im.size[1])"`
+    )
+    .toString()
+    .trim()
+    .split(/\s+/);
+  const w = meta[0];
+  const h = meta[1];
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="${label}">
+  <title>${label}</title>
+  <image xlink:href="data:image/png;base64,${b64}" width="${w}" height="${h}" preserveAspectRatio="xMidYMid meet"/>
+</svg>`;
+  fs.writeFileSync(path.join(ASSETS, outSvgName), svg);
 }
 
-function dataUriFromFile(filePath) {
-  return 'data:image/png;base64,' + fs.readFileSync(filePath).toString('base64');
+async function buildLightBadge() {
+  if (fs.existsSync(LIGHT_SOURCE)) {
+    await sharp(LIGHT_SOURCE)
+      .resize(1280, null, { withoutEnlargement: false })
+      .png()
+      .toFile(OUT_LIGHT);
+    console.log('wrote logo-networker-uk-partner-light.png (from light source)');
+    return;
+  }
+
+  const w = 640;
+  const h = 360;
+  const logoW = 450;
+  const logoBuf = await sharp(WORDMARK).resize(logoW).png().toBuffer();
+  const logoMeta = await sharp(logoBuf).metadata();
+  const logoLeft = Math.round((w - logoMeta.width) / 2);
+  const logoTop = 48;
+
+  const baseSvg = Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">
+    <rect width="${w}" height="${h}" rx="20" fill="#faf6ee"/>
+    <rect x="1.5" y="1.5" width="${w - 3}" height="${h - 3}" rx="18.5" fill="none" stroke="#1c2040" stroke-opacity="0.1"/>
+    <rect x="200" y="278" width="240" height="42" rx="21" fill="#1c2040"/>
+    <text x="320" y="306" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="700" letter-spacing="0.2em" fill="#faf6ee">PARTNER</text>
+  </svg>`);
+
+  const composed = await sharp(baseSvg)
+    .composite([{ input: logoBuf, left: logoLeft, top: logoTop }])
+    .png()
+    .toBuffer();
+
+  await sharp(composed).resize(1280, null, { withoutEnlargement: false }).png().toFile(OUT_LIGHT);
+
+  console.log('wrote logo-networker-uk-partner-light.png (composited — add light source PNG to replace)');
 }
 
 async function main() {
-  const onDark = await creamWordmark();
-  const uriColor = dataUriFromFile(SRC);
-  const uriLight = dataUriFromFile(onDark);
+  if (!fs.existsSync(LOCKUP_SOURCE)) {
+    throw new Error('Missing ' + LOCKUP_SOURCE + ' — add the Referral Partner lockup PNG from design.');
+  }
+  if (!fs.existsSync(DARK_SOURCE)) {
+    throw new Error('Missing ' + DARK_SOURCE + ' — add the Partner badge · dark PNG from design.');
+  }
 
-  const lockup = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="960" height="360" viewBox="0 0 960 360" role="img" aria-label="The Networker UK Referral Partner">
-  <title>The Networker UK Referral Partner</title>
-  <rect width="960" height="360" rx="24" fill="#b992be"/>
-  <image xlink:href="${uriLight}" x="40" y="72" width="420" height="195" preserveAspectRatio="xMidYMid meet"/>
-  <line x1="500" y1="88" x2="500" y2="272" stroke="#1c2040" stroke-opacity="0.35" stroke-width="2"/>
-  <text x="540" y="148" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="600" letter-spacing="0.04em" fill="#faf6ee">Referral</text>
-  <text x="540" y="228" font-family="Georgia, 'Times New Roman', serif" font-size="58" fill="#faf6ee">Partner</text>
-</svg>
-`;
+  await sharp(LOCKUP_SOURCE)
+    .resize(1920, null, { withoutEnlargement: false })
+    .png()
+    .toFile(path.join(ASSETS, 'logo-networker-uk-partner-lockup.png'));
+  console.log('wrote logo-networker-uk-partner-lockup.png');
 
-  const lightBadge = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="640" height="360" viewBox="0 0 640 360" role="img" aria-label="The Networker UK Partner">
-  <title>The Networker UK Partner</title>
-  <rect width="640" height="360" rx="20" fill="#faf6ee"/>
-  <rect x="1.5" y="1.5" width="637" height="357" rx="18.5" fill="none" stroke="#1c2040" stroke-opacity="0.1"/>
-  <image xlink:href="${uriColor}" x="95" y="48" width="450" height="190" preserveAspectRatio="xMidYMid meet"/>
-  <rect x="200" y="278" width="240" height="42" rx="21" fill="#1c2040"/>
-  <text x="320" y="306" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="700" letter-spacing="0.2em" fill="#faf6ee">PARTNER</text>
-</svg>
-`;
+  await sharp(DARK_SOURCE)
+    .resize(1280, null, { withoutEnlargement: false })
+    .png()
+    .toFile(path.join(ASSETS, 'logo-networker-uk-partner-dark.png'));
+  console.log('wrote logo-networker-uk-partner-dark.png');
 
-  const darkBadge = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="640" height="360" viewBox="0 0 640 360" role="img" aria-label="The Networker UK Partner">
-  <title>The Networker UK Partner</title>
-  <rect width="640" height="360" rx="20" fill="#1c2040"/>
-  <rect x="1.5" y="1.5" width="637" height="357" rx="18.5" fill="none" stroke="#e8b84b" stroke-opacity="0.35"/>
-  <image xlink:href="${uriLight}" x="95" y="48" width="450" height="190" preserveAspectRatio="xMidYMid meet"/>
-  <rect x="200" y="278" width="240" height="42" rx="21" fill="#e8b84b"/>
-  <text x="320" y="306" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="700" letter-spacing="0.2em" fill="#1c2040">PARTNER</text>
-</svg>
-`;
+  await buildLightBadge();
 
-  const lockupPath = path.join(ASSETS, 'logo-networker-uk-partner-lockup.svg');
-  fs.writeFileSync(lockupPath, lockup);
-  fs.writeFileSync(path.join(ASSETS, 'logo-networker-uk-partner-light.svg'), lightBadge);
-  fs.writeFileSync(path.join(ASSETS, 'logo-networker-uk-partner-dark.svg'), darkBadge);
-  await sharp(Buffer.from(lockup)).resize(1920).png().toFile(path.join(ASSETS, 'logo-networker-uk-partner-lockup.png'));
-  console.log('wrote partner badge SVGs + lockup PNG');
+  writeSvgWrapper(
+    'logo-networker-uk-partner-lockup.png',
+    'The Networker UK Referral Partner',
+    'logo-networker-uk-partner-lockup.svg'
+  );
+  writeSvgWrapper(
+    'logo-networker-uk-partner-dark.png',
+    'The Networker UK Partner',
+    'logo-networker-uk-partner-dark.svg'
+  );
+  writeSvgWrapper(
+    'logo-networker-uk-partner-light.png',
+    'The Networker UK Partner',
+    'logo-networker-uk-partner-light.svg'
+  );
+  console.log('wrote partner badge SVG wrappers');
 }
 
 main().catch((err) => {
