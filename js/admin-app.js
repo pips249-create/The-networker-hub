@@ -31131,9 +31131,14 @@
             }
             state.pitchEditingDeck = null;
             if (pitchCreateStatus) {
-              pitchCreateStatus.textContent = deckId
+              var statusMsg = deckId
                 ? 'Deck updated — same link as before.'
                 : 'Deck ready — opening in a new tab.';
+              if (data.crmWarning) {
+                statusMsg +=
+                  ' (Deck saved; CRM log skipped — ' + String(data.crmWarning) + ')';
+              }
+              pitchCreateStatus.textContent = statusMsg;
             }
             if (!deckId && data.deck && data.deck.path) {
               window.open(data.deck.path, '_blank', 'noopener');

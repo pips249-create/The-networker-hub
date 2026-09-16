@@ -122,31 +122,81 @@ async function getFocusOrganiserProfile(sb, organiserId) {
   };
 }
 
+function migrationHintFromDbError(msg) {
+  const m = String(msg || '').trim();
+  if (/custom_pitch_decks|deck_type|sponsorship_placements|prospect_logo_url/i.test(m)) {
+    return (
+      'Run migrations 293_custom_pitch_decks.sql, 294_custom_pitch_decks_logo.sql, and ' +
+      '295_custom_pitch_decks_sponsorship.sql in Supabase, then reload the API schema.'
+    );
+  }
+  if (/organiser_sales_demos|is_walkthrough_demo/i.test(m)) {
+    return (
+      'Run migrations 252_organiser_sales_kit.sql and 253_organiser_sales_kit_source.sql in Supabase, then reload the API schema.'
+    );
+  }
+  if (/schema cache/i.test(m)) {
+    return 'Supabase schema cache is stale — Project Settings → API → Reload schema, then refresh this page.';
+  }
+  if (/does not exist/i.test(m)) {
+    return (
+      'Database table or column missing. Confirm migrations 252, 253, 293–295 are applied, reload schema. (' +
+      m.slice(0, 160) +
+      ')'
+    );
+  }
+  return m || 'Could not save';
+}
+
 async function logPitchDeckToCrm(sb, req, fields) {
   const actor = actorFromRequest(req);
   if (!SHOWN_BY.has(actor.shownBy)) return null;
   const organiserName = cleanText(fields.organiserName, 200);
   if (!organiserName) return null;
 
-  const insertRes = await sb
+  const row = {
+    shown_at: new Date().toISOString().slice(0, 10),
+    shown_by: actor.shownBy,
+    organiser_name: organiserName,
+    organiser_email: fields.organiserEmail || null,
+    organiser_id: fields.organiserId || null,
+    outcome: 'follow_up',
+    notes: fields.notes || null,
+    source: 'manual',
+    created_by_email: actor.email || sessionEmail(req) || null,
+  };
+
+  let insertRes = await sb
     .from('organiser_sales_demos')
-    .insert({
-      shown_at: new Date().toISOString().slice(0, 10),
-      shown_by: actor.shownBy,
-      organiser_name: organiserName,
-      organiser_email: fields.organiserEmail || null,
-      organiser_id: fields.organiserId || null,
-      outcome: 'follow_up',
-      notes: fields.notes || null,
-      source: 'manual',
-      created_by_email: actor.email || sessionEmail(req) || null,
-    })
+    .insert(row)
     .select(
       'id, shown_at, shown_by, organiser_name, organiser_email, organiser_id, outcome, notes, source, created_by_email, created_at, updated_at'
     )
     .maybeSingle();
+  if (insertRes.error && /source/i.test(String(insertRes.error.message || ''))) {
+    const legacyRow = { ...row };
+    delete legacyRow.source;
+    insertRes = await sb
+      .from('organiser_sales_demos')
+      .insert(legacyRow)
+      .select(
+        'id, shown_at, shown_by, organiser_name, organiser_email, organiser_id, outcome, notes, created_by_email, created_at, updated_at'
+      )
+      .maybeSingle();
+  }
   if (insertRes.error) throw new Error(insertRes.error.message);
   return mapDemo(insertRes.data);
+}
+
+async function tryLogPitchDeckToCrm(sb, req, fields) {
+  try {
+    const demo = await logPitchDeckToCrm(sb, req, fields);
+    return { demo, warning: null };
+  } catch (e) {
+    const warning = migrationHintFromDbError(e && e.message);
+    console.warn('sales-kit CRM log failed', e && e.message);
+    return { demo: null, warning };
+  }
 }
 
 function parsePitchDeckBody(body) {
@@ -329,9 +379,7 @@ module.exports = async function handler(req, res) {
       return json(res, missing ? 503 : 500, {
         ok: false,
         error: missing ? 'migration_required' : 'load_failed',
-        message: missing
-          ? 'Run migration 252_organiser_sales_kit.sql in Supabase, then refresh.'
-          : msg,
+        message: missing ? migrationHintFromDbError(msg) : msg,
       });
     }
   }
@@ -523,13 +571,16 @@ module.exports = async function handler(req, res) {
         if (!upd.data) return json(res, 404, { error: 'not_found', message: 'Deck not found.' });
 
         let crmDemo = null;
+        let crmWarning = null;
         if (logToCrm) {
-          crmDemo = await logPitchDeckToCrm(sb, req, {
+          const crm = await tryLogPitchDeckToCrm(sb, req, {
             organiserName: companyName,
             organiserEmail: parsed.organiserEmail || null,
             organiserId: parsed.organiserId,
             notes: pitchDeckCrmNotes(absoluteDeckUrl(upd.data.slug), true),
           });
+          crmDemo = crm.demo;
+          crmWarning = crm.warning;
         }
 
         return json(res, 200, {
@@ -537,6 +588,7 @@ module.exports = async function handler(req, res) {
           deck: mapCustomPitchDeck(upd.data),
           generatedDeck: deck,
           crmDemo,
+          crmWarning,
         });
       }
 
@@ -564,19 +616,23 @@ module.exports = async function handler(req, res) {
           .maybeSingle();
         if (!insertRes.error) {
           let crmDemo = null;
+          let crmWarning = null;
           if (logToCrm) {
-            crmDemo = await logPitchDeckToCrm(sb, req, {
+            const crm = await tryLogPitchDeckToCrm(sb, req, {
               organiserName: companyName,
               organiserEmail: parsed.organiserEmail || null,
               organiserId: parsed.organiserId,
               notes: pitchDeckCrmNotes(absoluteDeckUrl(insertRes.data.slug), false),
             });
+            crmDemo = crm.demo;
+            crmWarning = crm.warning;
           }
           return json(res, 200, {
             ok: true,
             deck: mapCustomPitchDeck(insertRes.data),
             generatedDeck: deck,
             crmDemo,
+            crmWarning,
           });
         }
         if (/duplicate|unique/i.test(String(insertRes.error.message || ''))) {
@@ -601,13 +657,13 @@ module.exports = async function handler(req, res) {
     console.error('admin-sales-kit POST', e);
     const msg = e && e.message ? String(e.message) : 'Could not save';
     const missing =
-      /is_walkthrough_demo|organiser_sales_demos|does not exist|schema cache/i.test(msg);
+      /is_walkthrough_demo|organiser_sales_demos|custom_pitch_decks|deck_type|sponsorship_placements|does not exist|schema cache/i.test(
+        msg
+      );
     return json(res, missing ? 503 : 500, {
       ok: false,
       error: missing ? 'migration_required' : 'save_failed',
-      message: missing
-        ? 'Run migration 252_organiser_sales_kit.sql in Supabase, then refresh.'
-        : msg,
+      message: missing ? migrationHintFromDbError(msg) : msg,
     });
   }
 };
