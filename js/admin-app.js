@@ -1171,6 +1171,34 @@
     return touch + ' — ' + msg;
   }
 
+  function salesKitFollowUpEmailText(opts) {
+    opts = opts || {};
+    var name = String(opts.contactName || opts.companyName || '{{name}}').trim() || '{{name}}';
+    var sender = String(opts.sender || '{{sender}}').trim() || '{{sender}}';
+    var deckUrl = String(opts.deckUrl || '').trim();
+    var deckLine = deckUrl ? 'Tailored walkthrough deck: ' + deckUrl + '\n' : '';
+    return (
+      'Hi ' +
+      name +
+      ',\n\n' +
+      'Lovely to show you around The Networker UK today.\n\n' +
+      'Quick recap:\n' +
+      '• Free to list — you keep 100% of the ticket price (attendees pay 4.5% + 20p)\n' +
+      '• Built for networking groups — guest visits, member rates, visit tracking, attendee round-ups\n' +
+      '• Browse and ticket buying are live on The Networker UK\n' +
+      '• Easy start — claim your page, list yourself, or send us the details and we’ll help\n\n' +
+      deckLine +
+      'Benefits one-pager: https://thenetworkeruk.com/guides/organiser-leavebehind\n' +
+      'PDF: https://thenetworkeruk.com/assets/guides/organiser-leavebehind.pdf\n' +
+      'For organisers: https://thenetworkeruk.com/for-organisers\n' +
+      'Send an event: https://thenetworkeruk.com/add-your-event\n' +
+      'Get in touch: https://www.thenetworkeruk.com/contact\n\n' +
+      'Happy to list your next 2–3 meetings with you whenever suits.\n\n' +
+      'Best wishes,\n' +
+      sender
+    );
+  }
+
   function isManualSalesKitDemo(demo) {
     if (!demo) return false;
     return Boolean(salesKitParseTouchNotes(demo.notes).touch);
@@ -30141,6 +30169,13 @@
       demoOrganiser: null,
       internalCandidates: [],
       demos: [],
+      customPitchDecks: [],
+      pitchSectionCatalog: {},
+      pitchDefaultSections: [],
+      pitchSponsorshipCatalog: {},
+      pitchSponsorshipOrder: [],
+      focusOrganiserProfile: null,
+      pitchEditingDeck: null,
       search: [],
       tab: salesKitTab,
       focusOrganiser: salesKitFocus,
@@ -30434,6 +30469,220 @@
         '<a class="admin-shortcut" href="/p-tnh-org-cheats-c8r3#jamie" target="_blank" rel="noopener"><span class="admin-shortcut-label">Jamie</span><span class="admin-shortcut-desc">Open &amp; print her sheet</span></a>' +
         '<a class="admin-shortcut" href="/p-tnh-org-cheats-c8r3" target="_blank" rel="noopener"><span class="admin-shortcut-label">All three</span><span class="admin-shortcut-desc">Print pack</span></a>' +
         '</div></div></section>' +
+        (function () {
+          var catalog = state.pitchSectionCatalog || {};
+          var placementCatalog = state.pitchSponsorshipCatalog || {};
+          var placementOrder = (state.pitchSponsorshipOrder || []).length
+            ? state.pitchSponsorshipOrder
+            : Object.keys(placementCatalog);
+          var editing = state.pitchEditingDeck;
+          var profile = state.focusOrganiserProfile;
+          var deckType = editing && editing.deckType ? editing.deckType : 'sponsorship';
+          var sectionKeys = (state.pitchDefaultSections || []).length
+            ? state.pitchDefaultSections
+            : ['opening', 'problem', 'discovery', 'dashboard', 'tools', 'pricing', 'objections', 'next_steps'];
+          var selectedSections =
+            editing && (editing.includeSections || []).length ? editing.includeSections : null;
+          var selectedPlacements =
+            editing && (editing.sponsorshipPlacements || []).length
+              ? editing.sponsorshipPlacements
+              : [];
+          var prefillCompany = editing ? editing.companyName : focusName;
+          var prefillWebsite = editing ? editing.website || '' : (profile && profile.website) || '';
+          var prefillContact = editing ? editing.contactName || '' : '';
+          var prefillBrief = editing ? editing.brief || '' : (profile && profile.descriptionSnippet) || '';
+          var prefillLogo = editing
+            ? editing.prospectLogoUrl || ''
+            : (profile && profile.photoUrl) || '';
+          var placementGroups = ['Events', 'Organisers', 'Opportunities', 'Regional'];
+          var sponsorshipBlocks = placementGroups
+            .map(function (group) {
+              var keys = placementOrder.filter(function (key) {
+                return placementCatalog[key] && placementCatalog[key].group === group;
+              });
+              if (!keys.length) return '';
+              var items = keys
+                .map(function (key) {
+                  var p = placementCatalog[key];
+                  var title = (p && p.title) || key;
+                  var checked = selectedPlacements.indexOf(key) !== -1 ? ' checked' : '';
+                  return (
+                    '<label class="inline-flex items-start gap-2 rounded-lg border border-violet-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 cursor-pointer hover:bg-violet-50 max-w-full">' +
+                    '<input type="checkbox" class="sales-kit-pitch-placement-cb mt-0.5 rounded border-slate-300 shrink-0" value="' +
+                    attrEsc(key) +
+                    '"' +
+                    checked +
+                    ' />' +
+                    '<span>' +
+                    esc(title) +
+                    (p && p.price ? ' <span class="font-normal text-slate-500">(' + esc(p.price) + ')</span>' : '') +
+                    '</span></label>'
+                  );
+                })
+                .join('');
+              return (
+                '<div class="md:col-span-2 lg:col-span-3"><p class="text-xs font-semibold text-violet-800 uppercase mb-2">' +
+                esc(group) +
+                ' sponsorship</p><div class="flex flex-wrap gap-2">' +
+                items +
+                '</div></div>'
+              );
+            })
+            .join('');
+          function deckTypeRadio(value, label, desc) {
+            return (
+              '<label class="flex items-start gap-2 rounded-lg border px-3 py-2 cursor-pointer ' +
+              (deckType === value ? 'border-brand-400 bg-brand-50' : 'border-slate-200 bg-white') +
+              '">' +
+              '<input type="radio" class="sales-kit-pitch-deck-type mt-1" name="sales-kit-pitch-deck-type" value="' +
+              attrEsc(value) +
+              '"' +
+              (deckType === value ? ' checked' : '') +
+              ' />' +
+              '<span><span class="block text-sm font-semibold text-slate-900">' +
+              esc(label) +
+              '</span>' +
+              (desc ? '<span class="block text-xs text-slate-500 mt-0.5">' + esc(desc) + '</span>' : '') +
+              '</span></label>'
+            );
+          }
+          var checkboxes = sectionKeys
+            .map(function (key) {
+              var meta = catalog[key] || {};
+              var label = meta.nav || key;
+              var checked =
+                !selectedSections || selectedSections.indexOf(key) !== -1 ? ' checked' : '';
+              return (
+                '<label class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 cursor-pointer hover:bg-slate-50">' +
+                '<input type="checkbox" class="sales-kit-pitch-section-cb rounded border-slate-300" value="' +
+                attrEsc(key) +
+                '"' +
+                checked +
+                ' />' +
+                esc(label) +
+                '</label>'
+              );
+            })
+            .join('');
+          var deckRows = (state.customPitchDecks || [])
+            .map(function (d) {
+              var deckUrl =
+                (d.path || '').indexOf('http') === 0
+                  ? d.path
+                  : 'https://www.thenetworkeruk.com' + (d.path || '');
+              return (
+                '<li class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 border-t border-slate-100">' +
+                '<div class="min-w-0"><p class="font-medium text-slate-900">' +
+                esc(d.companyName) +
+                '</p><p class="text-xs text-slate-500 break-all">' +
+                esc(d.path || '') +
+                (d.deckType ? ' · ' + esc(d.deckType) : '') +
+                (d.website ? ' · ' + esc(d.website) : '') +
+                '</p></div>' +
+                '<div class="flex flex-wrap gap-2 shrink-0">' +
+                '<button type="button" class="sales-kit-edit-pitch-deck rounded-lg border border-slate-300 bg-white text-xs font-semibold px-2.5 py-1.5 text-slate-700 hover:bg-slate-50" data-id="' +
+                attrEsc(d.id) +
+                '">Edit</button>' +
+                '<button type="button" class="sales-kit-copy-pitch-followup rounded-lg border border-slate-300 bg-white text-xs font-semibold px-2.5 py-1.5 text-slate-700 hover:bg-slate-50" data-url="' +
+                attrEsc(deckUrl) +
+                '" data-contact="' +
+                attrEsc(d.contactName || '') +
+                '" data-company="' +
+                attrEsc(d.companyName || '') +
+                '">Copy follow-up</button>' +
+                '<button type="button" class="sales-kit-copy-pitch-url rounded-lg border border-slate-300 bg-white text-xs font-semibold px-2.5 py-1.5 text-slate-700 hover:bg-slate-50" data-url="' +
+                attrEsc(d.path || '') +
+                '">Copy link</button>' +
+                '<a class="rounded-lg bg-brand-700 text-white text-xs font-semibold px-2.5 py-1.5 hover:bg-brand-900" href="' +
+                attrEsc(d.path || '#') +
+                '" target="_blank" rel="noopener">Open deck</a>' +
+                '<button type="button" class="sales-kit-delete-pitch-deck text-xs font-semibold text-red-700 hover:underline" data-id="' +
+                attrEsc(d.id) +
+                '">Delete</button></li>'
+              );
+            })
+            .join('');
+          return (
+            '<section class="admin-dash-section">' +
+            '<div class="admin-dash-section-head"><h3>Tailored pitch decks</h3>' +
+            '<p>Pick <strong>sponsorship placements</strong> (Headline Sponsor, business opportunity listing, etc.) and/or organiser onboarding sections — then present fullscreen.</p></div>' +
+            '<div class="admin-dash-section-body space-y-4">' +
+            (profile && !editing
+              ? '<div class="rounded-xl border border-brand-200 bg-brand-50/60 p-3 text-sm text-brand-950">' +
+                '<p class="font-semibold">Loaded from group profile</p>' +
+                '<p class="mt-1 text-brand-900/85">Website and description pre-filled below' +
+                (profile.photoUrl ? ' · logo from organiser photo' : '') +
+                '.</p></div>'
+              : '') +
+            (editing
+              ? '<div class="rounded-xl border border-amber-200 bg-amber-50 p-3 flex flex-wrap items-center justify-between gap-2 text-sm text-amber-950">' +
+                '<p><strong>Editing</strong> ' +
+                esc(editing.companyName || 'deck') +
+                ' — same link after you save.</p>' +
+                '<button type="button" id="sales-kit-pitch-cancel-edit" class="rounded-lg border border-amber-300 bg-white text-xs font-semibold px-2.5 py-1.5 hover:bg-amber-100">Cancel edit</button></div>'
+              : '') +
+            '<form id="sales-kit-pitch-create" class="grid gap-3 md:grid-cols-2 lg:grid-cols-3">' +
+            '<input type="hidden" id="sales-kit-pitch-deck-id" value="' +
+            attrEsc(editing ? editing.id : '') +
+            '" />' +
+            '<input type="hidden" id="sales-kit-pitch-organiser-id" value="' +
+            attrEsc((editing && editing.organiserId) || focusId) +
+            '" />' +
+            '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="sales-kit-pitch-company">Company / group name</label>' +
+            '<input id="sales-kit-pitch-company" required class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white" placeholder="e.g. Business Matching UK" value="' +
+            attrEsc(prefillCompany) +
+            '" /></div>' +
+            '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="sales-kit-pitch-website">Website</label>' +
+            '<input id="sales-kit-pitch-website" type="url" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white" placeholder="https://…" value="' +
+            attrEsc(prefillWebsite) +
+            '" /></div>' +
+            '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="sales-kit-pitch-contact">Contact name</label>' +
+            '<input id="sales-kit-pitch-contact" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white" placeholder="Used in follow-up email copy" value="' +
+            attrEsc(prefillContact) +
+            '" /></div>' +
+            '<div class="md:col-span-2"><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="sales-kit-pitch-logo">Prospect logo URL</label>' +
+            '<input id="sales-kit-pitch-logo" type="url" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white" placeholder="From organiser photo or their site" value="' +
+            attrEsc(prefillLogo) +
+            '" /></div>' +
+            '<div class="md:col-span-2 lg:col-span-3"><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="sales-kit-pitch-brief">What should this deck include?</label>' +
+            '<textarea id="sales-kit-pitch-brief" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm min-h-[88px]" placeholder="e.g. Pitch Headline Sponsor plus business opportunity directory listing for Pink Spaghetti franchise leads.">' +
+            esc(prefillBrief) +
+            '</textarea></div>' +
+            '<div class="md:col-span-2 lg:col-span-3"><p class="text-xs font-semibold text-slate-500 uppercase mb-2">Deck type</p>' +
+            '<div class="grid gap-2 sm:grid-cols-3">' +
+            deckTypeRadio(
+              'sponsorship',
+              'Sponsorship / advertising',
+              'Packages from /advertising — pick placements below'
+            ) +
+            deckTypeRadio('organiser', 'Organiser onboarding', 'Ticketing & discovery for networking groups') +
+            deckTypeRadio('combined', 'Combined', 'Sponsorship placements plus organiser sections') +
+            '</div></div>' +
+            sponsorshipBlocks +
+            '<div id="sales-kit-pitch-organiser-sections" class="md:col-span-2 lg:col-span-3 contents">' +
+            '<div class="md:col-span-2 lg:col-span-3"><p class="text-xs font-semibold text-slate-500 uppercase mb-2">Organiser pitch sections</p>' +
+            '<div class="flex flex-wrap gap-2">' +
+            checkboxes +
+            '</div></div></div>' +
+            '<div class="md:col-span-2 lg:col-span-3">' +
+            '<label class="inline-flex items-center gap-2 text-sm text-slate-700 cursor-pointer">' +
+            '<input type="checkbox" id="sales-kit-pitch-log-crm" class="rounded border-slate-300" checked />' +
+            'Log to outreach CRM (Meeting — deck link)</label></div>' +
+            '<div class="md:col-span-2 lg:col-span-3 flex flex-wrap items-center gap-2">' +
+            '<button type="submit" id="sales-kit-pitch-create-btn" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-3 py-2 hover:bg-brand-900">' +
+            (editing ? 'Save changes' : 'Create pitch deck') +
+            '</button>' +
+            '<span id="sales-kit-pitch-create-status" class="text-sm text-slate-500" aria-live="polite"></span>' +
+            '</div></form>' +
+            ((state.customPitchDecks || []).length
+              ? '<div><p class="text-xs font-semibold text-slate-500 uppercase mb-2">Recent tailored decks</p>' +
+                '<ul class="rounded-lg border border-slate-200 bg-white divide-y divide-slate-100">' +
+                deckRows +
+                '</ul></div>'
+              : '<p class="text-sm text-slate-500">No tailored decks yet — create one above.</p>') +
+            '</div></section>'
+          );
+        })() +
         '<section class="admin-dash-section">' +
         '<div class="admin-dash-section-head"><h3>Decks &amp; leave-behinds</h3>' +
         '<p>Longer pitch decks and the PDF to send after the meeting.</p></div>' +
@@ -30785,10 +31034,181 @@
           });
         });
       });
+
+      var pitchCreateForm = document.getElementById('sales-kit-pitch-create');
+      var pitchCreateStatus = document.getElementById('sales-kit-pitch-create-status');
+      var pitchCancelEdit = document.getElementById('sales-kit-pitch-cancel-edit');
+      if (pitchCancelEdit) {
+        pitchCancelEdit.addEventListener('click', function () {
+          state.pitchEditingDeck = null;
+          paint();
+        });
+      }
+      function syncPitchDeckTypePanels() {
+        var type = 'sponsorship';
+        root.querySelectorAll('.sales-kit-pitch-deck-type:checked').forEach(function (rb) {
+          type = rb.value;
+        });
+        var orgWrap = document.getElementById('sales-kit-pitch-organiser-sections');
+        if (orgWrap) {
+          orgWrap.style.display = type === 'sponsorship' ? 'none' : '';
+        }
+      }
+      root.querySelectorAll('.sales-kit-pitch-deck-type').forEach(function (rb) {
+        rb.addEventListener('change', syncPitchDeckTypePanels);
+      });
+      syncPitchDeckTypePanels();
+
+      if (pitchCreateForm) {
+        pitchCreateForm.addEventListener('submit', function (e) {
+          e.preventDefault();
+          var companyEl = document.getElementById('sales-kit-pitch-company');
+          var websiteEl = document.getElementById('sales-kit-pitch-website');
+          var contactEl = document.getElementById('sales-kit-pitch-contact');
+          var briefEl = document.getElementById('sales-kit-pitch-brief');
+          var logoEl = document.getElementById('sales-kit-pitch-logo');
+          var orgIdEl = document.getElementById('sales-kit-pitch-organiser-id');
+          var deckIdEl = document.getElementById('sales-kit-pitch-deck-id');
+          var logCrmEl = document.getElementById('sales-kit-pitch-log-crm');
+          var createBtn = document.getElementById('sales-kit-pitch-create-btn');
+          var companyName = companyEl ? String(companyEl.value || '').trim() : '';
+          var deckId = deckIdEl ? String(deckIdEl.value || '').trim() : '';
+          if (!companyName) {
+            if (pitchCreateStatus) pitchCreateStatus.textContent = 'Add a company or group name.';
+            return;
+          }
+          var includeSections = [];
+          root.querySelectorAll('.sales-kit-pitch-section-cb:checked').forEach(function (cb) {
+            includeSections.push(cb.value);
+          });
+          var sponsorshipPlacements = [];
+          root.querySelectorAll('.sales-kit-pitch-placement-cb:checked').forEach(function (cb) {
+            sponsorshipPlacements.push(cb.value);
+          });
+          var deckType = 'sponsorship';
+          root.querySelectorAll('.sales-kit-pitch-deck-type:checked').forEach(function (rb) {
+            deckType = rb.value;
+          });
+          if (
+            (deckType === 'sponsorship' || deckType === 'combined') &&
+            !sponsorshipPlacements.length
+          ) {
+            if (pitchCreateStatus) {
+              pitchCreateStatus.textContent =
+                'Pick at least one sponsorship placement (e.g. Headline Sponsor or business opportunity listing).';
+            }
+            return;
+          }
+          if (createBtn) createBtn.disabled = true;
+          if (pitchCreateStatus) pitchCreateStatus.textContent = deckId ? 'Updating deck…' : 'Building deck…';
+          adminPost('/api/admin/sales-kit', {
+            action: deckId ? 'update_custom_pitch_deck' : 'create_custom_pitch_deck',
+            id: deckId || undefined,
+            companyName: companyName,
+            website: websiteEl ? websiteEl.value : '',
+            contactName: contactEl ? contactEl.value : '',
+            prospectLogoUrl: logoEl ? logoEl.value : '',
+            organiserId: orgIdEl ? orgIdEl.value : '',
+            organiserEmail:
+              (state.focusOrganiser && state.focusOrganiser.email) || '',
+            brief: briefEl ? briefEl.value : '',
+            deckType: deckType,
+            sponsorshipPlacements: sponsorshipPlacements,
+            includeSections: includeSections,
+            logToCrm: logCrmEl ? logCrmEl.checked : true,
+          }).then(function (data) {
+            if (createBtn) createBtn.disabled = false;
+            if (!data || !data.ok) {
+              if (pitchCreateStatus) {
+                pitchCreateStatus.textContent =
+                  (data && data.message) || 'Could not save deck.';
+              }
+              return;
+            }
+            if (data.crmDemo) {
+              salesKitOutreachCache.demos.unshift(data.crmDemo);
+              salesKitOutreachCache.loadedAt = Date.now();
+            }
+            state.pitchEditingDeck = null;
+            if (pitchCreateStatus) {
+              var statusMsg = deckId
+                ? 'Deck updated — same link as before.'
+                : 'Deck ready — opening in a new tab.';
+              if (data.crmWarning) {
+                statusMsg +=
+                  ' (Deck saved; CRM log skipped — ' + String(data.crmWarning) + ')';
+              }
+              if (data.schemaReloadHint) {
+                statusMsg += ' Tip: reload Supabase API schema when you can.';
+              }
+              pitchCreateStatus.textContent = statusMsg;
+            }
+            if (!deckId && data.deck && data.deck.path) {
+              window.open(data.deck.path, '_blank', 'noopener');
+            }
+            load();
+          });
+        });
+      }
+
+      root.querySelectorAll('.sales-kit-edit-pitch-deck').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var id = btn.getAttribute('data-id');
+          var found = (state.customPitchDecks || []).filter(function (d) {
+            return String(d.id) === String(id);
+          })[0];
+          if (!found) return;
+          state.pitchEditingDeck = found;
+          paint();
+          var formEl = document.getElementById('sales-kit-pitch-create');
+          if (formEl && formEl.scrollIntoView) formEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      });
+
+      root.querySelectorAll('.sales-kit-copy-pitch-followup').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var actor = state.actor || salesKitActorFromCurrentUser();
+          var text = salesKitFollowUpEmailText({
+            contactName: btn.getAttribute('data-contact') || '',
+            companyName: btn.getAttribute('data-company') || '',
+            deckUrl: btn.getAttribute('data-url') || '',
+            sender: salesKitActorLabel(actor),
+          });
+          copyText(text, pitchCreateStatus, 'Follow-up email copied — swap any remaining placeholders.');
+        });
+      });
+
+      root.querySelectorAll('.sales-kit-copy-pitch-url').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var path = btn.getAttribute('data-url') || '';
+          var url = path.indexOf('http') === 0 ? path : 'https://www.thenetworkeruk.com' + path;
+          copyText(url, pitchCreateStatus, 'Deck link copied.');
+        });
+      });
+
+      root.querySelectorAll('.sales-kit-delete-pitch-deck').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          if (!window.confirm('Delete this tailored pitch deck?')) return;
+          adminPost('/api/admin/sales-kit', {
+            action: 'delete_custom_pitch_deck',
+            id: btn.getAttribute('data-id'),
+          }).then(function (data) {
+            if (!data || !data.ok) {
+              window.alert((data && data.message) || 'Could not delete deck.');
+              return;
+            }
+            load();
+          });
+        });
+      });
     }
 
     function load() {
-      adminGet('/api/admin/sales-kit').then(function (data) {
+      var kitUrl = '/api/admin/sales-kit';
+      if (salesKitFocus && salesKitFocus.id) {
+        kitUrl += '?organiser=' + encodeURIComponent(salesKitFocus.id);
+      }
+      adminGet(kitUrl).then(function (data) {
         if (!data || data.ok === false || data.error) {
           if (root) {
             root.innerHTML =
@@ -30811,6 +31231,12 @@
         state.demoOrganiser = data.demoOrganiser || null;
         state.internalCandidates = data.internalCandidates || [];
         state.demos = data.demos || [];
+        state.customPitchDecks = data.customPitchDecks || [];
+        state.pitchSectionCatalog = data.pitchSectionCatalog || {};
+        state.pitchDefaultSections = data.pitchDefaultSections || [];
+        state.pitchSponsorshipCatalog = data.pitchSponsorshipCatalog || {};
+        state.pitchSponsorshipOrder = data.pitchSponsorshipOrder || [];
+        state.focusOrganiserProfile = data.focusOrganiserProfile || null;
         if (data.actor) state.actor = data.actor;
         paint();
       });
