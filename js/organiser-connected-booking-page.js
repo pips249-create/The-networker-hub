@@ -142,10 +142,10 @@
       }
     });
 
-    document.querySelectorAll('.cb-plan-card[data-cb-plan]').forEach(function (card) {
-      card.classList.toggle(
-        'cb-plan-card--current',
-        signedIn && data.plan === card.getAttribute('data-cb-plan')
+    document.querySelectorAll('.cb-compare-plan-col[data-cb-plan]').forEach(function (col) {
+      col.classList.toggle(
+        'cb-compare-plan-col--current',
+        signedIn && data.plan === col.getAttribute('data-cb-plan')
       );
     });
 
