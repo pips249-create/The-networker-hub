@@ -28,11 +28,24 @@
         escHtml(hero.websiteLabel || hero.website) +
         '</a>'
       : '';
+    var prospectLogo = hero.prospectLogoUrl
+      ? '<img src="' +
+        escHtml(hero.prospectLogoUrl) +
+        '" alt="" width="200" height="64" class="org-pitch-prospect-logo">'
+      : '';
+    var logos =
+      prospectLogo
+        ? '<div class="org-pitch-hero-logos">' +
+          prospectLogo +
+          '<span class="org-pitch-logo-x" aria-hidden="true">×</span>' +
+          '<img src="/assets/logo-nav-transparent.png?v=20260823uk3" alt="The Networker UK" width="220" height="48">' +
+          '</div>'
+        : '<div class="org-pitch-hero-logos">' +
+          '<img src="/assets/logo-nav-transparent.png?v=20260823uk3" alt="The Networker UK" width="220" height="48">' +
+          '</div>';
     return (
       '<header class="sponsor-pitch-hero">' +
-      '<div class="org-pitch-hero-logos">' +
-      '<img src="/assets/logo-nav-transparent.png?v=20260823uk3" alt="The Networker UK" width="220" height="48">' +
-      '</div>' +
+      logos +
       '<p class="sponsor-pitch-kicker">Prepared for ' +
       escHtml(hero.preparedFor || 'your group') +
       '</p>' +
@@ -299,6 +312,9 @@
 
   function renderDeck(payload) {
     var deck = payload.deck || {};
+    if (deck.hero && payload.prospectLogoUrl && !deck.hero.prospectLogoUrl) {
+      deck.hero.prospectLogoUrl = payload.prospectLogoUrl;
+    }
     var sections = deck.sections || [];
     var root = document.getElementById('custom-pitch-root');
     if (!root) return;

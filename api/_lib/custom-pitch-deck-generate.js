@@ -174,13 +174,15 @@ function sectionTemplates(companyName, website, brief) {
   };
 }
 
-function buildHero(companyName, website, brief) {
+function buildHero(companyName, website, brief, prospectLogoUrl) {
   const co = cleanText(companyName, 120) || 'Your group';
   const host = hostFromWebsite(website);
+  const logo = cleanText(prospectLogoUrl, 2000);
   return {
     preparedFor: co,
     website: normalizeWebsite(website),
     websiteLabel: host || '',
+    prospectLogoUrl: logo,
     headline: 'Move ' + co + ' to The Networker UK',
     lede:
       cleanText(brief, 320) ||
@@ -193,6 +195,7 @@ function buildDeckFromTemplate(input) {
   const companyName = cleanText(input.companyName, 120);
   const website = normalizeWebsite(input.website);
   const brief = cleanText(input.brief, 4000);
+  const prospectLogoUrl = cleanText(input.prospectLogoUrl, 2000);
   const sections = normalizeSections(input.includeSections);
   const templates = sectionTemplates(companyName, website, brief);
 
@@ -213,7 +216,7 @@ function buildDeckFromTemplate(input) {
 
   return {
     version: 1,
-    hero: buildHero(companyName, website, brief),
+    hero: buildHero(companyName, website, brief, prospectLogoUrl),
     sections: deckSections,
     close: {
       headline: 'Find your next attendees',

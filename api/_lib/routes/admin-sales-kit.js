@@ -60,6 +60,7 @@ function mapCustomPitchDeck(row) {
     website: row.website || '',
     contactName: row.contact_name || '',
     organiserId: row.organiser_id || null,
+    prospectLogoUrl: row.prospect_logo_url || '',
     includeSections: row.include_sections || [],
     brief: row.brief || '',
     createdByEmail: row.created_by_email || '',
@@ -68,11 +69,105 @@ function mapCustomPitchDeck(row) {
   };
 }
 
+function absoluteDeckUrl(slug) {
+  return 'https://www.thenetworkeruk.com' + publicPathForSlug(slug);
+}
+
+function pitchDeckCrmNotes(deckUrl, isUpdate) {
+  const verb = isUpdate ? 'Updated tailored pitch deck' : 'Tailored pitch deck';
+  return 'Meeting — ' + verb + ': ' + deckUrl;
+}
+
+function truthyLogToCrm(raw) {
+  if (raw === false || raw === 0) return false;
+  const s = String(raw == null ? 'true' : raw)
+    .trim()
+    .toLowerCase();
+  return s !== 'false' && s !== '0' && s !== 'no';
+}
+
+function descriptionSnippet(description) {
+  const text = String(description || '')
+    .trim()
+    .replace(/\s+/g, ' ');
+  if (!text) return '';
+  if (text.length <= 480) return text;
+  return text.slice(0, 477) + '…';
+}
+
+async function getFocusOrganiserProfile(sb, organiserId) {
+  const id = String(organiserId || '').trim();
+  if (!id) return null;
+  const { data, error } = await sb
+    .from('organisers')
+    .select('id, name, slug, email, contact_email, website, photo_url, description')
+    .eq('id', id)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) return null;
+  const mapped = mapOrganiser(data);
+  return {
+    ...mapped,
+    description: String(data.description || '').trim(),
+    descriptionSnippet: descriptionSnippet(data.description),
+  };
+}
+
+async function logPitchDeckToCrm(sb, req, fields) {
+  const actor = actorFromRequest(req);
+  if (!SHOWN_BY.has(actor.shownBy)) return null;
+  const organiserName = cleanText(fields.organiserName, 200);
+  if (!organiserName) return null;
+
+  const insertRes = await sb
+    .from('organiser_sales_demos')
+    .insert({
+      shown_at: new Date().toISOString().slice(0, 10),
+      shown_by: actor.shownBy,
+      organiser_name: organiserName,
+      organiser_email: fields.organiserEmail || null,
+      organiser_id: fields.organiserId || null,
+      outcome: 'follow_up',
+      notes: fields.notes || null,
+      source: 'manual',
+      created_by_email: actor.email || sessionEmail(req) || null,
+    })
+    .select(
+      'id, shown_at, shown_by, organiser_name, organiser_email, organiser_id, outcome, notes, source, created_by_email, created_at, updated_at'
+    )
+    .maybeSingle();
+  if (insertRes.error) throw new Error(insertRes.error.message);
+  return mapDemo(insertRes.data);
+}
+
+function parsePitchDeckBody(body) {
+  const companyName = cleanText(body.companyName || body.company_name, 120);
+  const website = normalizeWebsite(body.website);
+  const contactName = cleanText(body.contactName || body.contact_name, 120);
+  const brief = cleanText(body.brief || body.includes || body.contentBrief, 4000);
+  const includeSections = normalizeSections(body.includeSections || body.include_sections);
+  const organiserId = String(body.organiserId || body.organiser_id || '').trim() || null;
+  const organiserEmail = String(body.organiserEmail || body.organiser_email || '')
+    .trim()
+    .toLowerCase();
+  const prospectLogoUrl = cleanText(body.prospectLogoUrl || body.prospect_logo_url, 2000);
+  return {
+    companyName,
+    website,
+    contactName,
+    brief,
+    includeSections,
+    organiserId,
+    organiserEmail,
+    prospectLogoUrl,
+  };
+}
+
 async function listCustomPitchDecks(sb) {
   const { data, error } = await sb
     .from('custom_pitch_decks')
     .select(
-      'id, slug, company_name, website, contact_name, organiser_id, include_sections, brief, created_by_email, created_at, updated_at'
+      'id, slug, company_name, website, contact_name, organiser_id, prospect_logo_url, include_sections, brief, created_by_email, created_at, updated_at'
     )
     .order('created_at', { ascending: false })
     .limit(40);
@@ -181,16 +276,19 @@ module.exports = async function handler(req, res) {
   if (req.method === 'GET') {
     try {
       const q = String(req.query?.q || '').trim();
-      const [demoOrganiser, internalCandidates, demos, customPitchDecks] = await Promise.all([
-        getDemoOrganiser(sb),
-        listInternalCandidates(sb),
-        listDemos(sb),
-        listCustomPitchDecks(sb).catch(function (e) {
-          const msg = e && e.message ? String(e.message) : '';
-          if (/custom_pitch_decks|does not exist|schema cache/i.test(msg)) return [];
-          throw e;
-        }),
-      ]);
+      const focusOrganiserId = String(req.query?.organiser || req.query?.organiserId || '').trim();
+      const [demoOrganiser, internalCandidates, demos, customPitchDecks, focusOrganiserProfile] =
+        await Promise.all([
+          getDemoOrganiser(sb),
+          listInternalCandidates(sb),
+          listDemos(sb),
+          listCustomPitchDecks(sb).catch(function (e) {
+            const msg = e && e.message ? String(e.message) : '';
+            if (/custom_pitch_decks|does not exist|schema cache/i.test(msg)) return [];
+            throw e;
+          }),
+          focusOrganiserId ? getFocusOrganiserProfile(sb, focusOrganiserId) : Promise.resolve(null),
+        ]);
       const search = q ? await searchOrganisers(sb, q) : [];
       return json(res, 200, {
         ok: true,
@@ -198,6 +296,7 @@ module.exports = async function handler(req, res) {
         internalCandidates,
         demos,
         customPitchDecks,
+        focusOrganiserProfile,
         pitchSectionCatalog: SECTION_CATALOG,
         pitchDefaultSections: DEFAULT_SECTIONS,
         search,
@@ -355,23 +454,65 @@ module.exports = async function handler(req, res) {
       return json(res, 200, { ok: true });
     }
 
-    if (action === 'create_custom_pitch_deck') {
-      const companyName = cleanText(body.companyName || body.company_name, 120);
+    if (action === 'create_custom_pitch_deck' || action === 'update_custom_pitch_deck') {
+      const parsed = parsePitchDeckBody(body);
+      const companyName = parsed.companyName;
       if (!companyName) {
         return json(res, 400, { error: 'missing_company', message: 'Add the company or group name.' });
       }
-      const website = normalizeWebsite(body.website);
-      const contactName = cleanText(body.contactName || body.contact_name, 120);
-      const brief = cleanText(body.brief || body.includes || body.contentBrief, 4000);
-      const includeSections = normalizeSections(body.includeSections || body.include_sections);
-      const organiserId = String(body.organiserId || body.organiser_id || '').trim() || null;
 
       const deck = await generateCustomPitchDeck({
         companyName,
-        website,
-        brief,
-        includeSections,
+        website: parsed.website,
+        brief: parsed.brief,
+        includeSections: parsed.includeSections,
+        prospectLogoUrl: parsed.prospectLogoUrl,
       });
+
+      const logToCrm = truthyLogToCrm(body.logToCrm);
+      const isUpdate = action === 'update_custom_pitch_deck';
+      const deckId = String(body.id || body.deckId || '').trim();
+
+      if (isUpdate) {
+        if (!deckId) return json(res, 400, { error: 'missing_id', message: 'Pick a deck to update.' });
+        const upd = await sb
+          .from('custom_pitch_decks')
+          .update({
+            company_name: companyName,
+            website: parsed.website || null,
+            contact_name: parsed.contactName || null,
+            organiser_id: parsed.organiserId,
+            prospect_logo_url: parsed.prospectLogoUrl || null,
+            include_sections: parsed.includeSections,
+            brief: parsed.brief || null,
+            deck,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', deckId)
+          .select(
+            'id, slug, company_name, website, contact_name, organiser_id, prospect_logo_url, include_sections, brief, created_by_email, created_at, updated_at'
+          )
+          .maybeSingle();
+        if (upd.error) throw new Error(upd.error.message);
+        if (!upd.data) return json(res, 404, { error: 'not_found', message: 'Deck not found.' });
+
+        let crmDemo = null;
+        if (logToCrm) {
+          crmDemo = await logPitchDeckToCrm(sb, req, {
+            organiserName: companyName,
+            organiserEmail: parsed.organiserEmail || null,
+            organiserId: parsed.organiserId,
+            notes: pitchDeckCrmNotes(absoluteDeckUrl(upd.data.slug), true),
+          });
+        }
+
+        return json(res, 200, {
+          ok: true,
+          deck: mapCustomPitchDeck(upd.data),
+          generatedDeck: deck,
+          crmDemo,
+        });
+      }
 
       let slug = makeDeckSlug(companyName);
       for (let attempt = 0; attempt < 5; attempt++) {
@@ -380,23 +521,34 @@ module.exports = async function handler(req, res) {
           .insert({
             slug,
             company_name: companyName,
-            website: website || null,
-            contact_name: contactName || null,
-            organiser_id: organiserId,
-            include_sections: includeSections,
-            brief: brief || null,
+            website: parsed.website || null,
+            contact_name: parsed.contactName || null,
+            organiser_id: parsed.organiserId,
+            prospect_logo_url: parsed.prospectLogoUrl || null,
+            include_sections: parsed.includeSections,
+            brief: parsed.brief || null,
             deck,
             created_by_email: sessionEmail(req) || null,
           })
           .select(
-            'id, slug, company_name, website, contact_name, organiser_id, include_sections, brief, created_by_email, created_at, updated_at'
+            'id, slug, company_name, website, contact_name, organiser_id, prospect_logo_url, include_sections, brief, created_by_email, created_at, updated_at'
           )
           .maybeSingle();
         if (!insertRes.error) {
+          let crmDemo = null;
+          if (logToCrm) {
+            crmDemo = await logPitchDeckToCrm(sb, req, {
+              organiserName: companyName,
+              organiserEmail: parsed.organiserEmail || null,
+              organiserId: parsed.organiserId,
+              notes: pitchDeckCrmNotes(absoluteDeckUrl(insertRes.data.slug), false),
+            });
+          }
           return json(res, 200, {
             ok: true,
             deck: mapCustomPitchDeck(insertRes.data),
             generatedDeck: deck,
+            crmDemo,
           });
         }
         if (/duplicate|unique/i.test(String(insertRes.error.message || ''))) {
