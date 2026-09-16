@@ -29,6 +29,18 @@ const {
   assert.equal(deck.sections[0].id, 'opening');
   assert.ok(deck.sections[1].tiles && deck.sections[1].tiles.length >= 3);
 
+  const sponsorDeck = await generateCustomPitchDeck({
+    companyName: 'Pink Spaghetti',
+    website: 'https://www.pink-spaghetti.co.uk/',
+    brief: 'Franchise opportunity listing plus Events Headline conversation',
+    deckType: 'sponsorship',
+    sponsorshipPlacements: ['headline_events', 'opportunity_directory_listing'],
+  });
+  assert.equal(sponsorDeck.deckType, 'sponsorship');
+  assert.ok(sponsorDeck.sections.some(function (s) { return s.id === 'sponsor_headline_events'; }));
+  assert.ok(sponsorDeck.sections.some(function (s) { return s.id === 'sponsor_opportunity_directory_listing'; }));
+  assert.match(sponsorDeck.hero.headline, /Advertising on The Networker UK/);
+
   console.log('test-custom-pitch-deck-generate: ok');
 })().catch(function (e) {
   console.error(e);

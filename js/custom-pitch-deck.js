@@ -117,6 +117,9 @@
       '<h2>' +
       escHtml(section.title || '') +
       '</h2>' +
+      (section.price
+        ? '<p class="section-intro"><strong>' + escHtml(section.price) + '</strong></p>'
+        : '') +
       (section.intro
         ? '<p class="section-intro">' + escHtml(section.intro) + '</p>'
         : '') +
