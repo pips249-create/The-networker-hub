@@ -121,6 +121,25 @@
     }
   }
 
+  async function maybeAutoSendVerificationCode() {
+    if (params().get('token') || params().get('code')) return;
+    try {
+      if (sessionStorage.getItem('hub_verify_email_autosent')) return;
+      var statusRes = await fetch('/api/auth/verify-organiser-email', {
+        credentials: 'include',
+        cache: 'no-store',
+      });
+      var statusData = await statusRes.json();
+      if (!statusRes.ok || !statusData.ok) return;
+      if (statusData.organiserEmailVerified || !statusData.organiserAccess) return;
+      if (statusData.hasActiveVerifyCode) return;
+      sessionStorage.setItem('hub_verify_email_autosent', '1');
+      await resend();
+    } catch (e) {
+      /* non-fatal */
+    }
+  }
+
   async function init() {
     var session = await loadSession();
     if (!session.ok || !session.user) {
@@ -177,6 +196,7 @@
           .slice(0, 6);
       }
     }
+    await maybeAutoSendVerificationCode();
     if (codeEl) codeEl.focus();
   }
 
