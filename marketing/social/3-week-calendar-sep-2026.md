@@ -6,7 +6,7 @@
 **Site:** https://www.thenetworkeruk.com  
 **Hashtags (rotate lightly):** `#TheNetworkerUK` `#UKNetworking` `#BusinessNetworking` `#NetworkingEvents` `#SME` `#B2BNetworking`
 
-**Cadence:** 1 post most weekdays (15 posts). Swap mid-week if a bigger listing goes live.  
+**Cadence:** 1 post most weekdays (15 posts) in this file. **From Wed 16 Sep → use [`rest-of-sep-2026-2x-daily.md`](./rest-of-sep-2026-2x-daily.md) for 2 posts/day** (Birmingham · Manchester · Edinburgh + opportunities). Swap mid-week if a bigger listing goes live.  
 **Visual tip:** Prefer UK-branded assets (`going-bigger-uk-intl-1080.png`, event listing photos, Command Centre graphics). Skip pack images that still say “Hub” / thenetworkerhub.com unless refreshed.
 
 **All assets in one folder:** [`marketing/social/sep-2026-posts/`](./sep-2026-posts/) — filenames match the calendar dates (`01-tue-08-…`, `06-tue-15-…`, etc.). See that folder’s `README.md` for the posting guide.
