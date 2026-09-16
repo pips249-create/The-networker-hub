@@ -187,8 +187,17 @@ function drawRateCardPdf() {
   });
 }
 
+function syncPartnerBadgeEmailAsset() {
+  const src = path.join(ASSETS, 'logo-networker-uk-partner-light.png');
+  const dest = path.join(ROOT, 'api/_lib/email-assets/networker-uk-partner-badge-light.png');
+  if (!fs.existsSync(src)) return;
+  fs.copyFileSync(src, dest);
+  console.log('email-asset networker-uk-partner-badge-light.png');
+}
+
 async function main() {
   await exportPngs();
+  syncPartnerBadgeEmailAsset();
   await drawRateCardPdf();
 }
 
