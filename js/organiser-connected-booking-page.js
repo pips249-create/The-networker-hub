@@ -142,9 +142,11 @@
       }
     });
 
-    document.querySelectorAll('[data-cb-plan]').forEach(function (row) {
-      if (row.tagName !== 'TR') return;
-      row.classList.toggle('cb-plan-current', signedIn && data.plan === row.getAttribute('data-cb-plan'));
+    document.querySelectorAll('.cb-plan-card[data-cb-plan]').forEach(function (card) {
+      card.classList.toggle(
+        'cb-plan-card--current',
+        signedIn && data.plan === card.getAttribute('data-cb-plan')
+      );
     });
 
     var showPortal = signedIn && billing.canManageBilling;
