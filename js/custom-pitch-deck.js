@@ -6,12 +6,14 @@
   }
 
   function deckSlugFromPath() {
-    var path = (window.location.pathname || '').replace(/\.html$/i, '').replace(/\/+$/, '');
-    var m = path.match(/\/p-tnh-(custom-[a-z0-9-]+)$/i);
-    if (m) return m[1].toLowerCase();
     var params = new URLSearchParams(window.location.search || '');
     var q = String(params.get('slug') || '').trim().toLowerCase();
     if (/^custom-[a-z0-9-]+$/.test(q)) return q;
+
+    var path = (window.location.pathname || '').replace(/\.html$/i, '').replace(/\/+$/, '');
+    if (/\/p-tnh-custom-deck$/i.test(path)) return '';
+    var m = path.match(/\/p-tnh-(custom-[a-z0-9-]+)$/i);
+    if (m && m[1].toLowerCase() !== 'custom-deck') return m[1].toLowerCase();
     return '';
   }
 
