@@ -432,6 +432,13 @@ async function generateCustomPitchDeck(input) {
 }
 
 function publicPathForSlug(slug) {
+  const s = String(slug || '').trim();
+  if (!s) return '/p-tnh-custom-deck';
+  return '/p-tnh-custom-deck?slug=' + encodeURIComponent(s);
+}
+
+/** Legacy pretty path (/p-tnh-custom-*) — kept for redirects and old links. */
+function legacyPublicPathForSlug(slug) {
   return '/p-tnh-' + String(slug || '').trim();
 }
 
@@ -456,5 +463,6 @@ module.exports = {
   cleanText,
   generateCustomPitchDeck,
   publicPathForSlug,
+  legacyPublicPathForSlug,
   validatePitchDeckInput,
 };

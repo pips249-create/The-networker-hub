@@ -12,7 +12,7 @@ const {
 (async function () {
   const slug = makeDeckSlug('Business Matching UK');
   assert.match(slug, /^custom-business-matching-uk-[a-f0-9]{6}$/);
-  assert.equal(publicPathForSlug(slug), '/p-tnh-' + slug);
+  assert.equal(publicPathForSlug(slug), '/p-tnh-custom-deck?slug=' + encodeURIComponent(slug));
 
   const sections = normalizeSections(['pricing', 'opening', 'opening', 'nope']);
   assert.deepEqual(sections, ['pricing', 'opening']);

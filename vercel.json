@@ -455,8 +455,8 @@
       "destination": "/p-tnh-org-onboard-x4n7.html"
     },
     {
-      "source": "/p-tnh-custom-:slug",
-      "destination": "/p-tnh-custom-deck.html?slug=custom-:slug"
+      "source": "/p-tnh-custom-(.*)",
+      "destination": "/p-tnh-custom-deck?slug=custom-$1"
     },
     {
       "source": "/p-tnh-org-cheats-c8r3",
