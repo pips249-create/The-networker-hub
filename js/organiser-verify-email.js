@@ -160,9 +160,23 @@
         (result.data && result.data.message) ||
           'This confirmation code is invalid or expired. Enter a new code below.'
       );
+      if (codeEl) {
+        var digits = String(token || '')
+          .replace(/\D/g, '')
+          .slice(0, 6);
+        if (digits.length === 6) codeEl.value = digits;
+      }
       if (confirmBtn) confirmBtn.disabled = false;
     }
 
+    if (codeEl && !codeEl.value) {
+      var prefill = params().get('code') || params().get('token');
+      if (prefill) {
+        codeEl.value = String(prefill)
+          .replace(/\D/g, '')
+          .slice(0, 6);
+      }
+    }
     if (codeEl) codeEl.focus();
   }
 

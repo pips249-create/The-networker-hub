@@ -31,18 +31,20 @@ function isOrganiserClaimNext(next) {
   return String(next || '').indexOf('onboard=claim') !== -1;
 }
 
-/** True when next is verify-email and still carries the confirmation token. */
+/** True when next is verify-email and still carries the confirmation code or legacy token. */
 function hasVerifyEmailToken(next) {
   const raw = String(next || '').trim();
   if (!raw) return false;
   try {
     const url = /^https?:\/\//i.test(raw) ? new URL(raw) : new URL(raw, 'https://example.com');
     return (
-      /^\/organiser\/verify-email\/?$/.test(url.pathname) && !!url.searchParams.get('token')
+      /^\/organiser\/verify-email\/?$/.test(url.pathname) &&
+      !!(url.searchParams.get('token') || url.searchParams.get('code'))
     );
   } catch {
     return (
-      raw.indexOf('/organiser/verify-email') !== -1 && raw.indexOf('token=') !== -1
+      raw.indexOf('/organiser/verify-email') !== -1 &&
+      (raw.indexOf('token=') !== -1 || raw.indexOf('code=') !== -1)
     );
   }
 }
@@ -83,13 +85,15 @@ async function maybeAutoEnableOrganiserAccess(session, res) {
   await sbAuth.enableOrganiserAccess(session.sub);
   setHubViewCookie(res, 'organiser');
 
+  let verifyPath = null;
   if (!before.organiserEmailVerified) {
     try {
-      await sendOrganiserEmailVerification({
+      const sent = await sendOrganiserEmailVerification({
         userId: session.sub,
         email: session.email,
         name: session.name,
       });
+      verifyPath = sent.verifyPath || null;
     } catch {
       /* enable succeeds even if verification email fails */
     }
@@ -97,7 +101,7 @@ async function maybeAutoEnableOrganiserAccess(session, res) {
 
   return {
     enabled: true,
-    redirect: await resolveOrganiserRedirect(session),
+    redirect: verifyPath || (await resolveOrganiserRedirect(session)),
   };
 }
 
