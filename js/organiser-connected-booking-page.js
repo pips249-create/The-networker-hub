@@ -168,9 +168,16 @@
 
   fetch('/api/organiser/connected-booking', { credentials: 'include' })
     .then(function (r) {
-      return r.json();
+      return r.json().then(function (data) {
+        return { status: r.status, data: data };
+      });
     })
-    .then(function (data) {
+    .then(function (res) {
+      if (res.status === 404 || (res.data && res.data.error === 'not_found')) {
+        location.replace('/organiser/');
+        return;
+      }
+      var data = res.data || {};
       applyBillingUi(data);
       if (!data.ok) return;
       if (signinHint) signinHint.hidden = true;

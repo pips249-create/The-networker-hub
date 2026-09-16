@@ -15,6 +15,46 @@ function connectedBookingFeatureEnabled() {
   return v === '1' || v === 'true' || v === 'yes';
 }
 
+/** When set, only these signed-in emails see/use Connected booking (everyone else: feature hidden). */
+function connectedBookingPreviewEmails() {
+  const raw = String(process.env.CONNECTED_BOOKING_PREVIEW_EMAILS || '').trim();
+  if (!raw) return null;
+  const list = raw
+    .split(/[,;\s]+/)
+    .map((e) => String(e || '').trim().toLowerCase())
+    .filter(Boolean);
+  return list.length ? list : null;
+}
+
+function connectedBookingPreviewLocked() {
+  return Boolean(connectedBookingPreviewEmails()?.length);
+}
+
+function normalizeConnectedBookingEmail(email) {
+  return String(email || '')
+    .trim()
+    .toLowerCase();
+}
+
+/** Session/UI/API access for a signed-in organiser email. */
+function connectedBookingAllowedForEmail(email) {
+  const em = normalizeConnectedBookingEmail(email);
+  if (!em) return false;
+  const preview = connectedBookingPreviewEmails();
+  if (preview) return preview.includes(em);
+  return connectedBookingFeatureEnabled();
+}
+
+function connectedBookingAllowedForSession(session) {
+  return connectedBookingAllowedForEmail(session?.email);
+}
+
+/** Webhooks & server paths without a session (e.g. integration POST). */
+function connectedBookingOperationsEnabled() {
+  if (connectedBookingPreviewLocked()) return true;
+  return connectedBookingFeatureEnabled();
+}
+
 function isExternalConnectedEvent(row) {
   return String(row?.checkout_mode || CHECKOUT_HUB).trim() === CHECKOUT_EXTERNAL;
 }
@@ -92,6 +132,12 @@ module.exports = {
   CHECKOUT_EXTERNAL,
   CHECKOUT_HUB,
   connectedBookingFeatureEnabled,
+  connectedBookingPreviewEmails,
+  connectedBookingPreviewLocked,
+  connectedBookingAllowedForEmail,
+  connectedBookingAllowedForSession,
+  connectedBookingOperationsEnabled,
+  normalizeConnectedBookingEmail,
   isExternalConnectedEvent,
   normalizeExternalPriceLabel,
   normalizeExternalBookingUrl,

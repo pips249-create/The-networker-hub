@@ -3,7 +3,7 @@ const { jsonPublicError } = require('../public-error');
 const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
 const { adminViewFromSession, resolveOrganiserGroupScope } = require('../organiser-api-scope');
 const {
-  connectedBookingFeatureEnabled,
+  connectedBookingAllowedForSession,
   newWebhookSecret,
   signWebhookPayload,
   isConnectedPlanActive,
@@ -60,8 +60,8 @@ module.exports = async function handler(req, res) {
   const auth = await requireOrganiserSession(req);
   if (!auth.ok) return json(res, auth.status, { error: auth.error });
 
-  if (!connectedBookingFeatureEnabled()) {
-    return json(res, 503, { ok: false, error: 'connected_booking_disabled' });
+  if (!connectedBookingAllowedForSession(auth.session)) {
+    return json(res, 404, { ok: false, error: 'not_found' });
   }
   if (!isSupabaseConfigured()) {
     return json(res, 503, { ok: false, error: 'supabase_not_configured' });

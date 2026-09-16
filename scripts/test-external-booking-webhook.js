@@ -9,6 +9,7 @@ const {
   signWebhookPayload,
   verifyWebhookSignature,
   newWebhookSecret,
+  connectedBookingAllowedForEmail,
 } = require('../api/_lib/connected-booking-util');
 
 const free = parseExternalPriceLabelToDisplay('Free');
@@ -22,5 +23,17 @@ const body = Buffer.from(JSON.stringify({ orderId: 'a', eventId: 'b' }), 'utf8')
 const sig = signWebhookPayload(secret, body);
 assert.ok(verifyWebhookSignature(secret, body, sig));
 assert.ok(!verifyWebhookSignature(secret, body, 'bad'));
+
+const prevPreview = process.env.CONNECTED_BOOKING_PREVIEW_EMAILS;
+const prevEnabled = process.env.CONNECTED_BOOKING_ENABLED;
+process.env.CONNECTED_BOOKING_ENABLED = 'false';
+process.env.CONNECTED_BOOKING_PREVIEW_EMAILS = 'pips249@gmail.com';
+delete require.cache[require.resolve('../api/_lib/connected-booking-util')];
+const utilPreview = require('../api/_lib/connected-booking-util');
+assert.strictEqual(utilPreview.connectedBookingAllowedForEmail('pips249@gmail.com'), true);
+assert.strictEqual(utilPreview.connectedBookingAllowedForEmail('other@example.com'), false);
+process.env.CONNECTED_BOOKING_PREVIEW_EMAILS = prevPreview || '';
+process.env.CONNECTED_BOOKING_ENABLED = prevEnabled || '';
+delete require.cache[require.resolve('../api/_lib/connected-booking-util')];
 
 console.log('test-external-booking-webhook: ok');
