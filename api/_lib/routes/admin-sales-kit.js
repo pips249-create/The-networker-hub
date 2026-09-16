@@ -8,6 +8,16 @@ const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
 const { publicOrganiserSlug } = require('../organiser-slug');
 const { applyIlikeSearch } = require('../search-match');
 const { shownByFromEmail } = require('../organiser-sales-outreach');
+const {
+  SECTION_CATALOG,
+  DEFAULT_SECTIONS,
+  makeDeckSlug,
+  normalizeSections,
+  normalizeWebsite,
+  cleanText,
+  generateCustomPitchDeck,
+  publicPathForSlug,
+} = require('../custom-pitch-deck-generate');
 
 const SHOWN_BY = new Set(['Catherine', 'Rosie', 'Jamie', 'Other']);
 const OUTCOMES = new Set(['interested', 'listed', 'follow_up', 'not_now', 'other']);
@@ -38,6 +48,36 @@ function mapOrganiser(row) {
     isInternal: Boolean(row.is_internal),
     isWalkthroughDemo: Boolean(row.is_walkthrough_demo),
   };
+}
+
+function mapCustomPitchDeck(row) {
+  if (!row) return null;
+  return {
+    id: row.id,
+    slug: row.slug,
+    path: publicPathForSlug(row.slug),
+    companyName: row.company_name,
+    website: row.website || '',
+    contactName: row.contact_name || '',
+    organiserId: row.organiser_id || null,
+    includeSections: row.include_sections || [],
+    brief: row.brief || '',
+    createdByEmail: row.created_by_email || '',
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+async function listCustomPitchDecks(sb) {
+  const { data, error } = await sb
+    .from('custom_pitch_decks')
+    .select(
+      'id, slug, company_name, website, contact_name, organiser_id, include_sections, brief, created_by_email, created_at, updated_at'
+    )
+    .order('created_at', { ascending: false })
+    .limit(40);
+  if (error) throw new Error(error.message);
+  return (data || []).map(mapCustomPitchDeck);
 }
 
 function mapDemo(row) {
@@ -141,10 +181,15 @@ module.exports = async function handler(req, res) {
   if (req.method === 'GET') {
     try {
       const q = String(req.query?.q || '').trim();
-      const [demoOrganiser, internalCandidates, demos] = await Promise.all([
+      const [demoOrganiser, internalCandidates, demos, customPitchDecks] = await Promise.all([
         getDemoOrganiser(sb),
         listInternalCandidates(sb),
         listDemos(sb),
+        listCustomPitchDecks(sb).catch(function (e) {
+          const msg = e && e.message ? String(e.message) : '';
+          if (/custom_pitch_decks|does not exist|schema cache/i.test(msg)) return [];
+          throw e;
+        }),
       ]);
       const search = q ? await searchOrganisers(sb, q) : [];
       return json(res, 200, {
@@ -152,10 +197,13 @@ module.exports = async function handler(req, res) {
         demoOrganiser,
         internalCandidates,
         demos,
+        customPitchDecks,
+        pitchSectionCatalog: SECTION_CATALOG,
+        pitchDefaultSections: DEFAULT_SECTIONS,
         search,
         actor: actorFromRequest(req),
         migrationHint:
-          'If this page errors about missing columns/tables, run supabase/migrations/252_organiser_sales_kit.sql in Supabase.',
+          'If this page errors about missing columns/tables, run supabase/migrations/252_organiser_sales_kit.sql and 293_custom_pitch_decks.sql in Supabase.',
       });
     } catch (e) {
       console.error('admin-sales-kit GET', e);
@@ -303,6 +351,67 @@ module.exports = async function handler(req, res) {
       const id = String(body.id || '').trim();
       if (!id) return json(res, 400, { error: 'missing_id' });
       const del = await sb.from('organiser_sales_demos').delete().eq('id', id);
+      if (del.error) throw new Error(del.error.message);
+      return json(res, 200, { ok: true });
+    }
+
+    if (action === 'create_custom_pitch_deck') {
+      const companyName = cleanText(body.companyName || body.company_name, 120);
+      if (!companyName) {
+        return json(res, 400, { error: 'missing_company', message: 'Add the company or group name.' });
+      }
+      const website = normalizeWebsite(body.website);
+      const contactName = cleanText(body.contactName || body.contact_name, 120);
+      const brief = cleanText(body.brief || body.includes || body.contentBrief, 4000);
+      const includeSections = normalizeSections(body.includeSections || body.include_sections);
+      const organiserId = String(body.organiserId || body.organiser_id || '').trim() || null;
+
+      const deck = await generateCustomPitchDeck({
+        companyName,
+        website,
+        brief,
+        includeSections,
+      });
+
+      let slug = makeDeckSlug(companyName);
+      for (let attempt = 0; attempt < 5; attempt++) {
+        const insertRes = await sb
+          .from('custom_pitch_decks')
+          .insert({
+            slug,
+            company_name: companyName,
+            website: website || null,
+            contact_name: contactName || null,
+            organiser_id: organiserId,
+            include_sections: includeSections,
+            brief: brief || null,
+            deck,
+            created_by_email: sessionEmail(req) || null,
+          })
+          .select(
+            'id, slug, company_name, website, contact_name, organiser_id, include_sections, brief, created_by_email, created_at, updated_at'
+          )
+          .maybeSingle();
+        if (!insertRes.error) {
+          return json(res, 200, {
+            ok: true,
+            deck: mapCustomPitchDeck(insertRes.data),
+            generatedDeck: deck,
+          });
+        }
+        if (/duplicate|unique/i.test(String(insertRes.error.message || ''))) {
+          slug = makeDeckSlug(companyName);
+          continue;
+        }
+        throw new Error(insertRes.error.message);
+      }
+      return json(res, 500, { error: 'slug_collision', message: 'Could not allocate a deck URL — try again.' });
+    }
+
+    if (action === 'delete_custom_pitch_deck') {
+      const id = String(body.id || '').trim();
+      if (!id) return json(res, 400, { error: 'missing_id' });
+      const del = await sb.from('custom_pitch_decks').delete().eq('id', id);
       if (del.error) throw new Error(del.error.message);
       return json(res, 200, { ok: true });
     }

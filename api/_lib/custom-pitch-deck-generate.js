@@ -1,0 +1,309 @@
+/**
+ * Build tailored organiser sales pitch deck JSON (template + optional OpenAI polish).
+ */
+const crypto = require('crypto');
+
+const SECTION_CATALOG = {
+  opening: { nav: 'Opening', kicker: 'Start here' },
+  problem: { nav: 'The problem', kicker: 'Pain today' },
+  discovery: { nav: 'Discovery', kicker: 'Get found' },
+  dashboard: { nav: 'Dashboard', kicker: 'Your workspace' },
+  tools: { nav: 'Tools', kicker: 'Networking-only' },
+  pricing: { nav: 'Pricing', kicker: 'Commercials' },
+  objections: { nav: 'Objections', kicker: 'Pushback' },
+  next_steps: { nav: 'Next steps', kicker: 'Close' },
+};
+
+const DEFAULT_SECTIONS = [
+  'opening',
+  'problem',
+  'discovery',
+  'dashboard',
+  'tools',
+  'pricing',
+  'objections',
+  'next_steps',
+];
+
+function cleanText(value, max) {
+  return String(value || '')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .slice(0, max || 8000);
+}
+
+function normalizeWebsite(raw) {
+  const w = cleanText(raw, 500);
+  if (!w) return '';
+  if (/^https?:\/\//i.test(w)) return w;
+  return 'https://' + w.replace(/^\/+/, '');
+}
+
+function hostFromWebsite(website) {
+  try {
+    return new URL(normalizeWebsite(website)).hostname.replace(/^www\./i, '');
+  } catch {
+    return '';
+  }
+}
+
+function normalizeSections(raw) {
+  const list = Array.isArray(raw) ? raw : [];
+  const out = [];
+  list.forEach(function (key) {
+    const k = String(key || '').trim();
+    if (SECTION_CATALOG[k] && out.indexOf(k) === -1) out.push(k);
+  });
+  if (!out.length) return DEFAULT_SECTIONS.slice();
+  return out;
+}
+
+function makeDeckSlug(companyName) {
+  const base =
+    String(companyName || 'group')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 28) || 'group';
+  const suffix = crypto.randomBytes(3).toString('hex');
+  return 'custom-' + base + '-' + suffix;
+}
+
+function sectionTemplates(companyName, website, brief) {
+  const host = hostFromWebsite(website);
+  const co = companyName || 'your group';
+  const briefBit = brief ? cleanText(brief, 400) : '';
+
+  return {
+    opening: {
+      id: 'opening',
+      title: 'Opening the conversation with ' + co,
+      intro:
+        'Mirror how they run events today, then position The Networker UK as built for UK networking — not generic ticketing.' +
+        (briefBit ? ' Focus: ' + briefBit : ''),
+      bullets: [
+        'How do new people find and book your meetings today?',
+        'Do you offer guest or trial visits before paid membership?',
+        'How do you handle member-only pricing — access codes, spreadsheets, manual lists?',
+        'What hurts most: filling seats, admin, converting guests, or getting found?',
+      ],
+      quote:
+        'We built The Networker UK because generic ticketing platforms were not built for how UK networking groups grow — trial visits, member rates, curated rooms, and repeat attendance.',
+    },
+    problem: {
+      id: 'problem',
+      title: 'Why ' + co + ' feels the pain',
+      intro:
+        'Generic event platforms optimise for one-off ticket sales. Networking groups need discovery, guest conversion, and member access without spreadsheet admin.',
+      bullets: [
+        'New attendees struggle to find you outside your existing WhatsApp or LinkedIn circle',
+        'Member rates often mean access codes, manual lists, or chasing payments offline',
+        'You cannot always see who is on their first visit versus returning',
+        'Promoting each meeting across channels takes time you do not have',
+      ],
+    },
+    discovery: {
+      id: 'discovery',
+      title: 'Where ' + co + ' gets discovered',
+      intro:
+        'List on the UK directory networkers already browse — alongside reviews, maps, and organiser profiles.',
+      bullets: [
+        'Events, groups, and opportunities in one search with city and date filters',
+        'Public organiser page with reviews and upcoming meetings',
+        'Guest visit and register-interest flows so prospects try before they commit',
+        host ? 'Send people to your site (' + host + ') from your profile when you are ready' : 'Link your website from your organiser profile',
+      ],
+    },
+    dashboard: {
+      id: 'dashboard',
+      title: co + "'s organiser workspace",
+      intro: 'One dashboard for listings, bookings, attendees, and promote tools — built for repeat meetings.',
+      bullets: [
+        'Publish events in minutes — free and paid tickets, online or in-person',
+        'Attendee list with visit tracking (first visit vs returning)',
+        'Team editors so co-hosts are not sharing one login',
+        'Stripe payouts when you are ready; free events need no setup',
+      ],
+    },
+    tools: {
+      id: 'tools',
+      title: 'Tools generic platforms skip',
+      intro: 'Five networking-specific features ' + co + ' can turn on as you grow.',
+      tiles: [
+        { title: 'Guest visits', body: 'Complimentary trial visits before paid member tickets' },
+        { title: 'Visit tracking', body: 'See first visit vs returning on every attendee list' },
+        { title: 'Category exclusivity', body: 'Approve who is in the room before payment' },
+        { title: 'Previous attendees', body: 'Invite-only loyalty rates on repeat events' },
+        { title: 'Membership register', body: 'Member-only tickets without access codes' },
+      ],
+    },
+    pricing: {
+      id: 'pricing',
+      title: 'Free to list. Keep 100%.',
+      intro: 'No monthly subscription for events on The Networker UK.',
+      bullets: [
+        'You receive the full ticket price you set',
+        'Attendees pay 4.5% + 20p booking fee at checkout',
+        'Free events need no Stripe setup',
+        'Optional Premium Spotlight when you want extra visibility',
+        'Works alongside Eventbrite during a transition month',
+      ],
+    },
+    objections: {
+      id: 'objections',
+      title: 'Low-risk to try',
+      intro: 'Short answers when ' + co + ' pushes back.',
+      bullets: [
+        '"We are on Eventbrite." — List both for a month and compare admin time and new bookings',
+        '"Members will not sign up." — Browse is free; booking takes about two minutes',
+        '"We have a CRM." — Keep it for renewals; use The Networker UK for booking visibility',
+        '"What is the catch?" — None on listing; attendees pay the booking fee',
+      ],
+    },
+    next_steps: {
+      id: 'next_steps',
+      title: 'Let us list ' + co + "'s next meeting",
+      intro: 'Concrete steps you can agree on the call.',
+      bullets: [
+        'Claim the organiser page — ten minutes together',
+        'Publish the next 2–3 dates',
+        'Turn on guest visits or upload the member list',
+        'Review bookings and visit tracking after the first event',
+      ],
+    },
+  };
+}
+
+function buildHero(companyName, website, brief) {
+  const co = cleanText(companyName, 120) || 'Your group';
+  const host = hostFromWebsite(website);
+  return {
+    preparedFor: co,
+    website: normalizeWebsite(website),
+    websiteLabel: host || '',
+    headline: 'Move ' + co + ' to The Networker UK',
+    lede:
+      cleanText(brief, 320) ||
+      'Ticketing and discovery built for UK networking groups — free to list, you keep 100% of the ticket price, with tools generic platforms do not offer.',
+    chips: ['Free to list', 'Keep 100% of ticket price', 'Built for networking groups'],
+  };
+}
+
+function buildDeckFromTemplate(input) {
+  const companyName = cleanText(input.companyName, 120);
+  const website = normalizeWebsite(input.website);
+  const brief = cleanText(input.brief, 4000);
+  const sections = normalizeSections(input.includeSections);
+  const templates = sectionTemplates(companyName, website, brief);
+
+  const deckSections = sections.map(function (key) {
+    const t = templates[key];
+    const meta = SECTION_CATALOG[key];
+    return {
+      id: key,
+      navLabel: meta.nav,
+      kicker: meta.kicker,
+      title: t.title,
+      intro: t.intro,
+      bullets: t.bullets || [],
+      tiles: t.tiles || [],
+      quote: t.quote || '',
+    };
+  });
+
+  return {
+    version: 1,
+    hero: buildHero(companyName, website, brief),
+    sections: deckSections,
+    close: {
+      headline: 'Find your next attendees',
+      url: 'thenetworkeruk.com/for-organisers',
+    },
+  };
+}
+
+async function polishDeckWithOpenAI(deck, input) {
+  const key = process.env.OPENAI_API_KEY;
+  if (!key) return deck;
+
+  const model = process.env.OPENAI_CHAT_MODEL || 'gpt-4o-mini';
+  const system =
+    'You tailor internal B2B sales pitch decks for The Networker UK (UK networking group ticketing). ' +
+    'Return ONLY valid JSON matching the input shape: { hero, sections, close }. ' +
+    'Keep section ids unchanged. Improve wording to reference the prospect company naturally. ' +
+    'Do not invent pricing or product features beyond: free to list, organiser keeps 100% ticket price, attendees pay 4.5%+20p, guest visits, visit tracking, membership register, category exclusivity, organiser dashboard, UK events directory.';
+
+  const userPayload = {
+    companyName: input.companyName,
+    website: input.website,
+    brief: input.brief,
+    deck,
+  };
+
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer ' + key,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model,
+      temperature: 0.35,
+      max_tokens: 2500,
+      response_format: { type: 'json_object' },
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: JSON.stringify(userPayload) },
+      ],
+    }),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text().catch(function () {
+      return '';
+    });
+    console.warn('custom-pitch-deck OpenAI', res.status, errText.slice(0, 200));
+    return deck;
+  }
+
+  const data = await res.json();
+  const raw =
+    data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+  if (!raw) return deck;
+
+  try {
+    const parsed = JSON.parse(String(raw));
+    if (parsed && parsed.hero && Array.isArray(parsed.sections)) {
+      parsed.version = 1;
+      return parsed;
+    }
+  } catch (e) {
+    console.warn('custom-pitch-deck OpenAI parse', e && e.message);
+  }
+  return deck;
+}
+
+async function generateCustomPitchDeck(input) {
+  const base = buildDeckFromTemplate(input || {});
+  try {
+    return await polishDeckWithOpenAI(base, input || {});
+  } catch (e) {
+    console.warn('custom-pitch-deck generate', e && e.message);
+    return base;
+  }
+}
+
+function publicPathForSlug(slug) {
+  return '/p-tnh-' + String(slug || '').trim();
+}
+
+module.exports = {
+  SECTION_CATALOG,
+  DEFAULT_SECTIONS,
+  makeDeckSlug,
+  normalizeSections,
+  normalizeWebsite,
+  cleanText,
+  generateCustomPitchDeck,
+  publicPathForSlug,
+};

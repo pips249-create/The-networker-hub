@@ -30141,6 +30141,9 @@
       demoOrganiser: null,
       internalCandidates: [],
       demos: [],
+      customPitchDecks: [],
+      pitchSectionCatalog: {},
+      pitchDefaultSections: [],
       search: [],
       tab: salesKitTab,
       focusOrganiser: salesKitFocus,
@@ -30434,6 +30437,84 @@
         '<a class="admin-shortcut" href="/p-tnh-org-cheats-c8r3#jamie" target="_blank" rel="noopener"><span class="admin-shortcut-label">Jamie</span><span class="admin-shortcut-desc">Open &amp; print her sheet</span></a>' +
         '<a class="admin-shortcut" href="/p-tnh-org-cheats-c8r3" target="_blank" rel="noopener"><span class="admin-shortcut-label">All three</span><span class="admin-shortcut-desc">Print pack</span></a>' +
         '</div></div></section>' +
+        (function () {
+          var catalog = state.pitchSectionCatalog || {};
+          var sectionKeys = (state.pitchDefaultSections || []).length
+            ? state.pitchDefaultSections
+            : ['opening', 'problem', 'discovery', 'dashboard', 'tools', 'pricing', 'objections', 'next_steps'];
+          var checkboxes = sectionKeys
+            .map(function (key) {
+              var meta = catalog[key] || {};
+              var label = meta.nav || key;
+              return (
+                '<label class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 cursor-pointer hover:bg-slate-50">' +
+                '<input type="checkbox" class="sales-kit-pitch-section-cb rounded border-slate-300" value="' +
+                attrEsc(key) +
+                '" checked />' +
+                esc(label) +
+                '</label>'
+              );
+            })
+            .join('');
+          var deckRows = (state.customPitchDecks || [])
+            .map(function (d) {
+              return (
+                '<li class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 border-t border-slate-100">' +
+                '<div class="min-w-0"><p class="font-medium text-slate-900">' +
+                esc(d.companyName) +
+                '</p><p class="text-xs text-slate-500 break-all">' +
+                esc(d.path || '') +
+                (d.website ? ' · ' + esc(d.website) : '') +
+                '</p></div>' +
+                '<div class="flex flex-wrap gap-2 shrink-0">' +
+                '<button type="button" class="sales-kit-copy-pitch-url rounded-lg border border-slate-300 bg-white text-xs font-semibold px-2.5 py-1.5 text-slate-700 hover:bg-slate-50" data-url="' +
+                attrEsc(d.path || '') +
+                '">Copy link</button>' +
+                '<a class="rounded-lg bg-brand-700 text-white text-xs font-semibold px-2.5 py-1.5 hover:bg-brand-900" href="' +
+                attrEsc(d.path || '#') +
+                '" target="_blank" rel="noopener">Open deck</a>' +
+                '<button type="button" class="sales-kit-delete-pitch-deck text-xs font-semibold text-red-700 hover:underline" data-id="' +
+                attrEsc(d.id) +
+                '">Delete</button></li>'
+              );
+            })
+            .join('');
+          return (
+            '<section class="admin-dash-section">' +
+            '<div class="admin-dash-section-head"><h3>Tailored pitch decks</h3>' +
+            '<p>Generate a prospect-specific deck from their name, website, and what you want covered — then present it like the standard sales deck.</p></div>' +
+            '<div class="admin-dash-section-body space-y-4">' +
+            '<form id="sales-kit-pitch-create" class="grid gap-3 md:grid-cols-2 lg:grid-cols-3">' +
+            '<input type="hidden" id="sales-kit-pitch-organiser-id" value="' +
+            attrEsc(focusId) +
+            '" />' +
+            '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="sales-kit-pitch-company">Company / group name</label>' +
+            '<input id="sales-kit-pitch-company" required class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white" placeholder="e.g. Business Matching UK" value="' +
+            attrEsc(focusName) +
+            '" /></div>' +
+            '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="sales-kit-pitch-website">Website</label>' +
+            '<input id="sales-kit-pitch-website" type="url" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white" placeholder="https://…" /></div>' +
+            '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="sales-kit-pitch-contact">Contact name</label>' +
+            '<input id="sales-kit-pitch-contact" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white" placeholder="Optional — for your notes" /></div>' +
+            '<div class="md:col-span-2 lg:col-span-3"><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="sales-kit-pitch-brief">What should this deck include?</label>' +
+            '<textarea id="sales-kit-pitch-brief" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm min-h-[88px]" placeholder="e.g. Focus on Leeds launch, occupation vetting, guest visits, and keeping WhatsApp for community."></textarea></div>' +
+            '<div class="md:col-span-2 lg:col-span-3"><p class="text-xs font-semibold text-slate-500 uppercase mb-2">Sections</p>' +
+            '<div class="flex flex-wrap gap-2">' +
+            checkboxes +
+            '</div></div>' +
+            '<div class="md:col-span-2 lg:col-span-3 flex flex-wrap items-center gap-2">' +
+            '<button type="submit" id="sales-kit-pitch-create-btn" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-3 py-2 hover:bg-brand-900">Create pitch deck</button>' +
+            '<span id="sales-kit-pitch-create-status" class="text-sm text-slate-500" aria-live="polite"></span>' +
+            '</div></form>' +
+            ((state.customPitchDecks || []).length
+              ? '<div><p class="text-xs font-semibold text-slate-500 uppercase mb-2">Recent tailored decks</p>' +
+                '<ul class="rounded-lg border border-slate-200 bg-white divide-y divide-slate-100">' +
+                deckRows +
+                '</ul></div>'
+              : '<p class="text-sm text-slate-500">No tailored decks yet — create one above.</p>') +
+            '</div></section>'
+          );
+        })() +
         '<section class="admin-dash-section">' +
         '<div class="admin-dash-section-head"><h3>Decks &amp; leave-behinds</h3>' +
         '<p>Longer pitch decks and the PDF to send after the meeting.</p></div>' +
@@ -30785,6 +30866,78 @@
           });
         });
       });
+
+      var pitchCreateForm = document.getElementById('sales-kit-pitch-create');
+      var pitchCreateStatus = document.getElementById('sales-kit-pitch-create-status');
+      if (pitchCreateForm) {
+        pitchCreateForm.addEventListener('submit', function (e) {
+          e.preventDefault();
+          var companyEl = document.getElementById('sales-kit-pitch-company');
+          var websiteEl = document.getElementById('sales-kit-pitch-website');
+          var contactEl = document.getElementById('sales-kit-pitch-contact');
+          var briefEl = document.getElementById('sales-kit-pitch-brief');
+          var orgIdEl = document.getElementById('sales-kit-pitch-organiser-id');
+          var createBtn = document.getElementById('sales-kit-pitch-create-btn');
+          var companyName = companyEl ? String(companyEl.value || '').trim() : '';
+          if (!companyName) {
+            if (pitchCreateStatus) pitchCreateStatus.textContent = 'Add a company or group name.';
+            return;
+          }
+          var includeSections = [];
+          root.querySelectorAll('.sales-kit-pitch-section-cb:checked').forEach(function (cb) {
+            includeSections.push(cb.value);
+          });
+          if (createBtn) createBtn.disabled = true;
+          if (pitchCreateStatus) pitchCreateStatus.textContent = 'Building deck…';
+          adminPost('/api/admin/sales-kit', {
+            action: 'create_custom_pitch_deck',
+            companyName: companyName,
+            website: websiteEl ? websiteEl.value : '',
+            contactName: contactEl ? contactEl.value : '',
+            organiserId: orgIdEl ? orgIdEl.value : '',
+            brief: briefEl ? briefEl.value : '',
+            includeSections: includeSections,
+          }).then(function (data) {
+            if (createBtn) createBtn.disabled = false;
+            if (!data || !data.ok) {
+              if (pitchCreateStatus) {
+                pitchCreateStatus.textContent =
+                  (data && data.message) || 'Could not create deck.';
+              }
+              return;
+            }
+            if (pitchCreateStatus) pitchCreateStatus.textContent = 'Deck ready — opening in a new tab.';
+            if (data.deck && data.deck.path) {
+              window.open(data.deck.path, '_blank', 'noopener');
+            }
+            load();
+          });
+        });
+      }
+
+      root.querySelectorAll('.sales-kit-copy-pitch-url').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var path = btn.getAttribute('data-url') || '';
+          var url = path.indexOf('http') === 0 ? path : 'https://www.thenetworkeruk.com' + path;
+          copyText(url, pitchCreateStatus, 'Deck link copied.');
+        });
+      });
+
+      root.querySelectorAll('.sales-kit-delete-pitch-deck').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          if (!window.confirm('Delete this tailored pitch deck?')) return;
+          adminPost('/api/admin/sales-kit', {
+            action: 'delete_custom_pitch_deck',
+            id: btn.getAttribute('data-id'),
+          }).then(function (data) {
+            if (!data || !data.ok) {
+              window.alert((data && data.message) || 'Could not delete deck.');
+              return;
+            }
+            load();
+          });
+        });
+      });
     }
 
     function load() {
@@ -30811,6 +30964,9 @@
         state.demoOrganiser = data.demoOrganiser || null;
         state.internalCandidates = data.internalCandidates || [];
         state.demos = data.demos || [];
+        state.customPitchDecks = data.customPitchDecks || [];
+        state.pitchSectionCatalog = data.pitchSectionCatalog || {};
+        state.pitchDefaultSections = data.pitchDefaultSections || [];
         if (data.actor) state.actor = data.actor;
         paint();
       });

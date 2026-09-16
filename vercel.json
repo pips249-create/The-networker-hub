@@ -455,6 +455,10 @@
       "destination": "/p-tnh-org-onboard-x4n7.html"
     },
     {
+      "source": "/p-tnh-custom-:slug",
+      "destination": "/p-tnh-custom-deck.html?slug=custom-:slug"
+    },
+    {
       "source": "/p-tnh-org-cheats-c8r3",
       "destination": "/p-tnh-org-cheats-c8r3.html"
     },
