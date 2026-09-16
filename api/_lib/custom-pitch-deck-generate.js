@@ -2,6 +2,12 @@
  * Build tailored organiser sales pitch deck JSON (template + optional OpenAI polish).
  */
 const crypto = require('crypto');
+const {
+  normalizeDeckType,
+  normalizeSponsorshipPlacements,
+  buildSponsorshipSections,
+  SPONSORSHIP_PLACEMENT_ORDER,
+} = require('./sponsorship-pitch-catalog');
 
 const SECTION_CATALOG = {
   opening: { nav: 'Opening', kicker: 'Start here' },
@@ -47,15 +53,58 @@ function hostFromWebsite(website) {
   }
 }
 
-function normalizeSections(raw) {
+function normalizeSections(raw, opts) {
   const list = Array.isArray(raw) ? raw : [];
   const out = [];
   list.forEach(function (key) {
     const k = String(key || '').trim();
     if (SECTION_CATALOG[k] && out.indexOf(k) === -1) out.push(k);
   });
-  if (!out.length) return DEFAULT_SECTIONS.slice();
+  if (!out.length) {
+    return opts && opts.allowEmpty ? [] : DEFAULT_SECTIONS.slice();
+  }
   return out;
+}
+
+function sponsorshipOpeningSection(companyName, brief) {
+  const co = cleanText(companyName, 120) || 'your brand';
+  const briefBit = cleanText(brief, 400);
+  return {
+    id: 'sponsor_opening',
+    navLabel: 'Opening',
+    kicker: 'Partnerships',
+    title: 'Opening the conversation with ' + co,
+    intro:
+      'Confirm who they want to reach (event bookers, group owners, opportunity seekers), budget, and timing — then map packages from /advertising.' +
+      (briefBit ? ' Focus: ' + briefBit : ''),
+    bullets: [
+      'Who is the target buyer — business owners, franchisees, professionals booking events?',
+      'Which parts of the site matter most — Events, Organisers, or Opportunities?',
+      'Monthly vs prepaid commitment — most packages offer 1–12 month terms',
+      'Any category exclusivity or geographic focus (city / county)?',
+    ],
+    tiles: [],
+    quote: '',
+  };
+}
+
+function sponsorshipNextStepsSection(companyName) {
+  const co = cleanText(companyName, 120) || 'your brand';
+  return {
+    id: 'sponsor_next_steps',
+    navLabel: 'Next steps',
+    kicker: 'Close',
+    title: 'Recommended next steps for ' + co,
+    intro: 'Keep momentum while inventory and eligibility are fresh.',
+    bullets: [
+      'Confirm placement list and start dates (or enquiry for Headline / Industry slots)',
+      'Share logo assets and landing URL for creative',
+      'For self-serve: City / County Sponsor or Featured Boost checkout on /advertising',
+      'Book a 15-minute walkthrough of live placements on the site',
+    ],
+    tiles: [],
+    quote: '',
+  };
 }
 
 function makeDeckSlug(companyName) {
@@ -174,7 +223,7 @@ function sectionTemplates(companyName, website, brief) {
   };
 }
 
-function buildHero(companyName, website, brief, prospectLogoUrl) {
+function buildOrganiserHero(companyName, website, brief, prospectLogoUrl) {
   const co = cleanText(companyName, 120) || 'Your group';
   const host = hostFromWebsite(website);
   const logo = cleanText(prospectLogoUrl, 2000);
@@ -183,6 +232,7 @@ function buildHero(companyName, website, brief, prospectLogoUrl) {
     website: normalizeWebsite(website),
     websiteLabel: host || '',
     prospectLogoUrl: logo,
+    deckType: 'organiser',
     headline: 'Move ' + co + ' to The Networker UK',
     lede:
       cleanText(brief, 320) ||
@@ -191,15 +241,46 @@ function buildHero(companyName, website, brief, prospectLogoUrl) {
   };
 }
 
-function buildDeckFromTemplate(input) {
-  const companyName = cleanText(input.companyName, 120);
-  const website = normalizeWebsite(input.website);
-  const brief = cleanText(input.brief, 4000);
-  const prospectLogoUrl = cleanText(input.prospectLogoUrl, 2000);
-  const sections = normalizeSections(input.includeSections);
-  const templates = sectionTemplates(companyName, website, brief);
+function buildSponsorshipHero(companyName, website, brief, prospectLogoUrl) {
+  const co = cleanText(companyName, 120) || 'Your brand';
+  const host = hostFromWebsite(website);
+  const logo = cleanText(prospectLogoUrl, 2000);
+  return {
+    preparedFor: co,
+    website: normalizeWebsite(website),
+    websiteLabel: host || '',
+    prospectLogoUrl: logo,
+    deckType: 'sponsorship',
+    headline: 'Advertising on The Networker UK for ' + co,
+    lede:
+      cleanText(brief, 320) ||
+      'Reach business owners, event bookers, and opportunity seekers across our Events, Organisers, and Business Opportunities directories — with exclusive and self-serve placements.',
+    chips: ['Events · Organisers · Opportunities', 'Headline & page partners', 'Listings from £25/mo + VAT'],
+  };
+}
 
-  const deckSections = sections.map(function (key) {
+function buildCombinedHero(companyName, website, brief, prospectLogoUrl) {
+  const hero = buildOrganiserHero(companyName, website, brief, prospectLogoUrl);
+  hero.deckType = 'combined';
+  hero.headline = coHeadlineCombined(cleanText(companyName, 120));
+  hero.lede =
+    cleanText(brief, 320) ||
+    'Cover organiser ticketing plus sponsorship placements — tailored to how ' +
+      (cleanText(companyName, 120) || 'this partner') +
+      ' wants to grow on The Networker UK.';
+  hero.chips = ['Organiser tools', 'Sponsorship inventory', 'One partnership conversation'];
+  return hero;
+}
+
+function coHeadlineCombined(companyName) {
+  const co = companyName || 'your partner';
+  return 'The Networker UK partnership plan for ' + co;
+}
+
+function buildOrganiserSections(companyName, website, brief, includeSections) {
+  const sections = normalizeSections(includeSections);
+  const templates = sectionTemplates(companyName, website, brief);
+  return sections.map(function (key) {
     const t = templates[key];
     const meta = SECTION_CATALOG[key];
     return {
@@ -213,15 +294,69 @@ function buildDeckFromTemplate(input) {
       quote: t.quote || '',
     };
   });
+}
+
+function orderSponsorshipPlacements(placements) {
+  const set = {};
+  placements.forEach(function (k) {
+    set[k] = true;
+  });
+  return SPONSORSHIP_PLACEMENT_ORDER.filter(function (k) {
+    return set[k];
+  });
+}
+
+function buildDeckFromTemplate(input) {
+  const companyName = cleanText(input.companyName, 120);
+  const website = normalizeWebsite(input.website);
+  const brief = cleanText(input.brief, 4000);
+  const prospectLogoUrl = cleanText(input.prospectLogoUrl, 2000);
+  const deckType = normalizeDeckType(input.deckType);
+  const sponsorshipPlacements = orderSponsorshipPlacements(
+    normalizeSponsorshipPlacements(input.sponsorshipPlacements)
+  );
+
+  const deckSections = [];
+  let hero;
+  let close;
+
+  if (deckType === 'sponsorship') {
+    hero = buildSponsorshipHero(companyName, website, brief, prospectLogoUrl);
+    close = { headline: 'Explore placements', url: 'thenetworkeruk.com/advertising' };
+    deckSections.push(sponsorshipOpeningSection(companyName, brief));
+    deckSections.push.apply(
+      deckSections,
+      buildSponsorshipSections(sponsorshipPlacements, companyName, brief)
+    );
+    deckSections.push(sponsorshipNextStepsSection(companyName));
+  } else if (deckType === 'combined') {
+    hero = buildCombinedHero(companyName, website, brief, prospectLogoUrl);
+    close = { headline: 'Let\'s get you live', url: 'thenetworkeruk.com/advertising' };
+    deckSections.push(sponsorshipOpeningSection(companyName, brief));
+    deckSections.push.apply(
+      deckSections,
+      buildSponsorshipSections(sponsorshipPlacements, companyName, brief)
+    );
+    deckSections.push.apply(
+      deckSections,
+      buildOrganiserSections(companyName, website, brief, input.includeSections)
+    );
+  } else {
+    hero = buildOrganiserHero(companyName, website, brief, prospectLogoUrl);
+    close = { headline: 'Find your next attendees', url: 'thenetworkeruk.com/for-organisers' };
+    deckSections.push.apply(
+      deckSections,
+      buildOrganiserSections(companyName, website, brief, input.includeSections)
+    );
+  }
 
   return {
     version: 1,
-    hero: buildHero(companyName, website, brief, prospectLogoUrl),
+    deckType,
+    sponsorshipPlacements,
+    hero,
     sections: deckSections,
-    close: {
-      headline: 'Find your next attendees',
-      url: 'thenetworkeruk.com/for-organisers',
-    },
+    close,
   };
 }
 
@@ -231,10 +366,10 @@ async function polishDeckWithOpenAI(deck, input) {
 
   const model = process.env.OPENAI_CHAT_MODEL || 'gpt-4o-mini';
   const system =
-    'You tailor internal B2B sales pitch decks for The Networker UK (UK networking group ticketing). ' +
-    'Return ONLY valid JSON matching the input shape: { hero, sections, close }. ' +
+    'You tailor internal B2B sales pitch decks for The Networker UK (networking ticketing + advertising). ' +
+    'Return ONLY valid JSON matching the input shape: { hero, sections, close, deckType, sponsorshipPlacements }. ' +
     'Keep section ids unchanged. Improve wording to reference the prospect company naturally. ' +
-    'Do not invent pricing or product features beyond: free to list, organiser keeps 100% ticket price, attendees pay 4.5%+20p, guest visits, visit tracking, membership register, category exclusivity, organiser dashboard, UK events directory.';
+    'Do not invent pricing beyond published packages: Headline Sponsor ~£2k/mo, Page Partner ~£600/mo, Featured Boost £55, City from £29/mo, County from £49/mo, opportunity listing £25/mo + VAT, organiser free to list / keep 100% ticket / attendees 4.5%+20p.';
 
   const userPayload = {
     companyName: input.companyName,
@@ -300,6 +435,18 @@ function publicPathForSlug(slug) {
   return '/p-tnh-' + String(slug || '').trim();
 }
 
+function validatePitchDeckInput(input) {
+  const deckType = normalizeDeckType(input && input.deckType);
+  const placements = normalizeSponsorshipPlacements(input && input.sponsorshipPlacements);
+  if ((deckType === 'sponsorship' || deckType === 'combined') && !placements.length) {
+    return {
+      ok: false,
+      message: 'Pick at least one sponsorship placement (e.g. Headline Sponsor or business opportunity listing).',
+    };
+  }
+  return { ok: true, deckType, placements };
+}
+
 module.exports = {
   SECTION_CATALOG,
   DEFAULT_SECTIONS,
@@ -309,4 +456,5 @@ module.exports = {
   cleanText,
   generateCustomPitchDeck,
   publicPathForSlug,
+  validatePitchDeckInput,
 };

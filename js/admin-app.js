@@ -30172,6 +30172,8 @@
       customPitchDecks: [],
       pitchSectionCatalog: {},
       pitchDefaultSections: [],
+      pitchSponsorshipCatalog: {},
+      pitchSponsorshipOrder: [],
       focusOrganiserProfile: null,
       pitchEditingDeck: null,
       search: [],
@@ -30469,13 +30471,22 @@
         '</div></div></section>' +
         (function () {
           var catalog = state.pitchSectionCatalog || {};
+          var placementCatalog = state.pitchSponsorshipCatalog || {};
+          var placementOrder = (state.pitchSponsorshipOrder || []).length
+            ? state.pitchSponsorshipOrder
+            : Object.keys(placementCatalog);
           var editing = state.pitchEditingDeck;
           var profile = state.focusOrganiserProfile;
+          var deckType = editing && editing.deckType ? editing.deckType : 'sponsorship';
           var sectionKeys = (state.pitchDefaultSections || []).length
             ? state.pitchDefaultSections
             : ['opening', 'problem', 'discovery', 'dashboard', 'tools', 'pricing', 'objections', 'next_steps'];
           var selectedSections =
             editing && (editing.includeSections || []).length ? editing.includeSections : null;
+          var selectedPlacements =
+            editing && (editing.sponsorshipPlacements || []).length
+              ? editing.sponsorshipPlacements
+              : [];
           var prefillCompany = editing ? editing.companyName : focusName;
           var prefillWebsite = editing ? editing.website || '' : (profile && profile.website) || '';
           var prefillContact = editing ? editing.contactName || '' : '';
@@ -30483,6 +30494,58 @@
           var prefillLogo = editing
             ? editing.prospectLogoUrl || ''
             : (profile && profile.photoUrl) || '';
+          var placementGroups = ['Events', 'Organisers', 'Opportunities', 'Regional'];
+          var sponsorshipBlocks = placementGroups
+            .map(function (group) {
+              var keys = placementOrder.filter(function (key) {
+                return placementCatalog[key] && placementCatalog[key].group === group;
+              });
+              if (!keys.length) return '';
+              var items = keys
+                .map(function (key) {
+                  var p = placementCatalog[key];
+                  var title = (p && p.title) || key;
+                  var checked = selectedPlacements.indexOf(key) !== -1 ? ' checked' : '';
+                  return (
+                    '<label class="inline-flex items-start gap-2 rounded-lg border border-violet-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 cursor-pointer hover:bg-violet-50 max-w-full">' +
+                    '<input type="checkbox" class="sales-kit-pitch-placement-cb mt-0.5 rounded border-slate-300 shrink-0" value="' +
+                    attrEsc(key) +
+                    '"' +
+                    checked +
+                    ' />' +
+                    '<span>' +
+                    esc(title) +
+                    (p && p.price ? ' <span class="font-normal text-slate-500">(' + esc(p.price) + ')</span>' : '') +
+                    '</span></label>'
+                  );
+                })
+                .join('');
+              return (
+                '<div class="md:col-span-2 lg:col-span-3"><p class="text-xs font-semibold text-violet-800 uppercase mb-2">' +
+                esc(group) +
+                ' sponsorship</p><div class="flex flex-wrap gap-2">' +
+                items +
+                '</div></div>'
+              );
+            })
+            .join('');
+          function deckTypeRadio(value, label, desc) {
+            return (
+              '<label class="flex items-start gap-2 rounded-lg border px-3 py-2 cursor-pointer ' +
+              (deckType === value ? 'border-brand-400 bg-brand-50' : 'border-slate-200 bg-white') +
+              '">' +
+              '<input type="radio" class="sales-kit-pitch-deck-type mt-1" name="sales-kit-pitch-deck-type" value="' +
+              attrEsc(value) +
+              '"' +
+              (deckType === value ? ' checked' : '') +
+              ' />' +
+              '<span><span class="block text-sm font-semibold text-slate-900">' +
+              esc(label) +
+              '</span>' +
+              (desc ? '<span class="block text-xs text-slate-500 mt-0.5">' + esc(desc) + '</span>' : '') +
+              '</span></label>'
+            );
+          }
           var checkboxes = sectionKeys
             .map(function (key) {
               var meta = catalog[key] || {};
@@ -30513,6 +30576,7 @@
                 esc(d.companyName) +
                 '</p><p class="text-xs text-slate-500 break-all">' +
                 esc(d.path || '') +
+                (d.deckType ? ' · ' + esc(d.deckType) : '') +
                 (d.website ? ' · ' + esc(d.website) : '') +
                 '</p></div>' +
                 '<div class="flex flex-wrap gap-2 shrink-0">' +
@@ -30541,7 +30605,7 @@
           return (
             '<section class="admin-dash-section">' +
             '<div class="admin-dash-section-head"><h3>Tailored pitch decks</h3>' +
-            '<p>Generate a prospect-specific deck from their name, website, and what you want covered — then present it like the standard sales deck.</p></div>' +
+            '<p>Pick <strong>sponsorship placements</strong> (Headline Sponsor, business opportunity listing, etc.) and/or organiser onboarding sections — then present fullscreen.</p></div>' +
             '<div class="admin-dash-section-body space-y-4">' +
             (profile && !editing
               ? '<div class="rounded-xl border border-brand-200 bg-brand-50/60 p-3 text-sm text-brand-950">' +
@@ -30581,13 +30645,25 @@
             attrEsc(prefillLogo) +
             '" /></div>' +
             '<div class="md:col-span-2 lg:col-span-3"><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="sales-kit-pitch-brief">What should this deck include?</label>' +
-            '<textarea id="sales-kit-pitch-brief" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm min-h-[88px]" placeholder="e.g. Focus on Leeds launch, occupation vetting, guest visits, and keeping WhatsApp for community.">' +
+            '<textarea id="sales-kit-pitch-brief" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm min-h-[88px]" placeholder="e.g. Pitch Headline Sponsor plus business opportunity directory listing for Pink Spaghetti franchise leads.">' +
             esc(prefillBrief) +
             '</textarea></div>' +
-            '<div class="md:col-span-2 lg:col-span-3"><p class="text-xs font-semibold text-slate-500 uppercase mb-2">Sections</p>' +
+            '<div class="md:col-span-2 lg:col-span-3"><p class="text-xs font-semibold text-slate-500 uppercase mb-2">Deck type</p>' +
+            '<div class="grid gap-2 sm:grid-cols-3">' +
+            deckTypeRadio(
+              'sponsorship',
+              'Sponsorship / advertising',
+              'Packages from /advertising — pick placements below'
+            ) +
+            deckTypeRadio('organiser', 'Organiser onboarding', 'Ticketing & discovery for networking groups') +
+            deckTypeRadio('combined', 'Combined', 'Sponsorship placements plus organiser sections') +
+            '</div></div>' +
+            sponsorshipBlocks +
+            '<div id="sales-kit-pitch-organiser-sections" class="md:col-span-2 lg:col-span-3 contents">' +
+            '<div class="md:col-span-2 lg:col-span-3"><p class="text-xs font-semibold text-slate-500 uppercase mb-2">Organiser pitch sections</p>' +
             '<div class="flex flex-wrap gap-2">' +
             checkboxes +
-            '</div></div>' +
+            '</div></div></div>' +
             '<div class="md:col-span-2 lg:col-span-3">' +
             '<label class="inline-flex items-center gap-2 text-sm text-slate-700 cursor-pointer">' +
             '<input type="checkbox" id="sales-kit-pitch-log-crm" class="rounded border-slate-300" checked />' +
@@ -30968,6 +31044,21 @@
           paint();
         });
       }
+      function syncPitchDeckTypePanels() {
+        var type = 'sponsorship';
+        root.querySelectorAll('.sales-kit-pitch-deck-type:checked').forEach(function (rb) {
+          type = rb.value;
+        });
+        var orgWrap = document.getElementById('sales-kit-pitch-organiser-sections');
+        if (orgWrap) {
+          orgWrap.style.display = type === 'sponsorship' ? 'none' : '';
+        }
+      }
+      root.querySelectorAll('.sales-kit-pitch-deck-type').forEach(function (rb) {
+        rb.addEventListener('change', syncPitchDeckTypePanels);
+      });
+      syncPitchDeckTypePanels();
+
       if (pitchCreateForm) {
         pitchCreateForm.addEventListener('submit', function (e) {
           e.preventDefault();
@@ -30990,6 +31081,24 @@
           root.querySelectorAll('.sales-kit-pitch-section-cb:checked').forEach(function (cb) {
             includeSections.push(cb.value);
           });
+          var sponsorshipPlacements = [];
+          root.querySelectorAll('.sales-kit-pitch-placement-cb:checked').forEach(function (cb) {
+            sponsorshipPlacements.push(cb.value);
+          });
+          var deckType = 'sponsorship';
+          root.querySelectorAll('.sales-kit-pitch-deck-type:checked').forEach(function (rb) {
+            deckType = rb.value;
+          });
+          if (
+            (deckType === 'sponsorship' || deckType === 'combined') &&
+            !sponsorshipPlacements.length
+          ) {
+            if (pitchCreateStatus) {
+              pitchCreateStatus.textContent =
+                'Pick at least one sponsorship placement (e.g. Headline Sponsor or business opportunity listing).';
+            }
+            return;
+          }
           if (createBtn) createBtn.disabled = true;
           if (pitchCreateStatus) pitchCreateStatus.textContent = deckId ? 'Updating deck…' : 'Building deck…';
           adminPost('/api/admin/sales-kit', {
@@ -31003,6 +31112,8 @@
             organiserEmail:
               (state.focusOrganiser && state.focusOrganiser.email) || '',
             brief: briefEl ? briefEl.value : '',
+            deckType: deckType,
+            sponsorshipPlacements: sponsorshipPlacements,
             includeSections: includeSections,
             logToCrm: logCrmEl ? logCrmEl.checked : true,
           }).then(function (data) {
@@ -31115,6 +31226,8 @@
         state.customPitchDecks = data.customPitchDecks || [];
         state.pitchSectionCatalog = data.pitchSectionCatalog || {};
         state.pitchDefaultSections = data.pitchDefaultSections || [];
+        state.pitchSponsorshipCatalog = data.pitchSponsorshipCatalog || {};
+        state.pitchSponsorshipOrder = data.pitchSponsorshipOrder || [];
         state.focusOrganiserProfile = data.focusOrganiserProfile || null;
         if (data.actor) state.actor = data.actor;
         paint();

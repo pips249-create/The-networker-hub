@@ -17,7 +17,14 @@ const {
   cleanText,
   generateCustomPitchDeck,
   publicPathForSlug,
+  validatePitchDeckInput,
 } = require('../custom-pitch-deck-generate');
+const {
+  SPONSORSHIP_PLACEMENT_CATALOG,
+  SPONSORSHIP_PLACEMENT_ORDER,
+  normalizeDeckType,
+  normalizeSponsorshipPlacements,
+} = require('../sponsorship-pitch-catalog');
 
 const SHOWN_BY = new Set(['Catherine', 'Rosie', 'Jamie', 'Other']);
 const OUTCOMES = new Set(['interested', 'listed', 'follow_up', 'not_now', 'other']);
@@ -61,6 +68,8 @@ function mapCustomPitchDeck(row) {
     contactName: row.contact_name || '',
     organiserId: row.organiser_id || null,
     prospectLogoUrl: row.prospect_logo_url || '',
+    deckType: row.deck_type || 'organiser',
+    sponsorshipPlacements: row.sponsorship_placements || [],
     includeSections: row.include_sections || [],
     brief: row.brief || '',
     createdByEmail: row.created_by_email || '',
@@ -151,6 +160,10 @@ function parsePitchDeckBody(body) {
     .trim()
     .toLowerCase();
   const prospectLogoUrl = cleanText(body.prospectLogoUrl || body.prospect_logo_url, 2000);
+  const deckType = normalizeDeckType(body.deckType || body.deck_type);
+  const sponsorshipPlacements = normalizeSponsorshipPlacements(
+    body.sponsorshipPlacements || body.sponsorship_placements
+  );
   return {
     companyName,
     website,
@@ -160,6 +173,8 @@ function parsePitchDeckBody(body) {
     organiserId,
     organiserEmail,
     prospectLogoUrl,
+    deckType,
+    sponsorshipPlacements,
   };
 }
 
@@ -167,7 +182,7 @@ async function listCustomPitchDecks(sb) {
   const { data, error } = await sb
     .from('custom_pitch_decks')
     .select(
-      'id, slug, company_name, website, contact_name, organiser_id, prospect_logo_url, include_sections, brief, created_by_email, created_at, updated_at'
+      'id, slug, company_name, website, contact_name, organiser_id, prospect_logo_url, deck_type, sponsorship_placements, include_sections, brief, created_by_email, created_at, updated_at'
     )
     .order('created_at', { ascending: false })
     .limit(40);
@@ -299,6 +314,8 @@ module.exports = async function handler(req, res) {
         focusOrganiserProfile,
         pitchSectionCatalog: SECTION_CATALOG,
         pitchDefaultSections: DEFAULT_SECTIONS,
+        pitchSponsorshipCatalog: SPONSORSHIP_PLACEMENT_CATALOG,
+        pitchSponsorshipOrder: SPONSORSHIP_PLACEMENT_ORDER,
         search,
         actor: actorFromRequest(req),
         migrationHint:
@@ -461,12 +478,19 @@ module.exports = async function handler(req, res) {
         return json(res, 400, { error: 'missing_company', message: 'Add the company or group name.' });
       }
 
+      const validation = validatePitchDeckInput(parsed);
+      if (!validation.ok) {
+        return json(res, 400, { error: 'missing_placements', message: validation.message });
+      }
+
       const deck = await generateCustomPitchDeck({
         companyName,
         website: parsed.website,
         brief: parsed.brief,
         includeSections: parsed.includeSections,
         prospectLogoUrl: parsed.prospectLogoUrl,
+        deckType: parsed.deckType,
+        sponsorshipPlacements: parsed.sponsorshipPlacements,
       });
 
       const logToCrm = truthyLogToCrm(body.logToCrm);
@@ -483,6 +507,8 @@ module.exports = async function handler(req, res) {
             contact_name: parsed.contactName || null,
             organiser_id: parsed.organiserId,
             prospect_logo_url: parsed.prospectLogoUrl || null,
+            deck_type: parsed.deckType,
+            sponsorship_placements: parsed.sponsorshipPlacements,
             include_sections: parsed.includeSections,
             brief: parsed.brief || null,
             deck,
@@ -490,7 +516,7 @@ module.exports = async function handler(req, res) {
           })
           .eq('id', deckId)
           .select(
-            'id, slug, company_name, website, contact_name, organiser_id, prospect_logo_url, include_sections, brief, created_by_email, created_at, updated_at'
+            'id, slug, company_name, website, contact_name, organiser_id, prospect_logo_url, deck_type, sponsorship_placements, include_sections, brief, created_by_email, created_at, updated_at'
           )
           .maybeSingle();
         if (upd.error) throw new Error(upd.error.message);
@@ -525,13 +551,15 @@ module.exports = async function handler(req, res) {
             contact_name: parsed.contactName || null,
             organiser_id: parsed.organiserId,
             prospect_logo_url: parsed.prospectLogoUrl || null,
+            deck_type: parsed.deckType,
+            sponsorship_placements: parsed.sponsorshipPlacements,
             include_sections: parsed.includeSections,
             brief: parsed.brief || null,
             deck,
             created_by_email: sessionEmail(req) || null,
           })
           .select(
-            'id, slug, company_name, website, contact_name, organiser_id, prospect_logo_url, include_sections, brief, created_by_email, created_at, updated_at'
+            'id, slug, company_name, website, contact_name, organiser_id, prospect_logo_url, deck_type, sponsorship_placements, include_sections, brief, created_by_email, created_at, updated_at'
           )
           .maybeSingle();
         if (!insertRes.error) {
