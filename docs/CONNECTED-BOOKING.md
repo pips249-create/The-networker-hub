@@ -11,7 +11,7 @@ Organisers on a **Connected** monthly plan list events on The Networker UK and t
 5. Organiser signs in → `/organiser/connected-booking` → **Subscribe** (Starter / Growth / Scale). VAT is added at checkout.
 6. After payment, Stripe webhook activates the account (`connected_booking_status=active`, plan set). A webhook secret is created automatically on first activation if missing.
 7. Organiser rotates webhook secret if needed on the same page; **Manage billing** opens Stripe Customer Portal.
-8. Event: **Set up tickets** → Connected booking card, or PATCH event with `checkoutMode: external_connected`.
+8. Event: **Set up tickets** → the Connected booking card appears **only when** the organiser account plan is **active** (or the event was already on Connected). Otherwise the ticket page is unchanged.
 
 **Enterprise (20+ groups)** remains POA — email Rosie & Catherine from the pricing table.
 
