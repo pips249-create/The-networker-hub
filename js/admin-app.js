@@ -31138,6 +31138,9 @@
                 statusMsg +=
                   ' (Deck saved; CRM log skipped — ' + String(data.crmWarning) + ')';
               }
+              if (data.schemaReloadHint) {
+                statusMsg += ' Tip: reload Supabase API schema when you can.';
+              }
               pitchCreateStatus.textContent = statusMsg;
             }
             if (!deckId && data.deck && data.deck.path) {

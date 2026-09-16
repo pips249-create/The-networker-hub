@@ -57,8 +57,20 @@ function mapOrganiser(row) {
   };
 }
 
+const PITCH_DECK_SELECT_FULL =
+  'id, slug, company_name, website, contact_name, organiser_id, prospect_logo_url, deck_type, sponsorship_placements, include_sections, brief, created_by_email, created_at, updated_at';
+
+const PITCH_DECK_SELECT_LEGACY =
+  'id, slug, company_name, website, contact_name, organiser_id, include_sections, brief, deck, created_by_email, created_at, updated_at';
+
+function deckMetaFromRow(row) {
+  const deck = row && row.deck && typeof row.deck === 'object' ? row.deck : {};
+  return deck;
+}
+
 function mapCustomPitchDeck(row) {
   if (!row) return null;
+  const deckMeta = deckMetaFromRow(row);
   return {
     id: row.id,
     slug: row.slug,
@@ -67,15 +79,92 @@ function mapCustomPitchDeck(row) {
     website: row.website || '',
     contactName: row.contact_name || '',
     organiserId: row.organiser_id || null,
-    prospectLogoUrl: row.prospect_logo_url || '',
-    deckType: row.deck_type || 'organiser',
-    sponsorshipPlacements: row.sponsorship_placements || [],
+    prospectLogoUrl:
+      row.prospect_logo_url || (deckMeta.hero && deckMeta.hero.prospectLogoUrl) || '',
+    deckType: row.deck_type || deckMeta.deckType || 'organiser',
+    sponsorshipPlacements: row.sponsorship_placements || deckMeta.sponsorshipPlacements || [],
     includeSections: row.include_sections || [],
     brief: row.brief || '',
     createdByEmail: row.created_by_email || '',
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
+}
+
+function isPitchDeckSchemaMismatchError(msg) {
+  return /schema cache|PGRST204|Could not find the .* column|deck_type|sponsorship_placements|prospect_logo_url|custom_pitch_decks.*does not exist/i.test(
+    String(msg || '')
+  );
+}
+
+function deckJsonWithMeta(deck, parsed) {
+  const base = deck && typeof deck === 'object' ? Object.assign({}, deck) : {};
+  base.deckType = parsed.deckType;
+  base.sponsorshipPlacements = parsed.sponsorshipPlacements;
+  if (parsed.prospectLogoUrl) {
+    base.hero = Object.assign({}, base.hero || {}, { prospectLogoUrl: parsed.prospectLogoUrl });
+  }
+  return base;
+}
+
+function buildPitchDeckWriteRow(parsed, deck, opts) {
+  opts = opts || {};
+  const row = {
+    company_name: parsed.companyName,
+    website: parsed.website || null,
+    contact_name: parsed.contactName || null,
+    organiser_id: parsed.organiserId,
+    prospect_logo_url: parsed.prospectLogoUrl || null,
+    deck_type: parsed.deckType,
+    sponsorship_placements: parsed.sponsorshipPlacements,
+    include_sections: parsed.includeSections,
+    brief: parsed.brief || null,
+    deck: deckJsonWithMeta(deck, parsed),
+  };
+  if (opts.slug) row.slug = opts.slug;
+  if (opts.createdByEmail != null) row.created_by_email = opts.createdByEmail || null;
+  if (opts.forUpdate) row.updated_at = new Date().toISOString();
+  return row;
+}
+
+function legacyPitchDeckRow(row) {
+  const legacy = Object.assign({}, row);
+  delete legacy.deck_type;
+  delete legacy.sponsorship_placements;
+  delete legacy.prospect_logo_url;
+  return legacy;
+}
+
+async function insertCustomPitchDeckRow(sb, row) {
+  let res = await sb.from('custom_pitch_decks').insert(row).select(PITCH_DECK_SELECT_FULL).maybeSingle();
+  if (res.error && isPitchDeckSchemaMismatchError(res.error.message)) {
+    res = await sb
+      .from('custom_pitch_decks')
+      .insert(legacyPitchDeckRow(row))
+      .select(PITCH_DECK_SELECT_LEGACY)
+      .maybeSingle();
+    if (!res.error) res.schemaFallback = true;
+  }
+  return res;
+}
+
+async function updateCustomPitchDeckRow(sb, deckId, row) {
+  let res = await sb
+    .from('custom_pitch_decks')
+    .update(row)
+    .eq('id', deckId)
+    .select(PITCH_DECK_SELECT_FULL)
+    .maybeSingle();
+  if (res.error && isPitchDeckSchemaMismatchError(res.error.message)) {
+    res = await sb
+      .from('custom_pitch_decks')
+      .update(legacyPitchDeckRow(row))
+      .eq('id', deckId)
+      .select(PITCH_DECK_SELECT_LEGACY)
+      .maybeSingle();
+    if (!res.error) res.schemaFallback = true;
+  }
+  return res;
 }
 
 function absoluteDeckUrl(slug) {
@@ -122,13 +211,17 @@ async function getFocusOrganiserProfile(sb, organiserId) {
   };
 }
 
+const SCHEMA_RELOAD_HINT =
+  'Supabase API schema cache is stale (SQL migrations may already be fine). ' +
+  'Dashboard → Project Settings → API → Reload schema, wait ~30 seconds, then refresh Command Centre.';
+
 function migrationHintFromDbError(msg) {
   const m = String(msg || '').trim();
+  if (/schema cache|PGRST204|Could not find the .* column/i.test(m)) {
+    return SCHEMA_RELOAD_HINT + ' (' + m.slice(0, 120) + ')';
+  }
   if (/custom_pitch_decks|deck_type|sponsorship_placements|prospect_logo_url/i.test(m)) {
-    return (
-      'Run migrations 293_custom_pitch_decks.sql, 294_custom_pitch_decks_logo.sql, and ' +
-      '295_custom_pitch_decks_sponsorship.sql in Supabase, then reload the API schema.'
-    );
+    return SCHEMA_RELOAD_HINT + ' If the table is missing, run migrations 293–295 in SQL.';
   }
   if (/organiser_sales_demos|is_walkthrough_demo/i.test(m)) {
     return (
@@ -229,13 +322,20 @@ function parsePitchDeckBody(body) {
 }
 
 async function listCustomPitchDecks(sb) {
-  const { data, error } = await sb
+  let { data, error } = await sb
     .from('custom_pitch_decks')
-    .select(
-      'id, slug, company_name, website, contact_name, organiser_id, prospect_logo_url, deck_type, sponsorship_placements, include_sections, brief, created_by_email, created_at, updated_at'
-    )
+    .select(PITCH_DECK_SELECT_FULL)
     .order('created_at', { ascending: false })
     .limit(40);
+  if (error && isPitchDeckSchemaMismatchError(error.message)) {
+    const retry = await sb
+      .from('custom_pitch_decks')
+      .select(PITCH_DECK_SELECT_LEGACY)
+      .order('created_at', { ascending: false })
+      .limit(40);
+    data = retry.data;
+    error = retry.error;
+  }
   if (error) throw new Error(error.message);
   return (data || []).map(mapCustomPitchDeck);
 }
@@ -547,26 +647,11 @@ module.exports = async function handler(req, res) {
 
       if (isUpdate) {
         if (!deckId) return json(res, 400, { error: 'missing_id', message: 'Pick a deck to update.' });
-        const upd = await sb
-          .from('custom_pitch_decks')
-          .update({
-            company_name: companyName,
-            website: parsed.website || null,
-            contact_name: parsed.contactName || null,
-            organiser_id: parsed.organiserId,
-            prospect_logo_url: parsed.prospectLogoUrl || null,
-            deck_type: parsed.deckType,
-            sponsorship_placements: parsed.sponsorshipPlacements,
-            include_sections: parsed.includeSections,
-            brief: parsed.brief || null,
-            deck,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', deckId)
-          .select(
-            'id, slug, company_name, website, contact_name, organiser_id, prospect_logo_url, deck_type, sponsorship_placements, include_sections, brief, created_by_email, created_at, updated_at'
-          )
-          .maybeSingle();
+        const upd = await updateCustomPitchDeckRow(
+          sb,
+          deckId,
+          buildPitchDeckWriteRow(parsed, deck, { forUpdate: true })
+        );
         if (upd.error) throw new Error(upd.error.message);
         if (!upd.data) return json(res, 404, { error: 'not_found', message: 'Deck not found.' });
 
@@ -589,31 +674,19 @@ module.exports = async function handler(req, res) {
           generatedDeck: deck,
           crmDemo,
           crmWarning,
+          schemaReloadHint: upd.schemaFallback ? SCHEMA_RELOAD_HINT : null,
         });
       }
 
       let slug = makeDeckSlug(companyName);
       for (let attempt = 0; attempt < 5; attempt++) {
-        const insertRes = await sb
-          .from('custom_pitch_decks')
-          .insert({
+        const insertRes = await insertCustomPitchDeckRow(
+          sb,
+          buildPitchDeckWriteRow(parsed, deck, {
             slug,
-            company_name: companyName,
-            website: parsed.website || null,
-            contact_name: parsed.contactName || null,
-            organiser_id: parsed.organiserId,
-            prospect_logo_url: parsed.prospectLogoUrl || null,
-            deck_type: parsed.deckType,
-            sponsorship_placements: parsed.sponsorshipPlacements,
-            include_sections: parsed.includeSections,
-            brief: parsed.brief || null,
-            deck,
-            created_by_email: sessionEmail(req) || null,
+            createdByEmail: sessionEmail(req) || null,
           })
-          .select(
-            'id, slug, company_name, website, contact_name, organiser_id, prospect_logo_url, deck_type, sponsorship_placements, include_sections, brief, created_by_email, created_at, updated_at'
-          )
-          .maybeSingle();
+        );
         if (!insertRes.error) {
           let crmDemo = null;
           let crmWarning = null;
@@ -633,6 +706,7 @@ module.exports = async function handler(req, res) {
             generatedDeck: deck,
             crmDemo,
             crmWarning,
+            schemaReloadHint: insertRes.schemaFallback ? SCHEMA_RELOAD_HINT : null,
           });
         }
         if (/duplicate|unique/i.test(String(insertRes.error.message || ''))) {
