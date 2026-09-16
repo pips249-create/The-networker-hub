@@ -25,7 +25,7 @@ function vatTreatmentLabel(value) {
 function isInternalTicket(ticket) {
   const type = String(ticket?.ticketType || ticket?.ticket_type || '').trim();
   const name = String(ticket?.name || '').trim();
-  if (/guest-visit/i.test(type) || /^guest\s*visit$/i.test(name)) return true;
+  // Guest visits are public access (trial visits) — only alumni stay invite-only/internal.
   if (type === 'Alumni' || /^alumni/i.test(name)) return true;
   return false;
 }

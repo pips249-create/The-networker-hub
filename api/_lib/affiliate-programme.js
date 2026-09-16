@@ -154,6 +154,72 @@ async function clickCountsByPartnerIds(partnerIds) {
   return { total, last7, last30, tableMissing: false };
 }
 
+async function referralActivityForPartner(partnerId, opts) {
+  opts = opts || {};
+  const id = String(partnerId || '').trim();
+  const limit = Math.min(Math.max(Number(opts.limit) || 50, 1), 100);
+  if (!id) {
+    return { clicks: [], attributions: [], clicksTableMissing: false, attributionsTableMissing: false };
+  }
+
+  const sb = getSupabaseAdmin();
+  let clicks = [];
+  let attributions = [];
+  let clicksTableMissing = false;
+  let attributionsTableMissing = false;
+
+  const { data: clickRows, error: clickErr } = await sb
+    .from('affiliate_clicks')
+    .select('id, path, landing_url, created_at')
+    .eq('partner_id', id)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (clickErr) {
+    if (/affiliate_clicks|Could not find the table|schema cache/i.test(clickErr.message || '')) {
+      clicksTableMissing = true;
+    } else {
+      throw new Error(clickErr.message || 'affiliate_clicks_activity_failed');
+    }
+  } else {
+    clicks = (clickRows || []).map(function (row) {
+      return {
+        id: row.id,
+        path: row.path || null,
+        landingUrl: row.landing_url || null,
+        createdAt: row.created_at,
+      };
+    });
+  }
+
+  const { data: attrRows, error: attrErr } = await sb
+    .from('affiliate_attributions')
+    .select('id, customer_email, source, context, created_at')
+    .eq('partner_id', id)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (attrErr) {
+    if (/affiliate_attributions|Could not find the table|schema cache/i.test(attrErr.message || '')) {
+      attributionsTableMissing = true;
+    } else {
+      throw new Error(attrErr.message || 'affiliate_attributions_activity_failed');
+    }
+  } else {
+    attributions = (attrRows || []).map(function (row) {
+      return {
+        id: row.id,
+        customerEmail: row.customer_email || null,
+        source: row.source || null,
+        context: row.context || null,
+        createdAt: row.created_at,
+      };
+    });
+  }
+
+  return { clicks, attributions, clicksTableMissing, attributionsTableMissing };
+}
+
 function mapPartnerRow(row, clickStats) {
   if (!row) return null;
   const stats = clickStats || {};
@@ -193,5 +259,6 @@ module.exports = {
   recordAffiliateAttribution,
   recordAffiliateClick,
   clickCountsByPartnerIds,
+  referralActivityForPartner,
   mapPartnerRow,
 };

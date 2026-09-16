@@ -124,8 +124,8 @@
       subtitle: 'Ireland building intake and country interest sign-ups from the map',
     },
     'event-health': {
-      title: 'Event data issues',
-      subtitle: 'Fix published events missing dates, organisers, VAT, or profile data',
+      title: 'Data issues',
+      subtitle: 'Urgent broken listing data first — past dates and missing logos are under Later cleanup',
     },
     cleanup: {
       title: 'Fix listings',
@@ -136,7 +136,7 @@
       subtitle: 'Click a row to add a photo, description, or website',
     },
     'event-intake': {
-      title: 'Fix listings',
+      title: 'Event requests',
       subtitle: 'Open a request and create the listing — we match or create the group for you',
     },
     'event-cleanup': {
@@ -342,9 +342,9 @@
     'event-health': {
       title: 'How to fix event data issues',
       steps: [
-        'Each row is a published event missing something important.',
-        'Expand the event and fill in the highlighted fields.',
-        'Click Save fixes when done — the event drops off this list.',
+        'Urgent only is the default — missing date, broken organiser link, or hate speech.',
+        'Expand the event and fill in the highlighted fields, then Save fixes.',
+        'Use Later cleanup for logos, empty profiles, past dates, and VAT polish.',
         'For many events with the same issue, tick several and use bulk fix at the top.',
       ],
     },
@@ -506,7 +506,7 @@
   var ADMIN_HUB_TABS_KEY = 'tnh_admin_hub_tabs_v1';
   var NAV_SECTION_ROUTES = {
     platform: ['system', 'analytics', 'international', 'rankings', 'accounts', 'support'],
-    listings: ['cleanup', 'opportunities', 'moderation'],
+    listings: ['cleanup', 'event-intake', 'event-health', 'opportunities', 'moderation'],
     revenue: ['financials', 'revenue-mix', 'revenue-targets'],
     crm: ['sales-kit', 'spotlight', 'sponsorship', 'referral-partners'],
     comms: ['email', 'social', 'social-founding'],
@@ -537,7 +537,7 @@
   var revenueTargetsChartInstance = null;
   var revenueTargetsChartView = 'overall';
   var revenueTargetsChartMode = 'monthly';
-  var eventHealthState = { issueFilter: 'all', selected: {} };
+  var eventHealthState = { issueFilter: 'urgent', selected: {} };
   var groupCleanupState = {
     page: 0,
     q: '',
@@ -616,8 +616,12 @@
   var spotlightSlotsCache = null;
   var spotlightOrganiserState = { q: '', featured: '' };
   var spotlightOpportunityState = { q: '', featured: '' };
+  var spotlightOpportunitySearchResults = null;
+  var spotlightOpportunitySearchLoading = false;
+  var spotlightOpportunitiesCatalogTotal = null;
   var spotlightOrganiserSearchTimer = null;
   var spotlightOpportunitySearchTimer = null;
+  var spotlightOpportunitySearchFetchToken = 0;
   var bookingsSearchState = { q: '' };
   var complaintsState = { filter: 'open', expanded: {}, items: [] };
   var adminLogoPending = {};
@@ -1744,12 +1748,21 @@
     if (h === 'social/founding' || h.indexOf('social/founding/') === 0) {
       return 'social-founding';
     }
-    var key = h.split('/')[0].split('?')[0];
+    // Event requests + data issues are first-class sidebar items (not buried in Fix listings).
+    var path = h.split('?')[0];
+    if (path === 'cleanup/requests' || path.indexOf('cleanup/requests/') === 0) {
+      return 'event-intake';
+    }
+    if (path === 'cleanup/issues' || path.indexOf('cleanup/issues/') === 0 || path === 'event-health') {
+      return 'event-health';
+    }
+    var key = path.split('/')[0];
     var parents = {
       'group-cleanup': 'cleanup',
       'event-cleanup': 'cleanup',
       'opportunity-cleanup': 'opportunities',
-      'event-health': 'cleanup',
+      'event-health': 'event-health',
+      'event-intake': 'event-intake',
       campaigns: 'email',
       emails: 'email',
       impersonate: 'accounts',
@@ -2339,21 +2352,20 @@
     return { hate: hate, profanity: profanity };
   }
 
-  /** Fix listings sidebar badge — matches tab work (groups / requests / urgent data). */
+  /** Incomplete groups only — event requests and data issues have their own nav badges. */
   function listingFixSeverityCounts() {
     var counts =
       (adminMetricsCache && adminMetricsCache.actionCounts) ||
       ((readCachedAdminMetrics() || {}).actionCounts) ||
       {};
     var urgent = urgentEventHealthCount();
-    var polish =
-      (Number(counts.incompleteOrganisers) || 0) + (Number(counts.openEventRequests) || 0);
+    var polish = Number(counts.incompleteOrganisers) || 0;
     return { urgent: urgent, polish: polish, softEvents: softEventHealthCount() };
   }
 
   function fixListingsBadgeTotal() {
     var parts = listingFixSeverityCounts();
-    return parts.urgent + parts.polish;
+    return parts.polish;
   }
 
   function adminAttentionTotal(data) {
@@ -2515,41 +2527,67 @@
       (stripe ? stripe + ' unfinished Stripe setup' : '');
   }
 
+  function updateEventRequestsNavBadge(data) {
+    var badge = document.getElementById('admin-event-requests-badge');
+    if (!badge) return;
+    var counts = (data && data.actionCounts) || {};
+    var n = Number(counts.openEventRequests) || 0;
+    if (n <= 0) {
+      badge.classList.add('hidden');
+      badge.textContent = '0';
+      badge.title = '';
+      return;
+    }
+    badge.textContent = n > 99 ? '99+' : String(n);
+    badge.classList.remove('hidden');
+    badge.setAttribute(
+      'aria-label',
+      n + ' event request' + (n === 1 ? '' : 's') + ' waiting to be listed'
+    );
+    badge.title = n + ' submitted event request' + (n === 1 ? '' : 's') + ' to review';
+  }
+
+  function updateDataIssuesNavBadge() {
+    var badge = document.getElementById('admin-data-issues-badge');
+    if (!badge) return;
+    var n = urgentEventHealthCount();
+    if (n <= 0) {
+      badge.classList.add('hidden');
+      badge.textContent = '0';
+      badge.title = '';
+      return;
+    }
+    badge.textContent = n > 99 ? '99+' : String(n);
+    badge.classList.remove('hidden');
+    badge.setAttribute(
+      'aria-label',
+      n + ' urgent data issue' + (n === 1 ? '' : 's')
+    );
+    badge.title =
+      n + ' published event' + (n === 1 ? '' : 's') + ' with urgent missing or bad data';
+  }
+
   function updateHealthBadge() {
     var badge = document.getElementById('admin-health-badge');
     if (!badge) return;
-    var counts = listingFixSeverityCounts();
-    var urgent = counts.urgent;
-    var polish = counts.polish;
-    var total = urgent + polish;
+    var counts =
+      (adminMetricsCache && adminMetricsCache.actionCounts) ||
+      ((readCachedAdminMetrics() || {}).actionCounts) ||
+      {};
+    var incomplete = Number(counts.incompleteOrganisers) || 0;
     badge.classList.remove('admin-nav-badge--polish');
-    if (urgent > 0) {
-      badge.textContent = total > 99 ? '99+' : String(total);
-      badge.classList.remove('hidden');
-      badge.setAttribute(
-        'aria-label',
-        urgent +
-          ' urgent listing issue' +
-          (urgent === 1 ? '' : 's') +
-          (polish ? ', ' + polish + ' other Fix listings items' : '')
-      );
-      badge.title =
-        urgent +
-        ' urgent data issues · ' +
-        polish +
-        ' incomplete groups / open requests';
-    } else if (polish > 0) {
-      badge.textContent = polish > 99 ? '99+' : String(polish);
+    if (incomplete > 0) {
+      badge.textContent = incomplete > 99 ? '99+' : String(incomplete);
       badge.classList.add('admin-nav-badge--polish');
       badge.classList.remove('hidden');
       badge.setAttribute(
         'aria-label',
-        polish + ' Fix listings item' + (polish === 1 ? '' : 's') + ' need attention'
+        incomplete + ' incomplete group page' + (incomplete === 1 ? '' : 's')
       );
-      badge.title = polish + ' incomplete groups or open event requests';
+      badge.title = incomplete + ' group page' + (incomplete === 1 ? '' : 's') + ' missing photo, description, or website';
     } else {
       badge.classList.add('hidden');
-      badge.setAttribute('aria-label', 'No open listing fixes');
+      badge.setAttribute('aria-label', 'No incomplete group pages');
       badge.title = '';
     }
   }
@@ -2994,6 +3032,8 @@
     }
 
     updateHealthBadge();
+    updateEventRequestsNavBadge(data);
+    updateDataIssuesNavBadge();
     updateModerationNavBadge(data);
     updateOpportunitiesNavBadge(data);
     updateSupportNavBadge(data);
@@ -3718,7 +3758,64 @@
 
   function eventMatchesIssueFilter(ev, filter) {
     if (!filter || filter === 'all') return true;
+    if (filter === 'urgent') {
+      return (ev.issues || []).some(function (i) {
+        return i && i.severity === 'high';
+      });
+    }
+    if (filter === 'polish') {
+      return (ev.issues || []).some(function (i) {
+        return i && i.severity !== 'high';
+      });
+    }
     return issueCodes(ev).indexOf(filter) >= 0;
+  }
+
+  function eventHealthIssueRows(data) {
+    return Object.keys((data && data.issuesByCode) || {})
+      .map(function (code) {
+        var sample = { label: code, severity: 'low' };
+        ((data && data.events) || []).some(function (ev) {
+          var hit = (ev.issues || []).find(function (i) {
+            return i.code === code;
+          });
+          if (hit) sample = hit;
+          return !!hit;
+        });
+        return { code: code, sample: sample, count: data.issuesByCode[code] };
+      })
+      .sort(function (a, b) {
+        var sa =
+          HEALTH_SEVERITY_ORDER[a.sample.severity] != null
+            ? HEALTH_SEVERITY_ORDER[a.sample.severity]
+            : 9;
+        var sb =
+          HEALTH_SEVERITY_ORDER[b.sample.severity] != null
+            ? HEALTH_SEVERITY_ORDER[b.sample.severity]
+            : 9;
+        if (sa !== sb) return sa - sb;
+        return String(a.sample.label).localeCompare(String(b.sample.label));
+      });
+  }
+
+  function eventHealthRowsForFilter(rows, filter) {
+    var list = rows || [];
+    if (filter === 'urgent') {
+      return list.filter(function (row) {
+        return row.sample && row.sample.severity === 'high';
+      });
+    }
+    if (filter === 'polish') {
+      return list.filter(function (row) {
+        return row.sample && row.sample.severity !== 'high';
+      });
+    }
+    if (filter && filter !== 'all') {
+      return list.filter(function (row) {
+        return row.code === filter;
+      });
+    }
+    return list;
   }
 
   function logEventHealthCompletionRemote(beforeEv) {
@@ -4714,12 +4811,14 @@
       var issueFromHash = String(query.get('issue') || '').trim();
       if (issueFromHash) {
         eventHealthState.issueFilter = issueFromHash;
+      } else {
+        eventHealthState.issueFilter = 'urgent';
       }
     }
 
     main.innerHTML =
       '<div class="space-y-4">' +
-      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Checks <strong>published</strong> events only. Draft events still being built by organisers are not included.</p>' +
+      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Checks <strong>published</strong> events only. Default view is <strong>urgent</strong> (missing date, broken organiser, hate speech). Logos, past dates, and empty profiles live under <strong>Later cleanup</strong>.</p>' +
       '<div id="event-health-status" class="text-sm text-slate-500">Scanning published events…</div>' +
       '<div id="event-health-summary" class="hidden admin-metric-grid admin-metric-grid--4"></div>' +
       '<div id="event-health-toolbar" class="hidden flex flex-wrap items-center gap-3"></div>' +
@@ -4794,10 +4893,24 @@
         return;
       }
 
+      var allEvents = data.events || [];
+      var urgentCount = allEvents.filter(function (ev) {
+        return eventMatchesIssueFilter(ev, 'urgent');
+      }).length;
+      var polishCount = allEvents.filter(function (ev) {
+        return eventMatchesIssueFilter(ev, 'polish');
+      }).length;
+      var filter = eventHealthState.issueFilter || 'urgent';
+      var filteredForStatus = allEvents.filter(function (ev) {
+        return eventMatchesIssueFilter(ev, filter);
+      });
+      var visibleCount = filteredForStatus.length;
+      var publishedTotal = data.totalPublished || 0;
+
       if (!data.count) {
         status.innerHTML =
           '<span class="text-emerald-700 font-semibold">All ' +
-          (data.totalPublished || 0) +
+          publishedTotal +
           ' published events look complete.</span>';
         summary.classList.add('hidden');
         list.innerHTML = '';
@@ -4809,7 +4922,7 @@
       }
 
       var organisers = data.organisers || [];
-      var needsOrganiserLink = (data.events || []).some(function (ev) {
+      var needsOrganiserLink = filteredForStatus.some(function (ev) {
         var codes = issueCodes(ev);
         return codes.indexOf('missing_organiser') >= 0 || codes.indexOf('invalid_organiser') >= 0;
       });
@@ -4817,68 +4930,102 @@
         ? organisers.length
           ? ' <span class="text-slate-500">Choose an organiser for each event below.</span>'
           : ' <span class="text-red-700 font-semibold">No organisers found — create one in the Organiser dashboard first.</span>'
-        : ' <span class="text-slate-500">Only the flagged fields are shown — fill them in and save.</span>';
-      status.innerHTML =
-        '<span class="text-brand-900 font-semibold">' +
-        data.count +
-        ' of ' +
-        (data.totalPublished || data.count) +
-        ' published event' +
-        (data.totalPublished === 1 ? '' : 's') +
-        (data.count === 1 ? ' needs' : ' need') +
-        ' attention.</span>' +
-        statusHint;
+        : filter === 'urgent'
+          ? ' <span class="text-slate-500">Fix these first — missing date, organiser link, or hate speech.</span>'
+          : ' <span class="text-slate-500">Only the flagged fields are shown — fill them in and save.</span>';
 
-      var issueCards = Object.keys(data.issuesByCode || {})
-        .map(function (code) {
-          var sample = { label: code, severity: 'low' };
-          (data.events || []).some(function (ev) {
-            var hit = (ev.issues || []).find(function (i) {
-              return i.code === code;
-            });
-            if (hit) sample = hit;
-            return !!hit;
-          });
-          return { code: code, sample: sample, count: data.issuesByCode[code] };
-        })
-        .sort(function (a, b) {
-          var sa = HEALTH_SEVERITY_ORDER[a.sample.severity] != null ? HEALTH_SEVERITY_ORDER[a.sample.severity] : 9;
-          var sb = HEALTH_SEVERITY_ORDER[b.sample.severity] != null ? HEALTH_SEVERITY_ORDER[b.sample.severity] : 9;
-          if (sa !== sb) return sa - sb;
-          return String(a.sample.label).localeCompare(String(b.sample.label));
-        })
-        .map(function (row) {
-          return (
-            '<div class="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">' +
-            '<p class="text-xs text-slate-500 uppercase font-semibold">' +
-            esc(row.sample.label) +
-            '</p>' +
-            '<p class="text-xl font-bold text-brand-900 mt-1">' +
-            row.count +
-            '</p></div>'
-          );
-        })
-        .join('');
-      summary.innerHTML = issueCards;
-      summary.classList.remove('hidden');
+      if (filter === 'urgent' && urgentCount === 0) {
+        status.innerHTML =
+          '<span class="text-emerald-700 font-semibold">No urgent data issues.</span>' +
+          (polishCount
+            ? ' <span class="text-slate-500">' +
+              polishCount +
+              ' polish item' +
+              (polishCount === 1 ? '' : 's') +
+              ' available under Later cleanup.</span>'
+            : '');
+      } else if (filter === 'urgent') {
+        status.innerHTML =
+          '<span class="text-brand-900 font-semibold">' +
+          urgentCount +
+          ' urgent data issue' +
+          (urgentCount === 1 ? '' : 's') +
+          '.</span>' +
+          statusHint +
+          (polishCount
+            ? ' <span class="text-slate-500">' +
+              polishCount +
+              ' polish item' +
+              (polishCount === 1 ? '' : 's') +
+              ' under Later cleanup.</span>'
+            : '');
+      } else if (filter === 'polish') {
+        status.innerHTML =
+          '<span class="text-brand-900 font-semibold">' +
+          visibleCount +
+          ' polish item' +
+          (visibleCount === 1 ? '' : 's') +
+          ' (logos, profiles, past dates, VAT).</span>' +
+          ' <span class="text-slate-500">Optional tidy-up — not urgent.</span>';
+      } else if (filter === 'all') {
+        status.innerHTML =
+          '<span class="text-brand-900 font-semibold">' +
+          data.count +
+          ' of ' +
+          publishedTotal +
+          ' published event' +
+          (publishedTotal === 1 ? '' : 's') +
+          (data.count === 1 ? ' needs' : ' need') +
+          ' attention.</span>' +
+          ' <span class="text-slate-500">' +
+          urgentCount +
+          ' urgent · ' +
+          polishCount +
+          ' polish.</span>';
+      } else {
+        status.innerHTML =
+          '<span class="text-brand-900 font-semibold">' +
+          visibleCount +
+          ' event' +
+          (visibleCount === 1 ? '' : 's') +
+          ' match this filter.</span>' +
+          statusHint;
+      }
 
-      var issueFilterOptions = Object.keys(data.issuesByCode || {})
-        .map(function (code) {
-          var sample = { label: code, severity: 'low' };
-          (data.events || []).some(function (ev) {
-            var hit = (ev.issues || []).find(function (i) {
-              return i.code === code;
-            });
-            if (hit) sample = hit;
-            return !!hit;
-          });
-          return { code: code, label: sample.label };
-        })
-        .sort(function (a, b) {
-          return String(a.label).localeCompare(String(b.label));
-        });
+      var issueRows = eventHealthRowsForFilter(eventHealthIssueRows(data), filter);
+      if (issueRows.length) {
+        summary.innerHTML = issueRows
+          .map(function (row) {
+            var tone =
+              row.sample.severity === 'high'
+                ? 'border-red-200 bg-red-50'
+                : row.sample.severity === 'medium'
+                  ? 'border-amber-200 bg-amber-50/60'
+                  : 'border-slate-200 bg-white';
+            return (
+              '<div class="rounded-lg border p-3 shadow-sm ' +
+              tone +
+              '">' +
+              '<p class="text-xs text-slate-500 uppercase font-semibold">' +
+              esc(row.sample.label) +
+              '</p>' +
+              '<p class="text-xl font-bold text-brand-900 mt-1">' +
+              row.count +
+              '</p></div>'
+            );
+          })
+          .join('');
+        summary.classList.remove('hidden');
+      } else {
+        summary.classList.add('hidden');
+        summary.innerHTML = '';
+      }
 
-      var needsOrganiserBulk = (data.events || []).filter(function (ev) {
+      var issueFilterOptions = eventHealthIssueRows(data).map(function (row) {
+        return { code: row.code, label: row.sample.label, severity: row.sample.severity };
+      });
+
+      var needsOrganiserBulk = filteredForStatus.filter(function (ev) {
         var codes = issueCodes(ev);
         return codes.indexOf('missing_organiser') >= 0 || codes.indexOf('invalid_organiser') >= 0;
       }).length;
@@ -4894,23 +5041,35 @@
       if (toolbar) {
         toolbar.classList.remove('hidden');
         toolbar.innerHTML =
-          '<label class="text-xs font-semibold text-slate-500">Filter by issue ' +
+          '<label class="text-xs font-semibold text-slate-500">Show ' +
           '<select id="event-health-filter" class="ml-2 rounded-lg border border-slate-300 px-2 py-1.5 text-sm bg-white">' +
-          '<option value="all">All issues</option>' +
+          '<option value="urgent"' +
+          (filter === 'urgent' ? ' selected' : '') +
+          '>Urgent only</option>' +
+          '<option value="polish"' +
+          (filter === 'polish' ? ' selected' : '') +
+          '>Later cleanup' +
+          (polishCount ? ' (' + polishCount + ')' : '') +
+          '</option>' +
+          '<option value="all"' +
+          (filter === 'all' ? ' selected' : '') +
+          '>All issues</option>' +
+          '<optgroup label="By issue">' +
           issueFilterOptions
             .map(function (opt) {
               return (
                 '<option value="' +
                 attrEsc(opt.code) +
                 '"' +
-                (eventHealthState.issueFilter === opt.code ? ' selected' : '') +
+                (filter === opt.code ? ' selected' : '') +
                 '>' +
                 esc(opt.label) +
+                (opt.severity === 'high' ? ' · urgent' : '') +
                 '</option>'
               );
             })
             .join('') +
-          '</select></label>' +
+          '</optgroup></select></label>' +
           '<label class="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 cursor-pointer">' +
           '<input type="checkbox" id="event-health-select-page" class="rounded border-slate-300"> Select all on page</label>' +
           (needsOrganiserBulk > 1
@@ -4921,7 +5080,7 @@
         var filterEl = document.getElementById('event-health-filter');
         if (filterEl) {
           filterEl.addEventListener('change', function () {
-            eventHealthState.issueFilter = filterEl.value || 'all';
+            eventHealthState.issueFilter = filterEl.value || 'urgent';
             renderEventHealth();
           });
         }
@@ -4951,9 +5110,9 @@
         }
       }
 
-      var sortedEvents = (data.events || [])
+      var sortedEvents = allEvents
         .filter(function (ev) {
-          return eventMatchesIssueFilter(ev, eventHealthState.issueFilter);
+          return eventMatchesIssueFilter(ev, filter);
         })
         .slice()
         .sort(function (a, b) {
@@ -4965,7 +5124,16 @@
 
       if (!sortedEvents.length) {
         list.innerHTML =
-          '<p class="text-sm text-slate-500 rounded-lg border border-slate-200 bg-white p-4">No events match this filter.</p>';
+          filter === 'urgent' && polishCount
+            ? '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-white p-4">No urgent issues. Switch to <button type="button" id="event-health-show-polish" class="font-semibold text-brand-800 underline">Later cleanup</button> to tidy logos, profiles, and past dates.</p>'
+            : '<p class="text-sm text-slate-500 rounded-lg border border-slate-200 bg-white p-4">No events match this filter.</p>';
+        var showPolishBtn = document.getElementById('event-health-show-polish');
+        if (showPolishBtn) {
+          showPolishBtn.addEventListener('click', function () {
+            eventHealthState.issueFilter = 'polish';
+            renderEventHealth();
+          });
+        }
         paintEventHealthCompleted(data.recentCompletions || []);
         updateHealthBulkBar();
         return;
@@ -10933,7 +11101,7 @@
       '<div class="space-y-6">' +
       '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">' +
       '<div><h3 class="font-bold text-brand-900">Referral partners</h3>' +
-          '<p class="text-xs text-slate-500 mt-1">Invite-only partner programme — 20% on opportunity listings and sponsorship. Public enquire: <a class="text-brand-700 hover:underline" href="/partners" target="_blank" rel="noopener">/partners</a>. After create, use <strong>Email invite</strong> for the partner hub (earnings + media kit). Clicks count when someone lands with <code>?ref=CODE</code> (deduped ~30 mins per browser). Inbox: partnerships@thenetworkeruk.com · Hub: <a class="text-brand-700 hover:underline" href="/partners/kit" target="_blank" rel="noopener">/partners/kit</a></p></div>' +
+          '<p class="text-xs text-slate-500 mt-1">Invite-only partner programme — 20% on opportunity listings and sponsorship. Public enquire: <a class="text-brand-700 hover:underline" href="/partners" target="_blank" rel="noopener">/partners</a>. After create, use <strong>Email invite</strong> for the partner hub. <strong>Clicks</strong> = anonymous link landings with <code>?ref=CODE</code> (deduped ~30 mins per browser) — they do <em>not</em> show names. <strong>Known people</strong> appear when they submit an advertising enquiry, start checkout, or pay (see <strong>Activity</strong> per partner and the commissions ledger below). Inbox: partnerships@thenetworkeruk.com · Hub: <a class="text-brand-700 hover:underline" href="/partners/kit" target="_blank" rel="noopener">/partners/kit</a> (same page as <code>/partners/earnings</code>)</p></div>' +
       '<form id="affiliate-partner-form" class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 items-end">' +
       '<label class="text-xs font-semibold text-slate-600">Code<input id="aff-code" name="code" required maxlength="32" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm font-mono uppercase" placeholder="JOE" /></label>' +
       '<label class="text-xs font-semibold text-slate-600">Display name<input id="aff-name" name="displayName" required class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Joe Bloggs" /></label>' +
@@ -10942,6 +11110,7 @@
       '</form>' +
       '<p id="affiliate-partners-status" class="text-sm text-slate-500">Loading partners…</p>' +
       '<div id="affiliate-partners-body" class="overflow-x-auto"></div>' +
+      '<div id="affiliate-activity-panel" class="hidden rounded-lg border border-brand-100 bg-brand-50/40 p-4 space-y-4"></div>' +
       '</section>' +
       '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">' +
       '<div class="flex flex-wrap items-start justify-between gap-3">' +
@@ -10971,6 +11140,7 @@
     var commissionsBodyEl = document.getElementById('affiliate-commissions-body');
     var manualForm = document.getElementById('affiliate-manual-form');
     var promoteBtn = document.getElementById('aff-promote-eligible');
+    var activityPanel = document.getElementById('affiliate-activity-panel');
 
     function setStatus(el, text, tone) {
       if (!el) return;
@@ -11056,6 +11226,13 @@
             '<button type="button" class="block text-left text-brand-700 hover:underline" data-aff-invite="' +
             attrEsc(row.id || '') +
             '">Email invite</button>' +
+            '<button type="button" class="block text-left text-brand-700 hover:underline" data-aff-activity="' +
+            attrEsc(row.id || '') +
+            '" data-aff-activity-code="' +
+            attrEsc(row.code || '') +
+            '" data-aff-activity-name="' +
+            attrEsc(row.displayName || '') +
+            '">Activity (who converted)</button>' +
             '</td>' +
             '<td class="px-3 py-2 text-sm">' +
             '<button type="button" class="text-xs font-semibold ' +
@@ -11123,6 +11300,138 @@
             });
         });
       });
+      bodyEl.querySelectorAll('[data-aff-activity]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          loadPartnerActivity(
+            btn.getAttribute('data-aff-activity'),
+            btn.getAttribute('data-aff-activity-code'),
+            btn.getAttribute('data-aff-activity-name')
+          );
+        });
+      });
+    }
+
+    function loadPartnerActivity(partnerId, code, displayName) {
+      if (!activityPanel || !partnerId) return;
+      activityPanel.classList.remove('hidden');
+      activityPanel.innerHTML =
+        '<p class="text-sm text-slate-600">Loading activity for <strong>' +
+        esc(displayName || code || 'partner') +
+        '</strong> (<span class="font-mono">' +
+        esc(code || '') +
+        '</span>)…</p>';
+      activityPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+      adminGet(
+        '/api/admin/affiliate-partners?view=referral_activity&partnerId=' + encodeURIComponent(partnerId)
+      )
+        .then(function (data) {
+          if (!data || !data.ok) {
+            throw new Error((data && data.message) || (data && data.error) || 'activity_load_failed');
+          }
+          renderPartnerActivityPanel(data, displayName, code);
+        })
+        .catch(function (err) {
+          activityPanel.innerHTML =
+            '<p class="text-sm text-red-700">' +
+            esc((err && err.message) || 'Could not load referral activity') +
+            '</p>';
+        });
+    }
+
+    function renderPartnerActivityPanel(data, displayName, code) {
+      if (!activityPanel) return;
+      var clicks = Array.isArray(data.clicks) ? data.clicks : [];
+      var attributions = Array.isArray(data.attributions) ? data.attributions : [];
+      var identified = attributions.filter(function (row) {
+        return row.customerEmail;
+      });
+
+      var clickRows = clicks
+        .map(function (row) {
+          var page = row.path || '—';
+          var url = row.landingUrl ? String(row.landingUrl) : '';
+          return (
+            '<tr class="border-t border-slate-100">' +
+            '<td class="px-2 py-1.5 text-xs whitespace-nowrap">' +
+            esc(formatAdminDateTime(row.createdAt)) +
+            '</td>' +
+            '<td class="px-2 py-1.5 text-xs font-mono">' +
+            esc(page) +
+            '</td>' +
+            '<td class="px-2 py-1.5 text-xs break-all">' +
+            (url
+              ? '<a class="text-brand-700 hover:underline" href="' +
+                attrEsc(url) +
+                '" target="_blank" rel="noopener">' +
+                esc(url.length > 72 ? url.slice(0, 72) + '…' : url) +
+                '</a>'
+              : '—') +
+            '</td></tr>'
+          );
+        })
+        .join('');
+
+      var attrRows = attributions
+        .map(function (row) {
+          return (
+            '<tr class="border-t border-slate-100">' +
+            '<td class="px-2 py-1.5 text-xs whitespace-nowrap">' +
+            esc(formatAdminDateTime(row.createdAt)) +
+            '</td>' +
+            '<td class="px-2 py-1.5 text-xs break-all">' +
+            (row.customerEmail
+              ? '<a class="text-brand-700 hover:underline" href="mailto:' +
+                attrEsc(row.customerEmail) +
+                '">' +
+                esc(row.customerEmail) +
+                '</a>'
+              : '<span class="text-slate-400">(no email)</span>') +
+            '</td>' +
+            '<td class="px-2 py-1.5 text-xs">' +
+            esc(row.context || row.source || '—') +
+            '</td></tr>'
+          );
+        })
+        .join('');
+
+      activityPanel.innerHTML =
+        '<div class="flex flex-wrap items-start justify-between gap-2">' +
+        '<div><h4 class="font-bold text-brand-900 text-sm">Referral activity — ' +
+        esc(displayName || code || 'Partner') +
+        '</h4>' +
+        '<p class="text-xs text-slate-600 mt-1 max-w-2xl">Clicks are anonymous visits (e.g. ' +
+        esc(String(clicks.length)) +
+        ' shown). Rows with an email are enquiry/checkout attributions — that is how you know <em>who</em> came through with this code. Paid sales also show in the commissions ledger.</p></div>' +
+        '<button type="button" id="aff-activity-close" class="text-xs font-semibold text-slate-500 hover:text-slate-800">Close</button></div>' +
+        (data.clicksTableMissing
+          ? '<p class="text-xs text-red-700 font-semibold">Click log missing — run migration 290_affiliate_clicks.sql.</p>'
+          : '') +
+        '<div class="grid gap-4 lg:grid-cols-2">' +
+        '<div><p class="text-xs font-semibold text-slate-700 mb-1">Recent link landings (anonymous)</p>' +
+        (clickRows
+          ? '<div class="overflow-x-auto rounded border border-slate-200 bg-white"><table class="min-w-full text-left"><thead class="bg-slate-50 text-[10px] uppercase text-slate-500"><tr><th class="px-2 py-1">When</th><th class="px-2 py-1">Path</th><th class="px-2 py-1">URL</th></tr></thead><tbody>' +
+            clickRows +
+            '</tbody></table></div>'
+          : '<p class="text-xs text-slate-500">No clicks logged yet.</p>') +
+        '</div>' +
+        '<div><p class="text-xs font-semibold text-slate-700 mb-1">Identified leads (' +
+        esc(String(identified.length)) +
+        ' with email)</p>' +
+        (attrRows
+          ? '<div class="overflow-x-auto rounded border border-slate-200 bg-white"><table class="min-w-full text-left"><thead class="bg-slate-50 text-[10px] uppercase text-slate-500"><tr><th class="px-2 py-1">When</th><th class="px-2 py-1">Email</th><th class="px-2 py-1">Context</th></tr></thead><tbody>' +
+            attrRows +
+            '</tbody></table></div>'
+          : '<p class="text-xs text-slate-500">No enquiry or checkout attributions yet — only anonymous clicks so far.</p>') +
+        '</div></div>';
+
+      var closeBtn = document.getElementById('aff-activity-close');
+      if (closeBtn) {
+        closeBtn.addEventListener('click', function () {
+          activityPanel.classList.add('hidden');
+          activityPanel.innerHTML = '';
+        });
+      }
     }
 
     function renderCommissions(data) {
@@ -22927,14 +23236,123 @@
       .join('');
   }
 
-  function filterSpotlightOpportunities(rows) {
+  function mergeSpotlightOpportunityRowsById(primary, extra) {
+    var byId = new Map();
+    (primary || []).forEach(function (row) {
+      if (row && row.id != null) byId.set(String(row.id), row);
+    });
+    (extra || []).forEach(function (row) {
+      if (!row || row.id == null) return;
+      var key = String(row.id);
+      if (!byId.has(key)) byId.set(key, row);
+    });
+    return Array.from(byId.values());
+  }
+
+  function fetchAllApprovedOpportunitiesForSpotlight() {
+    var PAGE = 50;
+    var offset = 0;
+    var collected = [];
+    var total = null;
+
+    function loadNext() {
+      return adminGet(
+        '/api/admin/opportunities?approval_status=Approved&limit=' +
+          PAGE +
+          '&offset=' +
+          offset +
+          '&sort=title'
+      ).then(function (data) {
+        if (!data || !data.ok) {
+          return { ok: false, data: data, opportunities: collected, total: total };
+        }
+        if (total == null && data.total != null) total = data.total;
+        var batch = data.opportunities || [];
+        collected = mergeSpotlightOpportunityRowsById(collected, batch);
+        offset += batch.length;
+        var hasMore =
+          batch.length > 0 &&
+          (data.hasMore === true || (total != null && collected.length < total));
+        if (hasMore && offset < 5000) return loadNext();
+        return {
+          ok: true,
+          opportunities: collected,
+          total: total != null ? total : collected.length,
+        };
+      });
+    }
+
+    return loadNext();
+  }
+
+  function fetchSpotlightOpportunitySearchPages(q) {
+    var PAGE = 50;
+    var offset = 0;
+    var collected = [];
+    var total = null;
+    var query = encodeURIComponent(q);
+
+    function loadNext() {
+      return adminGet(
+        '/api/admin/opportunities?approval_status=Approved&q=' +
+          query +
+          '&limit=' +
+          PAGE +
+          '&offset=' +
+          offset +
+          '&sort=title'
+      ).then(function (data) {
+        if (!data || !data.ok) return { ok: false, data: data, opportunities: collected, total: total };
+        if (total == null && data.total != null) total = data.total;
+        var batch = data.opportunities || [];
+        collected = mergeSpotlightOpportunityRowsById(collected, batch);
+        offset += batch.length;
+        var hasMore =
+          batch.length > 0 &&
+          (data.hasMore === true || (total != null && collected.length < total));
+        if (hasMore && offset < 500) return loadNext();
+        return { ok: true, opportunities: collected, total: total != null ? total : collected.length };
+      });
+    }
+
+    return loadNext();
+  }
+
+  function spotlightOpportunityListSource() {
+    if (spotlightOpportunitySearchResults != null) return spotlightOpportunitySearchResults;
+    return featuredSpotlightOpportunities;
+  }
+
+  function patchSpotlightOpportunityLocalRow(id, wantFeatured, until, dataRow) {
+    [featuredSpotlightOpportunities, spotlightOpportunitySearchResults].forEach(function (list) {
+      if (!list) return;
+      var idx = list.findIndex(function (row) {
+        return String(row.id) === String(id);
+      });
+      if (idx >= 0 && dataRow) {
+        list[idx] = Object.assign({}, list[idx], dataRow);
+      } else if (idx < 0 && dataRow) {
+        list.push(dataRow);
+        idx = list.length - 1;
+      }
+      if (idx >= 0) {
+        list[idx].featured = wantFeatured;
+        list[idx].featured_until = wantFeatured ? until : null;
+        list[idx].featuredUntil = wantFeatured ? until : null;
+      }
+    });
+  }
+
+  function filterSpotlightOpportunities(rows, opts) {
+    opts = opts || {};
     var q = String(spotlightOpportunityState.q || '').trim();
     var featured = spotlightOpportunityState.featured;
+    var skipTextSearch = opts.skipTextSearch === true;
     return (rows || []).filter(function (o) {
       if (featured === 'active' && !isSpotlightOpportunityActiveInCarousel(o)) return false;
       if (featured === 'yes' && !o.featured) return false;
       if (featured === 'no' && o.featured) return false;
-      if (!q) return true;
+      if (skipTextSearch || !q) return true;
       var hay = String(o.title || '') + ' ' + String(o.host || '') + ' ' + String(o.owner_email || '');
       return adminTextMatchesSearch(hay, q);
     });
@@ -22957,25 +23375,39 @@
     return (
       countLabel +
       ' · ' +
-      (filterActive ? rows.length + ' shown · ' + allRows.length + ' loaded' : allRows.length + ' approved listings')
+      (filterActive
+        ? rows.length + ' shown · ' + allRows.length + ' loaded'
+        : spotlightOpportunitiesCatalogTotal != null &&
+            spotlightOpportunitiesCatalogTotal > allRows.length
+          ? allRows.length + ' of ' + spotlightOpportunitiesCatalogTotal + ' approved listings'
+          : allRows.length + ' approved listings')
     );
   }
 
   function paintSpotlightOpportunitiesTable() {
     var tbody = document.getElementById('spotlight-opportunities-tbody');
     var status = document.getElementById('spotlight-opportunities-status');
-    var rows = filterSpotlightOpportunities(featuredSpotlightOpportunities);
+    var catalog = spotlightOpportunityListSource();
+    var usingServerSearch = spotlightOpportunitySearchResults != null;
+    var rows = filterSpotlightOpportunities(catalog, { skipTextSearch: usingServerSearch });
     var filterActive = spotlightOpportunityState.q || spotlightOpportunityState.featured;
     if (status) {
-      status.textContent = spotlightOpportunitiesStatusText(
-        featuredSpotlightOpportunities,
-        rows,
-        filterActive
-      );
+      if (spotlightOpportunitySearchLoading) {
+        status.textContent = 'Searching approved listings…';
+      } else {
+        status.textContent = spotlightOpportunitiesStatusText(catalog, rows, filterActive);
+      }
     }
     if (!tbody) return;
-    if (!featuredSpotlightOpportunities.length) {
-      tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-6 text-slate-500">No approved opportunities found.</td></tr>';
+    if (!catalog.length && !spotlightOpportunitySearchLoading) {
+      tbody.innerHTML =
+        '<tr><td colspan="6" class="px-4 py-6 text-slate-500">' +
+        (usingServerSearch
+          ? 'No approved opportunities match your search.'
+          : !featuredSpotlightOpportunities.length
+            ? 'No approved opportunities found.'
+            : 'No opportunities match your filters.') +
+        '</td></tr>';
       return;
     }
     if (!rows.length) {
@@ -23103,26 +23535,56 @@
     }
   }
 
+  function runSpotlightOpportunitySearch(q) {
+    var trimmed = String(q || '').trim();
+    if (!trimmed) {
+      spotlightOpportunitySearchResults = null;
+      spotlightOpportunitySearchLoading = false;
+      paintSpotlightOpportunitiesTable();
+      return;
+    }
+    var token = ++spotlightOpportunitySearchFetchToken;
+    spotlightOpportunitySearchLoading = true;
+    paintSpotlightOpportunitiesTable();
+    fetchSpotlightOpportunitySearchPages(trimmed).then(function (result) {
+      if (token !== spotlightOpportunitySearchFetchToken) return;
+      spotlightOpportunitySearchLoading = false;
+      if (!result || !result.ok) {
+        spotlightOpportunitySearchResults = [];
+        paintSpotlightOpportunitiesTable();
+        return;
+      }
+      spotlightOpportunitySearchResults = result.opportunities || [];
+      paintSpotlightOpportunitiesTable();
+    });
+  }
+
   function bindSpotlightOpportunityFilters() {
     var searchEl = document.getElementById('spotlight-opportunities-search');
     var featuredEl = document.getElementById('spotlight-opportunities-featured');
     var clearBtn = document.getElementById('spotlight-opportunities-clear');
-    function sync() {
-      spotlightOpportunityState.q = searchEl ? searchEl.value : '';
+    function syncFeaturedFilter() {
       spotlightOpportunityState.featured = featuredEl ? featuredEl.value : '';
       paintSpotlightOpportunitiesTable();
+    }
+    function syncSearch() {
+      spotlightOpportunityState.q = searchEl ? searchEl.value : '';
+      runSpotlightOpportunitySearch(spotlightOpportunityState.q);
     }
     if (searchEl) {
       searchEl.addEventListener('input', function () {
         if (spotlightOpportunitySearchTimer) clearTimeout(spotlightOpportunitySearchTimer);
-        spotlightOpportunitySearchTimer = setTimeout(sync, 200);
+        spotlightOpportunitySearchTimer = setTimeout(syncSearch, 200);
       });
     }
-    if (featuredEl) featuredEl.addEventListener('change', sync);
+    if (featuredEl) featuredEl.addEventListener('change', syncFeaturedFilter);
     if (clearBtn) {
       clearBtn.addEventListener('click', function () {
         spotlightOpportunityState.q = '';
         spotlightOpportunityState.featured = '';
+        spotlightOpportunitySearchResults = null;
+        spotlightOpportunitySearchLoading = false;
+        spotlightOpportunitySearchFetchToken += 1;
         if (searchEl) searchEl.value = '';
         if (featuredEl) featuredEl.value = '';
         paintSpotlightOpportunitiesTable();
@@ -23244,14 +23706,7 @@
                   data.organiser
                 );
               } else {
-                applyLocalFeatured(
-                  featuredSpotlightOpportunities,
-                  row.id,
-                  false,
-                  null,
-                  'opportunity',
-                  data.opportunity
-                );
+                patchSpotlightOpportunityLocalRow(row.id, false, null, data.opportunity);
               }
             })
             .catch(function () {
@@ -23332,14 +23787,12 @@
               );
               paintSpotlightOrganisersTable();
             } else {
-              applyLocalFeatured(
-                featuredSpotlightOpportunities,
+              patchSpotlightOpportunityLocalRow(
                 id,
                 true,
                 (data.opportunity &&
                   (data.opportunity.featured_until || data.opportunity.featuredUntil)) ||
                   untilIso,
-                'opportunity',
                 data.opportunity
               );
               paintSpotlightOpportunitiesTable();
@@ -23406,14 +23859,7 @@
               );
               paintSpotlightOrganisersTable();
             } else {
-              applyLocalFeatured(
-                featuredSpotlightOpportunities,
-                id,
-                wantFeatured,
-                untilIso,
-                'opportunity',
-                data.opportunity
-              );
+              patchSpotlightOpportunityLocalRow(id, wantFeatured, untilIso, data.opportunity);
               paintSpotlightOpportunitiesTable();
             }
             invalidateSpotlightSlotsCache();
@@ -23689,30 +24135,22 @@
     bindSpotlightOpportunityFilters();
     bindSpotlightToggleHandlers();
 
-    Promise.all([
-      adminGet('/api/admin/opportunities?approval_status=Approved&featured=1&limit=100&sort=title'),
-      adminGet('/api/admin/opportunities?approval_status=Approved&limit=100&sort=title'),
-    ]).then(function (results) {
+    spotlightOpportunitySearchResults = null;
+    spotlightOpportunitySearchLoading = false;
+    spotlightOpportunitiesCatalogTotal = null;
+
+    fetchAllApprovedOpportunitiesForSpotlight().then(function (result) {
       var tbody = document.getElementById('spotlight-opportunities-tbody');
       var status = document.getElementById('spotlight-opportunities-status');
-      var featuredData = results[0];
-      var allData = results[1];
-      if ((!featuredData || !featuredData.ok) && (!allData || !allData.ok)) {
+      if (!result || !result.ok) {
         if (status) status.textContent = 'Could not load opportunities.';
         if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-6 text-red-700">Load failed.</td></tr>';
         return;
       }
-      var byId = new Map();
-      ((featuredData && featuredData.ok && featuredData.opportunities) || []).forEach(function (row) {
-        if (row && row.id != null) byId.set(String(row.id), row);
-      });
-      ((allData && allData.ok && allData.opportunities) || []).forEach(function (row) {
-        if (!row || row.id == null) return;
-        var key = String(row.id);
-        if (!byId.has(key)) byId.set(key, row);
-      });
-      featuredSpotlightOpportunities = Array.from(byId.values());
+      featuredSpotlightOpportunities = result.opportunities || [];
+      spotlightOpportunitiesCatalogTotal = result.total != null ? result.total : featuredSpotlightOpportunities.length;
       paintSpotlightOpportunitiesTable();
+      if (spotlightOpportunityState.q) runSpotlightOpportunitySearch(spotlightOpportunityState.q);
     });
   }
 
