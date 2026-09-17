@@ -61,7 +61,7 @@
 
     if (!billingActive && isExternalConnectedEvent(loadedEvent)) {
       showStatus(
-        'This event uses Connected booking but your plan is not active. Renew or contact us to edit or publish.',
+        'This event uses Connected but your plan is not active. Renew or contact us to edit or publish.',
         'error'
       );
     }
@@ -108,11 +108,11 @@
       return;
     }
     if (!billingActive) {
-      showStatus('Connected booking is not active on your account yet.', 'error');
+      showStatus('Connected is not active on your account yet.', 'error');
       return;
     }
     if (!toggle || !toggle.checked) {
-      showStatus('Turn on Connected booking to save.', 'error');
+      showStatus('Turn on Connected to save.', 'error');
       return;
     }
     const url = urlInput ? urlInput.value.trim() : '';
@@ -146,7 +146,7 @@
       return;
     }
     loadedEvent = Object.assign({}, ev, payload, { checkoutMode: 'external_connected' });
-    showStatus(publish ? 'Published with Connected booking.' : 'Saved Connected booking settings.', 'ok');
+    showStatus(publish ? 'Published with Connected.' : 'Saved Connected settings.', 'ok');
     refreshCardVisibility();
   }
 

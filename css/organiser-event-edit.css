@@ -6118,7 +6118,7 @@ button.cb-plan-card-btn:disabled {
   box-shadow: 0 6px 22px rgba(26, 46, 59, 0.08);
 }
 
-.cb-mockup-frame--hub {
+.cb-mockup-frame--listing {
   border-color: rgba(13, 110, 122, 0.28);
 }
 
@@ -6276,11 +6276,11 @@ button.cb-plan-card-btn:disabled {
   transform: rotate(45deg);
 }
 
-.cb-hub-callout {
+.cb-linkout-callout {
   margin-top: 8px;
 }
 
-.cb-hub-callout-title {
+.cb-linkout-callout-title {
   margin: 0 0 8px;
   font-family: 'DM Serif Display', Georgia, serif;
   font-size: 1.25rem;
@@ -6288,14 +6288,14 @@ button.cb-plan-card-btn:disabled {
   color: var(--ee-purple-dark);
 }
 
-.cb-hub-callout p {
+.cb-linkout-callout p {
   margin: 0;
   font-size: 15px;
   line-height: 1.5;
   color: var(--ee-text-mid);
 }
 
-.cb-hub-callout-cta {
+.cb-linkout-callout-cta {
   margin: 14px 0 0;
 }
 
