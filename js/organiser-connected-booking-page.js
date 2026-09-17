@@ -25,6 +25,22 @@
   var adminPanel = document.getElementById('cb-admin-panel');
   var checkoutBanner = document.getElementById('cb-checkout-banner');
   var billingTip = document.getElementById('cb-billing-tip');
+  var authStatus = document.getElementById('cb-auth-status');
+
+  if (signinHint) signinHint.hidden = true;
+
+  function setAuthStatus(msg, kind) {
+    if (!authStatus) return;
+    authStatus.hidden = !msg;
+    authStatus.textContent = msg || '';
+    authStatus.className =
+      'ee-hint cb-auth-status' +
+      (kind === 'error' ? ' ee-alert-warn' : kind === 'ok' ? ' ee-alert-ok' : '');
+  }
+
+  function loginNextUrl() {
+    return '/login?next=' + encodeURIComponent('/organiser/connected-booking') + '&intent=organiser';
+  }
 
   function showCheckoutBanner() {
     var params = new URLSearchParams(location.search);
@@ -66,12 +82,16 @@
           location.href = res.data.url;
           return;
         }
-        if (res.status === 401 || res.status === 403) {
-          location.href = '/login?next=' + encodeURIComponent('/organiser/connected-booking');
+        if (res.status === 401) {
+          location.href = loginNextUrl();
+          return;
+        }
+        if (res.status === 403 && res.data && res.data.error === 'preview_restricted') {
+          window.alert(res.data.message || 'This account cannot subscribe yet.');
           return;
         }
         var msg =
-          (res.data && res.data.error) ||
+          (res.data && (res.data.message || res.data.error)) ||
           'Could not start checkout. Try again or email hi@thenetworkeruk.com.';
         window.alert(msg);
       })
@@ -122,7 +142,8 @@
     document.querySelectorAll('.cb-subscribe-btn').forEach(function (btn) {
       var plan = btn.getAttribute('data-cb-plan');
       if (!signedIn) {
-        btn.textContent = 'Sign in to subscribe';
+        btn.disabled = false;
+        btn.textContent = 'Subscribe';
         return;
       }
       if (!billing.stripeCheckoutConfigured) {
@@ -166,98 +187,156 @@
     }
   }
 
-  fetch('/api/organiser/connected-booking', { credentials: 'include' })
-    .then(function (r) {
-      return r.json().then(function (data) {
-        return { status: r.status, data: data };
-      });
-    })
-    .then(function (res) {
-      if (res.status === 404 || (res.data && res.data.error === 'not_found')) {
-        location.replace('/organiser/');
-        return;
-      }
-      var data = res.data || {};
-      applyBillingUi(data);
-      if (!data.ok) return;
-      if (signinHint) signinHint.hidden = true;
-      if (adminPanel) adminPanel.hidden = false;
+  function handleConnectedApi(res, sessionEmail) {
+    var data = res.data || {};
 
-      var statusEl = document.getElementById('cb-plan-status');
-      if (statusEl) {
-        var planLabel = data.plan ? String(data.plan) : 'none';
-        statusEl.textContent =
-          'Plan: ' +
-          planLabel +
-          ' — ' +
-          (data.active ? 'Active' : data.status || 'Inactive') +
-          (data.groupLimit != null
-            ? ' · Groups: ' + data.groupCount + ' / ' + data.groupLimit
-            : data.plan === 'enterprise'
-              ? ' · Groups: unlimited'
-              : '');
-      }
+    if (res.status === 403 && data.error === 'preview_restricted') {
+      setAuthStatus(
+        (data.message || 'Preview access only.') +
+          (data.signedInAs ? ' Signed in as ' + data.signedInAs + '.' : ''),
+        'error'
+      );
+      applyBillingUi({ ok: false });
+      return;
+    }
 
-      var accountWrap = document.getElementById('cb-account-id-wrap');
-      var accountEl = document.getElementById('cb-account-id');
-      if (data.accountId && accountEl && accountWrap) {
-        accountEl.textContent = data.accountId;
-        accountWrap.hidden = false;
-      }
+    if (res.status === 401) {
+      setAuthStatus('Session expired — sign in again to subscribe or manage your webhook.', 'error');
+      if (signinHint) signinHint.hidden = false;
+      applyBillingUi({ ok: false });
+      return;
+    }
 
-      var log = document.getElementById('cb-sync-log');
-      if (log) {
-        log.innerHTML = '';
-        var rows = data.recentSync || [];
-        if (!rows.length) {
-          var empty = document.createElement('li');
-          empty.className = 'cb-sync-empty';
-          empty.textContent = 'No sync attempts yet.';
-          log.appendChild(empty);
-        } else {
-          rows.forEach(function (row) {
-            var li = document.createElement('li');
-            li.textContent =
-              (row.created_at || '').replace('T', ' ').slice(0, 19) +
-              ' — ' +
-              row.outcome +
-              (row.message ? ' — ' + row.message : '');
-            log.appendChild(li);
-          });
-        }
-      }
+    if (!data.ok && data.error === 'organiser_account_not_found') {
+      setAuthStatus(
+        data.message ||
+          'No organiser account for this login. Open My Events first, then return here.',
+        'error'
+      );
+      applyBillingUi({ ok: false });
+      return;
+    }
 
-      var rotateBtn = document.getElementById('cb-rotate-secret');
-      if (rotateBtn && !rotateBtn.dataset.bound) {
-        rotateBtn.dataset.bound = '1';
-        rotateBtn.addEventListener('click', function () {
-          rotateBtn.disabled = true;
-          fetch('/api/organiser/connected-booking', {
-            method: 'PATCH',
-            credentials: 'include',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'rotate_webhook_secret' }),
-          })
-            .then(function (r) {
-              return r.json();
-            })
-            .then(function (res) {
-              if (res.webhookSecret) {
-                var el = document.getElementById('cb-secret-reveal');
-                if (el) {
-                  el.hidden = false;
-                  el.textContent =
-                    'Copy this secret now — we cannot show it again: ' + res.webhookSecret;
-                }
-              }
-            })
-            .finally(function () {
-              rotateBtn.disabled = false;
-            });
+    if (!data.ok) {
+      setAuthStatus(
+        data.message || 'Could not load your Connected booking account. Try refreshing the page.',
+        'error'
+      );
+      applyBillingUi({ ok: false });
+      return;
+    }
+
+    setAuthStatus('');
+    applyBillingUi(data);
+    if (signinHint) signinHint.hidden = true;
+    if (adminPanel) adminPanel.hidden = false;
+
+    var statusEl = document.getElementById('cb-plan-status');
+    if (statusEl) {
+      var planLabel = data.plan ? String(data.plan) : 'none';
+      statusEl.textContent =
+        'Plan: ' +
+        planLabel +
+        ' — ' +
+        (data.active ? 'Active' : data.status || 'Inactive') +
+        (data.groupLimit != null
+          ? ' · Groups: ' + data.groupCount + ' / ' + data.groupLimit
+          : data.plan === 'enterprise'
+            ? ' · Groups: unlimited'
+            : '');
+    }
+
+    var accountWrap = document.getElementById('cb-account-id-wrap');
+    var accountEl = document.getElementById('cb-account-id');
+    if (data.accountId && accountEl && accountWrap) {
+      accountEl.textContent = data.accountId;
+      accountWrap.hidden = false;
+    }
+
+    var log = document.getElementById('cb-sync-log');
+    if (log) {
+      log.innerHTML = '';
+      var rows = data.recentSync || [];
+      if (!rows.length) {
+        var empty = document.createElement('li');
+        empty.className = 'cb-sync-empty';
+        empty.textContent = 'No sync attempts yet.';
+        log.appendChild(empty);
+      } else {
+        rows.forEach(function (row) {
+          var li = document.createElement('li');
+          li.textContent =
+            (row.created_at || '').replace('T', ' ').slice(0, 19) +
+            ' — ' +
+            row.outcome +
+            (row.message ? ' — ' + row.message : '');
+          log.appendChild(li);
         });
       }
+    }
+
+    var rotateBtn = document.getElementById('cb-rotate-secret');
+    if (rotateBtn && !rotateBtn.dataset.bound) {
+      rotateBtn.dataset.bound = '1';
+      rotateBtn.addEventListener('click', function () {
+        rotateBtn.disabled = true;
+        fetch('/api/organiser/connected-booking', {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'rotate_webhook_secret' }),
+        })
+          .then(function (r) {
+            return r.json();
+          })
+          .then(function (res) {
+            if (res.webhookSecret) {
+              var el = document.getElementById('cb-secret-reveal');
+              if (el) {
+                el.hidden = false;
+                el.textContent =
+                  'Copy this secret now — we cannot show it again: ' + res.webhookSecret;
+              }
+            }
+          })
+          .finally(function () {
+            rotateBtn.disabled = false;
+          });
+      });
+    }
+  }
+
+  fetch('/api/auth/session', { credentials: 'include', cache: 'no-store' })
+    .then(function (r) {
+      return r.json();
+    })
+    .then(function (sessionData) {
+      var sessionEmail =
+        sessionData && sessionData.user && sessionData.user.email
+          ? String(sessionData.user.email).trim()
+          : '';
+
+      if (!sessionData || !sessionData.ok || !sessionData.user) {
+        setAuthStatus('Sign in with your organiser account to subscribe and manage webhooks.', 'error');
+        if (signinHint) signinHint.hidden = false;
+        applyBillingUi({ ok: false });
+        return;
+      }
+
+      setAuthStatus('Loading your Connected booking account…');
+
+      return fetch('/api/organiser/connected-booking', { credentials: 'include', cache: 'no-store' })
+        .then(function (r) {
+          return r.json().then(function (data) {
+            return { status: r.status, data: data };
+          });
+        })
+        .then(function (res) {
+          handleConnectedApi(res, sessionEmail);
+        });
     })
     .catch(function () {
-      /* signed out — sign-in section stays visible */
+      setAuthStatus('Could not verify your session. Refresh the page or sign in again.', 'error');
+      if (signinHint) signinHint.hidden = false;
     });
 })();

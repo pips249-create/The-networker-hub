@@ -9,7 +9,6 @@ const {
   signWebhookPayload,
   verifyWebhookSignature,
   newWebhookSecret,
-  connectedBookingAllowedForEmail,
 } = require('../api/_lib/connected-booking-util');
 
 const free = parseExternalPriceLabelToDisplay('Free');

@@ -1950,6 +1950,23 @@ body.organiser-booking-options-page {
   margin: 0 auto;
 }
 
+body.connected-booking-page .ee-booking-help {
+  padding-left: clamp(12px, 3vw, 28px);
+  padding-right: clamp(12px, 3vw, 28px);
+}
+
+body.connected-booking-page .ee-booking-help-shell {
+  max-width: min(1280px, 100%);
+}
+
+body.connected-booking-page .ee-booking-help-lede {
+  max-width: none;
+}
+
+body.connected-booking-page .ee-booking-help-table-wrap {
+  padding: 22px clamp(14px, 2vw, 24px) 18px;
+}
+
 .ee-booking-help-hero {
   margin: 8px 0 22px;
   padding: 8px 0 4px;
@@ -5618,7 +5635,82 @@ a.ee-btn.ee-btn-primary {
 }
 
 .cb-compare-table--plans {
-  min-width: 920px;
+  min-width: 960px;
+  border-collapse: separate;
+  border-spacing: 12px 0;
+}
+
+.cb-compare-table--plans .cb-compare-feature-col {
+  border: none;
+  background: transparent;
+}
+
+.cb-compare-table--plans thead th.cb-compare-plan-col {
+  border: 2px solid rgba(13, 110, 122, 0.22);
+  border-radius: 16px 16px 0 0;
+  box-shadow: 0 6px 20px rgba(26, 46, 59, 0.08);
+  padding-top: 18px;
+}
+
+.cb-compare-table--plans tbody td:nth-child(2),
+.cb-compare-table--plans tbody td:nth-child(3),
+.cb-compare-table--plans tbody td:nth-child(4),
+.cb-compare-table--plans tbody td:nth-child(5) {
+  border-left: 2px solid rgba(13, 110, 122, 0.16);
+  border-right: 2px solid rgba(13, 110, 122, 0.16);
+  background: #fff;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+}
+
+.cb-compare-table--plans tbody tr:last-child td:nth-child(n + 2) {
+  border-bottom: 2px solid rgba(13, 110, 122, 0.16);
+  border-radius: 0 0 16px 16px;
+  padding-bottom: 18px;
+}
+
+.cb-compare-table--plans tbody tr.cb-compare-cta-row td:nth-child(n + 2) {
+  border-bottom: 2px solid rgba(13, 110, 122, 0.22);
+}
+
+.cb-compare-table--plans .cb-compare-plan-col--featured {
+  border-color: var(--ee-purple);
+  box-shadow: 0 10px 32px rgba(13, 110, 122, 0.22);
+  animation: cb-popular-column-glow 2.8s ease-in-out infinite;
+}
+
+.cb-compare-table--plans tbody td:nth-child(3) {
+  background: rgba(13, 110, 122, 0.04);
+}
+
+.cb-compare-table--plans .cb-compare-plan-badge {
+  animation: cb-popular-badge-bounce 2.2s ease-in-out infinite;
+}
+
+@keyframes cb-popular-badge-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes cb-popular-column-glow {
+  0%,
+  100% {
+    box-shadow: 0 10px 32px rgba(13, 110, 122, 0.2);
+  }
+  50% {
+    box-shadow: 0 14px 40px rgba(13, 110, 122, 0.32);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cb-compare-table--plans .cb-compare-plan-col--featured,
+  .cb-compare-table--plans .cb-compare-plan-badge {
+    animation: none;
+  }
 }
 
 .cb-compare-table--plans .cb-compare-feature-col {
@@ -5659,7 +5751,7 @@ a.ee-btn.ee-btn-primary {
   background: var(--ee-purple);
 }
 
-.cb-compare-col-title {
+.cb-compare-table--plans .cb-compare-col-title {
   display: block;
   font-family: 'DM Serif Display', Georgia, serif;
   font-size: 1.05rem;

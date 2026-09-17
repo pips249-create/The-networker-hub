@@ -16,10 +16,10 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260909listmenu1" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260916cb4plan2" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260917cbwide1" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260812doors2" />
   </head>
-  <body class="organiser-booking-options-page">
+  <body class="organiser-booking-options-page connected-booking-page">
     <div id="hub-site-nav"></div>
     <script src="../js/site-nav.js?v=20260910aff1" data-root="../" data-page="organiser" defer></script>
 
@@ -53,6 +53,7 @@
             <a href="/organiser/booking-options">Hub checkout</a> is free to list (4.5% + 20p booking fee per ticket). One
             model per event — you cannot mix Hub and Connected on the same listing.
           </p>
+          <p class="ee-hint cb-auth-status" id="cb-auth-status" hidden role="status"></p>
           <p class="ee-alert ee-alert-ok cb-checkout-banner" id="cb-checkout-banner" hidden role="status"></p>
           <div class="cb-compare-wrap ee-booking-help-table-scroll" id="cb-pricing-compare">
             <table class="cb-compare-table cb-compare-table--plans">
@@ -215,13 +216,13 @@
 
         <section class="ee-booking-help-section ee-booking-help-section--accent" id="cb-signin-hint">
           <p class="ee-booking-help-pick">
-            <a class="ee-btn ee-btn-gold" href="/login?next=/organiser/connected-booking">Sign in</a>
+            <a class="ee-btn ee-btn-gold" href="/login?next=/organiser/connected-booking&amp;intent=organiser">Sign in</a>
             to manage your webhook secret and view sync logs.
           </p>
         </section>
       </div>
     </div>
 
-    <script src="../js/organiser-connected-booking-page.js?v=20260916cb4plan1" defer></script>
+    <script src="../js/organiser-connected-booking-page.js?v=20260917cbwide1" defer></script>
   </body>
 </html>

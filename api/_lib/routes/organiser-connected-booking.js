@@ -61,7 +61,13 @@ module.exports = async function handler(req, res) {
   if (!auth.ok) return json(res, auth.status, { error: auth.error });
 
   if (!connectedBookingAllowedForSession(auth.session)) {
-    return json(res, 404, { ok: false, error: 'not_found' });
+    return json(res, 403, {
+      ok: false,
+      error: 'preview_restricted',
+      message:
+        'Connected booking preview is limited to approved organiser accounts. Sign in with the preview email on file, or contact us to be added.',
+      signedInAs: String(auth.session.email || '').trim().toLowerCase(),
+    });
   }
   if (!isSupabaseConfigured()) {
     return json(res, 503, { ok: false, error: 'supabase_not_configured' });
@@ -73,16 +79,33 @@ module.exports = async function handler(req, res) {
   try {
     const accountId = await resolveOrganiserAccountId(sb, auth.session, adminView);
     if (!accountId) {
-      return json(res, 404, { ok: false, error: 'organiser_account_not_found' });
+      return json(res, 200, {
+        ok: false,
+        error: 'organiser_account_not_found',
+        message:
+          'We could not find an organiser account for this login. Open My Events from the organiser workspace first, or claim your group profile.',
+      });
     }
 
-    const { data: account, error: accErr } = await sb
+    const accountSelectWithCustomer =
+      'id, connected_booking_plan, connected_booking_status, connected_booking_webhook_secret, connected_booking_stripe_subscription_id, connected_booking_stripe_customer_id';
+    const accountSelectBase =
+      'id, connected_booking_plan, connected_booking_status, connected_booking_webhook_secret, connected_booking_stripe_subscription_id';
+
+    let account = null;
+    let accErr = null;
+    ({ data: account, error: accErr } = await sb
       .from('organiser_accounts')
-      .select(
-        'id, connected_booking_plan, connected_booking_status, connected_booking_webhook_secret, connected_booking_stripe_subscription_id, connected_booking_stripe_customer_id'
-      )
+      .select(accountSelectWithCustomer)
       .eq('id', accountId)
-      .maybeSingle();
+      .maybeSingle());
+    if (accErr && /connected_booking_stripe_customer_id/i.test(accErr.message || '')) {
+      ({ data: account, error: accErr } = await sb
+        .from('organiser_accounts')
+        .select(accountSelectBase)
+        .eq('id', accountId)
+        .maybeSingle());
+    }
     if (accErr) throw new Error(accErr.message);
     if (!account) return json(res, 404, { ok: false, error: 'organiser_account_not_found' });
 

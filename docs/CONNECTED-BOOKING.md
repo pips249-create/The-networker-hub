@@ -9,7 +9,7 @@ Organisers on a **Connected** monthly plan list events on The Networker UK and t
 Set on Vercel:
 
 ```text
-CONNECTED_BOOKING_PREVIEW_EMAILS=pips249@gmail.com
+CONNECTED_BOOKING_PREVIEW_EMAILS=pips249@gmail.com,hi@thenetworkeruk.com
 ```
 
 While this is set, **only that signed-in email** sees `/organiser/connected-booking`, the tickets-page Connected card (when plan active), and can use the APIs/webhooks for their organiser account. Everyone else gets no UI and `404` / hidden behaviour. You do **not** need `CONNECTED_BOOKING_ENABLED=true` for preview users when the preview list is set.
