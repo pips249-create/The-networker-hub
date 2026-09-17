@@ -2,7 +2,8 @@ const { json, setCors } = require('../auth');
 const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
 const { isUuid } = require('../uuid');
 const {
-  connectedBookingFeatureEnabled,
+  connectedBookingOperationsEnabled,
+  connectedBookingAllowedForOrganiserAccountId,
   verifyWebhookSignature,
   loadOrganiserAccountForOrganiserId,
   isConnectedPlanActive,
@@ -36,7 +37,7 @@ module.exports = async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return json(res, 405, { error: 'method_not_allowed' });
 
-  if (!connectedBookingFeatureEnabled()) {
+  if (!connectedBookingOperationsEnabled()) {
     return json(res, 503, { ok: false, error: 'connected_booking_disabled' });
   }
   if (!isSupabaseConfigured()) {
@@ -86,6 +87,20 @@ module.exports = async function handler(req, res) {
       payload: { eventId },
     });
     return json(res, 401, { ok: false, error: 'unknown_account' });
+  }
+
+  const accountAllowed = await connectedBookingAllowedForOrganiserAccountId(sb, account.id);
+  if (!accountAllowed) {
+    await logExternalSync(sb, {
+      organiser_account_id: account.id,
+      event_id: eventId || null,
+      outcome: 'rejected',
+      http_status: 403,
+      message: 'preview_not_allowed',
+      external_order_id: String(body.orderId || body.order_id || ''),
+      payload: { eventId },
+    });
+    return json(res, 403, { ok: false, error: 'connected_booking_disabled' });
   }
 
   if (!isConnectedPlanActive(account)) {

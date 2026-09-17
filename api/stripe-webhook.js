@@ -46,6 +46,12 @@ const {
   handleMembershipInvoicePaid,
   handleMembershipInvoicePaymentFailed,
 } = require('./_lib/membership-billing');
+const {
+  handleConnectedBookingCheckoutCompleted,
+  handleConnectedBookingSubscriptionUpdated,
+  handleConnectedBookingSubscriptionDeleted,
+  handleConnectedBookingInvoicePaymentFailed,
+} = require('./_lib/connected-booking-subscriptions');
 
 const STRIPE_WEBHOOK_TOLERANCE_SEC = 300;
 
@@ -204,6 +210,9 @@ async function handler(req, res) {
       const membershipResult = await runHandler('membership', () =>
         handleMembershipCheckoutCompleted(session)
       );
+      const connectedBookingResult = await runHandler('connected_booking', () =>
+        handleConnectedBookingCheckoutCompleted(session)
+      );
       const premiumResult = await runHandler('opportunity_premium', () =>
         handleOpportunityPremiumCheckout(session)
       );
@@ -233,6 +242,7 @@ async function handler(req, res) {
           cityPartnerResult,
           countyPartnerResult,
           membershipResult,
+          connectedBookingResult,
           premiumResult,
           listingResult,
           featuredResult,
@@ -255,12 +265,22 @@ async function handler(req, res) {
       const membershipResult = await runHandler('membership_sub_updated', () =>
         handleMembershipSubscriptionUpdated(subscription)
       );
+      const connectedBookingResult = await runHandler('connected_booking_sub_updated', () =>
+        handleConnectedBookingSubscriptionUpdated(subscription)
+      );
       const listingResult = await runHandler('listing_sub_updated', () =>
         handleOpportunityListingSubscriptionUpdated(subscription)
       );
       res.statusCode = 200;
       return res.end(
-        JSON.stringify({ ok: true, cityPartnerResult, countyPartnerResult, membershipResult, listingResult })
+        JSON.stringify({
+          ok: true,
+          cityPartnerResult,
+          countyPartnerResult,
+          membershipResult,
+          connectedBookingResult,
+          listingResult,
+        })
       );
     }
 
@@ -275,12 +295,22 @@ async function handler(req, res) {
       const membershipResult = await runHandler('membership_sub_deleted', () =>
         handleMembershipSubscriptionDeleted(subscription)
       );
+      const connectedBookingResult = await runHandler('connected_booking_sub_deleted', () =>
+        handleConnectedBookingSubscriptionDeleted(subscription)
+      );
       const listingResult = await runHandler('listing_sub_deleted', () =>
         handleOpportunityListingSubscriptionDeleted(subscription)
       );
       res.statusCode = 200;
       return res.end(
-        JSON.stringify({ ok: true, cityPartnerResult, countyPartnerResult, membershipResult, listingResult })
+        JSON.stringify({
+          ok: true,
+          cityPartnerResult,
+          countyPartnerResult,
+          membershipResult,
+          connectedBookingResult,
+          listingResult,
+        })
       );
     }
 
@@ -307,8 +337,11 @@ async function handler(req, res) {
       const membershipResult = await runHandler('membership_invoice_failed', () =>
         handleMembershipInvoicePaymentFailed(invoice)
       );
+      const connectedBookingResult = await runHandler('connected_booking_invoice_failed', () =>
+        handleConnectedBookingInvoicePaymentFailed(invoice)
+      );
       res.statusCode = 200;
-      return res.end(JSON.stringify({ ok: true, membershipResult }));
+      return res.end(JSON.stringify({ ok: true, membershipResult, connectedBookingResult }));
     }
 
     if (event.type === 'charge.refunded') {

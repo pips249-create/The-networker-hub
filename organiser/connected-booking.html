@@ -16,7 +16,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260909listmenu1" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260915cbpage3" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260916cb4plan2" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260812doors2" />
   </head>
   <body class="organiser-booking-options-page">
@@ -42,104 +42,114 @@
           </p>
         </header>
 
-        <section class="ee-booking-help-table-wrap" aria-labelledby="cb-compare-title">
-          <h2 id="cb-compare-title">Hub checkout vs Connected booking</h2>
-          <p class="ee-booking-help-table-lede">Pick one model per event — you cannot mix both on the same listing.</p>
-          <div class="cb-compare-wrap ee-booking-help-table-scroll">
-            <table class="cb-compare-table">
+        <section class="ee-booking-help-table-wrap ee-booking-help-section--accent" aria-labelledby="cb-plans-title">
+          <h2 id="cb-plans-title">Compare Connected booking plans</h2>
+          <p class="ee-booking-help-table-lede">
+            List on The Networker UK, take payment on your website, and sync registrations via webhook. Pick one plan for
+            your account — prices ex VAT (20% added at Stripe checkout).
+          </p>
+          <p class="ee-booking-help-table-tip">
+            Need tickets, membership, or guest visits on The Networker UK instead?
+            <a href="/organiser/booking-options">Hub checkout</a> is free to list (4.5% + 20p booking fee per ticket). One
+            model per event — you cannot mix Hub and Connected on the same listing.
+          </p>
+          <p class="ee-alert ee-alert-ok cb-checkout-banner" id="cb-checkout-banner" hidden role="status"></p>
+          <div class="cb-compare-wrap ee-booking-help-table-scroll" id="cb-pricing-compare">
+            <table class="cb-compare-table cb-compare-table--plans">
               <thead>
                 <tr>
                   <th scope="col" class="cb-compare-feature-col"></th>
-                  <th scope="col" class="cb-compare-hub-col">
-                    <span class="cb-compare-col-title">Hub checkout</span>
-                    <span class="cb-compare-col-sub">Default · free listing</span>
+                  <th scope="col" class="cb-compare-plan-col" data-cb-plan="starter">
+                    <span class="cb-compare-col-title">1 group profile</span>
+                    <span class="cb-compare-col-price">£39 <span class="cb-compare-col-vat">+ VAT / mo</span></span>
+                    <span class="cb-compare-col-sub">Starter</span>
                   </th>
-                  <th scope="col" class="cb-compare-connected-col">
-                    <span class="cb-compare-col-title">Connected booking</span>
-                    <span class="cb-compare-col-sub">Your website · monthly plan</span>
+                  <th scope="col" class="cb-compare-plan-col cb-compare-plan-col--featured" data-cb-plan="growth">
+                    <span class="cb-compare-plan-badge">Most popular</span>
+                    <span class="cb-compare-col-title">Up to 5 group profiles</span>
+                    <span class="cb-compare-col-price">£99 <span class="cb-compare-col-vat">+ VAT / mo</span></span>
+                    <span class="cb-compare-col-sub">Growth</span>
+                  </th>
+                  <th scope="col" class="cb-compare-plan-col" data-cb-plan="scale">
+                    <span class="cb-compare-col-title">Up to 20 group profiles</span>
+                    <span class="cb-compare-col-price">£199 <span class="cb-compare-col-vat">+ VAT / mo</span></span>
+                    <span class="cb-compare-col-sub">Scale</span>
+                  </th>
+                  <th scope="col" class="cb-compare-plan-col cb-compare-plan-col--enterprise">
+                    <span class="cb-compare-col-title">20+ group profiles</span>
+                    <span class="cb-compare-col-price">POA</span>
+                    <span class="cb-compare-col-sub">Enterprise</span>
                   </th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
                   <th scope="row">Listing on The Networker UK</th>
-                  <td>Free</td>
-                  <td class="cb-compare-connected-cell">Included in plan (from £39/mo)</td>
+                  <td>Included</td>
+                  <td>Included</td>
+                  <td>Included</td>
+                  <td>Included</td>
+                </tr>
+                <tr>
+                  <th scope="row">Events you can list</th>
+                  <td>Unlimited</td>
+                  <td>Unlimited</td>
+                  <td>Unlimited</td>
+                  <td>Unlimited</td>
                 </tr>
                 <tr>
                   <th scope="row">Where people pay</th>
-                  <td>On The Networker UK</td>
-                  <td class="cb-compare-connected-cell">Your website / booking system</td>
+                  <td>Your website / booking system</td>
+                  <td>Your website / booking system</td>
+                  <td>Your website / booking system</td>
+                  <td>Your website / booking system</td>
                 </tr>
                 <tr>
-                  <th scope="row">What you pay</th>
-                  <td>Nothing — buyers pay 4.5% + 20p booking fee on top of ticket price</td>
-                  <td class="cb-compare-connected-cell">Monthly plan only — you keep 100% of ticket money</td>
-                </tr>
-                <tr>
-                  <th scope="row">You receive</th>
-                  <td>100% of ticket price (via Stripe Connect)</td>
-                  <td class="cb-compare-connected-cell">100% of ticket price (on your system)</td>
+                  <th scope="row">Your cost</th>
+                  <td>£39/mo ex VAT — you keep 100% of ticket money</td>
+                  <td>£99/mo ex VAT — you keep 100% of ticket money</td>
+                  <td>£199/mo ex VAT — you keep 100% of ticket money</td>
+                  <td>POA — you keep 100% of ticket money</td>
                 </tr>
                 <tr>
                   <th scope="row">Verified post-event reviews</th>
-                  <td>Yes</td>
-                  <td class="cb-compare-connected-cell">Yes — real-time webhook required</td>
+                  <td>Yes — real-time webhook required</td>
+                  <td>Yes — real-time webhook required</td>
+                  <td>Yes — real-time webhook required</td>
+                  <td>Yes — real-time webhook required</td>
                 </tr>
                 <tr>
                   <th scope="row">Attendee list &amp; round-up emails</th>
-                  <td>Yes</td>
-                  <td class="cb-compare-connected-cell">Yes — when webhook syncs bookings</td>
+                  <td>Yes — when webhook syncs bookings</td>
+                  <td>Yes — when webhook syncs bookings</td>
+                  <td>Yes — when webhook syncs bookings</td>
+                  <td>Yes — when webhook syncs bookings</td>
                 </tr>
                 <tr>
                   <th scope="row">Membership, guest visits, application seating</th>
-                  <td>Yes</td>
-                  <td class="cb-compare-connected-cell">No — use Hub checkout for those events</td>
+                  <td class="cb-compare-muted">No — use Hub checkout</td>
+                  <td class="cb-compare-muted">No — use Hub checkout</td>
+                  <td class="cb-compare-muted">No — use Hub checkout</td>
+                  <td class="cb-compare-muted">No — use Hub checkout</td>
                 </tr>
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-        <section class="ee-booking-help-section ee-booking-help-section--accent" aria-labelledby="cb-plans-title">
-          <div class="ee-booking-help-section-head">
-            <p class="ee-booking-help-kicker">Connected booking</p>
-            <h2 id="cb-plans-title">Monthly plans (ex VAT)</h2>
-            <p class="ee-booking-help-pick">Unlimited events on every plan.</p>
-          </div>
-          <div class="cb-pricing-wrap">
-            <table class="cb-pricing-table">
-              <thead>
-                <tr>
-                  <th scope="col">Plan</th>
-                  <th scope="col">Group profiles</th>
-                  <th scope="col">Price</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td class="cb-pricing-plan">Starter</td>
-                  <td>1</td>
-                  <td class="cb-pricing-price">£39 / month</td>
-                </tr>
-                <tr>
-                  <td class="cb-pricing-plan">Growth</td>
-                  <td>Up to 5</td>
-                  <td class="cb-pricing-price">£99 / month</td>
-                </tr>
-                <tr>
-                  <td class="cb-pricing-plan">Scale</td>
-                  <td>Up to 20</td>
-                  <td class="cb-pricing-price">£199 / month</td>
-                </tr>
-                <tr>
-                  <td class="cb-pricing-plan">Enterprise</td>
-                  <td>20+ groups</td>
-                  <td class="cb-pricing-price cb-pricing-poa-cell">
+                <tr class="cb-compare-cta-row">
+                  <th scope="row">Choose this plan</th>
+                  <td>
+                    <button type="button" class="cb-compare-cta cb-subscribe-btn" data-cb-plan="starter">Subscribe</button>
+                  </td>
+                  <td>
+                    <button type="button" class="cb-compare-cta cb-compare-cta--primary cb-subscribe-btn" data-cb-plan="growth">
+                      Subscribe
+                    </button>
+                  </td>
+                  <td>
+                    <button type="button" class="cb-compare-cta cb-subscribe-btn" data-cb-plan="scale">Subscribe</button>
+                  </td>
+                  <td>
                     <a
-                      class="ee-btn ee-btn-gold cb-poa-btn"
+                      class="cb-compare-cta cb-compare-cta--link"
                       href="mailto:rosie@thenetworkeruk.com,hi@thenetworkeruk.com?subject=Connected%20booking%20%E2%80%94%2020%2B%20groups%20(POA)&amp;body=Hi%20Rosie%20and%20Catherine%2C%0A%0AI%20would%20like%20Connected%20booking%20for%20____%20group%20profile(s).%0A%0AOrganisation%20name%3A%20%0AContact%20email%3A%20%0A%0AThank%20you."
-                      >Email Rosie &amp; Catherine (POA)</a
+                      >Email Rosie &amp; Catherine</a
                     >
                   </td>
                 </tr>
@@ -147,11 +157,16 @@
             </table>
           </div>
           <div class="cb-poa-actions">
-            <a class="ee-btn ee-btn-outline" href="mailto:hi@thenetworkeruk.com?subject=Connected%20booking%20pilot"
-              >Ask about Starter / Growth / Scale</a
+            <button type="button" class="ee-btn ee-btn-outline" id="cb-manage-billing" hidden>
+              Manage billing
+            </button>
+            <a class="ee-btn ee-btn-outline" href="mailto:hi@thenetworkeruk.com?subject=Connected%20booking%20question"
+              >Questions? Email us</a
             >
           </div>
-          <p class="ee-booking-help-table-tip">Self-serve checkout for plans is coming soon.</p>
+          <p class="ee-booking-help-table-tip" id="cb-billing-tip">
+            Sign in to subscribe. Payment is handled securely by Stripe.
+          </p>
         </section>
 
         <section class="ee-booking-help-section" aria-labelledby="cb-webhook-title">
@@ -187,6 +202,9 @@
               Account id for headers: <code id="cb-account-id"></code>
             </p>
             <div class="ee-card-actions">
+              <button type="button" class="ee-btn ee-btn-outline" id="cb-manage-billing-panel" hidden>
+                Manage billing
+              </button>
               <button type="button" class="ee-btn ee-btn-gold" id="cb-rotate-secret">Generate new webhook secret</button>
             </div>
             <p class="ee-alert ee-alert-warn cb-secret-reveal" id="cb-secret-reveal" hidden role="status"></p>
@@ -204,6 +222,6 @@
       </div>
     </div>
 
-    <script src="../js/organiser-connected-booking-page.js?v=20260915cbpage3" defer></script>
+    <script src="../js/organiser-connected-booking-page.js?v=20260916cb4plan1" defer></script>
   </body>
 </html>

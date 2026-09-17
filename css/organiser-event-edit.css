@@ -5617,6 +5617,142 @@ a.ee-btn.ee-btn-primary {
   background: rgba(13, 110, 122, 0.08);
 }
 
+.cb-compare-table--plans {
+  min-width: 920px;
+}
+
+.cb-compare-table--plans .cb-compare-feature-col {
+  width: 22%;
+}
+
+.cb-compare-table--plans .cb-compare-plan-col {
+  width: 19.5%;
+  position: relative;
+  vertical-align: top;
+  background: #fafcfd;
+}
+
+.cb-compare-table--plans .cb-compare-plan-col--featured {
+  background: rgba(13, 110, 122, 0.12);
+  box-shadow: inset 0 0 0 2px var(--ee-purple);
+}
+
+.cb-compare-table--plans .cb-compare-plan-col--current {
+  background: rgba(189, 147, 46, 0.12);
+  box-shadow: inset 0 0 0 2px var(--ee-gold);
+}
+
+.cb-compare-table--plans .cb-compare-plan-col--enterprise {
+  background: #f8f9fa;
+}
+
+.cb-compare-plan-badge {
+  display: inline-block;
+  margin: 0 0 8px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--ee-purple);
+}
+
+.cb-compare-col-title {
+  display: block;
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: 1.05rem;
+  font-weight: 400;
+  line-height: 1.25;
+  color: var(--ee-purple-dark);
+  margin-bottom: 6px;
+}
+
+.cb-compare-table--plans .cb-compare-col-sub {
+  margin-top: 6px;
+  text-transform: uppercase;
+  font-size: 10px;
+}
+
+.cb-compare-col-price {
+  display: block;
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: 1.5rem;
+  font-weight: 400;
+  line-height: 1.15;
+  color: var(--ee-purple-dark);
+  margin: 0 0 2px;
+}
+
+.cb-compare-col-vat {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ee-text-soft);
+}
+
+.cb-compare-table--plans tbody td {
+  text-align: left;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.cb-compare-table--plans tbody th {
+  vertical-align: middle;
+}
+
+.cb-compare-table--plans td.cb-compare-yes,
+.cb-compare-table--plans td.cb-compare-muted {
+  text-align: center;
+  font-size: 14px;
+}
+
+.cb-compare-table--plans td.cb-compare-muted {
+  color: var(--ee-text-mid);
+  font-style: italic;
+}
+
+.cb-compare-table--plans tr.cb-compare-cta-row th,
+.cb-compare-table--plans tr.cb-compare-cta-row td {
+  vertical-align: middle;
+  background: #fff;
+  border-top: 2px solid rgba(13, 110, 122, 0.22);
+}
+
+.cb-compare-cta {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+  border: 2px solid rgba(26, 46, 59, 0.14);
+  background: #fff;
+  color: var(--ee-purple-dark);
+  text-decoration: none;
+}
+
+.cb-compare-cta--primary {
+  border-color: var(--ee-purple);
+  background: var(--ee-purple);
+  color: #fff;
+}
+
+.cb-compare-cta--link {
+  line-height: 1.35;
+  padding: 10px 8px;
+}
+
+button.cb-compare-cta:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .cb-pricing-wrap {
   margin-top: 12px;
   overflow-x: auto;
@@ -5684,5 +5820,228 @@ a.ee-btn.ee-btn-primary {
   flex-wrap: wrap;
   gap: 10px;
   align-items: center;
+}
+
+.cb-pricing-action-col {
+  min-width: 8.5rem;
+}
+
+.cb-pricing-action-cell {
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.cb-subscribe-btn {
+  padding: 8px 14px;
+  font-size: 14px;
+}
+
+.cb-subscribe-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.cb-checkout-banner {
+  margin: 0 0 14px;
+}
+
+.cb-pricing-table tr.cb-plan-current td {
+  background: rgba(189, 147, 46, 0.08);
+}
+
+.cb-plan-cards {
+  display: grid;
+  gap: 16px;
+  margin-top: 12px;
+  align-items: stretch;
+}
+
+.cb-plan-cards--compare {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.cb-plan-cards--pricing {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.cb-plan-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  padding: 22px 20px 20px;
+  border-radius: 16px;
+  border: 1px solid rgba(26, 46, 59, 0.12);
+  background: #fff;
+  box-shadow: 0 8px 28px rgba(26, 46, 59, 0.07);
+}
+
+.cb-plan-card--featured {
+  border: 2px solid var(--ee-purple);
+  box-shadow: 0 12px 36px rgba(13, 110, 122, 0.18);
+}
+
+.cb-plan-card--current {
+  border-color: var(--ee-gold);
+  box-shadow: 0 10px 32px rgba(189, 147, 46, 0.22);
+}
+
+.cb-plan-card-badge {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  padding: 5px 14px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--ee-purple);
+  white-space: nowrap;
+}
+
+.cb-plan-card-head {
+  margin: 0 0 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(26, 46, 59, 0.1);
+}
+
+.cb-plan-card--featured .cb-plan-card-head {
+  padding-top: 6px;
+}
+
+.cb-plan-card-name {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--ee-text-soft);
+}
+
+.cb-plan-card-price {
+  margin: 0 0 10px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 8px;
+}
+
+.cb-plan-card-amount {
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: 2.35rem;
+  font-weight: 400;
+  line-height: 1;
+  color: var(--ee-purple-dark);
+}
+
+.cb-plan-card-vat {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ee-text-soft);
+}
+
+.cb-plan-card-tagline {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ee-text-mid);
+}
+
+.cb-plan-card-features {
+  flex: 1 1 auto;
+  margin: 0 0 18px;
+  padding: 0;
+  list-style: none;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ee-text);
+}
+
+.cb-plan-card-features li {
+  position: relative;
+  margin: 0 0 10px;
+  padding-left: 1.55em;
+}
+
+.cb-plan-card-features li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-weight: 800;
+  color: var(--ee-purple);
+}
+
+.cb-plan-card-features-muted {
+  color: var(--ee-text-mid);
+}
+
+.cb-plan-card-foot {
+  margin-top: auto;
+}
+
+.cb-plan-card-btn {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 16px;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  border: 2px solid rgba(26, 46, 59, 0.14);
+  background: #fff;
+  color: var(--ee-purple-dark);
+  box-shadow: 0 2px 8px rgba(26, 46, 59, 0.06);
+  transition: filter 0.15s ease, box-shadow 0.15s ease;
+}
+
+.cb-plan-card-btn:hover {
+  filter: brightness(1.02);
+  box-shadow: 0 4px 14px rgba(26, 46, 59, 0.1);
+}
+
+.cb-plan-card-btn--primary {
+  border-color: var(--ee-purple);
+  background: var(--ee-purple);
+  color: #fff;
+  box-shadow: 0 6px 20px rgba(13, 110, 122, 0.35);
+}
+
+.cb-plan-card-btn--primary:hover {
+  filter: brightness(1.06);
+}
+
+.cb-plan-card-btn--outline {
+  background: #fff;
+}
+
+button.cb-plan-card-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@media (max-width: 1100px) {
+  .cb-plan-cards--pricing {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .cb-plan-cards--compare,
+  .cb-plan-cards--pricing {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cb-plan-card-amount {
+    font-size: 2rem;
+  }
 }
 

@@ -80,7 +80,28 @@ function eventPayloadFromBody(body, email) {
   if (Object.prototype.hasOwnProperty.call(body, 'externalPriceLabel') || Object.prototype.hasOwnProperty.call(body, 'external_price_label')) {
     payload.externalPriceLabel = body.externalPriceLabel || body.external_price_label;
   }
+  payload._editorEmail = String(email || '').trim();
   return payload;
+}
+
+function connectedBookingPayloadBlocked(session, body) {
+  const { connectedBookingAllowedForEmail, CHECKOUT_EXTERNAL } = require('../connected-booking');
+  const mode = String(body.checkoutMode || body.checkout_mode || '').trim();
+  const touchesExternal =
+    mode === CHECKOUT_EXTERNAL ||
+    Object.prototype.hasOwnProperty.call(body, 'externalBookingUrl') ||
+    Object.prototype.hasOwnProperty.call(body, 'external_booking_url') ||
+    Object.prototype.hasOwnProperty.call(body, 'externalPriceLabel') ||
+    Object.prototype.hasOwnProperty.call(body, 'external_price_label');
+  if (!touchesExternal) return null;
+  if (connectedBookingAllowedForEmail(session?.email)) return null;
+  return {
+    status: 403,
+    body: {
+      error: 'connected_booking_not_available',
+      message: 'Connected booking is not available on your account yet.',
+    },
+  };
 }
 
 function validateEventDescription(body) {
@@ -225,6 +246,8 @@ module.exports = async function handler(req, res) {
       return json(res, manageGate.status, { error: manageGate.error, message: manageGate.message });
     }
     const body = parseBody(req);
+    const cbBlocked = connectedBookingPayloadBlocked(auth.session, body);
+    if (cbBlocked) return json(res, cbBlocked.status, cbBlocked.body);
     const publishBlocked = await requireVerifiedForPublish(body);
     if (publishBlocked) return publishBlocked;
     const eventId = String(body.id || body.eventId || req.query?.id || '').trim();
@@ -399,6 +422,9 @@ module.exports = async function handler(req, res) {
         return jsonPublicError(res, json, e, { code: e.code || 'event_republish_failed', logLabel: '[organiser-events]' });
       }
     }
+
+    const cbBlocked = connectedBookingPayloadBlocked(auth.session, body);
+    if (cbBlocked) return json(res, cbBlocked.status, cbBlocked.body);
 
     const title = String(body.title || '').trim();
     const groupId = String(body.organiserGroupId || body.groupId || '').trim();
