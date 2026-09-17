@@ -49,7 +49,22 @@
 
   function eventIdFromQuery() {
     const params = new URLSearchParams(window.location.search);
-    return String(params.get('id') || params.get('eventId') || '').trim();
+    const single = String(params.get('id') || params.get('eventId') || '').trim();
+    if (single) return single;
+    const ids = String(params.get('ids') || '')
+      .split(',')
+      .map(function (s) {
+        return s.trim();
+      })
+      .filter(Boolean);
+    return ids[0] || '';
+  }
+
+  function resolveEventId() {
+    const fromQuery = eventIdFromQuery();
+    if (fromQuery) return fromQuery;
+    if (loadedEvent && loadedEvent.id) return String(loadedEvent.id).trim();
+    return '';
   }
 
   function setConnectedOnlyLayout(on) {
@@ -77,9 +92,11 @@
 
     if (planLink) planLink.hidden = false;
 
-    const eid = eventIdFromQuery();
-    if (setupLink && eid) {
-      setupLink.href = '/organiser/event-connected-setup?id=' + encodeURIComponent(eid);
+    const eid = resolveEventId();
+    if (setupLink) {
+      setupLink.href = eid
+        ? '/organiser/event-connected-setup?id=' + encodeURIComponent(eid)
+        : '/organiser/event-connected-setup';
     }
 
     setConnectedOnlyLayout(true);

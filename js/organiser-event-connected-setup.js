@@ -4,7 +4,16 @@
   }
 
   function eventIdFromQuery() {
-    return String(new URLSearchParams(location.search).get('id') || '').trim();
+    var params = new URLSearchParams(location.search);
+    var single = String(params.get('id') || params.get('eventId') || '').trim();
+    if (single) return single;
+    var ids = String(params.get('ids') || '')
+      .split(',')
+      .map(function (s) {
+        return s.trim();
+      })
+      .filter(Boolean);
+    return ids[0] || '';
   }
 
   function api(path, opts) {
@@ -143,7 +152,9 @@
   }
 
   if (!eventId) {
-    showBlocked('Open an event from My Events first (missing event id).');
+    showBlocked(
+      'No event selected. Open an event from My Events → Set up tickets, then use Connected event setup — or add ?id=your-event-id to this page URL.'
+    );
   } else {
     Promise.all([
       api('/api/organiser/events?id=' + encodeURIComponent(eventId)),
