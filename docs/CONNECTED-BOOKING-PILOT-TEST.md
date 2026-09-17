@@ -24,6 +24,25 @@ Redeploy. Then sign in as that email and open `/organiser/connected-booking`. Th
 
 Optional: if you still want to test Stripe checkout, create a **100% off** promotion code in Stripe Dashboard and set `CONNECTED_BOOKING_STRIPE_PROMOTION_CODES=true` on Vercel, then use **Subscribe** and enter the code at checkout.
 
+## Create a group profile and Connected billing (before Eventbrite)
+
+Connected billing is tied to your **organiser account**, not a single button per group:
+
+| Plan | Published **group profiles** (organiser pages) | Events |
+|------|-----------------------------------------------|--------|
+| Starter (pilot grant) | **1** | Unlimited on your account |
+| Growth | 5 | Unlimited |
+| Scale | 20 | Unlimited |
+
+**Steps**
+
+1. **My Events** → **+ Add organiser page** (`/organiser/group-edit`) — create or claim your networking group.
+2. Sign in with a **pilot grant** email → open **Connected booking** once → Starter activates free (see env vars below).
+3. **List an event** under that group → **Set up tickets** → turn on **Connected booking** and paste your **Eventbrite URL** (when ready).
+4. If you add **more than one organiser page**, My Events shows a banner: upgrade for more group slots, or use **Link-out £9.99/event** (no attendee sync) for a single event.
+
+You do **not** “assign” Connected to one group in settings — you keep **one published group profile** on Starter, or upgrade if you need more pages live on the hub.
+
 ## End-to-end test checklist
 
 ### A. Hub side

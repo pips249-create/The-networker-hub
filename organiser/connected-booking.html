@@ -29,6 +29,7 @@
           <a class="ee-back" href="/organiser/#events-list">← Back to My Events</a>
         </div>
 
+        <div id="cb-connected-billing-banner" class="org-connected-billing-banner" hidden role="status"></div>
         <header class="ee-booking-help-hero">
           <p class="ee-booking-help-eyebrow">Organiser workspace</p>
           <h1 class="ee-booking-help-title">Connected booking</h1>
@@ -45,8 +46,9 @@
         <section class="ee-booking-help-table-wrap ee-booking-help-section--accent" aria-labelledby="cb-plans-title">
           <h2 id="cb-plans-title">Compare Connected booking plans</h2>
           <p class="ee-booking-help-table-lede">
-            List on The Networker UK, take payment on your website, and sync registrations via webhook. Pick one plan for
-            your account — prices ex VAT (20% added at Stripe checkout).
+            List on The Networker UK, take payment on your website, and sync registrations via webhook. One subscription
+            covers your <strong>organiser account</strong> — each tier sets how many <strong>group profiles</strong> you
+            can keep published (unlimited events). Prices ex VAT (20% added at Stripe checkout).
           </p>
           <p class="ee-booking-help-table-tip">
             Need tickets, membership, or guest visits on The Networker UK instead?
@@ -223,6 +225,7 @@
       </div>
     </div>
 
+    <script src="../js/organiser-connected-billing-banner.js?v=20260917banner1" defer></script>
     <script src="../js/organiser-connected-booking-page.js?v=20260917pilot1" defer></script>
   </body>
 </html>
