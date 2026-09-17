@@ -16,7 +16,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260909listmenu1" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260917cbfix2" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260917slots1" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260812doors2" />
   </head>
   <body class="organiser-booking-options-page">
@@ -170,7 +170,7 @@
           </p>
         </section>
 
-        <section class="ee-booking-help-section" aria-labelledby="cb-webhook-title">
+        <section class="ee-booking-help-section" aria-labelledby="cb-webhook-title" id="cb-webhook-section">
           <div class="ee-booking-help-section-head">
             <p class="ee-booking-help-kicker">For your developer</p>
             <h2 id="cb-webhook-title">Real-time registration webhook</h2>
@@ -189,6 +189,23 @@
             </ul>
             <p class="ee-hint" style="margin-top: 14px"><strong>Example body</strong></p>
             <pre class="cb-code-block" id="cb-sample" aria-label="Example JSON payload"></pre>
+          </div>
+        </section>
+
+        <section class="ee-booking-help-section" id="cb-slots-panel" hidden aria-labelledby="cb-slots-title">
+          <div class="ee-booking-help-section-head">
+            <p class="ee-booking-help-kicker">Apply your plan</p>
+            <h2 id="cb-slots-title">Which organiser pages use Connected?</h2>
+            <p class="ee-booking-help-pick">
+              Your subscription applies to whole <strong>group profiles</strong> (organiser pages), not individual
+              events. Only events under assigned pages can use Connected booking and the webhook.
+            </p>
+          </div>
+          <div class="ee-card">
+            <p class="ee-hint" id="cb-slots-limit-hint"></p>
+            <ul class="cb-slots-list" id="cb-slots-list"></ul>
+            <p class="ee-hint" id="cb-slots-status" hidden role="status"></p>
+            <button type="button" class="ee-btn ee-btn-gold" id="cb-slots-save">Save assignment</button>
           </div>
         </section>
 
@@ -223,6 +240,6 @@
       </div>
     </div>
 
-    <script src="../js/organiser-connected-booking-page.js?v=20260917cbfix2" defer></script>
+    <script src="../js/organiser-connected-booking-page.js?v=20260917slots1" defer></script>
   </body>
 </html>
