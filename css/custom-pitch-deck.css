@@ -1,0 +1,67 @@
+/* Tailored decks — same family as /p-tnh-ev-hub-k7m2 (partner × Networker lockup) */
+.custom-pitch-logo-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin: 0 auto 20px;
+}
+
+.custom-pitch-logo-row img {
+  display: block;
+  max-height: 52px;
+  width: auto;
+  max-width: min(240px, 42vw);
+  object-fit: contain;
+}
+
+.custom-pitch-logo-row .custom-pitch-partner-logo {
+  padding: 10px 16px;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid var(--pitch-border);
+  box-shadow: 0 4px 16px rgba(13, 110, 122, 0.08);
+}
+
+.custom-pitch-logo-x {
+  color: var(--pitch-muted);
+  font-size: 1.4rem;
+  font-weight: 600;
+  opacity: 0.55;
+}
+
+.custom-pitch-prospect-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 100px;
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 1rem;
+  color: var(--pitch-ink);
+  background: #fff;
+  border: 1px solid var(--pitch-border);
+}
+
+.custom-pitch-hero-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin: 0 auto 8px;
+  max-width: 42em;
+}
+
+.custom-pitch-hero-chip {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--pitch-teal-soft);
+  color: var(--pitch-teal);
+  border: 1px solid var(--pitch-border);
+}
