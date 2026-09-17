@@ -218,25 +218,110 @@ function normalizeSponsorshipPlacements(raw) {
   return out;
 }
 
-function buildSponsorshipSections(placements, companyName, brief) {
+function hasOpportunityListingLaunchOffer(placements) {
+  return (placements || []).indexOf('opportunity_directory_listing') !== -1;
+}
+
+/** 3-month Premium Spotlight is bundled with the directory listing launch offer (even if boost isn’t ticked). */
+function hasOpportunitySpotlightLaunchOffer(placements) {
+  const list = placements || [];
+  return (
+    list.indexOf('featured_opportunity_boost') !== -1 ||
+    list.indexOf('opportunity_directory_listing') !== -1
+  );
+}
+
+function applyOpportunityLaunchOfferToSection(key, section, companyName) {
+  const co = companyName || 'your brand';
+  if (key === 'opportunity_directory_listing') {
+    section.price = 'Included — 12 months at no charge';
+    section.intro =
+      'Launch partnership offer for ' +
+      co +
+      ': a full business opportunity directory listing on /opportunities/ with member enquiries routed to you — subscription fees waived for the first year.' +
+      (section.intro ? ' ' + section.intro : '');
+    section.bullets = [
+      '12 months of the standard directory listing at no subscription charge (normally £25/month + VAT)',
+      'Includes 3 months Premium Spotlight on /opportunities/ browse at no charge (normally £55 per ~30-day boost)',
+      'Public detail page plus inclusion in /opportunities/ search while the offer is active',
+      'Member enquiries routed to your listing owner — no per-lead fee during the included year',
+      'After month 12, continue at the published listing rate or pause — Headline Sponsor and email inventory remain separate packages',
+    ];
+  }
+  if (key === 'featured_opportunity_boost') {
+    section.price = 'Included — 3 months Premium Spotlight';
+    section.intro =
+      'Launch partnership offer for ' +
+      co +
+      ': stay in the Premium Spotlight carousel on /opportunities/ for three months at no charge.' +
+      (section.intro ? ' ' + section.intro : '');
+    section.bullets = [
+      '3 months of Premium Spotlight on the opportunities browse carousel at no charge (normally £55 per ~30-day boost)',
+      'Featured badge and highlighted card for higher click-through while each spotlight month is live',
+      'We schedule the three spotlight windows in Command Centre — no Stripe checkout required for this launch offer',
+      'Stacks with the directory listing — ideal for franchise and partnership offers that need visibility fast',
+    ];
+  }
+  return section;
+}
+
+function buildSectionForPlacement(key, companyName, brief, applyLaunch) {
   const co = companyName || 'your brand';
   const briefBit = brief ? String(brief).trim() : '';
-  return placements.map(function (key) {
-    const p = SPONSORSHIP_PLACEMENT_CATALOG[key];
-    let intro = 'Why this fits ' + co + '.';
-    if (briefBit) intro += ' ' + briefBit;
-    return {
-      id: 'sponsor_' + key,
-      navLabel: p.nav,
-      kicker: p.kicker,
-      title: p.title,
-      intro: intro,
-      bullets: (p.bullets || []).slice(),
-      price: p.price || '',
-      tiles: [],
-      quote: '',
-    };
-  });
+  const p = SPONSORSHIP_PLACEMENT_CATALOG[key];
+  if (!p) return null;
+  let intro = 'Why this fits ' + co + '.';
+  if (briefBit) intro += ' ' + briefBit;
+  const section = {
+    id: 'sponsor_' + key,
+    navLabel: p.nav,
+    kicker: p.kicker,
+    title: p.title,
+    intro: intro,
+    bullets: (p.bullets || []).slice(),
+    price: p.price || '',
+    tiles: [],
+    quote: '',
+  };
+  if (applyLaunch) {
+    applyOpportunityLaunchOfferToSection(key, section, co);
+  }
+  return section;
+}
+
+function buildSponsorshipSections(placements, companyName, brief, options) {
+  const applyLaunch =
+    !options || options.applyOpportunityLaunchOffer !== false;
+  const ordered = placements || [];
+  const sections = ordered
+    .map(function (key) {
+      return buildSectionForPlacement(key, companyName, brief, applyLaunch);
+    })
+    .filter(Boolean);
+
+  if (
+    applyLaunch &&
+    ordered.indexOf('opportunity_directory_listing') !== -1 &&
+    ordered.indexOf('featured_opportunity_boost') === -1
+  ) {
+    sections.push(
+      buildSectionForPlacement('featured_opportunity_boost', companyName, brief, applyLaunch)
+    );
+  }
+
+  return sections;
+}
+
+function launchOfferHeroChips(placements) {
+  const chips = [];
+  if (hasOpportunityListingLaunchOffer(placements)) {
+    chips.push('12 months listing included');
+  }
+  if (hasOpportunitySpotlightLaunchOffer(placements)) {
+    chips.push('3 months Premium Spotlight included');
+  }
+  if (chips.length) chips.push('Launch partnership offer');
+  return chips;
 }
 
 module.exports = {
@@ -246,4 +331,7 @@ module.exports = {
   normalizeDeckType,
   normalizeSponsorshipPlacements,
   buildSponsorshipSections,
+  hasOpportunityListingLaunchOffer,
+  hasOpportunitySpotlightLaunchOffer,
+  launchOfferHeroChips,
 };

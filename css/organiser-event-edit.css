@@ -5502,6 +5502,73 @@ a.ee-btn.ee-btn-primary {
   word-break: break-all;
 }
 
+/* Connected account notice (plan vs group profiles) — My Events + Connected page */
+.cb-account-notice {
+  display: none;
+  margin: 0 0 22px;
+}
+
+.cb-account-notice--active {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 6px 14px;
+  align-items: start;
+  padding: 16px 18px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(13, 110, 122, 0.2);
+  background: linear-gradient(135deg, #ffffff 0%, #f3fafb 55%, #faf8f4 100%);
+  box-shadow: 0 8px 28px rgba(26, 46, 59, 0.07);
+}
+
+.cb-account-notice-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--ee-purple-dark);
+  background: rgba(13, 110, 122, 0.12);
+  border: 1px solid rgba(13, 110, 122, 0.18);
+}
+
+.cb-account-notice-title {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--ee-purple-dark);
+}
+
+.cb-account-notice-body {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ee-text-mid);
+}
+
+.cb-account-notice-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(26, 46, 59, 0.08);
+}
+
+.cb-account-notice-btn {
+  padding: 8px 14px;
+  font-size: 14px;
+}
+
+#org-connected-billing-banner.cb-account-notice--active {
+  margin: 0 0 16px;
+}
+
 .cb-compare-wrap {
   margin-top: 8px;
   border-radius: 12px;
@@ -6045,8 +6112,42 @@ button.cb-plan-card-btn:disabled {
   }
 }
 
+.organiser-connected-booking-page .ee-booking-help {
+  background: linear-gradient(180deg, #f5fafb 0%, #ffffff 220px);
+}
+
 .organiser-connected-booking-page .ee-booking-help-shell {
   max-width: 1120px;
+}
+
+.organiser-connected-booking-page .cb-hero {
+  margin-bottom: 8px;
+  padding: 26px 24px 22px;
+  border-radius: 16px;
+  border: 1px solid rgba(13, 110, 122, 0.14);
+  background: linear-gradient(
+    145deg,
+    rgba(13, 110, 122, 0.1) 0%,
+    rgba(255, 255, 255, 0.98) 42%,
+    rgba(189, 147, 46, 0.07) 100%
+  );
+  box-shadow: 0 12px 40px rgba(26, 46, 59, 0.07);
+}
+
+.organiser-connected-booking-page .cb-hero .ee-booking-help-lede {
+  max-width: 42em;
+}
+
+.organiser-connected-booking-page .ee-booking-help-section {
+  margin-bottom: 20px;
+}
+
+.organiser-connected-booking-page .cb-value-panel {
+  padding: 16px 16px 14px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid rgba(26, 46, 59, 0.08);
+  box-shadow: 0 4px 16px rgba(26, 46, 59, 0.05);
 }
 
 .cb-hero-actions {

@@ -1192,6 +1192,9 @@
       '• Browse and ticket buying are live on The Networker UK\n' +
       '• Easy start — claim your page, list yourself, or send us the details and we’ll help\n\n' +
       deckLine +
+      (deckUrl
+        ? 'PDF: open the deck link above and click Download PDF (tailored to this prospect).\n'
+        : '') +
       'Benefits one-pager: https://thenetworkeruk.com/guides/organiser-leavebehind\n' +
       'PDF: https://thenetworkeruk.com/assets/guides/organiser-leavebehind.pdf\n' +
       'For organisers: https://thenetworkeruk.com/for-organisers\n' +
@@ -11519,7 +11522,13 @@
           renderPartners(data);
           var total = Number(data.total) || 0;
           var active = Number(data.activeCount) || 0;
-          if (data.clicksTableMissing) {
+          if (data.termsColumnsMissing) {
+            setStatus(
+              statusEl,
+              'Terms columns missing — run migration 296_affiliate_partner_terms.sql in Supabase (partner table from 289 is OK).',
+              'error'
+            );
+          } else if (data.clicksTableMissing) {
             setStatus(
               statusEl,
               'Click tracking is off — run migration 290_affiliate_clicks.sql in Supabase, then hard-refresh and open a ?ref= link again.',
@@ -11539,9 +11548,7 @@
         .catch(function (err) {
           if (bodyEl) {
             bodyEl.innerHTML =
-              '<p class="text-sm text-red-700">' +
-              esc((err && err.message) || 'Could not load partners') +
-              '</p>';
+              '<p class="text-sm text-red-700">Could not load partners. See the message above the form.</p>';
           }
           setStatus(statusEl, (err && err.message) || 'Could not load partners', 'error');
         });
@@ -31074,7 +31081,7 @@
           return (
             '<section class="admin-dash-section">' +
             '<div class="admin-dash-section-head"><h3>Tailored pitch decks</h3>' +
-            '<p>Pick <strong>sponsorship placements</strong> (Headline Sponsor, business opportunity listing, etc.) and/or organiser onboarding sections — then present fullscreen.</p></div>' +
+            '<p>Pick <strong>sponsorship placements</strong> (Headline Sponsor, business opportunity listing, etc.) and/or organiser onboarding sections — present fullscreen or use <strong>Download PDF</strong> on the deck (Barnsgate-style) to attach after the meeting. Ticking <strong>Directory listing</strong> alone includes the launch offer: <strong>12 months free listing + 3 months free Premium Spotlight</strong>.</p></div>' +
             '<div class="admin-dash-section-body space-y-4">' +
             (profile && !editing
               ? '<div class="rounded-xl border border-brand-200 bg-brand-50/60 p-3 text-sm text-brand-950">' +
@@ -31114,7 +31121,7 @@
             attrEsc(prefillLogo) +
             '" /></div>' +
             '<div class="md:col-span-2 lg:col-span-3"><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="sales-kit-pitch-brief">What should this deck include?</label>' +
-            '<textarea id="sales-kit-pitch-brief" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm min-h-[88px]" placeholder="e.g. Pitch Headline Sponsor plus business opportunity directory listing for Pink Spaghetti franchise leads.">' +
+            '<textarea id="sales-kit-pitch-brief" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm min-h-[88px]" placeholder="e.g. Pink Spaghetti franchise leads — tick Directory listing + Opportunity boost for 12 months free listing and 3 months free Premium Spotlight.">' +
             esc(prefillBrief) +
             '</textarea></div>' +
             '<div class="md:col-span-2 lg:col-span-3"><p class="text-xs font-semibold text-slate-500 uppercase mb-2">Deck type</p>' +

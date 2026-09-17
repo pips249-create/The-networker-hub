@@ -6,6 +6,17 @@ Organisers on a **Connected** monthly subscription list events on The Networker 
 
 ## Enable in production
 
+### If Sentry shows `connected_booking_stripe_customer_id does not exist`
+
+Production Supabase is missing migration **293**. In the Supabase SQL editor (production project), run:
+
+```sql
+alter table public.organiser_accounts
+  add column if not exists connected_booking_stripe_customer_id text;
+```
+
+Also run **`292_external_connected_booking.sql`** if Connected booking columns/tables were never applied. Until 293 is applied, **Manage billing** may not work after subscribe; the page and checkout should still load once app deploys **#66+**.
+
 ### Private preview (only you)
 
 Set on Vercel:
@@ -14,7 +25,7 @@ Set on Vercel:
 CONNECTED_BOOKING_PREVIEW_EMAILS=pips249@gmail.com
 ```
 
-While this is set, **only that signed-in email** sees `/organiser/connected-booking`, the tickets-page Connected card (when plan active), and can use the APIs/webhooks for their organiser account. Everyone else gets no UI and `404` / hidden behaviour. You do **not** need `CONNECTED_BOOKING_ENABLED=true` for preview users when the preview list is set.
+While this is set, **only that signed-in email** sees `/organiser/connected-booking`, the tickets-page Connected card (when plan active), and can use the APIs/webhooks for their organiser account. Everyone else gets no UI and **403 preview_restricted** / hidden behaviour. You do **not** need `CONNECTED_BOOKING_ENABLED=true` for preview users when the preview list is set.
 
 When ready to launch for all organisers: **remove** `CONNECTED_BOOKING_PREVIEW_EMAILS` and set `CONNECTED_BOOKING_ENABLED=true`.
 
@@ -46,7 +57,31 @@ When ready to launch for all organisers: **remove** `CONNECTED_BOOKING_PREVIEW_E
 
 Link Out: £9.99 per event, redirect only (see organiser copy on `/organiser/connected-booking`).
 
+**Link-out listing (£9.99 + VAT per event)** — separate product from Connected; hub redirect only; no webhook, attendees, or verified reviews. See `/organiser/booking-options#link-out` and [EXTERNAL-CHECKOUT-FLOWS.md](./EXTERNAL-CHECKOUT-FLOWS.md).
+
+**Planned UX:** after subscribe, **choose which organiser page(s)** your plan applies to; Connected events use a **slim setup** (display price + booking link + API docs), not hub ticket tiers. Link-out uses its own flow and `checkout_mode`.
+
+## Group profiles vs Connected plan
+
+One Connected subscription applies to the whole **organiser account**. Plan tier limits how many **group profiles** (organiser pages) you can keep **published** at once — not how many events you list. Unlimited events per account on Connected plans.
+
 ## Tests
 
-- `npm run test-external-booking-webhook`
-- `npm run test-connected-booking-subscriptions`
+From the repo root (one command per line):
+
+```bash
+cd ~/The-networker-hub
+npm run test-connected-booking-subscriptions
+npm run test-external-booking-webhook
+```
+
+**Pilot / Eventbrite end-to-end:** see [CONNECTED-BOOKING-PILOT-TEST.md](./CONNECTED-BOOKING-PILOT-TEST.md) (`CONNECTED_BOOKING_PILOT_GRANT_EMAILS`, webhook script).
+
+## Pilot grant (complimentary Starter)
+
+```text
+CONNECTED_BOOKING_PILOT_GRANT_EMAILS=pips249@gmail.com
+CONNECTED_BOOKING_PILOT_GRANT_PLAN=starter
+```
+
+First visit to `/organiser/connected-booking` activates the plan without Stripe. Still use preview emails so only pilot accounts see the feature.
