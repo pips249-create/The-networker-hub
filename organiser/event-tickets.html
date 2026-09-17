@@ -66,31 +66,25 @@
         <div class="ee-card" id="ee-external-booking-card" hidden>
           <h2>Connected booking (your website)</h2>
           <p class="ee-hint" id="ee-external-booking-intro">
-            For organisers on a Connected plan: list on The Networker UK and send buyers to your own checkout.
-            Registrations sync via webhook for verified reviews and attendee round-ups.
+            List on The Networker UK with a display price and a link to your checkout. Attendee sync and verified reviews
+            use a developer webhook — not Hub tickets.
           </p>
-          <div id="ee-external-booking-controls">
-            <label class="ee-field">
-              <input type="checkbox" id="ee-external-booking-enabled" />
-              <span>Use Connected booking for this event</span>
-            </label>
-            <label class="ee-field">
-              <span>Booking page URL</span>
-              <input type="url" id="ee-external-booking-url" placeholder="https://yoursite.com/book" autocomplete="off" />
-            </label>
-            <label class="ee-field">
-              <span>Price shown on listing</span>
-              <input type="text" id="ee-external-price-label" placeholder="e.g. Free, £15, From £10" maxlength="80" />
-            </label>
-            <p class="ee-hint" id="ee-external-booking-status" hidden role="status"></p>
-            <div class="ee-attendance-next">
-              <button type="button" class="ee-btn ee-btn-outline" id="ee-external-booking-save">Save Connected settings</button>
-              <button type="button" class="ee-btn ee-btn-gold" id="ee-external-booking-publish">Publish (Connected)</button>
-            </div>
+          <p class="ee-attendance-next">
+            <a class="ee-btn ee-btn-gold" id="ee-connected-setup-link" href="/organiser/event-connected-setup"
+              >Connected event setup →</a
+            >
+            <a class="ee-btn ee-btn-outline" id="ee-connected-plan-link" href="/organiser/connected-booking" hidden
+              >Plans &amp; assign organiser pages</a
+            >
+          </p>
+          <p class="ee-hint" id="ee-external-booking-status" hidden role="status"></p>
+          <div id="ee-external-booking-controls" hidden aria-hidden="true">
+            <input type="checkbox" id="ee-external-booking-enabled" hidden />
+            <input type="url" id="ee-external-booking-url" hidden />
+            <input type="text" id="ee-external-price-label" hidden />
+            <button type="button" id="ee-external-booking-save" hidden></button>
+            <button type="button" id="ee-external-booking-publish" hidden></button>
           </div>
-          <p class="ee-hint">
-            <a id="ee-connected-plan-link" href="/organiser/connected-booking" hidden>Connected booking — plans &amp; webhook docs</a>
-          </p>
         </div>
 
         <div id="ee-hub-ticket-panels">
@@ -761,6 +755,6 @@
     <script src="../js/hub-field-tip.js?v=20260711" defer></script>
     <script src="../js/organiser-launch-setup.js?v=20260820hubreview1" defer></script>
     <script src="../js/organiser-event-tickets.js?v=20260910tickets1" defer></script>
-    <script src="../js/organiser-event-external-booking.js?v=20260916cbgate1" defer></script>
+    <script src="../js/organiser-event-external-booking.js?v=20260917slots1" defer></script>
   </body>
 </html>

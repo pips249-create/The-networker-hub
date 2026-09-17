@@ -12,6 +12,10 @@ const {
   countPublishedGroupsForAccount,
   groupLimitForPlan,
   PLAN_GROUP_LIMITS,
+  listAccountOrganisersForSlots,
+  listAssignedSlotOrganiserIds,
+  assignConnectedBookingSlots,
+  maybeAutoAssignSingleStarterSlot,
 } = require('../connected-booking');
 const { isSelfServeConnectedPlan } = require('../connected-booking-pricing');
 const {
@@ -226,9 +230,27 @@ module.exports = async function handler(req, res) {
     }
 
     if (req.method === 'GET') {
+      if (isConnectedPlanActive(account)) {
+        try {
+          await maybeAutoAssignSingleStarterSlot(sb, account);
+        } catch (autoErr) {
+          console.warn('[organiser-connected-booking] auto slot assign', autoErr?.message || autoErr);
+        }
+      }
+
       const groupCount = await countPublishedGroupsForAccount(sb, accountId);
       const limit = groupLimitForPlan(account.connected_booking_plan);
       const syncResult = await loadRecentSyncLog(sb, accountId);
+      const slotOrganisers = await listAccountOrganisersForSlots(sb, accountId);
+      const assignedOrganiserIds = slotOrganisers.organisers
+        .filter((o) => o.slotAssigned)
+        .map((o) => o.id);
+      const needsSlotAssignment =
+        isConnectedPlanActive(account) &&
+        limit != null &&
+        assignedOrganiserIds.length === 0 &&
+        slotOrganisers.organisers.length > 0 &&
+        !slotOrganisers.schemaMissing;
 
       const site = String(process.env.SITE_URL || 'https://www.thenetworkeruk.com').replace(/\/$/, '');
       const stripeCheckout = isStripeCheckoutConfigured();
@@ -262,6 +284,12 @@ module.exports = async function handler(req, res) {
         },
         recentSync: syncResult.logs,
         schemaWarning: syncResult.schemaWarning || undefined,
+        slots: {
+          assignedOrganiserIds,
+          accountOrganisers: slotOrganisers.organisers,
+          schemaMissing: slotOrganisers.schemaMissing,
+          needsAssignment: needsSlotAssignment,
+        },
         pilotGrant: pilotGranted
           ? {
               granted: true,
@@ -275,6 +303,21 @@ module.exports = async function handler(req, res) {
 
     if (req.method === 'PATCH') {
       const body = parseBody(req);
+
+      if (body.action === 'assign_connected_slots') {
+        const ids = body.organiserIds || body.organiser_ids || [];
+        const result = await assignConnectedBookingSlots(sb, account, ids);
+        const refreshed = await listAccountOrganisersForSlots(sb, accountId);
+        return json(res, 200, {
+          ok: true,
+          assignedOrganiserIds: result.assignedOrganiserIds,
+          slots: {
+            assignedOrganiserIds: result.assignedOrganiserIds,
+            accountOrganisers: refreshed.organisers,
+          },
+        });
+      }
+
       const patch = {};
 
       if (body.action === 'rotate_webhook_secret') {

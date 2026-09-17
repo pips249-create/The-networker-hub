@@ -153,4 +153,5 @@ module.exports = {
   groupLimitForPlan,
   assertConnectedBookingEntitlement,
   logExternalSync,
+  ...require('./connected-booking-slots'),
 };

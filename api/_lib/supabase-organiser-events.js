@@ -1071,6 +1071,8 @@ async function buildEventRow(payload, eventId, mode) {
     normalizeExternalBookingUrl,
     normalizeExternalPriceLabel,
     assertConnectedBookingEntitlement,
+    assertOrganiserConnectedSlot,
+    loadOrganiserAccountForOrganiserId,
   } = require('./connected-booking');
 
   const editorEmail = payload._editorEmail || payload.email || '';
@@ -1173,7 +1175,10 @@ async function buildEventRow(payload, eventId, mode) {
     }
     if (connectedBookingAllowedForEmail(editorEmail) && organiserId) {
       const sbEnt = getSupabaseAdmin();
-      await assertConnectedBookingEntitlement(sbEnt, organiserId, { skipGroupLimit: true });
+      const entAccount = await assertConnectedBookingEntitlement(sbEnt, organiserId, {
+        skipGroupLimit: true,
+      });
+      await assertOrganiserConnectedSlot(sbEnt, organiserId, entAccount);
     }
     row.ticket_sales_enabled = true;
     row.attendance_mode = 'tickets';
