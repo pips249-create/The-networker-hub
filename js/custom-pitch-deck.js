@@ -130,7 +130,7 @@
     );
   }
 
-  function renderClose(close) {
+  function renderClose(close, companyName) {
     return (
       '<section class="sponsor-pitch-section org-pitch-section--compact" id="close">' +
       '<div class="org-pitch-slide-close">' +
@@ -140,8 +140,39 @@
       '</p>' +
       '<p class="url">' +
       escHtml((close && close.url) || 'thenetworkeruk.com/for-organisers') +
-      '</p></div></section>'
+      '</p></div>' +
+      '<div class="sponsor-pitch-cta">' +
+      '<div><h2>Send this after the meeting</h2>' +
+      '<p>Download a PDF to attach for ' +
+      escHtml(companyName || 'your prospect') +
+      ' — same layout as the Barnsgate partnership deck.</p></div>' +
+      '<div class="sponsor-pitch-cta-actions no-print">' +
+      '<button type="button" class="secondary" id="pitch-download-pdf-cta">Download PDF</button>' +
+      '<a class="primary" href="mailto:rosie@thenetworkeruk.com">Email Rosie →</a>' +
+      '</div></div></section>'
     );
+  }
+
+  function pdfFilenameForCompany(name) {
+    var base =
+      String(name || 'prospect')
+        .trim()
+        .replace(/[^a-z0-9]+/gi, '-')
+        .replace(/^-+|-+$/g, '') || 'prospect';
+    return base + '-Networker-UK-Pitch.pdf';
+  }
+
+  function bindPitchPdfDownload(companyName) {
+    if (!window.HubPitchPdf) return;
+    window.HubPitchPdf.bindButtons({
+      filename: pdfFilenameForCompany(companyName),
+      hideSelectors: ['.no-print', '.sponsor-pitch-nav', '.org-pitch-present'],
+      onSuccess: function () {
+        if (window.HubPitchAnalytics && typeof window.HubPitchAnalytics.record === 'function') {
+          window.HubPitchAnalytics.record('pdf_download');
+        }
+      },
+    });
   }
 
   function renderPresentSlides(deck) {
@@ -340,13 +371,17 @@
       renderHero(deck.hero || {}) +
       renderNav(sections) +
       sections.map(renderSection).join('') +
-      renderClose(deck.close);
+      renderClose(deck.close, payload.companyName);
 
     var slideHost = document.getElementById('org-pitch-present-slides');
     if (slideHost) slideHost.innerHTML = renderPresentSlides(deck);
 
     bindSectionNav();
     bindPresentMode();
+    bindPitchPdfDownload(payload.companyName);
+
+    var pdfBannerBtn = document.getElementById('pitch-download-pdf');
+    if (pdfBannerBtn) pdfBannerBtn.disabled = false;
   }
 
   var slug = deckSlugFromPath();
