@@ -222,8 +222,13 @@ function hasOpportunityListingLaunchOffer(placements) {
   return (placements || []).indexOf('opportunity_directory_listing') !== -1;
 }
 
+/** 3-month Premium Spotlight is bundled with the directory listing launch offer (even if boost isn’t ticked). */
 function hasOpportunitySpotlightLaunchOffer(placements) {
-  return (placements || []).indexOf('featured_opportunity_boost') !== -1;
+  const list = placements || [];
+  return (
+    list.indexOf('featured_opportunity_boost') !== -1 ||
+    list.indexOf('opportunity_directory_listing') !== -1
+  );
 }
 
 function applyOpportunityLaunchOfferToSection(key, section, companyName) {
@@ -237,7 +242,8 @@ function applyOpportunityLaunchOfferToSection(key, section, companyName) {
       (section.intro ? ' ' + section.intro : '');
     section.bullets = [
       '12 months of the standard directory listing at no subscription charge (normally £25/month + VAT)',
-      'Public detail page plus inclusion in /opportunities/ search and browse while the offer is active',
+      'Includes 3 months Premium Spotlight on /opportunities/ browse at no charge (normally £55 per ~30-day boost)',
+      'Public detail page plus inclusion in /opportunities/ search while the offer is active',
       'Member enquiries routed to your listing owner — no per-lead fee during the included year',
       'After month 12, continue at the published listing rate or pause — Headline Sponsor and email inventory remain separate packages',
     ];
@@ -259,31 +265,51 @@ function applyOpportunityLaunchOfferToSection(key, section, companyName) {
   return section;
 }
 
-function buildSponsorshipSections(placements, companyName, brief, options) {
+function buildSectionForPlacement(key, companyName, brief, applyLaunch) {
   const co = companyName || 'your brand';
   const briefBit = brief ? String(brief).trim() : '';
+  const p = SPONSORSHIP_PLACEMENT_CATALOG[key];
+  if (!p) return null;
+  let intro = 'Why this fits ' + co + '.';
+  if (briefBit) intro += ' ' + briefBit;
+  const section = {
+    id: 'sponsor_' + key,
+    navLabel: p.nav,
+    kicker: p.kicker,
+    title: p.title,
+    intro: intro,
+    bullets: (p.bullets || []).slice(),
+    price: p.price || '',
+    tiles: [],
+    quote: '',
+  };
+  if (applyLaunch) {
+    applyOpportunityLaunchOfferToSection(key, section, co);
+  }
+  return section;
+}
+
+function buildSponsorshipSections(placements, companyName, brief, options) {
   const applyLaunch =
     !options || options.applyOpportunityLaunchOffer !== false;
-  return placements.map(function (key) {
-    const p = SPONSORSHIP_PLACEMENT_CATALOG[key];
-    let intro = 'Why this fits ' + co + '.';
-    if (briefBit) intro += ' ' + briefBit;
-    const section = {
-      id: 'sponsor_' + key,
-      navLabel: p.nav,
-      kicker: p.kicker,
-      title: p.title,
-      intro: intro,
-      bullets: (p.bullets || []).slice(),
-      price: p.price || '',
-      tiles: [],
-      quote: '',
-    };
-    if (applyLaunch) {
-      applyOpportunityLaunchOfferToSection(key, section, co);
-    }
-    return section;
-  });
+  const ordered = placements || [];
+  const sections = ordered
+    .map(function (key) {
+      return buildSectionForPlacement(key, companyName, brief, applyLaunch);
+    })
+    .filter(Boolean);
+
+  if (
+    applyLaunch &&
+    ordered.indexOf('opportunity_directory_listing') !== -1 &&
+    ordered.indexOf('featured_opportunity_boost') === -1
+  ) {
+    sections.push(
+      buildSectionForPlacement('featured_opportunity_boost', companyName, brief, applyLaunch)
+    );
+  }
+
+  return sections;
 }
 
 function launchOfferHeroChips(placements) {

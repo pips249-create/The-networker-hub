@@ -31081,7 +31081,7 @@
           return (
             '<section class="admin-dash-section">' +
             '<div class="admin-dash-section-head"><h3>Tailored pitch decks</h3>' +
-            '<p>Pick <strong>sponsorship placements</strong> (Headline Sponsor, business opportunity listing, etc.) and/or organiser onboarding sections — present fullscreen or use <strong>Download PDF</strong> on the deck (Barnsgate-style) to attach after the meeting.</p></div>' +
+            '<p>Pick <strong>sponsorship placements</strong> (Headline Sponsor, business opportunity listing, etc.) and/or organiser onboarding sections — present fullscreen or use <strong>Download PDF</strong> on the deck (Barnsgate-style) to attach after the meeting. Ticking <strong>Directory listing</strong> alone includes the launch offer: <strong>12 months free listing + 3 months free Premium Spotlight</strong>.</p></div>' +
             '<div class="admin-dash-section-body space-y-4">' +
             (profile && !editing
               ? '<div class="rounded-xl border border-brand-200 bg-brand-50/60 p-3 text-sm text-brand-950">' +
