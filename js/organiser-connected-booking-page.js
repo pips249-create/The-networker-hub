@@ -1,4 +1,39 @@
 (function () {
+  var embed = window.HubOrganiserEmbedBootstrap || {};
+
+  function initEmbedDrawerNav() {
+    if (typeof embed.applyEmbedDrawerBodyClass === 'function') {
+      embed.applyEmbedDrawerBodyClass();
+    }
+    var isEmbed =
+      typeof embed.isEmbedDrawer === 'function' ? embed.isEmbedDrawer() : false;
+    if (!isEmbed) return;
+    var backBtn = document.getElementById('cb-embed-back-tickets');
+    var ids =
+      typeof embed.eventIdsFromSearch === 'function' ? embed.eventIdsFromSearch() : [];
+    if (backBtn && ids.length) {
+      backBtn.hidden = false;
+      backBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        if (
+          typeof embed.notifyParent === 'function' &&
+          embed.notifyParent('hub-event-goto-tickets', {
+            eventIds: ids,
+            title: '',
+          })
+        ) {
+          return;
+        }
+        location.href =
+          '/organiser/event-tickets?ids=' +
+          encodeURIComponent(ids.join(',')) +
+          '&embed=1';
+      });
+    }
+  }
+
+  initEmbedDrawerNav();
+
   var site = location.origin.replace(/\/$/, '');
   var webhookUrl = site + '/api/integrations/booking';
 

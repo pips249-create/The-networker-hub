@@ -145,7 +145,71 @@
     organiserAccess: false,
     organiserEmailVerified: false,
     dashboardScope: null,
+    connectedBooking: null,
   };
+
+  let connectedBookingLoadPromise = null;
+
+  function dispatchConnectedBookingDetail(payload, groupTotal) {
+    if (!payload || typeof window === 'undefined') return;
+    try {
+      window.dispatchEvent(
+        new CustomEvent('hub-organiser-connected-booking', {
+          detail: Object.assign({}, payload, {
+            groupTotal: groupTotal != null ? groupTotal : state.groups.length,
+          }),
+        })
+      );
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function loadConnectedBookingMeta(forceRefresh) {
+    if (!forceRefresh && connectedBookingLoadPromise) {
+      return connectedBookingLoadPromise;
+    }
+    connectedBookingLoadPromise = fetch('/api/organiser/connected-booking', {
+      credentials: 'include',
+      cache: 'no-store',
+    })
+      .then(function (r) {
+        return r.json().then(function (data) {
+          return { status: r.status, data: data };
+        });
+      })
+      .then(function (res) {
+        if (res.status === 403 || res.status === 404) {
+          state.connectedBooking = null;
+          return null;
+        }
+        state.connectedBooking = res.data || null;
+        dispatchConnectedBookingDetail(state.connectedBooking, state.groups.length);
+        return state.connectedBooking;
+      })
+      .catch(function () {
+        connectedBookingLoadPromise = null;
+        return null;
+      });
+    return connectedBookingLoadPromise;
+  }
+
+  function connectedSlotCellHtml(groupId) {
+    var cb = state.connectedBooking;
+    if (!cb || !cb.ok || !cb.active) {
+      return '<span class="org-muted">—</span>';
+    }
+    var slots = cb.slots || {};
+    var ids = slots.assignedOrganiserIds || [];
+    if (!ids.some(function (id) {
+      return String(id) === String(groupId);
+    })) {
+      return '<span class="org-muted">—</span>';
+    }
+    return (
+      '<span class="org-badge org-badge-teal org-connected-slot-badge" title="This organiser page uses your Connected booking plan">Connected</span>'
+    );
+  }
 
   let groupClaimRejectMode = false;
   let groupClaimSubmitInFlight = false;
@@ -11964,6 +12028,10 @@
         Promise.resolve()
           .then(function () {
             if (typeof renderGroups === 'function') renderGroups();
+            return loadConnectedBookingMeta(true);
+          })
+          .then(function () {
+            if (typeof renderGroups === 'function') renderGroups();
           })
           .catch(function () {
             return null;
@@ -12302,6 +12370,8 @@
         ratingHtml(g.rating) +
         '</td><td>' +
         statusBadgeHtml(g.statusKey || 'draft', g.statusLabel || 'Draft') +
+        '</td><td class="org-td-connected">' +
+        connectedSlotCellHtml(g.id) +
         '</td><td class="org-td-actions">' +
         '<button type="button" class="org-btn org-btn-sm org-btn-outline org-member-list-link" data-org-goto-memberships="' +
         esc(g.id) +
@@ -19679,6 +19749,32 @@
       if (e.data && e.data.type === 'hub-event-goto-tickets') {
         const ids = Array.isArray(e.data.eventIds) ? e.data.eventIds : [];
         if (ids.length) openEventTicketsDrawer(ids, e.data.title || '');
+        return;
+      }
+      if (e.data && e.data.type === 'hub-event-goto-connected-setup') {
+        const eid = String(e.data.eventId || '').trim();
+        const ids = Array.isArray(e.data.eventIds) ? e.data.eventIds.filter(Boolean) : [];
+        if (!eid) return;
+        let url =
+          '/organiser/event-connected-setup?id=' +
+          encodeURIComponent(eid) +
+          '&embed=1';
+        if (ids.length) {
+          url += '&returnIds=' + encodeURIComponent(ids.join(','));
+        }
+        openEventDrawerFrame(url, e.data.title || 'Connected event setup', null, {
+          progressStep: 'tickets',
+        });
+        return;
+      }
+      if (e.data && e.data.type === 'hub-event-goto-connected-booking') {
+        const ids = Array.isArray(e.data.eventIds) ? e.data.eventIds.filter(Boolean) : [];
+        let url = '/organiser/connected-booking?embed=1';
+        if (ids.length) {
+          url += '&returnIds=' + encodeURIComponent(ids.join(','));
+        }
+        url += '#cb-slots-panel';
+        openEventDrawerFrame(url, 'Connected plan', null, { progressStep: 'tickets' });
         return;
       }
       if (e.data && e.data.type === 'hub-event-tickets-done') {
