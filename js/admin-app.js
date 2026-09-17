@@ -11519,7 +11519,13 @@
           renderPartners(data);
           var total = Number(data.total) || 0;
           var active = Number(data.activeCount) || 0;
-          if (data.clicksTableMissing) {
+          if (data.termsColumnsMissing) {
+            setStatus(
+              statusEl,
+              'Terms columns missing — run migration 296_affiliate_partner_terms.sql in Supabase (partner table from 289 is OK).',
+              'error'
+            );
+          } else if (data.clicksTableMissing) {
             setStatus(
               statusEl,
               'Click tracking is off — run migration 290_affiliate_clicks.sql in Supabase, then hard-refresh and open a ?ref= link again.',
@@ -11539,9 +11545,7 @@
         .catch(function (err) {
           if (bodyEl) {
             bodyEl.innerHTML =
-              '<p class="text-sm text-red-700">' +
-              esc((err && err.message) || 'Could not load partners') +
-              '</p>';
+              '<p class="text-sm text-red-700">Could not load partners. See the message above the form.</p>';
           }
           setStatus(statusEl, (err && err.message) || 'Could not load partners', 'error');
         });
