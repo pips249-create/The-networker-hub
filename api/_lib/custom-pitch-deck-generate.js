@@ -56,6 +56,17 @@ function hostFromWebsite(website) {
   }
 }
 
+function defaultProspectLogoFromWebsite(website) {
+  const host = hostFromWebsite(website);
+  return host ? 'https://logo.clearbit.com/' + host : '';
+}
+
+function resolveProspectLogoUrl(explicit, website) {
+  const url = cleanText(explicit, 2000);
+  if (url) return url;
+  return defaultProspectLogoFromWebsite(website);
+}
+
 function normalizeSections(raw, opts) {
   const list = Array.isArray(raw) ? raw : [];
   const out = [];
@@ -267,7 +278,7 @@ function sectionTemplates(companyName, website, brief) {
 function buildOrganiserHero(companyName, website, brief, prospectLogoUrl) {
   const co = cleanText(companyName, 120) || 'Your group';
   const host = hostFromWebsite(website);
-  const logo = cleanText(prospectLogoUrl, 2000);
+  const logo = resolveProspectLogoUrl(prospectLogoUrl, website);
   return {
     preparedFor: co,
     website: normalizeWebsite(website),
@@ -285,7 +296,7 @@ function buildOrganiserHero(companyName, website, brief, prospectLogoUrl) {
 function buildSponsorshipHero(companyName, website, brief, prospectLogoUrl, placements) {
   const co = cleanText(companyName, 120) || 'Your brand';
   const host = hostFromWebsite(website);
-  const logo = cleanText(prospectLogoUrl, 2000);
+  const logo = resolveProspectLogoUrl(prospectLogoUrl, website);
   const offerChips = launchOfferHeroChips(placements || []);
   const defaultLede =
     'Reach business owners, event bookers, and opportunity seekers across our Events, Organisers, and Business Opportunities directories — with exclusive and self-serve placements.';

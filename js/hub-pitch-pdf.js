@@ -123,6 +123,26 @@
     });
   }
 
+  function createFixedWidthClone(shell, width) {
+    var w = width || 760;
+    var host = document.createElement('div');
+    host.setAttribute('data-hub-pitch-pdf-clone', '1');
+    host.style.cssText =
+      'position:fixed;left:0;top:0;width:' +
+      w +
+      'px;opacity:0.01;pointer-events:none;z-index:2147483646;overflow:visible;background:#fffdf9';
+    var clone = shell.cloneNode(true);
+    clone.classList.add('hub-pitch-pdf-clone-shell');
+    host.appendChild(clone);
+    document.body.appendChild(host);
+    return {
+      target: clone,
+      cleanup: function () {
+        host.remove();
+      },
+    };
+  }
+
   function downloadFromShell(options) {
     options = options || {};
     var shell = document.querySelector(options.shellSelector || '.sponsor-pitch-shell');
@@ -134,6 +154,8 @@
     var filename = options.filename || 'Networker-UK-pitch.pdf';
     var hideSelectors = options.hideSelectors || ['.no-print', '.sponsor-pitch-nav'];
     var buttons = options.buttons || [];
+    var cloneMount = null;
+    var captureShell = shell;
 
     setButtonsBusy(buttons, true);
     var hideNodes = [];
@@ -147,15 +169,22 @@
       el.style.display = 'none';
     });
 
-    var restoreImages = prepareShellImagesForPdf(shell, options.imageHook);
+    shell.classList.add('hub-pitch-pdf-capture');
+    if (options.fixedWidthClone) {
+      cloneMount = createFixedWidthClone(shell, options.cloneWidth || 760);
+      captureShell = cloneMount.target;
+    }
 
-    return waitForImages(shell, options.imageTimeoutMs || 4000)
+    var restoreImages = prepareShellImagesForPdf(captureShell, options.imageHook);
+
+    return waitForImages(captureShell, options.imageTimeoutMs || 5000)
       .then(function () {
         return loadHtml2PdfLibrary();
       })
       .then(function (html2pdf) {
+        var captureWidth = captureShell.scrollWidth || captureShell.offsetWidth || 760;
         var opt = {
-          margin: [10, 10, 10, 10],
+          margin: options.margin || [8, 8, 8, 8],
           filename: filename,
           image: { type: 'jpeg', quality: 0.96 },
           html2canvas: {
@@ -164,18 +193,26 @@
             allowTaint: false,
             backgroundColor: options.backgroundColor || '#fffdf9',
             logging: false,
-            imageTimeout: 5000,
-            windowWidth: Math.max(shell.scrollWidth, 980),
+            imageTimeout: 8000,
+            scrollX: 0,
+            scrollY: 0,
+            windowWidth: captureWidth,
+            width: captureWidth,
           },
           jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
           pagebreak: {
             mode: ['css', 'legacy'],
-            avoid: options.pagebreakAvoid || ['.org-pitch-tile', '.pitch-stat', '.sponsor-pitch-cta'],
+            avoid: options.pagebreakAvoid || [
+              '.org-pitch-tile',
+              '.pitch-stat',
+              '.sponsor-pitch-cta',
+              '.org-pitch-hero-showcase',
+            ],
           },
         };
         return html2pdf()
           .set(opt)
-          .from(shell)
+          .from(captureShell)
           .outputPdf('blob')
           .then(function (blob) {
             if (!blob) throw new Error('empty pdf');
@@ -192,6 +229,8 @@
       })
       .finally(function () {
         restoreImages();
+        if (cloneMount && cloneMount.cleanup) cloneMount.cleanup();
+        shell.classList.remove('hub-pitch-pdf-capture');
         hideNodes.forEach(function (el) {
           el.style.display = el.getAttribute('data-pdf-was-hidden') || '';
           el.removeAttribute('data-pdf-was-hidden');

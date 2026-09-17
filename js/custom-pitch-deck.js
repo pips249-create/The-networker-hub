@@ -17,6 +17,57 @@
     return '';
   }
 
+  function logoUrlFromWebsite(website) {
+    try {
+      var raw = String(website || '').trim();
+      if (!raw) return '';
+      var url = /^https?:\/\//i.test(raw) ? raw : 'https://' + raw.replace(/^\/+/, '');
+      var host = new URL(url).hostname.replace(/^www\./i, '');
+      return host ? 'https://logo.clearbit.com/' + host : '';
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function enrichHero(hero, payload) {
+    hero = hero || {};
+    if (!hero.prospectLogoUrl && payload && payload.prospectLogoUrl) {
+      hero.prospectLogoUrl = payload.prospectLogoUrl;
+    }
+    if (!hero.prospectLogoUrl && payload && payload.website) {
+      hero.prospectLogoUrl = logoUrlFromWebsite(payload.website);
+    }
+    if (!hero.prospectLogoUrl && hero.website) {
+      hero.prospectLogoUrl = logoUrlFromWebsite(hero.website);
+    }
+    if (!hero.preparedFor && payload && payload.companyName) {
+      hero.preparedFor = payload.companyName;
+    }
+    return hero;
+  }
+
+  function renderProspectLogoBlock(hero) {
+    var name = String(hero.preparedFor || 'Partner').trim();
+    if (hero.prospectLogoUrl) {
+      return (
+        '<img src="' +
+        escHtml(hero.prospectLogoUrl) +
+        '" alt="' +
+        escHtml(name) +
+        '" width="220" height="64" class="org-pitch-prospect-logo" crossorigin="anonymous" referrerpolicy="no-referrer">'
+      );
+    }
+    var initials = name
+      .split(/\s+/)
+      .slice(0, 2)
+      .map(function (w) {
+        return w.charAt(0);
+      })
+      .join('')
+      .toUpperCase();
+    return '<span class="org-pitch-prospect-mark">' + escHtml(initials || name.slice(0, 2).toUpperCase()) + '</span>';
+  }
+
   function renderHero(hero) {
     var chips = (hero.chips || [])
       .map(function (c) {
@@ -30,22 +81,14 @@
         escHtml(hero.websiteLabel || hero.website) +
         '</a>'
       : '';
-    var prospectLogo = hero.prospectLogoUrl
-      ? '<img src="' +
-        escHtml(hero.prospectLogoUrl) +
-        '" alt="" width="200" height="64" class="org-pitch-prospect-logo">'
-      : '';
     var logos =
-      prospectLogo
-        ? '<div class="org-pitch-hero-logos">' +
-          prospectLogo +
-          '<span class="org-pitch-logo-x" aria-hidden="true">×</span>' +
-          '<img src="/assets/logo-nav-transparent.png?v=20260823uk3" alt="The Networker UK" width="220" height="48">' +
-          '</div>'
-        : '<div class="org-pitch-hero-logos">' +
-          '<img src="/assets/logo-nav-transparent.png?v=20260823uk3" alt="The Networker UK" width="220" height="48">' +
-          '</div>';
+      '<div class="org-pitch-hero-logos">' +
+      renderProspectLogoBlock(hero) +
+      '<span class="org-pitch-logo-x" aria-hidden="true">×</span>' +
+      '<img src="/assets/logo-nav-transparent.png?v=20260823uk3" alt="The Networker UK" width="220" height="48">' +
+      '</div>';
     return (
+      '<div class="org-pitch-hero-showcase">' +
       '<header class="sponsor-pitch-hero">' +
       logos +
       '<p class="sponsor-pitch-kicker">Prepared for ' +
@@ -59,7 +102,7 @@
       '</p>' +
       (chips ? '<div class="org-pitch-chip-row">' + chips + '</div>' : '') +
       (website ? '<p class="text-sm mt-3 opacity-80">' + website + '</p>' : '') +
-      '</header>'
+      '</header></div>'
     );
   }
 
@@ -120,7 +163,9 @@
       escHtml(section.title || '') +
       '</h2>' +
       (section.price
-        ? '<p class="section-intro"><strong>' + escHtml(section.price) + '</strong></p>'
+        ? /included|no charge|free/i.test(String(section.price))
+          ? '<p class="org-pitch-launch-price">' + escHtml(section.price) + '</p>'
+          : '<p class="section-intro"><strong>' + escHtml(section.price) + '</strong></p>'
         : '') +
       (section.intro
         ? '<p class="section-intro">' + escHtml(section.intro) + '</p>'
@@ -162,11 +207,44 @@
     return base + '-Networker-UK-Pitch.pdf';
   }
 
+  function bindProspectLogoFallback(root, companyName) {
+    if (!root) return;
+    var name = String(companyName || 'Partner').trim();
+    var initials = name
+      .split(/\s+/)
+      .slice(0, 2)
+      .map(function (w) {
+        return w.charAt(0);
+      })
+      .join('')
+      .toUpperCase();
+    root.querySelectorAll('.org-pitch-prospect-logo').forEach(function (img) {
+      img.addEventListener(
+        'error',
+        function () {
+          var mark = document.createElement('span');
+          mark.className = 'org-pitch-prospect-mark';
+          mark.textContent = initials || name.slice(0, 2).toUpperCase();
+          if (img.parentNode) img.parentNode.replaceChild(mark, img);
+        },
+        { once: true }
+      );
+    });
+  }
+
   function bindPitchPdfDownload(companyName) {
     if (!window.HubPitchPdf) return;
     window.HubPitchPdf.bindButtons({
       filename: pdfFilenameForCompany(companyName),
+      fixedWidthClone: true,
+      cloneWidth: 760,
       hideSelectors: ['.no-print', '.sponsor-pitch-nav', '.org-pitch-present'],
+      imageHook: function (img, src) {
+        if (/^https?:\/\//i.test(src) && src.indexOf(window.location.origin) !== 0) {
+          img.setAttribute('crossorigin', 'anonymous');
+        }
+        return null;
+      },
       onSuccess: function () {
         if (window.HubPitchAnalytics && typeof window.HubPitchAnalytics.record === 'function') {
           window.HubPitchAnalytics.record('pdf_download');
@@ -348,9 +426,7 @@
 
   function renderDeck(payload) {
     var deck = payload.deck || {};
-    if (deck.hero && payload.prospectLogoUrl && !deck.hero.prospectLogoUrl) {
-      deck.hero.prospectLogoUrl = payload.prospectLogoUrl;
-    }
+    deck.hero = enrichHero(deck.hero, payload);
     var sections = deck.sections || [];
     var root = document.getElementById('custom-pitch-root');
     if (!root) return;
@@ -378,6 +454,7 @@
 
     bindSectionNav();
     bindPresentMode();
+    bindProspectLogoFallback(root, payload.companyName);
     bindPitchPdfDownload(payload.companyName);
 
     var pdfBannerBtn = document.getElementById('pitch-download-pdf');
