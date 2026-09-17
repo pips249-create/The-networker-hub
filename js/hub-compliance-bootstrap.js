@@ -3,7 +3,7 @@
  * Loaded by site-nav.js and standalone pages without the main nav.
  */
 (function () {
-  var BUILD = '20260901cmp2';
+  var BUILD = '20260917cmp3';
   var FONT_SAFE = 'js/hub-fonts-safe.js?v=20260828fonts1';
 
   function ensureFontSafety(root) {
@@ -53,7 +53,7 @@
     var embed = options.embed === true || (options.embed !== false && isEmbedContext());
 
     ensureFontSafety(root);
-    loadAsset(root, 'js/hub-sentry.js?v=20260901sentry7', { defer: false });
+    loadAsset(root, 'js/hub-sentry.js?v=20260917sentry8', { defer: false });
 
     if (embed) {
       window.HubCookieConsent = window.HubCookieConsent || {
