@@ -6,6 +6,7 @@ const { emailSiteBase } = require('./hub-email-urls');
 const { mapPartnerRow } = require('./affiliate-programme');
 const { emailGreetingName } = require('./email-display-name');
 const { partnerInviteEmailAttachments } = require('./partner-programme-email-assets');
+const { termsPagePath, acceptPagePath } = require('./partner-terms');
 
 function partnerInviteVariables(partner) {
   const mapped = mapPartnerRow(partner) || {};
@@ -29,6 +30,8 @@ function partnerInviteVariables(partner) {
       mapped.linkMediaKit ||
       site + '/partners/earnings?ref=' + encodeURIComponent(code),
     support_email: 'partnerships@thenetworkeruk.com',
+    terms_url: site + termsPagePath(),
+    accept_terms_url: site + acceptPagePath(code),
   };
 }
 

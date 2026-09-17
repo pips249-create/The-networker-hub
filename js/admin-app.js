@@ -11201,6 +11201,19 @@
               ? '<span class="text-emerald-700 font-semibold">Active</span>'
               : '<span class="text-slate-500">Inactive</span>') +
             '</td>' +
+            '<td class="px-3 py-2 text-xs">' +
+            (row.termsAccepted
+              ? '<span class="text-emerald-700 font-semibold">Accepted</span>'
+              : '<span class="text-amber-800 font-semibold">Pending</span>') +
+            (row.applicationTermsAgreedAt && !row.termsAccepted
+              ? '<div class="text-slate-500 mt-0.5">Applied OK</div>'
+              : '') +
+            (!row.termsAccepted
+              ? '<button type="button" class="block text-left text-brand-700 hover:underline mt-1" data-aff-mark-terms="' +
+                attrEsc(row.id || '') +
+                '">Mark accepted (email)</button>'
+              : '') +
+            '</td>' +
             '<td class="px-3 py-2 text-sm tabular-nums">' +
             '<strong>' +
             esc(String(clicksTotal)) +
@@ -11250,7 +11263,7 @@
       bodyEl.innerHTML =
         '<table class="min-w-full text-left">' +
         '<thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">' +
-        '<tr><th class="px-3 py-2">Code</th><th class="px-3 py-2">Partner</th><th class="px-3 py-2">Status</th><th class="px-3 py-2">Clicks</th><th class="px-3 py-2">Links</th><th class="px-3 py-2"></th></tr>' +
+        '<tr><th class="px-3 py-2">Code</th><th class="px-3 py-2">Partner</th><th class="px-3 py-2">Status</th><th class="px-3 py-2">Terms</th><th class="px-3 py-2">Clicks</th><th class="px-3 py-2">Links</th><th class="px-3 py-2"></th></tr>' +
         '</thead><tbody>' +
         rows +
         '</tbody></table>';
@@ -11307,6 +11320,24 @@
             btn.getAttribute('data-aff-activity-code'),
             btn.getAttribute('data-aff-activity-name')
           );
+        });
+      });
+      bodyEl.querySelectorAll('[data-aff-mark-terms]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var id = btn.getAttribute('data-aff-mark-terms');
+          if (!window.confirm('Record terms as accepted for this partner (e.g. email agreement)?')) return;
+          btn.disabled = true;
+          adminPost('/api/admin/affiliate-partners', { action: 'mark_terms_accepted', id: id })
+            .then(function (res) {
+              if (!res || !res.ok) throw new Error((res && res.message) || res.error || 'update_failed');
+              return loadPartners();
+            })
+            .catch(function (err) {
+              setStatus(statusEl, (err && err.message) || 'Could not update terms', 'error');
+            })
+            .finally(function () {
+              btn.disabled = false;
+            });
         });
       });
     }

@@ -294,6 +294,7 @@
     "api/contact-chat.js": { "maxDuration": 30 },
     "api/contact-message.js": { "maxDuration": 15 },
     "api/partner-enquire.js": { "maxDuration": 15 },
+    "api/partner-terms.js": { "maxDuration": 15 },
     "api/event-intake.js": { "maxDuration": 15 },
     "api/advertising.js": { "maxDuration": 15 },
     "api/international-interest.js": { "maxDuration": 10 },
@@ -401,6 +402,14 @@
     {
       "source": "/partners/earnings",
       "destination": "/partners/earnings.html"
+    },
+    {
+      "source": "/partners/terms",
+      "destination": "/partners/terms.html"
+    },
+    {
+      "source": "/partners/accept-terms",
+      "destination": "/partners/accept-terms.html"
     },
     {
       "source": "/advertising",

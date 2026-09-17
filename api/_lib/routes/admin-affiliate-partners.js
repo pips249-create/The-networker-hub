@@ -18,6 +18,7 @@ const {
   isAffiliateEligibleProduct,
 } = require('../affiliate-commissions');
 const { sendPartnerInviteEmail } = require('../partner-invite-email');
+const { REFERRAL_PARTNER_TERMS_VERSION } = require('../partner-terms');
 
 function parseBody(req) {
   let body = req.body;
@@ -48,7 +49,9 @@ function poundsToPence(raw) {
 async function listPartners(sb) {
   const { data, error } = await sb
     .from('affiliate_partners')
-    .select('id, code, display_name, email, active, notes, created_at, updated_at')
+    .select(
+      'id, code, display_name, email, active, notes, created_at, updated_at, terms_accepted_at, terms_version, application_terms_agreed_at'
+    )
     .order('created_at', { ascending: false })
     .limit(200);
   if (error) {
@@ -208,7 +211,9 @@ module.exports = async function handler(req, res) {
           created_at: now,
           updated_at: now,
         })
-        .select('id, code, display_name, email, active, notes, created_at, updated_at')
+        .select(
+      'id, code, display_name, email, active, notes, created_at, updated_at, terms_accepted_at, terms_version, application_terms_agreed_at'
+    )
         .single();
 
       if (error) {
@@ -241,7 +246,9 @@ module.exports = async function handler(req, res) {
         .from('affiliate_partners')
         .update({ active, updated_at: new Date().toISOString() })
         .eq('id', id)
-        .select('id, code, display_name, email, active, notes, created_at, updated_at')
+        .select(
+      'id, code, display_name, email, active, notes, created_at, updated_at, terms_accepted_at, terms_version, application_terms_agreed_at'
+    )
         .maybeSingle();
 
       if (error) throw new Error(error.message);
@@ -258,7 +265,9 @@ module.exports = async function handler(req, res) {
 
       let query = sb
         .from('affiliate_partners')
-        .select('id, code, display_name, email, active, notes, created_at, updated_at');
+        .select(
+      'id, code, display_name, email, active, notes, created_at, updated_at, terms_accepted_at, terms_version, application_terms_agreed_at'
+    );
       if (id) query = query.eq('id', id);
       else query = query.eq('code', code);
 
@@ -355,6 +364,36 @@ module.exports = async function handler(req, res) {
     if (action === 'promote_eligible') {
       const result = await promoteEligibleAffiliateCommissions();
       return json(res, 200, { ok: true, ...result });
+    }
+
+    if (action === 'mark_terms_accepted') {
+      const id = String(body.id || '').trim();
+      if (!id) return json(res, 400, { ok: false, error: 'missing_id' });
+      const now = new Date().toISOString();
+      const { data, error } = await sb
+        .from('affiliate_partners')
+        .update({
+          terms_accepted_at: now,
+          terms_version: REFERRAL_PARTNER_TERMS_VERSION,
+          updated_at: now,
+        })
+        .eq('id', id)
+        .select(
+          'id, code, display_name, email, active, notes, created_at, updated_at, terms_accepted_at, terms_version, application_terms_agreed_at'
+        )
+        .maybeSingle();
+      if (error) {
+        if (/terms_accepted_at|schema cache/i.test(error.message || '')) {
+          return json(res, 503, {
+            ok: false,
+            error: 'terms_columns_missing',
+            message: 'Run migration 296_affiliate_partner_terms.sql in Supabase.',
+          });
+        }
+        throw new Error(error.message);
+      }
+      if (!data) return json(res, 404, { ok: false, error: 'not_found' });
+      return json(res, 200, { ok: true, partner: mapPartnerRow(data) });
     }
 
     return json(res, 400, { ok: false, error: 'unknown_action' });

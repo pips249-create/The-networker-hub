@@ -244,6 +244,10 @@ function mapPartnerRow(row, clickStats) {
       'https://www.thenetworkeruk.com/partners/earnings?ref=' + encodeURIComponent(row.code),
     linkPartnerHub:
       'https://www.thenetworkeruk.com/partners/earnings?ref=' + encodeURIComponent(row.code),
+    termsAcceptedAt: row.terms_accepted_at || null,
+    termsVersion: row.terms_version || null,
+    termsAccepted: require('./partner-terms').partnerTermsAccepted(row),
+    applicationTermsAgreedAt: row.application_terms_agreed_at || null,
   };
 }
 
