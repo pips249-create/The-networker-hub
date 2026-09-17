@@ -30,6 +30,65 @@ function parseBody(req) {
   return body || {};
 }
 
+async function loadOrganiserAccountRow(sb, accountId) {
+  const accountSelectWithCustomer =
+    'id, connected_booking_plan, connected_booking_status, connected_booking_webhook_secret, connected_booking_stripe_subscription_id, connected_booking_stripe_customer_id';
+  const accountSelectBase =
+    'id, connected_booking_plan, connected_booking_status, connected_booking_webhook_secret, connected_booking_stripe_subscription_id';
+
+  let account = null;
+  let accErr = null;
+  ({ data: account, error: accErr } = await sb
+    .from('organiser_accounts')
+    .select(accountSelectWithCustomer)
+    .eq('id', accountId)
+    .maybeSingle());
+  if (accErr && /connected_booking|does not exist|column/i.test(accErr.message || '')) {
+    ({ data: account, error: accErr } = await sb
+      .from('organiser_accounts')
+      .select(accountSelectBase)
+      .eq('id', accountId)
+      .maybeSingle());
+  }
+  if (accErr) {
+    const e = new Error(
+      'Connected booking database columns are missing. Run Supabase migration 292_external_connected_booking.sql (and 293_connected_booking_stripe_customer.sql for billing).'
+    );
+    e.code = 'connected_booking_schema_missing';
+    e.status = 503;
+    throw e;
+  }
+  return account;
+}
+
+async function loadRecentSyncLog(sb, accountId) {
+  try {
+    const { data, error } = await sb
+      .from('external_booking_sync_log')
+      .select('id, created_at, event_id, external_order_id, outcome, message, http_status')
+      .eq('organiser_account_id', accountId)
+      .order('created_at', { ascending: false })
+      .limit(15);
+    if (error) {
+      if (/external_booking_sync_log|does not exist|relation/i.test(error.message || '')) {
+        return { logs: [], schemaWarning: 'Sync log table missing — run migration 292.' };
+      }
+      throw new Error(error.message);
+    }
+    return { logs: data || [], schemaWarning: null };
+  } catch (e) {
+    console.warn('[organiser-connected-booking] sync log unavailable', e?.message || e);
+    return { logs: [], schemaWarning: 'Sync log unavailable.' };
+  }
+}
+
+function connectedBookingErrorFallback(err) {
+  if (err && err.code === 'connected_booking_schema_missing' && err.message) {
+    return String(err.message).trim();
+  }
+  return 'Connected booking could not load. Run Supabase migrations 292 and 293 on production, then refresh.';
+}
+
 async function resolveOrganiserAccountId(sb, session, adminView) {
   const scope = await resolveOrganiserGroupScope(session, adminView);
   const accountId = String(scope.organiserAccountId || '').trim();
@@ -61,7 +120,13 @@ module.exports = async function handler(req, res) {
   if (!auth.ok) return json(res, auth.status, { error: auth.error });
 
   if (!connectedBookingAllowedForSession(auth.session)) {
-    return json(res, 404, { ok: false, error: 'not_found' });
+    return json(res, 403, {
+      ok: false,
+      error: 'preview_restricted',
+      message:
+        'Connected booking preview is limited to approved organiser accounts. Sign in with the preview email on file, or contact us to be added.',
+      signedInAs: String(auth.session.email || '').trim().toLowerCase(),
+    });
   }
   if (!isSupabaseConfigured()) {
     return json(res, 503, { ok: false, error: 'supabase_not_configured' });
@@ -73,28 +138,21 @@ module.exports = async function handler(req, res) {
   try {
     const accountId = await resolveOrganiserAccountId(sb, auth.session, adminView);
     if (!accountId) {
-      return json(res, 404, { ok: false, error: 'organiser_account_not_found' });
+      return json(res, 200, {
+        ok: false,
+        error: 'organiser_account_not_found',
+        message:
+          'We could not find an organiser account for this login. Open My Events from the organiser workspace first, or claim your group profile.',
+      });
     }
 
-    const { data: account, error: accErr } = await sb
-      .from('organiser_accounts')
-      .select(
-        'id, connected_booking_plan, connected_booking_status, connected_booking_webhook_secret, connected_booking_stripe_subscription_id, connected_booking_stripe_customer_id'
-      )
-      .eq('id', accountId)
-      .maybeSingle();
-    if (accErr) throw new Error(accErr.message);
+    const account = await loadOrganiserAccountRow(sb, accountId);
     if (!account) return json(res, 404, { ok: false, error: 'organiser_account_not_found' });
 
     if (req.method === 'GET') {
       const groupCount = await countPublishedGroupsForAccount(sb, accountId);
       const limit = groupLimitForPlan(account.connected_booking_plan);
-      const { data: logs } = await sb
-        .from('external_booking_sync_log')
-        .select('id, created_at, event_id, external_order_id, outcome, message, http_status')
-        .eq('organiser_account_id', accountId)
-        .order('created_at', { ascending: false })
-        .limit(15);
+      const syncResult = await loadRecentSyncLog(sb, accountId);
 
       const site = String(process.env.SITE_URL || 'https://www.thenetworkeruk.com').replace(/\/$/, '');
       const stripeCheckout = isStripeCheckoutConfigured();
@@ -126,7 +184,8 @@ module.exports = async function handler(req, res) {
           scale: { groups: PLAN_GROUP_LIMITS.scale, monthlyExVat: 199 },
           enterprise: { groups: null, note: 'Email Rosie and Catherine for 20+ groups.' },
         },
-        recentSync: logs || [],
+        recentSync: syncResult.logs,
+        schemaWarning: syncResult.schemaWarning || undefined,
       });
     }
 
@@ -256,7 +315,9 @@ module.exports = async function handler(req, res) {
   } catch (e) {
     return jsonPublicError(res, json, e, {
       code: e.code || 'connected_booking_failed',
+      fallback: connectedBookingErrorFallback(e),
       logLabel: '[organiser-connected-booking]',
+      extra: { ok: false },
     });
   }
 };
