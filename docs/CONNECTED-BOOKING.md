@@ -55,7 +55,9 @@ When ready to launch for all organisers: **remove** `CONNECTED_BOOKING_PREVIEW_E
 
 Hub checkout remains free to list; booking fee 4.5% + 20p per ticket.
 
-**Link-out listing (£9.99 + VAT per event)** — hub button to your site only; no webhook, attendees, or verified reviews. See `/organiser/booking-options#link-out` (self-serve checkout coming after pilot).
+**Link-out listing (£9.99 + VAT per event)** — separate product from Connected; hub redirect only; no webhook, attendees, or verified reviews. See `/organiser/booking-options#link-out` and [EXTERNAL-CHECKOUT-FLOWS.md](./EXTERNAL-CHECKOUT-FLOWS.md).
+
+**Planned UX:** after subscribe, **choose which organiser page(s)** your plan applies to; Connected events use a **slim setup** (display price + booking link + API docs), not hub ticket tiers. Link-out uses its own flow and `checkout_mode`.
 
 ## Group profiles vs Connected plan
 
