@@ -70,7 +70,7 @@ async function assignConnectedBookingSlots(sb, account, organiserIds) {
 
   if (ids.length > maxSlots) {
     const e = new Error(
-      `Your plan allows ${maxSlots} group profile${maxSlots === 1 ? '' : 's'} on Connected booking. Remove ${
+      `Your plan allows ${maxSlots} organiser page${maxSlots === 1 ? '' : 's'} on Connected booking. Remove ${
         ids.length - maxSlots
       } selection(s).`
     );
@@ -154,7 +154,7 @@ async function assertOrganiserConnectedSlot(sb, organiserId, account) {
   if (limit == null) return;
 
   const e = new Error(
-    'This organiser page is not assigned to your Connected plan. Open Connected booking and choose which group profile(s) use your subscription.'
+    'This organiser page is not assigned to your Connected plan. Open Connected booking and choose which organiser page(s) use your subscription.'
   );
   e.status = 403;
   e.code = 'connected_booking_slot_not_assigned';

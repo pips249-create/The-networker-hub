@@ -145,7 +145,69 @@
     organiserAccess: false,
     organiserEmailVerified: false,
     dashboardScope: null,
+    connectedBooking: null,
   };
+
+  let connectedBookingLoadPromise = null;
+
+  function dispatchConnectedBookingDetail(payload, groupTotal) {
+    if (!payload || typeof window === 'undefined') return;
+    try {
+      window.dispatchEvent(
+        new CustomEvent('hub-organiser-connected-booking', {
+          detail: Object.assign({}, payload, {
+            groupTotal: groupTotal != null ? groupTotal : state.groups.length,
+          }),
+        })
+      );
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function loadConnectedBookingMeta(forceRefresh) {
+    if (!forceRefresh && connectedBookingLoadPromise) {
+      return connectedBookingLoadPromise;
+    }
+    connectedBookingLoadPromise = fetch('/api/organiser/connected-booking', {
+      credentials: 'include',
+      cache: 'no-store',
+    })
+      .then(function (r) {
+        return r.json().then(function (data) {
+          return { status: r.status, data: data };
+        });
+      })
+      .then(function (res) {
+        if (res.status === 403 || res.status === 404) {
+          state.connectedBooking = null;
+          return null;
+        }
+        state.connectedBooking = res.data || null;
+        dispatchConnectedBookingDetail(state.connectedBooking, state.groups.length);
+        return state.connectedBooking;
+      })
+      .catch(function () {
+        connectedBookingLoadPromise = null;
+        return null;
+      });
+    return connectedBookingLoadPromise;
+  }
+
+  function connectedSlotBadgeHtml(groupId) {
+    var cb = state.connectedBooking;
+    if (!cb || !cb.ok || !cb.active) return '';
+    var slots = cb.slots || {};
+    var ids = slots.assignedOrganiserIds || [];
+    if (!ids.some(function (id) {
+      return String(id) === String(groupId);
+    })) {
+      return '';
+    }
+    return (
+      ' <span class="org-badge org-badge-teal org-connected-slot-badge" title="This organiser page uses your Connected booking plan">Connected</span>'
+    );
+  }
 
   let groupClaimRejectMode = false;
   let groupClaimSubmitInFlight = false;
@@ -11964,6 +12026,10 @@
         Promise.resolve()
           .then(function () {
             if (typeof renderGroups === 'function') renderGroups();
+            return loadConnectedBookingMeta(true);
+          })
+          .then(function () {
+            if (typeof renderGroups === 'function') renderGroups();
           })
           .catch(function () {
             return null;
@@ -12290,6 +12356,7 @@
         esc(g.name) +
         '</button>' +
         groupRankingBadgeHtml(g.id) +
+        connectedSlotBadgeHtml(g.id) +
         '</td><td>' +
         '<button type="button" class="org-td-events-click" data-org-goto-events="' +
         esc(g.id) +
