@@ -30,6 +30,16 @@ function parseBody(req) {
   return body || {};
 }
 
+function supabaseErrText(err) {
+  if (!err) return '';
+  return [err.message, err.details, err.hint, err.code].filter(Boolean).join(' ');
+}
+
+function isSupabaseSchemaError(err) {
+  const text = supabaseErrText(err);
+  return /PGRST204|42703|schema cache|Could not find the .* column|does not exist|connected_booking/i.test(text);
+}
+
 async function loadOrganiserAccountRow(sb, accountId) {
   const accountSelectWithCustomer =
     'id, connected_booking_plan, connected_booking_status, connected_booking_webhook_secret, connected_booking_stripe_subscription_id, connected_booking_stripe_customer_id';
@@ -43,7 +53,11 @@ async function loadOrganiserAccountRow(sb, accountId) {
     .select(accountSelectWithCustomer)
     .eq('id', accountId)
     .maybeSingle());
-  if (accErr && /connected_booking|does not exist|column/i.test(accErr.message || '')) {
+  if (
+    accErr &&
+    (/connected_booking_stripe_customer_id|stripe_customer_id/i.test(supabaseErrText(accErr)) ||
+      isSupabaseSchemaError(accErr))
+  ) {
     ({ data: account, error: accErr } = await sb
       .from('organiser_accounts')
       .select(accountSelectBase)

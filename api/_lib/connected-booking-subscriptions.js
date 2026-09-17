@@ -10,6 +10,15 @@ const { isSelfServeConnectedPlan } = require('./connected-booking-pricing');
 
 const CONNECTED_BOOKING_CHECKOUT_TYPE = 'connected_booking';
 
+function supabaseErrText(err) {
+  if (!err) return '';
+  return [err.message, err.details, err.hint, err.code].filter(Boolean).join(' ');
+}
+
+function isMissingStripeCustomerColumn(err) {
+  return /connected_booking_stripe_customer_id|stripe_customer_id/i.test(supabaseErrText(err));
+}
+
 function normalizeMeta(metadata) {
   return metadata && typeof metadata === 'object' ? metadata : {};
 }
@@ -132,12 +141,23 @@ async function syncConnectedBookingAccountFromSubscription(subscription, options
     }
   }
 
-  const { data: updated, error: updErr } = await sb
+  let updated = null;
+  let updErr = null;
+  ({ data: updated, error: updErr } = await sb
     .from('organiser_accounts')
     .update(patch)
     .eq('id', accountId)
     .select('id, connected_booking_plan, connected_booking_status, connected_booking_stripe_subscription_id')
-    .single();
+    .single());
+  if (updErr && patch.connected_booking_stripe_customer_id && isMissingStripeCustomerColumn(updErr)) {
+    delete patch.connected_booking_stripe_customer_id;
+    ({ data: updated, error: updErr } = await sb
+      .from('organiser_accounts')
+      .update(patch)
+      .eq('id', accountId)
+      .select('id, connected_booking_plan, connected_booking_status, connected_booking_stripe_subscription_id')
+      .single());
+  }
   if (updErr) throw new Error(updErr.message);
 
   return {
