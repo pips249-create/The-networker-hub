@@ -89,6 +89,17 @@ function connectedBookingErrorFallback(err) {
   return 'Connected booking could not load. Run Supabase migrations 292 and 293 on production, then refresh.';
 }
 
+function stripeCheckoutPublicMessage(err) {
+  const msg = String(err?.message || err?.raw?.message || '').trim();
+  if (msg === 'stripe_not_configured') {
+    return 'Online checkout is not configured yet — contact hi@thenetworkeruk.com.';
+  }
+  if (msg && msg.length <= 220 && !/sk_live|sk_test|api[_-]?key|secret/i.test(msg)) {
+    return 'Could not start Stripe checkout: ' + msg;
+  }
+  return 'Could not start checkout. Try again in a moment or email hi@thenetworkeruk.com.';
+}
+
 async function resolveOrganiserAccountId(sb, session, adminView) {
   const scope = await resolveOrganiserGroupScope(session, adminView);
   const accountId = String(scope.organiserAccountId || '').trim();
@@ -269,12 +280,26 @@ module.exports = async function handler(req, res) {
           }
           return json(res, 409, { ok: false, error: 'already_subscribed' });
         }
-        const session = await createConnectedBookingCheckoutSession({
-          plan,
-          organiserAccountId: accountId,
-          email,
-        });
-        return json(res, 200, { ok: true, url: session.url, sessionId: session.id });
+        try {
+          const session = await createConnectedBookingCheckoutSession({
+            plan,
+            organiserAccountId: accountId,
+            email,
+          });
+          return json(res, 200, { ok: true, url: session.url, sessionId: session.id });
+        } catch (checkoutErr) {
+          console.error(
+            '[organiser-connected-booking] create_checkout',
+            checkoutErr?.message || checkoutErr
+          );
+          const notConfigured =
+            String(checkoutErr?.message || '').trim() === 'stripe_not_configured';
+          return json(res, notConfigured ? 503 : 502, {
+            ok: false,
+            error: notConfigured ? 'stripe_not_configured' : 'stripe_checkout_failed',
+            message: stripeCheckoutPublicMessage(checkoutErr),
+          });
+        }
       }
 
       if (body.action === 'billing_portal') {
