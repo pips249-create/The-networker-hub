@@ -1,6 +1,8 @@
 # Connected external booking
 
-Organisers on a **Connected** monthly subscription list events on The Networker UK and take payment on their own website. Registrations arrive via a **real-time webhook** so attendee lists, round-ups, and **verified post-event reviews** work. **Link Out** (pay-per-event, no subscription) does not include verified reviews.
+Organisers on a **Connected** monthly subscription list events on The Networker UK and take payment on their own website. Registrations arrive via a **real-time webhook** so attendee lists, round-ups, and **verified post-event reviews** work.
+
+**Link Out** (£9.99 per event) lists the event and redirects buyers to the organiser’s booking URL. There is **no integration** — no webhook, no verified reviews, round-ups, or other Connected benefits.
 
 ## Enable in production
 
@@ -42,7 +44,7 @@ When ready to launch for all organisers: **remove** `CONNECTED_BOOKING_PREVIEW_E
 | Scale | 20 | £199 |
 | 20+ | POA | Contact Rosie & Catherine |
 
-Link Out remains free to list; booking fee 4.5% + 20p per ticket (no verified reviews).
+Link Out: £9.99 per event, redirect only (see organiser copy on `/organiser/connected-booking`).
 
 ## Tests
 
