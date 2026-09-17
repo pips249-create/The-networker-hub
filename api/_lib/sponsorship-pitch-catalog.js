@@ -218,14 +218,57 @@ function normalizeSponsorshipPlacements(raw) {
   return out;
 }
 
-function buildSponsorshipSections(placements, companyName, brief) {
+function hasOpportunityListingLaunchOffer(placements) {
+  return (placements || []).indexOf('opportunity_directory_listing') !== -1;
+}
+
+function hasOpportunitySpotlightLaunchOffer(placements) {
+  return (placements || []).indexOf('featured_opportunity_boost') !== -1;
+}
+
+function applyOpportunityLaunchOfferToSection(key, section, companyName) {
+  const co = companyName || 'your brand';
+  if (key === 'opportunity_directory_listing') {
+    section.price = 'Included — 12 months at no charge';
+    section.intro =
+      'Launch partnership offer for ' +
+      co +
+      ': a full business opportunity directory listing on /opportunities/ with member enquiries routed to you — subscription fees waived for the first year.' +
+      (section.intro ? ' ' + section.intro : '');
+    section.bullets = [
+      '12 months of the standard directory listing at no subscription charge (normally £25/month + VAT)',
+      'Public detail page plus inclusion in /opportunities/ search and browse while the offer is active',
+      'Member enquiries routed to your listing owner — no per-lead fee during the included year',
+      'After month 12, continue at the published listing rate or pause — Headline Sponsor and email inventory remain separate packages',
+    ];
+  }
+  if (key === 'featured_opportunity_boost') {
+    section.price = 'Included — 3 months Premium Spotlight';
+    section.intro =
+      'Launch partnership offer for ' +
+      co +
+      ': stay in the Premium Spotlight carousel on /opportunities/ for three months at no charge.' +
+      (section.intro ? ' ' + section.intro : '');
+    section.bullets = [
+      '3 months of Premium Spotlight on the opportunities browse carousel at no charge (normally £55 per ~30-day boost)',
+      'Featured badge and highlighted card for higher click-through while each spotlight month is live',
+      'We schedule the three spotlight windows in Command Centre — no Stripe checkout required for this launch offer',
+      'Stacks with the directory listing — ideal for franchise and partnership offers that need visibility fast',
+    ];
+  }
+  return section;
+}
+
+function buildSponsorshipSections(placements, companyName, brief, options) {
   const co = companyName || 'your brand';
   const briefBit = brief ? String(brief).trim() : '';
+  const applyLaunch =
+    !options || options.applyOpportunityLaunchOffer !== false;
   return placements.map(function (key) {
     const p = SPONSORSHIP_PLACEMENT_CATALOG[key];
     let intro = 'Why this fits ' + co + '.';
     if (briefBit) intro += ' ' + briefBit;
-    return {
+    const section = {
       id: 'sponsor_' + key,
       navLabel: p.nav,
       kicker: p.kicker,
@@ -236,7 +279,23 @@ function buildSponsorshipSections(placements, companyName, brief) {
       tiles: [],
       quote: '',
     };
+    if (applyLaunch) {
+      applyOpportunityLaunchOfferToSection(key, section, co);
+    }
+    return section;
   });
+}
+
+function launchOfferHeroChips(placements) {
+  const chips = [];
+  if (hasOpportunityListingLaunchOffer(placements)) {
+    chips.push('12 months listing included');
+  }
+  if (hasOpportunitySpotlightLaunchOffer(placements)) {
+    chips.push('3 months Premium Spotlight included');
+  }
+  if (chips.length) chips.push('Launch partnership offer');
+  return chips;
 }
 
 module.exports = {
@@ -246,4 +305,7 @@ module.exports = {
   normalizeDeckType,
   normalizeSponsorshipPlacements,
   buildSponsorshipSections,
+  hasOpportunityListingLaunchOffer,
+  hasOpportunitySpotlightLaunchOffer,
+  launchOfferHeroChips,
 };
