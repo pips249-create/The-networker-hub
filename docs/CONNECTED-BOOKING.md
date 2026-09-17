@@ -55,7 +55,31 @@ When ready to launch for all organisers: **remove** `CONNECTED_BOOKING_PREVIEW_E
 
 Hub checkout remains free to list; booking fee 4.5% + 20p per ticket.
 
+**Link-out listing (£9.99 + VAT per event)** — separate product from Connected; hub redirect only; no webhook, attendees, or verified reviews. See `/organiser/booking-options#link-out` and [EXTERNAL-CHECKOUT-FLOWS.md](./EXTERNAL-CHECKOUT-FLOWS.md).
+
+**Planned UX:** after subscribe, **choose which organiser page(s)** your plan applies to; Connected events use a **slim setup** (display price + booking link + API docs), not hub ticket tiers. Link-out uses its own flow and `checkout_mode`.
+
+## Group profiles vs Connected plan
+
+One Connected subscription applies to the whole **organiser account**. Plan tier limits how many **group profiles** (organiser pages) you can keep **published** at once — not how many events you list. Unlimited events per account on Connected plans.
+
 ## Tests
 
-- `npm run test-external-booking-webhook`
-- `npm run test-connected-booking-subscriptions`
+From the repo root (one command per line):
+
+```bash
+cd ~/The-networker-hub
+npm run test-connected-booking-subscriptions
+npm run test-external-booking-webhook
+```
+
+**Pilot / Eventbrite end-to-end:** see [CONNECTED-BOOKING-PILOT-TEST.md](./CONNECTED-BOOKING-PILOT-TEST.md) (`CONNECTED_BOOKING_PILOT_GRANT_EMAILS`, webhook script).
+
+## Pilot grant (complimentary Starter)
+
+```text
+CONNECTED_BOOKING_PILOT_GRANT_EMAILS=pips249@gmail.com
+CONNECTED_BOOKING_PILOT_GRANT_PLAN=starter
+```
+
+First visit to `/organiser/connected-booking` activates the plan without Stripe. Still use preview emails so only pilot accounts see the feature.

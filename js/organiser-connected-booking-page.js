@@ -355,9 +355,11 @@
 
     if (data.schemaWarning) {
       setAuthStatus(data.schemaWarning, 'error');
+    } else if (data.pilotGrant && data.pilotGrant.message) {
+      setAuthStatus(data.pilotGrant.message, 'ok');
+    } else {
+      setAuthStatus('');
     }
-
-    setAuthStatus('');
     applyBillingUi(data);
     if (signinHint) signinHint.hidden = true;
     if (adminPanel) adminPanel.hidden = false;

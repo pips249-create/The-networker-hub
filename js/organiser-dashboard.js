@@ -18169,6 +18169,13 @@
     applyPendingOpportunitySubmitFlash();
     pruneStaleEventFilters();
     bootstrapReady = true;
+    try {
+      window.dispatchEvent(
+        new CustomEvent('hub-organiser-bootstrap', {
+          detail: { groups: state.groups || [] },
+        })
+      );
+    } catch (_) {}
     const groupDrawerOpen =
       skipRenderIfGroupDrawer && document.body.classList.contains('org-group-drawer-open');
     if (!groupDrawerOpen) {

@@ -4,6 +4,8 @@ const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
 const { adminViewFromSession, resolveOrganiserGroupScope } = require('../organiser-api-scope');
 const {
   connectedBookingAllowedForSession,
+  connectedBookingPilotGrantEligible,
+  connectedBookingPilotGrantPlan,
   newWebhookSecret,
   signWebhookPayload,
   isConnectedPlanActive,
@@ -107,6 +109,44 @@ function connectedBookingErrorFallback(err) {
   return 'Connected booking could not load. Run Supabase migrations 292 and 293 on production, then refresh.';
 }
 
+async function ensurePilotGrantIfEligible(sb, account, sessionEmail) {
+  if (!account?.id || !connectedBookingPilotGrantEligible(sessionEmail)) {
+    return { account, pilotGranted: false };
+  }
+  if (isConnectedPlanActive(account)) {
+    return { account, pilotGranted: false, pilotActive: true };
+  }
+  const plan = connectedBookingPilotGrantPlan();
+  const patch = {
+    connected_booking_plan: plan,
+    connected_booking_status: 'active',
+  };
+  if (!String(account.connected_booking_webhook_secret || '').trim()) {
+    patch.connected_booking_webhook_secret = newWebhookSecret();
+  }
+  const { data: updated, error: updErr } = await sb
+    .from('organiser_accounts')
+    .update(patch)
+    .eq('id', account.id)
+    .select(
+      'id, connected_booking_plan, connected_booking_status, connected_booking_webhook_secret, connected_booking_stripe_subscription_id, connected_booking_stripe_customer_id'
+    )
+    .maybeSingle();
+  if (updErr) {
+    const { data: fallbackRow, error: fallbackErr } = await sb
+      .from('organiser_accounts')
+      .update(patch)
+      .eq('id', account.id)
+      .select(
+        'id, connected_booking_plan, connected_booking_status, connected_booking_webhook_secret, connected_booking_stripe_subscription_id'
+      )
+      .maybeSingle();
+    if (fallbackErr) throw new Error(fallbackErr.message);
+    return { account: fallbackRow || account, pilotGranted: true };
+  }
+  return { account: updated || account, pilotGranted: true };
+}
+
 function stripeCheckoutPublicMessage(err) {
   const msg = String(err?.message || err?.raw?.message || '').trim();
   if (msg === 'stripe_not_configured') {
@@ -175,8 +215,19 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    const account = await loadOrganiserAccountRow(sb, accountId);
+    let account = await loadOrganiserAccountRow(sb, accountId);
     if (!account) return json(res, 404, { ok: false, error: 'organiser_account_not_found' });
+
+    let pilotGranted = false;
+    if (req.method === 'GET') {
+      const grantResult = await ensurePilotGrantIfEligible(
+        sb,
+        account,
+        auth.session.email
+      );
+      account = grantResult.account;
+      pilotGranted = grantResult.pilotGranted;
+    }
 
     if (req.method === 'GET') {
       if (isConnectedPlanActive(account)) {
@@ -239,6 +290,14 @@ module.exports = async function handler(req, res) {
           schemaMissing: slotOrganisers.schemaMissing,
           needsAssignment: needsSlotAssignment,
         },
+        pilotGrant: pilotGranted
+          ? {
+              granted: true,
+              plan: account.connected_booking_plan,
+              message:
+                'Pilot access — Starter plan activated without charge for this login. Generate your webhook secret below.',
+            }
+          : undefined,
       });
     }
 
