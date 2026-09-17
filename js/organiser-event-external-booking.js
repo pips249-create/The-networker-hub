@@ -2,6 +2,21 @@
  * Connected booking entry on Set up tickets — links to dedicated Connected setup page.
  */
 (function () {
+  const embed = window.HubOrganiserEmbedBootstrap || {};
+  const isEmbedDrawer =
+    typeof embed.isEmbedDrawer === 'function'
+      ? embed.isEmbedDrawer
+      : function () {
+          try {
+            return (
+              new URLSearchParams(window.location.search).get('embed') === '1' ||
+              window.self !== window.top
+            );
+          } catch (e) {
+            return false;
+          }
+        };
+
   const form = document.getElementById('ee-tickets-form');
   if (!form || form.dataset.externalBookingBound) return;
   form.dataset.externalBookingBound = '1';
@@ -21,6 +36,10 @@
   let billingActive = false;
   let featureEnabled = false;
   let loadedEvent = null;
+
+  if (isEmbedDrawer()) {
+    document.documentElement.classList.add('ee-connected-tickets-checking');
+  }
 
   function api(path) {
     return fetch(path, { credentials: 'include', cache: 'no-store' }).then(function (res) {
@@ -47,6 +66,22 @@
     return isExternalConnectedEvent(loadedEvent);
   }
 
+  function eventIdsFromQueryArray() {
+    if (typeof embed.eventIdsFromSearch === 'function') {
+      return embed.eventIdsFromSearch();
+    }
+    const params = new URLSearchParams(window.location.search);
+    const ids = String(params.get('ids') || '')
+      .split(',')
+      .map(function (s) {
+        return s.trim();
+      })
+      .filter(Boolean);
+    if (ids.length) return ids;
+    const eid = resolveEventId();
+    return eid ? [eid] : [];
+  }
+
   function eventIdFromQuery() {
     const params = new URLSearchParams(window.location.search);
     const single = String(params.get('id') || params.get('eventId') || '').trim();
@@ -69,6 +104,7 @@
 
   function setConnectedOnlyLayout(on) {
     document.body.classList.toggle('ee-connected-tickets-only', on);
+    document.documentElement.classList.toggle('ee-connected-tickets-checking', !on && isEmbedDrawer());
     if (hubPanels) hubPanels.hidden = on;
     if (seriesCard) seriesCard.hidden = on;
     if (wizardMount) wizardMount.hidden = on;
@@ -80,11 +116,64 @@
     }
   }
 
+  function bindPlanLink() {
+    if (!planLink || planLink.dataset.boundConnectedPlan) return;
+    planLink.dataset.boundConnectedPlan = '1';
+    planLink.addEventListener('click', function (e) {
+      const ids = eventIdsFromQueryArray();
+      if (
+        isEmbedDrawer() &&
+        typeof embed.notifyParent === 'function' &&
+        embed.notifyParent('hub-event-goto-connected-booking', { eventIds: ids })
+      ) {
+        e.preventDefault();
+        return;
+      }
+      if (typeof embed.buildEmbedHref === 'function') {
+        planLink.href = embed.buildEmbedHref('/organiser/connected-booking', {
+          eventIds: ids,
+          hash: '#cb-slots-panel',
+        });
+      }
+    });
+  }
+
+  function bindSetupLink() {
+    if (!setupLink || setupLink.dataset.boundConnectedSetup) return;
+    setupLink.dataset.boundConnectedSetup = '1';
+    setupLink.addEventListener('click', function (e) {
+      const eid = resolveEventId();
+      if (!eid) return;
+      const ids = eventIdsFromQueryArray();
+      if (
+        isEmbedDrawer() &&
+        typeof embed.notifyParent === 'function' &&
+        embed.notifyParent('hub-event-goto-connected-setup', {
+          eventId: eid,
+          eventIds: ids,
+          title: (loadedEvent && loadedEvent.title) || '',
+        })
+      ) {
+        e.preventDefault();
+        return;
+      }
+      if (typeof embed.buildEmbedHref === 'function') {
+        setupLink.href = embed.buildEmbedHref('/organiser/event-connected-setup', {
+          id: eid,
+          eventIds: ids,
+        });
+      } else {
+        setupLink.href = '/organiser/event-connected-setup?id=' + encodeURIComponent(eid);
+      }
+    });
+  }
+
   function refreshCardVisibility() {
     const show = shouldShowCard();
     card.hidden = !show;
     if (!show) {
       setConnectedOnlyLayout(false);
+      document.documentElement.classList.remove('ee-connected-tickets-checking');
       card.classList.remove('is-active');
       showStatus('');
       return;
@@ -94,9 +183,16 @@
 
     const eid = resolveEventId();
     if (setupLink) {
-      setupLink.href = eid
-        ? '/organiser/event-connected-setup?id=' + encodeURIComponent(eid)
-        : '/organiser/event-connected-setup';
+      if (typeof embed.buildEmbedHref === 'function' && eid) {
+        setupLink.href = embed.buildEmbedHref('/organiser/event-connected-setup', {
+          id: eid,
+          eventIds: eventIdsFromQueryArray(),
+        });
+      } else {
+        setupLink.href = eid
+          ? '/organiser/event-connected-setup?id=' + encodeURIComponent(eid)
+          : '/organiser/event-connected-setup';
+      }
     }
 
     setConnectedOnlyLayout(true);
@@ -125,6 +221,9 @@
   window.addEventListener('ee-event-loaded', function (e) {
     applyEventFields(e.detail && e.detail.event);
   });
+
+  bindPlanLink();
+  bindSetupLink();
 
   api('/api/organiser/connected-booking').then(function (res) {
     if (res.ok && res.data && res.data.featureEnabled) {

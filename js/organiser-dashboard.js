@@ -19751,6 +19751,32 @@
         if (ids.length) openEventTicketsDrawer(ids, e.data.title || '');
         return;
       }
+      if (e.data && e.data.type === 'hub-event-goto-connected-setup') {
+        const eid = String(e.data.eventId || '').trim();
+        const ids = Array.isArray(e.data.eventIds) ? e.data.eventIds.filter(Boolean) : [];
+        if (!eid) return;
+        let url =
+          '/organiser/event-connected-setup?id=' +
+          encodeURIComponent(eid) +
+          '&embed=1';
+        if (ids.length) {
+          url += '&returnIds=' + encodeURIComponent(ids.join(','));
+        }
+        openEventDrawerFrame(url, e.data.title || 'Connected event setup', null, {
+          progressStep: 'tickets',
+        });
+        return;
+      }
+      if (e.data && e.data.type === 'hub-event-goto-connected-booking') {
+        const ids = Array.isArray(e.data.eventIds) ? e.data.eventIds.filter(Boolean) : [];
+        let url = '/organiser/connected-booking?embed=1';
+        if (ids.length) {
+          url += '&returnIds=' + encodeURIComponent(ids.join(','));
+        }
+        url += '#cb-slots-panel';
+        openEventDrawerFrame(url, 'Connected plan', null, { progressStep: 'tickets' });
+        return;
+      }
       if (e.data && e.data.type === 'hub-event-tickets-done') {
         const publishedEventIds = Array.isArray(e.data.eventIds)
           ? e.data.eventIds.filter(Boolean)

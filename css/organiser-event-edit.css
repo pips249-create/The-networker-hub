@@ -5542,8 +5542,39 @@ a.ee-btn.ee-btn-primary {
   box-shadow: 0 6px 22px rgba(13, 110, 122, 0.12);
 }
 
-body.ee-connected-tickets-only .ee-lock-banner {
+body.ee-connected-tickets-only .ee-lock-banner,
+body.ee-connected-tickets-checking .ee-lock-banner {
   margin-bottom: 0;
+}
+
+body.ee-connected-tickets-only #ee-hub-ticket-panels,
+body.ee-connected-tickets-only #ee-series-card,
+body.ee-connected-tickets-only #ee-wizard-mount,
+body.ee-connected-tickets-checking #ee-hub-ticket-panels,
+body.ee-connected-tickets-checking #ee-series-card,
+body.ee-connected-tickets-checking #ee-wizard-mount {
+  display: none !important;
+}
+
+body.ee-connected-tickets-only .ee-lead#ee-tickets-lead,
+body.ee-connected-tickets-checking .ee-lead#ee-tickets-lead {
+  display: none !important;
+}
+
+body.ee-embed-drawer.organiser-connected-booking-page #hub-site-nav,
+body.ee-embed-drawer.organiser-connected-setup-page #hub-site-nav {
+  display: none !important;
+}
+
+body.ee-embed-drawer.organiser-connected-booking-page .ee-booking-help-shell,
+body.ee-embed-drawer.organiser-connected-setup-page .ee-wrap {
+  max-width: none;
+  padding: 0 16px 24px;
+}
+
+body.ee-embed-drawer.organiser-connected-booking-page .ee-back-row .ee-back[href*='#events'],
+body.ee-embed-drawer.organiser-connected-setup-page .ee-back-row .ee-back[href*='#events'] {
+  display: none !important;
 }
 
 .ee-connected-legal-hint {
