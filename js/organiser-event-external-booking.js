@@ -10,6 +10,10 @@
   if (!card) return;
 
   const hubPanels = document.getElementById('ee-hub-ticket-panels');
+  const seriesCard = document.getElementById('ee-series-card');
+  const wizardMount = document.getElementById('ee-wizard-mount');
+  const pageTitle = document.querySelector('.ee-title');
+  const pageLead = document.getElementById('ee-tickets-lead');
   const statusEl = document.getElementById('ee-external-booking-status');
   const planLink = document.getElementById('ee-connected-plan-link');
   const setupLink = document.getElementById('ee-connected-setup-link');
@@ -48,11 +52,25 @@
     return String(params.get('id') || params.get('eventId') || '').trim();
   }
 
+  function setConnectedOnlyLayout(on) {
+    document.body.classList.toggle('ee-connected-tickets-only', on);
+    if (hubPanels) hubPanels.hidden = on;
+    if (seriesCard) seriesCard.hidden = on;
+    if (wizardMount) wizardMount.hidden = on;
+    if (pageTitle) {
+      pageTitle.textContent = on ? 'Connected booking' : 'Set up tickets';
+    }
+    if (pageLead) {
+      pageLead.hidden = on;
+    }
+  }
+
   function refreshCardVisibility() {
     const show = shouldShowCard();
     card.hidden = !show;
     if (!show) {
-      if (hubPanels) hubPanels.hidden = false;
+      setConnectedOnlyLayout(false);
+      card.classList.remove('is-active');
       showStatus('');
       return;
     }
@@ -64,12 +82,12 @@
       setupLink.href = '/organiser/event-connected-setup?id=' + encodeURIComponent(eid);
     }
 
+    setConnectedOnlyLayout(true);
+
     if (isExternalConnectedEvent(loadedEvent)) {
-      if (hubPanels) hubPanels.hidden = true;
       card.classList.add('is-active');
       showStatus('This event uses Connected booking. Use Connected event setup to edit price and booking link.', 'ok');
     } else {
-      if (hubPanels) hubPanels.hidden = false;
       card.classList.remove('is-active');
       if (!billingActive) {
         showStatus(
