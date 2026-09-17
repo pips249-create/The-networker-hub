@@ -713,8 +713,6 @@ async function createConnectedBookingCheckoutSession(opts) {
   if (!accountId) throw new Error('missing_organiser_account_id');
 
   const totals = connectedBookingPlanTotals(plan);
-  const catalogKey = 'connected_booking_' + plan;
-  const exVatPriceId = getCatalogPriceId(catalogKey);
 
   const metadata = {
     checkout_type: CONNECTED_BOOKING_CHECKOUT_TYPE,
@@ -722,43 +720,31 @@ async function createConnectedBookingCheckoutSession(opts) {
     organiser_account_id: accountId,
     billing_mode: 'subscription',
     amount_ex_vat_pence: String(totals.monthlyExVatPence),
+    vat_pence: String(totals.monthlyVatPence),
     owner_email: String(opts.email || '').toLowerCase(),
   };
 
-  const lineItems = [];
-  if (exVatPriceId) {
-    lineItems.push({ price: exVatPriceId, quantity: 1 });
-  } else {
-    lineItems.push({
+  // Single VAT-inclusive recurring line (avoids Stripe failures from mixing catalog Price IDs + extra VAT lines).
+  const lineItems = [
+    {
       price_data: {
         currency: 'gbp',
         product_data: {
           name: 'Connected booking — ' + totals.label,
           description:
             totals.label +
-            ' plan — list events on The Networker UK, take payment on your website (£' +
+            ' plan — list on The Networker UK, checkout on your site. £' +
             (totals.monthlyExVatPence / 100).toFixed(0) +
-            '/month ex VAT)',
+            '/month ex VAT (£' +
+            (totals.totalPence / 100).toFixed(2) +
+            '/month incl. 20% VAT). Renews monthly until cancelled.',
         },
-        unit_amount: totals.monthlyExVatPence,
+        unit_amount: totals.totalPence,
         recurring: { interval: 'month' },
       },
       quantity: 1,
-    });
-  }
-
-  lineItems.push({
-    price_data: {
-      currency: 'gbp',
-      product_data: {
-        name: 'VAT (20%)',
-        description: 'VAT on Connected booking — ' + totals.label,
-      },
-      unit_amount: totals.monthlyVatPence,
-      recurring: { interval: 'month' },
     },
-    quantity: 1,
-  });
+  ];
 
   const site = siteBaseUrl();
   const successUrl =
