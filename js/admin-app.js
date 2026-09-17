@@ -1192,9 +1192,7 @@
       '• Browse and ticket buying are live on The Networker UK\n' +
       '• Easy start — claim your page, list yourself, or send us the details and we’ll help\n\n' +
       deckLine +
-      (deckUrl
-        ? 'PDF: open the deck link above and click Download PDF (tailored to this prospect).\n'
-        : '') +
+      (deckUrl ? 'Sales walkthrough deck (share this link after the meeting): ' + deckUrl + '\n' : '') +
       'Benefits one-pager: https://thenetworkeruk.com/guides/organiser-leavebehind\n' +
       'PDF: https://thenetworkeruk.com/assets/guides/organiser-leavebehind.pdf\n' +
       'For organisers: https://thenetworkeruk.com/for-organisers\n' +
@@ -31081,7 +31079,7 @@
           return (
             '<section class="admin-dash-section">' +
             '<div class="admin-dash-section-head"><h3>Tailored pitch decks</h3>' +
-            '<p>Pick <strong>sponsorship placements</strong> (Headline Sponsor, business opportunity listing, etc.) and/or organiser onboarding sections — present fullscreen or use <strong>Download PDF</strong> on the deck (Barnsgate-style) to attach after the meeting. Ticking <strong>Directory listing</strong> alone includes the launch offer: <strong>12 months free listing + 3 months free Premium Spotlight</strong>.</p></div>' +
+            '<p>Pick <strong>sponsorship placements</strong> (Headline Sponsor, business opportunity listing, etc.) and/or organiser onboarding sections — then share the deck link (same scrollable walkthrough style as the <a href="/p-tnh-ev-hub-k7m2" target="_blank" rel="noopener" class="text-brand-700 font-semibold hover:underline">Events Headline sales deck</a>). Ticking <strong>Directory listing</strong> alone includes the launch offer: <strong>12 months free listing + 3 months free Premium Spotlight</strong>.</p></div>' +
             '<div class="admin-dash-section-body space-y-4">' +
             (profile && !editing
               ? '<div class="rounded-xl border border-brand-200 bg-brand-50/60 p-3 text-sm text-brand-950">' +

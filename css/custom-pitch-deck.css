@@ -1,168 +1,67 @@
-/* Tailored Command Centre pitch decks — richer hero + PDF-safe layout */
-.org-pitch-page--custom {
-  --custom-sparkle: #c299d1;
-  --custom-sparkle-soft: rgba(194, 153, 209, 0.35);
-  --custom-gold: #e8c547;
+/* Tailored decks — same family as /p-tnh-ev-hub-k7m2 (partner × Networker lockup) */
+.custom-pitch-logo-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin: 0 auto 20px;
 }
 
-.org-pitch-page--custom .sponsor-pitch-shell {
-  padding-bottom: 96px;
+.custom-pitch-logo-row img {
+  display: block;
+  max-height: 52px;
+  width: auto;
+  max-width: min(240px, 42vw);
+  object-fit: contain;
 }
 
-.org-pitch-hero-showcase {
-  position: relative;
-  margin: 0 0 40px;
-  padding: 36px 28px 32px;
-  border-radius: 24px;
-  background:
-    radial-gradient(ellipse 120% 80% at 50% -20%, rgba(125, 255, 212, 0.22), transparent 55%),
-    radial-gradient(circle at 12% 88%, var(--custom-sparkle-soft), transparent 42%),
-    radial-gradient(circle at 88% 72%, rgba(13, 110, 122, 0.12), transparent 40%),
-    linear-gradient(145deg, #ffffff 0%, #f8fbfc 48%, #fff9f5 100%);
-  border: 1px solid rgba(13, 110, 122, 0.16);
-  box-shadow:
-    0 4px 24px rgba(30, 58, 79, 0.06),
-    0 0 0 1px rgba(255, 255, 255, 0.8) inset;
-  overflow: hidden;
+.custom-pitch-logo-row .custom-pitch-partner-logo {
+  padding: 10px 16px;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid var(--pitch-border);
+  box-shadow: 0 4px 16px rgba(13, 110, 122, 0.08);
 }
 
-.org-pitch-hero-showcase::before,
-.org-pitch-hero-showcase::after {
-  content: '';
-  position: absolute;
-  border-radius: 50%;
-  pointer-events: none;
+.custom-pitch-logo-x {
+  color: var(--pitch-muted);
+  font-size: 1.4rem;
+  font-weight: 600;
   opacity: 0.55;
 }
 
-.org-pitch-hero-showcase::before {
-  width: 140px;
-  height: 140px;
-  top: -40px;
-  right: -30px;
-  background: radial-gradient(circle, var(--custom-sparkle-soft) 0%, transparent 70%);
-}
-
-.org-pitch-hero-showcase::after {
-  width: 90px;
-  height: 90px;
-  bottom: 12px;
-  left: -20px;
-  background: radial-gradient(circle, rgba(125, 255, 212, 0.35) 0%, transparent 70%);
-}
-
-.org-pitch-hero-showcase .sponsor-pitch-hero {
-  position: relative;
-  z-index: 1;
-  padding: 0;
-}
-
-.org-pitch-page--custom .org-pitch-hero-logos {
-  gap: 24px;
-  margin-bottom: 24px;
-}
-
-.org-pitch-page--custom .org-pitch-hero-logos img,
-.org-pitch-page--custom .org-pitch-prospect-logo {
-  height: 56px;
-  max-width: min(260px, 44vw);
-  padding: 12px 20px;
-  border-radius: 16px;
-  border: 1px solid rgba(13, 110, 122, 0.12);
-  box-shadow:
-    0 8px 28px rgba(13, 110, 122, 0.1),
-    0 0 0 1px rgba(255, 255, 255, 0.9) inset;
-  background: #fff;
-}
-
-.org-pitch-prospect-mark {
+.custom-pitch-prospect-mark {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 120px;
-  height: 56px;
-  padding: 0 20px;
-  border-radius: 16px;
+  min-width: 100px;
+  padding: 10px 18px;
+  border-radius: 12px;
   font-weight: 800;
   font-size: 1rem;
-  letter-spacing: 0.02em;
   color: var(--pitch-ink);
-  background: linear-gradient(135deg, #fff 0%, #f3eef8 100%);
-  border: 1px solid var(--custom-sparkle-soft);
-  box-shadow: 0 8px 24px rgba(194, 153, 209, 0.2);
-}
-
-.org-pitch-page--custom .org-pitch-logo-x {
-  font-size: 1.75rem;
-  color: var(--custom-sparkle);
-  opacity: 0.85;
-  text-shadow: 0 0 12px var(--custom-sparkle-soft);
-}
-
-.org-pitch-page--custom .sponsor-pitch-kicker {
-  background: linear-gradient(135deg, var(--pitch-teal) 0%, #0a5560 100%);
-  box-shadow: 0 4px 16px rgba(13, 110, 122, 0.25);
-}
-
-.org-pitch-page--custom .sponsor-pitch-hero h1 {
-  font-size: clamp(1.85rem, 4.5vw, 2.65rem);
-  text-wrap: balance;
-}
-
-.org-pitch-page--custom .org-pitch-chip {
-  background: linear-gradient(135deg, rgba(125, 255, 212, 0.35) 0%, rgba(194, 153, 209, 0.25) 100%);
-  border: 1px solid rgba(13, 110, 122, 0.2);
-  font-weight: 700;
-  box-shadow: 0 2px 10px rgba(13, 110, 122, 0.08);
-}
-
-.org-pitch-launch-price {
-  display: inline-block;
-  margin: 0 0 14px;
-  padding: 10px 18px;
-  border-radius: 999px;
-  font-weight: 800;
-  font-size: 0.95rem;
-  letter-spacing: 0.02em;
-  color: #3d2a00;
-  background: linear-gradient(135deg, #ffeaa7 0%, #f5d76e 45%, #e8c547 100%);
-  border: 1px solid rgba(180, 140, 20, 0.35);
-  box-shadow: 0 4px 18px rgba(232, 197, 71, 0.35);
-}
-
-.org-pitch-page--custom .sponsor-pitch-section {
-  border-radius: 18px;
-  padding: 28px 24px;
-  margin-bottom: 28px;
-  background: rgba(255, 255, 255, 0.72);
+  background: #fff;
   border: 1px solid var(--pitch-border);
-  box-shadow: 0 6px 24px rgba(30, 58, 79, 0.04);
 }
 
-.org-pitch-page--custom .sponsor-pitch-section h2 {
-  font-family: 'DM Serif Display', Georgia, serif;
+.custom-pitch-hero-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin: 0 auto 8px;
+  max-width: 42em;
 }
 
-/* PDF / html2canvas capture — avoid sticky nav bleed and horizontal clip */
-.hub-pitch-pdf-capture.sponsor-pitch-shell,
-.hub-pitch-pdf-clone-shell {
-  max-width: 760px !important;
-  width: 760px !important;
-  margin: 0 auto !important;
-  padding: 20px 24px 48px !important;
-  box-sizing: border-box !important;
-  overflow: visible !important;
-}
-
-.hub-pitch-pdf-capture .sponsor-pitch-nav,
-.hub-pitch-pdf-clone-shell .sponsor-pitch-nav {
-  display: none !important;
-  margin: 0 !important;
-  position: static !important;
-}
-
-.hub-pitch-pdf-capture .org-pitch-hero-showcase,
-.hub-pitch-pdf-clone-shell .org-pitch-hero-showcase {
-  break-inside: avoid;
-  page-break-inside: avoid;
+.custom-pitch-hero-chip {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--pitch-teal-soft);
+  color: var(--pitch-teal);
+  border: 1px solid var(--pitch-border);
 }
