@@ -4,6 +4,17 @@ Organisers on a **Connected** monthly plan list events on The Networker UK and t
 
 ## Enable in production
 
+### If Sentry shows `connected_booking_stripe_customer_id does not exist`
+
+Production Supabase is missing migration **293**. In the Supabase SQL editor (production project), run:
+
+```sql
+alter table public.organiser_accounts
+  add column if not exists connected_booking_stripe_customer_id text;
+```
+
+Also run **`292_external_connected_booking.sql`** if Connected booking columns/tables were never applied. Until 293 is applied, **Manage billing** may not work after subscribe; the page and checkout should still load once app deploys **#66+**.
+
 ### Private preview (only you)
 
 Set on Vercel:
@@ -12,7 +23,7 @@ Set on Vercel:
 CONNECTED_BOOKING_PREVIEW_EMAILS=pips249@gmail.com
 ```
 
-While this is set, **only that signed-in email** sees `/organiser/connected-booking`, the tickets-page Connected card (when plan active), and can use the APIs/webhooks for their organiser account. Everyone else gets no UI and `404` / hidden behaviour. You do **not** need `CONNECTED_BOOKING_ENABLED=true` for preview users when the preview list is set.
+While this is set, **only that signed-in email** sees `/organiser/connected-booking`, the tickets-page Connected card (when plan active), and can use the APIs/webhooks for their organiser account. Everyone else gets no UI and **403 preview_restricted** / hidden behaviour. You do **not** need `CONNECTED_BOOKING_ENABLED=true` for preview users when the preview list is set.
 
 When ready to launch for all organisers: **remove** `CONNECTED_BOOKING_PREVIEW_EMAILS` and set `CONNECTED_BOOKING_ENABLED=true`.
 
