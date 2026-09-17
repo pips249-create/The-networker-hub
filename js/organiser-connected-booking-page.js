@@ -46,7 +46,7 @@
     if (!data) return 'Something went wrong. Try again or email hi@thenetworkeruk.com.';
     if (data.message) return data.message;
     if (data.error === 'connected_booking_failed') {
-      return 'Connected booking could not load (server error). Check Supabase migrations 292 and 293, then redeploy.';
+      return 'Connected could not load (server error). Check Supabase migrations 292 and 293, then redeploy.';
     }
     if (data.error === 'stripe_checkout_failed' || data.error === 'stripe_not_configured') {
       return data.message || 'Checkout is temporarily unavailable. Email hi@thenetworkeruk.com.';
