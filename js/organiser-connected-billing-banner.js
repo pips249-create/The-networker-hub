@@ -145,7 +145,7 @@
             return '<span class="org-connected-billing-banner-page">' + esc(o.name) + '</span>';
           })
           .join(', ') +
-        '. Look for the <span class="org-badge org-badge-teal org-connected-slot-badge">Connected</span> badge in the table below.</p>';
+        '. See the <strong>Connected</strong> column in the table below.</p>';
     } else if (needsPick) {
       assignedBlock =
         '<p class="org-connected-billing-banner-assigned">Pick which organiser ' +

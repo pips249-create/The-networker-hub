@@ -194,18 +194,20 @@
     return connectedBookingLoadPromise;
   }
 
-  function connectedSlotBadgeHtml(groupId) {
+  function connectedSlotCellHtml(groupId) {
     var cb = state.connectedBooking;
-    if (!cb || !cb.ok || !cb.active) return '';
+    if (!cb || !cb.ok || !cb.active) {
+      return '<span class="org-muted">—</span>';
+    }
     var slots = cb.slots || {};
     var ids = slots.assignedOrganiserIds || [];
     if (!ids.some(function (id) {
       return String(id) === String(groupId);
     })) {
-      return '';
+      return '<span class="org-muted">—</span>';
     }
     return (
-      ' <span class="org-badge org-badge-teal org-connected-slot-badge" title="This organiser page uses your Connected booking plan">Connected</span>'
+      '<span class="org-badge org-badge-teal org-connected-slot-badge" title="This organiser page uses your Connected booking plan">Connected</span>'
     );
   }
 
@@ -12356,7 +12358,6 @@
         esc(g.name) +
         '</button>' +
         groupRankingBadgeHtml(g.id) +
-        connectedSlotBadgeHtml(g.id) +
         '</td><td>' +
         '<button type="button" class="org-td-events-click" data-org-goto-events="' +
         esc(g.id) +
@@ -12369,6 +12370,8 @@
         ratingHtml(g.rating) +
         '</td><td>' +
         statusBadgeHtml(g.statusKey || 'draft', g.statusLabel || 'Draft') +
+        '</td><td class="org-td-connected">' +
+        connectedSlotCellHtml(g.id) +
         '</td><td class="org-td-actions">' +
         '<button type="button" class="org-btn org-btn-sm org-btn-outline org-member-list-link" data-org-goto-memberships="' +
         esc(g.id) +
