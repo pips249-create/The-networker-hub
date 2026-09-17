@@ -43,6 +43,20 @@
   }
   showCheckoutBanner();
 
+  var devDetails = document.getElementById('cb-webhook-docs');
+  function openDeveloperDocs() {
+    if (devDetails) devDetails.open = true;
+  }
+  if (devDetails) {
+    devDetails.addEventListener('toggle', function () {
+      devDetails.classList.toggle('is-open', devDetails.open);
+    });
+    if (location.hash === '#cb-webhook-docs') openDeveloperDocs();
+    window.addEventListener('hashchange', function () {
+      if (location.hash === '#cb-webhook-docs') openDeveloperDocs();
+    });
+  }
+
   function postBillingAction(action, plan) {
     var body = { action: action };
     if (plan) body.plan = plan;
@@ -142,10 +156,10 @@
       }
     });
 
-    document.querySelectorAll('.cb-compare-plan-col[data-cb-plan]').forEach(function (col) {
-      col.classList.toggle(
-        'cb-compare-plan-col--current',
-        signedIn && data.plan === col.getAttribute('data-cb-plan')
+    document.querySelectorAll('.cb-plan-card[data-cb-plan]').forEach(function (card) {
+      card.classList.toggle(
+        'cb-plan-card--current',
+        signedIn && data.plan === card.getAttribute('data-cb-plan')
       );
     });
 

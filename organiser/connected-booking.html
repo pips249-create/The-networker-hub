@@ -16,10 +16,10 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260909listmenu1" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260916cb4plan2" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260917cbux1" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260812doors2" />
   </head>
-  <body class="organiser-booking-options-page">
+  <body class="organiser-booking-options-page organiser-connected-booking-page">
     <div id="hub-site-nav"></div>
     <script src="../js/site-nav.js?v=20260910aff1" data-root="../" data-page="organiser" defer></script>
 
@@ -29,133 +29,187 @@
           <a class="ee-back" href="/organiser/#events-list">← Back to My Events</a>
         </div>
 
-        <header class="ee-booking-help-hero">
-          <p class="ee-booking-help-eyebrow">Organiser workspace</p>
-          <h1 class="ee-booking-help-title">Connected booking</h1>
+        <header class="ee-booking-help-hero cb-hero">
+          <p class="ee-booking-help-eyebrow">Connected booking</p>
+          <h1 class="ee-booking-help-title">Keep your tickets. Expand your reach.</h1>
           <p class="ee-booking-help-lede">
-            List events on The Networker UK, take payment on your own site, and sync registrations for verified
-            reviews, attendee lists, and round-up emails.
+            List events on The Networker UK, direct buyers to pay on your website, and automatically sync attendee
+            data for verified reviews and automated marketing.
           </p>
-          <p class="ee-booking-help-lede ee-booking-help-lede--quiet">
-            Prefer tickets and membership on The Networker UK?
-            <a href="/organiser/booking-options">Hub checkout</a> is free to list (4.5% + 20p booking fee per ticket).
-          </p>
+          <div class="cb-hero-actions">
+            <a class="ee-btn ee-btn-gold" href="#cb-pricing">Choose a plan</a>
+            <a class="ee-btn ee-btn-outline" href="#cb-webhook-docs">View developer setup</a>
+          </div>
         </header>
 
-        <section class="ee-booking-help-table-wrap ee-booking-help-section--accent" aria-labelledby="cb-plans-title">
-          <h2 id="cb-plans-title">Compare Connected booking plans</h2>
+        <section class="ee-booking-help-section" aria-labelledby="cb-value-title">
+          <h2 id="cb-value-title" class="cb-section-title">Why Connected booking</h2>
+          <div class="ee-booking-help-grid cb-value-grid">
+            <article class="ee-booking-help-panel cb-value-panel">
+              <span class="cb-value-icon" aria-hidden="true">💳</span>
+              <h3 class="cb-value-heading">Direct checkout</h3>
+              <p>Keep 100% of your ticket money and control your payment processing.</p>
+            </article>
+            <article class="ee-booking-help-panel cb-value-panel">
+              <span class="cb-value-icon" aria-hidden="true">⭐</span>
+              <h3 class="cb-value-heading">Automated reviews</h3>
+              <p>Sync registrations seamlessly via webhook to collect verified post-event reviews.</p>
+            </article>
+            <article class="ee-booking-help-panel cb-value-panel">
+              <span class="cb-value-icon" aria-hidden="true">✉️</span>
+              <h3 class="cb-value-heading">Email reach</h3>
+              <p>Automatically feature your events in Networker UK round-up emails to increase attendance.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="ee-booking-help-section ee-booking-help-section--accent" aria-labelledby="cb-flow-title">
+          <div class="ee-booking-help-section-head">
+            <h2 id="cb-flow-title">How it looks for attendees</h2>
+            <p class="ee-booking-help-pick">
+              Your event stays visible on The Networker UK. When someone books, they complete payment on your site —
+              we receive the registration in real time.
+            </p>
+          </div>
+          <div class="cb-flow-mockups">
+            <figure class="cb-flow-mockup">
+              <figcaption class="cb-flow-mockup-label">On The Networker UK</figcaption>
+              <div class="cb-mockup-frame cb-mockup-frame--hub">
+                <div class="cb-mockup-bar"></div>
+                <div class="cb-mockup-event">
+                  <div class="cb-mockup-event-img" aria-hidden="true"></div>
+                  <div class="cb-mockup-event-body">
+                    <p class="cb-mockup-event-title">Friday breakfast networking</p>
+                    <p class="cb-mockup-event-meta">Tue 24 Sep · 7:30am · Birmingham</p>
+                    <span class="cb-mockup-pill">Book on organiser site</span>
+                  </div>
+                </div>
+              </div>
+            </figure>
+            <div class="cb-flow-arrow" aria-hidden="true">→</div>
+            <figure class="cb-flow-mockup">
+              <figcaption class="cb-flow-mockup-label">Your website checkout</figcaption>
+              <div class="cb-mockup-frame cb-mockup-frame--external">
+                <div class="cb-mockup-bar cb-mockup-bar--muted"></div>
+                <div class="cb-mockup-checkout">
+                  <p class="cb-mockup-checkout-title">Complete your booking</p>
+                  <div class="cb-mockup-field"></div>
+                  <div class="cb-mockup-field cb-mockup-field--short"></div>
+                  <span class="cb-mockup-pay-btn">Pay securely</span>
+                </div>
+              </div>
+            </figure>
+          </div>
+          <ul class="cb-feature-badges" aria-label="Included capabilities">
+            <li><span class="cb-feature-badge-icon" aria-hidden="true">✓</span> Verified reviews</li>
+            <li><span class="cb-feature-badge-icon" aria-hidden="true">✓</span> Attendee lists</li>
+            <li><span class="cb-feature-badge-icon" aria-hidden="true">✓</span> Round-up emails</li>
+            <li><span class="cb-feature-badge-icon" aria-hidden="true">✓</span> Real-time webhook sync</li>
+          </ul>
+        </section>
+
+        <section
+          class="ee-booking-help-section ee-booking-help-section--accent"
+          id="cb-pricing"
+          aria-labelledby="cb-plans-title"
+        >
+          <h2 id="cb-plans-title">Choose your plan</h2>
           <p class="ee-booking-help-table-lede">
-            List on The Networker UK, take payment on your website, and sync registrations via webhook. Pick one plan for
-            your account — prices ex VAT (20% added at Stripe checkout).
-          </p>
-          <p class="ee-booking-help-table-tip">
-            Need tickets, membership, or guest visits on The Networker UK instead?
-            <a href="/organiser/booking-options">Hub checkout</a> is free to list (4.5% + 20p booking fee per ticket). One
-            model per event — you cannot mix Hub and Connected on the same listing.
+            One subscription per organiser account. Prices exclude VAT — 20% is added at Stripe checkout.
           </p>
           <p class="ee-alert ee-alert-ok cb-checkout-banner" id="cb-checkout-banner" hidden role="status"></p>
-          <div class="cb-compare-wrap ee-booking-help-table-scroll" id="cb-pricing-compare">
-            <table class="cb-compare-table cb-compare-table--plans">
-              <thead>
-                <tr>
-                  <th scope="col" class="cb-compare-feature-col"></th>
-                  <th scope="col" class="cb-compare-plan-col" data-cb-plan="starter">
-                    <span class="cb-compare-col-title">1 group profile</span>
-                    <span class="cb-compare-col-price">£39 <span class="cb-compare-col-vat">+ VAT / mo</span></span>
-                    <span class="cb-compare-col-sub">Starter</span>
-                  </th>
-                  <th scope="col" class="cb-compare-plan-col cb-compare-plan-col--featured" data-cb-plan="growth">
-                    <span class="cb-compare-plan-badge">Most popular</span>
-                    <span class="cb-compare-col-title">Up to 5 group profiles</span>
-                    <span class="cb-compare-col-price">£99 <span class="cb-compare-col-vat">+ VAT / mo</span></span>
-                    <span class="cb-compare-col-sub">Growth</span>
-                  </th>
-                  <th scope="col" class="cb-compare-plan-col" data-cb-plan="scale">
-                    <span class="cb-compare-col-title">Up to 20 group profiles</span>
-                    <span class="cb-compare-col-price">£199 <span class="cb-compare-col-vat">+ VAT / mo</span></span>
-                    <span class="cb-compare-col-sub">Scale</span>
-                  </th>
-                  <th scope="col" class="cb-compare-plan-col cb-compare-plan-col--enterprise">
-                    <span class="cb-compare-col-title">20+ group profiles</span>
-                    <span class="cb-compare-col-price">POA</span>
-                    <span class="cb-compare-col-sub">Enterprise</span>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <th scope="row">Listing on The Networker UK</th>
-                  <td>Included</td>
-                  <td>Included</td>
-                  <td>Included</td>
-                  <td>Included</td>
-                </tr>
-                <tr>
-                  <th scope="row">Events you can list</th>
-                  <td>Unlimited</td>
-                  <td>Unlimited</td>
-                  <td>Unlimited</td>
-                  <td>Unlimited</td>
-                </tr>
-                <tr>
-                  <th scope="row">Where people pay</th>
-                  <td>Your website / booking system</td>
-                  <td>Your website / booking system</td>
-                  <td>Your website / booking system</td>
-                  <td>Your website / booking system</td>
-                </tr>
-                <tr>
-                  <th scope="row">Your cost</th>
-                  <td>£39/mo ex VAT — you keep 100% of ticket money</td>
-                  <td>£99/mo ex VAT — you keep 100% of ticket money</td>
-                  <td>£199/mo ex VAT — you keep 100% of ticket money</td>
-                  <td>POA — you keep 100% of ticket money</td>
-                </tr>
-                <tr>
-                  <th scope="row">Verified post-event reviews</th>
-                  <td>Yes — real-time webhook required</td>
-                  <td>Yes — real-time webhook required</td>
-                  <td>Yes — real-time webhook required</td>
-                  <td>Yes — real-time webhook required</td>
-                </tr>
-                <tr>
-                  <th scope="row">Attendee list &amp; round-up emails</th>
-                  <td>Yes — when webhook syncs bookings</td>
-                  <td>Yes — when webhook syncs bookings</td>
-                  <td>Yes — when webhook syncs bookings</td>
-                  <td>Yes — when webhook syncs bookings</td>
-                </tr>
-                <tr>
-                  <th scope="row">Membership, guest visits, application seating</th>
-                  <td class="cb-compare-muted">No — use Hub checkout</td>
-                  <td class="cb-compare-muted">No — use Hub checkout</td>
-                  <td class="cb-compare-muted">No — use Hub checkout</td>
-                  <td class="cb-compare-muted">No — use Hub checkout</td>
-                </tr>
-                <tr class="cb-compare-cta-row">
-                  <th scope="row">Choose this plan</th>
-                  <td>
-                    <button type="button" class="cb-compare-cta cb-subscribe-btn" data-cb-plan="starter">Subscribe</button>
-                  </td>
-                  <td>
-                    <button type="button" class="cb-compare-cta cb-compare-cta--primary cb-subscribe-btn" data-cb-plan="growth">
-                      Subscribe
-                    </button>
-                  </td>
-                  <td>
-                    <button type="button" class="cb-compare-cta cb-subscribe-btn" data-cb-plan="scale">Subscribe</button>
-                  </td>
-                  <td>
-                    <a
-                      class="cb-compare-cta cb-compare-cta--link"
-                      href="mailto:rosie@thenetworkeruk.com,hi@thenetworkeruk.com?subject=Connected%20booking%20%E2%80%94%2020%2B%20groups%20(POA)&amp;body=Hi%20Rosie%20and%20Catherine%2C%0A%0AI%20would%20like%20Connected%20booking%20for%20____%20group%20profile(s).%0A%0AOrganisation%20name%3A%20%0AContact%20email%3A%20%0A%0AThank%20you."
-                      >Email Rosie &amp; Catherine</a
-                    >
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+
+          <div class="cb-plan-cards cb-plan-cards--pricing" id="cb-pricing-compare">
+            <article class="cb-plan-card" data-cb-plan="starter">
+              <header class="cb-plan-card-head">
+                <p class="cb-plan-card-name">Starter</p>
+                <p class="cb-plan-card-price">
+                  <span class="cb-plan-card-amount">£39</span>
+                  <span class="cb-plan-card-vat">+ VAT / mo</span>
+                </p>
+                <p class="cb-plan-card-tagline">1 group profile</p>
+              </header>
+              <ul class="cb-plan-card-features">
+                <li>Unlimited event listings</li>
+                <li>Direct customer checkout on your site</li>
+                <li>Real-time webhook registration sync</li>
+                <li>Included in attendee round-up emails</li>
+              </ul>
+              <div class="cb-plan-card-foot">
+                <button type="button" class="cb-plan-card-btn cb-subscribe-btn" data-cb-plan="starter">
+                  Subscribe
+                </button>
+              </div>
+            </article>
+
+            <article class="cb-plan-card cb-plan-card--featured" data-cb-plan="growth">
+              <p class="cb-plan-card-badge">Most popular</p>
+              <header class="cb-plan-card-head">
+                <p class="cb-plan-card-name">Growth</p>
+                <p class="cb-plan-card-price">
+                  <span class="cb-plan-card-amount">£99</span>
+                  <span class="cb-plan-card-vat">+ VAT / mo</span>
+                </p>
+                <p class="cb-plan-card-tagline">Up to 5 group profiles</p>
+              </header>
+              <ul class="cb-plan-card-features">
+                <li>All Starter features included</li>
+                <li>Manage up to 5 brand or regional group profiles</li>
+                <li>Priority placement in round-up emails</li>
+              </ul>
+              <div class="cb-plan-card-foot">
+                <button
+                  type="button"
+                  class="cb-plan-card-btn cb-plan-card-btn--primary cb-subscribe-btn"
+                  data-cb-plan="growth"
+                >
+                  Subscribe
+                </button>
+              </div>
+            </article>
+
+            <article class="cb-plan-card" data-cb-plan="scale">
+              <header class="cb-plan-card-head">
+                <p class="cb-plan-card-name">Scale</p>
+                <p class="cb-plan-card-price">
+                  <span class="cb-plan-card-amount">£199</span>
+                  <span class="cb-plan-card-vat">+ VAT / mo</span>
+                </p>
+                <p class="cb-plan-card-tagline">Up to 20 group profiles</p>
+              </header>
+              <ul class="cb-plan-card-features">
+                <li>All Growth features included</li>
+                <li>Designed for large networks and event agencies</li>
+                <li>Dedicated account assistance</li>
+              </ul>
+              <div class="cb-plan-card-foot">
+                <button type="button" class="cb-plan-card-btn cb-subscribe-btn" data-cb-plan="scale">Subscribe</button>
+              </div>
+            </article>
+
+            <article class="cb-plan-card cb-plan-card--enterprise">
+              <header class="cb-plan-card-head">
+                <p class="cb-plan-card-name">Enterprise</p>
+                <p class="cb-plan-card-price">
+                  <span class="cb-plan-card-amount">POA</span>
+                </p>
+                <p class="cb-plan-card-tagline">20+ group profiles</p>
+              </header>
+              <ul class="cb-plan-card-features">
+                <li>Custom volume discounts</li>
+                <li>Dedicated tech support</li>
+                <li>Tailored onboarding for your teams</li>
+              </ul>
+              <div class="cb-plan-card-foot">
+                <a
+                  class="cb-plan-card-btn cb-plan-card-btn--outline"
+                  href="mailto:rosie@thenetworkeruk.com,hi@thenetworkeruk.com?subject=Connected%20booking%20%E2%80%94%2020%2B%20groups%20(POA)&amp;body=Hi%20Rosie%20and%20Catherine%2C%0A%0AI%20would%20like%20Connected%20booking%20for%20____%20group%20profile(s).%0A%0AOrganisation%20name%3A%20%0AContact%20email%3A%20%0A%0AThank%20you."
+                  >Contact Rosie &amp; Catherine</a
+                >
+              </div>
+            </article>
           </div>
+
           <div class="cb-poa-actions">
             <button type="button" class="ee-btn ee-btn-outline" id="cb-manage-billing" hidden>
               Manage billing
@@ -167,28 +221,6 @@
           <p class="ee-booking-help-table-tip" id="cb-billing-tip">
             Sign in to subscribe. Payment is handled securely by Stripe.
           </p>
-        </section>
-
-        <section class="ee-booking-help-section" aria-labelledby="cb-webhook-title">
-          <div class="ee-booking-help-section-head">
-            <p class="ee-booking-help-kicker">For your developer</p>
-            <h2 id="cb-webhook-title">Real-time registration webhook</h2>
-            <p class="ee-booking-help-pick">
-              When someone buys on your site, your system sends one HTTPS POST so we create the registration.
-            </p>
-          </div>
-          <div class="ee-card cb-webhook-card">
-            <p class="ee-hint"><strong>Endpoint</strong></p>
-            <p class="cb-webhook-url" id="cb-webhook-url-display"></p>
-            <p class="ee-hint" style="margin-top: 14px"><strong>Headers</strong></p>
-            <ul class="cb-meta-list">
-              <li><code>Content-Type: application/json</code></li>
-              <li><code>X-Organiser-Account-Id: &lt;your account id&gt;</code></li>
-              <li><code>X-Networker-Signature: &lt;HMAC-SHA256 of raw body&gt;</code></li>
-            </ul>
-            <p class="ee-hint" style="margin-top: 14px"><strong>Example body</strong></p>
-            <pre class="cb-code-block" id="cb-sample" aria-label="Example JSON payload"></pre>
-          </div>
         </section>
 
         <section class="ee-booking-help-section" id="cb-admin-panel" hidden aria-labelledby="cb-connection-title">
@@ -213,15 +245,55 @@
           </div>
         </section>
 
+        <section class="ee-booking-help-section" aria-labelledby="cb-webhook-title">
+          <details class="ee-optional-details cb-dev-details" id="cb-webhook-docs">
+            <summary class="ee-optional-details-summary cb-dev-summary">
+              <span class="cb-dev-summary-toggle" aria-hidden="true">+</span>
+              <span class="ee-optional-details-title" id="cb-webhook-title">View webhook &amp; API documentation</span>
+              <span class="ee-optional-details-hint"
+                >Endpoint, headers, and example JSON — for your developer or booking provider.</span
+              >
+            </summary>
+            <div class="ee-optional-details-body">
+              <p class="ee-booking-help-pick">
+                When someone buys on your site, your system sends one HTTPS POST so we create the registration.
+              </p>
+              <div class="ee-card cb-webhook-card">
+                <p class="ee-hint"><strong>Endpoint</strong></p>
+                <p class="cb-webhook-url" id="cb-webhook-url-display"></p>
+                <p class="ee-hint" style="margin-top: 14px"><strong>Headers</strong></p>
+                <ul class="cb-meta-list">
+                  <li><code>Content-Type: application/json</code></li>
+                  <li><code>X-Organiser-Account-Id: &lt;your account id&gt;</code></li>
+                  <li><code>X-Networker-Signature: &lt;HMAC-SHA256 of raw body&gt;</code></li>
+                </ul>
+                <p class="ee-hint" style="margin-top: 14px"><strong>Example body</strong></p>
+                <pre class="cb-code-block" id="cb-sample" aria-label="Example JSON payload"></pre>
+              </div>
+            </div>
+          </details>
+        </section>
+
         <section class="ee-booking-help-section ee-booking-help-section--accent" id="cb-signin-hint">
           <p class="ee-booking-help-pick">
             <a class="ee-btn ee-btn-gold" href="/login?next=/organiser/connected-booking">Sign in</a>
             to manage your webhook secret and view sync logs.
           </p>
         </section>
+
+        <aside class="ee-booking-help-panel ee-booking-help-panel--note cb-hub-callout">
+          <h2 class="cb-hub-callout-title">Looking for hassle-free ticketing built-in?</h2>
+          <p>
+            If you do not want to handle payments on your own site, use Hub Checkout. Free to list, with a flat fee of
+            4.5% + 20p per ticket.
+          </p>
+          <p class="cb-hub-callout-cta">
+            <a class="ee-btn ee-btn-outline" href="/organiser/booking-options">Explore Hub Checkout</a>
+          </p>
+        </aside>
       </div>
     </div>
 
-    <script src="../js/organiser-connected-booking-page.js?v=20260916cb4plan1" defer></script>
+    <script src="../js/organiser-connected-booking-page.js?v=20260917cbux1" defer></script>
   </body>
 </html>
