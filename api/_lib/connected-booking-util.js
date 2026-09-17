@@ -26,6 +26,29 @@ function connectedBookingPreviewEmails() {
   return list.length ? list : null;
 }
 
+/** Pilot: activate Connected booking without Stripe for these organiser login emails. */
+function connectedBookingPilotGrantEmails() {
+  const raw = String(process.env.CONNECTED_BOOKING_PILOT_GRANT_EMAILS || '').trim();
+  if (!raw) return null;
+  const list = raw
+    .split(/[,;\s]+/)
+    .map((e) => String(e || '').trim().toLowerCase())
+    .filter(Boolean);
+  return list.length ? list : null;
+}
+
+function connectedBookingPilotGrantPlan() {
+  const plan = String(process.env.CONNECTED_BOOKING_PILOT_GRANT_PLAN || 'starter').trim().toLowerCase();
+  return plan in PLAN_GROUP_LIMITS ? plan : 'starter';
+}
+
+function connectedBookingPilotGrantEligible(email) {
+  const em = normalizeConnectedBookingEmail(email);
+  if (!em) return false;
+  const list = connectedBookingPilotGrantEmails();
+  return Boolean(list && list.includes(em));
+}
+
 function connectedBookingPreviewLocked() {
   return Boolean(connectedBookingPreviewEmails()?.length);
 }
@@ -133,6 +156,9 @@ module.exports = {
   CHECKOUT_HUB,
   connectedBookingFeatureEnabled,
   connectedBookingPreviewEmails,
+  connectedBookingPilotGrantEmails,
+  connectedBookingPilotGrantPlan,
+  connectedBookingPilotGrantEligible,
   connectedBookingPreviewLocked,
   connectedBookingAllowedForEmail,
   connectedBookingAllowedForSession,
