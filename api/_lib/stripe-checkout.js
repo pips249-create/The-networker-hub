@@ -753,6 +753,11 @@ async function createConnectedBookingCheckoutSession(opts) {
   const cancelUrl =
     String(opts.cancelUrl || '').trim() || site + '/organiser/connected-booking?checkout=cancel';
 
+  const allowPromo =
+    String(process.env.CONNECTED_BOOKING_STRIPE_PROMOTION_CODES || '').trim().toLowerCase() ===
+      'true' ||
+    String(process.env.CONNECTED_BOOKING_STRIPE_PROMOTION_CODES || '').trim() === '1';
+
   return stripe.checkout.sessions.create({
     mode: 'subscription',
     customer_email: opts.email,
@@ -762,6 +767,7 @@ async function createConnectedBookingCheckoutSession(opts) {
     success_url: successUrl,
     cancel_url: cancelUrl,
     line_items: lineItems,
+    ...(allowPromo ? { allow_promotion_codes: true } : {}),
   });
 }
 

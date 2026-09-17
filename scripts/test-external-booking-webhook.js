@@ -36,4 +36,13 @@ process.env.CONNECTED_BOOKING_PREVIEW_EMAILS = prevPreview || '';
 process.env.CONNECTED_BOOKING_ENABLED = prevEnabled || '';
 delete require.cache[require.resolve('../api/_lib/connected-booking-util')];
 
+process.env.CONNECTED_BOOKING_PILOT_GRANT_EMAILS = 'pilot@test.com';
+delete require.cache[require.resolve('../api/_lib/connected-booking-util')];
+const utilPilot = require('../api/_lib/connected-booking-util');
+assert.strictEqual(utilPilot.connectedBookingPilotGrantEligible('pilot@test.com'), true);
+assert.strictEqual(utilPilot.connectedBookingPilotGrantEligible('other@test.com'), false);
+assert.strictEqual(utilPilot.connectedBookingPilotGrantPlan(), 'starter');
+delete process.env.CONNECTED_BOOKING_PILOT_GRANT_EMAILS;
+delete require.cache[require.resolve('../api/_lib/connected-booking-util')];
+
 console.log('test-external-booking-webhook: ok');

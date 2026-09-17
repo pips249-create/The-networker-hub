@@ -57,5 +57,21 @@ Hub checkout remains free to list; booking fee 4.5% + 20p per ticket.
 
 ## Tests
 
-- `npm run test-external-booking-webhook`
-- `npm run test-connected-booking-subscriptions`
+From the repo root (one command per line):
+
+```bash
+cd ~/The-networker-hub
+npm run test-connected-booking-subscriptions
+npm run test-external-booking-webhook
+```
+
+**Pilot / Eventbrite end-to-end:** see [CONNECTED-BOOKING-PILOT-TEST.md](./CONNECTED-BOOKING-PILOT-TEST.md) (`CONNECTED_BOOKING_PILOT_GRANT_EMAILS`, webhook script).
+
+## Pilot grant (complimentary Starter)
+
+```text
+CONNECTED_BOOKING_PILOT_GRANT_EMAILS=pips249@gmail.com
+CONNECTED_BOOKING_PILOT_GRANT_PLAN=starter
+```
+
+First visit to `/organiser/connected-booking` activates the plan without Stripe. Still use preview emails so only pilot accounts see the feature.
