@@ -46,5 +46,12 @@ Hub checkout remains free to list; booking fee 4.5% + 20p per ticket.
 
 ## Tests
 
-- `npm run test-external-booking-webhook`
-- `npm run test-connected-booking-subscriptions`
+Run these **from the project root** (the folder that contains `package.json` — e.g. after `git clone` and `cd The-networker-hub`), not from your home directory:
+
+```bash
+cd /path/to/The-networker-hub
+npm run test-external-booking-webhook
+npm run test-connected-booking-subscriptions
+```
+
+You should see `test-external-booking-webhook: ok` and `test-connected-booking-subscriptions: ok`. No Supabase or Stripe env is required for these two scripts.
