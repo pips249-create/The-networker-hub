@@ -307,10 +307,24 @@
     }
   }
 
+  function applyPricingLabels(pricing) {
+    if (!pricing) return;
+    Object.keys(pricing).forEach(function (planKey) {
+      var row = pricing[planKey];
+      if (!row || row.monthlyExVat == null) return;
+      var card = document.querySelector('.cb-plan-card[data-cb-plan="' + planKey + '"]');
+      if (!card) return;
+      var amountEl = card.querySelector('.cb-plan-card-amount');
+      if (amountEl) amountEl.textContent = '£' + row.monthlyExVat;
+    });
+  }
+
   function applyBillingUi(data) {
     var billing = data.billing || {};
     var canSubscribe = billing.canSubscribe !== false && billing.stripeCheckoutConfigured !== false;
     var signedIn = data.ok === true;
+
+    applyPricingLabels(data.pricing);
 
     document.querySelectorAll('.cb-subscribe-btn').forEach(function (btn) {
       var plan = btn.getAttribute('data-cb-plan');
