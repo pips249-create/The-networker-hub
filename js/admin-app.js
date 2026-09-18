@@ -8455,6 +8455,9 @@
           '<button type="button" class="w-full rounded-lg border border-slate-200 text-slate-800 py-2 text-sm font-semibold hover:bg-slate-50" id="drawer-toggle-emails">' +
           (u.emailsEnabled === false ? 'Enable emails for this user' : 'Block emails for this user') +
           '</button>' +
+          '<p class="text-xs font-semibold text-slate-500 uppercase tracking-wide pt-2">Organiser email confirm</p>' +
+          '<button type="button" class="w-full rounded-lg border border-brand-200 text-brand-800 py-2 text-sm font-semibold hover:bg-brand-50" id="drawer-resend-organiser-verify">Resend organiser confirm email</button>' +
+          '<button type="button" class="w-full rounded-lg border border-emerald-200 text-emerald-900 py-2 text-sm font-semibold hover:bg-emerald-50" id="drawer-mark-organiser-verified">Mark organiser email confirmed</button>' +
           '<p class="text-xs font-semibold text-slate-500 uppercase tracking-wide pt-2">Password support</p>' +
           '<button type="button" class="w-full rounded-lg border border-brand-200 text-brand-800 py-2 text-sm font-semibold hover:bg-brand-50" id="drawer-reset-link">Send password reset email</button>' +
           '<button type="button" class="w-full rounded-lg border border-slate-200 text-slate-800 py-2 text-sm font-semibold hover:bg-slate-50" id="drawer-temp-password">Set temporary password</button>' +
@@ -8557,6 +8560,61 @@
           })
           .finally(function () {
             tempBtn.disabled = false;
+          });
+      });
+    }
+    var resendOrgVerifyBtn = document.getElementById('drawer-resend-organiser-verify');
+    if (resendOrgVerifyBtn) {
+      resendOrgVerifyBtn.addEventListener('click', function () {
+        resendOrgVerifyBtn.disabled = true;
+        adminPost('/api/admin/users', {
+          action: 'resend_organiser_verification',
+          email: u.email,
+          userId: u.id,
+        })
+          .then(function (data) {
+            if (!data || !data.ok) throw new Error((data && data.message) || 'Could not send');
+            var bits = [data.message || 'Done.'];
+            if (data.verifyCode) bits.push('Code: ' + data.verifyCode);
+            if (data.verifyUrl) bits.push('Link: ' + data.verifyUrl);
+            if (data.deliveryError) bits.push('Delivery error: ' + data.deliveryError);
+            showPwdResult(bits.join(' — '), !data.emailSent);
+          })
+          .catch(function (err) {
+            showPwdResult(err.message || 'Failed.', true);
+          })
+          .finally(function () {
+            resendOrgVerifyBtn.disabled = false;
+          });
+      });
+    }
+    var markOrgVerifiedBtn = document.getElementById('drawer-mark-organiser-verified');
+    if (markOrgVerifiedBtn) {
+      markOrgVerifiedBtn.addEventListener('click', function () {
+        if (
+          !window.confirm(
+            'Mark organiser email as confirmed for ' +
+              u.email +
+              '? They will be able to publish, view attendees, and open Stripe.'
+          )
+        ) {
+          return;
+        }
+        markOrgVerifiedBtn.disabled = true;
+        adminPost('/api/admin/users', {
+          action: 'mark_organiser_email_verified',
+          email: u.email,
+          userId: u.id,
+        })
+          .then(function (data) {
+            if (!data || !data.ok) throw new Error((data && data.message) || 'Update failed');
+            showPwdResult(data.message || 'Organiser email confirmed.', false);
+          })
+          .catch(function (err) {
+            showPwdResult(err.message || 'Failed.', true);
+          })
+          .finally(function () {
+            markOrgVerifiedBtn.disabled = false;
           });
       });
     }

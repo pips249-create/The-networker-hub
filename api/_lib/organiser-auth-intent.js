@@ -94,8 +94,12 @@ async function maybeAutoEnableOrganiserAccess(session, res) {
         name: session.name,
       });
       verifyPath = sent.verifyPath || null;
-    } catch {
-      /* enable succeeds even if verification email fails */
+    } catch (e) {
+      verifyPath =
+        e.verifyPath ||
+        (e.verifyCode
+          ? '/organiser/verify-email?code=' + encodeURIComponent(String(e.verifyCode))
+          : '/organiser/verify-email');
     }
   }
 

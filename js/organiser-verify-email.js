@@ -102,18 +102,28 @@
       if (data.devVerifyCode && codeEl) {
         codeEl.value = String(data.devVerifyCode);
       }
-      if ((data.devVerifyCode || data.devVerifyUrl) && devEl) {
+      if (data.verifyCode && codeEl) {
+        codeEl.value = String(data.verifyCode);
+      }
+      if ((data.devVerifyCode || data.devVerifyUrl || data.verifyCode || data.verifyUrl) && devEl) {
         devEl.hidden = false;
-        if (data.devVerifyCode) {
-          devEl.textContent = 'Dev code: ' + data.devVerifyCode;
+        if (data.verifyCode || data.devVerifyCode) {
+          devEl.textContent =
+            'Confirmation code: ' + String(data.verifyCode || data.devVerifyCode);
         } else {
           devEl.innerHTML =
-            'Dev link: <a href="' +
-            String(data.devVerifyUrl).replace(/"/g, '&quot;') +
+            'Confirm link: <a href="' +
+            String(data.verifyUrl || data.devVerifyUrl).replace(/"/g, '&quot;') +
             '">Open verify page</a>';
         }
       }
-      showStatus(data.message || 'Confirmation code sent.', true);
+      showStatus(
+        data.message ||
+          (data.emailSent === false
+            ? 'Email could not be delivered — use the code shown below.'
+            : 'Confirmation code sent. Check inbox and spam/junk.'),
+        true
+      );
       if (codeEl) codeEl.focus();
     } catch (e) {
       showError('Could not resend confirmation code.');

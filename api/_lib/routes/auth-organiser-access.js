@@ -66,20 +66,25 @@ module.exports = async function handler(req, res) {
       return json(res, 200, {
         ok: true,
         emailSent: true,
-        message: 'Check your inbox for a confirmation code.',
+        message:
+          'Check your inbox (and spam/junk) for a confirmation code sent to ' +
+          session.email +
+          '.',
         redirect: result.verifyPath || '/organiser/verify-email',
         ...result,
       });
     } catch (e) {
-      if (e.code === 'email_not_configured' && (e.verifyUrl || e.verifyCode)) {
+      if (e.verifyCode || e.code === 'email_not_configured') {
         return json(res, 200, {
           ok: true,
           emailSent: false,
-          devVerifyUrl: e.verifyUrl || null,
-          devVerifyCode: e.verifyCode || null,
+          verifyCode: e.verifyCode || null,
+          verifyUrl: e.verifyUrl || null,
           message: e.verifyCode
-            ? 'Email is not configured on this server. Use the confirmation code below.'
-            : 'Email is not configured on this server. Use the verification link below.',
+            ? 'We could not deliver email to ' +
+              session.email +
+              '. Enter this code on the confirmation screen instead, and check spam/junk.'
+            : 'Email is not configured on this server. Use the confirmation code below.',
         });
       }
       return json(res, 500, {
@@ -192,19 +197,25 @@ module.exports = async function handler(req, res) {
         verifyPath = sent.verifyPath || null;
         verifyMessage = 'We sent a confirmation code to ' + session.email + '.';
       } catch (e) {
-        if (e.code === 'email_not_configured' && (e.verifyUrl || e.verifyCode)) {
+        if (e.verifyCode || e.verifyUrl || e.code === 'email_not_configured') {
           devVerifyUrl = e.verifyUrl || null;
           devVerifyCode = e.verifyCode || null;
-          verifyPath = devVerifyUrl
-            ? String(devVerifyUrl).replace(/^https?:\/\/[^/]+/i, '')
-            : devVerifyCode
-              ? '/organiser/verify-email?code=' + encodeURIComponent(String(devVerifyCode))
-              : null;
+          verifyPath =
+            e.verifyPath ||
+            (devVerifyUrl
+              ? String(devVerifyUrl).replace(/^https?:\/\/[^/]+/i, '')
+              : devVerifyCode
+                ? '/organiser/verify-email?code=' + encodeURIComponent(String(devVerifyCode))
+                : '/organiser/verify-email');
           verifyMessage = e.verifyCode
-            ? 'Email is not configured on this server — enter the confirmation code on the next screen.'
-            : 'Email is not configured on this server — use the verification link on the next screen.';
+            ? 'We could not deliver email to ' +
+              session.email +
+              ' — enter the confirmation code on the next screen (and check spam/junk).'
+            : 'We could not send a confirmation email yet — confirm your email on the next screen.';
         } else {
-          verifyMessage = 'Organiser access enabled, but we could not send a confirmation email yet.';
+          verifyPath = '/organiser/verify-email';
+          verifyMessage =
+            'Organiser access enabled, but we could not send a confirmation email yet. Use Resend code on the next screen.';
         }
       }
     }
