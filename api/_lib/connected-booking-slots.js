@@ -1,9 +1,4 @@
-const { groupLimitForPlan } = require('./connected-booking-util');
-
-function isConnectedPlanActive(account) {
-  if (!account) return false;
-  return String(account.connected_booking_status || '').trim() === 'active';
-}
+const { groupLimitForPlan, isConnectedPlanActive } = require('./connected-booking-util');
 
 function isMissingSlotColumnError(err) {
   const msg = [err?.message, err?.details, err?.code].filter(Boolean).join(' ');
