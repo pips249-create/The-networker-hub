@@ -70,6 +70,64 @@
 
   var platformPickerControl = null;
   var platformUrlInputBound = false;
+  var platformPickerExpanded = false;
+
+  function arrivedFromTicketsStep() {
+    return String(new URLSearchParams(location.search).get('from') || '').trim() === 'tickets';
+  }
+
+  function shouldCollapsePlatformPicker() {
+    return arrivedFromTicketsStep() && !platformPickerExpanded;
+  }
+
+  function escAttr(s) {
+    return String(s || '')
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;');
+  }
+
+  function updatePlatformPickerPresentation() {
+    var hub = window.HubConnectedPlatform;
+    var picker = qs('ecs-platform-picker');
+    var summary = qs('ecs-platform-chosen');
+    if (!picker || !summary || !hub || !platformPickerControl) return;
+
+    var key = platformPickerControl.getSelected();
+    var meta = hub.PLATFORMS[key];
+    var collapse = shouldCollapsePlatformPicker();
+
+    picker.hidden = collapse;
+    summary.hidden = !collapse;
+    if (collapse && meta) {
+      var nameEl = qs('ecs-platform-chosen-name');
+      var logoEl = qs('ecs-platform-chosen-logo');
+      if (nameEl) nameEl.textContent = meta.label || key;
+      if (logoEl) {
+        logoEl.innerHTML = meta.logo
+          ? '<img src="' + escAttr(meta.logo) + '" alt="" width="120" height="28" decoding="async" />'
+          : '';
+      }
+    }
+  }
+
+  function bindPlatformChangeControl() {
+    var btn = qs('ecs-platform-change');
+    if (!btn || btn.dataset.bound) return;
+    btn.dataset.bound = '1';
+    btn.addEventListener('click', function () {
+      platformPickerExpanded = true;
+      updatePlatformPickerPresentation();
+      var picker = qs('ecs-platform-picker');
+      if (picker) {
+        try {
+          picker.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } catch (e) {
+          /* ignore */
+        }
+      }
+    });
+  }
 
   function syncBookingUrlPlaceholder(meta) {
     var urlInput = qs('ecs-booking-url');
@@ -90,6 +148,7 @@
         syncEventLinkPanel(platformKey);
         renderProviderWebhookCard(platformKey);
         updateOneTimeProviderStatus(platformKey);
+        updatePlatformPickerPresentation();
       });
     }
     if (platformPickerControl) {
@@ -126,6 +185,7 @@
     var chosen = fromUrl || stored || 'own_site';
     platformPickerControl.apply(chosen);
     renderProviderWebhookCard(chosen);
+    updatePlatformPickerPresentation();
   }
 
   function qs(id) {
@@ -422,6 +482,8 @@
     if (qs('ecs-booking-url')) qs('ecs-booking-url').value = ev.externalBookingUrl || ev.external_booking_url || '';
     initPlatformPicker();
     restorePlatformSelection();
+    bindPlatformChangeControl();
+    updatePlatformPickerPresentation();
   }
 
   var providersById = {};
@@ -932,6 +994,8 @@
     bindEventLinkUi();
     initPlatformPicker();
     restorePlatformSelection();
+    bindPlatformChangeControl();
+    updatePlatformPickerPresentation();
     syncEventLinkPanel(selectedIntegrationPlatform());
     if (slotStatus && billing.plan) {
       slotStatus.hidden = false;

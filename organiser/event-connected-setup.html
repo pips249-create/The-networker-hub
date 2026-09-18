@@ -13,7 +13,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260909listmenu1" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260918drawerux3" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260918pickcollapse1" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260812doors2" />
   </head>
   <body class="organiser-event-edit-page organiser-connected-setup-page">
@@ -99,6 +99,16 @@
           </ol>
         </div>
 
+        <div class="ecs-platform-chosen" id="ecs-platform-chosen" hidden>
+          <p class="ecs-platform-chosen-kicker">Where people book</p>
+          <div class="ecs-platform-chosen-row">
+            <span class="ecs-platform-chosen-logo" id="ecs-platform-chosen-logo" aria-hidden="true"></span>
+            <span class="ecs-platform-chosen-name" id="ecs-platform-chosen-name"></span>
+            <button type="button" class="ee-btn ee-btn-outline ee-btn-sm" id="ecs-platform-change">
+              Change
+            </button>
+          </div>
+        </div>
         <fieldset class="ecs-platform-picker" id="ecs-platform-picker">
           <legend>Where do people book?</legend>
           <div class="ecs-platform-grid" data-connected-platform-grid aria-label="Booking platform"></div>
@@ -198,6 +208,6 @@
     <script src="../js/organiser-page-loading.js?v=20260811claimux2" defer></script>
     <script src="../js/hub-external-booking-url.js?v=20260918easylink1" defer></script>
     <script src="../js/organiser-connected-platform.js?v=20260918pickhint1" defer></script>
-    <script src="../js/organiser-event-connected-setup.js?v=20260918drawerux3" defer></script>
+    <script src="../js/organiser-event-connected-setup.js?v=20260918pickcollapse1" defer></script>
   </body>
 </html>

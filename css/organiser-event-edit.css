@@ -5654,6 +5654,44 @@ body.ee-embed-drawer.organiser-connected-setup-page .ecs-setup-checklist {
   display: none;
 }
 
+.ecs-platform-chosen {
+  margin: 0 0 18px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 2px solid rgba(13, 110, 122, 0.2);
+  background: rgba(13, 110, 122, 0.04);
+}
+
+.ecs-platform-chosen-kicker {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ee-text-soft, #736b6e);
+}
+
+.ecs-platform-chosen-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+}
+
+.ecs-platform-chosen-logo img {
+  display: block;
+  max-height: 28px;
+  max-width: 120px;
+  object-fit: contain;
+}
+
+.ecs-platform-chosen-name {
+  flex: 1 1 auto;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ee-purple-dark, #084a52);
+}
+
 .ecs-platform-picker {
   margin: 0 0 18px;
   padding: 0;

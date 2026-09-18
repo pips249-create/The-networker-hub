@@ -193,13 +193,15 @@
           id: eid,
           eventIds: ids,
           platform: platform,
+          fromTickets: true,
         });
       } else {
         setupLink.href =
           '/organiser/event-connected-setup?id=' +
           encodeURIComponent(eid) +
           '&platform=' +
-          encodeURIComponent(platform);
+          encodeURIComponent(platform) +
+          '&from=tickets';
       }
     });
   }
@@ -225,6 +227,7 @@
           id: eid,
           eventIds: eventIdsFromQueryArray(),
           platform: selectedPlatform(),
+          fromTickets: true,
         });
       } else {
         setupHref = eid

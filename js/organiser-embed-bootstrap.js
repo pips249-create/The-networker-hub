@@ -213,6 +213,7 @@
     }
     if (options.id) url.searchParams.set('id', String(options.id));
     if (options.platform) url.searchParams.set('platform', String(options.platform));
+    if (options.fromTickets) url.searchParams.set('from', 'tickets');
     if (options.hash) url.hash = options.hash;
     return url.pathname + url.search + url.hash;
   }
