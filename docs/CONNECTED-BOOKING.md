@@ -30,7 +30,7 @@ When ready to launch for all organisers: **remove** `CONNECTED_BOOKING_PREVIEW_E
 1. Run migrations `292_external_connected_booking.sql`, `293_connected_booking_stripe_customer.sql`, and `297_connected_booking_organiser_slots.sql`.
 2. Set `CONNECTED_BOOKING_ENABLED=true` on Vercel (or use preview emails above until launch).
 3. Ensure `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` are set (same webhook endpoint as Hub checkout).
-4. Optional: `npm run sync-stripe` to create Connected booking prices and set `STRIPE_CONNECTED_BOOKING_*_PRICE_ID` env vars (checkout works without them using dynamic prices).
+4. After changing intro prices in `api/_lib/connected-booking-pricing.js`, run `npm run sync-stripe` and update Vercel **`STRIPE_CONNECTED_BOOKING_*_PRICE_ID`** env vars (checkout also works with dynamic line items if price IDs are missing).
 5. Organiser signs in → `/organiser/connected-booking` → **Subscribe** (Starter / Growth / Scale). VAT is added at checkout.
 6. After payment, Stripe webhook activates the account (`connected_booking_status=active`, plan set). A webhook secret is created automatically on first activation if missing.
 7. Organiser rotates webhook secret if needed on the same page; **Manage billing** opens Stripe Customer Portal.
@@ -46,11 +46,11 @@ When ready to launch for all organisers: **remove** `CONNECTED_BOOKING_PREVIEW_E
 
 ## Pricing (commercial)
 
-| Plan | Groups | Monthly (ex VAT) |
-|------|--------|------------------|
-| Starter | 1 | £39 |
-| Growth | 5 | £99 |
-| Scale | 20 | £199 |
+| Plan | Organiser pages | Monthly (ex VAT, intro offer) |
+|------|-----------------|----------------------------|
+| Starter | 1 | £19 |
+| Growth | 5 | £39 |
+| Scale | 20 | £99 |
 | 20+ | POA | Contact Rosie & Catherine |
 
 Hub checkout remains free to list; booking fee 4.5% + 20p per ticket.

@@ -17,7 +17,10 @@ const {
   assignConnectedBookingSlots,
   maybeAutoAssignSingleStarterSlot,
 } = require('../connected-booking');
-const { isSelfServeConnectedPlan } = require('../connected-booking-pricing');
+const {
+  isSelfServeConnectedPlan,
+  CONNECTED_BOOKING_PLAN_AMOUNTS_EX_VAT_PENCE,
+} = require('../connected-booking-pricing');
 const {
   isStripeCheckoutConfigured,
   createConnectedBookingCheckoutSession,
@@ -277,9 +280,18 @@ module.exports = async function handler(req, res) {
           selfServePlans: ['starter', 'growth', 'scale'],
         },
         pricing: {
-          starter: { groups: PLAN_GROUP_LIMITS.starter, monthlyExVat: 39 },
-          growth: { groups: PLAN_GROUP_LIMITS.growth, monthlyExVat: 99 },
-          scale: { groups: PLAN_GROUP_LIMITS.scale, monthlyExVat: 199 },
+          starter: {
+            groups: PLAN_GROUP_LIMITS.starter,
+            monthlyExVat: CONNECTED_BOOKING_PLAN_AMOUNTS_EX_VAT_PENCE.starter / 100,
+          },
+          growth: {
+            groups: PLAN_GROUP_LIMITS.growth,
+            monthlyExVat: CONNECTED_BOOKING_PLAN_AMOUNTS_EX_VAT_PENCE.growth / 100,
+          },
+          scale: {
+            groups: PLAN_GROUP_LIMITS.scale,
+            monthlyExVat: CONNECTED_BOOKING_PLAN_AMOUNTS_EX_VAT_PENCE.scale / 100,
+          },
           enterprise: { groups: null, note: 'Email Rosie and Catherine for 20+ groups.' },
         },
         recentSync: syncResult.logs,
