@@ -81,7 +81,7 @@
     if (!data) return 'Something went wrong. Try again or email hi@thenetworkeruk.com.';
     if (data.message) return data.message;
     if (data.error === 'connected_booking_failed') {
-      return 'Connected booking could not load (server error). Check Supabase migrations 292 and 293, then redeploy.';
+      return 'Connected could not load (server error). Check Supabase migrations 292 and 293, then redeploy.';
     }
     if (data.error === 'stripe_checkout_failed' || data.error === 'stripe_not_configured') {
       return data.message || 'Checkout is temporarily unavailable. Email hi@thenetworkeruk.com.';
@@ -106,6 +106,20 @@
     }
   }
   showCheckoutBanner();
+
+  var devDetails = document.getElementById('cb-webhook-docs');
+  function openDeveloperDocs() {
+    if (devDetails) devDetails.open = true;
+  }
+  if (devDetails) {
+    devDetails.addEventListener('toggle', function () {
+      devDetails.classList.toggle('is-open', devDetails.open);
+    });
+    if (location.hash === '#cb-webhook-docs') openDeveloperDocs();
+    window.addEventListener('hashchange', function () {
+      if (location.hash === '#cb-webhook-docs') openDeveloperDocs();
+    });
+  }
 
   function postBillingAction(action, plan) {
     var body = { action: action };
@@ -293,10 +307,24 @@
     }
   }
 
+  function applyPricingLabels(pricing) {
+    if (!pricing) return;
+    Object.keys(pricing).forEach(function (planKey) {
+      var row = pricing[planKey];
+      if (!row || row.monthlyExVat == null) return;
+      var card = document.querySelector('.cb-plan-card[data-cb-plan="' + planKey + '"]');
+      if (!card) return;
+      var amountEl = card.querySelector('.cb-plan-card-amount');
+      if (amountEl) amountEl.textContent = '£' + row.monthlyExVat;
+    });
+  }
+
   function applyBillingUi(data) {
     var billing = data.billing || {};
     var canSubscribe = billing.canSubscribe !== false && billing.stripeCheckoutConfigured !== false;
     var signedIn = data.ok === true;
+
+    applyPricingLabels(data.pricing);
 
     document.querySelectorAll('.cb-subscribe-btn').forEach(function (btn) {
       var plan = btn.getAttribute('data-cb-plan');
@@ -322,10 +350,10 @@
       }
     });
 
-    document.querySelectorAll('.cb-compare-plan-col[data-cb-plan]').forEach(function (col) {
-      col.classList.toggle(
-        'cb-compare-plan-col--current',
-        signedIn && data.plan === col.getAttribute('data-cb-plan')
+    document.querySelectorAll('.cb-plan-card[data-cb-plan]').forEach(function (card) {
+      card.classList.toggle(
+        'cb-plan-card--current',
+        signedIn && data.plan === card.getAttribute('data-cb-plan')
       );
     });
 

@@ -277,9 +277,9 @@ module.exports = async function handler(req, res) {
           selfServePlans: ['starter', 'growth', 'scale'],
         },
         pricing: {
-          starter: { groups: PLAN_GROUP_LIMITS.starter, monthlyExVat: 39 },
-          growth: { groups: PLAN_GROUP_LIMITS.growth, monthlyExVat: 99 },
-          scale: { groups: PLAN_GROUP_LIMITS.scale, monthlyExVat: 199 },
+          starter: { groups: PLAN_GROUP_LIMITS.starter, monthlyExVat: 19 },
+          growth: { groups: PLAN_GROUP_LIMITS.growth, monthlyExVat: 39 },
+          scale: { groups: PLAN_GROUP_LIMITS.scale, monthlyExVat: 99 },
           enterprise: { groups: null, note: 'Email Rosie and Catherine for 20+ groups.' },
         },
         recentSync: syncResult.logs,

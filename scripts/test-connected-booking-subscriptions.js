@@ -20,8 +20,8 @@ assert.strictEqual(isSelfServeConnectedPlan('starter'), true);
 assert.strictEqual(isSelfServeConnectedPlan('enterprise'), false);
 
 const starter = connectedBookingPlanTotals('starter');
-assert.strictEqual(starter.monthlyExVatPence, 3900);
-assert.strictEqual(starter.monthlyVatPence, 780);
-assert.strictEqual(starter.totalPence, 4680);
+assert.strictEqual(starter.monthlyExVatPence, 1900);
+assert.strictEqual(starter.monthlyVatPence, 380);
+assert.strictEqual(starter.totalPence, 2280);
 
 console.log('test-connected-booking-subscriptions: ok');
