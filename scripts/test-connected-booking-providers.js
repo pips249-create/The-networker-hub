@@ -16,19 +16,27 @@ const {
   buildProviderWebhookPublicUrl,
   eventbriteSafeUrlLength,
   parseShortWebhookRoute,
+  webhookPublicSite,
+  WEBHOOK_TOKEN_HEX_LEN,
 } = require('../api/_lib/provider-webhook-url');
 
 const ebUrl = buildProviderWebhookPublicUrl(
   'https://www.thenetworkeruk.com',
   'eventbrite',
-  'a'.repeat(32)
+  'a'.repeat(WEBHOOK_TOKEN_HEX_LEN)
 );
-assert.ok(ebUrl.includes('/api/w/eb/'), ebUrl);
+assert.strictEqual(webhookPublicSite('https://www.thenetworkeruk.com'), 'https://thenetworkeruk.com');
+assert.ok(ebUrl.includes('/w/eb/'), ebUrl);
+assert.ok(!ebUrl.includes('www.'), ebUrl);
 assert.ok(eventbriteSafeUrlLength(ebUrl), 'Eventbrite URL length ' + ebUrl.length);
 
 assert.deepStrictEqual(
-  parseShortWebhookRoute({ url: '/api/w/eb/' + 'b'.repeat(32) }),
-  { provider: 'eventbrite', token: 'b'.repeat(32) }
+  parseShortWebhookRoute({ url: '/w/eb/' + 'b'.repeat(WEBHOOK_TOKEN_HEX_LEN) }),
+  { provider: 'eventbrite', token: 'b'.repeat(WEBHOOK_TOKEN_HEX_LEN) }
+);
+assert.deepStrictEqual(
+  parseShortWebhookRoute({ url: '/api/w/eb/' + 'c'.repeat(WEBHOOK_TOKEN_HEX_LEN) }),
+  { provider: 'eventbrite', token: 'c'.repeat(WEBHOOK_TOKEN_HEX_LEN) }
 );
 
 assert.strictEqual(isConnectedBookingProviderId('eventbrite'), true);

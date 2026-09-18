@@ -1,5 +1,5 @@
 /**
- * Short Connected provider webhooks — /api/w/eb/{token} (Eventbrite ~74 char Payload URL limit).
+ * Short Connected provider webhooks — /w/eb/{token} (Eventbrite Payload URL ~70 chars).
  */
 const { wrapHandler } = require('./_lib/sentry');
 const { json, setCors } = require('./_lib/auth');

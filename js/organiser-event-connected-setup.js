@@ -862,7 +862,7 @@
             {
               done: webhookReady,
               text:
-                'On this page: click Enable Eventbrite, then Copy webhook URL. Use the short link (…/api/w/eb/…) — Eventbrite only keeps the first 74 characters.',
+                'On this page: click Enable Eventbrite, then Copy webhook URL. It should look like https://thenetworkeruk.com/w/eb/… (under 70 characters — Eventbrite truncates longer URLs).',
             },
             {
               done: false,
@@ -1005,7 +1005,14 @@
             '<ol class="ecs-eventbrite-admin-guide-steps">' +
             '<li>Profile menu (top right) → <strong>Account settings</strong> → <strong>Webhooks</strong>.</li>' +
             '<li><strong>Add webhook</strong>, or open your existing webhook.</li>' +
-            '<li><strong>Payload URL</strong>: paste the <strong>short</strong> URL from TNH (starts with <code>…/api/w/eb/</code>). Eventbrite cuts URLs at <strong>74 characters</strong> — if you see <code>…/webhc</code> it was truncated and will 404.</li>' +
+            '<li><strong>Payload URL</strong>: paste the <strong>short</strong> URL from TNH (<code>https://thenetworkeruk.com/w/eb/…</code>). Must stay under <strong>70 characters</strong> — Eventbrite silently truncates longer URLs (broken webhooks / 404).</li>' +
+            (p.webhookUrl
+              ? '<li class="ecs-eventbrite-url-len">This URL is <strong>' +
+                String(p.webhookUrl.length) +
+                '</strong> characters' +
+                (p.webhookUrl.length <= 70 ? ' — OK for Eventbrite.' : ' — too long; refresh this page or click Enable Eventbrite again.') +
+                '</li>'
+              : '') +
             '<li><strong>Action</strong>: <code>order.placed</code> (your screenshot is correct). <strong>Events</strong>: All or this event only.</li>' +
             '<li>Save, then use Eventbrite’s <strong>Test</strong> button if offered.</li>' +
             '</ol>' +
