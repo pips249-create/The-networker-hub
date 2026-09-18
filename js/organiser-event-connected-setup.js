@@ -893,7 +893,7 @@
               text:
                 'Link this listing to your ' +
                 label +
-                ' event id in the box above (numbers only).',
+                ' event id in the box above (numbers only — use “Use id from booking URL” if you pasted a full link).',
             },
             {
               done: false,
