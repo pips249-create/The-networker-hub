@@ -26,6 +26,7 @@ const {
   normalizeSponsorshipPlacements,
   enrichDeckWithEmailInventory,
 } = require('../sponsorship-pitch-catalog');
+const { resolveImageUrl } = require('../supabase-storage');
 
 const SHOWN_BY = new Set(['Catherine', 'Rosie', 'Jamie', 'Other']);
 const OUTCOMES = new Set(['interested', 'listed', 'follow_up', 'not_now', 'other']);
@@ -427,6 +428,9 @@ function parsePitchDeckBody(body) {
     .trim()
     .toLowerCase();
   const prospectLogoUrl = cleanText(body.prospectLogoUrl || body.prospect_logo_url, 2000);
+  const logoBase64 = String(body.logoBase64 || body.prospectLogoBase64 || '').trim();
+  const logoMime = cleanText(body.logoMime || body.prospectLogoMime, 120);
+  const logoFilename = cleanText(body.logoFilename || body.prospectLogoFilename, 120);
   const deckType = normalizeDeckType(body.deckType || body.deck_type);
   const sponsorshipPlacements = normalizeSponsorshipPlacements(
     body.sponsorshipPlacements || body.sponsorship_placements
@@ -440,9 +444,36 @@ function parsePitchDeckBody(body) {
     organiserId,
     organiserEmail,
     prospectLogoUrl,
+    logoBase64,
+    logoMime,
+    logoFilename,
     deckType,
     sponsorshipPlacements,
   };
+}
+
+async function resolvePitchProspectLogo(parsed, deckId) {
+  const folderKey = String(deckId || parsed.companyName || 'draft')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 48) || 'draft';
+  try {
+    const resolved = await resolveImageUrl({
+      folder: 'pitch-prospect-logos/' + folderKey,
+      logoUrl: parsed.prospectLogoUrl,
+      logoBase64: parsed.logoBase64,
+      logoMime: parsed.logoMime,
+      logoFilename: parsed.logoFilename || 'prospect-logo.png',
+    });
+    if (resolved) parsed.prospectLogoUrl = cleanText(resolved, 2000);
+  } catch (e) {
+    const msg = (e && e.message) || 'Could not upload logo';
+    const err = new Error(msg);
+    err.code = 'logo_upload_failed';
+    throw err;
+  }
+  return parsed;
 }
 
 async function listCustomPitchDecks(sb) {
@@ -744,7 +775,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (action === 'create_custom_pitch_deck' || action === 'update_custom_pitch_deck') {
-      const parsed = parsePitchDeckBody(body);
+      let parsed = parsePitchDeckBody(body);
       const companyName = parsed.companyName;
       if (!companyName) {
         return json(res, 400, { error: 'missing_company', message: 'Add the company or group name.' });
@@ -764,6 +795,17 @@ module.exports = async function handler(req, res) {
           body.keepCopy === 'true' ||
           body.regenerate === false ||
           body.regenerate === 'false');
+
+      if (parsed.logoBase64 || parsed.prospectLogoUrl) {
+        try {
+          parsed = await resolvePitchProspectLogo(parsed, deckId || null);
+        } catch (logoErr) {
+          return json(res, 400, {
+            error: 'logo_upload_failed',
+            message: (logoErr && logoErr.message) || 'Could not upload logo.',
+          });
+        }
+      }
 
       let deck;
       if (keepCopy) {

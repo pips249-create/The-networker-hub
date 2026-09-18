@@ -62,9 +62,14 @@ function defaultProspectLogoFromWebsite(website) {
   return host ? 'https://logo.clearbit.com/' + host : '';
 }
 
-function resolveProspectLogoUrl(explicit, website) {
+function resolveProspectLogoUrl(explicit, website, companyName) {
   const url = cleanText(explicit, 2000);
   if (url) return url;
+  const host = hostFromWebsite(website);
+  const hay = (host + ' ' + String(companyName || '')).toLowerCase();
+  if (/pink-?spaghetti/.test(hay)) {
+    return 'https://www.pink-spaghetti.co.uk/_webedit/cached-images/16.png';
+  }
   return defaultProspectLogoFromWebsite(website);
 }
 
@@ -325,7 +330,7 @@ function sectionTemplates(companyName, website, brief) {
 function buildOrganiserHero(companyName, website, brief, prospectLogoUrl) {
   const co = cleanText(companyName, 120) || 'Your group';
   const host = hostFromWebsite(website);
-  const logo = resolveProspectLogoUrl(prospectLogoUrl, website);
+  const logo = resolveProspectLogoUrl(prospectLogoUrl, website, companyName);
   return {
     preparedFor: co,
     website: normalizeWebsite(website),
@@ -343,7 +348,7 @@ function buildOrganiserHero(companyName, website, brief, prospectLogoUrl) {
 function buildSponsorshipHero(companyName, website, brief, prospectLogoUrl, placements) {
   const co = cleanText(companyName, 120) || 'Your brand';
   const host = hostFromWebsite(website);
-  const logo = resolveProspectLogoUrl(prospectLogoUrl, website);
+  const logo = resolveProspectLogoUrl(prospectLogoUrl, website, companyName);
   const offerChips = launchOfferHeroChips(placements || []);
   const defaultLede =
     'Reach business owners, event bookers, and opportunity seekers across our Events, Organisers, and Business Opportunities directories — with exclusive and self-serve placements.';

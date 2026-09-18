@@ -4,6 +4,7 @@
 const assert = require('assert');
 const {
   looksLikePhotoUrl,
+  knownProspectLogo,
   discoverSiteBrandAssets,
   resolveProspectLogoCandidates,
 } = require('../api/_lib/prospect-logo-candidates');
@@ -15,6 +16,10 @@ assert.equal(
 assert.equal(
   looksLikePhotoUrl('https://www.pink-spaghetti.co.uk/_webedit/cached-images/16.png'),
   false
+);
+assert.equal(
+  knownProspectLogo('https://www.pink-spaghetti.co.uk/', 'Pink Spaghetti'),
+  'https://www.pink-spaghetti.co.uk/_webedit/cached-images/16.png'
 );
 
 (async function () {
@@ -40,6 +45,23 @@ assert.equal(
     !/131\.jpg|131-0-0/i.test(candidates[0]),
     'must not lead with og hero photo'
   );
+
+  const demoted = await resolveProspectLogoCandidates(
+    'https://www.pink-spaghetti.co.uk/',
+    'https://www.pink-spaghetti.co.uk/_webedit/cached-images/131-0-0-1115-10000-8885-1920.jpg',
+    'Pink Spaghetti'
+  );
+  assert.ok(
+    /cached-images\/16/i.test(demoted[0]),
+    'photo-looking saved URL must not beat real logo, got ' + demoted[0]
+  );
+
+  const uploaded = await resolveProspectLogoCandidates(
+    'https://www.pink-spaghetti.co.uk/',
+    'https://cdn.example.com/uploads/ps-logo.png',
+    'Pink Spaghetti'
+  );
+  assert.equal(uploaded[0], 'https://cdn.example.com/uploads/ps-logo.png');
 
   console.log('test-prospect-logo-candidates: ok');
   console.log('  first=', candidates[0]);

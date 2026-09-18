@@ -69,7 +69,11 @@ module.exports = wrapHandler(async function handler(req, res) {
   const website = data.website || '';
   const explicitLogo =
     data.prospect_logo_url || (data.deck && data.deck.hero && data.deck.hero.prospectLogoUrl) || '';
-  const prospectLogoCandidates = await resolveProspectLogoCandidates(website, explicitLogo);
+  const prospectLogoCandidates = await resolveProspectLogoCandidates(
+    website,
+    explicitLogo,
+    data.company_name
+  );
   const prospectLogoUrl = prospectLogoCandidates[0] || '';
   const rawDeck = data.deck && typeof data.deck === 'object' ? data.deck : {};
   const deck = enrichDeckWithEmailInventory(

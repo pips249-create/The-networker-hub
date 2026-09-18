@@ -37,7 +37,17 @@ function looksLikePhotoUrl(url) {
   return false;
 }
 
-function buildProspectLogoCandidates(website, explicitUrl) {
+/** Hard-coded brand marks when site discovery is flaky or an old og:image was saved. */
+function knownProspectLogo(website, companyName) {
+  const host = hostFromWebsite(website);
+  const hay = (host + ' ' + String(companyName || '')).toLowerCase();
+  if (/pink-?spaghetti/.test(hay)) {
+    return 'https://www.pink-spaghetti.co.uk/_webedit/cached-images/16.png';
+  }
+  return '';
+}
+
+function buildProspectLogoCandidates(website, explicitUrl, companyName) {
   const out = [];
   const add = function (url) {
     const u = String(url || '').trim();
@@ -45,7 +55,9 @@ function buildProspectLogoCandidates(website, explicitUrl) {
     out.push(u);
   };
 
-  add(cleanText(explicitUrl, 2000));
+  const explicit = cleanText(explicitUrl, 2000);
+  if (explicit && !looksLikePhotoUrl(explicit)) add(explicit);
+  add(knownProspectLogo(website, companyName));
   const host = hostFromWebsite(website);
   if (host) {
     add('https://logo.clearbit.com/' + host);
@@ -54,6 +66,7 @@ function buildProspectLogoCandidates(website, explicitUrl) {
     add('https://' + host + '/apple-touch-icon.png');
     add('https://' + host + '/favicon.ico');
   }
+  if (explicit && looksLikePhotoUrl(explicit)) add(explicit);
   return out;
 }
 
@@ -144,8 +157,8 @@ async function discoverOgImage(website) {
   return assets.logos[0] || assets.ogImage || '';
 }
 
-async function resolveProspectLogoCandidates(website, explicitUrl) {
-  const candidates = buildProspectLogoCandidates(website, explicitUrl);
+async function resolveProspectLogoCandidates(website, explicitUrl, companyName) {
+  const candidates = buildProspectLogoCandidates(website, explicitUrl, companyName);
   const assets = await discoverSiteBrandAssets(website);
   const preferred = [];
   const add = function (url) {
@@ -154,8 +167,11 @@ async function resolveProspectLogoCandidates(website, explicitUrl) {
     preferred.push(u);
   };
 
-  // Explicit admin override always wins.
-  add(cleanText(explicitUrl, 2000));
+  const explicit = cleanText(explicitUrl, 2000);
+  // Uploaded / pasted logo URL wins — unless it is clearly a hero/stock photo
+  // (older decks sometimes stored og:image here by mistake).
+  if (explicit && !looksLikePhotoUrl(explicit)) add(explicit);
+  add(knownProspectLogo(website, companyName));
   // Real site logos before Clearbit / favicons / og photos.
   assets.logos.forEach(add);
 
@@ -169,6 +185,7 @@ async function resolveProspectLogoCandidates(website, explicitUrl) {
   if (assets.ogImage && !looksLikePhotoUrl(assets.ogImage)) {
     add(assets.ogImage);
   }
+  if (explicit && looksLikePhotoUrl(explicit)) add(explicit);
 
   return preferred.length ? preferred : candidates;
 }
@@ -179,5 +196,6 @@ module.exports = {
   discoverSiteBrandAssets,
   discoverOgImage,
   looksLikePhotoUrl,
+  knownProspectLogo,
   hostFromWebsite,
 };
