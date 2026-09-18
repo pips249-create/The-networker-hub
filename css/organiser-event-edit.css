@@ -5502,6 +5502,31 @@ a.ee-btn.ee-btn-primary {
   word-break: break-all;
 }
 
+.cb-providers-list {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cb-providers-list-item .cb-provider-card {
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(13, 110, 122, 0.22);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.cb-provider-webhook-url {
+  word-break: break-all;
+  font-size: 12px;
+}
+
+.cb-providers-link-card .ee-field-label {
+  margin-top: 10px;
+}
+
 .cb-slots-list {
   list-style: none;
   margin: 12px 0 16px;
