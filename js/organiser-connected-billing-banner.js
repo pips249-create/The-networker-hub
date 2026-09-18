@@ -235,6 +235,10 @@
     var assigned = assignedNames(billing);
     var needsPick = Boolean(billing.slots && billing.slots.needsAssignment);
     var schemaMissing = Boolean(billing.slots && billing.slots.schemaMissing);
+    var setupHint =
+      (billing.setup && billing.setup.nextStep) ||
+      billing.schemaWarning ||
+      '';
     var overPublished = published > limit;
     var overPages = total > limit;
     var show =
@@ -258,6 +262,12 @@
           (total > limit ? ' (' + total + ' organiser pages on your account)' : '');
 
     var assignedBlock = '';
+    if (setupHint) {
+      assignedBlock +=
+        '<p class="ee-hint ee-alert-warn org-connected-billing-setup-hint" role="status">' +
+        esc(setupHint) +
+        '</p>';
+    }
     if (assigned.length) {
       assignedBlock =
         '<p class="org-connected-billing-banner-assigned"><strong>Connected booking is on:</strong> ' +

@@ -334,6 +334,10 @@
     if (signinHint) signinHint.hidden = true;
     if (adminPanel) adminPanel.hidden = false;
 
+    if (data.setup && data.setup.nextStep && !data.setup.readyForConnectedEvents) {
+      setAuthStatus('Next: ' + data.setup.nextStep, data.schemaWarning ? 'error' : 'ok');
+    }
+
     var workspaceHint = document.getElementById('cb-slots-workspace-hint');
     if (workspaceHint) {
       var slots = data.slots || {};

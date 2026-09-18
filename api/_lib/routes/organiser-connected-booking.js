@@ -16,6 +16,7 @@ const {
   listAssignedSlotOrganiserIds,
   assignConnectedBookingSlots,
   maybeAutoAssignSingleStarterSlot,
+  connectedBookingSlotsMeta,
 } = require('../connected-booking');
 const {
   isSelfServeConnectedPlan,
@@ -103,6 +104,58 @@ async function loadRecentSyncLog(sb, accountId) {
     console.warn('[organiser-connected-booking] sync log unavailable', e?.message || e);
     return { logs: [], schemaWarning: 'Sync log unavailable.' };
   }
+}
+
+function connectedBookingSetupGuide(account, slotsMeta, hasWebhookSecret) {
+  const steps = [];
+  if (!isConnectedPlanActive(account)) {
+    steps.push({
+      key: 'subscribe',
+      label: 'Activate a Connected plan (Subscribe or pilot grant).',
+      done: false,
+    });
+  } else {
+    steps.push({ key: 'subscribe', label: 'Connected plan active.', done: true });
+  }
+  if (slotsMeta.schemaMissing) {
+    steps.push({
+      key: 'migration_297',
+      label:
+        'Apply Supabase migration 297_connected_booking_organiser_slots.sql and reload the API schema cache.',
+      done: false,
+    });
+  } else {
+    steps.push({ key: 'migration_297', label: 'Organiser-page slot database ready.', done: true });
+  }
+  if (!slotsMeta.schemaMissing && slotsMeta.needsAssignment) {
+    steps.push({
+      key: 'assign_pages',
+      label: 'Organiser pages → tick page(s) → Save assignment.',
+      done: false,
+    });
+  } else if (!slotsMeta.schemaMissing && slotsMeta.assignedOrganiserIds.length) {
+    steps.push({ key: 'assign_pages', label: 'Organiser page(s) assigned for Connected.', done: true });
+  }
+  if (!hasWebhookSecret) {
+    steps.push({
+      key: 'webhook_secret',
+      label: 'Connected booking → Generate webhook secret (for Eventbrite/Zapier sync).',
+      done: false,
+    });
+  } else {
+    steps.push({ key: 'webhook_secret', label: 'Webhook secret configured.', done: true });
+  }
+  const ready =
+    isConnectedPlanActive(account) &&
+    !slotsMeta.schemaMissing &&
+    slotsMeta.assignedOrganiserIds.length > 0 &&
+    hasWebhookSecret;
+  const next = steps.find((s) => !s.done);
+  return {
+    readyForConnectedEvents: ready,
+    steps,
+    nextStep: next ? next.label : 'Create or edit an event → Connected event setup → publish.',
+  };
 }
 
 function connectedBookingErrorFallback(err) {
@@ -249,15 +302,9 @@ module.exports = async function handler(req, res) {
       const limit = groupLimitForPlan(account.connected_booking_plan);
       const syncResult = await loadRecentSyncLog(sb, accountId);
       const slotOrganisers = await listAccountOrganisersForSlots(sb, accountId);
-      const assignedOrganiserIds = slotOrganisers.organisers
-        .filter((o) => o.slotAssigned)
-        .map((o) => o.id);
-      const needsSlotAssignment =
-        isConnectedPlanActive(account) &&
-        limit != null &&
-        assignedOrganiserIds.length === 0 &&
-        slotOrganisers.organisers.length > 0 &&
-        !slotOrganisers.schemaMissing;
+      const slots = connectedBookingSlotsMeta(account, slotOrganisers);
+      const hasWebhookSecret = Boolean(String(account.connected_booking_webhook_secret || '').trim());
+      const setup = connectedBookingSetupGuide(account, slots, hasWebhookSecret);
 
       const site = String(process.env.SITE_URL || 'https://www.thenetworkeruk.com').replace(/\/$/, '');
       const stripeCheckout = isStripeCheckoutConfigured();
@@ -274,9 +321,10 @@ module.exports = async function handler(req, res) {
         active: isConnectedPlanActive(account),
         groupCount,
         groupLimit: limit,
-        hasWebhookSecret: Boolean(String(account.connected_booking_webhook_secret || '').trim()),
+        hasWebhookSecret,
         webhookUrl: site + '/api/integrations/booking',
         accountId: account.id,
+        setup,
         billing: {
           stripeCheckoutConfigured: stripeCheckout,
           canSubscribe: canStartCheckout,
@@ -301,15 +349,10 @@ module.exports = async function handler(req, res) {
         recentSync: syncResult.logs,
         schemaWarning:
           syncResult.schemaWarning ||
-          (slotOrganisers.schemaMissing
+          (slots.schemaMissing
             ? 'Organiser-page Connected slots need Supabase migration 297_connected_booking_organiser_slots.sql — assignment cannot be saved until it is applied.'
             : undefined),
-        slots: {
-          assignedOrganiserIds,
-          accountOrganisers: slotOrganisers.organisers,
-          schemaMissing: slotOrganisers.schemaMissing,
-          needsAssignment: needsSlotAssignment,
-        },
+        slots,
         pilotGrant: pilotGranted
           ? {
               granted: true,
@@ -326,15 +369,25 @@ module.exports = async function handler(req, res) {
 
       if (body.action === 'assign_connected_slots') {
         const ids = body.organiserIds || body.organiser_ids || [];
+        if (!Array.isArray(ids) || !ids.length) {
+          return json(res, 400, {
+            ok: false,
+            error: 'no_organiser_pages_selected',
+            message: 'Select at least one organiser page, then Save assignment.',
+          });
+        }
         const result = await assignConnectedBookingSlots(sb, account, ids);
         const refreshed = await listAccountOrganisersForSlots(sb, accountId);
+        const slots = connectedBookingSlotsMeta(account, refreshed);
         return json(res, 200, {
           ok: true,
           assignedOrganiserIds: result.assignedOrganiserIds,
-          slots: {
-            assignedOrganiserIds: result.assignedOrganiserIds,
-            accountOrganisers: refreshed.organisers,
-          },
+          slots,
+          setup: connectedBookingSetupGuide(
+            account,
+            slots,
+            Boolean(String(account.connected_booking_webhook_secret || '').trim())
+          ),
         });
       }
 
