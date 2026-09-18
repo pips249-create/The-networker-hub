@@ -2833,11 +2833,13 @@
       };
       if (isEmbedDrawer && window.parent && window.parent !== window) {
         goToTicketSetup(locationMeta);
+        // Location & access is on this page — skip the duplicate location drawer step.
         window.parent.postMessage(
           {
-            type: 'hub-event-goto-location',
+            type: 'hub-event-goto-tickets',
             eventIds,
             title,
+            fromLocation: true,
           },
           window.location.origin
         );

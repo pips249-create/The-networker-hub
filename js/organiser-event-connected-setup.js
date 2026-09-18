@@ -996,32 +996,57 @@
   }
 
   function bindProviderEnableButtons(root) {
-    if (!root) return;
-    root.querySelectorAll('[data-enable-provider]').forEach(function (btn) {
-      if (btn.dataset.enableBound) return;
-      btn.dataset.enableBound = '1';
-      btn.addEventListener('click', function () {
-        var provider = btn.getAttribute('data-enable-provider');
-        btn.disabled = true;
-        api('/api/organiser/connected-booking-providers', {
-          method: 'PATCH',
-          body: JSON.stringify({ action: 'enable_provider', provider: provider }),
-        })
-          .then(function (res) {
-            btn.disabled = false;
-            if (!res.ok) {
-              window.alert(res.data.message || res.data.error || 'Could not enable provider.');
-              return;
+    if (!root || root.dataset.enableDelegated === '1') return;
+    root.dataset.enableDelegated = '1';
+    root.addEventListener('click', function (e) {
+      var btn = e.target && e.target.closest ? e.target.closest('[data-enable-provider]') : null;
+      if (!btn || btn.disabled) return;
+      e.preventDefault();
+      var provider = btn.getAttribute('data-enable-provider');
+      if (!provider) return;
+      btn.disabled = true;
+      var statusMount = qs('ecs-provider-enable-status');
+      if (statusMount) {
+        statusMount.hidden = false;
+        statusMount.textContent = 'Enabling…';
+        statusMount.className = 'ee-hint';
+      }
+      api('/api/organiser/connected-booking-providers', {
+        method: 'PATCH',
+        body: JSON.stringify({ action: 'enable_provider', provider: provider }),
+      })
+        .then(function (res) {
+          btn.disabled = false;
+          if (!res.ok || (res.data && res.data.ok === false)) {
+            var msg = providerEnableErrorMessage(res.data);
+            if (statusMount) {
+              statusMount.textContent = msg;
+              statusMount.className = 'ee-hint ee-alert-warn';
+            } else {
+              window.alert(msg);
             }
-            loadProviderCatalog().then(function () {
-              renderProviderWebhookCard(selectedIntegrationPlatform());
-            });
-          })
-          .catch(function () {
-            btn.disabled = false;
-            window.alert('Could not enable provider.');
+            return;
+          }
+          mergeProviderConnectionFromPatch(res.data && res.data.connection);
+          if (statusMount) {
+            statusMount.textContent = 'Enabled — copy the webhook URL below into Eventbrite admin.';
+            statusMount.className = 'ee-hint ee-alert-ok';
+          }
+          return loadProviderCatalog().then(function () {
+            renderProviderWebhookCard(selectedIntegrationPlatform());
+            renderRegistrationSyncSteps(selectedIntegrationPlatform());
+            updateOneTimeProviderStatus(selectedIntegrationPlatform());
           });
-      });
+        })
+        .catch(function () {
+          btn.disabled = false;
+          if (statusMount) {
+            statusMount.textContent = 'Could not enable provider. Check your connection and try again.';
+            statusMount.className = 'ee-hint ee-alert-warn';
+          } else {
+            window.alert('Could not enable provider.');
+          }
+        });
     });
   }
 
@@ -1041,11 +1066,54 @@
     );
   }
 
+  function providerEnableErrorMessage(data) {
+    if (!data) return 'Could not enable provider.';
+    if (data.message) return String(data.message);
+    var code = String(data.error || '').trim();
+    if (code === 'connected_booking_provider_schema_missing') {
+      return 'Provider webhooks are not set up on this environment yet. Your site admin needs to run the Connected booking provider database migration.';
+    }
+    if (code === 'preview_restricted') {
+      return 'Connected booking preview is not enabled for this account.';
+    }
+    if (code === 'supabase_not_configured') {
+      return 'Connected booking is temporarily unavailable (database not configured).';
+    }
+    return code || 'Could not enable provider.';
+  }
+
+  function showProviderSchemaWarn(data) {
+    var el = qs('ecs-providers-schema-warn');
+    if (!el) return;
+    if (data && data.schemaMissing) {
+      el.hidden = false;
+      el.innerHTML =
+        'Registration sync needs a database update on the server (migration <strong>299_connected_booking_provider_links.sql</strong>). ' +
+        'Until then, Enable Eventbrite will not work here — contact support or use Connected booking → Booking providers on a fully configured site.';
+      return;
+    }
+    el.hidden = true;
+    el.textContent = '';
+  }
+
+  function mergeProviderConnectionFromPatch(connection) {
+    if (!connection || !connection.provider) return;
+    var key = String(connection.provider).trim();
+    var prev = providersById[key] || { id: key };
+    providersById[key] = Object.assign({}, prev, {
+      id: key,
+      label: prev.label || key,
+      webhookUrl: connection.webhookUrl || prev.webhookUrl,
+      connectionStatus: connection.status || 'active',
+    });
+  }
+
   function loadProviderCatalog() {
     if (!eventId) return Promise.resolve();
     return api('/api/organiser/connected-booking-providers?eventId=' + encodeURIComponent(eventId)).then(
       function (res) {
         if (!res.ok || !res.data || !res.data.ok) return;
+        showProviderSchemaWarn(res.data);
         providersById = {};
         (res.data.providers || []).forEach(function (p) {
           if (p && p.id) providersById[p.id] = p;
