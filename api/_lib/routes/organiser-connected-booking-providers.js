@@ -10,6 +10,7 @@ const {
   deleteEventLink,
 } = require('../connected-booking-provider-store');
 const { resolveOrganiserAccountId } = require('../organiser-account-resolve');
+const { buildProviderWebhookPublicUrl } = require('../provider-webhook-url');
 
 function parseBody(req) {
   let body = req.body;
@@ -72,7 +73,8 @@ module.exports = async function handler(req, res) {
           p.id === 'custom'
             ? site + '/api/integrations/booking'
             : conn?.webhook_token
-              ? site + p.webhookPath + '?token=' + encodeURIComponent(conn.webhook_token)
+              ? buildProviderWebhookPublicUrl(site, p.id, conn.webhook_token) ||
+                site + p.webhookPath + '?token=' + encodeURIComponent(conn.webhook_token)
               : null;
         return {
           id: p.id,
@@ -104,13 +106,17 @@ module.exports = async function handler(req, res) {
 
       if (action === 'enable_provider') {
         const provider = String(body.provider || '').trim().toLowerCase();
-        const conn = await ensureProviderConnection(sb, accountId, provider);
-        const meta = CONNECTED_BOOKING_PROVIDERS.find((p) => p.id === provider);
+        let conn = await ensureProviderConnection(sb, accountId, provider);
+        if (String(conn.webhook_token || '').length > 32) {
+          conn = await ensureProviderConnection(sb, accountId, provider, { rotateToken: true });
+        }
         const webhookUrl =
+          buildProviderWebhookPublicUrl(site, provider, conn.webhook_token) ||
           site +
-          (meta?.webhookPath || '/api/integrations/providers/' + provider + '/webhook') +
-          '?token=' +
-          encodeURIComponent(conn.webhook_token);
+            '/api/integrations/providers/' +
+            provider +
+            '/webhook?token=' +
+            encodeURIComponent(conn.webhook_token);
         return json(res, 200, {
           ok: true,
           connection: {

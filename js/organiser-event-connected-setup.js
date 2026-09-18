@@ -530,8 +530,9 @@
     }
     if (key === 'eventbrite') {
       return (
-        'Enable <strong>Eventbrite</strong> below, paste the webhook URL into Eventbrite admin, then link this TNH event to your ' +
-        '<strong>Eventbrite event id</strong> on Booking providers. Orders sync automatically — not via your own website POST.'
+        'When someone buys on Eventbrite, their registration appears on The Networker UK. You paste our webhook URL into ' +
+        '<strong>Eventbrite → Account settings → Webhooks</strong> (see steps below), with action <strong>order.placed</strong>. ' +
+        'You must also link your <strong>Eventbrite event id</strong> in the box above.'
       );
     }
     var p = providersById[key];
@@ -855,26 +856,50 @@
     var label = (p && p.label) || key.replace(/_/g, ' ');
     var linked = linkedExternalEventId(key);
     var webhookReady = Boolean(p && p.webhookUrl);
-    var parts = [
-      {
-        done: Boolean(linked),
-        text:
-          'Link this listing to your ' +
-          label +
-          ' event id in the box above (numbers only — use “Use id from booking URL” if you pasted a full link).',
-      },
-      {
-        done: webhookReady,
-        text: 'Enable ' + label + ' below — once per account — to generate your webhook URL.',
-      },
-      {
-        done: false,
-        text:
-          'Copy that webhook URL into ' +
-          label +
-          ' (Eventbrite: Account settings → Webhooks). New ticket orders then sync attendees here.',
-      },
-    ];
+    var parts =
+      key === 'eventbrite'
+        ? [
+            {
+              done: webhookReady,
+              text:
+                'On this page: click Enable Eventbrite, then Copy webhook URL. Use the short link (…/api/w/eb/…) — Eventbrite only keeps the first 74 characters.',
+            },
+            {
+              done: false,
+              text:
+                'In Eventbrite: your profile (top right) → Account settings → Webhooks → Add webhook (or open an existing one). Paste the full URL into Payload URL.',
+            },
+            {
+              done: false,
+              text: 'In Eventbrite: set Action to order.placed. “Events: All” is fine, or limit to your event.',
+            },
+            {
+              done: Boolean(linked),
+              text:
+                'Back on this page: link your Eventbrite event id above (numbers only, e.g. 2001520723363) and Save link.',
+            },
+            {
+              done: false,
+              text: 'Test: buy a free ticket on Eventbrite, then check the attendee list on The Networker UK.',
+            },
+          ]
+        : [
+            {
+              done: webhookReady,
+              text: 'Enable ' + label + ' below — once per account — to generate your webhook URL.',
+            },
+            {
+              done: Boolean(linked),
+              text:
+                'Link this listing to your ' +
+                label +
+                ' event id in the box above (numbers only — use “Use id from booking URL” if you pasted a full link).',
+            },
+            {
+              done: false,
+              text: 'Copy the webhook URL into ' + label + ' admin (see their webhook / integrations help).',
+            },
+          ];
     stepsEl.innerHTML = parts
       .map(function (step, index) {
         return (
@@ -963,6 +988,31 @@
     }
 
     var linked = eventLinkForPlatform(key);
+    var webhookUrlBlock = p.webhookUrl
+      ? '<p class="ee-hint"><strong>Webhook URL</strong> — paste this entire line into Eventbrite <strong>Payload URL</strong>:</p>' +
+        '<p class="cb-webhook-url" data-webhook-url="' +
+        escAttr(p.webhookUrl) +
+        '">' +
+        escHtml(p.webhookUrl) +
+        '</p>' +
+        '<p class="ee-attendance-next ecs-webhook-copy-row">' +
+        '<button type="button" class="ee-btn ee-btn-outline ee-btn-sm" data-copy-webhook-url>Copy webhook URL</button>' +
+        '<span class="ee-hint ecs-copy-webhook-status" data-copy-webhook-status hidden role="status"></span>' +
+        '</p>' +
+        (key === 'eventbrite'
+          ? '<div class="ecs-eventbrite-admin-guide" role="note">' +
+            '<p class="ecs-eventbrite-admin-guide-title"><strong>In Eventbrite (matches “Manage webhook” screen)</strong></p>' +
+            '<ol class="ecs-eventbrite-admin-guide-steps">' +
+            '<li>Profile menu (top right) → <strong>Account settings</strong> → <strong>Webhooks</strong>.</li>' +
+            '<li><strong>Add webhook</strong>, or open your existing webhook.</li>' +
+            '<li><strong>Payload URL</strong>: paste the <strong>short</strong> URL from TNH (starts with <code>…/api/w/eb/</code>). Eventbrite cuts URLs at <strong>74 characters</strong> — if you see <code>…/webhc</code> it was truncated and will 404.</li>' +
+            '<li><strong>Action</strong>: <code>order.placed</code> (your screenshot is correct). <strong>Events</strong>: All or this event only.</li>' +
+            '<li>Save, then use Eventbrite’s <strong>Test</strong> button if offered.</li>' +
+            '</ol>' +
+            '<p class="ee-hint">Still required on this page: link your Eventbrite <strong>event id</strong> in “Link registrations” above, then publish.</p>' +
+            '</div>'
+          : '')
+      : '<p class="ee-hint">Click Enable to generate your webhook URL for ' + escHtml(p.label) + '.</p>';
 
     mount.innerHTML =
       '<p class="ee-hint"><strong>' +
@@ -970,13 +1020,7 @@
       '</strong> — ' +
       escHtml(p.docsHint || '') +
       '</p>' +
-      (p.webhookUrl
-        ? '<p class="ee-hint"><strong>Webhook URL</strong> (paste in ' +
-          escHtml(p.label) +
-          ' admin):</p><p class="cb-webhook-url">' +
-          escHtml(p.webhookUrl) +
-          '</p>'
-        : '<p class="ee-hint">Click Enable to generate your webhook URL for ' + escHtml(p.label) + '.</p>') +
+      webhookUrlBlock +
       '<button type="button" class="ee-btn ee-btn-outline ee-btn-sm" data-enable-provider="' +
       escHtml(key) +
       '"' +
@@ -999,6 +1043,31 @@
     if (!root || root.dataset.enableDelegated === '1') return;
     root.dataset.enableDelegated = '1';
     root.addEventListener('click', function (e) {
+      var copyBtn = e.target && e.target.closest ? e.target.closest('[data-copy-webhook-url]') : null;
+      if (copyBtn) {
+        e.preventDefault();
+        var urlEl = root.querySelector('[data-webhook-url]');
+        var url = urlEl ? urlEl.getAttribute('data-webhook-url') || urlEl.textContent : '';
+        url = String(url || '').trim();
+        var statusEl = root.querySelector('[data-copy-webhook-status]');
+        if (!url) return;
+        function copiedOk() {
+          if (statusEl) {
+            statusEl.hidden = false;
+            statusEl.textContent = 'Copied — paste into Eventbrite Payload URL.';
+            statusEl.className = 'ee-hint ee-alert-ok ecs-copy-webhook-status';
+          }
+        }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(url).then(copiedOk).catch(function () {
+            window.prompt('Copy this webhook URL:', url);
+          });
+        } else {
+          window.prompt('Copy this webhook URL:', url);
+          copiedOk();
+        }
+        return;
+      }
       var btn = e.target && e.target.closest ? e.target.closest('[data-enable-provider]') : null;
       if (!btn || btn.disabled) return;
       e.preventDefault();

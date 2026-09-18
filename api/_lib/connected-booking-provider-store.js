@@ -1,5 +1,5 @@
-const crypto = require('crypto');
 const { isConnectedBookingProviderId } = require('./connected-booking-providers');
+const { newWebhookToken } = require('./provider-webhook-url');
 
 function isMissingProviderTablesError(err) {
   const msg = [err?.message, err?.details, err?.code].filter(Boolean).join(' ');
@@ -8,11 +8,8 @@ function isMissingProviderTablesError(err) {
   );
 }
 
-function newWebhookToken() {
-  return crypto.randomBytes(24).toString('hex');
-}
-
-async function ensureProviderConnection(sb, accountId, provider) {
+async function ensureProviderConnection(sb, accountId, provider, opts) {
+  const rotateToken = opts && opts.rotateToken;
   if (!isConnectedBookingProviderId(provider) || provider === 'custom') {
     const e = new Error('invalid_provider');
     e.status = 400;
@@ -33,7 +30,20 @@ async function ensureProviderConnection(sb, accountId, provider) {
     }
     throw new Error(readErr.message);
   }
-  if (existing?.id) return existing;
+  if (existing?.id) {
+    if (rotateToken && existing.webhook_token) {
+      const token = newWebhookToken();
+      const { data: updated, error: upErr } = await sb
+        .from('connected_booking_provider_connections')
+        .update({ webhook_token: token, updated_at: new Date().toISOString() })
+        .eq('id', existing.id)
+        .select('id, organiser_account_id, provider, status, webhook_token, config, created_at, updated_at')
+        .single();
+      if (upErr) throw new Error(upErr.message);
+      return updated;
+    }
+    return existing;
+  }
 
   const token = newWebhookToken();
   const { data: inserted, error: insErr } = await sb
