@@ -235,8 +235,14 @@
 
   function renderEventsHeadlinePanel(ctx) {
     var logoInner = ctx.logoUrl
-      ? '<img src="' + esc(ctx.logoUrl) + '" alt="" referrerpolicy="no-referrer" style="max-height:44px;width:auto">'
-      : '<span style="font-weight:800;font-size:0.85rem">' + esc(ctx.companyName || 'Partner') + '</span>';
+      ? '<img src="' +
+        esc(ctx.logoUrl) +
+        '" alt="' +
+        esc(ctx.companyName || 'Partner') +
+        '" class="custom-pitch-events-logo" referrerpolicy="no-referrer" style="max-height:52px;max-width:160px;width:auto;height:auto;object-fit:contain">'
+      : '<span style="font-weight:800;font-size:0.85rem;color:#1e3a4f">' +
+        esc(ctx.companyName || 'Partner') +
+        '</span>';
     return (
       '<div class="ad-mock-page ad-mock-page--events-dir">' +
       '<div class="ad-mock-page-bar"><span></span><span></span><span></span><em>/events/</em></div>' +
@@ -252,7 +258,7 @@
       '<div class="ad-events-dir-sponsor-col">' +
       '<aside class="sponsor-hub sponsor-hub--in-hero sponsor-hub--active sponsor-hub--logo-only" style="margin:0 auto">' +
       '<div class="sponsor-hub-head"><span class="icon" aria-hidden="true">★</span><span>Powered by</span></div>' +
-      '<div class="sponsor-logo-wrap sponsor-logo-band has-logo" style="background:#1a1a2e;padding:12px;border-radius:12px">' +
+      '<div class="sponsor-logo-wrap sponsor-logo-band has-logo custom-pitch-events-logo-band">' +
       logoInner +
       '</div></aside></div></div></section></div></div></div>'
     );

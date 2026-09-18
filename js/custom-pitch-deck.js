@@ -456,7 +456,7 @@
     }
 
     root.querySelectorAll(
-      '.custom-pitch-partner-logo, .custom-pitch-detail-logo, .ad-full-email-sponsor-logo'
+      '.custom-pitch-partner-logo, .custom-pitch-detail-logo, .custom-pitch-events-logo, .ad-full-email-sponsor-logo'
     ).forEach(function (img) {
       var idx = 0;
       img.removeAttribute('crossorigin');
