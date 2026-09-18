@@ -220,8 +220,36 @@
     el.hidden = !msg;
     el.textContent = msg || '';
     el.className =
-      'ee-hint' +
+      'ecs-page-actions-status ee-hint' +
       (kind === 'error' ? ' ee-alert-warn' : kind === 'ok' ? ' ee-alert-ok' : '');
+    if (msg && (kind === 'error' || kind === 'ok')) {
+      try {
+        el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
+  function setPageActionsVisible(show) {
+    var bar = qs('ecs-page-actions');
+    if (bar) bar.hidden = !show;
+  }
+
+  function saveErrorMessage(data, status) {
+    if (!data) return status === 403 ? 'You do not have permission to publish this event.' : 'Could not save.';
+    if (data.message) return String(data.message);
+    var code = String(data.error || '').trim();
+    if (code === 'missing_dates') {
+      return 'Add at least one event date in Event details or Location before publishing.';
+    }
+    if (code === 'organiser_email_not_verified') {
+      return 'Verify your organiser email before publishing (check your inbox for the verification link).';
+    }
+    if (code === 'missing_title' || code === 'missing_group') {
+      return 'Event details are incomplete — open Event details and try again.';
+    }
+    return code || 'Could not save.';
   }
 
   var eventId = eventIdFromQuery();
@@ -274,6 +302,7 @@
 
   function showBlocked(msg) {
     hideSlotsCard();
+    setPageActionsVisible(false);
     if (blocked) {
       blocked.hidden = false;
       blocked.textContent = msg;
@@ -1283,6 +1312,7 @@
     if (blocked) blocked.hidden = true;
     if (formCard) formCard.hidden = false;
     if (devSection) devSection.hidden = false;
+    setPageActionsVisible(true);
     bindEmbedDrawerNav();
     bindEventLinkUi();
     initPlatformPicker();
@@ -1325,7 +1355,18 @@
   }
 
   async function saveConnected(publish) {
-    if (!loadedEvent || !billing || !billing.active) return;
+    var saveBtn = qs('ecs-save');
+    var pubBtn = qs('ecs-publish');
+    if (!loadedEvent || !billing || !billing.active) {
+      setStatus(
+        saveStatus,
+        !billing || !billing.active
+          ? 'Connected booking is not active on this account yet.'
+          : 'Still loading this event — wait a moment and try again.',
+        'error'
+      );
+      return;
+    }
     var price = qs('ecs-price-label') ? qs('ecs-price-label').value.trim() : '';
     var url = qs('ecs-booking-url') ? qs('ecs-booking-url').value.trim() : '';
     if (!price) {
@@ -1346,54 +1387,64 @@
       return;
     }
 
-    var linkResult = await ensureEventLinkBeforeSave(publish);
-    if (!linkResult.ok) {
-      setStatus(saveStatus, linkResult.message || 'Could not link provider event.', 'error');
-      syncEventLinkPanel(selectedIntegrationPlatform());
-      return;
-    }
+    if (saveBtn) saveBtn.disabled = true;
+    if (pubBtn) pubBtn.disabled = true;
+    setStatus(saveStatus, publish ? 'Publishing…' : 'Saving…');
 
-    setStatus(saveStatus, 'Saving…');
-    var payload = {
-      id: eventId,
-      title: loadedEvent.title,
-      organiserGroupId: organiserIdForEvent(loadedEvent),
-      checkoutMode: 'external_connected',
-      externalPriceLabel: price,
-      externalBookingUrl: url,
-      listingStatus: publish ? 'published' : 'draft',
-    };
-    if (eventDate) {
-      payload.date = eventDate;
-      if (loadedEvent.endDate) payload.endDate = loadedEvent.endDate;
-    }
-
-    var res = await api('/api/organiser/events', { method: 'PATCH', body: JSON.stringify(payload) });
-    if (!res.ok) {
-      setStatus(saveStatus, res.data.message || res.data.error || 'Could not save.', 'error');
-      return;
-    }
-    var savedEv = (res.data && res.data.event) || null;
-    if (savedEv && savedEv.externalBookingUrl && qs('ecs-booking-url')) {
-      qs('ecs-booking-url').value = savedEv.externalBookingUrl;
-      payload.externalBookingUrl = savedEv.externalBookingUrl;
-    } else if (
-      window.HubExternalBookingUrl &&
-      typeof window.HubExternalBookingUrl.toAttendeeBookingUrl === 'function' &&
-      url &&
-      qs('ecs-booking-url')
-    ) {
-      var attendeeUrl = window.HubExternalBookingUrl.toAttendeeBookingUrl(url);
-      if (attendeeUrl && attendeeUrl !== url) {
-        qs('ecs-booking-url').value = attendeeUrl;
-        payload.externalBookingUrl = attendeeUrl;
+    try {
+      var linkResult = await ensureEventLinkBeforeSave(publish);
+      if (!linkResult.ok) {
+        setStatus(saveStatus, linkResult.message || 'Could not link provider event.', 'error');
+        syncEventLinkPanel(selectedIntegrationPlatform());
+        return;
       }
+
+      var payload = {
+        id: eventId,
+        title: loadedEvent.title,
+        organiserGroupId: organiserIdForEvent(loadedEvent),
+        checkoutMode: 'external_connected',
+        externalPriceLabel: price,
+        externalBookingUrl: url,
+        listingStatus: publish ? 'published' : 'draft',
+      };
+      if (eventDate) {
+        payload.date = eventDate;
+        if (loadedEvent.endDate) payload.endDate = loadedEvent.endDate;
+      }
+
+      var res = await api('/api/organiser/events', { method: 'PATCH', body: JSON.stringify(payload) });
+      if (!res.ok) {
+        setStatus(saveStatus, saveErrorMessage(res.data, res.status), 'error');
+        return;
+      }
+      var savedEv = (res.data && res.data.event) || null;
+      if (savedEv && savedEv.externalBookingUrl && qs('ecs-booking-url')) {
+        qs('ecs-booking-url').value = savedEv.externalBookingUrl;
+        payload.externalBookingUrl = savedEv.externalBookingUrl;
+      } else if (
+        window.HubExternalBookingUrl &&
+        typeof window.HubExternalBookingUrl.toAttendeeBookingUrl === 'function' &&
+        url &&
+        qs('ecs-booking-url')
+      ) {
+        var attendeeUrl = window.HubExternalBookingUrl.toAttendeeBookingUrl(url);
+        if (attendeeUrl && attendeeUrl !== url) {
+          qs('ecs-booking-url').value = attendeeUrl;
+          payload.externalBookingUrl = attendeeUrl;
+        }
+      }
+      loadedEvent = Object.assign({}, loadedEvent, payload);
+      if (typeof embed.writeConnectedSetupPrefetch === 'function') {
+        embed.writeConnectedSetupPrefetch(eventId, loadedEvent, billing);
+      }
+      setStatus(saveStatus, publish ? 'Published — your Connected listing is live.' : 'Draft saved.', 'ok');
+    } catch (err) {
+      setStatus(saveStatus, 'Could not save — check your connection and try again.', 'error');
+    } finally {
+      if (saveBtn) saveBtn.disabled = false;
+      if (pubBtn) pubBtn.disabled = false;
     }
-    loadedEvent = Object.assign({}, loadedEvent, payload);
-    if (typeof embed.writeConnectedSetupPrefetch === 'function') {
-      embed.writeConnectedSetupPrefetch(eventId, loadedEvent, billing);
-    }
-    setStatus(saveStatus, publish ? 'Published with Connected booking.' : 'Saved.', 'ok');
   }
 
   function loadFromNetwork() {
@@ -1441,11 +1492,15 @@
 
   var saveBtn = qs('ecs-save');
   var pubBtn = qs('ecs-publish');
-  if (saveBtn) saveBtn.addEventListener('click', function () {
-    saveConnected(false);
-  });
-  if (pubBtn) pubBtn.addEventListener('click', function () {
-    saveConnected(true);
-  });
+  if (saveBtn) {
+    saveBtn.addEventListener('click', function () {
+      saveConnected(false);
+    });
+  }
+  if (pubBtn) {
+    pubBtn.addEventListener('click', function () {
+      saveConnected(true);
+    });
+  }
 
 })();

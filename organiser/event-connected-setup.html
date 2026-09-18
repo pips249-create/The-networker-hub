@@ -13,7 +13,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260909listmenu1" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260918ebshort3" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260918ebfoot1" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260812doors2" />
   </head>
   <body class="organiser-event-edit-page organiser-connected-setup-page">
@@ -163,11 +163,6 @@
           <p class="ee-hint" id="ecs-event-link-status" hidden role="status"></p>
         </div>
 
-        <p class="ee-hint" id="ecs-save-status" hidden role="status"></p>
-        <div class="ee-attendance-next">
-          <button type="button" class="ee-btn ee-btn-outline" id="ecs-save">Save draft</button>
-          <button type="button" class="ee-btn ee-btn-gold" id="ecs-publish">Publish Connected event</button>
-        </div>
       </div>
 
       <section class="ee-booking-help-section" id="ecs-developer-section" hidden>
@@ -205,12 +200,20 @@
         Need tickets, membership, or guest visits <em>on The Networker UK</em> instead?
         <a href="/organiser/event-tickets">Use on-platform checkout (set up tickets)</a>.
       </p>
+
+      <footer class="ecs-page-actions" id="ecs-page-actions" hidden>
+        <p class="ecs-page-actions-status ee-hint" id="ecs-save-status" hidden role="status" aria-live="polite"></p>
+        <div class="ecs-page-actions-row">
+          <button type="button" class="ee-btn ee-btn-outline" id="ecs-save">Save draft</button>
+          <button type="button" class="ee-btn ee-btn-gold" id="ecs-publish">Publish Connected event</button>
+        </div>
+      </footer>
     </div>
 
     <script src="../js/organiser-embed-bootstrap.js?v=20260918embed2" defer></script>
     <script src="../js/organiser-page-loading.js?v=20260811claimux2" defer></script>
     <script src="../js/hub-external-booking-url.js?v=20260918eventlink1" defer></script>
     <script src="../js/organiser-connected-platform.js?v=20260918pickhint1" defer></script>
-    <script src="../js/organiser-event-connected-setup.js?v=20260918ebshort3" defer></script>
+    <script src="../js/organiser-event-connected-setup.js?v=20260918ebfoot1" defer></script>
   </body>
 </html>

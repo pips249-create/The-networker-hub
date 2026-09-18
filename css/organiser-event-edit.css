@@ -6073,6 +6073,52 @@ body.ee-embed-drawer.organiser-connected-setup-page .ecs-setup-checklist {
   margin: 0;
 }
 
+.ecs-page-actions {
+  margin-top: 28px;
+  padding: 16px 0 max(20px, env(safe-area-inset-bottom));
+  border-top: 2px solid rgba(13, 110, 122, 0.2);
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.98) 70%, rgba(255, 255, 255, 0));
+}
+
+.organiser-connected-setup-page.ee-embed-drawer .ecs-page-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 4;
+  margin-top: 20px;
+  padding-top: 14px;
+  box-shadow: 0 -8px 24px rgba(26, 46, 59, 0.08);
+}
+
+.ecs-page-actions-status {
+  margin: 0 0 12px;
+  font-size: 14px;
+}
+
+.ecs-page-actions-status.ee-alert-warn,
+.ecs-page-actions-status.ee-alert-ok {
+  padding: 10px 12px;
+  border-radius: 8px;
+}
+
+.ecs-page-actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 12px;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.ecs-page-actions-row .ee-btn-gold {
+  flex: 1 1 auto;
+  min-width: min(100%, 220px);
+}
+
+@media (min-width: 520px) {
+  .ecs-page-actions-row .ee-btn-gold {
+    flex: 0 1 auto;
+  }
+}
+
 .ecs-setup-checklist {
   margin: 0 0 20px;
   padding: 14px 16px;
