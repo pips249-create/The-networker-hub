@@ -196,13 +196,44 @@ a.ee-wizard-link:hover {
 
 .ee-format-panel {
   display: none;
-  margin-top: 20px;
-  padding-top: 18px;
-  border-top: 1px solid var(--ee-border);
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
 }
 
 .ee-format-panel.is-visible {
   display: block;
+}
+
+/* One divider below In person / Online — not full-bleed lines through the toggle row */
+#ee-card-location .ee-field-format {
+  margin-bottom: 0;
+}
+
+#ee-card-location .ee-field-format .ee-mode-toggle {
+  width: 100%;
+  gap: 10px;
+}
+
+#ee-card-location .ee-field-format .ee-mode-btn {
+  flex: 1 1 calc(50% - 5px);
+  min-width: 0;
+  max-width: none;
+}
+
+#ee-card-location .ee-field-format + .ee-format-panel.is-visible,
+#ee-card-location .ee-field-format + .ee-format-panel + .ee-format-panel.is-visible {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--ee-border);
+}
+
+#ee-card-location .ee-format-panel.is-visible > .ee-subheading:first-child {
+  margin-top: 0;
+}
+
+#ee-card-location .ee-mode-btn.is-active {
+  box-shadow: inset 0 0 0 1px var(--ee-purple);
 }
 
 .ee-back-row {
