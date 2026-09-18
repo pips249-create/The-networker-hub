@@ -156,7 +156,7 @@
     const hub = window.HubConnectedPlatform;
     const eid = resolveEventId();
     if (!root || !hub || !eid) return;
-    platformPicker = hub.bindPicker(root, eid);
+    platformPicker = hub.bindPicker(root, eid, null, { hintContext: 'pick' });
   }
 
   function bindSetupLink() {
@@ -193,13 +193,15 @@
           id: eid,
           eventIds: ids,
           platform: platform,
+          fromTickets: true,
         });
       } else {
         setupLink.href =
           '/organiser/event-connected-setup?id=' +
           encodeURIComponent(eid) +
           '&platform=' +
-          encodeURIComponent(platform);
+          encodeURIComponent(platform) +
+          '&from=tickets';
       }
     });
   }
@@ -225,6 +227,7 @@
           id: eid,
           eventIds: eventIdsFromQueryArray(),
           platform: selectedPlatform(),
+          fromTickets: true,
         });
       } else {
         setupHref = eid

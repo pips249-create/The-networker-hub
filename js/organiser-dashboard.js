@@ -19837,6 +19837,7 @@
         if (platform) {
           url += '&platform=' + encodeURIComponent(platform);
         }
+        url += '&from=tickets';
         if (ids.length) {
           url += '&returnIds=' + encodeURIComponent(ids.join(','));
         }

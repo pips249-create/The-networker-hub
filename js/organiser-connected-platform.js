@@ -60,6 +60,16 @@
   /** Default card order on tickets + setup */
   var PLATFORM_ORDER = ['eventbrite', 'ticket_tailor', 'luma', 'trybooking', 'own_site', 'custom'];
 
+  var PICK_STEP_HINT =
+    'Tap <strong>Continue to Connected setup</strong> next — you will add listing price and your checkout link there.';
+
+  function hintForContext(platformKey, context) {
+    var p = PLATFORMS[platformKey];
+    if (!p) return '';
+    if (context === 'pick') return PICK_STEP_HINT;
+    return p.hint;
+  }
+
   function storageKey(eventId) {
     var id = String(eventId || '').trim();
     return id ? 'ecs_booking_platform:' + id : '';
@@ -135,8 +145,10 @@
     container.innerHTML = parts.join('');
   }
 
-  function bindPicker(root, eventId, onChange) {
+  function bindPicker(root, eventId, onChange, options) {
     if (!root) return null;
+    options = options || {};
+    var hintContext = String(options.hintContext || 'setup').trim();
     var grid = root.querySelector('[data-connected-platform-grid]') || root.querySelector('.ecs-platform-grid');
     if (grid && !grid.dataset.platformGridFilled) {
       fillPlatformGrid(grid);
@@ -176,8 +188,9 @@
         btn.setAttribute('aria-pressed', on ? 'true' : 'false');
       });
       if (hintEl) {
-        hintEl.hidden = false;
-        hintEl.innerHTML = PLATFORMS[key].hint;
+        var hintHtml = hintForContext(key, hintContext);
+        hintEl.hidden = !hintHtml;
+        hintEl.innerHTML = hintHtml;
       }
       if (typeof onChange === 'function') onChange(key, PLATFORMS[key]);
     }

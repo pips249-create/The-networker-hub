@@ -101,6 +101,8 @@ function parseEventbriteEventIdFromUrl(raw) {
   }
   const eidParam = String(parsed.searchParams.get('eid') || '').trim();
   if (/^\d+$/.test(eidParam)) return eidParam;
+  const numericPath = parsed.pathname.match(/\/e\/(\d{6,})(?:\/|$)/i);
+  if (numericPath) return numericPath[1];
   const pathId = parsed.pathname.match(/-(\d{8,})(?:\/|$)/);
   if (pathId) return pathId[1];
   return '';

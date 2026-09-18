@@ -70,6 +70,64 @@
 
   var platformPickerControl = null;
   var platformUrlInputBound = false;
+  var platformPickerExpanded = false;
+
+  function arrivedFromTicketsStep() {
+    return String(new URLSearchParams(location.search).get('from') || '').trim() === 'tickets';
+  }
+
+  function shouldCollapsePlatformPicker() {
+    return arrivedFromTicketsStep() && !platformPickerExpanded;
+  }
+
+  function escAttr(s) {
+    return String(s || '')
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;');
+  }
+
+  function updatePlatformPickerPresentation() {
+    var hub = window.HubConnectedPlatform;
+    var picker = qs('ecs-platform-picker');
+    var summary = qs('ecs-platform-chosen');
+    if (!picker || !summary || !hub || !platformPickerControl) return;
+
+    var key = platformPickerControl.getSelected();
+    var meta = hub.PLATFORMS[key];
+    var collapse = shouldCollapsePlatformPicker();
+
+    picker.hidden = collapse;
+    summary.hidden = !collapse;
+    if (collapse && meta) {
+      var nameEl = qs('ecs-platform-chosen-name');
+      var logoEl = qs('ecs-platform-chosen-logo');
+      if (nameEl) nameEl.textContent = meta.label || key;
+      if (logoEl) {
+        logoEl.innerHTML = meta.logo
+          ? '<img src="' + escAttr(meta.logo) + '" alt="" width="120" height="28" decoding="async" />'
+          : '';
+      }
+    }
+  }
+
+  function bindPlatformChangeControl() {
+    var btn = qs('ecs-platform-change');
+    if (!btn || btn.dataset.bound) return;
+    btn.dataset.bound = '1';
+    btn.addEventListener('click', function () {
+      platformPickerExpanded = true;
+      updatePlatformPickerPresentation();
+      var picker = qs('ecs-platform-picker');
+      if (picker) {
+        try {
+          picker.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } catch (e) {
+          /* ignore */
+        }
+      }
+    });
+  }
 
   function syncBookingUrlPlaceholder(meta) {
     var urlInput = qs('ecs-booking-url');
@@ -90,6 +148,7 @@
         syncEventLinkPanel(platformKey);
         renderProviderWebhookCard(platformKey);
         updateOneTimeProviderStatus(platformKey);
+        updatePlatformPickerPresentation();
       });
     }
     if (platformPickerControl) {
@@ -126,6 +185,7 @@
     var chosen = fromUrl || stored || 'own_site';
     platformPickerControl.apply(chosen);
     renderProviderWebhookCard(chosen);
+    updatePlatformPickerPresentation();
   }
 
   function qs(id) {
@@ -422,6 +482,8 @@
     if (qs('ecs-booking-url')) qs('ecs-booking-url').value = ev.externalBookingUrl || ev.external_booking_url || '';
     initPlatformPicker();
     restorePlatformSelection();
+    bindPlatformChangeControl();
+    updatePlatformPickerPresentation();
   }
 
   var providersById = {};
@@ -504,12 +566,43 @@
     return hub.guessProviderExternalEventId(platform, bookingUrl);
   }
 
+  function normalizeExternalEventId(platform, raw) {
+    var key = String(platform || '').trim();
+    var value = String(raw || '').trim();
+    if (!value) return '';
+    var hub = window.HubExternalBookingUrl;
+    if (hub && typeof hub.guessProviderExternalEventId === 'function') {
+      var fromUrl = hub.guessProviderExternalEventId(key, value);
+      if (fromUrl) return fromUrl;
+    }
+    if (/^\d+$/.test(value)) return value;
+    return value;
+  }
+
+  function resolveGuessedExternalId(platform) {
+    var key = String(platform || selectedIntegrationPlatform() || '').trim();
+    var bookingUrl = qs('ecs-booking-url') ? qs('ecs-booking-url').value.trim() : '';
+    var input = qs('ecs-external-event-id');
+    var manual = input ? String(input.value || '').trim() : '';
+    var hub = window.HubExternalBookingUrl;
+    if (!hub || typeof hub.guessProviderExternalEventId !== 'function') return '';
+    return (
+      hub.guessProviderExternalEventId(key, bookingUrl) ||
+      hub.guessProviderExternalEventId(key, manual) ||
+      ''
+    );
+  }
+
   function resolveExternalEventIdForLink(platform) {
     var key = String(platform || selectedIntegrationPlatform() || '').trim();
     var input = qs('ecs-external-event-id');
     var manual = input ? String(input.value || '').trim() : '';
-    if (manual) return manual;
-    return guessExternalEventIdFromBookingUrl(key);
+    if (manual) return normalizeExternalEventId(key, manual);
+    return normalizeExternalEventId(key, guessExternalEventIdFromBookingUrl(key));
+  }
+
+  function displayExternalEventId(platform, raw) {
+    return normalizeExternalEventId(platform, raw) || String(raw || '').trim();
   }
 
   function setEventLinkStatus(msg, kind) {
@@ -529,7 +622,10 @@
     if (linkedId) {
       badge.hidden = false;
       badge.className = 'ecs-event-link-badge ee-hint is-linked';
-      badge.textContent = 'Linked — provider event id ' + linkedId + ' will sync registrations to this TNH event.';
+      badge.textContent =
+        'Linked — provider event id ' +
+        displayExternalEventId(key, linkedId) +
+        ' will sync registrations to this TNH event.';
       return;
     }
     badge.hidden = false;
@@ -547,9 +643,9 @@
       if (useBtn) useBtn.hidden = true;
       return;
     }
-    var guessed = guessExternalEventIdFromBookingUrl(platform);
+    var guessed = resolveGuessedExternalId(platform);
     var input = qs('ecs-external-event-id');
-    var current = input ? String(input.value || '').trim() : '';
+    var current = input ? normalizeExternalEventId(platform, input.value) : '';
     if (guessed && guessed !== current) {
       hint.hidden = false;
       hint.textContent =
@@ -567,12 +663,17 @@
     var input = qs('ecs-external-event-id');
     if (!input) return;
     if (externalEventIdUserEdited && !force && input.value.trim()) return;
-    var linked = linkedExternalEventId(platform);
-    if (linked) {
-      input.value = linked;
+    var guessed = resolveGuessedExternalId(platform);
+    if (force && guessed) {
+      input.value = guessed;
+      externalEventIdUserEdited = false;
       return;
     }
-    var guessed = guessExternalEventIdFromBookingUrl(platform);
+    var linked = linkedExternalEventId(platform);
+    if (linked && !force) {
+      input.value = displayExternalEventId(platform, linked);
+      return;
+    }
     if (guessed && (force || !input.value.trim())) {
       input.value = guessed;
       externalEventIdUserEdited = false;
@@ -723,11 +824,72 @@
     var useUrlBtn = qs('ecs-use-url-id');
     if (useUrlBtn) {
       useUrlBtn.addEventListener('click', function () {
-        maybeAutofillExternalEventId(true);
+        var platform = selectedIntegrationPlatform();
+        var guessed = resolveGuessedExternalId(platform);
+        var input = qs('ecs-external-event-id');
+        if (!guessed) {
+          setEventLinkStatus(
+            'We could not read an event id — paste your Eventbrite /e/… link in Booking / checkout URL above, then try again.',
+            'error'
+          );
+          return;
+        }
+        if (input) input.value = guessed;
         externalEventIdUserEdited = false;
         refreshEventLinkAutofillHint();
+        setEventLinkStatus('Using event id ' + guessed + '. Click Save link for this event.', 'ok');
       });
     }
+  }
+
+  function renderRegistrationSyncSteps(platform) {
+    var stepsEl = qs('ecs-webhook-steps');
+    if (!stepsEl) return;
+    var key = String(platform || selectedIntegrationPlatform() || '').trim();
+    if (key === 'own_site' || key === 'custom') {
+      stepsEl.hidden = true;
+      return;
+    }
+    stepsEl.hidden = false;
+    var p = providersById[key];
+    var label = (p && p.label) || key.replace(/_/g, ' ');
+    var linked = linkedExternalEventId(key);
+    var webhookReady = Boolean(p && p.webhookUrl);
+    var parts = [
+      {
+        done: Boolean(linked),
+        text:
+          'Link this listing to your ' +
+          label +
+          ' event id in the box above (numbers only — use “Use id from booking URL” if you pasted a full link).',
+      },
+      {
+        done: webhookReady,
+        text: 'Enable ' + label + ' below — once per account — to generate your webhook URL.',
+      },
+      {
+        done: false,
+        text:
+          'Copy that webhook URL into ' +
+          label +
+          ' (Eventbrite: Account settings → Webhooks). New ticket orders then sync attendees here.',
+      },
+    ];
+    stepsEl.innerHTML = parts
+      .map(function (step, index) {
+        return (
+          '<li class="ecs-webhook-step' +
+          (step.done ? ' is-done' : '') +
+          '">' +
+          '<span class="ecs-webhook-step-num" aria-hidden="true">' +
+          (index + 1) +
+          '</span>' +
+          '<span class="ecs-webhook-step-text">' +
+          escHtml(step.text) +
+          '</span></li>'
+        );
+      })
+      .join('');
   }
 
   function renderProviderWebhookCard(platform) {
@@ -736,6 +898,7 @@
     var heading = qs('ecs-webhook-heading');
     if (!mount) return;
     var key = String(platform || selectedIntegrationPlatform() || 'own_site').trim();
+    renderRegistrationSyncSteps(key);
     if (lead) lead.innerHTML = providerWebhookLead(key);
     if (heading) {
       var providerLabel = providersById[key] && providersById[key].label;
@@ -823,7 +986,9 @@
       '</button>' +
       (linked && (linked.external_event_id || linked.externalEventId)
         ? '<p class="ee-hint ee-alert-ok">This event is linked (id <code>' +
-          escHtml(linked.external_event_id || linked.externalEventId) +
+          escHtml(
+            displayExternalEventId(key, linked.external_event_id || linked.externalEventId)
+          ) +
           '</code>).</p>'
         : '<p class="ee-hint">Link this event in the <strong>Link registrations</strong> section above (we can fill the id from your booking URL).</p>') +
       '<p class="ee-hint">Account setup: <a href="/organiser/connected-booking#cb-providers-title">Connected booking → Booking providers</a>.</p>';
@@ -831,32 +996,57 @@
   }
 
   function bindProviderEnableButtons(root) {
-    if (!root) return;
-    root.querySelectorAll('[data-enable-provider]').forEach(function (btn) {
-      if (btn.dataset.enableBound) return;
-      btn.dataset.enableBound = '1';
-      btn.addEventListener('click', function () {
-        var provider = btn.getAttribute('data-enable-provider');
-        btn.disabled = true;
-        api('/api/organiser/connected-booking-providers', {
-          method: 'PATCH',
-          body: JSON.stringify({ action: 'enable_provider', provider: provider }),
-        })
-          .then(function (res) {
-            btn.disabled = false;
-            if (!res.ok) {
-              window.alert(res.data.message || res.data.error || 'Could not enable provider.');
-              return;
+    if (!root || root.dataset.enableDelegated === '1') return;
+    root.dataset.enableDelegated = '1';
+    root.addEventListener('click', function (e) {
+      var btn = e.target && e.target.closest ? e.target.closest('[data-enable-provider]') : null;
+      if (!btn || btn.disabled) return;
+      e.preventDefault();
+      var provider = btn.getAttribute('data-enable-provider');
+      if (!provider) return;
+      btn.disabled = true;
+      var statusMount = qs('ecs-provider-enable-status');
+      if (statusMount) {
+        statusMount.hidden = false;
+        statusMount.textContent = 'Enabling…';
+        statusMount.className = 'ee-hint';
+      }
+      api('/api/organiser/connected-booking-providers', {
+        method: 'PATCH',
+        body: JSON.stringify({ action: 'enable_provider', provider: provider }),
+      })
+        .then(function (res) {
+          btn.disabled = false;
+          if (!res.ok || (res.data && res.data.ok === false)) {
+            var msg = providerEnableErrorMessage(res.data);
+            if (statusMount) {
+              statusMount.textContent = msg;
+              statusMount.className = 'ee-hint ee-alert-warn';
+            } else {
+              window.alert(msg);
             }
-            loadProviderCatalog().then(function () {
-              renderProviderWebhookCard(selectedIntegrationPlatform());
-            });
-          })
-          .catch(function () {
-            btn.disabled = false;
-            window.alert('Could not enable provider.');
+            return;
+          }
+          mergeProviderConnectionFromPatch(res.data && res.data.connection);
+          if (statusMount) {
+            statusMount.textContent = 'Enabled — copy the webhook URL below into Eventbrite admin.';
+            statusMount.className = 'ee-hint ee-alert-ok';
+          }
+          return loadProviderCatalog().then(function () {
+            renderProviderWebhookCard(selectedIntegrationPlatform());
+            renderRegistrationSyncSteps(selectedIntegrationPlatform());
+            updateOneTimeProviderStatus(selectedIntegrationPlatform());
           });
-      });
+        })
+        .catch(function () {
+          btn.disabled = false;
+          if (statusMount) {
+            statusMount.textContent = 'Could not enable provider. Check your connection and try again.';
+            statusMount.className = 'ee-hint ee-alert-warn';
+          } else {
+            window.alert('Could not enable provider.');
+          }
+        });
     });
   }
 
@@ -876,11 +1066,54 @@
     );
   }
 
+  function providerEnableErrorMessage(data) {
+    if (!data) return 'Could not enable provider.';
+    if (data.message) return String(data.message);
+    var code = String(data.error || '').trim();
+    if (code === 'connected_booking_provider_schema_missing') {
+      return 'Provider webhooks are not set up on this environment yet. Your site admin needs to run the Connected booking provider database migration.';
+    }
+    if (code === 'preview_restricted') {
+      return 'Connected booking preview is not enabled for this account.';
+    }
+    if (code === 'supabase_not_configured') {
+      return 'Connected booking is temporarily unavailable (database not configured).';
+    }
+    return code || 'Could not enable provider.';
+  }
+
+  function showProviderSchemaWarn(data) {
+    var el = qs('ecs-providers-schema-warn');
+    if (!el) return;
+    if (data && data.schemaMissing) {
+      el.hidden = false;
+      el.innerHTML =
+        'Registration sync needs a database update on the server (migration <strong>299_connected_booking_provider_links.sql</strong>). ' +
+        'Until then, Enable Eventbrite will not work here — contact support or use Connected booking → Booking providers on a fully configured site.';
+      return;
+    }
+    el.hidden = true;
+    el.textContent = '';
+  }
+
+  function mergeProviderConnectionFromPatch(connection) {
+    if (!connection || !connection.provider) return;
+    var key = String(connection.provider).trim();
+    var prev = providersById[key] || { id: key };
+    providersById[key] = Object.assign({}, prev, {
+      id: key,
+      label: prev.label || key,
+      webhookUrl: connection.webhookUrl || prev.webhookUrl,
+      connectionStatus: connection.status || 'active',
+    });
+  }
+
   function loadProviderCatalog() {
     if (!eventId) return Promise.resolve();
     return api('/api/organiser/connected-booking-providers?eventId=' + encodeURIComponent(eventId)).then(
       function (res) {
         if (!res.ok || !res.data || !res.data.ok) return;
+        showProviderSchemaWarn(res.data);
         providersById = {};
         (res.data.providers || []).forEach(function (p) {
           if (p && p.id) providersById[p.id] = p;
@@ -932,6 +1165,8 @@
     bindEventLinkUi();
     initPlatformPicker();
     restorePlatformSelection();
+    bindPlatformChangeControl();
+    updatePlatformPickerPresentation();
     syncEventLinkPanel(selectedIntegrationPlatform());
     if (slotStatus && billing.plan) {
       slotStatus.hidden = false;

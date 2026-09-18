@@ -7,6 +7,8 @@
       var parsed = new URL(url);
       var eidParam = String(parsed.searchParams.get('eid') || '').trim();
       if (/^\d+$/.test(eidParam)) return eidParam;
+      var numericPath = parsed.pathname.match(/\/e\/(\d{6,})(?:\/|$)/i);
+      if (numericPath) return numericPath[1];
       var pathId = parsed.pathname.match(/-(\d{8,})(?:\/|$)/);
       if (pathId) return pathId[1];
     } catch (e) {
