@@ -1643,10 +1643,14 @@
       placeholder.textContent = 'Select an organiser page…';
       sel.appendChild(placeholder);
     }
+    const pageLabel =
+      window.HubOrganiserActions && window.HubOrganiserActions.organiserPageSelectLabel
+        ? window.HubOrganiserActions.organiserPageSelectLabel
+        : null;
     groups.forEach((g) => {
       const opt = document.createElement('option');
       opt.value = g.id;
-      opt.textContent = g.name;
+      opt.textContent = pageLabel ? pageLabel(g) : g.name;
       sel.appendChild(opt);
     });
     if (preselectedId) {

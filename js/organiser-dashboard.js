@@ -1961,7 +1961,7 @@
   const RANKING_BADGE_CSS = '../css/hub-ranking-badge.css?v=20260728lb2';
   const RANKINGS_JS = '../js/rankings.js?v=20260807rank';
   const RANKING_BADGE_PNG_JS = '../js/ranking-badge-png.js?v=20260728png';
-  const EVENT_CONNECTIONS_JS = '../js/organiser-event-connections.js?v=20260827credits2';
+  const EVENT_CONNECTIONS_JS = '../js/organiser-event-connections.js?v=20260918orgstatus';
   const GROUP_UPDATES_JS = '../js/organiser-group-updates.js?v=20260827credits2';
   const EMAIL_ANALYTICS_JS = '../js/organiser-email-analytics.js?v=20260820analytics1';
   let communicateToolsBound = false;

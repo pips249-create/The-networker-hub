@@ -388,13 +388,18 @@
     }
     if (e.groupWrap) e.groupWrap.hidden = false;
     var current = e.group.value;
+    var pageLabel =
+      window.HubOrganiserActions && window.HubOrganiserActions.organiserPageSelectLabel
+        ? window.HubOrganiserActions.organiserPageSelectLabel
+        : null;
     e.group.innerHTML = groups
       .map(function (g) {
+        var label = pageLabel ? pageLabel(g) : g.name || 'Organiser page';
         return (
           '<option value="' +
           esc(g.id) +
           '">' +
-          esc(g.name || 'Organiser page') +
+          esc(label) +
           '</option>'
         );
       })

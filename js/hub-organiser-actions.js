@@ -315,6 +315,40 @@
     return st === 'published' || st === 'live' || st === 'approved';
   }
 
+  /** Suffix for organiser page pickers, e.g. " (Unpublished)" — empty when live on the directory. */
+  function organiserPageListingSuffix(group) {
+    if (!group) return '';
+    var key = String(group.statusKey || '')
+      .trim()
+      .toLowerCase();
+    if (!key) {
+      var raw = String(
+        group.statusRaw || group.listingStatus || group.listing_status || group.status || ''
+      )
+        .trim()
+        .toLowerCase();
+      if (/unpublish/.test(raw)) key = 'unpublished';
+      else if (!raw || /^draft$|pending|hidden|inactive/.test(raw)) key = 'draft';
+      else if (/publish|live|active|public|approved|verified/.test(raw)) key = 'live';
+      else key = 'draft';
+    }
+    if (key === 'live' || key === 'published') return '';
+    var label = String(group.statusLabel || '').trim();
+    if (!label) {
+      if (key === 'unpublished') label = 'Unpublished';
+      else if (key === 'draft') label = 'Draft';
+      else label = key.charAt(0).toUpperCase() + key.slice(1);
+    }
+    if (label.toLowerCase() === 'live') return '';
+    return ' (' + label + ')';
+  }
+
+  function organiserPageSelectLabel(group, fallbackName) {
+    var name =
+      String((group && group.name) || fallbackName || 'Organiser page').trim() || 'Organiser page';
+    return name + organiserPageListingSuffix(group);
+  }
+
   function isCurrentlyFeaturedListing(item) {
     if (!item || !item.featured) return false;
     var until = item.featuredUntil || item.featured_until;
@@ -521,6 +555,8 @@
     getBrowseReturnPath: getBrowseReturnPath,
     clearBrowseReturn: clearBrowseReturn,
     applyBrowseReturnBack: applyBrowseReturnBack,
+    organiserPageListingSuffix: organiserPageListingSuffix,
+    organiserPageSelectLabel: organiserPageSelectLabel,
   };
 
   function init() {
