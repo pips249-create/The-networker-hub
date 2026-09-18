@@ -42,6 +42,21 @@
       .replace(/"/g, '&quot;');
   }
 
+  function publishConnectedBookingState(data, groupTotal) {
+    if (!data || !data.ok) return;
+    try {
+      window.dispatchEvent(
+        new CustomEvent('hub-organiser-connected-booking', {
+          detail: Object.assign({}, data, {
+            groupTotal: groupTotal != null ? groupTotal : undefined,
+          }),
+        })
+      );
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
   function assignedNames(payload) {
     var slots = payload && payload.slots;
     if (!slots || !Array.isArray(slots.accountOrganisers)) return [];
@@ -132,7 +147,12 @@
           if (!res.ok) {
             if (statusEl) {
               statusEl.className = 'ee-hint ee-alert-warn';
-              statusEl.textContent = res.body.message || res.body.error || 'Could not save.';
+              var errMsg = res.body.message || res.body.error || 'Could not save.';
+              if (res.body.error === 'connected_booking_schema_missing') {
+                errMsg =
+                  'Connected page assignment is not available until database migration 297 is applied on production. Email hi@thenetworkeruk.com if this persists.';
+              }
+              statusEl.textContent = errMsg;
             }
             return;
           }
@@ -145,15 +165,11 @@
                 statusEl.className = 'ee-hint ee-alert-ok';
                 statusEl.textContent = 'Saved. Connected booking is assigned — check the Connected column below.';
               }
-              try {
-                window.dispatchEvent(
-                  new CustomEvent('hub-organiser-connected-booking', {
-                    detail: Object.assign({ ok: true, active: true }, fresh || {}),
-                  })
-                );
-              } catch (e) {
-                /* ignore */
-              }
+              var total =
+                (billing.slots && billing.slots.accountOrganisers && billing.slots.accountOrganisers.length) ||
+                undefined;
+              publishConnectedBookingState(fresh, total);
+              renderBanner(fresh, total);
             });
         })
         .catch(function () {
@@ -166,7 +182,7 @@
     });
   }
 
-  function bindCollapse(root) {
+  function bindCollapse(root, forceExpanded) {
     if (!root) return;
     var btn = root.querySelector('[data-connected-banner-toggle]');
     var panel = root.querySelector('[data-connected-banner-panel]');
@@ -180,7 +196,7 @@
       if (label) label.textContent = collapsed ? 'Show' : 'Hide';
     }
 
-    apply(isCollapsed());
+    apply(forceExpanded ? false : isCollapsed());
     btn.addEventListener('click', function () {
       var next = !root.classList.contains('is-collapsed');
       setCollapsed(next);
@@ -213,6 +229,7 @@
 
     var assigned = assignedNames(billing);
     var needsPick = Boolean(billing.slots && billing.slots.needsAssignment);
+    var schemaMissing = Boolean(billing.slots && billing.slots.schemaMissing);
     var overPublished = published > limit;
     var overPages = total > limit;
     var show =
@@ -269,9 +286,13 @@
     }
 
     var body =
+      (schemaMissing
+        ? '<strong>Setup incomplete:</strong> organiser-page Connected slots need database migration 297 on production — assignment cannot be saved until that is applied. '
+        : '') +
       (warnBits.length ? warnBits.join(' ') + ' ' : '') +
       'Connected billing uses <strong>slots</strong> on organiser pages (not one event at a time). ' +
-      'Unpublish organiser pages you do not need on the hub, reassign slots on Connected booking, or upgrade for more. ' +
+      'Tick the page(s) below, click <strong>Save assignment</strong>, then check the <strong>Connected</strong> column. ' +
+      'Upgrade your plan for more slots. ' +
       'Only need a booking link on one event? Use <strong>Link-out listing (£9.99 + VAT per event)</strong> — hub button to your site, no webhook, no attendee list or verified reviews on The Networker UK.';
 
     var warn = overPublished || overPages || needsPick;
@@ -356,8 +377,8 @@
       el.hidden = false;
       el.className =
         'org-connected-billing-banner' + (warn ? ' org-connected-billing-banner--warn' : ' org-connected-billing-banner--info');
-      bindCollapse(el);
-      if (forOrgPage && needsPick) bindOrgInlineSlots(el, billing);
+      bindCollapse(el, forOrgPage && needsPick);
+      if (forOrgPage && needsPick && !schemaMissing) bindOrgInlineSlots(el, billing);
     });
   }
 
@@ -385,7 +406,9 @@
       var groups = (results[0] && results[0].groups) || [];
       var res = results[1] || {};
       if (res.status === 403 || res.status === 404) return;
-      renderBanner(res.data || {}, groups.length);
+      var data = res.data || {};
+      renderBanner(data, groups.length);
+      publishConnectedBookingState(data, groups.length);
     });
   }
 
@@ -397,7 +420,7 @@
         ? detail.groupTotal
         : detail.slots && detail.slots.accountOrganisers
           ? detail.slots.accountOrganisers.length
-          : stateGroupTotal();
+          : undefined;
     renderBanner(detail, total);
   });
 

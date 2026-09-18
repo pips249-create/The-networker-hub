@@ -295,7 +295,11 @@ module.exports = async function handler(req, res) {
           enterprise: { groups: null, note: 'Email Rosie and Catherine for 20+ groups.' },
         },
         recentSync: syncResult.logs,
-        schemaWarning: syncResult.schemaWarning || undefined,
+        schemaWarning:
+          syncResult.schemaWarning ||
+          (slotOrganisers.schemaMissing
+            ? 'Organiser-page Connected slots need Supabase migration 297_connected_booking_organiser_slots.sql — assignment cannot be saved until it is applied.'
+            : undefined),
         slots: {
           assignedOrganiserIds,
           accountOrganisers: slotOrganisers.organisers,
