@@ -81,7 +81,12 @@ node scripts/send-external-booking-webhook.js \
 
 Success: HTTP **200** and `{ "ok": true, ... }`. On Connected booking page, **Recent sync attempts** shows **accepted**. The registration appears in organiser attendee tools for that event.
 
-**Production automation (Zapier / Make):**
+**Preferred (no Zapier):**
+
+- **Your own booking link:** Connected event setup → paste your checkout URL → **Enable your own website webhook** (or **Connected booking → Booking providers → Your own website**). POST `{ eventId, orderId, email, … }` to the token URL after each sale.
+- **Eventbrite / Ticket Tailor / Luma / TryBooking:** enable the provider under **Booking providers**, link TNH event id ↔ provider event id, paste the webhook URL into the provider admin. See [CONNECTED-BOOKING-PROVIDERS.md](./CONNECTED-BOOKING-PROVIDERS.md).
+
+**Legacy / fallback automation (Zapier / Make):**
 
 | Who pays for Zapier? | Typical approach |
 |----------------------|------------------|

@@ -332,6 +332,60 @@
     if (qs('ecs-event-id-wrap')) qs('ecs-event-id-wrap').hidden = !eventId;
   }
 
+  var ownSiteProvider = null;
+
+  function ownSiteSampleJson() {
+    return JSON.stringify(
+      {
+        eventId: eventId || 'YOUR_TNH_EVENT_UUID',
+        orderId: 'your-booking-ref-123',
+        email: 'buyer@example.com',
+        name: 'Buyer Name',
+        quantity: 1,
+        amountPaid: 15,
+        status: 'confirmed',
+      },
+      null,
+      2
+    );
+  }
+
+  function applyOwnSiteWebhookUi() {
+    var urlEl = qs('ecs-own-site-webhook-url');
+    var hintEl = qs('ecs-own-site-webhook-hint');
+    var enableBtn = qs('ecs-enable-own-site');
+    var sampleEl = qs('ecs-own-site-sample');
+    if (sampleEl) sampleEl.textContent = ownSiteSampleJson();
+
+    var own = ownSiteProvider;
+    if (urlEl) {
+      urlEl.textContent = own && own.webhookUrl ? own.webhookUrl : 'Enable below to generate your webhook URL.';
+    }
+    if (hintEl) {
+      hintEl.textContent =
+        own && own.webhookUrl
+          ? 'POST Content-Type: application/json to this URL after each completed booking.'
+          : 'One click enables the URL — paste it into your site automation.';
+    }
+    if (enableBtn) {
+      enableBtn.hidden = Boolean(own && own.webhookUrl);
+    }
+  }
+
+  function loadOwnSiteProvider() {
+    if (!eventId) return Promise.resolve();
+    return api('/api/organiser/connected-booking-providers?eventId=' + encodeURIComponent(eventId)).then(
+      function (res) {
+        if (!res.ok || !res.data || !res.data.ok) return;
+        var list = res.data.providers || [];
+        ownSiteProvider = list.find(function (p) {
+          return p.id === 'own_site';
+        }) || null;
+        applyOwnSiteWebhookUi();
+      }
+    );
+  }
+
   function applyWebhookMeta() {
     var site = location.origin.replace(/\/$/, '');
     var wUrl = qs('ecs-webhook-url');
@@ -342,6 +396,8 @@
       if (ae) ae.textContent = billing.accountId;
       if (aw) aw.hidden = false;
     }
+    applyOwnSiteWebhookUi();
+    loadOwnSiteProvider();
   }
 
   function refreshAccess() {
@@ -484,4 +540,34 @@
   if (pubBtn) pubBtn.addEventListener('click', function () {
     saveConnected(true);
   });
+
+  var enableOwnBtn = qs('ecs-enable-own-site');
+  if (enableOwnBtn) {
+    enableOwnBtn.addEventListener('click', function () {
+      enableOwnBtn.disabled = true;
+      api('/api/organiser/connected-booking-providers', {
+        method: 'PATCH',
+        body: JSON.stringify({ action: 'enable_provider', provider: 'own_site' }),
+      })
+        .then(function (res) {
+          enableOwnBtn.disabled = false;
+          if (!res.ok) {
+            window.alert(res.data.message || res.data.error || 'Could not enable webhook.');
+            return;
+          }
+          if (res.data.connection && res.data.connection.webhookUrl) {
+            ownSiteProvider = {
+              id: 'own_site',
+              webhookUrl: res.data.connection.webhookUrl,
+            };
+          }
+          applyOwnSiteWebhookUi();
+          loadOwnSiteProvider();
+        })
+        .catch(function () {
+          enableOwnBtn.disabled = false;
+          window.alert('Could not enable webhook.');
+        });
+    });
+  }
 })();

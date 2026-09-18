@@ -263,6 +263,50 @@
           </div>
         </section>
 
+        <section class="ee-booking-help-section" id="cb-providers-panel" hidden aria-labelledby="cb-providers-title">
+          <div class="ee-booking-help-section-head">
+            <p class="ee-booking-help-kicker">Checkout platforms</p>
+            <h2 id="cb-providers-title">Booking providers (your site, Eventbrite, Ticket Tailor, Luma, TryBooking)</h2>
+            <p class="ee-booking-help-pick">
+              Enable a provider to get a <strong>webhook URL</strong> (no Zapier required). For your own checkout page,
+              use <strong>Your own website</strong> and POST each sale with the TNH event id. Other platforms: link each
+              TNH event to the provider’s event id.
+            </p>
+          </div>
+          <p class="ee-hint ee-alert-warn" id="cb-providers-schema-warn" hidden role="status"></p>
+          <ul class="cb-providers-list" id="cb-providers-list"></ul>
+          <div class="ee-card cb-providers-link-card" id="cb-providers-link-card" hidden>
+            <h3 class="cb-providers-link-title">Link a TNH event</h3>
+            <p class="ee-hint">
+              Use the TNH event UUID from Connected event setup, plus the id from your provider’s admin (Eventbrite
+              numeric event id, etc.).
+            </p>
+            <label class="ee-field-label" for="cb-link-event-id">TNH event id</label>
+            <input class="ee-input" id="cb-link-event-id" type="text" autocomplete="off" placeholder="uuid" />
+            <label class="ee-field-label" for="cb-link-provider">Provider</label>
+            <select class="ee-input" id="cb-link-provider">
+              <option value="own_site">Your own website</option>
+              <option value="eventbrite">Eventbrite</option>
+              <option value="ticket_tailor">Ticket Tailor</option>
+              <option value="luma">Luma</option>
+              <option value="trybooking">TryBooking</option>
+            </select>
+            <label class="ee-field-label" for="cb-link-external-id" id="cb-link-external-id-label"
+              >Provider event id</label
+            >
+            <input class="ee-input" id="cb-link-external-id" type="text" autocomplete="off" />
+            <p class="ee-hint" id="cb-own-site-payload-hint" hidden>
+              After each booking on your site, POST JSON to your webhook URL, for example:
+              <code
+                >{ "eventId": "TNH_EVENT_UUID", "orderId": "your-ref-123", "email": "buyer@example.com", "name": "Alex",
+                "amountPaid": 15 }</code
+              >
+            </p>
+            <p class="ee-hint" id="cb-providers-link-status" hidden role="status"></p>
+            <button type="button" class="ee-btn ee-btn-gold" id="cb-providers-link-save">Save event link</button>
+          </div>
+        </section>
+
         <section class="ee-booking-help-section" aria-labelledby="cb-webhook-title">
           <details class="ee-optional-details cb-dev-details" id="cb-webhook-docs">
             <summary class="ee-optional-details-summary cb-dev-summary">
@@ -315,5 +359,6 @@
 
     <script src="../js/organiser-embed-bootstrap.js?v=20260918embed1" defer></script>
     <script src="../js/organiser-connected-booking-page.js?v=20260918setup1" defer></script>
+    <script src="../js/organiser-connected-booking-providers.js?v=20260918providers2" defer></script>
   </body>
 </html>
