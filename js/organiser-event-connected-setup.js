@@ -131,6 +131,124 @@
     renderProviderWebhookCard(chosen);
   }
 
+  var PLATFORM_UI = {
+    eventbrite: {
+      label: 'Eventbrite',
+      placeholder: 'https://www.eventbrite.co.uk/e/your-event-…',
+      hint:
+        'Paste your <strong>Eventbrite event URL</strong> above. Enable <strong>Eventbrite</strong> on ' +
+        '<a href="/organiser/connected-booking#cb-providers-title">Connected booking → Booking providers</a>, ' +
+        'link this TNH event to your Eventbrite event id, and add our webhook URL in Eventbrite admin.',
+    },
+    own_site: {
+      label: 'Your own website',
+      placeholder: 'https://yourdomain.com/book/…',
+      hint:
+        'Paste your checkout URL above. Use <strong>Enable your own website webhook</strong> below (or on Booking providers) ' +
+        'so each sale POSTs to us — no Zapier.',
+    },
+    ticket_tailor: {
+      label: 'Ticket Tailor',
+      placeholder: 'https://www.tickettailor.com/events/…',
+      hint:
+        'Paste your Ticket Tailor event URL. Enable <strong>Ticket Tailor</strong> on ' +
+        '<a href="/organiser/connected-booking#cb-providers-title">Booking providers</a> and link the box office event id.',
+    },
+    luma: {
+      label: 'Luma',
+      placeholder: 'https://lu.ma/…',
+      hint:
+        'Paste your Luma event link. Enable <strong>Luma</strong> on ' +
+        '<a href="/organiser/connected-booking#cb-providers-title">Booking providers</a> and link the Luma event id.',
+    },
+    trybooking: {
+      label: 'TryBooking',
+      placeholder: 'https://…',
+      hint:
+        'Paste your TryBooking event URL. Enable <strong>TryBooking</strong> on ' +
+        '<a href="/organiser/connected-booking#cb-providers-title">Booking providers</a> and link the TryBooking event id.',
+    },
+  };
+
+  var selectedPlatform = '';
+
+  function guessPlatformFromUrl(url) {
+    var u = String(url || '').toLowerCase();
+    if (!u) return '';
+    if (/eventbrite/.test(u)) return 'eventbrite';
+    if (/tickettailor|ticket-tailor/.test(u)) return 'ticket_tailor';
+    if (/lu\.ma|luma\.com/.test(u)) return 'luma';
+    if (/trybooking/.test(u)) return 'trybooking';
+    if (/^https?:\/\//.test(u)) return 'own_site';
+    return '';
+  }
+
+  function platformStorageKey() {
+    return eventId ? 'ecs_booking_platform:' + eventId : '';
+  }
+
+  function applyPlatform(platform, opts) {
+    var key = String(platform || '').trim();
+    if (!PLATFORM_UI[key]) return;
+    selectedPlatform = key;
+    try {
+      var sk = platformStorageKey();
+      if (sk) localStorage.setItem(sk, key);
+    } catch (e) {
+      /* ignore */
+    }
+    var picker = qs('ecs-platform-picker');
+    if (picker) {
+      picker.querySelectorAll('[data-ecs-platform]').forEach(function (btn) {
+        btn.classList.toggle('is-selected', btn.getAttribute('data-ecs-platform') === key);
+        btn.setAttribute('aria-pressed', btn.getAttribute('data-ecs-platform') === key ? 'true' : 'false');
+      });
+    }
+    var meta = PLATFORM_UI[key];
+    var urlInput = qs('ecs-booking-url');
+    if (urlInput && meta.placeholder && (!urlInput.value.trim() || (opts && opts.forcePlaceholder))) {
+      urlInput.placeholder = meta.placeholder;
+    } else if (urlInput && meta.placeholder) {
+      urlInput.placeholder = meta.placeholder;
+    }
+    var hintEl = qs('ecs-platform-hint');
+    if (hintEl) {
+      hintEl.hidden = false;
+      hintEl.innerHTML = meta.hint;
+    }
+  }
+
+  function initPlatformPicker() {
+    var picker = qs('ecs-platform-picker');
+    if (!picker || picker.dataset.bound) return;
+    picker.dataset.bound = '1';
+    picker.querySelectorAll('[data-ecs-platform]').forEach(function (btn) {
+      btn.setAttribute('type', 'button');
+      btn.setAttribute('aria-pressed', 'false');
+      btn.addEventListener('click', function () {
+        applyPlatform(btn.getAttribute('data-ecs-platform'));
+      });
+    });
+    var urlInput = qs('ecs-booking-url');
+    if (urlInput) {
+      urlInput.addEventListener('input', function () {
+        var guess = guessPlatformFromUrl(urlInput.value);
+        if (guess && guess !== selectedPlatform) applyPlatform(guess);
+      });
+    }
+  }
+
+  function restorePlatformSelection() {
+    var fromUrl = guessPlatformFromUrl(qs('ecs-booking-url') && qs('ecs-booking-url').value);
+    var stored = '';
+    try {
+      stored = platformStorageKey() ? localStorage.getItem(platformStorageKey()) || '' : '';
+    } catch (e) {
+      stored = '';
+    }
+    applyPlatform(fromUrl || stored || 'own_site');
+  }
+
   function qs(id) {
     return document.getElementById(id);
   }
