@@ -5,24 +5,8 @@
 const { json } = require('./_lib/auth');
 const { wrapHandler } = require('./_lib/sentry');
 const { getSupabaseAdmin, isSupabaseConfigured } = require('./_lib/supabase');
-const { publicPathForSlug, normalizeWebsite } = require('./_lib/custom-pitch-deck-generate');
-
-function hostFromWebsite(website) {
-  try {
-    const w = normalizeWebsite(website);
-    if (!w) return '';
-    return new URL(w).hostname.replace(/^www\./i, '');
-  } catch {
-    return '';
-  }
-}
-
-function prospectLogoFallback(website, existing) {
-  const cur = String(existing || '').trim();
-  if (cur) return cur;
-  const host = hostFromWebsite(website);
-  return host ? 'https://logo.clearbit.com/' + host : '';
-}
+const { publicPathForSlug } = require('./_lib/custom-pitch-deck-generate');
+const { resolveProspectLogoCandidates } = require('./_lib/prospect-logo-candidates');
 
 function normalizeSlug(raw) {
   let s = String(raw || '')
@@ -82,10 +66,10 @@ module.exports = wrapHandler(async function handler(req, res) {
   }
 
   const website = data.website || '';
-  const prospectLogoUrl = prospectLogoFallback(
-    website,
-    data.prospect_logo_url || (data.deck && data.deck.hero && data.deck.hero.prospectLogoUrl) || ''
-  );
+  const explicitLogo =
+    data.prospect_logo_url || (data.deck && data.deck.hero && data.deck.hero.prospectLogoUrl) || '';
+  const prospectLogoCandidates = await resolveProspectLogoCandidates(website, explicitLogo);
+  const prospectLogoUrl = prospectLogoCandidates[0] || '';
 
   return json(res, 200, {
     ok: true,
@@ -95,6 +79,7 @@ module.exports = wrapHandler(async function handler(req, res) {
     website: website,
     contactName: data.contact_name || '',
     prospectLogoUrl: prospectLogoUrl,
+    prospectLogoCandidates: prospectLogoCandidates,
     includeSections: data.include_sections || [],
     brief: data.brief || '',
     deck: data.deck || {},
