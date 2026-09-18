@@ -1,6 +1,6 @@
 /**
- * Connected booking — plan slots on Organiser pages + Connected booking settings.
- * Loads lazily (Organiser pages route or Connected settings page), not on My Events.
+ * Connected booking — plan slots on Organiser pages (workspace). Billing/webhook on Connected page.
+ * Loads lazily on the Organiser pages route, not on My Events.
  */
 (function () {
   var ORG_MOUNT = 'org-connected-billing-banner';
@@ -317,8 +317,8 @@
           '<a class="org-btn org-btn-outline org-btn-sm" href="/organiser/connected-booking">Connected plan &amp; billing</a>';
       } else {
         actions =
-          '<a class="org-btn org-btn-gold org-btn-sm" href="/organiser/connected-booking' +
-          (needsPick ? '#cb-slots-panel' : '') +
+          '<a class="org-btn org-btn-gold org-btn-sm" href="' +
+          (needsPick ? '/organiser/#groups' : '/organiser/connected-booking') +
           '">' +
           (needsPick ? 'Choose organiser pages' : 'Manage Connected plan') +
           '</a> ' +

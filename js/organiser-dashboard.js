@@ -19778,13 +19778,8 @@
         return;
       }
       if (e.data && e.data.type === 'hub-event-goto-connected-booking') {
-        const ids = Array.isArray(e.data.eventIds) ? e.data.eventIds.filter(Boolean) : [];
-        let url = '/organiser/connected-booking?embed=1';
-        if (ids.length) {
-          url += '&returnIds=' + encodeURIComponent(ids.join(','));
-        }
-        url += '#cb-slots-panel';
-        openEventDrawerFrame(url, 'Connected plan', null, { progressStep: 'tickets' });
+        closeEventEditorDrawer();
+        location.href = '/organiser/#groups';
         return;
       }
       if (e.data && e.data.type === 'hub-event-tickets-done') {

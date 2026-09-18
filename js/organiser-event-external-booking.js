@@ -141,10 +141,7 @@
         return;
       }
       if (typeof embed.buildEmbedHref === 'function') {
-        planLink.href = embed.buildEmbedHref('/organiser/connected-booking', {
-          eventIds: ids,
-          hash: '#cb-slots-panel',
-        });
+        planLink.href = '/organiser/#groups';
       }
     });
   }
