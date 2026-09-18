@@ -165,6 +165,16 @@
     }
   }
 
+  window.addEventListener('hub-organiser-connected-booking', function (e) {
+    var detail = e && e.detail;
+    if (!detail || !detail.ok) return;
+    state.connectedBooking = detail;
+    var groupsPage = document.getElementById('org-page-groups');
+    if (groupsPage && groupsPage.classList.contains('is-active') && typeof renderGroups === 'function') {
+      renderGroups();
+    }
+  });
+
   function loadConnectedBookingMeta(forceRefresh) {
     if (!forceRefresh && connectedBookingLoadPromise) {
       return connectedBookingLoadPromise;

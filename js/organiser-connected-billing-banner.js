@@ -67,6 +67,105 @@
     }
   }
 
+  function bindOrgInlineSlots(root, billing) {
+    if (!root || root.id !== ORG_MOUNT) return;
+    var list = root.querySelector('[data-org-slots-list]');
+    var saveBtn = root.querySelector('[data-org-slots-save]');
+    var statusEl = root.querySelector('[data-org-slots-status]');
+    if (!list || !saveBtn) return;
+
+    var slots = billing.slots || {};
+    var limit = billing.groupLimit;
+    var selection = (slots.assignedOrganiserIds || []).slice();
+
+    list.querySelectorAll('input[type=checkbox]').forEach(function (cb) {
+      cb.addEventListener('change', function () {
+        var id = cb.getAttribute('data-org-id');
+        if (cb.checked) {
+          if (selection.indexOf(id) < 0) selection.push(id);
+          if (limit != null && selection.length > limit) {
+            selection = selection.slice(-limit);
+            list.querySelectorAll('input[type=checkbox]').forEach(function (other) {
+              var oid = other.getAttribute('data-org-id');
+              other.checked = selection.indexOf(oid) >= 0;
+            });
+          }
+        } else {
+          selection = selection.filter(function (x) {
+            return x !== id;
+          });
+        }
+      });
+    });
+
+    saveBtn.addEventListener('click', function () {
+      if (!selection.length) {
+        if (statusEl) {
+          statusEl.hidden = false;
+          statusEl.className = 'ee-hint ee-alert-warn';
+          statusEl.textContent = 'Select at least one organiser page.';
+        }
+        return;
+      }
+      saveBtn.disabled = true;
+      if (statusEl) {
+        statusEl.hidden = false;
+        statusEl.className = 'ee-hint';
+        statusEl.textContent = 'Saving…';
+      }
+      fetch('/api/organiser/connected-booking', {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'assign_connected_slots',
+          organiserIds: selection,
+        }),
+      })
+        .then(function (r) {
+          return r.json().then(function (body) {
+            return { ok: r.ok, body: body };
+          });
+        })
+        .then(function (res) {
+          saveBtn.disabled = false;
+          if (!res.ok) {
+            if (statusEl) {
+              statusEl.className = 'ee-hint ee-alert-warn';
+              statusEl.textContent = res.body.message || res.body.error || 'Could not save.';
+            }
+            return;
+          }
+          return fetch('/api/organiser/connected-booking', { credentials: 'include', cache: 'no-store' })
+            .then(function (r) {
+              return r.json();
+            })
+            .then(function (fresh) {
+              if (statusEl) {
+                statusEl.className = 'ee-hint ee-alert-ok';
+                statusEl.textContent = 'Saved. Connected booking is assigned — check the Connected column below.';
+              }
+              try {
+                window.dispatchEvent(
+                  new CustomEvent('hub-organiser-connected-booking', {
+                    detail: Object.assign({ ok: true, active: true }, fresh || {}),
+                  })
+                );
+              } catch (e) {
+                /* ignore */
+              }
+            });
+        })
+        .catch(function () {
+          saveBtn.disabled = false;
+          if (statusEl) {
+            statusEl.className = 'ee-hint ee-alert-warn';
+            statusEl.textContent = 'Could not save. Try again.';
+          }
+        });
+    });
+  }
+
   function bindCollapse(root) {
     if (!root) return;
     var btn = root.querySelector('[data-connected-banner-toggle]');
@@ -176,35 +275,89 @@
       'Only need a booking link on one event? Use <strong>Link-out listing (£9.99 + VAT per event)</strong> — hub button to your site, no webhook, no attendee list or verified reviews on The Networker UK.';
 
     var warn = overPublished || overPages || needsPick;
-    var html =
-      '<div class="org-connected-billing-banner-inner">' +
-      '<div class="org-connected-billing-banner-head">' +
-      '<p id="org-connected-billing-banner-title" class="org-connected-billing-banner-title">' +
-      '<strong>' +
-      esc(assignedTitle) +
-      '</strong></p>' +
-      '<button type="button" class="org-connected-billing-banner-toggle" data-connected-banner-toggle aria-expanded="true">' +
-      '<span class="org-connected-billing-banner-toggle-label">Hide</span>' +
-      '</button></div>' +
-      '<div class="org-connected-billing-banner-panel" data-connected-banner-panel>' +
-      assignedBlock +
-      '<p class="org-connected-billing-banner-body">' +
-      body +
-      '</p>' +
-      '<p class="org-connected-billing-banner-actions">' +
-      '<a class="org-btn org-btn-gold org-btn-sm" href="/organiser/connected-booking">' +
-      (needsPick ? 'Choose organiser pages' : 'Manage Connected plan') +
-      '</a> ' +
-      '<a class="org-btn org-btn-outline org-btn-sm" href="/organiser/booking-options#link-out">Link-out £9.99 / event</a> ' +
-      '<a class="org-btn org-btn-outline org-btn-sm" href="/organiser/#groups">Organiser pages</a>' +
-      '</p></div></div>';
+
+    function inlineSlotsHtml(forOrgPage) {
+      if (!needsPick || !forOrgPage) return '';
+      var orgs = (billing.slots && billing.slots.accountOrganisers) || [];
+      if (!orgs.length) return '';
+      var ids = (billing.slots.assignedOrganiserIds || []).slice();
+      var items = orgs
+        .map(function (o) {
+          var checked = ids.indexOf(o.id) >= 0;
+          return (
+            '<li class="cb-slots-list-item"><label class="cb-slots-label">' +
+            '<input type="checkbox" data-org-id="' +
+            esc(o.id) +
+            '"' +
+            (checked ? ' checked' : '') +
+            ' /> <span>' +
+            esc(o.name || 'Organiser page') +
+            '</span></label></li>'
+          );
+        })
+        .join('');
+      return (
+        '<div class="org-connected-slots-inline">' +
+        '<ul class="cb-slots-list" data-org-slots-list>' +
+        items +
+        '</ul>' +
+        '<p class="ee-hint org-connected-slots-status" data-org-slots-status hidden role="status"></p>' +
+        '<p class="org-connected-billing-banner-actions org-connected-slots-actions">' +
+        '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-org-slots-save>Save assignment</button>' +
+        '</p></div>'
+      );
+    }
+
+    function buildHtml(forOrgPage) {
+      var inline = inlineSlotsHtml(forOrgPage);
+      var actions = '';
+      if (needsPick && forOrgPage && inline) {
+        actions =
+          '<a class="org-btn org-btn-outline org-btn-sm" href="/organiser/booking-options#link-out">Link-out £9.99 / event</a> ' +
+          '<a class="org-btn org-btn-outline org-btn-sm" href="/organiser/connected-booking">Connected plan &amp; billing</a>';
+      } else {
+        actions =
+          '<a class="org-btn org-btn-gold org-btn-sm" href="/organiser/connected-booking' +
+          (needsPick ? '#cb-slots-panel' : '') +
+          '">' +
+          (needsPick ? 'Choose organiser pages' : 'Manage Connected plan') +
+          '</a> ' +
+          '<a class="org-btn org-btn-outline org-btn-sm" href="/organiser/booking-options#link-out">Link-out £9.99 / event</a> ' +
+          (forOrgPage
+            ? ''
+            : '<a class="org-btn org-btn-outline org-btn-sm" href="/organiser/#groups">Organiser pages</a>');
+      }
+
+      return (
+        '<div class="org-connected-billing-banner-inner">' +
+        '<div class="org-connected-billing-banner-head">' +
+        '<p id="org-connected-billing-banner-title" class="org-connected-billing-banner-title">' +
+        '<strong>' +
+        esc(assignedTitle) +
+        '</strong></p>' +
+        '<button type="button" class="org-btn org-btn-outline org-btn-sm org-connected-billing-banner-toggle" data-connected-banner-toggle aria-expanded="true">' +
+        '<span class="org-connected-billing-banner-toggle-label">Hide</span>' +
+        '</button></div>' +
+        '<div class="org-connected-billing-banner-panel" data-connected-banner-panel>' +
+        assignedBlock +
+        inline +
+        '<p class="org-connected-billing-banner-body">' +
+        body +
+        '</p>' +
+        '<p class="org-connected-billing-banner-actions">' +
+        actions +
+        '</p></div></div>'
+      );
+    }
 
     targets.forEach(function (el) {
-      el.innerHTML = html;
+      var forOrgPage = el.id === ORG_MOUNT;
+      el.innerHTML = buildHtml(forOrgPage);
       el.hidden = false;
       el.className =
         'org-connected-billing-banner' + (warn ? ' org-connected-billing-banner--warn' : ' org-connected-billing-banner--info');
       bindCollapse(el);
+      if (forOrgPage && needsPick) bindOrgInlineSlots(el, billing);
     });
   }
 
