@@ -229,8 +229,46 @@
         String(draft.photoUrl || '').trim() ||
         draft.hadUploadedPhoto ||
         (Array.isArray(draft.dates) && draft.dates.length) ||
-        (draft.editId && (String(draft.startTime || '').trim() || String(draft.endTime || '').trim()))
+        (draft.editId && (String(draft.startTime || '').trim() || String(draft.endTime || '').trim())) ||
+        String(draft.venue || '').trim() ||
+        String(draft.address1 || '').trim() ||
+        String(draft.city || '').trim() ||
+        String(draft.postcode || '').trim() ||
+        String(draft.platform || '').trim() ||
+        String(draft.joinLink || '').trim() ||
+        normalizeEventFormat(draft.eventFormat) === 'online'
     );
+  }
+
+  function mirrorLocationAutodraftFromEditStep(draft) {
+    if (!editId || !draft) return;
+    const hasLoc =
+      String(draft.venue || '').trim() ||
+      String(draft.address1 || '').trim() ||
+      String(draft.city || '').trim() ||
+      String(draft.postcode || '').trim() ||
+      String(draft.platform || '').trim() ||
+      String(draft.joinLink || '').trim() ||
+      normalizeEventFormat(draft.eventFormat) === 'online';
+    if (!hasLoc) return;
+    try {
+      localStorage.setItem(
+        'hub_event_location_autodraft_v1:' + editId,
+        JSON.stringify({
+          version: 1,
+          savedAt: draft.savedAt || new Date().toISOString(),
+          eventFormat: draft.eventFormat,
+          venue: draft.venue,
+          address1: draft.address1,
+          city: draft.city,
+          postcode: draft.postcode,
+          platform: draft.platform,
+          joinLink: draft.joinLink,
+        })
+      );
+    } catch {
+      /* ignore */
+    }
   }
 
   function saveAutodraftNow() {
@@ -245,6 +283,7 @@
         return;
       }
       localStorage.setItem(key, JSON.stringify(draft));
+      mirrorLocationAutodraftFromEditStep(draft);
     } catch {
       setAutodraftStatus('Could not save a browser backup.', 'error');
     }

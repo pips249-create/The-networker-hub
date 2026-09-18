@@ -5,6 +5,7 @@
   const SERIES_STORAGE_KEY = 'hub_event_series';
   const FORMAT_STORAGE_KEY = 'hub_event_format';
   const LOCATION_AUTODRAFT_PREFIX = 'hub_event_location_autodraft_v1:';
+  const EDIT_AUTODRAFT_PREFIX = 'hub_event_edit_autodraft_v1:';
   const AUTODRAFT_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000;
   const ORG_BOOTSTRAP_CACHE_KEY = 'hub_org_bootstrap_cache';
   const ORG_BOOTSTRAP_CACHE_MS = 120000;
@@ -201,11 +202,16 @@
 
   function applyLocationDraft(draft) {
     restoringAutodraft = true;
-    eventFormat = normalizeEventFormat(draft.eventFormat) || eventFormat;
-    applyFormatUi(eventFormat);
+    if (draft.eventFormat) {
+      eventFormat = normalizeEventFormat(draft.eventFormat) || eventFormat;
+      applyFormatUi(eventFormat);
+    }
     const set = (id, val) => {
       const el = document.getElementById(id);
-      if (el && val != null) el.value = String(val);
+      if (!el || val == null) return;
+      const next = String(val);
+      if (!next.trim() && String(el.value || '').trim()) return;
+      el.value = next;
     };
     set('ee-venue', draft.venue);
     set('ee-address1', draft.address1);
@@ -214,6 +220,32 @@
     set('ee-platform', draft.platform);
     set('ee-join-link', draft.joinLink);
     restoringAutodraft = false;
+  }
+
+  function mergeEditStepAutodraft() {
+    const id = editId || eventIds[0] || '';
+    if (!id) return;
+    let draft;
+    try {
+      draft = JSON.parse(localStorage.getItem(EDIT_AUTODRAFT_PREFIX + id) || 'null');
+      const age = Date.now() - new Date(draft?.savedAt || 0).getTime();
+      if (!draft || !Number.isFinite(age) || age > AUTODRAFT_MAX_AGE_MS) return;
+    } catch {
+      return;
+    }
+    if (draft.eventFormat) {
+      eventFormat = normalizeEventFormat(draft.eventFormat) || eventFormat;
+      applyFormatUi(eventFormat);
+    }
+    applyLocationDraft({
+      eventFormat: draft.eventFormat,
+      venue: draft.venue,
+      address1: draft.address1,
+      city: draft.city,
+      postcode: draft.postcode,
+      platform: draft.platform,
+      joinLink: draft.joinLink,
+    });
   }
 
   function saveAutodraftNow() {
@@ -813,6 +845,7 @@
       applySeriesDateOnlyUi(true);
     }
     prefillLocationFromEvent(ev);
+    mergeEditStepAutodraft();
     applyLockUi(ev.locked || eventTicketsSoldCount(ev) > 0);
     restoreLocationAutodraft();
     bindBackLinks();

@@ -156,7 +156,7 @@
     const hub = window.HubConnectedPlatform;
     const eid = resolveEventId();
     if (!root || !hub || !eid) return;
-    platformPicker = hub.bindPicker(root, eid);
+    platformPicker = hub.bindPicker(root, eid, null, { hintContext: 'pick' });
   }
 
   function bindSetupLink() {
