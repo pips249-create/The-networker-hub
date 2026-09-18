@@ -61,10 +61,14 @@
     placeholder.value = '';
     placeholder.textContent = 'Select an organiser page…';
     groupSelect.appendChild(placeholder);
+    var pageLabel =
+      window.HubOrganiserActions && window.HubOrganiserActions.organiserPageSelectLabel
+        ? window.HubOrganiserActions.organiserPageSelectLabel
+        : null;
     list.forEach(function (g) {
       var opt = document.createElement('option');
       opt.value = g.id;
-      opt.textContent = g.name || 'Group';
+      opt.textContent = pageLabel ? pageLabel(g, 'Group') : g.name || 'Group';
       groupSelect.appendChild(opt);
     });
     var addNew = document.createElement('option');
