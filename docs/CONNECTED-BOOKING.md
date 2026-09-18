@@ -8,14 +8,14 @@ Organisers on a **Connected** monthly subscription list events on The Networker 
 
 ### If Sentry shows `connected_booking_stripe_customer_id does not exist`
 
-Production Supabase is missing migration **293**. In the Supabase SQL editor (production project), run:
+Production Supabase is missing migration **298**. In the Supabase SQL editor (production project), run:
 
 ```sql
 alter table public.organiser_accounts
   add column if not exists connected_booking_stripe_customer_id text;
 ```
 
-Also run **`292_external_connected_booking.sql`** if Connected booking columns/tables were never applied. Until 293 is applied, **Manage billing** may not work after subscribe; the page and checkout should still load once app deploys **#66+**.
+Also run **`292_external_connected_booking.sql`** if Connected booking columns/tables were never applied. Until 298 is applied, **Manage billing** may not work after subscribe; the page and checkout should still load once app deploys **#66+**.
 
 ### Private preview (only you)
 
@@ -29,7 +29,7 @@ While this is set, **only that signed-in email** sees `/organiser/connected-book
 
 When ready to launch for all organisers: **remove** `CONNECTED_BOOKING_PREVIEW_EMAILS` and set `CONNECTED_BOOKING_ENABLED=true`.
 
-1. Run migrations `292_external_connected_booking.sql`, `293_connected_booking_stripe_customer.sql`, and `297_connected_booking_organiser_slots.sql`.
+1. Run migrations `292_external_connected_booking.sql`, `298_connected_booking_stripe_customer.sql`, and `297_connected_booking_organiser_slots.sql`.
 2. Set `CONNECTED_BOOKING_ENABLED=true` on Vercel (or use preview emails above until launch).
 3. Ensure `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` are set (same webhook endpoint as Hub checkout).
 4. After changing intro prices in `api/_lib/connected-booking-pricing.js`, run `npm run sync-stripe` and update Vercel **`STRIPE_CONNECTED_BOOKING_*_PRICE_ID`** env vars (checkout also works with dynamic line items if price IDs are missing).

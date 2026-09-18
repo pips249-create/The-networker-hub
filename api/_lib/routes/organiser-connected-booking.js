@@ -75,7 +75,7 @@ async function loadOrganiserAccountRow(sb, accountId) {
   }
   if (accErr) {
     const e = new Error(
-      'Connected booking database columns are missing. Run Supabase migration 292_external_connected_booking.sql (and 293_connected_booking_stripe_customer.sql for billing).'
+      'Connected booking database columns are missing. Run Supabase migration 292_external_connected_booking.sql (and 298_connected_booking_stripe_customer.sql for billing).'
     );
     e.code = 'connected_booking_schema_missing';
     e.status = 503;
@@ -109,7 +109,7 @@ function connectedBookingErrorFallback(err) {
   if (err && err.code === 'connected_booking_schema_missing' && err.message) {
     return String(err.message).trim();
   }
-  return 'Connected booking could not load. Run Supabase migrations 292 and 293 on production, then refresh.';
+  return 'Connected booking could not load. Run Supabase migrations 292 and 298 on production, then refresh.';
 }
 
 async function ensurePilotGrantIfEligible(sb, account, sessionEmail) {
