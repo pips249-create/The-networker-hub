@@ -993,7 +993,6 @@
         : '<p class="ee-hint">Link this event in the <strong>Link registrations</strong> section above (we can fill the id from your booking URL).</p>') +
       '<p class="ee-hint">Account setup: <a href="/organiser/connected-booking#cb-providers-title">Connected booking → Booking providers</a>.</p>';
     bindProviderEnableButtons(mount);
-    renderRegistrationSyncSteps(key);
   }
 
   function bindProviderEnableButtons(root) {
