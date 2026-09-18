@@ -56,6 +56,23 @@
       <p class="ee-hint" id="ecs-slot-status" hidden role="status"></p>
       <p class="ee-alert ee-alert-warn" id="ecs-blocked" hidden role="alert"></p>
 
+      <div class="ee-card" id="ecs-slots-card" hidden>
+        <h2>Assign this event’s organiser page</h2>
+        <p class="ee-hint" id="ecs-slots-lede">
+          Your Connected plan is active. Choose which organiser page(s) use Connected — this event can only be set up
+          when its page is selected.
+        </p>
+        <p class="ee-hint" id="ecs-slots-hint"></p>
+        <ul class="cb-slots-list" id="ecs-slots-list"></ul>
+        <p class="ee-hint" id="ecs-slots-status" hidden role="status"></p>
+        <div class="ee-attendance-next">
+          <button type="button" class="ee-btn ee-btn-gold" id="ecs-slots-save">Save assignment</button>
+          <button type="button" class="ee-btn ee-btn-outline" id="ecs-slots-back-tickets" hidden>
+            ← Back to Connected tickets
+          </button>
+        </div>
+      </div>
+
       <div class="ee-card" id="ecs-form-card" hidden>
         <h2>Listing on The Networker UK</h2>
         <p class="ee-hint">
@@ -125,6 +142,6 @@
     </div>
 
     <script src="../js/organiser-embed-bootstrap.js?v=20260918embed1" defer></script>
-    <script src="../js/organiser-event-connected-setup.js?v=20260918connsetup1" defer></script>
+    <script src="../js/organiser-event-connected-setup.js?v=20260918connsetup2" defer></script>
   </body>
 </html>
