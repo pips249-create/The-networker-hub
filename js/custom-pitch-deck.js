@@ -166,23 +166,22 @@
 
   function bulletToStat(text) {
     var b = String(text || '').trim();
+    if (!b) return { strong: '', span: '' };
     var dash = b.indexOf('—');
     if (dash === -1) dash = b.indexOf(' – ');
     if (dash === -1) dash = b.indexOf(' - ');
-    if (dash > 0 && dash < 90) {
+    if (dash > 8 && dash < 56) {
       return {
         strong: b.slice(0, dash).trim(),
         span: b.slice(dash + 1).replace(/^[-–—]\s*/, '').trim(),
       };
     }
     var colon = b.indexOf(':');
-    if (colon > 0 && colon < 70) {
+    if (colon > 8 && colon < 48) {
       return { strong: b.slice(0, colon).trim(), span: b.slice(colon + 1).trim() };
     }
-    if (b.length > 72) {
-      return { strong: b.slice(0, 68) + '…', span: b };
-    }
-    return { strong: b, span: '' };
+    // Long bullets: full text in the body — never truncate with ellipsis.
+    return { strong: '', span: b };
   }
 
   function liveLinkForSection(section) {
@@ -237,46 +236,40 @@
     var bullets = section.bullets || [];
     var statGrid = '';
     if (!tiles.length && bullets.length) {
-      statGrid =
-        '<div class="pitch-stat-grid">' +
-        bullets
-          .slice(0, 4)
-          .map(function (b) {
-            var stat = bulletToStat(b);
-            return (
-              '<article class="pitch-stat"><strong>' +
-              escHtml(stat.strong) +
-              '</strong>' +
-              (stat.span ? '<span>' + escHtml(stat.span) + '</span>' : '') +
-              '</article>'
-            );
-          })
-          .join('') +
-        '</div>';
+      // Prefer readable checklist for long sponsorship copy; cards only when titles are short.
+      var cardable = bullets.every(function (b) {
+        var s = bulletToStat(b);
+        return s.strong && s.strong.length <= 56 && s.span;
+      });
+      if (cardable) {
+        statGrid =
+          '<div class="pitch-stat-grid">' +
+          bullets
+            .map(function (b) {
+              var stat = bulletToStat(b);
+              return (
+                '<article class="pitch-stat"><strong>' +
+                escHtml(stat.strong) +
+                '</strong><span>' +
+                escHtml(stat.span) +
+                '</span></article>'
+              );
+            })
+            .join('') +
+          '</div>';
+      } else {
+        statGrid =
+          '<ul class="sponsor-pitch-checklist custom-pitch-point-list">' +
+          bullets
+            .map(function (b) {
+              return '<li>' + escHtml(b) + '</li>';
+            })
+            .join('') +
+          '</ul>';
+      }
     }
 
     var extraList = '';
-    if (bullets.length > 4) {
-      extraList =
-        '<ul class="sponsor-pitch-checklist">' +
-        bullets
-          .slice(4)
-          .map(function (b) {
-            return '<li>' + escHtml(b) + '</li>';
-          })
-          .join('') +
-        '</ul>';
-    } else if (!statGrid && bullets.length) {
-      extraList =
-        '<ul class="sponsor-pitch-checklist">' +
-        bullets
-          .map(function (b) {
-            return '<li>' + escHtml(b) + '</li>';
-          })
-          .join('') +
-        '</ul>';
-    }
-
     if (tiles) {
       statGrid = '<div class="pitch-stat-grid">' + tiles + '</div>';
     }

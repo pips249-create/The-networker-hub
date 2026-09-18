@@ -31111,9 +31111,9 @@
                 (d.website ? ' · ' + esc(d.website) : '') +
                 '</p></div>' +
                 '<div class="flex flex-wrap gap-2 shrink-0">' +
-                '<button type="button" class="sales-kit-edit-pitch-deck rounded-lg border border-slate-300 bg-white text-xs font-semibold px-2.5 py-1.5 text-slate-700 hover:bg-slate-50" data-id="' +
+                '<button type="button" class="sales-kit-edit-pitch-deck rounded-lg border border-brand-300 bg-brand-50 text-xs font-semibold px-2.5 py-1.5 text-brand-900 hover:bg-brand-100" data-id="' +
                 attrEsc(d.id) +
-                '">Edit</button>' +
+                '">Edit wording</button>' +
                 '<button type="button" class="sales-kit-copy-pitch-followup rounded-lg border border-slate-300 bg-white text-xs font-semibold px-2.5 py-1.5 text-slate-700 hover:bg-slate-50" data-url="' +
                 attrEsc(deckUrl) +
                 '" data-contact="' +
@@ -31241,9 +31241,9 @@
                     })
                     .join('');
                   return (
-                    '<div class="md:col-span-2 lg:col-span-3 rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-3" id="sales-kit-pitch-copy-editor">' +
-                    '<p class="text-xs font-semibold text-slate-600 uppercase">Edit wording by section</p>' +
-                    '<p class="text-xs text-slate-500">Tweak the hero and each little section without regenerating. Tick regenerate below only if you want a fresh template.</p>' +
+                    '<div class="md:col-span-2 lg:col-span-3 rounded-xl border border-brand-200 bg-brand-50/50 p-3 space-y-3" id="sales-kit-pitch-copy-editor">' +
+                    '<p class="text-xs font-semibold text-brand-900 uppercase">Edit wording by section</p>' +
+                    '<p class="text-sm text-slate-700">Change hero copy and each section below (titles, offer line, intro, bullets). <strong>Save changes</strong> updates the live deck link without regenerating. Only tick regenerate if you want a fresh template.</p>' +
                     '<div class="grid gap-2">' +
                     '<label class="block text-xs font-semibold text-slate-500">Hero headline' +
                     '<input id="sales-kit-pitch-copy-headline" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white" value="' +
