@@ -109,7 +109,11 @@ function connectedBookingErrorFallback(err) {
   if (err && err.code === 'connected_booking_schema_missing' && err.message) {
     return String(err.message).trim();
   }
-  return 'Connected booking could not load. Run Supabase migrations 292 and 298 on production, then refresh.';
+  const text = String(err?.message || '');
+  if (/connected_booking_slot_assigned_at|297_connected_booking/i.test(text)) {
+    return 'Organiser-page assignment needs Supabase migration 297_connected_booking_organiser_slots.sql (not 292/298). Apply 297, reload the schema cache, then try Save assignment again.';
+  }
+  return 'Connected booking could not load. If subscribe/billing works, run migration 297 for organiser-page slots; otherwise run 292 and 298, then refresh.';
 }
 
 async function ensurePilotGrantIfEligible(sb, account, sessionEmail) {

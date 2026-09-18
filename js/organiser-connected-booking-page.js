@@ -84,8 +84,14 @@
   function friendlyApiError(data) {
     if (!data) return 'Something went wrong. Try again or email hi@thenetworkeruk.com.';
     if (data.message) return data.message;
+    if (data.error === 'connected_booking_schema_missing') {
+      return (
+        data.message ||
+        'Database setup incomplete for Connected booking. See hi@thenetworkeruk.com if this persists after running migrations.'
+      );
+    }
     if (data.error === 'connected_booking_failed') {
-      return 'Connected could not load (server error). Check Supabase migrations 292 and 298, then redeploy.';
+      return 'Connected booking request failed. If your plan is already active, run migration 297 for organiser-page slots; otherwise check migrations 292 and 298.';
     }
     if (data.error === 'stripe_checkout_failed' || data.error === 'stripe_not_configured') {
       return data.message || 'Checkout is temporarily unavailable. Email hi@thenetworkeruk.com.';
@@ -216,8 +222,12 @@
 
     applyPricingLabels(data.pricing);
 
+    var planRank = { starter: 1, growth: 2, scale: 3 };
+    var currentRank = planRank[String(data.plan || '').toLowerCase()] || 0;
+
     document.querySelectorAll('.cb-subscribe-btn').forEach(function (btn) {
       var plan = btn.getAttribute('data-cb-plan');
+      var targetRank = planRank[plan] || 0;
       if (!signedIn) {
         btn.disabled = false;
         btn.textContent = 'Subscribe';
@@ -231,7 +241,14 @@
       if (data.active && data.plan === plan) {
         btn.disabled = true;
         btn.textContent = 'Current plan';
-      } else if (data.active && !canSubscribe) {
+      } else if (data.active && targetRank > currentRank) {
+        btn.disabled = false;
+        btn.textContent = 'Upgrade';
+      } else if (data.active && targetRank > 0 && targetRank < currentRank) {
+        btn.disabled = true;
+        btn.textContent = 'Use Manage billing';
+        btn.title = 'Change or downgrade your plan in Stripe billing portal.';
+      } else if (data.active) {
         btn.disabled = true;
         btn.textContent = 'Subscribed';
       } else {

@@ -148,9 +148,14 @@
             if (statusEl) {
               statusEl.className = 'ee-hint ee-alert-warn';
               var errMsg = res.body.message || res.body.error || 'Could not save.';
-              if (res.body.error === 'connected_booking_schema_missing') {
+              if (
+                res.body.error === 'connected_booking_schema_missing' ||
+                /297_connected_booking|connected_booking_slot_assigned_at/i.test(errMsg)
+              ) {
                 errMsg =
-                  'Connected page assignment is not available until database migration 297 is applied on production. Email hi@thenetworkeruk.com if this persists.';
+                  'Run Supabase migration 297_connected_booking_organiser_slots.sql (organiser-page slots). Migrations 292/298 alone are not enough for Save assignment.';
+              } else if (res.body.error === 'connected_booking_failed' && res.body.message) {
+                errMsg = res.body.message;
               }
               statusEl.textContent = errMsg;
             }
@@ -334,6 +339,9 @@
       var actions = '';
       if (needsPick && forOrgPage && inline) {
         actions =
+          (overPages
+            ? '<a class="org-btn org-btn-gold org-btn-sm" href="/organiser/connected-booking#cb-pricing">Upgrade plan</a> '
+            : '') +
           '<a class="org-btn org-btn-outline org-btn-sm" href="/organiser/booking-options#link-out">Link-out £9.99 / event</a> ' +
           '<a class="org-btn org-btn-outline org-btn-sm" href="/organiser/connected-booking">Connected plan &amp; billing</a>';
       } else {

@@ -116,7 +116,15 @@ async function assignConnectedBookingSlots(sb, account, organiserIds) {
       .update({ connected_booking_slot_assigned_at: now })
       .eq('organiser_account_id', accountId)
       .in('id', ids);
-    if (setErr) throw new Error(setErr.message);
+    if (setErr) {
+      if (isMissingSlotColumnError(setErr)) {
+        const e = new Error('Run Supabase migration 297_connected_booking_organiser_slots.sql.');
+        e.status = 503;
+        e.code = 'connected_booking_schema_missing';
+        throw e;
+      }
+      throw new Error(setErr.message);
+    }
   }
 
   return { assignedOrganiserIds: ids, assignedAt: now };
