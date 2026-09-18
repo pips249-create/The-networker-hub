@@ -581,6 +581,12 @@
         'so we create the registration (attendee list, round-ups, verified reviews). No Zapier required.'
       );
     }
+    if (key === 'custom') {
+      return (
+        'Use <strong>Zapier</strong>, <strong>Make</strong>, or your developer to send each booking to The Networker UK. ' +
+        'Include your TNH event id in the payload. Signed HMAC is in <strong>Advanced</strong> below — or use your own-site token webhook from Booking providers.'
+      );
+    }
     if (key === 'eventbrite') {
       return (
         'Enable <strong>Eventbrite</strong> below, paste the webhook URL into Eventbrite admin, then link this TNH event to your ' +
@@ -698,7 +704,7 @@
     var panel = qs('ecs-event-link-panel');
     var key = String(platform || selectedIntegrationPlatform() || 'own_site').trim();
     if (!panel) return;
-    if (key === 'own_site') {
+    if (key === 'own_site' || key === 'custom') {
       panel.hidden = true;
       return;
     }
@@ -759,7 +765,7 @@
   function saveEventLink(opts) {
     var options = opts || {};
     var platform = selectedIntegrationPlatform();
-    if (platform === 'own_site') return Promise.resolve({ ok: true, skipped: true });
+    if (platform === 'own_site' || platform === 'custom') return Promise.resolve({ ok: true, skipped: true });
     var externalId = resolveExternalEventIdForLink(platform);
     if (!externalId) {
       if (options.required) {
@@ -854,11 +860,16 @@
     if (lead) lead.innerHTML = providerWebhookLead(key);
     if (heading) {
       var providerLabel = providersById[key] && providersById[key].label;
-      heading.textContent = key === 'own_site' ? 'Your website webhook' : 'Webhook for ' + (providerLabel || key);
+      heading.textContent =
+        key === 'own_site'
+          ? 'Your website webhook'
+          : key === 'custom'
+            ? 'Zapier, Make, or custom webhook'
+            : 'Webhook for ' + (providerLabel || key);
     }
 
     var p = providersById[key];
-    if (!p && key !== 'own_site') {
+    if (!p && key !== 'own_site' && key !== 'custom') {
       mount.innerHTML =
         '<p class="ee-hint">Loading provider details… Open <a href="/organiser/connected-booking#cb-providers-title">Booking providers</a> if this does not update.</p>';
       return;
@@ -889,6 +900,23 @@
       var sampleEl = qs('ecs-own-site-sample');
       if (sampleEl) sampleEl.textContent = ownSiteSampleJson();
       bindProviderEnableButtons(mount);
+      return;
+    }
+
+    if (key === 'custom') {
+      var custom = providersById.custom || p;
+      var hmacUrl = custom && custom.webhookUrl ? custom.webhookUrl : location.origin.replace(/\/$/, '') + '/api/integrations/booking';
+      mount.innerHTML =
+        '<p class="ee-hint"><strong>Other platforms</strong> — connect via automation or code. Each booking should include TNH event id <code>' +
+        escHtml(eventId) +
+        '</code>.</p>' +
+        '<p class="ee-hint"><strong>Option A — Zapier / Make</strong><br />Trigger on a new sale in your tool → POST JSON to your ' +
+        '<a href="/organiser/connected-booking#cb-providers-title">own-site webhook URL</a> (enable <strong>Your own website</strong> on Booking providers).</p>' +
+        '<p class="ee-hint"><strong>Option B — Signed API</strong><br />Developers POST to:</p>' +
+        '<p class="cb-webhook-url">' +
+        escHtml(hmacUrl) +
+        '</p>' +
+        '<p class="ee-hint"><a href="/organiser/connected-booking#cb-webhook-title">HMAC webhook docs</a> (account id + secret).</p>';
       return;
     }
 

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 28" role="img" aria-label="Your website">
+  <circle cx="14" cy="14" r="10" fill="none" stroke="#0d6e7a" stroke-width="2"/>
+  <path d="M4 14h20M14 4a18 18 0 0 1 0 20M14 4a18 18 0 0 0 0 20" fill="none" stroke="#0d6e7a" stroke-width="1.5"/>
+  <text x="32" y="18" font-family="DM Sans, system-ui, sans-serif" font-size="11" font-weight="600" fill="#084a52">Your site</text>
+</svg>

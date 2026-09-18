@@ -1,8 +1,11 @@
-/** Shared Connected booking platform labels, hints, and per-event storage. */
+/** Shared Connected booking platform labels, hints, logos, and per-event storage. */
 (function (global) {
+  var LOGO_BASE = '/assets/connected-providers/';
+
   var PLATFORMS = {
     eventbrite: {
       label: 'Eventbrite',
+      logo: LOGO_BASE + 'eventbrite.svg',
       placeholder: 'https://www.eventbrite.co.uk/e/your-event-… or checkout link',
       hint:
         'Use a link that opens <strong>ticket checkout</strong>, not just your Eventbrite listing. Paste your public ' +
@@ -12,35 +15,52 @@
         '<a href="/organiser/connected-booking#cb-providers-title">Connected booking → Booking providers</a>, ' +
         'link this TNH event to your Eventbrite event id below (we fill it from your URL when we can), and add our webhook URL in Eventbrite admin once.',
     },
-    own_site: {
-      label: 'Your own website',
-      placeholder: 'https://yourdomain.com/book/…',
-      hint:
-        'Paste your checkout URL in setup. Enable <strong>Your own website</strong> webhook on Booking providers ' +
-        'so each sale POSTs to us — no Zapier.',
-    },
     ticket_tailor: {
       label: 'Ticket Tailor',
+      logo: LOGO_BASE + 'ticket-tailor.svg',
       placeholder: 'https://www.tickettailor.com/events/…',
       hint:
         'Paste your Ticket Tailor event URL in setup. Enable <strong>Ticket Tailor</strong> on ' +
-        '<a href="/organiser/connected-booking#cb-providers-title">Booking providers</a> and link the box office event id.',
+        '<a href="/organiser/connected-booking#cb-providers-title">Connected booking → Booking providers</a> and link the box office event id.',
     },
     luma: {
       label: 'Luma',
+      logo: LOGO_BASE + 'luma.svg',
       placeholder: 'https://lu.ma/…',
       hint:
         'Paste your Luma event link in setup. Enable <strong>Luma</strong> on ' +
-        '<a href="/organiser/connected-booking#cb-providers-title">Booking providers</a> and link the Luma event id.',
+        '<a href="/organiser/connected-booking#cb-providers-title">Connected booking → Booking providers</a> and link the Luma event id.',
     },
     trybooking: {
       label: 'TryBooking',
+      logo: LOGO_BASE + 'trybooking.svg',
       placeholder: 'https://…',
       hint:
         'Paste your TryBooking event URL in setup. Enable <strong>TryBooking</strong> on ' +
-        '<a href="/organiser/connected-booking#cb-providers-title">Booking providers</a> and link the TryBooking event id.',
+        '<a href="/organiser/connected-booking#cb-providers-title">Connected booking → Booking providers</a> and link the TryBooking event id.',
+    },
+    own_site: {
+      label: 'Your own website',
+      logo: LOGO_BASE + 'own-site.svg',
+      placeholder: 'https://yourdomain.com/book/…',
+      hint:
+        'Paste your checkout URL in setup. Enable <strong>Your own website</strong> webhook on Booking providers ' +
+        'so each sale POSTs to us — no Zapier required.',
+    },
+    custom: {
+      label: 'Other / Zapier',
+      logo: LOGO_BASE + 'other-zapier.svg',
+      placeholder: 'https://your-checkout-or-event-page…',
+      hint:
+        'Use <strong>any</strong> checkout (Humanitix, Meetup, your CRM, etc.). Connect with ' +
+        '<strong>Zapier</strong>, <strong>Make</strong>, or a small script — send each booking to our webhook with your TNH event id. ' +
+        'Developers can use the signed <strong>HMAC</strong> API on Connected setup → Advanced. ' +
+        '<a href="/organiser/connected-booking#cb-webhook-title">Webhook docs</a>.',
     },
   };
+
+  /** Default card order on tickets + setup */
+  var PLATFORM_ORDER = ['eventbrite', 'ticket_tailor', 'luma', 'trybooking', 'own_site', 'custom'];
 
   function storageKey(eventId) {
     var id = String(eventId || '').trim();
@@ -80,8 +100,66 @@
     return '';
   }
 
+  function escAttr(s) {
+    return String(s || '')
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;');
+  }
+
+  function fillPlatformGrid(container) {
+    if (!container || container.dataset.platformGridFilled) return;
+    container.dataset.platformGridFilled = '1';
+    container.classList.add('ecs-platform-grid');
+    container.setAttribute('role', 'radiogroup');
+    if (!container.getAttribute('aria-label')) {
+      container.setAttribute('aria-label', 'Connected booking integration');
+    }
+    var parts = [];
+    PLATFORM_ORDER.forEach(function (id) {
+      var p = PLATFORMS[id];
+      if (!p) return;
+      parts.push(
+        '<button type="button" class="ecs-platform-card" data-connected-platform="' +
+          escAttr(id) +
+          '" aria-pressed="false">' +
+          '<span class="ecs-platform-card-logo">' +
+          '<img src="' +
+          escAttr(p.logo) +
+          '" alt="" width="120" height="32" decoding="async" />' +
+          '</span>' +
+          '<span class="ecs-platform-card-label">' +
+          escAttr(p.label) +
+          '</span>' +
+          '</button>'
+      );
+    });
+    container.innerHTML = parts.join('');
+  }
+
   function bindPicker(root, eventId, onChange) {
-    if (!root || root.dataset.platformBound) return null;
+    if (!root) return null;
+    var grid = root.querySelector('[data-connected-platform-grid]') || root.querySelector('.ecs-platform-grid');
+    if (grid && !grid.dataset.platformGridFilled) {
+      fillPlatformGrid(grid);
+    }
+    if (root.dataset.platformBound) {
+      return {
+        getSelected: function () {
+          return getStored(eventId) || 'own_site';
+        },
+        apply: function (platform) {
+          var key = String(platform || '').trim();
+          if (!PLATFORMS[key]) return;
+          setStored(eventId, key);
+          root.querySelectorAll('[data-connected-platform]').forEach(function (btn) {
+            var on = btn.getAttribute('data-connected-platform') === key;
+            btn.classList.toggle('is-selected', on);
+            btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+          });
+        },
+      };
+    }
     root.dataset.platformBound = '1';
     var hintEl = root.querySelector('[data-connected-platform-hint]');
     var selected = getStored(eventId) || 'own_site';
@@ -115,10 +193,12 @@
 
   global.HubConnectedPlatform = {
     PLATFORMS: PLATFORMS,
+    PLATFORM_ORDER: PLATFORM_ORDER,
     storageKey: storageKey,
     getStored: getStored,
     setStored: setStored,
     guessFromUrl: guessFromUrl,
+    fillPlatformGrid: fillPlatformGrid,
     bindPicker: bindPicker,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

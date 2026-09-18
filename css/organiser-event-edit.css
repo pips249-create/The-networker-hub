@@ -5667,6 +5667,74 @@ body.ee-embed-drawer.organiser-connected-setup-page .ee-back-secondary {
   gap: 8px;
 }
 
+.ecs-platform-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  width: 100%;
+}
+
+@media (min-width: 520px) {
+  .ecs-platform-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.ecs-platform-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 8px;
+  min-height: 88px;
+  padding: 12px 10px 10px;
+  border: 2px solid rgba(26, 46, 59, 0.14);
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+
+.ecs-platform-card:hover {
+  border-color: rgba(13, 110, 122, 0.45);
+}
+
+.ecs-platform-card.is-selected {
+  border-color: rgba(13, 110, 122, 0.75);
+  background: rgba(13, 110, 122, 0.06);
+  box-shadow: inset 0 0 0 1px rgba(13, 110, 122, 0.2);
+}
+
+.ecs-platform-card-logo {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 32px;
+  width: 100%;
+}
+
+.ecs-platform-card-logo img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  max-height: 32px;
+  object-fit: contain;
+  object-position: left center;
+}
+
+.ecs-platform-card-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ee-text-mid, #4a6272);
+  line-height: 1.25;
+}
+
+.ecs-platform-card.is-selected .ecs-platform-card-label {
+  color: var(--ee-purple-dark, #084a52);
+}
+
 .ecs-platform-btn {
   border: 1px solid rgba(26, 46, 59, 0.2);
   border-radius: 999px;
