@@ -3,9 +3,12 @@
   var PLATFORMS = {
     eventbrite: {
       label: 'Eventbrite',
-      placeholder: 'https://www.eventbrite.co.uk/e/your-event-…',
+      placeholder: 'https://www.eventbrite.co.uk/e/your-event-… or checkout link',
       hint:
-        'Paste your <strong>Eventbrite event URL</strong> in setup. Enable <strong>Eventbrite</strong> on ' +
+        'Use a link that opens <strong>ticket checkout</strong>, not just your Eventbrite listing. Paste your public ' +
+        '<strong>/e/…</strong> URL and we send buyers straight to checkout, or paste ' +
+        '<strong>Marketing → Embedded checkout</strong> preview / ' +
+        '<code>…/checkout-external?eid=</code> from your event dashboard. Enable <strong>Eventbrite</strong> on ' +
         '<a href="/organiser/connected-booking#cb-providers-title">Connected booking → Booking providers</a>, ' +
         'link this TNH event to your Eventbrite event id, and add our webhook URL in Eventbrite admin.',
     },

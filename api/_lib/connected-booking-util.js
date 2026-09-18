@@ -89,6 +89,39 @@ function normalizeExternalPriceLabel(raw) {
   return text;
 }
 
+/** Numeric Eventbrite event id from public /e/… or checkout-external?eid= URLs. */
+function parseEventbriteEventIdFromUrl(raw) {
+  const url = String(raw || '').trim();
+  if (!url || !/eventbrite/i.test(url)) return '';
+  let parsed;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return '';
+  }
+  const eidParam = String(parsed.searchParams.get('eid') || '').trim();
+  if (/^\d+$/.test(eidParam)) return eidParam;
+  const pathId = parsed.pathname.match(/-(\d{8,})(?:\/|$)/);
+  if (pathId) return pathId[1];
+  return '';
+}
+
+/** Send attendees to ticket checkout, not the Eventbrite marketing listing. */
+function preferEventbriteCheckoutUrl(raw) {
+  const url = String(raw || '').trim();
+  if (!url || !/eventbrite/i.test(url)) return url;
+  if (/checkout-external|orderstart/i.test(url)) return url;
+  const eid = parseEventbriteEventIdFromUrl(url);
+  if (!eid) return url;
+  try {
+    const parsed = new URL(url);
+    const host = /\.co\.uk/i.test(parsed.hostname) ? 'www.eventbrite.co.uk' : 'www.eventbrite.com';
+    return `https://${host}/checkout-external?eid=${eid}`;
+  } catch {
+    return url;
+  }
+}
+
 function normalizeExternalBookingUrl(raw) {
   const url = String(raw || '').trim();
   if (!url) return '';
@@ -99,7 +132,8 @@ function normalizeExternalBookingUrl(raw) {
     return '';
   }
   if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return '';
-  return parsed.toString();
+  const normalized = parsed.toString();
+  return preferEventbriteCheckoutUrl(normalized);
 }
 
 function parseExternalPriceLabelToDisplay(label) {
@@ -172,6 +206,8 @@ module.exports = {
   isExternalConnectedEvent,
   normalizeExternalPriceLabel,
   normalizeExternalBookingUrl,
+  parseEventbriteEventIdFromUrl,
+  preferEventbriteCheckoutUrl,
   parseExternalPriceLabelToDisplay,
   newWebhookSecret,
   signWebhookPayload,

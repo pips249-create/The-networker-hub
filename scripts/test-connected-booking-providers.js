@@ -6,6 +6,11 @@ const { normalizeLumaWebhook } = require('../api/_lib/connected-booking-provider
 const { normalizeTryBookingWebhook } = require('../api/_lib/connected-booking-providers/adapters/trybooking');
 const { normalizeOwnSiteWebhook } = require('../api/_lib/connected-booking-providers/adapters/own-site');
 const { isConnectedBookingProviderId, CONNECTED_BOOKING_PROVIDERS } = require('../api/_lib/connected-booking-providers');
+const {
+  normalizeExternalBookingUrl,
+  preferEventbriteCheckoutUrl,
+  parseEventbriteEventIdFromUrl,
+} = require('../api/_lib/connected-booking-util');
 
 assert.strictEqual(isConnectedBookingProviderId('eventbrite'), true);
 assert.strictEqual(isConnectedBookingProviderId('nope'), false);
@@ -25,6 +30,23 @@ const eb = normalizeEventbriteWebhook({
 assert.strictEqual(eb.externalEventId, '123456789');
 assert.strictEqual(eb.email, 'buyer@example.com');
 assert.ok(eb.orderId.startsWith('eventbrite-'));
+
+assert.strictEqual(
+  parseEventbriteEventIdFromUrl('https://www.eventbrite.co.uk/e/networking-night-1234567890123'),
+  '1234567890123'
+);
+assert.strictEqual(
+  preferEventbriteCheckoutUrl('https://www.eventbrite.co.uk/e/networking-night-1234567890123'),
+  'https://www.eventbrite.co.uk/checkout-external?eid=1234567890123'
+);
+assert.strictEqual(
+  normalizeExternalBookingUrl('https://www.eventbrite.com/e/foo-9998887776665'),
+  'https://www.eventbrite.com/checkout-external?eid=9998887776665'
+);
+assert.strictEqual(
+  normalizeExternalBookingUrl('https://www.eventbrite.co.uk/checkout-external?eid=123'),
+  'https://www.eventbrite.co.uk/checkout-external?eid=123'
+);
 
 const tt = normalizeTicketTailorWebhook({
   payload: {

@@ -411,11 +411,11 @@
       editLink.hidden = isEmbedDrawer();
     }
     bindEmbedDrawerNav();
-    initPlatformPicker();
-    restorePlatformSelection();
 
     if (qs('ecs-price-label')) qs('ecs-price-label').value = ev.externalPriceLabel || ev.external_price_label || '';
     if (qs('ecs-booking-url')) qs('ecs-booking-url').value = ev.externalBookingUrl || ev.external_booking_url || '';
+    initPlatformPicker();
+    restorePlatformSelection();
     if (qs('ecs-event-id')) qs('ecs-event-id').textContent = eventId;
     if (qs('ecs-event-id-wrap')) qs('ecs-event-id-wrap').hidden = !eventId;
   }
@@ -573,6 +573,22 @@
     if (!res.ok) {
       setStatus(saveStatus, res.data.message || res.data.error || 'Could not save.', 'error');
       return;
+    }
+    var savedEv = (res.data && res.data.event) || null;
+    if (savedEv && savedEv.externalBookingUrl && qs('ecs-booking-url')) {
+      qs('ecs-booking-url').value = savedEv.externalBookingUrl;
+      payload.externalBookingUrl = savedEv.externalBookingUrl;
+    } else if (
+      window.HubExternalBookingUrl &&
+      typeof window.HubExternalBookingUrl.toAttendeeBookingUrl === 'function' &&
+      url &&
+      qs('ecs-booking-url')
+    ) {
+      var attendeeUrl = window.HubExternalBookingUrl.toAttendeeBookingUrl(url);
+      if (attendeeUrl && attendeeUrl !== url) {
+        qs('ecs-booking-url').value = attendeeUrl;
+        payload.externalBookingUrl = attendeeUrl;
+      }
     }
     loadedEvent = Object.assign({}, loadedEvent, payload);
     if (typeof embed.writeConnectedSetupPrefetch === 'function') {
