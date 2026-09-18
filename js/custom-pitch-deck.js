@@ -439,7 +439,7 @@
       logoUrl: deck.hero.prospectLogoUrl || '',
     };
     var liveHtml =
-      global.CustomPitchPreviews && CustomPitchPreviews.renderLiveExamplesSection
+      window.CustomPitchPreviews && CustomPitchPreviews.renderLiveExamplesSection
         ? CustomPitchPreviews.renderLiveExamplesSection(previewCtx, deck)
         : '';
     var navSections = sections.slice();
@@ -468,7 +468,7 @@
 
     bindSectionNav();
     bindProspectLogoFallback(root, payload);
-    if (global.CustomPitchPreviews && CustomPitchPreviews.bindTabs) {
+    if (window.CustomPitchPreviews && CustomPitchPreviews.bindTabs) {
       CustomPitchPreviews.bindTabs(root);
     }
   }
@@ -495,7 +495,8 @@
       }
       renderDeck(result.data);
     })
-    .catch(function () {
+    .catch(function (err) {
+      console.error('[custom-pitch-deck]', err);
       showError('Could not load this pitch deck — check your connection and try again.');
     });
 })();
