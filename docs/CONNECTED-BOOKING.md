@@ -6,6 +6,10 @@ Organisers on a **Connected** monthly subscription list events on The Networker 
 
 ## Enable in production
 
+### If **Save assignment** fails or mentions migrations (but subscribe works)
+
+You likely have **292** and **298** already, but are missing **297** (`connected_booking_slot_assigned_at` on `organisers`). Run **`297_connected_booking_organiser_slots.sql`**, then **reload the Supabase API schema cache** (Dashboard → Project Settings → API, or wait a few minutes).
+
 ### If Sentry shows `connected_booking_stripe_customer_id does not exist`
 
 Production Supabase is missing migration **298**. In the Supabase SQL editor (production project), run:
