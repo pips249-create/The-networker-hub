@@ -5602,6 +5602,76 @@ body.ee-embed-drawer.organiser-connected-setup-page .ee-back-row .ee-back[href*=
   display: none !important;
 }
 
+body.ee-embed-drawer.organiser-connected-setup-page .ee-back-row {
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 0 0 12px;
+  padding: 0;
+}
+
+body.ee-embed-drawer.organiser-connected-setup-page .ee-embed-back,
+body.ee-embed-drawer.organiser-connected-setup-page .ee-back-secondary {
+  display: inline-flex !important;
+}
+
+.ecs-platform-picker {
+  margin: 0 0 18px;
+  padding: 0;
+  border: none;
+}
+
+.ecs-platform-picker legend {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ee-purple-dark, #1a2e3b);
+  margin-bottom: 10px;
+  padding: 0;
+}
+
+.ecs-platform-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ecs-platform-btn {
+  border: 1px solid rgba(26, 46, 59, 0.2);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ee-purple-dark, #1a2e3b);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.ecs-platform-btn:hover {
+  border-color: rgba(13, 110, 122, 0.45);
+}
+
+.ecs-platform-btn.is-selected {
+  border-color: rgba(13, 110, 122, 0.65);
+  background: rgba(13, 110, 122, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(13, 110, 122, 0.25);
+}
+
+.ecs-platform-hint {
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: rgba(13, 110, 122, 0.06);
+  border-left: 3px solid rgba(13, 110, 122, 0.45);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.ecs-platform-hint a {
+  font-weight: 600;
+}
+
 body.ee-embed-drawer.organiser-connected-setup-page .ee-title,
 body.ee-embed-drawer.ee-connected-tickets-only .ee-title {
   display: none !important;

@@ -8411,6 +8411,8 @@
     backBtn.hidden = !eventDrawerBackEventId;
     if (eventDrawerBackTarget === 'location') {
       backBtn.textContent = '← Location & access';
+    } else if (eventDrawerBackTarget === 'tickets') {
+      backBtn.textContent = '← Booking options';
     } else if (eventDrawerBackTarget === 'details') {
       backBtn.textContent = '← Event details';
     } else {
@@ -8420,6 +8422,10 @@
 
   function goBackFromEventDrawer() {
     if (!eventDrawerBackEventId) return;
+    if (eventDrawerBackTarget === 'tickets') {
+      openEventTicketsDrawer([eventDrawerBackEventId], '');
+      return;
+    }
     if (eventDrawerBackTarget === 'location') {
       openEventLocationDrawer(eventDrawerBackEventId, { fromTickets: true });
       return;
@@ -19830,6 +19836,7 @@
         if (ids.length) {
           url += '&returnIds=' + encodeURIComponent(ids.join(','));
         }
+        setEventDrawerBackButton(true, eid, 'tickets');
         openEventDrawerFrame(url, e.data.title || 'Connected event setup', null, {
           progressStep: 'tickets',
         });
