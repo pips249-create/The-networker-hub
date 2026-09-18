@@ -1055,7 +1055,7 @@
 
     var linked = eventLinkForPlatform(key);
     var webhookUrlBlock = p.webhookUrl
-      ? '<p class="ee-hint"><strong>Webhook URL</strong> — paste this entire line into Eventbrite <strong>Payload URL</strong>:</p>' +
+      ? '<p class="ee-hint"><strong>Webhook URL</strong> — paste into your provider’s webhook settings:</p>' +
         '<p class="cb-webhook-url" data-webhook-url="' +
         escAttr(p.webhookUrl) +
         '">' +

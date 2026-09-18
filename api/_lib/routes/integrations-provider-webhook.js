@@ -95,6 +95,27 @@ module.exports = async function handler(req, res, providerId) {
 
   const normalized = normalizeProviderWebhook(provider, body);
   if (!normalized || normalized.partial) {
+    if (
+      provider === 'eventbrite' &&
+      body.api_url &&
+      body.config &&
+      typeof body.config === 'object'
+    ) {
+      await logExternalSync(sb, {
+        organiser_account_id: connection.organiser_account_id,
+        outcome: 'accepted',
+        http_status: 200,
+        message: 'eventbrite:webhook_ping',
+        payload: { api_url: body.api_url, action: body.config.action || null },
+      });
+      return json(res, 200, {
+        ok: true,
+        provider,
+        eventbrite_ping: true,
+        message:
+          'Webhook URL and token accepted. Real ticket orders still need your Eventbrite event id linked on The Networker UK.',
+      });
+    }
     await logExternalSync(sb, {
       organiser_account_id: connection.organiser_account_id,
       outcome: 'rejected',

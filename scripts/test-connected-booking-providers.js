@@ -58,6 +58,12 @@ assert.strictEqual(eb.externalEventId, '123456789');
 assert.strictEqual(eb.email, 'buyer@example.com');
 assert.ok(eb.orderId.startsWith('eventbrite-'));
 
+const ebPing = normalizeEventbriteWebhook({
+  api_url: 'https://www.eventbriteapi.com/v3/orders/12826552624/',
+  config: { action: 'order.placed', endpoint_url: 'https://thenetworkeruk.com/w/eb/test' },
+});
+assert.ok(ebPing && ebPing.partial, 'Eventbrite dashboard test payload is partial');
+
 assert.strictEqual(
   parseEventbriteEventIdFromUrl('https://www.eventbrite.co.uk/e/networking-night-1234567890123'),
   '1234567890123'
