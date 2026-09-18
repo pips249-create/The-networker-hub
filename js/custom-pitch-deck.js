@@ -29,20 +29,31 @@
     }
   }
 
+  function logoCandidatesFromPayload(payload) {
+    var list = (payload && payload.prospectLogoCandidates) || [];
+    if (list.length) return list.slice();
+    if (payload && payload.prospectLogoUrl) return [payload.prospectLogoUrl];
+    if (payload && payload.website) {
+      var fb = logoUrlFromWebsite(payload.website);
+      return fb ? [fb] : [];
+    }
+    return [];
+  }
+
   function enrichHero(hero, payload) {
     hero = hero || {};
+    var candidates = logoCandidatesFromPayload(payload);
+    if (candidates.length) hero.prospectLogoUrl = candidates[0];
     if (!hero.prospectLogoUrl && payload && payload.prospectLogoUrl) {
       hero.prospectLogoUrl = payload.prospectLogoUrl;
     }
     if (!hero.prospectLogoUrl && payload && payload.website) {
       hero.prospectLogoUrl = logoUrlFromWebsite(payload.website);
     }
-    if (!hero.prospectLogoUrl && hero.website) {
-      hero.prospectLogoUrl = logoUrlFromWebsite(hero.website);
-    }
     if (!hero.preparedFor && payload && payload.companyName) {
       hero.preparedFor = payload.companyName;
     }
+    hero.prospectLogoCandidates = candidates;
     return hero;
   }
 
@@ -54,7 +65,7 @@
         escHtml(hero.prospectLogoUrl) +
         '" alt="' +
         escHtml(name) +
-        '" width="200" height="56">'
+        '" width="200" height="56" crossorigin="anonymous" referrerpolicy="no-referrer">'
       );
     }
     var initials = name
@@ -307,9 +318,20 @@
     );
   }
 
-  function bindProspectLogoFallback(root, companyName) {
+  function syncPreviewThumbLogos(root, src) {
+    if (!root || !src) return;
+    root.querySelectorAll('.ad-mock-spotlight-thumb--opp').forEach(function (el) {
+      el.style.backgroundImage = 'url("' + String(src).replace(/"/g, '\\"') + '")';
+      el.style.backgroundSize = 'contain';
+      el.style.backgroundPosition = 'center';
+      el.style.backgroundRepeat = 'no-repeat';
+      el.textContent = '';
+    });
+  }
+
+  function bindProspectLogoFallback(root, payload) {
     if (!root) return;
-    var name = String(companyName || 'Partner').trim();
+    var name = String((payload && payload.companyName) || 'Partner').trim();
     var initials = name
       .split(/\s+/)
       .slice(0, 2)
@@ -318,17 +340,37 @@
       })
       .join('')
       .toUpperCase();
-    root.querySelectorAll('.custom-pitch-partner-logo').forEach(function (img) {
+    var candidates = logoCandidatesFromPayload(payload);
+    if (!candidates.length && payload && payload.prospectLogoUrl) {
+      candidates = [payload.prospectLogoUrl];
+    }
+
+    function replaceWithMark(img) {
+      var mark = document.createElement('span');
+      mark.className = 'custom-pitch-prospect-mark';
+      mark.textContent = initials || name.slice(0, 2).toUpperCase();
+      if (img.parentNode) img.parentNode.replaceChild(mark, img);
+    }
+
+    root.querySelectorAll('.custom-pitch-partner-logo, .custom-pitch-detail-logo').forEach(function (img) {
+      var idx = 0;
+      function tryNext() {
+        if (idx >= candidates.length) {
+          replaceWithMark(img);
+          return;
+        }
+        img.src = candidates[idx];
+        idx += 1;
+      }
       img.addEventListener(
-        'error',
+        'load',
         function () {
-          var mark = document.createElement('span');
-          mark.className = 'custom-pitch-prospect-mark';
-          mark.textContent = initials || name.slice(0, 2).toUpperCase();
-          if (img.parentNode) img.parentNode.replaceChild(mark, img);
+          syncPreviewThumbLogos(root, img.currentSrc || img.src);
         },
         { once: true }
       );
+      img.addEventListener('error', tryNext);
+      tryNext();
     });
   }
 
@@ -391,14 +433,44 @@
       bannerLabel.textContent = 'Tailored deck — ' + (payload.companyName || 'prospect');
     }
 
+    var previewCtx = {
+      companyName: payload.companyName,
+      website: payload.website,
+      logoUrl: deck.hero.prospectLogoUrl || '',
+    };
+    var liveHtml =
+      global.CustomPitchPreviews && CustomPitchPreviews.renderLiveExamplesSection
+        ? CustomPitchPreviews.renderLiveExamplesSection(previewCtx, deck)
+        : '';
+    var navSections = sections.slice();
+    var sectionParts = sections.map(renderSection);
+    if (liveHtml) {
+      var openIdx = -1;
+      for (var i = 0; i < sections.length; i++) {
+        if (sections[i].id === 'sponsor_opening') {
+          openIdx = i;
+          break;
+        }
+      }
+      var insertAt = openIdx >= 0 ? openIdx + 1 : 0;
+      sectionParts.splice(insertAt, 0, liveHtml);
+      navSections.splice(insertAt, 0, {
+        id: 'custom_pitch_live_examples',
+        navLabel: 'Live examples',
+      });
+    }
+
     root.innerHTML =
       renderHero(deck.hero || {}) +
-      renderNav(sections) +
-      sections.map(renderSection).join('') +
+      renderNav(navSections) +
+      sectionParts.join('') +
       renderClose(deck.close, payload.companyName);
 
     bindSectionNav();
-    bindProspectLogoFallback(root, payload.companyName);
+    bindProspectLogoFallback(root, payload);
+    if (global.CustomPitchPreviews && CustomPitchPreviews.bindTabs) {
+      CustomPitchPreviews.bindTabs(root);
+    }
   }
 
   var slug = deckSlugFromPath();

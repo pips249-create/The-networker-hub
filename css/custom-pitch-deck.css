@@ -65,3 +65,55 @@
   color: var(--pitch-teal);
   border: 1px solid var(--pitch-border);
 }
+
+.custom-pitch-live-examples .pitch-preview-stage {
+  margin-top: 8px;
+}
+
+.custom-pitch-detail-logo {
+  display: block;
+  max-height: 52px;
+  width: auto;
+  margin-bottom: 12px;
+  object-fit: contain;
+}
+
+.custom-pitch-open-days {
+  margin: 18px 0;
+  padding: 16px 18px;
+  border-radius: 14px;
+  background: var(--pitch-teal-soft);
+  border: 1px solid var(--pitch-border);
+}
+
+.custom-pitch-open-days h3 {
+  margin: 0 0 8px;
+  font-family: 'DM Serif Display', Georgia, serif;
+  font-size: 1.15rem;
+  font-weight: 400;
+  color: var(--pitch-ink);
+}
+
+.custom-pitch-open-days-lede {
+  margin: 0 0 10px;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--pitch-muted);
+}
+
+.custom-pitch-open-days-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--pitch-ink);
+}
+
+.custom-pitch-open-days-list li {
+  margin-bottom: 6px;
+}
+
+.ad-mock-spotlight-card--featured {
+  outline: 2px solid rgba(194, 153, 209, 0.55);
+  box-shadow: 0 10px 32px rgba(13, 110, 122, 0.12);
+}
