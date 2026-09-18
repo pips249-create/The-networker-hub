@@ -477,6 +477,16 @@
   margin-top: 4px;
 }
 
+/* Keep the send button clear of the fixed cookie banner on first visit */
+body:has(#hub-cookie-banner:not([hidden])) .contact-layout {
+  padding-bottom: 140px;
+}
+
+body:has(#hub-cookie-banner:not([hidden])) .contact-team-form-actions {
+  padding-bottom: 8px;
+  scroll-margin-bottom: 120px;
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;
