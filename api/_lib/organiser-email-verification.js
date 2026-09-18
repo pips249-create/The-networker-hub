@@ -163,6 +163,12 @@ async function sendOrganiserEmailVerification({ userId, email, name }) {
       err.verifyCode = code;
       throw err;
     }
+    // Don't leave a "pending" code that blocks auto-resend when delivery failed.
+    try {
+      await clearVerifyToken(userId);
+    } catch {
+      /* best-effort */
+    }
     throw e;
   }
 }
