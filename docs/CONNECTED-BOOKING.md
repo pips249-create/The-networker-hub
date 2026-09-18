@@ -59,7 +59,7 @@ Link Out: £9.99 per event, redirect only (see organiser copy on `/organiser/con
 
 **Link-out listing (£9.99 + VAT per event)** — separate product from Connected; hub redirect only; no webhook, attendees, or verified reviews. See `/organiser/booking-options#link-out` and [EXTERNAL-CHECKOUT-FLOWS.md](./EXTERNAL-CHECKOUT-FLOWS.md).
 
-**Planned UX:** after subscribe, **choose which organiser page(s)** your plan applies to; Connected events use a **slim setup** (display price + booking link + API docs), not hub ticket tiers. Link-out uses its own flow and `checkout_mode`.
+**UX:** after subscribe, **choose which organiser page(s)** use Connected on **Organiser pages** in the workspace (inline banner + **Connected** column). `/organiser/connected-booking` is for **subscribe, billing, and webhook** only. Connected events use a **slim setup** (display price + booking link + API docs), not hub ticket tiers. Link-out uses its own flow and `checkout_mode`.
 
 ## Group profiles vs Connected plan
 
