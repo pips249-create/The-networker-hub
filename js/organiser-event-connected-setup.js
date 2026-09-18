@@ -514,6 +514,90 @@
       .replace(/"/g, '&quot;');
   }
 
+  var EVENTBRITE_PAYLOAD_URL_MAX = 70;
+
+  function eventbriteWebhookUrlOk(url) {
+    var u = String(url || '').trim();
+    return u.length > 0 && u.length <= EVENTBRITE_PAYLOAD_URL_MAX && u.indexOf('/w/eb/') !== -1;
+  }
+
+  function renderEventbriteWebhookCard(mount, p, linked) {
+    var url = (p && p.webhookUrl) || '';
+    var linkedDone = Boolean(linked && (linked.external_event_id || linked.externalEventId));
+    var len = url.length;
+    var lenOk = len > 0 && len <= EVENTBRITE_PAYLOAD_URL_MAX;
+    var urlOk = eventbriteWebhookUrlOk(url);
+
+    if (!url) {
+      mount.innerHTML =
+        '<div class="ecs-eb-sync">' +
+        '<p class="ecs-eb-sync-tagline">One-time setup · ~1 minute</p>' +
+        '<p class="ecs-eb-sync-lead">Generate a <strong>short</strong> webhook URL, paste it in Eventbrite, then link your event id above.</p>' +
+        '<button type="button" class="ee-btn ee-btn-gold" data-enable-provider="eventbrite">Enable Eventbrite</button>' +
+        '</div>';
+      bindProviderEnableButtons(mount);
+      return;
+    }
+
+    mount.innerHTML =
+      '<div class="ecs-eb-sync">' +
+      '<ul class="ecs-eb-checklist" aria-label="Eventbrite sync">' +
+      '<li class="ecs-eb-check is-done"><span class="ecs-eb-check-icon" aria-hidden="true">✓</span> Webhook URL ready</li>' +
+      '<li class="ecs-eb-check' +
+      (linkedDone ? ' is-done' : '') +
+      '"><span class="ecs-eb-check-icon" aria-hidden="true">' +
+      (linkedDone ? '✓' : '2') +
+      '</span> Event id saved above' +
+      (linkedDone ? '' : ' <span class="ecs-eb-check-sub">(Link registrations)</span>') +
+      '</li>' +
+      '</ul>' +
+      '<div class="ecs-eb-url-panel' +
+      (urlOk ? '' : ' is-warning') +
+      '">' +
+      '<div class="ecs-eb-url-panel-head">' +
+      '<span class="ecs-eb-url-label">Copy into Eventbrite → Payload URL</span>' +
+      '<span class="ecs-eb-len-badge' +
+      (lenOk ? ' is-ok' : ' is-bad') +
+      '" title="Eventbrite truncates longer URLs">' +
+      len +
+      '/' +
+      EVENTBRITE_PAYLOAD_URL_MAX +
+      '</span>' +
+      '</div>' +
+      '<code class="ecs-eb-url cb-webhook-url" data-webhook-url="' +
+      escAttr(url) +
+      '">' +
+      escHtml(url) +
+      '</code>' +
+      '<div class="ecs-webhook-copy-row">' +
+      '<button type="button" class="ee-btn ee-btn-gold ee-btn-sm" data-copy-webhook-url>Copy for Eventbrite</button>' +
+      '<span class="ee-hint ecs-copy-webhook-status" data-copy-webhook-status hidden role="status"></span>' +
+      '</div>' +
+      (!urlOk
+        ? '<p class="ecs-eb-url-warn">URL too long or old format — refresh this page or click Enable Eventbrite again.</p>'
+        : '') +
+      '</div>' +
+      '<p class="ecs-eb-paste-hint">In Eventbrite: profile menu → <strong>Account settings → Webhooks</strong> · Action <code>order.placed</code></p>' +
+      '<details class="ecs-eb-help-details">' +
+      '<summary>Step-by-step in Eventbrite</summary>' +
+      '<ol class="ecs-eb-help-steps">' +
+      '<li>Open <strong>Webhooks</strong> → Add webhook (or edit yours).</li>' +
+      '<li>Paste the copied URL into <strong>Payload URL</strong> (full line).</li>' +
+      '<li>Set <strong>Action</strong> to <code>order.placed</code> and save.</li>' +
+      '</ol>' +
+      '</details>' +
+      (linkedDone
+        ? '<p class="ee-hint ee-alert-ok ecs-eb-linked">Linked event id <code>' +
+          escHtml(displayExternalEventId('eventbrite', linked.external_event_id || linked.externalEventId)) +
+          '</code></p>'
+        : '') +
+      (!urlOk
+        ? '<button type="button" class="ee-btn ee-btn-outline ee-btn-sm ecs-eb-regen" data-enable-provider="eventbrite">Get shorter URL</button>'
+        : '') +
+      '</div>';
+    bindProviderEnableButtons(mount);
+  }
+
   function providerWebhookLead(platform) {
     var key = String(platform || '').trim();
     if (key === 'own_site') {
@@ -529,11 +613,7 @@
       );
     }
     if (key === 'eventbrite') {
-      return (
-        'When someone buys on Eventbrite, their registration appears on The Networker UK. You paste our webhook URL into ' +
-        '<strong>Eventbrite → Account settings → Webhooks</strong> (see steps below), with action <strong>order.placed</strong>. ' +
-        'You must also link your <strong>Eventbrite event id</strong> in the box above.'
-      );
+      return 'Eventbrite ticket sales sync to your attendee list here — copy the webhook URL below, then link your event id above.';
     }
     var p = providersById[key];
     var label = (p && p.label) || key.replace(/_/g, ' ');
@@ -851,39 +931,18 @@
       stepsEl.hidden = true;
       return;
     }
+    if (key === 'eventbrite') {
+      stepsEl.hidden = true;
+      stepsEl.innerHTML = '';
+      return;
+    }
     stepsEl.hidden = false;
     var p = providersById[key];
     var label = (p && p.label) || key.replace(/_/g, ' ');
     var linked = linkedExternalEventId(key);
     var webhookReady = Boolean(p && p.webhookUrl);
     var parts =
-      key === 'eventbrite'
-        ? [
-            {
-              done: webhookReady,
-              text:
-                'On this page: click Enable Eventbrite, then Copy webhook URL. It should look like https://thenetworkeruk.com/w/eb/… (under 70 characters — Eventbrite truncates longer URLs).',
-            },
-            {
-              done: false,
-              text:
-                'In Eventbrite: your profile (top right) → Account settings → Webhooks → Add webhook (or open an existing one). Paste the full URL into Payload URL.',
-            },
-            {
-              done: false,
-              text: 'In Eventbrite: set Action to order.placed. “Events: All” is fine, or limit to your event.',
-            },
-            {
-              done: Boolean(linked),
-              text:
-                'Back on this page: link your Eventbrite event id above (numbers only, e.g. 2001520723363) and Save link.',
-            },
-            {
-              done: false,
-              text: 'Test: buy a free ticket on Eventbrite, then check the attendee list on The Networker UK.',
-            },
-          ]
-        : [
+        [
             {
               done: webhookReady,
               text: 'Enable ' + label + ' below — once per account — to generate your webhook URL.',
@@ -932,7 +991,9 @@
           ? 'Your website webhook'
           : key === 'custom'
             ? 'Zapier, Make, or custom webhook'
-            : 'Webhook for ' + (providerLabel || key);
+            : key === 'eventbrite'
+              ? 'Eventbrite sync'
+              : 'Webhook for ' + (providerLabel || key);
     }
 
     var p = providersById[key];
@@ -987,6 +1048,11 @@
       return;
     }
 
+    if (key === 'eventbrite') {
+      renderEventbriteWebhookCard(mount, p, eventLinkForPlatform(key));
+      return;
+    }
+
     var linked = eventLinkForPlatform(key);
     var webhookUrlBlock = p.webhookUrl
       ? '<p class="ee-hint"><strong>Webhook URL</strong> — paste this entire line into Eventbrite <strong>Payload URL</strong>:</p>' +
@@ -998,27 +1064,7 @@
         '<p class="ee-attendance-next ecs-webhook-copy-row">' +
         '<button type="button" class="ee-btn ee-btn-outline ee-btn-sm" data-copy-webhook-url>Copy webhook URL</button>' +
         '<span class="ee-hint ecs-copy-webhook-status" data-copy-webhook-status hidden role="status"></span>' +
-        '</p>' +
-        (key === 'eventbrite'
-          ? '<div class="ecs-eventbrite-admin-guide" role="note">' +
-            '<p class="ecs-eventbrite-admin-guide-title"><strong>In Eventbrite (matches “Manage webhook” screen)</strong></p>' +
-            '<ol class="ecs-eventbrite-admin-guide-steps">' +
-            '<li>Profile menu (top right) → <strong>Account settings</strong> → <strong>Webhooks</strong>.</li>' +
-            '<li><strong>Add webhook</strong>, or open your existing webhook.</li>' +
-            '<li><strong>Payload URL</strong>: paste the <strong>short</strong> URL from TNH (<code>https://thenetworkeruk.com/w/eb/…</code>). Must stay under <strong>70 characters</strong> — Eventbrite silently truncates longer URLs (broken webhooks / 404).</li>' +
-            (p.webhookUrl
-              ? '<li class="ecs-eventbrite-url-len">This URL is <strong>' +
-                String(p.webhookUrl.length) +
-                '</strong> characters' +
-                (p.webhookUrl.length <= 70 ? ' — OK for Eventbrite.' : ' — too long; refresh this page or click Enable Eventbrite again.') +
-                '</li>'
-              : '') +
-            '<li><strong>Action</strong>: <code>order.placed</code> (your screenshot is correct). <strong>Events</strong>: All or this event only.</li>' +
-            '<li>Save, then use Eventbrite’s <strong>Test</strong> button if offered.</li>' +
-            '</ol>' +
-            '<p class="ee-hint">Still required on this page: link your Eventbrite <strong>event id</strong> in “Link registrations” above, then publish.</p>' +
-            '</div>'
-          : '')
+        '</p>'
       : '<p class="ee-hint">Click Enable to generate your webhook URL for ' + escHtml(p.label) + '.</p>';
 
     mount.innerHTML =
