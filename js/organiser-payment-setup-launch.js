@@ -6,11 +6,27 @@
   var statusEl = document.getElementById('payment-setup-status');
   var hintEl = document.getElementById('payment-setup-hint');
   var errorEl = document.getElementById('payment-setup-error');
+  var recoverEl = document.getElementById('payment-setup-recover');
   var params = new URLSearchParams(window.location.search);
   var groupId = String(params.get('groupId') || '').trim();
   var returnPath = String(params.get('returnPath') || '/organiser/#events-revenue').trim();
 
-  function showError(message) {
+  function paymentSetupReturnPath() {
+    var path = '/organiser/payment-setup?groupId=' + encodeURIComponent(groupId);
+    if (returnPath) {
+      path += '&returnPath=' + encodeURIComponent(returnPath);
+    }
+    return path;
+  }
+
+  function verifyEmailHref() {
+    return (
+      '/organiser/verify-email?next=' + encodeURIComponent(paymentSetupReturnPath())
+    );
+  }
+
+  function showError(message, options) {
+    var opts = options || {};
     if (statusEl) statusEl.textContent = 'We could not open Stripe yet.';
     if (hintEl) hintEl.hidden = true;
     if (!errorEl) {
@@ -19,6 +35,15 @@
     }
     errorEl.hidden = false;
     errorEl.textContent = message;
+    if (recoverEl) {
+      if (opts.verifyEmail) {
+        recoverEl.hidden = false;
+        var link = recoverEl.querySelector('a');
+        if (link) link.href = verifyEmailHref();
+      } else {
+        recoverEl.hidden = true;
+      }
+    }
   }
 
   function appendStripeReturnFlag(path) {
@@ -58,13 +83,19 @@
     })
     .then(function (result) {
       if (!result.ok || !result.data.url) {
+        var needsVerify = result.data.error === 'organiser_email_not_verified';
         var detail =
           result.data.message ||
           (result.data.error === 'forbidden'
             ? 'You can only add bank details for organiser pages linked to your account.'
             : result.data.error) ||
           'Could not start bank details setup. Try again in a moment.';
-        showError(detail);
+        showError(detail, { verifyEmail: needsVerify });
+        if (needsVerify) {
+          window.setTimeout(function () {
+            window.location.assign(verifyEmailHref());
+          }, 1600);
+        }
         return;
       }
       if (statusEl) statusEl.textContent = 'Redirecting to Stripe…';

@@ -29,32 +29,45 @@
     }
   }
 
+  function logoCandidatesFromPayload(payload) {
+    var list = (payload && payload.prospectLogoCandidates) || [];
+    if (list.length) return list.slice();
+    if (payload && payload.prospectLogoUrl) return [payload.prospectLogoUrl];
+    if (payload && payload.website) {
+      var fb = logoUrlFromWebsite(payload.website);
+      return fb ? [fb] : [];
+    }
+    return [];
+  }
+
   function enrichHero(hero, payload) {
     hero = hero || {};
-    if (!hero.prospectLogoUrl && payload && payload.prospectLogoUrl) {
+    var candidates = logoCandidatesFromPayload(payload);
+    // Always prefer API-resolved candidates over a stale saved Clearbit URL.
+    if (candidates.length) {
+      hero.prospectLogoUrl = candidates[0];
+    } else if (payload && payload.prospectLogoUrl) {
       hero.prospectLogoUrl = payload.prospectLogoUrl;
-    }
-    if (!hero.prospectLogoUrl && payload && payload.website) {
+    } else if (!hero.prospectLogoUrl && payload && payload.website) {
       hero.prospectLogoUrl = logoUrlFromWebsite(payload.website);
-    }
-    if (!hero.prospectLogoUrl && hero.website) {
-      hero.prospectLogoUrl = logoUrlFromWebsite(hero.website);
     }
     if (!hero.preparedFor && payload && payload.companyName) {
       hero.preparedFor = payload.companyName;
     }
+    hero.prospectLogoCandidates = candidates;
     return hero;
   }
 
   function renderProspectLogoBlock(hero) {
     var name = String(hero.preparedFor || 'Partner').trim();
-    if (hero.prospectLogoUrl) {
+    var src = hero.prospectLogoUrl || (hero.prospectLogoCandidates && hero.prospectLogoCandidates[0]) || '';
+    if (src) {
       return (
         '<img class="custom-pitch-partner-logo" src="' +
-        escHtml(hero.prospectLogoUrl) +
+        escHtml(src) +
         '" alt="' +
         escHtml(name) +
-        '" width="200" height="56">'
+        '" width="220" height="64" decoding="async" referrerpolicy="no-referrer">'
       );
     }
     var initials = name
@@ -72,18 +85,23 @@
     );
   }
 
-  function heroPriceChip(hero) {
+  function heroOfferChips(hero) {
     var chips = hero.chips || [];
     if (!chips.length) return '';
-    if (chips.length === 1) {
-      return '<p class="sponsor-pitch-price-chip">' + escHtml(chips[0]) + '</p>';
-    }
     return (
-      '<p class="sponsor-pitch-price-chip">' +
-      escHtml(chips[0]) +
-      ' <span>/ ' +
-      escHtml(chips.slice(1).join(' · ')) +
-      '</span></p>'
+      '<div class="custom-pitch-hero-chip-row">' +
+      chips
+        .map(function (c, i) {
+          return (
+            '<span class="custom-pitch-hero-chip' +
+            (i > 1 ? ' custom-pitch-hero-chip--soft' : '') +
+            '">' +
+            escHtml(c) +
+            '</span>'
+          );
+        })
+        .join('') +
+      '</div>'
     );
   }
 
@@ -95,13 +113,14 @@
         escHtml(hero.websiteLabel || hero.website) +
         '</a></p>'
       : '';
-    var headline = escHtml(hero.headline || '');
-    var accentMatch = headline.match(/^(.+?\s)(on The Networker UK.*)$/i);
+    var rawHeadline = String(hero.headline || '');
+    var accentMatch = rawHeadline.match(/^(.+?\s)(on The Networker UK.*)$/i);
     var h1Html = accentMatch
       ? escHtml(accentMatch[1]) + '<span class="accent">' + escHtml(accentMatch[2]) + '</span>'
-      : headline;
+      : escHtml(rawHeadline);
 
     return (
+      '<div class="custom-pitch-hero-showcase">' +
       '<header class="sponsor-pitch-hero">' +
       '<div class="custom-pitch-logo-row">' +
       renderProspectLogoBlock(hero) +
@@ -117,9 +136,9 @@
       '<p class="sponsor-pitch-lede">' +
       escHtml(hero.lede || '') +
       '</p>' +
-      heroPriceChip(hero) +
+      heroOfferChips(hero) +
       website +
-      '</header>'
+      '</header></div>'
     );
   }
 
@@ -147,28 +166,66 @@
 
   function bulletToStat(text) {
     var b = String(text || '').trim();
+    if (!b) return { strong: '', span: '' };
     var dash = b.indexOf('—');
     if (dash === -1) dash = b.indexOf(' – ');
     if (dash === -1) dash = b.indexOf(' - ');
-    if (dash > 0 && dash < 90) {
+    if (dash > 8 && dash < 56) {
       return {
         strong: b.slice(0, dash).trim(),
         span: b.slice(dash + 1).replace(/^[-–—]\s*/, '').trim(),
       };
     }
     var colon = b.indexOf(':');
-    if (colon > 0 && colon < 70) {
+    if (colon > 8 && colon < 48) {
       return { strong: b.slice(0, colon).trim(), span: b.slice(colon + 1).trim() };
     }
-    if (b.length > 72) {
-      return { strong: b.slice(0, 68) + '…', span: b };
+    // Long bullets: full text in the body — never truncate with ellipsis.
+    return { strong: '', span: b };
+  }
+
+  function renderEmailInventory(section) {
+    var inv = section && section.emailInventory;
+    if (!inv) return '';
+
+    function listBlock(part) {
+      var templates = part.templates || [];
+      if (!templates.length) return '';
+      var count = part.count || templates.length;
+      return (
+        '<details class="pitch-email-details">' +
+        '<summary>Full email list (' +
+        escHtml(String(count)) +
+        ' templates)' +
+        (part.shortLabel ? ' — ' + escHtml(part.shortLabel) : '') +
+        '</summary>' +
+        '<ul class="pitch-email-tags">' +
+        templates
+          .map(function (name) {
+            return '<li>' + escHtml(name) + '</li>';
+          })
+          .join('') +
+        '</ul></details>'
+      );
     }
-    return { strong: b, span: '' };
+
+    if (inv.tally && Array.isArray(inv.parts) && inv.parts.length) {
+      return (
+        '<div class="pitch-email-tally">' +
+        inv.parts.map(listBlock).join('') +
+        '</div>'
+      );
+    }
+
+    return listBlock(inv);
   }
 
   function liveLinkForSection(section) {
     var id = String((section && section.id) || '');
     var title = String((section && section.title) || '').toLowerCase();
+    if (/email_inventory|sponsor_email/.test(id)) {
+      return { href: '/advertising', label: 'Open rate card →' };
+    }
     if (/opportunity|listing|spotlight|sponsor_opportunity|sponsor_headline_opportunities/.test(id + title)) {
       return {
         href: '/opportunities/',
@@ -217,52 +274,54 @@
 
     var bullets = section.bullets || [];
     var statGrid = '';
-    if (!tiles.length && bullets.length) {
-      statGrid =
-        '<div class="pitch-stat-grid">' +
-        bullets
-          .slice(0, 4)
-          .map(function (b) {
-            var stat = bulletToStat(b);
-            return (
-              '<article class="pitch-stat"><strong>' +
-              escHtml(stat.strong) +
-              '</strong>' +
-              (stat.span ? '<span>' + escHtml(stat.span) + '</span>' : '') +
-              '</article>'
-            );
-          })
-          .join('') +
-        '</div>';
-    }
-
     var extraList = '';
-    if (bullets.length > 4) {
-      extraList =
-        '<ul class="sponsor-pitch-checklist">' +
-        bullets
-          .slice(4)
-          .map(function (b) {
-            return '<li>' + escHtml(b) + '</li>';
-          })
-          .join('') +
-        '</ul>';
-    } else if (!statGrid && bullets.length) {
-      extraList =
-        '<ul class="sponsor-pitch-checklist">' +
-        bullets
-          .map(function (b) {
-            return '<li>' + escHtml(b) + '</li>';
-          })
-          .join('') +
-        '</ul>';
-    }
 
     if (tiles) {
       statGrid = '<div class="pitch-stat-grid">' + tiles + '</div>';
+      if (bullets.length) {
+        extraList =
+          '<ul class="sponsor-pitch-checklist">' +
+          bullets
+            .map(function (b) {
+              return '<li>' + escHtml(b) + '</li>';
+            })
+            .join('') +
+          '</ul>';
+      }
+    } else if (bullets.length) {
+      var cardable = bullets.every(function (b) {
+        var s = bulletToStat(b);
+        return s.strong && s.strong.length <= 56 && s.span;
+      });
+      if (cardable) {
+        statGrid =
+          '<div class="pitch-stat-grid">' +
+          bullets
+            .map(function (b) {
+              var stat = bulletToStat(b);
+              return (
+                '<article class="pitch-stat"><strong>' +
+                escHtml(stat.strong) +
+                '</strong><span>' +
+                escHtml(stat.span) +
+                '</span></article>'
+              );
+            })
+            .join('') +
+          '</div>';
+      } else {
+        extraList =
+          '<ul class="sponsor-pitch-checklist">' +
+          bullets
+            .map(function (b) {
+              return '<li>' + escHtml(b) + '</li>';
+            })
+            .join('') +
+          '</ul>';
+      }
     }
 
-    var body = statGrid + extraList;
+    var body = statGrid + extraList + renderEmailInventory(section);
     if (section.quote) {
       body += '<p class="pitch-aside">&ldquo;' + escHtml(section.quote) + '&rdquo;</p>';
     }
@@ -307,9 +366,20 @@
     );
   }
 
-  function bindProspectLogoFallback(root, companyName) {
+  function syncPreviewThumbLogos(root, src) {
+    if (!root || !src) return;
+    root.querySelectorAll('.ad-mock-spotlight-thumb--opp').forEach(function (el) {
+      el.style.backgroundImage = 'url("' + String(src).replace(/"/g, '\\"') + '")';
+      el.style.backgroundSize = 'contain';
+      el.style.backgroundPosition = 'center';
+      el.style.backgroundRepeat = 'no-repeat';
+      el.textContent = '';
+    });
+  }
+
+  function bindProspectLogoFallback(root, payload) {
     if (!root) return;
-    var name = String(companyName || 'Partner').trim();
+    var name = String((payload && payload.companyName) || 'Partner').trim();
     var initials = name
       .split(/\s+/)
       .slice(0, 2)
@@ -318,17 +388,44 @@
       })
       .join('')
       .toUpperCase();
-    root.querySelectorAll('.custom-pitch-partner-logo').forEach(function (img) {
+    var candidates = logoCandidatesFromPayload(payload);
+    if (!candidates.length && payload && payload.prospectLogoUrl) {
+      candidates = [payload.prospectLogoUrl];
+    }
+
+    function replaceWithMark(img) {
+      var mark = document.createElement('span');
+      mark.className = 'custom-pitch-prospect-mark';
+      mark.textContent = initials || name.slice(0, 2).toUpperCase();
+      if (img.parentNode) img.parentNode.replaceChild(mark, img);
+    }
+
+    root.querySelectorAll(
+      '.custom-pitch-partner-logo, .custom-pitch-detail-logo, .ad-full-email-sponsor-logo'
+    ).forEach(function (img) {
+      var idx = 0;
+      img.removeAttribute('crossorigin');
+      function tryNext() {
+        idx += 1;
+        if (idx >= candidates.length) {
+          replaceWithMark(img);
+          return;
+        }
+        img.removeAttribute('crossorigin');
+        img.src = candidates[idx];
+      }
+      img.addEventListener('error', tryNext);
       img.addEventListener(
-        'error',
+        'load',
         function () {
-          var mark = document.createElement('span');
-          mark.className = 'custom-pitch-prospect-mark';
-          mark.textContent = initials || name.slice(0, 2).toUpperCase();
-          if (img.parentNode) img.parentNode.replaceChild(mark, img);
+          syncPreviewThumbLogos(root, img.currentSrc || img.src);
         },
         { once: true }
       );
+      if (candidates.length) {
+        // Prefer API-resolved candidate list; do not force CORS (breaks many brand CDNs).
+        img.src = candidates[0];
+      }
     });
   }
 
@@ -380,7 +477,7 @@
   function renderDeck(payload) {
     var deck = payload.deck || {};
     deck.hero = enrichHero(deck.hero, payload);
-    var sections = deck.sections || [];
+    var sections = Array.isArray(deck.sections) ? deck.sections : [];
     var root = document.getElementById('custom-pitch-root');
     if (!root) return;
 
@@ -391,14 +488,47 @@
       bannerLabel.textContent = 'Tailored deck — ' + (payload.companyName || 'prospect');
     }
 
+    var liveHtml = '';
+    try {
+      var previewCtx = {
+        companyName: payload.companyName,
+        website: payload.website,
+        logoUrl: (deck.hero && deck.hero.prospectLogoUrl) || '',
+      };
+      if (window.CustomPitchPreviews && typeof CustomPitchPreviews.renderLiveExamplesSection === 'function') {
+        liveHtml = CustomPitchPreviews.renderLiveExamplesSection(previewCtx, deck) || '';
+      }
+    } catch (previewErr) {
+      console.warn('[custom-pitch-deck] live examples skipped', previewErr);
+      liveHtml = '';
+    }
+
+    var navSections = sections.slice();
+    var sectionParts = sections.map(renderSection);
+    if (liveHtml) {
+      // Show visuals first — before text-heavy opening.
+      sectionParts.unshift(liveHtml);
+      navSections.unshift({
+        id: 'custom_pitch_live_examples',
+        navLabel: 'Live examples',
+      });
+    }
+
     root.innerHTML =
       renderHero(deck.hero || {}) +
-      renderNav(sections) +
-      sections.map(renderSection).join('') +
+      renderNav(navSections) +
+      sectionParts.join('') +
       renderClose(deck.close, payload.companyName);
 
     bindSectionNav();
-    bindProspectLogoFallback(root, payload.companyName);
+    bindProspectLogoFallback(root, payload);
+    try {
+      if (window.CustomPitchPreviews && typeof CustomPitchPreviews.bindTabs === 'function') {
+        CustomPitchPreviews.bindTabs(root);
+      }
+    } catch (tabErr) {
+      console.warn('[custom-pitch-deck] preview tabs skipped', tabErr);
+    }
   }
 
   var slug = deckSlugFromPath();
@@ -421,9 +551,15 @@
         );
         return;
       }
-      renderDeck(result.data);
+      try {
+        renderDeck(result.data);
+      } catch (renderErr) {
+        console.error('[custom-pitch-deck] render', renderErr);
+        showError('Could not display this pitch deck. Try a hard refresh, then open the link from Command Centre again.');
+      }
     })
-    .catch(function () {
-      showError('Could not load this pitch deck — check your connection and try again.');
+    .catch(function (err) {
+      console.error('[custom-pitch-deck]', err);
+      showError('Could not load this pitch deck. Try a hard refresh (Ctrl+Shift+R), then open the link from Command Centre again.');
     });
 })();

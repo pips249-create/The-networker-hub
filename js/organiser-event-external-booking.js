@@ -48,6 +48,10 @@
     document.documentElement.classList.add('ee-connected-tickets-checking');
   }
 
+  if (isEmbedDrawer()) {
+    document.documentElement.classList.add('ee-connected-tickets-checking');
+  }
+
   function api(path) {
     return fetch(path, { credentials: 'include', cache: 'no-store' }).then(function (res) {
       return res.json().then(function (data) {

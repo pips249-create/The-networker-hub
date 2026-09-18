@@ -40,6 +40,60 @@ const {
   assert.ok(sponsorDeck.sections.some(function (s) { return s.id === 'sponsor_headline_events'; }));
   assert.ok(sponsorDeck.sections.some(function (s) { return s.id === 'sponsor_opportunity_directory_listing'; }));
   assert.match(sponsorDeck.hero.headline, /Advertising on The Networker UK/);
+  var eventsHeadline = sponsorDeck.sections.find(function (s) {
+    return s.id === 'sponsor_headline_events';
+  });
+  assert.ok(eventsHeadline && eventsHeadline.emailInventory);
+  assert.equal(eventsHeadline.emailInventory.count, 21);
+  assert.ok(
+    (eventsHeadline.tiles || []).some(function (t) {
+      return /21 emails/i.test(t.title || '');
+    })
+  );
+  var emailTally = sponsorDeck.sections.find(function (s) {
+    return s.id === 'sponsor_email_inventory';
+  });
+  assert.ok(emailTally);
+  assert.equal(emailTally.emailInventory.total, 21);
+  assert.ok(
+    (eventsHeadline.bullets || []).some(function (b) {
+      return /21 templates/i.test(b);
+    })
+  );
+
+  const multiHeadline = await generateCustomPitchDeck({
+    companyName: 'Multi Brand',
+    deckType: 'sponsorship',
+    sponsorshipPlacements: ['headline_events', 'headline_opportunities'],
+  });
+  var multiTally = multiHeadline.sections.find(function (s) {
+    return s.id === 'sponsor_email_inventory';
+  });
+  assert.ok(multiTally);
+  assert.equal(multiTally.emailInventory.total, 32);
+
+  const { enrichDeckWithEmailInventory } = require('../api/_lib/sponsorship-pitch-catalog');
+  const enriched = enrichDeckWithEmailInventory({
+    sponsorshipPlacements: ['headline_opportunities'],
+    hero: { preparedFor: 'Legacy Co' },
+    sections: [
+      {
+        id: 'sponsor_headline_opportunities',
+        title: 'Headline Sponsor — Business Opportunities Directory',
+        bullets: ['Old bullet without count'],
+        tiles: [],
+      },
+    ],
+  });
+  var oppSec = enriched.sections.find(function (s) {
+    return s.id === 'sponsor_headline_opportunities';
+  });
+  assert.equal(oppSec.emailInventory.count, 11);
+  assert.ok(enriched.sections.some(function (s) { return s.id === 'sponsor_email_inventory'; }));
+  assert.equal(
+    enriched.sections.find(function (s) { return s.id === 'sponsor_email_inventory'; }).emailInventory.total,
+    11
+  );
 
   const launchDeck = await generateCustomPitchDeck({
     companyName: 'Pink Spaghetti',
