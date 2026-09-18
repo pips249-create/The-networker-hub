@@ -6,16 +6,20 @@ Organisers on a **Connected** monthly subscription list events on The Networker 
 
 ## Enable in production
 
+### If **Save assignment** fails or mentions migrations (but subscribe works)
+
+You likely have **292** and **298** already, but are missing **297** (`connected_booking_slot_assigned_at` on `organisers`). Run **`297_connected_booking_organiser_slots.sql`**, then **reload the Supabase API schema cache** (Dashboard → Project Settings → API, or wait a few minutes).
+
 ### If Sentry shows `connected_booking_stripe_customer_id does not exist`
 
-Production Supabase is missing migration **293**. In the Supabase SQL editor (production project), run:
+Production Supabase is missing migration **298**. In the Supabase SQL editor (production project), run:
 
 ```sql
 alter table public.organiser_accounts
   add column if not exists connected_booking_stripe_customer_id text;
 ```
 
-Also run **`292_external_connected_booking.sql`** if Connected booking columns/tables were never applied. Until 293 is applied, **Manage billing** may not work after subscribe; the page and checkout should still load once app deploys **#66+**.
+Also run **`292_external_connected_booking.sql`** if Connected booking columns/tables were never applied. Until 298 is applied, **Manage billing** may not work after subscribe; the page and checkout should still load once app deploys **#66+**.
 
 ### Private preview (only you)
 
@@ -29,10 +33,10 @@ While this is set, **only that signed-in email** sees `/organiser/connected-book
 
 When ready to launch for all organisers: **remove** `CONNECTED_BOOKING_PREVIEW_EMAILS` and set `CONNECTED_BOOKING_ENABLED=true`.
 
-1. Run migrations `292_external_connected_booking.sql`, `293_connected_booking_stripe_customer.sql`, and `297_connected_booking_organiser_slots.sql`.
+1. Run migrations `292_external_connected_booking.sql`, `298_connected_booking_stripe_customer.sql`, and `297_connected_booking_organiser_slots.sql`.
 2. Set `CONNECTED_BOOKING_ENABLED=true` on Vercel (or use preview emails above until launch).
 3. Ensure `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` are set (same webhook endpoint as Hub checkout).
-4. Optional: `npm run sync-stripe` to create Connected booking prices and set `STRIPE_CONNECTED_BOOKING_*_PRICE_ID` env vars (checkout works without them using dynamic prices).
+4. After changing intro prices in `api/_lib/connected-booking-pricing.js`, run `npm run sync-stripe` and update Vercel **`STRIPE_CONNECTED_BOOKING_*_PRICE_ID`** env vars (checkout also works with dynamic line items if price IDs are missing).
 5. Organiser signs in → `/organiser/connected-booking` → **Subscribe** (Starter / Growth / Scale). VAT is added at checkout.
 6. After payment, Stripe webhook activates the account (`connected_booking_status=active`, plan set). A webhook secret is created automatically on first activation if missing.
 7. Organiser rotates webhook secret if needed on the same page; **Manage billing** opens Stripe Customer Portal.
@@ -48,18 +52,18 @@ When ready to launch for all organisers: **remove** `CONNECTED_BOOKING_PREVIEW_E
 
 ## Pricing (commercial)
 
-| Plan | Groups | Monthly (ex VAT) |
-|------|--------|------------------|
-| Starter | 1 | £39 |
-| Growth | 5 | £99 |
-| Scale | 20 | £199 |
+| Plan | Organiser pages | Monthly (ex VAT, intro offer) |
+|------|-----------------|----------------------------|
+| Starter | 1 | £19 |
+| Growth | 5 | £39 |
+| Scale | 20 | £99 |
 | 20+ | POA | Contact Rosie & Catherine |
 
 Link Out: £9.99 per event, redirect only (see organiser copy on `/organiser/connected-booking`).
 
 **Link-out listing (£9.99 + VAT per event)** — separate product from Connected; hub redirect only; no webhook, attendees, or verified reviews. See `/organiser/booking-options#link-out` and [EXTERNAL-CHECKOUT-FLOWS.md](./EXTERNAL-CHECKOUT-FLOWS.md).
 
-**Planned UX:** after subscribe, **choose which organiser page(s)** your plan applies to; Connected events use a **slim setup** (display price + booking link + API docs), not hub ticket tiers. Link-out uses its own flow and `checkout_mode`.
+**UX:** after subscribe, **choose which organiser page(s)** use Connected on **Organiser pages** in the workspace (inline banner + **Connected** column). `/organiser/connected-booking` is for **subscribe, billing, and webhook** only. Connected events use a **slim setup** (display price + booking link + API docs), not hub ticket tiers. Link-out uses its own flow and `checkout_mode`.
 
 ## Group profiles vs Connected plan
 

@@ -120,9 +120,14 @@
           <p class="cb-pricing-intro-badge">Introductory offer</p>
           <h2 id="cb-plans-title">Choose your plan</h2>
           <p class="ee-booking-help-table-lede">
-            One subscription covers your whole organiser account — each tier sets how many
-            <strong>organiser pages</strong> can use Connected (unlimited events). Prices exclude VAT — 20% is added at
-            Stripe checkout.
+            List on The Networker UK, take payment on your website, and sync registrations via webhook. One subscription
+            covers your <strong>organiser account</strong> — each tier sets how many <strong>organiser pages</strong> you
+            can use Connected booking on (unlimited events). <strong>Introductory offer</strong> prices ex VAT (20% added at Stripe checkout).
+          </p>
+          <p class="ee-booking-help-table-tip">
+            Need tickets, membership, or guest visits on The Networker UK instead?
+            <a href="/organiser/booking-options">Hub checkout</a> is free to list (4.5% + 20p booking fee per ticket). One
+            model per event — you cannot mix Hub and Connected on the same listing.
           </p>
           <p class="ee-alert ee-alert-ok cb-checkout-banner" id="cb-checkout-banner" hidden role="status"></p>
           <p class="ee-hint cb-auth-status" id="cb-auth-status" hidden role="status"></p>
@@ -229,23 +234,11 @@
           <p class="ee-booking-help-table-tip" id="cb-billing-tip">
             Sign in to subscribe. Payment is handled securely by Stripe.
           </p>
-        </section>
-
-        <section class="ee-booking-help-section" id="cb-slots-panel" hidden aria-labelledby="cb-slots-title">
-          <div class="ee-booking-help-section-head">
-            <p class="ee-booking-help-kicker">Apply your plan</p>
-            <h2 id="cb-slots-title">Which organiser pages use Connected?</h2>
-            <p class="ee-booking-help-pick">
-              Your subscription applies to whole <strong>organiser pages</strong>, not individual events. Only events
-              under assigned pages can use Connected and the webhook.
-            </p>
-          </div>
-          <div class="ee-card">
-            <p class="ee-hint" id="cb-slots-limit-hint"></p>
-            <ul class="cb-slots-list" id="cb-slots-list"></ul>
-            <p class="ee-hint" id="cb-slots-status" hidden role="status"></p>
-            <button type="button" class="ee-btn ee-btn-gold" id="cb-slots-save">Save assignment</button>
-          </div>
+          <p class="ee-hint ee-alert-warn" id="cb-slots-workspace-hint" hidden role="status">
+            Choose which organiser pages use Connected on
+            <a href="/organiser/#groups">Organiser pages</a> in your workspace (subscription and webhook setup stay on
+            this page).
+          </p>
         </section>
 
         <section class="ee-booking-help-section" id="cb-admin-panel" hidden aria-labelledby="cb-connection-title">
@@ -320,8 +313,7 @@
       </div>
     </div>
 
-    <script src="../js/organiser-embed-bootstrap.js?v=20260918cbux1" defer></script>
-    <script src="../js/organiser-connected-billing-banner.js?v=20260918cbux1" defer></script>
-    <script src="../js/organiser-connected-booking-page.js?v=20260918cbux1" defer></script>
+    <script src="../js/organiser-embed-bootstrap.js?v=20260918embed1" defer></script>
+    <script src="../js/organiser-connected-booking-page.js?v=20260918setup1" defer></script>
   </body>
 </html>

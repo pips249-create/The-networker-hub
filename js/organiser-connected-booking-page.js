@@ -34,6 +34,10 @@
 
   initEmbedDrawerNav();
 
+  if (location.hash === '#cb-slots-panel') {
+    location.replace('/organiser/#groups');
+  }
+
   var site = location.origin.replace(/\/$/, '');
   var webhookUrl = site + '/api/integrations/booking';
 
@@ -80,8 +84,14 @@
   function friendlyApiError(data) {
     if (!data) return 'Something went wrong. Try again or email hi@thenetworkeruk.com.';
     if (data.message) return data.message;
+    if (data.error === 'connected_booking_schema_missing') {
+      return (
+        data.message ||
+        'Database setup incomplete for Connected booking. See hi@thenetworkeruk.com if this persists after running migrations.'
+      );
+    }
     if (data.error === 'connected_booking_failed') {
-      return 'Connected could not load (server error). Check Supabase migrations 292 and 293, then redeploy.';
+      return 'Connected booking request failed. If your plan is already active, run migration 297 for organiser-page slots; otherwise check migrations 292 and 298.';
     }
     if (data.error === 'stripe_checkout_failed' || data.error === 'stripe_not_configured') {
       return data.message || 'Checkout is temporarily unavailable. Email hi@thenetworkeruk.com.';
@@ -193,120 +203,6 @@
     });
   });
 
-  var slotsSelection = [];
-
-  function renderSlotsPanel(data) {
-    var panel = document.getElementById('cb-slots-panel');
-    var list = document.getElementById('cb-slots-list');
-    var limitHint = document.getElementById('cb-slots-limit-hint');
-    var slotsStatus = document.getElementById('cb-slots-status');
-    if (!panel || !list || !data.active) {
-      if (panel) panel.hidden = true;
-      return;
-    }
-
-    var slots = data.slots || {};
-    if (slots.schemaMissing) {
-      panel.hidden = true;
-      return;
-    }
-
-    panel.hidden = false;
-    var limit = data.groupLimit;
-    var organisers = slots.accountOrganisers || [];
-    slotsSelection = (slots.assignedOrganiserIds || []).slice();
-
-    if (limitHint) {
-      limitHint.textContent =
-        limit != null
-          ? 'Select up to ' +
-            limit +
-            ' organiser page' +
-            (limit === 1 ? '' : 's') +
-            ' for Connected booking (Starter = 1).'
-          : 'Select organiser pages for Connected booking.';
-    }
-
-    list.innerHTML = '';
-    organisers.forEach(function (org) {
-      var li = document.createElement('li');
-      li.className = 'cb-slots-list-item';
-      var checked = slotsSelection.indexOf(org.id) >= 0;
-      li.innerHTML =
-        '<label class="cb-slots-label">' +
-        '<input type="checkbox" data-org-id="' +
-        org.id +
-        '"' +
-        (checked ? ' checked' : '') +
-        ' /> ' +
-        '<span>' +
-        (org.name || 'Organiser page') +
-        '</span></label>';
-      list.appendChild(li);
-    });
-
-    if (slots.needsAssignment && slotsStatus) {
-      slotsStatus.hidden = false;
-      slotsStatus.className = 'ee-hint ee-alert-warn';
-      slotsStatus.textContent = 'Choose at least one organiser page, then Save assignment, before publishing Connected events.';
-    } else if (slotsStatus) {
-      slotsStatus.hidden = true;
-    }
-
-    list.querySelectorAll('input[type=checkbox]').forEach(function (cb) {
-      cb.addEventListener('change', function () {
-        var id = cb.getAttribute('data-org-id');
-        if (cb.checked) {
-          if (slotsSelection.indexOf(id) < 0) slotsSelection.push(id);
-        } else {
-          slotsSelection = slotsSelection.filter(function (x) {
-            return x !== id;
-          });
-        }
-      });
-    });
-
-    var saveSlots = document.getElementById('cb-slots-save');
-    if (saveSlots && !saveSlots.dataset.bound) {
-      saveSlots.dataset.bound = '1';
-      saveSlots.addEventListener('click', function () {
-        saveSlots.disabled = true;
-        fetch('/api/organiser/connected-booking', {
-          method: 'PATCH',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'assign_connected_slots',
-            organiserIds: slotsSelection,
-          }),
-        })
-          .then(function (r) {
-            return r.json().then(function (body) {
-              return { ok: r.ok, body: body };
-            });
-          })
-          .then(function (res) {
-            if (slotsStatus) {
-              slotsStatus.hidden = false;
-              if (res.ok) {
-                slotsStatus.className = 'ee-hint ee-alert-ok';
-                slotsStatus.textContent = 'Assignment saved.';
-                if (res.body.slots) {
-                  slotsSelection = res.body.slots.assignedOrganiserIds || slotsSelection;
-                }
-              } else {
-                slotsStatus.className = 'ee-hint ee-alert-warn';
-                slotsStatus.textContent = res.body.message || res.body.error || 'Could not save.';
-              }
-            }
-          })
-          .finally(function () {
-            saveSlots.disabled = false;
-          });
-      });
-    }
-  }
-
   function applyPricingLabels(pricing) {
     if (!pricing) return;
     Object.keys(pricing).forEach(function (planKey) {
@@ -326,8 +222,12 @@
 
     applyPricingLabels(data.pricing);
 
+    var planRank = { starter: 1, growth: 2, scale: 3 };
+    var currentRank = planRank[String(data.plan || '').toLowerCase()] || 0;
+
     document.querySelectorAll('.cb-subscribe-btn').forEach(function (btn) {
       var plan = btn.getAttribute('data-cb-plan');
+      var targetRank = planRank[plan] || 0;
       if (!signedIn) {
         btn.disabled = false;
         btn.textContent = 'Subscribe';
@@ -341,7 +241,14 @@
       if (data.active && data.plan === plan) {
         btn.disabled = true;
         btn.textContent = 'Current plan';
-      } else if (data.active && !canSubscribe) {
+      } else if (data.active && targetRank > currentRank) {
+        btn.disabled = false;
+        btn.textContent = 'Upgrade';
+      } else if (data.active && targetRank > 0 && targetRank < currentRank) {
+        btn.disabled = true;
+        btn.textContent = 'Use Manage billing';
+        btn.title = 'Change or downgrade your plan in Stripe billing portal.';
+      } else if (data.active) {
         btn.disabled = true;
         btn.textContent = 'Subscribed';
       } else {
@@ -367,7 +274,7 @@
           'Online checkout is not configured yet — contact hi@thenetworkeruk.com to subscribe.';
       } else if (data.active) {
         billingTip.textContent =
-          'Your plan is active. Use Manage billing to update your card or cancel. Then set up your webhook secret.';
+          'Your plan is active. Use Manage billing to update your card or cancel. Assign organiser pages in your workspace, then set up your webhook secret below.';
       } else {
         billingTip.textContent = 'Choose a plan above. Payment is handled securely by Stripe (+ 20% VAT).';
       }
@@ -426,7 +333,20 @@
     applyBillingUi(data);
     if (signinHint) signinHint.hidden = true;
     if (adminPanel) adminPanel.hidden = false;
-    renderSlotsPanel(data);
+
+    if (data.setup && data.setup.nextStep && !data.setup.readyForConnectedEvents) {
+      setAuthStatus('Next: ' + data.setup.nextStep, data.schemaWarning ? 'error' : 'ok');
+    }
+
+    var workspaceHint = document.getElementById('cb-slots-workspace-hint');
+    if (workspaceHint) {
+      var slots = data.slots || {};
+      workspaceHint.hidden = !(
+        data.active &&
+        slots.needsAssignment &&
+        !slots.schemaMissing
+      );
+    }
 
     var statusEl = document.getElementById('cb-plan-status');
     if (statusEl) {

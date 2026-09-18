@@ -17,8 +17,28 @@
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260812doors2" />
   </head>
   <body class="organiser-event-edit-page organiser-connected-setup-page">
-    <div id="hub-site-nav"></div>
-    <script src="../js/site-nav.js?v=20260910aff1" data-root="../" data-page="organiser" defer></script>
+    <div id="hub-site-nav" hidden></div>
+    <script>
+      (function () {
+        var embed =
+          new URLSearchParams(location.search).get('embed') === '1' || window.self !== window.top;
+        if (embed) {
+          document.documentElement.classList.add('ee-embed-drawer-root');
+          document.addEventListener('DOMContentLoaded', function () {
+            document.body.classList.add('ee-embed-drawer');
+          });
+          return;
+        }
+        var nav = document.getElementById('hub-site-nav');
+        if (nav) nav.hidden = false;
+        var s = document.createElement('script');
+        s.src = '../js/site-nav.js?v=20260910aff1';
+        s.defer = true;
+        s.dataset.root = '../';
+        s.dataset.page = 'organiser';
+        document.head.appendChild(s);
+      })();
+    </script>
 
     <div class="ee-wrap">
       <div class="ee-back-row">
@@ -35,6 +55,23 @@
       <p class="ee-lead" id="ecs-event-title"></p>
       <p class="ee-hint" id="ecs-slot-status" hidden role="status"></p>
       <p class="ee-alert ee-alert-warn" id="ecs-blocked" hidden role="alert"></p>
+
+      <div class="ee-card" id="ecs-slots-card" hidden>
+        <h2>Assign this event’s organiser page</h2>
+        <p class="ee-hint" id="ecs-slots-lede">
+          Your Connected plan is active. Choose which organiser page(s) use Connected — this event can only be set up
+          when its page is selected.
+        </p>
+        <p class="ee-hint" id="ecs-slots-hint"></p>
+        <ul class="cb-slots-list" id="ecs-slots-list"></ul>
+        <p class="ee-hint" id="ecs-slots-status" hidden role="status"></p>
+        <div class="ee-attendance-next">
+          <button type="button" class="ee-btn ee-btn-gold" id="ecs-slots-save">Save assignment</button>
+          <button type="button" class="ee-btn ee-btn-outline" id="ecs-slots-back-tickets" hidden>
+            ← Back to Connected tickets
+          </button>
+        </div>
+      </div>
 
       <div class="ee-card" id="ecs-form-card" hidden>
         <h2>Listing on The Networker UK</h2>
@@ -104,8 +141,8 @@
       </p>
     </div>
 
-    <script src="../js/organiser-embed-bootstrap.js?v=20260917embed1" defer></script>
+    <script src="../js/organiser-embed-bootstrap.js?v=20260918embed1" defer></script>
     <script src="../js/organiser-page-loading.js?v=20260811claimux2" defer></script>
-    <script src="../js/organiser-event-connected-setup.js?v=20260917connsetup3" defer></script>
+    <script src="../js/organiser-event-connected-setup.js?v=20260918connsetup2" defer></script>
   </body>
 </html>

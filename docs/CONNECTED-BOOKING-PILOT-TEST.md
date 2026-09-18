@@ -81,7 +81,15 @@ node scripts/send-external-booking-webhook.js \
 
 Success: HTTP **200** and `{ "ok": true, ... }`. On Connected booking page, **Recent sync attempts** shows **accepted**. The registration appears in organiser attendee tools for that event.
 
-**Production automation:** Zapier (or similar): Trigger **Eventbrite → New order** → Action **Webhooks POST** with a **Code** step to HMAC-sign the body (same format as above). We can provide a Zap template in a later phase.
+**Production automation (Zapier / Make):**
+
+| Who pays for Zapier? | Typical approach |
+|----------------------|------------------|
+| **Each organiser** | They connect **their** Eventbrite to **their** Zapier (or Make) account and duplicate a template you share. This is the model today — The Networker UK does not receive Eventbrite order webhooks on their behalf without that bridge. |
+| **You (platform) during pilot** | You can run Zaps only for **pilot organisers** you support manually (one Zap per Eventbrite account you have access to). Does not scale to all users. |
+| **Future (not built yet)** | A native Eventbrite integration or a **single platform-owned** relay would avoid every organiser needing Zapier — Phase E in product docs. |
+
+Zap flow: Trigger **Eventbrite → New order** → **Code** step (build JSON + HMAC-SHA256 with the organiser’s webhook secret) → **Webhooks POST** to `/api/integrations/booking`. We can publish a copy-paste Zap template in a later phase.
 
 ### D. Verify on the hub
 

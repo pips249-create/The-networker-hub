@@ -5619,21 +5619,32 @@ body.ee-embed-drawer.organiser-connected-setup-page .ee-back-row .ee-back[href*=
   margin: 0;
 }
 
-.org-connected-billing-banner-toggle {
+.org-connected-billing-banner-toggle.org-btn {
   flex-shrink: 0;
-  border: 1px solid rgba(13, 110, 122, 0.35);
-  background: #fff;
-  color: var(--ee-teal, #0d6e7a);
-  font-size: 13px;
-  font-weight: 600;
-  padding: 6px 12px;
+  align-self: flex-start;
+  margin-top: 2px;
+  font-size: 12px;
+  padding: 5px 12px;
   border-radius: 999px;
-  cursor: pointer;
+  white-space: nowrap;
 }
 
-.org-connected-billing-banner--warn .org-connected-billing-banner-toggle {
-  border-color: rgba(180, 95, 0, 0.45);
-  color: #8a5a00;
+.org-connected-slots-inline {
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(13, 110, 122, 0.22);
+}
+
+.org-connected-billing-banner--warn .org-connected-slots-inline {
+  border-color: rgba(180, 95, 0, 0.35);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.org-connected-slots-actions {
+  margin-top: 10px;
+  margin-bottom: 0;
 }
 
 .org-connected-billing-banner-title {

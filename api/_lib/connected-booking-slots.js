@@ -1,4 +1,9 @@
-const { groupLimitForPlan, isConnectedPlanActive } = require('./connected-booking-util');
+const { groupLimitForPlan } = require('./connected-booking-util');
+
+function isConnectedPlanActive(account) {
+  if (!account) return false;
+  return String(account.connected_booking_status || '').trim() === 'active';
+}
 
 function isMissingSlotColumnError(err) {
   const msg = [err?.message, err?.details, err?.code].filter(Boolean).join(' ');
@@ -116,7 +121,15 @@ async function assignConnectedBookingSlots(sb, account, organiserIds) {
       .update({ connected_booking_slot_assigned_at: now })
       .eq('organiser_account_id', accountId)
       .in('id', ids);
-    if (setErr) throw new Error(setErr.message);
+    if (setErr) {
+      if (isMissingSlotColumnError(setErr)) {
+        const e = new Error('Run Supabase migration 297_connected_booking_organiser_slots.sql.');
+        e.status = 503;
+        e.code = 'connected_booking_schema_missing';
+        throw e;
+      }
+      throw new Error(setErr.message);
+    }
   }
 
   return { assignedOrganiserIds: ids, assignedAt: now };
@@ -133,7 +146,7 @@ async function isOrganiserOnConnectedSlot(sb, organiserId) {
     .maybeSingle();
 
   if (error) {
-    if (isMissingSlotColumnError(error)) return true;
+    if (isMissingSlotColumnError(error)) return false;
     throw new Error(error.message);
   }
   return Boolean(data?.connected_booking_slot_assigned_at);
@@ -154,7 +167,7 @@ async function assertOrganiserConnectedSlot(sb, organiserId, account) {
   if (limit == null) return;
 
   const e = new Error(
-    'This organiser page is not assigned to your Connected plan. Open Connected booking and choose which organiser page(s) use your subscription.'
+    'This organiser page is not assigned to your Connected plan. On Organiser pages in your workspace, tick the page(s) and click Save assignment.'
   );
   e.status = 403;
   e.code = 'connected_booking_slot_not_assigned';
@@ -178,6 +191,26 @@ async function maybeAutoAssignSingleStarterSlot(sb, account) {
   );
 }
 
+function connectedBookingSlotsMeta(account, slotOrganisers) {
+  const organisers = slotOrganisers?.organisers || [];
+  const schemaMissing = Boolean(slotOrganisers?.schemaMissing);
+  const assignedOrganiserIds = organisers.filter((o) => o.slotAssigned).map((o) => o.id);
+  const limit = groupLimitForPlan(account?.connected_booking_plan);
+  const needsAssignment =
+    isConnectedPlanActive(account) &&
+    limit != null &&
+    assignedOrganiserIds.length === 0 &&
+    organisers.length > 0 &&
+    !schemaMissing;
+
+  return {
+    assignedOrganiserIds,
+    accountOrganisers: organisers,
+    schemaMissing,
+    needsAssignment,
+  };
+}
+
 module.exports = {
   listAccountOrganisersForSlots,
   listAssignedSlotOrganiserIds,
@@ -185,4 +218,5 @@ module.exports = {
   isOrganiserOnConnectedSlot,
   assertOrganiserConnectedSlot,
   maybeAutoAssignSingleStarterSlot,
+  connectedBookingSlotsMeta,
 };
