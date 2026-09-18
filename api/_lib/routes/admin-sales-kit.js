@@ -24,6 +24,7 @@ const {
   SPONSORSHIP_PLACEMENT_ORDER,
   normalizeDeckType,
   normalizeSponsorshipPlacements,
+  enrichDeckWithEmailInventory,
 } = require('../sponsorship-pitch-catalog');
 
 const SHOWN_BY = new Set(['Catherine', 'Rosie', 'Jamie', 'Other']);
@@ -58,7 +59,7 @@ function mapOrganiser(row) {
 }
 
 const PITCH_DECK_SELECT_FULL =
-  'id, slug, company_name, website, contact_name, organiser_id, prospect_logo_url, deck_type, sponsorship_placements, include_sections, brief, created_by_email, created_at, updated_at';
+  'id, slug, company_name, website, contact_name, organiser_id, prospect_logo_url, deck_type, sponsorship_placements, include_sections, brief, deck, created_by_email, created_at, updated_at';
 
 const PITCH_DECK_SELECT_LEGACY =
   'id, slug, company_name, website, contact_name, organiser_id, include_sections, brief, deck, created_by_email, created_at, updated_at';
@@ -71,6 +72,15 @@ function deckMetaFromRow(row) {
 function mapCustomPitchDeck(row) {
   if (!row) return null;
   const deckMeta = deckMetaFromRow(row);
+  const sponsorshipPlacements = row.sponsorship_placements || deckMeta.sponsorshipPlacements || [];
+  const enrichedDeck = enrichDeckWithEmailInventory(
+    Object.assign({}, deckMeta, {
+      sponsorshipPlacements: Array.isArray(sponsorshipPlacements)
+        ? sponsorshipPlacements.slice()
+        : [],
+      sections: Array.isArray(deckMeta.sections) ? deckMeta.sections.slice() : [],
+    })
+  );
   return {
     id: row.id,
     slug: row.slug,
@@ -82,13 +92,127 @@ function mapCustomPitchDeck(row) {
     prospectLogoUrl:
       row.prospect_logo_url || (deckMeta.hero && deckMeta.hero.prospectLogoUrl) || '',
     deckType: row.deck_type || deckMeta.deckType || 'organiser',
-    sponsorshipPlacements: row.sponsorship_placements || deckMeta.sponsorshipPlacements || [],
+    sponsorshipPlacements: sponsorshipPlacements,
     includeSections: row.include_sections || [],
     brief: row.brief || '',
+    deckJson: sanitizeDeckJsonForAdmin(enrichedDeck),
     createdByEmail: row.created_by_email || '',
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
+}
+
+function sanitizeDeckJsonForAdmin(deck) {
+  const d = deck && typeof deck === 'object' ? deck : {};
+  const hero = d.hero && typeof d.hero === 'object' ? d.hero : {};
+  const close = d.close && typeof d.close === 'object' ? d.close : {};
+  const sections = Array.isArray(d.sections) ? d.sections : [];
+  return {
+    hero: {
+      headline: String(hero.headline || '').slice(0, 240),
+      lede: String(hero.lede || '').slice(0, 2000),
+      kicker: String(hero.kicker || '').slice(0, 120),
+      chips: Array.isArray(hero.chips)
+        ? hero.chips.map(function (c) {
+            return String(c || '').slice(0, 80);
+          }).slice(0, 8)
+        : [],
+    },
+    sections: sections.slice(0, 24).map(function (s) {
+      const sec = s && typeof s === 'object' ? s : {};
+      return {
+        id: String(sec.id || '').slice(0, 80),
+        navLabel: String(sec.navLabel || '').slice(0, 80),
+        title: String(sec.title || '').slice(0, 200),
+        intro: String(sec.intro || '').slice(0, 4000),
+        price: String(sec.price || '').slice(0, 160),
+        bullets: Array.isArray(sec.bullets)
+          ? sec.bullets.map(function (b) {
+              return String(b || '').slice(0, 500);
+            }).slice(0, 12)
+          : [],
+      };
+    }),
+    close: {
+      headline: String(close.headline || '').slice(0, 200),
+      url: String(close.url || '').slice(0, 300),
+    },
+  };
+}
+
+function applyCopyPatchToDeck(existingDeck, patch) {
+  const deck =
+    existingDeck && typeof existingDeck === 'object'
+      ? JSON.parse(JSON.stringify(existingDeck))
+      : {};
+  const copy = patch && typeof patch === 'object' ? patch : {};
+  if (copy.hero && typeof copy.hero === 'object') {
+    deck.hero = Object.assign({}, deck.hero || {}, {
+      headline: cleanText(copy.hero.headline, 240) || (deck.hero && deck.hero.headline) || '',
+      lede: cleanText(copy.hero.lede, 2000) || (deck.hero && deck.hero.lede) || '',
+      kicker:
+        copy.hero.kicker != null
+          ? cleanText(copy.hero.kicker, 120)
+          : (deck.hero && deck.hero.kicker) || '',
+    });
+    if (typeof copy.hero.chips === 'string') {
+      deck.hero.chips = copy.hero.chips
+        .split(/\n|,/)
+        .map(function (c) {
+          return cleanText(c, 80);
+        })
+        .filter(Boolean)
+        .slice(0, 8);
+    } else if (Array.isArray(copy.hero.chips)) {
+      deck.hero.chips = copy.hero.chips
+        .map(function (c) {
+          return cleanText(c, 80);
+        })
+        .filter(Boolean)
+        .slice(0, 8);
+    }
+  }
+  if (Array.isArray(copy.sections) && Array.isArray(deck.sections)) {
+    const byId = {};
+    copy.sections.forEach(function (s) {
+      if (s && s.id) byId[String(s.id)] = s;
+    });
+    deck.sections = deck.sections.map(function (sec) {
+      const p = byId[String(sec.id || '')];
+      if (!p) return sec;
+      const next = Object.assign({}, sec);
+      if (p.title != null) next.title = cleanText(p.title, 200);
+      if (p.intro != null) next.intro = cleanText(p.intro, 4000);
+      if (p.price != null) next.price = cleanText(p.price, 160);
+      if (p.navLabel != null) next.navLabel = cleanText(p.navLabel, 80);
+      if (typeof p.bullets === 'string') {
+        next.bullets = p.bullets
+          .split('\n')
+          .map(function (b) {
+            return cleanText(b, 500);
+          })
+          .filter(Boolean)
+          .slice(0, 12);
+      } else if (Array.isArray(p.bullets)) {
+        next.bullets = p.bullets
+          .map(function (b) {
+            return cleanText(b, 500);
+          })
+          .filter(Boolean)
+          .slice(0, 12);
+      }
+      return next;
+    });
+  }
+  if (copy.close && typeof copy.close === 'object') {
+    deck.close = Object.assign({}, deck.close || {}, {
+      headline:
+        copy.close.headline != null
+          ? cleanText(copy.close.headline, 200)
+          : (deck.close && deck.close.headline) || '',
+    });
+  }
+  return deck;
 }
 
 function isPitchDeckSchemaMismatchError(msg) {
@@ -631,19 +755,38 @@ module.exports = async function handler(req, res) {
         return json(res, 400, { error: 'missing_placements', message: validation.message });
       }
 
-      const deck = await generateCustomPitchDeck({
-        companyName,
-        website: parsed.website,
-        brief: parsed.brief,
-        includeSections: parsed.includeSections,
-        prospectLogoUrl: parsed.prospectLogoUrl,
-        deckType: parsed.deckType,
-        sponsorshipPlacements: parsed.sponsorshipPlacements,
-      });
-
       const logToCrm = truthyLogToCrm(body.logToCrm);
       const isUpdate = action === 'update_custom_pitch_deck';
       const deckId = String(body.id || body.deckId || '').trim();
+      const keepCopy =
+        isUpdate &&
+        (body.keepCopy === true ||
+          body.keepCopy === 'true' ||
+          body.regenerate === false ||
+          body.regenerate === 'false');
+
+      let deck;
+      if (keepCopy) {
+        if (!deckId) return json(res, 400, { error: 'missing_id', message: 'Pick a deck to update.' });
+        const existing = await sb
+          .from('custom_pitch_decks')
+          .select('deck')
+          .eq('id', deckId)
+          .maybeSingle();
+        if (existing.error) throw new Error(existing.error.message);
+        if (!existing.data) return json(res, 404, { error: 'not_found', message: 'Deck not found.' });
+        deck = applyCopyPatchToDeck(existing.data.deck, body.copy || body.deckCopy);
+      } else {
+        deck = await generateCustomPitchDeck({
+          companyName,
+          website: parsed.website,
+          brief: parsed.brief,
+          includeSections: parsed.includeSections,
+          prospectLogoUrl: parsed.prospectLogoUrl,
+          deckType: parsed.deckType,
+          sponsorshipPlacements: parsed.sponsorshipPlacements,
+        });
+      }
 
       if (isUpdate) {
         if (!deckId) return json(res, 400, { error: 'missing_id', message: 'Pick a deck to update.' });

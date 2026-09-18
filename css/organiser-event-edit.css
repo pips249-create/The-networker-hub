@@ -5502,71 +5502,167 @@ a.ee-btn.ee-btn-primary {
   word-break: break-all;
 }
 
-/* Connected account notice (plan vs group profiles) — My Events + Connected page */
-.cb-account-notice {
-  display: none;
-  margin: 0 0 22px;
+.cb-slots-list {
+  list-style: none;
+  margin: 12px 0 16px;
+  padding: 0;
 }
 
-.cb-account-notice--active {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 6px 14px;
-  align-items: start;
-  padding: 16px 18px 14px;
-  border-radius: 14px;
-  border: 1px solid rgba(13, 110, 122, 0.2);
-  background: linear-gradient(135deg, #ffffff 0%, #f3fafb 55%, #faf8f4 100%);
-  box-shadow: 0 8px 28px rgba(26, 46, 59, 0.07);
+.cb-slots-list-item {
+  margin: 8px 0;
 }
 
-.cb-account-notice-icon {
+.cb-slots-label {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  font-size: 1.1rem;
-  font-weight: 800;
-  line-height: 1;
-  color: var(--ee-purple-dark);
-  background: rgba(13, 110, 122, 0.12);
-  border: 1px solid rgba(13, 110, 122, 0.18);
-}
-
-.cb-account-notice-title {
-  margin: 0 0 4px;
+  gap: 10px;
   font-size: 15px;
-  font-weight: 700;
-  line-height: 1.35;
-  color: var(--ee-purple-dark);
+  cursor: pointer;
 }
 
-.cb-account-notice-body {
+.ee-connected-booking-card .ee-connected-booking-callout {
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 2px solid rgba(13, 110, 122, 0.45);
+  background: linear-gradient(135deg, rgba(13, 110, 122, 0.12) 0%, rgba(255, 255, 255, 0.98) 60%);
+  box-shadow: 0 4px 14px rgba(26, 46, 59, 0.07);
+}
+
+.ee-connected-booking-card .ee-connected-booking-callout p {
   margin: 0;
+  font-size: 15px;
+  line-height: 1.55;
+  font-weight: 500;
+  color: var(--ee-text, #1a2e3b);
+}
+
+.ee-connected-booking-card.is-active {
+  border-color: rgba(13, 110, 122, 0.55);
+  box-shadow: 0 6px 22px rgba(13, 110, 122, 0.12);
+}
+
+body.ee-connected-tickets-only .ee-lock-banner,
+body.ee-connected-tickets-checking .ee-lock-banner {
+  margin-bottom: 0;
+}
+
+body.ee-connected-tickets-only #ee-hub-ticket-panels,
+body.ee-connected-tickets-only #ee-series-card,
+body.ee-connected-tickets-only #ee-wizard-mount,
+body.ee-connected-tickets-checking #ee-hub-ticket-panels,
+body.ee-connected-tickets-checking #ee-series-card,
+body.ee-connected-tickets-checking #ee-wizard-mount {
+  display: none !important;
+}
+
+body.ee-connected-tickets-only .ee-lead#ee-tickets-lead,
+body.ee-connected-tickets-checking .ee-lead#ee-tickets-lead {
+  display: none !important;
+}
+
+body.ee-embed-drawer.organiser-connected-booking-page #hub-site-nav,
+body.ee-embed-drawer.organiser-connected-setup-page #hub-site-nav {
+  display: none !important;
+}
+
+body.ee-embed-drawer.organiser-connected-booking-page .ee-booking-help-shell,
+body.ee-embed-drawer.organiser-connected-setup-page .ee-wrap {
+  max-width: none;
+  padding: 0 16px 24px;
+}
+
+body.ee-embed-drawer.organiser-connected-booking-page .ee-back-row .ee-back[href*='#events'],
+body.ee-embed-drawer.organiser-connected-setup-page .ee-back-row .ee-back[href*='#events'] {
+  display: none !important;
+}
+
+.ee-connected-legal-hint {
+  margin: 8px 0 16px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: rgba(26, 46, 59, 0.04);
+  border-left: 3px solid rgba(13, 110, 122, 0.45);
+}
+
+.org-connected-billing-banner {
+  margin: 0 0 20px;
+  padding: 0;
+  border-radius: 12px;
+  border: 2px solid rgba(13, 110, 122, 0.45);
+  background: linear-gradient(135deg, rgba(13, 110, 122, 0.1) 0%, rgba(255, 255, 255, 0.95) 55%);
+  box-shadow: 0 6px 20px rgba(26, 46, 59, 0.08);
+}
+
+.org-connected-billing-banner--info {
+  border-color: rgba(13, 110, 122, 0.5);
+}
+
+.org-connected-billing-banner--warn {
+  border-color: rgba(180, 95, 0, 0.75);
+  background: linear-gradient(135deg, rgba(255, 193, 7, 0.28) 0%, rgba(255, 248, 230, 0.98) 50%);
+  box-shadow: 0 8px 24px rgba(180, 120, 0, 0.15);
+}
+
+.org-connected-billing-banner-inner {
+  padding: 14px 16px 16px;
+}
+
+.org-connected-billing-banner-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.org-connected-billing-banner.is-collapsed .org-connected-billing-banner-head {
+  margin: 0;
+}
+
+.org-connected-billing-banner-toggle {
+  flex-shrink: 0;
+  border: 1px solid rgba(13, 110, 122, 0.35);
+  background: #fff;
+  color: var(--ee-teal, #0d6e7a);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.org-connected-billing-banner--warn .org-connected-billing-banner-toggle {
+  border-color: rgba(180, 95, 0, 0.45);
+  color: #8a5a00;
+}
+
+.org-connected-billing-banner-title {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+.org-connected-billing-banner-assigned {
+  margin: 12px 0 0;
   font-size: 14px;
   line-height: 1.5;
-  color: var(--ee-text-mid);
 }
 
-.cb-account-notice-actions {
-  grid-column: 1 / -1;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 4px;
-  padding-top: 10px;
-  border-top: 1px solid rgba(26, 46, 59, 0.08);
+.org-connected-billing-banner-page {
+  font-weight: 600;
 }
 
-.cb-account-notice-btn {
-  padding: 8px 14px;
+.org-connected-slot-badge {
+  font-size: 11px;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+
+.org-connected-billing-banner-body {
+  margin: 12px 0;
   font-size: 14px;
-}
-
-#org-connected-billing-banner.cb-account-notice--active {
-  margin: 0 0 16px;
+  line-height: 1.55;
+  color: var(--ee-text-mid, #3d4f5c);
 }
 
 .cb-compare-wrap {
@@ -6148,6 +6244,20 @@ button.cb-plan-card-btn:disabled {
   background: #fff;
   border: 1px solid rgba(26, 46, 59, 0.08);
   box-shadow: 0 4px 16px rgba(26, 46, 59, 0.05);
+}
+
+.cb-pricing-intro-badge {
+  display: inline-block;
+  margin: 0 0 10px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ee-purple-dark);
+  background: rgba(189, 147, 46, 0.2);
+  border: 1px solid rgba(189, 147, 46, 0.35);
 }
 
 .cb-hero-actions {

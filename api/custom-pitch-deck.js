@@ -6,6 +6,8 @@ const { json } = require('./_lib/auth');
 const { wrapHandler } = require('./_lib/sentry');
 const { getSupabaseAdmin, isSupabaseConfigured } = require('./_lib/supabase');
 const { publicPathForSlug } = require('./_lib/custom-pitch-deck-generate');
+const { resolveProspectLogoCandidates } = require('./_lib/prospect-logo-candidates');
+const { enrichDeckWithEmailInventory } = require('./_lib/sponsorship-pitch-catalog');
 
 function normalizeSlug(raw) {
   let s = String(raw || '')
@@ -64,17 +66,33 @@ module.exports = wrapHandler(async function handler(req, res) {
     return json(res, 404, { error: 'not_found', message: 'Pitch deck not found.' });
   }
 
+  const website = data.website || '';
+  const explicitLogo =
+    data.prospect_logo_url || (data.deck && data.deck.hero && data.deck.hero.prospectLogoUrl) || '';
+  const prospectLogoCandidates = await resolveProspectLogoCandidates(website, explicitLogo);
+  const prospectLogoUrl = prospectLogoCandidates[0] || '';
+  const rawDeck = data.deck && typeof data.deck === 'object' ? data.deck : {};
+  const deck = enrichDeckWithEmailInventory(
+    Object.assign({}, rawDeck, {
+      sections: Array.isArray(rawDeck.sections) ? rawDeck.sections.slice() : [],
+      sponsorshipPlacements: Array.isArray(rawDeck.sponsorshipPlacements)
+        ? rawDeck.sponsorshipPlacements.slice()
+        : rawDeck.sponsorshipPlacements,
+    })
+  );
+
   return json(res, 200, {
     ok: true,
     slug: data.slug,
     path: publicPathForSlug(data.slug),
     companyName: data.company_name,
-    website: data.website || '',
+    website: website,
     contactName: data.contact_name || '',
-    prospectLogoUrl: data.prospect_logo_url || (data.deck && data.deck.hero && data.deck.hero.prospectLogoUrl) || '',
+    prospectLogoUrl: prospectLogoUrl,
+    prospectLogoCandidates: prospectLogoCandidates,
     includeSections: data.include_sections || [],
     brief: data.brief || '',
-    deck: data.deck || {},
+    deck: deck,
     updatedAt: data.updated_at,
   });
 });

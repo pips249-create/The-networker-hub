@@ -10,6 +10,7 @@ const {
   hasOpportunityListingLaunchOffer,
   hasOpportunitySpotlightLaunchOffer,
   launchOfferHeroChips,
+  enrichDeckWithEmailInventory,
 } = require('./sponsorship-pitch-catalog');
 
 const SECTION_CATALOG = {
@@ -54,6 +55,17 @@ function hostFromWebsite(website) {
   } catch {
     return '';
   }
+}
+
+function defaultProspectLogoFromWebsite(website) {
+  const host = hostFromWebsite(website);
+  return host ? 'https://logo.clearbit.com/' + host : '';
+}
+
+function resolveProspectLogoUrl(explicit, website) {
+  const url = cleanText(explicit, 2000);
+  if (url) return url;
+  return defaultProspectLogoFromWebsite(website);
 }
 
 function normalizeSections(raw, opts) {
@@ -267,7 +279,7 @@ function sectionTemplates(companyName, website, brief) {
 function buildOrganiserHero(companyName, website, brief, prospectLogoUrl) {
   const co = cleanText(companyName, 120) || 'Your group';
   const host = hostFromWebsite(website);
-  const logo = cleanText(prospectLogoUrl, 2000);
+  const logo = resolveProspectLogoUrl(prospectLogoUrl, website);
   return {
     preparedFor: co,
     website: normalizeWebsite(website),
@@ -285,7 +297,7 @@ function buildOrganiserHero(companyName, website, brief, prospectLogoUrl) {
 function buildSponsorshipHero(companyName, website, brief, prospectLogoUrl, placements) {
   const co = cleanText(companyName, 120) || 'Your brand';
   const host = hostFromWebsite(website);
-  const logo = cleanText(prospectLogoUrl, 2000);
+  const logo = resolveProspectLogoUrl(prospectLogoUrl, website);
   const offerChips = launchOfferHeroChips(placements || []);
   const defaultLede =
     'Reach business owners, event bookers, and opportunity seekers across our Events, Organisers, and Business Opportunities directories — with exclusive and self-serve placements.';
@@ -419,9 +431,10 @@ async function polishDeckWithOpenAI(deck, input) {
   const system =
     'You tailor internal B2B sales pitch decks for The Networker UK (networking ticketing + advertising). ' +
     'Return ONLY valid JSON matching the input shape: { hero, sections, close, deckType, sponsorshipPlacements }. ' +
-    'Keep section ids unchanged. Improve wording to reference the prospect company naturally. ' +
+    'Keep section ids unchanged (including sponsor_email_inventory). Preserve emailInventory objects and template counts. Improve wording to reference the prospect company naturally. ' +
     'Do not invent pricing beyond published packages: Headline Sponsor ~£2k/mo, Page Partner ~£600/mo, Featured Boost £55, City from £29/mo, County from £49/mo, opportunity listing £25/mo + VAT, organiser free to list / keep 100% ticket / attendees 4.5%+20p. ' +
-    'When sections show launch offers (12 months free business opportunity listing and/or 3 months free Premium Spotlight), keep those included terms — do not replace with standard paid pricing.';
+    'When sections show launch offers (12 months free business opportunity listing and/or 3 months free Premium Spotlight), keep those included terms — do not replace with standard paid pricing. ' +
+    'Keep Headline email tallies accurate: Events 21 templates, Organisers 21 templates, Opportunities 11 templates.';
 
   const userPayload = {
     companyName: input.companyName,
@@ -475,12 +488,14 @@ async function polishDeckWithOpenAI(deck, input) {
 
 async function generateCustomPitchDeck(input) {
   const base = buildDeckFromTemplate(input || {});
+  let deck;
   try {
-    return await polishDeckWithOpenAI(base, input || {});
+    deck = await polishDeckWithOpenAI(base, input || {});
   } catch (e) {
     console.warn('custom-pitch-deck generate', e && e.message);
-    return base;
+    deck = base;
   }
+  return enrichDeckWithEmailInventory(deck);
 }
 
 function publicPathForSlug(slug) {

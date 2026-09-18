@@ -2,10 +2,11 @@
 
 const CONNECTED_BOOKING_VAT_RATE = 0.2;
 
+/** Introductory offer (ex VAT) — update Stripe price IDs after `npm run sync-stripe`. */
 const CONNECTED_BOOKING_PLAN_AMOUNTS_EX_VAT_PENCE = {
-  starter: 3900,
-  growth: 9900,
-  scale: 19900,
+  starter: 1900,
+  growth: 3900,
+  scale: 9900,
 };
 
 const CONNECTED_BOOKING_PLAN_LABELS = {

@@ -27,6 +27,7 @@
     "delete-seed-events": "node scripts/delete-seed-events.js",
     "test-external-booking-webhook": "node scripts/test-external-booking-webhook.js",
     "test-connected-booking-subscriptions": "node scripts/test-connected-booking-subscriptions.js",
+    "test-connected-booking-slots": "node scripts/test-connected-booking-slots.js",
     "send-external-booking-webhook": "node scripts/send-external-booking-webhook.js",
     "test-review-e2e": "node scripts/review-e2e-test.js",
     "test-guest-visit-e2e": "node scripts/guest-visit-e2e-test.js",
