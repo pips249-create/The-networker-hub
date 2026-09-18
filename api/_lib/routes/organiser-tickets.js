@@ -7,6 +7,7 @@ const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
 const { adminViewFromSession, resolveOrganiserGroupScope } = require('../organiser-api-scope');
 const { jsonPublicError } = require('../public-error');
 const { arePublicTicketSalesOpen } = require('../soft-launch');
+const { coerceUuid } = require('../uuid');
 
 const EVENT_NOT_OWNED = {
   error: 'event_not_owned',
@@ -82,7 +83,11 @@ module.exports = async function handler(req, res) {
   }
 
   if (req.method === 'GET') {
-    const eventId = String(req.query?.eventId || '').trim();
+    const rawEventId = String(req.query?.eventId || '').trim();
+    const eventId = rawEventId ? coerceUuid(rawEventId) : '';
+    if (rawEventId && !eventId) {
+      return json(res, 400, { error: 'invalid_event_id', message: 'That event id is not valid.' });
+    }
     try {
       if (eventId) {
         const { groupIds, adminView } = await ownedEventIds();
@@ -103,7 +108,7 @@ module.exports = async function handler(req, res) {
   if (req.method === 'POST') {
     const body = parseBody(req);
     const eventIds = Array.isArray(body.eventIds)
-      ? body.eventIds.map((id) => String(id).trim()).filter(Boolean)
+      ? body.eventIds.map((id) => coerceUuid(id)).filter(Boolean)
       : [];
     const tickets = Array.isArray(body.tickets) ? body.tickets : [];
 
@@ -260,7 +265,7 @@ module.exports = async function handler(req, res) {
       }
     }
 
-    const eventId = String(body.eventId || '').trim();
+    const eventId = coerceUuid(body.eventId || '');
     const name = String(body.name || '').trim();
     const price = body.price;
     const description = String(body.description || '').trim();
@@ -293,7 +298,7 @@ module.exports = async function handler(req, res) {
   if (req.method === 'PATCH') {
     const body = parseBody(req);
     const action = String(body.action || '').trim().toLowerCase();
-    const eventId = String(body.eventId || body.event_id || '').trim();
+    const eventId = coerceUuid(body.eventId || body.event_id || '');
     if (action !== 'enable_sales') {
       return json(res, 400, { error: 'invalid_action' });
     }

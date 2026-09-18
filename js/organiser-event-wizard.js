@@ -28,15 +28,38 @@
     }
   }
 
+  var UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  var UUID_FIND = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i;
+
+  function coerceEventId(value) {
+    var raw = Array.isArray(value) ? String(value[0] || '').trim() : String(value || '').trim();
+    if (!raw) return '';
+    if (UUID_RE.test(raw)) return raw;
+    try {
+      var decoded = decodeURIComponent(raw.replace(/\+/g, ' ')).trim();
+      if (decoded) raw = decoded;
+    } catch (err) {
+      /* keep raw */
+    }
+    if (UUID_RE.test(raw)) return raw;
+    var cut = raw.search(/[?#]/);
+    if (cut > 0) {
+      var head = raw.slice(0, cut).trim();
+      if (UUID_RE.test(head)) return head;
+    }
+    var match = raw.match(UUID_FIND);
+    return match ? match[0] : '';
+  }
+
   function collectContext() {
     var params = new URLSearchParams(location.search);
-    var editId = params.get('id') || '';
+    var editId = coerceEventId(params.get('id') || '');
     var idsParam = params.get('ids') || '';
     var eventIds = idsParam
       ? idsParam
           .split(',')
           .map(function (s) {
-            return s.trim();
+            return coerceEventId(s);
           })
           .filter(Boolean)
       : [];
@@ -45,7 +68,7 @@
 
     var series = readSeriesMeta();
     if (!eventIds.length && series && Array.isArray(series.eventIds)) {
-      eventIds = series.eventIds.filter(Boolean);
+      eventIds = series.eventIds.map(coerceEventId).filter(Boolean);
     }
 
     var format = params.get('format') || '';
@@ -190,6 +213,7 @@
 
   window.HubEventWizard = {
     setStepComplete: setStepComplete,
+    coerceEventId: coerceEventId,
   };
 
   if (!isEmbedDrawer && step && mount) render(step, mount);

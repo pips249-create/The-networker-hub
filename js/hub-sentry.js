@@ -65,8 +65,68 @@
     return breadcrumbsMentionFontFace(event);
   }
 
+  function exceptionMessage(event, hint) {
+    var ex = hint && hint.originalException;
+    if (ex) {
+      if (typeof ex === 'string') return ex;
+      if (ex.message) return String(ex.message);
+    }
+    var values = event && event.exception && event.exception.values;
+    if (Array.isArray(values) && values[0] && values[0].value) {
+      return String(values[0].value);
+    }
+    return '';
+  }
+
+  function stackFrames(event) {
+    var values = event && event.exception && event.exception.values;
+    if (!Array.isArray(values) || !values.length) return [];
+    var frames = [];
+    for (var i = 0; i < values.length; i++) {
+      var stack = values[i] && values[i].stacktrace && values[i].stacktrace.frames;
+      if (Array.isArray(stack)) {
+        for (var j = 0; j < stack.length; j++) frames.push(stack[j]);
+      }
+    }
+    return frames;
+  }
+
+  /** Facebook / Meta in-app browser injects navigation_performance_logger; its native bridge fails often. */
+  function isFacebookInAppBrowserNoise(event, hint) {
+    var msg = exceptionMessage(event, hint);
+    if (
+      /Java object is gone/i.test(msg) ||
+      /webkit\.messageHandlers/i.test(msg) ||
+      /Error invoking postMessage/i.test(msg)
+    ) {
+      var frames = stackFrames(event);
+      for (var i = 0; i < frames.length; i++) {
+        var frame = frames[i] || {};
+        var filename = String(frame.filename || frame.abs_path || '');
+        var fn = String(frame.function || '');
+        if (
+          /iabjs:/i.test(filename) ||
+          /navigation_performance_logger/i.test(filename) ||
+          /sendDataToNative|sendBeforeUnloadMessage|processLargestContentfulPaintEvent/i.test(fn) ||
+          /sendDataToNative|sendBeforeUnloadMessage|processLargestContentfulPaintEvent/i.test(filename)
+        ) {
+          return true;
+        }
+      }
+      // Message alone is enough when Meta IAB tags the request (FBAN / FB_IAB) or fbclid traffic.
+      try {
+        var ua = String((navigator && navigator.userAgent) || '');
+        if (/FBAN|FBAV|FB_IAB|Instagram/i.test(ua)) return true;
+      } catch (_eUa) {
+        /* ignore */
+      }
+    }
+    return false;
+  }
+
   function beforeSend(event, hint) {
     if (isFontNetworkError(event, hint)) return null;
+    if (isFacebookInAppBrowserNoise(event, hint)) return null;
     return scrubEvent(event);
   }
 
@@ -143,7 +203,14 @@
       dsn: DSN,
       environment: env,
       sendDefaultPii: false,
-      ignoreErrors: ['NetworkError: A network error occurred.'],
+      ignoreErrors: [
+        'NetworkError: A network error occurred.',
+        'Error invoking postMessage: Java object is gone',
+        /Java object is gone/i,
+        /undefined is not an object \(evaluating 'window\.webkit\.messageHandlers'\)/i,
+        /Can't find variable: webkit/i,
+      ],
+      denyUrls: [/iabjs:/i, /navigation_performance_logger/i],
       beforeSend: beforeSend,
     });
   }
