@@ -862,7 +862,7 @@
             {
               done: webhookReady,
               text:
-                'On this page: click Enable Eventbrite (once per account), then Copy webhook URL. The URL must include …/webhook?token= at the end — not cut off.',
+                'On this page: click Enable Eventbrite, then Copy webhook URL. Use the short link (…/api/w/eb/…) — Eventbrite only keeps the first 74 characters.',
             },
             {
               done: false,
@@ -1005,7 +1005,7 @@
             '<ol class="ecs-eventbrite-admin-guide-steps">' +
             '<li>Profile menu (top right) → <strong>Account settings</strong> → <strong>Webhooks</strong>.</li>' +
             '<li><strong>Add webhook</strong>, or open your existing webhook.</li>' +
-            '<li><strong>Payload URL</strong>: paste the full copied URL. It must end with <code>webhook?token=</code> and a long token — if it stops at <code>…/webhc</code> it is truncated and will not work.</li>' +
+            '<li><strong>Payload URL</strong>: paste the <strong>short</strong> URL from TNH (starts with <code>…/api/w/eb/</code>). Eventbrite cuts URLs at <strong>74 characters</strong> — if you see <code>…/webhc</code> it was truncated and will 404.</li>' +
             '<li><strong>Action</strong>: <code>order.placed</code> (your screenshot is correct). <strong>Events</strong>: All or this event only.</li>' +
             '<li>Save, then use Eventbrite’s <strong>Test</strong> button if offered.</li>' +
             '</ol>' +

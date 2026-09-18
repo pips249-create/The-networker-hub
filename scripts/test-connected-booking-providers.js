@@ -12,6 +12,24 @@ const {
   parseEventbriteEventIdFromUrl,
   guessProviderExternalEventId,
 } = require('../api/_lib/connected-booking-util');
+const {
+  buildProviderWebhookPublicUrl,
+  eventbriteSafeUrlLength,
+  parseShortWebhookRoute,
+} = require('../api/_lib/provider-webhook-url');
+
+const ebUrl = buildProviderWebhookPublicUrl(
+  'https://www.thenetworkeruk.com',
+  'eventbrite',
+  'a'.repeat(32)
+);
+assert.ok(ebUrl.includes('/api/w/eb/'), ebUrl);
+assert.ok(eventbriteSafeUrlLength(ebUrl), 'Eventbrite URL length ' + ebUrl.length);
+
+assert.deepStrictEqual(
+  parseShortWebhookRoute({ url: '/api/w/eb/' + 'b'.repeat(32) }),
+  { provider: 'eventbrite', token: 'b'.repeat(32) }
+);
 
 assert.strictEqual(isConnectedBookingProviderId('eventbrite'), true);
 assert.strictEqual(isConnectedBookingProviderId('nope'), false);
