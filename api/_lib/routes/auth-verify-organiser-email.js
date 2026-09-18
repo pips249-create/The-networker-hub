@@ -1,7 +1,8 @@
 const { setCors, json, sessionFromRequest } = require('../auth');
 const { useSupabase } = require('../supabase');
-const { verifyOrganiserEmailToken } = require('../organiser-email-verification');
+const { verifyOrganiserEmailToken, hasActiveVerifyCode } = require('../organiser-email-verification');
 const { getOrganiserAccessStatus } = require('../organiser-access-guard');
+const { getHubAccount } = require('../supabase-auth');
 
 function parseBody(req) {
   let body = req.body;
@@ -32,7 +33,12 @@ module.exports = async function handler(req, res) {
 
   if (req.method === 'GET') {
     const status = await getOrganiserAccessStatus(session);
-    return json(res, 200, { ok: true, ...status });
+    const hub = await getHubAccount(session.sub);
+    return json(res, 200, {
+      ok: true,
+      ...status,
+      hasActiveVerifyCode: hasActiveVerifyCode(hub),
+    });
   }
 
   if (req.method !== 'POST') return json(res, 405, { error: 'method_not_allowed' });
