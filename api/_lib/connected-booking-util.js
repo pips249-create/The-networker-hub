@@ -150,6 +150,11 @@ function groupLimitForPlan(plan) {
   return PLAN_GROUP_LIMITS[key];
 }
 
+function isConnectedPlanActive(account) {
+  if (!account) return false;
+  return String(account.connected_booking_status || '').trim() === 'active';
+}
+
 module.exports = {
   PLAN_GROUP_LIMITS,
   CHECKOUT_EXTERNAL,
@@ -172,4 +177,5 @@ module.exports = {
   signWebhookPayload,
   verifyWebhookSignature,
   groupLimitForPlan,
+  isConnectedPlanActive,
 };

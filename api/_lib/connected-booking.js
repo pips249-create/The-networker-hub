@@ -19,6 +19,7 @@ const {
   signWebhookPayload,
   verifyWebhookSignature,
   groupLimitForPlan,
+  isConnectedPlanActive,
 } = require('./connected-booking-util');
 
 async function loadOrganiserAccountForOrganiserId(sb, organiserId) {
@@ -41,11 +42,6 @@ async function loadOrganiserAccountForOrganiserId(sb, organiserId) {
     .maybeSingle();
   if (accErr) throw new Error(accErr.message);
   return account ? { ...account, organiser_id: orgId } : null;
-}
-
-function isConnectedPlanActive(account) {
-  if (!account) return false;
-  return String(account.connected_booking_status || '').trim() === 'active';
 }
 
 async function countPublishedGroupsForAccount(sb, organiserAccountId) {
