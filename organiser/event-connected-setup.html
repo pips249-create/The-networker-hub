@@ -13,7 +13,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260909listmenu1" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260917connsetup1" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260918drawerux2" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260812doors2" />
   </head>
   <body class="organiser-event-edit-page organiser-connected-setup-page">
@@ -41,10 +41,16 @@
     </script>
 
     <div class="ee-wrap">
-      <div class="ee-back-row">
+      <div class="ee-back-row ecs-nav-row">
         <a class="ee-back" href="/organiser/#events-list">← Back to My Events</a>
         <button type="button" class="ee-btn ee-btn-outline ee-embed-back" id="ecs-embed-back-tickets" hidden>
-          ← Back to event setup
+          ← Booking options
+        </button>
+        <button type="button" class="ee-btn ee-btn-outline ee-embed-back" id="ecs-embed-back-edit" hidden>
+          ← Event details
+        </button>
+        <button type="button" class="ee-btn ee-btn-outline ee-embed-back" id="ecs-embed-back-location" hidden>
+          ← Location &amp; access
         </button>
         <a class="ee-back ee-back-secondary" id="ecs-edit-event-link" href="/organiser/event-edit" hidden
           >← Event details</a
@@ -76,9 +82,22 @@
       <div class="ee-card" id="ecs-form-card" hidden>
         <h2>Listing on The Networker UK</h2>
         <p class="ee-hint">
-          Payment happens on <strong>your</strong> website (Eventbrite, your checkout, etc.). We show the price below and
-          send visitors to your booking link. Registrations can sync via webhook for attendee tools and verified reviews.
+          Choose where people <strong>pay and book</strong> (not on The Networker UK). We show your price here and send
+          visitors to that system. Turn on the matching webhook so registrations sync for attendee tools and verified
+          reviews.
         </p>
+
+        <fieldset class="ecs-platform-picker" id="ecs-platform-picker">
+          <legend>Where do people book?</legend>
+          <div class="ecs-platform-options" role="radiogroup" aria-label="Booking platform">
+            <button type="button" class="ecs-platform-btn" data-ecs-platform="eventbrite">Eventbrite</button>
+            <button type="button" class="ecs-platform-btn" data-ecs-platform="own_site">Your own website</button>
+            <button type="button" class="ecs-platform-btn" data-ecs-platform="ticket_tailor">Ticket Tailor</button>
+            <button type="button" class="ecs-platform-btn" data-ecs-platform="luma">Luma</button>
+            <button type="button" class="ecs-platform-btn" data-ecs-platform="trybooking">TryBooking</button>
+          </div>
+          <p class="ee-hint ecs-platform-hint" id="ecs-platform-hint" hidden role="status"></p>
+        </fieldset>
 
         <label class="ee-field">
           <span>Price shown on listing <strong>(required)</strong></span>
@@ -170,6 +189,6 @@
 
     <script src="../js/organiser-embed-bootstrap.js?v=20260918embed1" defer></script>
     <script src="../js/organiser-page-loading.js?v=20260811claimux2" defer></script>
-    <script src="../js/organiser-event-connected-setup.js?v=20260918connsetup3" defer></script>
+    <script src="../js/organiser-event-connected-setup.js?v=20260918connsetup4" defer></script>
   </body>
 </html>

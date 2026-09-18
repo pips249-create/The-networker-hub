@@ -1,41 +1,197 @@
 (function () {
   var embed = window.HubOrganiserEmbedBootstrap || {};
 
-  function initEmbedDrawerNav() {
+  function isEmbedDrawer() {
+    return typeof embed.isEmbedDrawer === 'function' ? embed.isEmbedDrawer() : false;
+  }
+
+  function eventIdsForNavigation() {
+    if (typeof embed.eventIdsFromSearch === 'function') {
+      var ids = embed.eventIdsFromSearch();
+      if (ids.length) return ids;
+    }
+    return eventId ? [eventId] : [];
+  }
+
+  function notifyDrawerNav(type) {
+    var ids = eventIdsForNavigation();
+    var payload = {
+      eventId: eventId,
+      eventIds: ids,
+      title: (loadedEvent && loadedEvent.title) || '',
+    };
+    if (typeof embed.notifyParent === 'function' && embed.notifyParent(type, payload)) {
+      return true;
+    }
+    return false;
+  }
+
+  var embedNavBound = false;
+
+  function bindEmbedDrawerNav() {
+    if (!isEmbedDrawer() || embedNavBound) return;
     if (typeof embed.applyEmbedDrawerBodyClass === 'function') {
       embed.applyEmbedDrawerBodyClass();
     }
-    var isEmbed =
-      typeof embed.isEmbedDrawer === 'function' ? embed.isEmbedDrawer() : false;
-    if (!isEmbed) return;
-    var backBtn = document.getElementById('ecs-embed-back-tickets');
-    var ids =
-      typeof embed.eventIdsFromSearch === 'function' ? embed.eventIdsFromSearch() : [];
-    if (backBtn && ids.length) {
-      backBtn.hidden = false;
-      backBtn.addEventListener('click', function (e) {
+    var ids = eventIdsForNavigation();
+    if (!ids.length && !eventId) return;
+    embedNavBound = true;
+
+    function wire(btn, type, fallbackHref) {
+      if (!btn) return;
+      btn.hidden = false;
+      btn.addEventListener('click', function (e) {
         e.preventDefault();
-        if (
-          typeof embed.notifyParent === 'function' &&
-          embed.notifyParent('hub-event-goto-tickets', {
-            eventIds: ids,
-            title: '',
-          })
-        ) {
-          return;
-        }
-        location.href =
-          '/organiser/event-tickets?ids=' +
-          encodeURIComponent(ids.join(',')) +
-          '&embed=1';
+        if (notifyDrawerNav(type)) return;
+        if (fallbackHref) location.href = fallbackHref;
       });
     }
-    if (typeof embed.notifyEmbedDrawerReady === 'function') {
+
+    wire(
+      document.getElementById('ecs-embed-back-tickets'),
+      'hub-event-goto-tickets',
+      ids.length
+        ? '/organiser/event-tickets?ids=' + encodeURIComponent(ids.join(',')) + '&embed=1'
+        : ''
+    );
+    wire(
+      document.getElementById('ecs-embed-back-edit'),
+      'hub-event-goto-edit',
+      eventId ? '/organiser/event-edit?id=' + encodeURIComponent(eventId) + '&embed=1' : ''
+    );
+    wire(
+      document.getElementById('ecs-embed-back-location'),
+      'hub-event-goto-location',
+      eventId ? '/organiser/event-location?id=' + encodeURIComponent(eventId) + '&embed=1' : ''
+    );
+  }
+
+  function initEmbedDrawerNav() {
+    bindEmbedDrawerNav();
+    if (isEmbedDrawer() && typeof embed.notifyEmbedDrawerReady === 'function') {
       embed.notifyEmbedDrawerReady('tickets');
     }
   }
 
   initEmbedDrawerNav();
+
+  var PLATFORM_UI = {
+    eventbrite: {
+      label: 'Eventbrite',
+      placeholder: 'https://www.eventbrite.co.uk/e/your-event-…',
+      hint:
+        'Paste your <strong>Eventbrite event URL</strong> above. Enable <strong>Eventbrite</strong> on ' +
+        '<a href="/organiser/connected-booking#cb-providers-title">Connected booking → Booking providers</a>, ' +
+        'link this TNH event to your Eventbrite event id, and add our webhook URL in Eventbrite admin.',
+    },
+    own_site: {
+      label: 'Your own website',
+      placeholder: 'https://yourdomain.com/book/…',
+      hint:
+        'Paste your checkout URL above. Use <strong>Enable your own website webhook</strong> below (or on Booking providers) ' +
+        'so each sale POSTs to us — no Zapier.',
+    },
+    ticket_tailor: {
+      label: 'Ticket Tailor',
+      placeholder: 'https://www.tickettailor.com/events/…',
+      hint:
+        'Paste your Ticket Tailor event URL. Enable <strong>Ticket Tailor</strong> on ' +
+        '<a href="/organiser/connected-booking#cb-providers-title">Booking providers</a> and link the box office event id.',
+    },
+    luma: {
+      label: 'Luma',
+      placeholder: 'https://lu.ma/…',
+      hint:
+        'Paste your Luma event link. Enable <strong>Luma</strong> on ' +
+        '<a href="/organiser/connected-booking#cb-providers-title">Booking providers</a> and link the Luma event id.',
+    },
+    trybooking: {
+      label: 'TryBooking',
+      placeholder: 'https://…',
+      hint:
+        'Paste your TryBooking event URL. Enable <strong>TryBooking</strong> on ' +
+        '<a href="/organiser/connected-booking#cb-providers-title">Booking providers</a> and link the TryBooking event id.',
+    },
+  };
+
+  var selectedPlatform = '';
+
+  function guessPlatformFromUrl(url) {
+    var u = String(url || '').toLowerCase();
+    if (!u) return '';
+    if (/eventbrite/.test(u)) return 'eventbrite';
+    if (/tickettailor|ticket-tailor/.test(u)) return 'ticket_tailor';
+    if (/lu\.ma|luma\.com/.test(u)) return 'luma';
+    if (/trybooking/.test(u)) return 'trybooking';
+    if (/^https?:\/\//.test(u)) return 'own_site';
+    return '';
+  }
+
+  function platformStorageKey() {
+    return eventId ? 'ecs_booking_platform:' + eventId : '';
+  }
+
+  function applyPlatform(platform, opts) {
+    var key = String(platform || '').trim();
+    if (!PLATFORM_UI[key]) return;
+    selectedPlatform = key;
+    try {
+      var sk = platformStorageKey();
+      if (sk) localStorage.setItem(sk, key);
+    } catch (e) {
+      /* ignore */
+    }
+    var picker = qs('ecs-platform-picker');
+    if (picker) {
+      picker.querySelectorAll('[data-ecs-platform]').forEach(function (btn) {
+        btn.classList.toggle('is-selected', btn.getAttribute('data-ecs-platform') === key);
+        btn.setAttribute('aria-pressed', btn.getAttribute('data-ecs-platform') === key ? 'true' : 'false');
+      });
+    }
+    var meta = PLATFORM_UI[key];
+    var urlInput = qs('ecs-booking-url');
+    if (urlInput && meta.placeholder && (!urlInput.value.trim() || (opts && opts.forcePlaceholder))) {
+      urlInput.placeholder = meta.placeholder;
+    } else if (urlInput && meta.placeholder) {
+      urlInput.placeholder = meta.placeholder;
+    }
+    var hintEl = qs('ecs-platform-hint');
+    if (hintEl) {
+      hintEl.hidden = false;
+      hintEl.innerHTML = meta.hint;
+    }
+  }
+
+  function initPlatformPicker() {
+    var picker = qs('ecs-platform-picker');
+    if (!picker || picker.dataset.bound) return;
+    picker.dataset.bound = '1';
+    picker.querySelectorAll('[data-ecs-platform]').forEach(function (btn) {
+      btn.setAttribute('type', 'button');
+      btn.setAttribute('aria-pressed', 'false');
+      btn.addEventListener('click', function () {
+        applyPlatform(btn.getAttribute('data-ecs-platform'));
+      });
+    });
+    var urlInput = qs('ecs-booking-url');
+    if (urlInput) {
+      urlInput.addEventListener('input', function () {
+        var guess = guessPlatformFromUrl(urlInput.value);
+        if (guess && guess !== selectedPlatform) applyPlatform(guess);
+      });
+    }
+  }
+
+  function restorePlatformSelection() {
+    var fromUrl = guessPlatformFromUrl(qs('ecs-booking-url') && qs('ecs-booking-url').value);
+    var stored = '';
+    try {
+      stored = platformStorageKey() ? localStorage.getItem(platformStorageKey()) || '' : '';
+    } catch (e) {
+      stored = '';
+    }
+    applyPlatform(fromUrl || stored || 'own_site');
+  }
 
   function qs(id) {
     return document.getElementById(id);
@@ -323,8 +479,11 @@
     var editLink = qs('ecs-edit-event-link');
     if (editLink && eventId) {
       editLink.href = '/organiser/event-edit?id=' + encodeURIComponent(eventId);
-      editLink.hidden = false;
+      editLink.hidden = isEmbedDrawer();
     }
+    bindEmbedDrawerNav();
+    initPlatformPicker();
+    restorePlatformSelection();
 
     if (qs('ecs-price-label')) qs('ecs-price-label').value = ev.externalPriceLabel || ev.external_price_label || '';
     if (qs('ecs-booking-url')) qs('ecs-booking-url').value = ev.externalBookingUrl || ev.external_booking_url || '';
@@ -420,6 +579,9 @@
     if (blocked) blocked.hidden = true;
     if (formCard) formCard.hidden = false;
     if (devSection) devSection.hidden = false;
+    bindEmbedDrawerNav();
+    initPlatformPicker();
+    restorePlatformSelection();
     if (slotStatus && billing.plan) {
       slotStatus.hidden = false;
       slotStatus.textContent =

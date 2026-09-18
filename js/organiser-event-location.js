@@ -626,6 +626,22 @@
     return payload;
   }
 
+  function eventHasScheduledDate(ev) {
+    if (!ev) return false;
+    return Boolean(String(ev.date || ev.starts_at || ev.startsAt || '').trim());
+  }
+
+  async function assertEventsHaveDatesForTickets() {
+    const missing = [];
+    for (const id of eventIds) {
+      if (id === loadedEvent?.id && eventHasScheduledDate(loadedEvent)) continue;
+      const res = await api('/api/organiser/events?id=' + encodeURIComponent(id));
+      const ev = res.ok && res.data.event;
+      if (!eventHasScheduledDate(ev)) missing.push(id);
+    }
+    return missing;
+  }
+
   async function saveLocation(options) {
     const continueToTickets = options && options.continueToTickets;
     showAlert('');
@@ -634,6 +650,16 @@
     if (!loadedEvent || !eventIds.length) {
       showAlert('Event not found. Go back to event details and save again.');
       return;
+    }
+
+    if (continueToTickets) {
+      const missingDates = await assertEventsHaveDatesForTickets();
+      if (missingDates.length) {
+        showAlert(
+          'Select at least one date on Event details before continuing. Use ← Event details and pick date(s) on the calendar.'
+        );
+        return;
+      }
     }
 
     const locFields = buildLocationFields();
@@ -743,7 +769,7 @@
     if (isEmbedDrawer && window.parent && window.parent !== window) {
       goToTicketSetup(seriesPayload);
       window.parent.postMessage(
-        { type: 'hub-event-goto-tickets', eventIds, title },
+        { type: 'hub-event-goto-tickets', eventIds, title, fromLocation: true },
         window.location.origin
       );
       return;
@@ -801,8 +827,20 @@
     if (window.HubFieldTip && window.HubFieldTip.init) {
       window.HubFieldTip.init('[data-hub-tip]');
     }
+    const embed = window.HubOrganiserEmbedBootstrap || {};
+    if (typeof embed.notifyEmbedDrawerReady === 'function') {
+      embed.notifyEmbedDrawerReady('location', eventHasScheduledDate(loadedEvent));
+      return;
+    }
     if (isEmbedDrawer && window.parent && window.parent !== window) {
-      window.parent.postMessage({ type: 'hub-event-drawer-ready' }, window.location.origin);
+      window.parent.postMessage(
+        {
+          type: 'hub-event-drawer-ready',
+          progressStep: 'location',
+          stepComplete: eventHasScheduledDate(loadedEvent),
+        },
+        window.location.origin
+      );
     }
   }
 

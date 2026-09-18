@@ -8399,6 +8399,7 @@
   let eventDrawerCreateFlow = false;
   let eventDrawerProgressStep = '';
   let eventDrawerStepComplete = false;
+  let eventDrawerLocationComplete = false;
   let eventDrawerBackEventId = '';
   let eventDrawerBackTarget = '';
 
@@ -8410,6 +8411,8 @@
     backBtn.hidden = !eventDrawerBackEventId;
     if (eventDrawerBackTarget === 'location') {
       backBtn.textContent = '← Location & access';
+    } else if (eventDrawerBackTarget === 'tickets') {
+      backBtn.textContent = '← Booking options';
     } else if (eventDrawerBackTarget === 'details') {
       backBtn.textContent = '← Event details';
     } else {
@@ -8419,6 +8422,10 @@
 
   function goBackFromEventDrawer() {
     if (!eventDrawerBackEventId) return;
+    if (eventDrawerBackTarget === 'tickets') {
+      openEventTicketsDrawer([eventDrawerBackEventId], '');
+      return;
+    }
     if (eventDrawerBackTarget === 'location') {
       openEventLocationDrawer(eventDrawerBackEventId, { fromTickets: true });
       return;
@@ -8492,6 +8499,7 @@
     eventDrawerCreateFlow = false;
     eventDrawerProgressStep = '';
     eventDrawerStepComplete = false;
+    eventDrawerLocationComplete = false;
     renderEventDrawerOverview(null);
     if (frame) frame.removeAttribute('src');
     setTimeout(function () {
@@ -8598,8 +8606,11 @@
       const isCurrent = step.id === stepId;
       // Mark prior steps done; also mark the current step when the iframe reports it is complete
       // (e.g. tickets already saved on a live listing — otherwise step 3 never shows a ✓).
+      // Location only counts as done after the organiser completes that step (not when skipping straight to tickets).
       const isDone =
-        i < currentIndex ||
+        (step.id === 'location'
+          ? eventDrawerLocationComplete && i < currentIndex
+          : i < currentIndex) ||
         (isCurrent && eventDrawerStepComplete) ||
         (stepId === 'publish' && step.id === 'publish');
       let cls = 'ee-wizard-step';
@@ -19810,6 +19821,7 @@
       }
       if (e.data && e.data.type === 'hub-event-goto-tickets') {
         const ids = Array.isArray(e.data.eventIds) ? e.data.eventIds : [];
+        if (e.data.fromLocation) eventDrawerLocationComplete = true;
         if (ids.length) openEventTicketsDrawer(ids, e.data.title || '');
         return;
       }
@@ -19824,6 +19836,7 @@
         if (ids.length) {
           url += '&returnIds=' + encodeURIComponent(ids.join(','));
         }
+        setEventDrawerBackButton(true, eid, 'tickets');
         openEventDrawerFrame(url, e.data.title || 'Connected event setup', null, {
           progressStep: 'tickets',
         });
