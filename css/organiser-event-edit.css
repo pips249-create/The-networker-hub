@@ -5642,9 +5642,16 @@ body.ee-embed-drawer.organiser-connected-setup-page .ee-back-row {
   padding: 0;
 }
 
-body.ee-embed-drawer.organiser-connected-setup-page .ee-embed-back,
-body.ee-embed-drawer.organiser-connected-setup-page .ee-back-secondary {
+body.ee-embed-drawer.organiser-connected-setup-page .ee-back:not(.ee-embed-back) {
+  display: none !important;
+}
+
+body.ee-embed-drawer.organiser-connected-setup-page #ecs-embed-back-tickets:not([hidden]) {
   display: inline-flex !important;
+}
+
+body.ee-embed-drawer.organiser-connected-setup-page .ecs-setup-checklist {
+  display: none;
 }
 
 .ecs-platform-picker {
@@ -5758,7 +5765,7 @@ body.ee-embed-drawer.organiser-connected-setup-page .ee-back-secondary {
 }
 
 .ecs-platform-hint {
-  margin: 12px 0 0;
+  margin: 10px 0 16px;
   padding: 12px 14px;
   border-radius: 8px;
   background: rgba(13, 110, 122, 0.06);

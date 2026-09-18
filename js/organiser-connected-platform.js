@@ -8,44 +8,42 @@
       logo: LOGO_BASE + 'eventbrite.svg',
       placeholder: 'https://www.eventbrite.co.uk/e/your-event-… or checkout link',
       hint:
-        'Use a link that opens <strong>ticket checkout</strong>, not just your Eventbrite listing. Paste your public ' +
-        '<strong>/e/…</strong> URL and we send buyers straight to checkout, or paste ' +
-        '<strong>Marketing → Embedded checkout</strong> preview / ' +
-        '<code>…/checkout-external?eid=</code> from your event dashboard. Enable <strong>Eventbrite</strong> on ' +
-        '<a href="/organiser/connected-booking#cb-providers-title">Connected booking → Booking providers</a>, ' +
-        'link this TNH event to your Eventbrite event id below (we fill it from your URL when we can), and add our webhook URL in Eventbrite admin once.',
+        'Paste a <strong>checkout</strong> link in the field above — your public <strong>/e/…</strong> URL is fine; we send buyers to checkout when we can. ' +
+        'First time only: enable <strong>Eventbrite</strong> on ' +
+        '<a href="/organiser/connected-booking#cb-providers-title">Connected booking → Booking providers</a> and add our webhook in Eventbrite. ' +
+        'Then link your Eventbrite event id below (we fill it from the URL when possible).',
     },
     ticket_tailor: {
       label: 'Ticket Tailor',
       logo: LOGO_BASE + 'ticket-tailor.svg',
       placeholder: 'https://www.tickettailor.com/events/…',
       hint:
-        'Paste your Ticket Tailor event URL in setup. Enable <strong>Ticket Tailor</strong> on ' +
-        '<a href="/organiser/connected-booking#cb-providers-title">Connected booking → Booking providers</a> and link the box office event id.',
+        'Paste your Ticket Tailor event URL in the field above. Enable <strong>Ticket Tailor</strong> on ' +
+        '<a href="/organiser/connected-booking#cb-providers-title">Booking providers</a> and link the box office event id below.',
     },
     luma: {
       label: 'Luma',
       logo: LOGO_BASE + 'luma.svg',
       placeholder: 'https://lu.ma/…',
       hint:
-        'Paste your Luma event link in setup. Enable <strong>Luma</strong> on ' +
-        '<a href="/organiser/connected-booking#cb-providers-title">Connected booking → Booking providers</a> and link the Luma event id.',
+        'Paste your Luma link in the field above. Enable <strong>Luma</strong> on ' +
+        '<a href="/organiser/connected-booking#cb-providers-title">Booking providers</a> and link the Luma event id below.',
     },
     trybooking: {
       label: 'TryBooking',
       logo: LOGO_BASE + 'trybooking.svg',
       placeholder: 'https://…',
       hint:
-        'Paste your TryBooking event URL in setup. Enable <strong>TryBooking</strong> on ' +
-        '<a href="/organiser/connected-booking#cb-providers-title">Connected booking → Booking providers</a> and link the TryBooking event id.',
+        'Paste your TryBooking event URL in the field above. Enable <strong>TryBooking</strong> on ' +
+        '<a href="/organiser/connected-booking#cb-providers-title">Booking providers</a> and link the TryBooking event id below.',
     },
     own_site: {
       label: 'Your own website',
       logo: LOGO_BASE + 'own-site.svg',
       placeholder: 'https://yourdomain.com/book/…',
       hint:
-        'Paste your checkout URL in setup. Enable <strong>Your own website</strong> webhook on Booking providers ' +
-        'so each sale POSTs to us — no Zapier required.',
+        'Paste your checkout URL in the field above. Enable <strong>Your own website</strong> on ' +
+        '<a href="/organiser/connected-booking#cb-providers-title">Booking providers</a> so each sale POSTs to us — no Zapier required.',
     },
     custom: {
       label: 'Other / Zapier',
@@ -161,7 +159,10 @@
       };
     }
     root.dataset.platformBound = '1';
-    var hintEl = root.querySelector('[data-connected-platform-hint]');
+    var hintEl =
+      root.querySelector('[data-connected-platform-hint]') ||
+      (root.closest && root.closest('.ee-card') && root.closest('.ee-card').querySelector('[data-connected-platform-hint]')) ||
+      document.querySelector('[data-connected-platform-hint]');
     var selected = getStored(eventId) || 'own_site';
 
     function apply(platform) {
