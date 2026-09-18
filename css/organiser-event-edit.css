@@ -5602,6 +5602,29 @@ body.ee-embed-drawer.organiser-connected-setup-page .ee-back-row .ee-back[href*=
   display: none !important;
 }
 
+body.ee-embed-drawer.organiser-connected-setup-page .ee-title,
+body.ee-embed-drawer.ee-connected-tickets-only .ee-title {
+  display: none !important;
+}
+
+body.ee-embed-drawer.organiser-connected-setup-page .ee-wrap,
+body.ee-embed-drawer.ee-connected-tickets-only .ee-wrap {
+  padding-top: 0 !important;
+}
+
+body.ee-embed-drawer.organiser-connected-setup-page .ee-lead#ecs-event-title {
+  margin: 0 0 12px;
+}
+
+body.ee-embed-drawer.ee-connected-tickets-only .ee-connected-booking-card {
+  margin-top: 0;
+}
+
+body.ee-embed-drawer.ee-connected-tickets-only .ee-connected-booking-card .ee-card,
+body.ee-embed-drawer.ee-connected-tickets-only #ee-external-booking-card.ee-card {
+  margin-top: 0;
+}
+
 .ee-connected-legal-hint {
   margin: 8px 0 16px;
   padding: 12px 14px;

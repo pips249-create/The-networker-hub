@@ -2796,7 +2796,7 @@
         goToTicketSetup(locationMeta);
         window.parent.postMessage(
           {
-            type: 'hub-event-goto-tickets',
+            type: 'hub-event-goto-location',
             eventIds,
             title,
           },
@@ -2891,6 +2891,10 @@
       bindAutodraft();
       renderCalendar();
       renderSelectedList();
+      if (isEmbedDrawer) {
+        const submitBtn = document.getElementById('ee-submit');
+        if (submitBtn) submitBtn.textContent = 'Continue to location →';
+      }
     } catch (err) {
       console.error('[event-edit] bootEditor failed', err);
       if (isEmbedDrawer) {
