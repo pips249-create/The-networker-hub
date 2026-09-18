@@ -207,6 +207,51 @@
   box-shadow: 0 12px 36px rgba(13, 110, 122, 0.14);
 }
 
+.custom-pitch-page .pitch-stat strong {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  line-height: 1.35;
+}
+
+.custom-pitch-point-list {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+
+.custom-pitch-point-list li {
+  margin: 0;
+  padding: 14px 16px 14px 42px;
+  border-radius: 14px;
+  background: #fff;
+  border: 1.5px solid var(--pitch-border);
+  box-shadow: 0 4px 14px rgba(13, 110, 122, 0.05);
+  position: relative;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--pitch-ink);
+}
+
+.custom-pitch-point-list li::before {
+  content: '✓';
+  position: absolute;
+  left: 14px;
+  top: 14px;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--pitch-teal-soft);
+  color: var(--pitch-teal);
+  font-size: 0.75rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 @media (max-width: 640px) {
   .custom-pitch-hero-showcase {
     padding: 28px 18px 24px;
