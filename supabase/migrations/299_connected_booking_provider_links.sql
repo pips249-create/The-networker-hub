@@ -1,4 +1,4 @@
--- Connected booking: link TNH events to external ticketing providers (Eventbrite, Ticket Tailor, Luma, TryBooking).
+-- Connected booking: link TNH events to external ticketing providers (see also 300 for own_site).
 
 create table if not exists public.connected_booking_provider_connections (
   id uuid primary key default gen_random_uuid(),

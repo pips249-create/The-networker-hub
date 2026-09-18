@@ -1,7 +1,14 @@
 #!/usr/bin/env node
 /**
- * Send a signed test registration to POST /api/integrations/booking
- * (simulates what your site or Zapier should send after an Eventbrite order).
+ * Send a test registration webhook (own booking link or legacy HMAC).
+ *
+ * Own site (token URL — no HMAC):
+ *   node scripts/send-external-booking-webhook.js \
+ *     --url 'https://www.thenetworkeruk.com/api/integrations/providers/own_site/webhook?token=TOKEN' \
+ *     --event-id YOUR_TNH_EVENT_UUID \
+ *     --order-id site-123 --email buyer@example.com
+ *
+ * Legacy HMAC (/api/integrations/booking):
  *
  * Usage (from repo root):
  *   node scripts/send-external-booking-webhook.js \
@@ -73,13 +80,18 @@ async function main() {
   const accountId = args.account_id || process.env.ORGANISER_ACCOUNT_ID;
   const eventId = args.event_id || process.env.TNH_EVENT_ID;
   const secret = args.secret || process.env.CONNECTED_BOOKING_WEBHOOK_SECRET;
+  const tokenOnly = /\/providers\/own_site\/webhook/i.test(url) || Boolean(args.token);
   const orderId = args.order_id || 'test-order-' + Date.now();
   const email = args.email || 'test@example.com';
   const name = args.name || 'Test User';
 
-  if (!accountId || !eventId || !secret) {
+  if (!eventId) {
+    console.error('Missing --event-id (or env TNH_EVENT_ID)');
+    process.exit(1);
+  }
+  if (!tokenOnly && (!accountId || !secret)) {
     console.error(
-      'Missing --account-id, --event-id, or --secret (or env ORGANISER_ACCOUNT_ID, TNH_EVENT_ID, CONNECTED_BOOKING_WEBHOOK_SECRET)'
+      'Missing --account-id or --secret for HMAC webhook (or use own_site token URL / --token)'
     );
     process.exit(1);
   }
@@ -94,12 +106,14 @@ async function main() {
     status: 'confirmed',
   };
   const bodyBuf = Buffer.from(JSON.stringify(payload), 'utf8');
-  const signature = sign(secret, bodyBuf);
 
-  const res = await postJson(url, {
-    'X-Organiser-Account-Id': accountId,
-    'X-Networker-Signature': signature,
-  }, bodyBuf);
+  const headers = tokenOnly
+    ? {}
+    : {
+        'X-Organiser-Account-Id': accountId,
+        'X-Networker-Signature': sign(secret, bodyBuf),
+      };
+  const res = await postJson(url, headers, bodyBuf);
 
   console.log('HTTP', res.status);
   console.log(res.body);

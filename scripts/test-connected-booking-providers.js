@@ -4,6 +4,7 @@ const { normalizeEventbriteWebhook } = require('../api/_lib/connected-booking-pr
 const { normalizeTicketTailorWebhook } = require('../api/_lib/connected-booking-providers/adapters/ticket-tailor');
 const { normalizeLumaWebhook } = require('../api/_lib/connected-booking-providers/adapters/luma');
 const { normalizeTryBookingWebhook } = require('../api/_lib/connected-booking-providers/adapters/trybooking');
+const { normalizeOwnSiteWebhook } = require('../api/_lib/connected-booking-providers/adapters/own-site');
 const { isConnectedBookingProviderId, CONNECTED_BOOKING_PROVIDERS } = require('../api/_lib/connected-booking-providers');
 
 assert.strictEqual(isConnectedBookingProviderId('eventbrite'), true);
@@ -45,5 +46,15 @@ const tb = normalizeTryBookingWebhook({
   data: { event_id: 'tb-1', booking_id: 'b-1', email: 'try@example.com' },
 });
 assert.strictEqual(tb.externalEventId, 'tb-1');
+
+const own = normalizeOwnSiteWebhook({
+  eventId: '00000000-0000-4000-8000-000000000001',
+  orderId: 'site-42',
+  email: 'own@example.com',
+  name: 'Sam',
+  amountPaid: 10,
+});
+assert.strictEqual(own.tnhEventId, '00000000-0000-4000-8000-000000000001');
+assert.ok(own.orderId.startsWith('own-site-'));
 
 console.log('test-connected-booking-providers: ok');

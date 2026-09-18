@@ -30,11 +30,19 @@ const CONNECTED_BOOKING_PROVIDERS = [
     docsHint: 'Use the TryBooking event id from your booking admin.',
   },
   {
+    id: 'own_site',
+    label: 'Your own website',
+    status: 'live',
+    webhookPath: '/api/integrations/providers/own_site/webhook',
+    docsHint:
+      'Use your own booking/checkout URL on the listing. After each sale, POST JSON with TNH eventId, orderId, and email to your webhook URL (no Zapier).',
+  },
+  {
     id: 'custom',
     label: 'Custom (HMAC webhook)',
     status: 'live',
     webhookPath: '/api/integrations/booking',
-    docsHint: 'Developer POST with X-Networker-Signature — same as legacy Connected webhook.',
+    docsHint: 'Developer POST with X-Networker-Signature — advanced integrations.',
   },
 ];
 

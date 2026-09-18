@@ -14,6 +14,7 @@ const {
   resolveConnectionByToken,
 } = require('../connected-booking-provider-store');
 const { ingestConnectedBookingRegistration } = require('../connected-booking-ingest');
+const { isUuid } = require('../uuid');
 
 function readRawBody(req) {
   if (Buffer.isBuffer(req.body)) return req.body;
@@ -108,28 +109,38 @@ module.exports = async function handler(req, res, providerId) {
     });
   }
 
-  const link = await findEventLinkByExternal(sb, provider, normalized.externalEventId);
-  if (!link?.event_id) {
-    await logExternalSync(sb, {
-      organiser_account_id: connection.organiser_account_id,
-      outcome: 'rejected',
-      http_status: 404,
-      message: provider + ':event_not_linked',
-      external_order_id: normalized.orderId,
-      payload: { externalEventId: normalized.externalEventId },
-    });
-    return json(res, 404, {
-      ok: false,
-      error: 'event_not_linked',
-      message:
-        'No TNH event is linked to this ' +
-        provider +
-        ' event id. Link the event in Connected booking → Booking providers.',
-    });
-  }
+  let targetEventId = null;
 
-  if (link.organiser_account_id !== connection.organiser_account_id) {
-    return json(res, 403, { ok: false, error: 'link_account_mismatch' });
+  if (provider === 'own_site') {
+    targetEventId = String(normalized.tnhEventId || normalized.externalEventId || '').trim();
+    if (!isUuid(targetEventId)) {
+      return json(res, 400, { ok: false, error: 'invalid_event_id' });
+    }
+  } else {
+    const link = await findEventLinkByExternal(sb, provider, normalized.externalEventId);
+    if (!link?.event_id) {
+      await logExternalSync(sb, {
+        organiser_account_id: connection.organiser_account_id,
+        outcome: 'rejected',
+        http_status: 404,
+        message: provider + ':event_not_linked',
+        external_order_id: normalized.orderId,
+        payload: { externalEventId: normalized.externalEventId },
+      });
+      return json(res, 404, {
+        ok: false,
+        error: 'event_not_linked',
+        message:
+          'No TNH event is linked to this ' +
+          provider +
+          ' event id. Link the event in Connected booking → Booking providers.',
+      });
+    }
+
+    if (link.organiser_account_id !== connection.organiser_account_id) {
+      return json(res, 403, { ok: false, error: 'link_account_mismatch' });
+    }
+    targetEventId = link.event_id;
   }
 
   const { data: account, error: accErr } = await sb
@@ -143,7 +154,7 @@ module.exports = async function handler(req, res, providerId) {
     const result = await ingestConnectedBookingRegistration({
       sb,
       account,
-      eventId: link.event_id,
+      eventId: targetEventId,
       body: normalized,
       logPayload: {
         provider,
@@ -152,11 +163,11 @@ module.exports = async function handler(req, res, providerId) {
       },
       providerLabel: provider,
     });
-    return json(res, 200, { ok: true, provider, eventId: link.event_id, ...result });
+    return json(res, 200, { ok: true, provider, eventId: targetEventId, ...result });
   } catch (e) {
     await logExternalSync(sb, {
       organiser_account_id: connection.organiser_account_id,
-      event_id: link.event_id,
+      event_id: targetEventId,
       external_order_id: normalized.orderId,
       outcome: 'error',
       http_status: e.status || 500,

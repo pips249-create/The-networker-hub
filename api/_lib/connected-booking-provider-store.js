@@ -84,8 +84,12 @@ async function findEventLinkByExternal(sb, provider, externalEventId) {
 async function upsertEventLink(sb, accountId, input) {
   const eventId = String(input.eventId || '').trim();
   const provider = String(input.provider || '').trim().toLowerCase();
-  const externalEventId = String(input.externalEventId || input.external_event_id || '').trim();
+  let externalEventId = String(input.externalEventId || input.external_event_id || '').trim();
   const externalEventUrl = String(input.externalEventUrl || input.external_event_url || '').trim() || null;
+
+  if (provider === 'own_site' && eventId && !externalEventId) {
+    externalEventId = eventId;
+  }
 
   if (!eventId || !provider || !externalEventId) {
     const e = new Error('event_id, provider, and external_event_id are required.');

@@ -33,7 +33,7 @@ While this is set, **only that signed-in email** sees `/organiser/connected-book
 
 When ready to launch for all organisers: **remove** `CONNECTED_BOOKING_PREVIEW_EMAILS` and set `CONNECTED_BOOKING_ENABLED=true`.
 
-1. Run migrations `292_external_connected_booking.sql`, `298_connected_booking_stripe_customer.sql`, `297_connected_booking_organiser_slots.sql`, and `299_connected_booking_provider_links.sql` (provider webhooks).
+1. Run migrations `292`, `298`, `297`, `299`, and `300_connected_booking_own_site_provider.sql` (provider webhooks + own website).
 2. Set `CONNECTED_BOOKING_ENABLED=true` on Vercel (or use preview emails above until launch).
 3. Ensure `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` are set (same webhook endpoint as Hub checkout).
 4. After changing intro prices in `api/_lib/connected-booking-pricing.js`, run `npm run sync-stripe` and update Vercel **`STRIPE_CONNECTED_BOOKING_*_PRICE_ID`** env vars (checkout also works with dynamic line items if price IDs are missing).
@@ -79,7 +79,7 @@ npm run test-connected-booking-subscriptions
 npm run test-external-booking-webhook
 ```
 
-**Provider webhooks (Eventbrite, Ticket Tailor, Luma, TryBooking):** see [CONNECTED-BOOKING-PROVIDERS.md](./CONNECTED-BOOKING-PROVIDERS.md) — migration **299**, no Zapier required.
+**Provider webhooks (your own booking link, Eventbrite, Ticket Tailor, Luma, TryBooking):** see [CONNECTED-BOOKING-PROVIDERS.md](./CONNECTED-BOOKING-PROVIDERS.md) — migrations **299** + **300**, no Zapier required.
 
 **Pilot / manual webhook test:** see [CONNECTED-BOOKING-PILOT-TEST.md](./CONNECTED-BOOKING-PILOT-TEST.md) (`CONNECTED_BOOKING_PILOT_GRANT_EMAILS`, webhook script).
 

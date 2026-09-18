@@ -31,7 +31,7 @@
     if (data.schemaMissing && schemaWarn) {
       schemaWarn.hidden = false;
       schemaWarn.textContent =
-        'Run Supabase migration 299_connected_booking_provider_links.sql to enable provider webhooks.';
+        'Run Supabase migrations 299_connected_booking_provider_links.sql and 300_connected_booking_own_site_provider.sql to enable provider webhooks.';
     } else if (schemaWarn) {
       schemaWarn.hidden = true;
     }
@@ -114,6 +114,30 @@
       });
   }
 
+  var providerSelect = document.getElementById('cb-link-provider');
+  var externalIdLabel = document.getElementById('cb-link-external-id-label');
+  var externalIdInput = document.getElementById('cb-link-external-id');
+  var ownSiteHint = document.getElementById('cb-own-site-payload-hint');
+
+  function syncLinkFormForProvider() {
+    var p = providerSelect ? providerSelect.value : '';
+    var isOwn = p === 'own_site';
+    if (externalIdLabel) {
+      externalIdLabel.textContent = isOwn
+        ? 'Optional — leave blank to use TNH event id only in webhook JSON'
+        : 'Provider event id';
+    }
+    if (externalIdInput) {
+      externalIdInput.placeholder = isOwn ? 'Same as TNH event id if you link for records' : '';
+    }
+    if (ownSiteHint) ownSiteHint.hidden = !isOwn;
+  }
+
+  if (providerSelect) {
+    providerSelect.addEventListener('change', syncLinkFormForProvider);
+    syncLinkFormForProvider();
+  }
+
   if (saveLinkBtn) {
     saveLinkBtn.addEventListener('click', function () {
       var eventId = document.getElementById('cb-link-event-id');
@@ -125,9 +149,16 @@
         provider: provider ? provider.value : '',
         externalEventId: externalId ? externalId.value.trim() : '',
       };
-      if (!payload.eventId || !payload.externalEventId) {
-        setLinkStatus('Enter TNH event id and provider event id.', 'error');
+      if (!payload.eventId) {
+        setLinkStatus('Enter TNH event id.', 'error');
         return;
+      }
+      if (payload.provider !== 'own_site' && !payload.externalEventId) {
+        setLinkStatus('Enter provider event id.', 'error');
+        return;
+      }
+      if (payload.provider === 'own_site' && !payload.externalEventId) {
+        payload.externalEventId = payload.eventId;
       }
       saveLinkBtn.disabled = true;
       setLinkStatus('Saving…');
@@ -148,7 +179,12 @@
             setLinkStatus(res.body.message || res.body.error || 'Could not save link.', 'error');
             return;
           }
-          setLinkStatus('Event linked. New orders from this provider event id will sync here.', 'ok');
+          setLinkStatus(
+            payload.provider === 'own_site'
+              ? 'Event noted. Webhook POSTs use eventId in JSON — linking is optional for your own site.'
+              : 'Event linked. New orders from this provider event id will sync here.',
+            'ok'
+          );
         })
         .catch(function () {
           saveLinkBtn.disabled = false;

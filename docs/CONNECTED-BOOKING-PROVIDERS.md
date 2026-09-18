@@ -1,6 +1,6 @@
 # Connected booking — provider integrations
 
-Organisers pay **one Connected subscription**. Checkout stays on **Eventbrite, Ticket Tailor, Luma, TryBooking**, or a custom site. The Networker UK receives **order webhooks** and creates **registrations** on the linked TNH event.
+Organisers pay **one Connected subscription**. Checkout stays on **their own website**, **Eventbrite, Ticket Tailor, Luma, TryBooking**, or other systems. The Networker UK receives **order webhooks** and creates **registrations** on the TNH event.
 
 ## Architecture
 
@@ -16,7 +16,9 @@ connected_booking_event_links (provider + external id → TNH event_id)
 Same registration ingest as POST /api/integrations/booking
 ```
 
-**Custom / developer:** continue using `POST /api/integrations/booking` with HMAC (`X-Networker-Signature`).
+**Your own website:** enable **Your own website**, copy the token webhook URL, and POST after each sale (see below).
+
+**Custom / developer (advanced):** `POST /api/integrations/booking` with HMAC (`X-Networker-Signature`).
 
 ## Database
 
@@ -43,10 +45,33 @@ Run migration **`299_connected_booking_provider_links.sql`** (after 292, 297, 29
 | PATCH | `{ action: 'link_event', eventId, provider, externalEventId }` | Map TNH event |
 | PATCH | `{ action: 'unlink_event', eventId }` | Remove link |
 
+## Your own booking link / website
+
+1. Connected event setup → **Booking URL** = your checkout page (any HTTPS link you control).
+2. **Booking providers** → **Enable** → **Your own website**.
+3. After each completed booking, your site (or form plugin, small script, CRM) POSTs to your webhook URL:
+
+```json
+{
+  "eventId": "YOUR_TNH_EVENT_UUID",
+  "orderId": "unique-booking-ref",
+  "email": "buyer@example.com",
+  "name": "Buyer Name",
+  "quantity": 1,
+  "amountPaid": 15,
+  "status": "confirmed"
+}
+```
+
+No Eventbrite id and no Zapier. `eventId` must be the TNH event UUID from Connected event setup. `orderId` must be unique per booking (retries with the same id are treated as duplicates).
+
+Optional: **Link event** with provider **Your own website** and the same TNH uuid in both fields — for your records only; the webhook still keys off `eventId` in the JSON.
+
 ## Inbound webhooks
 
 | Provider | URL |
 |----------|-----|
+| Your own website | `/api/integrations/providers/own_site/webhook?token=…` |
 | Eventbrite | `/api/integrations/providers/eventbrite/webhook?token=…` |
 | Ticket Tailor | `/api/integrations/providers/ticket_tailor/webhook?token=…` |
 | Luma | `/api/integrations/providers/luma/webhook?token=…` |
@@ -54,12 +79,13 @@ Run migration **`299_connected_booking_provider_links.sql`** (after 292, 297, 29
 
 Token is issued when the organiser clicks **Enable** (or via PATCH). Without a valid token → `401 invalid_webhook_token`.
 
-Without a linked TNH event for the provider’s event id → `404 event_not_linked`.
+For third-party providers, without a linked TNH event for the provider’s event id → `404 event_not_linked`. **Your own website** uses `eventId` in the JSON instead (no external id required).
 
 ## Provider-specific notes
 
 | Provider | External event id | Webhook setup |
 |----------|-------------------|---------------|
+| **Your own website** | TNH event UUID in webhook JSON (`eventId`) | Your checkout POSTs to token URL after each sale — no provider admin. |
 | **Eventbrite** | Numeric id from `…/e/…` or API (`123456789`) | Eventbrite webhook pointing at TNH URL; map `order.placed` (payload shapes vary — adapter handles common v3 fields). |
 | **Ticket Tailor** | Box office event id | Ticket Tailor outbound webhook → TNH URL. |
 | **Luma** | Event api id | Luma webhook → TNH URL. |
