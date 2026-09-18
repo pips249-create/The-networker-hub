@@ -5414,7 +5414,12 @@
 
         try {
         if (eventIsExternalConnected(evNow)) {
-          const url = String(evNow.externalBookingUrl || '').trim();
+          const raw = String(evNow.externalBookingUrl || '').trim();
+          const url =
+            window.HubExternalBookingUrl &&
+            typeof window.HubExternalBookingUrl.toAttendeeBookingUrl === 'function'
+              ? window.HubExternalBookingUrl.toAttendeeBookingUrl(raw)
+              : raw;
           if (url) window.open(url, '_blank', 'noopener,noreferrer');
           return;
         }

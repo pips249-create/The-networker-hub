@@ -37,15 +37,12 @@
   let featureEnabled = false;
   let loadedEvent = null;
   let billingPayload = null;
+  let platformPicker = null;
 
   function cacheSetupPrefetch() {
     const eid = resolveEventId();
     if (!eid || !loadedEvent || typeof embed.writeConnectedSetupPrefetch !== 'function') return;
     embed.writeConnectedSetupPrefetch(eid, loadedEvent, billingPayload);
-  }
-
-  if (isEmbedDrawer()) {
-    document.documentElement.classList.add('ee-connected-tickets-checking');
   }
 
   if (isEmbedDrawer()) {
@@ -146,6 +143,22 @@
     });
   }
 
+  function selectedPlatform() {
+    if (platformPicker && platformPicker.getSelected) return platformPicker.getSelected();
+    const hub = window.HubConnectedPlatform;
+    const eid = resolveEventId();
+    if (hub && eid) return hub.getStored(eid) || 'own_site';
+    return 'own_site';
+  }
+
+  function initPlatformPicker() {
+    const root = document.getElementById('ee-connected-platform-picker');
+    const hub = window.HubConnectedPlatform;
+    const eid = resolveEventId();
+    if (!root || !hub || !eid) return;
+    platformPicker = hub.bindPicker(root, eid);
+  }
+
   function bindSetupLink() {
     if (!setupLink || setupLink.dataset.boundConnectedSetup) return;
     setupLink.dataset.boundConnectedSetup = '1';
@@ -153,6 +166,7 @@
       const eid = resolveEventId();
       if (!eid) return;
       const ids = eventIdsFromQueryArray();
+      const platform = selectedPlatform();
       cacheSetupPrefetch();
       if (setupLink) {
         setupLink.setAttribute('aria-busy', 'true');
@@ -168,6 +182,7 @@
           eventId: eid,
           eventIds: ids,
           title: (loadedEvent && loadedEvent.title) || '',
+          platform: platform,
         })
       ) {
         e.preventDefault();
@@ -177,9 +192,14 @@
         setupLink.href = embed.buildEmbedHref('/organiser/event-connected-setup', {
           id: eid,
           eventIds: ids,
+          platform: platform,
         });
       } else {
-        setupLink.href = '/organiser/event-connected-setup?id=' + encodeURIComponent(eid);
+        setupLink.href =
+          '/organiser/event-connected-setup?id=' +
+          encodeURIComponent(eid) +
+          '&platform=' +
+          encodeURIComponent(platform);
       }
     });
   }
@@ -204,6 +224,7 @@
         setupHref = embed.buildEmbedHref('/organiser/event-connected-setup', {
           id: eid,
           eventIds: eventIdsFromQueryArray(),
+          platform: selectedPlatform(),
         });
       } else {
         setupHref = eid
@@ -224,6 +245,7 @@
     }
 
     setConnectedOnlyLayout(true);
+    initPlatformPicker();
 
     if (isExternalConnectedEvent(loadedEvent)) {
       card.classList.add('is-active');

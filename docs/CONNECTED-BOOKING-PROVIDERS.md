@@ -33,7 +33,7 @@ Run migration **`299_connected_booking_provider_links.sql`** (after 292, 297, 29
 2. **Connected booking** → **Booking providers** → **Enable** Eventbrite (or other).
 3. Copy **Webhook URL** into the provider’s webhook settings (Eventbrite admin, Ticket Tailor, etc.).
 4. **Link event:** TNH event UUID + provider event id (e.g. Eventbrite numeric id from the event URL).
-5. Publish Connected event on TNH with booking URL pointing at provider.
+5. Publish Connected event on TNH with **booking URL** pointing at provider checkout (for Eventbrite, use ticket checkout — not only the public event listing; TNH rewrites common `/e/…` links to `checkout-external?eid=` on save).
 6. Test order → **Recent sync attempts** shows `eventbrite:accepted` (or provider id).
 
 ## API (organiser session)

@@ -33,6 +33,15 @@ function normalizeOccurrences(body) {
   return single ? [{ date: single, endDate: body.endDate || '' }] : [];
 }
 
+/** When PATCH omits dates (e.g. Connected setup publish), keep the event’s existing schedule. */
+function occurrencesFromExistingEvent(existing) {
+  if (!existing) return [];
+  const date = String(existing.date || existing.startsAt || existing.starts_at || '').trim();
+  if (!date) return [];
+  const endDate = String(existing.endDate || existing.endsAt || existing.ends_at || '').trim();
+  return [{ date, endDate }];
+}
+
 function eventPayloadFromBody(body, email) {
   const payload = {
     email,
@@ -258,7 +267,6 @@ module.exports = async function handler(req, res) {
       if (!access.ok) return json(res, 403, EVENT_NOT_OWNED);
       const { groups } = access;
       validateEventDescription(body);
-      const occ = normalizeOccurrences(body);
       const base = eventPayloadFromBody(body, auth.session.email);
       if (!base.title) return json(res, 400, { error: 'missing_title' });
       if (!base.groupId) return json(res, 400, { error: 'missing_group' });
@@ -266,12 +274,17 @@ module.exports = async function handler(req, res) {
         return json(res, 403, { error: 'group_not_owned' });
       }
 
+      const existing = await getEventById(eventId);
+      let occ = normalizeOccurrences(body);
+      if (!occ.length) {
+        occ = occurrencesFromExistingEvent(existing);
+      }
+
       const listingStatus = String(base.listingStatus || 'draft').toLowerCase();
       const isDraft = listingStatus === 'draft';
       if (!occ.length && !isDraft) {
         return json(res, 400, { error: 'missing_dates', message: 'Select at least one date before publishing.' });
       }
-      const existing = await getEventById(eventId);
       const seriesGroupId = resolveSeriesGroupId(existing.seriesGroupId, occ.length);
       const synced = await syncSeriesOccurrencesForEvent(eventId, {
         base,
