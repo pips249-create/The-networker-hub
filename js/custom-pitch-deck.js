@@ -422,7 +422,7 @@
   function renderDeck(payload) {
     var deck = payload.deck || {};
     deck.hero = enrichHero(deck.hero, payload);
-    var sections = deck.sections || [];
+    var sections = Array.isArray(deck.sections) ? deck.sections : [];
     var root = document.getElementById('custom-pitch-root');
     if (!root) return;
 
@@ -433,15 +433,21 @@
       bannerLabel.textContent = 'Tailored deck — ' + (payload.companyName || 'prospect');
     }
 
-    var previewCtx = {
-      companyName: payload.companyName,
-      website: payload.website,
-      logoUrl: deck.hero.prospectLogoUrl || '',
-    };
-    var liveHtml =
-      window.CustomPitchPreviews && CustomPitchPreviews.renderLiveExamplesSection
-        ? CustomPitchPreviews.renderLiveExamplesSection(previewCtx, deck)
-        : '';
+    var liveHtml = '';
+    try {
+      var previewCtx = {
+        companyName: payload.companyName,
+        website: payload.website,
+        logoUrl: (deck.hero && deck.hero.prospectLogoUrl) || '',
+      };
+      if (window.CustomPitchPreviews && typeof CustomPitchPreviews.renderLiveExamplesSection === 'function') {
+        liveHtml = CustomPitchPreviews.renderLiveExamplesSection(previewCtx, deck) || '';
+      }
+    } catch (previewErr) {
+      console.warn('[custom-pitch-deck] live examples skipped', previewErr);
+      liveHtml = '';
+    }
+
     var navSections = sections.slice();
     var sectionParts = sections.map(renderSection);
     if (liveHtml) {
@@ -468,8 +474,12 @@
 
     bindSectionNav();
     bindProspectLogoFallback(root, payload);
-    if (window.CustomPitchPreviews && CustomPitchPreviews.bindTabs) {
-      CustomPitchPreviews.bindTabs(root);
+    try {
+      if (window.CustomPitchPreviews && typeof CustomPitchPreviews.bindTabs === 'function') {
+        CustomPitchPreviews.bindTabs(root);
+      }
+    } catch (tabErr) {
+      console.warn('[custom-pitch-deck] preview tabs skipped', tabErr);
     }
   }
 
@@ -493,10 +503,15 @@
         );
         return;
       }
-      renderDeck(result.data);
+      try {
+        renderDeck(result.data);
+      } catch (renderErr) {
+        console.error('[custom-pitch-deck] render', renderErr);
+        showError('Could not display this pitch deck. Try a hard refresh, then open the link from Command Centre again.');
+      }
     })
     .catch(function (err) {
       console.error('[custom-pitch-deck]', err);
-      showError('Could not load this pitch deck — check your connection and try again.');
+      showError('Could not load this pitch deck. Try a hard refresh (Ctrl+Shift+R), then open the link from Command Centre again.');
     });
 })();
