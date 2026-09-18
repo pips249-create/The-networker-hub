@@ -41,7 +41,7 @@ const PUBLIC_PAGES = [
   { path: '/opportunities/', expect: /opportunit/i },
   { path: '/faq', expect: /faq|question/i },
   { path: '/about', expect: /about|networker/i },
-  { path: '/contact', expect: /contact|hubert/i },
+  { path: '/contact', expect: /contact|rosie|catherine|message/i },
   { path: '/for-organisers', expect: /organis/i },
   { path: '/for-attendees', expect: /My account|attendee|networker|peek/i },
   { path: '/peek', expect: /networker|hub/i },

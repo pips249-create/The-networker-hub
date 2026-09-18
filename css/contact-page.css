@@ -164,6 +164,17 @@
   position: relative;
 }
 
+/* Team email form only — drop chat shell sizing that left empty space / clipped actions */
+.contact-chat--team-only {
+  min-height: 0;
+  overflow: visible;
+}
+
+.contact-chat--team-only .contact-team-form {
+  border-top: 0;
+  margin-top: 0;
+}
+
 .contact-chat-body {
   flex: 1;
   display: flex;
@@ -486,6 +497,10 @@
 
   .contact-chat {
     min-height: 480px;
+  }
+
+  .contact-chat--team-only {
+    min-height: 0;
   }
 }
 
