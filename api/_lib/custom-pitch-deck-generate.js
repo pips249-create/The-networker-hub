@@ -81,28 +81,57 @@ function normalizeSections(raw, opts) {
   return out;
 }
 
+function isFlexibleFranchiseProspect(companyName, brief) {
+  const hay = String(companyName || '') + ' ' + String(brief || '');
+  return /pink\s*spaghetti|franchise|PA\/VA|virtual assistant|work[-\s]?life|career return/i.test(
+    hay
+  );
+}
+
 function sponsorshipOpeningSection(companyName, brief, placements) {
   const co = cleanText(companyName, 120) || 'your brand';
   const briefBit = cleanText(brief, 400);
   const listingOffer = hasOpportunityListingLaunchOffer(placements);
   const spotlightOffer = hasOpportunitySpotlightLaunchOffer(placements);
+  const franchiseFit = isFlexibleFranchiseProspect(companyName, brief);
   let intro =
-    'Confirm who they want to reach (event bookers, group owners, opportunity seekers), budget, and timing — then map packages from /advertising.';
+    'Confirm who they want to reach, budget, and timing — then map packages from /advertising.';
   if (listingOffer || spotlightOffer) {
+    intro =
+      'Lead with the zero-risk launch partnership for ' +
+      co +
+      ', then discuss optional Headline scale-ups only if they want total site takeover.';
     intro +=
-      ' For this conversation we are leading with the launch partnership: ' +
+      ' Included now: ' +
       (listingOffer ? '12 months business opportunity directory listing at no charge' : '') +
       (listingOffer && spotlightOffer ? ' plus ' : '') +
       (spotlightOffer ? '3 months Premium Spotlight on /opportunities/ at no charge' : '') +
-      '.';
+      ' (combined package worth £465 + VAT).';
   }
   if (briefBit) intro += ' Focus: ' + briefBit;
-  const bullets = [
-    'Who is the target buyer — business owners, franchisees, professionals booking events?',
-    'Which parts of the site matter most — Events, Organisers, or Opportunities?',
-    'Monthly vs prepaid commitment — most packages offer 1–12 month terms',
-    'Any category exclusivity or geographic focus (city / county)?',
-  ];
+
+  const bullets = [];
+  if (listingOffer || spotlightOffer) {
+    bullets.push(
+      'Step 1 (immediate, zero-risk): claim the free 12-month listing + 3-month Premium Spotlight'
+    );
+    bullets.push(
+      'Step 2 (optional scale-up): Headline Sponsorship (~£2,000/mo + VAT) for maximum B2B takeover — only after the listing is live'
+    );
+  }
+  if (franchiseFit) {
+    bullets.push(
+      'Target audience: aspiring entrepreneurs, professionals seeking flexible franchise opportunities, career returners, and remote / work-life-balance business managers'
+    );
+  } else {
+    bullets.push(
+      'Who is the target buyer — business owners, franchisees, professionals booking events?'
+    );
+  }
+  bullets.push(
+    'Which parts of the site matter most — Opportunities first, then Events or Organisers if they want scale?',
+    'Any category exclusivity or geographic focus (city / county)?'
+  );
   if (listingOffer) {
     bullets.unshift(
       'Confirm go-live date for the business opportunity listing — 12 months subscription included in this launch offer'
@@ -130,21 +159,28 @@ function sponsorshipNextStepsSection(companyName, placements) {
   const listingOffer = hasOpportunityListingLaunchOffer(placements);
   const spotlightOffer = hasOpportunitySpotlightLaunchOffer(placements);
   const bullets = [];
-  if (listingOffer) {
+  if (listingOffer || spotlightOffer) {
     bullets.push(
-      'Confirm listing copy, investment level, and owner email — we publish the business opportunity page and start the included 12-month period'
+      'Logo: high-res PNG or SVG (landscape) for the listing and spotlight card',
+      'Franchise overview: 150–300 words plus key investment figures (e.g. franchise fee)',
+      'Target destination: direct HTTPS URL for franchise / opportunity enquiries',
+      'Lead email: where candidate enquiries should be routed'
+    );
+    if (spotlightOffer) {
+      bullets.push(
+        'Preferred start month for the first of three included Premium Spotlight windows'
+      );
+    }
+    bullets.push(
+      'Optional later: confirm any Headline or Industry placements (separate packages — not required for the launch offer)'
+    );
+  } else {
+    bullets.push(
+      'Confirm additional placements and start dates (or enquire about Headline Sponsorship)',
+      'Share logo assets and landing URL for creative',
+      'Book a 15-minute walkthrough of live placements on the site'
     );
   }
-  if (spotlightOffer) {
-    bullets.push(
-      'Schedule the three included Premium Spotlight months in Command Centre (no Stripe checkout for this launch offer)'
-    );
-  }
-  bullets.push(
-    'Confirm any additional placements and start dates (or enquiry for Headline / Industry slots)',
-    'Share logo assets and landing URL for creative',
-    'Book a 15-minute walkthrough of live placements on the site'
-  );
   return {
     id: 'sponsor_next_steps',
     navLabel: 'Next steps',
@@ -152,7 +188,7 @@ function sponsorshipNextStepsSection(companyName, placements) {
     title: 'Recommended next steps for ' + co,
     intro:
       listingOffer || spotlightOffer
-        ? 'Lock in the launch offer in writing, then get the listing and spotlight live.'
+        ? 'A frictionless handoff — send these four assets and we publish the listing and schedule spotlight months.'
         : 'Keep momentum while inventory and eligibility are fresh.',
     bullets: bullets,
     tiles: [],
@@ -302,11 +338,11 @@ function buildSponsorshipHero(companyName, website, brief, prospectLogoUrl, plac
   const defaultLede =
     'Reach business owners, event bookers, and opportunity seekers across our Events, Organisers, and Business Opportunities directories — with exclusive and self-serve placements.';
   let lede = cleanText(brief, 320) || defaultLede;
+  let headline = 'Advertising on The Networker UK for ' + co;
   if (offerChips.length && !cleanText(brief, 320)) {
+    headline = 'Complimentary launch partnership for ' + co;
     lede =
-      'Launch partnership on The Networker UK for ' +
-      co +
-      ': business opportunity listing and Premium Spotlight visibility on /opportunities/ — with the included launch terms below.';
+      'Complimentary launch partnership package (worth £465 + VAT): get 12 months in our Business Opportunity Directory plus 3 months of Premium Spotlight positioning at no cost during our launch phase.';
   }
   return {
     preparedFor: co,
@@ -314,7 +350,7 @@ function buildSponsorshipHero(companyName, website, brief, prospectLogoUrl, plac
     websiteLabel: host || '',
     prospectLogoUrl: logo,
     deckType: 'sponsorship',
-    headline: 'Advertising on The Networker UK for ' + co,
+    headline: headline,
     lede: lede,
     chips: offerChips.length
       ? offerChips
@@ -433,7 +469,8 @@ async function polishDeckWithOpenAI(deck, input) {
     'Return ONLY valid JSON matching the input shape: { hero, sections, close, deckType, sponsorshipPlacements }. ' +
     'Keep section ids unchanged (including sponsor_email_inventory). Preserve emailInventory objects and template counts. Improve wording to reference the prospect company naturally. ' +
     'Do not invent pricing beyond published packages: Headline Sponsor ~£2k/mo, Page Partner ~£600/mo, Featured Boost £55, City from £29/mo, County from £49/mo, opportunity listing £25/mo + VAT, organiser free to list / keep 100% ticket / attendees 4.5%+20p. ' +
-    'When sections show launch offers (12 months free business opportunity listing and/or 3 months free Premium Spotlight), keep those included terms — do not replace with standard paid pricing. ' +
+    'When sections show launch offers (12 months free business opportunity listing and/or 3 months free Premium Spotlight), keep those included terms and the £465 + VAT value anchor — do not replace with standard paid pricing. ' +
+    'Keep Headline packages clearly optional / scale-up when a launch listing offer is present. ' +
     'Keep Headline email tallies accurate: Events 21 templates, Organisers 21 templates, Opportunities 11 templates.';
 
   const userPayload = {

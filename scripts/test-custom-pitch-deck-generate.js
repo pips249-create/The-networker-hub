@@ -39,7 +39,7 @@ const {
   assert.equal(sponsorDeck.deckType, 'sponsorship');
   assert.ok(sponsorDeck.sections.some(function (s) { return s.id === 'sponsor_headline_events'; }));
   assert.ok(sponsorDeck.sections.some(function (s) { return s.id === 'sponsor_opportunity_directory_listing'; }));
-  assert.match(sponsorDeck.hero.headline, /Advertising on The Networker UK/);
+  assert.match(sponsorDeck.hero.headline, /Advertising on The Networker UK|Complimentary launch partnership/);
   var eventsHeadline = sponsorDeck.sections.find(function (s) {
     return s.id === 'sponsor_headline_events';
   });
@@ -50,6 +50,15 @@ const {
       return /21 emails/i.test(t.title || '');
     })
   );
+  // Launch listing should appear before Headline upsell when both are selected.
+  var listingIdx = sponsorDeck.sections.findIndex(function (s) {
+    return s.id === 'sponsor_opportunity_directory_listing';
+  });
+  var headlineIdx = sponsorDeck.sections.findIndex(function (s) {
+    return s.id === 'sponsor_headline_events';
+  });
+  assert.ok(listingIdx >= 0 && headlineIdx > listingIdx);
+  assert.ok(/optional/i.test(eventsHeadline.kicker || '') || /optional upgrade/i.test(eventsHeadline.intro || ''));
   var emailTally = sponsorDeck.sections.find(function (s) {
     return s.id === 'sponsor_email_inventory';
   });
@@ -109,6 +118,42 @@ const {
   assert.ok(listingSection && /12 months/i.test(listingSection.price || ''));
   assert.ok(spotlightSection && /3 months/i.test(spotlightSection.price || ''));
   assert.ok((launchDeck.hero.chips || []).some(function (c) { return /12 months listing/i.test(c); }));
+  assert.ok((launchDeck.hero.chips || []).some(function (c) { return /£465/i.test(c); }));
+  assert.match(launchDeck.hero.headline, /Complimentary launch partnership/i);
+  assert.match(launchDeck.hero.lede, /£465/i);
+  assert.ok(
+    (listingSection.bullets || []).some(function (b) {
+      return /Dedicated profile page \+ full search visibility/i.test(b);
+    })
+  );
+  assert.ok(
+    (spotlightSection.bullets || []).some(function (b) {
+      return /Premium Spotlight carousel placement/i.test(b);
+    })
+  );
+  var opening = launchDeck.sections.find(function (s) {
+    return s.id === 'sponsor_opening';
+  });
+  assert.ok(
+    opening &&
+      (opening.bullets || []).some(function (b) {
+        return /Step 1 \(immediate, zero-risk\)/i.test(b);
+      })
+  );
+  assert.ok(
+    (opening.bullets || []).some(function (b) {
+      return /aspiring entrepreneurs|career returners|flexible franchise/i.test(b);
+    })
+  );
+  var nextSteps = launchDeck.sections.find(function (s) {
+    return s.id === 'sponsor_next_steps';
+  });
+  assert.ok(
+    nextSteps &&
+      (nextSteps.bullets || []).some(function (b) {
+        return /Lead email/i.test(b);
+      })
+  );
 
   const listingOnlyDeck = await generateCustomPitchDeck({
     companyName: 'Acme Franchise',

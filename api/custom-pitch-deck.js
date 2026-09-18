@@ -47,7 +47,7 @@ module.exports = wrapHandler(async function handler(req, res) {
   const { data, error } = await sb
     .from('custom_pitch_decks')
     .select(
-      'id, slug, company_name, website, contact_name, prospect_logo_url, include_sections, brief, deck, created_at, updated_at'
+      'id, slug, company_name, website, contact_name, prospect_logo_url, include_sections, brief, deck, created_by_email, created_at, updated_at'
     )
     .eq('slug', slug)
     .maybeSingle();
@@ -88,6 +88,7 @@ module.exports = wrapHandler(async function handler(req, res) {
     companyName: data.company_name,
     website: website,
     contactName: data.contact_name || '',
+    createdByEmail: data.created_by_email || '',
     prospectLogoUrl: prospectLogoUrl,
     prospectLogoCandidates: prospectLogoCandidates,
     includeSections: data.include_sections || [],

@@ -338,30 +338,85 @@
     );
   }
 
-  function renderClose(close, companyName) {
+  function salesSenderFromPayload(payload) {
+    var raw = String(
+      (payload && (payload.createdByEmail || payload.fromEmail || payload.ownerEmail)) || ''
+    )
+      .trim()
+      .toLowerCase();
+    if (/^catherine@/.test(raw) || raw.indexOf('catherine@') !== -1) {
+      return { name: 'Catherine', email: 'catherine@thenetworkeruk.com' };
+    }
+    if (/^jamie@/.test(raw) || raw.indexOf('jamie@') !== -1) {
+      return { name: 'Jamie', email: 'jamie@thenetworkeruk.com' };
+    }
+    if (/^rosie@/.test(raw) || raw.indexOf('rosie@') !== -1) {
+      return { name: 'Rosie', email: 'rosie@thenetworkeruk.com' };
+    }
+    // Default commercial inbox when creator is unknown.
+    return { name: 'Rosie', email: 'rosie@thenetworkeruk.com' };
+  }
+
+  function deckHasLaunchOffer(deck, payload) {
+    var placements =
+      (deck && deck.sponsorshipPlacements) ||
+      (payload && payload.sponsorshipPlacements) ||
+      [];
+    if (placements.indexOf('opportunity_directory_listing') !== -1) return true;
+    var sections = (deck && deck.sections) || [];
+    return sections.some(function (s) {
+      return /sponsor_opportunity_directory_listing|sponsor_featured_opportunity_boost/.test(
+        String((s && s.id) || '')
+      );
+    });
+  }
+
+  function renderClose(close, companyName, payload, deck) {
     var co = escHtml(companyName || 'your partner');
+    var sender = salesSenderFromPayload(payload || {});
     var mailSubject = encodeURIComponent('Partnership — ' + (companyName || 'The Networker UK'));
+    var launch = deckHasLaunchOffer(deck, payload);
+    var checklist = launch
+      ? '<div class="pitch-spec-row">' +
+        '<div><strong>Logo</strong> High-res PNG/SVG · landscape</div>' +
+        '<div><strong>Franchise overview</strong> 150–300 words + key investment figures</div>' +
+        '<div><strong>Target destination</strong> Direct URL for franchise enquiries</div>' +
+        '<div><strong>Lead email</strong> Where candidate enquiries should be sent</div>' +
+        '</div>'
+      : '<div class="pitch-spec-row">' +
+        '<div><strong>Logo</strong> PNG/SVG · landscape · for listing &amp; creative</div>' +
+        '<div><strong>Listing copy</strong> Opportunity description, investment level, enquiry routing</div>' +
+        '<div><strong>Website</strong> HTTPS URL for the listing CTA</div>' +
+        '<div><strong>Timing</strong> Preferred go-live date</div>' +
+        '</div>';
+    var ctaCopy = launch
+      ? 'Send the four assets above — we publish the listing, schedule spotlight months, and confirm the launch offer in writing.'
+      : 'Send assets and preferred start date — we confirm placements and go live.';
     return (
       '<section class="sponsor-pitch-section" id="close">' +
       '<h2>What we need from you</h2>' +
-      '<div class="pitch-spec-row">' +
-      '<div><strong>Logo</strong> PNG/SVG · landscape · for listing &amp; spotlight</div>' +
-      '<div><strong>Listing copy</strong> Opportunity description, investment level, enquiry routing</div>' +
-      '<div><strong>Website</strong> HTTPS URL for the listing CTA</div>' +
-      '<div><strong>Timing</strong> Go-live date for listing + first Premium Spotlight month</div>' +
-      '</div>' +
+      (launch
+        ? '<p class="section-intro">A frictionless 2-minute handoff — then we do the rest.</p>'
+        : '') +
+      checklist +
       '<div class="sponsor-pitch-cta">' +
       '<div><h2>Ready to confirm?</h2>' +
-      '<p>Send assets and preferred start date — we publish the listing, schedule spotlight months, and confirm the launch offer in writing.</p></div>' +
+      '<p>' +
+      ctaCopy +
+      '</p></div>' +
       '<div class="sponsor-pitch-cta-actions">' +
-      '<a class="primary" href="mailto:rosie@thenetworkeruk.com?subject=' +
+      '<a class="primary" href="mailto:' +
+      escHtml(sender.email) +
+      '?subject=' +
       mailSubject +
-      '">Email Rosie →</a>' +
+      '">Email ' +
+      escHtml(sender.name) +
+      ' →</a>' +
       '<a class="secondary" href="/advertising" target="_blank" rel="noopener">Rate card</a>' +
       '</div></div>' +
       '<p class="pitch-footnote">Prepared by The Networker UK for ' +
       co +
-      ' · Share this link after the meeting (same format as the Events Headline sales walkthrough)</p>' +
+      ' · Share this link after the meeting</p>' +
       '</section>'
     );
   }
@@ -487,6 +542,12 @@
     if (bannerLabel) {
       bannerLabel.textContent = 'Tailored deck — ' + (payload.companyName || 'prospect');
     }
+    var sender = salesSenderFromPayload(payload);
+    var bannerMail = document.getElementById('custom-pitch-banner-mail');
+    if (bannerMail) {
+      bannerMail.href = 'mailto:' + sender.email;
+      bannerMail.textContent = sender.email;
+    }
 
     var liveHtml = '';
     try {
@@ -518,7 +579,7 @@
       renderHero(deck.hero || {}) +
       renderNav(navSections) +
       sectionParts.join('') +
-      renderClose(deck.close, payload.companyName);
+      renderClose(deck.close, payload.companyName, payload, deck);
 
     bindSectionNav();
     bindProspectLogoFallback(root, payload);

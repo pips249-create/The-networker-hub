@@ -362,32 +362,32 @@ function hasOpportunitySpotlightLaunchOffer(placements) {
 function applyOpportunityLaunchOfferToSection(key, section, companyName) {
   const co = companyName || 'your brand';
   if (key === 'opportunity_directory_listing') {
-    section.price = 'Included — 12 months at no charge';
+    section.price = 'Included — 12 months at no charge (worth £300 + VAT)';
     section.intro =
-      'Launch partnership offer for ' +
+      'Complimentary launch partnership for ' +
       co +
-      ': a full business opportunity directory listing on /opportunities/ with member enquiries routed to you — subscription fees waived for the first year.' +
+      ': a full business opportunity directory listing on /opportunities/ with member enquiries routed to you — normally £25/month + VAT, waived for the first year.' +
       (section.intro ? ' ' + section.intro : '');
     section.bullets = [
-      '12 months of the standard directory listing at no subscription charge (normally £25/month + VAT)',
-      'Includes 3 months Premium Spotlight on /opportunities/ browse at no charge (normally £55 per ~30-day boost)',
-      'Public detail page plus inclusion in /opportunities/ search while the offer is active',
-      'Member enquiries routed to your listing owner — no per-lead fee during the included year',
-      'After month 12, continue at the published listing rate or pause — Headline Sponsor and email inventory remain separate packages',
+      '12 months directory listing at no subscription charge (normally £25/month + VAT)',
+      'Bundled: 3 months Premium Spotlight on /opportunities/ at no charge (normally £55 per boost)',
+      'Dedicated profile page + full search visibility across /opportunities/',
+      'Member enquiries routed to your listing owner — no per-lead fee',
+      'After month 12, continue at the published rate or pause — Headline Sponsor remains a separate optional upgrade',
     ];
   }
   if (key === 'featured_opportunity_boost') {
-    section.price = 'Included — 3 months Premium Spotlight';
+    section.price = 'Included — 3 months Premium Spotlight (worth £165 + VAT)';
     section.intro =
-      'Launch partnership offer for ' +
+      'Complimentary launch partnership for ' +
       co +
-      ': stay in the Premium Spotlight carousel on /opportunities/ for three months at no charge.' +
+      ': stay in the Premium Spotlight carousel on /opportunities/ for three months at no charge (normally £55 per ~30-day boost).' +
       (section.intro ? ' ' + section.intro : '');
     section.bullets = [
-      '3 months of Premium Spotlight on the opportunities browse carousel at no charge (normally £55 per ~30-day boost)',
-      'Featured badge and highlighted card for higher click-through while each spotlight month is live',
-      'We schedule the three spotlight windows in Command Centre — no Stripe checkout required for this launch offer',
-      'Stacks with the directory listing — ideal for franchise and partnership offers that need visibility fast',
+      '3 months of Premium Spotlight carousel placement at no charge',
+      'Featured badge & card highlighting for max click-through',
+      'We schedule the three spotlight windows in Command Centre — no Stripe checkout for this launch offer',
+      'Stacks with the directory listing — ideal when franchise and partnership offers need visibility fast',
     ];
   }
   return section;
@@ -502,7 +502,7 @@ function buildSectionForPlacement(key, companyName, brief, applyLaunch) {
 function buildSponsorshipSections(placements, companyName, brief, options) {
   const applyLaunch =
     !options || options.applyOpportunityLaunchOffer !== false;
-  const ordered = placements || [];
+  const ordered = orderPlacementsForLaunchOffer(placements || []);
   const sections = ordered
     .map(function (key) {
       return buildSectionForPlacement(key, companyName, brief, applyLaunch);
@@ -514,9 +514,30 @@ function buildSponsorshipSections(placements, companyName, brief, options) {
     ordered.indexOf('opportunity_directory_listing') !== -1 &&
     ordered.indexOf('featured_opportunity_boost') === -1
   ) {
-    sections.push(
-      buildSectionForPlacement('featured_opportunity_boost', companyName, brief, applyLaunch)
+    const spotlight = buildSectionForPlacement(
+      'featured_opportunity_boost',
+      companyName,
+      brief,
+      applyLaunch
     );
+    const listingIdx = sections.findIndex(function (s) {
+      return s && s.id === 'sponsor_opportunity_directory_listing';
+    });
+    if (listingIdx >= 0) sections.splice(listingIdx + 1, 0, spotlight);
+    else sections.push(spotlight);
+  }
+
+  // Soft-label Headline sections as optional scale-up when a launch listing offer leads the deck.
+  if (applyLaunch && hasOpportunityListingLaunchOffer(ordered)) {
+    sections.forEach(function (sec) {
+      if (!sec || !/^sponsor_headline_/.test(String(sec.id || ''))) return;
+      sec.kicker = 'Optional scale-up';
+      if (sec.intro && !/optional upgrade|scale-up/i.test(sec.intro)) {
+        sec.intro =
+          'Optional upgrade after the free listing is live — not required to claim the launch partnership. ' +
+          sec.intro;
+      }
+    });
   }
 
   const emailTally = buildEmailTallySection(ordered, companyName);
@@ -600,8 +621,25 @@ function launchOfferHeroChips(placements) {
   if (hasOpportunitySpotlightLaunchOffer(placements)) {
     chips.push('3 months Premium Spotlight included');
   }
-  if (chips.length) chips.push('Launch partnership offer');
+  if (chips.length) {
+    chips.push('Launch package worth £465 + VAT');
+    chips.push('Launch partnership offer');
+  }
   return chips;
+}
+
+/** Lead with zero-risk listing/spotlight before Headline upsells when the launch offer is in play. */
+function orderPlacementsForLaunchOffer(placements) {
+  const list = Array.isArray(placements) ? placements.slice() : [];
+  if (!hasOpportunityListingLaunchOffer(list)) return list;
+  const leadKeys = ['opportunity_directory_listing', 'featured_opportunity_boost'];
+  const lead = leadKeys.filter(function (key) {
+    return list.indexOf(key) !== -1;
+  });
+  const rest = list.filter(function (key) {
+    return leadKeys.indexOf(key) === -1;
+  });
+  return lead.concat(rest);
 }
 
 module.exports = {
@@ -618,4 +656,5 @@ module.exports = {
   hasOpportunityListingLaunchOffer,
   hasOpportunitySpotlightLaunchOffer,
   launchOfferHeroChips,
+  orderPlacementsForLaunchOffer,
 };
