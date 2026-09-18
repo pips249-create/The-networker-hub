@@ -62,7 +62,29 @@ const ebPing = normalizeEventbriteWebhook({
   api_url: 'https://www.eventbriteapi.com/v3/orders/12826552624/',
   config: { action: 'order.placed', endpoint_url: 'https://thenetworkeruk.com/w/eb/test' },
 });
-assert.ok(ebPing && ebPing.partial, 'Eventbrite dashboard test payload is partial');
+assert.ok(ebPing && ebPing.partial, 'Eventbrite order.placed payload is partial without API fetch');
+
+const {
+  isEventbriteOrderNotification,
+  isEventbriteConnectivityPing,
+} = require('../api/_lib/eventbrite-webhook-resolve');
+const orderHook = {
+  api_url: 'https://www.eventbriteapi.com/v3/orders/12826552624/',
+  config: { action: 'order.placed' },
+};
+assert.ok(isEventbriteOrderNotification(orderHook));
+assert.ok(!isEventbriteConnectivityPing(orderHook, ebPing));
+
+const { normalizeEventbriteOrderApiResponse } = require('../api/_lib/connected-booking-providers/adapters/eventbrite-api');
+const orderRows = normalizeEventbriteOrderApiResponse({
+  id: '12826552624',
+  event_id: '2001520723363',
+  attendees: [{ id: 'att-1', profile: { email: 'buyer@example.com', name: 'Alex Buyer' } }],
+  costs: { gross: { value: 0 } },
+});
+assert.strictEqual(orderRows.length, 1);
+assert.strictEqual(orderRows[0].email, 'buyer@example.com');
+assert.strictEqual(orderRows[0].externalEventId, '2001520723363');
 
 assert.strictEqual(
   parseEventbriteEventIdFromUrl('https://www.eventbrite.co.uk/e/networking-night-1234567890123'),

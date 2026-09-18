@@ -8,7 +8,9 @@ const {
   upsertEventLink,
   listEventLinksForAccount,
   deleteEventLink,
+  mergeProviderConnectionConfig,
 } = require('../connected-booking-provider-store');
+const { eventbritePrivateTokenFromConfig } = require('../connected-booking-providers/adapters/eventbrite-api');
 const { resolveOrganiserAccountId } = require('../organiser-account-resolve');
 const {
   buildProviderWebhookPublicUrl,
@@ -98,6 +100,10 @@ module.exports = async function handler(req, res) {
           connectionStatus: conn?.status || (p.id === 'custom' ? 'active' : 'not_configured'),
           webhookUrl,
           docsHint: p.docsHint,
+          eventbriteApiTokenConfigured:
+            p.id === 'eventbrite' && conn
+              ? Boolean(eventbritePrivateTokenFromConfig(conn.config))
+              : undefined,
         };
       })
       );
@@ -151,6 +157,24 @@ module.exports = async function handler(req, res) {
           externalEventUrl: body.externalEventUrl || body.external_event_url,
         });
         return json(res, 200, { ok: true, eventLink: link });
+      }
+
+      if (action === 'save_eventbrite_private_token') {
+        const token = String(body.token || body.eventbritePrivateToken || '').trim();
+        if (!token) {
+          return json(res, 400, {
+            ok: false,
+            error: 'missing_token',
+            message: 'Paste your Eventbrite private token (Developer links in Eventbrite account settings).',
+          });
+        }
+        const conn = await mergeProviderConnectionConfig(sb, accountId, 'eventbrite', {
+          eventbritePrivateToken: token,
+        });
+        return json(res, 200, {
+          ok: true,
+          eventbriteApiTokenConfigured: Boolean(eventbritePrivateTokenFromConfig(conn.config)),
+        });
       }
 
       if (action === 'unlink_event') {

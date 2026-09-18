@@ -481,6 +481,7 @@
   }
 
   function showSlotsAssignmentPanel() {
+    setPageActionsVisible(false);
     if (blocked) blocked.hidden = true;
     if (formCard) formCard.hidden = true;
     if (devSection) devSection.hidden = true;
@@ -556,6 +557,7 @@
     var len = url.length;
     var lenOk = len > 0 && len <= EVENTBRITE_PAYLOAD_URL_MAX;
     var urlOk = eventbriteWebhookUrlOk(url);
+    var tokenOk = Boolean(p && p.eventbriteApiTokenConfigured);
 
     if (!url) {
       mount.innerHTML =
@@ -578,6 +580,13 @@
       (linkedDone ? '✓' : '2') +
       '</span> Event id saved above' +
       (linkedDone ? '' : ' <span class="ecs-eb-check-sub">(Link registrations)</span>') +
+      '</li>' +
+      '<li class="ecs-eb-check' +
+      (tokenOk ? ' is-done' : '') +
+      '"><span class="ecs-eb-check-icon" aria-hidden="true">' +
+      (tokenOk ? '✓' : '3') +
+      '</span> Eventbrite API token saved' +
+      (tokenOk ? '' : ' <span class="ecs-eb-check-sub">(below)</span>') +
       '</li>' +
       '</ul>' +
       '<div class="ecs-eb-url-panel' +
@@ -607,6 +616,15 @@
         : '') +
       '</div>' +
       '<p class="ecs-eb-paste-hint">In Eventbrite: profile menu → <strong>Account settings → Webhooks</strong> · Action <code>order.placed</code></p>' +
+      '<div class="ecs-eb-token-panel">' +
+      '<label class="ee-field ecs-eb-token-field">' +
+      '<span>Eventbrite private token <strong>(required for attendee sync)</strong></span>' +
+      '<input type="password" id="ecs-eb-private-token" autocomplete="off" spellcheck="false" placeholder="From Eventbrite → Account settings → Developer links" />' +
+      '</label>' +
+      '<p class="ee-hint">Eventbrite webhooks only send an order link — we use this token to load buyer name and email when someone buys a ticket.</p>' +
+      '<button type="button" class="ee-btn ee-btn-outline ee-btn-sm" data-save-eventbrite-token>Save API token</button>' +
+      '<span class="ee-hint ecs-eb-token-status" data-eb-token-status hidden role="status"></span>' +
+      '</div>' +
       '<details class="ecs-eb-help-details">' +
       '<summary>Step-by-step in Eventbrite</summary>' +
       '<ol class="ecs-eb-help-steps">' +
@@ -625,6 +643,65 @@
         : '') +
       '</div>';
     bindProviderEnableButtons(mount);
+    bindEventbriteTokenSave(mount);
+  }
+
+  function bindEventbriteTokenSave(root) {
+    if (!root || root.dataset.ebTokenBound === '1') return;
+    root.dataset.ebTokenBound = '1';
+    root.addEventListener('click', function (e) {
+      var btn = e.target && e.target.closest ? e.target.closest('[data-save-eventbrite-token]') : null;
+      if (!btn || btn.disabled) return;
+      e.preventDefault();
+      var input = qs('ecs-eb-private-token');
+      var token = input ? String(input.value || '').trim() : '';
+      var statusEl = root.querySelector('[data-eb-token-status]');
+      if (!token) {
+        if (statusEl) {
+          statusEl.hidden = false;
+          statusEl.textContent = 'Paste your Eventbrite private token first.';
+          statusEl.className = 'ee-hint ee-alert-warn ecs-eb-token-status';
+        }
+        return;
+      }
+      btn.disabled = true;
+      if (statusEl) {
+        statusEl.hidden = false;
+        statusEl.textContent = 'Saving…';
+        statusEl.className = 'ee-hint ecs-eb-token-status';
+      }
+      api('/api/organiser/connected-booking-providers', {
+        method: 'PATCH',
+        body: JSON.stringify({ action: 'save_eventbrite_private_token', token: token }),
+      })
+        .then(function (res) {
+          btn.disabled = false;
+          if (!res.ok || !res.data || !res.data.ok) {
+            if (statusEl) {
+              statusEl.textContent =
+                (res.data && res.data.message) || (res.data && res.data.error) || 'Could not save token.';
+              statusEl.className = 'ee-hint ee-alert-warn ecs-eb-token-status';
+            }
+            return;
+          }
+          if (input) input.value = '';
+          providersById.eventbrite = Object.assign({}, providersById.eventbrite || { id: 'eventbrite' }, {
+            eventbriteApiTokenConfigured: true,
+          });
+          if (statusEl) {
+            statusEl.textContent = 'Saved — new ticket sales can sync attendee details.';
+            statusEl.className = 'ee-hint ee-alert-ok ecs-eb-token-status';
+          }
+          renderProviderWebhookCard('eventbrite');
+        })
+        .catch(function () {
+          btn.disabled = false;
+          if (statusEl) {
+            statusEl.textContent = 'Could not save token. Try again.';
+            statusEl.className = 'ee-hint ee-alert-warn ecs-eb-token-status';
+          }
+        });
+    });
   }
 
   function providerWebhookLead(platform) {
@@ -642,7 +719,7 @@
       );
     }
     if (key === 'eventbrite') {
-      return 'Eventbrite ticket sales sync to your attendee list here — copy the webhook URL below, then link your event id above.';
+      return 'Webhook URL + API token + linked event id → Eventbrite buyers appear in your TNH attendee list.';
     }
     var p = providersById[key];
     var label = (p && p.label) || key.replace(/_/g, ' ');

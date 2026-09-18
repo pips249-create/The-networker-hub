@@ -6036,6 +6036,22 @@ body.ee-embed-drawer.organiser-connected-setup-page .ecs-setup-checklist {
   align-self: flex-start;
 }
 
+.ecs-eb-token-panel {
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(26, 46, 59, 0.04);
+  border: 1px solid rgba(26, 46, 59, 0.1);
+}
+
+.ecs-eb-token-field {
+  margin-bottom: 8px;
+}
+
+.ecs-eb-token-status {
+  display: block;
+  margin-top: 8px;
+}
+
 .ecs-eventbrite-admin-guide {
   margin: 14px 0 0;
   padding: 14px 16px;
