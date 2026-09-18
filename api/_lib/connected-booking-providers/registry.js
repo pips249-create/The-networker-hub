@@ -6,7 +6,8 @@ const CONNECTED_BOOKING_PROVIDERS = [
     label: 'Eventbrite',
     status: 'beta',
     webhookPath: '/api/integrations/providers/eventbrite/webhook',
-    docsHint: 'Link your TNH event to the Eventbrite event id; orders POST to the provider webhook URL.',
+    docsHint:
+      'Paste the webhook URL into Eventbrite Account settings → Webhooks (Payload URL, action order.placed). Link the Eventbrite event id on TNH.',
   },
   {
     id: 'ticket_tailor',

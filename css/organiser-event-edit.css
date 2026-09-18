@@ -5863,6 +5863,43 @@ body.ee-embed-drawer.organiser-connected-setup-page .ecs-setup-checklist {
   background: rgba(13, 110, 122, 0.12);
 }
 
+.ecs-eventbrite-admin-guide {
+  margin: 14px 0 0;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: rgba(255, 244, 230, 0.5);
+  border: 1px solid rgba(189, 147, 46, 0.35);
+}
+
+.ecs-eventbrite-admin-guide-title {
+  margin: 0 0 10px;
+  font-size: 14px;
+}
+
+.ecs-eventbrite-admin-guide-steps {
+  margin: 0 0 10px;
+  padding-left: 1.25rem;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ee-text-mid, #4a6272);
+}
+
+.ecs-eventbrite-admin-guide-steps li + li {
+  margin-top: 6px;
+}
+
+.ecs-webhook-copy-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin: 8px 0 0;
+}
+
+.ecs-copy-webhook-status {
+  margin: 0;
+}
+
 .ecs-setup-checklist {
   margin: 0 0 20px;
   padding: 14px 16px;
