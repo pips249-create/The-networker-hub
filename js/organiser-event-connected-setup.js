@@ -30,6 +30,9 @@
           '&embed=1';
       });
     }
+    if (typeof embed.notifyEmbedDrawerReady === 'function') {
+      embed.notifyEmbedDrawerReady('tickets');
+    }
   }
 
   initEmbedDrawerNav();
@@ -74,12 +77,18 @@
   var billing = null;
   var loadedEvent = null;
   var assignedIds = [];
+  var usedPrefetch = false;
 
   var blocked = qs('ecs-blocked');
   var formCard = qs('ecs-form-card');
   var devSection = qs('ecs-developer-section');
   var slotStatus = qs('ecs-slot-status');
   var saveStatus = qs('ecs-save-status');
+
+  if (slotStatus && eventId) {
+    slotStatus.hidden = false;
+    slotStatus.textContent = 'Loading Connected setup…';
+  }
 
   function organiserIdForEvent(ev) {
     return String(ev.organiserGroupId || (ev.organiserGroupIds && ev.organiserGroupIds[0]) || '').trim();
@@ -91,6 +100,20 @@
     return assignedIds.indexOf(oid) >= 0;
   }
 
+  function applyBillingSlots(bill) {
+    billing = bill || {};
+    assignedIds =
+      (billing.slots && billing.slots.assignedOrganiserIds) ||
+      (billing.slots && billing.slots.accountOrganisers
+        ? billing.slots.accountOrganisers.filter(function (o) {
+            return o.slotAssigned;
+          }).map(function (o) {
+            return o.id;
+          })
+        : []) ||
+      [];
+  }
+
   function showBlocked(msg) {
     if (blocked) {
       blocked.hidden = false;
@@ -98,6 +121,10 @@
     }
     if (formCard) formCard.hidden = true;
     if (devSection) devSection.hidden = true;
+    if (slotStatus) slotStatus.hidden = true;
+    if (typeof embed.notifyEmbedDrawerBusy === 'function') {
+      embed.notifyEmbedDrawerBusy(false, '', 'tickets');
+    }
   }
 
   function applyEvent(ev) {
@@ -115,6 +142,18 @@
     if (qs('ecs-booking-url')) qs('ecs-booking-url').value = ev.externalBookingUrl || ev.external_booking_url || '';
     if (qs('ecs-event-id')) qs('ecs-event-id').textContent = eventId;
     if (qs('ecs-event-id-wrap')) qs('ecs-event-id-wrap').hidden = !eventId;
+  }
+
+  function applyWebhookMeta() {
+    var site = location.origin.replace(/\/$/, '');
+    var wUrl = qs('ecs-webhook-url');
+    if (wUrl) wUrl.textContent = site + '/api/integrations/booking';
+    if (billing && billing.accountId) {
+      var aw = qs('ecs-account-id-wrap');
+      var ae = qs('ecs-account-id');
+      if (ae) ae.textContent = billing.accountId;
+      if (aw) aw.hidden = false;
+    }
   }
 
   function refreshAccess() {
@@ -152,6 +191,28 @@
 
     var hubNote = qs('ecs-hub-tickets-note');
     if (hubNote) hubNote.hidden = false;
+
+    applyWebhookMeta();
+
+    if (typeof embed.notifyEmbedDrawerBusy === 'function') {
+      embed.notifyEmbedDrawerBusy(false, '', 'tickets');
+    }
+    if (typeof embed.notifyEmbedDrawerReady === 'function') {
+      embed.notifyEmbedDrawerReady('tickets');
+    }
+  }
+
+  function tryPrefetch() {
+    if (!eventId || typeof embed.readConnectedSetupPrefetch !== 'function') return false;
+    var hit = embed.readConnectedSetupPrefetch(eventId);
+    if (!hit || !hit.event) return false;
+    usedPrefetch = true;
+    applyEvent(hit.event);
+    if (hit.billing) {
+      applyBillingSlots(hit.billing);
+      refreshAccess();
+    }
+    return true;
   }
 
   async function saveConnected(publish) {
@@ -183,7 +244,40 @@
       setStatus(saveStatus, res.data.message || res.data.error || 'Could not save.', 'error');
       return;
     }
+    loadedEvent = Object.assign({}, loadedEvent, payload);
+    if (typeof embed.writeConnectedSetupPrefetch === 'function') {
+      embed.writeConnectedSetupPrefetch(eventId, loadedEvent, billing);
+    }
     setStatus(saveStatus, publish ? 'Published with Connected booking.' : 'Saved.', 'ok');
+  }
+
+  function loadFromNetwork() {
+    if (typeof embed.notifyEmbedDrawerBusy === 'function' && !usedPrefetch) {
+      embed.notifyEmbedDrawerBusy(true, 'Loading Connected setup…', 'tickets');
+    }
+    return Promise.all([
+      api('/api/organiser/events?id=' + encodeURIComponent(eventId)),
+      usedPrefetch && billing && billing.ok
+        ? Promise.resolve({ ok: true, data: billing })
+        : api('/api/organiser/connected-booking'),
+    ]).then(function (results) {
+      var evRes = results[0];
+      var billRes = results[1];
+
+      if (!evRes.ok || !evRes.data.event) {
+        if (!usedPrefetch) {
+          showBlocked(evRes.data?.message || 'Could not load this event.');
+        }
+        return;
+      }
+
+      applyBillingSlots(billRes.data || {});
+      applyEvent(evRes.data.event);
+      if (typeof embed.writeConnectedSetupPrefetch === 'function') {
+        embed.writeConnectedSetupPrefetch(eventId, loadedEvent, billing);
+      }
+      refreshAccess();
+    });
   }
 
   if (!eventId) {
@@ -191,41 +285,10 @@
       'No event selected. Open an event from My Events → Set up tickets, then use Connected event setup — or add ?id=your-event-id to this page URL.'
     );
   } else {
-    Promise.all([
-      api('/api/organiser/events?id=' + encodeURIComponent(eventId)),
-      api('/api/organiser/connected-booking'),
-    ]).then(function (results) {
-      var evRes = results[0];
-      var billRes = results[1];
-
-      if (!evRes.ok || !evRes.data.event) {
-        showBlocked(evRes.data?.message || 'Could not load this event.');
-        return;
-      }
-
-      billing = billRes.data || {};
-      assignedIds =
-        (billing.slots && billing.slots.assignedOrganiserIds) ||
-        (billing.slots && billing.slots.accountOrganisers
-          ? billing.slots.accountOrganisers.filter(function (o) {
-              return o.slotAssigned;
-            }).map(function (o) {
-              return o.id;
-            })
-          : []) ||
-        [];
-
-      applyEvent(evRes.data.event);
-      refreshAccess();
-
-      var site = location.origin.replace(/\/$/, '');
-      var wUrl = qs('ecs-webhook-url');
-      if (wUrl) wUrl.textContent = site + '/api/integrations/booking';
-      if (billing.accountId) {
-        var aw = qs('ecs-account-id-wrap');
-        var ae = qs('ecs-account-id');
-        if (ae) ae.textContent = billing.accountId;
-        if (aw) aw.hidden = false;
+    tryPrefetch();
+    loadFromNetwork().catch(function () {
+      if (!usedPrefetch) {
+        showBlocked('Could not load Connected setup. Try again.');
       }
     });
   }

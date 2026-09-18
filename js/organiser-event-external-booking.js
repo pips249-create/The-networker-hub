@@ -36,6 +36,13 @@
   let billingActive = false;
   let featureEnabled = false;
   let loadedEvent = null;
+  let billingPayload = null;
+
+  function cacheSetupPrefetch() {
+    const eid = resolveEventId();
+    if (!eid || !loadedEvent || typeof embed.writeConnectedSetupPrefetch !== 'function') return;
+    embed.writeConnectedSetupPrefetch(eid, loadedEvent, billingPayload);
+  }
 
   if (isEmbedDrawer()) {
     document.documentElement.classList.add('ee-connected-tickets-checking');
@@ -145,6 +152,14 @@
       const eid = resolveEventId();
       if (!eid) return;
       const ids = eventIdsFromQueryArray();
+      cacheSetupPrefetch();
+      if (setupLink) {
+        setupLink.setAttribute('aria-busy', 'true');
+        setupLink.classList.add('is-loading');
+      }
+      if (typeof embed.notifyEmbedDrawerBusy === 'function') {
+        embed.notifyEmbedDrawerBusy(true, 'Opening Connected setup…', 'tickets');
+      }
       if (
         isEmbedDrawer() &&
         typeof embed.notifyParent === 'function' &&
@@ -183,15 +198,27 @@
 
     const eid = resolveEventId();
     if (setupLink) {
+      var setupHref;
       if (typeof embed.buildEmbedHref === 'function' && eid) {
-        setupLink.href = embed.buildEmbedHref('/organiser/event-connected-setup', {
+        setupHref = embed.buildEmbedHref('/organiser/event-connected-setup', {
           id: eid,
           eventIds: eventIdsFromQueryArray(),
         });
       } else {
-        setupLink.href = eid
+        setupHref = eid
           ? '/organiser/event-connected-setup?id=' + encodeURIComponent(eid)
           : '/organiser/event-connected-setup';
+      }
+      setupLink.href = setupHref;
+      if (eid && setupHref) {
+        var pf = document.querySelector('link[data-connected-setup-prefetch]');
+        if (!pf) {
+          pf = document.createElement('link');
+          pf.rel = 'prefetch';
+          pf.setAttribute('data-connected-setup-prefetch', '1');
+          document.head.appendChild(pf);
+        }
+        pf.href = setupHref;
       }
     }
 
@@ -220,17 +247,25 @@
 
   window.addEventListener('ee-event-loaded', function (e) {
     applyEventFields(e.detail && e.detail.event);
+    cacheSetupPrefetch();
   });
 
   bindPlanLink();
   bindSetupLink();
 
+  if (setupLink) {
+    setupLink.addEventListener('mouseenter', cacheSetupPrefetch);
+    setupLink.addEventListener('focus', cacheSetupPrefetch);
+  }
+
   api('/api/organiser/connected-booking').then(function (res) {
     if (res.ok && res.data && res.data.featureEnabled) {
       featureEnabled = true;
       billingActive = Boolean(res.data.active);
+      billingPayload = res.data;
     }
     refreshCardVisibility();
+    cacheSetupPrefetch();
   });
 
   refreshCardVisibility();

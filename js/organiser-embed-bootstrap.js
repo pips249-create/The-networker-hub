@@ -7,6 +7,8 @@
 
   const CACHE_KEY = 'hub_org_bootstrap_cache';
   const CACHE_MS = 300000;
+  const CONNECTED_SETUP_PREFETCH_KEY = 'hub_connected_setup_prefetch_v1';
+  const CONNECTED_SETUP_PREFETCH_MS = 180000;
   const PARENT_WAIT_MS = 150;
 
   function isEmbedDrawer() {
@@ -233,6 +235,54 @@
     return true;
   }
 
+  function writeConnectedSetupPrefetch(eventId, event, billing) {
+    const id = String(eventId || '').trim();
+    if (!id || !event) return;
+    try {
+      global.sessionStorage.setItem(
+        CONNECTED_SETUP_PREFETCH_KEY,
+        JSON.stringify({
+          at: Date.now(),
+          eventId: id,
+          event: event,
+          billing: billing || null,
+        })
+      );
+    } catch {
+      /* ignore */
+    }
+  }
+
+  function readConnectedSetupPrefetch(eventId) {
+    const id = String(eventId || '').trim();
+    if (!id) return null;
+    try {
+      const raw = global.sessionStorage.getItem(CONNECTED_SETUP_PREFETCH_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      if (!parsed || String(parsed.eventId) !== id) return null;
+      if (!parsed.at || Date.now() - Number(parsed.at) > CONNECTED_SETUP_PREFETCH_MS) return null;
+      return parsed;
+    } catch {
+      return null;
+    }
+  }
+
+  function notifyEmbedDrawerReady(progressStep, stepComplete) {
+    return notifyParent('hub-event-drawer-ready', {
+      progressStep: progressStep || 'tickets',
+      stepComplete: stepComplete,
+    });
+  }
+
+  function notifyEmbedDrawerBusy(busy, message, progressStep) {
+    return notifyParent('hub-event-drawer-busy', {
+      busy: Boolean(busy),
+      message: message || '',
+      progressStep: progressStep || 'tickets',
+    });
+  }
+
   global.HubOrganiserEmbedBootstrap = {
     CACHE_KEY: CACHE_KEY,
     isEmbedDrawer: isEmbedDrawer,
@@ -240,6 +290,10 @@
     buildEmbedHref: buildEmbedHref,
     applyEmbedDrawerBodyClass: applyEmbedDrawerBodyClass,
     notifyParent: notifyParent,
+    writeConnectedSetupPrefetch: writeConnectedSetupPrefetch,
+    readConnectedSetupPrefetch: readConnectedSetupPrefetch,
+    notifyEmbedDrawerReady: notifyEmbedDrawerReady,
+    notifyEmbedDrawerBusy: notifyEmbedDrawerBusy,
     readCache: readCache,
     writeCache: writeCache,
     clearCache: clearCache,
