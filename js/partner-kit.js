@@ -62,6 +62,49 @@
     return 'earn';
   }
 
+  function showTermsBanner(code, acceptPage) {
+    var banner = document.getElementById('partner-terms-banner');
+    if (!banner || !code) return;
+    var acceptUrl =
+      acceptPage ||
+      '/partners/accept-terms?ref=' + encodeURIComponent(code);
+    banner.innerHTML =
+      '<div class="partner-terms-banner-inner">' +
+      '<p><strong>Accept Referral Partner Terms</strong> before sharing your tracking links. ' +
+      'Use the email on your invite.</p>' +
+      '<a class="partner-kit-download partner-kit-download--solid" href="' +
+      acceptUrl +
+      '">Accept terms</a>' +
+      '<a class="partner-kit-download" href="/partners/terms" target="_blank" rel="noopener">Read terms</a>' +
+      '</div>';
+    banner.hidden = false;
+    document.body.classList.add('partner-kit-page--terms-pending');
+  }
+
+  function checkTermsStatus(code) {
+    if (!code) return;
+    fetch('/api/partner-terms?code=' + encodeURIComponent(code), { credentials: 'same-origin' })
+      .then(function (res) {
+        return res.json().catch(function () {
+          return {};
+        });
+      })
+      .then(function (data) {
+        if (!data || !data.ok || !data.active) return;
+        if (data.termsAccepted) {
+          var banner = document.getElementById('partner-terms-banner');
+          if (banner) {
+            banner.hidden = true;
+            banner.innerHTML = '';
+          }
+          document.body.classList.remove('partner-kit-page--terms-pending');
+          return;
+        }
+        showTermsBanner(code, data.acceptPage);
+      })
+      .catch(function () {});
+  }
+
   function personalise() {
     var code = '';
     if (window.HubAffiliate && typeof window.HubAffiliate.captureFromUrl === 'function') {
@@ -118,6 +161,8 @@
       heroCode.textContent = code;
       heroLine.hidden = false;
     }
+
+    checkTermsStatus(code);
 
     var short = document.getElementById('partner-kit-copy-short');
     if (short && code) {

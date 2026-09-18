@@ -12,7 +12,7 @@ const {
 (async function () {
   const slug = makeDeckSlug('Business Matching UK');
   assert.match(slug, /^custom-business-matching-uk-[a-f0-9]{6}$/);
-  assert.equal(publicPathForSlug(slug), '/p-tnh-' + slug);
+  assert.equal(publicPathForSlug(slug), '/p-tnh-custom-deck?slug=' + encodeURIComponent(slug));
 
   const sections = normalizeSections(['pricing', 'opening', 'opening', 'nope']);
   assert.deepEqual(sections, ['pricing', 'opening']);
@@ -40,6 +40,37 @@ const {
   assert.ok(sponsorDeck.sections.some(function (s) { return s.id === 'sponsor_headline_events'; }));
   assert.ok(sponsorDeck.sections.some(function (s) { return s.id === 'sponsor_opportunity_directory_listing'; }));
   assert.match(sponsorDeck.hero.headline, /Advertising on The Networker UK/);
+
+  const launchDeck = await generateCustomPitchDeck({
+    companyName: 'Pink Spaghetti',
+    deckType: 'sponsorship',
+    sponsorshipPlacements: ['opportunity_directory_listing', 'featured_opportunity_boost'],
+  });
+  var listingSection = launchDeck.sections.find(function (s) {
+    return s.id === 'sponsor_opportunity_directory_listing';
+  });
+  var spotlightSection = launchDeck.sections.find(function (s) {
+    return s.id === 'sponsor_featured_opportunity_boost';
+  });
+  assert.ok(listingSection && /12 months/i.test(listingSection.price || ''));
+  assert.ok(spotlightSection && /3 months/i.test(spotlightSection.price || ''));
+  assert.ok((launchDeck.hero.chips || []).some(function (c) { return /12 months listing/i.test(c); }));
+
+  const listingOnlyDeck = await generateCustomPitchDeck({
+    companyName: 'Acme Franchise',
+    deckType: 'sponsorship',
+    sponsorshipPlacements: ['opportunity_directory_listing'],
+  });
+  assert.ok(
+    listingOnlyDeck.sections.some(function (s) {
+      return s.id === 'sponsor_featured_opportunity_boost';
+    })
+  );
+  assert.ok(
+    (listingOnlyDeck.hero.chips || []).some(function (c) {
+      return /Premium Spotlight/i.test(c);
+    })
+  );
 
   console.log('test-custom-pitch-deck-generate: ok');
 })().catch(function (e) {

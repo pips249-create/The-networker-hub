@@ -2,6 +2,7 @@
  * Partner Programme enquire / apply form — email partnerships@.
  */
 const { sendViaResend } = require('./send-template-email');
+const { REFERRAL_PARTNER_TERMS_VERSION } = require('./partner-terms');
 
 const PARTNERSHIPS_EMAIL = String(
   process.env.PARTNERSHIPS_EMAIL || 'partnerships@thenetworkeruk.com'
@@ -36,6 +37,11 @@ function normalizeInput(body) {
     audience: String(body.audience || body.how || '').trim(),
     message: String(body.message || '').trim(),
     website: String(body.website || body.company_url || '').trim(),
+    agreedToTerms:
+      body.agreedToTerms === true ||
+      body.agreedToTerms === 'true' ||
+      body.agreedToTerms === 1 ||
+      body.termsAgreed === true,
   };
 }
 
@@ -70,6 +76,13 @@ function validateInput(input) {
       message: 'Keep your message under 4000 characters.',
     };
   }
+  if (!input.agreedToTerms) {
+    return {
+      ok: false,
+      error: 'terms_required',
+      message: 'Please read and agree to the Referral Partner Terms before applying.',
+    };
+  }
   return { ok: true };
 }
 
@@ -100,6 +113,9 @@ function buildStaffEmailHtml(input) {
         escHtml(input.message).replace(/\n/g, '<br>') +
         '</p>'
       : '') +
+    '<p style="margin:16px 0 0;"><strong>Referral Partner Terms</strong><br>Agreed at application (version ' +
+    escHtml(REFERRAL_PARTNER_TERMS_VERSION) +
+    ')</p>' +
     '</div>'
   );
 }
@@ -126,6 +142,13 @@ async function submitPartnerEnquire(body) {
       ok: true,
       message: 'Thanks — we have your enquiry and will reply if we can take this forward.',
     };
+  }
+
+  try {
+    const { recordApplicationTermsAgreement } = require('./partner-terms');
+    await recordApplicationTermsAgreement(input.email);
+  } catch (e) {
+    /* optional — partner row may not exist yet */
   }
 
   await sendViaResend({

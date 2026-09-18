@@ -6,58 +6,139 @@
   }
 
   function deckSlugFromPath() {
-    var path = (window.location.pathname || '').replace(/\.html$/i, '').replace(/\/+$/, '');
-    var m = path.match(/\/p-tnh-(custom-[a-z0-9-]+)$/i);
-    if (m) return m[1].toLowerCase();
     var params = new URLSearchParams(window.location.search || '');
     var q = String(params.get('slug') || '').trim().toLowerCase();
     if (/^custom-[a-z0-9-]+$/.test(q)) return q;
+
+    var path = (window.location.pathname || '').replace(/\.html$/i, '').replace(/\/+$/, '');
+    if (/\/p-tnh-custom-deck$/i.test(path)) return '';
+    var m = path.match(/\/p-tnh-(custom-[a-z0-9-]+)$/i);
+    if (m && m[1].toLowerCase() !== 'custom-deck') return m[1].toLowerCase();
     return '';
   }
 
-  function renderHero(hero) {
-    var chips = (hero.chips || [])
-      .map(function (c) {
-        return '<span class="org-pitch-chip">' + escHtml(c) + '</span>';
+  function logoUrlFromWebsite(website) {
+    try {
+      var raw = String(website || '').trim();
+      if (!raw) return '';
+      var url = /^https?:\/\//i.test(raw) ? raw : 'https://' + raw.replace(/^\/+/, '');
+      var host = new URL(url).hostname.replace(/^www\./i, '');
+      return host ? 'https://logo.clearbit.com/' + host : '';
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function logoCandidatesFromPayload(payload) {
+    var list = (payload && payload.prospectLogoCandidates) || [];
+    if (list.length) return list.slice();
+    if (payload && payload.prospectLogoUrl) return [payload.prospectLogoUrl];
+    if (payload && payload.website) {
+      var fb = logoUrlFromWebsite(payload.website);
+      return fb ? [fb] : [];
+    }
+    return [];
+  }
+
+  function enrichHero(hero, payload) {
+    hero = hero || {};
+    var candidates = logoCandidatesFromPayload(payload);
+    // Always prefer API-resolved candidates over a stale saved Clearbit URL.
+    if (candidates.length) {
+      hero.prospectLogoUrl = candidates[0];
+    } else if (payload && payload.prospectLogoUrl) {
+      hero.prospectLogoUrl = payload.prospectLogoUrl;
+    } else if (!hero.prospectLogoUrl && payload && payload.website) {
+      hero.prospectLogoUrl = logoUrlFromWebsite(payload.website);
+    }
+    if (!hero.preparedFor && payload && payload.companyName) {
+      hero.preparedFor = payload.companyName;
+    }
+    hero.prospectLogoCandidates = candidates;
+    return hero;
+  }
+
+  function renderProspectLogoBlock(hero) {
+    var name = String(hero.preparedFor || 'Partner').trim();
+    var src = hero.prospectLogoUrl || (hero.prospectLogoCandidates && hero.prospectLogoCandidates[0]) || '';
+    if (src) {
+      return (
+        '<img class="custom-pitch-partner-logo" src="' +
+        escHtml(src) +
+        '" alt="' +
+        escHtml(name) +
+        '" width="220" height="64" decoding="async" referrerpolicy="no-referrer">'
+      );
+    }
+    var initials = name
+      .split(/\s+/)
+      .slice(0, 2)
+      .map(function (w) {
+        return w.charAt(0);
       })
-      .join('');
+      .join('')
+      .toUpperCase();
+    return (
+      '<span class="custom-pitch-prospect-mark">' +
+      escHtml(initials || name.slice(0, 2).toUpperCase()) +
+      '</span>'
+    );
+  }
+
+  function heroOfferChips(hero) {
+    var chips = hero.chips || [];
+    if (!chips.length) return '';
+    return (
+      '<div class="custom-pitch-hero-chip-row">' +
+      chips
+        .map(function (c, i) {
+          return (
+            '<span class="custom-pitch-hero-chip' +
+            (i > 1 ? ' custom-pitch-hero-chip--soft' : '') +
+            '">' +
+            escHtml(c) +
+            '</span>'
+          );
+        })
+        .join('') +
+      '</div>'
+    );
+  }
+
+  function renderHero(hero) {
     var website = hero.website
-      ? '<a href="' +
+      ? '<p class="pitch-aside"><a href="' +
         escHtml(hero.website) +
         '" target="_blank" rel="noopener">' +
         escHtml(hero.websiteLabel || hero.website) +
-        '</a>'
+        '</a></p>'
       : '';
-    var prospectLogo = hero.prospectLogoUrl
-      ? '<img src="' +
-        escHtml(hero.prospectLogoUrl) +
-        '" alt="" width="200" height="64" class="org-pitch-prospect-logo">'
-      : '';
-    var logos =
-      prospectLogo
-        ? '<div class="org-pitch-hero-logos">' +
-          prospectLogo +
-          '<span class="org-pitch-logo-x" aria-hidden="true">×</span>' +
-          '<img src="/assets/logo-nav-transparent.png?v=20260823uk3" alt="The Networker UK" width="220" height="48">' +
-          '</div>'
-        : '<div class="org-pitch-hero-logos">' +
-          '<img src="/assets/logo-nav-transparent.png?v=20260823uk3" alt="The Networker UK" width="220" height="48">' +
-          '</div>';
+    var rawHeadline = String(hero.headline || '');
+    var accentMatch = rawHeadline.match(/^(.+?\s)(on The Networker UK.*)$/i);
+    var h1Html = accentMatch
+      ? escHtml(accentMatch[1]) + '<span class="accent">' + escHtml(accentMatch[2]) + '</span>'
+      : escHtml(rawHeadline);
+
     return (
+      '<div class="custom-pitch-hero-showcase">' +
       '<header class="sponsor-pitch-hero">' +
-      logos +
+      '<div class="custom-pitch-logo-row">' +
+      renderProspectLogoBlock(hero) +
+      '<span class="custom-pitch-logo-x" aria-hidden="true">×</span>' +
+      '<img src="/assets/logo-nav-transparent.png?v=20260823uk3" alt="The Networker UK" width="220" height="48">' +
+      '</div>' +
       '<p class="sponsor-pitch-kicker">Prepared for ' +
-      escHtml(hero.preparedFor || 'your group') +
+      escHtml(hero.preparedFor || 'your partner') +
       '</p>' +
       '<h1>' +
-      escHtml(hero.headline || '') +
+      h1Html +
       '</h1>' +
       '<p class="sponsor-pitch-lede">' +
       escHtml(hero.lede || '') +
       '</p>' +
-      (chips ? '<div class="org-pitch-chip-row">' + chips + '</div>' : '') +
-      (website ? '<p class="text-sm mt-3 opacity-80">' + website + '</p>' : '') +
-      '</header>'
+      heroOfferChips(hero) +
+      website +
+      '</header></div>'
     );
   }
 
@@ -76,18 +157,75 @@
       })
       .join('');
     return (
-      '<nav class="sponsor-pitch-nav" id="pitch-section-nav" aria-label="Presentation sections">' +
+      '<nav class="sponsor-pitch-nav" id="pitch-section-nav" aria-label="Sections">' +
       '<div class="sponsor-pitch-nav-inner">' +
       buttons +
       '</div></nav>'
     );
   }
 
+  function bulletToStat(text) {
+    var b = String(text || '').trim();
+    var dash = b.indexOf('—');
+    if (dash === -1) dash = b.indexOf(' – ');
+    if (dash === -1) dash = b.indexOf(' - ');
+    if (dash > 0 && dash < 90) {
+      return {
+        strong: b.slice(0, dash).trim(),
+        span: b.slice(dash + 1).replace(/^[-–—]\s*/, '').trim(),
+      };
+    }
+    var colon = b.indexOf(':');
+    if (colon > 0 && colon < 70) {
+      return { strong: b.slice(0, colon).trim(), span: b.slice(colon + 1).trim() };
+    }
+    if (b.length > 72) {
+      return { strong: b.slice(0, 68) + '…', span: b };
+    }
+    return { strong: b, span: '' };
+  }
+
+  function liveLinkForSection(section) {
+    var id = String((section && section.id) || '');
+    var title = String((section && section.title) || '').toLowerCase();
+    if (/opportunity|listing|spotlight|sponsor_opportunity|sponsor_headline_opportunities/.test(id + title)) {
+      return {
+        href: '/opportunities/',
+        label: 'Open live /opportunities/ →',
+      };
+    }
+    if (/event|headline_events|sponsor_headline_events/.test(id + title)) {
+      return { href: '/events/', label: 'Open live /events/ →' };
+    }
+    if (/organiser|onboard|dashboard/.test(id + title)) {
+      return { href: '/for-organisers', label: 'For organisers →' };
+    }
+    return null;
+  }
+
   function renderSection(section) {
+    var live = liveLinkForSection(section);
+    var titleHtml = live
+      ? '<div class="pitch-section-head"><h2>' +
+        escHtml(section.title || '') +
+        '</h2><a class="pitch-live-link" href="' +
+        escHtml(live.href) +
+        '" target="_blank" rel="noopener">' +
+        escHtml(live.label) +
+        '</a></div>'
+      : '<h2>' + escHtml(section.title || '') + '</h2>';
+
+    var priceHtml = '';
+    if (section.price) {
+      priceHtml = /included|no charge|free/i.test(String(section.price))
+        ? '<p class="sponsor-pitch-price-chip">' + escHtml(section.price) + '</p>'
+        : '<p class="section-intro"><strong>' + escHtml(section.price) + '</strong></p>';
+    }
+
     var tiles = (section.tiles || [])
       .map(function (t) {
         return (
-          '<article class="org-pitch-tile"><strong>' +
+          '<article class="pitch-stat"><strong>' +
           escHtml(t.title) +
           '</strong><span>' +
           escHtml(t.body) +
@@ -95,95 +233,158 @@
         );
       })
       .join('');
-    var bullets = (section.bullets || [])
-      .map(function (b) {
-        return '<li>' + escHtml(b) + '</li>';
-      })
-      .join('');
-    var body = '';
+
+    var bullets = section.bullets || [];
+    var statGrid = '';
+    if (!tiles.length && bullets.length) {
+      statGrid =
+        '<div class="pitch-stat-grid">' +
+        bullets
+          .slice(0, 4)
+          .map(function (b) {
+            var stat = bulletToStat(b);
+            return (
+              '<article class="pitch-stat"><strong>' +
+              escHtml(stat.strong) +
+              '</strong>' +
+              (stat.span ? '<span>' + escHtml(stat.span) + '</span>' : '') +
+              '</article>'
+            );
+          })
+          .join('') +
+        '</div>';
+    }
+
+    var extraList = '';
+    if (bullets.length > 4) {
+      extraList =
+        '<ul class="sponsor-pitch-checklist">' +
+        bullets
+          .slice(4)
+          .map(function (b) {
+            return '<li>' + escHtml(b) + '</li>';
+          })
+          .join('') +
+        '</ul>';
+    } else if (!statGrid && bullets.length) {
+      extraList =
+        '<ul class="sponsor-pitch-checklist">' +
+        bullets
+          .map(function (b) {
+            return '<li>' + escHtml(b) + '</li>';
+          })
+          .join('') +
+        '</ul>';
+    }
+
     if (tiles) {
-      body = '<div class="org-pitch-tight-grid">' + tiles + '</div>';
-    } else if (bullets) {
-      body = '<ul class="sponsor-pitch-checklist">' + bullets + '</ul>';
+      statGrid = '<div class="pitch-stat-grid">' + tiles + '</div>';
     }
+
+    var body = statGrid + extraList;
     if (section.quote) {
-      body +=
-        '<p class="org-pitch-quote">&ldquo;' + escHtml(section.quote) + '&rdquo;</p>';
+      body += '<p class="pitch-aside">&ldquo;' + escHtml(section.quote) + '&rdquo;</p>';
     }
+
     return (
       '<section class="sponsor-pitch-section" id="' +
       escHtml(section.id) +
       '">' +
-      '<h2>' +
-      escHtml(section.title || '') +
-      '</h2>' +
-      (section.price
-        ? '<p class="section-intro"><strong>' + escHtml(section.price) + '</strong></p>'
-        : '') +
-      (section.intro
-        ? '<p class="section-intro">' + escHtml(section.intro) + '</p>'
-        : '') +
+      titleHtml +
+      priceHtml +
+      (section.intro ? '<p class="section-intro">' + escHtml(section.intro) + '</p>' : '') +
       body +
       '</section>'
     );
   }
 
-  function renderClose(close) {
+  function renderClose(close, companyName) {
+    var co = escHtml(companyName || 'your partner');
+    var mailSubject = encodeURIComponent('Partnership — ' + (companyName || 'The Networker UK'));
     return (
-      '<section class="sponsor-pitch-section org-pitch-section--compact" id="close">' +
-      '<div class="org-pitch-slide-close">' +
-      '<img src="/assets/logo-nav-transparent.png?v=20260823uk3" alt="The Networker UK">' +
-      '<p>' +
-      escHtml((close && close.headline) || 'Find your next attendees') +
-      '</p>' +
-      '<p class="url">' +
-      escHtml((close && close.url) || 'thenetworkeruk.com/for-organisers') +
-      '</p></div></section>'
+      '<section class="sponsor-pitch-section" id="close">' +
+      '<h2>What we need from you</h2>' +
+      '<div class="pitch-spec-row">' +
+      '<div><strong>Logo</strong> PNG/SVG · landscape · for listing &amp; spotlight</div>' +
+      '<div><strong>Listing copy</strong> Opportunity description, investment level, enquiry routing</div>' +
+      '<div><strong>Website</strong> HTTPS URL for the listing CTA</div>' +
+      '<div><strong>Timing</strong> Go-live date for listing + first Premium Spotlight month</div>' +
+      '</div>' +
+      '<div class="sponsor-pitch-cta">' +
+      '<div><h2>Ready to confirm?</h2>' +
+      '<p>Send assets and preferred start date — we publish the listing, schedule spotlight months, and confirm the launch offer in writing.</p></div>' +
+      '<div class="sponsor-pitch-cta-actions">' +
+      '<a class="primary" href="mailto:rosie@thenetworkeruk.com?subject=' +
+      mailSubject +
+      '">Email Rosie →</a>' +
+      '<a class="secondary" href="/advertising" target="_blank" rel="noopener">Rate card</a>' +
+      '</div></div>' +
+      '<p class="pitch-footnote">Prepared by The Networker UK for ' +
+      co +
+      ' · Share this link after the meeting (same format as the Events Headline sales walkthrough)</p>' +
+      '</section>'
     );
   }
 
-  function renderPresentSlides(deck) {
-    var hero = deck.hero || {};
-    var slides = [];
-    slides.push(
-      '<div class="org-pitch-slide is-active">' +
-        '<p class="org-pitch-slide-kicker">' +
-        escHtml(hero.preparedFor || '') +
-        '</p>' +
-        '<h2>' +
-        escHtml(hero.headline || '') +
-        '</h2>' +
-        '<p class="org-pitch-slide-lede">' +
-        escHtml(hero.lede || '') +
-        '</p></div>'
-    );
-    (deck.sections || []).forEach(function (section) {
-      var bullets = (section.bullets || [])
-        .slice(0, 6)
-        .map(function (b) {
-          return '<li>' + escHtml(b) + '</li>';
-        })
-        .join('');
-      slides.push(
-        '<div class="org-pitch-slide">' +
-          '<p class="org-pitch-slide-kicker">' +
-          escHtml(section.kicker || section.navLabel || '') +
-          '</p>' +
-          '<h2>' +
-          escHtml(section.title || '') +
-          '</h2>' +
-          (bullets ? '<ul class="org-pitch-slide-bullets">' + bullets + '</ul>' : '') +
-          '</div>'
-      );
+  function syncPreviewThumbLogos(root, src) {
+    if (!root || !src) return;
+    root.querySelectorAll('.ad-mock-spotlight-thumb--opp').forEach(function (el) {
+      el.style.backgroundImage = 'url("' + String(src).replace(/"/g, '\\"') + '")';
+      el.style.backgroundSize = 'contain';
+      el.style.backgroundPosition = 'center';
+      el.style.backgroundRepeat = 'no-repeat';
+      el.textContent = '';
     });
-    slides.push(
-      '<div class="org-pitch-slide"><div class="org-pitch-slide-close">' +
-        '<img src="/assets/logo-nav-transparent.png?v=20260823uk3" alt="The Networker UK">' +
-        '<p>' +
-        escHtml((deck.close && deck.close.headline) || '') +
-        '</p></div></div>'
-    );
-    return slides.join('');
+  }
+
+  function bindProspectLogoFallback(root, payload) {
+    if (!root) return;
+    var name = String((payload && payload.companyName) || 'Partner').trim();
+    var initials = name
+      .split(/\s+/)
+      .slice(0, 2)
+      .map(function (w) {
+        return w.charAt(0);
+      })
+      .join('')
+      .toUpperCase();
+    var candidates = logoCandidatesFromPayload(payload);
+    if (!candidates.length && payload && payload.prospectLogoUrl) {
+      candidates = [payload.prospectLogoUrl];
+    }
+
+    function replaceWithMark(img) {
+      var mark = document.createElement('span');
+      mark.className = 'custom-pitch-prospect-mark';
+      mark.textContent = initials || name.slice(0, 2).toUpperCase();
+      if (img.parentNode) img.parentNode.replaceChild(mark, img);
+    }
+
+    root.querySelectorAll('.custom-pitch-partner-logo, .custom-pitch-detail-logo').forEach(function (img) {
+      var idx = 0;
+      img.removeAttribute('crossorigin');
+      function tryNext() {
+        idx += 1;
+        if (idx >= candidates.length) {
+          replaceWithMark(img);
+          return;
+        }
+        img.removeAttribute('crossorigin');
+        img.src = candidates[idx];
+      }
+      img.addEventListener('error', tryNext);
+      img.addEventListener(
+        'load',
+        function () {
+          syncPreviewThumbLogos(root, img.currentSrc || img.src);
+        },
+        { once: true }
+      );
+      if (candidates.length) {
+        // Prefer API-resolved candidate list; do not force CORS (breaks many brand CDNs).
+        img.src = candidates[0];
+      }
+    });
   }
 
   function bindSectionNav() {
@@ -221,93 +422,11 @@
     });
   }
 
-  function bindPresentMode() {
-    var overlay = document.getElementById('org-pitch-present');
-    var openBtn = document.getElementById('org-pitch-present-open');
-    var closeBtn = document.getElementById('org-pitch-present-close');
-    if (!overlay || !openBtn) return;
-
-    var slides = Array.prototype.slice.call(overlay.querySelectorAll('.org-pitch-slide'));
-    var dotsWrap = document.getElementById('org-pitch-present-dots');
-    var counter = document.getElementById('org-pitch-present-counter');
-    var idx = 0;
-
-    if (dotsWrap) {
-      dotsWrap.innerHTML = slides
-        .map(function (_, i) {
-          return '<span data-slide-dot="' + i + '"></span>';
-        })
-        .join('');
-    }
-
-    function renderSlide() {
-      slides.forEach(function (slide, i) {
-        slide.classList.toggle('is-active', i === idx);
-      });
-      if (dotsWrap) {
-        dotsWrap.querySelectorAll('[data-slide-dot]').forEach(function (dot, i) {
-          dot.classList.toggle('is-active', i === idx);
-        });
-      }
-      if (counter) counter.textContent = idx + 1 + ' / ' + slides.length;
-    }
-
-    function openPresent() {
-      idx = 0;
-      renderSlide();
-      overlay.classList.add('is-open');
-      overlay.setAttribute('aria-hidden', 'false');
-      document.body.style.overflow = 'hidden';
-    }
-
-    function closePresent() {
-      overlay.classList.remove('is-open');
-      overlay.setAttribute('aria-hidden', 'true');
-      document.body.style.overflow = '';
-    }
-
-    function next() {
-      idx = Math.min(slides.length - 1, idx + 1);
-      renderSlide();
-    }
-
-    function prev() {
-      idx = Math.max(0, idx - 1);
-      renderSlide();
-    }
-
-    openBtn.disabled = false;
-    openBtn.addEventListener('click', openPresent);
-    if (closeBtn) closeBtn.addEventListener('click', closePresent);
-
-    if (dotsWrap) {
-      dotsWrap.addEventListener('click', function (e) {
-        var dot = e.target.closest('[data-slide-dot]');
-        if (!dot) return;
-        idx = parseInt(dot.getAttribute('data-slide-dot'), 10) || 0;
-        renderSlide();
-      });
-    }
-
-    document.addEventListener('keydown', function (e) {
-      if (!overlay.classList.contains('is-open')) return;
-      if (e.key === 'Escape') closePresent();
-      if (e.key === 'ArrowRight' || e.key === ' ') {
-        e.preventDefault();
-        next();
-      }
-      if (e.key === 'ArrowLeft') {
-        e.preventDefault();
-        prev();
-      }
-    });
-  }
-
   function showError(message) {
     var root = document.getElementById('custom-pitch-root');
     if (root) {
       root.innerHTML =
-        '<p class="text-sm text-red-800 p-6 rounded-xl border border-red-200 bg-red-50">' +
+        '<p class="section-intro" style="color:#991b1b;border:1px solid #fecaca;background:#fef2f2;padding:1rem;border-radius:12px;">' +
         escHtml(message) +
         '</p>';
     }
@@ -315,36 +434,59 @@
 
   function renderDeck(payload) {
     var deck = payload.deck || {};
-    if (deck.hero && payload.prospectLogoUrl && !deck.hero.prospectLogoUrl) {
-      deck.hero.prospectLogoUrl = payload.prospectLogoUrl;
-    }
-    var sections = deck.sections || [];
+    deck.hero = enrichHero(deck.hero, payload);
+    var sections = Array.isArray(deck.sections) ? deck.sections : [];
     var root = document.getElementById('custom-pitch-root');
     if (!root) return;
 
-    document.title = (payload.companyName || 'Tailored pitch') + ' — organiser pitch';
+    document.title = (payload.companyName || 'Tailored pitch') + ' — sales walkthrough';
 
     var bannerLabel = document.getElementById('custom-pitch-banner-label');
     if (bannerLabel) {
       bannerLabel.textContent = 'Tailored deck — ' + (payload.companyName || 'prospect');
     }
-    var bannerMeta = document.getElementById('custom-pitch-banner-meta');
-    if (bannerMeta) {
-      bannerMeta.innerHTML =
-        'Questions? <a href="mailto:rosie@thenetworkeruk.com">rosie@thenetworkeruk.com</a>';
+
+    var liveHtml = '';
+    try {
+      var previewCtx = {
+        companyName: payload.companyName,
+        website: payload.website,
+        logoUrl: (deck.hero && deck.hero.prospectLogoUrl) || '',
+      };
+      if (window.CustomPitchPreviews && typeof CustomPitchPreviews.renderLiveExamplesSection === 'function') {
+        liveHtml = CustomPitchPreviews.renderLiveExamplesSection(previewCtx, deck) || '';
+      }
+    } catch (previewErr) {
+      console.warn('[custom-pitch-deck] live examples skipped', previewErr);
+      liveHtml = '';
+    }
+
+    var navSections = sections.slice();
+    var sectionParts = sections.map(renderSection);
+    if (liveHtml) {
+      // Show visuals first — before text-heavy opening.
+      sectionParts.unshift(liveHtml);
+      navSections.unshift({
+        id: 'custom_pitch_live_examples',
+        navLabel: 'Live examples',
+      });
     }
 
     root.innerHTML =
       renderHero(deck.hero || {}) +
-      renderNav(sections) +
-      sections.map(renderSection).join('') +
-      renderClose(deck.close);
-
-    var slideHost = document.getElementById('org-pitch-present-slides');
-    if (slideHost) slideHost.innerHTML = renderPresentSlides(deck);
+      renderNav(navSections) +
+      sectionParts.join('') +
+      renderClose(deck.close, payload.companyName);
 
     bindSectionNav();
-    bindPresentMode();
+    bindProspectLogoFallback(root, payload);
+    try {
+      if (window.CustomPitchPreviews && typeof CustomPitchPreviews.bindTabs === 'function') {
+        CustomPitchPreviews.bindTabs(root);
+      }
+    } catch (tabErr) {
+      console.warn('[custom-pitch-deck] preview tabs skipped', tabErr);
+    }
   }
 
   var slug = deckSlugFromPath();
@@ -367,9 +509,15 @@
         );
         return;
       }
-      renderDeck(result.data);
+      try {
+        renderDeck(result.data);
+      } catch (renderErr) {
+        console.error('[custom-pitch-deck] render', renderErr);
+        showError('Could not display this pitch deck. Try a hard refresh, then open the link from Command Centre again.');
+      }
     })
-    .catch(function () {
-      showError('Could not load this pitch deck — check your connection and try again.');
+    .catch(function (err) {
+      console.error('[custom-pitch-deck]', err);
+      showError('Could not load this pitch deck. Try a hard refresh (Ctrl+Shift+R), then open the link from Command Centre again.');
     });
 })();

@@ -188,9 +188,58 @@
     return { ok: true, data: payload };
   }
 
+  function eventIdsFromSearch(search) {
+    const params = new URLSearchParams(search || global.location.search);
+    const ids = String(params.get('ids') || params.get('returnIds') || '')
+      .split(',')
+      .map(function (s) {
+        return s.trim();
+      })
+      .filter(Boolean);
+    if (ids.length) return ids;
+    const single = String(params.get('id') || params.get('eventId') || '').trim();
+    return single ? [single] : [];
+  }
+
+  function buildEmbedHref(path, opts) {
+    const options = opts || {};
+    const url = new URL(path, global.location.origin);
+    if (isEmbedDrawer()) url.searchParams.set('embed', '1');
+    const ids = options.eventIds || eventIdsFromSearch();
+    if (ids.length && !url.searchParams.has('ids') && !url.searchParams.has('returnIds')) {
+      url.searchParams.set(options.idsParam || 'returnIds', ids.join(','));
+    }
+    if (options.id) url.searchParams.set('id', String(options.id));
+    if (options.hash) url.hash = options.hash;
+    return url.pathname + url.search + url.hash;
+  }
+
+  function applyEmbedDrawerBodyClass() {
+    if (!isEmbedDrawer()) return;
+    if (global.document && global.document.body) {
+      global.document.body.classList.add('ee-embed-drawer');
+    }
+    if (global.document && global.document.documentElement) {
+      global.document.documentElement.classList.add('ee-embed-drawer-root');
+    }
+  }
+
+  function notifyParent(type, payload) {
+    if (!isEmbedDrawer() || !global.parent || global.parent === global) return false;
+    global.parent.postMessage(
+      Object.assign({ type: type }, payload || {}),
+      global.location.origin
+    );
+    return true;
+  }
+
   global.HubOrganiserEmbedBootstrap = {
     CACHE_KEY: CACHE_KEY,
     isEmbedDrawer: isEmbedDrawer,
+    eventIdsFromSearch: eventIdsFromSearch,
+    buildEmbedHref: buildEmbedHref,
+    applyEmbedDrawerBodyClass: applyEmbedDrawerBodyClass,
+    notifyParent: notifyParent,
     readCache: readCache,
     writeCache: writeCache,
     clearCache: clearCache,

@@ -7,6 +7,9 @@ const {
   normalizeSponsorshipPlacements,
   buildSponsorshipSections,
   SPONSORSHIP_PLACEMENT_ORDER,
+  hasOpportunityListingLaunchOffer,
+  hasOpportunitySpotlightLaunchOffer,
+  launchOfferHeroChips,
 } = require('./sponsorship-pitch-catalog');
 
 const SECTION_CATALOG = {
@@ -53,6 +56,17 @@ function hostFromWebsite(website) {
   }
 }
 
+function defaultProspectLogoFromWebsite(website) {
+  const host = hostFromWebsite(website);
+  return host ? 'https://logo.clearbit.com/' + host : '';
+}
+
+function resolveProspectLogoUrl(explicit, website) {
+  const url = cleanText(explicit, 2000);
+  if (url) return url;
+  return defaultProspectLogoFromWebsite(website);
+}
+
 function normalizeSections(raw, opts) {
   const list = Array.isArray(raw) ? raw : [];
   const out = [];
@@ -66,42 +80,80 @@ function normalizeSections(raw, opts) {
   return out;
 }
 
-function sponsorshipOpeningSection(companyName, brief) {
+function sponsorshipOpeningSection(companyName, brief, placements) {
   const co = cleanText(companyName, 120) || 'your brand';
   const briefBit = cleanText(brief, 400);
+  const listingOffer = hasOpportunityListingLaunchOffer(placements);
+  const spotlightOffer = hasOpportunitySpotlightLaunchOffer(placements);
+  let intro =
+    'Confirm who they want to reach (event bookers, group owners, opportunity seekers), budget, and timing — then map packages from /advertising.';
+  if (listingOffer || spotlightOffer) {
+    intro +=
+      ' For this conversation we are leading with the launch partnership: ' +
+      (listingOffer ? '12 months business opportunity directory listing at no charge' : '') +
+      (listingOffer && spotlightOffer ? ' plus ' : '') +
+      (spotlightOffer ? '3 months Premium Spotlight on /opportunities/ at no charge' : '') +
+      '.';
+  }
+  if (briefBit) intro += ' Focus: ' + briefBit;
+  const bullets = [
+    'Who is the target buyer — business owners, franchisees, professionals booking events?',
+    'Which parts of the site matter most — Events, Organisers, or Opportunities?',
+    'Monthly vs prepaid commitment — most packages offer 1–12 month terms',
+    'Any category exclusivity or geographic focus (city / county)?',
+  ];
+  if (listingOffer) {
+    bullets.unshift(
+      'Confirm go-live date for the business opportunity listing — 12 months subscription included in this launch offer'
+    );
+  }
+  if (spotlightOffer) {
+    bullets.unshift(
+      'Agree the three Premium Spotlight months on /opportunities/ — included at no charge in this launch offer'
+    );
+  }
   return {
     id: 'sponsor_opening',
     navLabel: 'Opening',
     kicker: 'Partnerships',
     title: 'Opening the conversation with ' + co,
-    intro:
-      'Confirm who they want to reach (event bookers, group owners, opportunity seekers), budget, and timing — then map packages from /advertising.' +
-      (briefBit ? ' Focus: ' + briefBit : ''),
-    bullets: [
-      'Who is the target buyer — business owners, franchisees, professionals booking events?',
-      'Which parts of the site matter most — Events, Organisers, or Opportunities?',
-      'Monthly vs prepaid commitment — most packages offer 1–12 month terms',
-      'Any category exclusivity or geographic focus (city / county)?',
-    ],
+    intro: intro,
+    bullets: bullets,
     tiles: [],
     quote: '',
   };
 }
 
-function sponsorshipNextStepsSection(companyName) {
+function sponsorshipNextStepsSection(companyName, placements) {
   const co = cleanText(companyName, 120) || 'your brand';
+  const listingOffer = hasOpportunityListingLaunchOffer(placements);
+  const spotlightOffer = hasOpportunitySpotlightLaunchOffer(placements);
+  const bullets = [];
+  if (listingOffer) {
+    bullets.push(
+      'Confirm listing copy, investment level, and owner email — we publish the business opportunity page and start the included 12-month period'
+    );
+  }
+  if (spotlightOffer) {
+    bullets.push(
+      'Schedule the three included Premium Spotlight months in Command Centre (no Stripe checkout for this launch offer)'
+    );
+  }
+  bullets.push(
+    'Confirm any additional placements and start dates (or enquiry for Headline / Industry slots)',
+    'Share logo assets and landing URL for creative',
+    'Book a 15-minute walkthrough of live placements on the site'
+  );
   return {
     id: 'sponsor_next_steps',
     navLabel: 'Next steps',
     kicker: 'Close',
     title: 'Recommended next steps for ' + co,
-    intro: 'Keep momentum while inventory and eligibility are fresh.',
-    bullets: [
-      'Confirm placement list and start dates (or enquiry for Headline / Industry slots)',
-      'Share logo assets and landing URL for creative',
-      'For self-serve: City / County Sponsor or Featured Boost checkout on /advertising',
-      'Book a 15-minute walkthrough of live placements on the site',
-    ],
+    intro:
+      listingOffer || spotlightOffer
+        ? 'Lock in the launch offer in writing, then get the listing and spotlight live.'
+        : 'Keep momentum while inventory and eligibility are fresh.',
+    bullets: bullets,
     tiles: [],
     quote: '',
   };
@@ -226,7 +278,7 @@ function sectionTemplates(companyName, website, brief) {
 function buildOrganiserHero(companyName, website, brief, prospectLogoUrl) {
   const co = cleanText(companyName, 120) || 'Your group';
   const host = hostFromWebsite(website);
-  const logo = cleanText(prospectLogoUrl, 2000);
+  const logo = resolveProspectLogoUrl(prospectLogoUrl, website);
   return {
     preparedFor: co,
     website: normalizeWebsite(website),
@@ -241,10 +293,20 @@ function buildOrganiserHero(companyName, website, brief, prospectLogoUrl) {
   };
 }
 
-function buildSponsorshipHero(companyName, website, brief, prospectLogoUrl) {
+function buildSponsorshipHero(companyName, website, brief, prospectLogoUrl, placements) {
   const co = cleanText(companyName, 120) || 'Your brand';
   const host = hostFromWebsite(website);
-  const logo = cleanText(prospectLogoUrl, 2000);
+  const logo = resolveProspectLogoUrl(prospectLogoUrl, website);
+  const offerChips = launchOfferHeroChips(placements || []);
+  const defaultLede =
+    'Reach business owners, event bookers, and opportunity seekers across our Events, Organisers, and Business Opportunities directories — with exclusive and self-serve placements.';
+  let lede = cleanText(brief, 320) || defaultLede;
+  if (offerChips.length && !cleanText(brief, 320)) {
+    lede =
+      'Launch partnership on The Networker UK for ' +
+      co +
+      ': business opportunity listing and Premium Spotlight visibility on /opportunities/ — with the included launch terms below.';
+  }
   return {
     preparedFor: co,
     website: normalizeWebsite(website),
@@ -252,10 +314,10 @@ function buildSponsorshipHero(companyName, website, brief, prospectLogoUrl) {
     prospectLogoUrl: logo,
     deckType: 'sponsorship',
     headline: 'Advertising on The Networker UK for ' + co,
-    lede:
-      cleanText(brief, 320) ||
-      'Reach business owners, event bookers, and opportunity seekers across our Events, Organisers, and Business Opportunities directories — with exclusive and self-serve placements.',
-    chips: ['Events · Organisers · Opportunities', 'Headline & page partners', 'Listings from £25/mo + VAT'],
+    lede: lede,
+    chips: offerChips.length
+      ? offerChips
+      : ['Events · Organisers · Opportunities', 'Headline & page partners', 'Listings from £25/mo + VAT'],
   };
 }
 
@@ -321,18 +383,18 @@ function buildDeckFromTemplate(input) {
   let close;
 
   if (deckType === 'sponsorship') {
-    hero = buildSponsorshipHero(companyName, website, brief, prospectLogoUrl);
+    hero = buildSponsorshipHero(companyName, website, brief, prospectLogoUrl, sponsorshipPlacements);
     close = { headline: 'Explore placements', url: 'thenetworkeruk.com/advertising' };
-    deckSections.push(sponsorshipOpeningSection(companyName, brief));
+    deckSections.push(sponsorshipOpeningSection(companyName, brief, sponsorshipPlacements));
     deckSections.push.apply(
       deckSections,
       buildSponsorshipSections(sponsorshipPlacements, companyName, brief)
     );
-    deckSections.push(sponsorshipNextStepsSection(companyName));
+    deckSections.push(sponsorshipNextStepsSection(companyName, sponsorshipPlacements));
   } else if (deckType === 'combined') {
     hero = buildCombinedHero(companyName, website, brief, prospectLogoUrl);
     close = { headline: 'Let\'s get you live', url: 'thenetworkeruk.com/advertising' };
-    deckSections.push(sponsorshipOpeningSection(companyName, brief));
+    deckSections.push(sponsorshipOpeningSection(companyName, brief, sponsorshipPlacements));
     deckSections.push.apply(
       deckSections,
       buildSponsorshipSections(sponsorshipPlacements, companyName, brief)
@@ -369,7 +431,8 @@ async function polishDeckWithOpenAI(deck, input) {
     'You tailor internal B2B sales pitch decks for The Networker UK (networking ticketing + advertising). ' +
     'Return ONLY valid JSON matching the input shape: { hero, sections, close, deckType, sponsorshipPlacements }. ' +
     'Keep section ids unchanged. Improve wording to reference the prospect company naturally. ' +
-    'Do not invent pricing beyond published packages: Headline Sponsor ~£2k/mo, Page Partner ~£600/mo, Featured Boost £55, City from £29/mo, County from £49/mo, opportunity listing £25/mo + VAT, organiser free to list / keep 100% ticket / attendees 4.5%+20p.';
+    'Do not invent pricing beyond published packages: Headline Sponsor ~£2k/mo, Page Partner ~£600/mo, Featured Boost £55, City from £29/mo, County from £49/mo, opportunity listing £25/mo + VAT, organiser free to list / keep 100% ticket / attendees 4.5%+20p. ' +
+    'When sections show launch offers (12 months free business opportunity listing and/or 3 months free Premium Spotlight), keep those included terms — do not replace with standard paid pricing.';
 
   const userPayload = {
     companyName: input.companyName,
@@ -432,6 +495,13 @@ async function generateCustomPitchDeck(input) {
 }
 
 function publicPathForSlug(slug) {
+  const s = String(slug || '').trim();
+  if (!s) return '/p-tnh-custom-deck';
+  return '/p-tnh-custom-deck?slug=' + encodeURIComponent(s);
+}
+
+/** Legacy pretty path (/p-tnh-custom-*) — kept for redirects and old links. */
+function legacyPublicPathForSlug(slug) {
   return '/p-tnh-' + String(slug || '').trim();
 }
 
@@ -456,5 +526,6 @@ module.exports = {
   cleanText,
   generateCustomPitchDeck,
   publicPathForSlug,
+  legacyPublicPathForSlug,
   validatePitchDeckInput,
 };

@@ -3,14 +3,26 @@ const { jsonPublicError } = require('../public-error');
 const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
 const { adminViewFromSession, resolveOrganiserGroupScope } = require('../organiser-api-scope');
 const {
-  connectedBookingFeatureEnabled,
+  connectedBookingAllowedForSession,
+  connectedBookingPilotGrantEligible,
+  connectedBookingPilotGrantPlan,
   newWebhookSecret,
   signWebhookPayload,
   isConnectedPlanActive,
   countPublishedGroupsForAccount,
   groupLimitForPlan,
   PLAN_GROUP_LIMITS,
+  listAccountOrganisersForSlots,
+  listAssignedSlotOrganiserIds,
+  assignConnectedBookingSlots,
+  maybeAutoAssignSingleStarterSlot,
 } = require('../connected-booking');
+const { isSelfServeConnectedPlan } = require('../connected-booking-pricing');
+const {
+  isStripeCheckoutConfigured,
+  createConnectedBookingCheckoutSession,
+  createConnectedBookingBillingPortalSession,
+} = require('../stripe-checkout');
 
 function parseBody(req) {
   let body = req.body;
@@ -22,6 +34,128 @@ function parseBody(req) {
     }
   }
   return body || {};
+}
+
+function supabaseErrText(err) {
+  if (!err) return '';
+  return [err.message, err.details, err.hint, err.code].filter(Boolean).join(' ');
+}
+
+function isSupabaseSchemaError(err) {
+  const text = supabaseErrText(err);
+  return /PGRST204|42703|schema cache|Could not find the .* column|does not exist|connected_booking/i.test(text);
+}
+
+async function loadOrganiserAccountRow(sb, accountId) {
+  const accountSelectWithCustomer =
+    'id, connected_booking_plan, connected_booking_status, connected_booking_webhook_secret, connected_booking_stripe_subscription_id, connected_booking_stripe_customer_id';
+  const accountSelectBase =
+    'id, connected_booking_plan, connected_booking_status, connected_booking_webhook_secret, connected_booking_stripe_subscription_id';
+
+  let account = null;
+  let accErr = null;
+  ({ data: account, error: accErr } = await sb
+    .from('organiser_accounts')
+    .select(accountSelectWithCustomer)
+    .eq('id', accountId)
+    .maybeSingle());
+  if (
+    accErr &&
+    (/connected_booking_stripe_customer_id|stripe_customer_id/i.test(supabaseErrText(accErr)) ||
+      isSupabaseSchemaError(accErr))
+  ) {
+    ({ data: account, error: accErr } = await sb
+      .from('organiser_accounts')
+      .select(accountSelectBase)
+      .eq('id', accountId)
+      .maybeSingle());
+  }
+  if (accErr) {
+    const e = new Error(
+      'Connected booking database columns are missing. Run Supabase migration 292_external_connected_booking.sql (and 293_connected_booking_stripe_customer.sql for billing).'
+    );
+    e.code = 'connected_booking_schema_missing';
+    e.status = 503;
+    throw e;
+  }
+  return account;
+}
+
+async function loadRecentSyncLog(sb, accountId) {
+  try {
+    const { data, error } = await sb
+      .from('external_booking_sync_log')
+      .select('id, created_at, event_id, external_order_id, outcome, message, http_status')
+      .eq('organiser_account_id', accountId)
+      .order('created_at', { ascending: false })
+      .limit(15);
+    if (error) {
+      if (/external_booking_sync_log|does not exist|relation/i.test(error.message || '')) {
+        return { logs: [], schemaWarning: 'Sync log table missing — run migration 292.' };
+      }
+      throw new Error(error.message);
+    }
+    return { logs: data || [], schemaWarning: null };
+  } catch (e) {
+    console.warn('[organiser-connected-booking] sync log unavailable', e?.message || e);
+    return { logs: [], schemaWarning: 'Sync log unavailable.' };
+  }
+}
+
+function connectedBookingErrorFallback(err) {
+  if (err && err.code === 'connected_booking_schema_missing' && err.message) {
+    return String(err.message).trim();
+  }
+  return 'Connected booking could not load. Run Supabase migrations 292 and 293 on production, then refresh.';
+}
+
+async function ensurePilotGrantIfEligible(sb, account, sessionEmail) {
+  if (!account?.id || !connectedBookingPilotGrantEligible(sessionEmail)) {
+    return { account, pilotGranted: false };
+  }
+  if (isConnectedPlanActive(account)) {
+    return { account, pilotGranted: false, pilotActive: true };
+  }
+  const plan = connectedBookingPilotGrantPlan();
+  const patch = {
+    connected_booking_plan: plan,
+    connected_booking_status: 'active',
+  };
+  if (!String(account.connected_booking_webhook_secret || '').trim()) {
+    patch.connected_booking_webhook_secret = newWebhookSecret();
+  }
+  const { data: updated, error: updErr } = await sb
+    .from('organiser_accounts')
+    .update(patch)
+    .eq('id', account.id)
+    .select(
+      'id, connected_booking_plan, connected_booking_status, connected_booking_webhook_secret, connected_booking_stripe_subscription_id, connected_booking_stripe_customer_id'
+    )
+    .maybeSingle();
+  if (updErr) {
+    const { data: fallbackRow, error: fallbackErr } = await sb
+      .from('organiser_accounts')
+      .update(patch)
+      .eq('id', account.id)
+      .select(
+        'id, connected_booking_plan, connected_booking_status, connected_booking_webhook_secret, connected_booking_stripe_subscription_id'
+      )
+      .maybeSingle();
+    if (fallbackErr) throw new Error(fallbackErr.message);
+    return { account: fallbackRow || account, pilotGranted: true };
+  }
+  return { account: updated || account, pilotGranted: true };
+}
+
+function stripeCheckoutPublicMessage(err) {
+  const msg = String(err?.message || err?.raw?.message || '').trim();
+  if (msg === 'stripe_not_configured') {
+    return 'Online checkout is not configured yet — contact hi@thenetworkeruk.com.';
+  }
+  if (msg && msg.length <= 220 && !/sk_live|sk_test|api[_-]?key|secret/i.test(msg)) {
+    return 'Could not start Stripe checkout: ' + msg;
+  }
+  return 'Could not start checkout. Try again in a moment or email hi@thenetworkeruk.com.';
 }
 
 async function resolveOrganiserAccountId(sb, session, adminView) {
@@ -54,8 +188,14 @@ module.exports = async function handler(req, res) {
   const auth = await requireOrganiserSession(req);
   if (!auth.ok) return json(res, auth.status, { error: auth.error });
 
-  if (!connectedBookingFeatureEnabled()) {
-    return json(res, 503, { ok: false, error: 'connected_booking_disabled' });
+  if (!connectedBookingAllowedForSession(auth.session)) {
+    return json(res, 403, {
+      ok: false,
+      error: 'preview_restricted',
+      message:
+        'Connected booking preview is limited to approved organiser accounts. Sign in with the preview email on file, or contact us to be added.',
+      signedInAs: String(auth.session.email || '').trim().toLowerCase(),
+    });
   }
   if (!isSupabaseConfigured()) {
     return json(res, 503, { ok: false, error: 'supabase_not_configured' });
@@ -67,53 +207,117 @@ module.exports = async function handler(req, res) {
   try {
     const accountId = await resolveOrganiserAccountId(sb, auth.session, adminView);
     if (!accountId) {
-      return json(res, 404, { ok: false, error: 'organiser_account_not_found' });
+      return json(res, 200, {
+        ok: false,
+        error: 'organiser_account_not_found',
+        message:
+          'We could not find an organiser account for this login. Open My Events from the organiser workspace first, or claim your group profile.',
+      });
     }
 
-    const { data: account, error: accErr } = await sb
-      .from('organiser_accounts')
-      .select(
-        'id, connected_booking_plan, connected_booking_status, connected_booking_webhook_secret, connected_booking_stripe_subscription_id'
-      )
-      .eq('id', accountId)
-      .maybeSingle();
-    if (accErr) throw new Error(accErr.message);
+    let account = await loadOrganiserAccountRow(sb, accountId);
     if (!account) return json(res, 404, { ok: false, error: 'organiser_account_not_found' });
 
+    let pilotGranted = false;
     if (req.method === 'GET') {
+      const grantResult = await ensurePilotGrantIfEligible(
+        sb,
+        account,
+        auth.session.email
+      );
+      account = grantResult.account;
+      pilotGranted = grantResult.pilotGranted;
+    }
+
+    if (req.method === 'GET') {
+      if (isConnectedPlanActive(account)) {
+        try {
+          await maybeAutoAssignSingleStarterSlot(sb, account);
+        } catch (autoErr) {
+          console.warn('[organiser-connected-booking] auto slot assign', autoErr?.message || autoErr);
+        }
+      }
+
       const groupCount = await countPublishedGroupsForAccount(sb, accountId);
       const limit = groupLimitForPlan(account.connected_booking_plan);
-      const { data: logs } = await sb
-        .from('external_booking_sync_log')
-        .select('id, created_at, event_id, external_order_id, outcome, message, http_status')
-        .eq('organiser_account_id', accountId)
-        .order('created_at', { ascending: false })
-        .limit(15);
+      const syncResult = await loadRecentSyncLog(sb, accountId);
+      const slotOrganisers = await listAccountOrganisersForSlots(sb, accountId);
+      const assignedOrganiserIds = slotOrganisers.organisers
+        .filter((o) => o.slotAssigned)
+        .map((o) => o.id);
+      const needsSlotAssignment =
+        isConnectedPlanActive(account) &&
+        limit != null &&
+        assignedOrganiserIds.length === 0 &&
+        slotOrganisers.organisers.length > 0 &&
+        !slotOrganisers.schemaMissing;
 
       const site = String(process.env.SITE_URL || 'https://www.thenetworkeruk.com').replace(/\/$/, '');
+      const stripeCheckout = isStripeCheckoutConfigured();
+      const hasCustomer = Boolean(String(account.connected_booking_stripe_customer_id || '').trim());
+      const status = account.connected_booking_status || 'inactive';
+      const canStartCheckout =
+        stripeCheckout && (status === 'inactive' || status === 'cancelled' || status === 'past_due');
+
       return json(res, 200, {
         ok: true,
         featureEnabled: true,
         plan: account.connected_booking_plan || null,
-        status: account.connected_booking_status || 'inactive',
+        status,
         active: isConnectedPlanActive(account),
         groupCount,
         groupLimit: limit,
         hasWebhookSecret: Boolean(String(account.connected_booking_webhook_secret || '').trim()),
         webhookUrl: site + '/api/integrations/booking',
         accountId: account.id,
+        billing: {
+          stripeCheckoutConfigured: stripeCheckout,
+          canSubscribe: canStartCheckout,
+          canManageBilling: stripeCheckout && hasCustomer && Boolean(account.connected_booking_stripe_subscription_id),
+          selfServePlans: ['starter', 'growth', 'scale'],
+        },
         pricing: {
           starter: { groups: PLAN_GROUP_LIMITS.starter, monthlyExVat: 39 },
           growth: { groups: PLAN_GROUP_LIMITS.growth, monthlyExVat: 99 },
           scale: { groups: PLAN_GROUP_LIMITS.scale, monthlyExVat: 199 },
           enterprise: { groups: null, note: 'Email Rosie and Catherine for 20+ groups.' },
         },
-        recentSync: logs || [],
+        recentSync: syncResult.logs,
+        schemaWarning: syncResult.schemaWarning || undefined,
+        slots: {
+          assignedOrganiserIds,
+          accountOrganisers: slotOrganisers.organisers,
+          schemaMissing: slotOrganisers.schemaMissing,
+          needsAssignment: needsSlotAssignment,
+        },
+        pilotGrant: pilotGranted
+          ? {
+              granted: true,
+              plan: account.connected_booking_plan,
+              message:
+                'Pilot access — Starter plan activated without charge for this login. Generate your webhook secret below.',
+            }
+          : undefined,
       });
     }
 
     if (req.method === 'PATCH') {
       const body = parseBody(req);
+
+      if (body.action === 'assign_connected_slots') {
+        const ids = body.organiserIds || body.organiser_ids || [];
+        const result = await assignConnectedBookingSlots(sb, account, ids);
+        const refreshed = await listAccountOrganisersForSlots(sb, accountId);
+        return json(res, 200, {
+          ok: true,
+          assignedOrganiserIds: result.assignedOrganiserIds,
+          slots: {
+            assignedOrganiserIds: result.assignedOrganiserIds,
+            accountOrganisers: refreshed.organisers,
+          },
+        });
+      }
+
       const patch = {};
 
       if (body.action === 'rotate_webhook_secret') {
@@ -160,6 +364,72 @@ module.exports = async function handler(req, res) {
 
     if (req.method === 'POST') {
       const body = parseBody(req);
+      const email = String(auth.session.email || '').trim().toLowerCase();
+      if (!email) {
+        return json(res, 403, { ok: false, error: 'missing_email' });
+      }
+
+      if (body.action === 'create_checkout') {
+        if (!isStripeCheckoutConfigured()) {
+          return json(res, 503, { ok: false, error: 'stripe_not_configured' });
+        }
+        const plan = String(body.plan || body.connectedBookingPlan || '').trim().toLowerCase();
+        if (!isSelfServeConnectedPlan(plan)) {
+          return json(res, 400, { ok: false, error: 'invalid_plan' });
+        }
+        const st = String(account.connected_booking_status || 'inactive');
+        if (st === 'active' && isConnectedPlanActive(account)) {
+          const hasCustomer = Boolean(String(account.connected_booking_stripe_customer_id || '').trim());
+          if (hasCustomer) {
+            try {
+              const portal = await createConnectedBookingBillingPortalSession({
+                customerId: account.connected_booking_stripe_customer_id,
+              });
+              return json(res, 200, {
+                ok: true,
+                alreadySubscribed: true,
+                url: portal.url,
+              });
+            } catch (e) {
+              return json(res, 409, { ok: false, error: 'already_subscribed' });
+            }
+          }
+          return json(res, 409, { ok: false, error: 'already_subscribed' });
+        }
+        try {
+          const session = await createConnectedBookingCheckoutSession({
+            plan,
+            organiserAccountId: accountId,
+            email,
+          });
+          return json(res, 200, { ok: true, url: session.url, sessionId: session.id });
+        } catch (checkoutErr) {
+          console.error(
+            '[organiser-connected-booking] create_checkout',
+            checkoutErr?.message || checkoutErr
+          );
+          const notConfigured =
+            String(checkoutErr?.message || '').trim() === 'stripe_not_configured';
+          return json(res, notConfigured ? 503 : 502, {
+            ok: false,
+            error: notConfigured ? 'stripe_not_configured' : 'stripe_checkout_failed',
+            message: stripeCheckoutPublicMessage(checkoutErr),
+          });
+        }
+      }
+
+      if (body.action === 'billing_portal') {
+        if (!isStripeCheckoutConfigured()) {
+          return json(res, 503, { ok: false, error: 'stripe_not_configured' });
+        }
+        const customerId = String(account.connected_booking_stripe_customer_id || '').trim();
+        if (!customerId) {
+          return json(res, 400, { ok: false, error: 'no_billing_customer' });
+        }
+        const portal = await createConnectedBookingBillingPortalSession({ customerId });
+        return json(res, 200, { ok: true, url: portal.url });
+      }
+
       if (body.action === 'test_signature') {
         const secret = String(account.connected_booking_webhook_secret || '').trim();
         if (!secret) {
@@ -186,7 +456,9 @@ module.exports = async function handler(req, res) {
   } catch (e) {
     return jsonPublicError(res, json, e, {
       code: e.code || 'connected_booking_failed',
+      fallback: connectedBookingErrorFallback(e),
       logLabel: '[organiser-connected-booking]',
+      extra: { ok: false },
     });
   }
 };

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <link rel="icon" href="/favicon.ico?v=20260823uk3" sizes="any" />
+    <title>Connected event setup – Organiser – The Networker UK</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/hub.css?v=20260909listmenu1" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260917connsetup1" />
+    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260812doors2" />
+  </head>
+  <body class="organiser-event-edit-page organiser-connected-setup-page">
+    <div id="hub-site-nav"></div>
+    <script src="../js/site-nav.js?v=20260910aff1" data-root="../" data-page="organiser" defer></script>
+
+    <div class="ee-wrap">
+      <div class="ee-back-row">
+        <a class="ee-back" href="/organiser/#events-list">← Back to My Events</a>
+        <button type="button" class="ee-btn ee-btn-outline ee-embed-back" id="ecs-embed-back-tickets" hidden>
+          ← Back to event setup
+        </button>
+        <a class="ee-back ee-back-secondary" id="ecs-edit-event-link" href="/organiser/event-edit" hidden
+          >← Event details</a
+        >
+      </div>
+
+      <h1 class="ee-title">Connected event — price &amp; booking link</h1>
+      <p class="ee-lead" id="ecs-event-title"></p>
+      <p class="ee-hint" id="ecs-slot-status" hidden role="status"></p>
+      <p class="ee-alert ee-alert-warn" id="ecs-blocked" hidden role="alert"></p>
+
+      <div class="ee-card" id="ecs-form-card" hidden>
+        <h2>Listing on The Networker UK</h2>
+        <p class="ee-hint">
+          Payment happens on <strong>your</strong> website (Eventbrite, your checkout, etc.). We show the price below and
+          send visitors to your booking link. Registrations can sync via webhook for attendee tools and verified reviews.
+        </p>
+
+        <label class="ee-field">
+          <span>Price shown on listing <strong>(required)</strong></span>
+          <input
+            type="text"
+            id="ecs-price-label"
+            maxlength="80"
+            placeholder="e.g. Free, £15, From £10"
+            autocomplete="off"
+          />
+        </label>
+        <p class="ee-hint ee-connected-legal-hint">
+          This is the price visitors see on The Networker UK before they leave for your site. You are responsible for
+          ensuring it matches what you charge on your checkout (including VAT where applicable) and complies with UK
+          consumer law. We do not process ticket payment on Connected booking.
+        </p>
+
+        <label class="ee-field">
+          <span>Booking page URL <strong>(required to publish)</strong></span>
+          <input
+            type="url"
+            id="ecs-booking-url"
+            placeholder="https://www.eventbrite.co.uk/e/…"
+            autocomplete="off"
+          />
+        </label>
+
+        <p class="ee-hint" id="ecs-save-status" hidden role="status"></p>
+        <div class="ee-attendance-next">
+          <button type="button" class="ee-btn ee-btn-outline" id="ecs-save">Save draft</button>
+          <button type="button" class="ee-btn ee-btn-gold" id="ecs-publish">Publish Connected event</button>
+        </div>
+      </div>
+
+      <section class="ee-booking-help-section" id="ecs-developer-section" hidden>
+        <div class="ee-booking-help-section-head">
+          <p class="ee-booking-help-kicker">For your developer</p>
+          <h2>Registration webhook</h2>
+          <p class="ee-hint">
+            When someone completes checkout on your site, your system POSTs to our API (signed with your webhook secret).
+            Full docs and sample JSON are on
+            <a href="/organiser/connected-booking#cb-webhook-title">Connected booking → webhook</a>.
+          </p>
+        </div>
+        <div class="ee-card">
+          <p class="ee-hint"><strong>Endpoint</strong></p>
+          <p class="cb-webhook-url" id="ecs-webhook-url"></p>
+          <p class="ee-hint" id="ecs-account-id-wrap" hidden>
+            <strong>Account id header:</strong> <code id="ecs-account-id"></code>
+          </p>
+          <p class="ee-hint" id="ecs-event-id-wrap" hidden>
+            <strong>Event id in JSON body:</strong> <code id="ecs-event-id"></code>
+          </p>
+        </div>
+      </section>
+
+      <p class="ee-hint" id="ecs-hub-tickets-note" hidden>
+        Need tickets, membership, or guest visits <em>on The Networker UK</em> instead?
+        <a href="/organiser/event-tickets">Use on-platform checkout (set up tickets)</a>.
+      </p>
+    </div>
+
+    <script src="../js/organiser-embed-bootstrap.js?v=20260917embed1" defer></script>
+    <script src="../js/organiser-page-loading.js?v=20260811claimux2" defer></script>
+    <script src="../js/organiser-event-connected-setup.js?v=20260917connsetup3" defer></script>
+  </body>
+</html>

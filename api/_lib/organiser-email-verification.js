@@ -124,7 +124,7 @@ async function markOrganiserEmailVerified(userId) {
   return data;
 }
 
-async function sendOrganiserEmailVerification({ userId, email, name }) {
+async function sendOrganiserEmailVerification({ userId, email, name, revealCode }) {
   const address = String(email || '')
     .trim()
     .toLowerCase();
@@ -140,6 +140,7 @@ async function sendOrganiserEmailVerification({ userId, email, name }) {
   const verifyPath = buildOrganiserVerifyEmailPath(code, address);
   const verifyUrl = siteHost() + verifyPath;
   const displayName = String(name || '').trim() || address.split('@')[0];
+  const shouldRevealCode = Boolean(revealCode);
 
   try {
     const result = await sendTemplatedEmail({
@@ -152,8 +153,20 @@ async function sendOrganiserEmailVerification({ userId, email, name }) {
         verify_url: verifyUrl,
       },
       skipEmailCheck: true,
+      resendTags: [{ name: 'category', value: 'organiser_email_verify' }],
     });
-    return { ok: true, emailSent: true, verifyUrl: null, verifyPath, ...result };
+    const out = {
+      ok: true,
+      emailSent: true,
+      verifyUrl: null,
+      verifyPath,
+      ...result,
+    };
+    if (shouldRevealCode) {
+      out.verifyUrl = verifyUrl;
+      out.verifyCode = code;
+    }
+    return out;
   } catch (e) {
     const errCode = e.code || '';
     if (errCode === 'resend_not_configured') {
@@ -161,8 +174,13 @@ async function sendOrganiserEmailVerification({ userId, email, name }) {
       err.code = 'email_not_configured';
       err.verifyUrl = verifyUrl;
       err.verifyCode = code;
+      err.verifyPath = verifyPath;
       throw err;
     }
+    // Keep the stored code so a signed-in user / admin can still confirm without inbox delivery.
+    e.verifyUrl = verifyUrl;
+    e.verifyCode = code;
+    e.verifyPath = verifyPath;
     throw e;
   }
 }

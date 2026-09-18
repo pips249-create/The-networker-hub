@@ -294,6 +294,7 @@
     "api/contact-chat.js": { "maxDuration": 30 },
     "api/contact-message.js": { "maxDuration": 15 },
     "api/partner-enquire.js": { "maxDuration": 15 },
+    "api/partner-terms.js": { "maxDuration": 15 },
     "api/event-intake.js": { "maxDuration": 15 },
     "api/advertising.js": { "maxDuration": 15 },
     "api/international-interest.js": { "maxDuration": 10 },
@@ -403,6 +404,14 @@
       "destination": "/partners/earnings.html"
     },
     {
+      "source": "/partners/terms",
+      "destination": "/partners/terms.html"
+    },
+    {
+      "source": "/partners/accept-terms",
+      "destination": "/partners/accept-terms.html"
+    },
+    {
       "source": "/advertising",
       "destination": "/advertising.html"
     },
@@ -455,8 +464,8 @@
       "destination": "/p-tnh-org-onboard-x4n7.html"
     },
     {
-      "source": "/p-tnh-custom-:slug",
-      "destination": "/p-tnh-custom-deck.html?slug=custom-:slug"
+      "source": "/p-tnh-custom-(.*)",
+      "destination": "/p-tnh-custom-deck?slug=custom-$1"
     },
     {
       "source": "/p-tnh-org-cheats-c8r3",

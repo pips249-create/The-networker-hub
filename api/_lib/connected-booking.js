@@ -4,6 +4,13 @@ const {
   CHECKOUT_EXTERNAL,
   CHECKOUT_HUB,
   connectedBookingFeatureEnabled,
+  connectedBookingAllowedForEmail,
+  connectedBookingAllowedForSession,
+  connectedBookingOperationsEnabled,
+  connectedBookingPreviewLocked,
+  connectedBookingPilotGrantEligible,
+  connectedBookingPilotGrantPlan,
+  normalizeConnectedBookingEmail,
   isExternalConnectedEvent,
   normalizeExternalPriceLabel,
   normalizeExternalBookingUrl,
@@ -92,11 +99,47 @@ async function logExternalSync(sb, row) {
   }
 }
 
+async function emailForOrganiserAccountId(sb, organiserAccountId) {
+  const accountId = String(organiserAccountId || '').trim();
+  if (!accountId) return '';
+  const { data: account, error } = await sb
+    .from('organiser_accounts')
+    .select('supabase_user_id')
+    .eq('id', accountId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  const userId = String(account?.supabase_user_id || '').trim();
+  if (!userId) return '';
+  try {
+    const { data: userData, error: userErr } = await sb.auth.admin.getUserById(userId);
+    if (userErr) throw userErr;
+    return normalizeConnectedBookingEmail(userData?.user?.email);
+  } catch {
+    return '';
+  }
+}
+
+async function connectedBookingAllowedForOrganiserAccountId(sb, organiserAccountId) {
+  const preview = connectedBookingPreviewLocked();
+  if (!preview && !connectedBookingFeatureEnabled()) return false;
+  if (!preview) return true;
+  const email = await emailForOrganiserAccountId(sb, organiserAccountId);
+  return connectedBookingAllowedForEmail(email);
+}
+
 module.exports = {
   PLAN_GROUP_LIMITS,
   CHECKOUT_EXTERNAL,
   CHECKOUT_HUB,
   connectedBookingFeatureEnabled,
+  connectedBookingAllowedForEmail,
+  connectedBookingAllowedForSession,
+  connectedBookingOperationsEnabled,
+  connectedBookingPreviewLocked,
+  connectedBookingPilotGrantEligible,
+  connectedBookingPilotGrantPlan,
+  emailForOrganiserAccountId,
+  connectedBookingAllowedForOrganiserAccountId,
   isExternalConnectedEvent,
   normalizeExternalPriceLabel,
   normalizeExternalBookingUrl,
@@ -110,4 +153,5 @@ module.exports = {
   groupLimitForPlan,
   assertConnectedBookingEntitlement,
   logExternalSync,
+  ...require('./connected-booking-slots'),
 };

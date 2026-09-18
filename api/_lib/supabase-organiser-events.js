@@ -1065,20 +1065,24 @@ async function buildEventRow(payload, eventId, mode) {
   }
 
   const {
-    connectedBookingFeatureEnabled,
+    connectedBookingAllowedForEmail,
     CHECKOUT_EXTERNAL,
     CHECKOUT_HUB,
     normalizeExternalBookingUrl,
     normalizeExternalPriceLabel,
     assertConnectedBookingEntitlement,
+    assertOrganiserConnectedSlot,
+    loadOrganiserAccountForOrganiserId,
   } = require('./connected-booking');
+
+  const editorEmail = payload._editorEmail || payload.email || '';
 
   if (
     Object.prototype.hasOwnProperty.call(payload, 'checkoutMode') ||
     Object.prototype.hasOwnProperty.call(payload, 'checkout_mode')
   ) {
     const rawMode = String(payload.checkoutMode || payload.checkout_mode || CHECKOUT_HUB).trim();
-    if (connectedBookingFeatureEnabled() && rawMode === CHECKOUT_EXTERNAL) {
+    if (connectedBookingAllowedForEmail(editorEmail) && rawMode === CHECKOUT_EXTERNAL) {
       row.checkout_mode = CHECKOUT_EXTERNAL;
     } else {
       row.checkout_mode = CHECKOUT_HUB;
@@ -1169,9 +1173,12 @@ async function buildEventRow(payload, eventId, mode) {
       e.code = 'missing_external_price_label';
       throw e;
     }
-    if (connectedBookingFeatureEnabled() && organiserId) {
+    if (connectedBookingAllowedForEmail(editorEmail) && organiserId) {
       const sbEnt = getSupabaseAdmin();
-      await assertConnectedBookingEntitlement(sbEnt, organiserId, { skipGroupLimit: true });
+      const entAccount = await assertConnectedBookingEntitlement(sbEnt, organiserId, {
+        skipGroupLimit: true,
+      });
+      await assertOrganiserConnectedSlot(sbEnt, organiserId, entAccount);
     }
     row.ticket_sales_enabled = true;
     row.attendance_mode = 'tickets';

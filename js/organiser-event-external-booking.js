@@ -1,7 +1,22 @@
 /**
- * Connected external booking — optional path on Set up tickets.
+ * Connected booking entry on Set up tickets — links to dedicated Connected setup page.
  */
 (function () {
+  const embed = window.HubOrganiserEmbedBootstrap || {};
+  const isEmbedDrawer =
+    typeof embed.isEmbedDrawer === 'function'
+      ? embed.isEmbedDrawer
+      : function () {
+          try {
+            return (
+              new URLSearchParams(window.location.search).get('embed') === '1' ||
+              window.self !== window.top
+            );
+          } catch (e) {
+            return false;
+          }
+        };
+
   const form = document.getElementById('ee-tickets-form');
   if (!form || form.dataset.externalBookingBound) return;
   form.dataset.externalBookingBound = '1';
@@ -9,23 +24,29 @@
   const card = document.getElementById('ee-external-booking-card');
   if (!card) return;
 
-  const toggle = document.getElementById('ee-external-booking-enabled');
-  const urlInput = document.getElementById('ee-external-booking-url');
-  const priceInput = document.getElementById('ee-external-price-label');
   const hubPanels = document.getElementById('ee-hub-ticket-panels');
-  const saveBtn = document.getElementById('ee-external-booking-save');
-  const publishBtn = document.getElementById('ee-external-booking-publish');
+  const seriesCard = document.getElementById('ee-series-card');
+  const wizardMount = document.getElementById('ee-wizard-mount');
+  const pageTitle = document.querySelector('.ee-title');
+  const pageLead = document.getElementById('ee-tickets-lead');
   const statusEl = document.getElementById('ee-external-booking-status');
   const planLink = document.getElementById('ee-connected-plan-link');
+  const setupLink = document.getElementById('ee-connected-setup-link');
 
-  function api(path, opts) {
-    return fetch(path, Object.assign({ credentials: 'include', headers: { 'Content-Type': 'application/json' } }, opts || {})).then(
-      function (res) {
-        return res.json().then(function (data) {
-          return { ok: res.ok, data: data };
-        });
-      }
-    );
+  let billingActive = false;
+  let featureEnabled = false;
+  let loadedEvent = null;
+
+  if (isEmbedDrawer()) {
+    document.documentElement.classList.add('ee-connected-tickets-checking');
+  }
+
+  function api(path) {
+    return fetch(path, { credentials: 'include', cache: 'no-store' }).then(function (res) {
+      return res.json().then(function (data) {
+        return { ok: res.ok, data: data };
+      });
+    });
   }
 
   function showStatus(msg, kind) {
@@ -35,90 +56,182 @@
     statusEl.className = 'ee-hint' + (kind === 'error' ? ' ee-alert-warn' : kind === 'ok' ? ' ee-alert-ok' : '');
   }
 
-  function syncPanels() {
-    const on = toggle && toggle.checked;
-    card.classList.toggle('is-active', Boolean(on));
-    if (hubPanels) hubPanels.hidden = Boolean(on);
+  function isExternalConnectedEvent(ev) {
+    return ev && String(ev.checkoutMode || '').trim() === 'external_connected';
+  }
+
+  function shouldShowCard() {
+    if (!featureEnabled) return false;
+    if (billingActive) return true;
+    return isExternalConnectedEvent(loadedEvent);
+  }
+
+  function eventIdsFromQueryArray() {
+    if (typeof embed.eventIdsFromSearch === 'function') {
+      return embed.eventIdsFromSearch();
+    }
+    const params = new URLSearchParams(window.location.search);
+    const ids = String(params.get('ids') || '')
+      .split(',')
+      .map(function (s) {
+        return s.trim();
+      })
+      .filter(Boolean);
+    if (ids.length) return ids;
+    const eid = resolveEventId();
+    return eid ? [eid] : [];
   }
 
   function eventIdFromQuery() {
     const params = new URLSearchParams(window.location.search);
-    return String(params.get('id') || params.get('eventId') || '').trim();
+    const single = String(params.get('id') || params.get('eventId') || '').trim();
+    if (single) return single;
+    const ids = String(params.get('ids') || '')
+      .split(',')
+      .map(function (s) {
+        return s.trim();
+      })
+      .filter(Boolean);
+    return ids[0] || '';
+  }
+
+  function resolveEventId() {
+    const fromQuery = eventIdFromQuery();
+    if (fromQuery) return fromQuery;
+    if (loadedEvent && loadedEvent.id) return String(loadedEvent.id).trim();
+    return '';
+  }
+
+  function setConnectedOnlyLayout(on) {
+    document.body.classList.toggle('ee-connected-tickets-only', on);
+    document.documentElement.classList.toggle('ee-connected-tickets-checking', !on && isEmbedDrawer());
+    if (hubPanels) hubPanels.hidden = on;
+    if (seriesCard) seriesCard.hidden = on;
+    if (wizardMount) wizardMount.hidden = on;
+    if (pageTitle) {
+      pageTitle.textContent = on ? 'Connected booking' : 'Set up tickets';
+    }
+    if (pageLead) {
+      pageLead.hidden = on;
+    }
+  }
+
+  function bindPlanLink() {
+    if (!planLink || planLink.dataset.boundConnectedPlan) return;
+    planLink.dataset.boundConnectedPlan = '1';
+    planLink.addEventListener('click', function (e) {
+      const ids = eventIdsFromQueryArray();
+      if (
+        isEmbedDrawer() &&
+        typeof embed.notifyParent === 'function' &&
+        embed.notifyParent('hub-event-goto-connected-booking', { eventIds: ids })
+      ) {
+        e.preventDefault();
+        return;
+      }
+      if (typeof embed.buildEmbedHref === 'function') {
+        planLink.href = embed.buildEmbedHref('/organiser/connected-booking', {
+          eventIds: ids,
+          hash: '#cb-slots-panel',
+        });
+      }
+    });
+  }
+
+  function bindSetupLink() {
+    if (!setupLink || setupLink.dataset.boundConnectedSetup) return;
+    setupLink.dataset.boundConnectedSetup = '1';
+    setupLink.addEventListener('click', function (e) {
+      const eid = resolveEventId();
+      if (!eid) return;
+      const ids = eventIdsFromQueryArray();
+      if (
+        isEmbedDrawer() &&
+        typeof embed.notifyParent === 'function' &&
+        embed.notifyParent('hub-event-goto-connected-setup', {
+          eventId: eid,
+          eventIds: ids,
+          title: (loadedEvent && loadedEvent.title) || '',
+        })
+      ) {
+        e.preventDefault();
+        return;
+      }
+      if (typeof embed.buildEmbedHref === 'function') {
+        setupLink.href = embed.buildEmbedHref('/organiser/event-connected-setup', {
+          id: eid,
+          eventIds: ids,
+        });
+      } else {
+        setupLink.href = '/organiser/event-connected-setup?id=' + encodeURIComponent(eid);
+      }
+    });
+  }
+
+  function refreshCardVisibility() {
+    const show = shouldShowCard();
+    card.hidden = !show;
+    if (!show) {
+      setConnectedOnlyLayout(false);
+      document.documentElement.classList.remove('ee-connected-tickets-checking');
+      card.classList.remove('is-active');
+      showStatus('');
+      return;
+    }
+
+    if (planLink) planLink.hidden = false;
+
+    const eid = resolveEventId();
+    if (setupLink) {
+      if (typeof embed.buildEmbedHref === 'function' && eid) {
+        setupLink.href = embed.buildEmbedHref('/organiser/event-connected-setup', {
+          id: eid,
+          eventIds: eventIdsFromQueryArray(),
+        });
+      } else {
+        setupLink.href = eid
+          ? '/organiser/event-connected-setup?id=' + encodeURIComponent(eid)
+          : '/organiser/event-connected-setup';
+      }
+    }
+
+    setConnectedOnlyLayout(true);
+
+    if (isExternalConnectedEvent(loadedEvent)) {
+      card.classList.add('is-active');
+      showStatus('This event uses Connected booking. Use Connected event setup to edit price and booking link.', 'ok');
+    } else {
+      card.classList.remove('is-active');
+      if (!billingActive) {
+        showStatus(
+          'This event uses Connected booking but your plan is not active. Renew or contact us.',
+          'error'
+        );
+      } else {
+        showStatus('');
+      }
+    }
   }
 
   function applyEventFields(ev) {
-    if (!ev) return;
-    if (String(ev.checkoutMode || '') === 'external_connected') {
-      if (toggle) toggle.checked = true;
-      if (urlInput) urlInput.value = ev.externalBookingUrl || '';
-      if (priceInput) priceInput.value = ev.externalPriceLabel || '';
-    }
-    syncPanels();
+    loadedEvent = ev || null;
+    refreshCardVisibility();
   }
 
   window.addEventListener('ee-event-loaded', function (e) {
     applyEventFields(e.detail && e.detail.event);
   });
 
-  if (toggle) toggle.addEventListener('change', syncPanels);
-
-  async function saveExternal(publish) {
-    const eventId = eventIdFromQuery();
-    if (!eventId) {
-      showStatus('Open an event from My Events first.', 'error');
-      return;
-    }
-    if (!toggle || !toggle.checked) {
-      showStatus('Turn on Connected booking to save.', 'error');
-      return;
-    }
-    const url = urlInput ? urlInput.value.trim() : '';
-    const priceLabel = priceInput ? priceInput.value.trim() : '';
-    if (!url || !priceLabel) {
-      showStatus('Enter your booking page URL and a price label (e.g. Free or £15).', 'error');
-      return;
-    }
-    showStatus('Saving…');
-    const existingRes = await api('/api/organiser/events?id=' + encodeURIComponent(eventId));
-    if (!existingRes.ok || !existingRes.data.event) {
-      showStatus(existingRes.data?.message || 'Could not load this event.', 'error');
-      return;
-    }
-    const ev = existingRes.data.event;
-    const payload = {
-      id: eventId,
-      title: ev.title,
-      organiserGroupId: ev.organiserGroupId || (ev.organiserGroupIds && ev.organiserGroupIds[0]) || '',
-      checkoutMode: 'external_connected',
-      externalBookingUrl: url,
-      externalPriceLabel: priceLabel,
-      listingStatus: publish ? 'published' : 'draft',
-    };
-    const { ok, data } = await api('/api/organiser/events', {
-      method: 'PATCH',
-      body: JSON.stringify(payload),
-    });
-    if (!ok) {
-      showStatus(data.message || data.error || 'Could not save.', 'error');
-      return;
-    }
-    showStatus(publish ? 'Published with Connected booking.' : 'Saved Connected booking settings.', 'ok');
-  }
-
-  if (saveBtn) saveBtn.addEventListener('click', function () { saveExternal(false); });
-  if (publishBtn) publishBtn.addEventListener('click', function () { saveExternal(true); });
+  bindPlanLink();
+  bindSetupLink();
 
   api('/api/organiser/connected-booking').then(function (res) {
-    if (planLink && res.ok && res.data) {
-      planLink.hidden = false;
-      if (!res.data.active) {
-        showStatus(
-          'Connected booking plan is not active yet. See Connected booking settings to subscribe or ask us to enable a pilot.',
-          'error'
-        );
-      }
+    if (res.ok && res.data && res.data.featureEnabled) {
+      featureEnabled = true;
+      billingActive = Boolean(res.data.active);
     }
+    refreshCardVisibility();
   });
 
-  syncPanels();
+  refreshCardVisibility();
 })();
