@@ -90,7 +90,9 @@
     if (!platformPickerControl) {
       platformPickerControl = hub.bindPicker(picker, eventId, function (platformKey, meta) {
         syncBookingUrlPlaceholder(meta);
+        syncEventLinkPanel(platformKey);
         renderProviderWebhookCard(platformKey);
+        updateOneTimeProviderStatus(platformKey);
       });
     }
     if (platformPickerControl) {
@@ -105,6 +107,8 @@
         if (guess && guess !== platformPickerControl.getSelected()) {
           platformPickerControl.apply(guess);
         }
+        maybeAutofillExternalEventId(false);
+        refreshEventLinkAutofillHint();
       });
     }
   }
@@ -116,6 +120,7 @@
     if (fromQuery && hub.PLATFORMS[fromQuery]) {
       hub.setStored(eventId, fromQuery);
       platformPickerControl.apply(fromQuery);
+      syncEventLinkPanel(fromQuery);
       renderProviderWebhookCard(fromQuery);
       return;
     }
@@ -424,6 +429,15 @@
 
   var providersById = {};
   var providerLinks = [];
+  var externalEventIdUserEdited = false;
+  var eventLinkUiBound = false;
+
+  var EXTERNAL_ID_LABELS = {
+    eventbrite: 'Eventbrite event id (numbers — we can fill this from your booking URL)',
+    ticket_tailor: 'Ticket Tailor event id (from box office / event URL)',
+    luma: 'Luma event id or slug (from your lu.ma link)',
+    trybooking: 'TryBooking event id',
+  };
 
   function selectedIntegrationPlatform() {
     if (platformPickerControl && platformPickerControl.getSelected) {
@@ -474,6 +488,245 @@
     });
   }
 
+  function linkedExternalEventId(platform) {
+    var link = eventLinkForPlatform(platform);
+    if (!link) return '';
+    return String(link.external_event_id || link.externalEventId || '').trim();
+  }
+
+  function guessExternalEventIdFromBookingUrl(platform) {
+    var hub = window.HubExternalBookingUrl;
+    var bookingUrl = qs('ecs-booking-url') ? qs('ecs-booking-url').value : '';
+    if (!hub || typeof hub.guessProviderExternalEventId !== 'function') return '';
+    return hub.guessProviderExternalEventId(platform, bookingUrl);
+  }
+
+  function resolveExternalEventIdForLink(platform) {
+    var key = String(platform || selectedIntegrationPlatform() || '').trim();
+    var input = qs('ecs-external-event-id');
+    var manual = input ? String(input.value || '').trim() : '';
+    if (manual) return manual;
+    return guessExternalEventIdFromBookingUrl(key);
+  }
+
+  function setEventLinkStatus(msg, kind) {
+    var el = qs('ecs-event-link-status');
+    if (!el) return;
+    el.hidden = !msg;
+    el.textContent = msg || '';
+    el.className =
+      'ee-hint' + (kind === 'error' ? ' ee-alert-warn' : kind === 'ok' ? ' ee-alert-ok' : '');
+  }
+
+  function refreshEventLinkBadge(platform) {
+    var badge = qs('ecs-event-link-badge');
+    if (!badge) return;
+    var key = String(platform || selectedIntegrationPlatform() || '').trim();
+    var linkedId = linkedExternalEventId(key);
+    if (linkedId) {
+      badge.hidden = false;
+      badge.className = 'ecs-event-link-badge ee-hint is-linked';
+      badge.textContent = 'Linked — provider event id ' + linkedId + ' will sync registrations to this TNH event.';
+      return;
+    }
+    badge.hidden = false;
+    badge.className = 'ecs-event-link-badge ee-hint is-unlinked';
+    badge.textContent = 'Not linked yet — save the provider event id below (or publish and we will link it for you).';
+  }
+
+  function refreshEventLinkAutofillHint() {
+    var hint = qs('ecs-event-link-autofill-hint');
+    var useBtn = qs('ecs-use-url-id');
+    if (!hint) return;
+    var platform = selectedIntegrationPlatform();
+    if (platform === 'own_site') {
+      hint.hidden = true;
+      if (useBtn) useBtn.hidden = true;
+      return;
+    }
+    var guessed = guessExternalEventIdFromBookingUrl(platform);
+    var input = qs('ecs-external-event-id');
+    var current = input ? String(input.value || '').trim() : '';
+    if (guessed && guessed !== current) {
+      hint.hidden = false;
+      hint.textContent =
+        'From your booking URL we see id “' + guessed + '”. Click “Use id from booking URL” or edit the field.';
+      if (useBtn) useBtn.hidden = false;
+      return;
+    }
+    hint.hidden = true;
+    if (useBtn) useBtn.hidden = true;
+  }
+
+  function maybeAutofillExternalEventId(force) {
+    var platform = selectedIntegrationPlatform();
+    if (platform === 'own_site') return;
+    var input = qs('ecs-external-event-id');
+    if (!input) return;
+    if (externalEventIdUserEdited && !force && input.value.trim()) return;
+    var linked = linkedExternalEventId(platform);
+    if (linked) {
+      input.value = linked;
+      return;
+    }
+    var guessed = guessExternalEventIdFromBookingUrl(platform);
+    if (guessed && (force || !input.value.trim())) {
+      input.value = guessed;
+      externalEventIdUserEdited = false;
+    }
+  }
+
+  function syncEventLinkPanel(platform) {
+    var panel = qs('ecs-event-link-panel');
+    var key = String(platform || selectedIntegrationPlatform() || 'own_site').trim();
+    if (!panel) return;
+    if (key === 'own_site') {
+      panel.hidden = true;
+      return;
+    }
+    panel.hidden = false;
+    var label = qs('ecs-external-id-label');
+    if (label) label.textContent = EXTERNAL_ID_LABELS[key] || 'Provider event id';
+    var help = qs('ecs-event-link-help');
+    if (help) {
+      var p = providersById[key];
+      help.textContent =
+        'Tell us which ' +
+        ((p && p.label) || 'provider') +
+        ' event matches this listing so ticket sales sync to The Networker UK — you do this once per TNH event.';
+    }
+    maybeAutofillExternalEventId(false);
+    refreshEventLinkBadge(key);
+    refreshEventLinkAutofillHint();
+  }
+
+  function updateOneTimeProviderStatus(platform) {
+    var el = qs('ecs-onetime-status');
+    if (!el) return;
+    var key = String(platform || selectedIntegrationPlatform() || '').trim();
+    if (key === 'own_site') {
+      var own = providersById.own_site;
+      if (own && own.webhookUrl) {
+        el.hidden = false;
+        el.textContent = 'Your website webhook: ready';
+      } else {
+        el.hidden = false;
+        el.textContent = 'Your website webhook: not enabled yet';
+      }
+      return;
+    }
+    var p = providersById[key];
+    if (p && p.webhookUrl) {
+      el.hidden = false;
+      el.textContent = ((p && p.label) || 'Provider') + ' webhook: ready (account setup done)';
+    } else if (p) {
+      el.hidden = false;
+      el.textContent = ((p && p.label) || 'Provider') + ' webhook: enable below (one time)';
+    } else {
+      el.hidden = true;
+    }
+  }
+
+  function mergeEventLinkFromApi(data) {
+    providerLinks = (data && data.eventLinks) || providerLinks || [];
+    var single = data && data.eventLink;
+    if (single && single.event_id) {
+      var exists = providerLinks.some(function (l) {
+        return String(l.event_id || l.eventId) === String(single.event_id || single.eventId);
+      });
+      if (!exists) providerLinks = providerLinks.concat([single]);
+    }
+  }
+
+  function saveEventLink(opts) {
+    var options = opts || {};
+    var platform = selectedIntegrationPlatform();
+    if (platform === 'own_site') return Promise.resolve({ ok: true, skipped: true });
+    var externalId = resolveExternalEventIdForLink(platform);
+    if (!externalId) {
+      if (options.required) {
+        return Promise.resolve({
+          ok: false,
+          message:
+            'Enter the provider event id, or paste a booking URL we can read (e.g. Eventbrite /e/… link). Then save the link.',
+        });
+      }
+      return Promise.resolve({ ok: true, skipped: true });
+    }
+    var linked = linkedExternalEventId(platform);
+    if (linked === externalId) {
+      return Promise.resolve({ ok: true, already: true });
+    }
+    setEventLinkStatus('Saving link…');
+    var bookingUrl = qs('ecs-booking-url') ? qs('ecs-booking-url').value.trim() : '';
+    return api('/api/organiser/connected-booking-providers', {
+      method: 'PATCH',
+      body: JSON.stringify({
+        action: 'link_event',
+        eventId: eventId,
+        provider: platform,
+        externalEventId: externalId,
+        externalEventUrl: bookingUrl || undefined,
+      }),
+    }).then(function (res) {
+      if (!res.ok) {
+        var msg = (res.data && (res.data.message || res.data.error)) || 'Could not save event link.';
+        if (!options.silent) setEventLinkStatus(msg, 'error');
+        return { ok: false, message: msg };
+      }
+      if (res.data && res.data.eventLink) {
+        var row = res.data.eventLink;
+        providerLinks = providerLinks.filter(function (l) {
+          return !(
+            String(l.event_id || l.eventId) === String(eventId) &&
+            String(l.provider || '') === String(platform)
+          );
+        });
+        providerLinks.push(row);
+      }
+      if (!options.silent) {
+        setEventLinkStatus('Linked — registrations from that provider event will sync here.', 'ok');
+      }
+      refreshEventLinkBadge(platform);
+      renderProviderWebhookCard(platform);
+      return { ok: true };
+    });
+  }
+
+  function ensureEventLinkBeforeSave(publish) {
+    return saveEventLink({ required: Boolean(publish), silent: Boolean(publish) });
+  }
+
+  function bindEventLinkUi() {
+    if (eventLinkUiBound) return;
+    eventLinkUiBound = true;
+    var extInput = qs('ecs-external-event-id');
+    if (extInput) {
+      extInput.addEventListener('input', function () {
+        externalEventIdUserEdited = true;
+        refreshEventLinkAutofillHint();
+      });
+    }
+    var saveLinkBtn = qs('ecs-save-event-link');
+    if (saveLinkBtn) {
+      saveLinkBtn.addEventListener('click', function () {
+        saveLinkBtn.disabled = true;
+        saveEventLink({ required: true }).then(function (res) {
+          saveLinkBtn.disabled = false;
+          if (!res.ok && res.message) setEventLinkStatus(res.message, 'error');
+        });
+      });
+    }
+    var useUrlBtn = qs('ecs-use-url-id');
+    if (useUrlBtn) {
+      useUrlBtn.addEventListener('click', function () {
+        maybeAutofillExternalEventId(true);
+        externalEventIdUserEdited = false;
+        refreshEventLinkAutofillHint();
+      });
+    }
+  }
+
   function renderProviderWebhookCard(platform) {
     var mount = qs('ecs-provider-webhook-card');
     var lead = qs('ecs-webhook-lead');
@@ -522,20 +775,6 @@
     }
 
     var linked = eventLinkForPlatform(key);
-    var ebIdHint = '';
-    if (key === 'eventbrite' && window.HubExternalBookingUrl) {
-      var bookingUrl = qs('ecs-booking-url') && qs('ecs-booking-url').value;
-      var ebId =
-        typeof window.HubExternalBookingUrl.parseEventbriteEventIdFromUrl === 'function'
-          ? window.HubExternalBookingUrl.parseEventbriteEventIdFromUrl(bookingUrl)
-          : '';
-      if (ebId) {
-        ebIdHint =
-          '<p class="ee-hint">From your booking URL, your Eventbrite event id looks like <code>' +
-          escHtml(ebId) +
-          '</code> — use that when linking on Booking providers.</p>';
-      }
-    }
 
     mount.innerHTML =
       '<p class="ee-hint"><strong>' +
@@ -557,17 +796,12 @@
       '>Enable ' +
       escHtml(p.label) +
       '</button>' +
-      ebIdHint +
       (linked && (linked.external_event_id || linked.externalEventId)
-        ? '<p class="ee-hint ee-alert-ok">Linked provider event id: <code>' +
+        ? '<p class="ee-hint ee-alert-ok">This event is linked (id <code>' +
           escHtml(linked.external_event_id || linked.externalEventId) +
-          '</code></p>'
-        : '<p class="ee-hint">Then link this TNH event id <code>' +
-          escHtml(eventId) +
-          '</code> to your ' +
-          escHtml(p.label) +
-          ' event on <a href="/organiser/connected-booking#cb-providers-title">Booking providers</a>.</p>') +
-      '<p class="ee-hint">Full setup: <a href="/organiser/connected-booking#cb-providers-title">Connected booking → Booking providers</a>.</p>';
+          '</code>).</p>'
+        : '<p class="ee-hint">Link this event in the <strong>Link registrations</strong> section above (we can fill the id from your booking URL).</p>') +
+      '<p class="ee-hint">Account setup: <a href="/organiser/connected-booking#cb-providers-title">Connected booking → Booking providers</a>.</p>';
     bindProviderEnableButtons(mount);
   }
 
@@ -626,7 +860,10 @@
         (res.data.providers || []).forEach(function (p) {
           if (p && p.id) providersById[p.id] = p;
         });
-        providerLinks = res.data.eventLinks || res.data.links || [];
+        mergeEventLinkFromApi(res.data);
+        var platform = selectedIntegrationPlatform();
+        updateOneTimeProviderStatus(platform);
+        syncEventLinkPanel(platform);
       }
     );
   }
@@ -667,8 +904,10 @@
     if (formCard) formCard.hidden = false;
     if (devSection) devSection.hidden = false;
     bindEmbedDrawerNav();
+    bindEventLinkUi();
     initPlatformPicker();
     restorePlatformSelection();
+    syncEventLinkPanel(selectedIntegrationPlatform());
     if (slotStatus && billing.plan) {
       slotStatus.hidden = false;
       slotStatus.textContent =
@@ -722,6 +961,13 @@
         'Add at least one event date in Event details or Location before publishing.',
         'error'
       );
+      return;
+    }
+
+    var linkResult = await ensureEventLinkBeforeSave(publish);
+    if (!linkResult.ok) {
+      setStatus(saveStatus, linkResult.message || 'Could not link provider event.', 'error');
+      syncEventLinkPanel(selectedIntegrationPlatform());
       return;
     }
 

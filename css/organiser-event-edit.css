@@ -5672,6 +5672,77 @@ body.ee-embed-drawer.organiser-connected-setup-page .ee-back-secondary {
   font-weight: 600;
 }
 
+.ecs-setup-checklist {
+  margin: 0 0 20px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: rgba(26, 46, 59, 0.04);
+  border: 1px solid rgba(26, 46, 59, 0.08);
+}
+
+.ecs-setup-checklist-lead {
+  margin: 0 0 10px;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.ecs-setup-checklist-steps {
+  margin: 0;
+  padding-left: 1.2rem;
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(26, 46, 59, 0.88);
+}
+
+.ecs-setup-checklist-steps li + li {
+  margin-top: 8px;
+}
+
+.ecs-onetime-status {
+  display: inline-block;
+  margin-left: 6px;
+  font-weight: 600;
+  color: #0d6e7a;
+}
+
+.ecs-event-link-panel {
+  margin: 20px 0 0;
+  padding: 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(13, 110, 122, 0.22);
+  background: rgba(13, 110, 122, 0.04);
+}
+
+.ecs-event-link-title {
+  margin: 0 0 8px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ee-purple-dark, #1a2e3b);
+}
+
+.ecs-event-link-badge {
+  margin: 0 0 12px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+}
+
+.ecs-event-link-badge.is-linked {
+  background: rgba(34, 120, 70, 0.1);
+  border-left: 3px solid rgba(34, 120, 70, 0.55);
+}
+
+.ecs-event-link-badge.is-unlinked {
+  background: rgba(180, 120, 20, 0.08);
+  border-left: 3px solid rgba(180, 120, 20, 0.45);
+}
+
+.ecs-event-link-actions {
+  margin-top: 10px;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 body.ee-embed-drawer.organiser-connected-setup-page .ee-title,
 body.ee-embed-drawer.ee-connected-tickets-only .ee-title {
   display: none !important;

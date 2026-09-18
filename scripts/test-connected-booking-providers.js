@@ -10,6 +10,7 @@ const {
   normalizeExternalBookingUrl,
   preferEventbriteCheckoutUrl,
   parseEventbriteEventIdFromUrl,
+  guessProviderExternalEventId,
 } = require('../api/_lib/connected-booking-util');
 
 assert.strictEqual(isConnectedBookingProviderId('eventbrite'), true);
@@ -46,6 +47,18 @@ assert.strictEqual(
 assert.strictEqual(
   normalizeExternalBookingUrl('https://www.eventbrite.co.uk/checkout-external?eid=123'),
   'https://www.eventbrite.co.uk/checkout-external?eid=123'
+);
+assert.strictEqual(
+  guessProviderExternalEventId('eventbrite', 'https://www.eventbrite.co.uk/e/foo-1234567890123'),
+  '1234567890123'
+);
+assert.strictEqual(
+  guessProviderExternalEventId('luma', 'https://lu.ma/my-networking-night'),
+  'my-networking-night'
+);
+assert.strictEqual(
+  guessProviderExternalEventId('ticket_tailor', 'https://www.tickettailor.com/events/my-show/'),
+  'my-show'
 );
 
 const tt = normalizeTicketTailorWebhook({

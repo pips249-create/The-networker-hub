@@ -10,7 +10,7 @@
         '<strong>Marketing → Embedded checkout</strong> preview / ' +
         '<code>…/checkout-external?eid=</code> from your event dashboard. Enable <strong>Eventbrite</strong> on ' +
         '<a href="/organiser/connected-booking#cb-providers-title">Connected booking → Booking providers</a>, ' +
-        'link this TNH event to your Eventbrite event id, and add our webhook URL in Eventbrite admin.',
+        'link this TNH event to your Eventbrite event id below (we fill it from your URL when we can), and add our webhook URL in Eventbrite admin once.',
     },
     own_site: {
       label: 'Your own website',

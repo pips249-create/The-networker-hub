@@ -13,7 +13,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260909listmenu1" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260918drawerux2" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260918easylink1" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260812doors2" />
   </head>
   <body class="organiser-event-edit-page organiser-connected-setup-page">
@@ -81,11 +81,23 @@
 
       <div class="ee-card" id="ecs-form-card" hidden>
         <h2>Listing on The Networker UK</h2>
-        <p class="ee-hint">
-          Choose where people <strong>pay and book</strong> (not on The Networker UK). We show your price here and send
-          visitors to that system. Turn on the matching webhook so registrations sync for attendee tools and verified
-          reviews.
-        </p>
+        <div class="ecs-setup-checklist" role="note">
+          <p class="ecs-setup-checklist-lead">
+            <strong>Most of this is per event.</strong> You only configure the provider webhook once for your account.
+          </p>
+          <ol class="ecs-setup-checklist-steps">
+            <li>
+              <strong>Once (first time only):</strong> enable your provider and paste the webhook URL in Eventbrite /
+              Ticket Tailor / etc.
+              <a href="/organiser/connected-booking#cb-providers-title">Connected booking → Booking providers</a>.
+              <span class="ecs-onetime-status" id="ecs-onetime-status" hidden></span>
+            </li>
+            <li>
+              <strong>Every event:</strong> price, checkout link, and link the provider event id below (we fill it from
+              your URL when we can).
+            </li>
+          </ol>
+        </div>
 
         <fieldset class="ecs-platform-picker" id="ecs-platform-picker">
           <legend>Where do people book?</legend>
@@ -124,6 +136,28 @@
             autocomplete="off"
           />
         </label>
+
+        <div class="ecs-event-link-panel" id="ecs-event-link-panel" hidden>
+          <h3 class="ecs-event-link-title">Link registrations for this event</h3>
+          <p class="ee-hint" id="ecs-event-link-help">
+            So ticket sales on your provider update the attendee list on The Networker UK.
+          </p>
+          <p class="ecs-event-link-badge ee-hint" id="ecs-event-link-badge" role="status"></p>
+          <label class="ee-field">
+            <span id="ecs-external-id-label">Provider event id</span>
+            <input type="text" id="ecs-external-event-id" autocomplete="off" spellcheck="false" />
+          </label>
+          <p class="ee-hint" id="ecs-event-link-autofill-hint" hidden></p>
+          <div class="ee-attendance-next ecs-event-link-actions">
+            <button type="button" class="ee-btn ee-btn-outline ee-btn-sm" id="ecs-save-event-link">
+              Save link for this event
+            </button>
+            <button type="button" class="ee-btn ee-btn-outline ee-btn-sm" id="ecs-use-url-id" hidden>
+              Use id from booking URL
+            </button>
+          </div>
+          <p class="ee-hint" id="ecs-event-link-status" hidden role="status"></p>
+        </div>
 
         <p class="ee-hint" id="ecs-save-status" hidden role="status"></p>
         <div class="ee-attendance-next">
@@ -168,8 +202,8 @@
 
     <script src="../js/organiser-embed-bootstrap.js?v=20260918embed2" defer></script>
     <script src="../js/organiser-page-loading.js?v=20260811claimux2" defer></script>
-    <script src="../js/hub-external-booking-url.js?v=20260918ebcheckout1" defer></script>
+    <script src="../js/hub-external-booking-url.js?v=20260918easylink1" defer></script>
     <script src="../js/organiser-connected-platform.js?v=20260918ebcheckout1" defer></script>
-    <script src="../js/organiser-event-connected-setup.js?v=20260918webhookfix1" defer></script>
+    <script src="../js/organiser-event-connected-setup.js?v=20260918easylink1" defer></script>
   </body>
 </html>

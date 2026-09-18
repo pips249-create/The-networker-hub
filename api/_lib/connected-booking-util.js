@@ -122,6 +122,32 @@ function preferEventbriteCheckoutUrl(raw) {
   }
 }
 
+function guessProviderExternalEventId(provider, raw) {
+  const platform = String(provider || '').trim().toLowerCase();
+  const url = String(raw || '').trim();
+  if (!platform || !url) return '';
+  if (platform === 'eventbrite') return parseEventbriteEventIdFromUrl(url);
+  let parsed;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return '';
+  }
+  if (platform === 'luma' && /lu\.ma|luma\.com/i.test(parsed.hostname)) {
+    const slug = parsed.pathname.replace(/^\/+/, '').split('/')[0];
+    if (slug && !/^event$/i.test(slug)) return slug;
+  }
+  if (platform === 'ticket_tailor' && /tickettailor|ticket-tailor/i.test(url)) {
+    const m = parsed.pathname.match(/\/events\/([^/?#]+)/i);
+    if (m) return m[1];
+  }
+  if (platform === 'trybooking' && /trybooking/i.test(url)) {
+    const m = parsed.pathname.match(/\/(\d{5,})(?:\/|$)/);
+    if (m) return m[1];
+  }
+  return '';
+}
+
 function normalizeExternalBookingUrl(raw) {
   const url = String(raw || '').trim();
   if (!url) return '';
@@ -208,6 +234,7 @@ module.exports = {
   normalizeExternalBookingUrl,
   parseEventbriteEventIdFromUrl,
   preferEventbriteCheckoutUrl,
+  guessProviderExternalEventId,
   parseExternalPriceLabelToDisplay,
   newWebhookSecret,
   signWebhookPayload,
