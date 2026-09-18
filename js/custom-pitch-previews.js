@@ -85,7 +85,7 @@
       (ctx.logoUrl
         ? '<img src="' +
           esc(ctx.logoUrl) +
-          '" alt="" class="custom-pitch-detail-logo" width="160" height="48" crossorigin="anonymous">'
+          '" alt="" class="custom-pitch-detail-logo" width="160" height="48" referrerpolicy="no-referrer">'
         : '') +
       '<span class="ad-mock-detail-badge">Franchise · Listed on The Networker UK</span>' +
       '<h4 class="ad-mock-detail-title">' +
@@ -110,7 +110,7 @@
 
   function renderEventsHeadlinePanel(ctx) {
     var logoInner = ctx.logoUrl
-      ? '<img src="' + esc(ctx.logoUrl) + '" alt="" crossorigin="anonymous" style="max-height:44px;width:auto">'
+      ? '<img src="' + esc(ctx.logoUrl) + '" alt="" referrerpolicy="no-referrer" style="max-height:44px;width:auto">'
       : '<span style="font-weight:800;font-size:0.85rem">' + esc(ctx.companyName || 'Partner') + '</span>';
     return (
       '<div class="ad-mock-page ad-mock-page--events-dir">' +

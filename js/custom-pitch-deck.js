@@ -43,11 +43,12 @@
   function enrichHero(hero, payload) {
     hero = hero || {};
     var candidates = logoCandidatesFromPayload(payload);
-    if (candidates.length) hero.prospectLogoUrl = candidates[0];
-    if (!hero.prospectLogoUrl && payload && payload.prospectLogoUrl) {
+    // Always prefer API-resolved candidates over a stale saved Clearbit URL.
+    if (candidates.length) {
+      hero.prospectLogoUrl = candidates[0];
+    } else if (payload && payload.prospectLogoUrl) {
       hero.prospectLogoUrl = payload.prospectLogoUrl;
-    }
-    if (!hero.prospectLogoUrl && payload && payload.website) {
+    } else if (!hero.prospectLogoUrl && payload && payload.website) {
       hero.prospectLogoUrl = logoUrlFromWebsite(payload.website);
     }
     if (!hero.preparedFor && payload && payload.companyName) {
@@ -59,13 +60,14 @@
 
   function renderProspectLogoBlock(hero) {
     var name = String(hero.preparedFor || 'Partner').trim();
-    if (hero.prospectLogoUrl) {
+    var src = hero.prospectLogoUrl || (hero.prospectLogoCandidates && hero.prospectLogoCandidates[0]) || '';
+    if (src) {
       return (
         '<img class="custom-pitch-partner-logo" src="' +
-        escHtml(hero.prospectLogoUrl) +
+        escHtml(src) +
         '" alt="' +
         escHtml(name) +
-        '" width="200" height="56" crossorigin="anonymous" referrerpolicy="no-referrer">'
+        '" width="220" height="64" decoding="async" referrerpolicy="no-referrer">'
       );
     }
     var initials = name
@@ -83,18 +85,23 @@
     );
   }
 
-  function heroPriceChip(hero) {
+  function heroOfferChips(hero) {
     var chips = hero.chips || [];
     if (!chips.length) return '';
-    if (chips.length === 1) {
-      return '<p class="sponsor-pitch-price-chip">' + escHtml(chips[0]) + '</p>';
-    }
     return (
-      '<p class="sponsor-pitch-price-chip">' +
-      escHtml(chips[0]) +
-      ' <span>/ ' +
-      escHtml(chips.slice(1).join(' · ')) +
-      '</span></p>'
+      '<div class="custom-pitch-hero-chip-row">' +
+      chips
+        .map(function (c, i) {
+          return (
+            '<span class="custom-pitch-hero-chip' +
+            (i > 1 ? ' custom-pitch-hero-chip--soft' : '') +
+            '">' +
+            escHtml(c) +
+            '</span>'
+          );
+        })
+        .join('') +
+      '</div>'
     );
   }
 
@@ -106,13 +113,14 @@
         escHtml(hero.websiteLabel || hero.website) +
         '</a></p>'
       : '';
-    var headline = escHtml(hero.headline || '');
-    var accentMatch = headline.match(/^(.+?\s)(on The Networker UK.*)$/i);
+    var rawHeadline = String(hero.headline || '');
+    var accentMatch = rawHeadline.match(/^(.+?\s)(on The Networker UK.*)$/i);
     var h1Html = accentMatch
       ? escHtml(accentMatch[1]) + '<span class="accent">' + escHtml(accentMatch[2]) + '</span>'
-      : headline;
+      : escHtml(rawHeadline);
 
     return (
+      '<div class="custom-pitch-hero-showcase">' +
       '<header class="sponsor-pitch-hero">' +
       '<div class="custom-pitch-logo-row">' +
       renderProspectLogoBlock(hero) +
@@ -128,9 +136,9 @@
       '<p class="sponsor-pitch-lede">' +
       escHtml(hero.lede || '') +
       '</p>' +
-      heroPriceChip(hero) +
+      heroOfferChips(hero) +
       website +
-      '</header>'
+      '</header></div>'
     );
   }
 
@@ -354,14 +362,17 @@
 
     root.querySelectorAll('.custom-pitch-partner-logo, .custom-pitch-detail-logo').forEach(function (img) {
       var idx = 0;
+      img.removeAttribute('crossorigin');
       function tryNext() {
+        idx += 1;
         if (idx >= candidates.length) {
           replaceWithMark(img);
           return;
         }
+        img.removeAttribute('crossorigin');
         img.src = candidates[idx];
-        idx += 1;
       }
+      img.addEventListener('error', tryNext);
       img.addEventListener(
         'load',
         function () {
@@ -369,8 +380,10 @@
         },
         { once: true }
       );
-      img.addEventListener('error', tryNext);
-      tryNext();
+      if (candidates.length) {
+        // Prefer API-resolved candidate list; do not force CORS (breaks many brand CDNs).
+        img.src = candidates[0];
+      }
     });
   }
 
@@ -451,16 +464,9 @@
     var navSections = sections.slice();
     var sectionParts = sections.map(renderSection);
     if (liveHtml) {
-      var openIdx = -1;
-      for (var i = 0; i < sections.length; i++) {
-        if (sections[i].id === 'sponsor_opening') {
-          openIdx = i;
-          break;
-        }
-      }
-      var insertAt = openIdx >= 0 ? openIdx + 1 : 0;
-      sectionParts.splice(insertAt, 0, liveHtml);
-      navSections.splice(insertAt, 0, {
+      // Show visuals first — before text-heavy opening.
+      sectionParts.unshift(liveHtml);
+      navSections.unshift({
         id: 'custom_pitch_live_examples',
         navLabel: 'Live examples',
       });
