@@ -114,9 +114,14 @@
         '</a></p>'
       : '';
     var rawHeadline = String(hero.headline || '');
-    var accentMatch = rawHeadline.match(/^(.+?\s)(on The Networker UK.*)$/i);
+    var accentMatch =
+      rawHeadline.match(/^(.+?\s)(on The Networker UK.*)$/i) ||
+      rawHeadline.match(/^(Complimentary launch partnership)(\s+for\s+.+)$/i);
     var h1Html = accentMatch
-      ? escHtml(accentMatch[1]) + '<span class="accent">' + escHtml(accentMatch[2]) + '</span>'
+      ? '<span class="accent">' +
+        escHtml(accentMatch[1]) +
+        '</span>' +
+        escHtml(accentMatch[2] || '')
       : escHtml(rawHeadline);
 
     return (
