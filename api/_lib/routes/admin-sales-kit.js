@@ -24,6 +24,7 @@ const {
   SPONSORSHIP_PLACEMENT_ORDER,
   normalizeDeckType,
   normalizeSponsorshipPlacements,
+  enrichDeckWithEmailInventory,
 } = require('../sponsorship-pitch-catalog');
 
 const SHOWN_BY = new Set(['Catherine', 'Rosie', 'Jamie', 'Other']);

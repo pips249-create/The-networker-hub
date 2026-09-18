@@ -207,6 +207,19 @@
   box-shadow: 0 12px 36px rgba(13, 110, 122, 0.14);
 }
 
+.custom-pitch-page .pitch-email-tally {
+  display: grid;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.custom-pitch-page .pitch-stat strong {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  line-height: 1.35;
+}
+
 @media (max-width: 640px) {
   .custom-pitch-hero-showcase {
     padding: 28px 18px 24px;
