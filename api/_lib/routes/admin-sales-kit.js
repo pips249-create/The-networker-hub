@@ -18,6 +18,7 @@ const {
   generateCustomPitchDeck,
   publicPathForSlug,
   validatePitchDeckInput,
+  enrichTalkTrackCopy,
 } = require('../custom-pitch-deck-generate');
 const {
   SPONSORSHIP_PLACEMENT_CATALOG,
@@ -74,13 +75,17 @@ function mapCustomPitchDeck(row) {
   if (!row) return null;
   const deckMeta = deckMetaFromRow(row);
   const sponsorshipPlacements = row.sponsorship_placements || deckMeta.sponsorshipPlacements || [];
-  const enrichedDeck = enrichDeckWithEmailInventory(
-    Object.assign({}, deckMeta, {
-      sponsorshipPlacements: Array.isArray(sponsorshipPlacements)
-        ? sponsorshipPlacements.slice()
-        : [],
-      sections: Array.isArray(deckMeta.sections) ? deckMeta.sections.slice() : [],
-    })
+  const enrichedDeck = enrichTalkTrackCopy(
+    enrichDeckWithEmailInventory(
+      Object.assign({}, deckMeta, {
+        sponsorshipPlacements: Array.isArray(sponsorshipPlacements)
+          ? sponsorshipPlacements.slice()
+          : [],
+        sections: Array.isArray(deckMeta.sections) ? deckMeta.sections.slice() : [],
+        brief: row.brief || '',
+      })
+    ),
+    { companyName: row.company_name, brief: row.brief || '' }
   );
   return {
     id: row.id,

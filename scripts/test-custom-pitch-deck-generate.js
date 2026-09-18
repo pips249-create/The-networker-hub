@@ -39,7 +39,7 @@ const {
   assert.equal(sponsorDeck.deckType, 'sponsorship');
   assert.ok(sponsorDeck.sections.some(function (s) { return s.id === 'sponsor_headline_events'; }));
   assert.ok(sponsorDeck.sections.some(function (s) { return s.id === 'sponsor_opportunity_directory_listing'; }));
-  assert.match(sponsorDeck.hero.headline, /Advertising on The Networker UK|Complimentary launch partnership/);
+  assert.match(sponsorDeck.hero.headline, /Advertising on The Networker UK|Complimentary launch partnership|Launch partnership walkthrough/);
   var eventsHeadline = sponsorDeck.sections.find(function (s) {
     return s.id === 'sponsor_headline_events';
   });
@@ -156,6 +156,65 @@ const {
       })
   );
   assert.ok(Array.isArray(listingSection.sayNotes) && listingSection.sayNotes.length);
+
+  const { enrichTalkTrackCopy, looksLikeLeaveBehindOpening } = require('../api/_lib/custom-pitch-deck-generate');
+  const leaveBehindOpening = {
+    id: 'sponsor_opening',
+    title: 'Opening the conversation with Pink Spaghetti',
+    intro:
+      'Confirm who they want to reach (event bookers, group owners, opportunity seekers), budget, and timing — then map packages from /advertising. For this conversation we are leading with the launch partnership: 12 months business opportunity directory listing at no charge plus 3 months Premium Spotlight on /opportunities/ at no charge. Focus: Business opportunity directory listing for 12 months for free included, Featured Opportunity Boost for 3 months included',
+    bullets: [
+      'Agree the three Premium Spotlight months on /opportunities/ — included at no charge in this launch offer',
+      'Confirm go-live date for the business opportunity listing — 12 months subscription included in this launch offer',
+      'Who is the target buyer — business owners, franchisees, professionals booking events?',
+      'Which parts of the site matter most — Events, Organisers, or Opportunities?',
+      'Monthly vs prepaid commitment — most packages offer 1–12 month terms',
+      'Any category exclusivity or geographic focus (city / county)?',
+    ],
+  };
+  assert.equal(looksLikeLeaveBehindOpening(leaveBehindOpening), true);
+  const rewritten = enrichTalkTrackCopy(
+    {
+      sponsorshipPlacements: ['opportunity_directory_listing', 'featured_opportunity_boost'],
+      hero: { preparedFor: 'Pink Spaghetti', lede: 'Reach business owners across our directories.' },
+      sections: [
+        leaveBehindOpening,
+        {
+          id: 'sponsor_next_steps',
+          title: 'What we need from you',
+          intro: 'Send assets when ready.',
+          bullets: ['Logo', 'URL'],
+        },
+      ],
+    },
+    { companyName: 'Pink Spaghetti', brief: 'Franchise leads' }
+  );
+  var rewrittenOpening = rewritten.sections.find(function (s) {
+    return s.id === 'sponsor_opening';
+  });
+  assert.ok(rewrittenOpening);
+  assert.match(rewrittenOpening.title, /Open the call with Pink Spaghetti/i);
+  assert.match(rewrittenOpening.intro, /Coach notes/i);
+  assert.ok(
+    !(rewrittenOpening.bullets || []).some(function (b) {
+      return /Confirm who they want|Monthly vs prepaid|Agree the three/i.test(b);
+    })
+  );
+  assert.ok(
+    (rewrittenOpening.bullets || []).every(function (b) {
+      return /^(Ask|Confirm)\s*:/i.test(b);
+    })
+  );
+  assert.match(rewritten.hero.lede, /talk track|walkthrough|not a leave-behind/i);
+  var rewrittenClose = rewritten.sections.find(function (s) {
+    return s.id === 'sponsor_next_steps';
+  });
+  assert.match(rewrittenClose.title, /Close — what to ask/i);
+  assert.ok(
+    (rewrittenClose.bullets || []).some(function (b) {
+      return /Ask for:/i.test(b);
+    })
+  );
 
   const listingOnlyDeck = await generateCustomPitchDeck({
     companyName: 'Acme Franchise',

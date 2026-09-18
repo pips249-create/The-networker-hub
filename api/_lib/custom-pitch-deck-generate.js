@@ -151,7 +151,7 @@ function sponsorshipOpeningSection(companyName, brief, placements) {
     id: 'sponsor_opening',
     navLabel: 'Opening',
     kicker: 'Talk track',
-    title: 'Opening the conversation with ' + co,
+    title: 'Open the call with ' + co,
     intro: intro,
     bullets: bullets,
     tiles: [],
@@ -548,6 +548,129 @@ async function polishDeckWithOpenAI(deck, input) {
   return deck;
 }
 
+function looksLikeLeaveBehindOpening(section) {
+  if (!section || typeof section !== 'object') return true;
+  const intro = String(section.intro || '');
+  const title = String(section.title || '');
+  const bullets = Array.isArray(section.bullets) ? section.bullets : [];
+  const joined = intro + '\n' + title + '\n' + bullets.join('\n');
+  if (
+    /Confirm who they want to reach|map packages from \/advertising|For this conversation we are leading|Agree the three Premium|Opening the conversation with/i.test(
+      joined
+    )
+  ) {
+    return true;
+  }
+  if (!/coach notes|talk track|not a leave-behind|read (?:aloud |them )?on the call/i.test(intro)) {
+    return true;
+  }
+  const labeled = bullets.filter(function (b) {
+    return /^(Ask|Say|Confirm|Ask for)\s*:/i.test(String(b || ''));
+  });
+  if (bullets.length && labeled.length < Math.min(2, bullets.length)) return true;
+  return false;
+}
+
+function looksLikeLeaveBehindClose(section) {
+  if (!section || typeof section !== 'object') return true;
+  const intro = String(section.intro || '');
+  const title = String(section.title || '');
+  const kicker = String(section.kicker || '');
+  const bullets = Array.isArray(section.bullets) ? section.bullets : [];
+  if (/What we need from you|Next steps for /i.test(title)) return true;
+  if (!/close the call|asset ask|End the call|Ask for:/i.test(intro + ' ' + kicker + ' ' + bullets.join(' '))) {
+    return true;
+  }
+  return false;
+}
+
+function placementsFromDeck(deck) {
+  const fromMeta = normalizeSponsorshipPlacements(
+    deck && (deck.sponsorshipPlacements || deck.sponsorship_placements)
+  );
+  if (fromMeta.length) return fromMeta;
+  const out = [];
+  ((deck && deck.sections) || []).forEach(function (sec) {
+    const id = String((sec && sec.id) || '');
+    const m = id.match(/^sponsor_(.+)$/);
+    if (!m) return;
+    if (m[1] === 'opening' || m[1] === 'next_steps' || m[1] === 'email_inventory') return;
+    if (out.indexOf(m[1]) === -1) out.push(m[1]);
+  });
+  return normalizeSponsorshipPlacements(out);
+}
+
+/**
+ * Rewrite leave-behind brochure copy on existing saved decks into on-call talk tracks.
+ * Safe to run on every API read — keeps edited talk-track wording; replaces brochure intros.
+ */
+function enrichTalkTrackCopy(deck, opts) {
+  if (!deck || typeof deck !== 'object') return deck;
+  opts = opts || {};
+  const companyName =
+    cleanText(opts.companyName, 120) ||
+    cleanText(deck.hero && deck.hero.preparedFor, 120) ||
+    'your brand';
+  const brief = cleanText(opts.brief, 4000) || cleanText(deck.brief, 4000);
+  const placements = placementsFromDeck(deck);
+  const next = Object.assign({}, deck);
+  next.sections = Array.isArray(deck.sections) ? deck.sections.slice() : [];
+
+  next.sections = next.sections.map(function (sec) {
+    if (!sec || typeof sec !== 'object') return sec;
+    const id = String(sec.id || '');
+    if (id === 'sponsor_opening' && looksLikeLeaveBehindOpening(sec)) {
+      return sponsorshipOpeningSection(companyName, brief, placements);
+    }
+    if (id === 'sponsor_next_steps' && looksLikeLeaveBehindClose(sec)) {
+      return sponsorshipNextStepsSection(companyName, placements);
+    }
+    const out = Object.assign({}, sec);
+    if (id === 'sponsor_opening') {
+      out.kicker = out.kicker || 'Talk track';
+      if (/Opening the conversation with/i.test(String(out.title || ''))) {
+        out.title = 'Open the call with ' + companyName;
+      }
+    }
+    if (id === 'sponsor_next_steps') {
+      out.kicker = out.kicker || 'Close the call';
+      if (/What we need from you|Next steps/i.test(String(out.title || ''))) {
+        out.title = 'Close — what to ask ' + companyName + ' for';
+      }
+    }
+    return out;
+  });
+
+  if (next.hero && typeof next.hero === 'object') {
+    const hero = Object.assign({}, next.hero, { walkthrough: true });
+    const lede = String(hero.lede || '');
+    if (
+      lede &&
+      !/talk track|walkthrough|read (?:aloud |them )?on the call|not a leave-behind/i.test(lede)
+    ) {
+      const listingOffer = hasOpportunityListingLaunchOffer(placements);
+      const spotlightOffer = hasOpportunitySpotlightLaunchOffer(placements);
+      if (listingOffer || spotlightOffer) {
+        hero.lede =
+          'Internal talk track for your call with ' +
+          companyName +
+          ': complimentary launch package worth £465 + VAT (12 months directory listing + 3 months Premium Spotlight). Read the Say / Ask notes aloud — this is not a leave-behind.';
+        if (!/walkthrough|launch partnership/i.test(String(hero.headline || ''))) {
+          hero.headline = 'Launch partnership walkthrough — ' + companyName;
+        }
+      } else {
+        hero.lede =
+          'Internal sales walkthrough for ' +
+          companyName +
+          ' — package facts plus Say / Ask lines to read on the call. Not a leave-behind PDF.';
+      }
+    }
+    next.hero = hero;
+  }
+
+  return next;
+}
+
 async function generateCustomPitchDeck(input) {
   const base = buildDeckFromTemplate(input || {});
   let deck;
@@ -557,7 +680,10 @@ async function generateCustomPitchDeck(input) {
     console.warn('custom-pitch-deck generate', e && e.message);
     deck = base;
   }
-  return enrichDeckWithEmailInventory(deck);
+  return enrichTalkTrackCopy(enrichDeckWithEmailInventory(deck), {
+    companyName: input && input.companyName,
+    brief: input && input.brief,
+  });
 }
 
 function publicPathForSlug(slug) {
@@ -591,6 +717,8 @@ module.exports = {
   normalizeWebsite,
   cleanText,
   generateCustomPitchDeck,
+  enrichTalkTrackCopy,
+  looksLikeLeaveBehindOpening,
   publicPathForSlug,
   legacyPublicPathForSlug,
   validatePitchDeckInput,

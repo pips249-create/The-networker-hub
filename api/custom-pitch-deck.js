@@ -5,7 +5,7 @@
 const { json } = require('./_lib/auth');
 const { wrapHandler } = require('./_lib/sentry');
 const { getSupabaseAdmin, isSupabaseConfigured } = require('./_lib/supabase');
-const { publicPathForSlug } = require('./_lib/custom-pitch-deck-generate');
+const { publicPathForSlug, enrichTalkTrackCopy } = require('./_lib/custom-pitch-deck-generate');
 const { resolveProspectLogoCandidates } = require('./_lib/prospect-logo-candidates');
 const { enrichDeckWithEmailInventory } = require('./_lib/sponsorship-pitch-catalog');
 
@@ -76,13 +76,17 @@ module.exports = wrapHandler(async function handler(req, res) {
   );
   const prospectLogoUrl = prospectLogoCandidates[0] || '';
   const rawDeck = data.deck && typeof data.deck === 'object' ? data.deck : {};
-  const deck = enrichDeckWithEmailInventory(
-    Object.assign({}, rawDeck, {
-      sections: Array.isArray(rawDeck.sections) ? rawDeck.sections.slice() : [],
-      sponsorshipPlacements: Array.isArray(rawDeck.sponsorshipPlacements)
-        ? rawDeck.sponsorshipPlacements.slice()
-        : rawDeck.sponsorshipPlacements,
-    })
+  const deck = enrichTalkTrackCopy(
+    enrichDeckWithEmailInventory(
+      Object.assign({}, rawDeck, {
+        sections: Array.isArray(rawDeck.sections) ? rawDeck.sections.slice() : [],
+        sponsorshipPlacements: Array.isArray(rawDeck.sponsorshipPlacements)
+          ? rawDeck.sponsorshipPlacements.slice()
+          : rawDeck.sponsorshipPlacements,
+        brief: data.brief || '',
+      })
+    ),
+    { companyName: data.company_name, brief: data.brief || '' }
   );
 
   return json(res, 200, {
