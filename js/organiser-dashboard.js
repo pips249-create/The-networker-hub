@@ -5447,26 +5447,40 @@
     refreshOrgBottomEventsCount();
   }
 
+  function groupListingActionHtml(id, item) {
+    const statusKey = item && item.statusKey;
+    if (statusKey === 'unpublished') {
+      return (
+        '<button type="button" class="org-action-item" data-republish-group="' +
+        esc(id) +
+        '"><span class="org-action-icon">↻</span><span class="org-action-text"><strong>Republish</strong><span>List on the platform again</span></span></button>'
+      );
+    }
+    if (statusKey === 'draft') {
+      return (
+        '<button type="button" class="org-action-item danger" disabled><span class="org-action-icon">⊘</span><span class="org-action-text"><strong>Unpublish</strong><span>Publish first to list on site</span></span></button>'
+      );
+    }
+    const blockingRegs = publishedEventsWithRegistrationsForGroup(id);
+    if (blockingRegs.length) {
+      return (
+        '<button type="button" class="org-action-item danger" disabled><span class="org-action-icon">⊘</span><span class="org-action-text"><strong>Unpublish</strong><span>' +
+        (blockingRegs.length === 1
+          ? 'Unpublish the event with registrations first'
+          : 'Unpublish events with registrations first') +
+        '</span></span></button>'
+      );
+    }
+    return (
+      '<button type="button" class="org-action-item danger" data-unpublish-group="' +
+      esc(id) +
+      '"><span class="org-action-icon">⊘</span><span class="org-action-text"><strong>Unpublish</strong><span>Remove from public site</span></span></button>'
+    );
+  }
+
   function actionMenuHtml(kind, id, title, item) {
     if (kind === 'group') {
-      const statusKey = item && item.statusKey;
-      const unpublishDisabled = statusKey === 'unpublished' || statusKey === 'draft';
-      const blockingRegs = !unpublishDisabled ? publishedEventsWithRegistrationsForGroup(id) : [];
-      const blockedByRegs = blockingRegs.length > 0;
-      const unpublishBtn =
-        unpublishDisabled || blockedByRegs
-          ? '<button type="button" class="org-action-item danger" disabled><span class="org-action-icon">⊘</span><span class="org-action-text"><strong>Unpublish</strong><span>' +
-            (statusKey === 'unpublished'
-              ? 'Already unpublished'
-              : statusKey === 'draft'
-                ? 'Publish first to list on site'
-                : blockingRegs.length === 1
-                  ? 'Unpublish the event with registrations first'
-                  : 'Unpublish events with registrations first') +
-            '</span></span></button>'
-          : '<button type="button" class="org-action-item danger" data-unpublish-group="' +
-            esc(id) +
-            '"><span class="org-action-icon">⊘</span><span class="org-action-text"><strong>Unpublish</strong><span>Remove from public site</span></span></button>';
+      const unpublishBtn = groupListingActionHtml(id, item);
       return (
         '<div class="org-action-wrap">' +
         '<button type="button" class="org-action-btn" data-org-action-toggle aria-expanded="false">Actions <span class="chev">▾</span></button>' +
@@ -9616,6 +9630,34 @@
     renderAll();
   }
 
+  async function confirmRepublishGroup(groupId) {
+    if (!groupId) return;
+    const g = findGroupById(groupId);
+    const label = g && g.name ? g.name : 'this organiser page';
+    const ok = window.confirm(
+      'Republish "' +
+        label +
+        '"?\n\n' +
+        'Your group profile will appear on the public directory again. Events stay as they are — republish individual events if needed.'
+    );
+    if (!ok) return;
+
+    const res = await api('/api/organiser/groups', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'republish', id: groupId }),
+    });
+    if (!res.ok) {
+      window.alert(res.data.message || res.data.error || 'Could not republish this group.');
+      return;
+    }
+    await loadBootstrap();
+    renderAll();
+    showOrganiserAlert(
+      res.data.message || 'Organiser page republished — live on the directory again.',
+      false
+    );
+  }
+
   async function confirmUnpublishEvent(eventId) {
     if (!eventId) return;
     const ev = findEventById(eventId) || { id: eventId };
@@ -9801,6 +9843,15 @@
       closeAllActionMenus();
       const gid = unpublishBtn.getAttribute('data-unpublish-group');
       confirmUnpublishGroup(gid);
+      return true;
+    }
+
+    const republishGroupBtn = e.target.closest('[data-republish-group]');
+    if (republishGroupBtn && !republishGroupBtn.disabled) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeAllActionMenus();
+      confirmRepublishGroup(republishGroupBtn.getAttribute('data-republish-group'));
       return true;
     }
 

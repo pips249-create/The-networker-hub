@@ -529,6 +529,76 @@ async function unpublishGroup(groupId) {
   return updateGroup(groupId, { listingStatus: 'unpublished' });
 }
 
+async function republishGroup(groupId) {
+  const sb = getSupabaseAdmin();
+  const id = String(groupId || '').trim();
+  const { data: row, error } = await sb
+    .from('organisers')
+    .select('id, listing_status, hide_from_browse_reason, organiser_account_id')
+    .eq('id', id)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!row?.id) {
+    const e = new Error('Group not found');
+    e.status = 404;
+    e.code = 'group_not_found';
+    throw e;
+  }
+
+  const listing = String(row.listing_status || '').toLowerCase().trim();
+  if (listing !== 'unpublished') {
+    const e = new Error('Only unpublished organiser pages can be republished.');
+    e.status = 400;
+    e.code = 'not_unpublished';
+    throw e;
+  }
+
+  const adminHide = String(row.hide_from_browse_reason || '').trim();
+  if (adminHide) {
+    const e = new Error(
+      'This page was hidden by The Networker UK. Email hi@thenetworkeruk.com if you need it restored.'
+    );
+    e.status = 403;
+    e.code = 'group_hidden_by_hub';
+    throw e;
+  }
+
+  const { moderationSummariesForOrganisers } = require('./organiser-moderation');
+  const mod = await moderationSummariesForOrganisers(sb, [id]);
+  if (mod.get(id)?.hub_suspended) {
+    const e = new Error(
+      'This organiser page is suspended. Contact hi@thenetworkeruk.com before publishing again.'
+    );
+    e.status = 403;
+    e.code = 'group_hub_suspended';
+    throw e;
+  }
+
+  const {
+    loadOrganiserAccountForOrganiserId,
+    isConnectedPlanActive,
+    countPublishedGroupsForAccount,
+    groupLimitForPlan,
+  } = require('./connected-booking');
+  const account = await loadOrganiserAccountForOrganiserId(sb, id);
+  if (account && isConnectedPlanActive(account)) {
+    const limit = groupLimitForPlan(account.connected_booking_plan);
+    if (limit != null) {
+      const used = await countPublishedGroupsForAccount(sb, account.id);
+      if (used >= limit) {
+        const e = new Error(
+          `Your Connected plan allows ${limit} organiser page${limit === 1 ? '' : 's'} on the public site. Unpublish another page or upgrade your plan.`
+        );
+        e.status = 403;
+        e.code = 'connected_booking_group_limit';
+        throw e;
+      }
+    }
+  }
+
+  return updateGroup(id, { listingStatus: 'published' });
+}
+
 async function listEventsForOrganiser(organiserId) {
   const sb = getSupabaseAdmin();
   const { data, error } = await sb
@@ -567,6 +637,7 @@ module.exports = {
   updateGroup,
   getGroupById,
   unpublishGroup,
+  republishGroup,
   enrichGroupForDashboard,
   groupOwnedBySession,
   isPlatformAdmin,
