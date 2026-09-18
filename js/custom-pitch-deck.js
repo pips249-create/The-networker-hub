@@ -116,7 +116,8 @@
     var rawHeadline = String(hero.headline || '');
     var accentMatch =
       rawHeadline.match(/^(.+?\s)(on The Networker UK.*)$/i) ||
-      rawHeadline.match(/^(Complimentary launch partnership)(\s+for\s+.+)$/i);
+      rawHeadline.match(/^(Complimentary launch partnership)(\s+for\s+.+)$/i) ||
+      rawHeadline.match(/^(Launch partnership walkthrough)(\s+[—-]\s+.+)$/i);
     var h1Html = accentMatch
       ? '<span class="accent">' +
         escHtml(accentMatch[1]) +
@@ -132,7 +133,7 @@
       '<span class="custom-pitch-logo-x" aria-hidden="true">×</span>' +
       '<img src="/assets/logo-nav-transparent.png?v=20260823uk3" alt="The Networker UK" width="220" height="48">' +
       '</div>' +
-      '<p class="sponsor-pitch-kicker">Prepared for ' +
+      '<p class="sponsor-pitch-kicker">Sales walkthrough · talk track for ' +
       escHtml(hero.preparedFor || 'your partner') +
       '</p>' +
       '<h1>' +
@@ -246,6 +247,47 @@
     return null;
   }
 
+  function renderSayNotes(section) {
+    var notes = (section && section.sayNotes) || [];
+    if (!notes.length) return '';
+    return (
+      '<ul class="pitch-presenter-notes">' +
+      notes
+        .map(function (n) {
+          var text = String(n || '').trim();
+          if (!text) return '';
+          var labeled = /^(Say|Ask|Confirm|Coach)\s*:/i.test(text);
+          if (labeled) {
+            var parts = text.split(/:\s*/);
+            var label = parts.shift();
+            return (
+              '<li><strong>' +
+              escHtml(label) +
+              ':</strong> ' +
+              escHtml(parts.join(': ').replace(/^["“]|["”]$/g, '')) +
+              '</li>'
+            );
+          }
+          return '<li><strong>Say:</strong> ' + escHtml(text) + '</li>';
+        })
+        .filter(Boolean)
+        .join('') +
+      '</ul>'
+    );
+  }
+
+  function formatTalkBullet(text) {
+    var b = String(text || '').trim();
+    var m = b.match(/^(Ask|Say|Confirm|Ask for|Book|Optional later)\s*:\s*(.*)$/i);
+    if (m) {
+      return '<li><strong>' + escHtml(m[1]) + ':</strong> ' + escHtml(m[2]) + '</li>';
+    }
+    if (/\?$/.test(b)) {
+      return '<li><strong>Ask:</strong> ' + escHtml(b) + '</li>';
+    }
+    return '<li>' + escHtml(b) + '</li>';
+  }
+
   function renderSection(section) {
     var live = liveLinkForSection(section);
     var titleHtml = live
@@ -280,55 +322,69 @@
     var bullets = section.bullets || [];
     var statGrid = '';
     var extraList = '';
+    var isTalkSection =
+      section.id === 'sponsor_opening' ||
+      section.id === 'sponsor_next_steps' ||
+      /^(Ask|Say|Confirm|Ask for)\s*:/i.test(String(bullets[0] || ''));
 
     if (tiles) {
       statGrid = '<div class="pitch-stat-grid">' + tiles + '</div>';
       if (bullets.length) {
         extraList =
           '<ul class="sponsor-pitch-checklist">' +
-          bullets
-            .map(function (b) {
-              return '<li>' + escHtml(b) + '</li>';
-            })
-            .join('') +
+          bullets.map(formatTalkBullet).join('') +
           '</ul>';
       }
     } else if (bullets.length) {
-      var cardable = bullets.every(function (b) {
-        var s = bulletToStat(b);
-        return s.strong && s.strong.length <= 56 && s.span;
-      });
-      if (cardable) {
-        statGrid =
-          '<div class="pitch-stat-grid">' +
-          bullets
-            .map(function (b) {
-              var stat = bulletToStat(b);
-              return (
-                '<article class="pitch-stat"><strong>' +
-                escHtml(stat.strong) +
-                '</strong><span>' +
-                escHtml(stat.span) +
-                '</span></article>'
-              );
-            })
-            .join('') +
-          '</div>';
-      } else {
+      if (isTalkSection) {
         extraList =
-          '<ul class="sponsor-pitch-checklist">' +
-          bullets
-            .map(function (b) {
-              return '<li>' + escHtml(b) + '</li>';
-            })
-            .join('') +
+          '<ul class="sponsor-pitch-checklist custom-pitch-talk-list">' +
+          bullets.map(formatTalkBullet).join('') +
           '</ul>';
+      } else {
+        var cardable = bullets.every(function (b) {
+          var s = bulletToStat(b);
+          return s.strong && s.strong.length <= 56 && s.span;
+        });
+        if (cardable) {
+          statGrid =
+            '<div class="pitch-stat-grid">' +
+            bullets
+              .map(function (b) {
+                var stat = bulletToStat(b);
+                return (
+                  '<article class="pitch-stat"><strong>' +
+                  escHtml(stat.strong) +
+                  '</strong><span>' +
+                  escHtml(stat.span) +
+                  '</span></article>'
+                );
+              })
+              .join('') +
+            '</div>';
+        } else {
+          extraList =
+            '<ul class="sponsor-pitch-checklist">' +
+            bullets.map(formatTalkBullet).join('') +
+            '</ul>';
+        }
       }
     }
 
-    var body = statGrid + extraList + renderEmailInventory(section);
+    var coach =
+      section.intro && /talk track|coach notes|internal/i.test(String(section.intro))
+        ? '<p class="custom-pitch-coach"><strong>Coach:</strong> ' + escHtml(section.intro) + '</p>'
+        : section.intro
+          ? '<p class="section-intro">' + escHtml(section.intro) + '</p>'
+          : '';
+
+    var body =
+      renderSayNotes(section) + statGrid + extraList + renderEmailInventory(section);
     if (section.quote) {
-      body += '<p class="pitch-aside">&ldquo;' + escHtml(section.quote) + '&rdquo;</p>';
+      body +=
+        '<p class="pitch-aside"><strong>Line:</strong> &ldquo;' +
+        escHtml(section.quote) +
+        '&rdquo;</p>';
     }
 
     return (
@@ -337,7 +393,7 @@
       '">' +
       titleHtml +
       priceHtml +
-      (section.intro ? '<p class="section-intro">' + escHtml(section.intro) + '</p>' : '') +
+      coach +
       body +
       '</section>'
     );
@@ -383,29 +439,29 @@
     var launch = deckHasLaunchOffer(deck, payload);
     var checklist = launch
       ? '<div class="pitch-spec-row">' +
-        '<div><strong>Logo</strong> High-res PNG/SVG · landscape</div>' +
-        '<div><strong>Franchise overview</strong> 150–300 words + key investment figures</div>' +
-        '<div><strong>Target destination</strong> Direct URL for franchise enquiries</div>' +
-        '<div><strong>Lead email</strong> Where candidate enquiries should be sent</div>' +
+        '<div><strong>Ask for · Logo</strong> High-res PNG/SVG · landscape</div>' +
+        '<div><strong>Ask for · Overview</strong> 150–300 words + investment figures</div>' +
+        '<div><strong>Ask for · URL</strong> Direct franchise enquiry destination</div>' +
+        '<div><strong>Ask for · Lead email</strong> Where candidate enquiries go</div>' +
         '</div>'
       : '<div class="pitch-spec-row">' +
-        '<div><strong>Logo</strong> PNG/SVG · landscape · for listing &amp; creative</div>' +
-        '<div><strong>Listing copy</strong> Opportunity description, investment level, enquiry routing</div>' +
-        '<div><strong>Website</strong> HTTPS URL for the listing CTA</div>' +
-        '<div><strong>Timing</strong> Preferred go-live date</div>' +
+        '<div><strong>Ask for · Logo</strong> PNG/SVG · landscape</div>' +
+        '<div><strong>Ask for · Copy</strong> Listing description + investment level</div>' +
+        '<div><strong>Ask for · Website</strong> HTTPS URL for the CTA</div>' +
+        '<div><strong>Ask for · Timing</strong> Preferred go-live date</div>' +
         '</div>';
     var ctaCopy = launch
-      ? 'Send the four assets above — we publish the listing, schedule spotlight months, and confirm the launch offer in writing.'
-      : 'Send assets and preferred start date — we confirm placements and go live.';
+      ? 'Close by asking for the four assets — then you publish the listing and schedule spotlight months.'
+      : 'Close by agreeing placements and start dates, then collect logo + URL.';
     return (
       '<section class="sponsor-pitch-section" id="close">' +
-      '<h2>What we need from you</h2>' +
+      '<h2>Close the call</h2>' +
       (launch
-        ? '<p class="section-intro">A frictionless 2-minute handoff — then we do the rest.</p>'
+        ? '<p class="section-intro">Keep the asset ask short — this is your end-of-call checklist, not a leave-behind.</p>'
         : '') +
       checklist +
       '<div class="sponsor-pitch-cta">' +
-      '<div><h2>Ready to confirm?</h2>' +
+      '<div><h2>After they say yes</h2>' +
       '<p>' +
       ctaCopy +
       '</p></div>' +
@@ -419,9 +475,9 @@
       ' →</a>' +
       '<a class="secondary" href="/advertising" target="_blank" rel="noopener">Rate card</a>' +
       '</div></div>' +
-      '<p class="pitch-footnote">Prepared by The Networker UK for ' +
+      '<p class="pitch-footnote">Internal walkthrough for ' +
       co +
-      ' · Share this link after the meeting</p>' +
+      ' — read on the call · show live /opportunities/ or /events/ demos · not a leave-behind PDF</p>' +
       '</section>'
     );
   }
@@ -545,7 +601,8 @@
 
     var bannerLabel = document.getElementById('custom-pitch-banner-label');
     if (bannerLabel) {
-      bannerLabel.textContent = 'Tailored deck — ' + (payload.companyName || 'prospect');
+      bannerLabel.textContent =
+        'Sales walkthrough — ' + (payload.companyName || 'prospect') + ' · read on the call';
     }
     var sender = salesSenderFromPayload(payload);
     var bannerMail = document.getElementById('custom-pitch-banner-mail');

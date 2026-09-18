@@ -119,8 +119,8 @@ const {
   assert.ok(spotlightSection && /3 months/i.test(spotlightSection.price || ''));
   assert.ok((launchDeck.hero.chips || []).some(function (c) { return /12 months listing/i.test(c); }));
   assert.ok((launchDeck.hero.chips || []).some(function (c) { return /£465/i.test(c); }));
-  assert.match(launchDeck.hero.headline, /Complimentary launch partnership/i);
-  assert.match(launchDeck.hero.lede, /£465/i);
+  assert.match(launchDeck.hero.headline, /Launch partnership walkthrough|Complimentary launch partnership/i);
+  assert.match(launchDeck.hero.lede, /talk track|walkthrough|£465/i);
   assert.ok(
     (listingSection.bullets || []).some(function (b) {
       return /Dedicated profile page \+ full search visibility/i.test(b);
@@ -134,15 +134,16 @@ const {
   var opening = launchDeck.sections.find(function (s) {
     return s.id === 'sponsor_opening';
   });
+  assert.ok(opening && Array.isArray(opening.sayNotes) && opening.sayNotes.length);
   assert.ok(
     opening &&
       (opening.bullets || []).some(function (b) {
-        return /Step 1 \(immediate, zero-risk\)/i.test(b);
+        return /Ask:/i.test(b);
       })
   );
   assert.ok(
     (opening.bullets || []).some(function (b) {
-      return /aspiring entrepreneurs|career returners|flexible franchise/i.test(b);
+      return /franchise|career returners|flexible|target buyer/i.test(b);
     })
   );
   var nextSteps = launchDeck.sections.find(function (s) {
@@ -151,9 +152,10 @@ const {
   assert.ok(
     nextSteps &&
       (nextSteps.bullets || []).some(function (b) {
-        return /Lead email/i.test(b);
+        return /Ask for:.*Lead email|lead email/i.test(b);
       })
   );
+  assert.ok(Array.isArray(listingSection.sayNotes) && listingSection.sayNotes.length);
 
   const listingOnlyDeck = await generateCustomPitchDeck({
     companyName: 'Acme Franchise',

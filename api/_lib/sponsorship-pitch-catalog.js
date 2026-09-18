@@ -364,30 +364,35 @@ function applyOpportunityLaunchOfferToSection(key, section, companyName) {
   if (key === 'opportunity_directory_listing') {
     section.price = 'Included — 12 months at no charge (worth £300 + VAT)';
     section.intro =
-      'Complimentary launch partnership for ' +
+      'Talk track for ' +
       co +
-      ': a full business opportunity directory listing on /opportunities/ with member enquiries routed to you — normally £25/month + VAT, waived for the first year.' +
-      (section.intro ? ' ' + section.intro : '');
+      ': lead with the complimentary directory listing — normally £25/month + VAT, waived for year one.';
     section.bullets = [
       '12 months directory listing at no subscription charge (normally £25/month + VAT)',
       'Bundled: 3 months Premium Spotlight on /opportunities/ at no charge (normally £55 per boost)',
       'Dedicated profile page + full search visibility across /opportunities/',
-      'Member enquiries routed to your listing owner — no per-lead fee',
-      'After month 12, continue at the published rate or pause — Headline Sponsor remains a separate optional upgrade',
+      'Member enquiries routed to their listing owner — no per-lead fee',
+      'After month 12, continue at the published rate or pause — Headline is a separate optional upgrade',
+    ];
+    section.sayNotes = [
+      'Say: “This is a complimentary launch partnership — 12 months on /opportunities/ plus 3 months Premium Spotlight, worth £465 + VAT, at no charge.”',
+      'Say: “You get a dedicated profile page, full search visibility, and enquiries routed straight to you — no per-lead fee.”',
+      'Ask: “When do you want the listing live, and who should own the enquiry inbox?”',
     ];
   }
   if (key === 'featured_opportunity_boost') {
     section.price = 'Included — 3 months Premium Spotlight (worth £165 + VAT)';
     section.intro =
-      'Complimentary launch partnership for ' +
-      co +
-      ': stay in the Premium Spotlight carousel on /opportunities/ for three months at no charge (normally £55 per ~30-day boost).' +
-      (section.intro ? ' ' + section.intro : '');
+      'Talk track: Premium Spotlight is bundled with the launch listing — three months in the featured carousel at no charge.';
     section.bullets = [
       '3 months of Premium Spotlight carousel placement at no charge',
       'Featured badge & card highlighting for max click-through',
       'We schedule the three spotlight windows in Command Centre — no Stripe checkout for this launch offer',
-      'Stacks with the directory listing — ideal when franchise and partnership offers need visibility fast',
+      'Stacks with the directory listing — use when they need visibility fast',
+    ];
+    section.sayNotes = [
+      'Say: “Premium Spotlight puts you in the featured row with a badge — included for three months in this launch offer.”',
+      'Ask: “Which month should we start the first of the three spotlight windows?”',
     ];
   }
   return section;
@@ -478,8 +483,8 @@ function buildSectionForPlacement(key, companyName, brief, applyLaunch) {
   const briefBit = brief ? String(brief).trim() : '';
   const p = SPONSORSHIP_PLACEMENT_CATALOG[key];
   if (!p) return null;
-  let intro = 'Why this fits ' + co + '.';
-  if (briefBit) intro += ' ' + briefBit;
+  let intro = 'Talk track — cover why this placement fits ' + co + ', then show the live example.';
+  if (briefBit) intro += ' Brief reminder: ' + briefBit;
   const emailInventory = emailInventoryForPlacement(key);
   const section = {
     id: 'sponsor_' + key,
@@ -491,12 +496,52 @@ function buildSectionForPlacement(key, companyName, brief, applyLaunch) {
     price: p.price || '',
     tiles: headlineEmailTiles(emailInventory),
     quote: '',
+    sayNotes: defaultSayNotesForPlacement(key, co),
   };
   if (emailInventory) section.emailInventory = emailInventory;
   if (applyLaunch) {
     applyOpportunityLaunchOfferToSection(key, section, co);
   }
   return section;
+}
+
+function defaultSayNotesForPlacement(key, companyName) {
+  const co = companyName || 'your brand';
+  if (key === 'headline_events') {
+    return [
+      'Say: “This is the exclusive Powered by hero on /events/ — one partner at a time.”',
+      'Say: “The same logo sits in the header of every attendee booking email — 21 templates.”',
+      'Ask: “Is Events Headline useful after the free listing is live, or shall we park it for now?”',
+    ];
+  }
+  if (key === 'headline_organisers') {
+    return [
+      'Say: “Organisers Headline puts your brand at the top of the groups directory plus 21 organiser emails.”',
+      'Ask: “Do you want to reach group owners as well as opportunity seekers?”',
+    ];
+  }
+  if (key === 'headline_opportunities') {
+    return [
+      'Say: “Opportunities Headline is the Powered by hero on /opportunities/ plus 11 opportunity emails.”',
+      'Ask: “Would you rather own the directory hero, or start with the complimentary listing?”',
+    ];
+  }
+  if (/page_partner/.test(key)) {
+    return [
+      'Say: “Page Partner is a shared sidebar slot — up to three logos — plus selected emails.”',
+      'Ask: “Is a Mini Sponsor slot useful alongside the listing, or shall we keep it simple?”',
+    ];
+  }
+  if (/featured_/.test(key)) {
+    return [
+      'Say: “This is a one-time Premium Spotlight boost — featured badge and top-row priority.”',
+      'Ask: “Do you want extra spotlight months beyond the three included in the launch offer?”',
+    ];
+  }
+  return [
+    'Say: “Here is how this package shows up for ' + co + ' on the live site.”',
+    'Ask: “Does this match the audience you want to reach first?”',
+  ];
 }
 
 function buildSponsorshipSections(placements, companyName, brief, options) {
@@ -532,10 +577,16 @@ function buildSponsorshipSections(placements, companyName, brief, options) {
     sections.forEach(function (sec) {
       if (!sec || !/^sponsor_headline_/.test(String(sec.id || ''))) return;
       sec.kicker = 'Optional scale-up';
-      if (sec.intro && !/optional upgrade|scale-up/i.test(sec.intro)) {
+      if (sec.intro && !/optional upgrade|scale-up|talk track/i.test(sec.intro)) {
         sec.intro =
           'Optional upgrade after the free listing is live — not required to claim the launch partnership. ' +
           sec.intro;
+      }
+      if (!Array.isArray(sec.sayNotes) || !sec.sayNotes.length) {
+        sec.sayNotes = defaultSayNotesForPlacement(
+          String(sec.id || '').replace(/^sponsor_/, ''),
+          companyName
+        );
       }
     });
   }
@@ -577,13 +628,41 @@ function enrichDeckWithEmailInventory(deck) {
   deck.sections = deck.sections.map(function (sec) {
     if (!sec || typeof sec !== 'object') return sec;
     const id = String(sec.id || '');
-    const m = id.match(/^sponsor_(headline_[a-z_]+)$/);
-    if (!m) return sec;
-    const inv = emailInventoryForPlacement(m[1]);
-    if (!inv) return sec;
-    const next = Object.assign({}, sec, { emailInventory: inv });
-    if (!Array.isArray(next.tiles) || !next.tiles.length) {
-      next.tiles = headlineEmailTiles(inv);
+    const m = id.match(/^sponsor_(.+)$/);
+    const next = Object.assign({}, sec);
+    if (m && HEADLINE_EMAIL_INVENTORIES[m[1]]) {
+      const inv = emailInventoryForPlacement(m[1]);
+      if (inv) {
+        next.emailInventory = inv;
+        if (!Array.isArray(next.tiles) || !next.tiles.length) {
+          next.tiles = headlineEmailTiles(inv);
+        }
+      }
+    }
+    if (
+      m &&
+      SPONSORSHIP_PLACEMENT_CATALOG[m[1]] &&
+      (!Array.isArray(next.sayNotes) || !next.sayNotes.length)
+    ) {
+      next.sayNotes = defaultSayNotesForPlacement(
+        m[1],
+        (deck.hero && deck.hero.preparedFor) || ''
+      );
+    }
+    if (
+      (id === 'sponsor_opening' || id === 'sponsor_next_steps') &&
+      (!Array.isArray(next.sayNotes) || !next.sayNotes.length)
+    ) {
+      next.sayNotes =
+        id === 'sponsor_opening'
+          ? [
+              'Say: “I’ll talk you through this live — it’s our internal walkthrough, not a leave-behind.”',
+              'Ask: “Shall we start with the complimentary launch listing?”',
+            ]
+          : [
+              'Say: “If you can send logo, overview, destination URL, and lead email, we’ll get you live.”',
+              'Ask: “Who should I chase for those assets after this call?”',
+            ];
     }
     return next;
   });
@@ -608,6 +687,10 @@ function enrichDeckWithEmailInventory(deck) {
       else insertAt += 1;
       deck.sections.splice(insertAt, 0, tallySection);
     }
+  }
+
+  if (deck.hero && typeof deck.hero === 'object') {
+    deck.hero = Object.assign({}, deck.hero, { walkthrough: true });
   }
 
   return deck;
