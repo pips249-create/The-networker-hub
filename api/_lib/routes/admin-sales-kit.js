@@ -24,6 +24,7 @@ const {
   SPONSORSHIP_PLACEMENT_ORDER,
   normalizeDeckType,
   normalizeSponsorshipPlacements,
+  enrichDeckWithEmailInventory,
 } = require('../sponsorship-pitch-catalog');
 
 const SHOWN_BY = new Set(['Catherine', 'Rosie', 'Jamie', 'Other']);
@@ -71,6 +72,15 @@ function deckMetaFromRow(row) {
 function mapCustomPitchDeck(row) {
   if (!row) return null;
   const deckMeta = deckMetaFromRow(row);
+  const sponsorshipPlacements = row.sponsorship_placements || deckMeta.sponsorshipPlacements || [];
+  const enrichedDeck = enrichDeckWithEmailInventory(
+    Object.assign({}, deckMeta, {
+      sponsorshipPlacements: Array.isArray(sponsorshipPlacements)
+        ? sponsorshipPlacements.slice()
+        : [],
+      sections: Array.isArray(deckMeta.sections) ? deckMeta.sections.slice() : [],
+    })
+  );
   return {
     id: row.id,
     slug: row.slug,
@@ -82,10 +92,10 @@ function mapCustomPitchDeck(row) {
     prospectLogoUrl:
       row.prospect_logo_url || (deckMeta.hero && deckMeta.hero.prospectLogoUrl) || '',
     deckType: row.deck_type || deckMeta.deckType || 'organiser',
-    sponsorshipPlacements: row.sponsorship_placements || deckMeta.sponsorshipPlacements || [],
+    sponsorshipPlacements: sponsorshipPlacements,
     includeSections: row.include_sections || [],
     brief: row.brief || '',
-    deckJson: sanitizeDeckJsonForAdmin(deckMeta),
+    deckJson: sanitizeDeckJsonForAdmin(enrichedDeck),
     createdByEmail: row.created_by_email || '',
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -108,7 +118,7 @@ function sanitizeDeckJsonForAdmin(deck) {
           }).slice(0, 8)
         : [],
     },
-    sections: sections.slice(0, 20).map(function (s) {
+    sections: sections.slice(0, 24).map(function (s) {
       const sec = s && typeof s === 'object' ? s : {};
       return {
         id: String(sec.id || '').slice(0, 80),

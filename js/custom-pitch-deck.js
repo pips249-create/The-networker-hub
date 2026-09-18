@@ -166,28 +166,66 @@
 
   function bulletToStat(text) {
     var b = String(text || '').trim();
+    if (!b) return { strong: '', span: '' };
     var dash = b.indexOf('—');
     if (dash === -1) dash = b.indexOf(' – ');
     if (dash === -1) dash = b.indexOf(' - ');
-    if (dash > 0 && dash < 90) {
+    if (dash > 8 && dash < 56) {
       return {
         strong: b.slice(0, dash).trim(),
         span: b.slice(dash + 1).replace(/^[-–—]\s*/, '').trim(),
       };
     }
     var colon = b.indexOf(':');
-    if (colon > 0 && colon < 70) {
+    if (colon > 8 && colon < 48) {
       return { strong: b.slice(0, colon).trim(), span: b.slice(colon + 1).trim() };
     }
-    if (b.length > 72) {
-      return { strong: b.slice(0, 68) + '…', span: b };
+    // Long bullets: full text in the body — never truncate with ellipsis.
+    return { strong: '', span: b };
+  }
+
+  function renderEmailInventory(section) {
+    var inv = section && section.emailInventory;
+    if (!inv) return '';
+
+    function listBlock(part) {
+      var templates = part.templates || [];
+      if (!templates.length) return '';
+      var count = part.count || templates.length;
+      return (
+        '<details class="pitch-email-details">' +
+        '<summary>Full email list (' +
+        escHtml(String(count)) +
+        ' templates)' +
+        (part.shortLabel ? ' — ' + escHtml(part.shortLabel) : '') +
+        '</summary>' +
+        '<ul class="pitch-email-tags">' +
+        templates
+          .map(function (name) {
+            return '<li>' + escHtml(name) + '</li>';
+          })
+          .join('') +
+        '</ul></details>'
+      );
     }
-    return { strong: b, span: '' };
+
+    if (inv.tally && Array.isArray(inv.parts) && inv.parts.length) {
+      return (
+        '<div class="pitch-email-tally">' +
+        inv.parts.map(listBlock).join('') +
+        '</div>'
+      );
+    }
+
+    return listBlock(inv);
   }
 
   function liveLinkForSection(section) {
     var id = String((section && section.id) || '');
     var title = String((section && section.title) || '').toLowerCase();
+    if (/email_inventory|sponsor_email/.test(id)) {
+      return { href: '/advertising', label: 'Open rate card →' };
+    }
     if (/opportunity|listing|spotlight|sponsor_opportunity|sponsor_headline_opportunities/.test(id + title)) {
       return {
         href: '/opportunities/',
@@ -236,52 +274,54 @@
 
     var bullets = section.bullets || [];
     var statGrid = '';
-    if (!tiles.length && bullets.length) {
-      statGrid =
-        '<div class="pitch-stat-grid">' +
-        bullets
-          .slice(0, 4)
-          .map(function (b) {
-            var stat = bulletToStat(b);
-            return (
-              '<article class="pitch-stat"><strong>' +
-              escHtml(stat.strong) +
-              '</strong>' +
-              (stat.span ? '<span>' + escHtml(stat.span) + '</span>' : '') +
-              '</article>'
-            );
-          })
-          .join('') +
-        '</div>';
-    }
-
     var extraList = '';
-    if (bullets.length > 4) {
-      extraList =
-        '<ul class="sponsor-pitch-checklist">' +
-        bullets
-          .slice(4)
-          .map(function (b) {
-            return '<li>' + escHtml(b) + '</li>';
-          })
-          .join('') +
-        '</ul>';
-    } else if (!statGrid && bullets.length) {
-      extraList =
-        '<ul class="sponsor-pitch-checklist">' +
-        bullets
-          .map(function (b) {
-            return '<li>' + escHtml(b) + '</li>';
-          })
-          .join('') +
-        '</ul>';
-    }
 
     if (tiles) {
       statGrid = '<div class="pitch-stat-grid">' + tiles + '</div>';
+      if (bullets.length) {
+        extraList =
+          '<ul class="sponsor-pitch-checklist">' +
+          bullets
+            .map(function (b) {
+              return '<li>' + escHtml(b) + '</li>';
+            })
+            .join('') +
+          '</ul>';
+      }
+    } else if (bullets.length) {
+      var cardable = bullets.every(function (b) {
+        var s = bulletToStat(b);
+        return s.strong && s.strong.length <= 56 && s.span;
+      });
+      if (cardable) {
+        statGrid =
+          '<div class="pitch-stat-grid">' +
+          bullets
+            .map(function (b) {
+              var stat = bulletToStat(b);
+              return (
+                '<article class="pitch-stat"><strong>' +
+                escHtml(stat.strong) +
+                '</strong><span>' +
+                escHtml(stat.span) +
+                '</span></article>'
+              );
+            })
+            .join('') +
+          '</div>';
+      } else {
+        extraList =
+          '<ul class="sponsor-pitch-checklist">' +
+          bullets
+            .map(function (b) {
+              return '<li>' + escHtml(b) + '</li>';
+            })
+            .join('') +
+          '</ul>';
+      }
     }
 
-    var body = statGrid + extraList;
+    var body = statGrid + extraList + renderEmailInventory(section);
     if (section.quote) {
       body += '<p class="pitch-aside">&ldquo;' + escHtml(section.quote) + '&rdquo;</p>';
     }
@@ -360,7 +400,9 @@
       if (img.parentNode) img.parentNode.replaceChild(mark, img);
     }
 
-    root.querySelectorAll('.custom-pitch-partner-logo, .custom-pitch-detail-logo').forEach(function (img) {
+    root.querySelectorAll(
+      '.custom-pitch-partner-logo, .custom-pitch-detail-logo, .ad-full-email-sponsor-logo'
+    ).forEach(function (img) {
       var idx = 0;
       img.removeAttribute('crossorigin');
       function tryNext() {

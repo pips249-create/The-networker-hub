@@ -27,6 +27,131 @@
     return placements.indexOf('headline_events') !== -1;
   }
 
+  function deckHasOrganisersHeadline(deck) {
+    var placements = (deck && deck.sponsorshipPlacements) || [];
+    return placements.indexOf('headline_organisers') !== -1;
+  }
+
+  function deckHasOpportunitiesHeadline(deck) {
+    var placements = (deck && deck.sponsorshipPlacements) || [];
+    return placements.indexOf('headline_opportunities') !== -1;
+  }
+
+  function deckHasHeadlineEmail(deck) {
+    return (
+      deckHasEventsHeadline(deck) ||
+      deckHasOrganisersHeadline(deck) ||
+      deckHasOpportunitiesHeadline(deck)
+    );
+  }
+
+  var HUB_LOGO = '/assets/logo-nav-transparent.png?v=20260823uk3';
+
+  function sponsorEmailRowHtml(ctx) {
+    var co = String(ctx.companyName || 'Partner').trim();
+    var url = String(ctx.website || '#').trim() || '#';
+    var logoInner = ctx.logoUrl
+      ? '<img src="' +
+        esc(ctx.logoUrl) +
+        '" alt="' +
+        esc(co) +
+        '" class="ad-full-email-sponsor-logo" loading="lazy" decoding="async" referrerpolicy="no-referrer">'
+      : '<span class="ad-full-email-sponsor-name">' + esc(co) + '</span>';
+    return (
+      '<div class="ad-full-email-sponsor ad-full-email-sponsor--highlight">' +
+      '<p class="pitch-email-kicker">Powered by</p>' +
+      '<a href="' +
+      esc(url) +
+      '" target="_blank" rel="noopener noreferrer">' +
+      logoInner +
+      '</a></div>'
+    );
+  }
+
+  function renderBookingEmailPanel(ctx) {
+    return (
+      '<div class="ad-email-preview-wrap">' +
+      '<div class="ad-email-preview-scale">' +
+      '<div class="ad-email-preview-inner">' +
+      '<div class="ad-full-email-card">' +
+      '<div class="ad-full-email-header">' +
+      '<img src="' +
+      HUB_LOGO +
+      '" alt="" class="ad-full-email-hub-logo">' +
+      sponsorEmailRowHtml(ctx) +
+      '<div class="ad-full-email-wave" aria-hidden="true"></div>' +
+      '</div>' +
+      '<div class="ad-full-email-body">' +
+      '<div class="ad-full-email-check" aria-hidden="true"></div>' +
+      '<p class="pitch-email-title">You\u2019re booked in</p>' +
+      '<span class="ad-email-line"></span>' +
+      '<span class="ad-email-line ad-email-line--short"></span>' +
+      '</div>' +
+      '<div class="ad-full-email-event-wrap">' +
+      '<div class="ad-full-email-event">' +
+      '<span class="ad-email-line ad-email-line--on-dark ad-email-line--xs"></span>' +
+      '<span class="ad-email-line ad-email-line--on-dark ad-email-line--title"></span>' +
+      '<span class="ad-email-line ad-email-line--on-dark"></span>' +
+      '</div></div></div></div></div>' +
+      '<p class="barns-preview-caption" style="margin:10px 0 0;font-size:0.85rem;color:var(--pitch-muted)">' +
+      'Attendee booking email — ' +
+      esc(ctx.companyName || 'your brand') +
+      ' logo under The Networker UK header (same placement across 21 templates)</p>' +
+      '</div>'
+    );
+  }
+
+  function renderOrganiserEmailPanel(ctx) {
+    return (
+      '<div class="ad-email-preview-wrap">' +
+      '<div class="ad-email-preview-scale">' +
+      '<div class="ad-email-preview-inner">' +
+      '<div class="ad-full-email-card">' +
+      '<div class="ad-full-email-header">' +
+      '<img src="' +
+      HUB_LOGO +
+      '" alt="" class="ad-full-email-hub-logo">' +
+      sponsorEmailRowHtml(ctx) +
+      '<div class="ad-full-email-wave" aria-hidden="true"></div>' +
+      '</div>' +
+      '<div class="ad-full-email-body">' +
+      '<p class="ad-full-email-kicker">Organiser update</p>' +
+      '<p class="pitch-email-title">New registration</p>' +
+      '<span class="ad-email-line"></span>' +
+      '<span class="ad-email-line ad-email-line--short"></span>' +
+      '<span class="ad-email-line ad-email-line--short"></span>' +
+      '</div></div></div></div>' +
+      '<p class="barns-preview-caption" style="margin:10px 0 0;font-size:0.85rem;color:var(--pitch-muted)">' +
+      'Organiser email — same Headline logo placement across 21 organiser templates</p>' +
+      '</div>'
+    );
+  }
+
+  function renderOpportunityEmailPanel(ctx) {
+    return (
+      '<div class="ad-email-preview-wrap">' +
+      '<div class="ad-email-preview-scale">' +
+      '<div class="ad-email-preview-inner">' +
+      '<div class="ad-full-email-card">' +
+      '<div class="ad-full-email-header">' +
+      '<img src="' +
+      HUB_LOGO +
+      '" alt="" class="ad-full-email-hub-logo">' +
+      sponsorEmailRowHtml(ctx) +
+      '<div class="ad-full-email-wave" aria-hidden="true"></div>' +
+      '</div>' +
+      '<div class="ad-full-email-body">' +
+      '<p class="ad-full-email-kicker">Business opportunity</p>' +
+      '<p class="pitch-email-title">New enquiry received</p>' +
+      '<span class="ad-email-line"></span>' +
+      '<span class="ad-email-line ad-email-line--short"></span>' +
+      '</div></div></div></div>' +
+      '<p class="barns-preview-caption" style="margin:10px 0 0;font-size:0.85rem;color:var(--pitch-muted)">' +
+      'Opportunity email — Headline logo in the header across 11 opportunity templates</p>' +
+      '</div>'
+    );
+  }
+
   function listingTitle(ctx) {
     var co = String(ctx.companyName || 'Your brand').trim();
     if (/franchise|franchising/i.test(co) || /spaghetti/i.test(co)) {
@@ -42,7 +167,7 @@
     return (
       'background-image:url("' +
       esc(ctx.logoUrl).replace(/"/g, '%22') +
-      '");background-size:contain;background-position:center;background-repeat:no-repeat;background-color:#fff';
+      '");background-size:contain;background-position:center;background-repeat:no-repeat;background-color:#fff;'
     );
   }
 
@@ -134,28 +259,96 @@
   }
 
   function renderLiveExamplesSection(ctx, deck) {
-    if (!deckHasOpportunityVisuals(deck) && !deckHasEventsHeadline(deck)) return '';
-
+    var showOpp = deckHasOpportunityVisuals(deck);
     var showEvents = deckHasEventsHeadline(deck);
-    var tabs =
-      '<button type="button" class="is-active" role="tab" data-custom-pitch-preview="spotlight" aria-selected="true">Premium Spotlight</button>' +
-      '<button type="button" role="tab" data-custom-pitch-preview="detail" aria-selected="false">Listing + open days</button>' +
-      (showEvents
-        ? '<button type="button" role="tab" data-custom-pitch-preview="events" aria-selected="false">Events Headline</button>'
-        : '');
+    var showOrgEmail = deckHasOrganisersHeadline(deck);
+    var showOppEmail = deckHasOpportunitiesHeadline(deck);
+    var showBookingEmail = showEvents;
+    if (!showOpp && !showEvents && !showOrgEmail && !showOppEmail) return '';
 
-    var panels =
-      '<div class="pitch-preview-panel" data-custom-pitch-preview-panel="spotlight" role="tabpanel">' +
-      renderSpotlightPanel(ctx) +
-      '</div>' +
-      '<div class="pitch-preview-panel" data-custom-pitch-preview-panel="detail" role="tabpanel" hidden>' +
-      renderDetailPanel(ctx) +
-      '</div>' +
-      (showEvents
-        ? '<div class="pitch-preview-panel" data-custom-pitch-preview-panel="events" role="tabpanel" hidden>' +
-          renderEventsHeadlinePanel(ctx) +
+    var tabBits = [];
+    var panelBits = [];
+    var noteBits = [];
+    var firstKey = '';
+
+    function addTab(key, label, panelHtml, noteHtml) {
+      var isFirst = !firstKey;
+      if (isFirst) firstKey = key;
+      tabBits.push(
+        '<button type="button" class="' +
+          (isFirst ? 'is-active' : '') +
+          '" role="tab" data-custom-pitch-preview="' +
+          key +
+          '" aria-selected="' +
+          (isFirst ? 'true' : 'false') +
+          '">' +
+          label +
+          '</button>'
+      );
+      panelBits.push(
+        '<div class="pitch-preview-panel" data-custom-pitch-preview-panel="' +
+          key +
+          '" role="tabpanel"' +
+          (isFirst ? '' : ' hidden') +
+          '>' +
+          panelHtml +
           '</div>'
-        : '');
+      );
+      if (noteHtml) noteBits.push(noteHtml);
+    }
+
+    if (showOpp) {
+      addTab(
+        'spotlight',
+        'Premium Spotlight',
+        renderSpotlightPanel(ctx),
+        '<li><strong>Say:</strong> &ldquo;Premium Spotlight puts your listing in the featured row with a badge — included for three months in this launch offer.&rdquo;</li>'
+      );
+      addTab(
+        'detail',
+        'Listing + open days',
+        renderDetailPanel(ctx),
+        '<li><strong>Say:</strong> &ldquo;The detail page is where members read the offer, send enquiries, and book open days you publish.&rdquo;</li>'
+      );
+    }
+    if (showEvents) {
+      addTab(
+        'events',
+        'Events Headline',
+        renderEventsHeadlinePanel(ctx),
+        '<li><strong>Say:</strong> &ldquo;Events Headline is the Powered by hero on /events/.&rdquo;</li>'
+      );
+    }
+    if (showBookingEmail) {
+      addTab(
+        'booking-email',
+        'Booking email',
+        renderBookingEmailPanel(ctx),
+        '<li><strong>Say:</strong> &ldquo;Same sponsor logo in every attendee booking email, directly under our header — 21 templates.&rdquo;</li>'
+      );
+    }
+    if (showOrgEmail) {
+      addTab(
+        'organiser-email',
+        'Organiser email',
+        renderOrganiserEmailPanel(ctx),
+        '<li><strong>Say:</strong> &ldquo;Organisers Headline puts your logo in every organiser email — 21 templates.&rdquo;</li>'
+      );
+    }
+    if (showOppEmail) {
+      addTab(
+        'opportunity-email',
+        'Opportunity email',
+        renderOpportunityEmailPanel(ctx),
+        '<li><strong>Say:</strong> &ldquo;Opportunities Headline puts your logo in every opportunity email — 11 templates.&rdquo;</li>'
+      );
+    }
+
+    var liveLink = showOpp
+      ? '<a class="pitch-live-link" href="/opportunities/" target="_blank" rel="noopener">Open live /opportunities/ →</a>'
+      : showEvents
+        ? '<a class="pitch-live-link" href="/events/" target="_blank" rel="noopener">Open live /events/ →</a>'
+        : '<a class="pitch-live-link" href="/advertising" target="_blank" rel="noopener">Open rate card →</a>';
 
     return (
       '<section class="sponsor-pitch-section custom-pitch-live-examples" id="custom_pitch_live_examples">' +
@@ -163,20 +356,14 @@
       '<h2>Live examples for ' +
       esc(ctx.companyName || 'your brand') +
       '</h2>' +
-      '<a class="pitch-live-link" href="/opportunities/" target="_blank" rel="noopener">Open live /opportunities/ →</a>' +
+      liveLink +
       '</div>' +
-      '<ul class="pitch-presenter-notes">' +
-      '<li><strong>Say:</strong> &ldquo;Premium Spotlight puts your listing in the featured row with a badge — included for three months in this launch offer.&rdquo;</li>' +
-      '<li><strong>Say:</strong> &ldquo;The detail page is where members read the offer, send enquiries, and book open days you publish.&rdquo;</li>' +
-      (showEvents
-        ? '<li><strong>Say:</strong> &ldquo;Events Headline is separate inventory — Powered by hero on /events/ when you are ready to add it.&rdquo;</li>'
-        : '') +
-      '</ul>' +
+      (noteBits.length ? '<ul class="pitch-presenter-notes">' + noteBits.join('') + '</ul>' : '') +
       '<div class="pitch-preview-stage">' +
       '<div class="sponsor-pitch-preview-tabs" id="custom-pitch-preview-tabs" role="tablist">' +
-      tabs +
+      tabBits.join('') +
       '</div>' +
-      panels +
+      panelBits.join('') +
       '</div></section>'
     );
   }

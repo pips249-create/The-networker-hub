@@ -2,6 +2,131 @@
  * Sponsorship / advertising placements for tailored sales pitch decks.
  * Labels align with /advertising packages.
  */
+
+/** Headline email inventories — counts/lists match /advertising rate card. */
+const HEADLINE_EMAIL_INVENTORIES = {
+  headline_events: {
+    audience: 'attendee',
+    label: 'Attendee emails with Headline Sponsor placement',
+    shortLabel: 'Attendee emails',
+    templates: [
+      'Booking confirmation',
+      'Event reminder',
+      'Online join reminder',
+      'Saved event — tickets open',
+      'Saved organiser — new listing',
+      'Application received',
+      'Application approved',
+      'Application denied',
+      'Meeting link added',
+      'Event details updated',
+      'Post-event review request',
+      'Guest visit follow-up',
+      'Category exclusivity payment reminder',
+      'Alumni fast pass invite',
+      'Attendee re-engagement',
+      'Sign-up events nudge',
+      'Sign-up events nudge (follow-up)',
+      'Hubert event concierge',
+      'Booking cancelled',
+      'Event cancelled',
+      'Refund processed',
+    ],
+    reach: {
+      emailLabel: 'Attendee email reach',
+      emailRange: '4,000 – 12,000 / mo',
+      directoryRange: '8,000 – 18,000 / mo',
+      combinedRange: '12,000 – 30,000 / mo',
+    },
+  },
+  headline_organisers: {
+    audience: 'organiser',
+    label: 'Organiser emails with Headline Sponsor placement',
+    shortLabel: 'Organiser emails',
+    templates: [
+      'New registration',
+      'New application',
+      'Booking cancelled',
+      'Event removed by platform',
+      'Event unpublished by platform',
+      'Listing unpublished by platform',
+      'Platform warning',
+      'Platform suspended',
+      'Ranking badge',
+      'Low upcoming events',
+      'Ticket sales nudge',
+      'Featured expiry reminder',
+      'Claim invite',
+      'Launch invite',
+      'Team invite',
+      'Email verify',
+      'Stripe Connect nudge',
+      'Payout requested',
+      'Payout approved',
+      'Payout paid',
+      'Event almost full',
+    ],
+    reach: {
+      emailLabel: 'Organiser email reach',
+      emailRange: '2,000 – 6,000 / mo',
+      directoryRange: '3,000 – 8,000 / mo',
+      combinedRange: '5,000 – 14,000 / mo',
+    },
+  },
+  headline_opportunities: {
+    audience: 'opportunity',
+    label: 'Opportunity emails with Headline Sponsor placement',
+    shortLabel: 'Opportunity emails',
+    templates: [
+      'Listing live',
+      'Listing expiry reminder',
+      'Premium expiry reminder',
+      'Premium live',
+      'Enquiry received',
+      'Enquiry sent',
+      'Listing expired',
+      'Premium expired',
+      'Listing rejected',
+      'Saved opportunity closing soon',
+      'Saved search match',
+    ],
+    reach: {
+      emailLabel: 'Opportunity email reach',
+      emailRange: '1,200 – 3,500 / mo',
+      directoryRange: '2,000 – 5,000 / mo',
+      combinedRange: '3,000 – 8,500 / mo',
+    },
+  },
+};
+
+function emailInventoryForPlacement(key) {
+  const inv = HEADLINE_EMAIL_INVENTORIES[key];
+  if (!inv) return null;
+  const templates = (inv.templates || []).slice();
+  return {
+    placementKey: key,
+    audience: inv.audience,
+    label: inv.label,
+    shortLabel: inv.shortLabel,
+    templates: templates,
+    count: templates.length,
+    reach: inv.reach ? Object.assign({}, inv.reach) : null,
+  };
+}
+
+function tallyEmailInventories(placements) {
+  const list = Array.isArray(placements) ? placements : [];
+  const parts = [];
+  let total = 0;
+  list.forEach(function (key) {
+    const inv = emailInventoryForPlacement(key);
+    if (!inv) return;
+    total += inv.count;
+    parts.push(inv);
+  });
+  return { total: total, parts: parts };
+}
+
 const SPONSORSHIP_PLACEMENT_CATALOG = {
   headline_events: {
     group: 'Events',
@@ -11,7 +136,8 @@ const SPONSORSHIP_PLACEMENT_CATALOG = {
     price: '£2,000 / month + VAT',
     bullets: [
       'Exclusive “Powered by” hero at the top of /events/ — one partner at a time',
-      'Logo and link in the header of attendee booking emails we send',
+      'Logo and link in the header of every attendee email we send — 21 templates (confirmations, reminders, cancellations and more)',
+      'Estimated attendee email reach 4,000 – 12,000 / mo (guide range — not guaranteed)',
       'Best for B2B brands reaching people actively booking networking events',
       'Monthly or prepaid 1 / 3 / 6 / 12 months (5–15% off longer terms)',
     ],
@@ -76,7 +202,8 @@ const SPONSORSHIP_PLACEMENT_CATALOG = {
     price: '£2,000 / month + VAT',
     bullets: [
       'Powered-by hero when visitors browse networking groups on /events/?mode=organisers',
-      'Logo in selected organiser-facing emails',
+      'Logo in the header of every organiser email we send — 21 templates (registrations, applications, payouts and more)',
+      'Estimated organiser email reach 2,000 – 6,000 / mo (guide range — not guaranteed)',
       'Reach group owners and chapter leaders comparing platforms',
       'Same monthly / prepaid structure as Events Headline Sponsor',
     ],
@@ -114,7 +241,8 @@ const SPONSORSHIP_PLACEMENT_CATALOG = {
     price: '£2,000 / month + VAT',
     bullets: [
       'Powered-by hero on /opportunities/ browse',
-      'Logo in business opportunity emails to members and enquirers',
+      'Logo in the header of every opportunity email we send — 11 templates (listing live, enquiries, expiry and more)',
+      'Estimated opportunity email reach 1,200 – 3,500 / mo (guide range — not guaranteed)',
       'Audience actively researching franchises, partnerships, and investments',
       'One Headline partner at a time — no competing sponsors in-slot',
     ],
@@ -265,6 +393,86 @@ function applyOpportunityLaunchOfferToSection(key, section, companyName) {
   return section;
 }
 
+function headlineEmailTiles(inventory) {
+  if (!inventory || !inventory.count) return [];
+  const tiles = [
+    {
+      title: inventory.count + ' emails',
+      body:
+        'Linked logo in ' +
+        String(inventory.shortLabel || 'matching emails').toLowerCase() +
+        ' — confirmations, reminders, updates and more',
+    },
+  ];
+  if (inventory.reach && inventory.reach.emailRange) {
+    tiles.push({
+      title: inventory.reach.emailRange,
+      body:
+        (inventory.reach.emailLabel || 'Email reach') +
+        ' · guide range, not guaranteed',
+    });
+  }
+  return tiles;
+}
+
+function buildEmailTallySection(placements, companyName) {
+  const tally = tallyEmailInventories(placements);
+  if (!tally.parts.length) return null;
+  const co = companyName || 'your brand';
+  const bullets = tally.parts.map(function (part) {
+    return (
+      part.shortLabel +
+      ': ' +
+      part.count +
+      ' templates' +
+      (part.reach && part.reach.emailRange ? ' · est. ' + part.reach.emailRange : '')
+    );
+  });
+  if (tally.parts.length > 1) {
+    bullets.unshift(
+      'Combined Headline email inventory for this deck: ' +
+        tally.total +
+        ' templates across ' +
+        tally.parts.length +
+        ' directories'
+    );
+  }
+  return {
+    id: 'sponsor_email_inventory',
+    navLabel: 'Emails',
+    kicker: 'Inbox tally',
+    title: 'Email inventory included for ' + co,
+    intro:
+      tally.parts.length === 1
+        ? 'Headline Sponsor includes your logo in every matching transactional email in that directory — tallied below from the live /advertising rate card.'
+        : 'Selected Headline packages stack their email inventories. Totals below match the live /advertising rate card.',
+    bullets: bullets,
+    price: '',
+    tiles: [
+      {
+        title: String(tally.total),
+        body:
+          tally.parts.length === 1
+            ? 'Email templates with your Headline Sponsor logo'
+            : 'Email templates across selected Headline packages',
+      },
+    ].concat(
+      tally.parts.map(function (part) {
+        return {
+          title: part.count + ' · ' + part.shortLabel,
+          body: part.label,
+        };
+      })
+    ),
+    quote: '',
+    emailInventory: {
+      tally: true,
+      total: tally.total,
+      parts: tally.parts,
+    },
+  };
+}
+
 function buildSectionForPlacement(key, companyName, brief, applyLaunch) {
   const co = companyName || 'your brand';
   const briefBit = brief ? String(brief).trim() : '';
@@ -272,6 +480,7 @@ function buildSectionForPlacement(key, companyName, brief, applyLaunch) {
   if (!p) return null;
   let intro = 'Why this fits ' + co + '.';
   if (briefBit) intro += ' ' + briefBit;
+  const emailInventory = emailInventoryForPlacement(key);
   const section = {
     id: 'sponsor_' + key,
     navLabel: p.nav,
@@ -280,9 +489,10 @@ function buildSectionForPlacement(key, companyName, brief, applyLaunch) {
     intro: intro,
     bullets: (p.bullets || []).slice(),
     price: p.price || '',
-    tiles: [],
+    tiles: headlineEmailTiles(emailInventory),
     quote: '',
   };
+  if (emailInventory) section.emailInventory = emailInventory;
   if (applyLaunch) {
     applyOpportunityLaunchOfferToSection(key, section, co);
   }
@@ -309,7 +519,77 @@ function buildSponsorshipSections(placements, companyName, brief, options) {
     );
   }
 
+  const emailTally = buildEmailTallySection(ordered, companyName);
+  if (emailTally) {
+    // Place tally after the first Headline package section so the count is obvious early.
+    let insertAt = sections.findIndex(function (s) {
+      return /^sponsor_headline_/.test(String(s.id || ''));
+    });
+    if (insertAt === -1) insertAt = 0;
+    else insertAt += 1;
+    sections.splice(insertAt, 0, emailTally);
+  }
+
   return sections;
+}
+
+/**
+ * Attach / refresh email inventory tallies on an existing saved deck (no copy rewrite).
+ * Keeps edited wording; fills missing counts, lists, and the Emails summary section.
+ */
+function enrichDeckWithEmailInventory(deck) {
+  if (!deck || typeof deck !== 'object') return deck;
+  const placements = normalizeSponsorshipPlacements(
+    deck.sponsorshipPlacements || deck.sponsorship_placements || []
+  );
+  if (!placements.length && Array.isArray(deck.sections)) {
+    deck.sections.forEach(function (sec) {
+      const id = String((sec && sec.id) || '');
+      const m = id.match(/^sponsor_(headline_[a-z_]+)$/);
+      if (m && placements.indexOf(m[1]) === -1 && HEADLINE_EMAIL_INVENTORIES[m[1]]) {
+        placements.push(m[1]);
+      }
+    });
+  }
+  if (!Array.isArray(deck.sections)) deck.sections = [];
+
+  deck.sections = deck.sections.map(function (sec) {
+    if (!sec || typeof sec !== 'object') return sec;
+    const id = String(sec.id || '');
+    const m = id.match(/^sponsor_(headline_[a-z_]+)$/);
+    if (!m) return sec;
+    const inv = emailInventoryForPlacement(m[1]);
+    if (!inv) return sec;
+    const next = Object.assign({}, sec, { emailInventory: inv });
+    if (!Array.isArray(next.tiles) || !next.tiles.length) {
+      next.tiles = headlineEmailTiles(inv);
+    }
+    return next;
+  });
+
+  const tallySection = buildEmailTallySection(placements, (deck.hero && deck.hero.preparedFor) || '');
+  if (tallySection) {
+    const existingIdx = deck.sections.findIndex(function (s) {
+      return s && s.id === 'sponsor_email_inventory';
+    });
+    if (existingIdx >= 0) {
+      // Refresh tally numbers; keep a custom title/intro if the sales team edited them.
+      const prev = deck.sections[existingIdx];
+      deck.sections[existingIdx] = Object.assign({}, tallySection, {
+        title: prev.title || tallySection.title,
+        intro: prev.intro || tallySection.intro,
+      });
+    } else {
+      let insertAt = deck.sections.findIndex(function (s) {
+        return s && /^sponsor_headline_/.test(String(s.id || ''));
+      });
+      if (insertAt === -1) insertAt = Math.min(1, deck.sections.length);
+      else insertAt += 1;
+      deck.sections.splice(insertAt, 0, tallySection);
+    }
+  }
+
+  return deck;
 }
 
 function launchOfferHeroChips(placements) {
@@ -327,10 +607,14 @@ function launchOfferHeroChips(placements) {
 module.exports = {
   SPONSORSHIP_PLACEMENT_CATALOG,
   SPONSORSHIP_PLACEMENT_ORDER,
+  HEADLINE_EMAIL_INVENTORIES,
   DECK_TYPES,
   normalizeDeckType,
   normalizeSponsorshipPlacements,
   buildSponsorshipSections,
+  emailInventoryForPlacement,
+  tallyEmailInventories,
+  enrichDeckWithEmailInventory,
   hasOpportunityListingLaunchOffer,
   hasOpportunitySpotlightLaunchOffer,
   launchOfferHeroChips,

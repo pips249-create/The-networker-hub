@@ -7,6 +7,7 @@ const { wrapHandler } = require('./_lib/sentry');
 const { getSupabaseAdmin, isSupabaseConfigured } = require('./_lib/supabase');
 const { publicPathForSlug } = require('./_lib/custom-pitch-deck-generate');
 const { resolveProspectLogoCandidates } = require('./_lib/prospect-logo-candidates');
+const { enrichDeckWithEmailInventory } = require('./_lib/sponsorship-pitch-catalog');
 
 function normalizeSlug(raw) {
   let s = String(raw || '')
@@ -70,6 +71,15 @@ module.exports = wrapHandler(async function handler(req, res) {
     data.prospect_logo_url || (data.deck && data.deck.hero && data.deck.hero.prospectLogoUrl) || '';
   const prospectLogoCandidates = await resolveProspectLogoCandidates(website, explicitLogo);
   const prospectLogoUrl = prospectLogoCandidates[0] || '';
+  const rawDeck = data.deck && typeof data.deck === 'object' ? data.deck : {};
+  const deck = enrichDeckWithEmailInventory(
+    Object.assign({}, rawDeck, {
+      sections: Array.isArray(rawDeck.sections) ? rawDeck.sections.slice() : [],
+      sponsorshipPlacements: Array.isArray(rawDeck.sponsorshipPlacements)
+        ? rawDeck.sponsorshipPlacements.slice()
+        : rawDeck.sponsorshipPlacements,
+    })
+  );
 
   return json(res, 200, {
     ok: true,
@@ -82,7 +92,7 @@ module.exports = wrapHandler(async function handler(req, res) {
     prospectLogoCandidates: prospectLogoCandidates,
     includeSections: data.include_sections || [],
     brief: data.brief || '',
-    deck: data.deck || {},
+    deck: deck,
     updatedAt: data.updated_at,
   });
 });
