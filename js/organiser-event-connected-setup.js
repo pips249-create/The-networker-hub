@@ -88,8 +88,9 @@
     var hub = window.HubConnectedPlatform;
     if (!picker || !hub || !eventId) return;
     if (!platformPickerControl) {
-      platformPickerControl = hub.bindPicker(picker, eventId, function (_key, meta) {
+      platformPickerControl = hub.bindPicker(picker, eventId, function (platformKey, meta) {
         syncBookingUrlPlaceholder(meta);
+        renderProviderWebhookCard(platformKey);
       });
     }
     if (platformPickerControl) {
@@ -115,11 +116,14 @@
     if (fromQuery && hub.PLATFORMS[fromQuery]) {
       hub.setStored(eventId, fromQuery);
       platformPickerControl.apply(fromQuery);
+      renderProviderWebhookCard(fromQuery);
       return;
     }
     var fromUrl = hub.guessFromUrl(qs('ecs-booking-url') && qs('ecs-booking-url').value);
     var stored = hub.getStored(eventId);
-    platformPickerControl.apply(fromUrl || stored || 'own_site');
+    var chosen = fromUrl || stored || 'own_site';
+    platformPickerControl.apply(chosen);
+    renderProviderWebhookCard(chosen);
   }
 
   function qs(id) {
@@ -416,11 +420,186 @@
     if (qs('ecs-booking-url')) qs('ecs-booking-url').value = ev.externalBookingUrl || ev.external_booking_url || '';
     initPlatformPicker();
     restorePlatformSelection();
-    if (qs('ecs-event-id')) qs('ecs-event-id').textContent = eventId;
-    if (qs('ecs-event-id-wrap')) qs('ecs-event-id-wrap').hidden = !eventId;
   }
 
-  var ownSiteProvider = null;
+  var providersById = {};
+  var providerLinks = [];
+
+  function selectedIntegrationPlatform() {
+    if (platformPickerControl && platformPickerControl.getSelected) {
+      return platformPickerControl.getSelected();
+    }
+    var hub = window.HubConnectedPlatform;
+    return (hub && hub.getStored(eventId)) || 'own_site';
+  }
+
+  function escHtml(s) {
+    return String(s || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function providerWebhookLead(platform) {
+    var key = String(platform || '').trim();
+    if (key === 'own_site') {
+      return (
+        'When someone completes checkout on <strong>your booking link</strong>, your site POSTs JSON to the webhook below ' +
+        'so we create the registration (attendee list, round-ups, verified reviews). No Zapier required.'
+      );
+    }
+    if (key === 'eventbrite') {
+      return (
+        'Enable <strong>Eventbrite</strong> below, paste the webhook URL into Eventbrite admin, then link this TNH event to your ' +
+        '<strong>Eventbrite event id</strong> on Booking providers. Orders sync automatically — not via your own website POST.'
+      );
+    }
+    var p = providersById[key];
+    var label = (p && p.label) || key.replace(/_/g, ' ');
+    return (
+      'Enable <strong>' +
+      escHtml(label) +
+      '</strong> below and paste the webhook URL into that platform’s admin. Link this TNH event to the provider’s event id on ' +
+      '<a href="/organiser/connected-booking#cb-providers-title">Connected booking → Booking providers</a>.'
+    );
+  }
+
+  function eventLinkForPlatform(platform) {
+    return (providerLinks || []).find(function (link) {
+      return (
+        String(link.event_id || link.eventId || '') === String(eventId || '') &&
+        String(link.provider || '') === String(platform || '')
+      );
+    });
+  }
+
+  function renderProviderWebhookCard(platform) {
+    var mount = qs('ecs-provider-webhook-card');
+    var lead = qs('ecs-webhook-lead');
+    var heading = qs('ecs-webhook-heading');
+    if (!mount) return;
+    var key = String(platform || selectedIntegrationPlatform() || 'own_site').trim();
+    if (lead) lead.innerHTML = providerWebhookLead(key);
+    if (heading) {
+      var providerLabel = providersById[key] && providersById[key].label;
+      heading.textContent = key === 'own_site' ? 'Your website webhook' : 'Webhook for ' + (providerLabel || key);
+    }
+
+    var p = providersById[key];
+    if (!p && key !== 'own_site') {
+      mount.innerHTML =
+        '<p class="ee-hint">Loading provider details… Open <a href="/organiser/connected-booking#cb-providers-title">Booking providers</a> if this does not update.</p>';
+      return;
+    }
+
+    if (key === 'own_site') {
+      var own = providersById.own_site || p;
+      mount.innerHTML =
+        '<p class="ee-hint"><strong>Token webhook URL</strong> — POST <code>application/json</code> after each completed booking.</p>' +
+        '<p class="cb-webhook-url" id="ecs-own-site-webhook-url">' +
+        escHtml(own && own.webhookUrl ? own.webhookUrl : 'Enable below to generate your webhook URL.') +
+        '</p>' +
+        '<p class="ee-hint" id="ecs-own-site-webhook-hint">' +
+        escHtml(
+          own && own.webhookUrl
+            ? 'Include the TNH event id in each JSON body (see example).'
+            : 'One click enables the URL — paste it into your site automation.'
+        ) +
+        '</p>' +
+        '<button type="button" class="ee-btn ee-btn-outline ee-btn-sm" data-enable-provider="own_site"' +
+        (own && own.webhookUrl ? ' hidden' : '') +
+        '>Enable your own website webhook</button>' +
+        '<p class="ee-hint" style="margin-top:12px"><strong>Event id in JSON body:</strong> <code>' +
+        escHtml(eventId) +
+        '</code></p>' +
+        '<pre class="cb-code-block" id="ecs-own-site-sample" aria-label="Example JSON payload"></pre>' +
+        '<p class="ee-hint">More detail: <a href="/organiser/connected-booking#cb-providers-title">Connected booking → Booking providers</a>.</p>';
+      var sampleEl = qs('ecs-own-site-sample');
+      if (sampleEl) sampleEl.textContent = ownSiteSampleJson();
+      bindProviderEnableButtons(mount);
+      return;
+    }
+
+    var linked = eventLinkForPlatform(key);
+    var ebIdHint = '';
+    if (key === 'eventbrite' && window.HubExternalBookingUrl) {
+      var bookingUrl = qs('ecs-booking-url') && qs('ecs-booking-url').value;
+      var ebId =
+        typeof window.HubExternalBookingUrl.parseEventbriteEventIdFromUrl === 'function'
+          ? window.HubExternalBookingUrl.parseEventbriteEventIdFromUrl(bookingUrl)
+          : '';
+      if (ebId) {
+        ebIdHint =
+          '<p class="ee-hint">From your booking URL, your Eventbrite event id looks like <code>' +
+          escHtml(ebId) +
+          '</code> — use that when linking on Booking providers.</p>';
+      }
+    }
+
+    mount.innerHTML =
+      '<p class="ee-hint"><strong>' +
+      escHtml(p.label) +
+      '</strong> — ' +
+      escHtml(p.docsHint || '') +
+      '</p>' +
+      (p.webhookUrl
+        ? '<p class="ee-hint"><strong>Webhook URL</strong> (paste in ' +
+          escHtml(p.label) +
+          ' admin):</p><p class="cb-webhook-url">' +
+          escHtml(p.webhookUrl) +
+          '</p>'
+        : '<p class="ee-hint">Click Enable to generate your webhook URL for ' + escHtml(p.label) + '.</p>') +
+      '<button type="button" class="ee-btn ee-btn-outline ee-btn-sm" data-enable-provider="' +
+      escHtml(key) +
+      '"' +
+      (p.webhookUrl ? ' hidden' : '') +
+      '>Enable ' +
+      escHtml(p.label) +
+      '</button>' +
+      ebIdHint +
+      (linked && (linked.external_event_id || linked.externalEventId)
+        ? '<p class="ee-hint ee-alert-ok">Linked provider event id: <code>' +
+          escHtml(linked.external_event_id || linked.externalEventId) +
+          '</code></p>'
+        : '<p class="ee-hint">Then link this TNH event id <code>' +
+          escHtml(eventId) +
+          '</code> to your ' +
+          escHtml(p.label) +
+          ' event on <a href="/organiser/connected-booking#cb-providers-title">Booking providers</a>.</p>') +
+      '<p class="ee-hint">Full setup: <a href="/organiser/connected-booking#cb-providers-title">Connected booking → Booking providers</a>.</p>';
+    bindProviderEnableButtons(mount);
+  }
+
+  function bindProviderEnableButtons(root) {
+    if (!root) return;
+    root.querySelectorAll('[data-enable-provider]').forEach(function (btn) {
+      if (btn.dataset.enableBound) return;
+      btn.dataset.enableBound = '1';
+      btn.addEventListener('click', function () {
+        var provider = btn.getAttribute('data-enable-provider');
+        btn.disabled = true;
+        api('/api/organiser/connected-booking-providers', {
+          method: 'PATCH',
+          body: JSON.stringify({ action: 'enable_provider', provider: provider }),
+        })
+          .then(function (res) {
+            btn.disabled = false;
+            if (!res.ok) {
+              window.alert(res.data.message || res.data.error || 'Could not enable provider.');
+              return;
+            }
+            loadProviderCatalog().then(function () {
+              renderProviderWebhookCard(selectedIntegrationPlatform());
+            });
+          })
+          .catch(function () {
+            btn.disabled = false;
+            window.alert('Could not enable provider.');
+          });
+      });
+    });
+  }
 
   function ownSiteSampleJson() {
     return JSON.stringify(
@@ -438,38 +617,16 @@
     );
   }
 
-  function applyOwnSiteWebhookUi() {
-    var urlEl = qs('ecs-own-site-webhook-url');
-    var hintEl = qs('ecs-own-site-webhook-hint');
-    var enableBtn = qs('ecs-enable-own-site');
-    var sampleEl = qs('ecs-own-site-sample');
-    if (sampleEl) sampleEl.textContent = ownSiteSampleJson();
-
-    var own = ownSiteProvider;
-    if (urlEl) {
-      urlEl.textContent = own && own.webhookUrl ? own.webhookUrl : 'Enable below to generate your webhook URL.';
-    }
-    if (hintEl) {
-      hintEl.textContent =
-        own && own.webhookUrl
-          ? 'POST Content-Type: application/json to this URL after each completed booking.'
-          : 'One click enables the URL — paste it into your site automation.';
-    }
-    if (enableBtn) {
-      enableBtn.hidden = Boolean(own && own.webhookUrl);
-    }
-  }
-
-  function loadOwnSiteProvider() {
+  function loadProviderCatalog() {
     if (!eventId) return Promise.resolve();
     return api('/api/organiser/connected-booking-providers?eventId=' + encodeURIComponent(eventId)).then(
       function (res) {
         if (!res.ok || !res.data || !res.data.ok) return;
-        var list = res.data.providers || [];
-        ownSiteProvider = list.find(function (p) {
-          return p.id === 'own_site';
-        }) || null;
-        applyOwnSiteWebhookUi();
+        providersById = {};
+        (res.data.providers || []).forEach(function (p) {
+          if (p && p.id) providersById[p.id] = p;
+        });
+        providerLinks = res.data.eventLinks || res.data.links || [];
       }
     );
   }
@@ -484,8 +641,9 @@
       if (ae) ae.textContent = billing.accountId;
       if (aw) aw.hidden = false;
     }
-    applyOwnSiteWebhookUi();
-    loadOwnSiteProvider();
+    return loadProviderCatalog().then(function () {
+      renderProviderWebhookCard(selectedIntegrationPlatform());
+    });
   }
 
   function refreshAccess() {
@@ -557,6 +715,15 @@
       setStatus(saveStatus, 'Enter your booking page URL before publishing.', 'error');
       return;
     }
+    var eventDate = loadedEvent && String(loadedEvent.date || loadedEvent.startsAt || '').trim();
+    if (publish && !eventDate) {
+      setStatus(
+        saveStatus,
+        'Add at least one event date in Event details or Location before publishing.',
+        'error'
+      );
+      return;
+    }
 
     setStatus(saveStatus, 'Saving…');
     var payload = {
@@ -568,6 +735,10 @@
       externalBookingUrl: url,
       listingStatus: publish ? 'published' : 'draft',
     };
+    if (eventDate) {
+      payload.date = eventDate;
+      if (loadedEvent.endDate) payload.endDate = loadedEvent.endDate;
+    }
 
     var res = await api('/api/organiser/events', { method: 'PATCH', body: JSON.stringify(payload) });
     if (!res.ok) {
@@ -649,33 +820,4 @@
     saveConnected(true);
   });
 
-  var enableOwnBtn = qs('ecs-enable-own-site');
-  if (enableOwnBtn) {
-    enableOwnBtn.addEventListener('click', function () {
-      enableOwnBtn.disabled = true;
-      api('/api/organiser/connected-booking-providers', {
-        method: 'PATCH',
-        body: JSON.stringify({ action: 'enable_provider', provider: 'own_site' }),
-      })
-        .then(function (res) {
-          enableOwnBtn.disabled = false;
-          if (!res.ok) {
-            window.alert(res.data.message || res.data.error || 'Could not enable webhook.');
-            return;
-          }
-          if (res.data.connection && res.data.connection.webhookUrl) {
-            ownSiteProvider = {
-              id: 'own_site',
-              webhookUrl: res.data.connection.webhookUrl,
-            };
-          }
-          applyOwnSiteWebhookUi();
-          loadOwnSiteProvider();
-        })
-        .catch(function () {
-          enableOwnBtn.disabled = false;
-          window.alert('Could not enable webhook.');
-        });
-    });
-  }
 })();

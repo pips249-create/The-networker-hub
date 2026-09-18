@@ -134,32 +134,11 @@
 
       <section class="ee-booking-help-section" id="ecs-developer-section" hidden>
         <div class="ee-booking-help-section-head">
-          <p class="ee-booking-help-kicker">For your developer</p>
-          <h2>Registration webhook</h2>
-          <p class="ee-hint">
-            When someone completes checkout on <strong>your booking link</strong>, your site POSTs one JSON payload so we
-            create the registration (attendee list, round-ups, verified reviews). No Zapier required.
-          </p>
+          <p class="ee-booking-help-kicker">Registration sync</p>
+          <h2 id="ecs-webhook-heading">Webhook for your integration</h2>
+          <p class="ee-hint" id="ecs-webhook-lead" role="status"></p>
         </div>
-        <div class="ee-card" id="ecs-own-site-webhook-card">
-          <p class="ee-hint"><strong>Recommended — your own booking page</strong></p>
-          <p class="ee-hint">
-            Use this token URL from your checkout, form plugin, or CRM. Include the TNH event id below in each POST.
-          </p>
-          <p class="cb-webhook-url" id="ecs-own-site-webhook-url"></p>
-          <p class="ee-hint" id="ecs-own-site-webhook-hint"></p>
-          <button type="button" class="ee-btn ee-btn-outline ee-btn-sm" id="ecs-enable-own-site" hidden>
-            Enable your own website webhook
-          </button>
-          <p class="ee-hint" id="ecs-event-id-wrap" hidden style="margin-top: 12px">
-            <strong>Event id in JSON body:</strong> <code id="ecs-event-id"></code>
-          </p>
-          <pre class="cb-code-block" id="ecs-own-site-sample" aria-label="Example JSON payload"></pre>
-          <p class="ee-hint">
-            More detail:
-            <a href="/organiser/connected-booking#cb-providers-title">Connected booking → Booking providers</a>.
-          </p>
-        </div>
+        <div class="ee-card" id="ecs-provider-webhook-card"></div>
         <details class="ee-optional-details cb-dev-details" style="margin-top: 16px">
           <summary class="ee-optional-details-summary cb-dev-summary">
             <span class="cb-dev-summary-toggle" aria-hidden="true">+</span>
@@ -191,6 +170,6 @@
     <script src="../js/organiser-page-loading.js?v=20260811claimux2" defer></script>
     <script src="../js/hub-external-booking-url.js?v=20260918ebcheckout1" defer></script>
     <script src="../js/organiser-connected-platform.js?v=20260918ebcheckout1" defer></script>
-    <script src="../js/organiser-event-connected-setup.js?v=20260918ebcheckout1" defer></script>
+    <script src="../js/organiser-event-connected-setup.js?v=20260918webhookfix1" defer></script>
   </body>
 </html>
