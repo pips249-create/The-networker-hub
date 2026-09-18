@@ -53,6 +53,14 @@ assert.strictEqual(
   '1234567890123'
 );
 assert.strictEqual(
+  parseEventbriteEventIdFromUrl('https://www.eventbrite.co.uk/e/2001520723363?aff=oddtdtcreator'),
+  '2001520723363'
+);
+assert.strictEqual(
+  guessProviderExternalEventId('eventbrite', 'https://www.eventbrite.co.uk/e/2001520723363'),
+  '2001520723363'
+);
+assert.strictEqual(
   guessProviderExternalEventId('luma', 'https://lu.ma/my-networking-night'),
   'my-networking-night'
 );

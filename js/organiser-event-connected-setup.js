@@ -566,12 +566,43 @@
     return hub.guessProviderExternalEventId(platform, bookingUrl);
   }
 
+  function normalizeExternalEventId(platform, raw) {
+    var key = String(platform || '').trim();
+    var value = String(raw || '').trim();
+    if (!value) return '';
+    var hub = window.HubExternalBookingUrl;
+    if (hub && typeof hub.guessProviderExternalEventId === 'function') {
+      var fromUrl = hub.guessProviderExternalEventId(key, value);
+      if (fromUrl) return fromUrl;
+    }
+    if (/^\d+$/.test(value)) return value;
+    return value;
+  }
+
+  function resolveGuessedExternalId(platform) {
+    var key = String(platform || selectedIntegrationPlatform() || '').trim();
+    var bookingUrl = qs('ecs-booking-url') ? qs('ecs-booking-url').value.trim() : '';
+    var input = qs('ecs-external-event-id');
+    var manual = input ? String(input.value || '').trim() : '';
+    var hub = window.HubExternalBookingUrl;
+    if (!hub || typeof hub.guessProviderExternalEventId !== 'function') return '';
+    return (
+      hub.guessProviderExternalEventId(key, bookingUrl) ||
+      hub.guessProviderExternalEventId(key, manual) ||
+      ''
+    );
+  }
+
   function resolveExternalEventIdForLink(platform) {
     var key = String(platform || selectedIntegrationPlatform() || '').trim();
     var input = qs('ecs-external-event-id');
     var manual = input ? String(input.value || '').trim() : '';
-    if (manual) return manual;
-    return guessExternalEventIdFromBookingUrl(key);
+    if (manual) return normalizeExternalEventId(key, manual);
+    return normalizeExternalEventId(key, guessExternalEventIdFromBookingUrl(key));
+  }
+
+  function displayExternalEventId(platform, raw) {
+    return normalizeExternalEventId(platform, raw) || String(raw || '').trim();
   }
 
   function setEventLinkStatus(msg, kind) {
@@ -591,7 +622,10 @@
     if (linkedId) {
       badge.hidden = false;
       badge.className = 'ecs-event-link-badge ee-hint is-linked';
-      badge.textContent = 'Linked — provider event id ' + linkedId + ' will sync registrations to this TNH event.';
+      badge.textContent =
+        'Linked — provider event id ' +
+        displayExternalEventId(key, linkedId) +
+        ' will sync registrations to this TNH event.';
       return;
     }
     badge.hidden = false;
@@ -609,9 +643,9 @@
       if (useBtn) useBtn.hidden = true;
       return;
     }
-    var guessed = guessExternalEventIdFromBookingUrl(platform);
+    var guessed = resolveGuessedExternalId(platform);
     var input = qs('ecs-external-event-id');
-    var current = input ? String(input.value || '').trim() : '';
+    var current = input ? normalizeExternalEventId(platform, input.value) : '';
     if (guessed && guessed !== current) {
       hint.hidden = false;
       hint.textContent =
@@ -629,12 +663,17 @@
     var input = qs('ecs-external-event-id');
     if (!input) return;
     if (externalEventIdUserEdited && !force && input.value.trim()) return;
-    var linked = linkedExternalEventId(platform);
-    if (linked) {
-      input.value = linked;
+    var guessed = resolveGuessedExternalId(platform);
+    if (force && guessed) {
+      input.value = guessed;
+      externalEventIdUserEdited = false;
       return;
     }
-    var guessed = guessExternalEventIdFromBookingUrl(platform);
+    var linked = linkedExternalEventId(platform);
+    if (linked && !force) {
+      input.value = displayExternalEventId(platform, linked);
+      return;
+    }
     if (guessed && (force || !input.value.trim())) {
       input.value = guessed;
       externalEventIdUserEdited = false;
@@ -785,11 +824,72 @@
     var useUrlBtn = qs('ecs-use-url-id');
     if (useUrlBtn) {
       useUrlBtn.addEventListener('click', function () {
-        maybeAutofillExternalEventId(true);
+        var platform = selectedIntegrationPlatform();
+        var guessed = resolveGuessedExternalId(platform);
+        var input = qs('ecs-external-event-id');
+        if (!guessed) {
+          setEventLinkStatus(
+            'We could not read an event id — paste your Eventbrite /e/… link in Booking / checkout URL above, then try again.',
+            'error'
+          );
+          return;
+        }
+        if (input) input.value = guessed;
         externalEventIdUserEdited = false;
         refreshEventLinkAutofillHint();
+        setEventLinkStatus('Using event id ' + guessed + '. Click Save link for this event.', 'ok');
       });
     }
+  }
+
+  function renderRegistrationSyncSteps(platform) {
+    var stepsEl = qs('ecs-webhook-steps');
+    if (!stepsEl) return;
+    var key = String(platform || selectedIntegrationPlatform() || '').trim();
+    if (key === 'own_site' || key === 'custom') {
+      stepsEl.hidden = true;
+      return;
+    }
+    stepsEl.hidden = false;
+    var p = providersById[key];
+    var label = (p && p.label) || key.replace(/_/g, ' ');
+    var linked = linkedExternalEventId(key);
+    var webhookReady = Boolean(p && p.webhookUrl);
+    var parts = [
+      {
+        done: Boolean(linked),
+        text:
+          'Link this listing to your ' +
+          label +
+          ' event id in the box above (numbers only — use “Use id from booking URL” if you pasted a full link).',
+      },
+      {
+        done: webhookReady,
+        text: 'Enable ' + label + ' below — once per account — to generate your webhook URL.',
+      },
+      {
+        done: false,
+        text:
+          'Copy that webhook URL into ' +
+          label +
+          ' (Eventbrite: Account settings → Webhooks). New ticket orders then sync attendees here.',
+      },
+    ];
+    stepsEl.innerHTML = parts
+      .map(function (step, index) {
+        return (
+          '<li class="ecs-webhook-step' +
+          (step.done ? ' is-done' : '') +
+          '">' +
+          '<span class="ecs-webhook-step-num" aria-hidden="true">' +
+          (index + 1) +
+          '</span>' +
+          '<span class="ecs-webhook-step-text">' +
+          escHtml(step.text) +
+          '</span></li>'
+        );
+      })
+      .join('');
   }
 
   function renderProviderWebhookCard(platform) {
@@ -798,6 +898,7 @@
     var heading = qs('ecs-webhook-heading');
     if (!mount) return;
     var key = String(platform || selectedIntegrationPlatform() || 'own_site').trim();
+    renderRegistrationSyncSteps(key);
     if (lead) lead.innerHTML = providerWebhookLead(key);
     if (heading) {
       var providerLabel = providersById[key] && providersById[key].label;
@@ -885,11 +986,14 @@
       '</button>' +
       (linked && (linked.external_event_id || linked.externalEventId)
         ? '<p class="ee-hint ee-alert-ok">This event is linked (id <code>' +
-          escHtml(linked.external_event_id || linked.externalEventId) +
+          escHtml(
+            displayExternalEventId(key, linked.external_event_id || linked.externalEventId)
+          ) +
           '</code>).</p>'
         : '<p class="ee-hint">Link this event in the <strong>Link registrations</strong> section above (we can fill the id from your booking URL).</p>') +
       '<p class="ee-hint">Account setup: <a href="/organiser/connected-booking#cb-providers-title">Connected booking → Booking providers</a>.</p>';
     bindProviderEnableButtons(mount);
+    renderRegistrationSyncSteps(key);
   }
 
   function bindProviderEnableButtons(root) {
