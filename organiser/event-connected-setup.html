@@ -90,13 +90,13 @@
         <fieldset class="ecs-platform-picker" id="ecs-platform-picker">
           <legend>Where do people book?</legend>
           <div class="ecs-platform-options" role="radiogroup" aria-label="Booking platform">
-            <button type="button" class="ecs-platform-btn" data-ecs-platform="eventbrite">Eventbrite</button>
-            <button type="button" class="ecs-platform-btn" data-ecs-platform="own_site">Your own website</button>
-            <button type="button" class="ecs-platform-btn" data-ecs-platform="ticket_tailor">Ticket Tailor</button>
-            <button type="button" class="ecs-platform-btn" data-ecs-platform="luma">Luma</button>
-            <button type="button" class="ecs-platform-btn" data-ecs-platform="trybooking">TryBooking</button>
+            <button type="button" class="ecs-platform-btn" data-connected-platform="eventbrite">Eventbrite</button>
+            <button type="button" class="ecs-platform-btn" data-connected-platform="own_site">Your own website</button>
+            <button type="button" class="ecs-platform-btn" data-connected-platform="ticket_tailor">Ticket Tailor</button>
+            <button type="button" class="ecs-platform-btn" data-connected-platform="luma">Luma</button>
+            <button type="button" class="ecs-platform-btn" data-connected-platform="trybooking">TryBooking</button>
           </div>
-          <p class="ee-hint ecs-platform-hint" id="ecs-platform-hint" hidden role="status"></p>
+          <p class="ee-hint ecs-platform-hint" data-connected-platform-hint hidden role="status"></p>
         </fieldset>
 
         <label class="ee-field">
@@ -187,8 +187,9 @@
       </p>
     </div>
 
-    <script src="../js/organiser-embed-bootstrap.js?v=20260918embed1" defer></script>
+    <script src="../js/organiser-embed-bootstrap.js?v=20260918embed2" defer></script>
     <script src="../js/organiser-page-loading.js?v=20260811claimux2" defer></script>
-    <script src="../js/organiser-event-connected-setup.js?v=20260918connsetup4" defer></script>
+    <script src="../js/organiser-connected-platform.js?v=20260918platform1" defer></script>
+    <script src="../js/organiser-event-connected-setup.js?v=20260918connsetup5" defer></script>
   </body>
 </html>

@@ -19828,11 +19828,15 @@
       if (e.data && e.data.type === 'hub-event-goto-connected-setup') {
         const eid = String(e.data.eventId || '').trim();
         const ids = Array.isArray(e.data.eventIds) ? e.data.eventIds.filter(Boolean) : [];
+        const platform = String(e.data.platform || '').trim();
         if (!eid) return;
         let url =
           '/organiser/event-connected-setup?id=' +
           encodeURIComponent(eid) +
           '&embed=1';
+        if (platform) {
+          url += '&platform=' + encodeURIComponent(platform);
+        }
         if (ids.length) {
           url += '&returnIds=' + encodeURIComponent(ids.join(','));
         }

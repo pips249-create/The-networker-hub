@@ -67,14 +67,24 @@
           <h2>Connected booking</h2>
           <div class="ee-connected-booking-callout" id="ee-external-booking-intro" role="note">
             <p>
-              Payment stays on <strong>your</strong> system — Eventbrite, Luma, Ticket Tailor, TryBooking, or your own
-              checkout. Pick your platform in setup, paste your booking link, and enable the matching webhook (no
-              Zapier). We do not sell tickets on The Networker UK for Connected events.
+              Payment stays on <strong>your</strong> booking system — not on The Networker UK. Choose your integration
+              below, then continue to add your listing price, booking link, and webhook.
             </p>
           </div>
+          <fieldset class="ecs-platform-picker" id="ee-connected-platform-picker">
+            <legend>Which integration do you use?</legend>
+            <div class="ecs-platform-options" role="radiogroup" aria-label="Connected booking integration">
+              <button type="button" class="ecs-platform-btn" data-connected-platform="eventbrite">Eventbrite</button>
+              <button type="button" class="ecs-platform-btn" data-connected-platform="own_site">Your own website</button>
+              <button type="button" class="ecs-platform-btn" data-connected-platform="ticket_tailor">Ticket Tailor</button>
+              <button type="button" class="ecs-platform-btn" data-connected-platform="luma">Luma</button>
+              <button type="button" class="ecs-platform-btn" data-connected-platform="trybooking">TryBooking</button>
+            </div>
+            <p class="ee-hint ecs-platform-hint" data-connected-platform-hint hidden role="status"></p>
+          </fieldset>
           <p class="ee-attendance-next">
             <a class="ee-btn ee-btn-gold" id="ee-connected-setup-link" href="/organiser/event-connected-setup"
-              >Connected event setup →</a
+              >Continue to Connected setup →</a
             >
             <a class="ee-btn ee-btn-outline" id="ee-connected-plan-link" href="/organiser/#groups" hidden
               >Assign organiser pages</a
@@ -758,6 +768,7 @@
     <script src="../js/hub-field-tip.js?v=20260711" defer></script>
     <script src="../js/organiser-launch-setup.js?v=20260820hubreview1" defer></script>
     <script src="../js/organiser-event-tickets.js?v=20260910tickets1" defer></script>
-    <script src="../js/organiser-event-external-booking.js?v=20260918groups1" defer></script>
+    <script src="../js/organiser-connected-platform.js?v=20260918platform1" defer></script>
+    <script src="../js/organiser-event-external-booking.js?v=20260918platform1" defer></script>
   </body>
 </html>
