@@ -31141,6 +31141,79 @@
             '<label class="inline-flex items-center gap-2 text-sm text-slate-700 cursor-pointer">' +
             '<input type="checkbox" id="sales-kit-pitch-log-crm" class="rounded border-slate-300" checked />' +
             'Log to outreach CRM (Meeting — deck link)</label></div>' +
+            (editing && editing.deckJson
+              ? (function () {
+                  var dj = editing.deckJson || {};
+                  var hero = dj.hero || {};
+                  var close = dj.close || {};
+                  var sectionEditors = (dj.sections || [])
+                    .map(function (sec, i) {
+                      return (
+                        '<details class="rounded-lg border border-slate-200 bg-white" data-pitch-copy-section="' +
+                        attrEsc(sec.id || '') +
+                        '"' +
+                        (i === 0 ? ' open' : '') +
+                        '>' +
+                        '<summary class="cursor-pointer px-3 py-2 text-sm font-semibold text-slate-800">' +
+                        esc(sec.navLabel || sec.title || 'Section') +
+                        '</summary>' +
+                        '<div class="grid gap-2 px-3 pb-3">' +
+                        '<label class="block text-xs font-semibold text-slate-500">Nav label' +
+                        '<input class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm" data-pitch-copy-nav value="' +
+                        attrEsc(sec.navLabel || '') +
+                        '" /></label>' +
+                        '<label class="block text-xs font-semibold text-slate-500">Title' +
+                        '<input class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm" data-pitch-copy-title value="' +
+                        attrEsc(sec.title || '') +
+                        '" /></label>' +
+                        '<label class="block text-xs font-semibold text-slate-500">Price / offer line' +
+                        '<input class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm" data-pitch-copy-price value="' +
+                        attrEsc(sec.price || '') +
+                        '" /></label>' +
+                        '<label class="block text-xs font-semibold text-slate-500">Intro' +
+                        '<textarea class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm min-h-[64px]" data-pitch-copy-intro>' +
+                        esc(sec.intro || '') +
+                        '</textarea></label>' +
+                        '<label class="block text-xs font-semibold text-slate-500">Bullets (one per line)' +
+                        '<textarea class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm min-h-[88px] font-mono" data-pitch-copy-bullets>' +
+                        esc((sec.bullets || []).join('\n')) +
+                        '</textarea></label>' +
+                        '</div></details>'
+                      );
+                    })
+                    .join('');
+                  return (
+                    '<div class="md:col-span-2 lg:col-span-3 rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-3" id="sales-kit-pitch-copy-editor">' +
+                    '<p class="text-xs font-semibold text-slate-600 uppercase">Edit wording by section</p>' +
+                    '<p class="text-xs text-slate-500">Tweak the hero and each little section without regenerating. Tick regenerate below only if you want a fresh template.</p>' +
+                    '<div class="grid gap-2">' +
+                    '<label class="block text-xs font-semibold text-slate-500">Hero headline' +
+                    '<input id="sales-kit-pitch-copy-headline" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white" value="' +
+                    attrEsc(hero.headline || '') +
+                    '" /></label>' +
+                    '<label class="block text-xs font-semibold text-slate-500">Hero intro' +
+                    '<textarea id="sales-kit-pitch-copy-lede" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white min-h-[72px]">' +
+                    esc(hero.lede || '') +
+                    '</textarea></label>' +
+                    '<label class="block text-xs font-semibold text-slate-500">Chips (comma separated)' +
+                    '<input id="sales-kit-pitch-copy-chips" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white" value="' +
+                    attrEsc((hero.chips || []).join(', ')) +
+                    '" /></label>' +
+                    '</div>' +
+                    '<div class="space-y-2">' +
+                    sectionEditors +
+                    '</div>' +
+                    '<label class="block text-xs font-semibold text-slate-500">Close line' +
+                    '<input id="sales-kit-pitch-copy-close" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white" value="' +
+                    attrEsc(close.headline || '') +
+                    '" /></label>' +
+                    '<label class="inline-flex items-center gap-2 text-sm text-slate-700 cursor-pointer">' +
+                    '<input type="checkbox" id="sales-kit-pitch-regenerate" class="rounded border-slate-300" />' +
+                    'Regenerate all copy from template (overwrites the wording above)</label>' +
+                    '</div>'
+                  );
+                })()
+              : '') +
             '<div class="md:col-span-2 lg:col-span-3 flex flex-wrap items-center gap-2">' +
             '<button type="submit" id="sales-kit-pitch-create-btn" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-3 py-2 hover:bg-brand-900">' +
             (editing ? 'Save changes' : 'Create pitch deck') +
@@ -31574,6 +31647,32 @@
           }
           if (createBtn) createBtn.disabled = true;
           if (pitchCreateStatus) pitchCreateStatus.textContent = deckId ? 'Updating deck…' : 'Building deck…';
+          var regenEl = document.getElementById('sales-kit-pitch-regenerate');
+          var keepCopy = !!(deckId && (!regenEl || !regenEl.checked));
+          var copyPayload = null;
+          if (keepCopy && document.getElementById('sales-kit-pitch-copy-editor')) {
+            copyPayload = {
+              hero: {
+                headline: (document.getElementById('sales-kit-pitch-copy-headline') || {}).value || '',
+                lede: (document.getElementById('sales-kit-pitch-copy-lede') || {}).value || '',
+                chips: (document.getElementById('sales-kit-pitch-copy-chips') || {}).value || '',
+              },
+              close: {
+                headline: (document.getElementById('sales-kit-pitch-copy-close') || {}).value || '',
+              },
+              sections: [],
+            };
+            root.querySelectorAll('[data-pitch-copy-section]').forEach(function (block) {
+              copyPayload.sections.push({
+                id: block.getAttribute('data-pitch-copy-section') || '',
+                navLabel: (block.querySelector('[data-pitch-copy-nav]') || {}).value || '',
+                title: (block.querySelector('[data-pitch-copy-title]') || {}).value || '',
+                price: (block.querySelector('[data-pitch-copy-price]') || {}).value || '',
+                intro: (block.querySelector('[data-pitch-copy-intro]') || {}).value || '',
+                bullets: (block.querySelector('[data-pitch-copy-bullets]') || {}).value || '',
+              });
+            });
+          }
           adminPost('/api/admin/sales-kit', {
             action: deckId ? 'update_custom_pitch_deck' : 'create_custom_pitch_deck',
             id: deckId || undefined,
@@ -31589,6 +31688,8 @@
             sponsorshipPlacements: sponsorshipPlacements,
             includeSections: includeSections,
             logToCrm: logCrmEl ? logCrmEl.checked : true,
+            keepCopy: keepCopy,
+            copy: copyPayload,
           }).then(function (data) {
             if (createBtn) createBtn.disabled = false;
             if (!data || !data.ok) {
@@ -31602,10 +31703,12 @@
               salesKitOutreachCache.demos.unshift(data.crmDemo);
               salesKitOutreachCache.loadedAt = Date.now();
             }
-            state.pitchEditingDeck = null;
+            state.pitchEditingDeck = keepCopy && data.deck ? data.deck : null;
             if (pitchCreateStatus) {
               var statusMsg = deckId
-                ? 'Deck updated — same link as before.'
+                ? keepCopy
+                  ? 'Wording saved — same link. Refresh the deck tab to see it.'
+                  : 'Deck regenerated — same link as before.'
                 : 'Deck ready — opening in a new tab.';
               if (data.crmWarning) {
                 statusMsg +=
