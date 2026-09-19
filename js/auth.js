@@ -304,11 +304,11 @@
             return;
           }
           showMessage(msg, result.data.message || 'Account created — taking you in…', 'success');
-          // Claim path: go straight in (no artificial pause). Others keep a short beat.
           var go = function () {
             window.location.href = result.data.redirect || next || '/welcome';
           };
-          if (getIntentParam() === 'organiser-claim') {
+          // Always continue promptly — verify-email is the next step for new accounts.
+          if (result.data.requiresEmailVerification || getIntentParam() === 'organiser-claim') {
             go();
           } else {
             setTimeout(go, 400);

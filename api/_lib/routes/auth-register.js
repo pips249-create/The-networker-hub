@@ -5,11 +5,14 @@ const { sendAccountWelcomeEmail } = require('../account-emails');
 const { enforceRateLimitAsync, clientIp } = require('../rate-limit');
 const { verifyTurnstileToken } = require('../turnstile');
 const { validateNewPassword } = require('../password-policy');
+const { getOrganiserAccessStatus } = require('../organiser-access-guard');
+const { sendOrganiserEmailVerification } = require('../organiser-email-verification');
 const {
   isOrganiserAuthIntent,
   isOrganiserClaimNext,
   maybeAutoEnableOrganiserAccess,
   redirectAfterOrganiserAuth,
+  buildEmailVerifyRedirect,
 } = require('../organiser-auth-intent');
 
 module.exports = async function handler(req, res) {
@@ -140,7 +143,10 @@ module.exports = async function handler(req, res) {
     let autoEnable = { enabled: false, redirect: null };
     if (isOrganiserAuthIntent({ next: body.next, intent: body.intent })) {
       try {
-        autoEnable = await maybeAutoEnableOrganiserAccess(sessionUser, res);
+        // Register owns the verification email so we do not send twice.
+        autoEnable = await maybeAutoEnableOrganiserAccess(sessionUser, res, {
+          skipVerificationEmail: true,
+        });
       } catch {
         /* registration succeeds even if auto-enable fails */
       }
@@ -153,11 +159,45 @@ module.exports = async function handler(req, res) {
       defaultRedirect: redirect,
     });
 
+    const accessStatus = await getOrganiserAccessStatus(sessionUser);
+    let emailSent = false;
+    let verifyCode = null;
+    const requiresEmailVerification = !accessStatus.organiserEmailVerified;
+
+    if (requiresEmailVerification) {
+      const afterVerify = redirect;
+      try {
+        const sent = await sendOrganiserEmailVerification({
+          userId: sessionUser.sub,
+          email: sessionUser.email,
+          name: sessionUser.name,
+        });
+        emailSent = true;
+        const codeMatch = String(sent.verifyPath || '').match(/[?&]code=([^&]+)/);
+        verifyCode = codeMatch ? decodeURIComponent(codeMatch[1]) : null;
+      } catch (e) {
+        verifyCode = e.verifyCode || null;
+      }
+      redirect = buildEmailVerifyRedirect({
+        next: afterVerify,
+        code: verifyCode,
+        email: sessionUser.email,
+      });
+    }
+
     return json(res, 201, {
       ok: true,
-      message: 'Your account has been created.',
+      message: requiresEmailVerification
+        ? emailSent
+          ? 'Account created — check your email for a confirmation code.'
+          : 'Account created — confirm your email to continue.'
+        : 'Your account has been created.',
       user: sessionUser,
       redirect,
+      requiresEmailVerification,
+      emailSent,
+      // Only expose code when delivery failed so signup can still complete.
+      verifyCode: emailSent ? null : verifyCode,
     });
   } catch (e) {
     const msg = e.message || 'Could not create your account.';
