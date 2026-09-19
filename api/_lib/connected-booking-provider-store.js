@@ -162,6 +162,20 @@ async function listEventLinksForAccount(sb, accountId) {
   return { links: data || [], schemaMissing: false };
 }
 
+async function mergeProviderConnectionConfig(sb, accountId, provider, configPatch) {
+  const conn = await ensureProviderConnection(sb, accountId, provider);
+  const prev = conn.config && typeof conn.config === 'object' ? conn.config : {};
+  const next = Object.assign({}, prev, configPatch || {});
+  const { data: updated, error } = await sb
+    .from('connected_booking_provider_connections')
+    .update({ config: next, updated_at: new Date().toISOString() })
+    .eq('id', conn.id)
+    .select('id, organiser_account_id, provider, status, webhook_token, config, created_at, updated_at')
+    .single();
+  if (error) throw new Error(error.message);
+  return updated;
+}
+
 async function deleteEventLink(sb, accountId, eventId) {
   const { error } = await sb
     .from('connected_booking_event_links')
@@ -176,7 +190,7 @@ async function resolveConnectionByToken(sb, provider, token) {
   if (!t) return null;
   const { data, error } = await sb
     .from('connected_booking_provider_connections')
-    .select('id, organiser_account_id, provider, status, webhook_token')
+    .select('id, organiser_account_id, provider, status, webhook_token, config')
     .eq('provider', provider)
     .eq('webhook_token', t)
     .eq('status', 'active')
@@ -196,5 +210,6 @@ module.exports = {
   listEventLinksForAccount,
   deleteEventLink,
   resolveConnectionByToken,
+  mergeProviderConnectionConfig,
   isMissingProviderTablesError,
 };

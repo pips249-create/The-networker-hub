@@ -15,6 +15,11 @@ const {
 } = require('../connected-booking-provider-store');
 const { ingestConnectedBookingRegistration } = require('../connected-booking-ingest');
 const { isUuid } = require('../uuid');
+const {
+  isEventbriteConnectivityPing,
+  isEventbriteOrderNotification,
+  resolveEventbriteWebhookRegistrations,
+} = require('../eventbrite-webhook-resolve');
 
 function readRawBody(req) {
   if (Buffer.isBuffer(req.body)) return req.body;
@@ -48,6 +53,96 @@ function tokenFromRequest(req) {
       req.headers['x-webhook-token'] ||
       ''
   ).trim();
+}
+
+async function ingestProviderRegistration({
+  sb,
+  provider,
+  connection,
+  normalized,
+}) {
+  let targetEventId = null;
+
+  if (provider === 'own_site') {
+    targetEventId = String(normalized.tnhEventId || normalized.externalEventId || '').trim();
+    if (!isUuid(targetEventId)) {
+      return { status: 400, body: { ok: false, error: 'invalid_event_id' } };
+    }
+  } else {
+    const link = await findEventLinkByExternal(sb, provider, normalized.externalEventId);
+    if (!link?.event_id) {
+      await logExternalSync(sb, {
+        organiser_account_id: connection.organiser_account_id,
+        outcome: 'rejected',
+        http_status: 404,
+        message: provider + ':event_not_linked',
+        external_order_id: normalized.orderId,
+        payload: { externalEventId: normalized.externalEventId },
+      });
+      return {
+        status: 404,
+        body: {
+          ok: false,
+          error: 'event_not_linked',
+          message:
+            'No TNH event is linked to this ' +
+            provider +
+            ' event id. Link the event in Connected booking → Booking providers.',
+        },
+      };
+    }
+
+    if (link.organiser_account_id !== connection.organiser_account_id) {
+      return { status: 403, body: { ok: false, error: 'link_account_mismatch' } };
+    }
+    targetEventId = link.event_id;
+  }
+
+  const { data: account, error: accErr } = await sb
+    .from('organiser_accounts')
+    .select('id, connected_booking_plan, connected_booking_status, connected_booking_webhook_secret')
+    .eq('id', connection.organiser_account_id)
+    .maybeSingle();
+  if (accErr) {
+    return { status: 500, body: { ok: false, error: 'account_lookup_failed' } };
+  }
+
+  try {
+    const result = await ingestConnectedBookingRegistration({
+      sb,
+      account,
+      eventId: targetEventId,
+      body: normalized,
+      logPayload: {
+        provider,
+        externalEventId: normalized.externalEventId,
+        email: normalized.email,
+      },
+      providerLabel: provider,
+    });
+    return {
+      status: 200,
+      body: { ok: true, provider, eventId: targetEventId, ...result },
+    };
+  } catch (e) {
+    await logExternalSync(sb, {
+      organiser_account_id: connection.organiser_account_id,
+      event_id: targetEventId,
+      external_order_id: normalized.orderId,
+      outcome: 'error',
+      http_status: e.status || 500,
+      message: provider + ':' + (e.message || String(e)),
+      payload: normalized,
+    });
+    return {
+      status: e.status || 500,
+      body: {
+        ok: false,
+        error: e.code || e.message || 'registration_failed',
+        message: e.message || undefined,
+      },
+    };
+  }
 }
 
 /** POST /api/integrations/providers/:provider/webhook?token=... */
@@ -93,6 +188,99 @@ module.exports = async function handler(req, res, providerId) {
     return json(res, 401, { ok: false, error: 'invalid_webhook_token' });
   }
 
+  if (provider === 'eventbrite') {
+    try {
+      const resolved = await resolveEventbriteWebhookRegistrations(body, connection);
+      if (!resolved.registrations.length) {
+        const normalized = normalizeProviderWebhook(provider, body);
+        if (isEventbriteConnectivityPing(body, normalized)) {
+          await logExternalSync(sb, {
+            organiser_account_id: connection.organiser_account_id,
+            outcome: 'accepted',
+            http_status: 200,
+            message: 'eventbrite:webhook_ping',
+            payload: { api_url: body.api_url, action: body.config.action || null },
+          });
+          return json(res, 200, {
+            ok: true,
+            provider,
+            eventbrite_ping: true,
+          });
+        }
+        const message = isEventbriteOrderNotification(body)
+          ? resolved.source === 'eventbrite_api'
+            ? 'Eventbrite order had no attendee email we could read.'
+            : 'Could not read Eventbrite order from this webhook.'
+          : 'Could not read attendee details from this Eventbrite webhook.';
+        await logExternalSync(sb, {
+          organiser_account_id: connection.organiser_account_id,
+          outcome: 'rejected',
+          http_status: 400,
+          message: 'eventbrite:unrecognized_payload',
+          payload: { api_url: body.api_url, source: resolved.source },
+        });
+        return json(res, 400, { ok: false, error: 'unrecognized_payload', message });
+      }
+
+      const outcomes = [];
+      for (const row of resolved.registrations) {
+        const ingested = await ingestProviderRegistration({
+          sb,
+          provider,
+          connection,
+          normalized: row,
+        });
+        outcomes.push(ingested);
+        if (ingested.status >= 400) {
+          return json(res, ingested.status, ingested.body);
+        }
+      }
+
+      if (!outcomes.length) {
+        await logExternalSync(sb, {
+          organiser_account_id: connection.organiser_account_id,
+          outcome: 'rejected',
+          http_status: 400,
+          message: 'eventbrite:unrecognized_payload',
+          payload: body,
+        });
+        return json(res, 400, {
+          ok: false,
+          error: 'unrecognized_payload',
+          message: 'Could not read attendee details from this Eventbrite webhook.',
+        });
+      }
+
+      return json(res, 200, {
+        ok: true,
+        provider,
+        source: resolved.source,
+        registrations: outcomes.map(function (o) {
+          return o.body;
+        }),
+      });
+    } catch (e) {
+      const status = e.status || 502;
+      await logExternalSync(sb, {
+        organiser_account_id: connection.organiser_account_id,
+        outcome: 'rejected',
+        http_status: status,
+        message: 'eventbrite:' + (e.message || 'order_fetch_failed'),
+        payload: { api_url: body.api_url },
+      });
+      const tokenMissing = e.message === 'eventbrite_private_token_missing';
+      return json(res, status, {
+        ok: false,
+        error: e.message || 'eventbrite_order_fetch_failed',
+        message: tokenMissing
+          ? 'Add your Eventbrite private token on Connected event setup — webhooks only send an order link, not buyer email.'
+          : status === 401
+            ? 'Eventbrite rejected the private token — paste a fresh token from Eventbrite → Account settings → Developer links.'
+            : e.message || 'Could not load order from Eventbrite.',
+      });
+    }
+  }
+
   const normalized = normalizeProviderWebhook(provider, body);
   if (!normalized || normalized.partial) {
     await logExternalSync(sb, {
@@ -109,75 +297,11 @@ module.exports = async function handler(req, res, providerId) {
     });
   }
 
-  let targetEventId = null;
-
-  if (provider === 'own_site') {
-    targetEventId = String(normalized.tnhEventId || normalized.externalEventId || '').trim();
-    if (!isUuid(targetEventId)) {
-      return json(res, 400, { ok: false, error: 'invalid_event_id' });
-    }
-  } else {
-    const link = await findEventLinkByExternal(sb, provider, normalized.externalEventId);
-    if (!link?.event_id) {
-      await logExternalSync(sb, {
-        organiser_account_id: connection.organiser_account_id,
-        outcome: 'rejected',
-        http_status: 404,
-        message: provider + ':event_not_linked',
-        external_order_id: normalized.orderId,
-        payload: { externalEventId: normalized.externalEventId },
-      });
-      return json(res, 404, {
-        ok: false,
-        error: 'event_not_linked',
-        message:
-          'No TNH event is linked to this ' +
-          provider +
-          ' event id. Link the event in Connected booking → Booking providers.',
-      });
-    }
-
-    if (link.organiser_account_id !== connection.organiser_account_id) {
-      return json(res, 403, { ok: false, error: 'link_account_mismatch' });
-    }
-    targetEventId = link.event_id;
-  }
-
-  const { data: account, error: accErr } = await sb
-    .from('organiser_accounts')
-    .select('id, connected_booking_plan, connected_booking_status, connected_booking_webhook_secret')
-    .eq('id', connection.organiser_account_id)
-    .maybeSingle();
-  if (accErr) return json(res, 500, { ok: false, error: 'account_lookup_failed' });
-
-  try {
-    const result = await ingestConnectedBookingRegistration({
-      sb,
-      account,
-      eventId: targetEventId,
-      body: normalized,
-      logPayload: {
-        provider,
-        externalEventId: normalized.externalEventId,
-        email: normalized.email,
-      },
-      providerLabel: provider,
-    });
-    return json(res, 200, { ok: true, provider, eventId: targetEventId, ...result });
-  } catch (e) {
-    await logExternalSync(sb, {
-      organiser_account_id: connection.organiser_account_id,
-      event_id: targetEventId,
-      external_order_id: normalized.orderId,
-      outcome: 'error',
-      http_status: e.status || 500,
-      message: provider + ':' + (e.message || String(e)),
-      payload: normalized,
-    });
-    return json(res, e.status || 500, {
-      ok: false,
-      error: e.code || e.message || 'registration_failed',
-      message: e.message || undefined,
-    });
-  }
+  const ingested = await ingestProviderRegistration({
+    sb,
+    provider,
+    connection,
+    normalized,
+  });
+  return json(res, ingested.status, ingested.body);
 };

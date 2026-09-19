@@ -31,7 +31,7 @@ Run migration **`299_connected_booking_provider_links.sql`** (after 292, 297, 29
 
 1. Connected plan active; organiser page(s) assigned (297).
 2. **Connected booking** → **Booking providers** → **Enable** Eventbrite (or other).
-3. **Eventbrite webhook (Payload URL):** Profile menu → **Account settings** → **Webhooks** → Add webhook (or edit existing). Paste the **full** TNH URL into **Payload URL** (must end with `webhook?token=…`). Set **Action** to **`order.placed`**. “Events: All” is fine. Other providers: paste the same TNH webhook URL into their webhook / integrations screen.
+3. **Eventbrite webhook (Payload URL):** Profile menu → **Account settings** → **Webhooks** → Add webhook (or edit existing). Paste the **short** TNH URL (`https://thenetworkeruk.com/w/eb/…`, under **70 characters**). Set **Action** to **`order.placed`**. “Events: All” is fine. Other providers: paste the TNH webhook URL from **Enable** into their webhook / integrations screen.
 4. **Link event:** TNH event UUID + provider event id (e.g. Eventbrite numeric id from the event URL).
 5. Publish Connected event on TNH with **booking URL** pointing at provider checkout (for Eventbrite, use ticket checkout — not only the public event listing; TNH rewrites common `/e/…` links to `checkout-external?eid=` on save).
 6. Test order → **Recent sync attempts** shows `eventbrite:accepted` (or provider id).
@@ -72,7 +72,7 @@ Optional: **Link event** with provider **Your own website** and the same TNH uui
 | Provider | URL |
 |----------|-----|
 | Your own website | `/api/integrations/providers/own_site/webhook?token=…` |
-| Eventbrite | `/api/integrations/providers/eventbrite/webhook?token=…` |
+| Eventbrite | `https://thenetworkeruk.com/w/eb/{token}` (≤70 chars for Payload URL; legacy long URL still works) |
 | Ticket Tailor | `/api/integrations/providers/ticket_tailor/webhook?token=…` |
 | Luma | `/api/integrations/providers/luma/webhook?token=…` |
 | TryBooking | `/api/integrations/providers/trybooking/webhook?token=…` |
@@ -86,7 +86,7 @@ For third-party providers, without a linked TNH event for the provider’s event
 | Provider | External event id | Webhook setup |
 |----------|-------------------|---------------|
 | **Your own website** | TNH event UUID in webhook JSON (`eventId`) | Your checkout POSTs to token URL after each sale — no provider admin. |
-| **Eventbrite** | Numeric id from `…/e/…` or API (`123456789`) | Eventbrite webhook pointing at TNH URL; map `order.placed` (payload shapes vary — adapter handles common v3 fields). |
+| **Eventbrite** | Numeric id from `…/e/…` or API (`123456789`) | Webhook URL + **private token** (Developer links) on Connected setup — Eventbrite only sends an order link; TNH loads buyer email via Eventbrite API. Action `order.placed`. |
 | **Ticket Tailor** | Box office event id | Ticket Tailor outbound webhook → TNH URL. |
 | **Luma** | Event api id | Luma webhook → TNH URL. |
 | **TryBooking** | Event id from TryBooking admin | Configure webhook to TNH URL. |

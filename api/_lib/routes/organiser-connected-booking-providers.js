@@ -8,9 +8,15 @@ const {
   upsertEventLink,
   listEventLinksForAccount,
   deleteEventLink,
+  mergeProviderConnectionConfig,
 } = require('../connected-booking-provider-store');
+const { eventbritePrivateTokenFromConfig } = require('../connected-booking-providers/adapters/eventbrite-api');
 const { resolveOrganiserAccountId } = require('../organiser-account-resolve');
-const { buildProviderWebhookPublicUrl } = require('../provider-webhook-url');
+const {
+  buildProviderWebhookPublicUrl,
+  eventbriteWebhookNeedsTokenRotation,
+  webhookPublicSite,
+} = require('../provider-webhook-url');
 
 function parseBody(req) {
   let body = req.body;
@@ -61,19 +67,30 @@ module.exports = async function handler(req, res) {
     }
 
     const site = String(process.env.SITE_URL || 'https://www.thenetworkeruk.com').replace(/\/$/, '');
+    const webhookSite = webhookPublicSite(site);
+
+    async function connectionForWebhook(providerId, conn) {
+      if (!conn?.webhook_token || providerId !== 'eventbrite') return conn;
+      if (!eventbriteWebhookNeedsTokenRotation(site, conn.webhook_token)) return conn;
+      return ensureProviderConnection(sb, accountId, providerId, { rotateToken: true });
+    }
 
     if (req.method === 'GET') {
       const connResult = await listProviderConnections(sb, accountId);
       const linksResult = await listEventLinksForAccount(sb, accountId);
       const eventId = String(req.query?.eventId || req.query?.event_id || '').trim();
 
-      const providers = CONNECTED_BOOKING_PROVIDERS.map((p) => {
-        const conn = (connResult.connections || []).find((c) => c.provider === p.id);
+      const providers = await Promise.all(
+        CONNECTED_BOOKING_PROVIDERS.map(async (p) => {
+        let conn = (connResult.connections || []).find((c) => c.provider === p.id);
+        if (conn?.webhook_token && p.id !== 'custom') {
+          conn = await connectionForWebhook(p.id, conn);
+        }
         const webhookUrl =
           p.id === 'custom'
             ? site + '/api/integrations/booking'
             : conn?.webhook_token
-              ? buildProviderWebhookPublicUrl(site, p.id, conn.webhook_token) ||
+              ? buildProviderWebhookPublicUrl(webhookSite, p.id, conn.webhook_token) ||
                 site + p.webhookPath + '?token=' + encodeURIComponent(conn.webhook_token)
               : null;
         return {
@@ -83,8 +100,13 @@ module.exports = async function handler(req, res) {
           connectionStatus: conn?.status || (p.id === 'custom' ? 'active' : 'not_configured'),
           webhookUrl,
           docsHint: p.docsHint,
+          eventbriteApiTokenConfigured:
+            p.id === 'eventbrite' && conn
+              ? Boolean(eventbritePrivateTokenFromConfig(conn.config))
+              : undefined,
         };
-      });
+      })
+      );
 
       let eventLink = null;
       if (eventId) {
@@ -107,11 +129,11 @@ module.exports = async function handler(req, res) {
       if (action === 'enable_provider') {
         const provider = String(body.provider || '').trim().toLowerCase();
         let conn = await ensureProviderConnection(sb, accountId, provider);
-        if (String(conn.webhook_token || '').length > 32) {
+        if (eventbriteWebhookNeedsTokenRotation(site, conn.webhook_token)) {
           conn = await ensureProviderConnection(sb, accountId, provider, { rotateToken: true });
         }
         const webhookUrl =
-          buildProviderWebhookPublicUrl(site, provider, conn.webhook_token) ||
+          buildProviderWebhookPublicUrl(webhookSite, provider, conn.webhook_token) ||
           site +
             '/api/integrations/providers/' +
             provider +
@@ -135,6 +157,24 @@ module.exports = async function handler(req, res) {
           externalEventUrl: body.externalEventUrl || body.external_event_url,
         });
         return json(res, 200, { ok: true, eventLink: link });
+      }
+
+      if (action === 'save_eventbrite_private_token') {
+        const token = String(body.token || body.eventbritePrivateToken || '').trim();
+        if (!token) {
+          return json(res, 400, {
+            ok: false,
+            error: 'missing_token',
+            message: 'Paste your Eventbrite private token (Developer links in Eventbrite account settings).',
+          });
+        }
+        const conn = await mergeProviderConnectionConfig(sb, accountId, 'eventbrite', {
+          eventbritePrivateToken: token,
+        });
+        return json(res, 200, {
+          ok: true,
+          eventbriteApiTokenConfigured: Boolean(eventbritePrivateTokenFromConfig(conn.config)),
+        });
       }
 
       if (action === 'unlink_event') {

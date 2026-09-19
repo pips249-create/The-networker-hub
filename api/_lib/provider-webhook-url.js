@@ -1,4 +1,8 @@
-/** Short public webhook URLs (Eventbrite Payload URL is ~74 chars max). */
+/** Short public webhook URLs (Eventbrite Payload URL field is ~70 chars in practice). */
+
+const EVENTBRITE_PAYLOAD_URL_MAX = 70;
+const WEBHOOK_TOKEN_BYTES = 12;
+const WEBHOOK_TOKEN_HEX_LEN = WEBHOOK_TOKEN_BYTES * 2;
 
 const SHORT_CODE_TO_PROVIDER = {
   eb: 'eventbrite',
@@ -12,27 +16,41 @@ const PROVIDER_TO_SHORT_CODE = Object.fromEntries(
   Object.entries(SHORT_CODE_TO_PROVIDER).map(([code, id]) => [id, code])
 );
 
-/** New tokens: 16 bytes → 32 hex (fits Eventbrite with /api/w/{code}/ prefix). */
 function newWebhookToken() {
   const crypto = require('crypto');
-  return crypto.randomBytes(16).toString('hex');
+  return crypto.randomBytes(WEBHOOK_TOKEN_BYTES).toString('hex');
 }
 
 function providerFromShortCode(code) {
   return SHORT_CODE_TO_PROVIDER[String(code || '').trim().toLowerCase()] || '';
 }
 
+/** Canonical origin for pasted webhook URLs (no www — saves 4 chars for Eventbrite). */
+function webhookPublicSite(site) {
+  let base = String(site || '').replace(/\/$/, '');
+  if (!base) base = 'https://thenetworkeruk.com';
+  try {
+    const u = new URL(base);
+    if (u.hostname === 'www.thenetworkeruk.com') {
+      u.hostname = 'thenetworkeruk.com';
+    }
+    return u.origin;
+  } catch {
+    return base.replace(/^https:\/\/www\.thenetworkeruk\.com/i, 'https://thenetworkeruk.com');
+  }
+}
+
 function buildProviderWebhookPublicUrl(site, providerId, token) {
-  const base = String(site || '').replace(/\/$/, '');
+  const base = webhookPublicSite(site);
   const provider = String(providerId || '').trim().toLowerCase();
   const t = String(token || '').trim();
   if (!base || !provider || !t) return '';
   const code = PROVIDER_TO_SHORT_CODE[provider];
   if (!code) return '';
-  return base + '/api/w/' + code + '/' + encodeURIComponent(t);
+  return base + '/w/' + code + '/' + encodeURIComponent(t);
 }
 
-/** Parse /api/w/eb/{token} */
+/** Parse /w/eb/{token} or legacy /api/w/eb/{token} */
 function parseShortWebhookRoute(req) {
   let pathname = '';
   if (req.url) {
@@ -53,15 +71,27 @@ function parseShortWebhookRoute(req) {
 }
 
 function eventbriteSafeUrlLength(url) {
-  return String(url || '').length <= 74;
+  return String(url || '').length <= EVENTBRITE_PAYLOAD_URL_MAX;
+}
+
+function eventbriteWebhookNeedsTokenRotation(site, token) {
+  const t = String(token || '').trim();
+  if (!t) return false;
+  if (t.length > WEBHOOK_TOKEN_HEX_LEN) return true;
+  const url = buildProviderWebhookPublicUrl(site, 'eventbrite', t);
+  return !eventbriteSafeUrlLength(url);
 }
 
 module.exports = {
+  EVENTBRITE_PAYLOAD_URL_MAX,
+  WEBHOOK_TOKEN_HEX_LEN,
   SHORT_CODE_TO_PROVIDER,
   PROVIDER_TO_SHORT_CODE,
   newWebhookToken,
   providerFromShortCode,
+  webhookPublicSite,
   buildProviderWebhookPublicUrl,
   parseShortWebhookRoute,
   eventbriteSafeUrlLength,
+  eventbriteWebhookNeedsTokenRotation,
 };
