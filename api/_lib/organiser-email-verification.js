@@ -1,6 +1,6 @@
 /**
- * Email verification for organiser actions (publish, attendees, payouts, claims).
- * Primary UX: 6-digit code entered on /organiser/verify-email.
+ * Email verification for account signup and organiser actions (publish, attendees, payouts, claims).
+ * Primary UX: 6-digit code entered on /organiser/verify-email right after create-account.
  * Legacy email links with ?token= still work for already-sent messages.
  */
 const crypto = require('crypto');

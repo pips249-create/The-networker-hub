@@ -385,7 +385,7 @@ const BRANDED_EMAIL_TEMPLATES = {
   organiser_email_verify: {
     file: 'organiser-email-verify.html',
     marker: 'hub-email-layout-v3-purple',
-    subject: 'Confirm your email for organiser access',
+    subject: 'Confirm your email – The Networker UK',
   },
   event_intake_received: {
     file: 'event-intake-received.html',

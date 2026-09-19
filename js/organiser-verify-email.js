@@ -14,17 +14,18 @@
     return new URLSearchParams(window.location.search);
   }
 
-  /** Safe same-origin organiser path from ?next= (payment-setup return, etc.). */
+  /** Safe same-origin path from ?next= (welcome, organiser, payment-setup, etc.). */
   function continueHref() {
     var raw = String(params().get('next') || '').trim();
-    if (!raw) return '/organiser/';
+    if (!raw) return '/welcome';
     try {
       var url = /^https?:\/\//i.test(raw) ? new URL(raw) : new URL(raw, window.location.origin);
-      if (url.origin !== window.location.origin) return '/organiser/';
-      if (!/^\/organiser(\/|$)/.test(url.pathname)) return '/organiser/';
+      if (url.origin !== window.location.origin) return '/welcome';
+      if (url.pathname === '/login' || url.pathname === '/register') return '/welcome';
+      if (!/^\//.test(url.pathname) || /^\/\//.test(url.pathname)) return '/welcome';
       return url.pathname + url.search + url.hash;
     } catch (e) {
-      return '/organiser/';
+      return '/welcome';
     }
   }
 
@@ -45,11 +46,14 @@
   function showVerifiedUi(message) {
     var nextHref = continueHref();
     var goingToPayments = nextHref.indexOf('/organiser/payment-setup') === 0;
+    var goingToOrganiser = nextHref.indexOf('/organiser') === 0;
     showStatus(
       message ||
         (goingToPayments
           ? 'Your email is confirmed. Opening bank details setup…'
-          : 'Your email is confirmed. Opening your organiser dashboard…'),
+          : goingToOrganiser
+            ? 'Your email is confirmed. Opening your organiser dashboard…'
+            : 'Your email is confirmed. Continuing…'),
       true
     );
     if (ledeEl) ledeEl.hidden = true;
@@ -60,6 +64,8 @@
       continueBtn.href = nextHref;
       if (goingToPayments) {
         continueBtn.textContent = 'Continue to bank details →';
+      } else if (!goingToOrganiser) {
+        continueBtn.textContent = 'Continue →';
       }
     }
     window.setTimeout(function () {
@@ -164,9 +170,12 @@
     try {
       var next = String(params().get('next') || '');
       var fromPayments = next.indexOf('/organiser/payment-setup') !== -1;
+      var fromSignup = next.indexOf('/welcome') === 0 || !next;
       var autosentKey = fromPayments
         ? 'hub_verify_email_autosent_payments'
-        : 'hub_verify_email_autosent';
+        : fromSignup
+          ? 'hub_verify_email_autosent_signup'
+          : 'hub_verify_email_autosent';
       if (sessionStorage.getItem(autosentKey)) return;
       var statusRes = await fetch('/api/auth/verify-organiser-email', {
         credentials: 'include',
@@ -174,9 +183,10 @@
       });
       var statusData = await statusRes.json();
       if (!statusRes.ok || !statusData.ok) return;
-      if (statusData.organiserEmailVerified || !statusData.organiserAccess) return;
-      // From Stripe setup, always resend once — prior send may have failed silently.
-      if (!fromPayments && statusData.hasActiveVerifyCode) return;
+      if (statusData.organiserEmailVerified) return;
+      // From Stripe setup / signup recovery, always resend once if needed.
+      if (!fromPayments && !fromSignup && statusData.hasActiveVerifyCode) return;
+      if (statusData.hasActiveVerifyCode && fromSignup) return;
       sessionStorage.setItem(autosentKey, '1');
       await resend();
     } catch (e) {
@@ -192,15 +202,10 @@
       return;
     }
 
-    if (!session.organiserAccess && (session.pendingClaimCount || 0) === 0) {
-      window.location.href = '/organiser/enable';
-      return;
-    }
-
     if (addressEl) addressEl.textContent = session.user.email || 'your email';
 
     if (session.organiserEmailVerified) {
-      showVerifiedUi('Your email is confirmed. You can use all organiser features.');
+      showVerifiedUi('Your email is confirmed.');
       return;
     }
 

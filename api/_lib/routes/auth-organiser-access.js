@@ -43,17 +43,11 @@ module.exports = async function handler(req, res) {
 
   if (action === 'resend-verification') {
     const status = await getOrganiserAccessStatus(session);
-    if (!status.organiserAccess) {
-      return json(res, 403, {
-        error: 'organiser_access_required',
-        message: 'Enable organiser access first.',
-      });
-    }
     if (status.organiserEmailVerified) {
       return json(res, 200, {
         ok: true,
         alreadyVerified: true,
-        message: 'Your email is already confirmed for organiser access.',
+        message: 'Your email is already confirmed.',
       });
     }
 
