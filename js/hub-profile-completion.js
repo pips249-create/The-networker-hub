@@ -72,6 +72,8 @@
     if (fields.jobTitle !== undefined) payload.jobTitle = fields.jobTitle;
     if (fields.company !== undefined) payload.company = fields.company;
     if (fields.name !== undefined) payload.name = fields.name;
+    if (fields.homeRegionSlug !== undefined) payload.homeRegionSlug = fields.homeRegionSlug;
+    if (fields.location !== undefined) payload.location = fields.location;
 
     return fetch('/api/auth/profile', {
       method: 'PATCH',
@@ -96,9 +98,11 @@
       });
   }
 
-  function validateProfileForm(industry, jobTitle) {
+  function validateProfileForm(industry, jobTitle, homeRegionSlug) {
     var sector = String(industry || '').trim();
     var title = String(jobTitle || '').trim();
+    var region = String(homeRegionSlug || '').trim();
+    if (!region) return 'Please choose where you are usually based.';
     if (!sector) return 'Please select your industry.';
     if (
       global.HubProfileIndustries &&
