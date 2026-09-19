@@ -10,6 +10,7 @@
   var getTurnstileToken = function () {
     return Promise.resolve('');
   };
+  var turnstileReady = Promise.resolve();
 
   function setStatus(message, isError) {
     if (!statusEl) return;
@@ -19,16 +20,19 @@
   }
 
   if (window.HUB_turnstile && typeof window.HUB_turnstile.bindForm === 'function') {
-    window.HUB_turnstile.bindForm(form).then(function (fn) {
+    turnstileReady = window.HUB_turnstile.bindForm(form).then(function (fn) {
       getTurnstileToken = fn || getTurnstileToken;
     });
   }
 
   form.addEventListener('submit', function (e) {
     e.preventDefault();
-    var name = String(document.getElementById('contact-team-only-name')?.value || '').trim();
-    var email = String(document.getElementById('contact-team-only-email')?.value || '').trim();
-    var message = String(document.getElementById('contact-team-only-message')?.value || '').trim();
+    var nameEl = document.getElementById('contact-team-only-name');
+    var emailEl = document.getElementById('contact-team-only-email');
+    var messageEl = document.getElementById('contact-team-only-message');
+    var name = String((nameEl && nameEl.value) || '').trim();
+    var email = String((emailEl && emailEl.value) || '').trim();
+    var message = String((messageEl && messageEl.value) || '').trim();
     if (!name || !email || !message) {
       setStatus('Please fill in your name, email, and message.', true);
       return;
@@ -37,7 +41,13 @@
     setStatus('Sending…', false);
     if (submitBtn) submitBtn.disabled = true;
 
-    getTurnstileToken()
+    turnstileReady
+      .catch(function () {
+        /* Turnstile optional when disabled server-side */
+      })
+      .then(function () {
+        return getTurnstileToken();
+      })
       .then(function (token) {
         var payload = { name: name, email: email, message: message };
         if (token) payload.turnstileToken = token;
@@ -55,13 +65,18 @@
             return {};
           })
           .then(function (data) {
-            return { ok: res.ok, data: data || {} };
+            return { ok: res.ok, status: res.status, data: data || {} };
           });
       })
       .then(function (result) {
         if (!result.ok || !result.data.ok) {
+          var captchaHint =
+            result.data.error === 'captcha_required' || result.data.error === 'captcha_failed'
+              ? 'Please complete the security check, then try again.'
+              : null;
           setStatus(
             result.data.message ||
+              captchaHint ||
               (result.data.error === 'site_private'
                 ? 'This form is temporarily unavailable. Please email hi@thenetworkeruk.com instead.'
                 : null) ||

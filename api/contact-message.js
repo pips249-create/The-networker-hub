@@ -3,7 +3,7 @@
  */
 const { json, setCors } = require('./_lib/auth');
 const { wrapHandler } = require('./_lib/sentry');
-const { enforceRateLimit, clientIp } = require('./_lib/rate-limit');
+const { enforceRateLimitAsync, clientIp } = require('./_lib/rate-limit');
 const { verifyTurnstileToken } = require('./_lib/turnstile');
 const { submitContactTeamMessage } = require('./_lib/contact-team-message');
 const { publicErrorPayload } = require('./_lib/public-error');
@@ -30,7 +30,7 @@ module.exports = wrapHandler(async function handler(req, res) {
     return json(res, 405, { ok: false, error: 'method_not_allowed' });
   }
 
-  const limited = enforceRateLimit(req, res, 'contact_team_message', {
+  const limited = await enforceRateLimitAsync(req, res, 'contact_team_message', {
     max: 8,
     windowMs: 300_000,
   });
@@ -52,7 +52,10 @@ module.exports = wrapHandler(async function handler(req, res) {
     return json(res, 400, {
       ok: false,
       error: captcha.error || 'captcha_failed',
-      message: 'Please complete the security check and try again.',
+      message:
+        captcha.error === 'captcha_required'
+          ? 'Please complete the security check, then try again.'
+          : 'Please complete the security check and try again.',
     });
   }
 
