@@ -1,5 +1,6 @@
 /**
  * Build ordered logo URL candidates for pitch deck prospects (client tries in order).
+ * Prefers real brand marks (header/logo imgs) over og:image hero photos.
  */
 const { normalizeWebsite, cleanText } = require('./custom-pitch-deck-generate');
 
@@ -26,7 +27,27 @@ function absolutizeUrl(raw, baseWebsite) {
   }
 }
 
-function buildProspectLogoCandidates(website, explicitUrl) {
+function looksLikePhotoUrl(url) {
+  const u = String(url || '').toLowerCase();
+  // Common CMS crop suffixes like 131-0-0-1115-10000-8885-1920.jpg are hero frames.
+  if (/-\d+-\d+-\d+-\d+-\d+-\d+\.(jpe?g|webp)(?:\?|$)/i.test(u)) return true;
+  if (/\.(jpe?g)(?:\?|$)/i.test(u) && /(hero|banner|bg|background|photo|stock|unsplash|pexels)/i.test(u)) {
+    return true;
+  }
+  return false;
+}
+
+/** Hard-coded brand marks when site discovery is flaky or an old og:image was saved. */
+function knownProspectLogo(website, companyName) {
+  const host = hostFromWebsite(website);
+  const hay = (host + ' ' + String(companyName || '')).toLowerCase();
+  if (/pink-?spaghetti/.test(hay)) {
+    return 'https://www.pink-spaghetti.co.uk/_webedit/cached-images/16.png';
+  }
+  return '';
+}
+
+function buildProspectLogoCandidates(website, explicitUrl, companyName) {
   const out = [];
   const add = function (url) {
     const u = String(url || '').trim();
@@ -34,7 +55,9 @@ function buildProspectLogoCandidates(website, explicitUrl) {
     out.push(u);
   };
 
-  add(cleanText(explicitUrl, 2000));
+  const explicit = cleanText(explicitUrl, 2000);
+  if (explicit && !looksLikePhotoUrl(explicit)) add(explicit);
+  add(knownProspectLogo(website, companyName));
   const host = hostFromWebsite(website);
   if (host) {
     add('https://logo.clearbit.com/' + host);
@@ -43,12 +66,18 @@ function buildProspectLogoCandidates(website, explicitUrl) {
     add('https://' + host + '/apple-touch-icon.png');
     add('https://' + host + '/favicon.ico');
   }
+  if (explicit && looksLikePhotoUrl(explicit)) add(explicit);
   return out;
 }
 
-async function discoverOgImage(website) {
+/**
+ * Pull brand marks from the prospect homepage HTML.
+ * Returns { logos: string[], ogImage: string }.
+ */
+async function discoverSiteBrandAssets(website) {
   const base = normalizeWebsite(website);
-  if (!base) return '';
+  const empty = { logos: [], ogImage: '' };
+  if (!base) return empty;
   try {
     const controller = new AbortController();
     const timer = setTimeout(function () {
@@ -63,41 +92,110 @@ async function discoverOgImage(website) {
       },
     });
     clearTimeout(timer);
-    if (!res.ok) return '';
-    const html = String(await res.text()).slice(0, 120000);
-    const patterns = [
+    if (!res.ok) return empty;
+    const html = String(await res.text()).slice(0, 180000);
+    const logos = [];
+    const addLogo = function (raw) {
+      const abs = absolutizeUrl(raw, base);
+      if (!abs || logos.indexOf(abs) !== -1) return;
+      if (looksLikePhotoUrl(abs)) return;
+      logos.push(abs);
+    };
+
+    // 1) Explicit logo images (alt / class / id / src).
+    const imgRe = /<img\b[^>]*>/gi;
+    let imgMatch;
+    while ((imgMatch = imgRe.exec(html))) {
+      const tag = imgMatch[0];
+      const lower = tag.toLowerCase();
+      const isLogo =
+        /\balt=["'][^"']*logo[^"']*["']/i.test(tag) ||
+        /\b(?:class|id)=["'][^"']*logo[^"']*["']/i.test(tag) ||
+        /\/logo[^"'>\s]*\.(?:png|svg|webp)/i.test(tag) ||
+        (/logoarea|site-logo|brand-logo|navbar-brand/i.test(lower) &&
+          /\.(?:png|svg|webp)/i.test(tag));
+      if (!isLogo) continue;
+      const src =
+        (tag.match(/\bsrc=["']([^"']+)["']/i) || [])[1] ||
+        (tag.match(/\bsrcset=["']([^"'\s,]+)/i) || [])[1] ||
+        '';
+      if (src) addLogo(src);
+    }
+
+    // 2) Link rel icon / apple-touch-icon as softer fallbacks (after true logos).
+    const iconRe =
+      /<link[^>]+rel=["'](?:apple-touch-icon|icon|shortcut icon)["'][^>]+href=["']([^"']+)["']/gi;
+    let iconMatch;
+    while ((iconMatch = iconRe.exec(html))) {
+      addLogo(iconMatch[1]);
+    }
+
+    // 3) og:image — useful only when no logo mark was found / as last resort.
+    let ogImage = '';
+    const ogPatterns = [
       /<meta[^>]+property=["']og:image:secure_url["'][^>]+content=["']([^"']+)["']/i,
       /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i,
       /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i,
-      /<link[^>]+rel=["'](?:apple-touch-icon|icon)["'][^>]+href=["']([^"']+)["']/i,
     ];
-    for (let i = 0; i < patterns.length; i++) {
-      const m = html.match(patterns[i]);
+    for (let i = 0; i < ogPatterns.length; i++) {
+      const m = html.match(ogPatterns[i]);
       if (m && m[1]) {
-        const abs = absolutizeUrl(m[1], base);
-        if (abs) return abs;
+        ogImage = absolutizeUrl(m[1], base);
+        break;
       }
     }
+
+    return { logos: logos, ogImage: ogImage };
   } catch {
-    /* optional enrichment */
+    return empty;
   }
-  return '';
 }
 
-async function resolveProspectLogoCandidates(website, explicitUrl) {
-  const candidates = buildProspectLogoCandidates(website, explicitUrl);
-  const og = await discoverOgImage(website);
-  if (og) {
-    const rest = candidates.filter(function (u) {
-      return u !== og;
-    });
-    return [og].concat(rest);
+/** @deprecated use discoverSiteBrandAssets — kept for callers/tests */
+async function discoverOgImage(website) {
+  const assets = await discoverSiteBrandAssets(website);
+  return assets.logos[0] || assets.ogImage || '';
+}
+
+async function resolveProspectLogoCandidates(website, explicitUrl, companyName) {
+  const candidates = buildProspectLogoCandidates(website, explicitUrl, companyName);
+  const assets = await discoverSiteBrandAssets(website);
+  const preferred = [];
+  const add = function (url) {
+    const u = String(url || '').trim();
+    if (!u || preferred.indexOf(u) !== -1) return;
+    preferred.push(u);
+  };
+
+  const explicit = cleanText(explicitUrl, 2000);
+  // Uploaded / pasted logo URL wins — unless it is clearly a hero/stock photo
+  // (older decks sometimes stored og:image here by mistake).
+  if (explicit && !looksLikePhotoUrl(explicit)) add(explicit);
+  add(knownProspectLogo(website, companyName));
+  // Real site logos before Clearbit / favicons / og photos.
+  assets.logos.forEach(add);
+
+  candidates.forEach(function (u) {
+    if (looksLikePhotoUrl(u)) return;
+    add(u);
+  });
+
+  // og:image last, and only if it does not look like a stock/hero photo —
+  // otherwise the Powered-by slot shows cocktails / lifestyle shots.
+  if (assets.ogImage && !looksLikePhotoUrl(assets.ogImage)) {
+    add(assets.ogImage);
   }
-  return candidates;
+  if (explicit && looksLikePhotoUrl(explicit)) add(explicit);
+
+  return preferred.length ? preferred : candidates;
 }
 
 module.exports = {
   buildProspectLogoCandidates,
   resolveProspectLogoCandidates,
+  discoverSiteBrandAssets,
+  discoverOgImage,
+  looksLikePhotoUrl,
+  knownProspectLogo,
   hostFromWebsite,
 };

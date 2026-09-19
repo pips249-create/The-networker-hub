@@ -62,9 +62,14 @@ function defaultProspectLogoFromWebsite(website) {
   return host ? 'https://logo.clearbit.com/' + host : '';
 }
 
-function resolveProspectLogoUrl(explicit, website) {
+function resolveProspectLogoUrl(explicit, website, companyName) {
   const url = cleanText(explicit, 2000);
   if (url) return url;
+  const host = hostFromWebsite(website);
+  const hay = (host + ' ' + String(companyName || '')).toLowerCase();
+  if (/pink-?spaghetti/.test(hay)) {
+    return 'https://www.pink-spaghetti.co.uk/_webedit/cached-images/16.png';
+  }
   return defaultProspectLogoFromWebsite(website);
 }
 
@@ -81,47 +86,84 @@ function normalizeSections(raw, opts) {
   return out;
 }
 
+function isFlexibleFranchiseProspect(companyName, brief) {
+  const hay = String(companyName || '') + ' ' + String(brief || '');
+  return /pink\s*spaghetti|franchise|PA\/VA|virtual assistant|work[-\s]?life|career return/i.test(
+    hay
+  );
+}
+
 function sponsorshipOpeningSection(companyName, brief, placements) {
   const co = cleanText(companyName, 120) || 'your brand';
   const briefBit = cleanText(brief, 400);
   const listingOffer = hasOpportunityListingLaunchOffer(placements);
   const spotlightOffer = hasOpportunitySpotlightLaunchOffer(placements);
+  const franchiseFit = isFlexibleFranchiseProspect(companyName, brief);
   let intro =
-    'Confirm who they want to reach (event bookers, group owners, opportunity seekers), budget, and timing — then map packages from /advertising.';
+    'Coach notes for the call with ' +
+    co +
+    ' — ask these, then map packages. This page is your talk track, not a leave-behind.';
   if (listingOffer || spotlightOffer) {
-    intro +=
-      ' For this conversation we are leading with the launch partnership: ' +
-      (listingOffer ? '12 months business opportunity directory listing at no charge' : '') +
-      (listingOffer && spotlightOffer ? ' plus ' : '') +
-      (spotlightOffer ? '3 months Premium Spotlight on /opportunities/ at no charge' : '') +
-      '.';
+    intro =
+      'Coach notes: lead with the zero-risk launch partnership for ' +
+      co +
+      ', then only open Headline if they ask about total site takeover. Included now: ' +
+      (listingOffer ? '12 months listing at no charge' : '') +
+      (listingOffer && spotlightOffer ? ' + ' : '') +
+      (spotlightOffer ? '3 months Premium Spotlight at no charge' : '') +
+      ' (worth £465 + VAT).';
   }
-  if (briefBit) intro += ' Focus: ' + briefBit;
-  const bullets = [
-    'Who is the target buyer — business owners, franchisees, professionals booking events?',
-    'Which parts of the site matter most — Events, Organisers, or Opportunities?',
-    'Monthly vs prepaid commitment — most packages offer 1–12 month terms',
-    'Any category exclusivity or geographic focus (city / county)?',
-  ];
+  if (briefBit) intro += ' Brief: ' + briefBit;
+
+  const bullets = [];
+  if (listingOffer || spotlightOffer) {
+    bullets.push(
+      'Ask: “Shall we lock the free 12-month listing + 3-month Premium Spotlight first — zero risk?”'
+    );
+    bullets.push(
+      'Ask: “After that, do you want to talk optional Events Headline (~£2,000/mo + VAT), or park scale-ups for later?”'
+    );
+  }
+  if (franchiseFit) {
+    bullets.push(
+      'Ask: “Your buyers are aspiring franchisees, career returners, and people after flexible / work-life-balance businesses — does that match how you sell?”'
+    );
+  } else {
+    bullets.push(
+      'Ask: “Who is the target buyer — business owners, franchisees, or professionals booking events?”'
+    );
+  }
+  bullets.push(
+    'Ask: “Which part of the site matters most first — Opportunities, Events, or Organisers?”',
+    'Ask: “Any category exclusivity or geographic focus (city / county)?”'
+  );
   if (listingOffer) {
     bullets.unshift(
-      'Confirm go-live date for the business opportunity listing — 12 months subscription included in this launch offer'
+      'Confirm: go-live date for the business opportunity listing — 12 months included in this launch offer'
     );
   }
   if (spotlightOffer) {
     bullets.unshift(
-      'Agree the three Premium Spotlight months on /opportunities/ — included at no charge in this launch offer'
+      'Confirm: the three Premium Spotlight months on /opportunities/ — included at no charge'
     );
   }
   return {
     id: 'sponsor_opening',
     navLabel: 'Opening',
-    kicker: 'Partnerships',
-    title: 'Opening the conversation with ' + co,
+    kicker: 'Talk track',
+    title: 'Open the call with ' + co,
     intro: intro,
     bullets: bullets,
     tiles: [],
     quote: '',
+    sayNotes: [
+      'Say: “We’ve put together a short walkthrough for ' +
+        co +
+        ' — I’ll talk you through it live rather than leave a PDF.”',
+      listingOffer || spotlightOffer
+        ? 'Say: “The headline offer is complimentary for launch — listing + spotlight, worth £465 + VAT.”'
+        : 'Say: “Let’s map which placements fit the audience you want to reach.”',
+    ].filter(Boolean),
   };
 }
 
@@ -130,33 +172,42 @@ function sponsorshipNextStepsSection(companyName, placements) {
   const listingOffer = hasOpportunityListingLaunchOffer(placements);
   const spotlightOffer = hasOpportunitySpotlightLaunchOffer(placements);
   const bullets = [];
-  if (listingOffer) {
+  if (listingOffer || spotlightOffer) {
     bullets.push(
-      'Confirm listing copy, investment level, and owner email — we publish the business opportunity page and start the included 12-month period'
+      'Ask for: high-res PNG or SVG logo (landscape)',
+      'Ask for: franchise overview — 150–300 words + key investment figures',
+      'Ask for: destination URL for franchise / opportunity enquiries',
+      'Ask for: lead email where candidate enquiries should be routed'
+    );
+    if (spotlightOffer) {
+      bullets.push('Ask for: preferred start month for the first Premium Spotlight window');
+    }
+    bullets.push(
+      'Optional later: Headline or Industry placements — separate packages, not required for the launch offer'
+    );
+  } else {
+    bullets.push(
+      'Ask for: placements + preferred start dates (or Headline Sponsorship enquiry)',
+      'Ask for: logo assets and landing URL',
+      'Book: 15-minute walkthrough of live placements on the site'
     );
   }
-  if (spotlightOffer) {
-    bullets.push(
-      'Schedule the three included Premium Spotlight months in Command Centre (no Stripe checkout for this launch offer)'
-    );
-  }
-  bullets.push(
-    'Confirm any additional placements and start dates (or enquiry for Headline / Industry slots)',
-    'Share logo assets and landing URL for creative',
-    'Book a 15-minute walkthrough of live placements on the site'
-  );
   return {
     id: 'sponsor_next_steps',
-    navLabel: 'Next steps',
-    kicker: 'Close',
-    title: 'Recommended next steps for ' + co,
+    navLabel: 'Close',
+    kicker: 'Close the call',
+    title: 'Close — what to ask ' + co + ' for',
     intro:
       listingOffer || spotlightOffer
-        ? 'Lock in the launch offer in writing, then get the listing and spotlight live.'
+        ? 'End the call with a short asset ask — once they send these, you publish the listing and schedule spotlight months.'
         : 'Keep momentum while inventory and eligibility are fresh.',
     bullets: bullets,
     tiles: [],
     quote: '',
+    sayNotes: [
+      'Say: “If you can send logo, overview, destination URL, and lead email, we’ll get you live.”',
+      'Ask: “Who should I chase for those four assets after this call?”',
+    ],
   };
 }
 
@@ -279,7 +330,7 @@ function sectionTemplates(companyName, website, brief) {
 function buildOrganiserHero(companyName, website, brief, prospectLogoUrl) {
   const co = cleanText(companyName, 120) || 'Your group';
   const host = hostFromWebsite(website);
-  const logo = resolveProspectLogoUrl(prospectLogoUrl, website);
+  const logo = resolveProspectLogoUrl(prospectLogoUrl, website, companyName);
   return {
     preparedFor: co,
     website: normalizeWebsite(website),
@@ -297,16 +348,23 @@ function buildOrganiserHero(companyName, website, brief, prospectLogoUrl) {
 function buildSponsorshipHero(companyName, website, brief, prospectLogoUrl, placements) {
   const co = cleanText(companyName, 120) || 'Your brand';
   const host = hostFromWebsite(website);
-  const logo = resolveProspectLogoUrl(prospectLogoUrl, website);
+  const logo = resolveProspectLogoUrl(prospectLogoUrl, website, companyName);
   const offerChips = launchOfferHeroChips(placements || []);
   const defaultLede =
     'Reach business owners, event bookers, and opportunity seekers across our Events, Organisers, and Business Opportunities directories — with exclusive and self-serve placements.';
   let lede = cleanText(brief, 320) || defaultLede;
+  let headline = 'Advertising on The Networker UK for ' + co;
   if (offerChips.length && !cleanText(brief, 320)) {
+    headline = 'Launch partnership walkthrough — ' + co;
     lede =
-      'Launch partnership on The Networker UK for ' +
+      'Internal talk track for your call with ' +
       co +
-      ': business opportunity listing and Premium Spotlight visibility on /opportunities/ — with the included launch terms below.';
+      ': complimentary launch package worth £465 + VAT (12 months directory listing + 3 months Premium Spotlight). Read the Say / Ask notes aloud — this is not a leave-behind.';
+  } else if (!cleanText(brief, 320)) {
+    lede =
+      'Internal sales walkthrough for ' +
+      co +
+      ' — package facts plus Say / Ask lines to read on the call. Not a leave-behind PDF.';
   }
   return {
     preparedFor: co,
@@ -314,7 +372,8 @@ function buildSponsorshipHero(companyName, website, brief, prospectLogoUrl, plac
     websiteLabel: host || '',
     prospectLogoUrl: logo,
     deckType: 'sponsorship',
-    headline: 'Advertising on The Networker UK for ' + co,
+    walkthrough: true,
+    headline: headline,
     lede: lede,
     chips: offerChips.length
       ? offerChips
@@ -429,11 +488,14 @@ async function polishDeckWithOpenAI(deck, input) {
 
   const model = process.env.OPENAI_CHAT_MODEL || 'gpt-4o-mini';
   const system =
-    'You tailor internal B2B sales pitch decks for The Networker UK (networking ticketing + advertising). ' +
+    'You tailor INTERNAL sales walkthrough scripts for The Networker UK (networking ticketing + advertising). ' +
+    'These decks are read aloud ON THE CALL by Catherine/Rosie/Jamie — not leave-behind brochures for the prospect. ' +
     'Return ONLY valid JSON matching the input shape: { hero, sections, close, deckType, sponsorshipPlacements }. ' +
-    'Keep section ids unchanged (including sponsor_email_inventory). Preserve emailInventory objects and template counts. Improve wording to reference the prospect company naturally. ' +
+    'Keep section ids unchanged (including sponsor_email_inventory). Preserve emailInventory objects, template counts, and sayNotes arrays. ' +
+    'Write intros as coach notes to the salesperson. Prefer Ask: / Say: / Confirm: lines in bullets and sayNotes. ' +
     'Do not invent pricing beyond published packages: Headline Sponsor ~£2k/mo, Page Partner ~£600/mo, Featured Boost £55, City from £29/mo, County from £49/mo, opportunity listing £25/mo + VAT, organiser free to list / keep 100% ticket / attendees 4.5%+20p. ' +
-    'When sections show launch offers (12 months free business opportunity listing and/or 3 months free Premium Spotlight), keep those included terms — do not replace with standard paid pricing. ' +
+    'When sections show launch offers (12 months free business opportunity listing and/or 3 months free Premium Spotlight), keep those included terms and the £465 + VAT value anchor — do not replace with standard paid pricing. ' +
+    'Keep Headline packages clearly optional / scale-up when a launch listing offer is present. ' +
     'Keep Headline email tallies accurate: Events 21 templates, Organisers 21 templates, Opportunities 11 templates.';
 
   const userPayload = {
@@ -486,6 +548,129 @@ async function polishDeckWithOpenAI(deck, input) {
   return deck;
 }
 
+function looksLikeLeaveBehindOpening(section) {
+  if (!section || typeof section !== 'object') return true;
+  const intro = String(section.intro || '');
+  const title = String(section.title || '');
+  const bullets = Array.isArray(section.bullets) ? section.bullets : [];
+  const joined = intro + '\n' + title + '\n' + bullets.join('\n');
+  if (
+    /Confirm who they want to reach|map packages from \/advertising|For this conversation we are leading|Agree the three Premium|Opening the conversation with/i.test(
+      joined
+    )
+  ) {
+    return true;
+  }
+  if (!/coach notes|talk track|not a leave-behind|read (?:aloud |them )?on the call/i.test(intro)) {
+    return true;
+  }
+  const labeled = bullets.filter(function (b) {
+    return /^(Ask|Say|Confirm|Ask for)\s*:/i.test(String(b || ''));
+  });
+  if (bullets.length && labeled.length < Math.min(2, bullets.length)) return true;
+  return false;
+}
+
+function looksLikeLeaveBehindClose(section) {
+  if (!section || typeof section !== 'object') return true;
+  const intro = String(section.intro || '');
+  const title = String(section.title || '');
+  const kicker = String(section.kicker || '');
+  const bullets = Array.isArray(section.bullets) ? section.bullets : [];
+  if (/What we need from you|Next steps for /i.test(title)) return true;
+  if (!/close the call|asset ask|End the call|Ask for:/i.test(intro + ' ' + kicker + ' ' + bullets.join(' '))) {
+    return true;
+  }
+  return false;
+}
+
+function placementsFromDeck(deck) {
+  const fromMeta = normalizeSponsorshipPlacements(
+    deck && (deck.sponsorshipPlacements || deck.sponsorship_placements)
+  );
+  if (fromMeta.length) return fromMeta;
+  const out = [];
+  ((deck && deck.sections) || []).forEach(function (sec) {
+    const id = String((sec && sec.id) || '');
+    const m = id.match(/^sponsor_(.+)$/);
+    if (!m) return;
+    if (m[1] === 'opening' || m[1] === 'next_steps' || m[1] === 'email_inventory') return;
+    if (out.indexOf(m[1]) === -1) out.push(m[1]);
+  });
+  return normalizeSponsorshipPlacements(out);
+}
+
+/**
+ * Rewrite leave-behind brochure copy on existing saved decks into on-call talk tracks.
+ * Safe to run on every API read — keeps edited talk-track wording; replaces brochure intros.
+ */
+function enrichTalkTrackCopy(deck, opts) {
+  if (!deck || typeof deck !== 'object') return deck;
+  opts = opts || {};
+  const companyName =
+    cleanText(opts.companyName, 120) ||
+    cleanText(deck.hero && deck.hero.preparedFor, 120) ||
+    'your brand';
+  const brief = cleanText(opts.brief, 4000) || cleanText(deck.brief, 4000);
+  const placements = placementsFromDeck(deck);
+  const next = Object.assign({}, deck);
+  next.sections = Array.isArray(deck.sections) ? deck.sections.slice() : [];
+
+  next.sections = next.sections.map(function (sec) {
+    if (!sec || typeof sec !== 'object') return sec;
+    const id = String(sec.id || '');
+    if (id === 'sponsor_opening' && looksLikeLeaveBehindOpening(sec)) {
+      return sponsorshipOpeningSection(companyName, brief, placements);
+    }
+    if (id === 'sponsor_next_steps' && looksLikeLeaveBehindClose(sec)) {
+      return sponsorshipNextStepsSection(companyName, placements);
+    }
+    const out = Object.assign({}, sec);
+    if (id === 'sponsor_opening') {
+      out.kicker = out.kicker || 'Talk track';
+      if (/Opening the conversation with/i.test(String(out.title || ''))) {
+        out.title = 'Open the call with ' + companyName;
+      }
+    }
+    if (id === 'sponsor_next_steps') {
+      out.kicker = out.kicker || 'Close the call';
+      if (/What we need from you|Next steps/i.test(String(out.title || ''))) {
+        out.title = 'Close — what to ask ' + companyName + ' for';
+      }
+    }
+    return out;
+  });
+
+  if (next.hero && typeof next.hero === 'object') {
+    const hero = Object.assign({}, next.hero, { walkthrough: true });
+    const lede = String(hero.lede || '');
+    if (
+      lede &&
+      !/talk track|walkthrough|read (?:aloud |them )?on the call|not a leave-behind/i.test(lede)
+    ) {
+      const listingOffer = hasOpportunityListingLaunchOffer(placements);
+      const spotlightOffer = hasOpportunitySpotlightLaunchOffer(placements);
+      if (listingOffer || spotlightOffer) {
+        hero.lede =
+          'Internal talk track for your call with ' +
+          companyName +
+          ': complimentary launch package worth £465 + VAT (12 months directory listing + 3 months Premium Spotlight). Read the Say / Ask notes aloud — this is not a leave-behind.';
+        if (!/walkthrough|launch partnership/i.test(String(hero.headline || ''))) {
+          hero.headline = 'Launch partnership walkthrough — ' + companyName;
+        }
+      } else {
+        hero.lede =
+          'Internal sales walkthrough for ' +
+          companyName +
+          ' — package facts plus Say / Ask lines to read on the call. Not a leave-behind PDF.';
+      }
+    }
+    next.hero = hero;
+  }
+
+  return next;
+}
+
 async function generateCustomPitchDeck(input) {
   const base = buildDeckFromTemplate(input || {});
   let deck;
@@ -495,7 +680,10 @@ async function generateCustomPitchDeck(input) {
     console.warn('custom-pitch-deck generate', e && e.message);
     deck = base;
   }
-  return enrichDeckWithEmailInventory(deck);
+  return enrichTalkTrackCopy(enrichDeckWithEmailInventory(deck), {
+    companyName: input && input.companyName,
+    brief: input && input.brief,
+  });
 }
 
 function publicPathForSlug(slug) {
@@ -529,6 +717,8 @@ module.exports = {
   normalizeWebsite,
   cleanText,
   generateCustomPitchDeck,
+  enrichTalkTrackCopy,
+  looksLikeLeaveBehindOpening,
   publicPathForSlug,
   legacyPublicPathForSlug,
   validatePitchDeckInput,

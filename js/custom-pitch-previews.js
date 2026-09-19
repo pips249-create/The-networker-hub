@@ -234,27 +234,36 @@
   }
 
   function renderEventsHeadlinePanel(ctx) {
+    var co = String(ctx.companyName || 'Partner').trim();
     var logoInner = ctx.logoUrl
-      ? '<img src="' + esc(ctx.logoUrl) + '" alt="" referrerpolicy="no-referrer" style="max-height:44px;width:auto">'
-      : '<span style="font-weight:800;font-size:0.85rem">' + esc(ctx.companyName || 'Partner') + '</span>';
+      ? '<img src="' +
+        esc(ctx.logoUrl) +
+        '" alt="' +
+        esc(co) +
+        '" class="custom-pitch-events-logo" referrerpolicy="no-referrer">'
+      : '<span style="font-weight:800;font-size:0.95rem;color:#1e3a4f">' + esc(co) + '</span>';
     return (
-      '<div class="ad-mock-page ad-mock-page--events-dir">' +
+      '<div class="ad-mock-page ad-mock-page--events-dir custom-pitch-events-mock">' +
       '<div class="ad-mock-page-bar"><span></span><span></span><span></span><em>/events/</em></div>' +
       '<div class="ad-events-dir-scale">' +
       '<div class="ad-events-dir-mock" aria-hidden="true">' +
       '<section class="ad-events-dir-hero">' +
       '<div class="ad-events-dir-hero-inner">' +
       '<div class="ad-events-dir-hero-copy">' +
-      '<span class="ad-events-dir-line ad-events-dir-line--badge"></span>' +
-      '<span class="ad-events-dir-line ad-events-dir-line--title"></span>' +
-      '<span class="ad-events-dir-line ad-events-dir-line--title2"></span>' +
+      '<span class="custom-pitch-events-kicker">UK events directory</span>' +
+      '<p class="custom-pitch-events-title">Find your next networking event</p>' +
+      '<p class="custom-pitch-events-sub">Exclusive Powered by placement — one Headline partner at a time.</p>' +
       '</div>' +
       '<div class="ad-events-dir-sponsor-col">' +
       '<aside class="sponsor-hub sponsor-hub--in-hero sponsor-hub--active sponsor-hub--logo-only" style="margin:0 auto">' +
       '<div class="sponsor-hub-head"><span class="icon" aria-hidden="true">★</span><span>Powered by</span></div>' +
-      '<div class="sponsor-logo-wrap sponsor-logo-band has-logo" style="background:#1a1a2e;padding:12px;border-radius:12px">' +
+      '<div class="sponsor-logo-wrap sponsor-logo-band has-logo custom-pitch-events-logo-band">' +
       logoInner +
-      '</div></aside></div></div></section></div></div></div>'
+      '</div></aside></div></div></section></div></div>' +
+      '<p class="custom-pitch-events-caption"><strong>' +
+      esc(co) +
+      '</strong> — live brand mark on the /events/ hero</p>' +
+      '</div>'
     );
   }
 

@@ -30707,6 +30707,9 @@
       pitchSponsorshipOrder: [],
       focusOrganiserProfile: null,
       pitchEditingDeck: null,
+      pitchLogoBase64: null,
+      pitchLogoMime: '',
+      pitchLogoFilename: '',
       search: [],
       tab: salesKitTab,
       focusOrganiser: salesKitFocus,
@@ -31171,10 +31174,24 @@
             '<input id="sales-kit-pitch-contact" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white" placeholder="Used in follow-up email copy" value="' +
             attrEsc(prefillContact) +
             '" /></div>' +
-            '<div class="md:col-span-2"><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="sales-kit-pitch-logo">Prospect logo URL</label>' +
-            '<input id="sales-kit-pitch-logo" type="url" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white" placeholder="Direct logo PNG/SVG URL (best) — we also try their website" value="' +
+            '<div class="md:col-span-2"><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="sales-kit-pitch-logo">Prospect logo</label>' +
+            '<div class="flex flex-wrap items-start gap-3">' +
+            '<div class="shrink-0">' +
+            '<div id="sales-kit-pitch-logo-preview-wrap" class="h-16 w-28 rounded-lg border border-slate-200 bg-white flex items-center justify-center overflow-hidden">' +
+            (prefillLogo || state.pitchLogoBase64
+              ? '<img id="sales-kit-pitch-logo-preview" src="' +
+                attrEsc(state.pitchLogoBase64 || prefillLogo) +
+                '" alt="" class="max-h-14 max-w-[6.5rem] object-contain">'
+              : '<span id="sales-kit-pitch-logo-preview-empty" class="text-[10px] text-slate-400 px-2 text-center">No logo yet</span><img id="sales-kit-pitch-logo-preview" src="" alt="" class="max-h-14 max-w-[6.5rem] object-contain hidden">') +
+            '</div></div>' +
+            '<div class="min-w-0 flex-1 space-y-2">' +
+            '<input id="sales-kit-pitch-logo" type="url" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white" placeholder="Direct logo PNG/SVG URL (optional)" value="' +
             attrEsc(prefillLogo) +
-            '" /></div>' +
+            '" />' +
+            '<label class="block text-xs text-slate-500" for="sales-kit-pitch-logo-file">Or upload a logo (PNG/JPG/WebP, max 2MB)</label>' +
+            '<input type="file" id="sales-kit-pitch-logo-file" accept="image/png,image/jpeg,image/webp,image/gif" class="block w-full text-sm text-slate-600" />' +
+            '<p class="text-[11px] text-slate-500">Upload or URL overrides auto-discovery from their website. Pink Spaghetti decks use their real mark by default.</p>' +
+            '</div></div></div>' +
             '<div class="md:col-span-2 lg:col-span-3"><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="sales-kit-pitch-brief">What should this deck include?</label>' +
             '<textarea id="sales-kit-pitch-brief" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm min-h-[88px]" placeholder="e.g. Pink Spaghetti franchise leads — tick Directory listing + Opportunity boost for 12 months free listing and 3 months free Premium Spotlight.">' +
             esc(prefillBrief) +
@@ -31645,7 +31662,62 @@
       if (pitchCancelEdit) {
         pitchCancelEdit.addEventListener('click', function () {
           state.pitchEditingDeck = null;
+          state.pitchLogoBase64 = null;
+          state.pitchLogoMime = '';
+          state.pitchLogoFilename = '';
           paint();
+        });
+      }
+      function setPitchLogoPreview(src) {
+        var preview = document.getElementById('sales-kit-pitch-logo-preview');
+        var empty = document.getElementById('sales-kit-pitch-logo-preview-empty');
+        if (!preview) return;
+        if (src) {
+          preview.src = src;
+          preview.classList.remove('hidden');
+          if (empty) empty.classList.add('hidden');
+        } else {
+          preview.removeAttribute('src');
+          preview.classList.add('hidden');
+          if (empty) empty.classList.remove('hidden');
+        }
+      }
+      var pitchLogoFile = document.getElementById('sales-kit-pitch-logo-file');
+      if (pitchLogoFile) {
+        pitchLogoFile.addEventListener('change', function (ev) {
+          var file = ev.target.files && ev.target.files[0];
+          if (!file) return;
+          if (file.size > 2 * 1024 * 1024) {
+            if (pitchCreateStatus) pitchCreateStatus.textContent = 'Logo must be under 2MB.';
+            ev.target.value = '';
+            return;
+          }
+          state.pitchLogoMime = file.type || 'image/png';
+          state.pitchLogoFilename = file.name || 'prospect-logo.png';
+          var reader = new FileReader();
+          reader.onload = function () {
+            state.pitchLogoBase64 = String(reader.result || '');
+            var logoEl = document.getElementById('sales-kit-pitch-logo');
+            if (logoEl) logoEl.value = '';
+            setPitchLogoPreview(state.pitchLogoBase64);
+            if (pitchCreateStatus) pitchCreateStatus.textContent = 'Logo ready — save the deck to apply it.';
+          };
+          reader.readAsDataURL(file);
+        });
+      }
+      var pitchLogoUrlInput = document.getElementById('sales-kit-pitch-logo');
+      if (pitchLogoUrlInput) {
+        pitchLogoUrlInput.addEventListener('input', function () {
+          var url = String(pitchLogoUrlInput.value || '').trim();
+          if (url) {
+            state.pitchLogoBase64 = null;
+            state.pitchLogoMime = '';
+            state.pitchLogoFilename = '';
+            if (pitchLogoFile) pitchLogoFile.value = '';
+            setPitchLogoPreview(url);
+          } else if (!state.pitchLogoBase64) {
+            setPitchLogoPreview('');
+          }
         });
       }
       function syncPitchDeckTypePanels() {
@@ -31738,6 +31810,9 @@
             website: websiteEl ? websiteEl.value : '',
             contactName: contactEl ? contactEl.value : '',
             prospectLogoUrl: logoEl ? logoEl.value : '',
+            logoBase64: state.pitchLogoBase64 || undefined,
+            logoMime: state.pitchLogoMime || undefined,
+            logoFilename: state.pitchLogoFilename || undefined,
             organiserId: orgIdEl ? orgIdEl.value : '',
             organiserEmail:
               (state.focusOrganiser && state.focusOrganiser.email) || '',
@@ -31757,6 +31832,9 @@
               }
               return;
             }
+            state.pitchLogoBase64 = null;
+            state.pitchLogoMime = '';
+            state.pitchLogoFilename = '';
             if (data.crmDemo) {
               salesKitOutreachCache.demos.unshift(data.crmDemo);
               salesKitOutreachCache.loadedAt = Date.now();
@@ -31793,6 +31871,9 @@
           })[0];
           if (!found) return;
           state.pitchEditingDeck = found;
+          state.pitchLogoBase64 = null;
+          state.pitchLogoMime = '';
+          state.pitchLogoFilename = '';
           paint();
           var formEl = document.getElementById('sales-kit-pitch-create');
           if (formEl && formEl.scrollIntoView) formEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
