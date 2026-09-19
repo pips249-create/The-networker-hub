@@ -55,15 +55,12 @@ function areAutomatedEmailSequencesEnabled(nowMs) {
 }
 
 /**
- * Hubert monthly event picks — opt-in only. The engagement cron can run other
- * nurture mail while this stays off.
- *
- *   HUBERT_EVENT_CONCIERGE_EMAILS_ENABLED=true
- *   HUBERT_EVENT_CONCIERGE_EMAILS_FORCE_OFF=true  (explicit kill switch)
+ * Hubert monthly event picks — HARD DISABLED (Sep 2026 Resend flood).
+ * Env flags cannot re-enable until this function is restored to the opt-in check
+ * and the early return in engagement-emails.js is removed.
  */
 function areHubertEventConciergeEmailsEnabled() {
-  if (parseEnvFlag('HUBERT_EVENT_CONCIERGE_EMAILS_FORCE_OFF')) return false;
-  return parseEnvFlag('HUBERT_EVENT_CONCIERGE_EMAILS_ENABLED');
+  return false;
 }
 
 function hubertEventConciergeEmailsStatus() {
