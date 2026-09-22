@@ -1272,6 +1272,47 @@
     if (url) window.open(url, '_blank', 'noopener,noreferrer');
   }
 
+  let externalBookingSigninNudgeBound = false;
+
+  function bindExternalBookingSigninNudgeOnce() {
+    if (externalBookingSigninNudgeBound) return;
+    const btn = document.getElementById('external-booking-signin-btn');
+    if (!btn) return;
+    externalBookingSigninNudgeBound = true;
+    btn.addEventListener('click', function () {
+      const ev = activeEvent();
+      if (ev && ev.id) {
+        saveCheckoutIntent(ev, { action: 'external_registration_check' });
+      }
+      showCheckoutSignInGate(true, {
+        title: 'Sign in to see your registration',
+        lead:
+          'If you bought on the organiser\u2019s ticket site, sign in with the same email address you used there. We\u2019ll show your ticket in My account when it has synced.',
+        checkoutFlag: true,
+      });
+    });
+  }
+
+  function externalRegistrationSigninNudgeEligible(ev) {
+    if (!eventIsExternalConnected(ev)) return false;
+    if (ev.isEventPast || ev.ticketSalesEnabled === false) return false;
+    if (!String(ev.externalBookingUrl || '').trim()) return false;
+    if (registrationIsConfirmedGoing(eventApplicationState)) return false;
+    return true;
+  }
+
+  async function syncExternalBookingSigninNudge(ev) {
+    bindExternalBookingSigninNudgeOnce();
+    const el = document.getElementById('external-booking-signin-nudge');
+    if (!el) return;
+    if (!externalRegistrationSigninNudgeEligible(ev)) {
+      el.hidden = true;
+      return;
+    }
+    const signedIn = await isSignedInAttendee();
+    el.hidden = signedIn;
+  }
+
   function normalizeEventFlags(ev, params) {
     const p = params || new URLSearchParams(window.location.search);
     const approvalFromTickets = (ev.tickets || []).some(tierIsApplication);
@@ -4286,7 +4327,10 @@
       eventApplicationState = null;
     }
     applyEventApplicationUi(ev);
-    if (ev && eventIsExternalConnected(ev)) applyTicketPanelState(ev);
+    if (ev && eventIsExternalConnected(ev)) {
+      applyTicketPanelState(ev);
+      syncExternalBookingSigninNudge(ev);
+    }
   }
 
   async function showAlreadyGoingInsteadOfAlert(ev, err) {
@@ -4356,6 +4400,7 @@
         if (purchaseView) purchaseView.removeAttribute('aria-hidden');
       }
       applyEventApplicationUi(ev);
+      syncExternalBookingSigninNudge(ev);
       updateTicketJumpBar(ev);
       return;
     }
@@ -5324,7 +5369,11 @@
 
     loadCheckoutSessionUser().then(function () {
       update();
+      const evNow = activeEvent();
+      if (evNow) syncExternalBookingSigninNudge(evNow);
     });
+
+    bindExternalBookingSigninNudgeOnce();
 
     if (appBack) {
       appBack.addEventListener('click', () => showSeatApplication(false));
@@ -5733,6 +5782,17 @@
       if (intent.action === 'save_event') {
         const saveBtn = document.getElementById('ticket-sales-scheduled-save-btn');
         if (saveBtn && window.HubFavourites) saveBtn.click();
+        return;
+      }
+
+      if (intent.action === 'external_registration_check') {
+        clearCheckoutIntent();
+        showCheckoutSignInGate(false);
+        await refreshEventApplicationUi(eventForResume);
+        applyTicketPanelState(eventForResume);
+        await syncExternalBookingSigninNudge(eventForResume);
+        const panel = document.getElementById('tickets');
+        if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         return;
       }
 
