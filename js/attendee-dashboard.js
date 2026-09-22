@@ -3135,6 +3135,7 @@
         meta: metaBits.join(' · '),
         cta: 'Open tickets',
         route: 'tickets',
+        media: thumbHtml(nextTicket),
       });
     }
 
@@ -3147,6 +3148,7 @@
         meta: String(pending[0].organiserName || '').trim(),
         cta: 'Leave review',
         route: 'reviews-pending',
+        media: thumbHtml(pending[0]),
       });
     }
 
@@ -3192,13 +3194,9 @@
       '<h2 class="ad-section-title">Next up</h2>' +
       '<div class="ad-overview-next-list" role="list">' +
       items
-        .map(function (item) {
-          return (
-            '<button type="button" class="ad-overview-next-card ad-overview-next-card--' +
-            esc(item.key) +
-            '" role="listitem" data-overview-next-route="' +
-            esc(item.route) +
-            '">' +
+        .map(function (item, index) {
+          const featured = index === 0;
+          const copy =
             '<span class="ad-overview-next-eyebrow">' +
             esc(item.eyebrow) +
             '</span>' +
@@ -3210,8 +3208,20 @@
               : '') +
             '<span class="ad-overview-next-cta">' +
             esc(item.cta) +
-            ' →</span>' +
-            '</button>'
+            ' →</span>';
+          return (
+            '<button type="button" class="ad-overview-next-card ad-overview-next-card--' +
+            esc(item.key) +
+            (featured ? ' ad-overview-next-card--featured' : '') +
+            '" role="listitem" data-overview-next-route="' +
+            esc(item.route) +
+            '">' +
+            (featured && item.media
+              ? '<span class="ad-overview-next-media">' + item.media + '</span>'
+              : '') +
+            '<span class="ad-overview-next-copy">' +
+            copy +
+            '</span></button>'
           );
         })
         .join('') +
@@ -3316,28 +3326,100 @@
     el.innerHTML = '';
   }
 
-  function overviewBlockVisible(id) {
-    const el = document.getElementById(id);
-    return Boolean(el && !el.hidden);
+  function renderWelcomeLine() {
+    const sub = document.getElementById('ad-welcome-sub');
+    if (!sub || sub.dataset.lockedError === '1') return;
+    const pending = pendingReviewsList().length;
+    const upcoming = upcomingList();
+    const nextTicket = upcoming
+      .slice()
+      .sort(function (a, b) {
+        const da = a.date ? new Date(a.date).getTime() : 0;
+        const db = b.date ? new Date(b.date).getTime() : 0;
+        return da - db;
+      })[0];
+    sub.hidden = false;
+    if (pending && !upcoming.length) {
+      sub.textContent =
+        pending === 1
+          ? 'One review waiting — about a minute, and it helps the group.'
+          : pending + ' reviews waiting — a minute each, and it helps the groups.';
+      return;
+    }
+    if (nextTicket) {
+      const when = formatDateShort(nextTicket.date);
+      sub.textContent =
+        'You are going to ' +
+        (nextTicket.title || 'an event') +
+        (when && when !== '—' ? ' · ' + when : '') +
+        '.';
+      return;
+    }
+    if (savedEvents.length) {
+      sub.textContent = 'Nothing booked this week — one of your saved events might be the one.';
+      return;
+    }
+    sub.textContent = 'Ready when you are — find a room this week.';
+  }
+
+  function renderOverviewPortals() {
+    const ticketsMeta = document.getElementById('ad-portal-tickets-meta');
+    const reviewsMeta = document.getElementById('ad-portal-reviews-meta');
+    const savedMeta = document.getElementById('ad-portal-saved-meta');
+    const reviewsPortal = document.querySelector('[data-ad-portal="reviews"]');
+    const upcoming = upcomingList().length;
+    const pending = pendingReviewsList().length;
+    const savedCount = savedEvents.length + savedOrganisers.length + myGroups.length;
+    if (ticketsMeta) {
+      ticketsMeta.textContent = upcoming
+        ? upcoming + (upcoming === 1 ? ' upcoming event' : ' upcoming events')
+        : 'Find a breakfast, lunch, or expo';
+    }
+    if (reviewsMeta) {
+      reviewsMeta.textContent = pending
+        ? pending + (pending === 1 ? ' waiting' : ' waiting')
+        : 'After events you attend';
+    }
+    if (reviewsPortal) reviewsPortal.classList.toggle('is-hot', pending > 0);
+    if (savedMeta) {
+      savedMeta.textContent = savedCount
+        ? savedCount + (savedCount === 1 ? ' saved listing' : ' saved listings')
+        : 'Heart events and groups you like';
+    }
+  }
+
+  function bindOverviewPortals() {
+    document.querySelectorAll('[data-ad-portal]').forEach(function (btn) {
+      if (btn.dataset.boundPortal) return;
+      btn.dataset.boundPortal = '1';
+      btn.addEventListener('click', function () {
+        const key = btn.getAttribute('data-ad-portal');
+        if (key === 'tickets') {
+          setTicketsScope('upcoming');
+          setRoute('tickets');
+          return;
+        }
+        if (key === 'reviews') {
+          setSavedScope('reviews');
+          setReviewsScope(pendingReviewsList().length > 0 ? 'pending' : 'done');
+          setRoute('reviews-pending');
+          return;
+        }
+        if (key === 'saved') {
+          setSavedScope('events');
+          setRoute('saved');
+        }
+      });
+    });
   }
 
   function syncOverviewChrome() {
+    renderWelcomeLine();
+    renderOverviewPortals();
     const stats = document.getElementById('ad-stats');
-    const hasNextUp = overviewBlockVisible('ad-overview-next');
-    if (stats) {
-      const visibleStats = stats.querySelectorAll('.ad-stat:not([hidden])');
-      stats.hidden = hasNextUp || !visibleStats.length;
-    }
+    if (stats) stats.hidden = true;
     const empty = document.getElementById('ad-overview-empty');
-    if (empty) {
-      empty.hidden = Boolean(
-        hasNextUp ||
-          (stats && !stats.hidden) ||
-          overviewBlockVisible('ad-overview-feed') ||
-          overviewBlockVisible('ad-overview-membership-nudge') ||
-          overviewBlockVisible('ad-overview-reviewer-reward')
-      );
-    }
+    if (empty) empty.hidden = true;
   }
 
   function renderOverviewFeed() {
@@ -4431,6 +4513,7 @@
   async function init() {
     bindNav();
     bindStatCards();
+    bindOverviewPortals();
     bindHubContextSwitch();
     bindSavedScope();
     bindTicketsScope();
@@ -4543,6 +4626,7 @@
         const sub = document.getElementById('ad-welcome-sub');
         if (sub) {
           sub.hidden = false;
+          sub.dataset.lockedError = '1';
           sub.textContent =
             data.message ||
             data.error ||
