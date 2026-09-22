@@ -6052,6 +6052,40 @@ body.ee-embed-drawer.organiser-connected-setup-page .ecs-setup-checklist {
   margin-top: 8px;
 }
 
+.ecs-eb-token-lead {
+  margin: 0 0 12px;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.ecs-eb-api-key-guide {
+  margin-bottom: 14px;
+}
+
+.ecs-eb-api-key-form-title {
+  margin: 12px 0 8px;
+  font-size: 13px;
+}
+
+.ecs-eb-api-key-samples {
+  margin: 0 0 10px;
+  padding-left: 1.2rem;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.ecs-eb-copy-sample {
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: rgba(26, 46, 59, 0.06);
+  font-size: 12px;
+}
+
+.ecs-eb-copy-sample:hover {
+  background: rgba(13, 110, 122, 0.12);
+}
+
 .ecs-eventbrite-admin-guide {
   margin: 14px 0 0;
   padding: 14px 16px;

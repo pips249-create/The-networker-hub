@@ -631,20 +631,40 @@
       '</div>' +
       '<p class="ecs-eb-paste-hint">In Eventbrite: profile menu → <strong>Account settings → Webhooks</strong> · Action <code>order.placed</code></p>' +
       '<div class="ecs-eb-token-panel">' +
+      '<p class="ecs-eb-token-lead"><strong>Attendee names &amp; emails</strong> — Eventbrite’s webhook does not include buyers. TNH needs a one-time <strong>private token</strong> from your Eventbrite account (not on this event page).</p>' +
+      '<details class="ecs-eb-help-details ecs-eb-api-key-guide" open>' +
+      '<summary>Get your private token (Eventbrite account settings)</summary>' +
+      '<ol class="ecs-eb-help-steps">' +
+      '<li>On <strong>eventbrite.com</strong>: profile (top right) → <strong>Account settings</strong>.</li>' +
+      '<li>Left menu: <strong>Developer links</strong> → <strong>API keys</strong> (or open <a href="https://www.eventbrite.com/platform/api-keys" target="_blank" rel="noopener">eventbrite.com/platform/api-keys</a>).</li>' +
+      '<li>Click <strong>Create API key</strong> if you do not have one yet.</li>' +
+      '</ol>' +
+      '<p class="ecs-eb-api-key-form-title"><strong>Application Details</strong> — Eventbrite asks for marketing-style fields; you can use:</p>' +
+      '<ul class="ecs-eb-api-key-samples">' +
+      '<li><strong>Application URL</strong>: <code class="ecs-eb-copy-sample" data-copy-sample="https://www.thenetworkeruk.com">https://www.thenetworkeruk.com</code></li>' +
+      '<li><strong>OAuth Redirect URI</strong>: leave blank, or the same URL as above</li>' +
+      '<li><strong>Application name</strong>: <code class="ecs-eb-copy-sample" data-copy-sample="The Networker UK ticket sync">The Networker UK ticket sync</code></li>' +
+      '<li><strong>Description</strong>: <code class="ecs-eb-copy-sample" data-copy-sample="Sync ticket buyers to The Networker UK attendee list for my events.">Sync ticket buyers to The Networker UK attendee list for my events.</code></li>' +
+      '</ul>' +
+      '<p class="ee-hint">Click a grey sample line to copy it, then paste into Eventbrite. Accept terms → <strong>Create key</strong>.</p>' +
+      '<ol class="ecs-eb-help-steps" start="4">' +
+      '<li>On your new key: <strong>Show API key, client secret and tokens</strong>.</li>' +
+      '<li>Copy the <strong>Private token</strong> (not Public) → paste below → <strong>Save API token</strong>.</li>' +
+      '</ol>' +
+      '</details>' +
       '<label class="ee-field ecs-eb-token-field">' +
-      '<span>Eventbrite private token <strong>(required for attendee sync)</strong></span>' +
-      '<input type="password" id="ecs-eb-private-token" autocomplete="off" spellcheck="false" placeholder="From Eventbrite → Account settings → Developer links" />' +
+      '<span>Paste private token here</span>' +
+      '<input type="password" id="ecs-eb-private-token" autocomplete="off" spellcheck="false" placeholder="Private token from Eventbrite API keys" />' +
       '</label>' +
-      '<p class="ee-hint">Eventbrite webhooks only send an order link — we use this token to load buyer name and email when someone buys a ticket.</p>' +
       '<button type="button" class="ee-btn ee-btn-outline ee-btn-sm" data-save-eventbrite-token>Save API token</button>' +
       '<span class="ee-hint ecs-eb-token-status" data-eb-token-status hidden role="status"></span>' +
       '</div>' +
       '<details class="ecs-eb-help-details">' +
-      '<summary>Step-by-step in Eventbrite</summary>' +
+      '<summary>Webhook URL in Eventbrite (Payload URL)</summary>' +
       '<ol class="ecs-eb-help-steps">' +
-      '<li>Open <strong>Webhooks</strong> → Add webhook (or edit yours).</li>' +
-      '<li>Paste the copied URL into <strong>Payload URL</strong> (full line).</li>' +
-      '<li>Set <strong>Action</strong> to <code>order.placed</code> and save.</li>' +
+      '<li><strong>Account settings → Webhooks</strong> → your webhook.</li>' +
+      '<li>Paste the copied URL into <strong>Payload URL</strong> (must include <strong>www.</strong>).</li>' +
+      '<li>Action: <code>order.placed</code> · Save.</li>' +
       '</ol>' +
       '</details>' +
       (linkedDone
@@ -664,6 +684,20 @@
     if (!root || root.dataset.ebTokenBound === '1') return;
     root.dataset.ebTokenBound = '1';
     root.addEventListener('click', function (e) {
+      var sample = e.target && e.target.closest ? e.target.closest('[data-copy-sample]') : null;
+      if (sample) {
+        e.preventDefault();
+        var text = sample.getAttribute('data-copy-sample') || sample.textContent || '';
+        text = String(text).trim();
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).catch(function () {
+            window.prompt('Copy:', text);
+          });
+        } else {
+          window.prompt('Copy:', text);
+        }
+        return;
+      }
       var btn = e.target && e.target.closest ? e.target.closest('[data-save-eventbrite-token]') : null;
       if (!btn || btn.disabled) return;
       e.preventDefault();
