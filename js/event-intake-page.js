@@ -478,3 +478,35 @@
       });
   });
 })();
+
+(function () {
+  var sections = document.querySelectorAll('.ei-reveal');
+  if (!sections.length) return;
+
+  function showAll() {
+    sections.forEach(function (el) {
+      el.classList.add('is-visible');
+    });
+  }
+
+  if (!('IntersectionObserver' in window)) {
+    showAll();
+    return;
+  }
+
+  var observer = new IntersectionObserver(
+    function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add('is-visible');
+        observer.unobserve(entry.target);
+      });
+    },
+    { rootMargin: '0px 0px -8% 0px', threshold: 0.12 }
+  );
+
+  sections.forEach(function (el) {
+    if (el.classList.contains('is-visible')) return;
+    observer.observe(el);
+  });
+})();
