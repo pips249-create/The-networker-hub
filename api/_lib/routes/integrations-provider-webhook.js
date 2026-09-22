@@ -69,7 +69,12 @@ async function ingestProviderRegistration({
       return { status: 400, body: { ok: false, error: 'invalid_event_id' } };
     }
   } else {
-    const link = await findEventLinkByExternal(sb, provider, normalized.externalEventId);
+    const link = await findEventLinkByExternal(
+      sb,
+      provider,
+      normalized.externalEventId,
+      connection.organiser_account_id
+    );
     if (!link?.event_id) {
       await logExternalSync(sb, {
         organiser_account_id: connection.organiser_account_id,
@@ -125,20 +130,26 @@ async function ingestProviderRegistration({
       body: { ok: true, provider, eventId: targetEventId, ...result },
     };
   } catch (e) {
+    const errCode = e.code || e.message || 'registration_failed';
     await logExternalSync(sb, {
       organiser_account_id: connection.organiser_account_id,
       event_id: targetEventId,
       external_order_id: normalized.orderId,
-      outcome: 'error',
+      outcome: 'rejected',
       http_status: e.status || 500,
-      message: provider + ':' + (e.message || String(e)),
-      payload: normalized,
+      message: provider + ':' + errCode,
+      payload: {
+        provider,
+        email: normalized.email,
+        externalEventId: normalized.externalEventId,
+        detail: e.message || undefined,
+      },
     });
     return {
       status: e.status || 500,
       body: {
         ok: false,
-        error: e.code || e.message || 'registration_failed',
+        error: errCode,
         message: e.message || undefined,
       },
     };

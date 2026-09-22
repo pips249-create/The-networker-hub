@@ -1,7 +1,10 @@
 const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
 const { ensureAttendeeId } = require('./supabase-favourites');
 const { assertNotBlockedByOrganiser } = require('./organiser-attendee-blocks');
-const { isExternalConnectedEvent } = require('./connected-booking');
+const {
+  publicListingUsesExternalBooking,
+  CHECKOUT_EXTERNAL,
+} = require('./connected-booking');
 
 /**
  * Create or update a registration from an organiser external booking webhook.
@@ -23,7 +26,9 @@ async function createRegistrationFromExternalBooking(input) {
 
   const { data: eventRow, error: evErr } = await sb
     .from('events')
-    .select('id, organiser_id, checkout_mode, status, approval_status')
+    .select(
+      'id, organiser_id, checkout_mode, external_booking_url, external_price_label, status, approval_status'
+    )
     .eq('id', eventId)
     .maybeSingle();
   if (evErr) throw new Error(evErr.message);
@@ -32,10 +37,19 @@ async function createRegistrationFromExternalBooking(input) {
     e.status = 404;
     throw e;
   }
-  if (!isExternalConnectedEvent(eventRow)) {
+  if (!publicListingUsesExternalBooking(eventRow)) {
     const e = new Error('event_not_external_connected');
     e.status = 400;
+    e.message =
+      'This TNH listing is not set up for Connected booking (add booking URL and price on Connected setup, then publish).';
     throw e;
+  }
+
+  if (String(eventRow.checkout_mode || 'hub').trim() !== CHECKOUT_EXTERNAL) {
+    await sb
+      .from('events')
+      .update({ checkout_mode: CHECKOUT_EXTERNAL, updated_at: new Date().toISOString() })
+      .eq('id', eventId);
   }
 
   const organiserId = eventRow.organiser_id || null;

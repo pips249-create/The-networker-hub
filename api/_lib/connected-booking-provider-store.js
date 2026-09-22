@@ -75,20 +75,43 @@ async function listProviderConnections(sb, accountId) {
   return { connections: data || [], schemaMissing: false };
 }
 
-async function findEventLinkByExternal(sb, provider, externalEventId) {
+async function findEventLinkByExternal(sb, provider, externalEventId, organiserAccountId) {
   const ext = String(externalEventId || '').trim();
   if (!ext) return null;
-  const { data, error } = await sb
-    .from('connected_booking_event_links')
-    .select('id, organiser_account_id, event_id, provider, external_event_id, external_event_url, metadata')
-    .eq('provider', provider)
-    .eq('external_event_id', ext)
-    .maybeSingle();
+  const accountId = String(organiserAccountId || '').trim();
+
+  function baseQuery() {
+    let q = sb
+      .from('connected_booking_event_links')
+      .select(
+        'id, organiser_account_id, event_id, provider, external_event_id, external_event_url, metadata'
+      )
+      .eq('provider', provider);
+    if (accountId) q = q.eq('organiser_account_id', accountId);
+    return q;
+  }
+
+  const { data, error } = await baseQuery().eq('external_event_id', ext).maybeSingle();
   if (error) {
     if (isMissingProviderTablesError(error)) return null;
     throw new Error(error.message);
   }
-  return data;
+  if (data?.event_id) return data;
+
+  if (provider !== 'eventbrite' || !accountId) return null;
+
+  const { parseEventbriteEventIdFromUrl } = require('./connected-booking-util');
+  const { data: links, error: listErr } = await baseQuery();
+  if (listErr) {
+    if (isMissingProviderTablesError(listErr)) return null;
+    throw new Error(listErr.message);
+  }
+  for (const row of links || []) {
+    if (String(row.external_event_id || '').trim() === ext) return row;
+    const fromUrl = parseEventbriteEventIdFromUrl(row.external_event_url);
+    if (fromUrl && fromUrl === ext) return row;
+  }
+  return null;
 }
 
 async function upsertEventLink(sb, accountId, input) {
