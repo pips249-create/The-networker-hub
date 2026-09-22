@@ -152,12 +152,19 @@
             <input type="text" id="ecs-external-event-id" autocomplete="off" spellcheck="false" />
           </label>
           <p class="ee-hint" id="ecs-event-link-autofill-hint" hidden></p>
+          <label class="ee-field ecs-eb-import-row" id="ecs-eb-import-row" hidden>
+            <input type="checkbox" id="ecs-eb-import-on-link" checked />
+            <span>When I save the link, also copy title, description, date, and venue from Eventbrite onto this TNH listing</span>
+          </label>
           <div class="ee-attendance-next ecs-event-link-actions">
             <button type="button" class="ee-btn ee-btn-outline ee-btn-sm" id="ecs-save-event-link">
               Save link for this event
             </button>
             <button type="button" class="ee-btn ee-btn-outline ee-btn-sm" id="ecs-use-url-id" hidden>
               Use id from booking URL
+            </button>
+            <button type="button" class="ee-btn ee-btn-outline ee-btn-sm" id="ecs-import-eventbrite-listing" hidden>
+              Update listing from Eventbrite
             </button>
           </div>
           <p class="ee-hint" id="ecs-event-link-status" hidden role="status"></p>
