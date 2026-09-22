@@ -1521,6 +1521,51 @@
     return true;
   }
 
+  function goToPublishedConfirmation(ev) {
+    var row = ev || loadedEvent || {};
+    var title = String(row.title || '').trim();
+    var image = String(row.imageUrl || row.photo || '').trim();
+    var groupId = organiserIdForEvent(row);
+    var ids = eventIdsForNavigation();
+    if (!ids.length && eventId) ids = [eventId];
+    try {
+      sessionStorage.setItem(
+        'hub_event_published_preview',
+        JSON.stringify({
+          ids: ids.join(','),
+          title: title,
+          image: image,
+          organiserGroupId: groupId,
+        })
+      );
+    } catch {
+      /* ignore */
+    }
+    var pq = new URLSearchParams();
+    pq.set('ids', ids.join(','));
+    pq.set('published', '1');
+    pq.set('connected', '1');
+    if (title) pq.set('title', title);
+    if (groupId) pq.set('groupId', groupId);
+    var publishedUrl = '/organiser/event-published?' + pq.toString();
+    if (isEmbedDrawer() && window.parent && window.parent !== window) {
+      window.parent.postMessage(
+        {
+          type: 'hub-event-tickets-done',
+          eventIds: ids.slice(),
+          eventId: ids[0] || eventId || '',
+          title: title,
+          imageUrl: image,
+          publishedUrl: publishedUrl,
+          connectedBooking: true,
+        },
+        window.location.origin
+      );
+      return;
+    }
+    location.href = publishedUrl;
+  }
+
   async function saveConnected(publish) {
     var saveBtn = qs('ecs-save');
     var pubBtn = qs('ecs-publish');
@@ -1605,7 +1650,11 @@
       if (typeof embed.writeConnectedSetupPrefetch === 'function') {
         embed.writeConnectedSetupPrefetch(eventId, loadedEvent, billing);
       }
-      setStatus(saveStatus, publish ? 'Published — your Connected listing is live.' : 'Draft saved.', 'ok');
+      if (publish) {
+        goToPublishedConfirmation(savedEv || loadedEvent);
+        return;
+      }
+      setStatus(saveStatus, 'Draft saved.', 'ok');
     } catch (err) {
       setStatus(saveStatus, 'Could not save — check your connection and try again.', 'error');
     } finally {

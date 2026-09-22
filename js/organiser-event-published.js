@@ -103,6 +103,7 @@
   }
   const featuredCancelled = params.get('featured') === 'cancelled';
   const extendFeatured = params.get('extend') === 'featured';
+  const connectedBookingPublish = params.get('connected') === '1';
 
   const featuredUpsell = document.getElementById('ep-featured-upsell');
   const featuredHeading = document.getElementById('ep-featured-heading');
@@ -830,9 +831,14 @@
       previewHint.textContent = 'This is how your event appears on the browse page.';
     }
     if (lead) {
-      lead.textContent = needsMembersCta
-        ? 'Your listing is live. Add people under Memberships so members can book this members-only meeting, or share it free on social media.'
-        : 'Your listing is live. Share it free on social media, or feature it in Premium Spotlight for extra visibility on the platform.';
+      if (connectedBookingPublish) {
+        lead.textContent =
+          'Your Connected listing is live on Browse events. Visitors see your price and checkout on your booking link (e.g. Eventbrite). Share on social media below, or add Premium Spotlight for extra visibility.';
+      } else {
+        lead.textContent = needsMembersCta
+          ? 'Your listing is live. Add people under Memberships so members can book this members-only meeting, or share it free on social media.'
+          : 'Your listing is live. Share it free on social media, or feature it in Premium Spotlight for extra visibility on the platform.';
+      }
     }
     showMembersCtaIfNeeded();
     setPromoteVisibility(true, {
