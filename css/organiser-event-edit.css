@@ -5885,6 +5885,133 @@ body.ee-embed-drawer.organiser-connected-setup-page .ecs-setup-checklist {
   color: var(--ee-text, #1a2e3b);
 }
 
+.ecs-eb-steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ecs-eb-step-card {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 2px solid rgba(26, 46, 59, 0.12);
+  background: #fff;
+}
+
+.ecs-eb-step-card.is-current {
+  border-color: rgba(13, 110, 122, 0.55);
+  box-shadow: 0 0 0 3px rgba(13, 110, 122, 0.12);
+}
+
+.ecs-eb-step-card.is-done {
+  border-color: rgba(13, 110, 122, 0.25);
+  background: rgba(13, 110, 122, 0.04);
+}
+
+.ecs-eb-step-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 10px 12px;
+  margin-bottom: 10px;
+}
+
+.ecs-eb-step-num {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 14px;
+  background: rgba(26, 46, 59, 0.08);
+  color: var(--ee-purple-dark, #084a52);
+}
+
+.ecs-eb-step-card.is-done .ecs-eb-step-num {
+  background: rgba(13, 110, 122, 0.2);
+}
+
+.ecs-eb-step-titles {
+  flex: 1 1 160px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ecs-eb-step-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ee-text, #1a2e3b);
+}
+
+.ecs-eb-step-badge {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(13, 110, 122, 0.15);
+  color: var(--ee-purple-dark, #084a52);
+}
+
+.ecs-eb-step-badge.is-todo {
+  background: rgba(189, 147, 46, 0.2);
+  color: #8a6914;
+}
+
+.ecs-eb-step-action {
+  margin: 0 0 10px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--ee-text-mid, #4a6272);
+}
+
+.ecs-eb-where {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(189, 147, 46, 0.15);
+  color: #8a6914;
+}
+
+.ecs-eb-where.is-tnh {
+  background: rgba(13, 110, 122, 0.12);
+  color: var(--ee-purple-dark, #084a52);
+}
+
+.ecs-eb-all-done {
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: rgba(13, 110, 122, 0.1);
+  border: 2px solid rgba(13, 110, 122, 0.35);
+  margin-bottom: 4px;
+}
+
+.ecs-eb-all-done-title {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--ee-purple-dark, #084a52);
+}
+
+.ecs-eb-all-done-text {
+  margin: 0 0 8px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
 .ecs-eb-checklist {
   margin: 0;
   padding: 0;

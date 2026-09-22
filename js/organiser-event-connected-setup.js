@@ -584,100 +584,131 @@
       return;
     }
 
+    var allDone = urlOk && linkedDone && tokenOk;
+    var nextStep = !urlOk ? 1 : !linkedDone ? 2 : !tokenOk ? 3 : 0;
+    var linkedId = linkedDone
+      ? displayExternalEventId('eventbrite', linked.external_event_id || linked.externalEventId)
+      : '';
+
     mount.innerHTML =
       '<div class="ecs-eb-sync">' +
-      '<ul class="ecs-eb-checklist" aria-label="Eventbrite sync">' +
-      '<li class="ecs-eb-check is-done"><span class="ecs-eb-check-icon" aria-hidden="true">✓</span> Webhook URL ready</li>' +
-      '<li class="ecs-eb-check' +
-      (linkedDone ? ' is-done' : '') +
-      '"><span class="ecs-eb-check-icon" aria-hidden="true">' +
-      (linkedDone ? '✓' : '2') +
-      '</span> Event id saved above' +
-      (linkedDone ? '' : ' <span class="ecs-eb-check-sub">(Link registrations)</span>') +
-      '</li>' +
-      '<li class="ecs-eb-check' +
-      (tokenOk ? ' is-done' : '') +
-      '"><span class="ecs-eb-check-icon" aria-hidden="true">' +
-      (tokenOk ? '✓' : '3') +
-      '</span> Eventbrite API token saved' +
-      (tokenOk ? '' : ' <span class="ecs-eb-check-sub">(below)</span>') +
-      '</li>' +
-      '</ul>' +
+      (allDone
+        ? '<div class="ecs-eb-all-done" role="status">' +
+          '<p class="ecs-eb-all-done-title">Setup complete</p>' +
+          '<p class="ecs-eb-all-done-text">Buy a <strong>test ticket</strong> on Eventbrite, then open this event’s <strong>attendee list</strong> on The Networker UK. The buyer’s name and email should appear within a minute.</p>' +
+          '<p class="ee-hint">Still to do: scroll down and <strong>Publish Connected event</strong> if this listing is not live yet.</p>' +
+          '</div>'
+        : '<p class="ecs-eb-sync-lead"><strong>Do these in order.</strong> ' +
+          '<span class="ecs-eb-where">On Eventbrite</span> = profile → Account settings (not the event editor). ' +
+          '<span class="ecs-eb-where is-tnh">On TNH</span> = this page.</p>') +
+      '<ol class="ecs-eb-steps" aria-label="Eventbrite sync steps">' +
+      '<li class="ecs-eb-step-card' +
+      (urlOk ? ' is-done' : '') +
+      (nextStep === 1 ? ' is-current' : '') +
+      '">' +
+      '<div class="ecs-eb-step-head">' +
+      '<span class="ecs-eb-step-num" aria-hidden="true">1</span>' +
+      '<div class="ecs-eb-step-titles">' +
+      '<span class="ecs-eb-step-title">Paste webhook into Eventbrite</span>' +
+      '<span class="ecs-eb-where">On Eventbrite</span>' +
+      '</div>' +
+      (urlOk ? '<span class="ecs-eb-step-badge">Done</span>' : '<span class="ecs-eb-step-badge is-todo">Do this</span>') +
+      '</div>' +
+      '<p class="ecs-eb-step-action">Account settings → <strong>Webhooks</strong> → Payload URL · Action <code>order.placed</code></p>' +
       '<div class="ecs-eb-url-panel' +
       (urlOk ? '' : ' is-warning') +
       '">' +
-      '<div class="ecs-eb-url-panel-head">' +
-      '<span class="ecs-eb-url-label">Copy into Eventbrite → Payload URL</span>' +
-      '<span class="ecs-eb-len-badge' +
-      (lenOk ? ' is-ok' : ' is-bad') +
-      '" title="Eventbrite truncates longer URLs">' +
-      len +
-      '/' +
-      EVENTBRITE_PAYLOAD_URL_MAX +
-      '</span>' +
-      '</div>' +
       '<code class="ecs-eb-url cb-webhook-url" data-webhook-url="' +
       escAttr(url) +
       '">' +
       escHtml(url) +
       '</code>' +
       '<div class="ecs-webhook-copy-row">' +
-      '<button type="button" class="ee-btn ee-btn-gold ee-btn-sm" data-copy-webhook-url>Copy for Eventbrite</button>' +
+      '<button type="button" class="ee-btn ee-btn-gold ee-btn-sm" data-copy-webhook-url>Copy URL → paste in Eventbrite</button>' +
+      '<span class="ecs-eb-len-badge' +
+      (lenOk ? ' is-ok' : ' is-bad') +
+      '">' +
+      len +
+      '/' +
+      EVENTBRITE_PAYLOAD_URL_MAX +
+      ' chars</span>' +
       '<span class="ee-hint ecs-copy-webhook-status" data-copy-webhook-status hidden role="status"></span>' +
       '</div>' +
       (!urlOk
-        ? '<p class="ecs-eb-url-warn">URL must start with <code>https://www.thenetworkeruk.com/w/eb/</code> (www avoids Eventbrite 308 errors). Refresh or click Enable Eventbrite again if this line looks wrong.</p>'
-        : '<p class="ee-hint ecs-eb-www-ok">Uses <strong>www</strong> so Eventbrite POSTs succeed (no 308 redirect).</p>') +
+        ? '<p class="ecs-eb-url-warn">URL must include <strong>www.</strong> — refresh this page if it does not.</p>'
+        : '') +
       '</div>' +
-      '<p class="ecs-eb-paste-hint">In Eventbrite: profile menu → <strong>Account settings → Webhooks</strong> · Action <code>order.placed</code></p>' +
-      '<div class="ecs-eb-token-panel">' +
-      '<p class="ecs-eb-token-lead"><strong>Attendee names &amp; emails</strong> — Eventbrite’s webhook does not include buyers. TNH needs a one-time <strong>private token</strong> from your Eventbrite account (not on this event page).</p>' +
-      '<details class="ecs-eb-help-details ecs-eb-api-key-guide" open>' +
-      '<summary>Get your private token (Eventbrite account settings)</summary>' +
+      '</li>' +
+      '<li class="ecs-eb-step-card' +
+      (linkedDone ? ' is-done' : '') +
+      (nextStep === 2 ? ' is-current' : '') +
+      '">' +
+      '<div class="ecs-eb-step-head">' +
+      '<span class="ecs-eb-step-num" aria-hidden="true">2</span>' +
+      '<div class="ecs-eb-step-titles">' +
+      '<span class="ecs-eb-step-title">Link this Eventbrite event id</span>' +
+      '<span class="ecs-eb-where is-tnh">On TNH</span>' +
+      '</div>' +
+      (linkedDone ? '<span class="ecs-eb-step-badge">Done</span>' : '<span class="ecs-eb-step-badge is-todo">Do this</span>') +
+      '</div>' +
+      (linkedDone
+        ? '<p class="ee-hint ee-alert-ok">Linked id <code>' + escHtml(linkedId) + '</code></p>'
+        : '<p class="ecs-eb-step-action">Scroll up to <strong>Link registrations</strong> · enter the numeric id from your Eventbrite event URL · <strong>Save link for this event</strong>.</p>' +
+          '<button type="button" class="ee-btn ee-btn-outline ee-btn-sm" data-scroll-event-link>Go to Link registrations</button>') +
+      '</li>' +
+      '<li class="ecs-eb-step-card' +
+      (tokenOk ? ' is-done' : '') +
+      (nextStep === 3 ? ' is-current' : '') +
+      '">' +
+      '<div class="ecs-eb-step-head">' +
+      '<span class="ecs-eb-step-num" aria-hidden="true">3</span>' +
+      '<div class="ecs-eb-step-titles">' +
+      '<span class="ecs-eb-step-title">Save Eventbrite private token</span>' +
+      '<span class="ecs-eb-where is-tnh">On TNH</span> <span class="ecs-eb-where">+ get token on Eventbrite</span>' +
+      '</div>' +
+      (tokenOk ? '<span class="ecs-eb-step-badge">Done</span>' : '<span class="ecs-eb-step-badge is-todo">Do this</span>') +
+      '</div>' +
+      (tokenOk
+        ? '<p class="ee-hint ee-alert-ok">Token saved — ticket buyers can sync. You can paste a new token below if you rotate your API key.</p>'
+        : '<p class="ecs-eb-step-action">Eventbrite webhooks do <em>not</em> send buyer email. Get <strong>Private token</strong> from Eventbrite → Account settings → Developer links → API keys, then paste here.</p>') +
+      '<details class="ecs-eb-help-details ecs-eb-api-key-guide"' +
+      (tokenOk ? '' : ' open') +
+      '>' +
+      '<summary>How to create / find the private token on Eventbrite</summary>' +
       '<ol class="ecs-eb-help-steps">' +
-      '<li>On <strong>eventbrite.com</strong>: profile (top right) → <strong>Account settings</strong>.</li>' +
-      '<li>Left menu: <strong>Developer links</strong> → <strong>API keys</strong> (or open <a href="https://www.eventbrite.com/platform/api-keys" target="_blank" rel="noopener">eventbrite.com/platform/api-keys</a>).</li>' +
-      '<li>Click <strong>Create API key</strong> if you do not have one yet.</li>' +
-      '</ol>' +
-      '<p class="ecs-eb-api-key-form-title"><strong>Application Details</strong> — Eventbrite asks for marketing-style fields; you can use:</p>' +
-      '<ul class="ecs-eb-api-key-samples">' +
-      '<li><strong>Application URL</strong>: <code class="ecs-eb-copy-sample" data-copy-sample="https://www.thenetworkeruk.com">https://www.thenetworkeruk.com</code></li>' +
-      '<li><strong>OAuth Redirect URI</strong>: leave blank, or the same URL as above</li>' +
-      '<li><strong>Application name</strong>: <code class="ecs-eb-copy-sample" data-copy-sample="The Networker UK ticket sync">The Networker UK ticket sync</code></li>' +
-      '<li><strong>Description</strong>: <code class="ecs-eb-copy-sample" data-copy-sample="Sync ticket buyers to The Networker UK attendee list for my events.">Sync ticket buyers to The Networker UK attendee list for my events.</code></li>' +
-      '</ul>' +
-      '<p class="ee-hint">Click a grey sample line to copy it, then paste into Eventbrite. Accept terms → <strong>Create key</strong>.</p>' +
-      '<ol class="ecs-eb-help-steps" start="4">' +
-      '<li>On your new key: <strong>Show API key, client secret and tokens</strong>.</li>' +
-      '<li>Copy the <strong>Private token</strong> (not Public) → paste below → <strong>Save API token</strong>.</li>' +
+      '<li><a href="https://www.eventbrite.com/platform/api-keys" target="_blank" rel="noopener">eventbrite.com/platform/api-keys</a> (or Account settings → Developer links → API keys).</li>' +
+      '<li><strong>Create API key</strong> if needed. Application URL: <code class="ecs-eb-copy-sample" data-copy-sample="https://www.thenetworkeruk.com">https://www.thenetworkeruk.com</code> (click to copy). Name/description: anything honest about syncing to TNH.</li>' +
+      '<li><strong>Show API key…</strong> → copy <strong>Private token</strong> (not Public).</li>' +
       '</ol>' +
       '</details>' +
       '<label class="ee-field ecs-eb-token-field">' +
-      '<span>Paste private token here</span>' +
-      '<input type="password" id="ecs-eb-private-token" autocomplete="off" spellcheck="false" placeholder="Private token from Eventbrite API keys" />' +
+      '<span>Paste private token</span>' +
+      '<input type="password" id="ecs-eb-private-token" autocomplete="off" spellcheck="false" placeholder="Private token from Eventbrite" />' +
       '</label>' +
-      '<button type="button" class="ee-btn ee-btn-outline ee-btn-sm" data-save-eventbrite-token>Save API token</button>' +
+      '<button type="button" class="ee-btn ee-btn-outline ee-btn-sm" data-save-eventbrite-token>Save API token on TNH</button>' +
       '<span class="ee-hint ecs-eb-token-status" data-eb-token-status hidden role="status"></span>' +
-      '</div>' +
-      '<details class="ecs-eb-help-details">' +
-      '<summary>Webhook URL in Eventbrite (Payload URL)</summary>' +
-      '<ol class="ecs-eb-help-steps">' +
-      '<li><strong>Account settings → Webhooks</strong> → your webhook.</li>' +
-      '<li>Paste the copied URL into <strong>Payload URL</strong> (must include <strong>www.</strong>).</li>' +
-      '<li>Action: <code>order.placed</code> · Save.</li>' +
+      '</li>' +
       '</ol>' +
-      '</details>' +
-      (linkedDone
-        ? '<p class="ee-hint ee-alert-ok ecs-eb-linked">Linked event id <code>' +
-          escHtml(displayExternalEventId('eventbrite', linked.external_event_id || linked.externalEventId)) +
-          '</code></p>'
-        : '') +
       (!urlOk
-        ? '<button type="button" class="ee-btn ee-btn-outline ee-btn-sm ecs-eb-regen" data-enable-provider="eventbrite">Get shorter URL</button>'
+        ? '<button type="button" class="ee-btn ee-btn-outline ee-btn-sm ecs-eb-regen" data-enable-provider="eventbrite">Fix webhook URL</button>'
         : '') +
       '</div>';
     bindProviderEnableButtons(mount);
     bindEventbriteTokenSave(mount);
+    var scrollLinkBtn = mount.querySelector('[data-scroll-event-link]');
+    if (scrollLinkBtn) {
+      scrollLinkBtn.addEventListener('click', function () {
+        var panel = qs('ecs-event-link-panel');
+        if (panel) {
+          panel.hidden = false;
+          try {
+            panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          } catch {
+            panel.scrollIntoView(true);
+          }
+        }
+      });
+    }
   }
 
   function bindEventbriteTokenSave(root) {
@@ -767,7 +798,7 @@
       );
     }
     if (key === 'eventbrite') {
-      return 'Webhook URL + API token + linked event id → Eventbrite buyers appear in your TNH attendee list.';
+      return 'Three steps below — then Eventbrite ticket buyers show on your TNH attendee list.';
     }
     var p = providersById[key];
     var label = (p && p.label) || key.replace(/_/g, ' ');
