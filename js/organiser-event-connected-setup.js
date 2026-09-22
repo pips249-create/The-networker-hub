@@ -145,6 +145,7 @@
     if (!platformPickerControl) {
       platformPickerControl = hub.bindPicker(picker, eventId, function (platformKey, meta) {
         syncBookingUrlPlaceholder(meta);
+        clearProviderEnableStatus();
         syncEventLinkPanel(platformKey);
         renderProviderWebhookCard(platformKey);
         updateOneTimeProviderStatus(platformKey);
@@ -777,12 +778,67 @@
     });
   }
 
+  var ACCOUNT_EVENT_SCOPE_NOTE =
+    ' <span class="ecs-webhook-scope-note">Account: enable the webhook once (same URL for all your groups and events). This page: link each TNH listing to that provider’s event id.</span>';
+
+  function providerAdminPasteLabel(key) {
+    var k = String(key || '').trim();
+    if (k === 'eventbrite') return 'Eventbrite admin → Payload URL';
+    if (k === 'ticket_tailor') return 'Ticket Tailor → Settings → Webhooks';
+    if (k === 'own_site') return 'your site or automation';
+    var p = providersById[k];
+    return ((p && p.label) || k.replace(/_/g, ' ')) + ' admin';
+  }
+
+  function providerEnableSuccessMessage(provider) {
+    var k = String(provider || '').trim();
+    if (k === 'own_site') {
+      return 'Enabled — use the webhook URL below in your checkout automation (include this event’s TNH id in each POST).';
+    }
+    return 'Enabled — copy the webhook URL below into ' + providerAdminPasteLabel(k) + '.';
+  }
+
+  function providerCopyWebhookSuccessMessage(provider) {
+    var k = String(provider || selectedIntegrationPlatform() || '').trim();
+    if (k === 'eventbrite') return 'Copied — paste into Eventbrite Payload URL.';
+    if (k === 'ticket_tailor') return 'Copied — paste into Ticket Tailor webhooks and subscribe to Order created.';
+    if (k === 'own_site') return 'Copied — paste into your site automation.';
+    return 'Copied — paste into ' + providerAdminPasteLabel(k) + '.';
+  }
+
+  function clearProviderEnableStatus() {
+    var el = qs('ecs-provider-enable-status');
+    if (!el) return;
+    el.hidden = true;
+    el.textContent = '';
+    el.className = 'ee-hint';
+  }
+
+  function registrationSyncLinkStepText(key, label) {
+    if (key === 'ticket_tailor') {
+      return (
+        'Link this listing to your Ticket Tailor ev_… event id above (Box office — not the public URL slug).'
+      );
+    }
+    if (key === 'eventbrite') {
+      return (
+        'Link this listing to your Eventbrite numeric event id above (or paste an /e/… booking URL and use “Use id from booking URL”).'
+      );
+    }
+    return (
+      'Link this listing to your ' +
+      label +
+      ' event id in the box above (use “Use id from booking URL” if you pasted a full link).'
+    );
+  }
+
   function providerWebhookLead(platform) {
     var key = String(platform || '').trim();
     if (key === 'own_site') {
       return (
         'When someone completes checkout on <strong>your booking link</strong>, your site POSTs JSON to the webhook below ' +
-        'so we create the registration (attendee list, round-ups, verified reviews). No Zapier required.'
+        'so we create the registration (attendee list, round-ups, verified reviews). No Zapier required.' +
+        ' Enable the URL once per account; each POST must include this listing’s TNH event id (see example).'
       );
     }
     if (key === 'custom') {
@@ -792,10 +848,16 @@
       );
     }
     if (key === 'eventbrite') {
-      return 'Webhook URL + API token + linked event id → Eventbrite buyers appear in your TNH attendee list.';
+      return (
+        'Webhook URL + API token + linked event id → Eventbrite buyers appear in your TNH attendee list.' +
+        ACCOUNT_EVENT_SCOPE_NOTE
+      );
     }
     if (key === 'ticket_tailor') {
-      return 'Webhook URL + linked <code>ev_…</code> event id → Ticket Tailor orders create TNH registrations (buyer email is in the webhook).';
+      return (
+        'Webhook URL + linked <code>ev_…</code> event id → Ticket Tailor orders create TNH registrations (buyer email is in the webhook).' +
+        ACCOUNT_EVENT_SCOPE_NOTE
+      );
     }
     var p = providersById[key];
     var label = (p && p.label) || key.replace(/_/g, ' ');
@@ -803,7 +865,8 @@
       'Enable <strong>' +
       escHtml(label) +
       '</strong> below and paste the webhook URL into that platform’s admin. Link this TNH event to the provider’s event id on ' +
-      '<a href="/organiser/connected-booking#cb-providers-title">Connected booking → Booking providers</a>.'
+      '<a href="/organiser/connected-booking#cb-providers-title">Connected booking → Booking providers</a>.' +
+      ACCOUNT_EVENT_SCOPE_NOTE
     );
   }
 
@@ -1109,13 +1172,45 @@
     var stepsEl = qs('ecs-webhook-steps');
     if (!stepsEl) return;
     var key = String(platform || selectedIntegrationPlatform() || '').trim();
-    if (key === 'own_site' || key === 'custom') {
-      stepsEl.hidden = true;
-      return;
-    }
-    if (key === 'eventbrite') {
+    if (key === 'custom') {
       stepsEl.hidden = true;
       stepsEl.innerHTML = '';
+      return;
+    }
+    if (key === 'eventbrite' || key === 'ticket_tailor') {
+      stepsEl.hidden = true;
+      stepsEl.innerHTML = '';
+      return;
+    }
+    if (key === 'own_site') {
+      var own = providersById.own_site;
+      var ownReady = Boolean(own && own.webhookUrl);
+      stepsEl.hidden = false;
+      stepsEl.innerHTML = [
+        {
+          done: ownReady,
+          text: 'Enable your website webhook below — once per account (Growth / Scale: same URL for every group).',
+        },
+        {
+          done: false,
+          text:
+            'On each booking POST, include this listing’s TNH event id in the JSON body (see example below). No per-event URL in Ticket Tailor or Eventbrite — use those platforms’ cards instead.',
+        },
+      ]
+        .map(function (step, index) {
+          return (
+            '<li class="ecs-webhook-step' +
+            (step.done ? ' is-done' : '') +
+            '">' +
+            '<span class="ecs-webhook-step-num" aria-hidden="true">' +
+            (index + 1) +
+            '</span>' +
+            '<span class="ecs-webhook-step-text">' +
+            escHtml(step.text) +
+            '</span></li>'
+          );
+        })
+        .join('');
       return;
     }
     stepsEl.hidden = false;
@@ -1131,14 +1226,11 @@
             },
             {
               done: Boolean(linked),
-              text:
-                'Link this listing to your ' +
-                label +
-                ' event id in the box above (numbers only — use “Use id from booking URL” if you pasted a full link).',
+              text: registrationSyncLinkStepText(key, label),
             },
             {
               done: false,
-              text: 'Copy the webhook URL into ' + label + ' admin (see their webhook / integrations help).',
+              text: 'Copy the webhook URL into ' + providerAdminPasteLabel(key) + '.',
             },
           ];
     stepsEl.innerHTML = parts
@@ -1296,7 +1388,7 @@
         function copiedOk() {
           if (statusEl) {
             statusEl.hidden = false;
-            statusEl.textContent = 'Copied — paste into Eventbrite Payload URL.';
+            statusEl.textContent = providerCopyWebhookSuccessMessage(selectedIntegrationPlatform());
             statusEl.className = 'ee-hint ee-alert-ok ecs-copy-webhook-status';
           }
         }
@@ -1340,7 +1432,7 @@
           }
           mergeProviderConnectionFromPatch(res.data && res.data.connection);
           if (statusMount) {
-            statusMount.textContent = 'Enabled — copy the webhook URL below into Eventbrite admin.';
+            statusMount.textContent = providerEnableSuccessMessage(provider);
             statusMount.className = 'ee-hint ee-alert-ok';
           }
           return loadProviderCatalog().then(function () {
