@@ -545,14 +545,28 @@
   }
 
   var EVENTBRITE_PAYLOAD_URL_MAX = 70;
+  var EVENTBRITE_WEBHOOK_ORIGIN = 'https://www.thenetworkeruk.com';
+
+  function canonicalEventbriteWebhookUrl(url) {
+    var u = String(url || '').trim();
+    if (!u) return u;
+    if (u.indexOf('https://thenetworkeruk.com/') === 0) {
+      return u.replace('https://thenetworkeruk.com/', EVENTBRITE_WEBHOOK_ORIGIN + '/');
+    }
+    return u;
+  }
 
   function eventbriteWebhookUrlOk(url) {
-    var u = String(url || '').trim();
-    return u.length > 0 && u.length <= EVENTBRITE_PAYLOAD_URL_MAX && u.indexOf('/w/eb/') !== -1;
+    var u = canonicalEventbriteWebhookUrl(url);
+    return (
+      u.length > 0 &&
+      u.length <= EVENTBRITE_PAYLOAD_URL_MAX &&
+      u.indexOf(EVENTBRITE_WEBHOOK_ORIGIN + '/w/eb/') === 0
+    );
   }
 
   function renderEventbriteWebhookCard(mount, p, linked) {
-    var url = (p && p.webhookUrl) || '';
+    var url = canonicalEventbriteWebhookUrl((p && p.webhookUrl) || '');
     var linkedDone = Boolean(linked && (linked.external_event_id || linked.externalEventId));
     var len = url.length;
     var lenOk = len > 0 && len <= EVENTBRITE_PAYLOAD_URL_MAX;
@@ -612,8 +626,8 @@
       '<span class="ee-hint ecs-copy-webhook-status" data-copy-webhook-status hidden role="status"></span>' +
       '</div>' +
       (!urlOk
-        ? '<p class="ecs-eb-url-warn">URL too long or old format — refresh this page or click Enable Eventbrite again.</p>'
-        : '') +
+        ? '<p class="ecs-eb-url-warn">URL must start with <code>https://www.thenetworkeruk.com/w/eb/</code> (www avoids Eventbrite 308 errors). Refresh or click Enable Eventbrite again if this line looks wrong.</p>'
+        : '<p class="ee-hint ecs-eb-www-ok">Uses <strong>www</strong> so Eventbrite POSTs succeed (no 308 redirect).</p>') +
       '</div>' +
       '<p class="ecs-eb-paste-hint">In Eventbrite: profile menu → <strong>Account settings → Webhooks</strong> · Action <code>order.placed</code></p>' +
       '<div class="ecs-eb-token-panel">' +
@@ -1328,10 +1342,14 @@
     if (!connection || !connection.provider) return;
     var key = String(connection.provider).trim();
     var prev = providersById[key] || { id: key };
+    var webhookUrl = connection.webhookUrl || prev.webhookUrl;
+    if (key === 'eventbrite' && webhookUrl) {
+      webhookUrl = canonicalEventbriteWebhookUrl(webhookUrl);
+    }
     providersById[key] = Object.assign({}, prev, {
       id: key,
       label: prev.label || key,
-      webhookUrl: connection.webhookUrl || prev.webhookUrl,
+      webhookUrl: webhookUrl,
       connectionStatus: connection.status || 'active',
     });
   }
@@ -1344,7 +1362,14 @@
         showProviderSchemaWarn(res.data);
         providersById = {};
         (res.data.providers || []).forEach(function (p) {
-          if (p && p.id) providersById[p.id] = p;
+          if (p && p.id) {
+            if (p.id === 'eventbrite' && p.webhookUrl) {
+              p = Object.assign({}, p, {
+                webhookUrl: canonicalEventbriteWebhookUrl(p.webhookUrl),
+              });
+            }
+            providersById[p.id] = p;
+          }
         });
         mergeEventLinkFromApi(res.data);
         var platform = selectedIntegrationPlatform();

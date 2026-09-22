@@ -25,9 +25,10 @@ const ebUrl = buildProviderWebhookPublicUrl(
   'eventbrite',
   'a'.repeat(WEBHOOK_TOKEN_HEX_LEN)
 );
-assert.strictEqual(webhookPublicSite('https://www.thenetworkeruk.com'), 'https://thenetworkeruk.com');
+assert.strictEqual(webhookPublicSite('https://thenetworkeruk.com'), 'https://www.thenetworkeruk.com');
+assert.strictEqual(webhookPublicSite('https://www.thenetworkeruk.com'), 'https://www.thenetworkeruk.com');
 assert.ok(ebUrl.includes('/w/eb/'), ebUrl);
-assert.ok(!ebUrl.includes('www.'), ebUrl);
+assert.ok(ebUrl.startsWith('https://www.thenetworkeruk.com/'), ebUrl);
 assert.ok(eventbriteSafeUrlLength(ebUrl), 'Eventbrite URL length ' + ebUrl.length);
 
 assert.deepStrictEqual(

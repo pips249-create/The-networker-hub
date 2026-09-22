@@ -31,7 +31,7 @@ Run migration **`299_connected_booking_provider_links.sql`** (after 292, 297, 29
 
 1. Connected plan active; organiser page(s) assigned (297).
 2. **Connected booking** → **Booking providers** → **Enable** Eventbrite (or other).
-3. **Eventbrite webhook (Payload URL):** Profile menu → **Account settings** → **Webhooks** → Add webhook (or edit existing). Paste the **short** TNH URL (`https://thenetworkeruk.com/w/eb/…`, under **70 characters**). Set **Action** to **`order.placed`**. “Events: All” is fine. Other providers: paste the TNH webhook URL from **Enable** into their webhook / integrations screen.
+3. **Eventbrite webhook (Payload URL):** Profile menu → **Account settings** → **Webhooks** → Add webhook (or edit existing). Paste the **short** TNH URL from Connected setup (`https://www.thenetworkeruk.com/w/eb/…`, under **70 characters** — must include **www** so Eventbrite is not 308-redirected). Set **Action** to **`order.placed`**. “Events: All” is fine. Other providers: paste the TNH webhook URL from **Enable** into their webhook / integrations screen.
 4. **Link event:** TNH event UUID + provider event id (e.g. Eventbrite numeric id from the event URL).
 5. Publish Connected event on TNH with **booking URL** pointing at provider checkout (for Eventbrite, use ticket checkout — not only the public event listing; TNH rewrites common `/e/…` links to `checkout-external?eid=` on save).
 6. Test order → **Recent sync attempts** shows `eventbrite:accepted` (or provider id).
@@ -72,7 +72,7 @@ Optional: **Link event** with provider **Your own website** and the same TNH uui
 | Provider | URL |
 |----------|-----|
 | Your own website | `/api/integrations/providers/own_site/webhook?token=…` |
-| Eventbrite | `https://thenetworkeruk.com/w/eb/{token}` (≤70 chars for Payload URL; legacy long URL still works) |
+| Eventbrite | `https://www.thenetworkeruk.com/w/eb/{token}` (≤70 chars; use **www** — bare `thenetworkeruk.com` returns 308 and breaks POST webhooks) |
 | Ticket Tailor | `/api/integrations/providers/ticket_tailor/webhook?token=…` |
 | Luma | `/api/integrations/providers/luma/webhook?token=…` |
 | TryBooking | `/api/integrations/providers/trybooking/webhook?token=…` |

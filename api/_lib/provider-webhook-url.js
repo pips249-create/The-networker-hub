@@ -25,18 +25,18 @@ function providerFromShortCode(code) {
   return SHORT_CODE_TO_PROVIDER[String(code || '').trim().toLowerCase()] || '';
 }
 
-/** Canonical origin for pasted webhook URLs (no www — saves 4 chars for Eventbrite). */
+/** Canonical origin for webhook URLs (www — apex thenetworkeruk.com 308-redirects POSTs and breaks Eventbrite). */
 function webhookPublicSite(site) {
   let base = String(site || '').replace(/\/$/, '');
-  if (!base) base = 'https://thenetworkeruk.com';
+  if (!base) base = 'https://www.thenetworkeruk.com';
   try {
     const u = new URL(base);
-    if (u.hostname === 'www.thenetworkeruk.com') {
-      u.hostname = 'thenetworkeruk.com';
+    if (u.hostname === 'thenetworkeruk.com') {
+      u.hostname = 'www.thenetworkeruk.com';
     }
     return u.origin;
   } catch {
-    return base.replace(/^https:\/\/www\.thenetworkeruk\.com/i, 'https://thenetworkeruk.com');
+    return base.replace(/^https:\/\/thenetworkeruk\.com/i, 'https://www.thenetworkeruk.com');
   }
 }
 
