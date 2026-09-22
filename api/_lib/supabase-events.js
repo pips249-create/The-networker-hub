@@ -354,8 +354,8 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
   const parsedDate = formatDateParts(nextDateRaw);
   const time = formatTimeRange(row.starts_at, row.ends_at) || parsedDate.time || '';
 
-  if (String(row.checkout_mode || 'hub') === 'external_connected') {
-    const { parseExternalPriceLabelToDisplay } = require('./connected-booking');
+  const { parseExternalPriceLabelToDisplay, publicListingUsesExternalBooking } = require('./connected-booking');
+  if (publicListingUsesExternalBooking(row)) {
     const externalUrl = String(row.external_booking_url || '').trim();
     const priceParts = parseExternalPriceLabelToDisplay(row.external_price_label);
     const eventHasEnded = isEventPast(row);
