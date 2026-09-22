@@ -2535,6 +2535,22 @@ tr.ad-row-highlight td {
   min-height: 120px;
 }
 
+@media (max-width: 560px) {
+  .ad-overview-next-card--featured {
+    grid-template-columns: 64px minmax(0, 1fr);
+    padding: 14px;
+    min-height: 0;
+  }
+
+  .ad-overview-next-media,
+  .ad-overview-next-media .ad-thumb,
+  .ad-overview-next-media .ad-thumb-placeholder {
+    width: 64px;
+    height: 64px;
+    border-radius: 12px;
+  }
+}
+
 .ad-overview-next-card--featured.ad-overview-next-card--review {
   background: linear-gradient(135deg, #fff6df 0%, #ffffff 62%);
   border-color: #ead9a8;
