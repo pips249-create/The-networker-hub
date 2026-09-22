@@ -1461,6 +1461,41 @@
   align-items: center;
 }
 
+.org-name-badge-print {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.org-name-badge-size {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--od-text-mid);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.org-name-badge-size-label {
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .org-name-badge-print,
+  .org-name-badge-size {
+    display: flex;
+    width: 100%;
+  }
+
+  .org-name-badge-size select {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+}
+
 .org-filter-check {
   display: inline-flex;
   align-items: center;

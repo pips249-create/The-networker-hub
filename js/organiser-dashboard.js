@@ -7157,7 +7157,7 @@
     } finally {
       if (btn) {
         btn.disabled = false;
-        btn.textContent = prev || '⬇ Export name badges (PDF)';
+        btn.textContent = prev || '⬇ Print name badges';
       }
     }
   }
