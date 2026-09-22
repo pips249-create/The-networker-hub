@@ -31,7 +31,7 @@
 <link rel="icon" href="/assets/favicon-32.png?v=20260823uk" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png?v=20260823uk">
 <link rel="stylesheet" href="css/hub-mobile.css?v=20260909listmenu1" />
-<link rel="stylesheet" href="css/event-intake-page.css?v=20260814cal1">
+<link rel="stylesheet" href="css/event-intake-page.css?v=20260922auth1">
 <link rel="stylesheet" href="css/hub-field-tip.css?v=20260711">
 <script src="js/hub-seo-static-config.js?v=20260811a"></script>
 <script src="js/hub-seo-static.js?v=20260612" data-page="add-your-event"></script>
@@ -49,7 +49,7 @@
       <p class="section-kicker">For organisers</p>
       <h1>Send us your event details</h1>
       <p class="content-hero-lede">
-        Fill this in once — Catherine or Jamie will list the event on The Networker UK for you.
+        Sign in, fill this in once — Catherine or Jamie will list the event on The Networker UK for you.
         Usually live within one business day.
       </p>
     </div>
@@ -59,6 +59,7 @@
     <aside class="ei-aside">
       <h2>What happens next</h2>
       <ol class="ei-steps">
+        <li>Sign in (or create a free account)</li>
         <li>You send the essentials below</li>
         <li>We create the listing on your group page</li>
         <li>We email you when it&rsquo;s live</li>
@@ -85,7 +86,13 @@
 
     <section class="ei-form-panel" aria-labelledby="ei-form-heading">
       <h2 id="ei-form-heading" class="visually-hidden">Event details form</h2>
-      <form class="ei-form" id="ei-form" novalidate>
+      <p class="ei-signin" id="ei-signin">
+        <a href="/login" id="ei-login-link">Sign in</a>
+        or
+        <a href="/register" id="ei-register-link">create a free account</a>
+        to send your event details — it only takes 2 minutes.
+      </p>
+      <form class="ei-form" id="ei-form" novalidate hidden>
         <div class="ei-honeypot" inert aria-hidden="true">
           <label>Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label>
         </div>
@@ -95,11 +102,11 @@
           <div class="ei-grid">
             <label class="ei-field">
               <span>Your name</span>
-              <input type="text" name="name" autocomplete="name" required>
+              <input type="text" name="name" id="ei-name" autocomplete="name" required>
             </label>
             <label class="ei-field">
               <span>Email</span>
-              <input type="email" name="email" autocomplete="email" required>
+              <input type="email" name="email" id="ei-email" autocomplete="email" required readonly>
             </label>
             <label class="ei-field">
               <span>Phone</span>
@@ -316,7 +323,7 @@
           We use these details to create or update your listing and to email you when it is live.
           See our <a href="/legal-policies#privacy">privacy policy</a>.
           Request deletion anytime via <a href="mailto:hi@thenetworkeruk.com">hi@thenetworkeruk.com</a>.
-          No account needed to send this form.
+          A free account is required to send this form.
         </p>
       </form>
     </section>
@@ -326,7 +333,7 @@
 <div id="hub-site-footer"></div>
 <script src="js/site-footer.js?v=20260910pp1" data-root=""></script>
 <script src="js/hub-turnstile.js?v=20260827sec1"></script>
-<script src="js/event-intake-page.js?v=20260827sec1"></script>
+<script src="js/event-intake-page.js?v=20260922auth1"></script>
 <script src="js/hub-field-tip.js?v=20260814intake1"></script>
 </body>
 </html>

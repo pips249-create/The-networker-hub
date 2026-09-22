@@ -74,6 +74,24 @@
   width: auto;
 }
 
+.ei-signin {
+  margin: 0 0 20px;
+  padding: 16px 18px;
+  font-size: 0.98rem;
+  line-height: 1.55;
+  color: var(--ei-ink);
+  background: rgba(74, 168, 240, 0.08);
+  border: 1px solid rgba(74, 168, 240, 0.28);
+  border-radius: 10px;
+}
+
+.ei-signin a {
+  font-weight: 600;
+  color: #2a6f9e;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .ei-form-panel {
   background: var(--surface, #fff);
   border: 1px solid var(--ei-line);

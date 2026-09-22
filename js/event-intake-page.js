@@ -82,12 +82,70 @@
 
   var submitBtn = document.getElementById('ei-submit');
   var statusEl = document.getElementById('ei-status');
+  var signinEl = document.getElementById('ei-signin');
+  var nameEl = document.getElementById('ei-name');
+  var emailEl = document.getElementById('ei-email');
   var inPersonEl = document.getElementById('ei-location-inperson');
   var onlineEl = document.getElementById('ei-location-online');
   var ticketWrap = document.getElementById('ei-ticket-details-wrap');
   var ticketField = document.getElementById('ei-ticket-details');
   var ticketLabel = document.getElementById('ei-ticket-details-label');
   var trialWrap = document.getElementById('ei-trial-details-wrap');
+  var sessionUser = null;
+
+  function authNextPath() {
+    return window.location.pathname + window.location.search + window.location.hash;
+  }
+
+  function applyAuthUi() {
+    var signedIn = Boolean(sessionUser && sessionUser.email);
+    if (signinEl) signinEl.hidden = signedIn;
+    form.hidden = !signedIn;
+    if (submitBtn) submitBtn.disabled = !signedIn;
+
+    var next = authNextPath();
+    var loginLink = document.getElementById('ei-login-link');
+    var registerLink = document.getElementById('ei-register-link');
+    if (loginLink) loginLink.href = '/login?next=' + encodeURIComponent(next);
+    if (registerLink) {
+      registerLink.href =
+        '/register?intent=organiser&next=' + encodeURIComponent(next);
+    }
+
+    if (!signedIn) return;
+    if (emailEl) emailEl.value = String(sessionUser.email || '').trim();
+    if (nameEl && !String(nameEl.value || '').trim() && sessionUser.name) {
+      nameEl.value = String(sessionUser.name).trim();
+    }
+  }
+
+  function loadSession() {
+    var fetcher = window.hubFetchSession
+      ? window.hubFetchSession
+      : function () {
+          return fetch('/api/auth/session', { credentials: 'include' }).then(function (r) {
+            return r.json();
+          });
+        };
+    return fetcher()
+      .then(function (data) {
+        if (data && data.ok && data.user) {
+          sessionUser = data.user;
+          return data.user;
+        }
+        sessionUser = null;
+        return null;
+      })
+      .catch(function () {
+        sessionUser = null;
+        return null;
+      })
+      .then(function () {
+        applyAuthUi();
+      });
+  }
+
+  loadSession();
 
   var PAY_COPY = {
     paid_tickets: {
@@ -323,6 +381,12 @@
     e.preventDefault();
     setStatus('', '');
 
+    if (!sessionUser || !sessionUser.email) {
+      applyAuthUi();
+      setStatus('Sign in or create a free account to send your event details.', 'error');
+      return;
+    }
+
     if (!selectedDateKeys().length) {
       setStatus('Click at least one date on the calendar.', 'error');
       var cal = document.querySelector('.ei-calendar');
@@ -332,8 +396,8 @@
 
     var fd = new FormData(form);
     var payload = {
-      name: String(fd.get('name') || '').trim(),
-      email: String(fd.get('email') || '').trim(),
+      name: String(fd.get('name') || sessionUser.name || '').trim(),
+      email: String(sessionUser.email || '').trim(),
       phone: String(fd.get('phone') || '').trim(),
       group: String(fd.get('group') || '').trim(),
       organiserWebsiteUrl: String(fd.get('organiserWebsiteUrl') || '').trim(),
@@ -369,6 +433,7 @@
         if (token) payload.turnstileToken = token;
         return fetch('/api/event-intake', {
           method: 'POST',
+          credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
@@ -389,7 +454,12 @@
           syncFormat();
           syncPayHow();
           syncTrial();
+          applyAuthUi();
           return;
+        }
+        if (result.data && result.data.error === 'not_authenticated') {
+          sessionUser = null;
+          applyAuthUi();
         }
         setStatus(
           (result.data && result.data.message) ||
@@ -402,7 +472,7 @@
       })
       .finally(function () {
         if (submitBtn) {
-          submitBtn.disabled = false;
+          submitBtn.disabled = !sessionUser;
           submitBtn.textContent = 'Send event details →';
         }
       });
