@@ -51,6 +51,10 @@ const mutationFn = dash.slice(
   dash.indexOf('async function refreshEventsWorkspaceAfterMutation'),
   dash.indexOf('async function submitDeleteEvent')
 );
+const duplicateFn = dash.slice(
+  dash.indexOf('async function submitDuplicateEvent'),
+  dash.indexOf('function confirmDuplicateEvent')
+);
 const eventsOnlyFn = eventsLib.slice(
   eventsLib.indexOf('const eventsOnly = String(req.query?.eventsOnly'),
   eventsLib.indexOf('let displayName = session.name')
@@ -65,6 +69,15 @@ assert(
   'mutation refresh reloads events only — not a full lean bootstrap',
   /await ensureEventsLoaded\(\{ force: true \}\)/.test(mutationFn) &&
     !/loadBootstrap/.test(mutationFn)
+);
+assert(
+  'saving an event from the drawer refreshes the list, not the full workspace',
+  /hub-event-saved[\s\S]{0,400}refreshEventsWorkspaceAfterMutation/.test(dash) &&
+    !/hub-event-saved[\s\S]{0,400}loadBootstrap\(\)\.then\(renderAll\)/.test(dash)
+);
+assert(
+  'duplicating an event refreshes the list, not the full workspace',
+  /refreshEventsWorkspaceAfterMutation/.test(duplicateFn) && !/loadBootstrap/.test(duplicateFn)
 );
 assert(
   'events list query sends eventsLite and known total',

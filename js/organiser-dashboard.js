@@ -9534,9 +9534,7 @@
     } catch {
       /* ignore */
     }
-    await loadBootstrap();
-    renderAll();
-    setRoute('events-list');
+    await refreshEventsWorkspaceAfterMutation({ route: 'events-list' });
     if (res.data.event && res.data.event.id) {
       openEventEditorDrawer(res.data.event);
     }
@@ -19816,7 +19814,7 @@
           e.data.draft ? 'Event changes saved.' : 'Event saved.',
           false
         );
-        loadBootstrap().then(renderAll);
+        refreshEventsWorkspaceAfterMutation({ route: 'events-list' });
         return;
       }
       if (e.data && e.data.type === 'hub-event-drawer-ready') {
