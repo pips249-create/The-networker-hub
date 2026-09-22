@@ -2659,7 +2659,8 @@
     const reward = (stats && stats.reviewerReward) || null;
     const count = reward && reward.count ? Number(reward.count) : Number(stats && stats.reviewsLeft) || 0;
     const pending = Number(stats && stats.reviewsPending) || 0;
-    if (!count && !pending) {
+    // Next up already surfaces pending reviews — don't add a second reviews card.
+    if (!count || pending > 0) {
       el.hidden = true;
       el.innerHTML = '';
       return;
@@ -2735,7 +2736,6 @@
             ? String(stats.reviewsLeft) + ' submitted · ' + reviewerRewardStatMeta(stats.reviewerReward, 0)
             : reviewerRewardStatMeta(stats.reviewerReward, 0);
     }
-    renderOverviewReviewerReward(stats);
     const enquiryCount = (opportunityEnquiries || []).length;
     if (enquiries) enquiries.textContent = String(enquiryCount);
     if (enquiriesHint) {
@@ -2748,6 +2748,14 @@
           ? 'Track replies by email'
           : '—';
     }
+    const upcomingBtn = document.querySelector('#ad-stats [data-ad-stat-route="upcoming"]');
+    const reviewsBtn = document.querySelector('#ad-stats [data-ad-stat-route="reviews"]');
+    const enquiryBtn = document.querySelector('#ad-stats [data-ad-stat-route="opportunity-enquiries"]');
+    if (upcomingBtn) upcomingBtn.hidden = !Number(stats.upcomingCount || 0);
+    if (reviewsBtn) reviewsBtn.hidden = pendingCount <= 0;
+    if (enquiryBtn) enquiryBtn.hidden = enquiryCount <= 0;
+    renderOverviewReviewerReward(stats);
+    syncOverviewChrome();
   }
 
   function setTabCount(id, n) {
@@ -3237,6 +3245,11 @@
 
     const expiring = myGroups.filter((item) => item.expiringSoon && item.membershipActive);
     const expired = myGroups.filter((item) => !item.membershipActive);
+    if (!expiring.length && !expired.length) {
+      el.hidden = true;
+      el.innerHTML = '';
+      return;
+    }
     const summaryParts = [myGroups.length + (myGroups.length === 1 ? ' membership' : ' memberships')];
     if (expiring.length) {
       summaryParts.push(expiring.length + ' expiring soon');
@@ -3298,28 +3311,33 @@
   function renderOverviewReviewNudge() {
     const el = document.getElementById('ad-overview-review-nudge');
     if (!el) return;
-    const pending = pendingReviewsList();
-    if (!pending.length) {
-      el.hidden = true;
-      el.innerHTML = '';
-      return;
+    // Next up already carries the first pending review — skip the extra list.
+    el.hidden = true;
+    el.innerHTML = '';
+  }
+
+  function overviewBlockVisible(id) {
+    const el = document.getElementById(id);
+    return Boolean(el && !el.hidden);
+  }
+
+  function syncOverviewChrome() {
+    const stats = document.getElementById('ad-stats');
+    const hasNextUp = overviewBlockVisible('ad-overview-next');
+    if (stats) {
+      const visibleStats = stats.querySelectorAll('.ad-stat:not([hidden])');
+      stats.hidden = hasNextUp || !visibleStats.length;
     }
-    el.hidden = false;
-    el.innerHTML =
-      '<h2 class="ad-section-title ad-section-title--spaced">Reviews to write</h2>' +
-      '<p class="ad-overview-review-nudge-lead">Share quick feedback after events you attended — it only takes a minute and helps groups you support.</p>' +
-      '<div class="ad-review-nudges" role="list">' +
-      pending
-        .slice(0, 3)
-        .map((reg) => reviewNudgeCardHtml(reg))
-        .join('') +
-      '</div>' +
-      (pending.length > 3
-        ? '<p class="ad-overview-more"><a href="#reviews-pending">View all ' +
-          pending.length +
-          ' pending reviews →</a></p>'
-        : '');
-    bindLeaveReviewButtons(el);
+    const empty = document.getElementById('ad-overview-empty');
+    if (empty) {
+      empty.hidden = Boolean(
+        hasNextUp ||
+          (stats && !stats.hidden) ||
+          overviewBlockVisible('ad-overview-feed') ||
+          overviewBlockVisible('ad-overview-membership-nudge') ||
+          overviewBlockVisible('ad-overview-reviewer-reward')
+      );
+    }
   }
 
   function renderOverviewFeed() {
@@ -3329,17 +3347,22 @@
 
     const feed = document.getElementById('ad-overview-feed');
     const scroll = document.getElementById('ad-overview-feed-scroll');
-    if (!feed || !scroll) return;
+    if (!feed || !scroll) {
+      syncOverviewChrome();
+      return;
+    }
 
     const items = savedEventsHappeningSoon();
     if (!items.length) {
       feed.hidden = true;
       scroll.innerHTML = '';
+      syncOverviewChrome();
       return;
     }
 
     feed.hidden = false;
     scroll.innerHTML = items.map((item) => feedEventCardHtml(item)).join('');
+    syncOverviewChrome();
   }
 
   function savedEventHref(item) {
@@ -4345,7 +4368,6 @@
   }
 
   function bindHubContextSwitch() {
-    initOrganiserContextBanner();
     document.querySelectorAll('[data-hub-switch]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const mode = btn.getAttribute('data-hub-switch');
@@ -4358,16 +4380,22 @@
     });
   }
 
-  function initOrganiserContextBanner() {
+  function initOrganiserContextBanner(sessionData) {
     const banner = document.getElementById('ad-organiser-context');
     if (!banner) return;
     if (localStorage.getItem(ORGANISER_CONTEXT_DISMISS_KEY) === '1') {
       banner.hidden = true;
       return;
     }
+    // Organiser workspace is already in My account — don't pitch the switch again.
+    if (sessionData && sessionData.organiserUiVisible) {
+      banner.hidden = true;
+      return;
+    }
     banner.hidden = false;
     const dismissBtn = document.getElementById('ad-organiser-context-dismiss');
-    if (dismissBtn) {
+    if (dismissBtn && !dismissBtn.dataset.boundOrganiserDismiss) {
+      dismissBtn.dataset.boundOrganiserDismiss = '1';
       dismissBtn.addEventListener('click', () => {
         localStorage.setItem(ORGANISER_CONTEXT_DISMISS_KEY, '1');
         banner.hidden = true;
@@ -4449,6 +4477,7 @@
     if (shell) shell.hidden = false;
     setDashboardLoading(true);
     renderWelcome(sessionData.user);
+    initOrganiserContextBanner(sessionData);
 
     try {
       ensureAttendeeHubMode();
@@ -4513,6 +4542,7 @@
         openCompareFromQuery();
         const sub = document.getElementById('ad-welcome-sub');
         if (sub) {
+          sub.hidden = false;
           sub.textContent =
             data.message ||
             data.error ||
