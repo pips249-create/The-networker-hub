@@ -193,7 +193,9 @@ module.exports = async function handler(req, res, providerId) {
     await logExternalSync(sb, {
       outcome: 'rejected',
       http_status: 401,
-      message: provider + ':invalid_webhook_token',
+      message:
+        provider +
+        ':invalid_webhook_token — paste the current Payload URL from Connected setup into Eventbrite (Account settings → Webhooks)',
       payload: { provider },
     });
     return json(res, 401, { ok: false, error: 'invalid_webhook_token' });
