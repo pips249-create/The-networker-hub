@@ -1250,11 +1250,9 @@
   }
 
   function eventIsExternalConnected(ev) {
-    return Boolean(
-      ev &&
-        String(ev.checkoutMode || '').trim() === 'external_connected' &&
-        String(ev.externalBookingUrl || '').trim()
-    );
+    if (!ev || !String(ev.externalBookingUrl || '').trim()) return false;
+    if (String(ev.checkoutMode || '').trim() === 'external_connected') return true;
+    return Boolean(String(ev.externalPriceLabel || '').trim());
   }
 
   function normalizeEventFlags(ev, params) {
@@ -3026,6 +3024,17 @@
 
     const tiers = ticketTiersForEvent(ev);
     const salesPending = Boolean(ev.isTicketSalesPending || ev.isTicketSalesScheduled);
+    if (ev.isTicketSalesPending && !ev.isTicketSalesScheduled) {
+      tiersEl.innerHTML = '';
+      const pendingHint = document.createElement('p');
+      pendingHint.className = 'ticket-load-hint';
+      pendingHint.textContent =
+        'Ticket sales are not open on The Networker UK yet. Use the button below to nudge the organiser.';
+      tiersEl.appendChild(pendingHint);
+      if (urgencyEl) urgencyEl.textContent = '';
+      syncPaidCheckoutPanel('', 1, 0);
+      return;
+    }
     const panelClosed = ev.isSoldOut || (ev.isSalesClosed && !salesPending);
     const isCategoryExclusivity = eventIsCategoryExclusivity(ev);
     const isGuestProg = eventIsGuestProgramme(ev);
@@ -4261,6 +4270,45 @@
     const nudgePanel = document.getElementById('ticket-sales-nudge');
     const scheduledPanel = document.getElementById('ticket-sales-scheduled');
     if (!panel || !buy) return;
+
+    if (eventIsExternalConnected(ev)) {
+      panel.classList.remove(
+        'is-unavailable',
+        'is-sales-pending',
+        'is-sales-scheduled',
+        'is-approval-mode',
+        'is-free-booking',
+        'is-qty-locked',
+        'show-application',
+        'show-checkout'
+      );
+      showSeatApplication(false);
+      showCheckoutDetails(false);
+      if (nudgePanel) nudgePanel.hidden = true;
+      if (scheduledPanel) scheduledPanel.hidden = true;
+      const alertPanelReset = document.getElementById('ticket-sales-alert');
+      if (alertPanelReset) alertPanelReset.hidden = true;
+      if (purchaseView) purchaseView.hidden = false;
+      const organiserName = ev.organiser || ev.organiserName || 'the organiser';
+      if (ev.isEventPast) {
+        panel.classList.add('is-unavailable');
+        buy.disabled = true;
+        buy.classList.add('cta-btn-disabled');
+        buy.textContent = 'Event ended';
+      } else if (ev.ticketSalesEnabled === false || !String(ev.externalBookingUrl || '').trim()) {
+        panel.classList.add('is-unavailable');
+        buy.disabled = true;
+        buy.classList.add('cta-btn-disabled');
+        buy.textContent = 'Booking not available';
+      } else {
+        buy.disabled = false;
+        buy.classList.remove('cta-btn-disabled');
+        buy.textContent = 'Book on ' + organiserName + '\u2019s website';
+      }
+      applyEventApplicationUi(ev);
+      updateTicketJumpBar(ev);
+      return;
+    }
 
     // Client safety net: platform soft-launch locks buying + interest nudges until 1 September.
     if (

@@ -11,6 +11,7 @@ const {
   preferEventbriteCheckoutUrl,
   parseEventbriteEventIdFromUrl,
   guessProviderExternalEventId,
+  publicListingUsesExternalBooking,
 } = require('../api/_lib/connected-booking-util');
 const {
   buildProviderWebhookPublicUrl,
@@ -39,6 +40,17 @@ assert.deepStrictEqual(
   parseShortWebhookRoute({ url: '/api/w/eb/' + 'c'.repeat(WEBHOOK_TOKEN_HEX_LEN) }),
   { provider: 'eventbrite', token: 'c'.repeat(WEBHOOK_TOKEN_HEX_LEN) }
 );
+
+assert.strictEqual(publicListingUsesExternalBooking({ checkout_mode: 'external_connected' }), true);
+assert.strictEqual(
+  publicListingUsesExternalBooking({
+    checkout_mode: 'hub',
+    external_booking_url: 'https://www.eventbrite.co.uk/e/foo-1234567890123',
+    external_price_label: 'Free',
+  }),
+  true
+);
+assert.strictEqual(publicListingUsesExternalBooking({ checkout_mode: 'hub' }), false);
 
 assert.strictEqual(isConnectedBookingProviderId('eventbrite'), true);
 assert.strictEqual(isConnectedBookingProviderId('nope'), false);

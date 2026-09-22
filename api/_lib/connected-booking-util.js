@@ -82,6 +82,16 @@ function isExternalConnectedEvent(row) {
   return String(row?.checkout_mode || CHECKOUT_HUB).trim() === CHECKOUT_EXTERNAL;
 }
 
+/** Public listing + attendee checkout (includes rows saved with URL/price but checkout_mode stuck on hub). */
+function publicListingUsesExternalBooking(row) {
+  if (!row) return false;
+  if (isExternalConnectedEvent(row)) return true;
+  return Boolean(
+    String(row.external_booking_url || '').trim() &&
+      String(row.external_price_label || '').trim()
+  );
+}
+
 function normalizeExternalPriceLabel(raw) {
   const text = String(raw || '').trim();
   if (!text) return '';
@@ -232,6 +242,7 @@ module.exports = {
   connectedBookingOperationsEnabled,
   normalizeConnectedBookingEmail,
   isExternalConnectedEvent,
+  publicListingUsesExternalBooking,
   normalizeExternalPriceLabel,
   normalizeExternalBookingUrl,
   parseEventbriteEventIdFromUrl,
