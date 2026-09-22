@@ -31,7 +31,7 @@
 <link rel="icon" href="/assets/favicon-32.png?v=20260823uk" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png?v=20260823uk">
 <link rel="stylesheet" href="css/hub-mobile.css?v=20260909listmenu1" />
-<link rel="stylesheet" href="css/event-intake-page.css?v=20260922auth1">
+<link rel="stylesheet" href="css/event-intake-page.css?v=20260922jazz1">
 <link rel="stylesheet" href="css/hub-field-tip.css?v=20260711">
 <script src="js/hub-seo-static-config.js?v=20260811a"></script>
 <script src="js/hub-seo-static.js?v=20260612" data-page="add-your-event"></script>
@@ -43,29 +43,46 @@
 <div id="hub-site-nav"></div>
 <script src="js/site-nav.js?v=20260910aff1" data-root="" data-page="add-your-event"></script>
 
-<main class="content-page-main">
-  <header class="content-hero ei-hero">
-    <div class="content-hero-inner">
-      <p class="section-kicker">For organisers</p>
-      <h1>Send us your event details</h1>
-      <p class="content-hero-lede">
-        Sign in, fill this in once — Catherine or Jamie will list the event on The Networker UK for you.
-        Usually live within one business day.
+<main class="ei-main">
+  <header class="ei-hero ei-reveal is-visible" aria-labelledby="ei-hero-heading">
+    <div class="ei-hero-media" aria-hidden="true">
+      <img
+        src="/assets/hero-networking.jpg"
+        alt=""
+        width="1600"
+        height="900"
+        decoding="async"
+        fetchpriority="high"
+      >
+    </div>
+    <span class="ei-hero-orb ei-hero-orb--1" aria-hidden="true"></span>
+    <span class="ei-hero-orb ei-hero-orb--2" aria-hidden="true"></span>
+    <div class="ei-hero-inner">
+      <p class="ei-hero-brand ei-reveal-child">The Networker UK</p>
+      <p class="ei-hero-kicker ei-reveal-child">For organisers</p>
+      <h1 id="ei-hero-heading" class="ei-reveal-child">Send us your event details</h1>
+      <p class="ei-hero-lede ei-reveal-child">
+        Sign in once — Catherine or Jamie will list it for you, usually within one business day.
       </p>
+      <div class="ei-hero-actions ei-reveal-child">
+        <a class="btn btn-primary" href="#ei-form-panel">Send event details</a>
+        <a class="btn btn-secondary" href="/contact">Prefer to talk? Contact us</a>
+      </div>
+      <p class="ei-hero-trust ei-reveal-child">Free to list · Keep 100% of ticket price · Built for UK networking</p>
     </div>
   </header>
 
-  <div class="ei-layout">
-    <aside class="ei-aside">
+  <div class="ei-layout ei-reveal">
+    <aside class="ei-aside ei-reveal-child">
       <h2>What happens next</h2>
       <ol class="ei-steps">
-        <li>Sign in (or create a free account)</li>
-        <li>You send the essentials below</li>
-        <li>We create the listing on your group page</li>
-        <li>We email you when it&rsquo;s live</li>
+        <li><span class="ei-step-num" aria-hidden="true">1</span><span>Sign in (or create a free account)</span></li>
+        <li><span class="ei-step-num" aria-hidden="true">2</span><span>Send the essentials below</span></li>
+        <li><span class="ei-step-num" aria-hidden="true">3</span><span>We create the listing on your group page</span></li>
+        <li><span class="ei-step-num" aria-hidden="true">4</span><span>We email you when it&rsquo;s live</span></li>
       </ol>
       <p class="ei-aside-note">
-        Prefer to manage events yourself later? You can claim your organiser page anytime from
+        Prefer to manage events yourself later? Claim your organiser page anytime from
         <a href="/for-organisers">For organisers</a>.
       </p>
       <div class="ei-book">
@@ -73,10 +90,7 @@
         <p>
           Get in touch with Catherine, Jamie, or Rosie — we&rsquo;ll take your details and list the event for you.
         </p>
-        <a
-          class="btn btn-secondary ei-book-btn"
-          href="/contact"
-        >Contact us →</a>
+        <a class="btn btn-secondary ei-book-btn" href="/contact">Contact us →</a>
       </div>
       <p class="ei-aside-note">
         Questions?
@@ -84,8 +98,11 @@
       </p>
     </aside>
 
-    <section class="ei-form-panel" aria-labelledby="ei-form-heading">
-      <h2 id="ei-form-heading" class="visually-hidden">Event details form</h2>
+    <section class="ei-form-panel ei-reveal-child" id="ei-form-panel" aria-labelledby="ei-form-heading">
+      <div class="ei-form-head">
+        <h2 id="ei-form-heading">Event details</h2>
+        <p>Fill this in once — we handle the listing setup for you.</p>
+      </div>
       <p class="ei-signin" id="ei-signin">
         <a href="/login" id="ei-login-link">Sign in</a>
         or
@@ -333,7 +350,7 @@
 <div id="hub-site-footer"></div>
 <script src="js/site-footer.js?v=20260910pp1" data-root=""></script>
 <script src="js/hub-turnstile.js?v=20260827sec1"></script>
-<script src="js/event-intake-page.js?v=20260922auth1"></script>
+<script src="js/event-intake-page.js?v=20260922jazz1"></script>
 <script src="js/hub-field-tip.js?v=20260814intake1"></script>
 </body>
 </html>
