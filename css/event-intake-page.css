@@ -150,13 +150,14 @@ html:has(.event-intake-page) {
 .ei-hero-inner {
   position: relative;
   z-index: 2;
-  max-width: 40em;
   width: 100%;
-  margin: 0 auto 0 0;
   max-width: 1180px;
-  margin-left: auto;
-  margin-right: auto;
+  margin: 0 auto;
   padding: 0;
+}
+
+.ei-hero-inner > * {
+  max-width: 36em;
 }
 
 .ei-hero-brand {
