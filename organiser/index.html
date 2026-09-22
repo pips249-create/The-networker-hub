@@ -72,6 +72,7 @@
               <span class="org-nav-badge org-nav-badge--action" id="org-payment-setup-nav-badge" hidden>Setup</span>
             </a>
             <a href="#groups" class="hub-side-nav-link" data-org-route="groups">Organiser pages</a>
+            <a href="#connected-booking" class="hub-side-nav-link" data-org-route="connected-booking">Connected booking</a>
             <a href="#memberships" class="hub-side-nav-link" id="org-nav-memberships" data-org-route="memberships" data-org-memberships-nav>
               Memberships
             </a>
@@ -798,6 +799,74 @@
             </div>
           </div>
           <nav class="org-pagination" id="pagination-groups" data-list="groups" aria-label="Organiser pages" hidden></nav>
+        </section>
+
+        <!-- Connected booking (webhooks, sync log, providers) -->
+        <section class="org-page org-page--connected-booking" id="org-page-connected-booking" data-org-page="connected-booking">
+          <header class="org-page-head org-page-head--split">
+            <div class="org-page-head-text">
+              <p class="org-page-kicker">Integrations</p>
+              <h1 class="org-page-title">Connected booking</h1>
+              <p class="org-page-lead">
+                Eventbrite and other checkout platforms send ticket sales here. Use <strong>Recent sync attempts</strong>
+                to debug when buyers do not appear on your attendee list. Per-event setup (Eventbrite URL, API token) stays
+                on each event’s <strong>Connected setup</strong> screen.
+              </p>
+            </div>
+            <a class="org-btn org-btn-outline" href="/organiser/connected-booking#cb-pricing">Plans &amp; pricing</a>
+          </header>
+          <p class="ee-hint cb-auth-status" id="cb-auth-status" hidden role="status"></p>
+          <div class="ee-card org-connected-workspace-card">
+            <p class="cb-plan-status" id="cb-plan-status"></p>
+            <p class="ee-hint" id="cb-account-id-wrap" hidden>
+              Account id for headers: <code id="cb-account-id"></code>
+            </p>
+            <div class="ee-card-actions">
+              <button type="button" class="ee-btn ee-btn-outline" id="cb-manage-billing-panel" hidden>
+                Manage billing
+              </button>
+              <button type="button" class="ee-btn ee-btn-outline" id="cb-rotate-secret">Generate new webhook secret</button>
+            </div>
+            <p class="ee-alert ee-alert-warn cb-secret-reveal" id="cb-secret-reveal" hidden role="status"></p>
+            <h2 class="cb-sync-title">Recent sync attempts</h2>
+            <p class="ee-hint">
+              Each line is one webhook from Eventbrite (or another provider). <code>eventbrite:accepted</code> means a
+              buyer was added. <code>webhook_ping</code> is only Eventbrite’s <strong>Test</strong> button — not a real
+              ticket. <code>invalid_webhook_token</code> means re-paste the Payload URL from Connected event setup into
+              Eventbrite.
+            </p>
+            <ul class="cb-sync-log" id="cb-sync-log"></ul>
+          </div>
+          <div class="ee-booking-help-section" id="cb-providers-panel" aria-labelledby="cb-providers-title">
+            <div class="ee-booking-help-section-head">
+              <p class="ee-booking-help-kicker">Checkout platforms</p>
+              <h2 id="cb-providers-title">Booking providers</h2>
+              <p class="ee-hint">
+                Enable Eventbrite (or others) once per account. Link each TNH event on
+                <strong>Connected event setup</strong> when you publish.
+              </p>
+            </div>
+            <p class="ee-hint ee-alert-warn" id="cb-providers-schema-warn" hidden role="status"></p>
+            <ul class="cb-providers-list" id="cb-providers-list"></ul>
+            <div class="ee-card cb-providers-link-card" id="cb-providers-link-card" hidden>
+              <h3 class="cb-providers-link-title">Link a TNH event</h3>
+              <p class="ee-hint">TNH event UUID plus the provider’s event id (Eventbrite numeric id).</p>
+              <label class="ee-field-label" for="cb-link-event-id">TNH event id</label>
+              <input class="ee-input" id="cb-link-event-id" type="text" autocomplete="off" placeholder="uuid" />
+              <label class="ee-field-label" for="cb-link-provider">Provider</label>
+              <select class="ee-input" id="cb-link-provider">
+                <option value="own_site">Your own website</option>
+                <option value="eventbrite">Eventbrite</option>
+                <option value="ticket_tailor">Ticket Tailor</option>
+                <option value="luma">Luma</option>
+                <option value="trybooking">TryBooking</option>
+              </select>
+              <label class="ee-field-label" for="cb-link-external-id" id="cb-link-external-id-label">Provider event id</label>
+              <input class="ee-input" id="cb-link-external-id" type="text" autocomplete="off" />
+              <p class="ee-hint" id="cb-providers-link-status" hidden role="status"></p>
+              <button type="button" class="ee-btn ee-btn-gold" id="cb-providers-link-save">Save event link</button>
+            </div>
+          </div>
         </section>
 
         <!-- Memberships -->
@@ -2976,6 +3045,7 @@
               <span class="org-nav-badge" id="org-more-notifications-badge" hidden>New</span>
             </button>
             <a href="#groups" class="org-more-sheet-link" data-org-route="groups">Organiser pages</a>
+            <a href="#connected-booking" class="org-more-sheet-link" data-org-route="connected-booking">Connected booking</a>
             <a href="#social" class="org-more-sheet-link" data-org-route="social">Promote</a>
             <a href="#communicate" class="org-more-sheet-link" data-org-route="communicate">Communicate</a>
             <a href="#team" class="org-more-sheet-link" data-org-route="team" id="org-more-team">
@@ -3962,7 +4032,9 @@
     <script src="../js/organiser-quarter-time.js?v=20260828openday2" defer></script>
     <script src="../js/organiser-setup-review.js?v=20260910impersonate1" defer></script>
     <script src="../js/organiser-connected-billing-banner.js?v=20260918setup1" defer></script>
-    <script src="../js/organiser-dashboard.js?v=20260918drawerux2" defer></script>
+    <script src="../js/organiser-connected-booking-page.js?v=20260922ws1" defer></script>
+    <script src="../js/organiser-connected-booking-providers.js?v=20260922ws1" defer></script>
+    <script src="../js/organiser-dashboard.js?v=20260922ws1" defer></script>
     <script src="../js/organiser-workspace-comfort.js?v=20260813noshow1" defer></script>
   </body>
 </html>

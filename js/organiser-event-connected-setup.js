@@ -657,7 +657,7 @@
         : '') +
       (p && p.eventbriteWebhookNeedsFix
         ? '<p class="ee-alert ee-alert-warn ecs-eb-token-status">Webhook URL on TNH was updated — paste the URL above into Eventbrite again or sync will stop (Recent sync attempts may show <code>invalid_webhook_token</code>).</p>'
-        : '<p class="ee-hint">If sync worked once then stopped, compare Eventbrite <strong>Payload URL</strong> with the line above — they must match exactly. Check <a href="/organiser/connected-booking">Connected booking → Recent sync attempts</a>.</p>') +
+        : '<p class="ee-hint">If sync worked once then stopped, compare Eventbrite <strong>Payload URL</strong> with the line above — they must match exactly. Check <a href="/organiser/#connected-booking">Organiser workspace → Connected booking</a> for Recent sync attempts.</p>') +
       '</div>';
     bindProviderEnableButtons(mount);
     bindEventbriteTokenSave(mount);

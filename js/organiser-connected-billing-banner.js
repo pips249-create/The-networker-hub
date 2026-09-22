@@ -357,9 +357,9 @@
       } else {
         actions =
           '<a class="org-btn org-btn-gold org-btn-sm" href="' +
-          (needsPick ? '/organiser/#groups' : '/organiser/connected-booking') +
+          (needsPick ? '/organiser/#groups' : '/organiser/#connected-booking') +
           '">' +
-          (needsPick ? 'Choose organiser pages' : 'Manage Connected plan') +
+          (needsPick ? 'Choose organiser pages' : 'Connected booking & sync log') +
           '</a> ' +
           '<a class="org-btn org-btn-outline org-btn-sm" href="/organiser/booking-options#link-out">Link-out £9.99 / event</a> ' +
           (forOrgPage

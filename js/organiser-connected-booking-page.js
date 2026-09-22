@@ -37,7 +37,6 @@
   if (location.hash === '#cb-slots-panel') {
     location.replace('/organiser/#groups');
   }
-
   var site = location.origin.replace(/\/$/, '');
   var webhookUrl = site + '/api/integrations/booking';
 
@@ -62,9 +61,16 @@
 
   var signinHint = document.getElementById('cb-signin-hint');
   var adminPanel = document.getElementById('cb-admin-panel');
+  var workspaceConnectedPage = document.getElementById('org-page-connected-booking');
   var checkoutBanner = document.getElementById('cb-checkout-banner');
   var billingTip = document.getElementById('cb-billing-tip');
   var authStatus = document.getElementById('cb-auth-status');
+  var hasConnectedUi =
+    document.getElementById('cb-sync-log') ||
+    adminPanel ||
+    document.getElementById('cb-plan-status');
+
+  if (!hasConnectedUi) return;
 
   if (signinHint) signinHint.hidden = true;
 
@@ -333,6 +339,8 @@
     applyBillingUi(data);
     if (signinHint) signinHint.hidden = true;
     if (adminPanel) adminPanel.hidden = false;
+    var providersPanel = document.getElementById('cb-providers-panel');
+    if (providersPanel && workspaceConnectedPage) providersPanel.hidden = false;
 
     if (data.setup && data.setup.nextStep && !data.setup.readyForConnectedEvents) {
       setAuthStatus('Next: ' + data.setup.nextStep, data.schemaWarning ? 'error' : 'ok');
@@ -423,32 +431,43 @@
     }
   }
 
-  fetch('/api/auth/session', { credentials: 'include', cache: 'no-store' })
-    .then(function (r) {
-      return r.json();
-    })
-    .then(function (sessionData) {
-      if (!sessionData || !sessionData.ok || !sessionData.user) {
-        setAuthStatus('Sign in with your organiser account to subscribe and manage webhooks.', 'error');
-        if (signinHint) signinHint.hidden = false;
-        applyBillingUi({ ok: false });
-        return;
-      }
+  function loadConnectedBookingAccount(options) {
+    var opts = options || {};
+    return fetch('/api/auth/session', { credentials: 'include', cache: 'no-store' })
+      .then(function (r) {
+        return r.json();
+      })
+      .then(function (sessionData) {
+        if (!sessionData || !sessionData.ok || !sessionData.user) {
+          if (!opts.silent) {
+            setAuthStatus('Sign in with your organiser account to subscribe and manage webhooks.', 'error');
+            if (signinHint) signinHint.hidden = false;
+          }
+          applyBillingUi({ ok: false });
+          return;
+        }
 
-      setAuthStatus('Loading your Connected booking account…');
+        if (!opts.silent) setAuthStatus('Loading your Connected booking account…');
 
-      return fetch('/api/organiser/connected-booking', { credentials: 'include', cache: 'no-store' })
-        .then(function (r) {
-          return r.json().then(function (data) {
-            return { status: r.status, data: data };
+        return fetch('/api/organiser/connected-booking', { credentials: 'include', cache: 'no-store' })
+          .then(function (r) {
+            return r.json().then(function (data) {
+              return { status: r.status, data: data };
+            });
+          })
+          .then(function (res) {
+            handleConnectedApi(res);
+            if (opts.silent) setAuthStatus('');
           });
-        })
-        .then(function (res) {
-          handleConnectedApi(res);
-        });
-    })
-    .catch(function () {
-      setAuthStatus('Could not verify your session. Refresh the page or sign in again.', 'error');
-      if (signinHint) signinHint.hidden = false;
-    });
+      })
+      .catch(function () {
+        if (!opts.silent) {
+          setAuthStatus('Could not verify your session. Refresh the page or sign in again.', 'error');
+          if (signinHint) signinHint.hidden = false;
+        }
+      });
+  }
+
+  window.refreshOrganiserConnectedBooking = loadConnectedBookingAccount;
+  loadConnectedBookingAccount();
 })();
