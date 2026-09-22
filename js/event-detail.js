@@ -1255,6 +1255,23 @@
     return Boolean(String(ev.externalPriceLabel || '').trim());
   }
 
+  function externalBookingUrlForEvent(ev) {
+    const raw = String((ev && ev.externalBookingUrl) || '').trim();
+    if (!raw) return '';
+    if (
+      window.HubExternalBookingUrl &&
+      typeof window.HubExternalBookingUrl.toAttendeeBookingUrl === 'function'
+    ) {
+      return window.HubExternalBookingUrl.toAttendeeBookingUrl(raw);
+    }
+    return raw;
+  }
+
+  function openExternalBookingForEvent(ev) {
+    const url = externalBookingUrlForEvent(ev);
+    if (url) window.open(url, '_blank', 'noopener,noreferrer');
+  }
+
   function normalizeEventFlags(ev, params) {
     const p = params || new URLSearchParams(window.location.search);
     const approvalFromTickets = (ev.tickets || []).some(tierIsApplication);
@@ -2132,7 +2149,14 @@
     const anotherBtn = document.getElementById('category-exclusivity-application-status-another-date');
     if (!anotherBtn || anotherBtn.dataset.bound === '1') return;
     anotherBtn.dataset.bound = '1';
-    anotherBtn.addEventListener('click', openSeriesDatePickerForAnotherDate);
+    anotherBtn.addEventListener('click', function () {
+      const ev = activeEvent();
+      if (eventIsExternalConnected(ev)) {
+        openExternalBookingForEvent(ev);
+        return;
+      }
+      openSeriesDatePickerForAnotherDate();
+    });
   }
 
   function selectSeriesDate(entry) {
@@ -3014,9 +3038,15 @@
       const buy = document.getElementById('buy-btn');
       const organiserName = ev.organiser || ev.organiserName || 'the organiser';
       if (buy && !ev.isEventPast && ev.ticketSalesEnabled !== false) {
-        buy.disabled = false;
-        buy.classList.remove('cta-btn-disabled');
-        buy.textContent = 'Book on ' + organiserName + '\u2019s website';
+        if (registrationIsConfirmedGoing(eventApplicationState)) {
+          buy.disabled = true;
+          buy.classList.add('cta-btn-disabled');
+          buy.textContent = "You're already going";
+        } else {
+          buy.disabled = false;
+          buy.classList.remove('cta-btn-disabled');
+          buy.textContent = 'Book on ' + organiserName + '\u2019s website';
+        }
       }
       syncPaidCheckoutPanel('', 1, 0);
       return;
@@ -4129,6 +4159,13 @@
     const status = String(state?.applicationStatus || '').trim();
     const payment = String(state?.paymentStatus || '').trim();
     if (status === 'Approved' && (payment === 'Paid' || payment === 'Free')) {
+      if (eventIsExternalConnected(ev)) {
+        return {
+          title: "You're already going",
+          lead:
+            "You're registered for this event (synced from the organiser's ticket site). View your ticket in My account, or buy another ticket on their site if you need an extra place.",
+        };
+      }
       return {
         title: "You're already going",
         lead: "You're registered for this date.",
@@ -4164,8 +4201,14 @@
       link.textContent = 'View my tickets';
       link.href = '/account/#upcoming';
       if (anotherBtn) {
-        const showAnother = seriesHasOtherBookableDates(ev && ev.id);
-        anotherBtn.hidden = !showAnother;
+        if (eventIsExternalConnected(ev)) {
+          anotherBtn.textContent = 'Buy another ticket on organiser site';
+          anotherBtn.hidden = !externalBookingUrlForEvent(ev);
+        } else {
+          anotherBtn.textContent = 'Book another date';
+          const showAnother = seriesHasOtherBookableDates(ev && ev.id);
+          anotherBtn.hidden = !showAnother;
+        }
       }
       return;
     }
@@ -4243,6 +4286,7 @@
       eventApplicationState = null;
     }
     applyEventApplicationUi(ev);
+    if (ev && eventIsExternalConnected(ev)) applyTicketPanelState(ev);
   }
 
   async function showAlreadyGoingInsteadOfAlert(ev, err) {
@@ -4300,10 +4344,16 @@
         buy.disabled = true;
         buy.classList.add('cta-btn-disabled');
         buy.textContent = 'Booking not available';
+      } else if (registrationIsConfirmedGoing(eventApplicationState)) {
+        buy.disabled = true;
+        buy.classList.add('cta-btn-disabled');
+        buy.textContent = "You're already going";
+        if (purchaseView) purchaseView.setAttribute('aria-hidden', 'true');
       } else {
         buy.disabled = false;
         buy.classList.remove('cta-btn-disabled');
         buy.textContent = 'Book on ' + organiserName + '\u2019s website';
+        if (purchaseView) purchaseView.removeAttribute('aria-hidden');
       }
       applyEventApplicationUi(ev);
       updateTicketJumpBar(ev);
@@ -5462,13 +5512,11 @@
 
         try {
         if (eventIsExternalConnected(evNow)) {
-          const raw = String(evNow.externalBookingUrl || '').trim();
-          const url =
-            window.HubExternalBookingUrl &&
-            typeof window.HubExternalBookingUrl.toAttendeeBookingUrl === 'function'
-              ? window.HubExternalBookingUrl.toAttendeeBookingUrl(raw)
-              : raw;
-          if (url) window.open(url, '_blank', 'noopener,noreferrer');
+          if (registrationIsConfirmedGoing(eventApplicationState)) {
+            await refreshEventApplicationUi(evNow);
+            return;
+          }
+          openExternalBookingForEvent(evNow);
           return;
         }
         if (registrationIsConfirmedGoing(eventApplicationState)) {
