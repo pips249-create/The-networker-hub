@@ -181,6 +181,30 @@ const tt = normalizeTicketTailorWebhook({
 assert.strictEqual(tt.externalEventId, 'ev-1');
 assert.strictEqual(tt.email, 't@example.com');
 
+const ttOfficial = normalizeTicketTailorWebhook({
+  id: 'wh_15',
+  event: 'ORDER.CREATED',
+  resource_url: 'https://api.tickettailor.com/v1/orders/or_737352',
+  payload: {
+    object: 'order',
+    id: 'or_737352',
+    status: 'completed',
+    buyer_details: {
+      email: 'john@example.com',
+      name: 'John Doe',
+    },
+    currency: { base_multiplier: 100, code: 'gbp' },
+    total_paid: 2500,
+    event_summary: { event_id: 'ev_40980', name: 'Festival' },
+    line_items: [{ type: 'ticket', quantity: 2, total: 2500 }],
+  },
+});
+assert.strictEqual(ttOfficial.externalEventId, 'ev_40980');
+assert.strictEqual(ttOfficial.email, 'john@example.com');
+assert.strictEqual(ttOfficial.orderId, 'ticket-tailor-or_737352');
+assert.strictEqual(ttOfficial.quantity, 2);
+assert.strictEqual(ttOfficial.amountPaid, 25);
+
 const luma = normalizeLumaWebhook({
   data: { event: { id: 'lu-1' }, registration_id: 'reg-1', email: 'l@example.com' },
 });
