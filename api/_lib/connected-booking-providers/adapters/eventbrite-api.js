@@ -13,6 +13,41 @@ function buildEventbriteOrderRequestUrl(apiUrl) {
   return withSlash + sep + 'expand=event,attendees';
 }
 
+function eventbriteAttendeesFromOrder(order) {
+  if (!order || typeof order !== 'object') return [];
+  const raw = order.attendees;
+  if (Array.isArray(raw)) return raw;
+  if (raw && typeof raw === 'object') {
+    if (Array.isArray(raw.attendees)) return raw.attendees;
+  }
+  return [];
+}
+
+async function fetchEventbriteOrderAttendees(orderId, privateToken) {
+  const id = String(orderId || '').trim();
+  const token = String(privateToken || '').trim();
+  if (!id || !token) return [];
+
+  const requestUrl = 'https://www.eventbriteapi.com/v3/orders/' + encodeURIComponent(id) + '/attendees/';
+  const res = await fetch(requestUrl, {
+    method: 'GET',
+    headers: {
+      Authorization: 'Bearer ' + token,
+      Accept: 'application/json',
+    },
+  });
+  const text = await res.text();
+  let data = null;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    data = null;
+  }
+  if (!res.ok || !data || typeof data !== 'object') return [];
+  if (Array.isArray(data.attendees)) return data.attendees;
+  return [];
+}
+
 async function fetchEventbriteOrder(apiUrl, privateToken) {
   const token = String(privateToken || '').trim();
   const requestUrl = buildEventbriteOrderRequestUrl(apiUrl);
@@ -67,11 +102,13 @@ function normalizeEventbriteOrderApiResponse(order) {
   );
   const amountPaid = Number.isFinite(amountCents) ? amountCents / 100 : 0;
 
-  const attendees = Array.isArray(order.attendees) ? order.attendees : [];
+  const attendees = eventbriteAttendeesFromOrder(order);
   const rows = [];
 
   for (const att of attendees) {
-    const email = normalizeEmail(att?.profile?.email || att?.email);
+    const email = normalizeEmail(
+      att?.profile?.email || att?.email || att?.profile?.email_address
+    );
     if (!email || !orderIdRaw) continue;
     const attId = String(att.id || '').trim();
     const extEvent =
@@ -126,7 +163,9 @@ function eventbritePrivateTokenFromConfig(config) {
 module.exports = {
   orderIdFromEventbriteApiUrl,
   buildEventbriteOrderRequestUrl,
+  eventbriteAttendeesFromOrder,
   fetchEventbriteOrder,
+  fetchEventbriteOrderAttendees,
   normalizeEventbriteOrderApiResponse,
   eventbritePrivateTokenFromConfig,
 };
