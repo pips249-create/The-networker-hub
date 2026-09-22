@@ -4051,15 +4051,18 @@
     try {
       return await (prefetch || apiWithTimeout('/api/organiser/bootstrap', {}, BOOTSTRAP_TIMEOUT_MS));
     } catch (e) {
-      if (!isTimeoutError(e)) throw e;
-      const fallback = await apiWithTimeout(
-        '/api/organiser/bootstrap?groupsOnly=1',
-        {},
-        BOOTSTRAP_FALLBACK_TIMEOUT_MS
-      );
-      if (!fallback || !fallback.ok) throw e;
-      fallback.data = Object.assign({ partial: true }, fallback.data || {});
-      return fallback;
+      try {
+        const fallback = await apiWithTimeout(
+          '/api/organiser/bootstrap?groupsOnly=1',
+          {},
+          BOOTSTRAP_FALLBACK_TIMEOUT_MS
+        );
+        if (!fallback || !fallback.ok) throw e;
+        fallback.data = Object.assign({ partial: true }, fallback.data || {});
+        return fallback;
+      } catch {
+        throw e;
+      }
     }
   }
 
