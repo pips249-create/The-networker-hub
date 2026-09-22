@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260909navlist2" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260828sidebar1" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260828sidebar1" />
-    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260922printbadges1" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20260922printbadges2" />
     <!-- hub-mobile last so phone overrides win over dashboard table min-widths -->
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260812footer10" />
     <script src="../js/hub-defer-css.js?v=20260828perf2" data-hrefs="../css/organiser-event-edit.css?v=20260918banner1|../css/organiser-flow-tour.css?v=20260716layout|../css/hubert-widget.css?v=20260805bottom2|../css/hub-ranking-badge.css?v=20260728lb2|../css/hub-partner-badge.css?v=20260820ticketembed1|../css/rankings-page.css?v=20260807rank|../css/organiser-opportunity-edit.css?v=20260829premium1|https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&family=Playfair+Display:wght@400;700&family=Source+Sans+3:wght@400;600;700&family=Oswald:wght@500;600&family=Nunito:wght@400;600;700&display=swap"></script>
@@ -2696,14 +2696,14 @@
                 ✉ Attendee round-up
               </button>
               <div class="org-name-badge-print">
-                <button type="button" class="org-btn org-btn-outline" id="btn-download-name-badges">
+                <button type="button" class="org-btn org-btn-outline org-btn-sm" id="btn-download-name-badges">
                   ⬇ Print name badges
                 </button>
                 <label class="org-name-badge-size" for="filter-attendees-label-format">
                   <span class="org-name-badge-size-label">Choose your size</span>
-                  <select id="filter-attendees-label-format">
-                    <option value="l7160">Standard — 63.5 × 38.1 mm (21 per sheet)</option>
-                    <option value="l7163">Large — 99.1 × 38.1 mm (14 per sheet)</option>
+                  <select id="filter-attendees-label-format" class="org-name-badge-size-select">
+                    <option value="l7160" title="63.5 × 38.1 mm">Standard · 21 per sheet</option>
+                    <option value="l7163" title="99.1 × 38.1 mm">Large · 14 per sheet</option>
                   </select>
                 </label>
               </div>

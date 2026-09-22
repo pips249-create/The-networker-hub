@@ -1464,7 +1464,7 @@
 .org-name-badge-print {
   display: inline-flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
   align-items: center;
 }
 
@@ -1472,15 +1472,24 @@
   display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   margin: 0;
   color: var(--od-text-mid);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
 }
 
 .org-name-badge-size-label {
   white-space: nowrap;
+}
+
+.org-filter-bar select.org-name-badge-size-select,
+.org-name-badge-size-select {
+  min-height: 30px;
+  padding: 4px 28px 4px 10px;
+  font-size: 12px;
+  background-position: right 8px center;
+  background-size: 12px;
 }
 
 @media (max-width: 900px) {
