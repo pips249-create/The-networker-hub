@@ -533,7 +533,7 @@ const FALLBACK_REPLIES = [
   {
     match: /name badge|printable badge|avery l?7160|avery l?7163|sticker sheet|badge pdf/i,
     reply:
-      'Sign in → /organiser/ → Events → Attendees, then choose your sheet size (standard — 63.5 × 38.1 mm, 21 per sheet; or large — 99.1 × 38.1 mm, 14 per sheet) and click Export name badges (PDF). Each badge shows the guest’s name, company, and job title from their Account when set — ask attendees to update these in account settings before the event.',
+      'Sign in → /organiser/ → Events → Attendees, then click Print name badges and choose your size (standard — 63.5 × 38.1 mm, 21 per sheet; or large — 99.1 × 38.1 mm, 14 per sheet). Each badge shows the guest’s name, company, and job title from their Account when set — ask attendees to update these in account settings before the event.',
   },
   {
     match: /job title.*(badge|profile|account)|update.*job title|company.*badge/i,
