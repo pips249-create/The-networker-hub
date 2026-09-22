@@ -1,15 +1,16 @@
 const { normalizeEventbriteWebhook } = require('./connected-booking-providers/adapters/eventbrite');
 const {
   fetchEventbriteOrder,
+  fetchEventbriteOrderAttendees,
   normalizeEventbriteOrderApiResponse,
   eventbritePrivateTokenFromConfig,
   orderIdFromEventbriteApiUrl,
 } = require('./connected-booking-providers/adapters/eventbrite-api');
 
+/** Real order webhooks point at …/orders/{id}/; config.action is often omitted (Eventbrite docs). */
 function isEventbriteOrderNotification(body) {
   const apiUrl = String(body?.api_url || '');
-  const action = String(body?.config?.action || body?.action || '').toLowerCase();
-  return /\/orders\/\d+/i.test(apiUrl) && action.includes('order');
+  return /\/orders\/\d+/i.test(apiUrl);
 }
 
 function isEventbriteConnectivityPing(body, normalized) {
@@ -37,7 +38,13 @@ async function resolveEventbriteWebhookRegistrations(body, connection) {
 
   const token = eventbritePrivateTokenFromConfig(connection?.config);
   const order = await fetchEventbriteOrder(apiUrl, token);
-  const registrations = normalizeEventbriteOrderApiResponse(order);
+  let registrations = normalizeEventbriteOrderApiResponse(order);
+  if (!registrations.length && orderId) {
+    const attendees = await fetchEventbriteOrderAttendees(orderId, token);
+    if (attendees.length) {
+      registrations = normalizeEventbriteOrderApiResponse(Object.assign({}, order, { attendees }));
+    }
+  }
   return {
     registrations,
     source: 'eventbrite_api',

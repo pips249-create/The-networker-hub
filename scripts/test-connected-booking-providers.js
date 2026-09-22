@@ -88,7 +88,21 @@ const orderHook = {
 assert.ok(isEventbriteOrderNotification(orderHook));
 assert.ok(!isEventbriteConnectivityPing(orderHook, ebPing));
 
-const { normalizeEventbriteOrderApiResponse } = require('../api/_lib/connected-booking-providers/adapters/eventbrite-api');
+const orderHookNoAction = {
+  api_url: 'https://www.eventbriteapi.com/v3/orders/12826552624/',
+  config: { endpoint_url: 'https://www.thenetworkeruk.com/w/eb/test' },
+};
+const orderHookNoActionNorm = normalizeEventbriteWebhook(orderHookNoAction);
+assert.ok(isEventbriteOrderNotification(orderHookNoAction), 'order api_url without config.action');
+assert.ok(
+  !isEventbriteConnectivityPing(orderHookNoAction, orderHookNoActionNorm),
+  'order webhook must not be treated as connectivity ping'
+);
+
+const {
+  normalizeEventbriteOrderApiResponse,
+  eventbriteAttendeesFromOrder,
+} = require('../api/_lib/connected-booking-providers/adapters/eventbrite-api');
 const orderRows = normalizeEventbriteOrderApiResponse({
   id: '12826552624',
   event_id: '2001520723363',
@@ -98,6 +112,26 @@ const orderRows = normalizeEventbriteOrderApiResponse({
 assert.strictEqual(orderRows.length, 1);
 assert.strictEqual(orderRows[0].email, 'buyer@example.com');
 assert.strictEqual(orderRows[0].externalEventId, '2001520723363');
+
+const paginatedAttendees = normalizeEventbriteOrderApiResponse({
+  id: '99',
+  event_id: '2002045983430',
+  email: 'fallback@example.com',
+  attendees: {
+    pagination: { object_count: 1, has_more_items: false },
+    attendees: [{ id: 'a1', profile: { email: 'nested@example.com' } }],
+  },
+});
+assert.strictEqual(paginatedAttendees.length, 1);
+assert.strictEqual(paginatedAttendees[0].email, 'nested@example.com');
+assert.deepStrictEqual(
+  eventbriteAttendeesFromOrder({
+    attendees: { attendees: [{ id: 'x' }] },
+  }).map(function (a) {
+    return a.id;
+  }),
+  ['x']
+);
 
 assert.strictEqual(
   parseEventbriteEventIdFromUrl('https://www.eventbrite.co.uk/e/networking-night-1234567890123'),
