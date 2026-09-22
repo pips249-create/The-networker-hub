@@ -550,17 +550,12 @@ async function buildOrganiserWorkspaceSummary(groupIds, adminView) {
   };
 }
 
-/** Sales totals from registrations only — safe when payout tables are missing. */
-async function enrichEventsWithRegistrationSales(events) {
-  const ids = (events || []).map((e) => e.id).filter(Boolean);
-  if (!ids.length) return events || [];
-  const [registrations, cancellations] = await Promise.all([
-    listRegistrationsForEvents(ids),
-    listCancellationsForEvents(ids),
-  ]);
+/** Apply already-fetched registration rows to event list items. */
+function applyRegistrationSalesToEventList(events, registrations, cancellations) {
   const cancellationsByEvent = mapLatestCancellationsByEvent(cancellations);
   const regsByEvent = {};
-  registrations.forEach((row) => {
+  (registrations || []).forEach((row) => {
+    if (!row || !row.event_id) return;
     if (!regsByEvent[row.event_id]) regsByEvent[row.event_id] = [];
     regsByEvent[row.event_id].push(row);
   });
@@ -579,6 +574,17 @@ async function enrichEventsWithRegistrationSales(events) {
       ticketsSoldLabel: formatTicketsSoldLabel(ticketsSold, capacity),
     };
   });
+}
+
+/** Sales totals from registrations only — safe when payout tables are missing. */
+async function enrichEventsWithRegistrationSales(events) {
+  const ids = (events || []).map((e) => e.id).filter(Boolean);
+  if (!ids.length) return events || [];
+  const [registrations, cancellations] = await Promise.all([
+    listRegistrationsForEvents(ids),
+    listCancellationsForEvents(ids),
+  ]);
+  return applyRegistrationSalesToEventList(events, registrations, cancellations);
 }
 
 async function getPayoutPreview(session, eventId) {
@@ -711,6 +717,7 @@ module.exports = {
   enrichEventsWithPayoutData,
   enrichOrganiserWorkspaceSales,
   enrichEventsWithRegistrationSales,
+  applyRegistrationSalesToEventList,
   enrichTicketsWithSales,
   summarizeRegistrationSales,
   buildOrganiserWorkspaceSummary,

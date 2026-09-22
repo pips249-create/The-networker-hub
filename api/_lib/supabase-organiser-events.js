@@ -3015,7 +3015,7 @@ async function countAllEvents() {
  */
 async function applyRegistrationSalesToEventsPage(overview, upcomingOverview, tickets, groups, groupEventCounts) {
   const {
-    enrichEventsWithRegistrationSales,
+    applyRegistrationSalesToEventList,
     enrichTicketsWithSales,
     listRegistrationsForEvents,
     listCancellationsForEvents,
@@ -3023,14 +3023,17 @@ async function applyRegistrationSalesToEventsPage(overview, upcomingOverview, ti
     mapLatestCancellationsByEvent,
   } = require('./supabase-organiser-payouts');
 
-  const enrichedEvents = await enrichEventsWithRegistrationSales(overview.events);
-  const upcomingEvents = await enrichEventsWithRegistrationSales(upcomingOverview.events);
-  const regs = await listRegistrationsForEvents([
-    ...new Set([...enrichedEvents.map((e) => e.id), ...upcomingEvents.map((e) => e.id)]),
+  const overviewEvents = overview.events || [];
+  const upcomingRaw = upcomingOverview.events || [];
+  const ids = [
+    ...new Set([...overviewEvents, ...upcomingRaw].map((ev) => ev && ev.id).filter(Boolean)),
+  ];
+  const [regs, cancellations] = await Promise.all([
+    listRegistrationsForEvents(ids),
+    listCancellationsForEvents(ids),
   ]);
-  const cancellations = await listCancellationsForEvents([
-    ...new Set(regs.map((row) => row.event_id).filter(Boolean)),
-  ]);
+  const enrichedEvents = applyRegistrationSalesToEventList(overviewEvents, regs, cancellations);
+  const upcomingEvents = applyRegistrationSalesToEventList(upcomingRaw, regs, cancellations);
   const cancellationsByEvent = mapLatestCancellationsByEvent(cancellations);
   const revenueContextByEventId = {};
   [...enrichedEvents, ...upcomingEvents].forEach((ev) => {
@@ -3052,27 +3055,29 @@ async function applyRegistrationSalesToEventsPage(overview, upcomingOverview, ti
 async function loadOrganiserEventsPage(session, groups, groupIds, adminView, pagination, options) {
   const opts = options || {};
   const { limit, offset, knownTotal, eventsLite } = pagination;
-  const skipSideLoads = offset > 0 && knownTotal != null;
+  const skipSideLoads = offset > 0;
   // Lite skips payout enrichment (slow), but still needs registration sales for
   // Tickets sold / Revenue columns on the Events list.
   const skipPayoutEnrichment = Boolean(eventsLite || opts.eventsLite);
+  // Per-group counts only enrich the organiser-pages table — skip on list refreshes.
+  const skipGroupCounts = skipSideLoads || skipPayoutEnrichment || knownTotal != null;
+  const skipTotalCount = skipSideLoads || knownTotal != null;
 
-  const [groupEventCounts, upcomingRaw, total] = await Promise.all([
-    skipSideLoads ? Promise.resolve(null) : countEventsByOrganiserGroup(groupIds),
+  const [groupEventCounts, upcomingRaw, total, events] = await Promise.all([
+    skipGroupCounts ? Promise.resolve(null) : countEventsByOrganiserGroup(groupIds),
     skipSideLoads ? Promise.resolve([]) : listUpcomingEventsForOrganiser(groupIds, WORKSPACE_UPCOMING_LIMIT),
-    skipSideLoads
+    skipTotalCount
       ? Promise.resolve(knownTotal)
       : adminView
         ? countAllEvents()
         : countEventsForOrganiser(groupIds),
+    listEventsForSession(session, groupIds, [], adminView, {
+      limit,
+      offset,
+      orderAsc: false,
+      allEvents: adminView,
+    }),
   ]);
-
-  const events = await listEventsForSession(session, groupIds, [], adminView, {
-    limit,
-    offset,
-    orderAsc: false,
-    allEvents: adminView,
-  });
 
   const eventIds = events.map((e) => e.id);
   const upcomingIds = upcomingRaw.map((e) => e.id);
@@ -3442,6 +3447,40 @@ async function getOrganiserWorkspace(req) {
   const personalScope = isAdmin && organiserPersonalScopeFromRequest(req);
   const adminView = isAdmin && !personalScope;
   const eventsPaginationQuery = parseWorkspaceEventsQuery(req);
+  const eventsOnly = String(req.query?.eventsOnly || '') === '1';
+
+  const { groups, groupIds, access: workspaceAccess, groupsError } =
+    await prepareOrganiserWorkspaceScope(session, adminView);
+
+  if (eventsOnly) {
+    try {
+      // Archive is fire-and-forget; skip on lite list refreshes so they stay cheap.
+      if (eventsPaginationQuery.offset === 0 && !eventsPaginationQuery.eventsLite) {
+        scheduleArchivePastPublishedEvents(groupIds);
+      }
+      const page = await loadOrganiserEventsPage(
+        session,
+        groups,
+        groupIds,
+        adminView,
+        eventsPaginationQuery
+      );
+      return finalizeOrganiserWorkspacePayload(
+        {
+          ok: true,
+          session,
+          groups: page.groups,
+          events: page.events,
+          upcomingEvents: page.upcomingEvents,
+          tickets: page.tickets,
+          eventsPagination: page.eventsPagination,
+        },
+        workspaceAccess
+      );
+    } catch (e) {
+      return { ok: false, status: 500, error: 'events_fetch_failed', message: e.message, groups };
+    }
+  }
 
   let displayName = session.name || '';
   try {
@@ -3450,9 +3489,6 @@ async function getOrganiserWorkspace(req) {
   } catch {
     /* ignore */
   }
-
-  const { groups, groupIds, access: workspaceAccess, groupsError } =
-    await prepareOrganiserWorkspaceScope(session, adminView);
 
   let pendingClaimGroups = [];
   let pendingClaimOpportunities = [];
@@ -3483,38 +3519,6 @@ async function getOrganiserWorkspace(req) {
       pendingSetupReviews = await listOrganiserSetupReviews(groupIds);
     } catch {
       pendingSetupReviews = [];
-    }
-  }
-
-  const eventsOnly = String(req.query?.eventsOnly || '') === '1';
-
-  if (eventsOnly) {
-    try {
-      if (eventsPaginationQuery.offset === 0) {
-        scheduleArchivePastPublishedEvents(groupIds);
-      }
-      const page = await loadOrganiserEventsPage(
-        session,
-        groups,
-        groupIds,
-        adminView,
-        eventsPaginationQuery
-      );
-      return finalizeOrganiserWorkspacePayload(
-        {
-          ok: true,
-          session,
-          groups: page.groups,
-          pendingSetupReviews,
-          events: page.events,
-          upcomingEvents: page.upcomingEvents,
-          tickets: page.tickets,
-          eventsPagination: page.eventsPagination,
-        },
-        workspaceAccess
-      );
-    } catch (e) {
-      return { ok: false, status: 500, error: 'events_fetch_failed', message: e.message, groups };
     }
   }
 
