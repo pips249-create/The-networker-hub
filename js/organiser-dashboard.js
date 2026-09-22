@@ -38,6 +38,7 @@
   let teamLoadingPromise = null;
   let eventsLoadingPromise = null;
   let eventsLoadGen = 0;
+  let workspaceStatsPromise = null;
   let reviewsLoadingPromise = null;
 
   function isPlatformWebsiteImportUrl(url) {
@@ -514,6 +515,7 @@
     let qs =
       '/api/organiser/bootstrap?eventsOnly=1&eventsLimit=' + EVENTS_FETCH_SIZE + '&eventsOffset=0';
     if (!full) qs += '&eventsLite=1';
+    if (state.eventsTotal > 0) qs += '&eventsTotal=' + String(state.eventsTotal);
     if (extra) qs += extra;
     return qs;
   }
@@ -5990,10 +5992,13 @@
       return ensureReviewsLoaded().then(() => renderReviews());
     }
     renderEventsPanel(eventsSubRoute);
-    return ensureEventsLoaded().then(function () {
+    const eventsPainted = eventsSourceList().length > 0 || state.eventsLoaded;
+    const eventsLoad = ensureEventsLoaded().then(function () {
       renderEventsPanel(eventsSubRoute);
       maybePrefetchEvents();
     });
+    // Paint from summaries/cache immediately — don't hold the route spinner on enrichment.
+    return eventsPainted ? Promise.resolve() : eventsLoad;
   }
 
   function invalidateEventsLoad() {
@@ -6056,6 +6061,31 @@
         }
       });
     return eventsLoadingPromise;
+  }
+
+  function applyWorkspaceSummary(summary) {
+    if (!summary || !summary.computed) return false;
+    state.workspaceSummary = summary;
+    renderStats();
+    return true;
+  }
+
+  function ensureWorkspaceStatsLoaded(options) {
+    const opts = options || {};
+    if (hasComputedWorkspaceSummary() && !opts.force) return Promise.resolve(true);
+    if (workspaceStatsPromise && !opts.force) return workspaceStatsPromise;
+    workspaceStatsPromise = api('/api/organiser/workspace-stats')
+      .then(function ({ ok, data }) {
+        if (!ok) return false;
+        return applyWorkspaceSummary(data.workspaceSummary);
+      })
+      .catch(function () {
+        return false;
+      })
+      .finally(function () {
+        workspaceStatsPromise = null;
+      });
+    return workspaceStatsPromise;
   }
 
   function ensureReviewsLoaded(options) {
@@ -8904,22 +8934,22 @@
     const opts = options || {};
     closeAllActionMenus();
     endOrgRouteLoading({ gen: orgRouteLoadGen, startedAt: 0 });
+    pruneStaleEventFilters();
     try {
-      await loadBootstrap({ silent: true });
+      await ensureEventsLoaded({ force: true });
     } catch (err) {
       showOrganiserAlert(
         (err && err.message) || 'Could not refresh the workspace. Try reloading the page.',
         true
       );
     }
-    pruneStaleEventFilters();
-    await ensureEventsLoaded({ force: true });
     if (document.querySelector('[data-org-page="events"].is-active')) {
       renderMyEventsHub();
     } else {
       renderAll();
     }
     setRoute(opts.route || 'events-list', { skipRouteLoading: true });
+    ensureWorkspaceStatsLoaded({ force: true });
   }
 
   async function submitDeleteEvent() {
@@ -9235,7 +9265,9 @@
         '/api/organiser/bootstrap?eventsOnly=1&eventsLimit=' +
           EVENTS_FETCH_SIZE +
           '&eventsOffset=' +
-          chunkOffset
+          chunkOffset +
+          (eventsNeedFullEnrichment() ? '' : '&eventsLite=1') +
+          (state.eventsTotal > 0 ? '&eventsTotal=' + String(state.eventsTotal) : '')
       );
       if (!ok) throw new Error(data.message || data.error || 'events_load_failed');
       state.events = data.events || [];
@@ -9502,9 +9534,7 @@
     } catch {
       /* ignore */
     }
-    await loadBootstrap();
-    renderAll();
-    setRoute('events-list');
+    await refreshEventsWorkspaceAfterMutation({ route: 'events-list' });
     if (res.data.event && res.data.event.id) {
       openEventEditorDrawer(res.data.event);
     }
@@ -18078,7 +18108,10 @@
     if (document.querySelector('[data-org-page="ticket-widget"].is-active') && state.eventsLoaded) {
       renderTicketWidgetPage();
     }
-    if (document.querySelector('[data-org-page="events"].is-active') && state.eventsLoaded) {
+    if (
+      document.querySelector('[data-org-page="events"].is-active') &&
+      (state.eventsLoaded || eventsSourceList().length)
+    ) {
       renderMyEventsHub();
       fillEventSelect(document.getElementById('ticket-event'));
     }
@@ -18213,24 +18246,51 @@
     state.pendingClaimGroups = sortPendingClaimGroups(data.pendingClaimGroups || []);
     state.pendingClaimOpportunities = data.pendingClaimOpportunities || [];
     state.pendingSetupReviews = data.pendingSetupReviews || [];
-    state.events = data.events || [];
-    state.upcomingEvents = data.upcomingEvents || [];
-    state.eventsTotal = data.eventsPagination?.total ?? state.events.length;
-    state.eventsChunkOffset = data.eventsPagination?.offset ?? 0;
-    state.eventsHasMore = Boolean(data.eventsPagination?.hasMore);
-    state.tickets = data.tickets || [];
+    const incomingEvents = Array.isArray(data.events) ? data.events : [];
+    const incomingUpcoming = Array.isArray(data.upcomingEvents) ? data.upcomingEvents : [];
+    const incomingTickets = Array.isArray(data.tickets) ? data.tickets : [];
+    // Lean bootstrap returns empty events/tickets. Keep a usable cache so the
+    // list does not wipe and wait for a second heavy fetch on every refresh.
+    if (incomingEvents.length || !state.eventsLoaded) {
+      state.events = incomingEvents;
+      state.eventsLoaded = incomingEvents.length > 0;
+      state.eventsEnrichment = incomingEvents.length ? 'full' : 'none';
+      if (incomingEvents.length) invalidateEventsLoad();
+    }
+    if (incomingUpcoming.length || !state.upcomingEvents.length) {
+      state.upcomingEvents = incomingUpcoming;
+    }
+    if (incomingTickets.length || !state.tickets.length) {
+      state.tickets = incomingTickets;
+    }
+    if (data.eventsPagination) {
+      state.eventsTotal = data.eventsPagination.total ?? state.events.length;
+      state.eventsChunkOffset = data.eventsPagination.offset ?? 0;
+      state.eventsHasMore = Boolean(data.eventsPagination.hasMore);
+    } else if (!state.eventsLoaded) {
+      state.eventsTotal = state.events.length;
+      state.eventsChunkOffset = 0;
+      state.eventsHasMore = false;
+    }
     listPages.groups = 1;
     listPages.events = 1;
     listPages.tickets = 1;
     listPages.reviews = 1;
     listPages.revenue = 1;
     listPages.attendees = 1;
-    state.reviews = data.reviews || [];
-    state.reviewsLoaded = false;
-    state.groupRankings = data.groupRankings || {};
-    state.workspaceSummary =
-      data.workspaceSummary && data.workspaceSummary.computed ? data.workspaceSummary : null;
-    state.eventSummaries = data.eventSummaries || [];
+    if (Array.isArray(data.reviews) && data.reviews.length) {
+      state.reviews = data.reviews;
+      state.reviewsLoaded = true;
+    }
+    if (data.groupRankings && Object.keys(data.groupRankings).length) {
+      state.groupRankings = data.groupRankings;
+    }
+    if (data.workspaceSummary && data.workspaceSummary.computed) {
+      state.workspaceSummary = data.workspaceSummary;
+    }
+    if (Array.isArray(data.eventSummaries)) {
+      state.eventSummaries = data.eventSummaries;
+    }
     if (
       !state.events.length &&
       state.eventSummaries.length &&
@@ -18238,10 +18298,9 @@
     ) {
       state.eventsHasMore = state.eventSummaries.length > EVENTS_FETCH_SIZE;
     }
-    state.eventsFullyLoaded = !state.eventsHasMore;
-    invalidateEventsLoad();
-    state.eventsLoaded = false;
-    state.eventsEnrichment = 'none';
+    if (!state.eventsLoaded) {
+      state.eventsFullyLoaded = !state.eventsHasMore;
+    }
     state.pendingApplicationsCount = Number(data.pendingApplications?.count) || 0;
     state.pendingApplicationsPreview = data.pendingApplications?.preview || [];
     if (!silent) {
@@ -18311,6 +18370,7 @@
     applyPendingGroupSave();
     applyPendingOpportunitySubmitFlash();
     pruneStaleEventFilters();
+    fillMyEventsFilters();
     bootstrapReady = true;
     try {
       window.dispatchEvent(
@@ -18349,6 +18409,7 @@
           setEventsSub(eventsSubRoute);
         }
       }
+      ensureWorkspaceStatsLoaded();
       if (parseRoute().page === 'memberships' || parseRoute().page === 'member-lists') {
         maybeRedirectToSingleMemberList();
       }
@@ -19753,7 +19814,7 @@
           e.data.draft ? 'Event changes saved.' : 'Event saved.',
           false
         );
-        loadBootstrap().then(renderAll);
+        refreshEventsWorkspaceAfterMutation({ route: 'events-list' });
         return;
       }
       if (e.data && e.data.type === 'hub-event-drawer-ready') {
