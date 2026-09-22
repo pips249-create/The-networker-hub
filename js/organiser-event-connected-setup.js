@@ -523,7 +523,8 @@
 
   var EXTERNAL_ID_LABELS = {
     eventbrite: 'Eventbrite event id (numbers — we can fill this from your booking URL)',
-    ticket_tailor: 'Ticket Tailor event id (from box office / event URL)',
+    ticket_tailor:
+      'Ticket Tailor event id (starts with ev_ — from Box office → event, not the URL slug)',
     luma: 'Luma event id or slug (from your lu.ma link)',
     trybooking: 'TryBooking event id',
   };
@@ -563,6 +564,64 @@
       u.length <= EVENTBRITE_PAYLOAD_URL_MAX &&
       u.indexOf(EVENTBRITE_WEBHOOK_ORIGIN + '/w/eb/') === 0
     );
+  }
+
+  function renderTicketTailorWebhookCard(mount, p, linked) {
+    var url = (p && p.webhookUrl) || '';
+    var linkedDone = Boolean(linked && (linked.external_event_id || linked.externalEventId));
+    if (!url) {
+      mount.innerHTML =
+        '<div class="ecs-eb-sync">' +
+        '<p class="ecs-eb-sync-tagline">One-time setup · ~2 minutes</p>' +
+        '<p class="ecs-eb-sync-lead">Enable Ticket Tailor to get a webhook URL, then paste it in Ticket Tailor and link your <strong>ev_…</strong> event id above.</p>' +
+        '<button type="button" class="ee-btn ee-btn-gold" data-enable-provider="ticket_tailor">Enable Ticket Tailor</button>' +
+        '</div>';
+      bindProviderEnableButtons(mount);
+      return;
+    }
+    mount.innerHTML =
+      '<div class="ecs-eb-sync">' +
+      '<ul class="ecs-eb-checklist" aria-label="Ticket Tailor sync">' +
+      '<li class="ecs-eb-check is-done"><span class="ecs-eb-check-icon" aria-hidden="true">✓</span> Webhook URL ready</li>' +
+      '<li class="ecs-eb-check' +
+      (linkedDone ? ' is-done' : '') +
+      '"><span class="ecs-eb-check-icon" aria-hidden="true">' +
+      (linkedDone ? '✓' : '2') +
+      '</span> Event id saved above (<code>ev_…</code> from Box office)' +
+      (linkedDone ? '' : ' <span class="ecs-eb-check-sub">(Link registrations)</span>') +
+      '</li>' +
+      '</ul>' +
+      '<div class="ecs-eb-url-panel">' +
+      '<div class="ecs-eb-url-panel-head">' +
+      '<span class="ecs-eb-url-label">Copy into Ticket Tailor → Settings → Webhooks</span>' +
+      '</div>' +
+      '<code class="ecs-eb-url cb-webhook-url" data-webhook-url="' +
+      escAttr(url) +
+      '">' +
+      escHtml(url) +
+      '</code>' +
+      '<div class="ecs-webhook-copy-row">' +
+      '<button type="button" class="ee-btn ee-btn-gold ee-btn-sm" data-copy-webhook-url>Copy webhook URL</button>' +
+      '<span class="ee-hint ecs-copy-webhook-status" data-copy-webhook-status hidden role="status"></span>' +
+      '</div>' +
+      '</div>' +
+      '<p class="ecs-eb-paste-hint">Subscribe to <strong>Order created</strong> (<code>ORDER.CREATED</code>). Ticket Tailor sends buyer email in the webhook — no extra API token needed.</p>' +
+      '<details class="ecs-eb-help-details">' +
+      '<summary>Where to find the event id</summary>' +
+      '<ol class="ecs-eb-help-steps">' +
+      '<li>In Ticket Tailor <strong>Box office</strong>, open your event.</li>' +
+      '<li>Copy the id that starts with <code>ev_</code> (API / event settings — not only the public URL slug).</li>' +
+      '<li>Paste it in <strong>Link registrations</strong> above and save.</li>' +
+      '</ol>' +
+      '</details>' +
+      (linkedDone
+        ? '<p class="ee-hint ee-alert-ok ecs-eb-linked">Linked event id <code>' +
+          escHtml(displayExternalEventId('ticket_tailor', linked.external_event_id || linked.externalEventId)) +
+          '</code></p>'
+        : '') +
+      '<p class="ee-hint">After a test sale, check <a href="/organiser/connected-booking#cb-sync-log">Recent sync attempts</a> for <code>ticket_tailor:accepted</code>.</p>' +
+      '</div>';
+    bindProviderEnableButtons(mount);
   }
 
   function renderEventbriteWebhookCard(mount, p, linked) {
@@ -734,6 +793,9 @@
     }
     if (key === 'eventbrite') {
       return 'Webhook URL + API token + linked event id → Eventbrite buyers appear in your TNH attendee list.';
+    }
+    if (key === 'ticket_tailor') {
+      return 'Webhook URL + linked <code>ev_…</code> event id → Ticket Tailor orders create TNH registrations (buyer email is in the webhook).';
     }
     var p = providersById[key];
     var label = (p && p.label) || key.replace(/_/g, ' ');
@@ -1113,7 +1175,9 @@
             ? 'Zapier, Make, or custom webhook'
             : key === 'eventbrite'
               ? 'Eventbrite sync'
-              : 'Webhook for ' + (providerLabel || key);
+              : key === 'ticket_tailor'
+                ? 'Ticket Tailor sync'
+                : 'Webhook for ' + (providerLabel || key);
     }
 
     var p = providersById[key];
@@ -1170,6 +1234,11 @@
 
     if (key === 'eventbrite') {
       renderEventbriteWebhookCard(mount, p, eventLinkForPlatform(key));
+      return;
+    }
+
+    if (key === 'ticket_tailor') {
+      renderTicketTailorWebhookCard(mount, p, eventLinkForPlatform(key));
       return;
     }
 
