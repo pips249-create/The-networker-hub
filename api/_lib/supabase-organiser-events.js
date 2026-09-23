@@ -3351,6 +3351,29 @@ async function getLeanOrganiserWorkspace(req) {
         ? countEventsForOrganiser(groupIds).catch(() => 0)
         : Promise.resolve(null),
     ]);
+  if (!adminView && !session.impersonator && (groups || []).length) {
+    try {
+      const { claimPagesWhereOrganiserListedEvents } = require('./supabase-organiser-claims');
+      const autoClaimedIds = await claimPagesWhereOrganiserListedEvents(
+        getSupabaseAdmin(),
+        groups,
+        eventCountsByGroup,
+        { signedInUserIds: [session.sub] }
+      );
+      if (autoClaimedIds && autoClaimedIds.size) {
+        groups = groups.map((group) =>
+          group && autoClaimedIds.has(group.id)
+            ? Object.assign({}, group, { ownershipClaimStatus: 'claimed' })
+            : group
+        );
+      }
+    } catch (e) {
+      console.warn(
+        '[organiser-workspace] organiser-listed claim',
+        e && e.message ? e.message : e
+      );
+    }
+  }
   const claimedGroupIds = new Set(
     (groups || [])
       .filter((g) => String(g.ownershipClaimStatus || '').toLowerCase() === 'claimed')

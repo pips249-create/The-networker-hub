@@ -473,6 +473,182 @@ async function syncEmailMatchedOrganiserClaims() {
   return { synced: 0 };
 }
 
+function isStaffEventListingRecord(row) {
+  if (!row) return false;
+  const source = String(row.source || '')
+    .trim()
+    .toLowerCase();
+  if (source === 'event_create') return true;
+  return /listed an event/i.test(String(row.notes || ''));
+}
+
+/**
+ * Events already on a pending page count as acceptance when the organiser
+ * signed in and staff did not list them. Command Centre / Impersonate listings
+ * stay unclaimed.
+ */
+function shouldClaimPageForExistingOrganiserEvents(input) {
+  const status = String(input && input.claimStatus != null ? input.claimStatus : '')
+    .trim()
+    .toLowerCase();
+  if (status === 'claimed' || status === 'disputed') return false;
+  if (status && status !== 'pending') return false;
+  if (input && input.internal) return false;
+  if (!input || !input.signedIn) return false;
+  if (!(Number(input.eventCount) > 0)) return false;
+  if (input.staffListedEvents) return false;
+  return true;
+}
+
+function eventCountForOrganiser(eventCounts, organiserId) {
+  if (!eventCounts || !organiserId) return 0;
+  if (typeof eventCounts.get === 'function') return Number(eventCounts.get(organiserId)) || 0;
+  return Number(eventCounts[organiserId]) || 0;
+}
+
+function organiserUserId(row) {
+  if (!row) return '';
+  if (row.supabase_user_id) return String(row.supabase_user_id);
+  if (row.supabaseUserId) return String(row.supabaseUserId);
+  if (Array.isArray(row.userIds) && row.userIds[0]) return String(row.userIds[0]);
+  return '';
+}
+
+function organiserClaimStatus(row) {
+  if (!row) return '';
+  if (row.ownership_claim_status != null && row.ownership_claim_status !== '') {
+    return row.ownership_claim_status;
+  }
+  return row.ownershipClaimStatus || '';
+}
+
+async function loadStaffListedOrganiserIds(sb, organiserIds) {
+  const ids = [...new Set((organiserIds || []).map((id) => String(id || '').trim()).filter(Boolean))];
+  const staff = new Set();
+  if (!ids.length) return staff;
+
+  const apply = async (select) => {
+    const { data, error } = await sb.from('organiser_sales_demos').select(select).in('organiser_id', ids);
+    if (error) throw new Error(error.message);
+    return data || [];
+  };
+
+  let rows = [];
+  try {
+    rows = await apply('organiser_id, source, notes');
+  } catch (e) {
+    const msg = String((e && e.message) || e || '');
+    if (!/source/i.test(msg)) throw e;
+    rows = await apply('organiser_id, notes');
+  }
+
+  rows.forEach((row) => {
+    if (row && row.organiser_id && isStaffEventListingRecord(row)) staff.add(row.organiser_id);
+  });
+  return staff;
+}
+
+async function loadSignedInUserIds(sb, userIds) {
+  const ids = [...new Set((userIds || []).map((id) => String(id || '').trim()).filter(Boolean))];
+  const signedIn = new Set();
+  await Promise.all(
+    ids.map(async (id) => {
+      try {
+        const { data, error } = await sb.auth.admin.getUserById(id);
+        if (!error && data && data.user && data.user.last_sign_in_at) signedIn.add(id);
+      } catch {
+        /* a lookup failure must not claim the page */
+      }
+    })
+  );
+  return signedIn;
+}
+
+async function markOrganiserPageClaimedForTheirEvents(sb, organiserId) {
+  const id = String(organiserId || '').trim();
+  if (!id) return false;
+  const patch = {
+    ownership_claim_status: 'claimed',
+    ownership_claimed_at: new Date().toISOString(),
+    ownership_disputed_at: null,
+    ownership_disputed_by_email: null,
+  };
+  const run = (withInternal) => {
+    let query = sb.from('organisers').update(patch).eq('id', id);
+    if (withInternal) query = query.eq('is_internal', false);
+    return query.or('ownership_claim_status.eq.pending,ownership_claim_status.is.null').select('id').maybeSingle();
+  };
+  let { data, error } = await run(true);
+  if (error && /is_internal/i.test(String(error.message || ''))) {
+    ({ data, error } = await run(false));
+  }
+  if (error) throw new Error(error.message);
+  return Boolean(data && data.id);
+}
+
+/**
+ * Claim pending pages whose events were added by the organiser, not by staff.
+ * Does not send the claim-confirmed email or award Founding Organiser.
+ * Returns the organiser ids that were claimed.
+ */
+async function claimPagesWhereOrganiserListedEvents(sb, rows, eventCounts, options) {
+  const claimed = new Set();
+  const list = Array.isArray(rows) ? rows.filter((row) => row && row.id) : [];
+  if (!sb || !list.length) return claimed;
+
+  const knownSignedIn = new Set(
+    ((options && options.signedInUserIds) || []).map((id) => String(id || '').trim()).filter(Boolean)
+  );
+  const candidates = list.filter((row) => {
+    const status = String(organiserClaimStatus(row) || '').trim().toLowerCase();
+    if (status === 'claimed' || status === 'disputed') return false;
+    if (status && status !== 'pending') return false;
+    if (row.is_internal || row.isInternal) return false;
+    return eventCountForOrganiser(eventCounts, row.id) > 0;
+  });
+  if (!candidates.length) return claimed;
+
+  const staffListed = await loadStaffListedOrganiserIds(
+    sb,
+    candidates.map((row) => row.id)
+  );
+  const needSignInLookup = [];
+  candidates.forEach((row) => {
+    const uid = organiserUserId(row);
+    if (uid && !knownSignedIn.has(uid)) needSignInLookup.push(uid);
+  });
+  const signedIn = needSignInLookup.length ? await loadSignedInUserIds(sb, needSignInLookup) : new Set();
+  knownSignedIn.forEach((id) => signedIn.add(id));
+
+  for (const row of candidates) {
+    const uid = organiserUserId(row);
+    if (
+      !shouldClaimPageForExistingOrganiserEvents({
+        claimStatus: organiserClaimStatus(row),
+        eventCount: eventCountForOrganiser(eventCounts, row.id),
+        signedIn: Boolean(uid && signedIn.has(uid)),
+        staffListedEvents: staffListed.has(row.id),
+        internal: Boolean(row.is_internal || row.isInternal),
+      })
+    ) {
+      continue;
+    }
+    try {
+      const did = await markOrganiserPageClaimedForTheirEvents(sb, row.id);
+      if (!did) continue;
+      claimed.add(row.id);
+      row.ownership_claim_status = 'claimed';
+      row.ownershipClaimStatus = 'claimed';
+    } catch (e) {
+      console.warn(
+        'claim page for organiser-listed events failed:',
+        e && e.message ? e.message : e
+      );
+    }
+  }
+  return claimed;
+}
+
 module.exports = {
   listPendingClaimGroupsForSession,
   claimGroupForSession,
@@ -483,6 +659,9 @@ module.exports = {
   ensureOrganiserClaimedForAdminEvent,
   shouldAutoClaimOrganiserOnEventCreate,
   claimOrganiserPageForListedEvent,
+  isStaffEventListingRecord,
+  shouldClaimPageForExistingOrganiserEvents,
+  claimPagesWhereOrganiserListedEvents,
   syncEmailMatchedOrganiserClaims,
   emailMatchesProfile,
 };

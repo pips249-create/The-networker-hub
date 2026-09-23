@@ -6,6 +6,8 @@
 const {
   shouldAutoClaimOrganiserOnEventCreate,
   claimOrganiserPageForListedEvent,
+  isStaffEventListingRecord,
+  shouldClaimPageForExistingOrganiserEvents,
 } = require('../api/_lib/supabase-organiser-claims');
 
 function assert(label, condition) {
@@ -44,6 +46,58 @@ assert('session without a user id does not claim', !shouldAutoClaimOrganiserOnEv
 
   const missing = await claimOrganiserPageForListedEvent(organiser, '  ');
   assert('missing group does not claim', missing && missing.claimed === false && missing.reason === 'missing_id');
+
+  assert(
+    'signed-in organiser with their own events is claimed',
+    shouldClaimPageForExistingOrganiserEvents({
+      claimStatus: 'pending',
+      eventCount: 155,
+      signedIn: true,
+      staffListedEvents: false,
+    })
+  );
+  assert(
+    'staff-listed events stay unclaimed',
+    !shouldClaimPageForExistingOrganiserEvents({
+      claimStatus: 'pending',
+      eventCount: 2,
+      signedIn: true,
+      staffListedEvents: true,
+    })
+  );
+  assert(
+    'a provisioned login that never signed in stays unclaimed',
+    !shouldClaimPageForExistingOrganiserEvents({
+      claimStatus: 'pending',
+      eventCount: 155,
+      signedIn: false,
+      staffListedEvents: false,
+    })
+  );
+  assert(
+    'no events does not claim',
+    !shouldClaimPageForExistingOrganiserEvents({
+      claimStatus: 'pending',
+      eventCount: 0,
+      signedIn: true,
+      staffListedEvents: false,
+    })
+  );
+  assert(
+    'already claimed is left alone',
+    !shouldClaimPageForExistingOrganiserEvents({
+      claimStatus: 'claimed',
+      eventCount: 4,
+      signedIn: true,
+      staffListedEvents: false,
+    })
+  );
+  assert('staff event create log is a staff listing', isStaffEventListingRecord({ source: 'event_create' }));
+  assert(
+    'listed-an-event note is a staff listing',
+    isStaffEventListingRecord({ notes: '2026-09-16: Listed an event — “Breakfast”' })
+  );
+  assert('impersonate-only log is not a staff listing', !isStaffEventListingRecord({ source: 'impersonate', notes: 'Impersonated workspace' }));
 
   if (!process.exitCode) {
     console.log('All organiser event auto-claim checks passed');

@@ -526,6 +526,13 @@ async function enrichOrganiserListRows(sb, rows, communicationIndex) {
     ),
   ]);
 
+  try {
+    const { claimPagesWhereOrganiserListedEvents } = require('../supabase-organiser-claims');
+    await claimPagesWhereOrganiserListedEvents(sb, rows, counts);
+  } catch (e) {
+    console.warn('[admin-organisers] organiser-listed claim', e && e.message ? e.message : e);
+  }
+
   return rows.map((row) => {
     const claim = claimInviteSentAt.get(row.id) || {};
     const withClaim = {
