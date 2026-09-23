@@ -274,7 +274,7 @@
     "api/organiser.js": { "maxDuration": 60 },
     "api/organisers.js": { "maxDuration": 15 },
     "api/rankings.js": { "maxDuration": 15 },
-    "api/events.js": { "maxDuration": 15 },
+    "api/events.js": { "maxDuration": 30 },
     "api/seo.js": { "maxDuration": 15 },
     "api/sitemap.js": { "maxDuration": 15 },
     "api/opportunities.js": { "maxDuration": 15 },
