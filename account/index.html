@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>My account – The Networker UK</title>
+    <title>Attendee dashboard – The Networker UK</title>
     <meta name="robots" content="noindex, nofollow" />
     <link rel="icon" href="/favicon.ico?v=20260823uk3" sizes="any" />
     <link rel="icon" href="/assets/favicon.svg?v=20260823uk3" type="image/svg+xml" />
@@ -16,14 +16,14 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260909listmenu1" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260812footer11" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260805mobile" />
-    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260807contrib" />
+    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260922dash3" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260812footer10" />
     <script src="../js/hub-defer-css.js?v=20260828perf2" data-hrefs="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap"></script>
 
   </head>
   <body class="attendee-dashboard-page hub-page-account">
     <div id="hub-site-nav"></div>
-    <script src="../js/site-nav.js?v=20260910aff1" data-root="../" data-page="account"></script>
+    <script src="../js/site-nav.js?v=20260922dash1" data-root="../" data-page="account"></script>
 
     <div id="ad-signin" class="ad-signin">
       <p>Sign in to see event tickets you have bought, reviews to leave, and business opportunity enquiries you have sent.</p>
@@ -35,7 +35,7 @@
     <div id="ad-shell" hidden>
       <div class="ad-dashboard-layout">
         <aside class="ad-sidebar">
-          <nav class="hub-side-nav hub-side-nav--minimal ad-dash-bar" aria-label="My account">
+          <nav class="hub-side-nav hub-side-nav--minimal ad-dash-bar" aria-label="Attendee dashboard">
             <a href="#overview" class="hub-side-nav-link is-active" data-ad-route="overview">Overview</a>
             <span class="hub-side-nav-divider">Event tickets</span>
             <a href="#upcoming" class="hub-side-nav-link" data-ad-route="tickets">
@@ -71,11 +71,9 @@
           <div class="ad-wrap">
             <div id="ad-overview-header">
               <header class="ad-page-head">
-                <p class="ad-hero-kicker">My account</p>
+                <p class="ad-hero-kicker">Attendee dashboard</p>
                 <h1 class="ad-welcome-name" id="ad-welcome-name">Welcome</h1>
-                <p class="ad-welcome-sub" id="ad-welcome-sub">
-                  Everything you have bought or taken part in as an attendee — tickets, saved events and organisers, reviews, and enquiries you sent to business listings.
-                </p>
+                <p class="ad-welcome-sub" id="ad-welcome-sub">Ready when you are — find a room this week.</p>
               </header>
 
               <aside class="hub-dash-context hub-dash-context--attendee hub-dash-context--dismissible" id="ad-organiser-context" hidden>
@@ -91,7 +89,7 @@
             <header class="ad-subpage-head" id="ad-subpage-head" hidden>
               <div class="ad-subpage-head-grid">
                 <div class="ad-subpage-head-text">
-                  <p class="ad-subpage-kicker">My account</p>
+                  <p class="ad-subpage-kicker">Attendee dashboard</p>
                   <h1 class="ad-subpage-title" id="ad-subpage-title">Upcoming events</h1>
                   <p class="ad-subpage-sub" id="ad-subpage-sub"></p>
                 </div>
@@ -105,7 +103,41 @@
             <!-- Overview -->
             <section class="ad-page is-active" id="ad-page-overview" data-ad-page="overview">
               <div class="ad-overview-next" id="ad-overview-next" hidden></div>
-              <div class="ad-stats ad-stats--compact" id="ad-stats">
+              <div class="ad-overview-portals" id="ad-overview-portals">
+                <button type="button" class="ad-portal ad-portal--events" data-ad-portal="tickets">
+                  <span class="ad-portal-icon" aria-hidden="true">📅</span>
+                  <span class="ad-portal-body">
+                    <strong>Your tickets</strong>
+                    <span id="ad-portal-tickets-meta">Find a breakfast, lunch, or expo</span>
+                  </span>
+                  <span class="ad-portal-arrow" aria-hidden="true">→</span>
+                </button>
+                <button type="button" class="ad-portal ad-portal--reviews" data-ad-portal="reviews">
+                  <span class="ad-portal-icon" aria-hidden="true">★</span>
+                  <span class="ad-portal-body">
+                    <strong>Reviews</strong>
+                    <span id="ad-portal-reviews-meta">After events you attend</span>
+                  </span>
+                  <span class="ad-portal-arrow" aria-hidden="true">→</span>
+                </button>
+                <button type="button" class="ad-portal ad-portal--saved" data-ad-portal="saved">
+                  <span class="ad-portal-icon" aria-hidden="true">♥</span>
+                  <span class="ad-portal-body">
+                    <strong>Saved</strong>
+                    <span id="ad-portal-saved-meta">Heart events and groups you like</span>
+                  </span>
+                  <span class="ad-portal-arrow" aria-hidden="true">→</span>
+                </button>
+              </div>
+              <p class="ad-overview-discover" id="ad-overview-discover">
+                <a href="../events/">Browse events</a>
+                <a href="/opportunities/">Opportunities</a>
+                <a href="/events/?mode=organisers">Organisers</a>
+              </p>
+              <div class="ad-overview-empty" id="ad-overview-empty" hidden>
+                <p>Nothing coming up. <a href="../events/">Browse events</a> when you are ready.</p>
+              </div>
+              <div class="ad-stats ad-stats--compact" id="ad-stats" hidden>
                 <button type="button" class="ad-stat ad-stat--purple ad-stat-link" data-ad-stat-route="upcoming" aria-label="View upcoming events">
                   <div class="ad-stat-label"><span class="ad-stat-label-full">Upcoming events</span><span class="ad-stat-label-short">Upcoming</span></div>
                   <div class="ad-stat-value" id="ad-stat-upcoming" aria-live="polite">—</div>
@@ -663,7 +695,7 @@
         </div>
       </div>
 
-      <nav class="ad-bottom-nav" aria-label="My account sections">
+      <nav class="ad-bottom-nav" aria-label="Attendee dashboard sections">
         <a href="#overview" class="ad-bottom-nav-link is-active" data-ad-route="overview">
           <span class="ad-bottom-nav-icon" aria-hidden="true">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg>
@@ -932,6 +964,6 @@
     <script src="../js/hub-calendar-share.js?v=20260609a" defer></script>
     <script src="../js/hub-going-share.js?v=20260714share2" defer></script>
     <script src="../js/hub-side-nav.js?v=20260805hubmobile2" defer></script>
-    <script src="../js/attendee-dashboard.js?v=20260828perf1" defer></script>
+    <script src="../js/attendee-dashboard.js?v=20260922dash3" defer></script>
   </body>
 </html>
