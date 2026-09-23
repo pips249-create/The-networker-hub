@@ -17,6 +17,9 @@
   const EVENTS_FETCH_SIZE = 100;
   /** Avoid freezing the tab by paging an entire franchise catalogue into memory. */
   const EVENTS_FULL_LOAD_MAX = 200;
+  const BOOTSTRAP_TIMEOUT_MS = 45000;
+  const BOOTSTRAP_FALLBACK_TIMEOUT_MS = 15000;
+  const ATTENDEES_TIMEOUT_MS = 25000;
 
   function orgPageSize() {
     if (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) {
@@ -101,6 +104,7 @@
     tickets: [],
     attendeesAll: [],
     attendeesLoaded: false,
+    attendeesTruncated: false,
     attendeeBlocks: [],
     pendingApplicationsCount: 0,
     pendingApplicationsPreview: [],
@@ -4041,6 +4045,29 @@
     }
   }
 
+  function isTimeoutError(e) {
+    return Boolean(e && /timed out/i.test(String((e && e.message) || '')));
+  }
+
+  async function fetchOrganiserBootstrap(prefetch) {
+    try {
+      return await (prefetch || apiWithTimeout('/api/organiser/bootstrap', {}, BOOTSTRAP_TIMEOUT_MS));
+    } catch (e) {
+      try {
+        const fallback = await apiWithTimeout(
+          '/api/organiser/bootstrap?groupsOnly=1',
+          {},
+          BOOTSTRAP_FALLBACK_TIMEOUT_MS
+        );
+        if (!fallback || !fallback.ok) throw e;
+        fallback.data = Object.assign({ partial: true }, fallback.data || {});
+        return fallback;
+      } catch {
+        throw e;
+      }
+    }
+  }
+
   function formatDate(raw) {
     if (!raw) return '—';
     const d = new Date(raw);
@@ -7005,10 +7032,15 @@
       errEl.textContent = '';
     }
     try {
-      const { ok, data } = await api('/api/organiser/attendees?eventId=all');
+      const { ok, data } = await apiWithTimeout(
+        '/api/organiser/attendees?eventId=all',
+        {},
+        ATTENDEES_TIMEOUT_MS
+      );
       if (ok) {
         state.attendeesAll = data.attendees || [];
         state.attendeeBlocks = data.blocks || [];
+        state.attendeesTruncated = Boolean(data.truncated);
         state.attendeesLoaded = true;
         maybeRelaxAttendeesHideArchived();
         maybeClearAttendeesPendingFilter();
@@ -18239,7 +18271,7 @@
     if (!silent) setDashboardLoading(true);
     let postReady = null;
     try {
-    const { ok, data } = await (prefetch || apiWithTimeout('/api/organiser/bootstrap', {}, 30000));
+    const { ok, data } = await fetchOrganiserBootstrap(prefetch);
     if (!ok) throw new Error(data.message || data.error || 'load_failed');
     cacheBootstrapForEmbed(data);
     state.groups = dedupeGroupsById(data.groups || []);
@@ -18364,7 +18396,14 @@
       state.dashboardScope = null;
     }
 
-    if (!silent) showOrganiserAlert(null);
+    if (data.partial) {
+      showOrganiserAlert(
+        'Dashboard opened with a quicker snapshot — attendees and events will finish loading in this tab.',
+        false
+      );
+    } else if (!silent) {
+      showOrganiserAlert(null);
+    }
     showOrganiserEmailVerifyBanner();
 
     applyPendingGroupSave();
@@ -18449,7 +18488,15 @@
   }
 
   async function refresh() {
-    await loadBootstrap({ silent: true });
+    try {
+      await loadBootstrap({ silent: true });
+    } catch (e) {
+      // Silent refresh (pageshow / hash / scope) must not become an unhandled
+      // rejection — that was the Sentry "Request timed out" on #events-list.
+      if (typeof console !== 'undefined' && console.warn) {
+        console.warn('[organiser] silent refresh failed', e && e.message ? e.message : e);
+      }
+    }
   }
 
   let groupLogoFile = null;
@@ -20123,7 +20170,7 @@
       }
 
       // Start bootstrap while binding the large DOM — overlaps network with CPU work.
-      const bootstrapPrefetch = apiWithTimeout('/api/organiser/bootstrap', {}, 30000);
+      const bootstrapPrefetch = apiWithTimeout('/api/organiser/bootstrap', {}, BOOTSTRAP_TIMEOUT_MS);
       bindForms();
       bindTeamUi();
       bindOnboardingPipeline();

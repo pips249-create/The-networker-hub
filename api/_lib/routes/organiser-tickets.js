@@ -92,7 +92,7 @@ module.exports = async function handler(req, res) {
         return json(res, 200, { ok: true, tickets });
       }
       const { groupIds, adminView } = await ownedEventIds();
-      const ids = await listEventIdsForOrganiserGroups(groupIds, adminView);
+      const ids = await listEventIdsForOrganiserGroups(groupIds, false);
       const tickets = await listTicketsForSession(auth.session, ids);
       return json(res, 200, { ok: true, tickets });
     } catch (e) {
