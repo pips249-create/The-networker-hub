@@ -49,6 +49,7 @@ const lean = fs.readFileSync(path.join(root, 'api/_lib/supabase-organiser-events
 const attendees = fs.readFileSync(path.join(root, 'api/_lib/routes/organiser-attendees.js'), 'utf8');
 const scope = fs.readFileSync(path.join(root, 'api/_lib/organiser-api-scope.js'), 'utf8');
 const bootstrap = fs.readFileSync(path.join(root, 'api/_lib/routes/organiser-bootstrap.js'), 'utf8');
+const sentry = fs.readFileSync(path.join(root, 'js/hub-sentry.js'), 'utf8');
 
 assert(
   'dashboard has a groups-only bootstrap fallback after timeout',
@@ -61,9 +62,14 @@ assert(
   /const BOOTSTRAP_TIMEOUT_MS = 45000/.test(dash)
 );
 assert(
-  'silent refresh catches bootstrap failures so Sentry is not flooded',
-  /async function refresh\(\)/.test(dash) &&
+  'silent refresh defaults to groups-only so hash/pageshow cannot re-hit lean bootstrap',
+  /async function refresh\(options\)/.test(dash) &&
+    /groupsOnly: !full/.test(dash) &&
     /silent refresh failed/.test(dash)
+);
+assert(
+  'scope switches still request a full workspace refresh',
+  /refresh\(\{\s*full:\s*true\s*\}\)/.test(dash)
 );
 assert(
   'attendees list uses a bounded timeout instead of hanging the tab',
@@ -72,7 +78,11 @@ assert(
 );
 assert(
   'HTML cache key bumped so browsers pick up the timeout fix',
-  /organiser-dashboard\.js\?v=20260922dashtimeout/.test(html)
+  /organiser-dashboard\.js\?v=20260923refreshlite/.test(html)
+);
+assert(
+  'Sentry ignores handled bootstrap timeout noise',
+  /Request timed out/i.test(sentry)
 );
 assert(
   'lean admin bootstrap skips event summaries',

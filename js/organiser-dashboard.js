@@ -4049,7 +4049,20 @@
     return Boolean(e && /timed out/i.test(String((e && e.message) || '')));
   }
 
-  async function fetchOrganiserBootstrap(prefetch) {
+  async function fetchOrganiserBootstrap(prefetch, options) {
+    // Nav / pageshow soft-refresh: never wait on the heavy lean workspace.
+    // Scope switches and mutations pass groupsOnly:false (full bootstrap + fallback).
+    if (options && options.groupsOnly && !prefetch) {
+      const lite = await apiWithTimeout(
+        '/api/organiser/bootstrap?groupsOnly=1',
+        {},
+        BOOTSTRAP_FALLBACK_TIMEOUT_MS
+      );
+      if (lite && lite.ok && lite.data) {
+        lite.data = Object.assign({ lite: true }, lite.data);
+      }
+      return lite;
+    }
     try {
       return await (prefetch || apiWithTimeout('/api/organiser/bootstrap', {}, BOOTSTRAP_TIMEOUT_MS));
     } catch (e) {
@@ -10665,7 +10678,7 @@
     closePayoutModal();
     closeModals();
     showOrganiserAlert(data.message || 'Payout request submitted.', false);
-    await refresh();
+    await refresh({ full: true });
     setRoute('events-revenue');
   }
 
@@ -10690,7 +10703,7 @@
       return;
     }
     showOrganiserAlert(data.message || 'Refunds verified.', false);
-    await refresh();
+    await refresh({ full: true });
     setRoute('events-revenue');
   }
 
@@ -11910,7 +11923,7 @@
     renderVisibilityHubMeta();
     if (!state.eventsLoaded || !state.opportunitiesLoaded) {
       requestAnimationFrame(function () {
-        if (!state.eventsLoaded) refresh();
+        if (!state.eventsLoaded) refresh({ full: true });
         if (!state.opportunitiesLoaded) {
           loadOpportunitiesList().then(function () {
             renderVisibilityHubMeta();
@@ -13921,12 +13934,12 @@
     if (e.target.id === 'btn-scope-my') {
       setOrganiserScopeCookie('my');
       closeNotificationsPanel();
-      refresh();
+      refresh({ full: true });
     }
     if (e.target.id === 'btn-scope-all') {
       setOrganiserScopeCookie('all');
       closeNotificationsPanel();
-      refresh();
+      refresh({ full: true });
     }
   }
 
@@ -18285,17 +18298,33 @@
     const silent = Boolean(options && options.silent);
     const skipClaimUi = Boolean(options && options.skipClaimUi);
     const skipRenderIfGroupDrawer = Boolean(options && options.skipRenderIfGroupDrawer);
+    const groupsOnly = Boolean(options && options.groupsOnly);
     const prefetch = options && options.prefetch;
     if (!silent) setDashboardLoading(true);
     let postReady = null;
     try {
-    const { ok, data } = await fetchOrganiserBootstrap(prefetch);
+    const { ok, data } = await fetchOrganiserBootstrap(prefetch, { groupsOnly: groupsOnly });
     if (!ok) throw new Error(data.message || data.error || 'load_failed');
+    // groupsOnly / timeout-fallback payloads omit claims, permissions, and event
+    // summaries — keep whatever the shell already has so soft-refresh cannot wipe UI.
+    const lite = groupsOnly || Boolean(data.partial) || Boolean(data.lite);
     cacheBootstrapForEmbed(data);
     state.groups = dedupeGroupsById(data.groups || []);
-    state.pendingClaimGroups = sortPendingClaimGroups(data.pendingClaimGroups || []);
-    state.pendingClaimOpportunities = data.pendingClaimOpportunities || [];
-    state.pendingSetupReviews = data.pendingSetupReviews || [];
+    if (!lite) {
+      state.pendingClaimGroups = sortPendingClaimGroups(data.pendingClaimGroups || []);
+      state.pendingClaimOpportunities = data.pendingClaimOpportunities || [];
+      state.pendingSetupReviews = data.pendingSetupReviews || [];
+    } else {
+      if (Array.isArray(data.pendingClaimGroups) && data.pendingClaimGroups.length) {
+        state.pendingClaimGroups = sortPendingClaimGroups(data.pendingClaimGroups);
+      }
+      if (Array.isArray(data.pendingClaimOpportunities) && data.pendingClaimOpportunities.length) {
+        state.pendingClaimOpportunities = data.pendingClaimOpportunities;
+      }
+      if (Array.isArray(data.pendingSetupReviews) && data.pendingSetupReviews.length) {
+        state.pendingSetupReviews = data.pendingSetupReviews;
+      }
+    }
     const incomingEvents = Array.isArray(data.events) ? data.events : [];
     const incomingUpcoming = Array.isArray(data.upcomingEvents) ? data.upcomingEvents : [];
     const incomingTickets = Array.isArray(data.tickets) ? data.tickets : [];
@@ -18351,8 +18380,10 @@
     if (!state.eventsLoaded) {
       state.eventsFullyLoaded = !state.eventsHasMore;
     }
-    state.pendingApplicationsCount = Number(data.pendingApplications?.count) || 0;
-    state.pendingApplicationsPreview = data.pendingApplications?.preview || [];
+    if (!lite) {
+      state.pendingApplicationsCount = Number(data.pendingApplications?.count) || 0;
+      state.pendingApplicationsPreview = data.pendingApplications?.preview || [];
+    }
     if (!silent) {
       state.attendeesLoaded = false;
       state.attendeesAll = [];
@@ -18362,27 +18393,35 @@
       loadCancellationsAll().then(() => renderCancellations());
     }
     state.groupsError = data.groupsError;
-    state.adminView = data.adminView;
-    state.personalScope = data.personalScope;
-    state.isAdmin = data.isAdmin;
+    if (typeof data.adminView === 'boolean') state.adminView = data.adminView;
+    if (typeof data.personalScope === 'boolean') state.personalScope = data.personalScope;
+    if (typeof data.isAdmin === 'boolean') state.isAdmin = data.isAdmin;
     if (data.user) {
       state.user = { ...state.user, ...data.user };
     }
-    state.canManageTeam = data.canManageTeam !== false;
-    state.canDeleteEvents = data.canDeleteEvents !== false;
-    state.canManagePayments = data.canManagePayments !== false;
-    state.canCreateGroups = data.canCreateGroups !== false;
-    state.canManageEvents = data.canManageEvents !== false;
-    state.canViewRevenue = data.canViewRevenue !== false;
-    state.canViewRegistrations = data.canViewRegistrations !== false;
-    state.canAccessPromote = data.canAccessPromote !== false;
-    state.canAccessCommunicate = data.canAccessCommunicate !== false;
-    state.isMarketing = data.isMarketing === true || data.organiserRole === 'marketing';
-    state.organiserRole = data.organiserRole || 'owner';
-    state.useTeamWorkspace = Boolean(data.useTeamWorkspace);
-    state.stripeConnectEnabled = Boolean(data.stripeConnectEnabled);
-    state.organiserAccess = data.organiserAccess === true;
-    state.organiserEmailVerified = data.organiserEmailVerified === true;
+    if (!lite) {
+      state.canManageTeam = data.canManageTeam !== false;
+      state.canDeleteEvents = data.canDeleteEvents !== false;
+      state.canManagePayments = data.canManagePayments !== false;
+      state.canCreateGroups = data.canCreateGroups !== false;
+      state.canManageEvents = data.canManageEvents !== false;
+      state.canViewRevenue = data.canViewRevenue !== false;
+      state.canViewRegistrations = data.canViewRegistrations !== false;
+      state.canAccessPromote = data.canAccessPromote !== false;
+      state.canAccessCommunicate = data.canAccessCommunicate !== false;
+      state.isMarketing = data.isMarketing === true || data.organiserRole === 'marketing';
+      state.organiserRole = data.organiserRole || 'owner';
+      state.useTeamWorkspace = Boolean(data.useTeamWorkspace);
+    }
+    if (typeof data.stripeConnectEnabled === 'boolean') {
+      state.stripeConnectEnabled = data.stripeConnectEnabled;
+    }
+    if (typeof data.organiserAccess === 'boolean') {
+      state.organiserAccess = data.organiserAccess;
+    }
+    if (typeof data.organiserEmailVerified === 'boolean') {
+      state.organiserEmailVerified = data.organiserEmailVerified;
+    }
     applyMarketingWorkspaceUi();
     if (isMarketingWorkspace()) {
       const currentHash = (location.hash.replace('#', '') || '').trim().toLowerCase();
@@ -18414,7 +18453,8 @@
       state.dashboardScope = null;
     }
 
-    if (data.partial) {
+    // Only surface the timeout-fallback snapshot on a visible first load.
+    if (data.partial && !silent && !groupsOnly) {
       showOrganiserAlert(
         'Dashboard opened with a quicker snapshot — attendees and events will finish loading in this tab.',
         false
@@ -18505,12 +18545,15 @@
     }
   }
 
-  async function refresh() {
+  async function refresh(options) {
+    // Default soft-refresh is groups-only so pageshow / hash / bottom-nav cannot
+    // re-hit the 45s lean bootstrap (Sentry: refresh → loadBootstrap → apiWithTimeout).
+    // Pass { full: true } after mutations or scope switches that need fresh workspace data.
+    const full = Boolean(options && options.full);
     try {
-      await loadBootstrap({ silent: true });
+      await loadBootstrap({ silent: true, groupsOnly: !full });
     } catch (e) {
-      // Silent refresh (pageshow / hash / scope) must not become an unhandled
-      // rejection — that was the Sentry "Request timed out" on #events-list.
+      // Silent refresh must not become an unhandled rejection.
       if (typeof console !== 'undefined' && console.warn) {
         console.warn('[organiser] silent refresh failed', e && e.message ? e.message : e);
       }
@@ -18659,7 +18702,7 @@
       closeModals();
       document.getElementById('form-group').reset();
       resetGroupLogoPicker();
-      await refresh();
+      await refresh({ full: true });
       setRoute('groups');
       if (logoWarning) alert(logoWarning);
       else if (logoResolutionWarning) alert(logoResolutionWarning);
@@ -18706,7 +18749,7 @@
           : 'Free';
       closeModals();
       document.getElementById('form-ticket').reset();
-      await refresh();
+      await refresh({ full: true });
       setRoute('events-tickets');
       let message =
         '<strong>Ticket created.</strong> “' +
@@ -19938,6 +19981,12 @@
             'That event is no longer available — it may have been deleted. Check My Events for your current listings.',
             true
           );
+        }).catch(function () {
+          setRoute('events-list');
+          showOrganiserAlert(
+            'That event is no longer available — it may have been deleted. Check My Events for your current listings.',
+            true
+          );
         });
         return;
       }
@@ -20079,6 +20128,8 @@
         }
         loadBootstrap({ silent: true }).then(function () {
           renderAll();
+          showOrganiserAlert('Your event is live.', false);
+        }).catch(function () {
           showOrganiserAlert('Your event is live.', false);
         });
         return;

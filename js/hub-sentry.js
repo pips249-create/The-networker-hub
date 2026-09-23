@@ -143,7 +143,12 @@
       dsn: DSN,
       environment: env,
       sendDefaultPii: false,
-      ignoreErrors: ['NetworkError: A network error occurred.'],
+      ignoreErrors: [
+        'NetworkError: A network error occurred.',
+        // Soft-refresh bootstrap aborts are handled in the organiser dashboard;
+        // keep older cached clients from flooding Sentry while immutable JS ages out.
+        /Request timed out/i,
+      ],
       beforeSend: beforeSend,
     });
   }
