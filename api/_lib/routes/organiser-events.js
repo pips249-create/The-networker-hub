@@ -33,6 +33,15 @@ function normalizeOccurrences(body) {
   return single ? [{ date: single, endDate: body.endDate || '' }] : [];
 }
 
+/** When PATCH omits dates (e.g. Connected setup publish), keep the event’s existing schedule. */
+function occurrencesFromExistingEvent(existing) {
+  if (!existing) return [];
+  const date = String(existing.date || existing.startsAt || existing.starts_at || '').trim();
+  if (!date) return [];
+  const endDate = String(existing.endDate || existing.endsAt || existing.ends_at || '').trim();
+  return [{ date, endDate }];
+}
+
 function eventPayloadFromBody(body, email) {
   const payload = {
     email,
@@ -71,7 +80,37 @@ function eventPayloadFromBody(body, email) {
   } else if (body.publish === true || body.publish === 'true') {
     payload.listingStatus = 'published';
   }
+  if (Object.prototype.hasOwnProperty.call(body, 'checkoutMode') || Object.prototype.hasOwnProperty.call(body, 'checkout_mode')) {
+    payload.checkoutMode = body.checkoutMode || body.checkout_mode;
+  }
+  if (Object.prototype.hasOwnProperty.call(body, 'externalBookingUrl') || Object.prototype.hasOwnProperty.call(body, 'external_booking_url')) {
+    payload.externalBookingUrl = body.externalBookingUrl || body.external_booking_url;
+  }
+  if (Object.prototype.hasOwnProperty.call(body, 'externalPriceLabel') || Object.prototype.hasOwnProperty.call(body, 'external_price_label')) {
+    payload.externalPriceLabel = body.externalPriceLabel || body.external_price_label;
+  }
+  payload._editorEmail = String(email || '').trim();
   return payload;
+}
+
+function connectedBookingPayloadBlocked(session, body) {
+  const { connectedBookingAllowedForEmail, CHECKOUT_EXTERNAL } = require('../connected-booking');
+  const mode = String(body.checkoutMode || body.checkout_mode || '').trim();
+  const touchesExternal =
+    mode === CHECKOUT_EXTERNAL ||
+    Object.prototype.hasOwnProperty.call(body, 'externalBookingUrl') ||
+    Object.prototype.hasOwnProperty.call(body, 'external_booking_url') ||
+    Object.prototype.hasOwnProperty.call(body, 'externalPriceLabel') ||
+    Object.prototype.hasOwnProperty.call(body, 'external_price_label');
+  if (!touchesExternal) return null;
+  if (connectedBookingAllowedForEmail(session?.email)) return null;
+  return {
+    status: 403,
+    body: {
+      error: 'connected_booking_not_available',
+      message: 'Connected booking is not available on your account yet.',
+    },
+  };
 }
 
 function validateEventDescription(body) {
@@ -216,6 +255,8 @@ module.exports = async function handler(req, res) {
       return json(res, manageGate.status, { error: manageGate.error, message: manageGate.message });
     }
     const body = parseBody(req);
+    const cbBlocked = connectedBookingPayloadBlocked(auth.session, body);
+    if (cbBlocked) return json(res, cbBlocked.status, cbBlocked.body);
     const publishBlocked = await requireVerifiedForPublish(body);
     if (publishBlocked) return publishBlocked;
     const eventId = String(body.id || body.eventId || req.query?.id || '').trim();
@@ -226,7 +267,6 @@ module.exports = async function handler(req, res) {
       if (!access.ok) return json(res, 403, EVENT_NOT_OWNED);
       const { groups } = access;
       validateEventDescription(body);
-      const occ = normalizeOccurrences(body);
       const base = eventPayloadFromBody(body, auth.session.email);
       if (!base.title) return json(res, 400, { error: 'missing_title' });
       if (!base.groupId) return json(res, 400, { error: 'missing_group' });
@@ -234,12 +274,17 @@ module.exports = async function handler(req, res) {
         return json(res, 403, { error: 'group_not_owned' });
       }
 
+      const existing = await getEventById(eventId);
+      let occ = normalizeOccurrences(body);
+      if (!occ.length) {
+        occ = occurrencesFromExistingEvent(existing);
+      }
+
       const listingStatus = String(base.listingStatus || 'draft').toLowerCase();
       const isDraft = listingStatus === 'draft';
       if (!occ.length && !isDraft) {
         return json(res, 400, { error: 'missing_dates', message: 'Select at least one date before publishing.' });
       }
-      const existing = await getEventById(eventId);
       const seriesGroupId = resolveSeriesGroupId(existing.seriesGroupId, occ.length);
       const synced = await syncSeriesOccurrencesForEvent(eventId, {
         base,
@@ -390,6 +435,9 @@ module.exports = async function handler(req, res) {
         return jsonPublicError(res, json, e, { code: e.code || 'event_republish_failed', logLabel: '[organiser-events]' });
       }
     }
+
+    const cbBlocked = connectedBookingPayloadBlocked(auth.session, body);
+    if (cbBlocked) return json(res, cbBlocked.status, cbBlocked.body);
 
     const title = String(body.title || '').trim();
     const groupId = String(body.organiserGroupId || body.groupId || '').trim();

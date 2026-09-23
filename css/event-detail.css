@@ -2188,6 +2188,19 @@ a:hover {
   display: none !important;
 }
 
+/* Free visit / £0 booking: no fee breakdown until a paid ticket is selected */
+.ticket-panel.is-free-booking .summary,
+.ticket-panel.is-free-booking .summary-fee-note,
+.ticket-panel.is-free-booking .ticket-vat-note,
+.ticket-panel.is-free-booking #ticket-secure-foot {
+  display: none !important;
+}
+
+.ticket-panel.is-free-booking.is-qty-locked .qty-row,
+.ticket-panel.is-free-booking.is-qty-locked .qty-avail-hint {
+  display: none !important;
+}
+
 .ticket-panel.is-approval-mode .ticket-tiers {
   margin-bottom: 16px;
 }

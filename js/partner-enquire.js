@@ -41,8 +41,14 @@
       document.getElementById('partner-enquire-website')?.value || ''
     ).trim();
 
+    var agreedToTerms = Boolean(document.getElementById('partner-enquire-terms')?.checked);
+
     if (!name || !email || !audience) {
       setStatus('Please fill in your name, email, and who you can introduce.', true);
+      return;
+    }
+    if (!agreedToTerms) {
+      setStatus('Please read and agree to the Referral Partner Terms before applying.', true);
       return;
     }
 
@@ -58,6 +64,7 @@
           audience: audience,
           message: message,
           website: website,
+          agreedToTerms: true,
         };
         if (token) payload.turnstileToken = token;
         return fetch('/api/partner-enquire', {

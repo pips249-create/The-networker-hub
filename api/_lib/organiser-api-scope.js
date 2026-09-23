@@ -61,7 +61,9 @@ async function resolveOrganiserApiScope(req) {
 
   let eventIds = [];
   try {
-    eventIds = await listEventIdsForOrganiserGroups(groupIds, adminView);
+    // Never pass adminView as "all platform events" — that made Attendees scan
+    // every registration when an admin opened My events.
+    eventIds = await listEventIdsForOrganiserGroups(groupIds, false);
   } catch (e) {
     return {
       ok: false,

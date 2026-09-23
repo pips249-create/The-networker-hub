@@ -15,6 +15,28 @@
     return p || '/';
   }
 
+  function deckSlugFromQuery() {
+    try {
+      var q = String(new URLSearchParams(window.location.search || '').get('slug') || '')
+        .trim()
+        .toLowerCase();
+      if (/^custom-[a-z0-9-]+$/.test(q)) return q;
+    } catch (e) {
+      /* ignore */
+    }
+    return '';
+  }
+
+  /** Pretty /p-tnh-custom-* URLs and tailored deck shell ?slug= map to one analytics path. */
+  function pitchAnalyticsPath() {
+    var path = normalizePath(window.location.pathname);
+    if (path === '/p-tnh-custom-deck') {
+      var slug = deckSlugFromQuery();
+      if (slug) return '/p-tnh-' + slug;
+    }
+    return path;
+  }
+
   function isPitchPath(path) {
     return /^\/p-tnh-[a-z0-9-]+$/.test(path);
   }
@@ -42,7 +64,7 @@
 
   function record(action, extra) {
     if (isLocalHost()) return;
-    var path = normalizePath(window.location.pathname);
+    var path = pitchAnalyticsPath();
     if (!isPitchPath(path)) return;
     var act = String(action || 'view')
       .trim()
@@ -60,7 +82,7 @@
 
   function recordViewOnce() {
     if (isLocalHost()) return;
-    var path = normalizePath(window.location.pathname);
+    var path = pitchAnalyticsPath();
     if (!isPitchPath(path)) return;
     var key = SESSION_KEY_PREFIX + path;
     try {

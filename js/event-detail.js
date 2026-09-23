@@ -1249,6 +1249,12 @@
       ev.priceKey === 'free' ? 'Free' : publicListingPriceLabel(ev, { withFrom: false });
   }
 
+  function eventIsExternalConnected(ev) {
+    if (!ev || !String(ev.externalBookingUrl || '').trim()) return false;
+    if (String(ev.checkoutMode || '').trim() === 'external_connected') return true;
+    return Boolean(String(ev.externalPriceLabel || '').trim());
+  }
+
   function normalizeEventFlags(ev, params) {
     const p = params || new URLSearchParams(window.location.search);
     const approvalFromTickets = (ev.tickets || []).some(tierIsApplication);
@@ -2996,8 +3002,39 @@
     const urgencyEl = document.getElementById('ev-urgency');
     if (!tiersEl) return;
 
+    if (eventIsExternalConnected(ev)) {
+      tiersEl.innerHTML = '';
+      const note = document.createElement('p');
+      note.className = 'ticket-load-hint';
+      note.textContent =
+        ev.externalBookingDisclaimer ||
+        'Tickets are sold on the organiser\u2019s website. The Networker UK does not process payment for this event.';
+      tiersEl.appendChild(note);
+      if (urgencyEl) urgencyEl.textContent = '';
+      const buy = document.getElementById('buy-btn');
+      const organiserName = ev.organiser || ev.organiserName || 'the organiser';
+      if (buy && !ev.isEventPast && ev.ticketSalesEnabled !== false) {
+        buy.disabled = false;
+        buy.classList.remove('cta-btn-disabled');
+        buy.textContent = 'Book on ' + organiserName + '\u2019s website';
+      }
+      syncPaidCheckoutPanel('', 1, 0);
+      return;
+    }
+
     const tiers = ticketTiersForEvent(ev);
     const salesPending = Boolean(ev.isTicketSalesPending || ev.isTicketSalesScheduled);
+    if (ev.isTicketSalesPending && !ev.isTicketSalesScheduled) {
+      tiersEl.innerHTML = '';
+      const pendingHint = document.createElement('p');
+      pendingHint.className = 'ticket-load-hint';
+      pendingHint.textContent =
+        'Ticket sales are not open on The Networker UK yet. Use the button below to nudge the organiser.';
+      tiersEl.appendChild(pendingHint);
+      if (urgencyEl) urgencyEl.textContent = '';
+      syncPaidCheckoutPanel('', 1, 0);
+      return;
+    }
     const panelClosed = ev.isSoldOut || (ev.isSalesClosed && !salesPending);
     const isCategoryExclusivity = eventIsCategoryExclusivity(ev);
     const isGuestProg = eventIsGuestProgramme(ev);
@@ -3483,7 +3520,6 @@
   function showCheckoutDetails(show) {
     const panel = document.getElementById('tickets');
     const form = document.getElementById('checkout-details-form');
-    const secureFoot = document.getElementById('ticket-secure-foot');
     if (panel) {
       panel.classList.toggle('show-checkout', show);
       if (show) panel.classList.remove('show-application');
@@ -3494,7 +3530,7 @@
     }
     const freeDataSharingNote = document.getElementById('checkout-free-data-sharing-note');
     if (freeDataSharingNote && !show) freeDataSharingNote.hidden = true;
-    if (secureFoot && !show) secureFoot.hidden = false;
+    // Paid/free visibility for #ticket-secure-foot is owned by syncPaidCheckoutPanel.
     if (!show) setCheckoutSubmitting(false);
     refreshTicketJumpVisibility();
   }
@@ -4235,6 +4271,45 @@
     const scheduledPanel = document.getElementById('ticket-sales-scheduled');
     if (!panel || !buy) return;
 
+    if (eventIsExternalConnected(ev)) {
+      panel.classList.remove(
+        'is-unavailable',
+        'is-sales-pending',
+        'is-sales-scheduled',
+        'is-approval-mode',
+        'is-free-booking',
+        'is-qty-locked',
+        'show-application',
+        'show-checkout'
+      );
+      showSeatApplication(false);
+      showCheckoutDetails(false);
+      if (nudgePanel) nudgePanel.hidden = true;
+      if (scheduledPanel) scheduledPanel.hidden = true;
+      const alertPanelReset = document.getElementById('ticket-sales-alert');
+      if (alertPanelReset) alertPanelReset.hidden = true;
+      if (purchaseView) purchaseView.hidden = false;
+      const organiserName = ev.organiser || ev.organiserName || 'the organiser';
+      if (ev.isEventPast) {
+        panel.classList.add('is-unavailable');
+        buy.disabled = true;
+        buy.classList.add('cta-btn-disabled');
+        buy.textContent = 'Event ended';
+      } else if (ev.ticketSalesEnabled === false || !String(ev.externalBookingUrl || '').trim()) {
+        panel.classList.add('is-unavailable');
+        buy.disabled = true;
+        buy.classList.add('cta-btn-disabled');
+        buy.textContent = 'Booking not available';
+      } else {
+        buy.disabled = false;
+        buy.classList.remove('cta-btn-disabled');
+        buy.textContent = 'Book on ' + organiserName + '\u2019s website';
+      }
+      applyEventApplicationUi(ev);
+      updateTicketJumpBar(ev);
+      return;
+    }
+
     // Client safety net: platform soft-launch locks buying + interest nudges until 1 September.
     if (
       window.HubSoftLaunch &&
@@ -4265,6 +4340,8 @@
       'is-sales-pending',
       'is-sales-scheduled',
       'is-approval-mode',
+      'is-free-booking',
+      'is-qty-locked',
       'show-application',
       'show-checkout'
     );
@@ -4538,6 +4615,7 @@
       else if (showAlumniTierSelected(ev)) labelText = 'Previous attendee ticket';
       else labelText = 'Apply for a seat';
     }
+    else if (eventIsExternalConnected(ev)) labelText = 'Book on organiser site';
     else if (ev.priceKey === 'free') labelText = 'Get free ticket';
     else labelText = 'Buy ticket';
 
@@ -5097,9 +5175,24 @@
       if (qtyValue) qtyValue.textContent = String(qty);
       qtyDown.disabled = qty <= 1 || bundleSelected || passSelected;
       qtyUp.disabled = qty >= maxQty || bundleSelected || passSelected;
-      if (qtyRow) qtyRow.hidden = bundleSelected || passSelected;
+
+      // Free bookings: no fee breakdown / "Secure checkout" until payment is required.
+      // Guest visits (and other qty-locked free tiers) also hide the quantity stepper.
+      const isFreeBooking = !(totals.total > 0);
+      const freeVisitSelected = Boolean(evNow && showGuestVisitSelected(evNow));
+      const hideFreeQty =
+        isFreeBooking && (freeVisitSelected || maxQty <= 1);
+      const summaryEl = document.querySelector('#tickets .summary');
+      if (summaryEl) summaryEl.hidden = isFreeBooking;
+      if (qtyRow) {
+        qtyRow.hidden = bundleSelected || passSelected || hideFreeQty;
+      }
+
       if (qtyHint) {
-        if (bundleSelected) {
+        if (hideFreeQty) {
+          qtyHint.hidden = true;
+          qtyHint.textContent = '';
+        } else if (bundleSelected) {
           qtyHint.hidden = false;
           qtyHint.textContent = 'Booking all remaining dates in one checkout.';
         } else if (passSelected) {
@@ -5116,8 +5209,15 @@
           qtyHint.textContent = '';
         }
       }
-      syncPaidCheckoutPanel(label, billQty, totals.total);
+
+      // Panel state resets checkout form / classes first — restore free-booking UI after.
       if (evNow) applyTicketPanelState(evNow);
+      const panel = document.getElementById('tickets');
+      if (panel) {
+        panel.classList.toggle('is-free-booking', isFreeBooking);
+        panel.classList.toggle('is-qty-locked', hideFreeQty);
+      }
+      syncPaidCheckoutPanel(label, billQty, totals.total);
     }
 
     if (bundleCheck && !bundleCheck.dataset.bound) {
@@ -5361,6 +5461,16 @@
         buy.disabled = true;
 
         try {
+        if (eventIsExternalConnected(evNow)) {
+          const raw = String(evNow.externalBookingUrl || '').trim();
+          const url =
+            window.HubExternalBookingUrl &&
+            typeof window.HubExternalBookingUrl.toAttendeeBookingUrl === 'function'
+              ? window.HubExternalBookingUrl.toAttendeeBookingUrl(raw)
+              : raw;
+          if (url) window.open(url, '_blank', 'noopener,noreferrer');
+          return;
+        }
         if (registrationIsConfirmedGoing(eventApplicationState)) {
           await refreshEventApplicationUi(evNow);
           return;

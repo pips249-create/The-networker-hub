@@ -246,6 +246,38 @@ module.exports = async function handler(req, res) {
       }
     }
 
+    if (action === 'republish' && actionGroupId) {
+      try {
+        const verified = await assertOrganiserEmailVerified(auth.session);
+        if (!verified.ok) {
+          return json(res, verified.status, {
+            error: verified.error,
+            message: verified.message,
+          });
+        }
+        const { groups } = await ownedGroupsForRequest(req, auth.session);
+        if (!api.groupOwnedBySession(auth.session, groups, actionGroupId)) {
+          return json(res, 403, { error: 'group_not_owned' });
+        }
+        const updated = await api.republishGroup(actionGroupId);
+        const group = await api.enrichGroupForDashboard(
+          updated,
+          auth.session,
+          adminViewForRequest(req, auth.session)
+        );
+        return json(res, 200, {
+          ok: true,
+          group,
+          message: 'Organiser page republished — it is live on the directory again.',
+        });
+      } catch (e) {
+        return jsonPublicError(res, json, e, {
+          code: e.code || 'group_republish_failed',
+          logLabel: '[organiser-groups]',
+        });
+      }
+    }
+
     if (action === 'duplicate' && actionGroupId) {
       try {
         const { groups } = await ownedGroupsForRequest(req, auth.session);

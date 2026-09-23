@@ -5,7 +5,10 @@
 const { isClientRole, setHubViewCookie } = require('./auth');
 const sbAuth = require('./supabase-auth');
 const { getOrganiserAccessStatus } = require('./organiser-access-guard');
-const { sendOrganiserEmailVerification } = require('./organiser-email-verification');
+const {
+  sendOrganiserEmailVerification,
+  buildOrganiserVerifyEmailPath,
+} = require('./organiser-email-verification');
 
 function organiserPathFromNext(next) {
   const raw = String(next || '').trim();
@@ -31,20 +34,40 @@ function isOrganiserClaimNext(next) {
   return String(next || '').indexOf('onboard=claim') !== -1;
 }
 
-/** True when next is verify-email and still carries the confirmation token. */
+/** True when next is verify-email and still carries the confirmation code or legacy token. */
 function hasVerifyEmailToken(next) {
   const raw = String(next || '').trim();
   if (!raw) return false;
   try {
     const url = /^https?:\/\//i.test(raw) ? new URL(raw) : new URL(raw, 'https://example.com');
     return (
-      /^\/organiser\/verify-email\/?$/.test(url.pathname) && !!url.searchParams.get('token')
+      /^\/organiser\/verify-email\/?$/.test(url.pathname) &&
+      !!(url.searchParams.get('token') || url.searchParams.get('code'))
     );
   } catch {
     return (
-      raw.indexOf('/organiser/verify-email') !== -1 && raw.indexOf('token=') !== -1
+      raw.indexOf('/organiser/verify-email') !== -1 &&
+      (raw.indexOf('token=') !== -1 || raw.indexOf('code=') !== -1)
     );
   }
+}
+
+/**
+ * Send users through email confirmation before the rest of onboarding.
+ * Preserves an optional code from a just-sent message and the eventual destination.
+ */
+function buildEmailVerifyRedirect({ next, code, email } = {}) {
+  const destination = String(next || '').trim() || '/welcome';
+  if (code) {
+    let path = buildOrganiserVerifyEmailPath(code, email);
+    path +=
+      (path.indexOf('?') >= 0 ? '&' : '?') + 'next=' + encodeURIComponent(destination);
+    return path;
+  }
+  const params = new URLSearchParams();
+  if (email) params.set('email', String(email).trim().toLowerCase());
+  params.set('next', destination);
+  return '/organiser/verify-email?' + params.toString();
 }
 
 async function resolveOrganiserRedirect(session) {
@@ -58,10 +81,12 @@ async function resolveOrganiserRedirect(session) {
   return '/organiser/verify-email';
 }
 
-async function maybeAutoEnableOrganiserAccess(session, res) {
+async function maybeAutoEnableOrganiserAccess(session, res, options = {}) {
   if (!session?.sub || !isClientRole(session.role)) {
     return { enabled: false, redirect: null };
   }
+
+  const skipVerificationEmail = Boolean(options.skipVerificationEmail);
 
   const before = await getOrganiserAccessStatus(session);
   if (before.organiserAccess) {
@@ -83,21 +108,29 @@ async function maybeAutoEnableOrganiserAccess(session, res) {
   await sbAuth.enableOrganiserAccess(session.sub);
   setHubViewCookie(res, 'organiser');
 
-  if (!before.organiserEmailVerified) {
+  let verifyPath = null;
+  if (!before.organiserEmailVerified && !skipVerificationEmail) {
     try {
-      await sendOrganiserEmailVerification({
+      const sent = await sendOrganiserEmailVerification({
         userId: session.sub,
         email: session.email,
         name: session.name,
       });
-    } catch {
-      /* enable succeeds even if verification email fails */
+      verifyPath = sent.verifyPath || null;
+    } catch (e) {
+      verifyPath =
+        e.verifyPath ||
+        (e.verifyCode
+          ? '/organiser/verify-email?code=' + encodeURIComponent(String(e.verifyCode))
+          : '/organiser/verify-email');
     }
+  } else if (!before.organiserEmailVerified) {
+    verifyPath = '/organiser/verify-email';
   }
 
   return {
     enabled: true,
-    redirect: await resolveOrganiserRedirect(session),
+    redirect: verifyPath || (await resolveOrganiserRedirect(session)),
   };
 }
 
@@ -135,4 +168,5 @@ module.exports = {
   maybeAutoEnableOrganiserAccess,
   resolveOrganiserRedirect,
   redirectAfterOrganiserAuth,
+  buildEmailVerifyRedirect,
 };

@@ -245,6 +245,112 @@ module.exports = async function handler(req, res) {
       }
     }
 
+    if (action === 'resend_organiser_verification' || action === 'mark_organiser_email_verified') {
+      try {
+        let targetId = userId;
+        let targetEmail = email;
+        let targetName = '';
+        if (!targetId && email) {
+          const user = await sbAuth.findUserByEmail(email);
+          if (!user) {
+            return json(res, 404, { ok: false, error: 'user_not_found', message: 'No account for this email.' });
+          }
+          targetId = user.id;
+          targetEmail = user.email;
+          targetName = String(user.name || user.full_name || '').trim();
+        }
+        if (!targetId) return json(res, 400, { ok: false, error: 'missing_user' });
+
+        if (!targetEmail) {
+          const sb = getSupabaseAdmin();
+          const { data: authData, error: authErr } = await sb.auth.admin.getUserById(targetId);
+          if (authErr) throw new Error(authErr.message);
+          targetEmail = String(authData?.user?.email || '')
+            .trim()
+            .toLowerCase();
+          targetName =
+            targetName ||
+            String(
+              authData?.user?.user_metadata?.full_name ||
+                authData?.user?.user_metadata?.name ||
+                ''
+            ).trim();
+        }
+
+        if (!targetEmail) {
+          return json(res, 400, {
+            ok: false,
+            error: 'missing_email',
+            message: 'This account has no email address on file.',
+          });
+        }
+
+        const {
+          sendOrganiserEmailVerification,
+          markOrganiserEmailVerified,
+        } = require('../organiser-email-verification');
+        const { getHubAccount, enableOrganiserAccess } = sbAuth;
+
+        if (action === 'mark_organiser_email_verified') {
+          await enableOrganiserAccess(targetId);
+          const hub = await markOrganiserEmailVerified(targetId);
+          return json(res, 200, {
+            ok: true,
+            email: targetEmail,
+            organiserEmailVerifiedAt: hub.organiser_email_verified_at,
+            message:
+              'Organiser email marked confirmed for ' +
+              (targetEmail || targetId) +
+              '. They can open Stripe / payouts now.',
+          });
+        }
+
+        const hub = await getHubAccount(targetId);
+        if (!hub?.organiser_access_at) {
+          await enableOrganiserAccess(targetId);
+        }
+
+        try {
+          const sent = await sendOrganiserEmailVerification({
+            userId: targetId,
+            email: targetEmail,
+            name: targetName,
+            revealCode: true,
+          });
+          return json(res, 200, {
+            ok: true,
+            email: targetEmail,
+            emailSent: true,
+            verifyCode: sent.verifyCode || null,
+            verifyUrl: sent.verifyUrl || null,
+            message:
+              'Confirmation email sent to ' +
+              targetEmail +
+              '. Share the code below if it does not arrive.',
+          });
+        } catch (mailErr) {
+          return json(res, 200, {
+            ok: true,
+            email: targetEmail,
+            emailSent: false,
+            verifyCode: mailErr.verifyCode || null,
+            verifyUrl: mailErr.verifyUrl || null,
+            message:
+              'Could not deliver email to ' +
+              (targetEmail || 'this account') +
+              '. Share this confirmation code/link with them instead.',
+            deliveryError: mailErr.message || String(mailErr),
+          });
+        }
+      } catch (e) {
+        return json(res, 500, {
+          ok: false,
+          error: 'organiser_verify_failed',
+          message: e.message || 'Could not update organiser email verification.',
+        });
+      }
+    }
+
     return json(res, 400, { ok: false, error: 'unknown_action' });
   }
 

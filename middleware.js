@@ -124,6 +124,7 @@ function isPublicListingPath(pathname, searchParams) {
 // Keep discovery files (llms.txt / agents.txt / sitemap) gated until public launch.
 const GATE_BYPASS_PREFIXES = [
   '/api/stripe-webhook',
+  '/api/integrations',
   '/api/resend-webhook',
   '/api/cron/',
   '/api/health',
@@ -1233,6 +1234,33 @@ export default async function middleware(request) {
   // cleanUrls maps embed/event.html → /embed/event, so /embed/event/:slug is not a
   // valid filesystem child and Vercel rewrites 404. Serve the widget HTML here;
   // the browser URL keeps the slug path for embed-event.js.
+  const customPitchMatch = pathname.match(/^\/p-tnh-(custom-[a-z0-9-]+)$/i);
+  if (customPitchMatch) {
+    const pitchSlug = String(customPitchMatch[1] || '')
+      .trim()
+      .toLowerCase();
+    if (pitchSlug) {
+      try {
+        const deckUrl = new URL('/p-tnh-custom-deck', url.origin);
+        deckUrl.searchParams.set('slug', pitchSlug);
+        const htmlRes = await fetch(deckUrl.toString(), {
+          headers: { 'x-custom-pitch-fetch': '1' },
+        });
+        if (htmlRes.ok) {
+          return new Response(await htmlRes.text(), {
+            status: 200,
+            headers: withNoIndexHeaders({
+              'Content-Type': 'text/html; charset=utf-8',
+              'Cache-Control': 'public, max-age=60, must-revalidate',
+            }),
+          });
+        }
+      } catch {
+        /* fall through */
+      }
+    }
+  }
+
   const embedSlugMatch = pathname.match(/^\/embed\/event\/([^/]+)$/i);
   if (embedSlugMatch) {
     const embedSlug = decodeURIComponent(embedSlugMatch[1] || '').trim();

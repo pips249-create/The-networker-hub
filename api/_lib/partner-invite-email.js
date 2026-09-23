@@ -5,6 +5,8 @@ const { sendTemplatedEmail } = require('./send-template-email');
 const { emailSiteBase } = require('./hub-email-urls');
 const { mapPartnerRow } = require('./affiliate-programme');
 const { emailGreetingName } = require('./email-display-name');
+const { partnerInviteEmailAttachments } = require('./partner-programme-email-assets');
+const { termsPagePath, acceptPagePath } = require('./partner-terms');
 
 function partnerInviteVariables(partner) {
   const mapped = mapPartnerRow(partner) || {};
@@ -28,6 +30,8 @@ function partnerInviteVariables(partner) {
       mapped.linkMediaKit ||
       site + '/partners/earnings?ref=' + encodeURIComponent(code),
     support_email: 'partnerships@thenetworkeruk.com',
+    terms_url: site + termsPagePath(),
+    accept_terms_url: site + acceptPagePath(code),
   };
 }
 
@@ -42,14 +46,17 @@ async function sendPartnerInviteEmail(partner) {
   }
 
   const vars = partnerInviteVariables(partner);
+  const attachments = partnerInviteEmailAttachments();
   await sendTemplatedEmail({
     slug: 'partner_programme_invite',
     to,
     variables: vars,
     replyTo: 'partnerships@thenetworkeruk.com',
+    attachments: attachments.length ? attachments : undefined,
     resendTags: [
       { name: 'category', value: 'partner_programme_invite' },
       { name: 'partner_code', value: String(vars.partner_code || '').slice(0, 32) },
+      ...(attachments.length ? [{ name: 'partner_badge_attachment', value: '1' }] : []),
     ],
   });
 

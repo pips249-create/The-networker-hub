@@ -5,6 +5,7 @@
   const SERIES_STORAGE_KEY = 'hub_event_series';
   const FORMAT_STORAGE_KEY = 'hub_event_format';
   const LOCATION_AUTODRAFT_PREFIX = 'hub_event_location_autodraft_v1:';
+  const EDIT_AUTODRAFT_PREFIX = 'hub_event_edit_autodraft_v1:';
   const AUTODRAFT_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000;
   const ORG_BOOTSTRAP_CACHE_KEY = 'hub_org_bootstrap_cache';
   const ORG_BOOTSTRAP_CACHE_MS = 120000;
@@ -201,11 +202,16 @@
 
   function applyLocationDraft(draft) {
     restoringAutodraft = true;
-    eventFormat = normalizeEventFormat(draft.eventFormat) || eventFormat;
-    applyFormatUi(eventFormat);
+    if (draft.eventFormat) {
+      eventFormat = normalizeEventFormat(draft.eventFormat) || eventFormat;
+      applyFormatUi(eventFormat);
+    }
     const set = (id, val) => {
       const el = document.getElementById(id);
-      if (el && val != null) el.value = String(val);
+      if (!el || val == null) return;
+      const next = String(val);
+      if (!next.trim() && String(el.value || '').trim()) return;
+      el.value = next;
     };
     set('ee-venue', draft.venue);
     set('ee-address1', draft.address1);
@@ -214,6 +220,32 @@
     set('ee-platform', draft.platform);
     set('ee-join-link', draft.joinLink);
     restoringAutodraft = false;
+  }
+
+  function mergeEditStepAutodraft() {
+    const id = editId || eventIds[0] || '';
+    if (!id) return;
+    let draft;
+    try {
+      draft = JSON.parse(localStorage.getItem(EDIT_AUTODRAFT_PREFIX + id) || 'null');
+      const age = Date.now() - new Date(draft?.savedAt || 0).getTime();
+      if (!draft || !Number.isFinite(age) || age > AUTODRAFT_MAX_AGE_MS) return;
+    } catch {
+      return;
+    }
+    if (draft.eventFormat) {
+      eventFormat = normalizeEventFormat(draft.eventFormat) || eventFormat;
+      applyFormatUi(eventFormat);
+    }
+    applyLocationDraft({
+      eventFormat: draft.eventFormat,
+      venue: draft.venue,
+      address1: draft.address1,
+      city: draft.city,
+      postcode: draft.postcode,
+      platform: draft.platform,
+      joinLink: draft.joinLink,
+    });
   }
 
   function saveAutodraftNow() {
@@ -626,6 +658,22 @@
     return payload;
   }
 
+  function eventHasScheduledDate(ev) {
+    if (!ev) return false;
+    return Boolean(String(ev.date || ev.starts_at || ev.startsAt || '').trim());
+  }
+
+  async function assertEventsHaveDatesForTickets() {
+    const missing = [];
+    for (const id of eventIds) {
+      if (id === loadedEvent?.id && eventHasScheduledDate(loadedEvent)) continue;
+      const res = await api('/api/organiser/events?id=' + encodeURIComponent(id));
+      const ev = res.ok && res.data.event;
+      if (!eventHasScheduledDate(ev)) missing.push(id);
+    }
+    return missing;
+  }
+
   async function saveLocation(options) {
     const continueToTickets = options && options.continueToTickets;
     showAlert('');
@@ -634,6 +682,16 @@
     if (!loadedEvent || !eventIds.length) {
       showAlert('Event not found. Go back to event details and save again.');
       return;
+    }
+
+    if (continueToTickets) {
+      const missingDates = await assertEventsHaveDatesForTickets();
+      if (missingDates.length) {
+        showAlert(
+          'Select at least one date on Event details before continuing. Use ← Event details and pick date(s) on the calendar.'
+        );
+        return;
+      }
     }
 
     const locFields = buildLocationFields();
@@ -743,7 +801,7 @@
     if (isEmbedDrawer && window.parent && window.parent !== window) {
       goToTicketSetup(seriesPayload);
       window.parent.postMessage(
-        { type: 'hub-event-goto-tickets', eventIds, title },
+        { type: 'hub-event-goto-tickets', eventIds, title, fromLocation: true },
         window.location.origin
       );
       return;
@@ -787,6 +845,7 @@
       applySeriesDateOnlyUi(true);
     }
     prefillLocationFromEvent(ev);
+    mergeEditStepAutodraft();
     applyLockUi(ev.locked || eventTicketsSoldCount(ev) > 0);
     restoreLocationAutodraft();
     bindBackLinks();
@@ -801,8 +860,20 @@
     if (window.HubFieldTip && window.HubFieldTip.init) {
       window.HubFieldTip.init('[data-hub-tip]');
     }
+    const embed = window.HubOrganiserEmbedBootstrap || {};
+    if (typeof embed.notifyEmbedDrawerReady === 'function') {
+      embed.notifyEmbedDrawerReady('location', eventHasScheduledDate(loadedEvent));
+      return;
+    }
     if (isEmbedDrawer && window.parent && window.parent !== window) {
-      window.parent.postMessage({ type: 'hub-event-drawer-ready' }, window.location.origin);
+      window.parent.postMessage(
+        {
+          type: 'hub-event-drawer-ready',
+          progressStep: 'location',
+          stepComplete: eventHasScheduledDate(loadedEvent),
+        },
+        window.location.origin
+      );
     }
   }
 

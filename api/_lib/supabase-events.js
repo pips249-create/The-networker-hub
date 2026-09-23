@@ -354,19 +354,152 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
   const parsedDate = formatDateParts(nextDateRaw);
   const time = formatTimeRange(row.starts_at, row.ends_at) || parsedDate.time || '';
 
+  const { parseExternalPriceLabelToDisplay, publicListingUsesExternalBooking } = require('./connected-booking');
+  if (publicListingUsesExternalBooking(row)) {
+    const externalUrl = String(row.external_booking_url || '').trim();
+    const priceParts = parseExternalPriceLabelToDisplay(row.external_price_label);
+    const eventHasEnded = isEventPast(row);
+    const ticketSalesEnabledOut = Boolean(externalUrl) && !eventHasEnded;
+    const orgName = organiser ? String(organiser.name || '').trim() : '';
+    const orgRating =
+      organiser && organiser.average_rating != null ? Number(organiser.average_rating) || 0 : 0;
+    const orgReviews = organiser ? Number(organiser.review_count) || 0 : 0;
+    const eventRating = Number(row.average_rating) || 0;
+    const eventReviews = Number(row.review_count) || 0;
+    const preferOrganiserReviews = orgReviews > 0 && orgRating > 0;
+    const highlights = Array.isArray(row.highlights)
+      ? row.highlights.map((h) => String(h || '').trim()).filter(Boolean)
+      : [];
+    return {
+      id: row.id,
+      slug: publicEventSlug({ slug: row.slug, title }),
+      title,
+      description: descText,
+      highlights,
+      foodIncluded: Boolean(row.food_included),
+      collectDietary: Boolean(row.collect_dietary),
+      collectAccessibility: Boolean(row.collect_accessibility),
+      date: parsedDate.dateOnly || parsedDate.display,
+      dateRaw: parsedDate.iso,
+      dateTs: parsedDate.ts,
+      dateFieldRaw: nextDateRaw ? String(nextDateRaw) : '',
+      endDateRaw: row.ends_at ? String(row.ends_at) : '',
+      time,
+      location,
+      city,
+      locationShort,
+      postcode,
+      outcode: String(row.outcode || '').trim() || ukOutcode(postcode),
+      nextDate: nextDateRaw ? String(nextDateRaw) : '',
+      nextDateTs: parsedDate.ts,
+      eventType: eventTypeLabel,
+      eventTypeCategory: eventTypeTabCategory(eventTypeLabel),
+      address: String(row.address || '').trim(),
+      venue,
+      venueName: venue,
+      venueAddress: [row.address, city, postcode].filter(Boolean).join(', '),
+      organiserId: row.organiser_id || (organiser && organiser.id) || '',
+      organiserSlug: organiser ? publicOrganiserSlug(organiser) || '' : '',
+      organiserLogo: organiser ? String(organiser.photo_url || '') : '',
+      organiserProfile: organiser ? String(organiser.description || '') : '',
+      industry: String(industry),
+      format,
+      type,
+      typeRaw: String(typeRaw),
+      typeSlug: type,
+      typeCategory,
+      lat: row.latitude != null ? Number(row.latitude) : null,
+      lng: row.longitude != null ? Number(row.longitude) : null,
+      featured: isEventCurrentlyFeatured(row),
+      featuredUntil: row.featured_until || null,
+      price: priceParts.display,
+      priceKey: priceParts.priceKey,
+      priceNum: priceParts.priceNum,
+      priceVaries: false,
+      photo: eventImageUrl(row),
+      photoPosition: normalizeEventImagePosition(row.image_position),
+      organiser: orgName,
+      organiserRating: orgRating,
+      organiserReviews: orgReviews,
+      rating: preferOrganiserReviews ? orgRating : eventRating,
+      reviews: preferOrganiserReviews ? orgReviews : eventReviews,
+      createdAt: row.created_at || null,
+      isApprovalRequired: false,
+      isSoldOut: false,
+      isSalesClosed: eventHasEnded || !externalUrl,
+      isEventPast: eventHasEnded,
+      isTicketSalesPending: false,
+      isTicketSalesScheduled: false,
+      ticketSalesEnabled: ticketSalesEnabledOut,
+      ticketSalesOpensAt: null,
+      ticketSalesOpensLabel: '',
+      ticketSalesOpensShort: '',
+      hasTicketTiers: false,
+      salesClosedReason: eventHasEnded ? 'ended' : !externalUrl ? 'no_tickets' : '',
+      spotsLeft: null,
+      capacity: null,
+      maxAttendees: null,
+      urgency: '',
+      dateLine: buildDateLine(locationShort, parsedDate, time),
+      meetingType: format || typeRaw,
+      hasFreeTickets: priceParts.priceKey === 'free',
+      hasPaidTickets: priceParts.priceKey !== 'free',
+      search: [title, descText, location, city, postcode, orgName, typeRaw, format, row.event_type]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase(),
+      listingStatusRaw: row.approval_status || 'Pending Review',
+      organiserListingStatusRaw: organiser ? organiser.listing_status || '' : '',
+      organiserRanking: organiserRanking || null,
+      organiserRankingLabel: organiserRanking?.cardLabel || '',
+      locationSlug: slugLocation(location),
+      industrySlug: slugIndustry(industry),
+      formatSlug: slugFormat(format),
+      tickets: [],
+      hasMembersOnlyTiers: false,
+      isMembersOnlyEvent: false,
+      attendanceMode: 'tickets',
+      complimentaryVisitsAllowed: 0,
+      complimentaryVisitsScope: 'per_group',
+      guestVisitTier: null,
+      alumniFastPassEnabled: false,
+      alumniTier: null,
+      guestPassesDisabled: true,
+      refundPolicy: null,
+      refundPolicyDetails: null,
+      refundCutoffDays: null,
+      vatTreatment: null,
+      stripePaymentLink: '',
+      recurrencePattern: row.recurrence_pattern || null,
+      recurrenceEndDate: row.recurrence_end_date || null,
+      seriesGroupId: row.series_group_id || null,
+      checkoutMode: 'external_connected',
+      externalBookingUrl: externalUrl,
+      externalPriceLabel: String(row.external_price_label || '').trim(),
+      externalBookingDisclaimer:
+        'Tickets are sold on the organiser\u2019s website. The Networker UK does not process payment for this event.',
+    };
+  }
+
   const eventTickets = (ticketRows || []).filter((t) => t.event_id === row.id);
   const tiers = eventTickets.map((t) =>
     ticketRowToTier(t, t._registrationCount != null ? t._registrationCount : 0)
   );
-  const publicTiers = tiers.filter(
-    (t) => !t.isGuestVisit && !t.isAlumni && !t.isMembersOnly
-  );
+  // Guest visits count as public access (not a closed members-only listing).
+  // Listing price still prefers general-admission sale tiers so Free guest +
+  // paid Standard does not collapse the card to "Free".
+  const publicAccessTiers = tiers.filter((t) => !t.isAlumni && !t.isMembersOnly);
+  const publicSaleTiers = publicAccessTiers.filter((t) => !t.isGuestVisit);
   const membersOnlyTierCount = tiers.filter((t) => t.isMembersOnly).length;
-  const pricedTiers = publicTiers.length ? publicTiers : [];
+  const pricedTiers = publicSaleTiers.length
+    ? publicSaleTiers.slice()
+    : publicAccessTiers.length
+      ? publicAccessTiers.slice()
+      : [];
   const attendanceMode = normalizeAttendanceMode(row.attendance_mode);
   const isMembersOnlyEvent =
     membersOnlyTierCount > 0 &&
-    pricedTiers.length === 0 &&
+    publicAccessTiers.length === 0 &&
     attendanceMode !== 'category_exclusivity';
   pricedTiers.sort((a, b) => {
     if (a.soldOut !== b.soldOut) return a.soldOut ? 1 : -1;
@@ -602,6 +735,9 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
     recurrencePattern: row.recurrence_pattern || null,
     recurrenceEndDate: row.recurrence_end_date || null,
     seriesGroupId: row.series_group_id || null,
+    checkoutMode: String(row.checkout_mode || 'hub').trim(),
+    externalBookingUrl: String(row.external_booking_url || '').trim(),
+    externalPriceLabel: String(row.external_price_label || '').trim(),
   };
 
   if (!ev.tickets.length && hasTicketTiers && !membersOnlyTierCount) {
@@ -641,6 +777,16 @@ function eventRowReadyForAutoApproval(row, organiser, tickets, refundPayload) {
   if (!row.organiser_id) return false;
   if (!String(row.event_type || '').trim()) return false;
   if (!String(row.meeting_type || '').trim()) return false;
+
+  if (String(row.checkout_mode || 'hub') === 'external_connected') {
+    if (!String(row.external_booking_url || '').trim()) return false;
+    if (!String(row.external_price_label || '').trim()) return false;
+    if (organiser) {
+      const listingStatus = String(organiser.listing_status || '').toLowerCase();
+      if (listingStatus === 'unpublished') return false;
+    }
+    return true;
+  }
 
   const ticketList = Array.isArray(tickets) ? tickets : [];
   if (!ticketList.length) return false;

@@ -43,7 +43,11 @@ function isAlumniTicket(ticket) {
   return Boolean(ticket.isAlumni) || /^alumni/i.test(String(ticket.name || '').trim());
 }
 
-/** Public tickets people can buy without being on the member list. */
+/**
+ * General-admission tickets for sale (Standard etc).
+ * Excludes guest visits, alumni, and members_only — used for first-visit stand-in
+ * detection and paid/free sale mix checks, not for members-only listing.
+ */
 function isPublicSaleTicket(ticket) {
   if (!ticket) return false;
   if (isGuestVisitTicket(ticket) || isAlumniTicket(ticket) || isMembersOnlyTicket(ticket)) {
@@ -51,6 +55,17 @@ function isPublicSaleTicket(ticket) {
   }
   const type = String(ticket.ticket_type || ticket.ticketType || '').trim().toLowerCase();
   if (type === 'guest-visit' || type === 'alumni') return false;
+  return true;
+}
+
+/**
+ * Public bookable access for members-only listing detection.
+ * Guest visits count as public; alumni (invite-only) and members_only do not.
+ */
+function countsAsPublicAccessTicket(ticket) {
+  if (!ticket) return false;
+  if (isMembersOnlyTicket(ticket)) return false;
+  if (isAlumniTicket(ticket)) return false;
   return true;
 }
 
@@ -441,6 +456,7 @@ module.exports = {
   isMembersOnlyTicket,
   isAlumniTicket,
   isPublicSaleTicket,
+  countsAsPublicAccessTicket,
   looksLikeComplimentaryVisitTicketName,
   publicTicketsMixFreeAndPaid,
   publicFreeTicketIsFirstVisitStandIn,

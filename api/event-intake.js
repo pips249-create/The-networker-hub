@@ -1,7 +1,7 @@
 /**
- * Public event intake API — organisers send details for staff to list.
+ * Event intake API — organisers send details for staff to list (signed-in only).
  */
-const { json, setCors } = require('./_lib/auth');
+const { json, setCors, sessionFromRequest } = require('./_lib/auth');
 const { wrapHandler } = require('./_lib/sentry');
 const { enforceRateLimit, clientIp } = require('./_lib/rate-limit');
 const { useSupabase } = require('./_lib/supabase');
@@ -29,6 +29,16 @@ module.exports = wrapHandler(async function handler(req, res) {
 
   if (req.method !== 'POST') {
     return json(res, 405, { ok: false, error: 'method_not_allowed' });
+  }
+
+  const session = sessionFromRequest(req);
+  const sessionEmail = session?.email ? String(session.email).trim().toLowerCase() : '';
+  if (!sessionEmail) {
+    return json(res, 401, {
+      ok: false,
+      error: 'not_authenticated',
+      message: 'Sign in or create a free account to send your event details.',
+    });
   }
 
   const limited = enforceRateLimit(req, res, 'event_intake', {
@@ -65,8 +75,17 @@ module.exports = wrapHandler(async function handler(req, res) {
     });
   }
 
+  // Prefer account identity so submissions stay tied to the signed-in user.
+  const intakeBody = Object.assign({}, body, {
+    email: sessionEmail,
+    name:
+      String(body.name || body.contactName || session.name || '').trim() ||
+      sessionEmail.split('@')[0] ||
+      'Organiser',
+  });
+
   try {
-    const result = await submitEventIntake(body);
+    const result = await submitEventIntake(intakeBody);
     if (!result.ok) {
       return json(res, 400, {
         ok: false,

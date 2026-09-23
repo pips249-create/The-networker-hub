@@ -164,6 +164,17 @@
   position: relative;
 }
 
+/* Team email form only — drop chat shell sizing that left empty space / clipped actions */
+.contact-chat--team-only {
+  min-height: 0;
+  overflow: visible;
+}
+
+.contact-chat--team-only .contact-team-form {
+  border-top: 0;
+  margin-top: 0;
+}
+
 .contact-chat-body {
   flex: 1;
   display: flex;
@@ -466,6 +477,16 @@
   margin-top: 4px;
 }
 
+/* Keep the send button clear of the fixed cookie banner on first visit */
+body:has(#hub-cookie-banner:not([hidden])) .contact-layout {
+  padding-bottom: 140px;
+}
+
+body:has(#hub-cookie-banner:not([hidden])) .contact-team-form-actions {
+  padding-bottom: 8px;
+  scroll-margin-bottom: 120px;
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -486,6 +507,10 @@
 
   .contact-chat {
     min-height: 480px;
+  }
+
+  .contact-chat--team-only {
+    min-height: 0;
   }
 }
 

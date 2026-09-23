@@ -9,6 +9,7 @@ const {
   getActivePartnerByCode,
   recordAffiliateAttribution,
   clickCountsByPartnerIds,
+  referralActivityForPartner,
 } = require('../affiliate-programme');
 const {
   createAffiliateCommission,
@@ -17,6 +18,7 @@ const {
   isAffiliateEligibleProduct,
 } = require('../affiliate-commissions');
 const { sendPartnerInviteEmail } = require('../partner-invite-email');
+const { REFERRAL_PARTNER_TERMS_VERSION } = require('../partner-terms');
 
 function parseBody(req) {
   let body = req.body;
@@ -44,21 +46,128 @@ function poundsToPence(raw) {
   return Math.round(n * 100);
 }
 
-async function listPartners(sb) {
-  const { data, error } = await sb
+const AFFILIATE_PARTNER_BASE_SELECT =
+  'id, code, display_name, email, active, notes, created_at, updated_at';
+const AFFILIATE_PARTNER_TERMS_SELECT =
+  ', terms_accepted_at, terms_version, application_terms_agreed_at';
+
+function supabaseErrorMessage(error) {
+  return String((error && error.message) || error || '');
+}
+
+function isMissingTableError(error, tableName) {
+  const msg = supabaseErrorMessage(error).toLowerCase();
+  const table = String(tableName || '').toLowerCase();
+  if (!table || !msg.includes(table)) return false;
+  return /could not find the table|relation .* does not exist|table .* not found/i.test(msg);
+}
+
+function isMissingTermsColumnsError(error) {
+  const msg = supabaseErrorMessage(error).toLowerCase();
+  return (
+    /terms_accepted_at|terms_version|application_terms_agreed_at/i.test(msg) &&
+    (/column/i.test(msg) || /schema cache/i.test(msg))
+  );
+}
+
+function withNullTermsFields(row) {
+  return Object.assign({}, row || {}, {
+    terms_accepted_at: null,
+    terms_version: null,
+    application_terms_agreed_at: null,
+  });
+}
+
+async function queryAffiliatePartnersList(sb) {
+  const fullSelect = AFFILIATE_PARTNER_BASE_SELECT + AFFILIATE_PARTNER_TERMS_SELECT;
+  let termsColumnsMissing = false;
+  let { data, error } = await sb
     .from('affiliate_partners')
-    .select('id, code, display_name, email, active, notes, created_at, updated_at')
+    .select(fullSelect)
     .order('created_at', { ascending: false })
     .limit(200);
+
+  if (error && isMissingTermsColumnsError(error)) {
+    termsColumnsMissing = true;
+    const retry = await sb
+      .from('affiliate_partners')
+      .select(AFFILIATE_PARTNER_BASE_SELECT)
+      .order('created_at', { ascending: false })
+      .limit(200);
+    data = retry.data;
+    error = retry.error;
+  }
+
   if (error) {
-    if (/affiliate_partners/i.test(error.message || '')) {
+    if (isMissingTableError(error, 'affiliate_partners')) {
       const err = new Error('affiliate_partners_table_missing');
       err.code = 'affiliate_partners_table_missing';
       throw err;
     }
-    throw new Error(error.message);
+    throw new Error(supabaseErrorMessage(error));
   }
-  const rows = data || [];
+
+  const rows = (data || []).map(function (row) {
+    return termsColumnsMissing ? withNullTermsFields(row) : row;
+  });
+  return { rows, termsColumnsMissing };
+}
+
+async function queryAffiliatePartnerSingle(sb, buildQuery) {
+  const fullSelect = AFFILIATE_PARTNER_BASE_SELECT + AFFILIATE_PARTNER_TERMS_SELECT;
+  let termsColumnsMissing = false;
+  let { data, error } = await buildQuery(sb.from('affiliate_partners').select(fullSelect));
+
+  if (error && isMissingTermsColumnsError(error)) {
+    termsColumnsMissing = true;
+    const retry = await buildQuery(sb.from('affiliate_partners').select(AFFILIATE_PARTNER_BASE_SELECT));
+    data = retry.data;
+    error = retry.error;
+  }
+
+  if (error) {
+    if (isMissingTableError(error, 'affiliate_partners')) {
+      const err = new Error('affiliate_partners_table_missing');
+      err.code = 'affiliate_partners_table_missing';
+      throw err;
+    }
+    throw new Error(supabaseErrorMessage(error));
+  }
+
+  if (!data) return { row: null, termsColumnsMissing };
+  return {
+    row: termsColumnsMissing ? withNullTermsFields(data) : data,
+    termsColumnsMissing,
+  };
+}
+
+function partnerPersistenceErrorResponse(error) {
+  if (isMissingTableError(error, 'affiliate_partners')) {
+    return {
+      status: 503,
+      body: {
+        ok: false,
+        error: 'affiliate_partners_table_missing',
+        message: 'Run migration 289_affiliate_partners.sql in Supabase.',
+      },
+    };
+  }
+  if (isMissingTermsColumnsError(error)) {
+    return {
+      status: 503,
+      body: {
+        ok: false,
+        error: 'affiliate_partner_terms_columns_missing',
+        message: 'Run migration 296_affiliate_partner_terms.sql in Supabase (289 is already OK).',
+      },
+    };
+  }
+  return null;
+}
+
+async function listPartners(sb) {
+  const listed = await queryAffiliatePartnersList(sb);
+  const rows = listed.rows || [];
   let clickStats = { total: {}, last7: {}, last30: {}, tableMissing: false };
   try {
     clickStats = await clickCountsByPartnerIds(rows.map((r) => r.id));
@@ -68,6 +177,7 @@ async function listPartners(sb) {
   return {
     partners: rows.map((row) => mapPartnerRow(row, clickStats)),
     clicksTableMissing: !!clickStats.tableMissing,
+    termsColumnsMissing: !!listed.termsColumnsMissing,
   };
 }
 
@@ -115,6 +225,31 @@ module.exports = async function handler(req, res) {
         return json(res, 200, { ok: true, configured: true, ...overview });
       }
 
+      if (view === 'referral_activity' || view === 'activity') {
+        const partnerId = String((req.query && req.query.partnerId) || '').trim();
+        const code = normalizeAffiliateCode(req.query && req.query.code);
+        let resolvedId = partnerId;
+        if (!resolvedId && code) {
+          const { data: partnerRow } = await sb
+            .from('affiliate_partners')
+            .select('id')
+            .eq('code', code)
+            .maybeSingle();
+          resolvedId = (partnerRow && partnerRow.id) || '';
+        }
+        if (!resolvedId) {
+          return json(res, 400, {
+            ok: false,
+            error: 'missing_partner',
+            message: 'Pass partnerId or code.',
+          });
+        }
+        const activity = await referralActivityForPartner(resolvedId, {
+          limit: req.query && req.query.limit,
+        });
+        return json(res, 200, { ok: true, configured: true, partnerId: resolvedId, code: code || null, ...activity });
+      }
+
       const listed = await listPartners(sb);
       const partners = listed.partners || [];
       return json(res, 200, {
@@ -122,6 +257,7 @@ module.exports = async function handler(req, res) {
         configured: true,
         partners,
         clicksTableMissing: !!listed.clicksTableMissing,
+        termsColumnsMissing: !!listed.termsColumnsMissing,
         total: partners.length,
         activeCount: partners.filter(function (p) {
           return p.active;
@@ -171,7 +307,7 @@ module.exports = async function handler(req, res) {
       }
 
       const now = new Date().toISOString();
-      const { data, error } = await sb
+      const { data: inserted, error: insertError } = await sb
         .from('affiliate_partners')
         .insert({
           code,
@@ -182,28 +318,27 @@ module.exports = async function handler(req, res) {
           created_at: now,
           updated_at: now,
         })
-        .select('id, code, display_name, email, active, notes, created_at, updated_at')
+        .select('id')
         .single();
 
-      if (error) {
-        if (/duplicate|unique/i.test(error.message || '')) {
+      if (insertError) {
+        if (/duplicate|unique/i.test(insertError.message || '')) {
           return json(res, 409, {
             ok: false,
             error: 'code_taken',
             message: 'That partner code is already in use.',
           });
         }
-        if (/affiliate_partners/i.test(error.message || '')) {
-          return json(res, 503, {
-            ok: false,
-            error: 'affiliate_partners_table_missing',
-            message: 'Run migration 289_affiliate_partners.sql in Supabase.',
-          });
-        }
-        throw new Error(error.message);
+        const persistence = partnerPersistenceErrorResponse(insertError);
+        if (persistence) return json(res, persistence.status, persistence.body);
+        throw new Error(supabaseErrorMessage(insertError));
       }
 
-      return json(res, 200, { ok: true, partner: mapPartnerRow(data) });
+      const loaded = await queryAffiliatePartnerSingle(sb, function (q) {
+        return q.eq('id', inserted.id).single();
+      });
+
+      return json(res, 200, { ok: true, partner: mapPartnerRow(loaded.row) });
     }
 
     if (action === 'set_active') {
@@ -211,16 +346,18 @@ module.exports = async function handler(req, res) {
       const active = body.active !== false;
       if (!id) return json(res, 400, { ok: false, error: 'missing_id' });
 
-      const { data, error } = await sb
+      const { error: updateError } = await sb
         .from('affiliate_partners')
         .update({ active, updated_at: new Date().toISOString() })
-        .eq('id', id)
-        .select('id, code, display_name, email, active, notes, created_at, updated_at')
-        .maybeSingle();
+        .eq('id', id);
 
-      if (error) throw new Error(error.message);
-      if (!data) return json(res, 404, { ok: false, error: 'not_found' });
-      return json(res, 200, { ok: true, partner: mapPartnerRow(data) });
+      if (updateError) throw new Error(supabaseErrorMessage(updateError));
+
+      const loaded = await queryAffiliatePartnerSingle(sb, function (q) {
+        return q.eq('id', id).maybeSingle();
+      });
+      if (!loaded.row) return json(res, 404, { ok: false, error: 'not_found' });
+      return json(res, 200, { ok: true, partner: mapPartnerRow(loaded.row) });
     }
 
     if (action === 'send_invite') {
@@ -230,14 +367,11 @@ module.exports = async function handler(req, res) {
         return json(res, 400, { ok: false, error: 'missing_partner', message: 'Choose a partner.' });
       }
 
-      let query = sb
-        .from('affiliate_partners')
-        .select('id, code, display_name, email, active, notes, created_at, updated_at');
-      if (id) query = query.eq('id', id);
-      else query = query.eq('code', code);
-
-      const { data, error } = await query.maybeSingle();
-      if (error) throw new Error(error.message);
+      const loaded = await queryAffiliatePartnerSingle(sb, function (q) {
+        if (id) return q.eq('id', id).maybeSingle();
+        return q.eq('code', code).maybeSingle();
+      });
+      const data = loaded.row;
       if (!data) return json(res, 404, { ok: false, error: 'not_found' });
       if (data.active === false) {
         return json(res, 400, {
@@ -329,6 +463,36 @@ module.exports = async function handler(req, res) {
     if (action === 'promote_eligible') {
       const result = await promoteEligibleAffiliateCommissions();
       return json(res, 200, { ok: true, ...result });
+    }
+
+    if (action === 'mark_terms_accepted') {
+      const id = String(body.id || '').trim();
+      if (!id) return json(res, 400, { ok: false, error: 'missing_id' });
+      const now = new Date().toISOString();
+      const { data, error } = await sb
+        .from('affiliate_partners')
+        .update({
+          terms_accepted_at: now,
+          terms_version: REFERRAL_PARTNER_TERMS_VERSION,
+          updated_at: now,
+        })
+        .eq('id', id)
+        .select(
+          'id, code, display_name, email, active, notes, created_at, updated_at, terms_accepted_at, terms_version, application_terms_agreed_at'
+        )
+        .maybeSingle();
+      if (error) {
+        if (/terms_accepted_at|schema cache/i.test(error.message || '')) {
+          return json(res, 503, {
+            ok: false,
+            error: 'terms_columns_missing',
+            message: 'Run migration 296_affiliate_partner_terms.sql in Supabase.',
+          });
+        }
+        throw new Error(error.message);
+      }
+      if (!data) return json(res, 404, { ok: false, error: 'not_found' });
+      return json(res, 200, { ok: true, partner: mapPartnerRow(data) });
     }
 
     return json(res, 400, { ok: false, error: 'unknown_action' });

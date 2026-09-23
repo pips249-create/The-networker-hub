@@ -17,6 +17,9 @@
   const EVENTS_FETCH_SIZE = 100;
   /** Avoid freezing the tab by paging an entire franchise catalogue into memory. */
   const EVENTS_FULL_LOAD_MAX = 200;
+  const BOOTSTRAP_TIMEOUT_MS = 45000;
+  const BOOTSTRAP_FALLBACK_TIMEOUT_MS = 15000;
+  const ATTENDEES_TIMEOUT_MS = 25000;
 
   function orgPageSize() {
     if (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) {
@@ -38,6 +41,7 @@
   let teamLoadingPromise = null;
   let eventsLoadingPromise = null;
   let eventsLoadGen = 0;
+  let workspaceStatsPromise = null;
   let reviewsLoadingPromise = null;
 
   function isPlatformWebsiteImportUrl(url) {
@@ -100,6 +104,7 @@
     tickets: [],
     attendeesAll: [],
     attendeesLoaded: false,
+    attendeesTruncated: false,
     attendeeBlocks: [],
     pendingApplicationsCount: 0,
     pendingApplicationsPreview: [],
@@ -145,7 +150,82 @@
     organiserAccess: false,
     organiserEmailVerified: false,
     dashboardScope: null,
+    connectedBooking: null,
   };
+
+  let connectedBookingLoadPromise = null;
+
+  function dispatchConnectedBookingDetail(payload, groupTotal) {
+    if (!payload || typeof window === 'undefined') return;
+    try {
+      window.dispatchEvent(
+        new CustomEvent('hub-organiser-connected-booking', {
+          detail: Object.assign({}, payload, {
+            groupTotal: groupTotal != null ? groupTotal : state.groups.length,
+          }),
+        })
+      );
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  window.addEventListener('hub-organiser-connected-booking', function (e) {
+    var detail = e && e.detail;
+    if (!detail || !detail.ok) return;
+    connectedBookingLoadPromise = null;
+    state.connectedBooking = detail;
+    var groupsPage = document.getElementById('org-page-groups');
+    if (groupsPage && groupsPage.classList.contains('is-active') && typeof renderGroups === 'function') {
+      renderGroups();
+    }
+  });
+
+  function loadConnectedBookingMeta(forceRefresh) {
+    if (!forceRefresh && connectedBookingLoadPromise) {
+      return connectedBookingLoadPromise;
+    }
+    connectedBookingLoadPromise = fetch('/api/organiser/connected-booking', {
+      credentials: 'include',
+      cache: 'no-store',
+    })
+      .then(function (r) {
+        return r.json().then(function (data) {
+          return { status: r.status, data: data };
+        });
+      })
+      .then(function (res) {
+        if (res.status === 403 || res.status === 404) {
+          state.connectedBooking = null;
+          return null;
+        }
+        state.connectedBooking = res.data || null;
+        dispatchConnectedBookingDetail(state.connectedBooking, state.groups.length);
+        return state.connectedBooking;
+      })
+      .catch(function () {
+        connectedBookingLoadPromise = null;
+        return null;
+      });
+    return connectedBookingLoadPromise;
+  }
+
+  function connectedSlotCellHtml(groupId) {
+    var cb = state.connectedBooking;
+    if (!cb || !cb.ok || !cb.active) {
+      return '<span class="org-muted">—</span>';
+    }
+    var slots = cb.slots || {};
+    var ids = slots.assignedOrganiserIds || [];
+    if (!ids.some(function (id) {
+      return String(id) === String(groupId);
+    })) {
+      return '<span class="org-muted">—</span>';
+    }
+    return (
+      '<span class="org-badge org-badge-teal org-connected-slot-badge" title="This organiser page uses your Connected booking plan">Connected</span>'
+    );
+  }
 
   let groupClaimRejectMode = false;
   let groupClaimSubmitInFlight = false;
@@ -439,6 +519,7 @@
     let qs =
       '/api/organiser/bootstrap?eventsOnly=1&eventsLimit=' + EVENTS_FETCH_SIZE + '&eventsOffset=0';
     if (!full) qs += '&eventsLite=1';
+    if (state.eventsTotal > 0) qs += '&eventsTotal=' + String(state.eventsTotal);
     if (extra) qs += extra;
     return qs;
   }
@@ -3964,6 +4045,29 @@
     }
   }
 
+  function isTimeoutError(e) {
+    return Boolean(e && /timed out/i.test(String((e && e.message) || '')));
+  }
+
+  async function fetchOrganiserBootstrap(prefetch) {
+    try {
+      return await (prefetch || apiWithTimeout('/api/organiser/bootstrap', {}, BOOTSTRAP_TIMEOUT_MS));
+    } catch (e) {
+      try {
+        const fallback = await apiWithTimeout(
+          '/api/organiser/bootstrap?groupsOnly=1',
+          {},
+          BOOTSTRAP_FALLBACK_TIMEOUT_MS
+        );
+        if (!fallback || !fallback.ok) throw e;
+        fallback.data = Object.assign({ partial: true }, fallback.data || {});
+        return fallback;
+      } catch {
+        throw e;
+      }
+    }
+  }
+
   function formatDate(raw) {
     if (!raw) return '—';
     const d = new Date(raw);
@@ -5372,26 +5476,40 @@
     refreshOrgBottomEventsCount();
   }
 
+  function groupListingActionHtml(id, item) {
+    const statusKey = item && item.statusKey;
+    if (statusKey === 'unpublished') {
+      return (
+        '<button type="button" class="org-action-item" data-republish-group="' +
+        esc(id) +
+        '"><span class="org-action-icon">↻</span><span class="org-action-text"><strong>Republish</strong><span>List on the platform again</span></span></button>'
+      );
+    }
+    if (statusKey === 'draft') {
+      return (
+        '<button type="button" class="org-action-item danger" disabled><span class="org-action-icon">⊘</span><span class="org-action-text"><strong>Unpublish</strong><span>Publish first to list on site</span></span></button>'
+      );
+    }
+    const blockingRegs = publishedEventsWithRegistrationsForGroup(id);
+    if (blockingRegs.length) {
+      return (
+        '<button type="button" class="org-action-item danger" disabled><span class="org-action-icon">⊘</span><span class="org-action-text"><strong>Unpublish</strong><span>' +
+        (blockingRegs.length === 1
+          ? 'Unpublish the event with registrations first'
+          : 'Unpublish events with registrations first') +
+        '</span></span></button>'
+      );
+    }
+    return (
+      '<button type="button" class="org-action-item danger" data-unpublish-group="' +
+      esc(id) +
+      '"><span class="org-action-icon">⊘</span><span class="org-action-text"><strong>Unpublish</strong><span>Remove from public site</span></span></button>'
+    );
+  }
+
   function actionMenuHtml(kind, id, title, item) {
     if (kind === 'group') {
-      const statusKey = item && item.statusKey;
-      const unpublishDisabled = statusKey === 'unpublished' || statusKey === 'draft';
-      const blockingRegs = !unpublishDisabled ? publishedEventsWithRegistrationsForGroup(id) : [];
-      const blockedByRegs = blockingRegs.length > 0;
-      const unpublishBtn =
-        unpublishDisabled || blockedByRegs
-          ? '<button type="button" class="org-action-item danger" disabled><span class="org-action-icon">⊘</span><span class="org-action-text"><strong>Unpublish</strong><span>' +
-            (statusKey === 'unpublished'
-              ? 'Already unpublished'
-              : statusKey === 'draft'
-                ? 'Publish first to list on site'
-                : blockingRegs.length === 1
-                  ? 'Unpublish the event with registrations first'
-                  : 'Unpublish events with registrations first') +
-            '</span></span></button>'
-          : '<button type="button" class="org-action-item danger" data-unpublish-group="' +
-            esc(id) +
-            '"><span class="org-action-icon">⊘</span><span class="org-action-text"><strong>Unpublish</strong><span>Remove from public site</span></span></button>';
+      const unpublishBtn = groupListingActionHtml(id, item);
       return (
         '<div class="org-action-wrap">' +
         '<button type="button" class="org-action-btn" data-org-action-toggle aria-expanded="false">Actions <span class="chev">▾</span></button>' +
@@ -5901,10 +6019,13 @@
       return ensureReviewsLoaded().then(() => renderReviews());
     }
     renderEventsPanel(eventsSubRoute);
-    return ensureEventsLoaded().then(function () {
+    const eventsPainted = eventsSourceList().length > 0 || state.eventsLoaded;
+    const eventsLoad = ensureEventsLoaded().then(function () {
       renderEventsPanel(eventsSubRoute);
       maybePrefetchEvents();
     });
+    // Paint from summaries/cache immediately — don't hold the route spinner on enrichment.
+    return eventsPainted ? Promise.resolve() : eventsLoad;
   }
 
   function invalidateEventsLoad() {
@@ -5967,6 +6088,31 @@
         }
       });
     return eventsLoadingPromise;
+  }
+
+  function applyWorkspaceSummary(summary) {
+    if (!summary || !summary.computed) return false;
+    state.workspaceSummary = summary;
+    renderStats();
+    return true;
+  }
+
+  function ensureWorkspaceStatsLoaded(options) {
+    const opts = options || {};
+    if (hasComputedWorkspaceSummary() && !opts.force) return Promise.resolve(true);
+    if (workspaceStatsPromise && !opts.force) return workspaceStatsPromise;
+    workspaceStatsPromise = api('/api/organiser/workspace-stats')
+      .then(function ({ ok, data }) {
+        if (!ok) return false;
+        return applyWorkspaceSummary(data.workspaceSummary);
+      })
+      .catch(function () {
+        return false;
+      })
+      .finally(function () {
+        workspaceStatsPromise = null;
+      });
+    return workspaceStatsPromise;
   }
 
   function ensureReviewsLoaded(options) {
@@ -6886,10 +7032,15 @@
       errEl.textContent = '';
     }
     try {
-      const { ok, data } = await api('/api/organiser/attendees?eventId=all');
+      const { ok, data } = await apiWithTimeout(
+        '/api/organiser/attendees?eventId=all',
+        {},
+        ATTENDEES_TIMEOUT_MS
+      );
       if (ok) {
         state.attendeesAll = data.attendees || [];
         state.attendeeBlocks = data.blocks || [];
+        state.attendeesTruncated = Boolean(data.truncated);
         state.attendeesLoaded = true;
         maybeRelaxAttendeesHideArchived();
         maybeClearAttendeesPendingFilter();
@@ -8310,6 +8461,7 @@
   let eventDrawerCreateFlow = false;
   let eventDrawerProgressStep = '';
   let eventDrawerStepComplete = false;
+  let eventDrawerLocationComplete = false;
   let eventDrawerBackEventId = '';
   let eventDrawerBackTarget = '';
 
@@ -8321,6 +8473,8 @@
     backBtn.hidden = !eventDrawerBackEventId;
     if (eventDrawerBackTarget === 'location') {
       backBtn.textContent = '← Location & access';
+    } else if (eventDrawerBackTarget === 'tickets') {
+      backBtn.textContent = '← Booking options';
     } else if (eventDrawerBackTarget === 'details') {
       backBtn.textContent = '← Event details';
     } else {
@@ -8330,6 +8484,10 @@
 
   function goBackFromEventDrawer() {
     if (!eventDrawerBackEventId) return;
+    if (eventDrawerBackTarget === 'tickets') {
+      openEventTicketsDrawer([eventDrawerBackEventId], '');
+      return;
+    }
     if (eventDrawerBackTarget === 'location') {
       openEventLocationDrawer(eventDrawerBackEventId, { fromTickets: true });
       return;
@@ -8403,6 +8561,7 @@
     eventDrawerCreateFlow = false;
     eventDrawerProgressStep = '';
     eventDrawerStepComplete = false;
+    eventDrawerLocationComplete = false;
     renderEventDrawerOverview(null);
     if (frame) frame.removeAttribute('src');
     setTimeout(function () {
@@ -8509,8 +8668,11 @@
       const isCurrent = step.id === stepId;
       // Mark prior steps done; also mark the current step when the iframe reports it is complete
       // (e.g. tickets already saved on a live listing — otherwise step 3 never shows a ✓).
+      // Location only counts as done after the organiser completes that step (not when skipping straight to tickets).
       const isDone =
-        i < currentIndex ||
+        (step.id === 'location'
+          ? eventDrawerLocationComplete && i < currentIndex
+          : i < currentIndex) ||
         (isCurrent && eventDrawerStepComplete) ||
         (stepId === 'publish' && step.id === 'publish');
       let cls = 'ee-wizard-step';
@@ -8804,22 +8966,22 @@
     const opts = options || {};
     closeAllActionMenus();
     endOrgRouteLoading({ gen: orgRouteLoadGen, startedAt: 0 });
+    pruneStaleEventFilters();
     try {
-      await loadBootstrap({ silent: true });
+      await ensureEventsLoaded({ force: true });
     } catch (err) {
       showOrganiserAlert(
         (err && err.message) || 'Could not refresh the workspace. Try reloading the page.',
         true
       );
     }
-    pruneStaleEventFilters();
-    await ensureEventsLoaded({ force: true });
     if (document.querySelector('[data-org-page="events"].is-active')) {
       renderMyEventsHub();
     } else {
       renderAll();
     }
     setRoute(opts.route || 'events-list', { skipRouteLoading: true });
+    ensureWorkspaceStatsLoaded({ force: true });
   }
 
   async function submitDeleteEvent() {
@@ -9135,7 +9297,9 @@
         '/api/organiser/bootstrap?eventsOnly=1&eventsLimit=' +
           EVENTS_FETCH_SIZE +
           '&eventsOffset=' +
-          chunkOffset
+          chunkOffset +
+          (eventsNeedFullEnrichment() ? '' : '&eventsLite=1') +
+          (state.eventsTotal > 0 ? '&eventsTotal=' + String(state.eventsTotal) : '')
       );
       if (!ok) throw new Error(data.message || data.error || 'events_load_failed');
       state.events = data.events || [];
@@ -9402,9 +9566,7 @@
     } catch {
       /* ignore */
     }
-    await loadBootstrap();
-    renderAll();
-    setRoute('events-list');
+    await refreshEventsWorkspaceAfterMutation({ route: 'events-list' });
     if (res.data.event && res.data.event.id) {
       openEventEditorDrawer(res.data.event);
     }
@@ -9539,6 +9701,34 @@
     }
     await loadBootstrap();
     renderAll();
+  }
+
+  async function confirmRepublishGroup(groupId) {
+    if (!groupId) return;
+    const g = findGroupById(groupId);
+    const label = g && g.name ? g.name : 'this organiser page';
+    const ok = window.confirm(
+      'Republish "' +
+        label +
+        '"?\n\n' +
+        'Your group profile will appear on the public directory again. Events stay as they are — republish individual events if needed.'
+    );
+    if (!ok) return;
+
+    const res = await api('/api/organiser/groups', {
+      method: 'POST',
+      body: JSON.stringify({ action: 'republish', id: groupId }),
+    });
+    if (!res.ok) {
+      window.alert(res.data.message || res.data.error || 'Could not republish this group.');
+      return;
+    }
+    await loadBootstrap();
+    renderAll();
+    showOrganiserAlert(
+      res.data.message || 'Organiser page republished — live on the directory again.',
+      false
+    );
   }
 
   async function confirmUnpublishEvent(eventId) {
@@ -9726,6 +9916,15 @@
       closeAllActionMenus();
       const gid = unpublishBtn.getAttribute('data-unpublish-group');
       confirmUnpublishGroup(gid);
+      return true;
+    }
+
+    const republishGroupBtn = e.target.closest('[data-republish-group]');
+    if (republishGroupBtn && !republishGroupBtn.disabled) {
+      e.preventDefault();
+      e.stopPropagation();
+      closeAllActionMenus();
+      confirmRepublishGroup(republishGroupBtn.getAttribute('data-republish-group'));
       return true;
     }
 
@@ -11964,6 +12163,10 @@
         Promise.resolve()
           .then(function () {
             if (typeof renderGroups === 'function') renderGroups();
+            return loadConnectedBookingMeta(true);
+          })
+          .then(function () {
+            if (typeof renderGroups === 'function') renderGroups();
           })
           .catch(function () {
             return null;
@@ -12302,6 +12505,8 @@
         ratingHtml(g.rating) +
         '</td><td>' +
         statusBadgeHtml(g.statusKey || 'draft', g.statusLabel || 'Draft') +
+        '</td><td class="org-td-connected">' +
+        connectedSlotCellHtml(g.id) +
         '</td><td class="org-td-actions">' +
         '<button type="button" class="org-btn org-btn-sm org-btn-outline org-member-list-link" data-org-goto-memberships="' +
         esc(g.id) +
@@ -17935,7 +18140,10 @@
     if (document.querySelector('[data-org-page="ticket-widget"].is-active') && state.eventsLoaded) {
       renderTicketWidgetPage();
     }
-    if (document.querySelector('[data-org-page="events"].is-active') && state.eventsLoaded) {
+    if (
+      document.querySelector('[data-org-page="events"].is-active') &&
+      (state.eventsLoaded || eventsSourceList().length)
+    ) {
       renderMyEventsHub();
       fillEventSelect(document.getElementById('ticket-event'));
     }
@@ -18063,31 +18271,58 @@
     if (!silent) setDashboardLoading(true);
     let postReady = null;
     try {
-    const { ok, data } = await (prefetch || apiWithTimeout('/api/organiser/bootstrap', {}, 30000));
+    const { ok, data } = await fetchOrganiserBootstrap(prefetch);
     if (!ok) throw new Error(data.message || data.error || 'load_failed');
     cacheBootstrapForEmbed(data);
     state.groups = dedupeGroupsById(data.groups || []);
     state.pendingClaimGroups = sortPendingClaimGroups(data.pendingClaimGroups || []);
     state.pendingClaimOpportunities = data.pendingClaimOpportunities || [];
     state.pendingSetupReviews = data.pendingSetupReviews || [];
-    state.events = data.events || [];
-    state.upcomingEvents = data.upcomingEvents || [];
-    state.eventsTotal = data.eventsPagination?.total ?? state.events.length;
-    state.eventsChunkOffset = data.eventsPagination?.offset ?? 0;
-    state.eventsHasMore = Boolean(data.eventsPagination?.hasMore);
-    state.tickets = data.tickets || [];
+    const incomingEvents = Array.isArray(data.events) ? data.events : [];
+    const incomingUpcoming = Array.isArray(data.upcomingEvents) ? data.upcomingEvents : [];
+    const incomingTickets = Array.isArray(data.tickets) ? data.tickets : [];
+    // Lean bootstrap returns empty events/tickets. Keep a usable cache so the
+    // list does not wipe and wait for a second heavy fetch on every refresh.
+    if (incomingEvents.length || !state.eventsLoaded) {
+      state.events = incomingEvents;
+      state.eventsLoaded = incomingEvents.length > 0;
+      state.eventsEnrichment = incomingEvents.length ? 'full' : 'none';
+      if (incomingEvents.length) invalidateEventsLoad();
+    }
+    if (incomingUpcoming.length || !state.upcomingEvents.length) {
+      state.upcomingEvents = incomingUpcoming;
+    }
+    if (incomingTickets.length || !state.tickets.length) {
+      state.tickets = incomingTickets;
+    }
+    if (data.eventsPagination) {
+      state.eventsTotal = data.eventsPagination.total ?? state.events.length;
+      state.eventsChunkOffset = data.eventsPagination.offset ?? 0;
+      state.eventsHasMore = Boolean(data.eventsPagination.hasMore);
+    } else if (!state.eventsLoaded) {
+      state.eventsTotal = state.events.length;
+      state.eventsChunkOffset = 0;
+      state.eventsHasMore = false;
+    }
     listPages.groups = 1;
     listPages.events = 1;
     listPages.tickets = 1;
     listPages.reviews = 1;
     listPages.revenue = 1;
     listPages.attendees = 1;
-    state.reviews = data.reviews || [];
-    state.reviewsLoaded = false;
-    state.groupRankings = data.groupRankings || {};
-    state.workspaceSummary =
-      data.workspaceSummary && data.workspaceSummary.computed ? data.workspaceSummary : null;
-    state.eventSummaries = data.eventSummaries || [];
+    if (Array.isArray(data.reviews) && data.reviews.length) {
+      state.reviews = data.reviews;
+      state.reviewsLoaded = true;
+    }
+    if (data.groupRankings && Object.keys(data.groupRankings).length) {
+      state.groupRankings = data.groupRankings;
+    }
+    if (data.workspaceSummary && data.workspaceSummary.computed) {
+      state.workspaceSummary = data.workspaceSummary;
+    }
+    if (Array.isArray(data.eventSummaries)) {
+      state.eventSummaries = data.eventSummaries;
+    }
     if (
       !state.events.length &&
       state.eventSummaries.length &&
@@ -18095,10 +18330,9 @@
     ) {
       state.eventsHasMore = state.eventSummaries.length > EVENTS_FETCH_SIZE;
     }
-    state.eventsFullyLoaded = !state.eventsHasMore;
-    invalidateEventsLoad();
-    state.eventsLoaded = false;
-    state.eventsEnrichment = 'none';
+    if (!state.eventsLoaded) {
+      state.eventsFullyLoaded = !state.eventsHasMore;
+    }
     state.pendingApplicationsCount = Number(data.pendingApplications?.count) || 0;
     state.pendingApplicationsPreview = data.pendingApplications?.preview || [];
     if (!silent) {
@@ -18162,13 +18396,28 @@
       state.dashboardScope = null;
     }
 
-    if (!silent) showOrganiserAlert(null);
+    if (data.partial) {
+      showOrganiserAlert(
+        'Dashboard opened with a quicker snapshot — attendees and events will finish loading in this tab.',
+        false
+      );
+    } else if (!silent) {
+      showOrganiserAlert(null);
+    }
     showOrganiserEmailVerifyBanner();
 
     applyPendingGroupSave();
     applyPendingOpportunitySubmitFlash();
     pruneStaleEventFilters();
+    fillMyEventsFilters();
     bootstrapReady = true;
+    try {
+      window.dispatchEvent(
+        new CustomEvent('hub-organiser-bootstrap', {
+          detail: { groups: state.groups || [] },
+        })
+      );
+    } catch (_) {}
     const groupDrawerOpen =
       skipRenderIfGroupDrawer && document.body.classList.contains('org-group-drawer-open');
     if (!groupDrawerOpen) {
@@ -18199,6 +18448,7 @@
           setEventsSub(eventsSubRoute);
         }
       }
+      ensureWorkspaceStatsLoaded();
       if (parseRoute().page === 'memberships' || parseRoute().page === 'member-lists') {
         maybeRedirectToSingleMemberList();
       }
@@ -18238,7 +18488,15 @@
   }
 
   async function refresh() {
-    await loadBootstrap({ silent: true });
+    try {
+      await loadBootstrap({ silent: true });
+    } catch (e) {
+      // Silent refresh (pageshow / hash / scope) must not become an unhandled
+      // rejection — that was the Sentry "Request timed out" on #events-list.
+      if (typeof console !== 'undefined' && console.warn) {
+        console.warn('[organiser] silent refresh failed', e && e.message ? e.message : e);
+      }
+    }
   }
 
   let groupLogoFile = null;
@@ -19603,7 +19861,7 @@
           e.data.draft ? 'Event changes saved.' : 'Event saved.',
           false
         );
-        loadBootstrap().then(renderAll);
+        refreshEventsWorkspaceAfterMutation({ route: 'events-list' });
         return;
       }
       if (e.data && e.data.type === 'hub-event-drawer-ready') {
@@ -19671,7 +19929,35 @@
       }
       if (e.data && e.data.type === 'hub-event-goto-tickets') {
         const ids = Array.isArray(e.data.eventIds) ? e.data.eventIds : [];
+        if (e.data.fromLocation) eventDrawerLocationComplete = true;
         if (ids.length) openEventTicketsDrawer(ids, e.data.title || '');
+        return;
+      }
+      if (e.data && e.data.type === 'hub-event-goto-connected-setup') {
+        const eid = String(e.data.eventId || '').trim();
+        const ids = Array.isArray(e.data.eventIds) ? e.data.eventIds.filter(Boolean) : [];
+        const platform = String(e.data.platform || '').trim();
+        if (!eid) return;
+        let url =
+          '/organiser/event-connected-setup?id=' +
+          encodeURIComponent(eid) +
+          '&embed=1';
+        if (platform) {
+          url += '&platform=' + encodeURIComponent(platform);
+        }
+        url += '&from=tickets';
+        if (ids.length) {
+          url += '&returnIds=' + encodeURIComponent(ids.join(','));
+        }
+        setEventDrawerBackButton(true, eid, 'tickets');
+        openEventDrawerFrame(url, e.data.title || 'Connected event setup', null, {
+          progressStep: 'tickets',
+        });
+        return;
+      }
+      if (e.data && e.data.type === 'hub-event-goto-connected-booking') {
+        closeEventEditorDrawer();
+        location.href = '/organiser/#groups';
         return;
       }
       if (e.data && e.data.type === 'hub-event-tickets-done') {
@@ -19884,7 +20170,7 @@
       }
 
       // Start bootstrap while binding the large DOM — overlaps network with CPU work.
-      const bootstrapPrefetch = apiWithTimeout('/api/organiser/bootstrap', {}, 30000);
+      const bootstrapPrefetch = apiWithTimeout('/api/organiser/bootstrap', {}, BOOTSTRAP_TIMEOUT_MS);
       bindForms();
       bindTeamUi();
       bindOnboardingPipeline();

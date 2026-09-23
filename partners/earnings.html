@@ -12,14 +12,17 @@
 <meta property="og:title" content="Partner workspace – The Networker UK">
 <meta property="og:description" content="Earnings, tracking links, logos, creatives, and rate card for referral partners.">
 <meta property="og:url" content="https://www.thenetworkeruk.com/partners/kit">
-<meta property="og:image" content="https://www.thenetworkeruk.com/assets/logo-networker-uk-og.png?v=20260908og">
+<meta property="og:image" content="http://localhost:3000/assets/logo-networker-uk-og.png?v=20260908og">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="The Networker UK">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/hub.css?v=20260909listmenu1">
 <link rel="stylesheet" href="/css/content-page.css?v=20260711e">
-<link rel="stylesheet" href="/css/partner-kit.css?v=20260910ws3">
+<link rel="stylesheet" href="/css/partner-kit.css?v=20260917terms1">
 <link rel="icon" href="/favicon.ico?v=20260823uk3" sizes="any">
 <link rel="icon" href="/assets/favicon.svg?v=20260823uk3" type="image/svg+xml">
 <link rel="icon" href="/assets/favicon-32.png?v=20260823uk" type="image/png" sizes="32x32">
@@ -29,7 +32,7 @@
 <body class="partner-kit-page">
 
 <div id="hub-site-nav"></div>
-<script src="/js/site-nav.js?v=20260910aff1" data-root="/" data-page="partners"></script>
+<script src="/js/site-nav.js?v=20260922dash1" data-root="/" data-page="partners"></script>
 
 <main class="content-page-main partner-kit-main">
   <header class="partner-kit-hero partner-kit-hero--hub" aria-label="Partner workspace">
@@ -38,8 +41,14 @@
         <p class="partner-kit-kicker">Referral partners</p>
         <h1>Your partner workspace</h1>
         <p class="partner-kit-lede">
-          Track earnings, copy your links, and download posts &amp; badges — pick a section below.
+          Everything you need to promote The Networker UK and get paid when your intros convert.
         </p>
+        <ul class="partner-kit-hero-points">
+          <li><strong>Your links</strong> — copy tracking URLs for the homepage, advertising, and opportunity listings</li>
+          <li><strong>Posts &amp; Stories</strong> — download ready-made square, landscape, and Story creatives</li>
+          <li><strong>Logos</strong> — official badges and the Referral Partner lockup for your site or email</li>
+          <li><strong>Earnings</strong> — see hold, ready to pay, and each referred sale once they pay</li>
+        </ul>
         <p class="partner-kit-code-pill" id="partner-hero-code-line" hidden>
           Partner code <strong id="partner-hero-code"></strong>
         </p>
@@ -49,11 +58,13 @@
         </div>
       </div>
       <div class="partner-kit-hero-visual partner-kit-hero-visual--mark" aria-hidden="true">
-        <img src="/assets/logo-networker-uk-transparent.png?v=20260910ws3" alt="" width="320" height="148" loading="eager">
+        <img src="/assets/logo-networker-uk-transparent.png?v=20260916logo2" alt="" width="320" height="148" loading="eager">
         <p class="partner-kit-hero-mark-label">Referral partner</p>
       </div>
     </div>
   </header>
+
+  <div id="partner-terms-banner" class="partner-terms-banner" hidden role="status" aria-live="polite"></div>
 
   <nav class="partner-hub-nav" aria-label="Workspace sections" id="partner-hub-nav">
     <p class="partner-hub-nav-label">Workspace menu</p>
@@ -172,8 +183,9 @@
         </p>
       </div>
 
-      <div class="partner-kit-card">
+      <div class="partner-kit-card partner-kit-card--copy">
         <h2 id="copy-title">Suggested copy</h2>
+        <p class="partner-kit-copy-intro">Ready to paste into WhatsApp, email, or LinkedIn — tap <strong>Copy text</strong> and add your tracking link where it says [LINK].</p>
         <div class="partner-kit-copy-block">
           <h3>Short message</h3>
           <blockquote id="partner-kit-copy-short">
@@ -274,38 +286,38 @@ DM me for my partner link.
         <p class="partner-kit-muted">Use the official wordmark below. Prefer Partner badges when you mention the programme — don’t stretch, recolour, or add effects.</p>
 
         <div class="partner-brand-primary">
-          <img src="/assets/logo-networker-uk-transparent.png?v=20260910ws3" alt="The Networker UK primary logo" width="360" height="167" loading="lazy">
+          <img src="/assets/logo-networker-uk-transparent.png?v=20260916logo2" alt="The Networker UK primary logo" width="360" height="167" loading="lazy">
           <div>
             <h3>Primary logo</h3>
             <p class="partner-kit-muted">Transparent PNG for light backgrounds — the real Networker UK wordmark.</p>
-            <a class="partner-kit-download partner-kit-download--solid" href="/assets/logo-networker-uk-transparent.png?v=20260910ws3" download="networker-uk-logo-transparent.png">Download PNG</a>
+            <a class="partner-kit-download partner-kit-download--solid" href="/assets/logo-networker-uk-transparent.png?v=20260916logo2" download="networker-uk-logo-transparent.png">Download PNG</a>
           </div>
         </div>
 
         <h3 class="partner-brand-subhead">Partner variants</h3>
         <div class="partner-kit-logo-grid">
-          <figure class="partner-kit-logo-tile partner-kit-logo-tile--plain">
-            <img src="/assets/logo-networker-uk-partner-lockup.png?v=20260910ws3" alt="The Networker UK Referral Partner lockup" width="320" height="180" loading="lazy">
+          <figure class="partner-kit-logo-tile partner-kit-logo-tile--lavender">
+            <img src="/assets/logo-networker-uk-partner-lockup.png?v=20260916logo2" alt="The Networker UK Referral Partner lockup" width="320" height="180" loading="lazy">
             <figcaption>Referral Partner lockup</figcaption>
             <div class="partner-kit-dl-row">
-              <a class="partner-kit-download" href="/assets/logo-networker-uk-partner-lockup.png?v=20260910ws3" download="networker-uk-referral-partner.png">PNG</a>
-              <a class="partner-kit-download" href="/assets/logo-networker-uk-partner-lockup.svg?v=20260910ws3" download="networker-uk-referral-partner.svg">SVG</a>
+              <a class="partner-kit-download" href="/assets/logo-networker-uk-partner-lockup.png?v=20260916logo2" download="networker-uk-referral-partner.png">PNG</a>
+              <a class="partner-kit-download" href="/assets/logo-networker-uk-partner-lockup.svg?v=20260916logo2" download="networker-uk-referral-partner.svg">SVG</a>
             </div>
           </figure>
           <figure class="partner-kit-logo-tile partner-kit-logo-tile--plain">
-            <img src="/assets/logo-networker-uk-partner-light.png?v=20260910ws3" alt="The Networker UK Partner badge on light" width="280" height="158" loading="lazy">
+            <img src="/assets/logo-networker-uk-partner-light.png?v=20260916logo2" alt="The Networker UK Partner badge on light" width="280" height="158" loading="lazy">
             <figcaption>Partner badge · light</figcaption>
             <div class="partner-kit-dl-row">
-              <a class="partner-kit-download" href="/assets/logo-networker-uk-partner-light.png?v=20260910ws3" download="networker-uk-partner-light.png">PNG</a>
-              <a class="partner-kit-download" href="/assets/logo-networker-uk-partner-light.svg?v=20260910ws3" download="networker-uk-partner-light.svg">SVG</a>
+              <a class="partner-kit-download" href="/assets/logo-networker-uk-partner-light.png?v=20260916logo2" download="networker-uk-partner-light.png">PNG</a>
+              <a class="partner-kit-download" href="/assets/logo-networker-uk-partner-light.svg?v=20260916logo2" download="networker-uk-partner-light.svg">SVG</a>
             </div>
           </figure>
           <figure class="partner-kit-logo-tile partner-kit-logo-tile--plain partner-kit-logo-tile--plain-dark">
-            <img src="/assets/logo-networker-uk-partner-dark.png?v=20260910ws3" alt="The Networker UK Partner badge on dark" width="280" height="158" loading="lazy">
+            <img src="/assets/logo-networker-uk-partner-dark.png?v=20260916logo2" alt="The Networker UK Partner badge on dark" width="280" height="158" loading="lazy">
             <figcaption>Partner badge · dark</figcaption>
             <div class="partner-kit-dl-row">
-              <a class="partner-kit-download" href="/assets/logo-networker-uk-partner-dark.png?v=20260910ws3" download="networker-uk-partner-dark.png">PNG</a>
-              <a class="partner-kit-download" href="/assets/logo-networker-uk-partner-dark.svg?v=20260910ws3" download="networker-uk-partner-dark.svg">SVG</a>
+              <a class="partner-kit-download" href="/assets/logo-networker-uk-partner-dark.png?v=20260916logo2" download="networker-uk-partner-dark.png">PNG</a>
+              <a class="partner-kit-download" href="/assets/logo-networker-uk-partner-dark.svg?v=20260916logo2" download="networker-uk-partner-dark.svg">SVG</a>
             </div>
           </figure>
         </div>
@@ -367,6 +379,6 @@ DM me for my partner link.
 
 <div id="hub-site-footer"></div>
 <script src="/js/site-footer.js?v=20260910pp1" data-root="/"></script>
-<script src="/js/partner-kit.js?v=20260910ws3"></script>
+<script src="/js/partner-kit.js?v=20260917terms1"></script>
 </body>
 </html>

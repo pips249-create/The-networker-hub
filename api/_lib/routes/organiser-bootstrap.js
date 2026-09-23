@@ -57,7 +57,16 @@ module.exports = async function handler(req, res) {
         ok: true,
         groups,
         events: [],
+        eventSummaries: [],
+        upcomingEvents: [],
+        tickets: [],
+        pendingClaimGroups: [],
+        pendingClaimOpportunities: [],
+        pendingSetupReviews: [],
         groupsError,
+        adminView,
+        personalScope,
+        isAdmin,
         stripeConnectEnabled: (() => {
           try {
             const { isStripeConnectEnabled } = require('../stripe-connect');

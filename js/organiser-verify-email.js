@@ -14,6 +14,21 @@
     return new URLSearchParams(window.location.search);
   }
 
+  /** Safe same-origin path from ?next= (welcome, organiser, payment-setup, etc.). */
+  function continueHref() {
+    var raw = String(params().get('next') || '').trim();
+    if (!raw) return '/welcome';
+    try {
+      var url = /^https?:\/\//i.test(raw) ? new URL(raw) : new URL(raw, window.location.origin);
+      if (url.origin !== window.location.origin) return '/welcome';
+      if (url.pathname === '/login' || url.pathname === '/register') return '/welcome';
+      if (!/^\//.test(url.pathname) || /^\/\//.test(url.pathname)) return '/welcome';
+      return url.pathname + url.search + url.hash;
+    } catch (e) {
+      return '/welcome';
+    }
+  }
+
   function showError(message) {
     if (!errorEl) return;
     errorEl.textContent = message || '';
@@ -29,13 +44,32 @@
   }
 
   function showVerifiedUi(message) {
-    showStatus(message || 'Your email is confirmed. Opening your organiser dashboard…', true);
+    var nextHref = continueHref();
+    var goingToPayments = nextHref.indexOf('/organiser/payment-setup') === 0;
+    var goingToOrganiser = nextHref.indexOf('/organiser') === 0;
+    showStatus(
+      message ||
+        (goingToPayments
+          ? 'Your email is confirmed. Opening bank details setup…'
+          : goingToOrganiser
+            ? 'Your email is confirmed. Opening your organiser dashboard…'
+            : 'Your email is confirmed. Continuing…'),
+      true
+    );
     if (ledeEl) ledeEl.hidden = true;
     if (formEl) formEl.hidden = true;
     if (resendBtn) resendBtn.hidden = true;
-    if (continueBtn) continueBtn.hidden = false;
+    if (continueBtn) {
+      continueBtn.hidden = false;
+      continueBtn.href = nextHref;
+      if (goingToPayments) {
+        continueBtn.textContent = 'Continue to bank details →';
+      } else if (!goingToOrganiser) {
+        continueBtn.textContent = 'Continue →';
+      }
+    }
     window.setTimeout(function () {
-      window.location.href = '/organiser/';
+      window.location.href = nextHref;
     }, 900);
   }
 
@@ -74,18 +108,28 @@
       if (data.devVerifyCode && codeEl) {
         codeEl.value = String(data.devVerifyCode);
       }
-      if ((data.devVerifyCode || data.devVerifyUrl) && devEl) {
+      if (data.verifyCode && codeEl) {
+        codeEl.value = String(data.verifyCode);
+      }
+      if ((data.devVerifyCode || data.devVerifyUrl || data.verifyCode || data.verifyUrl) && devEl) {
         devEl.hidden = false;
-        if (data.devVerifyCode) {
-          devEl.textContent = 'Dev code: ' + data.devVerifyCode;
+        if (data.verifyCode || data.devVerifyCode) {
+          devEl.textContent =
+            'Confirmation code: ' + String(data.verifyCode || data.devVerifyCode);
         } else {
           devEl.innerHTML =
-            'Dev link: <a href="' +
-            String(data.devVerifyUrl).replace(/"/g, '&quot;') +
+            'Confirm link: <a href="' +
+            String(data.verifyUrl || data.devVerifyUrl).replace(/"/g, '&quot;') +
             '">Open verify page</a>';
         }
       }
-      showStatus(data.message || 'Confirmation code sent.', true);
+      showStatus(
+        data.message ||
+          (data.emailSent === false
+            ? 'Email could not be delivered — use the code shown below.'
+            : 'Confirmation code sent. Check inbox and spam/junk.'),
+        true
+      );
       if (codeEl) codeEl.focus();
     } catch (e) {
       showError('Could not resend confirmation code.');
@@ -121,6 +165,35 @@
     }
   }
 
+  async function maybeAutoSendVerificationCode() {
+    if (params().get('token') || params().get('code')) return;
+    try {
+      var next = String(params().get('next') || '');
+      var fromPayments = next.indexOf('/organiser/payment-setup') !== -1;
+      var fromSignup = next.indexOf('/welcome') === 0 || !next;
+      var autosentKey = fromPayments
+        ? 'hub_verify_email_autosent_payments'
+        : fromSignup
+          ? 'hub_verify_email_autosent_signup'
+          : 'hub_verify_email_autosent';
+      if (sessionStorage.getItem(autosentKey)) return;
+      var statusRes = await fetch('/api/auth/verify-organiser-email', {
+        credentials: 'include',
+        cache: 'no-store',
+      });
+      var statusData = await statusRes.json();
+      if (!statusRes.ok || !statusData.ok) return;
+      if (statusData.organiserEmailVerified) return;
+      // From Stripe setup / signup recovery, always resend once if needed.
+      if (!fromPayments && !fromSignup && statusData.hasActiveVerifyCode) return;
+      if (statusData.hasActiveVerifyCode && fromSignup) return;
+      sessionStorage.setItem(autosentKey, '1');
+      await resend();
+    } catch (e) {
+      /* non-fatal */
+    }
+  }
+
   async function init() {
     var session = await loadSession();
     if (!session.ok || !session.user) {
@@ -129,15 +202,10 @@
       return;
     }
 
-    if (!session.organiserAccess && (session.pendingClaimCount || 0) === 0) {
-      window.location.href = '/organiser/enable';
-      return;
-    }
-
     if (addressEl) addressEl.textContent = session.user.email || 'your email';
 
     if (session.organiserEmailVerified) {
-      showVerifiedUi('Your email is confirmed. You can use all organiser features.');
+      showVerifiedUi('Your email is confirmed.');
       return;
     }
 
@@ -160,9 +228,24 @@
         (result.data && result.data.message) ||
           'This confirmation code is invalid or expired. Enter a new code below.'
       );
+      if (codeEl) {
+        var digits = String(token || '')
+          .replace(/\D/g, '')
+          .slice(0, 6);
+        if (digits.length === 6) codeEl.value = digits;
+      }
       if (confirmBtn) confirmBtn.disabled = false;
     }
 
+    if (codeEl && !codeEl.value) {
+      var prefill = params().get('code') || params().get('token');
+      if (prefill) {
+        codeEl.value = String(prefill)
+          .replace(/\D/g, '')
+          .slice(0, 6);
+      }
+    }
+    await maybeAutoSendVerificationCode();
     if (codeEl) codeEl.focus();
   }
 
