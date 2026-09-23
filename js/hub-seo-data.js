@@ -15,7 +15,7 @@ window.HUB_SEO_DATA = {
     },
     {
       "question": "Do I need an account to browse The Networker UK?",
-      "answer": "No — browsing is completely free. You can explore events and business opportunities without signing in. You only need a free account when you want to buy a ticket or enquire about a business opportunity. Sign-up takes about 2 minutes.",
+      "answer": "No — browsing is completely free. You can explore events and business opportunities without signing in. You only need a free account when you want to buy a ticket, enquire about a business opportunity, or send us event details to list. Sign-up takes about 2 minutes.",
       "category": "general",
       "icon": "👤"
     },
@@ -333,7 +333,7 @@ window.HUB_SEO_DATA = {
               "name": "Do I need an account to browse The Networker UK?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "No — browsing is completely free. You can explore events and business opportunities without signing in. You only need a free account when you want to buy a ticket or enquire about a business opportunity. Sign-up takes about 2 minutes."
+                "text": "No — browsing is completely free. You can explore events and business opportunities without signing in. You only need a free account when you want to buy a ticket, enquire about a business opportunity, or send us event details to list. Sign-up takes about 2 minutes."
               }
             },
             {
@@ -453,7 +453,7 @@ window.HUB_SEO_DATA = {
               "name": "Do I need an account to browse The Networker UK?",
               "acceptedAnswer": {
                 "@type": "Answer",
-                "text": "No — browsing is completely free. You can explore events and business opportunities without signing in. You only need a free account when you want to buy a ticket or enquire about a business opportunity. Sign-up takes about 2 minutes."
+                "text": "No — browsing is completely free. You can explore events and business opportunities without signing in. You only need a free account when you want to buy a ticket, enquire about a business opportunity, or send us event details to list. Sign-up takes about 2 minutes."
               }
             },
             {
