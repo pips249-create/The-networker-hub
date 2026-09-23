@@ -3582,9 +3582,11 @@ body.nav-menu-open {
 
   .opp-browse-page .events-results-actions .opp-copy-link-btn,
   .opp-browse-page .events-results-actions .opp-save-search-btn {
-    width: 100%;
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
     justify-content: center;
-    min-height: 44px;
+    min-height: 40px;
   }
 
   .opp-browse-page .events-view-sort-group {
