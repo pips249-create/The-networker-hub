@@ -2685,11 +2685,23 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
   .opp-browse-page .opp-results-tools .opp-copy-link-btn,
   .opp-browse-page .opp-results-tools .opp-save-search-btn {
     flex: 1 1 0;
-    width: auto;
+    width: 100%;
+    max-width: none;
     min-width: 0;
     justify-content: center;
     min-height: 40px;
     padding: 8px 12px;
+    box-sizing: border-box;
+  }
+
+  .opp-browse-page .events-results-meta {
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .opp-browse-page .events-view-sort-group {
+    width: 100%;
+    justify-content: space-between;
   }
 }
 
@@ -6730,9 +6742,10 @@ body.opp-alert-dialog-open {
   .opp-browse-page .bo-opp-card.event-grid-card {
     flex-direction: column;
     align-items: stretch;
-    padding: 10px;
+    padding: 12px;
     gap: 0;
     min-height: 0;
+    overflow: hidden;
   }
 
   .opp-browse-page .bo-opp-compact {
@@ -6741,19 +6754,20 @@ body.opp-alert-dialog-open {
     align-items: stretch;
     gap: 0;
     min-width: 0;
+    width: 100%;
   }
 
   .opp-browse-page .bo-opp-card .event-grid-media,
   .opp-browse-page .bo-opp-compact .event-grid-media {
-    flex: 0 0 104px !important;
-    width: 104px !important;
-    height: 104px !important;
-    min-width: 104px !important;
-    min-height: 104px !important;
-    max-width: 104px !important;
-    max-height: 104px !important;
+    flex: 0 0 96px !important;
+    width: 96px !important;
+    height: 96px !important;
+    min-width: 96px !important;
+    min-height: 96px !important;
+    max-width: 96px !important;
+    max-height: 96px !important;
     aspect-ratio: 1 / 1;
-    align-self: center;
+    align-self: flex-start;
     border-radius: 10px;
     overflow: hidden;
   }
@@ -6791,9 +6805,11 @@ body.opp-alert-dialog-open {
   .opp-browse-page .bo-opp-compact .event-grid-body {
     flex: 1 1 auto;
     min-width: 0;
-    padding: 2px 4px 2px 12px;
+    max-width: 100%;
+    padding: 0 2px 0 12px;
     gap: 4px;
-    justify-content: center;
+    justify-content: flex-start;
+    overflow: hidden;
   }
 
   .opp-browse-page .event-grid-body-top {
