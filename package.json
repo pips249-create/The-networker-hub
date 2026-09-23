@@ -16,6 +16,7 @@
     "test:stripe-webhook-signature": "node scripts/test-stripe-webhook-signature.js",
     "test:stripe-webhook-raw-body": "node scripts/test-stripe-webhook-raw-body.js",
     "test:browse-events": "node scripts/test-browse-events-timeout.js",
+    "test:organiser-event-auto-claim": "node scripts/test-organiser-event-auto-claim.js",
     "check:opportunities": "node scripts/smoke-test-opportunities.js",
     "check:opportunities:live": "node scripts/smoke-test-opportunities.js https://www.thenetworkeruk.com",
     "check:local": "node scripts/smoke-test-site.js http://localhost:3000",

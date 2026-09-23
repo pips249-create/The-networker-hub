@@ -9555,6 +9555,9 @@
       return;
     }
     closeModals();
+    if (res.data && res.data.ownershipClaimed && res.data.event) {
+      noteOrganiserPageClaimedFromListing(res.data.event.groupId || res.data.event.organiserId);
+    }
     showOrganiserAlert(
       res.data.message || 'Event duplicated as a draft — add dates and publish when ready.',
       false
@@ -13967,6 +13970,21 @@
   function syncPendingClaimFlag() {
     window.hubPendingGroupClaims = (state.pendingClaimGroups || []).length > 0;
     window.hubPendingOpportunityClaims = (state.pendingClaimOpportunities || []).length > 0;
+  }
+
+  /** Drop the claim prompt after the organiser lists an event on that page. */
+  function noteOrganiserPageClaimedFromListing(groupId) {
+    const id = String(groupId || '').trim();
+    if (!id) return;
+    state.pendingClaimGroups = (state.pendingClaimGroups || []).filter(function (g) {
+      return !g || g.id !== id;
+    });
+    state.groups = (state.groups || []).map(function (g) {
+      if (!g || g.id !== id) return g;
+      return Object.assign({}, g, { ownershipClaimStatus: 'claimed' });
+    });
+    syncPendingClaimFlag();
+    if (!(state.pendingClaimGroups || []).length) hideGroupClaimModal();
   }
 
   function gettingStartedProgress() {
@@ -19856,6 +19874,7 @@
         return;
       }
       if (e.data && e.data.type === 'hub-event-saved') {
+        if (e.data.ownershipClaimed) noteOrganiserPageClaimedFromListing(e.data.organiserGroupId);
         closeEventEditorDrawer();
         showOrganiserAlert(
           e.data.draft ? 'Event changes saved.' : 'Event saved.',
@@ -19928,6 +19947,7 @@
         return;
       }
       if (e.data && e.data.type === 'hub-event-goto-tickets') {
+        if (e.data.ownershipClaimed) noteOrganiserPageClaimedFromListing(e.data.organiserGroupId);
         const ids = Array.isArray(e.data.eventIds) ? e.data.eventIds : [];
         if (e.data.fromLocation) eventDrawerLocationComplete = true;
         if (ids.length) openEventTicketsDrawer(ids, e.data.title || '');
