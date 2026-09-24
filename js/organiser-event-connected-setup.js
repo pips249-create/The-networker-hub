@@ -1220,6 +1220,7 @@
     var heading = qs('ecs-webhook-heading');
     if (!mount) return;
     var key = String(platform || selectedIntegrationPlatform() || 'own_site').trim();
+    syncRegistrationSyncPresentation(key, false);
     renderRegistrationSyncSteps(key);
     if (lead) lead.innerHTML = providerWebhookLead(key);
     if (heading) {
