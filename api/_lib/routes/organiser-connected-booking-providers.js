@@ -1,7 +1,11 @@
 const { getOrganiserApi } = require('../organiser-provider');
 const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
 const { connectedBookingAllowedForSession } = require('../connected-booking');
-const { CONNECTED_BOOKING_PROVIDERS } = require('../connected-booking-providers');
+const {
+  CONNECTED_BOOKING_PROVIDERS,
+  isOrganiserPickerProvider,
+  listOrganiserPickerProviders,
+} = require('../connected-booking-providers');
 const {
   ensureProviderConnection,
   listProviderConnections,
@@ -79,7 +83,7 @@ module.exports = async function handler(req, res) {
       const eventId = String(req.query?.eventId || req.query?.event_id || '').trim();
 
       const providers = await Promise.all(
-        CONNECTED_BOOKING_PROVIDERS.map(async (p) => {
+        listOrganiserPickerProviders().map(async (p) => {
         const conn = (connResult.connections || []).find((c) => c.provider === p.id);
         const webhookUrl =
           p.id === 'custom'
@@ -131,6 +135,13 @@ module.exports = async function handler(req, res) {
 
       if (action === 'enable_provider') {
         const provider = String(body.provider || '').trim().toLowerCase();
+        if (!isOrganiserPickerProvider(provider)) {
+          return json(res, 400, {
+            ok: false,
+            error: 'provider_not_available',
+            message: 'That booking provider is not available. Use Eventbrite, Ticket Tailor, or your own website.',
+          });
+        }
         let conn = await ensureProviderConnection(sb, accountId, provider);
         if (eventbriteWebhookNeedsTokenRotation(site, conn.webhook_token)) {
           conn = await ensureProviderConnection(sb, accountId, provider, { rotateToken: true });
@@ -155,6 +166,13 @@ module.exports = async function handler(req, res) {
       if (action === 'link_event') {
         const eventId = String(body.eventId || body.event_id || '').trim();
         const provider = String(body.provider || '').trim().toLowerCase();
+        if (!isOrganiserPickerProvider(provider)) {
+          return json(res, 400, {
+            ok: false,
+            error: 'provider_not_available',
+            message: 'That booking provider is not available. Use Eventbrite, Ticket Tailor, or your own website.',
+          });
+        }
         const externalEventId = String(body.externalEventId || body.external_event_id || '').trim();
         const idCheck = validateProviderExternalEventId(provider, externalEventId);
         if (!idCheck.ok) {

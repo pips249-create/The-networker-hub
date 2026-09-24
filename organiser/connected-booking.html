@@ -271,11 +271,11 @@
         <section class="ee-booking-help-section" id="cb-providers-panel" hidden aria-labelledby="cb-providers-title">
           <div class="ee-booking-help-section-head">
             <p class="ee-booking-help-kicker">Checkout platforms</p>
-            <h2 id="cb-providers-title">Booking providers (your site, Eventbrite, Ticket Tailor, Luma, TryBooking)</h2>
+            <h2 id="cb-providers-title">Booking providers (Eventbrite, Ticket Tailor, your own website)</h2>
             <p class="ee-booking-help-pick">
-              Enable a provider to get a <strong>webhook URL</strong> (no Zapier required). For your own checkout page,
-              use <strong>Your own website</strong> and POST each sale with the TNH event id. Other platforms: link each
-              TNH event to the provider’s event id.
+              Enable a provider to get a <strong>webhook URL</strong>. For your own checkout, use
+              <strong>Your own website</strong> and POST each sale with the TNH event id. For Eventbrite and Ticket
+              Tailor, link each TNH event to the provider’s event id on Connected setup.
             </p>
           </div>
           <p class="ee-hint ee-alert-warn" id="cb-providers-schema-warn" hidden role="status"></p>
@@ -301,8 +301,6 @@
               <option value="own_site">Your own website</option>
               <option value="eventbrite">Eventbrite</option>
               <option value="ticket_tailor">Ticket Tailor</option>
-              <option value="luma">Luma</option>
-              <option value="trybooking">TryBooking</option>
             </select>
             <label class="ee-field-label" for="cb-link-external-id" id="cb-link-external-id-label"
               >Provider event id</label

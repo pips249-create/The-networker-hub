@@ -57,8 +57,10 @@
     },
   };
 
-  /** Default card order on tickets + setup */
-  var PLATFORM_ORDER = ['eventbrite', 'ticket_tailor', 'luma', 'trybooking', 'own_site', 'custom'];
+  /** Default card order on tickets + setup (Luma / TryBooking / Zapier hidden — webhooks still work if legacy). */
+  var PLATFORM_ORDER = ['eventbrite', 'ticket_tailor', 'own_site'];
+
+  var LEGACY_PLATFORM_ALIASES = { luma: 'own_site', trybooking: 'own_site', custom: 'own_site' };
 
   var PICK_STEP_HINT =
     'Tap <strong>Continue to Connected setup</strong> next — you will add listing price and your checkout link there.';
@@ -75,20 +77,26 @@
     return id ? 'ecs_booking_platform:' + id : '';
   }
 
+  function normalizePlatformKey(key) {
+    var v = String(key || '').trim();
+    if (LEGACY_PLATFORM_ALIASES[v]) return LEGACY_PLATFORM_ALIASES[v];
+    return PLATFORMS[v] ? v : '';
+  }
+
   function getStored(eventId) {
     try {
       var key = storageKey(eventId);
       if (!key) return '';
       var v = localStorage.getItem(key) || '';
-      return PLATFORMS[v] ? v : '';
+      return normalizePlatformKey(v);
     } catch (e) {
       return '';
     }
   }
 
   function setStored(eventId, platform) {
-    var key = String(platform || '').trim();
-    if (!PLATFORMS[key]) return;
+    var key = normalizePlatformKey(platform);
+    if (!key || !PLATFORMS[key]) return;
     try {
       var sk = storageKey(eventId);
       if (sk) localStorage.setItem(sk, key);
@@ -102,8 +110,6 @@
     if (!u) return '';
     if (/eventbrite/.test(u)) return 'eventbrite';
     if (/tickettailor|ticket-tailor/.test(u)) return 'ticket_tailor';
-    if (/lu\.ma|luma\.com/.test(u)) return 'luma';
-    if (/trybooking/.test(u)) return 'trybooking';
     if (/^https?:\/\//.test(u)) return 'own_site';
     return '';
   }
