@@ -31,7 +31,7 @@ Webhooks do **not** need an API key — buyer email is in the payload. An **opti
 
 ## Listing import (optional)
 
-After **#127** / batch deploy: save API key on Connected setup → **Update listing from Ticket Tailor** (or tick import when saving the `ev_…` link).
+Once listing import is deployed: save API key on Connected setup → **Update listing from Ticket Tailor** (or tick import when saving the `ev_…` link).
 
 1. Connected setup → Ticket Tailor → **Webhook URL & API key** → paste API key → Save.
 2. Booking URL + linked **`ev_…`** (or booking URL only — TNH may match slug to `ev_…` via API).
