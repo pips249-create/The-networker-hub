@@ -779,7 +779,7 @@
   }
 
   var ACCOUNT_EVENT_SCOPE_NOTE =
-    ' <span class="ecs-webhook-scope-note">Account: enable the webhook once (same URL for all groups and events). This page: link each listing to that provider’s event id.</span>';
+    ' <span class="ecs-webhook-scope-note">Account: enable the webhook once (same URL for all your groups and events). This page: link each TNH listing to that provider’s event id.</span>';
 
   function providerAdminPasteLabel(key) {
     var k = String(key || '').trim();
@@ -836,10 +836,14 @@
 
   function registrationSyncLinkStepText(key, label) {
     if (key === 'ticket_tailor') {
-      return 'Link this listing to your Ticket Tailor ev_… event id above (Box office — not the public URL slug).';
+      return (
+        'Link this listing to your Ticket Tailor ev_… event id above (Box office — not the public URL slug).'
+      );
     }
     if (key === 'eventbrite') {
-      return 'Link this listing to your Eventbrite numeric event id above (or paste an /e/… booking URL and use “Use id from booking URL”).';
+      return (
+        'Link this listing to your Eventbrite numeric event id above (or paste an /e/… booking URL and use “Use id from booking URL”).'
+      );
     }
     return (
       'Link this listing to your ' +
@@ -1224,11 +1228,12 @@
       stepsEl.innerHTML = [
         {
           done: ownReady,
-          text: 'Enable your website webhook below — once per account (same URL for every group on your plan).',
+          text: 'Enable your website webhook below — once per account (Growth / Scale: same URL for every group).',
         },
         {
           done: false,
-          text: 'Each booking POST must include this listing’s TNH event id in the JSON body (see example). Use Eventbrite or Ticket Tailor cards if checkout is on those platforms.',
+          text:
+            'On each booking POST, include this listing’s TNH event id in the JSON body (see example below). No per-event URL in Ticket Tailor or Eventbrite — use those platforms’ cards instead.',
         },
       ]
         .map(function (step, index) {

@@ -394,35 +394,53 @@ async function listBookingCancellationsForOrganiserEvents(
 
 /**
  * Lightweight pending-application summary for dashboard badges and notices.
+ * Chunks event_id filters so large organiser catalogues do not blow the
+ * PostgREST URL limit (HTTP 400 Bad Request).
  */
 async function summarizePendingApplicationsForEventIds(eventIds) {
-  if (!isSupabaseConfigured() || !eventIds.length) {
+  const ids = Array.isArray(eventIds) ? eventIds.filter(Boolean) : [];
+  if (!isSupabaseConfigured() || !ids.length) {
     return { count: 0, preview: [] };
   }
 
   const sb = getSupabaseAdmin();
-  const { count, data, error } = await sb
-    .from('registrations')
-    .select(
-      `
+  const select = `
       id,
+      created_at,
       event_id,
       screening_answer_industry,
       screening_answer_job_title,
       attendees ( name, email ),
       events ( title )
-    `,
-      { count: 'exact' }
-    )
-    .in('event_id', eventIds)
-    .eq('application_status', 'Pending')
-    .is('cancelled_at', null)
-    .order('created_at', { ascending: false })
-    .limit(10);
+    `;
+  const chunkSize = 80;
+  let totalCount = 0;
+  const previewRows = [];
 
-  if (error) throw new Error(error.message);
+  for (let i = 0; i < ids.length; i += chunkSize) {
+    const chunkIds = ids.slice(i, i + chunkSize);
+    const { count, data, error } = await sb
+      .from('registrations')
+      .select(select, { count: 'exact' })
+      .in('event_id', chunkIds)
+      .eq('application_status', 'Pending')
+      .is('cancelled_at', null)
+      .order('created_at', { ascending: false })
+      .limit(10);
 
-  const preview = (data || []).map((row) => {
+    if (error) throw new Error(error.message);
+
+    totalCount += Number(count) || 0;
+    if (data?.length) previewRows.push(...data);
+  }
+
+  previewRows.sort((a, b) => {
+    const aAt = Date.parse(a.created_at || '') || 0;
+    const bAt = Date.parse(b.created_at || '') || 0;
+    return bAt - aAt;
+  });
+
+  const preview = previewRows.slice(0, 10).map((row) => {
     const attendee = row.attendees || {};
     const event = row.events || {};
     const email = String(attendee.email || '').trim();
@@ -439,7 +457,7 @@ async function summarizePendingApplicationsForEventIds(eventIds) {
   });
 
   return {
-    count: count || 0,
+    count: totalCount,
     preview,
   };
 }

@@ -382,11 +382,47 @@ async function bootstrapOrganiserFromPendingClaims(session) {
 }
 
 /**
+ * Listing an event is the organiser accepting that page.
+ * Staff listings stay unclaimed: Command Centre, the admin workspace view, and Impersonate.
+ */
+function shouldAutoClaimOrganiserOnEventCreate(session, options) {
+  if (!session || !session.sub) return false;
+  if (session.impersonator) return false;
+  if (options && options.adminView) return false;
+  return true;
+}
+
+/**
+ * When the signed-in organiser adds an event, accept that organiser page.
+ * Same outcome as confirming the claim prompt (badge, claimed status, confirmation email).
+ * Failures do not block the event save. Already-claimed, disputed, internal, and
+ * unmatched pages are left as they are.
+ */
+async function claimOrganiserPageForListedEvent(session, groupId, options) {
+  if (!shouldAutoClaimOrganiserOnEventCreate(session, options)) {
+    return { claimed: false, reason: 'staff_or_admin' };
+  }
+  const id = String(groupId || '').trim();
+  if (!id) return { claimed: false, reason: 'missing_id' };
+  try {
+    const group = await claimGroupForSession(session, id);
+    return { claimed: Boolean(group), group: group || null };
+  } catch (e) {
+    const msg = e && e.message ? e.message : String(e);
+    if (msg !== 'claim_not_available' && msg !== 'invalid_group_id') {
+      console.warn('auto-claim on organiser event create failed:', msg);
+    }
+    return { claimed: false, reason: msg };
+  }
+}
+
+/**
  * When Command Centre creates events / impersonates a group, ensure a login exists
  * for the contact email so staff can open the workspace.
  *
- * Does NOT set ownership_claim_status to claimed — that is reserved for the
- * personalised claim-URL flow. Admin work used to false-claim pages
+ * Does NOT set ownership_claim_status to claimed. That happens when the organiser
+ * confirms the page, including by listing an event themselves
+ * (claimOrganiserPageForListedEvent). Admin work used to false-claim pages
  * and hide "Copy claim link".
  */
 async function ensureOrganiserClaimedForAdminEvent(organiserId) {
@@ -445,6 +481,8 @@ module.exports = {
   notifyAdminOfClaimDispute,
   bootstrapOrganiserFromPendingClaims,
   ensureOrganiserClaimedForAdminEvent,
+  shouldAutoClaimOrganiserOnEventCreate,
+  claimOrganiserPageForListedEvent,
   syncEmailMatchedOrganiserClaims,
   emailMatchesProfile,
 };
