@@ -31,7 +31,7 @@ Run migration **`299_connected_booking_provider_links.sql`** (after 292, 297, 29
 
 1. Connected plan active; organiser page(s) assigned (297).
 2. **Connected booking** → **Booking providers** → **Enable** Eventbrite (or other).
-3. **Eventbrite webhook (Payload URL):** Profile menu → **Account settings** → **Webhooks** → Add webhook. Paste the **short** TNH URL from Connected setup (`https://www.thenetworkeruk.com/w/eb/…`, under **70 characters** — must include **www** so Eventbrite is not 308-redirected). Set **Action** to **`order.placed`**. Add a **second webhook** with the same URL and Action **`attendee.updated`**. Eventbrite often collects the other ticket holders after payment, and that action is what sends their name and email. “Events: All” is fine. Other providers: paste the TNH webhook URL from **Enable** into their webhook / integrations screen.
+3. **Eventbrite webhook (Payload URL):** Profile menu → **Account settings** → **Webhooks** → Add webhook. Paste the **short** TNH URL from Connected setup (`https://www.thenetworkeruk.com/w/eb/…`, under **70 characters** — must include **www** so Eventbrite is not 308-redirected). Set **Action** to **`order.placed`**. “Events: All” is fine. Then save the **private token** on Connected setup. TNH uses it to load every ticket holder (not only the buyer) and to subscribe to **`attendee.updated`**, which is how a second person added after payment is synced. Other providers: paste the TNH webhook URL from **Enable** into their webhook / integrations screen.
 4. **Link event:** TNH event UUID + provider event id (e.g. Eventbrite numeric id from the event URL).
 5. Publish Connected event on TNH with **booking URL** pointing at provider checkout (for Eventbrite, use ticket checkout — not only the public event listing; TNH rewrites common `/e/…` links to `checkout-external?eid=` on save).
 6. Test order → **Recent sync attempts** shows `eventbrite:accepted` (or provider id). If you only see `eventbrite:webhook_ping` after a real purchase, the webhook reached TNH but was not treated as an order — update TNH (fixed in production) or check Eventbrite **Recent requests** for 400/404/401.
@@ -86,7 +86,7 @@ For third-party providers, without a linked TNH event for the provider’s event
 | Provider | External event id | Webhook setup |
 |----------|-------------------|---------------|
 | **Your own website** | TNH event UUID in webhook JSON (`eventId`) | Your checkout POSTs to token URL after each sale — no provider admin. |
-| **Eventbrite** | Numeric id from `…/e/…` or API (`123456789`) | Webhook URL + **private token** (Developer links) on Connected setup — Eventbrite only sends a link; TNH loads every ticket holder via the Eventbrite API. Actions `order.placed` and `attendee.updated` (same URL, two webhooks). |
+| **Eventbrite** | Numeric id from `…/e/…` or API (`123456789`) | Webhook URL (`order.placed`) + **private token**. TNH loads every attendee on the order and subscribes to `attendee.updated` so a second ticket holder added after payment is saved. |
 | **Ticket Tailor** | **`ev_…` id** from Box office (must match `event_summary.event_id` in webhooks — not always the same as the public `/events/slug` URL) | Ticket Tailor → **Settings → Webhooks** → subscribe to **Order created** → paste TNH URL (`/w/tt/…` or long form). No API token on TNH. |
 | **Luma** | Event api id | Luma webhook → TNH URL. |
 | **TryBooking** | Event id from TryBooking admin | Configure webhook to TNH URL. |

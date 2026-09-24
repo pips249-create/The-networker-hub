@@ -20,6 +20,8 @@ const {
   isEventbriteOrderNotification,
   resolveEventbriteWebhookRegistrations,
 } = require('../eventbrite-webhook-resolve');
+const { eventbritePrivateTokenFromConfig, ensureEventbriteAttendeeWebhook } = require('../connected-booking-providers/adapters/eventbrite-api');
+const { buildProviderWebhookPublicUrl, webhookPublicSite } = require('../provider-webhook-url');
 
 function readRawBody(req) {
   if (Buffer.isBuffer(req.body)) return req.body;
@@ -260,6 +262,17 @@ module.exports = async function handler(req, res, providerId) {
           error: 'unrecognized_payload',
           message: 'Could not read attendee details from this Eventbrite webhook.',
         });
+      }
+
+      try {
+        const site = webhookPublicSite(process.env.SITE_URL || 'https://www.thenetworkeruk.com');
+        const endpointUrl = buildProviderWebhookPublicUrl(site, 'eventbrite', connection.webhook_token);
+        await ensureEventbriteAttendeeWebhook(
+          eventbritePrivateTokenFromConfig(connection.config),
+          endpointUrl
+        );
+      } catch {
+        /* Buyer sync already succeeded. Attendee-update subscription is best-effort. */
       }
 
       return json(res, 200, {

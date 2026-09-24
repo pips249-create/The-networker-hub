@@ -11,6 +11,7 @@ const {
   mergeProviderConnectionConfig,
 } = require('../connected-booking-provider-store');
 const { eventbritePrivateTokenFromConfig } = require('../connected-booking-providers/adapters/eventbrite-api');
+const { syncEventbriteAttendeesForConnection } = require('../eventbrite-attendee-sync');
 const { resolveOrganiserAccountId } = require('../organiser-account-resolve');
 const {
   buildProviderWebhookPublicUrl,
@@ -182,10 +183,45 @@ module.exports = async function handler(req, res) {
         const conn = await mergeProviderConnectionConfig(sb, accountId, 'eventbrite', {
           eventbritePrivateToken: token,
         });
+        const endpointUrl = buildProviderWebhookPublicUrl(webhookSite, 'eventbrite', conn.webhook_token);
+        let attendeeSync = null;
+        try {
+          attendeeSync = await syncEventbriteAttendeesForConnection({
+            sb,
+            connection: conn,
+            endpointUrl,
+            force: true,
+          });
+        } catch (e) {
+          attendeeSync = { ok: false, reason: e.message || 'attendee_sync_failed' };
+        }
         return json(res, 200, {
           ok: true,
           eventbriteApiTokenConfigured: Boolean(eventbritePrivateTokenFromConfig(conn.config)),
+          attendeeSync,
         });
+      }
+
+      if (action === 'sync_eventbrite_attendees') {
+        const listed = await listProviderConnections(sb, accountId);
+        const conn = (listed.connections || []).find(function (row) {
+          return row.provider === 'eventbrite';
+        });
+        if (!conn || !eventbritePrivateTokenFromConfig(conn.config)) {
+          return json(res, 400, {
+            ok: false,
+            error: 'eventbrite_token_missing',
+            message: 'Save an Eventbrite private token before syncing ticket holders.',
+          });
+        }
+        const endpointUrl = buildProviderWebhookPublicUrl(webhookSite, 'eventbrite', conn.webhook_token);
+        const attendeeSync = await syncEventbriteAttendeesForConnection({
+          sb,
+          connection: Object.assign({}, conn, { organiser_account_id: accountId }),
+          endpointUrl,
+          force: false,
+        });
+        return json(res, 200, { ok: true, attendeeSync });
       }
 
       if (action === 'unlink_event') {

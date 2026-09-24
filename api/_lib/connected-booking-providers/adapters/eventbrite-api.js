@@ -172,17 +172,17 @@ async function fetchEventbriteJson(requestUrl, privateToken) {
   return { ok: res.ok, status: res.status, data };
 }
 
-async function fetchEventbriteOrderAttendees(orderId, privateToken) {
-  const id = String(orderId || '').trim();
+async function fetchEventbriteAttendeePages(firstUrl, privateToken, maxAttendees) {
   const token = String(privateToken || '').trim();
-  if (!id || !token) return [];
-
+  if (!firstUrl || !token) return [];
+  const cap = Math.max(1, Number(maxAttendees) || 1000);
   const all = [];
   const seenContinuations = new Set();
   let continuation = '';
-  for (let page = 0; page < 20; page += 1) {
-    let requestUrl = 'https://www.eventbriteapi.com/v3/orders/' + encodeURIComponent(id) + '/attendees/';
-    if (continuation) requestUrl += '?continuation=' + encodeURIComponent(continuation);
+  for (let page = 0; page < 20 && all.length < cap; page += 1) {
+    const requestUrl = continuation
+      ? firstUrl + (firstUrl.includes('?') ? '&' : '?') + 'continuation=' + encodeURIComponent(continuation)
+      : firstUrl;
     let result;
     try {
       result = await fetchEventbriteJson(requestUrl, token);
@@ -198,7 +198,173 @@ async function fetchEventbriteOrderAttendees(orderId, privateToken) {
     seenContinuations.add(next);
     continuation = next;
   }
-  return all;
+  return all.slice(0, cap);
+}
+
+async function fetchEventbriteOrderAttendees(orderId, privateToken) {
+  const id = String(orderId || '').trim();
+  if (!id) return [];
+  return fetchEventbriteAttendeePages(
+    'https://www.eventbriteapi.com/v3/orders/' + encodeURIComponent(id) + '/attendees/',
+    privateToken
+  );
+}
+
+async function fetchEventbriteEventAttendees(eventId, privateToken, maxAttendees) {
+  const id = String(eventId || '').trim();
+  if (!id) return [];
+  return fetchEventbriteAttendeePages(
+    'https://www.eventbriteapi.com/v3/events/' + encodeURIComponent(id) + '/attendees/',
+    privateToken,
+    maxAttendees || 100
+  );
+}
+
+function eventbriteWebhookActionList(webhook) {
+  const raw = webhook && (webhook.actions != null ? webhook.actions : webhook.action);
+  const parts = Array.isArray(raw) ? raw : String(raw || '').split(/[\s,]+/);
+  return parts
+    .map(function (part) {
+      return String(part || '').trim().toLowerCase();
+    })
+    .filter(Boolean);
+}
+
+function eventbriteWebhookEndpoint(webhook) {
+  return String((webhook && (webhook.endpoint_url || webhook.endpoint)) || '')
+    .trim()
+    .replace(/\/$/, '');
+}
+
+function registrationsFromEventbriteEventAttendees(eventId, attendees) {
+  const groups = new Map();
+  (attendees || []).forEach(function (att) {
+    if (!att || typeof att !== 'object') return;
+    const orderId = String(att.order_id || '').trim();
+    if (!orderId) return;
+    if (!groups.has(orderId)) groups.set(orderId, []);
+    groups.get(orderId).push(att);
+  });
+  const rows = [];
+  groups.forEach(function (list, orderId) {
+    const extEvent = String((list[0] && list[0].event_id) || eventId || '').trim();
+    rows.push.apply(
+      rows,
+      registrationsFromEventbriteOrder(
+        { id: orderId, event_id: extEvent },
+        [list]
+      )
+    );
+  });
+  return rows;
+}
+
+async function postEventbriteJson(requestUrl, privateToken, payload) {
+  const token = String(privateToken || '').trim();
+  if (!token || !requestUrl) {
+    const e = new Error('eventbrite_private_token_missing');
+    e.status = 503;
+    throw e;
+  }
+  const res = await fetch(requestUrl, {
+    method: 'POST',
+    headers: {
+      Authorization: 'Bearer ' + token,
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload || {}),
+  });
+  const text = await res.text();
+  let data = null;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch {
+    data = null;
+  }
+  return { ok: res.ok, status: res.status, data };
+}
+
+async function listEventbriteWebhooks(privateToken) {
+  const result = await fetchEventbriteJson('https://www.eventbriteapi.com/v3/webhooks/', privateToken);
+  if (!result.ok || !result.data || typeof result.data !== 'object') return [];
+  if (Array.isArray(result.data.webhooks)) return result.data.webhooks;
+  return [];
+}
+
+async function eventbriteOrganizationId(privateToken) {
+  const result = await fetchEventbriteJson(
+    'https://www.eventbriteapi.com/v3/users/me/organizations/',
+    privateToken
+  );
+  if (!result.ok || !result.data) return '';
+  const orgs = Array.isArray(result.data.organizations) ? result.data.organizations : [];
+  return orgs[0] && orgs[0].id ? String(orgs[0].id) : '';
+}
+
+function sameEventbriteWebhookUrl(a, b) {
+  return eventbriteWebhookEndpoint({ endpoint_url: a }) === eventbriteWebhookEndpoint({ endpoint_url: b });
+}
+
+/**
+ * Eventbrite collects other ticket holders after payment and sends attendee.updated.
+ * Subscribe with the private token so that webhook does not have to be added by hand.
+ */
+async function ensureEventbriteAttendeeWebhook(privateToken, endpointUrl) {
+  const endpoint = String(endpointUrl || '').trim();
+  if (!endpoint) return { ok: false, reason: 'missing_endpoint' };
+  let hooks = [];
+  try {
+    hooks = await listEventbriteWebhooks(privateToken);
+  } catch (e) {
+    return { ok: false, reason: e.message || 'webhook_list_failed' };
+  }
+  const ours = hooks.filter(function (hook) {
+    return sameEventbriteWebhookUrl(eventbriteWebhookEndpoint(hook), endpoint);
+  });
+  const actions = [];
+  ours.forEach(function (hook) {
+    eventbriteWebhookActionList(hook).forEach(function (action) {
+      if (actions.indexOf(action) === -1) actions.push(action);
+    });
+  });
+  if (actions.indexOf('attendee.updated') !== -1) {
+    return { ok: true, created: false };
+  }
+  const toCreate = actions.indexOf('order.placed') === -1 ? 'order.placed,attendee.updated' : 'attendee.updated';
+  try {
+    const created = await createEventbriteWebhook(privateToken, endpoint, toCreate);
+    if (!created.ok) {
+      return {
+        ok: false,
+        created: false,
+        reason:
+          (created.data && (created.data.error_description || created.data.error)) ||
+          'webhook_create_failed',
+      };
+    }
+    return { ok: true, created: true, actions: toCreate };
+  } catch (e) {
+    return { ok: false, reason: e.message || 'webhook_create_failed' };
+  }
+}
+
+async function createEventbriteWebhook(privateToken, endpointUrl, actions) {
+  const payload = {
+    endpoint_url: String(endpointUrl || '').trim(),
+    actions: String(actions || 'attendee.updated').trim(),
+  };
+  let result = await postEventbriteJson('https://www.eventbriteapi.com/v3/webhooks/', privateToken, payload);
+  if (result.ok) return result;
+  const orgId = await eventbriteOrganizationId(privateToken).catch(function () {
+    return '';
+  });
+  if (!orgId) return result;
+  return postEventbriteJson(
+    'https://www.eventbriteapi.com/v3/webhooks/',
+    privateToken,
+    Object.assign({ organization_id: orgId }, payload)
+  );
 }
 
 async function fetchEventbriteAttendee(eventId, attendeeId, privateToken) {
@@ -370,8 +536,15 @@ module.exports = {
   mergeEventbriteAttendees,
   fetchEventbriteOrder,
   fetchEventbriteOrderAttendees,
+  fetchEventbriteEventAttendees,
   fetchEventbriteAttendee,
+  eventbriteWebhookActionList,
+  eventbriteWebhookEndpoint,
+  listEventbriteWebhooks,
+  createEventbriteWebhook,
+  ensureEventbriteAttendeeWebhook,
   registrationsFromEventbriteOrder,
+  registrationsFromEventbriteEventAttendees,
   normalizeEventbriteOrderApiResponse,
   eventbritePrivateTokenFromConfig,
 };

@@ -107,6 +107,7 @@ const {
   eventbriteAttendeesFromOrder,
   eventbriteAttendeeRefFromApiUrl,
   registrationsFromEventbriteOrder,
+  registrationsFromEventbriteEventAttendees,
 } = require('../api/_lib/connected-booking-providers/adapters/eventbrite-api');
 const orderRows = normalizeEventbriteOrderApiResponse({
   id: '12826552624',
@@ -220,6 +221,14 @@ assert.ok(
   !isEventbriteConnectivityPing(attendeeHook, attendeeHookNorm),
   'attendee.updated must not be treated as a connectivity ping'
 );
+
+const fromEvent = registrationsFromEventbriteEventAttendees('2001520723363', [
+  { id: 'att-1', order_id: '555', event_id: '2001520723363', profile: { email: 'buyer@example.com', name: 'Alex Buyer' } },
+  { id: 'att-2', order_id: '555', event_id: '2001520723363', profile: { first_name: 'Sam', last_name: 'Guest', email: 'sam@example.com' } },
+]);
+assert.strictEqual(fromEvent.length, 2, 'event attendee list keeps the second ticket holder');
+assert.strictEqual(fromEvent[1].email, 'sam@example.com');
+assert.strictEqual(fromEvent[1].name, 'Sam Guest');
 
 assert.strictEqual(
   parseEventbriteEventIdFromUrl('https://www.eventbrite.co.uk/e/networking-night-1234567890123'),
@@ -410,7 +419,58 @@ async function runEventbriteFetchChecks() {
   }
 }
 
+async function runEventbriteWebhookSubscriptionChecks() {
+  const { ensureEventbriteAttendeeWebhook } = require('../api/_lib/connected-booking-providers/adapters/eventbrite-api');
+  const endpoint = 'https://www.thenetworkeruk.com/w/eb/' + 'a'.repeat(24);
+  const original = global.fetch;
+  const posts = [];
+  global.fetch = async function (url, opts) {
+    const method = (opts && opts.method) || 'GET';
+    const href = String(url);
+    if (method === 'GET' && href.endsWith('/v3/webhooks/')) {
+      return jsonResponse({
+        webhooks: [{ endpoint_url: endpoint, actions: 'order.placed' }],
+      });
+    }
+    if (method === 'POST' && href.endsWith('/v3/webhooks/')) {
+      posts.push(JSON.parse(opts.body));
+      return jsonResponse({ id: 'wh_1' });
+    }
+    throw new Error('unexpected fetch ' + method + ' ' + href);
+  };
+  try {
+    const subscribed = await ensureEventbriteAttendeeWebhook('tok', endpoint);
+    assert.strictEqual(subscribed.ok, true);
+    assert.strictEqual(subscribed.created, true);
+    assert.strictEqual(posts.length, 1);
+    assert.strictEqual(posts[0].actions, 'attendee.updated');
+    assert.strictEqual(posts[0].endpoint_url, endpoint);
+  } finally {
+    global.fetch = original;
+  }
+
+  const postsAgain = [];
+  global.fetch = async function (url, opts) {
+    const method = (opts && opts.method) || 'GET';
+    if (method === 'GET' && String(url).endsWith('/v3/webhooks/')) {
+      return jsonResponse({
+        webhooks: [{ endpoint_url: endpoint + '/', actions: ['order.placed', 'attendee.updated'] }],
+      });
+    }
+    if (method === 'POST') postsAgain.push(1);
+    throw new Error('should not create a webhook');
+  };
+  try {
+    const existing = await ensureEventbriteAttendeeWebhook('tok', endpoint);
+    assert.strictEqual(existing.created, false);
+    assert.strictEqual(postsAgain.length, 0);
+  } finally {
+    global.fetch = original;
+  }
+}
+
 runEventbriteFetchChecks()
+  .then(runEventbriteWebhookSubscriptionChecks)
   .then(function () {
     console.log('test-connected-booking-providers: ok');
   })
