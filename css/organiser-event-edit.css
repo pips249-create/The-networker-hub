@@ -5904,6 +5904,26 @@ body.ee-embed-drawer.organiser-connected-setup-page .ecs-setup-checklist {
   background: rgba(13, 110, 122, 0.12);
 }
 
+.ecs-eb-account-connected {
+  margin: 0 0 12px;
+}
+
+.ecs-eb-per-event-focus {
+  margin: 12px 0;
+}
+
+.ecs-eb-sync.is-account-ready .ecs-eb-checklist {
+  margin-bottom: 8px;
+}
+
+#ecs-developer-section.is-account-connected .ee-booking-help-kicker {
+  opacity: 0.85;
+}
+
+.ecs-eb-account-advanced {
+  margin-top: 12px;
+}
+
 .ecs-eb-sync {
   display: flex;
   flex-direction: column;
