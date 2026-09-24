@@ -5,12 +5,72 @@
     return typeof embed.isEmbedDrawer === 'function' ? embed.isEmbedDrawer() : false;
   }
 
+  var PUBLISHED_PREVIEW_KEY = 'hub_event_published_preview';
+
   function eventIdsForNavigation() {
     if (typeof embed.eventIdsFromSearch === 'function') {
       var ids = embed.eventIdsFromSearch();
       if (ids.length) return ids;
     }
     return eventId ? [eventId] : [];
+  }
+
+  function eventImageForPublish(ev) {
+    if (!ev) return '';
+    return String(ev.imageUrl || ev.photoUrl || ev.image_url || '').trim();
+  }
+
+  /** Same post-publish screen as hub tickets (premium + social share). */
+  function navigateAfterConnectedPublish() {
+    var ids = eventIdsForNavigation();
+    if (!ids.length && eventId) ids = [eventId];
+    var publishedTitle = (loadedEvent && loadedEvent.title) || '';
+    var publishedImage = eventImageForPublish(loadedEvent);
+    var groupId = loadedEvent ? String(organiserIdForEvent(loadedEvent) || '').trim() : '';
+    var publishedQs = new URLSearchParams();
+    publishedQs.set('ids', ids.join(','));
+    publishedQs.set('published', '1');
+    if (publishedTitle) publishedQs.set('title', publishedTitle);
+    if (groupId) publishedQs.set('groupId', groupId);
+    var publishedUrl = '/organiser/event-published?' + publishedQs.toString();
+    try {
+      sessionStorage.setItem(
+        PUBLISHED_PREVIEW_KEY,
+        JSON.stringify({
+          ids: ids.join(','),
+          title: publishedTitle,
+          image: publishedImage,
+          organiserGroupId: groupId,
+        })
+      );
+    } catch (previewErr) {
+      /* ignore */
+    }
+    try {
+      if (window.HubOrganiserLaunchSetup && typeof window.HubOrganiserLaunchSetup.markEventFamilyDone === 'function') {
+        if (eventId) window.HubOrganiserLaunchSetup.markEventFamilyDone('ev:' + eventId);
+      }
+    } catch (launchErr) {
+      /* ignore */
+    }
+    if (isEmbedDrawer()) {
+      if (
+        typeof embed.notifyParent === 'function' &&
+        embed.notifyParent('hub-event-tickets-done', {
+          eventIds: ids,
+          eventId: eventId || ids[0] || '',
+          title: publishedTitle,
+          imageUrl: publishedImage,
+          publishedUrl: publishedUrl,
+          organiserGroupId: groupId,
+          launchSetup: false,
+          familyKey: eventId ? 'ev:' + eventId : '',
+        })
+      ) {
+        return;
+      }
+    }
+    location.href = publishedUrl;
   }
 
   function notifyDrawerNav(type) {
@@ -1662,11 +1722,16 @@
           payload.externalBookingUrl = attendeeUrl;
         }
       }
-      loadedEvent = Object.assign({}, loadedEvent, payload);
+      loadedEvent = Object.assign({}, loadedEvent, payload, savedEv || {});
       if (typeof embed.writeConnectedSetupPrefetch === 'function') {
         embed.writeConnectedSetupPrefetch(eventId, loadedEvent, billing);
       }
-      setStatus(saveStatus, publish ? 'Published — your Connected listing is live.' : 'Draft saved.', 'ok');
+      if (publish) {
+        setStatus(saveStatus, 'Published — opening promotion and share options…', 'ok');
+        navigateAfterConnectedPublish();
+        return;
+      }
+      setStatus(saveStatus, 'Draft saved.', 'ok');
     } catch (err) {
       setStatus(saveStatus, 'Could not save — check your connection and try again.', 'error');
     } finally {
