@@ -9,6 +9,9 @@
  * (account welcome, booking confirmations, password reset, claim invites, etc.).
  * Those send from auth/checkout/organiser routes — not from the nurture crons below.
  *
+ * Post-event review requests are also transactional (sent to registered attendees after
+ * an event ends) — they run from /api/cron/booking-reminders and are not listed below.
+ *
  * Override:
  *   AUTOMATED_EMAIL_SEQUENCES_FORCE_ON=true   — resume nurture/digest crons
  *   AUTOMATED_EMAIL_SEQUENCES_FORCE_OFF=true  — hard kill even if FORCE_ON
@@ -81,7 +84,6 @@ function hubertEventConciergeEmailsStatus() {
  */
 const AUTOMATED_SEQUENCE_CRON_ROUTES = new Set([
   'engagement-emails',
-  'post-event-reviews',
   'favourite-sales',
   'organiser-listing-alerts',
   'opportunity-reminders',
