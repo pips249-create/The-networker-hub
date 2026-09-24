@@ -81,5 +81,7 @@ npm run test-connected-booking-providers
 
 ## Related
 
+- [ORGANISER-CONNECTED-LINK-EB-OR-TT.md](./ORGANISER-CONNECTED-LINK-EB-OR-TT.md) — pick Eventbrite or Ticket Tailor per event
+- [PILOT-CATHERINE-CONNECTED.md](./PILOT-CATHERINE-CONNECTED.md) — internal pilot for Catherine’s account
 - [CONNECTED-BOOKING-PROVIDERS.md](./CONNECTED-BOOKING-PROVIDERS.md) — all providers
 - [CONNECTED-BOOKING.md](./CONNECTED-BOOKING.md) — plans and slots
