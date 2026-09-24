@@ -31,6 +31,7 @@
     "test-connected-booking-subscriptions": "node scripts/test-connected-booking-subscriptions.js",
     "test-connected-booking-slots": "node scripts/test-connected-booking-slots.js",
     "test-connected-booking-providers": "node scripts/test-connected-booking-providers.js",
+    "send-ticket-tailor-webhook": "node scripts/send-ticket-tailor-webhook.js",
     "send-external-booking-webhook": "node scripts/send-external-booking-webhook.js",
     "test-review-e2e": "node scripts/review-e2e-test.js",
     "test-guest-visit-e2e": "node scripts/guest-visit-e2e-test.js",

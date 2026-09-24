@@ -109,3 +109,4 @@ npm run test-connected-booking-providers
 
 - [CONNECTED-BOOKING.md](./CONNECTED-BOOKING.md) — plan, slots, legacy HMAC webhook
 - [CONNECTED-BOOKING-PILOT-TEST.md](./CONNECTED-BOOKING-PILOT-TEST.md) — manual script testing
+- [TICKET-TAILOR-CONNECTED.md](./TICKET-TAILOR-CONNECTED.md) — Ticket Tailor setup and QA checklist
