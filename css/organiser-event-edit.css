@@ -5558,6 +5558,40 @@ a.ee-btn.ee-btn-primary {
   margin-top: 10px;
 }
 
+.cb-event-links-card {
+  margin-bottom: 16px;
+}
+
+.cb-event-links-table-wrap {
+  overflow-x: auto;
+  margin-top: 10px;
+}
+
+.cb-event-links-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.cb-event-links-table th,
+.cb-event-links-table td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(26, 46, 59, 0.1);
+  vertical-align: top;
+}
+
+.cb-event-links-table th {
+  font-weight: 600;
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.cb-event-links-id {
+  font-size: 11px;
+  word-break: break-all;
+}
+
 .cb-slots-list {
   list-style: none;
   margin: 12px 0 16px;

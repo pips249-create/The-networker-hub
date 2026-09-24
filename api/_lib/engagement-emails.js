@@ -1280,7 +1280,20 @@ async function sendDuePostEventReviewEmails(sb, options) {
 
     try {
       const organiser = organiserById[eventRow.organiser_id] || null;
-      const emailVars = buildPostEventReviewEmailVars(eventRow, attendee, organiser, siteUrl);
+      let reviewToken = '';
+      try {
+        const { createReviewLinkToken } = require('./review-link-token');
+        reviewToken = createReviewLinkToken({
+          registrationId: registration.id,
+          eventId: eventRow.id,
+          attendeeId: registration.attendee_id,
+        });
+      } catch {
+        reviewToken = '';
+      }
+      const emailVars = buildPostEventReviewEmailVars(eventRow, attendee, organiser, siteUrl, {
+        reviewToken,
+      });
       if (dryRun) {
         result.candidates.push({
           registration_id: registration.id,
@@ -1449,7 +1462,20 @@ async function sendDuePostEventReviewReminderEmails(sb) {
       const organiser = eventRow.organiser_id
         ? organiserById[eventRow.organiser_id] || null
         : null;
-      const emailVars = buildPostEventReviewEmailVars(eventRow, attendee, organiser, siteUrl);
+      let reviewToken = '';
+      try {
+        const { createReviewLinkToken } = require('./review-link-token');
+        reviewToken = createReviewLinkToken({
+          registrationId: registration.id,
+          eventId: eventRow.id,
+          attendeeId: registration.attendee_id,
+        });
+      } catch {
+        reviewToken = '';
+      }
+      const emailVars = buildPostEventReviewEmailVars(eventRow, attendee, organiser, siteUrl, {
+        reviewToken,
+      });
       // Claim before send so overlapping cron workers cannot double-send.
       const claimedAt = new Date().toISOString();
       const { data: claimed, error: claimErr } = await sb

@@ -930,6 +930,26 @@
     el.className = 'ee-hint';
   }
 
+  function validateProviderEventIdClient(platform, externalId) {
+    var key = String(platform || '').trim();
+    var id = String(externalId || '').trim();
+    if (!id) return { ok: true };
+    var hub = window.HubExternalBookingUrl;
+    if (
+      key === 'ticket_tailor' &&
+      hub &&
+      typeof hub.ticketTailorIdNeedsEvPrefix === 'function' &&
+      hub.ticketTailorIdNeedsEvPrefix(id)
+    ) {
+      return {
+        ok: false,
+        message:
+          'Use the ev_… event id from Ticket Tailor Box office — not the word from your checkout URL. Webhooks always send ev_…',
+      };
+    }
+    return { ok: true };
+  }
+
   function registrationSyncLinkStepText(key, label) {
     if (key === 'ticket_tailor') {
       return (
@@ -974,9 +994,6 @@
         'Webhook URL + linked <code>ev_…</code> event id → Ticket Tailor orders create TNH registrations (buyer email is in the webhook).' +
         ACCOUNT_EVENT_SCOPE_NOTE
       );
-    }
-    if (key === 'ticket_tailor') {
-      return 'Webhook URL + linked <code>ev_…</code> event id → Ticket Tailor orders create TNH registrations (buyer email is in the webhook).';
     }
     var p = providersById[key];
     var label = (p && p.label) || key.replace(/_/g, ' ');
@@ -1093,9 +1110,23 @@
     var current = input ? normalizeExternalEventId(platform, input.value) : '';
     if (guessed && guessed !== current) {
       hint.hidden = false;
-      hint.textContent =
-        'From your booking URL we see id “' + guessed + '”. Click “Use id from booking URL” or edit the field.';
-      if (useBtn) useBtn.hidden = false;
+      var hub = window.HubExternalBookingUrl;
+      if (
+        platform === 'ticket_tailor' &&
+        hub &&
+        typeof hub.ticketTailorIdNeedsEvPrefix === 'function' &&
+        hub.ticketTailorIdNeedsEvPrefix(guessed)
+      ) {
+        hint.textContent =
+          'Your checkout URL contains “' +
+          guessed +
+          '” (a slug). Ticket Tailor webhooks need the ev_… id from Box office — paste that id manually.';
+        if (useBtn) useBtn.hidden = true;
+      } else {
+        hint.textContent =
+          'From your booking URL we see id “' + guessed + '”. Click “Use id from booking URL” or edit the field.';
+        if (useBtn) useBtn.hidden = false;
+      }
       return;
     }
     hint.hidden = true;
@@ -1201,6 +1232,11 @@
         });
       }
       return Promise.resolve({ ok: true, skipped: true });
+    }
+    var idCheck = validateProviderEventIdClient(platform, externalId);
+    if (!idCheck.ok) {
+      if (!options.silent) setEventLinkStatus(idCheck.message, 'error');
+      return Promise.resolve({ ok: false, message: idCheck.message });
     }
     var linked = linkedExternalEventId(platform);
     if (linked === externalId) {

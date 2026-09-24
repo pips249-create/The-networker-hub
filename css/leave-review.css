@@ -1,0 +1,152 @@
+.leave-review-page {
+  --lr-purple: #452d5c;
+  --lr-gold: #e6b422;
+  --lr-muted: #635c5e;
+  background: #f7f4fb;
+  min-height: 100vh;
+}
+
+.lr-main {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 32px 20px 48px;
+}
+
+.lr-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 16px 40px rgba(69, 45, 92, 0.12);
+  padding: 28px 24px 24px;
+}
+
+.lr-kicker {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #b8860b;
+  margin: 0 0 8px;
+}
+
+.lr-title {
+  margin: 0 0 8px;
+  font-size: 1.5rem;
+  color: var(--lr-purple);
+}
+
+.lr-meta {
+  margin: 0 0 20px;
+  color: var(--lr-muted);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.lr-event-chip {
+  background: var(--lr-purple);
+  color: #fff;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 22px;
+}
+
+.lr-event-chip strong {
+  display: block;
+  font-size: 1.05rem;
+  margin-bottom: 4px;
+}
+
+.lr-stars {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin: 8px 0 16px;
+}
+
+.lr-star {
+  border: none;
+  background: transparent;
+  font-size: 42px;
+  line-height: 1;
+  color: #ddd;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.lr-star.is-active {
+  color: var(--lr-gold);
+}
+
+.lr-hint {
+  text-align: center;
+  font-size: 14px;
+  color: var(--lr-muted);
+  margin: 0 0 16px;
+}
+
+.lr-textarea {
+  width: 100%;
+  min-height: 100px;
+  border: 1px solid #e8e2ef;
+  border-radius: 10px;
+  padding: 12px;
+  font: inherit;
+  resize: vertical;
+  margin-bottom: 16px;
+}
+
+.lr-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.lr-btn-primary {
+  display: inline-block;
+  padding: 14px 28px;
+  border-radius: 999px;
+  border: none;
+  background: var(--lr-purple);
+  color: #fff;
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.lr-btn-primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.lr-error {
+  color: #b42318;
+  font-size: 14px;
+  margin: 0 0 12px;
+}
+
+.lr-success {
+  text-align: center;
+  padding: 12px 0;
+}
+
+.lr-success h2 {
+  margin: 0 0 8px;
+  color: var(--lr-purple);
+}
+
+.lr-loading {
+  text-align: center;
+  color: var(--lr-muted);
+  padding: 24px 0;
+}
+
+.lr-signin-fallback {
+  margin-top: 16px;
+  font-size: 14px;
+  color: var(--lr-muted);
+}
+
+.lr-signin-fallback a {
+  color: var(--lr-purple);
+  font-weight: 600;
+}

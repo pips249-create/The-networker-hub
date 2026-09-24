@@ -38,6 +38,10 @@
   let loadedEvent = null;
   let billingPayload = null;
   let platformPicker = null;
+  let providersById = {};
+  let providerLinks = [];
+  let providersLoadPromise = null;
+  const accountStatusEl = document.getElementById('ee-connected-account-status');
 
   function cacheSetupPrefetch() {
     const eid = resolveEventId();
@@ -151,12 +155,116 @@
     return 'own_site';
   }
 
+  function providerLabel(key) {
+    const hub = window.HubConnectedPlatform;
+    const meta = hub && hub.PLATFORMS && hub.PLATFORMS[key];
+    return (meta && meta.label) || String(key || '').replace(/_/g, ' ');
+  }
+
+  function eventLinkForPlatform(platform) {
+    const eid = resolveEventId();
+    if (!eid) return null;
+    return (providerLinks || []).find(function (link) {
+      return (
+        String(link.event_id || link.eventId || '') === String(eid) &&
+        String(link.provider || '') === String(platform || '')
+      );
+    });
+  }
+
+  function refreshAccountConnectionStatus(platform) {
+    if (!accountStatusEl) return;
+    const key = String(platform || selectedPlatform() || '').trim();
+    if (!key || key === 'custom') {
+      accountStatusEl.hidden = true;
+      accountStatusEl.textContent = '';
+      return;
+    }
+    const p = providersById[key];
+    const linked = eventLinkForPlatform(key);
+    const linkedId = linked && (linked.external_event_id || linked.externalEventId);
+    const webhookReady = Boolean(p && p.webhookUrl);
+    const tokenOk = key !== 'eventbrite' || Boolean(p && p.eventbriteApiTokenConfigured);
+
+    if (webhookReady && (key === 'own_site' || key === 'eventbrite' ? tokenOk : true)) {
+      accountStatusEl.hidden = false;
+      accountStatusEl.className = 'ee-hint ee-alert-ok';
+      let msg =
+        providerLabel(key) +
+        ' is already connected on your account (webhook ready). On the next screen you only add price, booking URL';
+      if (key === 'eventbrite' && !tokenOk) {
+        accountStatusEl.className = 'ee-hint';
+        msg =
+          providerLabel(key) +
+          ' webhook is ready — you still need to paste your Eventbrite API token once on Connected setup.';
+      } else if (linkedId) {
+        msg += ', and confirm the link for this event (already linked as ' + linkedId + ').';
+      } else if (key === 'ticket_tailor') {
+        msg += ', and the ev_… event id for this listing.';
+      } else if (key === 'eventbrite') {
+        msg += ', and your Eventbrite event id (we usually fill this from the booking URL).';
+      } else {
+        msg += ', and the provider event id for this listing.';
+      }
+      accountStatusEl.textContent = msg;
+      return;
+    }
+
+    if (p && key !== 'custom') {
+      accountStatusEl.hidden = false;
+      accountStatusEl.className = 'ee-hint';
+      accountStatusEl.textContent =
+        'First time with ' +
+        providerLabel(key) +
+        ' on this account? You will enable the webhook once on Connected setup (about a minute), then repeat only price + booking link for each new event.';
+      return;
+    }
+
+    accountStatusEl.hidden = true;
+    accountStatusEl.textContent = '';
+  }
+
+  function loadProviderCatalogForTickets() {
+    const eid = resolveEventId();
+    if (!eid || !billingActive) return Promise.resolve();
+    if (providersLoadPromise) return providersLoadPromise;
+    providersLoadPromise = fetch(
+      '/api/organiser/connected-booking-providers?eventId=' + encodeURIComponent(eid),
+      { credentials: 'include', cache: 'no-store' }
+    )
+      .then(function (res) {
+        return res.json();
+      })
+      .then(function (data) {
+        providersLoadPromise = null;
+        if (!data || !data.ok) return;
+        providersById = {};
+        (data.providers || []).forEach(function (p) {
+          if (p && p.id) providersById[p.id] = p;
+        });
+        providerLinks = data.eventLinks || [];
+        refreshAccountConnectionStatus(selectedPlatform());
+      })
+      .catch(function () {
+        providersLoadPromise = null;
+      });
+    return providersLoadPromise;
+  }
+
   function initPlatformPicker() {
     const root = document.getElementById('ee-connected-platform-picker');
     const hub = window.HubConnectedPlatform;
     const eid = resolveEventId();
     if (!root || !hub || !eid) return;
-    platformPicker = hub.bindPicker(root, eid, null, { hintContext: 'pick' });
+    platformPicker = hub.bindPicker(
+      root,
+      eid,
+      function (platformKey) {
+        refreshAccountConnectionStatus(platformKey);
+      },
+      { hintContext: 'pick' }
+    );
+    refreshAccountConnectionStatus(selectedPlatform());
   }
 
   function bindSetupLink() {
@@ -249,6 +357,7 @@
 
     setConnectedOnlyLayout(true);
     initPlatformPicker();
+    loadProviderCatalogForTickets();
 
     if (isExternalConnectedEvent(loadedEvent)) {
       card.classList.add('is-active');

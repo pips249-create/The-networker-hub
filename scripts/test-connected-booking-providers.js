@@ -11,6 +11,7 @@ const {
   preferEventbriteCheckoutUrl,
   parseEventbriteEventIdFromUrl,
   guessProviderExternalEventId,
+  validateProviderExternalEventId,
   publicListingUsesExternalBooking,
 } = require('../api/_lib/connected-booking-util');
 const {
@@ -169,6 +170,9 @@ assert.strictEqual(
   guessProviderExternalEventId('ticket_tailor', 'https://www.tickettailor.com/events/my-show/'),
   'my-show'
 );
+assert.strictEqual(validateProviderExternalEventId('ticket_tailor', 'ev_40980').ok, true);
+assert.strictEqual(validateProviderExternalEventId('ticket_tailor', 'my-show').ok, false);
+assert.strictEqual(validateProviderExternalEventId('eventbrite', '2001520723363').ok, true);
 
 const tt = normalizeTicketTailorWebhook({
   payload: {
