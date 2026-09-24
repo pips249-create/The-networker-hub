@@ -33,9 +33,19 @@ async function ensureProviderConnection(sb, accountId, provider, opts) {
   if (existing?.id) {
     if (rotateToken && existing.webhook_token) {
       const token = newWebhookToken();
+      const prevConfig =
+        existing.config && typeof existing.config === 'object' ? existing.config : {};
+      const nextConfig = Object.assign({}, prevConfig, {
+        webhookTokenPrevious: String(existing.webhook_token || '').trim(),
+        webhookTokenRotatedAt: new Date().toISOString(),
+      });
       const { data: updated, error: upErr } = await sb
         .from('connected_booking_provider_connections')
-        .update({ webhook_token: token, updated_at: new Date().toISOString() })
+        .update({
+          webhook_token: token,
+          config: nextConfig,
+          updated_at: new Date().toISOString(),
+        })
         .eq('id', existing.id)
         .select('id, organiser_account_id, provider, status, webhook_token, config, created_at, updated_at')
         .single();
@@ -91,11 +101,15 @@ async function findEventLinkByExternal(sb, provider, externalEventId, organiserA
     return q;
   }
 
-  const { data, error } = await baseQuery().eq('external_event_id', ext).maybeSingle();
+  const { data: linkRows, error } = await baseQuery()
+    .eq('external_event_id', ext)
+    .order('updated_at', { ascending: false })
+    .limit(1);
   if (error) {
     if (isMissingProviderTablesError(error)) return null;
     throw new Error(error.message);
   }
+  const data = linkRows && linkRows[0] ? linkRows[0] : null;
   if (data?.event_id) return data;
 
   if (provider !== 'eventbrite' || !accountId) return null;
@@ -208,6 +222,11 @@ async function deleteEventLink(sb, accountId, eventId) {
   if (error) throw new Error(error.message);
 }
 
+function webhookTokenPreviousFromConfig(config) {
+  const c = config && typeof config === 'object' ? config : {};
+  return String(c.webhookTokenPrevious || c.webhook_token_previous || '').trim();
+}
+
 async function resolveConnectionByToken(sb, provider, token) {
   const t = String(token || '').trim();
   if (!t) return null;
@@ -222,7 +241,21 @@ async function resolveConnectionByToken(sb, provider, token) {
     if (isMissingProviderTablesError(error)) return null;
     throw new Error(error.message);
   }
-  return data;
+  if (data?.organiser_account_id) return data;
+
+  const { data: activeRows, error: listErr } = await sb
+    .from('connected_booking_provider_connections')
+    .select('id, organiser_account_id, provider, status, webhook_token, config')
+    .eq('provider', provider)
+    .eq('status', 'active');
+  if (listErr) {
+    if (isMissingProviderTablesError(listErr)) return null;
+    throw new Error(listErr.message);
+  }
+  for (const row of activeRows || []) {
+    if (webhookTokenPreviousFromConfig(row.config) === t) return row;
+  }
+  return null;
 }
 
 module.exports = {
@@ -234,5 +267,6 @@ module.exports = {
   deleteEventLink,
   resolveConnectionByToken,
   mergeProviderConnectionConfig,
+  webhookTokenPreviousFromConfig,
   isMissingProviderTablesError,
 };

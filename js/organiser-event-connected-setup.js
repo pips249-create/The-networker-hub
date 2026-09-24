@@ -792,6 +792,11 @@
       '</ol>' +
       '</details>';
 
+    var webhookDriftHtml =
+      p && p.eventbriteWebhookNeedsFix
+        ? '<p class="ee-alert ee-alert-warn ecs-eb-token-status">Webhook URL on TNH was updated — paste the URL above into Eventbrite again or sync will stop (Recent sync attempts may show <code>invalid_webhook_token</code>).</p>'
+        : '<p class="ee-hint">If sync worked once then stopped, compare Eventbrite <strong>Payload URL</strong> with the line above — they must match exactly. Check <a href="/organiser/connected-booking#cb-sync-log">Connected booking → Recent sync attempts</a>.</p>';
+
     var perEventHtml = linkedDone
       ? '<p class="ee-hint ee-alert-ok ecs-eb-linked">This listing is linked to Eventbrite id <code>' +
         escHtml(displayExternalEventId('eventbrite', linked.external_event_id || linked.externalEventId)) +
@@ -815,6 +820,7 @@
         '<p class="ecs-eb-paste-hint">Only if you are (re)connecting Eventbrite: profile menu → <strong>Account settings → Webhooks</strong> · Action <code>order.placed</code></p>' +
         tokenPanelHtml +
         helpDetailsHtml +
+        webhookDriftHtml +
         '<p class="ee-hint"><a href="/organiser/connected-booking#cb-providers-title">Connected booking → Booking providers</a> for sync log and all links.</p>' +
         '</div></details>';
     } else {
@@ -824,6 +830,7 @@
         '<p class="ecs-eb-paste-hint">In Eventbrite: profile menu → <strong>Account settings → Webhooks</strong> · Action <code>order.placed</code></p>' +
         tokenPanelHtml +
         helpDetailsHtml +
+        webhookDriftHtml +
         perEventHtml +
         (!urlOk
           ? '<button type="button" class="ee-btn ee-btn-outline ee-btn-sm ecs-eb-regen" data-enable-provider="eventbrite">Get shorter URL</button>'

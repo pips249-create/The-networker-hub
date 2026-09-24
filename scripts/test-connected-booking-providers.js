@@ -53,6 +53,12 @@ assert.strictEqual(
 );
 assert.strictEqual(publicListingUsesExternalBooking({ checkout_mode: 'hub' }), false);
 
+const { webhookTokenPreviousFromConfig } = require('../api/_lib/connected-booking-provider-store');
+assert.strictEqual(
+  webhookTokenPreviousFromConfig({ webhookTokenPrevious: 'abc' }),
+  'abc'
+);
+
 assert.strictEqual(isConnectedBookingProviderId('eventbrite'), true);
 assert.strictEqual(isConnectedBookingProviderId('nope'), false);
 assert.ok(CONNECTED_BOOKING_PROVIDERS.length >= 5);

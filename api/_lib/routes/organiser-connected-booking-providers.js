@@ -71,12 +71,6 @@ module.exports = async function handler(req, res) {
     const site = String(process.env.SITE_URL || 'https://www.thenetworkeruk.com').replace(/\/$/, '');
     const webhookSite = webhookPublicSite(site);
 
-    async function connectionForWebhook(providerId, conn) {
-      if (!conn?.webhook_token || providerId !== 'eventbrite') return conn;
-      if (!eventbriteWebhookNeedsTokenRotation(site, conn.webhook_token)) return conn;
-      return ensureProviderConnection(sb, accountId, providerId, { rotateToken: true });
-    }
-
     if (req.method === 'GET') {
       const connResult = await listProviderConnections(sb, accountId);
       const linksResult = await listEventLinksForAccount(sb, accountId);
@@ -84,10 +78,7 @@ module.exports = async function handler(req, res) {
 
       const providers = await Promise.all(
         CONNECTED_BOOKING_PROVIDERS.map(async (p) => {
-        let conn = (connResult.connections || []).find((c) => c.provider === p.id);
-        if (conn?.webhook_token && p.id !== 'custom') {
-          conn = await connectionForWebhook(p.id, conn);
-        }
+        const conn = (connResult.connections || []).find((c) => c.provider === p.id);
         const webhookUrl =
           p.id === 'custom'
             ? site + '/api/integrations/booking'
@@ -105,6 +96,10 @@ module.exports = async function handler(req, res) {
           eventbriteApiTokenConfigured:
             p.id === 'eventbrite' && conn
               ? Boolean(eventbritePrivateTokenFromConfig(conn.config))
+              : undefined,
+          eventbriteWebhookNeedsFix:
+            p.id === 'eventbrite' && conn?.webhook_token
+              ? eventbriteWebhookNeedsTokenRotation(site, conn.webhook_token)
               : undefined,
         };
       })
