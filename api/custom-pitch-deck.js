@@ -5,7 +5,7 @@
 const { json } = require('./_lib/auth');
 const { wrapHandler } = require('./_lib/sentry');
 const { getSupabaseAdmin, isSupabaseConfigured } = require('./_lib/supabase');
-const { publicPathForSlug } = require('./_lib/custom-pitch-deck-generate');
+const { publicPathForSlug, enrichTalkTrackCopy } = require('./_lib/custom-pitch-deck-generate');
 const { resolveProspectLogoCandidates } = require('./_lib/prospect-logo-candidates');
 const { enrichDeckWithEmailInventory } = require('./_lib/sponsorship-pitch-catalog');
 
@@ -47,7 +47,7 @@ module.exports = wrapHandler(async function handler(req, res) {
   const { data, error } = await sb
     .from('custom_pitch_decks')
     .select(
-      'id, slug, company_name, website, contact_name, prospect_logo_url, include_sections, brief, deck, created_at, updated_at'
+      'id, slug, company_name, website, contact_name, prospect_logo_url, include_sections, brief, deck, created_by_email, created_at, updated_at'
     )
     .eq('slug', slug)
     .maybeSingle();
@@ -69,16 +69,24 @@ module.exports = wrapHandler(async function handler(req, res) {
   const website = data.website || '';
   const explicitLogo =
     data.prospect_logo_url || (data.deck && data.deck.hero && data.deck.hero.prospectLogoUrl) || '';
-  const prospectLogoCandidates = await resolveProspectLogoCandidates(website, explicitLogo);
+  const prospectLogoCandidates = await resolveProspectLogoCandidates(
+    website,
+    explicitLogo,
+    data.company_name
+  );
   const prospectLogoUrl = prospectLogoCandidates[0] || '';
   const rawDeck = data.deck && typeof data.deck === 'object' ? data.deck : {};
-  const deck = enrichDeckWithEmailInventory(
-    Object.assign({}, rawDeck, {
-      sections: Array.isArray(rawDeck.sections) ? rawDeck.sections.slice() : [],
-      sponsorshipPlacements: Array.isArray(rawDeck.sponsorshipPlacements)
-        ? rawDeck.sponsorshipPlacements.slice()
-        : rawDeck.sponsorshipPlacements,
-    })
+  const deck = enrichTalkTrackCopy(
+    enrichDeckWithEmailInventory(
+      Object.assign({}, rawDeck, {
+        sections: Array.isArray(rawDeck.sections) ? rawDeck.sections.slice() : [],
+        sponsorshipPlacements: Array.isArray(rawDeck.sponsorshipPlacements)
+          ? rawDeck.sponsorshipPlacements.slice()
+          : rawDeck.sponsorshipPlacements,
+        brief: data.brief || '',
+      })
+    ),
+    { companyName: data.company_name, brief: data.brief || '' }
   );
 
   return json(res, 200, {
@@ -88,6 +96,7 @@ module.exports = wrapHandler(async function handler(req, res) {
     companyName: data.company_name,
     website: website,
     contactName: data.contact_name || '',
+    createdByEmail: data.created_by_email || '',
     prospectLogoUrl: prospectLogoUrl,
     prospectLogoCandidates: prospectLogoCandidates,
     includeSections: data.include_sections || [],
