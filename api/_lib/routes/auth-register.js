@@ -161,7 +161,6 @@ module.exports = async function handler(req, res) {
 
     const accessStatus = await getOrganiserAccessStatus(sessionUser);
     let emailSent = false;
-    let verifyCode = null;
     const requiresEmailVerification = !accessStatus.organiserEmailVerified;
 
     if (requiresEmailVerification) {
@@ -173,10 +172,10 @@ module.exports = async function handler(req, res) {
           name: sessionUser.name,
         });
         emailSent = true;
-      } catch (e) {
-        verifyCode = e.verifyCode || null;
+      } catch {
+        emailSent = false;
       }
-      // Do not put verifyCode in the URL. The confirm page submits ?code= on load.
+      // The code stays in the email. This redirect only opens the entry form.
       redirect = buildEmailVerifyRedirect({
         next: afterVerify,
         email: sessionUser.email,
@@ -194,8 +193,6 @@ module.exports = async function handler(req, res) {
       redirect,
       requiresEmailVerification,
       emailSent,
-      // Only expose code when delivery failed so signup can still complete.
-      verifyCode: emailSent ? null : verifyCode,
     });
   } catch (e) {
     const msg = e.message || 'Could not create your account.';

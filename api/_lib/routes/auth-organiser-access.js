@@ -71,13 +71,10 @@ module.exports = async function handler(req, res) {
         return json(res, 200, {
           ok: true,
           emailSent: false,
-          verifyCode: e.verifyCode || null,
-          verifyUrl: e.verifyUrl || null,
-          message: e.verifyCode
-            ? 'We could not deliver email to ' +
-              session.email +
-              '. Enter this code on the confirmation screen instead, and check spam/junk.'
-            : 'Email is not configured on this server. Use the confirmation code below.',
+          message:
+            'We could not deliver the confirmation email to ' +
+            session.email +
+            '. Check spam/junk, then use Resend code.',
         });
       }
       return json(res, 500, {
@@ -174,8 +171,6 @@ module.exports = async function handler(req, res) {
     setHubViewCookie(res, 'organiser');
 
     let emailSent = false;
-    let devVerifyUrl = null;
-    let devVerifyCode = null;
     let verifyMessage = null;
 
     if (!before.organiserEmailVerified) {
@@ -187,19 +182,9 @@ module.exports = async function handler(req, res) {
         });
         emailSent = true;
         verifyMessage = 'We sent a confirmation code to ' + session.email + '.';
-      } catch (e) {
-        if (e.verifyCode || e.verifyUrl || e.code === 'email_not_configured') {
-          devVerifyUrl = e.verifyUrl || null;
-          devVerifyCode = e.verifyCode || null;
-          verifyMessage = e.verifyCode
-            ? 'We could not deliver email to ' +
-              session.email +
-              ' — enter the confirmation code on the next screen (and check spam/junk).'
-            : 'We could not send a confirmation email yet — confirm your email on the next screen.';
-        } else {
-          verifyMessage =
-            'Organiser access enabled, but we could not send a confirmation email yet. Use Resend code on the next screen.';
-        }
+      } catch {
+        verifyMessage =
+          'Organiser access enabled, but we could not send a confirmation email yet. Use Resend code on the next screen.';
       }
     }
 
@@ -210,8 +195,6 @@ module.exports = async function handler(req, res) {
       ok: true,
       ...status,
       emailSent,
-      devVerifyUrl,
-      devVerifyCode,
       verifyMessage,
       redirect,
       message: before.organiserAccess

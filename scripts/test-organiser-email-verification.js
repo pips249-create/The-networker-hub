@@ -21,6 +21,7 @@ assert.equal(codeOnly, '/organiser/verify-email?code=000001');
 const page = verifyEmailPagePath('New@Example.com');
 assert.equal(page, '/organiser/verify-email?email=new%40example.com');
 assert.doesNotMatch(page, /code=/);
+assert.doesNotMatch(page, /token=/);
 
 const signup = buildEmailVerifyRedirect({
   next: '/welcome',

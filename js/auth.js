@@ -31,8 +31,8 @@
   }
 
   /**
-   * Signup must land on the code form. ?code= / ?token= on that page confirms
-   * immediately, so drop them from in-app redirects. Email links still use them.
+   * Signup must land on an empty code form. A code in this URL is the secret
+   * from the email, so drop it from in-app redirects.
    */
   function withoutEmailVerifySecret(url) {
     var raw = String(url || '');
@@ -45,15 +45,6 @@
       return parsed.pathname + parsed.search + parsed.hash;
     } catch (e) {
       return raw;
-    }
-  }
-
-  function stashVerifyPrefill(code) {
-    try {
-      if (code) sessionStorage.setItem('hub_verify_email_prefill', String(code));
-      else sessionStorage.removeItem('hub_verify_email_prefill');
-    } catch (e) {
-      /* private mode */
     }
   }
 
@@ -331,7 +322,6 @@
             return;
           }
           showMessage(msg, result.data.message || 'Account created — taking you in…', 'success');
-          stashVerifyPrefill(result.data.verifyCode);
           var go = function () {
             window.location.href = withoutEmailVerifySecret(
               result.data.redirect || next || '/welcome'

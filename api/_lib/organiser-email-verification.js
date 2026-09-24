@@ -129,7 +129,9 @@ async function sendOrganiserEmailVerification({ userId, email, name, revealCode 
   const code = newVerifyCode();
   await storeVerifyToken(userId, code);
 
-  const verifyPath = buildOrganiserVerifyEmailPath(code, address);
+  // The email shows the digits. The link only opens the form — it must not
+  // carry the code, or the confirm page can mark the address verified on load.
+  const verifyPath = verifyEmailPagePath(address);
   const verifyUrl = siteHost() + verifyPath;
   const displayName = String(name || '').trim() || address.split('@')[0];
   const shouldRevealCode = Boolean(revealCode);

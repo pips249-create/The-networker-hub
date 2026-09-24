@@ -62,15 +62,6 @@
           if (submitBtn) submitBtn.disabled = false;
           return;
         }
-        try {
-          if (data.devVerifyCode) {
-            sessionStorage.setItem('hub_verify_email_prefill', String(data.devVerifyCode));
-          } else {
-            sessionStorage.removeItem('hub_verify_email_prefill');
-          }
-        } catch (storeErr) {
-          /* private mode */
-        }
         var nextUrl = data.redirect || '/organiser/verify-email';
         try {
           var parsed = new URL(nextUrl, window.location.origin);

@@ -3,7 +3,6 @@
   var addressEl = document.getElementById('verify-email-address');
   var statusEl = document.getElementById('verify-email-status');
   var errorEl = document.getElementById('verify-email-error');
-  var devEl = document.getElementById('verify-email-dev');
   var formEl = document.getElementById('verify-email-form');
   var codeEl = document.getElementById('verify-email-code');
   var confirmBtn = document.getElementById('verify-email-confirm');
@@ -105,30 +104,12 @@
         showError(data.message || 'Could not resend confirmation code.');
         return;
       }
-      if (data.devVerifyCode && codeEl) {
-        codeEl.value = String(data.devVerifyCode);
-      }
-      if (data.verifyCode && codeEl) {
-        codeEl.value = String(data.verifyCode);
-      }
-      if ((data.devVerifyCode || data.devVerifyUrl || data.verifyCode || data.verifyUrl) && devEl) {
-        devEl.hidden = false;
-        if (data.verifyCode || data.devVerifyCode) {
-          devEl.textContent =
-            'Confirmation code: ' + String(data.verifyCode || data.devVerifyCode);
-        } else {
-          devEl.innerHTML =
-            'Confirm link: <a href="' +
-            String(data.verifyUrl || data.devVerifyUrl).replace(/"/g, '&quot;') +
-            '">Open verify page</a>';
-        }
-      }
       showStatus(
         data.message ||
           (data.emailSent === false
-            ? 'Email could not be delivered — use the code shown below.'
-            : 'Confirmation code sent. Check inbox and spam/junk.'),
-        true
+            ? 'We could not deliver the email. Check spam/junk, then try Resend code.'
+            : 'Confirmation code sent. Check inbox and spam/junk, then enter the code.'),
+        data.emailSent !== false
       );
       if (codeEl) codeEl.focus();
     } catch (e) {
@@ -209,10 +190,12 @@
       return;
     }
 
-    var token = params().get('token') || params().get('code');
-    if (token) {
+    var legacyToken = String(params().get('token') || '').trim();
+    var legacyDigits = legacyToken.replace(/\D/g, '');
+    var legacyIsTypedCode = legacyDigits.length === 6 && legacyDigits === legacyToken;
+    if (legacyToken && !legacyIsTypedCode) {
       if (confirmBtn) confirmBtn.disabled = true;
-      var result = await verifyToken(token);
+      var result = await verifyToken(legacyToken);
       if (result.ok && result.data.verified) {
         if (window.history.replaceState) {
           var url = new URL(window.location.href);
@@ -226,37 +209,11 @@
       }
       showError(
         (result.data && result.data.message) ||
-          'This confirmation code is invalid or expired. Enter a new code below.'
+          'This confirmation link is invalid or expired. Enter the code from your email.'
       );
-      if (codeEl) {
-        var digits = String(token || '')
-          .replace(/\D/g, '')
-          .slice(0, 6);
-        if (digits.length === 6) codeEl.value = digits;
-      }
       if (confirmBtn) confirmBtn.disabled = false;
     }
 
-    if (codeEl && !codeEl.value) {
-      var prefill = '';
-      try {
-        prefill = sessionStorage.getItem('hub_verify_email_prefill') || '';
-        if (prefill) sessionStorage.removeItem('hub_verify_email_prefill');
-      } catch (e) {
-        prefill = '';
-      }
-      prefill = String(prefill)
-        .replace(/\D/g, '')
-        .slice(0, 6);
-      if (prefill.length === 6) {
-        codeEl.value = prefill;
-        if (devEl) {
-          devEl.hidden = false;
-          devEl.textContent =
-            'Email could not be delivered. Enter this confirmation code: ' + prefill;
-        }
-      }
-    }
     await maybeAutoSendVerificationCode();
     if (codeEl) codeEl.focus();
   }
