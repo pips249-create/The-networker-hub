@@ -4,6 +4,7 @@ const { verifyReviewLinkToken } = require('../review-link-token');
 const { submitReviewFromEmailToken, eventHasEnded, isEligibleRegistration } = require('../supabase-reviews');
 const { formatEventDateTime } = require('../favourite-sales-emails');
 const { enforceRateLimitAsync } = require('../rate-limit');
+const { buildReviewAccountFollowUp } = require('../review-account-follow-up');
 
 function parseBody(req) {
   let body = req.body;
@@ -76,6 +77,15 @@ async function loadReviewLinkContext(token) {
   if (reg.no_show_at) canReview = false;
   if (reg.cancelled_at) canReview = false;
 
+  const { data: attendee, error: attErr } = await sb
+    .from('attendees')
+    .select('id, email, supabase_user_id, company, job_title')
+    .eq('id', payload.attendeeId)
+    .maybeSingle();
+  if (attErr) throw new Error(attErr.message);
+
+  const followUp = buildReviewAccountFollowUp(attendee || {}, { includeEmailInUrls: false });
+
   return {
     ok: true,
     eventId: eventRow.id,
@@ -85,7 +95,26 @@ async function loadReviewLinkContext(token) {
     alreadyReviewed,
     canReview,
     eventSlug: eventRow.slug || null,
+    hasLinkedAccount: followUp.hasLinkedAccount,
+    profileNeedsDetails: followUp.profileNeedsDetails,
+    registerUrl: followUp.registerUrl,
+    loginUrl: followUp.loginUrl,
+    accountUrl: followUp.accountUrl,
+    settingsUrl: followUp.settingsUrl,
   };
+}
+
+async function followUpAfterSubmit(token) {
+  const payload = verifyReviewLinkToken(token);
+  if (!payload) return null;
+  const sb = getSupabaseAdmin();
+  const { data: attendee, error } = await sb
+    .from('attendees')
+    .select('id, email, supabase_user_id, company, job_title')
+    .eq('id', payload.attendeeId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return buildReviewAccountFollowUp(attendee || {}, { includeEmailInUrls: true });
 }
 
 module.exports = async function handler(req, res) {
@@ -130,10 +159,17 @@ module.exports = async function handler(req, res) {
         rating: body.rating,
         reviewText: body.reviewText || body.review_text,
       });
+      const followUp = (await followUpAfterSubmit(token)) || {};
       return json(res, 200, {
         ok: true,
         review,
         reviewerReward: review.reviewerReward || null,
+        hasLinkedAccount: followUp.hasLinkedAccount === true,
+        profileNeedsDetails: followUp.profileNeedsDetails === true,
+        registerUrl: followUp.registerUrl || null,
+        loginUrl: followUp.loginUrl || null,
+        accountUrl: followUp.accountUrl || '/account/#reviews-done',
+        settingsUrl: followUp.settingsUrl || '/account/settings',
       });
     } catch (e) {
       const msg = e.message || String(e);
