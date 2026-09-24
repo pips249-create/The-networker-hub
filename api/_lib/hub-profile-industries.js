@@ -44,10 +44,17 @@ function isBareOther(raw) {
   return normalizeIndustry(raw).toLocaleLowerCase('en-GB') === 'other';
 }
 
+const { hasHomeBase } = require('./attendee-home-region');
+
 function isAnalyticsProfileComplete(profile) {
   const sector = String(profile?.businessSector || profile?.business_sector || '').trim();
   const title = String(profile?.jobTitle || profile?.job_title || '').trim();
-  return sector.length >= 2 && !isBareOther(sector) && title.length >= 2;
+  return (
+    sector.length >= 2 &&
+    !isBareOther(sector) &&
+    title.length >= 2 &&
+    hasHomeBase(profile)
+  );
 }
 
 module.exports = {
