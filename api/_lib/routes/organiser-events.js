@@ -200,6 +200,21 @@ module.exports = async function handler(req, res) {
     return assertCanManageEvents(roleAccess.access);
   }
 
+  /** Organiser-added events accept that page. Admin and Impersonate listings do not. */
+  async function claimPageIfOrganiserListed(groupId, adminView) {
+    try {
+      const { claimOrganiserPageForListedEvent } = require('../supabase-organiser-claims');
+      return await claimOrganiserPageForListedEvent(auth.session, groupId, { adminView });
+    } catch (e) {
+      console.warn('[organiser-events] auto-claim', e && e.message ? e.message : e);
+      return { claimed: false };
+    }
+  }
+
+  function claimResponseFields(result) {
+    return result && result.claimed ? { ownershipClaimed: true } : {};
+  }
+
   async function assertOwnsEventId(eventId) {
     const { groups, groupIds, adminView, access } = await sessionGroups();
     if (adminView) return { ok: true, groups, groupIds, adminView, access };
@@ -360,6 +375,10 @@ module.exports = async function handler(req, res) {
           eventId,
           access.groupIds
         );
+        const claimResult = await claimPageIfOrganiserListed(
+          result.event && (result.event.groupId || result.event.organiserId),
+          access.adminView
+        );
         return json(res, 201, {
           ok: true,
           event: result.event,
@@ -367,6 +386,7 @@ module.exports = async function handler(req, res) {
           ticketCount: result.ticketCount,
           message:
             'Event duplicated as a draft — add new dates, review ticket types, then publish.',
+          ...claimResponseFields(claimResult),
         });
       } catch (e) {
         return jsonPublicError(res, json, e, { code: e.code || 'event_duplicate_failed', logLabel: '[organiser-events]' });
@@ -451,7 +471,7 @@ module.exports = async function handler(req, res) {
     if (!occ.length && !isDraft) return json(res, 400, { error: 'missing_dates' });
 
     try {
-      const { groups, groupIds } = await sessionGroups();
+      const { groups, groupIds, adminView } = await sessionGroups();
       if (!sessionOwnsGroup(auth.session, groups, groupIds, groupId)) {
         return json(res, 403, { error: 'group_not_owned' });
       }
@@ -494,12 +514,14 @@ module.exports = async function handler(req, res) {
           console.warn('[organiser-events] outreach log', logErr && logErr.message ? logErr.message : logErr);
         }
       }
+      const claimResult = await claimPageIfOrganiserListed(groupId, adminView);
       return json(res, 201, {
         ok: true,
         event: events[0],
         events,
         eventIds,
         needsTickets: eventIds.length > 0,
+        ...claimResponseFields(claimResult),
       });
     } catch (e) {
       return jsonPublicError(res, json, e, { code: e.code || 'event_create_failed', logLabel: '[organiser-events]' });

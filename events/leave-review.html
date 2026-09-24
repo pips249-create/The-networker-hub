@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Leave a review – The Networker UK</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" href="/favicon.ico?v=20260823uk3" sizes="any" />
+    <link rel="stylesheet" href="../css/hub.css?v=20260909listmenu1" />
+    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260909listmenu1" />
+    <link rel="stylesheet" href="../css/leave-review.css?v=20260924review1" />
+  </head>
+  <body class="leave-review-page">
+    <div id="hub-site-nav"></div>
+    <script src="../js/site-nav.js?v=20260923iab1" data-root="../" data-page="events"></script>
+
+    <main class="lr-main">
+      <div class="lr-card" id="lr-card">
+        <div class="lr-loading" id="lr-loading">Loading your review…</div>
+        <div id="lr-form-wrap" hidden>
+          <p class="lr-kicker">How was it?</p>
+          <h1 class="lr-title" id="lr-heading">Leave a review</h1>
+          <p class="lr-meta" id="lr-lede">A quick star rating helps other networkers choose where to go next.</p>
+          <div class="lr-event-chip" id="lr-event-chip" hidden>
+            <strong id="lr-event-title"></strong>
+            <span id="lr-event-meta"></span>
+          </div>
+          <form id="lr-form" novalidate>
+            <input type="hidden" id="lr-event-id" name="eventId" value="" />
+            <div class="lr-stars" id="lr-stars" role="radiogroup" aria-label="Rating out of 5">
+              <button type="button" class="lr-star" data-rating="1" aria-label="1 star">★</button>
+              <button type="button" class="lr-star" data-rating="2" aria-label="2 stars">★</button>
+              <button type="button" class="lr-star" data-rating="3" aria-label="3 stars">★</button>
+              <button type="button" class="lr-star" data-rating="4" aria-label="4 stars">★</button>
+              <button type="button" class="lr-star" data-rating="5" aria-label="5 stars">★</button>
+            </div>
+            <p class="lr-hint" id="lr-rating-hint">Tap a star to get started</p>
+            <div id="lr-feedback-step" hidden>
+              <label for="lr-text" class="visually-hidden">Your review (optional)</label>
+              <textarea
+                id="lr-text"
+                class="lr-textarea"
+                maxlength="2000"
+                placeholder="Optional — a short note about the room, host, or who you met."
+              ></textarea>
+            </div>
+            <p class="lr-error" id="lr-error" hidden role="alert"></p>
+            <div class="lr-actions">
+              <button type="submit" class="lr-btn-primary" id="lr-submit" disabled>Submit review</button>
+            </div>
+          </form>
+          <p class="lr-signin-fallback" id="lr-account-link" hidden>
+            Prefer your account?
+            <a href="/account/#reviews-pending" id="lr-account-href">Open attendee dashboard</a>
+          </p>
+        </div>
+        <div class="lr-success" id="lr-success" hidden>
+          <h2>Thank you</h2>
+          <p id="lr-success-text">Your review is live — it helps this group on The Networker UK.</p>
+          <p style="margin-top: 16px">
+            <a class="lr-btn-primary" href="/events/" style="text-decoration: none">Browse events</a>
+          </p>
+        </div>
+        <div class="lr-success" id="lr-done" hidden>
+          <h2>Already reviewed</h2>
+          <p>You have already left a review for this event. Thank you.</p>
+        </div>
+        <div class="lr-success" id="lr-invalid" hidden>
+          <h2>Link expired or invalid</h2>
+          <p>
+            Open
+            <a href="/account/#reviews-pending">your account</a>
+            after signing in, or use the latest review email we sent you.
+          </p>
+        </div>
+      </div>
+    </main>
+
+    <script src="../js/email-leave-review.js?v=20260924review1"></script>
+  </body>
+</html>

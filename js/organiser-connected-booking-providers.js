@@ -3,8 +3,26 @@
   var list = document.getElementById('cb-providers-list');
   var schemaWarn = document.getElementById('cb-providers-schema-warn');
   var linkCard = document.getElementById('cb-providers-link-card');
+  var linksCard = document.getElementById('cb-event-links-card');
+  var linksTableWrap = document.getElementById('cb-event-links-table-wrap');
   var linkStatus = document.getElementById('cb-providers-link-status');
   var saveLinkBtn = document.getElementById('cb-providers-link-save');
+
+  var PROVIDER_LABELS = {
+    eventbrite: 'Eventbrite',
+    ticket_tailor: 'Ticket Tailor',
+    luma: 'Luma',
+    trybooking: 'TryBooking',
+    own_site: 'Your own website',
+  };
+
+  var EXTERNAL_ID_LABELS = {
+    eventbrite: 'Eventbrite numeric event id',
+    ticket_tailor: 'Ticket Tailor ev_… event id (Box office)',
+    luma: 'Luma event id or slug',
+    trybooking: 'TryBooking event id',
+    own_site: 'Optional — TNH event id in webhook JSON',
+  };
 
   if (!panel || !list) return;
 
@@ -21,6 +39,72 @@
     linkStatus.textContent = msg || '';
     linkStatus.className =
       'ee-hint' + (kind === 'error' ? ' ee-alert-warn' : kind === 'ok' ? ' ee-alert-ok' : '');
+  }
+
+  function copyText(text) {
+    var value = String(text || '').trim();
+    if (!value) return Promise.reject();
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      return navigator.clipboard.writeText(value);
+    }
+    window.prompt('Copy:', value);
+    return Promise.resolve();
+  }
+
+  function bindCopyWebhookButtons(root) {
+    if (!root) return;
+    root.querySelectorAll('[data-copy-provider-webhook]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var url = btn.getAttribute('data-copy-provider-webhook') || '';
+        copyText(url).catch(function () {
+          window.prompt('Copy webhook URL:', url);
+        });
+      });
+    });
+  }
+
+  function renderEventLinks(links) {
+    if (!linksCard || !linksTableWrap) return;
+    var rows = (links || []).filter(function (row) {
+      return row && row.event_id && row.provider && row.provider !== 'custom';
+    });
+    if (!rows.length) {
+      linksCard.hidden = true;
+      linksTableWrap.innerHTML = '';
+      return;
+    }
+    linksCard.hidden = false;
+    var body = rows
+      .map(function (row) {
+        var eid = esc(row.event_id);
+        var provider = esc(PROVIDER_LABELS[row.provider] || row.provider);
+        var ext = esc(row.external_event_id || '');
+        var setupHref =
+          '/organiser/event-connected-setup?id=' + encodeURIComponent(row.event_id);
+        return (
+          '<tr>' +
+          '<td><code class="cb-event-links-id">' +
+          eid +
+          '</code></td>' +
+          '<td>' +
+          provider +
+          '</td>' +
+          '<td><code>' +
+          ext +
+          '</code></td>' +
+          '<td><a class="ee-link" href="' +
+          esc(setupHref) +
+          '">Connected setup</a></td>' +
+          '</tr>'
+        );
+      })
+      .join('');
+    linksTableWrap.innerHTML =
+      '<table class="cb-event-links-table">' +
+      '<thead><tr><th>TNH event id</th><th>Provider</th><th>Provider event id</th><th></th></tr></thead>' +
+      '<tbody>' +
+      body +
+      '</tbody></table>';
   }
 
   function renderProviders(data) {
@@ -52,7 +136,10 @@
           esc(p.label) +
           '):<br /><code class="cb-provider-webhook-url">' +
           esc(p.webhookUrl) +
-          '</code></p>'
+          '</code></p>' +
+          '<p class="ee-attendance-next"><button type="button" class="ee-btn ee-btn-outline ee-btn-sm" data-copy-provider-webhook="' +
+          esc(p.webhookUrl) +
+          '">Copy webhook URL</button></p>'
         : '<p class="ee-hint">Click Enable to generate your webhook URL.</p>';
       li.innerHTML =
         '<div class="cb-provider-card">' +
@@ -69,6 +156,9 @@
         '</div>';
       list.appendChild(li);
     });
+
+    bindCopyWebhookButtons(list);
+    renderEventLinks(data.eventLinks || []);
 
     list.querySelectorAll('[data-enable-provider]').forEach(function (btn) {
       btn.addEventListener('click', function () {
@@ -123,12 +213,18 @@
     var p = providerSelect ? providerSelect.value : '';
     var isOwn = p === 'own_site';
     if (externalIdLabel) {
-      externalIdLabel.textContent = isOwn
-        ? 'Optional — leave blank to use TNH event id only in webhook JSON'
-        : 'Provider event id';
+      externalIdLabel.textContent = EXTERNAL_ID_LABELS[p] || 'Provider event id';
     }
     if (externalIdInput) {
-      externalIdInput.placeholder = isOwn ? 'Same as TNH event id if you link for records' : '';
+      if (p === 'ticket_tailor') {
+        externalIdInput.placeholder = 'ev_40980';
+      } else if (isOwn) {
+        externalIdInput.placeholder = 'Same as TNH event id if you link for records';
+      } else if (p === 'eventbrite') {
+        externalIdInput.placeholder = '2001520723363';
+      } else {
+        externalIdInput.placeholder = '';
+      }
     }
     if (ownSiteHint) ownSiteHint.hidden = !isOwn;
   }

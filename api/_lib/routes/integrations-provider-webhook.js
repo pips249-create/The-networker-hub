@@ -295,6 +295,27 @@ module.exports = async function handler(req, res, providerId) {
   }
 
   const normalized = normalizeProviderWebhook(provider, body);
+  if (
+    provider === 'ticket_tailor' &&
+    normalized &&
+    !normalized.partial &&
+    normalized.status === 'pending'
+  ) {
+    await logExternalSync(sb, {
+      organiser_account_id: connection.organiser_account_id,
+      outcome: 'accepted',
+      http_status: 200,
+      message: 'ticket_tailor:pending_ignored',
+      external_order_id: normalized.orderId,
+      payload: { externalEventId: normalized.externalEventId, webhookEvent: normalized.webhookEvent },
+    });
+    return json(res, 200, {
+      ok: true,
+      provider,
+      ignored: true,
+      reason: 'pending_order',
+    });
+  }
   if (!normalized || normalized.partial) {
     await logExternalSync(sb, {
       organiser_account_id: connection.organiser_account_id,

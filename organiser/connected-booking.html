@@ -21,7 +21,7 @@
   </head>
   <body class="organiser-booking-options-page organiser-connected-booking-page">
     <div id="hub-site-nav"></div>
-    <script src="../js/site-nav.js?v=20260910aff1" data-root="../" data-page="organiser" defer></script>
+    <script src="../js/site-nav.js?v=20260923iab1" data-root="../" data-page="organiser" defer></script>
 
     <div class="ee-booking-help">
       <div class="ee-booking-help-shell">
@@ -280,11 +280,19 @@
           </div>
           <p class="ee-hint ee-alert-warn" id="cb-providers-schema-warn" hidden role="status"></p>
           <ul class="cb-providers-list" id="cb-providers-list"></ul>
+          <div class="ee-card cb-event-links-card" id="cb-event-links-card" hidden>
+            <h3 class="cb-providers-link-title">Linked events on your account</h3>
+            <p class="ee-hint">
+              One webhook per provider; each row is a TNH listing tied to a provider event id. Open Connected setup on
+              an event to add price and booking URL — or link manually below.
+            </p>
+            <div class="cb-event-links-table-wrap" id="cb-event-links-table-wrap"></div>
+          </div>
           <div class="ee-card cb-providers-link-card" id="cb-providers-link-card" hidden>
-            <h3 class="cb-providers-link-title">Link a TNH event</h3>
+            <h3 class="cb-providers-link-title">Link a TNH event manually</h3>
             <p class="ee-hint">
               Use the TNH event UUID from Connected event setup, plus the id from your provider’s admin (Eventbrite
-              numeric event id, etc.).
+              numeric event id, Ticket Tailor <code>ev_…</code>, etc.).
             </p>
             <label class="ee-field-label" for="cb-link-event-id">TNH event id</label>
             <input class="ee-input" id="cb-link-event-id" type="text" autocomplete="off" placeholder="uuid" />

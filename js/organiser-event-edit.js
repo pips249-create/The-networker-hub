@@ -2794,7 +2794,15 @@
 
       if (!publish) {
         if (isEmbedDrawer && window.parent && window.parent !== window) {
-          window.parent.postMessage({ type: 'hub-event-saved', draft: true }, window.location.origin);
+          window.parent.postMessage(
+            {
+              type: 'hub-event-saved',
+              draft: true,
+              ownershipClaimed: Boolean(res.data && res.data.ownershipClaimed),
+              organiserGroupId: organiserGroupId,
+            },
+            window.location.origin
+          );
           return;
         }
         location.href = '/organiser/#events-list';
@@ -2840,6 +2848,8 @@
             eventIds,
             title,
             fromLocation: true,
+            ownershipClaimed: Boolean(res.data && res.data.ownershipClaimed),
+            organiserGroupId: organiserGroupId,
           },
           window.location.origin
         );

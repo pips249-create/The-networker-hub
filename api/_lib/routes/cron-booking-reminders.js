@@ -2,6 +2,10 @@ const { json } = require('../auth');
 const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
 const { sendDueBookingReminders } = require('../booking-reminder-emails');
 const { sendDueOrganiserPostEventChecklistEmails } = require('../organiser-post-event-checklist-emails');
+const {
+  sendDuePostEventReviewEmails,
+  sendDuePostEventReviewReminderEmails,
+} = require('../engagement-emails');
 const { authorizeCron } = require('../cron-auth');
 
 module.exports = async function handler(req, res) {
@@ -19,7 +23,15 @@ module.exports = async function handler(req, res) {
     const sb = getSupabaseAdmin();
     const reminders = await sendDueBookingReminders(sb);
     const postEventChecklist = await sendDueOrganiserPostEventChecklistEmails(sb);
-    return json(res, 200, { ok: true, ...reminders, postEventChecklist });
+    const postReview = await sendDuePostEventReviewEmails(sb);
+    const postReviewReminder = await sendDuePostEventReviewReminderEmails(sb);
+    return json(res, 200, {
+      ok: true,
+      ...reminders,
+      postEventChecklist,
+      postReview,
+      postReviewReminder,
+    });
   } catch (e) {
     return json(res, 500, {
       ok: false,

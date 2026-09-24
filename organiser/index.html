@@ -36,7 +36,7 @@
     </div>
 
     <div id="hub-site-nav"></div>
-    <script src="../js/site-nav.js?v=20260910aff1" data-root="../" data-page="organiser"></script>
+    <script src="../js/site-nav.js?v=20260923iab1" data-root="../" data-page="organiser"></script>
 
     <div id="org-signin" class="org-signin" hidden>
       <p class="org-section-sub">
@@ -72,7 +72,9 @@
               <span class="org-nav-badge org-nav-badge--action" id="org-payment-setup-nav-badge" hidden>Setup</span>
             </a>
             <a href="#groups" class="hub-side-nav-link" data-org-route="groups">Organiser pages</a>
-            <a href="#connected-booking" class="hub-side-nav-link" data-org-route="connected-booking">Connected booking</a>
+            <a href="/organiser/connected-booking" class="hub-side-nav-link" id="org-nav-connected-booking">
+              Connected booking
+            </a>
             <a href="#memberships" class="hub-side-nav-link" id="org-nav-memberships" data-org-route="memberships" data-org-memberships-nav>
               Memberships
             </a>
@@ -2483,6 +2485,7 @@
             </div>
 
             <div id="org-payment-setup-overview" hidden></div>
+            <p class="org-section-sub org-sub-lead org-connected-events-quicklink" id="org-connected-events-quicklink" hidden role="status"></p>
 
             <p class="org-section-sub org-sub-lead" id="org-events-linkedin-nudge">
               Have a live event? Make a free LinkedIn post with ready-made words and a picture —
@@ -3045,7 +3048,7 @@
               <span class="org-nav-badge" id="org-more-notifications-badge" hidden>New</span>
             </button>
             <a href="#groups" class="org-more-sheet-link" data-org-route="groups">Organiser pages</a>
-            <a href="#connected-booking" class="org-more-sheet-link" data-org-route="connected-booking">Connected booking</a>
+            <a href="/organiser/connected-booking" class="org-more-sheet-link">Connected booking</a>
             <a href="#social" class="org-more-sheet-link" data-org-route="social">Promote</a>
             <a href="#communicate" class="org-more-sheet-link" data-org-route="communicate">Communicate</a>
             <a href="#team" class="org-more-sheet-link" data-org-route="team" id="org-more-team">
@@ -4034,7 +4037,7 @@
     <script src="../js/organiser-connected-billing-banner.js?v=20260918setup1" defer></script>
     <script src="../js/organiser-connected-booking-page.js?v=20260922ws1" defer></script>
     <script src="../js/organiser-connected-booking-providers.js?v=20260922ws1" defer></script>
-    <script src="../js/organiser-dashboard.js?v=20260922ws1" defer></script>
+    <script src="../js/organiser-dashboard.js?v=20260922dashtimeout" defer></script>
     <script src="../js/organiser-workspace-comfort.js?v=20260813noshow1" defer></script>
   </body>
 </html>

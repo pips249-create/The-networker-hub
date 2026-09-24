@@ -63,7 +63,20 @@ module.exports = async function handler(req, res) {
     const url = new URL(req.url, 'http://localhost');
     const filterEventId = url.searchParams.get('eventId') || 'all';
     const view = String(url.searchParams.get('view') || 'active').toLowerCase();
-    const eventIds = scope.eventIds || [];
+    const ATTENDEES_ALL_EVENT_LIMIT = 80;
+    let eventIds = scope.eventIds || [];
+    let attendeesTruncated = false;
+    if (
+      (!filterEventId || filterEventId === 'all') &&
+      view !== 'pending-summary' &&
+      eventIds.length > ATTENDEES_ALL_EVENT_LIMIT
+    ) {
+      const { listEventIdsForOrganiserGroups } = require('../supabase-organiser-events');
+      eventIds = await listEventIdsForOrganiserGroups(scope.groupIds, false, {
+        limit: ATTENDEES_ALL_EVENT_LIMIT,
+      });
+      attendeesTruncated = true;
+    }
     if (view === 'pending-summary' && summarizePendingApplicationsForEventIds) {
       const pendingApplications = await summarizePendingApplicationsForEventIds(eventIds);
       return json(res, 200, {
@@ -118,6 +131,7 @@ module.exports = async function handler(req, res) {
       blocks,
       view,
       eventCount: eventIds.length,
+      truncated: attendeesTruncated,
     });
   } catch (e) {
     return jsonPublicError(res, json, e, { code: 'server_error', logLabel: '[organiser-attendees]', extra: { attendees: [] } });

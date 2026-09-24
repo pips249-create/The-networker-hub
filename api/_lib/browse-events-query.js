@@ -379,27 +379,132 @@ async function attachOrganiserRatings(sb, rows) {
   });
 }
 
+async function fetchSlimRange(sb, params, select, from, to) {
+  let query = sb
+    .from(BROWSE_VIEW)
+    .select(select)
+    .order('starts_at', { ascending: true })
+    .range(from, to);
+  query = applyBrowseFilters(query, params);
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+  return data || [];
+}
+
 async function fetchAllMatchingSlim(sb, params, select) {
   const pageSize = 1000;
-  const rows = [];
-  let from = 0;
   const cap = hasGeoRadius(params) ? GEO_MATCH_CAP : 5000;
-  while (from < cap) {
-    const to = Math.min(from + pageSize - 1, cap - 1);
-    let query = sb
-      .from(BROWSE_VIEW)
-      .select(select)
-      .order('starts_at', { ascending: true })
-      .range(from, to);
-    query = applyBrowseFilters(query, params);
-    const { data, error } = await query;
-    if (error) throw new Error(error.message);
-    const batch = data || [];
+  const first = await fetchSlimRange(sb, params, select, 0, Math.min(pageSize, cap) - 1);
+  if (first.length < pageSize || pageSize >= cap) return first;
+
+  // PostgREST caps a response at 1000 rows. The live catalogue fills that cap
+  // (5 pages). Fetch the rest together — sequential pages were blowing the
+  // 15s events function limit on /events/.
+  const ranges = [];
+  for (let from = pageSize; from < cap; from += pageSize) {
+    ranges.push([from, Math.min(from + pageSize, cap) - 1]);
+  }
+  const rest = await Promise.all(
+    ranges.map(([from, to]) => fetchSlimRange(sb, params, select, from, to))
+  );
+  const rows = first.slice();
+  for (const batch of rest) {
     rows.push(...batch);
     if (batch.length < pageSize) break;
-    from += pageSize;
   }
   return rows;
+}
+
+const BROWSE_TYPE_TABS = [
+  'meeting',
+  'conference',
+  'events',
+  'exhibition',
+  'awards',
+  'webinar',
+  'workshop',
+  'seminar',
+  'masterclass',
+];
+
+/** One card per series, then count chips. Rows should already be filtered. */
+function tallyTypeCounts(rows) {
+  const deduped = dedupeBrowseRowsBySeries(rows || []);
+  const counts = { all: deduped.length };
+  BROWSE_TYPE_TABS.forEach((type) => {
+    counts[type] = 0;
+  });
+  deduped.forEach((row) => {
+    const type = String(row.type_tab || 'meeting').toLowerCase();
+    if (counts[type] != null) counts[type] += 1;
+  });
+  return counts;
+}
+
+function filterRowsByTypes(rows, types) {
+  if (!types || !types.length) return rows || [];
+  const wanted = new Set(types.map((type) => String(type).toLowerCase()));
+  return (rows || []).filter((row) => wanted.has(String(row.type_tab || 'meeting').toLowerCase()));
+}
+
+/**
+ * Page 1 of /events/ used to scan the whole upcoming catalogue twice (grid +
+ * type chips). That exceeded api/events maxDuration and the browser showed
+ * HTTP 504. Share one scan, and remember it briefly so paging/sorting does
+ * not scan again.
+ */
+const CATALOGUE_TTL_MS = 30000;
+const catalogueCache = new Map();
+
+function browseCatalogueKey(params) {
+  return JSON.stringify({
+    q: params.q || '',
+    inPerson: params.inPerson !== false,
+    online: params.online !== false,
+    freeOnly: !!params.freeOnly,
+    priceMin: Number.isFinite(params.priceMin) ? params.priceMin : null,
+    priceMax: Number.isFinite(params.priceMax) ? params.priceMax : null,
+    dateFrom: params.dateFrom || null,
+    dateTo: params.dateTo || null,
+    location: params.location || '',
+    outcodes: params.outcodes || [],
+    lat: Number.isFinite(params.lat) ? params.lat : null,
+    lng: Number.isFinite(params.lng) ? params.lng : null,
+    radiusMi: Number.isFinite(params.radiusMi) ? params.radiusMi : null,
+  });
+}
+
+function clearBrowseCatalogueCache() {
+  catalogueCache.clear();
+}
+
+async function fetchBrowseCatalogue(sb, params) {
+  const scanParams = { ...params, types: [] };
+  let rows = await fetchAllMatchingSlim(sb, scanParams, BROWSE_SLIM_SELECT);
+  if (hasGeoRadius(scanParams)) {
+    rows = rows.filter((row) => rowPassesGeo(row, scanParams));
+  }
+  return rows;
+}
+
+async function loadBrowseCatalogue(sb, params) {
+  const key = browseCatalogueKey(params);
+  const hit = catalogueCache.get(key);
+  if (hit && hit.rows && hit.expires > Date.now()) return hit.rows;
+  if (hit && hit.inflight) return hit.inflight;
+
+  const inflight = fetchBrowseCatalogue(sb, params)
+    .then((rows) => {
+      catalogueCache.set(key, { expires: Date.now() + CATALOGUE_TTL_MS, rows, inflight: null });
+      return rows;
+    })
+    .catch((err) => {
+      const current = catalogueCache.get(key);
+      if (current && current.inflight) catalogueCache.delete(key);
+      throw err;
+    });
+  catalogueCache.set(key, { expires: 0, rows: null, inflight });
+  return inflight;
 }
 
 function rowAddedSortKey(row) {
@@ -557,59 +662,10 @@ async function fetchMatchingRows(sb, params, select, options) {
 }
 
 async function fetchBrowseTypeCounts(sb, params) {
-  const types = [
-    'meeting',
-    'conference',
-    'events',
-    'exhibition',
-    'awards',
-    'webinar',
-    'workshop',
-    'seminar',
-    'masterclass',
-  ];
-  const base = { ...params, types: [] };
-
-  function tallyTypeCounts(rows) {
-    // Match grid pagination: one chip count per series, not per date row.
-    const deduped = dedupeBrowseRowsBySeries(rows || []);
-    const counts = { all: deduped.length };
-    types.forEach((type) => {
-      counts[type] = 0;
-    });
-    deduped.forEach((row) => {
-      const type = String(row.type_tab || 'meeting').toLowerCase();
-      if (counts[type] != null) counts[type] += 1;
-    });
-    return counts;
-  }
-
-  // Geo radius needs haversine in Node — page past PostgREST max-rows (1000).
-  if (hasGeoRadius(params)) {
-    const pageSize = 1000;
-    const rows = [];
-    let from = 0;
-    while (from < GEO_MATCH_CAP) {
-      const to = Math.min(from + pageSize - 1, GEO_MATCH_CAP - 1);
-      let query = sb
-        .from(BROWSE_VIEW)
-        .select('type_tab, latitude, longitude, format_tab, id, organiser_id, title, series_group_id')
-        .order('starts_at', { ascending: true })
-        .range(from, to);
-      query = applyBrowseFilters(query, base);
-      const { data, error } = await query;
-      if (error) throw new Error(error.message);
-      const batch = data || [];
-      rows.push(...batch);
-      if (batch.length < pageSize) break;
-      from += pageSize;
-    }
-    const filtered = rows.filter((row) => rowPassesGeo(row, params));
-    return tallyTypeCounts(filtered);
-  }
-
-  const slim = await fetchAllMatchingSlim(sb, base, 'type_tab, id, organiser_id, title, series_group_id');
-  return tallyTypeCounts(slim);
+  // Same rows as the grid (type chip is applied later). A second catalogue
+  // scan here is what pushed /api/hub-listings past the function timeout.
+  const rows = await loadBrowseCatalogue(sb, params);
+  return tallyTypeCounts(rows);
 }
 
 /**
@@ -671,10 +727,7 @@ async function hydrateBrowseEvents(sb, rows) {
 }
 
 async function fetchBrowsePageIds(sb, params) {
-  let filtered = await fetchAllMatchingSlim(sb, params, BROWSE_SLIM_SELECT);
-  if (hasGeoRadius(params)) {
-    filtered = filtered.filter((row) => rowPassesGeo(row, params));
-  }
+  let filtered = filterRowsByTypes(await loadBrowseCatalogue(sb, params), params.types);
   if (needsOrganiserRatingSort(params)) {
     filtered = await attachOrganiserRatings(sb, filtered);
     if (params.fiveStarsOnly) {
@@ -783,7 +836,11 @@ async function fetchBrowseEventsPage(sb, rawQuery) {
 
   const typeCountsPromise = wantHeavyMeta ? fetchBrowseTypeCounts(sb, params) : Promise.resolve(null);
   const spotlightPromise = wantHeavyMeta
-    ? require('./event-featured-slots').getFeaturedSpotlightSlotStatus()
+    ? require('./event-featured-slots')
+        .getFeaturedSpotlightSlotStatus()
+        .catch(function () {
+          return null;
+        })
     : Promise.resolve(null);
 
   const [pageData, featuredPack, typeCounts, spotlightSlots] = await Promise.all([
@@ -839,5 +896,7 @@ async function fetchBrowseEventsPage(sb, rawQuery) {
 module.exports = {
   parseBrowseQuery,
   fetchBrowseEventsPage,
+  clearBrowseCatalogueCache,
   BROWSE_VIEW,
+  BROWSE_SLIM_SELECT,
 };
