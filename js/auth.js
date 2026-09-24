@@ -30,6 +30,33 @@
     return p.get('intent') || '';
   }
 
+  /**
+   * Signup must land on the code form. ?code= / ?token= on that page confirms
+   * immediately, so drop them from in-app redirects. Email links still use them.
+   */
+  function withoutEmailVerifySecret(url) {
+    var raw = String(url || '');
+    if (raw.indexOf('/organiser/verify-email') === -1) return raw;
+    try {
+      var parsed = new URL(raw, window.location.origin);
+      if (parsed.pathname.replace(/\/$/, '') !== '/organiser/verify-email') return raw;
+      parsed.searchParams.delete('code');
+      parsed.searchParams.delete('token');
+      return parsed.pathname + parsed.search + parsed.hash;
+    } catch (e) {
+      return raw;
+    }
+  }
+
+  function stashVerifyPrefill(code) {
+    try {
+      if (code) sessionStorage.setItem('hub_verify_email_prefill', String(code));
+      else sessionStorage.removeItem('hub_verify_email_prefill');
+    } catch (e) {
+      /* private mode */
+    }
+  }
+
   function isOrganiserAuthIntentFromPage() {
     var intent = getIntentParam();
     if (intent === 'organiser' || intent === 'organiser-claim') return true;
@@ -304,8 +331,11 @@
             return;
           }
           showMessage(msg, result.data.message || 'Account created — taking you in…', 'success');
+          stashVerifyPrefill(result.data.verifyCode);
           var go = function () {
-            window.location.href = result.data.redirect || next || '/welcome';
+            window.location.href = withoutEmailVerifySecret(
+              result.data.redirect || next || '/welcome'
+            );
           };
           // Always continue promptly — verify-email is the next step for new accounts.
           if (result.data.requiresEmailVerification || getIntentParam() === 'organiser-claim') {

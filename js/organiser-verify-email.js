@@ -238,11 +238,23 @@
     }
 
     if (codeEl && !codeEl.value) {
-      var prefill = params().get('code') || params().get('token');
-      if (prefill) {
-        codeEl.value = String(prefill)
-          .replace(/\D/g, '')
-          .slice(0, 6);
+      var prefill = '';
+      try {
+        prefill = sessionStorage.getItem('hub_verify_email_prefill') || '';
+        if (prefill) sessionStorage.removeItem('hub_verify_email_prefill');
+      } catch (e) {
+        prefill = '';
+      }
+      prefill = String(prefill)
+        .replace(/\D/g, '')
+        .slice(0, 6);
+      if (prefill.length === 6) {
+        codeEl.value = prefill;
+        if (devEl) {
+          devEl.hidden = false;
+          devEl.textContent =
+            'Email could not be delivered. Enter this confirmation code: ' + prefill;
+        }
       }
     }
     await maybeAutoSendVerificationCode();

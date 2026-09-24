@@ -167,20 +167,18 @@ module.exports = async function handler(req, res) {
     if (requiresEmailVerification) {
       const afterVerify = redirect;
       try {
-        const sent = await sendOrganiserEmailVerification({
+        await sendOrganiserEmailVerification({
           userId: sessionUser.sub,
           email: sessionUser.email,
           name: sessionUser.name,
         });
         emailSent = true;
-        const codeMatch = String(sent.verifyPath || '').match(/[?&]code=([^&]+)/);
-        verifyCode = codeMatch ? decodeURIComponent(codeMatch[1]) : null;
       } catch (e) {
         verifyCode = e.verifyCode || null;
       }
+      // Do not put verifyCode in the URL. The confirm page submits ?code= on load.
       redirect = buildEmailVerifyRedirect({
         next: afterVerify,
-        code: verifyCode,
         email: sessionUser.email,
       });
     }

@@ -8,6 +8,10 @@ const { getSupabaseAdmin } = require('./supabase');
 const { sendTemplatedEmail } = require('./send-template-email');
 const { getHubAccount } = require('./supabase-auth');
 const { emailSiteBase } = require('./hub-email-urls');
+const {
+  buildOrganiserVerifyEmailPath,
+  verifyEmailPagePath,
+} = require('./organiser-email-verify-paths');
 
 const TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 
@@ -21,18 +25,6 @@ function hashToken(token) {
 
 function newVerifyCode() {
   return String(crypto.randomInt(0, 1000000)).padStart(6, '0');
-}
-
-function buildOrganiserVerifyEmailPath(code, email) {
-  const address = String(email || '')
-    .trim()
-    .toLowerCase();
-  let path =
-    '/organiser/verify-email?code=' + encodeURIComponent(String(code || '').trim());
-  if (address) {
-    path += '&email=' + encodeURIComponent(address);
-  }
-  return path;
 }
 
 function newLegacyLinkToken() {
@@ -159,7 +151,8 @@ async function sendOrganiserEmailVerification({ userId, email, name, revealCode 
       ok: true,
       emailSent: true,
       verifyUrl: null,
-      verifyPath,
+      // Never hand the magic-link path to the browser. ?code= confirms immediately.
+      verifyPath: verifyEmailPagePath(address),
       ...result,
     };
     if (shouldRevealCode) {
@@ -174,13 +167,13 @@ async function sendOrganiserEmailVerification({ userId, email, name, revealCode 
       err.code = 'email_not_configured';
       err.verifyUrl = verifyUrl;
       err.verifyCode = code;
-      err.verifyPath = verifyPath;
+      err.verifyPath = verifyEmailPagePath(address);
       throw err;
     }
     // Keep the stored code so a signed-in user / admin can still confirm without inbox delivery.
     e.verifyUrl = verifyUrl;
     e.verifyCode = code;
-    e.verifyPath = verifyPath;
+    e.verifyPath = verifyEmailPagePath(address);
     throw e;
   }
 }
