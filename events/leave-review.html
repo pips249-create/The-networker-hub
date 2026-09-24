@@ -8,7 +8,7 @@
     <link rel="icon" href="/favicon.ico?v=20260823uk3" sizes="any" />
     <link rel="stylesheet" href="../css/hub.css?v=20260909listmenu1" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260909listmenu1" />
-    <link rel="stylesheet" href="../css/leave-review.css?v=20260924review1" />
+    <link rel="stylesheet" href="../css/leave-review.css?v=20260924review2" />
   </head>
   <body class="leave-review-page">
     <div id="hub-site-nav"></div>
@@ -57,13 +57,36 @@
         <div class="lr-success" id="lr-success" hidden>
           <h2>Thank you</h2>
           <p id="lr-success-text">Your review is live — it helps this group on The Networker UK.</p>
-          <p style="margin-top: 16px">
-            <a class="lr-btn-primary" href="/events/" style="text-decoration: none">Browse events</a>
+          <div class="lr-followup" id="lr-followup" hidden>
+            <h3 class="lr-followup-title" id="lr-followup-title">Optional — save this in a free account</h3>
+            <p class="lr-followup-lede" id="lr-followup-lede">
+              Track tickets and reviews, and add company and job title for name badges at your next event.
+            </p>
+            <div class="lr-actions lr-followup-actions">
+              <a class="lr-btn-primary" id="lr-register-link" href="/register">Create free account</a>
+              <a class="lr-btn-secondary" id="lr-login-link" href="/login">Sign in</a>
+            </div>
+          </div>
+          <div class="lr-followup lr-followup--linked" id="lr-followup-linked" hidden>
+            <p class="lr-followup-lede" id="lr-followup-linked-text">
+              Your review is in your attendee dashboard. Add company and job title in profile settings if you like.
+            </p>
+            <div class="lr-actions lr-followup-actions">
+              <a class="lr-btn-primary" id="lr-account-link-success" href="/account/#reviews-done">Open your account</a>
+              <a class="lr-btn-secondary" id="lr-settings-link" href="/account/settings">Profile settings</a>
+            </div>
+          </div>
+          <p class="lr-browse-wrap">
+            <a class="lr-btn-secondary lr-btn-ghost" href="/events/">Browse events</a>
           </p>
         </div>
         <div class="lr-success" id="lr-done" hidden>
           <h2>Already reviewed</h2>
           <p>You have already left a review for this event. Thank you.</p>
+          <div id="lr-done-followup" hidden></div>
+          <p class="lr-browse-wrap">
+            <a class="lr-btn-secondary lr-btn-ghost" href="/events/">Browse events</a>
+          </p>
         </div>
         <div class="lr-success" id="lr-invalid" hidden>
           <h2>Link expired or invalid</h2>
@@ -76,6 +99,6 @@
       </div>
     </main>
 
-    <script src="../js/email-leave-review.js?v=20260924review1"></script>
+    <script src="../js/email-leave-review.js?v=20260924review2"></script>
   </body>
 </html>
