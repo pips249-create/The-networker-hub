@@ -22,13 +22,14 @@ dotenv.config({ path: path.join(root, '.env') });
 const { sendTemplatedEmail } = require('../api/_lib/send-template-email');
 const { mergeEmailPreviewVariables } = require('../api/_lib/email-preview-variables');
 const { campaignSiteVars } = require('../api/_lib/organiser-campaign-defaults');
+const { getBrandedEmailSubject } = require('../api/_lib/branded-email-templates');
 
 const SITE = 'https://www.thenetworkeruk.com';
 const CSV = path.join(root, 'data/Franchise-Claim-Followup.csv');
 const SLUG = 'franchise_claim_invite_followup';
 const REPLY_TO = 'catherine@thenetworkeruk.com';
 const FOOTER_EMAIL = 'hi@thenetworkeruk.com';
-const SUBJECT = 'Quick follow-up: Franchise Listing Invitation';
+const SUBJECT = getBrandedEmailSubject(SLUG);
 
 const args = process.argv.slice(2);
 const doSend = args.includes('--send');
@@ -88,7 +89,6 @@ async function sendOne(row, toOverride) {
   return sendTemplatedEmail({
     slug: SLUG,
     to,
-    subject: SUBJECT,
     variables: vars,
     skipEmailCheck: true,
     replyTo: REPLY_TO,

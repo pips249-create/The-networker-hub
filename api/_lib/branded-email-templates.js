@@ -29,8 +29,8 @@ const BRANDED_EMAIL_TEMPLATES = {
   },
   franchise_claim_invite_followup: {
     file: 'franchise-claim-invite-followup.html',
-    marker: 'hub-email-layout-v3-navy-gold-details-franchise-e2',
-    subject: 'Quick follow-up: Franchise Listing Invitation',
+    marker: 'hub-email-layout-v3-navy-gold-details-franchise-e3',
+    subject: '{{opportunity_title}} — claim by 30 September',
   },
   distributorship_claim_invite: {
     file: 'distributorship-claim-invite.html',
