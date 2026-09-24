@@ -273,6 +273,36 @@ function isMissingRankingTableError(error) {
   );
 }
 
+const RANKING_ENTRY_SELECT =
+  'organiser_id, rank, tier, label, rating, review_count, eligible_attendees, review_rate';
+
+/**
+ * One paged read of the current snapshot. The directory asks for every public
+ * organiser; chunking those ids was a dozen round-trips and helped push
+ * /api/organisers past the function limit.
+ */
+async function loadAllSnapshotRankings(sb, snapshot) {
+  const pageSize = 1000;
+  const out = {};
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await sb
+      .from('organiser_ranking_entries')
+      .select(RANKING_ENTRY_SELECT)
+      .eq('snapshot_id', snapshot.id)
+      .range(from, from + pageSize - 1);
+    if (error) {
+      if (isMissingRankingTableError(error)) return out;
+      throw new Error(error.message);
+    }
+    const batch = data || [];
+    batch.forEach((row) => {
+      out[row.organiser_id] = entryToRanking(row, snapshot);
+    });
+    if (batch.length < pageSize) break;
+  }
+  return out;
+}
+
 async function loadCurrentRankingsByOrganiserId(organiserIds) {
   if (!isSupabaseConfigured()) return {};
   const ids = (organiserIds || []).filter(Boolean);
@@ -318,12 +348,22 @@ async function loadCurrentRankingsByOrganiserId(organiserIds) {
     }
   }
 
+  // Directory-sized id lists: read the snapshot once instead of one query per 80 ids.
+  if (ids.length > RANKING_ID_CHUNK) {
+    const all = await loadAllSnapshotRankings(sb, snapshot);
+    const out = {};
+    ids.forEach((id) => {
+      if (all[id]) out[id] = all[id];
+    });
+    return out;
+  }
+
   const out = {};
   for (let i = 0; i < ids.length; i += RANKING_ID_CHUNK) {
     const chunk = ids.slice(i, i + RANKING_ID_CHUNK);
     const { data, error } = await sb
       .from('organiser_ranking_entries')
-      .select('*')
+      .select(RANKING_ENTRY_SELECT)
       .eq('snapshot_id', snapshot.id)
       .in('organiser_id', chunk);
     if (error) {
