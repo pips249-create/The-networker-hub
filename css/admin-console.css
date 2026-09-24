@@ -1656,6 +1656,33 @@ a.admin-action-row:hover .admin-action-btn {
 .admin-filter-bar input[type='text'],
 .admin-filter-bar select {
   min-height: 2.35rem;
+  line-height: 1.25rem;
+  color: #1e293b;
+  caret-color: #1e293b;
+}
+
+/* Tailwind preflight sets outline-offset: -2px on search fields. In Chrome that
+   pulls the focus ring inside the box and paints the native clear control as a
+   blue X, which hides the placeholder even when the field looks empty. */
+.admin-filter-bar input[type='search'] {
+  -webkit-appearance: none;
+  appearance: none;
+  outline-offset: 2px;
+}
+
+.admin-filter-bar input[type='search']::-webkit-search-decoration,
+.admin-filter-bar input[type='search']::-webkit-search-cancel-button,
+.admin-filter-bar input[type='search']::-webkit-search-results-button,
+.admin-filter-bar input[type='search']::-webkit-search-results-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
+}
+
+.admin-filter-bar input[type='search']::placeholder,
+.admin-filter-bar input[type='text']::placeholder {
+  color: #94a3b8;
+  opacity: 1;
 }
 
 .admin-hub-tab:focus-visible,
