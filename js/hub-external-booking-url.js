@@ -36,6 +36,19 @@
     return preferEventbriteCheckoutUrl(String(raw || '').trim());
   }
 
+  function isTicketTailorWebhookEventId(raw) {
+    return /^ev_/i.test(String(raw || '').trim());
+  }
+
+  /** URL slug from /events/my-show — not the id Ticket Tailor sends on webhooks. */
+  function ticketTailorIdNeedsEvPrefix(raw) {
+    var value = String(raw || '').trim();
+    if (!value) return false;
+    if (isTicketTailorWebhookEventId(value)) return false;
+    if (/^https?:\/\//i.test(value)) return false;
+    return true;
+  }
+
   function guessProviderExternalEventId(provider, raw) {
     var platform = String(provider || '').trim().toLowerCase();
     var url = String(raw || '').trim();
@@ -66,5 +79,7 @@
     preferEventbriteCheckoutUrl: preferEventbriteCheckoutUrl,
     toAttendeeBookingUrl: toAttendeeBookingUrl,
     guessProviderExternalEventId: guessProviderExternalEventId,
+    isTicketTailorWebhookEventId: isTicketTailorWebhookEventId,
+    ticketTailorIdNeedsEvPrefix: ticketTailorIdNeedsEvPrefix,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

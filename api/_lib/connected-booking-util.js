@@ -134,6 +134,25 @@ function preferEventbriteCheckoutUrl(raw) {
   }
 }
 
+function isTicketTailorWebhookEventId(raw) {
+  return /^ev_/i.test(String(raw || '').trim());
+}
+
+function validateProviderExternalEventId(provider, externalEventId) {
+  const p = String(provider || '').trim().toLowerCase();
+  const id = String(externalEventId || '').trim();
+  if (!id || p === 'own_site' || p === 'custom') return { ok: true };
+  if (p === 'ticket_tailor' && !isTicketTailorWebhookEventId(id)) {
+    return {
+      ok: false,
+      error: 'invalid_ticket_tailor_event_id',
+      message:
+        'Ticket Tailor sync needs the ev_… event id from Box office (webhooks do not use the checkout URL slug).',
+    };
+  }
+  return { ok: true };
+}
+
 function guessProviderExternalEventId(provider, raw) {
   const platform = String(provider || '').trim().toLowerCase();
   const url = String(raw || '').trim();
@@ -248,6 +267,8 @@ module.exports = {
   parseEventbriteEventIdFromUrl,
   preferEventbriteCheckoutUrl,
   guessProviderExternalEventId,
+  isTicketTailorWebhookEventId,
+  validateProviderExternalEventId,
   parseExternalPriceLabelToDisplay,
   newWebhookSecret,
   signWebhookPayload,

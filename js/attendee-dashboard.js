@@ -2659,7 +2659,8 @@
     const reward = (stats && stats.reviewerReward) || null;
     const count = reward && reward.count ? Number(reward.count) : Number(stats && stats.reviewsLeft) || 0;
     const pending = Number(stats && stats.reviewsPending) || 0;
-    if (!count && !pending) {
+    // Next up already surfaces pending reviews — don't add a second reviews card.
+    if (!count || pending > 0) {
       el.hidden = true;
       el.innerHTML = '';
       return;
@@ -2735,7 +2736,6 @@
             ? String(stats.reviewsLeft) + ' submitted · ' + reviewerRewardStatMeta(stats.reviewerReward, 0)
             : reviewerRewardStatMeta(stats.reviewerReward, 0);
     }
-    renderOverviewReviewerReward(stats);
     const enquiryCount = (opportunityEnquiries || []).length;
     if (enquiries) enquiries.textContent = String(enquiryCount);
     if (enquiriesHint) {
@@ -2748,6 +2748,14 @@
           ? 'Track replies by email'
           : '—';
     }
+    const upcomingBtn = document.querySelector('#ad-stats [data-ad-stat-route="upcoming"]');
+    const reviewsBtn = document.querySelector('#ad-stats [data-ad-stat-route="reviews"]');
+    const enquiryBtn = document.querySelector('#ad-stats [data-ad-stat-route="opportunity-enquiries"]');
+    if (upcomingBtn) upcomingBtn.hidden = !Number(stats.upcomingCount || 0);
+    if (reviewsBtn) reviewsBtn.hidden = pendingCount <= 0;
+    if (enquiryBtn) enquiryBtn.hidden = enquiryCount <= 0;
+    renderOverviewReviewerReward(stats);
+    syncOverviewChrome();
   }
 
   function setTabCount(id, n) {
@@ -3127,6 +3135,7 @@
         meta: metaBits.join(' · '),
         cta: 'Open tickets',
         route: 'tickets',
+        media: thumbHtml(nextTicket),
       });
     }
 
@@ -3139,6 +3148,7 @@
         meta: String(pending[0].organiserName || '').trim(),
         cta: 'Leave review',
         route: 'reviews-pending',
+        media: thumbHtml(pending[0]),
       });
     }
 
@@ -3184,13 +3194,9 @@
       '<h2 class="ad-section-title">Next up</h2>' +
       '<div class="ad-overview-next-list" role="list">' +
       items
-        .map(function (item) {
-          return (
-            '<button type="button" class="ad-overview-next-card ad-overview-next-card--' +
-            esc(item.key) +
-            '" role="listitem" data-overview-next-route="' +
-            esc(item.route) +
-            '">' +
+        .map(function (item, index) {
+          const featured = index === 0;
+          const copy =
             '<span class="ad-overview-next-eyebrow">' +
             esc(item.eyebrow) +
             '</span>' +
@@ -3202,8 +3208,20 @@
               : '') +
             '<span class="ad-overview-next-cta">' +
             esc(item.cta) +
-            ' →</span>' +
-            '</button>'
+            ' →</span>';
+          return (
+            '<button type="button" class="ad-overview-next-card ad-overview-next-card--' +
+            esc(item.key) +
+            (featured ? ' ad-overview-next-card--featured' : '') +
+            '" role="listitem" data-overview-next-route="' +
+            esc(item.route) +
+            '">' +
+            (featured && item.media
+              ? '<span class="ad-overview-next-media">' + item.media + '</span>'
+              : '') +
+            '<span class="ad-overview-next-copy">' +
+            copy +
+            '</span></button>'
           );
         })
         .join('') +
@@ -3237,6 +3255,11 @@
 
     const expiring = myGroups.filter((item) => item.expiringSoon && item.membershipActive);
     const expired = myGroups.filter((item) => !item.membershipActive);
+    if (!expiring.length && !expired.length) {
+      el.hidden = true;
+      el.innerHTML = '';
+      return;
+    }
     const summaryParts = [myGroups.length + (myGroups.length === 1 ? ' membership' : ' memberships')];
     if (expiring.length) {
       summaryParts.push(expiring.length + ' expiring soon');
@@ -3298,28 +3321,105 @@
   function renderOverviewReviewNudge() {
     const el = document.getElementById('ad-overview-review-nudge');
     if (!el) return;
-    const pending = pendingReviewsList();
-    if (!pending.length) {
-      el.hidden = true;
-      el.innerHTML = '';
+    // Next up already carries the first pending review — skip the extra list.
+    el.hidden = true;
+    el.innerHTML = '';
+  }
+
+  function renderWelcomeLine() {
+    const sub = document.getElementById('ad-welcome-sub');
+    if (!sub || sub.dataset.lockedError === '1') return;
+    const pending = pendingReviewsList().length;
+    const upcoming = upcomingList();
+    const nextTicket = upcoming
+      .slice()
+      .sort(function (a, b) {
+        const da = a.date ? new Date(a.date).getTime() : 0;
+        const db = b.date ? new Date(b.date).getTime() : 0;
+        return da - db;
+      })[0];
+    sub.hidden = false;
+    if (pending && !upcoming.length) {
+      sub.textContent =
+        pending === 1
+          ? 'One review waiting — about a minute, and it helps the group.'
+          : pending + ' reviews waiting — a minute each, and it helps the groups.';
       return;
     }
-    el.hidden = false;
-    el.innerHTML =
-      '<h2 class="ad-section-title ad-section-title--spaced">Reviews to write</h2>' +
-      '<p class="ad-overview-review-nudge-lead">Share quick feedback after events you attended — it only takes a minute and helps groups you support.</p>' +
-      '<div class="ad-review-nudges" role="list">' +
-      pending
-        .slice(0, 3)
-        .map((reg) => reviewNudgeCardHtml(reg))
-        .join('') +
-      '</div>' +
-      (pending.length > 3
-        ? '<p class="ad-overview-more"><a href="#reviews-pending">View all ' +
-          pending.length +
-          ' pending reviews →</a></p>'
-        : '');
-    bindLeaveReviewButtons(el);
+    if (nextTicket) {
+      const when = formatDateShort(nextTicket.date);
+      sub.textContent =
+        'You are going to ' +
+        (nextTicket.title || 'an event') +
+        (when && when !== '—' ? ' · ' + when : '') +
+        '.';
+      return;
+    }
+    if (savedEvents.length) {
+      sub.textContent = 'Nothing booked this week — one of your saved events might be the one.';
+      return;
+    }
+    sub.textContent = 'Ready when you are — find a room this week.';
+  }
+
+  function renderOverviewPortals() {
+    const ticketsMeta = document.getElementById('ad-portal-tickets-meta');
+    const reviewsMeta = document.getElementById('ad-portal-reviews-meta');
+    const savedMeta = document.getElementById('ad-portal-saved-meta');
+    const reviewsPortal = document.querySelector('[data-ad-portal="reviews"]');
+    const upcoming = upcomingList().length;
+    const pending = pendingReviewsList().length;
+    const savedCount = savedEvents.length + savedOrganisers.length + myGroups.length;
+    if (ticketsMeta) {
+      ticketsMeta.textContent = upcoming
+        ? upcoming + (upcoming === 1 ? ' upcoming event' : ' upcoming events')
+        : 'Find a breakfast, lunch, or expo';
+    }
+    if (reviewsMeta) {
+      reviewsMeta.textContent = pending
+        ? pending + (pending === 1 ? ' waiting' : ' waiting')
+        : 'After events you attend';
+    }
+    if (reviewsPortal) reviewsPortal.classList.toggle('is-hot', pending > 0);
+    if (savedMeta) {
+      savedMeta.textContent = savedCount
+        ? savedCount + (savedCount === 1 ? ' saved listing' : ' saved listings')
+        : 'Heart events and groups you like';
+    }
+  }
+
+  function bindOverviewPortals() {
+    document.querySelectorAll('[data-ad-portal]').forEach(function (btn) {
+      if (btn.dataset.boundPortal) return;
+      btn.dataset.boundPortal = '1';
+      btn.addEventListener('click', function () {
+        const key = btn.getAttribute('data-ad-portal');
+        if (key === 'tickets') {
+          setTicketsScope('upcoming');
+          setRoute('tickets');
+          return;
+        }
+        if (key === 'reviews') {
+          setSavedScope('reviews');
+          setReviewsScope(pendingReviewsList().length > 0 ? 'pending' : 'done');
+          setRoute('reviews-pending');
+          return;
+        }
+        if (key === 'saved') {
+          setSavedScope('events');
+          setRoute('saved');
+        }
+      });
+    });
+  }
+
+  function syncOverviewChrome() {
+    renderWelcomeLine();
+    renderOverviewPortals();
+    const stats = document.getElementById('ad-stats');
+    if (stats) stats.hidden = true;
+    const empty = document.getElementById('ad-overview-empty');
+    if (empty) empty.hidden = true;
   }
 
   function renderOverviewFeed() {
@@ -3329,17 +3429,22 @@
 
     const feed = document.getElementById('ad-overview-feed');
     const scroll = document.getElementById('ad-overview-feed-scroll');
-    if (!feed || !scroll) return;
+    if (!feed || !scroll) {
+      syncOverviewChrome();
+      return;
+    }
 
     const items = savedEventsHappeningSoon();
     if (!items.length) {
       feed.hidden = true;
       scroll.innerHTML = '';
+      syncOverviewChrome();
       return;
     }
 
     feed.hidden = false;
     scroll.innerHTML = items.map((item) => feedEventCardHtml(item)).join('');
+    syncOverviewChrome();
   }
 
   function savedEventHref(item) {
@@ -4345,7 +4450,6 @@
   }
 
   function bindHubContextSwitch() {
-    initOrganiserContextBanner();
     document.querySelectorAll('[data-hub-switch]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const mode = btn.getAttribute('data-hub-switch');
@@ -4358,16 +4462,22 @@
     });
   }
 
-  function initOrganiserContextBanner() {
+  function initOrganiserContextBanner(sessionData) {
     const banner = document.getElementById('ad-organiser-context');
     if (!banner) return;
     if (localStorage.getItem(ORGANISER_CONTEXT_DISMISS_KEY) === '1') {
       banner.hidden = true;
       return;
     }
+    // Organiser workspace is already in My account — don't pitch the switch again.
+    if (sessionData && sessionData.organiserUiVisible) {
+      banner.hidden = true;
+      return;
+    }
     banner.hidden = false;
     const dismissBtn = document.getElementById('ad-organiser-context-dismiss');
-    if (dismissBtn) {
+    if (dismissBtn && !dismissBtn.dataset.boundOrganiserDismiss) {
+      dismissBtn.dataset.boundOrganiserDismiss = '1';
       dismissBtn.addEventListener('click', () => {
         localStorage.setItem(ORGANISER_CONTEXT_DISMISS_KEY, '1');
         banner.hidden = true;
@@ -4403,6 +4513,7 @@
   async function init() {
     bindNav();
     bindStatCards();
+    bindOverviewPortals();
     bindHubContextSwitch();
     bindSavedScope();
     bindTicketsScope();
@@ -4449,6 +4560,7 @@
     if (shell) shell.hidden = false;
     setDashboardLoading(true);
     renderWelcome(sessionData.user);
+    initOrganiserContextBanner(sessionData);
 
     try {
       ensureAttendeeHubMode();
@@ -4513,6 +4625,8 @@
         openCompareFromQuery();
         const sub = document.getElementById('ad-welcome-sub');
         if (sub) {
+          sub.hidden = false;
+          sub.dataset.lockedError = '1';
           sub.textContent =
             data.message ||
             data.error ||

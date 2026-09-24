@@ -18,6 +18,7 @@ const {
   stripEventSalesFields,
 } = require('./organiser-marketing-workspace');
 const { eventHasTicketsOnSale, resolveTierSaleEnd } = require('./ticket-sales');
+const { shouldScanAllPlatformEvents, applyOrganiserIdScope } = require('./organiser-event-scope');
 const { assertTicketsEditableForEvents, loadLockedOrActiveSaleEvents, lockEventOnFirstSale } = require('./event-sale-lock');
 const { applyListingLifecyclePreserve } = require('./listing-lifecycle');
 // Top-level so Vercel file tracing includes this module in the organiser bundle
@@ -443,15 +444,17 @@ async function listAllOrganiserEvents() {
   return repaired.map(rowToEvent);
 }
 
-async function listEventIdsForOrganiserGroups(groupIds, allEvents) {
+async function listEventIdsForOrganiserGroups(groupIds, allEvents, options) {
   const ids = groupIds || [];
-  if (!ids.length && !allEvents) return [];
+  const opts = options && typeof options === 'object' ? options : {};
+  if (!ids.length && !shouldScanAllPlatformEvents(ids, allEvents)) return [];
   const sb = getSupabaseAdmin();
-  let query = sb.from('events').select('id');
-  if (!allEvents) {
-    if (ids.length === 1) query = query.eq('organiser_id', ids[0]);
-    else query = query.in('organiser_id', ids);
+  let query = sb.from('events').select('id').order('starts_at', { ascending: false });
+  if (!shouldScanAllPlatformEvents(ids, allEvents)) {
+    query = applyOrganiserIdScope(query, ids);
   }
+  const limit = Number(opts.limit) > 0 ? Math.min(Math.floor(Number(opts.limit)), 2000) : null;
+  if (limit) query = query.limit(limit);
   const { data, error } = await query;
   if (error) throw new Error(error.message);
   return (data || []).map((row) => row.id).filter(Boolean);
@@ -481,7 +484,7 @@ async function listEventSummariesForOrganiserGroups(groupIds, allEvents, options
   const ids = groupIds || [];
   const opts = options && typeof options === 'object' ? options : {};
   const limit = Number(opts.limit) > 0 ? Math.min(Math.floor(Number(opts.limit)), 500) : null;
-  if (!ids.length && !allEvents) return [];
+  if (!ids.length && !shouldScanAllPlatformEvents(ids, allEvents)) return [];
   const sb = getSupabaseAdmin();
   let query = sb
     .from('events')
@@ -491,9 +494,8 @@ async function listEventSummariesForOrganiserGroups(groupIds, allEvents, options
     .order('starts_at', {
       ascending: false,
     });
-  if (!allEvents) {
-    if (ids.length === 1) query = query.eq('organiser_id', ids[0]);
-    else query = query.in('organiser_id', ids);
+  if (!shouldScanAllPlatformEvents(ids, allEvents)) {
+    query = applyOrganiserIdScope(query, ids);
   }
   if (limit) query = query.limit(limit);
   const { data, error } = await query;
@@ -633,12 +635,11 @@ async function listEventsForOrganiser(email, groupIds, options) {
   const sb = getSupabaseAdmin();
   const ids = groupIds || [];
   const opts = options && typeof options === 'object' ? options : {};
-  if (!ids.length && !opts.allEvents) return [];
+  if (!ids.length && !shouldScanAllPlatformEvents(ids, opts.allEvents)) return [];
 
   let query = sb.from('events').select('*');
-  if (!opts.allEvents) {
-    if (ids.length === 1) query = query.eq('organiser_id', ids[0]);
-    else query = query.in('organiser_id', ids);
+  if (!shouldScanAllPlatformEvents(ids, opts.allEvents)) {
+    query = applyOrganiserIdScope(query, ids);
   }
   const orderAsc = opts.orderAsc !== false;
   query = query.order('starts_at', { ascending: orderAsc, nullsFirst: false });
@@ -3015,7 +3016,7 @@ async function countAllEvents() {
  */
 async function applyRegistrationSalesToEventsPage(overview, upcomingOverview, tickets, groups, groupEventCounts) {
   const {
-    enrichEventsWithRegistrationSales,
+    applyRegistrationSalesToEventList,
     enrichTicketsWithSales,
     listRegistrationsForEvents,
     listCancellationsForEvents,
@@ -3023,14 +3024,17 @@ async function applyRegistrationSalesToEventsPage(overview, upcomingOverview, ti
     mapLatestCancellationsByEvent,
   } = require('./supabase-organiser-payouts');
 
-  const enrichedEvents = await enrichEventsWithRegistrationSales(overview.events);
-  const upcomingEvents = await enrichEventsWithRegistrationSales(upcomingOverview.events);
-  const regs = await listRegistrationsForEvents([
-    ...new Set([...enrichedEvents.map((e) => e.id), ...upcomingEvents.map((e) => e.id)]),
+  const overviewEvents = overview.events || [];
+  const upcomingRaw = upcomingOverview.events || [];
+  const ids = [
+    ...new Set([...overviewEvents, ...upcomingRaw].map((ev) => ev && ev.id).filter(Boolean)),
+  ];
+  const [regs, cancellations] = await Promise.all([
+    listRegistrationsForEvents(ids),
+    listCancellationsForEvents(ids),
   ]);
-  const cancellations = await listCancellationsForEvents([
-    ...new Set(regs.map((row) => row.event_id).filter(Boolean)),
-  ]);
+  const enrichedEvents = applyRegistrationSalesToEventList(overviewEvents, regs, cancellations);
+  const upcomingEvents = applyRegistrationSalesToEventList(upcomingRaw, regs, cancellations);
   const cancellationsByEvent = mapLatestCancellationsByEvent(cancellations);
   const revenueContextByEventId = {};
   [...enrichedEvents, ...upcomingEvents].forEach((ev) => {
@@ -3052,27 +3056,27 @@ async function applyRegistrationSalesToEventsPage(overview, upcomingOverview, ti
 async function loadOrganiserEventsPage(session, groups, groupIds, adminView, pagination, options) {
   const opts = options || {};
   const { limit, offset, knownTotal, eventsLite } = pagination;
-  const skipSideLoads = offset > 0 && knownTotal != null;
+  const skipSideLoads = offset > 0;
   // Lite skips payout enrichment (slow), but still needs registration sales for
   // Tickets sold / Revenue columns on the Events list.
   const skipPayoutEnrichment = Boolean(eventsLite || opts.eventsLite);
+  // Per-group counts only enrich the organiser-pages table — skip on list refreshes.
+  const skipGroupCounts = skipSideLoads || skipPayoutEnrichment || knownTotal != null;
+  const skipTotalCount = skipSideLoads || knownTotal != null;
 
-  const [groupEventCounts, upcomingRaw, total] = await Promise.all([
-    skipSideLoads ? Promise.resolve(null) : countEventsByOrganiserGroup(groupIds),
+  const [groupEventCounts, upcomingRaw, total, events] = await Promise.all([
+    skipGroupCounts ? Promise.resolve(null) : countEventsByOrganiserGroup(groupIds),
     skipSideLoads ? Promise.resolve([]) : listUpcomingEventsForOrganiser(groupIds, WORKSPACE_UPCOMING_LIMIT),
-    skipSideLoads
+    skipTotalCount
       ? Promise.resolve(knownTotal)
-      : adminView
-        ? countAllEvents()
-        : countEventsForOrganiser(groupIds),
+      : countEventsForOrganiser(groupIds),
+    listEventsForSession(session, groupIds, [], adminView, {
+      limit,
+      offset,
+      orderAsc: false,
+      allEvents: adminView,
+    }),
   ]);
-
-  const events = await listEventsForSession(session, groupIds, [], adminView, {
-    limit,
-    offset,
-    orderAsc: false,
-    allEvents: adminView,
-  });
 
   const eventIds = events.map((e) => e.id);
   const upcomingIds = upcomingRaw.map((e) => e.id);
@@ -3303,6 +3307,7 @@ async function getLeanOrganiserWorkspace(req) {
   const { listPendingClaimGroupsForSession } = require('./supabase-organiser-claims');
   const { listPendingClaimOpportunitiesForSession } = require('./supabase-opportunity-claims');
   const accessStatusPromise = getOrganiserAccessStatus(session).catch(() => null);
+  const leanStartedAt = Date.now();
 
   // Scope first, then pending claims — never race a pre-scope pending list against
   // workspace prep (that previously auto-claimed pages the invite modal still showed).
@@ -3315,7 +3320,9 @@ async function getLeanOrganiserWorkspace(req) {
   const LEAN_EVENT_SUMMARY_LIMIT = 120;
   const leanGroupCount = (groupIds || []).length;
   // Skip per-group roster/count scans on huge admin overviews — still return a total event count.
-  const skipHeavyEnrichment = leanGroupCount > 40;
+  const skipHeavyEnrichment = adminView || leanGroupCount > 40;
+  // Admin "all organisers" must not wait on event summaries — Events/Attendees load those on demand.
+  const skipEventSummaries = adminView;
   // Lean path must stay bounded: never scan all platform events for admin view.
   const [pendingClaims, eventSummaries, eventCountsByGroup, accessStatus, rosterSummaries, leanEventsTotal] =
     await Promise.all([
@@ -3328,9 +3335,11 @@ async function getLeanOrganiserWorkspace(req) {
             groups: pendingGroups,
             opportunities,
           })),
-      listEventSummariesForOrganiserGroups(groupIds, false, {
-        limit: LEAN_EVENT_SUMMARY_LIMIT,
-      }).catch(() => []),
+      skipEventSummaries
+        ? Promise.resolve([])
+        : listEventSummariesForOrganiserGroups(groupIds, false, {
+            limit: LEAN_EVENT_SUMMARY_LIMIT,
+          }).catch(() => []),
       skipHeavyEnrichment
         ? Promise.resolve(new Map())
         : countEventsByOrganiserGroup(groupIds).catch(() => new Map()),
@@ -3382,7 +3391,15 @@ async function getLeanOrganiserWorkspace(req) {
 
   let pendingSetupReviews = [];
   // Setup review is for the real organiser — skip while admin is impersonating.
-  if (!adminView && !session.impersonator && groupIds.length) {
+  // Also skip on large workspaces or when lean bootstrap is already slow so the
+  // browser timeout cannot fire before the dashboard shell appears.
+  const skipSetupReviews =
+    adminView ||
+    session.impersonator ||
+    !groupIds.length ||
+    leanGroupCount > 10 ||
+    Date.now() - leanStartedAt > 8000;
+  if (!skipSetupReviews) {
     try {
       const { listOrganiserSetupReviews } = require('./organiser-setup-review');
       pendingSetupReviews = await listOrganiserSetupReviews(groupIds);
@@ -3442,6 +3459,40 @@ async function getOrganiserWorkspace(req) {
   const personalScope = isAdmin && organiserPersonalScopeFromRequest(req);
   const adminView = isAdmin && !personalScope;
   const eventsPaginationQuery = parseWorkspaceEventsQuery(req);
+  const eventsOnly = String(req.query?.eventsOnly || '') === '1';
+
+  const { groups, groupIds, access: workspaceAccess, groupsError } =
+    await prepareOrganiserWorkspaceScope(session, adminView);
+
+  if (eventsOnly) {
+    try {
+      // Archive is fire-and-forget; skip on lite list refreshes so they stay cheap.
+      if (eventsPaginationQuery.offset === 0 && !eventsPaginationQuery.eventsLite) {
+        scheduleArchivePastPublishedEvents(groupIds);
+      }
+      const page = await loadOrganiserEventsPage(
+        session,
+        groups,
+        groupIds,
+        adminView,
+        eventsPaginationQuery
+      );
+      return finalizeOrganiserWorkspacePayload(
+        {
+          ok: true,
+          session,
+          groups: page.groups,
+          events: page.events,
+          upcomingEvents: page.upcomingEvents,
+          tickets: page.tickets,
+          eventsPagination: page.eventsPagination,
+        },
+        workspaceAccess
+      );
+    } catch (e) {
+      return { ok: false, status: 500, error: 'events_fetch_failed', message: e.message, groups };
+    }
+  }
 
   let displayName = session.name || '';
   try {
@@ -3450,9 +3501,6 @@ async function getOrganiserWorkspace(req) {
   } catch {
     /* ignore */
   }
-
-  const { groups, groupIds, access: workspaceAccess, groupsError } =
-    await prepareOrganiserWorkspaceScope(session, adminView);
 
   let pendingClaimGroups = [];
   let pendingClaimOpportunities = [];
@@ -3483,38 +3531,6 @@ async function getOrganiserWorkspace(req) {
       pendingSetupReviews = await listOrganiserSetupReviews(groupIds);
     } catch {
       pendingSetupReviews = [];
-    }
-  }
-
-  const eventsOnly = String(req.query?.eventsOnly || '') === '1';
-
-  if (eventsOnly) {
-    try {
-      if (eventsPaginationQuery.offset === 0) {
-        scheduleArchivePastPublishedEvents(groupIds);
-      }
-      const page = await loadOrganiserEventsPage(
-        session,
-        groups,
-        groupIds,
-        adminView,
-        eventsPaginationQuery
-      );
-      return finalizeOrganiserWorkspacePayload(
-        {
-          ok: true,
-          session,
-          groups: page.groups,
-          pendingSetupReviews,
-          events: page.events,
-          upcomingEvents: page.upcomingEvents,
-          tickets: page.tickets,
-          eventsPagination: page.eventsPagination,
-        },
-        workspaceAccess
-      );
-    } catch (e) {
-      return { ok: false, status: 500, error: 'events_fetch_failed', message: e.message, groups };
     }
   }
 
@@ -3735,6 +3751,8 @@ module.exports = {
   WORKSPACE_EVENTS_LIMIT_DEFAULT,
   WORKSPACE_EVENTS_LIMIT_MAX,
   parseWorkspaceEventsQuery,
+  shouldScanAllPlatformEvents,
+  applyOrganiserIdScope,
   countEventsForOrganiser,
   loadOrganiserEventsPage,
   listEventsForSession,

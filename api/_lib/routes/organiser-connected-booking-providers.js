@@ -18,6 +18,7 @@ const {
   eventbriteWebhookNeedsTokenRotation,
   webhookPublicSite,
 } = require('../provider-webhook-url');
+const { validateProviderExternalEventId } = require('../connected-booking-util');
 
 function parseBody(req) {
   let body = req.body;
@@ -153,10 +154,19 @@ module.exports = async function handler(req, res) {
       if (action === 'link_event') {
         const eventId = String(body.eventId || body.event_id || '').trim();
         const provider = String(body.provider || '').trim().toLowerCase();
+        const externalEventId = String(body.externalEventId || body.external_event_id || '').trim();
+        const idCheck = validateProviderExternalEventId(provider, externalEventId);
+        if (!idCheck.ok) {
+          return json(res, 400, {
+            ok: false,
+            error: idCheck.error || 'invalid_external_event_id',
+            message: idCheck.message,
+          });
+        }
         const link = await upsertEventLink(sb, accountId, {
           eventId,
           provider,
-          externalEventId: body.externalEventId || body.external_event_id,
+          externalEventId,
           externalEventUrl: body.externalEventUrl || body.external_event_url,
         });
         const importListing =
