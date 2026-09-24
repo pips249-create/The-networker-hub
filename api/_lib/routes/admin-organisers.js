@@ -262,29 +262,40 @@ async function claimInviteSentAtForOrganisers(sb, ids) {
   const unique = [...new Set((ids || []).map((id) => String(id || '').trim()).filter(Boolean))];
   if (!unique.length) return map;
   try {
-    const { data, error } = await sb
-      .from('entity_activity_log')
-      .select('organiser_id, created_at, action, metadata')
-      .in('action', ['admin_claim_invite', 'admin_claim_url'])
-      .in('organiser_id', unique)
-      .order('created_at', { ascending: false })
-      .limit(Math.min(unique.length * 8, 400));
-    if (error) throw error;
-    (data || []).forEach((row) => {
-      const id = String(row.organiser_id || '').trim();
-      if (!id) return;
-      const action = String(row.action || '').trim();
-      const existing = map.get(id) || {};
-      if (action === 'admin_claim_invite' && !existing.claim_invite_sent_at) {
-        existing.claim_invite_sent_at = row.created_at || null;
-        existing.claim_invite_source =
-          (row.metadata && (row.metadata.campaign || row.metadata.source)) || 'claim_invite';
+    for (let i = 0; i < unique.length; i += 80) {
+      const chunk = unique.slice(i, i + 80);
+      const pageSize = 1000;
+      let offset = 0;
+      for (;;) {
+        const { data, error } = await sb
+          .from('entity_activity_log')
+          .select('id, organiser_id, created_at, action, metadata')
+          .in('action', ['admin_claim_invite', 'admin_claim_url'])
+          .in('organiser_id', chunk)
+          .order('created_at', { ascending: false })
+          .order('id', { ascending: false })
+          .range(offset, offset + pageSize - 1);
+        if (error) throw error;
+        const rows = data || [];
+        rows.forEach((row) => {
+          const id = String(row.organiser_id || '').trim();
+          if (!id) return;
+          const action = String(row.action || '').trim();
+          const existing = map.get(id) || {};
+          if (action === 'admin_claim_invite' && !existing.claim_invite_sent_at) {
+            existing.claim_invite_sent_at = row.created_at || null;
+            existing.claim_invite_source =
+              (row.metadata && (row.metadata.campaign || row.metadata.source)) || 'claim_invite';
+          }
+          if (action === 'admin_claim_url' && !existing.claim_link_copied_at) {
+            existing.claim_link_copied_at = row.created_at || null;
+          }
+          map.set(id, existing);
+        });
+        if (rows.length < pageSize) break;
+        offset += pageSize;
       }
-      if (action === 'admin_claim_url' && !existing.claim_link_copied_at) {
-        existing.claim_link_copied_at = row.created_at || null;
-      }
-      map.set(id, existing);
-    });
+    }
   } catch {
     /* activity log optional */
   }
@@ -534,18 +545,14 @@ async function enrichOrganiserListRows(sb, rows, communicationIndex) {
       claim_link_copied_at: claim.claim_link_copied_at || null,
       claim_invite_source: claim.claim_invite_source || null,
     };
-    if (communicationIndex && claim.claim_invite_sent_at) {
-      const id = String(row.id || '').trim();
-      const existing = communicationIndex.claimById.get(id);
-      const existingMs = existing ? Date.parse(String(existing)) || 0 : 0;
-      const claimMs = Date.parse(String(claim.claim_invite_sent_at)) || 0;
-      if (!existing || claimMs >= existingMs) {
-        communicationIndex.claimById.set(id, claim.claim_invite_sent_at);
-      }
-    }
-    const withComm = communicationIndex
-      ? attachLastCommunication(withClaim, communicationIndex)
-      : withClaim;
+    // Contact sort/filter already resolved last communication for the full set.
+    // Re-resolving here used a second, smaller activity query and could show a
+    // date the list was not ordered by.
+    const alreadyAttached = Object.prototype.hasOwnProperty.call(row, 'last_communication_at');
+    const withComm =
+      alreadyAttached || !communicationIndex
+        ? withClaim
+        : attachLastCommunication(withClaim, communicationIndex);
     return mapOrganiserRow(
       withComm,
       counts[row.id] || 0,

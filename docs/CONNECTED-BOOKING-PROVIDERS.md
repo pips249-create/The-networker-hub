@@ -36,6 +36,8 @@ Run migration **`299_connected_booking_provider_links.sql`** (after 292, 297, 29
 5. Publish Connected event on TNH with **booking URL** pointing at provider checkout (for Eventbrite, use ticket checkout — not only the public event listing; TNH rewrites common `/e/…` links to `checkout-external?eid=` on save).
 6. Test order → **Recent sync attempts** shows `eventbrite:accepted` (or provider id). If you only see `eventbrite:webhook_ping` after a real purchase, the webhook reached TNH but was not treated as an order — update TNH (fixed in production) or check Eventbrite **Recent requests** for 400/404/401.
 
+**Worked once then stopped?** Eventbrite keeps the Payload URL you pasted; TNH only changes it when you click **Fix webhook URL**. If you see `invalid_webhook_token` in Recent sync attempts, copy the URL from Connected setup again into Eventbrite → Webhooks (must include **www**). Opening Connected setup no longer rotates the URL automatically.
+
 ## API (organiser session)
 
 | Method | Path | Purpose |

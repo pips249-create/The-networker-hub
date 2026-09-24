@@ -20783,19 +20783,19 @@
       '<option value="recent_30"' +
       (groupCleanupState.lastContact === 'recent_30' ? ' selected' : '') +
       '>Contacted in last 30 days</option></select>' +
-      '<select id="group-cleanup-sort" class="rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white w-full sm:max-w-[14rem]" aria-label="Sort groups">' +
+      '<select id="group-cleanup-sort" class="admin-filter-sort rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white" aria-label="Sort groups">' +
       '<option value="updated"' +
       (groupCleanupState.sort === 'updated' ? ' selected' : '') +
-      '>Sort: Recently updated</option>' +
+      '>Recently updated</option>' +
       '<option value="created"' +
       (groupCleanupState.sort === 'created' ? ' selected' : '') +
-      '>Sort: Newest created</option>' +
+      '>Newest created</option>' +
       '<option value="last_contact_asc"' +
       (groupCleanupState.sort === 'last_contact_asc' ? ' selected' : '') +
-      '>Sort: Last communication (oldest)</option>' +
+      '>Oldest last contact</option>' +
       '<option value="last_contact_desc"' +
       (groupCleanupState.sort === 'last_contact_desc' ? ' selected' : '') +
-      '>Sort: Last communication (newest)</option></select></div>' +
+      '>Newest last contact</option></select></div>' +
       '<div class="flex flex-wrap gap-2">' +
       '<button type="button" data-group-quick="browse" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">On browse</button>' +
       '<button type="button" data-group-quick="draft" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Draft</button>' +

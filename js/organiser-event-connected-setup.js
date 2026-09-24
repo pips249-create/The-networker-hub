@@ -5,12 +5,72 @@
     return typeof embed.isEmbedDrawer === 'function' ? embed.isEmbedDrawer() : false;
   }
 
+  var PUBLISHED_PREVIEW_KEY = 'hub_event_published_preview';
+
   function eventIdsForNavigation() {
     if (typeof embed.eventIdsFromSearch === 'function') {
       var ids = embed.eventIdsFromSearch();
       if (ids.length) return ids;
     }
     return eventId ? [eventId] : [];
+  }
+
+  function eventImageForPublish(ev) {
+    if (!ev) return '';
+    return String(ev.imageUrl || ev.photoUrl || ev.image_url || '').trim();
+  }
+
+  /** Same post-publish screen as hub tickets (premium + social share). */
+  function navigateAfterConnectedPublish() {
+    var ids = eventIdsForNavigation();
+    if (!ids.length && eventId) ids = [eventId];
+    var publishedTitle = (loadedEvent && loadedEvent.title) || '';
+    var publishedImage = eventImageForPublish(loadedEvent);
+    var groupId = loadedEvent ? String(organiserIdForEvent(loadedEvent) || '').trim() : '';
+    var publishedQs = new URLSearchParams();
+    publishedQs.set('ids', ids.join(','));
+    publishedQs.set('published', '1');
+    if (publishedTitle) publishedQs.set('title', publishedTitle);
+    if (groupId) publishedQs.set('groupId', groupId);
+    var publishedUrl = '/organiser/event-published?' + publishedQs.toString();
+    try {
+      sessionStorage.setItem(
+        PUBLISHED_PREVIEW_KEY,
+        JSON.stringify({
+          ids: ids.join(','),
+          title: publishedTitle,
+          image: publishedImage,
+          organiserGroupId: groupId,
+        })
+      );
+    } catch (previewErr) {
+      /* ignore */
+    }
+    try {
+      if (window.HubOrganiserLaunchSetup && typeof window.HubOrganiserLaunchSetup.markEventFamilyDone === 'function') {
+        if (eventId) window.HubOrganiserLaunchSetup.markEventFamilyDone('ev:' + eventId);
+      }
+    } catch (launchErr) {
+      /* ignore */
+    }
+    if (isEmbedDrawer()) {
+      if (
+        typeof embed.notifyParent === 'function' &&
+        embed.notifyParent('hub-event-tickets-done', {
+          eventIds: ids,
+          eventId: eventId || ids[0] || '',
+          title: publishedTitle,
+          imageUrl: publishedImage,
+          publishedUrl: publishedUrl,
+          organiserGroupId: groupId,
+          launchSetup: false,
+          familyKey: eventId ? 'ev:' + eventId : '',
+        })
+      ) {
+        return;
+      }
+    }
+    location.href = publishedUrl;
   }
 
   function notifyDrawerNav(type) {
@@ -567,6 +627,17 @@
     );
   }
 
+  function syncRegistrationSyncPresentation(platform, accountConnected) {
+    var section = qs('ecs-developer-section');
+    if (section) {
+      section.classList.toggle('is-account-connected', Boolean(accountConnected));
+    }
+    var heading = qs('ecs-webhook-heading');
+    if (heading && accountConnected) {
+      heading.textContent = 'Registration sync — this event';
+    }
+  }
+
   function renderTicketTailorWebhookCard(mount, p, linked) {
     var url = (p && p.webhookUrl) || '';
     var linkedDone = Boolean(linked && (linked.external_event_id || linked.externalEventId));
@@ -580,18 +651,12 @@
       bindProviderEnableButtons(mount);
       return;
     }
-    mount.innerHTML =
-      '<div class="ecs-eb-sync">' +
-      '<ul class="ecs-eb-checklist" aria-label="Ticket Tailor sync">' +
-      '<li class="ecs-eb-check is-done"><span class="ecs-eb-check-icon" aria-hidden="true">✓</span> Webhook URL ready</li>' +
-      '<li class="ecs-eb-check' +
-      (linkedDone ? ' is-done' : '') +
-      '"><span class="ecs-eb-check-icon" aria-hidden="true">' +
-      (linkedDone ? '✓' : '2') +
-      '</span> Event id saved above (<code>ev_…</code> from Box office)' +
-      (linkedDone ? '' : ' <span class="ecs-eb-check-sub">(Link registrations)</span>') +
-      '</li>' +
-      '</ul>' +
+    var ttPerEvent = linkedDone
+      ? '<p class="ee-hint ee-alert-ok ecs-eb-linked">This listing is linked to <code>' +
+        escHtml(displayExternalEventId('ticket_tailor', linked.external_event_id || linked.externalEventId)) +
+        '</code>.</p>'
+      : '<p class="ee-hint ecs-eb-per-event-focus">For this event only: paste the <code>ev_…</code> id in <strong>Link registrations</strong> above.</p>';
+    var ttUrlBlock =
       '<div class="ecs-eb-url-panel">' +
       '<div class="ecs-eb-url-panel-head">' +
       '<span class="ecs-eb-url-label">Copy into Ticket Tailor → Settings → Webhooks</span>' +
@@ -602,27 +667,40 @@
       escHtml(url) +
       '</code>' +
       '<div class="ecs-webhook-copy-row">' +
-      '<button type="button" class="ee-btn ee-btn-gold ee-btn-sm" data-copy-webhook-url>Copy webhook URL</button>' +
+      '<button type="button" class="ee-btn ee-btn-outline ee-btn-sm" data-copy-webhook-url>Copy webhook URL</button>' +
       '<span class="ee-hint ecs-copy-webhook-status" data-copy-webhook-status hidden role="status"></span>' +
       '</div>' +
       '</div>' +
-      '<p class="ecs-eb-paste-hint">Subscribe to <strong>Order created</strong> (<code>ORDER.CREATED</code>). Ticket Tailor sends buyer email in the webhook — no extra API token needed.</p>' +
+      '<p class="ecs-eb-paste-hint">Subscribe to <strong>Order created</strong> (<code>ORDER.CREATED</code>).</p>';
+    mount.innerHTML =
+      '<div class="ecs-eb-sync is-account-ready">' +
+      '<p class="ee-hint ee-alert-ok ecs-eb-account-connected">Ticket Tailor webhook is set up for your account — paste it in Ticket Tailor once, not on every listing.</p>' +
+      '<ul class="ecs-eb-checklist" aria-label="Ticket Tailor sync">' +
+      '<li class="ecs-eb-check is-done"><span class="ecs-eb-check-icon" aria-hidden="true">✓</span> Account webhook (once)</li>' +
+      '<li class="ecs-eb-check' +
+      (linkedDone ? ' is-done' : '') +
+      '"><span class="ecs-eb-check-icon" aria-hidden="true">' +
+      (linkedDone ? '✓' : '2') +
+      '</span> This listing’s <code>ev_…</code> id' +
+      (linkedDone ? '' : ' <span class="ecs-eb-check-sub">(Link registrations above)</span>') +
+      '</li>' +
+      '</ul>' +
+      ttPerEvent +
+      '<details class="ecs-eb-account-advanced ee-optional-details">' +
+      '<summary class="ee-optional-details-summary">Webhook URL (account setup)</summary>' +
+      '<div class="ee-optional-details-body">' +
+      ttUrlBlock +
       '<details class="ecs-eb-help-details">' +
       '<summary>Where to find the event id</summary>' +
       '<ol class="ecs-eb-help-steps">' +
       '<li>In Ticket Tailor <strong>Box office</strong>, open your event.</li>' +
-      '<li>Copy the id that starts with <code>ev_</code> (API / event settings — not only the public URL slug).</li>' +
+      '<li>Copy the id that starts with <code>ev_</code> (not only the public URL slug).</li>' +
       '<li>Paste it in <strong>Link registrations</strong> above and save.</li>' +
-      '</ol>' +
-      '</details>' +
-      (linkedDone
-        ? '<p class="ee-hint ee-alert-ok ecs-eb-linked">Linked event id <code>' +
-          escHtml(displayExternalEventId('ticket_tailor', linked.external_event_id || linked.externalEventId)) +
-          '</code></p>'
-        : '') +
-      '<p class="ee-hint">After a test sale, check <a href="/organiser/connected-booking#cb-sync-log">Recent sync attempts</a> for <code>ticket_tailor:accepted</code>.</p>' +
-      '</div>';
+      '</ol></details>' +
+      '<p class="ee-hint">After a test sale, check <a href="/organiser/connected-booking#cb-sync-log">Recent sync attempts</a>.</p>' +
+      '</div></details></div>';
     bindProviderEnableButtons(mount);
+    syncRegistrationSyncPresentation('ticket_tailor', true);
   }
 
   function renderEventbriteWebhookCard(mount, p, linked) {
@@ -644,25 +722,27 @@
       return;
     }
 
-    mount.innerHTML =
-      '<div class="ecs-eb-sync">' +
+    var accountReady = urlOk && tokenOk;
+    var checklistHtml =
       '<ul class="ecs-eb-checklist" aria-label="Eventbrite sync">' +
-      '<li class="ecs-eb-check is-done"><span class="ecs-eb-check-icon" aria-hidden="true">✓</span> Webhook URL ready</li>' +
+      '<li class="ecs-eb-check is-done"><span class="ecs-eb-check-icon" aria-hidden="true">✓</span> Account webhook (once)</li>' +
       '<li class="ecs-eb-check' +
       (linkedDone ? ' is-done' : '') +
       '"><span class="ecs-eb-check-icon" aria-hidden="true">' +
       (linkedDone ? '✓' : '2') +
-      '</span> Event id saved above' +
-      (linkedDone ? '' : ' <span class="ecs-eb-check-sub">(Link registrations)</span>') +
+      '</span> This listing’s Eventbrite id' +
+      (linkedDone ? '' : ' <span class="ecs-eb-check-sub">(Link registrations above)</span>') +
       '</li>' +
       '<li class="ecs-eb-check' +
       (tokenOk ? ' is-done' : '') +
       '"><span class="ecs-eb-check-icon" aria-hidden="true">' +
       (tokenOk ? '✓' : '3') +
-      '</span> Eventbrite API token saved' +
+      '</span> Eventbrite API token' +
       (tokenOk ? '' : ' <span class="ecs-eb-check-sub">(below)</span>') +
       '</li>' +
-      '</ul>' +
+      '</ul>';
+
+    var urlPanelHtml =
       '<div class="ecs-eb-url-panel' +
       (urlOk ? '' : ' is-warning') +
       '">' +
@@ -682,14 +762,16 @@
       escHtml(url) +
       '</code>' +
       '<div class="ecs-webhook-copy-row">' +
-      '<button type="button" class="ee-btn ee-btn-gold ee-btn-sm" data-copy-webhook-url>Copy for Eventbrite</button>' +
+      '<button type="button" class="ee-btn ee-btn-outline ee-btn-sm" data-copy-webhook-url>Copy webhook URL</button>' +
       '<span class="ee-hint ecs-copy-webhook-status" data-copy-webhook-status hidden role="status"></span>' +
       '</div>' +
       (!urlOk
         ? '<p class="ecs-eb-url-warn">URL must start with <code>https://www.thenetworkeruk.com/w/eb/</code> (www avoids Eventbrite 308 errors). Refresh or click Enable Eventbrite again if this line looks wrong.</p>'
         : '<p class="ee-hint ecs-eb-www-ok">Uses <strong>www</strong> so Eventbrite POSTs succeed (no 308 redirect).</p>') +
       '</div>' +
-      '<p class="ecs-eb-paste-hint">In Eventbrite: profile menu → <strong>Account settings → Webhooks</strong> · Action <code>order.placed</code></p>' +
+      '<p class="ecs-eb-paste-hint">In Eventbrite: profile menu → <strong>Account settings → Webhooks</strong> · Action <code>order.placed</code></p>';
+
+    var tokenPanelHtml =
       '<div class="ecs-eb-token-panel">' +
       '<label class="ee-field ecs-eb-token-field">' +
       '<span>Eventbrite private token <strong>(required for attendee sync)</strong></span>' +
@@ -698,7 +780,9 @@
       '<p class="ee-hint">Eventbrite webhooks only send an order link — we use this token to load buyer name and email when someone buys a ticket.</p>' +
       '<button type="button" class="ee-btn ee-btn-outline ee-btn-sm" data-save-eventbrite-token>Save API token</button>' +
       '<span class="ee-hint ecs-eb-token-status" data-eb-token-status hidden role="status"></span>' +
-      '</div>' +
+      '</div>';
+
+    var helpDetailsHtml =
       '<details class="ecs-eb-help-details">' +
       '<summary>Step-by-step in Eventbrite</summary>' +
       '<ol class="ecs-eb-help-steps">' +
@@ -706,18 +790,57 @@
       '<li>Paste the copied URL into <strong>Payload URL</strong> (full line).</li>' +
       '<li>Set <strong>Action</strong> to <code>order.placed</code> and save.</li>' +
       '</ol>' +
-      '</details>' +
-      (linkedDone
-        ? '<p class="ee-hint ee-alert-ok ecs-eb-linked">Linked event id <code>' +
-          escHtml(displayExternalEventId('eventbrite', linked.external_event_id || linked.externalEventId)) +
-          '</code></p>'
-        : '') +
-      (!urlOk
-        ? '<button type="button" class="ee-btn ee-btn-outline ee-btn-sm ecs-eb-regen" data-enable-provider="eventbrite">Get shorter URL</button>'
-        : '') +
-      '</div>';
+      '</details>';
+
+    var webhookDriftHtml =
+      p && p.eventbriteWebhookNeedsFix
+        ? '<p class="ee-alert ee-alert-warn ecs-eb-token-status">Webhook URL on TNH was updated — paste the URL above into Eventbrite again or sync will stop (Recent sync attempts may show <code>invalid_webhook_token</code>).</p>'
+        : '<p class="ee-hint">If sync worked once then stopped, compare Eventbrite <strong>Payload URL</strong> with the line above — they must match exactly. Check <a href="/organiser/connected-booking#cb-sync-log">Connected booking → Recent sync attempts</a>.</p>';
+
+    var perEventHtml = linkedDone
+      ? '<p class="ee-hint ee-alert-ok ecs-eb-linked">This listing is linked to Eventbrite id <code>' +
+        escHtml(displayExternalEventId('eventbrite', linked.external_event_id || linked.externalEventId)) +
+        '</code>. New ticket sales on that Eventbrite event will sync here. Use <strong>Update listing from Eventbrite</strong> above to refresh title, date, and venue on TNH.</p>'
+      : '<p class="ee-hint ecs-eb-per-event-focus">For this event only: save the Eventbrite event id in <strong>Link registrations</strong> above (we often fill it from your booking URL).</p>';
+
+    var compactLead = accountReady
+      ? '<p class="ee-hint ee-alert-ok ecs-eb-account-connected">Eventbrite is already connected on your account — you do <strong>not</strong> need to paste the webhook again for other listings.</p>'
+      : '';
+
+    var bodyHtml;
+    if (accountReady) {
+      bodyHtml =
+        compactLead +
+        checklistHtml +
+        perEventHtml +
+        '<details class="ecs-eb-account-advanced ee-optional-details">' +
+        '<summary class="ee-optional-details-summary">Webhook URL &amp; API token (account setup)</summary>' +
+        '<div class="ee-optional-details-body">' +
+        urlPanelHtml +
+        '<p class="ecs-eb-paste-hint">Only if you are (re)connecting Eventbrite: profile menu → <strong>Account settings → Webhooks</strong> · Action <code>order.placed</code></p>' +
+        tokenPanelHtml +
+        helpDetailsHtml +
+        webhookDriftHtml +
+        '<p class="ee-hint"><a href="/organiser/connected-booking#cb-providers-title">Connected booking → Booking providers</a> for sync log and all links.</p>' +
+        '</div></details>';
+    } else {
+      bodyHtml =
+        checklistHtml +
+        urlPanelHtml +
+        '<p class="ecs-eb-paste-hint">In Eventbrite: profile menu → <strong>Account settings → Webhooks</strong> · Action <code>order.placed</code></p>' +
+        tokenPanelHtml +
+        helpDetailsHtml +
+        webhookDriftHtml +
+        perEventHtml +
+        (!urlOk
+          ? '<button type="button" class="ee-btn ee-btn-outline ee-btn-sm ecs-eb-regen" data-enable-provider="eventbrite">Get shorter URL</button>'
+          : '');
+    }
+
+    mount.innerHTML = '<div class="ecs-eb-sync' + (accountReady ? ' is-account-ready' : '') + '">' + bodyHtml + '</div>';
     bindProviderEnableButtons(mount);
     bindEventbriteTokenSave(mount);
+    syncRegistrationSyncPresentation('eventbrite', accountReady);
   }
 
   function bindEventbriteTokenSave(root) {
@@ -1054,14 +1177,77 @@
     var help = qs('ecs-event-link-help');
     if (help) {
       var p = providersById[key];
-      help.textContent =
-        'Tell us which ' +
-        ((p && p.label) || 'provider') +
-        ' event matches this listing so ticket sales sync to The Networker UK — you do this once per TNH event.';
+      if (key === 'eventbrite') {
+        help.textContent =
+          'Link your Eventbrite event id so ticket buyers sync here. You can also copy title, date, and venue from Eventbrite onto this TNH listing (attendee sync stays separate).';
+      } else {
+        help.textContent =
+          'Tell us which ' +
+          ((p && p.label) || 'provider') +
+          ' event matches this listing so ticket sales sync to The Networker UK — you do this once per TNH event.';
+      }
     }
+    var importRow = qs('ecs-eb-import-row');
+    var importBtn = qs('ecs-import-eventbrite-listing');
+    if (importRow) importRow.hidden = key !== 'eventbrite';
+    if (importBtn) importBtn.hidden = key !== 'eventbrite';
     maybeAutofillExternalEventId(false);
     refreshEventLinkBadge(key);
     refreshEventLinkAutofillHint();
+  }
+
+  function listingImportStatusMessage(data) {
+    if (!data) return '';
+    var parts = [];
+    if (data.importedFields && data.importedFields.length) {
+      parts.push('Updated on TNH: ' + data.importedFields.join(', ') + '.');
+    }
+    if (data.skippedBecauseLocked && data.skippedBecauseLocked.length) {
+      parts.push(
+        'Skipped (ticket sales lock date/venue): ' + data.skippedBecauseLocked.join(', ') + '.'
+      );
+    }
+    if (data.message && !parts.length) return data.message;
+    return parts.join(' ') || data.message || 'Listing updated from Eventbrite.';
+  }
+
+  function applyListingImportToForm(ev) {
+    if (!ev) return;
+    applyEvent(Object.assign({}, loadedEvent || {}, ev));
+  }
+
+  function importEventbriteListing(opts) {
+    var options = opts || {};
+    var platform = selectedIntegrationPlatform();
+    if (platform !== 'eventbrite') return Promise.resolve({ ok: true, skipped: true });
+    var externalId = resolveExternalEventIdForLink(platform);
+    if (!externalId && !linkedExternalEventId(platform)) {
+      var msg =
+        'Enter the Eventbrite event id or paste an Eventbrite /e/… link in Booking URL first.';
+      if (!options.silent) setEventLinkStatus(msg, 'error');
+      return Promise.resolve({ ok: false, message: msg });
+    }
+    if (!options.silent) setEventLinkStatus('Loading details from Eventbrite…');
+    return api('/api/organiser/connected-booking-providers', {
+      method: 'PATCH',
+      body: JSON.stringify({
+        action: 'import_eventbrite_listing',
+        eventId: eventId,
+        externalEventId: externalId || undefined,
+      }),
+    }).then(function (res) {
+      if (!res.ok || !res.data || !res.data.ok) {
+        var errMsg =
+          (res.data && (res.data.message || res.data.error)) || 'Could not import from Eventbrite.';
+        if (!options.silent) setEventLinkStatus(errMsg, 'error');
+        return { ok: false, message: errMsg };
+      }
+      applyListingImportToForm(res.data.event);
+      if (!options.silent) {
+        setEventLinkStatus(listingImportStatusMessage(res.data), 'ok');
+      }
+      return { ok: true, data: res.data };
+    });
   }
 
   function updateOneTimeProviderStatus(platform) {
@@ -1128,6 +1314,10 @@
     }
     setEventLinkStatus('Saving link…');
     var bookingUrl = qs('ecs-booking-url') ? qs('ecs-booking-url').value.trim() : '';
+    var importOnLink =
+      platform === 'eventbrite' &&
+      qs('ecs-eb-import-on-link') &&
+      qs('ecs-eb-import-on-link').checked;
     return api('/api/organiser/connected-booking-providers', {
       method: 'PATCH',
       body: JSON.stringify({
@@ -1136,6 +1326,7 @@
         provider: platform,
         externalEventId: externalId,
         externalEventUrl: bookingUrl || undefined,
+        importListing: importOnLink,
       }),
     }).then(function (res) {
       if (!res.ok) {
@@ -1153,8 +1344,15 @@
         });
         providerLinks.push(row);
       }
+      if (res.data && res.data.listingImport) {
+        applyListingImportToForm(res.data.listingImport.event);
+      }
       if (!options.silent) {
-        setEventLinkStatus('Linked — registrations from that provider event will sync here.', 'ok');
+        var linkMsg = 'Linked — registrations from that provider event will sync here.';
+        if (res.data && res.data.listingImport) {
+          linkMsg += ' ' + listingImportStatusMessage(res.data.listingImport);
+        }
+        setEventLinkStatus(linkMsg, 'ok');
       }
       refreshEventLinkBadge(platform);
       renderProviderWebhookCard(platform);
@@ -1183,6 +1381,15 @@
         saveEventLink({ required: true }).then(function (res) {
           saveLinkBtn.disabled = false;
           if (!res.ok && res.message) setEventLinkStatus(res.message, 'error');
+        });
+      });
+    }
+    var importBtn = qs('ecs-import-eventbrite-listing');
+    if (importBtn) {
+      importBtn.addEventListener('click', function () {
+        importBtn.disabled = true;
+        importEventbriteListing({ required: false }).then(function () {
+          importBtn.disabled = false;
         });
       });
     }
@@ -1295,6 +1502,7 @@
     var heading = qs('ecs-webhook-heading');
     if (!mount) return;
     var key = String(platform || selectedIntegrationPlatform() || 'own_site').trim();
+    syncRegistrationSyncPresentation(key, false);
     renderRegistrationSyncSteps(key);
     if (lead) lead.innerHTML = providerWebhookLead(key);
     if (heading) {
@@ -1736,11 +1944,16 @@
           payload.externalBookingUrl = attendeeUrl;
         }
       }
-      loadedEvent = Object.assign({}, loadedEvent, payload);
+      loadedEvent = Object.assign({}, loadedEvent, payload, savedEv || {});
       if (typeof embed.writeConnectedSetupPrefetch === 'function') {
         embed.writeConnectedSetupPrefetch(eventId, loadedEvent, billing);
       }
-      setStatus(saveStatus, publish ? 'Published — your Connected listing is live.' : 'Draft saved.', 'ok');
+      if (publish) {
+        setStatus(saveStatus, 'Published — opening promotion and share options…', 'ok');
+        navigateAfterConnectedPublish();
+        return;
+      }
+      setStatus(saveStatus, 'Draft saved.', 'ok');
     } catch (err) {
       setStatus(saveStatus, 'Could not save — check your connection and try again.', 'error');
     } finally {

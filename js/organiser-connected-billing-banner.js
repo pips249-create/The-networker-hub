@@ -5,6 +5,7 @@
 (function () {
   var ORG_MOUNT = 'org-connected-billing-banner';
   var CB_MOUNT = 'cb-connected-billing-banner';
+  var EVENTS_QUICKLINK_MOUNT = 'org-connected-events-quicklink';
   var COLLAPSE_KEY = 'hub_connected_billing_banner_collapsed_v1';
 
   function mountEl(id) {
@@ -18,8 +19,32 @@
 
   function shouldSelfFetch() {
     if (mountEl(CB_MOUNT)) return true;
+    if (mountEl(EVENTS_QUICKLINK_MOUNT)) return true;
     if (mountEl(ORG_MOUNT) && isOrganiserGroupsActive()) return true;
     return false;
+  }
+
+  function renderEventsQuickLink(data) {
+    var el = mountEl(EVENTS_QUICKLINK_MOUNT);
+    if (!el) return;
+    if (!data || !data.ok || !data.featureEnabled) {
+      el.hidden = true;
+      el.textContent = '';
+      return;
+    }
+    el.hidden = false;
+    if (data.active) {
+      el.innerHTML =
+        'Using <strong>Connected</strong> (Eventbrite / your checkout)? Manage webhooks, sync log, and billing on ' +
+        '<a class="org-inline-link" href="/organiser/connected-booking">Connected booking</a>. ' +
+        'Assign which organiser pages use your plan on ' +
+        '<a class="org-inline-link" href="/organiser/#groups">Organiser pages</a>.';
+      return;
+    }
+    el.innerHTML =
+      'Sell on Eventbrite or your own site and sync attendees? See ' +
+      '<a class="org-inline-link" href="/organiser/connected-booking">Connected booking</a> ' +
+      'or <a class="org-inline-link" href="/organiser/booking-options">how booking options work</a>.';
   }
 
   function planLabel(plan) {
@@ -357,9 +382,9 @@
       } else {
         actions =
           '<a class="org-btn org-btn-gold org-btn-sm" href="' +
-          (needsPick ? '/organiser/#groups' : '/organiser/connected-booking') +
+          (needsPick ? '/organiser/#groups' : '/organiser/#connected-booking') +
           '">' +
-          (needsPick ? 'Choose organiser pages' : 'Manage Connected plan') +
+          (needsPick ? 'Choose organiser pages' : 'Connected booking & sync log') +
           '</a> ' +
           '<a class="org-btn org-btn-outline org-btn-sm" href="/organiser/booking-options#link-out">Link-out £9.99 / event</a> ' +
           (forOrgPage
@@ -426,12 +451,13 @@
       if (res.status === 403 || res.status === 404) return;
       var data = res.data || {};
       renderBanner(data, groups.length);
+      renderEventsQuickLink(data);
       publishConnectedBookingState(data, groups.length);
     });
   }
 
   window.addEventListener('hub-organiser-connected-booking', function (e) {
-    if (!mountEl(ORG_MOUNT) && !mountEl(CB_MOUNT)) return;
+    if (!mountEl(ORG_MOUNT) && !mountEl(CB_MOUNT) && !mountEl(EVENTS_QUICKLINK_MOUNT)) return;
     var detail = (e && e.detail) || {};
     var total =
       detail.groupTotal != null
@@ -440,6 +466,7 @@
           ? detail.slots.accountOrganisers.length
           : undefined;
     renderBanner(detail, total);
+    renderEventsQuickLink(detail);
   });
 
   if (document.readyState === 'loading') {

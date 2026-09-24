@@ -11,6 +11,7 @@ const {
   mergeProviderConnectionConfig,
 } = require('../connected-booking-provider-store');
 const { eventbritePrivateTokenFromConfig } = require('../connected-booking-providers/adapters/eventbrite-api');
+const { importEventbriteListingForEvent } = require('../eventbrite-listing-import');
 const { resolveOrganiserAccountId } = require('../organiser-account-resolve');
 const {
   buildProviderWebhookPublicUrl,
@@ -70,12 +71,6 @@ module.exports = async function handler(req, res) {
     const site = String(process.env.SITE_URL || 'https://www.thenetworkeruk.com').replace(/\/$/, '');
     const webhookSite = webhookPublicSite(site);
 
-    async function connectionForWebhook(providerId, conn) {
-      if (!conn?.webhook_token || providerId !== 'eventbrite') return conn;
-      if (!eventbriteWebhookNeedsTokenRotation(site, conn.webhook_token)) return conn;
-      return ensureProviderConnection(sb, accountId, providerId, { rotateToken: true });
-    }
-
     if (req.method === 'GET') {
       const connResult = await listProviderConnections(sb, accountId);
       const linksResult = await listEventLinksForAccount(sb, accountId);
@@ -83,10 +78,7 @@ module.exports = async function handler(req, res) {
 
       const providers = await Promise.all(
         CONNECTED_BOOKING_PROVIDERS.map(async (p) => {
-        let conn = (connResult.connections || []).find((c) => c.provider === p.id);
-        if (conn?.webhook_token && p.id !== 'custom') {
-          conn = await connectionForWebhook(p.id, conn);
-        }
+        const conn = (connResult.connections || []).find((c) => c.provider === p.id);
         const webhookUrl =
           p.id === 'custom'
             ? site + '/api/integrations/booking'
@@ -104,6 +96,10 @@ module.exports = async function handler(req, res) {
           eventbriteApiTokenConfigured:
             p.id === 'eventbrite' && conn
               ? Boolean(eventbritePrivateTokenFromConfig(conn.config))
+              : undefined,
+          eventbriteWebhookNeedsFix:
+            p.id === 'eventbrite' && conn?.webhook_token
+              ? eventbriteWebhookNeedsTokenRotation(site, conn.webhook_token)
               : undefined,
         };
       })
@@ -151,6 +147,7 @@ module.exports = async function handler(req, res) {
       }
 
       if (action === 'link_event') {
+        const eventId = String(body.eventId || body.event_id || '').trim();
         const provider = String(body.provider || '').trim().toLowerCase();
         const externalEventId = String(body.externalEventId || body.external_event_id || '').trim();
         const idCheck = validateProviderExternalEventId(provider, externalEventId);
@@ -162,11 +159,36 @@ module.exports = async function handler(req, res) {
           });
         }
         const link = await upsertEventLink(sb, accountId, {
-          eventId: body.eventId || body.event_id,
+          eventId,
           provider,
           externalEventId,
           externalEventUrl: body.externalEventUrl || body.external_event_url,
         });
+        const importListing =
+          body.importListing === true ||
+          body.import_listing === true ||
+          body.syncListingFromEventbrite === true;
+        if (importListing && provider === 'eventbrite' && eventId) {
+          const { assertOrganiserOwnsEvent } = require('../supabase-organiser-alumni-invites');
+          await assertOrganiserOwnsEvent(auth.session, eventId);
+          try {
+            const listing = await importEventbriteListingForEvent(sb, auth.session, accountId, eventId, {
+              externalEventId: body.externalEventId || body.external_event_id,
+            });
+            return json(res, 200, {
+              ok: true,
+              eventLink: link,
+              listingImport: listing,
+            });
+          } catch (importErr) {
+            return json(res, importErr.status || 500, {
+              ok: false,
+              error: importErr.code || importErr.message || 'listing_import_failed',
+              message: importErr.message,
+              eventLink: link,
+            });
+          }
+        }
         return json(res, 200, { ok: true, eventLink: link });
       }
 
@@ -195,6 +217,46 @@ module.exports = async function handler(req, res) {
         }
         await deleteEventLink(sb, accountId, eventId);
         return json(res, 200, { ok: true });
+      }
+
+      if (action === 'import_eventbrite_listing') {
+        const eventId = String(body.eventId || body.event_id || '').trim();
+        if (!eventId) {
+          return json(res, 400, { ok: false, error: 'missing_event_id' });
+        }
+        const { assertOrganiserOwnsEvent } = require('../supabase-organiser-alumni-invites');
+        await assertOrganiserOwnsEvent(auth.session, eventId);
+
+        try {
+          const listing = await importEventbriteListingForEvent(sb, auth.session, accountId, eventId, {
+            externalEventId: body.externalEventId || body.external_event_id,
+          });
+          if (listing.empty) {
+            return json(res, 200, {
+              ok: true,
+              event: null,
+              importedFields: [],
+              skippedBecauseLocked: listing.skippedBecauseLocked,
+              externalEventId: listing.externalEventId,
+              message: listing.saleLocked
+                ? 'This event has ticket sales — date and venue stay locked. Nothing else was available to import.'
+                : 'Nothing to import from Eventbrite for this event.',
+            });
+          }
+          return json(res, 200, {
+            ok: true,
+            event: listing.event,
+            importedFields: listing.importedFields,
+            skippedBecauseLocked: listing.skippedBecauseLocked,
+            externalEventId: listing.externalEventId,
+          });
+        } catch (importErr) {
+          return json(res, importErr.status || 500, {
+            ok: false,
+            error: importErr.code || importErr.message || 'listing_import_failed',
+            message: importErr.message,
+          });
+        }
       }
 
       return json(res, 400, { ok: false, error: 'unknown_action' });

@@ -123,31 +123,32 @@
 
 .partner-programme-hero-lockup {
   justify-self: center;
-  width: 100%;
-  max-width: 520px;
-  display: grid;
-  grid-template-columns: minmax(0, 1.15fr) auto minmax(0, 0.85fr);
+  width: max-content;
+  max-width: 100%;
+  display: flex;
   align-items: center;
   gap: 0;
-  padding: 20px 22px;
+  padding: 18px 22px;
   border-radius: 16px;
   background: var(--pp-lavender);
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
 }
 
 .partner-programme-hero-lockup-mark {
+  flex: 0 1 auto;
   padding-right: 8px;
+  min-width: 0;
 }
 
 .partner-programme-hero-lockup-mark img {
-  width: 100%;
-  max-width: 280px;
+  width: clamp(148px, 22vw, 220px);
+  max-width: 100%;
   height: auto;
   display: block;
-  margin: 0 auto;
 }
 
 .partner-programme-hero-lockup-aside {
+  flex: 0 0 auto;
   padding-left: 18px;
   border-left: 2px solid rgba(28, 32, 64, 0.22);
 }
@@ -318,7 +319,7 @@
   color: var(--pp-navy);
 }
 
-.partner-enquire-field input,
+.partner-enquire-field input:not([type="checkbox"]),
 .partner-enquire-field textarea {
   width: 100%;
   box-sizing: border-box;
@@ -332,7 +333,7 @@
   background: #fff;
 }
 
-.partner-enquire-field input:focus,
+.partner-enquire-field input:not([type="checkbox"]):focus,
 .partner-enquire-field textarea:focus {
   outline: 2px solid rgba(122, 79, 130, 0.28);
   outline-offset: 1px;
@@ -392,20 +393,34 @@
   overflow: hidden;
 }
 
-.partner-accept-check-label,
-.partner-enquire-terms .partner-accept-check-label {
+.partner-enquire-field .partner-accept-check-label {
   display: flex;
   gap: 10px;
   align-items: flex-start;
+  margin: 0;
   font-size: 0.92rem;
+  font-weight: 500;
   line-height: 1.5;
   color: var(--pp-muted);
   cursor: pointer;
 }
 
-.partner-accept-check-label input {
-  margin-top: 4px;
-  flex-shrink: 0;
+.partner-enquire-field .partner-accept-check-label input[type="checkbox"] {
+  width: 1.05rem;
+  height: 1.05rem;
+  margin: 0.2rem 0 0;
+  flex: 0 0 auto;
+  accent-color: var(--pp-navy);
+}
+
+.partner-enquire-field .partner-accept-check-label input[type="checkbox"]:focus-visible {
+  outline: 2px solid rgba(122, 79, 130, 0.45);
+  outline-offset: 2px;
+}
+
+.partner-enquire-field .partner-accept-check-label span {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .partner-accept-check-label a {
@@ -465,6 +480,23 @@
 @media (max-width: 640px) {
   .partner-programme-hero {
     padding: 36px 20px 40px;
+  }
+
+  .partner-programme-hero-lockup {
+    justify-self: center;
+    padding: 16px 16px;
+  }
+
+  .partner-programme-hero-lockup-mark img {
+    width: clamp(120px, 38vw, 180px);
+  }
+
+  .partner-programme-hero-lockup-aside {
+    padding-left: 14px;
+  }
+
+  .partner-programme-hero-lockup-title {
+    font-size: 1.65rem;
   }
 
   .partner-programme-body {

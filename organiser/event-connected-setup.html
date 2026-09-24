@@ -152,12 +152,19 @@
             <input type="text" id="ecs-external-event-id" autocomplete="off" spellcheck="false" />
           </label>
           <p class="ee-hint" id="ecs-event-link-autofill-hint" hidden></p>
+          <label class="ee-field ecs-eb-import-row" id="ecs-eb-import-row" hidden>
+            <input type="checkbox" id="ecs-eb-import-on-link" checked />
+            <span>When I save the link, also copy title, description, date, and venue from Eventbrite onto this TNH listing</span>
+          </label>
           <div class="ee-attendance-next ecs-event-link-actions">
             <button type="button" class="ee-btn ee-btn-outline ee-btn-sm" id="ecs-save-event-link">
               Save link for this event
             </button>
             <button type="button" class="ee-btn ee-btn-outline ee-btn-sm" id="ecs-use-url-id" hidden>
               Use id from booking URL
+            </button>
+            <button type="button" class="ee-btn ee-btn-outline ee-btn-sm" id="ecs-import-eventbrite-listing" hidden>
+              Update listing from Eventbrite
             </button>
           </div>
           <p class="ee-hint" id="ecs-event-link-status" hidden role="status"></p>
@@ -214,6 +221,6 @@
     <script src="../js/organiser-page-loading.js?v=20260811claimux2" defer></script>
     <script src="../js/hub-external-booking-url.js?v=20260918eventlink1" defer></script>
     <script src="../js/organiser-connected-platform.js?v=20260918pickhint1" defer></script>
-    <script src="../js/organiser-event-connected-setup.js?v=20260922ebwww1" defer></script>
+    <script src="../js/organiser-event-connected-setup.js?v=20260922ebimport1" defer></script>
   </body>
 </html>
