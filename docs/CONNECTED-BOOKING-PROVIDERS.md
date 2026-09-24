@@ -89,7 +89,7 @@ For third-party providers, without a linked TNH event for the provider’s event
 |----------|-------------------|---------------|
 | **Your own website** | TNH event UUID in webhook JSON (`eventId`) | Your checkout POSTs to token URL after each sale — no provider admin. |
 | **Eventbrite** | Numeric id from `…/e/…` or API (`123456789`) | Webhook URL + **private token** (Developer links) on Connected setup — Eventbrite only sends an order link; TNH loads buyer email via Eventbrite API. Action `order.placed`. |
-| **Ticket Tailor** | **`ev_…` id** from Box office (must match `event_summary.event_id` in webhooks — not always the same as the public `/events/slug` URL) | Ticket Tailor → **Settings → Webhooks** → subscribe to **Order created** → paste TNH URL (`/w/tt/…` or long form). No API token on TNH. |
+| **Ticket Tailor** | **`ev_…` id** from Box office (must match `event_summary.event_id` in webhooks — not always the same as the public `/events/slug` URL) | Webhook: **Order created** → TNH URL (`/w/tt/…`). **Optional API key** (Box office → Settings → API) on Connected setup to import title, date, venue onto TNH — webhooks alone do not need the key. |
 | **Luma** | Event api id | Luma webhook → TNH URL. |
 | **TryBooking** | Event id from TryBooking admin | Configure webhook to TNH URL. |
 

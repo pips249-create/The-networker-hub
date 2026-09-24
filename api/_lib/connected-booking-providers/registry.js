@@ -14,7 +14,8 @@ const CONNECTED_BOOKING_PROVIDERS = [
     label: 'Ticket Tailor',
     status: 'beta',
     webhookPath: '/api/integrations/providers/ticket_tailor/webhook',
-    docsHint: 'Use the Ticket Tailor box office event id when linking.',
+    docsHint:
+      'Paste webhook URL in Ticket Tailor → Order created. Link ev_… per TNH event. Optional API key on Connected setup imports listing fields.',
   },
   {
     id: 'luma',

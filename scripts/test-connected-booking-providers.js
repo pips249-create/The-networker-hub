@@ -268,4 +268,54 @@ const onlinePatch = mapEventbriteEventToListingPatch({
 assert.strictEqual(onlinePatch.eventFormat, 'Online');
 assert.ok(!onlinePatch.venue);
 
+const {
+  mapTicketTailorEventToListingPatch,
+  ticketTailorIsOnline,
+  ticketTailorUrlSlugHint,
+  ticketTailorEventMatchesBookingUrl,
+  ticketTailorApiKeyFromConfig,
+  ticketTailorBasicAuthHeader,
+} = require('../api/_lib/connected-booking-providers/adapters/ticket-tailor-api');
+assert.strictEqual(ticketTailorIsOnline({ online_event: 'true' }), true);
+assert.strictEqual(ticketTailorUrlSlugHint('https://www.tickettailor.com/events/flowerfestival/40980'), 'flowerfestival');
+assert.strictEqual(
+  ticketTailorApiKeyFromConfig({ ticketTailorApiKey: 'sk_test' }),
+  'sk_test'
+);
+assert.ok(ticketTailorBasicAuthHeader('sk_test').startsWith('Basic '));
+assert.strictEqual(
+  ticketTailorEventMatchesBookingUrl(
+    {
+      url: 'https://www.tickettailor.com/events/flowerfestival/40980',
+      checkout_url: 'https://www.tickettailor.com/checkout/view-event/id/40980/chk/da99/',
+    },
+    'https://www.tickettailor.com/events/flowerfestival/40980',
+    'flowerfestival'
+  ),
+  true
+);
+const ttPatch = mapTicketTailorEventToListingPatch({
+  id: 'ev_40980',
+  name: 'Flower festival',
+  description: 'Outdoor networking.',
+  start: { iso: '2026-10-01T18:00:00+01:00' },
+  end: { iso: '2026-10-01T21:00:00+01:00' },
+  online_event: 'false',
+  checkout_url: 'https://www.tickettailor.com/checkout/view-event/id/40980/chk/da99/',
+  venue: { name: 'The Gardens', postal_code: 'SW1 3BR', country: 'GB' },
+});
+assert.strictEqual(ttPatch.title, 'Flower festival');
+assert.strictEqual(ttPatch.eventFormat, 'In person');
+assert.strictEqual(ttPatch.venue, 'The Gardens');
+assert.ok(ttPatch.externalBookingUrl.includes('checkout'));
+
+const ttOnlinePatch = mapTicketTailorEventToListingPatch({
+  online_event: 'true',
+  name: 'Zoom meetup',
+  online_link: 'https://zoom.us/j/123',
+  start: { iso: '2026-11-02T12:00:00Z' },
+});
+assert.strictEqual(ttOnlinePatch.eventFormat, 'Online');
+assert.strictEqual(ttOnlinePatch.onlineLink, 'https://zoom.us/j/123');
+
 console.log('test-connected-booking-providers: ok');
