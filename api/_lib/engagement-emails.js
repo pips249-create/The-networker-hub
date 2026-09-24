@@ -1873,8 +1873,7 @@ async function sendDueHubertEventConciergeEmails(sb) {
 }
 
 async function runEngagementEmailMaintenance(sb) {
-  // Post-event reviews are owned solely by /api/cron/post-event-reviews (10:05)
-  // so they are not double-run by this 10:00 engagement job.
+  // Post-event reviews run hourly from /api/cron/booking-reminders (with organiser checklist).
   const guestVisitFollowup = await sendDueGuestVisitFollowupEmails(sb);
   const categoryExclusivityPayment = await sendDueCategoryExclusivityPaymentReminders(sb);
   const reengagement = await sendDueAttendeeReengagementEmails(sb);
