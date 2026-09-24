@@ -80,7 +80,9 @@ assert.ok(ebPing && ebPing.partial, 'Eventbrite order.placed payload is partial 
 
 const {
   isEventbriteOrderNotification,
+  isEventbriteAttendeeNotification,
   isEventbriteConnectivityPing,
+  resolveEventbriteWebhookRegistrations,
 } = require('../api/_lib/eventbrite-webhook-resolve');
 const orderHook = {
   api_url: 'https://www.eventbriteapi.com/v3/orders/12826552624/',
@@ -103,6 +105,8 @@ assert.ok(
 const {
   normalizeEventbriteOrderApiResponse,
   eventbriteAttendeesFromOrder,
+  eventbriteAttendeeRefFromApiUrl,
+  registrationsFromEventbriteOrder,
 } = require('../api/_lib/connected-booking-providers/adapters/eventbrite-api');
 const orderRows = normalizeEventbriteOrderApiResponse({
   id: '12826552624',
@@ -132,6 +136,89 @@ assert.deepStrictEqual(
     return a.id;
   }),
   ['x']
+);
+
+const twoTicketOrder = normalizeEventbriteOrderApiResponse({
+  id: '555',
+  event_id: '2001520723363',
+  email: 'buyer@example.com',
+  name: 'Alex Buyer',
+  quantity: 2,
+  costs: { gross: { value: 3000 } },
+  attendees: [
+    {
+      id: 'att-1',
+      profile: { email: 'buyer@example.com', name: 'Alex Buyer', company: 'Northwind' },
+      costs: { gross: { value: 1500 } },
+    },
+    {
+      id: 'att-2',
+      profile: { first_name: 'Sam', last_name: 'Guest', job_title: 'Founder' },
+      answers: [{ question: 'Email address', type: 'text', answer: 'sam@example.com' }],
+      costs: { gross: { value: 1500 } },
+    },
+  ],
+});
+assert.strictEqual(twoTicketOrder.length, 2, 'both ticket holders become registrations');
+assert.strictEqual(twoTicketOrder[0].email, 'buyer@example.com');
+assert.strictEqual(twoTicketOrder[0].company, 'Northwind');
+assert.strictEqual(twoTicketOrder[0].amountPaid, 15);
+assert.strictEqual(twoTicketOrder[1].email, 'sam@example.com');
+assert.strictEqual(twoTicketOrder[1].name, 'Sam Guest');
+assert.strictEqual(twoTicketOrder[1].jobTitle, 'Founder');
+assert.strictEqual(twoTicketOrder[1].amountPaid, 15);
+assert.notStrictEqual(twoTicketOrder[0].orderId, twoTicketOrder[1].orderId);
+
+const buyerOnlyExpand = registrationsFromEventbriteOrder(
+  {
+    id: '555',
+    event_id: '2001520723363',
+    email: 'buyer@example.com',
+    name: 'Alex Buyer',
+    quantity: 2,
+    attendees: 'https://www.eventbriteapi.com/v3/orders/555/attendees/',
+    costs: { gross: { value: 3000 } },
+  },
+  [
+    [
+      { id: 'att-1', profile: { email: 'buyer@example.com', name: 'Alex Buyer' } },
+      { id: 'att-2', profile: { first_name: 'Sam', last_name: 'Guest', email: 'sam@example.com' } },
+    ],
+  ]
+);
+assert.strictEqual(buyerOnlyExpand.length, 2, 'attendees endpoint fills in the second ticket holder');
+assert.strictEqual(buyerOnlyExpand[1].name, 'Sam Guest');
+assert.strictEqual(buyerOnlyExpand[1].email, 'sam@example.com');
+assert.strictEqual(buyerOnlyExpand[0].amountPaid, 30);
+assert.strictEqual(buyerOnlyExpand[1].amountPaid, 0);
+
+const namedGuestWithoutEmail = normalizeEventbriteOrderApiResponse({
+  id: '556',
+  event_id: '2001520723363',
+  attendees: [
+    { id: 'att-1', profile: { email: 'buyer@example.com', name: 'Alex Buyer' } },
+    { id: 'att-2', profile: { first_name: 'Sam', last_name: 'Guest' } },
+  ],
+});
+assert.strictEqual(namedGuestWithoutEmail.length, 1);
+assert.deepStrictEqual(namedGuestWithoutEmail[0].guestNames, ['Sam Guest']);
+assert.strictEqual(namedGuestWithoutEmail[0].quantity, 2);
+
+assert.deepStrictEqual(
+  eventbriteAttendeeRefFromApiUrl(
+    'https://www.eventbriteapi.com/v3/events/2001520723363/attendees/998877/'
+  ),
+  { eventId: '2001520723363', attendeeId: '998877' }
+);
+const attendeeHook = {
+  api_url: 'https://www.eventbriteapi.com/v3/events/2001520723363/attendees/998877/',
+  config: { action: 'attendee.updated', endpoint_url: 'https://www.thenetworkeruk.com/w/eb/test' },
+};
+const attendeeHookNorm = normalizeEventbriteWebhook(attendeeHook);
+assert.ok(isEventbriteAttendeeNotification(attendeeHook));
+assert.ok(
+  !isEventbriteConnectivityPing(attendeeHook, attendeeHookNorm),
+  'attendee.updated must not be treated as a connectivity ping'
 );
 
 assert.strictEqual(
@@ -229,4 +316,105 @@ const own = normalizeOwnSiteWebhook({
 assert.strictEqual(own.tnhEventId, '00000000-0000-4000-8000-000000000001');
 assert.ok(own.orderId.startsWith('own-site-'));
 
-console.log('test-connected-booking-providers: ok');
+function jsonResponse(body, status) {
+  return {
+    ok: (status || 200) < 400,
+    status: status || 200,
+    text: async function () {
+      return JSON.stringify(body);
+    },
+  };
+}
+
+async function runEventbriteFetchChecks() {
+  const original = global.fetch;
+  global.fetch = async function (url) {
+    const href = String(url);
+    if (href.includes('/orders/555/attendees/')) {
+      if (href.includes('continuation=page2')) {
+        return jsonResponse({
+          pagination: { has_more_items: false },
+          attendees: [
+            {
+              id: '998877',
+              event_id: '2001520723363',
+              order_id: '555',
+              profile: { first_name: 'Sam', last_name: 'Guest', email: 'sam@example.com' },
+            },
+          ],
+        });
+      }
+      return jsonResponse({
+        pagination: { has_more_items: true, continuation: 'page2' },
+        attendees: [
+          {
+            id: 'att-1',
+            event_id: '2001520723363',
+            order_id: '555',
+            profile: { email: 'buyer@example.com', name: 'Alex Buyer' },
+          },
+        ],
+      });
+    }
+    if (href.includes('/events/2001520723363/attendees/998877')) {
+      return jsonResponse({
+        id: '998877',
+        event_id: '2001520723363',
+        order_id: '555',
+        profile: { first_name: 'Sam', last_name: 'Guest', email: 'sam@example.com', company: 'Contoso' },
+      });
+    }
+    if (href.includes('/orders/555')) {
+      return jsonResponse({
+        id: '555',
+        event_id: '2001520723363',
+        email: 'buyer@example.com',
+        name: 'Alex Buyer',
+        quantity: 2,
+        attendees: 'https://www.eventbriteapi.com/v3/orders/555/attendees/',
+        costs: { gross: { value: 3000 } },
+      });
+    }
+    throw new Error('unexpected fetch ' + href);
+  };
+
+  try {
+    const placed = await resolveEventbriteWebhookRegistrations(
+      {
+        api_url: 'https://www.eventbriteapi.com/v3/orders/555/',
+        config: { action: 'order.placed' },
+      },
+      { config: { eventbritePrivateToken: 'tok' } }
+    );
+    assert.strictEqual(placed.registrations.length, 2, 'order.placed loads every attendee page');
+    assert.strictEqual(placed.registrations[1].email, 'sam@example.com');
+    assert.strictEqual(placed.registrations[1].name, 'Sam Guest');
+
+    const updated = await resolveEventbriteWebhookRegistrations(
+      {
+        api_url: 'https://www.eventbriteapi.com/v3/events/2001520723363/attendees/998877/',
+        config: { action: 'attendee.updated' },
+      },
+      { config: { eventbritePrivateToken: 'tok' } }
+    );
+    assert.strictEqual(updated.source, 'eventbrite_api');
+    assert.strictEqual(updated.registrations.length, 2);
+    const sam = updated.registrations.find(function (row) {
+      return row.email === 'sam@example.com';
+    });
+    assert.ok(sam, 'attendee.updated includes the second ticket holder');
+    assert.strictEqual(sam.name, 'Sam Guest');
+    assert.strictEqual(sam.company, 'Contoso');
+  } finally {
+    global.fetch = original;
+  }
+}
+
+runEventbriteFetchChecks()
+  .then(function () {
+    console.log('test-connected-booking-providers: ok');
+  })
+  .catch(function (err) {
+    console.error(err);
+    process.exit(1);
+  });

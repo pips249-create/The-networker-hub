@@ -769,7 +769,7 @@
         ? '<p class="ecs-eb-url-warn">URL must start with <code>https://www.thenetworkeruk.com/w/eb/</code> (www avoids Eventbrite 308 errors). Refresh or click Enable Eventbrite again if this line looks wrong.</p>'
         : '<p class="ee-hint ecs-eb-www-ok">Uses <strong>www</strong> so Eventbrite POSTs succeed (no 308 redirect).</p>') +
       '</div>' +
-      '<p class="ecs-eb-paste-hint">In Eventbrite: profile menu → <strong>Account settings → Webhooks</strong> · Action <code>order.placed</code></p>';
+      '<p class="ecs-eb-paste-hint">In Eventbrite: profile menu → <strong>Account settings → Webhooks</strong>. Add this URL twice — Action <code>order.placed</code> and Action <code>attendee.updated</code> — so a second ticket holder added after payment still syncs.</p>';
 
     var tokenPanelHtml =
       '<div class="ecs-eb-token-panel">' +
@@ -777,7 +777,7 @@
       '<span>Eventbrite private token <strong>(required for attendee sync)</strong></span>' +
       '<input type="password" id="ecs-eb-private-token" autocomplete="off" spellcheck="false" placeholder="From Eventbrite → Account settings → Developer links" />' +
       '</label>' +
-      '<p class="ee-hint">Eventbrite webhooks only send an order link — we use this token to load buyer name and email when someone buys a ticket.</p>' +
+      '<p class="ee-hint">Eventbrite webhooks only send a link — we use this token to load every ticket holder, including someone added as a second attendee after checkout.</p>' +
       '<button type="button" class="ee-btn ee-btn-outline ee-btn-sm" data-save-eventbrite-token>Save API token</button>' +
       '<span class="ee-hint ecs-eb-token-status" data-eb-token-status hidden role="status"></span>' +
       '</div>';
@@ -789,6 +789,7 @@
       '<li>Open <strong>Webhooks</strong> → Add webhook (or edit yours).</li>' +
       '<li>Paste the copied URL into <strong>Payload URL</strong> (full line).</li>' +
       '<li>Set <strong>Action</strong> to <code>order.placed</code> and save.</li>' +
+      '<li>Add another webhook with the <strong>same URL</strong> and Action <code>attendee.updated</code>. That is what sends the second attendee’s name and email when they are entered after payment.</li>' +
       '</ol>' +
       '</details>';
 
@@ -812,7 +813,7 @@
         '<summary class="ee-optional-details-summary">Webhook URL &amp; API token (account setup)</summary>' +
         '<div class="ee-optional-details-body">' +
         urlPanelHtml +
-        '<p class="ecs-eb-paste-hint">Only if you are (re)connecting Eventbrite: profile menu → <strong>Account settings → Webhooks</strong> · Action <code>order.placed</code></p>' +
+        '<p class="ecs-eb-paste-hint">Only if you are (re)connecting Eventbrite: profile menu → <strong>Account settings → Webhooks</strong>. Same URL for Action <code>order.placed</code> and Action <code>attendee.updated</code>.</p>' +
         tokenPanelHtml +
         helpDetailsHtml +
         '<p class="ee-hint"><a href="/organiser/connected-booking#cb-providers-title">Connected booking → Booking providers</a> for sync log and all links.</p>' +
@@ -821,7 +822,7 @@
       bodyHtml =
         checklistHtml +
         urlPanelHtml +
-        '<p class="ecs-eb-paste-hint">In Eventbrite: profile menu → <strong>Account settings → Webhooks</strong> · Action <code>order.placed</code></p>' +
+        '<p class="ecs-eb-paste-hint">In Eventbrite: profile menu → <strong>Account settings → Webhooks</strong>. Add this URL twice — Action <code>order.placed</code> and Action <code>attendee.updated</code> — so a second ticket holder added after payment still syncs.</p>' +
         tokenPanelHtml +
         helpDetailsHtml +
         perEventHtml +

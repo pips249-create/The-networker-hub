@@ -7,7 +7,7 @@ const CONNECTED_BOOKING_PROVIDERS = [
     status: 'beta',
     webhookPath: '/api/integrations/providers/eventbrite/webhook',
     docsHint:
-      'Paste the webhook URL into Eventbrite Account settings → Webhooks (Payload URL, action order.placed). Link the Eventbrite event id on TNH.',
+      'Paste the webhook URL into Eventbrite Account settings → Webhooks twice: action order.placed and action attendee.updated (the second ticket holder is often added after payment). Link the Eventbrite event id on TNH.',
   },
   {
     id: 'ticket_tailor',
