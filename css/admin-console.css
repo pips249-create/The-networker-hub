@@ -501,6 +501,7 @@ body.hub-page-admin .site-nav {
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
+  overflow-anchor: none;
   -webkit-overflow-scrolling: touch;
   font-size: 1rem;
   line-height: 1.5;
@@ -1656,6 +1657,29 @@ a.admin-action-row:hover .admin-action-btn {
 .admin-filter-bar input[type='text'],
 .admin-filter-bar select {
   min-height: 2.35rem;
+}
+
+/* Search fields stay a fixed width so the clear button and result refresh
+   cannot wrap the filter row or scroll the bar out of view while typing. */
+.admin-filter-bar input.admin-filter-search {
+  width: 100%;
+  max-width: none;
+  flex: 1 1 16rem;
+  overflow-anchor: none;
+}
+
+@media (min-width: 640px) {
+  .admin-filter-bar input.admin-filter-search {
+    width: 20rem;
+    max-width: 20rem;
+    flex: 0 0 20rem;
+  }
+}
+
+.admin-filter-bar,
+#group-cleanup-list,
+#group-cleanup-status {
+  overflow-anchor: none;
 }
 
 /* Last-contact sort labels must stay fully visible. A 14rem cap clipped

@@ -19970,15 +19970,39 @@
       }
     });
 
+    var groupSearchScrollPin = null;
+    document.body.addEventListener('focusin', function (e) {
+      if (!e.target || e.target.id !== 'group-cleanup-search') return;
+      groupSearchScrollPin = captureAdminScroll();
+    });
+    document.body.addEventListener('keydown', function (e) {
+      if (!e.target || e.target.id !== 'group-cleanup-search') return;
+      if (e.isComposing) return;
+      groupSearchScrollPin = captureAdminScroll();
+      var pin = groupSearchScrollPin;
+      requestAnimationFrame(function () {
+        restoreAdminScroll(pin);
+      });
+    });
     document.body.addEventListener('input', function (e) {
       if (e.target.id !== 'group-cleanup-search') return;
+      var searchInput = e.target;
+      if (!groupSearchScrollPin) groupSearchScrollPin = captureAdminScroll();
+      var typingPin = groupSearchScrollPin;
+      requestAnimationFrame(function () {
+        restoreAdminScroll(typingPin);
+      });
       clearTimeout(groupSearchTimer);
       groupSearchTimer = setTimeout(function () {
-        groupCleanupState.q = e.target.value || '';
+        groupCleanupState.q = searchInput.value || '';
         groupCleanupState.page = 0;
         fetchGroupCleanup(0).then(function (data) {
           renderGroupCleanupList(data);
           bindGroupCleanupPageUi();
+          restoreAdminScroll(typingPin);
+          requestAnimationFrame(function () {
+            restoreAdminScroll(typingPin);
+          });
         });
       }, 300);
     });
@@ -20469,10 +20493,32 @@
     return '<span class="text-slate-600">Last: ' + esc(parts.join(' · ') || 'Contacted') + '</span>';
   }
 
+  function captureAdminScroll() {
+    var mainEl = document.getElementById('admin-main');
+    return {
+      mainEl: mainEl,
+      main: mainEl ? mainEl.scrollTop : 0,
+      x: window.scrollX || window.pageXOffset || 0,
+      y: window.scrollY || window.pageYOffset || 0,
+    };
+  }
+
+  function restoreAdminScroll(pin) {
+    if (!pin) return;
+    if (pin.mainEl) pin.mainEl.scrollTop = pin.main;
+    if ((window.scrollX || window.pageXOffset || 0) !== pin.x || (window.scrollY || window.pageYOffset || 0) !== pin.y) {
+      window.scrollTo(pin.x, pin.y);
+    }
+  }
+
   function renderGroupCleanupList(data) {
     var list = document.getElementById('group-cleanup-list');
     var status = document.getElementById('group-cleanup-status');
     if (!list) return;
+    var scrollPin = captureAdminScroll();
+    function keepScroll() {
+      restoreAdminScroll(scrollPin);
+    }
 
     if (!data || data.error || data.ok === false) {
       if (status) {
@@ -20482,6 +20528,7 @@
           ').</span>';
       }
       list.innerHTML = '';
+      keepScroll();
       return;
     }
 
@@ -20518,6 +20565,7 @@
       list.innerHTML =
         '<p class="text-sm text-slate-500 rounded-xl border border-dashed border-slate-300 p-8 text-center">No groups match your filters.</p>' +
         adminPaginationHtml(page, total, GROUP_PAGE_SIZE, 'data-group-page');
+      keepScroll();
       return;
     }
 
@@ -20621,6 +20669,7 @@
         .join('') +
       adminPaginationHtml(page, total, GROUP_PAGE_SIZE, 'data-group-page');
     updateGroupBulkBar();
+    keepScroll();
   }
 
   function renderGroupCleanup(fullHash) {
@@ -20708,7 +20757,7 @@
       '<span id="group-delete-msg" class="text-xs"></span></div></div></div>' +
       '<div class="admin-filter-bar admin-filter-bar--listings flex flex-col gap-3">' +
       '<div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">' +
-      '<input type="search" id="group-cleanup-search" placeholder="Search by name or email…" class="rounded-lg border border-slate-300 px-3 py-2 text-sm w-full sm:max-w-xs bg-white" value="' +
+      '<input type="text" id="group-cleanup-search" inputmode="search" enterkeyhint="search" autocomplete="off" spellcheck="false" placeholder="Search by name or email…" class="admin-filter-search rounded-lg border border-slate-300 px-3 py-2 text-sm bg-white" value="' +
       attrEsc(groupCleanupState.q) +
       '">' +
       '<label class="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">' +
@@ -21605,7 +21654,6 @@
     eventCleanupState.expanded = {};
     var status = document.getElementById('event-cleanup-status');
     if (status) status.textContent = 'Loading events…';
-    resetEventCleanupScroll();
     return fetchEventCleanup(0)
       .then(applyEventCleanupData)
       .catch(function () {
