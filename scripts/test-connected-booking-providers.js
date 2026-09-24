@@ -229,4 +229,37 @@ const own = normalizeOwnSiteWebhook({
 assert.strictEqual(own.tnhEventId, '00000000-0000-4000-8000-000000000001');
 assert.ok(own.orderId.startsWith('own-site-'));
 
+const {
+  mapEventbriteEventToListingPatch,
+  eventbriteIsOnline,
+} = require('../api/_lib/connected-booking-providers/adapters/eventbrite-api');
+assert.strictEqual(eventbriteIsOnline({ online_event: true }), true);
+const inPersonPatch = mapEventbriteEventToListingPatch({
+  id: '2001520723363',
+  name: { text: 'Networking Night' },
+  description: { text: 'Meet founders.' },
+  start: { utc: '2026-10-01T18:00:00Z' },
+  end: { utc: '2026-10-01T21:00:00Z' },
+  url: 'https://www.eventbrite.co.uk/e/networking-night-2001520723363',
+  venue: {
+    name: 'The Hub',
+    address: { address_1: '1 High Street', city: 'London', postal_code: 'SW1A 1AA' },
+  },
+});
+assert.strictEqual(inPersonPatch.title, 'Networking Night');
+assert.strictEqual(inPersonPatch.description, 'Meet founders.');
+assert.strictEqual(inPersonPatch.eventFormat, 'In person');
+assert.strictEqual(inPersonPatch.venue, 'The Hub');
+assert.strictEqual(inPersonPatch.city, 'London');
+assert.ok(inPersonPatch.externalBookingUrl.includes('checkout-external'));
+
+const onlinePatch = mapEventbriteEventToListingPatch({
+  online_event: true,
+  name: { text: 'Zoom social' },
+  start: { utc: '2026-11-02T12:00:00Z' },
+  url: 'https://www.eventbrite.com/e/zoom-social-1234567890123',
+});
+assert.strictEqual(onlinePatch.eventFormat, 'Online');
+assert.ok(!onlinePatch.venue);
+
 console.log('test-connected-booking-providers: ok');
