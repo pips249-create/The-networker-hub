@@ -1734,6 +1734,15 @@ function hubertConciergeMonthLabel(date) {
 
 async function sendDueHubertEventConciergeEmails(sb) {
   const result = { sent: 0, skipped: 0, errors: [] };
+  // HARD STOP (Sep 2026): Hubert monthly digests flooded Resend after soft-launch
+  // auto-resume. Do not send under any env flag until this block is deliberately removed.
+  return {
+    ...result,
+    disabled: true,
+    reason: 'hubert_event_concierge_hard_disabled',
+  };
+  // Unreachable until the hard stop above is removed intentionally.
+  // eslint-disable-next-line no-unreachable
   if (!areHubertEventConciergeEmailsEnabled()) {
     return { ...result, disabled: true, reason: 'hubert_event_concierge_not_enabled' };
   }
