@@ -5,6 +5,10 @@
   var API_PATH = '/api/hub-listings';
   var ANALYTICS_PATH = '/api/browse-analytics';
   var DEBOUNCE_MS = 400;
+  /** Transient gateway failures while the catalogue scan warms up. */
+  var RETRYABLE_STATUS = /HTTP (408|425|429|502|503|504)\b/;
+  var MAX_FETCH_ATTEMPTS = 2;
+  var RETRY_DELAY_MS = 700;
   var debounceTimer = null;
   var fetchToken = 0;
   var fetchAbort = null;
@@ -357,9 +361,15 @@
 
     setBrowseResultsLoading(true);
 
-    // Allow short HTTP cache (API sends max-age≈60) so identical filter reloads are cheap.
-    return fetch(url, { credentials: 'same-origin', signal: signal })
-      .then(function (res) {
+    function delay(ms) {
+      return new Promise(function (resolve) {
+        setTimeout(resolve, ms);
+      });
+    }
+
+    function fetchBrowseOnce() {
+      // Allow short HTTP cache (API sends max-age≈60) so identical filter reloads are cheap.
+      return fetch(url, { credentials: 'same-origin', signal: signal }).then(function (res) {
         if (!res.ok) {
           return res
             .json()
@@ -374,7 +384,26 @@
             });
         }
         return res.json();
-      })
+      });
+    }
+
+    function fetchBrowseWithRetry(attempt) {
+      return fetchBrowseOnce().catch(function (err) {
+        if (err && (err.name === 'AbortError' || err.message === 'The user aborted a request.')) {
+          throw err;
+        }
+        var msg = err && err.message ? String(err.message) : '';
+        if (attempt + 1 >= MAX_FETCH_ATTEMPTS || !RETRYABLE_STATUS.test(msg)) {
+          throw err;
+        }
+        return delay(RETRY_DELAY_MS).then(function () {
+          if (token !== fetchToken) throw err;
+          return fetchBrowseWithRetry(attempt + 1);
+        });
+      });
+    }
+
+    return fetchBrowseWithRetry(0)
       .then(function (data) {
         if (token !== fetchToken) return data;
         if (!data) return data;

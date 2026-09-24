@@ -18,8 +18,8 @@
       logo: LOGO_BASE + 'ticket-tailor.svg',
       placeholder: 'https://www.tickettailor.com/events/…',
       hint:
-        'Paste your Ticket Tailor event URL in the field above. Enable <strong>Ticket Tailor</strong> on ' +
-        '<a href="/organiser/connected-booking#cb-providers-title">Booking providers</a> and link the box office event id below.',
+        'Paste your Ticket Tailor checkout URL above. Enable <strong>Ticket Tailor</strong> below and add our webhook in Ticket Tailor (order created). ' +
+        'Link the <strong>ev_…</strong> event id from Box office (webhooks use that id, not the public URL slug).',
     },
     luma: {
       label: 'Luma',
