@@ -6,6 +6,8 @@
 
 const SKIP_EVENT_SLUGS = new Set([
   'booking-success',
+  'leave-review',
+  'leave-review.html',
   'index.html',
   'event.html',
   'organiser.html',
@@ -91,6 +93,12 @@ function isTicketEmbedPath(pathname) {
   );
 }
 
+/** Post-event review email (stars + Leave a review). Token is the auth; no sign-in. */
+function isLeaveReviewPath(pathname) {
+  const path = String(pathname || '').replace(/\/$/, '') || '/';
+  return path === '/events/leave-review' || path === '/events/leave-review.html';
+}
+
 function isPublicListingPath(pathname, searchParams) {
   const path = String(pathname || '').replace(/\/$/, '') || '/';
   const params = searchParams || new URLSearchParams();
@@ -128,6 +136,7 @@ const GATE_BYPASS_PREFIXES = [
   '/api/resend-webhook',
   '/api/cron/',
   '/api/health',
+  '/api/email-review',
   '/api/track',
   '/api/sponsor-out',
   '/api/sponsor-analytics',
@@ -739,6 +748,7 @@ function isGateBypassPath(pathname) {
     return true;
   }
   if (isTicketEmbedPath(pathname)) return true;
+  if (isLeaveReviewPath(pathname)) return true;
   if (isInternalSalesPath(pathname)) return true;
   return isOrganiserEarlyAccessPath(pathname);
 }
@@ -944,6 +954,10 @@ async function maybeGateSiteAccess(request, url) {
       return Response.redirect(new URL('/organiser/', url.origin).toString(), 302);
     }
     // Nested catalogue browse paths (filters, etc.) — still soft-launch locked.
+    // Review links must stay on the form for signed-in attendees.
+    if (isLeaveReviewPath(pathname)) {
+      return null;
+    }
     if (
       pathname.startsWith('/events/') ||
       pathname.startsWith('/opportunities/') ||
