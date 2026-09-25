@@ -89,13 +89,29 @@
     return re.test(haystack);
   }
 
+  /**
+   * One extra letter on a short query (beet → BEETc) so names can be found while
+   * typing, without treating "york" as a hit inside "yorkshire".
+   */
+  function termMatchesOneLetterContinuation(term, haystack) {
+    if (!term || term.length < 4) return false;
+    var words = haystackWords(haystack);
+    var want = term.length + 1;
+    var i;
+    for (i = 0; i < words.length; i++) {
+      var w = words[i];
+      if (w.length === want && w.indexOf(term) === 0) return true;
+    }
+    return false;
+  }
+
   function termMatchesHaystack(term, haystack) {
     var t = sanitizeSearchTerm(term);
     if (!t || t === 'and') return true;
     var hay = normalizeAmpersands(String(haystack || '')).toLowerCase();
-    /* Short terms: whole-word only (york ≠ yorkshire). Longer: substring for progressive typing. */
+    /* Short terms: whole word, or one extra letter (beet → beetc, york ≠ yorkshire). */
     if (t.length < FUZZY_MIN_LEN) {
-      return termMatchesWholeWord(t, hay);
+      return termMatchesWholeWord(t, hay) || termMatchesOneLetterContinuation(t, hay);
     }
     if (hay.indexOf(t) !== -1) return true;
 
