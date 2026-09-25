@@ -18,7 +18,7 @@ const {
 } = require('./opportunity-listing-pricing');
 const { ensureOpportunitySlug, publicOpportunitySlug, slugMatchesPublicRow, isUuidSlug } =
   require('./opportunity-slug');
-const { scanOpportunityRedFlags, stripEarningsMeta, isNetworkMarketingType } = require('./opportunity-moderation');
+const { scanOpportunityRedFlags, stripEarningsMeta } = require('./opportunity-moderation');
 const { assertExclusiveBrandAvailable } = require('./opportunity-brand-exclusivity');
 const { isHubSeedOwnerEmail } = require('./opportunity-hub-seed');
 const { parseOutcode, resolveRegionSlug } = require('./uk-outcode');
@@ -1335,11 +1335,6 @@ async function activateOpportunityPremium(opportunityId, sessionId) {
     .maybeSingle();
   if (loadErr) throw new Error(loadErr.message);
   if (!existing) throw new Error('not_found');
-  if (isNetworkMarketingType(existing)) {
-    const err = new Error('network_marketing_not_spotlight');
-    err.code = 'network_marketing_not_spotlight';
-    throw err;
-  }
 
   // One-time boost: up to ~30 days from now (or extend from remaining featured_until).
   if (sid && String(existing.premium_stripe_session_id || '').trim() === sid) {
