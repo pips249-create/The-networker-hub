@@ -93,7 +93,10 @@ async function checkResendRecentClaimInvite(email, slug) {
         const hitTo = toList.some(function (t) {
           return normalizeEmail(t) === email;
         });
-        if (hitTo && String(row.subject || '').trim() === subject) {
+        const rowSubject = String(row.subject || '').trim();
+        const followupResend =
+          slug === 'franchise_claim_invite_followup' && /claim by 30 September/i.test(rowSubject);
+        if (hitTo && (rowSubject === subject || followupResend)) {
           return row.created_at;
         }
       }

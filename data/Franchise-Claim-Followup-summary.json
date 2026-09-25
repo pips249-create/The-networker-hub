@@ -1,5 +1,5 @@
 {
-  "built_at": "2026-09-09T09:35:09.958Z",
+  "built_at": "2026-09-24T09:47:54.460Z",
   "audience": "franchise_email2_unclaimed_from_email1",
   "email1_csv": "data/Franchise-Claim-Resend.csv",
   "email1_recipients": 293,
@@ -21,7 +21,7 @@
     "test_title": 0,
     "not_approved": 1,
     "claimed_or_paid_or_not_pending": 4,
-    "not_in_email1": 44,
+    "not_in_email1": 56,
     "duplicate_title_email": 3
   },
   "sample": [
