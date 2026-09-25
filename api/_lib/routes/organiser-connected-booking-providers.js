@@ -1,7 +1,11 @@
 const { getOrganiserApi } = require('../organiser-provider');
 const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
 const { connectedBookingAllowedForSession } = require('../connected-booking');
-const { CONNECTED_BOOKING_PROVIDERS } = require('../connected-booking-providers');
+const {
+  CONNECTED_BOOKING_PROVIDERS,
+  isOrganiserPickerProvider,
+  listOrganiserPickerProviders,
+} = require('../connected-booking-providers');
 const {
   ensureProviderConnection,
   listProviderConnections,
@@ -11,7 +15,9 @@ const {
   mergeProviderConnectionConfig,
 } = require('../connected-booking-provider-store');
 const { eventbritePrivateTokenFromConfig } = require('../connected-booking-providers/adapters/eventbrite-api');
+const { ticketTailorApiKeyFromConfig } = require('../connected-booking-providers/adapters/ticket-tailor-api');
 const { importEventbriteListingForEvent } = require('../eventbrite-listing-import');
+const { importTicketTailorListingForEvent } = require('../ticket-tailor-listing-import');
 const { resolveOrganiserAccountId } = require('../organiser-account-resolve');
 const {
   buildProviderWebhookPublicUrl,
@@ -77,7 +83,7 @@ module.exports = async function handler(req, res) {
       const eventId = String(req.query?.eventId || req.query?.event_id || '').trim();
 
       const providers = await Promise.all(
-        CONNECTED_BOOKING_PROVIDERS.map(async (p) => {
+        listOrganiserPickerProviders().map(async (p) => {
         const conn = (connResult.connections || []).find((c) => c.provider === p.id);
         const webhookUrl =
           p.id === 'custom'
@@ -96,6 +102,10 @@ module.exports = async function handler(req, res) {
           eventbriteApiTokenConfigured:
             p.id === 'eventbrite' && conn
               ? Boolean(eventbritePrivateTokenFromConfig(conn.config))
+              : undefined,
+          ticketTailorApiKeyConfigured:
+            p.id === 'ticket_tailor' && conn
+              ? Boolean(ticketTailorApiKeyFromConfig(conn.config))
               : undefined,
           eventbriteWebhookNeedsFix:
             p.id === 'eventbrite' && conn?.webhook_token
@@ -125,6 +135,13 @@ module.exports = async function handler(req, res) {
 
       if (action === 'enable_provider') {
         const provider = String(body.provider || '').trim().toLowerCase();
+        if (!isOrganiserPickerProvider(provider)) {
+          return json(res, 400, {
+            ok: false,
+            error: 'provider_not_available',
+            message: 'That booking provider is not available. Use Eventbrite, Ticket Tailor, or your own website.',
+          });
+        }
         let conn = await ensureProviderConnection(sb, accountId, provider);
         if (eventbriteWebhookNeedsTokenRotation(site, conn.webhook_token)) {
           conn = await ensureProviderConnection(sb, accountId, provider, { rotateToken: true });
@@ -149,6 +166,13 @@ module.exports = async function handler(req, res) {
       if (action === 'link_event') {
         const eventId = String(body.eventId || body.event_id || '').trim();
         const provider = String(body.provider || '').trim().toLowerCase();
+        if (!isOrganiserPickerProvider(provider)) {
+          return json(res, 400, {
+            ok: false,
+            error: 'provider_not_available',
+            message: 'That booking provider is not available. Use Eventbrite, Ticket Tailor, or your own website.',
+          });
+        }
         const externalEventId = String(body.externalEventId || body.external_event_id || '').trim();
         const idCheck = validateProviderExternalEventId(provider, externalEventId);
         if (!idCheck.ok) {
@@ -167,14 +191,21 @@ module.exports = async function handler(req, res) {
         const importListing =
           body.importListing === true ||
           body.import_listing === true ||
-          body.syncListingFromEventbrite === true;
-        if (importListing && provider === 'eventbrite' && eventId) {
+          body.syncListingFromEventbrite === true ||
+          body.syncListingFromTicketTailor === true;
+        if (importListing && (provider === 'eventbrite' || provider === 'ticket_tailor') && eventId) {
           const { assertOrganiserOwnsEvent } = require('../supabase-organiser-alumni-invites');
           await assertOrganiserOwnsEvent(auth.session, eventId);
           try {
-            const listing = await importEventbriteListingForEvent(sb, auth.session, accountId, eventId, {
-              externalEventId: body.externalEventId || body.external_event_id,
-            });
+            const listing =
+              provider === 'ticket_tailor'
+                ? await importTicketTailorListingForEvent(sb, auth.session, accountId, eventId, {
+                    externalEventId: body.externalEventId || body.external_event_id,
+                    bookingUrl: body.externalEventUrl || body.external_event_url || body.bookingUrl,
+                  })
+                : await importEventbriteListingForEvent(sb, auth.session, accountId, eventId, {
+                    externalEventId: body.externalEventId || body.external_event_id,
+                  });
             return json(res, 200, {
               ok: true,
               eventLink: link,
@@ -219,7 +250,7 @@ module.exports = async function handler(req, res) {
         return json(res, 200, { ok: true });
       }
 
-      if (action === 'import_eventbrite_listing') {
+      if (action === 'import_eventbrite_listing' || action === 'import_ticket_tailor_listing') {
         const eventId = String(body.eventId || body.event_id || '').trim();
         if (!eventId) {
           return json(res, 400, { ok: false, error: 'missing_event_id' });
@@ -227,10 +258,20 @@ module.exports = async function handler(req, res) {
         const { assertOrganiserOwnsEvent } = require('../supabase-organiser-alumni-invites');
         await assertOrganiserOwnsEvent(auth.session, eventId);
 
+        const provider =
+          action === 'import_ticket_tailor_listing' ? 'ticket_tailor' : 'eventbrite';
+        const providerLabel = provider === 'ticket_tailor' ? 'Ticket Tailor' : 'Eventbrite';
+
         try {
-          const listing = await importEventbriteListingForEvent(sb, auth.session, accountId, eventId, {
-            externalEventId: body.externalEventId || body.external_event_id,
-          });
+          const listing =
+            provider === 'ticket_tailor'
+              ? await importTicketTailorListingForEvent(sb, auth.session, accountId, eventId, {
+                  externalEventId: body.externalEventId || body.external_event_id,
+                  bookingUrl: body.bookingUrl || body.externalEventUrl || body.external_event_url,
+                })
+              : await importEventbriteListingForEvent(sb, auth.session, accountId, eventId, {
+                  externalEventId: body.externalEventId || body.external_event_id,
+                });
           if (listing.empty) {
             return json(res, 200, {
               ok: true,
@@ -240,7 +281,7 @@ module.exports = async function handler(req, res) {
               externalEventId: listing.externalEventId,
               message: listing.saleLocked
                 ? 'This event has ticket sales — date and venue stay locked. Nothing else was available to import.'
-                : 'Nothing to import from Eventbrite for this event.',
+                : 'Nothing to import from ' + providerLabel + ' for this event.',
             });
           }
           return json(res, 200, {
@@ -257,6 +298,26 @@ module.exports = async function handler(req, res) {
             message: importErr.message,
           });
         }
+      }
+
+      if (action === 'save_ticket_tailor_api_key') {
+        const token = String(
+          body.token || body.apiKey || body.ticketTailorApiKey || body.ticket_tailor_api_key || ''
+        ).trim();
+        if (!token) {
+          return json(res, 400, {
+            ok: false,
+            error: 'missing_token',
+            message: 'Paste your Ticket Tailor API key (Box office → Settings → API).',
+          });
+        }
+        const conn = await mergeProviderConnectionConfig(sb, accountId, 'ticket_tailor', {
+          ticketTailorApiKey: token,
+        });
+        return json(res, 200, {
+          ok: true,
+          ticketTailorApiKeyConfigured: Boolean(ticketTailorApiKeyFromConfig(conn.config)),
+        });
       }
 
       return json(res, 400, { ok: false, error: 'unknown_action' });

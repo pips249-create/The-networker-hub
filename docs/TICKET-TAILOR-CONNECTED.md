@@ -2,7 +2,7 @@
 
 Checkout stays on **Ticket Tailor**. TNH receives **ORDER.CREATED** webhooks and creates **registrations** (attendee list, post-event reviews, round-ups when enabled).
 
-No API token on TNH — buyer email is in the webhook payload.
+Webhooks do **not** need an API key — buyer email is in the payload. An **optional API key** (Box office → Settings → API) only copies listing fields (title, date, venue) onto TNH — see **Listing import** below.
 
 ## Prerequisites
 
@@ -28,6 +28,16 @@ No API token on TNH — buyer email is in the webhook payload.
    - **Not** the word from `/events/my-show` in the URL — webhooks send `ev_…` in `event_summary.event_id`.
    - If you only pasted the URL slug, TNH will warn you to use `ev_…`.
 4. **Publish** the TNH listing.
+
+## Listing import (optional)
+
+Once listing import is deployed: save API key on Connected setup → **Update listing from Ticket Tailor** (or tick import when saving the `ev_…` link).
+
+1. Connected setup → Ticket Tailor → **Webhook URL & API key** → paste API key → Save.
+2. Booking URL + linked **`ev_…`** (or booking URL only — TNH may match slug to `ev_…` via API).
+3. **Update listing from Ticket Tailor** — refreshes title, description, schedule, venue/online link, checkout URL.
+
+Attendee sync is unchanged (webhooks only).
 
 ## Verify sync
 
@@ -71,5 +81,7 @@ npm run test-connected-booking-providers
 
 ## Related
 
+- [ORGANISER-CONNECTED-LINK-EB-OR-TT.md](./ORGANISER-CONNECTED-LINK-EB-OR-TT.md) — pick Eventbrite or Ticket Tailor per event
+- [PILOT-CATHERINE-CONNECTED.md](./PILOT-CATHERINE-CONNECTED.md) — internal pilot for Catherine’s account
 - [CONNECTED-BOOKING-PROVIDERS.md](./CONNECTED-BOOKING-PROVIDERS.md) — all providers
 - [CONNECTED-BOOKING.md](./CONNECTED-BOOKING.md) — plans and slots

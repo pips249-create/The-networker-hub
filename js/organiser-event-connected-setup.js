@@ -651,11 +651,25 @@
       bindProviderEnableButtons(mount);
       return;
     }
+    var tokenOk = Boolean(p && p.ticketTailorApiKeyConfigured);
     var ttPerEvent = linkedDone
       ? '<p class="ee-hint ee-alert-ok ecs-eb-linked">This listing is linked to <code>' +
         escHtml(displayExternalEventId('ticket_tailor', linked.external_event_id || linked.externalEventId)) +
-        '</code>.</p>'
+        '</code>. New Ticket Tailor orders sync here. Use <strong>Update listing from Ticket Tailor</strong> above to refresh title, date, and venue on TNH.</p>'
       : '<p class="ee-hint ecs-eb-per-event-focus">For this event only: paste the <code>ev_…</code> id in <strong>Link registrations</strong> above.</p>';
+    var ttTokenPanel =
+      '<div class="ecs-eb-token-panel">' +
+      '<label class="ee-field ecs-eb-token-field">' +
+      '<span>Ticket Tailor API key <strong>(required to import listing details)</strong></span>' +
+      '<input type="password" id="ecs-tt-api-key" autocomplete="off" spellcheck="false" placeholder="Box office → Settings → API" />' +
+      '</label>' +
+      '<p class="ee-hint">Webhooks include buyer email — this key is only used to copy event title, date, and venue onto TNH (optional for attendee sync).</p>' +
+      '<button type="button" class="ee-btn ee-btn-outline ee-btn-sm" data-save-ticket-tailor-api-key>Save API key</button>' +
+      '<span class="ee-hint ecs-eb-token-status" data-tt-api-key-status hidden role="status"></span>' +
+      (tokenOk
+        ? '<p class="ee-hint ee-alert-ok">API key saved — you can import listing fields from Ticket Tailor.</p>'
+        : '') +
+      '</div>';
     var ttUrlBlock =
       '<div class="ecs-eb-url-panel">' +
       '<div class="ecs-eb-url-panel-head">' +
@@ -684,12 +698,20 @@
       '</span> This listing’s <code>ev_…</code> id' +
       (linkedDone ? '' : ' <span class="ecs-eb-check-sub">(Link registrations above)</span>') +
       '</li>' +
+      '<li class="ecs-eb-check' +
+      (tokenOk ? ' is-done' : '') +
+      '"><span class="ecs-eb-check-icon" aria-hidden="true">' +
+      (tokenOk ? '✓' : '3') +
+      '</span> API key' +
+      (tokenOk ? '' : ' <span class="ecs-eb-check-sub">(for listing import — below)</span>') +
+      '</li>' +
       '</ul>' +
       ttPerEvent +
       '<details class="ecs-eb-account-advanced ee-optional-details">' +
-      '<summary class="ee-optional-details-summary">Webhook URL (account setup)</summary>' +
+      '<summary class="ee-optional-details-summary">Webhook URL &amp; API key (account setup)</summary>' +
       '<div class="ee-optional-details-body">' +
       ttUrlBlock +
+      ttTokenPanel +
       '<details class="ecs-eb-help-details">' +
       '<summary>Where to find the event id</summary>' +
       '<ol class="ecs-eb-help-steps">' +
@@ -697,10 +719,70 @@
       '<li>Copy the id that starts with <code>ev_</code> (not only the public URL slug).</li>' +
       '<li>Paste it in <strong>Link registrations</strong> above and save.</li>' +
       '</ol></details>' +
-      '<p class="ee-hint">After a test sale, check <a href="/organiser/connected-booking#cb-sync-log">Recent sync attempts</a>.</p>' +
+      '<p class="ee-hint">After a test sale, check <a href="/organiser/#cb-sync-log">Recent sync attempts</a>.</p>' +
       '</div></details></div>';
     bindProviderEnableButtons(mount);
+    bindTicketTailorApiKeySave(mount);
     syncRegistrationSyncPresentation('ticket_tailor', true);
+  }
+
+  function bindTicketTailorApiKeySave(root) {
+    if (!root || root.dataset.ttApiKeyBound === '1') return;
+    root.dataset.ttApiKeyBound = '1';
+    root.addEventListener('click', function (e) {
+      var btn =
+        e.target && e.target.closest ? e.target.closest('[data-save-ticket-tailor-api-key]') : null;
+      if (!btn || btn.disabled) return;
+      e.preventDefault();
+      var input = qs('ecs-tt-api-key');
+      var token = input ? String(input.value || '').trim() : '';
+      var statusEl = root.querySelector('[data-tt-api-key-status]');
+      if (!token) {
+        if (statusEl) {
+          statusEl.hidden = false;
+          statusEl.textContent = 'Paste your Ticket Tailor API key first.';
+          statusEl.className = 'ee-hint ee-alert-warn ecs-eb-token-status';
+        }
+        return;
+      }
+      btn.disabled = true;
+      if (statusEl) {
+        statusEl.hidden = false;
+        statusEl.textContent = 'Saving…';
+        statusEl.className = 'ee-hint ecs-eb-token-status';
+      }
+      api('/api/organiser/connected-booking-providers', {
+        method: 'PATCH',
+        body: JSON.stringify({ action: 'save_ticket_tailor_api_key', token: token }),
+      })
+        .then(function (res) {
+          btn.disabled = false;
+          if (!res.ok || !res.data || !res.data.ok) {
+            if (statusEl) {
+              statusEl.textContent =
+                (res.data && res.data.message) || (res.data && res.data.error) || 'Could not save key.';
+              statusEl.className = 'ee-hint ee-alert-warn ecs-eb-token-status';
+            }
+            return;
+          }
+          if (input) input.value = '';
+          providersById.ticket_tailor = Object.assign({}, providersById.ticket_tailor || { id: 'ticket_tailor' }, {
+            ticketTailorApiKeyConfigured: true,
+          });
+          if (statusEl) {
+            statusEl.textContent = 'Saved — you can import listing details from Ticket Tailor.';
+            statusEl.className = 'ee-hint ee-alert-ok ecs-eb-token-status';
+          }
+          renderProviderWebhookCard('ticket_tailor');
+        })
+        .catch(function () {
+          btn.disabled = false;
+          if (statusEl) {
+            statusEl.textContent = 'Could not save key.';
+            statusEl.className = 'ee-hint ee-alert-warn ecs-eb-token-status';
+          }
+        });
+    });
   }
 
   function renderEventbriteWebhookCard(mount, p, linked) {
@@ -795,7 +877,7 @@
     var webhookDriftHtml =
       p && p.eventbriteWebhookNeedsFix
         ? '<p class="ee-alert ee-alert-warn ecs-eb-token-status">Webhook URL on TNH was updated — paste the URL above into Eventbrite again or sync will stop (Recent sync attempts may show <code>invalid_webhook_token</code>).</p>'
-        : '<p class="ee-hint">If sync worked once then stopped, compare Eventbrite <strong>Payload URL</strong> with the line above — they must match exactly. Check <a href="/organiser/connected-booking#cb-sync-log">Connected booking → Recent sync attempts</a>.</p>';
+        : '<p class="ee-hint">If sync worked once then stopped, compare Eventbrite <strong>Payload URL</strong> with the line above — they must match exactly. Check <a href="/organiser/#cb-sync-log">Connected booking → Recent sync attempts</a>.</p>';
 
     var perEventHtml = linkedDone
       ? '<p class="ee-hint ee-alert-ok ecs-eb-linked">This listing is linked to Eventbrite id <code>' +
@@ -821,7 +903,7 @@
         tokenPanelHtml +
         helpDetailsHtml +
         webhookDriftHtml +
-        '<p class="ee-hint"><a href="/organiser/connected-booking#cb-providers-title">Connected booking → Booking providers</a> for sync log and all links.</p>' +
+        '<p class="ee-hint"><a href="/organiser/#cb-providers-title">Connected booking → Booking providers</a> for sync log and all links.</p>' +
         '</div></details>';
     } else {
       bodyHtml =
@@ -1008,7 +1090,7 @@
       'Enable <strong>' +
       escHtml(label) +
       '</strong> below and paste the webhook URL into that platform’s admin. Link this TNH event to the provider’s event id on ' +
-      '<a href="/organiser/connected-booking#cb-providers-title">Connected booking → Booking providers</a>.' +
+      '<a href="/organiser/#cb-providers-title">Connected booking → Booking providers</a>.' +
       ACCOUNT_EVENT_SCOPE_NOTE
     );
   }
@@ -1180,6 +1262,9 @@
       if (key === 'eventbrite') {
         help.textContent =
           'Link your Eventbrite event id so ticket buyers sync here. You can also copy title, date, and venue from Eventbrite onto this TNH listing (attendee sync stays separate).';
+      } else if (key === 'ticket_tailor') {
+        help.textContent =
+          'Link your Ticket Tailor ev_… event id so orders sync here. With an API key saved below, you can also copy title, date, and venue from Ticket Tailor onto this TNH listing.';
       } else {
         help.textContent =
           'Tell us which ' +
@@ -1189,8 +1274,23 @@
     }
     var importRow = qs('ecs-eb-import-row');
     var importBtn = qs('ecs-import-eventbrite-listing');
-    if (importRow) importRow.hidden = key !== 'eventbrite';
-    if (importBtn) importBtn.hidden = key !== 'eventbrite';
+    var importLabel = qs('ecs-import-on-link-label');
+    var listingImportPlatforms = { eventbrite: true, ticket_tailor: true };
+    if (importRow) importRow.hidden = !listingImportPlatforms[key];
+    if (importBtn) {
+      importBtn.hidden = !listingImportPlatforms[key];
+      if (key === 'eventbrite') importBtn.textContent = 'Update listing from Eventbrite';
+      else if (key === 'ticket_tailor') importBtn.textContent = 'Update listing from Ticket Tailor';
+    }
+    if (importLabel) {
+      if (key === 'eventbrite') {
+        importLabel.textContent =
+          'When I save the link, also copy title, description, date, and venue from Eventbrite onto this TNH listing';
+      } else if (key === 'ticket_tailor') {
+        importLabel.textContent =
+          'When I save the link, also copy title, description, date, and venue from Ticket Tailor onto this TNH listing';
+      }
+    }
     maybeAutofillExternalEventId(false);
     refreshEventLinkBadge(key);
     refreshEventLinkAutofillHint();
@@ -1208,7 +1308,19 @@
       );
     }
     if (data.message && !parts.length) return data.message;
-    return parts.join(' ') || data.message || 'Listing updated from Eventbrite.';
+    return parts.join(' ') || data.message || 'Listing updated.';
+  }
+
+  function connectedListingImportAction(platform) {
+    if (platform === 'ticket_tailor') return 'import_ticket_tailor_listing';
+    if (platform === 'eventbrite') return 'import_eventbrite_listing';
+    return '';
+  }
+
+  function connectedListingImportProviderLabel(platform) {
+    if (platform === 'ticket_tailor') return 'Ticket Tailor';
+    if (platform === 'eventbrite') return 'Eventbrite';
+    return 'provider';
   }
 
   function applyListingImportToForm(ev) {
@@ -1216,29 +1328,35 @@
     applyEvent(Object.assign({}, loadedEvent || {}, ev));
   }
 
-  function importEventbriteListing(opts) {
+  function importConnectedListing(opts) {
     var options = opts || {};
     var platform = selectedIntegrationPlatform();
-    if (platform !== 'eventbrite') return Promise.resolve({ ok: true, skipped: true });
+    var action = connectedListingImportAction(platform);
+    if (!action) return Promise.resolve({ ok: true, skipped: true });
+    var label = connectedListingImportProviderLabel(platform);
     var externalId = resolveExternalEventIdForLink(platform);
     if (!externalId && !linkedExternalEventId(platform)) {
       var msg =
-        'Enter the Eventbrite event id or paste an Eventbrite /e/… link in Booking URL first.';
+        platform === 'ticket_tailor'
+          ? 'Enter the Ticket Tailor ev_… id, or paste a Ticket Tailor booking URL in Booking URL first.'
+          : 'Enter the Eventbrite event id or paste an Eventbrite /e/… link in Booking URL first.';
       if (!options.silent) setEventLinkStatus(msg, 'error');
       return Promise.resolve({ ok: false, message: msg });
     }
-    if (!options.silent) setEventLinkStatus('Loading details from Eventbrite…');
+    if (!options.silent) setEventLinkStatus('Loading details from ' + label + '…');
+    var bookingUrl = qs('ecs-booking-url') ? qs('ecs-booking-url').value.trim() : '';
     return api('/api/organiser/connected-booking-providers', {
       method: 'PATCH',
       body: JSON.stringify({
-        action: 'import_eventbrite_listing',
+        action: action,
         eventId: eventId,
         externalEventId: externalId || undefined,
+        bookingUrl: bookingUrl || undefined,
       }),
     }).then(function (res) {
       if (!res.ok || !res.data || !res.data.ok) {
         var errMsg =
-          (res.data && (res.data.message || res.data.error)) || 'Could not import from Eventbrite.';
+          (res.data && (res.data.message || res.data.error)) || 'Could not import from ' + label + '.';
         if (!options.silent) setEventLinkStatus(errMsg, 'error');
         return { ok: false, message: errMsg };
       }
@@ -1315,7 +1433,7 @@
     setEventLinkStatus('Saving link…');
     var bookingUrl = qs('ecs-booking-url') ? qs('ecs-booking-url').value.trim() : '';
     var importOnLink =
-      platform === 'eventbrite' &&
+      (platform === 'eventbrite' || platform === 'ticket_tailor') &&
       qs('ecs-eb-import-on-link') &&
       qs('ecs-eb-import-on-link').checked;
     return api('/api/organiser/connected-booking-providers', {
@@ -1388,7 +1506,7 @@
     if (importBtn) {
       importBtn.addEventListener('click', function () {
         importBtn.disabled = true;
-        importEventbriteListing({ required: false }).then(function () {
+        importConnectedListing({ required: false }).then(function () {
           importBtn.disabled = false;
         });
       });
@@ -1522,7 +1640,7 @@
     var p = providersById[key];
     if (!p && key !== 'own_site' && key !== 'custom') {
       mount.innerHTML =
-        '<p class="ee-hint">Loading provider details… Open <a href="/organiser/connected-booking#cb-providers-title">Booking providers</a> if this does not update.</p>';
+        '<p class="ee-hint">Loading provider details… Open <a href="/organiser/#cb-providers-title">Booking providers</a> if this does not update.</p>';
       return;
     }
 
@@ -1547,7 +1665,7 @@
         escHtml(eventId) +
         '</code></p>' +
         '<pre class="cb-code-block" id="ecs-own-site-sample" aria-label="Example JSON payload"></pre>' +
-        '<p class="ee-hint">More detail: <a href="/organiser/connected-booking#cb-providers-title">Connected booking → Booking providers</a>.</p>';
+        '<p class="ee-hint">More detail: <a href="/organiser/#cb-providers-title">Connected booking → Booking providers</a>.</p>';
       var sampleEl = qs('ecs-own-site-sample');
       if (sampleEl) sampleEl.textContent = ownSiteSampleJson();
       bindProviderEnableButtons(mount);
@@ -1562,12 +1680,12 @@
         escHtml(eventId) +
         '</code>.</p>' +
         '<p class="ee-hint"><strong>Option A — Zapier / Make</strong><br />Trigger on a new sale in your tool → POST JSON to your ' +
-        '<a href="/organiser/connected-booking#cb-providers-title">own-site webhook URL</a> (enable <strong>Your own website</strong> on Booking providers).</p>' +
+        '<a href="/organiser/#cb-providers-title">own-site webhook URL</a> (enable <strong>Your own website</strong> on Booking providers).</p>' +
         '<p class="ee-hint"><strong>Option B — Signed API</strong><br />Developers POST to:</p>' +
         '<p class="cb-webhook-url">' +
         escHtml(hmacUrl) +
         '</p>' +
-        '<p class="ee-hint"><a href="/organiser/connected-booking#cb-webhook-title">HMAC webhook docs</a> (account id + secret).</p>';
+        '<p class="ee-hint"><a href="/organiser/#cb-webhook-title">HMAC webhook docs</a> (account id + secret).</p>';
       return;
     }
 
@@ -1616,7 +1734,7 @@
           ) +
           '</code>).</p>'
         : '<p class="ee-hint">Link this event in the <strong>Link registrations</strong> section above (we can fill the id from your booking URL).</p>') +
-      '<p class="ee-hint">Account setup: <a href="/organiser/connected-booking#cb-providers-title">Connected booking → Booking providers</a>.</p>';
+      '<p class="ee-hint">Account setup: <a href="/organiser/#cb-providers-title">Connected booking → Booking providers</a>.</p>';
     bindProviderEnableButtons(mount);
   }
 

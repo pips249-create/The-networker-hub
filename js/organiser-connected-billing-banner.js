@@ -36,14 +36,14 @@
     if (data.active) {
       el.innerHTML =
         'Using <strong>Connected</strong> (Eventbrite / your checkout)? Manage webhooks, sync log, and billing on ' +
-        '<a class="org-inline-link" href="/organiser/connected-booking">Connected booking</a>. ' +
+        '<a class="org-inline-link" href="/organiser/#connected-booking">Connected booking</a>. ' +
         'Assign which organiser pages use your plan on ' +
         '<a class="org-inline-link" href="/organiser/#groups">Organiser pages</a>.';
       return;
     }
     el.innerHTML =
       'Sell on Eventbrite or your own site and sync attendees? See ' +
-      '<a class="org-inline-link" href="/organiser/connected-booking">Connected booking</a> ' +
+      '<a class="org-inline-link" href="/organiser/#connected-booking">Connected booking</a> ' +
       'or <a class="org-inline-link" href="/organiser/booking-options">how booking options work</a>.';
   }
 
@@ -375,10 +375,10 @@
       if (needsPick && forOrgPage && inline) {
         actions =
           (overPages
-            ? '<a class="org-btn org-btn-gold org-btn-sm" href="/organiser/connected-booking#cb-pricing">Upgrade plan</a> '
+            ? '<a class="org-btn org-btn-gold org-btn-sm" href="/organiser/#cb-pricing">Upgrade plan</a> '
             : '') +
           '<a class="org-btn org-btn-outline org-btn-sm" href="/organiser/booking-options#link-out">Link-out £9.99 / event</a> ' +
-          '<a class="org-btn org-btn-outline org-btn-sm" href="/organiser/connected-booking">Connected plan &amp; billing</a>';
+          '<a class="org-btn org-btn-outline org-btn-sm" href="/organiser/#connected-booking">Connected plan &amp; billing</a>';
       } else {
         actions =
           '<a class="org-btn org-btn-gold org-btn-sm" href="' +
