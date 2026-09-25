@@ -721,6 +721,48 @@
   }
 
   var loadPromise = null;
+  var RETRYABLE_STATUS = /HTTP (408|425|429|502|503|504)\b/;
+  var MAX_FETCH_ATTEMPTS = 2;
+  var RETRY_DELAY_MS = 700;
+
+  function setOrganiserStatus(msg, isError) {
+    var status = document.getElementById('load-status');
+    if (!status) return;
+    status.textContent = msg || '';
+    status.hidden = !msg;
+    status.classList.toggle('is-error', !!isError);
+  }
+
+  function delay(ms) {
+    return new Promise(function (resolve) {
+      setTimeout(resolve, ms);
+    });
+  }
+
+  function fetchOrganisersPayload(attempt) {
+    return fetch(API)
+      .then(function (res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      })
+      .then(
+        function (data) {
+          return data;
+        },
+        function (err) {
+          var msg = err && err.message ? String(err.message) : '';
+          if (
+            attempt + 1 < MAX_FETCH_ATTEMPTS &&
+            (RETRYABLE_STATUS.test(msg) || /failed to fetch|networkerror|load failed/i.test(msg))
+          ) {
+            return delay(RETRY_DELAY_MS).then(function () {
+              return fetchOrganisersPayload(attempt + 1);
+            });
+          }
+          throw err;
+        }
+      );
+  }
 
   function loadOrganisers() {
     if (loadPromise) return loadPromise;
@@ -730,23 +772,24 @@
     }
 
     const fetchOrganisers = function () {
-      return fetch(API)
-        .then(function (res) {
-          return res.json();
-        })
+      return fetchOrganisersPayload(0)
         .then(function (data) {
           if (!data.configured) {
             organisers = [];
+            setOrganiserStatus('Organiser directory is not available right now.', true);
           } else if (data.error) {
             organisers = [];
+            setOrganiserStatus('Could not load organisers. Try again in a moment.', true);
           } else {
             organisers = data.organisers || [];
+            setOrganiserStatus('', false);
           }
           applyLoadedOrganisers();
           return organisers;
         })
         .catch(function () {
           organisers = [];
+          setOrganiserStatus('Could not load organisers. Try again in a moment.', true);
           applyLoadedOrganisers();
           return organisers;
         })

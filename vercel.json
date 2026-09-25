@@ -272,7 +272,7 @@
     "api/auth.js": { "maxDuration": 15 },
     "api/admin.js": { "maxDuration": 30 },
     "api/organiser.js": { "maxDuration": 60 },
-    "api/organisers.js": { "maxDuration": 15 },
+    "api/organisers.js": { "maxDuration": 30 },
     "api/rankings.js": { "maxDuration": 15 },
     "api/events.js": { "maxDuration": 30 },
     "api/seo.js": { "maxDuration": 15 },

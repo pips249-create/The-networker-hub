@@ -440,6 +440,20 @@ const NETWORKING_REGION_THEMES = {
   }
 };
 
+/**
+ * Pretty URLs (/networking/manchester/, /organisers/slug/) are one directory
+ * deeper than the /events/ template. Relative ../js and ../css then 404, so
+ * organiser browse never boots when the address has a trailing slash.
+ */
+function absolutizeDirectoryTemplateAssets(html) {
+  return String(html || '')
+    .replace(/((?:href|src)\s*=\s*["'])\.\.\/(css|js|assets)\//gi, '$1/$2/')
+    .replace(/(data-hrefs\s*=\s*["'])([^"']*)(["'])/gi, function (_match, open, value, close) {
+      return open + value.replace(/\.\.\/(css|js|assets)\//g, '/$1/') + close;
+    })
+    .replace(/(data-root\s*=\s*["'])\.\.\/(["'])/gi, '$1/$2');
+}
+
 function injectNetworkingRegionContent(html, meta) {
   const region = meta && meta.region;
   if (!region || !region.name) return html;
@@ -1392,7 +1406,7 @@ export default async function middleware(request) {
     // fall through to Vercel’s filesystem 404 for valid pretty URLs.
     if (!metaRes.ok) {
       if (htmlRes.ok && HARD_404_SEO_TYPES.has(type) && !shellQuery) {
-        return new Response(await htmlRes.text(), {
+        return new Response(absolutizeDirectoryTemplateAssets(await htmlRes.text()), {
           status: 200,
           headers: {
             'Content-Type': 'text/html; charset=utf-8',
@@ -1431,6 +1445,7 @@ export default async function middleware(request) {
     } else if (type === 'opportunity-industry') {
       html = injectOpportunityIndustryContent(html, meta);
     }
+    html = absolutizeDirectoryTemplateAssets(html);
 
     const seoHeaders = {
       'Content-Type': 'text/html; charset=utf-8',
