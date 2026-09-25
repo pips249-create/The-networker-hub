@@ -517,6 +517,29 @@ function buildStaticPageMeta(pageKey, origin) {
   };
 }
 
+/** Cities whose Search Console queries are “business networking events in {city}”. */
+const BUSINESS_NETWORKING_EVENTS_TITLE_SLUGS = new Set(['glasgow', 'bristol']);
+
+function usesBusinessNetworkingEventsTitle(slug) {
+  return BUSINESS_NETWORKING_EVENTS_TITLE_SLUGS.has(String(slug || '').trim().toLowerCase());
+}
+
+function networkingRegionTitle(region, year) {
+  if (region.slug === 'online') return `Online Networking Events ${year} | The Networker UK`;
+  if (usesBusinessNetworkingEventsTitle(region.slug)) {
+    return `Business networking events in ${region.name} ${year} | The Networker UK`;
+  }
+  return `Networking in ${region.name} ${year} | The Networker UK`;
+}
+
+function networkingRegionPageName(region, year) {
+  if (region.slug === 'online') return `Online networking events ${year}`;
+  if (usesBusinessNetworkingEventsTitle(region.slug)) {
+    return `Business networking events in ${region.name} ${year}`;
+  }
+  return `Networking in ${region.name} ${year}`;
+}
+
 async function buildNetworkingRegionMeta(slug, origin) {
   const region = getNetworkingRegion(slug);
   if (!region) return null;
@@ -529,7 +552,14 @@ async function buildNetworkingRegionMeta(slug, origin) {
   const copy = buildNetworkingRegionSeoCopy(region, eventCount);
 
   let description = trimText(copy.answerText, 160);
-  if (eventCount > 0 && region.slug !== 'online') {
+  if (usesBusinessNetworkingEventsTitle(region.slug)) {
+    description = trimText(
+      eventCount > 0
+        ? `Business networking events in ${region.name}: browse ${eventCount} upcoming meetings and groups. Book on The Networker UK.`
+        : `Business networking events in ${region.name}. Browse upcoming meetings and organiser groups on The Networker UK.`,
+      160
+    );
+  } else if (eventCount > 0 && region.slug !== 'online') {
     description = trimText(
       `Networking in ${region.name}: browse ${eventCount} upcoming business networking events, meetings and groups. Book on The Networker UK.`,
       160
@@ -541,15 +571,9 @@ async function buildNetworkingRegionMeta(slug, origin) {
     );
   }
 
-  const title =
-    region.slug === 'online'
-      ? `Online Networking Events ${year} | The Networker UK`
-      : `Networking in ${region.name} ${year} | The Networker UK`;
+  const title = networkingRegionTitle(region, year);
   const meta = { title, description, canonical, image, ogType: 'website' };
-  const pageName =
-    region.slug === 'online'
-      ? `Online networking events ${year}`
-      : `Networking in ${region.name} ${year}`;
+  const pageName = networkingRegionPageName(region, year);
   const about =
     region.areaType === 'county'
       ? {
@@ -776,6 +800,9 @@ module.exports = {
   buildOpportunityMeta,
   buildStaticPageMeta,
   buildNetworkingRegionMeta,
+  networkingRegionTitle,
+  networkingRegionPageName,
+  usesBusinessNetworkingEventsTitle,
   buildOpportunityIndustryMeta,
   buildRankingBadgeMeta,
   absoluteUrl,

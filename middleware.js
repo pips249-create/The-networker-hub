@@ -460,7 +460,9 @@ function injectNetworkingRegionContent(html, meta) {
   const h1Html =
     slug === 'online'
       ? 'Online networking events <span class="accent">' + year + '</span>'
-      : 'Networking in <span class="accent">' + name + '</span>';
+      : slug === 'glasgow' || slug === 'bristol'
+        ? 'Business networking events in <span class="accent">' + name + '</span>'
+        : 'Networking in <span class="accent">' + name + '</span>';
 
   const ledeHtml =
     slug === 'online'
