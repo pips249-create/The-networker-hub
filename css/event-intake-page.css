@@ -340,6 +340,25 @@ html:has(.event-intake-page) {
   text-underline-offset: 2px;
 }
 
+.ei-need-page p {
+  margin: 0 0 14px;
+}
+
+.ei-need-page .btn {
+  display: inline-flex;
+  text-decoration: none;
+}
+
+.ei-organiser-hint {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ei-muted);
+}
+
 .ei-form-panel {
   background: #fff;
   border: 1px solid var(--ei-line);

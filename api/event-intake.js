@@ -1,11 +1,19 @@
 /**
  * Event intake API — organisers send details for staff to list (signed-in only).
  */
-const { json, setCors, sessionFromRequest } = require('./_lib/auth');
+const {
+  json,
+  setCors,
+  sessionFromRequest,
+  sessionWithLiveAdminRole,
+  organiserPersonalScopeFromRequest,
+  isAdminRole,
+} = require('./_lib/auth');
 const { wrapHandler } = require('./_lib/sentry');
 const { enforceRateLimit, clientIp } = require('./_lib/rate-limit');
 const { useSupabase } = require('./_lib/supabase');
-const { submitEventIntake } = require('./_lib/event-intake');
+const { submitEventIntake, pickOwnedOrganiser } = require('./_lib/event-intake');
+const { listAccessibleGroupsForSession } = require('./_lib/supabase-organiser-access');
 const { verifyTurnstileToken } = require('./_lib/turnstile');
 
 function parseBody(req) {
@@ -85,6 +93,29 @@ module.exports = wrapHandler(async function handler(req, res) {
   });
 
   try {
+    const liveSession = await sessionWithLiveAdminRole(session);
+    const adminView = isAdminRole(liveSession.role) && !organiserPersonalScopeFromRequest(req);
+    const { groups } = await listAccessibleGroupsForSession(liveSession, adminView);
+    const owned = pickOwnedOrganiser(
+      groups,
+      body.organiserId || body.organiser_id
+    );
+    if (!owned) {
+      const hasPages = Array.isArray(groups) && groups.length > 0;
+      return json(res, 400, {
+        ok: false,
+        error: hasPages ? 'organiser_not_owned' : 'missing_organiser_page',
+        message: hasPages
+          ? 'Choose one of your organiser pages.'
+          : 'Create your organiser page before sending event details. We add the event to that page.',
+      });
+    }
+    intakeBody.organiserId = owned.id;
+    intakeBody.group = String(owned.name || '').trim() || intakeBody.group;
+    if (!String(intakeBody.organiserWebsiteUrl || intakeBody.organiser_website_url || '').trim() && owned.website) {
+      intakeBody.organiserWebsiteUrl = owned.website;
+    }
+
     const result = await submitEventIntake(intakeBody);
     if (!result.ok) {
       return json(res, 400, {

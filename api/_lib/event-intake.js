@@ -82,6 +82,21 @@ function attendanceDoorLabel(door) {
   return door === 'category_exclusivity' ? 'Application based' : 'General ticketing';
 }
 
+const ORGANISER_ID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function isOrganiserId(value) {
+  return ORGANISER_ID_RE.test(String(value || '').trim());
+}
+
+/** The page the signed-in submitter is allowed to attach this request to. */
+function pickOwnedOrganiser(groups, organiserId) {
+  const id = String(organiserId || '').trim();
+  if (!isOrganiserId(id)) return null;
+  const needle = id.toLowerCase();
+  return (groups || []).find((group) => group && String(group.id || '').toLowerCase() === needle) || null;
+}
+
 function normalizeMaxPlaces(raw) {
   const digits = String(raw == null ? '' : raw).trim();
   if (!digits) return null;
@@ -125,6 +140,7 @@ function normalizeIntakeInput(body) {
         ''
     )
       .trim() || null,
+    organiserId: String(body.organiserId || body.organiser_id || '').trim(),
     groupName: String(body.group || body.groupName || body.group_name || body.organiser || '').trim(),
     eventTitle: String(body.title || body.eventTitle || body.event_title || '').trim(),
     eventDates: String(body.dates || body.eventDates || body.event_dates || '').trim(),
@@ -164,6 +180,13 @@ function validateIntake(input) {
   }
   if (input.phone && !isValidPhone(input.phone)) {
     return { ok: false, error: 'invalid_phone', message: 'Enter a valid phone number.' };
+  }
+  if (!isOrganiserId(input.organiserId)) {
+    return {
+      ok: false,
+      error: 'missing_organiser_page',
+      message: 'Create your organiser page and choose it before sending event details.',
+    };
   }
   if (!input.groupName) {
     return { ok: false, error: 'missing_group', message: 'Enter your group or organiser name.' };
@@ -234,6 +257,7 @@ function buildStaffEmailHtml(input) {
     row('Email', input.email) +
     row('Phone', input.phone) +
     row('Group', input.groupName) +
+    row('Organiser page', input.organiserId) +
     row('Title', input.eventTitle) +
     row('Date(s)', input.eventDates) +
     row('Start', input.startTime) +
@@ -310,6 +334,7 @@ async function submitEventIntake(body) {
     contact_name: input.contactName,
     email: input.email,
     phone: input.phone,
+    organiser_id: input.organiserId,
     group_name: input.groupName,
     event_title: input.eventTitle,
     event_dates: input.eventDates,
@@ -357,6 +382,14 @@ async function submitEventIntake(body) {
       .single();
     data = retry.data;
     error = retry.error;
+  }
+
+  if (error && /organiser_id/i.test(error.message || '')) {
+    const err = new Error(
+      'Event intake needs a database update before it can use organiser pages. Email hi@thenetworkeruk.com with your event details.'
+    );
+    err.code = 'not_configured';
+    throw err;
   }
 
   if (error) {
@@ -526,5 +559,7 @@ module.exports = {
   notifyEventIntakeListed,
   normalizeIntakeInput,
   validateIntake,
+  pickOwnedOrganiser,
+  isOrganiserId,
   staffInbox,
 };
