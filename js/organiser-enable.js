@@ -62,7 +62,18 @@
           if (submitBtn) submitBtn.disabled = false;
           return;
         }
-        window.location.href = data.redirect || '/organiser/verify-email';
+        var nextUrl = data.redirect || '/organiser/verify-email';
+        try {
+          var parsed = new URL(nextUrl, window.location.origin);
+          if (parsed.pathname.replace(/\/$/, '') === '/organiser/verify-email') {
+            parsed.searchParams.delete('code');
+            parsed.searchParams.delete('token');
+            nextUrl = parsed.pathname + parsed.search + parsed.hash;
+          }
+        } catch (parseErr) {
+          /* keep nextUrl */
+        }
+        window.location.href = nextUrl;
       } catch (err) {
         showError('Something went wrong. Please try again.');
         if (submitBtn) submitBtn.disabled = false;

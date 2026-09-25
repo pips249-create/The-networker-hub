@@ -1,34 +1,15 @@
 #!/usr/bin/env node
 /**
  * Email verification URL helpers used at signup and organiser payouts.
+ * In-app redirects must not include the confirmation code: the verify page
+ * submits ?code= on load and would mark the address confirmed without the user.
  */
 const assert = require('assert');
-
-function buildOrganiserVerifyEmailPath(code, email) {
-  const address = String(email || '')
-    .trim()
-    .toLowerCase();
-  let path =
-    '/organiser/verify-email?code=' + encodeURIComponent(String(code || '').trim());
-  if (address) {
-    path += '&email=' + encodeURIComponent(address);
-  }
-  return path;
-}
-
-function buildEmailVerifyRedirect({ next, code, email } = {}) {
-  const destination = String(next || '').trim() || '/welcome';
-  if (code) {
-    let path = buildOrganiserVerifyEmailPath(code, email);
-    path +=
-      (path.indexOf('?') >= 0 ? '&' : '?') + 'next=' + encodeURIComponent(destination);
-    return path;
-  }
-  const params = new URLSearchParams();
-  if (email) params.set('email', String(email).trim().toLowerCase());
-  params.set('next', destination);
-  return '/organiser/verify-email?' + params.toString();
-}
+const {
+  buildOrganiserVerifyEmailPath,
+  verifyEmailPagePath,
+  buildEmailVerifyRedirect,
+} = require('../api/_lib/organiser-email-verify-paths');
 
 const path = buildOrganiserVerifyEmailPath('482917', 'Organiser@Example.com');
 assert.match(path, /^\/organiser\/verify-email\?code=482917&email=/);
@@ -37,12 +18,19 @@ assert(path.includes('organiser%40example.com'), 'email should be normalised and
 const codeOnly = buildOrganiserVerifyEmailPath('000001', '');
 assert.equal(codeOnly, '/organiser/verify-email?code=000001');
 
+const page = verifyEmailPagePath('New@Example.com');
+assert.equal(page, '/organiser/verify-email?email=new%40example.com');
+assert.doesNotMatch(page, /code=/);
+assert.doesNotMatch(page, /token=/);
+
 const signup = buildEmailVerifyRedirect({
   next: '/welcome',
   code: '482917',
   email: 'new@example.com',
 });
-assert.match(signup, /^\/organiser\/verify-email\?code=482917&email=new%40example.com&next=/);
+assert.doesNotMatch(signup, /code=/);
+assert.doesNotMatch(signup, /482917/);
+assert.match(signup, /email=new%40example.com/);
 assert(signup.includes(encodeURIComponent('/welcome')));
 
 const noCode = buildEmailVerifyRedirect({ next: '/organiser/', email: 'a@b.com' });
