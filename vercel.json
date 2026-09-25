@@ -341,6 +341,10 @@
       "destination": "/events/booking-success.html"
     },
     {
+      "source": "/events/leave-review",
+      "destination": "/events/leave-review.html"
+    },
+    {
       "source": "/events/organiser",
       "destination": "/events/organiser.html"
     },
