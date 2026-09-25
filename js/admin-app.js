@@ -322,9 +322,9 @@
     'event-intake': {
       title: 'How to list an event request',
       steps: [
-        'Click Create listing (or the request card) to open the pre-filled form.',
-        'Check the dates, venue, and ticket price — we match their group by email, or create one if it is new.',
-        'Create listing publishes the event. Ticket sales stay closed.',
+        'New requests already include their organiser page. Click Create listing to add the event to that page.',
+        'Check the dates, venue, and ticket price. Create listing publishes the event. Ticket sales stay closed.',
+        'Older requests without a page: match the group by email, or create the listing to add the group.',
         'They sign in to add Stripe (if paid), VAT, refunds, and terms before sales open.',
         'Mark done if you listed it another way; Spam for junk.',
       ],
@@ -29136,13 +29136,25 @@
       '</div>' +
       '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Organiser / group</label>' +
       '<div class="ei-create-org-picker relative">' +
-      '<input type="hidden" name="organiser_id">' +
-      '<input type="search" class="ei-create-org-search w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Search by group name or email…" value="' +
-      attrEsc(row.groupName || '') +
+      '<input type="hidden" name="organiser_id" value="' +
+      attrEsc(row.organiserId || '') +
+      '">' +
+      '<input type="search" class="ei-create-org-search w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="' +
+      (row.organiserId ? 'Search to use a different group…' : 'Search by group name or email…') +
+      '" value="' +
+      attrEsc(row.organiserName || row.groupName || '') +
       '" autocomplete="off">' +
       '<div class="ei-create-org-results hidden absolute left-0 right-0 top-full mt-1 max-h-48 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg z-40"></div>' +
-      '<p class="ei-create-org-chosen hidden mt-1 text-xs text-brand-800"></p></div>' +
-      '<p class="text-[11px] text-slate-500 mt-1">We match by email first. If this group is not on The Networker UK yet, creating the listing will add it from this request.</p></div>' +
+      '<p class="ei-create-org-chosen' +
+      (row.organiserId ? '' : ' hidden') +
+      ' mt-1 text-xs text-brand-800">' +
+      (row.organiserId ? 'Using: ' + esc(row.organiserName || row.groupName || 'organiser page') : '') +
+      '</p></div>' +
+      '<p class="text-[11px] text-slate-500 mt-1">' +
+      (String(row.organiserId || '').trim()
+        ? 'This request is already on their organiser page. Creating the listing only adds the event.'
+        : 'Older request with no organiser page. We match by email first. If this group is not on The Networker UK yet, creating the listing will add it from this request.') +
+      '</p></div>' +
       '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1">Title</label>' +
       '<input type="text" name="title" required class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" value="' +
       attrEsc(row.eventTitle || '') +
@@ -29266,7 +29278,7 @@
       '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-3">' +
       '<div class="flex flex-wrap items-start justify-between gap-3">' +
       '<div><h3 class="font-bold text-brand-900">Event requests</h3>' +
-      '<p class="text-xs text-slate-500 mt-1">Details sent via <a class="text-brand-700 hover:underline" href="/add-your-event" target="_blank" rel="noopener">/add-your-event</a>. Create the listing from the request — they finish Stripe (if paid), VAT, refunds, and terms before ticket sales open.</p></div>' +
+      '<p class="text-xs text-slate-500 mt-1">Details sent via <a class="text-brand-700 hover:underline" href="/add-your-event" target="_blank" rel="noopener">/add-your-event</a>. They create an organiser page first — Create listing adds the event to that page. Ticket sales stay closed until they confirm Stripe (if paid), VAT, refunds, and terms.</p></div>' +
       '<div class="flex flex-wrap gap-2">' +
       '<a href="#cleanup/requests?view=open" class="rounded-lg border text-xs font-semibold px-3 py-1.5 ' +
       (eventIntakeFilter === 'open'
@@ -29400,11 +29412,15 @@
                   btnClass +
                   ' border-slate-300 bg-white text-slate-700 hover:bg-slate-50" data-ei-find-organiser="1" data-ei-find-id="' +
                   attrEsc(row.id) +
+                  '" data-ei-organiser-id="' +
+                  attrEsc(row.organiserId || '') +
                   '" data-ei-group-name="' +
                   attrEsc(row.groupName || '') +
                   '" data-ei-email="' +
                   attrEsc(row.email || '') +
-                  '">Find organiser</button>';
+                  '">' +
+                  (row.organiserId ? 'Open organiser' : 'Find organiser') +
+                  '</button>';
 
                 var importBrandBtn = row.organiserWebsiteUrl
                   ? '<button type="button" class="' +
@@ -29415,6 +29431,8 @@
                     attrEsc(row.groupName || '') +
                     '" data-ei-email="' +
                     attrEsc(row.email || '') +
+                    '" data-ei-organiser-id="' +
+                    attrEsc(row.organiserId || '') +
                     '" data-ei-website="' +
                     attrEsc(row.organiserWebsiteUrl || '') +
                     '">Import logo + description</button>'
@@ -29436,6 +29454,17 @@
                   (row.groupName
                     ? '<p class="text-sm text-slate-700">' + esc(row.groupName) + '</p>'
                     : '') +
+                  (row.organiserId
+                    ? '<p class="text-sm text-brand-800">Organiser page: ' +
+                      (row.organiserPageUrl
+                        ? '<a class="text-brand-700 hover:underline" href="' +
+                          attrEsc(row.organiserPageUrl) +
+                          '" target="_blank" rel="noopener">' +
+                          esc(row.organiserName || row.groupName || 'View page') +
+                          '</a>'
+                        : esc(row.organiserName || row.groupName || 'Linked')) +
+                      '</p>'
+                    : '<p class="text-sm text-amber-800">No organiser page on this request. Match or create the group, then add the event.</p>') +
                   '</div></div>' +
                   '<dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-sm text-slate-700">' +
                   '<div><dt class="text-xs uppercase tracking-wide text-slate-500">Contact</dt><dd>' +
@@ -30083,6 +30112,11 @@
     },
     findOrganiser: function (btn, e) {
       if (!eiOnce(btn, e)) return;
+      var linkedId = String(btn.getAttribute('data-ei-organiser-id') || '').trim();
+      if (linkedId) {
+        location.replace('#cleanup/groups?organiser=' + encodeURIComponent(linkedId));
+        return;
+      }
       var findEmail = String(btn.getAttribute('data-ei-email') || '').trim();
       var findName = String(btn.getAttribute('data-ei-group-name') || '').trim();
       var findQueries = [];
@@ -30124,16 +30158,20 @@
       if (!eiOnce(btn, e)) return;
       var q2 = String(btn.getAttribute('data-ei-group-name') || '').trim();
       var importEmail = String(btn.getAttribute('data-ei-email') || '').trim();
+      var linkedOrganiserId = String(btn.getAttribute('data-ei-organiser-id') || '').trim();
       var website = String(btn.getAttribute('data-ei-website') || '').trim();
       if (!website) {
         window.alert('Missing website URL.');
         return;
       }
       var importQueries = [];
-      if (importEmail) importQueries.push(searchIntakeOrganisers(importEmail));
-      if (q2) importQueries.push(searchIntakeOrganisers(q2));
+      if (!linkedOrganiserId) {
+        if (importEmail) importQueries.push(searchIntakeOrganisers(importEmail));
+        if (q2) importQueries.push(searchIntakeOrganisers(q2));
+      }
       Promise.all(importQueries.length ? importQueries : [Promise.resolve([])])
         .then(function (results) {
+          if (linkedOrganiserId) return { id: linkedOrganiserId };
           var merged = [];
           var seen = {};
           results.forEach(function (list) {
@@ -30145,6 +30183,9 @@
           });
           var organiser = pickIntakeOrganiser(merged, importEmail, q2) || merged[0];
           if (!organiser) throw new Error('No group profile yet. Create the listing first — that adds the group.');
+          return organiser;
+        })
+        .then(function (organiser) {
           return adminPost('/api/admin/organisers', {
             action: 'fetch_website_meta',
             url: website,
@@ -30155,11 +30196,14 @@
               website: meta.url || website,
               description: meta.description || null,
               photo_url: meta.logo_url || meta.logoUrl || null,
+            }).then(function () {
+              return organiser;
             });
-          }).then(function () {
-            window.alert('Brand details imported. Opening organiser profile…');
-            location.replace('#cleanup/groups?organiser=' + encodeURIComponent(organiser.id));
           });
+        })
+        .then(function (organiser) {
+          window.alert('Brand details imported. Opening organiser profile…');
+          location.replace('#cleanup/groups?organiser=' + encodeURIComponent(organiser.id));
         })
         .catch(function (err) {
           window.alert((err && err.message) || 'Could not import organiser brand.');

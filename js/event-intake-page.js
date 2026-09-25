@@ -92,16 +92,87 @@
   var ticketLabel = document.getElementById('ei-ticket-details-label');
   var trialWrap = document.getElementById('ei-trial-details-wrap');
   var sessionUser = null;
+  var organiserPages = [];
+  var groupsState = 'idle';
 
   function authNextPath() {
     return window.location.pathname + window.location.search + window.location.hash;
   }
 
+  function organiserCreateHref() {
+    return '/organiser/group-edit?next=' + encodeURIComponent(authNextPath());
+  }
+
+  function escAttr(value) {
+    return String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;');
+  }
+
+  function escText(value) {
+    return String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  function selectedOrganiser() {
+    var select = document.getElementById('ei-organiser');
+    var id = select ? String(select.value || '') : '';
+    for (var i = 0; i < organiserPages.length; i++) {
+      if (organiserPages[i] && organiserPages[i].id === id) return organiserPages[i];
+    }
+    return null;
+  }
+
+  function syncOrganiserFields() {
+    var page = selectedOrganiser();
+    var groupInput = document.getElementById('ei-group');
+    var hint = document.getElementById('ei-organiser-hint');
+    var website = form.querySelector('[name="organiserWebsiteUrl"]');
+    if (groupInput) groupInput.value = page ? String(page.name || '').trim() : '';
+    if (hint) {
+      hint.textContent =
+        organiserPages.length > 1
+          ? 'We add this event to the page you choose.'
+          : 'We add this event to this page.';
+    }
+    if (website && page && page.website && website.dataset.userEdited !== '1') {
+      website.value = String(page.website || '').trim();
+    }
+  }
+
+  function renderOrganiserOptions() {
+    var select = document.getElementById('ei-organiser');
+    if (!select) return;
+    var current = select.value;
+    select.innerHTML = organiserPages
+      .map(function (page) {
+        var id = page && page.id ? String(page.id) : '';
+        if (!id) return '';
+        return (
+          '<option value="' +
+          escAttr(id) +
+          '">' +
+          escText((page && page.name) || 'Organiser page') +
+          '</option>'
+        );
+      })
+      .join('');
+    if (current && organiserPages.some(function (page) { return page && page.id === current; })) {
+      select.value = current;
+    }
+    syncOrganiserFields();
+  }
+
   function applyAuthUi() {
     var signedIn = Boolean(sessionUser && sessionUser.email);
+    var needPage = document.getElementById('ei-need-page');
+    var checking = document.getElementById('ei-checking-page');
+    var createLink = document.getElementById('ei-create-page');
     if (signinEl) signinEl.hidden = signedIn;
-    form.hidden = !signedIn;
-    if (submitBtn) submitBtn.disabled = !signedIn;
+    if (createLink) createLink.href = organiserCreateHref();
 
     var next = authNextPath();
     var loginLink = document.getElementById('ei-login-link');
@@ -112,11 +183,91 @@
         '/register?intent=organiser&next=' + encodeURIComponent(next);
     }
 
-    if (!signedIn) return;
+    if (!signedIn) {
+      form.hidden = true;
+      if (needPage) needPage.hidden = true;
+      if (checking) checking.hidden = true;
+      if (submitBtn) submitBtn.disabled = true;
+      return;
+    }
     if (emailEl) emailEl.value = String(sessionUser.email || '').trim();
     if (nameEl && !String(nameEl.value || '').trim() && sessionUser.name) {
       nameEl.value = String(sessionUser.name).trim();
     }
+
+    if (groupsState === 'loading' || groupsState === 'idle') {
+      form.hidden = true;
+      if (needPage) needPage.hidden = true;
+      if (checking) {
+        checking.hidden = groupsState !== 'idle';
+        checking.textContent = 'Checking your organiser page…';
+      }
+      if (submitBtn) submitBtn.disabled = true;
+      return;
+    }
+
+    if (groupsState === 'error') {
+      form.hidden = true;
+      if (needPage) needPage.hidden = true;
+      if (checking) {
+        checking.hidden = false;
+        checking.textContent = 'Could not load your organiser pages. Refresh and try again.';
+      }
+      if (submitBtn) submitBtn.disabled = true;
+      return;
+    }
+
+    if (checking) {
+      checking.hidden = true;
+      checking.textContent = 'Checking your organiser page…';
+    }
+
+    var hasPage = organiserPages.length > 0;
+    if (needPage) needPage.hidden = hasPage;
+    form.hidden = !hasPage;
+    if (submitBtn) submitBtn.disabled = !hasPage;
+    if (hasPage) renderOrganiserOptions();
+  }
+
+  function loadOrganiserPages() {
+    if (!sessionUser || !sessionUser.email) {
+      organiserPages = [];
+      groupsState = 'idle';
+      applyAuthUi();
+      return Promise.resolve();
+    }
+    groupsState = 'loading';
+    applyAuthUi();
+    return fetch('/api/organiser/groups', { credentials: 'include' })
+      .then(function (res) {
+        return res.json().then(function (data) {
+          return { ok: res.ok, status: res.status, data: data };
+        });
+      })
+      .then(function (result) {
+        var data = result.data || {};
+        if (!result.ok || data.ok === false || data.error) {
+          if (data.error === 'not_authenticated' || result.status === 401) {
+            sessionUser = null;
+            organiserPages = [];
+            groupsState = 'idle';
+            applyAuthUi();
+            return;
+          }
+          organiserPages = [];
+          groupsState = 'error';
+          applyAuthUi();
+          return;
+        }
+        organiserPages = Array.isArray(data.groups) ? data.groups : [];
+        groupsState = 'ready';
+        applyAuthUi();
+      })
+      .catch(function () {
+        organiserPages = [];
+        groupsState = 'error';
+        applyAuthUi();
+      });
   }
 
   function loadSession() {
@@ -141,8 +292,19 @@
         return null;
       })
       .then(function () {
-        applyAuthUi();
+        return loadOrganiserPages();
       });
+  }
+
+  var organiserSelect = document.getElementById('ei-organiser');
+  if (organiserSelect) {
+    organiserSelect.addEventListener('change', syncOrganiserFields);
+  }
+  var websiteInput = form.querySelector('[name="organiserWebsiteUrl"]');
+  if (websiteInput) {
+    websiteInput.addEventListener('input', function () {
+      websiteInput.dataset.userEdited = '1';
+    });
   }
 
   loadSession();
@@ -387,6 +549,15 @@
       return;
     }
 
+    var organiserPage = selectedOrganiser();
+    if (!organiserPage || !organiserPage.id) {
+      organiserPages = [];
+      groupsState = 'ready';
+      applyAuthUi();
+      setStatus('Create your organiser page before sending event details.', 'error');
+      return;
+    }
+
     if (!selectedDateKeys().length) {
       setStatus('Click at least one date on the calendar.', 'error');
       var cal = document.querySelector('.ei-calendar');
@@ -399,7 +570,8 @@
       name: String(fd.get('name') || sessionUser.name || '').trim(),
       email: String(sessionUser.email || '').trim(),
       phone: String(fd.get('phone') || '').trim(),
-      group: String(fd.get('group') || '').trim(),
+      organiserId: organiserPage.id,
+      group: String(organiserPage.name || fd.get('group') || '').trim(),
       organiserWebsiteUrl: String(fd.get('organiserWebsiteUrl') || '').trim(),
       title: String(fd.get('title') || '').trim(),
       dates: String(fd.get('dates') || '').trim(),
@@ -454,11 +626,19 @@
           syncFormat();
           syncPayHow();
           syncTrial();
+          if (websiteInput) delete websiteInput.dataset.userEdited;
           applyAuthUi();
           return;
         }
         if (result.data && result.data.error === 'not_authenticated') {
           sessionUser = null;
+          organiserPages = [];
+          groupsState = 'idle';
+          applyAuthUi();
+        }
+        if (result.data && result.data.error === 'missing_organiser_page') {
+          organiserPages = [];
+          groupsState = 'ready';
           applyAuthUi();
         }
         setStatus(

@@ -69,47 +69,22 @@ html:has(.event-intake-page) {
     transition: none;
   }
 
-  .ei-hero-orb,
-  .ei-hero-media img {
+  .ei-hero-orb {
     animation: none !important;
   }
 }
 
-/* Hero — full-bleed networking photo + brand-first copy */
+/* Hero — short text header, same palette as the form */
 .ei-hero {
   position: relative;
-  min-height: min(72vh, 640px);
   display: flex;
-  align-items: flex-end;
-  padding: clamp(72px, 12vw, 120px) clamp(20px, 4vw, 32px) clamp(40px, 6vw, 64px);
+  align-items: flex-start;
+  padding: clamp(28px, 4vw, 48px) clamp(20px, 4vw, 32px) clamp(28px, 4vw, 40px);
   overflow: hidden;
-  color: #fff;
+  color: var(--ei-ink);
+  background: linear-gradient(155deg, #fff 0%, var(--ei-teal-pale) 48%, #eef6f8 100%);
+  border-bottom: 1px solid var(--ei-line);
   isolation: isolate;
-}
-
-.ei-hero-media {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-}
-
-.ei-hero-media img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center 35%;
-  display: block;
-  transform: scale(1.04);
-  animation: ei-hero-ken 22s ease-in-out infinite alternate;
-}
-
-.ei-hero-media::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(180deg, rgba(8, 40, 48, 0.35) 0%, rgba(8, 40, 48, 0.55) 42%, rgba(8, 40, 48, 0.88) 100%),
-    linear-gradient(90deg, rgba(8, 40, 48, 0.55) 0%, transparent 55%);
 }
 
 .ei-hero-orb {
@@ -120,26 +95,21 @@ html:has(.event-intake-page) {
 }
 
 .ei-hero-orb--1 {
-  width: min(380px, 55vw);
-  height: min(380px, 55vw);
-  top: -120px;
+  width: min(320px, 48vw);
+  height: min(320px, 48vw);
+  top: -140px;
   right: -80px;
-  background: radial-gradient(circle, rgba(189, 147, 46, 0.28) 0%, transparent 68%);
+  background: radial-gradient(circle, rgba(13, 110, 122, 0.14) 0%, transparent 68%);
   animation: ei-orb-drift 16s ease-in-out infinite;
 }
 
 .ei-hero-orb--2 {
-  width: min(240px, 40vw);
-  height: min(240px, 40vw);
-  bottom: 10%;
+  width: min(200px, 36vw);
+  height: min(200px, 36vw);
+  bottom: -70px;
   left: -40px;
-  background: radial-gradient(circle, rgba(13, 110, 122, 0.35) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(189, 147, 46, 0.12) 0%, transparent 70%);
   animation: ei-orb-drift 20s ease-in-out infinite reverse;
-}
-
-@keyframes ei-hero-ken {
-  from { transform: scale(1.04) translate(0, 0); }
-  to { transform: scale(1.1) translate(-1.5%, -1%); }
 }
 
 @keyframes ei-orb-drift {
@@ -163,30 +133,34 @@ html:has(.event-intake-page) {
 .ei-hero-brand {
   margin: 0 0 10px;
   font-family: 'DM Serif Display', Georgia, serif;
-  font-size: clamp(1.65rem, 3.4vw, 2.35rem);
+  font-size: clamp(1.35rem, 2.4vw, 1.7rem);
   font-weight: 400;
   letter-spacing: -0.02em;
   line-height: 1.1;
-  color: #fff;
-  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.35);
+  color: var(--ei-teal-deep);
 }
 
 .ei-hero-kicker {
+  display: inline-block;
   margin: 0 0 12px;
+  padding: 6px 12px;
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(253, 243, 223, 0.92);
+  color: var(--ei-teal-dark);
+  background: rgba(13, 110, 122, 0.08);
+  border: 1px solid rgba(13, 110, 122, 0.18);
+  border-radius: 999px;
 }
 
 .ei-hero h1 {
   margin: 0 0 14px;
   font-family: 'DM Serif Display', Georgia, serif;
-  font-size: clamp(2rem, 4.5vw, 3rem);
+  font-size: clamp(2rem, 4.2vw, 2.75rem);
   font-weight: 400;
   line-height: 1.12;
-  color: #fff;
+  color: var(--ei-ink);
   max-width: 14em;
 }
 
@@ -195,7 +169,7 @@ html:has(.event-intake-page) {
   max-width: 32em;
   font-size: 1.08rem;
   line-height: 1.6;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--ei-muted);
 }
 
 .ei-hero-actions {
@@ -217,22 +191,22 @@ html:has(.event-intake-page) {
 }
 
 .ei-hero-actions .btn-secondary {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.45);
-  color: #fff !important;
-  backdrop-filter: blur(6px);
+  background: #fff;
+  border: 1.5px solid var(--ei-line);
+  color: var(--ei-ink) !important;
 }
 
 .ei-hero-actions .btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.2);
-  border-color: rgba(255, 255, 255, 0.65);
+  background: var(--ei-teal-pale);
+  border-color: var(--ei-teal);
+  color: var(--ei-teal-dark) !important;
 }
 
 .ei-hero-trust {
   margin: 0;
   font-size: 0.88rem;
   line-height: 1.5;
-  color: rgba(255, 255, 255, 0.78);
+  color: var(--ei-muted);
 }
 
 /* Layout */
@@ -338,6 +312,25 @@ html:has(.event-intake-page) {
   color: var(--ei-teal-dark);
   text-decoration: underline;
   text-underline-offset: 2px;
+}
+
+.ei-need-page p {
+  margin: 0 0 14px;
+}
+
+.ei-need-page .btn {
+  display: inline-flex;
+  text-decoration: none;
+}
+
+.ei-organiser-hint {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ei-muted);
 }
 
 .ei-form-panel {
@@ -818,8 +811,7 @@ html:has(.event-intake-page) {
 
 @media (max-width: 800px) {
   .ei-hero {
-    min-height: min(62vh, 520px);
-    align-items: flex-end;
+    align-items: flex-start;
   }
 
   .ei-layout {

@@ -31,7 +31,7 @@
 <link rel="icon" href="/assets/favicon-32.png?v=20260823uk" type="image/png" sizes="32x32">
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png?v=20260823uk">
 <link rel="stylesheet" href="css/hub-mobile.css?v=20260909listmenu1" />
-<link rel="stylesheet" href="css/event-intake-page.css?v=20260922jazz1">
+<link rel="stylesheet" href="css/event-intake-page.css?v=20260925hero1">
 <link rel="stylesheet" href="css/hub-field-tip.css?v=20260711">
 <script src="js/hub-seo-static-config.js?v=20260811a"></script>
 <script src="js/hub-seo-static.js?v=20260612" data-page="add-your-event"></script>
@@ -45,16 +45,6 @@
 
 <main class="ei-main">
   <header class="ei-hero ei-reveal is-visible" aria-labelledby="ei-hero-heading">
-    <div class="ei-hero-media" aria-hidden="true">
-      <img
-        src="/assets/hero-networking.jpg"
-        alt=""
-        width="1600"
-        height="900"
-        decoding="async"
-        fetchpriority="high"
-      >
-    </div>
     <span class="ei-hero-orb ei-hero-orb--1" aria-hidden="true"></span>
     <span class="ei-hero-orb ei-hero-orb--2" aria-hidden="true"></span>
     <div class="ei-hero-inner">
@@ -62,7 +52,7 @@
       <p class="ei-hero-kicker ei-reveal-child">For organisers</p>
       <h1 id="ei-hero-heading" class="ei-reveal-child">Send us your event details</h1>
       <p class="ei-hero-lede ei-reveal-child">
-        Sign in once — Catherine or Jamie will list it for you, usually within one business day.
+        Create your organiser page, then send the event details. We add the event to that page — usually within one business day.
       </p>
       <div class="ei-hero-actions ei-reveal-child">
         <a class="btn btn-primary" href="#ei-form-panel">Send event details</a>
@@ -77,13 +67,12 @@
       <h2>What happens next</h2>
       <ol class="ei-steps">
         <li><span class="ei-step-num" aria-hidden="true">1</span><span>Sign in (or create a free account)</span></li>
-        <li><span class="ei-step-num" aria-hidden="true">2</span><span>Send the essentials below</span></li>
-        <li><span class="ei-step-num" aria-hidden="true">3</span><span>We create the listing on your group page</span></li>
-        <li><span class="ei-step-num" aria-hidden="true">4</span><span>We email you when it&rsquo;s live</span></li>
+        <li><span class="ei-step-num" aria-hidden="true">2</span><span>Create your organiser page, if you don&rsquo;t have one</span></li>
+        <li><span class="ei-step-num" aria-hidden="true">3</span><span>Send the event details below</span></li>
+        <li><span class="ei-step-num" aria-hidden="true">4</span><span>We add the event to that page and email you</span></li>
       </ol>
       <p class="ei-aside-note">
-        Prefer to manage events yourself later? Claim your organiser page anytime from
-        <a href="/for-organisers">For organisers</a>.
+        The organiser page has to exist first. Then we only add the event — logo, name, and website stay on the page you already created.
       </p>
       <div class="ei-book">
         <h2>Prefer to talk it through?</h2>
@@ -109,6 +98,11 @@
         <a href="/register" id="ei-register-link">create a free account</a>
         to send your event details — it only takes 2 minutes.
       </p>
+      <p class="ei-signin" id="ei-checking-page" hidden>Checking your organiser page…</p>
+      <div class="ei-signin ei-need-page" id="ei-need-page" hidden>
+        <p><strong>Create your organiser page first.</strong> We add the event to that page, so it needs to exist before you send the details.</p>
+        <a class="btn btn-primary" id="ei-create-page" href="/organiser/group-edit?next=%2Fadd-your-event">Create organiser page</a>
+      </div>
       <form class="ei-form" id="ei-form" novalidate hidden>
         <div class="ei-honeypot" inert aria-hidden="true">
           <label>Website <input type="text" name="website" tabindex="-1" autocomplete="off"></label>
@@ -133,10 +127,12 @@
               <span>Organiser website URL <span class="ei-optional">(optional)</span></span>
               <input type="url" name="organiserWebsiteUrl" placeholder="https://yourorganiser.co.uk">
             </label>
-            <label class="ei-field ei-field--full">
-              <span>Group / organiser name</span>
-              <input type="text" name="group" autocomplete="organization" required placeholder="e.g. Liverpool Business Network">
-            </label>
+            <div class="ei-field ei-field--full" id="ei-organiser-field">
+              <span>Organiser page</span>
+              <select name="organiserId" id="ei-organiser" required></select>
+              <p class="ei-organiser-hint" id="ei-organiser-hint">We add this event to the page you choose.</p>
+              <input type="hidden" name="group" id="ei-group" value="">
+            </div>
           </div>
         </fieldset>
 
@@ -340,7 +336,7 @@
           We use these details to create or update your listing and to email you when it is live.
           See our <a href="/legal-policies#privacy">privacy policy</a>.
           Request deletion anytime via <a href="mailto:hi@thenetworkeruk.com">hi@thenetworkeruk.com</a>.
-          A free account is required to send this form.
+          A free account and an organiser page are required to send this form.
         </p>
       </form>
     </section>
@@ -350,7 +346,7 @@
 <div id="hub-site-footer"></div>
 <script src="js/site-footer.js?v=20260910pp1" data-root=""></script>
 <script src="js/hub-turnstile.js?v=20260827sec1"></script>
-<script src="js/event-intake-page.js?v=20260922jazz1"></script>
+<script src="js/event-intake-page.js?v=20260925orgpage1"></script>
 <script src="js/hub-field-tip.js?v=20260814intake1"></script>
 </body>
 </html>

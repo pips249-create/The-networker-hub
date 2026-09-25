@@ -3,6 +3,7 @@
  */
 const { requireAdmin, json, setCors, sessionFromRequest } = require('../auth');
 const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
+const { publicOrganiserSlug } = require('../organiser-slug');
 
 function mapRow(row) {
   return {
@@ -11,6 +12,10 @@ function mapRow(row) {
     email: row.email,
     phone: row.phone || null,
     groupName: row.group_name,
+    organiserId: row.organiser_id || null,
+    organiserName: row.organiser_name || null,
+    organiserSlug: row.organiser_slug || null,
+    organiserPageUrl: row.organiser_page_url || null,
     organiserWebsiteUrl: row.organiser_website_url || null,
     eventTitle: row.event_title,
     eventDates: row.event_dates,
@@ -41,8 +46,44 @@ function mapRow(row) {
 }
 
 const INTAKE_SELECT =
-  'id, contact_name, email, phone, group_name, organiser_website_url, event_title, event_dates, start_time, end_time, format, venue, address_line1, city, postcode, meeting_link, attendance_door, pay_how, max_places, free_trial_visits, free_trial_details, pricing, ticket_details, description, photo_url, notes, status, source, created_at, resolved_at, resolved_by';
-const INTAKE_SELECT_LEGACY = INTAKE_SELECT.replace('pay_how, max_places, ', 'pay_how, ');
+  'id, contact_name, email, phone, organiser_id, group_name, organiser_website_url, event_title, event_dates, start_time, end_time, format, venue, address_line1, city, postcode, meeting_link, attendance_door, pay_how, max_places, free_trial_visits, free_trial_details, pricing, ticket_details, description, photo_url, notes, status, source, created_at, resolved_at, resolved_by';
+const INTAKE_SELECT_NO_ORG = INTAKE_SELECT.replace('organiser_id, ', '');
+const INTAKE_SELECT_LEGACY = INTAKE_SELECT_NO_ORG.replace('pay_how, max_places, ', 'pay_how, ');
+
+function organiserPagePath(row) {
+  const slug = publicOrganiserSlug(row);
+  if (slug) return '/organisers/' + encodeURIComponent(slug);
+  const id = String((row && row.id) || '').trim();
+  if (id) return '/events/organiser?id=' + encodeURIComponent(id);
+  return '';
+}
+
+async function attachOrganiserPages(sb, submissions) {
+  const ids = [
+    ...new Set(
+      (submissions || [])
+        .map((row) => String(row.organiserId || '').trim())
+        .filter(Boolean)
+    ),
+  ];
+  if (!ids.length) return submissions;
+  const { data, error } = await sb.from('organisers').select('id, name, slug, website').in('id', ids);
+  if (error) return submissions;
+  const byId = {};
+  (data || []).forEach((row) => {
+    if (row && row.id) byId[row.id] = row;
+  });
+  return submissions.map((row) => {
+    const org = byId[row.organiserId];
+    if (!org) return row;
+    return Object.assign({}, row, {
+      organiserName: String(org.name || row.groupName || '').trim() || row.groupName,
+      organiserSlug: publicOrganiserSlug(org) || null,
+      organiserPageUrl: organiserPagePath(org) || null,
+      organiserWebsiteUrl: row.organiserWebsiteUrl || String(org.website || '').trim() || null,
+    });
+  });
+}
 
 async function listEventIntake(limit, status) {
   const sb = getSupabaseAdmin();
@@ -62,6 +103,9 @@ async function listEventIntake(limit, status) {
   }
 
   let res = await run(INTAKE_SELECT);
+  if (res.error && /organiser_id/i.test(res.error.message || '')) {
+    res = await run(INTAKE_SELECT_NO_ORG);
+  }
   if (res.error && /max_places/i.test(res.error.message || '')) {
     res = await run(INTAKE_SELECT_LEGACY);
   }
@@ -74,7 +118,7 @@ async function listEventIntake(limit, status) {
     throw new Error(res.error.message);
   }
 
-  const submissions = (res.data || []).map(mapRow);
+  const submissions = await attachOrganiserPages(sb, (res.data || []).map(mapRow));
   const openCount = submissions.filter((row) => row.status === 'open').length;
 
   return {
@@ -112,6 +156,17 @@ async function updateEventIntakeStatus(id, status, session) {
     .select(INTAKE_SELECT)
     .single();
 
+  if (error && /organiser_id/i.test(error.message || '')) {
+    const withoutOrg = await sb
+      .from('event_intake_submissions')
+      .update(patch)
+      .eq('id', id)
+      .select(INTAKE_SELECT_NO_ORG)
+      .single();
+    data = withoutOrg.data;
+    error = withoutOrg.error;
+  }
+
   if (error && /max_places/i.test(error.message || '')) {
     const retry = await sb
       .from('event_intake_submissions')
@@ -124,7 +179,8 @@ async function updateEventIntakeStatus(id, status, session) {
   }
 
   if (error) throw new Error(error.message);
-  return { ok: true, submission: mapRow(data) };
+  const [submission] = await attachOrganiserPages(sb, [mapRow(data)]);
+  return { ok: true, submission };
 }
 
 function parseBody(req) {

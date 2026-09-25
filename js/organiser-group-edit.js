@@ -45,6 +45,19 @@
     return Boolean(config && config.embedded);
   }
 
+  /** Same-origin path only. Used to return to /add-your-event after the organiser page is created. */
+  function safeInternalNext(raw) {
+    const path = String(raw || '').trim();
+    if (!path.startsWith('/') || path.startsWith('//')) return '';
+    if (/[\s\\]/.test(path) || path.indexOf('://') !== -1) return '';
+    if (path.length > 300) return '';
+    return path;
+  }
+
+  function returnNextPath() {
+    return (config && config.returnNext) || '';
+  }
+
   function getEditId() {
     return (config && config.editId) || '';
   }
@@ -1039,6 +1052,17 @@
         return;
       }
 
+      const nextPath = returnNextPath();
+      const onboardFlow = Boolean(onboardReview || launchSetup);
+      if (nextPath && !onboardFlow) {
+        keepBusy = true;
+        setActionBusy(triggerBtn, true, 'Continuing…');
+        setTimeout(function () {
+          location.href = nextPath;
+        }, delay);
+        return;
+      }
+
       if (continueToEvent || onboardReview || launchSetup) stashGroupContinue(saved && saved.id);
       if (continueToEvent || onboardReview || launchSetup) {
         keepBusy = true;
@@ -1070,7 +1094,11 @@
 
     if (!isEmbedded()) {
       const backLink = getRoot().querySelector('.ee-back');
-      if (backLink && window.HubOrganiserActions) {
+      const nextPath = returnNextPath();
+      if (backLink && nextPath) {
+        backLink.href = nextPath;
+        backLink.textContent = '← Back to event details';
+      } else if (backLink && window.HubOrganiserActions) {
         window.HubOrganiserActions.applyBrowseReturnBack(
           backLink,
           '/organiser/#groups',
@@ -1086,8 +1114,11 @@
         showAlert('Your session expired — refresh the page and sign in again.');
         return;
       }
-      const nextPath =
-        '/organiser/group-edit' + (editId ? '?id=' + encodeURIComponent(editId) : '');
+      const loginNext = new URLSearchParams();
+      if (editId) loginNext.set('id', editId);
+      if (returnNextPath()) loginNext.set('next', returnNextPath());
+      const loginQuery = loginNext.toString();
+      const nextPath = '/organiser/group-edit' + (loginQuery ? '?' + loginQuery : '');
       location.href = '../login?next=' + encodeURIComponent(nextPath);
       return;
     }
@@ -1285,6 +1316,7 @@
       onboardReview: Boolean(options.onboardReview),
       onboardLaunch: Boolean(options.onboardLaunch),
       embedded: Boolean(options.embedded),
+      returnNext: safeInternalNext(options.returnNext || ''),
       onClose: options.onClose || null,
       onSaved: options.onSaved || null,
       onContinue: options.onContinue || null,
@@ -1374,6 +1406,7 @@
       editId: params.get('id') || '',
       onboardReview: onboard === 'review' || onboard === 'launch',
       onboardLaunch: onboard === 'launch',
+      returnNext: safeInternalNext(params.get('next') || ''),
     });
     if (!params.get('id') && window.HubFlowTour) {
       window.HubFlowTour.startGroupTour({ isEdit: false, delay: 0 });
