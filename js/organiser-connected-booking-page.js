@@ -84,7 +84,7 @@
   }
 
   function loginNextUrl() {
-    return '/login?next=' + encodeURIComponent('/organiser/connected-booking') + '&intent=organiser';
+    return '/login?next=' + encodeURIComponent('/organiser/#connected-booking') + '&intent=organiser';
   }
 
   function friendlyApiError(data) {
@@ -469,5 +469,28 @@
   }
 
   window.refreshOrganiserConnectedBooking = loadConnectedBookingAccount;
+
+  var gotoPricing = document.getElementById('cb-goto-pricing');
+  if (gotoPricing && !gotoPricing.dataset.bound) {
+    gotoPricing.dataset.bound = '1';
+    gotoPricing.addEventListener('click', function () {
+      var el = document.getElementById('cb-pricing');
+      if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+
+  try {
+    var scrollTarget = sessionStorage.getItem('cb_workspace_scroll');
+    if (scrollTarget) {
+      sessionStorage.removeItem('cb_workspace_scroll');
+      requestAnimationFrame(function () {
+        var el = document.getElementById(scrollTarget);
+        if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+  } catch (eScroll) {
+    /* ignore */
+  }
+
   loadConnectedBookingAccount();
 })();

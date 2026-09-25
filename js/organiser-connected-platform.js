@@ -10,7 +10,7 @@
       hint:
         'Paste a <strong>checkout</strong> link in the field above — your public <strong>/e/…</strong> URL is fine; we send buyers to checkout when we can. ' +
         'First time only: enable <strong>Eventbrite</strong> on ' +
-        '<a href="/organiser/connected-booking#cb-providers-title">Connected booking → Booking providers</a> and add our webhook in Eventbrite. ' +
+        '<a href="/organiser/#cb-providers-title">Connected booking → Booking providers</a> and add our webhook in Eventbrite. ' +
         'Then link your Eventbrite event id below (we fill it from the URL when possible).',
     },
     ticket_tailor: {
@@ -27,7 +27,7 @@
       placeholder: 'https://lu.ma/…',
       hint:
         'Paste your Luma link in the field above. Enable <strong>Luma</strong> on ' +
-        '<a href="/organiser/connected-booking#cb-providers-title">Booking providers</a> and link the Luma event id below.',
+        '<a href="/organiser/#cb-providers-title">Booking providers</a> and link the Luma event id below.',
     },
     trybooking: {
       label: 'TryBooking',
@@ -35,7 +35,7 @@
       placeholder: 'https://…',
       hint:
         'Paste your TryBooking event URL in the field above. Enable <strong>TryBooking</strong> on ' +
-        '<a href="/organiser/connected-booking#cb-providers-title">Booking providers</a> and link the TryBooking event id below.',
+        '<a href="/organiser/#cb-providers-title">Booking providers</a> and link the TryBooking event id below.',
     },
     own_site: {
       label: 'Your own website',
@@ -43,7 +43,7 @@
       placeholder: 'https://yourdomain.com/book/…',
       hint:
         'Paste your checkout URL in the field above. Enable <strong>Your own website</strong> on ' +
-        '<a href="/organiser/connected-booking#cb-providers-title">Booking providers</a> so each sale POSTs to us — no Zapier required.',
+        '<a href="/organiser/#cb-providers-title">Booking providers</a> so each sale POSTs to us — no Zapier required.',
     },
     custom: {
       label: 'Other / Zapier',
@@ -53,7 +53,7 @@
         'Use <strong>any</strong> checkout (Humanitix, Meetup, your CRM, etc.). Connect with ' +
         '<strong>Zapier</strong>, <strong>Make</strong>, or a small script — send each booking to our webhook with your TNH event id. ' +
         'Developers can use the signed <strong>HMAC</strong> API on Connected setup → Advanced. ' +
-        '<a href="/organiser/connected-booking#cb-webhook-title">Webhook docs</a>.',
+        '<a href="/organiser/#cb-webhook-title">Webhook docs</a>.',
     },
   };
 

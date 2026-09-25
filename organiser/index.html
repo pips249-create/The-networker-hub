@@ -72,7 +72,7 @@
               <span class="org-nav-badge org-nav-badge--action" id="org-payment-setup-nav-badge" hidden>Setup</span>
             </a>
             <a href="#groups" class="hub-side-nav-link" data-org-route="groups">Organiser pages</a>
-            <a href="/organiser/connected-booking" class="hub-side-nav-link" id="org-nav-connected-booking">
+            <a href="#connected-booking" class="hub-side-nav-link" id="org-nav-connected-booking" data-org-route="connected-booking">
               Connected booking
             </a>
             <a href="#memberships" class="hub-side-nav-link" id="org-nav-memberships" data-org-route="memberships" data-org-memberships-nav>
@@ -803,21 +803,96 @@
           <nav class="org-pagination" id="pagination-groups" data-list="groups" aria-label="Organiser pages" hidden></nav>
         </section>
 
-        <!-- Connected booking (webhooks, sync log, providers) -->
+        <!-- Connected booking (plan, webhooks, sync log, providers) — stays inside workspace -->
         <section class="org-page org-page--connected-booking" id="org-page-connected-booking" data-org-page="connected-booking">
           <header class="org-page-head org-page-head--split">
             <div class="org-page-head-text">
               <p class="org-page-kicker">Integrations</p>
               <h1 class="org-page-title">Connected booking</h1>
               <p class="org-page-lead">
-                Eventbrite and other checkout platforms send ticket sales here. Use <strong>Recent sync attempts</strong>
-                to debug when buyers do not appear on your attendee list. Per-event setup (Eventbrite URL, API token) stays
-                on each event’s <strong>Connected setup</strong> screen.
+                Subscribe here, enable <strong>Eventbrite</strong> or <strong>Ticket Tailor</strong> once per account, then
+                link each event on <strong>Connected setup</strong>. Use <strong>Recent sync attempts</strong> when buyers
+                do not appear on your attendee list.
               </p>
             </div>
-            <a class="org-btn org-btn-outline" href="/organiser/connected-booking#cb-pricing">Plans &amp; pricing</a>
+            <button type="button" class="org-btn org-btn-outline" id="cb-goto-pricing">Plans &amp; pricing</button>
           </header>
           <p class="ee-hint cb-auth-status" id="cb-auth-status" hidden role="status"></p>
+
+          <section class="ee-booking-help-section ee-booking-help-section--accent org-connected-pricing" id="cb-pricing" aria-labelledby="cb-plans-title">
+            <p class="cb-pricing-intro-badge">Introductory offer</p>
+            <h2 id="cb-plans-title" class="org-page-subtitle">Choose your plan</h2>
+            <p class="ee-hint">
+              One subscription per organiser account — each tier sets how many <strong>organiser pages</strong> can use
+              Connected (unlimited events). Prices ex VAT; 20% VAT at Stripe checkout.
+            </p>
+            <p class="ee-alert ee-alert-ok cb-checkout-banner" id="cb-checkout-banner" hidden role="status"></p>
+            <div class="cb-plan-cards cb-plan-cards--pricing" id="cb-pricing-compare">
+              <article class="cb-plan-card" data-cb-plan="starter">
+                <header class="cb-plan-card-head">
+                  <p class="cb-plan-card-name">Starter</p>
+                  <p class="cb-plan-card-price">
+                    <span class="cb-plan-card-amount">£19</span>
+                    <span class="cb-plan-card-vat">+ VAT / mo</span>
+                  </p>
+                  <p class="cb-plan-card-tagline">1 organiser page</p>
+                </header>
+                <ul class="cb-plan-card-features">
+                  <li>Unlimited event listings</li>
+                  <li>Eventbrite, Ticket Tailor, or your site</li>
+                  <li>Real-time webhook registration sync</li>
+                </ul>
+                <div class="cb-plan-card-foot">
+                  <button type="button" class="cb-plan-card-btn cb-subscribe-btn" data-cb-plan="starter">Subscribe</button>
+                </div>
+              </article>
+              <article class="cb-plan-card cb-plan-card--featured" data-cb-plan="growth">
+                <p class="cb-plan-card-badge">Most popular</p>
+                <header class="cb-plan-card-head">
+                  <p class="cb-plan-card-name">Growth</p>
+                  <p class="cb-plan-card-price">
+                    <span class="cb-plan-card-amount">£39</span>
+                    <span class="cb-plan-card-vat">+ VAT / mo</span>
+                  </p>
+                  <p class="cb-plan-card-tagline">Up to 5 organiser pages</p>
+                </header>
+                <ul class="cb-plan-card-features">
+                  <li>All Starter features</li>
+                  <li>Up to 5 organiser pages on Connected</li>
+                </ul>
+                <div class="cb-plan-card-foot">
+                  <button type="button" class="cb-plan-card-btn cb-plan-card-btn--primary cb-subscribe-btn" data-cb-plan="growth">Subscribe</button>
+                </div>
+              </article>
+              <article class="cb-plan-card" data-cb-plan="scale">
+                <header class="cb-plan-card-head">
+                  <p class="cb-plan-card-name">Scale</p>
+                  <p class="cb-plan-card-price">
+                    <span class="cb-plan-card-amount">£99</span>
+                    <span class="cb-plan-card-vat">+ VAT / mo</span>
+                  </p>
+                  <p class="cb-plan-card-tagline">Up to 20 organiser pages</p>
+                </header>
+                <ul class="cb-plan-card-features">
+                  <li>All Growth features</li>
+                  <li>For large networks and agencies</li>
+                </ul>
+                <div class="cb-plan-card-foot">
+                  <button type="button" class="cb-plan-card-btn cb-subscribe-btn" data-cb-plan="scale">Subscribe</button>
+                </div>
+              </article>
+            </div>
+            <div class="cb-poa-actions">
+              <button type="button" class="ee-btn ee-btn-outline" id="cb-manage-billing" hidden>Manage billing</button>
+              <a class="ee-btn ee-btn-outline" href="mailto:hi@thenetworkeruk.com?subject=Connected%20question">Questions? Email us</a>
+            </div>
+            <p class="ee-hint" id="cb-billing-tip">Sign in to subscribe. Payment is handled securely by Stripe.</p>
+            <p class="ee-hint ee-alert-warn" id="cb-slots-workspace-hint" hidden role="status">
+              Choose which organiser pages use Connected on
+              <a href="#groups" data-org-route="groups">Organiser pages</a> (tick your page(s) → Save assignment).
+            </p>
+          </section>
+
           <div class="ee-card org-connected-workspace-card">
             <p class="cb-plan-status" id="cb-plan-status"></p>
             <p class="ee-hint" id="cb-account-id-wrap" hidden>
@@ -830,12 +905,10 @@
               <button type="button" class="ee-btn ee-btn-outline" id="cb-rotate-secret">Generate new webhook secret</button>
             </div>
             <p class="ee-alert ee-alert-warn cb-secret-reveal" id="cb-secret-reveal" hidden role="status"></p>
-            <h2 class="cb-sync-title">Recent sync attempts</h2>
+            <h2 class="cb-sync-title" id="cb-sync-log-title">Recent sync attempts</h2>
             <p class="ee-hint">
-              Each line is one webhook from Eventbrite (or another provider). <code>eventbrite:accepted</code> means a
-              buyer was added. <code>webhook_ping</code> is only Eventbrite’s <strong>Test</strong> button — not a real
-              ticket. <code>invalid_webhook_token</code> means re-paste the Payload URL from Connected event setup into
-              Eventbrite.
+              Each line is one webhook from Eventbrite, Ticket Tailor, or your site.
+              <code>ticket_tailor:accepted</code> / <code>eventbrite:accepted</code> means a buyer was added.
             </p>
             <ul class="cb-sync-log" id="cb-sync-log"></ul>
           </div>
@@ -844,15 +917,18 @@
               <p class="ee-booking-help-kicker">Checkout platforms</p>
               <h2 id="cb-providers-title">Booking providers</h2>
               <p class="ee-hint">
-                Enable Eventbrite (or others) once per account. Link each TNH event on
-                <strong>Connected event setup</strong> when you publish.
+                Enable <strong>Eventbrite</strong>, <strong>Ticket Tailor</strong>, or <strong>Your own website</strong> once per
+                account. Link each TNH event on <strong>Connected setup</strong> when you publish.
               </p>
             </div>
             <p class="ee-hint ee-alert-warn" id="cb-providers-schema-warn" hidden role="status"></p>
             <ul class="cb-providers-list" id="cb-providers-list"></ul>
+            <div class="ee-card cb-event-links-card" id="cb-event-links-card" hidden>
+              <h3 class="cb-providers-link-title">Linked events on your account</h3>
+              <div class="cb-event-links-table-wrap" id="cb-event-links-table-wrap"></div>
+            </div>
             <div class="ee-card cb-providers-link-card" id="cb-providers-link-card" hidden>
-              <h3 class="cb-providers-link-title">Link a TNH event</h3>
-              <p class="ee-hint">TNH event UUID plus the provider’s event id (Eventbrite numeric id).</p>
+              <h3 class="cb-providers-link-title">Link a TNH event manually</h3>
               <label class="ee-field-label" for="cb-link-event-id">TNH event id</label>
               <input class="ee-input" id="cb-link-event-id" type="text" autocomplete="off" placeholder="uuid" />
               <label class="ee-field-label" for="cb-link-provider">Provider</label>
@@ -863,6 +939,9 @@
               </select>
               <label class="ee-field-label" for="cb-link-external-id" id="cb-link-external-id-label">Provider event id</label>
               <input class="ee-input" id="cb-link-external-id" type="text" autocomplete="off" />
+              <p class="ee-hint" id="cb-own-site-payload-hint" hidden>
+                After each booking on your site, POST JSON to your webhook URL with TNH <code>eventId</code>, <code>orderId</code>, and <code>email</code>.
+              </p>
               <p class="ee-hint" id="cb-providers-link-status" hidden role="status"></p>
               <button type="button" class="ee-btn ee-btn-gold" id="cb-providers-link-save">Save event link</button>
             </div>
@@ -3046,7 +3125,7 @@
               <span class="org-nav-badge" id="org-more-notifications-badge" hidden>New</span>
             </button>
             <a href="#groups" class="org-more-sheet-link" data-org-route="groups">Organiser pages</a>
-            <a href="/organiser/connected-booking" class="org-more-sheet-link">Connected booking</a>
+            <a href="#connected-booking" class="org-more-sheet-link" data-org-route="connected-booking">Connected booking</a>
             <a href="#social" class="org-more-sheet-link" data-org-route="social">Promote</a>
             <a href="#communicate" class="org-more-sheet-link" data-org-route="communicate">Communicate</a>
             <a href="#team" class="org-more-sheet-link" data-org-route="team" id="org-more-team">

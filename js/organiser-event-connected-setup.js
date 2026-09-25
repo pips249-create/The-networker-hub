@@ -719,7 +719,7 @@
       '<li>Copy the id that starts with <code>ev_</code> (not only the public URL slug).</li>' +
       '<li>Paste it in <strong>Link registrations</strong> above and save.</li>' +
       '</ol></details>' +
-      '<p class="ee-hint">After a test sale, check <a href="/organiser/connected-booking#cb-sync-log">Recent sync attempts</a>.</p>' +
+      '<p class="ee-hint">After a test sale, check <a href="/organiser/#cb-sync-log">Recent sync attempts</a>.</p>' +
       '</div></details></div>';
     bindProviderEnableButtons(mount);
     bindTicketTailorApiKeySave(mount);
@@ -877,7 +877,7 @@
     var webhookDriftHtml =
       p && p.eventbriteWebhookNeedsFix
         ? '<p class="ee-alert ee-alert-warn ecs-eb-token-status">Webhook URL on TNH was updated — paste the URL above into Eventbrite again or sync will stop (Recent sync attempts may show <code>invalid_webhook_token</code>).</p>'
-        : '<p class="ee-hint">If sync worked once then stopped, compare Eventbrite <strong>Payload URL</strong> with the line above — they must match exactly. Check <a href="/organiser/connected-booking#cb-sync-log">Connected booking → Recent sync attempts</a>.</p>';
+        : '<p class="ee-hint">If sync worked once then stopped, compare Eventbrite <strong>Payload URL</strong> with the line above — they must match exactly. Check <a href="/organiser/#cb-sync-log">Connected booking → Recent sync attempts</a>.</p>';
 
     var perEventHtml = linkedDone
       ? '<p class="ee-hint ee-alert-ok ecs-eb-linked">This listing is linked to Eventbrite id <code>' +
@@ -903,7 +903,7 @@
         tokenPanelHtml +
         helpDetailsHtml +
         webhookDriftHtml +
-        '<p class="ee-hint"><a href="/organiser/connected-booking#cb-providers-title">Connected booking → Booking providers</a> for sync log and all links.</p>' +
+        '<p class="ee-hint"><a href="/organiser/#cb-providers-title">Connected booking → Booking providers</a> for sync log and all links.</p>' +
         '</div></details>';
     } else {
       bodyHtml =
@@ -1090,7 +1090,7 @@
       'Enable <strong>' +
       escHtml(label) +
       '</strong> below and paste the webhook URL into that platform’s admin. Link this TNH event to the provider’s event id on ' +
-      '<a href="/organiser/connected-booking#cb-providers-title">Connected booking → Booking providers</a>.' +
+      '<a href="/organiser/#cb-providers-title">Connected booking → Booking providers</a>.' +
       ACCOUNT_EVENT_SCOPE_NOTE
     );
   }
@@ -1640,7 +1640,7 @@
     var p = providersById[key];
     if (!p && key !== 'own_site' && key !== 'custom') {
       mount.innerHTML =
-        '<p class="ee-hint">Loading provider details… Open <a href="/organiser/connected-booking#cb-providers-title">Booking providers</a> if this does not update.</p>';
+        '<p class="ee-hint">Loading provider details… Open <a href="/organiser/#cb-providers-title">Booking providers</a> if this does not update.</p>';
       return;
     }
 
@@ -1665,7 +1665,7 @@
         escHtml(eventId) +
         '</code></p>' +
         '<pre class="cb-code-block" id="ecs-own-site-sample" aria-label="Example JSON payload"></pre>' +
-        '<p class="ee-hint">More detail: <a href="/organiser/connected-booking#cb-providers-title">Connected booking → Booking providers</a>.</p>';
+        '<p class="ee-hint">More detail: <a href="/organiser/#cb-providers-title">Connected booking → Booking providers</a>.</p>';
       var sampleEl = qs('ecs-own-site-sample');
       if (sampleEl) sampleEl.textContent = ownSiteSampleJson();
       bindProviderEnableButtons(mount);
@@ -1680,12 +1680,12 @@
         escHtml(eventId) +
         '</code>.</p>' +
         '<p class="ee-hint"><strong>Option A — Zapier / Make</strong><br />Trigger on a new sale in your tool → POST JSON to your ' +
-        '<a href="/organiser/connected-booking#cb-providers-title">own-site webhook URL</a> (enable <strong>Your own website</strong> on Booking providers).</p>' +
+        '<a href="/organiser/#cb-providers-title">own-site webhook URL</a> (enable <strong>Your own website</strong> on Booking providers).</p>' +
         '<p class="ee-hint"><strong>Option B — Signed API</strong><br />Developers POST to:</p>' +
         '<p class="cb-webhook-url">' +
         escHtml(hmacUrl) +
         '</p>' +
-        '<p class="ee-hint"><a href="/organiser/connected-booking#cb-webhook-title">HMAC webhook docs</a> (account id + secret).</p>';
+        '<p class="ee-hint"><a href="/organiser/#cb-webhook-title">HMAC webhook docs</a> (account id + secret).</p>';
       return;
     }
 
@@ -1734,7 +1734,7 @@
           ) +
           '</code>).</p>'
         : '<p class="ee-hint">Link this event in the <strong>Link registrations</strong> section above (we can fill the id from your booking URL).</p>') +
-      '<p class="ee-hint">Account setup: <a href="/organiser/connected-booking#cb-providers-title">Connected booking → Booking providers</a>.</p>';
+      '<p class="ee-hint">Account setup: <a href="/organiser/#cb-providers-title">Connected booking → Booking providers</a>.</p>';
     bindProviderEnableButtons(mount);
   }
 

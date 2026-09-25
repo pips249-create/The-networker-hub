@@ -5922,7 +5922,24 @@
         sub: null,
       };
     }
+    if (hash === 'connected-booking') {
+      return { page: 'connected-booking', sub: null, connectedAnchor: null };
+    }
+    if (/^cb-/.test(hash)) {
+      return { page: 'connected-booking', sub: null, connectedAnchor: hash };
+    }
     return { page: hash, sub: null };
+  }
+
+  function scrollConnectedBookingAnchor(anchorId) {
+    const id = String(anchorId || '').trim();
+    if (!id) return;
+    requestAnimationFrame(function () {
+      const el = document.getElementById(id);
+      if (el && typeof el.scrollIntoView === 'function') {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
   }
 
   function myEventsLeadForSub(sub, defaultLead) {
@@ -12098,11 +12115,14 @@
       );
     }
     if (page === 'connected-booking') {
+      const connectedAnchor = options.connectedAnchor || null;
       routeLoadTasks.push(
         Promise.resolve().then(function () {
           if (typeof window.refreshOrganiserConnectedBooking === 'function') {
             return window.refreshOrganiserConnectedBooking({ silent: true });
           }
+        }).then(function () {
+          scrollConnectedBookingAnchor(connectedAnchor);
         })
       );
     }
@@ -19777,7 +19797,7 @@
     window.addEventListener('hashchange', () => {
       applyAttendeesDeepLinkFromUrl();
       const r = parseRoute();
-      setRoute(r.sub || r.page);
+      setRoute(r.sub || r.page, { connectedAnchor: r.connectedAnchor || null });
       if (
         r.page === 'groups' ||
         r.page === 'memberships' ||
@@ -20210,7 +20230,7 @@
       bindReadyEventUi();
       bindUi();
       const initial = resolveInitialRoute();
-      setRoute(initial.sub || initial.page);
+      setRoute(initial.sub || initial.page, { connectedAnchor: initial.connectedAnchor || null });
       await loadBootstrap({ silent: true, prefetch: bootstrapPrefetch });
       applyPendingGroupContinue();
       try {

@@ -32,7 +32,7 @@ Merge/deploy **#127** (batch branch) if you need Ticket Tailor **listing import*
 ## 2. Catherine signs in
 
 1. Sign in at [thenetworkeruk.com](https://www.thenetworkeruk.com) as **catherine@thenetworkeruk.com**.
-2. Open **Connected booking** (`/organiser/connected-booking`).
+2. Open **Connected booking** in the organiser workspace (`/organiser/#connected-booking` — sidebar **Connected booking**).
 3. Confirm message that **Starter** activated (pilot grant) — no Stripe subscribe required.
 4. **Organiser pages** (workspace) → tick the group profile(s) to use Connected → **Save assignment** (Starter = **1** page).
 

@@ -4,7 +4,7 @@ One TNH listing → **one** checkout platform. Eventbrite and Ticket Tailor do n
 
 ## Before you start
 
-1. **Connected plan** — `/organiser/connected-booking` (subscribe or complimentary pilot).
+1. **Connected plan** — organiser workspace → **Connected booking** (`/organiser/#connected-booking`; subscribe or complimentary pilot).
 2. **Organiser page on Connected** — workspace **Organiser pages** → tick your group(s) → **Save assignment** (Starter = 1 page).
 
 ---

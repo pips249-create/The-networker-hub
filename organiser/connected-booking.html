@@ -23,6 +23,31 @@
     <div id="hub-site-nav"></div>
     <script src="../js/site-nav.js?v=20260923iab1" data-root="../" data-page="organiser" defer></script>
 
+    <script>
+      (function () {
+        fetch('/api/auth/session', { credentials: 'include', cache: 'no-store' })
+          .then(function (r) {
+            return r.json();
+          })
+          .then(function (d) {
+            if (!d || !d.ok || !d.user) return;
+            var extra = '';
+            var h = String(location.hash || '').replace(/^#/, '');
+            if (h && h !== 'cb-pricing' && /^cb-/.test(h)) extra = '';
+            if (h === 'cb-pricing') {
+              try {
+                sessionStorage.setItem('cb_workspace_scroll', 'cb-pricing');
+              } catch (e) {
+                /* ignore */
+              }
+            }
+            location.replace('/organiser/#connected-booking' + extra);
+          })
+          .catch(function () {
+            /* stay on marketing page */
+          });
+      })();
+    </script>
     <div class="ee-booking-help">
       <div class="ee-booking-help-shell">
         <div class="ee-back-row">
@@ -41,7 +66,7 @@
           </p>
           <div class="cb-hero-actions">
             <a class="ee-btn ee-btn-gold" href="#cb-pricing">Choose a plan</a>
-            <a class="ee-btn ee-btn-outline" href="/organiser/#connected-booking">Open in organiser workspace</a>
+            <a class="ee-btn ee-btn-outline" href="/organiser/#connected-booking">Open organiser workspace</a>
             <a class="ee-btn ee-btn-outline" href="#cb-webhook-docs">View developer setup</a>
           </div>
           <p class="ee-hint" style="margin-top: 12px">
@@ -349,7 +374,7 @@
 
         <section class="ee-booking-help-section ee-booking-help-section--accent" id="cb-signin-hint">
           <p class="ee-booking-help-pick">
-            <a class="ee-btn ee-btn-gold" href="/login?next=/organiser/connected-booking">Sign in</a>
+            <a class="ee-btn ee-btn-gold" href="/login?next=/organiser/%23connected-booking">Sign in</a>
             to manage your webhook secret and view sync logs.
           </p>
         </section>
