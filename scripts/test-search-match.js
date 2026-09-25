@@ -38,6 +38,11 @@ assert('missing word fails', !haystackMatchesQuery(hay, 'networking london'));
 
 assert('short term whole word', haystackMatchesQuery('york open day north yorkshire', 'york'));
 assert('short term does not match longer place', !haystackMatchesQuery('yorkshire & the humber franchise', 'york'));
+assert(
+  'short prefix matches one-letter continuation',
+  haystackMatchesQuery('BEETc at BEETc – pronounced beats', 'beet')
+);
+assert('short prefix does not match two extra letters', !haystackMatchesQuery('beetroot networking club', 'beet'));
 assert('short term ignores synthetic yorkshire tag', !haystackMatchesQuery('business women connections leeds yorkshire franchise', 'york'));
 assert('longer place query still matches', haystackMatchesQuery('yorkshire & the humber franchise', 'yorkshire'));
 assert('short exact still whole-word at edge', haystackMatchesQuery('bath', 'bath'));
