@@ -59,6 +59,13 @@ function isOpportunityAutoRejected(row) {
   return Boolean(effectiveRejectionAutomatedAt(row) || isLikelyAutomatedRejectionNote(row.rejection_note));
 }
 
+/** The "listing was not approved" email is an admin decision, not an automated scan. */
+function shouldEmailOpportunityRejection(options) {
+  if (options && options.automated) return false;
+  if (options && options.sendEmail === false) return false;
+  return true;
+}
+
 function mergeRejectionAutomatedMeta(meta, iso) {
   const at = String(iso || new Date().toISOString()).trim();
   const list = Array.isArray(meta) ? meta.slice() : [];
@@ -263,6 +270,7 @@ module.exports = {
   effectiveRejectionAutomatedAt,
   isLikelyAutomatedRejectionNote,
   isOpportunityAutoRejected,
+  shouldEmailOpportunityRejection,
   isOpportunitySubmittedForReview,
   mergeReviewSubmittedMeta,
   mergeRejectionAutomatedMeta,
