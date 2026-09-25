@@ -4,17 +4,24 @@ Internal runbook: enable Connected + test Eventbrite or Ticket Tailor on Catheri
 
 ## 1. Platform admin (Vercel Production)
 
-Add or update (comma-separated, lowercase emails):
+Add or update on **Vercel → Production** (comma-separated, lowercase):
 
 ```text
-CONNECTED_BOOKING_PREVIEW_EMAILS=catherine@thenetworkeruk.com
 CONNECTED_BOOKING_PILOT_GRANT_EMAILS=catherine@thenetworkeruk.com
 CONNECTED_BOOKING_PILOT_GRANT_PLAN=starter
 ```
 
-Optional while rolling out: keep other pilot emails in the same lists.
+**Minimum for Catherine:** `CONNECTED_BOOKING_PILOT_GRANT_EMAILS` alone is enough (pilot emails also pass the preview lock after deploy **#127+** or once this util change is live).
 
-If Connected is already open to all organisers, `CONNECTED_BOOKING_ENABLED=true` and preview list can be empty — pilot grant still auto-activates Starter on first visit for emails in `CONNECTED_BOOKING_PILOT_GRANT_EMAILS`.
+If you still use a preview allowlist, include Catherine there too:
+
+```text
+CONNECTED_BOOKING_PREVIEW_EMAILS=catherine@thenetworkeruk.com
+```
+
+**Symptom:** signed in as Catherine but alert *“preview is limited to approved organiser accounts”* → her email is **not** on the Production env vars above, or Vercel was not redeployed after changing them.
+
+If Connected is open to everyone, set `CONNECTED_BOOKING_ENABLED=true` and clear `CONNECTED_BOOKING_PREVIEW_EMAILS`.
 
 **Redeploy** after env changes.
 

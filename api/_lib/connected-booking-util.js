@@ -64,7 +64,12 @@ function connectedBookingAllowedForEmail(email) {
   const em = normalizeConnectedBookingEmail(email);
   if (!em) return false;
   const preview = connectedBookingPreviewEmails();
-  if (preview) return preview.includes(em);
+  if (preview) {
+    if (preview.includes(em)) return true;
+    // Pilot grant list doubles as preview access — avoid duplicating emails on Vercel.
+    if (connectedBookingPilotGrantEligible(email)) return true;
+    return false;
+  }
   return connectedBookingFeatureEnabled();
 }
 
