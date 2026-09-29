@@ -888,17 +888,68 @@
     return next || '/organiser/?onboard=claim';
   }
 
-  /** Login only — returning users with a claim link should skip straight to setup. */
-  function maybeRedirectAuthenticatedClaimLogin() {
-    if (!loginForm || !isOrganiserClaimEntry()) return;
+  /**
+   * Same-origin relative path only. Rejects protocol-relative URLs and
+   * another trip through the auth screens.
+   */
+  function safeSameOriginPath(next, fallback) {
+    var fallbackPath = fallback || '/account/';
+    var raw = String(next || '').trim();
+    if (!raw || raw.charAt(0) !== '/') return fallbackPath;
+    if (raw.charAt(1) === '/' || raw.charAt(1) === '\\') return fallbackPath;
+    if (/[\u0000-\u001F\u007F\\]/.test(raw) || raw.indexOf('://') !== -1) return fallbackPath;
+    var bare = (raw.split('?')[0].split('#')[0].replace(/\/+$/, '') || '/');
+    if (
+      bare === '/login' ||
+      bare === '/login.html' ||
+      bare === '/register' ||
+      bare === '/register.html' ||
+      bare === '/forgot-password' ||
+      bare === '/reset-password'
+    ) {
+      return fallbackPath;
+    }
+    return raw;
+  }
 
-    fetch('/api/auth/session', { credentials: 'include' })
-      .then(function (res) {
-        return res.json();
+  function signedInHome(data) {
+    var user = data && data.user;
+    if (user && user.role === 'admin') return '/admin/';
+    if (data && data.hubView === 'organiser' && data.organiserUiVisible) return '/organiser/';
+    return '/account/';
+  }
+
+  /**
+   * Login only. A valid session should continue to `next` (or the right
+   * dashboard) instead of asking for the password again.
+   */
+  function maybeRedirectAuthenticatedLogin() {
+    if (!loginForm) return;
+
+    var primary =
+      typeof window.hubFetchSession === 'function'
+        ? window.hubFetchSession()
+        : fetch('/api/auth/session', { credentials: 'include', cache: 'no-store' }).then(function (res) {
+            return res.json();
+          });
+
+    primary
+      .then(function (data) {
+        if (data && data.ok && data.user) return data;
+        return fetch('/api/auth/session', { credentials: 'include', cache: 'no-store' })
+          .then(function (res) {
+            return res.json();
+          })
+          .catch(function () {
+            return data || { ok: false };
+          });
       })
       .then(function (data) {
-        if (!data.ok || !data.user) return;
-        window.location.replace(claimContinueUrl());
+        if (!data || !data.ok || !data.user) return;
+        var dest = isOrganiserClaimEntry()
+          ? safeSameOriginPath(claimContinueUrl(), '/organiser/?onboard=claim')
+          : safeSameOriginPath(getNextParam(), signedInHome(data));
+        window.location.replace(dest);
       })
       .catch(function () {
         /* stay on auth form */
@@ -1051,6 +1102,6 @@
   applyOrganiserIntentContext();
   applyOrganiserClaimContext();
   initLoginAudienceToggle();
-  maybeRedirectAuthenticatedClaimLogin();
+  maybeRedirectAuthenticatedLogin();
   maybeShowAuthenticatedRegisterNotice();
 })();
