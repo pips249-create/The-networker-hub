@@ -74,6 +74,7 @@
     form.elements.category.value = offer && offer.category ? offer.category : '';
     form.elements.highlight.value = offer && offer.highlight ? offer.highlight : '';
     form.elements.summary.value = offer && offer.summary ? offer.summary : '';
+    form.elements.details.value = offer && offer.details ? offer.details : '';
     form.elements.href.value = offer && offer.href ? offer.href : '';
     form.elements.imageUrl.value = offer && offer.imageUrl ? offer.imageUrl : '';
     form.elements.sortOrder.value =
@@ -95,9 +96,42 @@
     if (first) first.focus();
   }
 
+  function safeHttpUrl(value) {
+    var href = String(value || '').trim();
+    return /^https?:\/\//i.test(href) ? href : '';
+  }
+
+  function detailIdFromHash() {
+    var hash = String(location.hash || '').replace(/^#/, '');
+    var parts = hash.split('/');
+    if (parts[0].toLowerCase() !== 'services' || !parts[1]) return '';
+    return parts[1];
+  }
+
+  function detailsHtml(text) {
+    return String(text || '')
+      .split(/\n{2,}/)
+      .map(function (block) {
+        var lines = block
+          .split('\n')
+          .map(function (line) {
+            return esc(line.trim());
+          })
+          .filter(Boolean);
+        if (!lines.length) return '';
+        return '<p>' + lines.join('<br>') + '</p>';
+      })
+      .join('');
+  }
+
+  function setPageHeading(title, sub) {
+    var titleEl = document.getElementById('ad-subpage-title');
+    var subEl = document.getElementById('ad-subpage-sub');
+    if (titleEl) titleEl.textContent = title;
+    if (subEl) subEl.textContent = sub;
+  }
+
   function cardHtml(offer) {
-    var href = String(offer.href || '').trim();
-    var safeHref = /^https?:\/\//i.test(href) ? href : '';
     var image = String(offer.imageUrl || '').trim();
     var safeImage = /^https?:\/\//i.test(image) ? image : '';
     var category = offer.category || 'Member offer';
@@ -134,13 +168,6 @@
         esc(offer.id) +
         '">Delete</button></div>'
       : '';
-    var link = safeHref
-      ? '<a class="ad-service-card-link" href="' +
-        esc(safeHref) +
-        '" target="_blank" rel="noopener noreferrer" aria-label="' +
-        esc(offer.title) +
-        '"></a>'
-      : '';
     return (
       '<article class="ad-service-card' +
       (offer.published ? '' : ' is-hidden-offer') +
@@ -161,11 +188,70 @@
       esc(offer.title) +
       '</h3>' +
       (summary ? '<p class="ad-service-summary">' + esc(summary) + '</p>' : '') +
-      (safeHref ? '<span class="ad-service-view">View offer</span>' : '') +
+      '<span class="ad-service-view">More information</span>' +
       admin +
       '</div>' +
-      link +
-      '</article>'
+      '<button type="button" class="ad-service-card-link" data-service-open="' +
+      esc(offer.id) +
+      '" aria-label="More about ' +
+      esc(offer.title) +
+      '"></button></article>'
+    );
+  }
+
+  function detailHtml(offer) {
+    var safeHref = safeHttpUrl(offer.href);
+    var safeImage = safeHttpUrl(offer.imageUrl);
+    var category = offer.category || 'Member offer';
+    var highlight = offer.highlight || '';
+    var provider = offer.provider || '';
+    var summary = offer.summary || '';
+    var body = detailsHtml(offer.details) || (summary ? '<p>' + esc(summary) + '</p>' : '');
+    var outbound = safeHref
+      ? '<a class="ad-btn ad-btn-primary ad-service-outbound" href="' +
+        esc(safeHref) +
+        '" target="_blank" rel="noopener noreferrer">Go to this offer</a>'
+      : '<p class="ad-service-outbound-missing">The link to this offer has not been added yet.</p>';
+    var admin = canManage
+      ? '<div class="ad-service-detail-admin">' +
+        '<button type="button" class="ad-btn ad-btn-ghost" data-service-edit="' +
+        esc(offer.id) +
+        '">Edit</button>' +
+        '<button type="button" class="ad-btn ad-btn-ghost" data-service-toggle="' +
+        esc(offer.id) +
+        '">' +
+        (offer.published ? 'Hide' : 'Publish') +
+        '</button>' +
+        '<button type="button" class="ad-btn ad-btn-danger" data-service-delete="' +
+        esc(offer.id) +
+        '">Delete</button></div>'
+      : '';
+    return (
+      '<button type="button" class="ad-service-back" data-service-back>← All offers</button>' +
+      '<article class="ad-service-detail-card">' +
+      '<div class="ad-service-media ' +
+      toneClass(offer.title) +
+      (safeImage ? ' has-image' : '') +
+      '">' +
+      (safeImage
+        ? '<img class="ad-service-img" src="' + esc(safeImage) + '" alt="" />'
+        : '<span class="ad-service-initials" aria-hidden="true">' + esc(initials(offer.title)) + '</span>') +
+      '<span class="ad-service-category">' +
+      esc(category) +
+      '</span>' +
+      (highlight ? '<span class="ad-service-highlight">' + esc(highlight) + '</span>' : '') +
+      (offer.published ? '' : '<span class="ad-service-hidden">Hidden</span>') +
+      '</div>' +
+      '<div class="ad-service-detail-body">' +
+      (provider ? '<p class="ad-service-detail-provider">' + esc(provider) + '</p>' : '') +
+      '<h2 class="ad-service-detail-title">' +
+      esc(offer.title) +
+      '</h2>' +
+      (summary ? '<p class="ad-service-detail-summary">' + esc(summary) + '</p>' : '') +
+      (body ? '<div class="ad-service-detail-copy">' + body + '</div>' : '') +
+      outbound +
+      admin +
+      '</div></article>'
     );
   }
 
@@ -176,17 +262,46 @@
     return null;
   }
 
+  function showListChrome(show) {
+    var grid = document.getElementById('ad-services-grid');
+    var adminBar = document.getElementById('ad-services-admin');
+    var detail = document.getElementById('ad-services-detail');
+    if (grid) grid.hidden = !show;
+    if (adminBar) adminBar.hidden = !show || !canManage;
+    if (detail) detail.hidden = show;
+  }
+
   function render() {
     var grid = document.getElementById('ad-services-grid');
     var empty = document.getElementById('ad-services-empty');
     var error = document.getElementById('ad-services-error');
-    var adminBar = document.getElementById('ad-services-admin');
+    var detail = document.getElementById('ad-services-detail');
     if (!grid) return;
-    if (adminBar) adminBar.hidden = !canManage;
     if (error) {
       error.hidden = !loadError;
       error.textContent = loadError || '';
     }
+    var detailId = detailIdFromHash();
+    if (detailId && loaded) {
+      var offer = findOffer(detailId);
+      var allowed = offer && (offer.published || canManage);
+      if (allowed && detail) {
+        showListChrome(false);
+        if (empty) empty.hidden = true;
+        detail.hidden = false;
+        detail.innerHTML = detailHtml(offer);
+        setPageHeading(offer.title, offer.highlight || offer.provider || 'Member offer');
+        return;
+      }
+      if (loaded) {
+        location.hash = 'services';
+      }
+    }
+    showListChrome(true);
+    setPageHeading(
+      'My services',
+      'Member offers and practical help — free trials, discounts, and guidance arranged for you.'
+    );
     var list = visibleOffers();
     if (!loaded) {
       grid.innerHTML = '<p class="ad-services-loading">Loading offers…</p>';
@@ -282,6 +397,7 @@
       category: form.elements.category.value,
       highlight: form.elements.highlight.value,
       summary: form.elements.summary.value,
+      details: form.elements.details.value,
       href: form.elements.href.value,
       imageUrl: form.elements.imageUrl.value,
       sortOrder: form.elements.sortOrder.value,
@@ -336,16 +452,25 @@
           });
       });
     }
-    var grid = document.getElementById('ad-services-grid');
-    if (grid && !grid.dataset.boundServiceGrid) {
-      grid.dataset.boundServiceGrid = '1';
-      grid.addEventListener('click', function (event) {
+    var services = document.querySelector('.ad-services');
+    if (services && !services.dataset.boundServiceClicks) {
+      services.dataset.boundServiceClicks = '1';
+      services.addEventListener('click', function (event) {
+        if (event.target.closest('[data-service-back]')) {
+          location.hash = 'services';
+          return;
+        }
         var editBtn = event.target.closest('[data-service-edit]');
         var toggleBtn = event.target.closest('[data-service-toggle]');
         var deleteBtn = event.target.closest('[data-service-delete]');
-        if (!editBtn && !toggleBtn && !deleteBtn) return;
+        var openBtn = event.target.closest('[data-service-open]');
+        if (!editBtn && !toggleBtn && !deleteBtn && !openBtn) return;
         event.preventDefault();
         event.stopPropagation();
+        if (openBtn) {
+          location.hash = 'services/' + openBtn.getAttribute('data-service-open');
+          return;
+        }
         if (editBtn) {
           var offer = findOffer(editBtn.getAttribute('data-service-edit'));
           if (offer) openForm(offer);
@@ -369,6 +494,7 @@
         var doomed = findOffer(id);
         var name = doomed && doomed.title ? doomed.title : 'this offer';
         if (!window.confirm('Delete “' + name + '”? Members will no longer see it.')) return;
+        if (detailIdFromHash()) location.hash = 'services';
         deleteBtn.disabled = true;
         send('DELETE', { id: id })
           .then(function () {
@@ -381,7 +507,11 @@
       });
     }
     document.addEventListener('keydown', function (event) {
-      if (event.key === 'Escape') closeForm();
+      if (event.key === 'Escape') {
+        var modal = document.getElementById('ad-service-modal');
+        if (modal && !modal.hidden) closeForm();
+        else if (detailIdFromHash()) location.hash = 'services';
+      }
     });
   }
 
@@ -400,5 +530,9 @@
     init: init,
     render: render,
     publishedCount: publishedCount,
+    routeHash: function () {
+      var id = detailIdFromHash();
+      return id ? '#services/' + id : '#services';
+    },
   };
 })();
