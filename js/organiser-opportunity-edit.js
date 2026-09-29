@@ -815,11 +815,11 @@
       if (isSubmittedAwaitingApproval(currentOpportunity)) {
         if (lead) {
           lead.innerHTML =
-            'Your listing is <strong>awaiting approval</strong> and is locked while we review it. You cannot change it until we approve or deny it. After we approve, start a <strong>monthly subscription of £25 + VAT</strong> (£30 total) and it goes live immediately.';
+            'Your listing is <strong>awaiting approval</strong>. Change the fields you need, then choose <strong>Update submission</strong>. Everything else stays as it is. After we approve, start a <strong>monthly subscription of £25 + VAT</strong> (£30 total) and it goes live immediately.';
         }
         if (note) {
           note.textContent =
-            'No charge until approved. If we ask for changes, you can edit and resubmit after denial.';
+            'No charge until approved. Updates stay on this listing — you do not submit a new opportunity.';
         }
       } else {
         if (lead) {
@@ -828,7 +828,7 @@
         }
         if (note) {
           note.textContent =
-            'Review your listing, then submit for approval. Once submitted, it locks until we approve or deny.';
+            'Review your listing, then submit for approval. You can still change it afterwards and update the same submission until we approve or deny.';
         }
       }
     }
@@ -881,10 +881,9 @@
     return approval === 'Pending Review' && Boolean(opportunity.reviewSubmittedAt);
   }
 
-  function isPendingReviewLocked(opportunity) {
-    if (!opportunity) return false;
-    if (opportunityListingIsLive(opportunity)) return false;
-    return isSubmittedAwaitingApproval(opportunity);
+  function isPendingReviewLocked() {
+    // Awaiting-approval listings stay editable so a change updates the same submission.
+    return false;
   }
 
   function applyPendingReviewLockedUi() {
@@ -1132,8 +1131,11 @@
     setOpenDaysSaveOnlyVisible(true);
   }
 
-  function submittedApprovalMessage() {
-    return 'Submitted for approval. Your listing is locked while we review it — we will email you when it is approved or if changes are needed.';
+  function submittedApprovalMessage(updatedExisting) {
+    if (updatedExisting) {
+      return 'Submission updated. This listing is still awaiting approval — we kept everything you did not change.';
+    }
+    return 'Submitted for approval. You can still change details on this page and update the same submission until we approve or deny it.';
   }
 
   function primarySubmitLabel() {
@@ -1143,7 +1145,7 @@
     ).trim();
     if (approval === 'Approved') return 'Pay via Stripe →';
     if (approval === 'Rejected') return 'Resubmit for approval';
-    if (isSubmittedAwaitingApproval(currentOpportunity)) return 'Awaiting approval';
+    if (isSubmittedAwaitingApproval(currentOpportunity)) return 'Update submission';
     return 'Submit for approval';
   }
 
@@ -1834,7 +1836,7 @@
     if (notice) notice.hidden = !isSubmittedAwaitingApproval(opp);
 
     const submitted = isSubmittedAwaitingApproval(opp);
-    const draftLabel = submitted ? 'Locked while reviewing' : 'Save as draft';
+    const draftLabel = submitted ? 'Save changes' : 'Save as draft';
     ['oe-save-draft', 'oe-save-draft-sticky'].forEach(function (id) {
       const btn = document.getElementById(id);
       if (btn) btn.textContent = draftLabel;
@@ -1842,7 +1844,7 @@
     const draftBarCopy = document.querySelector('#oe-draft-bar .oe-draft-bar-copy');
     if (draftBarCopy) {
       draftBarCopy.textContent = submitted
-        ? 'Your listing is locked while we review it. If we deny it, you can edit and resubmit.'
+        ? 'Change what you need, then save. This listing stays in the approval queue.'
         : 'Save your progress any time — only a title is needed for a draft.';
     }
 
@@ -1909,6 +1911,10 @@
     }
     if (commitmentEl) commitmentEl.value = commitmentVal;
     syncAffiliateFormMode();
+    if (opp.reviewSubmittedAt && requiresFcaDisclaimer()) {
+      const fcaBox = document.getElementById('oe-fca-attest');
+      if (fcaBox) fcaBox.checked = true;
+    }
 
     const usedKeys = new Set([
       'investment',
@@ -3231,12 +3237,7 @@
       }
     }
 
-    if (isPendingReviewLocked(currentOpportunity)) {
-      showAlert(
-        'This listing is locked while we review it. You cannot change it until we approve or deny it.'
-      );
-      return;
-    }
+    const updatingQueuedSubmission = isSubmittedAwaitingApproval(currentOpportunity);
 
     // hasActiveListing already computed above
     const payload = buildPayload(publish && hasActiveListing ? 'published' : 'draft');
@@ -3245,7 +3246,10 @@
       payload.submitForReview = true;
       payload.action = 'submit_for_review';
     }
-    const validationError = validatePayload(payload, !publish);
+    const validationError = validatePayload(
+      payload,
+      !publish && !updatingQueuedSubmission
+    );
     if (validationError) {
       showAlert(validationError);
       oeFlowRevealAll = true;
@@ -3264,14 +3268,20 @@
     [submitBtn, draftBtn].forEach((b) => {
       if (b) b.disabled = true;
     });
-    if (submitBtn && publish) submitBtn.textContent = 'Submitting…';
+    if (submitBtn && publish) {
+      submitBtn.textContent = updatingQueuedSubmission ? 'Updating…' : 'Submitting…';
+    }
     if (loading) {
       loading.show(
         publish
           ? hasActiveListing
             ? 'Submitting changes for reapproval'
-            : 'Preparing submission'
-          : 'Saving draft'
+            : updatingQueuedSubmission
+              ? 'Updating submission'
+              : 'Preparing submission'
+          : updatingQueuedSubmission
+            ? 'Saving changes'
+            : 'Saving draft'
       );
     }
 
@@ -3290,7 +3300,11 @@
 
       if (loading && publish) {
         loading.show(
-          hasActiveListing ? 'Submitting changes for reapproval' : 'Submitting for review'
+          hasActiveListing
+            ? 'Submitting changes for reapproval'
+            : updatingQueuedSubmission
+              ? 'Updating submission'
+              : 'Submitting for review'
         );
       }
 
@@ -3327,7 +3341,7 @@
                 : err === 'live_listing_resubmit_required'
                   ? 'Live listings must be submitted for reapproval. Use Submit changes for reapproval — your subscription stays active.'
                   : err === 'pending_review_locked'
-                    ? 'This listing is locked while we review it. You cannot change it until we approve or deny it.'
+                    ? 'This listing could not be updated. Change the fields you need and save again — it stays on the same submission.'
                     : res.data.message || err || 'Could not save opportunity';
         showAlert(msg);
         return;
@@ -3385,8 +3399,8 @@
           return;
         }
         showAlert(
-          isSubmittedAwaitingApproval(opportunity)
-            ? 'Changes saved. Submit for approval again when you want to send updates to the review team.'
+          updatingQueuedSubmission
+            ? 'Changes saved on this submission. It stays in the approval queue.'
             : 'Draft saved.'
         );
         resetFormBaseline();
@@ -3410,6 +3424,26 @@
         showAlert(
           'Changes submitted for reapproval. Your current listing stays live until we approve — your subscription continues unchanged.'
         );
+        resetFormBaseline();
+        syncListingStatusUi(opportunity);
+        return;
+      }
+
+      if (updatingQueuedSubmission) {
+        if (isEmbedDrawer && window.parent && window.parent !== window) {
+          window.parent.postMessage(
+            {
+              type: 'hub-opportunity-saved',
+              draft: false,
+              pendingReview: true,
+              id: opportunity.id || editId,
+              title: opportunity.title || '',
+            },
+            window.location.origin
+          );
+          return;
+        }
+        showAlert(submittedApprovalMessage(true));
         resetFormBaseline();
         syncListingStatusUi(opportunity);
         return;
