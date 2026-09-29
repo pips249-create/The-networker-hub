@@ -47,6 +47,22 @@ function listingPaymentCurrent(row) {
   return false;
 }
 
+/**
+ * "Your opportunity is live" is only for the first time an approved listing
+ * is published. A later monthly subscription payment must not send it again.
+ */
+function shouldSendOpportunityListingLiveEmail(row) {
+  if (!row) return false;
+  const approval = String(row.approval_status || row.approvalStatus || '').trim();
+  if (approval !== 'Approved') return false;
+  if (row.listing_paid_at || row.listingPaidAt) return false;
+  const status = String(row.status || '').toLowerCase();
+  if ((status === 'published' || status === 'live') && (row.published_at || row.publishedAt)) {
+    return false;
+  }
+  return true;
+}
+
 /** Paid before but subscription/term has ended (needs renewal). */
 function listingPaymentLapsed(row, nowMs) {
   if (!row || !row.listing_paid_at) return false;
@@ -80,4 +96,5 @@ module.exports = {
   listingPaymentCurrent,
   listingPaymentLapsed,
   listingBillingMode,
+  shouldSendOpportunityListingLiveEmail,
 };
