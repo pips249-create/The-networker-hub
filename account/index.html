@@ -17,7 +17,7 @@
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260812footer11" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260929services2" />
     <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260929pitch1" />
-    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260812footer10" />
+    <link rel="stylesheet" href="../css/hub-mobile.css?v=20260929reviews2" />
     <script src="../js/hub-defer-css.js?v=20260828perf2" data-hrefs="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap"></script>
 
   </head>
@@ -332,17 +332,60 @@
               </div>
             </section>
 
+            <!-- Reviews -->
+            <section class="ad-page" id="ad-page-reviews" data-ad-page="reviews">
+              <div class="ad-saved-panel">
+                <div class="ad-saved-scope-wrap">
+                  <p class="ad-saved-scope-kicker" id="ad-reviews-scope-kicker">Review lists</p>
+                  <div class="ad-saved-scope ad-saved-scope--pair ad-saved-scope--segments" role="tablist" aria-labelledby="ad-reviews-scope-kicker">
+                    <button type="button" class="ad-saved-scope-btn is-active" role="tab" aria-selected="true" data-reviews-scope="pending">
+                      <span class="ad-scope-label">To write</span>
+                      <span class="ad-saved-scope-count" id="ad-reviews-count-pending" hidden aria-hidden="true"></span>
+                    </button>
+                    <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-reviews-scope="done">
+                      <span class="ad-scope-label">Submitted</span>
+                      <span class="ad-saved-scope-count" id="ad-reviews-count-done" hidden aria-hidden="true"></span>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="ad-saved-pane is-active" data-reviews-pane="pending" role="tabpanel">
+                  <div class="ad-saved-pane-inner">
+                    <div class="ad-review-cards" id="ad-reviews-pending-cards" hidden role="list"></div>
+                    <p class="ad-empty" id="ad-reviews-pending-empty" hidden>No pending reviews — you're all caught up.</p>
+                  </div>
+                </div>
+
+                <div class="ad-saved-pane" data-reviews-pane="done" role="tabpanel" hidden>
+                  <div class="ad-saved-pane-inner ad-saved-pane-inner--table">
+                    <div class="ad-table-scroll">
+                      <div class="ad-table-wrap">
+                        <table>
+                          <thead>
+                            <tr>
+                              <th class="ad-th-thumb"></th>
+                              <th>Event</th>
+                              <th>Date</th>
+                              <th>Status</th>
+                              <th class="ad-th-actions">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody id="ad-reviews-done-body"></tbody>
+                        </table>
+                      </div>
+                    </div>
+                    <p class="ad-empty" id="ad-reviews-done-empty" hidden>You haven't submitted any reviews yet.</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
             <!-- Saved -->
             <section class="ad-page" id="ad-page-saved" data-ad-page="saved">
               <div class="ad-saved-panel">
                 <div class="ad-saved-scope-wrap">
                   <p class="ad-saved-scope-kicker" id="ad-saved-scope-kicker">Choose what to view</p>
                   <div class="ad-saved-scope ad-saved-scope--segments" role="tablist" aria-labelledby="ad-saved-scope-kicker">
-                    <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-saved-scope="reviews">
-                      <span class="ad-scope-label ad-scope-label--full">Reviews to write</span>
-                      <span class="ad-scope-label ad-scope-label--short">Reviews</span>
-                      <span class="ad-saved-scope-count" id="ad-saved-count-reviews" hidden aria-hidden="true"></span>
-                    </button>
                     <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-saved-scope="groups">
                       <span class="ad-scope-label ad-scope-label--full">My memberships</span>
                       <span class="ad-scope-label ad-scope-label--short">Members</span>
@@ -433,49 +476,6 @@
                       <div class="ad-empty-state-actions">
                         <a class="ad-btn ad-btn-primary" href="../events/#organisers">Browse organisers →</a>
                       </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="ad-saved-pane" data-saved-pane="reviews" role="tabpanel" hidden>
-                  <div class="ad-saved-pane-inner">
-                    <div class="ad-saved-scope-wrap ad-saved-scope-wrap--compact">
-                      <p class="ad-saved-scope-kicker" id="ad-reviews-scope-kicker">Review lists</p>
-                      <div class="ad-saved-scope ad-saved-scope--pair ad-saved-scope--segments" role="tablist" aria-labelledby="ad-reviews-scope-kicker">
-                        <button type="button" class="ad-saved-scope-btn is-active" role="tab" aria-selected="true" data-reviews-scope="pending">
-                          <span class="ad-scope-label">To write</span>
-                          <span class="ad-saved-scope-count" id="ad-reviews-count-pending" hidden aria-hidden="true"></span>
-                        </button>
-                        <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-reviews-scope="done">
-                          <span class="ad-scope-label">Submitted</span>
-                          <span class="ad-saved-scope-count" id="ad-reviews-count-done" hidden aria-hidden="true"></span>
-                        </button>
-                      </div>
-                    </div>
-
-                    <div class="ad-saved-pane is-active" data-reviews-pane="pending" role="tabpanel">
-                      <div class="ad-review-cards" id="ad-reviews-pending-cards" hidden role="list"></div>
-                      <p class="ad-empty" id="ad-reviews-pending-empty" hidden>No pending reviews — you're all caught up.</p>
-                    </div>
-
-                    <div class="ad-saved-pane" data-reviews-pane="done" role="tabpanel" hidden>
-                      <div class="ad-table-scroll">
-                        <div class="ad-table-wrap">
-                          <table>
-                            <thead>
-                              <tr>
-                                <th class="ad-th-thumb"></th>
-                                <th>Event</th>
-                                <th>Date</th>
-                                <th>Status</th>
-                                <th class="ad-th-actions">Actions</th>
-                              </tr>
-                            </thead>
-                            <tbody id="ad-reviews-done-body"></tbody>
-                          </table>
-                        </div>
-                      </div>
-                      <p class="ad-empty" id="ad-reviews-done-empty" hidden>You haven't submitted any reviews yet.</p>
                     </div>
                   </div>
                 </div>
@@ -750,6 +750,13 @@
           </span>
           <span class="ad-bottom-nav-label">Tickets</span>
           <span class="ad-bottom-nav-count" id="ad-bottom-tickets" hidden></span>
+        </a>
+        <a href="#reviews-pending" class="ad-bottom-nav-link" data-ad-route="reviews-pending" aria-label="Reviews to write">
+          <span class="ad-bottom-nav-icon" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 14.6 9.1l5.9.5-4.5 3.8 1.4 5.8L12 16.2 6.6 19.2l1.4-5.8L3.5 9.6l5.9-.5L12 3.5z"/></svg>
+          </span>
+          <span class="ad-bottom-nav-label">Reviews</span>
+          <span class="ad-bottom-nav-count" id="ad-bottom-reviews" hidden></span>
         </a>
         <a href="#saved" class="ad-bottom-nav-link" data-ad-route="saved">
           <span class="ad-bottom-nav-icon" aria-hidden="true">
@@ -1081,6 +1088,6 @@
     <script src="../js/hub-going-share.js?v=20260714share2" defer></script>
     <script src="../js/hub-side-nav.js?v=20260805hubmobile2" defer></script>
     <script src="../js/attendee-member-offers.js?v=20260929pitch1" defer></script>
-    <script src="../js/attendee-dashboard.js?v=20260929services2" defer></script>
+    <script src="../js/attendee-dashboard.js?v=20260929reviews2" defer></script>
   </body>
 </html>

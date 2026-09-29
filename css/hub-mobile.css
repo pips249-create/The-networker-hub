@@ -2730,6 +2730,7 @@ body.nav-menu-open {
   }
 
   .attendee-dashboard-page .ad-saved-scope--segments.ad-saved-scope--pair .ad-saved-scope-btn,
+  .attendee-dashboard-page #ad-page-saved .ad-saved-scope--segments .ad-saved-scope-btn,
   .attendee-dashboard-page #ad-page-saved-opportunities .ad-saved-scope--segments .ad-saved-scope-btn {
     flex: 1 1 0;
   }
