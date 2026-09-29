@@ -14,6 +14,7 @@ const {
   normalizeListingMonths,
   addMonths,
   listingPaymentCurrent,
+  shouldSendOpportunityListingLiveEmail,
 } = require('./opportunity-listing-pricing');
 const { ensureOpportunitySlug, publicOpportunitySlug, slugMatchesPublicRow, isUuidSlug } =
   require('./opportunity-slug');
@@ -801,10 +802,9 @@ async function activateOpportunityListingPayment(opportunityId, monthsOrOpts, se
     currentSlug: existing.slug,
   });
 
-  const wasLive =
-    String(existing.approval_status || '') === 'Approved' &&
-    String(existing.status || '').toLowerCase() === 'published' &&
-    listingPaymentCurrent(existing);
+  // First publish only. Monthly renewals already have listing_paid_at, and a
+  // lapsed term must not look like a brand-new go-live.
+  const sendLiveEmail = shouldSendOpportunityListingLiveEmail(existing);
 
   const patch = {
     status: 'published',
@@ -842,8 +842,8 @@ async function activateOpportunityListingPayment(opportunityId, monthsOrOpts, se
   }
 
   const listing = rowToListing(data);
-  // Pay-after-approve: go live email fires when payment activates an Approved listing.
-  if (!wasLive && listing.approvalStatus === 'Approved') {
+  // Pay-after-approve: one email when the listing first goes live, not on each monthly charge.
+  if (sendLiveEmail && listing.approvalStatus === 'Approved') {
     try {
       const { sendOpportunityListingLiveEmail } = require('./opportunity-emails');
       await sendOpportunityListingLiveEmail(listing);
