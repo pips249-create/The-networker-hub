@@ -7,9 +7,13 @@
     cache: 'no-store',
   })
     .then(function (res) {
-      return res.json();
+      if (!res.ok) return { ok: false, prefetchFailed: true };
+      return res.json().then(function (data) {
+        return data && typeof data === 'object' ? data : { ok: false, prefetchFailed: true };
+      });
     })
     .catch(function () {
-      return { ok: false };
+      // A dropped first request is not the same as being signed out.
+      return { ok: false, prefetchFailed: true };
     });
 })();
