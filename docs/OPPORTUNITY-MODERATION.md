@@ -56,7 +56,7 @@ The platform already shows disclaimers and blocks some MLM patterns in `js/oppor
 |--------|--------|
 | Guaranteed income / “quit your job in 90 days” | **Reject** |
 | Recruitment-primary network marketing (downline / upline / team-build income) | **Reject** |
-| Product-selling network marketing (typed `network-marketing`, no recruitment pitch) | **Approve** if substantiated; not eligible for Premium Spotlight |
+| Product-selling network marketing (typed `network-marketing`, no recruitment pitch) | **Approve** if substantiated; eligible for Premium Spotlight |
 | Investment opportunity without risk warning | **Reject** or require edit |
 | Legitimate franchise with territory + fee stated | **Approve** if substantiated |
 | Partnership / white-label B2B | **Approve** if clear and not misleading |
@@ -95,6 +95,7 @@ The platform already shows disclaimers and blocks some MLM patterns in `js/oppor
 
 | Date | Change |
 |------|--------|
+| 2026-09-25 | Product-selling network marketing listings can be featured in Premium Spotlight (admin grant and organiser checkout) and appear in the public carousel |
 | 2026-08-27 | Queue only listings with `review_submitted_at`; Approve clarity + resend pay email; 3-day unpaid reminder; Premium Spotlight gated until live |
 | 2026-08-27 | Review-then-pay: submit → pending review → Approve → Stripe → live; pending + approved-pay emails |
 | 2026-07-28 | Product-selling `network-marketing` type allowed; recruitment-primary auto-reject; not eligible for Premium Spotlight; browse hide filter default on |

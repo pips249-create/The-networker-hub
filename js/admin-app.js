@@ -427,7 +427,7 @@
       steps: [
         'Only approved live listings can appear in the public carousel.',
         'Toggle Featured and set an end date for the /opportunities/ carousel.',
-        'Network marketing listings never show in Premium Spotlight — clear them if they still count as featured.',
+        'Network marketing listings can be featured the same way as other approved live listings.',
         'Use Active in carousel to match what visitors see on /opportunities/.',
       ],
     },
@@ -23120,22 +23120,11 @@
     return !!(row && row.featured && isSpotlightFeaturedUntilExpired(row));
   }
 
-  function isNetworkMarketingOpportunityRow(row) {
-    if (!row) return false;
-    if (String(row.type || '') === 'network-marketing') return true;
-    var tags = Array.isArray(row.tags) ? row.tags : [];
-    for (var i = 0; i < tags.length; i++) {
-      if (String(tags[i] || '') === 'network-marketing') return true;
-    }
-    return false;
-  }
-
   function isSpotlightOpportunityActiveInCarousel(row) {
     if (!row || !row.featured) return false;
     if (String(row.status || '').toLowerCase() !== 'published') return false;
     if (row.listing_payment_active === false) return false;
     if (isSpotlightFeaturedUntilExpired(row)) return false;
-    if (isNetworkMarketingOpportunityRow(row)) return false;
     return true;
   }
 
@@ -23515,9 +23504,7 @@
         var active = isSpotlightOpportunityActiveInCarousel(o);
         var staleNote = '';
         if (o.featured && !active) {
-          if (isNetworkMarketingOpportunityRow(o)) {
-            staleNote = '<div class="text-[11px] text-amber-800 mt-1">Hidden on carousel (network marketing)</div>';
-          } else if (String(o.status || '').toLowerCase() !== 'published') {
+          if (String(o.status || '').toLowerCase() !== 'published') {
             staleNote = '<div class="text-[11px] text-amber-800 mt-1">Not published — not in carousel</div>';
           } else if (o.listing_payment_active === false) {
             staleNote = '<div class="text-[11px] text-amber-800 mt-1">Listing payment inactive — not in carousel</div>';
@@ -23748,7 +23735,7 @@
           kind === 'event'
             ? 'No past or expired featured events to clear. Active carousel placements are left alone.'
             : kind === 'opportunity'
-              ? 'No featured opportunities to clear. Only expired, unpaid, unpublished, or network-marketing placements are removed — active carousel rows stay featured.'
+              ? 'No featured opportunities to clear. Only expired, unpaid, or unpublished placements are removed — active carousel rows stay featured.'
               : 'No expired featured ' + noun + ' to clear. Rows without an end date stay featured until you turn them off.'
         );
         return;
@@ -23757,7 +23744,7 @@
         kind === 'opportunity'
           ? 'Remove featured from ' +
               stale.length +
-              ' opportunities that cannot appear in the public carousel (expired, unpaid, unpublished, or network marketing)? Active carousel placements stay featured.'
+              ' opportunities that cannot appear in the public carousel (expired, unpaid, or unpublished)? Active carousel placements stay featured.'
           : 'Remove featured from ' +
               stale.length +
               ' past/expired ' +
@@ -24194,7 +24181,7 @@
     main.innerHTML =
       '<div class="space-y-4">' +
       '<div id="spotlight-slots-wrap" class="text-sm text-slate-500">Loading carousel slot usage…</div>' +
-      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Featured opportunities appear in the Premium Spotlight on <code class="text-[11px]">/opportunities/</code>. Slot usage matches the public carousel (Approved + live + paid; network marketing is never shown). Use <strong>Active in carousel</strong> to see only placements that show right now.</p>' +
+      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Featured opportunities appear in the Premium Spotlight on <code class="text-[11px]">/opportunities/</code>. Slot usage matches the public carousel (Approved + live + paid, including network marketing). Use <strong>Active in carousel</strong> to see only placements that show right now.</p>' +
       '<div class="flex flex-wrap items-center gap-2">' +
       '<p id="spotlight-opportunities-status" class="text-sm text-slate-500 flex-1 min-w-[12rem]">Loading opportunities…</p>' +
       spotlightClearStaleBtnHtml('spotlight-clear-stale-opportunities') +
@@ -25386,7 +25373,7 @@
       '<div class="flex items-end"><label class="inline-flex items-center gap-2 text-sm text-slate-700 cursor-pointer pb-2">' +
       '<input type="checkbox" name="featured" class="rounded border-slate-300"' +
       (opp.featured ? ' checked' : '') +
-      '> Featured in spotlight <span class="text-xs text-slate-500">(not for network marketing)</span></label></div>' +
+      '> Featured in spotlight</label></div>' +
       '<div class="sm:col-span-2"><label class="flex items-start gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 cursor-pointer' +
       (browseHideDisabled ? ' opacity-60 cursor-not-allowed' : '') +
       '">' +

@@ -32,7 +32,7 @@ assert(
 );
 
 assert(
-  'excludes network-marketing type',
+  'includes network-marketing type',
   isPremiumSpotlightActiveRow({
     featured: true,
     status: 'published',
@@ -40,11 +40,11 @@ assert(
     listing_paid_at: '2026-08-01T00:00:00.000Z',
     listing_expires_at: future,
     type: 'network-marketing',
-  }) === false
+  }) === true
 );
 
 assert(
-  'excludes network-marketing tag',
+  'includes network-marketing tag',
   isPremiumSpotlightActiveRow({
     featured: true,
     status: 'published',
@@ -53,7 +53,7 @@ assert(
     listing_expires_at: future,
     type: 'franchise',
     tags: ['franchise', 'network-marketing'],
-  }) === false
+  }) === true
 );
 
 assert(

@@ -508,7 +508,7 @@
       var now = Date.now();
       var featured = dedupeListingsById(
         allListings.filter(function (item) {
-          if (!item || !item.featured || isNetworkMarketingListing(item)) return false;
+          if (!item || !item.featured) return false;
           var untilIso = item.featuredUntil || item.featured_until;
           if (untilIso) {
             var untilMs = new Date(untilIso).getTime();
@@ -1106,16 +1106,6 @@
     if (!activeCommitments.length) return true;
     for (var i = 0; i < activeCommitments.length; i++) {
       if (hasTag(item, activeCommitments[i])) return true;
-    }
-    return false;
-  }
-
-  function isNetworkMarketingListing(item) {
-    if (!item) return false;
-    if (String(item.type || '') === 'network-marketing') return true;
-    var tags = (item.tags || []).concat(item.filterTags || []);
-    for (var i = 0; i < tags.length; i++) {
-      if (String(tags[i] || '') === 'network-marketing') return true;
     }
     return false;
   }

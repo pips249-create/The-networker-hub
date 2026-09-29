@@ -4,7 +4,6 @@
  */
 const { getSupabaseAdmin } = require('./supabase');
 const { listingPaymentCurrent } = require('./opportunity-listing-pricing');
-const { isNetworkMarketingType } = require('./opportunity-moderation');
 const { SPOTLIGHT_CAROUSEL_MAX } = require('./spotlight-carousel-limits');
 
 const OPPORTUNITY_PREMIUM_SPOTLIGHT_MAX = SPOTLIGHT_CAROUSEL_MAX;
@@ -14,8 +13,6 @@ function isPremiumSpotlightActiveRow(row) {
   if (String(row.status || '').toLowerCase() !== 'published') return false;
   if (String(row.approval_status || '') !== 'Approved') return false;
   if (!listingPaymentCurrent(row)) return false;
-  // Browse carousel hides network-marketing from Premium Spotlight.
-  if (isNetworkMarketingType(row)) return false;
   if (row.featured_until) {
     const until = new Date(row.featured_until).getTime();
     if (!Number.isNaN(until) && until <= Date.now()) return false;

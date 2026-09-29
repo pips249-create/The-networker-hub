@@ -10,7 +10,7 @@ const {
   deriveOpportunityGeo,
   writeOpportunityRow,
 } = require('../supabase-opportunities');
-const { stripEarningsMeta, isNetworkMarketingType, scanOpportunityRedFlags } = require('../opportunity-moderation');
+const { stripEarningsMeta, scanOpportunityRedFlags } = require('../opportunity-moderation');
 const { sendOpportunityListingLiveEmail, sendOpportunityListingApprovedPayEmail } = require('../opportunity-emails');
 const { ensureOpportunitySlug } = require('../opportunity-slug');
 const { addMonths, listingPaymentCurrent, listingPaymentLapsed, listingBillingMode } = require('../opportunity-listing-pricing');
@@ -1117,9 +1117,6 @@ async function createAdminOpportunity(input) {
   const geo = deriveOpportunityGeo(input, meta);
   const { parseAdminBool } = require('../admin-bool');
   const featured = parseAdminBool(input.featured);
-  if (featured && isNetworkMarketingType(type)) {
-    throw new Error('network_marketing_not_spotlight');
-  }
   const category = String(input.category || 'general').trim() || 'general';
   const contactEmail = String(input.contact_email || input.contactEmail || '')
     .trim()
@@ -2040,22 +2037,6 @@ module.exports = async function handler(req, res) {
         );
       }
       const now = new Date();
-      if (patch.featured) {
-        const { data: currentFeatured } = await sb
-          .from('business_opportunities')
-          .select('type, tags')
-          .eq('id', id)
-          .maybeSingle();
-        const nextType = patch.type || (currentFeatured && currentFeatured.type);
-        const nextTags = currentFeatured && currentFeatured.tags;
-        if (isNetworkMarketingType({ type: nextType, tags: nextTags })) {
-          return json(res, 400, {
-            ok: false,
-            error: 'network_marketing_not_spotlight',
-            message: 'Network marketing listings cannot be featured in Premium Spotlight.',
-          });
-        }
-      }
       if (patch.status === 'published') {
         const { data: current } = await sb
           .from('business_opportunities')

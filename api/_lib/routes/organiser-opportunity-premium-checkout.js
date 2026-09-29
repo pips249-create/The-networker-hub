@@ -6,7 +6,6 @@ const {
   siteBaseUrl,
 } = require('../stripe-checkout');
 const { assertPremiumSpotlightSlotAvailable } = require('../opportunity-premium-slots');
-const { isNetworkMarketingType } = require('../opportunity-moderation');
 const {
   affiliateCodeFromBody,
   getActivePartnerByCode,
@@ -87,15 +86,6 @@ module.exports = async function handler(req, res) {
         ok: false,
         error: 'opportunity_not_live',
         message: 'Start your monthly listing subscription before buying Premium Spotlight.',
-      });
-    }
-
-    if (isNetworkMarketingType(opportunity)) {
-      return json(res, 400, {
-        ok: false,
-        error: 'network_marketing_not_spotlight',
-        message:
-          'Network marketing listings cannot use Premium Spotlight. Keep a standard listing focused on product sales.',
       });
     }
 
