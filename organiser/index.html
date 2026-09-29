@@ -2527,7 +2527,7 @@
           <div class="org-sub-page is-active" id="sub-events-list" role="tabpanel" data-events-panel="events-list" aria-labelledby="events-tab-list">
             <p class="org-filter-linked-note">Status, organiser page, and search filters apply to both Events and Revenue.</p>
             <p class="org-status-glossary">
-              <strong>Statuses:</strong> Draft — not finished yet · Unpublished — was live, now hidden · Live — on the platform · Archived — event ended
+              <strong>Statuses:</strong> Draft — not finished yet · Unpublished — was live, now hidden · Live — on the platform · Archived — event ended. Events from the last two weeks stay in this list. Choose Archived to see older ones.
             </p>
             <div class="org-filter-bar">
               <select id="filter-events-status" aria-label="Filter by status">
@@ -2536,6 +2536,7 @@
                 <option value="upcoming">Upcoming</option>
                 <option value="draft">Draft</option>
                 <option value="unpublished">Unpublished</option>
+                <option value="archived">Archived</option>
               </select>
               <select id="filter-events-group" aria-label="Filter by organiser page">
                 <option value="all">All organiser pages</option>
@@ -2944,6 +2945,7 @@
                 <option value="upcoming">Upcoming</option>
                 <option value="draft">Draft</option>
                 <option value="unpublished">Unpublished</option>
+                <option value="archived">Archived</option>
               </select>
               <select id="filter-revenue-group" aria-label="Filter by organiser page">
                 <option value="all">All organiser pages</option>
@@ -4037,7 +4039,8 @@
     <script src="../js/organiser-connected-billing-banner.js?v=20260918setup1" defer></script>
     <script src="../js/organiser-connected-booking-page.js?v=20260922ws1" defer></script>
     <script src="../js/organiser-connected-booking-providers.js?v=20260922ws1" defer></script>
-    <script src="../js/organiser-dashboard.js?v=20260922dashtimeout" defer></script>
+    <script src="../js/organiser-event-list-visibility.js?v=20260925recent1" defer></script>
+    <script src="../js/organiser-dashboard.js?v=20260925recent1" defer></script>
     <script src="../js/organiser-workspace-comfort.js?v=20260813noshow1" defer></script>
   </body>
 </html>
