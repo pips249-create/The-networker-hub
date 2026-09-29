@@ -30,6 +30,24 @@
     return p.get('intent') || '';
   }
 
+  /**
+   * Signup must land on an empty code form. A code in this URL is the secret
+   * from the email, so drop it from in-app redirects.
+   */
+  function withoutEmailVerifySecret(url) {
+    var raw = String(url || '');
+    if (raw.indexOf('/organiser/verify-email') === -1) return raw;
+    try {
+      var parsed = new URL(raw, window.location.origin);
+      if (parsed.pathname.replace(/\/$/, '') !== '/organiser/verify-email') return raw;
+      parsed.searchParams.delete('code');
+      parsed.searchParams.delete('token');
+      return parsed.pathname + parsed.search + parsed.hash;
+    } catch (e) {
+      return raw;
+    }
+  }
+
   function isOrganiserAuthIntentFromPage() {
     var intent = getIntentParam();
     if (intent === 'organiser' || intent === 'organiser-claim') return true;
@@ -305,7 +323,9 @@
           }
           showMessage(msg, result.data.message || 'Account created — taking you in…', 'success');
           var go = function () {
-            window.location.href = result.data.redirect || next || '/welcome';
+            window.location.href = withoutEmailVerifySecret(
+              result.data.redirect || next || '/welcome'
+            );
           };
           // Always continue promptly — verify-email is the next step for new accounts.
           if (result.data.requiresEmailVerification || getIntentParam() === 'organiser-claim') {

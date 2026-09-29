@@ -5,10 +5,8 @@
 const { isClientRole, setHubViewCookie } = require('./auth');
 const sbAuth = require('./supabase-auth');
 const { getOrganiserAccessStatus } = require('./organiser-access-guard');
-const {
-  sendOrganiserEmailVerification,
-  buildOrganiserVerifyEmailPath,
-} = require('./organiser-email-verification');
+const { sendOrganiserEmailVerification } = require('./organiser-email-verification');
+const { buildEmailVerifyRedirect } = require('./organiser-email-verify-paths');
 
 function organiserPathFromNext(next) {
   const raw = String(next || '').trim();
@@ -52,24 +50,6 @@ function hasVerifyEmailToken(next) {
   }
 }
 
-/**
- * Send users through email confirmation before the rest of onboarding.
- * Preserves an optional code from a just-sent message and the eventual destination.
- */
-function buildEmailVerifyRedirect({ next, code, email } = {}) {
-  const destination = String(next || '').trim() || '/welcome';
-  if (code) {
-    let path = buildOrganiserVerifyEmailPath(code, email);
-    path +=
-      (path.indexOf('?') >= 0 ? '&' : '?') + 'next=' + encodeURIComponent(destination);
-    return path;
-  }
-  const params = new URLSearchParams();
-  if (email) params.set('email', String(email).trim().toLowerCase());
-  params.set('next', destination);
-  return '/organiser/verify-email?' + params.toString();
-}
-
 async function resolveOrganiserRedirect(session) {
   const status = await getOrganiserAccessStatus(session);
   if (status.pendingClaimCount > 0) {
@@ -109,22 +89,18 @@ async function maybeAutoEnableOrganiserAccess(session, res, options = {}) {
   setHubViewCookie(res, 'organiser');
 
   let verifyPath = null;
-  if (!before.organiserEmailVerified && !skipVerificationEmail) {
-    try {
-      const sent = await sendOrganiserEmailVerification({
-        userId: session.sub,
-        email: session.email,
-        name: session.name,
-      });
-      verifyPath = sent.verifyPath || null;
-    } catch (e) {
-      verifyPath =
-        e.verifyPath ||
-        (e.verifyCode
-          ? '/organiser/verify-email?code=' + encodeURIComponent(String(e.verifyCode))
-          : '/organiser/verify-email');
+  if (!before.organiserEmailVerified) {
+    if (!skipVerificationEmail) {
+      try {
+        await sendOrganiserEmailVerification({
+          userId: session.sub,
+          email: session.email,
+          name: session.name,
+        });
+      } catch {
+        /* The verify screen can resend. Do not put the code in this redirect. */
+      }
     }
-  } else if (!before.organiserEmailVerified) {
     verifyPath = '/organiser/verify-email';
   }
 
