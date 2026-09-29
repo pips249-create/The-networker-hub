@@ -15,8 +15,8 @@
     <link rel="stylesheet" href="../css/hub-loading.css?v=20260630" />
     <link rel="stylesheet" href="../css/hub.css?v=20260909listmenu1" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260812footer11" />
-    <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260805mobile" />
-    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260929services1" />
+    <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260929services2" />
+    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260929services2" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260812footer10" />
     <script src="../js/hub-defer-css.js?v=20260828perf2" data-hrefs="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap"></script>
 
@@ -712,6 +712,7 @@
                 </div>
                 <p class="ad-services-error" id="ad-services-error" hidden role="alert"></p>
                 <div class="ad-services-grid" id="ad-services-grid" role="list"></div>
+                <div class="ad-services-detail" id="ad-services-detail" hidden></div>
                 <div class="ad-empty-state ad-empty-state--compact" id="ad-services-empty" hidden role="status">
                   <div class="ad-empty-state-icon" aria-hidden="true">
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M20 12v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7z"/></svg>
@@ -987,7 +988,7 @@
           ×
         </button>
         <h2 class="ad-service-modal-title" id="ad-service-modal-title">Add offer</h2>
-        <p class="ad-service-modal-sub">Members see this as a card on My services. Leave the link blank until you have a page to send them to.</p>
+        <p class="ad-service-modal-sub">The card opens the detail. The offer link is the button that takes the member to the offer.</p>
         <form id="ad-service-form" class="ad-service-form">
           <label class="ad-service-field">
             <span>Title</span>
@@ -1015,10 +1016,14 @@
           </div>
           <label class="ad-service-field">
             <span>Short description</span>
-            <textarea name="summary" maxlength="280" rows="3" placeholder="What the member gets."></textarea>
+            <textarea name="summary" maxlength="280" rows="2" placeholder="One line on the card."></textarea>
           </label>
           <label class="ad-service-field">
-            <span>Link</span>
+            <span>More information</span>
+            <textarea name="details" maxlength="4000" rows="5" placeholder="What the member should know before they go to the offer."></textarea>
+          </label>
+          <label class="ad-service-field">
+            <span>Link to the offer</span>
             <input name="href" type="url" maxlength="500" placeholder="https://" />
           </label>
           <label class="ad-service-field">
@@ -1065,7 +1070,7 @@
     <script src="../js/hub-calendar-share.js?v=20260609a" defer></script>
     <script src="../js/hub-going-share.js?v=20260714share2" defer></script>
     <script src="../js/hub-side-nav.js?v=20260805hubmobile2" defer></script>
-    <script src="../js/attendee-member-offers.js?v=20260929services1" defer></script>
-    <script src="../js/attendee-dashboard.js?v=20260929services1" defer></script>
+    <script src="../js/attendee-member-offers.js?v=20260929services2" defer></script>
+    <script src="../js/attendee-dashboard.js?v=20260929services2" defer></script>
   </body>
 </html>

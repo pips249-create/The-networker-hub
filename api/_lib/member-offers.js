@@ -8,6 +8,7 @@ const LIMITS = {
   category: 40,
   highlight: 48,
   summary: 280,
+  details: 4000,
   href: 500,
   imageUrl: 500,
 };
@@ -18,6 +19,16 @@ const UUID_RE =
 function cleanText(value, max) {
   const s = String(value == null ? '' : value)
     .replace(/\s+/g, ' ')
+    .trim();
+  if (!s) return '';
+  return s.slice(0, max);
+}
+
+function cleanMultiline(value, max) {
+  const s = String(value == null ? '' : value)
+    .replace(/\r\n/g, '\n')
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
     .trim();
   if (!s) return '';
   return s.slice(0, max);
@@ -86,6 +97,10 @@ function normalizeMemberOfferInput(input, options) {
     fields.summary = cleanText(firstPresent(src, ['summary', 'description']), LIMITS.summary);
   }
 
+  if (!partial || anyPresent(src, ['details', 'body'])) {
+    fields.details = cleanMultiline(firstPresent(src, ['details', 'body']), LIMITS.details);
+  }
+
   if (!partial || anyPresent(src, ['href', 'link', 'url'])) {
     const href = cleanHttpUrl(firstPresent(src, ['href', 'link', 'url']), LIMITS.href);
     if (href && href.error) errors.push('href');
@@ -126,6 +141,7 @@ function memberOfferFromRow(row) {
     category: row.category || '',
     highlight: row.highlight || '',
     summary: row.summary || '',
+    details: row.details || '',
     href: row.href || '',
     imageUrl: row.image_url || '',
     published: row.published === true,
@@ -150,7 +166,7 @@ async function listMemberOffers(options) {
   let query = sb
     .from('member_offers')
     .select(
-      'id, title, provider, category, highlight, summary, href, image_url, published, sort_order, updated_at'
+      'id, title, provider, category, highlight, summary, details, href, image_url, published, sort_order, updated_at'
     )
     .order('sort_order', { ascending: true })
     .order('title', { ascending: true });
@@ -175,6 +191,7 @@ async function createMemberOffer(fields, createdBy) {
     category: fields.category || '',
     highlight: fields.highlight || '',
     summary: fields.summary || '',
+    details: fields.details || '',
     href: fields.href || '',
     image_url: fields.image_url || '',
     published: fields.published !== false,
@@ -202,6 +219,7 @@ async function updateMemberOffer(id, fields) {
   if (hasOwn(fields, 'category')) patch.category = fields.category;
   if (hasOwn(fields, 'highlight')) patch.highlight = fields.highlight;
   if (hasOwn(fields, 'summary')) patch.summary = fields.summary;
+  if (hasOwn(fields, 'details')) patch.details = fields.details;
   if (hasOwn(fields, 'href')) patch.href = fields.href;
   if (hasOwn(fields, 'image_url')) patch.image_url = fields.image_url;
   if (hasOwn(fields, 'published')) patch.published = fields.published;

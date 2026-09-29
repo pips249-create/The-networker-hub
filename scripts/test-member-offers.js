@@ -43,6 +43,15 @@ if (Object.prototype.hasOwnProperty.call(patched.fields, 'title')) {
   fail('partial update invented a title');
 }
 
+const detailed = normalizeMemberOfferInput({
+  title: 'Swft Business Cards',
+  details: '  First paragraph.\n\nSecond paragraph.  ',
+});
+if (!detailed.ok) fail('details should be accepted');
+if (detailed.fields.details !== 'First paragraph.\n\nSecond paragraph.') {
+  fail('details should keep paragraphs, got ' + JSON.stringify(detailed.fields.details));
+}
+
 const sorted = normalizeMemberOfferInput({ title: 'Cards', sortOrder: 99999 });
 if (sorted.fields.sort_order !== 9999) fail('sort order should clamp');
 
@@ -56,12 +65,13 @@ const row = memberOfferFromRow({
   category: 'Business cards',
   highlight: '3 months free',
   summary: 'Member offer.',
+  details: 'More about the offer.',
   href: '',
   image_url: '',
   published: false,
   sort_order: 10,
 });
-if (!row || row.imageUrl !== '' || row.published !== false || row.sortOrder !== 10) {
+if (!row || row.imageUrl !== '' || row.published !== false || row.sortOrder !== 10 || row.details !== 'More about the offer.') {
   fail('row mapping');
 }
 

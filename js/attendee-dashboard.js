@@ -179,7 +179,12 @@
     }
     if (currentRoute === 'saved-opportunities') return '#saved-opportunities';
     if (currentRoute === 'visibility') return '#visibility';
-    if (currentRoute === 'services') return '#services';
+    if (currentRoute === 'services') {
+      if (window.HubAttendeeServices && typeof window.HubAttendeeServices.routeHash === 'function') {
+        return window.HubAttendeeServices.routeHash();
+      }
+      return '#services';
+    }
     return '#' + currentRoute;
   }
 
@@ -1952,7 +1957,14 @@
       return 'tickets';
     }
     if (hash === 'visibility' || hash === 'grow-visibility') return 'visibility';
-    if (hash === 'services' || hash === 'my-services' || hash === 'member-offers') return 'services';
+    if (
+      hash === 'services' ||
+      hash.indexOf('services/') === 0 ||
+      hash === 'my-services' ||
+      hash === 'member-offers'
+    ) {
+      return 'services';
+    }
     const allowed = [
       'overview',
       'tickets',
@@ -4452,7 +4464,13 @@
       a.dataset.boundAdRoute = '1';
       a.addEventListener('click', (e) => {
         e.preventDefault();
-        setRoute(a.getAttribute('data-ad-route') || 'overview');
+        const route = a.getAttribute('data-ad-route') || 'overview';
+        if (route === 'services' && (location.hash || '') !== '#services') {
+          const url = new URL(window.location.href);
+          url.hash = 'services';
+          history.pushState(null, '', url.pathname + url.search + url.hash);
+        }
+        setRoute(route);
       });
     });
     window.addEventListener('hashchange', () => setRoute(parseRoute()));
