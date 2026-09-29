@@ -96,6 +96,10 @@
       title: 'Grow your visibility',
       sub: 'Pin your own listings higher, or sponsor The Networker UK as a brand to reach audiences across events, organisers, and business opportunities.',
     },
+    services: {
+      title: 'My services',
+      sub: 'Member offers and practical help — free trials, discounts, and guidance arranged for you.',
+    },
     'reviews-pending': {
       title: 'Reviews to write',
       sub: 'Leave feedback for networking groups after events you attended. Reviews show on their public profile and they can reply here.',
@@ -175,6 +179,7 @@
     }
     if (currentRoute === 'saved-opportunities') return '#saved-opportunities';
     if (currentRoute === 'visibility') return '#visibility';
+    if (currentRoute === 'services') return '#services';
     return '#' + currentRoute;
   }
 
@@ -1194,6 +1199,7 @@
       return 'saved-opportunities';
     }
     if (route === 'overview') return 'overview';
+    if (route === 'services') return 'services';
     return '';
   }
 
@@ -1946,6 +1952,7 @@
       return 'tickets';
     }
     if (hash === 'visibility' || hash === 'grow-visibility') return 'visibility';
+    if (hash === 'services' || hash === 'my-services' || hash === 'member-offers') return 'services';
     const allowed = [
       'overview',
       'tickets',
@@ -1953,6 +1960,7 @@
       'saved-opportunities',
       'opportunity-enquiries',
       'visibility',
+      'services',
     ];
     return allowed.includes(hash) ? hash : 'overview';
   }
@@ -2568,6 +2576,9 @@
       updateOpportunitySavedSubpageHead();
       loadSavedOpportunities();
     }
+    if (currentRoute === 'services' && window.HubAttendeeServices) {
+      window.HubAttendeeServices.render();
+    }
     syncRouteHash();
     if (dashboardReady) {
       const key = routeTablesKey(currentRoute);
@@ -2800,6 +2811,12 @@
       myGroups.length + savedEvents.length + savedOrganisers.length + pendingReviewsList().length
     );
     set('ad-bottom-opportunities', oppTotal);
+    const serviceCount =
+      window.HubAttendeeServices && window.HubAttendeeServices.publishedCount
+        ? window.HubAttendeeServices.publishedCount()
+        : 0;
+    set('ad-side-services', serviceCount);
+    set('ad-bottom-services', serviceCount);
     setTabCount('ad-tickets-count-upcoming', upcomingList().length);
     setTabCount('ad-tickets-count-past', pastList().length);
     setTabCount('ad-tickets-count-cancellations', (cancelledBookings || []).length);
@@ -3366,6 +3383,7 @@
     const ticketsMeta = document.getElementById('ad-portal-tickets-meta');
     const reviewsMeta = document.getElementById('ad-portal-reviews-meta');
     const savedMeta = document.getElementById('ad-portal-saved-meta');
+    const servicesMeta = document.getElementById('ad-portal-services-meta');
     const reviewsPortal = document.querySelector('[data-ad-portal="reviews"]');
     const upcoming = upcomingList().length;
     const pending = pendingReviewsList().length;
@@ -3385,6 +3403,15 @@
       savedMeta.textContent = savedCount
         ? savedCount + (savedCount === 1 ? ' saved listing' : ' saved listings')
         : 'Heart events and groups you like';
+    }
+    if (servicesMeta) {
+      const serviceCount =
+        window.HubAttendeeServices && window.HubAttendeeServices.publishedCount
+          ? window.HubAttendeeServices.publishedCount()
+          : 0;
+      servicesMeta.textContent = serviceCount
+        ? serviceCount + (serviceCount === 1 ? ' member offer' : ' member offers')
+        : 'Member offers and practical help';
     }
   }
 
@@ -3408,7 +3435,9 @@
         if (key === 'saved') {
           setSavedScope('events');
           setRoute('saved');
+          return;
         }
+        if (key === 'services') setRoute('services');
       });
     });
   }
@@ -4558,6 +4587,15 @@
 
     if (signin) signin.hidden = true;
     if (shell) shell.hidden = false;
+    if (window.HubAttendeeServices) {
+      window.HubAttendeeServices.init({
+        isAdmin: Boolean(sessionData.user && sessionData.user.role === 'admin'),
+        onChange: function () {
+          updateSideCounts();
+          renderOverviewPortals();
+        },
+      });
+    }
     setDashboardLoading(true);
     renderWelcome(sessionData.user);
     initOrganiserContextBanner(sessionData);

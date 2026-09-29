@@ -32,6 +32,15 @@ delete require.cache[require.resolve('../api/_lib/connected-booking-util')];
 const utilPreview = require('../api/_lib/connected-booking-util');
 assert.strictEqual(utilPreview.connectedBookingAllowedForEmail('pips249@gmail.com'), true);
 assert.strictEqual(utilPreview.connectedBookingAllowedForEmail('other@example.com'), false);
+process.env.CONNECTED_BOOKING_PILOT_GRANT_EMAILS = 'pilot@test.com';
+delete require.cache[require.resolve('../api/_lib/connected-booking-util')];
+const utilPilotPreview = require('../api/_lib/connected-booking-util');
+assert.strictEqual(
+  utilPilotPreview.connectedBookingAllowedForEmail('pilot@test.com'),
+  true,
+  'pilot grant email allowed while preview list is locked'
+);
+assert.strictEqual(utilPilotPreview.connectedBookingAllowedForEmail('other@example.com'), false);
 process.env.CONNECTED_BOOKING_PREVIEW_EMAILS = prevPreview || '';
 process.env.CONNECTED_BOOKING_ENABLED = prevEnabled || '';
 delete require.cache[require.resolve('../api/_lib/connected-booking-util')];

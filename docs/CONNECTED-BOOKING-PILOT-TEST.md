@@ -16,12 +16,14 @@ npm run test-connected-booking-providers
 On **Vercel → Environment variables** (Production), set:
 
 ```text
-CONNECTED_BOOKING_PREVIEW_EMAILS=pips249@gmail.com,catherine@yourdomain.com
-CONNECTED_BOOKING_PILOT_GRANT_EMAILS=pips249@gmail.com,catherine@yourdomain.com
+CONNECTED_BOOKING_PREVIEW_EMAILS=catherine@thenetworkeruk.com
+CONNECTED_BOOKING_PILOT_GRANT_EMAILS=catherine@thenetworkeruk.com
 CONNECTED_BOOKING_PILOT_GRANT_PLAN=starter
 ```
 
 Redeploy. Then sign in as that email and open `/organiser/connected-booking`. The first load **activates Starter (1 group) at no charge** and creates a webhook secret if missing. You do **not** need to click Subscribe for pilot grant.
+
+**Catherine pilot:** step-by-step for `catherine@thenetworkeruk.com` → [PILOT-CATHERINE-CONNECTED.md](./PILOT-CATHERINE-CONNECTED.md). Organiser linking guide → [ORGANISER-CONNECTED-LINK-EB-OR-TT.md](./ORGANISER-CONNECTED-LINK-EB-OR-TT.md).
 
 Optional: if you still want to test Stripe checkout, create a **100% off** promotion code in Stripe Dashboard and set `CONNECTED_BOOKING_STRIPE_PROMOTION_CODES=true` on Vercel, then use **Subscribe** and enter the code at checkout.
 

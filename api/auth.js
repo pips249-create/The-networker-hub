@@ -53,6 +53,7 @@ const routes = {
   'registration-ticket-pdf': require('./_lib/routes/auth-registration-ticket-pdf'),
   'registration-invoice': require('./_lib/routes/auth-registration-invoice'),
   'nudge-ticket-sales': require('./_lib/routes/auth-nudge-ticket-sales'),
+  'member-offers': require('./_lib/routes/auth-member-offers'),
   'site-access': require('./_lib/routes/site-access'),
 };
 

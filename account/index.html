@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260909listmenu1" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260812footer11" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260805mobile" />
-    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260922dash3" />
+    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260929services1" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260812footer10" />
     <script src="../js/hub-defer-css.js?v=20260828perf2" data-hrefs="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap"></script>
 
@@ -26,7 +26,7 @@
     <script src="../js/site-nav.js?v=20260923iab1" data-root="../" data-page="account"></script>
 
     <div id="ad-signin" class="ad-signin">
-      <p>Sign in to see event tickets you have bought, reviews to leave, and business opportunity enquiries you have sent.</p>
+      <p>Sign in to see event tickets you have bought, member offers, reviews to leave, and business opportunity enquiries you have sent.</p>
       <p style="margin-top: 12px">
         <a class="ad-btn ad-btn-primary" href="../login?next=/account/">Sign in</a>
       </p>
@@ -56,6 +56,11 @@
             <a href="#saved-opportunities" class="hub-side-nav-link" data-ad-route="saved-opportunities">
               Opportunities
               <span class="ad-side-count" id="ad-side-opportunities" hidden></span>
+            </a>
+            <span class="hub-side-nav-divider">Member offers</span>
+            <a href="#services" class="hub-side-nav-link" data-ad-route="services">
+              My services
+              <span class="ad-side-count" id="ad-side-services" hidden></span>
             </a>
             <span class="hub-side-nav-divider hub-side-nav-divider--partner">Partner with us</span>
             <a href="#visibility" class="hub-side-nav-link" data-ad-route="visibility">Grow your visibility</a>
@@ -125,6 +130,14 @@
                   <span class="ad-portal-body">
                     <strong>Saved</strong>
                     <span id="ad-portal-saved-meta">Heart events and groups you like</span>
+                  </span>
+                  <span class="ad-portal-arrow" aria-hidden="true">→</span>
+                </button>
+                <button type="button" class="ad-portal ad-portal--services" data-ad-portal="services">
+                  <span class="ad-portal-icon" aria-hidden="true">✦</span>
+                  <span class="ad-portal-body">
+                    <strong>My services</strong>
+                    <span id="ad-portal-services-meta">Member offers and practical help</span>
                   </span>
                   <span class="ad-portal-arrow" aria-hidden="true">→</span>
                 </button>
@@ -691,6 +704,24 @@
               </div>
             </section>
 
+            <section class="ad-page" id="ad-page-services" data-ad-page="services">
+              <div class="ad-services">
+                <div class="ad-services-admin" id="ad-services-admin" hidden>
+                  <p class="ad-services-admin-note">Only platform admins can add or edit these. Members see published offers.</p>
+                  <button type="button" class="ad-btn ad-btn-primary" id="ad-services-add">Add offer</button>
+                </div>
+                <p class="ad-services-error" id="ad-services-error" hidden role="alert"></p>
+                <div class="ad-services-grid" id="ad-services-grid" role="list"></div>
+                <div class="ad-empty-state ad-empty-state--compact" id="ad-services-empty" hidden role="status">
+                  <div class="ad-empty-state-icon" aria-hidden="true">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M20 12v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7z"/></svg>
+                  </div>
+                  <h3 class="ad-empty-state-title">No member offers yet</h3>
+                  <p class="ad-empty-state-text">Free trials, discounts, and practical help arranged for members will show up here.</p>
+                </div>
+              </div>
+            </section>
+
           </div>
         </div>
       </div>
@@ -722,6 +753,13 @@
           </span>
           <span class="ad-bottom-nav-label">Opps</span>
           <span class="ad-bottom-nav-count" id="ad-bottom-opportunities" hidden></span>
+        </a>
+        <a href="#services" class="ad-bottom-nav-link" data-ad-route="services" aria-label="My services">
+          <span class="ad-bottom-nav-icon" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7z"/></svg>
+          </span>
+          <span class="ad-bottom-nav-label">Offers</span>
+          <span class="ad-bottom-nav-count" id="ad-bottom-services" hidden></span>
         </a>
       </nav>
     </div>
@@ -937,6 +975,69 @@
       </div>
     </div>
 
+    <div class="ad-service-modal" id="ad-service-modal" hidden>
+      <div class="ad-service-modal-backdrop" id="ad-service-modal-backdrop"></div>
+      <div
+        class="ad-service-modal-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="ad-service-modal-title"
+      >
+        <button type="button" class="ad-service-modal-close" id="ad-service-modal-close" aria-label="Close">
+          ×
+        </button>
+        <h2 class="ad-service-modal-title" id="ad-service-modal-title">Add offer</h2>
+        <p class="ad-service-modal-sub">Members see this as a card on My services. Leave the link blank until you have a page to send them to.</p>
+        <form id="ad-service-form" class="ad-service-form">
+          <label class="ad-service-field">
+            <span>Title</span>
+            <input id="ad-service-title" name="title" type="text" maxlength="120" required placeholder="Swft Business Cards" />
+          </label>
+          <div class="ad-service-form-row">
+            <label class="ad-service-field">
+              <span>Provider</span>
+              <input name="provider" type="text" maxlength="80" placeholder="Swft" />
+            </label>
+            <label class="ad-service-field">
+              <span>Category</span>
+              <input name="category" type="text" maxlength="40" placeholder="Business cards" />
+            </label>
+          </div>
+          <div class="ad-service-form-row">
+            <label class="ad-service-field">
+              <span>Offer badge</span>
+              <input name="highlight" type="text" maxlength="48" placeholder="3 months free" />
+            </label>
+            <label class="ad-service-field">
+              <span>Sort order</span>
+              <input name="sortOrder" type="number" min="0" max="9999" step="1" value="0" />
+            </label>
+          </div>
+          <label class="ad-service-field">
+            <span>Short description</span>
+            <textarea name="summary" maxlength="280" rows="3" placeholder="What the member gets."></textarea>
+          </label>
+          <label class="ad-service-field">
+            <span>Link</span>
+            <input name="href" type="url" maxlength="500" placeholder="https://" />
+          </label>
+          <label class="ad-service-field">
+            <span>Image URL</span>
+            <input name="imageUrl" type="url" maxlength="500" placeholder="https://" />
+          </label>
+          <label class="ad-service-check">
+            <input name="published" type="checkbox" checked />
+            <span>Published — visible to members</span>
+          </label>
+          <p class="ad-service-form-error" id="ad-service-form-error" hidden role="alert"></p>
+          <div class="ad-service-form-actions">
+            <button type="button" class="ad-btn ad-btn-ghost" id="ad-service-cancel">Cancel</button>
+            <button type="submit" class="ad-btn ad-btn-primary" id="ad-service-save">Save offer</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <div
       id="ad-dash-loading"
       class="hub-page-buffer hub-page-buffer--modal hub-page-buffer--dashboard"
@@ -964,6 +1065,7 @@
     <script src="../js/hub-calendar-share.js?v=20260609a" defer></script>
     <script src="../js/hub-going-share.js?v=20260714share2" defer></script>
     <script src="../js/hub-side-nav.js?v=20260805hubmobile2" defer></script>
-    <script src="../js/attendee-dashboard.js?v=20260922dash3" defer></script>
+    <script src="../js/attendee-member-offers.js?v=20260929services1" defer></script>
+    <script src="../js/attendee-dashboard.js?v=20260929services1" defer></script>
   </body>
 </html>

@@ -749,9 +749,9 @@ async function createConnectedBookingCheckoutSession(opts) {
   const site = siteBaseUrl();
   const successUrl =
     String(opts.successUrl || '').trim() ||
-    site + '/organiser/connected-booking?checkout=success&session_id={CHECKOUT_SESSION_ID}';
+    site + '/organiser/?checkout=success&session_id={CHECKOUT_SESSION_ID}#connected-booking';
   const cancelUrl =
-    String(opts.cancelUrl || '').trim() || site + '/organiser/connected-booking?checkout=cancel';
+    String(opts.cancelUrl || '').trim() || site + '/organiser/?checkout=cancel#connected-booking';
 
   const allowPromo =
     String(process.env.CONNECTED_BOOKING_STRIPE_PROMOTION_CODES || '').trim().toLowerCase() ===
@@ -776,7 +776,7 @@ async function createConnectedBookingBillingPortalSession(opts) {
   const customerId = String(opts.customerId || '').trim();
   if (!customerId) throw new Error('missing_customer');
   const returnUrl =
-    String(opts.returnUrl || '').trim() || siteBaseUrl() + '/organiser/connected-booking';
+    String(opts.returnUrl || '').trim() || siteBaseUrl() + '/organiser/#connected-booking';
   return stripe.billingPortal.sessions.create({
     customer: customerId,
     return_url: returnUrl,

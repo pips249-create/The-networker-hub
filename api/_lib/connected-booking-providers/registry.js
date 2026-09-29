@@ -1,5 +1,8 @@
 /** Supported Connected checkout providers (adapters in ./adapters/). */
 
+/** Shown in organiser UI (picker, enable, link form). Webhooks for other ids still work if already configured. */
+const ORGANISER_PICKER_PROVIDER_IDS = ['eventbrite', 'ticket_tailor', 'own_site'];
+
 const CONNECTED_BOOKING_PROVIDERS = [
   {
     id: 'eventbrite',
@@ -14,7 +17,8 @@ const CONNECTED_BOOKING_PROVIDERS = [
     label: 'Ticket Tailor',
     status: 'beta',
     webhookPath: '/api/integrations/providers/ticket_tailor/webhook',
-    docsHint: 'Use the Ticket Tailor box office event id when linking.',
+    docsHint:
+      'Paste webhook URL in Ticket Tailor → Order created. Link ev_… per TNH event. Optional API key on Connected setup imports listing fields.',
   },
   {
     id: 'luma',
@@ -58,8 +62,19 @@ function getConnectedBookingProvider(id) {
   return CONNECTED_BOOKING_PROVIDERS.find((p) => p.id === key) || null;
 }
 
+function isOrganiserPickerProvider(id) {
+  return ORGANISER_PICKER_PROVIDER_IDS.includes(String(id || '').trim().toLowerCase());
+}
+
+function listOrganiserPickerProviders() {
+  return CONNECTED_BOOKING_PROVIDERS.filter((p) => isOrganiserPickerProvider(p.id));
+}
+
 module.exports = {
   CONNECTED_BOOKING_PROVIDERS,
+  ORGANISER_PICKER_PROVIDER_IDS,
   isConnectedBookingProviderId,
   getConnectedBookingProvider,
+  isOrganiserPickerProvider,
+  listOrganiserPickerProviders,
 };

@@ -5922,7 +5922,24 @@
         sub: null,
       };
     }
+    if (hash === 'connected-booking') {
+      return { page: 'connected-booking', sub: null, connectedAnchor: null };
+    }
+    if (/^cb-/.test(hash)) {
+      return { page: 'connected-booking', sub: null, connectedAnchor: hash };
+    }
     return { page: hash, sub: null };
+  }
+
+  function scrollConnectedBookingAnchor(anchorId) {
+    const id = String(anchorId || '').trim();
+    if (!id) return;
+    requestAnimationFrame(function () {
+      const el = document.getElementById(id);
+      if (el && typeof el.scrollIntoView === 'function') {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
   }
 
   function myEventsLeadForSub(sub, defaultLead) {
@@ -6155,7 +6172,7 @@
 
   function eventsVisibleCount() {
     return eventsSourceList().filter(function (ev) {
-      if (filters.eventsHideArchived !== false && eventRowIsArchived(ev)) return false;
+      if (rowHiddenAsArchived(ev, { forCount: true })) return false;
       if (filters.eventsHideUnpublished && eventRowIsUnpublished(ev)) return false;
       return true;
     }).length;
@@ -8111,6 +8128,21 @@
     return eventOccurrenceHasEnded(ev);
   }
 
+  function rowHiddenAsArchived(ev, opts) {
+    const mode = opts || {};
+    const vis = window.organiserEventListVisibility;
+    if (vis && typeof vis.shouldHideArchivedRow === 'function') {
+      return vis.shouldHideArchivedRow({
+        hideArchived: Boolean(filters.eventsHideArchived),
+        status: mode.forCount ? 'all' : filters.eventsStatus,
+        search: mode.forCount ? '' : filters.eventsSearch,
+        isArchived: eventRowIsArchived(ev),
+        event: ev,
+      });
+    }
+    return Boolean(filters.eventsHideArchived) && eventRowIsArchived(ev);
+  }
+
   function eventRowIsUnpublished(ev) {
     if (!ev) return false;
     if (ev.isSeries && ev.seriesEvents && ev.seriesEvents.length) {
@@ -8174,7 +8206,8 @@
     });
   }
 
-  function filteredEventsList() {
+  function filteredEventsList(options) {
+    const keepArchived = Boolean(options && options.keepArchived);
     let list = eventsSourceList().slice();
     const q = filters.eventsSearch.trim().toLowerCase();
     if (q) {
@@ -8204,20 +8237,27 @@
     if (filters.eventsType !== 'all') {
       list = list.filter((ev) => String(ev.type || '') === filters.eventsType);
     }
-    if (filters.eventsHideArchived) {
-      list = list.filter((ev) => !eventRowIsArchived(ev));
+    if (!keepArchived) {
+      list = list.filter((ev) => !rowHiddenAsArchived(ev));
     }
     if (filters.eventsHideUnpublished) {
       list = list.filter((ev) => !eventRowIsUnpublished(ev));
     }
     list = groupEventsIntoSeries(list);
-    if (filters.eventsHideArchived) {
-      list = list.filter((ev) => !eventRowIsArchived(ev));
+    if (!keepArchived) {
+      list = list.filter((ev) => !rowHiddenAsArchived(ev));
     }
     if (filters.eventsHideUnpublished) {
       list = list.filter((ev) => !eventRowIsUnpublished(ev));
     }
     return list;
+  }
+
+  function listEmptiedByArchiveHide() {
+    if (!filters.eventsHideArchived) return false;
+    if (String(filters.eventsStatus || 'all') === 'archived') return false;
+    if (String(filters.eventsSearch || '').trim()) return false;
+    return filteredEventsList({ keepArchived: true }).length > 0;
   }
 
   async function ensureAllEventsForGrouping() {
@@ -12098,11 +12138,14 @@
       );
     }
     if (page === 'connected-booking') {
+      const connectedAnchor = options.connectedAnchor || null;
       routeLoadTasks.push(
         Promise.resolve().then(function () {
           if (typeof window.refreshOrganiserConnectedBooking === 'function') {
             return window.refreshOrganiserConnectedBooking({ silent: true });
           }
+        }).then(function () {
+          scrollConnectedBookingAnchor(connectedAnchor);
         })
       );
     }
@@ -12792,12 +12835,15 @@
 
     if (!list.length) {
       const hasEvents = eventsSourceList().length > 0;
+      const archivedOnly = hasEvents && listEmptiedByArchiveHide();
       setOrgEmpty(empty, {
         show: true,
         title: hasEvents ? 'No matching events' : 'No events yet',
-        text: hasEvents
-          ? 'Try adjusting your filters or search.'
-          : 'Create your organiser page first, then list your first event.',
+        text: !hasEvents
+          ? 'Create your organiser page first, then list your first event.'
+          : archivedOnly
+            ? 'Events from the last two weeks stay in this list. Choose status Archived, or uncheck Hide archived, to see older ones.'
+            : 'Try adjusting your filters or search.',
         hideActions: hasEvents,
       });
       updatePaginationNav('events', { totalPages: 1, start: 0, end: 0, total: 0, page: 1 });
@@ -13114,12 +13160,15 @@
 
     if (!list.length) {
       const hasEvents = state.events.length > 0;
+      const archivedOnly = hasEvents && listEmptiedByArchiveHide();
       setOrgEmpty(empty, {
         show: true,
         title: hasEvents ? 'No matching events' : 'No revenue data yet',
-        text: hasEvents
-          ? 'Try adjusting your filters or search — the same filters apply on the Events tab.'
-          : 'Ticket sales and payout status appear here once you list events and sell tickets.',
+        text: !hasEvents
+          ? 'Ticket sales and payout status appear here once you list events and sell tickets.'
+          : archivedOnly
+            ? 'Events from the last two weeks stay in this list. Choose status Archived, or uncheck Hide archived, to see older ones.'
+            : 'Try adjusting your filters or search — the same filters apply on the Events tab.',
         hideActions: true,
       });
       updatePaginationNav('revenue', { totalPages: 1, start: 0, end: 0, total: 0, page: 1 });
@@ -19777,7 +19826,7 @@
     window.addEventListener('hashchange', () => {
       applyAttendeesDeepLinkFromUrl();
       const r = parseRoute();
-      setRoute(r.sub || r.page);
+      setRoute(r.sub || r.page, { connectedAnchor: r.connectedAnchor || null });
       if (
         r.page === 'groups' ||
         r.page === 'memberships' ||
@@ -20210,7 +20259,7 @@
       bindReadyEventUi();
       bindUi();
       const initial = resolveInitialRoute();
-      setRoute(initial.sub || initial.page);
+      setRoute(initial.sub || initial.page, { connectedAnchor: initial.connectedAnchor || null });
       await loadBootstrap({ silent: true, prefetch: bootstrapPrefetch });
       applyPendingGroupContinue();
       try {
