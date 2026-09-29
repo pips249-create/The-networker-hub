@@ -25690,7 +25690,8 @@
   function syncOpportunityCleanupFilterUi() {
     var el;
     el = document.getElementById('opportunity-cleanup-search');
-    if (el) el.value = opportunityCleanupState.q || '';
+    // A refresh must not replace text the admin is still typing.
+    if (el && document.activeElement !== el) el.value = opportunityCleanupState.q || '';
     el = document.getElementById('opportunity-cleanup-sort');
     if (el) el.value = opportunityCleanupState.sort || 'created';
     el = document.getElementById('opportunity-cleanup-status-filter');
@@ -28966,15 +28967,32 @@
       }
     });
 
-    document.body.addEventListener('input', function (e) {
-      if (e.target.id !== 'opportunity-cleanup-search') return;
+    function commitOpportunitySearch(el) {
+      var next = String((el && el.value) || '').replace(/^\s+|\s+$/g, '');
+      if (next === String(opportunityCleanupState.q || '')) return;
+      opportunityCleanupState.q = next;
+      opportunityCleanupState.page = 0;
+      syncOpportunityListHashQuietly();
+      refreshOpportunityCleanupData();
+    }
+
+    function scheduleOpportunitySearch(el) {
       clearTimeout(opportunitySearchTimer);
       opportunitySearchTimer = setTimeout(function () {
-        opportunityCleanupState.q = e.target.value || '';
-        opportunityCleanupState.page = 0;
-        syncOpportunityListHashQuietly();
-        refreshOpportunityCleanupData();
+        commitOpportunitySearch(el);
       }, 300);
+    }
+
+    document.body.addEventListener('input', function (e) {
+      if (!e.target || e.target.id !== 'opportunity-cleanup-search') return;
+      scheduleOpportunitySearch(e.target);
+    });
+
+    // The native search clear control fires `search`, not always `input`.
+    document.body.addEventListener('search', function (e) {
+      if (!e.target || e.target.id !== 'opportunity-cleanup-search') return;
+      clearTimeout(opportunitySearchTimer);
+      commitOpportunitySearch(e.target);
     });
 
     document.body.addEventListener('click', handleOpportunityCleanupClick);
