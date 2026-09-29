@@ -12,8 +12,19 @@ const { isFeaturedUntilActive } = require('./admin-featured-until');
 /** Slim columns for directory counts / regional location matching — never select *. */
 const DIRECTORY_EVENT_SELECT =
   'id, organiser_id, title, slug, starts_at, city, postcode, outcode, location_label, venue, meeting_type, approval_status, status';
+/**
+ * Directory cards only. Avoid select * — refund copy, Stripe ids, and claim
+ * tokens are unused on browse and inflate the catalogue read.
+ */
+const DIRECTORY_ORG_SELECT =
+  'id, name, slug, description, photo_url, industries, meeting_formats, average_rating, review_count, complimentary_visits_allowed, featured, featured_until, founding_organiser_at, founding_homepage_until, website, instagram_url, facebook_url, linkedin_url, x_url, listing_status, verification_status, ownership_claim_status, outcode';
+/** Upcoming events only — “Has live listings” and city matching use current meetings. */
+const DIRECTORY_EVENT_QUERY = { select: DIRECTORY_EVENT_SELECT, upcomingOnly: true };
 const MAX_LOCATIONS_PER_ORG = 16;
 const ORG_PAGE_SIZE = 1000;
+const DIRECTORY_CACHE_MS = 60_000;
+/** Card blurbs are ~140 characters; keep a little extra for search snippets. */
+const DIRECTORY_DESCRIPTION_MAX = 280;
 
 function slugIndustry(ind) {
   return String(ind || '')
@@ -134,7 +145,7 @@ function rowToPublicOrganiser(row, eventCount, options) {
   const rating = row.average_rating != null ? Number(row.average_rating) : 0;
   const reviews = Number(row.review_count) || 0;
   const name = String(row.name || 'Untitled organiser').trim();
-  const description = String(row.description || '').trim();
+  let description = String(row.description || '').trim();
   const slug = publicOrganiserSlug(row) || '';
   const locations = Array.isArray(options.locations) ? options.locations : [];
 
@@ -177,6 +188,10 @@ function rowToPublicOrganiser(row, eventCount, options) {
       .toLowerCase(),
     claimable: isOrganiserClaimable(row),
   };
+
+  if (options.listCard && description.length > DIRECTORY_DESCRIPTION_MAX) {
+    base.description = description.slice(0, DIRECTORY_DESCRIPTION_MAX - 1).trim() + '…';
+  }
 
   if (options.membershipPlan && options.membershipPlan.offered) {
     base.membershipPlan = {
@@ -248,14 +263,69 @@ function rowToPublicOrganiser(row, eventCount, options) {
   return base;
 }
 
-async function fetchPublicOrganiserRows(sb) {
+async function fetchPublicOrganiserRows(sb, options = {}) {
+  const select = options.select || '*';
   const rows = await fetchAllPaged(
     sb,
-    (from, to) =>
-      sb.from('organisers').select('*').order('name').range(from, to),
+    (from, to) => {
+      let query = sb.from('organisers').select(select);
+      if (options.publicOnly) query = applyPublicOrganiserBrowseFilter(query);
+      return query.order('name').range(from, to);
+    },
     { pageSize: ORG_PAGE_SIZE }
   );
   return rows.filter(isPublicOrganiser);
+}
+
+function eventStartsMs(event) {
+  const raw = event && (event.starts_at || event.next_date);
+  const ms = raw ? new Date(raw).getTime() : 0;
+  return Number.isFinite(ms) ? ms : 0;
+}
+
+function rememberLocation(list, seen, event) {
+  if (list.length >= MAX_LOCATIONS_PER_ORG) return;
+  const city = String(event.city || '').trim();
+  const postcode = String(event.postcode || '').trim();
+  const outcode = String(event.outcode || '').trim();
+  const location = String(event.location_label || '').trim();
+  const venue = String(event.venue || '').trim();
+  if (!city && !postcode && !outcode && !location && !venue) return;
+  const key = [outcode, city, postcode].join('|').toLowerCase();
+  if (seen.has(key)) return;
+  seen.add(key);
+  list.push({ city, postcode, outcode, location, venue });
+}
+
+/**
+ * Count public upcoming listings and keep the newest venues (cap 16).
+ * Walking oldest-first used to fill the cap with historical cities, so a group
+ * now meeting in Manchester never matched that city page.
+ * `eventRows` must already be the public event set (approved, published).
+ */
+function indexPublicOrganiserEvents(organisers, eventRows) {
+  const orgById = new Map();
+  (organisers || []).forEach((org) => {
+    if (org && org.id) orgById.set(org.id, org);
+  });
+  const ordered = (eventRows || []).slice().sort((a, b) => eventStartsMs(a) - eventStartsMs(b));
+  const counts = new Map();
+  const locationsByOrg = new Map();
+  const seenByOrg = new Map();
+
+  for (let i = ordered.length - 1; i >= 0; i--) {
+    const event = ordered[i];
+    const org = event.organiser_id ? orgById.get(event.organiser_id) : null;
+    if (!org || !isPublicEvent(event, org)) continue;
+    counts.set(org.id, (counts.get(org.id) || 0) + 1);
+    if (!locationsByOrg.has(org.id)) {
+      locationsByOrg.set(org.id, []);
+      seenByOrg.set(org.id, new Set());
+    }
+    rememberLocation(locationsByOrg.get(org.id), seenByOrg.get(org.id), event);
+  }
+
+  return { counts, locationsByOrg };
 }
 
 async function loadPublishedEventIndex(sb, options = {}) {
@@ -336,25 +406,15 @@ function locationFromOrganiserOutcode(org) {
 }
 
 function locationsForOrganiser(organiserId, visibleEvents, org) {
-  const seen = new Set();
-  const locations = [];
-  for (const event of visibleEvents || []) {
-    if (event.organiser_id !== organiserId) continue;
-    const city = String(event.city || '').trim();
-    const postcode = String(event.postcode || '').trim();
-    const outcode = String(event.outcode || '').trim();
-    const location = String(event.location_label || '').trim();
-    const venue = String(event.venue || '').trim();
-    if (!city && !postcode && !outcode && !location && !venue) continue;
-    const key = [outcode, city, postcode].join('|').toLowerCase();
-    if (seen.has(key)) continue;
-    seen.add(key);
-    locations.push({ city, postcode, outcode, location, venue });
-    if (locations.length >= MAX_LOCATIONS_PER_ORG) break;
-  }
+  const mine = (visibleEvents || []).filter((event) => event.organiser_id === organiserId);
+  const { locationsByOrg } = indexPublicOrganiserEvents(
+    [org && org.id ? org : { id: organiserId, listing_status: 'published' }],
+    mine
+  );
+  let locations = locationsByOrg.get(organiserId) || [];
   if (!locations.length) {
     const fallback = locationFromOrganiserOutcode(org);
-    if (fallback) locations.push(fallback);
+    if (fallback) locations = [fallback];
   }
   return locations;
 }
@@ -403,45 +463,23 @@ async function fetchOrganiserReviews(sb, organiserId) {
     .filter((item) => item.rating > 0);
 }
 
-async function listPublicOrganisers() {
-  if (!isSupabaseConfigured()) return [];
-  const sb = getSupabaseAdmin();
-  const [organisers, { counts, visibleEvents }] = await Promise.all([
-    fetchPublicOrganiserRows(sb),
-    loadPublishedEventIndex(sb),
-  ]);
+let directoryCache = { expires: 0, payload: null, inflight: null };
 
-  let rankings = {};
-  try {
-    rankings = await getGroupRankingsForOrganiser(organisers.map((org) => org.id));
-  } catch {
-    rankings = {};
-  }
+function clearPublicOrganiserDirectoryCache() {
+  directoryCache = { expires: 0, payload: null, inflight: null };
+}
 
-  // Index locations by organiser once — avoid O(orgs × events) rescans.
-  const locationsByOrg = new Map();
-  (visibleEvents || []).forEach((event) => {
-    if (!event.organiser_id) return;
-    if (!locationsByOrg.has(event.organiser_id)) {
-      locationsByOrg.set(event.organiser_id, []);
-    }
-    const list = locationsByOrg.get(event.organiser_id);
-    if (list.length >= MAX_LOCATIONS_PER_ORG) return;
-    const city = String(event.city || '').trim();
-    const postcode = String(event.postcode || '').trim();
-    const outcode = String(event.outcode || '').trim();
-    const location = String(event.location_label || '').trim();
-    const venue = String(event.venue || '').trim();
-    if (!city && !postcode && !outcode && !location && !venue) return;
-    const key = [outcode, city, postcode].join('|').toLowerCase();
-    if (list._seen?.has(key)) return;
-    if (!list._seen) list._seen = new Set();
-    list._seen.add(key);
-    list.push({ city, postcode, outcode, location, venue });
+async function buildPublicOrganiserDirectory(sb) {
+  const organisersPromise = fetchPublicOrganiserRows(sb, {
+    select: DIRECTORY_ORG_SELECT,
+    publicOnly: true,
   });
-  locationsByOrg.forEach((list) => {
-    delete list._seen;
-  });
+  const eventsPromise = fetchPublishedEventRows(sb, DIRECTORY_EVENT_QUERY);
+  const organisers = await organisersPromise;
+  const rankingsPromise = getGroupRankingsForOrganiser(organisers.map((org) => org.id)).catch(() => ({}));
+  const eventRows = await eventsPromise;
+  const { counts, locationsByOrg } = indexPublicOrganiserEvents(organisers, eventRows);
+  const rankings = await rankingsPromise;
 
   return organisers
     .map((org) => {
@@ -453,6 +491,7 @@ async function listPublicOrganisers() {
       return rowToPublicOrganiser(org, counts.get(org.id) || 0, {
         ranking: rankings[org.id] || null,
         locations,
+        listCard: true,
       });
     })
     .sort((a, b) => {
@@ -460,6 +499,27 @@ async function listPublicOrganisers() {
       if (b.rating !== a.rating) return b.rating - a.rating;
       return String(a.name).localeCompare(String(b.name));
     });
+}
+
+async function listPublicOrganisers() {
+  if (!isSupabaseConfigured()) return [];
+  if (directoryCache.payload && directoryCache.expires > Date.now()) {
+    return directoryCache.payload;
+  }
+  if (directoryCache.inflight) return directoryCache.inflight;
+
+  const sb = getSupabaseAdmin();
+  const inflight = buildPublicOrganiserDirectory(sb)
+    .then((payload) => {
+      directoryCache.payload = payload;
+      directoryCache.expires = Date.now() + DIRECTORY_CACHE_MS;
+      return payload;
+    })
+    .finally(() => {
+      directoryCache.inflight = null;
+    });
+  directoryCache.inflight = inflight;
+  return inflight;
 }
 
 async function enrichPublicOrganiserDetail(sb, row) {
@@ -579,4 +639,8 @@ module.exports = {
   isPublicOrganiser,
   isOrganiserClaimable,
   applyPublicOrganiserBrowseFilter,
+  indexPublicOrganiserEvents,
+  clearPublicOrganiserDirectoryCache,
+  DIRECTORY_ORG_SELECT,
+  DIRECTORY_EVENT_QUERY,
 };

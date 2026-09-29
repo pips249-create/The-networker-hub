@@ -51,10 +51,9 @@ async function testTemplateBuild() {
     fail('missing clickable star rating row');
   }
   if (!built.html.includes(vars.review_url)) fail('review_url not substituted in HTML');
-  if (!vars.review_url.includes('#review/')) {
-    fail('review_url should deep-link with #review/eventId hash');
+  if (!vars.review_url.includes('/events/leave-review.html') && !vars.review_url.includes('#review/')) {
+    fail('review_url should deep-link to leave-review page or account hash');
   }
-  if (!vars.review_url.includes('?review=')) fail('review_url should include ?review=eventId');
   if (!String(vars.star_rating_row || '').includes('rating=5')) {
     fail('star_rating_row should include rated deep links');
   }
@@ -74,7 +73,24 @@ async function testReviewUrlHelper() {
   }
   const rated = reviewUrlForEvent({ id: eventId }, 'https://example.com', { rating: 4 });
   if (!rated.includes('rating=4')) fail('reviewUrlForEvent missing rating param');
+
+  process.env.SESSION_SECRET = process.env.SESSION_SECRET || 'test-session-secret-for-review-links';
+  const { createReviewLinkToken, verifyReviewLinkToken } = require('../api/_lib/review-link-token');
+  const token = createReviewLinkToken({
+    registrationId: '00000000-0000-4000-8000-000000000001',
+    eventId,
+    attendeeId: '00000000-0000-4000-8000-000000000002',
+  });
+  if (!verifyReviewLinkToken(token)) fail('review link token verify failed');
+  const tokenUrl = reviewUrlForEvent({ id: eventId }, 'https://example.com', {
+    reviewToken: token,
+    rating: 5,
+  });
+  if (!tokenUrl.includes('/events/leave-review.html?token=')) {
+    fail('token review_url should use leave-review page');
+  }
   pass('reviewUrlForEvent → ' + url);
+  pass('signed email review link → ' + tokenUrl.slice(0, 80) + '…');
 }
 
 async function testCronEligibility() {

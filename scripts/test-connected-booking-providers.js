@@ -11,6 +11,7 @@ const {
   preferEventbriteCheckoutUrl,
   parseEventbriteEventIdFromUrl,
   guessProviderExternalEventId,
+  validateProviderExternalEventId,
   publicListingUsesExternalBooking,
 } = require('../api/_lib/connected-booking-util');
 const {
@@ -51,6 +52,12 @@ assert.strictEqual(
   true
 );
 assert.strictEqual(publicListingUsesExternalBooking({ checkout_mode: 'hub' }), false);
+
+const { webhookTokenPreviousFromConfig } = require('../api/_lib/connected-booking-provider-store');
+assert.strictEqual(
+  webhookTokenPreviousFromConfig({ webhookTokenPrevious: 'abc' }),
+  'abc'
+);
 
 assert.strictEqual(isConnectedBookingProviderId('eventbrite'), true);
 assert.strictEqual(isConnectedBookingProviderId('nope'), false);
@@ -169,6 +176,9 @@ assert.strictEqual(
   guessProviderExternalEventId('ticket_tailor', 'https://www.tickettailor.com/events/my-show/'),
   'my-show'
 );
+assert.strictEqual(validateProviderExternalEventId('ticket_tailor', 'ev_40980').ok, true);
+assert.strictEqual(validateProviderExternalEventId('ticket_tailor', 'my-show').ok, false);
+assert.strictEqual(validateProviderExternalEventId('eventbrite', '2001520723363').ok, true);
 
 const tt = normalizeTicketTailorWebhook({
   payload: {
@@ -224,5 +234,88 @@ const own = normalizeOwnSiteWebhook({
 });
 assert.strictEqual(own.tnhEventId, '00000000-0000-4000-8000-000000000001');
 assert.ok(own.orderId.startsWith('own-site-'));
+
+const {
+  mapEventbriteEventToListingPatch,
+  eventbriteIsOnline,
+} = require('../api/_lib/connected-booking-providers/adapters/eventbrite-api');
+assert.strictEqual(eventbriteIsOnline({ online_event: true }), true);
+const inPersonPatch = mapEventbriteEventToListingPatch({
+  id: '2001520723363',
+  name: { text: 'Networking Night' },
+  description: { text: 'Meet founders.' },
+  start: { utc: '2026-10-01T18:00:00Z' },
+  end: { utc: '2026-10-01T21:00:00Z' },
+  url: 'https://www.eventbrite.co.uk/e/networking-night-2001520723363',
+  venue: {
+    name: 'The Hub',
+    address: { address_1: '1 High Street', city: 'London', postal_code: 'SW1A 1AA' },
+  },
+});
+assert.strictEqual(inPersonPatch.title, 'Networking Night');
+assert.strictEqual(inPersonPatch.description, 'Meet founders.');
+assert.strictEqual(inPersonPatch.eventFormat, 'In person');
+assert.strictEqual(inPersonPatch.venue, 'The Hub');
+assert.strictEqual(inPersonPatch.city, 'London');
+assert.ok(inPersonPatch.externalBookingUrl.includes('checkout-external'));
+
+const onlinePatch = mapEventbriteEventToListingPatch({
+  online_event: true,
+  name: { text: 'Zoom social' },
+  start: { utc: '2026-11-02T12:00:00Z' },
+  url: 'https://www.eventbrite.com/e/zoom-social-1234567890123',
+});
+assert.strictEqual(onlinePatch.eventFormat, 'Online');
+assert.ok(!onlinePatch.venue);
+
+const {
+  mapTicketTailorEventToListingPatch,
+  ticketTailorIsOnline,
+  ticketTailorUrlSlugHint,
+  ticketTailorEventMatchesBookingUrl,
+  ticketTailorApiKeyFromConfig,
+  ticketTailorBasicAuthHeader,
+} = require('../api/_lib/connected-booking-providers/adapters/ticket-tailor-api');
+assert.strictEqual(ticketTailorIsOnline({ online_event: 'true' }), true);
+assert.strictEqual(ticketTailorUrlSlugHint('https://www.tickettailor.com/events/flowerfestival/40980'), 'flowerfestival');
+assert.strictEqual(
+  ticketTailorApiKeyFromConfig({ ticketTailorApiKey: 'sk_test' }),
+  'sk_test'
+);
+assert.ok(ticketTailorBasicAuthHeader('sk_test').startsWith('Basic '));
+assert.strictEqual(
+  ticketTailorEventMatchesBookingUrl(
+    {
+      url: 'https://www.tickettailor.com/events/flowerfestival/40980',
+      checkout_url: 'https://www.tickettailor.com/checkout/view-event/id/40980/chk/da99/',
+    },
+    'https://www.tickettailor.com/events/flowerfestival/40980',
+    'flowerfestival'
+  ),
+  true
+);
+const ttPatch = mapTicketTailorEventToListingPatch({
+  id: 'ev_40980',
+  name: 'Flower festival',
+  description: 'Outdoor networking.',
+  start: { iso: '2026-10-01T18:00:00+01:00' },
+  end: { iso: '2026-10-01T21:00:00+01:00' },
+  online_event: 'false',
+  checkout_url: 'https://www.tickettailor.com/checkout/view-event/id/40980/chk/da99/',
+  venue: { name: 'The Gardens', postal_code: 'SW1 3BR', country: 'GB' },
+});
+assert.strictEqual(ttPatch.title, 'Flower festival');
+assert.strictEqual(ttPatch.eventFormat, 'In person');
+assert.strictEqual(ttPatch.venue, 'The Gardens');
+assert.ok(ttPatch.externalBookingUrl.includes('checkout'));
+
+const ttOnlinePatch = mapTicketTailorEventToListingPatch({
+  online_event: 'true',
+  name: 'Zoom meetup',
+  online_link: 'https://zoom.us/j/123',
+  start: { iso: '2026-11-02T12:00:00Z' },
+});
+assert.strictEqual(ttOnlinePatch.eventFormat, 'Online');
+assert.strictEqual(ttOnlinePatch.onlineLink, 'https://zoom.us/j/123');
 
 console.log('test-connected-booking-providers: ok');

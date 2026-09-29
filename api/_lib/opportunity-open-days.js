@@ -274,6 +274,8 @@ async function replaceOpenDaysForOpportunity(opportunityId, openDaysInput, sessi
     throw new Error('opportunity_not_owned');
   }
   const { isOpportunityLockedForOrganiserEditListing } = require('./opportunity-review-queue');
+  // Submitted listings stay editable, including open days, so a change does not
+  // require a new opportunity submission.
   if (
     sessionContext &&
     !isPlatformAdmin(sessionContext) &&

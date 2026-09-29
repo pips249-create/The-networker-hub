@@ -96,6 +96,10 @@
       title: 'Grow your visibility',
       sub: 'Pin your own listings higher, or sponsor The Networker UK as a brand to reach audiences across events, organisers, and business opportunities.',
     },
+    services: {
+      title: 'My services',
+      sub: 'Member offers and practical help — free trials, discounts, and guidance arranged for you.',
+    },
     'reviews-pending': {
       title: 'Reviews to write',
       sub: 'Leave feedback for networking groups after events you attended. Reviews show on their public profile and they can reply here.',
@@ -175,6 +179,12 @@
     }
     if (currentRoute === 'saved-opportunities') return '#saved-opportunities';
     if (currentRoute === 'visibility') return '#visibility';
+    if (currentRoute === 'services') {
+      if (window.HubAttendeeServices && typeof window.HubAttendeeServices.routeHash === 'function') {
+        return window.HubAttendeeServices.routeHash();
+      }
+      return '#services';
+    }
     return '#' + currentRoute;
   }
 
@@ -1194,6 +1204,7 @@
       return 'saved-opportunities';
     }
     if (route === 'overview') return 'overview';
+    if (route === 'services') return 'services';
     return '';
   }
 
@@ -1946,6 +1957,14 @@
       return 'tickets';
     }
     if (hash === 'visibility' || hash === 'grow-visibility') return 'visibility';
+    if (
+      hash === 'services' ||
+      hash.indexOf('services/') === 0 ||
+      hash === 'my-services' ||
+      hash === 'member-offers'
+    ) {
+      return 'services';
+    }
     const allowed = [
       'overview',
       'tickets',
@@ -1953,6 +1972,7 @@
       'saved-opportunities',
       'opportunity-enquiries',
       'visibility',
+      'services',
     ];
     return allowed.includes(hash) ? hash : 'overview';
   }
@@ -2568,6 +2588,9 @@
       updateOpportunitySavedSubpageHead();
       loadSavedOpportunities();
     }
+    if (currentRoute === 'services' && window.HubAttendeeServices) {
+      window.HubAttendeeServices.render();
+    }
     syncRouteHash();
     if (dashboardReady) {
       const key = routeTablesKey(currentRoute);
@@ -2800,6 +2823,12 @@
       myGroups.length + savedEvents.length + savedOrganisers.length + pendingReviewsList().length
     );
     set('ad-bottom-opportunities', oppTotal);
+    const serviceCount =
+      window.HubAttendeeServices && window.HubAttendeeServices.publishedCount
+        ? window.HubAttendeeServices.publishedCount()
+        : 0;
+    set('ad-side-services', serviceCount);
+    set('ad-bottom-services', serviceCount);
     setTabCount('ad-tickets-count-upcoming', upcomingList().length);
     setTabCount('ad-tickets-count-past', pastList().length);
     setTabCount('ad-tickets-count-cancellations', (cancelledBookings || []).length);
@@ -3366,6 +3395,7 @@
     const ticketsMeta = document.getElementById('ad-portal-tickets-meta');
     const reviewsMeta = document.getElementById('ad-portal-reviews-meta');
     const savedMeta = document.getElementById('ad-portal-saved-meta');
+    const servicesMeta = document.getElementById('ad-portal-services-meta');
     const reviewsPortal = document.querySelector('[data-ad-portal="reviews"]');
     const upcoming = upcomingList().length;
     const pending = pendingReviewsList().length;
@@ -3385,6 +3415,15 @@
       savedMeta.textContent = savedCount
         ? savedCount + (savedCount === 1 ? ' saved listing' : ' saved listings')
         : 'Heart events and groups you like';
+    }
+    if (servicesMeta) {
+      const serviceCount =
+        window.HubAttendeeServices && window.HubAttendeeServices.publishedCount
+          ? window.HubAttendeeServices.publishedCount()
+          : 0;
+      servicesMeta.textContent = serviceCount
+        ? serviceCount + (serviceCount === 1 ? ' member offer' : ' member offers')
+        : 'Member offers and practical help';
     }
   }
 
@@ -3408,7 +3447,9 @@
         if (key === 'saved') {
           setSavedScope('events');
           setRoute('saved');
+          return;
         }
+        if (key === 'services') setRoute('services');
       });
     });
   }
@@ -4423,7 +4464,13 @@
       a.dataset.boundAdRoute = '1';
       a.addEventListener('click', (e) => {
         e.preventDefault();
-        setRoute(a.getAttribute('data-ad-route') || 'overview');
+        const route = a.getAttribute('data-ad-route') || 'overview';
+        if (route === 'services' && (location.hash || '') !== '#services') {
+          const url = new URL(window.location.href);
+          url.hash = 'services';
+          history.pushState(null, '', url.pathname + url.search + url.hash);
+        }
+        setRoute(route);
       });
     });
     window.addEventListener('hashchange', () => setRoute(parseRoute()));
@@ -4536,18 +4583,34 @@
     window.addEventListener('resize', closeUtilityMenus);
     setRoute(parseRoute());
 
-    const sessionFetcher =
-      typeof window.hubFetchSession === 'function'
-        ? window.hubFetchSession
-        : function () {
-            return fetch('/api/auth/session', { credentials: 'include' }).then(function (res) {
+    async function loadAttendeeSession() {
+      if (window.__hubAttendeeAuthPromise) return window.__hubAttendeeAuthPromise;
+      const primary =
+        typeof window.hubFetchSession === 'function'
+          ? window.hubFetchSession()
+          : fetch('/api/auth/session', { credentials: 'include', cache: 'no-store' }).then(function (res) {
               return res.json();
             });
-          };
+      const data = await primary;
+      if (data && data.ok && data.user) return data;
+      try {
+        const res = await fetch('/api/auth/session', { credentials: 'include', cache: 'no-store' });
+        return await res.json();
+      } catch {
+        return data || { ok: false };
+      }
+    }
 
-    const sessionData = await sessionFetcher();
-    if (!sessionData.ok || !sessionData.user) {
+    if (!window.__hubAttendeeAuth) {
+      if (signin) signin.hidden = true;
+      setDashboardLoading(true);
+    }
+
+    const sessionData = await loadAttendeeSession();
+    if (!sessionData || !sessionData.ok || !sessionData.user) {
+      setDashboardLoading(false);
       if (shell) shell.hidden = true;
+      if (signin) signin.hidden = false;
       const signInLink = signin && signin.querySelector('a.ad-btn-primary');
       if (signInLink) {
         const returnTo = location.pathname + location.search + location.hash;
@@ -4558,6 +4621,15 @@
 
     if (signin) signin.hidden = true;
     if (shell) shell.hidden = false;
+    if (window.HubAttendeeServices) {
+      window.HubAttendeeServices.init({
+        isAdmin: Boolean(sessionData.user && sessionData.user.role === 'admin'),
+        onChange: function () {
+          updateSideCounts();
+          renderOverviewPortals();
+        },
+      });
+    }
     setDashboardLoading(true);
     renderWelcome(sessionData.user);
     initOrganiserContextBanner(sessionData);

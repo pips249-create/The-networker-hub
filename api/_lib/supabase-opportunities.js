@@ -7,8 +7,9 @@ const { resolveOpportunityDisplayCover } = require('./opportunity-media');
 const { resolveOrganiserAccess } = require('./supabase-organiser-access');
 const {
   effectiveReviewSubmittedAt,
-  isOpportunitySubmittedForReview,
+  mergeRejectionAutomatedMeta,
   mergeReviewSubmittedMeta,
+  shouldEmailOpportunityRejection,
   stampOpportunityReviewSubmission,
 } = require('./opportunity-review-queue');
 const {
@@ -549,21 +550,30 @@ async function rejectOpportunityListing(opportunityId, rejectionNote, options) {
     approval_status: 'Rejected',
     status: 'unpublished',
     rejection_note: note || null,
+    pending_review_payload: null,
     updated_at: new Date().toISOString(),
   };
   if (options && options.automated) {
-    const { mergeRejectionAutomatedMeta } = require('./opportunity-review-queue');
     patch.meta = mergeRejectionAutomatedMeta(baseMeta);
   }
-  const { data, error } = await sb
+  let { data, error } = await sb
     .from('business_opportunities')
     .update(patch)
     .eq('id', id)
     .select('*')
     .single();
+  if (error && isMissingOpportunityPendingReviewColumnError(error)) {
+    delete patch.pending_review_payload;
+    ({ data, error } = await sb
+      .from('business_opportunities')
+      .update(patch)
+      .eq('id', id)
+      .select('*')
+      .single());
+  }
   if (error) throw new Error(error.message);
 
-  if (!options || options.sendEmail !== false) {
+  if (shouldEmailOpportunityRejection(options)) {
     try {
       const { sendOpportunityRejectedEmail } = require('./lifecycle-emails');
       await sendOpportunityRejectedEmail(data, note);
@@ -579,9 +589,11 @@ async function maybeAutoRejectOpportunity(row) {
   if (!row) return { rejected: false };
   const scan = scanOpportunityRedFlags(row);
   if (!scan) return { rejected: false };
+  // Record the automated rejection. The lister email waits until an admin denies it.
   const listing = await rejectOpportunityListing(row.id, scan.rejectionNote, {
     automated: true,
     existingRow: row,
+    sendEmail: false,
   });
   return { rejected: true, listing, scan };
 }
@@ -1165,6 +1177,26 @@ async function createOpportunity(payload) {
   return listing;
 }
 
+async function refreshQueuedOpportunityReviewSnapshot(sb, id, saved, submittedAt) {
+  const at = String(submittedAt || new Date().toISOString()).trim();
+  const patch = {
+    pending_review_payload: {
+      submittedAt: at,
+      row: pickPendingReviewRowFields(saved),
+    },
+    updated_at: new Date().toISOString(),
+  };
+  try {
+    return await writeOpportunityRow(sb, 'update', patch, id);
+  } catch (err) {
+    console.warn(
+      '[opportunity] review snapshot refresh failed:',
+      err && err.message ? err.message : err
+    );
+    return saved;
+  }
+}
+
 async function updateOpportunity(id, payload) {
   const sb = getSupabaseAdmin();
   const existingRow = await getOpportunityRowById(id);
@@ -1174,14 +1206,6 @@ async function updateOpportunity(id, payload) {
     Boolean(existing?.listingPaymentActive) &&
     String(existing?.approvalStatus || '').trim() === 'Approved' &&
     ['published', 'live'].includes(String(existing?.status || '').toLowerCase());
-  const {
-    isOpportunityLockedForOrganiserEdit,
-  } = require('./opportunity-review-queue');
-  if (isOpportunityLockedForOrganiserEdit(existingRow) && !isLiveListing) {
-    const err = new Error('pending_review_locked');
-    err.code = 'pending_review_locked';
-    throw err;
-  }
   if (isLiveListing && !submitForReview) {
     throw new Error('live_listing_resubmit_required');
   }
@@ -1236,9 +1260,9 @@ async function updateOpportunity(id, payload) {
   if (effectiveReviewSubmittedAt(existingRow) && !submitForReview) {
     stampOpportunityReviewSubmission(row, effectiveReviewSubmittedAt(existingRow));
   }
-  const wasAlreadyQueued =
-    String(existing?.approvalStatus || '') === 'Pending Review' &&
-    isOpportunitySubmittedForReview(existingRow);
+  const alreadyInReviewQueue =
+    String(existing?.approvalStatus || '').trim() === 'Pending Review' &&
+    Boolean(effectiveReviewSubmittedAt(existingRow));
   let data = await writeOpportunityRow(sb, 'update', row, id);
 
   if (submitForReview) {
@@ -1246,6 +1270,15 @@ async function updateOpportunity(id, payload) {
     if (!effectiveReviewSubmittedAt(data)) {
       throw new Error('review_submission_failed');
     }
+  } else if (alreadyInReviewQueue) {
+    // Keep this listing in the same review. Replace the snapshot so Command
+    // Centre shows the edit without a brand-new submission.
+    data = await refreshQueuedOpportunityReviewSnapshot(
+      sb,
+      id,
+      data,
+      effectiveReviewSubmittedAt(existingRow)
+    );
   }
 
   if (data.status === 'published') {
@@ -1254,7 +1287,9 @@ async function updateOpportunity(id, payload) {
   }
 
   const listing = rowToListing(data);
-  if (submitForReview && !wasAlreadyQueued) await sendPendingReviewEmailSafe(listing, { resubmit: wasAlreadyQueued });
+  if (submitForReview && !alreadyInReviewQueue) {
+    await sendPendingReviewEmailSafe(listing, { resubmit: false });
+  }
   return listing;
 }
 

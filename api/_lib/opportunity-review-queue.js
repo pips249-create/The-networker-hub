@@ -59,6 +59,13 @@ function isOpportunityAutoRejected(row) {
   return Boolean(effectiveRejectionAutomatedAt(row) || isLikelyAutomatedRejectionNote(row.rejection_note));
 }
 
+/** The "listing was not approved" email is an admin decision, not an automated scan. */
+function shouldEmailOpportunityRejection(options) {
+  if (options && options.automated) return false;
+  if (options && options.sendEmail === false) return false;
+  return true;
+}
+
 function mergeRejectionAutomatedMeta(meta, iso) {
   const at = String(iso || new Date().toISOString()).trim();
   const list = Array.isArray(meta) ? meta.slice() : [];
@@ -135,30 +142,16 @@ function isOpportunityInAdminReviewQueue(row) {
   return isOpportunitySubmittedForReview(row);
 }
 
-/** True when an organiser must not edit listing fields until admin approves or denies. */
-function isOpportunityLockedForOrganiserEdit(row) {
-  if (!row) return false;
-  const approval = String(row.approval_status || row.approvalStatus || '').trim();
-  if (approval === 'Rejected') return false;
-  if (approval !== 'Pending Review') return false;
-  if (hasPendingLiveListingUpdate(row)) return true;
-  if (effectiveReviewSubmittedAt(row)) return true;
-  return isOpportunitySubmittedForReview(row);
+/**
+ * Submitted listings stay editable. The organiser changes the fields they need
+ * and updates the same approval submission — they do not start a new listing.
+ * Live listings still stage edits in pending_review_payload.
+ */
+function isOpportunityLockedForOrganiserEdit(_row) {
+  return false;
 }
 
-function isOpportunityLockedForOrganiserEditListing(listing) {
-  if (!listing) return false;
-  const approval = String(listing.approvalStatus || listing.approval_status || '').trim();
-  if (approval === 'Rejected') return false;
-  if (approval !== 'Pending Review') return false;
-  if (listing.hasPendingChanges || listing.has_pending_live_update) return true;
-  if (listing.reviewSubmittedAt || listing.review_submitted_at) return true;
-  const meta = Array.isArray(listing.meta) ? listing.meta : [];
-  for (let i = 0; i < meta.length; i += 1) {
-    const item = meta[i] || {};
-    if (String(item.key || '') !== REVIEW_SUBMITTED_META_KEY) continue;
-    if (String(item.val || '').trim()) return true;
-  }
+function isOpportunityLockedForOrganiserEditListing(_listing) {
   return false;
 }
 
@@ -263,6 +256,7 @@ module.exports = {
   effectiveRejectionAutomatedAt,
   isLikelyAutomatedRejectionNote,
   isOpportunityAutoRejected,
+  shouldEmailOpportunityRejection,
   isOpportunitySubmittedForReview,
   mergeReviewSubmittedMeta,
   mergeRejectionAutomatedMeta,

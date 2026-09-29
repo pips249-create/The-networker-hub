@@ -59,7 +59,7 @@ async function findRegistrationForReview(sb, attendeeId, eventId) {
   return res.data;
 }
 
-async function submitReview(session, input) {
+async function submitReviewForAttendeeId(attendeeId, input) {
   if (!isSupabaseConfigured()) throw new Error('supabase_not_configured');
 
   const eventId = String(input.eventId || input.event_id || '').trim();
@@ -75,8 +75,8 @@ async function submitReview(session, input) {
   const reviewText = sanitizeReviewPlainText(rawReview, MAX_REVIEW_TEXT);
 
   const sb = getSupabaseAdmin();
-  const attendeeId = await resolveAttendeeId(sb, session);
-  if (!attendeeId) throw new Error('attendee_not_found');
+  const resolvedAttendeeId = String(attendeeId || '').trim();
+  if (!resolvedAttendeeId) throw new Error('attendee_not_found');
 
   const [eventRes, existingReview] = await Promise.all([
     sb
@@ -87,7 +87,7 @@ async function submitReview(session, input) {
     sb
       .from('reviews')
       .select('id')
-      .eq('attendee_id', attendeeId)
+      .eq('attendee_id', resolvedAttendeeId)
       .eq('event_id', eventId)
       .maybeSingle(),
   ]);
@@ -100,7 +100,7 @@ async function submitReview(session, input) {
   const ev = eventRes.data;
   if (!eventHasEnded(ev)) throw new Error('event_not_finished');
 
-  const registration = await findRegistrationForReview(sb, attendeeId, eventId);
+  const registration = await findRegistrationForReview(sb, resolvedAttendeeId, eventId);
   if (registration && registration.no_show_at) {
     throw new Error('did_not_attend');
   }
@@ -114,7 +114,7 @@ async function submitReview(session, input) {
   const ins = await sb
     .from('reviews')
     .insert({
-      attendee_id: attendeeId,
+      attendee_id: resolvedAttendeeId,
       event_id: eventId,
       organiser_id: organiserId,
       rating,
@@ -130,7 +130,7 @@ async function submitReview(session, input) {
     const { count, error: countErr } = await sb
       .from('reviews')
       .select('id', { count: 'exact', head: true })
-      .eq('attendee_id', attendeeId);
+      .eq('attendee_id', resolvedAttendeeId);
     if (!countErr && count != null) reviewCount = Number(count) || 1;
   } catch {
     reviewCount = 1;
@@ -151,6 +151,38 @@ async function submitReview(session, input) {
     createdAt: ins.data.created_at,
     reviewerReward,
   };
+}
+
+async function submitReview(session, input) {
+  const sb = getSupabaseAdmin();
+  const attendeeId = await resolveAttendeeId(sb, session);
+  if (!attendeeId) throw new Error('attendee_not_found');
+  return submitReviewForAttendeeId(attendeeId, input);
+}
+
+async function submitReviewFromEmailToken(token, input) {
+  const { verifyReviewLinkToken } = require('./review-link-token');
+  const payload = verifyReviewLinkToken(token);
+  if (!payload) throw new Error('invalid_review_link');
+
+  const sb = getSupabaseAdmin();
+  const { data: reg, error: regErr } = await sb
+    .from('registrations')
+    .select('id, attendee_id, event_id, payment_status, application_status, cancelled_at, no_show_at')
+    .eq('id', payload.registrationId)
+    .maybeSingle();
+  if (regErr) throw new Error(regErr.message);
+  if (!reg?.id) throw new Error('invalid_review_link');
+  if (String(reg.attendee_id) !== payload.attendeeId || String(reg.event_id) !== payload.eventId) {
+    throw new Error('invalid_review_link');
+  }
+  if (reg.cancelled_at) throw new Error('not_eligible');
+  if (reg.no_show_at) throw new Error('did_not_attend');
+
+  const eventId = String(input.eventId || input.event_id || payload.eventId || '').trim();
+  if (eventId !== payload.eventId) throw new Error('invalid_review_link');
+
+  return submitReviewForAttendeeId(payload.attendeeId, Object.assign({}, input, { eventId }));
 }
 
 async function replyToReviewAsOrganiser(session, reviewId, replyText) {
@@ -297,6 +329,8 @@ async function listReviewsForOrganiserGroups(groupIds, groupsById, adminView) {
 
 module.exports = {
   submitReview,
+  submitReviewForAttendeeId,
+  submitReviewFromEmailToken,
   replyToReviewAsOrganiser,
   eventHasEnded,
   isEligibleRegistration,
