@@ -178,11 +178,18 @@
     if (regional && regional.name) {
       var year = new Date().getFullYear();
       if (heroBadge) heroBadge.textContent = 'Local networking directory';
+      var eventQueryCity = regional.slug === 'glasgow' || regional.slug === 'bristol';
       if (heroTitle) {
-        heroTitle.innerHTML =
-          'The best business networking events &amp; groups in <span class="accent"></span>';
-        var accent = heroTitle.querySelector('.accent');
-        if (accent) accent.textContent = regional.name + ' ' + year;
+        if (eventQueryCity && mode !== 'organisers') {
+          heroTitle.innerHTML = 'Business networking events in <span class="accent"></span>';
+          var cityAccent = heroTitle.querySelector('.accent');
+          if (cityAccent) cityAccent.textContent = regional.name;
+        } else {
+          heroTitle.innerHTML =
+            'The best business networking events &amp; groups in <span class="accent"></span>';
+          var accent = heroTitle.querySelector('.accent');
+          if (accent) accent.textContent = regional.name + ' ' + year;
+        }
       }
       if (heroSub) {
         heroSub.innerHTML =
@@ -206,11 +213,9 @@
       if (filterHeading) filterHeading.textContent = c.filterTitle;
       if (filterInboxHeading) filterInboxHeading.textContent = c.filterTitle;
       document.title =
-        'Business Networking Events in ' +
-        regional.name +
-        ' ' +
-        year +
-        ' – The Networker UK';
+        regional.slug === 'glasgow' || regional.slug === 'bristol'
+          ? 'Business networking events in ' + regional.name + ' ' + year + ' | The Networker UK'
+          : 'Business Networking Events in ' + regional.name + ' ' + year + ' – The Networker UK';
       initSponsorHub(mode);
       syncBrowseToggles(mode);
       syncOrganiserCta();

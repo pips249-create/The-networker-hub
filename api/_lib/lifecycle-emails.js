@@ -180,6 +180,12 @@ function reviewUrlForEvent(eventRow, siteUrl, options) {
   const eventId = String(eventRow?.id || '').trim();
   const opts = options && typeof options === 'object' ? options : {};
   const rating = Math.max(0, Math.min(5, Math.round(Number(opts.rating) || 0)));
+  const reviewToken = String(opts.reviewToken || '').trim();
+  if (eventId && reviewToken) {
+    let url = site + '/events/leave-review.html?token=' + encodeURIComponent(reviewToken);
+    if (rating >= 1) url += '&rating=' + String(rating);
+    return url;
+  }
   if (eventId) {
     const encoded = encodeURIComponent(eventId);
     let url = hubAccountUrl(site) + '?review=' + encoded;
@@ -189,10 +195,11 @@ function reviewUrlForEvent(eventRow, siteUrl, options) {
   return hubAccountUrl(site) + '#reviews-pending';
 }
 
-function buildReviewStarRatingRow(eventRow, siteUrl) {
+function buildReviewStarRatingRow(eventRow, siteUrl, linkOptions) {
+  const baseOpts = linkOptions && typeof linkOptions === 'object' ? linkOptions : {};
   const stars = [];
   for (let i = 1; i <= 5; i++) {
-    const href = escapeHtml(reviewUrlForEvent(eventRow, siteUrl, { rating: i }));
+    const href = escapeHtml(reviewUrlForEvent(eventRow, siteUrl, Object.assign({}, baseOpts, { rating: i })));
     stars.push(
       '<a class="review-star-link" href="' +
         href +
@@ -211,14 +218,17 @@ function buildReviewStarRatingRow(eventRow, siteUrl) {
   );
 }
 
-function buildPostEventReviewEmailVars(eventRow, attendee, organiser, siteUrl) {
+function buildPostEventReviewEmailVars(eventRow, attendee, organiser, siteUrl, options) {
   const site = siteBase(siteUrl);
+  const opts = options && typeof options === 'object' ? options : {};
+  const reviewToken = String(opts.reviewToken || '').trim();
   const { event_date } = formatEventDateTime(eventRow?.starts_at);
   const organiserName = String(organiser?.name || '').trim() || 'the organiser';
   const eventName = String(eventRow?.title || 'your event').trim();
   const metaParts = [];
   if (event_date) metaParts.push(event_date);
   if (organiserName && organiserName !== 'the organiser') metaParts.push(organiserName);
+  const linkOpts = reviewToken ? { reviewToken } : {};
   return {
     ...baseEmailVars(site),
     user_name: String(attendee?.name || '').trim() || 'there',
@@ -226,8 +236,8 @@ function buildPostEventReviewEmailVars(eventRow, attendee, organiser, siteUrl) {
     organiser_name: organiserName,
     event_date: event_date || '',
     event_meta: metaParts.join(' · ') || organiserName,
-    review_url: reviewUrlForEvent(eventRow, site),
-    star_rating_row: buildReviewStarRatingRow(eventRow, site),
+    review_url: reviewUrlForEvent(eventRow, site, linkOpts),
+    star_rating_row: buildReviewStarRatingRow(eventRow, site, linkOpts),
   };
 }
 

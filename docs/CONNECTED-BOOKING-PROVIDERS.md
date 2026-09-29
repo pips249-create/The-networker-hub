@@ -36,6 +36,8 @@ Run migration **`299_connected_booking_provider_links.sql`** (after 292, 297, 29
 5. Publish Connected event on TNH with **booking URL** pointing at provider checkout (for Eventbrite, use ticket checkout — not only the public event listing; TNH rewrites common `/e/…` links to `checkout-external?eid=` on save).
 6. Test order → **Recent sync attempts** shows `eventbrite:accepted` (or provider id). If you only see `eventbrite:webhook_ping` after a real purchase, the webhook reached TNH but was not treated as an order — update TNH (fixed in production) or check Eventbrite **Recent requests** for 400/404/401.
 
+**Worked once then stopped?** Eventbrite keeps the Payload URL you pasted; TNH only changes it when you click **Fix webhook URL**. If you see `invalid_webhook_token` in Recent sync attempts, copy the URL from Connected setup again into Eventbrite → Webhooks (must include **www**). Opening Connected setup no longer rotates the URL automatically.
+
 ## API (organiser session)
 
 | Method | Path | Purpose |
@@ -74,8 +76,7 @@ Optional: **Link event** with provider **Your own website** and the same TNH uui
 | Your own website | `/api/integrations/providers/own_site/webhook?token=…` |
 | Eventbrite | `https://www.thenetworkeruk.com/w/eb/{token}` (≤70 chars; use **www** — bare `thenetworkeruk.com` returns 308 and breaks POST webhooks) |
 | Ticket Tailor | `/api/integrations/providers/ticket_tailor/webhook?token=…` |
-| Luma | `/api/integrations/providers/luma/webhook?token=…` |
-| TryBooking | `/api/integrations/providers/trybooking/webhook?token=…` |
+| Luma / TryBooking | Hidden from organiser UI; legacy webhook URLs still accepted if already configured. |
 
 Token is issued when the organiser clicks **Enable** (or via PATCH). Without a valid token → `401 invalid_webhook_token`.
 
@@ -87,9 +88,7 @@ For third-party providers, without a linked TNH event for the provider’s event
 |----------|-------------------|---------------|
 | **Your own website** | TNH event UUID in webhook JSON (`eventId`) | Your checkout POSTs to token URL after each sale — no provider admin. |
 | **Eventbrite** | Numeric id from `…/e/…` or API (`123456789`) | Webhook URL + **private token** (Developer links) on Connected setup — Eventbrite only sends an order link; TNH loads buyer email via Eventbrite API. Action `order.placed`. |
-| **Ticket Tailor** | **`ev_…` id** from Box office (must match `event_summary.event_id` in webhooks — not always the same as the public `/events/slug` URL) | Ticket Tailor → **Settings → Webhooks** → subscribe to **Order created** → paste TNH URL (`/w/tt/…` or long form). No API token on TNH. |
-| **Luma** | Event api id | Luma webhook → TNH URL. |
-| **TryBooking** | Event id from TryBooking admin | Configure webhook to TNH URL. |
+| **Ticket Tailor** | **`ev_…` id** from Box office (must match `event_summary.event_id` in webhooks — not always the same as the public `/events/slug` URL) | Webhook: **Order created** → TNH URL (`/w/tt/…`). **Optional API key** (Box office → Settings → API) on Connected setup to import title, date, venue onto TNH — webhooks alone do not need the key. |
 
 Adapters live in `api/_lib/connected-booking-providers/adapters/`. Extend normalizers as real payloads are confirmed with pilot organisers.
 
@@ -107,3 +106,4 @@ npm run test-connected-booking-providers
 
 - [CONNECTED-BOOKING.md](./CONNECTED-BOOKING.md) — plan, slots, legacy HMAC webhook
 - [CONNECTED-BOOKING-PILOT-TEST.md](./CONNECTED-BOOKING-PILOT-TEST.md) — manual script testing
+- [TICKET-TAILOR-CONNECTED.md](./TICKET-TAILOR-CONNECTED.md) — Ticket Tailor setup and QA checklist

@@ -64,7 +64,12 @@ function connectedBookingAllowedForEmail(email) {
   const em = normalizeConnectedBookingEmail(email);
   if (!em) return false;
   const preview = connectedBookingPreviewEmails();
-  if (preview) return preview.includes(em);
+  if (preview) {
+    if (preview.includes(em)) return true;
+    // Pilot grant list doubles as preview access — avoid duplicating emails on Vercel.
+    if (connectedBookingPilotGrantEligible(email)) return true;
+    return false;
+  }
   return connectedBookingFeatureEnabled();
 }
 
@@ -132,6 +137,25 @@ function preferEventbriteCheckoutUrl(raw) {
   } catch {
     return url;
   }
+}
+
+function isTicketTailorWebhookEventId(raw) {
+  return /^ev_/i.test(String(raw || '').trim());
+}
+
+function validateProviderExternalEventId(provider, externalEventId) {
+  const p = String(provider || '').trim().toLowerCase();
+  const id = String(externalEventId || '').trim();
+  if (!id || p === 'own_site' || p === 'custom') return { ok: true };
+  if (p === 'ticket_tailor' && !isTicketTailorWebhookEventId(id)) {
+    return {
+      ok: false,
+      error: 'invalid_ticket_tailor_event_id',
+      message:
+        'Ticket Tailor sync needs the ev_… event id from Box office (webhooks do not use the checkout URL slug).',
+    };
+  }
+  return { ok: true };
 }
 
 function guessProviderExternalEventId(provider, raw) {
@@ -248,6 +272,8 @@ module.exports = {
   parseEventbriteEventIdFromUrl,
   preferEventbriteCheckoutUrl,
   guessProviderExternalEventId,
+  isTicketTailorWebhookEventId,
+  validateProviderExternalEventId,
   parseExternalPriceLabelToDisplay,
   newWebhookSecret,
   signWebhookPayload,

@@ -1,4 +1,4 @@
-# Connected booking — pilot test (Eventbrite + webhook)
+# Connected booking — pilot test (Eventbrite, Ticket Tailor, webhooks)
 
 ## Run automated smoke tests
 
@@ -8,6 +8,7 @@ Run **one command per line** (do not paste the `#` comment on the same line as `
 cd ~/The-networker-hub
 npm run test-connected-booking-subscriptions
 npm run test-external-booking-webhook
+npm run test-connected-booking-providers
 ```
 
 ## Free Starter plan for pilot organisers (no Stripe)
@@ -15,12 +16,14 @@ npm run test-external-booking-webhook
 On **Vercel → Environment variables** (Production), set:
 
 ```text
-CONNECTED_BOOKING_PREVIEW_EMAILS=pips249@gmail.com,catherine@yourdomain.com
-CONNECTED_BOOKING_PILOT_GRANT_EMAILS=pips249@gmail.com,catherine@yourdomain.com
+CONNECTED_BOOKING_PREVIEW_EMAILS=catherine@thenetworkeruk.com
+CONNECTED_BOOKING_PILOT_GRANT_EMAILS=catherine@thenetworkeruk.com
 CONNECTED_BOOKING_PILOT_GRANT_PLAN=starter
 ```
 
 Redeploy. Then sign in as that email and open `/organiser/connected-booking`. The first load **activates Starter (1 group) at no charge** and creates a webhook secret if missing. You do **not** need to click Subscribe for pilot grant.
+
+**Catherine pilot:** step-by-step for `catherine@thenetworkeruk.com` → [PILOT-CATHERINE-CONNECTED.md](./PILOT-CATHERINE-CONNECTED.md). Organiser linking guide → [ORGANISER-CONNECTED-LINK-EB-OR-TT.md](./ORGANISER-CONNECTED-LINK-EB-OR-TT.md).
 
 Optional: if you still want to test Stripe checkout, create a **100% off** promotion code in Stripe Dashboard and set `CONNECTED_BOOKING_STRIPE_PROMOTION_CODES=true` on Vercel, then use **Subscribe** and enter the code at checkout.
 
@@ -101,6 +104,17 @@ Zap flow: Trigger **Eventbrite → New order** → **Code** step (build JSON + H
 - Open the public event page → **Book** goes to Eventbrite.
 - After webhook **accepted**, check organiser **attendee list** / registrations for that event date.
 
+## Ticket Tailor end-to-end
+
+Full step-by-step: **[TICKET-TAILOR-CONNECTED.md](./TICKET-TAILOR-CONNECTED.md)**.
+
+**Short checklist**
+
+1. **Connected booking → Booking providers → Enable Ticket Tailor** → copy `https://www.thenetworkeruk.com/w/tt/…`
+2. **Ticket Tailor → Settings → Webhooks** → paste URL → **Order created** (`ORDER.CREATED`)
+3. TNH event → **Connected setup** → booking URL + link **`ev_…`** id (Box office, not URL slug) → **Publish**
+4. Place a test order (or run `npm run send-ticket-tailor-webhook -- …`) → **Recent sync attempts** → `ticket_tailor:accepted` → **Attendees**
+
 ## Troubleshooting
 
 | Symptom | Fix |
@@ -110,3 +124,5 @@ Zap flow: Trigger **Eventbrite → New order** → **Code** step (build JSON + H
 | `invalid_signature` | Regenerate secret; sign **raw JSON body** exactly |
 | `event_not_on_account` | `eventId` must be a TNH event on your organiser account |
 | Eventbrite purchase but no registration | Expected until Zapier or script sends the webhook |
+| Ticket Tailor order but no registration | Check `ev_…` link matches webhook; order not pending; sync log line |
+| `ticket_tailor:pending_ignored` | Normal for unpaid/pending TT orders — completes when order is paid |

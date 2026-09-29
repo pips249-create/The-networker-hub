@@ -217,7 +217,7 @@
       window.HubComplianceBootstrap.load(root);
     } else {
       var complianceScript = document.createElement('script');
-      complianceScript.src = root + 'js/hub-compliance-bootstrap.js?v=20260901cmp2';
+      complianceScript.src = root + 'js/hub-compliance-bootstrap.js?v=20260923cmp4';
       complianceScript.setAttribute('data-root', root);
       complianceScript.setAttribute('data-hub-compliance-bootstrap', '1');
       document.head.appendChild(complianceScript);
@@ -1467,24 +1467,35 @@
   probeCatalogueAccess();
 
   var sessionPromise = null;
+  function fetchSessionDirect() {
+    return fetch('/api/auth/session', { credentials: 'include', cache: 'no-store' })
+      .then(function (res) {
+        if (!res.ok) return { ok: false, prefetchFailed: true };
+        return res.json().then(function (data) {
+          return data && typeof data === 'object' ? data : { ok: false, prefetchFailed: true };
+        });
+      })
+      .catch(function () {
+        return { ok: false, prefetchFailed: true };
+      });
+  }
   window.hubFetchSession = function (force) {
     if (force) sessionPromise = null;
     if (!sessionPromise) {
-      if (!force && window.hubSessionPrefetchPromise) {
-        sessionPromise = window.hubSessionPrefetchPromise.catch(function () {
-          sessionPromise = null;
-          return { ok: false };
+      var initial =
+        !force && window.hubSessionPrefetchPromise
+          ? window.hubSessionPrefetchPromise.catch(function () {
+              return { ok: false, prefetchFailed: true };
+            })
+          : fetchSessionDirect();
+      sessionPromise = initial.then(function (data) {
+        if (data && data.ok && data.user) return data;
+        if (!data || !data.prefetchFailed) return data || { ok: false };
+        return fetchSessionDirect().then(function (retry) {
+          if (retry && retry.prefetchFailed) sessionPromise = null;
+          return retry && retry.prefetchFailed ? { ok: false } : retry;
         });
-      } else {
-        sessionPromise = fetch('/api/auth/session', { credentials: 'include', cache: 'no-store' })
-          .then(function (res) {
-            return res.json();
-          })
-          .catch(function () {
-            sessionPromise = null;
-            return { ok: false };
-          });
-      }
+      });
     }
     return sessionPromise;
   };

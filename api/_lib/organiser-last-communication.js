@@ -268,58 +268,72 @@ async function loadSalesDemosForOrganisers(sb, organisers) {
   return rows;
 }
 
+function rememberLatestAt(map, id, at) {
+  const key = String(id || '').trim();
+  if (!key || !at) return;
+  const prev = map.get(key);
+  if (!prev || contactMs(at) > contactMs(prev)) map.set(key, at);
+}
+
+/**
+ * Latest claim-invite time per organiser.
+ * The Sept 2026 rematch stamped thousands of rows with the same created_at.
+ * Offset pages ordered only by that column skip and repeat rows, so a
+ * first-seen map drops invites and those groups sort as never contacted.
+ * Order by id as well, and keep the newer timestamp whenever a row is seen.
+ */
 async function loadClaimInviteLatest(sb, organiserIds) {
   const map = new Map();
   const scoped = Array.isArray(organiserIds);
   const ids = scoped
     ? [...new Set(organiserIds.map((id) => String(id || '').trim()).filter(Boolean))]
     : [];
+  if (scoped && !ids.length) return map;
 
-  if (!scoped) {
-    // Full index: pull all claim-invite rows.
-    try {
-      const rows = await fetchAllRows(
-        sb,
-        'entity_activity_log',
-        'organiser_id, created_at',
-        (q) => q.eq('action', 'admin_claim_invite').order('created_at', { ascending: false })
-      );
-      rows.forEach((row) => {
-        const id = String(row.organiser_id || '').trim();
-        if (!id || map.has(id)) return;
-        map.set(id, row.created_at || null);
+  async function pageClaimInvites(apply) {
+    const pageSize = 1000;
+    let offset = 0;
+    const seen = new Set();
+    for (;;) {
+      let query = sb
+        .from('entity_activity_log')
+        .select('id, organiser_id, created_at')
+        .eq('action', 'admin_claim_invite')
+        .order('created_at', { ascending: false })
+        .order('id', { ascending: false })
+        .range(offset, offset + pageSize - 1);
+      if (typeof apply === 'function') query = apply(query);
+      const { data, error } = await query;
+      if (error) throw error;
+      const chunk = data || [];
+      let fresh = 0;
+      chunk.forEach((row) => {
+        const rowId = String(row.id || '');
+        if (rowId) {
+          if (seen.has(rowId)) return;
+          seen.add(rowId);
+        }
+        fresh += 1;
+        rememberLatestAt(map, row.organiser_id, row.created_at);
       });
-    } catch (e) {
-      const msg = String((e && e.message) || e || '');
-      if (/entity_activity_log|does not exist|schema cache/i.test(msg)) return map;
-      throw e;
+      if (chunk.length < pageSize || fresh === 0) break;
+      offset += pageSize;
     }
-    return map;
   }
 
-  if (!ids.length) return map;
-
-  for (let i = 0; i < ids.length; i += 80) {
-    const chunk = ids.slice(i, i + 80);
-    try {
-      const { data, error } = await sb
-        .from('entity_activity_log')
-        .select('organiser_id, created_at')
-        .eq('action', 'admin_claim_invite')
-        .in('organiser_id', chunk)
-        .order('created_at', { ascending: false })
-        .limit(Math.min(chunk.length * 4, 400));
-      if (error) throw error;
-      (data || []).forEach((row) => {
-        const id = String(row.organiser_id || '').trim();
-        if (!id || map.has(id)) return;
-        map.set(id, row.created_at || null);
-      });
-    } catch (e) {
-      const msg = String((e && e.message) || e || '');
-      if (/entity_activity_log|does not exist|schema cache/i.test(msg)) return map;
-      throw e;
+  try {
+    if (!scoped) {
+      await pageClaimInvites(null);
+    } else {
+      for (let i = 0; i < ids.length; i += 80) {
+        const chunk = ids.slice(i, i + 80);
+        await pageClaimInvites((q) => q.in('organiser_id', chunk));
+      }
     }
+  } catch (e) {
+    const msg = String((e && e.message) || e || '');
+    if (/entity_activity_log|does not exist|schema cache/i.test(msg)) return map;
+    throw e;
   }
   return map;
 }
@@ -411,13 +425,13 @@ function matchesLastContactFilter(contact, filter) {
 function compareLastContact(a, b, ascending) {
   const am = contactMs(a && a.last_communication_at);
   const bm = contactMs(b && b.last_communication_at);
-  if (am === 0 && bm === 0) {
-    return String((a && a.name) || '').localeCompare(String((b && b.name) || ''), 'en-GB');
-  }
-  if (am === 0) return ascending ? -1 : 1; // never contacted first when oldest-first
-  if (bm === 0) return ascending ? 1 : -1;
-  if (am !== bm) return ascending ? am - bm : bm - am;
-  return String((a && a.name) || '').localeCompare(String((b && b.name) || ''), 'en-GB');
+  const dir = ascending ? 1 : -1;
+  // Missing contact is the oldest value: first when sorting oldest-first, last when newest-first.
+  if (am !== bm) return (am - bm) * dir;
+  // Same instant (bulk claim invites share one timestamp) must still reverse
+  // between oldest and newest, or both options return the same list.
+  const nameCmp = String((a && a.name) || '').localeCompare(String((b && b.name) || ''), 'en-GB');
+  return nameCmp * dir;
 }
 
 function sortByLastContact(rows, sort) {
@@ -434,6 +448,7 @@ module.exports = {
   parseLastContactSort,
   needsLastContactPass,
   contactMs,
+  rememberLatestAt,
   buildLastCommunicationIndex,
   resolveLastCommunication,
   attachLastCommunication,

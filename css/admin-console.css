@@ -1658,6 +1658,23 @@ a.admin-action-row:hover .admin-action-btn {
   min-height: 2.35rem;
 }
 
+/* Last-contact sort labels must stay fully visible. A 14rem cap clipped
+   "Last communication (oldest)" to "Last communication (c". */
+.admin-filter-bar select.admin-filter-sort {
+  width: 100%;
+  max-width: none;
+  flex: 1 1 16.5rem;
+}
+
+@media (min-width: 640px) {
+  .admin-filter-bar select.admin-filter-sort {
+    width: auto;
+    min-width: 16.5rem;
+    max-width: 100%;
+    flex: 0 0 auto;
+  }
+}
+
 .admin-hub-tab:focus-visible,
 .admin-needs-chip:focus-visible,
 .entity-activity-load:focus-visible {

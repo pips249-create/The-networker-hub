@@ -178,7 +178,7 @@ module.exports = async function handler(req, res) {
         return json(res, 409, {
           error: 'pending_review_locked',
           message:
-            'This listing is locked while we review it. You cannot change it until we approve or deny it.',
+            'This listing could not be updated. Change the fields you need and save again — it stays on the same submission.',
         });
       }
       if (e && e.code === 'exclusive_brand_conflict') {

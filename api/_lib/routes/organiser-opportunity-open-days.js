@@ -106,7 +106,7 @@ module.exports = async function handler(req, res) {
           ok: false,
           error: 'pending_review_locked',
           message:
-            'This listing is locked while we review it. You cannot change open days until we approve or deny it.',
+            'Open days could not be saved. Try again — they update on this listing without a new submission.',
         });
       }
       if (

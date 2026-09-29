@@ -7,6 +7,7 @@ const {
   parseLastContactSort,
   needsLastContactPass,
   contactMs,
+  rememberLatestAt,
   demoToContact,
   pickNewerContact,
   matchesLastContactFilter,
@@ -95,6 +96,30 @@ assert.deepStrictEqual(
   sortedDesc.map((r) => r.id),
   ['org-1', 'org-2', 'org-3']
 );
+
+// Bulk claim invites share one timestamp. Oldest and newest must not return the same order.
+const blastAt = '2026-09-01T08:00:00.000Z';
+const tied = [
+  { id: 'alpha', name: 'Alpha', last_communication_at: blastAt },
+  { id: 'beta', name: 'Beta', last_communication_at: blastAt },
+  { id: 'older', name: 'Older', last_communication_at: '2026-08-01T08:00:00.000Z' },
+];
+assert.deepStrictEqual(
+  sortByLastContact(tied, 'last_contact_asc').map((r) => r.id),
+  ['older', 'alpha', 'beta']
+);
+assert.deepStrictEqual(
+  sortByLastContact(tied, 'last_contact_desc').map((r) => r.id),
+  ['beta', 'alpha', 'older']
+);
+
+const claimTimes = new Map();
+rememberLatestAt(claimTimes, 'org-1', '2026-09-01T08:00:00.000Z');
+rememberLatestAt(claimTimes, 'org-1', '2026-07-01T08:00:00.000Z');
+rememberLatestAt(claimTimes, 'org-2', '2026-06-01T08:00:00.000Z');
+rememberLatestAt(claimTimes, 'org-2', '2026-09-15T08:00:00.000Z');
+assert.strictEqual(claimTimes.get('org-1'), '2026-09-01T08:00:00.000Z');
+assert.strictEqual(claimTimes.get('org-2'), '2026-09-15T08:00:00.000Z');
 
 assert.ok(contactMs('2026-09-01') > contactMs('2026-08-01'));
 assert.strictEqual(resolveLastCommunication({ id: 'org-1' }, index).who, 'Catherine');

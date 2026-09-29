@@ -1475,6 +1475,31 @@ a:hover {
   background: #9ca3af;
 }
 
+.external-booking-signin-nudge {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(88, 28, 135, 0.06);
+  border: 1px solid rgba(88, 28, 135, 0.14);
+}
+
+.external-booking-signin-nudge-lead {
+  margin: 0 0 10px;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--text-secondary, #4b5563);
+}
+
+.external-booking-signin-nudge-btn {
+  width: 100%;
+  font-size: 0.875rem;
+}
+
+.ticket-panel.is-already-going #external-booking-signin-nudge,
+.ticket-panel.is-application-submitted #external-booking-signin-nudge {
+  display: none !important;
+}
+
 .ticket-load-hint {
   margin: 0;
   padding: 16px;

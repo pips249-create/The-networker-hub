@@ -187,7 +187,7 @@ module.exports = async function handler(req, res) {
               email.automatedEmailSequencesResumesAt
                 ? ` until ${email.automatedEmailSequencesResumesAt}`
                 : ' (set AUTOMATED_EMAIL_SEQUENCES_FORCE_ON=true to resume)'
-            } — engagement-emails, saved-event alerts, post-event reviews, etc. Account welcome, password reset, booking confirmations, and claim invites still send.`
+            } — engagement-emails, saved-event alerts, etc. Post-event review requests (registered attendees), account welcome, password reset, booking confirmations, and claim invites still send.`
           : null,
       hubertEventConcierge:
         !email.hubertEventConciergeEmailsEnabled

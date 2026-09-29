@@ -54,6 +54,13 @@
         onlineAccent.textContent = String(year);
         if (theme.accentHero) onlineAccent.style.color = theme.accentHero;
       }
+    } else if (slug === 'glasgow' || slug === 'bristol') {
+      heading.innerHTML = 'Business networking events in <span class="accent"></span>';
+      var cityAccent = heading.querySelector('.accent');
+      if (cityAccent) {
+        cityAccent.textContent = region.name;
+        if (theme.accentHero) cityAccent.style.color = theme.accentHero;
+      }
     } else {
       heading.innerHTML = 'Networking in <span class="accent"></span>';
       var accent = heading.querySelector('.accent');
