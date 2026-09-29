@@ -4566,18 +4566,34 @@
     window.addEventListener('resize', closeUtilityMenus);
     setRoute(parseRoute());
 
-    const sessionFetcher =
-      typeof window.hubFetchSession === 'function'
-        ? window.hubFetchSession
-        : function () {
-            return fetch('/api/auth/session', { credentials: 'include' }).then(function (res) {
+    async function loadAttendeeSession() {
+      if (window.__hubAttendeeAuthPromise) return window.__hubAttendeeAuthPromise;
+      const primary =
+        typeof window.hubFetchSession === 'function'
+          ? window.hubFetchSession()
+          : fetch('/api/auth/session', { credentials: 'include', cache: 'no-store' }).then(function (res) {
               return res.json();
             });
-          };
+      const data = await primary;
+      if (data && data.ok && data.user) return data;
+      try {
+        const res = await fetch('/api/auth/session', { credentials: 'include', cache: 'no-store' });
+        return await res.json();
+      } catch {
+        return data || { ok: false };
+      }
+    }
 
-    const sessionData = await sessionFetcher();
-    if (!sessionData.ok || !sessionData.user) {
+    if (!window.__hubAttendeeAuth) {
+      if (signin) signin.hidden = true;
+      setDashboardLoading(true);
+    }
+
+    const sessionData = await loadAttendeeSession();
+    if (!sessionData || !sessionData.ok || !sessionData.user) {
+      setDashboardLoading(false);
       if (shell) shell.hidden = true;
+      if (signin) signin.hidden = false;
       const signInLink = signin && signin.querySelector('a.ad-btn-primary');
       if (signInLink) {
         const returnTo = location.pathname + location.search + location.hash;
