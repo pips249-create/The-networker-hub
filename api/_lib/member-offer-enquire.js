@@ -98,7 +98,7 @@ function buildStaffEmailHtml(input) {
   return (
     '<div style="font-family:DM Sans,Arial,sans-serif;line-height:1.5;color:#2d2636;">' +
     '<h2 style="margin:0 0 12px;font-size:18px;">Offer your services</h2>' +
-    '<p style="margin:0 0 16px;">A member wants something featured on My services.</p>' +
+    '<p style="margin:0 0 16px;">A member wants something featured on Member offers.</p>' +
     '<table style="border-collapse:collapse;width:100%;max-width:520px;">' +
     '<tr><td style="padding:4px 12px 4px 0;color:#666;">Name</td><td><strong>' +
     escHtml(input.name) +

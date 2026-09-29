@@ -1,5 +1,5 @@
 /**
- * My services — member offers on the attendee dashboard.
+ * Member offers on the attendee dashboard.
  * Cards follow the events / opportunities grid. Only platform admins can edit them.
  */
 (function () {
@@ -301,8 +301,8 @@
     }
     showListChrome(true);
     setPageHeading(
-      'My services',
-      'Member offers and practical help — free trials, discounts, and guidance arranged for you.'
+      'Member offers',
+      'Free trials, discounts, and practical help arranged for you.'
     );
     var list = visibleOffers();
     if (!loaded) {

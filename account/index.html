@@ -37,7 +37,6 @@
         <aside class="ad-sidebar">
           <nav class="hub-side-nav hub-side-nav--minimal ad-dash-bar" aria-label="Attendee dashboard">
             <a href="#overview" class="hub-side-nav-link is-active" data-ad-route="overview">Overview</a>
-            <span class="hub-side-nav-divider">Event tickets</span>
             <a href="#upcoming" class="hub-side-nav-link" data-ad-route="tickets">
               Event tickets
               <span class="ad-side-count" id="ad-side-tickets" hidden></span>
@@ -52,14 +51,12 @@
               Saved &amp; memberships
               <span class="ad-side-count" id="ad-side-pending" hidden></span>
             </a>
-            <span class="hub-side-nav-divider">Business opportunities</span>
             <a href="#saved-opportunities" class="hub-side-nav-link" data-ad-route="saved-opportunities">
               Opportunities
               <span class="ad-side-count" id="ad-side-opportunities" hidden></span>
             </a>
-            <span class="hub-side-nav-divider">Member offers</span>
             <a href="#services" class="hub-side-nav-link" data-ad-route="services">
-              My services
+              Member offers
               <span class="ad-side-count" id="ad-side-services" hidden></span>
             </a>
             <span class="hub-side-nav-divider hub-side-nav-divider--partner">Partner with us</span>
@@ -136,8 +133,8 @@
                 <button type="button" class="ad-portal ad-portal--services" data-ad-portal="services">
                   <span class="ad-portal-icon" aria-hidden="true">✦</span>
                   <span class="ad-portal-body">
-                    <strong>My services</strong>
-                    <span id="ad-portal-services-meta">Member offers and practical help</span>
+                    <strong>Member offers</strong>
+                    <span id="ad-portal-services-meta">Trials, discounts, and practical help</span>
                   </span>
                   <span class="ad-portal-arrow" aria-hidden="true">→</span>
                 </button>
@@ -717,14 +714,14 @@
                   <div class="ad-empty-state-icon" aria-hidden="true">
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M20 12v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7z"/></svg>
                   </div>
-                  <h3 class="ad-empty-state-title">No member offers yet</h3>
-                  <p class="ad-empty-state-text">Free trials, discounts, and practical help arranged for members will show up here.</p>
+                  <h3 class="ad-empty-state-title">Nothing listed yet</h3>
+                  <p class="ad-empty-state-text">Published offers will show up here.</p>
                 </div>
                 <div class="ad-services-pitch" id="ad-services-pitch">
                   <div class="ad-services-pitch-intro" id="ad-services-pitch-intro">
                     <div class="ad-services-pitch-copy">
                       <p class="ad-services-pitch-title">Offer your services</p>
-                      <p class="ad-services-pitch-text">Have a free trial, discount, or practical help you want members to see? Send a short note and we will look into featuring it here.</p>
+                      <p class="ad-services-pitch-text">If you have something useful for members, send a short note and we will look into featuring it here.</p>
                     </div>
                     <button type="button" class="ad-btn ad-btn-primary" id="ad-services-pitch-open">Get in touch now</button>
                   </div>
@@ -785,7 +782,7 @@
           <span class="ad-bottom-nav-label">Opps</span>
           <span class="ad-bottom-nav-count" id="ad-bottom-opportunities" hidden></span>
         </a>
-        <a href="#services" class="ad-bottom-nav-link" data-ad-route="services" aria-label="My services">
+        <a href="#services" class="ad-bottom-nav-link" data-ad-route="services" aria-label="Member offers">
           <span class="ad-bottom-nav-icon" aria-hidden="true">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7z"/></svg>
           </span>
@@ -1101,7 +1098,7 @@
     <script src="../js/hub-going-share.js?v=20260714share2" defer></script>
     <script src="../js/hub-side-nav.js?v=20260805hubmobile2" defer></script>
     <script src="../js/attendee-auth-gate.js?v=20260929session1"></script>
-    <script src="../js/attendee-member-offers.js?v=20260929enquire1" defer></script>
-    <script src="../js/attendee-dashboard.js?v=20260929enquire1" defer></script>
+    <script src="../js/attendee-member-offers.js?v=20260929offers1" defer></script>
+    <script src="../js/attendee-dashboard.js?v=20260929offers1" defer></script>
   </body>
 </html>

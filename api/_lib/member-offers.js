@@ -1,5 +1,5 @@
 /**
- * Attendee dashboard member offers (My services).
+ * Attendee dashboard member offers.
  * Members read published rows. Platform admins create and edit them.
  */
 const LIMITS = {

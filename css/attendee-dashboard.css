@@ -3339,7 +3339,7 @@ body.ad-share-modal-open {
   display: none !important;
 }
 
-/* My services — member offer cards, in the same shape as event / opportunity cards */
+/* Member offers — cards in the same shape as event / opportunity cards */
 .ad-services-admin[hidden],
 .ad-services-error[hidden],
 .ad-service-form-error[hidden] {
