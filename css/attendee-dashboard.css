@@ -3405,6 +3405,54 @@ body.ad-share-modal-open {
   }
 }
 
+.ad-services-pitch[hidden] {
+  display: none !important;
+}
+
+.ad-services-pitch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 20px;
+  padding: 16px 18px;
+  background: var(--ad-white);
+  border: 1px solid var(--ad-border-soft);
+  border-radius: 14px;
+}
+
+.ad-services-pitch-title {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ad-slate);
+}
+
+.ad-services-pitch-text {
+  margin: 0;
+  max-width: 42em;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ad-text-mid);
+}
+
+.ad-services-pitch .ad-btn-primary {
+  flex-shrink: 0;
+  color: #fff;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .ad-services-pitch {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ad-services-pitch .ad-btn-primary {
+    white-space: normal;
+  }
+}
+
 .ad-service-card {
   position: relative;
   display: flex;

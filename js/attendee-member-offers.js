@@ -266,9 +266,11 @@
     var grid = document.getElementById('ad-services-grid');
     var adminBar = document.getElementById('ad-services-admin');
     var detail = document.getElementById('ad-services-detail');
+    var pitch = document.getElementById('ad-services-pitch');
     if (grid) grid.hidden = !show;
     if (adminBar) adminBar.hidden = !show || !canManage;
     if (detail) detail.hidden = show;
+    if (pitch) pitch.hidden = !show;
   }
 
   function render() {
