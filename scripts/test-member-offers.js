@@ -3,7 +3,9 @@ const {
   normalizeMemberOfferInput,
   isMemberOfferId,
   memberOfferFromRow,
+  publishGaps,
 } = require('../api/_lib/member-offers');
+const { prepareMemberOfferEnquire } = require('../api/_lib/member-offer-enquire');
 
 function fail(message) {
   console.error('FAIL: ' + message);
@@ -21,11 +23,27 @@ const created = normalizeMemberOfferInput({
   published: true,
   sortOrder: 10,
 });
-if (!created.ok) fail('expected a valid offer');
+if (created.ok || created.errors.indexOf('imageUrl') === -1) {
+  fail('publishing without a picture must be rejected');
+}
 if (created.fields.title !== 'Swft Business Cards') fail('title was not trimmed');
 if (created.fields.href !== 'https://example.com/swft') fail('https link was dropped');
 if (created.fields.published !== true) fail('published flag');
 if (created.fields.image_url !== '') fail('blank image should be empty');
+
+const ready = normalizeMemberOfferInput({
+  title: 'Swft Business Cards',
+  href: 'https://example.com/swft',
+  imageUrl: 'https://example.com/swft.jpg',
+  published: true,
+});
+if (!ready.ok) fail('a link and a picture should be enough to publish');
+if (publishGaps({ published: true, href: ready.fields.href, imageUrl: ready.fields.image_url }).length) {
+  fail('publish gaps should be empty when link and picture are set');
+}
+if (publishGaps({ published: false, href: '', imageUrl: '' }).length) {
+  fail('drafts can omit the link and picture');
+}
 
 const blocked = normalizeMemberOfferInput({
   title: 'Franchise help',
@@ -46,6 +64,7 @@ if (Object.prototype.hasOwnProperty.call(patched.fields, 'title')) {
 const detailed = normalizeMemberOfferInput({
   title: 'Swft Business Cards',
   details: '  First paragraph.\n\nSecond paragraph.  ',
+  published: false,
 });
 if (!detailed.ok) fail('details should be accepted');
 if (detailed.fields.details !== 'First paragraph.\n\nSecond paragraph.') {
@@ -74,6 +93,21 @@ const row = memberOfferFromRow({
 if (!row || row.imageUrl !== '' || row.published !== false || row.sortOrder !== 10 || row.details !== 'More about the offer.') {
   fail('row mapping');
 }
+
+const enquire = prepareMemberOfferEnquire(
+  { offer: 'Three months of business cards', audience: 'New networkers', website: 'https://example.com' },
+  { name: 'Sam Member', email: 'sam@example.com' }
+);
+if (!enquire.ok || enquire.input.email !== 'sam@example.com' || enquire.input.offer.indexOf('business cards') === -1) {
+  fail('enquiry should use the signed-in email');
+}
+const shortEnquire = prepareMemberOfferEnquire({ offer: 'Too short' }, { email: 'sam@example.com' });
+if (shortEnquire.ok) fail('a short offer note must be rejected');
+const badSite = prepareMemberOfferEnquire(
+  { offer: 'A useful member trial for cards', website: 'javascript:alert(1)' },
+  { email: 'sam@example.com' }
+);
+if (badSite.ok) fail('enquiry website must be http(s)');
 
 console.log('OK: member offer validation');
 
@@ -126,6 +160,19 @@ function mockRes() {
   const preflight = mockRes();
   await handler({ method: 'OPTIONS', url: '/api/auth/member-offers', headers: {} }, preflight);
   if (preflight.statusCode !== 200) fail('options should be 200');
+
+  const enquireHandler = require('../api/_lib/routes/auth-member-offer-enquire');
+  const enquireAnon = mockRes();
+  await enquireHandler(
+    {
+      method: 'POST',
+      url: '/api/auth/member-offer-enquire',
+      headers: { 'content-type': 'application/json' },
+      body: { offer: 'Three months of business cards for members' },
+    },
+    enquireAnon
+  );
+  if (enquireAnon.statusCode !== 401) fail('signed-out enquiry should be 401, got ' + enquireAnon.statusCode);
 
   console.log('OK: member offers route requires sign-in');
 })().catch(function (err) {

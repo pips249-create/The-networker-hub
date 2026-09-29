@@ -4624,6 +4624,10 @@
     if (window.HubAttendeeServices) {
       window.HubAttendeeServices.init({
         isAdmin: Boolean(sessionData.user && sessionData.user.role === 'admin'),
+        member: {
+          name: sessionData.user.name || '',
+          email: sessionData.user.email || '',
+        },
         onChange: function () {
           updateSideCounts();
           renderOverviewPortals();

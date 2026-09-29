@@ -3411,14 +3411,28 @@ body.ad-share-modal-open {
 
 .ad-services-pitch {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 14px;
   margin-top: 20px;
   padding: 16px 18px;
   background: var(--ad-white);
   border: 1px solid var(--ad-border-soft);
   border-radius: 14px;
+}
+
+.ad-services-pitch-intro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.ad-services-pitch-intro[hidden],
+.ad-services-pitch-form[hidden],
+.ad-services-pitch-done[hidden],
+.ad-services-pitch-error[hidden] {
+  display: none !important;
 }
 
 .ad-services-pitch-title {
@@ -3442,14 +3456,48 @@ body.ad-share-modal-open {
   white-space: nowrap;
 }
 
+.ad-services-pitch-form {
+  display: grid;
+  gap: 12px;
+}
+
+.ad-services-pitch-from,
+.ad-services-pitch-done {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ad-text-mid);
+}
+
+.ad-services-pitch-done {
+  color: var(--ad-slate);
+  font-weight: 600;
+}
+
+.ad-services-pitch-error {
+  margin: 0;
+  color: var(--ad-red);
+  font-size: 14px;
+}
+
+.ad-services-pitch-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
 @media (max-width: 640px) {
-  .ad-services-pitch {
+  .ad-services-pitch-intro {
     flex-direction: column;
     align-items: stretch;
   }
 
   .ad-services-pitch .ad-btn-primary {
     white-space: normal;
+  }
+
+  .ad-services-pitch-actions {
+    flex-direction: column-reverse;
   }
 }
 

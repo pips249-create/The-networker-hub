@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260909listmenu1" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260812footer11" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260929services2" />
-    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260929pitch1" />
+    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260929enquire1" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260812footer10" />
     <script src="../js/hub-defer-css.js?v=20260828perf2" data-hrefs="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap"></script>
 
@@ -721,14 +721,34 @@
                   <p class="ad-empty-state-text">Free trials, discounts, and practical help arranged for members will show up here.</p>
                 </div>
                 <div class="ad-services-pitch" id="ad-services-pitch">
-                  <div class="ad-services-pitch-copy">
-                    <p class="ad-services-pitch-title">Offer your services</p>
-                    <p class="ad-services-pitch-text">Have a free trial, discount, or practical help you want members to see? Send a short note and we will look into featuring it here.</p>
+                  <div class="ad-services-pitch-intro" id="ad-services-pitch-intro">
+                    <div class="ad-services-pitch-copy">
+                      <p class="ad-services-pitch-title">Offer your services</p>
+                      <p class="ad-services-pitch-text">Have a free trial, discount, or practical help you want members to see? Send a short note and we will look into featuring it here.</p>
+                    </div>
+                    <button type="button" class="ad-btn ad-btn-primary" id="ad-services-pitch-open">Get in touch now</button>
                   </div>
-                  <a
-                    class="ad-btn ad-btn-primary"
-                    href="mailto:partnerships@thenetworkeruk.com?subject=Offer%20your%20services&amp;body=Hi%2C%0A%0AI%20would%20like%20to%20offer%20a%20service%20to%20members.%0A%0AWhat%20I%20offer%3A%20%0AWho%20it%20is%20for%3A%20%0AWebsite%3A%20%0A%0AThank%20you."
-                    >Get in touch now</a>
+                  <form id="ad-services-pitch-form" class="ad-services-pitch-form" hidden>
+                    <p class="ad-services-pitch-from" id="ad-services-pitch-from"></p>
+                    <label class="ad-service-field">
+                      <span>What you offer</span>
+                      <textarea name="offer" required maxlength="500" rows="3" placeholder="A free trial, discount, or practical help for members."></textarea>
+                    </label>
+                    <label class="ad-service-field">
+                      <span>Who it is for</span>
+                      <input name="audience" maxlength="200" placeholder="For example, new networkers or local groups" />
+                    </label>
+                    <label class="ad-service-field">
+                      <span>Website</span>
+                      <input name="website" type="url" maxlength="500" placeholder="https://" />
+                    </label>
+                    <p class="ad-services-pitch-error" id="ad-services-pitch-error" hidden role="alert"></p>
+                    <div class="ad-services-pitch-actions">
+                      <button type="button" class="ad-btn ad-btn-ghost" id="ad-services-pitch-cancel">Cancel</button>
+                      <button type="submit" class="ad-btn ad-btn-primary" id="ad-services-pitch-send">Send</button>
+                    </div>
+                  </form>
+                  <p class="ad-services-pitch-done" id="ad-services-pitch-done" hidden>We've got it. We'll look into featuring this and reply from partnerships@thenetworkeruk.com.</p>
                 </div>
               </div>
             </section>
@@ -1042,7 +1062,7 @@
           </label>
           <label class="ad-service-check">
             <input name="published" type="checkbox" checked />
-            <span>Published — visible to members</span>
+            <span>Published — visible to members once it has a link and a picture</span>
           </label>
           <p class="ad-service-form-error" id="ad-service-form-error" hidden role="alert"></p>
           <div class="ad-service-form-actions">
@@ -1081,7 +1101,7 @@
     <script src="../js/hub-going-share.js?v=20260714share2" defer></script>
     <script src="../js/hub-side-nav.js?v=20260805hubmobile2" defer></script>
     <script src="../js/attendee-auth-gate.js?v=20260929session1"></script>
-    <script src="../js/attendee-member-offers.js?v=20260929pitch1" defer></script>
-    <script src="../js/attendee-dashboard.js?v=20260929session1" defer></script>
+    <script src="../js/attendee-member-offers.js?v=20260929enquire1" defer></script>
+    <script src="../js/attendee-dashboard.js?v=20260929enquire1" defer></script>
   </body>
 </html>

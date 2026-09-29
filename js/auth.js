@@ -140,7 +140,8 @@
     var emailEl = document.getElementById('email');
     if (!rememberEl || !emailEl) return;
     try {
-      var remembered = localStorage.getItem(REMEMBER_KEY) === '1';
+      var stored = localStorage.getItem(REMEMBER_KEY);
+      var remembered = stored !== '0';
       rememberEl.checked = remembered;
       if (remembered) {
         var savedEmail = localStorage.getItem(EMAIL_KEY);
@@ -157,7 +158,7 @@
         localStorage.setItem(REMEMBER_KEY, '1');
         localStorage.setItem(EMAIL_KEY, email);
       } else {
-        localStorage.removeItem(REMEMBER_KEY);
+        localStorage.setItem(REMEMBER_KEY, '0');
         localStorage.removeItem(EMAIL_KEY);
       }
     } catch {
