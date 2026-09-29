@@ -76,8 +76,7 @@ Optional: **Link event** with provider **Your own website** and the same TNH uui
 | Your own website | `/api/integrations/providers/own_site/webhook?token=…` |
 | Eventbrite | `https://www.thenetworkeruk.com/w/eb/{token}` (≤70 chars; use **www** — bare `thenetworkeruk.com` returns 308 and breaks POST webhooks) |
 | Ticket Tailor | `/api/integrations/providers/ticket_tailor/webhook?token=…` |
-| Luma | `/api/integrations/providers/luma/webhook?token=…` |
-| TryBooking | `/api/integrations/providers/trybooking/webhook?token=…` |
+| Luma / TryBooking | Hidden from organiser UI; legacy webhook URLs still accepted if already configured. |
 
 Token is issued when the organiser clicks **Enable** (or via PATCH). Without a valid token → `401 invalid_webhook_token`.
 
@@ -89,9 +88,7 @@ For third-party providers, without a linked TNH event for the provider’s event
 |----------|-------------------|---------------|
 | **Your own website** | TNH event UUID in webhook JSON (`eventId`) | Your checkout POSTs to token URL after each sale — no provider admin. |
 | **Eventbrite** | Numeric id from `…/e/…` or API (`123456789`) | Webhook URL + **private token** (Developer links) on Connected setup — Eventbrite only sends an order link; TNH loads buyer email via Eventbrite API. Action `order.placed`. |
-| **Ticket Tailor** | **`ev_…` id** from Box office (must match `event_summary.event_id` in webhooks — not always the same as the public `/events/slug` URL) | Ticket Tailor → **Settings → Webhooks** → subscribe to **Order created** → paste TNH URL (`/w/tt/…` or long form). No API token on TNH. |
-| **Luma** | Event api id | Luma webhook → TNH URL. |
-| **TryBooking** | Event id from TryBooking admin | Configure webhook to TNH URL. |
+| **Ticket Tailor** | **`ev_…` id** from Box office (must match `event_summary.event_id` in webhooks — not always the same as the public `/events/slug` URL) | Webhook: **Order created** → TNH URL (`/w/tt/…`). **Optional API key** (Box office → Settings → API) on Connected setup to import title, date, venue onto TNH — webhooks alone do not need the key. |
 
 Adapters live in `api/_lib/connected-booking-providers/adapters/`. Extend normalizers as real payloads are confirmed with pilot organisers.
 
