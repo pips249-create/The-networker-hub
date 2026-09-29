@@ -109,6 +109,14 @@ module.exports = async function handler(req, res) {
     return json(res, 405, { error: 'method_not_allowed' });
   } catch (e) {
     if (e && e.code === 'not_ready') return notReady(res);
+    if (e && e.code === 'publish_incomplete') {
+      return json(res, 400, {
+        ok: false,
+        error: 'publish_incomplete',
+        fields: e.fields || ['href', 'imageUrl'],
+        message: 'Add a link and a picture before publishing this offer.',
+      });
+    }
     console.error('[member-offers]', e && e.message ? e.message : e);
     return json(res, 500, { ok: false, error: 'member_offers_failed' });
   }

@@ -1,5 +1,5 @@
 /**
- * Attendee dashboard member offers (My services).
+ * Attendee dashboard member offers.
  * Members read published rows. Platform admins create and edit them.
  */
 const LIMITS = {
@@ -125,11 +125,34 @@ function normalizeMemberOfferInput(input, options) {
     fields.sort_order = Number.isFinite(n) ? Math.max(0, Math.min(9999, Math.round(n))) : 0;
   }
 
+  if (!partial && fields.published === true) {
+    if (!fields.href && errors.indexOf('href') === -1) errors.push('href');
+    if (!fields.image_url && errors.indexOf('imageUrl') === -1) errors.push('imageUrl');
+  }
+
   return { ok: errors.length === 0, errors, fields };
 }
 
 function isMemberOfferId(id) {
   return UUID_RE.test(String(id || '').trim());
+}
+
+/** A published card needs a real offer link and a picture. */
+function publishGaps(offer) {
+  if (!offer || offer.published !== true) return [];
+  const gaps = [];
+  if (!offer.href) gaps.push('href');
+  if (!offer.imageUrl && !offer.image_url) gaps.push('imageUrl');
+  return gaps;
+}
+
+function rejectUnpublishable(published, href, imageUrl) {
+  const gaps = publishGaps({ published: published === true, href: href || '', imageUrl: imageUrl || '' });
+  if (!gaps.length) return;
+  const err = new Error('Add a link and a picture before publishing this offer.');
+  err.code = 'publish_incomplete';
+  err.fields = gaps;
+  throw err;
 }
 
 function memberOfferFromRow(row) {
@@ -184,6 +207,8 @@ async function listMemberOffers(options) {
 }
 
 async function createMemberOffer(fields, createdBy) {
+  const published = fields.published !== false;
+  rejectUnpublishable(published, fields.href, fields.image_url);
   const sb = adminClient();
   const row = {
     title: fields.title,
@@ -213,6 +238,25 @@ async function createMemberOffer(fields, createdBy) {
 
 async function updateMemberOffer(id, fields) {
   const sb = adminClient();
+  const existingRes = await sb
+    .from('member_offers')
+    .select('href, image_url, published')
+    .eq('id', id)
+    .maybeSingle();
+  if (existingRes.error) {
+    if (isMissingTable(existingRes.error)) {
+      const err = new Error('member_offers_not_ready');
+      err.code = 'not_ready';
+      throw err;
+    }
+    throw existingRes.error;
+  }
+  if (!existingRes.data) return null;
+  const existing = existingRes.data;
+  const published = hasOwn(fields, 'published') ? fields.published === true : existing.published === true;
+  const href = hasOwn(fields, 'href') ? fields.href : existing.href || '';
+  const imageUrl = hasOwn(fields, 'image_url') ? fields.image_url : existing.image_url || '';
+  rejectUnpublishable(published, href, imageUrl);
   const patch = { updated_at: new Date().toISOString() };
   if (hasOwn(fields, 'title')) patch.title = fields.title;
   if (hasOwn(fields, 'provider')) patch.provider = fields.provider;
@@ -259,6 +303,7 @@ module.exports = {
   LIMITS,
   normalizeMemberOfferInput,
   isMemberOfferId,
+  publishGaps,
   memberOfferFromRow,
   listMemberOffers,
   createMemberOffer,

@@ -1,5 +1,5 @@
 /**
- * My services — member offers on the attendee dashboard.
+ * Member offers on the attendee dashboard.
  * Cards follow the events / opportunities grid. Only platform admins can edit them.
  */
 (function () {
@@ -79,7 +79,7 @@
     form.elements.imageUrl.value = offer && offer.imageUrl ? offer.imageUrl : '';
     form.elements.sortOrder.value =
       offer && offer.sortOrder != null ? String(offer.sortOrder) : '0';
-    form.elements.published.checked = offer ? offer.published !== false : true;
+    form.elements.published.checked = offer ? offer.published === true : false;
   }
 
   function openForm(offer) {
@@ -301,8 +301,8 @@
     }
     showListChrome(true);
     setPageHeading(
-      'My services',
-      'Member offers and practical help — free trials, discounts, and guidance arranged for you.'
+      'Member offers',
+      'Free trials, discounts, and practical help arranged for you.'
     );
     var list = visibleOffers();
     if (!loaded) {
@@ -370,6 +370,7 @@
     if (code === 'admin_only') return 'Only platform admins can change offers.';
     if (code === 'not_ready') return 'Member offers are not available yet.';
     if (code === 'not_found') return 'That offer has already been removed.';
+    if (code === 'publish_incomplete') return 'Add a link and a picture before publishing this offer.';
     return '';
   }
 
@@ -439,6 +440,11 @@
         if (submit) submit.disabled = true;
         setFormError('');
         var payload = formPayload(form);
+        if (payload.published && (!String(payload.href || '').trim() || !String(payload.imageUrl || '').trim())) {
+          setFormError('Add a link and a picture before publishing this offer.');
+          if (submit) submit.disabled = false;
+          return;
+        }
         var method = editingId ? 'PATCH' : 'POST';
         if (editingId) payload.id = editingId;
         send(method, payload)
@@ -481,6 +487,11 @@
         if (toggleBtn) {
           var current = findOffer(toggleBtn.getAttribute('data-service-toggle'));
           if (!current) return;
+          if (!current.published && !offerIsPublishable(current)) {
+            loadError = 'Add a link and a picture before publishing this offer.';
+            render();
+            return;
+          }
           toggleBtn.disabled = true;
           send('PATCH', { id: current.id, published: !current.published })
             .then(function () {
@@ -518,11 +529,123 @@
   }
 
   var started = false;
+  var member = { name: '', email: '' };
+
+  function offerIsPublishable(offer) {
+    return Boolean(offer && offer.href && offer.imageUrl);
+  }
+
+  function setPitchError(message) {
+    var el = document.getElementById('ad-services-pitch-error');
+    if (!el) return;
+    el.hidden = !message;
+    el.textContent = message || '';
+  }
+
+  function showPitchForm(open) {
+    var intro = document.getElementById('ad-services-pitch-intro');
+    var form = document.getElementById('ad-services-pitch-form');
+    var done = document.getElementById('ad-services-pitch-done');
+    var from = document.getElementById('ad-services-pitch-from');
+    if (intro) intro.hidden = open;
+    if (form) form.hidden = !open;
+    if (done) done.hidden = true;
+    if (open && from) {
+      var who = member.name ? member.name : 'your account';
+      from.textContent = member.email
+        ? 'Sending as ' + who + ' (' + member.email + ').'
+        : 'Sending from your signed-in account.';
+    }
+    if (open) setPitchError('');
+  }
+
+  function showPitchDone(message) {
+    var intro = document.getElementById('ad-services-pitch-intro');
+    var form = document.getElementById('ad-services-pitch-form');
+    var done = document.getElementById('ad-services-pitch-done');
+    if (intro) intro.hidden = true;
+    if (form) form.hidden = true;
+    if (done) {
+      done.hidden = false;
+      if (message) done.textContent = message;
+    }
+  }
+
+  function bindPitch() {
+    var openBtn = document.getElementById('ad-services-pitch-open');
+    var cancelBtn = document.getElementById('ad-services-pitch-cancel');
+    var form = document.getElementById('ad-services-pitch-form');
+    if (openBtn && !openBtn.dataset.boundPitchOpen) {
+      openBtn.dataset.boundPitchOpen = '1';
+      openBtn.addEventListener('click', function () {
+        showPitchForm(true);
+        var field = form && form.elements.offer;
+        if (field) field.focus();
+      });
+    }
+    if (cancelBtn && !cancelBtn.dataset.boundPitchCancel) {
+      cancelBtn.dataset.boundPitchCancel = '1';
+      cancelBtn.addEventListener('click', function () {
+        showPitchForm(false);
+      });
+    }
+    if (form && !form.dataset.boundPitchForm) {
+      form.dataset.boundPitchForm = '1';
+      form.addEventListener('submit', function (event) {
+        event.preventDefault();
+        setPitchError('');
+        var offerText = String(form.elements.offer.value || '').trim();
+        if (offerText.length < 10) {
+          setPitchError('Tell us what you offer, in a sentence or two.');
+          return;
+        }
+        var sendBtn = document.getElementById('ad-services-pitch-send');
+        if (sendBtn) sendBtn.disabled = true;
+        fetch('/api/auth/member-offer-enquire', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            offer: offerText,
+            audience: form.elements.audience.value,
+            website: form.elements.website.value,
+          }),
+        })
+          .then(function (res) {
+            return res.json().then(function (data) {
+              return { ok: res.ok, data: data || {} };
+            });
+          })
+          .then(function (result) {
+            if (!result.ok || !result.data.ok) {
+              setPitchError(
+                (result.data && result.data.message) ||
+                  'Could not send that just now. Email partnerships@thenetworkeruk.com instead.'
+              );
+              return;
+            }
+            form.reset();
+            showPitchDone(result.data.message);
+          })
+          .catch(function () {
+            setPitchError('Could not send that just now. Email partnerships@thenetworkeruk.com instead.');
+          })
+          .then(function () {
+            if (sendBtn) sendBtn.disabled = false;
+          });
+      });
+    }
+  }
 
   function init(options) {
     if (started) return;
     started = true;
+    if (options && options.member) {
+      member.name = String(options.member.name || '').trim();
+      member.email = String(options.member.email || '').trim();
+    }
     bind();
+    bindPitch();
     onChange = options && options.onChange;
     if (options && options.isAdmin) canManage = true;
     reload();

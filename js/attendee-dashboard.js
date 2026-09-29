@@ -97,8 +97,8 @@
       sub: 'Pin your own listings higher, or sponsor The Networker UK as a brand to reach audiences across events, organisers, and business opportunities.',
     },
     services: {
-      title: 'My services',
-      sub: 'Member offers and practical help — free trials, discounts, and guidance arranged for you.',
+      title: 'Member offers',
+      sub: 'Free trials, discounts, and practical help arranged for you.',
     },
     'reviews-pending': {
       title: 'Reviews to write',
@@ -3423,7 +3423,7 @@
           : 0;
       servicesMeta.textContent = serviceCount
         ? serviceCount + (serviceCount === 1 ? ' member offer' : ' member offers')
-        : 'Member offers and practical help';
+        : 'Trials, discounts, and practical help';
     }
   }
 
@@ -4624,6 +4624,10 @@
     if (window.HubAttendeeServices) {
       window.HubAttendeeServices.init({
         isAdmin: Boolean(sessionData.user && sessionData.user.role === 'admin'),
+        member: {
+          name: sessionData.user.name || '',
+          email: sessionData.user.email || '',
+        },
         onChange: function () {
           updateSideCounts();
           renderOverviewPortals();
