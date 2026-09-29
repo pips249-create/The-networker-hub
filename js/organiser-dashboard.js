@@ -12097,6 +12097,15 @@
         })
       );
     }
+    if (page === 'connected-booking') {
+      routeLoadTasks.push(
+        Promise.resolve().then(function () {
+          if (typeof window.refreshOrganiserConnectedBooking === 'function') {
+            return window.refreshOrganiserConnectedBooking({ silent: true });
+          }
+        })
+      );
+    }
     if (page === 'business-overview') {
       routeLoadTasks.push(
         new Promise(function (resolve) {
@@ -18223,6 +18232,7 @@
     if (page === 'social' || page === 'social-spotlight') return 'Loading Promote…';
     if (page === 'memberships') return 'Loading memberships…';
     if (page === 'groups') return 'Loading organiser pages…';
+    if (page === 'connected-booking') return 'Loading Connected booking…';
     if (page === 'team') return 'Loading team…';
     if (page === 'ticket-widget') return 'Loading ticket widget…';
     if (page === 'business-list') return 'Loading listing form…';
@@ -19977,7 +19987,7 @@
       }
       if (e.data && e.data.type === 'hub-event-goto-connected-booking') {
         closeEventEditorDrawer();
-        location.href = '/organiser/#groups';
+        setRoute('connected-booking');
         return;
       }
       if (e.data && e.data.type === 'hub-event-tickets-done') {

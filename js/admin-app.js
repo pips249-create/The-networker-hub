@@ -17425,7 +17425,7 @@
     var approval = String(opp.approval_status || '').trim();
     if (approval === 'Pending Review' && opportunityIsSubmittedForReview(opp)) {
       return (
-        '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-sky-100 text-sky-900" title="Submitted for review — organiser cannot edit until you approve or deny">Submitted for review</span>'
+        '<span class="inline-flex items-center rounded-full text-[10px] font-semibold px-2 py-0.5 bg-sky-100 text-sky-900" title="Submitted for review — the organiser can still edit this listing. The queue shows the latest version.">Submitted for review</span>'
       );
     }
     if (approval === 'Pending Review' && !opportunityIsSubmittedForReview(opp)) {
@@ -26611,7 +26611,7 @@
         ? 'Live listing — proposed changes awaiting approval. The current version stays public until you approve.' +
           (submittedAt ? ' · ' + submittedAt : '')
         : isPendingSubmitted
-          ? 'Submitted for approval — lister can still edit and resubmit until you approve.' +
+          ? 'Submitted for approval — the lister can change details and update this same submission until you approve. You are seeing the latest version.' +
             (submittedAt ? ' · ' + submittedAt : '')
           : awaitingPay
             ? 'Approved — awaiting listing payment before going live.'

@@ -33,10 +33,68 @@
     qs('lr-invalid').hidden = false;
   }
 
-  function showAlreadyReviewed() {
+  function applyFollowUp(followUp, mountId) {
+    if (!followUp || typeof followUp !== 'object') return;
+    var hasLinked = followUp.hasLinkedAccount === true;
+    var register = followUp.registerUrl;
+    var login = followUp.loginUrl;
+    var account = followUp.accountUrl || '/account/#reviews-done';
+    var settings = followUp.settingsUrl || '/account/settings';
+    var needsProfile = followUp.profileNeedsDetails !== false;
+
+    if (mountId === 'success') {
+      var guestBlock = qs('lr-followup');
+      var linkedBlock = qs('lr-followup-linked');
+      if (hasLinked) {
+        if (guestBlock) guestBlock.hidden = true;
+        if (linkedBlock) {
+          linkedBlock.hidden = false;
+          var linkedText = qs('lr-followup-linked-text');
+          if (linkedText) {
+            linkedText.textContent = needsProfile
+              ? 'Your review is saved in your account. Add company and job title in profile settings for name badges at your next event.'
+              : 'Your review is saved in your attendee dashboard.';
+          }
+          var acc = qs('lr-account-link-success');
+          var set = qs('lr-settings-link');
+          if (acc) acc.href = account;
+          if (set) set.hidden = !needsProfile;
+          if (set) set.href = settings;
+        }
+      } else if (guestBlock) {
+        guestBlock.hidden = false;
+        var reg = qs('lr-register-link');
+        var log = qs('lr-login-link');
+        if (reg && register) reg.href = register;
+        if (log && login) log.href = login;
+      }
+      return;
+    }
+
+    if (mountId === 'done') {
+      var host = qs('lr-done-followup');
+      if (!host || hasLinked) return;
+      host.hidden = false;
+      host.className = 'lr-followup';
+      host.innerHTML =
+        '<h3 class="lr-followup-title">Optional — save your reviews in a free account</h3>' +
+        '<p class="lr-followup-lede">Track tickets and past reviews, and add company and job title for name badges.</p>' +
+        '<div class="lr-actions lr-followup-actions">' +
+        '<a class="lr-btn-primary" href="' +
+        (register || '/register?intent=networker&next=%2Faccount%2Fsettings') +
+        '">Create free account</a>' +
+        '<a class="lr-btn-secondary" href="' +
+        (login || '/login?next=%2Faccount%2Fsettings') +
+        '">Sign in</a>' +
+        '</div>';
+    }
+  }
+
+  function showAlreadyReviewed(followUp) {
     qs('lr-loading').hidden = true;
     qs('lr-form-wrap').hidden = true;
     qs('lr-done').hidden = false;
+    applyFollowUp(followUp, 'done');
   }
 
   function showForm(ctx) {
@@ -61,10 +119,11 @@
     if (ratingParam >= 1 && ratingParam <= 5) setStars(Math.round(ratingParam));
   }
 
-  function showSuccess(message) {
+  function showSuccess(message, followUp) {
     qs('lr-form-wrap').hidden = true;
     qs('lr-success').hidden = false;
     if (message) qs('lr-success-text').textContent = message;
+    applyFollowUp(followUp, 'success');
   }
 
   async function init() {
@@ -117,7 +176,7 @@
                     ? 'This review link is only for confirmed attendees.'
                     : data.message || data.error || 'Could not submit review.';
             if (data.error === 'review_already_submitted') {
-              showAlreadyReviewed();
+              showAlreadyReviewed(data);
               return;
             }
             if (errEl) {
@@ -129,7 +188,7 @@
           var reward =
             (data.reviewerReward && data.reviewerReward.toastMessage) ||
             'Thanks — your review helps this group on The Networker UK.';
-          showSuccess(reward);
+          showSuccess(reward, data);
         } catch (submitErr) {
           if (errEl) {
             errEl.textContent =
@@ -152,7 +211,7 @@
         return;
       }
       if (info.alreadyReviewed) {
-        showAlreadyReviewed();
+        showAlreadyReviewed(info);
         return;
       }
       if (!info.canReview) {

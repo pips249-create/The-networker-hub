@@ -1,4 +1,4 @@
-# Connected booking — pilot test (Eventbrite + webhook)
+# Connected booking — pilot test (Eventbrite, Ticket Tailor, webhooks)
 
 ## Run automated smoke tests
 
@@ -8,6 +8,7 @@ Run **one command per line** (do not paste the `#` comment on the same line as `
 cd ~/The-networker-hub
 npm run test-connected-booking-subscriptions
 npm run test-external-booking-webhook
+npm run test-connected-booking-providers
 ```
 
 ## Free Starter plan for pilot organisers (no Stripe)
@@ -101,6 +102,17 @@ Zap flow: Trigger **Eventbrite → New order** → **Code** step (build JSON + H
 - Open the public event page → **Book** goes to Eventbrite.
 - After webhook **accepted**, check organiser **attendee list** / registrations for that event date.
 
+## Ticket Tailor end-to-end
+
+Full step-by-step: **[TICKET-TAILOR-CONNECTED.md](./TICKET-TAILOR-CONNECTED.md)**.
+
+**Short checklist**
+
+1. **Connected booking → Booking providers → Enable Ticket Tailor** → copy `https://www.thenetworkeruk.com/w/tt/…`
+2. **Ticket Tailor → Settings → Webhooks** → paste URL → **Order created** (`ORDER.CREATED`)
+3. TNH event → **Connected setup** → booking URL + link **`ev_…`** id (Box office, not URL slug) → **Publish**
+4. Place a test order (or run `npm run send-ticket-tailor-webhook -- …`) → **Recent sync attempts** → `ticket_tailor:accepted` → **Attendees**
+
 ## Troubleshooting
 
 | Symptom | Fix |
@@ -110,3 +122,5 @@ Zap flow: Trigger **Eventbrite → New order** → **Code** step (build JSON + H
 | `invalid_signature` | Regenerate secret; sign **raw JSON body** exactly |
 | `event_not_on_account` | `eventId` must be a TNH event on your organiser account |
 | Eventbrite purchase but no registration | Expected until Zapier or script sends the webhook |
+| Ticket Tailor order but no registration | Check `ev_…` link matches webhook; order not pending; sync log line |
+| `ticket_tailor:pending_ignored` | Normal for unpaid/pending TT orders — completes when order is paid |

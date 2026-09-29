@@ -793,10 +793,15 @@
       '</ol>' +
       '</details>';
 
+    var webhookDriftHtml =
+      p && p.eventbriteWebhookNeedsFix
+        ? '<p class="ee-alert ee-alert-warn ecs-eb-token-status">Webhook URL on TNH was updated — paste the URL above into Eventbrite again or sync will stop (Recent sync attempts may show <code>invalid_webhook_token</code>).</p>'
+        : '<p class="ee-hint">If sync worked once then stopped, compare Eventbrite <strong>Payload URL</strong> with the line above — they must match exactly. Check <a href="/organiser/connected-booking#cb-sync-log">Connected booking → Recent sync attempts</a>.</p>';
+
     var perEventHtml = linkedDone
       ? '<p class="ee-hint ee-alert-ok ecs-eb-linked">This listing is linked to Eventbrite id <code>' +
         escHtml(displayExternalEventId('eventbrite', linked.external_event_id || linked.externalEventId)) +
-        '</code>. New ticket sales on that Eventbrite event will sync here.</p>'
+        '</code>. New ticket sales on that Eventbrite event will sync here. Use <strong>Update listing from Eventbrite</strong> above to refresh title, date, and venue on TNH.</p>'
       : '<p class="ee-hint ecs-eb-per-event-focus">For this event only: save the Eventbrite event id in <strong>Link registrations</strong> above (we often fill it from your booking URL).</p>';
 
     var compactLead = accountReady
@@ -816,6 +821,7 @@
         '<p class="ecs-eb-paste-hint">Only if you are (re)connecting Eventbrite: profile menu → <strong>Account settings → Webhooks</strong> · Action <code>order.placed</code>. The API token subscribes to later attendee updates.</p>' +
         tokenPanelHtml +
         helpDetailsHtml +
+        webhookDriftHtml +
         '<p class="ee-hint"><a href="/organiser/connected-booking#cb-providers-title">Connected booking → Booking providers</a> for sync log and all links.</p>' +
         '</div></details>';
     } else {
@@ -825,6 +831,7 @@
         '<p class="ecs-eb-paste-hint">In Eventbrite: profile menu → <strong>Account settings → Webhooks</strong> · Action <code>order.placed</code>. Saving the API token below also subscribes to attendee updates, so a second ticket holder added after payment is pulled in.</p>' +
         tokenPanelHtml +
         helpDetailsHtml +
+        webhookDriftHtml +
         perEventHtml +
         (!urlOk
           ? '<button type="button" class="ee-btn ee-btn-outline ee-btn-sm ecs-eb-regen" data-enable-provider="eventbrite">Get shorter URL</button>'
@@ -1176,14 +1183,77 @@
     var help = qs('ecs-event-link-help');
     if (help) {
       var p = providersById[key];
-      help.textContent =
-        'Tell us which ' +
-        ((p && p.label) || 'provider') +
-        ' event matches this listing so ticket sales sync to The Networker UK — you do this once per TNH event.';
+      if (key === 'eventbrite') {
+        help.textContent =
+          'Link your Eventbrite event id so ticket buyers sync here. You can also copy title, date, and venue from Eventbrite onto this TNH listing (attendee sync stays separate).';
+      } else {
+        help.textContent =
+          'Tell us which ' +
+          ((p && p.label) || 'provider') +
+          ' event matches this listing so ticket sales sync to The Networker UK — you do this once per TNH event.';
+      }
     }
+    var importRow = qs('ecs-eb-import-row');
+    var importBtn = qs('ecs-import-eventbrite-listing');
+    if (importRow) importRow.hidden = key !== 'eventbrite';
+    if (importBtn) importBtn.hidden = key !== 'eventbrite';
     maybeAutofillExternalEventId(false);
     refreshEventLinkBadge(key);
     refreshEventLinkAutofillHint();
+  }
+
+  function listingImportStatusMessage(data) {
+    if (!data) return '';
+    var parts = [];
+    if (data.importedFields && data.importedFields.length) {
+      parts.push('Updated on TNH: ' + data.importedFields.join(', ') + '.');
+    }
+    if (data.skippedBecauseLocked && data.skippedBecauseLocked.length) {
+      parts.push(
+        'Skipped (ticket sales lock date/venue): ' + data.skippedBecauseLocked.join(', ') + '.'
+      );
+    }
+    if (data.message && !parts.length) return data.message;
+    return parts.join(' ') || data.message || 'Listing updated from Eventbrite.';
+  }
+
+  function applyListingImportToForm(ev) {
+    if (!ev) return;
+    applyEvent(Object.assign({}, loadedEvent || {}, ev));
+  }
+
+  function importEventbriteListing(opts) {
+    var options = opts || {};
+    var platform = selectedIntegrationPlatform();
+    if (platform !== 'eventbrite') return Promise.resolve({ ok: true, skipped: true });
+    var externalId = resolveExternalEventIdForLink(platform);
+    if (!externalId && !linkedExternalEventId(platform)) {
+      var msg =
+        'Enter the Eventbrite event id or paste an Eventbrite /e/… link in Booking URL first.';
+      if (!options.silent) setEventLinkStatus(msg, 'error');
+      return Promise.resolve({ ok: false, message: msg });
+    }
+    if (!options.silent) setEventLinkStatus('Loading details from Eventbrite…');
+    return api('/api/organiser/connected-booking-providers', {
+      method: 'PATCH',
+      body: JSON.stringify({
+        action: 'import_eventbrite_listing',
+        eventId: eventId,
+        externalEventId: externalId || undefined,
+      }),
+    }).then(function (res) {
+      if (!res.ok || !res.data || !res.data.ok) {
+        var errMsg =
+          (res.data && (res.data.message || res.data.error)) || 'Could not import from Eventbrite.';
+        if (!options.silent) setEventLinkStatus(errMsg, 'error');
+        return { ok: false, message: errMsg };
+      }
+      applyListingImportToForm(res.data.event);
+      if (!options.silent) {
+        setEventLinkStatus(listingImportStatusMessage(res.data), 'ok');
+      }
+      return { ok: true, data: res.data };
+    });
   }
 
   function updateOneTimeProviderStatus(platform) {
@@ -1250,6 +1320,10 @@
     }
     setEventLinkStatus('Saving link…');
     var bookingUrl = qs('ecs-booking-url') ? qs('ecs-booking-url').value.trim() : '';
+    var importOnLink =
+      platform === 'eventbrite' &&
+      qs('ecs-eb-import-on-link') &&
+      qs('ecs-eb-import-on-link').checked;
     return api('/api/organiser/connected-booking-providers', {
       method: 'PATCH',
       body: JSON.stringify({
@@ -1258,6 +1332,7 @@
         provider: platform,
         externalEventId: externalId,
         externalEventUrl: bookingUrl || undefined,
+        importListing: importOnLink,
       }),
     }).then(function (res) {
       if (!res.ok) {
@@ -1275,8 +1350,15 @@
         });
         providerLinks.push(row);
       }
+      if (res.data && res.data.listingImport) {
+        applyListingImportToForm(res.data.listingImport.event);
+      }
       if (!options.silent) {
-        setEventLinkStatus('Linked — registrations from that provider event will sync here.', 'ok');
+        var linkMsg = 'Linked — registrations from that provider event will sync here.';
+        if (res.data && res.data.listingImport) {
+          linkMsg += ' ' + listingImportStatusMessage(res.data.listingImport);
+        }
+        setEventLinkStatus(linkMsg, 'ok');
       }
       refreshEventLinkBadge(platform);
       renderProviderWebhookCard(platform);
@@ -1305,6 +1387,15 @@
         saveEventLink({ required: true }).then(function (res) {
           saveLinkBtn.disabled = false;
           if (!res.ok && res.message) setEventLinkStatus(res.message, 'error');
+        });
+      });
+    }
+    var importBtn = qs('ecs-import-eventbrite-listing');
+    if (importBtn) {
+      importBtn.addEventListener('click', function () {
+        importBtn.disabled = true;
+        importEventbriteListing({ required: false }).then(function () {
+          importBtn.disabled = false;
         });
       });
     }
