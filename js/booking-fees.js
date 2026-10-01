@@ -126,11 +126,21 @@
     return false;
   }
 
+  function listingPriceUnknown(ev) {
+    if (!ev || isMembersOnlyListing(ev)) return false;
+    if (ev.priceKey === 'enquire') return true;
+    // Older payloads labelled a missing tier as Free. A real free event has a £0 tier.
+    return ev.hasTicketTiers === false && ev.hasFreeTickets !== true && ev.priceKey === 'free';
+  }
+
   function listingPriceLabel(ev, options) {
     const opts = options || {};
     const withFrom = listingShowsFrom(ev, opts);
     if (isMembersOnlyListing(ev)) {
       return 'Members only';
+    }
+    if (listingPriceUnknown(ev)) {
+      return 'Ask organiser';
     }
     if (
       String(ev?.attendanceMode || '') === 'guest_programme' ||
@@ -167,6 +177,7 @@
     listingPriceNum: listingPriceNum,
     formatPounds: formatPounds,
     listingShowsFrom: listingShowsFrom,
+    listingPriceUnknown: listingPriceUnknown,
     listingPriceLabel: listingPriceLabel,
   };
 })(typeof window !== 'undefined' ? window : globalThis);

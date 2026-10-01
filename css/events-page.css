@@ -819,6 +819,11 @@ body.browse-mode-organisers .events-organiser-footnote-link {
   white-space: nowrap;
 }
 
+.event-grid-price.is-unpriced {
+  color: #635c5e;
+  font-weight: 600;
+}
+
 .event-grid-format {
   font-size: 10px;
   font-weight: 700;
@@ -1374,6 +1379,9 @@ body.browse-mode-organisers .events-organiser-footnote-link {
   line-height: 1.2;
   white-space: nowrap;
   flex-shrink: 0;
+}
+.premium-price.is-unpriced {
+  color: #635c5e;
 }
 .premium-card-body {
   position: relative;

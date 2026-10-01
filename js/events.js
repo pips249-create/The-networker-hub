@@ -412,6 +412,13 @@
   window.hubGuestVisitEligibilityByOrganiser = guestVisitEligibilityByOrganiser;
   var guestVisitLabelRefreshPromise = null;
 
+  function priceBadgeIsUnpriced(ev) {
+    if (window.HubBookingFees && typeof window.HubBookingFees.listingPriceUnknown === 'function') {
+      return window.HubBookingFees.listingPriceUnknown(ev);
+    }
+    return ev && ev.priceKey === 'enquire';
+  }
+
   function priceBadgeLabel(ev) {
     const mode = String(ev?.attendanceMode || '').trim();
     const isCe = mode === 'category_exclusivity' || mode === 'osop';
@@ -424,6 +431,12 @@
       return window.HubBookingFees.listingPriceLabel(ev, {
         guestVisitEligibility: eligibility || null,
       });
+    }
+    if (
+      ev.priceKey === 'enquire' ||
+      (ev.hasTicketTiers === false && ev.hasFreeTickets !== true && ev.priceKey === 'free')
+    ) {
+      return 'Ask organiser';
     }
     if (ev.priceKey === 'free' || !ev.price || /^free$/i.test(ev.price)) return 'Free';
     const n = Number(ev.priceNum);
@@ -685,7 +698,7 @@
           </div>
           <div class="premium-card-top">
             <span class="premium-badge">Premium</span>
-            <span class="premium-price">${escapeHtml(priceBadgeLabel(ev))}</span>
+            <span class="premium-price${priceBadgeIsUnpriced(ev) ? ' is-unpriced' : ''}">${escapeHtml(priceBadgeLabel(ev))}</span>
           </div>
           <div class="premium-card-body">
             <h3 class="premium-card-title">${escapeHtml(ev.title)}</h3>
@@ -788,7 +801,7 @@
         <div class="event-grid-body">
           <div class="event-grid-body-top">
             <span class="event-grid-format ${escapeHtml(fmtClass)}">${escapeHtml(fmtLabel)}</span>
-            <span class="event-grid-price">${escapeHtml(priceBadgeLabel(ev))}</span>
+            <span class="event-grid-price${priceBadgeIsUnpriced(ev) ? ' is-unpriced' : ''}">${escapeHtml(priceBadgeLabel(ev))}</span>
           </div>
           <h3 class="event-grid-title">${escapeHtml(ev.title)}</h3>
           <div class="event-grid-rating${hasRating ? '' : ' event-grid-rating--empty'}">

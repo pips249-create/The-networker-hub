@@ -1998,6 +1998,9 @@ body.events-view-map .events-map-wrap {
   color: #fff;
   white-space: nowrap;
 }
+.map-sidebar-item-price.is-unpriced {
+  background: #635c5e;
+}
 
 .events-map-panel .leaflet-container {
   position: absolute;
@@ -2539,6 +2542,9 @@ body.browse-mode-organisers .events-toolbar {
   border-radius: var(--radius-pill);
   background: #2d8a4e;
   color: #fff;
+}
+.map-event-card-price.is-unpriced {
+  background: #635c5e;
 }
 
 .map-event-card-title {
