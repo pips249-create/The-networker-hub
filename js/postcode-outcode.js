@@ -168,6 +168,14 @@
       'BN44', 'BN45',
       'PO18', 'PO19', 'PO20', 'PO21', 'PO22',
     ],
+    shropshire: [
+      'SY1', 'SY2', 'SY3', 'SY4', 'SY5', 'SY6', 'SY7', 'SY8', 'SY9',
+      'SY10', 'SY11', 'SY12', 'SY13',
+      'TF1', 'TF2', 'TF3', 'TF4', 'TF5', 'TF6', 'TF7', 'TF8', 'TF9', 'TF10',
+      'TF11', 'TF12', 'TF13',
+      'WV7', 'WV15', 'WV16',
+      'DY14',
+    ],
   };
 
   var COUNTY_SLUGS = {
@@ -183,6 +191,7 @@
     buckinghamshire: true,
     cambridgeshire: true,
     sussex: true,
+    shropshire: true,
   };
 
   var sectorSetCache = {};
@@ -301,6 +310,8 @@
     sussex: 'sussex',
     'east sussex': 'sussex',
     'west sussex': 'sussex',
+    shropshire: 'shropshire',
+    salop: 'shropshire',
   };
 
   function normalizeLocationText(raw) {

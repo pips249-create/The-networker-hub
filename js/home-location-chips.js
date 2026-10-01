@@ -51,8 +51,9 @@
 
     var isCounty = chip.classList.contains('home-location-chip--county');
     var circularCounties = Boolean(chip.closest('.networking-location-directory--counties-only'));
-    // Events keeps compact text-only county pills; Opportunities uses circular landmark chips.
-    if (isCounty && !circularCounties) {
+    // Events county pills stay text-only unless the chip includes an icon host.
+    // Opportunities always uses circular landmark chips.
+    if (isCounty && !circularCounties && !chip.querySelector('.home-location-chip-icon')) {
       syncCompactLabel(chip);
       return;
     }
