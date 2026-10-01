@@ -656,7 +656,13 @@
       '">' +
       escapeHtml(fmtLabel) +
       '</span>' +
-      '<span class="map-event-card-price">' +
+      '<span class="map-event-card-price' +
+      (window.HubBookingFees &&
+      typeof window.HubBookingFees.listingPriceUnknown === 'function' &&
+      window.HubBookingFees.listingPriceUnknown(ev)
+        ? ' is-unpriced'
+        : '') +
+      '">' +
       escapeHtml(mapPriceLabel(ev)) +
       '</span>' +
       '</div>' +
@@ -760,7 +766,13 @@
       escapeHtml(meta.join(' · ')) +
       '</span>' +
       '</span>' +
-      '<span class="map-sidebar-item-price">' +
+      '<span class="map-sidebar-item-price' +
+      (window.HubBookingFees &&
+      typeof window.HubBookingFees.listingPriceUnknown === 'function' &&
+      window.HubBookingFees.listingPriceUnknown(ev)
+        ? ' is-unpriced'
+        : '') +
+      '">' +
       escapeHtml(mapPriceLabel(ev)) +
       '</span>' +
       '</button></li>'

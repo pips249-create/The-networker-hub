@@ -539,11 +539,18 @@ function sortRows(rows, sort) {
       if (cb == null) return -1;
       return cb - ca;
     }
-    if (sort === 'price-asc') {
-      return (Number(a.min_ticket_price) || 0) - (Number(b.min_ticket_price) || 0);
-    }
-    if (sort === 'price-desc') {
-      return (Number(b.min_ticket_price) || 0) - (Number(a.min_ticket_price) || 0);
+    if (sort === 'price-asc' || sort === 'price-desc') {
+      const priceRank = (row) => {
+        if (row.min_ticket_price == null || row.min_ticket_price === '') return null;
+        const n = Number(row.min_ticket_price);
+        return Number.isFinite(n) ? n : null;
+      };
+      const pa = priceRank(a);
+      const pb = priceRank(b);
+      if (pa == null && pb == null) return 0;
+      if (pa == null) return 1;
+      if (pb == null) return -1;
+      return sort === 'price-asc' ? pa - pb : pb - pa;
     }
     if (sort === 'date') {
       return new Date(a.starts_at || 0) - new Date(b.starts_at || 0);
@@ -564,12 +571,12 @@ function applySqlSort(query, sort) {
   }
   if (sort === 'price-asc') {
     return query
-      .order('min_ticket_price', { ascending: true })
+      .order('min_ticket_price', { ascending: true, nullsFirst: false })
       .order('starts_at', { ascending: true });
   }
   if (sort === 'price-desc') {
     return query
-      .order('min_ticket_price', { ascending: false })
+      .order('min_ticket_price', { ascending: false, nullsFirst: false })
       .order('starts_at', { ascending: true });
   }
   if (sort === 'best-rated' || sort === 'rating-desc') {
@@ -597,11 +604,46 @@ function rowPassesGeo(row, params) {
   return haversineMiles(params.lat, params.lng, lat, lng) <= params.radiusMi;
 }
 
+function ticketPublishesPublicPrice(row) {
+  const type = String(row?.ticket_type || '').trim();
+  if (type === 'Alumni') return false;
+  const visibility = String(row?.visibility || 'public').trim().toLowerCase();
+  return visibility !== 'members_only';
+}
+
+/** Map pins don't load ticket rows. Mark listings that have no public price. */
+async function attachHasPublicTickets(sb, rows) {
+  const list = rows || [];
+  if (!list.length) return list;
+  const ids = [...new Set(list.map((row) => row.id).filter(Boolean))];
+  const withPrice = new Set();
+  const chunkSize = 40;
+  for (let i = 0; i < ids.length; i += chunkSize) {
+    const chunk = ids.slice(i, i + chunkSize);
+    const { data, error } = await sb
+      .from('tickets')
+      .select('event_id, visibility, ticket_type')
+      .in('event_id', chunk);
+    if (error) throw new Error(error.message);
+    (data || []).forEach((ticket) => {
+      if (ticketPublishesPublicPrice(ticket)) withPrice.add(ticket.event_id);
+    });
+  }
+  return list.map((row) => ({
+    ...row,
+    has_public_tickets: withPrice.has(row.id),
+  }));
+}
+
 function rowToBrowsePin(row) {
   const lat = row.latitude != null ? Number(row.latitude) : null;
   const lng = row.longitude != null ? Number(row.longitude) : null;
-  const priceNum = Number(row.min_ticket_price) || 0;
   const membersOnlyEvent = Boolean(row.members_only_event);
+  const rawPrice = row.min_ticket_price;
+  const priceUnknown =
+    !membersOnlyEvent &&
+    (row.has_public_tickets === false || rawPrice == null || rawPrice === '');
+  const priceNum = priceUnknown ? 0 : Number(rawPrice) || 0;
   const startsAt = row.starts_at ? new Date(row.starts_at) : null;
   const dateLine =
     startsAt && !Number.isNaN(startsAt.getTime())
@@ -609,9 +651,11 @@ function rowToBrowsePin(row) {
       : 'Date TBC';
   const priceLabel = membersOnlyEvent
     ? 'Members only'
-    : priceNum > 0
-      ? '£' + priceNum.toFixed(2)
-      : 'Free';
+    : priceUnknown
+      ? 'Ask organiser'
+      : priceNum > 0
+        ? '£' + priceNum.toFixed(2)
+        : 'Free';
   const typeRaw = String(row.event_type || row.type_tab || '').trim();
   return {
     id: row.id,
@@ -630,7 +674,13 @@ function rowToBrowsePin(row) {
     date: dateLine,
     dateLine: dateLine,
     priceNum,
-    priceKey: membersOnlyEvent ? 'members_only' : priceNum > 0 ? 'paid' : 'free',
+    priceKey: membersOnlyEvent
+      ? 'members_only'
+      : priceUnknown
+        ? 'enquire'
+        : priceNum > 0
+          ? 'paid'
+          : 'free',
     price: priceLabel,
     isMembersOnlyEvent: membersOnlyEvent,
     hasMembersOnlyTiers: membersOnlyEvent,
@@ -792,7 +842,8 @@ async function fetchBrowseEventsPage(sb, rawQuery) {
     const deduped = dedupeBrowseRowsBySeries(sorted);
     const pinSlice = deduped.slice(0, MAX_PINS);
     const withModes = await attachAttendanceModes(sb, pinSlice);
-    const pinEvents = withModes.map(rowToBrowsePin);
+    const withPrices = await attachHasPublicTickets(sb, withModes);
+    const pinEvents = withPrices.map(rowToBrowsePin);
     attachBrowseSeriesCounts(pinEvents, idToSeriesCountMap(withModes, pinSeriesCounts));
     return {
       events: pinEvents,

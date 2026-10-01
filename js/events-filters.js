@@ -934,8 +934,15 @@
       if (dateToTs && evTs > dateToTs) return false;
     }
 
-    if (checkFreeOnly && checkFreeOnly.checked && eventTicketPrice(ev) > 0) {
-      return false;
+    if (checkFreeOnly && checkFreeOnly.checked) {
+      if (
+        window.HubBookingFees &&
+        typeof window.HubBookingFees.listingPriceUnknown === 'function' &&
+        window.HubBookingFees.listingPriceUnknown(ev)
+      ) {
+        return false;
+      }
+      if (eventTicketPrice(ev) > 0) return false;
     }
 
     var bounds = getPriceBounds();
