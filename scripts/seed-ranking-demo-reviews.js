@@ -5,6 +5,9 @@
  *
  * Usage: node scripts/seed-ranking-demo-reviews.js
  *        node scripts/seed-ranking-demo-reviews.js --emails  (send congratulation emails)
+ *
+ * Demo reviewer emails use @networkerhub.example (non-deliverable). Outbound mail to
+ * seed attendee addresses is blocked in send-template-email.
  */
 const path = require('path');
 const fs = require('fs');
@@ -95,7 +98,7 @@ async function seedReviewsForOrganiser(sb, organiser) {
   let added = 0;
 
   for (let i = 0; i < REVIEW_TEXTS.length; i++) {
-    const email = `ranking-demo-${String(organiser.id).slice(0, 8)}-${i + 1}@demo.hub.local`;
+    const email = `ranking-demo-${String(organiser.id).slice(0, 8)}-${i + 1}@networkerhub.example`;
     const attendee = await ensureAttendee(sb, email, `Demo reviewer ${i + 1}`);
 
     const existing = await sb
