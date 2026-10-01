@@ -4,7 +4,8 @@
 const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
 const { parseTypeCategory } = require('./event-types');
 const { isTestFixtureText, isTestRegistration } = require('./test-fixture-filters');
-const { normalizeIndustry } = require('./hub-profile-industries');
+const { normalizeIndustry, isAnalyticsProfileComplete } = require('./hub-profile-industries');
+const { homeRegionLabel, hasHomeBase } = require('./attendee-home-region');
 
 function round2(n) {
   return Math.round(Number(n) * 100) / 100;
@@ -106,6 +107,24 @@ function locationAreaLabel(value) {
   return area.replace(/\s+(?:UK|United Kingdom)$/i, '').trim() || area;
 }
 
+function attendeeAnalyticsProfile(row) {
+  return {
+    businessSector: row?.business_sector,
+    jobTitle: row?.job_title,
+    homeRegionSlug: row?.home_region_slug,
+    location: row?.location,
+  };
+}
+
+function memberLocationLabel(attendee) {
+  const slug = String(attendee?.home_region_slug || '').trim();
+  if (slug) {
+    const fromSlug = homeRegionLabel(slug);
+    if (fromSlug) return fromSlug;
+  }
+  return locationAreaLabel(attendee?.location);
+}
+
 async function fetchAttendeeLocations(sb) {
   const rows = [];
   const pageSize = 1000;
@@ -113,7 +132,7 @@ async function fetchAttendeeLocations(sb) {
   for (let from = 0; ; from += pageSize) {
     const { data, error } = await sb
       .from('attendees')
-      .select('id, name, email, location')
+      .select('id, name, email, location, home_region_slug, supabase_user_id')
       .order('id', { ascending: true })
       .range(from, from + pageSize - 1);
     if (error) throw new Error(error.message);
@@ -124,12 +143,15 @@ async function fetchAttendeeLocations(sb) {
   return rows.filter((row) => !isTestActivityText(row.name || row.email || ''));
 }
 
-function aggregateUserLocations(attendees) {
+function aggregateUserLocations(attendees, options = {}) {
   const areas = new Map();
   let provided = 0;
+  const membersOnly = Boolean(options.membersOnly);
+  const labelFn = options.useHomeRegion ? memberLocationLabel : (a) => locationAreaLabel(a.location);
 
   (attendees || []).forEach((attendee) => {
-    const label = locationAreaLabel(attendee.location);
+    if (membersOnly && !attendee.supabase_user_id) return;
+    const label = labelFn(attendee);
     if (!label) return;
     provided += 1;
     const key = label.toLocaleLowerCase('en-GB');
@@ -138,13 +160,19 @@ function aggregateUserLocations(attendees) {
     areas.set(key, current);
   });
 
+  const scoped = membersOnly
+    ? (attendees || []).filter((a) => a.supabase_user_id)
+    : attendees || [];
+  const total = scoped.length;
+
   return {
-    total: (attendees || []).length,
+    total,
     provided,
-    missing: Math.max(0, (attendees || []).length - provided),
+    missing: Math.max(0, total - provided),
+    providedPct: total ? round2((provided / total) * 100) : 0,
     areas: Array.from(areas.values())
       .sort((a, b) => b.users - a.users || a.area.localeCompare(b.area, 'en-GB'))
-      .slice(0, 15),
+      .slice(0, options.limit || 15),
   };
 }
 
@@ -155,7 +183,9 @@ async function fetchAttendeeProfiles(sb) {
   for (let from = 0; ; from += pageSize) {
     const { data, error } = await sb
       .from('attendees')
-      .select('id, name, email, business_sector, job_title, professional_role, supabase_user_id')
+      .select(
+        'id, name, email, business_sector, job_title, professional_role, company, location, home_region_slug, supabase_user_id'
+      )
       .order('id', { ascending: true })
       .range(from, from + pageSize - 1);
     if (error) throw new Error(error.message);
@@ -166,7 +196,7 @@ async function fetchAttendeeProfiles(sb) {
   return rows.filter((row) => !isTestActivityText(row.name || row.email || ''));
 }
 
-function aggregateAttendeeProfiles(attendees) {
+function aggregateAttendeeProfiles(attendees, options = {}) {
   const industries = new Map();
   const jobTitles = new Map();
   const roles = new Map();
@@ -174,9 +204,17 @@ function aggregateAttendeeProfiles(attendees) {
   let withJobTitle = 0;
   let withBoth = 0;
   let withAccount = 0;
+  let withHomeBase = 0;
+  let profileComplete = 0;
+  const membersOnly = Boolean(options.membersOnly);
+  const listLimit = options.limit || 15;
 
   (attendees || []).forEach((attendee) => {
+    if (membersOnly && !attendee.supabase_user_id) return;
     if (attendee.supabase_user_id) withAccount += 1;
+    const analyticsProfile = attendeeAnalyticsProfile(attendee);
+    if (hasHomeBase(analyticsProfile)) withHomeBase += 1;
+    if (isAnalyticsProfileComplete(analyticsProfile)) profileComplete += 1;
     const industryRaw = String(attendee.business_sector || '').trim();
     const jobTitleRaw = String(attendee.job_title || '').trim();
     const industry = industryRaw ? normalizeIndustry(industryRaw) : '';
@@ -206,25 +244,66 @@ function aggregateAttendeeProfiles(attendees) {
     }
   });
 
-  const total = (attendees || []).length;
+  const total = membersOnly
+    ? (attendees || []).filter((a) => a.supabase_user_id).length
+    : (attendees || []).length;
+  const incomplete = Math.max(0, total - profileComplete);
   return {
     total,
     withAccount,
     withIndustry,
     withJobTitle,
     withBoth,
+    withHomeBase,
+    profileComplete,
+    profileIncomplete: incomplete,
+    profileCompletePct: total ? round2((profileComplete / total) * 100) : 0,
+    profileIncompletePct: total ? round2((incomplete / total) * 100) : 0,
     missingIndustry: Math.max(0, total - withIndustry),
     missingJobTitle: Math.max(0, total - withJobTitle),
+    missingHomeBase: Math.max(0, total - withHomeBase),
     missingBoth: Math.max(0, total - withBoth),
     industries: Array.from(industries.values())
       .sort((a, b) => b.users - a.users || a.label.localeCompare(b.label, 'en-GB'))
-      .slice(0, 15),
+      .slice(0, listLimit),
     jobTitles: Array.from(jobTitles.values())
       .sort((a, b) => b.users - a.users || a.label.localeCompare(b.label, 'en-GB'))
-      .slice(0, 15),
+      .slice(0, listLimit),
     professionalRoles: Array.from(roles.values())
       .sort((a, b) => b.users - a.users || a.label.localeCompare(b.label, 'en-GB'))
       .slice(0, 10),
+  };
+}
+
+function aggregateHubMemberProfiles(attendees) {
+  const members = (attendees || []).filter((row) => row.supabase_user_id);
+  return {
+    hubAccountsWithAttendeeRow: members.length,
+    profiles: aggregateAttendeeProfiles(attendees, { membersOnly: true, limit: 25 }),
+    locations: aggregateUserLocations(attendees, {
+      membersOnly: true,
+      useHomeRegion: true,
+      limit: 25,
+    }),
+  };
+}
+
+async function getAdminMemberProfileReport() {
+  if (!isSupabaseConfigured()) {
+    return { configured: false, provider: 'supabase' };
+  }
+  const sb = getSupabaseAdmin();
+  const attendees = await fetchAttendeeProfiles(sb);
+  return {
+    configured: true,
+    provider: 'supabase',
+    updatedAt: new Date().toISOString(),
+    scope: 'hub_accounts_with_attendee_row',
+    definition: {
+      profileComplete:
+        'Industry (not blank “Other”), job title (2+ chars), and home base (region slug or location text).',
+    },
+    ...aggregateHubMemberProfiles(attendees),
   };
 }
 
@@ -674,8 +753,9 @@ async function getAdminInsights(periodRaw) {
     promoteRoi,
     pitchPages,
     repeatAttendees: computeRepeatAttendees(allRegsFiltered),
-    userLocations: aggregateUserLocations(attendeeLocations),
+    userLocations: aggregateUserLocations(attendeeLocations, { useHomeRegion: true }),
     attendeeProfiles: aggregateAttendeeProfiles(attendeeProfilesRaw),
+    hubMemberProfiles: aggregateHubMemberProfiles(attendeeProfilesRaw),
     growthPulse: {
       registrations7d: regs7dRes.count || 0,
       newOrganisers7d: orgs7dRes.count || 0,
@@ -687,4 +767,9 @@ async function getAdminInsights(periodRaw) {
   };
 }
 
-module.exports = { getAdminInsights };
+module.exports = {
+  getAdminInsights,
+  getAdminMemberProfileReport,
+  aggregateAttendeeProfiles,
+  aggregateUserLocations,
+};

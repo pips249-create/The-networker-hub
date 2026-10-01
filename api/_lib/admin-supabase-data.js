@@ -2012,15 +2012,25 @@ async function getAdminUsersViaRpc(sb, options = {}) {
   });
   if (error) throw error;
   const payload = data && typeof data === 'object' ? data : {};
+  const { isAnalyticsProfileComplete } = require('./hub-profile-industries');
   const users = Array.isArray(payload.users)
-    ? payload.users.map((u) => ({
-        ...u,
-        isOnline: isUserOnline(u.lastSeenAt),
-        emailPrefEventReminders: u.emailPrefEventReminders !== false,
-        emailPrefOrganiserAlerts: u.emailPrefOrganiserAlerts !== false,
-        emailPrefOrganiserRoundups: u.emailPrefOrganiserRoundups !== false,
-        emailsEnabled: u.emailsEnabled !== false,
-      }))
+    ? payload.users.map((u) => {
+        const profileComplete = isAnalyticsProfileComplete({
+          businessSector: u.businessSector,
+          jobTitle: u.jobTitle,
+          homeRegionSlug: u.homeRegionSlug,
+          location: u.location,
+        });
+        return {
+          ...u,
+          profileComplete,
+          isOnline: isUserOnline(u.lastSeenAt),
+          emailPrefEventReminders: u.emailPrefEventReminders !== false,
+          emailPrefOrganiserAlerts: u.emailPrefOrganiserAlerts !== false,
+          emailPrefOrganiserRoundups: u.emailPrefOrganiserRoundups !== false,
+          emailsEnabled: u.emailsEnabled !== false,
+        };
+      })
     : [];
   return {
     users,

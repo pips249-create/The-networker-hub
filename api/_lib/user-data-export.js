@@ -74,6 +74,7 @@ function attendeeExport(attendee) {
     'business_sector',
     'professional_role',
     'location',
+    'home_region_slug',
     'public_review_name',
     'market_preferences',
     'created_at',
