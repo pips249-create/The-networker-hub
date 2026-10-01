@@ -1141,7 +1141,7 @@
         window.HubBookingFees.listingPriceUnknown(ev))
     ) {
       labelEl.textContent = 'Price';
-      priceEl.textContent = 'Ask organiser';
+      priceEl.textContent = 'Enquire for price';
       return;
     }
     if (eventIsGuestProgramme(ev)) {
@@ -3111,7 +3111,7 @@
       pendingHint.className = 'ticket-load-hint';
       pendingHint.textContent =
         ev.priceKey === 'enquire' || ev.hasTicketTiers === false
-          ? 'The organiser has not published a price yet. Use the button below to ask them.'
+          ? 'The organiser has not published a price yet. Use the button below to request it — we\u2019ll nudge them for you.'
           : 'Ticket sales are not open on The Networker UK yet. Use the button below to nudge the organiser.';
       tiersEl.appendChild(pendingHint);
       if (urgencyEl) urgencyEl.textContent = '';
@@ -3929,8 +3929,8 @@
     if (priceUnknown) {
       return {
         lead:
-          'The price isn\u2019t listed yet. Get in touch with the organiser to find out what it costs to attend.',
-        button: 'Ask the organiser',
+          'The price isn\u2019t listed yet. Send a quick request and we\u2019ll nudge the organiser to share what it costs to attend.',
+        button: 'Request the price',
       };
     }
     return {
@@ -4738,7 +4738,7 @@
     else if (ev.isTicketSalesPending) {
       labelText =
         ev.priceKey === 'enquire' || ev.hasTicketTiers === false
-          ? 'Ask organiser'
+          ? 'Request the price'
           : 'Nudge organiser';
     }
     else if (ev.isTicketSalesScheduled) labelText = 'Tickets opening soon';
@@ -4761,7 +4761,7 @@
         labelText !== 'Sold out' &&
         labelText !== 'Registration closed' &&
         labelText !== 'Nudge organiser' &&
-        labelText !== 'Ask organiser' &&
+        labelText !== 'Request the price' &&
         labelText !== 'Tickets opening soon' &&
         labelText !== 'Event ended' &&
         labelText !== "You're already going";

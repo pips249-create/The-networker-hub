@@ -652,7 +652,7 @@ function rowToBrowsePin(row) {
   const priceLabel = membersOnlyEvent
     ? 'Members only'
     : priceUnknown
-      ? 'Ask organiser'
+      ? 'Enquire for price'
       : priceNum > 0
         ? '£' + priceNum.toFixed(2)
         : 'Free';
