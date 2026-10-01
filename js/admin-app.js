@@ -659,15 +659,21 @@
     { slug: 'buckinghamshire', name: 'Buckinghamshire' },
     { slug: 'cambridgeshire', name: 'Cambridgeshire' },
     { slug: 'cheshire', name: 'Cheshire' },
+    { slug: 'devon', name: 'Devon' },
+    { slug: 'dorset', name: 'Dorset' },
     { slug: 'essex', name: 'Essex' },
     { slug: 'hampshire', name: 'Hampshire' },
     { slug: 'hertfordshire', name: 'Hertfordshire' },
     { slug: 'kent', name: 'Kent' },
     { slug: 'lancashire', name: 'Lancashire' },
+    { slug: 'norfolk', name: 'Norfolk' },
     { slug: 'oxfordshire', name: 'Oxfordshire' },
     { slug: 'shropshire', name: 'Shropshire' },
+    { slug: 'staffordshire', name: 'Staffordshire' },
     { slug: 'surrey', name: 'Surrey' },
     { slug: 'sussex', name: 'Sussex' },
+    { slug: 'warwickshire', name: 'Warwickshire' },
+    { slug: 'yorkshire', name: 'Yorkshire' },
   ];
 
   /** Launch Industry Sponsor inventory — Opportunities directory, enquiry + manual logo. */

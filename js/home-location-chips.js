@@ -49,15 +49,6 @@
     var theme = themes[slug];
     if (applyAccent) applyAccent(chip, theme);
 
-    var isCounty = chip.classList.contains('home-location-chip--county');
-    var circularCounties = Boolean(chip.closest('.networking-location-directory--counties-only'));
-    // Events county pills stay text-only unless the chip includes an icon host.
-    // Opportunities always uses circular landmark chips.
-    if (isCounty && !circularCounties && !chip.querySelector('.home-location-chip-icon')) {
-      syncCompactLabel(chip);
-      return;
-    }
-
     var icon = chip.querySelector('.home-location-chip-icon');
     if (!icon) {
       icon = document.createElement('span');
