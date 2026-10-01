@@ -53,22 +53,23 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 22px;
+    gap: 28px;
     width: 100%;
+    max-width: 980px;
   }
 
   .logos img {
+    display: block;
+    width: 440px;
+    max-width: 46%;
     height: auto;
-    width: 420px;
-    max-width: 42%;
     object-fit: contain;
-    /* Cover PNGs ship on black; lift onto plum */
-    mix-blend-mode: screen;
+    flex-shrink: 0;
   }
 
   .divider {
     width: 2px;
-    height: 110px;
+    height: 130px;
     background: rgba(250, 246, 238, 0.55);
     flex-shrink: 0;
   }
@@ -111,9 +112,25 @@
 <body>
   <div id="canvas">
     <div class="logos">
-      <img src="../../assets/logo-networker-uk-cover.png" alt="The Networker UK" width="420" height="220">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 132" role="img" aria-label="The Networker UK">
+        <text x="170" y="28" text-anchor="middle" font-family="'DM Serif Display', Georgia, serif" font-size="26" fill="#f5f0e8">The</text>
+        <text x="32" y="88" font-family="'DM Serif Display', Georgia, serif" font-size="58" fill="#c299d1">Net</text>
+        <text x="119" y="88" font-family="'DM Serif Display', Georgia, serif" font-size="58" fill="#c299d1">w</text>
+        <circle cx="176" cy="72" r="11" fill="#faf6ee" stroke="#c299d1" stroke-width="2.5"/>
+        <circle cx="176" cy="72" r="17" fill="none" stroke="#c299d1" stroke-width="2"/>
+        <text x="193" y="88" font-family="'DM Serif Display', Georgia, serif" font-size="58" fill="#c299d1">rker</text>
+        <text x="170" y="124" text-anchor="middle" font-family="'DM Serif Display', Georgia, serif" font-size="26" fill="#f5f0e8">UK</text>
+      </svg>
       <div class="divider" aria-hidden="true"></div>
-      <img src="../../assets/logo-networker-international-cover.png" alt="The Networker International" width="420" height="220">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 132" role="img" aria-label="The Networker International">
+        <text x="170" y="28" text-anchor="middle" font-family="'DM Serif Display', Georgia, serif" font-size="26" fill="#f5f0e8">The</text>
+        <text x="32" y="88" font-family="'DM Serif Display', Georgia, serif" font-size="58" fill="#c299d1">Net</text>
+        <text x="119" y="88" font-family="'DM Serif Display', Georgia, serif" font-size="58" fill="#c299d1">w</text>
+        <circle cx="176" cy="72" r="11" fill="#faf6ee" stroke="#c299d1" stroke-width="2.5"/>
+        <circle cx="176" cy="72" r="17" fill="none" stroke="#c299d1" stroke-width="2"/>
+        <text x="193" y="88" font-family="'DM Serif Display', Georgia, serif" font-size="58" fill="#c299d1">rker</text>
+        <text x="170" y="124" text-anchor="middle" font-family="'DM Serif Display', Georgia, serif" font-size="22" fill="#f5f0e8">International</text>
+      </svg>
     </div>
     <div class="copy">
       <h1 class="headline">We’re going bigger.</h1>
