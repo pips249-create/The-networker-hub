@@ -168,6 +168,7 @@
       'kent',
       'lancashire',
       'oxfordshire',
+      'shropshire',
       'surrey',
       'sussex',
       'yorkshire',

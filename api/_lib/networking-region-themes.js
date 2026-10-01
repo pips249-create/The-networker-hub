@@ -57,6 +57,7 @@ const REGION_THEMES = {
   buckinghamshire: theme('#4a3860', 'From High Wycombe and Aylesbury to Milton Keynes and business communities across Buckinghamshire.', 'buckinghamshire', '#c4b8e8'),
   cambridgeshire: theme('#6a4520', 'From Cambridge and Ely to Peterborough and business communities across Cambridgeshire.', 'cambridgeshire', '#d4a878'),
   sussex: theme('#0a6078', 'From Brighton and Worthing to Eastbourne, Chichester and business communities across Sussex.', 'sussex', '#67e8f9'),
+  shropshire: theme('#7c3a32', 'From Shrewsbury and Telford to Ludlow and business communities across Shropshire.', 'shropshire', '#e8b4a4'),
   // Scotland
   glasgow: theme('#0a7088', 'Connect with entrepreneurs across the Clyde and the city centre.', 'glasgow', '#67e8f9'),
   edinburgh: theme('#6a3068', 'From the Old Town and New Town to Leith and the wider Lothians.', 'edinburgh', '#e0a8d8'),

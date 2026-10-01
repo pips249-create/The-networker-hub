@@ -140,6 +140,11 @@
     "chip": "<path d=\"M8 72h64\" opacity=\".35\" stroke-width=\"1.1\"/><path d=\"M8 72h64\" opacity=\".35\" stroke-width=\"1.1\"/><path d=\"M10 72V58h12v14M58 72V58h12v14\" stroke-width=\"1.4\"/><path d=\"M22 58h36\" stroke-width=\"1.5\"/><path d=\"M26 58V48h28v10\" stroke-width=\"1.35\"/><path d=\"M24 48l16-8 16 8\" stroke-width=\"1.3\"/><path d=\"M36 40v8M44 40v8\" opacity=\".45\" stroke-width=\"1\"/><path d=\"M14 62h4M62 62h4\" opacity=\".4\" stroke-width=\"1\"/>",
     "hero": "<path d=\"M20 82h200\" opacity=\".35\"/><path d=\"M40 82h160\" opacity=\".35\"/><path d=\"M48 82V56h24v26M168 82V56h24v26\"/><path d=\"M72 56h96\" stroke-width=\"2\"/><path d=\"M80 56V42h80v14\"/><path d=\"M72 42l48-16 48 16\"/><path d=\"M104 30v12M128 30v12\" opacity=\".45\"/>"
   },
+  "iron-bridge": {
+    "label": "The Iron Bridge",
+    "chip": "<path d=\"M8 72h64\" opacity=\".35\" stroke-width=\"1.1\"/><path d=\"M8 72V48h12v24M60 72V48h12v24\" stroke-width=\"1.35\"/><path d=\"M8 56h12M8 64h12M60 56h12M60 64h12\" opacity=\".4\" stroke-width=\"1\"/><path d=\"M14 50c8-28 44-28 52 0\" stroke-width=\"1.7\"/><path d=\"M18 50c6-20 38-20 44 0\" opacity=\".5\" stroke-width=\"1.1\"/><path d=\"M10 46h60\" stroke-width=\"1.5\"/><path d=\"M14 42h52\" opacity=\".7\" stroke-width=\"1.1\"/><path d=\"M20 42v4M28 42v4M36 42v4M44 42v4M52 42v4M60 42v4\" opacity=\".45\" stroke-width=\"1\"/><path d=\"M24 48l4-6M32 50l4-12M40 50V36M48 50l-4-12M56 48l-4-6\" opacity=\".5\" stroke-width=\"1\"/><circle cx=\"24\" cy=\"47\" r=\"2.2\" opacity=\".65\" stroke-width=\"1\"/><circle cx=\"56\" cy=\"47\" r=\"2.2\" opacity=\".65\" stroke-width=\"1\"/>",
+    "hero": "<path d=\"M20 82h200\" opacity=\".35\"/><path d=\"M28 82V52h28v30M184 82V52h28v30\"/><path d=\"M28 62h28M28 72h28M184 62h28M184 72h28\" opacity=\".35\"/><path d=\"M42 54c28-42 128-42 156 0\" stroke-width=\"2.2\"/><path d=\"M54 54c22-30 110-30 132 0\" opacity=\".5\"/><path d=\"M36 48h168\" stroke-width=\"2\"/><path d=\"M44 42h152\" opacity=\".7\"/><path d=\"M56 42v6M80 42v6M104 42v6M128 42v6M152 42v6M176 42v6\" opacity=\".45\"/><path d=\"M70 50l8-10M96 52l8-16M120 52V34M144 52l-8-16M170 50l-8-10\" opacity=\".5\"/><circle cx=\"62\" cy=\"50\" r=\"5\" opacity=\".6\"/><circle cx=\"178\" cy=\"50\" r=\"5\" opacity=\".6\"/>"
+  },
   "online-events": {
     "label": "Online events",
     "chip": "<path d=\"M8 72h64\" opacity=\".35\" stroke-width=\"1.1\"/><rect x=\"18\" y=\"22\" width=\"44\" height=\"32\" rx=\"2\" stroke-width=\"1.45\"/><rect x=\"22\" y=\"26\" width=\"36\" height=\"24\" rx=\"1\" opacity=\".45\" stroke-width=\"1\"/><circle cx=\"40\" cy=\"38\" r=\"9\" stroke-width=\"1.25\"/><ellipse cx=\"40\" cy=\"38\" rx=\"9\" ry=\"3.5\" opacity=\".45\" stroke-width=\"1\"/><path d=\"M31 38h18M40 29v18\" opacity=\".45\" stroke-width=\"1\"/><path d=\"M33 32c3 2 6 3 7 3s4-1 7-3M33 44c3-2 6-3 7-3s4 1 7 3\" opacity=\".4\" stroke-width=\"1\"/><path d=\"M30 58h20\" stroke-width=\"1.35\"/><path d=\"M40 54v4M36 58h8\" stroke-width=\"1.25\"/><path d=\"M52 30c4 2 7 5 9 9M52 46c4-2 7-5 9-9\" opacity=\".45\" stroke-width=\"1.1\"/><path d=\"M56 34c2 1 3 3 3 4M56 42c2-1 3-3 3-4\" opacity=\".45\" stroke-width=\"1.1\"/>",
@@ -172,6 +177,7 @@
   "buckinghamshire": "reading-blade",
   "cambridgeshire": "cambridge",
   "sussex": "brighton",
+  "shropshire": "iron-bridge",
   "liverpool": "liverpool",
   "newcastle": "newcastle",
   "sheffield": "sheffield",

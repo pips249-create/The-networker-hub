@@ -69,6 +69,7 @@
         { slug: 'kent', label: 'Kent' },
         { slug: 'lancashire', label: 'Lancashire' },
         { slug: 'oxfordshire', label: 'Oxfordshire' },
+        { slug: 'shropshire', label: 'Shropshire' },
         { slug: 'surrey', label: 'Surrey' },
         { slug: 'sussex', label: 'Sussex' },
       ],

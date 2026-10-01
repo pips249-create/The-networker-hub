@@ -665,6 +665,7 @@
     { slug: 'kent', name: 'Kent' },
     { slug: 'lancashire', name: 'Lancashire' },
     { slug: 'oxfordshire', name: 'Oxfordshire' },
+    { slug: 'shropshire', name: 'Shropshire' },
     { slug: 'surrey', name: 'Surrey' },
     { slug: 'sussex', name: 'Sussex' },
   ];

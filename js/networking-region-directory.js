@@ -40,6 +40,7 @@
     buckinghamshire: { name: 'Buckinghamshire', location: 'Buckinghamshire', areaType: 'county' },
     cambridgeshire: { name: 'Cambridgeshire', location: 'Cambridgeshire', areaType: 'county' },
     sussex: { name: 'Sussex', location: 'Sussex', areaType: 'county' },
+    shropshire: { name: 'Shropshire', location: 'Shropshire', areaType: 'county' },
   };
 
   var ALIASES = {
@@ -53,6 +54,7 @@
     cambs: 'cambridgeshire',
     'east sussex': 'sussex',
     'west sussex': 'sussex',
+    salop: 'shropshire',
   };
 
   function normalize(raw) {

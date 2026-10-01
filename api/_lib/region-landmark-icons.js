@@ -548,6 +548,23 @@ const LANDMARKS = {
     hero:
       '<path d="M20 82h200" opacity=".35"/><path d="M40 82h160" opacity=".35"/><path d="M48 82V56h24v26M168 82V56h24v26"/><path d="M72 56h96" stroke-width="2"/><path d="M80 56V42h80v14"/><path d="M72 42l48-16 48 16"/><path d="M104 30v12M128 30v12" opacity=".45"/>',
   },
+  'iron-bridge': {
+    label: 'The Iron Bridge',
+    chip:
+      HATCH.ground +
+      '<path d="M8 72V48h12v24M60 72V48h12v24" stroke-width="1.35"/>' +
+      '<path d="M8 56h12M8 64h12M60 56h12M60 64h12" opacity=".4" stroke-width="1"/>' +
+      '<path d="M14 50c8-28 44-28 52 0" stroke-width="1.7"/>' +
+      '<path d="M18 50c6-20 38-20 44 0" opacity=".5" stroke-width="1.1"/>' +
+      '<path d="M10 46h60" stroke-width="1.5"/>' +
+      '<path d="M14 42h52" opacity=".7" stroke-width="1.1"/>' +
+      '<path d="M20 42v4M28 42v4M36 42v4M44 42v4M52 42v4M60 42v4" opacity=".45" stroke-width="1"/>' +
+      '<path d="M24 48l4-6M32 50l4-12M40 50V36M48 50l-4-12M56 48l-4-6" opacity=".5" stroke-width="1"/>' +
+      '<circle cx="24" cy="47" r="2.2" opacity=".65" stroke-width="1"/>' +
+      '<circle cx="56" cy="47" r="2.2" opacity=".65" stroke-width="1"/>',
+    hero:
+      '<path d="M20 82h200" opacity=".35"/><path d="M28 82V52h28v30M184 82V52h28v30"/><path d="M28 62h28M28 72h28M184 62h28M184 72h28" opacity=".35"/><path d="M42 54c28-42 128-42 156 0" stroke-width="2.2"/><path d="M54 54c22-30 110-30 132 0" opacity=".5"/><path d="M36 48h168" stroke-width="2"/><path d="M44 42h152" opacity=".7"/><path d="M56 42v6M80 42v6M104 42v6M128 42v6M152 42v6M176 42v6" opacity=".45"/><path d="M70 50l8-10M96 52l8-16M120 52V34M144 52l-8-16M170 50l-8-10" opacity=".5"/><circle cx="62" cy="50" r="5" opacity=".6"/><circle cx="178" cy="50" r="5" opacity=".6"/>',
+  },
   'online-events': {
     label: 'Online events',
     chip:
@@ -593,6 +610,7 @@ const LANDMARK_BY_REGION = {
   buckinghamshire: 'reading-blade',
   cambridgeshire: 'cambridge',
   sussex: 'brighton',
+  shropshire: 'iron-bridge',
   liverpool: 'liverpool',
   newcastle: 'newcastle',
   sheffield: 'sheffield',
