@@ -548,6 +548,184 @@ const LANDMARKS = {
     hero:
       '<path d="M20 82h200" opacity=".35"/><path d="M40 82h160" opacity=".35"/><path d="M48 82V56h24v26M168 82V56h24v26"/><path d="M72 56h96" stroke-width="2"/><path d="M80 56V42h80v14"/><path d="M72 42l48-16 48 16"/><path d="M104 30v12M128 30v12" opacity=".45"/>',
   },
+  'blackpool-tower': {
+    label: 'Blackpool Tower',
+    chip:
+      HATCH.ground +
+      '<path d="M22 72L32 26h16L58 72" stroke-width="1.35"/>' +
+      '<path d="M28 72L36 34h8L52 72" opacity=".45" stroke-width="1.1"/>' +
+      '<path d="M26 56l10-8 10 8M30 44l8-6 8 6" opacity=".5" stroke-width="1"/>' +
+      '<path d="M30 26h20" stroke-width="1.4"/>' +
+      '<ellipse cx="40" cy="24" rx="12" ry="3.5"/>' +
+      '<path d="M40 20V6" stroke-width="1.3"/>' +
+      '<path d="M36 12h8" stroke-width="1.15"/>',
+    hero:
+      '<path d="M20 82h200" opacity=".35"/><path d="M78 82L100 18h40L162 82"/><path d="M90 82L108 30h24L150 82" opacity=".45"/><path d="M88 58l16-12 16 12M96 40l12-8 12 8" opacity=".5"/><path d="M96 18h48"/><ellipse cx="120" cy="16" rx="22" ry="6"/><path d="M120 10V0"/><path d="M112 4h16"/>',
+  },
+  'canterbury-cathedral': {
+    label: 'Canterbury Cathedral',
+    chip:
+      HATCH.ground +
+      '<path d="M8 72V46h64v26"/>' +
+      '<path d="M8 46V30h12v16M60 46V30h12v16"/>' +
+      '<path d="M8 30l6-8 6 8M60 30l6-8 6 8"/>' +
+      '<path d="M28 46V14h24v32" stroke-width="1.4"/>' +
+      '<path d="M26 14h28" stroke-width="1.3"/>' +
+      '<path d="M34 14V6h12v8"/>' +
+      '<path d="M40 6V2" stroke-width="1.2"/>' +
+      '<path d="M30 14l-3-5M50 14l3-5" opacity=".6" stroke-width="1"/>' +
+      '<path d="M14 56h6M34 56h4M42 56h4M58 56h6" opacity=".45" stroke-width="1"/>',
+    hero:
+      '<path d="M16 82h208" opacity=".35"/><path d="M24 82V48h192v34"/><path d="M24 48V28h28v20M188 48V28h28v20"/><path d="M24 28l14-12 14 12M188 28l14-12 14 12"/><path d="M88 48V12h64v36" stroke-width="2"/><path d="M84 12h72"/><path d="M104 12V2h32v10"/><path d="M120 2V-4"/><path d="M92 12l-6-8M148 12l6-8" opacity=".6"/><path d="M40 62h14M96 62h12M132 62h12M186 62h14" opacity=".45"/>',
+  },
+  'spinnaker-tower': {
+    label: 'Spinnaker Tower',
+    chip:
+      HATCH.ground +
+      '<path d="M36 72V8" stroke-width="1.45"/>' +
+      '<path d="M36 16c18 8 24 24 18 46" stroke-width="1.4"/>' +
+      '<path d="M36 20c12 6 16 16 12 30" opacity=".45" stroke-width="1.1"/>' +
+      '<ellipse cx="36" cy="34" rx="9" ry="3.2"/>' +
+      '<path d="M28 72h20" stroke-width="1.3"/>' +
+      '<path d="M32 64h10" opacity=".5" stroke-width="1.1"/>',
+    hero:
+      '<path d="M20 82h200" opacity=".35"/><path d="M108 82V6" stroke-width="2.2"/><path d="M108 14c48 16 62 40 46 64" stroke-width="2"/><path d="M108 20c28 10 38 26 28 46" opacity=".45"/><ellipse cx="108" cy="36" rx="18" ry="6"/><path d="M88 82h48" stroke-width="2"/><path d="M96 70h24" opacity=".5"/>',
+  },
+  'southend-pier': {
+    label: 'Southend Pier',
+    chip:
+      HATCH.ground +
+      '<path d="M6 56h68" stroke-width="1.55"/>' +
+      '<path d="M12 56v14M24 56v14M36 56v14M48 56v14M60 56v14M70 56v14" opacity=".5" stroke-width="1"/>' +
+      '<path d="M6 56V42h16v14"/>' +
+      '<path d="M8 42l6-7 6 7"/>' +
+      '<path d="M56 56V44h16v12"/>' +
+      '<circle cx="64" cy="50" r="3.2" opacity=".65" stroke-width="1"/>',
+    hero:
+      '<path d="M16 82h208" opacity=".35"/><path d="M20 58h200" stroke-width="2"/><path d="M36 58v20M68 58v20M100 58v20M132 58v20M164 58v20M196 58v20" opacity=".5"/><path d="M20 58V36h36v22"/><path d="M24 36l14-14 14 14"/><path d="M168 58V40h40v18"/><circle cx="188" cy="48" r="6" opacity=".65"/>',
+  },
+  'st-albans-abbey': {
+    label: 'St Albans Cathedral',
+    chip:
+      HATCH.ground +
+      '<path d="M6 72V48h68v24"/>' +
+      '<path d="M26 48V16h28v32" stroke-width="1.45"/>' +
+      '<path d="M24 16h32" stroke-width="1.3"/>' +
+      '<path d="M28 16v-5h5v5M37 16v-5h6v5M47 16v-5h5v5" stroke-width="1.1"/>' +
+      '<path d="M26 28h28M26 38h28" opacity=".35" stroke-width="1"/>' +
+      '<path d="M6 48l10-8h8M64 48l-10-8h-8" opacity=".7" stroke-width="1.15"/>' +
+      '<path d="M12 58h8v8M60 58h8v8M36 26h8v12" opacity=".5" stroke-width="1"/>',
+    hero:
+      '<path d="M16 82h208" opacity=".35"/><path d="M20 82V50h200v32"/><path d="M84 50V14h72v36" stroke-width="2"/><path d="M80 14h80"/><path d="M90 14v-8h12v8M114 14v-8h12v8M138 14v-8h12v8"/><path d="M84 30h72M84 42h72" opacity=".35"/><path d="M20 50l24-14h16M196 50l-24-14h-16" opacity=".7"/><path d="M36 62h16v12M188 62h16v12M112 28h16v16" opacity=".5"/>',
+  },
+  'hampton-court': {
+    label: 'Hampton Court Palace',
+    chip:
+      HATCH.ground +
+      '<path d="M6 72V42h16v30M58 72V42h16v30"/>' +
+      '<path d="M22 72V34h36v38" stroke-width="1.35"/>' +
+      '<path d="M22 34V22h8v12M50 34V22h8v12"/>' +
+      '<path d="M22 22h8l-1-5h-6zM50 22h8l-1-5h-6z"/>' +
+      '<circle cx="40" cy="30" r="4" stroke-width="1.15"/>' +
+      '<path d="M32 72V56c0-5 3-8 8-8s8 3 8 8v16" opacity=".55" stroke-width="1.15"/>' +
+      '<path d="M10 42V32h3v10M15 42V30h3v12M62 42V32h3v10M67 42V30h3v12" stroke-width="1.05"/>' +
+      '<path d="M26 46l4 4M36 46l4 4M46 46l4 4" opacity=".3" stroke-width="1"/>',
+    hero:
+      '<path d="M16 82h208" opacity=".35"/><path d="M20 82V44h40v38M180 82V44h40v38"/><path d="M60 82V32h120v50" stroke-width="2"/><path d="M60 32V16h20v16M160 32V16h20v16"/><path d="M60 16h20l-3-8h-14zM160 16h20l-3-8h-14z"/><circle cx="120" cy="28" r="8"/><path d="M100 82V58c0-10 6-16 20-16s20 6 20 16v24" opacity=".55"/><path d="M28 44V30h6v14M40 44V26h6v18M188 44V30h6v14M200 44V26h6v18"/>',
+  },
+  'stowe-arch': {
+    label: 'Stowe Corinthian Arch',
+    chip:
+      HATCH.ground +
+      '<path d="M10 72V56h60v16"/>' +
+      '<path d="M14 56V34M24 56V34M34 56V30M46 56V30M56 56V34M66 56V34" stroke-width="1.2"/>' +
+      '<path d="M10 34h60" stroke-width="1.4"/>' +
+      '<path d="M12 30h56" stroke-width="1.2"/>' +
+      '<path d="M18 30l22-16 22 16"/>' +
+      '<path d="M36 56V38h8v18" opacity=".45" stroke-width="1.1"/>',
+    hero:
+      '<path d="M16 82h208" opacity=".35"/><path d="M28 82V58h184v24"/><path d="M40 58V32M64 58V32M96 58V24M144 58V24M176 58V32M200 58V32"/><path d="M28 32h184" stroke-width="2"/><path d="M36 26h168"/><path d="M56 26l64-22 64 22"/><path d="M104 58V36h32v22" opacity=".45"/>',
+  },
+  'york-minster': {
+    label: 'York Minster',
+    chip:
+      HATCH.ground +
+      '<path d="M10 72V40h60v32"/>' +
+      '<path d="M10 40V24h14v16M56 40V24h14v16"/>' +
+      '<path d="M10 24l7-10 7 10M56 24l7-10 7 10"/>' +
+      '<path d="M30 40V14h20v26" stroke-width="1.4"/>' +
+      '<path d="M28 14h24" stroke-width="1.3"/>' +
+      '<path d="M34 14V8h12v6"/>' +
+      '<path d="M16 54h6M58 54h6M36 22h8v10" opacity=".5" stroke-width="1"/>',
+    hero:
+      '<path d="M16 82h208" opacity=".35"/><path d="M24 82V40h192v42"/><path d="M24 40V22h32v18M184 40V22h32v18"/><path d="M24 22l16-16 16 16M184 22l16-16 16 16"/><path d="M88 40V12h64v28" stroke-width="2"/><path d="M84 12h72"/><path d="M104 12V4h32v8"/><path d="M40 56h16M184 56h16M108 24h24v16" opacity=".5"/>',
+  },
+  'corfe-castle': {
+    label: 'Corfe Castle',
+    chip:
+      HATCH.ground +
+      '<path d="M8 72c10-12 18-16 32-16s22 4 32 16"/>' +
+      '<path d="M30 56V26h20v30" stroke-width="1.4"/>' +
+      '<path d="M28 26h24"/>' +
+      '<path d="M32 26v-6h4v6M44 26v-6h4v6"/>' +
+      '<path d="M16 56V38h10v18M54 56V42h10v14"/>' +
+      '<path d="M16 38l5-7M26 38l-3-5M54 42l4-6" opacity=".7" stroke-width="1.1"/>',
+    hero:
+      '<path d="M20 82h200" opacity=".35"/><path d="M24 82c28-22 48-28 96-28s68 6 96 28"/><path d="M96 62V22h48v40" stroke-width="2"/><path d="M92 22h56"/><path d="M100 22v-10h8v10M132 22v-10h8v10"/><path d="M48 62V40h24v22M168 62V46h24v16"/><path d="M48 40l10-12M72 40l-6-8M168 46l8-10" opacity=".7"/>',
+  },
+  'smeaton-tower': {
+    label: "Smeaton's Tower",
+    chip:
+      HATCH.ground +
+      '<path d="M32 72V28h16v44" stroke-width="1.4"/>' +
+      '<path d="M30 28h20l-4-8h-12z"/>' +
+      '<path d="M36 20h8v-6h-8z"/>' +
+      '<path d="M40 14V8" stroke-width="1.2"/>' +
+      '<circle cx="40" cy="17" r="2.6" stroke-width="1.1"/>' +
+      '<path d="M32 40h16M32 52h16M32 64h16" opacity=".4" stroke-width="1"/>',
+    hero:
+      '<path d="M20 82h200" opacity=".35"/><path d="M104 82V24h32v58" stroke-width="2"/><path d="M100 24h40l-8-14h-24z"/><path d="M112 10h16V2h-16z"/><path d="M120 2V-4"/><circle cx="120" cy="8" r="4"/><path d="M104 40h32M104 56h32M104 70h32" opacity=".4"/>',
+  },
+  'lichfield-cathedral': {
+    label: 'Lichfield Cathedral',
+    chip:
+      HATCH.ground +
+      '<path d="M8 72V48h64v24"/>' +
+      '<path d="M12 48L20 16l8 32" stroke-width="1.25"/>' +
+      '<path d="M28 48L40 4l12 44" stroke-width="1.35"/>' +
+      '<path d="M52 48l8-32 8 32" stroke-width="1.25"/>' +
+      '<path d="M20 16V10M40 4V0M60 16V10" stroke-width="1.15"/>' +
+      '<path d="M24 58h6M38 58h6M52 58h6" opacity=".45" stroke-width="1"/>',
+    hero:
+      '<path d="M16 82h208" opacity=".35"/><path d="M24 82V48h192v34"/><path d="M40 48L64 8l24 40"/><path d="M88 48L120 0l32 48" stroke-width="2"/><path d="M152 48l24-40 24 40"/><path d="M64 8V0M120 0v-6M176 8V0"/><path d="M56 62h16M112 62h16M168 62h16" opacity=".45"/>',
+  },
+  'norwich-cathedral': {
+    label: 'Norwich Cathedral',
+    chip:
+      HATCH.ground +
+      '<path d="M8 72V46h64v26"/>' +
+      '<path d="M28 46V30h24v16" stroke-width="1.35"/>' +
+      '<path d="M28 30L40 4l12 26" stroke-width="1.35"/>' +
+      '<path d="M40 4V0" stroke-width="1.2"/>' +
+      '<path d="M8 46l12-8M72 46l-12-8" opacity=".55" stroke-width="1.1"/>' +
+      '<path d="M14 58h8M36 34h8v8M58 58h8" opacity=".45" stroke-width="1"/>',
+    hero:
+      '<path d="M16 82h208" opacity=".35"/><path d="M24 82V48h192v34"/><path d="M88 48V28h64v20" stroke-width="2"/><path d="M88 28L120 0l32 28" stroke-width="2"/><path d="M120 0V-6"/><path d="M24 48l28-14M216 48l-28-14" opacity=".55"/><path d="M40 62h16M108 32h24v12M184 62h16" opacity=".45"/>',
+  },
+  'warwick-castle': {
+    label: 'Warwick Castle',
+    chip:
+      HATCH.ground +
+      '<path d="M8 72V48h64v24" stroke-width="1.35"/>' +
+      '<path d="M8 48h64"/>' +
+      '<path d="M10 48v-5h6v5M22 48v-5h6v5M46 48v-5h6v5M58 48v-5h6v5" stroke-width="1.1"/>' +
+      '<circle cx="28" cy="40" r="8" stroke-width="1.3"/>' +
+      '<circle cx="52" cy="40" r="8" stroke-width="1.3"/>' +
+      '<path d="M28 32V26M52 32V26" stroke-width="1.15"/>' +
+      '<path d="M36 72V58h8v14" opacity=".55" stroke-width="1.15"/>',
+    hero:
+      '<path d="M16 82h208" opacity=".35"/><path d="M24 82V48h192v34" stroke-width="2"/><path d="M24 48h192"/><path d="M32 48v-8h12v8M56 48v-8h12v8M160 48v-8h12v8M184 48v-8h12v8"/><circle cx="80" cy="40" r="16"/><circle cx="160" cy="40" r="16"/><path d="M80 24V16M160 24V16"/><path d="M104 82V58h32v24" opacity=".55"/>',
+  },
   'iron-bridge': {
     label: 'The Iron Bridge',
     chip:
@@ -599,18 +777,24 @@ const LANDMARK_BY_REGION = {
   bristol: 'bristol',
   chester: 'chester',
   cheshire: 'chester',
-  lancashire: 'liverpool',
-  surrey: 'reading-blade',
-  kent: 'brighton',
-  hampshire: 'bournemouth-pier',
-  essex: 'cambridge',
-  hertfordshire: 'oxford',
+  lancashire: 'blackpool-tower',
+  surrey: 'hampton-court',
+  kent: 'canterbury-cathedral',
+  hampshire: 'spinnaker-tower',
+  essex: 'southend-pier',
+  hertfordshire: 'st-albans-abbey',
   berkshire: 'reading-blade',
   oxfordshire: 'oxford',
-  buckinghamshire: 'reading-blade',
+  buckinghamshire: 'stowe-arch',
   cambridgeshire: 'cambridge',
   sussex: 'brighton',
   shropshire: 'iron-bridge',
+  devon: 'smeaton-tower',
+  dorset: 'corfe-castle',
+  norfolk: 'norwich-cathedral',
+  staffordshire: 'lichfield-cathedral',
+  warwickshire: 'warwick-castle',
+  yorkshire: 'york-minster',
   liverpool: 'liverpool',
   newcastle: 'newcastle',
   sheffield: 'sheffield',

@@ -41,6 +41,12 @@
     cambridgeshire: { name: 'Cambridgeshire', location: 'Cambridgeshire', areaType: 'county' },
     sussex: { name: 'Sussex', location: 'Sussex', areaType: 'county' },
     shropshire: { name: 'Shropshire', location: 'Shropshire', areaType: 'county' },
+    devon: { name: 'Devon', location: 'Devon', areaType: 'county' },
+    dorset: { name: 'Dorset', location: 'Dorset', areaType: 'county' },
+    norfolk: { name: 'Norfolk', location: 'Norfolk', areaType: 'county' },
+    staffordshire: { name: 'Staffordshire', location: 'Staffordshire', areaType: 'county' },
+    warwickshire: { name: 'Warwickshire', location: 'Warwickshire', areaType: 'county' },
+    yorkshire: { name: 'Yorkshire', location: 'Yorkshire', areaType: 'county' },
   };
 
   var ALIASES = {
@@ -55,6 +61,13 @@
     'east sussex': 'sussex',
     'west sussex': 'sussex',
     salop: 'shropshire',
+    staffs: 'staffordshire',
+    warks: 'warwickshire',
+    'north yorkshire': 'yorkshire',
+    'south yorkshire': 'yorkshire',
+    'east yorkshire': 'yorkshire',
+    'west yorkshire': 'yorkshire',
+    'east riding': 'yorkshire',
   };
 
   function normalize(raw) {
