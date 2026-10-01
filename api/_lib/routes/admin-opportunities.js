@@ -13,7 +13,13 @@ const {
 const { stripEarningsMeta, isNetworkMarketingType, scanOpportunityRedFlags } = require('../opportunity-moderation');
 const { sendOpportunityListingLiveEmail, sendOpportunityListingApprovedPayEmail } = require('../opportunity-emails');
 const { ensureOpportunitySlug } = require('../opportunity-slug');
-const { addMonths, listingPaymentCurrent, listingPaymentLapsed, listingBillingMode } = require('../opportunity-listing-pricing');
+const {
+  addMonths,
+  listingPaymentCurrent,
+  listingPaymentLapsed,
+  listingBillingMode,
+  normalizeListingMonths,
+} = require('../opportunity-listing-pricing');
 const { resolveImageUrl } = require('../supabase-storage');
 const { resolveOpportunityDisplayCover } = require('../opportunity-media');
 const {
@@ -1687,6 +1693,98 @@ module.exports = async function handler(req, res) {
         return json(res, 200, { ok: true, opportunity: mapOpportunityRow(data) });
       } catch (e) {
         return json(res, 500, { ok: false, error: 'resend_pay_email_failed', message: e.message });
+      }
+    }
+
+    if (body.action === 'grant_complimentary_listing') {
+      try {
+        const sb = getSupabaseAdmin();
+        const termMonths = normalizeListingMonths(body.months != null ? body.months : 12);
+        const { data: current, error: loadErr } = await sb
+          .from('business_opportunities')
+          .select('*')
+          .eq('id', id)
+          .maybeSingle();
+        if (loadErr) throw new Error(loadErr.message);
+        if (!current) {
+          return json(res, 404, { ok: false, error: 'not_found', message: 'Listing not found.' });
+        }
+        if (hasPendingLiveListingUpdate(current)) {
+          return json(res, 400, {
+            ok: false,
+            error: 'pending_live_update',
+            message: 'Approve or deny the proposed changes first — complimentary access applies to the main listing.',
+          });
+        }
+        const approval = String(current.approval_status || '').trim();
+        if (approval === 'Rejected') {
+          return json(res, 400, {
+            ok: false,
+            error: 'rejected',
+            message: 'This listing was denied. Approve it again before granting complimentary access.',
+          });
+        }
+        const stripeSubId = String(current.listing_stripe_subscription_id || '').trim();
+        if (stripeSubId && listingPaymentCurrent(current)) {
+          return json(res, 400, {
+            ok: false,
+            error: 'active_stripe_subscription',
+            message:
+              'This listing has an active Stripe subscription. Cancel or let it lapse in Stripe before granting a complimentary term.',
+          });
+        }
+        if (listingPaymentCurrent(current) && !listingPaymentLapsed(current)) {
+          return json(res, 400, {
+            ok: false,
+            error: 'already_active',
+            message: 'This listing already has an active paid or complimentary term.',
+          });
+        }
+
+        const now = new Date();
+        if (approval !== 'Approved') {
+          const approvePatch = {
+            approval_status: 'Approved',
+            rejection_note: null,
+            approved_at: current.approved_at || now.toISOString(),
+            approved_pay_reminder_sent_at: null,
+            updated_at: now.toISOString(),
+          };
+          if (!effectiveReviewSubmittedAt(current)) {
+            approvePatch.review_submitted_at = now.toISOString();
+          }
+          const approvedRow = await writeOpportunityRow(sb, 'update', approvePatch, id);
+          if (!approvedRow) throw new Error('Approve before complimentary grant returned no row');
+          current.approval_status = approvedRow.approval_status;
+        }
+
+        const { activateOpportunityListingPayment } = require('../supabase-opportunities');
+        const listing = await activateOpportunityListingPayment(id, { months: termMonths });
+        const { data: refreshed, error: reloadErr } = await sb
+          .from('business_opportunities')
+          .select('*')
+          .eq('id', id)
+          .single();
+        if (reloadErr) throw new Error(reloadErr.message);
+
+        return json(res, 200, {
+          ok: true,
+          opportunity: mapOpportunityRow(refreshed),
+          listing,
+          months: termMonths,
+          message:
+            'Complimentary listing granted for ' +
+            termMonths +
+            ' month' +
+            (termMonths === 1 ? '' : 's') +
+            ' — no Stripe charge.',
+        });
+      } catch (e) {
+        return json(res, 500, {
+          ok: false,
+          error: 'grant_complimentary_listing_failed',
+          message: e.message || 'Could not grant complimentary listing.',
+        });
       }
     }
 
