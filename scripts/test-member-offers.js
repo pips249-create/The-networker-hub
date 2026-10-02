@@ -5,6 +5,7 @@ const {
   memberOfferFromRow,
   publishGaps,
   memberOfferIsLive,
+  missingOfferExtras,
 } = require('../api/_lib/member-offers');
 const { prepareMemberOfferEnquire } = require('../api/_lib/member-offer-enquire');
 
@@ -95,6 +96,10 @@ if (!memberOfferIsLive({ published: true, endsOn: '2026-10-02' }, '2026-10-02'))
 if (!memberOfferIsLive({ published: true, endsOn: '' }, '2026-10-02')) {
   fail('an offer with no end date should stay up');
 }
+if (!missingOfferExtras({ message: "Could not find the 'promo_code' column of 'member_offers' in the schema cache" })) {
+  fail('a missing code column should be recognised');
+}
+if (missingOfferExtras({ message: 'connection refused' })) fail('unrelated errors are not a missing column');
 
 if (isMemberOfferId('not-an-id')) fail('bad id accepted');
 if (!isMemberOfferId('11111111-1111-4111-8111-111111111111')) fail('uuid rejected');

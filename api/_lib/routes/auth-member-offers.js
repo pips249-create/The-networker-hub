@@ -126,6 +126,10 @@ module.exports = async function handler(req, res) {
       });
     }
     console.error('[member-offers]', e && e.message ? e.message : e);
-    return json(res, 500, { ok: false, error: 'member_offers_failed' });
+    return json(res, 500, {
+      ok: false,
+      error: 'member_offers_failed',
+      message: 'Could not save the offer. Try again, or paste an image link instead of the picture.',
+    });
   }
 };
