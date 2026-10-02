@@ -5,6 +5,7 @@
  */
 const assert = require('assert');
 const { rowToEvent, publicPriceFromTiers, PRICE_UNKNOWN_KEY } = require('../api/_lib/supabase-events');
+const { rowToBrowsePin } = require('../api/_lib/browse-events-query');
 
 const baseRow = {
   id: 'ev-bni',
@@ -66,4 +67,54 @@ const unknown = publicPriceFromTiers([], { isMembersOnlyEvent: false });
 assert.strictEqual(unknown.priceKey, 'enquire');
 assert.strictEqual(unknown.display, 'Ask organiser');
 
-console.log('OK  unpriced listings ask the organiser; £0 tiers stay Free');
+const connected = rowToEvent(
+  {
+    ...baseRow,
+    id: 'ev-connected',
+    attendance_mode: 'tickets',
+    checkout_mode: 'external_connected',
+    external_booking_url: 'https://www.eventbrite.co.uk/e/123456789',
+    external_price_label: '£18',
+  },
+  null,
+  []
+);
+assert.strictEqual(connected.priceKey, 'paid');
+assert.ok(String(connected.price).indexOf('18') !== -1);
+assert.strictEqual(connected.hasTicketTiers, false);
+
+const connectedFree = rowToEvent(
+  {
+    ...baseRow,
+    id: 'ev-connected-free',
+    attendance_mode: 'tickets',
+    checkout_mode: 'external_connected',
+    external_booking_url: 'https://www.eventbrite.co.uk/e/987654321',
+    external_price_label: 'Free',
+  },
+  null,
+  []
+);
+assert.strictEqual(connectedFree.priceKey, 'free');
+assert.strictEqual(connectedFree.price, 'Free');
+assert.strictEqual(connectedFree.hasFreeTickets, true);
+
+const connectedPin = rowToBrowsePin({
+  id: 'pin-connected',
+  slug: 'connected-meetup',
+  title: 'Connected meetup',
+  city: 'Leeds',
+  format_tab: 'in-person',
+  starts_at: '2026-11-01T09:00:00+00:00',
+  min_ticket_price: null,
+  has_public_tickets: false,
+  checkout_mode: 'external_connected',
+  external_booking_url: 'https://www.eventbrite.co.uk/e/111',
+  external_price_label: 'From £12',
+  event_type: 'Meeting',
+  type_tab: 'meeting',
+});
+assert.notStrictEqual(connectedPin.priceKey, 'enquire');
+assert.ok(String(connectedPin.price).toLowerCase().indexOf('12') !== -1);
+
+console.log('OK  unpriced listings ask the organiser; Connected booking keeps its price');
