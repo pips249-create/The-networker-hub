@@ -22,7 +22,7 @@ const baseRow = {
 };
 
 const unpriced = rowToEvent(baseRow, { id: 'org-1', name: 'BNI Nexus (Montrose)' }, []);
-assert.strictEqual(unpriced.price, 'Ask organiser');
+assert.strictEqual(unpriced.price, 'Enquire for price');
 assert.strictEqual(unpriced.priceKey, PRICE_UNKNOWN_KEY);
 assert.strictEqual(unpriced.hasTicketTiers, false);
 assert.strictEqual(unpriced.hasFreeTickets, false);
@@ -65,7 +65,7 @@ assert.strictEqual(membersOnly.priceKey, 'free');
 
 const unknown = publicPriceFromTiers([], { isMembersOnlyEvent: false });
 assert.strictEqual(unknown.priceKey, 'enquire');
-assert.strictEqual(unknown.display, 'Ask organiser');
+assert.strictEqual(unknown.display, 'Enquire for price');
 
 const connected = rowToEvent(
   {
@@ -117,4 +117,4 @@ const connectedPin = rowToBrowsePin({
 assert.notStrictEqual(connectedPin.priceKey, 'enquire');
 assert.ok(String(connectedPin.price).toLowerCase().indexOf('12') !== -1);
 
-console.log('OK  unpriced listings ask the organiser; Connected booking keeps its price');
+console.log('OK  unpriced listings enquire for price; Connected booking keeps its price');

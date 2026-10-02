@@ -436,7 +436,7 @@
       ev.priceKey === 'enquire' ||
       (ev.hasTicketTiers === false && ev.hasFreeTickets !== true && ev.priceKey === 'free')
     ) {
-      return 'Ask organiser';
+      return 'Enquire for price';
     }
     if (ev.priceKey === 'free' || !ev.price || /^free$/i.test(ev.price)) return 'Free';
     const n = Number(ev.priceNum);
