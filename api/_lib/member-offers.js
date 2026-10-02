@@ -394,7 +394,10 @@ async function applyOfferImage(body) {
       logoFilename: src.imageFilename || src.image_filename || 'offer.jpg',
     });
   } catch (e) {
-    const err = new Error(e && e.message ? e.message : 'Could not save that image.');
+    const unreadable = e && e.code === 'image_unreadable';
+    const err = new Error(
+      unreadable ? "Couldn't read that image." : e && e.message ? e.message : 'Could not save that image.'
+    );
     err.code = 'image_upload_failed';
     throw err;
   }
