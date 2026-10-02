@@ -246,6 +246,13 @@ async function claimGroupForSession(session, groupId) {
     );
   }
 
+  try {
+    const { noteOrganiserPageClaimed } = require('./jamie-targets');
+    await noteOrganiserPageClaimed(session, data);
+  } catch (e) {
+    console.warn('organiser claim activity log failed:', e && e.message ? e.message : e);
+  }
+
   return group;
 }
 

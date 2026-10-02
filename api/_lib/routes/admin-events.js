@@ -860,6 +860,16 @@ module.exports = async function handler(req, res) {
         }
 
         try {
+          const { logCreatedEvents } = require('../staff-event-activity');
+          await logCreatedEvents(session, events, {
+            source: 'admin_create',
+            organiserId,
+          });
+        } catch (logErr) {
+          console.warn('[admin-events] activity log', logErr && logErr.message ? logErr.message : logErr);
+        }
+
+        try {
           const { logOutreachFromEventCreate } = require('../organiser-sales-outreach');
           const adminSession = sessionFromRequest(req);
           await logOutreachFromEventCreate({

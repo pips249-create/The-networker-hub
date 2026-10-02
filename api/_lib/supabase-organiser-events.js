@@ -1745,7 +1745,7 @@ async function syncSeriesOccurrencesForEvent(eventId, { base, occurrences, serie
   const occ = Array.isArray(occurrences) ? occurrences.filter((o) => o && o.date) : [];
   if (!occ.length) {
     const event = await updateEvent(anchorId, { ...base, seriesGroupId: seriesGroupId || null });
-    return { events: [event], eventIds: [event.id], event };
+    return { events: [event], eventIds: [event.id], event, createdEvents: [] };
   }
 
   const guardedBase = await applyDuplicateTitleGuard(sb, anchorRow, base);
@@ -1819,8 +1819,9 @@ async function syncSeriesOccurrencesForEvent(eventId, { base, occurrences, serie
     });
   const eventIds = events.map((ev) => ev.id).filter(Boolean);
   const anchorEvent = events.find((ev) => ev.id === anchorId) || events[0];
+  const createdEvents = createdRows.map(rowToEvent);
 
-  return { events, eventIds, event: anchorEvent };
+  return { events, eventIds, event: anchorEvent, createdEvents };
 }
 
 async function maybeNotifyAttendeesOfEventUpdate(sb, eventId, existingRow, updatedRow) {
