@@ -9,6 +9,7 @@
   var loading = false;
   var loadError = '';
   var editingId = '';
+  var pendingImageFile = null;
   var onChange = null;
 
   function esc(s) {
@@ -34,17 +35,46 @@
     return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
   }
 
+  function londonToday() {
+    try {
+      return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(new Date());
+    } catch (e) {
+      return new Date().toISOString().slice(0, 10);
+    }
+  }
+
+  function offerHasEnded(offer) {
+    var end = offer && offer.endsOn ? String(offer.endsOn).slice(0, 10) : '';
+    return Boolean(end && end < londonToday());
+  }
+
+  function offerIsLive(offer) {
+    return Boolean(offer && offer.published && !offerHasEnded(offer));
+  }
+
   function visibleOffers() {
     if (canManage) return offers.slice();
-    return offers.filter(function (offer) {
-      return offer.published;
-    });
+    return offers.filter(offerIsLive);
   }
 
   function publishedCount() {
-    return offers.filter(function (offer) {
-      return offer.published;
-    }).length;
+    return offers.filter(offerIsLive).length;
+  }
+
+  function featuredDeal() {
+    var live = offers.filter(offerIsLive);
+    if (!live.length) return '';
+    var offer = live[0];
+    var who = offer.provider || offer.title || '';
+    var badge = offer.highlight || '';
+    if (who && badge) return who + ': ' + badge;
+    return who || badge;
+  }
+
+  function statusBadge(offer) {
+    if (!offer.published) return '<span class="ad-service-hidden">Hidden</span>';
+    if (offerHasEnded(offer)) return '<span class="ad-service-hidden">Ended</span>';
+    return '';
   }
 
   function notify() {
@@ -76,7 +106,11 @@
     form.elements.summary.value = offer && offer.summary ? offer.summary : '';
     form.elements.details.value = offer && offer.details ? offer.details : '';
     form.elements.href.value = offer && offer.href ? offer.href : '';
+    form.elements.promoCode.value = offer && offer.promoCode ? offer.promoCode : '';
+    form.elements.endsOn.value = offer && offer.endsOn ? String(offer.endsOn).slice(0, 10) : '';
     form.elements.imageUrl.value = offer && offer.imageUrl ? offer.imageUrl : '';
+    pendingImageFile = null;
+    showImagePreview(offer && offer.imageUrl ? offer.imageUrl : '');
     form.elements.sortOrder.value =
       offer && offer.sortOrder != null ? String(offer.sortOrder) : '0';
     form.elements.published.checked = offer ? offer.published === true : false;
@@ -152,7 +186,7 @@
       esc(category) +
       '</span>' +
       (highlight ? '<span class="ad-service-highlight">' + esc(highlight) + '</span>' : '') +
-      (offer.published ? '' : '<span class="ad-service-hidden">Hidden</span>') +
+      statusBadge(offer) +
       '</div>';
     var admin = canManage
       ? '<div class="ad-service-admin">' +
@@ -240,7 +274,7 @@
       esc(category) +
       '</span>' +
       (highlight ? '<span class="ad-service-highlight">' + esc(highlight) + '</span>' : '') +
-      (offer.published ? '' : '<span class="ad-service-hidden">Hidden</span>') +
+      statusBadge(offer) +
       '</div>' +
       '<div class="ad-service-detail-body">' +
       (provider ? '<p class="ad-service-detail-provider">' + esc(provider) + '</p>' : '') +
@@ -249,6 +283,13 @@
       '</h2>' +
       (summary ? '<p class="ad-service-detail-summary">' + esc(summary) + '</p>' : '') +
       (body ? '<div class="ad-service-detail-copy">' + body + '</div>' : '') +
+      (offer.promoCode
+        ? '<p class="ad-service-code">Use code <strong>' +
+          esc(offer.promoCode) +
+          '</strong> <button type="button" class="ad-service-code-copy" data-service-copy-code="' +
+          esc(offer.promoCode) +
+          '">Copy</button></p>'
+        : '') +
       outbound +
       admin +
       '</div></article>'
@@ -393,6 +434,110 @@
     return data;
   }
 
+  function showImagePreview(src) {
+    var preview = document.getElementById('ad-service-image-preview');
+    var empty = document.getElementById('ad-service-drop-empty');
+    var clearBtn = document.getElementById('ad-service-image-clear');
+    var hasSrc = Boolean(src);
+    if (preview) {
+      if (hasSrc) preview.src = src;
+      else preview.removeAttribute('src');
+      preview.hidden = !hasSrc;
+    }
+    if (empty) empty.hidden = hasSrc;
+    if (clearBtn) clearBtn.hidden = !hasSrc;
+  }
+
+  function readImageFile(file) {
+    return new Promise(function (resolve, reject) {
+      if (!file) {
+        reject(new Error('Choose an image.'));
+        return;
+      }
+      if (file.size > 2 * 1024 * 1024) {
+        reject(new Error('That image is too large. Use one under 2MB.'));
+        return;
+      }
+      var reader = new FileReader();
+      reader.onload = function () {
+        resolve({
+          dataUrl: String(reader.result || ''),
+          type: file.type || '',
+          name: file.name || 'offer.jpg',
+        });
+      };
+      reader.onerror = function () {
+        reject(new Error('Could not read that image.'));
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function setDroppedImage(file) {
+    pendingImageFile = file;
+    var form = document.getElementById('ad-service-form');
+    if (form && form.elements.imageUrl) form.elements.imageUrl.value = '';
+    var reader = new FileReader();
+    reader.onload = function () {
+      showImagePreview(String(reader.result || ''));
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function clearDroppedImage() {
+    pendingImageFile = null;
+    var fileInput = document.getElementById('ad-service-image-file');
+    var form = document.getElementById('ad-service-form');
+    if (fileInput) fileInput.value = '';
+    if (form && form.elements.imageUrl) form.elements.imageUrl.value = '';
+    showImagePreview('');
+  }
+
+  function bindImageDrop() {
+    var zone = document.getElementById('ad-service-drop');
+    var fileInput = document.getElementById('ad-service-image-file');
+    var clearBtn = document.getElementById('ad-service-image-clear');
+    var form = document.getElementById('ad-service-form');
+    if (zone && fileInput && !zone.dataset.boundImageDrop) {
+      zone.dataset.boundImageDrop = '1';
+      if (window.hubBindImageUpload) {
+        window.hubBindImageUpload({
+          zone: zone,
+          fileInput: fileInput,
+          onFile: setDroppedImage,
+          uploadOptions: { maxBytes: 2 * 1024 * 1024 },
+        });
+      }
+      zone.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          fileInput.click();
+        }
+      });
+    }
+    if (clearBtn && !clearBtn.dataset.boundImageClear) {
+      clearBtn.dataset.boundImageClear = '1';
+      clearBtn.addEventListener('click', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        clearDroppedImage();
+      });
+    }
+    if (form && form.elements.imageUrl && !form.elements.imageUrl.dataset.boundImageUrl) {
+      form.elements.imageUrl.dataset.boundImageUrl = '1';
+      form.elements.imageUrl.addEventListener('input', function () {
+        var url = String(form.elements.imageUrl.value || '').trim();
+        if (!url) {
+          if (!pendingImageFile) showImagePreview('');
+          return;
+        }
+        pendingImageFile = null;
+        if (fileInput) fileInput.value = '';
+        showImagePreview(url);
+      });
+    }
+  }
+
   function formPayload(form) {
     return {
       title: form.elements.title.value,
@@ -402,6 +547,8 @@
       summary: form.elements.summary.value,
       details: form.elements.details.value,
       href: form.elements.href.value,
+      promoCode: form.elements.promoCode.value,
+      endsOn: form.elements.endsOn.value,
       imageUrl: form.elements.imageUrl.value,
       sortOrder: form.elements.sortOrder.value,
       published: form.elements.published.checked,
@@ -440,14 +587,27 @@
         if (submit) submit.disabled = true;
         setFormError('');
         var payload = formPayload(form);
-        if (payload.published && (!String(payload.href || '').trim() || !String(payload.imageUrl || '').trim())) {
+        var hasPicture = Boolean(pendingImageFile) || String(payload.imageUrl || '').trim();
+        if (payload.published && (!String(payload.href || '').trim() || !hasPicture)) {
           setFormError('Add a link and a picture before publishing this offer.');
           if (submit) submit.disabled = false;
           return;
         }
         var method = editingId ? 'PATCH' : 'POST';
         if (editingId) payload.id = editingId;
-        send(method, payload)
+        var ready = pendingImageFile
+          ? readImageFile(pendingImageFile).then(function (file) {
+              payload.imageBase64 = file.dataUrl;
+              payload.imageMime = file.type;
+              payload.imageFilename = file.name;
+              payload.imageUrl = '';
+              return payload;
+            })
+          : Promise.resolve(payload);
+        ready
+          .then(function (body) {
+            return send(method, body);
+          })
           .then(function () {
             closeForm();
             return reload();
@@ -464,6 +624,18 @@
     if (services && !services.dataset.boundServiceClicks) {
       services.dataset.boundServiceClicks = '1';
       services.addEventListener('click', function (event) {
+        var copyBtn = event.target.closest('[data-service-copy-code]');
+        if (copyBtn) {
+          event.preventDefault();
+          var code = copyBtn.getAttribute('data-service-copy-code') || '';
+          var done = function () {
+            copyBtn.textContent = 'Copied';
+          };
+          if (code && navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(code).then(done).catch(function () {});
+          }
+          return;
+        }
         if (event.target.closest('[data-service-back]')) {
           location.hash = 'services';
           return;
@@ -645,6 +817,7 @@
       member.email = String(options.member.email || '').trim();
     }
     bind();
+    bindImageDrop();
     bindPitch();
     onChange = options && options.onChange;
     if (options && options.isAdmin) canManage = true;
@@ -655,6 +828,7 @@
     init: init,
     render: render,
     publishedCount: publishedCount,
+    featuredDeal: featuredDeal,
     routeHash: function () {
       var id = detailIdFromHash();
       return id ? '#services/' + id : '#services';

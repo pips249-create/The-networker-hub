@@ -4,6 +4,7 @@ const {
   isMemberOfferId,
   memberOfferFromRow,
   publishGaps,
+  memberOfferIsLive,
 } = require('../api/_lib/member-offers');
 const { prepareMemberOfferEnquire } = require('../api/_lib/member-offer-enquire');
 
@@ -73,6 +74,27 @@ if (detailed.fields.details !== 'First paragraph.\n\nSecond paragraph.') {
 
 const sorted = normalizeMemberOfferInput({ title: 'Cards', sortOrder: 99999 });
 if (sorted.fields.sort_order !== 9999) fail('sort order should clamp');
+
+const coded = normalizeMemberOfferInput({
+  title: 'Swft Business Cards',
+  promoCode: '  NETWORKER  ',
+  endsOn: '2026-12-31',
+  published: false,
+});
+if (!coded.ok || coded.fields.promo_code !== 'NETWORKER' || coded.fields.ends_on !== '2026-12-31') {
+  fail('code and end date should be kept');
+}
+const badDate = normalizeMemberOfferInput({ title: 'Cards', endsOn: 'next week', published: false });
+if (badDate.ok || badDate.errors.indexOf('endsOn') === -1) fail('a bad end date must be rejected');
+if (memberOfferIsLive({ published: true, endsOn: '2020-01-01' }, '2026-10-02')) {
+  fail('an offer should end after its end date');
+}
+if (!memberOfferIsLive({ published: true, endsOn: '2026-10-02' }, '2026-10-02')) {
+  fail('an offer should stay up on its end date');
+}
+if (!memberOfferIsLive({ published: true, endsOn: '' }, '2026-10-02')) {
+  fail('an offer with no end date should stay up');
+}
 
 if (isMemberOfferId('not-an-id')) fail('bad id accepted');
 if (!isMemberOfferId('11111111-1111-4111-8111-111111111111')) fail('uuid rejected');

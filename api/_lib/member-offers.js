@@ -11,6 +11,7 @@ const LIMITS = {
   details: 4000,
   href: 500,
   imageUrl: 500,
+  promoCode: 40,
 };
 
 const UUID_RE =
@@ -65,6 +66,33 @@ function anyPresent(src, keys) {
   return keys.some((key) => hasOwn(src, key));
 }
 
+function cleanDate(value) {
+  const s = String(value == null ? '' : value).trim();
+  if (!s) return '';
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return { error: 'invalid_date' };
+  const parsed = new Date(s + 'T00:00:00Z');
+  if (Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== s) {
+    return { error: 'invalid_date' };
+  }
+  return s;
+}
+
+function londonToday() {
+  try {
+    return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(new Date());
+  } catch {
+    return new Date().toISOString().slice(0, 10);
+  }
+}
+
+/** Published, and still on or before its end date. */
+function memberOfferIsLive(offer, today) {
+  if (!offer || offer.published !== true) return false;
+  const end = String(offer.endsOn || offer.ends_on || '').slice(0, 10);
+  if (!end) return true;
+  return end >= String(today || londonToday());
+}
+
 /**
  * @param {object} input
  * @param {{ partial?: boolean }} [options]
@@ -111,6 +139,16 @@ function normalizeMemberOfferInput(input, options) {
     const imageUrl = cleanHttpUrl(firstPresent(src, ['imageUrl', 'image_url']), LIMITS.imageUrl);
     if (imageUrl && imageUrl.error) errors.push('imageUrl');
     else fields.image_url = imageUrl || '';
+  }
+
+  if (!partial || anyPresent(src, ['promoCode', 'promo_code', 'code'])) {
+    fields.promo_code = cleanText(firstPresent(src, ['promoCode', 'promo_code', 'code']), LIMITS.promoCode);
+  }
+
+  if (!partial || anyPresent(src, ['endsOn', 'ends_on'])) {
+    const endsOn = cleanDate(firstPresent(src, ['endsOn', 'ends_on']));
+    if (endsOn && endsOn.error) errors.push('endsOn');
+    else fields.ends_on = endsOn || '';
   }
 
   if (!partial || anyPresent(src, ['published'])) {
@@ -167,6 +205,8 @@ function memberOfferFromRow(row) {
     details: row.details || '',
     href: row.href || '',
     imageUrl: row.image_url || '',
+    promoCode: row.promo_code || '',
+    endsOn: row.ends_on ? String(row.ends_on).slice(0, 10) : '',
     published: row.published === true,
     sortOrder: Number(row.sort_order) || 0,
     updatedAt: row.updated_at || null,
@@ -189,7 +229,7 @@ async function listMemberOffers(options) {
   let query = sb
     .from('member_offers')
     .select(
-      'id, title, provider, category, highlight, summary, details, href, image_url, published, sort_order, updated_at'
+      'id, title, provider, category, highlight, summary, details, href, image_url, promo_code, ends_on, published, sort_order, updated_at'
     )
     .order('sort_order', { ascending: true })
     .order('title', { ascending: true });
@@ -203,7 +243,10 @@ async function listMemberOffers(options) {
     }
     throw error;
   }
-  return (data || []).map(memberOfferFromRow);
+  const today = londonToday();
+  return (data || []).map(memberOfferFromRow).filter(function (offer) {
+    return includeUnpublished || memberOfferIsLive(offer, today);
+  });
 }
 
 async function createMemberOffer(fields, createdBy) {
@@ -219,6 +262,8 @@ async function createMemberOffer(fields, createdBy) {
     details: fields.details || '',
     href: fields.href || '',
     image_url: fields.image_url || '',
+    promo_code: fields.promo_code || '',
+    ends_on: fields.ends_on || null,
     published: fields.published !== false,
     sort_order: Number.isFinite(fields.sort_order) ? fields.sort_order : 0,
     updated_at: new Date().toISOString(),
@@ -266,6 +311,8 @@ async function updateMemberOffer(id, fields) {
   if (hasOwn(fields, 'details')) patch.details = fields.details;
   if (hasOwn(fields, 'href')) patch.href = fields.href;
   if (hasOwn(fields, 'image_url')) patch.image_url = fields.image_url;
+  if (hasOwn(fields, 'promo_code')) patch.promo_code = fields.promo_code;
+  if (hasOwn(fields, 'ends_on')) patch.ends_on = fields.ends_on || null;
   if (hasOwn(fields, 'published')) patch.published = fields.published;
   if (hasOwn(fields, 'sort_order')) patch.sort_order = fields.sort_order;
   const { data, error } = await sb
@@ -299,12 +346,42 @@ async function deleteMemberOffer(id) {
   return Boolean(data && data.id);
 }
 
+async function applyOfferImage(body) {
+  const src = body && typeof body === 'object' ? body : {};
+  const encoded = String(src.imageBase64 || src.image_base64 || '');
+  if (!encoded) return src;
+  const { resolveImageUrl } = require('./supabase-storage');
+  let url = '';
+  try {
+    url = await resolveImageUrl({
+      folder: 'member-offers',
+      logoBase64: encoded,
+      logoMime: src.imageMime || src.image_mime || '',
+      logoFilename: src.imageFilename || src.image_filename || 'offer.jpg',
+    });
+  } catch (e) {
+    const err = new Error(e && e.message ? e.message : 'Could not save that image.');
+    err.code = 'image_upload_failed';
+    throw err;
+  }
+  if (!url) {
+    const err = new Error('Could not save that image.');
+    err.code = 'image_upload_failed';
+    throw err;
+  }
+  src.imageUrl = url;
+  return src;
+}
+
 module.exports = {
   LIMITS,
   normalizeMemberOfferInput,
   isMemberOfferId,
   publishGaps,
+  memberOfferIsLive,
+  londonToday,
   memberOfferFromRow,
+  applyOfferImage,
   listMemberOffers,
   createMemberOffer,
   updateMemberOffer,
