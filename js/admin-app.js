@@ -449,7 +449,7 @@
       title: "How Jamie's targets work",
       steps: [
         'This page is only for Catherine and Jamie. It covers 1 October through 2 November.',
-        'Booked meetings count when Jamie logs Meeting in the organiser sales kit. Pitch-deck saves do not count.',
+        'Booked meetings count when Jamie logs Meeting in the organiser sales kit. A meeting Catherine refers to Jamie counts as 0.25. Pitch-deck saves do not count.',
         'A claimed page counts when the group claims in this period and Jamie was the last team member to contact them.',
         'Each date Jamie adds is logged as activity and counts toward events, including every date in a series.',
       ],
@@ -1160,6 +1160,16 @@
   function canSeeJamieTargets() {
     var who = salesKitActorFromEmail(currentUser && currentUser.email).shownBy;
     return who === 'Catherine' || who === 'Jamie';
+  }
+
+  function canReferMeetingToJamie() {
+    return salesKitActorFromEmail(currentUser && currentUser.email).shownBy === 'Catherine';
+  }
+
+  function formatJamieCount(n) {
+    var num = Math.round((Number(n) || 0) * 100) / 100;
+    if (Math.abs(num - Math.round(num)) < 0.001) return String(Math.round(num));
+    return String(num);
   }
 
   function syncJamieTargetsNav() {
@@ -32262,14 +32272,14 @@
       esc(metric.label || '') +
       '</p>' +
       '<p class="text-2xl font-bold text-brand-900 mt-1">' +
-      esc(String(metric.actual || 0)) +
+      esc(formatJamieCount(metric.actual || 0)) +
       '<span class="text-base font-semibold text-slate-400"> / ' +
       esc(String(metric.target || 0)) +
       '</span></p>' +
       '<p class="text-xs text-slate-500 mt-1">' +
       (metric.complete
         ? 'Target met'
-        : esc(String(metric.remaining || 0)) + ' still to go · ' + esc(String(pct)) + '%') +
+        : esc(formatJamieCount(metric.remaining || 0)) + ' still to go · ' + esc(String(pct)) + '%') +
       '</p>' +
       '<div class="mt-3 h-2.5 rounded-full bg-slate-100 overflow-hidden">' +
       '<div class="h-full ' +
@@ -32348,6 +32358,24 @@
         ' days elapsed · ' +
         esc(String(period.daysRemaining || 0)) +
         ' days remaining. Only Catherine and Jamie can see this page.</p></section>' +
+        (canReferMeetingToJamie()
+          ? '<form id="jamie-referral-form" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">' +
+            '<p class="text-sm font-semibold text-brand-900">Refer a meeting to Jamie</p>' +
+            '<p class="text-xs text-slate-500 mt-1">Each one counts as 0.25 of a booked meeting.</p>' +
+            '<div class="mt-3 flex flex-wrap gap-2 items-end">' +
+            '<label class="block flex-1" style="min-width:12rem">' +
+            '<span class="text-xs font-semibold text-slate-500">Group or contact</span>' +
+            '<input name="organiserName" required maxlength="200" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="e.g. Manchester Breakfast" />' +
+            '</label>' +
+            '<label class="block flex-1" style="min-width:12rem">' +
+            '<span class="text-xs font-semibold text-slate-500">Note (optional)</span>' +
+            '<input name="note" maxlength="200" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="e.g. intro emailed" />' +
+            '</label>' +
+            '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2">Add referred meeting</button>' +
+            '</div>' +
+            '<p id="jamie-referral-status" class="text-xs mt-2 text-slate-500" role="status"></p>' +
+            '</form>'
+          : '') +
         '<section class="grid sm:grid-cols-3 gap-3">' +
         jamieTargetsMetricCard(metrics.meetings || {}) +
         jamieTargetsMetricCard(metrics.claimedPages || {}) +
@@ -32355,10 +32383,41 @@
         '</section>' +
         '<section class="admin-dash-section">' +
         '<div class="admin-dash-section-head"><h3>Jamie\'s activity</h3>' +
-        '<p>Meetings she logs, pages claimed after her last contact, and events or series dates she adds.</p></div>' +
+        '<p>Meetings she logs, meetings Catherine refers, pages claimed after her last contact, and events or series dates she adds.</p></div>' +
         '<div class="admin-dash-section-body">' +
         activityHtml +
         '</div></section></div>';
+      var referralForm = document.getElementById('jamie-referral-form');
+      if (referralForm) {
+        referralForm.addEventListener('submit', function (event) {
+          event.preventDefault();
+          var status = document.getElementById('jamie-referral-status');
+          var nameInput = referralForm.elements.namedItem('organiserName');
+          var noteInput = referralForm.elements.namedItem('note');
+          var submit = referralForm.querySelector('button[type="submit"]');
+          var organiserName = nameInput ? String(nameInput.value || '').trim() : '';
+          if (!organiserName) {
+            if (status) status.textContent = 'Add the group or contact name.';
+            return;
+          }
+          if (submit) submit.disabled = true;
+          if (status) status.textContent = 'Saving…';
+          adminPost('/api/admin/jamie-targets', {
+            organiserName: organiserName,
+            note: noteInput ? String(noteInput.value || '').trim() : '',
+          }).then(function (saved) {
+            if (!saved || saved.ok === false) {
+              if (submit) submit.disabled = false;
+              if (status) {
+                status.textContent =
+                  (saved && (saved.message || saved.error)) || 'Could not save that referral.';
+              }
+              return;
+            }
+            renderJamieTargets();
+          });
+        });
+      }
     });
   }
 

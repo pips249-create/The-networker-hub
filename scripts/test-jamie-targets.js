@@ -4,7 +4,9 @@
 const assert = require('assert');
 const {
   canSeeJamieTargets,
+  canReferMeetingToJamie,
   isBookedMeetingNotes,
+  isReferredMeetingNotes,
   lastStaffBeforeClaim,
   buildJamieTargetsReport,
   periodMeta,
@@ -17,6 +19,13 @@ assert.strictEqual(canSeeJamieTargets('jamie@thenetworkeruk.com'), true);
 assert.strictEqual(canSeeJamieTargets('jamie.trickett01@gmail.com'), true);
 assert.strictEqual(canSeeJamieTargets('rosie@thenetworkeruk.com'), false);
 assert.strictEqual(canSeeJamieTargets('someone@example.com'), false);
+assert.strictEqual(canReferMeetingToJamie('catherine@thenetworkeruk.com'), true);
+assert.strictEqual(canReferMeetingToJamie('pips249@gmail.com'), true);
+assert.strictEqual(canReferMeetingToJamie('jamie@thenetworkeruk.com'), false);
+assert.strictEqual(isReferredMeetingNotes('Referred to Jamie'), true);
+assert.strictEqual(isReferredMeetingNotes('Referred to Jamie — intro emailed'), true);
+assert.strictEqual(isReferredMeetingNotes('Meeting'), false);
+assert.strictEqual(isBookedMeetingNotes('Referred to Jamie'), false);
 
 assert.strictEqual(isBookedMeetingNotes('Meeting'), true);
 assert.strictEqual(isBookedMeetingNotes('Meeting — Thursday 10am'), true);
@@ -125,6 +134,14 @@ const report = buildJamieTargetsReport({
       notes: 'Meeting',
       created_by_email: 'rosie@thenetworkeruk.com',
     },
+    {
+      shown_at: '2026-10-02',
+      shown_by: 'Catherine',
+      organiser_name: 'Delta Network',
+      organiser_id: 'org-5',
+      notes: 'Referred to Jamie — intro emailed',
+      created_by_email: 'catherine@thenetworkeruk.com',
+    },
   ],
   organisers: [
     { id: 'org-1', name: 'Alpha Network', ownership_claimed_at: '2026-10-05T10:00:00.000Z' },
@@ -134,8 +151,12 @@ const report = buildJamieTargetsReport({
 
 assert.strictEqual(report.metrics.events.actual, 2);
 assert.strictEqual(report.metrics.events.target, 275);
-assert.strictEqual(report.metrics.meetings.actual, 1);
+assert.strictEqual(report.metrics.meetings.actual, 1.25);
+assert.strictEqual(report.metrics.meetings.booked, 1);
+assert.strictEqual(report.metrics.meetings.referred, 1);
+assert.strictEqual(report.metrics.meetings.referredPoints, 0.25);
 assert.strictEqual(report.metrics.meetings.target, 4);
+assert.ok(report.activity.some((item) => item.kind === 'referral' && item.summary.indexOf('Delta') !== -1));
 assert.strictEqual(report.metrics.claimedPages.actual, 1);
 assert.strictEqual(report.metrics.claimedPages.target, 25);
 assert.strictEqual(report.period.daysElapsed, 2);

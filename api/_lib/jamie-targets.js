@@ -19,6 +19,9 @@ const TARGETS = {
   events: 275,
 };
 
+const REFERRAL_MEETING_WEIGHT = 0.25;
+const REFERRED_NOTE = 'Referred to Jamie';
+
 const STAFF = new Set(['Catherine', 'Rosie', 'Jamie']);
 const CREDIT_ACTIONS = new Set(['event_created', 'admin_claim_invite', 'admin_ownership_transfer']);
 const PITCH_DECK_MEETING = /^Meeting — (Updated )?Tailored pitch deck\b/i;
@@ -26,6 +29,10 @@ const PITCH_DECK_MEETING = /^Meeting — (Updated )?Tailored pitch deck\b/i;
 function canSeeJamieTargets(email) {
   const who = shownByFromEmail(email);
   return who === 'Catherine' || who === 'Jamie';
+}
+
+function canReferMeetingToJamie(email) {
+  return shownByFromEmail(email) === 'Catherine';
 }
 
 function isJamieStaff(emailOrShownBy) {
@@ -124,6 +131,36 @@ function isBookedMeetingNotes(notes) {
     });
 }
 
+function isReferredMeetingNotes(notes) {
+  return String(notes || '')
+    .split(/\n/)
+    .some((line) => {
+      const body = meetingTouchBody(line);
+      return (
+        body === REFERRED_NOTE ||
+        body.startsWith(REFERRED_NOTE + ' — ') ||
+        body.startsWith(REFERRED_NOTE + ' - ')
+      );
+    });
+}
+
+function referredMeetingDetail(notes) {
+  const lines = String(notes || '').split(/\n/);
+  for (let i = 0; i < lines.length; i += 1) {
+    const body = meetingTouchBody(lines[i]);
+    if (body === REFERRED_NOTE) return '';
+    if (body.startsWith(REFERRED_NOTE + ' — ') || body.startsWith(REFERRED_NOTE + ' - ')) {
+      return body.slice(REFERRED_NOTE.length + 3).trim();
+    }
+  }
+  return '';
+}
+
+function isCatherineReferral(row) {
+  if (!row || !isReferredMeetingNotes(row.notes)) return false;
+  return row.shown_by === 'Catherine' || staffNameFromEmail(row.created_by_email) === 'Catherine';
+}
+
 function meetingNoteDetail(notes) {
   const lines = String(notes || '').split(/\n/);
   for (let i = 0; i < lines.length; i += 1) {
@@ -195,6 +232,7 @@ function buildJamieTargetsReport(input) {
   const touches = [];
   const eventIds = new Set();
   const activity = [];
+  let referredMeetings = 0;
 
   activityRows.forEach((row) => {
     const staff = staffNameFromEmail(row.actor_email);
@@ -233,6 +271,21 @@ function buildJamieTargetsReport(input) {
         staff,
         email: row.created_by_email || '',
         at: row.shown_at || row.updated_at || row.created_at,
+      });
+    }
+    if (isCatherineReferral(row) && inPeriodDate(row.shown_at || row.created_at)) {
+      referredMeetings += 1;
+      const name = String(row.organiser_name || 'Group').trim() || 'Group';
+      const detail = referredMeetingDetail(row.notes);
+      activity.push({
+        at: /^\d{4}-\d{2}-\d{2}$/.test(String(row.shown_at || ''))
+          ? String(row.shown_at) + 'T12:00:00.000Z'
+          : row.shown_at || row.created_at,
+        kind: 'referral',
+        kindLabel: 'Referred meeting',
+        whenLabel: formatWhen(row.shown_at || row.created_at, true),
+        summary: 'Referred to Jamie · ' + name + (detail ? ' — ' + detail : '') + ' (0.25)',
+        organiserId: row.organiser_id || '',
       });
     }
     if (staff !== 'Jamie') return;
@@ -274,13 +327,25 @@ function buildJamieTargetsReport(input) {
   activity.sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
 
   const meetings = activity.filter((item) => item.kind === 'meeting');
+  const referredPoints = Math.round(referredMeetings * REFERRAL_MEETING_WEIGHT * 100) / 100;
+  const meetingPoints = Math.round((meetings.length + referredPoints) * 100) / 100;
+  const meetingHint =
+    meetings.length +
+    ' booked by Jamie and ' +
+    referredMeetings +
+    ' referred by Catherine (' +
+    referredPoints +
+    '). A meeting Jamie logs counts as 1. A meeting Catherine refers to her counts as 0.25. Pitch-deck saves do not count.';
   return {
     period: periodMeta(now),
     metrics: {
       meetings: {
-        ...progressSnapshot(meetings.length, TARGETS.meetings),
+        ...progressSnapshot(meetingPoints, TARGETS.meetings),
         label: 'Booked meetings',
-        hint: 'Counted when Jamie logs Meeting in the organiser sales kit during this period. Saving a pitch deck does not count.',
+        booked: meetings.length,
+        referred: referredMeetings,
+        referredPoints,
+        hint: meetingHint,
       },
       claimedPages: {
         ...progressSnapshot(claimIds.size, TARGETS.claimedPages),
@@ -412,16 +477,69 @@ async function noteOrganiserPageClaimed(session, organiserRow) {
   }
 }
 
+function referralNotes(detail) {
+  const note = String(detail || '')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .slice(0, 200);
+  if (!note) return REFERRED_NOTE;
+  return REFERRED_NOTE + ' — ' + note;
+}
+
+async function addReferredMeeting(sb, session, input) {
+  const fields = input || {};
+  const organiserName = String(fields.organiserName || fields.organiser_name || '')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .slice(0, 200);
+  if (!organiserName) {
+    const err = new Error('Add the group or contact name.');
+    err.status = 400;
+    err.code = 'missing_name';
+    throw err;
+  }
+  const email = String((session && session.email) || '')
+    .trim()
+    .toLowerCase();
+  const organiserEmail = String(fields.organiserEmail || fields.organiser_email || '')
+    .trim()
+    .toLowerCase();
+  const organiserId = String(fields.organiserId || fields.organiser_id || '').trim() || null;
+  const row = {
+    shown_at: londonToday(),
+    shown_by: 'Catherine',
+    organiser_name: organiserName,
+    organiser_email: organiserEmail || null,
+    organiser_id: organiserId,
+    outcome: 'follow_up',
+    notes: referralNotes(fields.note || fields.notes),
+    source: 'manual',
+    created_by_email: email || null,
+  };
+  let insertRes = await sb.from('organiser_sales_demos').insert(row).select('id').maybeSingle();
+  if (insertRes.error && /source/i.test(String(insertRes.error.message || ''))) {
+    const legacy = { ...row };
+    delete legacy.source;
+    insertRes = await sb.from('organiser_sales_demos').insert(legacy).select('id').maybeSingle();
+  }
+  if (insertRes.error) throw new Error(insertRes.error.message);
+  return { id: insertRes.data && insertRes.data.id, organiserName, notes: row.notes };
+}
+
 module.exports = {
   PERIOD_START,
   PERIOD_END,
   TARGETS,
+  REFERRAL_MEETING_WEIGHT,
   canSeeJamieTargets,
+  canReferMeetingToJamie,
   isBookedMeetingNotes,
+  isReferredMeetingNotes,
   lastStaffBeforeClaim,
   progressSnapshot,
   periodMeta,
   buildJamieTargetsReport,
   getJamieTargets,
+  addReferredMeeting,
   noteOrganiserPageClaimed,
 };
