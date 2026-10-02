@@ -5,6 +5,8 @@ const {
   memberOfferFromRow,
   publishGaps,
   memberOfferIsLive,
+  toMemberOfferPreview,
+  SIGNUP_PREVIEW_LIMIT,
 } = require('../api/_lib/member-offers');
 const { prepareMemberOfferEnquire } = require('../api/_lib/member-offer-enquire');
 
@@ -131,6 +133,36 @@ const badSite = prepareMemberOfferEnquire(
 );
 if (badSite.ok) fail('enquiry website must be http(s)');
 
+const preview = toMemberOfferPreview({
+  id: '11111111-1111-4111-8111-111111111111',
+  title: 'Swft Business Cards',
+  provider: 'Swft',
+  category: 'Business cards',
+  highlight: '3 months free',
+  summary: 'Member offer on Swft business cards.',
+  details: 'The full write-up stays in the account.',
+  href: 'https://example.com/swft',
+  imageUrl: 'https://example.com/swft.jpg',
+  promoCode: 'NETWORKER',
+  endsOn: '2026-12-01',
+});
+if (!preview || preview.title !== 'Swft Business Cards') fail('preview title');
+if (preview.href || preview.promoCode || preview.details || preview.id || preview.endsOn) {
+  fail('preview leaked a private field: ' + JSON.stringify(preview));
+}
+if (preview.imageUrl !== 'https://example.com/swft.jpg') fail('preview image');
+if (SIGNUP_PREVIEW_LIMIT !== 3) fail('signup preview should show three offers');
+
+const unsafePreview = toMemberOfferPreview({
+  title: 'Franchise help',
+  imageUrl: 'javascript:alert(1)',
+  href: 'https://example.com/franchise',
+});
+if (!unsafePreview || unsafePreview.imageUrl !== '' || unsafePreview.href) {
+  fail('preview must drop non-http images and links');
+}
+if (toMemberOfferPreview(null) !== null) fail('empty preview');
+
 console.log('OK: member offer validation');
 
 const handler = require('../api/_lib/routes/auth-member-offers');
@@ -195,6 +227,27 @@ function mockRes() {
     enquireAnon
   );
   if (enquireAnon.statusCode !== 401) fail('signed-out enquiry should be 401, got ' + enquireAnon.statusCode);
+
+  const previewHandler = require('../api/_lib/routes/auth-member-offer-previews');
+  const previewRes = mockRes();
+  await previewHandler({ method: 'GET', url: '/api/auth/member-offer-previews', headers: {} }, previewRes);
+  if (previewRes.statusCode !== 200 || !previewRes.body || previewRes.body.ok !== true) {
+    fail('signed-out preview should be 200, got ' + previewRes.statusCode);
+  }
+  if (!Array.isArray(previewRes.body.offers) || previewRes.body.offers.length > SIGNUP_PREVIEW_LIMIT) {
+    fail('preview should be a short list');
+  }
+  previewRes.body.offers.forEach(function (offer) {
+    ['href', 'promoCode', 'details', 'id', 'endsOn', 'published'].forEach(function (key) {
+      if (Object.prototype.hasOwnProperty.call(offer, key)) {
+        fail('preview offer included ' + key);
+      }
+    });
+  });
+
+  const previewWrite = mockRes();
+  await previewHandler({ method: 'POST', url: '/api/auth/member-offer-previews', headers: {} }, previewWrite);
+  if (previewWrite.statusCode !== 405) fail('preview writes should be 405, got ' + previewWrite.statusCode);
 
   console.log('OK: member offers route requires sign-in');
 })().catch(function (err) {
