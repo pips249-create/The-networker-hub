@@ -1557,8 +1557,8 @@ body.nav-menu-open {
 
   body.organiser-dashboard-page .hubert-launcher-icon,
   body.attendee-dashboard-page .hubert-launcher-icon {
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
   }
 
   .hub-side-nav.hub-side-nav--minimal {
@@ -3014,8 +3014,8 @@ body.nav-menu-open {
   }
 
   body.account-settings-page.is-profile-dirty .hubert-launcher-icon {
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
   }
 }
 
