@@ -659,6 +659,13 @@ body.networking-region-page .networking-region-intro {
   color: rgba(28, 32, 64, 0.78);
 }
 
+.networking-region-faq-a a {
+  color: #322b78;
+  font-weight: 600;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
 /* Server-rendered event list on /networking/:region (SEO + no-JS fallback) */
 .hub-region-ssr-listings {
   display: grid;

@@ -122,6 +122,149 @@
     setText('networking-region-intro-copy', introCopy);
   }
 
+  function articleFor(word) {
+    return /^[aeiou]/i.test(String(word || '')) ? 'an' : 'a';
+  }
+
+  function listPlaces(places) {
+    var items = (places || []).filter(Boolean);
+    if (items.length <= 1) return items[0] || '';
+    if (items.length === 2) return items[0] + ' and ' + items[1];
+    return items.slice(0, -1).join(', ') + ' and ' + items[items.length - 1];
+  }
+
+  function cityNameFromSlug(citySlug) {
+    return String(citySlug || '')
+      .split('-')
+      .filter(Boolean)
+      .map(function (part) {
+        return part.charAt(0).toUpperCase() + part.slice(1);
+      })
+      .join(' ');
+  }
+
+  function buildCountyFaqs(county) {
+    var name = county.name;
+    var towns = county.towns && county.towns.length ? county.towns.slice() : [name];
+    var townList = listPlaces(towns);
+    var hubs = (county.cities || [])
+      .map(function (citySlug) {
+        var key = String(citySlug || '').trim().toLowerCase();
+        if (!key) return null;
+        return { name: cityNameFromSlug(key), path: '/networking/' + key };
+      })
+      .filter(Boolean);
+    var together =
+      towns.length > 1
+        ? ', so ' +
+          articleFor(towns[0]) +
+          ' ' +
+          towns[0] +
+          ' event and ' +
+          articleFor(towns[towns.length - 1]) +
+          ' ' +
+          towns[towns.length - 1] +
+          ' group appear together'
+        : '';
+    var faqs = [
+      {
+        q: 'Which towns does networking in ' + name + ' cover?',
+        a:
+          'This page lists business networking across ' +
+          name +
+          ', including ' +
+          townList +
+          '. A meeting is included when the venue postcode falls in this county' +
+          together +
+          '.',
+      },
+    ];
+
+    if (hubs.length === 1) {
+      var hub = hubs[0];
+      var others = towns.filter(function (town) {
+        return town.toLowerCase() !== hub.name.toLowerCase();
+      });
+      faqs.push({
+        q: 'Does ' + hub.name + ' have its own networking page?',
+        a:
+          'Yes. ' +
+          hub.name +
+          ' has a city hub at ' +
+          hub.path +
+          ' for events in and around the city. This ' +
+          name +
+          ' page is the wider county directory' +
+          (others.length ? ', including ' + listPlaces(others) + ' as well as ' + hub.name : '') +
+          '.',
+      });
+    } else if (hubs.length > 1) {
+      var hubNames = hubs.map(function (item) {
+        return item.name;
+      });
+      var otherTowns = towns.filter(function (town) {
+        return hubNames.every(function (hubName) {
+          return town.toLowerCase() !== hubName.toLowerCase();
+        });
+      });
+      var hubSentence = hubs
+        .map(function (item, index) {
+          var line = item.name + ' has a city hub at ' + item.path;
+          if (index === 0) return line;
+          if (index === hubs.length - 1) return 'and ' + line;
+          return line;
+        })
+        .join(', ');
+      faqs.push({
+        q: 'Do ' + listPlaces(hubNames) + ' have their own networking pages?',
+        a:
+          'Yes. ' +
+          hubSentence +
+          '. This ' +
+          name +
+          ' page covers the wider county' +
+          (otherTowns.length
+            ? ', including ' + listPlaces(otherTowns) + ' as well as ' + listPlaces(hubNames)
+            : '') +
+          '.',
+      });
+    } else {
+      faqs.push({
+        q: 'How do I find networking in a specific ' + name + ' town?',
+        a:
+          townList +
+          ' are listed together on this ' +
+          name +
+          ' directory. Filter by location, or search the town name. Open an event to see the venue, or visit the organiser page for their next meetings.',
+      });
+    }
+
+    faqs.push(
+      {
+        q: 'Are there free networking events in ' + name + '?',
+        a:
+          'Often, yes. Many organisers list a free meeting or a guest visit before you join a group. Tick Free in the price filters on this page, then open the listing to see what is included.',
+      },
+      {
+        q: 'How do I list a networking group in ' + name + '?',
+        a:
+          'Claim a free organiser page and publish the meeting with its venue postcode. If that postcode sits in ' +
+          name +
+          ', the event is added to this directory automatically, including meetings in ' +
+          townList +
+          '. Start at /for-organisers.',
+      },
+      {
+        q: 'Why might a nearby event not appear on the ' + name + ' page?',
+        a:
+          'Listings follow postcode areas, which are a practical match for the county and sometimes differ from the ceremonial boundary. An event appears here when its venue postcode is in the ' +
+          name +
+          ' sectors this directory uses. Search the town or postcode on the main events page at /events/ if you are looking just outside those sectors.',
+      }
+    );
+    return faqs;
+  }
+
   var faqSection = document.getElementById('networking-region-faq');
   if (faqSection && !faqSection.getAttribute('data-hub-ssr-faq')) {
     faqSection.hidden = false;
@@ -135,7 +278,10 @@
     var faqList = document.getElementById('networking-region-faq-list');
     if (faqList && !faqList.children.length) {
       var place = slug === 'online' ? 'online' : 'in ' + region.name;
-      var faqs = [
+      var faqs =
+        region.areaType === 'county'
+          ? buildCountyFaqs(region)
+          : [
         {
           q:
             slug === 'online'
