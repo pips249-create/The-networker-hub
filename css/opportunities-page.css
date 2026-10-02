@@ -1827,7 +1827,8 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
 }
 
 .opp-browse-page .sponsor-hub--in-hero.sponsor-hub--logo-only {
-  padding-bottom: 14px;
+  padding-bottom: 0;
+  overflow: hidden;
 }
 
 .opp-browse-page .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-hub-head {
@@ -1835,10 +1836,18 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
 }
 
 .opp-browse-page .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-logo-wrap {
-  margin-bottom: 0;
-  min-height: 168px;
-  padding: 16px 18px;
+  margin: 0 -18px 0;
+  width: calc(100% + 36px);
+  min-height: 0;
+  padding: 0;
+  border-radius: 0;
+  overflow: hidden;
   transition: filter 0.2s ease, box-shadow 0.2s ease;
+}
+
+.opp-browse-page .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-logo-link {
+  display: block;
+  min-height: 0;
 }
 
 .opp-browse-page .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-logo-wrap:hover {
@@ -1852,7 +1861,11 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
 
 .opp-browse-page .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-logo,
 .opp-browse-page .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-logo--full {
-  max-height: 168px;
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  max-height: none;
+  height: auto;
 }
 
 .opp-browse-page .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-company,
@@ -1918,14 +1931,20 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
   transition: background-color 0.2s ease;
 }
 
+.opp-browse-page .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-logo-wrap.sponsor-logo-band {
+  display: block;
+  padding: 0;
+}
+
 .opp-browse-page .sponsor-logo-wrap.sponsor-logo-band--dark {
   border-radius: 8px;
 }
 
 .opp-browse-page .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-logo-wrap.sponsor-logo-band--dark {
-  margin-left: 0;
-  margin-right: 0;
-  width: 100%;
+  margin-left: -18px;
+  margin-right: -18px;
+  width: calc(100% + 36px);
+  border-radius: 0;
 }
 
 .opp-browse-page .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-logo-wrap.sponsor-logo-band--dark:hover {
