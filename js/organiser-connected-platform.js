@@ -159,46 +159,39 @@
     if (grid && !grid.dataset.platformGridFilled) {
       fillPlatformGrid(grid);
     }
-    if (root.dataset.platformBound) {
-      return {
-        getSelected: function () {
-          return getStored(eventId) || 'own_site';
-        },
-        apply: function (platform) {
-          var key = String(platform || '').trim();
-          if (!PLATFORMS[key]) return;
-          setStored(eventId, key);
-          root.querySelectorAll('[data-connected-platform]').forEach(function (btn) {
-            var on = btn.getAttribute('data-connected-platform') === key;
-            btn.classList.toggle('is-selected', on);
-            btn.setAttribute('aria-pressed', on ? 'true' : 'false');
-          });
-        },
-      };
+    if (root._hubPlatformPicker) {
+      root._hubPlatformPicker.setEventId(eventId);
+      if (typeof onChange === 'function') root._hubPlatformPicker.setOnChange(onChange);
+      return root._hubPlatformPicker.api;
     }
-    root.dataset.platformBound = '1';
     var hintEl =
       root.querySelector('[data-connected-platform-hint]') ||
       (root.closest && root.closest('.ee-card') && root.closest('.ee-card').querySelector('[data-connected-platform-hint]')) ||
       document.querySelector('[data-connected-platform-hint]');
-    var selected = getStored(eventId) || 'own_site';
+    var boundEventId = String(eventId || '').trim();
+    var changeHandler = onChange;
+    var selected = getStored(boundEventId) || 'own_site';
 
-    function apply(platform) {
-      var key = String(platform || '').trim();
-      if (!PLATFORMS[key]) return;
-      selected = key;
-      setStored(eventId, key);
+    function paint(key) {
       root.querySelectorAll('[data-connected-platform]').forEach(function (btn) {
         var on = btn.getAttribute('data-connected-platform') === key;
         btn.classList.toggle('is-selected', on);
         btn.setAttribute('aria-pressed', on ? 'true' : 'false');
       });
+    }
+
+    function apply(platform) {
+      var key = String(platform || '').trim();
+      if (!PLATFORMS[key]) return;
+      selected = key;
+      if (boundEventId) setStored(boundEventId, key);
+      paint(key);
       if (hintEl) {
         var hintHtml = hintForContext(key, hintContext);
         hintEl.hidden = !hintHtml;
         hintEl.innerHTML = hintHtml;
       }
-      if (typeof onChange === 'function') onChange(key, PLATFORMS[key]);
+      if (typeof changeHandler === 'function') changeHandler(key, PLATFORMS[key]);
     }
 
     root.querySelectorAll('[data-connected-platform]').forEach(function (btn) {
@@ -207,8 +200,26 @@
       });
     });
 
+    var api = {
+      getSelected: function () {
+        return selected;
+      },
+      apply: apply,
+    };
+    root._hubPlatformPicker = {
+      api: api,
+      setOnChange: function (fn) {
+        changeHandler = fn;
+      },
+      setEventId: function (nextId) {
+        var id = String(nextId || '').trim();
+        if (!id || id === boundEventId) return;
+        boundEventId = id;
+        apply(getStored(id) || 'own_site');
+      },
+    };
     apply(selected);
-    return { getSelected: function () { return selected; }, apply: apply };
+    return api;
   }
 
   global.HubConnectedPlatform = {
