@@ -529,6 +529,8 @@ async function addReferredMeeting(sb, session, input) {
 module.exports = {
   PERIOD_START,
   PERIOD_END,
+  PERIOD_START_ISO,
+  PERIOD_END_EXCLUSIVE_ISO,
   TARGETS,
   REFERRAL_MEETING_WEIGHT,
   canSeeJamieTargets,
