@@ -5,7 +5,10 @@ const {
   memberOfferFromRow,
   publishGaps,
   memberOfferIsLive,
+  missingOfferExtras,
+  applyOfferImage,
 } = require('../api/_lib/member-offers');
+const { decodeUploadBuffer, imageKind } = require('../api/_lib/supabase-storage');
 const { prepareMemberOfferEnquire } = require('../api/_lib/member-offer-enquire');
 
 function fail(message) {
@@ -95,6 +98,19 @@ if (!memberOfferIsLive({ published: true, endsOn: '2026-10-02' }, '2026-10-02'))
 if (!memberOfferIsLive({ published: true, endsOn: '' }, '2026-10-02')) {
   fail('an offer with no end date should stay up');
 }
+if (!missingOfferExtras({ message: "Could not find the 'promo_code' column of 'member_offers' in the schema cache" })) {
+  fail('a missing code column should be recognised');
+}
+if (missingOfferExtras({ message: 'connection refused' })) fail('unrelated errors are not a missing column');
+
+const PNG_1X1 =
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+const pngBuffer = decodeUploadBuffer('data:image/png;charset=utf-8;base64,' + PNG_1X1);
+if (!pngBuffer || !imageKind(pngBuffer) || imageKind(pngBuffer).mime !== 'image/png') {
+  fail('a png data url should be read as a png');
+}
+if (imageKind(Buffer.from('not an image!!'))) fail('text is not an image');
+if (imageKind(decodeUploadBuffer('data:image/jpeg;base64,AAAA'))) fail('a short payload is not an image');
 
 if (isMemberOfferId('not-an-id')) fail('bad id accepted');
 if (!isMemberOfferId('11111111-1111-4111-8111-111111111111')) fail('uuid rejected');
@@ -197,6 +213,16 @@ function mockRes() {
   if (enquireAnon.statusCode !== 401) fail('signed-out enquiry should be 401, got ' + enquireAnon.statusCode);
 
   console.log('OK: member offers route requires sign-in');
+
+  try {
+    await applyOfferImage({ imageBase64: 'data:image/png;base64,AAAA' });
+    fail('a file that is not a picture should be rejected');
+  } catch (err) {
+    if (!err || err.code !== 'image_upload_failed' || !/Couldn't read that image/.test(err.message || '')) {
+      fail('unreadable image should say so, got ' + (err && err.message));
+    }
+  }
+  console.log('OK: unreadable offer image is rejected');
 })().catch(function (err) {
   fail(err && err.stack ? err.stack : err);
 });

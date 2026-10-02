@@ -9,7 +9,12 @@
   var loading = false;
   var loadError = '';
   var editingId = '';
-  var pendingImageFile = null;
+  var pendingImage = null;
+  var imagePrepare = Promise.resolve();
+  var imageToken = 0;
+  var imageIncoming = false;
+  var imageFailed = false;
+  var IMAGE_READ_ERROR = "Couldn't read that image. Use a JPG or PNG, or paste an image link.";
   var onChange = null;
 
   function esc(s) {
@@ -109,7 +114,7 @@
     form.elements.promoCode.value = offer && offer.promoCode ? offer.promoCode : '';
     form.elements.endsOn.value = offer && offer.endsOn ? String(offer.endsOn).slice(0, 10) : '';
     form.elements.imageUrl.value = offer && offer.imageUrl ? offer.imageUrl : '';
-    pendingImageFile = null;
+    resetPendingImage();
     showImagePreview(offer && offer.imageUrl ? offer.imageUrl : '');
     form.elements.sortOrder.value =
       offer && offer.sortOrder != null ? String(offer.sortOrder) : '0';
@@ -448,44 +453,123 @@
     if (clearBtn) clearBtn.hidden = !hasSrc;
   }
 
-  function readImageFile(file) {
+  function resetPendingImage() {
+    imageToken += 1;
+    pendingImage = null;
+    imageIncoming = false;
+    imageFailed = false;
+    imagePrepare = Promise.resolve();
+  }
+
+  function loadDrawable(file) {
     return new Promise(function (resolve, reject) {
-      if (!file) {
-        reject(new Error('Choose an image.'));
-        return;
-      }
-      if (file.size > 2 * 1024 * 1024) {
-        reject(new Error('That image is too large. Use one under 2MB.'));
-        return;
-      }
+      var url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function () {
+        URL.revokeObjectURL(url);
+        if (!img.naturalWidth || !img.naturalHeight) {
+          reject(new Error(IMAGE_READ_ERROR));
+          return;
+        }
+        resolve(img);
+      };
+      img.onerror = function () {
+        URL.revokeObjectURL(url);
+        reject(new Error(IMAGE_READ_ERROR));
+      };
+      img.src = url;
+    });
+  }
+
+  function canvasToBlob(canvas, type, quality) {
+    return new Promise(function (resolve, reject) {
+      canvas.toBlob(
+        function (blob) {
+          if (blob) resolve(blob);
+          else reject(new Error(IMAGE_READ_ERROR));
+        },
+        type,
+        quality
+      );
+    });
+  }
+
+  function blobToDataUrl(blob) {
+    return new Promise(function (resolve, reject) {
       var reader = new FileReader();
       reader.onload = function () {
-        resolve({
-          dataUrl: String(reader.result || ''),
-          type: file.type || '',
-          name: file.name || 'offer.jpg',
-        });
+        resolve(String(reader.result || ''));
       };
       reader.onerror = function () {
-        reject(new Error('Could not read that image.'));
+        reject(new Error(IMAGE_READ_ERROR));
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  function prepareOfferImage(file) {
+    if (!file) return Promise.reject(new Error('Choose an image.'));
+    return loadDrawable(file).then(function (img) {
+      var maxEdge = 1600;
+      var longest = Math.max(img.naturalWidth, img.naturalHeight);
+      var scale = longest > maxEdge ? maxEdge / longest : 1;
+      var width = Math.max(1, Math.round(img.naturalWidth * scale));
+      var height = Math.max(1, Math.round(img.naturalHeight * scale));
+      var canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      var ctx = canvas.getContext('2d');
+      if (!ctx) return Promise.reject(new Error(IMAGE_READ_ERROR));
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, width, height);
+      ctx.drawImage(img, 0, 0, width, height);
+      var qualities = [0.86, 0.74, 0.62, 0.5];
+      var chain = Promise.resolve(null);
+      qualities.forEach(function (quality) {
+        chain = chain.then(function (blob) {
+          if (blob && blob.size <= 900 * 1024) return blob;
+          return canvasToBlob(canvas, 'image/jpeg', quality);
+        });
+      });
+      return chain.then(function (blob) {
+        if (!blob || blob.size > 2 * 1024 * 1024) {
+          throw new Error('That image is too large. Use one under 2MB.');
+        }
+        return blobToDataUrl(blob).then(function (dataUrl) {
+          if (dataUrl.indexOf('data:image/jpeg') !== 0) throw new Error(IMAGE_READ_ERROR);
+          var base = String(file.name || 'offer').replace(/\.[^.]+$/, '') || 'offer';
+          return { dataUrl: dataUrl, type: 'image/jpeg', name: base + '.jpg' };
+        });
+      });
     });
   }
 
   function setDroppedImage(file) {
-    pendingImageFile = file;
+    resetPendingImage();
+    var token = imageToken;
+    imageIncoming = true;
+    setFormError('');
     var form = document.getElementById('ad-service-form');
     if (form && form.elements.imageUrl) form.elements.imageUrl.value = '';
-    var reader = new FileReader();
-    reader.onload = function () {
-      showImagePreview(String(reader.result || ''));
-    };
-    reader.readAsDataURL(file);
+    imagePrepare = prepareOfferImage(file)
+      .then(function (prepared) {
+        if (token !== imageToken) return;
+        pendingImage = prepared;
+        imageIncoming = false;
+        showImagePreview(prepared.dataUrl);
+      })
+      .catch(function (err) {
+        if (token !== imageToken) return;
+        pendingImage = null;
+        imageIncoming = false;
+        imageFailed = true;
+        showImagePreview('');
+        setFormError(err && err.message ? err.message : IMAGE_READ_ERROR);
+      });
   }
 
   function clearDroppedImage() {
-    pendingImageFile = null;
+    resetPendingImage();
     var fileInput = document.getElementById('ad-service-image-file');
     var form = document.getElementById('ad-service-form');
     if (fileInput) fileInput.value = '';
@@ -505,7 +589,7 @@
           zone: zone,
           fileInput: fileInput,
           onFile: setDroppedImage,
-          uploadOptions: { maxBytes: 2 * 1024 * 1024 },
+          uploadOptions: { decodeLater: true },
         });
       }
       zone.addEventListener('keydown', function (event) {
@@ -528,10 +612,10 @@
       form.elements.imageUrl.addEventListener('input', function () {
         var url = String(form.elements.imageUrl.value || '').trim();
         if (!url) {
-          if (!pendingImageFile) showImagePreview('');
+          if (!pendingImage && !imageIncoming) showImagePreview('');
           return;
         }
-        pendingImageFile = null;
+        resetPendingImage();
         if (fileInput) fileInput.value = '';
         showImagePreview(url);
       });
@@ -587,23 +671,22 @@
         if (submit) submit.disabled = true;
         setFormError('');
         var payload = formPayload(form);
-        var hasPicture = Boolean(pendingImageFile) || String(payload.imageUrl || '').trim();
-        if (payload.published && (!String(payload.href || '').trim() || !hasPicture)) {
-          setFormError('Add a link and a picture before publishing this offer.');
-          if (submit) submit.disabled = false;
-          return;
-        }
         var method = editingId ? 'PATCH' : 'POST';
         if (editingId) payload.id = editingId;
-        var ready = pendingImageFile
-          ? readImageFile(pendingImageFile).then(function (file) {
-              payload.imageBase64 = file.dataUrl;
-              payload.imageMime = file.type;
-              payload.imageFilename = file.name;
-              payload.imageUrl = '';
-              return payload;
-            })
-          : Promise.resolve(payload);
+        var ready = imagePrepare.then(function () {
+          if (imageFailed) throw new Error(IMAGE_READ_ERROR);
+          if (pendingImage) {
+            payload.imageBase64 = pendingImage.dataUrl;
+            payload.imageMime = pendingImage.type;
+            payload.imageFilename = pendingImage.name;
+            payload.imageUrl = '';
+          }
+          var hasPicture = Boolean(pendingImage) || String(payload.imageUrl || '').trim();
+          if (payload.published && (!String(payload.href || '').trim() || !hasPicture)) {
+            throw new Error('Add a link and a picture before publishing this offer.');
+          }
+          return payload;
+        });
         ready
           .then(function (body) {
             return send(method, body);

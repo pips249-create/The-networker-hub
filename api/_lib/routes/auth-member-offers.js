@@ -114,7 +114,9 @@ module.exports = async function handler(req, res) {
       const raw = String(e.message || '');
       const message = /under 2MB/i.test(raw)
         ? 'That image is too large. Use one under 2MB.'
-        : 'Could not save that image. Use a JPG or PNG under 2MB, or paste an image link.';
+        : /couldn.t read|could not read/i.test(raw)
+          ? "Couldn't read that image. Use a JPG or PNG, or paste an image link."
+          : 'Could not save that image. Use a JPG or PNG under 2MB, or paste an image link.';
       return json(res, 400, { ok: false, error: 'image_upload_failed', message: message });
     }
     if (e && e.code === 'publish_incomplete') {
@@ -126,6 +128,10 @@ module.exports = async function handler(req, res) {
       });
     }
     console.error('[member-offers]', e && e.message ? e.message : e);
-    return json(res, 500, { ok: false, error: 'member_offers_failed' });
+    return json(res, 500, {
+      ok: false,
+      error: 'member_offers_failed',
+      message: 'Could not save the offer. Try again, or paste an image link instead of the picture.',
+    });
   }
 };
