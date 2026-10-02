@@ -1135,10 +1135,10 @@
     const priceEl = document.getElementById('ev-ticket-from-price');
     if (!labelEl || !priceEl || !ev) return;
     if (
-      ev.priceKey === 'enquire' ||
-      (window.HubBookingFees &&
-        typeof window.HubBookingFees.listingPriceUnknown === 'function' &&
-        window.HubBookingFees.listingPriceUnknown(ev))
+      window.HubBookingFees &&
+      typeof window.HubBookingFees.listingPriceUnknown === 'function'
+        ? window.HubBookingFees.listingPriceUnknown(ev)
+        : ev.priceKey === 'enquire'
     ) {
       labelEl.textContent = 'Price';
       priceEl.textContent = 'Ask organiser';
