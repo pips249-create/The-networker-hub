@@ -2,6 +2,7 @@ const { setCors, json, sessionFromRequest, requireAdminLive, isAdminRole } = req
 const {
   normalizeMemberOfferInput,
   isMemberOfferId,
+  applyOfferImage,
   listMemberOffers,
   createMemberOffer,
   updateMemberOffer,
@@ -75,7 +76,7 @@ module.exports = async function handler(req, res) {
     }
 
     if (req.method === 'POST') {
-      const parsed = normalizeMemberOfferInput(parseBody(req));
+      const parsed = normalizeMemberOfferInput(await applyOfferImage(parseBody(req)));
       if (!parsed.ok) {
         return json(res, 400, { ok: false, error: 'invalid_offer', fields: parsed.errors });
       }
@@ -94,7 +95,7 @@ module.exports = async function handler(req, res) {
         if (!removed) return json(res, 404, { ok: false, error: 'not_found' });
         return json(res, 200, { ok: true, id, canManage: true });
       }
-      const parsed = normalizeMemberOfferInput(body, { partial: true });
+      const parsed = normalizeMemberOfferInput(await applyOfferImage(body), { partial: true });
       if (!parsed.ok) {
         return json(res, 400, { ok: false, error: 'invalid_offer', fields: parsed.errors });
       }
@@ -109,6 +110,13 @@ module.exports = async function handler(req, res) {
     return json(res, 405, { error: 'method_not_allowed' });
   } catch (e) {
     if (e && e.code === 'not_ready') return notReady(res);
+    if (e && e.code === 'image_upload_failed') {
+      const raw = String(e.message || '');
+      const message = /under 2MB/i.test(raw)
+        ? 'That image is too large. Use one under 2MB.'
+        : 'Could not save that image. Use a JPG or PNG under 2MB, or paste an image link.';
+      return json(res, 400, { ok: false, error: 'image_upload_failed', message: message });
+    }
     if (e && e.code === 'publish_incomplete') {
       return json(res, 400, {
         ok: false,

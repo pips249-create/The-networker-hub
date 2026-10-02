@@ -3803,6 +3803,79 @@ body.ad-share-modal-open {
   resize: vertical;
 }
 
+.ad-service-hint {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--ad-text-mid);
+}
+
+.ad-service-drop {
+  display: grid;
+  place-items: center;
+  min-height: 140px;
+  padding: 12px;
+  border: 1.5px dashed var(--ad-border-soft);
+  border-radius: 12px;
+  background: #faf8fc;
+  cursor: pointer;
+  text-align: center;
+}
+
+.ad-service-drop.is-dragover {
+  border-color: var(--ad-teal);
+  background: #f4eef8;
+}
+
+.ad-service-drop-empty {
+  margin: 0;
+  max-width: 28em;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--ad-text-mid);
+}
+
+.ad-service-drop-preview {
+  max-width: 100%;
+  max-height: 180px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+#ad-service-image-clear[hidden],
+.ad-service-drop-preview[hidden],
+.ad-service-drop-empty[hidden] {
+  display: none !important;
+}
+
+#ad-service-image-clear {
+  justify-self: start;
+}
+
+.ad-service-code {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 14px;
+  font-size: 15px;
+  color: var(--ad-slate);
+}
+
+.ad-service-code-copy {
+  padding: 4px 10px;
+  border: 1px solid var(--ad-border-soft);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ad-teal-dark);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .ad-service-check {
   display: flex;
   align-items: center;

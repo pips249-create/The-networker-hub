@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260909listmenu1" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260812footer11" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260929services2" />
-    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260929offers1" />
+    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260929offerform1" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260812footer10" />
     <script src="../js/hub-defer-css.js?v=20260828perf2" data-hrefs="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap"></script>
 
@@ -1049,16 +1049,36 @@
             <span>More information</span>
             <textarea name="details" maxlength="4000" rows="5" placeholder="What the member should know before they go to the offer."></textarea>
           </label>
+          <div class="ad-service-form-row">
+            <label class="ad-service-field">
+              <span>Offer code</span>
+              <input name="promoCode" type="text" maxlength="40" placeholder="NETWORKER" autocomplete="off" />
+            </label>
+            <label class="ad-service-field">
+              <span>End date</span>
+              <input name="endsOn" type="date" />
+            </label>
+          </div>
+          <p class="ad-service-hint">Leave the code blank when the link is enough. Members stop seeing the offer after the end date.</p>
           <label class="ad-service-field">
             <span>Link to the offer</span>
             <input name="href" type="url" maxlength="500" placeholder="https://" />
           </label>
+          <div class="ad-service-field">
+            <span>Picture</span>
+            <div class="ad-service-drop" id="ad-service-drop" tabindex="0">
+              <input id="ad-service-image-file" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
+              <p class="ad-service-drop-empty" id="ad-service-drop-empty">Drop an image here, or choose a file. Paste works when this box is selected.</p>
+              <img class="ad-service-drop-preview" id="ad-service-image-preview" alt="" hidden />
+            </div>
+            <button type="button" class="ad-btn ad-btn-ghost ad-btn-sm" id="ad-service-image-clear" hidden>Remove picture</button>
+          </div>
           <label class="ad-service-field">
-            <span>Image URL</span>
+            <span>Or paste an image link</span>
             <input name="imageUrl" type="url" maxlength="500" placeholder="https://" />
           </label>
           <label class="ad-service-check">
-            <input name="published" type="checkbox" checked />
+            <input name="published" type="checkbox" />
             <span>Published — visible to members once it has a link and a picture</span>
           </label>
           <p class="ad-service-form-error" id="ad-service-form-error" hidden role="alert"></p>
@@ -1098,7 +1118,8 @@
     <script src="../js/hub-going-share.js?v=20260714share2" defer></script>
     <script src="../js/hub-side-nav.js?v=20260805hubmobile2" defer></script>
     <script src="../js/attendee-auth-gate.js?v=20260929session1"></script>
-    <script src="../js/attendee-member-offers.js?v=20260929offers1" defer></script>
-    <script src="../js/attendee-dashboard.js?v=20260929offers1" defer></script>
+    <script src="../js/organiser-image-upload.js?v=20260929offerform1" defer></script>
+    <script src="../js/attendee-member-offers.js?v=20260929offerform1" defer></script>
+    <script src="../js/attendee-dashboard.js?v=20260929offerform1" defer></script>
   </body>
 </html>

@@ -3417,13 +3417,19 @@
         : 'Heart events and groups you like';
     }
     if (servicesMeta) {
+      const deal =
+        window.HubAttendeeServices && window.HubAttendeeServices.featuredDeal
+          ? window.HubAttendeeServices.featuredDeal()
+          : '';
       const serviceCount =
         window.HubAttendeeServices && window.HubAttendeeServices.publishedCount
           ? window.HubAttendeeServices.publishedCount()
           : 0;
-      servicesMeta.textContent = serviceCount
-        ? serviceCount + (serviceCount === 1 ? ' member offer' : ' member offers')
-        : 'Trials, discounts, and practical help';
+      servicesMeta.textContent = deal
+        ? deal
+        : serviceCount
+          ? serviceCount + (serviceCount === 1 ? ' member offer' : ' member offers')
+          : 'Trials, discounts, and practical help';
     }
   }
 
