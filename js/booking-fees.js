@@ -126,8 +126,20 @@
     return false;
   }
 
+  function listingUsesExternalBooking(ev) {
+    if (!ev) return false;
+    if (String(ev.checkoutMode || ev.checkout_mode || '').trim() === 'external_connected') {
+      return true;
+    }
+    const url = String(ev.externalBookingUrl || ev.external_booking_url || '').trim();
+    const label = String(ev.externalPriceLabel || ev.external_price_label || '').trim();
+    return Boolean(url && label);
+  }
+
   function listingPriceUnknown(ev) {
     if (!ev || isMembersOnlyListing(ev)) return false;
+    // Connected booking publishes the price on the organiser site — never "ask".
+    if (listingUsesExternalBooking(ev)) return false;
     if (ev.priceKey === 'enquire') return true;
     // Older payloads labelled a missing tier as Free. A real free event has a £0 tier.
     return ev.hasTicketTiers === false && ev.hasFreeTickets !== true && ev.priceKey === 'free';
@@ -177,6 +189,7 @@
     listingPriceNum: listingPriceNum,
     formatPounds: formatPounds,
     listingShowsFrom: listingShowsFrom,
+    listingUsesExternalBooking: listingUsesExternalBooking,
     listingPriceUnknown: listingPriceUnknown,
     listingPriceLabel: listingPriceLabel,
   };

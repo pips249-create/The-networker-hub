@@ -960,6 +960,13 @@ html:has(.about-page) {
   color: var(--about-muted);
 }
 
+.about-updates-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+}
+
 .about-updates-note {
   margin: 12px 0 0;
   font-size: 0.82rem;

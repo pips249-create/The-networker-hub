@@ -659,15 +659,28 @@
     { slug: 'buckinghamshire', name: 'Buckinghamshire' },
     { slug: 'cambridgeshire', name: 'Cambridgeshire' },
     { slug: 'cheshire', name: 'Cheshire' },
+    { slug: 'devon', name: 'Devon' },
+    { slug: 'dorset', name: 'Dorset' },
     { slug: 'essex', name: 'Essex' },
     { slug: 'hampshire', name: 'Hampshire' },
     { slug: 'hertfordshire', name: 'Hertfordshire' },
     { slug: 'kent', name: 'Kent' },
     { slug: 'lancashire', name: 'Lancashire' },
+    { slug: 'norfolk', name: 'Norfolk' },
     { slug: 'oxfordshire', name: 'Oxfordshire' },
+    { slug: 'shropshire', name: 'Shropshire' },
+    { slug: 'staffordshire', name: 'Staffordshire' },
     { slug: 'surrey', name: 'Surrey' },
     { slug: 'sussex', name: 'Sussex' },
+    { slug: 'warwickshire', name: 'Warwickshire' },
+    { slug: 'yorkshire', name: 'Yorkshire' },
   ];
+
+  function countyPartnerNamesSentence() {
+    return NETWORKING_COUNTY_PARTNER_SLUGS.map(function (region) {
+      return region.name;
+    }).join(', ');
+  }
 
   /** Launch Industry Sponsor inventory — Opportunities directory, enquiry + manual logo. */
   var OPPORTUNITY_INDUSTRY_SPONSOR_SLUGS = [
@@ -10874,7 +10887,9 @@
       '<section class="space-y-3">' +
       '<h3 class="font-bold text-brand-900">Events County Sponsor placements</h3>' +
       '<p class="text-sm text-slate-600">Logo + link on Events county pages (/networking/:county). Separate from Opportunities County Sponsor. Sponsors can check out online on /advertising — upload logo + link here to publish.</p>' +
-      '<p class="text-xs text-slate-500">Launch counties: Berkshire, Buckinghamshire, Cambridgeshire, Cheshire, Essex, Hampshire, Hertfordshire, Kent, Lancashire, Oxfordshire, Surrey, Sussex.</p>' +
+      '<p class="text-xs text-slate-500">Counties: ' +
+      esc(countyPartnerNamesSentence()) +
+      '.</p>' +
       '</section>' +
       '<div class="admin-ad-picker-grid">' +
       cards +
@@ -10935,7 +10950,9 @@
       '<section class="space-y-3">' +
       '<h3 class="font-bold text-brand-900">Opportunities County Sponsor placements</h3>' +
       '<p class="text-sm text-slate-600">Logo + link on Opportunities county pages (/opportunities/networking/:county). Separate inventory from Events County Sponsor — place manually after an advertising enquiry.</p>' +
-      '<p class="text-xs text-slate-500">Launch counties: Berkshire, Buckinghamshire, Cambridgeshire, Cheshire, Essex, Hampshire, Hertfordshire, Kent, Lancashire, Oxfordshire, Surrey, Sussex.</p>' +
+      '<p class="text-xs text-slate-500">Counties: ' +
+      esc(countyPartnerNamesSentence()) +
+      '.</p>' +
       '</section>' +
       '<div class="admin-ad-picker-grid">' +
       cards +

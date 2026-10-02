@@ -345,7 +345,7 @@ const NETWORKING_REGION_THEMES = {
   },
   "lancashire": {
     "tagline": "From Preston and Blackpool to Burnley and business communities across Lancashire.",
-    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M16 82h208\" opacity=\".35\"/><path d=\"M40 82V28h40v54M160 82V16h40v66\"/><circle cx=\"60\" cy=\"42\" r=\"10\"/><circle cx=\"180\" cy=\"32\" r=\"10\"/><path d=\"M48 20c0-12 6-18 10-18 2 0 4 4 6 8l4-12c4 8 6 16 4 22\"/><path d=\"M168 8c0-12 6-18 10-18 2 0 4 4 6 8l4-12c4 8 6 16 4 22\"/><path d=\"M80 62h80v20H80z\"/><path d=\"M48 56h24M48 68h24M168 48h24M168 60h24\" opacity=\".4\"/></svg>"
+    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 82h200\" opacity=\".35\"/><path d=\"M78 82L100 18h40L162 82\"/><path d=\"M90 82L108 30h24L150 82\" opacity=\".45\"/><path d=\"M88 58l16-12 16 12M96 40l12-8 12 8\" opacity=\".5\"/><path d=\"M96 18h48\"/><ellipse cx=\"120\" cy=\"16\" rx=\"22\" ry=\"6\"/><path d=\"M120 10V0\"/><path d=\"M112 4h16\"/></svg>"
   },
   "newcastle": {
     "tagline": "From the Quayside and city centre to the wider North East.",
@@ -381,23 +381,23 @@ const NETWORKING_REGION_THEMES = {
   },
   "surrey": {
     "tagline": "From Guildford and Woking to Reigate and business communities across Surrey.",
-    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 82h200\" opacity=\".35\"/><path d=\"M104 82V12h32v70\"/><path d=\"M90 82h60\" stroke-width=\"2\"/><path d=\"M104 28h32M104 44h32M104 60h32\" opacity=\".4\"/><path d=\"M112 12V0h16v12\"/><path d=\"M140 24l8 6M140 44l8 6M140 64l8 6\" opacity=\".3\"/></svg>"
+    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M16 82h208\" opacity=\".35\"/><path d=\"M20 82V44h40v38M180 82V44h40v38\"/><path d=\"M60 82V32h120v50\" stroke-width=\"2\"/><path d=\"M60 32V16h20v16M160 32V16h20v16\"/><path d=\"M60 16h20l-3-8h-14zM160 16h20l-3-8h-14z\"/><circle cx=\"120\" cy=\"28\" r=\"8\"/><path d=\"M100 82V58c0-10 6-16 20-16s20 6 20 16v24\" opacity=\".55\"/><path d=\"M28 44V30h6v14M40 44V26h6v18M188 44V30h6v14M200 44V26h6v18\"/></svg>"
   },
   "kent": {
     "tagline": "From Canterbury and Maidstone to Tunbridge Wells and the wider Kent network.",
-    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 82h200\" opacity=\".35\"/><path d=\"M60 82V44c10-32 24-44 60-44s50 12 60 44v38\"/><path d=\"M100 22c0-16 8-24 20-24s20 8 20 24\"/><path d=\"M40 82V56c4-14 10-20 18-20s14 6 18 20v26\"/><path d=\"M164 82V56c4-14 10-20 18-20s14 6 18 20v26\"/><path d=\"M100 58c0-6 4-10 8-10s8 4 8 10v14h-16V58z\" opacity=\".5\"/></svg>"
+    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M16 82h208\" opacity=\".35\"/><path d=\"M24 82V48h192v34\"/><path d=\"M24 48V28h28v20M188 48V28h28v20\"/><path d=\"M24 28l14-12 14 12M188 28l14-12 14 12\"/><path d=\"M88 48V12h64v36\" stroke-width=\"2\"/><path d=\"M84 12h72\"/><path d=\"M104 12V2h32v10\"/><path d=\"M120 2V-4\"/><path d=\"M92 12l-6-8M148 12l6-8\" opacity=\".6\"/><path d=\"M40 62h14M96 62h12M132 62h12M186 62h14\" opacity=\".45\"/></svg>"
   },
   "hampshire": {
     "tagline": "From Southampton and Portsmouth to Winchester and business communities across Hampshire.",
-    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 82h200\" opacity=\".35\"/><path d=\"M40 82h160\" opacity=\".35\"/><path d=\"M48 82V56h24v26M168 82V56h24v26\"/><path d=\"M72 56h96\" stroke-width=\"2\"/><path d=\"M80 56V42h80v14\"/><path d=\"M72 42l48-16 48 16\"/><path d=\"M104 30v12M128 30v12\" opacity=\".45\"/></svg>"
+    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 82h200\" opacity=\".35\"/><path d=\"M108 82V6\" stroke-width=\"2.2\"/><path d=\"M108 14c48 16 62 40 46 64\" stroke-width=\"2\"/><path d=\"M108 20c28 10 38 26 28 46\" opacity=\".45\"/><ellipse cx=\"108\" cy=\"36\" rx=\"18\" ry=\"6\"/><path d=\"M88 82h48\" stroke-width=\"2\"/><path d=\"M96 70h24\" opacity=\".5\"/></svg>"
   },
   "essex": {
     "tagline": "From Chelmsford and Colchester to Southend and business communities across Essex.",
-    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M24 82h192\" opacity=\".35\"/><path d=\"M48 82V24h144v58\"/><path d=\"M52 24V6h28v18M160 24V6h28v18\"/><path d=\"M60 6l6-8 6 8M168 6l6-8 6 8\"/><path d=\"M96 36c0-12 8-18 16-18s16 6 16 18v28H96V36z\" opacity=\".55\"/><path d=\"M48 48h144M48 64h144\" opacity=\".3\"/></svg>"
+    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M16 82h208\" opacity=\".35\"/><path d=\"M20 58h200\" stroke-width=\"2\"/><path d=\"M36 58v20M68 58v20M100 58v20M132 58v20M164 58v20M196 58v20\" opacity=\".5\"/><path d=\"M20 58V36h36v22\"/><path d=\"M24 36l14-14 14 14\"/><path d=\"M168 58V40h40v18\"/><circle cx=\"188\" cy=\"48\" r=\"6\" opacity=\".65\"/></svg>"
   },
   "hertfordshire": {
     "tagline": "From St Albans and Watford to Hertford and business communities across Hertfordshire.",
-    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M24 82h192\" opacity=\".35\"/><circle cx=\"120\" cy=\"42\" r=\"36\"/><path d=\"M90 34c8-28 20-40 30-40s22 12 30 40\"/><path d=\"M120 2v8\"/><path d=\"M88 42v28M100 36v34M120 32v38M140 36v34M152 42v28\" opacity=\".45\"/><path d=\"M84 70h72v12H84z\"/></svg>"
+    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M16 82h208\" opacity=\".35\"/><path d=\"M20 82V50h200v32\"/><path d=\"M84 50V14h72v36\" stroke-width=\"2\"/><path d=\"M80 14h80\"/><path d=\"M90 14v-8h12v8M114 14v-8h12v8M138 14v-8h12v8\"/><path d=\"M84 30h72M84 42h72\" opacity=\".35\"/><path d=\"M20 50l24-14h16M196 50l-24-14h-16\" opacity=\".7\"/><path d=\"M36 62h16v12M188 62h16v12M112 28h16v16\" opacity=\".5\"/></svg>"
   },
   "berkshire": {
     "tagline": "From Reading and Maidenhead to Newbury and business communities across Berkshire.",
@@ -409,7 +409,7 @@ const NETWORKING_REGION_THEMES = {
   },
   "buckinghamshire": {
     "tagline": "From High Wycombe and Aylesbury to Milton Keynes and business communities across Buckinghamshire.",
-    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 82h200\" opacity=\".35\"/><path d=\"M104 82V12h32v70\"/><path d=\"M90 82h60\" stroke-width=\"2\"/><path d=\"M104 28h32M104 44h32M104 60h32\" opacity=\".4\"/><path d=\"M112 12V0h16v12\"/><path d=\"M140 24l8 6M140 44l8 6M140 64l8 6\" opacity=\".3\"/></svg>"
+    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M16 82h208\" opacity=\".35\"/><path d=\"M28 82V58h184v24\"/><path d=\"M40 58V32M64 58V32M96 58V24M144 58V24M176 58V32M200 58V32\"/><path d=\"M28 32h184\" stroke-width=\"2\"/><path d=\"M36 26h168\"/><path d=\"M56 26l64-22 64 22\"/><path d=\"M104 58V36h32v22\" opacity=\".45\"/></svg>"
   },
   "cambridgeshire": {
     "tagline": "From Cambridge and Ely to Peterborough and business communities across Cambridgeshire.",
@@ -418,6 +418,34 @@ const NETWORKING_REGION_THEMES = {
   "sussex": {
     "tagline": "From Brighton and Worthing to Eastbourne, Chichester and business communities across Sussex.",
     "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 82h200\" opacity=\".35\"/><path d=\"M60 82V44c10-32 24-44 60-44s50 12 60 44v38\"/><path d=\"M100 22c0-16 8-24 20-24s20 8 20 24\"/><path d=\"M40 82V56c4-14 10-20 18-20s14 6 18 20v26\"/><path d=\"M164 82V56c4-14 10-20 18-20s14 6 18 20v26\"/><path d=\"M100 58c0-6 4-10 8-10s8 4 8 10v14h-16V58z\" opacity=\".5\"/></svg>"
+  },
+  "shropshire": {
+    "tagline": "From Shrewsbury and Telford to Ludlow and business communities across Shropshire.",
+    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 82h200\" opacity=\".35\"/><path d=\"M28 82V52h28v30M184 82V52h28v30\"/><path d=\"M28 62h28M28 72h28M184 62h28M184 72h28\" opacity=\".35\"/><path d=\"M42 54c28-42 128-42 156 0\" stroke-width=\"2.2\"/><path d=\"M54 54c22-30 110-30 132 0\" opacity=\".5\"/><path d=\"M36 48h168\" stroke-width=\"2\"/><path d=\"M44 42h152\" opacity=\".7\"/><path d=\"M56 42v6M80 42v6M104 42v6M128 42v6M152 42v6M176 42v6\" opacity=\".45\"/><path d=\"M70 50l8-10M96 52l8-16M120 52V34M144 52l-8-16M170 50l-8-10\" opacity=\".5\"/><circle cx=\"62\" cy=\"50\" r=\"5\" opacity=\".6\"/><circle cx=\"178\" cy=\"50\" r=\"5\" opacity=\".6\"/></svg>"
+  },
+  "devon": {
+    "tagline": "From Exeter and Plymouth to Torquay and business communities across Devon.",
+    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 82h200\" opacity=\".35\"/><path d=\"M104 82V24h32v58\" stroke-width=\"2\"/><path d=\"M100 24h40l-8-14h-24z\"/><path d=\"M112 10h16V2h-16z\"/><path d=\"M120 2V-4\"/><circle cx=\"120\" cy=\"8\" r=\"4\"/><path d=\"M104 40h32M104 56h32M104 70h32\" opacity=\".4\"/></svg>"
+  },
+  "dorset": {
+    "tagline": "From Bournemouth and Poole to Dorchester and business communities across Dorset.",
+    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 82h200\" opacity=\".35\"/><path d=\"M24 82c28-22 48-28 96-28s68 6 96 28\"/><path d=\"M96 62V22h48v40\" stroke-width=\"2\"/><path d=\"M92 22h56\"/><path d=\"M100 22v-10h8v10M132 22v-10h8v10\"/><path d=\"M48 62V40h24v22M168 62V46h24v16\"/><path d=\"M48 40l10-12M72 40l-6-8M168 46l8-10\" opacity=\".7\"/></svg>"
+  },
+  "norfolk": {
+    "tagline": "From Norwich and King’s Lynn to the coast and business communities across Norfolk.",
+    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M16 82h208\" opacity=\".35\"/><path d=\"M24 82V48h192v34\"/><path d=\"M88 48V28h64v20\" stroke-width=\"2\"/><path d=\"M88 28L120 0l32 28\" stroke-width=\"2\"/><path d=\"M120 0V-6\"/><path d=\"M24 48l28-14M216 48l-28-14\" opacity=\".55\"/><path d=\"M40 62h16M108 32h24v12M184 62h16\" opacity=\".45\"/></svg>"
+  },
+  "staffordshire": {
+    "tagline": "From Stoke and Stafford to Lichfield and business communities across Staffordshire.",
+    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M16 82h208\" opacity=\".35\"/><path d=\"M24 82V48h192v34\"/><path d=\"M40 48L64 8l24 40\"/><path d=\"M88 48L120 0l32 48\" stroke-width=\"2\"/><path d=\"M152 48l24-40 24 40\"/><path d=\"M64 8V0M120 0v-6M176 8V0\"/><path d=\"M56 62h16M112 62h16M168 62h16\" opacity=\".45\"/></svg>"
+  },
+  "warwickshire": {
+    "tagline": "From Warwick and Leamington to Stratford and business communities across Warwickshire.",
+    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M16 82h208\" opacity=\".35\"/><path d=\"M24 82V48h192v34\" stroke-width=\"2\"/><path d=\"M24 48h192\"/><path d=\"M32 48v-8h12v8M56 48v-8h12v8M160 48v-8h12v8M184 48v-8h12v8\"/><circle cx=\"80\" cy=\"40\" r=\"16\"/><circle cx=\"160\" cy=\"40\" r=\"16\"/><path d=\"M80 24V16M160 24V16\"/><path d=\"M104 82V58h32v24\" opacity=\".55\"/></svg>"
+  },
+  "yorkshire": {
+    "tagline": "From Leeds, York and Sheffield to the coast and business communities across Yorkshire.",
+    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M16 82h208\" opacity=\".35\"/><path d=\"M24 82V40h192v42\"/><path d=\"M24 40V22h32v18M184 40V22h32v18\"/><path d=\"M24 22l16-16 16 16M184 22l16-16 16 16\"/><path d=\"M88 40V12h64v28\" stroke-width=\"2\"/><path d=\"M84 12h72\"/><path d=\"M104 12V4h32v8\"/><path d=\"M40 56h16M184 56h16M108 24h24v16\" opacity=\".5\"/></svg>"
   },
   "glasgow": {
     "tagline": "Connect with entrepreneurs across the Clyde and the city centre.",
