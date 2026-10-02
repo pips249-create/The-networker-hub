@@ -198,6 +198,16 @@
       })
       .then(function (data) {
         if (data && data.ok) renderProviders(data);
+        var eventbrite = (data && data.providers || []).filter(function (p) {
+          return p && p.id === 'eventbrite' && p.eventbriteApiTokenConfigured;
+        })[0];
+        if (!eventbrite) return;
+        fetch('/api/organiser/connected-booking-providers', {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'sync_eventbrite_attendees' }),
+        }).catch(function () {});
       })
       .catch(function () {
         /* ignore */
