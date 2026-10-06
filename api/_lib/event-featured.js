@@ -94,13 +94,11 @@ async function activateEventFeatured(eventId, planId, opts = {}) {
     featured_stripe_session_id: sessionId || null,
   };
 
-  const targetIds = peers.filter((row) => isPublishedApprovedRow(row)).map((row) => row.id);
-  if (!targetIds.length) targetIds.push(id);
-
-  const { data, error } = await sb.from('events').update(patch).in('id', targetIds).select('*');
+  const { data, error } = await sb.from('events').update(patch).eq('id', id).select('*');
   if (error) throw new Error(error.message);
   const anchor = (data || []).find((row) => row.id === id) || (data || [])[0];
   if (!anchor) throw new Error('event_not_found');
+  const clearedSeriesEventIds = await clearFeaturedOnSeriesPeers(sb, peers, id);
   return {
     event: anchor,
     featuredUntil: featured_until,
@@ -108,13 +106,40 @@ async function activateEventFeatured(eventId, planId, opts = {}) {
     amountGbp,
     pricingMode: quote.pricingMode,
     plan: planId,
-    seriesEventIds: targetIds,
+    seriesEventIds: [id],
+    clearedSeriesEventIds,
   };
 }
 
+const CLEAR_FEATURED_PATCH = {
+  featured: false,
+  featured_until: null,
+  featured_expiry_reminder_sent_at: null,
+};
+
+async function updateEventsByIds(sb, ids, patch) {
+  const unique = [...new Set((ids || []).filter(Boolean))];
+  const CHUNK = 80;
+  for (let i = 0; i < unique.length; i += CHUNK) {
+    const chunk = unique.slice(i, i + CHUNK);
+    const { error } = await sb.from('events').update(patch).in('id', chunk);
+    if (error) throw new Error(error.message);
+  }
+}
+
+/** Spotlight is one card per series — drop the featured flag from the other dates. */
+async function clearFeaturedOnSeriesPeers(sb, peers, keepId) {
+  const siblingIds = (peers || [])
+    .map((row) => row && row.id)
+    .filter((peerId) => peerId && peerId !== keepId);
+  await updateEventsByIds(sb, siblingIds, CLEAR_FEATURED_PATCH);
+  return siblingIds;
+}
+
 /**
- * Admin / ops: turn Premium Spotlight on for an event and every published,
- * approved peer in its series (same shape as paid activate, without Stripe).
+ * Admin / ops: turn Premium Spotlight on for this event only.
+ * Other dates in the same series are cleared so they are not all highlighted
+ * and do not crowd the carousel.
  */
 async function setEventFeaturedPlacement(eventId, opts = {}) {
   const id = String(eventId || '').trim();
@@ -149,27 +174,12 @@ async function setEventFeaturedPlacement(eventId, opts = {}) {
     patch.featured_amount_gbp = opts.featured_amount_gbp;
   }
 
-  const targetIds = [
-    ...new Set(
-      peers
-        .filter((row) => isPublishedApprovedRow(row) || row.id === id)
-        .map((row) => row.id)
-        .filter(Boolean)
-    ),
-  ];
-  if (!targetIds.length) targetIds.push(id);
-
-  const { data, error } = await sb.from('events').update(patch).in('id', targetIds).select('*');
+  const { data, error } = await sb.from('events').update(patch).eq('id', id).select('*');
   if (error) throw new Error(error.message);
   const anchor =
     (data || []).find((row) => row.id === id) || (data || [])[0] || { ...current, ...patch };
-  return { event: anchor, seriesEventIds: targetIds };
-}
-
-function isPublishedApprovedRow(row) {
-  if (!row) return false;
-  if (row.approval_status !== 'Approved') return false;
-  return String(row.status || 'published').toLowerCase() === 'published';
+  const clearedSeriesEventIds = await clearFeaturedOnSeriesPeers(sb, peers, id);
+  return { event: anchor, seriesEventIds: [id], clearedSeriesEventIds };
 }
 
 async function handleEventFeaturedCheckout(session) {
@@ -276,18 +286,25 @@ async function syncSeriesFeaturedPeers(sb) {
     // so recurring listings keep their Premium Spotlight slot on the next date.
     // Clearing a series still goes through clearEventFeaturedPlacement (all peers).
     const plan = planSeriesFeaturedRollForward(peers);
-    if (!plan || !plan.featureIds.length) continue;
+    const clearIds = plan?.clearIds || [];
+    if (!plan || (!plan.featureIds.length && !clearIds.length)) continue;
 
-    const { error: updateError } = await client
-      .from('events')
-      .update(plan.patch)
-      .in('id', plan.featureIds);
-    if (updateError) throw new Error(updateError.message);
-    synced += plan.featureIds.length;
-    rolled += plan.featureIds.filter((peerId) => {
-      const peer = peers.find((item) => item.id === peerId);
-      return peer && !peer.featured;
-    }).length;
+    if (plan.featureIds.length) {
+      const { error: updateError } = await client
+        .from('events')
+        .update(plan.patch)
+        .in('id', plan.featureIds);
+      if (updateError) throw new Error(updateError.message);
+      synced += plan.featureIds.length;
+      rolled += plan.featureIds.filter((peerId) => {
+        const peer = peers.find((item) => item.id === peerId);
+        return peer && !peer.featured;
+      }).length;
+    }
+    if (clearIds.length) {
+      await updateEventsByIds(client, clearIds, CLEAR_FEATURED_PATCH);
+      synced += clearIds.length;
+    }
   }
 
   return { synced, rolled };

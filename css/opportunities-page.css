@@ -1826,19 +1826,53 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
   text-decoration: none !important;
 }
 
+.opp-browse-page .opp-hero-sponsor-slot .sponsor-hub.sponsor-hub--logo-only {
+  flex: 0 0 auto;
+  align-self: start;
+  height: auto;
+}
+
 .opp-browse-page .sponsor-hub--in-hero.sponsor-hub--logo-only {
-  padding-bottom: 14px;
+  position: relative;
+  padding: 0;
+  height: auto;
+  overflow: hidden;
 }
 
 .opp-browse-page .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-hub-head {
-  margin-bottom: 8px;
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  margin: 0;
+  padding: 5px 9px 5px 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  color: var(--opp-navy);
+  font-size: 12px;
+  line-height: 1;
+  gap: 5px;
+  pointer-events: none;
+  box-shadow: 0 1px 3px rgba(20, 16, 40, 0.16);
+}
+
+.opp-browse-page .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-hub-head .icon {
+  font-size: 12px;
 }
 
 .opp-browse-page .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-logo-wrap {
-  margin-bottom: 0;
-  min-height: 168px;
-  padding: 16px 18px;
+  margin: 0;
+  width: 100%;
+  min-height: 0;
+  padding: 0;
+  border-radius: 0;
+  overflow: hidden;
   transition: filter 0.2s ease, box-shadow 0.2s ease;
+}
+
+.opp-browse-page .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-logo-link {
+  display: block;
+  min-height: 0;
 }
 
 .opp-browse-page .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-logo-wrap:hover {
@@ -1852,7 +1886,11 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
 
 .opp-browse-page .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-logo,
 .opp-browse-page .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-logo--full {
-  max-height: 168px;
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  max-height: none;
+  height: auto;
 }
 
 .opp-browse-page .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-company,
@@ -1918,14 +1956,19 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
   transition: background-color 0.2s ease;
 }
 
+.opp-browse-page .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-logo-wrap.sponsor-logo-band {
+  display: block;
+  padding: 0;
+}
+
 .opp-browse-page .sponsor-logo-wrap.sponsor-logo-band--dark {
   border-radius: 8px;
 }
 
 .opp-browse-page .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-logo-wrap.sponsor-logo-band--dark {
-  margin-left: 0;
-  margin-right: 0;
+  margin: 0;
   width: 100%;
+  border-radius: 0;
 }
 
 .opp-browse-page .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-logo-wrap.sponsor-logo-band--dark:hover {

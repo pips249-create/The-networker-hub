@@ -16,7 +16,7 @@
       rel="stylesheet"
     />
     <link rel="stylesheet" href="css/hub.css?v=20260909listmenu1" />
-    <link rel="stylesheet" href="css/auth.css?v=20260805email1g" />
+    <link rel="stylesheet" href="css/auth.css?v=20261002offers1" />
     <link rel="stylesheet" href="css/hub-mobile.css?v=20260909listmenu1" />
   </head>
   <body class="auth-page">
@@ -24,7 +24,16 @@
     <script src="js/site-nav.js?v=20260923iab1" data-root="" data-page="auth"></script>
 
     <main class="auth-main auth-main--wizard">
-      <div class="auth-wizard-shell">
+      <div class="auth-register-layout" id="auth-register-layout">
+        <aside class="auth-offer-preview" id="auth-offer-preview" hidden aria-labelledby="auth-offer-preview-title">
+          <p class="auth-offer-preview-kicker">Included with a free account</p>
+          <h2 class="auth-offer-preview-title" id="auth-offer-preview-title">Explore member offers today</h2>
+          <p class="auth-offer-preview-lede">
+            A preview of a few offers members can use. These cards stay on this page — create your account to open them.
+          </p>
+          <div class="auth-offer-preview-list" id="auth-offer-preview-list"></div>
+        </aside>
+        <div class="auth-wizard-shell">
         <ol class="auth-wizard-steps" id="auth-wizard-steps" aria-label="Account setup progress" hidden>
           <li class="auth-wizard-step is-current" aria-current="step">
             <span class="auth-wizard-num">1</span>
@@ -172,9 +181,11 @@
           </div>
         </div>
       </div>
+      </div>
     </main>
 
     <script src="js/hub-turnstile.js?v=20260827sec3"></script>
-    <script src="js/auth.js?v=20260924confirm2"></script>
+    <script src="js/register-offer-preview.js?v=20261002offers1"></script>
+    <script src="js/auth.js?v=20261002offers1"></script>
   </body>
 </html>

@@ -50,6 +50,7 @@ const routes = {
   'revenue-deals': require('./_lib/routes/admin-revenue-deals'),
   'revenue-targets': require('./_lib/routes/admin-revenue-targets'),
   'jamie-targets': require('./_lib/routes/admin-jamie-targets'),
+  'pips-activity': require('./_lib/routes/admin-pips-activity'),
   activity: require('./_lib/routes/admin-activity'),
 };
 

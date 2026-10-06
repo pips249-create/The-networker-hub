@@ -6,6 +6,7 @@ const {
   canSeeJamieTargets,
   isBookedMeetingNotes,
   lastStaffBeforeClaim,
+  creditListedEvents,
   buildJamieTargetsReport,
   periodMeta,
 } = require('../api/_lib/jamie-targets');
@@ -147,5 +148,88 @@ assert.ok(!report.activity.some((item) => item.summary.indexOf('Gamma') !== -1))
 const meta = periodMeta(new Date('2026-11-03T12:00:00.000Z'));
 assert.strictEqual(meta.daysElapsed, 33);
 assert.strictEqual(meta.daysRemaining, 0);
+
+const listedDemos = [
+  {
+    shown_at: '2026-10-03',
+    shown_by: 'Jamie',
+    organiser_name: 'Delta',
+    organiser_id: 'org-d',
+    notes: '2026-10-03: Listed an event — “Thursday breakfast”',
+    created_by_email: 'jamie.trickett01@gmail.com',
+  },
+];
+const listedEvents = [
+  {
+    id: 'e1',
+    title: 'Thursday breakfast',
+    organiser_id: 'org-d',
+    created_at: '2026-10-03T10:00:00.000Z',
+    starts_at: '2026-10-09T09:00:00.000Z',
+  },
+  {
+    id: 'e2',
+    title: 'Thursday breakfast',
+    organiser_id: 'org-d',
+    created_at: '2026-10-03T10:00:01.000Z',
+    starts_at: '2026-10-16T09:00:00.000Z',
+  },
+  {
+    id: 'e-other',
+    title: 'Someone else',
+    organiser_id: 'org-d',
+    created_at: '2026-10-03T10:00:02.000Z',
+    starts_at: '2026-10-16T09:00:00.000Z',
+  },
+];
+const credited = creditListedEvents(listedDemos, listedEvents, 'Jamie');
+assert.deepStrictEqual(
+  credited.map((row) => row.id),
+  ['e1', 'e2']
+);
+
+const missed = creditListedEvents(
+  [
+    {
+      shown_by: 'Jamie',
+      organiser_name: 'Echo',
+      organiser_id: 'org-e',
+      notes: '2026-10-04: Listed an event — “Lunch”',
+    },
+  ],
+  [],
+  'Jamie'
+);
+assert.strictEqual(missed.length, 1);
+assert.ok(String(missed[0].id).indexOf('listed:') === 0);
+
+const fromListings = buildJamieTargetsReport({
+  now: new Date('2026-10-06T12:00:00.000Z'),
+  activityRows: [],
+  demos: listedDemos,
+  organisers: [],
+  listedEvents: credited,
+});
+assert.strictEqual(fromListings.metrics.events.actual, 2);
+assert.ok(fromListings.activity.filter((item) => item.kind === 'event').length === 2);
+
+const withEmail = buildJamieTargetsReport({
+  now: new Date('2026-10-06T12:00:00.000Z'),
+  activityRows: [],
+  demos: [
+    {
+      shown_at: '2026-10-06',
+      shown_by: 'Jamie',
+      organiser_name: 'Colony Networking',
+      organiser_id: 'org-c',
+      notes: 'Meeting — Thursday\n2026-10-06: Emailed',
+      created_by_email: 'jamie@thenetworkeruk.com',
+    },
+  ],
+  organisers: [],
+});
+assert.strictEqual(withEmail.metrics.meetings.actual, 1);
+assert.strictEqual(withEmail.activity.filter((item) => item.kind === 'outreach').length, 1);
+assert.ok(withEmail.activity.some((item) => item.kind === 'outreach' && item.summary.indexOf('Emailed') !== -1));
 
 console.log('test-jamie-targets: ok');

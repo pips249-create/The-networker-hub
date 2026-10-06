@@ -237,6 +237,32 @@ function adminClient() {
   return require('./supabase').getSupabaseAdmin();
 }
 
+const SIGNUP_PREVIEW_LIMIT = 3;
+
+function safePreviewImageUrl(value) {
+  const s = String(value || '').trim();
+  if (!/^https?:\/\//i.test(s)) return '';
+  return s.slice(0, LIMITS.imageUrl);
+}
+
+/** Public signup teaser. Omits the offer link, code, and full write-up. */
+function toMemberOfferPreview(offer) {
+  if (!offer) return null;
+  return {
+    title: String(offer.title || '').slice(0, LIMITS.title),
+    provider: String(offer.provider || '').slice(0, LIMITS.provider),
+    category: String(offer.category || '').slice(0, LIMITS.category),
+    highlight: String(offer.highlight || '').slice(0, LIMITS.highlight),
+    summary: String(offer.summary || '').slice(0, LIMITS.summary),
+    imageUrl: safePreviewImageUrl(offer.imageUrl || offer.image_url),
+  };
+}
+
+async function listMemberOfferPreviews() {
+  const offers = await listMemberOffers();
+  return offers.slice(0, SIGNUP_PREVIEW_LIMIT).map(toMemberOfferPreview).filter(Boolean);
+}
+
 async function listMemberOffers(options) {
   const includeUnpublished = Boolean(options && options.includeUnpublished);
   const sb = adminClient();
@@ -420,7 +446,10 @@ module.exports = {
   londonToday,
   memberOfferFromRow,
   applyOfferImage,
+  SIGNUP_PREVIEW_LIMIT,
+  toMemberOfferPreview,
   listMemberOffers,
+  listMemberOfferPreviews,
   createMemberOffer,
   updateMemberOffer,
   deleteMemberOffer,

@@ -298,25 +298,58 @@ body.browse-mode-organisers .events-organiser-footnote .events-hub-cta-link {
   text-decoration: none !important;
 }
 
+.events-hero-sponsor-slot .sponsor-hub.sponsor-hub--logo-only {
+  flex: 0 0 auto;
+  align-self: start;
+  height: auto;
+}
+
 .sponsor-hub--in-hero.sponsor-hub--logo-only {
-  padding-bottom: 14px;
+  position: relative;
+  padding: 0;
+  height: auto;
+  overflow: hidden;
 }
 
 .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-hub-head {
-  margin-bottom: 8px;
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  margin: 0;
+  padding: 5px 9px 5px 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  font-size: 12px;
+  line-height: 1;
+  gap: 5px;
+  pointer-events: none;
+  box-shadow: 0 1px 3px rgba(20, 16, 40, 0.16);
+}
+
+.sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-hub-head .icon {
+  font-size: 12px;
 }
 
 .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-logo-wrap {
-  margin-bottom: 0;
-  min-height: 168px;
-  padding: 16px 18px;
+  margin: 0;
+  width: 100%;
+  min-height: 0;
+  padding: 0;
+  border-radius: 0;
+  overflow: hidden;
   transition: filter 0.2s ease, box-shadow 0.2s ease;
 }
 
 .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-logo-wrap.sponsor-logo-band--dark {
-  margin-left: 0;
-  margin-right: 0;
+  margin: 0;
   width: 100%;
+  border-radius: 0;
+}
+
+.sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-logo-link {
+  display: block;
+  min-height: 0;
 }
 
 .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-logo-wrap.sponsor-logo-band--dark:hover {
@@ -330,7 +363,11 @@ body.browse-mode-organisers .events-organiser-footnote .events-hub-cta-link {
 
 .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-logo,
 .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-logo--full {
-  max-height: 168px;
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  max-height: none;
+  height: auto;
 }
 
 .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-company,
@@ -342,6 +379,11 @@ body.browse-mode-organisers .events-organiser-footnote .events-hub-cta-link {
 
 .sponsor-hub--in-hero .sponsor-logo-wrap.sponsor-logo-band {
   padding: 10px 14px;
+}
+
+.sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-logo-wrap.sponsor-logo-band {
+  display: block;
+  padding: 0;
 }
 
 .sponsor-hub--in-hero .sponsor-logo,

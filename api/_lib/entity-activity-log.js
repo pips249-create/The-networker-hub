@@ -10,6 +10,11 @@ function cleanText(raw, max) {
     .slice(0, max || 500);
 }
 
+function asUuid(value) {
+  const s = String(value || '').trim();
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s) ? s : null;
+}
+
 function mapActorRole(session, access) {
   if (session && session.impersonator) return 'admin';
   try {
@@ -65,13 +70,16 @@ async function logEntityActivity(entry) {
     const action = cleanText(entry.action || '', 80);
     if (!entityType || !entityId || !action) return null;
 
+    const entityUuid = asUuid(entityId);
+    if (!entityUuid) return null;
+
     const row = {
-      actor_user_id: entry.actor_user_id || entry.actorUserId || null,
+      actor_user_id: asUuid(entry.actor_user_id || entry.actorUserId),
       actor_email: cleanText(entry.actor_email || entry.actorEmail || '', 200) || null,
       actor_role: String(entry.actor_role || entry.actorRole || 'unknown').trim() || 'unknown',
       entity_type: entityType,
-      entity_id: entityId,
-      organiser_id: entry.organiser_id || entry.organiserId || null,
+      entity_id: entityUuid,
+      organiser_id: asUuid(entry.organiser_id || entry.organiserId),
       action,
       summary: cleanText(entry.summary || action, 400) || action,
       metadata:

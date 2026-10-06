@@ -16,6 +16,8 @@ const {
   normalizeListingMonths,
   addMonths,
   listingPaymentCurrent,
+  shouldSendOpportunityListingLiveEmail,
+  listingActivationAlreadyApplied,
 } = require('./opportunity-listing-pricing');
 const { ensureOpportunitySlug, publicOpportunitySlug, slugMatchesPublicRow, isUuidSlug } =
   require('./opportunity-slug');
@@ -776,14 +778,15 @@ async function activateOpportunityListingPayment(opportunityId, monthsOrOpts, se
     }
   }
 
-  // Stripe retries must not re-activate for the same checkout session.
-  if (resolvedSessionId && String(existing.listing_stripe_session_id || '').trim() === resolvedSessionId) {
-    if (
-      listingPaymentCurrent(existing) &&
-      String(existing.status || '').toLowerCase() === 'published'
-    ) {
-      return rowToListing(existing);
-    }
+  // Same checkout session is reused for every renewal. Only skip when this
+  // payment would not extend the term (Stripe retry of a charge already applied).
+  if (
+    listingActivationAlreadyApplied(existing, {
+      sessionId: resolvedSessionId,
+      periodEndIso: periodEnd && !Number.isNaN(periodEnd.getTime()) ? periodEnd.toISOString() : '',
+    })
+  ) {
+    return rowToListing(existing);
   }
 
   const now = new Date();
@@ -803,11 +806,6 @@ async function activateOpportunityListingPayment(opportunityId, monthsOrOpts, se
     opportunityId: id,
     currentSlug: existing.slug,
   });
-
-  const wasLive =
-    String(existing.approval_status || '') === 'Approved' &&
-    String(existing.status || '').toLowerCase() === 'published' &&
-    listingPaymentCurrent(existing);
 
   const patch = {
     status: 'published',
@@ -845,8 +843,8 @@ async function activateOpportunityListingPayment(opportunityId, monthsOrOpts, se
   }
 
   const listing = rowToListing(data);
-  // Pay-after-approve: go live email fires when payment activates an Approved listing.
-  if (!wasLive && listing.approvalStatus === 'Approved') {
+  // First time payment publishes an approved listing. Renewals only extend the term.
+  if (shouldSendOpportunityListingLiveEmail(existing, data)) {
     try {
       const { sendOpportunityListingLiveEmail } = require('./opportunity-emails');
       await sendOpportunityListingLiveEmail(listing);

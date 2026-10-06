@@ -215,6 +215,10 @@
       title: 'Organiser sales kit',
       subtitle: 'CRM outreach log, pitch decks, and walkthrough tools for Catherine, Rosie & Jamie',
     },
+    'pips-activity': {
+      title: "Pip's Activity",
+      subtitle: '1 October – 2 November — events you add, CRM logs, and referrals',
+    },
     'jamie-targets': {
       title: "Jamie's targets",
       subtitle: '1 October – 2 November — meetings, claimed pages, and events added',
@@ -445,6 +449,14 @@
         'Use Report for monthly sponsor packs — filter by brand and directory (Events / Organisers / Opportunities), then Download PDF.',
       ],
     },
+    'pips-activity': {
+      title: "How Pip's Activity works",
+      steps: [
+        'This page is only for you. Jamie and Rosie cannot open it.',
+        'It covers the same dates as Jamie\'s targets: 1 October through 2 November.',
+        'Events you add, including every date in a series, show here. So do CRM logs, meetings, and meetings you refer to Jamie.',
+      ],
+    },
     'jamie-targets': {
       title: "How Jamie's targets work",
       steps: [
@@ -452,6 +464,7 @@
         'Booked meetings count when Jamie logs Meeting in the organiser sales kit. Pitch-deck saves do not count.',
         'A claimed page counts when the group claims in this period and Jamie was the last team member to contact them.',
         'Each date Jamie adds is logged as activity and counts toward events, including every date in a series.',
+        'CRM notes (calls, emails, and other sales-kit logs) appear in the amber list. They do not change the three scores, except a Meeting.',
       ],
     },
     'sales-kit': {
@@ -521,7 +534,7 @@
     platform: ['system', 'analytics', 'international', 'rankings', 'accounts', 'support'],
     listings: ['cleanup', 'event-intake', 'event-health', 'opportunities', 'moderation'],
     revenue: ['financials', 'revenue-mix', 'revenue-targets'],
-    crm: ['jamie-targets', 'sales-kit', 'spotlight', 'sponsorship', 'referral-partners'],
+    crm: ['pips-activity', 'jamie-targets', 'sales-kit', 'spotlight', 'sponsorship', 'referral-partners'],
     comms: ['email', 'social', 'social-founding'],
   };
   var HEALTH_STALE_MS = 5 * 60 * 1000;
@@ -1165,6 +1178,18 @@
   function syncJamieTargetsNav() {
     var show = canSeeJamieTargets();
     document.querySelectorAll('[data-jamie-targets-nav]').forEach(function (el) {
+      el.hidden = !show;
+      el.classList.toggle('hidden', !show);
+    });
+  }
+
+  function canSeePipsActivity() {
+    return salesKitActorFromEmail(currentUser && currentUser.email).shownBy === 'Catherine';
+  }
+
+  function syncPipsActivityNav() {
+    var show = canSeePipsActivity();
+    document.querySelectorAll('[data-pips-activity-nav]').forEach(function (el) {
       el.hidden = !show;
       el.classList.toggle('hidden', !show);
     });
@@ -23981,6 +24006,11 @@
               until ||
               null;
             if (kind === 'event') {
+              var clearedIds = data.clearedSeriesEventIds || [];
+              clearedIds.forEach(function (cid) {
+                if (String(cid) === String(id)) return;
+                applyLocalFeatured(featuredSpotlightEvents, cid, false, null, 'event');
+              });
               applyLocalFeatured(featuredSpotlightEvents, id, wantFeatured, untilIso, 'event', data.event);
               featuredSpotlightLoadGen += 1;
               paintFeaturedSpotlightTable();
@@ -24119,7 +24149,7 @@
     main.innerHTML =
       '<div class="space-y-4">' +
       '<div id="spotlight-slots-wrap" class="text-sm text-slate-500">Loading carousel slot usage…</div>' +
-      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Toggle featured events for the <strong>Premium Spotlight</strong> on <code class="text-[11px]">/events/</code>. Set an end date when you feature something (or choose no end date). You can change the date anytime under Expires.</p>' +
+      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Tick one date to put <strong>that event</strong> in the Premium Spotlight on <code class="text-[11px]">/events/</code>. A repeating series is a single carousel card — other dates in the series stay unticked. The bar shows the next upcoming featured date (up to 12 at a time).</p>' +
       '<div class="flex flex-wrap items-center gap-2">' +
       '<p id="featured-status" class="text-sm text-slate-500 flex-1 min-w-[12rem]">Loading approved events…</p>' +
       spotlightClearStaleBtnHtml('spotlight-clear-stale-events') +
@@ -32283,26 +32313,39 @@
     );
   }
 
-  function renderJamieTargets() {
-    if (!canSeeJamieTargets()) {
-      main.innerHTML =
-        '<p class="text-sm text-slate-600">Jamie\'s targets are only visible to Catherine and Jamie.</p>';
+  function renderPipsActivity() {
+    if (!canSeePipsActivity()) {
+      main.innerHTML = '<p class="text-sm text-slate-600">Pip\'s Activity is only visible to Catherine.</p>';
       return;
     }
-    main.innerHTML = '<p class="text-sm text-slate-500">Loading Jamie\'s targets…</p>';
-    adminGet('/api/admin/jamie-targets').then(function (data) {
+    main.innerHTML = '<p class="text-sm text-slate-500">Loading Pip\'s Activity…</p>';
+    adminGet('/api/admin/pips-activity').then(function (data) {
       if (!main) return;
-      if (!data || data.ok === false || !data.targets) {
+      if (!data || data.ok === false || !data.activity) {
         main.innerHTML =
           '<p class="text-sm text-red-700">' +
-          esc((data && (data.message || data.error)) || 'Could not load Jamie\'s targets.') +
+          esc((data && (data.message || data.error)) || 'Could not load Pip\'s Activity.') +
           '</p>';
         return;
       }
-      var targets = data.targets;
-      var period = targets.period || {};
-      var metrics = targets.metrics || {};
-      var items = Array.isArray(targets.activity) ? targets.activity : [];
+      var report = data.activity;
+      var period = report.period || {};
+      var counts = report.counts || {};
+      var items = Array.isArray(report.activity) ? report.activity : [];
+      function stat(label, value, hint) {
+        return (
+          '<article class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm min-w-0">' +
+          '<p class="text-xs font-semibold uppercase tracking-wide text-slate-500">' +
+          esc(label) +
+          '</p>' +
+          '<p class="text-2xl font-bold text-brand-900 mt-1">' +
+          esc(String(value || 0)) +
+          '</p>' +
+          '<p class="text-xs text-slate-500 mt-2 leading-relaxed">' +
+          esc(hint) +
+          '</p></article>'
+        );
+      }
       var activityHtml = items.length
         ? '<ul class="divide-y divide-slate-100">' +
           items
@@ -32332,7 +32375,96 @@
             })
             .join('') +
           '</ul>'
-        : '<p class="text-sm text-slate-500">Nothing logged in this period yet. Meetings from the sales kit, claimed pages Jamie worked, and events she adds will show up here.</p>';
+        : '<p class="text-sm text-slate-500">Nothing logged in this period yet. Events you add, CRM logs, and meetings you refer to Jamie will show up here.</p>';
+
+      main.innerHTML =
+        '<div class="space-y-5">' +
+        '<section class="rounded-xl border border-brand-200 bg-gradient-to-r from-brand-50 to-white p-4 sm:p-5">' +
+        '<p class="text-xs font-semibold uppercase tracking-wide text-brand-700">Pip</p>' +
+        '<p class="text-lg font-bold text-brand-900 mt-1">' +
+        esc(period.label || '1 October – 2 November 2026') +
+        '</p>' +
+        '<p class="text-sm text-slate-600 mt-1">Only you can see this page. It sits under CRM, above Jamie\'s targets.</p></section>' +
+        '<section class="grid sm:grid-cols-3 gap-3">' +
+        stat('Events added', counts.events, 'Each date you add, including every date in a series.') +
+        stat('Meetings logged', counts.meetings, 'Meeting touches you log in the organiser sales kit.') +
+        stat('Referred to Jamie', counts.referrals, 'Meetings you have referred across to Jamie.') +
+        '</section>' +
+        '<section class="admin-dash-section">' +
+        '<div class="admin-dash-section-head"><h3>Activity</h3>' +
+        '<p>Events you add, CRM logs, claim invites, and meetings you refer to Jamie.</p></div>' +
+        '<div class="admin-dash-section-body">' +
+        activityHtml +
+        '</div></section></div>';
+    });
+  }
+
+  function renderJamieTargets() {
+    if (!canSeeJamieTargets()) {
+      main.innerHTML =
+        '<p class="text-sm text-slate-600">Jamie\'s targets are only visible to Catherine and Jamie.</p>';
+      return;
+    }
+    main.innerHTML = '<p class="text-sm text-slate-500">Loading Jamie\'s targets…</p>';
+    adminGet('/api/admin/jamie-targets').then(function (data) {
+      if (!main) return;
+      if (!data || data.ok === false || !data.targets) {
+        main.innerHTML =
+          '<p class="text-sm text-red-700">' +
+          esc((data && (data.message || data.error)) || 'Could not load Jamie\'s targets.') +
+          '</p>';
+        return;
+      }
+      var targets = data.targets;
+      var period = targets.period || {};
+      var metrics = targets.metrics || {};
+      var items = Array.isArray(targets.activity) ? targets.activity : [];
+      var counted = items.filter(function (item) {
+        return item.kind !== 'outreach';
+      });
+      var crmNotes = items.filter(function (item) {
+        return item.kind === 'outreach';
+      });
+      function activityRows(list, linkClass) {
+        return (
+          '<ul class="divide-y divide-slate-100">' +
+          list
+            .map(function (item) {
+              var href = item.organiserId
+                ? '#sales-kit?tab=crm&organiser=' + encodeURIComponent(item.organiserId)
+                : '';
+              var summary = href
+                ? '<a class="font-medium hover:underline ' +
+                  linkClass +
+                  '" href="' +
+                  attrEsc(href) +
+                  '">' +
+                  esc(item.summary || '') +
+                  '</a>'
+                : '<span class="font-medium ' + linkClass + '">' + esc(item.summary || '') + '</span>';
+              return (
+                '<li class="py-3 flex flex-wrap items-baseline justify-between gap-2">' +
+                '<div class="min-w-0">' +
+                '<p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">' +
+                esc(item.kindLabel || '') +
+                '</p>' +
+                summary +
+                '</div>' +
+                '<p class="text-xs text-slate-500 shrink-0">' +
+                esc(item.whenLabel || '') +
+                '</p></li>'
+              );
+            })
+            .join('') +
+          '</ul>'
+        );
+      }
+      var activityHtml = counted.length
+        ? activityRows(counted, 'text-brand-900')
+        : '<p class="text-sm text-slate-500">Nothing has counted toward the targets yet. Meetings she logs, claimed pages, and events she adds will show up here.</p>';
+      var crmHtml = crmNotes.length
+        ? activityRows(crmNotes, 'text-amber-950')
+        : '<p class="text-sm text-amber-900">No CRM notes in this period yet.</p>';
 
       main.innerHTML =
         '<div class="space-y-5">' +
@@ -32347,17 +32479,28 @@
         esc(String(period.daysTotal || 0)) +
         ' days elapsed · ' +
         esc(String(period.daysRemaining || 0)) +
-        ' days remaining. Only Catherine and Jamie can see this page.</p></section>' +
+        ' days remaining. Only Catherine and Jamie can see this page.</p>' +
+        (canSeePipsActivity()
+          ? '<p class="text-sm mt-2"><a class="font-semibold text-brand-800 hover:underline" href="#pips-activity">Your own activity is on Pip\'s Activity.</a></p>'
+          : '') +
+        '</section>' +
         '<section class="grid sm:grid-cols-3 gap-3">' +
         jamieTargetsMetricCard(metrics.meetings || {}) +
         jamieTargetsMetricCard(metrics.claimedPages || {}) +
         jamieTargetsMetricCard(metrics.events || {}) +
         '</section>' +
         '<section class="admin-dash-section">' +
-        '<div class="admin-dash-section-head"><h3>Jamie\'s activity</h3>' +
+        '<div class="admin-dash-section-head"><h3>Counts toward the targets</h3>' +
         '<p>Meetings she logs, pages claimed after her last contact, and events or series dates she adds.</p></div>' +
         '<div class="admin-dash-section-body">' +
         activityHtml +
+        '</div></section>' +
+        '<section class="rounded-xl border border-amber-300 bg-amber-50 shadow-sm">' +
+        '<div class="px-4 py-3 border-b border-amber-200">' +
+        '<h3 class="text-base font-bold text-amber-950">CRM notes</h3>' +
+        '<p class="text-sm text-amber-900 mt-1">What Jamie logs in the sales kit, such as calls and emails. These do not change the three scores above. A meeting still counts up there.</p></div>' +
+        '<div class="px-4">' +
+        crmHtml +
         '</div></section></div>';
     });
   }
@@ -32378,6 +32521,7 @@
     'revenue-mix': renderRevenueMix,
     'revenue-targets': renderRevenueTargetsHub,
     'sales-kit': renderSalesKit,
+    'pips-activity': renderPipsActivity,
     'jamie-targets': renderJamieTargets,
     spotlight: renderSpotlightHub,
     featured: renderFeatured,
@@ -32499,6 +32643,7 @@
     currentUser = user;
     document.getElementById('sidebar-user').textContent = user.email;
     syncJamieTargetsNav();
+    syncPipsActivityNav();
     hideAdminGate();
     document.body.classList.add('hub-admin-active');
     bindAdminLayoutSync();

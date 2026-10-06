@@ -54,6 +54,7 @@ const routes = {
   'registration-invoice': require('./_lib/routes/auth-registration-invoice'),
   'nudge-ticket-sales': require('./_lib/routes/auth-nudge-ticket-sales'),
   'member-offers': require('./_lib/routes/auth-member-offers'),
+  'member-offer-previews': require('./_lib/routes/auth-member-offer-previews'),
   'member-offer-enquire': require('./_lib/routes/auth-member-offer-enquire'),
   'site-access': require('./_lib/routes/site-access'),
 };

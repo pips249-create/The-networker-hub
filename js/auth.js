@@ -1027,6 +1027,18 @@
       });
   }
 
+  function syncRegisterOfferPreview() {
+    var preview = window.HubRegisterOfferPreview;
+    if (!preview) return;
+    var full = document.getElementById('register-full');
+    var showForm = full && !full.hidden;
+    if (!showForm || isOrganiserAuthIntentFromPage() || isOrganiserClaimEntry()) {
+      preview.hide();
+      return;
+    }
+    preview.load();
+  }
+
   function showRegisterFullForm() {
     var early = document.getElementById('register-early-access');
     var full = document.getElementById('register-full');
@@ -1034,6 +1046,7 @@
     if (early) early.hidden = true;
     if (full) full.hidden = false;
     if (steps) steps.hidden = false;
+    syncRegisterOfferPreview();
     if (/nothing to set up today/i.test(document.title || '')) {
       document.title = 'Create account – The Networker UK';
     }
@@ -1046,6 +1059,7 @@
     if (early) early.hidden = false;
     if (full) full.hidden = true;
     if (steps) steps.hidden = true;
+    if (window.HubRegisterOfferPreview) window.HubRegisterOfferPreview.hide();
     document.title = 'Nothing to set up today – The Networker UK';
   }
 
