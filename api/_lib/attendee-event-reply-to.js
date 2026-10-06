@@ -17,6 +17,7 @@ const ATTENDEE_EVENT_REPLY_TO_ORGANISER_SLUGS = new Set([
   'booking_cancelled',
   'event_cancelled',
   'event_updated',
+  'event_details_updated',
   'refund_processed',
 ]);
 
