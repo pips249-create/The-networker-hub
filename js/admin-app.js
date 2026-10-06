@@ -464,6 +464,7 @@
         'Booked meetings count when Jamie logs Meeting in the organiser sales kit. Pitch-deck saves do not count.',
         'A claimed page counts when the group claims in this period and Jamie was the last team member to contact them.',
         'Each date Jamie adds is logged as activity and counts toward events, including every date in a series.',
+        'CRM notes (calls, emails, and other sales-kit logs) appear in the amber list. They do not change the three scores, except a Meeting.',
       ],
     },
     'sales-kit': {
@@ -32418,20 +32419,29 @@
       var period = targets.period || {};
       var metrics = targets.metrics || {};
       var items = Array.isArray(targets.activity) ? targets.activity : [];
-      var activityHtml = items.length
-        ? '<ul class="divide-y divide-slate-100">' +
-          items
+      var counted = items.filter(function (item) {
+        return item.kind !== 'outreach';
+      });
+      var crmNotes = items.filter(function (item) {
+        return item.kind === 'outreach';
+      });
+      function activityRows(list, linkClass) {
+        return (
+          '<ul class="divide-y divide-slate-100">' +
+          list
             .map(function (item) {
               var href = item.organiserId
                 ? '#sales-kit?tab=crm&organiser=' + encodeURIComponent(item.organiserId)
                 : '';
               var summary = href
-                ? '<a class="font-medium text-brand-900 hover:underline" href="' +
+                ? '<a class="font-medium hover:underline ' +
+                  linkClass +
+                  '" href="' +
                   attrEsc(href) +
                   '">' +
                   esc(item.summary || '') +
                   '</a>'
-                : '<span class="font-medium text-brand-900">' + esc(item.summary || '') + '</span>';
+                : '<span class="font-medium ' + linkClass + '">' + esc(item.summary || '') + '</span>';
               return (
                 '<li class="py-3 flex flex-wrap items-baseline justify-between gap-2">' +
                 '<div class="min-w-0">' +
@@ -32447,7 +32457,14 @@
             })
             .join('') +
           '</ul>'
-        : '<p class="text-sm text-slate-500">Nothing logged in this period yet. Meetings and CRM notes from the sales kit, claimed pages Jamie worked, and events she adds will show up here.</p>';
+        );
+      }
+      var activityHtml = counted.length
+        ? activityRows(counted, 'text-brand-900')
+        : '<p class="text-sm text-slate-500">Nothing has counted toward the targets yet. Meetings she logs, claimed pages, and events she adds will show up here.</p>';
+      var crmHtml = crmNotes.length
+        ? activityRows(crmNotes, 'text-amber-950')
+        : '<p class="text-sm text-amber-900">No CRM notes in this period yet.</p>';
 
       main.innerHTML =
         '<div class="space-y-5">' +
@@ -32473,10 +32490,17 @@
         jamieTargetsMetricCard(metrics.events || {}) +
         '</section>' +
         '<section class="admin-dash-section">' +
-        '<div class="admin-dash-section-head"><h3>Jamie\'s activity</h3>' +
-        '<p>Meetings and CRM notes she logs, pages claimed after her last contact, and events or series dates she adds.</p></div>' +
+        '<div class="admin-dash-section-head"><h3>Counts toward the targets</h3>' +
+        '<p>Meetings she logs, pages claimed after her last contact, and events or series dates she adds.</p></div>' +
         '<div class="admin-dash-section-body">' +
         activityHtml +
+        '</div></section>' +
+        '<section class="rounded-xl border border-amber-300 bg-amber-50 shadow-sm">' +
+        '<div class="px-4 py-3 border-b border-amber-200">' +
+        '<h3 class="text-base font-bold text-amber-950">CRM notes</h3>' +
+        '<p class="text-sm text-amber-900 mt-1">What Jamie logs in the sales kit, such as calls and emails. These do not change the three scores above. A meeting still counts up there.</p></div>' +
+        '<div class="px-4">' +
+        crmHtml +
         '</div></section></div>';
     });
   }

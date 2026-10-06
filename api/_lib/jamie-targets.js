@@ -243,17 +243,28 @@ function creditListedEvents(demos, events, staffName) {
   return credited;
 }
 
-function jamieOutreachLine(notes) {
+function isMeetingBody(body) {
+  const text = String(body || '').trim();
+  if (!text || PITCH_DECK_MEETING.test(text)) return false;
+  return text === 'Meeting' || /^Meeting — /.test(text) || /^Meeting - /.test(text);
+}
+
+/** Sales-kit lines to monitor. Meetings and "Listed an event" are counted elsewhere. */
+function crmNoteLines(notes, shownAt) {
   const lines = String(notes || '')
     .split(/\n/)
     .map((line) => String(line || '').trim())
     .filter(Boolean);
-  for (let i = lines.length - 1; i >= 0; i -= 1) {
-    const body = lines[i].replace(/^\d{4}-\d{2}-\d{2}:\s*/, '');
-    if (/^Listed an event\b/i.test(body)) continue;
-    return body;
-  }
-  return '';
+  const out = [];
+  lines.forEach((line) => {
+    const dated = line.match(/^(\d{4}-\d{2}-\d{2}):\s*(.*)$/);
+    const day = dated ? dated[1] : String(shownAt || '').slice(0, 10);
+    const body = String(dated ? dated[2] : line).trim();
+    if (!body || /^Listed an event\b/i.test(body) || isMeetingBody(body)) return;
+    if (!inPeriodDate(day)) return;
+    out.push({ day, body });
+  });
+  return out;
 }
 
 function touchInstant(raw) {
@@ -358,17 +369,16 @@ function buildJamieTargetsReport(input) {
         summary: 'Booked meeting · ' + name + (detail ? ' — ' + detail : ''),
         organiserId: row.organiser_id || '',
       });
-      return;
     }
-    const outreach = jamieOutreachLine(row.notes);
-    if (!outreach) return;
-    activity.push({
-      at,
-      kind: 'outreach',
-      kindLabel: 'CRM',
-      whenLabel: formatWhen(row.shown_at || row.created_at, true),
-      summary: outreach + (outreach.indexOf(name) === -1 ? ' · ' + name : ''),
-      organiserId: row.organiser_id || '',
+    crmNoteLines(row.notes, row.shown_at || row.created_at).forEach((note) => {
+      activity.push({
+        at: note.day + 'T12:00:00.000Z',
+        kind: 'outreach',
+        kindLabel: 'CRM',
+        whenLabel: formatWhen(note.day, true),
+        summary: note.body + (note.body.indexOf(name) === -1 ? ' · ' + name : ''),
+        organiserId: row.organiser_id || '',
+      });
     });
   });
 

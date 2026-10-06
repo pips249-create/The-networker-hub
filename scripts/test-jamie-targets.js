@@ -213,4 +213,23 @@ const fromListings = buildJamieTargetsReport({
 assert.strictEqual(fromListings.metrics.events.actual, 2);
 assert.ok(fromListings.activity.filter((item) => item.kind === 'event').length === 2);
 
+const withEmail = buildJamieTargetsReport({
+  now: new Date('2026-10-06T12:00:00.000Z'),
+  activityRows: [],
+  demos: [
+    {
+      shown_at: '2026-10-06',
+      shown_by: 'Jamie',
+      organiser_name: 'Colony Networking',
+      organiser_id: 'org-c',
+      notes: 'Meeting — Thursday\n2026-10-06: Emailed',
+      created_by_email: 'jamie@thenetworkeruk.com',
+    },
+  ],
+  organisers: [],
+});
+assert.strictEqual(withEmail.metrics.meetings.actual, 1);
+assert.strictEqual(withEmail.activity.filter((item) => item.kind === 'outreach').length, 1);
+assert.ok(withEmail.activity.some((item) => item.kind === 'outreach' && item.summary.indexOf('Emailed') !== -1));
+
 console.log('test-jamie-targets: ok');
