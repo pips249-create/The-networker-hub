@@ -52,6 +52,11 @@ const BRANDED_EMAIL_TEMPLATES = {
     marker: 'hub-email-layout-v3-purple',
     subject: 'An invitation for {{group_name}} — The Networker UK',
   },
+  organiser_unclaimed_followup: {
+    file: 'organiser-unclaimed-followup.html',
+    marker: 'hub-email-layout-v3-purple',
+    subject: '{{group_name}} is still unclaimed — The Networker UK',
+  },
   organiser_call_followup: {
     file: 'organiser-call-followup.html',
     marker: 'hub-email-layout-v3-purple',

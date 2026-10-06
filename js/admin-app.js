@@ -15956,6 +15956,7 @@
       'organiser_claim_invite',
       'organiser_launch_invite',
       'organiser_directory_invite',
+      'organiser_unclaimed_followup',
       'organiser_rebrand_announcement',
       'event_intake_received',
       'event_intake_listed',
@@ -17886,6 +17887,7 @@
       event_count: o.event_count || 0,
       hub_suspended: Boolean(o.hub_suspended),
       listing_status: o.listing_status || '',
+      ownership_claim_status: o.ownership_claim_status || '',
     };
   }
 
@@ -17922,6 +17924,8 @@
     if (deleteSection) deleteSection.classList.toggle('hidden', ids.length === 0);
     var browseSection = document.getElementById('group-browse-section');
     if (browseSection) browseSection.classList.toggle('hidden', ids.length === 0);
+    var unclaimedSection = document.getElementById('group-unclaimed-section');
+    if (unclaimedSection) unclaimedSection.classList.toggle('hidden', ids.length === 0);
     if (chipsEl) {
       chipsEl.innerHTML = rows
         .map(function (o) {
@@ -18831,7 +18835,12 @@
       attrEsc(o.email || '') +
       '" data-group-name="' +
       attrEsc(o.name || '') +
-      '" class="text-xs font-semibold rounded-lg border border-violet-200 text-violet-900 hover:bg-violet-50 px-2.5 py-1">Copy claim link</button>'
+      '" class="text-xs font-semibold rounded-lg border border-violet-200 text-violet-900 hover:bg-violet-50 px-2.5 py-1">Copy claim link</button>' +
+      '<button type="button" data-send-unclaimed-followup="' +
+      attrEsc(o.id) +
+      '" data-group-name="' +
+      attrEsc(o.name || '') +
+      '" class="text-xs font-semibold rounded-lg border border-violet-300 bg-violet-50 text-violet-950 hover:bg-violet-100 px-2.5 py-1">Send reminder</button>'
     );
   }
 
@@ -18888,9 +18897,9 @@
       });
   }
 
-  function createGroupCleanupForm(form) {
+  function createGroupCleanupForm(form, sendInvite) {
     var msg = document.getElementById('group-create-msg');
-    var btn = form.querySelector('[type="submit"]');
+    var buttons = form.querySelectorAll('[type="submit"]');
     var name = formFieldVal(form, 'name').trim();
     var email = formFieldVal(form, 'email').trim();
     if (!name) {
@@ -18907,12 +18916,13 @@
       }
       return;
     }
-    if (btn) btn.disabled = true;
+    buttons.forEach(function (b) {
+      b.disabled = true;
+    });
     if (msg) {
-      msg.textContent = 'Creating group…';
+      msg.textContent = sendInvite ? 'Creating group and emailing…' : 'Creating group…';
       msg.className = 'text-xs text-slate-500';
     }
-    var inviteBox = form.querySelector('[name="send_invite"]');
     adminPost('/api/admin/organisers', {
       action: 'create_group',
       name: name,
@@ -18920,7 +18930,7 @@
       website: formFieldVal(form, 'website').trim(),
       description: formFieldVal(form, 'description').trim(),
       provision_login: true,
-      send_invite: inviteBox ? !!inviteBox.checked : true,
+      send_invite: !!sendInvite,
     })
       .then(function (data) {
         if (!data.ok) throw new Error(data.message || data.error || 'Create failed');
@@ -18964,7 +18974,66 @@
         }
       })
       .finally(function () {
-        if (btn) btn.disabled = false;
+        buttons.forEach(function (b) {
+          b.disabled = false;
+        });
+      });
+  }
+
+  function sendUnclaimedGroupReminders(ids, triggerBtn) {
+    var unique = [];
+    (ids || []).forEach(function (id) {
+      var s = String(id || '').trim();
+      if (s && unique.indexOf(s) === -1) unique.push(s);
+    });
+    var msg = document.getElementById('group-email-unclaimed-msg');
+    if (!unique.length) {
+      window.alert('Select at least one group.');
+      return;
+    }
+    if (unique.length > 50) {
+      window.alert('Email up to 50 groups at a time.');
+      return;
+    }
+    var defaultLabel = triggerBtn ? triggerBtn.textContent : '';
+    if (triggerBtn) {
+      triggerBtn.disabled = true;
+      triggerBtn.textContent = unique.length > 1 ? 'Sending…' : 'Sending reminder…';
+    }
+    if (msg && unique.length > 1) {
+      msg.textContent = 'Sending reminders…';
+      msg.className = 'text-xs text-slate-500';
+    }
+    adminPost('/api/admin/organisers', {
+      action: 'send_unclaimed_followup',
+      ids: unique,
+    })
+      .then(function (data) {
+        if (!data || !data.ok) throw new Error((data && (data.message || data.error)) || 'Could not send reminder');
+        var failed = (data.failed && data.failed.length) || 0;
+        groupCleanupState.flash = {
+          text: data.message || 'Reminder sent.',
+          tone: failed ? 'warn' : 'ok',
+        };
+        if (msg) {
+          msg.textContent = data.message || 'Reminder sent.';
+          msg.className = failed
+            ? 'text-xs text-amber-800 font-semibold'
+            : 'text-xs text-emerald-700 font-semibold';
+        }
+        return refreshGroupCleanupPage();
+      })
+      .catch(function (err) {
+        window.alert(err.message || 'Could not send reminder.');
+        if (msg) {
+          msg.textContent = err.message || 'Could not send reminder.';
+          msg.className = 'text-xs text-red-700 font-semibold';
+        }
+      })
+      .finally(function () {
+        if (!triggerBtn) return;
+        triggerBtn.disabled = false;
+        triggerBtn.textContent = defaultLabel;
       });
   }
 
@@ -19948,6 +20017,31 @@
       return;
     }
 
+    if (e.target.closest('#group-email-unclaimed-btn')) {
+      var reminderIds = getSelectedGroupIds();
+      if (!reminderIds.length) {
+        window.alert('Select at least one group.');
+        return;
+      }
+      if (reminderIds.length > 50) {
+        window.alert('Email up to 50 groups at a time.');
+        return;
+      }
+      if (
+        !window.confirm(
+          'Email a reminder to ' +
+            reminderIds.length +
+            ' selected group' +
+            (reminderIds.length === 1 ? '' : 's') +
+            ' that have not claimed their page? Claimed groups are skipped.'
+        )
+      ) {
+        return;
+      }
+      sendUnclaimedGroupReminders(reminderIds, document.getElementById('group-email-unclaimed-btn'));
+      return;
+    }
+
     if (e.target.closest('#group-hide-browse-btn')) {
       bulkSetGroupsHiddenFromBrowse(true);
       return;
@@ -19981,6 +20075,23 @@
         claimUrlBtn.getAttribute('data-group-email'),
         claimUrlBtn.getAttribute('data-group-name'),
         claimUrlBtn
+      );
+      return;
+    }
+
+    var unclaimedReminderBtn = e.target.closest('[data-send-unclaimed-followup]');
+    if (unclaimedReminderBtn) {
+      var reminderName = unclaimedReminderBtn.getAttribute('data-group-name') || 'this group';
+      if (
+        !window.confirm(
+          'Email a reminder to ' + reminderName + '? Their page has not been claimed yet.'
+        )
+      ) {
+        return;
+      }
+      sendUnclaimedGroupReminders(
+        [unclaimedReminderBtn.getAttribute('data-send-unclaimed-followup')],
+        unclaimedReminderBtn
       );
       return;
     }
@@ -20038,7 +20149,8 @@
       if (!form || !form.classList || !form.closest('#admin-main')) return;
       if (form.id === 'group-create-form') {
         e.preventDefault();
-        createGroupCleanupForm(form);
+        var sendInvite = !!(e.submitter && e.submitter.getAttribute('data-email-group') === '1');
+        createGroupCleanupForm(form, sendInvite);
       } else if (form.classList.contains('group-cleanup-form')) {
         e.preventDefault();
         saveGroupCleanupForm(form);
@@ -20744,7 +20856,7 @@
       (groupCleanupState.createOpen ? '' : ' hidden') +
       '">' +
       '<h3 class="text-sm font-semibold text-brand-900">New networking group</h3>' +
-      '<p class="text-xs text-slate-600">Adds a login for the contact email and, unless you untick the box, publishes their page and emails an invitation to look at The Networker UK and that page.</p>' +
+      '<p class="text-xs text-slate-600">Create group saves a draft and does not email. Email this group publishes their page and sends the invitation.</p>' +
       '<form id="group-create-form" class="grid sm:grid-cols-2 gap-3">' +
       '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1" for="group-create-name">Group name</label>' +
       '<input type="text" id="group-create-name" name="name" required class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="e.g. Catalyst Networking Club"></div>' +
@@ -20754,11 +20866,9 @@
       '<input type="url" id="group-create-website" name="website" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="https://…"></div>' +
       '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1" for="group-create-description">Description <span class="font-normal text-slate-400">(optional)</span></label>' +
       '<textarea id="group-create-description" name="description" rows="3" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Short intro for this networking group"></textarea></div>' +
-      '<label class="sm:col-span-2 inline-flex items-start gap-2 text-sm text-slate-700 cursor-pointer">' +
-      '<input type="checkbox" id="group-create-send-invite" name="send_invite" class="rounded border-slate-300 mt-0.5" checked>' +
-      '<span>Email an invitation to look at The Networker UK and their page. Their page goes live so the links work. Untick to save a draft and skip the email.</span></label>' +
       '<div class="sm:col-span-2 flex flex-wrap items-center gap-3">' +
-      '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Create group</button>' +
+      '<button type="submit" class="rounded-lg border border-slate-300 bg-white text-slate-800 text-sm font-semibold px-4 py-2 hover:bg-slate-50">Create group</button>' +
+      '<button type="submit" data-email-group="1" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Email this group</button>' +
       '<span id="group-create-msg" class="text-xs"></span></div></form></div>' +
       '<div id="group-cleanup-bulk" class="hidden rounded-xl border border-brand-200 bg-brand-50 p-4 shadow-sm space-y-3">' +
       '<form id="group-bulk-form" class="space-y-3">' +
@@ -20778,6 +20888,12 @@
       '<div class="flex flex-wrap items-center gap-3">' +
       '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Apply to selected</button>' +
       '<span id="group-bulk-msg" class="text-xs"></span></div></form>' +
+      '<div id="group-unclaimed-section" class="hidden border-t border-brand-200 pt-4 space-y-3">' +
+      '<p class="text-sm font-semibold text-brand-900">Unclaimed pages</p>' +
+      '<p class="text-xs text-slate-600">Sends a reminder to selected groups that have not claimed their page. Claimed groups are skipped. Up to 50 at a time.</p>' +
+      '<div class="flex flex-wrap items-center gap-3">' +
+      '<button type="button" id="group-email-unclaimed-btn" class="rounded-lg border border-violet-300 bg-violet-50 text-violet-950 text-sm font-semibold px-4 py-2 hover:bg-violet-100">Email unclaimed groups</button>' +
+      '<span id="group-email-unclaimed-msg" class="text-xs"></span></div></div>' +
       '<div id="group-browse-section" class="hidden border-t border-brand-200 pt-4 space-y-3">' +
       '<p class="text-sm font-semibold text-brand-900">Browse visibility</p>' +
       '<p class="text-xs text-slate-600">Hide removes profiles from the public organiser directory. They can still claim via invite email and publish events (which puts the page live again).</p>' +
