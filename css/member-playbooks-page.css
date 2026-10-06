@@ -1,5 +1,34 @@
 /* Member zone playbooks — click-through slide decks (Hub brand, no photo hero) */
 
+/* Embed mode — slideshow only (Member offers modal) */
+body.member-playbooks-page.mp-embed #hub-site-nav,
+body.member-playbooks-page.mp-embed #hub-site-footer,
+body.member-playbooks-page.mp-embed .mp-top,
+body.member-playbooks-page.mp-embed .mp-tabs,
+body.member-playbooks-page.mp-embed .mp-footnote {
+  display: none !important;
+}
+
+body.member-playbooks-page.mp-embed {
+  background: transparent;
+  min-height: 0;
+}
+
+body.member-playbooks-page.mp-embed .mp-shell {
+  max-width: none;
+  margin: 0;
+  padding: 12px;
+}
+
+body.member-playbooks-page.mp-embed .mp-deck {
+  min-height: min(62vh, 520px);
+  box-shadow: none;
+}
+
+body.member-playbooks-page.mp-embed .mp-viewport {
+  min-height: min(62vh, 520px);
+}
+
 .member-playbooks-page {
   --mp-ink: var(--charcoal, #4a4446);
   --mp-ink-deep: #2f2a2c;

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Member offers playbook cards preview</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/hub.css?v=20260909listmenu1">
+<link rel="stylesheet" href="../css/attendee-dashboard.css?v=20261006playbooks2">
+<style>
+  body { margin: 0; padding: 24px; background: #f0ecf7; font-family: 'DM Sans', system-ui, sans-serif; }
+  .preview-note { margin: 0 0 16px; font-size: 14px; color: #5a4a62; }
+  .preview-note a { color: #7a3d8a; font-weight: 600; }
+</style>
+</head>
+<body class="attendee-dashboard-page">
+  <p class="preview-note">
+    Design preview — playbooks as offer cards. Click a card to open the slideshow.
+    Live: <a href="/account/#services">/account/#services</a>
+  </p>
+  <div class="ad-services-grid" id="ad-services-grid" role="list"></div>
+
+  <div class="ad-playbook-modal" id="ad-playbook-modal" hidden>
+    <div class="ad-playbook-modal-backdrop" id="ad-playbook-modal-backdrop"></div>
+    <div class="ad-playbook-modal-panel" role="dialog" aria-modal="true" aria-labelledby="ad-playbook-modal-title">
+      <div class="ad-playbook-modal-bar">
+        <h2 class="ad-playbook-modal-title" id="ad-playbook-modal-title">Playbook</h2>
+        <button type="button" class="ad-playbook-modal-close" id="ad-playbook-modal-close" aria-label="Close">×</button>
+      </div>
+      <iframe class="ad-playbook-frame" id="ad-playbook-frame" title="Member zone playbook" src="about:blank"></iframe>
+    </div>
+  </div>
+
+  <script src="../js/attendee-member-offers.js?v=20261006playbooks2"></script>
+  <script>
+    // Render only the playbook cards + wire modal (no auth/API).
+    HubAttendeeServices.init({ member: { name: 'Preview', email: 'preview@example.com' } });
+    // Force a playbook-only grid after init's reload fails anonymously.
+    setTimeout(function () {
+      var grid = document.getElementById('ad-services-grid');
+      if (!grid) return;
+      // Re-trigger render path by hacking visible state: open via click handlers already bound.
+      // Build cards manually matching production markup.
+      var books = [
+        ['marketing', 0, 'Marketing that fits a networking diary', 'Get visible without burning every evening — click through the short guide.'],
+        ['numbers', 1, 'What your numbers are really telling you', 'Read cash, pipeline, and time like a simple dashboard.'],
+        ['funding', 2, 'Funding your business', 'Choose the right investment path before you pitch anyone.']
+      ];
+      function initials(t) {
+        var p = t.trim().split(/\s+/);
+        return (p[0][0] + (p[1] ? p[1][0] : '')).toUpperCase();
+      }
+      grid.innerHTML = books.map(function (b) {
+        return '<article class="ad-service-card ad-service-card--playbook" role="listitem">' +
+          '<div class="ad-service-media ad-service-media--' + b[1] + '">' +
+          '<span class="ad-service-initials" aria-hidden="true">' + initials(b[2]) + '</span>' +
+          '<span class="ad-service-category">Playbook</span>' +
+          '<span class="ad-service-highlight">5 pages</span></div>' +
+          '<div class="ad-service-body">' +
+          '<div class="ad-service-body-top"><span class="ad-service-provider">The Networker UK</span>' +
+          '<span class="ad-service-kicker">Playbook</span></div>' +
+          '<h3 class="ad-service-title">' + b[2] + '</h3>' +
+          '<p class="ad-service-summary">' + b[3] + '</p>' +
+          '<span class="ad-service-view">Open playbook</span></div>' +
+          '<button type="button" class="ad-service-card-link" data-playbook-open="' + b[0] + '" aria-label="Open playbook"></button></article>';
+      }).join('');
+      grid.addEventListener('click', function (e) {
+        var btn = e.target.closest('[data-playbook-open]');
+        if (!btn) return;
+        e.preventDefault();
+        var id = btn.getAttribute('data-playbook-open');
+        var titles = { marketing: books[0][2], numbers: books[1][2], funding: books[2][2] };
+        document.getElementById('ad-playbook-modal-title').textContent = titles[id] || 'Playbook';
+        document.getElementById('ad-playbook-frame').src = '/guides/member-playbooks?embed=1#' + id;
+        document.getElementById('ad-playbook-modal').hidden = false;
+        document.body.classList.add('ad-playbook-modal-open');
+      });
+      function close() {
+        document.getElementById('ad-playbook-modal').hidden = true;
+        document.body.classList.remove('ad-playbook-modal-open');
+        document.getElementById('ad-playbook-frame').src = 'about:blank';
+      }
+      document.getElementById('ad-playbook-modal-close').onclick = close;
+      document.getElementById('ad-playbook-modal-backdrop').onclick = close;
+    }, 400);
+  </script>
+</body>
+</html>
