@@ -19045,7 +19045,8 @@
       triggerBtn.textContent = 'Checking…';
     }
     if (msg) {
-      msg.textContent = 'Finding groups that have not claimed and have not been contacted in the last 7 days…';
+      msg.textContent =
+        'Finding browse-page groups that have not claimed and have not been contacted in the last 7 days…';
       msg.className = 'text-xs text-slate-500';
     }
     adminPost('/api/admin/organisers', { action: 'list_unclaimed_stale_reminders' })
@@ -19054,7 +19055,8 @@
         var ids = data.ids || [];
         if (!ids.length) {
           if (msg) {
-            msg.textContent = 'No groups to email. Everyone unclaimed was contacted in the last 7 days, or has no email.';
+            msg.textContent =
+              'No groups to email. Browse-page groups that have not claimed were contacted in the last 7 days, or have no email.';
             msg.className = 'text-xs text-slate-600';
           }
           return null;
@@ -19065,7 +19067,7 @@
               ids.length +
               ' group' +
               (ids.length === 1 ? '' : 's') +
-              ' that have not been contacted in the last 7 days?'
+              ' on the browse page that have not claimed and have not been contacted in the last 7 days?'
           )
         ) {
           if (msg) msg.textContent = '';
@@ -19120,7 +19122,7 @@
       .finally(function () {
         if (!triggerBtn) return;
         triggerBtn.disabled = false;
-        triggerBtn.textContent = defaultLabel || 'Email unclaimed groups not contacted in 7 days';
+        triggerBtn.textContent = defaultLabel || 'Email browse groups not contacted in 7 days';
       });
   }
 
@@ -20964,9 +20966,9 @@
       '<span id="group-create-msg" class="text-xs"></span></div></form></div>' +
       '<section class="rounded-xl border border-violet-200 bg-white p-4 shadow-sm space-y-2">' +
       '<h3 class="text-sm font-semibold text-brand-900">Unclaimed reminders</h3>' +
-      '<p class="text-xs text-slate-600">Emails the reminder to every group that has not claimed their page and has not been contacted in the last 7 days. Claimed, disputed, hidden, and opted-out groups are left out.</p>' +
+      '<p class="text-xs text-slate-600">Emails the reminder to every group on the browse page that has not claimed their page and has not been contacted in the last 7 days. Claimed, disputed, hidden, off-browse, and opted-out groups are left out.</p>' +
       '<div class="flex flex-wrap items-center gap-3">' +
-      '<button type="button" id="group-email-stale-unclaimed-btn" class="rounded-lg bg-violet-800 text-white text-sm font-semibold px-4 py-2 hover:bg-violet-950">Email unclaimed groups not contacted in 7 days</button>' +
+      '<button type="button" id="group-email-stale-unclaimed-btn" class="rounded-lg bg-violet-800 text-white text-sm font-semibold px-4 py-2 hover:bg-violet-950">Email browse groups not contacted in 7 days</button>' +
       '<span id="group-email-stale-unclaimed-msg" class="text-xs"></span></div></section>' +
       '<div id="group-cleanup-bulk" class="hidden rounded-xl border border-brand-200 bg-brand-50 p-4 shadow-sm space-y-3">' +
       '<form id="group-bulk-form" class="space-y-3">' +

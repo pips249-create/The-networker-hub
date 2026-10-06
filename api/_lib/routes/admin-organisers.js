@@ -1521,8 +1521,9 @@ module.exports = async function handler(req, res) {
         summary: result.summary,
         message:
           result.ids.length === 1
-            ? '1 group has not claimed and has not been contacted in the last 7 days.'
-            : result.ids.length + ' groups have not claimed and have not been contacted in the last 7 days.',
+            ? '1 group on the browse page has not claimed and has not been contacted in the last 7 days.'
+            : result.ids.length +
+              ' groups on the browse page have not claimed and have not been contacted in the last 7 days.',
       });
     } catch (e) {
       return json(res, 500, {

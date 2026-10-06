@@ -140,6 +140,17 @@ async function main() {
     staleUnclaimedReminderReason({ ...base, listing_status: 'unpublished' }, null) === 'hidden',
     'hidden is skipped'
   );
+  assert(
+    staleUnclaimedReminderReason({ ...base, listing_status: 'draft' }, null) === 'not_on_browse',
+    'draft off the browse page is skipped'
+  );
+  assert(
+    staleUnclaimedReminderReason(
+      { ...base, listing_status: 'draft', verification_status: 'Verified' },
+      null
+    ) === '',
+    'verified page on browse is eligible'
+  );
   assert(staleUnclaimedReminderReason({ ...base, email: '' }, null) === 'missing_email', 'missing email is skipped');
   assert(
     staleUnclaimedReminderReason({ ...base, email: 'hi@thenetworkeruk.com' }, null) === 'opted_out',

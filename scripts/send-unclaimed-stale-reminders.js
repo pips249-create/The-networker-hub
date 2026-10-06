@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * Email the unclaimed-page reminder to groups that have not claimed
- * and have not been contacted in the last 7 days.
+ * Email the unclaimed-page reminder to groups on the browse page that
+ * have not claimed and have not been contacted in the last 7 days.
+ * The default run only lists them. Nothing is emailed unless --send is passed.
  *
  * Usage:
  *   node scripts/send-unclaimed-stale-reminders.js            # dry-run
@@ -54,7 +55,11 @@ function sleep(ms) {
   console.log('Skipped:', JSON.stringify(listed.summary));
   console.log('This run:', ids.length);
   if (!doSend) {
-    console.log('Dry-run. Pass --send to email these groups.');
+    const preview = (listed.groups || []).filter((group) => ids.indexOf(group.id) !== -1);
+    preview.forEach((group) => {
+      console.log('WOULD EMAIL', group.name || group.id, group.email || '');
+    });
+    console.log('Dry-run only. No email was sent.');
     return;
   }
 

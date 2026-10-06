@@ -1,10 +1,12 @@
 /**
- * Reminder audience: unclaimed groups with no house contact in the last 7 days.
- * Claimed, disputed, hidden, and known opt-outs are left out.
+ * Reminder audience: groups on the public browse page that have not claimed
+ * and have had no house contact in the last 7 days.
+ * Claimed, disputed, hidden, off-browse, and known opt-outs are left out.
  */
 const { assignUniqueOrganiserSlug, publicOrganiserSlug } = require('./organiser-slug');
 const { resolveOrganiserClaimUrl } = require('./organiser-claim-url');
 const { sendOrganiserUnclaimedFollowup } = require('./organiser-directory-invite');
+const { isPublicOrganiser } = require('./supabase-organisers-browse');
 const {
   buildLastCommunicationIndex,
   resolveLastCommunication,
@@ -32,6 +34,7 @@ function staleUnclaimedReminderReason(row, contact) {
   if (status === 'claimed') return 'already_claimed';
   if (status === 'disputed') return 'disputed';
   if (String(row.listing_status || '').toLowerCase() === 'unpublished') return 'hidden';
+  if (!isPublicOrganiser(row)) return 'not_on_browse';
   if (row.is_internal === true || row.is_internal === 'true') return 'internal';
   const name = String(row.name || '').trim();
   if (!name) return 'missing_name';
@@ -68,11 +71,13 @@ async function listStaleUnclaimedReminders(sb) {
     organiserIds: rows.map((row) => row.id),
   });
   const ids = [];
+  const groups = [];
   const summary = {
     eligible: 0,
     already_claimed: 0,
     disputed: 0,
     hidden: 0,
+    not_on_browse: 0,
     internal: 0,
     missing_name: 0,
     missing_email: 0,
@@ -83,12 +88,18 @@ async function listStaleUnclaimedReminders(sb) {
     const reason = staleUnclaimedReminderReason(row, resolveLastCommunication(row, index));
     if (!reason) {
       ids.push(String(row.id));
+      groups.push({
+        id: String(row.id),
+        name: String(row.name || '').trim(),
+        email: organiserContactEmail(row),
+      });
       summary.eligible += 1;
       return;
     }
     if (Object.prototype.hasOwnProperty.call(summary, reason)) summary[reason] += 1;
   });
-  return { ids, summary };
+  groups.sort((a, b) => a.name.localeCompare(b.name, 'en-GB', { sensitivity: 'base' }));
+  return { ids: groups.map((group) => group.id), groups, summary };
 }
 
 function describeUnclaimedFollowup({ sent, skipped, failed }) {
