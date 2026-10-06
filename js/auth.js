@@ -619,17 +619,49 @@
 
     var registerTitle = document.getElementById('register-form-title');
     if (registerTitle) {
-      registerTitle.textContent = 'Create your organiser account';
+      registerTitle.textContent = 'Create your free account';
     }
 
-    var registerLede = document.querySelector('#register-form') && document.querySelector('.auth-lede');
+    var registerLede = document.getElementById('register-form-lede');
     if (registerLede) {
       registerLede.textContent =
-        'Creating an account is free. Use the same email address your group listing is linked to on The Networker UK — then confirm your organiser page (about a minute).';
+        'Use the email on your group page. Then you confirm the page — it takes about a minute.';
     }
 
     var registerProof = document.getElementById('auth-platform-proof');
-    if (registerProof) registerProof.hidden = true;
+    if (registerProof && registerForm) {
+      registerProof.textContent = 'Free to claim and list · 17,000+ networkers last year';
+      registerProof.hidden = false;
+    } else if (registerProof) {
+      registerProof.hidden = true;
+    }
+
+    if (registerForm) {
+      if (callout) callout.hidden = true;
+      var claimSteps = document.getElementById('auth-wizard-steps');
+      if (claimSteps) claimSteps.hidden = true;
+      document.body.classList.add('auth-claim-signup');
+      var registerSubmit = document.getElementById('register-submit');
+      if (registerSubmit) registerSubmit.textContent = 'Create free account';
+      var backLink = document.getElementById('register-back-link');
+      var backHref = '';
+      try {
+        var focusRaw = sessionStorage.getItem('hub_claim_focus_v1');
+        var focus = focusRaw ? JSON.parse(focusRaw) : null;
+        var focusSlug = focus && focus.slug ? String(focus.slug).trim() : '';
+        if (focusSlug) backHref = '/organisers/' + encodeURIComponent(focusSlug);
+      } catch (e) {
+        backHref = '';
+      }
+      if (backLink) {
+        if (backHref) {
+          backLink.textContent = '\u2190 Back to your page';
+          backLink.setAttribute('href', backHref);
+        } else {
+          backLink.hidden = true;
+        }
+      }
+    }
 
     var panelProof = document.getElementById('auth-panel-proof');
     if (panelProof) {
