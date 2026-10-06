@@ -142,10 +142,21 @@ function tokensForMatch(raw) {
   return spaced.split(/\s+/).filter(Boolean);
 }
 
+function pluralFormsForTerm(term) {
+  const forms = [term + 's'];
+  // English -es only applies to stems ending in s, x, z, ch, or sh
+  // (bitch → bitches). Adding -es to every stem flags "spices" as "spic".
+  if (/(?:s|x|z|ch|sh)$/.test(term)) forms.push(term + 'es');
+  return forms;
+}
+
 function tokenEqualsTerm(token, term) {
   if (token === term) return true;
   // Simple plurals so "rapists" still matches "rapist"
-  if (token === term + 's' || token === term + 'es') return true;
+  const plurals = pluralFormsForTerm(term);
+  for (let i = 0; i < plurals.length; i++) {
+    if (token === plurals[i]) return true;
+  }
   return false;
 }
 
