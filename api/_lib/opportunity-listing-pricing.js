@@ -53,6 +53,47 @@ function listingPaymentLapsed(row, nowMs) {
   return !listingPaymentCurrent(row, nowMs);
 }
 
+/**
+ * "Your opportunity is live" is the first-publish notice.
+ * A monthly subscription payment must not send it again, including when the
+ * previous term has just ended and the renewal invoice is what extends it.
+ *
+ * beforeRow is the listing before this payment is applied.
+ * afterRow is the listing after payment (approval may still be pending).
+ */
+function shouldSendOpportunityListingLiveEmail(beforeRow, afterRow) {
+  const after = afterRow || beforeRow;
+  if (String((after && after.approval_status) || '') !== 'Approved') return false;
+  if (!beforeRow) return true;
+  if (beforeRow.listing_paid_at) return false;
+  const alreadyPublic =
+    String(beforeRow.approval_status || '') === 'Approved' &&
+    String(beforeRow.status || '').toLowerCase() === 'published' &&
+    listingPaymentCurrent(beforeRow);
+  return !alreadyPublic;
+}
+
+/**
+ * Stripe reuses the original checkout session on every renewal invoice.
+ * Skip re-activation only when this call would not extend the paid term
+ * (a retry of a charge already applied). A later period end still updates.
+ */
+function listingActivationAlreadyApplied(existing, options) {
+  const opts = options || {};
+  if (!existing) return false;
+  const sessionId = String(opts.sessionId || '').trim();
+  const storedSessionId = String(existing.listing_stripe_session_id || '').trim();
+  if (!sessionId || sessionId !== storedSessionId) return false;
+  if (!listingPaymentCurrent(existing)) return false;
+  if (String(existing.status || '').toLowerCase() !== 'published') return false;
+  const incoming = opts.periodEndIso ? new Date(opts.periodEndIso).getTime() : 0;
+  if (!incoming || Number.isNaN(incoming)) return true;
+  const existingExpires = existing.listing_expires_at
+    ? new Date(existing.listing_expires_at).getTime()
+    : 0;
+  return existingExpires >= incoming - 1000;
+}
+
 /** How the directory listing fee is billed — monthly subscription vs legacy prepaid. */
 function listingBillingMode(row) {
   if (!row) return '';
@@ -80,4 +121,6 @@ module.exports = {
   listingPaymentCurrent,
   listingPaymentLapsed,
   listingBillingMode,
+  shouldSendOpportunityListingLiveEmail,
+  listingActivationAlreadyApplied,
 };
