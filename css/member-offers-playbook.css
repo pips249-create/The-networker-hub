@@ -453,23 +453,23 @@
 }
 
 .mz-step-copy h2 {
-  margin: 0 0 8px;
-  font-size: clamp(1.45rem, 2.8vw, 1.9rem);
+  margin: 0 0 6px;
+  font-size: clamp(1.35rem, 2.6vw, 1.7rem);
   line-height: 1.15;
   font-weight: 800;
 }
 
 .mz-step-copy p {
   margin: 0;
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: 13px;
+  line-height: 1.4;
   color: rgba(255, 255, 255, 0.92);
   max-width: 40em;
 }
 
 .mz-target {
-  width: 72px;
-  height: 72px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   background:
     radial-gradient(circle at center, var(--mz-gold) 0 8px, transparent 9px),
@@ -808,30 +808,33 @@
 }
 
 .mz-nav-btn {
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
-  border: 0;
-  background: var(--mz-ink);
-  color: #fff;
-  font-size: 20px;
+  border: 2px solid rgba(26, 18, 40, 0.12);
+  background: #fff;
+  color: var(--mz-ink);
+  font-size: 22px;
   line-height: 1;
   cursor: pointer;
   display: inline-grid;
   place-items: center;
-  box-shadow: 0 8px 18px rgba(26, 18, 40, 0.22);
-  transition: transform 0.15s ease, background 0.15s ease;
+  box-shadow: 0 8px 18px rgba(26, 18, 40, 0.18);
+  transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease;
 }
 
 .mz-nav-btn:hover {
   transform: scale(1.05);
   background: var(--mz-lavender-deep);
+  border-color: var(--mz-lavender-deep);
+  color: #fff;
 }
 
 .mz-nav-btn:disabled {
-  opacity: 0.35;
+  opacity: 0.4;
   cursor: default;
   transform: none;
+  background: #f3eef5;
 }
 
 .mz-nav-btn:focus-visible,
