@@ -808,6 +808,21 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     }
   }
 
+  if (slug === 'organiser_directory_invite') {
+    const { directoryInviteVariables } = require('./organiser-directory-invite');
+    Object.assign(
+      vars,
+      directoryInviteVariables({
+        host: site,
+        groupName: vars.group_name || 'City Connectors',
+        organiser: { id: 'preview-org', slug: 'city-connectors', name: vars.group_name || 'City Connectors' },
+        claimUrl:
+          vars.claim_url ||
+          site + '/organisers/city-connectors?email=hello@example.com&intent=organiser-claim',
+      })
+    );
+  }
+
   if (slug === 'organiser_team_invite') {
     vars.inviter_name = vars.inviter_name || 'Jordan Lee';
     vars.account_name = vars.account_name || vars.organiser_name || 'City Connectors';

@@ -47,6 +47,11 @@ const BRANDED_EMAIL_TEMPLATES = {
     marker: 'hub-email-layout-v3-purple',
     subject: 'Your free organiser page is ready — The Networker UK',
   },
+  organiser_directory_invite: {
+    file: 'organiser-directory-invite.html',
+    marker: 'hub-email-layout-v3-purple',
+    subject: 'An invitation for {{group_name}} — The Networker UK',
+  },
   organiser_call_followup: {
     file: 'organiser-call-followup.html',
     marker: 'hub-email-layout-v3-purple',
