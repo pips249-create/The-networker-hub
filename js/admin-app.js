@@ -15955,6 +15955,7 @@
       'organiser_new_registration',
       'organiser_claim_invite',
       'organiser_launch_invite',
+      'organiser_directory_invite',
       'organiser_rebrand_announcement',
       'event_intake_received',
       'event_intake_listed',
@@ -18911,6 +18912,7 @@
       msg.textContent = 'Creating group…';
       msg.className = 'text-xs text-slate-500';
     }
+    var inviteBox = form.querySelector('[name="send_invite"]');
     adminPost('/api/admin/organisers', {
       action: 'create_group',
       name: name,
@@ -18918,12 +18920,20 @@
       website: formFieldVal(form, 'website').trim(),
       description: formFieldVal(form, 'description').trim(),
       provision_login: true,
+      send_invite: inviteBox ? !!inviteBox.checked : true,
     })
       .then(function (data) {
         if (!data.ok) throw new Error(data.message || data.error || 'Create failed');
+        var inviteFailed = data.invite && data.invite.sent === false && data.sendInvite !== false;
+        groupCleanupState.flash = {
+          text: data.message || 'Group created.',
+          tone: inviteFailed ? 'warn' : 'ok',
+        };
         if (msg) {
-          msg.textContent = (data.message || 'Group created.') + ' Use Copy claim link on the row when you are ready.';
-          msg.className = 'text-xs text-emerald-700 font-semibold';
+          msg.textContent = data.message || 'Group created.';
+          msg.className = inviteFailed
+            ? 'text-xs text-amber-800 font-semibold'
+            : 'text-xs text-emerald-700 font-semibold';
         }
         var newId = data.organiser && data.organiser.id;
         form.reset();
@@ -20560,6 +20570,17 @@
     var total = groupCleanupState.total || organisers.length;
 
     if (status) {
+      var flashHtml = '';
+      if (groupCleanupState.flash && groupCleanupState.flash.text) {
+        var flashTone = groupCleanupState.flash.tone === 'warn' ? 'text-amber-800' : 'text-emerald-800';
+        flashHtml =
+          '<p class="text-sm font-semibold ' +
+          flashTone +
+          ' mb-1">' +
+          esc(groupCleanupState.flash.text) +
+          '</p>';
+        groupCleanupState.flash = null;
+      }
       var claimLine = '';
       if (data.claimCounts) {
         claimLine =
@@ -20570,6 +20591,7 @@
           ' unclaimed</span>';
       }
       status.innerHTML =
+        flashHtml +
         '<span class="text-brand-900 font-semibold">' +
         (organisers.length
           ? 'Showing ' + pageStart + '–' + pageEnd + ' of ' + total + ' group' + (total === 1 ? '' : 's')
@@ -20722,7 +20744,7 @@
       (groupCleanupState.createOpen ? '' : ' hidden') +
       '">' +
       '<h3 class="text-sm font-semibold text-brand-900">New networking group</h3>' +
-      '<p class="text-xs text-slate-600">Creates a draft group profile and adds a login for the contact email. Use <strong>Copy claim link</strong> on the row to share their claim URL.</p>' +
+      '<p class="text-xs text-slate-600">Adds a login for the contact email and, unless you untick the box, publishes their page and emails an invitation to look at The Networker UK and that page.</p>' +
       '<form id="group-create-form" class="grid sm:grid-cols-2 gap-3">' +
       '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1" for="group-create-name">Group name</label>' +
       '<input type="text" id="group-create-name" name="name" required class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="e.g. Catalyst Networking Club"></div>' +
@@ -20732,6 +20754,9 @@
       '<input type="url" id="group-create-website" name="website" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="https://…"></div>' +
       '<div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-500 mb-1" for="group-create-description">Description <span class="font-normal text-slate-400">(optional)</span></label>' +
       '<textarea id="group-create-description" name="description" rows="3" class="w-full rounded-lg border border-slate-300 px-3 py-2 bg-white text-sm" placeholder="Short intro for this networking group"></textarea></div>' +
+      '<label class="sm:col-span-2 inline-flex items-start gap-2 text-sm text-slate-700 cursor-pointer">' +
+      '<input type="checkbox" id="group-create-send-invite" name="send_invite" class="rounded border-slate-300 mt-0.5" checked>' +
+      '<span>Email an invitation to look at The Networker UK and their page. Their page goes live so the links work. Untick to save a draft and skip the email.</span></label>' +
       '<div class="sm:col-span-2 flex flex-wrap items-center gap-3">' +
       '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Create group</button>' +
       '<span id="group-create-msg" class="text-xs"></span></div></form></div>' +
@@ -29735,6 +29760,7 @@
       contact_email: email,
       website: website,
       provision_login: true,
+      send_invite: false,
     }).then(function (data) {
       if (!data || !data.ok) throw new Error((data && data.message) || data.error || 'Could not create group');
       var org = data.organiser;

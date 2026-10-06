@@ -26,8 +26,43 @@ function publicOrganiserSlug(row) {
   return fromName || null;
 }
 
+/** attempt 0 is the name slug; later attempts append -2, -3, … */
+function organiserSlugCandidate(name, attempt) {
+  const base = slugifyOrganiserName(name) || 'networking-group';
+  const n = Number(attempt) || 0;
+  if (n <= 0) return base.slice(0, 80);
+  return (base.slice(0, 72) + '-' + (n + 1)).slice(0, 80);
+}
+
+/**
+ * Persist a unique public slug so /organisers/:slug resolves.
+ * Returns the stored slug, or '' when none could be saved.
+ */
+async function assignUniqueOrganiserSlug(sb, organiserId, name) {
+  const id = String(organiserId || '').trim();
+  if (!sb || !id) return '';
+  const { data: current, error: readErr } = await sb
+    .from('organisers')
+    .select('id, slug, name')
+    .eq('id', id)
+    .maybeSingle();
+  if (readErr) throw new Error(readErr.message);
+  const stored = String((current && current.slug) || '').trim();
+  if (stored && !isUuidSlug(stored)) return stored;
+  const label = String((current && current.name) || name || '').trim();
+  for (let n = 0; n < 40; n++) {
+    const candidate = organiserSlugCandidate(label, n);
+    const { error } = await sb.from('organisers').update({ slug: candidate }).eq('id', id);
+    if (!error) return candidate;
+    if (!/unique|duplicate/i.test(error.message || '')) throw new Error(error.message);
+  }
+  return '';
+}
+
 module.exports = {
   slugifyOrganiserName,
   isUuidSlug,
   publicOrganiserSlug,
+  organiserSlugCandidate,
+  assignUniqueOrganiserSlug,
 };

@@ -723,6 +723,7 @@ function shouldSkipEmailAllowlist(slug) {
     slug === 'event_intake_listed' ||
     slug === 'account_welcome' ||
     slug === 'organiser_launch_invite' ||
+    slug === 'organiser_directory_invite' ||
     slug === 'organiser_call_followup' ||
     slug === 'organiser_claim_invite' ||
     slug === 'opportunity_claim_invite' ||
@@ -749,6 +750,7 @@ function shouldAttachListUnsubscribe(slug) {
   if (
     s === 'organiser_rebrand_announcement' ||
     s === 'organiser_launch_invite' ||
+    s === 'organiser_directory_invite' ||
     s === 'organiser_call_followup' ||
     s === 'organiser_claim_invite' ||
     s === 'opportunity_claim_invite' ||

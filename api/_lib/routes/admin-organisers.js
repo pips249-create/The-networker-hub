@@ -1,7 +1,12 @@
 const { sessionFromRequest, requireAdmin, json, setCors } = require('../auth');
 const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
 const { resolveImageUrl } = require('../supabase-storage');
-const { publicOrganiserSlug } = require('../organiser-slug');
+const { publicOrganiserSlug, assignUniqueOrganiserSlug } = require('../organiser-slug');
+const {
+  shouldSendDirectoryInvite,
+  sendOrganiserDirectoryInvite,
+  directoryInviteCreateMessage,
+} = require('../organiser-directory-invite');
 const sbAuth = require('../supabase-auth');
 const { fetchWebsiteMeta } = require('../website-meta');
 const { createGroup } = require('../supabase-organiser');
@@ -1308,7 +1313,7 @@ async function mergeOrganisers(body) {
   return result;
 }
 
-async function createOrganiserGroupFromAdmin(body) {
+async function createOrganiserGroupFromAdmin(body, session) {
   const name = String(body.name || '').trim();
   const email = String(body.contact_email || body.email || '')
     .trim()
@@ -1326,15 +1331,26 @@ async function createOrganiserGroupFromAdmin(body) {
     throw err;
   }
 
+  const sendInvite = shouldSendDirectoryInvite(body);
   const created = await createGroup({
     name,
     contactEmail: email,
     email,
     description: String(body.description || '').trim() || null,
     website: String(body.website || '').trim() || null,
-    listingStatus: 'draft',
+    listingStatus: sendInvite ? 'published' : 'draft',
     verificationStatus: 'Pending',
   });
+
+  const sb = getSupabaseAdmin();
+  let storedSlug = '';
+  if (sendInvite) {
+    try {
+      storedSlug = await assignUniqueOrganiserSlug(sb, created.id, name);
+    } catch (slugErr) {
+      console.error('[create-group-slug]', slugErr.message || slugErr);
+    }
+  }
 
   let provision = null;
   const shouldProvision = body.provision_login !== false && body.provision_login !== 'false';
@@ -1344,18 +1360,38 @@ async function createOrganiserGroupFromAdmin(body) {
 
   invalidateIncompleteOrganiserCount();
 
-  const sb = getSupabaseAdmin();
   const { data: row, error } = await sb.from('organisers').select('*').eq('id', created.id).single();
   if (error) throw new Error(error.message);
   const counts = await eventCountsForOrganisers(sb, [created.id]);
   const loginMeta = await loginMetaForOrganisers(sb, [row]);
   const host = String(process.env.SITE_URL || 'https://www.thenetworkeruk.com').replace(/\/$/, '');
-  const claimUrl = await resolveOrganiserClaimUrl(email, host);
+  const claimSlug = storedSlug || publicOrganiserSlug(row) || '';
+  let claimUrl = '';
+  try {
+    claimUrl = await resolveOrganiserClaimUrl(email, host, claimSlug);
+  } catch (claimErr) {
+    console.error('[create-group-claim-url]', claimErr.message || claimErr);
+    const { organiserPublicUrl } = require('../hub-email-urls');
+    claimUrl = organiserPublicUrl(row, host);
+  }
+
+  let invite = { sent: false, skipped: !sendInvite };
+  if (sendInvite) {
+    invite = await sendOrganiserDirectoryInvite({
+      to: email,
+      host,
+      organiser: row,
+      claimUrl,
+      actorEmail: session && session.email,
+    });
+  }
 
   return {
     organiser: mapOrganiserRow(row, counts[created.id] || 0, loginMeta.get(created.id)),
     provision,
     claimUrl,
+    invite,
+    sendInvite,
   };
 }
 
@@ -1447,14 +1483,13 @@ module.exports = async function handler(req, res) {
 
   if (body.action === 'create_group') {
     try {
-      const result = await createOrganiserGroupFromAdmin(body);
-      const provision = result.provision;
-      let message = 'Networking group created as a draft.';
-      if (provision) {
-        message = provision.createdAuth
-          ? 'Group created and login added for ' + provision.email + ' (no email sent).'
-          : 'Group created and linked to existing login for ' + provision.email + ' (no email sent).';
-      }
+      const result = await createOrganiserGroupFromAdmin(body, session);
+      const message = directoryInviteCreateMessage({
+        sendInvite: result.sendInvite,
+        invite: result.invite,
+        provision: result.provision,
+        email: (result.organiser && result.organiser.email) || body.contact_email || body.email,
+      });
       return json(res, 201, { ok: true, ...result, message });
     } catch (e) {
       const status = e.status || 500;

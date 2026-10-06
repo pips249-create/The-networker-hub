@@ -66,6 +66,7 @@ const ORGANISER_EMAIL_SLUGS = new Set([
   'distributorship_claim_invite',
   'organiser_claim_confirmed',
   'organiser_launch_invite',
+  'organiser_directory_invite',
   'organiser_team_invite',
   'organiser_email_verify',
   'event_intake_listed',

@@ -8,6 +8,7 @@ const { logEntityActivity } = require('./entity-activity-log');
 const CLAIM_INVITE_SLUGS = new Set([
   'organiser_claim_invite',
   'organiser_launch_invite',
+  'organiser_directory_invite',
 ]);
 
 function isClaimInviteSlug(slug) {
