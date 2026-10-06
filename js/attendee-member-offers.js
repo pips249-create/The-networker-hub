@@ -18,35 +18,20 @@
   var onChange = null;
 
   /** Static playbooks — same card shape as partner offers; open the click-through deck. */
-  var PLAYBOOKS = [
-    {
-      id: 'marketing',
-      title: 'Marketing that fits a networking diary',
-      provider: 'The Networker UK',
-      category: 'Playbook',
-      highlight: '5 pages',
-      summary: 'Get visible without burning every evening — click through the short guide.',
-      tone: 0,
-    },
-    {
-      id: 'numbers',
-      title: 'What your numbers are really telling you',
-      provider: 'The Networker UK',
-      category: 'Playbook',
-      highlight: '5 pages',
-      summary: 'Read cash, pipeline, and time like a simple dashboard.',
-      tone: 1,
-    },
-    {
-      id: 'funding',
-      title: 'Funding your business',
-      provider: 'The Networker UK',
-      category: 'Playbook',
-      highlight: '5 pages',
-      summary: 'Choose the right investment path before you pitch anyone.',
-      tone: 2,
-    },
-  ];
+  var PLAYBOOKS =
+    window.HubMemberPlaybooks && Array.isArray(window.HubMemberPlaybooks.catalog)
+      ? window.HubMemberPlaybooks.catalog.map(function (book) {
+          return {
+            id: book.id,
+            title: book.title,
+            provider: 'The Networker UK',
+            category: 'Playbook',
+            highlight: '5 pages',
+            summary: book.summary,
+            tone: book.tone != null ? book.tone : 0,
+          };
+        })
+      : [];
 
   function esc(s) {
     var d = document.createElement('div');
@@ -388,10 +373,10 @@
 
   function closePlaybookModal() {
     var modal = document.getElementById('ad-playbook-modal');
-    var frame = document.getElementById('ad-playbook-frame');
+    var mount = document.getElementById('ad-playbook-mount');
     if (modal) modal.hidden = true;
     document.body.classList.remove('ad-playbook-modal-open');
-    if (frame) frame.src = 'about:blank';
+    if (mount) mount.innerHTML = '';
   }
 
   function openPlaybookModal(id) {
@@ -404,14 +389,24 @@
     }
     if (!book) return;
     var modal = document.getElementById('ad-playbook-modal');
-    var frame = document.getElementById('ad-playbook-frame');
+    var mount = document.getElementById('ad-playbook-mount');
     var title = document.getElementById('ad-playbook-modal-title');
-    if (!modal || !frame) {
-      location.href = '/guides/member-playbooks#' + id;
+    if (!modal || !mount || !window.HubMemberPlaybooks || typeof window.HubMemberPlaybooks.mount !== 'function') {
+      location.href = '/guides/member-playbooks.html#' + id;
       return;
     }
     if (title) title.textContent = book.title;
-    frame.src = '/guides/member-playbooks?embed=1#' + id;
+    window.HubMemberPlaybooks.mount(mount, {
+      deckId: id,
+      onSwitch: function (nextId) {
+        for (var j = 0; j < PLAYBOOKS.length; j += 1) {
+          if (PLAYBOOKS[j].id === nextId) {
+            if (title) title.textContent = PLAYBOOKS[j].title;
+            break;
+          }
+        }
+      },
+    });
     modal.hidden = false;
     document.body.classList.add('ad-playbook-modal-open');
   }

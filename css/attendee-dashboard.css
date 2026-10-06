@@ -3480,11 +3480,26 @@ body.ad-playbook-modal-open {
   background: var(--ad-teal-light);
 }
 
-.ad-playbook-frame {
+.ad-playbook-mount {
   flex: 1;
   width: 100%;
-  border: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 12px 14px 16px;
   background: var(--ad-bg);
+}
+
+.ad-playbook-mount.mp-shell {
+  max-width: none;
+  margin: 0;
+}
+
+.ad-playbook-mount .mp-deck {
+  min-height: min(58vh, 520px);
+}
+
+.ad-playbook-mount .mp-viewport {
+  min-height: min(58vh, 520px);
 }
 
 .ad-services-pitch[hidden] {

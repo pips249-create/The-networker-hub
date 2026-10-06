@@ -29,6 +29,14 @@ body.member-playbooks-page.mp-embed .mp-viewport {
   min-height: min(62vh, 520px);
 }
 
+.mp-stage {
+  min-height: min(70vh, 560px);
+}
+
+.mp-embed-mount[hidden] {
+  display: none !important;
+}
+
 .member-playbooks-page {
   --mp-ink: var(--charcoal, #4a4446);
   --mp-ink-deep: #2f2a2c;
