@@ -10,6 +10,7 @@ const {
   isRebrandCampaignSlug,
   LEGACY_REPLY_EMAIL,
 } = require('../organiser-campaign-defaults');
+const { isLegacyMemberIntroSlug, legacyMemberIntroVars } = require('../legacy-member-intro');
 
 const MAX_BULK = 50;
 
@@ -141,25 +142,29 @@ module.exports = async function handler(req, res) {
     body.variables && typeof body.variables === 'object' ? { ...body.variables } : {};
   const siteVars = campaignSiteVars(host);
   const rebrand = isRebrandCampaignSlug(slug);
+  const legacyIntro = isLegacyMemberIntroSlug(slug);
   const nameByEmail = await fetchOrganiserNamesByEmail(emails);
   const sent = [];
   const failed = [];
 
   for (const email of emails) {
     const organiserName = organiserDisplayName(email, baseVars, nameByEmail);
+    const introVars = legacyIntro ? legacyMemberIntroVars(host, baseVars.user_name || organiserName) : {};
     const variables = {
       ...siteVars,
+      ...introVars,
       organiser_name: organiserName,
       group_name: organiserName,
       ...baseVars,
     };
+    if (legacyIntro && !baseVars.user_name) variables.user_name = introVars.user_name;
     // Keep DB/group name when caller did not pass an explicit organiser_name.
     if (!baseVars.organiser_name && !baseVars.group_name) {
       variables.organiser_name = organiserName;
       variables.group_name = organiserName;
     }
 
-    if (!rebrand) {
+    if (!rebrand && !legacyIntro) {
       let claimUrl = baseVars.claim_url;
       if (!claimUrl) {
         try {
@@ -187,6 +192,11 @@ module.exports = async function handler(req, res) {
     if (rebrand) {
       sendOpts.from = baseVars.resend_from || legacyCampaignFrom();
       sendOpts.replyTo = baseVars.reply_to || LEGACY_REPLY_EMAIL;
+    } else if (legacyIntro) {
+      if (baseVars.resend_from || process.env.RESEND_FROM_LEGACY) {
+        sendOpts.from = baseVars.resend_from || legacyCampaignFrom();
+      }
+      sendOpts.replyTo = baseVars.reply_to || 'catherine@thenetworkeruk.com';
     } else if (slug === 'organiser_claim_invite' || slug === 'organiser_launch_invite') {
       sendOpts.replyTo = baseVars.reply_to || 'catherine@thenetworkeruk.com';
     }

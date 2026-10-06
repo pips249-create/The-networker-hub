@@ -682,6 +682,7 @@ const PREFERENCE_EMAIL_SLUGS = {
 
 /** Promotional / nurture mail — requires explicit marketing opt-in (PECR). */
 const MARKETING_EMAIL_SLUGS = new Set([
+  'legacy_site_reintroduction',
   'attendee_reengagement',
   'attendee_signup_events_nudge',
   'attendee_signup_events_nudge_followup',
@@ -733,6 +734,7 @@ function shouldSkipEmailAllowlist(slug) {
     slug === 'franchise_claim_invite_followup' ||
     slug === 'distributorship_claim_invite' ||
     slug === 'organiser_claim_confirmed' ||
+    slug === 'legacy_site_reintroduction' ||
     slug === 'partner_programme_invite'
   ) {
     return true;
@@ -750,6 +752,7 @@ function shouldAttachListUnsubscribe(slug) {
   if (MARKETING_EMAIL_SLUGS.has(s)) return true;
   if (
     s === 'organiser_rebrand_announcement' ||
+    s === 'legacy_site_reintroduction' ||
     s === 'organiser_launch_invite' ||
     s === 'organiser_directory_invite' ||
     s === 'organiser_unclaimed_followup' ||

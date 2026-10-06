@@ -33,6 +33,7 @@ const {
   HUB_PARTNER_SPONSOR_SLUGS,
 } = require('./email-sponsor-sections');
 const { campaignSiteVars, applyOrganiserLaunchInviteCopy } = require('./organiser-campaign-defaults');
+const { legacyMemberIntroVars } = require('./legacy-member-intro');
 const { buildListingAlertSeriesCopy } = require('./listing-alert-series');
 
 function sampleRecommendationCard(title, subtitle, url) {
@@ -787,6 +788,16 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     vars.suspension_reason =
       vars.suspension_reason || 'Repeated breaches of Platform rules after prior warnings.';
     vars.suspension_details_row = vars.suspension_details_row || '';
+  }
+
+  if (slug === 'legacy_site_reintroduction') {
+    const intro = legacyMemberIntroVars(site, vars.user_name);
+    Object.keys(intro).forEach((key) => {
+      if (vars[key] == null || vars[key] === '') vars[key] = intro[key];
+    });
+    if (!extraVars || !extraVars.user_name) vars.user_name = intro.user_name;
+    vars.event_count = (extraVars && extraVars.event_count) || intro.event_count;
+    vars.preheader = (extraVars && extraVars.preheader) || intro.preheader;
   }
 
   if (

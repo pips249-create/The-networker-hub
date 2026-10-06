@@ -67,6 +67,11 @@ const BRANDED_EMAIL_TEMPLATES = {
     marker: 'hub-email-layout-v3-purple',
     subject: "The Networker's new chapter",
   },
+  legacy_site_reintroduction: {
+    file: 'legacy-site-reintroduction.html',
+    marker: 'hub-email-layout-v3-purple',
+    subject: 'The Networker UK is live — {{event_count}} events and counting',
+  },
   organiser_team_invite: {
     file: 'organiser-team-invite.html',
     marker: 'hub-email-layout-v3-purple',
