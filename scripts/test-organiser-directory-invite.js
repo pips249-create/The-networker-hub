@@ -19,6 +19,7 @@ const {
   directoryInviteVariables,
   directoryInviteCreateMessage,
 } = require('../api/_lib/organiser-directory-invite');
+const { staleUnclaimedReminderReason } = require('../api/_lib/organiser-unclaimed-reminders');
 
 function fail(msg) {
   console.error('FAIL:', msg);
@@ -114,6 +115,48 @@ async function main() {
   });
   assert(skipped.indexOf('no invitation sent') !== -1, skipped);
   pass('admin messages');
+
+  const base = {
+    id: 'org-1',
+    name: 'City Connectors',
+    email: 'hello@city.example',
+    listing_status: 'published',
+    ownership_claim_status: 'pending',
+  };
+  const recent = { at: new Date(Date.now() - 2 * 86400000).toISOString() };
+  const old = { at: new Date(Date.now() - 10 * 86400000).toISOString() };
+  assert(staleUnclaimedReminderReason(base, null) === '', 'never contacted is eligible');
+  assert(staleUnclaimedReminderReason(base, old) === '', 'contact older than 7 days is eligible');
+  assert(staleUnclaimedReminderReason(base, recent) === 'recent_contact', 'contact inside 7 days is skipped');
+  assert(
+    staleUnclaimedReminderReason({ ...base, ownership_claim_status: 'claimed' }, null) === 'already_claimed',
+    'claimed is skipped'
+  );
+  assert(
+    staleUnclaimedReminderReason({ ...base, ownership_claim_status: 'disputed' }, null) === 'disputed',
+    'disputed is skipped'
+  );
+  assert(
+    staleUnclaimedReminderReason({ ...base, listing_status: 'unpublished' }, null) === 'hidden',
+    'hidden is skipped'
+  );
+  assert(
+    staleUnclaimedReminderReason({ ...base, listing_status: 'draft' }, null) === 'not_on_browse',
+    'draft off the browse page is skipped'
+  );
+  assert(
+    staleUnclaimedReminderReason(
+      { ...base, listing_status: 'draft', verification_status: 'Verified' },
+      null
+    ) === '',
+    'verified page on browse is eligible'
+  );
+  assert(staleUnclaimedReminderReason({ ...base, email: '' }, null) === 'missing_email', 'missing email is skipped');
+  assert(
+    staleUnclaimedReminderReason({ ...base, email: 'hi@thenetworkeruk.com' }, null) === 'opted_out',
+    'staff inbox is skipped'
+  );
+  pass('stale unclaimed audience');
 }
 
 main().catch(function (err) {
