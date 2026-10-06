@@ -163,7 +163,13 @@
       .join('');
   }
 
+  function onServicesPage() {
+    var page = document.getElementById('ad-page-services');
+    return Boolean(page && page.classList.contains('is-active'));
+  }
+
   function setPageHeading(title, sub) {
+    if (!onServicesPage()) return;
     var titleEl = document.getElementById('ad-subpage-title');
     var subEl = document.getElementById('ad-subpage-sub');
     if (titleEl) titleEl.textContent = title;

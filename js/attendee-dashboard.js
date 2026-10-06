@@ -38,10 +38,6 @@
       title: 'Saved organisers',
       sub: 'Networking groups and hosts you follow. Saving an event also saves its organiser.',
     },
-    reviews: {
-      title: 'Organiser reviews',
-      sub: 'Rate networking groups after events you attended. Reviews appear on the organiser’s public profile; they can reply here.',
-    },
   };
 
   const OPPORTUNITY_SAVED_SCOPE_HEAD = {
@@ -78,7 +74,7 @@
     },
     saved: {
       title: 'Saved & memberships',
-      sub: 'Your group memberships, saved events, saved organisers, and organiser reviews from events you attended.',
+      sub: 'Your group memberships, saved events, and saved organisers.',
     },
     'saved-opportunities': {
       title: 'Opportunities',
@@ -169,10 +165,10 @@
   function routeHash() {
     if (currentRoute === 'overview') return '';
     if (currentRoute === 'tickets') return '#' + ticketsScope;
-    if (currentRoute === 'saved' && savedScope === 'groups') return '#memberships';
-    if (currentRoute === 'saved' && savedScope === 'reviews') {
+    if (isReviewsRoute(currentRoute)) {
       return reviewsScope === 'done' ? '#reviews-done' : '#reviews-pending';
     }
+    if (currentRoute === 'saved' && savedScope === 'groups') return '#memberships';
     if (currentRoute === 'saved-opportunities' && opportunitySavedScope === 'alerts') return '#search-alerts';
     if (currentRoute === 'saved-opportunities' && opportunitySavedScope === 'enquiries') {
       return '#opportunity-enquiries';
@@ -1188,18 +1184,19 @@
 
   function layoutRouteKey(route) {
     if (route === 'tickets' || isTicketsScope(route)) return ticketsScope;
-    if (currentRoute === 'saved' && savedScope === 'reviews') return 'reviews';
     return route;
   }
 
   function pageRouteKey(route) {
     if (route === 'tickets' || isTicketsScope(route)) return 'tickets';
+    if (isReviewsRoute(route)) return 'reviews';
     return route;
   }
 
   function bottomNavRouteKey(route) {
     if (route === 'tickets' || isTicketsScope(route)) return 'tickets';
-    if (route === 'saved' || route === 'memberships' || isReviewsRoute(route)) return 'saved';
+    if (isReviewsRoute(route)) return 'reviews-pending';
+    if (route === 'saved' || route === 'memberships') return 'saved';
     if (route === 'saved-opportunities' || route === 'opportunity-enquiries') {
       return 'saved-opportunities';
     }
@@ -1226,6 +1223,7 @@
       if (navRoute === 'tickets' && (currentRoute === 'tickets' || isTicketsScope(currentRoute))) {
         active = true;
       }
+      if (navRoute === 'reviews-pending' && isReviewsRoute(currentRoute)) active = true;
       if (navRoute === 'saved' && currentRoute === 'saved') active = true;
       if (
         navRoute === 'saved-opportunities' &&
@@ -1281,11 +1279,9 @@
       btn.dataset.boundReviewsScope = '1';
       btn.addEventListener('click', () => {
         const scope = btn.getAttribute('data-reviews-scope') || 'pending';
-        setSavedScope('reviews');
-        setReviewsScope(scope);
-        syncRouteHash();
-        if (currentRoute !== 'saved') setRoute('saved');
-        else if (dashboardReady) renderRouteTables('saved', { force: true });
+        const route = reviewsRouteFromScope(scope);
+        if (currentRoute !== route) setRoute(route);
+        else if (dashboardReady) renderRouteTables('reviews', { force: true });
       });
     });
     setReviewsScope(reviewsScope);
@@ -1294,12 +1290,6 @@
   function maybeDefaultSavedScope() {
     if (savedScopePinned) return;
     if (currentRoute !== 'saved') return;
-    const pending = pendingReviewsList().length;
-    if (pending > 0 && (savedScope === 'events' || savedScope === 'reviews')) {
-      setSavedScope('reviews');
-      setReviewsScope('pending');
-      return;
-    }
     if (savedScope !== 'events') return;
     const hasGroups = myGroups.length > 0;
     const hasEvents = savedEvents.length > 0;
@@ -1921,9 +1911,8 @@
   function parseRoute() {
     const hash = (location.hash.replace('#', '') || 'overview').toLowerCase();
     if (hash.startsWith('review/')) {
-      savedScope = 'reviews';
       reviewsScope = 'pending';
-      return 'saved';
+      return 'reviews-pending';
     }
     if (hash === 'memberships') return 'memberships';
     if (hash === 'search-alerts') {
@@ -1939,14 +1928,12 @@
       return 'saved-opportunities';
     }
     if (hash === 'reviews-done') {
-      savedScope = 'reviews';
       reviewsScope = 'done';
-      return 'saved';
+      return 'reviews-done';
     }
     if (hash === 'reviews-pending' || hash === 'reviews') {
-      savedScope = 'reviews';
       reviewsScope = 'pending';
-      return 'saved';
+      return 'reviews-pending';
     }
     if (hash === 'tickets') {
       ticketsScope = 'upcoming';
@@ -2505,9 +2492,8 @@
     if (!eventId) return;
     const ratingParam = Number(new URLSearchParams(location.search).get('rating') || 0);
     const initialRating = ratingParam >= 1 && ratingParam <= 5 ? Math.round(ratingParam) : 0;
-    setSavedScope('reviews');
     setReviewsScope('pending');
-    setRoute('saved');
+    setRoute('reviews-pending');
     const reg = findRegistrationByEventId(eventId);
     const launch = () => {
       if (!reg) return;
@@ -2551,9 +2537,7 @@
     }
     if (nextRoute === 'reviews') nextRoute = 'reviews-pending';
     if (isReviewsRoute(nextRoute)) {
-      setSavedScope('reviews');
       setReviewsScope(reviewsScopeFromRoute(nextRoute));
-      nextRoute = 'saved';
     }
     if (isTicketsScope(nextRoute)) {
       setTicketsScope(nextRoute);
@@ -2727,8 +2711,6 @@
     const cta = el.querySelector('[data-ad-open-reviews]');
     if (cta) {
       cta.addEventListener('click', () => {
-        setSavedScope('reviews');
-        setReviewsScope('pending');
         setRoute('reviews-pending');
       });
     }
@@ -2818,9 +2800,10 @@
     set('ad-side-reviewed', doneReviewsList().length);
     set('ad-side-saved-opportunities', savedOpportunities.length + savedOpportunitySearches.length);
     set('ad-bottom-tickets', upcomingList().length);
+    set('ad-bottom-reviews', pendingReviewsList().length);
     set(
       'ad-bottom-saved',
-      myGroups.length + savedEvents.length + savedOrganisers.length + pendingReviewsList().length
+      myGroups.length + savedEvents.length + savedOrganisers.length
     );
     set('ad-bottom-opportunities', oppTotal);
     const serviceCount =
@@ -2838,7 +2821,6 @@
     setTabCount('ad-saved-count-groups', myGroups.length);
     setTabCount('ad-saved-count-events', savedEvents.length);
     setTabCount('ad-saved-count-organisers', savedOrganisers.length);
-    setTabCount('ad-saved-count-reviews', pendingReviewsList().length);
     setTabCount('ad-reviews-count-pending', pendingReviewsList().length);
     setTabCount('ad-reviews-count-done', doneReviewsList().length);
   }
@@ -3445,9 +3427,7 @@
           return;
         }
         if (key === 'reviews') {
-          setSavedScope('reviews');
-          setReviewsScope(pendingReviewsList().length > 0 ? 'pending' : 'done');
-          setRoute('reviews-pending');
+          setRoute(pendingReviewsList().length > 0 ? 'reviews-pending' : 'reviews-done');
           return;
         }
         if (key === 'saved') {
@@ -4304,6 +4284,7 @@
 
   function routeTablesKey(route) {
     if (route === 'tickets') return ticketsScope;
+    if (isReviewsRoute(route)) return 'reviews';
     return route;
   }
 
@@ -4357,6 +4338,7 @@
       } catch (err) {
         /* non-fatal */
       }
+    } else if (key === 'reviews') {
       try {
         renderPendingReviewCards();
         renderEventRows(
@@ -4421,8 +4403,11 @@
     renderRouteTables('past', { force: true });
     renderRouteTables('payments', { force: true });
     renderRouteTables('cancellations', { force: true });
-    if (savedEvents.length || myGroups.length || savedOrganisers.length || pendingReviewsList().length || doneReviewsList().length) {
+    if (savedEvents.length || myGroups.length || savedOrganisers.length) {
       renderRouteTables('saved', { force: true });
+    }
+    if (pendingReviewsList().length || doneReviewsList().length) {
+      renderRouteTables('reviews', { force: true });
     }
     renderRouteTables('saved-opportunities', { force: true });
     updateSideCounts();
@@ -4489,9 +4474,7 @@
       btn.addEventListener('click', () => {
         let route = btn.getAttribute('data-ad-stat-route') || 'overview';
         if (route === 'reviews') {
-          setSavedScope('reviews');
-          setReviewsScope(pendingReviewsList().length > 0 ? 'pending' : 'done');
-          route = 'saved';
+          route = pendingReviewsList().length > 0 ? 'reviews-pending' : 'reviews-done';
         }
         if (route === 'opportunity-enquiries') {
           setOpportunitySavedScope('enquiries');
