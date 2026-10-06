@@ -22,6 +22,7 @@ const { sendEventAlmostFullEmail, buildMeetingLinkEmailSection } = require('./li
 const { attendeeInitial } = require('./organiser-email-sections');
 const { resolveOrganiserNotificationEmail } = require('./organiser-notification-email');
 const { formatEventDateTime } = require('./event-timezone');
+const { normalizeMeetingLink, meetingLinkHref } = require('./meeting-link');
 
 function formatAmount(amountPaid) {
   const n = Number(amountPaid);
@@ -30,9 +31,8 @@ function formatAmount(amountPaid) {
 }
 
 function buildMeetingLinkSection(link) {
-  const url = String(link || '').trim();
-  if (!url) return '';
-  const safeUrl = url.replace(/"/g, '&quot;');
+  const safeUrl = meetingLinkHref(link);
+  if (!safeUrl) return '';
   return (
     '<tr><td class="mobile-pad" style="padding:0 48px 8px;">' +
     '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f0e8;border-radius:14px;border:1px solid #d9c4e0;">' +
@@ -75,7 +75,7 @@ function buildAttendeeEmailVars({
     String(ev.location_label || ev.venue || ev.city || '').trim() ||
     'See event page';
   const siteUrl = siteBase();
-  const meetingLink = String(registration.meeting_link || ev.meeting_link || '').trim();
+  const meetingLink = normalizeMeetingLink(registration.meeting_link || ev.meeting_link);
   const online = isOnlineEvent(ev, meetingLink);
   const ticketQuantity = Math.max(1, parseInt(registration.quantity, 10) || booked.quantity || 1);
   const bookedAtIso = registration.created_at || new Date().toISOString();
@@ -570,8 +570,8 @@ async function sendApplicationDecisionEmails(sb, registration, { decision, ticke
  * When an organiser adds a join link for the first time, email existing ticket holders.
  */
 async function sendMeetingLinkAddedEmails(sb, eventId, { previousLink, newLink } = {}) {
-  const prev = String(previousLink || '').trim();
-  const next = String(newLink || '').trim();
+  const prev = normalizeMeetingLink(previousLink) || String(previousLink || '').trim();
+  const next = normalizeMeetingLink(newLink);
   if (prev || !next || !eventId) {
     return { sent: 0, skipped: true, reason: 'not_first_link' };
   }

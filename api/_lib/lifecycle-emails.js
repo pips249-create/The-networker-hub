@@ -21,6 +21,7 @@ const { ownerNameFromOpportunity } = require('./opportunity-emails');
 const { resolveOrganiserNotificationEmail } = require('./organiser-notification-email');
 const { escapeHtml } = require('./event-refund-policy');
 const { formatEventDateTime } = require('./favourite-sales-emails');
+const { meetingLinkHref } = require('./meeting-link');
 
 function baseEmailVars(siteUrl) {
   const site = siteBase(siteUrl);
@@ -36,9 +37,8 @@ function baseEmailVars(siteUrl) {
 }
 
 function buildMeetingLinkEmailSection(link) {
-  const url = String(link || '').trim();
-  if (!url) return '';
-  const safeUrl = escapeHtml(url);
+  const safeUrl = meetingLinkHref(link);
+  if (!safeUrl) return '';
   return (
     '<a href="' +
     safeUrl +
