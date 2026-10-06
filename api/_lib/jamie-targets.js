@@ -22,6 +22,9 @@ const TARGETS = {
 const STAFF = new Set(['Catherine', 'Rosie', 'Jamie']);
 const CREDIT_ACTIONS = new Set(['event_created', 'admin_claim_invite', 'admin_ownership_transfer']);
 const PITCH_DECK_MEETING = /^Meeting — (Updated )?Tailored pitch deck\b/i;
+const CALL_MEETING_WEIGHT = 0.5;
+const REFERRAL_MEETING_WEIGHT = 0.25;
+const REFERRED_NOTE = 'Referred to Jamie';
 
 function canSeeJamieTargets(email) {
   const who = shownByFromEmail(email);
@@ -249,8 +252,26 @@ function isMeetingBody(body) {
   return text === 'Meeting' || /^Meeting — /.test(text) || /^Meeting - /.test(text);
 }
 
-/** Sales-kit lines to monitor. Meetings and "Listed an event" are counted elsewhere. */
-function crmNoteLines(notes, shownAt) {
+function isPhoneCallBody(body) {
+  const text = String(body || '').trim();
+  if (!text || /^Attempted call\b/i.test(text)) return false;
+  return text === 'Called' || text.startsWith('Called — ') || text.startsWith('Called - ');
+}
+
+function isReferredToJamieNotes(notes) {
+  return String(notes || '')
+    .split(/\n/)
+    .some((line) => {
+      const body = meetingTouchBody(line);
+      return (
+        body === REFERRED_NOTE ||
+        body.startsWith(REFERRED_NOTE + ' — ') ||
+        body.startsWith(REFERRED_NOTE + ' - ')
+      );
+    });
+}
+
+function datedNoteLines(notes, shownAt) {
   const lines = String(notes || '')
     .split(/\n/)
     .map((line) => String(line || '').trim())
@@ -260,11 +281,23 @@ function crmNoteLines(notes, shownAt) {
     const dated = line.match(/^(\d{4}-\d{2}-\d{2}):\s*(.*)$/);
     const day = dated ? dated[1] : String(shownAt || '').slice(0, 10);
     const body = String(dated ? dated[2] : line).trim();
-    if (!body || /^Listed an event\b/i.test(body) || isMeetingBody(body)) return;
-    if (!inPeriodDate(day)) return;
+    if (!body || !inPeriodDate(day)) return;
     out.push({ day, body });
   });
   return out;
+}
+
+function phoneCallLines(notes, shownAt) {
+  return datedNoteLines(notes, shownAt).filter((note) => isPhoneCallBody(note.body));
+}
+
+/** Sales-kit lines to monitor. Meetings, phone calls, and "Listed an event" are counted elsewhere. */
+function crmNoteLines(notes, shownAt) {
+  return datedNoteLines(notes, shownAt).filter((note) => {
+    if (/^Listed an event\b/i.test(note.body) || isMeetingBody(note.body)) return false;
+    if (isPhoneCallBody(note.body)) return false;
+    return true;
+  });
 }
 
 function touchInstant(raw) {
@@ -353,12 +386,24 @@ function buildJamieTargetsReport(input) {
         at: row.shown_at || row.updated_at || row.created_at,
       });
     }
-    if (staff !== 'Jamie') return;
-    if (!inPeriodDate(row.shown_at || row.created_at)) return;
     const name = String(row.organiser_name || 'Group').trim() || 'Group';
     const at = /^\d{4}-\d{2}-\d{2}$/.test(String(row.shown_at || ''))
       ? String(row.shown_at) + 'T12:00:00.000Z'
       : row.shown_at || row.created_at;
+    if (staff !== 'Jamie') {
+      if (isReferredToJamieNotes(row.notes) && inPeriodDate(row.shown_at || row.created_at)) {
+        activity.push({
+          at,
+          kind: 'referral',
+          kindLabel: 'Referred · 0.25',
+          whenLabel: formatWhen(row.shown_at || row.created_at, true),
+          summary: 'Referred meeting · ' + name,
+          organiserId: row.organiser_id || '',
+        });
+      }
+      return;
+    }
+    if (!inPeriodDate(row.shown_at || row.created_at)) return;
     if (isBookedMeetingNotes(row.notes)) {
       const detail = meetingNoteDetail(row.notes);
       activity.push({
@@ -370,6 +415,17 @@ function buildJamieTargetsReport(input) {
         organiserId: row.organiser_id || '',
       });
     }
+    phoneCallLines(row.notes, row.shown_at || row.created_at).forEach((note) => {
+      const detail = note.body.replace(/^Called\s+[—-]\s*/, '').trim();
+      activity.push({
+        at: note.day + 'T12:00:00.000Z',
+        kind: 'call',
+        kindLabel: 'Phone call · 0.5',
+        whenLabel: formatWhen(note.day, true),
+        summary: 'Phone call · ' + name + (detail && detail !== 'Called' ? ' — ' + detail : ''),
+        organiserId: row.organiser_id || '',
+      });
+    });
     crmNoteLines(row.notes, row.shown_at || row.created_at).forEach((note) => {
       activity.push({
         at: note.day + 'T12:00:00.000Z',
@@ -423,14 +479,19 @@ function buildJamieTargetsReport(input) {
 
   activity.sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
 
-  const meetings = activity.filter((item) => item.kind === 'meeting');
+  const meetingScore = activity.reduce((sum, item) => {
+    if (item.kind === 'meeting') return sum + 1;
+    if (item.kind === 'call') return sum + CALL_MEETING_WEIGHT;
+    if (item.kind === 'referral') return sum + REFERRAL_MEETING_WEIGHT;
+    return sum;
+  }, 0);
   return {
     period: periodMeta(now),
     metrics: {
       meetings: {
-        ...progressSnapshot(meetings.length, TARGETS.meetings),
+        ...progressSnapshot(meetingScore, TARGETS.meetings),
         label: 'Booked meetings',
-        hint: 'Counted when Jamie logs Meeting in the organiser sales kit during this period. Saving a pitch deck does not count.',
+        hint: 'A meeting Jamie logs counts as 1. A phone call she logs as Called counts as 0.5. An attempted call does not. A meeting Catherine refers counts as 0.25. Saving a pitch deck does not count.',
       },
       claimedPages: {
         ...progressSnapshot(claimIds.size, TARGETS.claimedPages),

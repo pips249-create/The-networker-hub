@@ -463,17 +463,18 @@
       title: "How Jamie's targets work",
       steps: [
         'This page is only for Catherine and Jamie. It covers 1 October through 2 November.',
-        'Booked meetings count when Jamie logs Meeting in the organiser sales kit. Pitch-deck saves do not count.',
+        'Log a booked meeting on this page, or in Organiser sales kit tap Meeting. That counts as 1 for whoever it is logged under.',
+        'A phone call Jamie logs with Called counts as 0.5. Attempted call does not count. Pitch-deck saves do not count.',
         'A claimed page counts when the group claims in this period and Jamie was the last team member to contact them.',
         'Each date Jamie adds is logged as activity and counts toward events, including every date in a series.',
-        'CRM notes (calls, emails, and other sales-kit logs) appear in the amber list. They do not change the three scores, except a Meeting.',
+        'Emails and other sales-kit notes stay in the amber list and do not change the three scores.',
       ],
     },
     'sales-kit': {
       title: 'How to use the organiser sales kit',
       steps: [
         'From group cleanup, click Organiser sales kit on a row — use the CRM dropdown to log a call or email under your login.',
-        'Tap Called, Attempted call, Emailed, Meeting, or LinkedIn to log outreach as yourself — you cannot log on behalf of Catherine, Rosie, or Jamie.',
+        'Tap Called, Attempted call, Emailed, Meeting, or LinkedIn to log outreach as yourself. Catherine can also log a booked meeting for herself or for Jamie from Pip\'s Activity or Jamie\'s targets.',
         'Switch to Pitch deck for cheat sheets, sales decks, Loom script, and follow-up email copy.',
         'Pin one agreed demo organiser on the pitch deck tab — everyone impersonates that group for live walkthroughs.',
         'Check the CRM log before messaging so you do not double-contact the same group.',
@@ -32285,6 +32286,94 @@
     load();
   }
 
+  function formatTargetNumber(value) {
+    var num = Number(value);
+    if (!Number.isFinite(num)) return '0';
+    var rounded = Math.round(num * 100) / 100;
+    if (Math.abs(rounded - Math.round(rounded)) < 0.001) return String(Math.round(rounded));
+    return String(rounded);
+  }
+
+  function countedMeetingFormHtml(opts) {
+    opts = opts || {};
+    var page = opts.page || 'pip';
+    var defaultCredit = opts.defaultCredit || 'Catherine';
+    var choice = opts.allowChoice
+      ? '<div class="flex flex-wrap gap-x-4 gap-y-2 text-sm text-slate-700">' +
+        '<label class="inline-flex items-center gap-2"><input type="radio" name="credit" value="Catherine"' +
+        (defaultCredit === 'Catherine' ? ' checked' : '') +
+        '> For me</label>' +
+        '<label class="inline-flex items-center gap-2"><input type="radio" name="credit" value="Jamie"' +
+        (defaultCredit === 'Jamie' ? ' checked' : '') +
+        '> For Jamie</label></div>'
+      : '<input type="hidden" name="credit" value="' + attrEsc(defaultCredit) + '">';
+    var intro = opts.allowChoice
+      ? 'Counts as 1. Choose who it is for. Jamie can also tap Meeting in the organiser sales kit. A phone call she logs there with Called counts as half a meeting. Attempted call does not.'
+      : 'Counts as 1 on your target. You can also tap Meeting in the organiser sales kit. A phone call you log there with Called counts as half a meeting. Attempted call does not.';
+    return (
+      '<section class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">' +
+      '<h3 class="text-base font-bold text-brand-900">Log a booked meeting</h3>' +
+      '<p class="text-sm text-slate-600 mt-1">' +
+      esc(intro) +
+      '</p>' +
+      '<form class="mt-3 space-y-3" data-counted-meeting-form data-page="' +
+      attrEsc(page) +
+      '">' +
+      choice +
+      '<label class="block"><span class="block text-xs font-semibold text-slate-500 mb-1">Group or contact</span>' +
+      '<input name="organiserName" required maxlength="160" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white" placeholder="Group name" autocomplete="off"></label>' +
+      '<label class="block"><span class="block text-xs font-semibold text-slate-500 mb-1">Note (optional)</span>' +
+      '<input name="note" maxlength="200" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white" placeholder="e.g. Thursday 10am" autocomplete="off"></label>' +
+      '<div class="flex flex-wrap items-center gap-3">' +
+      '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2">Save meeting</button>' +
+      '<p class="text-sm text-slate-500" data-counted-meeting-status></p></div></form></section>'
+    );
+  }
+
+  function bindCountedMeetingForm() {
+    if (!main) return;
+    var form = main.querySelector('[data-counted-meeting-form]');
+    if (!form || form.dataset.bound) return;
+    form.dataset.bound = '1';
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var status = form.querySelector('[data-counted-meeting-status]');
+      var nameEl = form.querySelector('[name="organiserName"]');
+      var noteEl = form.querySelector('[name="note"]');
+      var creditEl = form.querySelector('[name="credit"]:checked') || form.querySelector('[name="credit"]');
+      var credit = creditEl ? creditEl.value : '';
+      var btn = form.querySelector('button[type="submit"]');
+      var onJamiePage = form.getAttribute('data-page') === 'jamie';
+      if (btn) btn.disabled = true;
+      if (status) status.textContent = 'Saving…';
+      adminPost('/api/admin/sales-kit', {
+        action: 'log_counted_meeting',
+        credit: credit,
+        organiserName: nameEl ? nameEl.value : '',
+        note: noteEl ? noteEl.value : '',
+      }).then(function (data) {
+        if (btn) btn.disabled = false;
+        if (!data || !data.ok) {
+          if (status) status.textContent = (data && (data.message || data.error)) || 'Could not save.';
+          return;
+        }
+        if ((credit === 'Jamie') === onJamiePage) {
+          if (onJamiePage) renderJamieTargets();
+          else renderPipsActivity();
+          return;
+        }
+        if (nameEl) nameEl.value = '';
+        if (noteEl) noteEl.value = '';
+        if (status) {
+          status.textContent =
+            credit === 'Jamie'
+              ? 'Saved. It counts as 1 on Jamie’s targets.'
+              : 'Saved. It counts as 1 on your targets.';
+        }
+      });
+    });
+  }
+
   function jamieTargetsMetricCard(metric) {
     var pct = Math.min(100, Number(metric.progressPct) || 0);
     var bar = metric.complete ? 'bg-emerald-500' : 'bg-brand-500';
@@ -32294,14 +32383,14 @@
       esc(metric.label || '') +
       '</p>' +
       '<p class="text-2xl font-bold text-brand-900 mt-1">' +
-      esc(String(metric.actual || 0)) +
+      esc(formatTargetNumber(metric.actual)) +
       '<span class="text-base font-semibold text-slate-400"> / ' +
-      esc(String(metric.target || 0)) +
+      esc(formatTargetNumber(metric.target)) +
       '</span></p>' +
       '<p class="text-xs text-slate-500 mt-1">' +
       (metric.complete
         ? 'Target met'
-        : esc(String(metric.remaining || 0)) + ' still to go · ' + esc(String(pct)) + '%') +
+        : esc(formatTargetNumber(metric.remaining)) + ' still to go · ' + esc(String(pct)) + '%') +
       '</p>' +
       '<div class="mt-3 h-2.5 rounded-full bg-slate-100 overflow-hidden">' +
       '<div class="h-full ' +
@@ -32390,12 +32479,14 @@
         jamieTargetsMetricCard(metrics.claimedPages || {}) +
         jamieTargetsMetricCard(metrics.events || {}) +
         '</section>' +
+        countedMeetingFormHtml({ page: 'pip', allowChoice: true, defaultCredit: 'Catherine' }) +
         '<section class="admin-dash-section">' +
         '<div class="admin-dash-section-head"><h3>Activity</h3>' +
         '<p>Events you add, CRM logs, claim invites, and meetings you refer to Jamie.</p></div>' +
         '<div class="admin-dash-section-body">' +
         activityHtml +
         '</div></section></div>';
+      bindCountedMeetingForm();
     });
   }
 
@@ -32489,19 +32580,25 @@
         jamieTargetsMetricCard(metrics.claimedPages || {}) +
         jamieTargetsMetricCard(metrics.events || {}) +
         '</section>' +
+        countedMeetingFormHtml({
+          page: 'jamie',
+          allowChoice: canSeePipsActivity(),
+          defaultCredit: 'Jamie',
+        }) +
         '<section class="admin-dash-section">' +
         '<div class="admin-dash-section-head"><h3>Counts toward the targets</h3>' +
-        '<p>Meetings she logs, pages claimed after her last contact, and events or series dates she adds.</p></div>' +
+        '<p>Meetings count as 1, her phone calls as 0.5, referred meetings as 0.25, plus claimed pages and events she adds.</p></div>' +
         '<div class="admin-dash-section-body">' +
         activityHtml +
         '</div></section>' +
         '<section class="rounded-xl border border-amber-300 bg-amber-50 shadow-sm">' +
         '<div class="px-4 py-3 border-b border-amber-200">' +
         '<h3 class="text-base font-bold text-amber-950">CRM notes</h3>' +
-        '<p class="text-sm text-amber-900 mt-1">What Jamie logs in the sales kit, such as calls and emails. These do not change the three scores above. A meeting still counts up there.</p></div>' +
+        '<p class="text-sm text-amber-900 mt-1">Emails and other sales-kit notes. These do not change the three scores. Phone calls she logs as Called count as half a meeting in the list above.</p></div>' +
         '<div class="px-4">' +
         crmHtml +
         '</div></section></div>';
+      bindCountedMeetingForm();
     });
   }
 

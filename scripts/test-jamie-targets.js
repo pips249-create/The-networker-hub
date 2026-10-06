@@ -232,4 +232,41 @@ assert.strictEqual(withEmail.metrics.meetings.actual, 1);
 assert.strictEqual(withEmail.activity.filter((item) => item.kind === 'outreach').length, 1);
 assert.ok(withEmail.activity.some((item) => item.kind === 'outreach' && item.summary.indexOf('Emailed') !== -1));
 
+const withCall = buildJamieTargetsReport({
+  now: new Date('2026-10-06T12:00:00.000Z'),
+  activityRows: [],
+  demos: [
+    {
+      shown_at: '2026-10-06',
+      shown_by: 'Jamie',
+      organiser_name: 'Colony Networking',
+      organiser_id: 'org-c',
+      notes: 'Called — spoke to the organiser',
+      created_by_email: 'jamie@thenetworkeruk.com',
+    },
+    {
+      shown_at: '2026-10-06',
+      shown_by: 'Jamie',
+      organiser_name: 'Other Group',
+      organiser_id: 'org-o',
+      notes: 'Attempted call — no answer',
+      created_by_email: 'jamie@thenetworkeruk.com',
+    },
+    {
+      shown_at: '2026-10-05',
+      shown_by: 'Catherine',
+      organiser_name: 'Referred Group',
+      organiser_id: 'org-r',
+      notes: 'Referred to Jamie — intro emailed',
+      created_by_email: 'pips249@gmail.com',
+    },
+  ],
+  organisers: [],
+});
+assert.strictEqual(withCall.metrics.meetings.actual, 0.75);
+assert.strictEqual(withCall.activity.filter((item) => item.kind === 'call').length, 1);
+assert.strictEqual(withCall.activity.filter((item) => item.kind === 'referral').length, 1);
+assert.ok(withCall.activity.some((item) => item.kind === 'outreach' && item.summary.indexOf('Attempted call') !== -1));
+assert.ok(!withCall.activity.some((item) => item.kind === 'outreach' && item.summary.indexOf('Called —') !== -1));
+
 console.log('test-jamie-targets: ok');

@@ -656,6 +656,48 @@ module.exports = async function handler(req, res) {
       return json(res, 200, { ok: true, demoOrganiser: null });
     }
 
+    if (action === 'log_counted_meeting') {
+      const actor = actorFromRequest(req);
+      const credit = String(body.credit || '').trim();
+      const organiserName = String(body.organiserName || '').trim();
+      const note = String(body.note || '')
+        .trim()
+        .replace(/\s+/g, ' ')
+        .slice(0, 200);
+      if (credit !== 'Catherine' && credit !== 'Jamie') {
+        return json(res, 400, { error: 'invalid_credit', message: 'Choose you or Jamie.' });
+      }
+      const allowed =
+        actor.shownBy === 'Catherine' || (actor.shownBy === 'Jamie' && credit === 'Jamie');
+      if (!allowed) {
+        return json(res, 403, {
+          error: 'forbidden',
+          message: 'Only Catherine can log a meeting for Jamie or for herself.',
+        });
+      }
+      if (!organiserName) {
+        return json(res, 400, { error: 'missing_name', message: 'Add the group or contact name.' });
+      }
+      const notes = note ? 'Meeting — ' + note : 'Meeting';
+      const insertRes = await sb
+        .from('organiser_sales_demos')
+        .insert({
+          shown_at: new Date().toISOString().slice(0, 10),
+          shown_by: credit,
+          organiser_name: organiserName,
+          outcome: 'follow_up',
+          notes,
+          source: 'manual',
+          created_by_email: actor.email || sessionEmail(req) || null,
+        })
+        .select(
+          'id, shown_at, shown_by, organiser_name, organiser_email, organiser_id, outcome, notes, source, created_by_email, created_at, updated_at'
+        )
+        .maybeSingle();
+      if (insertRes.error) throw new Error(insertRes.error.message);
+      return json(res, 200, { ok: true, demo: mapDemo(insertRes.data), credit });
+    }
+
     if (action === 'add_demo') {
       const actor = actorFromRequest(req);
       const shownBy = actor.shownBy;
