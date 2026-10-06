@@ -21,6 +21,7 @@ const {
   contactUrl,
   supportEmail,
 } = require('./hub-email-urls');
+const { normalizeMeetingLink, meetingLinkHref } = require('./meeting-link');
 
 const META_CELL =
   'padding:0 0 10px;font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;color:rgba(255,255,255,0.75);line-height:1.5;';
@@ -54,9 +55,8 @@ function buildEventMetaRows(vars, online) {
 }
 
 function buildMeetingLinkRow(link, online) {
-  const url = String(link || '').trim();
-  if (!online || !url) return '';
-  const safeUrl = url.replace(/"/g, '&quot;');
+  const safeUrl = meetingLinkHref(link);
+  if (!online || !safeUrl) return '';
   return (
     '<tr><td class="mobile-pad" style="padding:0 48px 20px;">' +
     '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f5f0e8;border-radius:14px;border:1px solid #d9c4e0;">' +
@@ -105,7 +105,7 @@ function resolveSponsorSection(vars, dbSection) {
  */
 function enrichBookingConfirmationVars(vars, sponsorSection) {
   const input = vars && typeof vars === 'object' ? vars : {};
-  const meetingLink = String(input.meeting_link || '').trim();
+  const meetingLink = normalizeMeetingLink(input.meeting_link);
   const eventRow = {
     meeting_type: input.meeting_type,
     meeting_link: meetingLink,
@@ -146,6 +146,7 @@ function enrichBookingConfirmationVars(vars, sponsorSection) {
 
   const enriched = {
     ...input,
+    meeting_link: meetingLink,
     meeting_type: input.meeting_type || (online ? 'Online' : 'In person'),
     event_location: online ? '' : String(input.event_location || '').trim(),
     booking_reference: bookingReference,
@@ -180,7 +181,7 @@ function enrichBookingConfirmationVars(vars, sponsorSection) {
  */
 function enrichBookingReminderVars(vars, sponsorSection) {
   const input = vars && typeof vars === 'object' ? vars : {};
-  const meetingLink = String(input.meeting_link || '').trim();
+  const meetingLink = normalizeMeetingLink(input.meeting_link);
   const eventRow = {
     meeting_type: input.meeting_type,
     meeting_link: meetingLink,
@@ -194,6 +195,7 @@ function enrichBookingReminderVars(vars, sponsorSection) {
 
   return {
     ...input,
+    meeting_link: meetingLink,
     meeting_type: input.meeting_type || (online ? 'Online' : 'In person'),
     event_location: eventLocation,
     meeting_link_row: meetingLinkRow,

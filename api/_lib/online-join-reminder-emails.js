@@ -7,6 +7,7 @@ const {
 } = require('./lifecycle-emails');
 const { enrichBookingReminderVars } = require('./booking-email-sections');
 const { getEmailSponsorVars } = require('./email-sponsor-sections');
+const { normalizeMeetingLink } = require('./meeting-link');
 
 const REMINDER_HOURS = 1;
 const REMINDER_WINDOW_HOURS = 1;
@@ -14,7 +15,7 @@ const REMINDER_WINDOW_HOURS = 1;
 const REMINDER_CATCHUP_HOURS = 0.5;
 
 function resolveMeetingLink(registration, eventRow) {
-  return String(registration?.meeting_link || eventRow?.meeting_link || '').trim();
+  return normalizeMeetingLink(registration?.meeting_link || eventRow?.meeting_link);
 }
 
 /**
