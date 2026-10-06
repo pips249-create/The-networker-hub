@@ -465,7 +465,11 @@
     const form = document.getElementById('ee-form');
     if (!form || form.dataset.autodraftBound === '1') return;
     form.dataset.autodraftBound = '1';
-    form.addEventListener('input', () => {
+    form.addEventListener('input', (event) => {
+      const target = event.target;
+      if (target && (target.id === 'ee-title' || target.id === 'ee-description')) {
+        clearListingLanguageField(target.id);
+      }
       scheduleAutodraft();
     });
     form.addEventListener('change', () => {
@@ -1029,6 +1033,58 @@
         /* ignore */
       }
     }
+  }
+
+  function clearListingLanguageField(fieldId) {
+    const input = document.getElementById(fieldId);
+    const field = input ? input.closest('.ee-field') : null;
+    if (field) field.classList.remove('is-error');
+    const hint = document.getElementById(fieldId + '-language');
+    if (hint) {
+      hint.hidden = true;
+      hint.textContent = '';
+    }
+  }
+
+  function clearListingLanguageFieldErrors() {
+    clearListingLanguageField('ee-title');
+    clearListingLanguageField('ee-description');
+  }
+
+  function showListingLanguageRejection(data) {
+    const fallback =
+      'This listing can’t go live because it includes language that isn’t allowed. Please remove it and try again.';
+    const fields = data && data.language && Array.isArray(data.language.fields) ? data.language.fields : [];
+    showAlert((data && data.message) || fallback);
+    clearListingLanguageFieldErrors();
+    let scrolled = false;
+    fields.forEach((field) => {
+      const id = field.field === 'title' ? 'ee-title' : field.field === 'description' ? 'ee-description' : '';
+      if (!id) return;
+      const input = document.getElementById(id);
+      const wrap = input ? input.closest('.ee-field') : null;
+      if (wrap) wrap.classList.add('is-error');
+      const excerpts = (field.excerpts || []).map((item) => String(item || '').trim()).filter(Boolean);
+      const hint = document.getElementById(id + '-language');
+      if (hint && excerpts.length) {
+        hint.hidden = false;
+        hint.textContent =
+          'Remove ' + excerpts.map((item) => '“' + item + '”').join(', ') + ' — this isn’t allowed.';
+      }
+      if (!scrolled && wrap) {
+        scrolled = true;
+        try {
+          if (input) input.focus({ preventScroll: true });
+        } catch {
+          /* ignore */
+        }
+        try {
+          wrap.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } catch {
+          /* ignore */
+        }
+      }
+    });
   }
 
   function clearLocationFieldErrors() {
@@ -2767,13 +2823,15 @@
       if (!res || !res.ok) {
         setAutodraftStatus('');
         const err = (res && res.data && res.data.error) || '';
+        if (err === 'listing_hate_speech_blocked') {
+          showListingLanguageRejection(res.data || {});
+          return;
+        }
+        clearListingLanguageFieldErrors();
         const msg =
           err === 'missing_dates'
             ? 'Select at least one date on the calendar before publishing.'
-            : err === 'listing_hate_speech_blocked'
-              ? (res.data && res.data.message) ||
-                'This listing can’t go live because it includes language that isn’t allowed. Please remove it and try again.'
-              : err === 'duplicate_title_matches_source'
+            : err === 'duplicate_title_matches_source'
                 ? (res.data && res.data.message) ||
                   'This draft copy must keep “(copy)” in the title or use a new name — it cannot match the original event title.'
                 : err === 'event_not_owned'

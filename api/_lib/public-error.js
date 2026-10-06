@@ -57,10 +57,18 @@ function jsonPublicError(res, json, err, opts) {
       extra: Object.assign({ code: opts.code || payload.error }, opts.extra || {}),
     });
   }
+  const publicExtra =
+    payload.status >= 400 &&
+    payload.status < 500 &&
+    err &&
+    err.publicExtra &&
+    typeof err.publicExtra === 'object'
+      ? err.publicExtra
+      : {};
   return json(
     res,
     payload.status,
-    Object.assign({ error: payload.error, message: payload.message }, opts.extra || {})
+    Object.assign({ error: payload.error, message: payload.message }, publicExtra, opts.extra || {})
   );
 }
 
