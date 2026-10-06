@@ -9,7 +9,6 @@ const { buildMeetingLinkEmailSection } = require('./lifecycle-emails');
 const {
   buildAttendeeEmailVars,
 } = require('./registration-emails');
-const { resolveAttendeeEventReplyTo } = require('./attendee-event-reply-to');
 
 function normalizeText(value) {
   return String(value || '')
@@ -118,8 +117,16 @@ async function sendEventDetailsUpdatedEmails(sb, eventId, changes, eventRow) {
   if (ticketErr) throw new Error(ticketErr.message);
   const ticketsById = new Map((tickets || []).map((ticket) => [ticket.id, ticket]));
 
-  const organiserReply = await resolveAttendeeEventReplyTo(sb, eventRow.organiser_id);
-  const organiserName = organiserReply.organiserName;
+  let organiserName = '';
+  if (eventRow.organiser_id) {
+    const orgRes = await sb
+      .from('organisers')
+      .select('id, name')
+      .eq('id', eventRow.organiser_id)
+      .maybeSingle();
+    if (orgRes.error) throw new Error(orgRes.error.message);
+    organiserName = String(orgRes.data?.name || '').trim();
+  }
 
   const changesSection = buildChangesSectionHtml(list);
   const linkChange = list.find((change) => change.field === 'meeting_link');
@@ -165,7 +172,6 @@ async function sendEventDetailsUpdatedEmails(sb, eventId, changes, eventRow) {
         to: attendeeEmail,
         variables: vars,
         subject: 'Update for ' + eventName,
-        replyTo: organiserReply.replyTo,
       });
       result.sent += 1;
     } catch (err) {

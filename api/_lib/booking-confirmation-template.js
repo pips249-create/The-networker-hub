@@ -65,8 +65,8 @@ function isStaleBookingTemplate(bodyHtml) {
   if (!body.includes('hub-email-layout-v3-purple')) return true;
   if (body.includes('background:#4a4446')) return true;
   if (!body.includes('{{logo_footer_url}}')) return true;
-  // Point attendees at Reply (organiser), not the Hub support inbox.
-  if (!body.includes('Questions about this event? Just reply to this email')) return true;
+  // Hub stays Reply-To (privacy); copy says we pass event questions to the organiser.
+  if (!body.includes('Questions about this event? Reply and we')) return true;
   return false;
 }
 

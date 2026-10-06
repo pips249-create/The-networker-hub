@@ -228,7 +228,6 @@ async function sendRegistrationEmails(sb, registration) {
         slug: 'booking_confirmation',
         to: attendeeEmail,
         variables: vars,
-        replyTo: organiserEmail || undefined,
       });
       sent.attendee = true;
     } catch (e) {
@@ -351,7 +350,6 @@ async function sendApplicationEmails(sb, registration) {
         slug: 'application_received',
         to: attendeeEmail,
         variables: vars,
-        replyTo: organiserEmail || undefined,
       });
       sent.attendee = true;
     } catch (e) {
@@ -557,7 +555,6 @@ async function sendApplicationDecisionEmails(sb, registration, { decision, ticke
     to: attendeeEmail,
     variables: vars,
     subject,
-    replyTo: organiserContact.email || undefined,
   });
 
   return { attendee: true, decision: outcome };
@@ -649,7 +646,6 @@ async function sendMeetingLinkAddedEmails(sb, eventId, { previousLink, newLink }
         to: attendeeEmail,
         variables: vars,
         subject: 'Join link for ' + eventName,
-        replyTo: organiserContact.email || undefined,
       });
       result.sent += 1;
     } catch (e) {
@@ -744,7 +740,6 @@ async function sendSeriesBundleConfirmation(sb, { primaryRegistration, bundleReg
         slug: 'booking_confirmation',
         to: attendeeEmail,
         variables: vars,
-        replyTo: organiserContact.email || undefined,
       });
       await sb
         .from('registrations')
