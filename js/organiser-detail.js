@@ -140,7 +140,7 @@
     }
     if (textEl) {
       textEl.textContent =
-        'Have a look at the details below. Nothing is live as yours until you claim it. Creating an account is free and takes about a minute \u2014 then you can edit this page.';
+        'Have a look at the details below. Claiming this page is free, and listing your meetings is free \u2014 no fee, and you keep the ticket price. Last year more than 17,000 networkers used the site. An account takes about a minute, then you can edit this page.';
     }
     if (btn) {
       btn.setAttribute('href', authHref);
