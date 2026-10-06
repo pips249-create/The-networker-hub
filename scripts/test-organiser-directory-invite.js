@@ -61,6 +61,9 @@ async function main() {
   const html = built.html;
   const subject = built.subject;
   assert(subject.indexOf('City Connectors') !== -1, 'subject names the group: ' + subject);
+  assert(subject.indexOf("haven't heard of us") !== -1, 'subject says they may not know us: ' + subject);
+  assert(html.indexOf("You haven't heard of us.") !== -1, 'headline says they may not know us');
+  assert(html.indexOf("We've heard of you.") !== -1, 'headline says we have heard of them');
   assert(html.indexOf('17,000') !== -1, 'mentions last year audience');
   assert(/free/i.test(html), 'says listing is free');
   assert(html.indexOf('meetings and workshops') !== -1, 'mentions meetings and workshops');
