@@ -120,6 +120,12 @@ function buildOpportunityListingEmailVars(opportunity) {
   };
 }
 
+function listingLiveEmailIdempotencyKey(opportunity) {
+  const id = String(opportunity?.id || '').trim();
+  if (!id) return undefined;
+  return ('opp-listing-live:' + id).slice(0, 256);
+}
+
 async function sendOpportunityListingLiveEmail(opportunity) {
   const to = ownerEmailForOpportunity(opportunity);
   if (!to) return { skipped: true, reason: 'no_owner_email' };
@@ -129,6 +135,7 @@ async function sendOpportunityListingLiveEmail(opportunity) {
   await sendTemplatedEmail({
     slug: 'opportunity_listing_live',
     to,
+    idempotencyKey: listingLiveEmailIdempotencyKey(opportunity),
     variables: {
       owner_name: ownerNameFromOpportunity(opportunity, to),
       ...listing,
@@ -478,6 +485,7 @@ module.exports = {
   ownerNameFromOpportunity,
   ownerEmailForOpportunity,
   buildOpportunityListingEmailVars,
+  listingLiveEmailIdempotencyKey,
   sendOpportunityListingLiveEmail,
   sendOpportunityListingPendingReviewEmail,
   sendOpportunityListingSubmittedAdminEmail,
