@@ -149,6 +149,113 @@ function inPeriodDate(dateStr) {
   return day >= PERIOD_START && day <= PERIOD_END;
 }
 
+function listedEventMentions(notes) {
+  const mentions = [];
+  String(notes || '')
+    .split(/\n/)
+    .forEach((line) => {
+      const match = String(line || '')
+        .trim()
+        .match(/^(\d{4}-\d{2}-\d{2}):\s*Listed an event(?:\s+[—–-]\s*[“"]([^”"]+)[”"])?/i);
+      if (!match) return;
+      const day = match[1];
+      if (day < PERIOD_START || day > PERIOD_END) return;
+      mentions.push({ day, title: String(match[2] || '').trim() });
+    });
+  return mentions;
+}
+
+function titlesMatch(left, right) {
+  const a = String(left || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
+  const b = String(right || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
+  if (!a || !b) return false;
+  return a === b || a.startsWith(b) || b.startsWith(a);
+}
+
+function createdDayKeys(iso) {
+  const raw = String(iso || '').trim();
+  const utc = raw.slice(0, 10);
+  const d = new Date(raw);
+  if (Number.isNaN(d.getTime())) return utc ? [utc] : [];
+  const london = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/London',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(d);
+  return [...new Set([utc, london].filter(Boolean))];
+}
+
+function eventMatchesMention(eventRow, organiserId, mention) {
+  if (!eventRow || String(eventRow.organiser_id || eventRow.organiserId || '') !== organiserId) return false;
+  const created = eventRow.created_at || eventRow.createdAt;
+  if (!inPeriodIso(created)) return false;
+  if (!createdDayKeys(created).includes(mention.day)) return false;
+  if (!mention.title) return true;
+  return titlesMatch(eventRow.title, mention.title);
+}
+
+/**
+ * Events Jamie (or another staff member) listed, matched from sales-kit
+ * "Listed an event" notes to the event rows created that day.
+ * A note with no matching rows still counts once, so a listing is not invisible.
+ */
+function creditListedEvents(demos, events, staffName) {
+  const used = new Set();
+  const credited = [];
+  (demos || []).forEach((row) => {
+    if (demoStaff(row) !== staffName) return;
+    const organiserId = String(row.organiser_id || '');
+    const name = String(row.organiser_name || 'Group').trim() || 'Group';
+    listedEventMentions(row.notes).forEach((mention) => {
+      const hits = organiserId
+        ? (events || []).filter(
+            (eventRow) =>
+              eventRow &&
+              eventRow.id &&
+              !used.has(String(eventRow.id)) &&
+              eventMatchesMention(eventRow, organiserId, mention)
+          )
+        : [];
+      if (hits.length) {
+        hits.forEach((eventRow) => {
+          used.add(String(eventRow.id));
+          credited.push(eventRow);
+        });
+        return;
+      }
+      credited.push({
+        id: 'listed:' + (organiserId || name) + ':' + mention.day + ':' + mention.title,
+        title: mention.title || name,
+        organiser_id: organiserId,
+        created_at: mention.day + 'T12:00:00.000Z',
+        synthetic: true,
+        summary: 'Listed an event · ' + name + (mention.title ? ' — ' + mention.title : ''),
+      });
+    });
+  });
+  return credited;
+}
+
+function jamieOutreachLine(notes) {
+  const lines = String(notes || '')
+    .split(/\n/)
+    .map((line) => String(line || '').trim())
+    .filter(Boolean);
+  for (let i = lines.length - 1; i >= 0; i -= 1) {
+    const body = lines[i].replace(/^\d{4}-\d{2}-\d{2}:\s*/, '');
+    if (/^Listed an event\b/i.test(body)) continue;
+    return body;
+  }
+  return '';
+}
+
 function touchInstant(raw) {
   const s = String(raw || '').trim();
   if (!s) return NaN;
@@ -237,18 +344,51 @@ function buildJamieTargetsReport(input) {
     }
     if (staff !== 'Jamie') return;
     if (!inPeriodDate(row.shown_at || row.created_at)) return;
-    if (!isBookedMeetingNotes(row.notes)) return;
     const name = String(row.organiser_name || 'Group').trim() || 'Group';
-    const detail = meetingNoteDetail(row.notes);
+    const at = /^\d{4}-\d{2}-\d{2}$/.test(String(row.shown_at || ''))
+      ? String(row.shown_at) + 'T12:00:00.000Z'
+      : row.shown_at || row.created_at;
+    if (isBookedMeetingNotes(row.notes)) {
+      const detail = meetingNoteDetail(row.notes);
+      activity.push({
+        at,
+        kind: 'meeting',
+        kindLabel: 'Meeting',
+        whenLabel: formatWhen(row.shown_at || row.created_at, true),
+        summary: 'Booked meeting · ' + name + (detail ? ' — ' + detail : ''),
+        organiserId: row.organiser_id || '',
+      });
+      return;
+    }
+    const outreach = jamieOutreachLine(row.notes);
+    if (!outreach) return;
     activity.push({
-      at: /^\d{4}-\d{2}-\d{2}$/.test(String(row.shown_at || ''))
-        ? String(row.shown_at) + 'T12:00:00.000Z'
-        : row.shown_at || row.created_at,
-      kind: 'meeting',
-      kindLabel: 'Meeting',
+      at,
+      kind: 'outreach',
+      kindLabel: 'CRM',
       whenLabel: formatWhen(row.shown_at || row.created_at, true),
-      summary: 'Booked meeting · ' + name + (detail ? ' — ' + detail : ''),
+      summary: outreach + (outreach.indexOf(name) === -1 ? ' · ' + name : ''),
       organiserId: row.organiser_id || '',
+    });
+  });
+
+  (Array.isArray(source.listedEvents) ? source.listedEvents : []).forEach((eventRow) => {
+    const entityId = String(eventRow && (eventRow.id || eventRow.entity_id) || '');
+    if (!entityId || eventIds.has(entityId)) return;
+    const created = eventRow.created_at || eventRow.createdAt;
+    if (!inPeriodIso(created)) return;
+    eventIds.add(entityId);
+    const title = String(eventRow.title || '').trim();
+    const when = formatWhen(eventRow.starts_at || eventRow.date || created, false);
+    activity.push({
+      at: created,
+      kind: 'event',
+      kindLabel: 'Event',
+      whenLabel: formatWhen(created, false),
+      summary: eventRow.summary
+        ? String(eventRow.summary)
+        : 'Added event' + (title ? ': ' + title : '') + (when ? ' (' + when + ')' : ''),
+      organiserId: eventRow.organiser_id || eventRow.organiserId || '',
     });
   });
 
@@ -290,7 +430,7 @@ function buildJamieTargetsReport(input) {
       events: {
         ...progressSnapshot(eventIds.size, TARGETS.events),
         label: 'Events added',
-        hint: 'Each date Jamie adds is logged as activity and counted here, including every date in a series.',
+        hint: 'Each date Jamie adds counts here, including every date in a series. Listings already in the sales kit this period are included.',
       },
     },
     activity: activity.slice(0, 40),
@@ -316,7 +456,7 @@ async function getJamieTargets(sb) {
       .from('entity_activity_log')
       .select('id, created_at, actor_email, entity_id, organiser_id, action, summary, metadata')
       .eq('action', 'event_created')
-      .or('actor_email.ilike.jamie@%,actor_email.ilike.jamie.%')
+      .ilike('actor_email', 'jamie%')
       .gte('created_at', LOOKBACK_START_ISO)
       .lt('created_at', PERIOD_END_EXCLUSIVE_ISO)
       .order('created_at', { ascending: false })
@@ -350,7 +490,34 @@ async function getJamieTargets(sb) {
       .lt('ownership_claimed_at', PERIOD_END_EXCLUSIVE_ISO)
   );
 
-  return buildJamieTargetsReport({ activityRows, demos, organisers, now: new Date() });
+  const listedOrganiserIds = [
+    ...new Set(
+      demos
+        .filter((row) => demoStaff(row) === 'Jamie' && listedEventMentions(row.notes).length && row.organiser_id)
+        .map((row) => String(row.organiser_id))
+    ),
+  ];
+  const listedRows = [];
+  for (let i = 0; i < listedOrganiserIds.length; i += 80) {
+    const chunk = listedOrganiserIds.slice(i, i + 80);
+    const batch = await selectPages(() =>
+      sb
+        .from('events')
+        .select('id, title, organiser_id, created_at, starts_at')
+        .in('organiser_id', chunk)
+        .gte('created_at', PERIOD_START_ISO)
+        .lt('created_at', PERIOD_END_EXCLUSIVE_ISO)
+    );
+    listedRows.push(...batch);
+  }
+
+  return buildJamieTargetsReport({
+    activityRows,
+    demos,
+    organisers,
+    listedEvents: creditListedEvents(demos, listedRows, 'Jamie'),
+    now: new Date(),
+  });
 }
 
 async function noteOrganiserPageClaimed(session, organiserRow) {
@@ -415,12 +582,15 @@ async function noteOrganiserPageClaimed(session, organiserRow) {
 module.exports = {
   PERIOD_START,
   PERIOD_END,
+  PERIOD_START_ISO,
+  PERIOD_END_EXCLUSIVE_ISO,
   TARGETS,
   canSeeJamieTargets,
   isBookedMeetingNotes,
   lastStaffBeforeClaim,
   progressSnapshot,
   periodMeta,
+  creditListedEvents,
   buildJamieTargetsReport,
   getJamieTargets,
   noteOrganiserPageClaimed,
