@@ -14,9 +14,11 @@ const confirm = fs.readFileSync(
   'utf8'
 );
 
-assert.ok(reminder.includes('Questions about this event? Reply and we'));
-assert.ok(confirm.includes('Questions about this event? Reply and we'));
+assert.ok(reminder.includes('Questions about this event? Email'));
+assert.ok(confirm.includes('Questions about this event? Email'));
+assert.ok(reminder.includes('mailto:{{support_email}}'));
+assert.ok(confirm.includes('mailto:{{support_email}}'));
 assert.ok(!reminder.includes('Just reply to this email'));
 assert.ok(!isStaleBookingReminderTemplate(reminder));
 assert.ok(!isStaleBookingTemplate(confirm));
-console.log('ok — event help copy keeps Hub as relay without exposing organiser email');
+console.log('ok — event help copy uses support_email (hi@), not organiser address');

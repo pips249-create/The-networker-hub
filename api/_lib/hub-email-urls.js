@@ -246,26 +246,19 @@ function rewriteEmailVarsToPublicSite(vars, siteUrl) {
 }
 
 function supportEmail() {
-  const configured = String(process.env.SUPPORT_EMAIL || '').trim();
-  if (configured) return configured.toLowerCase();
-
-  const from = String(process.env.RESEND_FROM || '').trim();
-  const angleMatch = from.match(/<([^>]+)>/);
-  const raw = angleMatch ? angleMatch[1] : from;
-  const parsed = String(raw || '')
+  // Human inbox for Reply-To / footers — never the Resend mail.* From address.
+  const configured = String(process.env.SUPPORT_EMAIL || '')
     .trim()
     .toLowerCase();
-  if (parsed && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(parsed)) {
-    // Prefer the human inbox when Resend sends from a mail.* transactional domain.
+  if (configured && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(configured)) {
     const mailDomains = Array.isArray(LEGACY_MAIL_FROM_DOMAINS)
       ? LEGACY_MAIL_FROM_DOMAINS
       : [MAIL_FROM_DOMAIN];
-    if (mailDomains.some(function (d) { return parsed.endsWith('@' + d); })) {
-      return BRAND_SUPPORT_EMAIL;
+    // Ignore misconfigured SUPPORT_EMAIL on the transactional mail.* domain.
+    if (!mailDomains.some(function (d) { return configured.endsWith('@' + d); })) {
+      return configured;
     }
-    return parsed;
   }
-
   return BRAND_SUPPORT_EMAIL;
 }
 
