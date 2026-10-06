@@ -1,5 +1,6 @@
 const { sendTemplatedEmail } = require('./send-template-email');
 const { buildAttendeeEmailVars } = require('./registration-emails');
+const { resolveOrganiserBcc } = require('./organiser-email-bcc');
 
 const REMINDER_HOURS = 24;
 const REMINDER_WINDOW_HOURS = 2;
@@ -110,6 +111,7 @@ async function sendDueBookingReminders(sb) {
       if (orgRes.error) throw new Error(orgRes.error.message);
       organiserName = String(orgRes.data?.name || '').trim();
     }
+    const organiserBcc = await resolveOrganiserBcc(sb, eventRow.organiser_id, attendeeEmail);
 
     const vars = buildAttendeeEmailVars({
       registration,
@@ -139,6 +141,7 @@ async function sendDueBookingReminders(sb) {
           slug: 'booking_reminder',
           to: attendeeEmail,
           variables: vars,
+          bcc: organiserBcc,
         });
       } catch (sendErr) {
         await releaseRowTimestamp(sb, {

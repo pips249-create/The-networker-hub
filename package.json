@@ -48,6 +48,7 @@
     "test:member-offers": "node scripts/test-member-offers.js",
     "test:meeting-link": "node scripts/test-meeting-link.js",
     "test:booking-event-help-copy": "node scripts/test-booking-event-help-copy.js",
+    "test:organiser-email-bcc": "node scripts/test-organiser-email-bcc.js",
     "check:business-ops": "node scripts/check-business-ops-readiness.js",
     "check:dpas": "node scripts/check-dpa-register.js",
     "check:ops": "node scripts/check-ops-reliability.js",
