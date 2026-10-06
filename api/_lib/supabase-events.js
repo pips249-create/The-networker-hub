@@ -82,9 +82,33 @@ function parsePriceNum(raw) {
   return Number.isFinite(n) ? n : 0;
 }
 
+const PRICE_UNKNOWN_LABEL = 'Enquire for price';
+const PRICE_UNKNOWN_KEY = 'enquire';
+
 function normalizePrice(priceNum) {
   if (!priceNum || priceNum <= 0) return { display: 'Free', priceKey: 'free' };
   return { display: `£${priceNum.toFixed(2)}`, priceKey: 'paid' };
+}
+
+/**
+ * No public ticket means the price has not been published. £0 on a real tier
+ * is free; a missing tier is not.
+ */
+function publicPriceFromTiers(pricedTiers, options) {
+  const opts = options || {};
+  const tiers = pricedTiers || [];
+  if (!tiers.length && !opts.isMembersOnlyEvent) {
+    return { display: PRICE_UNKNOWN_LABEL, priceKey: PRICE_UNKNOWN_KEY, priceNum: 0 };
+  }
+  const priceNum = tiers.length
+    ? Math.min(...tiers.map((t) => t.priceNum).filter((n) => n >= 0))
+    : 0;
+  const normalized = normalizePrice(Number.isFinite(priceNum) ? priceNum : 0);
+  return {
+    display: normalized.display,
+    priceKey: normalized.priceKey,
+    priceNum: Number.isFinite(priceNum) ? priceNum : 0,
+  };
 }
 
 /** True when public paid tiers have more than one distinct face price (browse "from £X"). */
@@ -506,11 +530,10 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
     return a.priceNum - b.priceNum;
   });
 
-  let priceNum = pricedTiers.length
-    ? Math.min(...pricedTiers.map((t) => t.priceNum).filter((n) => n >= 0))
-    : 0;
-  if (!pricedTiers.length) priceNum = 0;
-  const { display: price, priceKey } = normalizePrice(priceNum);
+  const publicPrice = publicPriceFromTiers(pricedTiers, { isMembersOnlyEvent });
+  const priceNum = publicPrice.priceNum;
+  const price = publicPrice.display;
+  const priceKey = publicPrice.priceKey;
   const hasFreeTickets = pricedTiers.some((t) => t.priceNum === 0);
   const hasPaidTickets = pricedTiers.some((t) => t.priceNum > 0);
   const priceVaries = publicPaidPricesVary(pricedTiers);
@@ -1635,6 +1658,9 @@ async function handle(req, res) {
 
 module.exports = {
   handle,
+  PRICE_UNKNOWN_LABEL,
+  PRICE_UNKNOWN_KEY,
+  publicPriceFromTiers,
   rowToEvent,
   ticketRowToTier,
   fetchRegistrationCountsByTicket,

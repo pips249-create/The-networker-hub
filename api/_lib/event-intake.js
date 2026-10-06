@@ -9,6 +9,7 @@ const {
   eventPublicUrl,
   organiserDashboardUrl,
 } = require('./hub-email-urls');
+const { normalizeMeetingLink } = require('./meeting-link');
 
 function staffInbox() {
   const configured = String(process.env.EVENT_INTAKE_EMAIL || '').trim();
@@ -135,7 +136,7 @@ function normalizeIntakeInput(body) {
     addressLine1: String(body.address || body.addressLine1 || body.address_line1 || '').trim() || null,
     city: String(body.city || '').trim() || null,
     postcode: String(body.postcode || '').trim() || null,
-    meetingLink: String(body.meetingLink || body.meeting_link || body.joinLink || '').trim() || null,
+    meetingLink: normalizeMeetingLink(body.meetingLink || body.meeting_link || body.joinLink) || null,
     attendanceDoor,
     payHow,
     maxPlaces: normalizeMaxPlaces(maxPlacesRaw),

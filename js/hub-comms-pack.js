@@ -25,6 +25,7 @@
   }
 
   function isFreeEvent(ev) {
+    if (ev && ev.priceKey === 'enquire') return false;
     if (ev && ev.priceKey === 'free') return true;
     if (ev && ev.isFree === true) return true;
     var priceRaw = ev && (ev.priceNum != null ? ev.priceNum : ev.price);

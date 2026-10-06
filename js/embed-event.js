@@ -65,6 +65,7 @@
 
   function formatPrice(tier) {
     if (!tier) return '';
+    if (tier.priceKey === 'enquire') return 'Enquire for price';
     if (tier.priceKey === 'free' || !(Number(tier.priceNum) > 0)) return 'Free';
     if (tier.price) return String(tier.price);
     var n = Number(tier.priceNum) || 0;
@@ -82,7 +83,7 @@
       return true;
     });
     if (tickets.length) return tickets;
-    if (ev.isMembersOnlyEvent) return [];
+    if (ev.isMembersOnlyEvent || ev.priceKey === 'enquire') return [];
     return [
       {
         id: (ev.id || 'event') + '-standard',

@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260909listmenu1" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260812footer11" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260929services2" />
-    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20260929pitch1" />
+    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20261006playbooks1" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260929reviews2" />
     <script src="../js/hub-defer-css.js?v=20260828perf2" data-hrefs="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap"></script>
 
@@ -37,7 +37,6 @@
         <aside class="ad-sidebar">
           <nav class="hub-side-nav hub-side-nav--minimal ad-dash-bar" aria-label="Attendee dashboard">
             <a href="#overview" class="hub-side-nav-link is-active" data-ad-route="overview">Overview</a>
-            <span class="hub-side-nav-divider">Event tickets</span>
             <a href="#upcoming" class="hub-side-nav-link" data-ad-route="tickets">
               Event tickets
               <span class="ad-side-count" id="ad-side-tickets" hidden></span>
@@ -52,14 +51,12 @@
               Saved &amp; memberships
               <span class="ad-side-count" id="ad-side-pending" hidden></span>
             </a>
-            <span class="hub-side-nav-divider">Business opportunities</span>
             <a href="#saved-opportunities" class="hub-side-nav-link" data-ad-route="saved-opportunities">
               Opportunities
               <span class="ad-side-count" id="ad-side-opportunities" hidden></span>
             </a>
-            <span class="hub-side-nav-divider">Member offers</span>
             <a href="#services" class="hub-side-nav-link" data-ad-route="services">
-              My services
+              Member offers
               <span class="ad-side-count" id="ad-side-services" hidden></span>
             </a>
             <span class="hub-side-nav-divider hub-side-nav-divider--partner">Partner with us</span>
@@ -136,8 +133,8 @@
                 <button type="button" class="ad-portal ad-portal--services" data-ad-portal="services">
                   <span class="ad-portal-icon" aria-hidden="true">✦</span>
                   <span class="ad-portal-body">
-                    <strong>My services</strong>
-                    <span id="ad-portal-services-meta">Member offers and practical help</span>
+                    <strong>Member offers</strong>
+                    <span id="ad-portal-services-meta">Trials, discounts, and practical help</span>
                   </span>
                   <span class="ad-portal-arrow" aria-hidden="true">→</span>
                 </button>
@@ -706,6 +703,34 @@
 
             <section class="ad-page" id="ad-page-services" data-ad-page="services">
               <div class="ad-services">
+                <div class="ad-playbooks" id="ad-playbooks">
+                  <div class="ad-playbooks-head">
+                    <div>
+                      <p class="ad-playbooks-kicker">Member zone</p>
+                      <h2 class="ad-playbooks-title">Practical playbooks</h2>
+                      <p class="ad-playbooks-text">Marketing, numbers, and funding guides for networkers — sit beside the partner perks below.</p>
+                    </div>
+                    <a class="ad-btn ad-btn-ghost" href="/guides/member-playbooks">Open Member zone</a>
+                  </div>
+                  <div class="ad-playbooks-grid" role="list">
+                    <a class="ad-playbook-card" role="listitem" href="/guides/member-playbooks#marketing">
+                      <span class="ad-playbook-card-kicker">Guide</span>
+                      <strong>Marketing that fits a networking diary</strong>
+                      <span>A short playbook for getting visible without burning every evening.</span>
+                    </a>
+                    <a class="ad-playbook-card" role="listitem" href="/guides/member-playbooks#numbers">
+                      <span class="ad-playbook-card-kicker">Guide</span>
+                      <strong>What your numbers are really telling you</strong>
+                      <span>Read cash, pipeline, and time like a simple dashboard.</span>
+                    </a>
+                    <a class="ad-playbook-card" role="listitem" href="/guides/member-playbooks#funding">
+                      <span class="ad-playbook-card-kicker">Guide</span>
+                      <strong>Funding your business</strong>
+                      <span>Choose the right investment path before you pitch anyone.</span>
+                    </a>
+                  </div>
+                </div>
+
                 <div class="ad-services-admin" id="ad-services-admin" hidden>
                   <p class="ad-services-admin-note">Only platform admins can add or edit these. Members see published offers.</p>
                   <button type="button" class="ad-btn ad-btn-primary" id="ad-services-add">Add offer</button>
@@ -717,18 +742,38 @@
                   <div class="ad-empty-state-icon" aria-hidden="true">
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M20 12v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7z"/></svg>
                   </div>
-                  <h3 class="ad-empty-state-title">No member offers yet</h3>
-                  <p class="ad-empty-state-text">Free trials, discounts, and practical help arranged for members will show up here.</p>
+                  <h3 class="ad-empty-state-title">Nothing listed yet</h3>
+                  <p class="ad-empty-state-text">Published offers will show up here.</p>
                 </div>
                 <div class="ad-services-pitch" id="ad-services-pitch">
-                  <div class="ad-services-pitch-copy">
-                    <p class="ad-services-pitch-title">Offer your services</p>
-                    <p class="ad-services-pitch-text">Have a free trial, discount, or practical help you want members to see? Send a short note and we will look into featuring it here.</p>
+                  <div class="ad-services-pitch-intro" id="ad-services-pitch-intro">
+                    <div class="ad-services-pitch-copy">
+                      <p class="ad-services-pitch-title">Offer your services</p>
+                      <p class="ad-services-pitch-text">If you have something useful for members, send a short note and we will look into featuring it here.</p>
+                    </div>
+                    <button type="button" class="ad-btn ad-btn-primary" id="ad-services-pitch-open">Get in touch now</button>
                   </div>
-                  <a
-                    class="ad-btn ad-btn-primary"
-                    href="mailto:partnerships@thenetworkeruk.com?subject=Offer%20your%20services&amp;body=Hi%2C%0A%0AI%20would%20like%20to%20offer%20a%20service%20to%20members.%0A%0AWhat%20I%20offer%3A%20%0AWho%20it%20is%20for%3A%20%0AWebsite%3A%20%0A%0AThank%20you."
-                    >Get in touch now</a>
+                  <form id="ad-services-pitch-form" class="ad-services-pitch-form" hidden>
+                    <p class="ad-services-pitch-from" id="ad-services-pitch-from"></p>
+                    <label class="ad-service-field">
+                      <span>What you offer</span>
+                      <textarea name="offer" required maxlength="500" rows="3" placeholder="A free trial, discount, or practical help for members."></textarea>
+                    </label>
+                    <label class="ad-service-field">
+                      <span>Who it is for</span>
+                      <input name="audience" maxlength="200" placeholder="For example, new networkers or local groups" />
+                    </label>
+                    <label class="ad-service-field">
+                      <span>Website</span>
+                      <input name="website" type="url" maxlength="500" placeholder="https://" />
+                    </label>
+                    <p class="ad-services-pitch-error" id="ad-services-pitch-error" hidden role="alert"></p>
+                    <div class="ad-services-pitch-actions">
+                      <button type="button" class="ad-btn ad-btn-ghost" id="ad-services-pitch-cancel">Cancel</button>
+                      <button type="submit" class="ad-btn ad-btn-primary" id="ad-services-pitch-send">Send</button>
+                    </div>
+                  </form>
+                  <p class="ad-services-pitch-done" id="ad-services-pitch-done" hidden>We've got it. We'll look into featuring this and reply from partnerships@thenetworkeruk.com.</p>
                 </div>
               </div>
             </section>
@@ -772,7 +817,7 @@
           <span class="ad-bottom-nav-label">Opps</span>
           <span class="ad-bottom-nav-count" id="ad-bottom-opportunities" hidden></span>
         </a>
-        <a href="#services" class="ad-bottom-nav-link" data-ad-route="services" aria-label="My services">
+        <a href="#services" class="ad-bottom-nav-link" data-ad-route="services" aria-label="Member offers">
           <span class="ad-bottom-nav-icon" aria-hidden="true">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7z"/></svg>
           </span>
@@ -1039,17 +1084,37 @@
             <span>More information</span>
             <textarea name="details" maxlength="4000" rows="5" placeholder="What the member should know before they go to the offer."></textarea>
           </label>
+          <div class="ad-service-form-row">
+            <label class="ad-service-field">
+              <span>Offer code</span>
+              <input name="promoCode" type="text" maxlength="40" placeholder="NETWORKER" autocomplete="off" />
+            </label>
+            <label class="ad-service-field">
+              <span>End date</span>
+              <input name="endsOn" type="date" />
+            </label>
+          </div>
+          <p class="ad-service-hint">Leave the code blank when the link is enough. Members stop seeing the offer after the end date.</p>
           <label class="ad-service-field">
             <span>Link to the offer</span>
             <input name="href" type="url" maxlength="500" placeholder="https://" />
           </label>
+          <div class="ad-service-field">
+            <span>Picture</span>
+            <div class="ad-service-drop" id="ad-service-drop" tabindex="0">
+              <input id="ad-service-image-file" type="file" accept="image/*" hidden />
+              <p class="ad-service-drop-empty" id="ad-service-drop-empty">Drop an image here, or choose a file. Paste works when this box is selected.</p>
+              <img class="ad-service-drop-preview" id="ad-service-image-preview" alt="" hidden />
+            </div>
+            <button type="button" class="ad-btn ad-btn-ghost ad-btn-sm" id="ad-service-image-clear" hidden>Remove picture</button>
+          </div>
           <label class="ad-service-field">
-            <span>Image URL</span>
+            <span>Or paste an image link</span>
             <input name="imageUrl" type="url" maxlength="500" placeholder="https://" />
           </label>
           <label class="ad-service-check">
-            <input name="published" type="checkbox" checked />
-            <span>Published — visible to members</span>
+            <input name="published" type="checkbox" />
+            <span>Published — visible to members once it has a link and a picture</span>
           </label>
           <p class="ad-service-form-error" id="ad-service-form-error" hidden role="alert"></p>
           <div class="ad-service-form-actions">
@@ -1088,7 +1153,8 @@
     <script src="../js/hub-going-share.js?v=20260714share2" defer></script>
     <script src="../js/hub-side-nav.js?v=20260805hubmobile2" defer></script>
     <script src="../js/attendee-auth-gate.js?v=20260929session1"></script>
-    <script src="../js/attendee-member-offers.js?v=20260929reviews2" defer></script>
-    <script src="../js/attendee-dashboard.js?v=20260929reviews3" defer></script>
+    <script src="../js/organiser-image-upload.js?v=20261002offerimage1" defer></script>
+    <script src="../js/attendee-member-offers.js?v=20261006reviews1" defer></script>
+    <script src="../js/attendee-dashboard.js?v=20261006reviews1" defer></script>
   </body>
 </html>

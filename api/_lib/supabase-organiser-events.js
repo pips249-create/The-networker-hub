@@ -24,6 +24,7 @@ const { applyListingLifecyclePreserve } = require('./listing-lifecycle');
 // Top-level so Vercel file tracing includes this module in the organiser bundle
 // (dynamic require() inside assertEventLanguageForPublish was omitted from /var/task).
 const { assertNoHateSpeechOnLiveListing } = require('./listing-language-moderation');
+const { normalizeMeetingLink } = require('./meeting-link');
 
 const WORKSPACE_EVENTS_LIMIT_DEFAULT = 100;
 const WORKSPACE_EVENTS_LIMIT_MAX = 250;
@@ -1016,7 +1017,8 @@ async function buildEventRow(payload, eventId, mode) {
     touchesListingShape &&
     (mode === 'create' || Object.prototype.hasOwnProperty.call(payload, 'onlineLink'))
   ) {
-    row.meeting_link = payload.onlineLink || null;
+    const normalizedLink = normalizeMeetingLink(payload.onlineLink);
+    row.meeting_link = normalizedLink || null;
   }
   if (Object.prototype.hasOwnProperty.call(payload, 'onlinePlatform')) {
     const platform = String(payload.onlinePlatform || '').trim();
@@ -1745,7 +1747,7 @@ async function syncSeriesOccurrencesForEvent(eventId, { base, occurrences, serie
   const occ = Array.isArray(occurrences) ? occurrences.filter((o) => o && o.date) : [];
   if (!occ.length) {
     const event = await updateEvent(anchorId, { ...base, seriesGroupId: seriesGroupId || null });
-    return { events: [event], eventIds: [event.id], event };
+    return { events: [event], eventIds: [event.id], event, createdEvents: [] };
   }
 
   const guardedBase = await applyDuplicateTitleGuard(sb, anchorRow, base);
@@ -1819,8 +1821,9 @@ async function syncSeriesOccurrencesForEvent(eventId, { base, occurrences, serie
     });
   const eventIds = events.map((ev) => ev.id).filter(Boolean);
   const anchorEvent = events.find((ev) => ev.id === anchorId) || events[0];
+  const createdEvents = createdRows.map(rowToEvent);
 
-  return { events, eventIds, event: anchorEvent };
+  return { events, eventIds, event: anchorEvent, createdEvents };
 }
 
 async function maybeNotifyAttendeesOfEventUpdate(sb, eventId, existingRow, updatedRow) {

@@ -65,6 +65,9 @@ function isStaleBookingTemplate(bodyHtml) {
   if (!body.includes('hub-email-layout-v3-purple')) return true;
   if (body.includes('background:#4a4446')) return true;
   if (!body.includes('{{logo_footer_url}}')) return true;
+  // Reply-To / help contact is hi@ (support_email), not the mail.* From address.
+  if (!body.includes('Questions about this event? Email')) return true;
+  if (!body.includes('mailto:{{support_email}}')) return true;
   return false;
 }
 

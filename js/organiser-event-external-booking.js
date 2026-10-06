@@ -172,8 +172,64 @@
     });
   }
 
+  function assignedSlotIds() {
+    const slots = billingPayload && billingPayload.slots;
+    if (!slots || slots.schemaMissing) return null;
+    const raw = slots.assignedOrganiserIds;
+    if (!Array.isArray(raw)) return [];
+    return raw
+      .map(function (id) {
+        return String(id || '').trim();
+      })
+      .filter(Boolean);
+  }
+
+  function eventOrganiserId() {
+    const ev = loadedEvent;
+    if (!ev) return '';
+    return String(ev.organiserGroupId || (ev.organiserGroupIds && ev.organiserGroupIds[0]) || '').trim();
+  }
+
+  /** ok | unknown | needs-assignment | wrong-page | inactive */
+  function connectedSlotGate() {
+    if (!billingActive) return 'inactive';
+    if (!loadedEvent) return 'unknown';
+    const ids = assignedSlotIds();
+    if (ids == null) return 'unknown';
+    const oid = eventOrganiserId();
+    if (!oid) return 'unknown';
+    if (!ids.length) return 'needs-assignment';
+    if (ids.indexOf(oid) === -1) return 'wrong-page';
+    return 'ok';
+  }
+
+  function applySlotGateUi() {
+    const gate = connectedSlotGate();
+    const picker = document.getElementById('ee-connected-platform-picker');
+    const blocked = gate === 'wrong-page' || gate === 'needs-assignment';
+    if (picker) picker.hidden = blocked;
+    if (setupLink) setupLink.hidden = blocked;
+    if (planLink) planLink.hidden = gate === 'ok';
+    return gate;
+  }
+
   function refreshAccountConnectionStatus(platform) {
     if (!accountStatusEl) return;
+    const gate = applySlotGateUi();
+    if (gate === 'needs-assignment') {
+      accountStatusEl.hidden = false;
+      accountStatusEl.className = 'ee-hint ee-alert-warn';
+      accountStatusEl.textContent =
+        'Assign the organiser page for this event before connecting Eventbrite or Ticket Tailor. Ticket sync only runs on the page you assign.';
+      return;
+    }
+    if (gate === 'wrong-page') {
+      accountStatusEl.hidden = false;
+      accountStatusEl.className = 'ee-hint ee-alert-warn';
+      accountStatusEl.textContent =
+        'This event is on a different organiser page from the one on your Connected plan. With one page assigned, only that page’s events can use Eventbrite or Ticket Tailor. Use Assign organiser pages to switch, or upgrade if you need more than one.';
+      return;
+    }
     const key = String(platform || selectedPlatform() || '').trim();
     if (!key || key === 'custom') {
       accountStatusEl.hidden = true;
@@ -325,7 +381,7 @@
       return;
     }
 
-    if (planLink) planLink.hidden = false;
+    const gate = applySlotGateUi();
 
     const eid = resolveEventId();
     if (setupLink) {
@@ -356,8 +412,12 @@
     }
 
     setConnectedOnlyLayout(true);
-    initPlatformPicker();
-    loadProviderCatalogForTickets();
+    if (gate === 'ok' || gate === 'unknown' || gate === 'inactive') {
+      initPlatformPicker();
+      loadProviderCatalogForTickets();
+    } else {
+      refreshAccountConnectionStatus();
+    }
 
     if (isExternalConnectedEvent(loadedEvent)) {
       card.classList.add('is-active');

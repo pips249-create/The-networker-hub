@@ -178,10 +178,12 @@ function buildEventOffers(ev, url) {
     return offer;
   }
 
+  if (ev.priceKey === 'enquire') return undefined;
+
   const isFree = ev.priceKey === 'free' || ev.hasFreeTickets || Number(ev.priceNum) === 0;
   const isPaid = Number(ev.priceNum) > 0 || ev.hasPaidTickets;
 
-  // Google Event rich results expect an Offer — default to free when price is unknown.
+  // Google Event rich results expect an Offer — default to free when a £0 tier exists.
   const offer = {
     '@type': 'Offer',
     price: isPaid ? Number(ev.priceNum) || 0 : 0,
@@ -318,7 +320,13 @@ async function buildEventMeta(slug, origin) {
     ev.dateLine || ev.date,
     ev.location || ev.city,
     ev.organiser ? `by ${ev.organiser}` : '',
-    ev.price && ev.price !== 'Free' ? ev.price : ev.priceKey === 'free' ? 'Free' : '',
+    ev.priceKey === 'enquire'
+      ? ''
+      : ev.price && ev.price !== 'Free'
+        ? ev.price
+        : ev.priceKey === 'free'
+          ? 'Free'
+          : '',
   ].filter(Boolean);
   const description =
     trimText(ev.description, 120) ||

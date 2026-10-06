@@ -1,5 +1,5 @@
 /**
- * My services — member offers on the attendee dashboard.
+ * Member offers on the attendee dashboard.
  * Cards follow the events / opportunities grid. Only platform admins can edit them.
  */
 (function () {
@@ -9,6 +9,12 @@
   var loading = false;
   var loadError = '';
   var editingId = '';
+  var pendingImage = null;
+  var imagePrepare = Promise.resolve();
+  var imageToken = 0;
+  var imageIncoming = false;
+  var imageFailed = false;
+  var IMAGE_READ_ERROR = "Couldn't read that image. Use a JPG or PNG, or paste an image link.";
   var onChange = null;
 
   function esc(s) {
@@ -34,17 +40,46 @@
     return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
   }
 
+  function londonToday() {
+    try {
+      return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' }).format(new Date());
+    } catch (e) {
+      return new Date().toISOString().slice(0, 10);
+    }
+  }
+
+  function offerHasEnded(offer) {
+    var end = offer && offer.endsOn ? String(offer.endsOn).slice(0, 10) : '';
+    return Boolean(end && end < londonToday());
+  }
+
+  function offerIsLive(offer) {
+    return Boolean(offer && offer.published && !offerHasEnded(offer));
+  }
+
   function visibleOffers() {
     if (canManage) return offers.slice();
-    return offers.filter(function (offer) {
-      return offer.published;
-    });
+    return offers.filter(offerIsLive);
   }
 
   function publishedCount() {
-    return offers.filter(function (offer) {
-      return offer.published;
-    }).length;
+    return offers.filter(offerIsLive).length;
+  }
+
+  function featuredDeal() {
+    var live = offers.filter(offerIsLive);
+    if (!live.length) return '';
+    var offer = live[0];
+    var who = offer.provider || offer.title || '';
+    var badge = offer.highlight || '';
+    if (who && badge) return who + ': ' + badge;
+    return who || badge;
+  }
+
+  function statusBadge(offer) {
+    if (!offer.published) return '<span class="ad-service-hidden">Hidden</span>';
+    if (offerHasEnded(offer)) return '<span class="ad-service-hidden">Ended</span>';
+    return '';
   }
 
   function notify() {
@@ -76,10 +111,14 @@
     form.elements.summary.value = offer && offer.summary ? offer.summary : '';
     form.elements.details.value = offer && offer.details ? offer.details : '';
     form.elements.href.value = offer && offer.href ? offer.href : '';
+    form.elements.promoCode.value = offer && offer.promoCode ? offer.promoCode : '';
+    form.elements.endsOn.value = offer && offer.endsOn ? String(offer.endsOn).slice(0, 10) : '';
     form.elements.imageUrl.value = offer && offer.imageUrl ? offer.imageUrl : '';
+    resetPendingImage();
+    showImagePreview(offer && offer.imageUrl ? offer.imageUrl : '');
     form.elements.sortOrder.value =
       offer && offer.sortOrder != null ? String(offer.sortOrder) : '0';
-    form.elements.published.checked = offer ? offer.published !== false : true;
+    form.elements.published.checked = offer ? offer.published === true : false;
   }
 
   function openForm(offer) {
@@ -158,7 +197,7 @@
       esc(category) +
       '</span>' +
       (highlight ? '<span class="ad-service-highlight">' + esc(highlight) + '</span>' : '') +
-      (offer.published ? '' : '<span class="ad-service-hidden">Hidden</span>') +
+      statusBadge(offer) +
       '</div>';
     var admin = canManage
       ? '<div class="ad-service-admin">' +
@@ -246,7 +285,7 @@
       esc(category) +
       '</span>' +
       (highlight ? '<span class="ad-service-highlight">' + esc(highlight) + '</span>' : '') +
-      (offer.published ? '' : '<span class="ad-service-hidden">Hidden</span>') +
+      statusBadge(offer) +
       '</div>' +
       '<div class="ad-service-detail-body">' +
       (provider ? '<p class="ad-service-detail-provider">' + esc(provider) + '</p>' : '') +
@@ -255,6 +294,13 @@
       '</h2>' +
       (summary ? '<p class="ad-service-detail-summary">' + esc(summary) + '</p>' : '') +
       (body ? '<div class="ad-service-detail-copy">' + body + '</div>' : '') +
+      (offer.promoCode
+        ? '<p class="ad-service-code">Use code <strong>' +
+          esc(offer.promoCode) +
+          '</strong> <button type="button" class="ad-service-code-copy" data-service-copy-code="' +
+          esc(offer.promoCode) +
+          '">Copy</button></p>'
+        : '') +
       outbound +
       admin +
       '</div></article>'
@@ -273,10 +319,12 @@
     var adminBar = document.getElementById('ad-services-admin');
     var detail = document.getElementById('ad-services-detail');
     var pitch = document.getElementById('ad-services-pitch');
+    var playbooks = document.getElementById('ad-playbooks');
     if (grid) grid.hidden = !show;
     if (adminBar) adminBar.hidden = !show || !canManage;
     if (detail) detail.hidden = show;
     if (pitch) pitch.hidden = !show;
+    if (playbooks) playbooks.hidden = !show;
   }
 
   function render() {
@@ -307,8 +355,8 @@
     }
     showListChrome(true);
     setPageHeading(
-      'My services',
-      'Member offers and practical help — free trials, discounts, and guidance arranged for you.'
+      'Member offers',
+      'Free trials, discounts, and practical help arranged for you.'
     );
     var list = visibleOffers();
     if (!loaded) {
@@ -376,6 +424,7 @@
     if (code === 'admin_only') return 'Only platform admins can change offers.';
     if (code === 'not_ready') return 'Member offers are not available yet.';
     if (code === 'not_found') return 'That offer has already been removed.';
+    if (code === 'publish_incomplete') return 'Add a link and a picture before publishing this offer.';
     return '';
   }
 
@@ -398,6 +447,189 @@
     return data;
   }
 
+  function showImagePreview(src) {
+    var preview = document.getElementById('ad-service-image-preview');
+    var empty = document.getElementById('ad-service-drop-empty');
+    var clearBtn = document.getElementById('ad-service-image-clear');
+    var hasSrc = Boolean(src);
+    if (preview) {
+      if (hasSrc) preview.src = src;
+      else preview.removeAttribute('src');
+      preview.hidden = !hasSrc;
+    }
+    if (empty) empty.hidden = hasSrc;
+    if (clearBtn) clearBtn.hidden = !hasSrc;
+  }
+
+  function resetPendingImage() {
+    imageToken += 1;
+    pendingImage = null;
+    imageIncoming = false;
+    imageFailed = false;
+    imagePrepare = Promise.resolve();
+  }
+
+  function loadDrawable(file) {
+    return new Promise(function (resolve, reject) {
+      var url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function () {
+        URL.revokeObjectURL(url);
+        if (!img.naturalWidth || !img.naturalHeight) {
+          reject(new Error(IMAGE_READ_ERROR));
+          return;
+        }
+        resolve(img);
+      };
+      img.onerror = function () {
+        URL.revokeObjectURL(url);
+        reject(new Error(IMAGE_READ_ERROR));
+      };
+      img.src = url;
+    });
+  }
+
+  function canvasToBlob(canvas, type, quality) {
+    return new Promise(function (resolve, reject) {
+      canvas.toBlob(
+        function (blob) {
+          if (blob) resolve(blob);
+          else reject(new Error(IMAGE_READ_ERROR));
+        },
+        type,
+        quality
+      );
+    });
+  }
+
+  function blobToDataUrl(blob) {
+    return new Promise(function (resolve, reject) {
+      var reader = new FileReader();
+      reader.onload = function () {
+        resolve(String(reader.result || ''));
+      };
+      reader.onerror = function () {
+        reject(new Error(IMAGE_READ_ERROR));
+      };
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  function prepareOfferImage(file) {
+    if (!file) return Promise.reject(new Error('Choose an image.'));
+    return loadDrawable(file).then(function (img) {
+      var maxEdge = 1600;
+      var longest = Math.max(img.naturalWidth, img.naturalHeight);
+      var scale = longest > maxEdge ? maxEdge / longest : 1;
+      var width = Math.max(1, Math.round(img.naturalWidth * scale));
+      var height = Math.max(1, Math.round(img.naturalHeight * scale));
+      var canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      var ctx = canvas.getContext('2d');
+      if (!ctx) return Promise.reject(new Error(IMAGE_READ_ERROR));
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, width, height);
+      ctx.drawImage(img, 0, 0, width, height);
+      var qualities = [0.86, 0.74, 0.62, 0.5];
+      var chain = Promise.resolve(null);
+      qualities.forEach(function (quality) {
+        chain = chain.then(function (blob) {
+          if (blob && blob.size <= 900 * 1024) return blob;
+          return canvasToBlob(canvas, 'image/jpeg', quality);
+        });
+      });
+      return chain.then(function (blob) {
+        if (!blob || blob.size > 2 * 1024 * 1024) {
+          throw new Error('That image is too large. Use one under 2MB.');
+        }
+        return blobToDataUrl(blob).then(function (dataUrl) {
+          if (dataUrl.indexOf('data:image/jpeg') !== 0) throw new Error(IMAGE_READ_ERROR);
+          var base = String(file.name || 'offer').replace(/\.[^.]+$/, '') || 'offer';
+          return { dataUrl: dataUrl, type: 'image/jpeg', name: base + '.jpg' };
+        });
+      });
+    });
+  }
+
+  function setDroppedImage(file) {
+    resetPendingImage();
+    var token = imageToken;
+    imageIncoming = true;
+    setFormError('');
+    var form = document.getElementById('ad-service-form');
+    if (form && form.elements.imageUrl) form.elements.imageUrl.value = '';
+    imagePrepare = prepareOfferImage(file)
+      .then(function (prepared) {
+        if (token !== imageToken) return;
+        pendingImage = prepared;
+        imageIncoming = false;
+        showImagePreview(prepared.dataUrl);
+      })
+      .catch(function (err) {
+        if (token !== imageToken) return;
+        pendingImage = null;
+        imageIncoming = false;
+        imageFailed = true;
+        showImagePreview('');
+        setFormError(err && err.message ? err.message : IMAGE_READ_ERROR);
+      });
+  }
+
+  function clearDroppedImage() {
+    resetPendingImage();
+    var fileInput = document.getElementById('ad-service-image-file');
+    var form = document.getElementById('ad-service-form');
+    if (fileInput) fileInput.value = '';
+    if (form && form.elements.imageUrl) form.elements.imageUrl.value = '';
+    showImagePreview('');
+  }
+
+  function bindImageDrop() {
+    var zone = document.getElementById('ad-service-drop');
+    var fileInput = document.getElementById('ad-service-image-file');
+    var clearBtn = document.getElementById('ad-service-image-clear');
+    var form = document.getElementById('ad-service-form');
+    if (zone && fileInput && !zone.dataset.boundImageDrop) {
+      zone.dataset.boundImageDrop = '1';
+      if (window.hubBindImageUpload) {
+        window.hubBindImageUpload({
+          zone: zone,
+          fileInput: fileInput,
+          onFile: setDroppedImage,
+          uploadOptions: { decodeLater: true },
+        });
+      }
+      zone.addEventListener('keydown', function (event) {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          fileInput.click();
+        }
+      });
+    }
+    if (clearBtn && !clearBtn.dataset.boundImageClear) {
+      clearBtn.dataset.boundImageClear = '1';
+      clearBtn.addEventListener('click', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        clearDroppedImage();
+      });
+    }
+    if (form && form.elements.imageUrl && !form.elements.imageUrl.dataset.boundImageUrl) {
+      form.elements.imageUrl.dataset.boundImageUrl = '1';
+      form.elements.imageUrl.addEventListener('input', function () {
+        var url = String(form.elements.imageUrl.value || '').trim();
+        if (!url) {
+          if (!pendingImage && !imageIncoming) showImagePreview('');
+          return;
+        }
+        resetPendingImage();
+        if (fileInput) fileInput.value = '';
+        showImagePreview(url);
+      });
+    }
+  }
+
   function formPayload(form) {
     return {
       title: form.elements.title.value,
@@ -407,6 +639,8 @@
       summary: form.elements.summary.value,
       details: form.elements.details.value,
       href: form.elements.href.value,
+      promoCode: form.elements.promoCode.value,
+      endsOn: form.elements.endsOn.value,
       imageUrl: form.elements.imageUrl.value,
       sortOrder: form.elements.sortOrder.value,
       published: form.elements.published.checked,
@@ -447,7 +681,24 @@
         var payload = formPayload(form);
         var method = editingId ? 'PATCH' : 'POST';
         if (editingId) payload.id = editingId;
-        send(method, payload)
+        var ready = imagePrepare.then(function () {
+          if (imageFailed) throw new Error(IMAGE_READ_ERROR);
+          if (pendingImage) {
+            payload.imageBase64 = pendingImage.dataUrl;
+            payload.imageMime = pendingImage.type;
+            payload.imageFilename = pendingImage.name;
+            payload.imageUrl = '';
+          }
+          var hasPicture = Boolean(pendingImage) || String(payload.imageUrl || '').trim();
+          if (payload.published && (!String(payload.href || '').trim() || !hasPicture)) {
+            throw new Error('Add a link and a picture before publishing this offer.');
+          }
+          return payload;
+        });
+        ready
+          .then(function (body) {
+            return send(method, body);
+          })
           .then(function () {
             closeForm();
             return reload();
@@ -464,6 +715,18 @@
     if (services && !services.dataset.boundServiceClicks) {
       services.dataset.boundServiceClicks = '1';
       services.addEventListener('click', function (event) {
+        var copyBtn = event.target.closest('[data-service-copy-code]');
+        if (copyBtn) {
+          event.preventDefault();
+          var code = copyBtn.getAttribute('data-service-copy-code') || '';
+          var done = function () {
+            copyBtn.textContent = 'Copied';
+          };
+          if (code && navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(code).then(done).catch(function () {});
+          }
+          return;
+        }
         if (event.target.closest('[data-service-back]')) {
           location.hash = 'services';
           return;
@@ -487,6 +750,11 @@
         if (toggleBtn) {
           var current = findOffer(toggleBtn.getAttribute('data-service-toggle'));
           if (!current) return;
+          if (!current.published && !offerIsPublishable(current)) {
+            loadError = 'Add a link and a picture before publishing this offer.';
+            render();
+            return;
+          }
           toggleBtn.disabled = true;
           send('PATCH', { id: current.id, published: !current.published })
             .then(function () {
@@ -524,11 +792,124 @@
   }
 
   var started = false;
+  var member = { name: '', email: '' };
+
+  function offerIsPublishable(offer) {
+    return Boolean(offer && offer.href && offer.imageUrl);
+  }
+
+  function setPitchError(message) {
+    var el = document.getElementById('ad-services-pitch-error');
+    if (!el) return;
+    el.hidden = !message;
+    el.textContent = message || '';
+  }
+
+  function showPitchForm(open) {
+    var intro = document.getElementById('ad-services-pitch-intro');
+    var form = document.getElementById('ad-services-pitch-form');
+    var done = document.getElementById('ad-services-pitch-done');
+    var from = document.getElementById('ad-services-pitch-from');
+    if (intro) intro.hidden = open;
+    if (form) form.hidden = !open;
+    if (done) done.hidden = true;
+    if (open && from) {
+      var who = member.name ? member.name : 'your account';
+      from.textContent = member.email
+        ? 'Sending as ' + who + ' (' + member.email + ').'
+        : 'Sending from your signed-in account.';
+    }
+    if (open) setPitchError('');
+  }
+
+  function showPitchDone(message) {
+    var intro = document.getElementById('ad-services-pitch-intro');
+    var form = document.getElementById('ad-services-pitch-form');
+    var done = document.getElementById('ad-services-pitch-done');
+    if (intro) intro.hidden = true;
+    if (form) form.hidden = true;
+    if (done) {
+      done.hidden = false;
+      if (message) done.textContent = message;
+    }
+  }
+
+  function bindPitch() {
+    var openBtn = document.getElementById('ad-services-pitch-open');
+    var cancelBtn = document.getElementById('ad-services-pitch-cancel');
+    var form = document.getElementById('ad-services-pitch-form');
+    if (openBtn && !openBtn.dataset.boundPitchOpen) {
+      openBtn.dataset.boundPitchOpen = '1';
+      openBtn.addEventListener('click', function () {
+        showPitchForm(true);
+        var field = form && form.elements.offer;
+        if (field) field.focus();
+      });
+    }
+    if (cancelBtn && !cancelBtn.dataset.boundPitchCancel) {
+      cancelBtn.dataset.boundPitchCancel = '1';
+      cancelBtn.addEventListener('click', function () {
+        showPitchForm(false);
+      });
+    }
+    if (form && !form.dataset.boundPitchForm) {
+      form.dataset.boundPitchForm = '1';
+      form.addEventListener('submit', function (event) {
+        event.preventDefault();
+        setPitchError('');
+        var offerText = String(form.elements.offer.value || '').trim();
+        if (offerText.length < 10) {
+          setPitchError('Tell us what you offer, in a sentence or two.');
+          return;
+        }
+        var sendBtn = document.getElementById('ad-services-pitch-send');
+        if (sendBtn) sendBtn.disabled = true;
+        fetch('/api/auth/member-offer-enquire', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            offer: offerText,
+            audience: form.elements.audience.value,
+            website: form.elements.website.value,
+          }),
+        })
+          .then(function (res) {
+            return res.json().then(function (data) {
+              return { ok: res.ok, data: data || {} };
+            });
+          })
+          .then(function (result) {
+            if (!result.ok || !result.data.ok) {
+              setPitchError(
+                (result.data && result.data.message) ||
+                  'Could not send that just now. Email partnerships@thenetworkeruk.com instead.'
+              );
+              return;
+            }
+            form.reset();
+            showPitchDone(result.data.message);
+          })
+          .catch(function () {
+            setPitchError('Could not send that just now. Email partnerships@thenetworkeruk.com instead.');
+          })
+          .then(function () {
+            if (sendBtn) sendBtn.disabled = false;
+          });
+      });
+    }
+  }
 
   function init(options) {
     if (started) return;
     started = true;
+    if (options && options.member) {
+      member.name = String(options.member.name || '').trim();
+      member.email = String(options.member.email || '').trim();
+    }
     bind();
+    bindImageDrop();
+    bindPitch();
     onChange = options && options.onChange;
     if (options && options.isAdmin) canManage = true;
     reload();
@@ -538,6 +919,7 @@
     init: init,
     render: render,
     publishedCount: publishedCount,
+    featuredDeal: featuredDeal,
     routeHash: function () {
       var id = detailIdFromHash();
       return id ? '#services/' + id : '#services';

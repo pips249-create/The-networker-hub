@@ -3,7 +3,13 @@ const {
   normalizeMemberOfferInput,
   isMemberOfferId,
   memberOfferFromRow,
+  publishGaps,
+  memberOfferIsLive,
+  missingOfferExtras,
+  applyOfferImage,
 } = require('../api/_lib/member-offers');
+const { decodeUploadBuffer, imageKind } = require('../api/_lib/supabase-storage');
+const { prepareMemberOfferEnquire } = require('../api/_lib/member-offer-enquire');
 
 function fail(message) {
   console.error('FAIL: ' + message);
@@ -21,11 +27,27 @@ const created = normalizeMemberOfferInput({
   published: true,
   sortOrder: 10,
 });
-if (!created.ok) fail('expected a valid offer');
+if (created.ok || created.errors.indexOf('imageUrl') === -1) {
+  fail('publishing without a picture must be rejected');
+}
 if (created.fields.title !== 'Swft Business Cards') fail('title was not trimmed');
 if (created.fields.href !== 'https://example.com/swft') fail('https link was dropped');
 if (created.fields.published !== true) fail('published flag');
 if (created.fields.image_url !== '') fail('blank image should be empty');
+
+const ready = normalizeMemberOfferInput({
+  title: 'Swft Business Cards',
+  href: 'https://example.com/swft',
+  imageUrl: 'https://example.com/swft.jpg',
+  published: true,
+});
+if (!ready.ok) fail('a link and a picture should be enough to publish');
+if (publishGaps({ published: true, href: ready.fields.href, imageUrl: ready.fields.image_url }).length) {
+  fail('publish gaps should be empty when link and picture are set');
+}
+if (publishGaps({ published: false, href: '', imageUrl: '' }).length) {
+  fail('drafts can omit the link and picture');
+}
 
 const blocked = normalizeMemberOfferInput({
   title: 'Franchise help',
@@ -46,6 +68,7 @@ if (Object.prototype.hasOwnProperty.call(patched.fields, 'title')) {
 const detailed = normalizeMemberOfferInput({
   title: 'Swft Business Cards',
   details: '  First paragraph.\n\nSecond paragraph.  ',
+  published: false,
 });
 if (!detailed.ok) fail('details should be accepted');
 if (detailed.fields.details !== 'First paragraph.\n\nSecond paragraph.') {
@@ -54,6 +77,40 @@ if (detailed.fields.details !== 'First paragraph.\n\nSecond paragraph.') {
 
 const sorted = normalizeMemberOfferInput({ title: 'Cards', sortOrder: 99999 });
 if (sorted.fields.sort_order !== 9999) fail('sort order should clamp');
+
+const coded = normalizeMemberOfferInput({
+  title: 'Swft Business Cards',
+  promoCode: '  NETWORKER  ',
+  endsOn: '2026-12-31',
+  published: false,
+});
+if (!coded.ok || coded.fields.promo_code !== 'NETWORKER' || coded.fields.ends_on !== '2026-12-31') {
+  fail('code and end date should be kept');
+}
+const badDate = normalizeMemberOfferInput({ title: 'Cards', endsOn: 'next week', published: false });
+if (badDate.ok || badDate.errors.indexOf('endsOn') === -1) fail('a bad end date must be rejected');
+if (memberOfferIsLive({ published: true, endsOn: '2020-01-01' }, '2026-10-02')) {
+  fail('an offer should end after its end date');
+}
+if (!memberOfferIsLive({ published: true, endsOn: '2026-10-02' }, '2026-10-02')) {
+  fail('an offer should stay up on its end date');
+}
+if (!memberOfferIsLive({ published: true, endsOn: '' }, '2026-10-02')) {
+  fail('an offer with no end date should stay up');
+}
+if (!missingOfferExtras({ message: "Could not find the 'promo_code' column of 'member_offers' in the schema cache" })) {
+  fail('a missing code column should be recognised');
+}
+if (missingOfferExtras({ message: 'connection refused' })) fail('unrelated errors are not a missing column');
+
+const PNG_1X1 =
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+const pngBuffer = decodeUploadBuffer('data:image/png;charset=utf-8;base64,' + PNG_1X1);
+if (!pngBuffer || !imageKind(pngBuffer) || imageKind(pngBuffer).mime !== 'image/png') {
+  fail('a png data url should be read as a png');
+}
+if (imageKind(Buffer.from('not an image!!'))) fail('text is not an image');
+if (imageKind(decodeUploadBuffer('data:image/jpeg;base64,AAAA'))) fail('a short payload is not an image');
 
 if (isMemberOfferId('not-an-id')) fail('bad id accepted');
 if (!isMemberOfferId('11111111-1111-4111-8111-111111111111')) fail('uuid rejected');
@@ -74,6 +131,21 @@ const row = memberOfferFromRow({
 if (!row || row.imageUrl !== '' || row.published !== false || row.sortOrder !== 10 || row.details !== 'More about the offer.') {
   fail('row mapping');
 }
+
+const enquire = prepareMemberOfferEnquire(
+  { offer: 'Three months of business cards', audience: 'New networkers', website: 'https://example.com' },
+  { name: 'Sam Member', email: 'sam@example.com' }
+);
+if (!enquire.ok || enquire.input.email !== 'sam@example.com' || enquire.input.offer.indexOf('business cards') === -1) {
+  fail('enquiry should use the signed-in email');
+}
+const shortEnquire = prepareMemberOfferEnquire({ offer: 'Too short' }, { email: 'sam@example.com' });
+if (shortEnquire.ok) fail('a short offer note must be rejected');
+const badSite = prepareMemberOfferEnquire(
+  { offer: 'A useful member trial for cards', website: 'javascript:alert(1)' },
+  { email: 'sam@example.com' }
+);
+if (badSite.ok) fail('enquiry website must be http(s)');
 
 console.log('OK: member offer validation');
 
@@ -127,7 +199,30 @@ function mockRes() {
   await handler({ method: 'OPTIONS', url: '/api/auth/member-offers', headers: {} }, preflight);
   if (preflight.statusCode !== 200) fail('options should be 200');
 
+  const enquireHandler = require('../api/_lib/routes/auth-member-offer-enquire');
+  const enquireAnon = mockRes();
+  await enquireHandler(
+    {
+      method: 'POST',
+      url: '/api/auth/member-offer-enquire',
+      headers: { 'content-type': 'application/json' },
+      body: { offer: 'Three months of business cards for members' },
+    },
+    enquireAnon
+  );
+  if (enquireAnon.statusCode !== 401) fail('signed-out enquiry should be 401, got ' + enquireAnon.statusCode);
+
   console.log('OK: member offers route requires sign-in');
+
+  try {
+    await applyOfferImage({ imageBase64: 'data:image/png;base64,AAAA' });
+    fail('a file that is not a picture should be rejected');
+  } catch (err) {
+    if (!err || err.code !== 'image_upload_failed' || !/Couldn't read that image/.test(err.message || '')) {
+      fail('unreadable image should say so, got ' + (err && err.message));
+    }
+  }
+  console.log('OK: unreadable offer image is rejected');
 })().catch(function (err) {
   fail(err && err.stack ? err.stack : err);
 });

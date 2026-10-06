@@ -215,6 +215,10 @@
       title: 'Organiser sales kit',
       subtitle: 'CRM outreach log, pitch decks, and walkthrough tools for Catherine, Rosie & Jamie',
     },
+    'jamie-targets': {
+      title: "Jamie's targets",
+      subtitle: '1 October – 2 November — meetings, claimed pages, and events added',
+    },
     sponsorship: {
       title: 'Ads & sponsors',
       subtitle: 'Manage sponsor logos and advert placements',
@@ -441,6 +445,15 @@
         'Use Report for monthly sponsor packs — filter by brand and directory (Events / Organisers / Opportunities), then Download PDF.',
       ],
     },
+    'jamie-targets': {
+      title: "How Jamie's targets work",
+      steps: [
+        'This page is only for Catherine and Jamie. It covers 1 October through 2 November.',
+        'Booked meetings count when Jamie logs Meeting in the organiser sales kit. Pitch-deck saves do not count.',
+        'A claimed page counts when the group claims in this period and Jamie was the last team member to contact them.',
+        'Each date Jamie adds is logged as activity and counts toward events, including every date in a series.',
+      ],
+    },
     'sales-kit': {
       title: 'How to use the organiser sales kit',
       steps: [
@@ -508,7 +521,7 @@
     platform: ['system', 'analytics', 'international', 'rankings', 'accounts', 'support'],
     listings: ['cleanup', 'event-intake', 'event-health', 'opportunities', 'moderation'],
     revenue: ['financials', 'revenue-mix', 'revenue-targets'],
-    crm: ['sales-kit', 'spotlight', 'sponsorship', 'referral-partners'],
+    crm: ['jamie-targets', 'sales-kit', 'spotlight', 'sponsorship', 'referral-partners'],
     comms: ['email', 'social', 'social-founding'],
   };
   var HEALTH_STALE_MS = 5 * 60 * 1000;
@@ -659,15 +672,28 @@
     { slug: 'buckinghamshire', name: 'Buckinghamshire' },
     { slug: 'cambridgeshire', name: 'Cambridgeshire' },
     { slug: 'cheshire', name: 'Cheshire' },
+    { slug: 'devon', name: 'Devon' },
+    { slug: 'dorset', name: 'Dorset' },
     { slug: 'essex', name: 'Essex' },
     { slug: 'hampshire', name: 'Hampshire' },
     { slug: 'hertfordshire', name: 'Hertfordshire' },
     { slug: 'kent', name: 'Kent' },
     { slug: 'lancashire', name: 'Lancashire' },
+    { slug: 'norfolk', name: 'Norfolk' },
     { slug: 'oxfordshire', name: 'Oxfordshire' },
+    { slug: 'shropshire', name: 'Shropshire' },
+    { slug: 'staffordshire', name: 'Staffordshire' },
     { slug: 'surrey', name: 'Surrey' },
     { slug: 'sussex', name: 'Sussex' },
+    { slug: 'warwickshire', name: 'Warwickshire' },
+    { slug: 'yorkshire', name: 'Yorkshire' },
   ];
+
+  function countyPartnerNamesSentence() {
+    return NETWORKING_COUNTY_PARTNER_SLUGS.map(function (region) {
+      return region.name;
+    }).join(', ');
+  }
 
   /** Launch Industry Sponsor inventory — Opportunities directory, enquiry + manual logo. */
   var OPPORTUNITY_INDUSTRY_SPONSOR_SLUGS = [
@@ -1129,6 +1155,19 @@
 
   function salesKitActorFromCurrentUser() {
     return salesKitActorFromEmail(currentUser && currentUser.email);
+  }
+
+  function canSeeJamieTargets() {
+    var who = salesKitActorFromEmail(currentUser && currentUser.email).shownBy;
+    return who === 'Catherine' || who === 'Jamie';
+  }
+
+  function syncJamieTargetsNav() {
+    var show = canSeeJamieTargets();
+    document.querySelectorAll('[data-jamie-targets-nav]').forEach(function (el) {
+      el.hidden = !show;
+      el.classList.toggle('hidden', !show);
+    });
   }
 
   function salesKitActorLabel(actor) {
@@ -10874,7 +10913,9 @@
       '<section class="space-y-3">' +
       '<h3 class="font-bold text-brand-900">Events County Sponsor placements</h3>' +
       '<p class="text-sm text-slate-600">Logo + link on Events county pages (/networking/:county). Separate from Opportunities County Sponsor. Sponsors can check out online on /advertising — upload logo + link here to publish.</p>' +
-      '<p class="text-xs text-slate-500">Launch counties: Berkshire, Buckinghamshire, Cambridgeshire, Cheshire, Essex, Hampshire, Hertfordshire, Kent, Lancashire, Oxfordshire, Surrey, Sussex.</p>' +
+      '<p class="text-xs text-slate-500">Counties: ' +
+      esc(countyPartnerNamesSentence()) +
+      '.</p>' +
       '</section>' +
       '<div class="admin-ad-picker-grid">' +
       cards +
@@ -10935,7 +10976,9 @@
       '<section class="space-y-3">' +
       '<h3 class="font-bold text-brand-900">Opportunities County Sponsor placements</h3>' +
       '<p class="text-sm text-slate-600">Logo + link on Opportunities county pages (/opportunities/networking/:county). Separate inventory from Events County Sponsor — place manually after an advertising enquiry.</p>' +
-      '<p class="text-xs text-slate-500">Launch counties: Berkshire, Buckinghamshire, Cambridgeshire, Cheshire, Essex, Hampshire, Hertfordshire, Kent, Lancashire, Oxfordshire, Surrey, Sussex.</p>' +
+      '<p class="text-xs text-slate-500">Counties: ' +
+      esc(countyPartnerNamesSentence()) +
+      '.</p>' +
       '</section>' +
       '<div class="admin-ad-picker-grid">' +
       cards +
@@ -25690,7 +25733,8 @@
   function syncOpportunityCleanupFilterUi() {
     var el;
     el = document.getElementById('opportunity-cleanup-search');
-    if (el) el.value = opportunityCleanupState.q || '';
+    // A refresh must not replace text the admin is still typing.
+    if (el && document.activeElement !== el) el.value = opportunityCleanupState.q || '';
     el = document.getElementById('opportunity-cleanup-sort');
     if (el) el.value = opportunityCleanupState.sort || 'created';
     el = document.getElementById('opportunity-cleanup-status-filter');
@@ -28966,15 +29010,32 @@
       }
     });
 
-    document.body.addEventListener('input', function (e) {
-      if (e.target.id !== 'opportunity-cleanup-search') return;
+    function commitOpportunitySearch(el) {
+      var next = String((el && el.value) || '').replace(/^\s+|\s+$/g, '');
+      if (next === String(opportunityCleanupState.q || '')) return;
+      opportunityCleanupState.q = next;
+      opportunityCleanupState.page = 0;
+      syncOpportunityListHashQuietly();
+      refreshOpportunityCleanupData();
+    }
+
+    function scheduleOpportunitySearch(el) {
       clearTimeout(opportunitySearchTimer);
       opportunitySearchTimer = setTimeout(function () {
-        opportunityCleanupState.q = e.target.value || '';
-        opportunityCleanupState.page = 0;
-        syncOpportunityListHashQuietly();
-        refreshOpportunityCleanupData();
+        commitOpportunitySearch(el);
       }, 300);
+    }
+
+    document.body.addEventListener('input', function (e) {
+      if (!e.target || e.target.id !== 'opportunity-cleanup-search') return;
+      scheduleOpportunitySearch(e.target);
+    });
+
+    // The native search clear control fires `search`, not always `input`.
+    document.body.addEventListener('search', function (e) {
+      if (!e.target || e.target.id !== 'opportunity-cleanup-search') return;
+      clearTimeout(opportunitySearchTimer);
+      commitOpportunitySearch(e.target);
     });
 
     document.body.addEventListener('click', handleOpportunityCleanupClick);
@@ -32192,6 +32253,115 @@
     load();
   }
 
+  function jamieTargetsMetricCard(metric) {
+    var pct = Math.min(100, Number(metric.progressPct) || 0);
+    var bar = metric.complete ? 'bg-emerald-500' : 'bg-brand-500';
+    return (
+      '<article class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm min-w-0">' +
+      '<p class="text-xs font-semibold uppercase tracking-wide text-slate-500">' +
+      esc(metric.label || '') +
+      '</p>' +
+      '<p class="text-2xl font-bold text-brand-900 mt-1">' +
+      esc(String(metric.actual || 0)) +
+      '<span class="text-base font-semibold text-slate-400"> / ' +
+      esc(String(metric.target || 0)) +
+      '</span></p>' +
+      '<p class="text-xs text-slate-500 mt-1">' +
+      (metric.complete
+        ? 'Target met'
+        : esc(String(metric.remaining || 0)) + ' still to go · ' + esc(String(pct)) + '%') +
+      '</p>' +
+      '<div class="mt-3 h-2.5 rounded-full bg-slate-100 overflow-hidden">' +
+      '<div class="h-full ' +
+      bar +
+      '" style="width:' +
+      pct +
+      '%"></div></div>' +
+      '<p class="text-xs text-slate-500 mt-3 leading-relaxed">' +
+      esc(metric.hint || '') +
+      '</p></article>'
+    );
+  }
+
+  function renderJamieTargets() {
+    if (!canSeeJamieTargets()) {
+      main.innerHTML =
+        '<p class="text-sm text-slate-600">Jamie\'s targets are only visible to Catherine and Jamie.</p>';
+      return;
+    }
+    main.innerHTML = '<p class="text-sm text-slate-500">Loading Jamie\'s targets…</p>';
+    adminGet('/api/admin/jamie-targets').then(function (data) {
+      if (!main) return;
+      if (!data || data.ok === false || !data.targets) {
+        main.innerHTML =
+          '<p class="text-sm text-red-700">' +
+          esc((data && (data.message || data.error)) || 'Could not load Jamie\'s targets.') +
+          '</p>';
+        return;
+      }
+      var targets = data.targets;
+      var period = targets.period || {};
+      var metrics = targets.metrics || {};
+      var items = Array.isArray(targets.activity) ? targets.activity : [];
+      var activityHtml = items.length
+        ? '<ul class="divide-y divide-slate-100">' +
+          items
+            .map(function (item) {
+              var href = item.organiserId
+                ? '#sales-kit?tab=crm&organiser=' + encodeURIComponent(item.organiserId)
+                : '';
+              var summary = href
+                ? '<a class="font-medium text-brand-900 hover:underline" href="' +
+                  attrEsc(href) +
+                  '">' +
+                  esc(item.summary || '') +
+                  '</a>'
+                : '<span class="font-medium text-brand-900">' + esc(item.summary || '') + '</span>';
+              return (
+                '<li class="py-3 flex flex-wrap items-baseline justify-between gap-2">' +
+                '<div class="min-w-0">' +
+                '<p class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">' +
+                esc(item.kindLabel || '') +
+                '</p>' +
+                summary +
+                '</div>' +
+                '<p class="text-xs text-slate-500 shrink-0">' +
+                esc(item.whenLabel || '') +
+                '</p></li>'
+              );
+            })
+            .join('') +
+          '</ul>'
+        : '<p class="text-sm text-slate-500">Nothing logged in this period yet. Meetings from the sales kit, claimed pages Jamie worked, and events she adds will show up here.</p>';
+
+      main.innerHTML =
+        '<div class="space-y-5">' +
+        '<section class="rounded-xl border border-brand-200 bg-gradient-to-r from-brand-50 to-white p-4 sm:p-5">' +
+        '<p class="text-xs font-semibold uppercase tracking-wide text-brand-700">Jamie</p>' +
+        '<p class="text-lg font-bold text-brand-900 mt-1">' +
+        esc(period.label || '1 October – 2 November 2026') +
+        '</p>' +
+        '<p class="text-sm text-slate-600 mt-1">' +
+        esc(String(period.daysElapsed || 0)) +
+        ' of ' +
+        esc(String(period.daysTotal || 0)) +
+        ' days elapsed · ' +
+        esc(String(period.daysRemaining || 0)) +
+        ' days remaining. Only Catherine and Jamie can see this page.</p></section>' +
+        '<section class="grid sm:grid-cols-3 gap-3">' +
+        jamieTargetsMetricCard(metrics.meetings || {}) +
+        jamieTargetsMetricCard(metrics.claimedPages || {}) +
+        jamieTargetsMetricCard(metrics.events || {}) +
+        '</section>' +
+        '<section class="admin-dash-section">' +
+        '<div class="admin-dash-section-head"><h3>Jamie\'s activity</h3>' +
+        '<p>Meetings she logs, pages claimed after her last contact, and events or series dates she adds.</p></div>' +
+        '<div class="admin-dash-section-body">' +
+        activityHtml +
+        '</div></section></div>';
+    });
+  }
+
   var routes = {
     dashboard: renderDashboard,
     analytics: renderAnalyticsHub,
@@ -32208,6 +32378,7 @@
     'revenue-mix': renderRevenueMix,
     'revenue-targets': renderRevenueTargetsHub,
     'sales-kit': renderSalesKit,
+    'jamie-targets': renderJamieTargets,
     spotlight: renderSpotlightHub,
     featured: renderFeatured,
     support: renderSupportHub,
@@ -32327,6 +32498,7 @@
   function boot(user) {
     currentUser = user;
     document.getElementById('sidebar-user').textContent = user.email;
+    syncJamieTargetsNav();
     hideAdminGate();
     document.body.classList.add('hub-admin-active');
     bindAdminLayoutSync();

@@ -1134,6 +1134,16 @@
     const labelEl = document.getElementById('ev-ticket-from-label');
     const priceEl = document.getElementById('ev-ticket-from-price');
     if (!labelEl || !priceEl || !ev) return;
+    if (
+      window.HubBookingFees &&
+      typeof window.HubBookingFees.listingPriceUnknown === 'function'
+        ? window.HubBookingFees.listingPriceUnknown(ev)
+        : ev.priceKey === 'enquire'
+    ) {
+      labelEl.textContent = 'Price';
+      priceEl.textContent = 'Enquire for price';
+      return;
+    }
     if (eventIsGuestProgramme(ev)) {
       const showGuestHeader =
         eventAllowsGuestPasses(ev) &&
@@ -3100,7 +3110,9 @@
       const pendingHint = document.createElement('p');
       pendingHint.className = 'ticket-load-hint';
       pendingHint.textContent =
-        'Ticket sales are not open on The Networker UK yet. Use the button below to nudge the organiser.';
+        ev.priceKey === 'enquire' || ev.hasTicketTiers === false
+          ? 'The organiser has not published a price yet. Use the button below to request it — we\u2019ll nudge them for you.'
+          : 'Ticket sales are not open on The Networker UK yet. Use the button below to nudge the organiser.';
       tiersEl.appendChild(pendingHint);
       if (urgencyEl) urgencyEl.textContent = '';
       syncPaidCheckoutPanel('', 1, 0);
@@ -3906,6 +3918,36 @@
 
   let nudgeUiBound = false;
 
+  function pendingTicketSalesCopy(ev) {
+    const priceUnknown =
+      !ev ||
+      ev.priceKey === 'enquire' ||
+      ev.hasTicketTiers === false ||
+      (window.HubBookingFees &&
+        typeof window.HubBookingFees.listingPriceUnknown === 'function' &&
+        window.HubBookingFees.listingPriceUnknown(ev));
+    if (priceUnknown) {
+      return {
+        lead:
+          'The price isn\u2019t listed yet. Send a quick request and we\u2019ll nudge the organiser to share what it costs to attend.',
+        button: 'Request the price',
+      };
+    }
+    return {
+      lead: 'Interested in attending? Nudge the host to release tickets for this event.',
+      button: 'Nudge organiser to add tickets',
+    };
+  }
+
+  function applyPendingTicketSalesCopy(ev) {
+    const copy = pendingTicketSalesCopy(ev);
+    const nudgePanel = document.getElementById('ticket-sales-nudge');
+    const leadEl = nudgePanel && nudgePanel.querySelector('.ticket-sales-nudge-lead');
+    if (leadEl) leadEl.textContent = copy.lead;
+    const btn = document.getElementById('ticket-nudge-btn');
+    if (btn && !btn.dataset.sent) btn.textContent = copy.button;
+  }
+
   async function prefillNudgeEmail() {
     const emailEl = document.getElementById('ticket-nudge-email');
     const nameEl = document.getElementById('ticket-nudge-name');
@@ -3921,8 +3963,7 @@
         if (emailField) emailField.hidden = true;
         if (nameField) nameField.hidden = true;
         if (nudgePanel) nudgePanel.classList.add('is-logged-in');
-        const btn = document.getElementById('ticket-nudge-btn');
-        if (btn && !btn.dataset.sent) btn.textContent = 'Nudge organiser to add tickets';
+        applyPendingTicketSalesCopy(activeEvent());
         return;
       }
     } catch {
@@ -4491,17 +4532,11 @@
       if (purchaseView) purchaseView.removeAttribute('aria-hidden');
       if (nudgePanel) {
         nudgePanel.hidden = false;
-        const leadEl = nudgePanel.querySelector('.ticket-sales-nudge-lead');
-        if (leadEl) {
-          leadEl.textContent =
-            'Interested in attending? Nudge the host to release tickets for this event.';
-        }
         const subEl = nudgePanel.querySelector('.ticket-sales-nudge-sub');
         if (subEl) {
           subEl.hidden = true;
         }
-        const btn = document.getElementById('ticket-nudge-btn');
-        if (btn && !btn.dataset.sent) btn.textContent = 'Nudge organiser to add tickets';
+        applyPendingTicketSalesCopy(ev);
         bindTicketSalesNudgeUi(ev);
         prefillNudgeEmail();
       }
@@ -4700,7 +4735,12 @@
     let labelText = 'Get tickets';
     if (registrationIsConfirmedGoing(eventApplicationState)) labelText = "You're already going";
     else if (ev.isEventPast) labelText = 'Event ended';
-    else if (ev.isTicketSalesPending) labelText = 'Nudge organiser';
+    else if (ev.isTicketSalesPending) {
+      labelText =
+        ev.priceKey === 'enquire' || ev.hasTicketTiers === false
+          ? 'Request the price'
+          : 'Nudge organiser';
+    }
     else if (ev.isTicketSalesScheduled) labelText = 'Tickets opening soon';
     else if (ev.isSoldOut) labelText = 'Sold out';
     else if (ev.isSalesClosed) labelText = 'Registration closed';
@@ -4721,6 +4761,7 @@
         labelText !== 'Sold out' &&
         labelText !== 'Registration closed' &&
         labelText !== 'Nudge organiser' &&
+        labelText !== 'Request the price' &&
         labelText !== 'Tickets opening soon' &&
         labelText !== 'Event ended' &&
         labelText !== "You're already going";

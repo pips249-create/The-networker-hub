@@ -31,6 +31,10 @@ const {
   isApprovedPublicEventPayload,
 } = require('./supabase-events');
 const { eventImageUrl, normalizeEventImagePosition } = require('./event-image');
+const {
+  publicListingUsesExternalBooking,
+  parseExternalPriceLabelToDisplay,
+} = require('./connected-booking');
 
 const BROWSE_VIEW = 'browse_events_index';
 const MAX_LIMIT = 48;
@@ -539,11 +543,18 @@ function sortRows(rows, sort) {
       if (cb == null) return -1;
       return cb - ca;
     }
-    if (sort === 'price-asc') {
-      return (Number(a.min_ticket_price) || 0) - (Number(b.min_ticket_price) || 0);
-    }
-    if (sort === 'price-desc') {
-      return (Number(b.min_ticket_price) || 0) - (Number(a.min_ticket_price) || 0);
+    if (sort === 'price-asc' || sort === 'price-desc') {
+      const priceRank = (row) => {
+        if (row.min_ticket_price == null || row.min_ticket_price === '') return null;
+        const n = Number(row.min_ticket_price);
+        return Number.isFinite(n) ? n : null;
+      };
+      const pa = priceRank(a);
+      const pb = priceRank(b);
+      if (pa == null && pb == null) return 0;
+      if (pa == null) return 1;
+      if (pb == null) return -1;
+      return sort === 'price-asc' ? pa - pb : pb - pa;
     }
     if (sort === 'date') {
       return new Date(a.starts_at || 0) - new Date(b.starts_at || 0);
@@ -564,12 +575,12 @@ function applySqlSort(query, sort) {
   }
   if (sort === 'price-asc') {
     return query
-      .order('min_ticket_price', { ascending: true })
+      .order('min_ticket_price', { ascending: true, nullsFirst: false })
       .order('starts_at', { ascending: true });
   }
   if (sort === 'price-desc') {
     return query
-      .order('min_ticket_price', { ascending: false })
+      .order('min_ticket_price', { ascending: false, nullsFirst: false })
       .order('starts_at', { ascending: true });
   }
   if (sort === 'best-rated' || sort === 'rating-desc') {
@@ -597,21 +608,120 @@ function rowPassesGeo(row, params) {
   return haversineMiles(params.lat, params.lng, lat, lng) <= params.radiusMi;
 }
 
+function ticketPublishesPublicPrice(row) {
+  const type = String(row?.ticket_type || '').trim();
+  if (type === 'Alumni') return false;
+  const visibility = String(row?.visibility || 'public').trim().toLowerCase();
+  return visibility !== 'members_only';
+}
+
+/**
+ * Connected booking fields may be missing from older browse_events_index
+ * definitions — hydrate from events so external prices are not treated as unknown.
+ */
+async function attachExternalBookingFields(sb, rows) {
+  const list = rows || [];
+  if (!list.length) return list;
+  if (
+    Object.prototype.hasOwnProperty.call(list[0], 'checkout_mode') &&
+    Object.prototype.hasOwnProperty.call(list[0], 'external_price_label') &&
+    Object.prototype.hasOwnProperty.call(list[0], 'external_booking_url')
+  ) {
+    return list;
+  }
+
+  const ids = list.map((row) => row.id).filter(Boolean);
+  const byId = new Map();
+  for (let i = 0; i < ids.length; i += IN_CHUNK) {
+    const chunk = ids.slice(i, i + IN_CHUNK);
+    const { data, error } = await sb
+      .from('events')
+      .select('id, checkout_mode, external_booking_url, external_price_label')
+      .in('id', chunk);
+    if (error) throw new Error(error.message);
+    (data || []).forEach((row) => {
+      byId.set(row.id, row);
+    });
+  }
+  return list.map((row) => {
+    const extra = byId.get(row.id) || {};
+    return {
+      ...row,
+      checkout_mode: Object.prototype.hasOwnProperty.call(row, 'checkout_mode')
+        ? row.checkout_mode
+        : extra.checkout_mode || 'hub',
+      external_booking_url: Object.prototype.hasOwnProperty.call(row, 'external_booking_url')
+        ? row.external_booking_url
+        : extra.external_booking_url || '',
+      external_price_label: Object.prototype.hasOwnProperty.call(row, 'external_price_label')
+        ? row.external_price_label
+        : extra.external_price_label || '',
+    };
+  });
+}
+
+/** Map pins don't load ticket rows. Mark listings that have no public price. */
+async function attachHasPublicTickets(sb, rows) {
+  const list = rows || [];
+  if (!list.length) return list;
+  const ids = [...new Set(list.map((row) => row.id).filter(Boolean))];
+  const withPrice = new Set();
+  const chunkSize = 40;
+  for (let i = 0; i < ids.length; i += chunkSize) {
+    const chunk = ids.slice(i, i + chunkSize);
+    const { data, error } = await sb
+      .from('tickets')
+      .select('event_id, visibility, ticket_type')
+      .in('event_id', chunk);
+    if (error) throw new Error(error.message);
+    (data || []).forEach((ticket) => {
+      if (ticketPublishesPublicPrice(ticket)) withPrice.add(ticket.event_id);
+    });
+  }
+  return list.map((row) => ({
+    ...row,
+    has_public_tickets: withPrice.has(row.id) || publicListingUsesExternalBooking(row),
+  }));
+}
+
 function rowToBrowsePin(row) {
   const lat = row.latitude != null ? Number(row.latitude) : null;
   const lng = row.longitude != null ? Number(row.longitude) : null;
-  const priceNum = Number(row.min_ticket_price) || 0;
   const membersOnlyEvent = Boolean(row.members_only_event);
+  const externalListing = publicListingUsesExternalBooking(row);
+  const externalPrice = externalListing
+    ? parseExternalPriceLabelToDisplay(row.external_price_label)
+    : null;
+  const rawPrice = row.min_ticket_price;
+  const priceUnknown =
+    !membersOnlyEvent &&
+    !externalListing &&
+    (row.has_public_tickets === false || rawPrice == null || rawPrice === '');
+  const priceNum = priceUnknown
+    ? 0
+    : externalPrice && Number.isFinite(Number(externalPrice.priceNum))
+      ? Number(externalPrice.priceNum) || 0
+      : Number(rawPrice) || 0;
   const startsAt = row.starts_at ? new Date(row.starts_at) : null;
   const dateLine =
     startsAt && !Number.isNaN(startsAt.getTime())
       ? startsAt.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
       : 'Date TBC';
-  const priceLabel = membersOnlyEvent
-    ? 'Members only'
-    : priceNum > 0
-      ? '£' + priceNum.toFixed(2)
-      : 'Free';
+  let priceLabel = 'Free';
+  let priceKey = 'free';
+  if (membersOnlyEvent) {
+    priceLabel = 'Members only';
+    priceKey = 'members_only';
+  } else if (priceUnknown) {
+    priceLabel = 'Enquire for price';
+    priceKey = 'enquire';
+  } else if (externalPrice && externalPrice.display) {
+    priceLabel = externalPrice.display;
+    priceKey = externalPrice.priceKey || (priceNum > 0 ? 'paid' : 'free');
+  } else if (priceNum > 0) {
+    priceLabel = '£' + priceNum.toFixed(2);
+    priceKey = 'paid';
+  }
   const typeRaw = String(row.event_type || row.type_tab || '').trim();
   return {
     id: row.id,
@@ -630,11 +740,14 @@ function rowToBrowsePin(row) {
     date: dateLine,
     dateLine: dateLine,
     priceNum,
-    priceKey: membersOnlyEvent ? 'members_only' : priceNum > 0 ? 'paid' : 'free',
+    priceKey,
     price: priceLabel,
     isMembersOnlyEvent: membersOnlyEvent,
     hasMembersOnlyTiers: membersOnlyEvent,
     attendanceMode: String(row.attendance_mode || '').trim() || 'tickets',
+    checkoutMode: String(row.checkout_mode || 'hub').trim() || 'hub',
+    externalBookingUrl: String(row.external_booking_url || '').trim(),
+    externalPriceLabel: String(row.external_price_label || '').trim(),
     outcode: row.outcode,
     featured: isEventCurrentlyFeatured(row),
     eventType: typeRaw,
@@ -721,7 +834,8 @@ async function attachAttendanceModes(sb, rows) {
 async function hydrateBrowseEvents(sb, rows) {
   const withPositions = await attachImagePositions(sb, rows);
   const withModes = await attachAttendanceModes(sb, withPositions);
-  const published = withModes.map((row) => ({ ...row, next_date: row.starts_at }));
+  const withExternal = await attachExternalBookingFields(sb, withModes);
+  const published = withExternal.map((row) => ({ ...row, next_date: row.starts_at }));
   const mapped = await eventsFromPublishedRows(sb, published, null, { browseList: true });
   return mapped.filter((ev) => isApprovedPublicEventPayload(ev) && isUpcomingBrowseEvent(ev));
 }
@@ -792,7 +906,9 @@ async function fetchBrowseEventsPage(sb, rawQuery) {
     const deduped = dedupeBrowseRowsBySeries(sorted);
     const pinSlice = deduped.slice(0, MAX_PINS);
     const withModes = await attachAttendanceModes(sb, pinSlice);
-    const pinEvents = withModes.map(rowToBrowsePin);
+    const withExternal = await attachExternalBookingFields(sb, withModes);
+    const withPrices = await attachHasPublicTickets(sb, withExternal);
+    const pinEvents = withPrices.map(rowToBrowsePin);
     attachBrowseSeriesCounts(pinEvents, idToSeriesCountMap(withModes, pinSeriesCounts));
     return {
       events: pinEvents,
@@ -897,6 +1013,7 @@ module.exports = {
   parseBrowseQuery,
   fetchBrowseEventsPage,
   clearBrowseCatalogueCache,
+  rowToBrowsePin,
   BROWSE_VIEW,
   BROWSE_SLIM_SELECT,
 };

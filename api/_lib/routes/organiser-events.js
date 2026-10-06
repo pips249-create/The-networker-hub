@@ -308,6 +308,16 @@ module.exports = async function handler(req, res) {
       });
 
       try {
+        const { logCreatedEvents } = require('../staff-event-activity');
+        await logCreatedEvents(auth.session, synced.createdEvents || [], {
+          source: 'organiser_series',
+          organiserId: base.groupId || existing?.groupId || existing?.organiserId || null,
+        });
+      } catch {
+        /* activity log must not block saves */
+      }
+
+      try {
         const { resolveOrganiserAccess } = require('../supabase-organiser-access');
         const { logFromSession, changedKeys } = require('../entity-activity-log');
         const access = await resolveOrganiserAccess(auth.session);
@@ -375,6 +385,15 @@ module.exports = async function handler(req, res) {
           eventId,
           access.groupIds
         );
+        try {
+          const { logCreatedEvents } = require('../staff-event-activity');
+          await logCreatedEvents(auth.session, result.event ? [result.event] : [], {
+            source: 'organiser_duplicate',
+            organiserId: result.event && (result.event.groupId || result.event.organiserId),
+          });
+        } catch {
+          /* activity log must not block saves */
+        }
         const claimResult = await claimPageIfOrganiserListed(
           result.event && (result.event.groupId || result.event.organiserId),
           access.adminView
@@ -502,6 +521,15 @@ module.exports = async function handler(req, res) {
       }
 
       const eventIds = events.map((e) => e.id);
+      try {
+        const { logCreatedEvents } = require('../staff-event-activity');
+        await logCreatedEvents(auth.session, events, {
+          source: 'organiser_create',
+          organiserId: groupId,
+        });
+      } catch {
+        /* activity log must not block saves */
+      }
       if (auth.session && auth.session.impersonator && auth.session.impersonator.email) {
         try {
           const { logOutreachFromEventCreate } = require('../organiser-sales-outreach');

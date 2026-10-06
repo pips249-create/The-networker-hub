@@ -7,7 +7,9 @@ const { resolveOpportunityDisplayCover } = require('./opportunity-media');
 const { resolveOrganiserAccess } = require('./supabase-organiser-access');
 const {
   effectiveReviewSubmittedAt,
+  mergeRejectionAutomatedMeta,
   mergeReviewSubmittedMeta,
+  shouldEmailOpportunityRejection,
   stampOpportunityReviewSubmission,
 } = require('./opportunity-review-queue');
 const {
@@ -552,7 +554,6 @@ async function rejectOpportunityListing(opportunityId, rejectionNote, options) {
     updated_at: new Date().toISOString(),
   };
   if (options && options.automated) {
-    const { mergeRejectionAutomatedMeta } = require('./opportunity-review-queue');
     patch.meta = mergeRejectionAutomatedMeta(baseMeta);
   }
   let { data, error } = await sb
@@ -572,7 +573,7 @@ async function rejectOpportunityListing(opportunityId, rejectionNote, options) {
   }
   if (error) throw new Error(error.message);
 
-  if (!options || options.sendEmail !== false) {
+  if (shouldEmailOpportunityRejection(options)) {
     try {
       const { sendOpportunityRejectedEmail } = require('./lifecycle-emails');
       await sendOpportunityRejectedEmail(data, note);
@@ -588,9 +589,11 @@ async function maybeAutoRejectOpportunity(row) {
   if (!row) return { rejected: false };
   const scan = scanOpportunityRedFlags(row);
   if (!scan) return { rejected: false };
+  // Record the automated rejection. The lister email waits until an admin denies it.
   const listing = await rejectOpportunityListing(row.id, scan.rejectionNote, {
     automated: true,
     existingRow: row,
+    sendEmail: false,
   });
   return { rejected: true, listing, scan };
 }

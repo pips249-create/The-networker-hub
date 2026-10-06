@@ -540,6 +540,7 @@ async function sendViaResend({
   tags,
   replyTo,
   from,
+  bcc,
   skipAllowlist,
   listUnsubscribeUrl,
   idempotencyKey,
@@ -595,6 +596,11 @@ async function sendViaResend({
   if (replyToAddress && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(replyToAddress)) {
     body.reply_to = replyToAddress;
   }
+  const { normalizeBccList } = require('./organiser-email-bcc');
+  const bccList = normalizeBccList(bcc, recipient).filter(function (email) {
+    return skipAllowlist || isRecipientAllowed(email);
+  });
+  if (bccList.length) body.bcc = bccList;
   if (tagList.length) body.tags = tagList;
 
   const attachmentList = Array.isArray(attachments)
@@ -768,6 +774,7 @@ async function sendTemplatedEmail({
   resendTags,
   replyTo,
   from,
+  bcc,
   idempotencyKey,
   attachments,
   opportunityId,
@@ -852,6 +859,7 @@ async function sendTemplatedEmail({
     tags: mergedTags.length ? mergedTags : resendTags,
     replyTo,
     from,
+    bcc,
     skipAllowlist: shouldSkipEmailAllowlist(slug),
     listUnsubscribeUrl: shouldAttachListUnsubscribe(slug) ? unsubscribeUrl(siteUrl) : '',
     idempotencyKey: claimInviteIdempotency || idempotencyKey,

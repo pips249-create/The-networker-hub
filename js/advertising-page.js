@@ -541,6 +541,87 @@
     syncEnquire();
   }
 
+  var OPPORTUNITY_COUNTY_SPONSOR_OPTIONS = [
+    { slug: 'berkshire', name: 'Berkshire' },
+    { slug: 'buckinghamshire', name: 'Buckinghamshire' },
+    { slug: 'cambridgeshire', name: 'Cambridgeshire' },
+    { slug: 'cheshire', name: 'Cheshire' },
+    { slug: 'devon', name: 'Devon' },
+    { slug: 'dorset', name: 'Dorset' },
+    { slug: 'essex', name: 'Essex' },
+    { slug: 'hampshire', name: 'Hampshire' },
+    { slug: 'hertfordshire', name: 'Hertfordshire' },
+    { slug: 'kent', name: 'Kent' },
+    { slug: 'lancashire', name: 'Lancashire' },
+    { slug: 'norfolk', name: 'Norfolk' },
+    { slug: 'oxfordshire', name: 'Oxfordshire' },
+    { slug: 'shropshire', name: 'Shropshire' },
+    { slug: 'staffordshire', name: 'Staffordshire' },
+    { slug: 'surrey', name: 'Surrey' },
+    { slug: 'sussex', name: 'Sussex' },
+    { slug: 'warwickshire', name: 'Warwickshire' },
+    { slug: 'yorkshire', name: 'Yorkshire' },
+  ];
+
+  function initOpportunityCountyPartnerPicker() {
+    var list = document.getElementById('opportunity-county-partner-county-list');
+    var status = document.getElementById('opportunity-county-partner-status');
+    var countEl = document.getElementById('opportunity-county-partner-available-count');
+    var enquireBtn = document.getElementById('opportunity-county-partner-enquire-btn');
+    if (!list || !enquireBtn) return;
+
+    var selectedName = '';
+
+    if (countEl) countEl.textContent = String(OPPORTUNITY_COUNTY_SPONSOR_OPTIONS.length);
+
+    list.innerHTML = OPPORTUNITY_COUNTY_SPONSOR_OPTIONS.map(function (county) {
+      return (
+        '<label class="city-partner-city" data-county-slug="' +
+        esc(county.slug) +
+        '">' +
+        '<input type="radio" name="opportunity-county-partner-county" value="' +
+        esc(county.slug) +
+        '" data-county-name="' +
+        esc(county.name) +
+        '">' +
+        '<span>' +
+        esc(county.name) +
+        '</span>' +
+        '</label>'
+      );
+    }).join('');
+
+    function syncEnquire() {
+      var checked = list.querySelector('input[name="opportunity-county-partner-county"]:checked');
+      selectedName = checked ? String(checked.getAttribute('data-county-name') || '') : '';
+      if (selectedName) {
+        enquireBtn.textContent = 'Enquire about ' + selectedName + ' →';
+        enquireBtn.setAttribute('data-ad-enquiry-county', selectedName);
+        if (status) {
+          status.textContent =
+            selectedName + ' selected — send an enquiry and we will confirm availability.';
+        }
+      } else {
+        enquireBtn.textContent = 'Enquire about a county →';
+        enquireBtn.removeAttribute('data-ad-enquiry-county');
+        if (status) status.textContent = 'Pick a county above to enquire.';
+      }
+    }
+
+    list.addEventListener('change', syncEnquire);
+
+    enquireBtn.addEventListener('click', function (e) {
+      e.preventDefault();
+      var msg = selectedName
+        ? 'I am interested in Opportunities County Sponsor for ' + selectedName + '.'
+        : 'I am interested in Opportunities County Sponsor — please advise available counties.';
+      prefillEnquiryForm('Opportunities', 'County Sponsor', msg);
+      scrollToAnchor('ad-enquiry');
+    });
+
+    syncEnquire();
+  }
+
   function setQuickEnquiryStatus(message, type) {
     var statusEl = document.getElementById('ad-enquiry-quick-status');
     if (!statusEl) return;
@@ -1659,6 +1740,7 @@
       initTabJumpLinks();
       initEnquiryJumps();
       initIndustryPartnerPicker();
+      initOpportunityCountyPartnerPicker();
       initQuickEnquiry();
       initEnquiryForm();
       initStickyCta();
@@ -1674,6 +1756,7 @@
     initTabJumpLinks();
     initEnquiryJumps();
     initIndustryPartnerPicker();
+    initOpportunityCountyPartnerPicker();
     initQuickEnquiry();
     initEnquiryForm();
     initStickyCta();

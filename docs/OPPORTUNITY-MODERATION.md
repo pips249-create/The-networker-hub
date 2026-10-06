@@ -31,7 +31,7 @@ The platform already shows disclaimers and blocks some MLM patterns in `js/oppor
 1. **Pre-publish review** — Organisers submit for review with **no charge**. Admin Approve sends a pay-to-go-live email; Stripe payment then publishes immediately (`activateOpportunityListingPayment` + `opportunity_listing_live`). Already-paid pending listings go live on Approve.
 2. **Structured listing fields** — Investment amount, opportunity type, territory / location — required on submit; automated rejection if missing or vague.
 3. **Automated red flags** — Server-side pattern checks in `api/_lib/opportunity-moderation.js` for recruitment-primary network marketing, guaranteed income, passive income, crypto, and unregulated investment language.
-4. **Reject + email** — `opportunity_listing_rejected` template with required admin reason (or automated reason); edit and resubmit.
+4. **Reject + email** — `opportunity_listing_rejected` goes out only when an admin denies the listing, with their reason. Automated red flags still reject and store the reason, but do not email.
 5. **Enquiry disclaimer** — Keep on browse, detail, and enquiry form (already implemented).
 6. **Organiser terms** — Prohibit pyramid selling, recruitment-primary network marketing, and unregulated financial products (already in legal policies).
 
@@ -95,6 +95,7 @@ The platform already shows disclaimers and blocks some MLM patterns in `js/oppor
 
 | Date | Change |
 |------|--------|
+| 2026-09-24 | Rejection email sends only on admin deny; automated red-flag rejection no longer emails the lister |
 | 2026-08-27 | Queue only listings with `review_submitted_at`; Approve clarity + resend pay email; 3-day unpaid reminder; Premium Spotlight gated until live |
 | 2026-08-27 | Review-then-pay: submit → pending review → Approve → Stripe → live; pending + approved-pay emails |
 | 2026-07-28 | Product-selling `network-marketing` type allowed; recruitment-primary auto-reject; not eligible for Premium Spotlight; browse hide filter default on |
