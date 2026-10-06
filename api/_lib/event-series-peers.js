@@ -115,15 +115,30 @@ function seriesSpotlightBucketKey(row) {
 }
 
 function dedupeFeaturedRowsBySeries(rows) {
+  return takeFirstRowPerSeries(rows).rows;
+}
+
+/**
+ * Rows should already be in starts_at order. Keeps the first row per series
+ * so a recurring listing occupies one spotlight slot, not one per date.
+ * @param {object[]} rows
+ * @param {number} [max] stop after this many series
+ */
+function takeFirstRowPerSeries(rows, max) {
   const seen = new Set();
   const out = [];
+  const counts = new Map();
+  const cap = Number(max);
+  const limit = Number.isFinite(cap) && cap > 0 ? cap : Infinity;
   for (const row of rows || []) {
-    const key = seriesSpotlightBucketKey(row);
+    const key = seriesSpotlightBucketKey(row) || 'id:' + String(row?.id || out.length);
+    counts.set(key, (counts.get(key) || 0) + 1);
     if (seen.has(key)) continue;
     seen.add(key);
     out.push(row);
+    if (out.length >= limit) break;
   }
-  return out;
+  return { rows: out, counts };
 }
 
 /** Same bucket key as spotlight — one card per recurring listing on browse. */
@@ -180,6 +195,7 @@ module.exports = {
   seriesSpotlightBucketKey,
   seriesBrowseBucketKey,
   dedupeFeaturedRowsBySeries,
+  takeFirstRowPerSeries,
   countBrowseSeriesOccurrences,
   dedupeBrowseRowsBySeries,
   idToSeriesCountMap,

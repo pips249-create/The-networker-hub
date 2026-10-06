@@ -140,10 +140,10 @@ function isEventCurrentlyFeatured(row, at) {
 }
 
 /**
- * Decide how to keep a series visible in Premium Spotlight while its placement
- * window is still active. Pure helper for cron sync + unit tests.
+ * Keep one upcoming date in Premium Spotlight while the placement window is open.
+ * Does not flag every date in the series — the carousel shows a single card.
  *
- * @returns {{ patch: object, featureIds: string[], clearStartedIds: string[] } | null}
+ * @returns {{ patch: object, featureIds: string[], clearIds: string[], anchorId: string } | null}
  */
 function planSeriesFeaturedRollForward(peers, at) {
   const rows = peers || [];
@@ -151,13 +151,27 @@ function planSeriesFeaturedRollForward(peers, at) {
   const unexpired = rows.filter((row) => isFeaturedPlacementUnexpired(row, now));
   if (!unexpired.length) return null;
 
+  const upcoming = [...upcomingBrowseRows(rows, now)].sort(
+    (a, b) => new Date(a.starts_at) - new Date(b.starts_at)
+  );
+  if (!upcoming.length) return null;
+
+  const upcomingIds = new Set(upcoming.map((row) => row.id));
+  const upcomingFeatured = unexpired
+    .filter((row) => upcomingIds.has(row.id))
+    .sort((a, b) => new Date(a.starts_at) - new Date(b.starts_at));
+
   const anchor =
+    upcomingFeatured[0] ||
     [...unexpired]
       .filter((row) => row.featured_until)
-      .sort((a, b) => new Date(b.featured_until) - new Date(a.featured_until))[0] || unexpired[0];
+      .sort((a, b) => new Date(b.featured_until) - new Date(a.featured_until))[0] ||
+    unexpired[0];
 
-  const upcoming = upcomingBrowseRows(rows, now);
-  if (!upcoming.length) return null;
+  // A date that is still upcoming stays the carousel card. Once it has started,
+  // move that same window onto the next date only.
+  const keeper = upcomingFeatured[0] || upcoming[0];
+  if (!keeper?.id) return null;
 
   const patch = {
     featured: true,
@@ -188,17 +202,13 @@ function planSeriesFeaturedRollForward(peers, at) {
     );
   };
 
-  const featureIds = upcoming
-    .filter((peer) => !sameMeta(peer))
-    .map((peer) => peer.id)
-    .filter(Boolean);
+  const featureIds = sameMeta(keeper) ? [] : [keeper.id];
+  const clearIds = rows
+    .filter((row) => row && row.featured && row.id && row.id !== keeper.id)
+    .map((row) => row.id);
 
-  // Keep started peers featured while the window is open so admin lists still show
-  // the series as featured; public browse ignores started rows via isEventCurrentlyFeatured.
-  const clearStartedIds = [];
-
-  if (!featureIds.length && !clearStartedIds.length) return null;
-  return { patch, featureIds, clearStartedIds, anchorId: anchor.id };
+  if (!featureIds.length && !clearIds.length) return null;
+  return { patch, featureIds, clearIds, anchorId: anchor.id, keeperId: keeper.id };
 }
 
 function computeFeaturedUntil(currentUntil, planDays, eventStartsAt) {

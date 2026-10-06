@@ -1140,10 +1140,12 @@ module.exports = async function handler(req, res) {
           }
         }
       }
+      let clearedSeriesEventIds = [];
       if (Object.prototype.hasOwnProperty.call(patch, 'featured') && patch.featured === false) {
         const { clearEventFeaturedPlacement } = require('../event-featured');
         try {
-          await clearEventFeaturedPlacement(id);
+          const cleared = await clearEventFeaturedPlacement(id);
+          clearedSeriesEventIds = cleared.seriesEventIds || [];
         } catch (clearErr) {
           if (clearErr.message === 'event_not_found') {
             return json(res, 404, { error: 'not_found' });
@@ -1156,11 +1158,12 @@ module.exports = async function handler(req, res) {
       } else if (Object.prototype.hasOwnProperty.call(patch, 'featured') && patch.featured === true) {
         const { setEventFeaturedPlacement } = require('../event-featured');
         try {
-          await setEventFeaturedPlacement(id, {
+          const placement = await setEventFeaturedPlacement(id, {
             featured_until: Object.prototype.hasOwnProperty.call(patch, 'featured_until')
               ? patch.featured_until
               : undefined,
           });
+          clearedSeriesEventIds = placement.clearedSeriesEventIds || [];
         } catch (setErr) {
           if (setErr.message === 'event_not_found') {
             return json(res, 404, { error: 'not_found' });
@@ -1215,7 +1218,11 @@ module.exports = async function handler(req, res) {
       } catch {
         /* ignore */
       }
-      return json(res, 200, { ok: true, event });
+      return json(res, 200, {
+        ok: true,
+        event,
+        clearedSeriesEventIds: clearedSeriesEventIds || [],
+      });
     } catch (e) {
       if (e.code === 'missing_date' || e.code === 'missing_organiser' || e.status === 400) {
         return json(res, 400, { error: e.code || e.message, message: e.message });

@@ -24005,6 +24005,11 @@
               until ||
               null;
             if (kind === 'event') {
+              var clearedIds = data.clearedSeriesEventIds || [];
+              clearedIds.forEach(function (cid) {
+                if (String(cid) === String(id)) return;
+                applyLocalFeatured(featuredSpotlightEvents, cid, false, null, 'event');
+              });
               applyLocalFeatured(featuredSpotlightEvents, id, wantFeatured, untilIso, 'event', data.event);
               featuredSpotlightLoadGen += 1;
               paintFeaturedSpotlightTable();
@@ -24143,7 +24148,7 @@
     main.innerHTML =
       '<div class="space-y-4">' +
       '<div id="spotlight-slots-wrap" class="text-sm text-slate-500">Loading carousel slot usage…</div>' +
-      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Toggle featured events for the <strong>Premium Spotlight</strong> on <code class="text-[11px]">/events/</code>. Set an end date when you feature something (or choose no end date). You can change the date anytime under Expires.</p>' +
+      '<p class="text-sm text-slate-600 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3">Tick one date to put <strong>that event</strong> in the Premium Spotlight on <code class="text-[11px]">/events/</code>. A repeating series is a single carousel card — other dates in the series stay unticked. The bar shows the next upcoming featured date (up to 12 at a time).</p>' +
       '<div class="flex flex-wrap items-center gap-2">' +
       '<p id="featured-status" class="text-sm text-slate-500 flex-1 min-w-[12rem]">Loading approved events…</p>' +
       spotlightClearStaleBtnHtml('spotlight-clear-stale-events') +

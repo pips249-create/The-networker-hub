@@ -4,7 +4,6 @@
 const { isEventCurrentlyFeatured } = require('./event-featured-plans');
 const { SPOTLIGHT_CAROUSEL_MAX } = require('./spotlight-carousel-limits');
 const {
-  dedupeFeaturedRowsBySeries,
   countBrowseSeriesOccurrences,
   dedupeBrowseRowsBySeries,
   idToSeriesCountMap,
@@ -934,18 +933,18 @@ async function fetchBrowseEventsPage(sb, rawQuery) {
         // Spotlight uses location, search, format, dates, and price floor — but not
         // event-type chips, free-only, or max price, so premium stays visible when
         // users refine the grid (Option B: relevant premium).
-        let fq = sb.from(BROWSE_VIEW).select('*').eq('featured', true);
-        fq = applyBrowseFilters(fq, { ...params, types: [], freeOnly: false, priceMax: null });
-        // Over-fetch then series-dedupe so multi-date groups count as one slot (same as admin).
-        fq = fq.order('starts_at', { ascending: true }).limit(SPOTLIGHT_CAROUSEL_MAX * 4);
-        const { data: featuredRows, error: fErr } = await fq;
-        if (fErr) throw new Error(fErr.message);
-        const filtered = (featuredRows || []).filter((row) => isEventCurrentlyFeatured(row));
-        const featuredSeriesCounts = countBrowseSeriesOccurrences(filtered);
-        const deduped = dedupeFeaturedRowsBySeries(filtered).slice(0, SPOTLIGHT_CAROUSEL_MAX);
+        // One card per series: page past sibling dates instead of stopping after
+        // the first 48 featured rows (a long series used to fill that window).
+        const { pageUpcomingFeaturedSeries } = require('./event-featured-slots');
+        const pack = await pageUpcomingFeaturedSeries(sb, {
+          select: '*',
+          maxSeries: SPOTLIGHT_CAROUSEL_MAX,
+          applyQuery: (query) =>
+            applyBrowseFilters(query, { ...params, types: [], freeOnly: false, priceMax: null }),
+        });
         return {
-          rows: deduped,
-          idToSeriesCount: idToSeriesCountMap(deduped, featuredSeriesCounts),
+          rows: pack.rows,
+          idToSeriesCount: idToSeriesCountMap(pack.rows, pack.counts),
         };
       })()
     : Promise.resolve({ rows: [], idToSeriesCount: new Map() });
