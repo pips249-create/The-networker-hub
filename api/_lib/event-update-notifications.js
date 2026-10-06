@@ -118,7 +118,6 @@ async function sendEventDetailsUpdatedEmails(sb, eventId, changes, eventRow) {
   if (ticketErr) throw new Error(ticketErr.message);
   const ticketsById = new Map((tickets || []).map((ticket) => [ticket.id, ticket]));
 
-  const { resolveAttendeeEventReplyTo } = require('./attendee-event-reply-to');
   const organiserReply = await resolveAttendeeEventReplyTo(sb, eventRow.organiser_id);
   const organiserName = organiserReply.organiserName;
 
