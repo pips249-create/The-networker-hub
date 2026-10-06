@@ -136,6 +136,7 @@
     { "source": "/guides/export-attendees-and-visits.html", "destination": "/guides/export-attendees-and-visits", "permanent": true },
     { "source": "/guides/organiser-leavebehind.html", "destination": "/guides/organiser-leavebehind", "permanent": true },
     { "source": "/guides/international-overview.html", "destination": "/guides/international-overview", "permanent": true },
+    { "source": "/guides/member-playbooks.html", "destination": "/guides/member-playbooks", "permanent": true },
     { "source": "/p-tnh-intl-overview-i8n2", "destination": "/guides/international-overview", "permanent": false },
     { "source": "/p-tnh-intl-overview-i8n2.html", "destination": "/guides/international-overview", "permanent": false },
     { "source": "/p/tnh-intl-overview-i8n2", "destination": "/guides/international-overview", "permanent": false },

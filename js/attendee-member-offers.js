@@ -17,6 +17,22 @@
   var IMAGE_READ_ERROR = "Couldn't read that image. Use a JPG or PNG, or paste an image link.";
   var onChange = null;
 
+  /** Static playbooks — same card shape as partner offers; open the click-through deck. */
+  var PLAYBOOKS =
+    window.HubMemberPlaybooks && Array.isArray(window.HubMemberPlaybooks.catalog)
+      ? window.HubMemberPlaybooks.catalog.map(function (book) {
+          return {
+            id: book.id,
+            title: book.title,
+            provider: 'The Networker UK',
+            category: 'Playbook',
+            highlight: '5 pages',
+            summary: book.summary,
+            tone: book.tone != null ? book.tone : 0,
+          };
+        })
+      : [];
+
   function esc(s) {
     var d = document.createElement('div');
     d.textContent = s == null ? '' : String(s);
@@ -313,12 +329,86 @@
     var adminBar = document.getElementById('ad-services-admin');
     var detail = document.getElementById('ad-services-detail');
     var pitch = document.getElementById('ad-services-pitch');
-    var playbooks = document.getElementById('ad-playbooks');
     if (grid) grid.hidden = !show;
     if (adminBar) adminBar.hidden = !show || !canManage;
     if (detail) detail.hidden = show;
     if (pitch) pitch.hidden = !show;
-    if (playbooks) playbooks.hidden = !show;
+  }
+
+  function playbookCardHtml(book) {
+    return (
+      '<article class="ad-service-card ad-service-card--playbook" data-playbook-id="' +
+      esc(book.id) +
+      '" role="listitem">' +
+      '<div class="ad-service-media ad-service-media--' +
+      String(book.tone != null ? book.tone : 0) +
+      '">' +
+      '<span class="ad-service-initials" aria-hidden="true">' +
+      esc(initials(book.title)) +
+      '</span>' +
+      '<span class="ad-service-category">' +
+      esc(book.category) +
+      '</span>' +
+      (book.highlight ? '<span class="ad-service-highlight">' + esc(book.highlight) + '</span>' : '') +
+      '</div>' +
+      '<div class="ad-service-body">' +
+      '<div class="ad-service-body-top">' +
+      '<span class="ad-service-provider">' +
+      esc(book.provider) +
+      '</span>' +
+      '<span class="ad-service-kicker">Playbook</span></div>' +
+      '<h3 class="ad-service-title">' +
+      esc(book.title) +
+      '</h3>' +
+      (book.summary ? '<p class="ad-service-summary">' + esc(book.summary) + '</p>' : '') +
+      '<span class="ad-service-view">Open playbook</span>' +
+      '</div>' +
+      '<button type="button" class="ad-service-card-link" data-playbook-open="' +
+      esc(book.id) +
+      '" aria-label="Open playbook: ' +
+      esc(book.title) +
+      '"></button></article>'
+    );
+  }
+
+  function closePlaybookModal() {
+    var modal = document.getElementById('ad-playbook-modal');
+    var mount = document.getElementById('ad-playbook-mount');
+    if (modal) modal.hidden = true;
+    document.body.classList.remove('ad-playbook-modal-open');
+    if (mount) mount.innerHTML = '';
+  }
+
+  function openPlaybookModal(id) {
+    var book = null;
+    for (var i = 0; i < PLAYBOOKS.length; i += 1) {
+      if (PLAYBOOKS[i].id === id) {
+        book = PLAYBOOKS[i];
+        break;
+      }
+    }
+    if (!book) return;
+    var modal = document.getElementById('ad-playbook-modal');
+    var mount = document.getElementById('ad-playbook-mount');
+    var title = document.getElementById('ad-playbook-modal-title');
+    if (!modal || !mount || !window.HubMemberPlaybooks || typeof window.HubMemberPlaybooks.mount !== 'function') {
+      location.href = '/guides/member-playbooks.html#' + id;
+      return;
+    }
+    if (title) title.textContent = book.title;
+    window.HubMemberPlaybooks.mount(mount, {
+      deckId: id,
+      onSwitch: function (nextId) {
+        for (var j = 0; j < PLAYBOOKS.length; j += 1) {
+          if (PLAYBOOKS[j].id === nextId) {
+            if (title) title.textContent = PLAYBOOKS[j].title;
+            break;
+          }
+        }
+      },
+    });
+    modal.hidden = false;
+    document.body.classList.add('ad-playbook-modal-open');
   }
 
   function render() {
@@ -358,13 +448,14 @@
       if (empty) empty.hidden = true;
       return;
     }
+    var playbookHtml = PLAYBOOKS.map(playbookCardHtml).join('');
     if (!list.length) {
-      grid.innerHTML = '';
-      if (empty) empty.hidden = false;
+      grid.innerHTML = playbookHtml;
+      if (empty) empty.hidden = true;
       return;
     }
     if (empty) empty.hidden = true;
-    grid.innerHTML = list.map(cardHtml).join('');
+    grid.innerHTML = playbookHtml + list.map(cardHtml).join('');
     grid.querySelectorAll('.ad-service-img').forEach(function (img) {
       img.addEventListener('error', function () {
         var media = img.parentElement;
@@ -705,10 +796,26 @@
           });
       });
     }
+    var playbookModal = document.getElementById('ad-playbook-modal');
+    if (playbookModal && !playbookModal.dataset.bound) {
+      playbookModal.dataset.bound = '1';
+      var closePlaybook = document.getElementById('ad-playbook-modal-close');
+      var playbookBackdrop = document.getElementById('ad-playbook-modal-backdrop');
+      if (closePlaybook) closePlaybook.addEventListener('click', closePlaybookModal);
+      if (playbookBackdrop) playbookBackdrop.addEventListener('click', closePlaybookModal);
+    }
+
     var services = document.querySelector('.ad-services');
     if (services && !services.dataset.boundServiceClicks) {
       services.dataset.boundServiceClicks = '1';
       services.addEventListener('click', function (event) {
+        var playbookBtn = event.target.closest('[data-playbook-open]');
+        if (playbookBtn) {
+          event.preventDefault();
+          event.stopPropagation();
+          openPlaybookModal(playbookBtn.getAttribute('data-playbook-open'));
+          return;
+        }
         var copyBtn = event.target.closest('[data-service-copy-code]');
         if (copyBtn) {
           event.preventDefault();
@@ -778,6 +885,11 @@
     }
     document.addEventListener('keydown', function (event) {
       if (event.key === 'Escape') {
+        var playbookModalEl = document.getElementById('ad-playbook-modal');
+        if (playbookModalEl && !playbookModalEl.hidden) {
+          closePlaybookModal();
+          return;
+        }
         var modal = document.getElementById('ad-service-modal');
         if (modal && !modal.hidden) closeForm();
         else if (detailIdFromHash()) location.hash = 'services';

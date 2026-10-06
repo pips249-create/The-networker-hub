@@ -16,7 +16,8 @@
     <link rel="stylesheet" href="../css/hub.css?v=20260909listmenu1" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260812footer11" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260929services2" />
-    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20261006playbooks1" />
+    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20261006playbooks3" />
+    <link rel="stylesheet" href="../css/member-playbooks-page.css?v=20261006mp4" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260812footer10" />
     <script src="../js/hub-defer-css.js?v=20260828perf2" data-hrefs="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap"></script>
 
@@ -703,34 +704,6 @@
 
             <section class="ad-page" id="ad-page-services" data-ad-page="services">
               <div class="ad-services">
-                <div class="ad-playbooks" id="ad-playbooks">
-                  <div class="ad-playbooks-head">
-                    <div>
-                      <p class="ad-playbooks-kicker">Member zone</p>
-                      <h2 class="ad-playbooks-title">Practical playbooks</h2>
-                      <p class="ad-playbooks-text">Marketing, numbers, and funding guides for networkers — sit beside the partner perks below.</p>
-                    </div>
-                    <a class="ad-btn ad-btn-ghost" href="/guides/member-playbooks">Open Member zone</a>
-                  </div>
-                  <div class="ad-playbooks-grid" role="list">
-                    <a class="ad-playbook-card" role="listitem" href="/guides/member-playbooks#marketing">
-                      <span class="ad-playbook-card-kicker">Guide</span>
-                      <strong>Marketing that fits a networking diary</strong>
-                      <span>A short playbook for getting visible without burning every evening.</span>
-                    </a>
-                    <a class="ad-playbook-card" role="listitem" href="/guides/member-playbooks#numbers">
-                      <span class="ad-playbook-card-kicker">Guide</span>
-                      <strong>What your numbers are really telling you</strong>
-                      <span>Read cash, pipeline, and time like a simple dashboard.</span>
-                    </a>
-                    <a class="ad-playbook-card" role="listitem" href="/guides/member-playbooks#funding">
-                      <span class="ad-playbook-card-kicker">Guide</span>
-                      <strong>Funding your business</strong>
-                      <span>Choose the right investment path before you pitch anyone.</span>
-                    </a>
-                  </div>
-                </div>
-
                 <div class="ad-services-admin" id="ad-services-admin" hidden>
                   <p class="ad-services-admin-note">Only platform admins can add or edit these. Members see published offers.</p>
                   <button type="button" class="ad-btn ad-btn-primary" id="ad-services-add">Add offer</button>
@@ -1031,6 +1004,24 @@
       </div>
     </div>
 
+    <div class="ad-playbook-modal" id="ad-playbook-modal" hidden>
+      <div class="ad-playbook-modal-backdrop" id="ad-playbook-modal-backdrop"></div>
+      <div
+        class="ad-playbook-modal-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="ad-playbook-modal-title"
+      >
+        <div class="ad-playbook-modal-bar">
+          <h2 class="ad-playbook-modal-title" id="ad-playbook-modal-title">Playbook</h2>
+          <button type="button" class="ad-playbook-modal-close" id="ad-playbook-modal-close" aria-label="Close playbook">
+            ×
+          </button>
+        </div>
+        <div class="ad-playbook-mount mp-shell" id="ad-playbook-mount"></div>
+      </div>
+    </div>
+
     <div class="ad-service-modal" id="ad-service-modal" hidden>
       <div class="ad-service-modal-backdrop" id="ad-service-modal-backdrop"></div>
       <div
@@ -1147,7 +1138,8 @@
     <script src="../js/hub-side-nav.js?v=20260805hubmobile2" defer></script>
     <script src="../js/attendee-auth-gate.js?v=20260929session1"></script>
     <script src="../js/organiser-image-upload.js?v=20261002offerimage1" defer></script>
-    <script src="../js/attendee-member-offers.js?v=20261006playbooks1" defer></script>
+    <script src="../js/member-playbooks.js?v=20261006mp4" defer></script>
+    <script src="../js/attendee-member-offers.js?v=20261006playbooks3" defer></script>
     <script src="../js/attendee-dashboard.js?v=20260929offerform1" defer></script>
   </body>
 </html>
