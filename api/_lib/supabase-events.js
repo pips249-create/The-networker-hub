@@ -285,6 +285,7 @@ function ticketRowToTier(row, registrationCount) {
     isAlumni: ticketIsAlumni(row, name),
     isMembersOnly: isMembersOnlyTicket(row),
     visibility: String(row.visibility || 'public').toLowerCase(),
+    saleStartsAt: row.sale_starts_at || null,
     saleEnd: row.sale_ends_at || null,
     seriesScope: String(row.series_scope || 'date').trim(),
     isSeriesPass: String(row.series_scope || '').trim() === 'series_pass',
