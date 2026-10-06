@@ -19037,6 +19037,93 @@
       });
   }
 
+  function emailStaleUnclaimedGroups(triggerBtn) {
+    var msg = document.getElementById('group-email-stale-unclaimed-msg');
+    var defaultLabel = triggerBtn ? triggerBtn.textContent : '';
+    if (triggerBtn) {
+      triggerBtn.disabled = true;
+      triggerBtn.textContent = 'Checking…';
+    }
+    if (msg) {
+      msg.textContent = 'Finding groups that have not claimed and have not been contacted in the last 7 days…';
+      msg.className = 'text-xs text-slate-500';
+    }
+    adminPost('/api/admin/organisers', { action: 'list_unclaimed_stale_reminders' })
+      .then(function (data) {
+        if (!data || !data.ok) throw new Error((data && (data.message || data.error)) || 'Could not list groups');
+        var ids = data.ids || [];
+        if (!ids.length) {
+          if (msg) {
+            msg.textContent = 'No groups to email. Everyone unclaimed was contacted in the last 7 days, or has no email.';
+            msg.className = 'text-xs text-slate-600';
+          }
+          return null;
+        }
+        if (
+          !window.confirm(
+            'Email the unclaimed-page reminder to ' +
+              ids.length +
+              ' group' +
+              (ids.length === 1 ? '' : 's') +
+              ' that have not been contacted in the last 7 days?'
+          )
+        ) {
+          if (msg) msg.textContent = '';
+          return null;
+        }
+        var sent = 0;
+        var failed = 0;
+        var index = 0;
+        function nextChunk() {
+          if (index >= ids.length) {
+            var text =
+              'Reminder emailed to ' +
+              sent +
+              ' group' +
+              (sent === 1 ? '' : 's') +
+              (failed ? '. ' + failed + ' failed.' : '.');
+            groupCleanupState.flash = { text: text, tone: failed ? 'warn' : 'ok' };
+            if (msg) {
+              msg.textContent = text;
+              msg.className = failed
+                ? 'text-xs text-amber-800 font-semibold'
+                : 'text-xs text-emerald-700 font-semibold';
+            }
+            return refreshGroupCleanupPage();
+          }
+          var chunk = ids.slice(index, index + 20);
+          index += chunk.length;
+          if (triggerBtn) triggerBtn.textContent = 'Sending ' + Math.min(index, ids.length) + ' / ' + ids.length;
+          if (msg) {
+            msg.textContent = 'Sending reminders… ' + Math.min(index, ids.length) + ' of ' + ids.length;
+            msg.className = 'text-xs text-slate-500';
+          }
+          return adminPost('/api/admin/organisers', {
+            action: 'send_unclaimed_followup',
+            ids: chunk,
+          }).then(function (batch) {
+            if (!batch || !batch.ok) throw new Error((batch && (batch.message || batch.error)) || 'Could not send reminder');
+            sent += (batch.sent && batch.sent.length) || 0;
+            failed += (batch.failed && batch.failed.length) || 0;
+            return nextChunk();
+          });
+        }
+        return nextChunk();
+      })
+      .catch(function (err) {
+        window.alert(err.message || 'Could not send reminders.');
+        if (msg) {
+          msg.textContent = err.message || 'Could not send reminders.';
+          msg.className = 'text-xs text-red-700 font-semibold';
+        }
+      })
+      .finally(function () {
+        if (!triggerBtn) return;
+        triggerBtn.disabled = false;
+        triggerBtn.textContent = defaultLabel || 'Email unclaimed groups not contacted in 7 days';
+      });
+  }
+
   function saveGroupCleanupForm(form) {
     var id = form.getAttribute('data-organiser-id');
     var msg = form.querySelector('.group-cleanup-msg');
@@ -20017,6 +20104,11 @@
       return;
     }
 
+    if (e.target.closest('#group-email-stale-unclaimed-btn')) {
+      emailStaleUnclaimedGroups(document.getElementById('group-email-stale-unclaimed-btn'));
+      return;
+    }
+
     if (e.target.closest('#group-email-unclaimed-btn')) {
       var reminderIds = getSelectedGroupIds();
       if (!reminderIds.length) {
@@ -20870,6 +20962,12 @@
       '<button type="submit" class="rounded-lg border border-slate-300 bg-white text-slate-800 text-sm font-semibold px-4 py-2 hover:bg-slate-50">Create group</button>' +
       '<button type="submit" data-email-group="1" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Email this group</button>' +
       '<span id="group-create-msg" class="text-xs"></span></div></form></div>' +
+      '<section class="rounded-xl border border-violet-200 bg-white p-4 shadow-sm space-y-2">' +
+      '<h3 class="text-sm font-semibold text-brand-900">Unclaimed reminders</h3>' +
+      '<p class="text-xs text-slate-600">Emails the reminder to every group that has not claimed their page and has not been contacted in the last 7 days. Claimed, disputed, hidden, and opted-out groups are left out.</p>' +
+      '<div class="flex flex-wrap items-center gap-3">' +
+      '<button type="button" id="group-email-stale-unclaimed-btn" class="rounded-lg bg-violet-800 text-white text-sm font-semibold px-4 py-2 hover:bg-violet-950">Email unclaimed groups not contacted in 7 days</button>' +
+      '<span id="group-email-stale-unclaimed-msg" class="text-xs"></span></div></section>' +
       '<div id="group-cleanup-bulk" class="hidden rounded-xl border border-brand-200 bg-brand-50 p-4 shadow-sm space-y-3">' +
       '<form id="group-bulk-form" class="space-y-3">' +
       '<div class="flex flex-wrap items-center justify-between gap-2">' +

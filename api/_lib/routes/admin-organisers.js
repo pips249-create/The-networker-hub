@@ -5,9 +5,13 @@ const { publicOrganiserSlug, assignUniqueOrganiserSlug } = require('../organiser
 const {
   shouldSendDirectoryInvite,
   sendOrganiserDirectoryInvite,
-  sendOrganiserUnclaimedFollowup,
   directoryInviteCreateMessage,
 } = require('../organiser-directory-invite');
+const {
+  listStaleUnclaimedReminders,
+  describeUnclaimedFollowup,
+  sendUnclaimedFollowups,
+} = require('../organiser-unclaimed-reminders');
 const sbAuth = require('../supabase-auth');
 const { fetchWebsiteMeta } = require('../website-meta');
 const { createGroup } = require('../supabase-organiser');
@@ -1396,115 +1400,6 @@ async function createOrganiserGroupFromAdmin(body, session) {
   };
 }
 
-function describeUnclaimedFollowup({ sent, skipped, failed }) {
-  const sentRows = Array.isArray(sent) ? sent : [];
-  const skippedRows = Array.isArray(skipped) ? skipped : [];
-  const failedRows = Array.isArray(failed) ? failed : [];
-  const claimed = skippedRows.filter((row) => row.reason === 'already_claimed').length;
-  const missing = skippedRows.filter((row) => row.reason === 'missing_email').length;
-  const hidden = sentRows.filter((row) => row.hidden).length;
-  const parts = [
-    sentRows.length === 1
-      ? 'Reminder emailed to 1 group.'
-      : 'Reminder emailed to ' + sentRows.length + ' groups.',
-  ];
-  if (claimed) parts.push(claimed === 1 ? '1 already claimed.' : claimed + ' already claimed.');
-  if (missing) parts.push(missing === 1 ? '1 is missing an email.' : missing + ' are missing an email.');
-  if (hidden) {
-    parts.push(
-      hidden === 1
-        ? '1 is hidden from browse, so their public page stays off.'
-        : hidden + ' are hidden from browse, so their public pages stay off.'
-    );
-  }
-  if (failedRows.length) parts.push(failedRows.length === 1 ? '1 failed.' : failedRows.length + ' failed.');
-  return parts.join(' ');
-}
-
-async function sendUnclaimedFollowups(ids, session) {
-  const unique = [...new Set((Array.isArray(ids) ? ids : []).map((id) => String(id || '').trim()).filter(Boolean))];
-  if (!unique.length) {
-    const err = new Error('missing_ids');
-    err.status = 400;
-    throw err;
-  }
-  if (unique.length > 50) {
-    const err = new Error('too_many');
-    err.status = 400;
-    throw err;
-  }
-
-  const sb = getSupabaseAdmin();
-  const host = String(process.env.SITE_URL || 'https://www.thenetworkeruk.com').replace(/\/$/, '');
-  const { organiserPublicUrl } = require('../hub-email-urls');
-  const sent = [];
-  const skipped = [];
-  const failed = [];
-
-  for (const id of unique) {
-    const { data: row, error } = await sb.from('organisers').select('*').eq('id', id).maybeSingle();
-    if (error) {
-      failed.push({ id, error: error.message });
-      continue;
-    }
-    if (!row) {
-      skipped.push({ id, reason: 'not_found' });
-      continue;
-    }
-    const name = String(row.name || '').trim();
-    if (String(row.ownership_claim_status || '').toLowerCase() === 'claimed') {
-      skipped.push({ id, name, reason: 'already_claimed' });
-      continue;
-    }
-    const email = String(row.contact_email || row.email || '')
-      .trim()
-      .toLowerCase();
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      skipped.push({ id, name, reason: 'missing_email' });
-      continue;
-    }
-
-    const listing = String(row.listing_status || '').toLowerCase();
-    const hidden = listing === 'unpublished';
-    if (!hidden && listing !== 'published') {
-      const { error: pubErr } = await sb.from('organisers').update({ listing_status: 'published' }).eq('id', id);
-      if (pubErr) {
-        failed.push({ id, name, error: pubErr.message });
-        continue;
-      }
-      row.listing_status = 'published';
-    }
-
-    try {
-      await assignUniqueOrganiserSlug(sb, id, name);
-    } catch (slugErr) {
-      console.error('[unclaimed-followup-slug]', slugErr.message || slugErr);
-    }
-
-    const { data: fresh } = await sb.from('organisers').select('*').eq('id', id).maybeSingle();
-    const organiser = fresh || row;
-    let claimUrl = '';
-    try {
-      claimUrl = await resolveOrganiserClaimUrl(email, host, publicOrganiserSlug(organiser) || '');
-    } catch (claimErr) {
-      console.error('[unclaimed-followup-claim-url]', claimErr.message || claimErr);
-      claimUrl = organiserPublicUrl(organiser, host);
-    }
-
-    const result = await sendOrganiserUnclaimedFollowup({
-      to: email,
-      host,
-      organiser,
-      claimUrl,
-      actorEmail: session && session.email,
-    });
-    if (result && result.sent) sent.push({ id, email, name: organiser.name || name, hidden });
-    else failed.push({ id, email, name: organiser.name || name, error: (result && result.error) || 'send_failed' });
-  }
-
-  return { sent, skipped, failed };
-}
-
 async function bulkUpdateOrganisers(body) {
   const ids = Array.isArray(body.ids)
     ? [...new Set(body.ids.map((id) => String(id || '').trim()).filter(Boolean))]
@@ -1612,6 +1507,28 @@ module.exports = async function handler(req, res) {
         ok: false,
         error: e.message || 'create_group_failed',
         message: messages[e.message] || e.message || 'Could not create group.',
+      });
+    }
+  }
+
+  if (body.action === 'list_unclaimed_stale_reminders') {
+    try {
+      const result = await listStaleUnclaimedReminders(getSupabaseAdmin());
+      return json(res, 200, {
+        ok: true,
+        count: result.ids.length,
+        ids: result.ids,
+        summary: result.summary,
+        message:
+          result.ids.length === 1
+            ? '1 group has not claimed and has not been contacted in the last 7 days.'
+            : result.ids.length + ' groups have not claimed and have not been contacted in the last 7 days.',
+      });
+    } catch (e) {
+      return json(res, 500, {
+        ok: false,
+        error: e.message || 'list_unclaimed_stale_reminders_failed',
+        message: e.message || 'Could not list those groups.',
       });
     }
   }
