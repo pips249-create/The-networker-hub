@@ -1,5 +1,6 @@
 const { sendTemplatedEmail } = require('./send-template-email');
 const { buildAttendeeEmailVars } = require('./registration-emails');
+const { resolveAttendeeEventReplyTo } = require('./attendee-event-reply-to');
 
 const REMINDER_HOURS = 24;
 const REMINDER_WINDOW_HOURS = 2;
@@ -100,16 +101,8 @@ async function sendDueBookingReminders(sb) {
       ticketName = String(ticketRes.data?.name || 'Ticket').trim();
     }
 
-    let organiserName = '';
-    if (eventRow.organiser_id) {
-      const orgRes = await sb
-        .from('organisers')
-        .select('id, name')
-        .eq('id', eventRow.organiser_id)
-        .maybeSingle();
-      if (orgRes.error) throw new Error(orgRes.error.message);
-      organiserName = String(orgRes.data?.name || '').trim();
-    }
+    const organiserReply = await resolveAttendeeEventReplyTo(sb, eventRow.organiser_id);
+    const organiserName = organiserReply.organiserName;
 
     const vars = buildAttendeeEmailVars({
       registration,
@@ -139,6 +132,7 @@ async function sendDueBookingReminders(sb) {
           slug: 'booking_reminder',
           to: attendeeEmail,
           variables: vars,
+          replyTo: organiserReply.replyTo,
         });
       } catch (sendErr) {
         await releaseRowTimestamp(sb, {

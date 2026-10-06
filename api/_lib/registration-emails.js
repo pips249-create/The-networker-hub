@@ -228,6 +228,7 @@ async function sendRegistrationEmails(sb, registration) {
         slug: 'booking_confirmation',
         to: attendeeEmail,
         variables: vars,
+        replyTo: organiserEmail || undefined,
       });
       sent.attendee = true;
     } catch (e) {
@@ -350,6 +351,7 @@ async function sendApplicationEmails(sb, registration) {
         slug: 'application_received',
         to: attendeeEmail,
         variables: vars,
+        replyTo: organiserEmail || undefined,
       });
       sent.attendee = true;
     } catch (e) {
@@ -520,16 +522,10 @@ async function sendApplicationDecisionEmails(sb, registration, { decision, ticke
   const attendeeEmail = String(attendee.email || '').trim().toLowerCase();
   if (!attendeeEmail) return { skipped: true, reason: 'missing_attendee_email' };
 
-  let organiserName = '';
-  if (eventRow.organiser_id) {
-    const orgRes = await sb
-      .from('organisers')
-      .select('id, name')
-      .eq('id', eventRow.organiser_id)
-      .maybeSingle();
-    if (orgRes.error) throw new Error(orgRes.error.message);
-    organiserName = String(orgRes.data?.name || '').trim();
-  }
+  const organiserContact = eventRow.organiser_id
+    ? await resolveOrganiserNotificationEmail(sb, eventRow.organiser_id)
+    : { name: '', email: '' };
+  const organiserName = organiserContact.name;
 
   const ticketName = String(ticketRes.data?.name || 'Ticket').trim();
   const priceNum =
@@ -561,6 +557,7 @@ async function sendApplicationDecisionEmails(sb, registration, { decision, ticke
     to: attendeeEmail,
     variables: vars,
     subject,
+    replyTo: organiserContact.email || undefined,
   });
 
   return { attendee: true, decision: outcome };
@@ -606,16 +603,10 @@ async function sendMeetingLinkAddedEmails(sb, eventId, { previousLink, newLink }
 
   const ticketsById = new Map((ticketRes.data || []).map((t) => [t.id, t]));
 
-  let organiserName = '';
-  if (eventRow.organiser_id) {
-    const orgRes = await sb
-      .from('organisers')
-      .select('id, name')
-      .eq('id', eventRow.organiser_id)
-      .maybeSingle();
-    if (orgRes.error) throw new Error(orgRes.error.message);
-    organiserName = String(orgRes.data?.name || '').trim();
-  }
+  const organiserContact = eventRow.organiser_id
+    ? await resolveOrganiserNotificationEmail(sb, eventRow.organiser_id)
+    : { name: '', email: '' };
+  const organiserName = organiserContact.name;
 
   await sb.from('registrations').update({ meeting_link: next }).eq('event_id', eventId);
 
@@ -658,6 +649,7 @@ async function sendMeetingLinkAddedEmails(sb, eventId, { previousLink, newLink }
         to: attendeeEmail,
         variables: vars,
         subject: 'Join link for ' + eventName,
+        replyTo: organiserContact.email || undefined,
       });
       result.sent += 1;
     } catch (e) {
@@ -752,6 +744,7 @@ async function sendSeriesBundleConfirmation(sb, { primaryRegistration, bundleReg
         slug: 'booking_confirmation',
         to: attendeeEmail,
         variables: vars,
+        replyTo: organiserContact.email || undefined,
       });
       await sb
         .from('registrations')
