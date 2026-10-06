@@ -5,6 +5,7 @@ const {
   formatAmount,
 } = require('./registration-emails');
 const { isRefundEligibleForCancellation } = require('./cancellation-email-sections');
+const { resolveAttendeeEventReplyTo } = require('./attendee-event-reply-to');
 
 function formatRefundDate(iso) {
   const d = iso ? new Date(iso) : new Date();
@@ -190,10 +191,12 @@ async function sendBookingCancelledEmail(sb, registrationId, options = {}) {
     refund_issued: Boolean(options.refundIssued),
   });
   try {
+    const organiserReply = await resolveAttendeeEventReplyTo(sb, ctx.eventRow.organiser_id);
     await sendTemplatedEmail({
       slug: 'booking_cancelled',
       to: attendeeEmail,
       variables: vars,
+      replyTo: organiserReply.replyTo,
     });
     await sb
       .from('registrations')
@@ -221,10 +224,12 @@ async function sendEventCancelledEmail(sb, registrationId, organiserMessage, opt
   });
 
   try {
+    const organiserReply = await resolveAttendeeEventReplyTo(sb, ctx.eventRow.organiser_id);
     await sendTemplatedEmail({
       slug: 'event_cancelled',
       to: attendeeEmail,
       variables: vars,
+      replyTo: organiserReply.replyTo,
     });
     await sb
       .from('registrations')
@@ -257,10 +262,12 @@ async function sendRefundProcessedEmail(sb, registrationId, refundAmount) {
   });
 
   try {
+    const organiserReply = await resolveAttendeeEventReplyTo(sb, ctx.eventRow.organiser_id);
     await sendTemplatedEmail({
       slug: 'refund_processed',
       to: attendeeEmail,
       variables: vars,
+      replyTo: organiserReply.replyTo,
     });
     const now = new Date().toISOString();
     await sb
