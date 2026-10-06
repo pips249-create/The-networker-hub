@@ -95,13 +95,6 @@
       if (btn.classList.contains('is-busy')) return;
       btn.classList.add('is-busy');
       btn.setAttribute('aria-busy', 'true');
-      btn.setAttribute('aria-disabled', 'true');
-      var label = btn.querySelector('.org-claim-cta-label');
-      if (label) {
-        label.textContent = 'Opening sign-up\u2026';
-      } else {
-        btn.textContent = 'Opening sign-up\u2026';
-      }
     });
   }
 
