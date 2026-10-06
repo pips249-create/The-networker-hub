@@ -313,16 +313,12 @@
     var adminBar = document.getElementById('ad-services-admin');
     var detail = document.getElementById('ad-services-detail');
     var pitch = document.getElementById('ad-services-pitch');
+    var playbooks = document.getElementById('ad-playbooks');
     if (grid) grid.hidden = !show;
     if (adminBar) adminBar.hidden = !show || !canManage;
     if (detail) detail.hidden = show;
     if (pitch) pitch.hidden = !show;
-    if (window.HubMemberOffersPlaybook && typeof window.HubMemberOffersPlaybook.setVisible === 'function') {
-      window.HubMemberOffersPlaybook.setVisible(show);
-    } else {
-      var playbook = document.getElementById('mz-playbook');
-      if (playbook) playbook.hidden = !show;
-    }
+    if (playbooks) playbooks.hidden = !show;
   }
 
   function render() {
@@ -904,9 +900,6 @@
     if (options && options.member) {
       member.name = String(options.member.name || '').trim();
       member.email = String(options.member.email || '').trim();
-    }
-    if (window.HubMemberOffersPlaybook && typeof window.HubMemberOffersPlaybook.init === 'function') {
-      window.HubMemberOffersPlaybook.init();
     }
     bind();
     bindImageDrop();
