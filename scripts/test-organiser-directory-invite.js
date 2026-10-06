@@ -14,6 +14,7 @@ const { mergeEmailPreviewVariables } = require('../api/_lib/email-preview-variab
 const { organiserSlugCandidate } = require('../api/_lib/organiser-slug');
 const {
   DIRECTORY_INVITE_SLUG,
+  UNCLAIMED_FOLLOWUP_SLUG,
   shouldSendDirectoryInvite,
   directoryInviteVariables,
   directoryInviteCreateMessage,
@@ -73,6 +74,24 @@ async function main() {
   assert(html.indexOf('{{') === -1, 'no unresolved placeholders');
   assert(html.indexOf('See your page') !== -1, 'page button');
   pass('template builds — ' + subject);
+
+  const followPreview = mergeEmailPreviewVariables(UNCLAIMED_FOLLOWUP_SLUG, {}, 'https://www.thenetworkeruk.com');
+  const followBuilt = await buildEmailFromTemplate(UNCLAIMED_FOLLOWUP_SLUG, followPreview);
+  const followHtml = followBuilt.html;
+  const followSubject = followBuilt.subject;
+  assert(followSubject.indexOf('City Connectors') !== -1, 'follow-up subject names the group: ' + followSubject);
+  assert(/unclaimed/i.test(followSubject), 'follow-up subject says unclaimed: ' + followSubject);
+  assert(followHtml.indexOf('has not been claimed') !== -1, 'says the page has not been claimed');
+  assert(followHtml.indexOf('17,000') !== -1, 'follow-up mentions last year audience');
+  assert(followHtml.indexOf('reviews') !== -1, 'follow-up mentions reviews');
+  assert(followHtml.indexOf('first visits versus returning guests') !== -1, 'follow-up mentions visit tracking');
+  assert(followHtml.indexOf('booking system') !== -1, 'follow-up mentions the booking system');
+  assert(followHtml.indexOf('Claim your page') !== -1, 'claim button');
+  assert(followHtml.indexOf('/organisers/city-connectors') !== -1, 'follow-up page link substituted');
+  assert(followHtml.indexOf('/events/') !== -1, 'follow-up events link substituted');
+  assert(followHtml.indexOf('{{') === -1, 'follow-up has no unresolved placeholders');
+  assert(followHtml.indexOf('we wrote') === -1, 'follow-up does not assume a previous email');
+  pass('follow-up template builds — ' + followSubject);
 
   const sent = directoryInviteCreateMessage({
     sendInvite: true,

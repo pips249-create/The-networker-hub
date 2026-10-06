@@ -808,7 +808,7 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     }
   }
 
-  if (slug === 'organiser_directory_invite') {
+  if (slug === 'organiser_directory_invite' || slug === 'organiser_unclaimed_followup') {
     const { directoryInviteVariables } = require('./organiser-directory-invite');
     Object.assign(
       vars,
