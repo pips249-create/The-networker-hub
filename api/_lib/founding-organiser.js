@@ -4,6 +4,8 @@
  * Homepage strip: first 50 awards, visible until end of Nov 2026.
  * maybeAwardFoundingAfterEventPublish remains as a safety net for older claims.
  */
+const { applyPublicOrganiserBrowseFilter, isPublicOrganiser } = require('./supabase-organisers-browse');
+
 const FOUNDING_CLAIM_DEADLINE = new Date('2026-09-01T00:00:00+01:00');
 const FOUNDING_HOMEPAGE_UNTIL = new Date('2026-11-30T23:59:59+00:00');
 const FOUNDING_HOMEPAGE_CAP = 50;
@@ -210,6 +212,28 @@ async function listFoundingHomepageOrganisers(sb, now = new Date()) {
   return mergeSoftLaunchFoundingShowcase(withLogo);
 }
 
+/**
+ * Groups that have confirmed a public page: claimed, on the browse directory,
+ * and not a staff or internal profile.
+ */
+async function countConfirmedPublicOrganisers(sb) {
+  const pageSize = 1000;
+  const rows = [];
+  const columns =
+    'id, name, email, contact_email, organiser_account_id, listing_status, verification_status, is_internal';
+  for (let from = 0; from < 20000; from += pageSize) {
+    const { data, error } = await applyPublicOrganiserBrowseFilter(
+      sb.from('organisers').select(columns).eq('ownership_claim_status', 'claimed')
+    ).range(from, from + pageSize - 1);
+    if (error) throw new Error(error.message);
+    const chunk = data || [];
+    rows.push(...chunk);
+    if (chunk.length < pageSize) break;
+  }
+  const kept = await filterStaffFoundingRows(sb, rows);
+  return kept.filter((row) => row.is_internal !== true && isPublicOrganiser(row)).length;
+}
+
 /** All founding claimants — for the public preview gateway social-proof strip. */
 async function listFoundingOrganisersForGateway(sb, limit = 48) {
   const { data, error } = await sb
@@ -269,5 +293,6 @@ module.exports = {
   maybeAwardFoundingAfterEventPublish,
   listFoundingHomepageOrganisers,
   listFoundingOrganisersForGateway,
+  countConfirmedPublicOrganisers,
   mergeSoftLaunchFoundingShowcase,
 };

@@ -140,7 +140,7 @@
     }
     if (textEl) {
       textEl.textContent =
-        'Have a look at the details below. Nothing is live as yours until you claim it. Creating an account is free and takes about a minute \u2014 then you can edit this page.';
+        'Have a look at the details below. Claiming this page is free, and listing your meetings is free \u2014 no fee, and you keep the ticket price. Last year more than 17,000 networkers used the site. An account takes about a minute, then you can edit this page.';
     }
     if (btn) {
       btn.setAttribute('href', authHref);
@@ -319,6 +319,12 @@
     var useMarquee = list.length >= 5 && !prefersReducedMotion;
     track.classList.toggle('org-claim-peers-track--marquee', useMarquee);
     track.innerHTML = useMarquee ? items + items : items;
+    if (useMarquee) {
+      track.style.setProperty(
+        '--org-claim-peers-duration',
+        Math.max(140, list.length * 8) + 's'
+      );
+    }
     if (marquee) {
       marquee.setAttribute(
         'aria-label',
@@ -359,7 +365,11 @@
           return String(row.photoUrl || row.photo_url || '').trim();
         });
         var pool = withLogo.length >= CLAIM_PEERS_MIN ? withLogo : filtered;
-        renderClaimPeerStrip(pool.slice(0, 24), filtered.length);
+        var confirmedCount =
+          data && typeof data.confirmedCount === 'number' && data.confirmedCount >= 0
+            ? data.confirmedCount
+            : filtered.length;
+        renderClaimPeerStrip(pool.slice(0, 24), confirmedCount);
       })
       .catch(function () {
         renderClaimPeerStrip([]);

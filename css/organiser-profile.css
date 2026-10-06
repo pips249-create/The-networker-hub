@@ -597,7 +597,7 @@ body.org-claim-invite-active .how-reviews-trigger {
 }
 
 .org-claim-peers-track--marquee {
-  animation: org-claim-peers-scroll 28s linear infinite;
+  animation: org-claim-peers-scroll var(--org-claim-peers-duration, 140s) linear infinite;
 }
 
 .org-claim-peers-marquee:hover .org-claim-peers-track--marquee,
@@ -733,12 +733,39 @@ body.org-claim-sticky-visible {
   padding-bottom: 92px;
 }
 
+/* Hubert sits on this corner too. Park him on the left so Claim stays tappable. */
+body.org-claim-sticky-visible .hubert-widget:not(.hubert-widget--open),
+body.org-claim-sticky-visible .hubert-widget--open {
+  right: auto;
+  left: max(16px, env(safe-area-inset-left));
+}
+
+body.org-claim-sticky-visible .hubert-widget:not(.hubert-widget--open) .hubert-launcher-label {
+  display: none;
+}
+
+body.org-claim-sticky-visible .hubert-widget:not(.hubert-widget--open) .hubert-launcher {
+  padding: 8px;
+  border-radius: 50%;
+}
+
+body.org-claim-sticky-visible .hubert-panel {
+  right: auto;
+  left: 0;
+}
+
+@media (max-width: 719px) {
+  body.org-claim-sticky-visible .hubert-widget:not(.hubert-widget--open) {
+    bottom: calc(88px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
 @media (min-width: 720px) {
   .org-claim-sticky {
     left: auto;
     right: 20px;
     bottom: 20px;
-    max-width: 420px;
+    max-width: min(520px, calc(100vw - 40px));
     border-radius: 16px;
     padding: 14px 16px;
     box-shadow: 0 12px 32px rgba(28, 32, 64, 0.28);
