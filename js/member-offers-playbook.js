@@ -61,52 +61,57 @@
     }
   }
 
+  function onBrowse() {
+    var grid = document.getElementById('ad-services-grid');
+    if (grid) grid.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+  }
+
+  function onPitch() {
+    var openBtn = document.getElementById('ad-services-pitch-open');
+    var pitchBox = document.getElementById('ad-services-pitch');
+    if (pitchBox) pitchBox.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
+    if (openBtn) openBtn.click();
+  }
+
   function bind() {
     if (!root || root.dataset.bound === '1') return;
     root.dataset.bound = '1';
 
-    root.addEventListener('click', function (event) {
-      var prev = event.target.closest('.mz-nav-prev');
-      var next = event.target.closest('.mz-nav-next');
-      var dot = event.target.closest('.mz-pager-dot');
-      var jump = event.target.closest('[data-mz-jump]');
-      var browse = event.target.closest('[data-mz-browse-offers]');
-      var pitch = event.target.closest('[data-mz-open-pitch]');
-      if (prev) {
+    var prevBtn = $('.mz-nav-prev', root);
+    var nextBtn = $('.mz-nav-next', root);
+    if (prevBtn) {
+      prevBtn.addEventListener('click', function (event) {
         event.preventDefault();
+        event.stopPropagation();
         goTo(index - 1);
-        return;
-      }
-      if (next) {
+      });
+    }
+    if (nextBtn) {
+      nextBtn.addEventListener('click', function (event) {
         event.preventDefault();
+        event.stopPropagation();
         goTo(index + 1);
-        return;
-      }
-      if (dot) {
+      });
+    }
+    root.querySelectorAll('.mz-pager-dot').forEach(function (dot) {
+      dot.addEventListener('click', function (event) {
         event.preventDefault();
+        event.stopPropagation();
         var i = Number(dot.getAttribute('data-mz-dot'));
         if (!Number.isNaN(i)) goTo(i);
-        return;
-      }
-      if (jump) {
+      });
+    });
+    root.querySelectorAll('[data-mz-browse-offers]').forEach(function (btn) {
+      btn.addEventListener('click', function (event) {
         event.preventDefault();
-        var j = Number(jump.getAttribute('data-mz-jump'));
-        if (!Number.isNaN(j)) goTo(j);
-        return;
-      }
-      if (browse) {
+        onBrowse();
+      });
+    });
+    root.querySelectorAll('[data-mz-open-pitch]').forEach(function (btn) {
+      btn.addEventListener('click', function (event) {
         event.preventDefault();
-        var grid = document.getElementById('ad-services-grid');
-        if (grid) grid.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
-        return;
-      }
-      if (pitch) {
-        event.preventDefault();
-        var openBtn = document.getElementById('ad-services-pitch-open');
-        var pitchBox = document.getElementById('ad-services-pitch');
-        if (pitchBox) pitchBox.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
-        if (openBtn) openBtn.click();
-      }
+        onPitch();
+      });
     });
 
     root.addEventListener('keydown', function (event) {
