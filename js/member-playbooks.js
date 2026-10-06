@@ -12,27 +12,27 @@
       tone: 0,
     },
     {
-      id: 'numbers',
-      title: 'What your numbers are really telling you',
-      summary: 'Read cash, pipeline, and time like a simple dashboard.',
-      tone: 1,
-    },
-    {
-      id: 'funding',
-      title: 'Funding your business',
-      summary: 'Choose the right investment path before you pitch anyone.',
-      tone: 2,
-    },
-    {
       id: 'follow-up',
       title: 'Follow-up after the room',
       summary: 'What to do in the 24–72 hours after an event while names are still warm.',
-      tone: 3,
+      tone: 1,
     },
     {
       id: 'events',
       title: 'Choosing your next event',
       summary: 'Breakfast vs lunch vs expo — when to go wide, when to go deep.',
+      tone: 2,
+    },
+    {
+      id: 'numbers',
+      title: 'What your numbers are really telling you',
+      summary: 'Read cash, pipeline, and time like a simple dashboard.',
+      tone: 3,
+    },
+    {
+      id: 'funding',
+      title: 'Funding your business',
+      summary: 'Choose the right investment path before you pitch anyone.',
       tone: 0,
     },
   ];
