@@ -13,6 +13,7 @@ const { logoStripUrl } = require('./_lib/logo-strip-url');
 const {
   listFoundingHomepageOrganisers,
   listFoundingOrganisersForGateway,
+  countConfirmedPublicOrganisers,
   FOUNDING_HOMEPAGE_UNTIL,
   FOUNDING_HOMEPAGE_CAP,
   isBmukName,
@@ -67,9 +68,10 @@ module.exports = wrapHandler(async function handler(req, res) {
   try {
     const sb = getSupabaseAdmin();
     const forGateway = String(req.query?.for || '').trim().toLowerCase() === 'gateway';
-    const rows = forGateway
-      ? await listFoundingOrganisersForGateway(sb, 48)
-      : await listFoundingHomepageOrganisers(sb);
+    const [rows, confirmedCount] = await Promise.all([
+      forGateway ? listFoundingOrganisersForGateway(sb, 48) : listFoundingHomepageOrganisers(sb),
+      countConfirmedPublicOrganisers(sb),
+    ]);
     const organisers = rows.map((row) => mapRow(row, { includeHubHref: !forGateway }));
 
     // Public list changes rarely — short CDN cache avoids a cold serverless hit on every home view.
@@ -82,6 +84,7 @@ module.exports = wrapHandler(async function handler(req, res) {
     return res.status(200).json({
       ok: true,
       organisers,
+      confirmedCount,
       for: forGateway ? 'gateway' : 'homepage',
       cap: forGateway ? 48 : FOUNDING_HOMEPAGE_CAP,
       until: FOUNDING_HOMEPAGE_UNTIL.toISOString(),

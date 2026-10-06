@@ -319,6 +319,12 @@
     var useMarquee = list.length >= 5 && !prefersReducedMotion;
     track.classList.toggle('org-claim-peers-track--marquee', useMarquee);
     track.innerHTML = useMarquee ? items + items : items;
+    if (useMarquee) {
+      track.style.setProperty(
+        '--org-claim-peers-duration',
+        Math.max(140, list.length * 8) + 's'
+      );
+    }
     if (marquee) {
       marquee.setAttribute(
         'aria-label',
@@ -359,7 +365,11 @@
           return String(row.photoUrl || row.photo_url || '').trim();
         });
         var pool = withLogo.length >= CLAIM_PEERS_MIN ? withLogo : filtered;
-        renderClaimPeerStrip(pool.slice(0, 24), filtered.length);
+        var confirmedCount =
+          data && typeof data.confirmedCount === 'number' && data.confirmedCount >= 0
+            ? data.confirmedCount
+            : filtered.length;
+        renderClaimPeerStrip(pool.slice(0, 24), confirmedCount);
       })
       .catch(function () {
         renderClaimPeerStrip([]);

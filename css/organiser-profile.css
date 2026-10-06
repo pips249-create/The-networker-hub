@@ -597,7 +597,7 @@ body.org-claim-invite-active .how-reviews-trigger {
 }
 
 .org-claim-peers-track--marquee {
-  animation: org-claim-peers-scroll 28s linear infinite;
+  animation: org-claim-peers-scroll var(--org-claim-peers-duration, 140s) linear infinite;
 }
 
 .org-claim-peers-marquee:hover .org-claim-peers-track--marquee,
