@@ -1,4 +1,5 @@
 const { formatRefundPolicyLabel, formatRefundPolicyText, isOnlineEvent } = require('./event-refund-policy');
+const { normalizeMeetingLink } = require('./meeting-link');
 
 const SNAPSHOT_VERSION = 1;
 
@@ -37,7 +38,7 @@ function buildBookingSnapshot({ eventRow, ticketRow, quantity, amountPaid, payme
       postcode: String(eventRow.postcode || '').trim() || null,
       location_label: eventLocationLabel(eventRow) || null,
       meeting_type: String(eventRow.meeting_type || '').trim() || null,
-      meeting_link: String(eventRow.meeting_link || '').trim() || null,
+      meeting_link: normalizeMeetingLink(eventRow.meeting_link) || null,
       refund_policy: String(eventRow.refund_policy || '').trim() || null,
       refund_policy_details: String(eventRow.refund_policy_details || '').trim() || null,
       refund_cutoff_days:
@@ -127,7 +128,7 @@ function resolveBookedListing({ registration, eventRow, ticketRow }) {
     ? { id: ticketFromSnap.id, name: ticketFromSnap.name, price: ticketFromSnap.price }
     : ticketRow || {};
   const qty = Math.max(1, Number(snapshot?.quantity ?? registration?.quantity) || 1);
-  const meetingLink = String(registration?.meeting_link || ev.meeting_link || '').trim();
+  const meetingLink = normalizeMeetingLink(registration?.meeting_link || ev.meeting_link);
 
   return {
     eventRow: ev,

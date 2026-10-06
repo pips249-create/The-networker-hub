@@ -143,39 +143,73 @@ function buildEventAvailability(ev, ticketSoldOut) {
   return 'https://schema.org/InStock';
 }
 
+function laterIsoDate(a, b) {
+  const aMs = Date.parse(a);
+  const bMs = Date.parse(b);
+  if (Number.isNaN(aMs)) return b;
+  if (Number.isNaN(bMs)) return a;
+  return aMs >= bMs ? a : b;
+}
+
+/**
+ * When this offer becomes available. Google flags a missing offers.validFrom
+ * even when sales are already open, so fall through to the listing dates.
+ * Use the later of the public open (including platform soft launch) and this
+ * tier's sale start, so a held launch and a later tier both stay date-restricted.
+ */
+function offerValidFrom(ev, ticket) {
+  const scheduled = isoDateValue(ev && ev.ticketSalesOpensAt);
+  const tierStart = ticket
+    ? isoDateValue(ticket.saleStartsAt || ticket.saleStart || ticket.sale_starts_at)
+    : '';
+  if (scheduled && tierStart) return laterIsoDate(scheduled, tierStart);
+  if (tierStart) return tierStart;
+  if (scheduled) return scheduled;
+  return isoDateValue(ev && (ev.publishedAt || ev.createdAt));
+}
+
+function withOfferValidFrom(offer, ev, ticket) {
+  const validFrom = offerValidFrom(ev, ticket);
+  if (validFrom) offer.validFrom = validFrom;
+  return offer;
+}
+
 function buildEventOffers(ev, url) {
-  const validFrom = isoDateValue(ev.ticketSalesOpensAt);
   const publicTickets = Array.isArray(ev.tickets)
     ? ev.tickets.filter((t) => t && !t.isAlumni)
     : [];
 
   if (publicTickets.length > 1) {
-    return publicTickets.map((t) => {
-      const offer = {
+    return publicTickets.map((t) =>
+      withOfferValidFrom(
+        {
+          '@type': 'Offer',
+          name: t.name || t.label || 'Ticket',
+          price: Number(t.priceNum) >= 0 ? Number(t.priceNum) : 0,
+          priceCurrency: 'GBP',
+          availability: buildEventAvailability(ev, Boolean(t.soldOut)),
+          url,
+        },
+        ev,
+        t
+      )
+    );
+  }
+
+  if (publicTickets.length === 1) {
+    const t = publicTickets[0];
+    return withOfferValidFrom(
+      {
         '@type': 'Offer',
         name: t.name || t.label || 'Ticket',
         price: Number(t.priceNum) >= 0 ? Number(t.priceNum) : 0,
         priceCurrency: 'GBP',
         availability: buildEventAvailability(ev, Boolean(t.soldOut)),
         url,
-      };
-      if (validFrom) offer.validFrom = validFrom;
-      return offer;
-    });
-  }
-
-  if (publicTickets.length === 1) {
-    const t = publicTickets[0];
-    const offer = {
-      '@type': 'Offer',
-      name: t.name || t.label || 'Ticket',
-      price: Number(t.priceNum) >= 0 ? Number(t.priceNum) : 0,
-      priceCurrency: 'GBP',
-      availability: buildEventAvailability(ev, Boolean(t.soldOut)),
-      url,
-    };
-    if (validFrom) offer.validFrom = validFrom;
-    return offer;
+      },
+      ev,
+      t
+    );
   }
 
   if (ev.priceKey === 'enquire') return undefined;
@@ -192,8 +226,21 @@ function buildEventOffers(ev, url) {
     url,
   };
   if (isFree && !isPaid) offer.name = 'Free entry';
-  if (validFrom) offer.validFrom = validFrom;
-  return offer;
+  return withOfferValidFrom(offer, ev);
+}
+
+/** Google Event rich results expect Person or PerformingGroup, not Organization. */
+function buildEventPerformer(ev, origin) {
+  const name = String((ev && ev.organiser) || '').trim();
+  if (!name) return null;
+  const performer = {
+    '@type': 'PerformingGroup',
+    name,
+  };
+  if (ev.organiserSlug) {
+    performer.url = absoluteUrl(origin, '/organisers/' + encodeURIComponent(ev.organiserSlug));
+  }
+  return performer;
 }
 
 function buildEventSchema(ev, origin) {
@@ -263,6 +310,9 @@ function buildEventSchema(ev, origin) {
     schema.organizer = organizer;
   }
 
+  const performer = buildEventPerformer(ev, origin);
+  if (performer) schema.performer = performer;
+
   const offers = buildEventOffers(ev, url);
   if (offers) schema.offers = offers;
 
@@ -312,6 +362,7 @@ async function buildEventMeta(slug, origin) {
   const { data: ticketsRaw } = await sb.from('tickets').select('*').eq('event_id', row.id);
   const tickets = (ticketsRaw || []).map((t) => ({ ...t, _registrationCount: 0 }));
   const ev = rowToEvent(row, organiser, tickets);
+  ev.publishedAt = row.published_at || null;
   const eventSlug = ev.slug || publicEventSlug({ slug: row.slug, title: row.title });
   if (!eventSlug) return null;
 

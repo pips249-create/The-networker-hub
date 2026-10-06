@@ -229,6 +229,11 @@
   }
 
   async function acceptImageFile(file, onFile, qualityHintEl, options) {
+    if (!file) return false;
+    if (options && options.decodeLater) {
+      onFile(file);
+      return true;
+    }
     if (!isImageFile(file)) return false;
     const maxBytes =
       options && options.maxBytes != null ? Number(options.maxBytes) : MAX_BYTES;

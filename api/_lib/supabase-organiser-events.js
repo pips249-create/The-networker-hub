@@ -24,6 +24,7 @@ const { applyListingLifecyclePreserve } = require('./listing-lifecycle');
 // Top-level so Vercel file tracing includes this module in the organiser bundle
 // (dynamic require() inside assertEventLanguageForPublish was omitted from /var/task).
 const { assertNoHateSpeechOnLiveListing } = require('./listing-language-moderation');
+const { normalizeMeetingLink } = require('./meeting-link');
 
 const WORKSPACE_EVENTS_LIMIT_DEFAULT = 100;
 const WORKSPACE_EVENTS_LIMIT_MAX = 250;
@@ -1016,7 +1017,8 @@ async function buildEventRow(payload, eventId, mode) {
     touchesListingShape &&
     (mode === 'create' || Object.prototype.hasOwnProperty.call(payload, 'onlineLink'))
   ) {
-    row.meeting_link = payload.onlineLink || null;
+    const normalizedLink = normalizeMeetingLink(payload.onlineLink);
+    row.meeting_link = normalizedLink || null;
   }
   if (Object.prototype.hasOwnProperty.call(payload, 'onlinePlatform')) {
     const platform = String(payload.onlinePlatform || '').trim();

@@ -8,13 +8,33 @@ const BUCKET = 'organiser-assets';
 const MAX_BYTES = 2 * 1024 * 1024;
 
 function decodeUploadBuffer(base64) {
-  const raw = String(base64 || '').replace(/^data:[^;]+;base64,/, '');
+  const raw = String(base64 || '')
+    .replace(/^data:[^,]*,/, '')
+    .replace(/\s/g, '');
   if (!raw) return null;
   const buffer = Buffer.from(raw, 'base64');
+  if (!buffer.length) return null;
   if (buffer.length > MAX_BYTES) {
     throw new Error('Image must be under 2MB');
   }
   return buffer;
+}
+
+/** JPEG, PNG, GIF, or WebP. Anything else is not a picture we can store. */
+function imageKind(buffer) {
+  if (!buffer || buffer.length < 12) return null;
+  if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
+    return { ext: 'jpg', mime: 'image/jpeg' };
+  }
+  if (buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47) {
+    return { ext: 'png', mime: 'image/png' };
+  }
+  const gif = buffer.slice(0, 6).toString('ascii');
+  if (gif === 'GIF87a' || gif === 'GIF89a') return { ext: 'gif', mime: 'image/gif' };
+  if (buffer.slice(0, 4).toString('ascii') === 'RIFF' && buffer.slice(8, 12).toString('ascii') === 'WEBP') {
+    return { ext: 'webp', mime: 'image/webp' };
+  }
+  return null;
 }
 
 function sanitiseFilename(filename) {
@@ -134,7 +154,13 @@ async function resolveImageUrl({
     logoBase64 || (/^data:image\//i.test(url) ? url : '');
   const buffer = decodeUploadBuffer(base64Source);
   if (buffer) {
-    return uploadBuffer(buffer, folder, logoMime, logoFilename);
+    const kind = imageKind(buffer);
+    if (!kind) {
+      const err = new Error("Couldn't read that image.");
+      err.code = 'image_unreadable';
+      throw err;
+    }
+    return uploadBuffer(buffer, folder, kind.mime, logoFilename);
   }
 
   if (!url) return null;
@@ -154,6 +180,7 @@ module.exports = {
   BUCKET,
   resolveImageUrl,
   decodeUploadBuffer,
+  imageKind,
   isHostedAssetUrl,
   mirrorRemoteImageUrl,
 };

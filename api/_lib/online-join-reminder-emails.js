@@ -7,6 +7,8 @@ const {
 } = require('./lifecycle-emails');
 const { enrichBookingReminderVars } = require('./booking-email-sections');
 const { getEmailSponsorVars } = require('./email-sponsor-sections');
+const { normalizeMeetingLink } = require('./meeting-link');
+const { resolveOrganiserBcc } = require('./organiser-email-bcc');
 
 const REMINDER_HOURS = 1;
 const REMINDER_WINDOW_HOURS = 1;
@@ -14,7 +16,7 @@ const REMINDER_WINDOW_HOURS = 1;
 const REMINDER_CATCHUP_HOURS = 0.5;
 
 function resolveMeetingLink(registration, eventRow) {
-  return String(registration?.meeting_link || eventRow?.meeting_link || '').trim();
+  return normalizeMeetingLink(registration?.meeting_link || eventRow?.meeting_link);
 }
 
 /**
@@ -129,6 +131,7 @@ async function sendDueOnlineJoinReminders(sb) {
       if (orgRes.error) throw new Error(orgRes.error.message);
       organiserName = String(orgRes.data?.name || '').trim();
     }
+    const organiserBcc = await resolveOrganiserBcc(sb, eventRow.organiser_id, attendeeEmail);
 
     const vars = enrichBookingReminderVars(
       buildAttendeeEmailVars({
@@ -170,6 +173,7 @@ async function sendDueOnlineJoinReminders(sb) {
           to: attendeeEmail,
           variables: emailVars,
           subject: 'Join online in 1 hour — ' + String(eventRow.title || 'your event').trim(),
+          bcc: organiserBcc,
         });
       } catch (sendErr) {
         await releaseRowTimestamp(sb, {

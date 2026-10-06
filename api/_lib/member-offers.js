@@ -213,10 +213,24 @@ function memberOfferFromRow(row) {
   };
 }
 
+const OFFER_COLUMNS =
+  'id, title, provider, category, highlight, summary, details, href, image_url, promo_code, ends_on, published, sort_order, updated_at';
+const OFFER_COLUMNS_LEGACY =
+  'id, title, provider, category, highlight, summary, details, href, image_url, published, sort_order, updated_at';
+
 function isMissingTable(error) {
   const code = String(error && error.code ? error.code : '');
   const msg = String((error && (error.message || error.details)) || '');
   return code === '42P01' || /does not exist/i.test(msg);
+}
+
+function errorText(error) {
+  return String((error && (error.message || error.details || error.hint)) || '');
+}
+
+/** Code and end date columns are not on the live table until migration 303. */
+function missingOfferExtras(error) {
+  return /promo_code|ends_on/i.test(errorText(error));
 }
 
 function adminClient() {
@@ -252,15 +266,19 @@ async function listMemberOfferPreviews() {
 async function listMemberOffers(options) {
   const includeUnpublished = Boolean(options && options.includeUnpublished);
   const sb = adminClient();
-  let query = sb
-    .from('member_offers')
-    .select(
-      'id, title, provider, category, highlight, summary, details, href, image_url, promo_code, ends_on, published, sort_order, updated_at'
-    )
-    .order('sort_order', { ascending: true })
-    .order('title', { ascending: true });
-  if (!includeUnpublished) query = query.eq('published', true);
-  const { data, error } = await query;
+  async function load(columns) {
+    let query = sb
+      .from('member_offers')
+      .select(columns)
+      .order('sort_order', { ascending: true })
+      .order('title', { ascending: true });
+    if (!includeUnpublished) query = query.eq('published', true);
+    return query;
+  }
+  let { data, error } = await load(OFFER_COLUMNS);
+  if (error && missingOfferExtras(error)) {
+    ({ data, error } = await load(OFFER_COLUMNS_LEGACY));
+  }
   if (error) {
     if (isMissingTable(error)) {
       const err = new Error('member_offers_not_ready');
@@ -295,7 +313,13 @@ async function createMemberOffer(fields, createdBy) {
     updated_at: new Date().toISOString(),
   };
   if (isMemberOfferId(createdBy)) row.created_by = createdBy;
-  const { data, error } = await sb.from('member_offers').insert(row).select('*').single();
+  let { data, error } = await sb.from('member_offers').insert(row).select('*').single();
+  if (error && missingOfferExtras(error)) {
+    const legacy = Object.assign({}, row);
+    delete legacy.promo_code;
+    delete legacy.ends_on;
+    ({ data, error } = await sb.from('member_offers').insert(legacy).select('*').single());
+  }
   if (error) {
     if (isMissingTable(error)) {
       const err = new Error('member_offers_not_ready');
@@ -341,12 +365,22 @@ async function updateMemberOffer(id, fields) {
   if (hasOwn(fields, 'ends_on')) patch.ends_on = fields.ends_on || null;
   if (hasOwn(fields, 'published')) patch.published = fields.published;
   if (hasOwn(fields, 'sort_order')) patch.sort_order = fields.sort_order;
-  const { data, error } = await sb
+  let { data, error } = await sb
     .from('member_offers')
     .update(patch)
     .eq('id', id)
     .select('*')
     .maybeSingle();
+  if (error && missingOfferExtras(error)) {
+    delete patch.promo_code;
+    delete patch.ends_on;
+    ({ data, error } = await sb
+      .from('member_offers')
+      .update(patch)
+      .eq('id', id)
+      .select('*')
+      .maybeSingle());
+  }
   if (error) {
     if (isMissingTable(error)) {
       const err = new Error('member_offers_not_ready');
@@ -386,7 +420,10 @@ async function applyOfferImage(body) {
       logoFilename: src.imageFilename || src.image_filename || 'offer.jpg',
     });
   } catch (e) {
-    const err = new Error(e && e.message ? e.message : 'Could not save that image.');
+    const unreadable = e && e.code === 'image_unreadable';
+    const err = new Error(
+      unreadable ? "Couldn't read that image." : e && e.message ? e.message : 'Could not save that image.'
+    );
     err.code = 'image_upload_failed';
     throw err;
   }
@@ -405,6 +442,7 @@ module.exports = {
   isMemberOfferId,
   publishGaps,
   memberOfferIsLive,
+  missingOfferExtras,
   londonToday,
   memberOfferFromRow,
   applyOfferImage,

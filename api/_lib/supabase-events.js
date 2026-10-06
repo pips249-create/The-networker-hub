@@ -82,7 +82,7 @@ function parsePriceNum(raw) {
   return Number.isFinite(n) ? n : 0;
 }
 
-const PRICE_UNKNOWN_LABEL = 'Ask organiser';
+const PRICE_UNKNOWN_LABEL = 'Enquire for price';
 const PRICE_UNKNOWN_KEY = 'enquire';
 
 function normalizePrice(priceNum) {
@@ -285,6 +285,7 @@ function ticketRowToTier(row, registrationCount) {
     isAlumni: ticketIsAlumni(row, name),
     isMembersOnly: isMembersOnlyTicket(row),
     visibility: String(row.visibility || 'public').toLowerCase(),
+    saleStartsAt: row.sale_starts_at || null,
     saleEnd: row.sale_ends_at || null,
     seriesScope: String(row.series_scope || 'date').trim(),
     isSeriesPass: String(row.series_scope || '').trim() === 'series_pass',
