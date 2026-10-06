@@ -91,6 +91,38 @@ assert.strictEqual(report.counts.events, 2);
 assert.strictEqual(report.counts.referrals, 1);
 assert.strictEqual(report.counts.meetings, 1);
 assert.strictEqual(report.counts.outreach, 1);
+assert.strictEqual(report.metrics.meetings.actual, 1);
+assert.strictEqual(report.metrics.meetings.target, 4);
+assert.strictEqual(report.metrics.events.actual, 2);
+assert.strictEqual(report.metrics.events.target, 275);
+assert.strictEqual(report.metrics.claimedPages.actual, 0);
+assert.strictEqual(report.metrics.claimedPages.target, 25);
+
+const withClaim = buildPipActivityReport({
+  now: new Date('2026-10-06T12:00:00.000Z'),
+  activityRows: [],
+  demos: [],
+  organisers: [
+    { id: 'org-1', name: 'Alpha', ownership_claimed_at: '2026-10-05T10:00:00.000Z' },
+    { id: 'org-2', name: 'Beta', ownership_claimed_at: '2026-10-05T10:00:00.000Z' },
+  ],
+  claimDemos: [
+    {
+      shown_at: '2026-10-04',
+      shown_by: 'Catherine',
+      organiser_id: 'org-1',
+      created_by_email: 'pips249@gmail.com',
+    },
+    {
+      shown_at: '2026-10-04',
+      shown_by: 'Jamie',
+      organiser_id: 'org-2',
+      created_by_email: 'jamie@thenetworkeruk.com',
+    },
+  ],
+  claimActivity: [],
+});
+assert.strictEqual(withClaim.metrics.claimedPages.actual, 1);
 assert.ok(report.activity.some((item) => item.kind === 'event' && item.summary.indexOf('Breakfast') !== -1));
 assert.ok(report.activity.some((item) => item.kind === 'event' && item.summary.indexOf('County lunch') !== -1));
 assert.ok(

@@ -217,7 +217,7 @@
     },
     'pips-activity': {
       title: "Pip's Activity",
-      subtitle: '1 October – 2 November — events you add, CRM logs, and referrals',
+      subtitle: '1 October – 2 November — your meetings, claimed pages, and events',
     },
     'jamie-targets': {
       title: "Jamie's targets",
@@ -454,7 +454,9 @@
       steps: [
         'This page is only for you. Jamie and Rosie cannot open it.',
         'It covers the same dates as Jamie\'s targets: 1 October through 2 November.',
-        'Events you add, including every date in a series, show here. So do CRM logs, meetings, and meetings you refer to Jamie.',
+        'Your targets are 4 meetings you log, 25 claimed organiser pages, and 275 events you add.',
+        'A page counts when the group claims in this period and you were the last team member to contact them.',
+        'Meetings you refer to Jamie still show in the list and count as 0.25 on her target.',
       ],
     },
     'jamie-targets': {
@@ -32330,22 +32332,9 @@
       }
       var report = data.activity;
       var period = report.period || {};
+      var metrics = report.metrics || {};
       var counts = report.counts || {};
       var items = Array.isArray(report.activity) ? report.activity : [];
-      function stat(label, value, hint) {
-        return (
-          '<article class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm min-w-0">' +
-          '<p class="text-xs font-semibold uppercase tracking-wide text-slate-500">' +
-          esc(label) +
-          '</p>' +
-          '<p class="text-2xl font-bold text-brand-900 mt-1">' +
-          esc(String(value || 0)) +
-          '</p>' +
-          '<p class="text-xs text-slate-500 mt-2 leading-relaxed">' +
-          esc(hint) +
-          '</p></article>'
-        );
-      }
       var activityHtml = items.length
         ? '<ul class="divide-y divide-slate-100">' +
           items
@@ -32384,11 +32373,22 @@
         '<p class="text-lg font-bold text-brand-900 mt-1">' +
         esc(period.label || '1 October – 2 November 2026') +
         '</p>' +
-        '<p class="text-sm text-slate-600 mt-1">Only you can see this page. It sits under CRM, above Jamie\'s targets.</p></section>' +
+        '<p class="text-sm text-slate-600 mt-1">' +
+        esc(String(period.daysElapsed || 0)) +
+        ' of ' +
+        esc(String(period.daysTotal || 0)) +
+        ' days elapsed · ' +
+        esc(String(period.daysRemaining || 0)) +
+        ' days remaining. Only you can see this page.</p>' +
+        '<p class="text-sm text-slate-600 mt-1">You have referred ' +
+        esc(String(counts.referrals || 0)) +
+        ' meeting' +
+        (Number(counts.referrals) === 1 ? '' : 's') +
+        ' to Jamie. Each one still counts as 0.25 on her booked-meetings target.</p></section>' +
         '<section class="grid sm:grid-cols-3 gap-3">' +
-        stat('Events added', counts.events, 'Each date you add, including every date in a series.') +
-        stat('Meetings logged', counts.meetings, 'Meeting touches you log in the organiser sales kit.') +
-        stat('Referred to Jamie', counts.referrals, 'Meetings you have referred across to Jamie.') +
+        jamieTargetsMetricCard(metrics.meetings || {}) +
+        jamieTargetsMetricCard(metrics.claimedPages || {}) +
+        jamieTargetsMetricCard(metrics.events || {}) +
         '</section>' +
         '<section class="admin-dash-section">' +
         '<div class="admin-dash-section-head"><h3>Activity</h3>' +

@@ -8,9 +8,20 @@ const {
   PERIOD_END,
   PERIOD_START_ISO,
   PERIOD_END_EXCLUSIVE_ISO,
+  LOOKBACK_START,
+  LOOKBACK_START_ISO,
   isBookedMeetingNotes,
   creditListedEvents,
+  lastStaffBeforeClaim,
+  progressSnapshot,
+  periodMeta,
 } = require('./jamie-targets');
+
+const TARGETS = {
+  meetings: 4,
+  claimedPages: 25,
+  events: 275,
+};
 
 const PITCH_DECK_MEETING = /^Meeting — (Updated )?Tailored pitch deck\b/i;
 const TOUCHES = ['Attempted call', 'Called', 'Emailed', 'Meeting', 'LinkedIn'];
@@ -229,21 +240,76 @@ function buildPipActivityReport(input) {
   activity.sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
 
   const count = (kind) => activity.filter((item) => item.kind === kind).length;
+  const meetings = count('meeting');
+  const claimIds = claimedPageIds(source.organisers, source.claimDemos, source.claimActivity);
 
   return {
-    period: {
-      label: '1 October – 2 November 2026',
-      start: PERIOD_START,
-      end: PERIOD_END,
-    },
+    period: periodMeta(source.now || new Date()),
     counts: {
       events: eventIds.size,
-      meetings: count('meeting'),
+      meetings,
       referrals: count('referral'),
       outreach: count('outreach') + count('pitch'),
+      claimedPages: claimIds.size,
+    },
+    metrics: {
+      meetings: {
+        ...progressSnapshot(meetings, TARGETS.meetings),
+        label: 'Meetings logged',
+        hint: 'Meetings you log in the organiser sales kit. Saving a pitch deck does not count.',
+      },
+      claimedPages: {
+        ...progressSnapshot(claimIds.size, TARGETS.claimedPages),
+        label: 'Claimed organiser pages',
+        hint: 'A page counts when it is claimed in this period and you were the last team member to contact that group.',
+      },
+      events: {
+        ...progressSnapshot(eventIds.size, TARGETS.events),
+        label: 'Events added',
+        hint: 'Each date you add, including every date in a series.',
+      },
     },
     activity: activity.slice(0, 80),
   };
+}
+
+function claimedPageIds(organisers, demos, activityRows) {
+  const touches = [];
+  (activityRows || []).forEach((row) => {
+    const staff = shownByFromEmail(row.actor_email);
+    if (staff !== 'Catherine' && staff !== 'Rosie' && staff !== 'Jamie') return;
+    const action = String(row.action || '');
+    if (!['event_created', 'admin_claim_invite', 'admin_ownership_transfer'].includes(action)) return;
+    if (!row.organiser_id) return;
+    touches.push({
+      organiserId: row.organiser_id,
+      staff,
+      email: row.actor_email || '',
+      at: row.created_at,
+    });
+  });
+  (demos || []).forEach((row) => {
+    const shown = String(row.shown_by || '').trim();
+    const staff =
+      shown === 'Catherine' || shown === 'Rosie' || shown === 'Jamie'
+        ? shown
+        : shownByFromEmail(row.created_by_email);
+    if (!staff || staff === 'Other' || !row.organiser_id) return;
+    touches.push({
+      organiserId: row.organiser_id,
+      staff,
+      email: row.created_by_email || '',
+      at: row.shown_at || row.updated_at || row.created_at,
+    });
+  });
+  const ids = new Set();
+  (organisers || []).forEach((row) => {
+    const claimedAt = row && (row.ownership_claimed_at || row.ownershipClaimedAt);
+    if (!row || !row.id || !inPeriodIso(claimedAt)) return;
+    const credit = lastStaffBeforeClaim(touches, row.id, claimedAt);
+    if (credit && credit.staff === 'Catherine') ids.add(row.id);
+  });
+  return ids;
 }
 
 async function selectPages(buildQuery) {
@@ -304,14 +370,47 @@ async function getPipsActivity(sb) {
     listedRows.push(...batch);
   }
 
+  const [claimActivity, claimDemos, organisers] = await Promise.all([
+    selectPages(() =>
+      sb
+        .from('entity_activity_log')
+        .select('id, created_at, actor_email, organiser_id, action')
+        .in('action', ['event_created', 'admin_claim_invite', 'admin_ownership_transfer'])
+        .gte('created_at', LOOKBACK_START_ISO)
+        .lt('created_at', PERIOD_END_EXCLUSIVE_ISO)
+        .order('created_at', { ascending: false })
+    ),
+    selectPages(() =>
+      sb
+        .from('organiser_sales_demos')
+        .select('id, shown_at, shown_by, organiser_id, created_by_email, created_at, updated_at')
+        .gte('shown_at', LOOKBACK_START)
+        .lte('shown_at', PERIOD_END)
+        .order('shown_at', { ascending: false })
+    ),
+    selectPages(() =>
+      sb
+        .from('organisers')
+        .select('id, name, ownership_claimed_at')
+        .eq('ownership_claim_status', 'claimed')
+        .gte('ownership_claimed_at', PERIOD_START_ISO)
+        .lt('ownership_claimed_at', PERIOD_END_EXCLUSIVE_ISO)
+    ),
+  ]);
+
   return buildPipActivityReport({
     activityRows,
     demos,
     listedEvents: creditListedEvents(demos, listedRows, 'Catherine'),
+    organisers,
+    claimDemos,
+    claimActivity,
+    now: new Date(),
   });
 }
 
 module.exports = {
+  TARGETS,
   canSeePipsActivity,
   buildPipActivityReport,
   getPipsActivity,

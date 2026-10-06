@@ -594,6 +594,8 @@ module.exports = {
   PERIOD_END,
   PERIOD_START_ISO,
   PERIOD_END_EXCLUSIVE_ISO,
+  LOOKBACK_START,
+  LOOKBACK_START_ISO,
   TARGETS,
   canSeeJamieTargets,
   isBookedMeetingNotes,
