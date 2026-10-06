@@ -713,7 +713,7 @@ function rowToBrowsePin(row) {
     priceLabel = 'Members only';
     priceKey = 'members_only';
   } else if (priceUnknown) {
-    priceLabel = 'Ask organiser';
+    priceLabel = 'Enquire for price';
     priceKey = 'enquire';
   } else if (externalPrice && externalPrice.display) {
     priceLabel = externalPrice.display;

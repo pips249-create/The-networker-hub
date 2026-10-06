@@ -152,7 +152,7 @@
       return 'Members only';
     }
     if (listingPriceUnknown(ev)) {
-      return 'Ask organiser';
+      return 'Enquire for price';
     }
     if (
       String(ev?.attendanceMode || '') === 'guest_programme' ||

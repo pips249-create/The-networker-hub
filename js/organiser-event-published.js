@@ -551,7 +551,7 @@
   }
 
   function priceBadgeForPreview(ev) {
-    if (ev.priceKey === 'enquire') return 'Ask organiser';
+    if (ev.priceKey === 'enquire') return 'Enquire for price';
     if (ev.priceKey === 'free' || /^free$/i.test(String(ev.price || ''))) return 'Free';
     const n = Number(ev.priceNum != null ? ev.priceNum : ev.price);
     if (Number.isFinite(n) && n > 0) {

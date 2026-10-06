@@ -82,7 +82,7 @@ function parsePriceNum(raw) {
   return Number.isFinite(n) ? n : 0;
 }
 
-const PRICE_UNKNOWN_LABEL = 'Ask organiser';
+const PRICE_UNKNOWN_LABEL = 'Enquire for price';
 const PRICE_UNKNOWN_KEY = 'enquire';
 
 function normalizePrice(priceNum) {
