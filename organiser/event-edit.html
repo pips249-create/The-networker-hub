@@ -93,6 +93,7 @@
               </button>
             </div>
             <input type="text" id="ee-title" required placeholder="e.g. Lunch &amp; learn — Liverpool" />
+            <p class="ee-hint ee-field-error" id="ee-title-language" hidden></p>
           </div>
           <div class="ee-field">
             <label for="ee-type" data-hub-tip="event-type">Event type</label>
@@ -106,6 +107,7 @@
               </button>
             </div>
             <textarea id="ee-description" rows="5" maxlength="4000" placeholder="What attendees can expect, who should come, and what they will take away"></textarea>
+            <p class="ee-hint ee-field-error" id="ee-description-language" hidden></p>
             <p class="ee-hint"><span id="ee-word-count">0</span> / <span id="ee-word-max">500</span> words</p>
             <p class="ee-hint ee-lock-editable-hint" id="ee-lock-editable-hint" hidden>
               Title and description can still be updated — ticket holders are emailed when these change.
@@ -278,6 +280,6 @@
     <script src="../js/postcode-outcode.js?v=20260716loc" defer></script>
     <script src="../js/organiser-field-tips.js?v=20260806dst" defer></script>
     <script src="../js/hub-field-tip.js?v=20260716tips" defer></script>
-    <script src="../js/organiser-event-edit.js?v=20260918skiploc1" defer></script>
+    <script src="../js/organiser-event-edit.js?v=20261006language1" defer></script>
   </body>
 </html>

@@ -9,6 +9,17 @@ const { fetchEventRegistrationStats } = require('./admin-event-commerce');
 const { scanEventForOffPlatformBooking } = require('./off-platform-booking');
 const { scanEventListingLanguage } = require('./listing-language-moderation');
 
+function listingLanguageExcerpts(languageScan) {
+  const excerpts = [];
+  (languageScan?.fields || []).forEach((field) => {
+    (field.excerpts || []).forEach((item) => {
+      const clean = String(item || '').trim();
+      if (clean && !excerpts.includes(clean)) excerpts.push(clean);
+    });
+  });
+  return excerpts;
+}
+
 const ISSUE_DEFS = {
   missing_date: { label: 'Missing event date', severity: 'high' },
   missing_organiser: { label: 'No organiser linked', severity: 'high' },
@@ -210,6 +221,7 @@ async function scanEventHealth() {
     if (offPlatformHits.length) codes.push('off_platform_booking');
 
     const languageScan = scanEventListingLanguage(row);
+    const languageExcerpts = listingLanguageExcerpts(languageScan);
     if (languageScan.hate.length) codes.push('listing_hate_speech');
     else if (languageScan.profanity.length) codes.push('listing_profanity');
 
@@ -235,7 +247,7 @@ async function scanEventHealth() {
           code,
           label: 'Hate speech / extreme abuse in listing',
           severity: 'high',
-          matches: languageScan.hate,
+          matches: languageExcerpts.length ? languageExcerpts : languageScan.hate,
         };
       }
       if (code === 'listing_profanity' && languageScan.profanity.length) {
@@ -267,7 +279,9 @@ async function scanEventHealth() {
       vat_treatment: row.vat_treatment || '',
       off_platform_platforms: offPlatformHits.map((hit) => hit.label),
       language_matches: languageScan.hate.length
-        ? languageScan.hate
+        ? languageExcerpts.length
+          ? languageExcerpts
+          : languageScan.hate
         : languageScan.profanity,
       issues,
     });

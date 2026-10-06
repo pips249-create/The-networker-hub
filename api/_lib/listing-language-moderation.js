@@ -142,10 +142,21 @@ function tokensForMatch(raw) {
   return spaced.split(/\s+/).filter(Boolean);
 }
 
+function pluralFormsForTerm(term) {
+  const forms = [term + 's'];
+  // English -es only applies to stems ending in s, x, z, ch, or sh
+  // (bitch → bitches). Adding -es to every stem flags "spices" as "spic".
+  if (/(?:s|x|z|ch|sh)$/.test(term)) forms.push(term + 'es');
+  return forms;
+}
+
 function tokenEqualsTerm(token, term) {
   if (token === term) return true;
   // Simple plurals so "rapists" still matches "rapist"
-  if (token === term + 's' || token === term + 'es') return true;
+  const plurals = pluralFormsForTerm(term);
+  for (let i = 0; i < plurals.length; i++) {
+    if (token === plurals[i]) return true;
+  }
   return false;
 }
 
@@ -231,17 +242,138 @@ function scanListingLanguage(text) {
   return { hate: hateUnique, profanity };
 }
 
+function originalChunks(raw) {
+  const chunks = [];
+  const re = /\S+/g;
+  let match;
+  const text = String(raw || '');
+  while ((match = re.exec(text))) {
+    const trimmed = match[0].replace(/^[^A-Za-z0-9]+|[^A-Za-z0-9]+$/g, '');
+    if (trimmed) chunks.push(trimmed);
+  }
+  return chunks;
+}
+
+/**
+ * The words the organiser actually wrote, so a rejection can point at them.
+ * Single words first; otherwise the shortest phrase that still matches
+ * (covers "white power" and "n.i.g.g.e.r" / "n i g g e r").
+ */
+function findExcerpts(raw, terms) {
+  const chunks = originalChunks(raw);
+  const excerpts = [];
+  const seen = new Set();
+  function add(text) {
+    const clean = String(text || '').replace(/\s+/g, ' ').trim();
+    if (!clean || seen.has(clean.toLowerCase())) return;
+    seen.add(clean.toLowerCase());
+    excerpts.push(clean);
+  }
+
+  for (let t = 0; t < terms.length; t++) {
+    const term = terms[t];
+    const direct = chunks.filter((chunk) => scanListingLanguage(chunk).hate.includes(term));
+    if (direct.length) {
+      direct.forEach(add);
+      continue;
+    }
+    const maxWindow = Math.min(chunks.length, 8);
+    let foundWindow = false;
+    for (let size = 2; size <= maxWindow && !foundWindow; size++) {
+      for (let i = 0; i + size <= chunks.length; i++) {
+        const phrase = chunks.slice(i, i + size).join(' ');
+        if (!scanListingLanguage(phrase).hate.includes(term)) continue;
+        add(phrase);
+        foundWindow = true;
+      }
+    }
+    if (!foundWindow) add(term);
+  }
+  return excerpts;
+}
+
 function scanEventListingLanguage(row) {
-  return scanListingLanguage(collectListingLanguageText(row));
+  const parts = [
+    { field: 'title', text: row?.title },
+    { field: 'description', text: row?.description },
+  ];
+  const hate = [];
+  const profanity = [];
+  const fields = [];
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i];
+    const scan = scanListingLanguage(part.text);
+    scan.profanity.forEach((term) => {
+      if (!profanity.includes(term)) profanity.push(term);
+    });
+    if (!scan.hate.length) continue;
+    scan.hate.forEach((term) => {
+      if (!hate.includes(term)) hate.push(term);
+    });
+    fields.push({
+      field: part.field,
+      excerpts: findExcerpts(part.text, scan.hate),
+    });
+  }
+  return { hate, profanity, fields };
+}
+
+const LISTING_HATE_MESSAGE_MAX = 270;
+
+function clipExcerpt(text) {
+  const clean = String(text || '').replace(/\s+/g, ' ').trim();
+  if (clean.length <= 48) return clean;
+  return clean.slice(0, 45) + '…';
+}
+
+function listingHateSpeechMessage(fields) {
+  const sentences = [];
+  (fields || []).forEach((field) => {
+    const label = field.field === 'title' ? 'title' : 'description';
+    const excerpts = [];
+    (field.excerpts || []).forEach((item) => {
+      const clipped = clipExcerpt(item);
+      if (clipped && !excerpts.includes(clipped)) excerpts.push(clipped);
+    });
+    const shown = excerpts.slice(0, 3);
+    if (!shown.length) return;
+    sentences.push('In the ' + label + ', remove ' + shown.map((item) => '“' + item + '”').join(', '));
+  });
+  const lead =
+    'This listing can’t go live because of language that isn’t allowed on The Networker UK (hate speech or extreme abuse). ';
+  if (!sentences.length) return LISTING_HATE_SPEECH_ERROR;
+  let message = lead + sentences.join('. ') + '.';
+  if (message.length <= LISTING_HATE_MESSAGE_MAX) return message;
+  const shortLead = 'This listing can’t go live because of language that isn’t allowed. ';
+  message = shortLead + sentences.join('. ') + '.';
+  if (message.length <= LISTING_HATE_MESSAGE_MAX) return message;
+  return message.slice(0, LISTING_HATE_MESSAGE_MAX - 1) + '…';
+}
+
+function listingLanguagePublicExtra(fields) {
+  const safe = [];
+  (fields || []).forEach((field) => {
+    if (field.field !== 'title' && field.field !== 'description') return;
+    const excerpts = [];
+    (field.excerpts || []).forEach((item) => {
+      const clean = String(item || '').replace(/\s+/g, ' ').trim().slice(0, 80);
+      if (clean && excerpts.length < 4 && !excerpts.includes(clean)) excerpts.push(clean);
+    });
+    if (excerpts.length) safe.push({ field: field.field, excerpts });
+  });
+  if (!safe.length) return undefined;
+  return { language: { fields: safe } };
 }
 
 function assertNoHateSpeechForPublish(row) {
   const scan = scanEventListingLanguage(row);
   if (!scan.hate.length) return scan;
-  const err = new Error(LISTING_HATE_SPEECH_ERROR);
+  const err = new Error(listingHateSpeechMessage(scan.fields));
   err.status = 400;
   err.code = 'listing_hate_speech_blocked';
   err.matches = scan.hate;
+  err.language = { fields: scan.fields };
+  err.publicExtra = listingLanguagePublicExtra(scan.fields);
   throw err;
 }
 
@@ -262,6 +394,8 @@ module.exports = {
   collectListingLanguageText,
   scanListingLanguage,
   scanEventListingLanguage,
+  findExcerpts,
+  listingHateSpeechMessage,
   assertNoHateSpeechForPublish,
   assertNoHateSpeechOnLiveListing,
 };
