@@ -64,7 +64,7 @@ async function main() {
   assert(/free/i.test(html), 'says listing is free');
   assert(html.indexOf('meetings and workshops') !== -1, 'mentions meetings and workshops');
   assert(html.indexOf('show you around') !== -1, 'offers a tour');
-  assert(html.indexOf('Reviews') !== -1, 'mentions reviews');
+  assert(html.indexOf('reviews') !== -1, 'mentions reviews');
   assert(html.indexOf('first visits versus returning guests') !== -1, 'mentions visit tracking');
   assert(html.indexOf('booking system') !== -1, 'mentions the booking system');
   assert(html.indexOf('speaking with you soon') !== -1, 'looks forward to speaking');
