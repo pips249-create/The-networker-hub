@@ -636,10 +636,23 @@ function injectNetworkingRegionContent(html, meta) {
   }
 
   if (typeof meta.listingsTotal === 'number' && meta.listingsTotal >= 0) {
+    const listings = meta.listingsTotal;
+    const dates = Number(meta.dateTotal) || 0;
+    const showDates = dates > listings && listings > 0;
     out = out.replace(
       /<strong id="results-count">[\s\S]*?<\/strong>/i,
-      '<strong id="results-count">' + escapeHtml(String(meta.listingsTotal)) + '</strong>'
+      '<strong id="results-count">' + escapeHtml(String(listings)) + '</strong>'
     );
+    if (showDates) {
+      out = out.replace(
+        /<span id="results-count-noun">[\s\S]*?<\/span>/i,
+        '<span id="results-count-noun">' + (listings === 1 ? 'listing' : 'listings') + '</span>'
+      );
+      out = out.replace(
+        /<span id="results-date-note"[^>]*>[\s\S]*?<\/span>/i,
+        '<span id="results-date-note"> · ' + escapeHtml(String(dates)) + ' dates</span>'
+      );
+    }
   }
 
   return out;

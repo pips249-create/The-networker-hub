@@ -80,7 +80,7 @@ function buildListingsHtml(events, origin, region, total) {
         eventsUrl +
         '">View all ' +
         count +
-        ' events in ' +
+        (count === 1 ? ' listing in ' : ' listings in ') +
         regionName +
         '</a></p>'
       : '') +
@@ -113,13 +113,14 @@ function buildItemListSchema(events, origin, canonical) {
 async function buildNetworkingRegionSsr(slug, origin) {
   const region = getNetworkingRegion(slug);
   if (!region) {
-    return { listingsHtml: '', total: 0, itemList: null };
+    return { listingsHtml: '', total: 0, dateTotal: 0, itemList: null };
   }
 
   if (!isSupabaseConfigured()) {
     return {
       listingsHtml: buildListingsHtml([], origin, region, 0),
       total: 0,
+      dateTotal: 0,
       itemList: null,
     };
   }
@@ -134,12 +135,25 @@ async function buildNetworkingRegionSsr(slug, origin) {
       sort: 'date',
     });
     const events = (payload.events || []).slice();
-    const total = payload.pagination ? Number(payload.pagination.total) || events.length : events.length;
+    const pagination = payload.pagination || {};
+    // pagination.total counts every date in a series. The browse grid and
+    // "Showing N results" use listingTotal (one card per series).
+    const listingTotal = Number(pagination.listingTotal);
+    const dateTotalRaw = Number(pagination.total);
+    const total =
+      Number.isFinite(listingTotal) && listingTotal >= 0
+        ? listingTotal
+        : Number.isFinite(dateTotalRaw)
+          ? dateTotalRaw
+          : events.length;
+    const dateTotal =
+      Number.isFinite(dateTotalRaw) && dateTotalRaw >= 0 ? dateTotalRaw : total;
     const canonical = siteOrigin(origin) + region.path;
 
     return {
       listingsHtml: buildListingsHtml(events, origin, region, total),
       total,
+      dateTotal,
       itemList: buildItemListSchema(events, origin, canonical),
     };
   } catch (e) {
@@ -147,6 +161,7 @@ async function buildNetworkingRegionSsr(slug, origin) {
     return {
       listingsHtml: buildListingsHtml([], origin, region, 0),
       total: 0,
+      dateTotal: 0,
       itemList: null,
     };
   }

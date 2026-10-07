@@ -608,24 +608,31 @@ async function buildNetworkingRegionMeta(slug, origin) {
   const image = absoluteUrl(origin, OG_SHARE_IMAGE);
   const ssr = await buildNetworkingRegionSsr(slug, origin);
   const eventCount = Number(ssr.total) || 0;
-  const copy = buildNetworkingRegionSeoCopy(region, eventCount);
+  const dateCount = Number(ssr.dateTotal) || eventCount;
+  const copy = buildNetworkingRegionSeoCopy(region, eventCount, dateCount);
+  const datesBeyondListings = dateCount > eventCount && eventCount > 0;
+  const countBit = datesBeyondListings
+    ? `${eventCount} ${eventCount === 1 ? 'listing' : 'listings'} covering ${dateCount} dates`
+    : eventCount > 0
+      ? `${eventCount} upcoming ${eventCount === 1 ? 'listing' : 'listings'}`
+      : '';
 
   let description = trimText(copy.answerText, 160);
   if (usesBusinessNetworkingEventsTitle(region.slug)) {
     description = trimText(
       eventCount > 0
-        ? `Business networking events in ${region.name}: browse ${eventCount} upcoming meetings and groups. Book on The Networker UK.`
+        ? `Business networking events in ${region.name}: browse ${countBit}. Book on The Networker UK.`
         : `Business networking events in ${region.name}. Browse upcoming meetings and organiser groups on The Networker UK.`,
       160
     );
   } else if (eventCount > 0 && region.slug !== 'online') {
     description = trimText(
-      `Networking in ${region.name}: browse ${eventCount} upcoming business networking events, meetings and groups. Book on The Networker UK.`,
+      `Networking in ${region.name}: browse ${countBit}. Book on The Networker UK.`,
       160
     );
   } else if (eventCount > 0 && region.slug === 'online') {
     description = trimText(
-      `Browse ${eventCount} upcoming online networking events and webinars. Book on The Networker UK.`,
+      `Browse ${countBit} online. Book on The Networker UK.`,
       160
     );
   }
@@ -694,6 +701,7 @@ async function buildNetworkingRegionMeta(slug, origin) {
     },
     listingsHtml: ssr.listingsHtml,
     listingsTotal: eventCount,
+    dateTotal: dateCount,
     answerText: copy.answerText,
     faqHtml: copy.faqHtml,
     ...meta,

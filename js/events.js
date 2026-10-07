@@ -991,6 +991,7 @@
 
     const rangeStart = listingTotal ? start + 1 : 0;
     const rangeEnd = Math.min(start + pageItems.length, listingTotal);
+    const dateSuffix = browseDateSuffix(listingTotal);
     const rangeHtml =
       listingTotal > PAGE_SIZE
         ? '<p class="listings-range">Showing ' +
@@ -999,7 +1000,9 @@
           rangeEnd +
           ' of ' +
           listingTotal +
-          ' listings</p>'
+          ' listings' +
+          dateSuffix +
+          '</p>'
         : '';
 
     els.listings.innerHTML =
@@ -1024,12 +1027,51 @@
   }
   window.hubRevealBrowseResultCount = revealBrowseResultCount;
 
+  function browseDateTotal() {
+    const pagination = window.hubBrowsePagination;
+    if (!pagination || pagination.total == null) return 0;
+    return Number(pagination.total) || 0;
+  }
+
+  function browseDateSuffix(listingTotal) {
+    const listings = Number(listingTotal) || 0;
+    const dates = browseDateTotal();
+    if (!(dates > listings && listings > 0)) return '';
+    return ' · ' + dates + ' dates';
+  }
+
+  function applyResultCountLabels(listingTotal) {
+    const nounEl = document.getElementById('results-count-noun');
+    const dateNoteEl = document.getElementById('results-date-note');
+    const listings = Number(listingTotal) || 0;
+    const dates = browseDateTotal();
+    const showDates = dates > listings && listings > 0;
+    if (nounEl) {
+      nounEl.textContent = showDates ? (listings === 1 ? 'listing' : 'listings') : 'results';
+    }
+    if (dateNoteEl) {
+      dateNoteEl.hidden = !showDates;
+      dateNoteEl.textContent = showDates ? ' · ' + dates + ' dates' : '';
+    }
+  }
+
+  window.hubClearEventDateCount = function () {
+    const nounEl = document.getElementById('results-count-noun');
+    const dateNoteEl = document.getElementById('results-date-note');
+    if (nounEl) nounEl.textContent = 'results';
+    if (dateNoteEl) {
+      dateNoteEl.hidden = true;
+      dateNoteEl.textContent = '';
+    }
+  };
+
   function updateResultsSummary(totalItems) {
     const searchInput = document.getElementById('search');
     const searchQ = searchInput ? String(searchInput.value || '').trim() : '';
     const queryEl = document.getElementById('events-search-query');
     revealBrowseResultCount();
     if (els.resultsCount) els.resultsCount.textContent = String(totalItems);
+    applyResultCountLabels(totalItems);
     if (!queryEl) return;
     if (searchQ) {
       queryEl.hidden = false;

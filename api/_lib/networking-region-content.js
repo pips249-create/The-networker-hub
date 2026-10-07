@@ -17,32 +17,43 @@ function placePhrase(region) {
   return 'in ' + name;
 }
 
-function buildNetworkingRegionAnswer(region, eventCount, tagline) {
-  const name = region.name;
+function countPhrase(listingCount, dateCount) {
+  const listings = Number(listingCount) || 0;
+  const dates = Number(dateCount) || 0;
+  if (listings <= 0) return '';
+  const listingWord = listings === 1 ? 'listing' : 'listings';
+  if (dates > listings) {
+    return (
+      listings +
+      ' ' +
+      listingWord +
+      ', covering ' +
+      dates +
+      ' upcoming ' +
+      (dates === 1 ? 'date' : 'dates')
+    );
+  }
+  return listings + ' upcoming ' + listingWord;
+}
+
+function buildNetworkingRegionAnswer(region, eventCount, tagline, dateCount) {
   const place = placePhrase(region);
   const themeLine = String(tagline || '').trim();
-  const count = Number(eventCount) || 0;
+  const counted = countPhrase(eventCount, dateCount);
 
   if (region.slug === 'online') {
     return (
       'Find online business networking events, webinars and virtual meetings on The Networker UK. ' +
-      (count > 0
-        ? 'Browse ' + count + ' upcoming listings you can join from anywhere in the UK. '
+      (counted
+        ? 'Browse ' + counted + '. Join from anywhere in the UK. '
         : 'Browse upcoming listings you can join from anywhere in the UK. ') +
       'Workshops, hybrid sessions and virtual meetings are included. Filter by date and price, then book a ticket when you are ready.'
     );
   }
 
-  const lead =
-    count > 0
-      ? 'Find business networking ' +
-        place +
-        ' — browse ' +
-        count +
-        ' upcoming events, meetings and organiser groups on The Networker UK.'
-      : 'Find business networking ' +
-        place +
-        ' — browse upcoming events, meetings and organiser groups on The Networker UK.';
+  const lead = counted
+    ? 'Find business networking ' + place + ' — browse ' + counted + ' on The Networker UK.'
+    : 'Find business networking ' + place + ' — browse upcoming listings on The Networker UK.';
 
   const middle = themeLine
     ? ' ' +
@@ -57,20 +68,25 @@ function buildNetworkingRegionAnswer(region, eventCount, tagline) {
   );
 }
 
-function buildNetworkingRegionFaqs(region, eventCount, tagline) {
+function buildNetworkingRegionFaqs(region, eventCount, tagline, dateCount) {
   const name = region.name;
   const place = placePhrase(region);
   const path = region.path || '/networking/' + region.slug;
   const count = Number(eventCount) || 0;
+  const dates = Number(dateCount) || 0;
   const isOnline = region.slug === 'online';
   const local = String(tagline || '').trim().replace(/\.\s*$/, '');
   const fromLine = /^from\b/i.test(local)
     ? local.charAt(0).toLowerCase() + local.slice(1)
     : '';
-  const countLine =
-    count > 0
-      ? ' There are currently ' + count + ' upcoming listings.'
-      : ' New meetings are added as organisers publish them.';
+  const counted = countPhrase(count, dates);
+  const seriesNote =
+    dates > count && count > 0
+      ? ' Each listing is one group. When that group meets on several dates, those dates stay on the same listing.'
+      : '';
+  const countLine = counted
+    ? ' There are currently ' + counted + '.' + seriesNote
+    : ' New meetings are added as organisers publish them.';
 
   const whereQ = isOnline
     ? 'Where can I find online networking events?'
@@ -188,11 +204,11 @@ function buildNetworkingRegionFaqHtml(faqs, region) {
   );
 }
 
-function buildNetworkingRegionSeoCopy(region, eventCount) {
+function buildNetworkingRegionSeoCopy(region, eventCount, dateCount) {
   const theme = getRegionTheme(region.slug) || {};
   const tagline = theme.tagline || '';
-  const answerText = buildNetworkingRegionAnswer(region, eventCount, tagline);
-  const faqs = buildNetworkingRegionFaqs(region, eventCount, tagline);
+  const answerText = buildNetworkingRegionAnswer(region, eventCount, tagline, dateCount);
+  const faqs = buildNetworkingRegionFaqs(region, eventCount, tagline, dateCount);
   return {
     tagline: tagline,
     answerText: answerText,
@@ -207,4 +223,5 @@ module.exports = {
   buildNetworkingRegionFaqSchema,
   buildNetworkingRegionFaqHtml,
   buildNetworkingRegionSeoCopy,
+  countPhrase,
 };
