@@ -8,7 +8,7 @@
 const fs = require('fs');
 const path = require('path');
 const { FAQ_AEO_ENTRIES, FAQ_CATEGORIES } = require('../api/_lib/hubert-faq');
-const { buildFaqPageSchema, siteOrigin, DEFAULT_ORIGIN } = require('../api/_lib/hubert-seo');
+const { buildSchemaGraph, siteOrigin, DEFAULT_ORIGIN } = require('../api/_lib/hubert-seo');
 
 const CATEGORY_ORDER = ['general', 'buyers', 'organisers'];
 const CANONICAL_ORIGIN = siteOrigin(process.env.SITE_URL || DEFAULT_ORIGIN);
@@ -120,7 +120,8 @@ function buildFaqPanelsHtml() {
 }
 
 function buildFaqJsonLdTag() {
-  const schema = buildFaqPageSchema(FAQ_AEO_ENTRIES, CANONICAL_ORIGIN);
+  // Full graph (Organization + FAQPage) so AI crawlers see brand schema without JS.
+  const schema = buildSchemaGraph('faq', CANONICAL_ORIGIN);
   return (
     '<script type="application/ld+json" data-hubert-seo="static">' +
     JSON.stringify(schema) +
