@@ -1541,7 +1541,8 @@ body.browse-mode-organisers .events-organiser-footnote-link {
   height: 100%;
 }
 @media (min-width: 901px) {
-  .sponsor-hub { position: sticky; top: 76px; }
+  /* The hero band is overflow:hidden. Sticky top on that slot shoves the card down by 76px and the listings panel covers the bottom. */
+  .sponsor-hub:not(.sponsor-hub--in-hero) { position: sticky; top: 76px; }
 }
 .sponsor-hub-badge {
   position: absolute;
