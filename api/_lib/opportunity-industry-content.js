@@ -88,9 +88,11 @@ function buildOpportunityIndustryFaqHtml(faqs, industry) {
   if (!faqs || !faqs.length) return '';
   const label = escapeHtml(industry.label);
   const items = faqs
-    .map(function (item) {
+    .map(function (item, index) {
       return (
-        '<details class="networking-region-faq-item">' +
+        '<details class="networking-region-faq-item" name="networking-region-faq"' +
+        (index === 0 ? ' open' : '') +
+        '>' +
         '<summary class="networking-region-faq-q">' +
         escapeHtml(item.question) +
         '</summary>' +

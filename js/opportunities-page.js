@@ -1888,6 +1888,15 @@
   function syncIndustryFaq(label) {
     var faqSection = document.getElementById('networking-region-faq');
     if (!faqSection) return;
+    if (!faqSection.getAttribute('data-faq-exclusive')) {
+      faqSection.setAttribute('data-faq-exclusive', '1');
+      faqSection.addEventListener('click', function (event) {
+        var summary = event.target.closest ? event.target.closest('.networking-region-faq-q') : null;
+        if (!summary || !faqSection.contains(summary)) return;
+        var item = summary.parentElement;
+        if (item && item.open) event.preventDefault();
+      });
+    }
 
     if (activeCategories.length !== 1) {
       faqSection.hidden = true;
@@ -1923,9 +1932,11 @@
     if (!faqList) return;
     var faqs = buildIndustryFaqs(label);
     faqList.innerHTML = faqs
-      .map(function () {
+      .map(function (_item, i) {
         return (
-          '<details class="networking-region-faq-item">' +
+          '<details class="networking-region-faq-item" name="networking-region-faq"' +
+          (i === 0 ? ' open' : '') +
+          '>' +
           '<summary class="networking-region-faq-q"></summary>' +
           '<p class="networking-region-faq-a"></p>' +
           '</details>'

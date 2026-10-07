@@ -199,9 +199,11 @@
         },
       ];
       faqList.innerHTML = faqs
-        .map(function (item) {
+        .map(function (_item, i) {
           return (
-            '<details class="networking-region-faq-item">' +
+            '<details class="networking-region-faq-item" name="networking-region-faq"' +
+            (i === 0 ? ' open' : '') +
+            '>' +
             '<summary class="networking-region-faq-q"></summary>' +
             '<p class="networking-region-faq-a"></p>' +
             '</details>'
@@ -217,6 +219,16 @@
     }
   } else if (faqSection && faqSection.getAttribute('data-hub-ssr-faq')) {
     faqSection.hidden = false;
+  }
+
+  if (faqSection && !faqSection.getAttribute('data-faq-exclusive')) {
+    faqSection.setAttribute('data-faq-exclusive', '1');
+    faqSection.addEventListener('click', function (event) {
+      var summary = event.target.closest ? event.target.closest('.networking-region-faq-q') : null;
+      if (!summary || !faqSection.contains(summary)) return;
+      var item = summary.parentElement;
+      if (item && item.open) event.preventDefault();
+    });
   }
 
   var landmark = document.getElementById('networking-region-skyline');
