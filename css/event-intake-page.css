@@ -930,6 +930,7 @@ html:has(.event-intake-page) {
     min-height: 0;
     border-radius: 18px;
     padding: 18px 16px 20px;
+    overflow: visible;
   }
 
   .ei-hero h1 {
@@ -966,15 +967,15 @@ html:has(.event-intake-page) {
   .ei-hero-grid {
     display: block;
     position: relative;
-    padding-right: 30%;
+    padding-right: 32%;
     min-height: 0;
   }
 
   .ei-hero-art {
     position: absolute;
-    top: 0;
-    right: 0;
-    width: 28%;
+    top: 2px;
+    right: 2px;
+    width: 26%;
     margin: 0;
     min-height: 0;
     justify-content: flex-end;
@@ -982,6 +983,7 @@ html:has(.event-intake-page) {
 
   .ei-hero-illus {
     width: 100%;
+    filter: drop-shadow(0 8px 14px rgba(30, 58, 79, 0.1));
   }
 
   .ei-hero-trust {
