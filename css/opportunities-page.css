@@ -1615,7 +1615,7 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
 .opp-browse-page .opp-browse-hero {
   background: var(--opp-navy);
   color: #fff;
-  padding: 32px 24px 36px;
+  padding: 32px 24px 48px;
   position: relative;
   overflow: hidden;
 }
@@ -1756,6 +1756,7 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
 .opp-browse-page .opp-hero-sponsor-slot {
   min-width: 0;
   display: flex;
+  align-self: end;
 }
 
 .opp-browse-page .opp-hero-sponsor-slot .sponsor-hub {
@@ -1837,6 +1838,9 @@ body.opportunities-page.organiser-opportunity-edit-page:has([id='hub-site-nav'])
   padding: 0;
   height: auto;
   overflow: hidden;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .opp-browse-page .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-hub-head {
