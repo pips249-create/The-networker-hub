@@ -622,7 +622,7 @@ body.nav-menu-open {
 /* ─── Events browse ─── */
 @media (max-width: 768px) {
   .events-page .events-hero {
-    padding: 28px 16px 22px;
+    padding: 28px 16px 40px;
   }
 
   .events-page .events-hero-copy h1 {
@@ -674,7 +674,7 @@ body.nav-menu-open {
   }
 
   .opp-browse-page .opp-browse-hero {
-    padding: 20px 16px 28px;
+    padding: 20px 16px 40px;
   }
 
   .opp-browse-page .opp-browse-hero h1 {

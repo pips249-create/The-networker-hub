@@ -20,7 +20,7 @@
 .events-hero {
   background: var(--ev-navy);
   color: #fff;
-  padding: 32px 24px 36px;
+  padding: 32px 24px 48px;
   position: relative;
   overflow: hidden;
 }
@@ -257,6 +257,21 @@ body.browse-mode-organisers .events-organiser-footnote .events-hub-cta-link {
 .events-hero-sponsor-slot {
   min-width: 0;
   display: flex;
+  align-self: end;
+}
+
+@media (max-width: 768px) {
+  .events-hero-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .events-hero-sponsor-slot {
+    align-self: center;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+  }
 }
 
 .events-hero-sponsor-slot .sponsor-hub {
@@ -321,6 +336,9 @@ body.browse-mode-organisers .events-organiser-footnote .events-hub-cta-link {
   padding: 0;
   height: auto;
   overflow: hidden;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-hub-head {
