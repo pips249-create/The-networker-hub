@@ -563,32 +563,54 @@ body.networking-region-page .networking-region-intro {
   }
 }
 
-/* City / county FAQ block (SSR + AEO) */
+/* City / county FAQ block — same card as the regional intro */
 .networking-region-faq {
-  margin: 20px 0 12px;
+  --region-accent: #322b78;
+  --region-accent-soft: rgba(50, 43, 120, 0.1);
+  --region-accent-border: rgba(50, 43, 120, 0.2);
+  position: relative;
+  overflow: hidden;
+  margin: 12px 0 16px;
   padding: 0;
+  border: 1px solid var(--region-accent-border);
+  border-radius: 16px;
+  background: linear-gradient(135deg, #fff 0%, var(--region-accent-soft) 100%);
+  box-shadow: 0 8px 22px rgba(31, 28, 70, 0.05);
 }
 
 .networking-region-faq[hidden] {
   display: none;
 }
 
+.networking-region-faq-accent {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 4px;
+  background: var(--region-accent);
+}
+
 .networking-region-faq-inner {
   margin: 0;
-  padding: 18px 20px 8px;
-  border: 1px solid rgba(50, 43, 120, 0.14);
-  border-radius: 16px;
-  background: #fff;
-  box-shadow: 0 8px 22px rgba(31, 28, 70, 0.05);
+  padding: 14px 18px 4px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.networking-region-faq .networking-region-kicker {
+  margin-bottom: 2px;
 }
 
 .networking-region-faq h2 {
-  margin: 0 0 6px;
+  margin: 0 0 2px;
   font-family: 'DM Serif Display', Georgia, serif;
-  font-size: clamp(1.25rem, 2.2vw, 1.55rem);
+  font-size: clamp(1.15rem, 2vw, 1.35rem);
   font-weight: 400;
   line-height: 1.25;
-  color: var(--ink, #1c2040);
+  color: #1c2040;
   letter-spacing: 0;
   font-kerning: normal;
 }
@@ -601,7 +623,7 @@ body.networking-region-page .networking-region-intro {
 .networking-region-faq-item {
   margin: 0;
   padding: 0;
-  border-bottom: 1px solid rgba(28, 32, 64, 0.1);
+  border-bottom: 1px solid var(--region-accent-border);
 }
 
 .networking-region-faq-item:last-child {
@@ -634,29 +656,31 @@ body.networking-region-page .networking-region-intro {
   width: 10px;
   height: 10px;
   margin-top: 5px;
-  border-right: 2px solid rgba(50, 43, 120, 0.4);
-  border-bottom: 2px solid rgba(50, 43, 120, 0.4);
+  border-right: 2px solid var(--region-accent);
+  border-bottom: 2px solid var(--region-accent);
+  opacity: 0.55;
   transform: rotate(45deg);
-  transition: transform 0.18s ease, border-color 0.15s ease;
+  transition: transform 0.18s ease, opacity 0.15s ease;
 }
 
 .networking-region-faq-item[open] .networking-region-faq-q::after {
   margin-top: 8px;
+  opacity: 1;
   transform: rotate(225deg);
-  border-color: #322b78;
 }
 
 .networking-region-faq-q:hover {
-  color: #322b78;
+  color: var(--region-accent);
 }
 
 .networking-region-faq-a {
   margin: 0;
-  padding: 0 28px 16px 2px;
+  max-width: 68ch;
+  padding: 0 28px 14px 2px;
   font-family: 'DM Sans', system-ui, sans-serif;
-  font-size: 0.95rem;
-  line-height: 1.6;
-  color: rgba(28, 32, 64, 0.78);
+  font-size: 14px;
+  line-height: 1.55;
+  color: #625f73;
 }
 
 /* Server-rendered event list on /networking/:region (SEO + no-JS fallback) */

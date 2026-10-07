@@ -96,6 +96,9 @@
     if (applyAccent) applyAccent(intro, theme);
   }
 
+  var faqAccent = document.getElementById('networking-region-faq');
+  if (faqAccent && applyAccent) applyAccent(faqAccent, theme);
+
   var introHeading = document.getElementById('networking-region-intro-heading');
   if (introHeading) {
     if (slug === 'online') {
@@ -135,6 +138,8 @@
     var faqList = document.getElementById('networking-region-faq-list');
     if (faqList && !faqList.children.length) {
       var place = slug === 'online' ? 'online' : 'in ' + region.name;
+      var local = String(theme.tagline || '').replace(/\.\s*$/, '');
+      var fromLine = /^from\b/i.test(local) ? local.charAt(0).toLowerCase() + local.slice(1) : '';
       var faqs = [
         {
           q:
@@ -142,21 +147,39 @@
               ? 'Where can I find online networking events?'
               : 'Where can I find networking events ' + place + '?',
           a:
-            'Browse upcoming business networking events on this page, then open a listing to book. You can also visit organiser pages to see their next meetings.',
+            slug === 'online'
+              ? 'Online networking events are listed on this page. Each listing shows whether it is a webinar, virtual meeting or workshop, plus the date and ticket price. Filter by date, open an event to book, or visit an organiser page to see that group’s next sessions.'
+              : 'Networking events ' +
+                place +
+                ' are listed on this page.' +
+                (fromLine ? ' Coverage runs ' + fromLine + '.' : local ? ' ' + local + '.' : '') +
+                ' Open an event to see the date, format and price, then book a ticket, or open an organiser page to see that group’s next meetings.',
         },
         {
           q:
             slug === 'online'
               ? 'Are there free online networking events?'
               : 'Are there free networking events ' + place + '?',
-          a: 'Many organisers list free events or guest-visit options. Use filters to spot free and low-cost meetings.',
+          a:
+            slug === 'online'
+              ? 'Yes. Free online networking is listed alongside paid webinars and virtual meetings. Many organisers also offer a guest visit so you can try a group before you join. Use the price filter to show free and low-cost sessions, then open a listing to confirm a guest ticket is available.'
+              : 'Yes. Free networking ' +
+                place +
+                ' is listed on this page alongside paid breakfasts, mixers and workshops. Many groups offer a guest visit so you can try a meeting before you join. Filter by price to show free and low-cost events, then open a listing or the organiser’s page to confirm a guest ticket.',
         },
         {
           q:
             slug === 'online'
               ? 'How do I list an online networking event?'
               : 'How do I list my networking group ' + place + '?',
-          a: 'Claim a free organiser page and publish your meetings from the organiser dashboard. Start at /for-organisers.',
+          a:
+            slug === 'online'
+              ? 'List an online networking event by claiming a free organiser page, then publishing the meeting from the organiser dashboard. Once it is live it can appear in the online directory with the date, format and ticket price, so people can find it and book. Begin at /for-organisers.'
+              : 'List a networking group ' +
+                place +
+                ' by claiming a free organiser page, then publishing your meetings from the organiser dashboard. Once a meeting is live it can appear in the ' +
+                region.name +
+                ' directory, with the date, format and ticket price, so people can find it and book. Begin at /for-organisers.',
         },
         {
           q:
@@ -165,8 +188,14 @@
               : 'What types of networking happen ' + place + '?',
           a:
             slug === 'online'
-              ? 'Webinars, virtual meetings, workshops and hybrid events you can join from anywhere.'
-              : 'Breakfast meetings, evening mixers, workshops, conferences and industry groups — plus online options.',
+              ? 'Online networking here covers webinars, virtual meetings, workshops and hybrid events you can join from anywhere in the UK. Filter this page by date and price to see what is coming up, then book a ticket from the event page.'
+              : 'Networking ' +
+                place +
+                ' includes breakfast meetings, evening mixers, workshops, conferences, exhibitions and industry groups' +
+                (fromLine ? ', ' + fromLine : '') +
+                '. Hybrid and online meetings you can join from ' +
+                region.name +
+                ' are listed too. Filter this page by format, date and price to see what is on, then book from the event page.',
         },
       ];
       faqList.innerHTML = faqs
