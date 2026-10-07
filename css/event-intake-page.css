@@ -148,7 +148,7 @@ html:has(.event-intake-page) {
   letter-spacing: -0.03em;
   line-height: 1.05;
   color: var(--ei-ink);
-  max-width: 11em;
+  max-width: 9.5em;
 }
 
 .ei-hero-pill {
@@ -899,10 +899,6 @@ html:has(.event-intake-page) {
   .ei-hero-stage {
     border-radius: 18px;
     padding: 18px 16px 20px;
-  }
-
-  .ei-hero h1 br {
-    display: none;
   }
 
   .ei-hero-pill {
