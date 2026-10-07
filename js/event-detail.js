@@ -2355,6 +2355,8 @@
     currentEvent = ev;
     document.title = ev.title + ' – The Networker UK';
     document.body.setAttribute('data-event-id', ev.id);
+    var ssrFacts = document.getElementById('hub-ssr-event-facts');
+    if (ssrFacts) ssrFacts.hidden = true;
     setText('ev-title', ev.title);
     setText('ev-trail-current', ev.title);
     setText('ev-category', ev.typeRaw || ev.typeCategory || ev.format || 'Event');

@@ -495,6 +495,199 @@ function absolutizeDirectoryTemplateAssets(html) {
     .replace(/(data-root\s*=\s*["'])\.\.\/(["'])/gi, '$1/$2');
 }
 
+function setElementTextById(html, id, text) {
+  if (!text) return html;
+  const safeId = String(id || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const re = new RegExp(
+    '(<(?:h1|h2|h3|span|div|p|strong|a)[^>]*\\bid=["\']' + safeId + '["\'][^>]*>)([\\s\\S]*?)(</(?:h1|h2|h3|span|div|p|strong|a)>)',
+    'i'
+  );
+  if (!re.test(html)) return html;
+  return html.replace(re, '$1' + escapeHtml(text) + '$3');
+}
+
+function unhideElementById(html, id) {
+  const safeId = String(id || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const re = new RegExp(
+    '(<[^>]*\\bid=["\']' + safeId + '["\'][^>]*?)\\s*\\bhidden\\b([^>]*>)',
+    'i'
+  );
+  return html.replace(re, '$1$2');
+}
+
+function setImgSrcById(html, id, src, alt) {
+  if (!src) return html;
+  const safeId = String(id || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const re = new RegExp('(<img[^>]*\\bid=["\']' + safeId + '["\'][^>]*)(>)', 'i');
+  if (!re.test(html)) return html;
+  return html.replace(re, function (_m, before, close) {
+    let tag = before;
+    if (/\bsrc=["'][^"']*["']/i.test(tag)) {
+      tag = tag.replace(/\bsrc=["'][^"']*["']/i, 'src="' + escapeHtml(src) + '"');
+    } else {
+      tag += ' src="' + escapeHtml(src) + '"';
+    }
+    if (alt) {
+      if (/\balt=["'][^"']*["']/i.test(tag)) {
+        tag = tag.replace(/\balt=["'][^"']*["']/i, 'alt="' + escapeHtml(alt) + '"');
+      } else {
+        tag += ' alt="' + escapeHtml(alt) + '"';
+      }
+    }
+    return tag + close;
+  });
+}
+
+function injectEventDetailContent(html, meta) {
+  const ssr = meta && meta.detailSsr;
+  if (!ssr || !ssr.title) return html;
+
+  let out = String(html || '');
+  out = setElementTextById(out, 'ev-title', ssr.title);
+  out = setElementTextById(out, 'ev-trail-current', ssr.trail || ssr.title);
+  out = setElementTextById(out, 'ev-meta-starts', ssr.date);
+  if (ssr.time) {
+    out = unhideElementById(out, 'ev-meta-time-row');
+    out = setElementTextById(out, 'ev-meta-time', ssr.time);
+  }
+  out = setElementTextById(out, 'ev-meta-city', ssr.city || ssr.locationLine);
+  out = setElementTextById(out, 'ev-about-lead', ssr.about || meta.description || '');
+  out = setElementTextById(out, 'ev-host-name', ssr.hostName);
+  out = setElementTextById(out, 'ev-venue-name', ssr.venue || ssr.locationLine);
+  out = setElementTextById(out, 'ev-venue-addr', ssr.address || ssr.locationLine);
+  out = setElementTextById(out, 'ev-price', ssr.price);
+  out = setElementTextById(out, 'ev-category', ssr.category);
+  out = setElementTextById(out, 'ev-format', ssr.format);
+  if (ssr.imageUrl) {
+    out = setImgSrcById(out, 'ev-hero-img', ssr.imageUrl, ssr.title);
+  }
+  if (ssr.hostUrl) {
+    out = out.replace(
+      /(<a[^>]*\bid=["']ev-host-profile-link["'][^>]*)(>)/i,
+      function (_m, before, close) {
+        let tag = before.replace(/\bhidden\b/i, '');
+        if (/\bhref=["'][^"']*["']/i.test(tag)) {
+          tag = tag.replace(/\bhref=["'][^"']*["']/i, 'href="' + escapeHtml(ssr.hostUrl) + '"');
+        } else {
+          tag += ' href="' + escapeHtml(ssr.hostUrl) + '"';
+        }
+        return tag + close;
+      }
+    );
+    out = setElementTextById(out, 'ev-host-profile-link', 'View organiser page →');
+  }
+  if (ssr.ended) {
+    out = unhideElementById(out, 'ev-ended-banner');
+    out = setElementTextById(out, 'ev-ended-banner-title', ssr.endedTitle || 'This event has ended');
+    out = setElementTextById(out, 'ev-ended-banner-text', ssr.endedText || '');
+  }
+
+  // Extra crawlable facts block (kept for no-JS / AI crawlers; JS may leave it in place).
+  const facts = [
+    ssr.date ? ['Date', ssr.date] : null,
+    ssr.time ? ['Time', ssr.time] : null,
+    ssr.locationLine ? ['Location', ssr.locationLine] : null,
+    ssr.hostName ? ['Organiser', ssr.hostName] : null,
+    ssr.price ? ['Cost', ssr.price] : null,
+    ssr.category ? ['Type', ssr.category] : null,
+    ssr.format ? ['Format', ssr.format] : null,
+  ].filter(Boolean);
+  if (facts.length) {
+    const factsHtml =
+      '<section id="hub-ssr-event-facts" class="hub-ssr-event-facts" data-hub-ssr="1" aria-label="Event details">' +
+      '<h2 class="visually-hidden">Event details</h2>' +
+      '<dl>' +
+      facts
+        .map(function (pair) {
+          return (
+            '<div><dt>' +
+            escapeHtml(pair[0]) +
+            '</dt><dd>' +
+            escapeHtml(pair[1]) +
+            '</dd></div>'
+          );
+        })
+        .join('') +
+      '</dl>' +
+      (ssr.hostUrl
+        ? '<p><a href="' + escapeHtml(ssr.hostUrl) + '">Organiser page</a> · <a href="' +
+          escapeHtml(ssr.browseEventsUrl || '/events/') +
+          '">Browse events</a></p>'
+        : '<p><a href="' + escapeHtml(ssr.browseEventsUrl || '/events/') + '">Browse events</a></p>') +
+      '</section>';
+    if (/id=["']hub-ssr-event-facts["']/i.test(out)) {
+      out = out.replace(
+        /<section[^>]*id=["']hub-ssr-event-facts["'][^>]*>[\s\S]*?<\/section>/i,
+        factsHtml
+      );
+    } else {
+      out = out.replace(
+        /(<section class="content-section" id="ev-about-section">)/i,
+        factsHtml + '\n        $1'
+      );
+    }
+  }
+
+  return out;
+}
+
+function injectOrganiserDetailContent(html, meta) {
+  const ssr = meta && meta.detailSsr;
+  if (!ssr || !ssr.name) return html;
+
+  let out = String(html || '');
+  out = setElementTextById(out, 'org-name', ssr.name);
+  out = setElementTextById(out, 'org-description', ssr.description || meta.description || '');
+  if (ssr.website) {
+    out = out.replace(
+      /(<a[^>]*\bid=["']org-website["'][^>]*)(>)/i,
+      function (_m, before, close) {
+        let tag = before.replace(/\bhidden\b/i, '');
+        if (/\bhref=["'][^"']*["']/i.test(tag)) {
+          tag = tag.replace(/\bhref=["'][^"']*["']/i, 'href="' + escapeHtml(ssr.website) + '"');
+        } else {
+          tag += ' href="' + escapeHtml(ssr.website) + '"';
+        }
+        return tag + close;
+      }
+    );
+  }
+
+  const ssrBlock =
+    '<section id="hub-ssr-organiser" class="hub-ssr-organiser" data-hub-ssr="1" aria-label="' +
+    escapeHtml(ssr.name) +
+    '">' +
+    '<h1>' +
+    escapeHtml(ssr.name) +
+    '</h1>' +
+    (ssr.city ? '<p class="hub-ssr-organiser-city">' + escapeHtml(ssr.city) + '</p>' : '') +
+    (ssr.description ? '<p class="hub-ssr-organiser-desc">' + escapeHtml(ssr.description) + '</p>' : '') +
+    (ssr.website
+      ? '<p><a href="' + escapeHtml(ssr.website) + '" rel="noopener noreferrer">Website</a></p>'
+      : '') +
+    '<h2>Upcoming listings</h2>' +
+    (ssr.upcomingHtml || '<p><a href="/events/">Browse all events</a></p>') +
+    '<p><a href="/events/?mode=organisers">Browse organisers</a></p>' +
+    '</section>';
+
+  if (/id=["']hub-ssr-organiser["']/i.test(out)) {
+    out = out.replace(
+      /<section[^>]*id=["']hub-ssr-organiser["'][^>]*>[\s\S]*?<\/section>/i,
+      ssrBlock
+    );
+  } else {
+    out = out.replace(
+      /(<main class="org-profile-shell"[^>]*>)/i,
+      '$1\n  ' + ssrBlock
+    );
+  }
+
+  // Reveal profile shell content for crawlers / no-JS; JS still overwrites fields on hydrate.
+  out = unhideElementById(out, 'org-profile-content');
+
+  return out;
+}
+
 function injectNetworkingRegionContent(html, meta) {
   const region = meta && meta.region;
   if (!region || !region.name) return html;
@@ -1463,6 +1656,7 @@ export default async function middleware(request) {
     }
     // API/gate failures: serve the shell HTML when we have it so brief outages do not
     // fall through to Vercel’s filesystem 404 for valid pretty URLs.
+    // Always noindex — the shell still says “Loading…” and must not be indexed.
     if (!metaRes.ok) {
       if (htmlRes.ok && HARD_404_SEO_TYPES.has(type) && !shellQuery) {
         return new Response(absolutizeDirectoryTemplateAssets(await htmlRes.text()), {
@@ -1470,7 +1664,7 @@ export default async function middleware(request) {
           headers: {
             'Content-Type': 'text/html; charset=utf-8',
             'Cache-Control': 'public, max-age=30, must-revalidate',
-            ...(siteGated ? { 'X-Robots-Tag': NOINDEX_HEADER } : {}),
+            'X-Robots-Tag': NOINDEX_HEADER,
           },
         });
       }
@@ -1499,7 +1693,11 @@ export default async function middleware(request) {
     if (!htmlRes.ok) return passThroughIfGated(siteGated);
 
     let html = injectSeoIntoHtml(await htmlRes.text(), meta);
-    if (type === 'networking-region') {
+    if (type === 'event') {
+      html = injectEventDetailContent(html, meta);
+    } else if (type === 'organiser') {
+      html = injectOrganiserDetailContent(html, meta);
+    } else if (type === 'networking-region') {
       html = injectNetworkingRegionContent(html, meta);
     } else if (type === 'opportunity-industry') {
       html = injectOpportunityIndustryContent(html, meta);

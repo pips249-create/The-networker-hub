@@ -1,4 +1,37 @@
 /* Public organiser profile — blue-tint showcase (photo + reviews) */
+.hub-ssr-organiser {
+  margin: 0 0 20px;
+  padding: 20px 0 8px;
+  border-bottom: 1px solid rgba(30, 58, 95, 0.12);
+}
+
+.hub-ssr-organiser[hidden] {
+  display: none !important;
+}
+
+.hub-ssr-organiser h1 {
+  margin: 0 0 8px;
+  font-size: 1.6rem;
+  line-height: 1.2;
+  color: #1e3a5f;
+}
+
+.hub-ssr-organiser-city,
+.hub-ssr-organiser-desc {
+  margin: 0 0 10px;
+  color: #3d4f66;
+  line-height: 1.5;
+}
+
+.hub-ssr-organiser .hub-ssr-upcoming {
+  margin: 8px 0 12px;
+  padding-left: 1.2em;
+}
+
+.hub-ssr-organiser .hub-ssr-upcoming li {
+  margin: 0 0 6px;
+}
+
 .organiser-profile-page {
   background: linear-gradient(180deg, #eef4ff 0%, #f8fbff 220px, var(--surface-bg, #faf8fc) 480px);
 }
