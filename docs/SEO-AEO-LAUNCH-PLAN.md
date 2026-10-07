@@ -1,7 +1,7 @@
 # SEO & AEO launch plan
 
-**Private until 25 August 2026** (tickets & enquiries from 1 September) · Public hub: `www.thenetworkeruk.com`  
-Code foundations ~65% ready — gate, domain, and Search Console still decide launch discoverability.
+**Public hub:** `www.thenetworkeruk.com` (gate off; tickets live)  
+Code foundations are live (schema in HTML, discovery files, sitemap). **Search Console submit + indexing requests** are the remaining human step for Google/AIO visibility.
 
 > Cursor canvas side panel: `seo-aeo-launch-plan.canvas.tsx` (open from the Canvas / right sidebar in Cursor).
 
@@ -57,14 +57,26 @@ Code foundations ~65% ready — gate, domain, and Search Console still decide la
 
 ---
 
-## Browse week (25 August)
+## Browse / launch week — status (updated 7 Oct 2026)
 
-1. Remove `SITE_ACCESS_PASSWORD` → Redeploy (public browsing on).
-2. Confirm `/robots.txt` Allow, `/sitemap.xml` 200, `/llms.txt` + `/agents.txt` 200, no public `noindex`.
-3. Search Console: verify → submit `https://www.thenetworkeruk.com/sitemap.xml` → request indexing on home + 3–5 key pages.
-4. Keep tickets and opportunity enquiries closed until 1 September; banner copy should say so.
-5. If GBP exists: set website to live hub URL and publish only if verified without a Magpas Maps pin. Otherwise skip — GSC is enough.
-6. Week 1–2: watch Coverage / Page indexing; fix 404s from old URLs; confirm Event schema where eligible.
+1. ~~Remove `SITE_ACCESS_PASSWORD`~~ ✅ public browsing on.
+2. ~~Confirm `/robots.txt` Allow, `/sitemap.xml` 200, `/llms.txt` + `/agents.txt` 200~~ ✅
+3. **Search Console (do this now — needs your Google login):**
+   1. Open [Google Search Console](https://search.google.com/search-console) → property `thenetworkeruk.com` (or `www.thenetworkeruk.com`).
+   2. **Sitemaps** → submit: `https://www.thenetworkeruk.com/sitemap.xml`
+   3. **URL inspection** → Request indexing for each of:
+      - `https://www.thenetworkeruk.com/`
+      - `https://www.thenetworkeruk.com/events/`
+      - `https://www.thenetworkeruk.com/opportunities/`
+      - `https://www.thenetworkeruk.com/faq`
+      - `https://www.thenetworkeruk.com/networking/liverpool`
+      - `https://www.thenetworkeruk.com/networking/birmingham`
+      - `https://www.thenetworkeruk.com/networking/manchester`
+      - `https://www.thenetworkeruk.com/networking/central-london`
+   4. Optional: Rich Results Test on one event URL from the sitemap.
+4. Tickets / enquiries — follow current product state (no longer blocked on SEO gate).
+5. If GBP exists: website = hub URL; no Magpas Maps pin. Otherwise skip — GSC is enough.
+6. Ongoing: watch Page indexing; fix 404s; confirm Event schema on sample listings.
 
 ## Tickets week (1st September)
 

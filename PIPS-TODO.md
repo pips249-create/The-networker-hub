@@ -49,8 +49,8 @@ Ship/verify membership work, then scale readiness before loading more of the alp
 | Organiser groups & dashboard | ~90% | **~1,000+ groups in Supabase**; profiles tidied; auto-approve; Supabase-only |
 | Checkout & payments | ~95% | Prod checkout + Connect destination charges verified in live Stripe (Jul 2026); refund spot-check optional |
 | Email system | ~85% | Resend on prod; confirmation sends — **SPF/DKIM, cron reminders, allowlist off at launch** remain |
-| SEO | ~70% | Foundations built — **domain, GSC, sitemap verify, redirect** remain |
-| AEO (AI / answer engines) | ~70% | `llms.txt`, FAQs, JSON-LD — **gate-off discovery + canonical alignment** remain |
+| SEO | ~85% | Live on `www.thenetworkeruk.com` with schema + sitemap — **GSC sitemap submit / indexing requests + co.uk 301s** remain |
+| AEO (AI / answer engines) | ~85% | `llms.txt`, FAQ/Organization JSON-LD in HTML, discovery public — **GSC indexing + brand authority** remain |
 | Business ops | ~85% | ICO ZB694959 + solicitor + DPAs done; Finance VAT treatment sign-off + insurance optional |
 | Redirect & launch comms | ~35% | Redirect map + banner snippet + Hub list segments; Email 1 sent; Email 2 / hard 301s remain |
 
@@ -61,8 +61,8 @@ Ship/verify membership work, then scale readiness before loading more of the alp
 3. ~~**Connect destination charge test**~~ — done Jul 2026 (live PIs with `hub_checkout=connect_destination`; fee = booking fee only)
 4. **100% gates** — finish remaining items in Tabs 4–6, 9–10 below
 5. **Email 2 claim wave** — Soft path A + Founding Organiser perks (`docs/SEGMENT-A-EMAIL2.md`, `docs/FOUNDING-ORGANISER.md`); **run migration 241 → deploy → Brevo**
-6. **SEO pre-launch** — `SITE_URL` + GSC domain property done; GBP verification in progress; **submit sitemap + request indexing at gate-off** (`docs/SEO-AEO-LAUNCH-PLAN.md`)
-7. **August redirect** — banner install now; hard 301s deferred ~3 months for SEO (~Nov 2026)
+6. **SEO launch follow-through** — gate off + schema live (Oct 2026); **you still need to submit sitemap + request indexing in GSC** (`docs/SEO-AEO-LAUNCH-PLAN.md`)
+7. **Legacy redirect** — banner path ready; hard `the-networker.co.uk` 301s deferred (~Nov 2026) so equity consolidates cleanly
 8. **Resend Pro + Supabase Pro** — deferred ~1 week (before wider Resend sends / gate-off)
 
 *Note: events are listed fresh on the platform — we are not migrating or copying events from the old WordPress site.*
@@ -362,14 +362,14 @@ Without Connect, paid revenue stays on The Networker UK Stripe account (legacy *
 | [x] | Canonical + Open Graph on home, events browse, about, contact, FAQ, opportunities, training, legal |
 | [x] | JSON-LD in `<head>` on static pages; BreadcrumbList on event/organiser pages |
 | [x] | **`SITE_URL`** in Vercel Production = `https://www.thenetworkeruk.com` (exact canonical) — confirmed 6 Aug |
-| [ ] | Verify `/sitemap.xml` after deploy — counts match published events + organisers |
+| [x] | Verify `/sitemap.xml` after deploy — public 200; ~6.8k URLs (events / organisers / opportunities / city hubs) confirmed 7 Oct 2026 |
 | [x] | Align hard-coded `the-networker.co.uk` canonical leftovers; run `npm run build-seo` |
 | [x] | Rebuild FAQ/guides/help canonicals to `https://www.thenetworkeruk.com` (6 Aug — were `localhost:3000`) |
-| [x] | **Google Search Console** — domain property `thenetworkeruk.com` verified (6 Aug); **submit sitemap at gate-off** when `/sitemap.xml` is public |
-| [~] | **Google Business Profile** — Software company, UK service area, hub URL; verification processing (submitted 6 Aug; may take up to 5 days). No Magpas pin. |
-| [ ] | Launch week: remove `SITE_ACCESS_PASSWORD` → confirm `/robots.txt` Allow, `/llms.txt` 200 |
+| [~] | **Google Search Console** — domain property verified (6 Aug); sitemap is public — **still need human submit + Request indexing** (see launch plan) |
+| [~] | **Google Business Profile** — Software company, UK service area, hub URL; verification processing (submitted 6 Aug). No Magpas pin. |
+| [x] | Launch week: preview gate off — `/robots.txt` Allow, `/llms.txt` 200, homepage Organization JSON-LD in HTML (confirmed 7 Oct 2026) |
 | [x] | `the-networker.co.uk` 301 redirect map ready (Tab 7) — draft `docs/LEGACY-REDIRECT-MAP.md` |
-| [ ] | City/region landing pages (post-launch — not a 100% blocker) |
+| [x] | City/region landing pages — `/networking/{slug}` live in sitemap (43 hubs; confirmed 7 Oct 2026) |
 
 **Full plan:** `docs/SEO-AEO-LAUNCH-PLAN.md`
 
