@@ -219,6 +219,8 @@ const ORGANISER_EARLY_ACCESS_PREFIXES = [
   '/help/pricing-fees',
   '/help/organiser-payouts',
   '/account',
+  '/unsubscribe',
+  '/unsubscribe.html',
   '/advertising',
   '/api/auth',
   '/api/organiser',

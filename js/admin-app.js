@@ -15845,7 +15845,7 @@
       '<section id="email-preview-panel" class="bg-white rounded-xl border border-slate-200 shadow-sm p-6 hidden">' +
       '<h3 class="font-bold text-brand-900 mb-1">Preview</h3>' +
       '<p id="email-preview-subject" class="text-sm text-slate-600 mb-4"></p>' +
-      '<iframe id="email-preview-frame" title="Email preview" class="w-full rounded-lg border border-slate-100 bg-white" style="height:min(80vh,720px);border:0;" sandbox="allow-same-origin allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"></iframe>' +
+      '<iframe id="email-preview-frame" title="Email preview" class="w-full rounded-lg border border-slate-100 bg-white" style="height:min(80vh,720px);border:0;" sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-top-navigation-by-user-activation"></iframe>' +
       '</section></div></div></div>';
 
     function setEmailStatus(text, tone) {
@@ -16263,7 +16263,11 @@
     function setPreviewHtml(html) {
       var frame = document.getElementById('email-preview-frame');
       if (!frame) return;
-      frame.srcdoc = html || '';
+      var doc = String(html || '').replace(/<a\b([^>]*?)>/gi, function (match, attrs) {
+        if (/\btarget\s*=/i.test(attrs)) return match;
+        return '<a' + attrs + ' target="_blank" rel="noopener noreferrer">';
+      });
+      frame.srcdoc = doc;
     }
 
     function stripUnresolvedBookingPlaceholders(text) {

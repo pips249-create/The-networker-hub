@@ -128,6 +128,7 @@
     { "source": "/opportunities/list.html", "destination": "/opportunities/list", "permanent": true },
     { "source": "/opportunities/browse.html", "destination": "/opportunities/", "permanent": true },
     { "source": "/account/settings.html", "destination": "/account/settings", "permanent": true },
+    { "source": "/unsubscribe.html", "destination": "/unsubscribe", "permanent": true },
     { "source": "/guides/list-an-event.html", "destination": "/guides/list-an-event", "permanent": true },
     { "source": "/guides/list-a-conference-or-exhibition.html", "destination": "/guides/list-a-conference-or-exhibition", "permanent": true },
     { "source": "/guides/list-a-business-opportunity.html", "destination": "/guides/list-a-business-opportunity", "permanent": true },

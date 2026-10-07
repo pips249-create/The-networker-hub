@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+    <link rel="icon" href="/favicon.ico?v=20260823uk3" sizes="any" />
+    <link rel="icon" href="/assets/favicon.svg?v=20260823uk3" type="image/svg+xml" />
+    <link rel="icon" href="/assets/favicon-32.png?v=20260823uk" type="image/png" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png?v=20260823uk" />
+<title>Unsubscribe – The Networker UK</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/hub.css?v=20260909listmenu1">
+<link rel="stylesheet" href="css/auth.css">
+    <link rel="stylesheet" href="css/hub-mobile.css?v=20260909listmenu1" />
+</head>
+<body class="auth-page">
+
+<div id="hub-site-nav"></div>
+<script src="js/site-nav.js?v=20260923iab1" data-root="" data-page="auth"></script>
+
+<main class="auth-main">
+  <div class="auth-card">
+    <h1 id="unsub-title">Unsubscribe</h1>
+    <p class="auth-lede" id="unsub-lede">Turn off tips, recommendations, group roundups, and other optional emails. Booking confirmations, application updates, and password resets still arrive.</p>
+
+    <div id="unsub-message" class="auth-message" role="status"></div>
+
+    <form id="unsub-form" method="post" action="/api/auth/unsubscribe">
+      <input type="hidden" name="t" id="unsub-token" value="">
+      <div class="auth-field" id="unsub-email-field">
+        <label for="unsub-email">Email address</label>
+        <input type="email" id="unsub-email" name="email" autocomplete="email" required placeholder="you@company.com">
+      </div>
+      <p id="unsub-masked" hidden style="margin:0 0 16px;font-weight:600;"></p>
+      <div class="auth-actions">
+        <button type="submit" class="auth-submit" id="unsub-submit">Unsubscribe</button>
+      </div>
+    </form>
+
+    <div class="auth-links">
+      <a href="/account/settings#email-preferences">Manage each email instead</a>
+    </div>
+  </div>
+</main>
+
+<script>
+(function () {
+  var params = new URLSearchParams(window.location.search);
+  var token = params.get('t') || '';
+  var done = params.get('done') === '1';
+  var form = document.getElementById('unsub-form');
+  var tokenInput = document.getElementById('unsub-token');
+  var emailField = document.getElementById('unsub-email-field');
+  var emailInput = document.getElementById('unsub-email');
+  var masked = document.getElementById('unsub-masked');
+  var message = document.getElementById('unsub-message');
+  var title = document.getElementById('unsub-title');
+  var lede = document.getElementById('unsub-lede');
+
+  function showMessage(text, ok) {
+    if (!message) return;
+    message.textContent = text || '';
+    message.classList.add('is-visible');
+    message.classList.toggle('is-error', !ok);
+    message.classList.toggle('is-success', !!ok);
+  }
+
+  function showDone(text) {
+    if (title) title.textContent = 'Unsubscribed';
+    if (lede) lede.textContent = text || 'Optional emails to this address will stop.';
+    if (form) form.hidden = true;
+    showMessage('', true);
+  }
+
+  if (tokenInput) tokenInput.value = token;
+  if (token && emailInput) emailInput.required = false;
+  if (token && emailField) emailField.hidden = true;
+  if (done) showDone('Optional emails to this address will stop.');
+
+  if (token && !done) {
+    fetch('/api/auth/unsubscribe?t=' + encodeURIComponent(token), { headers: { Accept: 'application/json' } })
+      .then(function (res) { return res.json().then(function (data) { return { ok: res.ok, data: data }; }); })
+      .then(function (result) {
+        if (!result.ok) {
+          if (emailField) emailField.hidden = false;
+          if (emailInput) emailInput.required = true;
+          showMessage(result.data.message || 'This link has expired. Enter your email address.', false);
+          return;
+        }
+        if (emailField) emailField.hidden = true;
+        if (emailInput) emailInput.required = false;
+        if (masked) {
+          masked.hidden = false;
+          masked.textContent = result.data.emailMasked
+            ? 'Unsubscribe ' + result.data.emailMasked
+            : 'Confirm unsubscribe';
+        }
+      })
+      .catch(function () {
+        showMessage('Enter your email address to unsubscribe.', false);
+      });
+  }
+
+  if (!form) return;
+  form.addEventListener('submit', function (e) {
+    if (!window.fetch) return;
+    e.preventDefault();
+    var btn = document.getElementById('unsub-submit');
+    if (btn) btn.disabled = true;
+    var payload = {};
+    if (token && emailField && emailField.hidden) payload.token = token;
+    else if (emailInput) payload.email = emailInput.value.trim();
+    fetch('/api/auth/unsubscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(payload)
+    })
+      .then(function (res) { return res.json().then(function (data) { return { ok: res.ok, data: data }; }); })
+      .then(function (result) {
+        if (!result.ok || result.data.ok === false) {
+          showMessage(result.data.message || 'Could not unsubscribe.', false);
+          if (btn) btn.disabled = false;
+          return;
+        }
+        showDone(result.data.message);
+      })
+      .catch(function () {
+        showMessage('Could not reach the server. Try again shortly.', false);
+        if (btn) btn.disabled = false;
+      });
+  });
+})();
+</script>
+</body>
+</html>

@@ -251,6 +251,8 @@ async function getEmailsEnabledForEmail(email) {
 async function canSendEmailCategory(email, category) {
   const hub = await getHubAccountForEmail(email);
   if (!hub) {
+    const { isEmailSuppressed } = require('./email-unsubscribe');
+    if (await isEmailSuppressed(email)) return false;
     // Marketing requires a signed-in hub account with explicit opt-in (PECR).
     if (category === 'marketing') return false;
     return true;

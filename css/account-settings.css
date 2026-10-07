@@ -303,10 +303,69 @@
 }
 
 .as-signin {
-  max-width: 400px;
+  max-width: 440px;
   margin: 80px auto;
   text-align: center;
   color: var(--as-text-mid);
+}
+
+.as-unsub-guest {
+  text-align: left;
+  background: var(--as-white);
+  border: 1px solid var(--as-border-soft);
+  border-radius: var(--as-radius);
+  padding: 22px 20px;
+}
+
+.as-unsub-guest h2 {
+  margin: 0 0 8px;
+  font-size: 22px;
+  color: var(--as-text-dark);
+}
+
+.as-unsub-guest p {
+  margin: 0 0 14px;
+  line-height: 1.5;
+}
+
+.as-unsub-guest label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: var(--as-text-dark);
+}
+
+.as-unsub-guest input[type='email'] {
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  padding: 11px 12px;
+  border-radius: var(--as-radius-sm);
+  border: 1.5px solid var(--as-border-soft);
+  margin-bottom: 14px;
+}
+
+.as-unsub-status.is-ok {
+  color: #1f7a45;
+}
+
+.as-unsub-status.is-error {
+  color: #9b2335;
+}
+
+.as-unsub-signin {
+  margin-top: 14px;
+  font-size: 13px;
+}
+
+#email-preferences {
+  scroll-margin-top: 96px;
+}
+
+#email-preferences.is-unsubscribe-target {
+  outline: 2px solid var(--as-purple);
+  outline-offset: 4px;
 }
 
 .account-settings-page #as-signin[hidden],
