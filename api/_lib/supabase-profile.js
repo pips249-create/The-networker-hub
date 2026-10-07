@@ -380,6 +380,22 @@ async function updateProfile(session, body) {
         }
       }
     }
+    if (!updated && isMissingHubRow(updateErr)) {
+      const created = await sb
+        .from('hub_accounts')
+        .upsert(
+          {
+            user_id: uid,
+            role: session.role === 'admin' ? 'admin' : 'client',
+            ...hubPatch,
+          },
+          { onConflict: 'user_id' }
+        )
+        .select('*')
+        .maybeSingle();
+      if (!created.error) updated = created.data;
+      else updateErr = created.error;
+    }
     if (!updated && Object.keys(hubPatch).length) {
       throw new Error(updateErr?.message || 'Could not save email preferences');
     }
@@ -389,13 +405,32 @@ async function updateProfile(session, body) {
     hubAccount = data;
   }
 
+  if (body.emailsEnabled !== undefined && em) {
+    const { setEmailSuppressed } = require('./email-unsubscribe');
+    await setEmailSuppressed(em, body.emailsEnabled === false || body.emailsEnabled === 'false');
+  }
+
   const profile = rowToProfile(session, hubAccount, attendee);
+  const emailOnly = Object.keys(body).every(function (key) {
+    return (
+      key === 'emailsEnabled' ||
+      key === 'emailPrefEventReminders' ||
+      key === 'emailPrefOrganiserAlerts' ||
+      key === 'emailPrefOrganiserRoundups'
+    );
+  });
   return {
     profile,
     writable: WRITABLE,
     profileComplete: isAnalyticsProfileComplete(profile),
-    message: 'Your details were saved.',
+    message: emailOnly ? 'Email preferences saved.' : 'Your details were saved.',
   };
+}
+
+function isMissingHubRow(error) {
+  const code = String(error?.code || '');
+  const msg = String(error?.message || '');
+  return code === 'PGRST116' || /0 rows|no rows|multiple \(or no\) rows|cannot coerce/i.test(msg);
 }
 
 async function changePassword(session, currentPassword, newPassword) {

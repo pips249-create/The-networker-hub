@@ -331,6 +331,68 @@
 
   document.getElementById('as-email-master')?.addEventListener('change', syncEmailPrefDisabled);
 
+  function signInHref() {
+    const next = '/account/settings' + (window.location.hash || '');
+    return '../login?next=' + encodeURIComponent(next);
+  }
+
+  function applySignInLinks() {
+    const href = signInHref();
+    const general = document.getElementById('as-signin-link');
+    const unsub = document.getElementById('as-signin-link-unsub');
+    if (general) general.href = href;
+    if (unsub) unsub.href = href;
+  }
+
+  function setGuestUnsubStatus(message, ok) {
+    const status = document.getElementById('as-unsub-guest-status');
+    if (!status) return;
+    status.hidden = !message;
+    status.textContent = message || '';
+    status.className = 'as-unsub-status' + (ok ? ' is-ok' : message ? ' is-error' : '');
+  }
+
+  document.getElementById('as-unsub-guest-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const input = document.getElementById('as-unsub-email');
+    const btn = document.getElementById('as-unsub-guest-submit');
+    const email = input ? input.value.trim() : '';
+    if (!email) return;
+    setGuestUnsubStatus('', true);
+    if (btn) btn.disabled = true;
+    try {
+      const res = await fetch('/api/auth/unsubscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.ok === false) {
+        throw new Error(data.message || 'Could not unsubscribe.');
+      }
+      setGuestUnsubStatus(data.message || 'You are unsubscribed.', true);
+    } catch (err) {
+      setGuestUnsubStatus(err.message || 'Could not unsubscribe.', false);
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  });
+
+  document.getElementById('as-unsubscribe-all')?.addEventListener('click', () => {
+    ['as-email-master', 'as-email-reminders', 'as-email-organiser-alerts', 'as-email-organiser-roundups'].forEach(
+      (id) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.disabled = false;
+        el.checked = false;
+      }
+    );
+    syncEmailPrefDisabled();
+    const form = document.getElementById('as-email-prefs-form');
+    if (form && typeof form.requestSubmit === 'function') form.requestSubmit();
+    else form?.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+  });
+
   document.getElementById('as-download-data')?.addEventListener('click', async () => {
     hideAlert();
     const btn = document.getElementById('as-download-data');
@@ -699,6 +761,12 @@
       sessionData = { ok: false };
     }
     if (!sessionData.ok || !sessionData.user) {
+      applySignInLinks();
+      const unsubscribeIntent = window.location.hash === '#email-preferences';
+      const general = document.getElementById('as-signin-general');
+      const guest = document.getElementById('as-unsub-guest-form');
+      if (general) general.hidden = unsubscribeIntent;
+      if (guest) guest.hidden = !unsubscribeIntent;
       if (signin) signin.hidden = false;
       if (main) main.hidden = true;
       return;
@@ -706,13 +774,13 @@
     if (signin) signin.hidden = true;
     if (main) main.hidden = false;
     renderOrganiserWorkspace(sessionData);
-    if (window.location.hash === '#organiser-workspace') {
-      const section = document.getElementById('organiser-workspace');
-      if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-    if (window.location.hash === '#privacy-data') {
-      const section = document.getElementById('privacy-data');
-      if (section) section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const hash = window.location.hash;
+    if (hash === '#email-preferences' || hash === '#organiser-workspace' || hash === '#privacy-data') {
+      const section = document.getElementById(hash.slice(1));
+      if (section) {
+        if (hash === '#email-preferences') section.classList.add('is-unsubscribe-target');
+        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     }
     try {
       await loadProfile();

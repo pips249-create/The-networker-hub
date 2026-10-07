@@ -63,9 +63,42 @@ function hubAccountUrl(siteUrl) {
   return siteBase(siteUrl) + '/account/';
 }
 
-/** Email preferences / unsubscribe destination (account settings). */
-function unsubscribeUrl(siteUrl) {
-  return siteBase(siteUrl) + '/account/settings#email-preferences';
+function plainEmailAddress(value) {
+  const raw = String(value || '').trim();
+  const angled = raw.match(/<([^<>]+)>/);
+  return (angled ? angled[1] : raw).trim().toLowerCase();
+}
+
+/**
+ * Human unsubscribe page. Includes a signed token when the recipient is known
+ * so the link works without signing in.
+ */
+function unsubscribeUrl(siteUrl, email) {
+  const base = siteBase(siteUrl) + '/unsubscribe';
+  const em = plainEmailAddress(email);
+  if (!em || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) return base;
+  try {
+    const { createUnsubscribeToken } = require('./unsubscribe-token');
+    const token = createUnsubscribeToken(em);
+    if (!token) return base;
+    return base + '?t=' + encodeURIComponent(token);
+  } catch {
+    return base;
+  }
+}
+
+/** RFC 8058 one-click target. Empty when the address or signing secret is missing. */
+function oneClickUnsubscribeUrl(siteUrl, email) {
+  const em = plainEmailAddress(email);
+  if (!em || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) return '';
+  try {
+    const { createUnsubscribeToken } = require('./unsubscribe-token');
+    const token = createUnsubscribeToken(em);
+    if (!token) return '';
+    return siteBase(siteUrl) + '/api/auth/unsubscribe?t=' + encodeURIComponent(token);
+  } catch {
+    return '';
+  }
 }
 
 function welcomeUrl(siteUrl) {
@@ -274,6 +307,7 @@ module.exports = {
   opportunitiesBrowseUrl,
   hubAccountUrl,
   unsubscribeUrl,
+  oneClickUnsubscribeUrl,
   welcomeUrl,
   hubPaymentUrl,
   legalPolicyUrl,

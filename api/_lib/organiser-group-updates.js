@@ -850,7 +850,7 @@ async function buildTemplateVariables({
     privacy_url: siteUrl + '/privacy',
     terms_url: siteUrl + '/terms',
     site_url: siteUrl,
-    unsubscribe_url: unsubscribeUrl(siteUrl),
+    unsubscribe_url: unsubscribeUrl(siteUrl, recipient && recipient.email),
   };
 }
 

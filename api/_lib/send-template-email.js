@@ -1,5 +1,5 @@
 const { getEmailTemplateBySlug } = require('./supabase-email-templates');
-const { getEmailsEnabledForEmail, canSendEmailCategory } = require('./supabase-auth');
+const { getEmailsEnabledForEmail, getHubAccountForEmail, canSendEmailCategory } = require('./supabase-auth');
 const { getBookingEmailDefaultVars } = require('./email-booking-defaults');
 const { resolveBookingConfirmationBody } = require('./booking-confirmation-template');
 const { resolveBookingReminderBody } = require('./booking-reminder-template');
@@ -30,6 +30,7 @@ const {
   hubertIconUrl,
   supportEmail,
   unsubscribeUrl,
+  oneClickUnsubscribeUrl,
   emailSiteBase,
   rewriteEmailVarsToPublicSite,
 } = require('./hub-email-urls');
@@ -406,6 +407,10 @@ async function buildEmailFromTemplate(slug, variables, options = {}) {
   }
   // Preview/test vars from local admin often carry localhost — force public links.
   merged = rewriteEmailVarsToPublicSite(merged, siteUrl);
+  const recipientEmail = String(
+    overrides.recipientEmail || merged.user_email || merged.attendee_email || ''
+  ).trim();
+  merged.unsubscribe_url = unsubscribeUrl(siteUrl, recipientEmail);
   if (slug === 'organiser_launch_invite') {
     const { applyOrganiserLaunchInviteCopy } = require('./organiser-campaign-defaults');
     applyOrganiserLaunchInviteCopy(merged);
@@ -819,6 +824,15 @@ async function sendTemplatedEmail({
         throw err;
       }
     } else {
+      const hub = await getHubAccountForEmail(to);
+      if (!hub) {
+        const { isEmailSuppressed } = require('./email-unsubscribe');
+        if (await isEmailSuppressed(to)) {
+          const err = new Error('emails_disabled');
+          err.code = 'emails_disabled';
+          throw err;
+        }
+      }
       const allowed = await getEmailsEnabledForEmail(to);
       if (!allowed) {
         const err = new Error('emails_disabled');
@@ -828,8 +842,8 @@ async function sendTemplatedEmail({
     }
   }
 
-  const built = await buildEmailFromTemplate(slug, variables);
-  const siteUrl = (process.env.SITE_URL || 'https://the-networker-hub.vercel.app').replace(/\/$/, '');
+  const built = await buildEmailFromTemplate(slug, variables, { recipientEmail: to });
+  const siteUrl = emailSiteBase(process.env.SITE_URL);
   const sponsorTags = [];
   if (Array.isArray(built.sponsorTracked) && built.sponsorTracked.length) {
     sponsorTags.push({ name: 'has_sponsor', value: '1' });
@@ -865,7 +879,7 @@ async function sendTemplatedEmail({
     from,
     bcc,
     skipAllowlist: shouldSkipEmailAllowlist(slug),
-    listUnsubscribeUrl: shouldAttachListUnsubscribe(slug) ? unsubscribeUrl(siteUrl) : '',
+    listUnsubscribeUrl: shouldAttachListUnsubscribe(slug) ? oneClickUnsubscribeUrl(siteUrl, to) : '',
     idempotencyKey: claimInviteIdempotency || idempotencyKey,
     attachments,
   });

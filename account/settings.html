@@ -16,7 +16,7 @@
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260909listmenu1" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260626" />
-    <link rel="stylesheet" href="../css/account-settings.css?v=20260828data1" />
+    <link rel="stylesheet" href="../css/account-settings.css?v=20261007unsub1" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260909listmenu1" />
 
   </head>
@@ -24,10 +24,27 @@
     <div id="hub-site-nav"></div>
 
     <div id="as-signin" class="as-signin" hidden>
-      <p>Sign in to manage your account details.</p>
-      <p style="margin-top: 12px">
-        <a class="as-btn as-btn-primary" href="../login?next=/account/settings">Sign in</a>
-      </p>
+      <div id="as-signin-general">
+        <p>Sign in to manage your account details.</p>
+        <p style="margin-top: 12px">
+          <a class="as-btn as-btn-primary" id="as-signin-link" href="../login?next=/account/settings">Sign in</a>
+        </p>
+      </div>
+      <form id="as-unsub-guest-form" class="as-unsub-guest" hidden>
+        <h2>Unsubscribe</h2>
+        <p>
+          Turn off tips, recommendations, group roundups, and other optional emails. Booking confirmations,
+          application updates, and password resets still arrive.
+        </p>
+        <label for="as-unsub-email">Email address</label>
+        <input type="email" id="as-unsub-email" name="email" autocomplete="email" required placeholder="you@company.com" />
+        <button type="submit" class="as-btn as-btn-primary" id="as-unsub-guest-submit">Unsubscribe</button>
+        <p class="as-unsub-status" id="as-unsub-guest-status" hidden role="status"></p>
+        <p class="as-unsub-signin">
+          <a id="as-signin-link-unsub" href="../login?next=/account/settings%23email-preferences">Sign in</a>
+          to choose emails one by one.
+        </p>
+      </form>
     </div>
 
     <main id="as-main" class="as-wrap">
@@ -234,6 +251,7 @@
           </div>
           <div class="as-actions">
             <button type="submit" class="as-btn as-btn-primary" id="as-save-email-prefs">Save email preferences</button>
+            <button type="button" class="as-btn as-btn-outline" id="as-unsubscribe-all">Unsubscribe from optional emails</button>
           </div>
         </section>
       </form>
@@ -332,6 +350,6 @@
 
     <script src="../js/site-nav.js?v=20260923iab1" data-root="../" data-page="settings"></script>
     <script src="../js/hub-profile-industries.js?v=20260902other2"></script>
-    <script src="../js/account-settings.js?v=20260902other2"></script>
+    <script src="../js/account-settings.js?v=20261007unsub1"></script>
   </body>
 </html>
