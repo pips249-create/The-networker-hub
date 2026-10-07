@@ -901,6 +901,12 @@ html:has(.event-intake-page) {
     padding: 18px 16px 20px;
   }
 
+  .ei-hero h1 {
+    max-width: none;
+    font-size: clamp(1.85rem, 8.2vw, 2.35rem);
+    letter-spacing: -0.02em;
+  }
+
   .ei-hero-pill {
     white-space: normal;
     border-radius: 14px;
@@ -909,17 +915,29 @@ html:has(.event-intake-page) {
 
   .ei-hero-grid {
     display: block;
+    position: relative;
+    padding-right: 34%;
+    min-height: 148px;
   }
 
   .ei-hero-art {
-    float: right;
-    width: 38%;
-    margin: 0 0 8px 10px;
+    position: absolute;
+    top: 4px;
+    right: 0;
+    width: 32%;
+    margin: 0;
     min-height: 0;
+    justify-content: flex-end;
   }
 
   .ei-hero-illus {
     width: 100%;
+  }
+
+  .ei-hero-panel,
+  .ei-hero-actions,
+  .ei-hero-trust {
+    clear: both;
   }
 
   .ei-hero-actions {
