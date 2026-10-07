@@ -257,7 +257,7 @@ body.browse-mode-organisers .events-organiser-footnote .events-hub-cta-link {
 .events-hero-sponsor-slot {
   min-width: 0;
   display: flex;
-  align-self: end;
+  align-self: start;
 }
 
 @media (max-width: 768px) {
@@ -335,26 +335,29 @@ body.browse-mode-organisers .events-organiser-footnote .events-hub-cta-link {
   position: relative;
   padding: 0;
   height: auto;
-  overflow: hidden;
+  overflow: visible;
   border: 0;
+  border-radius: 0;
   background: transparent;
   box-shadow: none;
 }
 
 .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-hub-head {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  z-index: 2;
-  margin: 0;
-  padding: 5px 9px 5px 7px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.94);
+  position: static;
+  top: auto;
+  left: auto;
+  z-index: auto;
+  margin: 0 0 8px;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.82);
   font-size: 12px;
+  font-weight: 700;
   line-height: 1;
   gap: 5px;
   pointer-events: none;
-  box-shadow: 0 1px 3px rgba(20, 16, 40, 0.16);
+  box-shadow: none;
 }
 
 .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-hub-head .icon {
@@ -366,7 +369,7 @@ body.browse-mode-organisers .events-organiser-footnote .events-hub-cta-link {
   width: 100%;
   min-height: 0;
   padding: 0;
-  border-radius: 0;
+  border-radius: var(--radius);
   overflow: hidden;
   transition: filter 0.2s ease, box-shadow 0.2s ease;
 }
@@ -374,7 +377,7 @@ body.browse-mode-organisers .events-organiser-footnote .events-hub-cta-link {
 .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-logo-wrap.sponsor-logo-band--dark {
   margin: 0;
   width: 100%;
-  border-radius: 0;
+  border-radius: var(--radius);
 }
 
 .sponsor-hub--in-hero.sponsor-hub--logo-only .sponsor-logo-link {
