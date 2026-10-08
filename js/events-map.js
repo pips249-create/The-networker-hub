@@ -244,7 +244,12 @@
   function fitMapToLocationRadius(centerCoords) {
     if (!map || !centerCoords) return;
     var radiusMeters = getNearRadiusMiles() * 1609.344;
-    var bounds = L.circle(centerCoords, { radius: radiusMeters }).getBounds();
+    // Circle.getBounds() needs the layer on a map (uses map.layerPointToLatLng).
+    // Prefer the visible near-me circle; otherwise derive bounds from the center.
+    var bounds =
+      nearMeCircle && map.hasLayer(nearMeCircle)
+        ? nearMeCircle.getBounds()
+        : L.latLng(centerCoords).toBounds(radiusMeters * 2);
     suppressMapEvents++;
     map.fitBounds(bounds, { padding: [48, 48], maxZoom: 13 });
     setTimeout(function () {
