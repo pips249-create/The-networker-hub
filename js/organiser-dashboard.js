@@ -671,9 +671,12 @@
     return origin + '/events/organiser?id=' + encodeURIComponent(groupId);
   }
 
-  function partnerBadgeEmbedHtml(profileUrl, groupName) {
+  function partnerBadgeSrc() {
     const origin = location.origin || 'https://www.thenetworkeruk.com';
-    const badgeSrc = origin + '/assets/partner-badge.svg?v=20260806logo';
+    return origin + '/assets/organiser-badge.png?v=20261008uk1';
+  }
+
+  function partnerBadgeEmbedHtml(profileUrl, groupName) {
     const alt = (groupName || 'Our group') + ' on The Networker UK';
     return (
       '<a href="' +
@@ -682,7 +685,7 @@
       alt.replace(/"/g, '&quot;') +
       '">' +
       '<img src="' +
-      badgeSrc +
+      partnerBadgeSrc() +
       '" alt="' +
       alt.replace(/"/g, '&quot;') +
       '" width="220" height="88" style="border:0;display:inline-block;" />' +
@@ -690,39 +693,172 @@
     );
   }
 
-  function buildPartnerBadgeCardHtml(g) {
-    const profileUrl = groupPublicProfileAbsUrl(g.id, g.slug);
-    const embed = partnerBadgeEmbedHtml(profileUrl, g.name);
+  function profileWidgetUrlForGroup(g) {
     const origin = location.origin || 'https://www.thenetworkeruk.com';
+    const slug = String((g && g.slug) || '').trim();
+    if (slug) return origin + '/embed/profile?slug=' + encodeURIComponent(slug);
+    return origin + '/embed/profile?id=' + encodeURIComponent(g && g.id ? g.id : '');
+  }
+
+  function profileWidgetSnippet(src, groupName) {
+    const title = String(groupName || 'Organiser profile').replace(/"/g, '&quot;') + ' on The Networker UK';
     return (
-      '<article class="org-partner-badge-card">' +
+      '<!-- The Networker UK profile widget -->\n' +
+      '<iframe\n' +
+      '  src="' +
+      src +
+      '"\n' +
+      '  title="' +
+      title +
+      '"\n' +
+      '  loading="lazy"\n' +
+      '  style="width:100%;max-width:420px;min-height:320px;border:0;overflow:hidden;display:block;"\n' +
+      '></iframe>\n' +
+      '<script>\n' +
+      "window.addEventListener('message', function (e) {\n" +
+      "  if (!e.data || e.data.source !== 'tnh-profile-embed' || e.data.type !== 'resize') return;\n" +
+      "  var frames = document.querySelectorAll('iframe[src*=\"/embed/profile\"]');\n" +
+      '  for (var i = 0; i < frames.length; i++) {\n' +
+      '    if (e.source === frames[i].contentWindow && e.data.height) {\n' +
+      '      frames[i].style.height = e.data.height + "px";\n' +
+      '    }\n' +
+      '  }\n' +
+      '});\n' +
+      '</scr' +
+      'ipt>'
+    );
+  }
+
+  function linkedInShareHref(profileUrl) {
+    return 'https://www.linkedin.com/sharing/share-offsite/?url=' + encodeURIComponent(profileUrl);
+  }
+
+  function linkedInCaption(groupName, profileUrl) {
+    const name = groupName || 'Our networking group';
+    return (
+      name +
+      ' is on The Networker UK — upcoming events, reviews and tickets on one profile.\n\n' +
+      profileUrl
+    );
+  }
+
+  function emailSignatureHtml(profileUrl, groupName) {
+    const name = String(groupName || 'Our networking group')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+    return (
+      '<p style="font-family:Arial,sans-serif;font-size:14px;line-height:1.45;margin:0;">' +
+      '<a href="' +
+      profileUrl +
+      '" style="color:#452d5c;font-weight:700;text-decoration:none;">' +
+      name +
+      '</a><br>' +
+      '<a href="' +
+      profileUrl +
+      '" style="color:#635c5e;text-decoration:none;">On The Networker UK</a></p>' +
+      '<a href="' +
+      profileUrl +
+      '" style="text-decoration:none;">' +
+      '<img src="' +
+      partnerBadgeSrc() +
+      '" alt="Listed on The Networker UK" width="180" height="72" style="border:0;display:block;margin-top:8px;" />' +
+      '</a>'
+    );
+  }
+
+  function buildProfilePromoteHtml(groups, g) {
+    const profileUrl = groupPublicProfileAbsUrl(g.id, g.slug);
+    const widgetSrc = profileWidgetUrlForGroup(g);
+    const badgeEmbed = partnerBadgeEmbedHtml(profileUrl, g.name);
+    const widgetEmbed = profileWidgetSnippet(widgetSrc, g.name);
+    const caption = linkedInCaption(g.name, profileUrl);
+    const signature = emailSignatureHtml(profileUrl, g.name);
+    const picker =
+      groups.length > 1
+        ? '<label class="org-partner-badge-meta" for="org-profile-promote-group">Group</label>' +
+          '<select id="org-profile-promote-group" class="org-ticket-widget-select">' +
+          groups
+            .map(function (row) {
+              return (
+                '<option value="' +
+                attrEsc(row.id) +
+                '"' +
+                (String(row.id) === String(g.id) ? ' selected' : '') +
+                '>' +
+                esc(row.name || 'Your group') +
+                '</option>'
+              );
+            })
+            .join('') +
+          '</select>'
+        : '';
+    return (
+      picker +
+      '<article class="org-partner-badge-card org-profile-promote-step">' +
+      '<p class="org-profile-promote-kicker">1 · Website</p>' +
       '<div class="org-partner-badge-card-head">' +
       '<div><h3 class="org-partner-badge-card-name">' +
       esc(g.name || 'Your group') +
       '</h3>' +
-      '<p class="org-partner-badge-meta">Partner badge · links to your public profile</p></div>' +
+      '<p class="org-partner-badge-meta">Organiser badge · links to your public profile. Paste it in a footer or About page.</p></div>' +
       '<div class="hub-partner-badge-preview">' +
       '<img src="' +
-      esc(origin + '/assets/partner-badge.svg?v=20260806logo') +
+      esc(partnerBadgeSrc()) +
       '" alt="" width="220" height="88" /></div></div>' +
-      '<label for="partner-badge-code-' +
-      esc(g.id) +
-      '" class="org-partner-badge-meta">Embed code</label>' +
-      '<textarea readonly class="org-partner-badge-code" id="partner-badge-code-' +
-      esc(g.id) +
-      '" rows="4">' +
-      esc(embed) +
+      '<label for="partner-badge-code" class="org-partner-badge-meta">Website embed code</label>' +
+      '<textarea readonly class="org-partner-badge-code" id="partner-badge-code" rows="4">' +
+      esc(badgeEmbed) +
       '</textarea>' +
       '<div class="org-partner-badge-actions">' +
-      '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-copy-partner-embed="' +
-      attrEsc(g.id) +
-      '">Copy embed code</button>' +
+      '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-copy-target="partner-badge-code">Copy badge code</button>' +
       '<button type="button" class="org-btn org-btn-outline org-btn-sm" data-copy-link="' +
       attrEsc(profileUrl) +
       '">Copy profile link</button>' +
       '<a class="org-btn org-btn-outline org-btn-sm" href="' +
       esc(groupPublicProfileUrl(g.id, g.slug)) +
       '" target="_blank" rel="noopener noreferrer">View public profile</a>' +
+      '</div></article>' +
+      '<article class="org-partner-badge-card org-profile-promote-step">' +
+      '<p class="org-profile-promote-kicker">2 · Website widget</p>' +
+      '<h3 class="org-partner-badge-card-name">Profile widget</h3>' +
+      '<p class="org-partner-badge-meta">A live card — name, reviews, and upcoming events — that stays useful after a single event ends.</p>' +
+      '<div class="org-ticket-widget-preview-wrap org-profile-widget-preview-wrap">' +
+      '<iframe class="org-ticket-widget-preview" title="Profile widget preview" loading="lazy" src="' +
+      esc(widgetSrc) +
+      '"></iframe></div>' +
+      '<label for="profile-widget-code" class="org-partner-badge-meta">Website embed code</label>' +
+      '<textarea readonly class="org-partner-badge-code" id="profile-widget-code" rows="8">' +
+      esc(widgetEmbed) +
+      '</textarea>' +
+      '<div class="org-partner-badge-actions">' +
+      '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-copy-target="profile-widget-code">Copy widget code</button>' +
+      '<a class="org-btn org-btn-outline org-btn-sm" href="' +
+      esc(widgetSrc) +
+      '" target="_blank" rel="noopener noreferrer">Open widget</a>' +
+      '</div>' +
+      '<p class="org-partner-badge-meta">Optional colours: add <code>&amp;brand=452d5c</code> or <code>&amp;bg=faf7f2</code> to the iframe address.</p>' +
+      '</article>' +
+      '<article class="org-partner-badge-card org-profile-promote-step">' +
+      '<p class="org-profile-promote-kicker">3 · LinkedIn and email signature</p>' +
+      '<h3 class="org-partner-badge-card-name">Share the profile</h3>' +
+      '<p class="org-partner-badge-meta">LinkedIn opens a post with your profile link. Paste the caption if you want the wording ready. The signature is for email.</p>' +
+      '<div class="org-partner-badge-actions">' +
+      '<a class="org-btn org-btn-gold org-btn-sm" href="' +
+      esc(linkedInShareHref(profileUrl)) +
+      '" target="_blank" rel="noopener noreferrer">Share on LinkedIn</a>' +
+      '<button type="button" class="org-btn org-btn-outline org-btn-sm" data-copy-target="profile-linkedin-caption">Copy LinkedIn caption</button>' +
+      '</div>' +
+      '<label for="profile-linkedin-caption" class="org-partner-badge-meta">LinkedIn caption</label>' +
+      '<textarea readonly class="org-partner-badge-code" id="profile-linkedin-caption" rows="4">' +
+      esc(caption) +
+      '</textarea>' +
+      '<label for="profile-email-signature" class="org-partner-badge-meta">Email signature</label>' +
+      '<textarea readonly class="org-partner-badge-code" id="profile-email-signature" rows="6">' +
+      esc(signature) +
+      '</textarea>' +
+      '<div class="org-partner-badge-actions">' +
+      '<button type="button" class="org-btn org-btn-gold org-btn-sm" data-copy-target="profile-email-signature">Copy email signature</button>' +
       '</div></article>'
     );
   }
@@ -735,14 +871,26 @@
     });
     if (!groups.length) {
       root.innerHTML =
-        '<p class="org-section-sub">Publish a group profile first — then your website badge will appear here.</p>';
+        '<p class="org-section-sub">Publish a group profile first — then your organiser badge, profile widget, and LinkedIn share will appear here.</p>';
       return;
     }
-    root.innerHTML = groups.map(buildPartnerBadgeCardHtml).join('');
-    root.querySelectorAll('[data-copy-partner-embed]').forEach(function (btn) {
+    const prev = root.querySelector('#org-profile-promote-group');
+    const prevId = prev ? String(prev.value || '') : '';
+    const selected =
+      groups.find(function (g) {
+        return String(g.id) === prevId;
+      }) || groups[0];
+    root.innerHTML = buildProfilePromoteHtml(groups, selected);
+    const select = root.querySelector('#org-profile-promote-group');
+    if (select) {
+      select.addEventListener('change', function () {
+        renderOrganiserPartnerBadge();
+      });
+    }
+    root.querySelectorAll('[data-copy-target]').forEach(function (btn) {
       btn.addEventListener('click', function () {
-        const id = btn.getAttribute('data-copy-partner-embed') || '';
-        const ta = document.getElementById('partner-badge-code-' + id);
+        const id = btn.getAttribute('data-copy-target') || '';
+        const ta = document.getElementById(id);
         copyOrganiserText((ta && ta.value) || '', btn);
       });
     });
@@ -2263,6 +2411,9 @@
       r === 'social-partner' ||
       r === 'partner' ||
       r === 'website-badge' ||
+      r === 'organiser-badge' ||
+      r === 'profile-widget' ||
+      r === 'social-profile' ||
       r === 'social-brand' ||
       r === 'brand' ||
       r === 'brand-kit' ||
@@ -2329,7 +2480,16 @@
     ) {
       return 'ranking';
     }
-    if (r === 'social-partner' || r === 'partner' || r === 'website-badge') return 'partner';
+    if (
+      r === 'social-partner' ||
+      r === 'partner' ||
+      r === 'website-badge' ||
+      r === 'organiser-badge' ||
+      r === 'profile-widget' ||
+      r === 'social-profile'
+    ) {
+      return 'partner';
+    }
     if (r === 'social-brand' || r === 'brand' || r === 'brand-kit') return 'brand';
     if (
       r === 'social-reach' ||

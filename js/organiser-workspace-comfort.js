@@ -100,7 +100,8 @@
       steps: [
         'Start with a free LinkedIn post for your next event.',
         'Use Colours & type if you want the image in your brand look.',
-        'Open More ways to get found for Feature event, Top groups, badges, or paid reach.',
+        'Open More ways to get found for Feature event, Top groups, your organiser badge, or paid reach.',
+        'Organiser badge puts your profile on a website, in a profile widget, on LinkedIn, and in an email signature.',
       ],
     },
     communicate: {
@@ -134,7 +135,7 @@
       steps: [
         'Groups are ranked by attendee ratings, then review rate.',
         'Share your ranking award badge when you place, and choose whether to appear on the public list.',
-        'The Partner badge (listed-on seal) is separate — find it under Promote → Partner badge.',
+        'The organiser badge (listed-on seal, profile widget, LinkedIn and email signature) is separate — find it under Promote → Organiser badge.',
       ],
     },
     team: {
@@ -165,7 +166,10 @@
       hash === 'brand-kit' ||
       hash === 'social-partner' ||
       hash === 'partner' ||
-      hash === 'website-badge'
+      hash === 'website-badge' ||
+      hash === 'organiser-badge' ||
+      hash === 'profile-widget' ||
+      hash === 'social-profile'
     ) {
       return 'social';
     }

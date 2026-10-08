@@ -58,8 +58,8 @@ window.HUB_SEO_STATIC = {
   },
   "for-organisers": {
     "path": "/for-organisers",
-    "title": "Find your next attendees – For organisers – The Networker UK",
-    "description": "Find your next attendees, bookings, and discovery on The Networker UK. Ticketing built for UK networking groups with tools generic platforms do not offer.",
+    "title": "Your networking group deserves to be found – For organisers – The Networker UK",
+    "description": "Claim your free Networker UK profile, list events, collect reviews, sell tickets, and promote it on your website, LinkedIn and email signature.",
     "image": "/assets/logo-networker-uk-og.png?v=20260908og",
     "ogType": "website"
   },

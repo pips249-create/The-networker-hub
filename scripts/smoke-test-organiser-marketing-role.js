@@ -39,4 +39,12 @@ const sanitized = marketing.sanitizeWorkspaceForMarketing({
 assert.strictEqual(sanitized.workspaceSummary, null);
 assert.strictEqual(sanitized.stats.revenue, null);
 
+assert.ok(/Organiser badge/.test(htmlFile), 'promote tab labels the organiser badge');
+assert.ok(/profileWidgetSnippet/.test(dashFile), 'dashboard builds a profile widget embed');
+assert.ok(/tnh-profile-embed/.test(dashFile), 'widget resize messages use the profile source');
+assert.ok(/Share on LinkedIn/.test(dashFile), 'LinkedIn share is one click from the badge panel');
+assert.ok(fs.existsSync(path.join(root, 'embed/profile.html')), 'profile embed page exists');
+assert.ok(/isProfileEmbedPath/.test(read('middleware.js')), 'profile embed bypasses the site gate');
+assert.ok(/Your networking group deserves to be found/.test(read('for-organisers.html')));
+
 console.log('smoke-test-organiser-marketing-role: ok');

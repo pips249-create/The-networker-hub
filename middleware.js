@@ -93,6 +93,16 @@ function isTicketEmbedPath(pathname) {
   );
 }
 
+/** Organiser profile card — same anonymous iframe exception as the ticket widget. */
+function isProfileEmbedPath(pathname) {
+  const path = String(pathname || '').replace(/\/$/, '') || '/';
+  return path === '/embed/profile' || path === '/embed/profile.html';
+}
+
+function isPublicEmbedPath(pathname) {
+  return isTicketEmbedPath(pathname) || isProfileEmbedPath(pathname);
+}
+
 /** Post-event review email (stars + Leave a review). Token is the auth; no sign-in. */
 function isLeaveReviewPath(pathname) {
   const path = String(pathname || '').replace(/\/$/, '') || '/';
@@ -102,7 +112,7 @@ function isLeaveReviewPath(pathname) {
 function isPublicListingPath(pathname, searchParams) {
   const path = String(pathname || '').replace(/\/$/, '') || '/';
   const params = searchParams || new URLSearchParams();
-  if (isTicketEmbedPath(path)) return true;
+  if (isPublicEmbedPath(path)) return true;
   const eventMatch = path.match(/^\/events\/([^/]+)$/);
   if (eventMatch && !SKIP_EVENT_SLUGS.has(decodeURIComponent(eventMatch[1]))) return true;
   // Fallback share links: /events/event?id=… (and .html) — used when slug is missing.
@@ -793,7 +803,7 @@ function isGateBypassPath(pathname) {
   ) {
     return true;
   }
-  if (isTicketEmbedPath(pathname)) return true;
+  if (isPublicEmbedPath(pathname)) return true;
   if (isLeaveReviewPath(pathname)) return true;
   if (isInternalSalesPath(pathname)) return true;
   return isOrganiserEarlyAccessPath(pathname);

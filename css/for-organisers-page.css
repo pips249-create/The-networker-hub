@@ -184,6 +184,12 @@ html:has(.for-organisers-page) {
   letter-spacing: -0.01em;
 }
 
+.fo-hero h1.fo-hero-heading--statement {
+  font-size: clamp(1.9rem, 4.2vw, 2.85rem);
+  line-height: 1.12;
+  max-width: 16em;
+}
+
 .fo-hero-accent {
   color: var(--fo-purple);
   font-style: normal;
