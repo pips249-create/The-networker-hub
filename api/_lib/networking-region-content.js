@@ -1,7 +1,9 @@
 /**
  * Answer blocks + FAQs for /networking/:slug city & county hubs (SEO + AEO).
+ * City FAQs are unique per slug. Counties and online use the shared template.
  */
 const { getRegionTheme } = require('./networking-region-themes');
+const { getCityNetworkingFaqs } = require('./networking-city-faqs');
 
 function escapeHtml(text) {
   return String(text || '')
@@ -69,6 +71,9 @@ function buildNetworkingRegionAnswer(region, eventCount, tagline, dateCount) {
 }
 
 function buildNetworkingRegionFaqs(region, eventCount, tagline, dateCount) {
+  const cityFaqs = getCityNetworkingFaqs(region && region.slug, eventCount, dateCount);
+  if (cityFaqs && cityFaqs.length) return cityFaqs;
+
   const name = region.name;
   const place = placePhrase(region);
   const path = region.path || '/networking/' + region.slug;
