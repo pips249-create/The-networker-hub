@@ -1,0 +1,224 @@
+/* Organiser profile embed — iframe-safe card for organiser websites. */
+
+:root {
+  --embed-bg: #faf7f2;
+  --embed-surface: #ffffff;
+  --embed-ink: #2a2426;
+  --embed-muted: #635c5e;
+  --embed-border: rgba(74, 68, 70, 0.14);
+  --embed-brand: #452d5c;
+  --embed-brand-ink: #ffffff;
+  --embed-accent: #b8956a;
+  --embed-radius: 14px;
+  --embed-font: 'DM Sans', 'DM Sans Fallback', system-ui, sans-serif;
+  --embed-display: 'DM Serif Display', 'DM Serif Display Fallback', Georgia, serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  background: transparent;
+  color: var(--embed-ink);
+  font-family: var(--embed-font);
+  font-size: 15px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+body.embed-profile-body {
+  min-height: 0;
+  padding: 0;
+}
+
+.embed-profile {
+  background: var(--embed-bg);
+  border: 1px solid var(--embed-border);
+  border-radius: var(--embed-radius);
+  overflow: hidden;
+  color: var(--embed-ink);
+}
+
+.embed-profile__status,
+.embed-profile__error {
+  padding: 1.25rem 1rem;
+  color: var(--embed-muted);
+  font-size: 0.92rem;
+}
+
+.embed-profile__error {
+  color: #7a3040;
+}
+
+.embed-profile__head {
+  display: flex;
+  gap: 0.85rem;
+  align-items: flex-start;
+  padding: 0.95rem 1rem 0.35rem;
+}
+
+.embed-profile__logo {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  object-fit: cover;
+  background: #fff;
+  border: 1px solid var(--embed-border);
+  flex: 0 0 auto;
+}
+
+.embed-profile__logo--empty {
+  display: grid;
+  place-items: center;
+  font-family: var(--embed-display);
+  font-size: 1.35rem;
+  color: var(--embed-brand);
+  background: #fff;
+}
+
+.embed-profile__name {
+  font-family: var(--embed-display);
+  font-size: 1.28rem;
+  font-weight: 400;
+  line-height: 1.15;
+  color: var(--embed-ink);
+}
+
+.embed-profile__place {
+  margin-top: 0.2rem;
+  color: var(--embed-muted);
+  font-size: 0.82rem;
+}
+
+.embed-profile__rating {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.5rem;
+  margin-top: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--embed-muted);
+}
+
+.embed-profile__stars {
+  color: #d7c7a2;
+  letter-spacing: 0.04em;
+}
+
+.embed-profile__stars .is-on {
+  color: #b8860b;
+}
+
+.embed-profile__award {
+  display: inline-block;
+  margin-top: 0.35rem;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(69, 45, 92, 0.08);
+  color: var(--embed-brand);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.embed-profile__desc {
+  padding: 0.45rem 1rem 0.15rem;
+  color: var(--embed-muted);
+  font-size: 0.88rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.embed-profile__events {
+  list-style: none;
+  margin: 0.65rem 0.75rem 0.2rem;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.embed-profile__event {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  background: var(--embed-surface);
+  border: 1px solid var(--embed-border);
+  border-radius: 10px;
+  padding: 0.55rem 0.7rem;
+}
+
+.embed-profile__event:hover {
+  border-color: rgba(69, 45, 92, 0.35);
+}
+
+.embed-profile__event strong {
+  display: block;
+  font-size: 0.9rem;
+  line-height: 1.3;
+}
+
+.embed-profile__event small {
+  display: block;
+  margin-top: 0.12rem;
+  color: var(--embed-muted);
+  font-size: 0.75rem;
+}
+
+.embed-profile__empty {
+  margin: 0.7rem 1rem 0.2rem;
+  color: var(--embed-muted);
+  font-size: 0.84rem;
+}
+
+.embed-profile__review {
+  margin: 0.65rem 1rem 0.15rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid var(--embed-border);
+  font-size: 0.84rem;
+  color: var(--embed-ink);
+}
+
+.embed-profile__review p {
+  margin: 0;
+}
+
+.embed-profile__review cite {
+  display: block;
+  margin-top: 0.25rem;
+  font-style: normal;
+  color: var(--embed-muted);
+  font-size: 0.75rem;
+}
+
+.embed-profile__cta {
+  display: block;
+  margin: 0.8rem 1rem 0.35rem;
+  text-align: center;
+  text-decoration: none;
+  background: var(--embed-brand);
+  color: var(--embed-brand-ink);
+  border-radius: 999px;
+  padding: 0.62rem 0.9rem;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+.embed-profile__cta:hover {
+  filter: brightness(1.08);
+}
+
+.embed-profile__foot {
+  display: flex;
+  justify-content: center;
+  padding: 0.35rem 1rem 0.75rem;
+}
+
+.embed-profile__foot img {
+  display: block;
+  width: 148px;
+  height: auto;
+}

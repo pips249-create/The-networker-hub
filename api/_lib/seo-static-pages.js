@@ -72,9 +72,9 @@ const STATIC_PAGES = {
   },
   'for-organisers': {
     path: '/for-organisers',
-    title: 'Find your next attendees – For organisers – The Networker UK',
+    title: 'Your networking group deserves to be found – For organisers – The Networker UK',
     description:
-      'Find your next attendees, bookings, and discovery on The Networker UK. Ticketing built for UK networking groups with tools generic platforms do not offer.',
+      'Claim your free Networker UK profile, list events, collect reviews, sell tickets, and promote it on your website, LinkedIn and email signature.',
     image: OG_SHARE_IMAGE,
     ogType: 'website',
   },

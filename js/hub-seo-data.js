@@ -1154,8 +1154,8 @@ window.HUB_SEO_DATA = {
           "@context": "https://schema.org",
           "@type": "WebPage",
           "url": "https://www.thenetworkeruk.com/for-organisers",
-          "name": "For Organisers – The Networker UK",
-          "description": "Organiser dashboard, guest visit programme, visit tracking, Category Exclusivity, Previous Attendees, and discovery in the UK events and opportunities directories.",
+          "name": "Your networking group deserves to be found – For organisers – The Networker UK",
+          "description": "Claim your free Networker UK profile, list events, collect reviews, sell tickets, and promote it on your website, LinkedIn and email signature.",
           "about": {
             "@context": "https://schema.org",
             "@type": "Organization",

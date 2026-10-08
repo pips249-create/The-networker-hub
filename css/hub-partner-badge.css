@@ -97,3 +97,40 @@
   border: 0;
   background: transparent;
 }
+
+.org-profile-promote-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.75rem;
+  margin: 0 0 1rem;
+  padding: 0;
+  list-style: none;
+  color: #475569;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.org-profile-promote-legend li {
+  padding: 0.28rem 0.65rem;
+  border-radius: 999px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.org-profile-promote-kicker {
+  margin: 0 0 0.45rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #452d5c;
+}
+
+.org-profile-widget-preview-wrap {
+  max-width: 420px;
+  margin-top: 0.75rem;
+}
+
+.org-profile-widget-preview-wrap .org-ticket-widget-preview {
+  min-height: 360px;
+}

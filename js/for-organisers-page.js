@@ -317,7 +317,7 @@
       var discoverLede = document.querySelector('[data-fo-discover-lede]');
       if (discoverLede) {
         discoverLede.textContent =
-          'The Networker UK connects UK networkers to your events. List for free, then promote from your workspace with LinkedIn pictures and ranking badges — not another generic listing site.';
+          'Your profile is the long-term asset. List events for free, collect reviews, then promote the profile from your workspace — badge, website widget, LinkedIn and email signature.';
       }
     } catch (e) {}
 
