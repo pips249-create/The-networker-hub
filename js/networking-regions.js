@@ -125,6 +125,8 @@
     setText('networking-region-intro-copy', introCopy);
   }
 
+  // City FAQ copy is server-rendered from api/_lib/networking-city-faqs.js.
+  // This block only runs when that HTML was not injected.
   var faqSection = document.getElementById('networking-region-faq');
   if (faqSection && !faqSection.getAttribute('data-hub-ssr-faq')) {
     faqSection.hidden = false;
