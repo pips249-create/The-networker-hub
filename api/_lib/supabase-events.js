@@ -1243,6 +1243,32 @@ function asPublishedEventRow(row) {
   return { ...row, next_date: row.starts_at };
 }
 
+/**
+ * Recurring dates often share one public slug — only the first row stores it,
+ * and later dates fall back to the same title slug. Opening that URL should
+ * land on the next date that has not started (the occurrence browse shows as
+ * "Next"), not the original date in the series.
+ * Returns null when the slug identifies a single date, or when every shared
+ * date has already started.
+ */
+function pickSharedSeriesSlugRow(rows, requestedSlug, at) {
+  const sharing = (rows || []).filter((row) => slugMatchesPublicRow(row, requestedSlug));
+  if (sharing.length <= 1) return null;
+  const upcoming = sharing
+    .filter((row) => row && row.starts_at && !isEventStarted(row, at))
+    .sort((a, b) => new Date(a.starts_at) - new Date(b.starts_at));
+  return upcoming[0] || null;
+}
+
+async function preferUpcomingSharedSlugOccurrence(sb, row, requestedSlug) {
+  if (!row || (!row.series_group_id && !row.recurrence_pattern)) return row;
+  const siblings = await fetchSeriesSiblingRows(sb, row);
+  const picked = pickSharedSeriesSlugRow(siblings, requestedSlug);
+  if (!picked || picked.id === row.id) return row;
+  if (!isPublishedApprovedEventRow(picked)) return row;
+  return asPublishedEventRow(picked);
+}
+
 async function fetchPublishedEventBySlug(sb, slug) {
   const s = String(slug || '').trim();
   if (!s) return null;
@@ -1257,7 +1283,7 @@ async function fetchPublishedEventBySlug(sb, slug) {
   const tableRes = await sb.from('events').select('*').eq('slug', s).maybeSingle();
   if (tableRes.error) throw new Error(tableRes.error.message);
   if (tableRes.data && isPublishedApprovedEventRow(tableRes.data)) {
-    return asPublishedEventRow(tableRes.data);
+    return preferUpcomingSharedSlugOccurrence(sb, asPublishedEventRow(tableRes.data), s);
   }
 
   const prefix = s.replace(/-\d+$/, '') || s;
@@ -1271,7 +1297,7 @@ async function fetchPublishedEventBySlug(sb, slug) {
     .limit(32);
   if (slugErr) throw new Error(slugErr.message);
   let match = (slugCandidates || []).find((row) => slugMatchesPublicRow(row, s));
-  if (match) return asPublishedEventRow(match);
+  if (match) return preferUpcomingSharedSlugOccurrence(sb, asPublishedEventRow(match), s);
 
   // Title-derived slugs (events with null stored slug). PostgREST caps each
   // response at ~1000 rows, so page with .range instead of a single .limit(2500).
@@ -1285,7 +1311,11 @@ async function fetchPublishedEventBySlug(sb, slug) {
     if (slimErr) throw new Error(slimErr.message);
     if (!slimRows || !slimRows.length) return null;
     const slimHit = slimRows.find((row) => slugMatchesPublicRow(row, s));
-    if (slimHit) return fetchPublishedEventById(sb, slimHit.id);
+    if (slimHit) {
+      const byId = await fetchPublishedEventById(sb, slimHit.id);
+      if (!byId) return null;
+      return preferUpcomingSharedSlugOccurrence(sb, byId, s);
+    }
     if (slimRows.length < pageSize) return null;
   }
 }
@@ -1669,6 +1699,7 @@ module.exports = {
   fetchAllPaged,
   fetchPublishedEventRows,
   fetchPublishedEventBySlug,
+  pickSharedSeriesSlugRow,
   fetchEventSeriesDates,
   eventsFromPublishedRows,
   isApprovedPublicEventPayload,

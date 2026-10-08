@@ -1888,10 +1888,75 @@
     return dateKeyFromParts(d.getFullYear(), d.getMonth(), d.getDate());
   }
 
+  function seriesEntryIsPast(entry) {
+    if (
+      window.HubEventTimezone &&
+      typeof window.HubEventTimezone.isEventPast === 'function'
+    ) {
+      return window.HubEventTimezone.isEventPast(entry);
+    }
+    const ts =
+      entry && entry.dateTs != null
+        ? Number(entry.dateTs)
+        : entry && entry.dateRaw
+          ? new Date(entry.dateRaw).getTime()
+          : 0;
+    return Boolean(ts && ts < Date.now());
+  }
+
+  function seriesEntryHasStarted(entry) {
+    if (
+      window.HubEventTimezone &&
+      typeof window.HubEventTimezone.isEventStarted === 'function'
+    ) {
+      return window.HubEventTimezone.isEventStarted(entry);
+    }
+    const ts =
+      entry && entry.dateTs != null
+        ? Number(entry.dateTs)
+        : entry && entry.dateRaw
+          ? new Date(entry.dateRaw).getTime()
+          : 0;
+    return Boolean(ts && ts <= Date.now());
+  }
+
+  function seriesSlugKey(entry) {
+    return String((entry && entry.slug) || '')
+      .trim()
+      .toLowerCase();
+  }
+
+  /**
+   * A shared series slug resolves to whichever row stored it — usually the
+   * first date. If that date has started, open the next one that has not.
+   * A slug that belongs to only one date stays on that date.
+   */
+  function preferredSeriesLandingEntry(initialEv) {
+    const matched =
+      seriesDatesList.find(function (item) {
+        return item && initialEv && item.id === initialEv.id;
+      }) || null;
+    const slug = seriesSlugKey(matched || initialEv);
+    if (!slug) return matched;
+    const sharing = seriesDatesList.filter(function (item) {
+      return seriesSlugKey(item) === slug;
+    });
+    if (sharing.length <= 1) return matched;
+    if (matched && !seriesEntryHasStarted(matched)) return matched;
+    const upcoming = sharing.find(function (item) {
+      return item && item.dateRaw && !seriesEntryHasStarted(item);
+    });
+    return upcoming || matched;
+  }
+
   function mergeSeriesDateEntry(baseEv, entry) {
     const locationSource = pickBestLocationSource([entry, baseEv].concat(seriesDatesList || []));
+    const past = seriesEntryIsPast(entry);
     return Object.assign({}, baseEv, entry, copyLocationFields(locationSource), {
       tickets: entry.tickets || baseEv.tickets,
+      isEventPast: past,
+      isSalesClosed: past || Boolean(entry.isSalesClosed),
+      salesClosedReason: past ? 'ended' : entry.isSalesClosed ? entry.salesClosedReason || '' : '',
     });
   }
 
@@ -2217,6 +2282,15 @@
     currentEvent = merged;
     updateEventDateMeta(merged);
     applyLocationBlock(merged);
+    applyEndedEventBanner(merged);
+    setText('ev-price', publicListingPriceLabel(merged));
+    syncTicketHeader(merged);
+    setText(
+      'ev-related-title',
+      merged.isEventPast
+        ? 'Upcoming from ' + (merged.organiser || 'this organiser')
+        : 'More from ' + (merged.organiser || 'this organiser')
+    );
     const selectedEl = document.getElementById('ev-series-selected');
     if (selectedEl) selectedEl.textContent = 'Selected: ' + formatSeriesSelectedLine(entry);
     renderSeriesCalendar();
@@ -2234,12 +2308,14 @@
     wrap.hidden = false;
     updateSeriesDateCopy();
 
-    const now = Date.now() - 86400000;
     const upcoming = seriesDatesList.find(function (item) {
       return seriesEntryIsBookable(item);
     });
     const initialEntry =
-      seriesDatesList.find((item) => item.id === initialEv.id) || upcoming || seriesDatesList[0];
+      preferredSeriesLandingEntry(initialEv) ||
+      seriesDatesList.find((item) => item.id === initialEv.id) ||
+      upcoming ||
+      seriesDatesList[0];
 
     if (initialEntry && initialEntry.dateRaw) {
       const d = new Date(initialEntry.dateRaw);
@@ -2247,11 +2323,6 @@
         seriesCalMonth = d.getMonth();
         seriesCalYear = d.getFullYear();
       }
-    }
-
-    if (initialEntry && initialEntry.id !== initialEv.id && ticketPanelSetEvent) {
-      selectSeriesDate(initialEntry);
-      return;
     }
 
     if (!wrap.dataset.bound) {
@@ -2275,6 +2346,11 @@
       document.getElementById('ev-series-change-btn')?.addEventListener('click', () => {
         setSeriesDatePickerOpen(true);
       });
+    }
+
+    if (initialEntry && initialEntry.id !== initialEv.id && ticketPanelSetEvent) {
+      selectSeriesDate(initialEntry);
+      return;
     }
 
     selectedSeriesEventId = initialEv.id;
