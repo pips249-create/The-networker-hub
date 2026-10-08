@@ -29,6 +29,7 @@
             highlight: '5 pages',
             summary: book.summary,
             tone: book.tone != null ? book.tone : 0,
+            imageUrl: book.imageUrl || '',
           };
         })
       : [];
@@ -336,16 +337,19 @@
   }
 
   function playbookCardHtml(book) {
+    var image = String(book.imageUrl || '').trim();
+    var safeImage = image.indexOf('/assets/') === 0 || /^https?:\/\//i.test(image) ? image : '';
     return (
       '<article class="ad-service-card ad-service-card--playbook" data-playbook-id="' +
       esc(book.id) +
       '" role="listitem">' +
       '<div class="ad-service-media ad-service-media--' +
       String(book.tone != null ? book.tone : 0) +
+      (safeImage ? ' has-image' : '') +
       '">' +
-      '<span class="ad-service-initials" aria-hidden="true">' +
-      esc(initials(book.title)) +
-      '</span>' +
+      (safeImage
+        ? '<img class="ad-service-img" src="' + esc(safeImage) + '" alt="" loading="lazy" />'
+        : '<span class="ad-service-initials" aria-hidden="true">' + esc(initials(book.title)) + '</span>') +
       '<span class="ad-service-category">' +
       esc(book.category) +
       '</span>' +

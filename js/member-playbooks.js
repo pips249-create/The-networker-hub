@@ -10,30 +10,35 @@
       title: 'Marketing that fits a networking diary',
       summary: 'Get visible without burning every evening — click through the short guide.',
       tone: 0,
+      imageUrl: '/assets/playbooks/marketing.jpg',
     },
     {
       id: 'follow-up',
       title: 'Follow-up after the room',
       summary: 'What to do in the 24–72 hours after an event while names are still warm.',
       tone: 1,
+      imageUrl: '/assets/playbooks/follow-up.jpg',
     },
     {
       id: 'events',
       title: 'Choosing your next event',
       summary: 'Breakfast vs lunch vs expo — when to go wide, when to go deep.',
       tone: 2,
+      imageUrl: '/assets/playbooks/events.jpg',
     },
     {
       id: 'numbers',
       title: 'What your numbers are really telling you',
       summary: 'Read cash, pipeline, and time like a simple dashboard.',
       tone: 3,
+      imageUrl: '/assets/playbooks/numbers.jpg',
     },
     {
       id: 'funding',
       title: 'Funding your business',
       summary: 'Choose the right investment path before you pitch anyone.',
       tone: 0,
+      imageUrl: '/assets/playbooks/funding.jpg',
     },
   ];
 
