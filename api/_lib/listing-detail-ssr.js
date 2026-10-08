@@ -220,54 +220,11 @@ function injectEventDetailContent(html, meta) {
     out = setElementTextById(out, 'ev-ended-banner-text', ssr.endedText || '');
   }
 
-  const facts = [
-    ssr.date ? ['Date', ssr.date] : null,
-    ssr.time ? ['Time', ssr.time] : null,
-    ssr.locationLine ? ['Location', ssr.locationLine] : null,
-    ssr.hostName ? ['Organiser', ssr.hostName] : null,
-    ssr.price ? ['Cost', ssr.price] : null,
-    ssr.category ? ['Type', ssr.category] : null,
-    ssr.format ? ['Format', ssr.format] : null,
-  ].filter(Boolean);
-  if (facts.length) {
-    const factsHtml =
-      '<section id="hub-ssr-event-facts" class="hub-ssr-event-facts" data-hub-ssr="1" aria-label="Event details">' +
-      '<h2 class="visually-hidden">Event details</h2>' +
-      '<dl>' +
-      facts
-        .map(function (pair) {
-          return (
-            '<div><dt>' +
-            escapeHtml(pair[0]) +
-            '</dt><dd>' +
-            escapeHtml(pair[1]) +
-            '</dd></div>'
-          );
-        })
-        .join('') +
-      '</dl>' +
-      (ssr.hostUrl
-        ? '<p><a href="' +
-          escapeHtml(ssr.hostUrl) +
-          '">Organiser page</a> · <a href="' +
-          escapeHtml(ssr.browseEventsUrl || '/events/') +
-          '">Browse events</a></p>'
-        : '<p><a href="' +
-          escapeHtml(ssr.browseEventsUrl || '/events/') +
-          '">Browse events</a></p>') +
-      '</section>';
-    if (/id=["']hub-ssr-event-facts["']/i.test(out)) {
-      out = out.replace(
-        /<section[^>]*id=["']hub-ssr-event-facts["'][^>]*>[\s\S]*?<\/section>/i,
-        factsHtml
-      );
-    } else {
-      out = out.replace(
-        /(<section class="content-section" id="ev-about-section">)/i,
-        factsHtml + '\n        $1'
-      );
-    }
-  }
+  // Strip any legacy crawl-only facts block from older deploys / cached HTML.
+  out = out.replace(
+    /<section[^>]*id=["']hub-ssr-event-facts["'][^>]*>[\s\S]*?<\/section>\s*/i,
+    ''
+  );
 
   return out;
 }
@@ -278,6 +235,12 @@ function injectOrganiserDetailContent(html, meta) {
   if (!ssr || !ssr.name) return html;
 
   let out = String(html || '');
+  // Remove legacy duplicate SSR header (name/description shown twice).
+  out = out.replace(
+    /<section[^>]*id=["']hub-ssr-organiser["'][^>]*>[\s\S]*?<\/section>\s*/i,
+    ''
+  );
+
   out = setElementTextById(out, 'org-name', ssr.name);
   out = setElementTextById(out, 'org-description', ssr.description || meta.description || '');
   if (ssr.website) {
@@ -295,32 +258,15 @@ function injectOrganiserDetailContent(html, meta) {
     );
   }
 
-  const ssrBlock =
-    '<section id="hub-ssr-organiser" class="hub-ssr-organiser" data-hub-ssr="1" aria-label="' +
-    escapeHtml(ssr.name) +
-    '">' +
-    '<h1>' +
-    escapeHtml(ssr.name) +
-    '</h1>' +
-    (ssr.city ? '<p class="hub-ssr-organiser-city">' + escapeHtml(ssr.city) + '</p>' : '') +
-    (ssr.description
-      ? '<p class="hub-ssr-organiser-desc">' + escapeHtml(ssr.description) + '</p>'
-      : '') +
-    (ssr.website
-      ? '<p><a href="' + escapeHtml(ssr.website) + '" rel="noopener noreferrer">Website</a></p>'
-      : '') +
-    '<h2>Upcoming listings</h2>' +
-    (ssr.upcomingHtml || '<p><a href="/events/">Browse all events</a></p>') +
-    '<p><a href="/events/?mode=organisers">Browse organisers</a></p>' +
-    '</section>';
-
-  if (/id=["']hub-ssr-organiser["']/i.test(out)) {
-    out = out.replace(
-      /<section[^>]*id=["']hub-ssr-organiser["'][^>]*>[\s\S]*?<\/section>/i,
-      ssrBlock
-    );
-  } else {
-    out = out.replace(/(<main class="org-profile-shell"[^>]*>)/i, '$1\n  ' + ssrBlock);
+  // Upcoming links go into the existing list slot; JS replaces this on hydrate.
+  if (ssr.upcomingHtml) {
+    const upcoming = String(ssr.upcomingHtml);
+    if (/id=["']org-events["']/i.test(out)) {
+      out = out.replace(
+        /(<div class="org-events-list" id="org-events">)([\s\S]*?)(<\/div>)/i,
+        '$1' + upcoming + '$3'
+      );
+    }
   }
 
   out = unhideElementById(out, 'org-profile-content');

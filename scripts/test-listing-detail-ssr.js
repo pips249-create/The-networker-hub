@@ -80,21 +80,24 @@ const injectedEvent = injectEventDetailContent(eventHtml, {
 assert.ok(injectedEvent.includes('>Thursday Breakfast</h1>'));
 assert.ok(!injectedEvent.includes('>Loading event…</h1>'));
 assert.ok(injectedEvent.includes('Weekly networking breakfast'));
-assert.ok(injectedEvent.includes('id="hub-ssr-event-facts"'));
 assert.ok(injectedEvent.includes('BNI Manchester'));
-assert.ok(injectedEvent.includes('/organisers/bni-manchester'));
-console.log('ok — event.html injector fills title/about/facts');
+assert.ok(!injectedEvent.includes('hub-ssr-event-facts'));
+assert.ok(!injectedEvent.includes('<dt>Date</dt>'));
+console.log('ok — event.html fills existing fields without a facts list');
 
 const orgHtml = fs.readFileSync(path.join(__dirname, '../events/organiser.html'), 'utf8');
 const injectedOrg = injectOrganiserDetailContent(orgHtml, {
   description: 'fallback desc',
   detailSsr: orgSsr,
 });
-assert.ok(injectedOrg.includes('id="hub-ssr-organiser"'));
-assert.ok(injectedOrg.includes('<h1>121 Business Links</h1>'));
+assert.ok(!injectedOrg.includes('id="hub-ssr-organiser"'));
+assert.ok(injectedOrg.includes('>121 Business Links</h1>'));
 assert.ok(injectedOrg.includes('/events/friday-lunch'));
 assert.ok(/id=["']org-profile-content["'](?![^>]*\bhidden\b)/i.test(injectedOrg));
-console.log('ok — organiser.html injector adds crawlable block');
+// Name appears once in the profile h1, not as a duplicate SSR header block.
+const nameHits = (injectedOrg.match(/121 Business Links/g) || []).length;
+assert.ok(nameHits >= 1 && nameHits <= 3, 'expected name in profile fields only, got ' + nameHits);
+console.log('ok — organiser.html fills profile fields without duplicate header');
 
 const mw = fs.readFileSync(path.join(__dirname, '../middleware.js'), 'utf8');
 assert.ok(mw.includes('function injectEventDetailContent'));
@@ -102,6 +105,8 @@ assert.ok(mw.includes('function injectOrganiserDetailContent'));
 assert.ok(mw.includes("type === 'event'"));
 assert.ok(mw.includes("type === 'organiser'"));
 assert.ok(mw.includes('Always noindex'));
-console.log('ok — middleware wires event/organiser SSR injectors');
+assert.ok(!mw.includes('hub-ssr-event-facts" class="hub-ssr-event-facts"'));
+assert.ok(!mw.includes('class="hub-ssr-organiser"'));
+console.log('ok — middleware wires slim event/organiser SSR injectors');
 
 console.log('All listing-detail-ssr checks passed.');

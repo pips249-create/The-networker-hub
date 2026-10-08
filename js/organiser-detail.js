@@ -1034,8 +1034,6 @@
   function renderOrganiser(org) {
     currentOrganiser = org;
     document.getElementById('org-profile-content').hidden = false;
-    var ssrOrganiser = document.getElementById('hub-ssr-organiser');
-    if (ssrOrganiser) ssrOrganiser.hidden = true;
     document.title = (org.name || 'Organiser') + ' – The Networker UK';
 
     renderPhoto(org);
