@@ -30,6 +30,7 @@ const {
 const { getPublicRankingLeaderboard } = require('./organiser-ranking-snapshot');
 const { rankingBadgeImageUrl } = require('./ranking-badge-svg');
 const { OG_SHARE_IMAGE } = require('./hub-brand');
+const { buildEventDetailSsr, buildOrganiserDetailSsr } = require('./listing-detail-ssr');
 
 function buildRankingBadgeImageUrl(origin, opts) {
   const o = opts || {};
@@ -416,6 +417,7 @@ async function buildEventMeta(slug, origin) {
     openGraph: buildOpenGraphTags(meta),
     schema: buildSchemaGraphFromParts([eventSchema, breadcrumbs], origin),
     breadcrumbs: breadcrumbs.itemListElement,
+    detailSsr: buildEventDetailSsr(ev, origin),
   };
 }
 
@@ -511,6 +513,45 @@ async function buildOpportunityMeta(slug, origin) {
   };
 }
 
+async function fetchOrganiserUpcomingForSsr(org) {
+  if (!org || !org.id || !isSupabaseConfigured()) return [];
+  try {
+    const sb = getSupabaseAdmin();
+    const nowIso = new Date().toISOString();
+    const { data, error } = await sb
+      .from('events')
+      .select('id, title, slug, starts_at, city, venue, location_label, status, approval_status, published_at')
+      .eq('organiser_id', org.id)
+      .eq('status', 'published')
+      .eq('approval_status', 'Approved')
+      .not('published_at', 'is', null)
+      .gte('starts_at', nowIso)
+      .order('starts_at', { ascending: true })
+      .limit(8);
+    if (error || !data) return [];
+    return data.map(function (row) {
+      return {
+        title: row.title,
+        slug: row.slug,
+        date: row.starts_at
+          ? new Date(row.starts_at).toLocaleDateString('en-GB', {
+              weekday: 'short',
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric',
+            })
+          : '',
+        city: row.city || row.location_label || '',
+        venue: row.venue || '',
+        starts_at: row.starts_at,
+      };
+    });
+  } catch (e) {
+    console.error('organiser_ssr_upcoming_failed', e && e.message ? e.message : e);
+    return [];
+  }
+}
+
 async function buildOrganiserMeta(slug, origin) {
   const org = await getPublicOrganiserBySlug(slug);
   if (!org || !org.slug) return null;
@@ -540,6 +581,7 @@ async function buildOrganiserMeta(slug, origin) {
     ],
     origin
   );
+  const upcoming = await fetchOrganiserUpcomingForSsr(org);
 
   return {
     ok: true,
@@ -549,6 +591,7 @@ async function buildOrganiserMeta(slug, origin) {
     openGraph: buildOpenGraphTags(meta),
     schema: buildSchemaGraphFromParts([organiserSchema, breadcrumbs], origin),
     breadcrumbs: breadcrumbs.itemListElement,
+    detailSsr: buildOrganiserDetailSsr(org, origin, upcoming),
   };
 }
 
