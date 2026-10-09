@@ -1596,15 +1596,23 @@ export default async function middleware(request) {
       isSiteAccessGateActive() && String(process.env.SITE_ACCESS_PASSWORD || '').trim() && seoSecret
         ? { 'x-hub-internal-seo': seoSecret }
         : {};
+    // Bound the seo-meta wait so a slow/timing-out /api/seo instance cannot
+    // hold the edge middleware until Vercel returns a gateway 504.
+    const seoAbort =
+      typeof AbortSignal !== 'undefined' && typeof AbortSignal.timeout === 'function'
+        ? AbortSignal.timeout(8000)
+        : undefined;
     const [metaRes, htmlRes] = await Promise.all([
       fetch(metaUrl.toString(), {
         headers: {
           'x-forwarded-host': url.host,
           ...internalHeaders,
         },
+        signal: seoAbort,
       }),
       fetch(new URL(templatePath, url.origin).toString(), {
         headers: internalHeaders,
+        signal: seoAbort,
       }),
     ]);
 

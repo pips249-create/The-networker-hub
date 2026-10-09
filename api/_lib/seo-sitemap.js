@@ -37,6 +37,9 @@ const STATIC_PATHS = [
   ...OPPORTUNITY_INDUSTRY_SLUGS.map((slug) => '/opportunities/industry/' + slug),
 ];
 
+const SITEMAP_CACHE_TTL_MS = 10 * 60 * 1000;
+const sitemapCache = new Map();
+
 function xmlEscape(value) {
   return String(value || '')
     .replace(/&/g, '&amp;')
@@ -55,26 +58,6 @@ function urlEntry(origin, path, lastmod) {
   return xml;
 }
 
-async function fetchAllOrganiserRows(sb) {
-  const rows = [];
-  const pageSize = 1000;
-  let from = 0;
-  while (true) {
-    const { data, error } = await sb
-      .from('organisers')
-      // organisers has created_at only (no updated_at column)
-      .select('id, name, slug, created_at')
-      .order('name')
-      .range(from, from + pageSize - 1);
-    if (error) throw new Error(error.message);
-    const batch = data || [];
-    rows.push(...batch);
-    if (batch.length < pageSize) break;
-    from += pageSize;
-  }
-  return rows;
-}
-
 function isoDate(value) {
   if (!value) return '';
   const d = new Date(value);
@@ -82,7 +65,21 @@ function isoDate(value) {
   return d.toISOString().slice(0, 10);
 }
 
-async function buildSitemapXml(originOverride) {
+async function fetchOrganisersByIds(sb, orgIds) {
+  const orgById = new Map();
+  for (let i = 0; i < orgIds.length; i += 80) {
+    const chunk = orgIds.slice(i, i + 80);
+    const { data: orgs, error: orgErr } = await sb
+      .from('organisers')
+      .select('id, name, slug, listing_status, verification_status, created_at')
+      .in('id', chunk);
+    if (orgErr) throw new Error(orgErr.message);
+    (orgs || []).forEach((o) => orgById.set(o.id, o));
+  }
+  return orgById;
+}
+
+async function buildSitemapXmlUncached(originOverride) {
   const origin = siteOrigin(originOverride);
   const today = new Date().toISOString().slice(0, 10);
   let body = STATIC_PATHS.map((path) => urlEntry(origin, path, today)).join('');
@@ -97,12 +94,11 @@ async function buildSitemapXml(originOverride) {
   }
 
   const sb = getSupabaseAdmin();
-  const [eventRows, organisers, opportunityRows] = await Promise.all([
+  const [eventRows, opportunityRows] = await Promise.all([
     fetchPublishedEventRows(sb, {
       // events has created_at only (no updated_at column)
       select: 'id, slug, title, organiser_id, starts_at, created_at, approval_status, status',
     }),
-    fetchAllOrganiserRows(sb),
     sb
       .from('business_opportunities')
       .select('id, title, slug, updated_at, published_at, created_at, status, approval_status, listing_expires_at')
@@ -113,25 +109,14 @@ async function buildSitemapXml(originOverride) {
   if (opportunityRows.error) throw new Error(opportunityRows.error.message);
 
   const orgIds = [...new Set((eventRows || []).map((row) => row.organiser_id).filter(Boolean))];
-  let orgById = new Map();
-  for (let i = 0; i < orgIds.length; i += 80) {
-    const chunk = orgIds.slice(i, i + 80);
-    const { data: orgs, error: orgErr } = await sb
-      .from('organisers')
-      .select('id, name, slug, listing_status, created_at')
-      .in('id', chunk);
-    if (orgErr) throw new Error(orgErr.message);
-    (orgs || []).forEach((o) => orgById.set(o.id, o));
-  }
+  // Only load organisers that own published events — avoids a full organisers table scan
+  // that used to stack on top of the event catalogue read and time out /api/seo.
+  const orgById = await fetchOrganisersByIds(sb, orgIds);
 
   const events = (eventRows || []).filter((row) => {
     const org = row.organiser_id ? orgById.get(row.organiser_id) : null;
     return isPublicEvent(row, org);
   });
-
-  const organiserIdsWithPublicEvents = new Set(
-    (events || []).map((row) => row.organiser_id).filter(Boolean)
-  );
 
   // One <loc> per public event slug (recurring series share a slug — duplicates upset GSC).
   const eventSlugLastmod = new Map();
@@ -149,8 +134,12 @@ async function buildSitemapXml(originOverride) {
   });
 
   const organiserSlugs = new Set();
-  (organisers || []).forEach((row) => {
-    if (!organiserIdsWithPublicEvents.has(row.id)) return;
+  const organiserIdsWithPublicEvents = new Set(
+    (events || []).map((row) => row.organiser_id).filter(Boolean)
+  );
+  organiserIdsWithPublicEvents.forEach((orgId) => {
+    const row = orgById.get(orgId);
+    if (!row) return;
     const name = String(row.name || '').trim();
     if (!name) return;
     const slug = publicOrganiserSlug(row);
@@ -186,7 +175,47 @@ async function buildSitemapXml(originOverride) {
   );
 }
 
+async function buildSitemapXml(originOverride) {
+  const origin = siteOrigin(originOverride);
+  const hit = sitemapCache.get(origin);
+  if (hit && hit.xml && hit.expires > Date.now()) return hit.xml;
+  if (hit && hit.inflight) return hit.inflight;
+
+  const inflight = buildSitemapXmlUncached(origin)
+    .then((xml) => {
+      sitemapCache.set(origin, {
+        expires: Date.now() + SITEMAP_CACHE_TTL_MS,
+        xml,
+        inflight: null,
+      });
+      return xml;
+    })
+    .catch((err) => {
+      const current = sitemapCache.get(origin);
+      // Serve a briefly-stale sitemap if a rebuild fails after a successful build.
+      if (current && current.xml) {
+        current.inflight = null;
+        current.expires = Date.now() + 60_000;
+        return current.xml;
+      }
+      if (current && current.inflight) sitemapCache.delete(origin);
+      throw err;
+    });
+
+  sitemapCache.set(origin, {
+    expires: hit && hit.expires ? hit.expires : 0,
+    xml: hit && hit.xml ? hit.xml : null,
+    inflight,
+  });
+  return inflight;
+}
+
+function clearSitemapCache() {
+  sitemapCache.clear();
+}
+
 module.exports = {
   STATIC_PATHS,
   buildSitemapXml,
+  clearSitemapCache,
 };
