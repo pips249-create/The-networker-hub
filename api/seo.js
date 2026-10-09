@@ -1,14 +1,15 @@
 /**
  * Single serverless function for SEO routes (Hobby plan function limit).
+ * Lazy-load sub-routes so a meta request does not pay sitemap/hubert cold-start cost.
  */
 const { getSubRoute } = require('./_lib/route-path');
 const { wrapHandler } = require('./_lib/sentry');
 const { json, setCors } = require('./_lib/auth');
 
-const routes = {
-  meta: require('./_lib/routes/seo-meta'),
-  sitemap: require('./_lib/routes/seo-sitemap'),
-  'hubert-schema': require('./_lib/routes/hubert-schema'),
+const routeLoaders = {
+  meta: () => require('./_lib/routes/seo-meta'),
+  sitemap: () => require('./_lib/routes/seo-sitemap'),
+  'hubert-schema': () => require('./_lib/routes/hubert-schema'),
 };
 
 function requestPathname(req) {
@@ -36,9 +37,10 @@ module.exports = wrapHandler(async function handler(req, res) {
   if (!route && (req.query?.type || req.query?.slug || req.query?.page)) {
     route = 'meta';
   }
-  const fn = routes[route];
-  if (!fn) {
+  const load = routeLoaders[route];
+  if (!load) {
     return json(res, 404, { error: 'not_found', path: route || '(empty)' });
   }
+  const fn = load();
   return fn(req, res);
 });

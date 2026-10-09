@@ -10,7 +10,7 @@ const {
 const { getStaticPageConfig } = require('./seo-static-pages');
 const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
 const { fetchPublishedEventBySlug, rowToEvent, isPublicEvent } = require('./supabase-events');
-const { getPublicOrganiserBySlug } = require('./supabase-organisers-browse');
+const { getPublicOrganiserForSeo } = require('./supabase-organisers-browse');
 const { publicEventSlug } = require('./event-slug');
 const { publicOrganiserSlug } = require('./organiser-slug');
 const { publicOpportunitySlug } = require('./opportunity-slug');
@@ -350,18 +350,34 @@ function buildOrganiserSchema(org, origin) {
 async function buildEventMeta(slug, origin) {
   if (!isSupabaseConfigured()) return null;
   const sb = getSupabaseAdmin();
-  const row = await fetchPublishedEventBySlug(sb, slug);
+  // Cap title-derived catalogue scan — SEO must stay inside the function budget.
+  const row = await fetchPublishedEventBySlug(sb, slug, { maxScanRows: 3000 });
   if (!row) return null;
 
-  let organiser = null;
-  if (row.organiser_id) {
-    const { data: org } = await sb.from('organisers').select('*').eq('id', row.organiser_id).maybeSingle();
-    organiser = org;
-    if (organiser && !isPublicEvent(row, organiser)) return null;
-  }
+  const [orgRes, ticketsRes] = await Promise.all([
+    row.organiser_id
+      ? sb
+          .from('organisers')
+          .select(
+            'id, name, slug, photo_url, listing_status, verification_status, average_rating, review_count, website'
+          )
+          .eq('id', row.organiser_id)
+          .maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
+    sb
+      .from('tickets')
+      .select(
+        'id, event_id, price, quantity, name, ticket_type, description, sale_ends_at, sale_starts_at, status, visibility'
+      )
+      .eq('event_id', row.id),
+  ]);
+  if (orgRes.error) throw new Error(orgRes.error.message);
+  if (ticketsRes.error) throw new Error(ticketsRes.error.message);
 
-  const { data: ticketsRaw } = await sb.from('tickets').select('*').eq('event_id', row.id);
-  const tickets = (ticketsRaw || []).map((t) => ({ ...t, _registrationCount: 0 }));
+  const organiser = orgRes.data || null;
+  if (organiser && !isPublicEvent(row, organiser)) return null;
+
+  const tickets = (ticketsRes.data || []).map((t) => ({ ...t, _registrationCount: 0 }));
   const ev = rowToEvent(row, organiser, tickets);
   ev.publishedAt = row.published_at || null;
   const eventSlug = ev.slug || publicEventSlug({ slug: row.slug, title: row.title });
@@ -553,7 +569,7 @@ async function fetchOrganiserUpcomingForSsr(org) {
 }
 
 async function buildOrganiserMeta(slug, origin) {
-  const org = await getPublicOrganiserBySlug(slug);
+  const org = await getPublicOrganiserForSeo(slug);
   if (!org || !org.slug) return null;
 
   const title = `${org.name} – Networking organiser – The Networker UK`;
@@ -888,7 +904,18 @@ async function buildRankingBadgeMeta(lookup, origin) {
   return { ...meta, openGraph: buildOpenGraphTags(meta) };
 }
 
-async function buildSeoMeta(type, slug, origin) {
+const SEO_META_CACHE_TTL_MS = 60_000;
+const seoMetaCache = new Map();
+
+function seoMetaCacheKey(type, slug, origin) {
+  return String(type || '').toLowerCase() + '|' + String(slug || '').trim() + '|' + siteOrigin(origin);
+}
+
+function clearSeoMetaCache() {
+  seoMetaCache.clear();
+}
+
+async function buildSeoMetaUncached(type, slug, origin) {
   const t = String(type || '').toLowerCase();
   const s = String(slug || '').trim();
   if (t === 'page') return buildStaticPageMeta(s, origin);
@@ -900,6 +927,26 @@ async function buildSeoMeta(type, slug, origin) {
   if (t === 'networking-region') return await buildNetworkingRegionMeta(s, origin);
   if (t === 'opportunity-industry') return await buildOpportunityIndustryMeta(s, origin);
   return null;
+}
+
+async function buildSeoMeta(type, slug, origin) {
+  const key = seoMetaCacheKey(type, slug, origin);
+  const hit = seoMetaCache.get(key);
+  if (hit && hit.value !== undefined && hit.expires > Date.now()) return hit.value;
+  if (hit && hit.inflight) return hit.inflight;
+
+  const inflight = buildSeoMetaUncached(type, slug, origin)
+    .then((value) => {
+      seoMetaCache.set(key, { expires: Date.now() + SEO_META_CACHE_TTL_MS, value, inflight: null });
+      return value;
+    })
+    .catch((err) => {
+      const current = seoMetaCache.get(key);
+      if (current && current.inflight) seoMetaCache.delete(key);
+      throw err;
+    });
+  seoMetaCache.set(key, { expires: 0, value: undefined, inflight });
+  return inflight;
 }
 
 module.exports = {
@@ -917,4 +964,5 @@ module.exports = {
   buildRankingBadgeMeta,
   absoluteUrl,
   trimText,
+  clearSeoMetaCache,
 };

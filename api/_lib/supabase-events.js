@@ -1243,7 +1243,7 @@ function asPublishedEventRow(row) {
   return { ...row, next_date: row.starts_at };
 }
 
-async function fetchPublishedEventBySlug(sb, slug) {
+async function fetchPublishedEventBySlug(sb, slug, options = {}) {
   const s = String(slug || '').trim();
   if (!s) return null;
 
@@ -1254,10 +1254,22 @@ async function fetchPublishedEventBySlug(sb, slug) {
     if (byId) return byId;
   }
 
-  const tableRes = await sb.from('events').select('*').eq('slug', s).maybeSingle();
-  if (tableRes.error) throw new Error(tableRes.error.message);
-  if (tableRes.data && isPublishedApprovedEventRow(tableRes.data)) {
-    return asPublishedEventRow(tableRes.data);
+  // Filter to public rows in the query. A bare .eq('slug') + maybeSingle used to
+  // (a) error when recurring dates share a slug, or (b) match an unpublished row
+  // and fall through to a full catalogue scan — both paths blew /api/seo past
+  // the function timeout.
+  const { data: bySlugRows, error: bySlugErr } = await sb
+    .from('events')
+    .select('*')
+    .eq('slug', s)
+    .eq('approval_status', 'Approved')
+    .eq('status', 'published')
+    .not('starts_at', 'is', null)
+    .order('starts_at', { ascending: true, nullsFirst: false })
+    .limit(1);
+  if (bySlugErr) throw new Error(bySlugErr.message);
+  if (bySlugRows && bySlugRows[0] && isPublishedApprovedEventRow(bySlugRows[0])) {
+    return asPublishedEventRow(bySlugRows[0]);
   }
 
   const prefix = s.replace(/-\d+$/, '') || s;
@@ -1273,21 +1285,27 @@ async function fetchPublishedEventBySlug(sb, slug) {
   let match = (slugCandidates || []).find((row) => slugMatchesPublicRow(row, s));
   if (match) return asPublishedEventRow(match);
 
-  // Title-derived slugs (events with null stored slug). PostgREST caps each
-  // response at ~1000 rows, so page with .range instead of a single .limit(2500).
+  // Title-derived slugs (events with null stored slug). Cap the scan so a miss
+  // cannot page the whole catalogue inside a 15–30s serverless limit.
   const pageSize = 1000;
-  for (let from = 0; ; from += pageSize) {
+  const maxScanRows = Math.min(
+    Math.max(Number(options.maxScanRows) || 5000, pageSize),
+    PUBLISHED_EVENT_HARD_CAP
+  );
+  for (let from = 0; from < maxScanRows; from += pageSize) {
+    const to = Math.min(from + pageSize, maxScanRows) - 1;
     const { data: slimRows, error: slimErr } = await sb
       .from('published_events')
       .select('id, slug, title')
       .order('next_date', { ascending: false, nullsFirst: false })
-      .range(from, from + pageSize - 1);
+      .range(from, to);
     if (slimErr) throw new Error(slimErr.message);
     if (!slimRows || !slimRows.length) return null;
     const slimHit = slimRows.find((row) => slugMatchesPublicRow(row, s));
     if (slimHit) return fetchPublishedEventById(sb, slimHit.id);
     if (slimRows.length < pageSize) return null;
   }
+  return null;
 }
 
 /**

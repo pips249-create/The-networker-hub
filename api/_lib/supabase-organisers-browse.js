@@ -560,11 +560,9 @@ async function enrichPublicOrganiserDetail(sb, row) {
   });
 }
 
-async function getPublicOrganiserBySlug(slug) {
+async function resolvePublicOrganiserRowBySlug(sb, slug) {
   const s = String(slug || '').trim();
   if (!s) return null;
-  if (!isSupabaseConfigured()) return null;
-  const sb = getSupabaseAdmin();
   const slugLower = s.toLowerCase();
 
   let row = null;
@@ -583,7 +581,32 @@ async function getPublicOrganiserBySlug(slug) {
   }
 
   if (!row || !isPublicOrganiser(row)) return null;
+  return row;
+}
+
+async function getPublicOrganiserBySlug(slug) {
+  const s = String(slug || '').trim();
+  if (!s) return null;
+  if (!isSupabaseConfigured()) return null;
+  const sb = getSupabaseAdmin();
+  const row = await resolvePublicOrganiserRowBySlug(sb, s);
+  if (!row) return null;
   return enrichPublicOrganiserDetail(sb, row);
+}
+
+/**
+ * Lightweight public organiser for /api/seo — name, slug, description, photo,
+ * ratings only. Skips reviews, rankings, membership, and full event index that
+ * were pushing seo-meta past the serverless timeout.
+ */
+async function getPublicOrganiserForSeo(slug) {
+  const s = String(slug || '').trim();
+  if (!s) return null;
+  if (!isSupabaseConfigured()) return null;
+  const sb = getSupabaseAdmin();
+  const row = await resolvePublicOrganiserRowBySlug(sb, s);
+  if (!row) return null;
+  return rowToPublicOrganiser(row, 0, {});
 }
 
 /**
@@ -630,6 +653,7 @@ async function getPublicOrganiserById(id) {
 module.exports = {
   listPublicOrganisers,
   getPublicOrganiserBySlug,
+  getPublicOrganiserForSeo,
   getPublicOrganiserById,
   listPublicSiblingOrganisersByEmail,
   rowToPublicOrganiser,
