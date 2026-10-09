@@ -525,8 +525,10 @@
   var MEETING_FORMATS = ['In person', 'Online'];
   var healthCache = null;
   var healthCacheFetchedAt = 0;
+  var healthInflight = null;
   var adminMetricsCache = null;
   var adminMetricsInflight = null;
+  var adminMetricsLightInflight = null;
   var ADMIN_METRICS_CACHE_KEY = 'tnh_admin_metrics_v2';
   var ADMIN_NAV_SECTIONS_KEY = 'tnh_admin_nav_sections_v1';
   var ADMIN_HUB_TABS_KEY = 'tnh_admin_hub_tabs_v1';
@@ -3005,9 +3007,11 @@
 
   function fetchAdminMetrics(force, light) {
     var useLight = !!light;
+    if (!force && useLight && adminMetricsLightInflight) return adminMetricsLightInflight;
     if (!force && !useLight && adminMetricsInflight) return adminMetricsInflight;
     var url = '/api/admin/metrics' + (useLight ? '?light=1' : '');
     var req = adminGet(url).then(function (data) {
+      if (useLight && adminMetricsLightInflight === req) adminMetricsLightInflight = null;
       if (!useLight && adminMetricsInflight === req) adminMetricsInflight = null;
       if (data && !data.error && data.configured !== false) {
         if (!data.light) {
@@ -3027,6 +3031,7 @@
       }
       return data;
     });
+    if (useLight) adminMetricsLightInflight = req;
     if (!useLight) adminMetricsInflight = req;
     return req;
   }
@@ -3628,7 +3633,8 @@
   }
 
   function fetchEventHealth() {
-    return fetch('/api/admin/event-health', { credentials: 'include', cache: 'no-store' })
+    if (healthInflight) return healthInflight;
+    healthInflight = fetch('/api/admin/event-health', { credentials: 'include', cache: 'no-store' })
       .then(function (r) {
         return r.json().then(function (data) {
           if (!r.ok) {
@@ -3644,7 +3650,12 @@
       })
       .catch(function () {
         return { error: 'network_error' };
+      })
+      .then(function (data) {
+        healthInflight = null;
+        return data;
       });
+    return healthInflight;
   }
 
   function issueBadge(issue) {

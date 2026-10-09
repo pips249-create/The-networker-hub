@@ -5,7 +5,6 @@ const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
 const { publicEventSlug } = require('./event-slug');
 const { publicOrganiserSlug } = require('./organiser-slug');
 const { normalizeEventType } = require('./event-types');
-const { fetchEventRegistrationStats } = require('./admin-event-commerce');
 const { scanEventForOffPlatformBooking } = require('./off-platform-booking');
 const { scanEventListingLanguage } = require('./listing-language-moderation');
 
@@ -41,7 +40,13 @@ const ISSUE_DEFS = {
 
 const SEVERITY_ORDER = { high: 0, medium: 1, low: 2 };
 const PAGE_SIZE = 1000;
-const IN_CHUNK_SIZE = 80;
+const SCAN_CACHE_MS = 60 * 1000;
+const EVENT_HEALTH_COLUMNS =
+  'id, title, slug, description, organiser_id, starts_at, ends_at, event_type, meeting_type, vat_treatment, locked, status, meeting_link, location_label, venue';
+const ORGANISER_HEALTH_COLUMNS =
+  'id, name, photo_url, description, listing_status, slug, website';
+
+let scanCache = { at: 0, report: null, inflight: null };
 
 function issuePayload(code) {
   const def = ISSUE_DEFS[code] || { label: code, severity: 'low' };
@@ -88,13 +93,16 @@ async function fetchPublishedRows(sb) {
     return await fetchAllRows(sb, (from, to) =>
       sb
         .from('events')
-        .select('*')
+        .select(EVENT_HEALTH_COLUMNS)
         .eq('status', 'published')
-        .order('title', { ascending: true })
+        .order('id', { ascending: true })
         .range(from, to)
     );
   } catch (tableErr) {
-    const viewRes = await sb.from('published_events').select('*').order('title', { ascending: true });
+    const viewRes = await sb
+      .from('published_events')
+      .select(EVENT_HEALTH_COLUMNS)
+      .order('id', { ascending: true });
     if (!viewRes.error) return viewRes.data || [];
 
     const tableMsg = String(tableErr?.message || tableErr || '');
@@ -106,37 +114,50 @@ async function fetchPublishedRows(sb) {
     return fetchAllRows(sb, (from, to) =>
       sb
         .from('events')
-        .select('*')
+        .select(EVENT_HEALTH_COLUMNS)
         .eq('approval_status', 'Approved')
         .eq('status', 'published')
-        .order('title', { ascending: true })
+        .order('id', { ascending: true })
         .range(from, to)
     );
   }
-}
-
-async function fetchRowsByIds(sb, table, idColumn, ids, select) {
-  const unique = [...new Set((ids || []).filter(Boolean))];
-  if (!unique.length) return [];
-
-  const all = [];
-  for (let i = 0; i < unique.length; i += IN_CHUNK_SIZE) {
-    const chunk = unique.slice(i, i + IN_CHUNK_SIZE);
-    const res = await sb.from(table).select(select).in(idColumn, chunk);
-    if (res.error) throw new Error(res.error.message);
-    all.push(...(res.data || []));
-  }
-  return all;
 }
 
 async function fetchAllOrganisers(sb) {
   return fetchAllRows(sb, (from, to) =>
     sb
       .from('organisers')
-      .select('id, name, listing_status, slug')
-      .order('name', { ascending: true })
+      .select(ORGANISER_HEALTH_COLUMNS)
+      .order('id', { ascending: true })
       .range(from, to)
   );
+}
+
+async function fetchPaidTicketEventIds(sb) {
+  const rows = await fetchAllRows(sb, (from, to) =>
+    sb.from('tickets').select('event_id, price').gt('price', 0).range(from, to)
+  );
+  const ids = new Set();
+  rows.forEach((ticket) => {
+    if (ticket.event_id && ticketPrice(ticket) > 0) ids.add(ticket.event_id);
+  });
+  return ids;
+}
+
+async function fetchRegistrationStats(sb) {
+  const rows = await fetchAllRows(sb, (from, to) =>
+    sb.from('registrations').select('event_id, payment_status').range(from, to)
+  );
+  const stats = {};
+  rows.forEach((row) => {
+    if (!row.event_id) return;
+    if (!stats[row.event_id]) stats[row.event_id] = { registration_count: 0, paid_booking_count: 0 };
+    stats[row.event_id].registration_count += 1;
+    if (String(row.payment_status || '').trim() === 'Paid') {
+      stats[row.event_id].paid_booking_count += 1;
+    }
+  });
+  return stats;
 }
 
 function ticketPrice(ticket) {
@@ -157,27 +178,16 @@ async function scanEventHealth() {
 
   const sb = getSupabaseAdmin();
   const events = await fetchPublishedRows(sb);
-  const eventIds = events.map((e) => e.id);
-  const orgIds = [...new Set(events.map((e) => e.organiser_id).filter(Boolean))];
 
-  const [organisers, tickets, allOrganisers] = await Promise.all([
-    fetchRowsByIds(
-      sb,
-      'organisers',
-      'id',
-      orgIds,
-      'id, name, photo_url, description, listing_status, slug, website'
-    ),
-    fetchRowsByIds(sb, 'tickets', 'event_id', eventIds, 'event_id, price'),
+  // Paid tickets and registrations are small tables. Looking them up per event
+  // (thousands of published rows, 80 ids at a time) ran past the admin function limit.
+  const [allOrganisers, paidTicketEventIds, commerceStats] = await Promise.all([
     fetchAllOrganisers(sb),
+    fetchPaidTicketEventIds(sb),
+    fetchRegistrationStats(sb),
   ]);
 
-  const orgById = new Map(organisers.map((o) => [o.id, o]));
-  const tixByEvent = new Map();
-  tickets.forEach((t) => {
-    if (!tixByEvent.has(t.event_id)) tixByEvent.set(t.event_id, []);
-    tixByEvent.get(t.event_id).push(t);
-  });
+  const orgById = new Map(allOrganisers.map((o) => [o.id, o]));
 
   const flagged = [];
   const issuesByCode = {};
@@ -210,9 +220,7 @@ async function scanEventHealth() {
       }
     }
 
-    const eventTix = tixByEvent.get(row.id) || [];
-    const hasPaid = eventTix.some((t) => ticketPrice(t) > 0);
-    if (hasPaid && !row.vat_treatment) codes.push('missing_vat');
+    if (paidTicketEventIds.has(row.id) && !row.vat_treatment) codes.push('missing_vat');
 
     if (!String(row.event_type || '').trim()) codes.push('missing_event_type');
     if (!String(row.meeting_type || '').trim()) codes.push('missing_meeting_type');
@@ -287,10 +295,6 @@ async function scanEventHealth() {
     });
   }
 
-  const commerceStats = await fetchEventRegistrationStats(
-    sb,
-    flagged.map((row) => row.id)
-  );
   const eventById = new Map(events.map((eventRow) => [eventRow.id, eventRow]));
   flagged.forEach((row) => {
     const source = eventById.get(row.id);
@@ -308,7 +312,10 @@ async function scanEventHealth() {
     totalPublished: events.length,
     events: flagged,
     issuesByCode,
-    organisers: allOrganisers.map((o) => ({
+    organisers: allOrganisers
+      .slice()
+      .sort((a, b) => String(a.name || '').localeCompare(String(b.name || '')))
+      .map((o) => ({
       id: o.id,
       name: String(o.name || '').trim(),
       listingStatus: o.listing_status || '',
@@ -317,4 +324,35 @@ async function scanEventHealth() {
   };
 }
 
-module.exports = { scanEventHealth, ISSUE_DEFS, issuePayload, SEVERITY_ORDER };
+function invalidateEventHealthCache() {
+  scanCache = { at: 0, report: null, inflight: null };
+}
+
+function scanEventHealthCached() {
+  const now = Date.now();
+  if (scanCache.report && now - scanCache.at < SCAN_CACHE_MS) {
+    return Promise.resolve(scanCache.report);
+  }
+  if (scanCache.inflight) return scanCache.inflight;
+  scanCache.inflight = scanEventHealth()
+    .then((report) => {
+      scanCache.report = report;
+      scanCache.at = Date.now();
+      scanCache.inflight = null;
+      return report;
+    })
+    .catch((err) => {
+      scanCache.inflight = null;
+      throw err;
+    });
+  return scanCache.inflight;
+}
+
+module.exports = {
+  scanEventHealth,
+  scanEventHealthCached,
+  invalidateEventHealthCache,
+  ISSUE_DEFS,
+  issuePayload,
+  SEVERITY_ORDER,
+};
