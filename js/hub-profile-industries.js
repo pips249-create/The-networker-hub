@@ -46,11 +46,23 @@
     return !!normalized && !!CANONICAL[normalized.toLocaleLowerCase('en-GB')] && !isBareOther(normalized);
   }
 
+  function hasHomeBase(profile) {
+    if (!profile) return false;
+    var slug = String(profile.homeRegionSlug || '').trim();
+    if (slug) return true;
+    return String(profile.location || '').trim().length >= 2;
+  }
+
   function isProfileComplete(profile) {
     if (!profile) return false;
     var sector = String(profile.businessSector || '').trim();
     var title = String(profile.jobTitle || '').trim();
-    return sector.length >= 2 && !isBareOther(sector) && title.length >= 2;
+    return (
+      sector.length >= 2 &&
+      !isBareOther(sector) &&
+      title.length >= 2 &&
+      hasHomeBase(profile)
+    );
   }
 
   function fillIndustrySelect(selectEl, selectedValue) {
@@ -134,6 +146,7 @@
   }
 
   global.HubProfileIndustries = {
+    hasHomeBase: hasHomeBase,
     INDUSTRIES: INDUSTRIES,
     normalizeIndustry: normalizeIndustry,
     isBareOther: isBareOther,

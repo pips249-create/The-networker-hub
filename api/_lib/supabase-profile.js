@@ -16,11 +16,16 @@ const {
   isBareOther,
   isAnalyticsProfileComplete,
 } = require('./hub-profile-industries');
+const {
+  normalizeHomeRegionSlug,
+  homeRegionLabel,
+} = require('./attendee-home-region');
 
 const WRITABLE = {
   name: true,
   publicReviewName: true,
   location: true,
+  homeRegionSlug: true,
   company: true,
   jobTitle: true,
   professionalRole: true,
@@ -172,6 +177,7 @@ function rowToProfile(session, hub, attendee) {
     }),
     reviewNameExample: firstNameLastInitial(legalName) || 'Alex M.',
     location: String(attendee?.location || '').trim(),
+    homeRegionSlug: normalizeHomeRegionSlug(attendee?.home_region_slug) || '',
     company: String(attendee?.company || '').trim(),
     jobTitle: String(attendee?.job_title || '').trim(),
     professionalRole: String(attendee?.professional_role || '').trim(),
@@ -235,6 +241,22 @@ async function updateProfile(session, body) {
     }
   }
   if (body.location !== undefined) attendeePatch.location = String(body.location || '').trim();
+  if (body.homeRegionSlug !== undefined || body.home_region_slug !== undefined) {
+    const rawSlug =
+      body.homeRegionSlug !== undefined ? body.homeRegionSlug : body.home_region_slug;
+    const slug = normalizeHomeRegionSlug(rawSlug);
+    if (String(rawSlug || '').trim() && !slug) {
+      const e = new Error('Please choose a valid UK area from the list.');
+      e.status = 400;
+      e.code = 'invalid_home_region';
+      throw e;
+    }
+    attendeePatch.home_region_slug = slug || null;
+    if (slug) {
+      const label = homeRegionLabel(slug);
+      if (label) attendeePatch.location = label;
+    }
+  }
   if (body.company !== undefined) {
     attendeePatch.company = String(body.company || '').trim() || null;
   }
