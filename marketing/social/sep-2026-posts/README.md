@@ -1,6 +1,9 @@
 # Sep 2026 social assets
 
-Ready-to-post images for the 3-week calendar (`../3-week-calendar-sep-2026.md`).
+Ready-to-post images for the September calendars:
+
+- `../3-week-calendar-sep-2026.md` (8–15 Sep, 1/day)
+- `../rest-of-sep-2026-2x-daily.md` (**16–30 Sep, 2/day** — Birmingham · Manchester · Edinburgh + opportunities)
 
 ## What’s in here
 
