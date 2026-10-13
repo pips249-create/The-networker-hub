@@ -6,7 +6,79 @@ const { publicEventSlug } = require('./event-slug');
 const { publicOrganiserSlug } = require('./organiser-slug');
 const { normalizeEventType } = require('./event-types');
 const { scanEventForOffPlatformBooking } = require('./off-platform-booking');
-const { scanEventListingLanguage } = require('./listing-language-moderation');
+const {
+  HATE_PHRASES,
+  HATE_TOKENS,
+  PROFANITY_TOKENS,
+  scanEventListingLanguage,
+} = require('./listing-language-moderation');
+
+const LANGUAGE_TERMS = [
+  ...new Set(
+    [...HATE_TOKENS, ...HATE_PHRASES, ...PROFANITY_TOKENS].map((term) =>
+      String(term || '').toLowerCase()
+    )
+  ),
+].filter((term) => term.length >= 3);
+
+// Symbol-split swears only (f*ck, sh!t, f.u.c.k). Spaces must not count —
+// "It's a free" is normal copy, not a masked word.
+const MASKED_LANGUAGE = [
+  /f[^a-z0-9\s]+(?:u[^a-z0-9\s]*)?c[^a-z0-9\s]*k/i,
+  /s[^a-z0-9\s]+h[^a-z0-9\s]*t|sh[^a-z0-9\s]+t/i,
+  /b[^a-z0-9\s]+[i1!][^a-z0-9\s]*t[^a-z0-9\s]*c[^a-z0-9\s]*h/i,
+  /c[^a-z0-9\s]+n[^a-z0-9\s]*t/i,
+];
+
+function hasMaskedLanguage(raw) {
+  for (let i = 0; i < MASKED_LANGUAGE.length; i++) {
+    if (MASKED_LANGUAGE[i].test(raw)) return true;
+  }
+  return false;
+}
+
+function normalizeLanguageHaystack(raw) {
+  return String(raw || '')
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/0/g, 'o')
+    .replace(/1/g, 'i')
+    .replace(/3/g, 'e')
+    .replace(/4/g, 'a')
+    .replace(/5/g, 's')
+    .replace(/7/g, 't')
+    .replace(/8/g, 'b')
+    .replace(/\$/g, 's')
+    .replace(/@/g, 'a')
+    .replace(/[^a-z0-9]+/g, '');
+}
+
+/**
+ * The full language scanner is too slow to run on every published listing.
+ * A cheap text check decides whether that scanner is worth running; a miss
+ * still goes through the real scanner so excerpts stay accurate.
+ */
+function scanEventListingLanguageForHealth(row) {
+  const empty = { hate: [], profanity: [], fields: [] };
+  const title = String(row?.title || '');
+  const description = String(row?.description || '');
+  if (!title.trim() && !description.trim()) return empty;
+
+  const raw = title + '\n' + description;
+  const collapsed = normalizeLanguageHaystack(raw);
+  let maybe = hasMaskedLanguage(raw);
+  if (!maybe) {
+    for (let i = 0; i < LANGUAGE_TERMS.length; i++) {
+      if (collapsed.includes(LANGUAGE_TERMS[i])) {
+        maybe = true;
+        break;
+      }
+    }
+  }
+  if (!maybe) return empty;
+  return scanEventListingLanguage(row);
+}
 
 function listingLanguageExcerpts(languageScan) {
   const excerpts = [];
@@ -90,14 +162,27 @@ async function fetchAllRows(sb, buildQuery) {
 
 async function fetchPublishedRows(sb) {
   try {
-    return await fetchAllRows(sb, (from, to) =>
-      sb
-        .from('events')
-        .select(EVENT_HEALTH_COLUMNS)
-        .eq('status', 'published')
-        .order('id', { ascending: true })
-        .range(from, to)
+    const countRes = await sb
+      .from('events')
+      .select('id', { count: 'exact', head: true })
+      .eq('status', 'published');
+    if (countRes.error) throw countRes.error;
+    const total = countRes.count || 0;
+    const starts = [];
+    for (let from = 0; from < total; from += PAGE_SIZE) starts.push(from);
+    const pages = await Promise.all(
+      starts.map(async (from) => {
+        const res = await sb
+          .from('events')
+          .select(EVENT_HEALTH_COLUMNS)
+          .eq('status', 'published')
+          .order('id', { ascending: true })
+          .range(from, from + PAGE_SIZE - 1);
+        if (res.error) throw res.error;
+        return res.data || [];
+      })
     );
+    return pages.flat();
   } catch (tableErr) {
     const viewRes = await sb
       .from('published_events')
@@ -228,7 +313,7 @@ async function scanEventHealth() {
     const offPlatformHits = scanEventForOffPlatformBooking(row);
     if (offPlatformHits.length) codes.push('off_platform_booking');
 
-    const languageScan = scanEventListingLanguage(row);
+    const languageScan = scanEventListingLanguageForHealth(row);
     const languageExcerpts = listingLanguageExcerpts(languageScan);
     if (languageScan.hate.length) codes.push('listing_hate_speech');
     else if (languageScan.profanity.length) codes.push('listing_profanity');

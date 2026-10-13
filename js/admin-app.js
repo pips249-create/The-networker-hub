@@ -525,6 +525,7 @@
   var MEETING_FORMATS = ['In person', 'Online'];
   var healthCache = null;
   var healthCacheFetchedAt = 0;
+  var healthBackoffUntil = 0;
   var healthInflight = null;
   var adminMetricsCache = null;
   var adminMetricsInflight = null;
@@ -2979,6 +2980,7 @@
   }
 
   function shouldRefreshHealth() {
+    if (Date.now() < healthBackoffUntil) return false;
     if (document.getElementById('event-health-list')) return true;
     if (!healthCacheFetchedAt) return true;
     return Date.now() - healthCacheFetchedAt > HEALTH_STALE_MS;
@@ -3123,6 +3125,9 @@
       if (data && !data.error && data.configured !== false) {
         healthCache = data;
         healthCacheFetchedAt = Date.now();
+        healthBackoffUntil = 0;
+      } else if (data && data.error) {
+        healthBackoffUntil = Date.now() + 2 * 60 * 1000;
       }
       if (adminMetricsCache) {
         applyDashboardNotifications(adminMetricsCache);
