@@ -7,8 +7,8 @@
 <title>Member offers playbook cards preview</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../css/hub.css?v=20260909listmenu1">
-<link rel="stylesheet" href="../css/attendee-dashboard.css?v=20261006playbooks3">
-<link rel="stylesheet" href="../css/member-playbooks-page.css?v=20261006mp4">
+<link rel="stylesheet" href="../css/attendee-dashboard.css?v=20261007imgs1">
+<link rel="stylesheet" href="../css/member-playbooks-page.css?v=20261007imgs1">
 <style>
   body { margin: 0; padding: 24px; background: #f0ecf7; font-family: 'DM Sans', system-ui, sans-serif; }
   .preview-note { margin: 0 0 16px; font-size: 14px; color: #5a4a62; }
@@ -33,7 +33,7 @@
     </div>
   </div>
 
-  <script src="../js/member-playbooks.js?v=20261006mp4"></script>
+  <script src="../js/member-playbooks.js?v=20261007imgs1"></script>
   <script>
     function initials(t) {
       var p = t.trim().split(/\s+/);
@@ -42,9 +42,12 @@
     var books = HubMemberPlaybooks.catalog;
     var grid = document.getElementById('ad-services-grid');
     grid.innerHTML = books.map(function (b) {
+      var img = b.imageUrl
+        ? '<img class="ad-service-img" src="' + b.imageUrl + '" alt="" loading="lazy" />'
+        : '<span class="ad-service-initials" aria-hidden="true">' + initials(b.title) + '</span>';
       return '<article class="ad-service-card ad-service-card--playbook" role="listitem">' +
-        '<div class="ad-service-media ad-service-media--' + (b.tone || 0) + '">' +
-        '<span class="ad-service-initials" aria-hidden="true">' + initials(b.title) + '</span>' +
+        '<div class="ad-service-media ad-service-media--' + (b.tone || 0) + (b.imageUrl ? ' has-image' : '') + '">' +
+        img +
         '<span class="ad-service-category">Playbook</span>' +
         '<span class="ad-service-highlight">5 pages</span></div>' +
         '<div class="ad-service-body">' +
