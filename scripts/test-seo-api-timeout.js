@@ -61,6 +61,14 @@ function createMockSb(handlers) {
           state.filters.push(['ilike', col, val]);
           return b;
         },
+        gte(col, val) {
+          state.filters.push(['gte', col, val]);
+          return b;
+        },
+        lt(col, val) {
+          state.filters.push(['lt', col, val]);
+          return b;
+        },
         in(col, vals) {
           state.filters.push(['in', col, vals]);
           return b;
@@ -145,9 +153,55 @@ async function testUnpublishedSlugDoesNotScanForever() {
     return { data: null, error: null };
   });
 
-  const row = await fetchPublishedEventBySlug(sb, 'missing-slug', { maxScanRows: 3000 });
+  const row = await fetchPublishedEventBySlug(sb, 'missing-slug');
   assert('missing slug returns null', row == null);
-  assert('title-derived scan capped at 3 pages', publishedEventsPages === 3);
+  assert('missing slug does not scan the catalogue', publishedEventsPages === 0);
+}
+
+async function testNullSlugResolvesFromTitle() {
+  const soon = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString();
+  const later = new Date(Date.now() + 40 * 24 * 60 * 60 * 1000).toISOString();
+  let catalogueScans = 0;
+  const sb = createMockSb((state) => {
+    if (state.table === 'published_events') {
+      catalogueScans += 1;
+      return { data: [], error: null };
+    }
+    if (state.filters.some((f) => f[0] === 'eq' && f[1] === 'slug')) {
+      return { data: [], error: null };
+    }
+    if (state.filters.some((f) => f[0] === 'ilike' && f[1] === 'slug')) {
+      return { data: [], error: null };
+    }
+    if (state.filters.some((f) => f[0] === 'ilike' && f[1] === 'title')) {
+      return {
+        data: [
+          {
+            id: 'dec',
+            slug: null,
+            title: 'Faith Works - Christian Business Networking',
+            approval_status: 'Approved',
+            status: 'published',
+            starts_at: later,
+          },
+          {
+            id: 'oct',
+            slug: null,
+            title: 'Faith Works - Christian Business Networking',
+            approval_status: 'Approved',
+            status: 'published',
+            starts_at: soon,
+          },
+        ],
+        error: null,
+      };
+    }
+    return { data: null, error: null };
+  });
+
+  const row = await fetchPublishedEventBySlug(sb, 'faith-works-christian-business-networking');
+  assert('title slug opens the next date', row && row.id === 'oct');
+  assert('title slug does not scan published_events', catalogueScans === 0);
 }
 
 async function testOrganiserSeoSkipsEnrichment() {
@@ -227,6 +281,7 @@ async function testIsPublicEventStillWorks() {
 async function main() {
   await testPublishedSlugSkipsCatalogueScan();
   await testUnpublishedSlugDoesNotScanForever();
+  await testNullSlugResolvesFromTitle();
   await testOrganiserSeoSkipsEnrichment();
   await testSitemapCacheAndStaticOnly();
   await testSeoMetaCache();
