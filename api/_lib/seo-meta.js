@@ -350,8 +350,7 @@ function buildOrganiserSchema(org, origin) {
 async function buildEventMeta(slug, origin) {
   if (!isSupabaseConfigured()) return null;
   const sb = getSupabaseAdmin();
-  // Cap title-derived catalogue scan — SEO must stay inside the function budget.
-  const row = await fetchPublishedEventBySlug(sb, slug, { maxScanRows: 3000 });
+  const row = await fetchPublishedEventBySlug(sb, slug);
   if (!row) return null;
 
   const [orgRes, ticketsRes] = await Promise.all([

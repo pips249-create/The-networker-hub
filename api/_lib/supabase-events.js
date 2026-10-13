@@ -1243,7 +1243,67 @@ function asPublishedEventRow(row) {
   return { ...row, next_date: row.starts_at };
 }
 
-async function fetchPublishedEventBySlug(sb, slug, options = {}) {
+/** ILIKE pattern for a public slug when events.slug was never stored. */
+function titleIlikePatternFromSlug(slug) {
+  const parts = String(slug || '')
+    .toLowerCase()
+    .split('-')
+    .map((part) => part.replace(/[%_,]/g, '').trim())
+    .filter(Boolean);
+  if (!parts.length) return '';
+  return '%' + parts.join('%') + '%';
+}
+
+function pickUpcomingSlugMatch(rows, requestedSlug, at) {
+  const matches = (rows || []).filter(
+    (row) => slugMatchesPublicRow(row, requestedSlug) && isPublishedApprovedEventRow(row)
+  );
+  if (!matches.length) return null;
+  const upcoming = matches
+    .filter((row) => row.starts_at && !isEventStarted(row, at))
+    .sort((a, b) => new Date(a.starts_at) - new Date(b.starts_at));
+  if (upcoming.length) return upcoming[0];
+  return matches.slice().sort((a, b) => new Date(b.starts_at) - new Date(a.starts_at))[0];
+}
+
+/**
+ * Events published without a stored slug are linked as /events/{title-slug}.
+ * Match the title directly. Paging the furthest-future catalogue misses
+ * near-term listings, and those cards 404.
+ */
+async function fetchPublishedEventByTitleSlug(sb, slug) {
+  const pattern = titleIlikePatternFromSlug(slug);
+  if (!pattern) return null;
+  const since = new Date(Date.now() - 18 * 60 * 60 * 1000).toISOString();
+  const { data, error } = await sb
+    .from('events')
+    .select('*')
+    .eq('approval_status', 'Approved')
+    .eq('status', 'published')
+    .gte('starts_at', since)
+    .ilike('title', pattern)
+    .order('starts_at', { ascending: true })
+    .limit(40);
+  if (error) throw new Error(error.message);
+  const picked = pickUpcomingSlugMatch(data, slug);
+  if (picked) return asPublishedEventRow(picked);
+
+  const { data: past, error: pastErr } = await sb
+    .from('events')
+    .select('*')
+    .eq('approval_status', 'Approved')
+    .eq('status', 'published')
+    .not('starts_at', 'is', null)
+    .lt('starts_at', since)
+    .ilike('title', pattern)
+    .order('starts_at', { ascending: false })
+    .limit(8);
+  if (pastErr) throw new Error(pastErr.message);
+  const pastPick = pickUpcomingSlugMatch(past, slug);
+  return pastPick ? asPublishedEventRow(pastPick) : null;
+}
+
+async function fetchPublishedEventBySlug(sb, slug) {
   const s = String(slug || '').trim();
   if (!s) return null;
 
@@ -1285,27 +1345,7 @@ async function fetchPublishedEventBySlug(sb, slug, options = {}) {
   let match = (slugCandidates || []).find((row) => slugMatchesPublicRow(row, s));
   if (match) return asPublishedEventRow(match);
 
-  // Title-derived slugs (events with null stored slug). Cap the scan so a miss
-  // cannot page the whole catalogue inside a 15–30s serverless limit.
-  const pageSize = 1000;
-  const maxScanRows = Math.min(
-    Math.max(Number(options.maxScanRows) || 5000, pageSize),
-    PUBLISHED_EVENT_HARD_CAP
-  );
-  for (let from = 0; from < maxScanRows; from += pageSize) {
-    const to = Math.min(from + pageSize, maxScanRows) - 1;
-    const { data: slimRows, error: slimErr } = await sb
-      .from('published_events')
-      .select('id, slug, title')
-      .order('next_date', { ascending: false, nullsFirst: false })
-      .range(from, to);
-    if (slimErr) throw new Error(slimErr.message);
-    if (!slimRows || !slimRows.length) return null;
-    const slimHit = slimRows.find((row) => slugMatchesPublicRow(row, s));
-    if (slimHit) return fetchPublishedEventById(sb, slimHit.id);
-    if (slimRows.length < pageSize) return null;
-  }
-  return null;
+  return fetchPublishedEventByTitleSlug(sb, s);
 }
 
 /**
