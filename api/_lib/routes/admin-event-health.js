@@ -1,5 +1,5 @@
 const { sessionFromRequest, requireAdmin, json, setCors } = require('../auth');
-const { scanEventHealth } = require('../admin-event-health');
+const { scanEventHealthCached, invalidateEventHealthCache } = require('../admin-event-health');
 const {
   logEventHealthCompletion,
   fetchRecentHealthCompletions,
@@ -33,6 +33,7 @@ module.exports = async function handler(req, res) {
       return json(res, 400, { ok: false, error: 'missing_fields' });
     }
     try {
+      invalidateEventHealthCache();
       const logged = await logEventHealthCompletion(
         {
           eventId,
@@ -52,7 +53,7 @@ module.exports = async function handler(req, res) {
 
   try {
     const [report, recentCompletions] = await Promise.all([
-      scanEventHealth(),
+      scanEventHealthCached(),
       fetchRecentHealthCompletions(15),
     ]);
     return json(res, 200, {

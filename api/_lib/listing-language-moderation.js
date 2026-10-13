@@ -390,6 +390,7 @@ function assertNoHateSpeechOnLiveListing(row, previousStatus) {
 module.exports = {
   LISTING_HATE_SPEECH_ERROR,
   HATE_TOKENS,
+  HATE_PHRASES,
   PROFANITY_TOKENS,
   collectListingLanguageText,
   scanListingLanguage,
