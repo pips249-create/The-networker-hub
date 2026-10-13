@@ -17,7 +17,7 @@
   var IMAGE_READ_ERROR = "Couldn't read that image. Use a JPG or PNG, or paste an image link.";
   var onChange = null;
 
-  /** Static playbooks — same card shape as partner offers; open the click-through deck. */
+  /** Static playbooks — a compact row under partner offers; open the click-through deck. */
   var PLAYBOOKS =
     window.HubMemberPlaybooks && Array.isArray(window.HubMemberPlaybooks.catalog)
       ? window.HubMemberPlaybooks.catalog.map(function (book) {
@@ -330,49 +330,74 @@
     var adminBar = document.getElementById('ad-services-admin');
     var detail = document.getElementById('ad-services-detail');
     var pitch = document.getElementById('ad-services-pitch');
+    var playbooks = document.getElementById('ad-playbooks');
     if (grid) grid.hidden = !show;
     if (adminBar) adminBar.hidden = !show || !canManage;
     if (detail) detail.hidden = show;
     if (pitch) pitch.hidden = !show;
+    if (playbooks && !show) playbooks.hidden = true;
   }
 
   function playbookCardHtml(book) {
     var image = String(book.imageUrl || '').trim();
     var safeImage = image.indexOf('/assets/') === 0 || /^https?:\/\//i.test(image) ? image : '';
     return (
-      '<article class="ad-service-card ad-service-card--playbook" data-playbook-id="' +
+      '<article class="ad-playbook-chip" data-playbook-id="' +
       esc(book.id) +
       '" role="listitem">' +
-      '<div class="ad-service-media ad-service-media--' +
+      '<div class="ad-playbook-chip-media ad-service-media--' +
       String(book.tone != null ? book.tone : 0) +
       (safeImage ? ' has-image' : '') +
       '">' +
       (safeImage
         ? '<img class="ad-service-img" src="' + esc(safeImage) + '" alt="" loading="lazy" />'
         : '<span class="ad-service-initials" aria-hidden="true">' + esc(initials(book.title)) + '</span>') +
-      '<span class="ad-service-category">' +
-      esc(book.category) +
-      '</span>' +
-      (book.highlight ? '<span class="ad-service-highlight">' + esc(book.highlight) + '</span>' : '') +
+      '<span class="ad-playbook-chip-pages">5 pages</span>' +
       '</div>' +
-      '<div class="ad-service-body">' +
-      '<div class="ad-service-body-top">' +
-      '<span class="ad-service-provider">' +
-      esc(book.provider) +
-      '</span>' +
-      '<span class="ad-service-kicker">Playbook</span></div>' +
-      '<h3 class="ad-service-title">' +
+      '<h3 class="ad-playbook-chip-title">' +
       esc(book.title) +
       '</h3>' +
-      (book.summary ? '<p class="ad-service-summary">' + esc(book.summary) + '</p>' : '') +
-      '<span class="ad-service-view">Open playbook</span>' +
-      '</div>' +
       '<button type="button" class="ad-service-card-link" data-playbook-open="' +
       esc(book.id) +
       '" aria-label="Open playbook: ' +
       esc(book.title) +
       '"></button></article>'
     );
+  }
+
+  function renderPlaybooks() {
+    var section = document.getElementById('ad-playbooks');
+    var row = document.getElementById('ad-playbooks-row');
+    if (!section || !row) return;
+    if (!PLAYBOOKS.length) {
+      section.hidden = true;
+      row.innerHTML = '';
+      return;
+    }
+    row.innerHTML = PLAYBOOKS.map(playbookCardHtml).join('');
+    section.hidden = false;
+    bindOfferImages(row);
+  }
+
+  function bindOfferImages(root) {
+    if (!root) return;
+    root.querySelectorAll('.ad-service-img').forEach(function (img) {
+      img.addEventListener('error', function () {
+        var media = img.parentElement;
+        if (!media) return;
+        media.classList.remove('has-image');
+        img.remove();
+        if (!media.querySelector('.ad-service-initials')) {
+          var mark = document.createElement('span');
+          mark.className = 'ad-service-initials';
+          mark.setAttribute('aria-hidden', 'true');
+          var card = media.closest('.ad-service-card, .ad-playbook-chip');
+          var title = card ? card.querySelector('.ad-service-title, .ad-playbook-chip-title') : null;
+          mark.textContent = initials(title ? title.textContent : '');
+          media.insertBefore(mark, media.firstChild);
+        }
+      });
+    });
   }
 
   function closePlaybookModal() {
@@ -447,36 +472,23 @@
       'Free trials, discounts, and practical help arranged for you.'
     );
     var list = visibleOffers();
+    var playbooks = document.getElementById('ad-playbooks');
     if (!loaded) {
       grid.innerHTML = '<p class="ad-services-loading">Loading offers…</p>';
       if (empty) empty.hidden = true;
+      if (playbooks) playbooks.hidden = true;
       return;
     }
-    var playbookHtml = PLAYBOOKS.map(playbookCardHtml).join('');
+    if (empty) empty.hidden = list.length > 0 || PLAYBOOKS.length > 0;
     if (!list.length) {
-      grid.innerHTML = playbookHtml;
-      if (empty) empty.hidden = true;
-      return;
+      grid.innerHTML = '';
+      grid.hidden = true;
+    } else {
+      grid.hidden = false;
+      grid.innerHTML = list.map(cardHtml).join('');
+      bindOfferImages(grid);
     }
-    if (empty) empty.hidden = true;
-    grid.innerHTML = playbookHtml + list.map(cardHtml).join('');
-    grid.querySelectorAll('.ad-service-img').forEach(function (img) {
-      img.addEventListener('error', function () {
-        var media = img.parentElement;
-        if (!media) return;
-        media.classList.remove('has-image');
-        img.remove();
-        if (!media.querySelector('.ad-service-initials')) {
-          var mark = document.createElement('span');
-          mark.className = 'ad-service-initials';
-          mark.setAttribute('aria-hidden', 'true');
-          var card = media.closest('.ad-service-card');
-          var title = card ? card.querySelector('.ad-service-title') : null;
-          mark.textContent = initials(title ? title.textContent : '');
-          media.insertBefore(mark, media.firstChild);
-        }
-      });
-    });
+    renderPlaybooks();
   }
 
   async function reload() {

@@ -7,20 +7,45 @@
 <title>Member offers playbook cards preview</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../css/hub.css?v=20260909listmenu1">
-<link rel="stylesheet" href="../css/attendee-dashboard.css?v=20261007imgs1">
-<link rel="stylesheet" href="../css/member-playbooks-page.css?v=20261007imgs1">
+<link rel="stylesheet" href="../css/attendee-dashboard.css?v=20261013pbrow">
+<link rel="stylesheet" href="../css/member-playbooks-page.css?v=20261013pbrow">
 <style>
   body { margin: 0; padding: 24px; background: #f0ecf7; font-family: 'DM Sans', system-ui, sans-serif; }
+  .ad-services-grid, .ad-playbooks { max-width: 992px; }
   .preview-note { margin: 0 0 16px; font-size: 14px; color: #5a4a62; }
   .preview-note a { color: #7a3d8a; font-weight: 600; }
 </style>
 </head>
 <body class="attendee-dashboard-page">
   <p class="preview-note">
-    Design preview — playbooks as offer cards. Click a card to open the slideshow (no iframe).
+    Design preview — partner offers lead the grid. Playbooks sit in a shorter row underneath.
     Live: <a href="/account/#services">/account/#services</a>
   </p>
-  <div class="ad-services-grid" id="ad-services-grid" role="list"></div>
+  <div class="ad-services-grid" id="ad-services-grid" role="list">
+    <article class="ad-service-card is-highlight" role="listitem">
+      <div class="ad-service-media ad-service-media--0 has-image" style="background:#2d1b5e;">
+        <img class="ad-service-img" src="../assets/sponsors/my-medical-cover-logo-white.png" alt="" style="object-fit:contain;padding:28px;background:#241447;" />
+        <span class="ad-service-category">Health Insurance</span>
+        <span class="ad-service-highlight">£100 Amazon gift voucher</span>
+      </div>
+      <div class="ad-service-body">
+        <div class="ad-service-body-top">
+          <span class="ad-service-provider">My Medical Cover</span>
+          <span class="ad-service-kicker">£100 Amazon gift voucher</span>
+        </div>
+        <h3 class="ad-service-title">Health Insurance</h3>
+        <p class="ad-service-summary">As a The Networker UK member you can receive a £100 Amazon gift voucher.</p>
+        <span class="ad-service-view">More information</span>
+      </div>
+    </article>
+  </div>
+  <section class="ad-playbooks" id="ad-playbooks">
+    <div class="ad-playbooks-head">
+      <h2 class="ad-playbooks-title">Playbooks</h2>
+      <p class="ad-playbooks-sub">Five-page guides for the work after the handshake.</p>
+    </div>
+    <div class="ad-playbooks-row" id="ad-playbooks-row" role="list"></div>
+  </section>
 
   <div class="ad-playbook-modal" id="ad-playbook-modal" hidden>
     <div class="ad-playbook-modal-backdrop" id="ad-playbook-modal-backdrop"></div>
@@ -33,33 +58,27 @@
     </div>
   </div>
 
-  <script src="../js/member-playbooks.js?v=20261007imgs1"></script>
+  <script src="../js/member-playbooks.js?v=20261013pbrow"></script>
   <script>
     function initials(t) {
       var p = t.trim().split(/\s+/);
       return (p[0][0] + (p[1] ? p[1][0] : '')).toUpperCase();
     }
     var books = HubMemberPlaybooks.catalog;
-    var grid = document.getElementById('ad-services-grid');
-    grid.innerHTML = books.map(function (b) {
+    var row = document.getElementById('ad-playbooks-row');
+    row.innerHTML = books.map(function (b) {
       var img = b.imageUrl
         ? '<img class="ad-service-img" src="' + b.imageUrl + '" alt="" loading="lazy" />'
         : '<span class="ad-service-initials" aria-hidden="true">' + initials(b.title) + '</span>';
-      return '<article class="ad-service-card ad-service-card--playbook" role="listitem">' +
-        '<div class="ad-service-media ad-service-media--' + (b.tone || 0) + (b.imageUrl ? ' has-image' : '') + '">' +
+      return '<article class="ad-playbook-chip" role="listitem">' +
+        '<div class="ad-playbook-chip-media ad-service-media--' + (b.tone || 0) + (b.imageUrl ? ' has-image' : '') + '">' +
         img +
-        '<span class="ad-service-category">Playbook</span>' +
-        '<span class="ad-service-highlight">5 pages</span></div>' +
-        '<div class="ad-service-body">' +
-        '<div class="ad-service-body-top"><span class="ad-service-provider">The Networker UK</span>' +
-        '<span class="ad-service-kicker">Playbook</span></div>' +
-        '<h3 class="ad-service-title">' + b.title + '</h3>' +
-        '<p class="ad-service-summary">' + b.summary + '</p>' +
-        '<span class="ad-service-view">Open playbook</span></div>' +
+        '<span class="ad-playbook-chip-pages">5 pages</span></div>' +
+        '<h3 class="ad-playbook-chip-title">' + b.title + '</h3>' +
         '<button type="button" class="ad-service-card-link" data-playbook-open="' + b.id + '" aria-label="Open playbook"></button></article>';
     }).join('');
 
-    grid.addEventListener('click', function (e) {
+    row.addEventListener('click', function (e) {
       var btn = e.target.closest('[data-playbook-open]');
       if (!btn) return;
       e.preventDefault();
