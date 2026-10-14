@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>QR card · with Rosie · The Networker UK</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,500;0,9..40,700;0,9..40,800&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<link rel="icon" href="/favicon.ico?v=20260823uk3" sizes="any">
+<style>
+  @page { size: A6 portrait; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'DM Sans', system-ui, sans-serif;
+    color: #2f2a2c;
+    background: #e6ddd2;
+  }
+  .screen-bar {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    align-items: center;
+    padding: 12px 16px;
+    background: #2f2a2c;
+    color: #fff;
+    font-size: 14px;
+  }
+  .screen-bar a { color: #fff; }
+  .screen-bar button {
+    appearance: none;
+    border: 0;
+    border-radius: 999px;
+    padding: 8px 14px;
+    font: inherit;
+    font-weight: 700;
+    background: #c299d1;
+    color: #2f2a2c;
+    cursor: pointer;
+  }
+  .desk { display: flex; justify-content: center; padding: 28px 16px 48px; }
+  .card {
+    width: 105mm;
+    min-height: 148mm;
+    background: #fff;
+    padding: 10mm 9mm 9mm;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    box-shadow: 0 16px 40px rgba(47, 42, 44, .16);
+  }
+  .logo { width: 42mm; height: auto; }
+  h1 {
+    margin-top: 7mm;
+    font-family: 'DM Serif Display', Georgia, serif;
+    font-weight: 400;
+    font-size: 22pt;
+    line-height: 1.05;
+  }
+  h1 em { font-style: italic; color: #8d6b9c; }
+  p {
+    margin-top: 3mm;
+    font-size: 11pt;
+    line-height: 1.35;
+    color: #635c5e;
+    max-width: 78mm;
+  }
+  .qr {
+    width: 48mm;
+    height: 48mm;
+    margin-top: 6mm;
+    border: 0.3mm solid rgba(47, 42, 44, 0.12);
+    border-radius: 2mm;
+    padding: 1.5mm;
+    background: #fff;
+  }
+  .url {
+    margin-top: 3mm;
+    font-size: 10pt;
+    font-weight: 800;
+    color: #8d6b9c;
+  }
+  @media print {
+    body { background: #fff; }
+    .screen-bar { display: none; }
+    .desk { padding: 0; }
+    .card { box-shadow: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="screen-bar">
+    <span>Show this, or print A6. The code opens <a href="/with-rosie">thenetworkeruk.com/with-rosie</a>.</span>
+    <button type="button" onclick="window.print()">Print</button>
+  </div>
+  <div class="desk">
+    <article class="card">
+      <img class="logo" src="assets/logo-nav-transparent.png?v=20260823uk3" alt="The Networker UK" width="220" height="86">
+      <h1>What we can do <em>for you</em></h1>
+      <p>Find events, run a masterclass, add a member offer, or advertise your business.</p>
+      <img class="qr" src="assets/marketing/qr-with-rosie.svg" alt="QR code for thenetworkeruk.com/with-rosie" width="240" height="240">
+      <p class="url">thenetworkeruk.com/with-rosie</p>
+    </article>
+  </div>
+</body>
+</html>
