@@ -44,7 +44,8 @@
     width: 210mm;
     height: 297mm;
     background: #fff;
-    padding: 22mm 18mm;
+    position: relative;
+    padding: 22mm 18mm 18mm;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -110,6 +111,16 @@
     font-weight: 800;
     color: #8d6b9c;
   }
+  .credit {
+    position: absolute;
+    left: 18mm;
+    right: 18mm;
+    bottom: 12mm;
+    font-size: 12pt;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: #635c5e;
+  }
   @media print {
     body { background: #fff; }
     .screen-bar { display: none !important; }
@@ -132,6 +143,10 @@
     h1 { font-size: 28pt; }
     li { font-size: 14pt; }
     .free { font-size: 32pt; }
+    .credit {
+      position: static;
+      margin-top: 18px;
+    }
   }
 </style>
 </head>
@@ -150,9 +165,10 @@
         <li>Add a member offer</li>
         <li>Find a new investment opportunity</li>
       </ul>
-      <p class="free">FOR FREE</p>
+      <p class="free">ALL FOR FREE</p>
       <img class="qr" src="assets/marketing/qr-with-rosie.svg" alt="QR code for thenetworkeruk.com/with-rosie" width="240" height="240">
       <p class="url">thenetworkeruk.com/with-rosie</p>
+      <p class="credit">Rosie McGilvray, Member of BMUK</p>
     </article>
   </div>
   <script src="js/with-rosie-card.js?v=20261014print1"></script>
