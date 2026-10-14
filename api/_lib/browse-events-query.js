@@ -394,11 +394,18 @@ async function fetchSlimRange(sb, params, select, from, to) {
   return data || [];
 }
 
+function markBrowseCap(rows, capped) {
+  if (capped) rows.capped = true;
+  return rows;
+}
+
 async function fetchAllMatchingSlim(sb, params, select) {
   const pageSize = 1000;
   const cap = hasGeoRadius(params) ? GEO_MATCH_CAP : 5000;
   const first = await fetchSlimRange(sb, params, select, 0, Math.min(pageSize, cap) - 1);
-  if (first.length < pageSize || pageSize >= cap) return first;
+  if (first.length < pageSize || pageSize >= cap) {
+    return markBrowseCap(first, first.length >= cap);
+  }
 
   // PostgREST caps a response at 1000 rows. The live catalogue fills that cap
   // (5 pages). Fetch the rest together — sequential pages were blowing the
@@ -411,11 +418,15 @@ async function fetchAllMatchingSlim(sb, params, select) {
     ranges.map(([from, to]) => fetchSlimRange(sb, params, select, from, to))
   );
   const rows = first.slice();
+  let filledCap = true;
   for (const batch of rest) {
     rows.push(...batch);
-    if (batch.length < pageSize) break;
+    if (batch.length < pageSize) {
+      filledCap = false;
+      break;
+    }
   }
-  return rows;
+  return markBrowseCap(rows, filledCap && rows.length >= cap);
 }
 
 const BROWSE_TYPE_TABS = [
@@ -484,10 +495,11 @@ function clearBrowseCatalogueCache() {
 async function fetchBrowseCatalogue(sb, params) {
   const scanParams = { ...params, types: [] };
   let rows = await fetchAllMatchingSlim(sb, scanParams, BROWSE_SLIM_SELECT);
+  const capped = !!rows.capped;
   if (hasGeoRadius(scanParams)) {
     rows = rows.filter((row) => rowPassesGeo(row, scanParams));
   }
-  return rows;
+  return markBrowseCap(rows, capped);
 }
 
 async function loadBrowseCatalogue(sb, params) {
@@ -840,7 +852,9 @@ async function hydrateBrowseEvents(sb, rows) {
 }
 
 async function fetchBrowsePageIds(sb, params) {
-  let filtered = filterRowsByTypes(await loadBrowseCatalogue(sb, params), params.types);
+  const catalogue = await loadBrowseCatalogue(sb, params);
+  const datesCapped = !!catalogue.capped;
+  let filtered = filterRowsByTypes(catalogue, params.types);
   if (needsOrganiserRatingSort(params)) {
     filtered = await attachOrganiserRatings(sb, filtered);
     if (params.fiveStarsOnly) {
@@ -850,9 +864,11 @@ async function fetchBrowsePageIds(sb, params) {
 
   const seriesCounts = countBrowseSeriesOccurrences(filtered);
   const sorted = sortRows(filtered, params.sort);
-  const dateTotal = sorted.length;
   const deduped = dedupeBrowseRowsBySeries(sorted);
   const listingTotal = deduped.length;
+  // A full 5,000-row scan is a ceiling, not the catalogue size. Don't publish
+  // that ceiling as "N dates".
+  const dateTotal = datesCapped ? listingTotal : sorted.length;
   const slice = deduped.slice(params.offset, params.offset + params.limit);
 
   return {
@@ -893,6 +909,7 @@ async function fetchBrowseEventsPage(sb, rawQuery) {
     } else {
       slim = await fetchAllMatchingSlim(sb, pinParams, PIN_SELECT);
     }
+    const datesCapped = !!slim.capped;
     if (ratingSort) {
       slim = await attachOrganiserRatings(sb, slim);
       if (params.fiveStarsOnly) {
@@ -901,8 +918,8 @@ async function fetchBrowseEventsPage(sb, rawQuery) {
     }
     const pinSeriesCounts = countBrowseSeriesOccurrences(slim);
     const sorted = sortRows(slim, params.sort);
-    const dateTotal = sorted.length;
     const deduped = dedupeBrowseRowsBySeries(sorted);
+    const dateTotal = datesCapped ? deduped.length : sorted.length;
     const pinSlice = deduped.slice(0, MAX_PINS);
     const withModes = await attachAttendanceModes(sb, pinSlice);
     const withExternal = await attachExternalBookingFields(sb, withModes);
