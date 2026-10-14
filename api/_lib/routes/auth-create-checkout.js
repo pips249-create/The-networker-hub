@@ -45,6 +45,7 @@ const {
 } = require('../ce-member-invites');
 const { availableEventQty, assertEventHasCapacity } = require('../event-capacity');
 const { enforceRateLimitAsync } = require('../rate-limit');
+const { assertTicketBuyerEmailVerified } = require('../ticket-email-verification');
 
 function parseBody(req) {
   let body = req.body;
@@ -119,12 +120,24 @@ module.exports = async function handler(req, res) {
   const submittedEmail = String(bodyEarly.email || '')
     .trim()
     .toLowerCase();
-  const checkoutEmail = sessionEmail || submittedEmail;
+
+  if (!session?.sub || !sessionEmail) {
+    return json(res, 401, {
+      ok: false,
+      error: 'not_authenticated',
+      message: 'Please sign in or create a free account to complete your booking.',
+    });
+  }
+  if (submittedEmail && submittedEmail !== sessionEmail) {
+    return json(res, 403, {
+      ok: false,
+      error: 'checkout_email_mismatch',
+      message: 'Tickets must be booked using the email address on your account.',
+    });
+  }
+  const checkoutEmail = sessionEmail;
   const checkoutName = String(bodyEarly.name || session?.name || '').trim();
 
-  if (!checkoutEmail) {
-    return json(res, 400, { ok: false, error: 'missing_email' });
-  }
   if (!checkoutName) {
     return json(res, 400, { ok: false, error: 'missing_name' });
   }
@@ -160,6 +173,9 @@ module.exports = async function handler(req, res) {
   }
 
   try {
+    const emailGate = await assertTicketBuyerEmailVerified(session, '/account/');
+    if (!emailGate.ok) return json(res, emailGate.status, emailGate.body);
+
     const body = bodyEarly;
     const eventId = String(body.eventId || body.event_id || '').trim();
     if (!isUuid(eventId)) {

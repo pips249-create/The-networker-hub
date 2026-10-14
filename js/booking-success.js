@@ -681,6 +681,13 @@
       });
 
       if (!res.ok || !data.ok) {
+        if (data.error === 'email_not_verified') {
+          const next = location.pathname + location.search;
+          window.location.assign(
+            data.redirect || '/organiser/verify-email?next=' + encodeURIComponent(next)
+          );
+          return;
+        }
         if (data.action === 'exists' || data.error === 'booking_failed') {
           await finishConfirmedBooking(
             pending,

@@ -9,7 +9,9 @@ const {
   buildOrganiserVerifyEmailPath,
   verifyEmailPagePath,
   buildEmailVerifyRedirect,
+  unverifiedAccountLoginRedirect,
 } = require('../api/_lib/organiser-email-verify-paths');
+const { isFreeTicketClaim } = require('../api/_lib/ticket-email-verification');
 
 const path = buildOrganiserVerifyEmailPath('482917', 'Organiser@Example.com');
 assert.match(path, /^\/organiser\/verify-email\?code=482917&email=/);
@@ -35,5 +37,33 @@ assert(signup.includes(encodeURIComponent('/welcome')));
 
 const noCode = buildEmailVerifyRedirect({ next: '/organiser/', email: 'a@b.com' });
 assert.equal(noCode, '/organiser/verify-email?email=a%40b.com&next=%2Forganiser%2F');
+
+assert.equal(
+  unverifiedAccountLoginRedirect({ verified: true, redirect: '/events/', email: 'a@b.com' }),
+  null
+);
+
+const loginRedirect = unverifiedAccountLoginRedirect({
+  verified: false,
+  redirect: '/events/breakfast',
+  email: 'Buyer@Example.com',
+});
+assert.match(loginRedirect, /^\/organiser\/verify-email\?/);
+assert.match(loginRedirect, /email=buyer%40example.com/);
+assert(loginRedirect.includes(encodeURIComponent('/events/breakfast')));
+assert.doesNotMatch(loginRedirect, /code=/);
+
+const alreadyVerify = unverifiedAccountLoginRedirect({
+  verified: false,
+  redirect: '/organiser/verify-email',
+  email: 'a@b.com',
+  fallbackNext: '/account/',
+});
+assert(alreadyVerify.includes(encodeURIComponent('/account/')));
+assert.doesNotMatch(alreadyVerify, /code=/);
+
+assert.equal(isFreeTicketClaim({ paymentStatus: 'Free' }), true);
+assert.equal(isFreeTicketClaim({ amountPaid: 0 }), true);
+assert.equal(isFreeTicketClaim({ paymentStatus: 'Paid', stripeCheckoutSessionId: 'cs_test' }), false);
 
 console.log('OK  organiser email verification paths');

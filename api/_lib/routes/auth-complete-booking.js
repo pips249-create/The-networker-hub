@@ -4,6 +4,10 @@ const { isSupabaseConfigured } = require('../supabase');
 const { verifyEventCheckoutPayment } = require('../verify-checkout-payment');
 const { parseBundleMetadata } = require('../series-bundle-checkout');
 const { bookingErrorResponse } = require('../booking-error-messages');
+const {
+  assertTicketBuyerEmailVerified,
+  isFreeTicketClaim,
+} = require('../ticket-email-verification');
 
 function parseBody(req) {
   let body = req.body;
@@ -39,6 +43,10 @@ module.exports = async function handler(req, res) {
 
   try {
     const body = parseBody(req);
+    if (isFreeTicketClaim(body)) {
+      const emailGate = await assertTicketBuyerEmailVerified(session, '/account/');
+      if (!emailGate.ok) return json(res, emailGate.status, emailGate.body);
+    }
     const payment = await verifyEventCheckoutPayment(body, session);
 
     const email = String(session.email || body.email || '')

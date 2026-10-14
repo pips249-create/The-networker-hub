@@ -22,6 +22,12 @@ const {
   redirectAfterOrganiserAuth,
 } = require('../organiser-auth-intent');
 const { touchLastSeen } = require('../hub-last-seen');
+const { getOrganiserAccessStatus } = require('../organiser-access-guard');
+const {
+  sendOrganiserEmailVerification,
+  hasActiveVerifyCode,
+} = require('../organiser-email-verification');
+const { unverifiedAccountLoginRedirect } = require('../organiser-email-verify-paths');
 
 const LOGIN_FAIL_MAX = 8;
 const LOGIN_FAIL_WINDOW_MS = 900_000;
@@ -208,6 +214,39 @@ module.exports = async function handler(req, res) {
       autoResult: autoEnable,
       defaultRedirect: redirect,
     });
+
+    try {
+      const accessStatus = await getOrganiserAccessStatus(sessionUser);
+      const verifyRedirect = unverifiedAccountLoginRedirect({
+        verified: accessStatus.organiserEmailVerified,
+        redirect,
+        email: sessionUser.email,
+        fallbackNext: body.next,
+      });
+      if (verifyRedirect) {
+        redirect = verifyRedirect;
+        try {
+          const hub = await sbAuth.getHubAccount(sessionUser.sub);
+          if (!hasActiveVerifyCode(hub)) {
+            await sendOrganiserEmailVerification({
+              userId: sessionUser.sub,
+              email: sessionUser.email,
+              name: sessionUser.name,
+            });
+          }
+        } catch (sendErr) {
+          console.error(
+            '[login] verification email',
+            sendErr && sendErr.message ? sendErr.message : sendErr
+          );
+        }
+      }
+    } catch (statusErr) {
+      console.error(
+        '[login] email verification status',
+        statusErr && statusErr.message ? statusErr.message : statusErr
+      );
+    }
 
     return json(res, 200, {
       ok: true,

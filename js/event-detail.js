@@ -158,6 +158,31 @@
     }
   }
 
+  function emailConfirmPath() {
+    const next = location.pathname + location.search;
+    return '/organiser/verify-email?next=' + encodeURIComponent(next);
+  }
+
+  async function ensureEmailConfirmedForTickets() {
+    let data = null;
+    try {
+      data = await fetchSessionData();
+    } catch (e) {
+      return true;
+    }
+    if (data && data.ok && data.user && data.organiserEmailVerified === false) {
+      window.location.assign(emailConfirmPath());
+      return false;
+    }
+    return true;
+  }
+
+  function redirectIfEmailNotVerified(data) {
+    if (!data || data.error !== 'email_not_verified') return false;
+    window.location.assign(data.redirect || emailConfirmPath());
+    return true;
+  }
+
   function authPageUrl(page, withCheckoutFlag) {
     const next = encodeURIComponent(location.pathname + location.search);
     let url = '/' + page + '?next=' + next;
@@ -2849,6 +2874,9 @@
         'Book all dates is not available for this ticket right now. Pick a single date instead.',
       already_going: "You're already going to this event. View your ticket in My account.",
       not_authenticated: 'Please sign in or create a free account to complete your booking.',
+      email_not_verified:
+        "Sorry, it seems you haven't confirmed your email. Please do so now.",
+      checkout_email_mismatch: 'Tickets must be booked using the email address on your account.',
       ticket_sales_platform_closed:
         'Ticket buying opens at 9am on 1 September 2026. You can browse events now — ticket interest alerts start then too.',
     };
@@ -2897,6 +2925,7 @@
       return true;
     }
     clearBookingPending();
+    if (redirectIfEmailNotVerified(data)) return false;
     throw new Error(checkoutErrorMessage(data));
   }
 
@@ -2949,6 +2978,7 @@
       return {};
     });
     if (!res.ok || !data.ok) {
+      if (redirectIfEmailNotVerified(data)) return false;
       throw new Error(checkoutErrorMessage(data));
     }
     if (data.completed) {
@@ -5576,6 +5606,7 @@
 
     async function processCheckoutBooking(isPaid) {
       clearCheckoutInlineError();
+      if (!(await ensureEmailConfirmedForTickets())) return;
       const ev = activeEvent();
       update();
       const tierEl = getSelectedTierEl();
@@ -5621,7 +5652,8 @@
       if (!paid) {
         setCheckoutSubmitting(true, 'Registering…');
         try {
-          await completeFreeBooking(ev, ticketId, qty, attendee, seriesCheckoutOptions());
+          const booked = await completeFreeBooking(ev, ticketId, qty, attendee, seriesCheckoutOptions());
+          if (booked === false) return;
         } catch (err) {
           setCheckoutSubmitting(false);
           throw err;
@@ -5631,7 +5663,8 @@
 
       setCheckoutSubmitting(true, 'Redirecting to payment…');
       try {
-        await startPaidCheckout(ev, ticketId, qty, attendee, seriesCheckoutOptions());
+        const started = await startPaidCheckout(ev, ticketId, qty, attendee, seriesCheckoutOptions());
+        if (started === false) return;
       } catch (err) {
         setCheckoutSubmitting(false);
         throw err;
@@ -5752,6 +5785,7 @@
             return;
           }
           await loadCheckoutSessionUser();
+          if (!(await ensureEmailConfirmedForTickets())) return;
           if (!(await ensureAttendeeProfileComplete())) return;
           if (needsCheckoutDetailsStep(evNow, qty)) {
             renderCheckoutGuestNames(qty);
@@ -5799,6 +5833,7 @@
           return;
         }
         await loadCheckoutSessionUser();
+        if (!(await ensureEmailConfirmedForTickets())) return;
         if (!(await ensureAttendeeProfileComplete())) return;
         const vatTreatment =
           window.HubBookingFees && typeof window.HubBookingFees.eventVatTreatment === 'function'

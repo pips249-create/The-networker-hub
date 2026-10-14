@@ -147,17 +147,19 @@ async function main() {
     else fail('reset rejects weak password', 'HTTP ' + r.status + ' ' + JSON.stringify(r.data).slice(0, 180));
   }
 
-  // Checkout: missing email still 400 (rate limit must not break validation path)
+  // Checkout: anonymous buyers cannot start a ticket (confirmed account required)
   {
     const r = await postJson('/api/auth/create-checkout', { name: 'Smoke Tester' });
-    if (r.status === 400 && (r.data.error === 'missing_email' || r.data.ok === false)) {
+    if (r.status === 401 && r.data.error === 'not_authenticated') {
+      ok('checkout requires sign-in', 'HTTP ' + r.status);
+    } else if (r.status === 400 && (r.data.error === 'missing_email' || r.data.ok === false)) {
       ok('checkout missing email', 'HTTP ' + r.status + ' ' + (r.data.error || ''));
     } else {
-      fail('checkout missing email', 'HTTP ' + r.status + ' ' + JSON.stringify(r.data).slice(0, 180));
+      fail('checkout requires sign-in', 'HTTP ' + r.status + ' ' + JSON.stringify(r.data).slice(0, 180));
     }
   }
 
-  // Checkout: with email hits rate-limit-then-validation (invalid event)
+  // Checkout: a raw email without a signed-in account cannot buy
   {
     const r = await postJson('/api/auth/create-checkout', {
       email: 'smoke-checkout-' + Date.now() + '@example.com',
@@ -165,6 +167,7 @@ async function main() {
       eventId: 'not-a-uuid',
     });
     if (
+      (r.status === 401 && r.data.error === 'not_authenticated') ||
       r.status === 400 ||
       r.status === 429 ||
       (r.status === 503 && r.data.error === 'supabase_not_configured')

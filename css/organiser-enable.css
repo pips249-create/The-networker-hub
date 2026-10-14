@@ -131,6 +131,10 @@
   box-sizing: border-box;
 }
 
+.auth-page--organiser-access a.auth-primary-btn[hidden] {
+  display: none !important;
+}
+
 .auth-page--organiser-access .auth-verify-status.is-success {
   background: #e3f5eb;
   border-color: #9dd9cc;

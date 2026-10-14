@@ -258,6 +258,8 @@
         'The organiser has not finished payout setup. Ticket sales are temporarily unavailable.',
       free_ticket_use_complete_booking: 'This is a free ticket — no payment is required.',
       not_authenticated: 'Please sign in to complete your booking.',
+      email_not_verified:
+        "Sorry, it seems you haven't confirmed your email. Please do so now.",
       registration_not_found: 'We could not find that booking. Refresh the page and try again.',
       registration_not_approved: 'Your application must be approved before you can complete your booking.',
       registration_already_paid: 'This booking is already paid.',
@@ -288,6 +290,13 @@
     const data = await res.json().catch(function () {
       return {};
     });
+    if (data.error === 'email_not_verified') {
+      const next = location.pathname + location.search;
+      window.location.assign(
+        data.redirect || '/organiser/verify-email?next=' + encodeURIComponent(next)
+      );
+      return null;
+    }
     if (!res.ok || !data.ok) {
       throw new Error(checkoutErrorMessage(data));
     }
@@ -309,6 +318,13 @@
     const data = await res.json().catch(function () {
       return {};
     });
+    if (data.error === 'email_not_verified') {
+      const next = location.pathname + location.search;
+      window.location.assign(
+        data.redirect || '/organiser/verify-email?next=' + encodeURIComponent(next)
+      );
+      return null;
+    }
     if (!res.ok || !data.ok) {
       if (data.error === 'free_ticket_use_complete_booking') {
         return completeFreeRegistration(reg);
@@ -346,6 +362,7 @@
     }
     try {
       const result = isFree ? await completeFreeRegistration(reg) : await startRegistrationCheckout(reg);
+      if (!result) return;
       if (result && !result.url) {
         await reloadDashboard();
         const updated = findRegistrationById(reg.id);
