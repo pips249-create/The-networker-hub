@@ -17,7 +17,7 @@
   var IMAGE_READ_ERROR = "Couldn't read that image. Use a JPG or PNG, or paste an image link.";
   var onChange = null;
 
-  /** Static playbooks — a compact row under partner offers; open the click-through deck. */
+  /** Static playbooks — a quiet list under partner offers; open the click-through deck. */
   var PLAYBOOKS =
     window.HubMemberPlaybooks && Array.isArray(window.HubMemberPlaybooks.catalog)
       ? window.HubMemberPlaybooks.catalog.map(function (book) {
@@ -339,24 +339,14 @@
   }
 
   function playbookCardHtml(book) {
-    var image = String(book.imageUrl || '').trim();
-    var safeImage = image.indexOf('/assets/') === 0 || /^https?:\/\//i.test(image) ? image : '';
     return (
-      '<article class="ad-playbook-chip" data-playbook-id="' +
+      '<article class="ad-playbook-link" data-playbook-id="' +
       esc(book.id) +
       '" role="listitem">' +
-      '<div class="ad-playbook-chip-media ad-service-media--' +
-      String(book.tone != null ? book.tone : 0) +
-      (safeImage ? ' has-image' : '') +
-      '">' +
-      (safeImage
-        ? '<img class="ad-service-img" src="' + esc(safeImage) + '" alt="" loading="lazy" />'
-        : '<span class="ad-service-initials" aria-hidden="true">' + esc(initials(book.title)) + '</span>') +
-      '<span class="ad-playbook-chip-pages">5 pages</span>' +
-      '</div>' +
-      '<h3 class="ad-playbook-chip-title">' +
+      '<h3 class="ad-playbook-link-title">' +
       esc(book.title) +
       '</h3>' +
+      '<span class="ad-playbook-link-go" aria-hidden="true">Open</span>' +
       '<button type="button" class="ad-service-card-link" data-playbook-open="' +
       esc(book.id) +
       '" aria-label="Open playbook: ' +
@@ -376,7 +366,6 @@
     }
     row.innerHTML = PLAYBOOKS.map(playbookCardHtml).join('');
     section.hidden = false;
-    bindOfferImages(row);
   }
 
   function bindOfferImages(root) {

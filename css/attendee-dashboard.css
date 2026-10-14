@@ -3440,93 +3440,51 @@ body.ad-share-modal-open {
   color: var(--ad-text-mid);
 }
 
-.ad-playbooks-row {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.ad-playbook-chip {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
+.ad-playbooks-list {
   background: var(--ad-white);
   border: 1px solid var(--ad-border-soft);
-  border-radius: 12px;
+  border-radius: 14px;
   overflow: hidden;
-  box-shadow: 0 1px 6px rgba(45, 38, 54, 0.05);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-.ad-playbook-chip:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(45, 38, 54, 0.1);
+.ad-playbook-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 13px 16px;
+  border-top: 1px solid var(--ad-border-soft);
 }
 
-.ad-playbook-chip-media,
-.ad-playbook-chip-title {
+.ad-playbook-link:first-child {
+  border-top: 0;
+}
+
+.ad-playbook-link:hover {
+  background: var(--ad-teal-pale);
+}
+
+.ad-playbook-link-title,
+.ad-playbook-link-go {
   position: relative;
   z-index: 1;
   pointer-events: none;
 }
 
-.ad-playbook-chip-media {
-  aspect-ratio: 16 / 10;
-  overflow: hidden;
-  display: grid;
-  place-items: center;
-}
-
-.ad-playbook-chip-media .ad-service-img {
-  position: absolute;
-  inset: 0;
-}
-
-.ad-playbook-chip-pages {
-  position: absolute;
-  z-index: 2;
-  top: 8px;
-  right: 8px;
-  max-width: calc(100% - 16px);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  line-height: 1.3;
-  padding: 3px 7px;
-  border-radius: 999px;
-  background: #d4a017;
-  color: #1a1200;
-  box-shadow: 0 2px 8px rgba(42, 38, 40, 0.22);
-}
-
-.ad-playbook-chip-title {
+.ad-playbook-link-title {
   margin: 0;
-  padding: 8px 10px 11px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--ad-slate);
+}
+
+.ad-playbook-link-go {
+  flex-shrink: 0;
   font-size: 13px;
   font-weight: 700;
-  line-height: 1.3;
-  color: var(--ad-slate);
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-@media (max-width: 1100px) {
-  .ad-playbooks-row {
-    grid-template-columns: none;
-    grid-auto-flow: column;
-    grid-auto-columns: minmax(168px, 42%);
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    padding-bottom: 6px;
-  }
-
-  .ad-playbook-chip {
-    scroll-snap-align: start;
-  }
+  color: var(--ad-teal-dark);
 }
 
 .ad-playbook-modal[hidden] {
