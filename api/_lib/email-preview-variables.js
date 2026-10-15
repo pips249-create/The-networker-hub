@@ -34,6 +34,11 @@ const {
 } = require('./email-sponsor-sections');
 const { campaignSiteVars, applyOrganiserLaunchInviteCopy } = require('./organiser-campaign-defaults');
 const { buildListingAlertSeriesCopy } = require('./listing-alert-series');
+const {
+  hubertDigestIntroHtml,
+  hubertProfilePromptHtml,
+  hubertLocationFooterHtml,
+} = require('./engagement-emails');
 
 function sampleRecommendationCard(title, subtitle, url) {
   return (
@@ -276,12 +281,10 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
 
   if (slug === 'attendee_hubert_event_concierge') {
     vars.month_label = 'July 2026';
-    vars.near_location_phrase = 'near York';
     vars.account_settings_url = site + '/account/settings';
-    vars.location_footer_html =
-      'Picks based on <strong style="color:#635c5e;">York</strong>. Change your location in <a href="' +
-      vars.account_settings_url +
-      '" style="color:#5b2f99;font-weight:600;text-decoration:none;">account settings</a> anytime. You receive this digest because marketing emails are turned on.';
+    vars.digest_intro_html = hubertDigestIntroHtml(vars.user_name, 'York', 'GB');
+    vars.profile_prompt_html = hubertProfilePromptHtml(site, 'York', 'GB');
+    vars.location_footer_html = hubertLocationFooterHtml(site, 'York', 'GB');
     vars.nearby_events_html =
       '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:1px;margin:0 0 12px;">Events within 25 miles of York</p>' +
       sampleRecommendationCard(

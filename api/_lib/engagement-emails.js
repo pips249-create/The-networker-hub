@@ -77,6 +77,46 @@ function locationTipHtml(siteUrl, location, countryCode) {
   );
 }
 
+function hubertNeedsLocationPrompt(location, countryCode) {
+  return isUkCountryCode(countryCode) && !nearbyLocationLabel(location);
+}
+
+/** Hubert digest intro. "Near you" only when a UK city or postcode is saved. */
+function hubertDigestIntroHtml(userName, location, countryCode) {
+  const name = escapeHtml(String(userName || '').trim() || 'there');
+  const greeting =
+    'Hello ' + name + ', I am Hubert, your business butler at The Networker UK. ';
+  if (!isUkCountryCode(countryCode)) {
+    return greeting + 'Here are online events, and a few that members are booking this month.';
+  }
+  const label = nearbyLocationLabel(location);
+  if (label) {
+    return (
+      greeting +
+      'Here are events near ' +
+      escapeHtml(label) +
+      ', and a few that members are booking this month.'
+    );
+  }
+  return greeting + 'Here are events members are booking this month.';
+}
+
+/** Ask UK members with no saved place to finish their profile before we claim picks are nearby. */
+function hubertProfilePromptHtml(siteUrl, location, countryCode) {
+  if (!hubertNeedsLocationPrompt(location, countryCode)) return '';
+  const href = accountSettingsUrl(siteUrl);
+  return (
+    '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 16px;background:#f7f4fb;border:1px solid rgba(69,45,92,0.12);border-radius:10px;">' +
+    '<tr><td style="padding:16px 18px;text-align:left;">' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:700;color:#452d5c;margin:0 0 6px;">Add your city or postcode</p>' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;line-height:1.55;color:#635c5e;margin:0 0 12px;">Then these emails can include personalised events near you.</p>' +
+    '<a href="' +
+    href +
+    '" style="display:inline-block;padding:10px 18px;background:#5b2f99;border-radius:8px;color:#ffffff;font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;font-weight:700;text-decoration:none;">Add your location &rarr;</a>' +
+    '</td></tr></table>'
+  );
+}
+
 /** Hubert digest footer — acknowledge saved location instead of always asking for it. */
 function hubertLocationFooterHtml(siteUrl, location, countryCode) {
   const href = accountSettingsUrl(siteUrl);
@@ -95,17 +135,17 @@ function hubertLocationFooterHtml(siteUrl, location, countryCode) {
   const label = nearbyLocationLabel(location);
   if (label) {
     return (
-      'Picks based on <strong style="color:#635c5e;">' +
+      'These are based on <strong style="color:#635c5e;">' +
       escapeHtml(label) +
       '</strong>. Change your location in <a href="' +
       href +
-      '" style="color:#5b2f99;font-weight:600;text-decoration:none;">account settings</a> anytime. You receive this digest because marketing emails are turned on.'
+      '" style="color:#5b2f99;font-weight:600;text-decoration:none;">account settings</a> at any time. You are receiving this because marketing emails are switched on.'
     );
   }
   return (
-    'Update your location in <a href="' +
+    'Add your city or postcode in <a href="' +
     href +
-    '" style="color:#5b2f99;font-weight:600;text-decoration:none;">account settings</a> to refine nearby picks. You receive this digest because marketing emails are turned on.'
+    '" style="color:#5b2f99;font-weight:600;text-decoration:none;">account settings</a> for personalised events. You are receiving this because marketing emails are switched on.'
   );
 }
 
@@ -1918,7 +1958,16 @@ async function sendDueHubertEventConciergeEmails(sb) {
             ...baseEmailVars(siteUrl),
             user_name: String(attendee.name || '').trim() || 'there',
             month_label: monthLabel,
-            near_location_phrase: nearLocationPhrase(attendee.location, attendee.country_code),
+            digest_intro_html: hubertDigestIntroHtml(
+              attendee.name,
+              attendee.location,
+              attendee.country_code
+            ),
+            profile_prompt_html: hubertProfilePromptHtml(
+              siteUrl,
+              attendee.location,
+              attendee.country_code
+            ),
             nearby_events_html: eventSections.nearby_events_html,
             popular_events_html: eventSections.popular_events_html,
             browse_events_url: browseEventsUrl(siteUrl),
@@ -1929,7 +1978,7 @@ async function sendDueHubertEventConciergeEmails(sb) {
               attendee.country_code
             ),
           },
-          subject: "Hubert's event picks for " + monthLabel,
+          subject: "The Networker UK's events for " + monthLabel,
         });
       } catch (sendErr) {
         await releaseRowTimestamp(sb, {
@@ -1995,4 +2044,7 @@ module.exports = {
   runEngagementEmailMaintenance,
   buildRecommendationsHtml,
   buildSignupNudgeEventsHtml,
+  hubertDigestIntroHtml,
+  hubertProfilePromptHtml,
+  hubertLocationFooterHtml,
 };

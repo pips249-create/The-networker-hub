@@ -58,7 +58,7 @@ function buildSponsorLogoMarkup(logo, name, logoBandBg) {
     safeLogo +
     '" alt="' +
     safeName +
-    '" width="140" style="max-width:140px;width:auto;max-height:48px;height:auto;display:block;margin:0 auto;border:0;">';
+    '" width="360" style="max-width:360px;width:auto;max-height:150px;height:auto;display:block;margin:0 auto;border:0;">';
   const band = String(logoBandBg || '').trim().toLowerCase();
   if (band && band !== EMAIL_SPONSOR_LOGO_BAND_FALLBACK) {
     return (

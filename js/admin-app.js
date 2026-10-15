@@ -16234,12 +16234,16 @@
           previewRecommendationsHtml();
       } else if (slug === 'attendee_hubert_event_concierge') {
         SAMPLE_VARS.month_label = 'July 2026';
-        SAMPLE_VARS.near_location_phrase = 'near York';
         SAMPLE_VARS.account_settings_url = previewOrigin + '/account/settings';
+        SAMPLE_VARS.digest_intro_html =
+          'Hello ' +
+          (SAMPLE_VARS.user_name || 'there') +
+          ', I am Hubert, your business butler at The Networker UK. Here are events near York, and a few that members are booking this month.';
+        SAMPLE_VARS.profile_prompt_html = '';
         SAMPLE_VARS.location_footer_html =
-          'Picks based on <strong style="color:#635c5e;">York</strong>. Change your location in <a href="' +
+          'These are based on <strong style="color:#635c5e;">York</strong>. Change your location in <a href="' +
           SAMPLE_VARS.account_settings_url +
-          '" style="color:#5b2f99;font-weight:600;text-decoration:none;">account settings</a> anytime. You receive this digest because marketing emails are turned on.';
+          '" style="color:#5b2f99;font-weight:600;text-decoration:none;">account settings</a> at any time. You are receiving this because marketing emails are switched on.';
         SAMPLE_VARS.nearby_events_html =
           '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:10px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:2.5px;margin:0 0 12px;">Events within 25 miles of York</p>' +
           previewRecommendationsHtml();
@@ -16602,7 +16606,7 @@
           attrEsc(logo) +
           '" alt="' +
           attrEsc(label) +
-          '" width="140" style="max-width:140px;width:100%;height:auto;display:block;margin:0 auto;">'
+          '" width="360" style="max-width:360px;width:auto;max-height:150px;height:auto;display:block;margin:0 auto;">'
         : '<span style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:600;color:#9a7aa8;">' +
           esc(label) +
           '</span>';
@@ -16668,7 +16672,7 @@
           '<p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2">Powered by</p>' +
           '<img src="' +
           attrEsc(logo) +
-          '" alt="" class="mx-auto max-h-12 w-auto" style="max-width:140px;display:block;">';
+          '" alt="" class="mx-auto w-auto" style="max-width:360px;max-height:150px;display:block;">';
       } else {
         el.innerHTML =
           '<p class="text-[10px] font-semibold uppercase tracking-wide text-slate-400 mb-2">Powered by</p>' +
