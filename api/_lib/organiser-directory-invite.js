@@ -3,6 +3,9 @@
  * look at The Networker UK, their new page, and the events directory.
  */
 const DIRECTORY_INVITE_SLUG = 'organiser_directory_invite';
+const DIRECTORY_NUDGE_SLUG = 'organiser_directory_invite_nudge';
+const DIRECTORY_DAY7_SLUG = 'organiser_directory_invite_day7';
+const DIRECTORY_DAY21_SLUG = 'organiser_directory_invite_day21';
 const UNCLAIMED_FOLLOWUP_SLUG = 'organiser_unclaimed_followup';
 
 function shouldSendDirectoryInvite(body) {
@@ -53,18 +56,21 @@ function directoryInviteCreateMessage({ sendInvite, invite, provision, email }) 
   return 'Networking group created as a draft (no invitation sent).';
 }
 
-async function sendOutreachEmail({ slug, to, host, organiser, claimUrl, actorEmail, source, campaign, idempotencyKey }) {
+async function sendOutreachEmail({ slug, to, host, organiser, claimUrl, actorEmail, source, campaign, idempotencyKey, extraVariables }) {
   const email = String(to || '')
     .trim()
     .toLowerCase();
   const name = String((organiser && organiser.name) || 'your group').trim() || 'your group';
   if (!email) return { sent: false, error: 'missing_email' };
-  const variables = directoryInviteVariables({
-    host,
-    groupName: name,
-    organiser,
-    claimUrl,
-  });
+  const variables = {
+    ...directoryInviteVariables({
+      host,
+      groupName: name,
+      organiser,
+      claimUrl,
+    }),
+    ...(extraVariables || {}),
+  };
   try {
     const { sendTemplatedEmail } = require('./send-template-email');
     const { supportEmail } = require('./hub-email-urls');
@@ -113,6 +119,52 @@ async function sendOrganiserDirectoryInvite({ to, host, organiser, claimUrl, act
   });
 }
 
+async function sendOrganiserDirectoryNudge({ to, host, organiser, claimUrl, actorEmail }) {
+  const organiserId = organiser && organiser.id ? String(organiser.id) : '';
+  return sendOutreachEmail({
+    slug: DIRECTORY_NUDGE_SLUG,
+    to,
+    host,
+    organiser,
+    claimUrl,
+    actorEmail,
+    source: 'directory_invite_nudge',
+    campaign: 'directory_invite_nudge',
+    idempotencyKey: organiserId ? 'dir-nudge-' + organiserId : undefined,
+  });
+}
+
+async function sendOrganiserDirectoryDay7({ to, host, organiser, claimUrl, actorEmail }) {
+  const organiserId = organiser && organiser.id ? String(organiser.id) : '';
+  return sendOutreachEmail({
+    slug: DIRECTORY_DAY7_SLUG,
+    to,
+    host,
+    organiser,
+    claimUrl,
+    actorEmail,
+    source: 'directory_invite_day7',
+    campaign: 'directory_invite_day7',
+    idempotencyKey: organiserId ? 'dir-day7-' + organiserId : undefined,
+  });
+}
+
+async function sendOrganiserDirectoryDay21({ to, host, organiser, claimUrl, actorEmail, extraVariables }) {
+  const organiserId = organiser && organiser.id ? String(organiser.id) : '';
+  return sendOutreachEmail({
+    slug: DIRECTORY_DAY21_SLUG,
+    to,
+    host,
+    organiser,
+    claimUrl,
+    actorEmail,
+    source: 'directory_invite_day21',
+    campaign: 'directory_invite_day21',
+    idempotencyKey: organiserId ? 'dir-day21-' + organiserId : undefined,
+    extraVariables,
+  });
+}
+
 async function sendOrganiserUnclaimedFollowup({ to, host, organiser, claimUrl, actorEmail }) {
   const organiserId = organiser && organiser.id ? String(organiser.id) : '';
   const day = new Date().toISOString().slice(0, 10);
@@ -131,10 +183,16 @@ async function sendOrganiserUnclaimedFollowup({ to, host, organiser, claimUrl, a
 
 module.exports = {
   DIRECTORY_INVITE_SLUG,
+  DIRECTORY_NUDGE_SLUG,
+  DIRECTORY_DAY7_SLUG,
+  DIRECTORY_DAY21_SLUG,
   UNCLAIMED_FOLLOWUP_SLUG,
   shouldSendDirectoryInvite,
   directoryInviteVariables,
   directoryInviteCreateMessage,
   sendOrganiserDirectoryInvite,
+  sendOrganiserDirectoryNudge,
+  sendOrganiserDirectoryDay7,
+  sendOrganiserDirectoryDay21,
   sendOrganiserUnclaimedFollowup,
 };

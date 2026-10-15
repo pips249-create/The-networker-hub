@@ -90,9 +90,23 @@ const PLACEHOLDER_RE = /\{\{\s*([a-zA-Z0-9_]+)\s*\}\}/g;
 const DEFAULT_RESEND_FROM_NAME = 'The Networker UK';
 const DEFAULT_RESEND_FROM_EMAIL = 'hello@mail.thenetworkeruk.com';
 
+/** Old Hub sending domains. Production still had RESEND_FROM on these. */
+function isLegacyHubMailAddress(email) {
+  const domain = String(email || '')
+    .split('@')
+    .pop();
+  return (
+    domain === 'thenetworkerhub.com' ||
+    domain.endsWith('.thenetworkerhub.com') ||
+    domain === 'thenetworkerhub.co.uk' ||
+    domain.endsWith('.thenetworkerhub.co.uk')
+  );
+}
+
 /**
  * Always send with a friendly from-name so inboxes show "The Networker UK"
  * instead of only the mail.thenetworkeruk.com address.
+ * Hub-domain From addresses are rewritten to the UK mail domain.
  */
 function formatResendFrom(raw) {
   const configured = String(raw || '').trim();
@@ -105,7 +119,7 @@ function formatResendFrom(raw) {
   } else if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(configured)) {
     email = configured.toLowerCase();
   }
-  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || isLegacyHubMailAddress(email)) {
     email = DEFAULT_RESEND_FROM_EMAIL;
   }
   return '"' + DEFAULT_RESEND_FROM_NAME + '" <' + email + '>';
@@ -729,6 +743,9 @@ function shouldSkipEmailAllowlist(slug) {
     slug === 'account_welcome' ||
     slug === 'organiser_launch_invite' ||
     slug === 'organiser_directory_invite' ||
+    slug === 'organiser_directory_invite_nudge' ||
+    slug === 'organiser_directory_invite_day7' ||
+    slug === 'organiser_directory_invite_day21' ||
     slug === 'organiser_unclaimed_followup' ||
     slug === 'organiser_call_followup' ||
     slug === 'organiser_claim_invite' ||
@@ -757,6 +774,9 @@ function shouldAttachListUnsubscribe(slug) {
     s === 'organiser_rebrand_announcement' ||
     s === 'organiser_launch_invite' ||
     s === 'organiser_directory_invite' ||
+    s === 'organiser_directory_invite_nudge' ||
+    s === 'organiser_directory_invite_day7' ||
+    s === 'organiser_directory_invite_day21' ||
     s === 'organiser_unclaimed_followup' ||
     s === 'organiser_call_followup' ||
     s === 'organiser_claim_invite' ||

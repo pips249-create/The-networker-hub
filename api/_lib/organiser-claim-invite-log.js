@@ -9,6 +9,9 @@ const CLAIM_INVITE_SLUGS = new Set([
   'organiser_claim_invite',
   'organiser_launch_invite',
   'organiser_directory_invite',
+  'organiser_directory_invite_nudge',
+  'organiser_directory_invite_day7',
+  'organiser_directory_invite_day21',
   'organiser_unclaimed_followup',
 ]);
 

@@ -8,7 +8,12 @@ const { json, setCors } = require('../auth');
 const { useSupabase } = require('../supabase');
 const { enforceRateLimitAsync } = require('../rate-limit');
 const { verifyUnsubscribeToken, maskEmail } = require('../unsubscribe-token');
-const { applyEmailUnsubscribe, isEmail } = require('../email-unsubscribe');
+const {
+  applyEmailUnsubscribe,
+  isEmail,
+  normalizeUnsubscribeReason,
+  normalizeUnsubscribeNote,
+} = require('../email-unsubscribe');
 
 function readBody(req) {
   let body = req.body;
@@ -148,8 +153,25 @@ async function handlePost(req, res) {
     return json(res, 429, { error: 'rate_limited', message, retryAfterSec: limited.retryAfterSec });
   }
 
+  const reason = oneClick ? 'mail_app' : normalizeUnsubscribeReason(body.reason);
+  const note = oneClick ? '' : normalizeUnsubscribeNote(body.note);
+  if (!oneClick && !reason) {
+    const message = 'Choose a reason so we know why you are unsubscribing.';
+    if (wantsHtml(req)) return sendHtml(res, 400, message);
+    return json(res, 400, { error: 'reason_required', message });
+  }
+  if (!oneClick && reason === 'other' && !note) {
+    const message = 'Tell us a little more about why you are unsubscribing.';
+    if (wantsHtml(req)) return sendHtml(res, 400, message);
+    return json(res, 400, { error: 'note_required', message });
+  }
+
   try {
-    await applyEmailUnsubscribe(email);
+    await applyEmailUnsubscribe(email, {
+      source: oneClick ? 'one_click' : 'unsubscribe_page',
+      reason: reason,
+      note: note,
+    });
   } catch (err) {
     const status = err.status || 500;
     const message = err.message || 'Could not unsubscribe. Email hi@thenetworkeruk.com and we will remove you.';

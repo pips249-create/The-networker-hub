@@ -22,6 +22,7 @@ const routes = {
   'roster-emails': require('./_lib/routes/cron-roster-emails'),
   'group-updates': require('./_lib/routes/cron-group-updates'),
   'affiliate-commissions': require('./_lib/routes/cron-affiliate-commissions'),
+  'directory-invite-nudge': require('./_lib/routes/cron-directory-invite-nudge'),
 };
 
 module.exports = wrapHandler(async function handler(req, res) {

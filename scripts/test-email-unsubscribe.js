@@ -14,6 +14,7 @@ const {
 } = require('../api/_lib/unsubscribe-token');
 const { unsubscribeUrl, oneClickUnsubscribeUrl } = require('../api/_lib/hub-email-urls');
 const { ensureUnsubscribeLink } = require('../api/_lib/email-footer-unsubscribe');
+const { normalizeUnsubscribeReason, unsubscribeReasonLabel } = require('../api/_lib/email-unsubscribe');
 
 const email = 'Alex.Morgan@Example.com';
 const token = createUnsubscribeToken(email);
@@ -59,5 +60,16 @@ assert.ok(authSource.includes("unsubscribe: require('./_lib/routes/auth-unsubscr
 const settings = require('fs').readFileSync(require('path').join(__dirname, '../account/settings.html'), 'utf8');
 assert.ok(settings.includes('id="as-unsub-guest-form"'));
 assert.ok(settings.includes('id="as-unsubscribe-all"'));
+assert.ok(settings.includes('id="as-unsub-reason"'));
+
+const pageHtml = require('fs').readFileSync(require('path').join(__dirname, '../unsubscribe.html'), 'utf8');
+assert.ok(pageHtml.includes('id="unsub-reason"'));
+assert.ok(pageHtml.includes('value="too_many"'));
+assert.strictEqual(normalizeUnsubscribeReason('too_many'), 'too_many');
+assert.strictEqual(normalizeUnsubscribeReason('nope'), '');
+assert.strictEqual(unsubscribeReasonLabel('never_signed_up'), "I didn't sign up");
+
+const adminSource = require('fs').readFileSync(require('path').join(__dirname, '../api/admin.js'), 'utf8');
+assert.ok(adminSource.includes("unsubscribes: require('./_lib/routes/admin-unsubscribes')"));
 
 console.log('email unsubscribe checks passed');

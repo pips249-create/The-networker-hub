@@ -34,6 +34,7 @@ const routes = {
   'event-intake': require('./_lib/routes/admin-event-intake'),
   'sponsor-clicks': require('./_lib/routes/admin-sponsor-clicks'),
   emails: require('./_lib/routes/admin-emails'),
+  unsubscribes: require('./_lib/routes/admin-unsubscribes'),
   'event-health': require('./_lib/routes/admin-event-health'),
   organisers: require('./_lib/routes/admin-organisers'),
   opportunities: require('./_lib/routes/admin-opportunities'),

@@ -73,7 +73,9 @@
 }
 
 .auth-field > input[type='email'],
-.auth-field > input[type='text'] {
+.auth-field > input[type='text'],
+.auth-field > select,
+.auth-field > textarea {
   width: 100%;
   box-sizing: border-box;
   font-family: inherit;

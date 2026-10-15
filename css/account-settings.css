@@ -337,7 +337,9 @@
   color: var(--as-text-dark);
 }
 
-.as-unsub-guest input[type='email'] {
+.as-unsub-guest input[type='email'],
+.as-unsub-guest select,
+.as-unsub-guest textarea {
   width: 100%;
   box-sizing: border-box;
   font: inherit;

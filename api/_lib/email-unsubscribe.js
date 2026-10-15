@@ -46,9 +46,56 @@ async function clearSuppression(email) {
   return true;
 }
 
-async function setEmailSuppressed(email, suppressed) {
+const UNSUBSCRIBE_REASONS = {
+  too_many: 'Too many emails',
+  not_relevant: 'Not relevant to me',
+  never_signed_up: "I didn't sign up",
+  no_longer_organise: 'I no longer run this group',
+  other: 'Something else',
+  account_settings: 'Turned off in account settings',
+  mail_app: 'Unsubscribed from their mail app',
+};
+
+const GENERIC_REASONS = {
+  account_settings: true,
+  mail_app: true,
+};
+
+const UNSUBSCRIBE_SOURCES = {
+  unsubscribe: 'Unsubscribe page',
+  unsubscribe_page: 'Unsubscribe page',
+  one_click: 'Mail app',
+  account_settings: 'Account settings',
+  manual: 'Added by us',
+};
+
+function normalizeUnsubscribeReason(value) {
+  const key = String(value || '').trim().toLowerCase().slice(0, 40);
+  return UNSUBSCRIBE_REASONS[key] ? key : '';
+}
+
+function normalizeUnsubscribeNote(value) {
+  return String(value || '').replace(/\s+/g, ' ').trim().slice(0, 280);
+}
+
+function unsubscribeReasonLabel(reason) {
+  const key = String(reason || '').trim();
+  return UNSUBSCRIBE_REASONS[key] || '';
+}
+
+function unsubscribeSourceLabel(source) {
+  const key = String(source || '').trim();
+  return UNSUBSCRIBE_SOURCES[key] || (key ? key : 'Unsubscribe page');
+}
+
+async function setEmailSuppressed(email, suppressed, options) {
   try {
-    if (suppressed) return await recordSuppression(email);
+    if (suppressed) {
+      return await recordSuppression(
+        email,
+        Object.assign({ source: 'account_settings', reason: 'account_settings' }, options)
+      );
+    }
     return await clearSuppression(email);
   } catch (err) {
     if (isMissingTable(err)) return false;
@@ -56,18 +103,46 @@ async function setEmailSuppressed(email, suppressed) {
   }
 }
 
-async function recordSuppression(email) {
+async function recordSuppression(email, options) {
   const em = String(email || '').trim().toLowerCase();
   if (!isEmail(em)) return false;
+  const opts = options || {};
   const sb = getSupabaseAdmin();
-  const { error } = await sb.from('email_suppressions').upsert(
-    {
-      email: em,
-      unsubscribed_at: new Date().toISOString(),
-      source: 'unsubscribe',
-    },
-    { onConflict: 'email' }
-  );
+  const reason = normalizeUnsubscribeReason(opts.reason);
+  const note = normalizeUnsubscribeNote(opts.note);
+  const source = String(opts.source || 'unsubscribe').trim().slice(0, 40) || 'unsubscribe';
+
+  let existing = null;
+  const current = await sb
+    .from('email_suppressions')
+    .select('reason, reason_note, source')
+    .eq('email', em)
+    .maybeSingle();
+  if (!current.error) existing = current.data;
+
+  if (existing && existing.reason && GENERIC_REASONS[reason] && !GENERIC_REASONS[existing.reason]) {
+    return true;
+  }
+
+  const payload = {
+    email: em,
+    unsubscribed_at: new Date().toISOString(),
+    source: source,
+    reason: reason || null,
+    reason_note: reason === 'other' ? note || null : null,
+  };
+  let { error } = await sb.from('email_suppressions').upsert(payload, { onConflict: 'email' });
+  if (error && /reason/i.test(String(error.message || ''))) {
+    const fallback = await sb.from('email_suppressions').upsert(
+      {
+        email: em,
+        unsubscribed_at: payload.unsubscribed_at,
+        source: source,
+      },
+      { onConflict: 'email' }
+    );
+    error = fallback.error;
+  }
   if (error) {
     if (isMissingTable(error)) return false;
     throw new Error(error.message);
@@ -109,7 +184,7 @@ async function clearHubOptionalEmail(userId, role) {
  * Always resolves for a valid address so the public page can confirm without
  * revealing whether an account exists.
  */
-async function applyEmailUnsubscribe(email) {
+async function applyEmailUnsubscribe(email, options) {
   const em = String(email || '').trim().toLowerCase();
   if (!isEmail(em)) {
     const err = new Error('Enter a valid email address.');
@@ -124,7 +199,7 @@ async function applyEmailUnsubscribe(email) {
   if (user && user.id) {
     hubUpdated = await clearHubOptionalEmail(user.id, user.role);
   }
-  const suppressed = await recordSuppression(em);
+  const suppressed = await recordSuppression(em, options);
   return {
     email: em,
     updated: hubUpdated || suppressed || !user,
@@ -136,4 +211,8 @@ module.exports = {
   isEmailSuppressed,
   setEmailSuppressed,
   applyEmailUnsubscribe,
+  normalizeUnsubscribeReason,
+  normalizeUnsubscribeNote,
+  unsubscribeReasonLabel,
+  unsubscribeSourceLabel,
 };

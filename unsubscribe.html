@@ -35,6 +35,21 @@
         <input type="email" id="unsub-email" name="email" autocomplete="email" required placeholder="you@company.com">
       </div>
       <p id="unsub-masked" hidden style="margin:0 0 16px;font-weight:600;"></p>
+      <div class="auth-field">
+        <label for="unsub-reason">Why are you unsubscribing?</label>
+        <select id="unsub-reason" name="reason" required>
+          <option value="">Choose a reason</option>
+          <option value="too_many">Too many emails</option>
+          <option value="not_relevant">Not relevant to me</option>
+          <option value="never_signed_up">I didn't sign up</option>
+          <option value="no_longer_organise">I no longer run this group</option>
+          <option value="other">Something else</option>
+        </select>
+      </div>
+      <div class="auth-field" id="unsub-note-field" hidden>
+        <label for="unsub-note">Tell us a little more</label>
+        <textarea id="unsub-note" name="note" maxlength="280" rows="3" placeholder="What should we know?"></textarea>
+      </div>
       <div class="auth-actions">
         <button type="submit" class="auth-submit" id="unsub-submit">Unsubscribe</button>
       </div>
@@ -104,13 +119,38 @@
       });
   }
 
+  var reasonSelect = document.getElementById('unsub-reason');
+  var noteField = document.getElementById('unsub-note-field');
+  var noteInput = document.getElementById('unsub-note');
+  if (reasonSelect) {
+    reasonSelect.addEventListener('change', function () {
+      var other = reasonSelect.value === 'other';
+      if (noteField) noteField.hidden = !other;
+      if (noteInput) noteInput.required = other;
+    });
+  }
+
   if (!form) return;
   form.addEventListener('submit', function (e) {
     if (!window.fetch) return;
     e.preventDefault();
     var btn = document.getElementById('unsub-submit');
     if (btn) btn.disabled = true;
-    var payload = {};
+    var reasonEl = document.getElementById('unsub-reason');
+    var noteEl = document.getElementById('unsub-note');
+    var reason = reasonEl ? reasonEl.value : '';
+    if (!reason) {
+      showMessage('Choose a reason so we know why you are unsubscribing.', false);
+      if (btn) btn.disabled = false;
+      return;
+    }
+    var note = noteEl ? noteEl.value.trim() : '';
+    if (reason === 'other' && !note) {
+      showMessage('Tell us a little more about why you are unsubscribing.', false);
+      if (btn) btn.disabled = false;
+      return;
+    }
+    var payload = { reason: reason, note: note };
     if (token && emailField && emailField.hidden) payload.token = token;
     else if (emailInput) payload.email = emailInput.value.trim();
     fetch('/api/auth/unsubscribe', {

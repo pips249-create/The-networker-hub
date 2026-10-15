@@ -477,6 +477,14 @@
         'Check the CRM log before messaging so you do not double-contact the same group.',
       ],
     },
+    'email-unsubscribed': {
+      title: 'How to read unsubscribes',
+      steps: [
+        'Each row is an address that opted out of optional emails.',
+        'The reason is what they chose on the unsubscribe page. Mail-app unsubscribes have no written reason.',
+        'Booking confirmations and password resets still go out. This list is optional mail only.',
+      ],
+    },
     campaigns: {
       title: 'How to send email campaigns',
       steps: [
@@ -1863,6 +1871,9 @@
         : PAGE_META.users.subtitle;
     }
     if (route === 'email') {
+      if (hash.indexOf('unsubscribed') !== -1) {
+        return 'People who opted out of optional emails, and the reason they gave.';
+      }
       return hash.indexOf('templates') !== -1 ? PAGE_META.emails.subtitle : PAGE_META.campaigns.subtitle;
     }
     if (route === 'social') {
@@ -1993,6 +2004,9 @@
       title = PAGE_META['social-founding'].title;
       subtitle = PAGE_META['social-founding'].subtitle;
     }
+    if (route === 'email' && String(fullHash || '').indexOf('unsubscribed') !== -1) {
+      title = 'Unsubscribed';
+    }
     if (route === 'sponsorship' && fullHash) {
       if (fullHash === 'sponsorship/home-partners') {
         title = 'Home page — Partners & sponsors';
@@ -2070,6 +2084,7 @@
       return hash.indexOf('impersonate') !== -1 ? 'impersonate' : 'users';
     }
     if (route === 'email') {
+      if (hash.indexOf('unsubscribed') !== -1) return 'email-unsubscribed';
       return hash.indexOf('templates') !== -1 ? 'emails' : 'campaigns';
     }
     if (route === 'social') {
@@ -16452,6 +16467,9 @@
       'organiser_claim_invite',
       'organiser_launch_invite',
       'organiser_directory_invite',
+      'organiser_directory_invite_nudge',
+      'organiser_directory_invite_day7',
+      'organiser_directory_invite_day21',
       'organiser_unclaimed_followup',
       'organiser_rebrand_announcement',
       'event_intake_received',
@@ -31559,17 +31577,86 @@
   }
 
 
+  function renderEmailUnsubscribes() {
+    main.innerHTML =
+      '<div class="space-y-4" id="email-unsub-root">' +
+      '<p class="text-sm text-slate-500" id="email-unsub-status">Loading unsubscribes…</p>' +
+      '</div>';
+    adminGet('/api/admin/unsubscribes').then(function (data) {
+      var root = document.getElementById('email-unsub-root');
+      if (!root) return;
+      if (!data || data.ok === false) {
+        root.innerHTML =
+          '<p class="text-sm text-rose-700">' +
+          esc((data && data.message) || 'Could not load unsubscribes.') +
+          '</p>';
+        return;
+      }
+      var rows = data.rows || [];
+      if (!rows.length) {
+        root.innerHTML =
+          '<p class="text-sm text-slate-600">No one has unsubscribed yet. New opt-outs from the email footer will show here with the reason they chose.</p>';
+        return;
+      }
+      var body = rows
+        .map(function (row) {
+          var when = row.unsubscribedAt ? new Date(row.unsubscribedAt) : null;
+          var whenLabel =
+            when && !isNaN(when.getTime())
+              ? when.toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short' })
+              : '';
+          var reason = row.reasonLabel || 'No reason given';
+          if (row.note) reason += ' - ' + row.note;
+          return (
+            '<tr class="border-t border-slate-200">' +
+            '<td class="px-3 py-2 align-top">' +
+            esc(row.email || '') +
+            '</td>' +
+            '<td class="px-3 py-2 align-top whitespace-nowrap">' +
+            esc(whenLabel) +
+            '</td>' +
+            '<td class="px-3 py-2 align-top">' +
+            esc(reason) +
+            '</td>' +
+            '<td class="px-3 py-2 align-top">' +
+            esc(row.sourceLabel || '') +
+            '</td>' +
+            '</tr>'
+          );
+        })
+        .join('');
+      root.innerHTML =
+        '<p class="text-sm text-slate-600">' +
+        rows.length +
+        (rows.length === 1 ? ' address has' : ' addresses have') +
+        ' opted out of optional emails.</p>' +
+        '<div class="overflow-x-auto rounded-xl border border-slate-200 bg-white">' +
+        '<table class="min-w-full text-sm text-left">' +
+        '<thead class="bg-slate-50 text-slate-600">' +
+        '<tr>' +
+        '<th class="px-3 py-2 font-semibold">Email</th>' +
+        '<th class="px-3 py-2 font-semibold">When</th>' +
+        '<th class="px-3 py-2 font-semibold">Reason</th>' +
+        '<th class="px-3 py-2 font-semibold">How</th>' +
+        '</tr></thead><tbody>' +
+        body +
+        '</tbody></table></div>';
+    });
+  }
+
   function renderEmailHub(fullHash) {
-    var tab = resolveHubTab(fullHash, 'email', ['campaigns', 'templates'], 'campaigns');
+    var tab = resolveHubTab(fullHash, 'email', ['campaigns', 'templates', 'unsubscribed'], 'campaigns');
     if (!tab) return;
     var tabsHtml = adminHubTabsHtml(
       [
         { key: 'campaigns', label: 'Campaigns', href: '#email/campaigns' },
         { key: 'templates', label: 'Templates', href: '#email/templates' },
+        { key: 'unsubscribed', label: 'Unsubscribed', href: '#email/unsubscribed' },
       ],
       tab
     );
-    if (tab === 'templates') withHubTabs(tabsHtml, renderEmails);
+    if (tab === 'unsubscribed') withHubTabs(tabsHtml, renderEmailUnsubscribes);
+    else if (tab === 'templates') withHubTabs(tabsHtml, renderEmails);
     else withHubTabs(tabsHtml, renderCampaigns);
   }
 

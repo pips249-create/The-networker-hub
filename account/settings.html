@@ -38,6 +38,17 @@
         </p>
         <label for="as-unsub-email">Email address</label>
         <input type="email" id="as-unsub-email" name="email" autocomplete="email" required placeholder="you@company.com" />
+        <label for="as-unsub-reason">Why are you unsubscribing?</label>
+        <select id="as-unsub-reason" name="reason" required>
+          <option value="">Choose a reason</option>
+          <option value="too_many">Too many emails</option>
+          <option value="not_relevant">Not relevant to me</option>
+          <option value="never_signed_up">I didn't sign up</option>
+          <option value="no_longer_organise">I no longer run this group</option>
+          <option value="other">Something else</option>
+        </select>
+        <label for="as-unsub-note" id="as-unsub-note-label" hidden>Tell us a little more</label>
+        <textarea id="as-unsub-note" name="note" maxlength="280" rows="3" hidden placeholder="What should we know?"></textarea>
         <button type="submit" class="as-btn as-btn-primary" id="as-unsub-guest-submit">Unsubscribe</button>
         <p class="as-unsub-status" id="as-unsub-guest-status" hidden role="status"></p>
         <p class="as-unsub-signin">

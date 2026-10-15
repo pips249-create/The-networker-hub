@@ -76,6 +76,8 @@ async function main() {
   assert(html.indexOf('/organisers/city-connectors') !== -1, 'page link substituted');
   assert(html.indexOf('background:#d4a853') !== -1, 'primary button uses the gold accent');
   assert(html.indexOf('{{') === -1, 'no unresolved placeholders');
+  assert(html.indexOf('https://www.thenetworkeruk.com/unsubscribe') !== -1, 'invite has an unsubscribe link');
+  assert(!/[\u2013\u2014]|&ndash;|&mdash;/.test(html), 'invite uses hyphens, not en dashes');
   assert(html.indexOf('See your page') !== -1, 'page button');
   pass('template builds — ' + subject);
 

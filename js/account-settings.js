@@ -422,19 +422,42 @@
     status.className = 'as-unsub-status' + (ok ? ' is-ok' : message ? ' is-error' : '');
   }
 
+  document.getElementById('as-unsub-reason')?.addEventListener('change', (e) => {
+    const other = e.target && e.target.value === 'other';
+    const note = document.getElementById('as-unsub-note');
+    const label = document.getElementById('as-unsub-note-label');
+    if (note) {
+      note.hidden = !other;
+      note.required = other;
+    }
+    if (label) label.hidden = !other;
+  });
+
   document.getElementById('as-unsub-guest-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const input = document.getElementById('as-unsub-email');
+    const reasonEl = document.getElementById('as-unsub-reason');
+    const noteEl = document.getElementById('as-unsub-note');
     const btn = document.getElementById('as-unsub-guest-submit');
     const email = input ? input.value.trim() : '';
+    const reason = reasonEl ? reasonEl.value : '';
+    const note = noteEl ? noteEl.value.trim() : '';
     if (!email) return;
+    if (!reason) {
+      setGuestUnsubStatus('Choose a reason so we know why you are unsubscribing.', false);
+      return;
+    }
+    if (reason === 'other' && !note) {
+      setGuestUnsubStatus('Tell us a little more about why you are unsubscribing.', false);
+      return;
+    }
     setGuestUnsubStatus('', true);
     if (btn) btn.disabled = true;
     try {
       const res = await fetch('/api/auth/unsubscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, reason, note }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || data.ok === false) {

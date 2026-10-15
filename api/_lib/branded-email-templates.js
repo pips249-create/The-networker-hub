@@ -52,6 +52,21 @@ const BRANDED_EMAIL_TEMPLATES = {
     marker: 'hub-email-layout-v3-purple',
     subject: "We love what you're doing at {{group_name}}",
   },
+  organiser_directory_invite_nudge: {
+    file: 'organiser-directory-invite-nudge.html',
+    marker: 'hub-email-layout-v3-purple',
+    subject: 'Your page for {{group_name}} is still here',
+  },
+  organiser_directory_invite_day7: {
+    file: 'organiser-directory-invite-day7.html',
+    marker: 'hub-email-layout-v3-purple',
+    subject: "Re: We love what you're doing at {{group_name}}",
+  },
+  organiser_directory_invite_day21: {
+    file: 'organiser-directory-invite-day21.html',
+    marker: 'hub-email-layout-v3-purple',
+    subject: 'A quick update for {{group_name}}',
+  },
   organiser_unclaimed_followup: {
     file: 'organiser-unclaimed-followup.html',
     marker: 'hub-email-layout-v3-purple',

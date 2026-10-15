@@ -808,7 +808,13 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     }
   }
 
-  if (slug === 'organiser_directory_invite' || slug === 'organiser_unclaimed_followup') {
+  if (
+    slug === 'organiser_directory_invite' ||
+    slug === 'organiser_directory_invite_nudge' ||
+    slug === 'organiser_directory_invite_day7' ||
+    slug === 'organiser_directory_invite_day21' ||
+    slug === 'organiser_unclaimed_followup'
+  ) {
     const { directoryInviteVariables } = require('./organiser-directory-invite');
     Object.assign(
       vars,
@@ -821,6 +827,10 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
           site + '/organisers/city-connectors?email=hello@example.com&intent=organiser-claim',
       })
     );
+    if (slug === 'organiser_directory_invite_day21' && !vars.hosts_line) {
+      const { hostsLine } = require('./organiser-directory-nudge');
+      vars.hosts_line = hostsLine(['Top Clubs', 'Harbour & City Hosts']);
+    }
   }
 
   if (slug === 'organiser_team_invite') {
