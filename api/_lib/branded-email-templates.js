@@ -50,7 +50,7 @@ const BRANDED_EMAIL_TEMPLATES = {
   organiser_directory_invite: {
     file: 'organiser-directory-invite.html',
     marker: 'hub-email-layout-v3-purple',
-    subject: "You haven't heard of us, but we've heard of {{group_name}}",
+    subject: "We love what you're doing at {{group_name}}",
   },
   organiser_unclaimed_followup: {
     file: 'organiser-unclaimed-followup.html',
