@@ -1153,13 +1153,18 @@
     return { ok: res.ok, status: res.status, data };
   }
 
+  let lastEventFetchStatus = 0;
+
   async function fetchEventForEdit(eventId, bootstrapEvents) {
+    lastEventFetchStatus = 0;
     const res = await api('/api/organiser/events?id=' + encodeURIComponent(eventId));
+    lastEventFetchStatus = res.status;
     if (res.ok && res.data.event) return res.data.event;
 
     const cached = (bootstrapEvents || []).find((e) => e.id === eventId) || null;
     if (!res.ok) {
       const retry = await api('/api/organiser/events?id=' + encodeURIComponent(eventId));
+      lastEventFetchStatus = retry.status;
       if (retry.ok && retry.data.event) return retry.data.event;
     }
 
@@ -2447,9 +2452,9 @@
             }
           }
           prefillFromEvent(ev);
-        } else {
+        } else if (lastEventFetchStatus === 404) {
           showAlert(
-            'Could not load this event. Try again from My Events, or check you have access to this listing.'
+            'This event was deleted or is no longer available. Go back to My Events and open a current listing.'
           );
           if (isEmbedDrawer && editId && window.parent && window.parent !== window) {
             window.parent.postMessage(
@@ -2457,6 +2462,10 @@
               window.location.origin
             );
           }
+        } else if (lastEventFetchStatus !== 403) {
+          showAlert(
+            'Could not open this event. It is still in My Events — go back and open it again.'
+          );
         }
         return;
       }

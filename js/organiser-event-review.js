@@ -996,14 +996,14 @@
     if (ticketsRes.status === 401 || eventRes.status === 401) {
       const next = encodeURIComponent(location.pathname + location.search);
       location.href = '../login?next=' + next;
-      return false;
+      return 'auth';
     }
 
     loadedTickets =
       ticketsRes.ok && Array.isArray(ticketsRes.data.tickets) ? ticketsRes.data.tickets : [];
     anchorEvent = eventRes.ok && eventRes.data.event ? eventRes.data.event : null;
 
-    if (!anchorEvent) return false;
+    if (!anchorEvent) return eventRes.status === 404 ? 'missing' : false;
 
     if (anchorEvent.title && !seriesMeta.title) seriesMeta.title = anchorEvent.title;
     if (anchorEvent.organiserGroupId && !seriesMeta.organiserGroupId) {
@@ -1329,9 +1329,13 @@
       if (loading) loading.hide();
     }
 
-    if (!ok) {
+    if (ok === 'auth') return;
+
+    if (ok !== true) {
       showAlert(
-        'This event was deleted or is no longer available. Go back to My Events and open a current listing.',
+        ok === 'missing'
+          ? 'This event was deleted or is no longer available. Go back to My Events and open a current listing.'
+          : 'Could not open this event. It is still in My Events — go back and open it again.',
         'warn'
       );
       return;

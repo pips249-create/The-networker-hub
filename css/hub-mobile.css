@@ -3031,8 +3031,15 @@ body.nav-menu-open {
   .organiser-event-edit-page .ee-wrap {
     width: 100%;
     max-width: 100%;
-    padding: 12px 14px calc(96px + env(safe-area-inset-bottom, 0px)) !important;
+    padding: 12px 14px calc(168px + env(safe-area-inset-bottom, 0px)) !important;
     box-sizing: border-box;
+  }
+
+  .organiser-event-edit-page .ee-field,
+  .organiser-event-edit-page .ee-tier-price-mode,
+  .organiser-event-edit-page .ee-attendance-card {
+    scroll-margin-top: 96px;
+    scroll-margin-bottom: 160px;
   }
 
   .organiser-event-edit-page .ee-top-bar,

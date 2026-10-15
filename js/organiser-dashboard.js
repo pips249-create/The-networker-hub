@@ -9035,9 +9035,12 @@
           ? eventOrId
           : findEventById(editId);
       if (!ev || !ev.id) {
-        if ((drawerOpts.fromTickets || drawerOpts.fromLocation || drawerOpts.launchSetup) && editId) {
+        // The events list can omit a draft that still exists. Open by id and let
+        // the editor decide — only a 404 from that load means the listing is gone.
+        if (editId) {
           const frameOpts = { editId: editId };
           if (drawerOpts.seriesEdit) frameOpts.seriesEdit = true;
+          if (drawerOpts.seriesDate) frameOpts.seriesDate = true;
           if (drawerOpts.launchSetup) frameOpts.launchSetup = true;
           frameUrl = eventEditorFrameUrl(frameOpts);
           const drawerUi = eventDrawerCreateFlow ? { progressStep: 'details' } : null;

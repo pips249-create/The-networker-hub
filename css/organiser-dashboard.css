@@ -10514,7 +10514,7 @@ body.org-event-drawer-open {
 }
 
 .org-event-drawer .org-group-drawer-panel {
-  width: min(1140px, 67vw);
+  width: min(1140px, 100%);
   max-width: 100%;
 }
 

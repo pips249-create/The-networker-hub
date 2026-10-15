@@ -1053,7 +1053,7 @@ a.ee-wizard-link:hover {
   background: var(--ee-white);
   border: 1px solid var(--ee-border);
   border-radius: var(--ee-radius);
-  overflow: hidden;
+  overflow: visible;
   box-shadow: 0 1px 3px rgba(45, 27, 94, 0.05);
 }
 
@@ -5067,9 +5067,16 @@ body.ee-embed-drawer.organiser-event-edit-page {
 body.ee-embed-drawer .ee-wrap {
   max-width: none;
   width: 100%;
-  padding: 0 16px 24px !important;
+  padding: 0 16px calc(128px + env(safe-area-inset-bottom, 0px)) !important;
   margin: 0 !important;
   box-sizing: border-box;
+}
+
+body.ee-embed-drawer .ee-field,
+body.ee-embed-drawer .ee-tier-price-mode,
+body.ee-embed-drawer .ee-attendance-card {
+  scroll-margin-top: 20px;
+  scroll-margin-bottom: 140px;
 }
 
 body.ee-embed-drawer .ee-grid--create {

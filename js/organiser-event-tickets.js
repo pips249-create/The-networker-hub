@@ -270,6 +270,9 @@
       const price = Number(row.querySelector('.ee-tier-price')?.value);
       return !Number.isFinite(price) || price <= 0;
     });
+    if (namedTierMissingPriceChoice()) {
+      blockers.push('Choose free or paid for each ticket');
+    }
     if (unpaidNamed) {
       blockers.push('Enter a price for each paid ticket');
     }
@@ -391,6 +394,9 @@
       const price = Number(row.querySelector('.ee-tier-price')?.value);
       return !Number.isFinite(price) || price <= 0;
     });
+    if (namedTierMissingPriceChoice()) {
+      blockers.push('Choose free or paid for each ticket');
+    }
     if (unpaidNamed) {
       blockers.push('Enter a price for each paid ticket');
     }
@@ -1807,9 +1813,10 @@
       '<div class="ee-field ee-tier-price-mode-field">' +
       '<span class="ee-label-block">Is this ticket free or paid?</span>' +
       '<div class="ee-tier-price-mode" role="group" aria-label="Free or paid">' +
-      '<button type="button" class="ee-tier-price-mode-btn is-active" data-price-mode="free" aria-pressed="true">Free</button>' +
+      '<button type="button" class="ee-tier-price-mode-btn" data-price-mode="free" aria-pressed="false">Free</button>' +
       '<button type="button" class="ee-tier-price-mode-btn" data-price-mode="paid" aria-pressed="false">Paid</button>' +
       '</div>' +
+      '<p class="ee-hint ee-hint--below ee-tier-price-choice-hint">Choose free or paid before this ticket can be saved.</p>' +
       '<p class="ee-hint ee-hint--below ee-tier-price-mode-hint">You can have a Free ticket and a paid ticket. Complimentary visits below are an optional limited trial (1–3) for networking groups — not a Free ticket for everyone.</p>' +
       '<p class="ee-hint ee-hint-warn ee-complimentary-visit-hint" hidden></p>' +
       '</div>' +
@@ -1896,8 +1903,17 @@
     });
     const qtyLabel = hasUnlimited && count ? 'unlimited' : String(totalQty);
     const fromPrice = minPrice == null ? 0 : Number(minPrice);
-    const priceLabel =
-      minPrice == null || fromPrice === 0
+    const priceUnset = Array.from(rows).some(function (row) {
+      const name = row.querySelector('.ee-tier-name')?.value.trim();
+      if (!name) return false;
+      const chosen = row.getAttribute('data-price-chosen');
+      if (chosen === 'free' || chosen === 'paid') return false;
+      const price = Number(row.querySelector('.ee-tier-price')?.value);
+      return !(Number.isFinite(price) && price > 0);
+    });
+    const priceLabel = priceUnset
+      ? 'choose free or paid'
+      : minPrice == null || fromPrice === 0
         ? 'Free'
         : count > 1
           ? 'from £' + fromPrice.toFixed(2)
@@ -1941,28 +1957,39 @@
     field.hidden = !seriesHasMultipleDates();
   }
 
+  function namedTierMissingPriceChoice() {
+    return Array.from(document.querySelectorAll('.ee-tier-row')).some(function (row) {
+      const name = row.querySelector('.ee-tier-name')?.value.trim();
+      if (!name) return false;
+      const chosen = row.getAttribute('data-price-chosen');
+      if (chosen === 'free' || chosen === 'paid') return false;
+      const price = Number(row.querySelector('.ee-tier-price')?.value);
+      return !(Number.isFinite(price) && price > 0);
+    });
+  }
+
   function syncTierPriceMode(row) {
     if (!row) return;
     const priceEl = row.querySelector('.ee-tier-price');
     const priceField = row.querySelector('.ee-tier-price-field');
     const raw = String((priceEl && priceEl.value) || '').trim();
     const price = Number(raw);
-    const paidSelected = Boolean(
-      row.querySelector('.ee-tier-price-mode-btn.is-active[data-price-mode="paid"]')
-    );
-    const isFree =
-      Number.isFinite(price) && price > 0 ? false : paidSelected ? false : true;
+    let mode = row.getAttribute('data-price-chosen') || '';
+    if (Number.isFinite(price) && price > 0) mode = 'paid';
     row.querySelectorAll('.ee-tier-price-mode-btn').forEach(function (btn) {
-      const mode = btn.getAttribute('data-price-mode');
-      const active = isFree ? mode === 'free' : mode === 'paid';
+      const btnMode = btn.getAttribute('data-price-mode');
+      const active = Boolean(mode) && btnMode === mode;
       btn.classList.toggle('is-active', active);
       btn.setAttribute('aria-pressed', active ? 'true' : 'false');
     });
-    if (priceField) priceField.hidden = isFree;
+    if (priceField) priceField.hidden = mode !== 'paid';
+    const hint = row.querySelector('.ee-tier-price-choice-hint');
+    if (hint) hint.hidden = Boolean(mode);
   }
 
   function setTierPriceMode(row, mode) {
     if (!row) return;
+    row.setAttribute('data-price-chosen', mode === 'paid' ? 'paid' : 'free');
     const priceEl = row.querySelector('.ee-tier-price');
     const priceField = row.querySelector('.ee-tier-price-field');
     const paid = mode === 'paid';
@@ -2008,7 +2035,7 @@
       const price = Number(row.querySelector('.ee-tier-price')?.value);
       return !Number.isFinite(price) || price <= 0;
     }
-    return true;
+    return Boolean(row.querySelector('.ee-tier-price-mode-btn.is-active[data-price-mode="free"]'));
   }
 
   function publicTierRowIsPaid(row) {
@@ -2286,6 +2313,11 @@
     if (descEl) descEl.value = ticket.description || '';
     const priceEl = row.querySelector('.ee-tier-price');
     if (priceEl) priceEl.value = ticket.price === '' || ticket.price == null ? '0' : String(ticket.price);
+    const savedPrice = Number(ticket.price);
+    row.setAttribute(
+      'data-price-chosen',
+      Number.isFinite(savedPrice) && savedPrice > 0 ? 'paid' : 'free'
+    );
     const qtyEl = row.querySelector('.ee-tier-qty');
     if (qtyEl) {
       const qtyNorm = normalizeTicketQuantity(ticket.quantityAvailable);
@@ -3933,7 +3965,12 @@
     const tickets =
       ticketsRes.ok && Array.isArray(ticketsRes.data.tickets) ? ticketsRes.data.tickets : [];
     const event = eventRes.ok && eventRes.data.event ? eventRes.data.event : null;
-    return { tickets, event, authFailed: false };
+    return {
+      tickets,
+      event,
+      authFailed: false,
+      missing: eventRes.status === 404,
+    };
   }
 
   /** True when this date already has its own attendance / ticket setup. */
@@ -5178,6 +5215,26 @@
     syncAttendanceStepUi();
   }
 
+  function bindKeepFieldsClearOfStickyBars() {
+    const root = document.getElementById('ee-tickets-form');
+    if (!root || root.dataset.stickyClearBound === '1') return;
+    root.dataset.stickyClearBound = '1';
+    root.addEventListener('focusin', function (e) {
+      const el = e.target;
+      if (!el || !el.closest) return;
+      const field = el.closest('.ee-field, .ee-tier-price-mode') || el;
+      window.requestAnimationFrame(function () {
+        const bar = document.getElementById('ee-tickets-actions');
+        const barTop =
+          bar && !bar.hidden ? bar.getBoundingClientRect().top : window.innerHeight;
+        const rect = field.getBoundingClientRect();
+        if (rect.bottom > barTop - 12 || rect.top < 16) {
+          field.scrollIntoView({ block: 'center', inline: 'nearest' });
+        }
+      });
+    });
+  }
+
   function bindNumberInputScrollFriendly() {
     const root = document.getElementById('ee-tickets-form') || document.querySelector('.ee-wrap');
     if (!root || root.dataset.numberWheelBound === '1') return;
@@ -5202,6 +5259,7 @@
     loadSeriesMeta();
     bindGuestPassesFields();
     bindAttendanceStep1Ui();
+    bindKeepFieldsClearOfStickyBars();
     if (!eventIds.length) {
       showAlert('No events in this series. Go back and save your event dates first.', 'warn');
       ticketsUiReady = true;
@@ -5295,7 +5353,9 @@
         /* ignore */
       }
       showAlert(
-        'This event was deleted or is no longer available. Go back to My Events and open a current listing.',
+        loaded.missing
+          ? 'This event was deleted or is no longer available. Go back to My Events and open a current listing.'
+          : 'Could not open this event. It is still in My Events — go back and open it again.',
         'warn'
       );
       notifyEmbedDrawerReady();
