@@ -642,6 +642,9 @@
   var spotlightSlotsCache = null;
   var spotlightOrganiserState = { q: '', featured: '' };
   var spotlightOpportunityState = { q: '', featured: '' };
+  var spotlightEventSearchResults = null;
+  var spotlightEventSearchLoading = false;
+  var spotlightEventSearchFetchToken = 0;
   var spotlightOpportunitySearchResults = null;
   var spotlightOpportunitySearchLoading = false;
   var spotlightOpportunitiesCatalogTotal = null;
@@ -23958,11 +23961,150 @@
     );
   }
 
-  function filterFeaturedSpotlightEvents(events) {
+  function mergeSpotlightEventRowsById(primary, extra) {
+    var byId = new Map();
+    (primary || []).forEach(function (row) {
+      if (row && row.id != null) byId.set(String(row.id), row);
+    });
+    (extra || []).forEach(function (row) {
+      if (!row || row.id == null) return;
+      var key = String(row.id);
+      if (!byId.has(key)) byId.set(key, row);
+    });
+    return Array.from(byId.values());
+  }
+
+  function spotlightEventListSource() {
+    if (spotlightEventSearchResults != null) return spotlightEventSearchResults;
+    return featuredSpotlightEvents;
+  }
+
+  function patchSpotlightEventLocalRow(id, wantFeatured, until, dataRow) {
+    [featuredSpotlightEvents, spotlightEventSearchResults].forEach(function (list) {
+      if (!list) return;
+      var idx = list.findIndex(function (row) {
+        return String(row.id) === String(id);
+      });
+      if (idx >= 0 && dataRow) {
+        list[idx] = Object.assign({}, list[idx], dataRow);
+      } else if (idx < 0 && dataRow) {
+        list.push(dataRow);
+        idx = list.length - 1;
+      }
+      if (idx >= 0) {
+        list[idx].featured = wantFeatured;
+        list[idx].featured_until = wantFeatured ? until : null;
+        list[idx].featuredUntil = wantFeatured ? until : null;
+      }
+    });
+  }
+
+  function fetchSpotlightEventSearchPages(q) {
+    var PAGE = 50;
+    var offset = 0;
+    var collected = [];
+    var total = null;
+    var query = encodeURIComponent(q);
+
+    function loadNext() {
+      return adminGet(
+        '/api/admin/events?approval_status=Approved&q=' +
+          query +
+          '&limit=' +
+          PAGE +
+          '&offset=' +
+          offset +
+          '&sort=date&light=1'
+      ).then(function (data) {
+        if (!data || !data.ok) return { ok: false, data: data, events: collected, total: total };
+        if (total == null && data.total != null) total = data.total;
+        var batch = data.events || [];
+        collected = mergeSpotlightEventRowsById(collected, batch);
+        offset += batch.length;
+        var hasMore =
+          batch.length > 0 &&
+          (data.hasMore === true || (total != null && collected.length < total));
+        if (hasMore && offset < 500) return loadNext();
+        return { ok: true, events: collected, total: total != null ? total : collected.length };
+      });
+    }
+
+    function loadOrganiserMatchedEvents() {
+      return adminGet('/api/admin/organisers?q=' + query + '&limit=25').then(function (orgData) {
+        var organisers = (orgData && orgData.organisers) || [];
+        if (!organisers.length) return { ok: true, events: [] };
+        var chain = Promise.resolve([]);
+        organisers.slice(0, 10).forEach(function (org) {
+          if (!org || !org.id) return;
+          chain = chain.then(function (rows) {
+            return adminGet(
+              '/api/admin/events?approval_status=Approved&organiser_id=' +
+                encodeURIComponent(org.id) +
+                '&limit=50&sort=date&light=1'
+            ).then(function (evData) {
+              if (!evData || !evData.ok) return rows;
+              return mergeSpotlightEventRowsById(rows, evData.events || []);
+            });
+          });
+        });
+        return chain.then(function (events) {
+          return { ok: true, events: events || [] };
+        });
+      });
+    }
+
+    return Promise.all([loadNext(), loadOrganiserMatchedEvents()]).then(function (parts) {
+      var titleSearch = parts[0];
+      var orgSearch = parts[1];
+      if ((!titleSearch || !titleSearch.ok) && (!orgSearch || !orgSearch.ok)) {
+        return { ok: false, events: [], total: 0 };
+      }
+      var events = mergeSpotlightEventRowsById(
+        titleSearch && titleSearch.ok ? titleSearch.events : [],
+        orgSearch && orgSearch.ok ? orgSearch.events : []
+      );
+      return {
+        ok: true,
+        events: events,
+        total: Math.max(
+          (titleSearch && titleSearch.total) || 0,
+          events.length
+        ),
+      };
+    });
+  }
+
+  function runSpotlightEventSearch(q) {
+    var trimmed = String(q || '').trim();
+    if (!trimmed) {
+      spotlightEventSearchResults = null;
+      spotlightEventSearchLoading = false;
+      paintFeaturedSpotlightTable();
+      return;
+    }
+    var token = ++spotlightEventSearchFetchToken;
+    spotlightEventSearchLoading = true;
+    paintFeaturedSpotlightTable();
+    fetchSpotlightEventSearchPages(trimmed).then(function (result) {
+      if (token !== spotlightEventSearchFetchToken) return;
+      spotlightEventSearchLoading = false;
+      if (!result || !result.ok) {
+        spotlightEventSearchResults = [];
+        paintFeaturedSpotlightTable();
+        return;
+      }
+      spotlightEventSearchResults = result.events || [];
+      paintFeaturedSpotlightTable();
+    });
+  }
+
+  function filterFeaturedSpotlightEvents(events, opts) {
+    opts = opts || {};
     var q = String(featuredSpotlightState.q || '').trim();
     var featured = featuredSpotlightState.featured;
     var type = featuredSpotlightState.eventType;
     var when = featuredSpotlightState.when;
+    var skipTextSearch = opts.skipTextSearch === true;
     var now = Date.now();
     return (events || []).filter(function (ev) {
       if (featured === 'active' && !isSpotlightEventActiveInCarousel(ev)) return false;
@@ -23976,7 +24118,7 @@
         if (!ev.starts_at) return false;
         if (new Date(ev.starts_at).getTime() >= now) return false;
       }
-      if (!q) return true;
+      if (skipTextSearch || !q) return true;
       var hay =
         String(ev.title || '') +
         ' ' +
@@ -24012,19 +24154,30 @@
   function paintFeaturedSpotlightTable() {
     var tbody = document.getElementById('featured-tbody');
     var status = document.getElementById('featured-status');
-    var events = featuredSpotlightEvents || [];
-    var rows = filterFeaturedSpotlightEvents(events);
+    var events = spotlightEventListSource();
+    var usingServerSearch = spotlightEventSearchResults != null;
+    var rows = filterFeaturedSpotlightEvents(events, { skipTextSearch: usingServerSearch });
     if (status) {
-      var filterActive =
-        featuredSpotlightState.q ||
-        featuredSpotlightState.featured ||
-        featuredSpotlightState.eventType ||
-        featuredSpotlightState.when;
-      status.textContent = featuredSpotlightStatusText(events, rows, filterActive);
+      if (spotlightEventSearchLoading) {
+        status.textContent = 'Searching approved events…';
+      } else {
+        var filterActive =
+          featuredSpotlightState.q ||
+          featuredSpotlightState.featured ||
+          featuredSpotlightState.eventType ||
+          featuredSpotlightState.when;
+        status.textContent = featuredSpotlightStatusText(events, rows, filterActive);
+      }
     }
     if (!tbody) return;
+    if (spotlightEventSearchLoading && !(events && events.length)) {
+      tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-6 text-slate-500">Searching…</td></tr>';
+      return;
+    }
     if (!events.length) {
-      tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-6 text-slate-500">No approved events yet.</td></tr>';
+      tbody.innerHTML = usingServerSearch
+        ? '<tr><td colspan="7" class="px-4 py-6 text-slate-500">No approved events match that search. Try another name, organiser, or city — or clear filters.</td></tr>'
+        : '<tr><td colspan="7" class="px-4 py-6 text-slate-500">No approved events yet.</td></tr>';
       return;
     }
     if (!rows.length) {
@@ -24375,29 +24528,36 @@
     var whenEl = document.getElementById('featured-spotlight-when');
     var clearBtn = document.getElementById('featured-spotlight-clear');
 
-    function syncFromControls() {
-      featuredSpotlightState.q = searchEl ? searchEl.value : '';
+    function syncFilters() {
       featuredSpotlightState.featured = featuredEl ? featuredEl.value : '';
       featuredSpotlightState.eventType = typeEl ? typeEl.value : '';
       featuredSpotlightState.when = whenEl ? whenEl.value : '';
       paintFeaturedSpotlightTable();
     }
 
+    function syncSearch() {
+      featuredSpotlightState.q = searchEl ? searchEl.value : '';
+      runSpotlightEventSearch(featuredSpotlightState.q);
+    }
+
     if (searchEl) {
       searchEl.addEventListener('input', function () {
         if (featuredSpotlightSearchTimer) clearTimeout(featuredSpotlightSearchTimer);
-        featuredSpotlightSearchTimer = setTimeout(syncFromControls, 200);
+        featuredSpotlightSearchTimer = setTimeout(syncSearch, 200);
       });
     }
-    if (featuredEl) featuredEl.addEventListener('change', syncFromControls);
-    if (typeEl) typeEl.addEventListener('change', syncFromControls);
-    if (whenEl) whenEl.addEventListener('change', syncFromControls);
+    if (featuredEl) featuredEl.addEventListener('change', syncFilters);
+    if (typeEl) typeEl.addEventListener('change', syncFilters);
+    if (whenEl) whenEl.addEventListener('change', syncFilters);
     if (clearBtn) {
       clearBtn.addEventListener('click', function () {
         featuredSpotlightState.q = '';
         featuredSpotlightState.featured = '';
         featuredSpotlightState.eventType = '';
         featuredSpotlightState.when = 'upcoming';
+        spotlightEventSearchResults = null;
+        spotlightEventSearchLoading = false;
+        spotlightEventSearchFetchToken += 1;
         if (searchEl) searchEl.value = '';
         if (featuredEl) featuredEl.value = '';
         if (typeEl) typeEl.value = '';
@@ -24594,7 +24754,7 @@
                 return;
               }
               if (kind === 'event') {
-                applyLocalFeatured(featuredSpotlightEvents, row.id, false, null, 'event', data.event);
+                patchSpotlightEventLocalRow(row.id, false, null, data.event);
               } else if (kind === 'organiser') {
                 applyLocalFeatured(
                   featuredSpotlightOrganisers,
@@ -24665,12 +24825,10 @@
                 ? untilVal + 'T23:59:59.000Z'
                 : untilVal;
             if (kind === 'event') {
-              applyLocalFeatured(
-                featuredSpotlightEvents,
+              patchSpotlightEventLocalRow(
                 id,
                 true,
                 (data.event && (data.event.featured_until || data.event.featuredUntil)) || untilIso,
-                'event',
                 data.event
               );
               paintFeaturedSpotlightTable();
@@ -24747,9 +24905,9 @@
               var clearedIds = data.clearedSeriesEventIds || [];
               clearedIds.forEach(function (cid) {
                 if (String(cid) === String(id)) return;
-                applyLocalFeatured(featuredSpotlightEvents, cid, false, null, 'event');
+                patchSpotlightEventLocalRow(cid, false, null, null);
               });
-              applyLocalFeatured(featuredSpotlightEvents, id, wantFeatured, untilIso, 'event', data.event);
+              patchSpotlightEventLocalRow(id, wantFeatured, untilIso, data.event);
               featuredSpotlightLoadGen += 1;
               paintFeaturedSpotlightTable();
             } else if (kind === 'organiser') {
@@ -24803,19 +24961,6 @@
       tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-6 text-slate-500">Loading…</td></tr>';
     }
 
-    function mergeSpotlightRows(primary, secondary) {
-      var byId = new Map();
-      (primary || []).forEach(function (row) {
-        if (row && row.id != null) byId.set(String(row.id), row);
-      });
-      (secondary || []).forEach(function (row) {
-        if (!row || row.id == null) return;
-        var key = String(row.id);
-        if (!byId.has(key)) byId.set(key, row);
-      });
-      return Array.from(byId.values());
-    }
-
     Promise.all([
       adminGet('/api/admin/events?approval_status=Approved&featured=1&limit=100&sort=date&light=1'),
       adminGet('/api/admin/events?approval_status=Approved&limit=100&sort=date&light=1&when=upcoming'),
@@ -24842,12 +24987,16 @@
           }
           return;
         }
-        featuredSpotlightEvents = mergeSpotlightRows(
+        featuredSpotlightEvents = mergeSpotlightEventRowsById(
           featuredData && featuredData.ok ? featuredData.events : [],
           upcomingData && upcomingData.ok ? upcomingData.events : []
         );
         try {
-          paintFeaturedSpotlightTable();
+          if (featuredSpotlightState.q) {
+            runSpotlightEventSearch(featuredSpotlightState.q);
+          } else {
+            paintFeaturedSpotlightTable();
+          }
         } catch (err) {
           if (status) status.textContent = 'Could not display events.';
           if (tbody) {
@@ -24936,6 +25085,8 @@
     loadSpotlightSlotBanner();
     bindFeaturedSpotlightFilters();
     bindSpotlightToggleHandlers();
+    spotlightEventSearchResults = null;
+    spotlightEventSearchLoading = false;
     loadFeaturedSpotlightEvents();
   }
 
