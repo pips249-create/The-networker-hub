@@ -1,7 +1,6 @@
 const { setSessionCookie, json, setCors, hubViewFromRequest } = require('../auth');
 const { useSupabase } = require('../supabase');
 const sbAuth = require('../supabase-auth');
-const { sendAccountWelcomeEmail } = require('../account-emails');
 const { enforceRateLimitAsync, clientIp } = require('../rate-limit');
 const { verifyTurnstileToken } = require('../turnstile');
 const { validateNewPassword } = require('../password-policy');
@@ -9,7 +8,6 @@ const { getOrganiserAccessStatus } = require('../organiser-access-guard');
 const { sendOrganiserEmailVerification } = require('../organiser-email-verification');
 const {
   isOrganiserAuthIntent,
-  isOrganiserClaimNext,
   maybeAutoEnableOrganiserAccess,
   redirectAfterOrganiserAuth,
   buildEmailVerifyRedirect,
@@ -118,19 +116,6 @@ module.exports = async function handler(req, res) {
     let redirect = body.next || '/welcome';
     if (hubViewFromRequest(req) === 'organiser' && !body.next) {
       redirect = '/welcome';
-    }
-
-    try {
-      // Claim flow sends organiser_claim_confirmed right after Yes — skip generic welcome.
-      const claimSignup =
-        String(body.intent || '')
-          .trim()
-          .toLowerCase() === 'organiser-claim' || isOrganiserClaimNext(body.next);
-      if (!claimSignup) {
-        await sendAccountWelcomeEmail({ email, name });
-      }
-    } catch {
-      /* Registration succeeds even if welcome email fails */
     }
 
     try {

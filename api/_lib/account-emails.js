@@ -36,15 +36,19 @@ function buildAccountWelcomeVars({ email, name, siteUrl }) {
   };
 }
 
-async function sendAccountWelcomeEmail({ email, name, siteUrl }) {
+async function sendAccountWelcomeEmail({ email, name, siteUrl, userId }) {
   const to = String(email || '').trim().toLowerCase();
   if (!to) return { ok: false, skipped: true, reason: 'missing_email' };
 
   const variables = buildAccountWelcomeVars({ email: to, name, siteUrl });
+  const idempotencyKey = (
+    'account-welcome:' + (String(userId || '').trim() || to)
+  ).slice(0, 256);
   return sendTemplatedEmail({
     slug: 'account_welcome',
     to,
     variables,
+    idempotencyKey,
   });
 }
 
