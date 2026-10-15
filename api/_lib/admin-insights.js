@@ -138,13 +138,16 @@ function aggregateUserLocations(attendees) {
     areas.set(key, current);
   });
 
+  const ranked = Array.from(areas.values()).sort(
+    (a, b) => b.users - a.users || a.area.localeCompare(b.area, 'en-GB')
+  );
+
   return {
     total: (attendees || []).length,
     provided,
     missing: Math.max(0, (attendees || []).length - provided),
-    areas: Array.from(areas.values())
-      .sort((a, b) => b.users - a.users || a.area.localeCompare(b.area, 'en-GB'))
-      .slice(0, 15),
+    areaCount: ranked.length,
+    areas: ranked.slice(0, 80),
   };
 }
 
@@ -648,21 +651,6 @@ async function getAdminInsights(periodRaw) {
     /* table may not exist yet */
   }
 
-  let pitchPages = {
-    configured: false,
-    totals: {},
-    views: 0,
-    pdfDownloads: 0,
-    uniquePages: 0,
-    pages: [],
-  };
-  try {
-    const { getPitchPageStats } = require('./pitch-page-log');
-    pitchPages = await getPitchPageStats(period);
-  } catch {
-    /* table may not exist yet */
-  }
-
   return {
     configured: true,
     provider: 'supabase',
@@ -672,7 +660,6 @@ async function getAdminInsights(periodRaw) {
     revenueComparison,
     ticketVolume: computeTicketVolume(periodRegs),
     promoteRoi,
-    pitchPages,
     repeatAttendees: computeRepeatAttendees(allRegsFiltered),
     userLocations: aggregateUserLocations(attendeeLocations),
     attendeeProfiles: aggregateAttendeeProfiles(attendeeProfilesRaw),

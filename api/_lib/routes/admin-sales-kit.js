@@ -8,6 +8,7 @@ const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
 const { publicOrganiserSlug } = require('../organiser-slug');
 const { applyIlikeSearch } = require('../search-match');
 const { shownByFromEmail } = require('../organiser-sales-outreach');
+const { getPitchPageStats } = require('../pitch-page-log');
 const {
   SECTION_CATALOG,
   DEFAULT_SECTIONS,
@@ -566,7 +567,7 @@ module.exports = async function handler(req, res) {
     try {
       const q = String(req.query?.q || '').trim();
       const focusOrganiserId = String(req.query?.organiser || req.query?.organiserId || '').trim();
-      const [demoOrganiser, internalCandidates, demos, customPitchDecks, focusOrganiserProfile] =
+      const [demoOrganiser, internalCandidates, demos, customPitchDecks, focusOrganiserProfile, pitchOpens] =
         await Promise.all([
           getDemoOrganiser(sb),
           listInternalCandidates(sb),
@@ -577,6 +578,13 @@ module.exports = async function handler(req, res) {
             throw e;
           }),
           focusOrganiserId ? getFocusOrganiserProfile(sb, focusOrganiserId) : Promise.resolve(null),
+          getPitchPageStats('all').catch(function (e) {
+            return {
+              configured: false,
+              pages: [],
+              message: e && e.message ? String(e.message) : 'Could not load pitch opens.',
+            };
+          }),
         ]);
       const search = q ? await searchOrganisers(sb, q) : [];
       return json(res, 200, {
@@ -591,6 +599,7 @@ module.exports = async function handler(req, res) {
         pitchSponsorshipCatalog: SPONSORSHIP_PLACEMENT_CATALOG,
         pitchSponsorshipOrder: SPONSORSHIP_PLACEMENT_ORDER,
         search,
+        pitchOpens,
         actor: actorFromRequest(req),
         migrationHint:
           'If this page errors about missing columns/tables, run supabase/migrations/252_organiser_sales_kit.sql and 293_custom_pitch_decks.sql in Supabase.',

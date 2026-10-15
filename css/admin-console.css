@@ -527,7 +527,7 @@ body.hub-page-admin .site-nav {
   flex-wrap: wrap;
   gap: 0.4rem;
   position: sticky;
-  top: 3.35rem;
+  top: 0;
   z-index: 25;
   padding: 0.45rem 0;
   margin: 0 0 0.25rem;
@@ -555,6 +555,93 @@ body.hub-page-admin .site-nav {
   background: #f1f5f9;
   color: #0f172a;
   border-color: #cbd5e1;
+}
+
+.admin-insights-jump-link.is-active {
+  background: #2d1b3d;
+  border-color: #2d1b3d;
+  color: #fff;
+}
+
+.admin-insights-jump-link.is-active:hover {
+  background: #3b2450;
+  border-color: #3b2450;
+  color: #fff;
+}
+
+.admin-member-map-layout {
+  display: grid;
+  gap: 0.75rem;
+}
+
+@media (min-width: 80rem) {
+  .admin-member-map-layout {
+    grid-template-columns: minmax(0, 1.45fr) minmax(16rem, 0.7fr);
+    align-items: start;
+  }
+}
+
+.admin-member-map {
+  height: 28rem;
+  min-height: 18rem;
+  border-radius: 0.75rem;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.admin-member-map .leaflet-container {
+  height: 100%;
+  width: 100%;
+  font-family: inherit;
+  background: #e2e8f0;
+}
+
+.admin-insights-list-scroll--map {
+  max-height: 24rem;
+}
+
+.admin-insights-ranks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.admin-insights-rank-track {
+  display: block;
+  height: 0.3rem;
+  margin-top: 0.2rem;
+  border-radius: 9999px;
+  background: #f1f5f9;
+  overflow: hidden;
+}
+
+.admin-insights-rank-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #6d28d9;
+}
+
+.admin-insights-place {
+  min-width: 0;
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #2d1b3d;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.admin-insights-place:hover,
+.admin-insights-place:focus-visible {
+  color: #6d28d9;
+  text-decoration: underline;
 }
 
 .admin-insights-table-scroll {

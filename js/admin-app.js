@@ -270,7 +270,7 @@
         'Overview links out to Vercel for visitor charts and shows live platform counts.',
         'Demand shows searches, favourites, opportunity enquiries, and guest visits.',
         'Waitlist shows launch / peek email sign-ups (site access, /peek/about-us, About) with source breakdown and CSV export.',
-        'Insights opens with tickets bought on The Networker UK (paid vs free), then ranks top groups and events. Sales pitch opens (e.g. Barnsgate) are under Insights → Sales pitches. Change 7 / 30 / all days on Demand or Insights.',
+        'Insights opens with tickets bought on The Networker UK (paid vs free), then ranks top groups and events. Use the section buttons to jump — Member demographics includes a map of where members are. Change 7 / 30 / all days on Demand or Insights.',
       ],
     },
     rankings: {
@@ -472,7 +472,7 @@
       steps: [
         'From group cleanup, click Organiser sales kit on a row — use the CRM dropdown to log a call or email under your login.',
         'Tap Called, Attempted call, Emailed, Meeting, or LinkedIn to log outreach as yourself — you cannot log on behalf of Catherine, Rosie, or Jamie.',
-        'Switch to Pitch deck for cheat sheets, sales decks, Loom script, and follow-up email copy.',
+        'Switch to Pitch deck for cheat sheets, sales decks, pitch-page opens, Loom script, and follow-up email copy.',
         'Pin one agreed demo organiser on the pitch deck tab — everyone impersonates that group for live walkthroughs.',
         'Check the CRM log before messaging so you do not double-contact the same group.',
       ],
@@ -5536,8 +5536,14 @@
     return '<div class="admin-insights-table-scroll">' + html + '</div>';
   }
 
-  function insightsListScroll(html) {
-    return '<div class="admin-insights-list-scroll">' + html + '</div>';
+  function insightsListScroll(html, extraClass) {
+    return (
+      '<div class="admin-insights-list-scroll' +
+      (extraClass ? ' ' + extraClass : '') +
+      '">' +
+      html +
+      '</div>'
+    );
   }
 
   function renderInsightsTopOrganisers(rows) {
@@ -5666,37 +5672,76 @@
     );
   }
 
+  function insightsPct(part, total) {
+    var n = Number(total) || 0;
+    if (!n) return '—';
+    return Math.round(((Number(part) || 0) / n) * 100) + '%';
+  }
+
+  function insightsRankList(rows, labelKey, options) {
+    var opts = options || {};
+    if (!rows.length) {
+      return '<p class="text-sm text-slate-500">' + esc(opts.empty || 'Nothing recorded yet.') + '</p>';
+    }
+    var max = 0;
+    rows.forEach(function (row) {
+      max = Math.max(max, Number(row.users) || 0);
+    });
+    return insightsListScroll(
+      '<ul class="admin-insights-ranks">' +
+        rows
+          .map(function (row) {
+            var users = Number(row.users) || 0;
+            var width = max ? Math.max(6, Math.round((users / max) * 100)) : 0;
+            var label = row[labelKey] || '—';
+            var name = opts.placeButton
+              ? '<button type="button" class="admin-insights-place" data-insights-place="' +
+                attrEsc(label) +
+                '">' +
+                esc(label) +
+                '</button>'
+              : '<span class="font-medium text-brand-900 min-w-0 truncate">' + esc(label) + '</span>';
+            return (
+              '<li class="admin-insights-rank">' +
+              '<div class="flex items-center justify-between text-sm gap-3">' +
+              name +
+              '<span class="text-slate-500 shrink-0 tabular-nums">' +
+              esc(String(users)) +
+              (opts.memberSuffix ? (users === 1 ? ' member' : ' members') : '') +
+              '</span></div>' +
+              '<span class="admin-insights-rank-track" aria-hidden="true"><span class="admin-insights-rank-fill" style="width:' +
+              width +
+              '%"></span></span></li>'
+            );
+          })
+          .join('') +
+        '</ul>',
+      opts.scrollClass || ''
+    );
+  }
+
   function renderInsightsUserLocations(locationData) {
     var data = locationData || {};
     var rows = data.areas || [];
     if (!rows.length) {
       return '<p class="text-sm text-slate-500">No members have added a location yet.</p>';
     }
+    var capNote =
+      data.areaCount > rows.length
+        ? '<p class="text-xs text-slate-400 mb-2">Showing the ' +
+          esc(String(rows.length)) +
+          ' largest places of ' +
+          esc(String(data.areaCount)) +
+          '.</p>'
+        : '';
     return (
-      '<p class="text-xs text-slate-500 mb-2">' +
-      esc(String(data.provided || 0)) +
-      ' of ' +
-      esc(String(data.total || 0)) +
-      ' profiles provided a location · ' +
-      esc(String(data.missing || 0)) +
-      ' not provided</p>' +
-      insightsListScroll(
-        '<ul class="space-y-1.5">' +
-          rows
-            .map(function (row) {
-              return (
-                '<li class="flex items-center justify-between text-sm gap-3">' +
-                '<span class="font-medium text-brand-900 min-w-0 truncate">' +
-                esc(row.area) +
-                '</span><span class="text-slate-500 shrink-0 tabular-nums">' +
-                esc(String(row.users || 0)) +
-                (Number(row.users || 0) === 1 ? ' member' : ' members') +
-                '</span></li>'
-              );
-            })
-            .join('') +
-          '</ul>'
-      )
+      '<p class="text-xs text-slate-500 mb-2">Click a place to show it on the map.</p>' +
+      capNote +
+      insightsRankList(rows, 'area', {
+        placeButton: true,
+        memberSuffix: true,
+        scrollClass: 'admin-insights-list-scroll--map',
+      })
     );
   }
 
@@ -5715,40 +5760,8 @@
       ' attendee profiles have industry + job title · ' +
       esc(String(data.withAccount || 0)) +
       ' linked to accounts</p>';
-    var industryList = !rows.length
-      ? '<p class="text-sm text-slate-500">No industries recorded yet.</p>'
-      : insightsListScroll(
-          '<ul class="space-y-1.5">' +
-            rows
-              .map(function (row) {
-                return (
-                  '<li class="flex items-center justify-between text-sm gap-3"><span class="font-medium text-brand-900 min-w-0 truncate">' +
-                  esc(row.label) +
-                  '</span><span class="text-slate-500 shrink-0 tabular-nums">' +
-                  esc(String(row.users || 0)) +
-                  '</span></li>'
-                );
-              })
-              .join('') +
-            '</ul>'
-        );
-    var titleList = !titles.length
-      ? '<p class="text-sm text-slate-500">No job titles recorded yet.</p>'
-      : insightsListScroll(
-          '<ul class="space-y-1.5">' +
-            titles
-              .map(function (row) {
-                return (
-                  '<li class="flex items-center justify-between text-sm gap-3"><span class="font-medium text-brand-900 min-w-0 truncate">' +
-                  esc(row.label) +
-                  '</span><span class="text-slate-500 shrink-0 tabular-nums">' +
-                  esc(String(row.users || 0)) +
-                  '</span></li>'
-                );
-              })
-              .join('') +
-            '</ul>'
-        );
+    var industryList = insightsRankList(rows, 'label', { empty: 'No industries recorded yet.' });
+    var titleList = insightsRankList(titles, 'label', { empty: 'No job titles recorded yet.' });
     return (
       coverage +
       '<div class="grid gap-3 md:grid-cols-2">' +
@@ -5856,6 +5869,555 @@
       .join('');
   }
 
+  var INSIGHTS_JUMPS = [
+    { id: 'insights-tickets', label: 'Tickets' },
+    { id: 'insights-demographics', label: 'Member demographics' },
+    { id: 'insights-performers', label: 'Performers' },
+    { id: 'insights-growth', label: 'Growth' },
+    { id: 'insights-promote', label: 'Promote ROI' },
+    { id: 'insights-places', label: 'Places & ratings' },
+  ];
+
+  var insightsMemberMap = null;
+  var insightsMemberMapToken = 0;
+  var insightsMemberMarkers = Object.create(null);
+
+  var MEMBER_PLACE_COORDS = {
+    london: [51.5074, -0.1278],
+    'greater london': [51.5074, -0.1278],
+    'city of london': [51.5155, -0.0922],
+    manchester: [53.4808, -2.2426],
+    'greater manchester': [53.4808, -2.2426],
+    birmingham: [52.4862, -1.8904],
+    leeds: [53.8008, -1.5491],
+    glasgow: [55.8642, -4.2518],
+    edinburgh: [55.9533, -3.1883],
+    liverpool: [53.4084, -2.9916],
+    bristol: [51.4545, -2.5879],
+    sheffield: [53.3811, -1.4701],
+    newcastle: [54.9783, -1.6178],
+    'newcastle upon tyne': [54.9783, -1.6178],
+    nottingham: [52.9548, -1.1581],
+    cardiff: [51.4816, -3.1791],
+    belfast: [54.5973, -5.9301],
+    leicester: [52.6369, -1.1398],
+    coventry: [52.4068, -1.5197],
+    bradford: [53.796, -1.7594],
+    southampton: [50.9097, -1.4044],
+    brighton: [50.8225, -0.1372],
+    'brighton and hove': [50.8225, -0.1372],
+    plymouth: [50.3755, -4.1427],
+    reading: [51.4543, -0.9781],
+    oxford: [51.752, -1.2577],
+    cambridge: [52.2053, 0.1218],
+    york: [53.96, -1.0873],
+    norwich: [52.6309, 1.2974],
+    exeter: [50.7184, -3.5339],
+    bath: [51.3811, -2.359],
+    'milton keynes': [52.0406, -0.7594],
+    northampton: [52.2405, -0.9027],
+    derby: [52.9225, -1.4746],
+    'stoke on trent': [53.0027, -2.1794],
+    wolverhampton: [52.5862, -2.1288],
+    swansea: [51.6214, -3.9436],
+    aberdeen: [57.1497, -2.0943],
+    dundee: [56.462, -2.9707],
+    inverness: [57.4778, -4.2247],
+    bournemouth: [50.7192, -1.8808],
+    portsmouth: [50.8198, -1.088],
+    hull: [53.7676, -0.3274],
+    'kingston upon hull': [53.7676, -0.3274],
+    middlesbrough: [54.5742, -1.235],
+    sunderland: [54.9069, -1.3838],
+    preston: [53.7632, -2.7031],
+    blackpool: [53.8175, -3.0357],
+    bolton: [53.5769, -2.4282],
+    stockport: [53.4106, -2.1575],
+    chester: [53.1934, -2.8931],
+    worcester: [52.1936, -2.2216],
+    gloucester: [51.8642, -2.2382],
+    cheltenham: [51.8994, -2.0783],
+    swindon: [51.5558, -1.7797],
+    luton: [51.8787, -0.42],
+    guildford: [51.2362, -0.5704],
+    maidstone: [51.2704, 0.5227],
+    canterbury: [51.2802, 1.0789],
+    colchester: [51.8959, 0.8919],
+    ipswich: [52.0567, 1.1482],
+    peterborough: [52.5695, -0.2405],
+    lincoln: [53.2307, -0.5406],
+    doncaster: [53.5228, -1.1285],
+    wakefield: [53.6833, -1.4977],
+    huddersfield: [53.6458, -1.785],
+    harrogate: [53.9921, -1.5418],
+    carlisle: [54.8951, -2.9382],
+    lancaster: [54.0466, -2.8007],
+    durham: [54.7753, -1.5849],
+    shrewsbury: [52.7073, -2.7553],
+    telford: [52.6784, -2.4453],
+    wrexham: [53.046, -2.993],
+    newport: [51.5842, -2.9977],
+    stirling: [56.1165, -3.9369],
+    perth: [56.395, -3.4308],
+    'st albans': [51.755, -0.336],
+    warrington: [53.39, -2.597],
+    croydon: [51.3762, -0.0982],
+    watford: [51.6565, -0.3903],
+    slough: [51.5105, -0.595],
+    windsor: [51.4839, -0.6044],
+    oxfordshire: [51.7612, -1.2465],
+    surrey: [51.271, -0.404],
+    kent: [51.2787, 0.5217],
+    essex: [51.7343, 0.4685],
+    sussex: [50.95, -0.15],
+    'west sussex': [50.928, -0.461],
+    'east sussex': [50.908, 0.248],
+    hampshire: [51.0577, -1.3081],
+    yorkshire: [53.959, -1.082],
+    'west yorkshire': [53.8008, -1.5491],
+    'south yorkshire': [53.3811, -1.4701],
+    'north yorkshire': [54.05, -1.4],
+    lancashire: [53.7632, -2.7031],
+    cheshire: [53.1934, -2.8931],
+    devon: [50.7184, -3.5339],
+    cornwall: [50.266, -5.053],
+    somerset: [51.105, -2.926],
+    dorset: [50.748, -2.344],
+    wales: [52.13, -3.78],
+    scotland: [56.49, -4.2],
+    england: [52.55, -1.46],
+    'northern ireland': [54.6, -6.6],
+  };
+
+  var MEMBER_PLACE_SKIP =
+    /^(uk|u\.k\.|united kingdom|great britain|britain|remote|online|virtual|n\/a|na|none|unknown|various|uk wide|nationwide|anywhere)$/i;
+
+  function memberPlaceKey(label) {
+    return String(label || '')
+      .trim()
+      .toLowerCase()
+      .replace(/&/g, ' and ')
+      .replace(/[^a-z0-9]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function isUkMemberCoord(pair) {
+    return (
+      pair &&
+      pair[0] >= 49 &&
+      pair[0] <= 61.2 &&
+      pair[1] >= -8.8 &&
+      pair[1] <= 2.2
+    );
+  }
+
+  function readMemberPlaceCache() {
+    try {
+      var raw = sessionStorage.getItem('admin-member-place-coords-v1');
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function writeMemberPlaceCache(cache) {
+    try {
+      sessionStorage.setItem('admin-member-place-coords-v1', JSON.stringify(cache));
+    } catch (e) {
+      /* ignore quota */
+    }
+  }
+
+  function pickPlaceCoords(label, rows) {
+    var needle = memberPlaceKey(label).replace(/ /g, '');
+    var exact = null;
+    var prefix = null;
+    (rows || []).forEach(function (row) {
+      if (!row || row.latitude == null || row.longitude == null) return;
+      var name = memberPlaceKey(row.name_1 || '').replace(/ /g, '');
+      if (!name) return;
+      var pair = [row.latitude, row.longitude];
+      if (!isUkMemberCoord(pair)) return;
+      if (name === needle) exact = pair;
+      else if (
+        !prefix &&
+        needle.length >= 4 &&
+        (name.indexOf(needle) === 0 || needle.indexOf(name) === 0)
+      ) {
+        prefix = pair;
+      }
+    });
+    return exact || prefix;
+  }
+
+  function geocodeMemberPlaceName(label) {
+    return fetch('https://api.postcodes.io/places?q=' + encodeURIComponent(label) + '&limit=8')
+      .then(function (res) {
+        return res.json();
+      })
+      .then(function (data) {
+        var coords = pickPlaceCoords(label, (data && data.result) || []);
+        if (coords) return coords;
+        return fetch('https://api.postcodes.io/postcodes?q=' + encodeURIComponent(label) + '&limit=1')
+          .then(function (res) {
+            return res.json();
+          })
+          .then(function (post) {
+            var row = post && post.result && post.result[0];
+            if (!row || row.latitude == null) return null;
+            var pair = [row.latitude, row.longitude];
+            return isUkMemberCoord(pair) ? pair : null;
+          });
+      });
+  }
+
+  function geocodeMemberPlace(label) {
+    var key = memberPlaceKey(label);
+    if (MEMBER_PLACE_COORDS[key]) return Promise.resolve(MEMBER_PLACE_COORDS[key]);
+    if (MEMBER_PLACE_SKIP.test(String(label || '').trim()) || MEMBER_PLACE_SKIP.test(key)) {
+      return Promise.resolve(null);
+    }
+    var outcode = String(label || '')
+      .trim()
+      .toUpperCase()
+      .replace(/\s+/g, '');
+    if (/^[A-Z]{1,2}\d[A-Z\d]?$/.test(outcode)) {
+      return fetch('https://api.postcodes.io/outcodes/' + encodeURIComponent(outcode))
+        .then(function (res) {
+          return res.json();
+        })
+        .then(function (data) {
+          var row = data && data.result;
+          if (row && row.latitude != null && row.longitude != null) {
+            var pair = [row.latitude, row.longitude];
+            if (isUkMemberCoord(pair)) return pair;
+          }
+          return geocodeMemberPlaceName(label);
+        })
+        .catch(function () {
+          return geocodeMemberPlaceName(label);
+        });
+    }
+    return geocodeMemberPlaceName(label);
+  }
+
+  function mapPool(items, limit, worker) {
+    var index = 0;
+    function next() {
+      if (index >= items.length) return Promise.resolve();
+      var current = index;
+      index += 1;
+      return worker(items[current]).then(next);
+    }
+    var runners = [];
+    var count = Math.min(limit, items.length);
+    for (var i = 0; i < count; i += 1) runners.push(next());
+    if (!runners.length) return Promise.resolve();
+    return Promise.all(runners);
+  }
+
+  function insightsJumpNavHtml() {
+    return (
+      '<nav class="admin-insights-jump" aria-label="Insights sections">' +
+      INSIGHTS_JUMPS.map(function (item, i) {
+        return (
+          '<button type="button" class="admin-insights-jump-link' +
+          (i === 0 ? ' is-active' : '') +
+          '" data-insights-jump="' +
+          attrEsc(item.id) +
+          '" aria-controls="' +
+          attrEsc(item.id) +
+          '"' +
+          (i === 0 ? ' aria-current="true"' : '') +
+          '>' +
+          esc(item.label) +
+          '</button>'
+        );
+      }).join('') +
+      '</nav>'
+    );
+  }
+
+  function setInsightsJumpActive(id) {
+    document.querySelectorAll('[data-insights-jump]').forEach(function (btn) {
+      var on = btn.getAttribute('data-insights-jump') === id;
+      btn.classList.toggle('is-active', on);
+      if (on) btn.setAttribute('aria-current', 'true');
+      else btn.removeAttribute('aria-current');
+    });
+  }
+
+  function scrollInsightsSection(id) {
+    var section = document.getElementById(id);
+    var scroller = document.getElementById('admin-main');
+    if (!section || !scroller) return;
+    var nav = document.querySelector('.admin-insights-jump');
+    var navHeight = nav ? nav.offsetHeight : 0;
+    var top =
+      section.getBoundingClientRect().top -
+      scroller.getBoundingClientRect().top +
+      scroller.scrollTop -
+      navHeight -
+      8;
+    scroller.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+    setInsightsJumpActive(id);
+  }
+
+  function syncInsightsJumpActive() {
+    var nav = document.querySelector('.admin-insights-jump');
+    if (!nav) return;
+    var marker = nav.getBoundingClientRect().bottom + 16;
+    var current = INSIGHTS_JUMPS[0] ? INSIGHTS_JUMPS[0].id : '';
+    INSIGHTS_JUMPS.forEach(function (item) {
+      var el = document.getElementById(item.id);
+      if (el && el.getBoundingClientRect().top <= marker) current = item.id;
+    });
+    if (current) setInsightsJumpActive(current);
+  }
+
+  function focusInsightsMemberPlace(label) {
+    var marker = insightsMemberMarkers[memberPlaceKey(label)];
+    if (!marker || !insightsMemberMap) return;
+    var zoom = Math.max(insightsMemberMap.getZoom() || 0, 8);
+    insightsMemberMap.setView(marker.getLatLng(), zoom);
+    marker.openPopup();
+  }
+
+  function clearInsightsMemberMap() {
+    insightsMemberMapToken += 1;
+    insightsMemberMarkers = Object.create(null);
+    if (insightsMemberMap) {
+      try {
+        insightsMemberMap.remove();
+      } catch (e) {
+        /* container already gone */
+      }
+      insightsMemberMap = null;
+    }
+  }
+
+  function memberBubbleRadius(users) {
+    var n = Number(users) || 1;
+    return Math.max(7, Math.min(34, 6 + Math.sqrt(n) * 2.6));
+  }
+
+  function mountInsightsMemberMap(areas) {
+    var host = document.getElementById('insights-member-map');
+    var note = document.getElementById('insights-member-map-note');
+    if (!host) return;
+    var rows = areas || [];
+    if (!rows.length) {
+      host.innerHTML =
+        '<p class="text-sm text-slate-500 p-4">No member locations to plot yet.</p>';
+      return;
+    }
+    if (!window.hubEnsureLeafletReady) {
+      host.innerHTML =
+        '<p class="text-sm text-slate-500 p-4">Map could not load. The place list is still available.</p>';
+      return;
+    }
+    var token = insightsMemberMapToken;
+    host.innerHTML = '<p class="text-sm text-slate-500 p-4">Placing members on the map…</p>';
+    var cache = readMemberPlaceCache();
+    var pending = [];
+    rows.forEach(function (row) {
+      var key = memberPlaceKey(row.area);
+      if (!key || Object.prototype.hasOwnProperty.call(cache, key)) return;
+      if (MEMBER_PLACE_COORDS[key]) {
+        cache[key] = MEMBER_PLACE_COORDS[key];
+        return;
+      }
+      if (MEMBER_PLACE_SKIP.test(key)) {
+        cache[key] = null;
+        return;
+      }
+      pending.push(row.area);
+    });
+
+    mapPool(pending, 4, function (label) {
+      if (token !== insightsMemberMapToken) return Promise.resolve();
+      return geocodeMemberPlace(label)
+        .then(function (coords) {
+          cache[memberPlaceKey(label)] = coords || null;
+        })
+        .catch(function () {
+          /* leave uncached so a later visit can retry */
+        });
+    }).then(function () {
+      if (token !== insightsMemberMapToken) return;
+      writeMemberPlaceCache(cache);
+      var mount = document.getElementById('insights-member-map');
+      if (!mount) return;
+      var plotted = [];
+      var missed = [];
+      rows.forEach(function (row) {
+        var coords = cache[memberPlaceKey(row.area)];
+        if (isUkMemberCoord(coords)) plotted.push({ area: row.area, users: row.users, coords: coords });
+        else missed.push(row.area);
+      });
+      if (note) {
+        var noteText =
+          plotted.length +
+          ' place' +
+          (plotted.length === 1 ? '' : 's') +
+          ' on the map';
+        if (missed.length) {
+          noteText +=
+            ' · ' +
+            missed.length +
+            ' not placed (' +
+            missed.slice(0, 4).join(', ') +
+            (missed.length > 4 ? '…' : '') +
+            ')';
+        }
+        note.textContent = noteText;
+      }
+      if (!plotted.length) {
+        mount.innerHTML =
+          '<p class="text-sm text-slate-500 p-4">None of these location labels could be placed on a UK map. They are still listed beside the map.</p>';
+        return;
+      }
+      window
+        .hubEnsureLeafletReady(function () {
+          if (token !== insightsMemberMapToken) return;
+          var mapHost = document.getElementById('insights-member-map');
+          if (!mapHost || !window.L) return;
+          mapHost.innerHTML = '';
+          var map = window.L.map(mapHost, { scrollWheelZoom: false, attributionControl: true });
+          insightsMemberMap = map;
+          window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap',
+            maxZoom: 12,
+          }).addTo(map);
+          var bounds = [];
+          plotted.forEach(function (row) {
+            var marker = window.L.circleMarker(row.coords, {
+              radius: memberBubbleRadius(row.users),
+              color: '#2d1b3d',
+              weight: 1,
+              fillColor: '#6d28d9',
+              fillOpacity: 0.55,
+            });
+            marker.bindPopup(
+              '<strong>' +
+                esc(row.area) +
+                '</strong><br>' +
+                esc(String(row.users || 0)) +
+                (Number(row.users) === 1 ? ' member' : ' members')
+            );
+            marker.addTo(map);
+            insightsMemberMarkers[memberPlaceKey(row.area)] = marker;
+            bounds.push(row.coords);
+          });
+          if (bounds.length === 1) map.setView(bounds[0], 7);
+          else map.fitBounds(bounds, { padding: [28, 28], maxZoom: 8 });
+          setTimeout(function () {
+            if (insightsMemberMap === map) map.invalidateSize();
+          }, 60);
+        })
+        .catch(function () {
+          var failed = document.getElementById('insights-member-map');
+          if (failed) {
+            failed.innerHTML =
+              '<p class="text-sm text-slate-500 p-4">Map could not load. The place list is still available.</p>';
+          }
+        });
+    });
+  }
+
+  function renderInsightsDemographicsSection(data) {
+    var profiles = data.attendeeProfiles || {};
+    var locations = data.userLocations || {};
+    return (
+      '<section id="insights-demographics" class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3 scroll-mt-24">' +
+      '<div><h3 class="font-bold text-brand-900">Member demographics</h3>' +
+      '<p class="text-sm text-slate-500 mt-0.5">Where members say they are, plus industry and job title from onboarding and checkout. The map is all members, not the date range above.</p></div>' +
+      '<div class="admin-metric-grid admin-metric-grid--4">' +
+      card(
+        'Industry provided',
+        insightsPct(profiles.withIndustry, profiles.total),
+        String(profiles.withIndustry || 0) + ' of ' + String(profiles.total || 0) + ' profiles',
+        'blue'
+      ) +
+      card(
+        'Job title provided',
+        insightsPct(profiles.withJobTitle, profiles.total),
+        String(profiles.withJobTitle || 0) + ' of ' + String(profiles.total || 0) + ' profiles',
+        'violet'
+      ) +
+      card(
+        'Location provided',
+        insightsPct(locations.provided, locations.total),
+        String(locations.provided || 0) + ' of ' + String(locations.total || 0) + ' profiles',
+        'emerald'
+      ) +
+      card(
+        'Attendee records',
+        String(profiles.total || locations.total || 0),
+        String(profiles.withAccount || 0) + ' with login · ' + String(profiles.withBoth || 0) + ' with industry and job title',
+        'gold'
+      ) +
+      '</div>' +
+      '<div class="admin-member-map-layout">' +
+      '<div class="min-w-0">' +
+      '<h4 class="text-sm font-bold text-brand-900">Where members are</h4>' +
+      '<p class="text-xs text-slate-500 mt-0.5 mb-2">Each bubble is a place members typed on their profile. Larger bubbles mean more members.</p>' +
+      '<div id="insights-member-map" class="admin-member-map" role="region" aria-label="Map of member locations"></div>' +
+      '<p id="insights-member-map-note" class="text-xs text-slate-500 mt-2"></p>' +
+      '</div>' +
+      '<div class="min-w-0 rounded-xl border border-slate-200 p-3 flex flex-col">' +
+      '<h4 class="text-sm font-bold text-brand-900">By place</h4>' +
+      renderInsightsUserLocations(locations) +
+      '</div></div>' +
+      '<div class="rounded-xl border border-slate-200 p-3">' +
+      renderInsightsAttendeeProfiles(profiles) +
+      '</div></section>'
+    );
+  }
+
+  function renderPitchOpensSection(pitch) {
+    var data = pitch || {};
+    var body =
+      data.configured === false
+        ? '<p class="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">' +
+          esc(
+            data.message ||
+              'Apply migration 238_pitch_page_views.sql in Supabase to start collecting pitch opens.'
+          ) +
+          '</p>'
+        : '<div class="admin-metric-grid admin-metric-grid--4">' +
+          card('Page opens', String(data.views || 0), 'All time · refresh in the same tab is not re-counted') +
+          card('PDF downloads', String(data.pdfDownloads || 0), 'From pitch “Download PDF” buttons') +
+          card('Decks touched', String(data.uniquePages || 0), 'Distinct pitch URLs with activity') +
+          card(
+            'Top deck',
+            data.pages && data.pages[0] ? String(data.pages[0].label || data.pages[0].path) : '—',
+            data.pages && data.pages[0] ? String(data.pages[0].views || 0) + ' opens' : 'No opens yet'
+          ) +
+          '</div>' +
+          '<div class="min-w-0 rounded-xl border border-slate-200 overflow-hidden">' +
+          '<div class="px-3 py-2 border-b border-slate-100 bg-slate-50 flex items-center justify-between gap-2">' +
+          '<h4 class="text-sm font-bold text-brand-900">By pitch</h4>' +
+          '<span class="text-[11px] text-slate-400">All time</span></div>' +
+          insightsTableScroll(
+            '<table class="w-full text-sm admin-insights-table"><thead class="text-[11px] uppercase tracking-wide text-slate-500">' +
+              '<tr><th class="px-2.5 py-2 text-left">Pitch</th><th class="px-2.5 py-2 text-right">Opens</th><th class="px-2.5 py-2 text-right">PDFs</th><th class="px-2.5 py-2 text-right">Last opened</th><th class="px-2.5 py-2 text-left">Referrers</th></tr></thead>' +
+              '<tbody>' +
+              renderInsightsPitchPages(data.pages || []) +
+              '</tbody></table>'
+          ) +
+          '</div>';
+    return (
+      '<section class="admin-dash-section" id="sales-kit-pitch-opens">' +
+      '<div class="admin-dash-section-head"><h3>Sales pitch opens</h3>' +
+      '<p>Confidential <code class="text-xs">/p-tnh-*</code> decks. All-time opens, no cookie consent needed.</p></div>' +
+      '<div class="admin-dash-section-body space-y-3">' +
+      body +
+      '</div></section>'
+    );
+  }
+
   function renderInsightsPanel(data) {
     if (!data || data.error || data.configured === false) {
       return '<p class="text-sm text-red-700">Could not load platform insights. Check Supabase env vars on Vercel.</p>';
@@ -5867,7 +6429,6 @@
     var funnel = data.applicationFunnel || {};
     var promote = data.promoteRoi || {};
     var promoteTotals = promote.totals || {};
-    var pitch = data.pitchPages || {};
     var tickets = data.ticketVolume || {};
     var periodLabel = analyticsPeriodLabel(data.period || analyticsState.period);
     var orgCount = (data.topOrganisers || []).length;
@@ -5876,15 +6437,7 @@
 
     return (
       '<div class="admin-insights space-y-4">' +
-      '<nav class="admin-insights-jump" aria-label="Insights sections">' +
-      '<a href="#insights-tickets" class="admin-insights-jump-link">Tickets</a>' +
-      '<a href="#insights-performers" class="admin-insights-jump-link">Performers</a>' +
-      '<a href="#insights-growth" class="admin-insights-jump-link">Growth</a>' +
-      '<a href="#insights-promote" class="admin-insights-jump-link">Promote ROI</a>' +
-      '<a href="#insights-pitches" class="admin-insights-jump-link">Sales pitches</a>' +
-      '<a href="#insights-places" class="admin-insights-jump-link">Places &amp; ratings</a>' +
-      '<a href="#insights-demographics" class="admin-insights-jump-link">Member demographics</a>' +
-      '</nav>' +
+      insightsJumpNavHtml() +
       '<section id="insights-tickets" class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3 scroll-mt-24">' +
       '<div><h3 class="font-bold text-brand-900">Tickets bought on The Networker UK</h3>' +
       '<p class="text-sm text-slate-500 mt-0.5">Confirmed bookings in ' +
@@ -5920,6 +6473,7 @@
         'violet'
       ) +
       '</div></section>' +
+      renderInsightsDemographicsSection(data) +
       '<section id="insights-performers" class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3 scroll-mt-24">' +
       '<div class="flex flex-wrap items-end justify-between gap-2">' +
       '<div><h3 class="font-bold text-brand-900">Top performers</h3>' +
@@ -6041,97 +6595,10 @@
           ) +
           '</div>') +
       '</section>' +
-      '<section id="insights-pitches" class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3 scroll-mt-24">' +
-      '<div><h3 class="font-bold text-brand-900">Sales pitch opens</h3>' +
-      '<p class="text-sm text-slate-500 mt-0.5">Confidential <code class="text-xs">/p-tnh-*</code> decks — first-party opens (no cookie consent needed). ' +
-      esc(periodLabel) +
-      '.</p></div>' +
-      (pitch.configured === false
-        ? '<p class="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">' +
-          esc(
-            pitch.message ||
-              'Apply migration 238_pitch_page_views.sql in Supabase to start collecting pitch opens.'
-          ) +
-          '</p>'
-        : '<div class="admin-metric-grid admin-metric-grid--4">' +
-          card(
-            'Page opens',
-            String(pitch.views || 0),
-            'Unique sessions per pitch URL (refresh in same tab not re-counted)'
-          ) +
-          card(
-            'PDF downloads',
-            String(pitch.pdfDownloads || 0),
-            'From sponsor pitch “Download PDF” buttons'
-          ) +
-          card(
-            'Decks touched',
-            String(pitch.uniquePages || 0),
-            'Distinct pitch URLs with activity'
-          ) +
-          card(
-            'Top deck',
-            pitch.pages && pitch.pages[0]
-              ? String(pitch.pages[0].label || pitch.pages[0].path)
-              : '—',
-            pitch.pages && pitch.pages[0]
-              ? String(pitch.pages[0].views || 0) + ' opens'
-              : 'No opens yet'
-          ) +
-          '</div>' +
-          '<div class="min-w-0 rounded-xl border border-slate-200 overflow-hidden">' +
-          '<div class="px-3 py-2 border-b border-slate-100 bg-slate-50 flex items-center justify-between gap-2">' +
-          '<h4 class="text-sm font-bold text-brand-900">By pitch</h4>' +
-          '<span class="text-[11px] text-slate-400">Most recent activity first in Last opened</span></div>' +
-          insightsTableScroll(
-            '<table class="w-full text-sm admin-insights-table"><thead class="text-[11px] uppercase tracking-wide text-slate-500">' +
-              '<tr><th class="px-2.5 py-2 text-left">Pitch</th><th class="px-2.5 py-2 text-right">Opens</th><th class="px-2.5 py-2 text-right">PDFs</th><th class="px-2.5 py-2 text-right">Last opened</th><th class="px-2.5 py-2 text-left">Referrers</th></tr></thead>' +
-              '<tbody>' +
-              renderInsightsPitchPages(pitch.pages || []) +
-              '</tbody></table>'
-          ) +
-          '</div>') +
-      '</section>' +
-      '<section id="insights-demographics" class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3 scroll-mt-24">' +
-      '<div><h3 class="font-bold text-brand-900">Member demographics</h3>' +
-      '<p class="text-sm text-slate-500 mt-0.5">Industry and job title from account onboarding and checkout — for platform positioning and sales reporting.</p></div>' +
-      '<div class="admin-metric-grid admin-metric-grid--4">' +
-      card(
-        'Industry provided',
-        String((data.attendeeProfiles && data.attendeeProfiles.withIndustry) || 0),
-        String((data.attendeeProfiles && data.attendeeProfiles.missingIndustry) || 0) + ' missing',
-        'blue'
-      ) +
-      card(
-        'Job title provided',
-        String((data.attendeeProfiles && data.attendeeProfiles.withJobTitle) || 0),
-        String((data.attendeeProfiles && data.attendeeProfiles.missingJobTitle) || 0) + ' missing',
-        'violet'
-      ) +
-      card(
-        'Complete profiles',
-        String((data.attendeeProfiles && data.attendeeProfiles.withBoth) || 0),
-        'Industry + job title both set',
-        'brand'
-      ) +
-      card(
-        'Attendee records',
-        String((data.attendeeProfiles && data.attendeeProfiles.total) || 0),
-        String((data.attendeeProfiles && data.attendeeProfiles.withAccount) || 0) + ' with login',
-        'gold'
-      ) +
-      '</div>' +
-      '<div class="rounded-xl border border-slate-200 p-3">' +
-      renderInsightsAttendeeProfiles(data.attendeeProfiles || {}) +
-      '</div></section>' +
       '<section id="insights-places" class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3 scroll-mt-24">' +
       '<div><h3 class="font-bold text-brand-900">Places &amp; ratings</h3>' +
-      '<p class="text-sm text-slate-500 mt-0.5">Longer lists stay in a fixed-height scroll so the page does not grow forever.</p></div>' +
+      '<p class="text-sm text-slate-500 mt-0.5">Event cities, formats, and ratings. Member locations are on Member demographics.</p></div>' +
       '<div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">' +
-      '<div class="rounded-xl border border-slate-200 p-3 flex flex-col min-h-0"><h4 class="text-sm font-bold text-brand-900">Member locations</h4>' +
-      '<p class="text-xs text-slate-500 mt-0.5 mb-2">Grouped from the location members entered.</p>' +
-      renderInsightsUserLocations(data.userLocations || {}) +
-      '</div>' +
       '<div class="rounded-xl border border-slate-200 p-3 flex flex-col min-h-0"><h4 class="text-sm font-bold text-brand-900 mb-2">Event cities</h4>' +
       renderInsightsCities(data.topCities || []) +
       '</div>' +
@@ -6427,9 +6894,14 @@
   function loadAnalyticsInsightsPanel() {
     var panel = document.getElementById('analytics-insights');
     if (!panel) return;
+    clearInsightsMemberMap();
     panel.innerHTML = '<p class="text-sm text-slate-500">Loading platform insights…</p>';
     adminGet('/api/admin/insights?period=' + encodeURIComponent(analyticsState.period)).then(function (data) {
-      if (panel) panel.innerHTML = renderInsightsPanel(data);
+      if (!panel) return;
+      clearInsightsMemberMap();
+      panel.innerHTML = renderInsightsPanel(data);
+      syncInsightsJumpActive();
+      mountInsightsMemberMap((data && data.userLocations && data.userLocations.areas) || []);
     });
   }
 
@@ -6442,6 +6914,18 @@
     if (document.body.dataset.analyticsPeriodBound) return;
     document.body.dataset.analyticsPeriodBound = '1';
     document.body.addEventListener('click', function (e) {
+      var placeBtn = e.target.closest('[data-insights-place]');
+      if (placeBtn) {
+        e.preventDefault();
+        focusInsightsMemberPlace(placeBtn.getAttribute('data-insights-place'));
+        return;
+      }
+      var jump = e.target.closest('[data-insights-jump]');
+      if (jump) {
+        e.preventDefault();
+        scrollInsightsSection(jump.getAttribute('data-insights-jump'));
+        return;
+      }
       if (e.target.closest('#demand-export-csv')) {
         exportDemandSearchesCsv(analyticsState.demandCache);
         return;
@@ -6463,6 +6947,17 @@
           (on ? 'bg-brand-700 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200');
       });
     });
+    var insightsScroller = document.getElementById('admin-main');
+    if (insightsScroller && !insightsScroller.dataset.insightsJumpBound) {
+      insightsScroller.dataset.insightsJumpBound = '1';
+      insightsScroller.addEventListener(
+        'scroll',
+        function () {
+          syncInsightsJumpActive();
+        },
+        { passive: true }
+      );
+    }
   }
 
   function paintAnalyticsOverviewMetrics() {
@@ -31044,6 +31539,7 @@
       pitchSponsorshipOrder: [],
       focusOrganiserProfile: null,
       pitchEditingDeck: null,
+      pitchOpens: null,
       search: [],
       tab: salesKitTab,
       focusOrganiser: salesKitFocus,
@@ -31249,6 +31745,7 @@
             attrEsc(salesKitTabHref('crm', focus)) +
             '">Back to CRM</a></div>'
           : '') +
+        renderPitchOpensSection(state.pitchOpens) +
         '<section class="admin-dash-section">' +
         '<div class="admin-dash-section-head"><h3>Agreed demo organiser</h3>' +
         '<p>One shared group for live walkthroughs — keep events, tickets, and Promote looking polished.</p></div>' +
@@ -32208,6 +32705,7 @@
         state.pitchSponsorshipCatalog = data.pitchSponsorshipCatalog || {};
         state.pitchSponsorshipOrder = data.pitchSponsorshipOrder || [];
         state.focusOrganiserProfile = data.focusOrganiserProfile || null;
+        state.pitchOpens = data.pitchOpens || null;
         if (data.actor) state.actor = data.actor;
         paint();
       });
