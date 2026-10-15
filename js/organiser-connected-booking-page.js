@@ -291,17 +291,27 @@
     var data = res.data || {};
 
     if (res.status === 503 && data.error === 'connected_booking_schema_missing') {
+      try {
+        window.dispatchEvent(
+          new CustomEvent('hub-organiser-connected-booking-access', { detail: { allowed: true } })
+        );
+      } catch (eSchemaAccess) {
+        /* ignore */
+      }
       setAuthStatus(data.message || 'Database migration required (292).', 'error');
       applyBillingUi({ ok: false });
       return;
     }
 
     if (res.status === 403 && data.error === 'preview_restricted') {
-      setAuthStatus(
-        (data.message || 'Preview access only.') +
-          (data.signedInAs ? ' Signed in as ' + data.signedInAs + '.' : ''),
-        'error'
-      );
+      try {
+        window.dispatchEvent(
+          new CustomEvent('hub-organiser-connected-booking-access', { detail: { allowed: false } })
+        );
+      } catch (eAccess) {
+        /* ignore */
+      }
+      setAuthStatus('', '');
       applyBillingUi({ ok: false });
       return;
     }
@@ -337,6 +347,13 @@
       setAuthStatus('');
     }
     applyBillingUi(data);
+    try {
+      window.dispatchEvent(
+        new CustomEvent('hub-organiser-connected-booking-access', { detail: { allowed: true } })
+      );
+    } catch (eAccessOk) {
+      /* ignore */
+    }
     if (signinHint) signinHint.hidden = true;
     if (adminPanel) adminPanel.hidden = false;
     var providersPanel = document.getElementById('cb-providers-panel');

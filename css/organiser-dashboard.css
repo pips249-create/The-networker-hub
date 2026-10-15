@@ -13052,6 +13052,11 @@ body.org-event-drawer-open {
   -webkit-overflow-scrolling: touch;
 }
 
+#org-nav-connected-booking[hidden],
+a[data-connected-booking-nav][hidden] {
+  display: none !important;
+}
+
 .org-more-sheet-link {
   display: flex;
   align-items: center;

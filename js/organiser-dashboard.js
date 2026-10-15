@@ -151,9 +151,23 @@
     organiserEmailVerified: false,
     dashboardScope: null,
     connectedBooking: null,
+    connectedBookingAllowed: null,
   };
 
   let connectedBookingLoadPromise = null;
+
+  function syncConnectedBookingNav(allowed) {
+    state.connectedBookingAllowed = Boolean(allowed);
+    document.querySelectorAll('[data-connected-booking-nav]').forEach(function (el) {
+      el.hidden = !state.connectedBookingAllowed;
+    });
+  }
+
+  function connectedBookingResponseAllowed(res) {
+    if (!res || res.status === 401 || res.status === 403) return false;
+    if (res.data && res.data.error === 'preview_restricted') return false;
+    return res.status >= 200 && res.status < 300;
+  }
 
   function dispatchConnectedBookingDetail(payload, groupTotal) {
     if (!payload || typeof window === 'undefined') return;
@@ -169,6 +183,21 @@
       /* ignore */
     }
   }
+
+  window.addEventListener('hub-organiser-connected-booking-access', function (e) {
+    var allowed = Boolean(e && e.detail && e.detail.allowed);
+    syncConnectedBookingNav(allowed);
+    if (
+      !allowed &&
+      document.querySelector('[data-org-page="connected-booking"].is-active')
+    ) {
+      setRoute('dashboard', {
+        skipConnectedGuard: true,
+        skipRouteLoading: true,
+        skipEventsGuard: true,
+      });
+    }
+  });
 
   window.addEventListener('hub-organiser-connected-booking', function (e) {
     var detail = e && e.detail;
@@ -195,7 +224,27 @@
         });
       })
       .then(function (res) {
-        if (res.status === 403 || res.status === 404) {
+        var schemaMissing =
+          res &&
+          res.status === 503 &&
+          res.data &&
+          res.data.error === 'connected_booking_schema_missing';
+        if (
+          !res ||
+          res.status === 401 ||
+          res.status === 403 ||
+          (res.data && res.data.error === 'preview_restricted')
+        ) {
+          state.connectedBooking = null;
+          syncConnectedBookingNav(false);
+          return null;
+        }
+        if (!connectedBookingResponseAllowed(res) && !schemaMissing) {
+          state.connectedBooking = null;
+          return null;
+        }
+        syncConnectedBookingNav(true);
+        if (schemaMissing) {
           state.connectedBooking = null;
           return null;
         }
@@ -12126,6 +12175,30 @@
   function setRoute(route, options) {
     options = options || {};
     const routeIn = route;
+    if (route === 'connected-booking' && !options.skipConnectedGuard) {
+      if (state.connectedBookingAllowed === false) {
+        setRoute('dashboard', {
+          skipConnectedGuard: true,
+          skipRouteLoading: true,
+          skipEventsGuard: true,
+        });
+        return;
+      }
+      if (state.connectedBookingAllowed !== true) {
+        loadConnectedBookingMeta().then(function () {
+          if (state.connectedBookingAllowed) {
+            setRoute('connected-booking', Object.assign({}, options, { skipConnectedGuard: true }));
+          } else {
+            setRoute('dashboard', {
+              skipConnectedGuard: true,
+              skipRouteLoading: true,
+              skipEventsGuard: true,
+            });
+          }
+        });
+        return;
+      }
+    }
     if (
       bootstrapReady &&
       isMarketingWorkspace() &&
@@ -20419,6 +20492,7 @@
       bindReadyEventUi();
       bindUi();
       const initial = resolveInitialRoute();
+      loadConnectedBookingMeta();
       setRoute(initial.sub || initial.page, { connectedAnchor: initial.connectedAnchor || null });
       await loadBootstrap({ silent: true, prefetch: bootstrapPrefetch });
       applyPendingGroupContinue();
