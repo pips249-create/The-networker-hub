@@ -563,10 +563,12 @@
     var sc = window.HubSpotlightCarousel;
     if (!sc || typeof sc.applyLoopLayout !== 'function') {
       els.spotlightTrack.innerHTML = cardsHtml || '';
+      markSpotlightCovers();
       return;
     }
     var section = els.spotlightSection || els.spotlightTrack.closest('.premium-spotlight');
     sc.applyLoopLayout(els.spotlightTrack, section, itemCount, '.opp-premium-card', cardsHtml);
+    markSpotlightCovers();
   }
 
   function refreshSpotlightLayout() {
@@ -679,14 +681,104 @@
     return moneyFieldLabel(item) + ' · ' + investmentLabel(item);
   }
 
+  function readSpotlightPlate(img) {
+    try {
+      var canvas = document.createElement('canvas');
+      var w = 24;
+      var h = 14;
+      canvas.width = w;
+      canvas.height = h;
+      var ctx = canvas.getContext('2d', { willReadFrequently: true });
+      ctx.drawImage(img, 0, 0, w, h);
+      var pts = [
+        [0, 0],
+        [w - 1, 0],
+        [0, h - 1],
+        [w - 1, h - 1],
+        [Math.floor(w / 2), 0],
+        [Math.floor(w / 2), h - 1],
+        [0, Math.floor(h / 2)],
+        [w - 1, Math.floor(h / 2)],
+      ];
+      var colors = [];
+      for (var i = 0; i < pts.length; i++) {
+        colors.push(ctx.getImageData(pts[i][0], pts[i][1], 1, 1).data);
+      }
+      var transparent = colors.every(function (c) {
+        return c[3] < 24;
+      });
+      if (transparent) return { flat: true, color: '' };
+      var maxDelta = 0;
+      for (var j = 1; j < colors.length; j++) {
+        maxDelta = Math.max(
+          maxDelta,
+          Math.abs(colors[j][0] - colors[0][0]),
+          Math.abs(colors[j][1] - colors[0][1]),
+          Math.abs(colors[j][2] - colors[0][2])
+        );
+      }
+      if (maxDelta >= 28) return { flat: false, color: '' };
+      return {
+        flat: true,
+        color: 'rgb(' + colors[0][0] + ',' + colors[0][1] + ',' + colors[0][2] + ')',
+      };
+    } catch (e) {
+      return { flat: false, color: '' };
+    }
+  }
+
+  function applySpotlightLogoArtwork(card, plateColor) {
+    if (!card) return;
+    card.classList.add('is-logo-artwork');
+    if (!plateColor) return;
+    var bg = card.querySelector('.premium-card-bg');
+    if (bg) bg.style.background = plateColor;
+  }
+
+  function inspectSpotlightCover(img) {
+    if (!img || img.dataset.artworkChecked === '1') return;
+    if (!img.complete || !img.naturalWidth) return;
+    img.dataset.artworkChecked = '1';
+    var card = img.closest('.opp-premium-card');
+    var plate = readSpotlightPlate(img);
+    if (img.classList.contains('is-logo-cover') || plate.flat) {
+      applySpotlightLogoArtwork(card, plate.color);
+    }
+  }
+
+  function bindSpotlightCover(img) {
+    if (!img) return;
+    if (img.dataset.artworkBound === '1') {
+      inspectSpotlightCover(img);
+      return;
+    }
+    img.dataset.artworkBound = '1';
+    if (img.complete && img.naturalWidth) inspectSpotlightCover(img);
+    else {
+      img.addEventListener('load', function () {
+        inspectSpotlightCover(img);
+      });
+    }
+  }
+
+  function markSpotlightCovers() {
+    if (!els.spotlightTrack) return;
+    var imgs = els.spotlightTrack.querySelectorAll('.opp-premium-card-img');
+    for (var i = 0; i < imgs.length; i++) bindSpotlightCover(imgs[i]);
+  }
+
   function premiumSpotlightMediaHtml(item, thumb) {
     var cover = String(item.imageUrl || '').trim();
+    var logoCover = isLogoCoverImage(item);
     var mediaInner = cover
-      ? '<img class="opp-premium-card-img" src="' +
+      ? '<img class="opp-premium-card-img' +
+        (logoCover ? ' is-logo-cover' : '') +
+        '" src="' +
         escapeHtml(cover) +
         '" alt="' +
         escapeHtml(item.title || 'Opportunity cover') +
-        '" loading="lazy" decoding="async" />'
+        '" crossorigin="anonymous" loading="lazy" decoding="async" ' +
+        'onerror="this.onerror=null;this.removeAttribute(\'crossorigin\');this.src=this.src" />'
       : '<span class="opp-premium-thumb-emoji" aria-hidden="true">' + thumb.emoji + '</span>';
 
     return (
@@ -710,8 +802,11 @@
           return 'opp-type-franchise';
         };
 
+    var logoArtwork = isLogoCoverImage(item);
     return (
-      '<article class="premium-card opp-premium-card" data-id="' +
+      '<article class="premium-card opp-premium-card' +
+      (logoArtwork ? ' is-logo-artwork' : '') +
+      '" data-id="' +
       escapeHtml(item.id) +
       '">' +
       '<a class="premium-card-link" href="' +
