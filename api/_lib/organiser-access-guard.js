@@ -57,6 +57,24 @@ async function getOrganiserAccessStatus(session) {
     };
   }
 
+  // Platform admins already pass every organiser gate. Counting profiles and
+  // pending claims by their email scans groups that list a shared inbox.
+  if (admin) {
+    const hub = await getHubAccount(uid);
+    return {
+      organiserAccess: true,
+      organiserUiVisible: true,
+      organiserUiHidden: Boolean(hub?.organiser_ui_hidden_at),
+      organiserEmailVerified: true,
+      pendingClaimCount: 0,
+      organiserProfiles: 0,
+      ownedOpportunityCount: 0,
+      organiserAccessAt: hub?.organiser_access_at || null,
+      organiserEmailVerifiedAt: hub?.organiser_email_verified_at || null,
+      organiserUiHiddenAt: hub?.organiser_ui_hidden_at || null,
+    };
+  }
+
   const [hub, organiserProfiles, pendingClaimCount, ownedOpportunityCount] = await Promise.all([
     getHubAccount(uid),
     countOrganiserProfiles(uid, email),

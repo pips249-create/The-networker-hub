@@ -33453,6 +33453,7 @@
     '<p class="text-slate-500" id="admin-gate-msg">Verifying admin access…</p>'
   );
 
+  function confirmAdminSession(attempt) {
   fetch('/api/auth/session', { credentials: 'include' })
     .then(function (res) {
       return res.json();
@@ -33496,6 +33497,15 @@
       boot(data.user);
     })
     .catch(function () {
+      if (!attempt) {
+        setTimeout(function () {
+          confirmAdminSession(1);
+        }, 600);
+        return;
+      }
       showAdminGate('<p class="text-slate-500" id="admin-gate-msg">Could not verify session.</p>');
     });
+  }
+
+  confirmAdminSession(0);
 })();

@@ -33,7 +33,9 @@ module.exports = async function handler(req, res) {
 
   try {
     if (useSupabase()) {
-      const user = await sbAuth.findUserByEmail(session.email);
+      const user = session.sub
+        ? await sbAuth.getUserForSession(session)
+        : await sbAuth.findUserByEmail(session.email, { scanDirectory: false });
       if (!user) {
         if (session.impersonator) {
           return json(res, 200, {
@@ -74,12 +76,19 @@ module.exports = async function handler(req, res) {
 
       await sbAuth.backfillAttendeeUserId(fresh.sub, fresh.email);
 
-      const organiserProfiles = await sbAuth.countOrganiserProfiles(fresh.sub, fresh.email);
-      const organiserTermsAccepted = await sbAuth.hasOrganiserTermsAccepted(fresh.sub);
-      const organiserOpportunityTermsAccepted = await sbAuth.hasOrganiserOpportunityTermsAccepted(
-        fresh.sub
-      );
-      const accessStatus = await getOrganiserAccessStatus(fresh);
+      const [
+        organiserProfiles,
+        organiserTermsAccepted,
+        organiserOpportunityTermsAccepted,
+        accessStatus,
+      ] = await Promise.all([
+        isAdminRole(role)
+          ? Promise.resolve(0)
+          : sbAuth.countOrganiserProfiles(fresh.sub, fresh.email),
+        sbAuth.hasOrganiserTermsAccepted(fresh.sub),
+        sbAuth.hasOrganiserOpportunityTermsAccepted(fresh.sub),
+        getOrganiserAccessStatus(fresh),
+      ]);
       const impersonating = !!session.impersonator;
 
       return json(res, 200, {

@@ -374,9 +374,34 @@ async function findAuthUserIdByEmail(email) {
   return null;
 }
 
-async function findUserByEmail(email) {
+/**
+ * Session cookies already carry the auth user id. Look that up directly.
+ * Do not scan the Auth directory — that path times out the 15s session function
+ * and leaves Command Centre stuck on "could not verify session".
+ */
+async function getUserForSession(session) {
+  const userId = String(session?.sub || session?.userId || session?.id || '').trim();
+  if (!userId) return null;
+
+  const sb = getSupabaseAdmin();
+  const { data, error } = await sb.auth.admin.getUserById(userId);
+  if (error) {
+    const msg = String(error.message || '');
+    if (/not found/i.test(msg)) return null;
+    throw new Error(msg || 'auth_lookup_failed');
+  }
+  if (!data?.user) return null;
+
+  const em = String(data.user.email || session?.email || '')
+    .trim()
+    .toLowerCase();
+  return authUserRecordToAppUser(data.user, em);
+}
+
+async function findUserByEmail(email, options) {
   const em = String(email || '').trim().toLowerCase();
   if (!em) return null;
+  const scanDirectory = !options || options.scanDirectory !== false;
 
   const sb = getSupabaseAdmin();
 
@@ -404,6 +429,9 @@ async function findUserByEmail(email) {
   }
 
   // Last resort only — never call this in a loop (impersonate / provision).
+  // Session confirmation must not use this: paging the directory exceeds the function limit.
+  if (!scanDirectory) return null;
+
   let page = 1;
   const perPage = 1000;
   while (page <= 20) {
@@ -888,6 +916,7 @@ module.exports = {
   CURRENT_ORGANISER_TERMS_VERSION,
   CURRENT_ORGANISER_OPPORTUNITY_TERMS_VERSION,
   findUserByEmail,
+  getUserForSession,
   getHubAccount,
   hasOrganiserTermsAccepted,
   hasOrganiserOpportunityTermsAccepted,
