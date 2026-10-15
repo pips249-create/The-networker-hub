@@ -5724,7 +5724,7 @@
     var data = locationData || {};
     var rows = data.areas || [];
     if (!rows.length) {
-      return '<p class="text-sm text-slate-500">No members have added a location yet.</p>';
+      return '<p class="text-sm text-slate-500">No signed-in members have added a location yet.</p>';
     }
     var capNote =
       data.areaCount > rows.length
@@ -5757,9 +5757,7 @@
       esc(String(data.withBoth || 0)) +
       ' of ' +
       esc(String(data.total || 0)) +
-      ' attendee profiles have industry + job title · ' +
-      esc(String(data.withAccount || 0)) +
-      ' linked to accounts</p>';
+      ' signed-in accounts have an industry and job title.</p>';
     var industryList = insightsRankList(rows, 'label', { empty: 'No industries recorded yet.' });
     var titleList = insightsRankList(titles, 'label', { empty: 'No job titles recorded yet.' });
     return (
@@ -6332,30 +6330,30 @@
     return (
       '<section id="insights-demographics" class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3 scroll-mt-24">' +
       '<div><h3 class="font-bold text-brand-900">Member demographics</h3>' +
-      '<p class="text-sm text-slate-500 mt-0.5">Where members say they are, plus industry and job title from onboarding and checkout. The map is all members, not the date range above.</p></div>' +
+      '<p class="text-sm text-slate-500 mt-0.5">Industry, job title, and location for people who have signed in. The map ignores the date range above.</p></div>' +
       '<div class="admin-metric-grid admin-metric-grid--4">' +
       card(
         'Industry provided',
         insightsPct(profiles.withIndustry, profiles.total),
-        String(profiles.withIndustry || 0) + ' of ' + String(profiles.total || 0) + ' profiles',
+        String(profiles.withIndustry || 0) + ' of ' + String(profiles.total || 0) + ' signed-in accounts',
         'blue'
       ) +
       card(
         'Job title provided',
         insightsPct(profiles.withJobTitle, profiles.total),
-        String(profiles.withJobTitle || 0) + ' of ' + String(profiles.total || 0) + ' profiles',
+        String(profiles.withJobTitle || 0) + ' of ' + String(profiles.total || 0) + ' signed-in accounts',
         'violet'
       ) +
       card(
         'Location provided',
         insightsPct(locations.provided, locations.total),
-        String(locations.provided || 0) + ' of ' + String(locations.total || 0) + ' profiles',
+        String(locations.provided || 0) + ' of ' + String(locations.total || 0) + ' signed-in accounts',
         'emerald'
       ) +
       card(
-        'Attendee records',
+        'Signed in',
         String(profiles.total || locations.total || 0),
-        String(profiles.withAccount || 0) + ' with login · ' + String(profiles.withBoth || 0) + ' with industry and job title',
+        'Have logged in at least once · ' + String(profiles.withBoth || 0) + ' with industry and job title',
         'gold'
       ) +
       '</div>' +

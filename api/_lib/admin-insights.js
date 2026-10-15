@@ -106,6 +106,35 @@ function locationAreaLabel(value) {
   return area.replace(/\s+(?:UK|United Kingdom)$/i, '').trim() || area;
 }
 
+async function fetchSignedInUserIds(sb) {
+  const ids = new Set();
+  const perPage = 1000;
+  for (let page = 1; page <= 50; page += 1) {
+    const { data, error } = await sb.auth.admin.listUsers({ page, perPage });
+    if (error) throw new Error(error.message);
+    const users = data?.users || [];
+    for (const user of users) {
+      if (user.last_sign_in_at && user.id) ids.add(user.id);
+    }
+    if (users.length < perPage) break;
+  }
+  return ids;
+}
+
+/** Attendee rows whose login has been used at least once. One row per person. */
+function keepSignedInAttendees(rows, signedInIds) {
+  const ids = signedInIds instanceof Set ? signedInIds : new Set(signedInIds || []);
+  const seen = new Set();
+  const kept = [];
+  for (const row of rows || []) {
+    const id = String(row?.supabase_user_id || '').trim();
+    if (!id || !ids.has(id) || seen.has(id)) continue;
+    seen.add(id);
+    kept.push(row);
+  }
+  return kept;
+}
+
 async function fetchAttendeeLocations(sb) {
   const rows = [];
   const pageSize = 1000;
@@ -113,7 +142,7 @@ async function fetchAttendeeLocations(sb) {
   for (let from = 0; ; from += pageSize) {
     const { data, error } = await sb
       .from('attendees')
-      .select('id, name, email, location')
+      .select('id, name, email, location, supabase_user_id')
       .order('id', { ascending: true })
       .range(from, from + pageSize - 1);
     if (error) throw new Error(error.message);
@@ -557,6 +586,7 @@ async function getAdminInsights(periodRaw) {
     revenueRegsRes,
     attendeeLocations,
     attendeeProfilesRaw,
+    signedInIds,
   ] = await Promise.all([
     fetchRegistrations(sb, since),
     fetchAllRegistrationsFiltered(sb),
@@ -582,6 +612,7 @@ async function getAdminInsights(periodRaw) {
       .gte('created_at', sixtyDaysAgo),
     fetchAttendeeLocations(sb),
     fetchAttendeeProfiles(sb),
+    fetchSignedInUserIds(sb),
   ]);
 
   if (reviewsRes.error) throw new Error(reviewsRes.error.message);
@@ -661,8 +692,8 @@ async function getAdminInsights(periodRaw) {
     ticketVolume: computeTicketVolume(periodRegs),
     promoteRoi,
     repeatAttendees: computeRepeatAttendees(allRegsFiltered),
-    userLocations: aggregateUserLocations(attendeeLocations),
-    attendeeProfiles: aggregateAttendeeProfiles(attendeeProfilesRaw),
+    userLocations: aggregateUserLocations(keepSignedInAttendees(attendeeLocations, signedInIds)),
+    attendeeProfiles: aggregateAttendeeProfiles(keepSignedInAttendees(attendeeProfilesRaw, signedInIds)),
     growthPulse: {
       registrations7d: regs7dRes.count || 0,
       newOrganisers7d: orgs7dRes.count || 0,
@@ -674,4 +705,4 @@ async function getAdminInsights(periodRaw) {
   };
 }
 
-module.exports = { getAdminInsights };
+module.exports = { getAdminInsights, keepSignedInAttendees };
