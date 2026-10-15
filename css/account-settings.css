@@ -206,7 +206,8 @@
   resize: vertical;
 }
 
-.as-field input:disabled {
+.as-field input:disabled,
+.as-field select:disabled {
   background: var(--as-purple-pale);
   color: var(--as-text-soft);
 }
@@ -421,6 +422,11 @@
 
 .as-field-hint.is-error {
   color: #b42318;
+}
+
+.as-field-hint a {
+  color: var(--as-purple, #5b2f99);
+  font-weight: 600;
 }
 
 .as-field-row {

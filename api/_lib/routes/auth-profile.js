@@ -104,6 +104,11 @@ module.exports = async function handler(req, res) {
   try {
     return await handleSupabase(req, res, session);
   } catch (e) {
-    return json(res, 500, { error: 'profile_failed', message: e.message || 'Could not update profile.' });
+    const status = Number(e.status);
+    const code = status >= 400 && status < 500 ? status : 500;
+    return json(res, code, {
+      error: e.code || (code === 500 ? 'profile_failed' : 'invalid_profile'),
+      message: e.message || 'Could not update profile.',
+    });
   }
 };

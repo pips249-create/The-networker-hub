@@ -286,12 +286,34 @@
     showNearYouChip(slug);
   }
 
+  function profileOutsideUk() {
+    var code = String(window.hubProfileCountryCode || 'GB')
+      .trim()
+      .toUpperCase();
+    return code !== 'GB' && code !== 'UK';
+  }
+
+  function rememberProfilePlace(profile) {
+    if (window.HubProfileCountries && window.HubProfileCountries.rememberProfilePlace) {
+      return window.HubProfileCountries.rememberProfilePlace(profile).location;
+    }
+    var loc = String((profile && profile.location) || '').trim();
+    var code = String((profile && (profile.countryCode || profile.country)) || 'GB')
+      .trim()
+      .toUpperCase();
+    window.hubProfileLocation = loc;
+    window.hubProfileCountryCode = code === 'UK' ? 'GB' : code || 'GB';
+    window.hubProfilePlaceLoaded = true;
+    return loc;
+  }
+
   function loadProfileLocationQuietly() {
     if (window.hubLoadProfileLocation) return window.hubLoadProfileLocation();
-    if (window.hubProfileLocation) return Promise.resolve(window.hubProfileLocation || '');
+    if (window.hubProfilePlaceLoaded) return Promise.resolve(window.hubProfileLocation || '');
     if (typeof window.hubFetchProfile === 'function') {
       return window.hubFetchProfile().then(function (data) {
-        return (data && data.ok && data.profile && String(data.profile.location || '').trim()) || '';
+        if (data && data.ok && data.profile) return rememberProfilePlace(data.profile);
+        return '';
       });
     }
     if (typeof window.hubFetchSession !== 'function') return Promise.resolve('');
@@ -304,12 +326,8 @@
             return res.json();
           })
           .then(function (data) {
-            var loc = '';
-            if (data && data.ok && data.profile) {
-              loc = String(data.profile.location || '').trim();
-            }
-            window.hubProfileLocation = loc;
-            return loc;
+            if (data && data.ok && data.profile) return rememberProfilePlace(data.profile);
+            return '';
           });
       })
       .catch(function () {
@@ -357,6 +375,7 @@
 
     function fromProfile() {
       loadProfileLocationQuietly().then(function (loc) {
+        if (profileOutsideUk()) return;
         var slug = slugFromText(loc);
         if (slug) applySlug(slug);
       });
@@ -377,6 +396,11 @@
     // Prefer account location over GPS. Never call getCurrentPosition while
     // permission is "prompt" — that was firing a location popup on every visit/login.
     loadProfileLocationQuietly().then(function (loc) {
+      if (profileOutsideUk()) {
+        return readGrantedGeolocation().then(function (coords) {
+          if (coords && coords.length === 2) fromCoords(coords[0], coords[1]);
+        });
+      }
       var slug = slugFromText(loc);
       if (slug) {
         applySlug(slug);

@@ -138,6 +138,75 @@
     else if (roleWritable) syncProfessionalRoleOther({ clear: false, writable: true });
     if (roleEls.otherInput && !roleWritable) roleEls.otherInput.disabled = true;
     setFieldWritable('as-location', w.location !== false);
+    setFieldWritable('as-country', w.countryCode !== false);
+  }
+
+  const UK_LOCATION_TIP =
+    'Powers the Near Me filter on our Events page when you\u2019re signed in. It is also used for nearby recommendations in marketing emails and the monthly Hubert events round-up. It is not shown to organisers or on your name badge.';
+  const OUTSIDE_LOCATION_TIP =
+    'We save your city for when listings open in your country. Near Me and nearby emails on this hub use a UK city or postcode, so we will not match UK events to this location. Online events still appear on the Events page.';
+  const INTERNATIONAL_HUB_URL = 'https://www.thenetworkerinternational.com/';
+
+  function selectedCountryCode() {
+    return document.getElementById('as-country')?.value.trim() || 'GB';
+  }
+
+  function countryIsUk(code) {
+    const value = String(code || 'GB')
+      .trim()
+      .toUpperCase();
+    return !value || value === 'GB' || value === 'UK';
+  }
+
+  function syncPlaceCopy() {
+    const code = selectedCountryCode();
+    const uk = countryIsUk(code);
+    const location = document.getElementById('as-location');
+    const hint = document.getElementById('as-place-hint');
+    const tip = document.getElementById('as-location-tip-text');
+    if (location) location.placeholder = uk ? 'e.g. Manchester or M1 1AE' : 'City';
+    if (tip) tip.textContent = uk ? UK_LOCATION_TIP : OUTSIDE_LOCATION_TIP;
+    if (!hint) return;
+    hint.textContent = '';
+    if (uk) {
+      hint.textContent =
+        'City or postcode. Used for Near Me and nearby emails. Not shown on your badge.';
+      return;
+    }
+    hint.appendChild(
+      document.createTextNode(
+        'In-person events on this hub are in the United Kingdom. We will show online events you can join, and keep this city for later. '
+      )
+    );
+    const link = document.createElement('a');
+    link.href = INTERNATIONAL_HUB_URL;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.textContent = 'Register interest on The Networker International';
+    hint.appendChild(link);
+    hint.appendChild(document.createTextNode('.'));
+  }
+
+  function fillCountrySelect(code) {
+    const select = document.getElementById('as-country');
+    if (!select) return;
+    if (window.HubProfileCountries && window.HubProfileCountries.countryOptions) {
+      const wanted = String(code || 'GB').trim().toUpperCase() || 'GB';
+      const current = select.value;
+      if (select.options.length < 2) {
+        select.textContent = '';
+        window.HubProfileCountries.countryOptions().forEach(function (row) {
+          const opt = document.createElement('option');
+          opt.value = row.code;
+          opt.textContent = row.name;
+          select.appendChild(opt);
+        });
+      }
+      select.value = wanted;
+      if (select.value !== wanted) select.value = current || 'GB';
+      if (!select.value) select.value = 'GB';
+    }
+    syncPlaceCopy();
   }
 
   function scrollAlertIntoView() {
@@ -193,6 +262,7 @@
       setFieldValue('as-industry', profile.businessSector || '');
     }
     applyProfessionalRoleSelection(profile.professionalRole || '');
+    fillCountrySelect(profile.countryCode || 'GB');
     setFieldValue('as-location', profile.location || '');
     fillEmailPrefs(profile);
     rememberProfileBaseline();
@@ -502,6 +572,7 @@
       businessSector: resolvedIndustry(),
       professionalRole: resolvedProfessionalRole(),
       location: document.getElementById('as-location')?.value.trim() || '',
+      countryCode: selectedCountryCode(),
     });
   }
 
@@ -530,7 +601,10 @@
 
   const profileForm = document.getElementById('as-profile-form');
   profileForm?.addEventListener('input', syncProfileDirty);
-  profileForm?.addEventListener('change', syncProfileDirty);
+  profileForm?.addEventListener('change', () => {
+    syncPlaceCopy();
+    syncProfileDirty();
+  });
 
   document.getElementById('as-sticky-save-btn')?.addEventListener('click', () => {
     if (profileForm && typeof profileForm.requestSubmit === 'function') {
@@ -581,6 +655,7 @@
           businessSector: industryValue,
           professionalRole: roleValue,
           location: document.getElementById('as-location').value.trim(),
+          countryCode: selectedCountryCode(),
         }),
       });
       const data = await res.json();
@@ -790,6 +865,7 @@
     }
   }
 
+  fillCountrySelect('GB');
   initFieldTips();
   init();
 })();

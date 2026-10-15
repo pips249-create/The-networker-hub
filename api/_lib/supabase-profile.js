@@ -16,11 +16,13 @@ const {
   isBareOther,
   isAnalyticsProfileComplete,
 } = require('./hub-profile-industries');
+const { normalizeCountryCode } = require('./profile-countries');
 
 const WRITABLE = {
   name: true,
   publicReviewName: true,
   location: true,
+  countryCode: true,
   company: true,
   jobTitle: true,
   professionalRole: true,
@@ -95,6 +97,14 @@ function normalizeProfessionalRole(raw) {
     throw e;
   }
   return trimmed.replace(/\s+/g, ' ');
+}
+
+function storedCountryCode(raw) {
+  const code = String(raw || '')
+    .trim()
+    .toUpperCase();
+  if (!code || code === 'UK') return 'GB';
+  return code;
 }
 
 function interestsToPreferences(interests) {
@@ -172,6 +182,7 @@ function rowToProfile(session, hub, attendee) {
     }),
     reviewNameExample: firstNameLastInitial(legalName) || 'Alex M.',
     location: String(attendee?.location || '').trim(),
+    countryCode: storedCountryCode(attendee?.country_code),
     company: String(attendee?.company || '').trim(),
     jobTitle: String(attendee?.job_title || '').trim(),
     professionalRole: String(attendee?.professional_role || '').trim(),
@@ -235,6 +246,10 @@ async function updateProfile(session, body) {
     }
   }
   if (body.location !== undefined) attendeePatch.location = String(body.location || '').trim();
+  if (body.countryCode !== undefined || body.country !== undefined) {
+    const raw = body.countryCode !== undefined ? body.countryCode : body.country;
+    attendeePatch.country_code = normalizeCountryCode(raw);
+  }
   if (body.company !== undefined) {
     attendeePatch.company = String(body.company || '').trim() || null;
   }
@@ -295,7 +310,22 @@ async function updateProfile(session, body) {
     } else {
       updateErr = primary.error;
       const msg = String(primary.error.message || '').toLowerCase();
-      if (
+      if (msg.includes('country_code')) {
+        const withoutCountry = { ...attendeePatch };
+        delete withoutCountry.country_code;
+        if (Object.keys(withoutCountry).length) {
+          const retryCountry = await sb
+            .from('attendees')
+            .update(withoutCountry)
+            .eq('id', attendee.id)
+            .select('*')
+            .single();
+          if (!retryCountry.error) updated = retryCountry.data;
+          else updateErr = retryCountry.error;
+        } else {
+          updated = attendee;
+        }
+      } else if (
         msg.includes('business_sector') ||
         msg.includes('market_preferences') ||
         msg.includes('job_title') ||
@@ -305,6 +335,7 @@ async function updateProfile(session, body) {
         const fallback = { ...attendeePatch };
         delete fallback.business_sector;
         delete fallback.market_preferences;
+        delete fallback.country_code;
         if (msg.includes('job_title')) delete fallback.job_title;
         if (msg.includes('professional_role')) delete fallback.professional_role;
         if (msg.includes('public_review_name')) delete fallback.public_review_name;

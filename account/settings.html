@@ -16,7 +16,7 @@
     />
     <link rel="stylesheet" href="../css/hub.css?v=20260909listmenu1" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260626" />
-    <link rel="stylesheet" href="../css/account-settings.css?v=20261007unsub1" />
+    <link rel="stylesheet" href="../css/account-settings.css?v=20261015country" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260909listmenu1" />
 
   </head>
@@ -185,33 +185,44 @@
               autocomplete="organization-title"
             />
           </div>
-          <div class="as-field">
-            <div class="as-field-label-row">
-              <label for="as-location">Location</label>
-              <button
-                type="button"
-                class="as-field-tip-btn"
-                data-as-field-tip="as-location-tip-text"
-                aria-label="What is location used for?"
-                aria-expanded="false"
-                aria-controls="as-location-tip-text"
-              >
-                <span aria-hidden="true">?</span>
-              </button>
+          <div class="as-field-row">
+            <div class="as-field">
+              <label for="as-country">Country</label>
+              <select id="as-country" name="countryCode" autocomplete="country">
+                <option value="GB">United Kingdom</option>
+              </select>
             </div>
-            <div id="as-location-tip-text" class="as-field-tip-popover" role="tooltip" hidden>
-              Powers the &lsquo;Near Me&rsquo; filter on our Events page when you&apos;re signed in.
-              It is also used for nearby recommendations in marketing emails and the monthly Hubert
-              events round-up. It is not shown to organisers or on your name badge.
+            <div class="as-field">
+              <div class="as-field-label-row">
+                <label for="as-location">Location</label>
+                <button
+                  type="button"
+                  class="as-field-tip-btn"
+                  data-as-field-tip="as-location-tip-text"
+                  aria-label="What is location used for?"
+                  aria-expanded="false"
+                  aria-controls="as-location-tip-text"
+                >
+                  <span aria-hidden="true">?</span>
+                </button>
+              </div>
+              <div id="as-location-tip-text" class="as-field-tip-popover" role="tooltip" hidden>
+                Powers the &lsquo;Near Me&rsquo; filter on our Events page when you&apos;re signed in.
+                It is also used for nearby recommendations in marketing emails and the monthly Hubert
+                events round-up. It is not shown to organisers or on your name badge.
+              </div>
+              <input
+                type="text"
+                id="as-location"
+                name="location"
+                placeholder="e.g. Manchester or M1 1AE"
+                autocomplete="address-level2"
+              />
             </div>
-            <input
-              type="text"
-              id="as-location"
-              name="location"
-              placeholder="e.g. Manchester, UK or postcode"
-              autocomplete="address-level2"
-            />
           </div>
+          <p class="as-field-hint" id="as-place-hint">
+            City or postcode. Used for Near Me and nearby emails. Not shown on your badge.
+          </p>
           <div class="as-actions as-actions--profile">
             <button type="submit" class="as-btn as-btn-primary" id="as-save-profile">Save changes</button>
           </div>
@@ -350,6 +361,7 @@
 
     <script src="../js/site-nav.js?v=20260923iab1" data-root="../" data-page="settings"></script>
     <script src="../js/hub-profile-industries.js?v=20260902other2"></script>
-    <script src="../js/account-settings.js?v=20261007unsub1"></script>
+    <script src="../js/profile-countries.js?v=20261015country"></script>
+    <script src="../js/account-settings.js?v=20261015country"></script>
   </body>
 </html>

@@ -28,20 +28,41 @@ const { escapeHtml } = require('./event-refund-policy');
 const { claimRowTimestamp, releaseRowTimestamp } = require('./email-send-claim');
 const { areHubertEventConciergeEmailsEnabled } = require('./automated-email-sequences');
 const { hasLinkedAttendeeAccount } = require('./attendee-member-account');
+const { countryName, isUkCountryCode } = require('./profile-countries');
+
+const INTERNATIONAL_HUB_URL = 'https://www.thenetworkerinternational.com/';
 
 function accountSettingsUrl(siteUrl) {
   return String(siteUrl || siteBase()).replace(/\/$/, '') + '/account/settings/';
 }
 
-/** "near Manchester" when a profile location is set, otherwise "near you". */
-function nearLocationPhrase(location) {
+/** "near Manchester" for UK profiles, "online" when the member is outside the UK. */
+function nearLocationPhrase(location, countryCode) {
+  if (!isUkCountryCode(countryCode)) return 'online';
   const label = nearbyLocationLabel(location);
   if (!label) return 'near you';
   return 'near ' + label;
 }
 
+function outsideUkLocationNoteHtml(countryCode) {
+  const name = escapeHtml(countryName(countryCode) || 'your country');
+  return (
+    '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 8px;background:#f7f4fb;border:1px solid rgba(69,45,92,0.12);border-radius:10px;">' +
+    '<tr><td style="padding:16px 18px;text-align:left;">' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:700;color:#452d5c;margin:0 0 6px;">Online events</p>' +
+    '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;line-height:1.55;color:#635c5e;margin:0 0 12px;">In-person events on The Networker UK are in the United Kingdom, so these picks are online. Your profile country is ' +
+    name +
+    '. Register interest for your country on The Networker International.</p>' +
+    '<a href="' +
+    INTERNATIONAL_HUB_URL +
+    '" style="display:inline-block;padding:10px 18px;background:#5b2f99;border-radius:8px;color:#ffffff;font-family:\'DM Sans\',system-ui,sans-serif;font-size:14px;font-weight:700;text-decoration:none;">The Networker International &rarr;</a>' +
+    '</td></tr></table>'
+  );
+}
+
 /** Soft CTA when the attendee has no city/postcode saved yet. */
-function locationTipHtml(siteUrl, location) {
+function locationTipHtml(siteUrl, location, countryCode) {
+  if (!isUkCountryCode(countryCode)) return outsideUkLocationNoteHtml(countryCode);
   if (String(location || '').trim()) return '';
   const href = accountSettingsUrl(siteUrl);
   return (
@@ -57,8 +78,20 @@ function locationTipHtml(siteUrl, location) {
 }
 
 /** Hubert digest footer — acknowledge saved location instead of always asking for it. */
-function hubertLocationFooterHtml(siteUrl, location) {
+function hubertLocationFooterHtml(siteUrl, location, countryCode) {
   const href = accountSettingsUrl(siteUrl);
+  if (!isUkCountryCode(countryCode)) {
+    const name = escapeHtml(countryName(countryCode) || 'your country');
+    return (
+      'You\u2019re in <strong style="color:#635c5e;">' +
+      name +
+      '</strong>. These picks are online — in-person events on this hub are in the UK. <a href="' +
+      INTERNATIONAL_HUB_URL +
+      '" style="color:#5b2f99;font-weight:600;text-decoration:none;">Register interest for your country</a>, or change this in <a href="' +
+      href +
+      '" style="color:#5b2f99;font-weight:600;text-decoration:none;">account settings</a>.'
+    );
+  }
   const label = nearbyLocationLabel(location);
   if (label) {
     return (
@@ -147,9 +180,12 @@ function eventRecommendationSubtitle(ev) {
   );
 }
 
-async function buildSignupNudgeEventsHtml(sb, attendeeLocation) {
+async function buildSignupNudgeEventsHtml(sb, attendeeLocation, countryCode) {
   const siteUrl = siteBase();
-  const nearbyResult = await fetchNearbyEvents(sb, attendeeLocation, { limit: 5 });
+  const nearbyResult = await fetchNearbyEvents(sb, attendeeLocation, {
+    limit: 5,
+    countryCode: countryCode,
+  });
   const nearbyIds = nearbyResult.events.map((ev) => ev.id);
   const popularResult = await fetchPopularEvents(sb, {
     limit: 3,
@@ -190,7 +226,7 @@ async function buildSignupNudgeEventsHtml(sb, attendeeLocation) {
   };
 }
 
-async function buildRecommendationsHtml(sb, attendeeLocation) {
+async function buildRecommendationsHtml(sb, attendeeLocation, countryCode) {
   const siteUrl = siteBase();
   const now = new Date().toISOString();
   const parts = [];
@@ -257,7 +293,10 @@ async function buildRecommendationsHtml(sb, attendeeLocation) {
     }
   }
 
-  const nearby = await fetchNearbyEvents(sb, attendeeLocation, { limit: 4 });
+  const nearby = await fetchNearbyEvents(sb, attendeeLocation, {
+    limit: 4,
+    countryCode: countryCode,
+  });
   if (nearby.events.length) {
     parts.push(sectionHeading(nearbySectionHeading(nearby)));
     for (const ev of nearby.events) {
@@ -315,7 +354,7 @@ async function sendDueAttendeeReengagementEmails(sb) {
 
   const { data: attendees, error: attErr } = await sb
     .from('attendees')
-    .select('id, email, name, location, reengagement_email_sent_at')
+    .select('id, email, name, location, country_code, reengagement_email_sent_at')
     .in('id', eligibleIds);
   if (attErr) throw new Error(attErr.message);
 
@@ -343,7 +382,11 @@ async function sendDueAttendeeReengagementEmails(sb) {
     }
 
     try {
-      const recommendationsHtml = await buildRecommendationsHtml(sb, attendee.location);
+      const recommendationsHtml = await buildRecommendationsHtml(
+        sb,
+        attendee.location,
+        attendee.country_code
+      );
       const claimedAt = new Date().toISOString();
       const claimed = await claimRowTimestamp(sb, {
         table: 'attendees',
@@ -416,7 +459,7 @@ async function sendDueSignupEventsNudgeEmails(sb) {
 
   const { data: attendees, error: attErr } = await sb
     .from('attendees')
-    .select('id, email, name, location, created_at, signup_events_nudge_sent_at')
+    .select('id, email, name, location, country_code, created_at, signup_events_nudge_sent_at')
     .lte('created_at', eligibleAfter)
     .gte('created_at', eligibleBefore)
     .is('signup_events_nudge_sent_at', null);
@@ -437,7 +480,11 @@ async function sendDueSignupEventsNudgeEmails(sb) {
     }
 
     try {
-      const eventSections = await buildSignupNudgeEventsHtml(sb, attendee.location);
+      const eventSections = await buildSignupNudgeEventsHtml(
+        sb,
+        attendee.location,
+        attendee.country_code
+      );
       if (!eventSections.nearby_events_html && !eventSections.popular_events_html) {
         result.skipped += 1;
         continue;
@@ -463,11 +510,11 @@ async function sendDueSignupEventsNudgeEmails(sb) {
           variables: {
             ...baseEmailVars(siteUrl),
             user_name: String(attendee.name || '').trim() || 'there',
-            near_location_phrase: nearLocationPhrase(attendee.location),
+            near_location_phrase: nearLocationPhrase(attendee.location, attendee.country_code),
             nearby_events_html: eventSections.nearby_events_html,
             popular_events_html: eventSections.popular_events_html,
             browse_events_url: browseEventsUrl(siteUrl),
-            location_tip_html: locationTipHtml(siteUrl, attendee.location),
+            location_tip_html: locationTipHtml(siteUrl, attendee.location, attendee.country_code),
             add_location_url: accountSettingsUrl(siteUrl),
           },
           subject: 'Events picked for you on The Networker UK',
@@ -604,7 +651,7 @@ async function sendDueSignupEventsNudgeFollowupEmails(sb) {
   const { data: attendees, error: attErr } = await sb
     .from('attendees')
     .select(
-      'id, email, name, location, created_at, supabase_user_id, signup_events_nudge_sent_at, signup_events_nudge_followup_sent_at'
+      'id, email, name, location, country_code, created_at, supabase_user_id, signup_events_nudge_sent_at, signup_events_nudge_followup_sent_at'
     )
     .lte('created_at', eligibleAfter)
     .gte('created_at', eligibleBefore)
@@ -649,7 +696,11 @@ async function sendDueSignupEventsNudgeFollowupEmails(sb) {
     }
 
     try {
-      const eventSections = await buildSignupNudgeEventsHtml(sb, attendee.location);
+      const eventSections = await buildSignupNudgeEventsHtml(
+        sb,
+        attendee.location,
+        attendee.country_code
+      );
       if (!eventSections.nearby_events_html && !eventSections.popular_events_html) {
         result.skipped += 1;
         continue;
@@ -675,11 +726,11 @@ async function sendDueSignupEventsNudgeFollowupEmails(sb) {
           variables: {
             ...baseEmailVars(siteUrl),
             user_name: String(attendee.name || '').trim() || 'there',
-            near_location_phrase: nearLocationPhrase(attendee.location),
+            near_location_phrase: nearLocationPhrase(attendee.location, attendee.country_code),
             nearby_events_html: eventSections.nearby_events_html,
             popular_events_html: eventSections.popular_events_html,
             browse_events_url: browseEventsUrl(siteUrl),
-            location_tip_html: locationTipHtml(siteUrl, attendee.location),
+            location_tip_html: locationTipHtml(siteUrl, attendee.location, attendee.country_code),
             add_location_url: accountSettingsUrl(siteUrl),
           },
           subject: 'Still looking for your first event?',
@@ -1771,7 +1822,7 @@ async function sendDueHubertEventConciergeEmails(sb) {
   const { data: attendees, error } = await sb
     .from('attendees')
     .select(
-      'id, email, name, location, supabase_user_id, hubert_event_concierge_sent_at, signup_events_nudge_sent_at, signup_events_nudge_followup_sent_at'
+      'id, email, name, location, country_code, supabase_user_id, hubert_event_concierge_sent_at, signup_events_nudge_sent_at, signup_events_nudge_followup_sent_at'
     )
     .not('email', 'is', null)
     .not('supabase_user_id', 'is', null)
@@ -1837,7 +1888,11 @@ async function sendDueHubertEventConciergeEmails(sb) {
     }
 
     try {
-      const eventSections = await buildSignupNudgeEventsHtml(sb, attendee.location);
+      const eventSections = await buildSignupNudgeEventsHtml(
+        sb,
+        attendee.location,
+        attendee.country_code
+      );
       if (!eventSections.nearby_events_html && !eventSections.popular_events_html) {
         result.skipped += 1;
         continue;
@@ -1863,12 +1918,16 @@ async function sendDueHubertEventConciergeEmails(sb) {
             ...baseEmailVars(siteUrl),
             user_name: String(attendee.name || '').trim() || 'there',
             month_label: monthLabel,
-            near_location_phrase: nearLocationPhrase(attendee.location),
+            near_location_phrase: nearLocationPhrase(attendee.location, attendee.country_code),
             nearby_events_html: eventSections.nearby_events_html,
             popular_events_html: eventSections.popular_events_html,
             browse_events_url: browseEventsUrl(siteUrl),
             account_settings_url: accountSettingsUrl(siteUrl),
-            location_footer_html: hubertLocationFooterHtml(siteUrl, attendee.location),
+            location_footer_html: hubertLocationFooterHtml(
+              siteUrl,
+              attendee.location,
+              attendee.country_code
+            ),
           },
           subject: "Hubert's event picks for " + monthLabel,
         });

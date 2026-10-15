@@ -1512,7 +1512,16 @@
           })
           .then(function (data) {
             if (data && data.ok && data.profile) {
-              window.hubProfileLocation = String(data.profile.location || '').trim();
+              if (window.HubProfileCountries && window.HubProfileCountries.rememberProfilePlace) {
+                window.HubProfileCountries.rememberProfilePlace(data.profile);
+              } else {
+                window.hubProfileLocation = String(data.profile.location || '').trim();
+                var countryCode = String(data.profile.countryCode || data.profile.country || 'GB')
+                  .trim()
+                  .toUpperCase();
+                window.hubProfileCountryCode = countryCode === 'UK' ? 'GB' : countryCode || 'GB';
+                window.hubProfilePlaceLoaded = true;
+              }
             }
             return data && typeof data === 'object' ? data : { ok: false, profile: null };
           });

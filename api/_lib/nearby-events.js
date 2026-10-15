@@ -2,6 +2,7 @@ const { isEventPublishedForSale } = require('./ticket-sales');
 const { isOnlineEvent } = require('./event-refund-policy');
 const { haversineMiles, bboxForRadiusMiles } = require('./uk-outcode');
 const { geocodeUkLocation } = require('./postcode-geocode');
+const { countryName, isUkCountryCode } = require('./profile-countries');
 
 /** Max distance for "events near you" blocks in lifecycle emails. */
 const NEARBY_EMAIL_RADIUS_MILES = 25;
@@ -39,6 +40,7 @@ function nearbyLocationLabel(location) {
 }
 
 function nearbySectionHeading(nearbyResult) {
+  if (nearbyResult?.outsideUk) return 'Popular online events';
   const source = String(nearbyResult?.source || 'nearby').trim();
   if (source === 'popular_online') return 'Popular online events';
   if (source === 'upcoming') return 'Coming up on The Networker UK';
@@ -63,6 +65,12 @@ function nearbySectionHeading(nearbyResult) {
 function nearbySectionSubtitle(nearbyResult) {
   const source = String(nearbyResult?.source || 'nearby').trim();
   const label = String(nearbyResult?.locationLabel || '').trim();
+
+  if (nearbyResult?.outsideUk) {
+    return label
+      ? 'Online events. Your profile country is ' + label
+      : 'Online events you can join from outside the UK';
+  }
 
   if (source === 'popular_online') {
     return label
@@ -211,6 +219,29 @@ async function fetchPopularOnlineEvents(sb, options = {}) {
 
 async function fetchNearbyEvents(sb, location, options = {}) {
   const limit = Math.max(1, Math.min(Number(options.limit) || 4, 8));
+  if (!isUkCountryCode(options.countryCode)) {
+    const popularOnline = await fetchPopularOnlineEvents(sb, { ...options, limit });
+    const label = countryName(options.countryCode) || nearbyLocationLabel(location);
+    if (popularOnline.length) {
+      return {
+        events: popularOnline,
+        locationLabel: label,
+        radiusMiles: null,
+        source: 'popular_online',
+        usedFallback: true,
+        outsideUk: true,
+      };
+    }
+    return {
+      events: [],
+      locationLabel: label,
+      radiusMiles: null,
+      source: null,
+      usedFallback: false,
+      outsideUk: true,
+    };
+  }
+
   const nearby = await fetchNearbyEventsByLocation(sb, location, options);
 
   if (nearby.events.length) {

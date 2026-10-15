@@ -80,7 +80,16 @@
     }
 
     if (window.hubIsNearMeActive && window.hubIsNearMeActive()) {
-      if (window.hubUserCoords && window.hubUserCoords.length === 2) {
+      var outsideUkNoDevice =
+        window.hubProfileOutsideUk &&
+        window.hubProfileOutsideUk() &&
+        !(window.hubUserCoords && window.hubUserCoords.length === 2) &&
+        !params.location;
+      if (outsideUkNoDevice) {
+        params.inPerson = '0';
+        params.online = '1';
+        params.location = '';
+      } else if (window.hubUserCoords && window.hubUserCoords.length === 2) {
         params.lat = String(window.hubUserCoords[0]);
         params.lng = String(window.hubUserCoords[1]);
         params.radius = String(

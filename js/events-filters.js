@@ -598,8 +598,79 @@
 
   var profileLocationPromise = null;
 
+  function profileOutsideUk() {
+    var code = String(window.hubProfileCountryCode || 'GB')
+      .trim()
+      .toUpperCase();
+    return code !== 'GB' && code !== 'UK';
+  }
+
+  window.hubProfileOutsideUk = profileOutsideUk;
+
+  function rememberProfilePlace(profile) {
+    if (window.HubProfileCountries && window.HubProfileCountries.rememberProfilePlace) {
+      window.HubProfileCountries.rememberProfilePlace(profile);
+      return;
+    }
+    window.hubProfileLocation = String((profile && profile.location) || '').trim();
+    var code = String((profile && (profile.countryCode || profile.country)) || 'GB')
+      .trim()
+      .toUpperCase();
+    window.hubProfileCountryCode = code === 'UK' ? 'GB' : code || 'GB';
+    window.hubProfilePlaceLoaded = true;
+  }
+
+  function syncOutsideUkNearNote() {
+    var note = document.getElementById('near-me-outside-uk');
+    if (!note) return;
+    if (document.body.classList.contains('browse-mode-organisers')) {
+      note.hidden = true;
+      note.textContent = '';
+      return;
+    }
+    var typed = postcodeInput ? String(postcodeInput.value || '').trim() : '';
+    var show = isNearMeActive() && profileOutsideUk() && !typed;
+    if (!show) {
+      note.hidden = true;
+      note.textContent = '';
+      return;
+    }
+    var code = String(window.hubProfileCountryCode || '').trim();
+    var name =
+      window.HubProfileCountries && window.HubProfileCountries.countryName
+        ? window.HubProfileCountries.countryName(code)
+        : '';
+    var usingDevice = window.hubUserCoords && window.hubUserCoords.length === 2;
+    note.hidden = false;
+    note.textContent = '';
+    if (usingDevice) {
+      note.appendChild(
+        document.createTextNode(
+          'Near Me is using this device\u2019s location, not your saved city' +
+            (name ? '. Your profile country is ' + name : '') +
+            '. In-person events on this hub are in the United Kingdom.'
+        )
+      );
+      return;
+    }
+    note.appendChild(
+      document.createTextNode(
+        'In-person events on The Networker UK are in the United Kingdom, so Near Me is showing online events' +
+          (name ? '. Your profile country is ' + name : '') +
+          '. '
+      )
+    );
+    var link = document.createElement('a');
+    link.href = 'https://www.thenetworkerinternational.com/';
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.textContent = 'Register interest for your country';
+    note.appendChild(link);
+    note.appendChild(document.createTextNode('.'));
+  }
+
   function loadProfileLocation() {
-    if (window.hubProfileLocation) return Promise.resolve(window.hubProfileLocation || '');
+    if (window.hubProfilePlaceLoaded) return Promise.resolve(window.hubProfileLocation || '');
     if (profileLocationPromise) return profileLocationPromise;
     var fetcher =
       typeof window.hubFetchProfile === 'function'
@@ -617,9 +688,10 @@
     if (!fetcher) return Promise.resolve('');
     profileLocationPromise = fetcher
       .then(function (data) {
-        if (data && data.ok && data.profile) {
-          window.hubProfileLocation = String(data.profile.location || '').trim();
-        }
+        var wasOutside = profileOutsideUk();
+        if (data && data.ok && data.profile) rememberProfilePlace(data.profile);
+        if (profileOutsideUk() !== wasOutside && isNearMeActive()) applyNearMeFilters();
+        else syncOutsideUkNearNote();
         return window.hubProfileLocation || '';
       })
       .catch(function () {
@@ -669,6 +741,8 @@
     if (deliveryFmt === 'online') return true;
 
     if (isNearMeActive()) {
+      var typedLocation = String(pc || '').trim();
+      if (profileOutsideUk() && !window.hubUserCoords && !typedLocation) return false;
       // Wait for geolocation — do not hide in-person listings before coords exist.
       if (!window.hubUserCoords) return true;
       center = window.hubUserCoords;
@@ -746,7 +820,7 @@
       return window.hubGeocodeUserPostcode(pc);
     }
     var profileLoc = String(window.hubProfileLocation || '').trim();
-    if (profileLoc && window.hubGeocodeLocationQuery) {
+    if (!profileOutsideUk() && profileLoc && window.hubGeocodeLocationQuery) {
       return window.hubGeocodeLocationQuery(profileLoc).then(function (coords) {
         if (coords) {
           window.hubUserCoords = coords;
@@ -826,10 +900,13 @@
     if (!isNearMeActive()) {
       window.hubUserCoords = null;
       syncNearRadiusUi();
+      syncOutsideUkNearNote();
       applyLocationFilters();
       return;
     }
+    syncOutsideUkNearNote();
     resolveNearMeCoords().then(function () {
+      syncOutsideUkNearNote();
       if (window.HUB_refreshNearYouChip) window.HUB_refreshNearYouChip();
       if (window.hubServerBrowse && window.hubBrowseFetchNow) {
         window.hubBrowseFetchNow(1);
