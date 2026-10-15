@@ -2,7 +2,7 @@
  * Follow-ups after the directory invitation, only while the page is unclaimed.
  * Day 3 is the short preview check-in. Day 7 is the social-proof note.
  */
-const { DIRECTORY_INVITE_SLUG, DIRECTORY_NUDGE_SLUG, DIRECTORY_DAY7_SLUG, DIRECTORY_DAY21_SLUG } = require('./organiser-directory-invite');
+const { DIRECTORY_INVITE_SLUG, DIRECTORY_NUDGE_SLUG, DIRECTORY_DAY7_SLUG, DIRECTORY_DAY21_SLUG, DIRECTORY_DAY35_SLUG } = require('./organiser-directory-invite');
 const { isPublicOrganiser } = require('./supabase-organisers-browse');
 const { isExcludedLaunchOrganiser } = require('../../scripts/launch-excluded-organisers');
 
@@ -13,6 +13,8 @@ const DAY7_AFTER_DAYS = 7;
 const DAY7_UNTIL_DAYS = 15;
 const DAY21_AFTER_DAYS = 21;
 const DAY21_UNTIL_DAYS = 35;
+const DAY35_AFTER_DAYS = 35;
+const DAY35_UNTIL_DAYS = 49;
 const NUDGE_BATCH = 40;
 const ACTIVITY_LIMIT = 1000;
 
@@ -67,6 +69,19 @@ function hostsLine(names) {
     );
   }
   return "We've recently welcomed several networking hosts to The Networker UK.";
+}
+
+function directoryDay35SkipReason({ inviteAt, alreadySent, claimStatus, now }) {
+  if (alreadySent) return 'already_sent';
+  const status = String(claimStatus || '').toLowerCase();
+  if (status === 'claimed') return 'already_claimed';
+  if (status === 'disputed') return 'disputed';
+  const sent = Date.parse(inviteAt || '');
+  if (!Number.isFinite(sent)) return 'missing_invite';
+  const age = (now == null ? Date.now() : Number(now)) - sent;
+  if (age < DAY35_AFTER_DAYS * DAY_MS) return 'too_soon';
+  if (age >= DAY35_UNTIL_DAYS * DAY_MS) return 'too_old';
+  return '';
 }
 
 function directoryDay21SkipReason({ inviteAt, alreadySent, claimStatus, now }) {
@@ -256,6 +271,7 @@ async function sendDueDirectoryStage(sb, options, stage) {
       siblingOrganisers: siblings,
     });
     if (result && result.sent) sent += 1;
+    else if (result && result.error === 'emails_disabled') skipped += 1;
     else failed += 1;
   }
 
@@ -282,6 +298,16 @@ function sendDueDirectoryDay7(sb, options) {
   });
 }
 
+function sendDueDirectoryDay35(sb, options) {
+  const { sendOrganiserDirectoryDay35 } = require('./organiser-directory-invite');
+  return sendDueDirectoryStage(sb, options, {
+    slug: DIRECTORY_DAY35_SLUG,
+    lookbackDays: DAY35_UNTIL_DAYS,
+    skip: directoryDay35SkipReason,
+    send: sendOrganiserDirectoryDay35,
+  });
+}
+
 function sendDueDirectoryDay21(sb, options) {
   const { sendOrganiserDirectoryDay21 } = require('./organiser-directory-invite');
   return sendDueDirectoryStage(sb, options, {
@@ -297,6 +323,7 @@ module.exports = {
   DIRECTORY_NUDGE_SLUG,
   DIRECTORY_DAY7_SLUG,
   DIRECTORY_DAY21_SLUG,
+  DIRECTORY_DAY35_SLUG,
   NUDGE_AFTER_DAYS,
   NUDGE_UNTIL_DAYS,
   DAY7_AFTER_DAYS,
@@ -304,9 +331,11 @@ module.exports = {
   directoryNudgeSkipReason,
   directoryDay7SkipReason,
   directoryDay21SkipReason,
+  directoryDay35SkipReason,
   hostsLine,
   latestActivityByOrganiser,
   sendDueDirectoryNudges,
   sendDueDirectoryDay7,
   sendDueDirectoryDay21,
+  sendDueDirectoryDay35,
 };

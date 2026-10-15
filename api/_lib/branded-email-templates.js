@@ -67,6 +67,11 @@ const BRANDED_EMAIL_TEMPLATES = {
     marker: 'hub-email-layout-v3-purple',
     subject: 'A quick update for {{group_name}}',
   },
+  organiser_directory_invite_day35: {
+    file: 'organiser-directory-invite-day35.html',
+    marker: 'hub-email-layout-v3-purple',
+    subject: 'Should we keep this page open for {{group_name}}?',
+  },
   organiser_unclaimed_followup: {
     file: 'organiser-unclaimed-followup.html',
     marker: 'hub-email-layout-v3-purple',

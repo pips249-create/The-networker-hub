@@ -813,6 +813,7 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     slug === 'organiser_directory_invite_nudge' ||
     slug === 'organiser_directory_invite_day7' ||
     slug === 'organiser_directory_invite_day21' ||
+    slug === 'organiser_directory_invite_day35' ||
     slug === 'organiser_unclaimed_followup'
   ) {
     const { directoryInviteVariables } = require('./organiser-directory-invite');

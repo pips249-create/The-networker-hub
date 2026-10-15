@@ -746,6 +746,7 @@ function shouldSkipEmailAllowlist(slug) {
     slug === 'organiser_directory_invite_nudge' ||
     slug === 'organiser_directory_invite_day7' ||
     slug === 'organiser_directory_invite_day21' ||
+    slug === 'organiser_directory_invite_day35' ||
     slug === 'organiser_unclaimed_followup' ||
     slug === 'organiser_call_followup' ||
     slug === 'organiser_claim_invite' ||
@@ -777,6 +778,7 @@ function shouldAttachListUnsubscribe(slug) {
     s === 'organiser_directory_invite_nudge' ||
     s === 'organiser_directory_invite_day7' ||
     s === 'organiser_directory_invite_day21' ||
+    s === 'organiser_directory_invite_day35' ||
     s === 'organiser_unclaimed_followup' ||
     s === 'organiser_call_followup' ||
     s === 'organiser_claim_invite' ||

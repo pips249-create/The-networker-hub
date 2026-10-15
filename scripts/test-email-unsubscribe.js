@@ -63,6 +63,8 @@ assert.ok(settings.includes('id="as-unsubscribe-all"'));
 assert.ok(settings.includes('id="as-unsub-reason"'));
 
 const pageHtml = require('fs').readFileSync(require('path').join(__dirname, '../unsubscribe.html'), 'utf8');
+assert.ok(pageHtml.includes('Want this page taken down?'));
+assert.ok(pageHtml.includes('mailto:hi@thenetworkeruk.com?subject=Please%20take%20down%20my%20page'));
 assert.ok(pageHtml.includes('id="unsub-reason"'));
 assert.ok(pageHtml.includes('value="too_many"'));
 assert.strictEqual(normalizeUnsubscribeReason('too_many'), 'too_many');

@@ -70,6 +70,7 @@ const ORGANISER_EMAIL_SLUGS = new Set([
   'organiser_directory_invite_nudge',
   'organiser_directory_invite_day7',
   'organiser_directory_invite_day21',
+  'organiser_directory_invite_day35',
   'organiser_unclaimed_followup',
   'organiser_team_invite',
   'organiser_email_verify',

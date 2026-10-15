@@ -543,7 +543,7 @@
     listings: ['cleanup', 'event-intake', 'event-health', 'opportunities', 'moderation'],
     revenue: ['financials', 'revenue-mix', 'revenue-targets'],
     crm: ['pips-activity', 'jamie-targets', 'sales-kit', 'spotlight', 'sponsorship', 'referral-partners'],
-    comms: ['email', 'social', 'social-founding'],
+    comms: ['email', 'email-unsubscribed', 'social', 'social-founding'],
   };
   var HEALTH_STALE_MS = 5 * 60 * 1000;
   var METRICS_POLL_MS = 90000;
@@ -1823,6 +1823,7 @@
     if (h === 'social/founding' || h.indexOf('social/founding/') === 0) {
       return 'social-founding';
     }
+    if (h.split('?')[0] === 'email/unsubscribed') return 'email-unsubscribed';
     // Event requests + data issues are first-class sidebar items (not buried in Fix listings).
     var path = h.split('?')[0];
     if (path === 'cleanup/requests' || path.indexOf('cleanup/requests/') === 0) {
@@ -16470,6 +16471,7 @@
       'organiser_directory_invite_nudge',
       'organiser_directory_invite_day7',
       'organiser_directory_invite_day21',
+      'organiser_directory_invite_day35',
       'organiser_unclaimed_followup',
       'organiser_rebrand_announcement',
       'event_intake_received',

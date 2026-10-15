@@ -15,9 +15,11 @@ const {
   DIRECTORY_NUDGE_SLUG,
   DIRECTORY_DAY7_SLUG,
   DIRECTORY_DAY21_SLUG,
+  DIRECTORY_DAY35_SLUG,
   directoryNudgeSkipReason,
   directoryDay7SkipReason,
   directoryDay21SkipReason,
+  directoryDay35SkipReason,
   hostsLine,
   latestActivityByOrganiser,
 } = require('../api/_lib/organiser-directory-nudge');
@@ -55,6 +57,18 @@ assert(directoryDay21SkipReason({ inviteAt: at(20), now }) === 'too_soon', 'day 
 assert(directoryDay21SkipReason({ inviteAt: at(21), now }) === '', 'day 21 is due');
 assert(directoryDay21SkipReason({ inviteAt: at(28), now }) === '', 'a missed day 21 still qualifies');
 assert(directoryDay21SkipReason({ inviteAt: at(35), now }) === 'too_old', 'day 21 window closes');
+assert(directoryDay35SkipReason({ inviteAt: at(34), now }) === 'too_soon', 'day 34 waits for the close');
+assert(directoryDay35SkipReason({ inviteAt: at(35), now }) === '', 'day 35 is due');
+assert(directoryDay35SkipReason({ inviteAt: at(42), now }) === '', 'a missed day 35 still qualifies');
+assert(directoryDay35SkipReason({ inviteAt: at(49), now }) === 'too_old', 'day 35 window closes');
+assert(
+  directoryDay35SkipReason({ inviteAt: at(36), alreadySent: true, now }) === 'already_sent',
+  'one day-35 note only'
+);
+assert(
+  directoryDay35SkipReason({ inviteAt: at(36), claimStatus: 'claimed', now }) === 'already_claimed',
+  'claimed pages skip day 35'
+);
 assert(
   directoryDay21SkipReason({ inviteAt: at(22), alreadySent: true, now }) === 'already_sent',
   'one day-21 note only'
@@ -141,6 +155,21 @@ async function main() {
   assert(day21Html.indexOf('https://www.thenetworkeruk.com/unsubscribe') !== -1, 'day 21 has an unsubscribe link');
   assert(!/[\u2013\u2014]|&ndash;|&mdash;/.test(day21Html), 'day 21 uses hyphens, not en dashes');
   pass('day 21 template builds — ' + day21.subject);
+
+  const day35 = await buildEmailFromTemplate(
+    DIRECTORY_DAY35_SLUG,
+    mergeEmailPreviewVariables(DIRECTORY_DAY35_SLUG, {}, 'https://www.thenetworkeruk.com')
+  );
+  const day35Html = day35.html;
+  assert(day35.subject.indexOf('Should we keep this page open for City Connectors?') !== -1, 'day 35 subject: ' + day35.subject);
+  assert(day35Html.indexOf('stop clogging up your inbox') !== -1, 'day 35 is the last note');
+  assert(day35Html.indexOf('co-organisers') !== -1, 'day 35 uses British spelling');
+  assert(day35Html.indexOf('Take a look at your page') !== -1, 'day 35 has one page button');
+  assert(day35Html.indexOf('unclaimed') === -1, 'day 35 does not call the page unclaimed');
+  assert(day35Html.indexOf('{{') === -1, 'day 35 has no unresolved placeholders');
+  assert(day35Html.indexOf('https://www.thenetworkeruk.com/unsubscribe') !== -1, 'day 35 has an unsubscribe link');
+  assert(!/[\u2013\u2014]|&ndash;|&mdash;/.test(day35Html), 'day 35 uses hyphens, not en dashes');
+  pass('day 35 template builds — ' + day35.subject);
 }
 
 main().catch(function (err) {
