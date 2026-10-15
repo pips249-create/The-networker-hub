@@ -15,6 +15,57 @@ function shouldSendDirectoryInvite(body) {
   return true;
 }
 
+function groupedGroupName(names) {
+  const clean = [];
+  const seen = new Set();
+  (names || []).forEach((name) => {
+    const text = String(name || '').trim();
+    const key = text.toLowerCase();
+    if (!text || seen.has(key)) return;
+    seen.add(key);
+    clean.push(text);
+  });
+  if (!clean.length) return 'your group';
+  if (clean.length === 1) return clean[0];
+  if (clean.length === 2) return clean[0] + ' and ' + clean[1];
+  return clean[0] + ', ' + clean[1] + ' and ' + (clean.length - 2) + ' more';
+}
+
+function directoryGroupsHtml(items) {
+  const list = [];
+  const seen = new Set();
+  (items || []).forEach((item) => {
+    const name = String((item && item.name) || '').trim();
+    const key = name.toLowerCase();
+    if (!name || seen.has(key)) return;
+    seen.add(key);
+    list.push({ name, url: String((item && item.url) || '').trim() });
+  });
+  if (list.length < 2) return '';
+  const { escapeHtml } = require('./event-refund-policy');
+  const rows = list
+    .map((item) => {
+      const name = escapeHtml(item.name);
+      const url = /^https?:\/\//i.test(item.url) ? escapeHtml(item.url) : '';
+      const label = url
+        ? '<a href="' + url + '" style="color:#452d5c;font-weight:700;text-decoration:none;">' + name + '</a>'
+        : name;
+      return (
+        '<tr><td style="padding:0 0 8px;font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;line-height:1.5;color:#1c2040;">' +
+        label +
+        '</td></tr>'
+      );
+    })
+    .join('');
+  return (
+    '<tr><td class="mobile-pad" style="padding:8px 40px 4px;text-align:left;">' +
+    '<p class="body-copy" style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:0 0 10px;">These pages are ready:</p>' +
+    '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">' +
+    rows +
+    '</table></td></tr>'
+  );
+}
+
 function directoryInviteVariables({ host, groupName, organiser, claimUrl }) {
   const { campaignSiteVars } = require('./organiser-campaign-defaults');
   const { organiserPublicUrl, browseEventsUrl, contactUrl } = require('./hub-email-urls');
@@ -32,6 +83,7 @@ function directoryInviteVariables({ host, groupName, organiser, claimUrl }) {
     claim_url: claim || organiserUrl,
     page_url: pageUrl,
     contact_url: contactUrl(site),
+    groups_html: '',
   };
 }
 
@@ -56,16 +108,49 @@ function directoryInviteCreateMessage({ sendInvite, invite, provision, email }) 
   return 'Networking group created as a draft (no invitation sent).';
 }
 
-async function sendOutreachEmail({ slug, to, host, organiser, claimUrl, actorEmail, source, campaign, idempotencyKey, extraVariables }) {
+function outreachLogTargets(organiser, siblingOrganisers) {
+  const targets = [];
+  const seen = new Set();
+  const primaryId = organiser && organiser.id ? String(organiser.id) : '';
+  const primaryName = String((organiser && organiser.name) || 'your group').trim() || 'your group';
+  if (primaryId) {
+    seen.add(primaryId);
+    targets.push({ id: primaryId, name: primaryName });
+  }
+  (siblingOrganisers || []).forEach((row) => {
+    const id = row && row.id ? String(row.id) : '';
+    if (!id || seen.has(id)) return;
+    seen.add(id);
+    targets.push({
+      id,
+      name: String((row && row.name) || primaryName).trim() || primaryName,
+    });
+  });
+  return targets;
+}
+
+async function sendOutreachEmail({
+  slug,
+  to,
+  host,
+  organiser,
+  claimUrl,
+  actorEmail,
+  source,
+  campaign,
+  idempotencyKey,
+  extraVariables,
+  siblingOrganisers,
+}) {
   const email = String(to || '')
     .trim()
     .toLowerCase();
-  const name = String((organiser && organiser.name) || 'your group').trim() || 'your group';
+  const name = String((extraVariables && extraVariables.group_name) || (organiser && organiser.name) || 'your group').trim() || 'your group';
   if (!email) return { sent: false, error: 'missing_email' };
   const variables = {
     ...directoryInviteVariables({
       host,
-      groupName: name,
+      groupName: (organiser && organiser.name) || name,
       organiser,
       claimUrl,
     }),
@@ -85,26 +170,31 @@ async function sendOutreachEmail({ slug, to, host, organiser, claimUrl, actorEma
     });
     try {
       const { logClaimInviteSent } = require('./organiser-claim-invite-log');
-      await logClaimInviteSent({
-        email,
-        organiserId: organiserId || null,
-        organiserName: name,
-        slug,
-        source: source || 'admin',
-        campaign: campaign || slug,
-        actorEmail: actorEmail || undefined,
-      });
+      const targets = outreachLogTargets(organiser, siblingOrganisers);
+      const logged = targets.length ? targets : [{ id: organiserId, name }];
+      for (const target of logged) {
+        if (!target.id) continue;
+        await logClaimInviteSent({
+          email,
+          organiserId: target.id,
+          organiserName: target.name,
+          slug,
+          source: source || 'admin',
+          campaign: campaign || slug,
+          actorEmail: actorEmail || undefined,
+        });
+      }
     } catch {
       /* outreach logging must not fail the send */
     }
-    return { sent: true, to: email, name };
+    return { sent: true, to: email, name, organisers: outreachLogTargets(organiser, siblingOrganisers).length || 1 };
   } catch (e) {
     console.error('[organiser-directory-invite]', e && e.message ? e.message : e);
     return { sent: false, to: email, name, error: (e && e.message) || 'send_failed' };
   }
 }
 
-async function sendOrganiserDirectoryInvite({ to, host, organiser, claimUrl, actorEmail }) {
+async function sendOrganiserDirectoryInvite({ to, host, organiser, claimUrl, actorEmail, extraVariables, siblingOrganisers }) {
   const organiserId = organiser && organiser.id ? String(organiser.id) : '';
   return sendOutreachEmail({
     slug: DIRECTORY_INVITE_SLUG,
@@ -116,10 +206,12 @@ async function sendOrganiserDirectoryInvite({ to, host, organiser, claimUrl, act
     source: 'admin_create_group',
     campaign: 'directory_invite',
     idempotencyKey: organiserId ? 'dir-invite-' + organiserId : undefined,
+    extraVariables,
+    siblingOrganisers,
   });
 }
 
-async function sendOrganiserDirectoryNudge({ to, host, organiser, claimUrl, actorEmail }) {
+async function sendOrganiserDirectoryNudge({ to, host, organiser, claimUrl, actorEmail, extraVariables, siblingOrganisers }) {
   const organiserId = organiser && organiser.id ? String(organiser.id) : '';
   return sendOutreachEmail({
     slug: DIRECTORY_NUDGE_SLUG,
@@ -131,10 +223,12 @@ async function sendOrganiserDirectoryNudge({ to, host, organiser, claimUrl, acto
     source: 'directory_invite_nudge',
     campaign: 'directory_invite_nudge',
     idempotencyKey: organiserId ? 'dir-nudge-' + organiserId : undefined,
+    extraVariables,
+    siblingOrganisers,
   });
 }
 
-async function sendOrganiserDirectoryDay7({ to, host, organiser, claimUrl, actorEmail }) {
+async function sendOrganiserDirectoryDay7({ to, host, organiser, claimUrl, actorEmail, extraVariables, siblingOrganisers }) {
   const organiserId = organiser && organiser.id ? String(organiser.id) : '';
   return sendOutreachEmail({
     slug: DIRECTORY_DAY7_SLUG,
@@ -146,10 +240,12 @@ async function sendOrganiserDirectoryDay7({ to, host, organiser, claimUrl, actor
     source: 'directory_invite_day7',
     campaign: 'directory_invite_day7',
     idempotencyKey: organiserId ? 'dir-day7-' + organiserId : undefined,
+    extraVariables,
+    siblingOrganisers,
   });
 }
 
-async function sendOrganiserDirectoryDay21({ to, host, organiser, claimUrl, actorEmail, extraVariables }) {
+async function sendOrganiserDirectoryDay21({ to, host, organiser, claimUrl, actorEmail, extraVariables, siblingOrganisers }) {
   const organiserId = organiser && organiser.id ? String(organiser.id) : '';
   return sendOutreachEmail({
     slug: DIRECTORY_DAY21_SLUG,
@@ -162,6 +258,7 @@ async function sendOrganiserDirectoryDay21({ to, host, organiser, claimUrl, acto
     campaign: 'directory_invite_day21',
     idempotencyKey: organiserId ? 'dir-day21-' + organiserId : undefined,
     extraVariables,
+    siblingOrganisers,
   });
 }
 
@@ -188,6 +285,8 @@ module.exports = {
   DIRECTORY_DAY21_SLUG,
   UNCLAIMED_FOLLOWUP_SLUG,
   shouldSendDirectoryInvite,
+  groupedGroupName,
+  directoryGroupsHtml,
   directoryInviteVariables,
   directoryInviteCreateMessage,
   sendOrganiserDirectoryInvite,

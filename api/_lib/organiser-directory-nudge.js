@@ -171,6 +171,7 @@ async function sendDueDirectoryStage(sb, options, stage) {
   const { resolveOrganiserClaimUrl } = require('./organiser-claim-url');
   const { organiserPublicUrl } = require('./hub-email-urls');
   const { publicOrganiserSlug } = require('./organiser-slug');
+  const { groupedGroupName, directoryGroupsHtml } = require('./organiser-directory-invite');
   const host = String(process.env.SITE_URL || 'https://www.thenetworkeruk.com').replace(/\/$/, '');
   let sent = 0;
   let skipped = 0;
@@ -202,25 +203,57 @@ async function sendDueDirectoryStage(sb, options, stage) {
     eligible.push({ row, email });
   }
 
-  for (const item of eligible.slice(0, NUDGE_BATCH)) {
-    const row = item.row;
-    const email = item.email;
+  const byEmail = new Map();
+  eligible.forEach((item) => {
+    const list = byEmail.get(item.email) || [];
+    list.push(item);
+    byEmail.set(item.email, list);
+  });
+  const batches = [...byEmail.values()]
+    .map((group) =>
+      group.slice().sort((a, b) => {
+        const byName = String(a.row.name || '').localeCompare(String(b.row.name || ''), 'en-GB', {
+          sensitivity: 'base',
+        });
+        if (byName) return byName;
+        return String(a.row.id || '').localeCompare(String(b.row.id || ''));
+      })
+    )
+    .slice(0, NUDGE_BATCH);
+
+  for (const group of batches) {
+    const row = group[0].row;
+    const email = group[0].email;
+    const siblings = group.slice(1).map((item) => item.row);
     let claimUrl = '';
     try {
       claimUrl = await resolveOrganiserClaimUrl(email, host, publicOrganiserSlug(row) || '');
     } catch {
       claimUrl = organiserPublicUrl(row, host);
     }
+    const names = group.map((item) => item.row.name);
+    const label = groupedGroupName(names);
+    const pages = group.map((item) => ({
+      name: item.row.name,
+      url: organiserPublicUrl(item.row, host),
+    }));
     const picked = hostNames
-      .filter((name) => name.toLowerCase() !== String(row.name || '').trim().toLowerCase())
+      .filter((name) => !names.some((groupName) => groupName.toLowerCase() === String(name || '').trim().toLowerCase()))
       .slice(0, 2);
+    const extraVariables = {
+      group_name: label,
+      organiser_name: label,
+      groups_html: directoryGroupsHtml(pages),
+    };
+    if (stage.includeHosts) extraVariables.hosts_line = hostsLine(picked);
     const result = await stage.send({
       to: email,
       host,
       organiser: row,
       claimUrl,
       actorEmail: 'system@thenetworkeruk.com',
-      extraVariables: stage.includeHosts ? { hosts_line: hostsLine(picked) } : undefined,
+      extraVariables,
+      siblingOrganisers: siblings,
     });
     if (result && result.sent) sent += 1;
     else failed += 1;

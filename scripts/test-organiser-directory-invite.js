@@ -16,6 +16,8 @@ const {
   DIRECTORY_INVITE_SLUG,
   UNCLAIMED_FOLLOWUP_SLUG,
   shouldSendDirectoryInvite,
+  groupedGroupName,
+  directoryGroupsHtml,
   directoryInviteVariables,
   directoryInviteCreateMessage,
 } = require('../api/_lib/organiser-directory-invite');
@@ -55,6 +57,19 @@ async function main() {
   assert(vars.events_url === 'https://www.thenetworkeruk.com/events/', 'events directory url');
   assert(vars.page_url.indexOf('/organisers/harbour-city-hosts') !== -1, 'page url uses claim link');
   assert(vars.group_name === 'Harbour & City Hosts', 'group name kept');
+  assert(vars.groups_html === '', 'one group has no extra list');
+  assert(groupedGroupName(['Berwick Law', 'Braidlaw']) === 'Berwick Law and Braidlaw', 'two groups share a subject');
+  assert(
+    groupedGroupName(['Berwick Law', 'Braidlaw', 'Britannia', 'Nouveau']) === 'Berwick Law, Braidlaw and 2 more',
+    'longer bundles stay short'
+  );
+  const listHtml = directoryGroupsHtml([
+    { name: 'Berwick Law', url: 'https://www.thenetworkeruk.com/organisers/berwick-law' },
+    { name: 'Braidlaw', url: 'https://www.thenetworkeruk.com/organisers/braidlaw' },
+  ]);
+  assert(listHtml.indexOf('These pages are ready') !== -1, 'shared inbox lists every page');
+  assert(listHtml.indexOf('Berwick Law') !== -1 && listHtml.indexOf('Braidlaw') !== -1, 'both names are listed');
+  assert(directoryGroupsHtml([{ name: 'Only One', url: 'https://example.com/one' }]) === '', 'a single page stays as it is');
   pass('invite variables');
 
   const preview = mergeEmailPreviewVariables(DIRECTORY_INVITE_SLUG, {}, 'https://www.thenetworkeruk.com');

@@ -37,6 +37,25 @@ withEnv({ SUPPORT_EMAIL: 'hi@thenetworkeruk.com', RESEND_FROM: 'hello@mail.thene
 });
 console.log('ok — supportEmail is hi@thenetworkeruk.com, not mail.* From');
 
+const { formatResendFrom } = require('../api/_lib/send-template-email');
+assert.strictEqual(
+  formatResendFrom('The Networker Hub <hello@mail.thenetworkerhub.com>'),
+  '"The Networker UK" <hello@mail.thenetworkeruk.com>'
+);
+assert.strictEqual(
+  formatResendFrom('hello@thenetworkerhub.co.uk'),
+  '"The Networker UK" <hello@mail.thenetworkeruk.com>'
+);
+assert.strictEqual(
+  formatResendFrom('The Networker UK <hello@mail.thenetworkeruk.com>'),
+  '"The Networker UK" <hello@mail.thenetworkeruk.com>'
+);
+assert.strictEqual(
+  formatResendFrom('Rosie @ The Networker <hello@the-networker.co.uk>'),
+  '"The Networker UK" <hello@the-networker.co.uk>'
+);
+console.log('ok — Hub From addresses rewrite to mail.thenetworkeruk.com');
+
 const fs = require('fs');
 const path = require('path');
 const reminder = fs.readFileSync(
