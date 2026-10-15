@@ -278,6 +278,18 @@
     return root + path;
   }
 
+  // A tap on Profile & preferences was landing on Sign out: the menu closed
+  // during the click and the same gesture hit the button underneath.
+  var suppressSignOutUntil = 0;
+
+  function noteAccountLinkPress() {
+    suppressSignOutUntil = Date.now() + 700;
+  }
+
+  function signOutClickIgnored() {
+    return Date.now() < suppressSignOutUntil;
+  }
+
   function signOutRedirectUrl() {
     var path = String(window.location.pathname || '').toLowerCase();
     if (
@@ -1092,7 +1104,13 @@
     if (closeBtn) closeBtn.addEventListener('click', closeMenu);
     backdrop.addEventListener('click', closeMenu);
     drawer.querySelectorAll('a').forEach(function (a) {
-      a.addEventListener('click', closeMenu);
+      a.addEventListener('pointerdown', noteAccountLinkPress);
+      a.addEventListener('click', function (e) {
+        noteAccountLinkPress();
+        e.stopPropagation();
+        // Close after this click so the tap is not retargeted onto Sign out.
+        window.setTimeout(closeMenu, 0);
+      });
     });
     document.addEventListener('keydown', function (e) {
       if (!drawer.classList.contains('is-open')) return;
@@ -1102,7 +1120,12 @@
 
     var mobileSignOut = document.getElementById('nav-mobile-signout');
     if (mobileSignOut) {
-      mobileSignOut.addEventListener('click', function () {
+      mobileSignOut.addEventListener('click', function (e) {
+        if (signOutClickIgnored()) {
+          e.preventDefault();
+          e.stopPropagation();
+          return;
+        }
         closeMenu();
         cacheUser(null);
         fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
@@ -1271,6 +1294,9 @@
       renderImpersonationBanner(data);
       return;
     }
+    // A dropped session request is not a sign-out. Keep the header until a
+    // definite logged-out response comes back.
+    if (data && data.prefetchFailed && readCachedUser()) return;
     cacheUser(null);
     renderNav(null, false);
     renderImpersonationBanner(null);
@@ -1369,9 +1395,22 @@
     applyAccountAttention(user);
     refreshAdminAttentionBadge(user);
 
+    var hubMenu = document.getElementById('nav-my-hub-menu');
+    if (hubMenu) {
+      hubMenu.addEventListener('pointerdown', function (e) {
+        var link = e.target && e.target.closest ? e.target.closest('a') : null;
+        if (link) noteAccountLinkPress();
+      });
+    }
+
     var signOut = document.getElementById('nav-signout');
     if (signOut) {
-      signOut.addEventListener('click', function () {
+      signOut.addEventListener('click', function (e) {
+        if (signOutClickIgnored()) {
+          e.preventDefault();
+          e.stopPropagation();
+          return;
+        }
         cacheUser(null);
         fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
           .catch(function () {
@@ -1490,10 +1529,18 @@
           : fetchSessionDirect();
       sessionPromise = initial.then(function (data) {
         if (data && data.ok && data.user) return data;
-        if (!data || !data.prefetchFailed) return data || { ok: false };
+        // Retry before wiping a signed-in header. One failed read was showing
+        // Profile & preferences as the sign-in wall.
+        var shouldRetry = !!(data && data.prefetchFailed) || !!readCachedUser();
+        if (!shouldRetry) return data || { ok: false };
         return fetchSessionDirect().then(function (retry) {
+          if (retry && retry.ok && retry.user) return retry;
           if (retry && retry.prefetchFailed) sessionPromise = null;
-          return retry && retry.prefetchFailed ? { ok: false } : retry;
+          if (retry && retry.prefetchFailed && readCachedUser()) {
+            return { ok: false, prefetchFailed: true };
+          }
+          return (retry && !retry.prefetchFailed ? retry : null) ||
+            (data && !data.prefetchFailed ? data : null) || { ok: false };
         });
       });
     }

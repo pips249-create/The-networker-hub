@@ -659,12 +659,35 @@
     }
   });
 
+  async function fetchSessionDirect() {
+    const sessionRes = await fetch('/api/auth/session', {
+      credentials: 'include',
+      cache: 'no-store',
+    });
+    if (!sessionRes.ok) return { ok: false, prefetchFailed: true };
+    const data = await sessionRes.json();
+    return data && typeof data === 'object' ? data : { ok: false, prefetchFailed: true };
+  }
+
   async function fetchSession() {
-    if (typeof window.hubFetchSession === 'function') {
-      return window.hubFetchSession();
+    let data = null;
+    try {
+      data =
+        typeof window.hubFetchSession === 'function'
+          ? await window.hubFetchSession()
+          : await fetchSessionDirect();
+    } catch (_) {
+      data = { ok: false, prefetchFailed: true };
     }
-    const sessionRes = await fetch('/api/auth/session', { credentials: 'include' });
-    return sessionRes.json();
+    if (data && data.ok && data.user) return data;
+    try {
+      const retry = await fetchSessionDirect();
+      if (retry && retry.ok && retry.user) return retry;
+      if (retry && !retry.prefetchFailed) return retry;
+    } catch (_) {
+      /* keep the first result */
+    }
+    return data || { ok: false };
   }
 
   function initFieldTips() {
