@@ -6,6 +6,108 @@ const {
   CHECKOUT_EXTERNAL,
 } = require('./connected-booking');
 
+function cleanGuestNames(raw) {
+  const list = Array.isArray(raw) ? raw : [];
+  const seen = new Set();
+  const out = [];
+  for (const item of list) {
+    const name = String(item || '').trim();
+    if (!name) continue;
+    const key = name.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(name);
+  }
+  return out;
+}
+
+async function fillBlankAttendeeProfile(sb, attendeeId, { company, jobTitle }) {
+  const companyVal = String(company || '').trim();
+  const jobVal = String(jobTitle || '').trim();
+  if (!attendeeId || (!companyVal && !jobVal)) return false;
+  const current = await sb
+    .from('attendees')
+    .select('id, company, job_title')
+    .eq('id', attendeeId)
+    .maybeSingle();
+  if (current.error) throw new Error(current.error.message);
+  if (!current.data) return false;
+  const patch = {};
+  if (companyVal && !String(current.data.company || '').trim()) patch.company = companyVal;
+  if (jobVal && !String(current.data.job_title || '').trim()) patch.job_title = jobVal;
+  if (!Object.keys(patch).length) return false;
+  const upd = await sb.from('attendees').update(patch).eq('id', attendeeId);
+  if (upd.error) throw new Error(upd.error.message);
+  return true;
+}
+
+/**
+ * A later Eventbrite attendee.updated can arrive after the buyer row was saved.
+ * Refresh name, email, and guest names instead of treating the retry as a no-op.
+ */
+async function refreshExistingExternalRegistration(sb, existing, input) {
+  const email = String(input.email || '').trim().toLowerCase();
+  const name = String(input.name || '').trim() || null;
+  const company = input.company;
+  const jobTitle = input.jobTitle || input.job_title;
+  const guestNames = cleanGuestNames(input.guestNames || input.guest_names);
+  let changed = false;
+
+  const attendeeRes = existing.attendee_id
+    ? await sb
+        .from('attendees')
+        .select('id, email, name')
+        .eq('id', existing.attendee_id)
+        .maybeSingle()
+    : { data: null, error: null };
+  if (attendeeRes.error) throw new Error(attendeeRes.error.message);
+
+  const currentEmail = String(attendeeRes.data?.email || '').trim().toLowerCase();
+  const currentName = String(attendeeRes.data?.name || '').trim();
+  let attendeeId = existing.attendee_id;
+
+  if (email && email !== currentEmail) {
+    await assertNotBlockedByOrganiser(sb, {
+      organiserId: input.organiserId,
+      email,
+      attendeeId: null,
+    });
+    attendeeId = await ensureAttendeeId(sb, { email, name, sub: null });
+    changed = true;
+  } else if (email) {
+    attendeeId = await ensureAttendeeId(sb, { email, name, sub: null });
+    if (name && name !== currentName) changed = true;
+  }
+
+  if (attendeeId && attendeeId !== existing.attendee_id) {
+    const moved = await sb.from('registrations').update({ attendee_id: attendeeId }).eq('id', existing.id);
+    if (moved.error) throw new Error(moved.error.message);
+    changed = true;
+  }
+
+  if (await fillBlankAttendeeProfile(sb, attendeeId || existing.attendee_id, { company, jobTitle })) {
+    changed = true;
+  }
+
+  if (guestNames.length) {
+    const reg = await sb.from('registrations').select('guest_names').eq('id', existing.id).maybeSingle();
+    if (reg.error) throw new Error(reg.error.message);
+    const prev = cleanGuestNames(reg.data?.guest_names);
+    const same =
+      prev.length === guestNames.length &&
+      prev.every(function (entry, index) {
+        return entry === guestNames[index];
+      });
+    if (!same) {
+      const upd = await sb.from('registrations').update({ guest_names: guestNames }).eq('id', existing.id);
+      if (upd.error) throw new Error(upd.error.message);
+      changed = true;
+    }
+  }
+
+  return changed;
+}
+
 /**
  * Create or update a registration from an organiser external booking webhook.
  * Idempotent on external_order_id per event.
@@ -76,11 +178,23 @@ async function createRegistrationFromExternalBooking(input) {
     return { action: 'cancelled', id: existingRes.data.id };
   }
 
+  const name = String(input.name || input.customerName || '').trim() || null;
+  const company = input.company;
+  const jobTitle = input.jobTitle || input.job_title;
+  const guestNames = cleanGuestNames(input.guestNames || input.guest_names);
+
   if (existingRes.data?.id) {
-    return { action: 'duplicate', id: existingRes.data.id };
+    const changed = await refreshExistingExternalRegistration(sb, existingRes.data, {
+      organiserId,
+      email,
+      name,
+      company,
+      jobTitle,
+      guestNames,
+    });
+    return { action: changed ? 'updated' : 'duplicate', id: existingRes.data.id };
   }
 
-  const name = String(input.name || input.customerName || '').trim() || null;
   const quantity = Math.max(1, Math.min(99, Math.floor(Number(input.quantity ?? input.qty) || 1)));
   const amountPaidRaw = input.amountPaid ?? input.amount_paid;
   const amountPaid =
@@ -97,6 +211,7 @@ async function createRegistrationFromExternalBooking(input) {
   });
 
   const attendeeId = await ensureAttendeeId(sb, { email, name, sub: null });
+  await fillBlankAttendeeProfile(sb, attendeeId, { company, jobTitle });
 
   const ins = await sb
     .from('registrations')
@@ -111,6 +226,7 @@ async function createRegistrationFromExternalBooking(input) {
       application_status: 'Approved',
       booking_source: 'external',
       external_order_id: externalOrderId,
+      guest_names: guestNames.length ? guestNames : null,
     })
     .select('id, attendee_id, event_id')
     .single();

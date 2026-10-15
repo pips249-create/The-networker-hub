@@ -851,7 +851,7 @@
         ? '<p class="ecs-eb-url-warn">URL must start with <code>https://www.thenetworkeruk.com/w/eb/</code> (www avoids Eventbrite 308 errors). Refresh or click Enable Eventbrite again if this line looks wrong.</p>'
         : '<p class="ee-hint ecs-eb-www-ok">Uses <strong>www</strong> so Eventbrite POSTs succeed (no 308 redirect).</p>') +
       '</div>' +
-      '<p class="ecs-eb-paste-hint">In Eventbrite: profile menu → <strong>Account settings → Webhooks</strong> · Action <code>order.placed</code></p>';
+      '<p class="ecs-eb-paste-hint">In Eventbrite: profile menu → <strong>Account settings → Webhooks</strong> · Action <code>order.placed</code>. Saving the API token below also subscribes to attendee updates, so a second ticket holder added after payment is pulled in.</p>';
 
     var tokenPanelHtml =
       '<div class="ecs-eb-token-panel">' +
@@ -859,7 +859,7 @@
       '<span>Eventbrite private token <strong>(required for attendee sync)</strong></span>' +
       '<input type="password" id="ecs-eb-private-token" autocomplete="off" spellcheck="false" placeholder="From Eventbrite → Account settings → Developer links" />' +
       '</label>' +
-      '<p class="ee-hint">Eventbrite webhooks only send an order link — we use this token to load buyer name and email when someone buys a ticket.</p>' +
+      '<p class="ee-hint">Eventbrite webhooks only send a link — we use this token to load every ticket holder, including someone added as a second attendee after checkout.</p>' +
       '<button type="button" class="ee-btn ee-btn-outline ee-btn-sm" data-save-eventbrite-token>Save API token</button>' +
       '<span class="ee-hint ecs-eb-token-status" data-eb-token-status hidden role="status"></span>' +
       '</div>';
@@ -871,6 +871,7 @@
       '<li>Open <strong>Webhooks</strong> → Add webhook (or edit yours).</li>' +
       '<li>Paste the copied URL into <strong>Payload URL</strong> (full line).</li>' +
       '<li>Set <strong>Action</strong> to <code>order.placed</code> and save.</li>' +
+      '<li>Paste your private token below and save. We then load every ticket holder already on the event, and subscribe to updates when someone adds the other attendee after payment.</li>' +
       '</ol>' +
       '</details>';
 
@@ -899,7 +900,7 @@
         '<summary class="ee-optional-details-summary">Webhook URL &amp; API token (account setup)</summary>' +
         '<div class="ee-optional-details-body">' +
         urlPanelHtml +
-        '<p class="ecs-eb-paste-hint">Only if you are (re)connecting Eventbrite: profile menu → <strong>Account settings → Webhooks</strong> · Action <code>order.placed</code></p>' +
+        '<p class="ecs-eb-paste-hint">Only if you are (re)connecting Eventbrite: profile menu → <strong>Account settings → Webhooks</strong> · Action <code>order.placed</code>. The API token subscribes to later attendee updates.</p>' +
         tokenPanelHtml +
         helpDetailsHtml +
         webhookDriftHtml +
@@ -909,7 +910,7 @@
       bodyHtml =
         checklistHtml +
         urlPanelHtml +
-        '<p class="ecs-eb-paste-hint">In Eventbrite: profile menu → <strong>Account settings → Webhooks</strong> · Action <code>order.placed</code></p>' +
+        '<p class="ecs-eb-paste-hint">In Eventbrite: profile menu → <strong>Account settings → Webhooks</strong> · Action <code>order.placed</code>. Saving the API token below also subscribes to attendee updates, so a second ticket holder added after payment is pulled in.</p>' +
         tokenPanelHtml +
         helpDetailsHtml +
         webhookDriftHtml +
@@ -968,7 +969,12 @@
             eventbriteApiTokenConfigured: true,
           });
           if (statusEl) {
-            statusEl.textContent = 'Saved — new ticket sales can sync attendee details.';
+            var pulled = res.data.attendeeSync && Number(res.data.attendeeSync.created) > 0
+              ? ' Pulled in ' + res.data.attendeeSync.created + ' ticket holder' +
+                (res.data.attendeeSync.created === 1 ? '' : 's') +
+                ' already on Eventbrite.'
+              : '';
+            statusEl.textContent = 'Saved — every ticket holder on a linked event can sync.' + pulled;
             statusEl.className = 'ee-hint ee-alert-ok ecs-eb-token-status';
           }
           renderProviderWebhookCard('eventbrite');
@@ -1898,6 +1904,12 @@
           }
         });
         mergeEventLinkFromApi(res.data);
+        if (providersById.eventbrite && providersById.eventbrite.eventbriteApiTokenConfigured) {
+          api('/api/organiser/connected-booking-providers', {
+            method: 'PATCH',
+            body: JSON.stringify({ action: 'sync_eventbrite_attendees' }),
+          }).catch(function () {});
+        }
         var platform = selectedIntegrationPlatform();
         updateOneTimeProviderStatus(platform);
         syncEventLinkPanel(platform);
