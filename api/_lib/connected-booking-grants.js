@@ -66,9 +66,21 @@ async function findOrganiserAccountById(sb, accountId) {
   return data || null;
 }
 
-async function findOrganiserAccountByEmail(sb, email) {
+/**
+ * Every organiser_accounts row that might belong to this email.
+ * Prefer login account (auth user / accounts.email) over directory-page matches
+ * so Command Centre grants land on the account they actually sign in with.
+ */
+async function findAllOrganiserAccountsByEmail(sb, email) {
   const em = normalizeConnectedBookingEmail(email);
-  if (!em) return null;
+  if (!em) return [];
+
+  const byId = new Map();
+
+  function add(row) {
+    if (!row || !row.id) return;
+    byId.set(String(row.id), row);
+  }
 
   const { data: byEmail, error: emailErr } = await sb
     .from('organiser_accounts')
@@ -76,21 +88,7 @@ async function findOrganiserAccountByEmail(sb, email) {
     .eq('email', em)
     .maybeSingle();
   if (emailErr) throw new Error(emailErr.message);
-  if (byEmail) return byEmail;
-
-  const quoted = '"' + em.replace(/"/g, '') + '"';
-  const { data: orgs, error: orgErr } = await sb
-    .from('organisers')
-    .select('organiser_account_id, email, contact_email')
-    .or('email.eq.' + quoted + ',contact_email.eq.' + quoted)
-    .not('organiser_account_id', 'is', null)
-    .limit(5);
-  if (orgErr) throw new Error(orgErr.message);
-  const accountId = String((orgs && orgs[0] && orgs[0].organiser_account_id) || '').trim();
-  if (accountId) {
-    const byOrg = await findOrganiserAccountById(sb, accountId);
-    if (byOrg) return byOrg;
-  }
+  add(byEmail);
 
   if (typeof sb.auth?.admin?.getUserByEmail === 'function') {
     try {
@@ -102,14 +100,33 @@ async function findOrganiserAccountByEmail(sb, email) {
           .eq('supabase_user_id', userData.user.id)
           .maybeSingle();
         if (uidErr) throw new Error(uidErr.message);
-        if (byUid) return byUid;
+        add(byUid);
       }
     } catch {
       /* fall through */
     }
   }
 
-  return null;
+  const quoted = '"' + em.replace(/"/g, '') + '"';
+  const { data: orgs, error: orgErr } = await sb
+    .from('organisers')
+    .select('organiser_account_id, email, contact_email')
+    .or('email.eq.' + quoted + ',contact_email.eq.' + quoted)
+    .not('organiser_account_id', 'is', null)
+    .limit(20);
+  if (orgErr) throw new Error(orgErr.message);
+  for (const org of orgs || []) {
+    const accountId = String(org.organiser_account_id || '').trim();
+    if (!accountId || byId.has(accountId)) continue;
+    add(await findOrganiserAccountById(sb, accountId));
+  }
+
+  return [...byId.values()];
+}
+
+async function findOrganiserAccountByEmail(sb, email) {
+  const all = await findAllOrganiserAccountsByEmail(sb, email);
+  return all[0] || null;
 }
 
 async function listOrganisersForAccount(sb, accountId) {
@@ -243,6 +260,7 @@ module.exports = {
   mapGrantAccount,
   resolveAccountEmail,
   findOrganiserAccountByEmail,
+  findAllOrganiserAccountsByEmail,
   findOrganiserAccountById,
   listOrganisersForAccount,
   listGrantedAccounts,

@@ -280,6 +280,51 @@ module.exports = async function handler(req, res) {
     let account = await loadOrganiserAccountRow(sb, accountId);
     if (!account) return json(res, 404, { ok: false, error: 'organiser_account_not_found' });
 
+    // If Command Centre granted Link Out / Connected on a sibling account for this
+    // email, copy the grant flags onto the login account used by the workspace.
+    if (
+      !accountHasAdminConnectedGrant(account) &&
+      !accountHasLinkOutGrant(account) &&
+      !isConnectedPlanActive(account)
+    ) {
+      try {
+        const { findAllOrganiserAccountsByEmail } = require('../connected-booking-grants');
+        const siblings = await findAllOrganiserAccountsByEmail(sb, auth.session.email);
+        const grantedSibling = siblings.find(
+          (row) =>
+            String(row.id) !== String(account.id) &&
+            (accountHasLinkOutGrant(row) ||
+              accountHasAdminConnectedGrant(row) ||
+              isConnectedPlanActive(row))
+        );
+        if (grantedSibling) {
+          if (accountHasLinkOutGrant(grantedSibling) && !accountHasLinkOutGrant(account)) {
+            const { activateLinkOutGrant } = require('../connected-booking-grants');
+            account = await activateLinkOutGrant(sb, account, {
+              grantedBy: grantedSibling.link_out_granted_by || 'grant-sync',
+              note: grantedSibling.link_out_grant_note || 'Synced from sibling account grant',
+            });
+            account = (await loadOrganiserAccountRow(sb, accountId)) || account;
+          }
+          if (
+            (accountHasAdminConnectedGrant(grantedSibling) || isConnectedPlanActive(grantedSibling)) &&
+            !isConnectedPlanActive(account)
+          ) {
+            const { activateConnectedBookingGrant } = require('../connected-booking-grants');
+            account = await activateConnectedBookingGrant(sb, account, {
+              plan: grantedSibling.connected_booking_plan || 'starter',
+              grantedBy: grantedSibling.connected_booking_granted_by || 'grant-sync',
+              note:
+                grantedSibling.connected_booking_grant_note || 'Synced from sibling account grant',
+            });
+            account = (await loadOrganiserAccountRow(sb, accountId)) || account;
+          }
+        }
+      } catch (syncErr) {
+        console.warn('[organiser-connected-booking] grant sync', syncErr?.message || syncErr);
+      }
+    }
+
     const hasCompAccess =
       accountHasAdminConnectedGrant(account) ||
       accountHasLinkOutGrant(account) ||
