@@ -802,7 +802,10 @@ function eventRowReadyForAutoApproval(row, organiser, tickets, refundPayload) {
   if (!String(row.event_type || '').trim()) return false;
   if (!String(row.meeting_type || '').trim()) return false;
 
-  if (String(row.checkout_mode || 'hub') === 'external_connected') {
+  if (
+    String(row.checkout_mode || 'hub') === 'external_connected' ||
+    String(row.checkout_mode || 'hub') === 'external_link'
+  ) {
     if (!String(row.external_booking_url || '').trim()) return false;
     if (!String(row.external_price_label || '').trim()) return false;
     if (organiser) {

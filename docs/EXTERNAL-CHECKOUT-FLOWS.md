@@ -114,7 +114,7 @@ Optional checkbox on first save: “I confirm this display price is accurate for
 | **A (done / in PR)** | Pilot grant, Stripe subscribe, webhook ingest, basic Connected card on current tickets page |
 | **B** | Assign Connected slots to organiser pages; enforce on publish |
 | **C** | Dedicated **Connected event setup** page (or mode) — hub ticket wizard hidden |
-| **D** | **Link-out** checkout_mode + £9.99 Stripe + dedicated setup page |
+| **D** | **Link-out** checkout_mode + £9.99 Stripe + dedicated setup page — **partial:** `external_link` + Command Centre free grants (`320_admin_external_booking_grants.sql`, Financials → External booking); paid self-serve Stripe still to do |
 | **E** | Eventbrite/Zapier template docs (optional automation) |
 
 ---

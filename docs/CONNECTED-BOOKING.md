@@ -91,3 +91,13 @@ CONNECTED_BOOKING_PILOT_GRANT_PLAN=starter
 ```
 
 First visit to `/organiser/connected-booking` activates the plan without Stripe. Still use preview emails so only pilot accounts see the feature.
+
+## Command Centre allocation (preferred for partnerships)
+
+**Financials → External booking** (`#financials/external-booking`):
+
+1. Enter the organiser login email (e.g. `tnguyen@themartechsummit.com`).
+2. Choose **Link Out** (redirect only) or **Connected** (optional webhook sync).
+3. Optionally add a note → **Allocate grant**.
+
+Requires migration `320_admin_external_booking_grants.sql`. No Vercel redeploy for day-to-day comps. Env pilot grants remain for bootstrap testers.

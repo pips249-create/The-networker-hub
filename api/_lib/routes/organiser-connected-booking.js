@@ -9,6 +9,8 @@ const {
   newWebhookSecret,
   signWebhookPayload,
   isConnectedPlanActive,
+  accountHasAdminConnectedGrant,
+  accountHasLinkOutGrant,
   countPublishedGroupsForAccount,
   groupLimitForPlan,
   PLAN_GROUP_LIMITS,
@@ -51,6 +53,8 @@ function isSupabaseSchemaError(err) {
 }
 
 async function loadOrganiserAccountRow(sb, accountId) {
+  const accountSelectWithGrants =
+    'id, connected_booking_plan, connected_booking_status, connected_booking_webhook_secret, connected_booking_stripe_subscription_id, connected_booking_stripe_customer_id, connected_booking_granted_at, connected_booking_granted_by, link_out_granted_at, link_out_granted_by';
   const accountSelectWithCustomer =
     'id, connected_booking_plan, connected_booking_status, connected_booking_webhook_secret, connected_booking_stripe_subscription_id, connected_booking_stripe_customer_id';
   const accountSelectBase =
@@ -60,9 +64,20 @@ async function loadOrganiserAccountRow(sb, accountId) {
   let accErr = null;
   ({ data: account, error: accErr } = await sb
     .from('organiser_accounts')
-    .select(accountSelectWithCustomer)
+    .select(accountSelectWithGrants)
     .eq('id', accountId)
     .maybeSingle());
+  if (
+    accErr &&
+    (/connected_booking_granted_at|link_out_granted_at/i.test(supabaseErrText(accErr)) ||
+      isSupabaseSchemaError(accErr))
+  ) {
+    ({ data: account, error: accErr } = await sb
+      .from('organiser_accounts')
+      .select(accountSelectWithCustomer)
+      .eq('id', accountId)
+      .maybeSingle());
+  }
   if (
     accErr &&
     (/connected_booking_stripe_customer_id|stripe_customer_id/i.test(supabaseErrText(accErr)) ||
@@ -235,15 +250,6 @@ module.exports = async function handler(req, res) {
   const auth = await requireOrganiserSession(req);
   if (!auth.ok) return json(res, auth.status, { error: auth.error });
 
-  if (!connectedBookingAllowedForSession(auth.session)) {
-    return json(res, 403, {
-      ok: false,
-      error: 'preview_restricted',
-      message:
-        'Connected booking preview is limited to approved organiser accounts. Sign in with the preview email on file, or contact us to be added.',
-      signedInAs: String(auth.session.email || '').trim().toLowerCase(),
-    });
-  }
   if (!isSupabaseConfigured()) {
     return json(res, 503, { ok: false, error: 'supabase_not_configured' });
   }
@@ -254,6 +260,15 @@ module.exports = async function handler(req, res) {
   try {
     const accountId = await resolveOrganiserAccountId(sb, auth.session, adminView);
     if (!accountId) {
+      if (!connectedBookingAllowedForSession(auth.session)) {
+        return json(res, 403, {
+          ok: false,
+          error: 'preview_restricted',
+          message:
+            'Connected booking preview is limited to approved organiser accounts. Sign in with the preview email on file, or contact us to be added.',
+          signedInAs: String(auth.session.email || '').trim().toLowerCase(),
+        });
+      }
       return json(res, 200, {
         ok: false,
         error: 'organiser_account_not_found',
@@ -264,6 +279,20 @@ module.exports = async function handler(req, res) {
 
     let account = await loadOrganiserAccountRow(sb, accountId);
     if (!account) return json(res, 404, { ok: false, error: 'organiser_account_not_found' });
+
+    const hasCompAccess =
+      accountHasAdminConnectedGrant(account) ||
+      accountHasLinkOutGrant(account) ||
+      isConnectedPlanActive(account);
+    if (!connectedBookingAllowedForSession(auth.session) && !hasCompAccess) {
+      return json(res, 403, {
+        ok: false,
+        error: 'preview_restricted',
+        message:
+          'Connected booking preview is limited to approved organiser accounts. Sign in with the preview email on file, or contact us to be added.',
+        signedInAs: String(auth.session.email || '').trim().toLowerCase(),
+      });
+    }
 
     let pilotGranted = false;
     if (req.method === 'GET') {
@@ -340,6 +369,8 @@ module.exports = async function handler(req, res) {
             ? 'Organiser-page Connected slots need Supabase migration 297_connected_booking_organiser_slots.sql — assignment cannot be saved until it is applied.'
             : undefined),
         slots,
+        connectedGranted: accountHasAdminConnectedGrant(account),
+        linkOutGranted: accountHasLinkOutGrant(account),
         pilotGrant: pilotGranted
           ? {
               granted: true,
@@ -347,7 +378,14 @@ module.exports = async function handler(req, res) {
               message:
                 'Pilot access — Starter plan activated without charge for this login. Generate your webhook secret below.',
             }
-          : undefined,
+          : accountHasAdminConnectedGrant(account)
+            ? {
+                granted: true,
+                plan: account.connected_booking_plan,
+                message:
+                  'Complimentary Connected booking allocated from Command Centre. Generate your webhook secret below if you want attendee sync.',
+              }
+            : undefined,
       });
     }
 

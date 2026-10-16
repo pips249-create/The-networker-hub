@@ -1921,16 +1921,18 @@
   }
 
   function refreshAccess() {
-    if (!billing || !billing.ok || !billing.active) {
+    var linkOutOnly = Boolean(billing && billing.ok && billing.linkOutGranted && !billing.active);
+    if (!billing || !billing.ok || (!billing.active && !linkOutOnly)) {
       showBlocked(
-        'Connected booking is not active. Open Connected booking to subscribe or use your pilot access, then assign your organiser page.'
+        'Connected booking is not active. Open Connected booking to subscribe or use your pilot access, then assign your organiser page. Partnership Link Out can also be allocated from Command Centre.'
       );
       return;
     }
 
     if (
-      (billing.slots && billing.slots.needsAssignment) ||
-      (loadedEvent && !eventOnAssignedSlot(loadedEvent))
+      !linkOutOnly &&
+      ((billing.slots && billing.slots.needsAssignment) ||
+        (loadedEvent && !eventOnAssignedSlot(loadedEvent)))
     ) {
       showSlotsAssignmentPanel();
       return;
@@ -1939,7 +1941,7 @@
     hideSlotsCard();
     if (blocked) blocked.hidden = true;
     if (formCard) formCard.hidden = false;
-    if (devSection) devSection.hidden = false;
+    if (devSection) devSection.hidden = linkOutOnly;
     setPageActionsVisible(true);
     bindEmbedDrawerNav();
     bindEventLinkUi();
@@ -1948,18 +1950,24 @@
     bindPlatformChangeControl();
     updatePlatformPickerPresentation();
     syncEventLinkPanel(selectedIntegrationPlatform());
-    if (slotStatus && billing.plan) {
-      slotStatus.hidden = false;
-      slotStatus.textContent =
-        'Connected plan: ' +
-        billing.plan +
-        ' — this event uses one of your assigned organiser page slot(s).';
+    if (slotStatus) {
+      if (linkOutOnly) {
+        slotStatus.hidden = false;
+        slotStatus.textContent =
+          'Link Out (partnership) — buyers go to your booking URL. No webhook sync on this event.';
+      } else if (billing.plan) {
+        slotStatus.hidden = false;
+        slotStatus.textContent =
+          'Connected plan: ' +
+          billing.plan +
+          ' — this event uses one of your assigned organiser page slot(s).';
+      }
     }
 
     var hubNote = qs('ecs-hub-tickets-note');
     if (hubNote) hubNote.hidden = false;
 
-    applyWebhookMeta();
+    if (!linkOutOnly) applyWebhookMeta();
 
     if (typeof embed.notifyEmbedDrawerBusy === 'function') {
       embed.notifyEmbedDrawerBusy(false, '', 'tickets');
@@ -2027,11 +2035,16 @@
         return;
       }
 
+      var useLinkOutOnly =
+        billing &&
+        billing.linkOutGranted &&
+        !billing.active &&
+        String((loadedEvent && loadedEvent.checkoutMode) || '') !== 'external_connected';
       var payload = {
         id: eventId,
         title: loadedEvent.title,
         organiserGroupId: organiserIdForEvent(loadedEvent),
-        checkoutMode: 'external_connected',
+        checkoutMode: useLinkOutOnly ? 'external_link' : 'external_connected',
         externalPriceLabel: price,
         externalBookingUrl: url,
         listingStatus: publish ? 'published' : 'draft',

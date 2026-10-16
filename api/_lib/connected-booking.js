@@ -2,6 +2,7 @@ const { getSupabaseAdmin } = require('./supabase');
 const {
   PLAN_GROUP_LIMITS,
   CHECKOUT_EXTERNAL,
+  CHECKOUT_LINK_OUT,
   CHECKOUT_HUB,
   connectedBookingFeatureEnabled,
   connectedBookingAllowedForEmail,
@@ -11,7 +12,11 @@ const {
   connectedBookingPilotGrantEligible,
   connectedBookingPilotGrantPlan,
   normalizeConnectedBookingEmail,
+  accountHasAdminConnectedGrant,
+  accountHasLinkOutGrant,
   isExternalConnectedEvent,
+  isExternalLinkOutEvent,
+  isExternalCheckoutEvent,
   publicListingUsesExternalBooking,
   normalizeExternalPriceLabel,
   normalizeExternalBookingUrl,
@@ -22,6 +27,9 @@ const {
   groupLimitForPlan,
   isConnectedPlanActive,
 } = require('./connected-booking-util');
+
+const ACCOUNT_SELECT_BASE =
+  'id, connected_booking_plan, connected_booking_status, connected_booking_webhook_secret, connected_booking_stripe_subscription_id, connected_booking_granted_at, link_out_granted_at';
 
 async function loadOrganiserAccountForOrganiserId(sb, organiserId) {
   const orgId = String(organiserId || '').trim();
@@ -34,13 +42,22 @@ async function loadOrganiserAccountForOrganiserId(sb, organiserId) {
   if (orgErr) throw new Error(orgErr.message);
   const accountId = String(org?.organiser_account_id || '').trim();
   if (!accountId) return null;
-  const { data: account, error: accErr } = await sb
+  let account = null;
+  let accErr = null;
+  ({ data: account, error: accErr } = await sb
     .from('organiser_accounts')
-    .select(
-      'id, connected_booking_plan, connected_booking_status, connected_booking_webhook_secret, connected_booking_stripe_subscription_id'
-    )
+    .select(ACCOUNT_SELECT_BASE)
     .eq('id', accountId)
-    .maybeSingle();
+    .maybeSingle());
+  if (accErr && /connected_booking_granted_at|link_out_granted_at/i.test(String(accErr.message || ''))) {
+    ({ data: account, error: accErr } = await sb
+      .from('organiser_accounts')
+      .select(
+        'id, connected_booking_plan, connected_booking_status, connected_booking_webhook_secret, connected_booking_stripe_subscription_id'
+      )
+      .eq('id', accountId)
+      .maybeSingle());
+  }
   if (accErr) throw new Error(accErr.message);
   return account ? { ...account, organiser_id: orgId } : null;
 }
@@ -121,12 +138,40 @@ async function connectedBookingAllowedForOrganiserAccountId(sb, organiserAccount
   if (!preview && !connectedBookingFeatureEnabled()) return false;
   if (!preview) return true;
   const email = await emailForOrganiserAccountId(sb, organiserAccountId);
-  return connectedBookingAllowedForEmail(email);
+  if (connectedBookingAllowedForEmail(email)) return true;
+  const accountId = String(organiserAccountId || '').trim();
+  if (!accountId) return false;
+  const { data: account } = await sb
+    .from('organiser_accounts')
+    .select('id, connected_booking_status, connected_booking_granted_at')
+    .eq('id', accountId)
+    .maybeSingle();
+  return isConnectedPlanActive(account) || accountHasAdminConnectedGrant(account);
+}
+
+async function assertLinkOutEntitlement(sb, organiserId) {
+  const account = await loadOrganiserAccountForOrganiserId(sb, organiserId);
+  if (!account) {
+    const e = new Error('link_out_no_account');
+    e.status = 403;
+    e.code = 'link_out_no_account';
+    throw e;
+  }
+  if (!accountHasLinkOutGrant(account) && !isConnectedPlanActive(account)) {
+    const e = new Error('link_out_inactive');
+    e.status = 403;
+    e.code = 'link_out_inactive';
+    e.message =
+      'Link Out is not enabled on your account. Ask The Networker UK to allocate it, or use Connected booking.';
+    throw e;
+  }
+  return account;
 }
 
 module.exports = {
   PLAN_GROUP_LIMITS,
   CHECKOUT_EXTERNAL,
+  CHECKOUT_LINK_OUT,
   CHECKOUT_HUB,
   connectedBookingFeatureEnabled,
   connectedBookingAllowedForEmail,
@@ -135,9 +180,13 @@ module.exports = {
   connectedBookingPreviewLocked,
   connectedBookingPilotGrantEligible,
   connectedBookingPilotGrantPlan,
+  accountHasAdminConnectedGrant,
+  accountHasLinkOutGrant,
   emailForOrganiserAccountId,
   connectedBookingAllowedForOrganiserAccountId,
   isExternalConnectedEvent,
+  isExternalLinkOutEvent,
+  isExternalCheckoutEvent,
   publicListingUsesExternalBooking,
   normalizeExternalPriceLabel,
   normalizeExternalBookingUrl,
@@ -150,6 +199,7 @@ module.exports = {
   countPublishedGroupsForAccount,
   groupLimitForPlan,
   assertConnectedBookingEntitlement,
+  assertLinkOutEntitlement,
   logExternalSync,
   ...require('./connected-booking-slots'),
 };

@@ -8,7 +8,16 @@ const PLAN_GROUP_LIMITS = {
 };
 
 const CHECKOUT_EXTERNAL = 'external_connected';
+const CHECKOUT_LINK_OUT = 'external_link';
 const CHECKOUT_HUB = 'hub';
+
+function accountHasAdminConnectedGrant(account) {
+  return Boolean(account && String(account.connected_booking_granted_at || '').trim());
+}
+
+function accountHasLinkOutGrant(account) {
+  return Boolean(account && String(account.link_out_granted_at || '').trim());
+}
 
 function connectedBookingFeatureEnabled() {
   const v = String(process.env.CONNECTED_BOOKING_ENABLED || '').trim().toLowerCase();
@@ -87,10 +96,19 @@ function isExternalConnectedEvent(row) {
   return String(row?.checkout_mode || CHECKOUT_HUB).trim() === CHECKOUT_EXTERNAL;
 }
 
+function isExternalLinkOutEvent(row) {
+  return String(row?.checkout_mode || CHECKOUT_HUB).trim() === CHECKOUT_LINK_OUT;
+}
+
+/** Connected or Link Out — both send buyers to an external booking URL. */
+function isExternalCheckoutEvent(row) {
+  return isExternalConnectedEvent(row) || isExternalLinkOutEvent(row);
+}
+
 /** Public listing + attendee checkout (includes rows saved with URL/price but checkout_mode stuck on hub). */
 function publicListingUsesExternalBooking(row) {
   if (!row) return false;
-  if (isExternalConnectedEvent(row)) return true;
+  if (isExternalCheckoutEvent(row)) return true;
   return Boolean(
     String(row.external_booking_url || '').trim() &&
       String(row.external_price_label || '').trim()
@@ -254,6 +272,7 @@ function isConnectedPlanActive(account) {
 module.exports = {
   PLAN_GROUP_LIMITS,
   CHECKOUT_EXTERNAL,
+  CHECKOUT_LINK_OUT,
   CHECKOUT_HUB,
   connectedBookingFeatureEnabled,
   connectedBookingPreviewEmails,
@@ -265,7 +284,11 @@ module.exports = {
   connectedBookingAllowedForSession,
   connectedBookingOperationsEnabled,
   normalizeConnectedBookingEmail,
+  accountHasAdminConnectedGrant,
+  accountHasLinkOutGrant,
   isExternalConnectedEvent,
+  isExternalLinkOutEvent,
+  isExternalCheckoutEvent,
   publicListingUsesExternalBooking,
   normalizeExternalPriceLabel,
   normalizeExternalBookingUrl,

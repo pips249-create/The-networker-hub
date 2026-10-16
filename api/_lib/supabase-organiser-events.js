@@ -1070,23 +1070,47 @@ async function buildEventRow(payload, eventId, mode) {
   const {
     connectedBookingAllowedForEmail,
     CHECKOUT_EXTERNAL,
+    CHECKOUT_LINK_OUT,
     CHECKOUT_HUB,
     normalizeExternalBookingUrl,
     normalizeExternalPriceLabel,
     assertConnectedBookingEntitlement,
+    assertLinkOutEntitlement,
     assertOrganiserConnectedSlot,
     loadOrganiserAccountForOrganiserId,
+    isConnectedPlanActive,
+    accountHasAdminConnectedGrant,
+    accountHasLinkOutGrant,
   } = require('./connected-booking');
 
   const editorEmail = payload._editorEmail || payload.email || '';
+  const organiserIdForCheckout = row.organiser_id || payload.groupId || null;
+  let checkoutAccount = null;
+  async function loadCheckoutAccount() {
+    if (checkoutAccount || !organiserIdForCheckout) return checkoutAccount;
+    checkoutAccount = await loadOrganiserAccountForOrganiserId(getSupabaseAdmin(), organiserIdForCheckout);
+    return checkoutAccount;
+  }
 
   if (
     Object.prototype.hasOwnProperty.call(payload, 'checkoutMode') ||
     Object.prototype.hasOwnProperty.call(payload, 'checkout_mode')
   ) {
     const rawMode = String(payload.checkoutMode || payload.checkout_mode || CHECKOUT_HUB).trim();
-    if (connectedBookingAllowedForEmail(editorEmail) && rawMode === CHECKOUT_EXTERNAL) {
-      row.checkout_mode = CHECKOUT_EXTERNAL;
+    if (rawMode === CHECKOUT_EXTERNAL) {
+      const acc = await loadCheckoutAccount();
+      const canConnected =
+        connectedBookingAllowedForEmail(editorEmail) ||
+        isConnectedPlanActive(acc) ||
+        accountHasAdminConnectedGrant(acc);
+      row.checkout_mode = canConnected ? CHECKOUT_EXTERNAL : CHECKOUT_HUB;
+    } else if (rawMode === CHECKOUT_LINK_OUT) {
+      const acc = await loadCheckoutAccount();
+      const canLinkOut =
+        accountHasLinkOutGrant(acc) ||
+        isConnectedPlanActive(acc) ||
+        connectedBookingAllowedForEmail(editorEmail);
+      row.checkout_mode = canLinkOut ? CHECKOUT_LINK_OUT : CHECKOUT_HUB;
     } else {
       row.checkout_mode = CHECKOUT_HUB;
     }
@@ -1162,10 +1186,17 @@ async function buildEventRow(payload, eventId, mode) {
   }
 
   const effectiveCheckoutMode = String(row.checkout_mode || CHECKOUT_HUB).trim();
-  if (effectiveCheckoutMode === CHECKOUT_EXTERNAL && row.status === 'published') {
+  if (
+    (effectiveCheckoutMode === CHECKOUT_EXTERNAL || effectiveCheckoutMode === CHECKOUT_LINK_OUT) &&
+    row.status === 'published'
+  ) {
     const organiserId = row.organiser_id || payload.groupId || null;
     if (!row.external_booking_url) {
-      const e = new Error('Add your booking page URL before publishing with Connected booking.');
+      const e = new Error(
+        effectiveCheckoutMode === CHECKOUT_LINK_OUT
+          ? 'Add your booking page URL before publishing with Link Out.'
+          : 'Add your booking page URL before publishing with Connected booking.'
+      );
       e.status = 400;
       e.code = 'missing_external_booking_url';
       throw e;
@@ -1176,12 +1207,16 @@ async function buildEventRow(payload, eventId, mode) {
       e.code = 'missing_external_price_label';
       throw e;
     }
-    if (connectedBookingAllowedForEmail(editorEmail) && organiserId) {
+    if (organiserId) {
       const sbEnt = getSupabaseAdmin();
-      const entAccount = await assertConnectedBookingEntitlement(sbEnt, organiserId, {
-        skipGroupLimit: true,
-      });
-      await assertOrganiserConnectedSlot(sbEnt, organiserId, entAccount);
+      if (effectiveCheckoutMode === CHECKOUT_LINK_OUT) {
+        await assertLinkOutEntitlement(sbEnt, organiserId);
+      } else {
+        const entAccount = await assertConnectedBookingEntitlement(sbEnt, organiserId, {
+          skipGroupLimit: true,
+        });
+        await assertOrganiserConnectedSlot(sbEnt, organiserId, entAccount);
+      }
     }
     row.ticket_sales_enabled = true;
     row.attendance_mode = 'tickets';
