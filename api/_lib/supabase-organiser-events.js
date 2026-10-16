@@ -1467,6 +1467,96 @@ async function syncTicketSaleEndsAfterStartChange(sb, eventId, oldStartsAt, newS
   }
 }
 
+/**
+ * Connected / Link Out setup saves only checkout URL, price label, mode, and
+ * listing status. Avoid the full series rebuild (which rebuilds location from
+ * empty form defaults and can stall publish for a long time).
+ */
+async function updateExternalBookingFields(eventId, payload) {
+  const sb = getSupabaseAdmin();
+  const id = String(eventId || '').trim();
+  if (!id) {
+    const e = new Error('missing_event_id');
+    e.status = 400;
+    throw e;
+  }
+  const { data: existing, error: existingErr } = await sb
+    .from('events')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle();
+  if (existingErr) throw new Error(existingErr.message);
+  if (!existing) {
+    const e = new Error('Event not found');
+    e.status = 404;
+    throw e;
+  }
+
+  const listingStatus = String(payload.listingStatus || payload.status || '').toLowerCase();
+  const publishing =
+    listingStatus === 'published' || listingStatus === 'publish' || listingStatus === 'live';
+
+  if (publishing) {
+    assertEventHasDateForPublish(existing);
+    assertEventHasOrganiserForPublish(existing);
+    assertEventLanguageForPublish({ ...existing, status: 'published' }, existing);
+  }
+
+  const row = await buildEventRow(
+    {
+      listingStatus: payload.listingStatus,
+      checkoutMode: payload.checkoutMode,
+      externalBookingUrl: payload.externalBookingUrl,
+      externalPriceLabel: payload.externalPriceLabel,
+      groupId: payload.groupId || existing.organiser_id,
+      title: payload.title || existing.title,
+      _editorEmail: payload._editorEmail || payload.email || '',
+    },
+    id,
+    'update'
+  );
+
+  const patch = {};
+  if (row.checkout_mode !== undefined) patch.checkout_mode = row.checkout_mode;
+  if (row.external_booking_url !== undefined) patch.external_booking_url = row.external_booking_url;
+  if (row.external_price_label !== undefined) patch.external_price_label = row.external_price_label;
+  if (row.status !== undefined) patch.status = row.status;
+  if (row.approval_status !== undefined) patch.approval_status = row.approval_status;
+  if (row.ticket_sales_enabled !== undefined) patch.ticket_sales_enabled = row.ticket_sales_enabled;
+  if (row.attendance_mode !== undefined) patch.attendance_mode = row.attendance_mode;
+  if (publishing && !existing.published_at) {
+    patch.published_at = new Date().toISOString();
+  }
+
+  if (!Object.keys(patch).length) {
+    return rowToEvent(existing);
+  }
+
+  const { data, error } = await updateEventRowById(sb, id, patch);
+  if (error) throw new Error(error.message);
+
+  if (publishing && String(data?.status || '').toLowerCase() === 'published') {
+    await publishOrganiserListingsForEventIds(sb, [data]);
+    try {
+      const { notifyRosterMembersOfPublishedEvent } = require('./organiser-member-roster');
+      const wasLive = String(existing.status || '').toLowerCase() === 'published';
+      if (!wasLive) {
+        notifyRosterMembersOfPublishedEvent(data).catch((err) => {
+          console.error(
+            '[updateExternalBookingFields] member list new-event email failed',
+            id,
+            err?.message || err
+          );
+        });
+      }
+    } catch {
+      /* optional */
+    }
+  }
+
+  return rowToEvent(data);
+}
+
 async function updateEvent(eventId, payload) {
   const sb = getSupabaseAdmin();
   const { data: existing } = await sb.from('events').select('*').eq('id', eventId).maybeSingle();
@@ -3806,6 +3896,7 @@ module.exports = {
   createEventsForOccurrences,
   duplicateEventForSession,
   updateEvent,
+  updateExternalBookingFields,
   syncSeriesOccurrencesForEvent,
   deleteEventForSession,
   enableTicketSalesForEvent,

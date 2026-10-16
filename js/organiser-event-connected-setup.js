@@ -267,13 +267,45 @@
   }
 
   function api(path, opts) {
-    return fetch(path, Object.assign({ credentials: 'include', headers: { 'Content-Type': 'application/json' } }, opts || {})).then(
-      function (res) {
-        return res.json().then(function (data) {
-          return { ok: res.ok, status: res.status, data: data };
-        });
-      }
+    opts = opts || {};
+    var timeoutMs = Number(opts.timeoutMs) || 0;
+    var controller = timeoutMs > 0 && typeof AbortController !== 'undefined' ? new AbortController() : null;
+    var timer = null;
+    if (controller) {
+      timer = setTimeout(function () {
+        controller.abort();
+      }, timeoutMs);
+    }
+    var fetchOpts = Object.assign(
+      { credentials: 'include', headers: { 'Content-Type': 'application/json' } },
+      opts,
+      controller ? { signal: controller.signal } : {}
     );
+    delete fetchOpts.timeoutMs;
+    return fetch(path, fetchOpts)
+      .then(function (res) {
+        return res.json().then(
+          function (data) {
+            return { ok: res.ok, status: res.status, data: data };
+          },
+          function () {
+            return { ok: res.ok, status: res.status, data: {} };
+          }
+        );
+      })
+      .catch(function (err) {
+        if (err && err.name === 'AbortError') {
+          return {
+            ok: false,
+            status: 0,
+            data: { error: 'timeout', message: 'That took too long — try Publish again.' },
+          };
+        }
+        throw err;
+      })
+      .finally(function () {
+        if (timer) clearTimeout(timer);
+      });
   }
 
   function setStatus(el, msg, kind) {
@@ -309,6 +341,15 @@
     }
     if (code === 'missing_title' || code === 'missing_group') {
       return 'Event details are incomplete — open Event details and try again.';
+    }
+    if (code === 'timeout') {
+      return data.message || 'That took too long — try Publish again.';
+    }
+    if (code === 'missing_external_booking_url') {
+      return data.message || 'Enter your booking page URL before publishing.';
+    }
+    if (code === 'link_out_inactive' || code === 'connected_booking_inactive') {
+      return data.message || 'External booking is not enabled on this account yet.';
     }
     return code || 'Could not save.';
   }
@@ -2048,18 +2089,22 @@
     setStatus(saveStatus, publish ? 'Publishing…' : 'Saving…');
 
     try {
-      var linkResult = await ensureEventLinkBeforeSave(publish);
-      if (!linkResult.ok) {
-        setStatus(saveStatus, linkResult.message || 'Could not link provider event.', 'error');
-        syncEventLinkPanel(selectedIntegrationPlatform());
-        return;
-      }
-
       var useLinkOutOnly =
         billing &&
         billing.linkOutGranted &&
         !billing.active &&
         String((loadedEvent && loadedEvent.checkoutMode) || '') !== 'external_connected';
+
+      // Link Out / own-site redirects do not need a provider event link.
+      if (!useLinkOutOnly && !linkOutOnly) {
+        var linkResult = await ensureEventLinkBeforeSave(publish);
+        if (!linkResult.ok) {
+          setStatus(saveStatus, linkResult.message || 'Could not link provider event.', 'error');
+          syncEventLinkPanel(selectedIntegrationPlatform());
+          return;
+        }
+      }
+
       var payload = {
         id: eventId,
         title: loadedEvent.title,
@@ -2068,13 +2113,18 @@
         externalPriceLabel: price,
         externalBookingUrl: url,
         listingStatus: publish ? 'published' : 'draft',
+        externalBookingOnly: true,
       };
       if (eventDate) {
         payload.date = eventDate;
         if (loadedEvent.endDate) payload.endDate = loadedEvent.endDate;
       }
 
-      var res = await api('/api/organiser/events', { method: 'PATCH', body: JSON.stringify(payload) });
+      var res = await api('/api/organiser/events', {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+        timeoutMs: 45000,
+      });
       if (!res.ok) {
         setStatus(saveStatus, saveErrorMessage(res.data, res.status), 'error');
         return;
