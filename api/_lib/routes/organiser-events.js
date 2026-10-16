@@ -42,37 +42,130 @@ function occurrencesFromExistingEvent(existing) {
   return [{ date, endDate }];
 }
 
-function eventPayloadFromBody(body, email) {
+function bodyHas(body, key) {
+  return Boolean(body) && Object.prototype.hasOwnProperty.call(body, key);
+}
+
+/**
+ * Connected / Link Out setup only patches checkout fields + listing status.
+ * Detect that so PATCH can skip the heavy series/location rebuild.
+ */
+function isExternalBookingOnlyPatch(body) {
+  if (!body || typeof body !== 'object') return false;
+  if (body.externalBookingOnly === true || body.externalBookingOnly === 'true') return true;
+  const touchesExternal =
+    bodyHas(body, 'checkoutMode') ||
+    bodyHas(body, 'checkout_mode') ||
+    bodyHas(body, 'externalBookingUrl') ||
+    bodyHas(body, 'external_booking_url') ||
+    bodyHas(body, 'externalPriceLabel') ||
+    bodyHas(body, 'external_price_label');
+  if (!touchesExternal) return false;
+  const listingShapeKeys = [
+    'type',
+    'format',
+    'location',
+    'venue',
+    'addressLine1',
+    'city',
+    'postcode',
+    'fullAddress',
+    'eventFormat',
+    'onlinePlatform',
+    'onlineLink',
+    'description',
+    'photoBase64',
+    'imageBase64',
+    'photoUrl',
+    'imageUrl',
+    'occurrences',
+    'dates',
+    'attendeeExtras',
+  ];
+  return !listingShapeKeys.some((key) => bodyHas(body, key));
+}
+
+function eventPayloadFromBody(body, email, opts) {
+  const mode = opts && opts.mode === 'create' ? 'create' : 'update';
+  const includeListingDefaults = mode === 'create';
   const payload = {
     email,
     groupId: String(body.organiserGroupId || body.groupId || '').trim(),
     title: String(body.title || '').trim(),
-    type: String(body.type || body.format || 'Meeting').trim(),
-    location: String(body.location || '').trim(),
-    venue: String(body.venue || '').trim(),
-    addressLine1: String(body.addressLine1 || '').trim(),
-    city: String(body.city || '').trim(),
-    postcode: String(body.postcode || '').trim(),
-    fullAddress: String(body.fullAddress || '').trim(),
-    eventFormat: String(body.eventFormat || '').trim(),
-    onlinePlatform: String(body.onlinePlatform || '').trim(),
-    onlineLink: String(body.onlineLink || '').trim(),
-    attendeeExtras: body.attendeeExtras || null,
-    industry: String(body.industry || '').trim(),
-    maxAttendees: body.maxAttendees,
-    recurrencePattern: body.recurrencePattern || body.recurrence || null,
-    recurrenceEndDate: body.recurrenceEndDate || null,
-    photoBase64: body.photoBase64 || body.imageBase64 || null,
-    photoMime: body.photoMime || body.imageMime || null,
-    photoFilename: body.photoFilename || body.imageFilename || null,
   };
-  if (Object.prototype.hasOwnProperty.call(body, 'description')) {
+  if (includeListingDefaults || bodyHas(body, 'type') || bodyHas(body, 'format')) {
+    payload.type = String(body.type || body.format || 'Meeting').trim();
+  }
+  if (includeListingDefaults || bodyHas(body, 'location')) {
+    payload.location = String(body.location || '').trim();
+  }
+  if (includeListingDefaults || bodyHas(body, 'venue')) {
+    payload.venue = String(body.venue || '').trim();
+  }
+  if (includeListingDefaults || bodyHas(body, 'addressLine1')) {
+    payload.addressLine1 = String(body.addressLine1 || '').trim();
+  }
+  if (includeListingDefaults || bodyHas(body, 'city')) {
+    payload.city = String(body.city || '').trim();
+  }
+  if (includeListingDefaults || bodyHas(body, 'postcode')) {
+    payload.postcode = String(body.postcode || '').trim();
+  }
+  if (includeListingDefaults || bodyHas(body, 'fullAddress')) {
+    payload.fullAddress = String(body.fullAddress || '').trim();
+  }
+  if (includeListingDefaults || bodyHas(body, 'eventFormat')) {
+    payload.eventFormat = String(body.eventFormat || '').trim();
+  }
+  if (includeListingDefaults || bodyHas(body, 'onlinePlatform')) {
+    payload.onlinePlatform = String(body.onlinePlatform || '').trim();
+  }
+  if (includeListingDefaults || bodyHas(body, 'onlineLink')) {
+    payload.onlineLink = String(body.onlineLink || '').trim();
+  }
+  if (includeListingDefaults || bodyHas(body, 'attendeeExtras')) {
+    payload.attendeeExtras = body.attendeeExtras || null;
+  }
+  if (includeListingDefaults || bodyHas(body, 'industry')) {
+    payload.industry = String(body.industry || '').trim();
+  }
+  if (includeListingDefaults || bodyHas(body, 'maxAttendees')) {
+    payload.maxAttendees = body.maxAttendees;
+  }
+  if (
+    includeListingDefaults ||
+    bodyHas(body, 'recurrencePattern') ||
+    bodyHas(body, 'recurrence')
+  ) {
+    payload.recurrencePattern = body.recurrencePattern || body.recurrence || null;
+  }
+  if (includeListingDefaults || bodyHas(body, 'recurrenceEndDate')) {
+    payload.recurrenceEndDate = body.recurrenceEndDate || null;
+  }
+  if (
+    includeListingDefaults ||
+    bodyHas(body, 'photoBase64') ||
+    bodyHas(body, 'imageBase64')
+  ) {
+    payload.photoBase64 = body.photoBase64 || body.imageBase64 || null;
+  }
+  if (includeListingDefaults || bodyHas(body, 'photoMime') || bodyHas(body, 'imageMime')) {
+    payload.photoMime = body.photoMime || body.imageMime || null;
+  }
+  if (
+    includeListingDefaults ||
+    bodyHas(body, 'photoFilename') ||
+    bodyHas(body, 'imageFilename')
+  ) {
+    payload.photoFilename = body.photoFilename || body.imageFilename || null;
+  }
+  if (bodyHas(body, 'description')) {
     payload.description = String(body.description || '').trim();
   }
-  if (Object.prototype.hasOwnProperty.call(body, 'photoUrl') || Object.prototype.hasOwnProperty.call(body, 'imageUrl')) {
+  if (bodyHas(body, 'photoUrl') || bodyHas(body, 'imageUrl')) {
     payload.photoUrl = String(body.photoUrl || body.imageUrl || '').trim();
   }
-  if (Object.prototype.hasOwnProperty.call(body, 'imagePosition')) {
+  if (bodyHas(body, 'imagePosition')) {
     payload.imagePosition = String(body.imagePosition || '').trim();
   }
   if (body.listingStatus != null) {
@@ -80,13 +173,13 @@ function eventPayloadFromBody(body, email) {
   } else if (body.publish === true || body.publish === 'true') {
     payload.listingStatus = 'published';
   }
-  if (Object.prototype.hasOwnProperty.call(body, 'checkoutMode') || Object.prototype.hasOwnProperty.call(body, 'checkout_mode')) {
+  if (bodyHas(body, 'checkoutMode') || bodyHas(body, 'checkout_mode')) {
     payload.checkoutMode = body.checkoutMode || body.checkout_mode;
   }
-  if (Object.prototype.hasOwnProperty.call(body, 'externalBookingUrl') || Object.prototype.hasOwnProperty.call(body, 'external_booking_url')) {
+  if (bodyHas(body, 'externalBookingUrl') || bodyHas(body, 'external_booking_url')) {
     payload.externalBookingUrl = body.externalBookingUrl || body.external_booking_url;
   }
-  if (Object.prototype.hasOwnProperty.call(body, 'externalPriceLabel') || Object.prototype.hasOwnProperty.call(body, 'external_price_label')) {
+  if (bodyHas(body, 'externalPriceLabel') || bodyHas(body, 'external_price_label')) {
     payload.externalPriceLabel = body.externalPriceLabel || body.external_price_label;
   }
   payload._editorEmail = String(email || '').trim();
@@ -176,6 +269,7 @@ module.exports = async function handler(req, res) {
     createEvent,
     createEventsForOccurrences,
     updateEvent,
+    updateExternalBookingFields,
     syncSeriesOccurrencesForEvent,
     deleteEventForSession,
     duplicateEventForSession,
@@ -334,22 +428,50 @@ module.exports = async function handler(req, res) {
       }
 
       const existing = await getEventById(eventId);
-      let occ = normalizeOccurrences(body);
-      if (!occ.length) {
-        occ = occurrencesFromExistingEvent(existing);
-      }
+      const externalBookingOnly = isExternalBookingOnlyPatch(body);
 
-      const listingStatus = String(base.listingStatus || 'draft').toLowerCase();
-      const isDraft = listingStatus === 'draft';
-      if (!occ.length && !isDraft) {
-        return json(res, 400, { error: 'missing_dates', message: 'Select at least one date before publishing.' });
+      let synced;
+      if (externalBookingOnly) {
+        const listingStatus = String(base.listingStatus || 'draft').toLowerCase();
+        const isDraft = listingStatus === 'draft';
+        const hasDate = Boolean(
+          String(existing?.date || existing?.startsAt || existing?.starts_at || '').trim() ||
+            String(body.date || '').trim()
+        );
+        if (!hasDate && !isDraft) {
+          return json(res, 400, {
+            error: 'missing_dates',
+            message: 'Select at least one date before publishing.',
+          });
+        }
+        const updated = await updateExternalBookingFields(eventId, base);
+        synced = {
+          event: updated,
+          events: [updated],
+          eventIds: updated?.id ? [updated.id] : [eventId],
+          createdEvents: [],
+        };
+      } else {
+        let occ = normalizeOccurrences(body);
+        if (!occ.length) {
+          occ = occurrencesFromExistingEvent(existing);
+        }
+
+        const listingStatus = String(base.listingStatus || 'draft').toLowerCase();
+        const isDraft = listingStatus === 'draft';
+        if (!occ.length && !isDraft) {
+          return json(res, 400, {
+            error: 'missing_dates',
+            message: 'Select at least one date before publishing.',
+          });
+        }
+        const seriesGroupId = resolveSeriesGroupId(existing.seriesGroupId, occ.length);
+        synced = await syncSeriesOccurrencesForEvent(eventId, {
+          base,
+          occurrences: occ,
+          seriesGroupId,
+        });
       }
-      const seriesGroupId = resolveSeriesGroupId(existing.seriesGroupId, occ.length);
-      const synced = await syncSeriesOccurrencesForEvent(eventId, {
-        base,
-        occurrences: occ,
-        seriesGroupId,
-      });
 
       try {
         const { logCreatedEvents } = require('../staff-event-activity');
@@ -378,6 +500,9 @@ module.exports = async function handler(req, res) {
           'description',
           'eventFormat',
           'onlineLink',
+          'checkoutMode',
+          'externalBookingUrl',
+          'externalPriceLabel',
         ]);
         const statusChanged =
           String(existing?.listingStatus || existing?.status || '') !==
@@ -391,7 +516,11 @@ module.exports = async function handler(req, res) {
             (statusChanged ? 'Updated event status' : 'Updated event') +
             (updated?.title ? ': ' + String(updated.title).slice(0, 80) : '') +
             (keys.length ? ' (' + keys.slice(0, 6).join(', ') + ')' : ''),
-          metadata: { changedFields: keys, listingStatus: base.listingStatus || null },
+          metadata: {
+            changedFields: keys,
+            listingStatus: base.listingStatus || null,
+            externalBookingOnly,
+          },
         });
       } catch {
         /* activity log must not block saves */
@@ -528,7 +657,7 @@ module.exports = async function handler(req, res) {
 
     if (!title) return json(res, 400, { error: 'missing_title' });
     if (!groupId) return json(res, 400, { error: 'missing_group' });
-    const base = eventPayloadFromBody(body, auth.session.email);
+    const base = eventPayloadFromBody(body, auth.session.email, { mode: 'create' });
     if (base.listingStatus == null) base.listingStatus = 'draft';
     const isDraft = String(base.listingStatus || '').toLowerCase() === 'draft';
     if (!occ.length && !isDraft) return json(res, 400, { error: 'missing_dates' });
