@@ -1964,20 +1964,20 @@
       }
     }
 
-    if (pubBtn || qs('ecs-publish')) {
-      var publishBtn = qs('ecs-publish');
-      if (publishBtn) {
-        publishBtn.textContent = linkOutOnly ? 'Publish Link Out event' : 'Publish Connected event';
-      }
+    var publishBtn = qs('ecs-publish');
+    if (publishBtn) {
+      publishBtn.textContent = linkOutOnly ? 'Publish Link Out event' : 'Publish Connected event';
     }
-    var bookingHint = qs('ecs-booking-url-hint') || document.querySelector('[data-ecs-booking-hint]');
-    if (!bookingHint) {
-      var bookingLabel = document.querySelector('label[for="ecs-booking-url"]');
-      var hintAfter = bookingLabel && bookingLabel.parentElement && bookingLabel.parentElement.querySelector('.ee-hint');
-      if (hintAfter && linkOutOnly) {
-        hintAfter.textContent =
-          'Paste your registration / checkout URL. Buyers leave The Networker UK and complete booking on your site.';
-      }
+    var platformHint = document.querySelector('#ecs-form-card [data-connected-platform-hint], .ecs-platform-hint');
+    if (platformHint && linkOutOnly) {
+      platformHint.hidden = false;
+      platformHint.textContent =
+        'Paste your registration / checkout URL. Buyers leave The Networker UK and complete booking on your site — no webhook needed for Link Out.';
+    }
+    var legalHint = document.querySelector('.ee-connected-legal-hint');
+    if (legalHint && linkOutOnly) {
+      legalHint.textContent =
+        'This is the price visitors see on The Networker UK before they leave for your site. You are responsible for ensuring it matches what you charge on your checkout (including VAT where applicable) and complies with UK consumer law. We do not process ticket payment on Link Out.';
     }
 
     var hubNote = qs('ecs-hub-tickets-note');
