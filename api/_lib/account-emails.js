@@ -1,5 +1,6 @@
 const { sendTemplatedEmail } = require('./send-template-email');
 const { emailGreetingName } = require('./email-display-name');
+const { getSupabaseAdmin } = require('./supabase');
 const {
   siteBase,
   browseEventsUrl,
@@ -12,6 +13,12 @@ const {
   logoFooterUrl,
   supportEmail,
 } = require('./hub-email-urls');
+
+/** Auth user_metadata key — welcome after confirm, not on create-account. */
+const ACCOUNT_WELCOME_POLICY_KEY = 'account_welcome_policy';
+const ACCOUNT_WELCOME_AFTER_VERIFY = 'after_verify';
+const ACCOUNT_WELCOME_SKIP = 'skip';
+const ACCOUNT_WELCOME_SENT = 'sent';
 
 function buildAccountWelcomeVars({ email, name, siteUrl }) {
   const site = siteBase(siteUrl);
@@ -48,7 +55,64 @@ async function sendAccountWelcomeEmail({ email, name, siteUrl }) {
   });
 }
 
+async function setAccountWelcomePolicy(userId, policy) {
+  const uid = String(userId || '').trim();
+  const value = String(policy || '').trim();
+  if (!uid || !value) return { ok: false, skipped: true, reason: 'missing_args' };
+
+  const sb = getSupabaseAdmin();
+  const { data, error } = await sb.auth.admin.getUserById(uid);
+  if (error || !data?.user) {
+    return { ok: false, skipped: true, reason: 'user_not_found' };
+  }
+
+  const user_metadata = {
+    ...(data.user.user_metadata || {}),
+    [ACCOUNT_WELCOME_POLICY_KEY]: value,
+  };
+  const { error: updateError } = await sb.auth.admin.updateUserById(uid, { user_metadata });
+  if (updateError) throw new Error(updateError.message);
+  return { ok: true, policy: value };
+}
+
+/**
+ * After email confirmation, send account_welcome once when register deferred it.
+ * Claim signups store "skip" and never get the generic welcome.
+ */
+async function maybeSendDeferredAccountWelcome({ userId, email, name, siteUrl }) {
+  const uid = String(userId || '').trim();
+  if (!uid) return { ok: false, skipped: true, reason: 'missing_user' };
+
+  const sb = getSupabaseAdmin();
+  const { data, error } = await sb.auth.admin.getUserById(uid);
+  if (error || !data?.user) {
+    return { ok: false, skipped: true, reason: 'user_not_found' };
+  }
+
+  const policy = String(data.user.user_metadata?.[ACCOUNT_WELCOME_POLICY_KEY] || '').trim();
+  if (policy !== ACCOUNT_WELCOME_AFTER_VERIFY) {
+    return { ok: false, skipped: true, reason: policy || 'not_pending' };
+  }
+
+  const result = await sendAccountWelcomeEmail({ email, name, siteUrl });
+  try {
+    const user_metadata = {
+      ...(data.user.user_metadata || {}),
+      [ACCOUNT_WELCOME_POLICY_KEY]: ACCOUNT_WELCOME_SENT,
+    };
+    await sb.auth.admin.updateUserById(uid, { user_metadata });
+  } catch {
+    /* Welcome already sent; policy update is best-effort */
+  }
+  return result;
+}
+
 module.exports = {
+  ACCOUNT_WELCOME_AFTER_VERIFY,
+  ACCOUNT_WELCOME_SKIP,
+  ACCOUNT_WELCOME_SENT,
   buildAccountWelcomeVars,
   sendAccountWelcomeEmail,
+  setAccountWelcomePolicy,
+  maybeSendDeferredAccountWelcome,
 };

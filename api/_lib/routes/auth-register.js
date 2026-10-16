@@ -1,7 +1,13 @@
 const { setSessionCookie, json, setCors, hubViewFromRequest } = require('../auth');
 const { useSupabase } = require('../supabase');
 const sbAuth = require('../supabase-auth');
-const { sendAccountWelcomeEmail } = require('../account-emails');
+const {
+  sendAccountWelcomeEmail,
+  setAccountWelcomePolicy,
+  ACCOUNT_WELCOME_AFTER_VERIFY,
+  ACCOUNT_WELCOME_SKIP,
+  ACCOUNT_WELCOME_SENT,
+} = require('../account-emails');
 const { enforceRateLimitAsync, clientIp } = require('../rate-limit');
 const { verifyTurnstileToken } = require('../turnstile');
 const { validateNewPassword } = require('../password-policy');
@@ -120,18 +126,11 @@ module.exports = async function handler(req, res) {
       redirect = '/welcome';
     }
 
-    try {
-      // Claim flow sends organiser_claim_confirmed right after Yes — skip generic welcome.
-      const claimSignup =
-        String(body.intent || '')
-          .trim()
-          .toLowerCase() === 'organiser-claim' || isOrganiserClaimNext(body.next);
-      if (!claimSignup) {
-        await sendAccountWelcomeEmail({ email, name });
-      }
-    } catch {
-      /* Registration succeeds even if welcome email fails */
-    }
+    // Claim flow sends organiser_claim_confirmed right after Yes — skip generic welcome.
+    const claimSignup =
+      String(body.intent || '')
+        .trim()
+        .toLowerCase() === 'organiser-claim' || isOrganiserClaimNext(body.next);
 
     try {
       const { bootstrapOrganiserFromPendingClaims } = require('../supabase-organiser-claims');
@@ -163,6 +162,8 @@ module.exports = async function handler(req, res) {
     let emailSent = false;
     const requiresEmailVerification = !accessStatus.organiserEmailVerified;
 
+    // Confirm-your-email must go out before (and without) the Welcome email.
+    // Welcome is deferred until verify succeeds so inboxes are not reversed.
     if (requiresEmailVerification) {
       const afterVerify = redirect;
       try {
@@ -180,6 +181,28 @@ module.exports = async function handler(req, res) {
         next: afterVerify,
         email: sessionUser.email,
       });
+
+      try {
+        await setAccountWelcomePolicy(
+          sessionUser.sub,
+          claimSignup ? ACCOUNT_WELCOME_SKIP : ACCOUNT_WELCOME_AFTER_VERIFY
+        );
+      } catch {
+        /* Policy is best-effort; verify can still complete without welcome */
+      }
+    } else if (!claimSignup) {
+      try {
+        await sendAccountWelcomeEmail({ email, name });
+        await setAccountWelcomePolicy(sessionUser.sub, ACCOUNT_WELCOME_SENT);
+      } catch {
+        /* Registration succeeds even if welcome email fails */
+      }
+    } else {
+      try {
+        await setAccountWelcomePolicy(sessionUser.sub, ACCOUNT_WELCOME_SKIP);
+      } catch {
+        /* ignore */
+      }
     }
 
     return json(res, 201, {
