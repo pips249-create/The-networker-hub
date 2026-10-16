@@ -12,7 +12,7 @@
     "sync-stripe": "node scripts/sync-stripe-pricing.js",
     "deploy": "npx vercel --prod",
     "check:api": "node scripts/smoke-test-api.js",
-    "check:stripe-webhook": "node scripts/test-stripe-webhook-signature.js && node scripts/test-stripe-webhook-raw-body.js && node scripts/smoke-test-stripe-webhook.js",
+    "check:stripe-webhook": "node scripts/test-stripe-webhook-signature.js && node scripts/test-stripe-webhook-raw-body.js && node scripts/test-stripe-invoice-parent.js && node scripts/smoke-test-stripe-webhook.js",
     "test:stripe-webhook-signature": "node scripts/test-stripe-webhook-signature.js",
     "test:stripe-webhook-raw-body": "node scripts/test-stripe-webhook-raw-body.js",
     "test:browse-events": "node scripts/test-browse-events-timeout.js",

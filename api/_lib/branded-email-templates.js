@@ -12,6 +12,11 @@ const BRANDED_EMAIL_TEMPLATES = {
     marker: 'hub-email-layout-v3-purple',
     subject: "It's FREE to claim {{organiser_name}} — The Networker UK",
   },
+  organiser_ownership_transfer: {
+    file: 'organiser-ownership-transfer.html',
+    marker: 'hub-email-layout-v3-purple',
+    subject: 'Your request to manage {{organiser_name}} is approved',
+  },
   opportunity_claim_invite: {
     file: 'opportunity-claim-invite.html',
     marker: 'hub-email-layout-v3-navy-gold-details-bo-invite',
@@ -60,7 +65,7 @@ const BRANDED_EMAIL_TEMPLATES = {
   organiser_directory_invite_day7: {
     file: 'organiser-directory-invite-day7.html',
     marker: 'hub-email-layout-v3-purple',
-    subject: "Re: We love what you're doing at {{group_name}}",
+    subject: "Your next guests are already looking for {{group_name}}",
   },
   organiser_directory_invite_day21: {
     file: 'organiser-directory-invite-day21.html',

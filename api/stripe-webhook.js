@@ -18,7 +18,11 @@ const { handleEventFeaturedCheckout } = require('./_lib/event-featured');
 const { handleGroupUpdateCreditsCheckout } = require('./_lib/group-update-credits');
 const { handleConnectionsCreditsCheckout } = require('./_lib/connections-credits');
 const { handleChargeRefunded } = require('./_lib/stripe-refund-webhook');
-const { handleInvoicePaid, handleSponsorshipCheckoutCompleted } = require('./_lib/stripe-revenue');
+const {
+  handleInvoicePaid,
+  handleSponsorshipCheckoutCompleted,
+  recordOpportunityListingRenewalFromInvoice,
+} = require('./_lib/stripe-revenue');
 const {
   maybeCreateCommissionFromCheckoutSession,
   maybeCreateCommissionFromInvoice,
@@ -317,6 +321,9 @@ async function handler(req, res) {
     if (event.type === 'invoice.paid') {
       const invoice = event.data.object || {};
       const revenueResult = await runHandler('invoice_revenue', () => handleInvoicePaid(invoice));
+      const listingRenewalResult = await runHandler('listing_renewal_revenue', () =>
+        recordOpportunityListingRenewalFromInvoice(invoice)
+      );
       const membershipResult = await runHandler('membership_invoice_paid', () =>
         handleMembershipInvoicePaid(invoice)
       );
@@ -328,7 +335,14 @@ async function handler(req, res) {
       );
       res.statusCode = 200;
       return res.end(
-        JSON.stringify({ ok: true, revenueResult, membershipResult, listingResult, affiliateResult })
+        JSON.stringify({
+          ok: true,
+          revenueResult,
+          listingRenewalResult,
+          membershipResult,
+          listingResult,
+          affiliateResult,
+        })
       );
     }
 

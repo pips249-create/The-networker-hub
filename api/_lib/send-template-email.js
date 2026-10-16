@@ -142,6 +142,7 @@ const TRANSACTIONAL_EMAIL_SLUGS = new Set([
   'organiser_ranking_badge',
   'organiser_featured_expiry_reminder',
   'organiser_claim_invite',
+  'organiser_ownership_transfer',
   'opportunity_claim_invite',
   'affiliate_claim_invite',
   'franchise_claim_invite',
@@ -750,6 +751,7 @@ function shouldSkipEmailAllowlist(slug) {
     slug === 'organiser_unclaimed_followup' ||
     slug === 'organiser_call_followup' ||
     slug === 'organiser_claim_invite' ||
+    slug === 'organiser_ownership_transfer' ||
     slug === 'opportunity_claim_invite' ||
     slug === 'affiliate_claim_invite' ||
     slug === 'franchise_claim_invite' ||

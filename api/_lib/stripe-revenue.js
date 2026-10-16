@@ -83,6 +83,30 @@ function normalizeMeta(meta) {
   return meta && typeof meta === 'object' ? meta : {};
 }
 
+/**
+ * Stripe API 2025-03-31+ (Basil / Dahlia) removed Invoice.subscription.
+ * Webhook payloads put the id and metadata on invoice.parent.subscription_details.
+ * Older payloads still use invoice.subscription and invoice.subscription_details.
+ */
+function invoiceSubscriptionId(invoice) {
+  const direct = invoice?.subscription;
+  if (typeof direct === 'string' && direct.trim()) return direct.trim();
+  if (direct && typeof direct === 'object' && direct.id) return String(direct.id).trim();
+
+  const parent = invoice?.parent?.subscription_details?.subscription;
+  if (typeof parent === 'string' && parent.trim()) return parent.trim();
+  if (parent && typeof parent === 'object' && parent.id) return String(parent.id).trim();
+  return '';
+}
+
+function invoiceSubscriptionMetadata(invoice) {
+  return {
+    ...normalizeMeta(invoice?.parent?.subscription_details?.metadata),
+    ...normalizeMeta(invoice?.subscription_details?.metadata),
+    ...normalizeMeta(invoice?.metadata),
+  };
+}
+
 function parseRevenueCategory(metadata) {
   const meta = normalizeMeta(metadata);
   const direct = String(meta.revenue_category || meta.revenueCategory || '').trim().toLowerCase();
@@ -216,14 +240,14 @@ async function handleInvoicePaid(invoice) {
     return { skipped: true, reason: 'not_paid' };
   }
 
-  const metadata = normalizeMeta(invoice.metadata);
+  const metadata = invoiceSubscriptionMetadata(invoice);
 
   if (shouldSkipSelfServeMetadata(metadata)) {
     return { skipped: true, reason: 'self_serve_checkout' };
   }
 
   // Subscription renewals for organiser premium/listings — tracked elsewhere unless tagged.
-  if (invoice.subscription && !isHubSponsorshipMetadata(metadata)) {
+  if (invoiceSubscriptionId(invoice) && !isHubSponsorshipMetadata(metadata)) {
     return { skipped: true, reason: 'subscription_without_sponsorship_metadata' };
   }
 
@@ -332,8 +356,7 @@ async function recordMembershipBookingFeeFromInvoice(invoice, subscription) {
 
   const meta = {
     ...normalizeMeta(subscription?.metadata),
-    ...normalizeMeta(invoice?.subscription_details?.metadata),
-    ...normalizeMeta(invoice?.metadata),
+    ...invoiceSubscriptionMetadata(invoice),
   };
 
   const checkoutType = String(meta.checkout_type || '').trim().toLowerCase();
@@ -417,13 +440,84 @@ async function recordMembershipBookingFeeFromInvoice(invoice, subscription) {
   });
 }
 
+/**
+ * Monthly opportunity-listing renewals. The first charge is already counted from
+ * listing_paid_at; each later subscription_cycle invoice must be logged or Sales
+ * targets stays on the original month.
+ */
+async function recordOpportunityListingRenewalFromInvoice(invoice) {
+  if (!invoice || String(invoice.status || '').toLowerCase() !== 'paid') {
+    return { skipped: true, reason: 'not_paid' };
+  }
+
+  const billingReason = String(invoice.billing_reason || '').trim().toLowerCase();
+  if (billingReason !== 'subscription_cycle') {
+    return { skipped: true, reason: 'not_renewal' };
+  }
+
+  const metadata = invoiceSubscriptionMetadata(invoice);
+  const checkoutType = String(metadata.checkout_type || metadata.checkoutType || '')
+    .trim()
+    .toLowerCase();
+  if (checkoutType !== 'opportunity_listing') {
+    return { skipped: true, reason: 'not_listing' };
+  }
+
+  const invoiceId = String(invoice.id || '').trim();
+  if (!invoiceId) return { skipped: true, reason: 'missing_invoice_id' };
+
+  const amountGbp = invoicePaidAmountGbp(invoice);
+  if (amountGbp <= 0) return { skipped: true, reason: 'zero_amount' };
+
+  let title = '';
+  const opportunityId = String(metadata.opportunity_id || metadata.opportunityId || '').trim();
+  if (opportunityId) {
+    try {
+      const sb = getSupabaseAdmin();
+      const { data } = await sb
+        .from('business_opportunities')
+        .select('title')
+        .eq('id', opportunityId)
+        .maybeSingle();
+      title = String(data?.title || '').trim();
+    } catch {
+      title = '';
+    }
+  }
+
+  const sourceLabel = ('Listing renewal' + (title ? ' — ' + title : '')).slice(0, 240);
+
+  return recordStripeRevenueDeal({
+    category: 'opportunities',
+    amountGbp,
+    recordedAt: invoiceRecordedAt(invoice),
+    metadata: {
+      ...metadata,
+      source_label: sourceLabel,
+      revenue_category: 'opportunities',
+    },
+    fallbacks: {
+      description: 'Listing renewal',
+      invoiceNumber: invoice.number || invoice.id,
+    },
+    notes: ['Listing renewal', invoice.number || invoice.id].filter(Boolean).join(' · '),
+    sourceType: 'stripe_invoice',
+    stripeInvoiceId: invoiceId,
+    stripeCustomerId:
+      typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id || null,
+  });
+}
+
 module.exports = {
   VALID_CATEGORIES,
   PLACEMENT_CATEGORIES,
   CMS_SLOT_CATEGORIES,
   parseRevenueCategory,
+  invoiceSubscriptionId,
+  invoiceSubscriptionMetadata,
   handleInvoicePaid,
   handleSponsorshipCheckoutCompleted,
   recordMembershipBookingFeeFromInvoice,
+  recordOpportunityListingRenewalFromInvoice,
   recordStripeRevenueDeal,
 };

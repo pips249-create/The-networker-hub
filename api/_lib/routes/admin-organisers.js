@@ -1048,21 +1048,31 @@ async function transferOrganiserOwnership(body, session) {
 
   let claimUrl = null;
   let claimInviteSent = false;
+  let requestedClaim = false;
+  try {
+    const { data: openRequest, error: requestErr } = await sb
+      .from('organiser_claim_requests')
+      .select('id')
+      .eq('organiser_id', organiserId)
+      .eq('claimant_email', newEmail)
+      .eq('status', 'open')
+      .limit(1);
+    if (!requestErr && Array.isArray(openRequest) && openRequest.length) requestedClaim = true;
+  } catch {
+    /* claim-request table is optional for older databases */
+  }
+
   if (claimMode === 'pending_invite') {
     try {
       const host = String(process.env.SITE_URL || 'https://www.thenetworkeruk.com').replace(/\/$/, '');
       claimUrl = await resolveOrganiserClaimUrl(newEmail, host);
-      const { sendTemplatedEmail } = require('../send-template-email');
-      const { campaignSiteVars } = require('../organiser-campaign-defaults');
-      await sendTemplatedEmail({
-        slug: 'organiser_claim_invite',
+      const { sendOrganiserOwnershipTransferEmail } = require('../organiser-ownership-email');
+      await sendOrganiserOwnershipTransferEmail({
         to: newEmail,
-        variables: {
-          ...campaignSiteVars(host),
-          organiser_name: String(organiser.name || 'your group').trim() || 'your group',
-          claim_url: claimUrl,
-        },
-        skipEmailCheck: true,
+        organiserName: organiser.name,
+        claimUrl,
+        requested: requestedClaim,
+        host,
       });
       claimInviteSent = true;
       try {
@@ -1071,7 +1081,7 @@ async function transferOrganiserOwnership(body, session) {
           email: newEmail,
           organiserId: organiserId,
           organiserName: organiser.name,
-          slug: 'organiser_claim_invite',
+          slug: 'organiser_ownership_transfer',
           source: 'admin_ownership_transfer',
           campaign: 'ownership_transfer_invite',
           actorEmail: session && session.email,
@@ -1081,6 +1091,25 @@ async function transferOrganiserOwnership(body, session) {
       }
     } catch (inviteErr) {
       console.error('[admin-transfer-ownership-invite]', inviteErr.message || inviteErr);
+    }
+  }
+
+  if (requestedClaim && (claimInviteSent || claimMode === 'immediate')) {
+    try {
+      await sb
+        .from('organiser_claim_requests')
+        .update({
+          status: 'resolved',
+          resolved_at: new Date().toISOString(),
+          admin_notes: claimInviteSent
+            ? 'Resolved — ownership transferred and takeover email sent.'
+            : 'Resolved — ownership transferred.',
+        })
+        .eq('organiser_id', organiserId)
+        .eq('claimant_email', newEmail)
+        .eq('status', 'open');
+    } catch {
+      /* ignore */
     }
   }
 
@@ -1969,7 +1998,7 @@ module.exports = async function handler(req, res) {
         ok: true,
         ...result,
         message:
-          'Contact email updated and claim invite sent to ' +
+          'Contact email updated. Takeover email sent to ' +
           String(result.claimantEmail || 'the claimant') +
           '.',
       });
@@ -1999,8 +2028,8 @@ module.exports = async function handler(req, res) {
         result.claimMode === 'immediate'
           ? 'Claimed immediately.'
           : result.claimInviteSent
-            ? 'Claim invite sent.'
-            : 'Set to pending claim (invite email may have failed — use Copy claim link).',
+            ? 'Takeover email sent.'
+            : 'Set to pending claim (takeover email may have failed — use Copy claim link).',
       ];
       if (result.stripeCleared) parts.push('Stripe Connect cleared — new owner must re-onboard.');
       else if (result.hadStripe && result.stripeAction === 'keep') {

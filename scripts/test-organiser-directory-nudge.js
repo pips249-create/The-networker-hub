@@ -127,7 +127,7 @@ async function main() {
     mergeEmailPreviewVariables(DIRECTORY_DAY7_SLUG, {}, 'https://www.thenetworkeruk.com')
   );
   const day7Html = day7.html;
-  assert(day7.subject.indexOf('Re: We love what you\'re doing at City Connectors') !== -1, 'day 7 replies to the invite: ' + day7.subject);
+  assert(day7.subject.indexOf('Your next guests are already looking for City Connectors') !== -1, 'day 7 subject: ' + day7.subject);
   assert(day7Html.indexOf('Your next guests are already looking') !== -1, 'day 7 headline');
   assert(day7Html.indexOf('17,000') !== -1, 'day 7 uses the directory audience');
   assert(day7Html.indexOf('first-time guests') !== -1, 'day 7 mentions first-time guests');
@@ -165,6 +165,8 @@ async function main() {
   assert(day35Html.indexOf('stop clogging up your inbox') !== -1, 'day 35 is the last note');
   assert(day35Html.indexOf('co-organisers') !== -1, 'day 35 uses British spelling');
   assert(day35Html.indexOf('Take a look at your page') !== -1, 'day 35 has one page button');
+  assert(day35Html.indexOf('Send us the details') !== -1, 'day 35 offers the event form');
+  assert(day35Html.indexOf('/add-your-event') !== -1, 'day 35 links to the event form');
   assert(day35Html.indexOf('unclaimed') === -1, 'day 35 does not call the page unclaimed');
   assert(day35Html.indexOf('{{') === -1, 'day 35 has no unresolved placeholders');
   assert(day35Html.indexOf('https://www.thenetworkeruk.com/unsubscribe') !== -1, 'day 35 has an unsubscribe link');

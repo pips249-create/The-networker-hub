@@ -225,10 +225,8 @@ async function handleConnectedBookingSubscriptionDeleted(subscription) {
 }
 
 async function handleConnectedBookingInvoicePaymentFailed(invoice) {
-  const subId =
-    typeof invoice?.subscription === 'string'
-      ? invoice.subscription.trim()
-      : String(invoice?.subscription?.id || '').trim();
+  const { invoiceSubscriptionId } = require('./stripe-revenue');
+  const subId = invoiceSubscriptionId(invoice);
   if (!subId) return { skipped: true, reason: 'missing_subscription' };
 
   const sb = getSupabaseAdmin();
