@@ -2221,6 +2221,27 @@ a:hover {
   display: none !important;
 }
 
+/* Link Out / Connected: pay on organiser site — no Hub booking fee or qty checkout */
+.ticket-panel.is-external-booking .qty-row,
+.ticket-panel.is-external-booking .summary,
+.ticket-panel.is-external-booking .qty-avail-hint,
+.ticket-panel.is-external-booking .ticket-vat-note,
+.ticket-panel.is-external-booking .summary-fee-note,
+.ticket-panel.is-external-booking #ticket-paid-checkout,
+.ticket-panel.is-external-booking #ticket-secure-foot,
+.ticket-panel.is-external-booking #ev-series-bundle-option {
+  display: none !important;
+}
+
+.ticket-external-listing-price {
+  margin: 0 0 12px;
+  padding: 0 16px 4px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--ink, #111827);
+  text-align: center;
+}
+
 .ticket-panel.is-free-booking.is-qty-locked .qty-row,
 .ticket-panel.is-free-booking.is-qty-locked .qty-avail-hint {
   display: none !important;
