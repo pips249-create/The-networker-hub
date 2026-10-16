@@ -77,6 +77,11 @@ const BRANDED_EMAIL_TEMPLATES = {
     marker: 'hub-email-layout-v3-purple',
     subject: 'Should we keep this page open for {{group_name}}?',
   },
+  organiser_claimed_no_event: {
+    file: 'organiser-claimed-no-event.html',
+    marker: 'hub-email-layout-v3-purple',
+    subject: 'Add a meeting for {{group_name}}',
+  },
   organiser_unclaimed_followup: {
     file: 'organiser-unclaimed-followup.html',
     marker: 'hub-email-layout-v3-purple',
