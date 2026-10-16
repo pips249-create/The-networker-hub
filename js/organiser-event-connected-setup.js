@@ -1964,6 +1964,22 @@
       }
     }
 
+    if (pubBtn || qs('ecs-publish')) {
+      var publishBtn = qs('ecs-publish');
+      if (publishBtn) {
+        publishBtn.textContent = linkOutOnly ? 'Publish Link Out event' : 'Publish Connected event';
+      }
+    }
+    var bookingHint = qs('ecs-booking-url-hint') || document.querySelector('[data-ecs-booking-hint]');
+    if (!bookingHint) {
+      var bookingLabel = document.querySelector('label[for="ecs-booking-url"]');
+      var hintAfter = bookingLabel && bookingLabel.parentElement && bookingLabel.parentElement.querySelector('.ee-hint');
+      if (hintAfter && linkOutOnly) {
+        hintAfter.textContent =
+          'Paste your registration / checkout URL. Buyers leave The Networker UK and complete booking on your site.';
+      }
+    }
+
     var hubNote = qs('ecs-hub-tickets-note');
     if (hubNote) hubNote.hidden = false;
 
@@ -1993,12 +2009,16 @@
   async function saveConnected(publish) {
     var saveBtn = qs('ecs-save');
     var pubBtn = qs('ecs-publish');
-    if (!loadedEvent || !billing || !billing.active) {
+    var linkOutOnly = Boolean(billing && billing.ok && billing.linkOutGranted && !billing.active);
+    var canSaveExternal = Boolean(billing && billing.ok && (billing.active || linkOutOnly));
+    if (!loadedEvent || !canSaveExternal) {
       setStatus(
         saveStatus,
-        !billing || !billing.active
-          ? 'Connected booking is not active on this account yet.'
-          : 'Still loading this event — wait a moment and try again.',
+        !loadedEvent
+          ? 'Still loading this event — wait a moment and try again.'
+          : linkOutOnly || (billing && billing.linkOutGranted)
+            ? 'Link Out is still loading for this account — refresh and try again.'
+            : 'Connected booking is not active on this account yet.',
         'error'
       );
       return;
