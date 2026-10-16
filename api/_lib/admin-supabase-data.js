@@ -400,37 +400,37 @@ async function countSignedInAuthUsers(sb) {
 }
 
 /**
- * Claimed group profiles whose linked owner has signed in (knows email + password).
- * Excludes silent imports that were marked claimed without ever logging in.
+ * Distinct logins that have claimed at least one public group page.
+ * Register-and-claim issues a Hub session cookie and does not set Auth
+ * last_sign_in_at, so sign-in time cannot be used — it dropped real claims.
+ * One login can own many pages (a franchise); those count as one account.
  */
-async function countOrganisersWithSignedInOwner(sb, signedInIds) {
-  const ids = signedInIds instanceof Set ? signedInIds : new Set();
-  if (!ids.size) return 0;
-
-  let query = sb
-    .from('organisers')
-    .select('id, supabase_user_id')
-    .eq('ownership_claim_status', 'claimed')
-    .not('supabase_user_id', 'is', null)
-    .eq('is_internal', false);
-
-  let { data, error } = await query;
-  if (error && /is_internal/i.test(String(error.message || ''))) {
-    const fallback = await sb
+async function countClaimedOrganiserAccounts(sb) {
+  const pageSize = 1000;
+  const ids = new Set();
+  let from = 0;
+  let excludeInternal = true;
+  while (from < 20000) {
+    let query = sb
       .from('organisers')
-      .select('id, supabase_user_id')
+      .select('supabase_user_id')
       .eq('ownership_claim_status', 'claimed')
       .not('supabase_user_id', 'is', null);
-    data = fallback.data;
-    error = fallback.error;
+    if (excludeInternal) query = query.eq('is_internal', false);
+    const { data, error } = await query.range(from, from + pageSize - 1);
+    if (error && excludeInternal && /is_internal/i.test(String(error.message || ''))) {
+      excludeInternal = false;
+      continue;
+    }
+    if (error) throw new Error(error.message);
+    const rows = data || [];
+    for (const row of rows) {
+      if (row.supabase_user_id) ids.add(String(row.supabase_user_id));
+    }
+    if (rows.length < pageSize) break;
+    from += pageSize;
   }
-  if (error) throw new Error(error.message);
-
-  let count = 0;
-  for (const row of data || []) {
-    if (row.supabase_user_id && ids.has(row.supabase_user_id)) count += 1;
-  }
-  return count;
+  return ids.size;
 }
 
 async function fetchDashboardMetrics(sb) {
@@ -530,10 +530,9 @@ async function fetchDashboardMetrics(sb) {
   if (userEventsApprovedRes.error) throw new Error(userEventsApprovedRes.error.message);
 
   const memberAccounts = Math.max(attendeesRes.count || 0, accountsRes.count || 0);
-  const signedInIds = signedInCounts.signedInIds || new Set();
   let organisersWithPassword = 0;
   try {
-    organisersWithPassword = await countOrganisersWithSignedInOwner(sb, signedInIds);
+    organisersWithPassword = await countClaimedOrganiserAccounts(sb);
   } catch {
     organisersWithPassword = 0;
   }
@@ -555,8 +554,8 @@ async function fetchDashboardMetrics(sb) {
     /** Profiles with ownership_claim_status = claimed (excludes is_internal when column exists). */
     claimedOrganisers,
     /**
-     * Claimed groups whose owner has signed in at least once
-     * (email + password they know — not silent import).
+     * Distinct logins that claimed at least one public group page.
+     * A franchise that claimed many pages still counts as one account.
      */
     organisersWithPassword,
     /** Events created on the Hub (airtable_id null) — not legacy import or seed-browse. */

@@ -7016,9 +7016,9 @@
           card(
             'Organiser accounts',
             String(m.organisersWithPassword != null ? m.organisersWithPassword : m.claimedOrganisers || 0),
-            'Claimed with email & password · ' +
+            'Claimed their page · ' +
               (m.claimedOrganisers || 0) +
-              ' marked claimed · ' +
+              ' group pages · ' +
               (m.organisers || 0) +
               ' group profiles',
             'violet'
@@ -7327,9 +7327,9 @@
         card(
           'Organiser accounts',
           String(m.organisersWithPassword != null ? m.organisersWithPassword : m.claimedOrganisers || 0),
-          'Claimed with email & password · ' +
+          'Claimed their page · ' +
             (m.claimedOrganisers || 0) +
-            ' marked claimed · ' +
+            ' group pages · ' +
             (m.organisers || 0) +
             ' group profiles'
         ) +
@@ -8350,9 +8350,9 @@
       '<dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">' +
       '<div><dt>Organiser accounts</dt><dd>' +
       esc(String(m.organisersWithPassword != null ? m.organisersWithPassword : m.claimedOrganisers || 0)) +
-      ' with email &amp; password (' +
+      ' claimed their page (' +
       esc(String(m.claimedOrganisers || 0)) +
-      ' marked claimed)</dd></div>' +
+      ' group pages)</dd></div>' +
       '<div><dt>Events by users</dt><dd>' +
       esc(String(m.userAddedEvents || 0)) +
       ' (' +
