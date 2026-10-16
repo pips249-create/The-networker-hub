@@ -181,6 +181,24 @@
     }
   });
 
+  function setConnectedBookingNavVisible(show) {
+    ['org-nav-connected-booking', 'org-more-connected-booking'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      el.hidden = !show;
+      if (show) {
+        if (state.connectedBooking && state.connectedBooking.uiMode === 'link_out') {
+          if (el.id === 'org-nav-connected-booking') el.textContent = 'Link Out';
+          else el.textContent = 'Link Out';
+        } else if (el.id === 'org-nav-connected-booking') {
+          el.textContent = 'Connected booking';
+        } else {
+          el.textContent = 'Connected booking';
+        }
+      }
+    });
+  }
+
   function loadConnectedBookingMeta(forceRefresh) {
     if (!forceRefresh && connectedBookingLoadPromise) {
       return connectedBookingLoadPromise;
@@ -197,18 +215,28 @@
       .then(function (res) {
         if (res.status === 403 || res.status === 404) {
           state.connectedBooking = null;
+          setConnectedBookingNavVisible(false);
           return null;
         }
         state.connectedBooking = res.data || null;
+        var visible = Boolean(res.data && res.data.ok && res.data.navVisible);
+        setConnectedBookingNavVisible(visible);
         dispatchConnectedBookingDetail(state.connectedBooking, state.groups.length);
         return state.connectedBooking;
       })
       .catch(function () {
         connectedBookingLoadPromise = null;
+        setConnectedBookingNavVisible(false);
         return null;
       });
     return connectedBookingLoadPromise;
   }
+
+  window.addEventListener('hub-organiser-connected-nav', function (e) {
+    var detail = e && e.detail;
+    if (!detail) return;
+    setConnectedBookingNavVisible(Boolean(detail.visible));
+  });
 
   function connectedSlotCellHtml(groupId) {
     var cb = state.connectedBooking;
@@ -20421,6 +20449,9 @@
       const initial = resolveInitialRoute();
       setRoute(initial.sub || initial.page, { connectedAnchor: initial.connectedAnchor || null });
       await loadBootstrap({ silent: true, prefetch: bootstrapPrefetch });
+      loadConnectedBookingMeta(true).catch(function () {
+        return null;
+      });
       applyPendingGroupContinue();
       try {
         const bootParams = new URLSearchParams(window.location.search);

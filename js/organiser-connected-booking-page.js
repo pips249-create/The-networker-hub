@@ -287,26 +287,92 @@
     }
   }
 
+  function setConnectedNavVisible(show) {
+    ['org-nav-connected-booking', 'org-more-connected-booking'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.hidden = !show;
+    });
+    try {
+      window.dispatchEvent(
+        new CustomEvent('hub-organiser-connected-nav', { detail: { visible: Boolean(show) } })
+      );
+    } catch (e) {
+      /* ignore */
+    }
+  }
+
+  function applyWorkspaceMode(data) {
+    var linkOutPanel = document.getElementById('cb-link-out-panel');
+    var connectedOnly = document.getElementById('cb-connected-only');
+    var gotoPricing = document.getElementById('cb-goto-pricing');
+    var titleEl = document.getElementById('cb-page-title');
+    var leadEl = document.getElementById('cb-page-lead');
+    var mode = String((data && data.uiMode) || '').trim();
+    if (!mode) {
+      if (data && data.linkOutGranted && !data.active) mode = 'link_out';
+      else if (data && data.ok) mode = 'connected';
+      else mode = 'hidden';
+    }
+
+    if (mode === 'link_out') {
+      setConnectedNavVisible(true);
+      if (titleEl) titleEl.textContent = 'Link Out';
+      if (leadEl) {
+        leadEl.innerHTML =
+          'Your listings send buyers to <strong>your website</strong>. No Connected subscription or webhook setup.';
+      }
+      if (linkOutPanel) linkOutPanel.hidden = false;
+      if (connectedOnly) connectedOnly.hidden = true;
+      if (gotoPricing) gotoPricing.hidden = true;
+      return mode;
+    }
+
+    if (mode === 'connected' && data && data.ok) {
+      setConnectedNavVisible(true);
+      if (titleEl) titleEl.textContent = 'Connected booking';
+      if (leadEl) {
+        leadEl.innerHTML =
+          'Subscribe here, enable <strong>Eventbrite</strong> or <strong>Ticket Tailor</strong> once per account, then link each event on <strong>Connected setup</strong>. Use <strong>Recent sync attempts</strong> when buyers do not appear on your attendee list.';
+      }
+      if (linkOutPanel) linkOutPanel.hidden = true;
+      if (connectedOnly) connectedOnly.hidden = false;
+      if (gotoPricing) gotoPricing.hidden = false;
+      return mode;
+    }
+
+    setConnectedNavVisible(false);
+    if (linkOutPanel) linkOutPanel.hidden = true;
+    if (connectedOnly) connectedOnly.hidden = true;
+    if (gotoPricing) gotoPricing.hidden = true;
+    if (titleEl) titleEl.textContent = 'Connected booking';
+    return 'hidden';
+  }
+
   function handleConnectedApi(res) {
     var data = res.data || {};
 
     if (res.status === 503 && data.error === 'connected_booking_schema_missing') {
       setAuthStatus(data.message || 'Database migration required (292).', 'error');
+      applyWorkspaceMode({ ok: false });
       applyBillingUi({ ok: false });
       return;
     }
 
     if (res.status === 403 && data.error === 'preview_restricted') {
+      applyWorkspaceMode({ ok: false, uiMode: 'hidden' });
       setAuthStatus(
-        (data.message || 'Preview access only.') +
-          (data.signedInAs ? ' Signed in as ' + data.signedInAs + '.' : ''),
+        'Connected booking is not available on this account yet.',
         'error'
       );
       applyBillingUi({ ok: false });
+      if (workspaceConnectedPage && location.hash.indexOf('connected-booking') !== -1) {
+        location.hash = 'events-list';
+      }
       return;
     }
 
     if (res.status === 401) {
+      applyWorkspaceMode({ ok: false });
       setAuthStatus('Session expired — sign in again to subscribe or manage your webhook.', 'error');
       if (signinHint) signinHint.hidden = false;
       applyBillingUi({ ok: false });
@@ -314,6 +380,7 @@
     }
 
     if (!data.ok && data.error === 'organiser_account_not_found') {
+      applyWorkspaceMode({ ok: false });
       setAuthStatus(
         data.message ||
           'No organiser account for this login. Open My Events first, then return here.',
@@ -324,8 +391,17 @@
     }
 
     if (!data.ok) {
+      applyWorkspaceMode({ ok: false });
       setAuthStatus(friendlyApiError(data), 'error');
       applyBillingUi({ ok: false });
+      return;
+    }
+
+    var mode = applyWorkspaceMode(data);
+    if (mode === 'link_out') {
+      setAuthStatus('Link Out is active on this account — set the booking URL on each event.', 'ok');
+      applyBillingUi({ ok: false });
+      if (signinHint) signinHint.hidden = true;
       return;
     }
 
