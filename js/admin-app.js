@@ -364,7 +364,7 @@
         'Click Review to open the listing on its own page (submitted details, website preview, and admin edit).',
         'Approve — if unpaid, the owner gets a pay-to-go-live email; if already paid, it goes live now. Confirm dialog explains which.',
         'Deny if it does not meet standards (include a reason) — then you return to the list.',
-        'Use Organiser sales kit on a row (or in Review) — dropdown logs outreach in the shared CRM without leaving this page.',
+        'Open Actions on a group row (or Organiser sales kit in Review) — log outreach in the shared CRM without leaving this page.',
         'Use Resend pay email on Approved listings still awaiting Stripe.',
         'Toggle Featured only for Approved live listings in the opportunities carousel.',
       ],
@@ -470,7 +470,7 @@
     'sales-kit': {
       title: 'How to use the organiser sales kit',
       steps: [
-        'From group cleanup, click Organiser sales kit on a row — use the CRM dropdown to log a call or email under your login.',
+        'From group cleanup, open Actions on a row — use Organiser sales kit in the menu to log a call or email under your login.',
         'Tap Called, Attempted call, Emailed, Meeting, or LinkedIn to log outreach as yourself — you cannot log on behalf of Catherine, Rosie, or Jamie.',
         'Switch to Pitch deck for cheat sheets, sales decks, pitch-page opens, Loom script, and follow-up email copy.',
         'Pin one agreed demo organiser on the pitch deck tab — everyone impersonates that group for live walkthroughs.',
@@ -1609,35 +1609,16 @@
     };
   }
 
-  function salesKitDropdownHtml(source, opts) {
-    opts = opts || {};
-    var size = opts.size === 'md' ? 'md' : 'sm';
-    var btnClass =
-      size === 'md'
-        ? 'rounded-lg border border-brand-200 bg-white text-sm font-semibold px-3 py-2 text-brand-800 hover:bg-brand-50'
-        : 'text-xs font-semibold rounded-lg border border-brand-200 text-brand-800 px-2.5 py-1 hover:bg-brand-50';
+  function salesKitMenuInnerHtml(source) {
     var focus = salesKitFocusFromSource(source);
     var quickLog = salesKitQuickLogButtonsHtml(focus);
     var lastContact = findLastManualSalesKitContact(focus, salesKitOutreachCache.demos);
-    var houseContacts = salesKitHouseContactsFromSource(source);
-    var houseContact = findLatestHouseContact(focus, salesKitOutreachCache.demos, houseContacts);
-
+    var houseContact = findLatestHouseContact(
+      focus,
+      salesKitOutreachCache.demos,
+      salesKitHouseContactsFromSource(source)
+    );
     return (
-      '<div class="admin-sales-kit-menu relative inline-block"' +
-      ' data-org-id="' +
-      attrEsc(focus.id) +
-      '" data-org-name="' +
-      attrEsc(focus.name) +
-      '" data-org-email="' +
-      attrEsc(focus.email) +
-      '" data-house-contacts="' +
-      attrEsc(JSON.stringify(houseContacts)) +
-      '">' +
-      '<button type="button" class="admin-sales-kit-menu-toggle ' +
-      btnClass +
-      ' inline-flex items-center gap-1" aria-expanded="false" aria-haspopup="menu">' +
-      'Organiser sales kit <span aria-hidden="true" class="text-[10px]">▾</span></button>' +
-      '<div class="admin-sales-kit-menu-panel hidden" role="menu">' +
       '<div class="admin-sales-kit-menu-head">' +
       '<p class="admin-sales-kit-menu-title">' +
       esc(focus.name || 'Contact') +
@@ -1654,7 +1635,52 @@
       '</div>' +
       '<p class="admin-sales-kit-menu-kicker">Quick log to CRM</p>' +
       quickLog +
-      '<p class="admin-sales-kit-menu-status" aria-live="polite"></p>' +
+      '<p class="admin-sales-kit-menu-status" aria-live="polite"></p>'
+    );
+  }
+
+  function salesKitDropdownHtml(source, opts) {
+    opts = opts || {};
+    var size = opts.size === 'md' ? 'md' : 'sm';
+    var btnClass =
+      size === 'md'
+        ? 'rounded-lg border border-brand-200 bg-white text-sm font-semibold px-3 py-2 text-brand-800 hover:bg-brand-50'
+        : 'text-xs font-semibold rounded-lg border border-brand-200 text-brand-800 px-2.5 py-1 hover:bg-brand-50';
+    var focus = salesKitFocusFromSource(source);
+    var houseContacts = salesKitHouseContactsFromSource(source);
+    var shellAttrs =
+      ' data-org-id="' +
+      attrEsc(focus.id) +
+      '" data-org-name="' +
+      attrEsc(focus.name) +
+      '" data-org-email="' +
+      attrEsc(focus.email) +
+      '" data-house-contacts="' +
+      attrEsc(JSON.stringify(houseContacts)) +
+      '"';
+    var inner = salesKitMenuInnerHtml(source);
+
+    if (opts.embedded) {
+      return (
+        '<div class="admin-sales-kit-menu admin-sales-kit-menu--embedded"' +
+        shellAttrs +
+        '>' +
+        '<p class="admin-group-actions-section-label">Organiser sales kit</p>' +
+        inner +
+        '</div>'
+      );
+    }
+
+    return (
+      '<div class="admin-sales-kit-menu relative inline-block"' +
+      shellAttrs +
+      '>' +
+      '<button type="button" class="admin-sales-kit-menu-toggle ' +
+      btnClass +
+      ' inline-flex items-center gap-1" aria-expanded="false" aria-haspopup="menu">' +
+      'Organiser sales kit <span aria-hidden="true" class="text-[10px]">▾</span></button>' +
+      '<div class="admin-sales-kit-menu-panel hidden" role="menu">' +
+      inner +
       '</div></div>'
     );
   }
@@ -1708,6 +1734,65 @@
     });
   }
 
+  function closeAllGroupActionsMenus(exceptMenu) {
+    document.querySelectorAll('.admin-group-actions-panel').forEach(function (panel) {
+      var menu = panel.closest('.admin-group-actions-menu');
+      if (exceptMenu && menu === exceptMenu) return;
+      panel.classList.add('hidden');
+      var toggle = menu && menu.querySelector('.admin-group-actions-toggle');
+      if (toggle) toggle.setAttribute('aria-expanded', 'false');
+    });
+  }
+
+  function bindGroupActionsMenus() {
+    if (window.__groupActionsMenusBound) return;
+    window.__groupActionsMenusBound = true;
+
+    document.body.addEventListener('click', function (e) {
+      var toggle = e.target.closest('.admin-group-actions-toggle');
+      if (toggle) {
+        e.preventDefault();
+        e.stopPropagation();
+        var menu = toggle.closest('.admin-group-actions-menu');
+        var panel = menu && menu.querySelector('.admin-group-actions-panel');
+        if (!panel) return;
+        var willOpen = panel.classList.contains('hidden');
+        closeAllGroupActionsMenus();
+        document.querySelectorAll('.admin-sales-kit-menu-panel').forEach(function (skPanel) {
+          skPanel.classList.add('hidden');
+          var skToggle =
+            skPanel.closest('.admin-sales-kit-menu') &&
+            skPanel.closest('.admin-sales-kit-menu').querySelector('.admin-sales-kit-menu-toggle');
+          if (skToggle) skToggle.setAttribute('aria-expanded', 'false');
+        });
+        if (willOpen) {
+          panel.classList.remove('hidden');
+          toggle.setAttribute('aria-expanded', 'true');
+          var embeddedKit = menu.querySelector('.admin-sales-kit-menu--embedded');
+          if (embeddedKit) refreshSalesKitContactBlocks(embeddedKit);
+        }
+        return;
+      }
+
+      if (e.target.closest('[data-group-action-close]')) {
+        closeAllGroupActionsMenus();
+        return;
+      }
+
+      // Keep open for CRM touches / notes inside the panel; do not stopPropagation
+      // so sales-kit and row action handlers still receive the click.
+      if (e.target.closest('.admin-group-actions-panel')) {
+        return;
+      }
+
+      if (!e.target.closest('.admin-group-actions-menu')) closeAllGroupActionsMenus();
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') closeAllGroupActionsMenus();
+    });
+  }
+
   function bindSalesKitMenus() {
     if (window.__salesKitMenusBound) return;
     window.__salesKitMenusBound = true;
@@ -1732,6 +1817,7 @@
         if (!panel) return;
         var willOpen = panel.classList.contains('hidden');
         closeAllSalesKitMenus();
+        closeAllGroupActionsMenus();
         if (willOpen) {
           panel.classList.remove('hidden');
           toggle.setAttribute('aria-expanded', 'true');
@@ -19602,21 +19688,71 @@
     return String((o && o.ownership_claim_status) || '').toLowerCase() === 'claimed';
   }
 
-  function groupClaimEmailButtonHtml(o) {
-    if (!o || !o.email || groupIsClaimed(o)) return '';
+  function groupCleanupRowActionsHtml(o, opts) {
+    opts = opts || {};
+    var isOpen = Boolean(opts.isOpen);
+    var publicHref = opts.publicHref || '';
+    var items = [];
+
+    if (publicHref) {
+      items.push(
+        '<a href="' +
+          attrEsc(publicHref) +
+          '" target="_blank" rel="noopener" role="menuitem" data-group-action-close class="admin-group-actions-item">View</a>'
+      );
+    }
+    if (o && o.email && !groupIsClaimed(o)) {
+      items.push(
+        '<button type="button" role="menuitem" data-group-action-close data-copy-group-claim-url="' +
+          attrEsc(o.id) +
+          '" data-group-email="' +
+          attrEsc(o.email || '') +
+          '" data-group-name="' +
+          attrEsc(o.name || '') +
+          '" class="admin-group-actions-item">Copy claim link</button>'
+      );
+    }
+    if (o && !o.has_login && o.email) {
+      items.push(
+        '<button type="button" role="menuitem" data-group-action-close data-provision-group-login="' +
+          attrEsc(o.id) +
+          '" class="admin-group-actions-item">Create login</button>'
+      );
+    }
+    if (o && (o.email || o.has_login)) {
+      items.push(
+        '<button type="button" role="menuitem" data-group-action-close data-impersonate-group="' +
+          attrEsc(o.id) +
+          '" data-group-email="' +
+          attrEsc(o.email || '') +
+          '" class="admin-group-actions-item">Impersonate</button>'
+      );
+    }
+
+    items.push(
+      '<button type="button" role="menuitem" data-group-action-close data-toggle-group-edit="1" class="admin-group-actions-item admin-group-actions-item--primary">' +
+        (isOpen ? 'Close' : 'Edit profile') +
+        '</button>'
+    );
+    items.push(
+      '<button type="button" role="menuitem" data-group-action-close data-delete-group="' +
+        attrEsc(o.id) +
+        '" data-group-name="' +
+        attrEsc(o.name || '') +
+        '" data-group-event-count="' +
+        String(o.event_count || 0) +
+        '" class="admin-group-actions-item admin-group-actions-item--danger">Delete</button>'
+    );
+
     return (
-      '<button type="button" data-copy-group-claim-url="' +
-      attrEsc(o.id) +
-      '" data-group-email="' +
-      attrEsc(o.email || '') +
-      '" data-group-name="' +
-      attrEsc(o.name || '') +
-      '" class="text-xs font-semibold rounded-lg border border-violet-200 text-violet-900 hover:bg-violet-50 px-2.5 py-1">Copy claim link</button>' +
-      '<button type="button" data-send-unclaimed-followup="' +
-      attrEsc(o.id) +
-      '" data-group-name="' +
-      attrEsc(o.name || '') +
-      '" class="text-xs font-semibold rounded-lg border border-violet-300 bg-violet-50 text-violet-950 hover:bg-violet-100 px-2.5 py-1">Send reminder</button>'
+      '<div class="admin-group-actions-menu relative inline-block">' +
+      '<button type="button" class="admin-group-actions-toggle text-xs font-semibold rounded-lg border border-slate-300 bg-white text-slate-800 px-2.5 py-1 hover:bg-slate-50 inline-flex items-center gap-1" aria-expanded="false" aria-haspopup="menu">' +
+      'Actions <span aria-hidden="true" class="text-[10px]">▾</span></button>' +
+      '<div class="admin-group-actions-panel hidden" role="menu">' +
+      items.join('') +
+      '<div class="admin-group-actions-divider" role="separator"></div>' +
+      salesKitDropdownHtml(o, { embedded: true }) +
+      '</div></div>'
     );
   }
 
@@ -20949,23 +21085,6 @@
       return;
     }
 
-    var unclaimedReminderBtn = e.target.closest('[data-send-unclaimed-followup]');
-    if (unclaimedReminderBtn) {
-      var reminderName = unclaimedReminderBtn.getAttribute('data-group-name') || 'this group';
-      if (
-        !window.confirm(
-          'Email a reminder to ' + reminderName + '? Their page has not been claimed yet.'
-        )
-      ) {
-        return;
-      }
-      sendUnclaimedGroupReminders(
-        [unclaimedReminderBtn.getAttribute('data-send-unclaimed-followup')],
-        unclaimedReminderBtn
-      );
-      return;
-    }
-
     var provisionBtn = e.target.closest('[data-provision-group-login]');
     if (provisionBtn) {
       provisionGroupLogin(provisionBtn.getAttribute('data-provision-group-login'), provisionBtn);
@@ -21653,36 +21772,9 @@
             '<p class="text-[11px] mt-0.5">' +
             formatGroupLastCommunication(o) +
             '</p></div></div>' +
-            '<div class="flex flex-wrap gap-1.5 shrink-0">' +
-            (publicHref
-              ? '<a href="' +
-                attrEsc(publicHref) +
-                '" target="_blank" rel="noopener" class="text-xs font-semibold text-brand-700 hover:underline px-1 py-1">View</a>'
-              : '') +
-            groupClaimEmailButtonHtml(o) +
-            (!o.has_login && o.email
-              ? '<button type="button" data-provision-group-login="' +
-                attrEsc(o.id) +
-                '" class="text-xs font-semibold rounded-lg border border-brand-200 text-brand-800 px-2.5 py-1 hover:bg-brand-50">Create login</button>'
-              : '') +
-            (o.email || o.has_login
-              ? '<button type="button" data-impersonate-group="' +
-                attrEsc(o.id) +
-                '" data-group-email="' +
-                attrEsc(o.email || '') +
-                '" class="text-xs font-semibold rounded-lg border border-brand-700 text-brand-700 px-2.5 py-1 hover:bg-brand-50">Impersonate</button>'
-              : '') +
-            salesKitDropdownHtml(o) +
-            '<button type="button" data-toggle-group-edit="1" class="text-xs font-semibold rounded-lg bg-brand-700 text-white px-2.5 py-1 hover:bg-brand-900">' +
-            (isOpen ? 'Close' : 'Edit profile') +
-            '</button>' +
-            '<button type="button" data-delete-group="' +
-            attrEsc(o.id) +
-            '" data-group-name="' +
-            attrEsc(o.name || '') +
-            '" data-group-event-count="' +
-            String(o.event_count || 0) +
-            '" class="text-xs font-semibold rounded-lg border border-red-200 text-red-700 px-2.5 py-1 hover:bg-red-50">Delete</button></div></div>' +
+            '<div class="flex flex-wrap gap-1.5 shrink-0 justify-end">' +
+            groupCleanupRowActionsHtml(o, { isOpen: isOpen, publicHref: publicHref }) +
+            '</div></div>' +
             '<div class="group-cleanup-panel border-t border-slate-100 bg-slate-50/80 px-4 py-3' +
             (isOpen ? '' : ' hidden') +
             '">' +
@@ -21893,7 +21985,7 @@
       '<button type="button" data-group-quick="last_contact_asc" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-700 hover:bg-slate-50">Oldest contact first</button>' +
       '<button type="button" data-group-quick="clear" class="text-xs font-semibold rounded-full border border-slate-300 px-3 py-1 text-slate-500 hover:bg-slate-50">Clear filters</button></div>' +
       '</div></details></div>' +
-      '<p class="text-xs text-slate-500">Compact rows — click <strong>Edit profile</strong> to expand. Last communication uses sales-kit CRM touches and claim-invite emails. Use page numbers or Go to below to browse.</p>' +
+      '<p class="text-xs text-slate-500">Compact rows — open <strong>Actions</strong> for View, claim link, impersonate, sales kit, Edit profile, or Delete. Last communication uses sales-kit CRM touches and claim-invite emails. Use page numbers or Go to below to browse.</p>' +
       '<div id="group-cleanup-list" class="space-y-2"></div></div>';
 
     groupCleanupState.page = 0;
@@ -32100,7 +32192,7 @@
         return (
           '<section class="admin-dash-section" id="sales-kit-outreach">' +
           '<div class="admin-dash-section-head"><h3>Outreach CRM</h3>' +
-          '<p>Log calls and emails under your login so Catherine, Rosie and Jamie do not double-message the same contact. Use the <strong>Organiser sales kit</strong> dropdown on a group or opportunity row.</p></div>' +
+          '<p>Log calls and emails under your login so Catherine, Rosie and Jamie do not double-message the same contact. On Fix listings → Groups, open <strong>Actions</strong> → Organiser sales kit; opportunities still use the sales kit dropdown on the row.</p></div>' +
           '<div class="admin-dash-section-body space-y-4">' +
           (focus
             ? '<div class="rounded-xl border border-brand-200 bg-brand-50/70 p-4 flex flex-wrap items-start justify-between gap-3">' +
@@ -32122,7 +32214,7 @@
               '</div></div>'
             : '<div class="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950">' +
               '<p class="font-semibold">Pick a group first</p>' +
-              '<p class="mt-1">Use the <strong>Organiser sales kit</strong> dropdown on a row in group cleanup or opportunities, or type the name in the manual log below.</p>' +
+              '<p class="mt-1">On group cleanup open <strong>Actions</strong> → Organiser sales kit, use the sales kit dropdown on an opportunity row, or type the name in the manual log below.</p>' +
               '</div>') +
           '<div><p class="text-xs font-semibold text-slate-500 uppercase mb-2">Quick log</p>' +
           quickLogHtml +
@@ -33894,6 +33986,7 @@
     bindEventCleanupForms();
     bindOpportunityCleanupForms();
     bindSalesKitMenus();
+    bindGroupActionsMenus();
     prefetchSalesKitOutreachCache();
     bindAdminPaginationGoto();
     // Metrics only after admin session is confirmed — never paint cache for guests
