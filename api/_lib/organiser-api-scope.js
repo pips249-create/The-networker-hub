@@ -30,7 +30,12 @@ async function resolveOrganiserGroupScope(session, adminView) {
     e.code = 'groups_fetch_failed';
     throw e;
   }
-  return { groups: groups || [], groupIds: groupIds || [], access };
+  return {
+    groups: groups || [],
+    groupIds: groupIds || [],
+    access,
+    organiserAccountId: String(access?.accountId || '').trim() || null,
+  };
 }
 
 async function resolveOrganiserApiScope(req) {

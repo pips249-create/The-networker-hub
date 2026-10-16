@@ -123,11 +123,28 @@
     if (hubPanels) hubPanels.hidden = on;
     if (seriesCard) seriesCard.hidden = on;
     if (wizardMount) wizardMount.hidden = on;
+    var linkOutOnly = linkOutGranted && !billingActive;
     if (pageTitle) {
-      pageTitle.textContent = on ? 'Connected booking' : 'Set up tickets';
+      pageTitle.textContent = on
+        ? linkOutOnly
+          ? 'Link Out — book on your website'
+          : 'Connected booking'
+        : 'Set up tickets';
     }
     if (pageLead) {
       pageLead.hidden = on;
+    }
+    var cardTitle = card.querySelector('h2');
+    if (cardTitle && on) {
+      cardTitle.textContent = linkOutOnly ? 'Link Out' : 'Connected booking';
+    }
+    var intro = document.getElementById('ee-external-booking-intro');
+    if (intro && on && linkOutOnly) {
+      intro.innerHTML =
+        '<p>Buyers stay on The Networker UK listing, then go to <strong>your</strong> booking page. No webhook or attendee sync — just the redirect button.</p>';
+    }
+    if (setupLink && on && linkOutOnly) {
+      setupLink.textContent = 'Continue to set booking URL →';
     }
   }
 

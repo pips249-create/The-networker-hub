@@ -5,6 +5,7 @@ const assert = require('assert');
 const {
   normalizePlan,
   mapGrantAccount,
+  findAllOrganiserAccountsByEmail,
 } = require('../api/_lib/connected-booking-grants');
 const {
   CHECKOUT_LINK_OUT,
@@ -17,6 +18,7 @@ const {
 assert.strictEqual(normalizePlan('growth'), 'growth');
 assert.strictEqual(normalizePlan('nope'), 'starter');
 assert.strictEqual(CHECKOUT_LINK_OUT, 'external_link');
+assert.strictEqual(typeof findAllOrganiserAccountsByEmail, 'function');
 
 assert.strictEqual(
   accountHasAdminConnectedGrant({ connected_booking_granted_at: '2026-10-16T00:00:00Z' }),

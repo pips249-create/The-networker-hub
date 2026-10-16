@@ -10184,6 +10184,7 @@
         '<div class="rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-950 space-y-1">' +
         '<p><strong>Allocate free external booking</strong> for partners (e.g. BEETC / Martech Summit) without Vercel env vars.</p>' +
         '<p><strong>Link Out</strong> — redirect button only (no webhook). <strong>Connected</strong> — redirect + optional attendee sync.</p>' +
+        '<p>Grant applies to <strong>every organiser account</strong> matching that email (login + directory pages). Then open their event → <strong>Set up tickets</strong> to paste the booking URL.</p>' +
         '<p>Run Supabase migration <code class="text-xs">320_admin_external_booking_grants.sql</code> if grant columns are missing.</p>' +
         '</div>' +
         '<div class="grid gap-3 sm:grid-cols-3">' +
@@ -10370,7 +10371,12 @@
           );
           return;
         }
-        setStatus('Saved.');
+        var n = Number(data.matchCount || 1) || 1;
+        setStatus(
+          n > 1
+            ? 'Saved on ' + n + ' matching accounts. Open their event → Set up tickets.'
+            : 'Saved. Open their event → Set up tickets to add the booking URL.'
+        );
         load();
       });
     }

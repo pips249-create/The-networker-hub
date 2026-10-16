@@ -11,6 +11,7 @@ const {
   mapGrantAccount,
   resolveAccountEmail,
   findOrganiserAccountByEmail,
+  findAllOrganiserAccountsByEmail,
   findOrganiserAccountById,
   listOrganisersForAccount,
   listGrantedAccounts,
@@ -97,6 +98,20 @@ module.exports = async function handler(req, res) {
       'command-centre';
 
     if (action === 'lookup') {
+      const email = normalizeConnectedBookingEmail(body.email);
+      if (email) {
+        const all = await findAllOrganiserAccountsByEmail(sb, email);
+        if (!all.length) {
+          return json(res, 404, {
+            ok: false,
+            error: 'not_found',
+            message: 'No organiser account found for that email. They need a hub account first.',
+          });
+        }
+        const accounts = [];
+        for (const row of all) accounts.push(await hydrateAccount(sb, row));
+        return json(res, 200, { ok: true, account: accounts[0], accounts, matchCount: accounts.length });
+      }
       const account = await resolveTargetAccount(sb, body);
       if (!account) {
         return json(res, 404, {
@@ -108,8 +123,22 @@ module.exports = async function handler(req, res) {
       return json(res, 200, { ok: true, account: await hydrateAccount(sb, account) });
     }
 
-    const account = await resolveTargetAccount(sb, body);
-    if (!account) {
+    // Email grants apply to every matching account (login + directory-linked),
+    // so Link Out shows when they open the organiser workspace.
+    const email = normalizeConnectedBookingEmail(body.email);
+    const explicitId = String(body.accountId || body.id || '').trim();
+    let targets = [];
+    if (explicitId && !email) {
+      const one = await findOrganiserAccountById(sb, explicitId);
+      if (one) targets = [one];
+    } else if (email) {
+      targets = await findAllOrganiserAccountsByEmail(sb, email);
+    } else {
+      const one = await resolveTargetAccount(sb, body);
+      if (one) targets = [one];
+    }
+
+    if (!targets.length) {
       return json(res, 404, {
         ok: false,
         error: 'not_found',
@@ -117,27 +146,40 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    let updated = account;
-    if (action === 'grant_connected') {
-      updated = await activateConnectedBookingGrant(sb, account, {
-        plan: normalizePlan(body.plan),
-        grantedBy,
-        note: body.note,
-      });
-    } else if (action === 'revoke_connected') {
-      updated = await revokeConnectedBookingGrant(sb, account);
-    } else if (action === 'grant_link_out') {
-      updated = await activateLinkOutGrant(sb, account, { grantedBy, note: body.note });
-    } else if (action === 'revoke_link_out') {
-      updated = await revokeLinkOutGrant(sb, account);
-    } else {
-      return json(res, 400, { error: 'unknown_action', message: 'Unknown action: ' + action });
+    const updatedRows = [];
+    for (const account of targets) {
+      let updated = account;
+      if (action === 'grant_connected') {
+        updated = await activateConnectedBookingGrant(sb, account, {
+          plan: normalizePlan(body.plan),
+          grantedBy,
+          note: body.note,
+        });
+      } else if (action === 'revoke_connected') {
+        updated = await revokeConnectedBookingGrant(sb, account);
+      } else if (action === 'grant_link_out') {
+        updated = await activateLinkOutGrant(sb, account, { grantedBy, note: body.note });
+      } else if (action === 'revoke_link_out') {
+        updated = await revokeLinkOutGrant(sb, account);
+      } else {
+        return json(res, 400, { error: 'unknown_action', message: 'Unknown action: ' + action });
+      }
+      updatedRows.push(updated);
     }
+
+    const accounts = [];
+    for (const row of updatedRows) accounts.push(await hydrateAccount(sb, row));
 
     return json(res, 200, {
       ok: true,
       action,
-      account: await hydrateAccount(sb, updated),
+      account: accounts[0],
+      accounts,
+      matchCount: accounts.length,
+      message:
+        accounts.length > 1
+          ? 'Updated ' + accounts.length + ' matching organiser accounts for this email.'
+          : undefined,
     });
   } catch (e) {
     console.error('admin-connected-booking POST', e);
