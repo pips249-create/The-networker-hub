@@ -163,11 +163,9 @@ async function handleOpportunityListingSubscriptionDeleted(subscription) {
 }
 
 async function handleOpportunityListingInvoicePaid(invoice) {
-  const meta = normalizeMeta(invoice?.subscription_details?.metadata || invoice?.metadata);
-  const subId =
-    typeof invoice?.subscription === 'string'
-      ? invoice.subscription.trim()
-      : String(invoice?.subscription?.id || '').trim();
+  const { invoiceSubscriptionId, invoiceSubscriptionMetadata } = require('./stripe-revenue');
+  const meta = invoiceSubscriptionMetadata(invoice);
+  const subId = invoiceSubscriptionId(invoice);
 
   if (!isOpportunityListingMetadata(meta) && !subId) {
     return { skipped: true, reason: 'not_opportunity_listing' };

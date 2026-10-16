@@ -330,15 +330,11 @@ async function maybeCreateCommissionFromCheckoutSession(session) {
 
 async function maybeCreateCommissionFromInvoice(invoice) {
   invoice = invoice || {};
-  const meta = normalizeMeta(
-    invoice.subscription_details?.metadata || invoice.metadata || {}
-  );
+  const { invoiceSubscriptionId, invoiceSubscriptionMetadata } = require('./stripe-revenue');
+  const meta = invoiceSubscriptionMetadata(invoice);
 
   let productType = productTypeFromMetadata(meta);
-  const subId =
-    typeof invoice.subscription === 'string'
-      ? invoice.subscription.trim()
-      : String(invoice.subscription?.id || '').trim();
+  const subId = invoiceSubscriptionId(invoice);
 
   // Pull subscription metadata when invoice meta is thin
   if ((!productType || !meta.affiliate_code) && subId) {

@@ -792,13 +792,11 @@ async function findMembershipSubscriptionForEmail(email, organiserId) {
 }
 
 async function handleMembershipInvoicePaid(invoice) {
-  const subscriptionId =
-    typeof invoice?.subscription === 'string'
-      ? invoice.subscription
-      : String(invoice?.subscription?.id || '').trim();
+  const { invoiceSubscriptionId, invoiceSubscriptionMetadata } = require('./stripe-revenue');
+  const subscriptionId = invoiceSubscriptionId(invoice);
   if (!subscriptionId) return { ok: false, skipped: true, reason: 'no_subscription' };
 
-  const meta = normalizeMeta(invoice?.subscription_details?.metadata || invoice?.metadata);
+  const meta = invoiceSubscriptionMetadata(invoice);
   let subscription;
   if (!isMembershipCheckoutMetadata(meta)) {
     subscription = await retrieveMembershipSubscription(subscriptionId);
@@ -850,10 +848,8 @@ async function handleMembershipInvoicePaid(invoice) {
 }
 
 async function handleMembershipInvoicePaymentFailed(invoice) {
-  const subscriptionId =
-    typeof invoice?.subscription === 'string'
-      ? invoice.subscription
-      : String(invoice?.subscription?.id || '').trim();
+  const { invoiceSubscriptionId } = require('./stripe-revenue');
+  const subscriptionId = invoiceSubscriptionId(invoice);
   if (!subscriptionId) return { ok: false, skipped: true, reason: 'no_subscription' };
 
   const subscription = await retrieveMembershipSubscription(subscriptionId);
