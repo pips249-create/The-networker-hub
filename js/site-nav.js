@@ -853,7 +853,7 @@
         link('/login', 'Sign in', 'auth', 'nav-signin') +
         '</span>';
     } else {
-      /* Sign in (quiet) then Join free (primary) — reads as one auth cluster */
+      /* Sign in (outlined) then Join free (primary) — both findable; Sign in is not quiet */
       actions +=
         '<span class="nav-auth">' +
         link('/login', 'Sign in', 'auth', 'nav-signin') +
@@ -892,6 +892,17 @@
     return html;
   }
 
+  /** Persistent Sign in in the mobile header — not only inside the hamburger drawer. */
+  function mobileBarAuthHtml(user, pending) {
+    if (isPeekPath()) return '';
+    if (user || pending) return '';
+    return (
+      '<a class="nav-mobile-bar-signin" href="' +
+      href('/login') +
+      '" id="nav-mobile-bar-signin">Sign in</a>'
+    );
+  }
+
   function buildMobileDrawerLinks(user, pending) {
     if (isPeekPath()) {
       var peekHtml = '<p class="nav-mobile-section-label">Sneak peek</p>';
@@ -900,19 +911,47 @@
     }
     var early = catalogueOpen === false;
     var html = '';
-    if (user && !early) {
-      html += link('/', 'Home', 'home', 'nav-mobile-item');
-    }
-    if (early) {
-      html += '<p class="nav-mobile-section-label">Explore</p>';
-      if (user && user.organiserUiVisible) {
+    if (pending && !user) {
+      html +=
+        '<span class="nav-mobile-auth-pending" aria-hidden="true">' +
+        '<span class="nav-auth-pending-pill"></span>' +
+        '<span class="nav-auth-pending-pill"></span>' +
+        '</span>';
+    } else if (!user) {
+      /* Auth first — returning users should not scroll past Browse / cities to find Sign in */
+      if (early) {
+        html += link('/login', 'Sign in', 'auth', 'nav-mobile-item nav-mobile-signin');
+      } else {
+        html += '<div class="nav-mobile-auth">';
+        html += link('/login', 'Sign in', 'auth', 'nav-mobile-item nav-mobile-signin');
+        html += link('/register', 'Join free', 'auth', 'nav-mobile-item nav-mobile-register');
+        html += '</div>';
+      }
+    } else {
+      // Same mobile account section for everyone; optional links only when relevant.
+      html += '<p class="nav-mobile-account-label">My account</p>';
+      html += link('/account/', 'Attendee dashboard', 'account', 'nav-mobile-item');
+      if (user.organiserUiVisible) {
         html += link(
           '/organiser/',
           'Organiser workspace',
           'organiser',
           'nav-mobile-item nav-org-workspace'
         );
-      } else {
+      }
+      html += link('/account/settings', 'Profile & preferences', 'settings', 'nav-mobile-item');
+      if (user.role === 'admin') {
+        html += link('/admin/', 'Command Center', 'admin', 'nav-mobile-item nav-admin-cc');
+      }
+      html +=
+        '<button type="button" class="nav-mobile-item nav-mobile-signout" id="nav-mobile-signout">Sign out</button>';
+    }
+    if (user && !early) {
+      html += link('/', 'Home', 'home', 'nav-mobile-item');
+    }
+    if (early) {
+      html += '<p class="nav-mobile-section-label">Explore</p>';
+      if (!(user && user.organiserUiVisible)) {
         html += link('/for-organisers', 'For organisers', 'for-organisers', 'nav-mobile-item');
       }
       html += link('/contact', 'Contact', 'contact', 'nav-mobile-item');
@@ -934,49 +973,8 @@
       html +=
         '<a class="nav-mobile-item" href="https://www.thenetworkerinternational.com/" rel="noopener noreferrer">International</a>';
     }
-    if (pending && !user) {
-      html +=
-        '<span class="nav-mobile-auth-pending" aria-hidden="true">' +
-        '<span class="nav-auth-pending-pill"></span>' +
-        '<span class="nav-auth-pending-pill"></span>' +
-        '</span>';
-      return html;
-    }
     if (catalogueOpen !== false) {
       html += listCtasHtml(user, 'nav-mobile-item');
-    }
-    if (user) {
-      // Same mobile account section for everyone; optional links only when relevant.
-      html += '<p class="nav-mobile-account-label">My account</p>';
-      html += link('/account/', 'Attendee dashboard', 'account', 'nav-mobile-item');
-      if (user.organiserUiVisible) {
-        html += link(
-          '/organiser/',
-          'Organiser workspace',
-          'organiser',
-          'nav-mobile-item nav-org-workspace'
-        );
-      }
-      html += link('/account/settings', 'Profile & preferences', 'settings', 'nav-mobile-item');
-      html += link(
-        '/advertising',
-        'Advertising &amp; sponsorship',
-        'advertising',
-        'nav-mobile-item'
-      );
-      html += link('/contact', 'Contact us', 'contact', 'nav-mobile-item');
-      if (user.role === 'admin') {
-        html += link('/admin/', 'Command Center', 'admin', 'nav-mobile-item nav-admin-cc');
-      }
-      html +=
-        '<button type="button" class="nav-mobile-item nav-mobile-signout" id="nav-mobile-signout">Sign out</button>';
-    } else if (early) {
-      html += link('/login', 'Sign in', 'auth', 'nav-mobile-item nav-mobile-signin');
-    } else {
-      html += '<div class="nav-mobile-auth">';
-      html += link('/login', 'Sign in', 'auth', 'nav-mobile-item nav-mobile-signin');
-      html += link('/register', 'Join free', 'auth', 'nav-mobile-item nav-mobile-register');
-      html += '</div>';
     }
     return html;
   }
@@ -1329,6 +1327,7 @@
       '<nav class="nav-links" aria-label="Main">' +
       buildNavLinks(user, pending) +
       '</nav>' +
+      mobileBarAuthHtml(user, pending) +
       '<button type="button" class="nav-menu-toggle" id="nav-menu-toggle" aria-expanded="false" aria-controls="nav-mobile-drawer" aria-label="Open menu">' +
       '<span class="nav-menu-bar"></span><span class="nav-menu-bar"></span><span class="nav-menu-bar"></span>' +
       '</button>' +

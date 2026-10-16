@@ -79,6 +79,11 @@
   gap: 5px;
 }
 
+/* Desktop: Sign in lives in .nav-links. Mobile: persistent header chip. */
+.nav-mobile-bar-signin {
+  display: none;
+}
+
 .nav-menu-bar {
   display: block;
   width: 18px;
@@ -451,9 +456,38 @@ body.nav-menu-open {
     display: none !important;
   }
 
+  /* Keep Sign in visible outside the hamburger — utility nav users look top-right */
+  .nav-mobile-bar-signin {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    order: 1;
+    flex-shrink: 0;
+    margin-left: auto;
+    min-height: 40px;
+    padding: 0 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(74, 68, 70, 0.28);
+    background: var(--surface-card, #fff);
+    color: var(--charcoal, #4a4446);
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .nav-mobile-bar-signin:active,
+  .nav-mobile-bar-signin:hover {
+    background: rgba(194, 153, 209, 0.12);
+    border-color: rgba(194, 153, 209, 0.55);
+    color: var(--charcoal, #4a4446);
+  }
+
   .nav-menu-toggle {
     display: inline-flex;
     order: 2;
+    margin-left: 8px;
     margin-right: max(8px, env(safe-area-inset-right));
   }
 

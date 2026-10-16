@@ -636,13 +636,20 @@ a:hover { color: var(--charcoal); }
   justify-content: center;
   flex-shrink: 0;
   min-height: 40px;
-  padding: 0 12px;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(74, 68, 70, 0.28);
+  background: transparent;
   color: var(--charcoal) !important;
   font-weight: 600;
   white-space: nowrap;
+  text-decoration: none !important;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
 }
 .nav-signin:hover {
-  color: var(--lavender-deep) !important;
+  background: rgba(194, 153, 209, 0.12);
+  border-color: rgba(194, 153, 209, 0.55);
+  color: var(--charcoal) !important;
 }
 
 .nav-register {
