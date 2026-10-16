@@ -1760,6 +1760,26 @@ async function buildSharedSeriesRowTemplate(base, anchorId) {
   row = await inheritGroupPhotoIfMissing(row, payload);
   delete row.starts_at;
   delete row.ends_at;
+
+  // Create-mode defaults missing description/venue/etc. to null. Refill from the
+  // anchor row when the save payload omitted those fields (e.g. Link Out publish).
+  const id = String(anchorId || '').trim();
+  if (id) {
+    const sb = getSupabaseAdmin();
+    const { data: anchor } = await sb.from('events').select('*').eq('id', id).maybeSingle();
+    if (anchor) {
+      const { PEER_CONTENT_KEYS } = require('./listing-lifecycle');
+      PEER_CONTENT_KEYS.forEach((key) => {
+        if (
+          (row[key] == null || row[key] === '') &&
+          anchor[key] != null &&
+          anchor[key] !== ''
+        ) {
+          row[key] = anchor[key];
+        }
+      });
+    }
+  }
   return row;
 }
 

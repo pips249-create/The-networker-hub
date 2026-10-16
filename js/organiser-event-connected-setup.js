@@ -2145,7 +2145,14 @@
           payload.externalBookingUrl = attendeeUrl;
         }
       }
-      loadedEvent = Object.assign({}, loadedEvent, payload, savedEv || {});
+      // Merge checkout fields only — never let a partial Link Out payload blank
+      // description, venue, or other Event details already on loadedEvent.
+      loadedEvent = Object.assign({}, loadedEvent, savedEv || {}, {
+        checkoutMode: payload.checkoutMode,
+        externalPriceLabel: payload.externalPriceLabel,
+        externalBookingUrl: payload.externalBookingUrl,
+        listingStatus: payload.listingStatus,
+      });
       if (typeof embed.writeConnectedSetupPrefetch === 'function') {
         embed.writeConnectedSetupPrefetch(eventId, loadedEvent, billing);
       }
