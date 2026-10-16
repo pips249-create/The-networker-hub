@@ -2115,6 +2115,8 @@
         listingStatus: publish ? 'published' : 'draft',
         externalBookingOnly: true,
       };
+      var seriesIds = eventIdsForNavigation();
+      if (seriesIds.length) payload.eventIds = seriesIds;
       if (eventDate) {
         payload.date = eventDate;
         if (loadedEvent.endDate) payload.endDate = loadedEvent.endDate;

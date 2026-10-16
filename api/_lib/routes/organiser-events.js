@@ -444,11 +444,19 @@ module.exports = async function handler(req, res) {
             message: 'Select at least one date before publishing.',
           });
         }
-        const updated = await updateExternalBookingFields(eventId, base);
+        const bodyEventIds = Array.isArray(body.eventIds)
+          ? body.eventIds
+          : Array.isArray(body.ids)
+            ? body.ids
+            : [];
+        const updated = await updateExternalBookingFields(eventId, {
+          ...base,
+          eventIds: bodyEventIds,
+        });
         synced = {
-          event: updated,
-          events: [updated],
-          eventIds: updated?.id ? [updated.id] : [eventId],
+          event: updated.event || updated,
+          events: updated.events || [updated.event || updated],
+          eventIds: updated.eventIds || [(updated.event || updated)?.id || eventId],
           createdEvents: [],
         };
       } else {
