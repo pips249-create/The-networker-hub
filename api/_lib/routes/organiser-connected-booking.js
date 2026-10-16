@@ -6,6 +6,7 @@ const {
   connectedBookingAllowedForSession,
   connectedBookingPilotGrantEligible,
   connectedBookingPilotGrantPlan,
+  connectedBookingPreviewLocked,
   newWebhookSecret,
   signWebhookPayload,
   isConnectedPlanActive,
@@ -416,6 +417,23 @@ module.exports = async function handler(req, res) {
         slots,
         connectedGranted: accountHasAdminConnectedGrant(account),
         linkOutGranted: accountHasLinkOutGrant(account),
+        uiMode:
+          isConnectedPlanActive(account) || accountHasAdminConnectedGrant(account)
+            ? 'connected'
+            : accountHasLinkOutGrant(account)
+              ? 'link_out'
+              : 'connected',
+        // Keep nav/page off the general organiser population until they are granted,
+        // subscribed, or on the preview/pilot allowlist — not merely because the
+        // feature flag is on for API access.
+        navVisible: Boolean(
+          isConnectedPlanActive(account) ||
+            accountHasAdminConnectedGrant(account) ||
+            accountHasLinkOutGrant(account) ||
+            connectedBookingPilotGrantEligible(auth.session.email) ||
+            (connectedBookingAllowedForSession(auth.session) &&
+              connectedBookingPreviewLocked())
+        ),
         pilotGrant: pilotGranted
           ? {
               granted: true,
