@@ -90,6 +90,13 @@ const FAQ_AEO_ENTRIES = [
     icon: '✅',
   },
   {
+    question: 'How do I sign in or log in?',
+    answer:
+      'Tap Sign in in the top-right of any page (on a phone it sits beside the menu button), or go to /login. Use the email and password for your Networker UK account — the same login works for My account and the organiser dashboard. New here? Choose Join free / Create a free account instead.',
+    category: 'general',
+    icon: '🔐',
+  },
+  {
     question: 'I forgot my password — how do I sign in?',
     answer:
       'Go to /login and use the password reset link. Enter your email and follow the instructions. If you are still stuck, email hi@thenetworkeruk.com from the address on your account.',

@@ -606,9 +606,9 @@ const FALLBACK_REPLIES = [
       'Sign in and open /organiser/ to create events, manage attendees, sell tickets, and list opportunities. Complete Stripe onboarding there for payouts. New groups: email hi@thenetworkeruk.com with your group name, format, and location.',
   },
   {
-    match: /account|register|sign up|create account|sign in|login/i,
+    match: /account|register|sign up|create account|sign in|log ?in|how (do i|to) (sign|log) ?in/i,
     reply:
-      'Browsing is completely free — no account needed. You need a free account to buy tickets or enquire about opportunities. Register at /register (about 2 minutes) or sign in at /login.',
+      'Browsing is completely free — no account needed. You need a free account to buy tickets or enquire about opportunities. Sign in is top-right on every page (on a phone, beside the menu button), or go to /login. New here? Register at /register (about 2 minutes). Same login for My account and the organiser dashboard.',
   },
   {
     match: /browse|find|search|filter|map view|near me|upcoming/i,

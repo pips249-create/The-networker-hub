@@ -74,6 +74,12 @@ window.HUB_SEO_DATA = {
       "icon": "✅"
     },
     {
+      "question": "How do I sign in or log in?",
+      "answer": "Tap Sign in in the top-right of any page (on a phone it sits beside the menu button), or go to /login. Use the email and password for your Networker UK account — the same login works for My account and the organiser dashboard. New here? Choose Join free / Create a free account instead.",
+      "category": "general",
+      "icon": "🔐"
+    },
+    {
       "question": "I forgot my password — how do I sign in?",
       "answer": "Go to /login and use the password reset link. Enter your email and follow the instructions. If you are still stuck, email hi@thenetworkeruk.com from the address on your account.",
       "category": "general",
@@ -526,6 +532,14 @@ window.HUB_SEO_DATA = {
               "acceptedAnswer": {
                 "@type": "Answer",
                 "text": "Yes — browsing events and business opportunities is completely free with no sign-in required. You only pay when you purchase an event ticket at the price shown by the organiser."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How do I sign in or log in?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Tap Sign in in the top-right of any page (on a phone it sits beside the menu button), or go to /login. Use the email and password for your Networker UK account — the same login works for My account and the organiser dashboard. New here? Choose Join free / Create a free account instead."
               }
             },
             {
@@ -1154,8 +1168,8 @@ window.HUB_SEO_DATA = {
           "@context": "https://schema.org",
           "@type": "WebPage",
           "url": "https://www.thenetworkeruk.com/for-organisers",
-          "name": "Your networking group deserves to be found – For organisers – The Networker UK",
-          "description": "Claim your free Networker UK profile, list events, collect reviews, sell tickets, and promote it on your website, LinkedIn and email signature.",
+          "name": "For Organisers – The Networker UK",
+          "description": "Organiser dashboard, guest visit programme, visit tracking, Category Exclusivity, Previous Attendees, and discovery in the UK events and opportunities directories.",
           "about": {
             "@context": "https://schema.org",
             "@type": "Organization",
