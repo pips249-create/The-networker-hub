@@ -398,6 +398,14 @@
     }
 
     var mode = applyWorkspaceMode(data);
+    if (mode === 'hidden') {
+      setAuthStatus('Connected booking is not available on this account yet.', 'error');
+      applyBillingUi({ ok: false });
+      if (workspaceConnectedPage && location.hash.indexOf('connected-booking') !== -1) {
+        location.hash = 'events-list';
+      }
+      return;
+    }
     if (mode === 'link_out') {
       setAuthStatus('Link Out is active on this account — set the booking URL on each event.', 'ok');
       applyBillingUi({ ok: false });

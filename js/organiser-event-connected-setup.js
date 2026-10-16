@@ -1964,6 +1964,22 @@
       }
     }
 
+    var publishBtn = qs('ecs-publish');
+    if (publishBtn) {
+      publishBtn.textContent = linkOutOnly ? 'Publish Link Out event' : 'Publish Connected event';
+    }
+    var platformHint = document.querySelector('#ecs-form-card [data-connected-platform-hint], .ecs-platform-hint');
+    if (platformHint && linkOutOnly) {
+      platformHint.hidden = false;
+      platformHint.textContent =
+        'Paste your registration / checkout URL. Buyers leave The Networker UK and complete booking on your site — no webhook needed for Link Out.';
+    }
+    var legalHint = document.querySelector('.ee-connected-legal-hint');
+    if (legalHint && linkOutOnly) {
+      legalHint.textContent =
+        'This is the price visitors see on The Networker UK before they leave for your site. You are responsible for ensuring it matches what you charge on your checkout (including VAT where applicable) and complies with UK consumer law. We do not process ticket payment on Link Out.';
+    }
+
     var hubNote = qs('ecs-hub-tickets-note');
     if (hubNote) hubNote.hidden = false;
 
@@ -1993,12 +2009,16 @@
   async function saveConnected(publish) {
     var saveBtn = qs('ecs-save');
     var pubBtn = qs('ecs-publish');
-    if (!loadedEvent || !billing || !billing.active) {
+    var linkOutOnly = Boolean(billing && billing.ok && billing.linkOutGranted && !billing.active);
+    var canSaveExternal = Boolean(billing && billing.ok && (billing.active || linkOutOnly));
+    if (!loadedEvent || !canSaveExternal) {
       setStatus(
         saveStatus,
-        !billing || !billing.active
-          ? 'Connected booking is not active on this account yet.'
-          : 'Still loading this event — wait a moment and try again.',
+        !loadedEvent
+          ? 'Still loading this event — wait a moment and try again.'
+          : linkOutOnly || (billing && billing.linkOutGranted)
+            ? 'Link Out is still loading for this account — refresh and try again.'
+            : 'Connected booking is not active on this account yet.',
         'error'
       );
       return;
