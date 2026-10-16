@@ -498,7 +498,10 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
       recurrencePattern: row.recurrence_pattern || null,
       recurrenceEndDate: row.recurrence_end_date || null,
       seriesGroupId: row.series_group_id || null,
-      checkoutMode: 'external_connected',
+      checkoutMode:
+        String(row.checkout_mode || '').trim() === 'external_link'
+          ? 'external_link'
+          : 'external_connected',
       externalBookingUrl: externalUrl,
       externalPriceLabel: String(row.external_price_label || '').trim(),
       externalBookingDisclaimer:

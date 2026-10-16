@@ -1266,6 +1266,69 @@
     return Boolean(String(ev.externalPriceLabel || '').trim());
   }
 
+  /**
+   * Link Out / Connected: buyers pay on the organiser site.
+   * Hide Hub quantity, booking fee, and "Before you pay" — only the listing price is informational.
+   */
+  function applyExternalBookingCheckoutUi(ev) {
+    const panel = document.getElementById('tickets');
+    if (panel) {
+      panel.classList.add('is-external-booking');
+      panel.classList.remove('is-free-booking', 'is-qty-locked', 'show-checkout');
+    }
+    const qtyRow = document.querySelector('#tickets .qty-row');
+    if (qtyRow) qtyRow.hidden = true;
+    const qtyHint = document.getElementById('qty-avail-hint');
+    if (qtyHint) {
+      qtyHint.hidden = true;
+      qtyHint.textContent = '';
+    }
+    const summaryEl = document.querySelector('#tickets .summary');
+    if (summaryEl) summaryEl.hidden = true;
+    const summaryFeeNote = document.getElementById('summary-fee-note');
+    if (summaryFeeNote) summaryFeeNote.hidden = true;
+    const vatNote = document.getElementById('ev-vat-note');
+    if (vatNote) vatNote.hidden = true;
+    const bundleOption = document.getElementById('ev-series-bundle-option');
+    if (bundleOption) bundleOption.hidden = true;
+    const paidBlock = document.getElementById('ticket-paid-checkout');
+    if (paidBlock) paidBlock.hidden = true;
+    const feeNoteEl = document.getElementById('checkout-fee-note');
+    if (feeNoteEl) feeNoteEl.hidden = true;
+    const secureFoot = document.getElementById('ticket-secure-foot');
+    if (secureFoot) secureFoot.hidden = true;
+    const accountLine = document.getElementById('checkout-account-line');
+    if (accountLine) {
+      accountLine.hidden = true;
+      accountLine.textContent = '';
+    }
+
+    const tiersEl = document.getElementById('ticket-tiers');
+    if (!tiersEl) return;
+    let priceEl = document.getElementById('ticket-external-listing-price');
+    const priceLabel = String(
+      (ev && (ev.externalPriceLabel || ev.price)) || ''
+    ).trim();
+    if (!priceLabel || String((ev && ev.priceKey) || '') === 'enquire') {
+      if (priceEl) priceEl.remove();
+      return;
+    }
+    if (!priceEl) {
+      priceEl = document.createElement('p');
+      priceEl.id = 'ticket-external-listing-price';
+      priceEl.className = 'ticket-external-listing-price';
+      tiersEl.appendChild(priceEl);
+    }
+    priceEl.textContent = 'Price on listing: ' + priceLabel;
+  }
+
+  function clearExternalBookingCheckoutUi() {
+    const panel = document.getElementById('tickets');
+    if (panel) panel.classList.remove('is-external-booking');
+    const priceEl = document.getElementById('ticket-external-listing-price');
+    if (priceEl) priceEl.remove();
+  }
+
   function externalBookingUrlForEvent(ev) {
     const raw = String((ev && ev.externalBookingUrl) || '').trim();
     if (!raw) return '';
@@ -3100,9 +3163,11 @@
           buy.textContent = 'Book on ' + organiserName + '\u2019s website';
         }
       }
-      syncPaidCheckoutPanel('', 1, 0);
+      applyExternalBookingCheckoutUi(ev);
       return;
     }
+
+    clearExternalBookingCheckoutUi();
 
     const tiers = ticketTiersForEvent(ev);
     const salesPending = Boolean(ev.isTicketSalesPending || ev.isTicketSalesScheduled);
@@ -3860,6 +3925,11 @@
     const secureFoot = document.getElementById('ticket-secure-foot');
     const buy = document.getElementById('buy-btn');
 
+    if (eventIsExternalConnected(ev)) {
+      applyExternalBookingCheckoutUi(ev);
+      return;
+    }
+
     if (ev?.isTicketSalesScheduled || ev?.isTicketSalesPending) {
       if (paidBlock) paidBlock.hidden = true;
       if (secureFoot) secureFoot.hidden = true;
@@ -4441,11 +4511,14 @@
         buy.textContent = 'Book on ' + organiserName + '\u2019s website';
         if (purchaseView) purchaseView.removeAttribute('aria-hidden');
       }
+      applyExternalBookingCheckoutUi(ev);
       applyEventApplicationUi(ev);
       syncExternalBookingSigninNudge(ev);
       updateTicketJumpBar(ev);
       return;
     }
+
+    clearExternalBookingCheckoutUi();
 
     // Client safety net: platform soft-launch locks buying + interest nudges until 1 September.
     if (
@@ -5249,6 +5322,10 @@
 
     function update() {
       const evNow = activeEvent();
+      if (eventIsExternalConnected(evNow)) {
+        applyExternalBookingCheckoutUi(evNow);
+        return;
+      }
       if (eventIsCategoryExclusivity(evNow) || eventIsGuestProgramme(evNow)) {
         qty = 1;
         maxQty = 1;
