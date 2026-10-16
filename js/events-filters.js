@@ -761,15 +761,29 @@
       return window.hubMatchOutcode(pc, ev);
     }
 
-    /* Mile radius for full postcodes and unmapped place names. */
+    /* Mile radius for full postcodes and metro cities. */
     var geoCenter = center || locationFilterCenter();
     var evCoords = eventCoords(ev);
-    if (geoCenter && evCoords && window.hubDistanceMiles) {
-      return (
+    var withinRadius =
+      !!(geoCenter &&
+        evCoords &&
+        window.hubDistanceMiles &&
         window.hubDistanceMiles(geoCenter[0], geoCenter[1], evCoords[0], evCoords[1]) <=
-        getLocationRadiusMiles()
-      );
-    }
+          getLocationRadiusMiles());
+    if (withinRadius) return true;
+
+    /*
+     * Metro city pages (Glasgow, Manchester, …): keep events in that city's
+     * postcode sectors even when they sit outside the mile radius or lack coords.
+     * Full postcodes stay radius-only.
+     */
+    var metroCityFallback =
+      pc &&
+      window.hubPrefersGeoRadiusForLocation &&
+      window.hubPrefersGeoRadiusForLocation(pc) &&
+      !(window.hubParseFullUkPostcode && window.hubParseFullUkPostcode(pc)) &&
+      window.hubMatchOutcode;
+    if (metroCityFallback) return window.hubMatchOutcode(pc, ev);
 
     if (geoCenter) {
       /* Centre known but event has no coords — fall back to outcode/sector match. */

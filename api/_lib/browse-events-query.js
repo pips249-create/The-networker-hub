@@ -47,7 +47,7 @@ const PIN_SELECT =
   'id, slug, title, city, format_tab, latitude, longitude, starts_at, outcode, min_ticket_price, image_url, photo_url, image_position, event_type, type_tab, featured, featured_until, average_rating, review_count, organiser_id, series_group_id';
 
 const BROWSE_SLIM_SELECT =
-  'id, organiser_id, title, series_group_id, latitude, longitude, format_tab, type_tab, starts_at, min_ticket_price, average_rating, review_count, featured, featured_until, created_at';
+  'id, organiser_id, title, series_group_id, latitude, longitude, outcode, city, location_label, format_tab, type_tab, starts_at, min_ticket_price, average_rating, review_count, featured, featured_until, created_at';
 
 const SLIM_RATING_SELECT = BROWSE_SLIM_SELECT;
 
@@ -157,6 +157,39 @@ function prefersOutcodeLocation(params) {
   if (region && isMetroRadiusRegion(region)) return false;
   const list = outcodeListForLocation(raw, params.outcodes);
   return !!(list && list.length);
+}
+
+/**
+ * Named metro cities (e.g. Glasgow) still use a mile radius for neighbouring towns,
+ * but also keep every event in that city's postcode sectors — including listings
+ * outside the default radius or missing lat/lng.
+ */
+function metroCityRegion(params) {
+  const raw = String(params.location || '').trim();
+  if (!raw || parseFullUkPostcode(raw)) return null;
+  const region = cityRegionFromInput(raw);
+  if (!region || !isMetroRadiusRegion(region)) return null;
+  return region;
+}
+
+function rowMatchesMetroSectors(row, params) {
+  const region = metroCityRegion(params);
+  if (!region) return false;
+
+  const outcodes = outcodeListForLocation(params.location, params.outcodes);
+  const oc = String(row.outcode || '')
+    .trim()
+    .toUpperCase();
+  if (oc && outcodes && outcodes.length && outcodes.includes(oc)) return true;
+
+  const textFilters = regionLocationTextFilters(region);
+  const cityName = textFilters && textFilters.cityName ? String(textFilters.cityName).trim() : '';
+  if (cityName.length >= 3) {
+    const needle = cityName.toLowerCase();
+    const hay = [row.city, row.location_label].filter(Boolean).join(' ').toLowerCase();
+    if (hay.includes(needle)) return true;
+  }
+  return false;
 }
 
 /** When radius is set without lat/lng, geocode location (full postcode, outcode, or city). */
@@ -286,9 +319,30 @@ function applyGeoBboxFilter(query, params) {
   const maxLat = box.maxLat.toFixed(6);
   const minLng = box.minLng.toFixed(6);
   const maxLng = box.maxLng.toFixed(6);
-  return query.or(
-    `format_tab.eq.online,and(latitude.gte.${minLat},latitude.lte.${maxLat},longitude.gte.${minLng},longitude.lte.${maxLng})`
-  );
+  const orParts = [
+    'format_tab.eq.online',
+    `and(latitude.gte.${minLat},latitude.lte.${maxLat},longitude.gte.${minLng},longitude.lte.${maxLng})`,
+  ];
+
+  // Metro city pages: also include the city's own postcode sectors / city name.
+  const region = metroCityRegion(params);
+  if (region) {
+    const outcodes = outcodeListForLocation(params.location, params.outcodes);
+    if (outcodes && outcodes.length) {
+      const ocList = outcodes.length <= 120 ? outcodes : outcodes.slice(0, 120);
+      orParts.push(`outcode.in.(${ocList.join(',')})`);
+    }
+    const textFilters = regionLocationTextFilters(region);
+    if (textFilters && textFilters.cityName) {
+      const cityTerm = sanitizeSearchTerm(textFilters.cityName.toLowerCase());
+      if (cityTerm.length >= 3) {
+        orParts.push(`city.ilike.%${cityTerm}%`);
+        orParts.push(`location_label.ilike.%${cityTerm}%`);
+      }
+    }
+  }
+
+  return query.or(orParts.join(','));
 }
 
 function applyBrowseFilters(query, params) {
@@ -613,6 +667,7 @@ function applySqlSort(query, sort) {
 function rowPassesGeo(row, params) {
   if (!hasGeoRadius(params) || prefersOutcodeLocation(params)) return true;
   if (row.format_tab === 'online') return true;
+  if (rowMatchesMetroSectors(row, params)) return true;
   const lat = row.latitude != null ? Number(row.latitude) : null;
   const lng = row.longitude != null ? Number(row.longitude) : null;
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) return false;

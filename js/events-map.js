@@ -196,10 +196,22 @@
     if (formatClass(ev) === 'online') return true;
     var coords = coordsForEvent(ev);
     if (coords && window.hubDistanceMiles) {
-      return (
+      var within =
         window.hubDistanceMiles(centerCoords[0], centerCoords[1], coords[0], coords[1]) <=
-        getNearRadiusMiles()
-      );
+        getNearRadiusMiles();
+      if (within) return true;
+      if (isNearMeActive()) return false;
+      var metroPc = postcodeQuery();
+      if (
+        metroPc &&
+        window.hubPrefersGeoRadiusForLocation &&
+        window.hubPrefersGeoRadiusForLocation(metroPc) &&
+        !(window.hubParseFullUkPostcode && window.hubParseFullUkPostcode(metroPc)) &&
+        window.hubMatchOutcode
+      ) {
+        return window.hubMatchOutcode(metroPc, ev);
+      }
+      return false;
     }
     if (isNearMeActive()) return false;
     var pc = postcodeQuery();
