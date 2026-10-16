@@ -1144,6 +1144,15 @@
       priceEl.textContent = 'Enquire for price';
       return;
     }
+    if (eventIsExternalConnected(ev)) {
+      labelEl.textContent = 'Price';
+      const externalLabel =
+        window.HubBookingFees && typeof window.HubBookingFees.listingPriceLabel === 'function'
+          ? window.HubBookingFees.listingPriceLabel(ev)
+          : String(ev.externalPriceLabel || ev.price || '').trim();
+      priceEl.textContent = externalLabel || 'See organiser site';
+      return;
+    }
     if (eventIsGuestProgramme(ev)) {
       const showGuestHeader =
         eventAllowsGuestPasses(ev) &&
@@ -1306,9 +1315,10 @@
     const tiersEl = document.getElementById('ticket-tiers');
     if (!tiersEl) return;
     let priceEl = document.getElementById('ticket-external-listing-price');
-    const priceLabel = String(
-      (ev && (ev.externalPriceLabel || ev.price)) || ''
-    ).trim();
+    const priceLabel =
+      window.HubBookingFees && typeof window.HubBookingFees.listingPriceLabel === 'function'
+        ? String(window.HubBookingFees.listingPriceLabel(ev) || '').trim()
+        : String((ev && (ev.externalPriceLabel || ev.price)) || '').trim();
     if (!priceLabel || String((ev && ev.priceKey) || '') === 'enquire') {
       if (priceEl) priceEl.remove();
       return;
@@ -1319,7 +1329,8 @@
       priceEl.className = 'ticket-external-listing-price';
       tiersEl.appendChild(priceEl);
     }
-    priceEl.textContent = 'Price on listing: ' + priceLabel;
+    // Show the organiser’s label as typed (e.g. “From £455.00”), not a Hub fee total.
+    priceEl.textContent = priceLabel;
   }
 
   function clearExternalBookingCheckoutUi() {

@@ -62,6 +62,8 @@
     if (!ev || ev.priceKey === 'free' || /^free$/i.test(String(ev.price || ''))) return 0;
     const ticketPrice = Number(ev.priceNum);
     if (!Number.isFinite(ticketPrice) || ticketPrice <= 0) return 0;
+    // Link Out / Connected: listing price is informational only — no Hub booking fee.
+    if (listingUsesExternalBooking(ev)) return roundMoney(ticketPrice);
     return calculateCheckoutTotals(ticketPrice, 1, eventVatTreatment(ev)).total;
   }
 
@@ -128,12 +130,21 @@
 
   function listingUsesExternalBooking(ev) {
     if (!ev) return false;
-    if (String(ev.checkoutMode || ev.checkout_mode || '').trim() === 'external_connected') {
+    const mode = String(ev.checkoutMode || ev.checkout_mode || '').trim();
+    if (mode === 'external_connected' || mode === 'external_link') {
       return true;
     }
     const url = String(ev.externalBookingUrl || ev.external_booking_url || '').trim();
     const label = String(ev.externalPriceLabel || ev.external_price_label || '').trim();
     return Boolean(url && label);
+  }
+
+  /** Organiser-entered Link Out / Connected price text (keep “From £455.00” as typed). */
+  function externalListingPriceLabel(ev) {
+    if (!ev) return '';
+    const raw = String(ev.externalPriceLabel || ev.external_price_label || '').trim();
+    if (raw) return raw;
+    return String(ev.price || '').trim();
   }
 
   function listingPriceUnknown(ev) {
@@ -153,6 +164,17 @@
     }
     if (listingPriceUnknown(ev)) {
       return 'Enquire for price';
+    }
+    if (listingUsesExternalBooking(ev)) {
+      const external = externalListingPriceLabel(ev);
+      if (external) return external;
+      if (!ev || ev.priceKey === 'free' || /^free$/i.test(String(ev.price || ''))) {
+        return 'Free';
+      }
+      const amount = listingPriceNum(ev);
+      if (amount <= 0) return 'Free';
+      const formatted = formatPounds(amount);
+      return withFrom ? 'From ' + formatted : formatted;
     }
     if (
       String(ev?.attendanceMode || '') === 'guest_programme' ||
@@ -190,6 +212,7 @@
     formatPounds: formatPounds,
     listingShowsFrom: listingShowsFrom,
     listingUsesExternalBooking: listingUsesExternalBooking,
+    externalListingPriceLabel: externalListingPriceLabel,
     listingPriceUnknown: listingPriceUnknown,
     listingPriceLabel: listingPriceLabel,
   };
