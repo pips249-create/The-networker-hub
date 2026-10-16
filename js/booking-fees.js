@@ -140,11 +140,21 @@
   }
 
   /** Organiser-entered Link Out / Connected price text (keep “From £455.00” as typed). */
+  function normalizeExternalListingPriceLabel(raw) {
+    let text = String(raw || '').trim();
+    if (!text) return '';
+    // Common typo / casing: "Fro £455" or "from £455" → "From £455"
+    text = text.replace(/^fro(?:m)?(\s+)/i, 'From$1');
+    return text;
+  }
+
   function externalListingPriceLabel(ev) {
     if (!ev) return '';
-    const raw = String(ev.externalPriceLabel || ev.external_price_label || '').trim();
+    const raw = normalizeExternalListingPriceLabel(
+      ev.externalPriceLabel || ev.external_price_label || ''
+    );
     if (raw) return raw;
-    return String(ev.price || '').trim();
+    return normalizeExternalListingPriceLabel(ev.price || '');
   }
 
   function listingPriceUnknown(ev) {

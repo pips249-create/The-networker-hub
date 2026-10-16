@@ -29,6 +29,12 @@ assert.strictEqual(fees.listingPriceLabel(linkOut), 'From £455.00');
 assert.strictEqual(fees.listingPriceNum(linkOut), 455);
 assert.ok(fees.listingPriceNum(linkOut) < 475, 'must not include Hub booking fee');
 
+const froTypo = Object.assign({}, linkOut, {
+  externalPriceLabel: 'Fro £455.00',
+  price: 'Fro £455.00',
+});
+assert.strictEqual(fees.listingPriceLabel(froTypo), 'From £455.00');
+
 const connected = {
   checkoutMode: 'external_connected',
   externalBookingUrl: 'https://www.eventbrite.co.uk/e/123',
