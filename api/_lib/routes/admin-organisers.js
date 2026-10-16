@@ -1589,6 +1589,7 @@ module.exports = async function handler(req, res) {
 
   if (body.action === 'get_claim_url' || body.action === 'send_claim_invite') {
     const organiserId = String(body.id || body.organiserId || body.organiser_id || '').trim();
+    const sendInvite = body.action === 'send_claim_invite';
     if (!organiserId) {
       return json(res, 400, { ok: false, error: 'missing_id', message: 'Group id is required.' });
     }
@@ -1596,7 +1597,9 @@ module.exports = async function handler(req, res) {
       const sb = getSupabaseAdmin();
       const { data: organiser, error } = await sb
         .from('organisers')
-        .select('id, name, email, contact_email, supabase_user_id, ownership_claim_status')
+        .select(
+          'id, name, slug, email, contact_email, supabase_user_id, ownership_claim_status, listing_status, verification_status'
+        )
         .eq('id', organiserId)
         .maybeSingle();
       if (error) throw new Error(error.message);
@@ -1622,7 +1625,38 @@ module.exports = async function handler(req, res) {
       }
 
       const host = String(process.env.SITE_URL || 'https://www.thenetworkeruk.com').replace(/\/$/, '');
-      const claimUrl = await resolveOrganiserClaimUrl(email, host);
+      const claimSlug = publicOrganiserSlug(organiser) || '';
+      const claimUrl = await resolveOrganiserClaimUrl(email, host, claimSlug);
+
+      if (sendInvite) {
+        const invite = await sendOrganiserDirectoryInvite({
+          to: email,
+          host,
+          organiser,
+          claimUrl,
+          actorEmail: session && session.email,
+        });
+        if (!invite || !invite.sent) {
+          return json(res, 502, {
+            ok: false,
+            email,
+            claimUrl,
+            invite,
+            error: (invite && invite.error) || 'invite_send_failed',
+            message:
+              'Could not send the invitation email' +
+              (invite && invite.error ? ' (' + String(invite.error).slice(0, 180) + ')' : '') +
+              '. Use Copy claim link on the row.',
+          });
+        }
+        return json(res, 200, {
+          ok: true,
+          email,
+          claimUrl,
+          invite,
+          message: 'Invitation emailed to ' + email + '. The follow-up sequence can start from this send.',
+        });
+      }
 
       try {
         const { logFromSession } = require('../entity-activity-log');
@@ -1647,8 +1681,8 @@ module.exports = async function handler(req, res) {
     } catch (e) {
       return json(res, e.status || 500, {
         ok: false,
-        error: e.message || 'get_claim_url_failed',
-        message: e.message || 'Could not resolve the claim link.',
+        error: e.message || (sendInvite ? 'send_claim_invite_failed' : 'get_claim_url_failed'),
+        message: e.message || (sendInvite ? 'Could not send the invitation.' : 'Could not resolve the claim link.'),
       });
     }
   }

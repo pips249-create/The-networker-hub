@@ -19703,6 +19703,15 @@
     }
     if (o && o.email && !groupIsClaimed(o)) {
       items.push(
+        '<button type="button" role="menuitem" data-group-action-close data-send-group-claim-invite="' +
+          attrEsc(o.id) +
+          '" data-group-email="' +
+          attrEsc(o.email || '') +
+          '" data-group-name="' +
+          attrEsc(o.name || '') +
+          '" class="admin-group-actions-item">Email invite</button>'
+      );
+      items.push(
         '<button type="button" role="menuitem" data-group-action-close data-copy-group-claim-url="' +
           attrEsc(o.id) +
           '" data-group-email="' +
@@ -19800,6 +19809,53 @@
         if (!triggerBtn) return;
         triggerBtn.disabled = false;
         if (triggerBtn.textContent === 'Copied') {
+          setTimeout(function () {
+            triggerBtn.textContent = defaultLabel;
+          }, 1400);
+        } else {
+          triggerBtn.textContent = defaultLabel;
+        }
+      });
+  }
+
+  function sendGroupClaimInvite(organiserId, email, name, triggerBtn) {
+    var to = String(email || '').trim();
+    if (!to) {
+      window.alert('Add a contact email before emailing the invite.');
+      return;
+    }
+    var label = name ? '“' + name + '”' : 'this group';
+    if (
+      !window.confirm(
+        'Email the directory invitation to ' + to + ' for ' + label + '? This starts the follow-up sequence.'
+      )
+    ) {
+      return;
+    }
+    var defaultLabel = 'Email invite';
+    if (triggerBtn) {
+      triggerBtn.disabled = true;
+      triggerBtn.textContent = 'Sending…';
+    }
+    adminPost('/api/admin/organisers', {
+      action: 'send_claim_invite',
+      id: organiserId,
+    })
+      .then(function (data) {
+        if (!data || !data.ok) {
+          throw new Error((data && data.message) || 'Could not send invitation');
+        }
+        window.alert(data.message || 'Invitation emailed to ' + to + '.');
+        if (triggerBtn) triggerBtn.textContent = 'Sent';
+        return refreshGroupCleanupPage();
+      })
+      .catch(function (err) {
+        window.alert(err.message || 'Could not send invitation.');
+      })
+      .finally(function () {
+        if (!triggerBtn) return;
+        triggerBtn.disabled = false;
+        if (triggerBtn.textContent === 'Sent') {
           setTimeout(function () {
             triggerBtn.textContent = defaultLabel;
           }, 1400);
@@ -21070,6 +21126,17 @@
         deleteGroupBtn.getAttribute('data-group-name'),
         parseInt(deleteGroupBtn.getAttribute('data-group-event-count'), 10) || 0,
         deleteGroupBtn
+      );
+      return;
+    }
+
+    var claimInviteBtn = e.target.closest('[data-send-group-claim-invite]');
+    if (claimInviteBtn) {
+      sendGroupClaimInvite(
+        claimInviteBtn.getAttribute('data-send-group-claim-invite'),
+        claimInviteBtn.getAttribute('data-group-email'),
+        claimInviteBtn.getAttribute('data-group-name'),
+        claimInviteBtn
       );
       return;
     }
