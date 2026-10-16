@@ -93,22 +93,66 @@ function eventPayloadFromBody(body, email) {
   return payload;
 }
 
-function connectedBookingPayloadBlocked(session, body) {
-  const { connectedBookingAllowedForEmail, CHECKOUT_EXTERNAL } = require('../connected-booking');
+async function connectedBookingPayloadBlocked(session, body) {
+  const {
+    connectedBookingAllowedForEmail,
+    CHECKOUT_EXTERNAL,
+    CHECKOUT_LINK_OUT,
+    isConnectedPlanActive,
+    accountHasAdminConnectedGrant,
+    accountHasLinkOutGrant,
+    loadOrganiserAccountForOrganiserId,
+  } = require('../connected-booking');
+  const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
   const mode = String(body.checkoutMode || body.checkout_mode || '').trim();
   const touchesExternal =
     mode === CHECKOUT_EXTERNAL ||
+    mode === CHECKOUT_LINK_OUT ||
     Object.prototype.hasOwnProperty.call(body, 'externalBookingUrl') ||
     Object.prototype.hasOwnProperty.call(body, 'external_booking_url') ||
     Object.prototype.hasOwnProperty.call(body, 'externalPriceLabel') ||
     Object.prototype.hasOwnProperty.call(body, 'external_price_label');
   if (!touchesExternal) return null;
   if (connectedBookingAllowedForEmail(session?.email)) return null;
+  if (!isSupabaseConfigured()) {
+    return {
+      status: 403,
+      body: {
+        error: 'connected_booking_not_available',
+        message: 'External booking is not available on your account yet.',
+      },
+    };
+  }
+  try {
+    const sb = getSupabaseAdmin();
+    let organiserId = String(
+      body.groupId || body.organiserGroupId || body.organiserId || body.organiser_id || ''
+    ).trim();
+    if (!organiserId) {
+      const eventId = String(body.id || body.eventId || '').trim();
+      if (eventId) {
+        const { data: ev } = await sb.from('events').select('organiser_id').eq('id', eventId).maybeSingle();
+        organiserId = String(ev?.organiser_id || '').trim();
+      }
+    }
+    if (organiserId) {
+      const account = await loadOrganiserAccountForOrganiserId(sb, organiserId);
+      if (
+        isConnectedPlanActive(account) ||
+        accountHasAdminConnectedGrant(account) ||
+        accountHasLinkOutGrant(account)
+      ) {
+        return null;
+      }
+    }
+  } catch {
+    /* fall through */
+  }
   return {
     status: 403,
     body: {
       error: 'connected_booking_not_available',
-      message: 'Connected booking is not available on your account yet.',
+      message: 'External booking is not available on your account yet.',
     },
   };
 }
@@ -270,7 +314,7 @@ module.exports = async function handler(req, res) {
       return json(res, manageGate.status, { error: manageGate.error, message: manageGate.message });
     }
     const body = parseBody(req);
-    const cbBlocked = connectedBookingPayloadBlocked(auth.session, body);
+    const cbBlocked = await connectedBookingPayloadBlocked(auth.session, body);
     if (cbBlocked) return json(res, cbBlocked.status, cbBlocked.body);
     const publishBlocked = await requireVerifiedForPublish(body);
     if (publishBlocked) return publishBlocked;
@@ -475,7 +519,7 @@ module.exports = async function handler(req, res) {
       }
     }
 
-    const cbBlocked = connectedBookingPayloadBlocked(auth.session, body);
+    const cbBlocked = await connectedBookingPayloadBlocked(auth.session, body);
     if (cbBlocked) return json(res, cbBlocked.status, cbBlocked.body);
 
     const title = String(body.title || '').trim();

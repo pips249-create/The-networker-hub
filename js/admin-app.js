@@ -9930,6 +9930,7 @@
       '<a href="#financials/organisers" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-brand-300 transition"><p class="font-bold text-brand-900">Organisers</p><p class="text-xs text-slate-500 mt-1">Stripe Connect status and ticket revenue</p></a>' +
       '<a href="#financials/payouts" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-brand-300 transition"><p class="font-bold text-brand-900">Payouts</p><p class="text-xs text-slate-500 mt-1">Queue and refunds pending</p></a>' +
       '<a href="#financials/activity" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-brand-300 transition"><p class="font-bold text-brand-900">Activity</p><p class="text-xs text-slate-500 mt-1">Recent registrations</p></a>' +
+      '<a href="#financials/external-booking" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm hover:border-brand-300 transition"><p class="font-bold text-brand-900">External booking</p><p class="text-xs text-slate-500 mt-1">Allocate free Connected or Link Out</p></a>' +
       '</div></div>';
     loadFinancialsData().then(function (data) {
       paintFinancialsSummary(
@@ -10130,7 +10131,7 @@
     var tab = resolveHubTab(
       fullHash,
       'financials',
-      ['overview', 'organisers', 'payouts', 'activity'],
+      ['overview', 'organisers', 'payouts', 'activity', 'external-booking'],
       'overview'
     );
     if (!tab) return;
@@ -10141,13 +10142,259 @@
         { key: 'organisers', label: 'Organisers', href: '#financials/organisers' },
         { key: 'payouts', label: 'Payouts', href: '#financials/payouts', badgeHtml: payoutBadge, badgeKey: 'pendingPayouts' },
         { key: 'activity', label: 'Activity', href: '#financials/activity' },
+        { key: 'external-booking', label: 'External booking', href: '#financials/external-booking' },
       ],
       tab
     );
     if (tab === 'organisers') withHubTabs(tabsHtml, renderFinancialsOrganisers);
     else if (tab === 'payouts') withHubTabs(tabsHtml, renderFinancialsPayouts);
     else if (tab === 'activity') withHubTabs(tabsHtml, renderFinancialsActivity);
+    else if (tab === 'external-booking') withHubTabs(tabsHtml, renderExternalBookingGrants);
     else withHubTabs(tabsHtml, renderFinancialsOverview);
+  }
+
+  function renderExternalBookingGrants() {
+    main.innerHTML =
+      '<div class="space-y-4" id="admin-external-booking-root">' +
+      '<p class="text-sm text-slate-600">Loading external booking grants…</p>' +
+      '</div>';
+
+    var root = document.getElementById('admin-external-booking-root');
+    var state = { q: '', accounts: [], stats: null, busy: false };
+
+    function paint() {
+      if (!root) return;
+      var stats = state.stats || {};
+      var rows = state.accounts || [];
+      if (state.q) {
+        rows = rows.filter(function (a) {
+          var orgBits = (a.organisers || [])
+            .map(function (o) {
+              return [o.name, o.email, o.slug].join(' ');
+            })
+            .join(' ');
+          return adminTextMatchesSearch(
+            [a.email, a.id, a.connectedGrantedBy, a.linkOutGrantedBy, orgBits].join(' '),
+            state.q
+          );
+        });
+      }
+
+      root.innerHTML =
+        '<div class="rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-950 space-y-1">' +
+        '<p><strong>Allocate free external booking</strong> for partners (e.g. BEETC / Martech Summit) without Vercel env vars.</p>' +
+        '<p><strong>Link Out</strong> — redirect button only (no webhook). <strong>Connected</strong> — redirect + optional attendee sync.</p>' +
+        '<p>Run Supabase migration <code class="text-xs">320_admin_external_booking_grants.sql</code> if grant columns are missing.</p>' +
+        '</div>' +
+        '<div class="grid gap-3 sm:grid-cols-3">' +
+        '<div class="rounded-xl border border-slate-200 bg-white p-4"><p class="text-xs font-semibold uppercase text-slate-500">Connected grants</p><p class="text-2xl font-bold text-brand-900 mt-1">' +
+        esc(String(stats.connectedGrants != null ? stats.connectedGrants : '—')) +
+        '</p></div>' +
+        '<div class="rounded-xl border border-slate-200 bg-white p-4"><p class="text-xs font-semibold uppercase text-slate-500">Link Out grants</p><p class="text-2xl font-bold text-brand-900 mt-1">' +
+        esc(String(stats.linkOutGrants != null ? stats.linkOutGrants : '—')) +
+        '</p></div>' +
+        '<div class="rounded-xl border border-slate-200 bg-white p-4"><p class="text-xs font-semibold uppercase text-slate-500">Accounts listed</p><p class="text-2xl font-bold text-brand-900 mt-1">' +
+        esc(String(stats.total != null ? stats.total : '—')) +
+        '</p></div>' +
+        '</div>' +
+        '<div class="rounded-xl border border-slate-200 bg-white p-4 space-y-3">' +
+        '<h3 class="text-sm font-semibold text-brand-900">Grant to an organiser email</h3>' +
+        '<div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">' +
+        '<div class="lg:col-span-2"><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="admin-eb-email">Email</label>' +
+        '<input id="admin-eb-email" type="email" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="tnguyen@themartechsummit.com"></div>' +
+        '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="admin-eb-type">Type</label>' +
+        '<select id="admin-eb-type" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">' +
+        '<option value="link_out">Link Out (redirect only)</option>' +
+        '<option value="connected">Connected (sync optional)</option>' +
+        '</select></div>' +
+        '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="admin-eb-plan">Connected plan</label>' +
+        '<select id="admin-eb-plan" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm">' +
+        '<option value="starter">Starter (1 page)</option>' +
+        '<option value="growth">Growth (5 pages)</option>' +
+        '<option value="scale">Scale (20 pages)</option>' +
+        '</select></div>' +
+        '</div>' +
+        '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="admin-eb-note">Note (optional)</label>' +
+        '<input id="admin-eb-note" type="text" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="BEETC partnership — free Link Out">' +
+        '</div>' +
+        '<div class="flex flex-wrap gap-2 items-center">' +
+        '<button type="button" id="admin-eb-lookup" class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Look up</button>' +
+        '<button type="button" id="admin-eb-grant" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-3 py-2 hover:bg-brand-900">Allocate grant</button>' +
+        '<span id="admin-eb-status" class="text-sm text-slate-500"></span>' +
+        '</div></div>' +
+        '<div class="rounded-xl border border-slate-200 bg-white p-4 space-y-3">' +
+        '<div class="flex flex-wrap items-end gap-3 justify-between">' +
+        '<div class="flex-1 min-w-[200px]"><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="admin-eb-q">Search grants</label>' +
+        '<input id="admin-eb-q" type="search" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm" placeholder="Email, group, note…" value="' +
+        attrEsc(state.q) +
+        '"></div>' +
+        '<button type="button" id="admin-eb-refresh" class="rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Refresh</button>' +
+        '</div></div>' +
+        '<div class="rounded-xl border border-slate-200 bg-white overflow-hidden">' +
+        '<div class="overflow-x-auto"><table class="min-w-full text-sm">' +
+        '<thead class="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500"><tr>' +
+        '<th class="px-4 py-3">Account</th><th class="px-4 py-3">Grants</th><th class="px-4 py-3">Groups</th><th class="px-4 py-3">Actions</th>' +
+        '</tr></thead><tbody>' +
+        (rows.length
+          ? rows
+              .map(function (a) {
+                var badges = [];
+                if (a.hasConnectedGrant) {
+                  badges.push(
+                    '<span class="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-semibold text-emerald-800">Connected ' +
+                      esc(a.connectedBookingPlan || 'starter') +
+                      '</span>'
+                  );
+                }
+                if (a.hasLinkOutGrant) {
+                  badges.push(
+                    '<span class="inline-flex rounded-full bg-sky-50 px-2 py-0.5 text-xs font-semibold text-sky-900">Link Out</span>'
+                  );
+                }
+                if (a.hasStripeSubscription) {
+                  badges.push(
+                    '<span class="inline-flex rounded-full bg-violet-50 px-2 py-0.5 text-xs font-semibold text-violet-900">Stripe sub</span>'
+                  );
+                }
+                var groups = (a.organisers || [])
+                  .slice(0, 3)
+                  .map(function (o) {
+                    return esc(o.name || 'Untitled');
+                  })
+                  .join(', ');
+                if ((a.organisers || []).length > 3) groups += '…';
+                return (
+                  '<tr class="border-t border-slate-100 align-top" data-eb-account="' +
+                  attrEsc(a.id) +
+                  '">' +
+                  '<td class="px-4 py-3"><p class="font-semibold text-brand-900">' +
+                  esc(a.email || '—') +
+                  '</p><p class="text-xs text-slate-500 font-mono">' +
+                  esc(a.id) +
+                  '</p>' +
+                  (a.connectedGrantNote || a.linkOutGrantNote
+                    ? '<p class="text-xs text-slate-600 mt-1">' +
+                      esc(a.connectedGrantNote || a.linkOutGrantNote) +
+                      '</p>'
+                    : '') +
+                  '</td>' +
+                  '<td class="px-4 py-3"><div class="flex flex-wrap gap-1.5">' +
+                  (badges.length ? badges.join('') : '<span class="text-xs text-slate-400">—</span>') +
+                  '</div></td>' +
+                  '<td class="px-4 py-3 text-xs text-slate-600">' +
+                  (groups || '—') +
+                  '</td>' +
+                  '<td class="px-4 py-3"><div class="flex flex-wrap gap-2">' +
+                  (a.hasConnectedGrant
+                    ? '<button type="button" class="rounded border border-red-200 px-2 py-1 text-xs font-semibold text-red-700 hover:bg-red-50" data-eb-action="revoke_connected">Revoke Connected</button>'
+                    : '') +
+                  (a.hasLinkOutGrant
+                    ? '<button type="button" class="rounded border border-red-200 px-2 py-1 text-xs font-semibold text-red-700 hover:bg-red-50" data-eb-action="revoke_link_out">Revoke Link Out</button>'
+                    : '') +
+                  '</div></td></tr>'
+                );
+              })
+              .join('')
+          : '<tr><td colspan="4" class="px-4 py-8 text-center text-slate-500">No complimentary grants yet. Allocate one above.</td></tr>') +
+        '</tbody></table></div></div>';
+
+      var qEl = document.getElementById('admin-eb-q');
+      if (qEl) {
+        qEl.addEventListener('input', function () {
+          state.q = qEl.value || '';
+          paint();
+        });
+      }
+      var refreshBtn = document.getElementById('admin-eb-refresh');
+      if (refreshBtn) refreshBtn.addEventListener('click', load);
+      var lookupBtn = document.getElementById('admin-eb-lookup');
+      if (lookupBtn) lookupBtn.addEventListener('click', function () { runAction('lookup'); });
+      var grantBtn = document.getElementById('admin-eb-grant');
+      if (grantBtn) {
+        grantBtn.addEventListener('click', function () {
+          var typeEl = document.getElementById('admin-eb-type');
+          var type = typeEl ? typeEl.value : 'link_out';
+          runAction(type === 'connected' ? 'grant_connected' : 'grant_link_out');
+        });
+      }
+      root.querySelectorAll('[data-eb-action]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var tr = btn.closest('[data-eb-account]');
+          var id = tr ? tr.getAttribute('data-eb-account') : '';
+          var action = btn.getAttribute('data-eb-action');
+          if (!id || !action) return;
+          if (!window.confirm('Revoke this grant?')) return;
+          runAction(action, id);
+        });
+      });
+    }
+
+    function setStatus(msg, isError) {
+      var el = document.getElementById('admin-eb-status');
+      if (!el) return;
+      el.textContent = msg || '';
+      el.className = 'text-sm ' + (isError ? 'text-red-700' : 'text-slate-500');
+    }
+
+    function runAction(action, accountId) {
+      if (state.busy) return;
+      var emailEl = document.getElementById('admin-eb-email');
+      var noteEl = document.getElementById('admin-eb-note');
+      var planEl = document.getElementById('admin-eb-plan');
+      var email = emailEl ? String(emailEl.value || '').trim() : '';
+      var body = { action: action };
+      if (accountId) body.accountId = accountId;
+      else body.email = email;
+      if (action === 'grant_connected') body.plan = planEl ? planEl.value : 'starter';
+      if (noteEl && noteEl.value) body.note = String(noteEl.value || '').trim();
+      if (!body.accountId && !body.email) {
+        setStatus('Enter an organiser email first.', true);
+        return;
+      }
+      state.busy = true;
+      setStatus(action === 'lookup' ? 'Looking up…' : 'Saving…');
+      adminPost('/api/admin/connected-booking', body).then(function (data) {
+        state.busy = false;
+        if (!data || !data.ok) {
+          setStatus((data && (data.message || data.error)) || 'Request failed', true);
+          return;
+        }
+        if (action === 'lookup') {
+          var a = data.account || {};
+          setStatus(
+            (a.email || 'Account') +
+              ' — Connected: ' +
+              (a.hasConnectedGrant ? a.connectedBookingPlan || 'yes' : 'no') +
+              ', Link Out: ' +
+              (a.hasLinkOutGrant ? 'yes' : 'no')
+          );
+          return;
+        }
+        setStatus('Saved.');
+        load();
+      });
+    }
+
+    function load() {
+      var url = '/api/admin/connected-booking';
+      if (state.q) url += '?q=' + encodeURIComponent(state.q);
+      adminGet(url).then(function (data) {
+        if (!data || !data.ok) {
+          if (root) {
+            root.innerHTML =
+              '<p class="text-sm text-red-700">' +
+              esc((data && (data.message || data.error)) || 'Could not load grants.') +
+              '</p>';
+          }
+          return;
+        }
+        state.accounts = data.accounts || [];
+        state.stats = data.stats || null;
+        paint();
+      });
+    }
+
+    load();
   }
 
   function renderFinancials() {

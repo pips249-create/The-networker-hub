@@ -35,6 +35,7 @@
 
   let billingActive = false;
   let featureEnabled = false;
+  let linkOutGranted = false;
   let loadedEvent = null;
   let billingPayload = null;
   let platformPicker = null;
@@ -69,12 +70,14 @@
   }
 
   function isExternalConnectedEvent(ev) {
-    return ev && String(ev.checkoutMode || '').trim() === 'external_connected';
+    if (!ev) return false;
+    var mode = String(ev.checkoutMode || '').trim();
+    return mode === 'external_connected' || mode === 'external_link';
   }
 
   function shouldShowCard() {
-    if (!featureEnabled) return false;
-    if (billingActive) return true;
+    if (!featureEnabled && !linkOutGranted) return false;
+    if (billingActive || linkOutGranted) return true;
     return isExternalConnectedEvent(loadedEvent);
   }
 
@@ -421,16 +424,26 @@
 
     if (isExternalConnectedEvent(loadedEvent)) {
       card.classList.add('is-active');
-      showStatus('This event uses Connected booking. Use Connected event setup to edit price and booking link.', 'ok');
+      var mode = String((loadedEvent && loadedEvent.checkoutMode) || '').trim();
+      showStatus(
+        mode === 'external_link'
+          ? 'This event uses Link Out. Use Connected event setup to edit the display price and booking link.'
+          : 'This event uses Connected booking. Use Connected event setup to edit price and booking link.',
+        'ok'
+      );
     } else {
       card.classList.remove('is-active');
-      if (!billingActive) {
+      if (!billingActive && !linkOutGranted) {
         showStatus(
           'This event uses Connected booking but your plan is not active. Renew or contact us.',
           'error'
         );
       } else {
-        showStatus('');
+        showStatus(
+          linkOutGranted && !billingActive
+            ? 'Link Out is enabled on your account. Continue to set the booking URL for this event.'
+            : ''
+        );
       }
     }
   }
@@ -454,9 +467,10 @@
   }
 
   api('/api/organiser/connected-booking').then(function (res) {
-    if (res.ok && res.data && res.data.featureEnabled) {
+    if (res.ok && res.data && (res.data.featureEnabled || res.data.linkOutGranted || res.data.connectedGranted)) {
       featureEnabled = true;
       billingActive = Boolean(res.data.active);
+      linkOutGranted = Boolean(res.data.linkOutGranted);
       billingPayload = res.data;
     }
     refreshCardVisibility();

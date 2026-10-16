@@ -184,7 +184,10 @@ module.exports = async function handler(req, res) {
       .maybeSingle();
     if (evRes.error) throw new Error(evRes.error.message);
     if (!evRes.data) return json(res, 404, { ok: false, error: 'event_not_found' });
-    if (String(evRes.data.checkout_mode || 'hub') === 'external_connected') {
+    if (
+      String(evRes.data.checkout_mode || 'hub') === 'external_connected' ||
+      String(evRes.data.checkout_mode || 'hub') === 'external_link'
+    ) {
       return json(res, 400, {
         ok: false,
         error: 'external_checkout',

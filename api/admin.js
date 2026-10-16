@@ -43,6 +43,7 @@ const routes = {
   campaigns: require('./_lib/routes/admin-campaigns'),
   rankings: require('./_lib/routes/admin-rankings'),
   founding: require('./_lib/routes/admin-founding'),
+  'connected-booking': require('./_lib/routes/admin-connected-booking'),
   'image-proxy': require('./_lib/routes/admin-image-proxy'),
   'sales-kit': require('./_lib/routes/admin-sales-kit'),
   spotlight: require('./_lib/routes/admin-spotlight'),

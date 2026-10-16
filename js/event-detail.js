@@ -1261,7 +1261,8 @@
 
   function eventIsExternalConnected(ev) {
     if (!ev || !String(ev.externalBookingUrl || '').trim()) return false;
-    if (String(ev.checkoutMode || '').trim() === 'external_connected') return true;
+    var mode = String(ev.checkoutMode || '').trim();
+    if (mode === 'external_connected' || mode === 'external_link') return true;
     return Boolean(String(ev.externalPriceLabel || '').trim());
   }
 
