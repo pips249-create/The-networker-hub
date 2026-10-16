@@ -40,16 +40,49 @@ function priceLabel(ev) {
   return '';
 }
 
+function isPlaceholderLocationText(raw) {
+  const s = String(raw || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
+  if (!s) return true;
+  return (
+    s === 'tbc' ||
+    s === 'tba' ||
+    s === 'tbd' ||
+    s === 'venue tbc' ||
+    s === 'location tbc' ||
+    s === 'venue tba' ||
+    s === 'location tba' ||
+    s === 'to be confirmed' ||
+    s === 'to be announced' ||
+    s === 'coming soon'
+  );
+}
+
+function firstRealLocationPart(parts) {
+  for (let i = 0; i < (parts || []).length; i++) {
+    const part = String(parts[i] || '').trim();
+    if (part && !isPlaceholderLocationText(part)) return part;
+  }
+  return '';
+}
+
 function buildEventDetailSsr(ev, origin) {
   if (!ev || !ev.title) return null;
   const slug = ev.slug || publicEventSlug(ev);
   const organiserSlug = ev.organiserSlug || '';
   const about = trimText(ev.description, 600);
-  const city = String(ev.city || '').trim();
-  const venue = String(ev.venue || ev.venueName || '').trim();
-  const address = String(ev.venueAddress || ev.address || '').trim();
+  const city = firstRealLocationPart([ev.city, ev.locationShort, ev.location]);
+  const venue = firstRealLocationPart([ev.venue, ev.venueName, ev.location, ev.locationShort, ev.city]);
+  const address = firstRealLocationPart([
+    [ev.address, ev.city, ev.postcode].filter(Boolean).join(', '),
+    ev.venueAddress,
+    ev.location,
+  ]);
   const locationLine =
-    [venue, city, ev.postcode].filter(Boolean).join(', ') || String(ev.location || '').trim();
+    firstRealLocationPart([[venue, city, ev.postcode].filter(Boolean).join(', '), ev.location]) ||
+    city;
   const dateLine = String(ev.date || ev.dateLine || '').trim();
   const timeLine = String(ev.time || '').trim();
   const ended = Boolean(ev.isEventPast || ev.salesClosedReason === 'ended');

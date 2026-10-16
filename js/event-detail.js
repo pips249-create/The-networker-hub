@@ -1430,9 +1430,39 @@
     };
   }
 
+  function isPlaceholderLocationText(raw) {
+    const s = String(raw || '')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, ' ');
+    if (!s) return true;
+    return (
+      s === 'tbc' ||
+      s === 'tba' ||
+      s === 'tbd' ||
+      s === 'venue tbc' ||
+      s === 'location tbc' ||
+      s === 'venue tba' ||
+      s === 'location tba' ||
+      s === 'to be confirmed' ||
+      s === 'to be announced' ||
+      s === 'coming soon'
+    );
+  }
+
+  function firstRealLocationPart(parts) {
+    for (let i = 0; i < parts.length; i++) {
+      const part = String(parts[i] || '').trim();
+      if (part && !isPlaceholderLocationText(part)) return part;
+    }
+    return '';
+  }
+
   function venueQuery(ev) {
     return [ev.venueName, ev.venueAddress, ev.venue, ev.postcode, ev.location]
-      .filter(Boolean)
+      .filter(function (part) {
+        return part && !isPlaceholderLocationText(part);
+      })
       .join(', ')
       .trim();
   }
@@ -1501,7 +1531,8 @@
     const online = isOnlineOnlyEvent(ev);
     const cityLabel = online
       ? 'Online'
-      : ev.city || ev.outcode || ev.locationShort || 'Location TBC';
+      : firstRealLocationPart([ev.city, ev.outcode, ev.locationShort, ev.location]) ||
+        'Location TBC';
     setText('ev-meta-city', cityLabel);
 
     const section = document.getElementById('ev-location-section');
@@ -1512,10 +1543,24 @@
       return;
     }
 
-    const vn = String(ev.venue || ev.venueName || '').trim();
-    const va = [ev.address, ev.city, ev.postcode].filter(Boolean).join(', ') || ev.venueAddress || '';
+    // Prefer real venue fields; never treat placeholder “TBC” as the venue name.
+    // Fall back to location_label / address when venue was cleared (e.g. older Link Out save).
+    const vn = firstRealLocationPart([
+      ev.venue,
+      ev.venueName,
+      ev.location,
+      ev.locationShort,
+      ev.city,
+    ]);
+    const va = firstRealLocationPart([
+      [ev.address, ev.city, ev.postcode].filter(Boolean).join(', '),
+      ev.venueAddress,
+      ev.location,
+    ]);
+    // Avoid repeating the same string as both name and address.
+    const addrDisplay = va && va !== vn ? va : '';
     setText('ev-venue-name', vn || 'Venue TBC');
-    setText('ev-venue-addr', va);
+    setText('ev-venue-addr', addrDisplay);
     applyMapAndDirections(ev);
 
     if (window.HUB_applyDetailRegionCta) {
