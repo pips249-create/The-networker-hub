@@ -59,6 +59,7 @@ const ORGANISER_EMAIL_SLUGS = new Set([
   'organiser_ticket_sales_nudge',
   'organiser_featured_expiry_reminder',
   'organiser_claim_invite',
+  'organiser_ownership_transfer',
   'opportunity_claim_invite',
   'affiliate_claim_invite',
   'franchise_claim_invite',

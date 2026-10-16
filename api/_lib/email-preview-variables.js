@@ -698,6 +698,16 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     vars.other_groups_note = vars.other_groups_note || '';
   }
 
+  if (slug === 'organiser_ownership_transfer') {
+    vars.claim_url = vars.claim_url || site + '/organiser/claim?token=preview-claim-token';
+    vars.organiser_name = vars.organiser_name || 'OxfordSTEM.Network';
+    vars.lead =
+      vars.lead ||
+      'You asked to claim and manage ' +
+        vars.organiser_name +
+        '. We have approved that request and updated the profile so this email address can take it over.';
+  }
+
   if (slug === 'opportunity_claim_invite') {
     const franchiseEmailFooterLogoDataUri = require('./franchise-email-footer-logo-datauri');
     vars.claim_url =

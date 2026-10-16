@@ -3374,7 +3374,7 @@
             (r.message
               ? '<p class="text-xs text-amber-900/85 mt-2 italic">“' + esc(r.message) + '”</p>'
               : '') +
-            '<p class="text-xs text-amber-900/85 mt-2">Verify the claimant, then approve to update the profile email and send the claim invite.</p>' +
+            '<p class="text-xs text-amber-900/85 mt-2">Verify the claimant, then approve to update the profile email and email them a link to take over the page.</p>' +
             '<div class="flex flex-wrap gap-2 mt-3">' +
             (r.organiserId
               ? '<a href="' +
@@ -18955,7 +18955,7 @@
       '</fieldset>' +
       '<label class="flex items-start gap-2 text-[11px] text-slate-700 cursor-pointer">' +
       '<input type="checkbox" class="group-transfer-immediate rounded border-slate-300 mt-0.5">' +
-      '<span>Grant ownership immediately (skip claim invite)</span></label>' +
+      '<span>Grant ownership immediately (skip takeover email)</span></label>' +
       '<div class="flex flex-wrap items-center gap-2">' +
       '<button type="button" class="group-transfer-submit rounded-lg border border-amber-300 bg-amber-50 text-amber-950 text-xs font-semibold px-3 py-1.5 hover:bg-amber-100">Transfer ownership</button>' +
       '<span class="group-transfer-msg text-xs"></span></div></div>' +
@@ -19067,7 +19067,7 @@
       '',
       claimMode === 'immediate'
         ? '• Ownership will be granted immediately'
-        : '• They will get a claim invite email',
+        : '• They will get an email to take over the page',
       keepEditor && keepEditor.checked
         ? '• Previous owner kept as editor on this group'
         : '• Previous owner will lose access to this group',
@@ -20377,7 +20377,7 @@
         !window.confirm(
           'Approve this claim request for “' +
             approveOrganiserName +
-            '”? The claimant email will become the profile contact and they will receive the claim invite email.'
+            '”? The claimant email will become the profile contact and they will receive an email to take over the page.'
         )
       ) {
         return;
@@ -20389,7 +20389,7 @@
       })
         .then(function (data) {
           if (!data || !data.ok) throw new Error((data && data.message) || 'Could not approve claim request');
-          var successMsg = (data && data.message) || 'Claim invite sent.';
+          var successMsg = (data && data.message) || 'Takeover email sent.';
           if (data && data.claimUrl) {
             successMsg += '\n\nClaim link (for your records):\n' + data.claimUrl;
           }
@@ -21453,7 +21453,7 @@
       '<div class="space-y-4">' +
       '<section class="rounded-xl border border-amber-200 bg-white p-4 shadow-sm space-y-3">' +
       '<div><h3 class="font-bold text-brand-900">Organiser claim requests</h3>' +
-      '<p class="text-xs text-slate-500 mt-0.5">Public claim requests — approve to update the profile email and send the claim invite, or mark resolved once handled.</p></div>' +
+      '<p class="text-xs text-slate-500 mt-0.5">Public claim requests — approve to update the profile email and email them a link to take over the page, or mark resolved once handled.</p></div>' +
       '<div id="group-claim-requests"><p class="text-sm text-slate-500">Loading claim requests…</p></div></section>' +
       '<section class="rounded-xl border border-red-200 bg-white p-4 shadow-sm space-y-3">' +
       '<div><h3 class="font-bold text-brand-900">Group profile disputes</h3>' +

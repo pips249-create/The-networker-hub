@@ -7,6 +7,7 @@ const { logEntityActivity } = require('./entity-activity-log');
 
 const CLAIM_INVITE_SLUGS = new Set([
   'organiser_claim_invite',
+  'organiser_ownership_transfer',
   'organiser_launch_invite',
   'organiser_directory_invite',
   'organiser_directory_invite_nudge',
@@ -85,6 +86,8 @@ async function logClaimInviteSent(opts) {
       const id = String(org.id || '').trim();
       if (!id) continue;
       const name = String(org.name || options.organiserName || '').trim() || 'group';
+      const summaryLead =
+        slug === 'organiser_ownership_transfer' ? 'ownership email sent to ' : 'claim invite emailed to ';
       const row = {
         actor_email: actorEmail,
         actor_role: 'system',
@@ -92,7 +95,7 @@ async function logClaimInviteSent(opts) {
         entity_id: id,
         organiser_id: id,
         action: 'admin_claim_invite',
-        summary: 'claim invite emailed to ' + email + (name ? ' (' + name.slice(0, 60) + ')' : ''),
+        summary: summaryLead + email + (name ? ' (' + name.slice(0, 60) + ')' : ''),
         metadata: {
           to: email,
           slug,

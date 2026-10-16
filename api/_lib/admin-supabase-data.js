@@ -1690,30 +1690,41 @@ async function approveOrganiserClaimRequest(requestId) {
   if (updateErr) throw new Error(updateErr.message);
 
   const { resolveOrganiserClaimUrl } = require('./organiser-claim-url');
-  const { sendTemplatedEmail } = require('./send-template-email');
-  const { campaignSiteVars } = require('./organiser-campaign-defaults');
+  const { sendOrganiserOwnershipTransferEmail } = require('./organiser-ownership-email');
   const host = String(process.env.SITE_URL || 'https://www.thenetworkeruk.com').replace(/\/$/, '');
   const claimUrl = await resolveOrganiserClaimUrl(claimantEmail, host);
   const organiserName =
     String(organiser.name || request.organiser_name || 'your group').trim() || 'your group';
 
-  await sendTemplatedEmail({
-    slug: 'organiser_claim_invite',
+  await sendOrganiserOwnershipTransferEmail({
     to: claimantEmail,
-    variables: {
-      ...campaignSiteVars(host),
-      organiser_name: organiserName,
-      claim_url: claimUrl,
-    },
-    skipEmailCheck: true,
+    organiserName,
+    claimUrl,
+    requested: true,
+    host,
   });
+
+  try {
+    const { logClaimInviteSent } = require('./organiser-claim-invite-log');
+    await logClaimInviteSent({
+      sb,
+      email: claimantEmail,
+      organiserId: organiser.id,
+      organiserName,
+      slug: 'organiser_ownership_transfer',
+      source: 'admin_claim_request_approved',
+      campaign: 'claim_request_approved',
+    });
+  } catch {
+    /* ignore */
+  }
 
   const { data: resolved, error: resolveErr } = await sb
     .from('organiser_claim_requests')
     .update({
       status: 'resolved',
       resolved_at: new Date().toISOString(),
-      admin_notes: 'Approved — contact email updated and claim invite sent.',
+      admin_notes: 'Approved — contact email updated and takeover email sent.',
     })
     .eq('id', id)
     .select('id, organiser_id, organiser_name, claimant_email')

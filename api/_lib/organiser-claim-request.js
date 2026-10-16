@@ -130,7 +130,7 @@ async function createOrganiserClaimRequest(input) {
     (role ? '<li><strong>Role:</strong> ' + escapeHtml(role) + '</li>' : '') +
     (message ? '<li><strong>Message:</strong> ' + escapeHtml(message) + '</li>' : '') +
     '</ul>' +
-    '<p><strong>Next steps:</strong> verify the claimant in Command Centre, update the profile contact email if needed, then approve to send the claim invite.</p>' +
+    '<p><strong>Next steps:</strong> verify the claimant in Command Centre, then approve to update the profile email and email them a link to take over the page.</p>' +
     '<p><a href="' +
     escapeHtml(adminUrl) +
     '">Open group cleanup in Command Centre</a></p>' +
