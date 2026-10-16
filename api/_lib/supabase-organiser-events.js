@@ -1496,10 +1496,25 @@ async function updateExternalBookingFields(eventId, payload) {
   const publishing =
     listingStatus === 'published' || listingStatus === 'publish' || listingStatus === 'live';
 
+  // Publish every date in the series (and any ids from Connected setup ?ids=).
+  const seedIds = [
+    id,
+    ...((Array.isArray(payload.eventIds) ? payload.eventIds : [])
+      .map((raw) => String(raw || '').trim())
+      .filter(Boolean)),
+  ];
+  const allIds = await expandEventIdsToSeriesPeers(sb, seedIds);
+  const { data: peerRows, error: peerErr } = await sb.from('events').select('*').in('id', allIds);
+  if (peerErr) throw new Error(peerErr.message);
+  const rowsById = new Map((peerRows || []).map((row) => [row.id, row]));
+  if (!rowsById.has(id)) rowsById.set(id, existing);
+
   if (publishing) {
-    assertEventHasDateForPublish(existing);
-    assertEventHasOrganiserForPublish(existing);
-    assertEventLanguageForPublish({ ...existing, status: 'published' }, existing);
+    for (const row of rowsById.values()) {
+      assertEventHasDateForPublish(row);
+      assertEventHasOrganiserForPublish(row);
+      assertEventLanguageForPublish({ ...row, status: 'published' }, row);
+    }
   }
 
   const row = await buildEventRow(
@@ -1524,24 +1539,51 @@ async function updateExternalBookingFields(eventId, payload) {
   if (row.approval_status !== undefined) patch.approval_status = row.approval_status;
   if (row.ticket_sales_enabled !== undefined) patch.ticket_sales_enabled = row.ticket_sales_enabled;
   if (row.attendance_mode !== undefined) patch.attendance_mode = row.attendance_mode;
-  if (publishing && !existing.published_at) {
-    patch.published_at = new Date().toISOString();
-  }
 
+  const targetIds = [...rowsById.keys()];
   if (!Object.keys(patch).length) {
-    return rowToEvent(existing);
+    const events = targetIds.map((peerId) => rowToEvent(rowsById.get(peerId))).filter(Boolean);
+    return {
+      event: rowToEvent(existing),
+      events,
+      eventIds: targetIds,
+    };
   }
 
-  const { data, error } = await updateEventRowById(sb, id, patch);
+  const { data: updatedRows, error } = await sb
+    .from('events')
+    .update(patch)
+    .in('id', targetIds)
+    .select('*');
   if (error) throw new Error(error.message);
 
-  if (publishing && String(data?.status || '').toLowerCase() === 'published') {
-    await publishOrganiserListingsForEventIds(sb, [data]);
+  let savedRows = updatedRows || [];
+  if (publishing) {
+    const needPublishedAt = savedRows.filter((r) => !r.published_at).map((r) => r.id);
+    if (needPublishedAt.length) {
+      const publishedAt = new Date().toISOString();
+      const { data: stamped, error: stampErr } = await sb
+        .from('events')
+        .update({ published_at: publishedAt })
+        .in('id', needPublishedAt)
+        .select('*');
+      if (stampErr) throw new Error(stampErr.message);
+      const stampedById = new Map((stamped || []).map((r) => [r.id, r]));
+      savedRows = savedRows.map((r) => stampedById.get(r.id) || r);
+    }
+  }
+
+  const anchor = savedRows.find((r) => r.id === id) || savedRows[0] || existing;
+  const events = savedRows.map(rowToEvent).filter(Boolean);
+  const eventIds = savedRows.map((r) => r.id).filter(Boolean);
+
+  if (publishing && String(anchor?.status || '').toLowerCase() === 'published') {
+    await publishOrganiserListingsForEventIds(sb, savedRows);
     try {
       const { notifyRosterMembersOfPublishedEvent } = require('./organiser-member-roster');
       const wasLive = String(existing.status || '').toLowerCase() === 'published';
       if (!wasLive) {
-        notifyRosterMembersOfPublishedEvent(data).catch((err) => {
+        notifyRosterMembersOfPublishedEvent(anchor).catch((err) => {
           console.error(
             '[updateExternalBookingFields] member list new-event email failed',
             id,
@@ -1554,7 +1596,11 @@ async function updateExternalBookingFields(eventId, payload) {
     }
   }
 
-  return rowToEvent(data);
+  return {
+    event: rowToEvent(anchor),
+    events: events.length ? events : [rowToEvent(anchor)],
+    eventIds: eventIds.length ? eventIds : [id],
+  };
 }
 
 async function updateEvent(eventId, payload) {
@@ -1760,6 +1806,26 @@ async function buildSharedSeriesRowTemplate(base, anchorId) {
   row = await inheritGroupPhotoIfMissing(row, payload);
   delete row.starts_at;
   delete row.ends_at;
+
+  // Create-mode defaults missing description/venue/etc. to null. Refill from the
+  // anchor row when the save payload omitted those fields (e.g. Link Out publish).
+  const id = String(anchorId || '').trim();
+  if (id) {
+    const sb = getSupabaseAdmin();
+    const { data: anchor } = await sb.from('events').select('*').eq('id', id).maybeSingle();
+    if (anchor) {
+      const { PEER_CONTENT_KEYS } = require('./listing-lifecycle');
+      PEER_CONTENT_KEYS.forEach((key) => {
+        if (
+          (row[key] == null || row[key] === '') &&
+          anchor[key] != null &&
+          anchor[key] !== ''
+        ) {
+          row[key] = anchor[key];
+        }
+      });
+    }
+  }
   return row;
 }
 
