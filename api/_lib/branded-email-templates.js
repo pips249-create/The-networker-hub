@@ -65,7 +65,7 @@ const BRANDED_EMAIL_TEMPLATES = {
   organiser_directory_invite_day7: {
     file: 'organiser-directory-invite-day7.html',
     marker: 'hub-email-layout-v3-purple',
-    subject: "Re: We love what you're doing at {{group_name}}",
+    subject: "Your next guests are already looking for {{group_name}}",
   },
   organiser_directory_invite_day21: {
     file: 'organiser-directory-invite-day21.html',

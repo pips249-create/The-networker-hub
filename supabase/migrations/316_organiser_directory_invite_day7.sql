@@ -13,7 +13,7 @@ values (
   'organiser_directory_invite_day7',
   'Directory invite day-7 note',
   'Sent seven days after the directory invitation when the group has not claimed their page.',
-  'Re: We love what you''re doing at {{group_name}}',
+  'Your next guests are already looking for {{group_name}}',
   '<p>stub — see email-templates/organiser-directory-invite-day7.html</p>',
   array[
     'group_name',
