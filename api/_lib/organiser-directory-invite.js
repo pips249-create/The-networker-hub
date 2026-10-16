@@ -162,11 +162,14 @@ async function sendOutreachEmail({
     const { sendTemplatedEmail } = require('./send-template-email');
     const { supportEmail } = require('./hub-email-urls');
     const organiserId = organiser && organiser.id ? String(organiser.id) : '';
+    // Admin/system claim outreach must reach newly provisioned logins.
+    // provisionOrganiserLogin sets emails_enabled=false (PECR default), which
+    // would otherwise block the invite that starts the day 3/7/21/35 sequence.
     await sendTemplatedEmail({
       slug,
       to: email,
       variables,
-      skipEmailCheck: false,
+      skipEmailCheck: true,
       replyTo: supportEmail(),
       idempotencyKey: idempotencyKey || undefined,
     });

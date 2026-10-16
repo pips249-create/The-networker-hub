@@ -20,8 +20,10 @@ const {
   directoryGroupsHtml,
   directoryInviteVariables,
   directoryInviteCreateMessage,
+  sendOrganiserDirectoryInvite,
 } = require('../api/_lib/organiser-directory-invite');
 const { staleUnclaimedReminderReason } = require('../api/_lib/organiser-unclaimed-reminders');
+const sendTemplateEmailModule = require('../api/_lib/send-template-email');
 
 function fail(msg) {
   console.error('FAIL:', msg);
@@ -132,6 +134,29 @@ async function main() {
   });
   assert(skipped.indexOf('no invitation sent') !== -1, skipped);
   pass('admin messages');
+
+  let capturedSendOpts = null;
+  const originalSend = sendTemplateEmailModule.sendTemplatedEmail;
+  sendTemplateEmailModule.sendTemplatedEmail = async function mockSend(opts) {
+    capturedSendOpts = opts;
+    return { id: 'test-email' };
+  };
+  try {
+    const inviteResult = await sendOrganiserDirectoryInvite({
+      to: 'hello@example.com',
+      host: 'https://www.thenetworkeruk.com',
+      organiser: { id: 'org-pinnacle', name: 'Pinnacle Business Hub', slug: 'pinnacle-business-hub' },
+      claimUrl:
+        'https://www.thenetworkeruk.com/organisers/pinnacle-business-hub?email=hello%40example.com&intent=organiser-claim',
+      actorEmail: 'admin@example.com',
+    });
+    assert(inviteResult && inviteResult.sent === true, 'directory invite reports sent');
+    assert(capturedSendOpts && capturedSendOpts.slug === DIRECTORY_INVITE_SLUG, 'uses directory invite slug');
+    assert(capturedSendOpts.skipEmailCheck === true, 'skips emails_enabled so provisioned logins still get the invite');
+    pass('directory invite bypasses emails_enabled');
+  } finally {
+    sendTemplateEmailModule.sendTemplatedEmail = originalSend;
+  }
 
   const base = {
     id: 'org-1',
