@@ -3,6 +3,7 @@ const { useSupabase } = require('../supabase');
 const { verifyOrganiserEmailToken, hasActiveVerifyCode } = require('../organiser-email-verification');
 const { getOrganiserAccessStatus } = require('../organiser-access-guard');
 const { getHubAccount } = require('../supabase-auth');
+const { maybeSendDeferredAccountWelcome } = require('../account-emails');
 
 function parseBody(req) {
   let body = req.body;
@@ -52,6 +53,18 @@ module.exports = async function handler(req, res) {
   try {
     const result = await verifyOrganiserEmailToken({ userId: session.sub, token });
     const status = await getOrganiserAccessStatus(session);
+
+    try {
+      // Register defers account_welcome until confirmation succeeds.
+      await maybeSendDeferredAccountWelcome({
+        userId: session.sub,
+        email: session.email,
+        name: session.name,
+      });
+    } catch {
+      /* Verification still succeeds if welcome email fails */
+    }
+
     return json(res, 200, {
       ok: true,
       verified: true,
