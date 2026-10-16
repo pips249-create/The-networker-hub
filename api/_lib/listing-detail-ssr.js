@@ -33,7 +33,12 @@ function absoluteUrl(origin, path) {
 function priceLabel(ev) {
   if (ev.priceKey === 'enquire') return 'Enquire for price';
   if (ev.priceKey === 'free' || ev.price === 'Free' || ev.hasFreeTickets) return 'Free';
-  if (ev.price && String(ev.price).trim()) return String(ev.price).trim();
+  if (ev.price && String(ev.price).trim()) {
+    // Match normalizeExternalPriceLabel — "Fro £455" → "From £455"
+    return String(ev.price)
+      .trim()
+      .replace(/^fro(?:m)?(\s+)/i, 'From$1');
+  }
   if (ev.priceNum != null && Number(ev.priceNum) > 0) {
     return '£' + Number(ev.priceNum).toFixed(2);
   }

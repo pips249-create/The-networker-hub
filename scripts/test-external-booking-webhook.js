@@ -18,6 +18,13 @@ assert.strictEqual(free.priceKey, 'free');
 const paid = parseExternalPriceLabelToDisplay('£12');
 assert.strictEqual(paid.priceNum, 12);
 
+const froTypo = parseExternalPriceLabelToDisplay('Fro £455.00');
+assert.strictEqual(froTypo.display, 'From £455.00');
+assert.strictEqual(froTypo.priceNum, 455);
+
+const fromLower = parseExternalPriceLabelToDisplay('from £12');
+assert.strictEqual(fromLower.display, 'From £12');
+
 const secret = newWebhookSecret();
 const body = Buffer.from(JSON.stringify({ orderId: 'a', eventId: 'b' }), 'utf8');
 const sig = signWebhookPayload(secret, body);

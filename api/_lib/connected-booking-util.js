@@ -116,8 +116,10 @@ function publicListingUsesExternalBooking(row) {
 }
 
 function normalizeExternalPriceLabel(raw) {
-  const text = String(raw || '').trim();
+  let text = String(raw || '').trim();
   if (!text) return '';
+  // Common typo / casing: "Fro £455" or "from £455" → "From £455"
+  text = text.replace(/^fro(?:m)?(\s+)/i, 'From$1');
   if (text.length > 80) return text.slice(0, 80).trim();
   return text;
 }
@@ -225,7 +227,7 @@ function parseExternalPriceLabelToDisplay(label) {
     const n = Number(String(fromMatch[1]).replace(/,/g, ''));
     const num = Number.isFinite(n) ? n : 0;
     return {
-      display: text.startsWith('From') || text.startsWith('from') ? text : `From £${num.toFixed(2)}`,
+      display: /^From\b/.test(text) ? text : `From £${num.toFixed(2)}`,
       priceKey: num > 0 ? 'paid' : 'free',
       priceNum: num,
     };
