@@ -824,6 +824,7 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     slug === 'organiser_directory_invite_day7' ||
     slug === 'organiser_directory_invite_day21' ||
     slug === 'organiser_directory_invite_day35' ||
+    slug === 'organiser_claimed_no_event' ||
     slug === 'organiser_unclaimed_followup'
   ) {
     const { directoryInviteVariables } = require('./organiser-directory-invite');
@@ -841,6 +842,9 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     if (slug === 'organiser_directory_invite_day21' && !vars.hosts_line) {
       const { hostsLine } = require('./organiser-directory-nudge');
       vars.hosts_line = hostsLine(['Top Clubs', 'Harbour & City Hosts']);
+    }
+    if (slug === 'organiser_claimed_no_event') {
+      vars.list_event_url = vars.list_event_url || site + '/organiser/event-format';
     }
   }
 

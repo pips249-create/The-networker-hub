@@ -7,6 +7,7 @@ const DIRECTORY_NUDGE_SLUG = 'organiser_directory_invite_nudge';
 const DIRECTORY_DAY7_SLUG = 'organiser_directory_invite_day7';
 const DIRECTORY_DAY21_SLUG = 'organiser_directory_invite_day21';
 const DIRECTORY_DAY35_SLUG = 'organiser_directory_invite_day35';
+const CLAIMED_NO_EVENT_SLUG = 'organiser_claimed_no_event';
 const UNCLAIMED_FOLLOWUP_SLUG = 'organiser_unclaimed_followup';
 
 function shouldSendDirectoryInvite(body) {
@@ -280,6 +281,25 @@ async function sendOrganiserDirectoryDay35({ to, host, organiser, claimUrl, acto
   });
 }
 
+async function sendOrganiserClaimedNoEvent({ to, host, organiser, claimUrl, actorEmail, extraVariables, siblingOrganisers }) {
+  const email = String(to || '')
+    .trim()
+    .toLowerCase();
+  return sendOutreachEmail({
+    slug: CLAIMED_NO_EVENT_SLUG,
+    to,
+    host,
+    organiser,
+    claimUrl,
+    actorEmail,
+    source: 'claimed_no_event',
+    campaign: 'claimed_no_event',
+    idempotencyKey: email ? 'claimed-no-event-' + email : undefined,
+    extraVariables,
+    siblingOrganisers,
+  });
+}
+
 async function sendOrganiserUnclaimedFollowup({ to, host, organiser, claimUrl, actorEmail }) {
   const organiserId = organiser && organiser.id ? String(organiser.id) : '';
   const day = new Date().toISOString().slice(0, 10);
@@ -302,6 +322,7 @@ module.exports = {
   DIRECTORY_DAY7_SLUG,
   DIRECTORY_DAY21_SLUG,
   DIRECTORY_DAY35_SLUG,
+  CLAIMED_NO_EVENT_SLUG,
   UNCLAIMED_FOLLOWUP_SLUG,
   shouldSendDirectoryInvite,
   groupedGroupName,
@@ -313,5 +334,6 @@ module.exports = {
   sendOrganiserDirectoryDay7,
   sendOrganiserDirectoryDay21,
   sendOrganiserDirectoryDay35,
+  sendOrganiserClaimedNoEvent,
   sendOrganiserUnclaimedFollowup,
 };
