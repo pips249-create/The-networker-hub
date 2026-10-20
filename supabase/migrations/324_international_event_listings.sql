@@ -10,6 +10,7 @@ create table if not exists public.international_event_listings (
   country_name text not null,
   organiser_name text not null,
   organiser_website text,
+  description text,
   external_url text not null,
   starts_at_local time,
   image_url text,

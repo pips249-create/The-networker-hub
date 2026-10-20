@@ -80,6 +80,14 @@ const staffSource = normalizeInput({ ...base, source: 'admin_staff' });
 assert.strictEqual(staffSource.source, 'admin_staff');
 assert.strictEqual(validateInput(staffSource).ok, true);
 
+const withDesc = normalizeInput({
+  ...base,
+  description: '  Morning networking for founders.  ',
+});
+assert.strictEqual(withDesc.description, 'Morning networking for founders.');
+assert.strictEqual(validateInput(withDesc).ok, true);
+assert.strictEqual(normalizeInput({ ...base, description: '' }).description, null);
+
 // Missing-table detection must be narrow — table name alone is not enough.
 assert.strictEqual(
   isMissingInternationalEventListingsTable({

@@ -522,6 +522,9 @@
           '</a></p>'
         : '<p class="intl-browse-card-organiser">' + escapeHtml(row.organiserName) + '</p>';
     }
+    var description = row.description
+      ? '<p class="intl-browse-card-desc">' + escapeHtml(row.description) + '</p>'
+      : '';
     var media = row.imageUrl
       ? '<div class="intl-browse-card-media"><img src="' +
         escapeAttr(row.imageUrl) +
@@ -543,6 +546,7 @@
       '<p class="intl-browse-card-place">' +
       place +
       '</p>' +
+      description +
       organiser +
       '<a class="intl-browse-card-cta" href="' +
       escapeAttr(row.externalUrl || '#') +
@@ -941,6 +945,9 @@
               escapeHtml(row.organiserName) +
               '</p>';
         }
+        var description = row.description
+          ? '<p class="intl-events-item-desc">' + escapeHtml(row.description) + '</p>'
+          : '';
         var media = row.imageUrl
           ? '<div class="intl-events-item-media"><img src="' +
             escapeAttr(row.imageUrl) +
@@ -961,6 +968,7 @@
           '<p class="intl-events-item-place">' +
           escapeHtml((row.city || '') + (row.countryName ? ', ' + row.countryName : '')) +
           '</p>' +
+          description +
           organiser +
           '<a class="intl-events-item-link" href="' +
           escapeAttr(row.externalUrl || '#') +
@@ -1286,6 +1294,9 @@
       countryName = String(els.eventCountry.options[els.eventCountry.selectedIndex].text || '').trim();
     }
     var startsAtLocal = els.eventTime ? String(els.eventTime.value || '').trim() : '';
+    var description = els.eventDescription
+      ? String(els.eventDescription.value || '').trim()
+      : '';
     var organiserName = String(els.eventOrganiser.value || '').trim();
     var organiserWebsite = String(els.eventOrganiserWebsite.value || '').trim();
     var externalUrl = String(els.eventUrl.value || '').trim();
@@ -1346,6 +1357,7 @@
         countryName: countryName,
         organiserName: organiserName,
         organiserWebsite: organiserWebsite || undefined,
+        description: description || undefined,
         externalUrl: externalUrl,
         imageUrl: imageUrl || undefined,
         name: contactName || undefined,
@@ -2017,6 +2029,7 @@
     els.eventModal = byId('intl-event-modal');
     els.eventForm = byId('intl-event-form');
     els.eventTitleField = byId('intl-event-name-field');
+    els.eventDescription = byId('intl-event-description');
     els.eventStarts = byId('intl-event-starts');
     els.eventTime = byId('intl-event-time');
     els.eventEnds = byId('intl-event-ends');
