@@ -368,7 +368,15 @@ async function submitInternationalEventListing(payload) {
     .single();
 
   if (insertRes.error) {
-    if (/international_event_listings/i.test(insertRes.error.message || '')) {
+    const dbMessage = String(insertRes.error.message || '');
+    console.error('[international-event-listings-insert]', dbMessage);
+    // Missing relation / schema cache → treat as not configured (migrations 324/325).
+    if (
+      /international_event_listings/i.test(dbMessage) ||
+      /schema cache/i.test(dbMessage) ||
+      insertRes.error.code === '42P01' ||
+      insertRes.error.code === 'PGRST205'
+    ) {
       const err = new Error(
         'Event submissions are not configured yet — email hi@thenetworkeruk.com with your event details.'
       );
