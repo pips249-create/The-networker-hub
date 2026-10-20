@@ -117,6 +117,36 @@ function isMissingInternationalEventListingsTable(error) {
   );
 }
 
+/**
+ * True when the table exists but is still on the early 324 shape (description /
+ * price_label) or is missing optional columns from 325/326.
+ */
+function isOutdatedInternationalEventListingsSchema(error) {
+  const code = String((error && error.code) || '').trim();
+  const msg = String((error && error.message) || error || '');
+  if (!/international_event_listings/i.test(msg)) return false;
+  if (isMissingInternationalEventListingsTable(error)) return false;
+  if (code === '42703' || code === 'PGRST204') {
+    return /organiser_name|organiser_website|starts_at_local|image_url/i.test(msg);
+  }
+  return (
+    /column international_event_listings\.(organiser_name|organiser_website|starts_at_local|image_url) does not exist/i.test(
+      msg
+    ) ||
+    /could not find the '(organiser_name|organiser_website|starts_at_local|image_url)' column of 'international_event_listings'/i.test(
+      msg
+    )
+  );
+}
+
+function schemaOutdatedError() {
+  const err = new Error(
+    'Event listings schema is outdated — run migration 326_international_event_organiser_columns.sql in Supabase.'
+  );
+  err.code = 'events_schema_outdated';
+  return err;
+}
+
 function normalizeInput(payload) {
   payload = payload || {};
   const allowedSources = new Set([
@@ -399,6 +429,9 @@ async function submitInternationalEventListing(payload) {
       err.code = 'not_configured';
       throw err;
     }
+    if (isOutdatedInternationalEventListingsSchema(insertRes.error)) {
+      throw schemaOutdatedError();
+    }
     const err = new Error(insertRes.error.message || 'Could not save your event.');
     err.code = 'save_failed';
     throw err;
@@ -491,6 +524,9 @@ async function listPublicInternationalEventListings(options) {
     if (isMissingInternationalEventListingsTable(res.error)) {
       return { ok: true, configured: false, events: [], total: 0 };
     }
+    if (isOutdatedInternationalEventListingsSchema(res.error)) {
+      return { ok: true, configured: false, events: [], total: 0, schemaOutdated: true };
+    }
     throw new Error(res.error.message || 'Could not load events.');
   }
 
@@ -519,6 +555,9 @@ async function listAdminInternationalEventListings(limit, status) {
       const err = new Error('events_table_missing');
       err.code = 'events_table_missing';
       throw err;
+    }
+    if (isOutdatedInternationalEventListingsSchema(res.error)) {
+      throw schemaOutdatedError();
     }
     throw new Error(res.error.message);
   }
@@ -557,7 +596,12 @@ async function updateInternationalEventListingStatus(id, status, session) {
     .select(ADMIN_SELECT)
     .single();
 
-  if (error) throw new Error(error.message);
+  if (error) {
+    if (isOutdatedInternationalEventListingsSchema(error)) {
+      throw schemaOutdatedError();
+    }
+    throw new Error(error.message);
+  }
   return { ok: true, event: mapAdmin(data) };
 }
 
@@ -626,6 +670,9 @@ async function createAdminInternationalEventListing(payload, session) {
       err.code = 'events_table_missing';
       throw err;
     }
+    if (isOutdatedInternationalEventListingsSchema(insertRes.error)) {
+      throw schemaOutdatedError();
+    }
     const err = new Error(insertRes.error.message || 'Could not save event.');
     err.code = 'save_failed';
     throw err;
@@ -646,6 +693,7 @@ module.exports = {
   validateInput,
   normalizeLocalTime,
   isMissingInternationalEventListingsTable,
+  isOutdatedInternationalEventListingsSchema,
   submitInternationalEventListing,
   createAdminInternationalEventListing,
   listPublicInternationalEventListings,
