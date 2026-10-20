@@ -219,12 +219,37 @@
     }
   }
 
+  function applyCheckoutSignInGateActionOrder(preferRegister) {
+    const signIn = document.getElementById('checkout-signin-btn');
+    const register = document.getElementById('checkout-register-btn');
+    if (!signIn || !register) return;
+    const actions = signIn.parentElement;
+    if (preferRegister) {
+      signIn.className = 'checkout-signin-register';
+      register.className = 'cta-btn';
+      if (actions && register.nextElementSibling !== signIn) {
+        actions.insertBefore(register, signIn);
+      }
+    } else {
+      signIn.className = 'cta-btn';
+      register.className = 'checkout-signin-register';
+      if (actions && signIn.nextElementSibling !== register) {
+        actions.insertBefore(signIn, register);
+      }
+    }
+  }
+
   function showCheckoutSignInGate(show, config) {
     const gate = document.getElementById('checkout-signin-gate');
     const panel = document.getElementById('tickets');
     const notice = document.getElementById('checkout-resume-notice');
     if (!gate) {
-      if (show) location.href = authPageUrl('login', true);
+      if (show) {
+        location.href = authPageUrl(
+          config && config.preferRegister ? 'register' : 'login',
+          true
+        );
+      }
       return;
     }
     bindSignInGateOnce();
@@ -243,8 +268,12 @@
       const checkoutFlag = config.checkoutFlag !== false;
       if (signIn) signIn.href = authPageUrl('login', checkoutFlag);
       if (register) register.href = authPageUrl('register', checkoutFlag);
+      applyCheckoutSignInGateActionOrder(Boolean(config.preferRegister));
     } else if (show) {
       showCheckoutProfileGate(false);
+      applyCheckoutSignInGateActionOrder(false);
+    } else {
+      applyCheckoutSignInGateActionOrder(false);
     }
     gate.hidden = !show;
     if (panel) {
@@ -1357,14 +1386,42 @@
     if (url) window.open(url, '_blank', 'noopener,noreferrer');
   }
 
+  function externalBookingOrganiserName(ev) {
+    return (ev && (ev.organiser || ev.organiserName)) || 'the organiser';
+  }
+
+  function externalBookingGateConfig(ev) {
+    const organiserName = externalBookingOrganiserName(ev);
+    return {
+      title: 'Create a free account to book',
+      lead:
+        'Tickets are sold on ' +
+        organiserName +
+        '\u2019s website. Join free first — use the same email when you pay, and we\u2019ll show your ticket in My account when it syncs.',
+      checkoutFlag: true,
+      preferRegister: true,
+    };
+  }
+
+  async function requireAccountForExternalBooking(ev) {
+    if (!ev) return false;
+    return requireSignedInAttendee({
+      gate: externalBookingGateConfig(ev),
+      intent: {
+        ev: ev,
+        data: { action: 'external_book' },
+      },
+    });
+  }
+
   let externalBookingSigninNudgeBound = false;
 
   function bindExternalBookingSigninNudgeOnce() {
     if (externalBookingSigninNudgeBound) return;
-    const btn = document.getElementById('external-booking-signin-btn');
-    if (!btn) return;
+    const checkBtn = document.getElementById('external-booking-signin-btn');
+    if (!checkBtn) return;
     externalBookingSigninNudgeBound = true;
-    btn.addEventListener('click', function () {
+    checkBtn.addEventListener('click', function () {
       const ev = activeEvent();
       if (ev && ev.id) {
         saveCheckoutIntent(ev, { action: 'external_registration_check' });
@@ -1374,6 +1431,7 @@
         lead:
           'If you bought on the organiser\u2019s ticket site, sign in with the same email address you used there. We\u2019ll show your ticket in My account when it has synced.',
         checkoutFlag: true,
+        preferRegister: false,
       });
     });
   }
@@ -1386,6 +1444,18 @@
     return true;
   }
 
+  function setExternalBookingBuyLabel(ev, signedIn) {
+    const buy = document.getElementById('buy-btn');
+    if (!buy || !ev || ev.isEventPast || ev.ticketSalesEnabled === false) return;
+    if (!String(ev.externalBookingUrl || '').trim()) return;
+    if (registrationIsConfirmedGoing(eventApplicationState)) return;
+    if (buy.disabled && buy.dataset.busy === '1') return;
+    const organiserName = externalBookingOrganiserName(ev);
+    buy.textContent = signedIn
+      ? 'Book on ' + organiserName + '\u2019s website'
+      : 'Create free account to book';
+  }
+
   async function syncExternalBookingSigninNudge(ev) {
     bindExternalBookingSigninNudgeOnce();
     const el = document.getElementById('external-booking-signin-nudge');
@@ -1396,6 +1466,11 @@
     }
     const signedIn = await isSignedInAttendee();
     el.hidden = signedIn;
+    setExternalBookingBuyLabel(ev, signedIn);
+    const jumpLabel = document.getElementById('ticket-jump-label');
+    if (jumpLabel && eventIsExternalConnected(ev) && !registrationIsConfirmedGoing(eventApplicationState)) {
+      jumpLabel.textContent = signedIn ? 'Book on organiser site' : 'Create free account to book';
+    }
   }
 
   function normalizeEventFlags(ev, params) {
@@ -3214,7 +3289,6 @@
       }
       if (urgencyEl) urgencyEl.textContent = '';
       const buy = document.getElementById('buy-btn');
-      const organiserName = ev.organiser || ev.organiserName || 'the organiser';
       if (buy && !ev.isEventPast && ev.ticketSalesEnabled !== false) {
         if (registrationIsConfirmedGoing(eventApplicationState)) {
           buy.disabled = true;
@@ -3223,7 +3297,8 @@
         } else {
           buy.disabled = false;
           buy.classList.remove('cta-btn-disabled');
-          buy.textContent = 'Book on ' + organiserName + '\u2019s website';
+          // Default signed-out label; syncExternalBookingSigninNudge upgrades if signed in.
+          buy.textContent = 'Create free account to book';
         }
       }
       applyExternalBookingCheckoutUi(ev);
@@ -4552,7 +4627,6 @@
       const alertPanelReset = document.getElementById('ticket-sales-alert');
       if (alertPanelReset) alertPanelReset.hidden = true;
       if (purchaseView) purchaseView.hidden = false;
-      const organiserName = ev.organiser || ev.organiserName || 'the organiser';
       if (ev.isEventPast) {
         panel.classList.add('is-unavailable');
         buy.disabled = true;
@@ -4571,7 +4645,8 @@
       } else {
         buy.disabled = false;
         buy.classList.remove('cta-btn-disabled');
-        buy.textContent = 'Book on ' + organiserName + '\u2019s website';
+        // Default signed-out label; syncExternalBookingSigninNudge upgrades if signed in.
+        buy.textContent = 'Create free account to book';
         if (purchaseView) purchaseView.removeAttribute('aria-hidden');
       }
       applyExternalBookingCheckoutUi(ev);
@@ -4887,7 +4962,7 @@
       else if (showAlumniTierSelected(ev)) labelText = 'Previous attendee ticket';
       else labelText = 'Apply for a seat';
     }
-    else if (eventIsExternalConnected(ev)) labelText = 'Book on organiser site';
+    else if (eventIsExternalConnected(ev)) labelText = 'Create free account to book';
     else if (ev.priceKey === 'free') labelText = 'Get free ticket';
     else labelText = 'Buy ticket';
 
@@ -5747,6 +5822,9 @@
             await refreshEventApplicationUi(evNow);
             return;
           }
+          if (!(await requireAccountForExternalBooking(evNow))) {
+            return;
+          }
           openExternalBookingForEvent(evNow);
           return;
         }
@@ -5975,6 +6053,21 @@
         await syncExternalBookingSigninNudge(eventForResume);
         const panel = document.getElementById('tickets');
         if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        return;
+      }
+
+      if (intent.action === 'external_book') {
+        clearCheckoutIntent();
+        showCheckoutSignInGate(false);
+        await refreshEventApplicationUi(eventForResume);
+        applyTicketPanelState(eventForResume);
+        await syncExternalBookingSigninNudge(eventForResume);
+        if (registrationIsConfirmedGoing(eventApplicationState)) {
+          const panel = document.getElementById('tickets');
+          if (panel) panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          return;
+        }
+        openExternalBookingForEvent(eventForResume);
         return;
       }
 
