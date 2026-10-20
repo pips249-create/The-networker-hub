@@ -760,8 +760,22 @@
       region: region.id,
       country: (fromCountry && fromCountry.iso2) || '',
     });
+    var singleCountry =
+      codes.length === 1 &&
+      (!fromCountry ||
+        !fromCountry.iso2 ||
+        String(fromCountry.iso2).toUpperCase() === String(codes[0]).toUpperCase());
+    var sameName =
+      fromCountry &&
+      fromCountry.name &&
+      String(fromCountry.name).toLowerCase() === String(region.name || '').toLowerCase();
     var lede;
-    if (fromCountry && fromCountry.name) {
+    if (singleCountry || sameName) {
+      lede =
+        'Browse upcoming link-out networking events in ' +
+        (fromCountry && fromCountry.name ? fromCountry.name : region.name) +
+        ', then book on the organiser’s site.';
+    } else if (fromCountry && fromCountry.name) {
       lede =
         fromCountry.name +
         ' is part of ' +
@@ -776,7 +790,7 @@
       kind: 'region',
       region: region,
       fromCountry: fromCountry,
-      kicker: 'Region',
+      kicker: singleCountry || sameName ? 'Country' : 'Region',
       title: region.name,
       lede: lede,
       countryCodes: codes,
@@ -786,7 +800,7 @@
         if (!state.browseContext || state.browseContext.kind !== 'region') return;
         if (!state.browseContext.region || state.browseContext.region.id !== region.id) return;
         paintBrowseList(events, {
-          showCountry: true,
+          showCountry: !(singleCountry || sameName),
           emptyMessage:
             'No upcoming link-out events across ' +
             region.name +
