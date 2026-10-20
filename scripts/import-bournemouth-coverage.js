@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 /**
- * Bournemouth / BCP coverage: organiser shells, BNI chapters, monthly networks,
- * series extensions, Link Out booking CTAs. Claim/invite emails stay off.
+ * Bournemouth / BCP coverage: unclaimed organiser shells + listing-backed dates
+ * only (no cadence guesses). Claim/invite emails stay off.
+ * Never writes events for claimed/paying organisers (TOP, ticketed clubs, etc.).
+ * --apply also removes previously invented projected dates (see PROJECTED_REMOVE).
  *
  *   node scripts/import-bournemouth-coverage.js
  *   node scripts/import-bournemouth-coverage.js --apply
@@ -152,6 +154,10 @@ async function ensureGroup(sb, spec) {
       .eq('id', spec.preferExistingId)
       .maybeSingle();
     if (data) {
+      if (await isClaimedOrPayingOrganiser(sb, data.id)) {
+        console.log(`  · reuse claimed/paying ${spec.name} (read-only — no event writes)`);
+        return data.id;
+      }
       if (String(data.listing_status || '').toLowerCase() !== 'published' && APPLY) {
         await sb.from('organisers').update({ listing_status: 'published' }).eq('id', data.id);
       }
@@ -165,6 +171,10 @@ async function ensureGroup(sb, spec) {
     .limit(1)
     .maybeSingle();
   if (byName) {
+    if (await isClaimedOrPayingOrganiser(sb, byName.id)) {
+      console.log(`  · found claimed/paying ${spec.name} (read-only — no event writes)`);
+      return byName.id;
+    }
     if (String(byName.listing_status || '').toLowerCase() !== 'published' && APPLY) {
       await sb.from('organisers').update({ listing_status: 'published' }).eq('id', byName.id);
     }
@@ -243,27 +253,62 @@ function eachWeekday(fromIsoDate, toIsoDate, weekday /* 0=Sun … 5=Fri */) {
   return out;
 }
 
-function nthWeekdayOfMonth(year, monthIndex0, weekday, n) {
-  const d = new Date(Date.UTC(year, monthIndex0, 1, 12));
-  while (d.getUTCDay() !== weekday) d.setUTCDate(d.getUTCDate() + 1);
-  d.setUTCDate(d.getUTCDate() + (n - 1) * 7);
-  if (d.getUTCMonth() !== monthIndex0) return null;
-  return d.toISOString().slice(0, 10);
-}
+/**
+ * Dates previously invented from monthly cadence (not each backed by a listing).
+ * Removed on --apply so the hub only keeps listing-backed rows.
+ */
+const PROJECTED_REMOVE = [
+  // Property Wave — keep 2026-11-04 only
+  { titleMatch: 'Property Wave Networking Event', days: ['2026-12-02', '2027-01-06', '2027-02-03', '2027-03-03'] },
+  // Ladies Who Latte — keep 2026-11-10 only
+  {
+    titleMatch: 'Bournemouth Ladies Who Latte',
+    days: ['2026-12-08', '2027-01-12', '2027-02-09', '2027-03-09'],
+  },
+  // BCP — keep 2026-11-11 + 2026-12-02 only
+  {
+    titleMatch: 'BCP Business Network Bournemouth',
+    days: ['2027-01-13', '2027-02-10', '2027-03-10'],
+  },
+  // BH Banter Q1 seeds (never listing-backed)
+  { titleMatch: 'BH Banter', days: ['2027-01-20', '2027-02-17', '2027-03-17'] },
+];
 
-function monthsRange(fromY, fromM0, toY, toM0) {
-  const out = [];
-  let y = fromY;
-  let m = fromM0;
-  while (y < toY || (y === toY && m <= toM0)) {
-    out.push([y, m]);
-    m += 1;
-    if (m > 11) {
-      m = 0;
-      y += 1;
+async function removeProjectedDates(sb) {
+  console.log('\n0) Remove previously projected (non-listing-backed) dates');
+  for (const spec of PROJECTED_REMOVE) {
+    for (const day of spec.days) {
+      const start = day + 'T00:00:00.000Z';
+      const end = day + 'T23:59:59.999Z';
+      const { data, error } = await sb
+        .from('events')
+        .select('id, title, starts_at, organiser_id')
+        .ilike('title', spec.titleMatch + '%')
+        .gte('starts_at', start)
+        .lte('starts_at', end);
+      if (error) {
+        console.warn('  · lookup failed', spec.titleMatch, day, error.message);
+        continue;
+      }
+      if (!data || !data.length) {
+        console.log(`  · none: ${spec.titleMatch} @ ${day}`);
+        continue;
+      }
+      for (const row of data) {
+        if (await isClaimedOrPayingOrganiser(sb, row.organiser_id)) {
+          console.log(`  · skip delete (claimed/paying): ${row.title} @ ${day}`);
+          continue;
+        }
+        if (!APPLY) {
+          console.log(`  · would delete: ${row.title} @ ${day} (${row.id})`);
+          continue;
+        }
+        const { error: delErr } = await sb.from('events').delete().eq('id', row.id);
+        if (delErr) console.warn('  · delete failed', row.id, delErr.message);
+        else console.log(`  · deleted: ${row.title} @ ${day}`);
+      }
     }
   }
-  return out;
 }
 
 async function publishOne(sb, organiserId, spec, seriesGroupId) {
@@ -429,7 +474,9 @@ async function main() {
   }
   const sb = getSupabaseAdmin();
   console.log(APPLY ? 'APPLY mode' : 'DRY-RUN — pass --apply to write');
-  console.log('Bournemouth coverage: groups + BNI + series + Q1');
+  console.log('Bournemouth coverage: listing-backed dates only');
+
+  await removeProjectedDates(sb);
 
   console.log('\n1) Organiser shells (published, no claim email)');
   const shorelineId = await ensureGroup(sb, {
@@ -490,14 +537,6 @@ async function main() {
     description:
       'Dorset Chamber of Commerce & Industry — networking lunches, toolkits and member events across Dorset.',
   });
-  const bournemouthChamberId = await ensureGroup(sb, {
-    key: 'bournemouthChamber',
-    name: 'Bournemouth Chamber of Trade & Commerce',
-    email: 'hi@thenetworkeruk.com',
-    website: 'https://bournemouthchamber.org.uk/events/',
-    description:
-      'Bournemouth Chamber of Trade & Commerce — BH Banter evenings and local business networking since 1916.',
-  });
   const giantPeachId = await ensureGroup(sb, {
     key: 'giantPeach',
     name: 'Giant Peach',
@@ -542,13 +581,15 @@ async function main() {
   await setLogoIfEmpty(sb, shorelineId, BNI_LOGO, 'BNI Shoreline');
   await setLogoIfEmpty(sb, prioryId, BNI_CDN_LOGO, 'BNI Priory');
 
-  console.log('\n2) BNI weekly chapters through March 2027');
+  console.log('\n2) BNI chapters — standing weekly meetings (chapter schedule, not one-off tickets)');
+  // Shoreline Eventbrite is multi-date; Priory publishes as weekly Thursday chapter.
+  // Cap at end of 2026 so we do not invent a long Q1 2027 runway without listings.
   await extendSeries(sb, {
     name: 'BNI Shoreline Bournemouth',
     organiserId: shorelineId,
     title: 'BNI Shoreline Bournemouth Weekly Networking Meeting',
     titleMatch: 'BNI Shoreline Bournemouth',
-    days: eachWeekday('2026-10-21', '2027-03-30', 2), // Tuesdays
+    days: eachWeekday('2026-10-21', '2026-12-29', 2), // Tuesdays
     startTime: '09:30:00',
     endTime: '11:00:00',
     venue: 'Carlton Hotel',
@@ -568,7 +609,7 @@ async function main() {
     organiserId: prioryId,
     title: 'BNI Priory Christchurch Weekly Business Networking Meeting',
     titleMatch: 'BNI Priory Christchurch',
-    days: eachWeekday('2026-10-23', '2027-03-25', 4), // Thursdays
+    days: eachWeekday('2026-10-23', '2026-12-31', 4), // Thursdays
     startTime: '06:45:00',
     endTime: '08:30:00',
     venue: 'Chapel Gate / BU Sports Campus',
@@ -583,77 +624,71 @@ async function main() {
       'Weekly Thursday BNI Priory breakfast meeting at Chapel Gate (BU Sports Campus), Parley — serving Christchurch, Bournemouth and East Dorset. One member per category; visitors arrange via the chapter.',
   });
 
-  console.log('\n3) Monthly networks + one-offs (Nov–Mar)');
-  // Intentionally NOT extending TOP / Fore / PPN / Christchurch Chamber —
-  // those are claimed or ticketed organisers who manage their own calendars.
-  // BCP brunch — known Nov/Dec + 2nd Wed Jan–Mar
-  const bcpDays = ['2026-11-11', '2026-12-02'].concat(
-    monthsRange(2027, 0, 2027, 2)
-      .map(([y, m]) => nthWeekdayOfMonth(y, m, 3, 2))
-      .filter(Boolean)
-  );
-  for (const day of bcpDays) {
-    const festive = day === '2026-12-02';
-    await publishOne(sb, bcpId, {
-      title: festive
-        ? 'BCP Festive Brunch with Mini Showcase'
-        : 'BCP Business Network Bournemouth, Brunch & Showcase',
-      titleMatch: festive ? 'BCP Festive Brunch' : 'BCP Business Network Bournemouth',
-      date: `${day}T09:30:00+00:00`,
-      endDate: `${day}T15:30:00+00:00`,
-      venue: 'The Village Hotel',
-      addressLine1: 'Deansleigh Road',
-      city: 'Bournemouth',
-      postcode: 'BH7 7DZ',
-      bookingUrl:
-        'https://www.eventbrite.co.uk/e/bcp-business-network-bournemouth-brunch-showcase-tickets-1369659210569',
-      priceLabel: festive ? 'From £22' : 'From £13',
-      description:
-        'BCP Business Network monthly brunch and afternoon business showcase at Village Hotel Bournemouth — structured networking for BCP-area professionals.',
-    });
-  }
+  console.log('\n3) Listing-backed one-offs only (no cadence guesses)');
+  // Intentionally NOT extending TOP / Fore / PPN / Christchurch Chamber.
 
-  // Property Wave — first Wednesday
-  for (const [y, m] of monthsRange(2026, 10, 2027, 2)) {
-    const day = nthWeekdayOfMonth(y, m, 3, 1);
-    if (!day || day < '2026-11-01') continue;
-    await publishOne(sb, propertyWaveId, {
-      title: 'Property Wave Networking Event',
-      titleMatch: 'Property Wave Networking Event',
-      date: `${day}T19:30:00+00:00`,
-      endDate: `${day}T21:30:00+00:00`,
-      venue: 'Brewhouse and Kitchen (Malthouse)',
-      addressLine1: '147 Parkwood Road, Southbourne',
-      city: 'Bournemouth',
-      postcode: 'BH5 2BW',
-      bookingUrl:
-        'https://www.eventbrite.co.uk/e/property-wave-networking-event-4th-november-2026-tickets-2003548145437',
-      priceLabel: '£5',
-      description:
-        'Monthly Property Wave meetup — informal property investor networking at Brewhouse and Kitchen, Southbourne. First Wednesday of the month; £5 on the door.',
-    });
-  }
+  await publishOne(sb, bcpId, {
+    title: 'BCP Business Network Bournemouth, Brunch & Showcase',
+    titleMatch: 'BCP Business Network Bournemouth',
+    date: '2026-11-11T09:30:00+00:00',
+    endDate: '2026-11-11T15:30:00+00:00',
+    venue: 'The Village Hotel',
+    addressLine1: 'Deansleigh Road',
+    city: 'Bournemouth',
+    postcode: 'BH7 7DZ',
+    bookingUrl:
+      'https://www.eventbrite.co.uk/e/bcp-business-network-bournemouth-brunch-showcase-tickets-1369659210569',
+    priceLabel: 'From £13',
+    description:
+      'BCP Business Network monthly brunch and afternoon business showcase at Village Hotel Bournemouth — structured networking for BCP-area professionals.',
+  });
 
-  // Ladies Who Latte — 2nd Tuesday
-  for (const [y, m] of monthsRange(2026, 10, 2027, 2)) {
-    const day = nthWeekdayOfMonth(y, m, 2, 2);
-    if (!day || day < '2026-11-01') continue;
-    await publishOne(sb, ladiesId, {
-      title: 'Bournemouth Ladies Who Latte',
-      titleMatch: 'Bournemouth Ladies Who Latte',
-      date: `${day}T10:00:00+00:00`,
-      endDate: `${day}T12:00:00+00:00`,
-      venue: 'Iford Golf Centre (Christchurch Golf Club)',
-      addressLine1: 'Riverside Avenue',
-      city: 'Bournemouth',
-      postcode: 'BH7 7ES',
-      bookingUrl:
-        'https://www.eventbrite.co.uk/e/bournemouth-ladies-who-latte-november-2026-tickets-2003398754605',
-      priceLabel: 'Free',
-      description:
-        'Free monthly women’s business networking — structured introductions at Iford Golf Centre. Second Tuesday of the month; ticket required.',
-    });
-  }
+  await publishOne(sb, bcpId, {
+    title: 'BCP Festive Brunch with Mini Showcase',
+    titleMatch: 'BCP Festive Brunch',
+    date: '2026-12-02T09:00:00+00:00',
+    endDate: '2026-12-02T15:30:00+00:00',
+    venue: 'The Village Hotel',
+    addressLine1: 'Deansleigh Road',
+    city: 'Bournemouth',
+    postcode: 'BH7 7DZ',
+    bookingUrl: 'https://www.eventbrite.co.uk/o/bcp-business-network-111440665021',
+    priceLabel: 'From £22',
+    description:
+      'BCP Festive Brunch with Mini Showcase at Village Hotel Bournemouth — festive networking brunch for BCP-area professionals.',
+  });
+
+  await publishOne(sb, propertyWaveId, {
+    title: 'Property Wave Networking Event - 4th November 2026',
+    titleMatch: 'Property Wave Networking Event',
+    date: '2026-11-04T19:30:00+00:00',
+    endDate: '2026-11-04T21:30:00+00:00',
+    venue: 'Brewhouse and Kitchen (Malthouse)',
+    addressLine1: '147 Parkwood Road, Southbourne',
+    city: 'Bournemouth',
+    postcode: 'BH5 2BW',
+    bookingUrl:
+      'https://www.eventbrite.co.uk/e/property-wave-networking-event-4th-november-2026-tickets-2003548145437',
+    priceLabel: '£5',
+    description:
+      'Property Wave meetup — informal property investor networking at Brewhouse and Kitchen, Southbourne. £5 on the door.',
+  });
+
+  await publishOne(sb, ladiesId, {
+    title: 'Bournemouth Ladies Who Latte - November 2026',
+    titleMatch: 'Bournemouth Ladies Who Latte',
+    date: '2026-11-10T10:00:00+00:00',
+    endDate: '2026-11-10T12:00:00+00:00',
+    venue: 'Iford Golf Centre (Christchurch Golf Club)',
+    addressLine1: 'Riverside Avenue',
+    city: 'Bournemouth',
+    postcode: 'BH7 7ES',
+    bookingUrl:
+      'https://www.eventbrite.co.uk/e/bournemouth-ladies-who-latte-november-2026-tickets-2003398754605',
+    priceLabel: 'Free',
+    description:
+      'Free women’s business networking — structured introductions at Iford Golf Centre. Ticket required.',
+  });
 
   await publishOne(sb, dbaId, {
     title: 'Dorset Business Angels Pitch Presentation Event - November 2026',
