@@ -14,11 +14,19 @@ window.INTL_REGION_SEED = [
     "marketsList": false
   },
   {
-    "id": "north_america",
-    "name": "North America",
-    "blurb": "United States is building; Canada registers via the map.",
+    "id": "united_states",
+    "name": "United States",
+    "blurb": "United States is building — dedicated intake page.",
     "codes": [
-      "US",
+      "US"
+    ],
+    "marketsList": false
+  },
+  {
+    "id": "canada",
+    "name": "Canada",
+    "blurb": "Canada registers via the map — no separate page yet.",
+    "codes": [
       "CA"
     ],
     "marketsList": true
