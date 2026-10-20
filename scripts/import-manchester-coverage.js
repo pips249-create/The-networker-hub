@@ -135,17 +135,39 @@ async function enrichGeo({ venue, addressLine1, city, postcode }) {
 }
 
 async function ensureGroup(sb, spec) {
-  if (spec.slug) {
-    const { data } = await sb.from('organisers').select('id, listing_status').eq('slug', spec.slug).maybeSingle();
-    if (data) return data.id;
+  // Prefer existing organisers — never create a second shell for the same group.
+  if (spec.preferExistingId) {
+    const { data } = await sb
+      .from('organisers')
+      .select('id, name, listing_status')
+      .eq('id', spec.preferExistingId)
+      .maybeSingle();
+    if (data) {
+      console.log(`  · reuse existing ${data.name} (${data.id})`);
+      return data.id;
+    }
   }
-  const { data: byName } = await sb
-    .from('organisers')
-    .select('id, listing_status')
-    .ilike('name', spec.name)
-    .limit(1)
-    .maybeSingle();
-  if (byName) return byName.id;
+  const slugs = [spec.slug, ...(spec.slugAliases || [])].filter(Boolean);
+  for (const slug of slugs) {
+    const { data } = await sb.from('organisers').select('id, name').eq('slug', slug).maybeSingle();
+    if (data) {
+      console.log(`  · reuse by slug ${slug} → ${data.name}`);
+      return data.id;
+    }
+  }
+  const names = [spec.name, ...(spec.nameAliases || [])].filter(Boolean);
+  for (const name of names) {
+    const { data: byName } = await sb
+      .from('organisers')
+      .select('id, name')
+      .ilike('name', name)
+      .limit(1)
+      .maybeSingle();
+    if (byName) {
+      console.log(`  · reuse by name → ${byName.name} (${byName.id})`);
+      return byName.id;
+    }
+  }
   if (!APPLY) {
     console.log(`  · would create group ${spec.name}`);
     return `dry-run:${spec.key}`;
@@ -480,9 +502,12 @@ const VERIFIED = [
   },
 ];
 
+/** Prefer these live IDs/slugs on re-run so we never create duplicate shells. */
 const ORG_SPECS = {
   propertyNexus: {
     key: 'propertyNexus',
+    preferExistingId: '05e3883b-b0e5-48dc-90b7-2a1e4d0960f3',
+    slug: 'property-nexus',
     name: 'Property Nexus',
     email: 'hi@thenetworkeruk.com',
     website: 'https://www.eventbrite.co.uk/o/property-nexus-85527918003',
@@ -490,21 +515,30 @@ const ORG_SPECS = {
   },
   gmChamber: {
     key: 'gmChamber',
+    preferExistingId: '04ec9151-6c0b-4cdb-b667-f28342ab4b0f',
+    slug: 'greater-manchester-chamber-of-commerce',
     name: 'Greater Manchester Chamber of Commerce',
+    nameAliases: ['GM Chamber', 'Greater Manchester Chamber'],
     email: 'hi@thenetworkeruk.com',
     website: 'https://www.gmchamber.co.uk/events',
     description: 'Greater Manchester Chamber — networking, training and flagship events for regional business.',
   },
   natwestAccelerator: {
     key: 'natwestAccelerator',
+    preferExistingId: 'f51ddef0-76b6-41a8-962d-76b467a0e2c6',
+    slug: 'natwest-accelerator-manchester',
     name: 'NatWest Accelerator Manchester',
+    nameAliases: ['Manchester NatWest Accelerator'],
     email: 'hi@thenetworkeruk.com',
     website: 'https://www.eventbrite.co.uk/o/manchester-natwest-accelerator-45703125883',
     description: 'NatWest Accelerator Manchester hub — founder programmes, She Scales and co-working community.',
   },
   bniCityCentre: {
     key: 'bniCityCentre',
+    preferExistingId: '4dc57863-c781-45ec-974f-b3e1c63ced97',
+    slug: 'bni-manchester-city-centre-graphene',
     name: 'BNI Manchester City Centre (Graphene)',
+    nameAliases: ['BNI Manchester City Centre', 'Graphene Mcr'],
     email: 'hi@thenetworkeruk.com',
     website:
       'https://www.eventbrite.co.uk/e/bni-business-referral-networking-city-centre-tickets-1987735581633',
@@ -512,20 +546,28 @@ const ORG_SPECS = {
   },
   zouk: {
     key: 'zouk',
+    preferExistingId: '6506d964-bd2c-4727-8569-b3344666c7a4',
+    slug: 'zouk-tea-bar-grill',
     name: 'Zouk Tea Bar & Grill',
+    nameAliases: ['Zouk Connect', 'Zouk Tea Bar and Grill'],
     email: 'hi@thenetworkeruk.com',
     website: 'https://zoukteabar.co.uk/blog/zouk-connect/business-networking-manchester-zouk-connect',
     description: 'Zouk Connect — monthly Manchester business networking lunches on the private mezzanine.',
   },
   bniLegends: {
     key: 'bniLegends',
+    preferExistingId: '84ca71f8-39ae-40a5-9573-60f3fe0d2948',
+    slug: 'bni-legends-manchester',
     name: 'BNI Legends Manchester',
+    nameAliases: ['BNI Legends', 'BNI Manchester'],
     email: 'hi@thenetworkeruk.com',
     website: 'https://www.eventbrite.co.uk/o/bni-manchester-13377164225',
     description: 'BNI Legends — Manchester BNI chapter hosting visitor networking meetings at Campfield.',
   },
   ipxnw: {
     key: 'ipxnw',
+    preferExistingId: 'a0a0e7b9-5229-4228-94cf-d88d60a1ae03',
+    slug: 'ipxnw',
     name: 'IPxNW',
     email: 'hi@thenetworkeruk.com',
     website: 'https://www.eventbrite.co.uk/e/ipxnw-autumn-networking-dinner-tickets-2000962325179',
@@ -533,6 +575,8 @@ const ORG_SPECS = {
   },
   troubleClub: {
     key: 'troubleClub',
+    preferExistingId: '7345bd44-3066-4721-ac50-6a9e5ff5f390',
+    slug: 'the-trouble-club',
     name: 'The Trouble Club',
     email: 'hi@thenetworkeruk.com',
     website: 'https://www.eventbrite.co.uk/o/the-trouble-club-18507952259',
@@ -540,6 +584,8 @@ const ORG_SPECS = {
   },
   ssasNw: {
     key: 'ssasNw',
+    preferExistingId: 'a7581989-021b-4ee7-86f8-abfaa6368402',
+    slug: 'ssas-north-west',
     name: 'SSAS North West',
     email: 'hi@thenetworkeruk.com',
     website:
@@ -548,13 +594,18 @@ const ORG_SPECS = {
   },
   mbh: {
     key: 'mbh',
+    preferExistingId: '7359599a-fc4c-4220-90c6-df499efac065',
+    slug: 'mbh-manchester-s-b2b-business-hub',
     name: "MBH Manchester's B2B Business Hub",
+    nameAliases: ['MBH', "Manchester's B2B Business Hub"],
     email: 'hi@thenetworkeruk.com',
     website: 'https://www.eventbrite.co.uk/o/mbh-manchesters-b2b-business-hub-85527918003',
     description: 'MBH — North West B2B networking including Women in Business brunch events.',
   },
   femaleFounderUk: {
     key: 'femaleFounderUk',
+    preferExistingId: '9ccba776-9e47-4427-9331-cfc52fd29770',
+    slug: 'female-founder-uk',
     name: 'Female Founder UK',
     email: 'hi@thenetworkeruk.com',
     website: 'https://www.eventbrite.co.uk/o/female-founder-uk-118178636031',
@@ -562,6 +613,8 @@ const ORG_SPECS = {
   },
   greenEconomy: {
     key: 'greenEconomy',
+    preferExistingId: 'aaa31d93-c222-450f-95c5-c3a9fd07ce9c',
+    slug: 'green-economy',
     name: 'Green Economy',
     email: 'hi@thenetworkeruk.com',
     website: 'https://www.eventbrite.co.uk/o/green-economy-31130127117',
