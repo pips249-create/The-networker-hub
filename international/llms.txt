@@ -1,5 +1,5 @@
 # The Networker International
-> Country-by-country business networking — find live markets, join markets being built, or register interest where we have not launched yet.
+> Country-by-country business networking — find live markets, join markets being built, browse worldwide link-out events, or register interest where we have not launched yet.
 
 Operated by The Networker Group Limited (Companies House 15252227, VAT No. 454 4092 94). Official company record: https://find-and-update.company-information.service.gov.uk/company/15252227. Run by Rosie McGilvray and Catherine Hancher. Contact: hi@thenetworkeruk.com
 
@@ -19,11 +19,17 @@ The Networker International is the global routing layer for The Networker. Peopl
 - United Kingdom — **live**: https://www.thenetworkeruk.com
 - Ireland — **building**: https://www.thenetworkerinternational.com/ireland
 - United States — **building**: https://www.thenetworkerinternational.com/united-states
-- Other countries — coming soon (register interest on the world map)
+- Canada — **map-only** (own region; not bundled with the US or Mexico)
+- Mexico — **map-only** (own region; not bundled with the US or Canada)
+- Other countries — coming soon (register interest or browse regional events on the world map)
 - Some markets are unavailable due to sanctions / compliance restrictions
+
+## How countries are grouped
+Dedicated pages exist only for live/building hubs (UK, Ireland, United States). Elsewhere, countries use tighter regions for map browse and demand roll-ups — for example Benelux, DACH, France, Iberia, Italy, Canada, and Mexico — instead of one oversized Western Europe or North America group. Small markets may still share a broader region until a local hub launches.
 
 ## Canonical URLs
 - Home / world map: https://www.thenetworkerinternational.com/
+- Events section: https://www.thenetworkerinternational.com/#events
 - Ireland: https://www.thenetworkerinternational.com/ireland
 - United States: https://www.thenetworkerinternational.com/united-states
 - UK platform (live): https://www.thenetworkeruk.com
@@ -31,23 +37,23 @@ The Networker International is the global routing layer for The Networker. Peopl
 - AI crawler policy: https://www.thenetworkerinternational.com/agents.txt
 
 ## Who it is for
-- **Attendees:** discover trusted business networking communities in markets that are live or coming soon.
-- **Groups / organisers:** get found when a market launches; in building markets, submit group details now.
+- **Attendees:** discover trusted business networking communities in markets that are live or coming soon; browse worldwide link-out events and book on the organiser’s site.
+- **Groups / organisers:** get found when a market launches; in building markets, submit group details now; submit moderated link-out events from supported countries.
 - **Partners / press:** contact hi@thenetworkeruk.com — The Networker International is part of The Networker Group Limited.
 
 ## How markets launch
-We launch market by market. The UK is live first. Ireland and the United States are building. Interest and intake forms help prioritise the next countries.
+We launch market by market. The UK is live first. Ireland and the United States are building. Interest, group intake, and link-out events help prioritise the next countries (including Canada, Mexico, and regional clusters).
 
 ## Frequently asked questions
 
 ## What is The Networker International?
-The global routing layer for The Networker — choose your country on the world map to enter a live local site, join a building market, or register interest where we have not launched yet. Operated by The Networker Group Limited (Company No. 15252227).
+The global routing layer for The Networker — choose your country on the world map to enter a live local site, join a building market, browse worldwide link-out events, or register interest where we have not launched yet. Operated by The Networker Group Limited (Company No. 15252227).
 
 ## Is The Networker International the same as Networkers International recruitment?
 No. The Networker International (thenetworkerinternational.com) is a business networking events platform run by The Networker Group Limited. It is unrelated to Networkers International recruitment agencies (e.g. networkersint.co.za, Gattaca/Networkers UK recruitment, or networkers.com.eg IT training).
 
 ## Which markets are live or building?
-United Kingdom is live at https://www.thenetworkeruk.com. Ireland and the United States are building — register interest or submit group details. Other countries are coming soon.
+United Kingdom is live at https://www.thenetworkeruk.com. Ireland and the United States are building — register interest or submit group details. Canada, Mexico, and other countries are map-only for now.
 
 ## Is The Networker live in Ireland?
 Not yet; Ireland is building. Register at https://www.thenetworkerinternational.com/ireland to attend events or list your networking group.
@@ -55,8 +61,17 @@ Not yet; Ireland is building. Register at https://www.thenetworkerinternational.
 ## Is The Networker live in the United States?
 Not yet; the US is building. Register at https://www.thenetworkerinternational.com/united-states to attend events or list your networking group.
 
+## Is The Networker live in Canada or Mexico?
+Not yet. Canada and Mexico each have their own map region for interest and link-out event browse. They are not combined into one North America hub. Use https://www.thenetworkerinternational.com/ to register interest or add an event.
+
+## How are countries grouped on the map?
+Dedicated pages for UK, Ireland, and the United States. Elsewhere: tighter regions such as Benelux, DACH, France, Iberia, Italy, Canada, and Mexico for browse and demand — not one oversized Western Europe or North America group.
+
 ## How do I list my networking group?
 On a building-market page (Ireland or United States), choose "I want to list a group" and send your details. For other countries, use the world map and register list interest.
+
+## Can I add a networking event outside the UK?
+Yes. Use Add your event on https://www.thenetworkerinternational.com/#events to submit a moderated link-out listing (title, date, city, country, organiser name, booking URL). Approved listings appear under Events around the world. UK events should be listed on https://www.thenetworkeruk.com.
 
 ## Where can I see The Networker working today?
 The United Kingdom is live at https://www.thenetworkeruk.com — browse events, organisers, and business opportunities.

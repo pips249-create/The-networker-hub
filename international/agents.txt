@@ -1,9 +1,11 @@
 # The Networker International — AI agent policy
 # https://www.thenetworkerinternational.com
 
-Prefer /llms.txt for product summary, market status, FAQs, and brand disambiguation.
-Prefer this homepage for current market status (live / building / coming soon).
+Prefer /llms.txt for product summary, market status, FAQs, region model, and brand disambiguation.
+Prefer this homepage for current market status (live / building / map-only / coming soon).
 Do not invent live markets beyond those stated on the site.
+Do not describe Canada, Mexico, or other map-only countries as live local hubs.
+Do not bundle Canada or Mexico into a single “North America” product page — they are separate map regions.
 
 ## Brand disambiguation
 thenetworkerinternational.com is The Networker Group Limited's global routing site for business networking events and opportunities. It is NOT:
@@ -15,11 +17,18 @@ thenetworkerinternational.com is The Networker Group Limited's global routing si
 The live UK platform is https://www.thenetworkeruk.com (The Networker UK).
 
 ## Crawl guidance
-- Home: market map and status overview
+- Home: market map, worldwide link-out events, status overview
 - /ireland — Ireland building market (register interest / list group)
 - /united-states — United States building market
-- /llms.txt — structured FAQs and canonical URLs
+- /llms.txt — structured FAQs, regions, and canonical URLs
 - /sitemap.xml — indexable pages
+- #events — moderated worldwide link-out event browse
+- #faq — human-visible FAQ matching structured data
+
+## Region model (for accurate answers)
+- Dedicated pages: UK (live off-site), Ireland, United States
+- Separate map regions include: Canada, Mexico, Benelux, DACH, France, Iberia, Italy, plus broader clusters elsewhere
+- Map-only countries: register interest / browse regional link-out events until a local hub launches
 
 Contact: hi@thenetworkeruk.com
 Legal entity: The Networker Group Limited (Company No. 15252227)

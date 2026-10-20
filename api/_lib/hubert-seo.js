@@ -537,10 +537,12 @@ function buildLlmsTxt(origin) {
     base +
     '/sitemap.xml\n\n' +
     '## Global / International\n' +
-    '- The Networker International (world map, building markets): https://www.thenetworkerinternational.com/\n' +
+    '- The Networker International (world map, worldwide link-out events, building markets): https://www.thenetworkerinternational.com/\n' +
     '- Ireland (building): https://www.thenetworkerinternational.com/ireland\n' +
     '- United States (building): https://www.thenetworkerinternational.com/united-states\n' +
-    '- International llms.txt: https://www.thenetworkerinternational.com/llms.txt\n\n' +
+    '- Canada and Mexico are separate map-only regions (not one North America hub)\n' +
+    '- International llms.txt (AEO / FAQs): https://www.thenetworkerinternational.com/llms.txt\n' +
+    '- International agents.txt: https://www.thenetworkerinternational.com/agents.txt\n\n' +
     '## Organiser help articles\n\n' +
     '### When do organisers receive payouts?\n' +
     HELP_PAGES['organiser-payouts'].llmsSummary +

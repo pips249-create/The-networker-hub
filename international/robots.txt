@@ -12,3 +12,4 @@ Allow: /llms.txt
 Allow: /agents.txt
 Allow: /ireland
 Allow: /united-states
+Allow: /sitemap.xml
