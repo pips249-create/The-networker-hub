@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
  * Smoke: Linked Out / Connected event pages require an account before leaving for the organiser site.
+ * Link Out must not promise ticket sync; Connected may.
  */
 const assert = require('assert');
 const fs = require('fs');
@@ -31,12 +32,24 @@ assert.ok(
   'signed-out CTA copy must invite account creation'
 );
 assert.ok(
-  eventHtml.includes('Create a free Networker UK account first'),
-  'sidebar nudge must explain why to join before booking'
+  detailJs.includes('eventHasExternalRegistrationSync'),
+  'copy must branch on Connected (sync) vs Link Out (no sync)'
+);
+assert.ok(
+  detailJs.includes('tickets for this listing stay on their site'),
+  'Link Out gate/nudge must not promise My account ticket sync'
+);
+assert.ok(
+  detailJs.includes('when their booking syncs, your ticket shows in My account'),
+  'Connected copy may still explain webhook sync'
+);
+assert.ok(
+  eventHtml.includes('tickets for this listing stay on their site'),
+  'default sidebar nudge must be honest for Link Out'
 );
 assert.ok(
   eventHtml.includes('Already bought? Sign in to check registration'),
-  'already-bought path remains as a quiet secondary action'
+  'already-bought path remains for Connected listings'
 );
 assert.ok(
   !/<button[^>]*>\s*Sign in to check registration\s*<\/button>/.test(eventHtml),
