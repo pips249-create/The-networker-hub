@@ -34,7 +34,7 @@ https://www.thenetworkeruk.com/peek?utm_source=the-networker.co.uk&utm_medium=ba
 
 Three columns (unequal widths):
 
-1. **The Networker UK logo** (cream chip) · We’re upgrading · Browse from **25 August**
+1. **The Networker UK logo** (cream chip) · We’re upgrading · Browsing is **open**
 2. **Find your next** *[rotating word]*
 3. **Sneak Peek →** (opens Hub `/peek` mini-site)
 

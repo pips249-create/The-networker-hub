@@ -298,7 +298,7 @@
     ) {
       return window.HubSoftLaunch.publicOpenDayRegistrationsClosedMessage();
     }
-    return 'Open day registration opens when public browsing starts on 25 August 2026. You can browse listings now.';
+    return 'Open day registration is temporarily unavailable. Please try again shortly.';
   }
 
   function enquiriesClosedCopy() {
