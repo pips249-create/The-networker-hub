@@ -96,6 +96,27 @@ function greetingName(contactName) {
   return name || 'there';
 }
 
+/**
+ * True only when PostgREST/Postgres reports the relation itself is missing.
+ * Do NOT treat every error that happens to mention the table name (column,
+ * RLS, permission, constraint, network) as "run migrations".
+ */
+function isMissingInternationalEventListingsTable(error) {
+  const code = String((error && error.code) || '').trim();
+  const msg = String((error && error.message) || error || '');
+  // Bare SQLSTATE with no message (rare) — only safe when we already queried this table.
+  if (!msg && (code === '42P01' || code === 'PGRST205')) return true;
+  // Require the table name so errors about other relations are not mis-attributed.
+  if (!/international_event_listings/i.test(msg)) return false;
+  if (code === '42P01' || code === 'PGRST205') return true;
+  // Column-missing messages also say "schema cache" — require table-not-found wording.
+  return (
+    /could not find the table/i.test(msg) ||
+    /relation ["']?public\.?international_event_listings["']? does not exist/i.test(msg) ||
+    /table ["']?public\.?international_event_listings["']? (does not exist|not found)/i.test(msg)
+  );
+}
+
 function normalizeInput(payload) {
   payload = payload || {};
   const allowedSources = new Set([
@@ -370,13 +391,8 @@ async function submitInternationalEventListing(payload) {
   if (insertRes.error) {
     const dbMessage = String(insertRes.error.message || '');
     console.error('[international-event-listings-insert]', dbMessage);
-    // Missing relation / schema cache → treat as not configured (migrations 324/325).
-    if (
-      /international_event_listings/i.test(dbMessage) ||
-      /schema cache/i.test(dbMessage) ||
-      insertRes.error.code === '42P01' ||
-      insertRes.error.code === 'PGRST205'
-    ) {
+    // Missing relation only → treat as not configured (migrations 324/325).
+    if (isMissingInternationalEventListingsTable(insertRes.error)) {
       const err = new Error(
         'Event submissions are not configured yet — email hi@thenetworkeruk.com with your event details.'
       );
@@ -472,7 +488,7 @@ async function listPublicInternationalEventListings(options) {
 
   const res = await query;
   if (res.error) {
-    if (/international_event_listings/i.test(res.error.message || '')) {
+    if (isMissingInternationalEventListingsTable(res.error)) {
       return { ok: true, configured: false, events: [], total: 0 };
     }
     throw new Error(res.error.message || 'Could not load events.');
@@ -499,7 +515,7 @@ async function listAdminInternationalEventListings(limit, status) {
 
   const res = await query;
   if (res.error) {
-    if (/international_event_listings/i.test(res.error.message || '')) {
+    if (isMissingInternationalEventListingsTable(res.error)) {
       const err = new Error('events_table_missing');
       err.code = 'events_table_missing';
       throw err;
@@ -603,7 +619,7 @@ async function createAdminInternationalEventListing(payload, session) {
     .single();
 
   if (insertRes.error) {
-    if (/international_event_listings/i.test(insertRes.error.message || '')) {
+    if (isMissingInternationalEventListingsTable(insertRes.error)) {
       const err = new Error(
         'Event listings table is missing — run migrations 324 and 325 in Supabase.'
       );
@@ -629,6 +645,7 @@ module.exports = {
   normalizeInput,
   validateInput,
   normalizeLocalTime,
+  isMissingInternationalEventListingsTable,
   submitInternationalEventListing,
   createAdminInternationalEventListing,
   listPublicInternationalEventListings,
