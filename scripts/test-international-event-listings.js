@@ -4,6 +4,7 @@ const {
   normalizeInput,
   validateInput,
   normalizeLocalTime,
+  isMissingInternationalEventListingsTable,
 } = require('../api/_lib/international-event-listings');
 
 const base = {
@@ -77,5 +78,55 @@ assert.strictEqual(unavailable.error, 'country_unavailable');
 const staffSource = normalizeInput({ ...base, source: 'admin_staff' });
 assert.strictEqual(staffSource.source, 'admin_staff');
 assert.strictEqual(validateInput(staffSource).ok, true);
+
+// Missing-table detection must be narrow — table name alone is not enough.
+assert.strictEqual(
+  isMissingInternationalEventListingsTable({
+    message: "Could not find the table 'public.international_event_listings' in the schema cache",
+    code: 'PGRST205',
+  }),
+  true
+);
+assert.strictEqual(
+  isMissingInternationalEventListingsTable({
+    message: 'relation "public.international_event_listings" does not exist',
+    code: '42P01',
+  }),
+  true
+);
+assert.strictEqual(
+  isMissingInternationalEventListingsTable({
+    message:
+      "Could not find the 'ends_on' column of 'international_event_listings' in the schema cache",
+    code: 'PGRST204',
+  }),
+  false,
+  'column-missing must not look like table-missing'
+);
+assert.strictEqual(
+  isMissingInternationalEventListingsTable({
+    message: 'permission denied for table international_event_listings',
+  }),
+  false
+);
+assert.strictEqual(
+  isMissingInternationalEventListingsTable({
+    message:
+      'new row violates row-level security policy for table "international_event_listings"',
+  }),
+  false
+);
+assert.strictEqual(
+  isMissingInternationalEventListingsTable({
+    message: 'insert or update on table "international_event_listings" violates check constraint',
+  }),
+  false
+);
+assert.strictEqual(
+  isMissingInternationalEventListingsTable({
+    message: 'JWT expired',
+  }),
+  false
+);
 
 console.log('test-international-event-listings: ok');

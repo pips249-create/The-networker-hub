@@ -44,6 +44,31 @@ function mapIntake(row) {
 const INTAKE_SELECT =
   'id, contact_name, email, phone, group_name, website_url, org_type, description, country_code, country_name, status, source, created_at, resolved_at, resolved_by';
 
+/** True only when the named relation itself is missing — not every error that mentions it. */
+function isMissingNamedTable(error, tableName) {
+  const code = String((error && error.code) || '').trim();
+  const msg = String((error && error.message) || error || '');
+  const table = String(tableName || '').trim();
+  if (!table) return false;
+  if (!msg && (code === '42P01' || code === 'PGRST205')) return true;
+  const tableRe = new RegExp(table.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
+  if (!tableRe.test(msg)) return false;
+  if (code === '42P01' || code === 'PGRST205') return true;
+  return (
+    /could not find the table/i.test(msg) ||
+    new RegExp(
+      'relation ["\']?public\\.?' + table.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '["\']? does not exist',
+      'i'
+    ).test(msg) ||
+    new RegExp(
+      'table ["\']?public\\.?' +
+        table.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') +
+        '["\']? (does not exist|not found)',
+      'i'
+    ).test(msg)
+  );
+}
+
 async function listInterest(limit) {
   const sb = getSupabaseAdmin();
   const max = Math.min(Math.max(Number(limit) || 200, 1), 500);
@@ -54,7 +79,7 @@ async function listInterest(limit) {
     .limit(max);
 
   if (res.error) {
-    if (/international_country_interest/i.test(res.error.message || '')) {
+    if (isMissingNamedTable(res.error, 'international_country_interest')) {
       const err = new Error('interest_table_missing');
       err.code = 'interest_table_missing';
       throw err;
@@ -88,7 +113,7 @@ async function listIntake(limit, status) {
 
   const res = await query;
   if (res.error) {
-    if (/international_group_intake/i.test(res.error.message || '')) {
+    if (isMissingNamedTable(res.error, 'international_group_intake')) {
       const err = new Error('intake_table_missing');
       err.code = 'intake_table_missing';
       throw err;
@@ -184,7 +209,13 @@ module.exports = async function handler(req, res) {
           if (e && e.code === 'events_table_missing') {
             return { events: [], pendingCount: 0, total: 0, missing: true };
           }
-          throw e;
+          // Soft-fail so interest/intake still render; surface the real DB message.
+          return {
+            events: [],
+            pendingCount: 0,
+            total: 0,
+            error: String((e && e.message) || e || 'Could not load events.'),
+          };
         }),
       ]);
       return json(res, 200, {
@@ -200,6 +231,7 @@ module.exports = async function handler(req, res) {
         eventsTotal: events.total,
         eventsPendingCount: events.pendingCount,
         eventsConfigured: !events.missing,
+        eventsError: events.error || null,
       });
     }
 
@@ -239,11 +271,16 @@ module.exports = async function handler(req, res) {
       e.code === 'intake_table_missing' ||
       e.code === 'events_table_missing'
     ) {
+      const migrationHint =
+        e.code === 'events_table_missing'
+          ? 'Run migrations 324_international_event_listings.sql and 325_international_event_optional_fields.sql in Supabase (then reload the API schema cache if needed).'
+          : e.code === 'intake_table_missing'
+            ? 'Run migration 262_international_group_intake.sql in Supabase.'
+            : 'Run migration 261_international_country_interest.sql in Supabase.';
       return json(res, 503, {
         ok: false,
         error: e.code,
-        message:
-          'Run migrations 261_international_country_interest.sql, 262_international_group_intake.sql, and 324_international_event_listings.sql in Supabase.',
+        message: migrationHint,
       });
     }
     if (e.code === 'invalid_status') {

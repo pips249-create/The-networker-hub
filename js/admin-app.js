@@ -33823,6 +33823,8 @@
               'Events table missing — run migrations 324 + 325 in Supabase before submissions work.',
               'error'
             );
+          } else if (data.eventsError) {
+            setStatus(String(data.eventsError), 'error');
           } else {
             setStatus(
               (data.eventsPendingCount || 0) +
