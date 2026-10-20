@@ -27,13 +27,26 @@ const REGIONS = [
     marketsList: false,
   },
   {
-    id: 'north_america',
-    name: 'North America',
-    blurb: 'United States is building; Canada and Mexico register via the map.',
-    codes: ['US', 'CA', 'MX'],
+    id: 'united_states',
+    name: 'United States',
+    blurb: 'United States is building — dedicated intake page.',
+    codes: ['US'],
+    /** Spotlight market already listed individually — skip duplicate Markets row. */
+    marketsList: false,
+  },
+  {
+    id: 'canada',
+    name: 'Canada',
+    blurb: 'Canada registers via the map — no separate page yet.',
+    codes: ['CA'],
     marketsList: true,
-    /** US has its own Markets row — only show regional roll-up for CA/MX spillover. */
-    excludeFromMarketsTotal: ['US'],
+  },
+  {
+    id: 'mexico',
+    name: 'Mexico',
+    blurb: 'Mexico registers via the map — no separate page yet.',
+    codes: ['MX'],
+    marketsList: true,
   },
   {
     id: 'central_america_caribbean',

@@ -31,6 +31,10 @@ assert.strictEqual(regionForCountry('DE').id, 'dach');
 assert.strictEqual(regionForCountry('BE').id, 'benelux');
 assert.strictEqual(regionForCountry('FR').id, 'france');
 assert.strictEqual(regionForCountry('IT').id, 'italy');
+assert.strictEqual(regionForCountry('US').id, 'united_states');
+assert.strictEqual(regionForCountry('CA').id, 'canada');
+assert.strictEqual(regionForCountry('MX').id, 'mexico');
+assert.ok(!REGIONS.some(function (r) { return r.id === 'north_america'; }), 'north_america should be split');
 assert.notStrictEqual(regionForCountry('IT').id, 'central_eastern_europe');
 assert.ok(!REGIONS.some(function (r) { return r.id === 'western_europe'; }), 'western_europe should be split');
 
