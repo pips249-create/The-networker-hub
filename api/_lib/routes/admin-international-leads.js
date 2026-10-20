@@ -6,6 +6,7 @@ const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
 const {
   listAdminInternationalEventListings,
   updateInternationalEventListingStatus,
+  createAdminInternationalEventListing,
 } = require('../international-event-listings');
 
 function mapInterest(row) {
@@ -200,6 +201,20 @@ module.exports = async function handler(req, res) {
         eventsPendingCount: events.pendingCount,
         eventsConfigured: !events.missing,
       });
+    }
+
+    if (req.method === 'POST') {
+      const body = parseBody(req);
+      const action = String(body.action || '')
+        .trim()
+        .toLowerCase();
+      if (action === 'create_event' || action === 'create') {
+        const result = await createAdminInternationalEventListing(body, session);
+        if (!result.ok) {
+          return json(res, 400, result);
+        }
+        return json(res, 200, result);
+      }
     }
 
     if (req.method === 'PATCH' || req.method === 'POST') {

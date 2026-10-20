@@ -74,4 +74,8 @@ const unavailable = validateInput(
 assert.strictEqual(unavailable.ok, false);
 assert.strictEqual(unavailable.error, 'country_unavailable');
 
+const staffSource = normalizeInput({ ...base, source: 'admin_staff' });
+assert.strictEqual(staffSource.source, 'admin_staff');
+assert.strictEqual(validateInput(staffSource).ok, true);
+
 console.log('test-international-event-listings: ok');
