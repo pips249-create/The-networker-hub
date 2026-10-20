@@ -1304,6 +1304,12 @@
     return Boolean(String(ev.externalPriceLabel || '').trim());
   }
 
+  /** Connected booking only — Link Out has no webhook, so tickets never sync to My account. */
+  function eventHasExternalRegistrationSync(ev) {
+    if (!eventIsExternalConnected(ev)) return false;
+    return String((ev && ev.checkoutMode) || '').trim() === 'external_connected';
+  }
+
   /**
    * Link Out / Connected: buyers pay on the organiser site.
    * Hide Hub quantity, booking fee, and "Before you pay" — only the listing price is informational.
@@ -1397,7 +1403,7 @@
       lead:
         'Tickets are sold on ' +
         organiserName +
-        '\u2019s website. Join free first — use the same email when you pay, and we\u2019ll show your ticket in My account when it syncs.',
+        '\u2019s website. Join free with the same email you\u2019ll use when you pay — when their booking syncs, your ticket shows in My account.',
       checkoutFlag: true,
       preferRegister: true,
     };
@@ -1405,6 +1411,8 @@
 
   async function requireAccountForExternalBooking(ev) {
     if (!ev) return false;
+    // Link Out has no webhook — do not gate; open the organiser site directly.
+    if (!eventHasExternalRegistrationSync(ev)) return true;
     return requireSignedInAttendee({
       gate: externalBookingGateConfig(ev),
       intent: {
@@ -1423,6 +1431,7 @@
     externalBookingSigninNudgeBound = true;
     checkBtn.addEventListener('click', function () {
       const ev = activeEvent();
+      if (!eventHasExternalRegistrationSync(ev)) return;
       if (ev && ev.id) {
         saveCheckoutIntent(ev, { action: 'external_registration_check' });
       }
@@ -1437,11 +1446,21 @@
   }
 
   function externalRegistrationSigninNudgeEligible(ev) {
-    if (!eventIsExternalConnected(ev)) return false;
+    // Connected only — Link Out never syncs tickets into My account.
+    if (!eventHasExternalRegistrationSync(ev)) return false;
     if (ev.isEventPast || ev.ticketSalesEnabled === false) return false;
     if (!String(ev.externalBookingUrl || '').trim()) return false;
     if (registrationIsConfirmedGoing(eventApplicationState)) return false;
     return true;
+  }
+
+  function externalBookingBuyLabel(ev, signedIn) {
+    const organiserName = externalBookingOrganiserName(ev);
+    const bookOnSite = 'Book on ' + organiserName + '\u2019s website';
+    if (eventHasExternalRegistrationSync(ev)) {
+      return signedIn ? bookOnSite : 'Create free account to book';
+    }
+    return bookOnSite;
   }
 
   function setExternalBookingBuyLabel(ev, signedIn) {
@@ -1450,10 +1469,7 @@
     if (!String(ev.externalBookingUrl || '').trim()) return;
     if (registrationIsConfirmedGoing(eventApplicationState)) return;
     if (buy.disabled && buy.dataset.busy === '1') return;
-    const organiserName = externalBookingOrganiserName(ev);
-    buy.textContent = signedIn
-      ? 'Book on ' + organiserName + '\u2019s website'
-      : 'Create free account to book';
+    buy.textContent = externalBookingBuyLabel(ev, signedIn);
   }
 
   async function syncExternalBookingSigninNudge(ev) {
@@ -1462,6 +1478,15 @@
     if (!el) return;
     if (!externalRegistrationSigninNudgeEligible(ev)) {
       el.hidden = true;
+      setExternalBookingBuyLabel(ev, true);
+      const jumpOff = document.getElementById('ticket-jump-label');
+      if (
+        jumpOff &&
+        eventIsExternalConnected(ev) &&
+        !registrationIsConfirmedGoing(eventApplicationState)
+      ) {
+        jumpOff.textContent = 'Book on organiser site';
+      }
       return;
     }
     const signedIn = await isSignedInAttendee();
@@ -3297,8 +3322,8 @@
         } else {
           buy.disabled = false;
           buy.classList.remove('cta-btn-disabled');
-          // Default signed-out label; syncExternalBookingSigninNudge upgrades if signed in.
-          buy.textContent = 'Create free account to book';
+          // Link Out → book on site; Connected signed-out → create account (nudge upgrades if signed in).
+          buy.textContent = externalBookingBuyLabel(ev, !eventHasExternalRegistrationSync(ev));
         }
       }
       applyExternalBookingCheckoutUi(ev);
@@ -4453,8 +4478,9 @@
       if (eventIsExternalConnected(ev)) {
         return {
           title: "You're already going",
-          lead:
-            "You're registered for this event (synced from the organiser's ticket site). View your ticket in My account, or buy another ticket on their site if you need an extra place.",
+          lead: eventHasExternalRegistrationSync(ev)
+            ? "You're registered for this event (synced from the organiser's ticket site). View your ticket in My account, or buy another ticket on their site if you need an extra place."
+            : "You're marked as going for this listing. Buy another ticket on the organiser's site if you need an extra place.",
         };
       }
       return {
@@ -4645,8 +4671,8 @@
       } else {
         buy.disabled = false;
         buy.classList.remove('cta-btn-disabled');
-        // Default signed-out label; syncExternalBookingSigninNudge upgrades if signed in.
-        buy.textContent = 'Create free account to book';
+        // Link Out → book on site; Connected signed-out → create account (nudge upgrades if signed in).
+        buy.textContent = externalBookingBuyLabel(ev, !eventHasExternalRegistrationSync(ev));
         if (purchaseView) purchaseView.removeAttribute('aria-hidden');
       }
       applyExternalBookingCheckoutUi(ev);
@@ -4962,7 +4988,11 @@
       else if (showAlumniTierSelected(ev)) labelText = 'Previous attendee ticket';
       else labelText = 'Apply for a seat';
     }
-    else if (eventIsExternalConnected(ev)) labelText = 'Create free account to book';
+    else if (eventIsExternalConnected(ev)) {
+      labelText = eventHasExternalRegistrationSync(ev)
+        ? 'Create free account to book'
+        : 'Book on organiser site';
+    }
     else if (ev.priceKey === 'free') labelText = 'Get free ticket';
     else labelText = 'Buy ticket';
 
