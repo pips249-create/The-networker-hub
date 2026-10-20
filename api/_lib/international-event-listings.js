@@ -542,12 +542,6 @@ async function updateInternationalEventListingStatus(id, status, session) {
  * Defaults to approved so it appears on public browse immediately.
  */
 async function createAdminInternationalEventListing(payload, session) {
-  if (!isSupabaseConfigured()) {
-    const err = new Error('Supabase is not configured.');
-    err.code = 'not_configured';
-    throw err;
-  }
-
   const sessionEmail = normalizeEmail(
     (session && (session.email || session.userEmail || session.sub)) || ''
   );
@@ -560,6 +554,12 @@ async function createAdminInternationalEventListing(payload, session) {
   input.source = 'admin_staff';
   const validation = validateInput(input);
   if (!validation.ok) return validation;
+
+  if (!isSupabaseConfigured()) {
+    const err = new Error('Supabase is not configured.');
+    err.code = 'not_configured';
+    throw err;
+  }
 
   const statusRaw = String((payload && payload.status) || 'approved')
     .trim()
