@@ -33933,31 +33933,10 @@
       );
     });
 
-    var intlEventCountries = [
-      { iso2: 'AE', name: 'United Arab Emirates' },
-      { iso2: 'AU', name: 'Australia' },
-      { iso2: 'BE', name: 'Belgium' },
-      { iso2: 'BR', name: 'Brazil' },
-      { iso2: 'CA', name: 'Canada' },
-      { iso2: 'CH', name: 'Switzerland' },
-      { iso2: 'DE', name: 'Germany' },
-      { iso2: 'DK', name: 'Denmark' },
-      { iso2: 'ES', name: 'Spain' },
-      { iso2: 'FR', name: 'France' },
-      { iso2: 'IE', name: 'Ireland' },
-      { iso2: 'IN', name: 'India' },
-      { iso2: 'IT', name: 'Italy' },
-      { iso2: 'JP', name: 'Japan' },
-      { iso2: 'MX', name: 'Mexico' },
-      { iso2: 'NL', name: 'Netherlands' },
-      { iso2: 'NO', name: 'Norway' },
-      { iso2: 'NZ', name: 'New Zealand' },
-      { iso2: 'PT', name: 'Portugal' },
-      { iso2: 'SE', name: 'Sweden' },
-      { iso2: 'SG', name: 'Singapore' },
-      { iso2: 'US', name: 'United States' },
-      { iso2: 'ZA', name: 'South Africa' },
-    ];
+    var intlEventCountries =
+      typeof window.INTL_EVENT_COUNTRY_OPTIONS === 'function'
+        ? window.INTL_EVENT_COUNTRY_OPTIONS()
+        : [];
     var addForm = document.getElementById('intl-event-add-form');
     var addCountry = document.getElementById('intl-add-country');
     var addToggle = document.getElementById('intl-event-add-toggle');
