@@ -59,7 +59,9 @@ function isExternalBookingOnlyPatch(body) {
     bodyHas(body, 'externalBookingUrl') ||
     bodyHas(body, 'external_booking_url') ||
     bodyHas(body, 'externalPriceLabel') ||
-    bodyHas(body, 'external_price_label');
+    bodyHas(body, 'external_price_label') ||
+    bodyHas(body, 'externalBookingNote') ||
+    bodyHas(body, 'external_booking_note');
   if (!touchesExternal) return false;
   const listingShapeKeys = [
     'type',
@@ -182,6 +184,11 @@ function eventPayloadFromBody(body, email, opts) {
   if (bodyHas(body, 'externalPriceLabel') || bodyHas(body, 'external_price_label')) {
     payload.externalPriceLabel = body.externalPriceLabel || body.external_price_label;
   }
+  if (bodyHas(body, 'externalBookingNote')) {
+    payload.externalBookingNote = body.externalBookingNote;
+  } else if (bodyHas(body, 'external_booking_note')) {
+    payload.externalBookingNote = body.external_booking_note;
+  }
   payload._editorEmail = String(email || '').trim();
   return payload;
 }
@@ -204,7 +211,9 @@ async function connectedBookingPayloadBlocked(session, body) {
     Object.prototype.hasOwnProperty.call(body, 'externalBookingUrl') ||
     Object.prototype.hasOwnProperty.call(body, 'external_booking_url') ||
     Object.prototype.hasOwnProperty.call(body, 'externalPriceLabel') ||
-    Object.prototype.hasOwnProperty.call(body, 'external_price_label');
+    Object.prototype.hasOwnProperty.call(body, 'external_price_label') ||
+    Object.prototype.hasOwnProperty.call(body, 'externalBookingNote') ||
+    Object.prototype.hasOwnProperty.call(body, 'external_booking_note');
   if (!touchesExternal) return null;
   if (connectedBookingAllowedForEmail(session?.email)) return null;
   if (!isSupabaseConfigured()) {
@@ -511,6 +520,7 @@ module.exports = async function handler(req, res) {
           'checkoutMode',
           'externalBookingUrl',
           'externalPriceLabel',
+          'externalBookingNote',
         ]);
         const statusChanged =
           String(existing?.listingStatus || existing?.status || '') !==

@@ -40,7 +40,9 @@ function isExternalBookingOnlyPatch(body) {
     bodyHas(body, 'externalBookingUrl') ||
     bodyHas(body, 'external_booking_url') ||
     bodyHas(body, 'externalPriceLabel') ||
-    bodyHas(body, 'external_price_label');
+    bodyHas(body, 'external_price_label') ||
+    bodyHas(body, 'externalBookingNote') ||
+    bodyHas(body, 'external_booking_note');
   if (!touchesExternal) return false;
   const listingShapeKeys = [
     'type',
@@ -98,6 +100,11 @@ function eventPayloadFromBody(body, email, opts) {
   if (bodyHas(body, 'externalPriceLabel') || bodyHas(body, 'external_price_label')) {
     payload.externalPriceLabel = body.externalPriceLabel || body.external_price_label;
   }
+  if (bodyHas(body, 'externalBookingNote')) {
+    payload.externalBookingNote = body.externalBookingNote;
+  } else if (bodyHas(body, 'external_booking_note')) {
+    payload.externalBookingNote = body.external_booking_note;
+  }
   payload._editorEmail = String(email || '').trim();
   return payload;
 }
@@ -116,11 +123,16 @@ const linkOutBody = {
   checkoutMode: 'external_link',
   externalPriceLabel: 'From £455.00',
   externalBookingUrl: 'https://themartechsummit.com/london-registration',
+  externalBookingNote: 'Use code NETWORKER20 for 20% off',
   listingStatus: 'published',
   externalBookingOnly: true,
   date: '2026-10-01T18:00:00.000Z',
 };
 assert.strictEqual(isExternalBookingOnlyPatch(linkOutBody), true);
+assert.strictEqual(
+  eventPayloadFromBody(linkOutBody, 'organiser@example.com').externalBookingNote,
+  'Use code NETWORKER20 for 20% off'
+);
 assert.strictEqual(
   isExternalBookingOnlyPatch({
     checkoutMode: 'external_link',
