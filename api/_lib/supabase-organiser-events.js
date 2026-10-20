@@ -289,6 +289,7 @@ function rowToEvent(row) {
     checkoutMode: String(row.checkout_mode || 'hub').trim(),
     externalBookingUrl: String(row.external_booking_url || '').trim(),
     externalPriceLabel: String(row.external_price_label || '').trim(),
+    externalBookingNote: String(row.external_booking_note || '').trim(),
   };
 }
 
@@ -1074,6 +1075,7 @@ async function buildEventRow(payload, eventId, mode) {
     CHECKOUT_HUB,
     normalizeExternalBookingUrl,
     normalizeExternalPriceLabel,
+    normalizeExternalBookingNote,
     assertConnectedBookingEntitlement,
     assertLinkOutEntitlement,
     assertOrganiserConnectedSlot,
@@ -1132,6 +1134,14 @@ async function buildEventRow(payload, eventId, mode) {
   ) {
     row.external_price_label = normalizeExternalPriceLabel(
       payload.externalPriceLabel || payload.external_price_label
+    );
+  }
+  if (
+    Object.prototype.hasOwnProperty.call(payload, 'externalBookingNote') ||
+    Object.prototype.hasOwnProperty.call(payload, 'external_booking_note')
+  ) {
+    row.external_booking_note = normalizeExternalBookingNote(
+      payload.externalBookingNote || payload.external_booking_note
     );
   }
 
@@ -1523,6 +1533,7 @@ async function updateExternalBookingFields(eventId, payload) {
       checkoutMode: payload.checkoutMode,
       externalBookingUrl: payload.externalBookingUrl,
       externalPriceLabel: payload.externalPriceLabel,
+      externalBookingNote: payload.externalBookingNote,
       groupId: payload.groupId || existing.organiser_id,
       title: payload.title || existing.title,
       _editorEmail: payload._editorEmail || payload.email || '',
@@ -1535,6 +1546,7 @@ async function updateExternalBookingFields(eventId, payload) {
   if (row.checkout_mode !== undefined) patch.checkout_mode = row.checkout_mode;
   if (row.external_booking_url !== undefined) patch.external_booking_url = row.external_booking_url;
   if (row.external_price_label !== undefined) patch.external_price_label = row.external_price_label;
+  if (row.external_booking_note !== undefined) patch.external_booking_note = row.external_booking_note;
   if (row.status !== undefined) patch.status = row.status;
   if (row.approval_status !== undefined) patch.approval_status = row.approval_status;
   if (row.ticket_sales_enabled !== undefined) patch.ticket_sales_enabled = row.ticket_sales_enabled;

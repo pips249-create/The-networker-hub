@@ -3205,6 +3205,13 @@
         ev.externalBookingDisclaimer ||
         'Tickets are sold on the organiser\u2019s website. The Networker UK does not process payment for this event.';
       tiersEl.appendChild(note);
+      const promoText = String(ev.externalBookingNote || '').trim();
+      if (promoText) {
+        const promo = document.createElement('p');
+        promo.className = 'ticket-load-hint ticket-load-hint--external-promo';
+        promo.textContent = promoText;
+        tiersEl.appendChild(promo);
+      }
       if (urgencyEl) urgencyEl.textContent = '';
       const buy = document.getElementById('buy-btn');
       const organiserName = ev.organiser || ev.organiserName || 'the organiser';

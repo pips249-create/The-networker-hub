@@ -504,6 +504,7 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
           : 'external_connected',
       externalBookingUrl: externalUrl,
       externalPriceLabel: String(row.external_price_label || '').trim(),
+      externalBookingNote: String(row.external_booking_note || '').trim(),
       externalBookingDisclaimer:
         'Tickets are sold on the organiser\u2019s website. The Networker UK does not process payment for this event.',
     };
@@ -765,6 +766,7 @@ function rowToEvent(row, organiser, ticketRows, organiserRanking) {
     checkoutMode: String(row.checkout_mode || 'hub').trim(),
     externalBookingUrl: String(row.external_booking_url || '').trim(),
     externalPriceLabel: String(row.external_price_label || '').trim(),
+    externalBookingNote: String(row.external_booking_note || '').trim(),
   };
 
   if (!ev.tickets.length && hasTicketTiers && !membersOnlyTierCount) {

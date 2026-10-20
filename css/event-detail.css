@@ -1514,6 +1514,14 @@ a:hover {
   font-weight: 600;
 }
 
+.ticket-load-hint--external-promo {
+  padding: 0 16px 14px;
+  margin-top: -6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink, #1a1523);
+}
+
 .ticket-load-hint--warn {
   color: #7c2d12;
   background: #fff7ed;

@@ -612,6 +612,9 @@
 
     if (qs('ecs-price-label')) qs('ecs-price-label').value = ev.externalPriceLabel || ev.external_price_label || '';
     if (qs('ecs-booking-url')) qs('ecs-booking-url').value = ev.externalBookingUrl || ev.external_booking_url || '';
+    if (qs('ecs-booking-note')) {
+      qs('ecs-booking-note').value = ev.externalBookingNote || ev.external_booking_note || '';
+    }
     initPlatformPicker();
     restorePlatformSelection();
     bindPlatformChangeControl();
@@ -2066,6 +2069,7 @@
     }
     var price = qs('ecs-price-label') ? qs('ecs-price-label').value.trim() : '';
     var url = qs('ecs-booking-url') ? qs('ecs-booking-url').value.trim() : '';
+    var bookingNote = qs('ecs-booking-note') ? qs('ecs-booking-note').value.trim() : '';
     if (!price) {
       setStatus(saveStatus, 'Enter the price shown on the listing.', 'error');
       return;
@@ -2112,6 +2116,7 @@
         checkoutMode: useLinkOutOnly ? 'external_link' : 'external_connected',
         externalPriceLabel: price,
         externalBookingUrl: url,
+        externalBookingNote: bookingNote,
         listingStatus: publish ? 'published' : 'draft',
         externalBookingOnly: true,
       };
@@ -2153,6 +2158,7 @@
         checkoutMode: payload.checkoutMode,
         externalPriceLabel: payload.externalPriceLabel,
         externalBookingUrl: payload.externalBookingUrl,
+        externalBookingNote: payload.externalBookingNote,
         listingStatus: payload.listingStatus,
       });
       if (typeof embed.writeConnectedSetupPrefetch === 'function') {

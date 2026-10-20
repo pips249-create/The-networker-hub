@@ -124,6 +124,16 @@ function normalizeExternalPriceLabel(raw) {
   return text;
 }
 
+/** Short promo / note under the Link Out or Connected booking disclaimer (plain text). */
+function normalizeExternalBookingNote(raw) {
+  let text = String(raw || '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!text) return '';
+  if (text.length > 160) return text.slice(0, 160).trim();
+  return text;
+}
+
 /** Numeric Eventbrite event id from public /e/… or checkout-external?eid= URLs. */
 function parseEventbriteEventIdFromUrl(raw) {
   const url = String(raw || '').trim();
@@ -293,6 +303,7 @@ module.exports = {
   isExternalCheckoutEvent,
   publicListingUsesExternalBooking,
   normalizeExternalPriceLabel,
+  normalizeExternalBookingNote,
   normalizeExternalBookingUrl,
   parseEventbriteEventIdFromUrl,
   preferEventbriteCheckoutUrl,
