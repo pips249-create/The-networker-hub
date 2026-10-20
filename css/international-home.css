@@ -1357,19 +1357,24 @@
 .intl-browse-panel {
   position: relative;
   z-index: 1;
+  display: flex;
+  flex-direction: column;
   width: min(760px, 100%);
   height: 100%;
-  overflow: auto;
+  max-height: 100%;
+  /* Flex items default to min-height:auto (content size), which blocks overflow scroll. */
+  min-height: 0;
+  overflow: hidden;
   background: linear-gradient(180deg, #faf6ee 0%, #fff 42%);
   border-left: 1px solid rgba(184, 174, 166, 0.4);
   box-shadow: -18px 0 40px rgba(45, 38, 54, 0.12);
-  padding: 28px 28px 36px;
+  padding: 28px 28px 0;
   animation: intl-browse-in 0.28s ease;
 }
 
 @media (max-width: 720px) {
   .intl-browse-panel {
-    padding: 22px 18px 28px;
+    padding: 22px 18px 0;
   }
 }
 
@@ -1410,6 +1415,7 @@
 }
 
 .intl-browse-header {
+  flex: 0 0 auto;
   padding-right: 40px;
   margin-bottom: 20px;
 }
@@ -1478,6 +1484,7 @@
 }
 
 .intl-browse-status {
+  flex: 0 0 auto;
   margin: 0 0 16px;
   font-size: 15px;
   color: var(--text-muted);
@@ -1490,9 +1497,22 @@
 .intl-browse-list {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 0 0 36px;
   display: grid;
   gap: 16px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable;
+}
+
+@media (max-width: 720px) {
+  .intl-browse-list {
+    padding-bottom: 28px;
+  }
 }
 
 .intl-browse-card {
