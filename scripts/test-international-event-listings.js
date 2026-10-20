@@ -11,6 +11,8 @@ const base = {
   city: 'Dublin',
   countryCode: 'IE',
   countryName: 'Ireland',
+  organiserName: 'Dublin Business Network',
+  organiserWebsite: 'https://example.com',
   externalUrl: 'https://example.com/book',
   contactName: 'Alex Organiser',
   email: 'alex@example.com',
@@ -29,6 +31,19 @@ assert.strictEqual(uk.error, 'use_uk_site');
 const badUrl = validateInput(normalizeInput({ ...base, externalUrl: 'ftp://example.com' }));
 assert.strictEqual(badUrl.ok, false);
 assert.strictEqual(badUrl.error, 'invalid_url');
+
+const missingOrg = validateInput(normalizeInput({ ...base, organiserName: '' }));
+assert.strictEqual(missingOrg.ok, false);
+assert.strictEqual(missingOrg.error, 'missing_organiser');
+
+const badOrgSite = validateInput(
+  normalizeInput({ ...base, organiserWebsite: 'not-a-url' })
+);
+assert.strictEqual(badOrgSite.ok, false);
+assert.strictEqual(badOrgSite.error, 'invalid_organiser_website');
+
+const noOrgSite = validateInput(normalizeInput({ ...base, organiserWebsite: '' }));
+assert.strictEqual(noOrgSite.ok, true);
 
 const endBeforeStart = validateInput(
   normalizeInput({ ...base, startsOn: '2026-11-12', endsOn: '2026-11-10' })

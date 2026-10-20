@@ -137,6 +137,7 @@
     activeModal: null,
     events: [],
     eventsFilter: '',
+    browseContext: null,
   };
 
   var els = {};
@@ -275,23 +276,13 @@
   }
 
   function popupActionText(meta) {
-    if (meta.live) {
-      return isCoarsePointer() ? 'Tap to explore →' : 'Click to explore →';
-    }
-    if (meta.url) {
-      return isCoarsePointer() ? 'Tap to open preview →' : 'Open market preview →';
-    }
-    if (meta.building) {
-      return isCoarsePointer()
-        ? 'Tap to tell us about your group →'
-        : 'Tell us about your group →';
-    }
     if (meta.unavailable) {
       return 'We don\u2019t operate in this region';
     }
-    return isCoarsePointer()
-      ? 'Tap to register interest →'
-      : 'Register your interest →';
+    if (meta.live) {
+      return isCoarsePointer() ? 'Tap to browse events →' : 'Browse events →';
+    }
+    return isCoarsePointer() ? 'Tap to browse events →' : 'Browse events →';
   }
 
   function hideCountryPopup() {
@@ -451,21 +442,290 @@
   function handleCountryAction(meta) {
     if (!meta || meta.unavailable) return;
     clearHover();
-    if (meta.url) {
-      window.location.href = meta.url;
-      return;
-    }
-    if (meta.building) {
-      openBuildingModal(meta);
-      return;
-    }
-    openInterestModal(meta);
+    openCountryBrowse(meta);
   }
 
   function closeActiveModal() {
-    if (state.activeModal === 'building') closeBuildingModal();
+    if (state.activeModal === 'browse') closeBrowsePanel();
+    else if (state.activeModal === 'building') closeBuildingModal();
     else if (state.activeModal === 'interest') closeInterestModal();
     else if (state.activeModal === 'event') closeEventModal();
+  }
+
+  function statusLabel(meta) {
+    if (!meta) return 'Events';
+    if (meta.live) return 'Live';
+    if (meta.building) return 'Building';
+    return 'Coming soon';
+  }
+
+  function renderBrowseEventCard(row, options) {
+    options = options || {};
+    var place =
+      escapeHtml(row.city || '') +
+      (row.countryName ? ', ' + escapeHtml(row.countryName) : '');
+    var countryChip =
+      options.showCountry && row.countryName
+        ? '<span class="intl-browse-card-country">' + escapeHtml(row.countryName) + '</span>'
+        : '';
+    var organiser = '';
+    if (row.organiserName) {
+      organiser = row.organiserWebsite
+        ? '<p class="intl-browse-card-organiser"><a href="' +
+          escapeAttr(row.organiserWebsite) +
+          '" target="_blank" rel="noopener noreferrer">' +
+          escapeHtml(row.organiserName) +
+          '</a></p>'
+        : '<p class="intl-browse-card-organiser">' + escapeHtml(row.organiserName) + '</p>';
+    }
+    return (
+      '<li class="intl-browse-card">' +
+      '<div class="intl-browse-card-top">' +
+      '<span class="intl-browse-card-date">' +
+      escapeHtml(formatEventDateRange(row)) +
+      '</span>' +
+      countryChip +
+      '</div>' +
+      '<h3 class="intl-browse-card-title">' +
+      escapeHtml(row.title || 'Event') +
+      '</h3>' +
+      '<p class="intl-browse-card-place">' +
+      place +
+      '</p>' +
+      organiser +
+      '<a class="intl-browse-card-cta" href="' +
+      escapeAttr(row.externalUrl || '#') +
+      '" target="_blank" rel="noopener noreferrer">Open booking page →</a>' +
+      '</li>'
+    );
+  }
+
+  function browseActionsHtml(context) {
+    var bits = [];
+    if (context.kind === 'country' && context.meta) {
+      var meta = context.meta;
+      if (meta.live && meta.url) {
+        bits.push(
+          '<a class="intl-browse-btn intl-browse-btn--primary" href="https://www.thenetworkeruk.com/events/" rel="noopener noreferrer">Browse UK events</a>'
+        );
+        bits.push(
+          '<a class="intl-browse-btn" href="' +
+            escapeAttr(meta.url) +
+            '" rel="noopener noreferrer">Open UK home</a>'
+        );
+      } else {
+        if (meta.url) {
+          bits.push(
+            '<a class="intl-browse-btn" href="' +
+              escapeAttr(meta.url) +
+              '">Open market page</a>'
+          );
+        }
+        if (meta.building) {
+          bits.push(
+            '<button type="button" class="intl-browse-btn" data-intl-browse-action="building">List a group</button>'
+          );
+        } else {
+          bits.push(
+            '<button type="button" class="intl-browse-btn" data-intl-browse-action="interest">Register interest</button>'
+          );
+        }
+        bits.push(
+          '<button type="button" class="intl-browse-btn intl-browse-btn--primary" data-intl-browse-action="add-event">Add an event</button>'
+        );
+      }
+    } else {
+      bits.push(
+        '<button type="button" class="intl-browse-btn intl-browse-btn--primary" data-intl-browse-action="add-event">Add an event</button>'
+      );
+      bits.push(
+        '<button type="button" class="intl-browse-btn" data-intl-browse-action="interest-region">Register interest</button>'
+      );
+    }
+    return bits.join('');
+  }
+
+  function bindBrowseActions() {
+    if (!els.browseActions) return;
+    els.browseActions.querySelectorAll('[data-intl-browse-action]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var action = btn.getAttribute('data-intl-browse-action');
+        var context = state.browseContext;
+        if (action === 'add-event') {
+          var prefill =
+            context && context.kind === 'country' && context.meta && !context.meta.live
+              ? context.meta
+              : null;
+          closeBrowsePanel();
+          openEventModal(prefill);
+          return;
+        }
+        if (action === 'building' && context && context.meta) {
+          closeBrowsePanel();
+          openBuildingModal(context.meta);
+          return;
+        }
+        if (action === 'interest' && context && context.meta) {
+          closeBrowsePanel();
+          openInterestModal(context.meta);
+          return;
+        }
+        if (action === 'interest-region') {
+          closeBrowsePanel();
+          focusCountrySearch();
+        }
+      });
+    });
+  }
+
+  function paintBrowseList(events, options) {
+    options = options || {};
+    if (!els.browseList || !els.browseStatus) return;
+    if (!events.length) {
+      els.browseStatus.hidden = false;
+      els.browseStatus.textContent = options.emptyMessage || 'No upcoming link-out events here yet.';
+      els.browseList.innerHTML = '';
+      return;
+    }
+    els.browseStatus.hidden = true;
+    els.browseList.innerHTML = events
+      .map(function (row) {
+        return renderBrowseEventCard(row, { showCountry: Boolean(options.showCountry) });
+      })
+      .join('');
+  }
+
+  function fetchBrowseEvents(countryCodes) {
+    var codes = (countryCodes || []).filter(Boolean);
+    var query = codes.length ? '?countries=' + encodeURIComponent(codes.join(',')) : '';
+    return fetch('/api/international-event-listings' + query)
+      .then(function (res) {
+        return res.json();
+      })
+      .then(function (data) {
+        return data && Array.isArray(data.events) ? data.events : [];
+      });
+  }
+
+  function openBrowseShell(context) {
+    state.browseContext = context;
+    state.activeModal = 'browse';
+    if (els.eventModal) els.eventModal.hidden = true;
+    if (els.buildingModal) els.buildingModal.hidden = true;
+    if (els.modal) els.modal.hidden = true;
+    if (els.browseKicker) els.browseKicker.textContent = context.kicker || 'Events';
+    if (els.browseTitle) els.browseTitle.textContent = context.title || 'Events';
+    if (els.browseLede) els.browseLede.textContent = context.lede || '';
+    if (els.browseActions) {
+      els.browseActions.innerHTML = browseActionsHtml(context);
+      bindBrowseActions();
+    }
+    if (els.browseStatus) {
+      els.browseStatus.hidden = false;
+      els.browseStatus.textContent = 'Loading events…';
+    }
+    if (els.browseList) els.browseList.innerHTML = '';
+    if (els.browsePanel) els.browsePanel.hidden = false;
+    document.body.style.overflow = 'hidden';
+    if (els.browseClose) els.browseClose.focus();
+  }
+
+  function closeBrowsePanel() {
+    if (els.browsePanel) els.browsePanel.hidden = true;
+    document.body.style.overflow = '';
+    state.browseContext = null;
+    if (state.activeModal === 'browse') state.activeModal = null;
+  }
+
+  function openCountryBrowse(meta) {
+    if (!meta || meta.unavailable) return;
+    trackIntl('intl_browse_open', { kind: 'country', country: meta.iso2 || '' });
+    var lede;
+    if (meta.live) {
+      lede =
+        'The UK platform is live — browse the full directory there. Link-out listings on International are for markets we are still building.';
+    } else if (meta.building) {
+      lede =
+        'We are building here. Browse link-out events below, list your group, or add an event for review.';
+    } else {
+      lede =
+        'Browse upcoming link-out networking events in ' +
+        meta.name +
+        ', then book on the organiser’s site.';
+    }
+    openBrowseShell({
+      kind: 'country',
+      meta: meta,
+      kicker: statusLabel(meta),
+      title: meta.name,
+      lede: lede,
+      countryCodes: meta.iso2 && meta.iso2 !== 'GB' ? [meta.iso2] : [],
+    });
+
+    if (meta.live) {
+      paintBrowseList([], {
+        emptyMessage:
+          'UK events live on The Networker UK — use Browse UK events above for the full directory.',
+      });
+      return;
+    }
+
+    fetchBrowseEvents([meta.iso2])
+      .then(function (events) {
+        if (!state.browseContext || state.browseContext.kind !== 'country') return;
+        if (!state.browseContext.meta || state.browseContext.meta.iso2 !== meta.iso2) return;
+        paintBrowseList(events, {
+          emptyMessage:
+            'No upcoming link-out events in ' +
+            meta.name +
+            ' yet — add one, or register interest while we build.',
+        });
+      })
+      .catch(function () {
+        if (els.browseStatus) {
+          els.browseStatus.hidden = false;
+          els.browseStatus.textContent = 'Could not load events right now.';
+        }
+      });
+  }
+
+  function openRegionBrowse(region) {
+    if (!region || !region.id) return;
+    var codes = Array.isArray(region.codes) ? region.codes.slice() : [];
+    if (!codes.length && Array.isArray(region.countries)) {
+      codes = region.countries.map(function (row) {
+        return row && row.code;
+      }).filter(Boolean);
+    }
+    trackIntl('intl_browse_open', { kind: 'region', region: region.id });
+    openBrowseShell({
+      kind: 'region',
+      region: region,
+      kicker: 'Region',
+      title: region.name,
+      lede:
+        region.blurb ||
+        'Browse upcoming link-out networking events across this region, then book on the organiser’s site.',
+      countryCodes: codes,
+    });
+    fetchBrowseEvents(codes)
+      .then(function (events) {
+        if (!state.browseContext || state.browseContext.kind !== 'region') return;
+        if (!state.browseContext.region || state.browseContext.region.id !== region.id) return;
+        paintBrowseList(events, {
+          showCountry: true,
+          emptyMessage:
+            'No upcoming link-out events across ' +
+            region.name +
+            ' yet — add one from your country.',
+        });
+      })
+      .catch(function () {
+        if (els.browseStatus) {
+          els.browseStatus.hidden = false;
+          els.browseStatus.textContent = 'Could not load events right now.';
+        }
+      });
   }
 
   function eventCountryOptions() {
@@ -562,19 +822,24 @@
     els.eventsStatus.hidden = true;
     els.eventsList.innerHTML = rows
       .map(function (row) {
-        var desc = row.description
-          ? '<p class="intl-events-item-desc">' + escapeHtml(row.description) + '</p>'
-          : '';
-        var price = row.priceLabel
-          ? '<span>' + escapeHtml(row.priceLabel) + '</span>'
-          : '';
+        var organiser = '';
+        if (row.organiserName) {
+          organiser = row.organiserWebsite
+            ? '<p class="intl-events-item-organiser"><a href="' +
+              escapeAttr(row.organiserWebsite) +
+              '" target="_blank" rel="noopener noreferrer">' +
+              escapeHtml(row.organiserName) +
+              '</a></p>'
+            : '<p class="intl-events-item-organiser">' +
+              escapeHtml(row.organiserName) +
+              '</p>';
+        }
         return (
           '<li class="intl-events-item">' +
           '<div class="intl-events-item-meta">' +
           '<span>' +
           escapeHtml(formatEventDateRange(row)) +
           '</span>' +
-          price +
           '</div>' +
           '<h3 class="intl-events-item-title">' +
           escapeHtml(row.title || 'Event') +
@@ -582,7 +847,7 @@
           '<p class="intl-events-item-place">' +
           escapeHtml((row.city || '') + (row.countryName ? ', ' + row.countryName : '')) +
           '</p>' +
-          desc +
+          organiser +
           '<a class="intl-events-item-link" href="' +
           escapeAttr(row.externalUrl || '#') +
           '" target="_blank" rel="noopener noreferrer">Open booking page →</a>' +
@@ -625,6 +890,7 @@
 
   function openEventModal(prefillCountry) {
     state.activeModal = 'event';
+    if (els.browsePanel) els.browsePanel.hidden = true;
     if (els.interestModal) els.interestModal.hidden = true;
     if (els.buildingModal) els.buildingModal.hidden = true;
     fillEventCountrySelects();
@@ -656,6 +922,7 @@
     state.selectedCountry = meta;
     state.selectedIntent = 'attend';
     state.activeModal = 'interest';
+    if (els.browsePanel) els.browsePanel.hidden = true;
     els.modalCountry.textContent = meta.name;
     els.modalLede.textContent =
       'The Networker isn\u2019t live in ' +
@@ -688,6 +955,7 @@
     state.selectedCountry = meta;
     state.selectedOrgType = 'networking_group';
     state.activeModal = 'building';
+    if (els.browsePanel) els.browsePanel.hidden = true;
     els.buildingCountry.textContent = meta.name;
     els.buildingLede.textContent =
       'We\u2019re building The Networker in ' +
@@ -903,6 +1171,8 @@
     if (els.eventCountry && els.eventCountry.selectedIndex >= 0) {
       countryName = String(els.eventCountry.options[els.eventCountry.selectedIndex].text || '').trim();
     }
+    var organiserName = String(els.eventOrganiser.value || '').trim();
+    var organiserWebsite = String(els.eventOrganiserWebsite.value || '').trim();
     var externalUrl = String(els.eventUrl.value || '').trim();
     var contactName = String(els.eventContact.value || '').trim();
     var email = String(els.eventEmail.value || '').trim();
@@ -925,6 +1195,11 @@
     }
     if (!countryCode) {
       els.eventError.textContent = 'Choose a country.';
+      els.eventError.hidden = false;
+      return;
+    }
+    if (!organiserName) {
+      els.eventError.textContent = 'Enter the organiser or group name.';
       els.eventError.hidden = false;
       return;
     }
@@ -957,9 +1232,9 @@
         city: city,
         countryCode: countryCode,
         countryName: countryName,
+        organiserName: organiserName,
+        organiserWebsite: organiserWebsite || undefined,
         externalUrl: externalUrl,
-        priceLabel: String(els.eventPrice.value || '').trim(),
-        description: String(els.eventDescription.value || '').trim(),
         name: contactName,
         email: email,
         website_hp: honeypot ? String(honeypot.value || '') : '',
@@ -1024,20 +1299,39 @@
       var item = document.createElement('li');
       item.className = 'intl-markets-region';
       item.innerHTML =
+        '<button type="button" class="intl-markets-region-btn" data-intl-region-id="' +
+        escapeAttr(region.id) +
+        '">' +
         '<div class="intl-markets-region-head">' +
         '<span class="intl-markets-name">' +
-        region.name +
+        escapeHtml(region.name) +
         '</span>' +
-        '<span class="intl-markets-status intl-markets-status--soon">Coming soon</span>' +
+        '<span class="intl-markets-status intl-markets-status--soon">Browse events</span>' +
         '</div>' +
         '<p>' +
-        (region.blurb ||
-          'Register interest for your country on the map — no separate page yet.') +
+        escapeHtml(
+          region.blurb ||
+            'Register interest for your country on the map — no separate page yet.'
+        ) +
         '</p>' +
         '<p class="intl-markets-demand">' +
-        formatMarketsDemand(region.listTotal) +
-        ' across this region</p>';
+        escapeHtml(formatMarketsDemand(region.listTotal) + ' across this region') +
+        '</p>' +
+        '</button>';
       host.appendChild(item);
+    });
+
+    host.querySelectorAll('[data-intl-region-id]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = btn.getAttribute('data-intl-region-id');
+        var region =
+          (state.regionStats || []).find(function (row) {
+            return row.id === id;
+          }) ||
+          state.regionMeta[id] ||
+          null;
+        if (region) openRegionBrowse(region);
+      });
     });
   }
 
@@ -1317,7 +1611,7 @@
   }
 
   function initModal() {
-    document.querySelectorAll('[data-intl-modal-close]').forEach(function (node) {
+    document.querySelectorAll('[data-intl-modal-close], [data-intl-browse-close]').forEach(function (node) {
       node.addEventListener('click', closeActiveModal);
     });
 
@@ -1563,9 +1857,9 @@
     els.eventEnds = byId('intl-event-ends');
     els.eventCity = byId('intl-event-city');
     els.eventCountry = byId('intl-event-country');
+    els.eventOrganiser = byId('intl-event-organiser');
+    els.eventOrganiserWebsite = byId('intl-event-organiser-website');
     els.eventUrl = byId('intl-event-url');
-    els.eventPrice = byId('intl-event-price');
-    els.eventDescription = byId('intl-event-description');
     els.eventContact = byId('intl-event-contact');
     els.eventEmail = byId('intl-event-email');
     els.eventError = byId('intl-event-error');
@@ -1575,6 +1869,14 @@
     els.eventsStatus = byId('intl-events-status');
     els.eventsFilter = byId('intl-events-country-filter');
     els.interestModal = byId('intl-interest-modal');
+    els.browsePanel = byId('intl-browse-panel');
+    els.browseKicker = byId('intl-browse-kicker');
+    els.browseTitle = byId('intl-browse-title');
+    els.browseLede = byId('intl-browse-lede');
+    els.browseActions = byId('intl-browse-actions');
+    els.browseStatus = byId('intl-browse-status');
+    els.browseList = byId('intl-browse-list');
+    els.browseClose = document.querySelector('#intl-browse-panel .intl-browse-close');
 
     initModal();
     initLearnMorePanel();

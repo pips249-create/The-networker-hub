@@ -235,7 +235,7 @@ async function buildUserDataExport(session) {
       ? safeSelect(sb, 'international_event_listings', (q) =>
           q
             .select(
-              'id, created_at, title, starts_on, ends_on, city, country_code, country_name, description, external_url, price_label, contact_name, email, status, source'
+              'id, created_at, title, starts_on, ends_on, city, country_code, country_name, organiser_name, organiser_website, external_url, contact_name, email, status, source'
             )
             .eq('email', email)
             .order('created_at', { ascending: false })

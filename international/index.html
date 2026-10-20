@@ -175,7 +175,7 @@
           "name": "Can I add an event outside the UK?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Yes. Submit a link-out listing with title, date, city, country, and your booking URL. We review it before it appears on the public browse list. UK events should be listed on thenetworkeruk.com."
+            "text": "Yes. Submit a link-out listing with title, date, city, country, organiser name, and your booking URL. We review it before it appears on the public browse list. UK events should be listed on thenetworkeruk.com."
           }
         },
         {
@@ -203,7 +203,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/hub.css?v=20260831intl30">
-<link rel="stylesheet" href="/css/international-home.css?v=20261020intl35">
+<link rel="stylesheet" href="/css/international-home.css?v=20261020intl37">
 <link rel="icon" href="/favicon.ico?v=20260825intl26" sizes="any">
 <link rel="icon" href="/assets/favicon.svg?v=20260825intl26" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/assets/logo-networker-international.png?v=20260825intl26">
@@ -451,7 +451,7 @@
         </div>
         <div>
           <dt>Can I add an event outside the UK?</dt>
-          <dd>Yes. Use <a href="#events">Add your event</a> to submit a link-out listing (title, date, city, country, and your booking URL). We review it before it appears. UK events should be listed on <a href="https://www.thenetworkeruk.com/add-your-event" rel="noopener noreferrer">The Networker UK</a>.</dd>
+          <dd>Yes. Use <a href="#events">Add your event</a> to submit a link-out listing (title, date, place, organiser name, and booking URL). We review it before it appears. UK events should be listed on <a href="https://www.thenetworkeruk.com/add-your-event" rel="noopener noreferrer">The Networker UK</a>.</dd>
         </div>
         <div>
           <dt>How do markets launch?</dt>
@@ -557,6 +557,28 @@
   </div>
 </div>
 
+<div class="intl-browse" id="intl-browse-panel" hidden>
+  <div class="intl-browse-backdrop" data-intl-browse-close tabindex="-1" aria-hidden="true"></div>
+  <aside
+    class="intl-browse-panel"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="intl-browse-title"
+  >
+    <button type="button" class="intl-browse-close" data-intl-browse-close aria-label="Close">&times;</button>
+    <header class="intl-browse-header">
+      <p class="intl-browse-kicker" id="intl-browse-kicker">Events</p>
+      <h2 class="intl-browse-title" id="intl-browse-title">Country</h2>
+      <p class="intl-browse-lede" id="intl-browse-lede">
+        Browse upcoming link-out networking events, then book on the organiser&rsquo;s site.
+      </p>
+      <div class="intl-browse-actions" id="intl-browse-actions"></div>
+    </header>
+    <p class="intl-browse-status" id="intl-browse-status">Loading events&hellip;</p>
+    <ul class="intl-browse-list" id="intl-browse-list" aria-live="polite"></ul>
+  </aside>
+</div>
+
 <div class="intl-modal" id="intl-event-modal" hidden>
   <div class="intl-modal-backdrop" data-intl-modal-close tabindex="-1" aria-hidden="true"></div>
   <div class="intl-modal-panel intl-modal-panel--wide" role="dialog" aria-modal="true" aria-labelledby="intl-event-title">
@@ -598,14 +620,14 @@
         </div>
       </div>
 
+      <label class="intl-field-label" for="intl-event-organiser">Organiser / group name</label>
+      <input class="intl-field-input" id="intl-event-organiser" name="organiserName" type="text" required maxlength="160" autocomplete="organization" placeholder="e.g. Dublin Business Network">
+
+      <label class="intl-field-label" for="intl-event-organiser-website">Organiser website <span class="intl-optional">(optional)</span></label>
+      <input class="intl-field-input" id="intl-event-organiser-website" name="organiserWebsite" type="url" placeholder="https://yourgroup.com">
+
       <label class="intl-field-label" for="intl-event-url">Booking / info URL</label>
       <input class="intl-field-input" id="intl-event-url" name="externalUrl" type="url" required placeholder="https://yoursite.com/book">
-
-      <label class="intl-field-label" for="intl-event-price">Price label <span class="intl-optional">(optional)</span></label>
-      <input class="intl-field-input" id="intl-event-price" name="priceLabel" type="text" maxlength="40" placeholder="e.g. Free, $25, From €15">
-
-      <label class="intl-field-label" for="intl-event-description">Short description <span class="intl-optional">(optional)</span></label>
-      <textarea class="intl-field-textarea" id="intl-event-description" name="description" rows="3" maxlength="1200" placeholder="Who it&rsquo;s for and what to expect"></textarea>
 
       <div class="intl-event-form-grid">
         <div>
@@ -679,6 +701,6 @@
 </div>
 
 <script src="/js/hub-compliance-bootstrap.js?v=20260923cmp4" data-root="/"></script>
-<script src="/js/international-home.js?v=20261020intl35" defer></script>
+<script src="/js/international-home.js?v=20261020intl37" defer></script>
 </body>
 </html>

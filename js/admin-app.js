@@ -33517,16 +33517,20 @@
               '<td class="py-2.5 pr-3"><div class="font-semibold text-brand-900">' +
               esc(row.title || '—') +
               '</div>' +
-              (row.priceLabel
-                ? '<div class="text-xs text-slate-500 mt-0.5">' + esc(row.priceLabel) + '</div>'
+              (row.organiserName
+                ? '<div class="text-xs text-slate-600 mt-0.5">' +
+                  esc(row.organiserName) +
+                  (row.organiserWebsite
+                    ? ' · <a class="text-brand-700 hover:underline" href="' +
+                      attrEsc(row.organiserWebsite) +
+                      '" target="_blank" rel="noopener">Website</a>'
+                    : '') +
+                  '</div>'
                 : '') +
               (row.externalUrl
                 ? '<div><a class="text-xs text-brand-700 hover:underline" href="' +
                   attrEsc(row.externalUrl) +
                   '" target="_blank" rel="noopener">Link out</a></div>'
-                : '') +
-              (row.description
-                ? '<p class="text-xs text-slate-500 mt-1 max-w-xs">' + esc(row.description) + '</p>'
                 : '') +
               '</td>' +
               '<td class="py-2.5 pr-3">' +
@@ -33855,11 +33859,11 @@
             city: row.city,
             countryCode: row.countryCode,
             countryName: row.countryName,
+            organiserName: row.organiserName,
+            organiserWebsite: row.organiserWebsite,
             externalUrl: row.externalUrl,
-            priceLabel: row.priceLabel,
             contactName: row.contactName,
             email: row.email,
-            description: row.description,
           };
         })
       );
