@@ -190,28 +190,15 @@
       return;
     }
 
-    var legacyToken = String(params().get('token') || '').trim();
-    var legacyDigits = legacyToken.replace(/\D/g, '');
-    var legacyIsTypedCode = legacyDigits.length === 6 && legacyDigits === legacyToken;
-    if (legacyToken && !legacyIsTypedCode) {
-      if (confirmBtn) confirmBtn.disabled = true;
-      var result = await verifyToken(legacyToken);
-      if (result.ok && result.data.verified) {
-        if (window.history.replaceState) {
-          var url = new URL(window.location.href);
-          url.searchParams.delete('token');
-          url.searchParams.delete('code');
-          url.searchParams.delete('email');
-          window.history.replaceState({}, '', url.pathname + url.search);
-        }
-        showVerifiedUi(result.data.message || 'Email confirmed.');
-        return;
-      }
-      showError(
-        (result.data && result.data.message) ||
-          'This confirmation link is invalid or expired. Enter the code from your email.'
-      );
-      if (confirmBtn) confirmBtn.disabled = false;
+    // Never auto-submit ?code= / ?token= on load. Mail scanners and in-app
+    // redirects used to mark the address confirmed and fire the welcome email
+    // before the user entered the code from their inbox.
+    if (window.history.replaceState && (params().get('token') || params().get('code'))) {
+      var scrub = new URL(window.location.href);
+      scrub.searchParams.delete('token');
+      scrub.searchParams.delete('code');
+      window.history.replaceState({}, '', scrub.pathname + scrub.search + scrub.hash);
+      showError('Enter the 6-digit code from your email to confirm this address.');
     }
 
     await maybeAutoSendVerificationCode();

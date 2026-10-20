@@ -1,9 +1,9 @@
 /**
  * URL helpers for organiser / account email confirmation.
  *
- * /organiser/verify-email treats ?code= and ?token= as magic links and confirms
- * the address immediately. Those secrets belong in the email only.
- * In-app redirects after signup, login, or enable must not include them.
+ * The confirm page requires the user to type the 6-digit code. Do not put
+ * ?code= or ?token= on in-app redirects — those secrets belong in the email only
+ * (and URL secrets must not auto-confirm on page load).
  */
 
 function buildOrganiserVerifyEmailPath(code, email) {
