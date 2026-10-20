@@ -16,10 +16,18 @@ window.INTL_REGION_SEED = [
   {
     "id": "north_america",
     "name": "North America",
-    "blurb": "United States is building; Canada and Mexico register via the map.",
+    "blurb": "United States is building; Canada registers via the map.",
     "codes": [
       "US",
-      "CA",
+      "CA"
+    ],
+    "marketsList": true
+  },
+  {
+    "id": "mexico",
+    "name": "Mexico",
+    "blurb": "Mexico registers via the map — no separate page yet.",
+    "codes": [
       "MX"
     ],
     "marketsList": true

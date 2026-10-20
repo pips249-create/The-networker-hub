@@ -29,11 +29,18 @@ const REGIONS = [
   {
     id: 'north_america',
     name: 'North America',
-    blurb: 'United States is building; Canada and Mexico register via the map.',
-    codes: ['US', 'CA', 'MX'],
+    blurb: 'United States is building; Canada registers via the map.',
+    codes: ['US', 'CA'],
     marketsList: true,
-    /** US has its own Markets row — only show regional roll-up for CA/MX spillover. */
+    /** US has its own Markets row — only show regional roll-up for Canada spillover. */
     excludeFromMarketsTotal: ['US'],
+  },
+  {
+    id: 'mexico',
+    name: 'Mexico',
+    blurb: 'Mexico registers via the map — no separate page yet.',
+    codes: ['MX'],
+    marketsList: true,
   },
   {
     id: 'central_america_caribbean',
