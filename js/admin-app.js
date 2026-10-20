@@ -33396,6 +33396,12 @@
       '<button type="button" id="intl-leads-export-events" class="rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold px-3 py-2 hover:bg-slate-50">Export events CSV</button>' +
       '</div></div>' +
       '<p id="intl-leads-status" class="text-sm text-slate-500">Loading leads…</p>' +
+      '<div id="intl-events-schema-banner" class="hidden rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-950" role="status">' +
+      '<p class="font-semibold">Link-out events table is missing in Supabase</p>' +
+      '<p class="mt-1 text-amber-900/90">Public “Submit for review” and staff Add event will fail until you run ' +
+      '<code class="text-xs bg-white/80 px-1 rounded">supabase/migrations/324_international_event_listings.sql</code> then ' +
+      '<code class="text-xs bg-white/80 px-1 rounded">325_international_event_optional_fields.sql</code> in the Supabase SQL Editor.</p>' +
+      '</div>' +
       '</section>' +
       '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-3">' +
       '<div class="flex flex-wrap items-center justify-between gap-2">' +
@@ -33803,20 +33809,31 @@
           cache.interest = Array.isArray(data.interest) ? data.interest : [];
           cache.intake = Array.isArray(data.intake) ? data.intake : [];
           cache.events = Array.isArray(data.events) ? data.events : [];
+          var schemaBanner = document.getElementById('intl-events-schema-banner');
+          if (schemaBanner) {
+            schemaBanner.classList.toggle('hidden', data.eventsConfigured !== false);
+          }
           paintIntakeFilters();
           paintEventsFilters();
           renderEvents();
           renderIntake();
           renderInterest();
-          setStatus(
-            (data.eventsPendingCount || 0) +
-              ' pending events · ' +
-              (data.intakeOpenCount || 0) +
-              ' open building leads · ' +
-              (data.interestRecentCount || 0) +
-              ' interest in last 7 days',
-            'ok'
-          );
+          if (data.eventsConfigured === false) {
+            setStatus(
+              'Events table missing — run migrations 324 + 325 in Supabase before submissions work.',
+              'error'
+            );
+          } else {
+            setStatus(
+              (data.eventsPendingCount || 0) +
+                ' pending events · ' +
+                (data.intakeOpenCount || 0) +
+                ' open building leads · ' +
+                (data.interestRecentCount || 0) +
+                ' interest in last 7 days',
+              'ok'
+            );
+          }
         })
         .catch(function (err) {
           if (intakeBody) {
