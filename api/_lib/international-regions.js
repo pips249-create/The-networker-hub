@@ -180,6 +180,7 @@ function buildRegionAggregates(countries, threshold) {
       name: region.name,
       blurb: region.blurb,
       marketsList: Boolean(region.marketsList),
+      codes: region.codes.slice(),
       interest: interest,
       groups: groups,
       total: total,

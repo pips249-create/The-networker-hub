@@ -10,10 +10,10 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const UNAVAILABLE_COUNTRY_CODES = new Set(['BY', 'IR', 'KP', 'RU', 'SY']);
 
 const PUBLIC_SELECT =
-  'id, title, starts_on, ends_on, city, country_code, country_name, description, external_url, price_label, created_at';
+  'id, title, starts_on, ends_on, city, country_code, country_name, organiser_name, organiser_website, external_url, created_at';
 
 const ADMIN_SELECT =
-  'id, title, starts_on, ends_on, city, country_code, country_name, description, external_url, price_label, contact_name, email, status, source, created_at, reviewed_at, reviewed_by';
+  'id, title, starts_on, ends_on, city, country_code, country_name, organiser_name, organiser_website, external_url, contact_name, email, status, source, created_at, reviewed_at, reviewed_by';
 
 function staffInbox() {
   const configured = String(process.env.EVENT_INTAKE_EMAIL || '').trim();
@@ -98,15 +98,32 @@ function normalizeInput(payload) {
     countryName: String(payload.countryName || payload.country_name || '')
       .trim()
       .slice(0, 120),
-    description: String(payload.description || payload.notes || '')
+    organiserName: String(
+      payload.organiserName ||
+        payload.organiser_name ||
+        payload.groupName ||
+        payload.group_name ||
+        payload.organisation ||
+        ''
+    )
       .trim()
-      .slice(0, 1200) || null,
+      .slice(0, 160),
+    organiserWebsiteRaw: String(
+      payload.organiserWebsite ||
+        payload.organiser_website ||
+        payload.groupWebsite ||
+        payload.group_website ||
+        ''
+    ).trim(),
+    organiserWebsite: normalizeExternalUrl(
+      payload.organiserWebsite ||
+        payload.organiser_website ||
+        payload.groupWebsite ||
+        payload.group_website
+    ),
     externalUrl: normalizeExternalUrl(
       payload.externalUrl || payload.external_url || payload.url || payload.link || payload.bookingUrl
     ),
-    priceLabel: String(payload.priceLabel || payload.price_label || payload.price || '')
-      .trim()
-      .slice(0, 40) || null,
     contactName: String(payload.name || payload.contactName || payload.contact_name || '')
       .trim()
       .slice(0, 120),
@@ -154,6 +171,20 @@ function validateInput(input) {
       message: 'We cannot list events in this country.',
     };
   }
+  if (!input.organiserName) {
+    return {
+      ok: false,
+      error: 'missing_organiser',
+      message: 'Enter the organiser or group name.',
+    };
+  }
+  if (input.organiserWebsiteRaw && !input.organiserWebsite) {
+    return {
+      ok: false,
+      error: 'invalid_organiser_website',
+      message: 'Enter a valid organiser website (https://…), or leave it blank.',
+    };
+  }
   if (!input.externalUrl) {
     return {
       ok: false,
@@ -179,9 +210,9 @@ function mapPublic(row) {
     city: row.city,
     countryCode: row.country_code,
     countryName: row.country_name,
-    description: row.description || null,
+    organiserName: row.organiser_name || null,
+    organiserWebsite: row.organiser_website || null,
     externalUrl: row.external_url,
-    priceLabel: row.price_label || null,
     createdAt: row.created_at,
   };
 }
@@ -214,16 +245,12 @@ function buildStaffEmailHtml(input) {
     row('Ends', input.endsOn) +
     row('City', input.city) +
     row('Country', input.countryName + ' (' + input.countryCode + ')') +
+    row('Organiser / group', input.organiserName) +
+    row('Organiser website', input.organiserWebsite) +
     row('Link out', input.externalUrl) +
-    row('Price shown', input.priceLabel) +
     row('Contact', input.contactName) +
     row('Email', input.email) +
     '</table>' +
-    (input.description
-      ? '<p style="margin:16px 0 0;"><strong>About the event</strong><br>' +
-        escHtml(input.description).replace(/\n/g, '<br>') +
-        '</p>'
-      : '') +
     '<p style="margin:16px 0 0;color:#666;font-size:13px;">Approve in Admin → International leads before it appears on the public browse list.</p>' +
     '</div>'
   );
@@ -277,9 +304,9 @@ async function submitInternationalEventListing(payload) {
       city: input.city,
       country_code: input.countryCode,
       country_name: input.countryName,
-      description: input.description,
+      organiser_name: input.organiserName,
+      organiser_website: input.organiserWebsite,
       external_url: input.externalUrl,
-      price_label: input.priceLabel,
       contact_name: input.contactName,
       email: input.email,
       status: 'pending',
@@ -335,6 +362,24 @@ async function submitInternationalEventListing(payload) {
   };
 }
 
+function normalizeCountryCodeList(raw) {
+  const fromArray = Array.isArray(raw) ? raw : null;
+  const fromString = String(raw || '')
+    .split(/[\s,]+/)
+    .map(function (part) {
+      return normalizeCountryCode(part);
+    })
+    .filter(Boolean);
+  const list = fromArray
+    ? fromArray.map(normalizeCountryCode).filter(Boolean)
+    : fromString;
+  const unique = [];
+  list.forEach(function (code) {
+    if (code.length === 2 && unique.indexOf(code) === -1) unique.push(code);
+  });
+  return unique;
+}
+
 async function listPublicInternationalEventListings(options) {
   options = options || {};
   if (!isSupabaseConfigured()) {
@@ -343,7 +388,12 @@ async function listPublicInternationalEventListings(options) {
 
   const sb = getSupabaseAdmin();
   const max = Math.min(Math.max(Number(options.limit) || 100, 1), 200);
-  const countryCode = normalizeCountryCode(options.countryCode || options.country_code);
+  const countryCodes = normalizeCountryCodeList(
+    options.countryCodes ||
+      options.countries ||
+      options.countryCode ||
+      options.country_code
+  );
   const today = new Date().toISOString().slice(0, 10);
 
   let query = sb
@@ -354,8 +404,10 @@ async function listPublicInternationalEventListings(options) {
     .order('starts_on', { ascending: true })
     .limit(max);
 
-  if (countryCode && countryCode.length === 2) {
-    query = query.eq('country_code', countryCode);
+  if (countryCodes.length === 1) {
+    query = query.eq('country_code', countryCodes[0]);
+  } else if (countryCodes.length > 1) {
+    query = query.in('country_code', countryCodes);
   }
 
   const res = await query;

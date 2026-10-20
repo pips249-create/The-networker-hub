@@ -97,7 +97,13 @@ async function getInternationalInterestStats() {
     regions: regions,
     countryToRegion: COUNTRY_TO_REGION,
     regionMeta: REGIONS.map(function (r) {
-      return { id: r.id, name: r.name, marketsList: r.marketsList };
+      return {
+        id: r.id,
+        name: r.name,
+        marketsList: r.marketsList,
+        codes: r.codes.slice(),
+        blurb: r.blurb,
+      };
     }),
   };
 }

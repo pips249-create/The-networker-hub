@@ -34,9 +34,13 @@ module.exports = wrapHandler(async function handler(req, res) {
     try {
       const countryCode =
         (req.query && (req.query.countryCode || req.query.country_code || req.query.country)) || '';
+      const countries =
+        (req.query && (req.query.countries || req.query.countryCodes || req.query.country_codes)) ||
+        '';
       const limit = req.query && req.query.limit;
       const result = await listPublicInternationalEventListings({
         countryCode: countryCode,
+        countries: countries || countryCode,
         limit: limit,
       });
       return json(res, 200, result);

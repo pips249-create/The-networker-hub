@@ -8,9 +8,9 @@ create table if not exists public.international_event_listings (
   city text not null,
   country_code text not null,
   country_name text not null,
-  description text,
+  organiser_name text not null,
+  organiser_website text,
   external_url text not null,
-  price_label text,
   contact_name text not null,
   email text not null,
   status text not null default 'pending'
