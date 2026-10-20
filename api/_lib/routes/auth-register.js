@@ -160,6 +160,8 @@ module.exports = async function handler(req, res) {
 
     const accessStatus = await getOrganiserAccessStatus(sessionUser);
     let emailSent = false;
+    // Always require a fresh inbox code at signup unless this address is already confirmed.
+    // Pending-claim bootstrap must not count as confirmation (see supabase-organiser-claims).
     const requiresEmailVerification = !accessStatus.organiserEmailVerified;
 
     // Confirm-your-email must go out before (and without) the Welcome email.
@@ -190,18 +192,19 @@ module.exports = async function handler(req, res) {
       } catch {
         /* Policy is best-effort; verify can still complete without welcome */
       }
-    } else if (!claimSignup) {
+    } else if (claimSignup) {
+      try {
+        await setAccountWelcomePolicy(sessionUser.sub, ACCOUNT_WELCOME_SKIP);
+      } catch {
+        /* ignore */
+      }
+    } else {
+      // Already confirmed (e.g. provisioned login reclaim) — welcome is safe now.
       try {
         await sendAccountWelcomeEmail({ email, name });
         await setAccountWelcomePolicy(sessionUser.sub, ACCOUNT_WELCOME_SENT);
       } catch {
         /* Registration succeeds even if welcome email fails */
-      }
-    } else {
-      try {
-        await setAccountWelcomePolicy(sessionUser.sub, ACCOUNT_WELCOME_SKIP);
-      } catch {
-        /* ignore */
       }
     }
 

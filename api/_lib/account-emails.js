@@ -78,6 +78,7 @@ async function setAccountWelcomePolicy(userId, policy) {
 /**
  * After email confirmation, send account_welcome once when register deferred it.
  * Claim signups store "skip" and never get the generic welcome.
+ * Requires hub.organiser_email_verified_at so welcome cannot race ahead of confirm.
  */
 async function maybeSendDeferredAccountWelcome({ userId, email, name, siteUrl }) {
   const uid = String(userId || '').trim();
@@ -92,6 +93,18 @@ async function maybeSendDeferredAccountWelcome({ userId, email, name, siteUrl })
   const policy = String(data.user.user_metadata?.[ACCOUNT_WELCOME_POLICY_KEY] || '').trim();
   if (policy !== ACCOUNT_WELCOME_AFTER_VERIFY) {
     return { ok: false, skipped: true, reason: policy || 'not_pending' };
+  }
+
+  const { data: hub, error: hubError } = await sb
+    .from('hub_accounts')
+    .select('organiser_email_verified_at')
+    .eq('user_id', uid)
+    .maybeSingle();
+  if (hubError) {
+    return { ok: false, skipped: true, reason: 'hub_lookup_failed' };
+  }
+  if (!hub?.organiser_email_verified_at) {
+    return { ok: false, skipped: true, reason: 'email_not_verified' };
   }
 
   const result = await sendAccountWelcomeEmail({ email, name, siteUrl });

@@ -129,8 +129,8 @@ async function sendOrganiserEmailVerification({ userId, email, name, revealCode 
   const code = newVerifyCode();
   await storeVerifyToken(userId, code);
 
-  // The email shows the digits. The link only opens the form — it must not
-  // carry the code, or the confirm page can mark the address verified on load.
+  // The email shows the digits. The link only opens the empty form — it must
+  // not carry the code (welcome mail is gated on a successful code submit).
   const verifyPath = verifyEmailPagePath(address);
   const verifyUrl = siteHost() + verifyPath;
   const displayName = String(name || '').trim() || address.split('@')[0];
@@ -153,7 +153,7 @@ async function sendOrganiserEmailVerification({ userId, email, name, revealCode 
       ok: true,
       emailSent: true,
       verifyUrl: null,
-      // Never hand the magic-link path to the browser. ?code= confirms immediately.
+      // Never hand a code-bearing path to the browser after signup/enable.
       verifyPath: verifyEmailPagePath(address),
       ...result,
     };

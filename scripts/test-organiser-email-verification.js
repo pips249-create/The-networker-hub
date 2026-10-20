@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
  * Email verification URL helpers used at signup and organiser payouts.
- * In-app redirects must not include the confirmation code: the verify page
- * submits ?code= on load and would mark the address confirmed without the user.
+ * In-app redirects must not include the confirmation code: URL secrets must
+ * not auto-confirm the address (welcome mail is gated on a typed code submit).
  */
 const assert = require('assert');
 const {

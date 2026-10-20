@@ -346,8 +346,9 @@ async function rejectGroupForSession(session, groupId, notes) {
 
 /**
  * When someone authenticates with the same email as a pending group profile,
- * skip separate organiser enable + email-verify steps — they proved ownership
- * by using the address the invite was sent to.
+ * enable organiser access / view so they can claim — but do NOT mark the email
+ * confirmed. Inbox confirmation (6-digit code) is still required before welcome
+ * mail and sensitive organiser actions.
  */
 async function bootstrapOrganiserFromPendingClaims(session) {
   const pendingGroups = await listPendingClaimGroupsForSession(session);
@@ -372,11 +373,11 @@ async function bootstrapOrganiserFromPendingClaims(session) {
     .maybeSingle();
 
   // Only enable organiser access / view — never rewrite platform role (login was demoting admins).
+  // Do not set organiser_email_verified_at: matching a directory email is not inbox proof.
   const patch = {
     user_id: session.sub,
     hub_view: 'organiser',
     organiser_access_at: hub?.organiser_access_at || now,
-    organiser_email_verified_at: hub?.organiser_email_verified_at || now,
   };
   if (!hub) {
     patch.role = 'client';
