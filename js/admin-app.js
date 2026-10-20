@@ -33382,6 +33382,66 @@
     }
   }
 
+  /** Event calendar date (YYYY-MM-DD) + optional local time — not created_at. */
+  function formatIntlEventWhen(startsOn, startsAtLocal, endsOn) {
+    var start = String(startsOn || '').trim();
+    if (!start) return '—';
+    var label = start;
+    try {
+      var parts = start.split('-');
+      if (parts.length === 3) {
+        label = new Date(
+          Number(parts[0]),
+          Number(parts[1]) - 1,
+          Number(parts[2])
+        ).toLocaleDateString('en-GB', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+        });
+      }
+    } catch (e) {
+      label = start;
+    }
+    var time = String(startsAtLocal || '').trim();
+    var timeMatch = time.match(/^(\d{1,2}):(\d{2})/);
+    if (timeMatch) {
+      var hours = Number(timeMatch[1]);
+      var minutes = Number(timeMatch[2]);
+      if (Number.isFinite(hours) && Number.isFinite(minutes)) {
+        var suffix = hours >= 12 ? 'pm' : 'am';
+        var hour12 = hours % 12;
+        if (hour12 === 0) hour12 = 12;
+        label +=
+          ' · ' + hour12 + ':' + String(minutes).padStart(2, '0') + suffix;
+      }
+    }
+    var end = String(endsOn || '').trim();
+    if (end && end !== start) {
+      try {
+        var endParts = end.split('-');
+        if (endParts.length === 3) {
+          label +=
+            ' → ' +
+            new Date(
+              Number(endParts[0]),
+              Number(endParts[1]) - 1,
+              Number(endParts[2])
+            ).toLocaleDateString('en-GB', {
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric',
+            });
+        } else {
+          label += ' → ' + end;
+        }
+      } catch (e2) {
+        label += ' → ' + end;
+      }
+    }
+    return label;
+  }
+
   function renderInternationalLeadsHub() {
     main.innerHTML =
       '<div class="space-y-6">' +
@@ -33554,12 +33614,15 @@
             return (
               '<tr class="border-b border-slate-100 align-top">' +
               '<td class="py-2.5 pr-3 whitespace-nowrap text-slate-600">' +
-              esc(formatIntlLeadDate(row.createdAt)) +
-              '<div class="text-xs text-slate-500 mt-0.5">' +
-              esc(row.startsOn || '') +
-              (row.startsAtLocal ? ' · ' + esc(String(row.startsAtLocal).slice(0, 5)) : '') +
-              (row.endsOn && row.endsOn !== row.startsOn ? ' → ' + esc(row.endsOn) : '') +
-              '</div></td>' +
+              '<div class="font-semibold text-brand-900">' +
+              esc(formatIntlEventWhen(row.startsOn, row.startsAtLocal, row.endsOn)) +
+              '</div>' +
+              (row.createdAt
+                ? '<div class="text-xs text-slate-500 mt-0.5">Added ' +
+                  esc(formatIntlLeadDate(row.createdAt)) +
+                  '</div>'
+                : '') +
+              '</td>' +
               '<td class="py-2.5 pr-3"><div class="font-semibold text-brand-900">' +
               esc(row.title || '—') +
               '</div>' +
@@ -33938,12 +34001,12 @@
         'international-event-listings.csv',
         cache.events.map(function (row) {
           return {
-            createdAt: row.createdAt,
-            status: row.status,
-            title: row.title,
             startsOn: row.startsOn,
             startsAtLocal: row.startsAtLocal,
             endsOn: row.endsOn,
+            createdAt: row.createdAt,
+            status: row.status,
+            title: row.title,
             city: row.city,
             countryCode: row.countryCode,
             countryName: row.countryName,

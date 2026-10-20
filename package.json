@@ -44,6 +44,7 @@
     "test-international-regions": "node scripts/test-international-regions.js",
     "test-intl-seo-aeo": "node scripts/test-intl-seo-aeo.js",
     "test-intl-browse-lede": "node scripts/test-intl-browse-lede.js",
+    "test-intl-admin-event-when": "node scripts/test-intl-admin-event-when.js",
     "send-ticket-tailor-webhook": "node scripts/send-ticket-tailor-webhook.js",
     "send-external-booking-webhook": "node scripts/send-external-booking-webhook.js",
     "test-review-e2e": "node scripts/review-e2e-test.js",
