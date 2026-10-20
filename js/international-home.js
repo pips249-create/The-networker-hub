@@ -280,7 +280,10 @@
       return 'We don\u2019t operate in this region';
     }
     if (meta.live) {
-      return isCoarsePointer() ? 'Tap to browse events →' : 'Browse events →';
+      return isCoarsePointer() ? 'Tap to open UK →' : 'Open UK →';
+    }
+    if (meta.url) {
+      return isCoarsePointer() ? 'Tap to open market →' : 'Open market page →';
     }
     return isCoarsePointer() ? 'Tap to browse events →' : 'Browse events →';
   }
@@ -442,6 +445,17 @@
   function handleCountryAction(meta) {
     if (!meta || meta.unavailable) return;
     clearHover();
+    // Live / building markets with a dedicated page (UK, Ireland, US) — go there.
+    // Browse drawer is for map-only countries and regions without a local hub yet.
+    if (meta.url) {
+      trackIntl('intl_market_open', {
+        country: meta.iso2 || '',
+        status: meta.status || '',
+        url: meta.url,
+      });
+      window.location.href = meta.url;
+      return;
+    }
     openCountryBrowse(meta);
   }
 
