@@ -298,3 +298,40 @@ window.INTL_REGION_SEED = [
     "marketsList": true
   }
 ];
+
+/**
+ * Full country list for international link-out event forms (admin + public).
+ * Excludes UK (list on thenetworkeruk.com) and unavailable markets.
+ */
+window.INTL_EVENT_COUNTRY_OPTIONS = function intlEventCountryOptions() {
+  var UNAVAILABLE = { BY: 1, IR: 1, KP: 1, RU: 1, SY: 1 };
+  var NAME_OVERRIDES = { XK: 'Kosovo' };
+  var displayNames = null;
+  try {
+    if (typeof Intl !== 'undefined' && typeof Intl.DisplayNames === 'function') {
+      displayNames = new Intl.DisplayNames(['en-GB'], { type: 'region' });
+    }
+  } catch (e) {
+    displayNames = null;
+  }
+  var seen = Object.create(null);
+  var list = [];
+  (window.INTL_REGION_SEED || []).forEach(function (region) {
+    (region.codes || []).forEach(function (raw) {
+      var code = String(raw || '')
+        .trim()
+        .toUpperCase();
+      if (!code || code === 'GB' || UNAVAILABLE[code] || seen[code]) return;
+      seen[code] = true;
+      var name =
+        NAME_OVERRIDES[code] ||
+        (displayNames && displayNames.of(code)) ||
+        code;
+      list.push({ iso2: code, name: name });
+    });
+  });
+  list.sort(function (a, b) {
+    return a.name.localeCompare(b.name, 'en-GB');
+  });
+  return list;
+};

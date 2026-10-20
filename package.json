@@ -39,6 +39,7 @@
     "test-connected-booking-providers": "node scripts/test-connected-booking-providers.js",
     "test-connected-booking-grants": "node scripts/test-connected-booking-grants.js",
     "test-international-event-listings": "node scripts/test-international-event-listings.js",
+    "test-intl-event-country-options": "node scripts/test-intl-event-country-options.js",
     "send-ticket-tailor-webhook": "node scripts/send-ticket-tailor-webhook.js",
     "send-external-booking-webhook": "node scripts/send-external-booking-webhook.js",
     "test-review-e2e": "node scripts/review-e2e-test.js",

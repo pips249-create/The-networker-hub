@@ -39,7 +39,7 @@
     '760': { iso2: 'SY', name: 'Syria' },
   };
 
-  /** Fallback country picker for event form when map data is not ready. */
+  /** Fallback when region seed / map data is not ready (keep in sync with popular markets). */
   var EVENT_COUNTRY_FALLBACK = [
     { iso2: 'AE', name: 'United Arab Emirates' },
     { iso2: 'AU', name: 'Australia' },
@@ -802,6 +802,10 @@
   }
 
   function eventCountryOptions() {
+    var fromSeed =
+      typeof window.INTL_EVENT_COUNTRY_OPTIONS === 'function'
+        ? window.INTL_EVENT_COUNTRY_OPTIONS()
+        : [];
     var fromMap = state.countries
       .filter(function (meta) {
         return meta && meta.iso2 && !meta.unavailable && meta.iso2 !== 'GB';
@@ -810,7 +814,7 @@
         return { iso2: meta.iso2, name: meta.name };
       });
     var byCode = {};
-    EVENT_COUNTRY_FALLBACK.concat(fromMap).forEach(function (row) {
+    EVENT_COUNTRY_FALLBACK.concat(fromSeed, fromMap).forEach(function (row) {
       if (!row || !row.iso2 || row.iso2 === 'GB') return;
       byCode[row.iso2] = { iso2: row.iso2, name: row.name };
     });
@@ -819,7 +823,7 @@
         return byCode[code];
       })
       .sort(function (a, b) {
-        return a.name.localeCompare(b.name);
+        return a.name.localeCompare(b.name, 'en-GB');
       });
   }
 
