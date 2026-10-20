@@ -166,6 +166,7 @@ const GATE_BYPASS_PREFIXES = [
   '/united-states',
   '/api/international-interest',
   '/api/international-group-intake',
+  '/api/international-event-listings',
   '/api/international-hub-stats',
   '/api/international-interest-stats',
   // Non-secret client bootstrap (Turnstile site key) — needed on gated + early-access forms.

@@ -112,6 +112,7 @@ async function buildUserDataExport(session) {
     reviewReports,
     countryInterest,
     groupIntake,
+    eventListings,
     organiserProfiles,
   ] = await Promise.all([
     attendeeId
@@ -230,6 +231,16 @@ async function buildUserDataExport(session) {
             .order('created_at', { ascending: false })
         )
       : Promise.resolve({ rows: [] }),
+    email
+      ? safeSelect(sb, 'international_event_listings', (q) =>
+          q
+            .select(
+              'id, created_at, title, starts_on, ends_on, city, country_code, country_name, description, external_url, price_label, contact_name, email, status, source'
+            )
+            .eq('email', email)
+            .order('created_at', { ascending: false })
+        )
+      : Promise.resolve({ rows: [] }),
     userId
       ? safeSelect(sb, 'organisers', (q) =>
           q
@@ -256,6 +267,7 @@ async function buildUserDataExport(session) {
     reviewReports,
     countryInterest,
     groupIntake,
+    eventListings,
     organiserProfiles,
   ];
   sections.forEach((section) => {
@@ -289,6 +301,7 @@ async function buildUserDataExport(session) {
     review_reports_submitted: reviewReports.rows,
     international_country_interest: countryInterest.rows,
     international_group_intake: groupIntake.rows,
+    international_event_listings: eventListings.rows,
     organiser_profiles: organiserProfiles.rows,
     notes: [
       'This export contains personal data we hold about you as a platform member.',

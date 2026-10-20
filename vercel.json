@@ -346,6 +346,7 @@
     "api/advertising.js": { "maxDuration": 15 },
     "api/international-interest.js": { "maxDuration": 10 },
     "api/international-group-intake.js": { "maxDuration": 10 },
+    "api/international-event-listings.js": { "maxDuration": 10 },
     "api/international-hub-stats.js": { "maxDuration": 10 },
     "api/international-interest-stats.js": { "maxDuration": 10 }
   },

@@ -39,6 +39,33 @@
     '760': { iso2: 'SY', name: 'Syria' },
   };
 
+  /** Fallback country picker for event form when map data is not ready. */
+  var EVENT_COUNTRY_FALLBACK = [
+    { iso2: 'AE', name: 'United Arab Emirates' },
+    { iso2: 'AU', name: 'Australia' },
+    { iso2: 'BE', name: 'Belgium' },
+    { iso2: 'BR', name: 'Brazil' },
+    { iso2: 'CA', name: 'Canada' },
+    { iso2: 'CH', name: 'Switzerland' },
+    { iso2: 'DE', name: 'Germany' },
+    { iso2: 'DK', name: 'Denmark' },
+    { iso2: 'ES', name: 'Spain' },
+    { iso2: 'FR', name: 'France' },
+    { iso2: 'IE', name: 'Ireland' },
+    { iso2: 'IN', name: 'India' },
+    { iso2: 'IT', name: 'Italy' },
+    { iso2: 'JP', name: 'Japan' },
+    { iso2: 'MX', name: 'Mexico' },
+    { iso2: 'NL', name: 'Netherlands' },
+    { iso2: 'NO', name: 'Norway' },
+    { iso2: 'NZ', name: 'New Zealand' },
+    { iso2: 'PT', name: 'Portugal' },
+    { iso2: 'SE', name: 'Sweden' },
+    { iso2: 'SG', name: 'Singapore' },
+    { iso2: 'US', name: 'United States' },
+    { iso2: 'ZA', name: 'South Africa' },
+  ];
+
   var searchTrackTimer = null;
   var lastSearchTracked = '';
 
@@ -108,6 +135,8 @@
     countryToRegion: {},
     regionMeta: {},
     activeModal: null,
+    events: [],
+    eventsFilter: '',
   };
 
   var els = {};
@@ -436,6 +465,191 @@
   function closeActiveModal() {
     if (state.activeModal === 'building') closeBuildingModal();
     else if (state.activeModal === 'interest') closeInterestModal();
+    else if (state.activeModal === 'event') closeEventModal();
+  }
+
+  function eventCountryOptions() {
+    var fromMap = state.countries
+      .filter(function (meta) {
+        return meta && meta.iso2 && !meta.unavailable && meta.iso2 !== 'GB';
+      })
+      .map(function (meta) {
+        return { iso2: meta.iso2, name: meta.name };
+      });
+    var byCode = {};
+    EVENT_COUNTRY_FALLBACK.concat(fromMap).forEach(function (row) {
+      if (!row || !row.iso2 || row.iso2 === 'GB') return;
+      byCode[row.iso2] = { iso2: row.iso2, name: row.name };
+    });
+    return Object.keys(byCode)
+      .map(function (code) {
+        return byCode[code];
+      })
+      .sort(function (a, b) {
+        return a.name.localeCompare(b.name);
+      });
+  }
+
+  function fillEventCountrySelects() {
+    var options = eventCountryOptions();
+    var selects = [els.eventCountry, els.eventsFilter];
+    selects.forEach(function (select) {
+      if (!select) return;
+      var previous = select.value || '';
+      var isFilter = select === els.eventsFilter;
+      var html = isFilter
+        ? '<option value="">All countries</option>'
+        : '<option value="">Select a country</option>';
+      options.forEach(function (meta) {
+        html +=
+          '<option value="' +
+          meta.iso2 +
+          '">' +
+          meta.name +
+          '</option>';
+      });
+      select.innerHTML = html;
+      if (previous && Array.prototype.some.call(select.options, function (opt) {
+        return opt.value === previous;
+      })) {
+        select.value = previous;
+      }
+    });
+  }
+
+  function formatEventDate(iso) {
+    if (!iso) return '';
+    try {
+      return new Date(String(iso) + 'T00:00:00').toLocaleDateString('en-GB', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+      });
+    } catch (e) {
+      return String(iso);
+    }
+  }
+
+  function formatEventDateRange(row) {
+    var start = formatEventDate(row.startsOn);
+    if (!row.endsOn || row.endsOn === row.startsOn) return start;
+    return start + ' – ' + formatEventDate(row.endsOn);
+  }
+
+  function renderEventsList() {
+    if (!els.eventsList || !els.eventsStatus) return;
+    var filter = String(state.eventsFilter || '').toUpperCase();
+    var rows = state.events.filter(function (row) {
+      if (!filter) return true;
+      return String(row.countryCode || '').toUpperCase() === filter;
+    });
+
+    if (!state.events.length) {
+      els.eventsStatus.hidden = false;
+      els.eventsStatus.textContent =
+        'No upcoming link-out events yet — be the first to add one.';
+      els.eventsList.innerHTML = '';
+      return;
+    }
+
+    if (!rows.length) {
+      els.eventsStatus.hidden = false;
+      els.eventsStatus.textContent = 'No upcoming events in that country yet.';
+      els.eventsList.innerHTML = '';
+      return;
+    }
+
+    els.eventsStatus.hidden = true;
+    els.eventsList.innerHTML = rows
+      .map(function (row) {
+        var desc = row.description
+          ? '<p class="intl-events-item-desc">' + escapeHtml(row.description) + '</p>'
+          : '';
+        var price = row.priceLabel
+          ? '<span>' + escapeHtml(row.priceLabel) + '</span>'
+          : '';
+        return (
+          '<li class="intl-events-item">' +
+          '<div class="intl-events-item-meta">' +
+          '<span>' +
+          escapeHtml(formatEventDateRange(row)) +
+          '</span>' +
+          price +
+          '</div>' +
+          '<h3 class="intl-events-item-title">' +
+          escapeHtml(row.title || 'Event') +
+          '</h3>' +
+          '<p class="intl-events-item-place">' +
+          escapeHtml((row.city || '') + (row.countryName ? ', ' + row.countryName : '')) +
+          '</p>' +
+          desc +
+          '<a class="intl-events-item-link" href="' +
+          escapeAttr(row.externalUrl || '#') +
+          '" target="_blank" rel="noopener noreferrer">Open booking page →</a>' +
+          '</li>'
+        );
+      })
+      .join('');
+  }
+
+  function escapeHtml(value) {
+    return String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function escapeAttr(value) {
+    return escapeHtml(value).replace(/'/g, '&#39;');
+  }
+
+  function loadEvents() {
+    if (!els.eventsStatus || !els.eventsList) return Promise.resolve();
+    els.eventsStatus.hidden = false;
+    els.eventsStatus.textContent = 'Loading events…';
+    return fetch('/api/international-event-listings')
+      .then(function (res) {
+        return res.json();
+      })
+      .then(function (data) {
+        state.events = data && Array.isArray(data.events) ? data.events : [];
+        renderEventsList();
+      })
+      .catch(function () {
+        els.eventsStatus.hidden = false;
+        els.eventsStatus.textContent = 'Could not load events right now.';
+        els.eventsList.innerHTML = '';
+      });
+  }
+
+  function openEventModal(prefillCountry) {
+    state.activeModal = 'event';
+    if (els.interestModal) els.interestModal.hidden = true;
+    if (els.buildingModal) els.buildingModal.hidden = true;
+    fillEventCountrySelects();
+    if (els.eventForm) {
+      els.eventForm.hidden = false;
+      els.eventForm.reset();
+    }
+    if (els.eventSuccess) els.eventSuccess.hidden = true;
+    if (els.eventError) {
+      els.eventError.hidden = true;
+      els.eventError.textContent = '';
+    }
+    if (els.eventSubmit) els.eventSubmit.disabled = false;
+    if (prefillCountry && prefillCountry.iso2 && els.eventCountry) {
+      els.eventCountry.value = prefillCountry.iso2;
+    }
+    if (els.eventModal) els.eventModal.hidden = false;
+    document.body.style.overflow = 'hidden';
+    if (els.eventTitleField) els.eventTitleField.focus();
+  }
+
+  function closeEventModal() {
+    if (els.eventModal) els.eventModal.hidden = true;
+    document.body.style.overflow = '';
+    if (state.activeModal === 'event') state.activeModal = null;
   }
 
   function openInterestModal(meta) {
@@ -456,6 +670,7 @@
     els.error.textContent = '';
     els.email.value = '';
     els.submit.disabled = false;
+    if (els.eventModal) els.eventModal.hidden = true;
     els.buildingModal.hidden = true;
     els.modal.hidden = false;
     document.body.style.overflow = 'hidden';
@@ -487,6 +702,7 @@
     els.buildingError.textContent = '';
     els.buildingForm.reset();
     els.buildingSubmit.disabled = false;
+    if (els.eventModal) els.eventModal.hidden = true;
     els.modal.hidden = true;
     els.buildingModal.hidden = false;
     document.body.style.overflow = 'hidden';
@@ -658,6 +874,116 @@
       target.focus();
       if (typeof target.select === 'function') target.select();
     }, 250);
+  }
+
+  function initEventCtas() {
+    function onAdd() {
+      trackIntl('intl_home_cta_click', { cta: 'add_event' });
+      openEventModal();
+    }
+    var introBtn = byId('intl-add-event-btn');
+    var sectionBtn = byId('intl-events-add-btn');
+    if (introBtn) introBtn.addEventListener('click', onAdd);
+    if (sectionBtn) sectionBtn.addEventListener('click', onAdd);
+    if (els.eventsFilter) {
+      els.eventsFilter.addEventListener('change', function () {
+        state.eventsFilter = String(els.eventsFilter.value || '').toUpperCase();
+        renderEventsList();
+      });
+    }
+  }
+
+  function submitEventListing() {
+    var title = String(els.eventTitleField.value || '').trim();
+    var startsOn = String(els.eventStarts.value || '').trim();
+    var endsOn = String(els.eventEnds.value || '').trim();
+    var city = String(els.eventCity.value || '').trim();
+    var countryCode = String(els.eventCountry.value || '').trim().toUpperCase();
+    var countryName = '';
+    if (els.eventCountry && els.eventCountry.selectedIndex >= 0) {
+      countryName = String(els.eventCountry.options[els.eventCountry.selectedIndex].text || '').trim();
+    }
+    var externalUrl = String(els.eventUrl.value || '').trim();
+    var contactName = String(els.eventContact.value || '').trim();
+    var email = String(els.eventEmail.value || '').trim();
+    var honeypot = els.eventForm.querySelector('[name="website_hp"]');
+
+    if (!title) {
+      els.eventError.textContent = 'Enter the event title.';
+      els.eventError.hidden = false;
+      return;
+    }
+    if (!startsOn) {
+      els.eventError.textContent = 'Enter a start date.';
+      els.eventError.hidden = false;
+      return;
+    }
+    if (!city) {
+      els.eventError.textContent = 'Enter the city.';
+      els.eventError.hidden = false;
+      return;
+    }
+    if (!countryCode) {
+      els.eventError.textContent = 'Choose a country.';
+      els.eventError.hidden = false;
+      return;
+    }
+    if (!externalUrl) {
+      els.eventError.textContent = 'Enter a booking or info URL.';
+      els.eventError.hidden = false;
+      return;
+    }
+    if (!contactName) {
+      els.eventError.textContent = 'Enter your name.';
+      els.eventError.hidden = false;
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      els.eventError.textContent = 'Enter a valid email address.';
+      els.eventError.hidden = false;
+      return;
+    }
+
+    els.eventError.hidden = true;
+    els.eventSubmit.disabled = true;
+
+    fetch('/api/international-event-listings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: title,
+        startsOn: startsOn,
+        endsOn: endsOn || undefined,
+        city: city,
+        countryCode: countryCode,
+        countryName: countryName,
+        externalUrl: externalUrl,
+        priceLabel: String(els.eventPrice.value || '').trim(),
+        description: String(els.eventDescription.value || '').trim(),
+        name: contactName,
+        email: email,
+        website_hp: honeypot ? String(honeypot.value || '') : '',
+        source: 'international_events_section',
+      }),
+    })
+      .then(function (res) {
+        return res.json().then(function (data) {
+          return { ok: res.ok, data: data };
+        });
+      })
+      .then(function (result) {
+        if (!result.ok || !result.data.ok) {
+          throw new Error((result.data && result.data.message) || 'Could not save your event.');
+        }
+        trackIntl('intl_event_submit', { country: countryCode });
+        els.eventForm.hidden = true;
+        els.eventSuccess.hidden = false;
+      })
+      .catch(function (err) {
+        els.eventError.textContent = err.message || 'Something went wrong. Please try again.';
+        els.eventError.hidden = false;
+        els.eventSubmit.disabled = false;
+      });
   }
 
   function initRegisterInterestCta() {
@@ -960,6 +1286,7 @@
 
     state.countries = features.map(countryMeta);
     populateCountryFinder();
+    fillEventCountrySelects();
 
     ensureMapDefs();
 
@@ -1025,6 +1352,13 @@
       event.preventDefault();
       submitBuildingIntake();
     });
+
+    if (els.eventForm) {
+      els.eventForm.addEventListener('submit', function (event) {
+        event.preventDefault();
+        submitEventListing();
+      });
+    }
   }
 
   function submitInterest() {
@@ -1222,13 +1556,35 @@
     els.buildingError = byId('intl-building-error');
     els.buildingSuccess = byId('intl-building-success');
     els.buildingSubmit = byId('intl-building-submit');
+    els.eventModal = byId('intl-event-modal');
+    els.eventForm = byId('intl-event-form');
+    els.eventTitleField = byId('intl-event-name-field');
+    els.eventStarts = byId('intl-event-starts');
+    els.eventEnds = byId('intl-event-ends');
+    els.eventCity = byId('intl-event-city');
+    els.eventCountry = byId('intl-event-country');
+    els.eventUrl = byId('intl-event-url');
+    els.eventPrice = byId('intl-event-price');
+    els.eventDescription = byId('intl-event-description');
+    els.eventContact = byId('intl-event-contact');
+    els.eventEmail = byId('intl-event-email');
+    els.eventError = byId('intl-event-error');
+    els.eventSuccess = byId('intl-event-success');
+    els.eventSubmit = byId('intl-event-submit');
+    els.eventsList = byId('intl-events-list');
+    els.eventsStatus = byId('intl-events-status');
+    els.eventsFilter = byId('intl-events-country-filter');
+    els.interestModal = byId('intl-interest-modal');
 
     initModal();
     initLearnMorePanel();
     initRegisterInterestCta();
+    initEventCtas();
+    fillEventCountrySelects();
     initCountryFinder();
     loadHubStats();
     loadInterestDemand();
+    loadEvents();
 
     window.addEventListener('resize', function () {
       var hovered = els.svg && els.svg.querySelector('.intl-country.is-hovered');

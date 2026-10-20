@@ -1,8 +1,12 @@
 /**
- * Admin — International map leads (country interest + building market group intake).
+ * Admin — International map leads (country interest + building market group intake + link-out events).
  */
 const { requireAdmin, json, setCors, sessionFromRequest } = require('../auth');
 const { getSupabaseAdmin, isSupabaseConfigured } = require('../supabase');
+const {
+  listAdminInternationalEventListings,
+  updateInternationalEventListingStatus,
+} = require('../international-event-listings');
 
 function mapInterest(row) {
   return {
@@ -167,10 +171,20 @@ module.exports = async function handler(req, res) {
         const intake = await listIntake(limit, status);
         return json(res, 200, { ok: true, configured: true, ...intake });
       }
+      if (type === 'events' || type === 'event') {
+        const events = await listAdminInternationalEventListings(limit, status);
+        return json(res, 200, { ok: true, configured: true, ...events });
+      }
 
-      const [interest, intake] = await Promise.all([
+      const [interest, intake, events] = await Promise.all([
         listInterest(limit),
         listIntake(limit, status || 'all'),
+        listAdminInternationalEventListings(limit, status || 'all').catch(function (e) {
+          if (e && e.code === 'events_table_missing') {
+            return { events: [], pendingCount: 0, total: 0, missing: true };
+          }
+          throw e;
+        }),
       ]);
       return json(res, 200, {
         ok: true,
@@ -181,6 +195,10 @@ module.exports = async function handler(req, res) {
         intake: intake.intake,
         intakeTotal: intake.total,
         intakeOpenCount: intake.openCount,
+        events: events.events,
+        eventsTotal: events.total,
+        eventsPendingCount: events.pendingCount,
+        eventsConfigured: !events.missing,
       });
     }
 
@@ -188,25 +206,36 @@ module.exports = async function handler(req, res) {
       const body = parseBody(req);
       const id = String(body.id || '').trim();
       if (!id) return json(res, 400, { ok: false, error: 'missing_id' });
+      const kind = String(body.kind || body.type || 'intake')
+        .trim()
+        .toLowerCase();
+      if (kind === 'event' || kind === 'events') {
+        const result = await updateInternationalEventListingStatus(id, body.status, session);
+        return json(res, 200, result);
+      }
       const result = await updateIntakeStatus(id, body.status, session);
       return json(res, 200, result);
     }
 
     return json(res, 405, { error: 'method_not_allowed' });
   } catch (e) {
-    if (e.code === 'interest_table_missing' || e.code === 'intake_table_missing') {
+    if (
+      e.code === 'interest_table_missing' ||
+      e.code === 'intake_table_missing' ||
+      e.code === 'events_table_missing'
+    ) {
       return json(res, 503, {
         ok: false,
         error: e.code,
         message:
-          'Run migrations 261_international_country_interest.sql and 262_international_group_intake.sql in Supabase.',
+          'Run migrations 261_international_country_interest.sql, 262_international_group_intake.sql, and 324_international_event_listings.sql in Supabase.',
       });
     }
     if (e.code === 'invalid_status') {
       return json(res, 400, {
         ok: false,
         error: 'invalid_status',
-        message: 'Status must be open, done, or spam.',
+        message: 'Status must be a valid lead or event status.',
       });
     }
     return json(res, 500, {
