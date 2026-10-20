@@ -14,6 +14,18 @@ const DISPLAY_THRESHOLD = 5;
 /** Markets we actively promote with dedicated International URLs. */
 const SPOTLIGHT_CODES = ['IE', 'US'];
 
+function regionMetaPayload() {
+  return REGIONS.map(function (r) {
+    return {
+      id: r.id,
+      name: r.name,
+      marketsList: r.marketsList,
+      codes: r.codes.slice(),
+      blurb: r.blurb,
+    };
+  });
+}
+
 function emptyStats() {
   return {
     ok: true,
@@ -22,6 +34,7 @@ function emptyStats() {
     countries: {},
     regions: [],
     countryToRegion: COUNTRY_TO_REGION,
+    regionMeta: regionMetaPayload(),
   };
 }
 
@@ -96,15 +109,7 @@ async function getInternationalInterestStats() {
     countries: countries,
     regions: regions,
     countryToRegion: COUNTRY_TO_REGION,
-    regionMeta: REGIONS.map(function (r) {
-      return {
-        id: r.id,
-        name: r.name,
-        marketsList: r.marketsList,
-        codes: r.codes.slice(),
-        blurb: r.blurb,
-      };
-    }),
+    regionMeta: regionMetaPayload(),
   };
 }
 

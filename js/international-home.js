@@ -233,7 +233,26 @@
     );
   }
 
+  function seedRegionMaps() {
+    var seed = window.INTL_REGION_SEED;
+    if (!Array.isArray(seed) || !seed.length) return;
+    if (!Object.keys(state.countryToRegion || {}).length) {
+      state.countryToRegion = {};
+      seed.forEach(function (region) {
+        if (!region || !region.id || !Array.isArray(region.codes)) return;
+        region.codes.forEach(function (code) {
+          if (code) state.countryToRegion[String(code).toUpperCase()] = region.id;
+        });
+      });
+    }
+    seed.forEach(function (region) {
+      if (!region || !region.id) return;
+      if (!state.regionMeta[region.id]) state.regionMeta[region.id] = region;
+    });
+  }
+
   function regionMetaForCountry(iso2) {
+    seedRegionMaps();
     var code = String(iso2 || '').toUpperCase();
     var regionId = state.countryToRegion[code];
     if (!regionId) return null;
@@ -284,6 +303,12 @@
     }
     if (meta.url) {
       return isCoarsePointer() ? 'Tap to open market →' : 'Open market page →';
+    }
+    var region = regionMetaForCountry(meta.iso2);
+    if (region && region.name) {
+      return isCoarsePointer()
+        ? 'Tap to browse ' + region.name + ' →'
+        : 'Browse ' + region.name + ' →';
     }
     return isCoarsePointer() ? 'Tap to browse events →' : 'Browse events →';
   }
@@ -446,7 +471,7 @@
     if (!meta || meta.unavailable) return;
     clearHover();
     // Live / building markets with a dedicated page (UK, Ireland, US) — go there.
-    // Browse drawer is for map-only countries and regions without a local hub yet.
+    // Map-only / lower-demand markets share a regional browse drawer (e.g. Brazil → South America).
     if (meta.url) {
       trackIntl('intl_market_open', {
         country: meta.iso2 || '',
@@ -454,6 +479,11 @@
         url: meta.url,
       });
       window.location.href = meta.url;
+      return;
+    }
+    var region = regionMetaForCountry(meta.iso2);
+    if (region && region.id) {
+      openRegionBrowse(region, { fromCountry: meta });
       return;
     }
     openCountryBrowse(meta);
@@ -573,10 +603,12 @@
         var action = btn.getAttribute('data-intl-browse-action');
         var context = state.browseContext;
         if (action === 'add-event') {
-          var prefill =
-            context && context.kind === 'country' && context.meta && !context.meta.live
-              ? context.meta
-              : null;
+          var prefill = null;
+          if (context && context.kind === 'country' && context.meta && !context.meta.live) {
+            prefill = context.meta;
+          } else if (context && context.kind === 'region' && context.fromCountry) {
+            prefill = context.fromCountry;
+          }
           closeBrowsePanel();
           openEventModal(prefill);
           return;
@@ -592,8 +624,11 @@
           return;
         }
         if (action === 'interest-region') {
+          var fromCountry =
+            context && context.kind === 'region' ? context.fromCountry || null : null;
           closeBrowsePanel();
-          focusCountrySearch();
+          if (fromCountry) openInterestModal(fromCountry);
+          else focusCountrySearch();
         }
       });
     });
@@ -710,23 +745,40 @@
       });
   }
 
-  function openRegionBrowse(region) {
+  function openRegionBrowse(region, options) {
     if (!region || !region.id) return;
+    options = options || {};
+    var fromCountry = options.fromCountry || null;
     var codes = Array.isArray(region.codes) ? region.codes.slice() : [];
     if (!codes.length && Array.isArray(region.countries)) {
       codes = region.countries.map(function (row) {
         return row && row.code;
       }).filter(Boolean);
     }
-    trackIntl('intl_browse_open', { kind: 'region', region: region.id });
+    trackIntl('intl_browse_open', {
+      kind: 'region',
+      region: region.id,
+      country: (fromCountry && fromCountry.iso2) || '',
+    });
+    var lede;
+    if (fromCountry && fromCountry.name) {
+      lede =
+        fromCountry.name +
+        ' is part of ' +
+        region.name +
+        ' — browse link-out networking events across the region, then book on the organiser’s site.';
+    } else {
+      lede =
+        region.blurb ||
+        'Browse upcoming link-out networking events across this region, then book on the organiser’s site.';
+    }
     openBrowseShell({
       kind: 'region',
       region: region,
+      fromCountry: fromCountry,
       kicker: 'Region',
       title: region.name,
-      lede:
-        region.blurb ||
-        'Browse upcoming link-out networking events across this region, then book on the organiser’s site.',
+      lede: lede,
       countryCodes: codes,
     });
     fetchBrowseEvents(codes)
@@ -1897,6 +1949,7 @@
   }
 
   function init() {
+    seedRegionMaps();
     initFooter();
     els.canvas = byId('intl-map-canvas');
     els.mapWrap = byId('intl-map-wrap');
