@@ -39,20 +39,27 @@ const BNI_LOGO =
   'https://uztgzbjrmjbonfniyqcu.supabase.co/storage/v1/object/public/organiser-assets/organisers/bulk/1780850310450-ruf56lv5.png';
 const BNI_CDN_LOGO = 'https://cdn.bniconnectglobal.com/new_template/assets/appicon/socialmedia.png';
 
-/** Known live organisers on the Bournemouth hub. */
-const EXISTING = {
-  topNetworking: '3ca3085f-2c5b-4a5b-b578-f7b87e056d37',
-  foreBusiness: 'ec4d9673-d0b8-4093-8d71-4bc9173c489b',
-  ppnBournemouth: '58e44d2c-5443-4004-a417-4f6700710cfd',
-  christchurchChamber: 'b796828c-4e2a-4761-af74-5db1844a6756',
-};
-
-const SERIES = {
-  topBournemouth: '574c964a-dcc6-4c96-803a-a98351d32108',
-  topChristchurch: '49349ecd-e0f9-4db7-80af-a1314b555b14',
-  fore: '247c530f-b0a9-4c60-adcf-450388766015',
-  ppn: 'ecf1cb4c-a0bf-4034-91e9-0a5efe3407ed',
-};
+/**
+ * Never invent dates for claimed / paying organisers (e.g. TOP Networking).
+ * They own their calendar; coverage imports only fill unclaimed shells.
+ */
+async function isClaimedOrPayingOrganiser(sb, organiserId) {
+  if (!organiserId || String(organiserId).startsWith('dry-run:')) return false;
+  const { data, error } = await sb
+    .from('organisers')
+    .select(
+      'id, name, ownership_claim_status, stripe_account_id, supabase_user_id, organiser_account_id'
+    )
+    .eq('id', organiserId)
+    .maybeSingle();
+  if (error || !data) return true; // fail closed
+  const claim = String(data.ownership_claim_status || '').toLowerCase();
+  if (claim === 'claimed' || claim === 'disputed') return true;
+  if (String(data.stripe_account_id || '').trim()) return true;
+  if (String(data.supabase_user_id || '').trim()) return true;
+  if (String(data.organiser_account_id || '').trim()) return true;
+  return false;
+}
 
 function fetchText(url, redirectsLeft = 5) {
   return new Promise((resolve, reject) => {
@@ -236,11 +243,6 @@ function eachWeekday(fromIsoDate, toIsoDate, weekday /* 0=Sun … 5=Fri */) {
   return out;
 }
 
-function eachNthWeekday(fromIsoDate, toIsoDate, weekday, stepWeeks) {
-  const weekly = eachWeekday(fromIsoDate, toIsoDate, weekday);
-  return weekly.filter((_, i) => i % stepWeeks === 0);
-}
-
 function nthWeekdayOfMonth(year, monthIndex0, weekday, n) {
   const d = new Date(Date.UTC(year, monthIndex0, 1, 12));
   while (d.getUTCDay() !== weekday) d.setUTCDate(d.getUTCDate() + 1);
@@ -267,6 +269,10 @@ function monthsRange(fromY, fromM0, toY, toM0) {
 async function publishOne(sb, organiserId, spec, seriesGroupId) {
   const day = String(spec.date).slice(0, 10);
   const titleMatch = spec.titleMatch || spec.title.slice(0, 28);
+  if (await isClaimedOrPayingOrganiser(sb, organiserId)) {
+    console.log(`  · skip claimed/paying organiser — not writing: ${spec.title}`);
+    return;
+  }
   if (await dateExists(sb, organiserId, titleMatch, day)) {
     console.log(`  · skip exists: ${spec.title} @ ${day}`);
     return;
@@ -317,6 +323,10 @@ async function publishOne(sb, organiserId, spec, seriesGroupId) {
 
 async function extendSeries(sb, spec) {
   console.log(`\n· ${spec.name}`);
+  if (await isClaimedOrPayingOrganiser(sb, spec.organiserId)) {
+    console.log('  · skip — organiser is claimed/paying (they manage their own dates)');
+    return;
+  }
   const days = spec.days || [];
   const geo = await enrichGeo(spec);
   let seriesGroupId = spec.seriesGroupId || null;
@@ -395,6 +405,10 @@ async function extendSeries(sb, spec) {
 
 async function setLogoIfEmpty(sb, organiserId, photoUrl, label) {
   if (!organiserId || String(organiserId).startsWith('dry-run:') || !photoUrl) return;
+  if (await isClaimedOrPayingOrganiser(sb, organiserId)) {
+    console.log(`  · skip logo — claimed/paying: ${label}`);
+    return;
+  }
   const { data } = await sb.from('organisers').select('photo_url').eq('id', organiserId).maybeSingle();
   if (data?.photo_url && String(data.photo_url).trim()) {
     console.log(`  · keep logo: ${label}`);
@@ -569,90 +583,9 @@ async function main() {
       'Weekly Thursday BNI Priory breakfast meeting at Chapel Gate (BU Sports Campus), Parley — serving Christchurch, Bournemouth and East Dorset. One member per category; visitors arrange via the chapter.',
   });
 
-  console.log('\n3) Extend existing TOP / Fore / PPN series');
-  await extendSeries(sb, {
-    name: 'TOP Club Bournemouth',
-    organiserId: EXISTING.topNetworking,
-    seriesGroupId: SERIES.topBournemouth,
-    title: 'TOP Club Bournemouth',
-    titleMatch: 'TOP Club Bournemouth',
-    days: eachNthWeekday('2026-10-27', '2027-03-30', 2, 2), // fortnightly Tuesdays from 27 Oct
-    startTime: '07:00:00',
-    endTime: '08:45:00',
-    venue: 'Marsham Court Hotel',
-    addressLine1: '3 Russell Cotes Road, East Cliff',
-    city: 'Bournemouth',
-    postcode: 'BH1 3AB',
-    priceLabel: 'From £18',
-    attendanceMode: 'tickets',
-    description:
-      'TOP Networking Bournemouth — fortnightly breakfast club for SME owners at Marsham Court Hotel, East Cliff.',
-  });
-
-  await extendSeries(sb, {
-    name: 'TOP Club Christchurch',
-    organiserId: EXISTING.topNetworking,
-    seriesGroupId: SERIES.topChristchurch,
-    title: 'TOP Club Christchurch',
-    titleMatch: 'TOP Club Christchurch',
-    days: eachNthWeekday('2026-10-30', '2027-03-26', 4, 2), // fortnightly Thursdays
-    startTime: '06:45:00',
-    endTime: '08:30:00',
-    venue: 'SOHO (Christchurch)',
-    addressLine1: 'Christchurch',
-    city: 'Christchurch',
-    postcode: 'BH23 1BW',
-    priceLabel: 'From £18',
-    attendanceMode: 'tickets',
-    description:
-      'TOP Networking Christchurch — fortnightly breakfast networking for local business owners.',
-  });
-
-  // Fore — monthly Thursdays after 29 Oct (approx 4-week cadence)
-  await extendSeries(sb, {
-    name: 'Fore Business Bournemouth',
-    organiserId: EXISTING.foreBusiness,
-    seriesGroupId: SERIES.fore,
-    title: 'Fore Business - Bournemouth | KNIGHTON HEATH GOLF CLUB',
-    titleMatch: 'Fore Business - Bournemouth',
-    days: eachNthWeekday('2026-10-29', '2027-03-26', 4, 4),
-    startTime: '08:45:00',
-    endTime: '10:30:00',
-    venue: 'Knighton Heath Golf Club',
-    addressLine1: 'Francis Avenue',
-    city: 'Bournemouth',
-    postcode: 'BH11 8NX',
-    priceLabel: 'Enquire for price',
-    attendanceMode: 'tickets',
-    description:
-      'Fore Business Bournemouth — golf-club networking breakfast at Knighton Heath for local business owners.',
-  });
-
-  // PPN — monthly from 11 Nov (2nd Wednesday evenings)
-  const ppnDays = monthsRange(2026, 10, 2027, 2)
-    .map(([y, m]) => nthWeekdayOfMonth(y, m, 3, 2))
-    .filter(Boolean)
-    .filter((d) => d >= '2026-11-11');
-  await extendSeries(sb, {
-    name: 'PPN Bournemouth',
-    organiserId: EXISTING.ppnBournemouth,
-    seriesGroupId: SERIES.ppn,
-    title: 'PPN Bournemouth',
-    titleMatch: 'PPN Bournemouth',
-    days: ppnDays,
-    startTime: '20:00:00',
-    endTime: '22:00:00',
-    venue: 'Ocean Beach Hotel & Spa',
-    addressLine1: 'East Overcliff Drive',
-    city: 'Bournemouth',
-    postcode: 'BH1 3AQ',
-    priceLabel: 'Enquire for price',
-    attendanceMode: 'tickets',
-    description:
-      'Progressive Property Network Bournemouth — monthly evening meetup for property investors at Ocean Beach Hotel & Spa.',
-  });
-
-  console.log('\n4) Monthly networks + one-offs (Nov–Mar)');
+  console.log('\n3) Monthly networks + one-offs (Nov–Mar)');
+  // Intentionally NOT extending TOP / Fore / PPN / Christchurch Chamber —
+  // those are claimed or ticketed organisers who manage their own calendars.
   // BCP brunch — known Nov/Dec + 2nd Wed Jan–Mar
   const bcpDays = ['2026-11-11', '2026-12-02'].concat(
     monthsRange(2027, 0, 2027, 2)
