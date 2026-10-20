@@ -5,6 +5,7 @@ const {
   validateInput,
   normalizeLocalTime,
   isMissingInternationalEventListingsTable,
+  isOutdatedInternationalEventListingsSchema,
 } = require('../api/_lib/international-event-listings');
 
 const base = {
@@ -125,6 +126,54 @@ assert.strictEqual(
 assert.strictEqual(
   isMissingInternationalEventListingsTable({
     message: 'JWT expired',
+  }),
+  false
+);
+
+// Outdated schema: table exists, organiser columns from rewritten 324 are missing.
+assert.strictEqual(
+  isOutdatedInternationalEventListingsSchema({
+    message: 'column international_event_listings.organiser_name does not exist',
+    code: '42703',
+  }),
+  true
+);
+assert.strictEqual(
+  isOutdatedInternationalEventListingsSchema({
+    message:
+      "Could not find the 'organiser_website' column of 'international_event_listings' in the schema cache",
+    code: 'PGRST204',
+  }),
+  true
+);
+assert.strictEqual(
+  isOutdatedInternationalEventListingsSchema({
+    message:
+      "Could not find the 'starts_at_local' column of 'international_event_listings' in the schema cache",
+    code: 'PGRST204',
+  }),
+  true
+);
+assert.strictEqual(
+  isOutdatedInternationalEventListingsSchema({
+    message: "Could not find the table 'public.international_event_listings' in the schema cache",
+    code: 'PGRST205',
+  }),
+  false,
+  'table-missing must not look like schema-outdated'
+);
+assert.strictEqual(
+  isOutdatedInternationalEventListingsSchema({
+    message:
+      "Could not find the 'ends_on' column of 'international_event_listings' in the schema cache",
+    code: 'PGRST204',
+  }),
+  false,
+  'unrelated missing columns are not treated as organiser-schema outdated'
+);
+assert.strictEqual(
+  isOutdatedInternationalEventListingsSchema({
+    message: 'permission denied for table international_event_listings',
   }),
   false
 );

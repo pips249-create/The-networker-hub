@@ -33397,8 +33397,8 @@
       '</div></div>' +
       '<p id="intl-leads-status" class="text-sm text-slate-500">Loading leads…</p>' +
       '<div id="intl-events-schema-banner" class="hidden rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-950" role="status">' +
-      '<p class="font-semibold">Link-out events table is missing in Supabase</p>' +
-      '<p class="mt-1 text-amber-900/90">Public “Submit for review” and staff Add event will fail until you run ' +
+      '<p class="font-semibold" id="intl-events-schema-banner-title">Link-out events table is missing in Supabase</p>' +
+      '<p class="mt-1 text-amber-900/90" id="intl-events-schema-banner-body">Public “Submit for review” and staff Add event will fail until you run ' +
       '<code class="text-xs bg-white/80 px-1 rounded">supabase/migrations/324_international_event_listings.sql</code> then ' +
       '<code class="text-xs bg-white/80 px-1 rounded">325_international_event_optional_fields.sql</code> in the Supabase SQL Editor.</p>' +
       '</div>' +
@@ -33810,17 +33810,40 @@
           cache.intake = Array.isArray(data.intake) ? data.intake : [];
           cache.events = Array.isArray(data.events) ? data.events : [];
           var schemaBanner = document.getElementById('intl-events-schema-banner');
+          var schemaTitle = document.getElementById('intl-events-schema-banner-title');
+          var schemaBody = document.getElementById('intl-events-schema-banner-body');
+          var showMissing = data.eventsConfigured === false;
+          var showOutdated = data.eventsSchemaOutdated === true;
           if (schemaBanner) {
-            schemaBanner.classList.toggle('hidden', data.eventsConfigured !== false);
+            schemaBanner.classList.toggle('hidden', !(showMissing || showOutdated));
+          }
+          if (showOutdated && schemaTitle && schemaBody) {
+            schemaTitle.textContent = 'Link-out events schema needs an update in Supabase';
+            schemaBody.innerHTML =
+              'Admin and public event lists fail until you run ' +
+              '<code class="text-xs bg-white/80 px-1 rounded">supabase/migrations/326_international_event_organiser_columns.sql</code> ' +
+              'in the Supabase SQL Editor (adds <code class="text-xs bg-white/80 px-1 rounded">organiser_name</code> / ' +
+              '<code class="text-xs bg-white/80 px-1 rounded">organiser_website</code>). Interest and building intake still work.';
+          } else if (showMissing && schemaTitle && schemaBody) {
+            schemaTitle.textContent = 'Link-out events table is missing in Supabase';
+            schemaBody.innerHTML =
+              'Public “Submit for review” and staff Add event will fail until you run ' +
+              '<code class="text-xs bg-white/80 px-1 rounded">supabase/migrations/324_international_event_listings.sql</code> then ' +
+              '<code class="text-xs bg-white/80 px-1 rounded">325_international_event_optional_fields.sql</code> in the Supabase SQL Editor.';
           }
           paintIntakeFilters();
           paintEventsFilters();
           renderEvents();
           renderIntake();
           renderInterest();
-          if (data.eventsConfigured === false) {
+          if (showMissing) {
             setStatus(
               'Events table missing — run migrations 324 + 325 in Supabase before submissions work.',
+              'error'
+            );
+          } else if (showOutdated) {
+            setStatus(
+              'Events schema outdated — run migration 326 in Supabase (organiser_name). Interest and building intake still load.',
               'error'
             );
           } else if (data.eventsError) {

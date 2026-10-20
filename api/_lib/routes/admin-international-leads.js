@@ -209,6 +209,15 @@ module.exports = async function handler(req, res) {
           if (e && e.code === 'events_table_missing') {
             return { events: [], pendingCount: 0, total: 0, missing: true };
           }
+          if (e && e.code === 'events_schema_outdated') {
+            return {
+              events: [],
+              pendingCount: 0,
+              total: 0,
+              schemaOutdated: true,
+              error: String((e && e.message) || e),
+            };
+          }
           // Soft-fail so interest/intake still render; surface the real DB message.
           return {
             events: [],
@@ -231,6 +240,7 @@ module.exports = async function handler(req, res) {
         eventsTotal: events.total,
         eventsPendingCount: events.pendingCount,
         eventsConfigured: !events.missing,
+        eventsSchemaOutdated: Boolean(events.schemaOutdated),
         eventsError: events.error || null,
       });
     }
@@ -281,6 +291,14 @@ module.exports = async function handler(req, res) {
         ok: false,
         error: e.code,
         message: migrationHint,
+      });
+    }
+    if (e.code === 'events_schema_outdated') {
+      return json(res, 503, {
+        ok: false,
+        error: e.code,
+        message:
+          'Run migration 326_international_event_organiser_columns.sql in the Supabase SQL Editor (adds organiser_name / organiser_website).',
       });
     }
     if (e.code === 'invalid_status') {
