@@ -90,7 +90,7 @@
       '<img class="tnh-upgrade-banner__logo" src="https://www.thenetworkeruk.com/assets/logo-networker-uk-transparent.png?v=20260825banner" width="140" height="65" alt="The Networker UK">' +
       "</span></a>" +
       '<p class="tnh-upgrade-banner__status">We&rsquo;re upgrading</p>' +
-      '<p class="tnh-upgrade-banner__date">Browse from <strong>25 August</strong></p>' +
+      '<p class="tnh-upgrade-banner__date">Browsing is <strong>open</strong></p>' +
       "</div>" +
       '<div class="tnh-upgrade-banner__col tnh-upgrade-banner__col--hero">' +
       '<p class="tnh-upgrade-banner__headline">Find your next ' +

@@ -8,7 +8,7 @@
 
 UTM: `utm_source=the-networker.co.uk&utm_medium=banner&utm_campaign=soft_launch_2026&utm_content=peek`
 
-Product voice: **The Networker UK** logo (cream chip), rotating **Find your next…**, launch line (**Browse from 25 August**). No dismiss — banner always shows.
+Product voice: **The Networker UK** logo (cream chip), rotating **Find your next…**, launch line (**Browsing is open**). No dismiss — banner always shows.
 
 ---
 
@@ -18,7 +18,7 @@ Product voice: **The Networker UK** logo (cream chip), rotating **Find your next
 2. Lands on Hub **`/peek`** (closed mini-site — no catalogue unlock, no sign-in)
 3. From there: **`/peek/about-us`**, **`/peek/for-organisers`**, **`/peek/for-networkers`**, or launch updates
 4. Old `/about` and `/for-networkers` URLs redirect into `/peek` while the gate is on
-5. Public events / opportunities browse from 25 August; tickets and enquiries from 1 September
+5. Public browsing is open; tickets and enquiries from 1 September
 
 ---
 
