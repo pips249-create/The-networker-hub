@@ -33400,11 +33400,50 @@
       '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-3">' +
       '<div class="flex flex-wrap items-center justify-between gap-2">' +
       '<h3 class="font-bold text-brand-900">Link-out events <span class="text-slate-400 font-semibold text-sm" id="intl-events-count"></span></h3>' +
+      '<div class="flex flex-wrap gap-2 items-center">' +
+      '<button type="button" id="intl-event-add-toggle" class="rounded-lg bg-brand-700 text-white text-xs font-semibold px-3 py-1.5 hover:bg-brand-900">Add event</button>' +
       '<div class="flex flex-wrap gap-2" id="intl-events-filters">' +
       '<button type="button" data-intl-events-view="pending" class="rounded-lg border text-xs font-semibold px-3 py-1.5 border-brand-700 bg-brand-50 text-brand-900">Pending</button>' +
       '<button type="button" data-intl-events-view="approved" class="rounded-lg border text-xs font-semibold px-3 py-1.5 border-slate-300 bg-white text-slate-700 hover:bg-slate-50">Approved</button>' +
       '<button type="button" data-intl-events-view="all" class="rounded-lg border text-xs font-semibold px-3 py-1.5 border-slate-300 bg-white text-slate-700 hover:bg-slate-50">All</button>' +
-      '</div></div>' +
+      '</div></div></div>' +
+      '<form id="intl-event-add-form" class="hidden rounded-xl border border-brand-200 bg-brand-50/40 p-4 space-y-3" novalidate>' +
+      '<p class="text-sm text-brand-950 font-semibold">Add a link-out event (staff)</p>' +
+      '<p class="text-xs text-slate-600">Publishes to International browse when “Publish now” is checked. UK events stay on thenetworkeruk.com.</p>' +
+      '<div class="grid gap-3 md:grid-cols-2 lg:grid-cols-3">' +
+      '<div class="lg:col-span-2"><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="intl-add-title">Event title</label>' +
+      '<input id="intl-add-title" required class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white" placeholder="e.g. Dublin Founders Breakfast" /></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="intl-add-country">Country</label>' +
+      '<select id="intl-add-country" required class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white">' +
+      '<option value="">Select country</option></select></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="intl-add-city">City</label>' +
+      '<input id="intl-add-city" required class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white" placeholder="City" /></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="intl-add-starts">Start date</label>' +
+      '<input id="intl-add-starts" type="date" required class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white" /></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="intl-add-time">Local start time <span class="font-normal normal-case">(optional)</span></label>' +
+      '<input id="intl-add-time" type="time" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white" /></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="intl-add-ends">End date <span class="font-normal normal-case">(optional)</span></label>' +
+      '<input id="intl-add-ends" type="date" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white" /></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="intl-add-organiser">Organiser / group</label>' +
+      '<input id="intl-add-organiser" required class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white" placeholder="Group name" /></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="intl-add-org-site">Organiser website <span class="font-normal normal-case">(optional)</span></label>' +
+      '<input id="intl-add-org-site" type="url" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white" placeholder="https://" /></div>' +
+      '<div class="lg:col-span-2"><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="intl-add-url">Booking / info URL</label>' +
+      '<input id="intl-add-url" type="url" required class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white" placeholder="https://" /></div>' +
+      '<div class="lg:col-span-2"><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="intl-add-image">Photo URL <span class="font-normal normal-case">(optional)</span></label>' +
+      '<input id="intl-add-image" type="url" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white" placeholder="https://" /></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="intl-add-contact">Contact name <span class="font-normal normal-case">(optional)</span></label>' +
+      '<input id="intl-add-contact" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white" placeholder="Contact" /></div>' +
+      '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="intl-add-email">Contact email</label>' +
+      '<input id="intl-add-email" type="email" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white" placeholder="Defaults to your staff email" /></div>' +
+      '</div>' +
+      '<div class="flex flex-wrap items-center gap-3">' +
+      '<label class="inline-flex items-center gap-2 text-sm font-semibold text-slate-700 cursor-pointer">' +
+      '<input id="intl-add-publish" type="checkbox" class="rounded border-slate-300" checked /> Publish now</label>' +
+      '<button type="submit" id="intl-add-submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-900">Save event</button>' +
+      '<button type="button" id="intl-add-cancel" class="rounded-lg border border-slate-300 bg-white text-sm font-semibold px-4 py-2 text-slate-700 hover:bg-slate-50">Cancel</button>' +
+      '<p id="intl-add-form-status" class="text-sm text-slate-500"></p>' +
+      '</div></form>' +
       '<div id="intl-events-body" class="overflow-x-auto"></div>' +
       '</section>' +
       '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-3">' +
@@ -33876,6 +33915,156 @@
         })
       );
     });
+
+    var intlEventCountries = [
+      { iso2: 'AE', name: 'United Arab Emirates' },
+      { iso2: 'AU', name: 'Australia' },
+      { iso2: 'BE', name: 'Belgium' },
+      { iso2: 'BR', name: 'Brazil' },
+      { iso2: 'CA', name: 'Canada' },
+      { iso2: 'CH', name: 'Switzerland' },
+      { iso2: 'DE', name: 'Germany' },
+      { iso2: 'DK', name: 'Denmark' },
+      { iso2: 'ES', name: 'Spain' },
+      { iso2: 'FR', name: 'France' },
+      { iso2: 'IE', name: 'Ireland' },
+      { iso2: 'IN', name: 'India' },
+      { iso2: 'IT', name: 'Italy' },
+      { iso2: 'JP', name: 'Japan' },
+      { iso2: 'MX', name: 'Mexico' },
+      { iso2: 'NL', name: 'Netherlands' },
+      { iso2: 'NO', name: 'Norway' },
+      { iso2: 'NZ', name: 'New Zealand' },
+      { iso2: 'PT', name: 'Portugal' },
+      { iso2: 'SE', name: 'Sweden' },
+      { iso2: 'SG', name: 'Singapore' },
+      { iso2: 'US', name: 'United States' },
+      { iso2: 'ZA', name: 'South Africa' },
+    ];
+    var addForm = document.getElementById('intl-event-add-form');
+    var addCountry = document.getElementById('intl-add-country');
+    var addToggle = document.getElementById('intl-event-add-toggle');
+    var addCancel = document.getElementById('intl-add-cancel');
+    var addFormStatus = document.getElementById('intl-add-form-status');
+    var addSubmit = document.getElementById('intl-add-submit');
+
+    if (addCountry) {
+      intlEventCountries.forEach(function (row) {
+        var opt = document.createElement('option');
+        opt.value = row.iso2;
+        opt.textContent = row.name;
+        opt.setAttribute('data-name', row.name);
+        addCountry.appendChild(opt);
+      });
+    }
+
+    function setAddFormOpen(open) {
+      if (!addForm || !addToggle) return;
+      addForm.classList.toggle('hidden', !open);
+      addToggle.textContent = open ? 'Hide form' : 'Add event';
+      if (open) {
+        var titleEl = document.getElementById('intl-add-title');
+        if (titleEl) titleEl.focus();
+      }
+    }
+
+    function setAddFormStatus(text, tone) {
+      if (!addFormStatus) return;
+      addFormStatus.textContent = text || '';
+      addFormStatus.className =
+        'text-sm ' +
+        (tone === 'error'
+          ? 'text-red-700 font-semibold'
+          : tone === 'ok'
+            ? 'text-emerald-700 font-semibold'
+            : 'text-slate-500');
+    }
+
+    if (addToggle) {
+      addToggle.addEventListener('click', function () {
+        setAddFormOpen(addForm && addForm.classList.contains('hidden'));
+      });
+    }
+    if (addCancel) {
+      addCancel.addEventListener('click', function () {
+        setAddFormOpen(false);
+        setAddFormStatus('');
+      });
+    }
+    if (addForm) {
+      addForm.addEventListener('submit', function (event) {
+        event.preventDefault();
+        var countryOpt = addCountry && addCountry.selectedOptions && addCountry.selectedOptions[0];
+        var countryCode = addCountry ? String(addCountry.value || '').trim().toUpperCase() : '';
+        var countryName = countryOpt
+          ? String(countryOpt.getAttribute('data-name') || countryOpt.textContent || '').trim()
+          : '';
+        var publishNow = Boolean(
+          document.getElementById('intl-add-publish') &&
+            document.getElementById('intl-add-publish').checked
+        );
+        var payload = {
+          action: 'create_event',
+          title: document.getElementById('intl-add-title')
+            ? document.getElementById('intl-add-title').value
+            : '',
+          city: document.getElementById('intl-add-city')
+            ? document.getElementById('intl-add-city').value
+            : '',
+          startsOn: document.getElementById('intl-add-starts')
+            ? document.getElementById('intl-add-starts').value
+            : '',
+          endsOn: document.getElementById('intl-add-ends')
+            ? document.getElementById('intl-add-ends').value
+            : '',
+          startsAtLocal: document.getElementById('intl-add-time')
+            ? document.getElementById('intl-add-time').value
+            : '',
+          countryCode: countryCode,
+          countryName: countryName,
+          organiserName: document.getElementById('intl-add-organiser')
+            ? document.getElementById('intl-add-organiser').value
+            : '',
+          organiserWebsite: document.getElementById('intl-add-org-site')
+            ? document.getElementById('intl-add-org-site').value
+            : '',
+          externalUrl: document.getElementById('intl-add-url')
+            ? document.getElementById('intl-add-url').value
+            : '',
+          imageUrl: document.getElementById('intl-add-image')
+            ? document.getElementById('intl-add-image').value
+            : '',
+          contactName: document.getElementById('intl-add-contact')
+            ? document.getElementById('intl-add-contact').value
+            : '',
+          email: document.getElementById('intl-add-email')
+            ? document.getElementById('intl-add-email').value
+            : '',
+          status: publishNow ? 'approved' : 'pending',
+        };
+        if (addSubmit) addSubmit.disabled = true;
+        setAddFormStatus('Saving…');
+        adminPost('/api/admin/international-leads', payload)
+          .then(function (data) {
+            if (!data || data.ok === false) {
+              throw new Error((data && data.message) || (data && data.error) || 'Could not save event');
+            }
+            addForm.reset();
+            var publishEl = document.getElementById('intl-add-publish');
+            if (publishEl) publishEl.checked = true;
+            setAddFormStatus(data.message || 'Event saved.', 'ok');
+            eventsView = publishNow ? 'approved' : 'pending';
+            paintEventsFilters();
+            load();
+          })
+          .catch(function (err) {
+            setAddFormStatus((err && err.message) || 'Could not save event', 'error');
+          })
+          .then(function () {
+            if (addSubmit) addSubmit.disabled = false;
+          });
+      });
+    }
 
     load();
   }

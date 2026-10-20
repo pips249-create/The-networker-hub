@@ -104,6 +104,7 @@ function normalizeInput(payload) {
     'international_events_section',
     'international_country_ie',
     'international_country_us',
+    'admin_staff',
   ]);
   const sourceRaw = String(payload.source || '')
     .trim()
@@ -536,11 +537,92 @@ async function updateInternationalEventListingStatus(id, status, session) {
   return { ok: true, event: mapAdmin(data) };
 }
 
+/**
+ * Staff-seeded link-out event (Admin → International). Skips public emails.
+ * Defaults to approved so it appears on public browse immediately.
+ */
+async function createAdminInternationalEventListing(payload, session) {
+  const sessionEmail = normalizeEmail(
+    (session && (session.email || session.userEmail || session.sub)) || ''
+  );
+  const body = Object.assign({}, payload || {}, {
+    source: 'admin_staff',
+    email: normalizeEmail((payload && payload.email) || '') || sessionEmail || staffInbox(),
+  });
+
+  const input = normalizeInput(body);
+  input.source = 'admin_staff';
+  const validation = validateInput(input);
+  if (!validation.ok) return validation;
+
+  if (!isSupabaseConfigured()) {
+    const err = new Error('Supabase is not configured.');
+    err.code = 'not_configured';
+    throw err;
+  }
+
+  const statusRaw = String((payload && payload.status) || 'approved')
+    .trim()
+    .toLowerCase();
+  const status = statusRaw === 'pending' ? 'pending' : 'approved';
+  const reviewer = String(
+    (session && (session.email || session.userEmail || session.sub)) || 'admin'
+  ).trim();
+
+  const sb = getSupabaseAdmin();
+  const insertRes = await sb
+    .from('international_event_listings')
+    .insert({
+      title: input.title,
+      starts_on: input.startsOn,
+      ends_on: input.endsOn,
+      city: input.city,
+      country_code: input.countryCode,
+      country_name: input.countryName,
+      organiser_name: input.organiserName,
+      organiser_website: input.organiserWebsite,
+      external_url: input.externalUrl,
+      starts_at_local: input.startsAtLocal,
+      image_url: input.imageUrl,
+      contact_name: input.contactName,
+      email: input.email,
+      status: status,
+      source: 'admin_staff',
+      reviewed_at: status === 'approved' ? new Date().toISOString() : null,
+      reviewed_by: status === 'approved' ? reviewer : null,
+    })
+    .select(ADMIN_SELECT)
+    .single();
+
+  if (insertRes.error) {
+    if (/international_event_listings/i.test(insertRes.error.message || '')) {
+      const err = new Error(
+        'Event listings table is missing — run migrations 324 and 325 in Supabase.'
+      );
+      err.code = 'events_table_missing';
+      throw err;
+    }
+    const err = new Error(insertRes.error.message || 'Could not save event.');
+    err.code = 'save_failed';
+    throw err;
+  }
+
+  return {
+    ok: true,
+    event: mapAdmin(insertRes.data),
+    message:
+      status === 'approved'
+        ? 'Event added and published to International browse.'
+        : 'Event saved as pending for review.',
+  };
+}
+
 module.exports = {
   normalizeInput,
   validateInput,
   normalizeLocalTime,
   submitInternationalEventListing,
+  createAdminInternationalEventListing,
   listPublicInternationalEventListings,
   listAdminInternationalEventListings,
   updateInternationalEventListingStatus,
