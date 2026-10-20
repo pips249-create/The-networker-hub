@@ -97,4 +97,23 @@ assert.match(
   'confirm page should scrub URL secrets instead of confirming'
 );
 
+const intentSrc = fs.readFileSync(
+  path.join(__dirname, '../api/_lib/organiser-auth-intent.js'),
+  'utf8'
+);
+const resolveFn = intentSrc.slice(
+  intentSrc.indexOf('async function resolveOrganiserRedirect'),
+  intentSrc.indexOf('async function maybeAutoEnableOrganiserAccess')
+);
+assert.match(
+  resolveFn,
+  /if\s*\(\s*!status\.organiserEmailVerified\s*\)/,
+  'organiser redirect must require email confirm before claim'
+);
+assert.ok(
+  resolveFn.indexOf('!status.organiserEmailVerified') <
+    resolveFn.indexOf('pendingClaimCount'),
+  'email confirm check must come before pending-claim redirect'
+);
+
 console.log('OK  account welcome deferred until email confirm');

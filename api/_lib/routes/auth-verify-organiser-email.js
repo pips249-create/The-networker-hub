@@ -4,6 +4,7 @@ const { verifyOrganiserEmailToken, hasActiveVerifyCode } = require('../organiser
 const { getOrganiserAccessStatus } = require('../organiser-access-guard');
 const { getHubAccount } = require('../supabase-auth');
 const { maybeSendDeferredAccountWelcome } = require('../account-emails');
+const { resolveOrganiserRedirect } = require('../organiser-auth-intent');
 
 function parseBody(req) {
   let body = req.body;
@@ -65,12 +66,13 @@ module.exports = async function handler(req, res) {
       /* Verification still succeeds if welcome email fails */
     }
 
+    const redirect = await resolveOrganiserRedirect(session);
     return json(res, 200, {
       ok: true,
       verified: true,
       organiserEmailVerifiedAt: result.organiser_email_verified_at,
       ...status,
-      redirect: '/organiser/',
+      redirect,
       message: 'Email confirmed. You can now publish events and manage attendees.',
     });
   } catch (e) {
