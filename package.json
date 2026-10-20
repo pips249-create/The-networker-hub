@@ -30,6 +30,8 @@
     "import:glasgow-gaps:apply": "node scripts/import-glasgow-coverage-gaps.js --apply",
     "import:glasgow-pass4": "node scripts/import-glasgow-pass4-bni-q1.js",
     "import:glasgow-pass4:apply": "node scripts/import-glasgow-pass4-bni-q1.js --apply",
+    "import:bournemouth": "node scripts/import-bournemouth-coverage.js",
+    "import:bournemouth:apply": "node scripts/import-bournemouth-coverage.js --apply",
     "seed-browse-events": "node scripts/seed-browse-events.js",
     "delete-seed-events": "node scripts/delete-seed-events.js",
     "test-external-booking-webhook": "node scripts/test-external-booking-webhook.js",
