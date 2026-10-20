@@ -172,10 +172,18 @@
         },
         {
           "@type": "Question",
+          "name": "Can I add an event outside the UK?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Submit a link-out listing with title, date, city, country, and your booking URL. We review it before it appears on the public browse list. UK events should be listed on thenetworkeruk.com."
+          }
+        },
+        {
+          "@type": "Question",
           "name": "How do markets launch?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "We launch market by market. Interest and group intake help us prioritise the next countries after the UK, Ireland, and the United States."
+            "text": "We launch market by market. Interest, group intake, and link-out events help us prioritise the next countries after the UK, Ireland, and the United States."
           }
         },
         {
@@ -195,7 +203,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/hub.css?v=20260831intl30">
-<link rel="stylesheet" href="/css/international-home.css?v=20260902intl34">
+<link rel="stylesheet" href="/css/international-home.css?v=20261020intl35">
 <link rel="icon" href="/favicon.ico?v=20260825intl26" sizes="any">
 <link rel="icon" href="/assets/favicon.svg?v=20260825intl26" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/assets/logo-networker-international.png?v=20260825intl26">
@@ -246,7 +254,7 @@
         <p class="intl-intro-kicker">What is The Networker International?</p>
         <h2 class="intl-intro-title" id="intl-intro-title">Trusted business networking, country by country.</h2>
         <p class="intl-intro-copy">
-          Explore live markets, join markets we&rsquo;re building, or register interest where we haven&rsquo;t launched yet.
+          Explore live markets, browse worldwide link-out events, or register interest where we haven&rsquo;t launched yet.
         </p>
         <div class="intl-intro-learn">
           <button
@@ -273,7 +281,11 @@
           </button>
         </div>
         <p class="intl-intro-split" id="intl-intro-split">
-          Building markets:
+          <a href="#events">Browse events</a>
+          ·
+          <button type="button" class="intl-intro-text-btn" id="intl-add-event-btn">Add an event</button>
+          <span class="intl-intro-split-sep" aria-hidden="true">·</span>
+          Building:
           <a href="/ireland">Ireland</a>
           ·
           <a href="/united-states">United States</a>
@@ -332,6 +344,28 @@
     </div>
   </section>
 
+  <section class="intl-events" id="events" aria-labelledby="intl-events-title">
+    <div class="intl-events-inner">
+      <div class="intl-events-head">
+        <div>
+          <h2 class="intl-events-title" id="intl-events-title">Events around the world</h2>
+          <p class="intl-events-lede">
+            Link-out listings only — browse upcoming networking events, then book on the organiser&rsquo;s site.
+          </p>
+        </div>
+        <button type="button" class="intl-events-add-btn" id="intl-events-add-btn">Add your event</button>
+      </div>
+      <div class="intl-events-toolbar">
+        <label class="intl-events-filter-label" for="intl-events-country-filter">Filter by country</label>
+        <select class="intl-events-filter" id="intl-events-country-filter">
+          <option value="">All countries</option>
+        </select>
+      </div>
+      <p class="intl-events-status" id="intl-events-status">Loading events&hellip;</p>
+      <ul class="intl-events-list" id="intl-events-list" aria-live="polite"></ul>
+    </div>
+  </section>
+
   <section class="intl-markets" id="markets" aria-labelledby="intl-markets-title">
     <div class="intl-markets-inner">
       <h2 class="intl-markets-title" id="intl-markets-title">Markets</h2>
@@ -383,11 +417,11 @@
       <div class="intl-about-grid">
         <article class="intl-about-card">
           <h3>For attendees</h3>
-          <p>Open a live market to browse events and opportunities, or register interest so we know where demand is building.</p>
+          <p>Open a live market, browse worldwide link-out events, or register interest so we know where demand is building.</p>
         </article>
         <article class="intl-about-card">
           <h3>For groups</h3>
-          <p>In building markets (Ireland and the United States), tell us about your networking group or training organisation. Elsewhere, register to list when we launch.</p>
+          <p>Submit a link-out event from anywhere we support, or in building markets (Ireland and the United States) tell us about your networking group.</p>
         </article>
         <article class="intl-about-card">
           <h3>How markets launch</h3>
@@ -416,8 +450,12 @@
           <dd>On <a href="/ireland">Ireland</a> or <a href="/united-states">United States</a>, choose &ldquo;I want to list a group&rdquo; and send your details. For other countries, use the map and choose list interest.</dd>
         </div>
         <div>
+          <dt>Can I add an event outside the UK?</dt>
+          <dd>Yes. Use <a href="#events">Add your event</a> to submit a link-out listing (title, date, city, country, and your booking URL). We review it before it appears. UK events should be listed on <a href="https://www.thenetworkeruk.com/add-your-event" rel="noopener noreferrer">The Networker UK</a>.</dd>
+        </div>
+        <div>
           <dt>How do markets launch?</dt>
-          <dd>Country by country. Interest and group intake help us prioritise what follows the UK, Ireland, and the United States.</dd>
+          <dd>Country by country. Interest, group intake, and link-out events help us prioritise what follows the UK, Ireland, and the United States.</dd>
         </div>
         <div>
           <dt>How do I get in touch?</dt>
@@ -442,6 +480,7 @@
         >
       </a>
       <nav class="intl-footer-nav" aria-label="Footer">
+        <a href="#events">Events</a>
         <a href="#markets">Markets</a>
         <a href="#about">About</a>
         <a href="#faq">FAQ</a>
@@ -518,6 +557,85 @@
   </div>
 </div>
 
+<div class="intl-modal" id="intl-event-modal" hidden>
+  <div class="intl-modal-backdrop" data-intl-modal-close tabindex="-1" aria-hidden="true"></div>
+  <div class="intl-modal-panel intl-modal-panel--wide" role="dialog" aria-modal="true" aria-labelledby="intl-event-title">
+    <button type="button" class="intl-modal-close" data-intl-modal-close aria-label="Close">&times;</button>
+    <p class="intl-modal-kicker">Link-out listing</p>
+    <h2 class="intl-modal-title" id="intl-event-title">Add your event</h2>
+    <p class="intl-modal-lede">
+      Share a worldwide networking event. We list a short preview here; people book on your site.
+      UK events should use <a href="https://www.thenetworkeruk.com/add-your-event" rel="noopener noreferrer">The Networker UK</a>.
+    </p>
+
+    <form class="intl-event-form" id="intl-event-form" novalidate>
+      <input type="text" name="website_hp" class="intl-honeypot" tabindex="-1" autocomplete="off" aria-hidden="true">
+
+      <label class="intl-field-label" for="intl-event-name-field">Event title</label>
+      <input class="intl-field-input" id="intl-event-name-field" name="title" type="text" required maxlength="160" placeholder="e.g. Dublin Founders Breakfast">
+
+      <div class="intl-event-form-grid">
+        <div>
+          <label class="intl-field-label" for="intl-event-starts">Start date</label>
+          <input class="intl-field-input" id="intl-event-starts" name="startsOn" type="date" required>
+        </div>
+        <div>
+          <label class="intl-field-label" for="intl-event-ends">End date <span class="intl-optional">(optional)</span></label>
+          <input class="intl-field-input" id="intl-event-ends" name="endsOn" type="date">
+        </div>
+      </div>
+
+      <div class="intl-event-form-grid">
+        <div>
+          <label class="intl-field-label" for="intl-event-city">City</label>
+          <input class="intl-field-input" id="intl-event-city" name="city" type="text" required maxlength="120" placeholder="e.g. Dublin" autocomplete="address-level2">
+        </div>
+        <div>
+          <label class="intl-field-label" for="intl-event-country">Country</label>
+          <select class="intl-field-input" id="intl-event-country" name="countryCode" required>
+            <option value="">Select a country</option>
+          </select>
+        </div>
+      </div>
+
+      <label class="intl-field-label" for="intl-event-url">Booking / info URL</label>
+      <input class="intl-field-input" id="intl-event-url" name="externalUrl" type="url" required placeholder="https://yoursite.com/book">
+
+      <label class="intl-field-label" for="intl-event-price">Price label <span class="intl-optional">(optional)</span></label>
+      <input class="intl-field-input" id="intl-event-price" name="priceLabel" type="text" maxlength="40" placeholder="e.g. Free, $25, From €15">
+
+      <label class="intl-field-label" for="intl-event-description">Short description <span class="intl-optional">(optional)</span></label>
+      <textarea class="intl-field-textarea" id="intl-event-description" name="description" rows="3" maxlength="1200" placeholder="Who it&rsquo;s for and what to expect"></textarea>
+
+      <div class="intl-event-form-grid">
+        <div>
+          <label class="intl-field-label" for="intl-event-contact">Your name</label>
+          <input class="intl-field-input" id="intl-event-contact" name="name" type="text" required autocomplete="name" placeholder="Your name">
+        </div>
+        <div>
+          <label class="intl-field-label" for="intl-event-email">Email</label>
+          <input class="intl-field-input" id="intl-event-email" name="email" type="email" required autocomplete="email" placeholder="you@company.com">
+        </div>
+      </div>
+
+      <p class="intl-privacy-note">
+        We use your details to review and publish this link-out listing, and to contact you if we need a clarification.
+        See our
+        <a href="https://www.thenetworkeruk.com/legal-policies#privacy" target="_blank" rel="noopener noreferrer">privacy policy</a>.
+        Ask us to delete your details anytime at
+        <a href="mailto:hi@thenetworkeruk.com">hi@thenetworkeruk.com</a>.
+      </p>
+
+      <p class="intl-form-error" id="intl-event-error" hidden></p>
+      <button type="submit" class="intl-submit-btn" id="intl-event-submit">Submit for review</button>
+    </form>
+
+    <p class="intl-form-success" id="intl-event-success" hidden>
+      Thanks &mdash; we&rsquo;ll review your event and publish it if it looks right.
+    </p>
+  </div>
+</div>
+
 <div class="intl-modal" id="intl-interest-modal" hidden>
   <div class="intl-modal-backdrop" data-intl-modal-close tabindex="-1" aria-hidden="true"></div>
   <div class="intl-modal-panel" role="dialog" aria-modal="true" aria-labelledby="intl-modal-title">
@@ -561,6 +679,6 @@
 </div>
 
 <script src="/js/hub-compliance-bootstrap.js?v=20260923cmp4" data-root="/"></script>
-<script src="/js/international-home.js?v=20260902intl34" defer></script>
+<script src="/js/international-home.js?v=20261020intl35" defer></script>
 </body>
 </html>

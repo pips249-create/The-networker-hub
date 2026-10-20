@@ -33388,13 +33388,24 @@
       '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-3">' +
       '<div class="flex flex-wrap items-start justify-between gap-3">' +
       '<div><h3 class="font-bold text-brand-900">International leads</h3>' +
-      '<p class="text-xs text-slate-500 mt-1">Interest sign-ups and Ireland building intake from <a class="text-brand-700 hover:underline" href="https://www.thenetworkerinternational.com/" target="_blank" rel="noopener">thenetworkerinternational.com</a>.</p></div>' +
+      '<p class="text-xs text-slate-500 mt-1">Interest sign-ups, building intake, and link-out events from <a class="text-brand-700 hover:underline" href="https://www.thenetworkerinternational.com/" target="_blank" rel="noopener">thenetworkerinternational.com</a>.</p></div>' +
       '<div class="flex flex-wrap gap-2">' +
       '<button type="button" id="intl-leads-refresh" class="rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold px-3 py-2 hover:bg-slate-50">Refresh</button>' +
       '<button type="button" id="intl-leads-export-interest" class="rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold px-3 py-2 hover:bg-slate-50">Export interest CSV</button>' +
       '<button type="button" id="intl-leads-export-intake" class="rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold px-3 py-2 hover:bg-slate-50">Export building CSV</button>' +
+      '<button type="button" id="intl-leads-export-events" class="rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold px-3 py-2 hover:bg-slate-50">Export events CSV</button>' +
       '</div></div>' +
       '<p id="intl-leads-status" class="text-sm text-slate-500">Loading leads…</p>' +
+      '</section>' +
+      '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-3">' +
+      '<div class="flex flex-wrap items-center justify-between gap-2">' +
+      '<h3 class="font-bold text-brand-900">Link-out events <span class="text-slate-400 font-semibold text-sm" id="intl-events-count"></span></h3>' +
+      '<div class="flex flex-wrap gap-2" id="intl-events-filters">' +
+      '<button type="button" data-intl-events-view="pending" class="rounded-lg border text-xs font-semibold px-3 py-1.5 border-brand-700 bg-brand-50 text-brand-900">Pending</button>' +
+      '<button type="button" data-intl-events-view="approved" class="rounded-lg border text-xs font-semibold px-3 py-1.5 border-slate-300 bg-white text-slate-700 hover:bg-slate-50">Approved</button>' +
+      '<button type="button" data-intl-events-view="all" class="rounded-lg border text-xs font-semibold px-3 py-1.5 border-slate-300 bg-white text-slate-700 hover:bg-slate-50">All</button>' +
+      '</div></div>' +
+      '<div id="intl-events-body" class="overflow-x-auto"></div>' +
       '</section>' +
       '<section class="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-3">' +
       '<div class="flex flex-wrap items-center justify-between gap-2">' +
@@ -33414,8 +33425,10 @@
     var statusEl = document.getElementById('intl-leads-status');
     var intakeBody = document.getElementById('intl-intake-body');
     var interestBody = document.getElementById('intl-interest-body');
+    var eventsBody = document.getElementById('intl-events-body');
     var intakeView = 'open';
-    var cache = { interest: [], intake: [] };
+    var eventsView = 'pending';
+    var cache = { interest: [], intake: [], events: [] };
 
     function setStatus(text, tone) {
       if (!statusEl) return;
@@ -33440,6 +33453,17 @@
       });
     }
 
+    function paintEventsFilters() {
+      document.querySelectorAll('[data-intl-events-view]').forEach(function (btn) {
+        var active = btn.getAttribute('data-intl-events-view') === eventsView;
+        btn.className =
+          'rounded-lg border text-xs font-semibold px-3 py-1.5 ' +
+          (active
+            ? 'border-brand-700 bg-brand-50 text-brand-900'
+            : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50');
+      });
+    }
+
     function filteredIntake() {
       if (intakeView === 'all') return cache.intake;
       if (intakeView === 'done') {
@@ -33449,6 +33473,132 @@
       }
       return cache.intake.filter(function (row) {
         return row.status === 'open';
+      });
+    }
+
+    function filteredEvents() {
+      if (eventsView === 'all') return cache.events;
+      return cache.events.filter(function (row) {
+        return row.status === eventsView;
+      });
+    }
+
+    function renderEvents() {
+      if (!eventsBody) return;
+      var rows = filteredEvents();
+      var pendingCount = cache.events.filter(function (r) {
+        return r.status === 'pending';
+      }).length;
+      var countEl = document.getElementById('intl-events-count');
+      if (countEl) {
+        countEl.textContent = '(' + pendingCount + ' pending · ' + cache.events.length + ' total)';
+      }
+      if (!rows.length) {
+        eventsBody.innerHTML =
+          '<p class="text-sm text-slate-500">No link-out events in this view yet.</p>';
+        return;
+      }
+      eventsBody.innerHTML =
+        '<table class="min-w-full text-sm">' +
+        '<thead><tr class="text-left text-xs uppercase tracking-wide text-slate-500 border-b border-slate-200">' +
+        '<th class="py-2 pr-3">When</th><th class="py-2 pr-3">Event</th><th class="py-2 pr-3">Place</th>' +
+        '<th class="py-2 pr-3">Contact</th><th class="py-2 pr-3">Status</th><th class="py-2">Actions</th>' +
+        '</tr></thead><tbody>' +
+        rows
+          .map(function (row) {
+            return (
+              '<tr class="border-b border-slate-100 align-top">' +
+              '<td class="py-2.5 pr-3 whitespace-nowrap text-slate-600">' +
+              esc(formatIntlLeadDate(row.createdAt)) +
+              '<div class="text-xs text-slate-500 mt-0.5">' +
+              esc(row.startsOn || '') +
+              (row.endsOn && row.endsOn !== row.startsOn ? ' → ' + esc(row.endsOn) : '') +
+              '</div></td>' +
+              '<td class="py-2.5 pr-3"><div class="font-semibold text-brand-900">' +
+              esc(row.title || '—') +
+              '</div>' +
+              (row.priceLabel
+                ? '<div class="text-xs text-slate-500 mt-0.5">' + esc(row.priceLabel) + '</div>'
+                : '') +
+              (row.externalUrl
+                ? '<div><a class="text-xs text-brand-700 hover:underline" href="' +
+                  attrEsc(row.externalUrl) +
+                  '" target="_blank" rel="noopener">Link out</a></div>'
+                : '') +
+              (row.description
+                ? '<p class="text-xs text-slate-500 mt-1 max-w-xs">' + esc(row.description) + '</p>'
+                : '') +
+              '</td>' +
+              '<td class="py-2.5 pr-3">' +
+              esc(row.city || '—') +
+              '<div class="text-xs text-slate-500">' +
+              esc(row.countryName || row.countryCode || '') +
+              '</div></td>' +
+              '<td class="py-2.5 pr-3"><div class="font-semibold text-brand-900">' +
+              esc(row.contactName || '—') +
+              '</div><a class="text-xs text-brand-700 hover:underline" href="mailto:' +
+              attrEsc(row.email || '') +
+              '">' +
+              esc(row.email || '') +
+              '</a></td>' +
+              '<td class="py-2.5 pr-3"><span class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ' +
+              (row.status === 'pending'
+                ? 'bg-amber-50 text-amber-900'
+                : row.status === 'approved'
+                  ? 'bg-emerald-50 text-emerald-800'
+                  : row.status === 'spam'
+                    ? 'bg-rose-50 text-rose-800'
+                    : 'bg-slate-100 text-slate-700') +
+              '">' +
+              esc(row.status || 'pending') +
+              '</span></td>' +
+              '<td class="py-2.5"><div class="flex flex-wrap gap-1">' +
+              (row.status !== 'approved'
+                ? '<button type="button" class="rounded border border-slate-200 px-2 py-1 text-xs font-semibold hover:bg-slate-50" data-intl-event-status="approved" data-id="' +
+                  attrEsc(row.id) +
+                  '">Approve</button>'
+                : '') +
+              (row.status !== 'pending'
+                ? '<button type="button" class="rounded border border-slate-200 px-2 py-1 text-xs font-semibold hover:bg-slate-50" data-intl-event-status="pending" data-id="' +
+                  attrEsc(row.id) +
+                  '">Pending</button>'
+                : '') +
+              (row.status !== 'rejected'
+                ? '<button type="button" class="rounded border border-slate-200 px-2 py-1 text-xs font-semibold hover:bg-slate-50" data-intl-event-status="rejected" data-id="' +
+                  attrEsc(row.id) +
+                  '">Reject</button>'
+                : '') +
+              (row.status !== 'spam'
+                ? '<button type="button" class="rounded border border-slate-200 px-2 py-1 text-xs font-semibold hover:bg-slate-50" data-intl-event-status="spam" data-id="' +
+                  attrEsc(row.id) +
+                  '">Spam</button>'
+                : '') +
+              '</div></td></tr>'
+            );
+          })
+          .join('') +
+        '</tbody></table>';
+
+      eventsBody.querySelectorAll('[data-intl-event-status]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var id = btn.getAttribute('data-id');
+          var status = btn.getAttribute('data-intl-event-status');
+          if (!id || !status) return;
+          adminPatch('/api/admin/international-leads', {
+            id: id,
+            status: status,
+            kind: 'event',
+          })
+            .then(function (data) {
+              if (!data || !data.ok) {
+                throw new Error((data && data.message) || 'Could not update status');
+              }
+              load();
+            })
+            .catch(function (err) {
+              window.alert((err && err.message) || 'Could not update status');
+            });
+        });
       });
     }
 
@@ -33603,11 +33753,16 @@
           }
           cache.interest = Array.isArray(data.interest) ? data.interest : [];
           cache.intake = Array.isArray(data.intake) ? data.intake : [];
+          cache.events = Array.isArray(data.events) ? data.events : [];
           paintIntakeFilters();
+          paintEventsFilters();
+          renderEvents();
           renderIntake();
           renderInterest();
           setStatus(
-            (data.intakeOpenCount || 0) +
+            (data.eventsPendingCount || 0) +
+              ' pending events · ' +
+              (data.intakeOpenCount || 0) +
               ' open building leads · ' +
               (data.interestRecentCount || 0) +
               ' interest in last 7 days',
@@ -33631,6 +33786,13 @@
         intakeView = btn.getAttribute('data-intl-intake-view') || 'open';
         paintIntakeFilters();
         renderIntake();
+      });
+    });
+    document.querySelectorAll('[data-intl-events-view]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        eventsView = btn.getAttribute('data-intl-events-view') || 'pending';
+        paintEventsFilters();
+        renderEvents();
       });
     });
     document.getElementById('intl-leads-export-interest').addEventListener('click', function () {
@@ -33671,6 +33833,32 @@
             groupName: row.groupName,
             orgType: row.orgType,
             websiteUrl: row.websiteUrl,
+            description: row.description,
+          };
+        })
+      );
+    });
+    document.getElementById('intl-leads-export-events').addEventListener('click', function () {
+      if (!cache.events.length) {
+        window.alert('No link-out events to export yet.');
+        return;
+      }
+      downloadAdminCsv(
+        'international-event-listings.csv',
+        cache.events.map(function (row) {
+          return {
+            createdAt: row.createdAt,
+            status: row.status,
+            title: row.title,
+            startsOn: row.startsOn,
+            endsOn: row.endsOn,
+            city: row.city,
+            countryCode: row.countryCode,
+            countryName: row.countryName,
+            externalUrl: row.externalUrl,
+            priceLabel: row.priceLabel,
+            contactName: row.contactName,
+            email: row.email,
             description: row.description,
           };
         })
