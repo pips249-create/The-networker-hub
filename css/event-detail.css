@@ -1490,9 +1490,24 @@ a:hover {
   color: var(--text-secondary, #4b5563);
 }
 
-.external-booking-signin-nudge-btn {
+.external-booking-signin-check-btn {
+  display: block;
   width: 100%;
-  font-size: 0.875rem;
+  margin-top: 2px;
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--text-muted, #6b7280);
+  text-align: center;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.external-booking-signin-check-btn:hover {
+  color: var(--purple-700, #5b21b6);
 }
 
 .ticket-panel.is-already-going #external-booking-signin-nudge,
