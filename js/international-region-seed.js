@@ -79,22 +79,55 @@ window.INTL_REGION_SEED = [
     "marketsList": true
   },
   {
-    "id": "western_europe",
-    "name": "Western Europe",
-    "blurb": "Register interest for your country on the map — no separate page yet.",
+    "id": "benelux",
+    "name": "Benelux",
+    "blurb": "Belgium, Netherlands, and Luxembourg — register interest on the map.",
     "codes": [
-      "AT",
       "BE",
-      "FR",
-      "DE",
-      "LI",
-      "LU",
-      "MC",
       "NL",
-      "PT",
-      "ES",
+      "LU"
+    ],
+    "marketsList": true
+  },
+  {
+    "id": "dach",
+    "name": "DACH",
+    "blurb": "Germany, Austria, Switzerland, and Liechtenstein — register interest on the map.",
+    "codes": [
+      "DE",
+      "AT",
       "CH",
-      "AD",
+      "LI"
+    ],
+    "marketsList": true
+  },
+  {
+    "id": "france",
+    "name": "France",
+    "blurb": "France, Monaco, and Andorra — register interest on the map.",
+    "codes": [
+      "FR",
+      "MC",
+      "AD"
+    ],
+    "marketsList": true
+  },
+  {
+    "id": "iberia",
+    "name": "Iberia",
+    "blurb": "Spain and Portugal — register interest on the map.",
+    "codes": [
+      "ES",
+      "PT"
+    ],
+    "marketsList": true
+  },
+  {
+    "id": "italy",
+    "name": "Italy",
+    "blurb": "Italy and nearby microstates — register interest on the map.",
+    "codes": [
+      "IT",
       "SM",
       "VA"
     ],
@@ -140,8 +173,7 @@ window.INTL_REGION_SEED = [
       "SI",
       "UA",
       "CY",
-      "MT",
-      "IT"
+      "MT"
     ],
     "marketsList": true
   },

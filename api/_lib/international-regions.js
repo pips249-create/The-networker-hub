@@ -53,12 +53,38 @@ const REGIONS = [
     marketsList: true,
   },
   {
-    id: 'western_europe',
-    name: 'Western Europe',
-    blurb: 'Register interest for your country on the map — no separate page yet.',
-    codes: [
-      'AT', 'BE', 'FR', 'DE', 'LI', 'LU', 'MC', 'NL', 'PT', 'ES', 'CH', 'AD', 'SM', 'VA',
-    ],
+    id: 'benelux',
+    name: 'Benelux',
+    blurb: 'Belgium, Netherlands, and Luxembourg — register interest on the map.',
+    codes: ['BE', 'NL', 'LU'],
+    marketsList: true,
+  },
+  {
+    id: 'dach',
+    name: 'DACH',
+    blurb: 'Germany, Austria, Switzerland, and Liechtenstein — register interest on the map.',
+    codes: ['DE', 'AT', 'CH', 'LI'],
+    marketsList: true,
+  },
+  {
+    id: 'france',
+    name: 'France',
+    blurb: 'France, Monaco, and Andorra — register interest on the map.',
+    codes: ['FR', 'MC', 'AD'],
+    marketsList: true,
+  },
+  {
+    id: 'iberia',
+    name: 'Iberia',
+    blurb: 'Spain and Portugal — register interest on the map.',
+    codes: ['ES', 'PT'],
+    marketsList: true,
+  },
+  {
+    id: 'italy',
+    name: 'Italy',
+    blurb: 'Italy and nearby microstates — register interest on the map.',
+    codes: ['IT', 'SM', 'VA'],
     marketsList: true,
   },
   {
@@ -74,7 +100,7 @@ const REGIONS = [
     blurb: 'Register interest for your country on the map — no separate page yet.',
     codes: [
       'AL', 'BA', 'BG', 'HR', 'CZ', 'GR', 'HU', 'XK', 'MK', 'MD', 'ME', 'PL', 'RO',
-      'RS', 'SK', 'SI', 'UA', 'CY', 'MT', 'IT',
+      'RS', 'SK', 'SI', 'UA', 'CY', 'MT',
     ],
     marketsList: true,
   },
