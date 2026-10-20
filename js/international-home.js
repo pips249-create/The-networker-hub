@@ -492,8 +492,15 @@
           '</a></p>'
         : '<p class="intl-browse-card-organiser">' + escapeHtml(row.organiserName) + '</p>';
     }
+    var media = row.imageUrl
+      ? '<div class="intl-browse-card-media"><img src="' +
+        escapeAttr(row.imageUrl) +
+        '" alt="" loading="lazy" decoding="async"></div>'
+      : '';
     return (
       '<li class="intl-browse-card">' +
+      media +
+      '<div class="intl-browse-card-body">' +
       '<div class="intl-browse-card-top">' +
       '<span class="intl-browse-card-date">' +
       escapeHtml(formatEventDateRange(row)) +
@@ -510,7 +517,7 @@
       '<a class="intl-browse-card-cta" href="' +
       escapeAttr(row.externalUrl || '#') +
       '" target="_blank" rel="noopener noreferrer">Open booking page →</a>' +
-      '</li>'
+      '</div></li>'
     );
   }
 
@@ -804,8 +811,24 @@
     }
   }
 
+  function formatEventLocalTime(raw) {
+    var value = String(raw || '').trim();
+    if (!value) return '';
+    var match = value.match(/^(\d{1,2}):(\d{2})/);
+    if (!match) return '';
+    var hours = Number(match[1]);
+    var minutes = Number(match[2]);
+    if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return '';
+    var suffix = hours >= 12 ? 'pm' : 'am';
+    var hour12 = hours % 12;
+    if (hour12 === 0) hour12 = 12;
+    return hour12 + ':' + String(minutes).padStart(2, '0') + suffix;
+  }
+
   function formatEventDateRange(row) {
     var start = formatEventDate(row.startsOn);
+    var time = formatEventLocalTime(row.startsAtLocal);
+    if (time) start = start + ' · ' + time;
     if (!row.endsOn || row.endsOn === row.startsOn) return start;
     return start + ' – ' + formatEventDate(row.endsOn);
   }
@@ -848,8 +871,15 @@
               escapeHtml(row.organiserName) +
               '</p>';
         }
+        var media = row.imageUrl
+          ? '<div class="intl-events-item-media"><img src="' +
+            escapeAttr(row.imageUrl) +
+            '" alt="" loading="lazy" decoding="async"></div>'
+          : '';
         return (
           '<li class="intl-events-item">' +
+          media +
+          '<div class="intl-events-item-body">' +
           '<div class="intl-events-item-meta">' +
           '<span>' +
           escapeHtml(formatEventDateRange(row)) +
@@ -865,7 +895,7 @@
           '<a class="intl-events-item-link" href="' +
           escapeAttr(row.externalUrl || '#') +
           '" target="_blank" rel="noopener noreferrer">Open booking page →</a>' +
-          '</li>'
+          '</div></li>'
         );
       })
       .join('');
@@ -1185,9 +1215,11 @@
     if (els.eventCountry && els.eventCountry.selectedIndex >= 0) {
       countryName = String(els.eventCountry.options[els.eventCountry.selectedIndex].text || '').trim();
     }
+    var startsAtLocal = els.eventTime ? String(els.eventTime.value || '').trim() : '';
     var organiserName = String(els.eventOrganiser.value || '').trim();
     var organiserWebsite = String(els.eventOrganiserWebsite.value || '').trim();
     var externalUrl = String(els.eventUrl.value || '').trim();
+    var imageUrl = els.eventImage ? String(els.eventImage.value || '').trim() : '';
     var contactName = String(els.eventContact.value || '').trim();
     var email = String(els.eventEmail.value || '').trim();
     var honeypot = els.eventForm.querySelector('[name="website_hp"]');
@@ -1222,11 +1254,6 @@
       els.eventError.hidden = false;
       return;
     }
-    if (!contactName) {
-      els.eventError.textContent = 'Enter your name.';
-      els.eventError.hidden = false;
-      return;
-    }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       els.eventError.textContent = 'Enter a valid email address.';
       els.eventError.hidden = false;
@@ -1243,13 +1270,15 @@
         title: title,
         startsOn: startsOn,
         endsOn: endsOn || undefined,
+        startsAtLocal: startsAtLocal || undefined,
         city: city,
         countryCode: countryCode,
         countryName: countryName,
         organiserName: organiserName,
         organiserWebsite: organiserWebsite || undefined,
         externalUrl: externalUrl,
-        name: contactName,
+        imageUrl: imageUrl || undefined,
+        name: contactName || undefined,
         email: email,
         website_hp: honeypot ? String(honeypot.value || '') : '',
         source: 'international_events_section',
@@ -1782,11 +1811,6 @@
     var email = String(els.buildingEmail.value || '').trim();
     var group = String(els.buildingGroup.value || '').trim();
 
-    if (!name) {
-      els.buildingError.textContent = 'Enter your name.';
-      els.buildingError.hidden = false;
-      return;
-    }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       els.buildingError.textContent = 'Enter a valid email address.';
       els.buildingError.hidden = false;
@@ -1923,12 +1947,14 @@
     els.eventForm = byId('intl-event-form');
     els.eventTitleField = byId('intl-event-name-field');
     els.eventStarts = byId('intl-event-starts');
+    els.eventTime = byId('intl-event-time');
     els.eventEnds = byId('intl-event-ends');
     els.eventCity = byId('intl-event-city');
     els.eventCountry = byId('intl-event-country');
     els.eventOrganiser = byId('intl-event-organiser');
     els.eventOrganiserWebsite = byId('intl-event-organiser-website');
     els.eventUrl = byId('intl-event-url');
+    els.eventImage = byId('intl-event-image');
     els.eventContact = byId('intl-event-contact');
     els.eventEmail = byId('intl-event-email');
     els.eventError = byId('intl-event-error');

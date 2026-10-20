@@ -75,7 +75,8 @@ function normalizeInput(payload) {
     .toLowerCase()
     .slice(0, 64);
   return {
-    contactName: String(payload.name || payload.contactName || payload.contact_name || '').trim(),
+    contactName:
+      String(payload.name || payload.contactName || payload.contact_name || '').trim() || null,
     email: normalizeEmail(payload.email),
     phone: normalizePhone(payload.phone || payload.telephone || payload.mobile),
     groupName: String(payload.group || payload.groupName || payload.group_name || '').trim(),
@@ -89,12 +90,14 @@ function normalizeInput(payload) {
   };
 }
 
+function greetingName(contactName) {
+  const name = String(contactName || '').trim();
+  return name || 'there';
+}
+
 function validateInput(input) {
   if (input.website) {
     return { ok: true, honeypot: true };
-  }
-  if (!input.contactName) {
-    return { ok: false, error: 'missing_name', message: 'Enter your name.' };
   }
   if (!input.email || input.email.length > 254 || !EMAIL_RE.test(input.email)) {
     return { ok: false, error: 'invalid_email', message: 'Enter a valid email address.' };
@@ -160,7 +163,7 @@ function buildConfirmationEmailHtml(input) {
   return (
     '<div style="font-family:DM Sans,Arial,sans-serif;line-height:1.55;color:#2d2636;max-width:560px;">' +
     '<p style="margin:0 0 12px;">Hi ' +
-    escHtml(input.contactName) +
+    escHtml(greetingName(input.contactName)) +
     ',</p>' +
     '<p style="margin:0 0 12px;">Thanks — we have your details for <strong>' +
     escHtml(input.groupName) +
