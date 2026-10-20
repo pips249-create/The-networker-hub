@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Fill Glasgow directory gaps (coverage check + follow-up pass).
+ * Fill Glasgow directory gaps (coverage check + follow-up passes).
  *
  * Workflow (matches Command Centre):
  *  - Existing published groups → add events only (no invite email).
@@ -8,6 +8,9 @@
  *    (Plain "Create group" leaves listing_status=draft, which hides events.)
  *  - Event cover images: fetch the listing’s own image (Eventbrite og:image /
  *    cdn.evbuc, or page og:image). Never rely on Unsplash stock fallbacks.
+ *  - Link Out: set checkout_mode=external_link + booking URL + price label so
+ *    the public CTA goes to Eventbrite/Chamber/IoD/FSB (not hub tickets).
+ *    Applied via service-role patch after create (directory seeding; no claim email).
  *
  * Usage:
  *   node scripts/import-glasgow-coverage-gaps.js            # dry-run
@@ -33,6 +36,12 @@ const { createEvent, createEventsForOccurrences, resolveSeriesGroupId } =
 const { deriveLocationFields, resolveRegionSlug, parseOutcode } = require('../api/_lib/uk-outcode');
 const { geocodeUkPostcode } = require('../api/_lib/postcode-geocode');
 const { normalizeEventPhotoUrl, eventImageDbValue } = require('../api/_lib/event-image');
+const {
+  CHECKOUT_LINK_OUT,
+  preferEventbriteCheckoutUrl,
+  normalizeExternalBookingUrl,
+  normalizeExternalPriceLabel,
+} = require('../api/_lib/connected-booking-util');
 
 const APPLY = process.argv.includes('--apply');
 
@@ -49,6 +58,8 @@ const EXISTING = {
   theBusinessConnection: 'e4cec2d2-aed0-48bd-ba42-e64ffd3b8102',
   swib: '41772b77-dd4e-46a9-9a44-a61844e49784',
   chamberGlasgow: '5b79f98e-3a41-44b8-b612-f84baa763d75',
+  fsbScotland: '3ac0176b-b903-46df-9801-26bd702fc78b',
+  businessGateway: '8c5df762-fe25-47e3-ae87-c7704aa915c8',
 };
 
 const B2B_MIXER_GLASGOW_ID = '5a2dae36-3cd8-47eb-a760-691545ac090b';
@@ -121,6 +132,30 @@ const NEW_GROUPS = [
     description:
       'Friendly, productive Glasgow morning networking community — popular coffee meetings with free first visits.',
   },
+  {
+    key: 'iodGlasgowWest',
+    name: 'The Institute of Directors - Glasgow & West of Scotland',
+    email: 'donna.bell@iod.com',
+    website: 'https://www.iod.com/',
+    description:
+      'IoD Glasgow & West of Scotland — monthly breakfast networking and director community events.',
+  },
+  {
+    key: 'dunbartonshireChamber',
+    name: 'Dunbartonshire Chamber of Commerce',
+    email: 'admin@dunbartonshirechamber.co.uk',
+    website: 'https://www.dunbartonshirechamber.co.uk/',
+    description:
+      'Dunbartonshire Chamber of Commerce — business breakfasts and networking for members across West Dunbartonshire and beyond.',
+  },
+  {
+    key: 'scottishPropertyPodcast',
+    name: 'Scottish Property Podcast',
+    email: 'hi@thenetworkeruk.com',
+    website: 'https://www.eventbrite.co.uk/o/scottish-property-podcast',
+    description:
+      'Networking events for Scotland’s property investor community, linked with the Scottish Property Podcast.',
+  },
 ];
 
 /** Title prefix → booking page used to backfill real cover images (no stock). */
@@ -160,11 +195,54 @@ const IMAGE_BACKFILL = [
   },
 ];
 
-function bookingBlurb(url, priceNote) {
+function bookingBlurb(url, priceNote, { linkOut } = {}) {
   const lines = [];
   if (priceNote) lines.push(priceNote);
-  if (url) lines.push('Book / reserve: ' + url);
+  // When Link Out is set, the Book CTA carries the URL — skip duplicating it in copy.
+  if (url && !linkOut) lines.push('Book / reserve: ' + url);
   return lines.join('\n\n');
+}
+
+function priceLabelFromSpec(spec) {
+  if (spec.priceLabel) return normalizeExternalPriceLabel(spec.priceLabel);
+  const note = String(spec.priceNote || '');
+  if (/\bfree\b/i.test(note) && !/£\d/.test(note)) return 'Free';
+  const from = note.match(/From\s*£[\d,.]+/i);
+  if (from) return normalizeExternalPriceLabel(from[0]);
+  const pound = note.match(/£[\d,.]+/);
+  if (pound) return normalizeExternalPriceLabel(pound[0]);
+  if (/enquire|portal|chamber/i.test(note)) return 'Enquire for price';
+  return 'Tickets available';
+}
+
+function linkOutUrlFromSpec(spec) {
+  const raw = String(spec.bookingUrl || spec.linkOutUrl || '').trim();
+  if (!raw) return '';
+  return normalizeExternalBookingUrl(preferEventbriteCheckoutUrl(raw)) || '';
+}
+
+async function applyLinkOut(sb, eventId, spec) {
+  const url = linkOutUrlFromSpec(spec);
+  const priceLabel = priceLabelFromSpec(spec);
+  if (!url || !priceLabel) {
+    console.log(`  · skip Link Out on ${eventId} — need booking URL + price label`);
+    return;
+  }
+  if (!APPLY) {
+    console.log(`  · would Link Out ${eventId}: ${priceLabel} → ${url.slice(0, 80)}`);
+    return;
+  }
+  const { error } = await sb
+    .from('events')
+    .update({
+      checkout_mode: CHECKOUT_LINK_OUT,
+      external_booking_url: url,
+      external_price_label: priceLabel,
+      ticket_sales_enabled: true,
+    })
+    .eq('id', eventId);
+  if (error) console.warn('    Link Out patch failed', eventId, error.message);
+  else console.log(`  · Link Out set: ${priceLabel}`);
 }
 
 function fetchText(url, redirectsLeft = 5) {
@@ -335,7 +413,7 @@ async function eventExists(sb, organiserId, titlePrefix) {
   if (String(organiserId).startsWith('dry-run:')) return false;
   const { data, error } = await sb
     .from('events')
-    .select('id, title, starts_at, image_url')
+    .select('id, title, starts_at, image_url, checkout_mode, external_booking_url, external_price_label')
     .eq('organiser_id', organiserId)
     .ilike('title', titlePrefix + '%')
     .gte('starts_at', new Date().toISOString())
@@ -344,18 +422,32 @@ async function eventExists(sb, organiserId, titlePrefix) {
   return (data && data[0]) || null;
 }
 
+function wantsLinkOut(spec) {
+  if (spec.linkOut === false) return false;
+  return Boolean(linkOutUrlFromSpec(spec));
+}
+
 async function publishEvent(sb, organiserId, spec) {
+  const useLinkOut = wantsLinkOut(spec);
   const existing = await eventExists(sb, organiserId, spec.titleMatch || spec.title.slice(0, 24));
   if (existing) {
     console.log(`  · skip (already listed): ${existing.title} @ ${existing.starts_at}`);
     if (isWeakImageUrl(existing.image_url) && (spec.bookingUrl || spec.imageUrl)) {
       await applyImageToEvent(sb, existing.id, spec.bookingUrl, spec.imageUrl);
     }
+    if (
+      useLinkOut &&
+      (String(existing.checkout_mode || '') !== CHECKOUT_LINK_OUT ||
+        !String(existing.external_booking_url || '').trim() ||
+        !String(existing.external_price_label || '').trim())
+    ) {
+      await applyLinkOut(sb, existing.id, spec);
+    }
     return existing;
   }
 
   const geo = await enrichGeo(spec);
-  const description = [spec.description, bookingBlurb(spec.bookingUrl, spec.priceNote)]
+  const description = [spec.description, bookingBlurb(spec.bookingUrl, spec.priceNote, { linkOut: useLinkOut })]
     .filter(Boolean)
     .join('\n\n');
   const photoUrl =
@@ -380,7 +472,7 @@ async function publishEvent(sb, organiserId, spec) {
 
   if (!APPLY) {
     console.log(
-      `  · would publish: ${spec.title} | ${spec.date || (spec.occurrences || []).length + ' dates'} | ${geo.city} ${geo.postcode} | image=${photoUrl ? 'yes' : 'NO'}`
+      `  · would publish: ${spec.title} | ${spec.date || (spec.occurrences || []).length + ' dates'} | ${geo.city} ${geo.postcode} | image=${photoUrl ? 'yes' : 'NO'} | linkOut=${useLinkOut ? priceLabelFromSpec(spec) : 'no'}`
     );
     return null;
   }
@@ -435,10 +527,11 @@ async function publishEvent(sb, organiserId, spec) {
   for (const ev of events) {
     const { error } = await sb.from('events').update(patch).eq('id', ev.id);
     if (error) console.warn('    geo/image patch failed', ev.id, error.message);
+    if (useLinkOut) await applyLinkOut(sb, ev.id, spec);
   }
 
   console.log(
-    `  · published ${events.length} date(s): ${spec.title}${photoUrl ? ' (with listing image)' : ' (no image found)'}`
+    `  · published ${events.length} date(s): ${spec.title}${photoUrl ? ' (with listing image)' : ' (no image found)'}${useLinkOut ? ' + Link Out' : ''}`
   );
   return events[0];
 }
@@ -812,6 +905,7 @@ function buildEventSpecs(createdMap) {
       city: 'Glasgow',
       postcode: 'G1 2FF',
       bookingUrl: 'https://www.glasgowchamberofcommerce.com/events/',
+      priceLabel: 'Enquire for price',
       priceNote: 'Book via Glasgow Chamber portal (member and non-member rates).',
       description:
         'Glasgow Chamber Christmas Women’s Networking Lunch — two-course lunch and a glass of wine at The Ivy Buchanan Street.',
@@ -828,6 +922,7 @@ function buildEventSpecs(createdMap) {
       city: 'Glasgow',
       postcode: 'G2 3EX',
       bookingUrl: 'https://www.glasgowchamberofcommerce.com/events/',
+      priceLabel: 'From £40',
       priceNote: 'Member £40 / non-member £70 — book via Glasgow Chamber portal.',
       description:
         'Glasgow Chamber autumn speed networking lunch — two-course lunch, a glass of wine and structured introductions.',
@@ -845,11 +940,187 @@ function buildEventSpecs(createdMap) {
       postcode: 'G2 8QW',
       bookingUrl:
         'https://www.eventbrite.co.uk/e/the-business-connection-pre-dinner-networking-glasgow-tickets-1993485790663',
+      priceLabel: '£7',
       priceNote: '£7 subsidised — drink and small plate included. Book via Eventbrite.',
       description:
         'Relaxed midweek networking for working professionals — light bites, drinks and conversation at YOTEL Glasgow.',
     },
+
+    // ── Pass 3 (IoD / FSB / Business Gateway / Chamber extras) ──
+    {
+      organiserId: createdMap.iodGlasgowWest,
+      title: 'IoD Glasgow & West of Scotland Monthly Breakfast Networking Event',
+      titleMatch: 'IoD Glasgow & West of Scotland Monthly Breakfast',
+      eventType: 'Meeting',
+      date: '2026-10-22T08:30:00+01:00',
+      endDate: '2026-10-22T10:30:00+01:00',
+      venue: 'VEGA, YOTEL Glasgow',
+      addressLine1: '260 Argyle Street',
+      city: 'Glasgow',
+      postcode: 'G2 8QW',
+      bookingUrl:
+        'https://www.iod.com/events/iod_glasgow_west_of_scotland_monthly_breakfast_networking_event1088073839/',
+      fallbackImage:
+        'https://assets-gbr.mkt.dynamics.com/3d10f99b-9259-4f54-b3e8-f7555348045c/digitalassets/images/21f05859-c09f-f111-b8de-7ced8d9a5122?ts=639231752051909304',
+      priceLabel: 'Free',
+      priceNote: 'Free to attend — breakfast can be purchased at the hotel. Book via IoD.',
+      description:
+        'Monthly IoD Glasgow & West breakfast networking at YOTEL — meet fellow directors, share issues affecting your business and make new connections.',
+    },
+    {
+      organiserId: EXISTING.fsbScotland,
+      title: 'FSB Connect Glasgow - Oct',
+      titleMatch: 'FSB Connect Glasgow',
+      eventType: 'Meeting',
+      date: '2026-10-29T10:00:00+00:00',
+      endDate: '2026-10-29T12:00:00+00:00',
+      venue: 'FSB Scotland Office',
+      addressLine1: '58 Waterloo Street',
+      city: 'Glasgow',
+      postcode: 'G2 7DA',
+      bookingUrl: 'https://events.fsb.org.uk/en/8d2bI2X7/g/fJqTd8nh8e/fsb-connect-glasgow-oct-3aJ8Pziib',
+      priceLabel: 'Free',
+      priceNote: 'Free for FSB members and non-members — book via FSB events.',
+      description:
+        'Popular FSB Connect networking for small businesses and the self-employed at the FSB Scotland office — tea, coffee and face-to-face introductions.',
+    },
+    {
+      organiserId: EXISTING.businessGateway,
+      title: 'Business Networking Breakfast',
+      titleMatch: 'Business Networking Breakfast',
+      eventType: 'Meeting',
+      date: '2026-10-29T09:30:00+00:00',
+      endDate: '2026-10-29T11:00:00+00:00',
+      venue: 'Greenlaw Business Centre',
+      addressLine1: '6 Greenlaw Way',
+      city: 'Glasgow',
+      postcode: 'G77 6EF',
+      bookingUrl: 'https://www.bgateway.com/events/business-networking-breakfast-32321',
+      priceLabel: 'Free',
+      priceNote: 'Free — book via Business Gateway.',
+      description:
+        'Business Gateway breakfast networking — coffee, breakfast rolls and connections with local people and businesses at Greenlaw Business Centre.',
+    },
+    {
+      organiserId: EXISTING.chamberGlasgow,
+      title: "Glasgow Talks... with Gavin Birch-Williams, Managing Director of Glasgow Airport",
+      titleMatch: 'Glasgow Talks',
+      eventType: 'Meeting',
+      date: '2026-10-28T10:00:00+00:00',
+      endDate: '2026-10-28T12:00:00+00:00',
+      venue: 'Glasgow',
+      addressLine1: 'Glasgow',
+      city: 'Glasgow',
+      postcode: 'G2 1DY',
+      bookingUrl: 'https://www.glasgowchamberofcommerce.com/events/',
+      priceLabel: 'From £35',
+      priceNote: 'Member £35 / non-member £60 — book via Glasgow Chamber portal.',
+      description:
+        'Glasgow Chamber Talks with Gavin Birch-Williams, Managing Director of Glasgow Airport — Cleared for Take-Off: Glasgow Airport’s vision for the next decade, plus networking.',
+    },
+    {
+      organiserId: createdMap.dunbartonshireChamber,
+      title: 'DCC Business Breakfast Meeting - November 19th',
+      titleMatch: 'DCC Business Breakfast Meeting',
+      eventType: 'Meeting',
+      date: '2026-11-19T08:30:00+00:00',
+      endDate: '2026-11-19T10:00:00+00:00',
+      venue: 'Golden Jubilee Conference Hotel',
+      addressLine1: 'Beardmore Street, Clydebank',
+      city: 'Glasgow',
+      postcode: 'G81 4SA',
+      bookingUrl:
+        'https://www.eventbrite.co.uk/e/dcc-business-breakfast-meeting-november-19th-tickets-1998891924555',
+      priceLabel: 'Tickets available',
+      priceNote: 'Chamber members discounted — book via Eventbrite (guest pass code GUEST50 for first-time non-members).',
+      description:
+        'Dunbartonshire Chamber Business Breakfast Club at the Golden Jubilee Hotel, Clydebank — network with local businesses over coffee and a breakfast roll.',
+    },
+    {
+      organiserId: EXISTING.chamberGlasgow,
+      title: 'Behind the Scenes Breakfast at Ikea',
+      titleMatch: 'Behind the Scenes Breakfast at Ikea',
+      eventType: 'Meeting',
+      date: '2027-01-21T10:00:00+00:00',
+      endDate: '2027-01-21T12:00:00+00:00',
+      venue: 'IKEA Glasgow',
+      addressLine1: 'Glasgow',
+      city: 'Glasgow',
+      postcode: 'G51 4ED',
+      bookingUrl: 'https://www.glasgowchamberofcommerce.com/events/',
+      priceLabel: 'Enquire for price',
+      priceNote: 'Book via Glasgow Chamber portal.',
+      description:
+        'Glasgow Chamber Behind the Scenes breakfast at IKEA Glasgow — an exclusive look behind the operation plus networking over breakfast.',
+    },
+    {
+      organiserId: createdMap.scottishPropertyPodcast,
+      title: 'Scottish Property Podcast Networking Event Glasgow - 4th November 2026',
+      titleMatch: 'Scottish Property Podcast Networking',
+      eventType: 'Meeting',
+      date: '2026-11-04T18:00:00+00:00',
+      endDate: '2026-11-04T21:00:00+00:00',
+      venue: 'Glasgow',
+      addressLine1: 'Glasgow',
+      city: 'Glasgow',
+      postcode: 'G2 1DH',
+      bookingUrl:
+        'https://www.eventbrite.co.uk/e/scottish-property-podcast-networking-event-glasgow-4th-november-2026-tickets-2003403552957',
+      priceLabel: 'Tickets available',
+      priceNote: 'Book via Eventbrite.',
+      description:
+        'Scottish Property Podcast networking evening in Glasgow — meet property investors, developers and professionals from the podcast community.',
+    },
   ];
+}
+
+/** Already-live Glasgow listings to convert to Link Out (not created by this script). */
+const LINK_OUT_BACKFILL = [
+  {
+    titleMatch: 'HUSTLE Glasgow Entrepreneur Networking',
+    bookingUrl:
+      'https://www.eventbrite.co.uk/e/hustle-glasgow-entrepreneur-networking-event-tickets-2000154508979',
+    priceLabel: 'Free',
+  },
+  {
+    titleMatch: 'Property Deal Network Glasgow',
+    bookingUrl:
+      'https://www.eventbrite.co.uk/e/property-deal-network-glasgow-pdn-property-investor-networking-event-tickets-2001772049085',
+    priceLabel: 'Free',
+  },
+  {
+    titleMatch: 'B2B Mixer Glasgow',
+    bookingUrl:
+      'https://www.eventbrite.co.uk/e/b2b-mixer-glasgow-100-networking-event-making-referrals-tickets-2000394304213',
+    priceLabel: 'Tickets available',
+    eventId: B2B_MIXER_GLASGOW_ID,
+  },
+];
+
+async function backfillLinkOuts(sb) {
+  console.log('\n5) Backfill Link Out on existing Glasgow listings');
+  for (const row of LINK_OUT_BACKFILL) {
+    if (row.linkOut === false) continue;
+    if (row.eventId) {
+      await applyLinkOut(sb, row.eventId, row);
+      continue;
+    }
+    const { data, error } = await sb
+      .from('events')
+      .select('id, title, checkout_mode, external_booking_url, city')
+      .ilike('title', row.titleMatch + '%')
+      .ilike('city', 'Glasgow')
+      .gte('starts_at', new Date().toISOString())
+      .limit(10);
+    if (error) throw new Error(error.message);
+    if (!(data || []).length) {
+      console.log(`  · ${row.titleMatch}: not found`);
+      continue;
+    }
+    for (const ev of data) {
+      await applyLinkOut(sb, ev.id, row);
+    }
+  }
 }
 
 async function main() {
@@ -860,6 +1131,7 @@ async function main() {
   const sb = getSupabaseAdmin();
   console.log(APPLY ? 'APPLY mode — writing to Supabase' : 'DRY-RUN — pass --apply to write');
   console.log('Images: listing covers from Eventbrite/og:image (no Unsplash stock).');
+  console.log('Checkout: Link Out (external_link) where a booking URL is known.');
 
   await fixB2bMixerGeo(sb);
 
@@ -869,7 +1141,7 @@ async function main() {
     await ensureNewGroup(sb, spec, createdMap);
   }
 
-  console.log('\n3) Add / refresh Glasgow events');
+  console.log('\n3) Add / refresh Glasgow events (+ Link Out)');
   for (const spec of buildEventSpecs(createdMap)) {
     const orgId = spec.organiserId;
     if (!orgId) {
@@ -880,6 +1152,7 @@ async function main() {
   }
 
   await backfillImages(sb);
+  await backfillLinkOuts(sb);
 
   console.log('\nDone.', APPLY ? 'Review /networking/glasgow' : 'Re-run with --apply to write.');
 }
