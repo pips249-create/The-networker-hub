@@ -11,7 +11,9 @@ create table if not exists public.international_event_listings (
   organiser_name text not null,
   organiser_website text,
   external_url text not null,
-  contact_name text not null,
+  starts_at_local time,
+  image_url text,
+  contact_name text,
   email text not null,
   status text not null default 'pending'
     check (status in ('pending', 'approved', 'rejected', 'spam')),

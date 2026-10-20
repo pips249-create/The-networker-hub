@@ -10,10 +10,10 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const UNAVAILABLE_COUNTRY_CODES = new Set(['BY', 'IR', 'KP', 'RU', 'SY']);
 
 const PUBLIC_SELECT =
-  'id, title, starts_on, ends_on, city, country_code, country_name, organiser_name, organiser_website, external_url, created_at';
+  'id, title, starts_on, ends_on, starts_at_local, city, country_code, country_name, organiser_name, organiser_website, external_url, image_url, created_at';
 
 const ADMIN_SELECT =
-  'id, title, starts_on, ends_on, city, country_code, country_name, organiser_name, organiser_website, external_url, contact_name, email, status, source, created_at, reviewed_at, reviewed_by';
+  'id, title, starts_on, ends_on, starts_at_local, city, country_code, country_name, organiser_name, organiser_website, external_url, image_url, contact_name, email, status, source, created_at, reviewed_at, reviewed_by';
 
 function staffInbox() {
   const configured = String(process.env.EVENT_INTAKE_EMAIL || '').trim();
@@ -60,6 +60,25 @@ function normalizeDate(raw) {
   return value;
 }
 
+/** Optional local wall-clock time HH:MM or HH:MM:SS → HH:MM:SS for Postgres time. */
+function normalizeLocalTime(raw) {
+  const value = String(raw || '').trim();
+  if (!value) return null;
+  const match = value.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+  if (!match) return null;
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  const seconds = match[3] != null ? Number(match[3]) : 0;
+  if (hours > 23 || minutes > 59 || seconds > 59) return null;
+  return (
+    String(hours).padStart(2, '0') +
+    ':' +
+    String(minutes).padStart(2, '0') +
+    ':' +
+    String(seconds).padStart(2, '0')
+  );
+}
+
 function normalizeExternalUrl(raw) {
   const value = String(raw || '').trim();
   if (!value) return null;
@@ -72,6 +91,11 @@ function normalizeExternalUrl(raw) {
   }
 }
 
+function greetingName(contactName) {
+  const name = String(contactName || '').trim();
+  return name || 'there';
+}
+
 function normalizeInput(payload) {
   payload = payload || {};
   const allowedSources = new Set([
@@ -80,6 +104,7 @@ function normalizeInput(payload) {
     'international_events_section',
     'international_country_ie',
     'international_country_us',
+    'admin_staff',
   ]);
   const sourceRaw = String(payload.source || '')
     .trim()
@@ -91,6 +116,12 @@ function normalizeInput(payload) {
       .slice(0, 160),
     startsOn: normalizeDate(payload.startsOn || payload.starts_on || payload.date || payload.startDate),
     endsOn: normalizeDate(payload.endsOn || payload.ends_on || payload.endDate) || null,
+    startsAtLocalRaw: String(
+      payload.startsAtLocal || payload.starts_at_local || payload.startTime || payload.time || ''
+    ).trim(),
+    startsAtLocal: normalizeLocalTime(
+      payload.startsAtLocal || payload.starts_at_local || payload.startTime || payload.time
+    ),
     city: String(payload.city || payload.town || '')
       .trim()
       .slice(0, 120),
@@ -121,12 +152,16 @@ function normalizeInput(payload) {
         payload.groupWebsite ||
         payload.group_website
     ),
+    imageUrlRaw: String(payload.imageUrl || payload.image_url || payload.photoUrl || payload.photo || '').trim(),
+    imageUrl: normalizeExternalUrl(
+      payload.imageUrl || payload.image_url || payload.photoUrl || payload.photo
+    ),
     externalUrl: normalizeExternalUrl(
       payload.externalUrl || payload.external_url || payload.url || payload.link || payload.bookingUrl
     ),
     contactName: String(payload.name || payload.contactName || payload.contact_name || '')
       .trim()
-      .slice(0, 120),
+      .slice(0, 120) || null,
     email: normalizeEmail(payload.email),
     website: String(payload.website_hp || '').trim(),
     source: allowedSources.has(sourceRaw) ? sourceRaw : 'international_map',
@@ -148,6 +183,13 @@ function validateInput(input) {
       ok: false,
       error: 'invalid_end_date',
       message: 'End date must be on or after the start date.',
+    };
+  }
+  if (input.startsAtLocalRaw && !input.startsAtLocal) {
+    return {
+      ok: false,
+      error: 'invalid_time',
+      message: 'Enter a valid local start time (HH:MM), or leave it blank.',
     };
   }
   if (!input.city) {
@@ -192,8 +234,12 @@ function validateInput(input) {
       message: 'Enter a valid booking or info URL (https://…).',
     };
   }
-  if (!input.contactName) {
-    return { ok: false, error: 'missing_name', message: 'Enter your name.' };
+  if (input.imageUrlRaw && !input.imageUrl) {
+    return {
+      ok: false,
+      error: 'invalid_image_url',
+      message: 'Enter a valid photo URL (https://…), or leave it blank.',
+    };
   }
   if (!input.email || input.email.length > 254 || !EMAIL_RE.test(input.email)) {
     return { ok: false, error: 'invalid_email', message: 'Enter a valid email address.' };
@@ -207,12 +253,14 @@ function mapPublic(row) {
     title: row.title,
     startsOn: row.starts_on,
     endsOn: row.ends_on || null,
+    startsAtLocal: row.starts_at_local || null,
     city: row.city,
     countryCode: row.country_code,
     countryName: row.country_name,
     organiserName: row.organiser_name || null,
     organiserWebsite: row.organiser_website || null,
     externalUrl: row.external_url,
+    imageUrl: row.image_url || null,
     createdAt: row.created_at,
   };
 }
@@ -242,11 +290,13 @@ function buildStaffEmailHtml(input) {
     '</p>' +
     '<table style="border-collapse:collapse;width:100%;max-width:560px;">' +
     row('Starts', input.startsOn) +
+    row('Local start time', input.startsAtLocal) +
     row('Ends', input.endsOn) +
     row('City', input.city) +
     row('Country', input.countryName + ' (' + input.countryCode + ')') +
     row('Organiser / group', input.organiserName) +
     row('Organiser website', input.organiserWebsite) +
+    row('Photo URL', input.imageUrl) +
     row('Link out', input.externalUrl) +
     row('Contact', input.contactName) +
     row('Email', input.email) +
@@ -260,7 +310,7 @@ function buildConfirmationEmailHtml(input) {
   return (
     '<div style="font-family:DM Sans,Arial,sans-serif;line-height:1.55;color:#2d2636;max-width:560px;">' +
     '<p style="margin:0 0 12px;">Hi ' +
-    escHtml(input.contactName) +
+    escHtml(greetingName(input.contactName)) +
     ',</p>' +
     '<p style="margin:0 0 12px;">Thanks — we received <strong>' +
     escHtml(input.title) +
@@ -307,6 +357,8 @@ async function submitInternationalEventListing(payload) {
       organiser_name: input.organiserName,
       organiser_website: input.organiserWebsite,
       external_url: input.externalUrl,
+      starts_at_local: input.startsAtLocal,
+      image_url: input.imageUrl,
       contact_name: input.contactName,
       email: input.email,
       status: 'pending',
@@ -485,10 +537,92 @@ async function updateInternationalEventListingStatus(id, status, session) {
   return { ok: true, event: mapAdmin(data) };
 }
 
+/**
+ * Staff-seeded link-out event (Admin → International). Skips public emails.
+ * Defaults to approved so it appears on public browse immediately.
+ */
+async function createAdminInternationalEventListing(payload, session) {
+  const sessionEmail = normalizeEmail(
+    (session && (session.email || session.userEmail || session.sub)) || ''
+  );
+  const body = Object.assign({}, payload || {}, {
+    source: 'admin_staff',
+    email: normalizeEmail((payload && payload.email) || '') || sessionEmail || staffInbox(),
+  });
+
+  const input = normalizeInput(body);
+  input.source = 'admin_staff';
+  const validation = validateInput(input);
+  if (!validation.ok) return validation;
+
+  if (!isSupabaseConfigured()) {
+    const err = new Error('Supabase is not configured.');
+    err.code = 'not_configured';
+    throw err;
+  }
+
+  const statusRaw = String((payload && payload.status) || 'approved')
+    .trim()
+    .toLowerCase();
+  const status = statusRaw === 'pending' ? 'pending' : 'approved';
+  const reviewer = String(
+    (session && (session.email || session.userEmail || session.sub)) || 'admin'
+  ).trim();
+
+  const sb = getSupabaseAdmin();
+  const insertRes = await sb
+    .from('international_event_listings')
+    .insert({
+      title: input.title,
+      starts_on: input.startsOn,
+      ends_on: input.endsOn,
+      city: input.city,
+      country_code: input.countryCode,
+      country_name: input.countryName,
+      organiser_name: input.organiserName,
+      organiser_website: input.organiserWebsite,
+      external_url: input.externalUrl,
+      starts_at_local: input.startsAtLocal,
+      image_url: input.imageUrl,
+      contact_name: input.contactName,
+      email: input.email,
+      status: status,
+      source: 'admin_staff',
+      reviewed_at: status === 'approved' ? new Date().toISOString() : null,
+      reviewed_by: status === 'approved' ? reviewer : null,
+    })
+    .select(ADMIN_SELECT)
+    .single();
+
+  if (insertRes.error) {
+    if (/international_event_listings/i.test(insertRes.error.message || '')) {
+      const err = new Error(
+        'Event listings table is missing — run migrations 324 and 325 in Supabase.'
+      );
+      err.code = 'events_table_missing';
+      throw err;
+    }
+    const err = new Error(insertRes.error.message || 'Could not save event.');
+    err.code = 'save_failed';
+    throw err;
+  }
+
+  return {
+    ok: true,
+    event: mapAdmin(insertRes.data),
+    message:
+      status === 'approved'
+        ? 'Event added and published to International browse.'
+        : 'Event saved as pending for review.',
+  };
+}
+
 module.exports = {
   normalizeInput,
   validateInput,
+  normalizeLocalTime,
   submitInternationalEventListing,
+  createAdminInternationalEventListing,
   listPublicInternationalEventListings,
   listAdminInternationalEventListings,
   updateInternationalEventListingStatus,

@@ -3,6 +3,7 @@ const assert = require('assert');
 const {
   normalizeInput,
   validateInput,
+  normalizeLocalTime,
 } = require('../api/_lib/international-event-listings');
 
 const base = {
@@ -14,11 +15,19 @@ const base = {
   organiserName: 'Dublin Business Network',
   organiserWebsite: 'https://example.com',
   externalUrl: 'https://example.com/book',
-  contactName: 'Alex Organiser',
   email: 'alex@example.com',
 };
 
 assert.strictEqual(validateInput(normalizeInput(base)).ok, true);
+assert.strictEqual(validateInput(normalizeInput({ ...base, name: '' })).ok, true);
+assert.strictEqual(
+  validateInput(normalizeInput({ ...base, startsAtLocal: '09:30', imageUrl: 'https://cdn.example.com/a.jpg' })).ok,
+  true
+);
+
+assert.strictEqual(normalizeLocalTime('9:30'), '09:30:00');
+assert.strictEqual(normalizeLocalTime('09:30:15'), '09:30:15');
+assert.strictEqual(normalizeLocalTime('25:00'), null);
 
 const honeypot = validateInput(normalizeInput({ ...base, website_hp: 'bot' }));
 assert.strictEqual(honeypot.ok, true);
@@ -42,6 +51,14 @@ const badOrgSite = validateInput(
 assert.strictEqual(badOrgSite.ok, false);
 assert.strictEqual(badOrgSite.error, 'invalid_organiser_website');
 
+const badTime = validateInput(normalizeInput({ ...base, startsAtLocal: 'not-a-time' }));
+assert.strictEqual(badTime.ok, false);
+assert.strictEqual(badTime.error, 'invalid_time');
+
+const badImage = validateInput(normalizeInput({ ...base, imageUrl: 'ftp://x.com/a.jpg' }));
+assert.strictEqual(badImage.ok, false);
+assert.strictEqual(badImage.error, 'invalid_image_url');
+
 const noOrgSite = validateInput(normalizeInput({ ...base, organiserWebsite: '' }));
 assert.strictEqual(noOrgSite.ok, true);
 
@@ -56,5 +73,9 @@ const unavailable = validateInput(
 );
 assert.strictEqual(unavailable.ok, false);
 assert.strictEqual(unavailable.error, 'country_unavailable');
+
+const staffSource = normalizeInput({ ...base, source: 'admin_staff' });
+assert.strictEqual(staffSource.source, 'admin_staff');
+assert.strictEqual(validateInput(staffSource).ok, true);
 
 console.log('test-international-event-listings: ok');
