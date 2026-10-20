@@ -155,9 +155,75 @@ function countBrowseSeriesOccurrences(rows) {
   return counts;
 }
 
+/**
+ * Accidental republishes: same organiser, title, and starts_at (not a multi-date series).
+ * Prefer the bookable / priced card so browse does not show Enquire + £15 twins.
+ */
+function browseSameSlotKey(row) {
+  const organiserId = String(row?.organiser_id || '').trim();
+  const title = seriesTitleKey(row);
+  const startsAt = String(row?.starts_at || '').trim();
+  if (!organiserId || !title || !startsAt) return '';
+  return organiserId + '\0' + title + '\0' + startsAt;
+}
+
+function browseSameSlotQuality(row) {
+  if (!row) return -1;
+  let score = 0;
+  const rawPrice = row.min_ticket_price;
+  const hasPrice = rawPrice != null && rawPrice !== '';
+  if (hasPrice) score += 100;
+  if (Number(rawPrice) > 0) score += 20;
+  const checkout = String(row.checkout_mode || '').trim().toLowerCase();
+  if (checkout === 'external_link' || checkout === 'external') score += 15;
+  if (String(row.external_booking_url || '').trim()) score += 10;
+  if (String(row.image_url || row.photo_url || '').trim()) score += 5;
+  if (row.featured) score += 25;
+  return score;
+}
+
+/**
+ * Within each same-slot group, keep the highest-quality row at the first
+ * group's position in the already-sorted list.
+ */
+function collapseBrowseSameSlotDuplicates(rows) {
+  const list = rows || [];
+  if (list.length < 2) return list;
+
+  const bestByKey = new Map();
+  const firstIndexByKey = new Map();
+  for (let i = 0; i < list.length; i++) {
+    const row = list[i];
+    const key = browseSameSlotKey(row);
+    if (!key) continue;
+    if (!firstIndexByKey.has(key)) firstIndexByKey.set(key, i);
+    const existing = bestByKey.get(key);
+    if (!existing || browseSameSlotQuality(row) > browseSameSlotQuality(existing)) {
+      bestByKey.set(key, row);
+    }
+  }
+  if (!bestByKey.size) return list;
+
+  const out = [];
+  const emitted = new Set();
+  for (let i = 0; i < list.length; i++) {
+    const row = list[i];
+    const key = browseSameSlotKey(row);
+    if (!key) {
+      out.push(row);
+      continue;
+    }
+    if (emitted.has(key)) continue;
+    if (firstIndexByKey.get(key) !== i) continue;
+    emitted.add(key);
+    out.push(bestByKey.get(key) || row);
+  }
+  return out;
+}
+
 /** Rows must already be sorted — keeps the first (best) row per series for the active sort. */
 function dedupeBrowseRowsBySeries(rows) {
-  return dedupeFeaturedRowsBySeries(rows);
+  return dedupeFeaturedRowsBySeries(collapseBrowseSameSlotDuplicates(rows));
 }
 
 function seriesCountForRow(row, seriesCounts) {
@@ -194,6 +260,9 @@ module.exports = {
   seriesFeaturedUntil,
   seriesSpotlightBucketKey,
   seriesBrowseBucketKey,
+  browseSameSlotKey,
+  browseSameSlotQuality,
+  collapseBrowseSameSlotDuplicates,
   dedupeFeaturedRowsBySeries,
   takeFirstRowPerSeries,
   countBrowseSeriesOccurrences,
