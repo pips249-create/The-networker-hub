@@ -153,13 +153,6 @@
       var group = String((groupEl && groupEl.value) || '').trim();
 
       if (listing) {
-        if (!name) {
-          if (error) {
-            error.textContent = 'Enter your name.';
-            error.hidden = false;
-          }
-          return;
-        }
         if (!group) {
           if (error) {
             error.textContent = 'Enter your group or organisation name.';

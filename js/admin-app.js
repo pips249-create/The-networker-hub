@@ -33512,6 +33512,7 @@
               esc(formatIntlLeadDate(row.createdAt)) +
               '<div class="text-xs text-slate-500 mt-0.5">' +
               esc(row.startsOn || '') +
+              (row.startsAtLocal ? ' · ' + esc(String(row.startsAtLocal).slice(0, 5)) : '') +
               (row.endsOn && row.endsOn !== row.startsOn ? ' → ' + esc(row.endsOn) : '') +
               '</div></td>' +
               '<td class="py-2.5 pr-3"><div class="font-semibold text-brand-900">' +
@@ -33531,6 +33532,11 @@
                 ? '<div><a class="text-xs text-brand-700 hover:underline" href="' +
                   attrEsc(row.externalUrl) +
                   '" target="_blank" rel="noopener">Link out</a></div>'
+                : '') +
+              (row.imageUrl
+                ? '<div><a class="text-xs text-brand-700 hover:underline" href="' +
+                  attrEsc(row.imageUrl) +
+                  '" target="_blank" rel="noopener">Photo</a></div>'
                 : '') +
               '</td>' +
               '<td class="py-2.5 pr-3">' +
@@ -33855,6 +33861,7 @@
             status: row.status,
             title: row.title,
             startsOn: row.startsOn,
+            startsAtLocal: row.startsAtLocal,
             endsOn: row.endsOn,
             city: row.city,
             countryCode: row.countryCode,
@@ -33862,6 +33869,7 @@
             organiserName: row.organiserName,
             organiserWebsite: row.organiserWebsite,
             externalUrl: row.externalUrl,
+            imageUrl: row.imageUrl,
             contactName: row.contactName,
             email: row.email,
           };
