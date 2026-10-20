@@ -1414,8 +1414,47 @@
     return ' — coming soon';
   }
 
+  function metaForCountryPath(path) {
+    if (!path) return null;
+    var id = path.getAttribute('data-country-id');
+    if (!id) return null;
+    return (
+      state.countries.find(function (country) {
+        return country.numericId === id;
+      }) || null
+    );
+  }
+
+  function countryPathFromPoint(clientX, clientY) {
+    function matchAt(x, y) {
+      var stack = document.elementsFromPoint(x, y) || [];
+      for (var i = 0; i < stack.length; i++) {
+        var node = stack[i];
+        if (node && node.classList && node.classList.contains('intl-country')) {
+          return node;
+        }
+      }
+      return null;
+    }
+
+    var direct = matchAt(clientX, clientY);
+    if (direct) return direct;
+
+    // Soften near-misses (thin islands, automation clicks, arc glow edges).
+    var deltas = [0, -3, 3, -6, 6, -10, 10, -14, 14];
+    for (var yi = 0; yi < deltas.length; yi++) {
+      for (var xi = 0; xi < deltas.length; xi++) {
+        if (!xi && !yi) continue;
+        var hit = matchAt(clientX + deltas[xi], clientY + deltas[yi]);
+        if (hit) return hit;
+      }
+    }
+    return null;
+  }
+
   function bindCountryPath(path, meta) {
     path.setAttribute('data-country-id', meta.numericId);
+    if (meta.iso2) path.setAttribute('data-country-iso2', meta.iso2);
     if (!meta.unavailable) {
       path.setAttribute('tabindex', '0');
       path.setAttribute('role', 'button');
@@ -1444,6 +1483,7 @@
     path.addEventListener('blur', onLeave);
     path.addEventListener('click', function (event) {
       event.preventDefault();
+      event.stopPropagation();
       onCountryActivate(path, meta);
     });
     path.addEventListener('keydown', function (event) {
@@ -1452,6 +1492,20 @@
         event.preventDefault();
         handleCountryAction(meta);
       }
+    });
+  }
+
+  function bindMapClickFallback() {
+    if (!els.svg || els.svg.dataset.intlClickBound === '1') return;
+    els.svg.dataset.intlClickBound = '1';
+    els.svg.addEventListener('click', function (event) {
+      if (event.defaultPrevented) return;
+      var path = countryPathFromPoint(event.clientX, event.clientY);
+      if (!path) return;
+      var meta = metaForCountryPath(path);
+      if (!meta) return;
+      event.preventDefault();
+      onCountryActivate(path, meta);
     });
   }
 
@@ -1602,6 +1656,7 @@
 
     els.svg.appendChild(countriesGroup);
     renderNetworkArcs(projection, features);
+    bindMapClickFallback();
 
     els.loading.hidden = true;
     state.mapReady = true;
