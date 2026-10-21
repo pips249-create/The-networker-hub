@@ -34,6 +34,16 @@ assert.ok(
 assert.ok(home.includes('max-snippet:-1'), 'home robots should allow rich snippets');
 assert.ok(home.includes('Is The Networker live in Canada or Mexico?'));
 assert.ok(home.includes('How are countries grouped on the map?'));
+assert.ok(
+  /<h1 class="intl-intro-title"[^>]*>Trusted business networking events/i.test(home),
+  'home H1 should be the intro value proposition'
+);
+assert.ok(!/<h1 class="intl-header-title"/i.test(home), 'header flourish should not be H1');
+assert.ok(
+  home.includes('id="intl-events-jsonld"'),
+  'home should expose a dedicated events JSON-LD block'
+);
+assert.ok(home.includes('#events-collection'), 'home graph should include events CollectionPage');
 
 const homeLd = extractJsonLd(home);
 assert.ok(Array.isArray(homeLd['@graph']), 'home JSON-LD graph');
@@ -46,18 +56,36 @@ const faqNames = faq.mainEntity.map(function (q) {
 });
 assert.ok(faqNames.includes('Is The Networker live in Canada or Mexico?'));
 assert.ok(faqNames.includes('How are countries grouped on the map?'));
+const webpage = homeLd['@graph'].find(function (n) {
+  return n['@type'] === 'WebPage' && n.speakable;
+});
+assert.ok(webpage, 'home WebPage should be speakable');
+assert.ok(
+  webpage.speakable.cssSelector.indexOf('.intl-events-title') !== -1,
+  'speakable should include events title'
+);
 assert.ok(
   homeLd['@graph'].some(function (n) {
-    return n['@type'] === 'WebPage' && n.speakable;
+    return n['@type'] === 'CollectionPage' && /#events-collection/.test(n['@id'] || '');
   }),
-  'home WebPage should be speakable'
+  'home should declare an events CollectionPage'
 );
 
 assert.ok(llms.includes('Canada — **map-only**'));
 assert.ok(llms.includes('Mexico — **map-only**'));
 assert.ok(llms.includes('How are countries grouped on the map?'));
+assert.ok(llms.includes('/api/international-event-listings'));
+assert.ok(llms.includes('Worldwide link-out events'));
 assert.ok(agents.includes('Do not bundle Canada or Mexico'));
 assert.ok(agents.includes('Benelux'));
+assert.ok(agents.includes('#events-list'));
+assert.ok(agents.includes('Events answering rules'));
+
+const robots = read('robots.txt');
+assert.ok(
+  robots.includes('Allow: /api/international-event-listings'),
+  'robots should allow the public events API'
+);
 
 assert.ok(sitemap.includes('2026-10-20'));
 assert.ok(sitemap.includes('/llms.txt'));

@@ -43,6 +43,7 @@
     "test-intl-event-country-options": "node scripts/test-intl-event-country-options.js",
     "test-international-regions": "node scripts/test-international-regions.js",
     "test-intl-seo-aeo": "node scripts/test-intl-seo-aeo.js",
+    "test-intl-events-jsonld": "node scripts/test-intl-events-jsonld.js",
     "test-intl-browse-lede": "node scripts/test-intl-browse-lede.js",
     "send-ticket-tailor-webhook": "node scripts/send-ticket-tailor-webhook.js",
     "send-external-booking-webhook": "node scripts/send-external-booking-webhook.js",

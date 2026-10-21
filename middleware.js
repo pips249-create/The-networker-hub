@@ -273,6 +273,103 @@ function escapeHtml(text) {
     .replace(/"/g, '&quot;');
 }
 
+/** Compact Event ItemList JSON-LD for International home (Edge-safe, no Node requires). */
+function buildIntlEventsItemListJsonLd(events) {
+  const list = Array.isArray(events) ? events : [];
+  const items = [];
+  for (let i = 0; i < list.length && items.length < 24; i += 1) {
+    const row = list[i] || {};
+    const title = String(row.title || '').trim();
+    const startsOn = String(row.startsOn || '').trim();
+    const externalUrl = String(row.externalUrl || '').trim();
+    if (!title || !/^\d{4}-\d{2}-\d{2}$/.test(startsOn) || !externalUrl) continue;
+    const timeRaw = String(row.startsAtLocal || '').trim();
+    const timeMatch = timeRaw.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+    let startDate = startsOn;
+    if (timeMatch) {
+      const hh = String(Number(timeMatch[1])).padStart(2, '0');
+      const mm = String(Number(timeMatch[2])).padStart(2, '0');
+      const ss = timeMatch[3] != null ? String(Number(timeMatch[3])).padStart(2, '0') : '00';
+      startDate = startsOn + 'T' + hh + ':' + mm + ':' + ss;
+    }
+    const eventNode = {
+      '@type': 'Event',
+      name: title,
+      startDate: startDate,
+      eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+      eventStatus: 'https://schema.org/EventScheduled',
+      url: externalUrl,
+      location: {
+        '@type': 'Place',
+        name: String(row.city || row.countryName || 'Venue TBA'),
+        address: {
+          '@type': 'PostalAddress',
+          addressLocality: String(row.city || ''),
+          addressCountry: String(row.countryCode || ''),
+        },
+      },
+      offers: {
+        '@type': 'Offer',
+        url: externalUrl,
+        availability: 'https://schema.org/InStock',
+      },
+    };
+    if (row.endsOn && String(row.endsOn) !== startsOn) eventNode.endDate = String(row.endsOn);
+    if (row.description) eventNode.description = String(row.description).slice(0, 500);
+    if (row.imageUrl) eventNode.image = [String(row.imageUrl)];
+    if (row.organiserName) {
+      eventNode.organizer = { '@type': 'Organization', name: String(row.organiserName) };
+      if (row.organiserWebsite) eventNode.organizer.url = String(row.organiserWebsite);
+    }
+    items.push({ '@type': 'ListItem', position: items.length + 1, item: eventNode });
+  }
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    '@id': 'https://www.thenetworkerinternational.com/#events-list',
+    name: 'Events around the world',
+    description:
+      'Upcoming moderated link-out business networking events on The Networker International. Book on the organiser’s site.',
+    url: 'https://www.thenetworkerinternational.com/#events',
+    numberOfItems: items.length,
+    itemListElement: items,
+  };
+}
+
+function injectIntlEventsJsonLd(html, events) {
+  const payload = JSON.stringify(buildIntlEventsItemListJsonLd(events));
+  const replaced = String(html || '').replace(
+    /<script type="application\/ld\+json" id="intl-events-jsonld">[\s\S]*?<\/script>/i,
+    '<script type="application/ld+json" id="intl-events-jsonld">' + payload + '</script>'
+  );
+  return replaced;
+}
+
+async function fetchIntlEventsForSeo(origin) {
+  try {
+    const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timer =
+      controller &&
+      setTimeout(function () {
+        try {
+          controller.abort();
+        } catch {
+          /* ignore */
+        }
+      }, 2200);
+    const res = await fetch(new URL('/api/international-event-listings?limit=24', origin).toString(), {
+      headers: { 'x-intl-landing-fetch': '1', Accept: 'application/json' },
+      signal: controller ? controller.signal : undefined,
+    });
+    if (timer) clearTimeout(timer);
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data && Array.isArray(data.events) ? data.events : [];
+  } catch {
+    return [];
+  }
+}
+
 function buildHeadTags(meta) {
   if (!meta) return '';
   let tags = '<!-- hub-seo-injected -->\n';
@@ -1398,7 +1495,10 @@ export default async function middleware(request) {
           headers: { 'x-intl-landing-fetch': '1' },
         });
         if (htmlRes.ok) {
-          return new Response(await htmlRes.text(), {
+          let html = await htmlRes.text();
+          const events = await fetchIntlEventsForSeo(url.origin);
+          if (events.length) html = injectIntlEventsJsonLd(html, events);
+          return new Response(html, {
             status: 200,
             headers: {
               'Content-Type': 'text/html; charset=utf-8',

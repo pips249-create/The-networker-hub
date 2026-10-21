@@ -1008,6 +1008,95 @@
     return escapeHtml(value).replace(/'/g, '&#39;');
   }
 
+  function padEventSchemaTime(raw) {
+    var value = String(raw || '').trim();
+    if (!value) return '';
+    var match = value.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+    if (!match) return '';
+    var hh = String(Number(match[1])).padStart(2, '0');
+    var mm = String(Number(match[2])).padStart(2, '0');
+    var ss = match[3] != null ? String(Number(match[3])).padStart(2, '0') : '00';
+    return hh + ':' + mm + ':' + ss;
+  }
+
+  function toEventSchemaDate(date, time) {
+    var day = String(date || '').trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return '';
+    var clock = padEventSchemaTime(time);
+    return clock ? day + 'T' + clock : day;
+  }
+
+  function buildEventsItemListJsonLd(events) {
+    var list = Array.isArray(events) ? events : [];
+    var items = [];
+    for (var i = 0; i < list.length && items.length < 24; i += 1) {
+      var row = list[i];
+      if (!row || !row.title || !row.startsOn || !row.externalUrl) continue;
+      var startDate = toEventSchemaDate(row.startsOn, row.startsAtLocal);
+      if (!startDate) continue;
+      var eventNode = {
+        '@type': 'Event',
+        name: String(row.title),
+        startDate: startDate,
+        eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+        eventStatus: 'https://schema.org/EventScheduled',
+        url: String(row.externalUrl),
+        location: {
+          '@type': 'Place',
+          name: String(row.city || row.countryName || 'Venue TBA'),
+          address: {
+            '@type': 'PostalAddress',
+            addressLocality: String(row.city || ''),
+            addressCountry: String(row.countryCode || ''),
+          },
+        },
+        offers: {
+          '@type': 'Offer',
+          url: String(row.externalUrl),
+          availability: 'https://schema.org/InStock',
+        },
+      };
+      if (row.endsOn && String(row.endsOn) !== String(row.startsOn)) {
+        eventNode.endDate = toEventSchemaDate(row.endsOn, null) || String(row.endsOn);
+      }
+      if (row.description) eventNode.description = String(row.description).slice(0, 500);
+      if (row.imageUrl) eventNode.image = [String(row.imageUrl)];
+      if (row.organiserName) {
+        eventNode.organizer = {
+          '@type': 'Organization',
+          name: String(row.organiserName),
+        };
+        if (row.organiserWebsite) eventNode.organizer.url = String(row.organiserWebsite);
+      }
+      items.push({
+        '@type': 'ListItem',
+        position: items.length + 1,
+        item: eventNode,
+      });
+    }
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      '@id': 'https://www.thenetworkerinternational.com/#events-list',
+      name: 'Events around the world',
+      description:
+        'Upcoming moderated link-out business networking events on The Networker International. Book on the organiser’s site.',
+      url: 'https://www.thenetworkerinternational.com/#events',
+      numberOfItems: items.length,
+      itemListElement: items,
+    };
+  }
+
+  function updateEventsJsonLd(events) {
+    var el = document.getElementById('intl-events-jsonld');
+    if (!el) return;
+    try {
+      el.textContent = JSON.stringify(buildEventsItemListJsonLd(events));
+    } catch (err) {
+      /* keep existing JSON-LD */
+    }
+  }
+
   function loadEvents() {
     if (!els.eventsStatus || !els.eventsList) return Promise.resolve();
     els.eventsStatus.hidden = false;
@@ -1019,11 +1108,13 @@
       .then(function (data) {
         state.events = data && Array.isArray(data.events) ? data.events : [];
         renderEventsList();
+        updateEventsJsonLd(state.events);
       })
       .catch(function () {
         els.eventsStatus.hidden = false;
         els.eventsStatus.textContent = 'Could not load events right now.';
         els.eventsList.innerHTML = '';
+        updateEventsJsonLd([]);
       });
   }
 

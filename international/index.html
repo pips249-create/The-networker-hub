@@ -95,8 +95,16 @@
       "inLanguage": "en",
       "speakable": {
         "@type": "SpeakableSpecification",
-        "cssSelector": [".intl-intro-title", ".intl-faq-list dt", ".intl-faq-list dd"]
-      }
+        "cssSelector": [
+          ".intl-intro-title",
+          ".intl-intro-copy",
+          ".intl-events-title",
+          ".intl-events-lede",
+          ".intl-faq-list dt",
+          ".intl-faq-list dd"
+        ]
+      },
+      "hasPart": { "@id": "https://www.thenetworkerinternational.com/#events-collection" }
     },
     {
       "@type": "WebSite",
@@ -106,6 +114,16 @@
       "publisher": { "@id": "https://www.thenetworkerinternational.com/#organization" },
       "description": "Country-by-country business networking — live markets, building markets, worldwide link-out events, and interest waitlists.",
       "inLanguage": "en"
+    },
+    {
+      "@type": "CollectionPage",
+      "@id": "https://www.thenetworkerinternational.com/#events-collection",
+      "url": "https://www.thenetworkerinternational.com/#events",
+      "name": "Events around the world",
+      "description": "Moderated worldwide link-out business networking events. Browse on The Networker International, then book on the organiser’s site.",
+      "isPartOf": { "@id": "https://www.thenetworkerinternational.com/#webpage" },
+      "about": { "@id": "https://www.thenetworkerinternational.com/#organization" },
+      "mainEntity": { "@id": "https://www.thenetworkerinternational.com/#events-list" }
     },
     {
       "@type": "ItemList",
@@ -233,11 +251,23 @@
   ]
 }
 </script>
+<script type="application/ld+json" id="intl-events-jsonld">
+{
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  "@id": "https://www.thenetworkerinternational.com/#events-list",
+  "name": "Events around the world",
+  "description": "Upcoming moderated link-out business networking events on The Networker International. Book on the organiser’s site.",
+  "url": "https://www.thenetworkerinternational.com/#events",
+  "numberOfItems": 0,
+  "itemListElement": []
+}
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/hub.css?v=20260831intl30">
-<link rel="stylesheet" href="/css/international-home.css?v=20261021intlcarousel2">
+<link rel="stylesheet" href="/css/international-home.css?v=20261021intlseo1">
 <link rel="icon" href="/favicon.ico?v=20260825intl26" sizes="any">
 <link rel="icon" href="/assets/favicon.svg?v=20260825intl26" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/assets/logo-networker-international.png?v=20260825intl26">
@@ -252,10 +282,10 @@
       <img src="/assets/logo-networker-international.png?v=20260825intl26" width="240" height="52" alt="The Networker International">
     </a>
     <div class="intl-header-tagline">
-      <h1 class="intl-header-title">
+      <p class="intl-header-title">
         <span class="intl-header-title-line">Find your</span>
         <span class="intl-header-title-accent">next&hellip;</span>
-      </h1>
+      </p>
       <p class="intl-header-lede">Choose your country on the map</p>
     </div>
     <div class="intl-header-finder" id="intl-header-finder">
@@ -286,7 +316,7 @@
       </div>
       <aside class="intl-intro-card" aria-labelledby="intl-intro-title">
         <p class="intl-intro-kicker">What is The Networker International?</p>
-        <h2 class="intl-intro-title" id="intl-intro-title">Trusted business networking, country by country.</h2>
+        <h1 class="intl-intro-title" id="intl-intro-title">Trusted business networking events, country by country.</h1>
         <p class="intl-intro-copy">
           Explore live markets, browse worldwide link-out events, or register interest where we haven&rsquo;t launched yet.
         </p>
@@ -417,6 +447,13 @@
           ›
         </button>
       </div>
+      <noscript>
+        <p class="intl-events-lede">
+          JavaScript is required to load the live event list. Approved worldwide link-out networking events appear here —
+          book on the organiser&rsquo;s site. Add yours via the form when scripts are enabled, or email
+          <a href="mailto:hi@thenetworkeruk.com">hi@thenetworkeruk.com</a>.
+        </p>
+      </noscript>
     </div>
   </section>
 
@@ -780,6 +817,6 @@
 
 <script src="/js/hub-compliance-bootstrap.js?v=20260923cmp4" data-root="/"></script>
 <script src="/js/international-region-seed.js?v=20261020intlcanus1" defer></script>
-<script src="/js/international-home.js?v=20261021intlcarousel2" defer></script>
+<script src="/js/international-home.js?v=20261021intlseo1" defer></script>
 </body>
 </html>
