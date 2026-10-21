@@ -2,9 +2,11 @@
 /**
  * Account welcome must not precede confirm-your-email at signup.
  * Register never sends welcome; verify sends it once after a typed code.
+ * Organiser workspace access is also deferred until that typed code succeeds.
  * Self-serve signup clears staff-provisioned verify flags.
- * Pending-claim bootstrap must not mark the email confirmed.
+ * Pending-claim bootstrap must not mark the email confirmed or grant access_at.
  * The confirm page must not auto-submit URL secrets on load.
+ * The organiser auth gate must redirect unverified users to confirm-email.
  */
 const assert = require('assert');
 const fs = require('fs');
@@ -112,8 +114,8 @@ assert.doesNotMatch(
 );
 assert.match(
   claimsSrc,
-  /Do not set organiser_email_verified_at/,
-  'bootstrap should document that inbox confirmation is still required'
+  /Do not set organiser_access_at or organiser_email_verified_at/,
+  'bootstrap should document that inbox confirmation is still required before access'
 );
 
 assert.doesNotMatch(
@@ -144,6 +146,88 @@ assert.ok(
   resolveFn.indexOf('!status.organiserEmailVerified') <
     resolveFn.indexOf('pendingClaimCount'),
   'email confirm check must come before pending-claim redirect'
+);
+
+const autoEnableFn = intentSrc.slice(
+  intentSrc.indexOf('async function maybeAutoEnableOrganiserAccess'),
+  intentSrc.indexOf('async function maybeEnableOrganiserAccessAfterEmailVerify')
+);
+assert.match(
+  autoEnableFn,
+  /pendingVerification:\s*true/,
+  'auto-enable must defer access until email confirm'
+);
+assert.match(
+  autoEnableFn,
+  /setOrganiserAccessPending/,
+  'auto-enable must record pending organiser intent while waiting for confirm'
+);
+assert.ok(
+  autoEnableFn.indexOf('!before.organiserEmailVerified') <
+    autoEnableFn.indexOf('enableOrganiserAccess'),
+  'auto-enable must not call enableOrganiserAccess before email is confirmed'
+);
+
+assert.match(
+  verifySrc,
+  /maybeEnableOrganiserAccessAfterEmailVerify/,
+  'verify route must enable organiser access only after the typed code succeeds'
+);
+assert.ok(
+  verifySrc.indexOf('await maybeEnableOrganiserAccessAfterEmailVerify') <
+    verifySrc.indexOf('await maybeSendDeferredAccountWelcome'),
+  'access enable must run before welcome so both wait on the same confirm'
+);
+
+assert.doesNotMatch(
+  claimsSrc,
+  /organiser_access_at:\s*hub\?\.organiser_access_at\s*\|\|\s*now/,
+  'pending-claim bootstrap must not grant organiser_access_at before confirm'
+);
+
+const authGateSrc = fs.readFileSync(
+  path.join(__dirname, '../js/organiser-auth-gate.js'),
+  'utf8'
+);
+assert.match(
+  authGateSrc,
+  /organiserEmailVerified\s*!==\s*true/,
+  'organiser workspace gate must block unverified users'
+);
+assert.match(
+  authGateSrc,
+  /\/organiser\/verify-email/,
+  'organiser workspace gate must send unverified users to confirm-email'
+);
+
+const provisionSrc = fs.readFileSync(
+  path.join(__dirname, '../api/_lib/supabase-auth.js'),
+  'utf8'
+);
+const provisionStart = provisionSrc.indexOf('async function provisionOrganiserLogin');
+const provisionFn = provisionSrc.slice(
+  provisionStart,
+  provisionSrc.indexOf('async function findOrganiserIdsByEmail', provisionStart)
+);
+assert.doesNotMatch(
+  provisionFn,
+  /organiser_email_verified_at:\s*now/,
+  'provisionOrganiserLogin must not mark the email confirmed without inbox proof'
+);
+
+const enableRouteSrc = fs.readFileSync(
+  path.join(__dirname, '../api/_lib/routes/auth-organiser-access.js'),
+  'utf8'
+);
+assert.match(
+  enableRouteSrc,
+  /Confirm your email to enable organiser access/,
+  'enable-organiser must require confirm before unlocking access'
+);
+assert.ok(
+  enableRouteSrc.indexOf('!before.organiserEmailVerified') <
+    enableRouteSrc.indexOf('await sbAuth.enableOrganiserAccess'),
+  'enable-organiser must not call enableOrganiserAccess before email confirm'
 );
 
 console.log('OK  account welcome deferred until email confirm');

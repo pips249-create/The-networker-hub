@@ -894,14 +894,14 @@ async function transferOrganiserOwnership(body, session) {
     hub_view: 'organiser',
     display_name: String(organiser.name || '').trim() || existingHub?.display_name || null,
   };
+  // Unlock organiser access for the transferred login, but do not mark the
+  // address confirmed — they must enter the inbox code before Welcome / workspace.
   if (createdAuth) {
     hubPatch.emails_enabled = false;
     hubPatch.organiser_access_at = now;
-    hubPatch.organiser_email_verified_at = now;
   } else {
     if (!existingHub) hubPatch.emails_enabled = false;
     if (!existingHub?.organiser_access_at) hubPatch.organiser_access_at = now;
-    if (!existingHub?.organiser_email_verified_at) hubPatch.organiser_email_verified_at = now;
   }
 
   const { error: hubErr } = await sb.from('hub_accounts').upsert(hubPatch, { onConflict: 'user_id' });

@@ -545,7 +545,7 @@
     var registerLede = document.getElementById('register-form-lede');
     if (registerLede) {
       registerLede.textContent =
-        'Step 1 of 2 — create your account to list events and manage your group. We enable organiser access automatically; confirm your email before publishing.';
+        'Step 1 of 2 — create your account to list events and manage your group. Confirm your email next — organiser access unlocks after that.';
     }
 
     var registerProof = document.getElementById('auth-platform-proof');
