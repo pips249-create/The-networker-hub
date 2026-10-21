@@ -2602,6 +2602,90 @@ window.HUB_SEO_DATA = {
           ]
         }
       ]
+    },
+    "guide-connect-own-website": {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebPage",
+          "@id": "https://www.thenetworkeruk.com/guides/connect-own-website#webpage",
+          "url": "https://www.thenetworkeruk.com/guides/connect-own-website",
+          "name": "Connect your own website – How-to guides – The Networker UK",
+          "description": "Keep checkout on your own booking site and sync buyers to The Networker UK attendee list for reviews and round-ups.",
+          "isPartOf": {
+            "@type": "WebSite",
+            "name": "The Networker UK",
+            "url": "https://www.thenetworkeruk.com"
+          }
+        },
+        {
+          "@type": "HowTo",
+          "@id": "https://www.thenetworkeruk.com/guides/connect-own-website#howto",
+          "url": "https://www.thenetworkeruk.com/guides/connect-own-website",
+          "name": "How to connect your own website to The Networker UK",
+          "description": "Keep checkout on your own booking site and sync buyers to The Networker UK attendee list for reviews and round-ups.",
+          "step": [
+            {
+              "@type": "HowToStep",
+              "position": 1,
+              "name": "Enable Your own website on Connected booking",
+              "text": "Open Connected booking, enable Your own website under Booking providers, and copy the token webhook URL.",
+              "url": "https://www.thenetworkeruk.com/guides/connect-own-website#enable-own-website"
+            },
+            {
+              "@type": "HowToStep",
+              "position": 2,
+              "name": "Publish the listing with your booking link",
+              "text": "On Connected setup, choose Your own website, set the display price and checkout URL, publish, and copy the TNH event UUID.",
+              "url": "https://www.thenetworkeruk.com/guides/connect-own-website#publish-listing"
+            },
+            {
+              "@type": "HowToStep",
+              "position": 3,
+              "name": "Send each booking to us",
+              "text": "After each sale, POST JSON with eventId, orderId, and email to your webhook URL. Optional: name, company, jobTitle, quantity, amountPaid, status.",
+              "url": "https://www.thenetworkeruk.com/guides/connect-own-website#send-booking"
+            },
+            {
+              "@type": "HowToStep",
+              "position": 4,
+              "name": "Pick how you send it",
+              "text": "Use your checkout server, Zapier, Make, or any tool that can POST JSON after payment.",
+              "url": "https://www.thenetworkeruk.com/guides/connect-own-website#how-to-send"
+            },
+            {
+              "@type": "HowToStep",
+              "position": 5,
+              "name": "Check it worked",
+              "text": "Recent sync attempts should show own_site:accepted and the buyer should appear on Attendees. Verified reviews follow after the event ends.",
+              "url": "https://www.thenetworkeruk.com/guides/connect-own-website#check-it-worked"
+            }
+          ]
+        },
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://www.thenetworkeruk.com/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Organiser guides",
+              "item": "https://www.thenetworkeruk.com/guides"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "Connect your own website",
+              "item": "https://www.thenetworkeruk.com/guides/connect-own-website"
+            }
+          ]
+        }
+      ]
     }
   }
 };

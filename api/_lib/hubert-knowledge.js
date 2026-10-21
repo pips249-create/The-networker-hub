@@ -114,7 +114,7 @@ const KNOWLEDGE_SECTIONS = [
   {
     title: 'ORGANISER GUIDES',
     body:
-      'Organiser guides live at /guides — getting started with events (/guides/list-an-event, then open /organiser/ for the in-app checklist), claim your organiser page (/guides/claim-your-organiser-page), list a conference or exhibition (/guides/list-a-conference-or-exhibition), export attendees and track visits (/guides/export-attendees-and-visits), connect Eventbrite for Connected booking (/guides/connect-eventbrite), list a business opportunity (/guides/list-a-business-opportunity), invite team members (/guides/invite-your-team). Attendees should use the FAQ or Hubert chat instead.',
+      'Organiser guides live at /guides — getting started with events (/guides/list-an-event, then open /organiser/ for the in-app checklist), claim your organiser page (/guides/claim-your-organiser-page), list a conference or exhibition (/guides/list-a-conference-or-exhibition), export attendees and track visits (/guides/export-attendees-and-visits), connect Eventbrite for Connected booking (/guides/connect-eventbrite), connect your own website booking system (/guides/connect-own-website), list a business opportunity (/guides/list-a-business-opportunity), invite team members (/guides/invite-your-team). Attendees should use the FAQ or Hubert chat instead.',
   },
   {
     title: 'ORGANISER TEAM & EDITORS',

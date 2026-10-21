@@ -239,7 +239,19 @@
     const gate = applySlotGateUi();
     const keyEarly = String(platform || selectedPlatform() || '').trim();
     if (guideNudgeEl) {
-      guideNudgeEl.hidden = keyEarly !== 'eventbrite' || gate === 'needs-assignment' || gate === 'wrong-page';
+      const guideLink = document.getElementById('ee-connected-guide-link');
+      const showGuide = keyEarly === 'eventbrite' || keyEarly === 'own_site';
+      guideNudgeEl.hidden =
+        !showGuide || gate === 'needs-assignment' || gate === 'wrong-page';
+      if (guideLink && showGuide) {
+        if (keyEarly === 'own_site') {
+          guideLink.href = '/guides/connect-own-website';
+          guideLink.textContent = 'Open the own-website setup guide ↗';
+        } else {
+          guideLink.href = '/guides/connect-eventbrite';
+          guideLink.textContent = 'Open the Eventbrite setup guide ↗';
+        }
+      }
     }
     if (gate === 'needs-assignment') {
       accountStatusEl.hidden = false;

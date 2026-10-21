@@ -1420,9 +1420,10 @@
 
   function updateEventbriteGuideCta(platform) {
     var cta = qs('ecs-eventbrite-guide-cta');
-    if (!cta) return;
+    var ownCta = qs('ecs-own-site-guide-cta');
     var key = String(platform || selectedIntegrationPlatform() || '').trim();
-    cta.hidden = key !== 'eventbrite';
+    if (cta) cta.hidden = key !== 'eventbrite';
+    if (ownCta) ownCta.hidden = key !== 'own_site';
   }
 
   function updateOneTimeProviderStatus(platform) {
@@ -1723,6 +1724,9 @@
         escHtml(eventId) +
         '</code></p>' +
         '<pre class="cb-code-block" id="ecs-own-site-sample" aria-label="Example JSON payload"></pre>' +
+        '<p class="ee-attendance-next">' +
+        '<a class="ee-btn ee-btn-outline ee-btn-sm" href="/guides/connect-own-website" target="_blank" rel="noopener noreferrer">Open own-website setup guide ↗</a>' +
+        '</p>' +
         '<p class="ee-hint">More detail: <a href="/organiser/#cb-providers-title">Connected booking → Booking providers</a>.</p>';
       var sampleEl = qs('ecs-own-site-sample');
       if (sampleEl) sampleEl.textContent = ownSiteSampleJson();
@@ -1883,6 +1887,8 @@
         orderId: 'your-booking-ref-123',
         email: 'buyer@example.com',
         name: 'Buyer Name',
+        company: 'Acme Ltd',
+        jobTitle: 'Founder',
         quantity: 1,
         amountPaid: 15,
         status: 'confirmed',

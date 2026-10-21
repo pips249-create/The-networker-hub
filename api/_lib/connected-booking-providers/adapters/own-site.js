@@ -12,6 +12,9 @@ function normalizeOwnSiteWebhook(body) {
 
   const email = normalizeEmail(body.email || body.buyerEmail || body.buyer_email);
   const name = String(body.name || body.buyerName || body.buyer_name || '').trim() || null;
+  const company = String(body.company || body.organisation || body.organization || '').trim() || null;
+  const jobTitle = String(body.jobTitle || body.job_title || body.title || '').trim() || null;
+  const guestNames = body.guestNames || body.guest_names || null;
 
   const quantity = Number(body.quantity ?? body.qty ?? 1);
   const amountPaid = Number(body.amountPaid ?? body.amount_paid ?? body.amount ?? 0);
@@ -37,6 +40,9 @@ function normalizeOwnSiteWebhook(body) {
     orderId: normalizeOrderId('own_site', orderId),
     email,
     name,
+    company,
+    jobTitle,
+    guestNames,
     quantity: Number.isFinite(quantity) ? quantity : 1,
     amountPaid: Number.isFinite(amountPaid) ? amountPaid : 0,
     status,

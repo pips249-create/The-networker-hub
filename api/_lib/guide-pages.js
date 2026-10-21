@@ -129,6 +129,41 @@ const GUIDE_PAGES = {
       },
     ],
   },
+  'connect-own-website': {
+    path: '/guides/connect-own-website',
+    title: 'Connect your own website – How-to guides – The Networker UK',
+    description:
+      'Keep checkout on your own booking site and sync buyers to The Networker UK attendee list for reviews and round-ups.',
+    name: 'Connect your own website',
+    howToName: 'How to connect your own website to The Networker UK',
+    steps: [
+      {
+        id: 'enable-own-website',
+        name: 'Enable Your own website on Connected booking',
+        text: 'Open Connected booking, enable Your own website under Booking providers, and copy the token webhook URL.',
+      },
+      {
+        id: 'publish-listing',
+        name: 'Publish the listing with your booking link',
+        text: 'On Connected setup, choose Your own website, set the display price and checkout URL, publish, and copy the TNH event UUID.',
+      },
+      {
+        id: 'send-booking',
+        name: 'Send each booking to us',
+        text: 'After each sale, POST JSON with eventId, orderId, and email to your webhook URL. Optional: name, company, jobTitle, quantity, amountPaid, status.',
+      },
+      {
+        id: 'how-to-send',
+        name: 'Pick how you send it',
+        text: 'Use your checkout server, Zapier, Make, or any tool that can POST JSON after payment.',
+      },
+      {
+        id: 'check-it-worked',
+        name: 'Check it worked',
+        text: 'Recent sync attempts should show own_site:accepted and the buyer should appear on Attendees. Verified reviews follow after the event ends.',
+      },
+    ],
+  },
 };
 
 const GUIDES_HUB = {
