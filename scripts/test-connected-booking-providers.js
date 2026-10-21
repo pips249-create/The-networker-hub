@@ -326,10 +326,14 @@ const own = normalizeOwnSiteWebhook({
   orderId: 'site-42',
   email: 'own@example.com',
   name: 'Sam',
+  company: 'Acme',
+  jobTitle: 'Founder',
   amountPaid: 10,
 });
 assert.strictEqual(own.tnhEventId, '00000000-0000-4000-8000-000000000001');
 assert.ok(own.orderId.startsWith('own-site-'));
+assert.strictEqual(own.company, 'Acme');
+assert.strictEqual(own.jobTitle, 'Founder');
 
 const {
   mapEventbriteEventToListingPatch,

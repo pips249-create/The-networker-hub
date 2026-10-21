@@ -134,7 +134,9 @@
       var guideBtn =
         p.id === 'eventbrite'
           ? '<a class="ee-btn ee-btn-outline ee-btn-sm" href="/guides/connect-eventbrite" target="_blank" rel="noopener noreferrer">Setup guide</a>'
-          : '';
+          : p.id === 'own_site'
+            ? '<a class="ee-btn ee-btn-outline ee-btn-sm" href="/guides/connect-own-website" target="_blank" rel="noopener noreferrer">Setup guide</a>'
+            : '';
       var copyBtn = p.webhookUrl
         ? '<button type="button" class="ee-btn ee-btn-outline ee-btn-sm" data-copy-provider-webhook="' +
           esc(p.webhookUrl) +

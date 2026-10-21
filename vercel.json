@@ -138,6 +138,7 @@
     { "source": "/guides/claim-your-organiser-page.html", "destination": "/guides/claim-your-organiser-page", "permanent": true },
     { "source": "/guides/export-attendees-and-visits.html", "destination": "/guides/export-attendees-and-visits", "permanent": true },
     { "source": "/guides/connect-eventbrite.html", "destination": "/guides/connect-eventbrite", "permanent": true },
+    { "source": "/guides/connect-own-website.html", "destination": "/guides/connect-own-website", "permanent": true },
     { "source": "/guides/organiser-leavebehind.html", "destination": "/guides/organiser-leavebehind", "permanent": true },
     { "source": "/guides/international-overview.html", "destination": "/guides/international-overview", "permanent": true },
     { "source": "/guides/member-playbooks.html", "destination": "/guides/member-playbooks", "permanent": true },

@@ -22,6 +22,7 @@ const STATIC_PATHS = [
   '/guides/claim-your-organiser-page',
   '/guides/export-attendees-and-visits',
   '/guides/connect-eventbrite',
+  '/guides/connect-own-website',
   '/faq',
   '/help/organiser-payouts',
   '/help/pricing-fees',

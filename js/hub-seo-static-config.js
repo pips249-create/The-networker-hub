@@ -167,5 +167,12 @@ window.HUB_SEO_STATIC = {
     "description": "Link Eventbrite to The Networker UK so ticket sales sync to your attendee list — one-time webhook setup, then link each event.",
     "image": "/assets/logo-networker-uk-og.png?v=20260908og",
     "ogType": "article"
+  },
+  "guide-connect-own-website": {
+    "path": "/guides/connect-own-website",
+    "title": "Connect your own website – How-to guides – The Networker UK",
+    "description": "Keep checkout on your own booking site and sync buyers to The Networker UK attendee list for reviews and round-ups.",
+    "image": "/assets/logo-networker-uk-og.png?v=20260908og",
+    "ogType": "article"
   }
 };

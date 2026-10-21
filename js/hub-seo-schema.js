@@ -49,6 +49,9 @@
     if (/\/guides\/connect-eventbrite(?:\.html)?\/?$/.test(path)) {
       return 'guide-connect-eventbrite';
     }
+    if (/\/guides\/connect-own-website(?:\.html)?\/?$/.test(path)) {
+      return 'guide-connect-own-website';
+    }
     if (/\/faq(?:\.html)?\/?$/.test(path)) return 'faq';
     if (/\/help\/organiser-payouts(?:\.html)?\/?$/.test(path)) return 'help-organiser-payouts';
     if (/\/help\/pricing-fees(?:\.html)?\/?$/.test(path)) return 'help-pricing-fees';

@@ -44,7 +44,8 @@
       placeholder: 'https://yourdomain.com/book/…',
       hint:
         'Paste your checkout URL in the field above. Enable <strong>Your own website</strong> on ' +
-        '<a href="/organiser/#cb-providers-title">Booking providers</a> so each sale POSTs to us — no Zapier required.',
+        '<a href="/organiser/#cb-providers-title">Booking providers</a> so each sale POSTs to us — no Zapier required. ' +
+        '<a href="/guides/connect-own-website" target="_blank" rel="noopener">Step-by-step guide</a>.',
     },
     custom: {
       label: 'Other / Zapier',
