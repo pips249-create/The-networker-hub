@@ -81,6 +81,8 @@ npm run test-external-booking-webhook
 
 **Provider webhooks (your own booking link, Eventbrite, Ticket Tailor, Luma, TryBooking):** see [CONNECTED-BOOKING-PROVIDERS.md](./CONNECTED-BOOKING-PROVIDERS.md) — migrations **299** + **300**, no Zapier required.
 
+**Organiser Eventbrite walkthrough:** [/guides/connect-eventbrite](../guides/connect-eventbrite.html) · internal notes [EVENTBRITE-CONNECTED.md](./EVENTBRITE-CONNECTED.md).
+
 **Pilot / manual webhook test:** see [CONNECTED-BOOKING-PILOT-TEST.md](./CONNECTED-BOOKING-PILOT-TEST.md) (`CONNECTED_BOOKING_PILOT_GRANT_EMAILS`, webhook script).
 
 ## Pilot grant (complimentary Starter)

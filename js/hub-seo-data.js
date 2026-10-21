@@ -2518,6 +2518,90 @@ window.HUB_SEO_DATA = {
           ]
         }
       ]
+    },
+    "guide-connect-eventbrite": {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebPage",
+          "@id": "https://www.thenetworkeruk.com/guides/connect-eventbrite#webpage",
+          "url": "https://www.thenetworkeruk.com/guides/connect-eventbrite",
+          "name": "Connect Eventbrite – How-to guides – The Networker UK",
+          "description": "Link Eventbrite to The Networker UK so ticket sales sync to your attendee list — one-time webhook setup, then link each event.",
+          "isPartOf": {
+            "@type": "WebSite",
+            "name": "The Networker UK",
+            "url": "https://www.thenetworkeruk.com"
+          }
+        },
+        {
+          "@type": "HowTo",
+          "@id": "https://www.thenetworkeruk.com/guides/connect-eventbrite#howto",
+          "url": "https://www.thenetworkeruk.com/guides/connect-eventbrite",
+          "name": "How to connect Eventbrite to The Networker UK",
+          "description": "Link Eventbrite to The Networker UK so ticket sales sync to your attendee list — one-time webhook setup, then link each event.",
+          "step": [
+            {
+              "@type": "HowToStep",
+              "position": 1,
+              "name": "Enable Eventbrite on Connected booking",
+              "text": "Open Connected booking in the organiser dashboard, enable Eventbrite under Booking providers, and copy the webhook URL (keep www in https://www.thenetworkeruk.com/w/eb/…).",
+              "url": "https://www.thenetworkeruk.com/guides/connect-eventbrite#enable-eventbrite"
+            },
+            {
+              "@type": "HowToStep",
+              "position": 2,
+              "name": "Paste the webhook URL into Eventbrite",
+              "text": "In Eventbrite Account settings → Webhooks, paste the Networker UK URL as the Payload URL and set the action to order.placed. Do this once per Eventbrite account.",
+              "url": "https://www.thenetworkeruk.com/guides/connect-eventbrite#paste-webhook"
+            },
+            {
+              "@type": "HowToStep",
+              "position": 3,
+              "name": "Save your Eventbrite private token",
+              "text": "Save the Eventbrite private API token on Connected booking so we can load buyer email and ticket holders after each order.placed ping.",
+              "url": "https://www.thenetworkeruk.com/guides/connect-eventbrite#api-token"
+            },
+            {
+              "@type": "HowToStep",
+              "position": 4,
+              "name": "Link each event",
+              "text": "On Connected setup for the event, choose Eventbrite, add the display price and Eventbrite URL, confirm the numeric event id, save the link, and publish.",
+              "url": "https://www.thenetworkeruk.com/guides/connect-eventbrite#link-event"
+            },
+            {
+              "@type": "HowToStep",
+              "position": 5,
+              "name": "Check it worked",
+              "text": "After a test or real Eventbrite order, Recent sync attempts should show eventbrite:accepted and the buyer should appear on the event Attendees list.",
+              "url": "https://www.thenetworkeruk.com/guides/connect-eventbrite#check-it-worked"
+            }
+          ]
+        },
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://www.thenetworkeruk.com/"
+            },
+            {
+              "@type": "ListItem",
+              "position": 2,
+              "name": "Organiser guides",
+              "item": "https://www.thenetworkeruk.com/guides"
+            },
+            {
+              "@type": "ListItem",
+              "position": 3,
+              "name": "Connect Eventbrite",
+              "item": "https://www.thenetworkeruk.com/guides/connect-eventbrite"
+            }
+          ]
+        }
+      ]
     }
   }
 };
