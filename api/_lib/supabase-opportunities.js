@@ -1836,12 +1836,34 @@ async function handleOpportunityListingCheckout(session) {
     subscriptionId,
     periodEndIso: periodEnd,
   });
+
+  let receiptEmail = { skipped: true, reason: 'not_sent' };
+  try {
+    const { formatGbpFromAmountTotal } = require('./stripe-checkout');
+    const { sendOpportunityListingPaymentReceipt } = require('./opportunity-emails');
+    receiptEmail = await sendOpportunityListingPaymentReceipt(opportunity, {
+      email:
+        session.customer_details?.email ||
+        session.customer_email ||
+        metadata.owner_email ||
+        '',
+      amountPaid: formatGbpFromAmountTotal(session.amount_total),
+      isRenewal: false,
+    });
+  } catch (emailErr) {
+    receiptEmail = {
+      ok: false,
+      error: emailErr && emailErr.message ? emailErr.message : String(emailErr),
+    };
+  }
+
   return {
     ok: true,
     opportunityId,
     listingExpiresAt: opportunity.listingExpiresAt,
     listingMonths: opportunity.listingMonths,
     subscriptionId: subscriptionId || null,
+    receiptEmail,
   };
 }
 

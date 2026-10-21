@@ -263,7 +263,12 @@ async function handleCityPartnerCheckoutCompleted(session) {
     welcomeEmail = { skipped: true, reason: 'already_finalized' };
   } else if (email) {
     try {
-      welcomeEmail = await sendWelcome({ email, cities });
+      const { formatGbpFromAmountTotal } = require('./stripe-checkout');
+      welcomeEmail = await sendWelcome({
+        email,
+        cities,
+        amountPaid: formatGbpFromAmountTotal(session.amount_total),
+      });
     } catch (e) {
       /* Slot reservation succeeds even if welcome email fails */
       welcomeEmail = { ok: false, error: e.message || String(e) };

@@ -173,10 +173,42 @@ async function handleOpportunityListingInvoicePaid(invoice) {
 
   if (!subId) return { skipped: true, reason: 'missing_subscription' };
 
-  const { getStripeClient } = require('./stripe-checkout');
+  const { getStripeClient, formatGbpFromAmountTotal } = require('./stripe-checkout');
   const stripe = getStripeClient();
   const subscription = await stripe.subscriptions.retrieve(subId);
-  return syncListingFromSubscription(subscription, { forceBySubscriptionId: true });
+  const synced = await syncListingFromSubscription(subscription, { forceBySubscriptionId: true });
+
+  // First payment receipt is sent from checkout.session.completed — renewals only here.
+  const reason = String(invoice?.billing_reason || '').trim();
+  let receiptEmail = { skipped: true, reason: 'not_renewal' };
+  if (reason === 'subscription_cycle') {
+    try {
+      const opportunityId = String(
+        meta.opportunity_id || subscription?.metadata?.opportunity_id || ''
+      ).trim();
+      if (opportunityId) {
+        const { getOpportunityById } = require('./supabase-opportunities');
+        const { sendOpportunityListingPaymentReceipt } = require('./opportunity-emails');
+        const opportunity = await getOpportunityById(opportunityId);
+        receiptEmail = await sendOpportunityListingPaymentReceipt(opportunity, {
+          email:
+            invoice.customer_email ||
+            meta.owner_email ||
+            subscription?.metadata?.owner_email ||
+            '',
+          amountPaid: formatGbpFromAmountTotal(invoice.amount_paid),
+          isRenewal: true,
+        });
+      }
+    } catch (emailErr) {
+      receiptEmail = {
+        ok: false,
+        error: emailErr && emailErr.message ? emailErr.message : String(emailErr),
+      };
+    }
+  }
+
+  return { ...synced, receiptEmail };
 }
 
 module.exports = {

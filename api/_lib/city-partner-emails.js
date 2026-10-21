@@ -24,6 +24,10 @@ async function sendCityPartnerPaymentWelcome(opts) {
   const creativeEmail = String(process.env.CITY_PARTNER_CREATIVE_EMAIL || 'rosie@thenetworkeruk.com')
     .trim()
     .toLowerCase();
+  const amountPaid = String(opts?.amountPaid || '').trim();
+  const amountLine = amountPaid
+    ? 'Amount paid: <strong style="color:#1c2040;">' + amountPaid + '</strong>.'
+    : '';
 
   await sendTemplatedEmail({
     slug: 'city_partner_payment_welcome',
@@ -33,8 +37,10 @@ async function sendCityPartnerPaymentWelcome(opts) {
       city_names: cityNames || 'your selected cities',
       advertising_url: siteUrl + '/advertising#city-partner-package',
       creative_email: creativeEmail,
+      amount_paid: amountPaid,
+      amount_line: amountLine,
       monthly_note:
-        'Your subscription renews monthly until cancelled. We publish your logo once creative is approved.',
+        'Your subscription renews monthly until cancelled. We publish your logo once creative is approved. This email is your payment confirmation — keep it for your records.',
       site_url: siteUrl,
     },
   });

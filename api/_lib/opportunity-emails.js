@@ -148,6 +148,51 @@ async function sendOpportunityListingLiveEmail(opportunity) {
   return { sent: true, to };
 }
 
+/**
+ * Payment receipt for opportunity listing checkout / renewals.
+ * Lives in organiser workspace billing (Stripe portal) — not the attendee dashboard.
+ */
+async function sendOpportunityListingPaymentReceipt(opportunity, opts) {
+  const to = String(opts?.email || ownerEmailForOpportunity(opportunity) || '')
+    .trim()
+    .toLowerCase();
+  if (!to) return { skipped: true, reason: 'no_owner_email' };
+
+  const siteUrl = siteBase();
+  const listing = buildOpportunityListingEmailVars(opportunity);
+  const amountPaid = String(opts?.amountPaid || '').trim();
+  const isRenewal = Boolean(opts?.isRenewal);
+  const editUrl =
+    siteUrl +
+    '/organiser/opportunity-edit?id=' +
+    encodeURIComponent(String(opportunity?.id || ''));
+
+  await sendTemplatedEmail({
+    slug: 'opportunity_listing_payment_receipt',
+    to,
+    variables: {
+      owner_name: ownerNameFromOpportunity(opportunity, to),
+      opportunity_title: listing.opportunity_title,
+      amount_paid: amountPaid || 'Paid',
+      receipt_intro: isRenewal
+        ? 'Thanks — your opportunity listing renewal went through.'
+        : 'Thanks — your opportunity listing payment went through.',
+      period_note: listing.listing_until
+        ? 'Your listing is paid until ' +
+          listing.listing_until +
+          '. Manage or cancel from your organiser listing → Manage or cancel subscription.'
+        : 'Manage or cancel anytime from your organiser listing → Manage or cancel subscription.',
+      cta_url: editUrl,
+      cta_label: 'Open listing billing',
+      dashboard_url: organiserBusinessDashboardUrl(siteUrl),
+      site_url: siteUrl,
+    },
+    subject:
+      (isRenewal ? 'Renewal receipt — ' : 'Payment receipt — ') + listing.opportunity_title,
+  });
+  return { sent: true, to, isRenewal };
+}
+
 async function sendOpportunityListingPendingReviewEmail(opportunity) {
   const to = ownerEmailForOpportunity(opportunity);
   if (!to) return { skipped: true, reason: 'no_owner_email' };
@@ -479,6 +524,7 @@ module.exports = {
   ownerEmailForOpportunity,
   buildOpportunityListingEmailVars,
   sendOpportunityListingLiveEmail,
+  sendOpportunityListingPaymentReceipt,
   sendOpportunityListingPendingReviewEmail,
   sendOpportunityListingSubmittedAdminEmail,
   opportunityReviewNotifyInboxes,

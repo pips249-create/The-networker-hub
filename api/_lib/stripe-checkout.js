@@ -107,6 +107,7 @@ async function createPaidCheckoutSession(opts) {
   if (opts.paymentIntentData && typeof opts.paymentIntentData === 'object') {
     sessionParams.payment_intent_data = opts.paymentIntentData;
   }
+  applyCheckoutReceiptEmail(sessionParams, opts.email);
 
   const stripeAccountId = String(opts.stripeAccountId || '').trim();
   if (stripeAccountId) {
@@ -118,6 +119,34 @@ async function createPaidCheckoutSession(opts) {
 
 function siteBaseUrl() {
   return String(process.env.SITE_URL || 'https://the-networker-hub.vercel.app').replace(/\/$/, '');
+}
+
+/**
+ * Ensure Stripe can email a card receipt for one-time Checkout payments.
+ * Setting receipt_email on the PaymentIntent sends a live-mode receipt even when
+ * Dashboard → Customer emails → Successful payments is off.
+ * Subscriptions use Hub receipt emails (invoice emails still need Dashboard settings).
+ */
+function applyCheckoutReceiptEmail(sessionParams, email) {
+  const trimmed = String(email || '').trim().toLowerCase();
+  if (!trimmed || !sessionParams || typeof sessionParams !== 'object') return sessionParams;
+  if (!sessionParams.customer_email) sessionParams.customer_email = trimmed;
+  if (String(sessionParams.mode || '').trim() !== 'payment') return sessionParams;
+  const existing =
+    sessionParams.payment_intent_data && typeof sessionParams.payment_intent_data === 'object'
+      ? sessionParams.payment_intent_data
+      : {};
+  sessionParams.payment_intent_data = {
+    ...existing,
+    receipt_email: trimmed,
+  };
+  return sessionParams;
+}
+
+function formatGbpFromAmountTotal(amountTotal) {
+  const n = Number(amountTotal);
+  if (!Number.isFinite(n) || n < 0) return '';
+  return '£' + (n / 100).toFixed(2).replace(/\.00$/, '');
 }
 
 function lineItemFromCatalog(catalogKey, fallbackPriceData) {
@@ -149,7 +178,7 @@ async function createOpportunityListingCheckoutSession(opts) {
     opts.affiliateCode
   );
 
-  return stripe.checkout.sessions.create({
+  const sessionParams = {
     mode: 'subscription',
     customer_email: opts.email,
     client_reference_id: 'opp-listing-' + opportunityId,
@@ -186,7 +215,9 @@ async function createOpportunityListingCheckoutSession(opts) {
         quantity: 1,
       },
     ],
-  });
+  };
+  applyCheckoutReceiptEmail(sessionParams, opts.email);
+  return stripe.checkout.sessions.create(sessionParams);
 }
 
 /**
@@ -211,7 +242,7 @@ async function createOpportunityPremiumCheckoutSession(opts) {
     opts.affiliateCode
   );
 
-  return stripe.checkout.sessions.create({
+  const sessionParams = {
     mode: 'payment',
     customer_email: opts.email,
     client_reference_id: 'opp-premium-' + opportunityId,
@@ -234,7 +265,9 @@ async function createOpportunityPremiumCheckoutSession(opts) {
         quantity: 1,
       },
     ],
-  });
+  };
+  applyCheckoutReceiptEmail(sessionParams, opts.email);
+  return stripe.checkout.sessions.create(sessionParams);
 }
 
 async function retrieveCheckoutSession(sessionId, options = {}) {
@@ -270,7 +303,7 @@ async function createEventFeaturedCheckoutSession(opts) {
     String(opts.lineItemDescription || '').trim() ||
     'Premium spotlight placement for "' + eventTitle + '"';
 
-  return stripe.checkout.sessions.create({
+  const sessionParams = {
     mode: 'payment',
     customer_email: opts.email,
     client_reference_id: 'event-featured-' + eventId + '-' + planId,
@@ -305,7 +338,9 @@ async function createEventFeaturedCheckoutSession(opts) {
             quantity: 1,
           },
     ],
-  });
+  };
+  applyCheckoutReceiptEmail(sessionParams, opts.email);
+  return stripe.checkout.sessions.create(sessionParams);
 }
 
 /**
@@ -322,7 +357,7 @@ async function createGroupUpdateCreditsCheckoutSession(opts) {
   const groupName = String(opts.groupName || 'Your group').trim() || 'Your group';
   const amountPence = pack.amountPence;
 
-  return stripe.checkout.sessions.create({
+  const sessionParams = {
     mode: 'payment',
     customer_email: opts.email,
     client_reference_id: 'ogu-credits-' + organiserId + '-' + pack.id,
@@ -346,7 +381,9 @@ async function createGroupUpdateCreditsCheckoutSession(opts) {
         unit_amount: amountPence,
       }),
     ],
-  });
+  };
+  applyCheckoutReceiptEmail(sessionParams, opts.email);
+  return stripe.checkout.sessions.create(sessionParams);
 }
 
 /**
@@ -363,7 +400,7 @@ async function createConnectionsCreditsCheckoutSession(opts) {
   const groupName = String(opts.groupName || 'Your group').trim() || 'Your group';
   const amountPence = pack.amountPence;
 
-  return stripe.checkout.sessions.create({
+  const sessionParams = {
     mode: 'payment',
     customer_email: opts.email,
     client_reference_id: 'oec-credits-' + organiserId + '-' + pack.id,
@@ -387,7 +424,9 @@ async function createConnectionsCreditsCheckoutSession(opts) {
         unit_amount: amountPence,
       }),
     ],
-  });
+  };
+  applyCheckoutReceiptEmail(sessionParams, opts.email);
+  return stripe.checkout.sessions.create(sessionParams);
 }
 
 /**
@@ -482,6 +521,7 @@ async function createCityPartnerCheckoutSession(opts) {
     sessionParams.subscription_data = { metadata: metaWithAffiliate };
   }
 
+  applyCheckoutReceiptEmail(sessionParams, opts.email);
   return stripe.checkout.sessions.create(sessionParams);
 }
 
@@ -573,6 +613,7 @@ async function createCountyPartnerCheckoutSession(opts) {
     sessionParams.subscription_data = { metadata: metaWithAffiliate };
   }
 
+  applyCheckoutReceiptEmail(sessionParams, opts.email);
   return stripe.checkout.sessions.create(sessionParams);
 }
 
@@ -801,6 +842,8 @@ module.exports = {
   getStripeSecretKey,
   isStripeCheckoutConfigured,
   getStripeClient,
+  applyCheckoutReceiptEmail,
+  formatGbpFromAmountTotal,
   createPaidCheckoutSession,
   createOpportunityListingCheckoutSession,
   createOpportunityPremiumCheckoutSession,

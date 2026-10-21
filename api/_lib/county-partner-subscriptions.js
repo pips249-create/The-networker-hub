@@ -244,7 +244,12 @@ async function handleCountyPartnerCheckoutCompleted(session) {
     welcomeEmail = { skipped: true, reason: 'already_finalized' };
   } else if (email) {
     try {
-      welcomeEmail = await sendWelcome({ email, counties });
+      const { formatGbpFromAmountTotal } = require('./stripe-checkout');
+      welcomeEmail = await sendWelcome({
+        email,
+        counties,
+        amountPaid: formatGbpFromAmountTotal(session.amount_total),
+      });
     } catch (e) {
       welcomeEmail = { ok: false, error: e.message || String(e) };
     }
