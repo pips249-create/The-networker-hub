@@ -208,6 +208,12 @@
       'PE30', 'PE31', 'PE32', 'PE33', 'PE34', 'PE35', 'PE36', 'PE37', 'PE38',
       'IP22',
     ],
+    suffolk: [
+      'IP1', 'IP2', 'IP3', 'IP4', 'IP5', 'IP6', 'IP7', 'IP8', 'IP9', 'IP10',
+      'IP11', 'IP12', 'IP13', 'IP14', 'IP15', 'IP16', 'IP17', 'IP18', 'IP19', 'IP20',
+      'IP21', 'IP23', 'IP27', 'IP28', 'IP29', 'IP30', 'IP31', 'IP32', 'IP33',
+      'NR32', 'NR33', 'NR34', 'NR35',
+    ],
     staffordshire: [
       'ST1', 'ST2', 'ST3', 'ST4', 'ST5', 'ST6', 'ST7', 'ST8', 'ST9', 'ST10',
       'ST11', 'ST12', 'ST13', 'ST14', 'ST15', 'ST16', 'ST17', 'ST18', 'ST19', 'ST20',
@@ -269,6 +275,7 @@
     devon: true,
     dorset: true,
     norfolk: true,
+    suffolk: true,
     staffordshire: true,
     warwickshire: true,
     yorkshire: true,
@@ -395,6 +402,7 @@
     devon: 'devon',
     dorset: 'dorset',
     norfolk: 'norfolk',
+    suffolk: 'suffolk',
     staffordshire: 'staffordshire',
     staffs: 'staffordshire',
     warwickshire: 'warwickshire',

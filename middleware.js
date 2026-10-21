@@ -553,6 +553,10 @@ const NETWORKING_REGION_THEMES = {
     "tagline": "From Norwich and King’s Lynn to the coast and business communities across Norfolk.",
     "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M16 82h208\" opacity=\".35\"/><path d=\"M24 82V48h192v34\"/><path d=\"M88 48V28h64v20\" stroke-width=\"2\"/><path d=\"M88 28L120 0l32 28\" stroke-width=\"2\"/><path d=\"M120 0V-6\"/><path d=\"M24 48l28-14M216 48l-28-14\" opacity=\".55\"/><path d=\"M40 62h16M108 32h24v12M184 62h16\" opacity=\".45\"/></svg>"
   },
+  "suffolk": {
+    "tagline": "From Ipswich and Bury St Edmunds to Lowestoft and business communities across Suffolk.",
+    "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M20 82h200\" opacity=\".35\"/><path d=\"M104 82V24h32v58\" stroke-width=\"2\"/><path d=\"M100 24h40l-8-14h-24z\"/><path d=\"M112 10h16V2h-16z\"/><path d=\"M120 2V-4\"/><circle cx=\"120\" cy=\"8\" r=\"4\"/><path d=\"M104 40h32M104 56h32M104 70h32\" opacity=\".4\"/><path d=\"M40 74c20-10 40-14 80-14s60 4 80 14\" opacity=\".45\"/></svg>"
+  },
   "staffordshire": {
     "tagline": "From Stoke and Stafford to Lichfield and business communities across Staffordshire.",
     "landmark": "<svg class=\"networking-region-landmark-svg\" viewBox=\"0 0 240 90\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.8\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M16 82h208\" opacity=\".35\"/><path d=\"M24 82V48h192v34\"/><path d=\"M40 48L64 8l24 40\"/><path d=\"M88 48L120 0l32 48\" stroke-width=\"2\"/><path d=\"M152 48l24-40 24 40\"/><path d=\"M64 8V0M120 0v-6M176 8V0\"/><path d=\"M56 62h16M112 62h16M168 62h16\" opacity=\".45\"/></svg>"

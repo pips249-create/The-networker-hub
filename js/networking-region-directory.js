@@ -44,6 +44,7 @@
     devon: { name: 'Devon', location: 'Devon', areaType: 'county' },
     dorset: { name: 'Dorset', location: 'Dorset', areaType: 'county' },
     norfolk: { name: 'Norfolk', location: 'Norfolk', areaType: 'county' },
+    suffolk: { name: 'Suffolk', location: 'Suffolk', areaType: 'county' },
     staffordshire: { name: 'Staffordshire', location: 'Staffordshire', areaType: 'county' },
     warwickshire: { name: 'Warwickshire', location: 'Warwickshire', areaType: 'county' },
     yorkshire: { name: 'Yorkshire', location: 'Yorkshire', areaType: 'county' },

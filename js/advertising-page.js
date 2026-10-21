@@ -557,6 +557,7 @@
     { slug: 'oxfordshire', name: 'Oxfordshire' },
     { slug: 'shropshire', name: 'Shropshire' },
     { slug: 'staffordshire', name: 'Staffordshire' },
+    { slug: 'suffolk', name: 'Suffolk' },
     { slug: 'surrey', name: 'Surrey' },
     { slug: 'sussex', name: 'Sussex' },
     { slug: 'warwickshire', name: 'Warwickshire' },

@@ -173,6 +173,7 @@
       'oxfordshire',
       'shropshire',
       'staffordshire',
+      'suffolk',
       'surrey',
       'sussex',
       'warwickshire',
