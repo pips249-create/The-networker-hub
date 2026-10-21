@@ -43,6 +43,7 @@
   let providerLinks = [];
   let providersLoadPromise = null;
   const accountStatusEl = document.getElementById('ee-connected-account-status');
+  const guideNudgeEl = document.getElementById('ee-connected-guide-nudge');
 
   function cacheSetupPrefetch() {
     const eid = resolveEventId();
@@ -236,6 +237,10 @@
   function refreshAccountConnectionStatus(platform) {
     if (!accountStatusEl) return;
     const gate = applySlotGateUi();
+    const keyEarly = String(platform || selectedPlatform() || '').trim();
+    if (guideNudgeEl) {
+      guideNudgeEl.hidden = keyEarly !== 'eventbrite' || gate === 'needs-assignment' || gate === 'wrong-page';
+    }
     if (gate === 'needs-assignment') {
       accountStatusEl.hidden = false;
       accountStatusEl.className = 'ee-hint ee-alert-warn';
@@ -250,7 +255,7 @@
         'This event is on a different organiser page from the one on your Connected plan. With one page assigned, only that page’s events can use Eventbrite or Ticket Tailor. Use Assign organiser pages to switch, or upgrade if you need more than one.';
       return;
     }
-    const key = String(platform || selectedPlatform() || '').trim();
+    const key = keyEarly;
     if (!key || key === 'custom') {
       accountStatusEl.hidden = true;
       accountStatusEl.textContent = '';

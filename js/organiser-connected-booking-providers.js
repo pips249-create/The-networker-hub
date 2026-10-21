@@ -125,22 +125,32 @@
       if (p.id === 'custom') return;
       var li = document.createElement('li');
       li.className = 'cb-providers-list-item';
-      var actions =
+      var enableBtn =
         p.connectionStatus === 'not_configured'
           ? '<button type="button" class="ee-btn ee-btn-outline ee-btn-sm" data-enable-provider="' +
             esc(p.id) +
             '">Enable</button>'
           : '';
-      var urlBlock = p.webhookUrl
+      var guideBtn =
+        p.id === 'eventbrite'
+          ? '<a class="ee-btn ee-btn-outline ee-btn-sm" href="/guides/connect-eventbrite" target="_blank" rel="noopener noreferrer">Setup guide</a>'
+          : '';
+      var copyBtn = p.webhookUrl
+        ? '<button type="button" class="ee-btn ee-btn-outline ee-btn-sm" data-copy-provider-webhook="' +
+          esc(p.webhookUrl) +
+          '">Copy webhook URL</button>'
+        : '';
+      var webhookBlock = p.webhookUrl
         ? '<p class="ee-hint cb-provider-webhook"><strong>Webhook URL</strong> (paste in ' +
           esc(p.label) +
           '):<br /><code class="cb-provider-webhook-url">' +
           esc(p.webhookUrl) +
-          '</code></p>' +
-          '<p class="ee-attendance-next"><button type="button" class="ee-btn ee-btn-outline ee-btn-sm" data-copy-provider-webhook="' +
-          esc(p.webhookUrl) +
-          '">Copy webhook URL</button></p>'
+          '</code></p>'
         : '<p class="ee-hint">Click Enable to generate your webhook URL.</p>';
+      var actionBits = [copyBtn, enableBtn, guideBtn].filter(Boolean).join(' ');
+      var actionsRow = actionBits
+        ? '<p class="ee-attendance-next">' + actionBits + '</p>'
+        : '';
       li.innerHTML =
         '<div class="cb-provider-card">' +
         '<p class="cb-provider-name"><strong>' +
@@ -151,8 +161,8 @@
         '<p class="ee-hint">' +
         esc(p.docsHint) +
         '</p>' +
-        urlBlock +
-        actions +
+        webhookBlock +
+        actionsRow +
         '</div>';
       list.appendChild(li);
     });
