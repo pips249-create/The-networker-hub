@@ -301,6 +301,33 @@
     }
   }
 
+  function showComingSoonPanel(show) {
+    var panel = document.getElementById('cb-coming-soon-panel');
+    if (panel) panel.hidden = !show;
+  }
+
+  function applyComingSoonMode() {
+    var linkOutPanel = document.getElementById('cb-link-out-panel');
+    var connectedOnly = document.getElementById('cb-connected-only');
+    var gotoPricing = document.getElementById('cb-goto-pricing');
+    var titleEl = document.getElementById('cb-page-title');
+    var leadEl = document.getElementById('cb-page-lead');
+    setConnectedNavVisible(true);
+    showComingSoonPanel(true);
+    if (linkOutPanel) linkOutPanel.hidden = true;
+    if (connectedOnly) connectedOnly.hidden = true;
+    if (gotoPricing) gotoPricing.hidden = true;
+    if (titleEl) titleEl.textContent = 'Connected booking';
+    if (leadEl) {
+      leadEl.textContent =
+        'Keep checkout on Eventbrite, Ticket Tailor, or your own website — and sync buyers to your Networker UK attendee list for reviews and round-ups.';
+    }
+    if (adminPanel) adminPanel.hidden = true;
+    var providersPanel = document.getElementById('cb-providers-panel');
+    if (providersPanel) providersPanel.hidden = true;
+    return 'coming_soon';
+  }
+
   function applyWorkspaceMode(data) {
     var linkOutPanel = document.getElementById('cb-link-out-panel');
     var connectedOnly = document.getElementById('cb-connected-only');
@@ -311,11 +338,12 @@
     if (!mode) {
       if (data && data.linkOutGranted && !data.active) mode = 'link_out';
       else if (data && data.ok) mode = 'connected';
-      else mode = 'hidden';
+      else mode = 'coming_soon';
     }
 
     if (mode === 'link_out') {
       setConnectedNavVisible(true);
+      showComingSoonPanel(false);
       if (titleEl) titleEl.textContent = 'Link Out';
       if (leadEl) {
         leadEl.innerHTML =
@@ -329,10 +357,11 @@
 
     if (mode === 'connected' && data && data.ok) {
       setConnectedNavVisible(true);
+      showComingSoonPanel(false);
       if (titleEl) titleEl.textContent = 'Connected booking';
       if (leadEl) {
         leadEl.innerHTML =
-          'Subscribe here, enable <strong>Eventbrite</strong> or <strong>Ticket Tailor</strong> once per account, then link each event on <strong>Connected setup</strong>. Use <strong>Recent sync attempts</strong> when buyers do not appear on your attendee list.';
+          'Subscribe here, enable <strong>Eventbrite</strong>, <strong>Ticket Tailor</strong>, or <strong>your own website</strong> once per account, then link each event on <strong>Connected setup</strong>. Use <strong>Recent sync attempts</strong> when buyers do not appear on your attendee list.';
       }
       if (linkOutPanel) linkOutPanel.hidden = true;
       if (connectedOnly) connectedOnly.hidden = false;
@@ -340,12 +369,7 @@
       return mode;
     }
 
-    setConnectedNavVisible(false);
-    if (linkOutPanel) linkOutPanel.hidden = true;
-    if (connectedOnly) connectedOnly.hidden = true;
-    if (gotoPricing) gotoPricing.hidden = true;
-    if (titleEl) titleEl.textContent = 'Connected booking';
-    return 'hidden';
+    return applyComingSoonMode();
   }
 
   function handleConnectedApi(res) {
@@ -353,26 +377,20 @@
 
     if (res.status === 503 && data.error === 'connected_booking_schema_missing') {
       setAuthStatus(data.message || 'Database migration required (292).', 'error');
-      applyWorkspaceMode({ ok: false });
+      applyComingSoonMode();
       applyBillingUi({ ok: false });
       return;
     }
 
     if (res.status === 403 && data.error === 'preview_restricted') {
-      applyWorkspaceMode({ ok: false, uiMode: 'hidden' });
-      setAuthStatus(
-        'Connected booking is not available on this account yet.',
-        'error'
-      );
+      applyComingSoonMode();
+      setAuthStatus('');
       applyBillingUi({ ok: false });
-      if (workspaceConnectedPage && location.hash.indexOf('connected-booking') !== -1) {
-        location.hash = 'events-list';
-      }
       return;
     }
 
     if (res.status === 401) {
-      applyWorkspaceMode({ ok: false });
+      applyComingSoonMode();
       setAuthStatus('Session expired — sign in again to subscribe or manage your webhook.', 'error');
       if (signinHint) signinHint.hidden = false;
       applyBillingUi({ ok: false });
@@ -380,7 +398,7 @@
     }
 
     if (!data.ok && data.error === 'organiser_account_not_found') {
-      applyWorkspaceMode({ ok: false });
+      applyComingSoonMode();
       setAuthStatus(
         data.message ||
           'No organiser account for this login. Open My Events first, then return here.',
@@ -391,19 +409,16 @@
     }
 
     if (!data.ok) {
-      applyWorkspaceMode({ ok: false });
+      applyComingSoonMode();
       setAuthStatus(friendlyApiError(data), 'error');
       applyBillingUi({ ok: false });
       return;
     }
 
     var mode = applyWorkspaceMode(data);
-    if (mode === 'hidden') {
-      setAuthStatus('Connected booking is not available on this account yet.', 'error');
+    if (mode === 'coming_soon' || mode === 'hidden') {
+      setAuthStatus('');
       applyBillingUi({ ok: false });
-      if (workspaceConnectedPage && location.hash.indexOf('connected-booking') !== -1) {
-        location.hash = 'events-list';
-      }
       return;
     }
     if (mode === 'link_out') {
@@ -523,8 +538,9 @@
       })
       .then(function (sessionData) {
         if (!sessionData || !sessionData.ok || !sessionData.user) {
+          applyComingSoonMode();
           if (!opts.silent) {
-            setAuthStatus('Sign in with your organiser account to subscribe and manage webhooks.', 'error');
+            setAuthStatus('');
             if (signinHint) signinHint.hidden = false;
           }
           applyBillingUi({ ok: false });
@@ -545,6 +561,7 @@
           });
       })
       .catch(function () {
+        applyComingSoonMode();
         if (!opts.silent) {
           setAuthStatus('Could not verify your session. Refresh the page or sign in again.', 'error');
           if (signinHint) signinHint.hidden = false;
