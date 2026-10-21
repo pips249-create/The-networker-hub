@@ -230,4 +230,72 @@ assert.ok(
   'enable-organiser must not call enableOrganiserAccess before email confirm'
 );
 
+assert.match(
+  resolveFn,
+  /return\s*['"]\/welcome['"]/,
+  'attendee-only accounts must continue to /welcome after confirm'
+);
+
+const attendeeGateSrc = fs.readFileSync(
+  path.join(__dirname, '../js/attendee-auth-gate.js'),
+  'utf8'
+);
+assert.match(
+  attendeeGateSrc,
+  /organiserEmailVerified\s*!==\s*true/,
+  'attendee My account gate must block unverified users'
+);
+assert.match(
+  attendeeGateSrc,
+  /\/organiser\/verify-email/,
+  'attendee My account gate must send unverified users to confirm-email'
+);
+
+const welcomeSrc = fs.readFileSync(path.join(__dirname, '../js/welcome.js'), 'utf8');
+assert.match(
+  welcomeSrc,
+  /organiserEmailVerified\s*!==\s*true/,
+  'welcome onboarding must require email confirm'
+);
+
+const settingsSrc = fs.readFileSync(
+  path.join(__dirname, '../js/account-settings.js'),
+  'utf8'
+);
+assert.match(
+  settingsSrc,
+  /organiserEmailVerified\s*!==\s*true/,
+  'account settings must require email confirm'
+);
+
+const loginSrc = fs.readFileSync(
+  path.join(__dirname, '../api/_lib/routes/auth-login.js'),
+  'utf8'
+);
+assert.match(
+  loginSrc,
+  /buildEmailVerifyRedirect/,
+  'login must send unverified accounts to confirm-email'
+);
+
+const attendeeDashSrc = fs.readFileSync(
+  path.join(__dirname, '../api/_lib/routes/auth-attendee-dashboard.js'),
+  'utf8'
+);
+assert.match(
+  attendeeDashSrc,
+  /assertEmailVerified/,
+  'attendee dashboard API must require email confirm'
+);
+
+const accessGuardSrc = fs.readFileSync(
+  path.join(__dirname, '../api/_lib/organiser-access-guard.js'),
+  'utf8'
+);
+assert.match(
+  accessGuardSrc,
+  /async function assertEmailVerified/,
+  'shared assertEmailVerified helper must exist for all account types'
+);
+
 console.log('OK  account welcome deferred until email confirm');

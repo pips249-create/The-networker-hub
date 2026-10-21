@@ -55,7 +55,20 @@
   window.__hubAttendeeAuthPromise = fetchSession()
     .then(function (data) {
       window.__hubAttendeeAuth = data || { ok: false };
-      if (!data || !data.ok || !data.user) showSignedOut();
+      if (!data || !data.ok || !data.user) {
+        showSignedOut();
+        return window.__hubAttendeeAuth;
+      }
+      // Every account must confirm inbox access before My account.
+      if (data.user.role !== 'admin' && data.organiserEmailVerified !== true) {
+        var verifyNext =
+          window.location.pathname + window.location.search + window.location.hash;
+        if (!verifyNext || verifyNext.charAt(0) !== '/') verifyNext = '/account/';
+        window.location.replace(
+          '/organiser/verify-email?next=' + encodeURIComponent(verifyNext)
+        );
+        return window.__hubAttendeeAuth;
+      }
       return window.__hubAttendeeAuth;
     })
     .catch(function () {

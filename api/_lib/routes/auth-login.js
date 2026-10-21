@@ -20,7 +20,9 @@ const {
   isOrganiserAuthIntent,
   maybeAutoEnableOrganiserAccess,
   redirectAfterOrganiserAuth,
+  buildEmailVerifyRedirect,
 } = require('../organiser-auth-intent');
+const { getOrganiserAccessStatus } = require('../organiser-access-guard');
 const { touchLastSeen } = require('../hub-last-seen');
 
 const LOGIN_FAIL_MAX = 8;
@@ -208,6 +210,33 @@ module.exports = async function handler(req, res) {
       autoResult: autoEnable,
       defaultRedirect: redirect,
     });
+
+    // Every account must confirm inbox access before My account / workspace.
+    if (!isAdminRole(role)) {
+      try {
+        const accessStatus = await getOrganiserAccessStatus(sessionUser);
+        if (!accessStatus.organiserEmailVerified) {
+          let nextAfterConfirm = redirect;
+          if (String(nextAfterConfirm || '').indexOf('/organiser/verify-email') === 0) {
+            nextAfterConfirm = body.next || (isOrganiserAuthIntent({
+              next: body.next,
+              intent: body.intent,
+            })
+              ? '/organiser/'
+              : '/welcome');
+          }
+          redirect = buildEmailVerifyRedirect({
+            next: nextAfterConfirm,
+            email: sessionUser.email,
+          });
+        }
+      } catch {
+        redirect = buildEmailVerifyRedirect({
+          next: body.next || '/welcome',
+          email: sessionUser.email,
+        });
+      }
+    }
 
     return json(res, 200, {
       ok: true,

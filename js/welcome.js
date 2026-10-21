@@ -156,6 +156,13 @@
         window.location.href = '/register';
         return null;
       }
+      // Welcome onboarding is account access — confirm email first.
+      if (data.user.role !== 'admin' && data.organiserEmailVerified !== true) {
+        window.location.replace(
+          '/organiser/verify-email?next=' + encodeURIComponent('/welcome')
+        );
+        return null;
+      }
       if (isWelcomeDone()) {
         window.location.href = '/events/';
         return null;

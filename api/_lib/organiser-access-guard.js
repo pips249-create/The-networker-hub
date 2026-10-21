@@ -110,20 +110,36 @@ async function assertOrganiserAccess(session) {
   );
 }
 
+/** Every hub account (attendee or organiser) must confirm inbox access. */
+async function assertEmailVerified(session) {
+  if (isAdminRole(session?.role)) return { ok: true };
+
+  const hub = await getHubAccount(session?.sub);
+  if (isOrganiserEmailVerified(hub)) return { ok: true };
+
+  return guardError(
+    403,
+    'email_not_verified',
+    'Confirm your email address before continuing. Check your inbox for a 6-digit code.'
+  );
+}
+
 async function assertOrganiserEmailVerified(session) {
   if (isAdminRole(session?.role)) return { ok: true };
 
   const access = await assertOrganiserAccess(session);
   if (!access.ok) return access;
 
-  const hub = await getHubAccount(session.sub);
-  if (isOrganiserEmailVerified(hub)) return { ok: true };
+  const verified = await assertEmailVerified(session);
+  if (!verified.ok) {
+    return guardError(
+      403,
+      'organiser_email_not_verified',
+      'Confirm your email address before publishing events, viewing attendees, receiving payouts, or claiming an organiser page.'
+    );
+  }
 
-  return guardError(
-    403,
-    'organiser_email_not_verified',
-    'Confirm your email address before publishing events, viewing attendees, receiving payouts, or claiming an organiser page.'
-  );
+  return { ok: true };
 }
 
 function isPublishIntent(body) {
@@ -138,6 +154,7 @@ function isPublishIntent(body) {
 module.exports = {
   getOrganiserAccessStatus,
   assertOrganiserAccess,
+  assertEmailVerified,
   assertOrganiserEmailVerified,
   isPublishIntent,
   countPendingClaimGroups,

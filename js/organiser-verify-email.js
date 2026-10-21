@@ -63,7 +63,9 @@
       continueBtn.href = nextHref;
       if (goingToPayments) {
         continueBtn.textContent = 'Continue to bank details →';
-      } else if (!goingToOrganiser) {
+      } else if (goingToOrganiser) {
+        continueBtn.textContent = 'Continue to organiser workspace →';
+      } else {
         continueBtn.textContent = 'Continue →';
       }
     }
