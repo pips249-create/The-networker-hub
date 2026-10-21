@@ -180,12 +180,17 @@ const BRANDED_EMAIL_TEMPLATES = {
   city_partner_payment_welcome: {
     file: 'city-partner-payment-welcome.html',
     marker: 'hub-email-layout-v3-purple',
-    subject: 'City Partner confirmed — send your logo & link',
+    subject: 'City Partner payment receipt — send your logo & link',
   },
   county_partner_payment_welcome: {
     file: 'county-partner-payment-welcome.html',
     marker: 'hub-email-layout-v3-purple',
-    subject: 'County Sponsor confirmed — send your logo & link',
+    subject: 'County Sponsor payment receipt — send your logo & link',
+  },
+  opportunity_listing_payment_receipt: {
+    file: 'opportunity-listing-payment-receipt.html',
+    marker: 'hub-email-layout-v3-navy-gold',
+    subject: 'Payment receipt — {{opportunity_title}}',
   },
   city_partner_slot_open: {
     file: 'city-partner-slot-open.html',

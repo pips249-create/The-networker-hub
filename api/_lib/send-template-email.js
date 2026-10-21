@@ -159,6 +159,7 @@ const TRANSACTIONAL_EMAIL_SLUGS = new Set([
   'opportunity_listing_approved_pay',
   'opportunity_listing_approved_pay_reminder',
   'opportunity_listing_expiry_reminder',
+  'opportunity_listing_payment_receipt',
   'opportunity_premium_expiry_reminder',
   'opportunity_premium_live',
   'opportunity_enquiry_received',
@@ -168,6 +169,8 @@ const TRANSACTIONAL_EMAIL_SLUGS = new Set([
   'opportunity_listing_expired',
   'opportunity_premium_expired',
   'opportunity_listing_rejected',
+  'city_partner_payment_welcome',
+  'county_partner_payment_welcome',
   'payout_requested',
   'payout_approved',
   'payout_paid',
@@ -759,7 +762,11 @@ function shouldSkipEmailAllowlist(slug) {
     slug === 'franchise_claim_invite_followup' ||
     slug === 'distributorship_claim_invite' ||
     slug === 'organiser_claim_confirmed' ||
-    slug === 'partner_programme_invite'
+    slug === 'partner_programme_invite' ||
+    slug === 'city_partner_payment_welcome' ||
+    slug === 'county_partner_payment_welcome' ||
+    slug === 'opportunity_listing_payment_receipt' ||
+    slug === 'member_roster_renewal_receipt'
   ) {
     return true;
   }

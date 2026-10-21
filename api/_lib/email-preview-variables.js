@@ -617,9 +617,13 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     vars.available_from_note = vars.available_from_note || ' — checkout is open now';
     vars.advertising_url = vars.advertising_url || site + '/advertising#city-partner-package';
     vars.creative_email = vars.creative_email || supportEmail();
+    vars.amount_paid = vars.amount_paid || '£149';
+    vars.amount_line =
+      vars.amount_line ||
+      'Amount paid: <strong style="color:#1c2040;">' + vars.amount_paid + '</strong>.';
     vars.monthly_note =
       vars.monthly_note ||
-      'Your subscription renews monthly until cancelled. We publish your logo once creative is approved.';
+      'Your subscription renews monthly until cancelled. We publish your logo once creative is approved. This email is your payment confirmation — keep it for your records.';
   }
 
   if (slug === 'county_partner_payment_welcome') {
@@ -627,9 +631,26 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
     vars.county_names = vars.county_names || 'Cheshire';
     vars.advertising_url = vars.advertising_url || site + '/advertising#county-partner-package';
     vars.creative_email = vars.creative_email || supportEmail();
+    vars.amount_paid = vars.amount_paid || '£299';
+    vars.amount_line =
+      vars.amount_line ||
+      'Amount paid: <strong style="color:#1c2040;">' + vars.amount_paid + '</strong>.';
     vars.monthly_note =
       vars.monthly_note ||
-      'Your subscription renews monthly until cancelled. We publish your logo once creative is approved.';
+      'Your subscription renews monthly until cancelled. We publish your logo once creative is approved. This email is your payment confirmation — keep it for your records.';
+  }
+
+  if (slug === 'opportunity_listing_payment_receipt') {
+    vars.owner_name = vars.owner_name || 'Alex';
+    vars.opportunity_title = vars.opportunity_title || 'Regional franchise opportunity';
+    vars.amount_paid = vars.amount_paid || '£30';
+    vars.receipt_intro =
+      vars.receipt_intro || 'Thanks — your opportunity listing payment went through.';
+    vars.period_note =
+      vars.period_note ||
+      'Manage or cancel anytime from your organiser listing → Manage or cancel subscription.';
+    vars.cta_url = vars.cta_url || site + '/organiser/#business-overview';
+    vars.cta_label = vars.cta_label || 'Open listing billing';
   }
 
   if (slug === 'event_details_updated') {
