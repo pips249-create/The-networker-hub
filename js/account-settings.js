@@ -869,6 +869,12 @@
       if (main) main.hidden = true;
       return;
     }
+    if (sessionData.user.role !== 'admin' && sessionData.organiserEmailVerified !== true) {
+      window.location.replace(
+        '/organiser/verify-email?next=' + encodeURIComponent('/account/settings')
+      );
+      return;
+    }
     if (signin) signin.hidden = true;
     if (main) main.hidden = false;
     renderOrganiserWorkspace(sessionData);

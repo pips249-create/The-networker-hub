@@ -84,7 +84,7 @@ module.exports = async function handler(req, res) {
       organiserEmailVerifiedAt: result.organiser_email_verified_at,
       ...status,
       redirect,
-      message: 'Email confirmed. You can now publish events and manage attendees.',
+      message: 'Email confirmed. Your account is ready.',
     });
   } catch (e) {
     const code = e.message === 'token_expired' ? 'token_expired' : 'invalid_token';

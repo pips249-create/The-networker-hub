@@ -95,7 +95,17 @@ async function resolveOrganiserRedirect(session) {
   if (status.pendingClaimCount > 0) {
     return '/organiser/?onboard=claim';
   }
-  return '/organiser/';
+  const pendingIntent = await hasOrganiserAccessPending(session.sub).catch(() => false);
+  if (
+    pendingIntent ||
+    status.organiserAccess ||
+    status.organiserProfiles > 0 ||
+    status.ownedOpportunityCount > 0
+  ) {
+    return '/organiser/';
+  }
+  // Attendee-only accounts continue to the welcome onboarding after confirm.
+  return '/welcome';
 }
 
 async function maybeAutoEnableOrganiserAccess(session, res, options = {}) {

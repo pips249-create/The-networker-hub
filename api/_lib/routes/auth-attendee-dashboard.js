@@ -3,6 +3,7 @@ const { buildStats } = require('../attendee');
 const { getAttendeeDashboardFromSupabase } = require('../supabase-attendee-dashboard');
 const { isSupabaseConfigured, useSupabase } = require('../supabase');
 const sbAuth = require('../supabase-auth');
+const { assertEmailVerified } = require('../organiser-access-guard');
 
 module.exports = async function handler(req, res) {
   setCors(req, res);
@@ -20,6 +21,15 @@ module.exports = async function handler(req, res) {
     return json(res, 503, {
       error: 'not_configured',
       message: 'Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in Vercel.',
+    });
+  }
+
+  const verified = await assertEmailVerified(session);
+  if (!verified.ok) {
+    return json(res, verified.status || 403, {
+      error: verified.error,
+      message: verified.message,
+      redirect: '/organiser/verify-email?next=' + encodeURIComponent('/account/'),
     });
   }
 
