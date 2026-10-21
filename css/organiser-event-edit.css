@@ -6918,8 +6918,8 @@ button.cb-compare-cta:disabled {
 }
 
 .cb-plan-card-btn--primary {
-  border-color: var(--ee-purple);
-  background: var(--ee-purple);
+  border-color: var(--ee-purple, #0d6e7a);
+  background: var(--ee-purple, #0d6e7a);
   color: #fff;
   box-shadow: 0 6px 20px rgba(13, 110, 122, 0.35);
 }
