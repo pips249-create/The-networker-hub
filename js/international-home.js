@@ -503,15 +503,42 @@
     return 'Coming soon';
   }
 
+  function countryFlagHtml(countryCode) {
+    var iso = String(countryCode || '')
+      .trim()
+      .toLowerCase();
+    if (iso === 'uk') iso = 'gb';
+    if (!/^[a-z]{2}$/.test(iso)) return '';
+    return (
+      '<img class="intl-flag" src="https://flagcdn.com/w40/' +
+      iso +
+      '.png" srcset="https://flagcdn.com/w80/' +
+      iso +
+      '.png 2x" width="16" height="12" alt="" loading="lazy" decoding="async">'
+    );
+  }
+
+  function countryChipHtml(row, className) {
+    if (!row || !row.countryName) return '';
+    var flag = countryFlagHtml(row.countryCode);
+    return (
+      '<span class="' +
+      className +
+      '">' +
+      flag +
+      escapeHtml(row.countryName) +
+      '</span>'
+    );
+  }
+
   function renderBrowseEventCard(row, options) {
     options = options || {};
     var place =
       escapeHtml(row.city || '') +
       (row.countryName ? ', ' + escapeHtml(row.countryName) : '');
-    var countryChip =
-      options.showCountry && row.countryName
-        ? '<span class="intl-browse-card-country">' + escapeHtml(row.countryName) + '</span>'
-        : '';
+    var countryChip = options.showCountry
+      ? countryChipHtml(row, 'intl-browse-card-country')
+      : '';
     var organiser = '';
     if (row.organiserName) {
       organiser = row.organiserWebsite
@@ -956,9 +983,7 @@
               escapeHtml(row.organiserName) +
               '</p>';
         }
-        var countryChip = row.countryName
-          ? '<span class="intl-events-item-country">' + escapeHtml(row.countryName) + '</span>'
-          : '';
+        var countryChip = countryChipHtml(row, 'intl-events-item-country');
         var description = row.description
           ? '<p class="intl-events-item-desc">' + escapeHtml(row.description) + '</p>'
           : '';
@@ -1381,8 +1406,28 @@
     }
     var introBtn = byId('intl-add-event-btn');
     var sectionBtn = byId('intl-events-add-btn');
+    var browseBtn = byId('intl-browse-events-btn');
     if (introBtn) introBtn.addEventListener('click', onAdd);
     if (sectionBtn) sectionBtn.addEventListener('click', onAdd);
+    if (browseBtn) {
+      browseBtn.addEventListener('click', function (event) {
+        trackIntl('intl_home_cta_click', { cta: 'browse_events' });
+        var target = byId('events');
+        if (!target) return;
+        event.preventDefault();
+        var reduceMotion =
+          window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        target.scrollIntoView({
+          behavior: reduceMotion ? 'auto' : 'smooth',
+          block: 'start',
+        });
+        if (window.history && typeof window.history.pushState === 'function') {
+          window.history.pushState(null, '', '#events');
+        } else {
+          window.location.hash = 'events';
+        }
+      });
+    }
     if (els.eventsFilter) {
       els.eventsFilter.addEventListener('change', function () {
         state.eventsFilter = String(els.eventsFilter.value || '').toUpperCase();
