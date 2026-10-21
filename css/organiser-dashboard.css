@@ -24,6 +24,19 @@
   --od-radius-sm: 8px;
   --od-shadow-sm: 0 2px 10px rgba(26, 46, 59, 0.06);
   --od-shadow-md: 0 4px 20px rgba(26, 46, 59, 0.08);
+  /* Alias event-edit tokens so Connected booking (and other ee-* UI) renders in the workspace */
+  --ee-purple: var(--od-purple);
+  --ee-purple-dark: var(--od-purple-dark);
+  --ee-purple-light: var(--od-purple-light);
+  --ee-purple-pale: var(--od-purple-pale);
+  --ee-gold: var(--od-gold);
+  --ee-text: var(--od-text-dark);
+  --ee-text-mid: var(--od-text-mid);
+  --ee-text-soft: var(--od-text-soft);
+  --ee-bg: var(--od-bg);
+  --ee-white: var(--od-white);
+  --ee-border: #e8dbea;
+  --ee-radius: 10px;
   font-family: 'DM Sans', 'DM Sans', system-ui, sans-serif;
   background: var(--od-bg);
   color: var(--od-text-dark);
