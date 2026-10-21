@@ -237,7 +237,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/hub.css?v=20260831intl30">
-<link rel="stylesheet" href="/css/international-home.css?v=20261020intlscroll1">
+<link rel="stylesheet" href="/css/international-home.css?v=20261020intldesc1">
 <link rel="icon" href="/favicon.ico?v=20260825intl26" sizes="any">
 <link rel="icon" href="/assets/favicon.svg?v=20260825intl26" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/assets/logo-networker-international.png?v=20260825intl26">
@@ -638,6 +638,16 @@
       <label class="intl-field-label" for="intl-event-name-field">Event title</label>
       <input class="intl-field-input" id="intl-event-name-field" name="title" type="text" required maxlength="160" placeholder="e.g. Dublin Founders Breakfast">
 
+      <label class="intl-field-label" for="intl-event-description">Short description <span class="intl-optional">(optional)</span></label>
+      <textarea
+        class="intl-field-textarea"
+        id="intl-event-description"
+        name="description"
+        rows="3"
+        maxlength="600"
+        placeholder="What happens, who it suits, and anything people should know before they book"
+      ></textarea>
+
       <div class="intl-event-form-grid">
         <div>
           <label class="intl-field-label" for="intl-event-starts">Start date</label>
@@ -750,6 +760,6 @@
 
 <script src="/js/hub-compliance-bootstrap.js?v=20260923cmp4" data-root="/"></script>
 <script src="/js/international-region-seed.js?v=20261020intlcanus1" defer></script>
-<script src="/js/international-home.js?v=20261020intlscroll1" defer></script>
+<script src="/js/international-home.js?v=20261020intldesc1" defer></script>
 </body>
 </html>
