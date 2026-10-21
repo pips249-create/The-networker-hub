@@ -55,7 +55,8 @@ Optional: link event with provider `own_site` and the same UUID in both fields (
 
 | Step | Expected |
 |------|----------|
-| POST after a sale | HTTP 200 |
+| **Send test booking** (Connected setup or Booking providers) | Creates a test attendee without a terminal |
+| POST after a sale (or the button above) | HTTP 200 / `own_site:accepted` |
 | Recent sync attempts | `own_site:accepted` |
 | Attendees | Buyer row |
 | After event end | Verified review flow (~24h cron) |

@@ -356,6 +356,97 @@ module.exports = async function handler(req, res) {
         });
       }
 
+      if (action === 'send_test_booking') {
+        const eventId = String(body.eventId || body.event_id || '').trim();
+        if (!eventId) {
+          return json(res, 400, {
+            ok: false,
+            error: 'missing_event_id',
+            message: 'Choose a Networker UK event to send the test booking to.',
+          });
+        }
+        const { assertOrganiserOwnsEvent } = require('../supabase-organiser-alumni-invites');
+        await assertOrganiserOwnsEvent(auth.session, eventId);
+
+        const conn = await ensureProviderConnection(sb, accountId, 'own_site');
+        if (!conn || !conn.webhook_token) {
+          return json(res, 400, {
+            ok: false,
+            error: 'own_site_not_enabled',
+            message: 'Enable Your own website on Booking providers first, then try again.',
+          });
+        }
+
+        const { data: account, error: accErr } = await sb
+          .from('organiser_accounts')
+          .select(
+            'id, connected_booking_plan, connected_booking_status, connected_booking_webhook_secret'
+          )
+          .eq('id', accountId)
+          .maybeSingle();
+        if (accErr) {
+          return json(res, 500, { ok: false, error: 'account_lookup_failed', message: accErr.message });
+        }
+
+        const sessionEmail =
+          (auth.session &&
+            (auth.session.email ||
+              (auth.session.user && auth.session.user.email) ||
+              (auth.session.organiser && auth.session.organiser.email))) ||
+          '';
+        const email = String(body.email || sessionEmail || 'test-booking@thenetworkeruk.com')
+          .trim()
+          .toLowerCase();
+        const name = String(body.name || 'Test booking').trim() || 'Test booking';
+        const orderId = String(body.orderId || body.order_id || '').trim() || 'test-' + Date.now();
+
+        const { ingestConnectedBookingRegistration } = require('../connected-booking-ingest');
+        try {
+          const result = await ingestConnectedBookingRegistration({
+            sb,
+            account,
+            eventId,
+            body: {
+              orderId,
+              email,
+              name,
+              quantity: 1,
+              amountPaid: 0,
+              status: 'confirmed',
+            },
+            logPayload: {
+              test: true,
+              source: 'organiser_send_test_booking',
+              email,
+            },
+            providerLabel: 'own_site',
+          });
+          return json(res, 200, {
+            ok: true,
+            result,
+            orderId,
+            email,
+            message:
+              result && result.action === 'duplicate'
+                ? 'That test order was already synced (duplicate). Check Recent sync attempts and Attendees.'
+                : 'Test booking accepted. Check Recent sync attempts for own_site:accepted, then open Attendees for this event.',
+          });
+        } catch (ingestErr) {
+          const code = String(ingestErr.code || ingestErr.message || 'test_booking_failed');
+          const status = ingestErr.status || 500;
+          let message = ingestErr.message || 'Could not send test booking.';
+          if (code === 'connected_booking_inactive') {
+            message =
+              'Connected booking is not active on this account yet. Choose a plan (or ask for pilot access), then try again.';
+          } else if (code === 'connected_booking_disabled') {
+            message = 'Connected booking is not enabled for this account.';
+          } else if (code === 'event_not_on_account') {
+            message = 'That event is not on this organiser account.';
+          }
+          return json(res, status, { ok: false, error: code, message });
+        }
+      }
+
       return json(res, 400, { ok: false, error: 'unknown_action' });
     }
 
