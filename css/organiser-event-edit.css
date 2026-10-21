@@ -6769,7 +6769,14 @@ button.cb-compare-cta:disabled {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+/* Workspace shows 3 self-serve tiers; standalone page also has Enterprise */
 .cb-plan-cards--pricing {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  /* Room for the overlapping "Most popular" badge */
+  padding-top: 12px;
+}
+
+.cb-plan-cards--pricing:has(> .cb-plan-card--enterprise) {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
@@ -6777,21 +6784,24 @@ button.cb-compare-cta:disabled {
   position: relative;
   display: flex;
   flex-direction: column;
+  height: 100%;
   min-height: 100%;
+  box-sizing: border-box;
   padding: 22px 20px 20px;
   border-radius: 16px;
-  border: 1px solid rgba(26, 46, 59, 0.12);
+  /* 2px on all cards so featured/current borders do not shift layout */
+  border: 2px solid rgba(26, 46, 59, 0.12);
   background: #fff;
   box-shadow: 0 8px 28px rgba(26, 46, 59, 0.07);
 }
 
 .cb-plan-card--featured {
-  border: 2px solid var(--ee-purple);
+  border-color: var(--ee-purple, #0d6e7a);
   box-shadow: 0 12px 36px rgba(13, 110, 122, 0.18);
 }
 
 .cb-plan-card--current {
-  border-color: var(--ee-gold);
+  border-color: var(--ee-gold, #bd932e);
   box-shadow: 0 10px 32px rgba(189, 147, 46, 0.22);
 }
 
@@ -6808,8 +6818,9 @@ button.cb-compare-cta:disabled {
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: #fff;
-  background: var(--ee-purple);
+  background: var(--ee-purple, #0d6e7a);
   white-space: nowrap;
+  z-index: 1;
 }
 
 .cb-plan-card-head {
@@ -6844,7 +6855,7 @@ button.cb-compare-cta:disabled {
   font-size: 2.35rem;
   font-weight: 400;
   line-height: 1;
-  color: var(--ee-purple-dark);
+  color: var(--ee-purple-dark, #084a52);
 }
 
 .cb-plan-card-vat {
@@ -6882,7 +6893,7 @@ button.cb-compare-cta:disabled {
   left: 0;
   top: 0;
   font-weight: 800;
-  color: var(--ee-purple);
+  color: var(--ee-purple, #0d6e7a);
 }
 
 .cb-plan-card-features-muted {
