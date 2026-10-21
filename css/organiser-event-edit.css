@@ -5610,6 +5610,28 @@ a.ee-btn.ee-btn-primary {
   cursor: pointer;
 }
 
+.cb-setup-guide-card {
+  margin: 0 0 1.25rem;
+  border-color: rgba(13, 110, 122, 0.28);
+  background: linear-gradient(180deg, #e8f6f8 0%, #fff 72%);
+}
+
+.cb-setup-guide-card .org-page-subtitle {
+  margin: 0 0 0.5rem;
+}
+
+.ecs-setup-guide-cta {
+  margin: 0.75rem 0 0;
+}
+
+.ee-connected-guide-nudge {
+  margin: 0.75rem 0 0;
+}
+
+.ee-connected-guide-nudge a {
+  font-weight: 600;
+}
+
 .ee-connected-booking-card .ee-connected-booking-callout {
   margin: 0 0 16px;
   padding: 14px 16px;

@@ -1418,10 +1418,18 @@
     });
   }
 
+  function updateEventbriteGuideCta(platform) {
+    var cta = qs('ecs-eventbrite-guide-cta');
+    if (!cta) return;
+    var key = String(platform || selectedIntegrationPlatform() || '').trim();
+    cta.hidden = key !== 'eventbrite';
+  }
+
   function updateOneTimeProviderStatus(platform) {
     var el = qs('ecs-onetime-status');
-    if (!el) return;
     var key = String(platform || selectedIntegrationPlatform() || '').trim();
+    updateEventbriteGuideCta(key);
+    if (!el) return;
     if (key === 'own_site') {
       var own = providersById.own_site;
       if (own && own.webhookUrl) {
