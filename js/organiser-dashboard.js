@@ -397,7 +397,7 @@
     if (titleEl) titleEl.textContent = 'Create your organiser page';
     if (descEl) {
       descEl.innerHTML =
-        'Your public page on the platform. <a href="/events/#organisers" class="org-getting-started-link">Search existing groups</a> first. If yours is already listed, open it and request access instead of creating a duplicate.';
+        'Needed to list events. <a href="/events/#organisers" class="org-getting-started-link">Search existing groups</a> first. If yours is already listed, open it and request access instead of creating a duplicate.';
     }
     if (createBtn) createBtn.hidden = false;
     if (findLink) findLink.hidden = true;
@@ -4420,11 +4420,12 @@
           notices.push({
             id: 'onboarding',
             type: 'info',
-            title: 'Set up your organiser workspace',
+            title: 'Explore the workspace — add a page when you are ready',
             text:
-              'Start with your <strong>organiser page</strong> — your public page on the platform for your group, business, or brand. Then you can list events, add ticket types, and manage bookings.',
+              'Look around Overview, My events, and the other areas first. When you want to list events or take bookings, add an <strong>organiser page</strong> — the public profile for your group, business, or brand.',
             actions:
-              '<a class="org-btn org-btn-gold org-btn-sm" href="/organiser/group-edit">Create organiser page</a>',
+              '<a class="org-btn org-btn-gold org-btn-sm" href="/organiser/group-edit">Create organiser page</a>' +
+              ' <a class="org-btn org-btn-outline org-btn-sm" href="/events/?mode=organisers">Search existing groups</a>',
           });
         }
       }
@@ -6006,10 +6007,6 @@
   function finishDeepLinkAfterBootstrap() {
     const deepLinkRoute = applyAttendeesDeepLinkFromUrl();
     if (deepLinkRoute && deepLinkRoute.startsWith('events-')) {
-      if (needsOrganiserPageFirst()) {
-        redirectEventsToOrganiserSetup(deepLinkRoute);
-        return;
-      }
       setRoute(deepLinkRoute);
       return;
     }
@@ -6018,22 +6015,12 @@
       return;
     }
     if (filters.attendeesEvent !== 'all' || filters.attendeesPendingOnly) {
-      if (needsOrganiserPageFirst()) {
-        redirectEventsToOrganiserSetup('events-attendees');
-        return;
-      }
       setRoute('events-attendees');
     }
   }
 
   function needsOrganiserPageFirst() {
     return !state.groups.length && !(state.pendingClaimGroups || []).length;
-  }
-
-  function isEventsRoute(route) {
-    if (!route) return false;
-    const r = String(route).toLowerCase();
-    return r === 'events' || r === 'events-overview' || r === 'tickets' || r.startsWith('events-');
   }
 
   function openNeedsOrganiserPageModal() {
@@ -6047,27 +6034,9 @@
     modal.classList.add('is-open');
   }
 
-  function redirectEventsToOrganiserSetup() {
-    // Land on Overview so the checklist stays visible behind the explainer modal.
-    setRoute('dashboard', { skipEventsGuard: true });
+  /** Prompt when listing an event needs a page — browsing the workspace is not blocked. */
+  function promptNeedsOrganiserPageForListing() {
     openNeedsOrganiserPageModal();
-  }
-
-  function isOrganiserTourOpen() {
-    return Boolean(
-      document.body.classList.contains('org-onboard-active') ||
-        (window.HubOrganiserOnboarding &&
-          window.HubOrganiserOnboarding.isTourOpen &&
-          window.HubOrganiserOnboarding.isTourOpen())
-    );
-  }
-
-  function enforceEventsOrganiserGate() {
-    if (!bootstrapReady || !needsOrganiserPageFirst() || isOrganiserTourOpen()) return;
-    const onEventsPage = Boolean(document.querySelector('[data-org-page="events"].is-active'));
-    if (onEventsPage || isEventsRoute(eventsSubRoute)) {
-      redirectEventsToOrganiserSetup();
-    }
   }
 
   function parseRoute() {
@@ -8677,7 +8646,7 @@
   function goToNewEventEditor(e) {
     if (e && e.preventDefault) e.preventDefault();
     if (!state.groups.length) {
-      redirectEventsToOrganiserSetup();
+      promptNeedsOrganiserPageForListing();
       return;
     }
     openNewEventEditorDrawer();
@@ -11331,11 +11300,20 @@
     if (!alertEl) return;
     if (!message) {
       alertEl.hidden = true;
+      alertEl.className = 'org-alert';
+      alertEl.innerHTML = '';
       return;
     }
     alertEl.hidden = false;
     alertEl.className = 'org-alert' + (isError ? ' error' : '');
     alertEl.innerHTML = message;
+  }
+
+  /** Drop softy info banners when changing pages; keep error alerts until dismissed/replaced. */
+  function clearOrganiserInfoAlertOnNavigate() {
+    if (!alertEl || alertEl.hidden) return;
+    if (alertEl.classList.contains('error')) return;
+    showOrganiserAlert(null);
   }
 
   function dedupeGroupsById(groups) {
@@ -11801,15 +11779,7 @@
       }
     }
     if (maybeRedirectToSingleMemberList()) return;
-    const groups = memberListGroups();
-    if (!groups.length) {
-      setRoute('groups');
-      showOrganiserAlert(
-        'Create an organiser page first, then open <strong>Membership</strong> from that row.',
-        false
-      );
-      return;
-    }
+    // Allow browsing Memberships with no organiser page — empty state offers create/search.
     setRoute('memberships');
   }
 
@@ -12171,16 +12141,7 @@
     }
     closeNotificationsPanel();
     closeOrgMoreSheet();
-    if (
-      bootstrapReady &&
-      !options.skipEventsGuard &&
-      !isOrganiserTourOpen() &&
-      needsOrganiserPageFirst() &&
-      isEventsRoute(route)
-    ) {
-      redirectEventsToOrganiserSetup();
-      return;
-    }
+    clearOrganiserInfoAlertOnNavigate();
     let page = route || 'dashboard';
     if (page === 'member-lists') page = 'memberships';
     let sub = null;
@@ -12714,7 +12675,7 @@
         title: hasGroups ? 'No matching organiser pages' : 'No organiser pages yet',
         text: hasGroups
           ? 'Try adjusting your search or status filter.'
-          : 'Create your organiser page on the platform before listing events.',
+          : 'Optional until you list an event — create a page when you are ready, or search for an existing group and request access.',
         hideActions: hasGroups,
       });
       updatePaginationNav('groups', { totalPages: 1, start: 0, end: 0, total: 0, page: 1 });
@@ -13024,11 +12985,14 @@
     if (!list.length) {
       const hasEvents = eventsSourceList().length > 0;
       const archivedOnly = hasEvents && listEmptiedByArchiveHide();
+      const needsPage = needsOrganiserPageFirst();
       setOrgEmpty(empty, {
         show: true,
         title: hasEvents ? 'No matching events' : 'No events yet',
         text: !hasEvents
-          ? 'Create your organiser page first, then list your first event.'
+          ? needsPage
+            ? 'Browse the workspace anytime. When you are ready to list an event, add an organiser page — then come back here.'
+            : 'List your first meeting, exhibition, or conference when you are ready.'
           : archivedOnly
             ? 'Events from the last two weeks stay in this list. Choose status Archived, or uncheck Hide archived, to see older ones.'
             : 'Try adjusting your filters or search.',
@@ -14320,7 +14284,7 @@
     if (titleEl) {
       if (hasClaimOnboardMismatch()) {
         titleEl.textContent = 'Claim your existing listing first';
-      } else if (requiredDone === 0) titleEl.textContent = "Here's what to do first";
+      } else if (requiredDone === 0) titleEl.textContent = "When you're ready";
       else titleEl.textContent = "Here's what's next";
     }
     panel.classList.remove('is-complete');
@@ -14330,7 +14294,7 @@
       const remaining = 3 - requiredDone;
       progressHint.textContent =
         requiredDone === 0
-          ? '3 steps to get your workspace ready.'
+          ? 'Explore freely — these steps help when you want to go live.'
           : remaining === 1
             ? '1 step left on your setup checklist.'
             : remaining + ' steps left on your setup checklist.';
@@ -18708,7 +18672,6 @@
       updateTeamNavBadge();
       refreshPendingApplicationsSummary();
       if (!groupDrawerOpen) {
-        enforceEventsOrganiserGate();
         if (document.querySelector('[data-org-page="events"].is-active')) {
           setEventsSub(eventsSubRoute);
         }
