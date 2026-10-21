@@ -46,6 +46,9 @@
     if (/\/guides\/export-attendees-and-visits(?:\.html)?\/?$/.test(path)) {
       return 'guide-export-attendees-and-visits';
     }
+    if (/\/guides\/connect-eventbrite(?:\.html)?\/?$/.test(path)) {
+      return 'guide-connect-eventbrite';
+    }
     if (/\/faq(?:\.html)?\/?$/.test(path)) return 'faq';
     if (/\/help\/organiser-payouts(?:\.html)?\/?$/.test(path)) return 'help-organiser-payouts';
     if (/\/help\/pricing-fees(?:\.html)?\/?$/.test(path)) return 'help-pricing-fees';

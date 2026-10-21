@@ -11,7 +11,8 @@
         'Paste a <strong>checkout</strong> link in the field above — your public <strong>/e/…</strong> URL is fine; we send buyers to checkout when we can. ' +
         'First time only: enable <strong>Eventbrite</strong> on ' +
         '<a href="/organiser/#cb-providers-title">Connected booking → Booking providers</a> and add our webhook in Eventbrite. ' +
-        'Then link your Eventbrite event id below (we fill it from the URL when possible).',
+        'Then link your Eventbrite event id below (we fill it from the URL when possible). ' +
+        '<a href="/guides/connect-eventbrite" target="_blank" rel="noopener">Step-by-step guide</a>.',
     },
     ticket_tailor: {
       label: 'Ticket Tailor',

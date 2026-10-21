@@ -523,6 +523,123 @@ html:has(.guides-page) {
   font-family: 'DM Serif Display', 'DM Serif Display Fallback', Georgia, serif;
 }
 
+.guide-flow {
+  list-style: none;
+  margin: 1.25rem 0 2rem;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+  counter-reset: guide-flow;
+}
+
+.guide-flow li {
+  counter-increment: guide-flow;
+  position: relative;
+  padding: 14px 16px 14px 4.25rem;
+  margin: 0;
+  border-radius: 10px;
+  border: 1px solid var(--gd-border);
+  background: var(--gd-card);
+}
+
+.guide-flow li::before {
+  content: counter(guide-flow);
+  position: absolute;
+  left: 14px;
+  top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: var(--gd-teal);
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.guide-flow strong {
+  display: block;
+  font-size: 0.95rem;
+  color: var(--gd-text);
+  margin-bottom: 4px;
+}
+
+.guide-flow span {
+  display: block;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--gd-text-mid);
+}
+
+.guide-troubleshoot {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0 2rem;
+  font-size: 0.95rem;
+}
+
+.guide-troubleshoot th,
+.guide-troubleshoot td {
+  text-align: left;
+  vertical-align: top;
+  padding: 12px 14px;
+  border: 1px solid var(--gd-border);
+}
+
+.guide-troubleshoot th {
+  background: var(--gd-teal-pale);
+  color: var(--gd-text);
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.guide-troubleshoot td:first-child {
+  white-space: nowrap;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 640px) {
+  .guide-troubleshoot,
+  .guide-troubleshoot thead,
+  .guide-troubleshoot tbody,
+  .guide-troubleshoot th,
+  .guide-troubleshoot td,
+  .guide-troubleshoot tr {
+    display: block;
+  }
+
+  .guide-troubleshoot thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+  }
+
+  .guide-troubleshoot tr {
+    margin-bottom: 12px;
+    border: 1px solid var(--gd-border);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--gd-card);
+  }
+
+  .guide-troubleshoot td {
+    border: none;
+    border-top: 1px solid var(--gd-border);
+  }
+
+  .guide-troubleshoot td:first-child {
+    white-space: normal;
+    background: var(--gd-teal-pale);
+    font-weight: 600;
+  }
+}
+
 .guides-page .btn-primary {
   background: var(--gd-teal);
   border-color: var(--gd-teal);

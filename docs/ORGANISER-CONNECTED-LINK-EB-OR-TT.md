@@ -67,6 +67,8 @@ Optional: tick **copy title, date, venue when I save the link** (Eventbrite need
 
 ## More detail
 
+- Organiser guide: [/guides/connect-eventbrite](../guides/connect-eventbrite.html)
+- [EVENTBRITE-CONNECTED.md](./EVENTBRITE-CONNECTED.md)
 - [TICKET-TAILOR-CONNECTED.md](./TICKET-TAILOR-CONNECTED.md)
 - [CONNECTED-BOOKING-PILOT-TEST.md](./CONNECTED-BOOKING-PILOT-TEST.md)
 - [CONNECTED-BOOKING-PROVIDERS.md](./CONNECTED-BOOKING-PROVIDERS.md)

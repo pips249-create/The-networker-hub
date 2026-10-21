@@ -160,5 +160,12 @@ window.HUB_SEO_STATIC = {
     "description": "How to download attendee lists, filter by visit count, export name badges, and use the guest visit programme on The Networker UK.",
     "image": "/assets/logo-networker-uk-og.png?v=20260908og",
     "ogType": "article"
+  },
+  "guide-connect-eventbrite": {
+    "path": "/guides/connect-eventbrite",
+    "title": "Connect Eventbrite – How-to guides – The Networker UK",
+    "description": "Link Eventbrite to The Networker UK so ticket sales sync to your attendee list — one-time webhook setup, then link each event.",
+    "image": "/assets/logo-networker-uk-og.png?v=20260908og",
+    "ogType": "article"
   }
 };

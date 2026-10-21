@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Connect Eventbrite – How-to guides – The Networker UK</title>
+<meta name="description" content="Link Eventbrite to The Networker UK so ticket sales sync to your attendee list — one-time webhook setup, then link each event.">
+<!-- hub-static-seo -->
+<link rel="canonical" href="https://www.thenetworkeruk.com/guides/connect-eventbrite">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="The Networker UK">
+<meta property="og:title" content="Connect Eventbrite – How-to guides – The Networker UK">
+<meta property="og:description" content="Link Eventbrite to The Networker UK so ticket sales sync to your attendee list — one-time webhook setup, then link each event.">
+<meta property="og:url" content="https://www.thenetworkeruk.com/guides/connect-eventbrite">
+<meta property="og:image" content="https://www.thenetworkeruk.com/assets/logo-networker-uk-og.png?v=20260908og">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="The Networker UK">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Connect Eventbrite – How-to guides – The Networker UK">
+<meta name="twitter:description" content="Link Eventbrite to The Networker UK so ticket sales sync to your attendee list — one-time webhook setup, then link each event.">
+<meta name="twitter:image" content="https://www.thenetworkeruk.com/assets/logo-networker-uk-og.png">
+<!-- /hub-static-seo -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/hub.css?v=20261016signin1">
+<link rel="stylesheet" href="../css/content-page.css">
+<link rel="stylesheet" href="../css/guides-page.css?v=20261021eb1">
+<link rel="icon" href="/favicon.ico?v=20260823uk3" sizes="any">
+<link rel="icon" href="/assets/favicon.svg?v=20260823uk3" type="image/svg+xml">
+<link rel="icon" href="/assets/favicon-32.png?v=20260823uk" type="image/png" sizes="32x32">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png?v=20260823uk">
+<link rel="stylesheet" href="../css/hub-mobile.css?v=20261016signin1" />
+<script src="../js/hub-seo-static-config.js?v=20260612"></script>
+<script src="../js/hub-seo-static.js?v=20260612" data-page="guide-connect-eventbrite"></script>
+<script src="../js/hub-seo-data.js?v=20260612" defer></script>
+<script src="../js/hub-seo-schema.js?v=20260612" defer></script>
+  <script type="application/ld+json" data-hubert-seo="static">{"@context":"https://schema.org","@graph":[{"@type":"WebPage","@id":"https://www.thenetworkeruk.com/guides/connect-eventbrite#webpage","url":"https://www.thenetworkeruk.com/guides/connect-eventbrite","name":"Connect Eventbrite – How-to guides – The Networker UK","description":"Link Eventbrite to The Networker UK so ticket sales sync to your attendee list — one-time webhook setup, then link each event.","isPartOf":{"@type":"WebSite","name":"The Networker UK","url":"https://www.thenetworkeruk.com"}},{"@type":"HowTo","@id":"https://www.thenetworkeruk.com/guides/connect-eventbrite#howto","url":"https://www.thenetworkeruk.com/guides/connect-eventbrite","name":"How to connect Eventbrite to The Networker UK","description":"Link Eventbrite to The Networker UK so ticket sales sync to your attendee list — one-time webhook setup, then link each event.","step":[{"@type":"HowToStep","position":1,"name":"Enable Eventbrite on Connected booking","text":"Open Connected booking in the organiser dashboard, enable Eventbrite under Booking providers, and copy the webhook URL (keep www in https://www.thenetworkeruk.com/w/eb/…).","url":"https://www.thenetworkeruk.com/guides/connect-eventbrite#enable-eventbrite"},{"@type":"HowToStep","position":2,"name":"Paste the webhook URL into Eventbrite","text":"In Eventbrite Account settings → Webhooks, paste the Networker UK URL as the Payload URL and set the action to order.placed. Do this once per Eventbrite account.","url":"https://www.thenetworkeruk.com/guides/connect-eventbrite#paste-webhook"},{"@type":"HowToStep","position":3,"name":"Save your Eventbrite private token","text":"Save the Eventbrite private API token on Connected booking so we can load buyer email and ticket holders after each order.placed ping.","url":"https://www.thenetworkeruk.com/guides/connect-eventbrite#api-token"},{"@type":"HowToStep","position":4,"name":"Link each event","text":"On Connected setup for the event, choose Eventbrite, add the display price and Eventbrite URL, confirm the numeric event id, save the link, and publish.","url":"https://www.thenetworkeruk.com/guides/connect-eventbrite#link-event"},{"@type":"HowToStep","position":5,"name":"Check it worked","text":"After a test or real Eventbrite order, Recent sync attempts should show eventbrite:accepted and the buyer should appear on the event Attendees list.","url":"https://www.thenetworkeruk.com/guides/connect-eventbrite#check-it-worked"}]},{"@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Home","item":"https://www.thenetworkeruk.com/"},{"@type":"ListItem","position":2,"name":"Organiser guides","item":"https://www.thenetworkeruk.com/guides"},{"@type":"ListItem","position":3,"name":"Connect Eventbrite","item":"https://www.thenetworkeruk.com/guides/connect-eventbrite"}]}]}</script>
+</head>
+<body class="guides-page">
+
+<div id="hub-site-nav"></div>
+<script src="../js/site-nav.js?v=20261016signin1" data-root="../" data-page="guides"></script>
+
+<main class="content-page-main">
+  <header class="guides-hero">
+    <span class="guides-hero-orb guides-hero-orb--1" aria-hidden="true"></span>
+    <div class="guides-hero-inner">
+      <p class="section-kicker">Organiser guide</p>
+      <h1>Connect Eventbrite</h1>
+      <p class="guides-hero-lede">
+        Keep selling tickets on Eventbrite. List the same event on The Networker UK — when someone buys, they appear on your attendee list here too.
+      </p>
+    </div>
+  </header>
+
+  <div class="content-body">
+    <a class="guide-back" href="../guides">← All guides</a>
+
+    <div class="guide-intro-callout">
+      <p>
+        <strong>In plain English:</strong> Eventbrite still takes the payment. We need a short “ping” from Eventbrite after each sale so we can add the buyer to your Networker UK listing (attendees, reviews, round-ups).
+      </p>
+      <p>You set that ping up <strong>once</strong> for your account. Then for each event you paste your Eventbrite link and save.</p>
+      <p>
+        <a class="btn btn-primary" href="../login?next=/organiser/%23connected-booking&amp;intent=organiser">Open Connected booking →</a>
+      </p>
+    </div>
+
+    <h2>What you need first</h2>
+    <ul>
+      <li>An organiser account on The Networker UK</li>
+      <li>A <strong>Connected booking</strong> plan (subscribe, or a complimentary pilot if we offered you one)</li>
+      <li>Your group’s <strong>organiser page</strong> assigned to Connected (under Organiser pages → Save assignment)</li>
+      <li>Access to your Eventbrite account settings (to paste a webhook URL)</li>
+    </ul>
+    <p>
+      Not on Connected yet? Open
+      <a href="/organiser/#connected-booking">Connected booking</a>
+      in your dashboard and choose a plan. Link Out (£9.99 per event) only redirects buyers — it does <strong>not</strong> sync attendees.
+    </p>
+
+    <h2>How it fits together</h2>
+    <ol class="guide-flow" role="list">
+      <li>
+        <strong>Someone finds you on The Networker UK</strong>
+        <span>They click Book and go to your Eventbrite checkout.</span>
+      </li>
+      <li>
+        <strong>They pay on Eventbrite</strong>
+        <span>Nothing changes for your buyers — same tickets, same Eventbrite fees.</span>
+      </li>
+      <li>
+        <strong>Eventbrite tells us about the order</strong>
+        <span>We add them to your attendee list on The Networker UK (when the link is set up correctly).</span>
+      </li>
+    </ol>
+
+    <h2>Step-by-step</h2>
+    <ol class="guide-steps">
+      <li class="guide-step" id="enable-eventbrite">
+        <h3>Enable Eventbrite on Connected booking (once)</h3>
+        <p>
+          Sign in → open
+          <a href="/organiser/#connected-booking">Connected booking</a>
+          → scroll to <strong>Booking providers</strong> → choose <strong>Eventbrite</strong> → <strong>Enable</strong>.
+        </p>
+        <p>Copy the webhook URL we show you. It looks like:</p>
+        <p><code>https://www.thenetworkeruk.com/w/eb/…</code></p>
+        <p>
+          <strong>Important:</strong> keep the <strong>www</strong> in the address. Without it, Eventbrite’s messages can fail.
+        </p>
+      </li>
+      <li class="guide-step" id="paste-webhook">
+        <h3>Paste that URL into Eventbrite (once)</h3>
+        <p>In Eventbrite:</p>
+        <ol>
+          <li>Open your profile menu → <strong>Account settings</strong> → <strong>Webhooks</strong></li>
+          <li>Add a webhook (or edit an existing one)</li>
+          <li>Paste the Networker UK URL as the <strong>Payload URL</strong></li>
+          <li>Set the action to <strong>order.placed</strong></li>
+          <li>“Events: All” is fine</li>
+        </ol>
+        <p>You only do this once per Eventbrite account — not for every event.</p>
+      </li>
+      <li class="guide-step" id="api-token">
+        <h3>Save your Eventbrite private token (once)</h3>
+        <p>
+          Eventbrite’s ping only includes a link to the order — not the buyer’s email. We use a
+          <strong>private token</strong> from Eventbrite’s developer settings to load the buyer (and other ticket holders) safely.
+        </p>
+        <p>
+          On Connected setup or Booking providers, follow the <strong>Save API token</strong> / private token link
+          (Eventbrite Developer links), paste the token, and save.
+        </p>
+        <p>Without this token, sales may reach us but buyers will not appear on your attendee list.</p>
+      </li>
+      <li class="guide-step" id="link-event">
+        <h3>Link each event (every listing)</h3>
+        <p>For each event you want synced:</p>
+        <ol>
+          <li>Open the event → <strong>Set up tickets</strong></li>
+          <li>Under Connected booking, choose <strong>Eventbrite</strong> → <strong>Continue to Connected setup</strong></li>
+          <li>Enter the <strong>price shown on The Networker UK</strong> (what visitors see before they leave)</li>
+          <li>Paste your Eventbrite event or checkout URL</li>
+          <li>
+            Confirm the <strong>Eventbrite event id</strong> (the long number in the URL — use
+            <strong>Use id from booking URL</strong> if we offer it)
+          </li>
+          <li>Optional: tick copy title, date, and venue from Eventbrite onto your Networker UK listing</li>
+          <li><strong>Save link for this event</strong>, then <strong>Publish</strong></li>
+        </ol>
+      </li>
+      <li class="guide-step" id="check-it-worked">
+        <h3>Check it worked</h3>
+        <p>Place a small test order on Eventbrite (or wait for a real booking), then:</p>
+        <ul>
+          <li>
+            <strong>Connected booking → Recent sync attempts</strong> should show
+            <code>eventbrite:accepted</code>
+          </li>
+          <li>Open the event’s <strong>Attendees</strong> list — the buyer should be there</li>
+        </ul>
+        <p>
+          If you only see <code>eventbrite:webhook_ping</code>, the message arrived but was not treated as a full order —
+          check the private token and that the event id is linked.
+        </p>
+      </li>
+    </ol>
+
+    <h2>If something goes wrong</h2>
+    <table class="guide-troubleshoot">
+      <thead>
+        <tr>
+          <th scope="col">What you see</th>
+          <th scope="col">What to try</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>invalid_webhook_token</code></td>
+          <td>
+            Copy the webhook URL again from Connected booking and paste it into Eventbrite → Webhooks (include
+            <strong>www</strong>). Use <strong>Fix webhook URL</strong> on our side if shown.
+          </td>
+        </tr>
+        <tr>
+          <td><code>event_not_linked</code></td>
+          <td>
+            On Connected setup, save the numeric Eventbrite event id that matches the event you sold tickets for.
+          </td>
+        </tr>
+        <tr>
+          <td>Buyer missing on Attendees</td>
+          <td>
+            Confirm the private token is saved, the webhook action is <strong>order.placed</strong>, and Recent sync
+            attempts shows <code>accepted</code>.
+          </td>
+        </tr>
+        <tr>
+          <td>Worked once, then stopped</td>
+          <td>
+            Eventbrite keeps the URL you pasted. If we regenerated your token, paste the new URL into Eventbrite again.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="content-callout">
+      <p>
+        <strong>Using Ticket Tailor instead?</strong> Same idea, different buttons — see the short checklist in
+        <a href="/organiser/#connected-booking">Connected booking</a>
+        under Booking providers, or ask Hubert.
+      </p>
+      <p>
+        Stuck? Email
+        <a href="mailto:hi@thenetworkeruk.com">hi@thenetworkeruk.com</a>
+        with your event name and a line from <strong>Recent sync attempts</strong>.
+      </p>
+    </div>
+
+    <div class="guide-related">
+      <h2>More guides</h2>
+      <ul class="guide-related-links" role="list">
+        <li><a href="/guides/list-an-event">List an event</a></li>
+        <li><a href="/guides/export-attendees-and-visits">Export attendees &amp; track visits</a></li>
+        <li><a href="/guides/claim-your-organiser-page">Claim your organiser page</a></li>
+        <li><a href="/organiser/#connected-booking">Open Connected booking</a></li>
+        <li><a href="../guides">All organiser guides</a></li>
+      </ul>
+    </div>
+  </div>
+</main>
+
+<div id="hub-site-footer"></div>
+<script src="../js/site-footer.js?v=20260910pp1" data-root="../"></script>
+</body>
+</html>
