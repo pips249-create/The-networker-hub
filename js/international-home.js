@@ -907,6 +907,14 @@
     return start + ' – ' + formatEventDate(row.endsOn);
   }
 
+  function updateEventsRailNav() {
+    if (!els.eventsRail || !els.eventsRailPrev || !els.eventsRailNext) return;
+    var maxScroll = Math.max(0, els.eventsRail.scrollWidth - els.eventsRail.clientWidth - 2);
+    var left = els.eventsRail.scrollLeft;
+    els.eventsRailPrev.disabled = left <= 2;
+    els.eventsRailNext.disabled = left >= maxScroll;
+  }
+
   function renderEventsList() {
     if (!els.eventsList || !els.eventsStatus) return;
     var filter = String(state.eventsFilter || '').toUpperCase();
@@ -920,6 +928,7 @@
       els.eventsStatus.textContent =
         'No upcoming link-out events yet — be the first to add one.';
       els.eventsList.innerHTML = '';
+      if (els.eventsRailWrap) els.eventsRailWrap.hidden = true;
       return;
     }
 
@@ -927,10 +936,12 @@
       els.eventsStatus.hidden = false;
       els.eventsStatus.textContent = 'No upcoming events in that country yet.';
       els.eventsList.innerHTML = '';
+      if (els.eventsRailWrap) els.eventsRailWrap.hidden = true;
       return;
     }
 
     els.eventsStatus.hidden = true;
+    if (els.eventsRailWrap) els.eventsRailWrap.hidden = false;
     els.eventsList.innerHTML = rows
       .map(function (row) {
         var organiser = '';
@@ -945,6 +956,9 @@
               escapeHtml(row.organiserName) +
               '</p>';
         }
+        var countryChip = row.countryName
+          ? '<span class="intl-events-item-country">' + escapeHtml(row.countryName) + '</span>'
+          : '';
         var description = row.description
           ? '<p class="intl-events-item-desc">' + escapeHtml(row.description) + '</p>'
           : '';
@@ -952,7 +966,7 @@
           ? '<div class="intl-events-item-media"><img src="' +
             escapeAttr(row.imageUrl) +
             '" alt="" loading="lazy" decoding="async"></div>'
-          : '';
+          : '<div class="intl-events-item-media intl-events-item-media--empty" aria-hidden="true">Event</div>';
         return (
           '<li class="intl-events-item">' +
           media +
@@ -961,6 +975,7 @@
           '<span>' +
           escapeHtml(formatEventDateRange(row)) +
           '</span>' +
+          countryChip +
           '</div>' +
           '<h3 class="intl-events-item-title">' +
           escapeHtml(row.title || 'Event') +
@@ -977,6 +992,8 @@
         );
       })
       .join('');
+    if (els.eventsRail) els.eventsRail.scrollLeft = 0;
+    window.requestAnimationFrame(updateEventsRailNav);
   }
 
   function escapeHtml(value) {
@@ -1280,6 +1297,25 @@
         state.eventsFilter = String(els.eventsFilter.value || '').toUpperCase();
         renderEventsList();
       });
+    }
+    function scrollEventsRail(dir) {
+      if (!els.eventsRail) return;
+      var step = Math.max(240, Math.round(els.eventsRail.clientWidth * 0.85));
+      els.eventsRail.scrollBy({ left: dir * step, behavior: 'smooth' });
+    }
+    if (els.eventsRailPrev) {
+      els.eventsRailPrev.addEventListener('click', function () {
+        scrollEventsRail(-1);
+      });
+    }
+    if (els.eventsRailNext) {
+      els.eventsRailNext.addEventListener('click', function () {
+        scrollEventsRail(1);
+      });
+    }
+    if (els.eventsRail) {
+      els.eventsRail.addEventListener('scroll', updateEventsRailNav, { passive: true });
+      window.addEventListener('resize', updateEventsRailNav);
     }
   }
 
@@ -2047,6 +2083,10 @@
     els.eventsList = byId('intl-events-list');
     els.eventsStatus = byId('intl-events-status');
     els.eventsFilter = byId('intl-events-country-filter');
+    els.eventsRailWrap = byId('intl-events-rail-wrap');
+    els.eventsRail = byId('intl-events-rail');
+    els.eventsRailPrev = byId('intl-events-rail-prev');
+    els.eventsRailNext = byId('intl-events-rail-next');
     els.interestModal = byId('intl-interest-modal');
     els.browsePanel = byId('intl-browse-panel');
     els.browseKicker = byId('intl-browse-kicker');
