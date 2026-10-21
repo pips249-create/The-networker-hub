@@ -116,23 +116,28 @@ html:has(.guides-page) {
 }
 
 .guides-hero-actions .btn-primary {
-  background: var(--gd-teal);
-  border-color: var(--gd-teal);
+  background: var(--gd-gold);
+  border-color: var(--gd-gold);
+  color: #1a2e3b !important;
+  box-shadow: 0 8px 22px rgba(189, 147, 46, 0.28);
 }
 
 .guides-hero-actions .btn-primary:hover {
-  background: var(--gd-teal-dark);
-  border-color: var(--gd-teal-dark);
+  background: #d4a93a;
+  border-color: #d4a93a;
+  color: #1a2e3b !important;
 }
 
 .guides-hero-actions .btn-secondary {
-  color: var(--gd-teal);
-  border-color: var(--gd-border);
-  background: rgba(255, 255, 255, 0.85);
+  color: var(--gd-text) !important;
+  border: 1.5px solid var(--gd-border);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: none;
 }
 
 .guides-hero-actions .btn-secondary:hover {
   border-color: var(--gd-teal);
+  color: var(--gd-teal-dark) !important;
   background: #fff;
 }
 
@@ -641,13 +646,28 @@ html:has(.guides-page) {
 }
 
 .guides-page .btn-primary {
-  background: var(--gd-teal);
-  border-color: var(--gd-teal);
+  background: var(--gd-gold);
+  border-color: var(--gd-gold);
+  color: #1a2e3b !important;
+  box-shadow: 0 8px 22px rgba(189, 147, 46, 0.28);
 }
 
 .guides-page .btn-primary:hover {
-  background: var(--gd-teal-dark);
-  border-color: var(--gd-teal-dark);
+  background: #d4a93a;
+  border-color: #d4a93a;
+  color: #1a2e3b !important;
+}
+
+.guides-page .btn-secondary {
+  color: var(--gd-text) !important;
+  border: 1.5px solid var(--gd-border);
+  background: #fff;
+  box-shadow: none;
+}
+
+.guides-page .btn-secondary:hover {
+  border-color: var(--gd-teal);
+  color: var(--gd-teal-dark) !important;
 }
 
 @media (max-width: 640px) {
