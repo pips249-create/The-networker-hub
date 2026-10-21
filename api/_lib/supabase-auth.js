@@ -752,14 +752,15 @@ async function provisionOrganiserLogin(organiserId) {
     display_name: name || null,
   };
   const now = new Date().toISOString();
+  // Provisioning may unlock organiser access, but inbox confirmation is still
+  // required before Welcome mail and the organiser workspace (do not set
+  // organiser_email_verified_at here).
   if (createdAuth) {
     hubPatch.emails_enabled = false;
     hubPatch.organiser_access_at = now;
-    hubPatch.organiser_email_verified_at = now;
   } else {
     if (!existingHub) hubPatch.emails_enabled = false;
     if (!existingHub?.organiser_access_at) hubPatch.organiser_access_at = now;
-    if (!existingHub?.organiser_email_verified_at) hubPatch.organiser_email_verified_at = now;
   }
 
   await upsertHubAccount(hubPatch);

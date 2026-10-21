@@ -346,9 +346,9 @@ async function rejectGroupForSession(session, groupId, notes) {
 
 /**
  * When someone authenticates with the same email as a pending group profile,
- * enable organiser access / view so they can claim — but do NOT mark the email
- * confirmed. Inbox confirmation (6-digit code) is still required before welcome
- * mail and sensitive organiser actions.
+ * point hub_view at organiser and mark access as pending — but do NOT grant
+ * organiser_access_at or mark the email confirmed. Inbox confirmation
+ * (6-digit code) is required before Welcome mail and the organiser workspace.
  */
 async function bootstrapOrganiserFromPendingClaims(session) {
   const pendingGroups = await listPendingClaimGroupsForSession(session);
@@ -365,26 +365,36 @@ async function bootstrapOrganiserFromPendingClaims(session) {
   }
 
   const sb = getSupabaseAdmin();
-  const now = new Date().toISOString();
   const { data: hub } = await sb
     .from('hub_accounts')
     .select('organiser_access_at, organiser_email_verified_at, hub_view, role')
     .eq('user_id', session.sub)
     .maybeSingle();
 
-  // Only enable organiser access / view — never rewrite platform role (login was demoting admins).
-  // Do not set organiser_email_verified_at: matching a directory email is not inbox proof.
+  // Point hub_view at organiser so after inbox confirm they land in the right
+  // workspace. Do not set organiser_access_at or organiser_email_verified_at:
+  // matching a directory email is not inbox proof, and access waits for the
+  // typed confirmation code (see auth-verify-organiser-email).
   const patch = {
     user_id: session.sub,
     hub_view: 'organiser',
-    organiser_access_at: hub?.organiser_access_at || now,
   };
+  if (hub?.organiser_access_at) {
+    patch.organiser_access_at = hub.organiser_access_at;
+  }
   if (!hub) {
     patch.role = 'client';
   }
 
   const { error } = await sb.from('hub_accounts').upsert(patch, { onConflict: 'user_id' });
   if (error) throw new Error(error.message);
+
+  try {
+    const { setOrganiserAccessPending } = require('./organiser-auth-intent');
+    await setOrganiserAccessPending(session.sub, true);
+  } catch {
+    /* Pending flag is best-effort; verify still unlocks via pendingClaimCount */
+  }
 
   return { bootstrapped: true, pendingCount };
 }

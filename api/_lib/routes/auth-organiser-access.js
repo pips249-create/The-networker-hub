@@ -3,6 +3,7 @@ const { useSupabase } = require('../supabase');
 const sbAuth = require('../supabase-auth');
 const { getOrganiserAccessStatus } = require('../organiser-access-guard');
 const { sendOrganiserEmailVerification } = require('../organiser-email-verification');
+const { setOrganiserAccessPending } = require('../organiser-auth-intent');
 
 function parseBody(req) {
   let body = req.body;
@@ -168,13 +169,19 @@ module.exports = async function handler(req, res) {
 
   try {
     const before = await getOrganiserAccessStatus(session);
-    await sbAuth.enableOrganiserAccess(session.sub);
-    setHubViewCookie(res, 'organiser');
 
-    let emailSent = false;
-    let verifyMessage = null;
-
+    // Inbox confirmation first — do not unlock the organiser workspace until
+    // the 6-digit code succeeds (see auth-verify-organiser-email).
     if (!before.organiserEmailVerified) {
+      try {
+        await setOrganiserAccessPending(session.sub, true);
+      } catch {
+        /* Verify can still complete */
+      }
+      setHubViewCookie(res, 'organiser');
+
+      let emailSent = false;
+      let verifyMessage = null;
       try {
         await sendOrganiserEmailVerification({
           userId: session.sub,
@@ -185,22 +192,39 @@ module.exports = async function handler(req, res) {
         verifyMessage = 'We sent a confirmation code to ' + session.email + '.';
       } catch {
         verifyMessage =
-          'Organiser access enabled, but we could not send a confirmation email yet. Use Resend code on the next screen.';
+          'Confirm your email before organiser access is enabled. Use Resend code on the next screen if needed.';
       }
+
+      const status = await getOrganiserAccessStatus(session);
+      return json(res, 200, {
+        ok: true,
+        ...status,
+        emailSent,
+        verifyMessage,
+        redirect: '/organiser/verify-email',
+        message:
+          'Confirm your email to enable organiser access. We sent a code to ' + session.email + '.',
+      });
     }
 
-    const status = await getOrganiserAccessStatus(session);
-    const redirect = !before.organiserEmailVerified ? '/organiser/verify-email' : '/organiser/';
+    await sbAuth.enableOrganiserAccess(session.sub);
+    try {
+      await setOrganiserAccessPending(session.sub, false);
+    } catch {
+      /* Access is already enabled */
+    }
+    setHubViewCookie(res, 'organiser');
 
+    const status = await getOrganiserAccessStatus(session);
     return json(res, 200, {
       ok: true,
       ...status,
-      emailSent,
-      verifyMessage,
-      redirect,
+      emailSent: false,
+      verifyMessage: null,
+      redirect: '/organiser/',
       message: before.organiserAccess
         ? 'Organiser access is already enabled.'
-        : 'Organiser access enabled. You can set up your organiser page while we confirm your email.',
+        : 'Organiser access enabled.',
     });
   } catch (e) {
     return json(res, 500, {

@@ -1,12 +1,48 @@
 /**
  * Detect organiser signup intent and opt users in without a separate enable step
  * when they arrive from for-organisers CTAs (still requires email verification).
+ *
+ * Organiser workspace access and the Welcome email both wait until the inbox
+ * confirmation code succeeds — matching a directory email is not enough.
  */
 const { isClientRole, setHubViewCookie } = require('./auth');
 const sbAuth = require('./supabase-auth');
+const { getSupabaseAdmin } = require('./supabase');
 const { getOrganiserAccessStatus } = require('./organiser-access-guard');
 const { sendOrganiserEmailVerification } = require('./organiser-email-verification');
 const { buildEmailVerifyRedirect } = require('./organiser-email-verify-paths');
+
+const ORGANISER_ACCESS_PENDING_KEY = 'organiser_access_pending';
+
+async function setOrganiserAccessPending(userId, pending) {
+  const uid = String(userId || '').trim();
+  if (!uid) return { ok: false, skipped: true, reason: 'missing_user' };
+
+  const sb = getSupabaseAdmin();
+  const { data, error } = await sb.auth.admin.getUserById(uid);
+  if (error || !data?.user) {
+    return { ok: false, skipped: true, reason: 'user_not_found' };
+  }
+
+  const user_metadata = { ...(data.user.user_metadata || {}) };
+  if (pending) {
+    user_metadata[ORGANISER_ACCESS_PENDING_KEY] = true;
+  } else {
+    delete user_metadata[ORGANISER_ACCESS_PENDING_KEY];
+  }
+  const { error: updateError } = await sb.auth.admin.updateUserById(uid, { user_metadata });
+  if (updateError) throw new Error(updateError.message);
+  return { ok: true, pending: Boolean(pending) };
+}
+
+async function hasOrganiserAccessPending(userId) {
+  const uid = String(userId || '').trim();
+  if (!uid) return false;
+  const sb = getSupabaseAdmin();
+  const { data, error } = await sb.auth.admin.getUserById(uid);
+  if (error || !data?.user) return false;
+  return Boolean(data.user.user_metadata?.[ORGANISER_ACCESS_PENDING_KEY]);
+}
 
 function organiserPathFromNext(next) {
   const raw = String(next || '').trim();
@@ -70,6 +106,31 @@ async function maybeAutoEnableOrganiserAccess(session, res, options = {}) {
   const skipVerificationEmail = Boolean(options.skipVerificationEmail);
 
   const before = await getOrganiserAccessStatus(session);
+  if (!before.organiserEmailVerified) {
+    try {
+      await setOrganiserAccessPending(session.sub, true);
+    } catch {
+      /* Verify screen can still complete; enable-after-verify is best-effort */
+    }
+    setHubViewCookie(res, 'organiser');
+    if (!skipVerificationEmail) {
+      try {
+        await sendOrganiserEmailVerification({
+          userId: session.sub,
+          email: session.email,
+          name: session.name,
+        });
+      } catch {
+        /* The verify screen can resend. Do not put the code in this redirect. */
+      }
+    }
+    return {
+      enabled: false,
+      pendingVerification: true,
+      redirect: '/organiser/verify-email',
+    };
+  }
+
   if (before.organiserAccess) {
     return {
       enabled: false,
@@ -82,35 +143,60 @@ async function maybeAutoEnableOrganiserAccess(session, res, options = {}) {
     return {
       enabled: false,
       bootstrapped: true,
-      redirect: before.organiserEmailVerified
-        ? '/organiser/?onboard=claim'
-        : '/organiser/verify-email',
+      redirect: '/organiser/?onboard=claim',
     };
   }
 
   await sbAuth.enableOrganiserAccess(session.sub);
-  setHubViewCookie(res, 'organiser');
-
-  let verifyPath = null;
-  if (!before.organiserEmailVerified) {
-    if (!skipVerificationEmail) {
-      try {
-        await sendOrganiserEmailVerification({
-          userId: session.sub,
-          email: session.email,
-          name: session.name,
-        });
-      } catch {
-        /* The verify screen can resend. Do not put the code in this redirect. */
-      }
-    }
-    verifyPath = '/organiser/verify-email';
+  try {
+    await setOrganiserAccessPending(session.sub, false);
+  } catch {
+    /* Access is already enabled */
   }
+  setHubViewCookie(res, 'organiser');
 
   return {
     enabled: true,
-    redirect: verifyPath || (await resolveOrganiserRedirect(session)),
+    redirect: await resolveOrganiserRedirect(session),
   };
+}
+
+/**
+ * After a successful inbox code submit, grant organiser access when the user
+ * asked for it (CTA / enable) or already matches a pending claim / profile.
+ */
+async function maybeEnableOrganiserAccessAfterEmailVerify(session, res) {
+  if (!session?.sub || !isClientRole(session.role)) {
+    return { enabled: false };
+  }
+
+  const status = await getOrganiserAccessStatus(session);
+  if (!status.organiserEmailVerified) {
+    return { enabled: false, reason: 'email_not_verified' };
+  }
+
+  const pendingIntent = await hasOrganiserAccessPending(session.sub).catch(() => false);
+  const shouldEnable =
+    pendingIntent ||
+    status.organiserAccess ||
+    status.pendingClaimCount > 0 ||
+    status.organiserProfiles > 0 ||
+    status.ownedOpportunityCount > 0;
+
+  if (!shouldEnable) {
+    return { enabled: false, reason: 'no_organiser_intent' };
+  }
+
+  if (!status.organiserAccessAt) {
+    await sbAuth.enableOrganiserAccess(session.sub);
+  }
+  try {
+    await setOrganiserAccessPending(session.sub, false);
+  } catch {
+    /* Access grant is the important part */
+  }
+  setHubViewCookie(res, 'organiser');
+  return { enabled: true };
 }
 
 function isPreservableOrganiserDeepLink(next) {
@@ -141,10 +227,14 @@ function redirectAfterOrganiserAuth({ next, intent, autoResult, defaultRedirect 
 }
 
 module.exports = {
+  ORGANISER_ACCESS_PENDING_KEY,
   isOrganiserAuthIntent,
   isOrganiserClaimNext,
   isPreservableOrganiserDeepLink,
   maybeAutoEnableOrganiserAccess,
+  maybeEnableOrganiserAccessAfterEmailVerify,
+  setOrganiserAccessPending,
+  hasOrganiserAccessPending,
   resolveOrganiserRedirect,
   redirectAfterOrganiserAuth,
   buildEmailVerifyRedirect,

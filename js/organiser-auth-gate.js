@@ -54,6 +54,22 @@
     window[RESOLVED_KEY] = data || { ok: false };
 
     if (data && data.ok && data.user) {
+      // Inbox confirmation is required before the organiser workspace opens.
+      // Pending claims / provisioned profiles must not skip Confirm your email.
+      if (
+        data.user.role !== 'admin' &&
+        !data.impersonating &&
+        data.organiserEmailVerified !== true
+      ) {
+        var verifyNext =
+          '/organiser/' +
+          (window.location.search || '') +
+          (window.location.hash || '');
+        window.location.replace(
+          '/organiser/verify-email?next=' + encodeURIComponent(verifyNext)
+        );
+        return;
+      }
       var hasAccess =
         data.organiserUiVisible || data.user.role === 'admin' || data.impersonating;
       if (!hasAccess) {

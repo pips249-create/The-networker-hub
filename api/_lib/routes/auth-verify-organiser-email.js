@@ -4,7 +4,10 @@ const { verifyOrganiserEmailToken, hasActiveVerifyCode } = require('../organiser
 const { getOrganiserAccessStatus } = require('../organiser-access-guard');
 const { getHubAccount } = require('../supabase-auth');
 const { maybeSendDeferredAccountWelcome } = require('../account-emails');
-const { resolveOrganiserRedirect } = require('../organiser-auth-intent');
+const {
+  resolveOrganiserRedirect,
+  maybeEnableOrganiserAccessAfterEmailVerify,
+} = require('../organiser-auth-intent');
 
 function parseBody(req) {
   let body = req.body;
@@ -53,6 +56,14 @@ module.exports = async function handler(req, res) {
 
   try {
     const result = await verifyOrganiserEmailToken({ userId: session.sub, token });
+
+    try {
+      // Access is deferred until this typed-code success — not at register/enable.
+      await maybeEnableOrganiserAccessAfterEmailVerify(session, res);
+    } catch {
+      /* Verification still succeeds if access enable fails */
+    }
+
     const status = await getOrganiserAccessStatus(session);
 
     try {
