@@ -1391,7 +1391,7 @@
     }
     function scrollEventsRail(dir) {
       if (!els.eventsRail) return;
-      var step = Math.max(240, Math.round(els.eventsRail.clientWidth * 0.85));
+      var step = Math.max(280, Math.round(els.eventsRail.clientWidth * 0.85));
       els.eventsRail.scrollBy({ left: dir * step, behavior: 'smooth' });
     }
     if (els.eventsRailPrev) {

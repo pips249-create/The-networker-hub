@@ -1138,9 +1138,9 @@
 }
 
 .intl-events-inner {
-  max-width: 1040px;
+  max-width: 1280px;
   margin: 0 auto;
-  padding: 36px clamp(16px, 4vw, 28px) 28px;
+  padding: 36px clamp(16px, 3vw, 28px) 32px;
 }
 
 .intl-events-head {
@@ -1289,7 +1289,7 @@
 }
 
 .intl-events-item {
-  flex: 0 0 min(200px, 68vw);
+  flex: 0 0 min(260px, 74vw);
   scroll-snap-align: start;
   display: flex;
   flex-direction: column;
@@ -1335,8 +1335,8 @@
 
 .intl-events-item-body {
   display: grid;
-  gap: 4px;
-  padding: 12px 12px 14px;
+  gap: 5px;
+  padding: 14px 14px 16px;
   min-width: 0;
   flex: 1;
 }
@@ -1363,12 +1363,12 @@
 .intl-events-item-title {
   margin: 0;
   font-family: 'DM Serif Display', Georgia, serif;
-  font-size: 0.98rem;
+  font-size: 1.05rem;
   font-weight: 400;
   color: var(--charcoal);
   line-height: 1.25;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
