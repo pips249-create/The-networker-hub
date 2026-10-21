@@ -72,7 +72,7 @@
               <span class="org-nav-badge org-nav-badge--action" id="org-payment-setup-nav-badge" hidden>Setup</span>
             </a>
             <a href="#groups" class="hub-side-nav-link" data-org-route="groups">Organiser pages</a>
-            <a href="#connected-booking" class="hub-side-nav-link" id="org-nav-connected-booking" data-org-route="connected-booking" hidden>
+            <a href="#connected-booking" class="hub-side-nav-link" id="org-nav-connected-booking" data-org-route="connected-booking">
               Connected booking
             </a>
             <a href="#memberships" class="hub-side-nav-link" id="org-nav-memberships" data-org-route="memberships" data-org-memberships-nav>
@@ -816,14 +816,44 @@
               <p class="org-page-kicker">Integrations</p>
               <h1 class="org-page-title" id="cb-page-title">Connected booking</h1>
               <p class="org-page-lead" id="cb-page-lead">
-                Subscribe here, enable <strong>Eventbrite</strong> or <strong>Ticket Tailor</strong> once per account, then
-                link each event on <strong>Connected setup</strong>. Use <strong>Recent sync attempts</strong> when buyers
-                do not appear on your attendee list.
+                Keep checkout on Eventbrite, Ticket Tailor, or your own website — and sync buyers to your Networker UK
+                attendee list for reviews and round-ups.
               </p>
             </div>
             <button type="button" class="org-btn org-btn-outline" id="cb-goto-pricing" hidden>Plans &amp; pricing</button>
           </header>
           <p class="ee-hint cb-auth-status" id="cb-auth-status" hidden role="status"></p>
+
+          <aside class="ee-card cb-coming-soon-panel" id="cb-coming-soon-panel" aria-labelledby="cb-coming-soon-title">
+            <p class="ee-booking-help-kicker">Coming soon</p>
+            <h2 class="org-page-subtitle" id="cb-coming-soon-title">Connected booking is on the way</h2>
+            <p class="ee-hint">
+              List your events on The Networker UK while people keep booking where they already do — Eventbrite, Ticket
+              Tailor, or your own website. When a ticket is sold, we can sync the buyer onto your attendee list here, so
+              verified reviews and round-ups still work.
+            </p>
+            <ul class="ee-hint" style="margin: 12px 0 0; padding-left: 1.2rem; line-height: 1.55">
+              <li>Checkout stays on your existing booking system</li>
+              <li>Buyers appear on your Networker UK attendee list</li>
+              <li>Verified post-event reviews and round-ups when sync is live</li>
+            </ul>
+            <p class="ee-hint" style="margin-top: 16px">
+              Want early access or a walkthrough for your group?
+              Email
+              <a href="mailto:hi@thenetworkeruk.com?subject=Connected%20booking%20-%20find%20out%20more"
+                >hi@thenetworkeruk.com</a
+              >
+              to find out more.
+            </p>
+            <p class="ee-attendance-next" style="margin-top: 14px">
+              <a class="ee-btn ee-btn-gold" href="mailto:hi@thenetworkeruk.com?subject=Connected%20booking%20-%20find%20out%20more"
+                >Email hi@thenetworkeruk.com</a
+              >
+              <a class="ee-btn ee-btn-outline" href="/guides/connect-eventbrite" target="_blank" rel="noopener noreferrer"
+                >Preview the Eventbrite guide</a
+              >
+            </p>
+          </aside>
 
           <aside class="ee-card org-link-out-panel" id="cb-link-out-panel" hidden>
             <p class="ee-booking-help-kicker">Partnership</p>
@@ -3184,7 +3214,7 @@
               <span class="org-nav-badge" id="org-more-notifications-badge" hidden>New</span>
             </button>
             <a href="#groups" class="org-more-sheet-link" data-org-route="groups">Organiser pages</a>
-            <a href="#connected-booking" class="org-more-sheet-link" id="org-more-connected-booking" data-org-route="connected-booking" hidden>Connected booking</a>
+            <a href="#connected-booking" class="org-more-sheet-link" id="org-more-connected-booking" data-org-route="connected-booking">Connected booking</a>
             <a href="#social" class="org-more-sheet-link" data-org-route="social">Promote</a>
             <a href="#communicate" class="org-more-sheet-link" data-org-route="communicate">Communicate</a>
             <a href="#team" class="org-more-sheet-link" data-org-route="team" id="org-more-team">
@@ -4173,10 +4203,10 @@
     <script src="../js/organiser-quarter-time.js?v=20260828openday2" defer></script>
     <script src="../js/organiser-setup-review.js?v=20260910impersonate1" defer></script>
     <script src="../js/organiser-connected-billing-banner.js?v=20260918setup1" defer></script>
-    <script src="../js/organiser-connected-booking-page.js?v=20261016linkoutui1" defer></script>
+    <script src="../js/organiser-connected-booking-page.js?v=20261021comingsoon1" defer></script>
     <script src="../js/organiser-connected-booking-providers.js?v=20261021own1" defer></script>
     <script src="../js/organiser-event-list-visibility.js?v=20260925recent1" defer></script>
-    <script src="../js/organiser-dashboard.js?v=20261021browse2" defer></script>
+    <script src="../js/organiser-dashboard.js?v=20261021comingsoon1" defer></script>
     <script src="../js/organiser-workspace-comfort.js?v=20261008profile1" defer></script>
   </body>
 </html>
