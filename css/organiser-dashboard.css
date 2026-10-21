@@ -13193,3 +13193,86 @@ body.org-more-sheet-open {
 .org-setup-review-terms {
   margin-top: 4px;
 }
+
+/* Connected booking collapsible sections */
+.cb-fold {
+  margin: 0 0 14px;
+  border: 1px solid var(--od-border-soft, #cfe4ea);
+  border-radius: 14px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.cb-fold-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.cb-fold-summary::-webkit-details-marker {
+  display: none;
+}
+
+.cb-fold-summary:hover {
+  background: #f7fbfc;
+}
+
+.cb-fold-summary-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.cb-fold-kicker {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--od-text-soft, #7a94a3);
+}
+
+.cb-fold-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--od-purple-dark, #084a52);
+}
+
+.cb-fold-sub {
+  font-size: 12px;
+  color: var(--od-text-soft, #7a94a3);
+}
+
+.cb-fold-chev {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--od-text-soft, #7a94a3);
+  transform: rotate(-90deg);
+  transition: transform 0.15s ease;
+}
+
+.cb-fold[open] > .cb-fold-summary .cb-fold-chev {
+  transform: rotate(0deg);
+}
+
+.cb-fold-body {
+  padding: 0 16px 16px;
+  border-top: 1px solid rgba(13, 110, 122, 0.1);
+}
+
+.cb-fold-body > .ee-hint:first-child {
+  margin-top: 12px;
+}
+
+.org-page--connected-booking .org-connected-workspace-card {
+  margin-bottom: 14px;
+}
+
+.org-page--connected-booking .org-connected-pricing[hidden] {
+  display: none !important;
+}

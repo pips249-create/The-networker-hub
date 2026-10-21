@@ -168,9 +168,31 @@
       '</tbody></table>';
   }
 
+  function updateProvidersFoldSub(providers) {
+    var sub = document.getElementById('cb-providers-fold-sub');
+    if (!sub) return;
+    var rows = (providers || []).filter(function (p) {
+      return p && p.id !== 'custom';
+    });
+    var enabled = rows.filter(function (p) {
+      return p.connectionStatus && p.connectionStatus !== 'not_configured';
+    }).length;
+    if (!rows.length) {
+      sub.textContent = 'Eventbrite, Ticket Tailor, or your own website';
+      return;
+    }
+    sub.textContent =
+      enabled === 0
+        ? 'None enabled yet — tap to set up'
+        : enabled === 1
+          ? '1 provider enabled — tap to manage'
+          : enabled + ' providers enabled — tap to manage';
+  }
+
   function renderProviders(data) {
     if (!data || !data.ok) return;
     panel.hidden = false;
+    updateProvidersFoldSub(data.providers);
     if (linkCard) linkCard.hidden = false;
 
     if (data.schemaMissing && schemaWarn) {
