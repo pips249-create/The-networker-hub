@@ -1239,7 +1239,7 @@
   min-width: 0;
   overflow-x: auto;
   overflow-y: hidden;
-  scroll-snap-type: x mandatory;
+  scroll-snap-type: x proximity;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
@@ -1289,11 +1289,11 @@
 }
 
 .intl-events-item {
-  flex: 0 0 min(260px, 78vw);
+  flex: 0 0 min(200px, 68vw);
   scroll-snap-align: start;
   display: flex;
   flex-direction: column;
-  border-radius: 16px;
+  border-radius: 14px;
   border: 1px solid rgba(184, 174, 166, 0.35);
   background: rgba(255, 255, 255, 0.88);
   overflow: hidden;
@@ -1335,8 +1335,8 @@
 
 .intl-events-item-body {
   display: grid;
-  gap: 6px;
-  padding: 14px 14px 16px;
+  gap: 4px;
+  padding: 12px 12px 14px;
   min-width: 0;
   flex: 1;
 }
@@ -1344,8 +1344,8 @@
 .intl-events-item-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 10px;
-  font-size: 11px;
+  gap: 4px 8px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -1363,7 +1363,7 @@
 .intl-events-item-title {
   margin: 0;
   font-family: 'DM Serif Display', Georgia, serif;
-  font-size: 1.12rem;
+  font-size: 0.98rem;
   font-weight: 400;
   color: var(--charcoal);
   line-height: 1.25;
@@ -1375,14 +1375,20 @@
 
 .intl-events-item-place {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .intl-events-item-organiser {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
   color: var(--charcoal);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .intl-events-item-organiser a {
@@ -1397,11 +1403,11 @@
 
 .intl-events-item-link {
   margin-top: auto;
-  padding-top: 8px;
+  padding-top: 6px;
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--charcoal);
   text-decoration: none;
