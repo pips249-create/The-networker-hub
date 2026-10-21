@@ -33,7 +33,13 @@ assert(
   'cheshire slot key',
   countyPartnerSlotKey('cheshire') === 'networking_county_partner_cheshire'
 );
-assert('twelve launch counties', listCountyPartnerRegions().length === 12);
+assert(
+  'includes suffolk among county partner regions',
+  listCountyPartnerRegions().some(function (c) {
+    return c.slug === 'suffolk';
+  })
+);
+assert('twenty county partner regions', listCountyPartnerRegions().length === 20);
 assert(
   'city slug rejected',
   normalizeCountySlugs(['chester', 'manchester']).length === 0

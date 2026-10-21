@@ -74,6 +74,7 @@
         { slug: 'oxfordshire', label: 'Oxfordshire' },
         { slug: 'shropshire', label: 'Shropshire' },
         { slug: 'staffordshire', label: 'Staffordshire' },
+        { slug: 'suffolk', label: 'Suffolk' },
         { slug: 'surrey', label: 'Surrey' },
         { slug: 'sussex', label: 'Sussex' },
         { slug: 'warwickshire', label: 'Warwickshire' },

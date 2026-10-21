@@ -61,6 +61,7 @@ const REGION_THEMES = {
   devon: theme('#2a5a40', 'From Exeter and Plymouth to Torquay and business communities across Devon.', 'devon', '#9dcea8'),
   dorset: theme('#8a6840', 'From Bournemouth and Poole to Dorchester and business communities across Dorset.', 'dorset', '#e8c89a'),
   norfolk: theme('#3a5878', 'From Norwich and King’s Lynn to the coast and business communities across Norfolk.', 'norfolk', '#a8c8e0'),
+  suffolk: theme('#2e5868', 'From Ipswich and Bury St Edmunds to Lowestoft and business communities across Suffolk.', 'suffolk', '#a8d0dc'),
   staffordshire: theme('#4a5870', 'From Stoke and Stafford to Lichfield and business communities across Staffordshire.', 'staffordshire', '#b8c4d8'),
   warwickshire: theme('#5a4038', 'From Warwick and Leamington to Stratford and business communities across Warwickshire.', 'warwickshire', '#d4b8a8'),
   yorkshire: theme('#3d4a62', 'From Leeds, York and Sheffield to the coast and business communities across Yorkshire.', 'yorkshire', '#c5d0e0'),

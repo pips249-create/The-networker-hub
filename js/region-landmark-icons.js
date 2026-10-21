@@ -200,6 +200,11 @@
     "chip": "<path d=\"M8 72h64\" opacity=\".35\" stroke-width=\"1.1\"/><path d=\"M8 72V46h64v26\"/><path d=\"M28 46V30h24v16\" stroke-width=\"1.35\"/><path d=\"M28 30L40 4l12 26\" stroke-width=\"1.35\"/><path d=\"M40 4V0\" stroke-width=\"1.2\"/><path d=\"M8 46l12-8M72 46l-12-8\" opacity=\".55\" stroke-width=\"1.1\"/><path d=\"M14 58h8M36 34h8v8M58 58h8\" opacity=\".45\" stroke-width=\"1\"/>",
     "hero": "<path d=\"M16 82h208\" opacity=\".35\"/><path d=\"M24 82V48h192v34\"/><path d=\"M88 48V28h64v20\" stroke-width=\"2\"/><path d=\"M88 28L120 0l32 28\" stroke-width=\"2\"/><path d=\"M120 0V-6\"/><path d=\"M24 48l28-14M216 48l-28-14\" opacity=\".55\"/><path d=\"M40 62h16M108 32h24v12M184 62h16\" opacity=\".45\"/>"
   },
+  "southwold-lighthouse": {
+    "label": "Southwold Lighthouse",
+    "chip": "<path d=\"M8 72h64\" opacity=\".35\" stroke-width=\"1.1\"/><path d=\"M30 72V26h20v46\" stroke-width=\"1.4\"/><path d=\"M28 26h24l-4-8h-16z\"/><path d=\"M34 18h12V10h-12z\"/><path d=\"M40 10V4\" stroke-width=\"1.2\"/><circle cx=\"40\" cy=\"14\" r=\"2.8\" stroke-width=\"1.1\"/><path d=\"M30 38h20M30 50h20M30 62h20\" opacity=\".4\" stroke-width=\"1\"/><path d=\"M12 68c8-4 16-6 28-6s20 2 28 6\" opacity=\".45\" stroke-width=\"1.1\"/>",
+    "hero": "<path d=\"M20 82h200\" opacity=\".35\"/><path d=\"M104 82V24h32v58\" stroke-width=\"2\"/><path d=\"M100 24h40l-8-14h-24z\"/><path d=\"M112 10h16V2h-16z\"/><path d=\"M120 2V-4\"/><circle cx=\"120\" cy=\"8\" r=\"4\"/><path d=\"M104 40h32M104 56h32M104 70h32\" opacity=\".4\"/><path d=\"M40 74c20-10 40-14 80-14s60 4 80 14\" opacity=\".45\"/>"
+  },
   "warwick-castle": {
     "label": "Warwick Castle",
     "chip": "<path d=\"M8 72h64\" opacity=\".35\" stroke-width=\"1.1\"/><path d=\"M8 72V48h64v24\" stroke-width=\"1.35\"/><path d=\"M8 48h64\"/><path d=\"M10 48v-5h6v5M22 48v-5h6v5M46 48v-5h6v5M58 48v-5h6v5\" stroke-width=\"1.1\"/><circle cx=\"28\" cy=\"40\" r=\"8\" stroke-width=\"1.3\"/><circle cx=\"52\" cy=\"40\" r=\"8\" stroke-width=\"1.3\"/><path d=\"M28 32V26M52 32V26\" stroke-width=\"1.15\"/><path d=\"M36 72V58h8v14\" opacity=\".55\" stroke-width=\"1.15\"/>",
@@ -246,6 +251,7 @@
   "devon": "smeaton-tower",
   "dorset": "corfe-castle",
   "norfolk": "norwich-cathedral",
+  "suffolk": "southwold-lighthouse",
   "staffordshire": "lichfield-cathedral",
   "warwickshire": "warwick-castle",
   "yorkshire": "york-minster",

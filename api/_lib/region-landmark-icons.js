@@ -712,6 +712,20 @@ const LANDMARKS = {
     hero:
       '<path d="M16 82h208" opacity=".35"/><path d="M24 82V48h192v34"/><path d="M88 48V28h64v20" stroke-width="2"/><path d="M88 28L120 0l32 28" stroke-width="2"/><path d="M120 0V-6"/><path d="M24 48l28-14M216 48l-28-14" opacity=".55"/><path d="M40 62h16M108 32h24v12M184 62h16" opacity=".45"/>',
   },
+  'southwold-lighthouse': {
+    label: 'Southwold Lighthouse',
+    chip:
+      HATCH.ground +
+      '<path d="M30 72V26h20v46" stroke-width="1.4"/>' +
+      '<path d="M28 26h24l-4-8h-16z"/>' +
+      '<path d="M34 18h12V10h-12z"/>' +
+      '<path d="M40 10V4" stroke-width="1.2"/>' +
+      '<circle cx="40" cy="14" r="2.8" stroke-width="1.1"/>' +
+      '<path d="M30 38h20M30 50h20M30 62h20" opacity=".4" stroke-width="1"/>' +
+      '<path d="M12 68c8-4 16-6 28-6s20 2 28 6" opacity=".45" stroke-width="1.1"/>',
+    hero:
+      '<path d="M20 82h200" opacity=".35"/><path d="M104 82V24h32v58" stroke-width="2"/><path d="M100 24h40l-8-14h-24z"/><path d="M112 10h16V2h-16z"/><path d="M120 2V-4"/><circle cx="120" cy="8" r="4"/><path d="M104 40h32M104 56h32M104 70h32" opacity=".4"/><path d="M40 74c20-10 40-14 80-14s60 4 80 14" opacity=".45"/>',
+  },
   'warwick-castle': {
     label: 'Warwick Castle',
     chip:
@@ -792,6 +806,7 @@ const LANDMARK_BY_REGION = {
   devon: 'smeaton-tower',
   dorset: 'corfe-castle',
   norfolk: 'norwich-cathedral',
+  suffolk: 'southwold-lighthouse',
   staffordshire: 'lichfield-cathedral',
   warwickshire: 'warwick-castle',
   yorkshire: 'york-minster',
