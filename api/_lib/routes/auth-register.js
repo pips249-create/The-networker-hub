@@ -1,18 +1,19 @@
-const { setSessionCookie, json, setCors, hubViewFromRequest } = require('../auth');
+const { setSessionCookie, json, setCors, hubViewFromRequest, isAdminRole } = require('../auth');
 const { useSupabase } = require('../supabase');
 const sbAuth = require('../supabase-auth');
 const {
-  sendAccountWelcomeEmail,
   setAccountWelcomePolicy,
   ACCOUNT_WELCOME_AFTER_VERIFY,
   ACCOUNT_WELCOME_SKIP,
-  ACCOUNT_WELCOME_SENT,
 } = require('../account-emails');
 const { enforceRateLimitAsync, clientIp } = require('../rate-limit');
 const { verifyTurnstileToken } = require('../turnstile');
 const { validateNewPassword } = require('../password-policy');
 const { getOrganiserAccessStatus } = require('../organiser-access-guard');
-const { sendOrganiserEmailVerification } = require('../organiser-email-verification');
+const {
+  sendOrganiserEmailVerification,
+  clearOrganiserEmailVerification,
+} = require('../organiser-email-verification');
 const {
   isOrganiserAuthIntent,
   isOrganiserClaimNext,
@@ -158,14 +159,25 @@ module.exports = async function handler(req, res) {
       defaultRedirect: redirect,
     });
 
+    // Self-serve signup always needs a fresh inbox code. Staff provisioning
+    // marks organiser_email_verified_at without inbox proof — that must not
+    // unlock Welcome or skip Confirm your email.
+    if (!isAdminRole(sessionUser.role)) {
+      try {
+        await clearOrganiserEmailVerification(sessionUser.sub);
+      } catch {
+        /* Still send the confirm email below */
+      }
+    }
+
     const accessStatus = await getOrganiserAccessStatus(sessionUser);
     let emailSent = false;
-    // Always require a fresh inbox code at signup unless this address is already confirmed.
-    // Pending-claim bootstrap must not count as confirmation (see supabase-organiser-claims).
-    const requiresEmailVerification = !accessStatus.organiserEmailVerified;
+    // Admins keep any prior verify flag; everyone else was cleared above.
+    const requiresEmailVerification =
+      !isAdminRole(sessionUser.role) || !accessStatus.organiserEmailVerified;
 
-    // Confirm-your-email must go out before (and without) the Welcome email.
-    // Welcome is deferred until verify succeeds so inboxes are not reversed.
+    // Confirm-your-email goes out at signup. Welcome is NEVER sent here —
+    // only after a successful code submit (see auth-verify-organiser-email).
     if (requiresEmailVerification) {
       const afterVerify = redirect;
       try {
@@ -183,29 +195,15 @@ module.exports = async function handler(req, res) {
         next: afterVerify,
         email: sessionUser.email,
       });
+    }
 
-      try {
-        await setAccountWelcomePolicy(
-          sessionUser.sub,
-          claimSignup ? ACCOUNT_WELCOME_SKIP : ACCOUNT_WELCOME_AFTER_VERIFY
-        );
-      } catch {
-        /* Policy is best-effort; verify can still complete without welcome */
-      }
-    } else if (claimSignup) {
-      try {
-        await setAccountWelcomePolicy(sessionUser.sub, ACCOUNT_WELCOME_SKIP);
-      } catch {
-        /* ignore */
-      }
-    } else {
-      // Already confirmed (e.g. provisioned login reclaim) — welcome is safe now.
-      try {
-        await sendAccountWelcomeEmail({ email, name });
-        await setAccountWelcomePolicy(sessionUser.sub, ACCOUNT_WELCOME_SENT);
-      } catch {
-        /* Registration succeeds even if welcome email fails */
-      }
+    try {
+      await setAccountWelcomePolicy(
+        sessionUser.sub,
+        claimSignup ? ACCOUNT_WELCOME_SKIP : ACCOUNT_WELCOME_AFTER_VERIFY
+      );
+    } catch {
+      /* Policy is best-effort; verify can still send welcome when unset */
     }
 
     return json(res, 201, {

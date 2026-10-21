@@ -59,11 +59,14 @@ async function storeVerifyToken(userId, token) {
   await ensureHubAccountRow(uid);
 
   const expiresAt = new Date(Date.now() + TOKEN_TTL_MS).toISOString();
+  // Issuing a fresh code always re-opens confirmation — prior staff/provision
+  // verified_at flags must not let Welcome or the verify page skip the code.
   const { data, error } = await sb
     .from('hub_accounts')
     .update({
       organiser_email_verify_token_hash: hashToken(token),
       organiser_email_verify_expires_at: expiresAt,
+      organiser_email_verified_at: null,
     })
     .eq('user_id', uid)
     .select('user_id')
@@ -93,6 +96,27 @@ async function clearVerifyToken(userId) {
       organiser_email_verify_expires_at: null,
     })
     .eq('user_id', String(userId || '').trim());
+}
+
+/**
+ * Self-serve signup must prove inbox access with a fresh code.
+ * Staff provisioning / silent imports set organiser_email_verified_at without
+ * an inbox check — clear that so Welcome cannot fire until confirm succeeds.
+ */
+async function clearOrganiserEmailVerification(userId) {
+  const sb = getSupabaseAdmin();
+  const uid = String(userId || '').trim();
+  if (!uid) throw new Error('missing_user');
+
+  const { error } = await sb
+    .from('hub_accounts')
+    .update({
+      organiser_email_verified_at: null,
+      organiser_email_verify_token_hash: null,
+      organiser_email_verify_expires_at: null,
+    })
+    .eq('user_id', uid);
+  if (error) throw new Error(error.message);
 }
 
 async function markOrganiserEmailVerified(userId) {
@@ -221,6 +245,7 @@ module.exports = {
   sendOrganiserEmailVerification,
   verifyOrganiserEmailToken,
   markOrganiserEmailVerified,
+  clearOrganiserEmailVerification,
   buildOrganiserVerifyEmailPath,
   hasActiveVerifyCode,
   newLegacyLinkToken,

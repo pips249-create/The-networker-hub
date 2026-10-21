@@ -129,10 +129,11 @@ module.exports = async function handler(req, res) {
       await sbAuth.showOrganiserWorkspace(session.sub);
       setHubViewCookie(res, 'organiser');
       const status = await getOrganiserAccessStatus(session);
-      const redirect =
-        status.organiserEmailVerified || status.pendingClaimCount > 0
-          ? '/organiser/'
-          : '/organiser/verify-email';
+      const redirect = !status.organiserEmailVerified
+        ? '/organiser/verify-email'
+        : status.pendingClaimCount > 0
+          ? '/organiser/?onboard=claim'
+          : '/organiser/';
       return json(res, 200, {
         ok: true,
         ...status,
