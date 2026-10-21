@@ -11300,11 +11300,20 @@
     if (!alertEl) return;
     if (!message) {
       alertEl.hidden = true;
+      alertEl.className = 'org-alert';
+      alertEl.innerHTML = '';
       return;
     }
     alertEl.hidden = false;
     alertEl.className = 'org-alert' + (isError ? ' error' : '');
     alertEl.innerHTML = message;
+  }
+
+  /** Drop softy info banners when changing pages; keep error alerts until dismissed/replaced. */
+  function clearOrganiserInfoAlertOnNavigate() {
+    if (!alertEl || alertEl.hidden) return;
+    if (alertEl.classList.contains('error')) return;
+    showOrganiserAlert(null);
   }
 
   function dedupeGroupsById(groups) {
@@ -11770,15 +11779,7 @@
       }
     }
     if (maybeRedirectToSingleMemberList()) return;
-    const groups = memberListGroups();
-    if (!groups.length) {
-      setRoute('groups');
-      showOrganiserAlert(
-        'Create an organiser page first, then open <strong>Membership</strong> from that row.',
-        false
-      );
-      return;
-    }
+    // Allow browsing Memberships with no organiser page — empty state offers create/search.
     setRoute('memberships');
   }
 
@@ -12140,6 +12141,7 @@
     }
     closeNotificationsPanel();
     closeOrgMoreSheet();
+    clearOrganiserInfoAlertOnNavigate();
     let page = route || 'dashboard';
     if (page === 'member-lists') page = 'memberships';
     let sub = null;
