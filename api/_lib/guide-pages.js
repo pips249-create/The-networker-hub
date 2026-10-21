@@ -160,7 +160,7 @@ const GUIDE_PAGES = {
       {
         id: 'check-it-worked',
         name: 'Check it worked',
-        text: 'Recent sync attempts should show own_site:accepted and the buyer should appear on Attendees. Verified reviews follow after the event ends.',
+        text: 'Use Send test booking on Connected setup (or Booking providers), then confirm Recent sync attempts shows own_site:accepted and the buyer appears on Attendees. Verified reviews follow after the event ends.',
       },
     ],
   },
