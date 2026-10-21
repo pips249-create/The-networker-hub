@@ -63,6 +63,67 @@
     });
   }
 
+  function defaultTestEventId(links) {
+    var linkInput = document.getElementById('cb-link-event-id');
+    if (linkInput && linkInput.value && String(linkInput.value).trim()) {
+      return String(linkInput.value).trim();
+    }
+    var own = (links || []).filter(function (row) {
+      return row && row.provider === 'own_site' && row.event_id;
+    })[0];
+    if (own) return String(own.event_id);
+    var any = (links || []).filter(function (row) {
+      return row && row.event_id;
+    })[0];
+    return any ? String(any.event_id) : '';
+  }
+
+  function bindSendTestBookingButtons(root, links) {
+    if (!root) return;
+    root.querySelectorAll('[data-send-test-booking]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var suggested = defaultTestEventId(links);
+        var eventId = window.prompt(
+          'Enter the Networker UK event id to receive the test attendee:',
+          suggested || ''
+        );
+        if (eventId == null) return;
+        eventId = String(eventId).trim();
+        if (!eventId) {
+          window.alert('Event id is required.');
+          return;
+        }
+        btn.disabled = true;
+        fetch('/api/organiser/connected-booking-providers', {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'send_test_booking', eventId: eventId }),
+        })
+          .then(function (r) {
+            return r.json().then(function (body) {
+              return { ok: r.ok, body: body };
+            });
+          })
+          .then(function (res) {
+            btn.disabled = false;
+            if (!res.ok) {
+              window.alert(res.body.message || res.body.error || 'Could not send test booking.');
+              return;
+            }
+            window.alert(res.body.message || 'Test booking sent.');
+            if (typeof window.refreshOrganiserConnectedBooking === 'function') {
+              window.refreshOrganiserConnectedBooking({ silent: true });
+            }
+          })
+          .catch(function () {
+            btn.disabled = false;
+            window.alert('Could not send test booking.');
+          });
+      });
+    });
+  }
+
   function renderEventLinks(links) {
     if (!linksCard || !linksTableWrap) return;
     var rows = (links || []).filter(function (row) {
@@ -142,6 +203,10 @@
           esc(p.webhookUrl) +
           '">Copy webhook URL</button>'
         : '';
+      var testBtn =
+        p.id === 'own_site' && p.webhookUrl
+          ? '<button type="button" class="ee-btn ee-btn-gold ee-btn-sm" data-send-test-booking="own_site">Send test booking</button>'
+          : '';
       var webhookBlock = p.webhookUrl
         ? '<p class="ee-hint cb-provider-webhook"><strong>Webhook URL</strong> (paste in ' +
           esc(p.label) +
@@ -149,7 +214,7 @@
           esc(p.webhookUrl) +
           '</code></p>'
         : '<p class="ee-hint">Click Enable to generate your webhook URL.</p>';
-      var actionBits = [copyBtn, enableBtn, guideBtn].filter(Boolean).join(' ');
+      var actionBits = [copyBtn, testBtn, enableBtn, guideBtn].filter(Boolean).join(' ');
       var actionsRow = actionBits
         ? '<p class="ee-attendance-next">' + actionBits + '</p>'
         : '';
@@ -170,6 +235,7 @@
     });
 
     bindCopyWebhookButtons(list);
+    bindSendTestBookingButtons(list, data.eventLinks || []);
     renderEventLinks(data.eventLinks || []);
 
     list.querySelectorAll('[data-enable-provider]').forEach(function (btn) {

@@ -1725,12 +1725,17 @@
         '</code></p>' +
         '<pre class="cb-code-block" id="ecs-own-site-sample" aria-label="Example JSON payload"></pre>' +
         '<p class="ee-attendance-next">' +
+        (own && own.webhookUrl
+          ? '<button type="button" class="ee-btn ee-btn-gold ee-btn-sm" data-send-test-booking="own_site">Send test booking</button>'
+          : '') +
         '<a class="ee-btn ee-btn-outline ee-btn-sm" href="/guides/connect-own-website" target="_blank" rel="noopener noreferrer">Open own-website setup guide ↗</a>' +
         '</p>' +
+        '<p class="ee-hint" id="ecs-own-site-test-status" hidden role="status"></p>' +
         '<p class="ee-hint">More detail: <a href="/organiser/#cb-providers-title">Connected booking → Booking providers</a>.</p>';
       var sampleEl = qs('ecs-own-site-sample');
       if (sampleEl) sampleEl.textContent = ownSiteSampleJson();
       bindProviderEnableButtons(mount);
+      bindOwnSiteTestBooking(mount);
       return;
     }
 
@@ -1798,6 +1803,68 @@
         : '<p class="ee-hint">Link this event in the <strong>Link registrations</strong> section above (we can fill the id from your booking URL).</p>') +
       '<p class="ee-hint">Account setup: <a href="/organiser/#cb-providers-title">Connected booking → Booking providers</a>.</p>';
     bindProviderEnableButtons(mount);
+  }
+
+  function bindOwnSiteTestBooking(root) {
+    if (!root) return;
+    var btn = root.querySelector('[data-send-test-booking="own_site"]');
+    if (!btn || btn.dataset.bound) return;
+    btn.dataset.bound = '1';
+    btn.addEventListener('click', function () {
+      if (!eventId) {
+        window.alert('Open Connected setup from an event first.');
+        return;
+      }
+      var statusEl = qs('ecs-own-site-test-status');
+      btn.disabled = true;
+      if (statusEl) {
+        statusEl.hidden = false;
+        statusEl.className = 'ee-hint';
+        statusEl.textContent = 'Sending test booking…';
+      }
+      fetch('/api/organiser/connected-booking-providers', {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'send_test_booking', eventId: eventId }),
+      })
+        .then(function (r) {
+          return r.json().then(function (data) {
+            return { ok: r.ok, data: data };
+          });
+        })
+        .then(function (res) {
+          btn.disabled = false;
+          if (!res.ok) {
+            var errMsg = res.data.message || res.data.error || 'Could not send test booking.';
+            if (statusEl) {
+              statusEl.className = 'ee-hint ee-alert-warn';
+              statusEl.textContent = errMsg;
+            } else {
+              window.alert(errMsg);
+            }
+            return;
+          }
+          var okMsg =
+            res.data.message ||
+            'Test booking accepted. Check Recent sync attempts, then Attendees for this event.';
+          if (statusEl) {
+            statusEl.className = 'ee-hint ee-alert-ok';
+            statusEl.textContent = okMsg;
+          } else {
+            window.alert(okMsg);
+          }
+        })
+        .catch(function () {
+          btn.disabled = false;
+          if (statusEl) {
+            statusEl.className = 'ee-hint ee-alert-warn';
+            statusEl.textContent = 'Could not send test booking. Check your connection and try again.';
+          } else {
+            window.alert('Could not send test booking.');
+          }
+        });
+    });
   }
 
   function bindProviderEnableButtons(root) {

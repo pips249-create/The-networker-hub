@@ -215,18 +215,19 @@
       .then(function (res) {
         if (res.status === 403 || res.status === 404) {
           state.connectedBooking = null;
-          setConnectedBookingNavVisible(false);
+          // Keep nav visible so organisers can open the Coming soon page.
+          setConnectedBookingNavVisible(true);
           return null;
         }
         state.connectedBooking = res.data || null;
-        var visible = Boolean(res.data && res.data.ok && res.data.navVisible);
-        setConnectedBookingNavVisible(visible);
+        // Always show Connected booking in the hub; restricted accounts see Coming soon.
+        setConnectedBookingNavVisible(true);
         dispatchConnectedBookingDetail(state.connectedBooking, state.groups.length);
         return state.connectedBooking;
       })
       .catch(function () {
         connectedBookingLoadPromise = null;
-        setConnectedBookingNavVisible(false);
+        setConnectedBookingNavVisible(true);
         return null;
       });
     return connectedBookingLoadPromise;
