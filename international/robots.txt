@@ -4,6 +4,7 @@ Allow: /
 Disallow: /api/
 Allow: /api/international-hub-stats
 Allow: /api/international-interest-stats
+Allow: /api/international-event-listings
 
 Sitemap: https://www.thenetworkerinternational.com/sitemap.xml
 
@@ -13,3 +14,4 @@ Allow: /agents.txt
 Allow: /ireland
 Allow: /united-states
 Allow: /sitemap.xml
+Allow: /api/international-event-listings

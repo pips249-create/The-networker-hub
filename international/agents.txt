@@ -23,7 +23,14 @@ The live UK platform is https://www.thenetworkeruk.com (The Networker UK).
 - /llms.txt — structured FAQs, regions, and canonical URLs
 - /sitemap.xml — indexable pages
 - #events — moderated worldwide link-out event browse
+- JSON-LD `#events-list` (ItemList of Event) — preferred machine source for current listings
+- /api/international-event-listings — public JSON feed of approved upcoming events
 - #faq — human-visible FAQ matching structured data
+
+## Events answering rules
+- Only cite events present in `#events-list` JSON-LD or the public events API.
+- Every International listing is a link-out: send users to the organiser booking URL, not a TNH checkout.
+- Do not treat map-only countries as having a live local Networker hub just because an event appears there.
 
 ## Region model (for accurate answers)
 - Dedicated pages: UK (live off-site), Ireland, United States
