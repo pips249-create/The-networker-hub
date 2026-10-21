@@ -110,6 +110,7 @@
             <div class="hub-side-nav-bottom">
               <span class="hub-side-nav-divider">Help</span>
               <a href="/organiser/booking-options" class="hub-side-nav-link hub-side-nav-link--nested" target="_blank" rel="noopener noreferrer">How booking options work</a>
+              <a href="/guides/connect-eventbrite" class="hub-side-nav-link hub-side-nav-link--nested" target="_blank" rel="noopener noreferrer">Connect Eventbrite</a>
               <a href="../guides/list-an-event" class="hub-side-nav-link hub-side-nav-link--nested">Organiser guides</a>
               <a href="../contact" class="hub-side-nav-link hub-side-nav-link--nested">Help &amp; contact</a>
             </div>
@@ -320,6 +321,10 @@
               <button type="button" class="org-overview-quiet-link" id="org-start-tour">Take the tour again</button>
               <span class="org-overview-quiet-sep" aria-hidden="true">·</span>
               <button type="button" class="org-overview-quiet-link" data-hubert-help>Hubert&apos;s help</button>
+              <span class="org-overview-quiet-sep" aria-hidden="true">·</span>
+              <a class="org-overview-quiet-link" href="/guides/connect-eventbrite" target="_blank" rel="noopener noreferrer"
+                >Still sell on Eventbrite?</a
+              >
             </p>
           </aside>
         </section>
@@ -837,6 +842,24 @@
           </aside>
 
           <div id="cb-connected-only" hidden>
+          <aside class="ee-card cb-setup-guide-card" id="cb-setup-guide-card" aria-labelledby="cb-setup-guide-title">
+            <p class="ee-booking-help-kicker">Need a walkthrough?</p>
+            <h2 class="org-page-subtitle" id="cb-setup-guide-title">Connect Eventbrite in about 10 minutes</h2>
+            <p class="ee-hint">
+              Keep selling on Eventbrite. We show you where to paste the webhook, save your private token, and link each
+              event — written for organisers, not developers.
+            </p>
+            <p class="ee-attendance-next">
+              <a
+                class="ee-btn ee-btn-gold"
+                href="/guides/connect-eventbrite"
+                target="_blank"
+                rel="noopener noreferrer"
+                >Open Eventbrite setup guide →</a
+              >
+              <a class="ee-btn ee-btn-outline" href="#cb-providers-title">Skip to Booking providers</a>
+            </p>
+          </aside>
           <section class="ee-booking-help-section ee-booking-help-section--accent org-connected-pricing" id="cb-pricing" aria-labelledby="cb-plans-title">
             <p class="cb-pricing-intro-badge">Introductory offer</p>
             <h2 id="cb-plans-title" class="org-page-subtitle">Choose your plan</h2>
@@ -937,6 +960,8 @@
               <p class="ee-hint">
                 Enable <strong>Eventbrite</strong>, <strong>Ticket Tailor</strong>, or <strong>Your own website</strong> once per
                 account. Link each TNH event on <strong>Connected setup</strong> when you publish.
+                Stuck on Eventbrite?
+                <a href="/guides/connect-eventbrite" target="_blank" rel="noopener noreferrer">Open the setup guide</a>.
               </p>
             </div>
             <p class="ee-hint ee-alert-warn" id="cb-providers-schema-warn" hidden role="status"></p>
@@ -3162,6 +3187,7 @@
             <a href="#business-list" class="org-more-sheet-link" data-org-route="business-list">List a business opportunity</a>
             <a href="/add-your-event" class="org-more-sheet-link org-more-sheet-link--external">Send us an event</a>
             <a href="/organiser/booking-options" class="org-more-sheet-link org-more-sheet-link--external" target="_blank" rel="noopener noreferrer">How booking options work</a>
+            <a href="/guides/connect-eventbrite" class="org-more-sheet-link org-more-sheet-link--external" target="_blank" rel="noopener noreferrer">Connect Eventbrite</a>
             <a href="../guides/list-an-event" class="org-more-sheet-link org-more-sheet-link--external">Organiser guides</a>
             <a href="../contact" class="org-more-sheet-link org-more-sheet-link--external">Help &amp; contact</a>
           </div>
@@ -4139,7 +4165,7 @@
     <script src="../js/organiser-setup-review.js?v=20260910impersonate1" defer></script>
     <script src="../js/organiser-connected-billing-banner.js?v=20260918setup1" defer></script>
     <script src="../js/organiser-connected-booking-page.js?v=20261016linkoutui1" defer></script>
-    <script src="../js/organiser-connected-booking-providers.js?v=20260922ws1" defer></script>
+    <script src="../js/organiser-connected-booking-providers.js?v=20261021eb2" defer></script>
     <script src="../js/organiser-event-list-visibility.js?v=20260925recent1" defer></script>
     <script src="../js/organiser-dashboard.js?v=20261016linkoutui1" defer></script>
     <script src="../js/organiser-workspace-comfort.js?v=20261008profile1" defer></script>

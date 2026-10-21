@@ -94,6 +94,41 @@ const GUIDE_PAGES = {
       { id: 'guest-visits', name: 'Set up the guest visit programme', text: 'On the event tickets step, tick Enable guest visit programme to offer complimentary trial visits before paid member tickets. Configure visit limits on your organiser page.' },
     ],
   },
+  'connect-eventbrite': {
+    path: '/guides/connect-eventbrite',
+    title: 'Connect Eventbrite – How-to guides – The Networker UK',
+    description:
+      'Link Eventbrite to The Networker UK so ticket sales sync to your attendee list — one-time webhook setup, then link each event.',
+    name: 'Connect Eventbrite',
+    howToName: 'How to connect Eventbrite to The Networker UK',
+    steps: [
+      {
+        id: 'enable-eventbrite',
+        name: 'Enable Eventbrite on Connected booking',
+        text: 'Open Connected booking in the organiser dashboard, enable Eventbrite under Booking providers, and copy the webhook URL (keep www in https://www.thenetworkeruk.com/w/eb/…).',
+      },
+      {
+        id: 'paste-webhook',
+        name: 'Paste the webhook URL into Eventbrite',
+        text: 'In Eventbrite Account settings → Webhooks, paste the Networker UK URL as the Payload URL and set the action to order.placed. Do this once per Eventbrite account.',
+      },
+      {
+        id: 'api-token',
+        name: 'Save your Eventbrite private token',
+        text: 'Save the Eventbrite private API token on Connected booking so we can load buyer email and ticket holders after each order.placed ping.',
+      },
+      {
+        id: 'link-event',
+        name: 'Link each event',
+        text: 'On Connected setup for the event, choose Eventbrite, add the display price and Eventbrite URL, confirm the numeric event id, save the link, and publish.',
+      },
+      {
+        id: 'check-it-worked',
+        name: 'Check it worked',
+        text: 'After a test or real Eventbrite order, Recent sync attempts should show eventbrite:accepted and the buyer should appear on the event Attendees list.',
+      },
+    ],
+  },
 };
 
 const GUIDES_HUB = {

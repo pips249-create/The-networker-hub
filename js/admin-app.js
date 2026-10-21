@@ -33419,6 +33419,8 @@
       '<div class="grid gap-3 md:grid-cols-2 lg:grid-cols-3">' +
       '<div class="lg:col-span-2"><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="intl-add-title">Event title</label>' +
       '<input id="intl-add-title" required class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white" placeholder="e.g. Dublin Founders Breakfast" /></div>' +
+      '<div class="lg:col-span-3"><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="intl-add-description">Short description <span class="font-normal normal-case">(optional)</span></label>' +
+      '<textarea id="intl-add-description" rows="3" maxlength="600" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white" placeholder="What happens, who it suits, anything people should know"></textarea></div>' +
       '<div><label class="block text-xs font-semibold text-slate-500 uppercase mb-1" for="intl-add-country">Country</label>' +
       '<select id="intl-add-country" required class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white">' +
       '<option value="">Select country</option></select></div>' +
@@ -33563,6 +33565,9 @@
               '<td class="py-2.5 pr-3"><div class="font-semibold text-brand-900">' +
               esc(row.title || '—') +
               '</div>' +
+              (row.description
+                ? '<p class="text-xs text-slate-600 mt-0.5 max-w-xs">' + esc(row.description) + '</p>'
+                : '') +
               (row.organiserName
                 ? '<div class="text-xs text-slate-600 mt-0.5">' +
                   esc(row.organiserName) +
@@ -33949,6 +33954,7 @@
             countryName: row.countryName,
             organiserName: row.organiserName,
             organiserWebsite: row.organiserWebsite,
+            description: row.description,
             externalUrl: row.externalUrl,
             imageUrl: row.imageUrl,
             contactName: row.contactName,
@@ -34048,6 +34054,9 @@
             : '',
           organiserWebsite: document.getElementById('intl-add-org-site')
             ? document.getElementById('intl-add-org-site').value
+            : '',
+          description: document.getElementById('intl-add-description')
+            ? document.getElementById('intl-add-description').value
             : '',
           externalUrl: document.getElementById('intl-add-url')
             ? document.getElementById('intl-add-url').value

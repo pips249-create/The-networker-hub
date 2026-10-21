@@ -1382,6 +1382,17 @@
   text-overflow: ellipsis;
 }
 
+.intl-events-item-desc {
+  margin: 2px 0 0;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: var(--charcoal);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .intl-events-item-organiser {
   margin: 0;
   font-size: 0.8rem;
@@ -1691,6 +1702,17 @@
   margin: 0;
   font-size: 1rem;
   color: var(--text-muted);
+}
+
+.intl-browse-card-desc {
+  margin: 2px 0 0;
+  font-size: 0.98rem;
+  line-height: 1.45;
+  color: var(--charcoal);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .intl-browse-card-organiser {

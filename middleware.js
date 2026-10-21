@@ -225,6 +225,7 @@ const ORGANISER_EARLY_ACCESS_PREFIXES = [
   '/guides/list-a-conference-or-exhibition',
   '/guides/invite-your-team',
   '/guides/export-attendees-and-visits',
+  '/guides/connect-eventbrite',
   '/guides/member-playbooks',
   '/guides/member-playbooks.html',
   '/help/pricing-fees',

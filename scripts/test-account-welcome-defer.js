@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
  * Account welcome must not precede confirm-your-email at signup.
- * Register defers welcome (after_verify); verify sends it once.
+ * Register never sends welcome; verify sends it once after a typed code.
+ * Self-serve signup clears staff-provisioned verify flags.
  * Pending-claim bootstrap must not mark the email confirmed.
  * The confirm page must not auto-submit URL secrets on load.
  */
@@ -29,6 +30,10 @@ const verifyPageSrc = fs.readFileSync(
   path.join(__dirname, '../js/organiser-verify-email.js'),
   'utf8'
 );
+const verificationSrc = fs.readFileSync(
+  path.join(__dirname, '../api/_lib/organiser-email-verification.js'),
+  'utf8'
+);
 
 assert.match(
   registerSrc,
@@ -40,20 +45,29 @@ assert.match(
   /sendOrganiserEmailVerification/,
   'register should still send confirm-your-email'
 );
+assert.match(
+  registerSrc,
+  /clearOrganiserEmailVerification/,
+  'register must clear staff-provisioned verify flags before confirm'
+);
+assert.doesNotMatch(
+  registerSrc,
+  /sendAccountWelcomeEmail/,
+  'register must never send the welcome email'
+);
 
 const verifyCall = registerSrc.indexOf('await sendOrganiserEmailVerification');
-const welcomeCall = registerSrc.indexOf('await sendAccountWelcomeEmail');
 assert(verifyCall !== -1, 'register must call sendOrganiserEmailVerification');
-assert(welcomeCall !== -1, 'register must still send welcome when verify is not required');
-assert(
-  verifyCall < welcomeCall,
-  'confirm-your-email call must appear before welcome send in register'
-);
 
 assert.match(
   verifySrc,
   /maybeSendDeferredAccountWelcome/,
   'verify route should send deferred welcome after confirmation'
+);
+assert.match(
+  verifySrc,
+  /resolveOrganiserRedirect/,
+  'verify route should route claim users after confirm'
 );
 
 assert.match(accountEmailsSrc, /ACCOUNT_WELCOME_AFTER_VERIFY/);
@@ -68,6 +82,22 @@ assert.match(
   accountEmailsSrc,
   /email_not_verified/,
   'deferred welcome should skip when hub is not confirmed'
+);
+assert.match(
+  accountEmailsSrc,
+  /ACCOUNT_WELCOME_SKIP \|\| policy === ACCOUNT_WELCOME_SENT/,
+  'deferred welcome should skip only skip/sent policies'
+);
+
+assert.match(
+  verificationSrc,
+  /async function clearOrganiserEmailVerification/,
+  'clearOrganiserEmailVerification helper must exist'
+);
+assert.match(
+  verificationSrc,
+  /organiser_email_verified_at:\s*null/,
+  'storing a fresh confirm code must clear organiser_email_verified_at'
 );
 
 assert.match(
@@ -95,6 +125,25 @@ assert.match(
   verifyPageSrc,
   /Never auto-submit/,
   'confirm page should scrub URL secrets instead of confirming'
+);
+
+const intentSrc = fs.readFileSync(
+  path.join(__dirname, '../api/_lib/organiser-auth-intent.js'),
+  'utf8'
+);
+const resolveFn = intentSrc.slice(
+  intentSrc.indexOf('async function resolveOrganiserRedirect'),
+  intentSrc.indexOf('async function maybeAutoEnableOrganiserAccess')
+);
+assert.match(
+  resolveFn,
+  /if\s*\(\s*!status\.organiserEmailVerified\s*\)/,
+  'organiser redirect must require email confirm before claim'
+);
+assert.ok(
+  resolveFn.indexOf('!status.organiserEmailVerified') <
+    resolveFn.indexOf('pendingClaimCount'),
+  'email confirm check must come before pending-claim redirect'
 );
 
 console.log('OK  account welcome deferred until email confirm');

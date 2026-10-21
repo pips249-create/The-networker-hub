@@ -52,13 +52,14 @@ function hasVerifyEmailToken(next) {
 
 async function resolveOrganiserRedirect(session) {
   const status = await getOrganiserAccessStatus(session);
+  // Inbox confirmation first — matching a directory email is not enough.
+  if (!status.organiserEmailVerified) {
+    return '/organiser/verify-email';
+  }
   if (status.pendingClaimCount > 0) {
     return '/organiser/?onboard=claim';
   }
-  if (status.organiserEmailVerified) {
-    return '/organiser/';
-  }
-  return '/organiser/verify-email';
+  return '/organiser/';
 }
 
 async function maybeAutoEnableOrganiserAccess(session, res, options = {}) {
@@ -81,7 +82,9 @@ async function maybeAutoEnableOrganiserAccess(session, res, options = {}) {
     return {
       enabled: false,
       bootstrapped: true,
-      redirect: '/organiser/?onboard=claim',
+      redirect: before.organiserEmailVerified
+        ? '/organiser/?onboard=claim'
+        : '/organiser/verify-email',
     };
   }
 

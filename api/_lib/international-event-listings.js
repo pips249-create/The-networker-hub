@@ -10,10 +10,10 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const UNAVAILABLE_COUNTRY_CODES = new Set(['BY', 'IR', 'KP', 'RU', 'SY']);
 
 const PUBLIC_SELECT =
-  'id, title, starts_on, ends_on, starts_at_local, city, country_code, country_name, organiser_name, organiser_website, external_url, image_url, created_at';
+  'id, title, starts_on, ends_on, starts_at_local, city, country_code, country_name, organiser_name, organiser_website, description, external_url, image_url, created_at';
 
 const ADMIN_SELECT =
-  'id, title, starts_on, ends_on, starts_at_local, city, country_code, country_name, organiser_name, organiser_website, external_url, image_url, contact_name, email, status, source, created_at, reviewed_at, reviewed_by';
+  'id, title, starts_on, ends_on, starts_at_local, city, country_code, country_name, organiser_name, organiser_website, description, external_url, image_url, contact_name, email, status, source, created_at, reviewed_at, reviewed_by';
 
 function staffInbox() {
   const configured = String(process.env.EVENT_INTAKE_EMAIL || '').trim();
@@ -127,13 +127,13 @@ function isOutdatedInternationalEventListingsSchema(error) {
   if (!/international_event_listings/i.test(msg)) return false;
   if (isMissingInternationalEventListingsTable(error)) return false;
   if (code === '42703' || code === 'PGRST204') {
-    return /organiser_name|organiser_website|starts_at_local|image_url/i.test(msg);
+    return /organiser_name|organiser_website|starts_at_local|image_url|description/i.test(msg);
   }
   return (
-    /column international_event_listings\.(organiser_name|organiser_website|starts_at_local|image_url) does not exist/i.test(
+    /column international_event_listings\.(organiser_name|organiser_website|starts_at_local|image_url|description) does not exist/i.test(
       msg
     ) ||
-    /could not find the '(organiser_name|organiser_website|starts_at_local|image_url)' column of 'international_event_listings'/i.test(
+    /could not find the '(organiser_name|organiser_website|starts_at_local|image_url|description)' column of 'international_event_listings'/i.test(
       msg
     )
   );
@@ -141,7 +141,7 @@ function isOutdatedInternationalEventListingsSchema(error) {
 
 function schemaOutdatedError() {
   const err = new Error(
-    'Event listings schema is outdated — run migration 326_international_event_organiser_columns.sql in Supabase.'
+    'Event listings schema is outdated — run migrations 326 and 327 in Supabase (organiser columns + description).'
   );
   err.code = 'events_schema_outdated';
   return err;
@@ -203,6 +203,10 @@ function normalizeInput(payload) {
         payload.groupWebsite ||
         payload.group_website
     ),
+    description:
+      String(payload.description || payload.blurb || payload.summary || '')
+        .trim()
+        .slice(0, 600) || null,
     imageUrlRaw: String(payload.imageUrl || payload.image_url || payload.photoUrl || payload.photo || '').trim(),
     imageUrl: normalizeExternalUrl(
       payload.imageUrl || payload.image_url || payload.photoUrl || payload.photo
@@ -310,6 +314,7 @@ function mapPublic(row) {
     countryName: row.country_name,
     organiserName: row.organiser_name || null,
     organiserWebsite: row.organiser_website || null,
+    description: row.description || null,
     externalUrl: row.external_url,
     imageUrl: row.image_url || null,
     createdAt: row.created_at,
@@ -347,6 +352,7 @@ function buildStaffEmailHtml(input) {
     row('Country', input.countryName + ' (' + input.countryCode + ')') +
     row('Organiser / group', input.organiserName) +
     row('Organiser website', input.organiserWebsite) +
+    row('Description', input.description) +
     row('Photo URL', input.imageUrl) +
     row('Link out', input.externalUrl) +
     row('Contact', input.contactName) +
@@ -407,6 +413,7 @@ async function submitInternationalEventListing(payload) {
       country_name: input.countryName,
       organiser_name: input.organiserName,
       organiser_website: input.organiserWebsite,
+      description: input.description,
       external_url: input.externalUrl,
       starts_at_local: input.startsAtLocal,
       image_url: input.imageUrl,
@@ -649,6 +656,7 @@ async function createAdminInternationalEventListing(payload, session) {
       country_name: input.countryName,
       organiser_name: input.organiserName,
       organiser_website: input.organiserWebsite,
+      description: input.description,
       external_url: input.externalUrl,
       starts_at_local: input.startsAtLocal,
       image_url: input.imageUrl,
