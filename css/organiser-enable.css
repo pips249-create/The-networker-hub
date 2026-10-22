@@ -476,6 +476,14 @@
   max-width: 560px;
 }
 
+.org-list-account-require {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--od-border-soft, #cfe4ea);
+  font-weight: 600;
+  color: var(--od-text-dark, #1a2e3b);
+}
+
 .org-list-account-card {
   margin: 0 auto;
 }
