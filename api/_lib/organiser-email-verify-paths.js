@@ -1,9 +1,9 @@
 /**
  * URL helpers for organiser / account email confirmation.
  *
- * The confirm page requires the user to type the 6-digit code. Do not put
- * ?code= or ?token= on in-app redirects — those secrets belong in the email only
- * (and URL secrets must not auto-confirm on page load).
+ * Inbox CTAs may include ?code= so the confirm page can prefill the digits.
+ * In-app redirects must stay code-free. The confirm page must never auto-submit
+ * URL secrets on load (mail scanners / premature Welcome).
  */
 
 function buildOrganiserVerifyEmailPath(code, email) {
@@ -28,8 +28,8 @@ function verifyEmailPagePath(email) {
 }
 
 /**
- * Where to send someone who still needs to enter the code.
- * `code` is ignored on purpose: passing it used to auto-confirm the email.
+ * Where to send someone who still needs to confirm.
+ * `code` is ignored on purpose: in-app redirects must not carry inbox secrets.
  */
 function buildEmailVerifyRedirect({ next, email } = {}) {
   const destination = String(next || '').trim() || '/welcome';

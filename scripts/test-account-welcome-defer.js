@@ -5,7 +5,7 @@
  * Organiser workspace access is also deferred until that typed code succeeds.
  * Self-serve signup clears staff-provisioned verify flags.
  * Pending-claim bootstrap must not mark the email confirmed or grant access_at.
- * The confirm page must not auto-submit URL secrets on load.
+ * The confirm page may prefill URL codes but must not auto-submit on load.
  * The organiser auth gate must redirect unverified users to confirm-email.
  */
 const assert = require('assert');
@@ -123,10 +123,30 @@ assert.doesNotMatch(
   /await verifyToken\(legacyToken\)/,
   'confirm page must not auto-submit URL tokens on load'
 );
+assert.doesNotMatch(
+  verifyPageSrc,
+  /await verifyToken\(urlCode\)/,
+  'confirm page must not auto-submit prefilled URL codes on load'
+);
 assert.match(
   verifyPageSrc,
-  /Never auto-submit/,
-  'confirm page should scrub URL secrets instead of confirming'
+  /never auto-submit/i,
+  'confirm page must document that URL codes are not auto-submitted'
+);
+assert.match(
+  verifyPageSrc,
+  /codeEl\.value\s*=\s*urlCode/,
+  'confirm page should prefill the code from the inbox CTA'
+);
+assert.match(
+  verificationSrc,
+  /buildOrganiserVerifyEmailPath\(code,\s*address\)/,
+  'confirm email CTA must include the code so the page can prefill it'
+);
+assert.match(
+  verificationSrc,
+  /verifyPath:\s*safeVerifyPath/,
+  'in-app verifyPath after send must stay code-free'
 );
 
 const intentSrc = fs.readFileSync(

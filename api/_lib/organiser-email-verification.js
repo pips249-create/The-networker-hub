@@ -153,10 +153,13 @@ async function sendOrganiserEmailVerification({ userId, email, name, revealCode 
   const code = newVerifyCode();
   await storeVerifyToken(userId, code);
 
-  // The email shows the digits. The link only opens the empty form — it must
-  // not carry the code (welcome mail is gated on a successful code submit).
-  const verifyPath = verifyEmailPagePath(address);
-  const verifyUrl = siteHost() + verifyPath;
+  // Email CTA includes the code so the confirm page can prefill it. The page
+  // still requires an explicit Confirm click (no auto-submit) so mail scanners
+  // cannot mark the address verified or fire Welcome early.
+  const emailVerifyPath = buildOrganiserVerifyEmailPath(code, address);
+  const verifyUrl = siteHost() + emailVerifyPath;
+  // In-app redirects stay code-free; only the inbox link carries the digits.
+  const safeVerifyPath = verifyEmailPagePath(address);
   const displayName = String(name || '').trim() || address.split('@')[0];
   const shouldRevealCode = Boolean(revealCode);
 
@@ -178,7 +181,7 @@ async function sendOrganiserEmailVerification({ userId, email, name, revealCode 
       emailSent: true,
       verifyUrl: null,
       // Never hand a code-bearing path to the browser after signup/enable.
-      verifyPath: verifyEmailPagePath(address),
+      verifyPath: safeVerifyPath,
       ...result,
     };
     if (shouldRevealCode) {
@@ -193,13 +196,13 @@ async function sendOrganiserEmailVerification({ userId, email, name, revealCode 
       err.code = 'email_not_configured';
       err.verifyUrl = verifyUrl;
       err.verifyCode = code;
-      err.verifyPath = verifyEmailPagePath(address);
+      err.verifyPath = safeVerifyPath;
       throw err;
     }
     // Keep the stored code so a signed-in user / admin can still confirm without inbox delivery.
     e.verifyUrl = verifyUrl;
     e.verifyCode = code;
-    e.verifyPath = verifyEmailPagePath(address);
+    e.verifyPath = safeVerifyPath;
     throw e;
   }
 }
