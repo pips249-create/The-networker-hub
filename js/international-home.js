@@ -872,31 +872,82 @@
       });
   }
 
-  function fillEventCountrySelects() {
-    var options = eventCountryOptions();
-    var selects = [els.eventCountry, els.eventsFilter];
-    selects.forEach(function (select) {
-      if (!select) return;
-      var previous = select.value || '';
-      var isFilter = select === els.eventsFilter;
-      var html = isFilter
-        ? '<option value="">All countries</option>'
-        : '<option value="">Select a country</option>';
-      options.forEach(function (meta) {
-        html +=
-          '<option value="' +
-          meta.iso2 +
-          '">' +
-          meta.name +
-          '</option>';
-      });
-      select.innerHTML = html;
-      if (previous && Array.prototype.some.call(select.options, function (opt) {
+  function fillEventFormCountrySelect() {
+    if (!els.eventCountry) return;
+    var previous = els.eventCountry.value || '';
+    var html = '<option value="">Select a country</option>';
+    eventCountryOptions().forEach(function (meta) {
+      html +=
+        '<option value="' +
+        meta.iso2 +
+        '">' +
+        meta.name +
+        '</option>';
+    });
+    els.eventCountry.innerHTML = html;
+    if (
+      previous &&
+      Array.prototype.some.call(els.eventCountry.options, function (opt) {
         return opt.value === previous;
-      })) {
-        select.value = previous;
+      })
+    ) {
+      els.eventCountry.value = previous;
+    }
+  }
+
+  /** Filter dropdown: only countries that currently have listed events. */
+  function fillEventsFilterSelect() {
+    if (!els.eventsFilter) return;
+    var previous = String(els.eventsFilter.value || state.eventsFilter || '').toUpperCase();
+    var byCode = {};
+    (state.events || []).forEach(function (row) {
+      var code = String((row && row.countryCode) || '')
+        .trim()
+        .toUpperCase();
+      var name = String((row && row.countryName) || '').trim();
+      if (!code || code.length !== 2) return;
+      if (!byCode[code]) {
+        byCode[code] = { iso2: code, name: name || code };
+      } else if (name && byCode[code].name === byCode[code].iso2) {
+        byCode[code].name = name;
       }
     });
+    var options = Object.keys(byCode)
+      .map(function (code) {
+        return byCode[code];
+      })
+      .sort(function (a, b) {
+        return a.name.localeCompare(b.name, 'en-GB');
+      });
+
+    var html = '<option value="">All countries</option>';
+    options.forEach(function (meta) {
+      html +=
+        '<option value="' +
+        meta.iso2 +
+        '">' +
+        meta.name +
+        '</option>';
+    });
+    els.eventsFilter.innerHTML = html;
+
+    if (
+      previous &&
+      Array.prototype.some.call(els.eventsFilter.options, function (opt) {
+        return String(opt.value || '').toUpperCase() === previous;
+      })
+    ) {
+      els.eventsFilter.value = previous;
+      state.eventsFilter = previous;
+    } else {
+      els.eventsFilter.value = '';
+      state.eventsFilter = '';
+    }
+  }
+
+  function fillEventCountrySelects() {
+    fillEventFormCountrySelect();
+    fillEventsFilterSelect();
   }
 
   function formatEventDate(iso) {
@@ -1132,10 +1183,13 @@
       })
       .then(function (data) {
         state.events = data && Array.isArray(data.events) ? data.events : [];
+        fillEventsFilterSelect();
         renderEventsList();
         updateEventsJsonLd(state.events);
       })
       .catch(function () {
+        state.events = [];
+        fillEventsFilterSelect();
         els.eventsStatus.hidden = false;
         els.eventsStatus.textContent = 'Could not load events right now.';
         els.eventsList.innerHTML = '';

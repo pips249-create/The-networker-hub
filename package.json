@@ -41,6 +41,7 @@
     "test-connected-booking-grants": "node scripts/test-connected-booking-grants.js",
     "test-international-event-listings": "node scripts/test-international-event-listings.js",
     "test-intl-event-country-options": "node scripts/test-intl-event-country-options.js",
+    "test-intl-events-filter-countries": "node scripts/test-intl-events-filter-countries.js",
     "test-international-regions": "node scripts/test-international-regions.js",
     "test-intl-seo-aeo": "node scripts/test-intl-seo-aeo.js",
     "test-intl-events-jsonld": "node scripts/test-intl-events-jsonld.js",
