@@ -4678,11 +4678,11 @@
     if (selected) selected.textContent = claimSelectedOrganiser.name || 'Selected group';
     if (sub) {
       sub.textContent =
-        'Pick the date you attended (optional), then claim that past event. Only published events from the last 90 days that you have not already booked or claimed are listed.';
+        'Search by the date you attended, then claim that past event. Only published events from the last 90 days that you have not already booked or claimed are listed.';
     }
     if (hint) {
       hint.hidden = false;
-      hint.textContent = 'Claimable past events for this group (last 90 days).';
+      hint.textContent = 'Use the date field to find the night you attended.';
     }
     const eventDate = document.getElementById('ad-claim-event-date');
     if (eventDate) {
