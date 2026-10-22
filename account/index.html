@@ -41,6 +41,10 @@
               Event tickets
               <span class="ad-side-count" id="ad-side-tickets" hidden></span>
             </a>
+            <a href="#past" class="hub-side-nav-link" data-ad-route="past">
+              Events I&rsquo;ve attended
+              <span class="ad-side-count" id="ad-side-past" hidden></span>
+            </a>
             <span class="hub-side-nav-divider">Reviews</span>
             <a href="#reviews-pending" class="hub-side-nav-link" data-ad-route="reviews-pending">
               Reviews to write
@@ -111,6 +115,14 @@
                   <span class="ad-portal-body">
                     <strong>Your tickets</strong>
                     <span id="ad-portal-tickets-meta">Find a breakfast, lunch, or expo</span>
+                  </span>
+                  <span class="ad-portal-arrow" aria-hidden="true">→</span>
+                </button>
+                <button type="button" class="ad-portal ad-portal--attended" data-ad-portal="past">
+                  <span class="ad-portal-icon" aria-hidden="true">✓</span>
+                  <span class="ad-portal-body">
+                    <strong>Events I&rsquo;ve attended</strong>
+                    <span id="ad-portal-past-meta">Claim events &amp; get nominated</span>
                   </span>
                   <span class="ad-portal-arrow" aria-hidden="true">→</span>
                 </button>
@@ -185,8 +197,8 @@
                       <span class="ad-saved-scope-count" id="ad-tickets-count-upcoming" hidden aria-hidden="true"></span>
                     </button>
                     <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-tickets-scope="past">
-                      <span class="ad-scope-label ad-scope-label--full">Past events</span>
-                      <span class="ad-scope-label ad-scope-label--short">Past</span>
+                      <span class="ad-scope-label ad-scope-label--full">Events I&rsquo;ve attended</span>
+                      <span class="ad-scope-label ad-scope-label--short">Attended</span>
                       <span class="ad-saved-scope-count" id="ad-tickets-count-past" hidden aria-hidden="true"></span>
                     </button>
                     <button type="button" class="ad-saved-scope-btn" role="tab" aria-selected="false" data-tickets-scope="payments">
@@ -1156,6 +1168,6 @@
     <script src="../js/attendee-auth-gate.js?v=20261021confirm2"></script>
     <script src="../js/organiser-image-upload.js?v=20261002offerimage1" defer></script>
     <script src="../js/attendee-member-offers.js?v=20261015offers1" defer></script>
-    <script src="../js/attendee-dashboard.js?v=20261022claims1" defer></script>
+    <script src="../js/attendee-dashboard.js?v=20261022attended1" defer></script>
   </body>
 </html>
