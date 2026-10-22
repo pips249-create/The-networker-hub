@@ -218,7 +218,7 @@ function rosiePhotoUrl(siteUrl) {
   return toPublicAssetUrl('/assets/about-rosie.png?v=' + LOGO_ASSET_VERSION, siteUrl);
 }
 
-/** Co-founder photo for Meet Catherine / event promo blocks in member digests. */
+/** Team photo for Meet Catherine / event promo blocks in member digests. */
 function catherinePhotoUrl(siteUrl) {
   return toPublicAssetUrl('/assets/about-catherine.png?v=' + LOGO_ASSET_VERSION, siteUrl);
 }

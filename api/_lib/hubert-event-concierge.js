@@ -1,5 +1,5 @@
 /**
- * Weekly Hubert Event Concierge helpers (cadence + alternating co-founder promos).
+ * Weekly Hubert Event Concierge helpers (cadence + alternating team event promos).
  * Kept free of Supabase/send deps so scripts and previews can load it alone.
  */
 const { siteBase, rosiePhotoUrl, catherinePhotoUrl } = require('./hub-email-urls');
@@ -8,7 +8,7 @@ const { siteBase, rosiePhotoUrl, catherinePhotoUrl } = require('./hub-email-urls
 const HUBERT_CONCIERGE_INTERVAL_DAYS = 7;
 
 /**
- * Hide both co-founder event promos after the November 2026 shows wrap (UTC).
+ * Hide both team event promos after the November 2026 shows wrap (UTC).
  * MarTech Summit: 10–11 Nov · Business Show London: 11–12 Nov.
  */
 const COFOUNDER_EVENT_PROMO_UNTIL_MS = Date.UTC(2026, 10, 13, 23, 59, 59);

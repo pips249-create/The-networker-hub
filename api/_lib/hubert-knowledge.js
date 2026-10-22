@@ -193,12 +193,12 @@ const FALLBACK_REPLIES = [
   {
     match: /what does rosie do|who is rosie|rosie('s)? role/i,
     reply:
-      'Rosie is co-founder of The Networker UK alongside Catherine. Together they built the platform to connect UK business owners and professionals with events, communities, and opportunities. More on /about — for specific enquiries, hi@thenetworkeruk.com.',
+      'Rosie is co-founder of The Networker UK. She looks after partnerships, organiser relationships, and day-to-day growth across the UK networking community, and runs The Networker Group Ltd with Catherine. More on /about — for specific enquiries, hi@thenetworkeruk.com.',
   },
   {
-    match: /who is catherine|catherine.*co-founder|what does catherine do/i,
+    match: /who is catherine|what does catherine do|catherine('s)? role/i,
     reply:
-      'Catherine is co-founder of The Networker UK alongside Rosie. Together they run The Networker Group Ltd and built The Networker UK as a trusted place to discover networking events and business opportunities across the UK. More on /about.',
+      'Catherine leads the product and technical side of The Networker UK: ticketing, payouts, and the organiser tools. She runs The Networker Group Ltd with Rosie. More on /about.',
   },
   {
     match: /why.*(start|created|built)|how did (the )?hub start|origin of|story behind/i,
