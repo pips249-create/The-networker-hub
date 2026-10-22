@@ -154,7 +154,101 @@
     cambridge: 'cambridge',
     oxford: 'oxford',
     chester: 'chester',
+    reading: 'reading',
+    bournemouth: 'bournemouth',
+    belfast: 'belfast',
+    leicester: 'leicester',
+    // County directory slugs — keep in sync with api/_lib/networking-county-sectors.js
+    berkshire: 'berkshire',
+    buckinghamshire: 'buckinghamshire',
+    cambridgeshire: 'cambridgeshire',
+    cheshire: 'cheshire',
+    devon: 'devon',
+    dorset: 'dorset',
+    essex: 'essex',
+    hampshire: 'hampshire',
+    hertfordshire: 'hertfordshire',
+    kent: 'kent',
+    lancashire: 'lancashire',
+    norfolk: 'norfolk',
+    oxfordshire: 'oxfordshire',
+    shropshire: 'shropshire',
+    staffordshire: 'staffordshire',
+    suffolk: 'suffolk',
+    surrey: 'surrey',
+    sussex: 'sussex',
+    warwickshire: 'warwickshire',
+    yorkshire: 'yorkshire',
   };
+
+  /**
+   * City hubs nested under each Opportunities / Events county page.
+   * Keep aligned with NETWORKING_COUNTY_META.cities (+ Reading for Berkshire).
+   */
+  var COUNTY_NESTED_SLUGS = {
+    berkshire: ['reading'],
+    cambridgeshire: ['cambridge'],
+    cheshire: ['chester'],
+    dorset: ['bournemouth'],
+    oxfordshire: ['oxford'],
+    sussex: ['brighton'],
+    yorkshire: ['leeds', 'sheffield'],
+  };
+
+  /**
+   * Extra place names so a county landing matches town-labelled listings
+   * (e.g. Maidenhead → Berkshire) even when citySlugs only has a town hub.
+   */
+  var COUNTY_PLACE_TERMS = {
+    berkshire: ['reading', 'maidenhead', 'newbury', 'slough', 'windsor', 'bracknell', 'wokingham', 'ascot'],
+    buckinghamshire: [
+      'high wycombe',
+      'aylesbury',
+      'milton keynes',
+      'amersham',
+      'beaconsfield',
+      'marlow',
+      'buckingham',
+    ],
+    cambridgeshire: ['cambridge', 'ely', 'peterborough', 'huntingdon', 'wisbech', 'st neots'],
+    cheshire: ['chester', 'crewe', 'warrington', 'macclesfield', 'wilmslow', 'nantwich', 'congleton'],
+    devon: ['exeter', 'plymouth', 'torquay', 'paignton', 'barnstaple', 'exmouth', 'newton abbot'],
+    dorset: ['bournemouth', 'poole', 'dorchester', 'weymouth', 'christchurch', 'bridport'],
+    essex: ['chelmsford', 'colchester', 'southend', 'basildon', 'harlow', 'brentwood', 'clacton'],
+    hampshire: ['southampton', 'portsmouth', 'winchester', 'basingstoke', 'fareham', 'eastleigh'],
+    hertfordshire: ['st albans', 'watford', 'hertford', 'hemel hempstead', 'stevenage', 'hatfield'],
+    kent: ['canterbury', 'maidstone', 'tunbridge wells', 'ashford', 'dartford', 'rochester', 'folkestone'],
+    lancashire: ['preston', 'blackpool', 'burnley', 'lancaster', 'blackburn', 'chorley', 'lytham'],
+    norfolk: ['norwich', "king's lynn", 'kings lynn', 'great yarmouth', 'thetford', 'dereham'],
+    oxfordshire: ['oxford', 'banbury', 'abingdon', 'witney', 'bicester', 'didcot'],
+    shropshire: ['shrewsbury', 'telford', 'ludlow', 'oswestry', 'bridgnorth'],
+    staffordshire: ['stoke', 'stafford', 'lichfield', 'burton', 'tamworth', 'newcastle-under-lyme'],
+    suffolk: ['ipswich', 'bury st edmunds', 'lowestoft', 'felixstowe', 'newmarket', 'sudbury'],
+    surrey: ['guildford', 'woking', 'reigate', 'epsom', 'kingston', 'redhill', 'farnham'],
+    sussex: ['brighton', 'worthing', 'eastbourne', 'chichester', 'hastings', 'crawley', 'horsham'],
+    warwickshire: ['warwick', 'leamington', 'stratford', 'nuneaton', 'rugby', 'kenilworth'],
+    yorkshire: [
+      'leeds',
+      'sheffield',
+      'york',
+      'bradford',
+      'huddersfield',
+      'hull',
+      'doncaster',
+      'halifax',
+      'harrogate',
+      'ripon',
+      'scarborough',
+      'wakefield',
+      'barnsley',
+      'rotherham',
+    ],
+  };
+
+  var COUNTY_SLUG_SET = Object.keys(COUNTY_PLACE_TERMS).reduce(function (acc, slug) {
+    acc[slug] = true;
+    return acc;
+  }, {});
 
   var UMBRELLA_TO_SLUGS = {
     england: [
@@ -208,6 +302,11 @@
       'sheffield',
     ],
     yorkshire: ['leeds', 'sheffield'],
+    'north yorkshire': ['yorkshire', 'leeds'],
+    'south yorkshire': ['yorkshire', 'sheffield'],
+    'west yorkshire': ['yorkshire', 'leeds'],
+    'east yorkshire': ['yorkshire'],
+    'east riding': ['yorkshire'],
     'north england': ['manchester', 'liverpool', 'newcastle', 'leeds', 'sheffield'],
     'north west': ['manchester', 'liverpool'],
     north: ['manchester', 'liverpool', 'newcastle', 'leeds', 'sheffield'],
@@ -389,9 +488,13 @@
       return item;
     }
 
-    Object.keys(CITY_SLUG_BY_NAME).forEach(function (name) {
-      if (blob.indexOf(name) !== -1) add(CITY_SLUG_BY_NAME[name]);
-    });
+    Object.keys(CITY_SLUG_BY_NAME)
+      .sort(function (a, b) {
+        return b.length - a.length;
+      })
+      .forEach(function (name) {
+        if (blob.indexOf(name) !== -1) add(CITY_SLUG_BY_NAME[name]);
+      });
 
     Object.keys(UMBRELLA_TO_SLUGS)
       .sort(function (a, b) {
@@ -401,15 +504,88 @@
         if (phrase === 'london') return;
         if (blob.indexOf(phrase) !== -1) {
           UMBRELLA_TO_SLUGS[phrase].forEach(add);
+          // Keep the umbrella key itself when it is a county slug so
+          // /opportunities/networking/yorkshire matches Leeds-tagged rows.
+          var phraseSlug = phrase.replace(/\s+/g, '-');
+          if (COUNTY_SLUG_SET[phraseSlug]) add(phraseSlug);
         }
       });
 
     if (/tyne/.test(blob)) add('newcastle');
     if (/greater manchester/.test(blob)) add('manchester');
 
+    // Town hubs also belong on their county page (Reading → Berkshire, etc.).
+    Object.keys(COUNTY_NESTED_SLUGS).forEach(function (countySlug) {
+      var hubs = COUNTY_NESTED_SLUGS[countySlug] || [];
+      for (var h = 0; h < hubs.length; h++) {
+        if (seen[hubs[h]]) {
+          add(countySlug);
+          break;
+        }
+      }
+    });
+
     item.citySlugs = slugs;
     item.matchesAllCities = false;
     return item;
+  }
+
+  function isNetworkingCountySlug(slug) {
+    return Boolean(COUNTY_SLUG_SET[String(slug || '').trim().toLowerCase()]);
+  }
+
+  function nestedSlugsForCounty(slug) {
+    var key = String(slug || '')
+      .trim()
+      .toLowerCase();
+    return (COUNTY_NESTED_SLUGS[key] || []).slice();
+  }
+
+  function placeTermsForCounty(slug) {
+    var key = String(slug || '')
+      .trim()
+      .toLowerCase();
+    return (COUNTY_PLACE_TERMS[key] || []).slice();
+  }
+
+  /** True when a listing belongs on /opportunities/networking/:county. */
+  function listingMatchesCountySlug(item, countySlug, countyName) {
+    var slug = String(countySlug || '')
+      .trim()
+      .toLowerCase();
+    if (!item || !slug) return false;
+    if (item.matchesAllCities) return true;
+    if (item.citySlugs && item.citySlugs.indexOf(slug) !== -1) return true;
+
+    var nested = COUNTY_NESTED_SLUGS[slug] || [];
+    if (item.citySlugs && nested.length) {
+      for (var i = 0; i < nested.length; i++) {
+        if (item.citySlugs.indexOf(nested[i]) !== -1) return true;
+      }
+    }
+
+    var hay = [
+      item.locationLabel,
+      item.searchText,
+      item.title,
+      item.desc,
+      (item.tags || []).join(' '),
+      (item.filterTags || []).join(' '),
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+
+    var name = String(countyName || slug)
+      .trim()
+      .toLowerCase();
+    if (name && hay.indexOf(name) !== -1) return true;
+
+    var terms = COUNTY_PLACE_TERMS[slug] || [];
+    for (var t = 0; t < terms.length; t++) {
+      if (terms[t] && hay.indexOf(terms[t]) !== -1) return true;
+    }
+    return false;
   }
 
   function locationLabel(item) {
@@ -842,6 +1018,8 @@
     CATEGORY_OPTIONS: CATEGORY_OPTIONS,
     CATEGORY_LABELS: CATEGORY_LABELS,
     SEED_LISTINGS: SEED_LISTINGS,
+    COUNTY_NESTED_SLUGS: COUNTY_NESTED_SLUGS,
+    COUNTY_PLACE_TERMS: COUNTY_PLACE_TERMS,
     buildSearchText: buildSearchText,
     normalizeListing: normalizeListing,
     expandCatalog: expandCatalog,
@@ -867,6 +1045,10 @@
     parseInvestmentIncludes: parseInvestmentIncludes,
     listingCategories: listingCategories,
     listingHasCategory: listingHasCategory,
+    isNetworkingCountySlug: isNetworkingCountySlug,
+    nestedSlugsForCounty: nestedSlugsForCounty,
+    placeTermsForCounty: placeTermsForCounty,
+    listingMatchesCountySlug: listingMatchesCountySlug,
     CATEGORY_KEYWORDS: CATEGORY_KEYWORDS,
   };
 

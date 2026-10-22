@@ -57,6 +57,7 @@
     "test:refund-policy": "node scripts/test-refund-policy-compliance.js",
     "test:city-partner-checkout": "node scripts/test-city-partner-checkout.js",
     "test:county-partner-checkout": "node scripts/test-county-partner-checkout.js",
+    "test:opportunity-county-match": "node scripts/test-opportunity-county-match.js",
     "test:opportunity-live-email": "node scripts/test-opportunity-live-email-dedupe.js",
     "test:opportunity-spotlight-slots": "node scripts/test-opportunity-spotlight-slots.js",
     "test:member-offers": "node scripts/test-member-offers.js",
