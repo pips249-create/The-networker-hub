@@ -4571,7 +4571,7 @@
     }
     if (hint) {
       hint.hidden = false;
-      hint.textContent = 'Type at least 2 letters to find a group.';
+      hint.textContent = 'Type at least 2 letters — group name or past event title.';
     }
     if (results) results.innerHTML = '';
     const input = document.getElementById('ad-claim-search');
@@ -4628,14 +4628,23 @@
       '/api/auth/attendance-claims?action=search-organisers&q=' + encodeURIComponent(query);
     fetch(url, { credentials: 'include', cache: 'no-store' })
       .then(function (r) {
-        return r.json();
+        return r.json().then(function (data) {
+          return { okHttp: r.ok, data: data || {} };
+        });
       })
-      .then(function (data) {
-        const organisers = (data && data.ok && data.organisers) || [];
+      .then(function (res) {
+        if (!res.okHttp || !res.data.ok) {
+          results.innerHTML =
+            '<p class="ad-claim-hint">' +
+            esc((res.data && res.data.message) || 'Could not search groups. Try again.') +
+            '</p>';
+          return;
+        }
+        const organisers = res.data.organisers || [];
         results.innerHTML = '';
         if (!organisers.length) {
           results.innerHTML =
-            '<p class="ad-claim-hint">No groups found. Try another name.</p>';
+            '<p class="ad-claim-hint">No groups or past events matched. Try the group name or event title.</p>';
           if (hint) hint.hidden = true;
           return;
         }
@@ -4651,7 +4660,7 @@
             '<div><p class="ad-claim-result-title"></p><p class="ad-claim-result-meta"></p></div>' +
             '<button type="button" class="ad-btn ad-btn-primary ad-claim-pick-group">Choose</button>';
           row.querySelector('.ad-claim-result-title').textContent = org.name || 'Group';
-          row.querySelector('.ad-claim-result-meta').textContent = [org.outcode, org.slug]
+          row.querySelector('.ad-claim-result-meta').textContent = [org.matchHint, org.slug]
             .filter(Boolean)
             .join(' · ');
           const btn = row.querySelector('.ad-claim-pick-group');
