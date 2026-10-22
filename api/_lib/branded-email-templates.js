@@ -360,7 +360,7 @@ const BRANDED_EMAIL_TEMPLATES = {
   attendee_hubert_event_concierge: {
     file: 'attendee-hubert-event-concierge.html',
     marker: 'hub-email-layout-v3-purple',
-    subject: "Hubert's event picks for {{month_label}}",
+    subject: "Hubert's weekly event picks — week of {{week_label}}",
   },
   organiser_low_upcoming_events: {
     file: 'organiser-low-upcoming-events.html',

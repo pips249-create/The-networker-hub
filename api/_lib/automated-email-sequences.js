@@ -58,7 +58,7 @@ function areAutomatedEmailSequencesEnabled(nowMs) {
 }
 
 /**
- * Hubert monthly event picks — opt-in only. The engagement cron can run other
+ * Hubert weekly event picks — opt-in only. The engagement cron can run other
  * nurture mail while this stays off.
  *
  *   HUBERT_EVENT_CONCIERGE_EMAILS_ENABLED=true

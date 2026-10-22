@@ -61,13 +61,14 @@
                 <img src="{{hubert_icon_url}}" alt="Hubert" width="52" height="52" style="width:52px;height:52px;display:block;margin:0 auto;border:0;border-radius:50%;">
               </td></tr>
             </table>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px;">Hubert Event Concierge</p>
-            <h1 class="hero-title" style="font-family:'DM Sans',system-ui,sans-serif;font-size:28px;font-weight:600;color:#1c2040;margin:0 0 10px;line-height:1.15;">Your {{month_label}} networking picks</h1>
-            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:0;">Hi {{user_name}}, I am Hubert — your business butler on The Networker UK. Here are upcoming events {{near_location_phrase}}, plus a few popular listings members are booking this month.</p>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px;">Hubert Event Concierge · Weekly</p>
+            <h1 class="hero-title" style="font-family:'DM Sans',system-ui,sans-serif;font-size:28px;font-weight:600;color:#1c2040;margin:0 0 10px;line-height:1.15;">Your weekly networking picks</h1>
+            <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;line-height:1.7;color:#635c5e;margin:0;">Hi {{user_name}}, I am Hubert — your business butler on The Networker UK. Here are upcoming events {{near_location_phrase}}, plus popular listings members are booking this week (week of {{week_label}}).</p>
           </td>
         </tr>
         <tr><td class="mobile-pad" style="padding:0 40px 8px;">{{nearby_events_html}}</td></tr>
-        <tr><td class="mobile-pad" style="padding:0 40px 20px;">{{popular_events_html}}</td></tr>
+        <tr><td class="mobile-pad" style="padding:0 40px 8px;">{{popular_events_html}}</td></tr>
+        <tr><td class="mobile-pad" style="padding:0 40px 12px;">{{meet_rosie_html}}</td></tr>
         <tr><td class="mobile-pad email-cta" style="padding:0 40px 12px;text-align:center;"><a href="{{browse_events_url}}" style="display:inline-block;text-align:center;padding:14px 32px;background:#1c2040;border-radius:999px;color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;margin:0 6px 10px;">Browse all events &rarr;</a></td></tr>
         <tr><td class="mobile-pad" style="padding:0 40px 28px;text-align:center;"><p style="font-family:'DM Sans',system-ui,sans-serif;font-size:13px;line-height:1.6;color:#9d87aa;margin:0;">{{location_footer_html}}</p></td></tr>
         {{mini_sponsors_row}}
