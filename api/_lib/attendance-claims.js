@@ -759,12 +759,12 @@ async function findUnpublishedPastHint(sb, organiserId, { dateOk, dateStr, oldes
   let query = sb
     .from('events')
     .select('id, starts_at, status')
-    .eq('organiser_id', organiserId)
     .in('status', ['draft', 'unpublished'])
     .lt('starts_at', nowIso)
     .gte('starts_at', oldest)
     .order('starts_at', { ascending: false })
     .limit(40);
+  if (organiserId && isUuid(organiserId)) query = query.eq('organiser_id', organiserId);
   if (dateOk) {
     const noonUtc = new Date(`${dateStr}T12:00:00Z`);
     const from = new Date(noonUtc.getTime() - 36 * 60 * 60 * 1000).toISOString();
@@ -849,14 +849,23 @@ async function searchClaimablePastEvents(session, input) {
   // Exclude events already claimed/reviewed or with eligible registration.
   const eventIds = rows.map((r) => r.id);
   if (!eventIds.length) {
-    const unpublished = hasOrganiser
-      ? await findUnpublishedPastHint(sb, organiserId, {
-          dateOk,
-          dateStr,
-          oldest,
-          nowIso,
-        })
-      : { unpublishedOnDate: false, unpublishedInWindow: false };
+    let unpublished = { unpublishedOnDate: false, unpublishedInWindow: false };
+    if (hasOrganiser) {
+      unpublished = await findUnpublishedPastHint(sb, organiserId, {
+        dateOk,
+        dateStr,
+        oldest,
+        nowIso,
+      });
+    } else if (dateOk) {
+      // Date-only search: see if anything draft exists that day (any group).
+      unpublished = await findUnpublishedPastHint(sb, null, {
+        dateOk,
+        dateStr,
+        oldest,
+        nowIso,
+      });
+    }
     return emptyClaimableEventsResult({ filteredByDate: dateOk, ...unpublished });
   }
 
