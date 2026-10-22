@@ -570,9 +570,58 @@ function mapClaimOrganiserRow(row, matchHint) {
   };
 }
 
+async function organisersFromAttendeeBookings(sb, attendeeId) {
+  if (!attendeeId) return [];
+  const nowIso = new Date().toISOString();
+  const { data, error } = await sb
+    .from('registrations')
+    .select(
+      'id, event_id, payment_status, events ( id, title, starts_at, organiser_id, organisers ( id, name, slug, photo_url ) )'
+    )
+    .eq('attendee_id', attendeeId)
+    .neq('payment_status', 'Refunded')
+    .order('created_at', { ascending: false })
+    .limit(80);
+  if (error) throw new Error(error.message);
+
+  const byId = new Map();
+  (data || []).forEach((reg) => {
+    const ev = reg.events;
+    if (!ev || !ev.starts_at || String(ev.starts_at) >= nowIso) return;
+    const org = ev.organisers;
+    const oid = ev.organiser_id || org?.id;
+    if (!oid || byId.has(oid)) return;
+    const title = String(ev.title || '').trim();
+    const row = org?.id
+      ? org
+      : { id: oid, name: '', slug: null, photo_url: null };
+    byId.set(
+      oid,
+      mapClaimOrganiserRow(row, title ? `From your bookings · ${title}` : 'From your bookings')
+    );
+  });
+
+  const missing = [...byId.entries()].filter(([, row]) => !row.name).map(([id]) => id);
+  if (missing.length) {
+    const orgRes = await sb
+      .from('organisers')
+      .select('id, name, slug, photo_url')
+      .in('id', missing.slice(0, 40));
+    if (orgRes.error) throw new Error(orgRes.error.message);
+    (orgRes.data || []).forEach((row) => {
+      if (!row?.id || !byId.has(row.id)) return;
+      const prev = byId.get(row.id);
+      byId.set(row.id, mapClaimOrganiserRow(row, prev.matchHint || 'From your bookings'));
+    });
+  }
+
+  return [...byId.values()].filter((row) => row.name);
+}
+
 async function searchClaimableOrganisers(session, input) {
   if (!isSupabaseConfigured()) return [];
   const sb = getSupabaseAdmin();
+  const attendeeId = await resolveAttendeeId(sb, session);
 
   const q = String(input?.q || '')
     .trim()
@@ -580,30 +629,51 @@ async function searchClaimableOrganisers(session, input) {
     .replace(/[%_,.()]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
-  if (q.length < 2) return [];
 
-  const { applyPublicOrganiserBrowseFilter, isPublicOrganiser } = require('./supabase-organisers-browse');
   const byId = new Map();
 
-  // 1) Match organiser / group name (and slug).
-  let nameQuery = sb
+  // Always seed with groups the attendee already booked — most reliable discovery path.
+  // Empty query = suggestions only; typed query = filter these + global search.
+  if (attendeeId) {
+    const booked = await organisersFromAttendeeBookings(sb, attendeeId);
+    booked.forEach((row) => {
+      if (!row?.id) return;
+      if (q && q.length >= 1) {
+        const hay = `${row.name || ''} ${row.matchHint || ''} ${row.slug || ''}`.toLowerCase();
+        if (!hay.includes(q)) return;
+      }
+      byId.set(row.id, row);
+    });
+  }
+
+  // Empty / very short query: booking suggestions only (no noisy global browse).
+  if (q.length < 2) {
+    return [...byId.values()]
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .slice(0, 20);
+  }
+
+  // 1) Match organiser / group name — do NOT require public-directory browse status.
+  //    Listing-only / admin / draft-but-active groups still run past events people claim.
+  const nameRes = await sb
     .from('organisers')
     .select('id, name, slug, photo_url, listing_status, verification_status')
+    .not('name', 'is', null)
+    .neq('name', '')
+    .neq('listing_status', 'unpublished')
+    .ilike('name', `%${q}%`)
     .order('name', { ascending: true })
     .limit(40);
-  nameQuery = applyPublicOrganiserBrowseFilter(nameQuery);
-  nameQuery = nameQuery.ilike('name', `%${q}%`);
-  const nameRes = await nameQuery;
   if (nameRes.error) throw new Error(nameRes.error.message);
   (nameRes.data || []).forEach((row) => {
-    if (!row?.id || !String(row.name || '').trim()) return;
+    if (!row?.id || !String(row.name || '').trim() || byId.has(row.id)) return;
     byId.set(row.id, mapClaimOrganiserRow(row, 'Group name match'));
   });
 
   // 2) Match past published event titles → surface that event's organiser.
-  //    People often type the event name (e.g. "The Networker Hub Example"), not the group name.
+  //    People type the event name (e.g. "The Networker Hub Example"), not the group name.
+  //    No 90-day cap here — claim window still applies when listing events for a group.
   const nowIso = new Date().toISOString();
-  const oldest = addDaysIso(null, -CLAIM_WINDOW_DAYS);
   const eventRes = await sb
     .from('events')
     .select(
@@ -612,7 +682,6 @@ async function searchClaimableOrganisers(session, input) {
     .eq('status', 'published')
     .not('organiser_id', 'is', null)
     .lt('starts_at', nowIso)
-    .gte('starts_at', oldest)
     .ilike('title', `%${q}%`)
     .order('starts_at', { ascending: false })
     .limit(40);
@@ -623,16 +692,12 @@ async function searchClaimableOrganisers(session, input) {
     const oid = ev.organiser_id || org?.id;
     if (!oid || byId.has(oid)) return;
     if (org?.id) {
-      if (!isPublicOrganiser(org) && String(org.listing_status || '').toLowerCase() !== 'published') {
-        // Still allow if they have a published past event matching the search.
-      }
+      if (String(org.listing_status || '').toLowerCase() === 'unpublished') return;
       const title = String(ev.title || '').trim();
       byId.set(oid, mapClaimOrganiserRow(org, title ? `Event: ${title}` : 'Past event match'));
-      return;
     }
   });
 
-  // Fetch any organiser ids we only know from events without nested join.
   const missingIds = (eventRes.data || [])
     .map((ev) => ev.organiser_id)
     .filter((id) => id && !byId.has(id));
@@ -645,6 +710,7 @@ async function searchClaimableOrganisers(session, input) {
     if (orgRes.error) throw new Error(orgRes.error.message);
     (orgRes.data || []).forEach((row) => {
       if (!row?.id || byId.has(row.id)) return;
+      if (String(row.listing_status || '').toLowerCase() === 'unpublished') return;
       const sample = (eventRes.data || []).find((ev) => ev.organiser_id === row.id);
       const title = String(sample?.title || '').trim();
       byId.set(row.id, mapClaimOrganiserRow(row, title ? `Event: ${title}` : 'Past event match'));

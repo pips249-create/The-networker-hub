@@ -65,11 +65,15 @@ module.exports = async function handler(req, res) {
       const url = new URL(req.url, 'https://internal.local');
       const action = String(url.searchParams.get('action') || '').trim();
 
-      if (action === 'search-organisers') {
+      if (action === 'search-organisers' || action === 'suggest-organisers') {
         const organisers = await searchClaimableOrganisers(session, {
           q: url.searchParams.get('q') || '',
         });
-        return json(res, 200, { ok: true, organisers });
+        return json(res, 200, {
+          ok: true,
+          organisers,
+          suggested: !String(url.searchParams.get('q') || '').trim(),
+        });
       }
 
       if (action === 'search') {
