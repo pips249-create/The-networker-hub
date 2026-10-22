@@ -45,4 +45,21 @@ assert.equal(list.numberOfItems, 1);
 assert.equal(list.itemListElement.length, 1);
 assert.equal(list.itemListElement[0].item.name, 'Dublin Founders Breakfast');
 
+const onlineList = buildIntlEventsItemList([
+  {
+    title: 'Global Founders Zoom',
+    startsOn: '2026-11-01',
+    startsAtLocal: '17:00',
+    city: 'Online',
+    countryCode: 'OL',
+    countryName: 'Online',
+    externalUrl: 'https://example.com/zoom',
+  },
+]);
+assert.equal(
+  onlineList.itemListElement[0].item.eventAttendanceMode,
+  'https://schema.org/OnlineEventAttendanceMode'
+);
+assert.equal(onlineList.itemListElement[0].item.location['@type'], 'VirtualLocation');
+
 console.log('test-intl-events-jsonld: ok');

@@ -39,6 +39,37 @@
     '760': { iso2: 'SY', name: 'Syria' },
   };
 
+  var ONLINE_COUNTRY_CODE = 'OL';
+  var ONLINE_COUNTRY_NAME = 'Online';
+  var ONLINE_META = {
+    iso2: ONLINE_COUNTRY_CODE,
+    name: ONLINE_COUNTRY_NAME,
+    status: 'online',
+    live: false,
+    building: false,
+    unavailable: false,
+    online: true,
+  };
+
+  function isOnlineCode(code) {
+    return String(code || '').trim().toUpperCase() === ONLINE_COUNTRY_CODE;
+  }
+
+  function isOnlineEvent(row) {
+    if (!row) return false;
+    if (isOnlineCode(row.countryCode)) return true;
+    return String(row.countryName || '').trim().toLowerCase() === 'online';
+  }
+
+  function formatEventPlace(row) {
+    if (isOnlineEvent(row)) {
+      var host = String(row.city || '').trim();
+      if (!host || host.toLowerCase() === 'online') return ONLINE_COUNTRY_NAME;
+      return ONLINE_COUNTRY_NAME + ' · ' + host;
+    }
+    return (row.city || '') + (row.countryName ? ', ' + row.countryName : '');
+  }
+
   /** Fallback when region seed / map data is not ready (keep in sync with popular markets). */
   var EVENT_COUNTRY_FALLBACK = [
     { iso2: 'AE', name: 'United Arab Emirates' },
@@ -467,9 +498,47 @@
     handleCountryAction(meta);
   }
 
+  function openOnlineEventsBrowse() {
+    trackIntl('intl_online_open', { source: 'finder' });
+    ensureOnlineFilterOption();
+    if (els.eventsFilter) els.eventsFilter.value = ONLINE_COUNTRY_CODE;
+    state.eventsFilter = ONLINE_COUNTRY_CODE;
+    renderEventsList();
+    var target = byId('events');
+    if (target) {
+      var reduceMotion =
+        window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      target.scrollIntoView({
+        behavior: reduceMotion ? 'auto' : 'smooth',
+        block: 'start',
+      });
+    }
+    if (window.history && typeof window.history.pushState === 'function') {
+      window.history.pushState(null, '', '#events');
+    }
+    if (els.headerResults) els.headerResults.hidden = true;
+    if (els.headerSearch) els.headerSearch.value = '';
+  }
+
+  function ensureOnlineFilterOption() {
+    if (!els.eventsFilter) return;
+    var exists = Array.prototype.some.call(els.eventsFilter.options || [], function (opt) {
+      return String(opt.value || '').toUpperCase() === ONLINE_COUNTRY_CODE;
+    });
+    if (exists) return;
+    var opt = document.createElement('option');
+    opt.value = ONLINE_COUNTRY_CODE;
+    opt.textContent = ONLINE_COUNTRY_NAME;
+    els.eventsFilter.appendChild(opt);
+  }
+
   function handleCountryAction(meta) {
     if (!meta || meta.unavailable) return;
     clearHover();
+    if (meta.online || isOnlineCode(meta.iso2)) {
+      openOnlineEventsBrowse();
+      return;
+    }
     // Live / building markets with a dedicated page (UK, Ireland, US) — go there.
     // Map-only / lower-demand markets share a regional browse drawer (e.g. Brazil → South America).
     if (meta.url) {
@@ -508,6 +577,9 @@
       .trim()
       .toLowerCase();
     if (iso === 'uk') iso = 'gb';
+    if (iso === 'ol') {
+      return '<span class="intl-flag intl-flag--online" aria-hidden="true"></span>';
+    }
     if (!/^[a-z]{2}$/.test(iso)) return '';
     return (
       '<img class="intl-flag" src="https://flagcdn.com/w40/' +
@@ -521,24 +593,25 @@
   function countryChipHtml(row, className) {
     if (!row || !row.countryName) return '';
     var flag = countryFlagHtml(row.countryCode);
+    var label = isOnlineEvent(row) ? ONLINE_COUNTRY_NAME : row.countryName;
     return (
       '<span class="' +
       className +
+      (isOnlineEvent(row) ? ' is-online' : '') +
       '">' +
       flag +
-      escapeHtml(row.countryName) +
+      escapeHtml(label) +
       '</span>'
     );
   }
 
   function renderBrowseEventCard(row, options) {
     options = options || {};
-    var place =
-      escapeHtml(row.city || '') +
-      (row.countryName ? ', ' + escapeHtml(row.countryName) : '');
-    var countryChip = options.showCountry
-      ? countryChipHtml(row, 'intl-browse-card-country')
-      : '';
+    var place = escapeHtml(formatEventPlace(row));
+    var countryChip =
+      options.showCountry || isOnlineEvent(row)
+        ? countryChipHtml(row, 'intl-browse-card-country')
+        : '';
     var organiser = '';
     if (row.organiserName) {
       organiser = row.organiserWebsite
@@ -872,10 +945,29 @@
       });
   }
 
+  function syncEventFormPlaceFields() {
+    if (!els.eventCountry || !els.eventCity) return;
+    var code = String(els.eventCountry.value || '').toUpperCase();
+    var cityLabel = byId('intl-event-city-label');
+    if (isOnlineCode(code)) {
+      if (cityLabel) cityLabel.textContent = 'Host city / timezone note';
+      els.eventCity.placeholder = 'e.g. Online or London (GMT)';
+      if (!String(els.eventCity.value || '').trim()) {
+        els.eventCity.value = ONLINE_COUNTRY_NAME;
+      }
+    } else {
+      if (cityLabel) cityLabel.textContent = 'City';
+      els.eventCity.placeholder = 'e.g. Dublin';
+      if (String(els.eventCity.value || '').trim().toLowerCase() === 'online') {
+        els.eventCity.value = '';
+      }
+    }
+  }
+
   function fillEventFormCountrySelect() {
     if (!els.eventCountry) return;
     var previous = els.eventCountry.value || '';
-    var html = '<option value="">Select a country</option>';
+    var html = '<option value="">Select a country or Online</option>';
     eventCountryOptions().forEach(function (meta) {
       html +=
         '<option value="' +
@@ -893,6 +985,7 @@
     ) {
       els.eventCountry.value = previous;
     }
+    syncEventFormPlaceFields();
   }
 
   /** Filter dropdown: only countries that currently have listed events. */
@@ -1057,7 +1150,7 @@
           escapeHtml(row.title || 'Event') +
           '</h3>' +
           '<p class="intl-events-item-place">' +
-          escapeHtml((row.city || '') + (row.countryName ? ', ' + row.countryName : '')) +
+          escapeHtml(formatEventPlace(row)) +
           '</p>' +
           description +
           organiser +
@@ -1110,22 +1203,31 @@
       if (!row || !row.title || !row.startsOn || !row.externalUrl) continue;
       var startDate = toEventSchemaDate(row.startsOn, row.startsAtLocal);
       if (!startDate) continue;
+      var online = isOnlineEvent(row);
       var eventNode = {
         '@type': 'Event',
         name: String(row.title),
         startDate: startDate,
-        eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+        eventAttendanceMode: online
+          ? 'https://schema.org/OnlineEventAttendanceMode'
+          : 'https://schema.org/OfflineEventAttendanceMode',
         eventStatus: 'https://schema.org/EventScheduled',
         url: String(row.externalUrl),
-        location: {
-          '@type': 'Place',
-          name: String(row.city || row.countryName || 'Venue TBA'),
-          address: {
-            '@type': 'PostalAddress',
-            addressLocality: String(row.city || ''),
-            addressCountry: String(row.countryCode || ''),
-          },
-        },
+        location: online
+          ? {
+              '@type': 'VirtualLocation',
+              url: String(row.externalUrl),
+              name: formatEventPlace(row),
+            }
+          : {
+              '@type': 'Place',
+              name: String(row.city || row.countryName || 'Venue TBA'),
+              address: {
+                '@type': 'PostalAddress',
+                addressLocality: String(row.city || ''),
+                addressCountry: String(row.countryCode || ''),
+              },
+            },
         offers: {
           '@type': 'Offer',
           url: String(row.externalUrl),
@@ -1315,7 +1417,19 @@
       });
   }
 
+  function queryMatchesOnline(normalized) {
+    if (!normalized) return false;
+    return (
+      normalized.indexOf('online') !== -1 ||
+      normalized.indexOf('virtual') !== -1 ||
+      normalized.indexOf('webinar') !== -1 ||
+      normalized === 'ol'
+    );
+  }
+
   function statusBadge(meta) {
+    if (!meta) return '';
+    if (meta.online) return 'Online';
     if (meta.live) return 'Live';
     if (meta.building) return 'Building';
     return 'Coming soon';
@@ -1329,6 +1443,13 @@
       if (!normalized) return meta.live || meta.building;
       return meta.name.toLowerCase().indexOf(normalized) !== -1;
     });
+    if (queryMatchesOnline(normalized)) {
+      matches = [ONLINE_META].concat(
+        matches.filter(function (meta) {
+          return !isOnlineCode(meta.iso2);
+        })
+      );
+    }
 
     container.innerHTML = '';
 
@@ -1350,20 +1471,24 @@
     matches.slice(0, normalized ? 10 : 6).forEach(function (meta) {
       var button = document.createElement('button');
       button.type = 'button';
-      button.className = 'intl-country-result intl-country-result--' + meta.status;
+      button.className =
+        'intl-country-result intl-country-result--' +
+        (meta.online ? 'online' : meta.status || 'soon');
       button.setAttribute('role', 'option');
-      var demandRow = !meta.live ? interestRowFor(meta) : null;
+      var demandRow = !meta.live && !meta.online ? interestRowFor(meta) : null;
       var demandHtml =
         demandRow && demandRow.total >= 1
           ? '<span class="intl-country-result-demand">' +
             formatCount(demandRow.total) +
             ' registered</span>'
           : '';
-      var region = !meta.live && !meta.building ? regionMetaForCountry(meta.iso2) : null;
+      var region = !meta.live && !meta.building && !meta.online ? regionMetaForCountry(meta.iso2) : null;
       var regionHtml =
         region && region.name
           ? '<span class="intl-country-result-region">' + region.name + '</span>'
-          : '';
+          : meta.online
+            ? '<span class="intl-country-result-region">Worldwide virtual events</span>'
+            : '';
       button.innerHTML =
         '<span class="intl-country-result-copy">' +
         '<span class="intl-country-result-name">' +
@@ -1461,8 +1586,18 @@
     var introBtn = byId('intl-add-event-btn');
     var sectionBtn = byId('intl-events-add-btn');
     var browseBtn = byId('intl-browse-events-btn');
+    var onlineHeaderBtn = byId('intl-header-online-link');
     if (introBtn) introBtn.addEventListener('click', onAdd);
     if (sectionBtn) sectionBtn.addEventListener('click', onAdd);
+    if (els.eventCountry) {
+      els.eventCountry.addEventListener('change', syncEventFormPlaceFields);
+    }
+    if (onlineHeaderBtn) {
+      onlineHeaderBtn.addEventListener('click', function (event) {
+        event.preventDefault();
+        openOnlineEventsBrowse();
+      });
+    }
     if (browseBtn) {
       browseBtn.addEventListener('click', function (event) {
         trackIntl('intl_home_cta_click', { cta: 'browse_events' });
@@ -1541,13 +1676,19 @@
       els.eventError.hidden = false;
       return;
     }
+    if (isOnlineCode(countryCode)) {
+      countryName = ONLINE_COUNTRY_NAME;
+      if (!city) city = ONLINE_COUNTRY_NAME;
+    }
     if (!city) {
-      els.eventError.textContent = 'Enter the city.';
+      els.eventError.textContent = isOnlineCode(countryCode)
+        ? 'Enter Online or a host city / timezone note.'
+        : 'Enter the city.';
       els.eventError.hidden = false;
       return;
     }
     if (!countryCode) {
-      els.eventError.textContent = 'Choose a country.';
+      els.eventError.textContent = 'Choose a country or Online.';
       els.eventError.hidden = false;
       return;
     }

@@ -381,5 +381,10 @@ window.INTL_EVENT_COUNTRY_OPTIONS = function intlEventCountryOptions() {
   list.sort(function (a, b) {
     return a.name.localeCompare(b.name, 'en-GB');
   });
+  // Pseudo-region for virtual / webinar link-out listings (not an ISO country).
+  list = list.filter(function (row) {
+    return row && row.iso2 !== 'OL';
+  });
+  list.unshift({ iso2: 'OL', name: 'Online' });
   return list;
 };

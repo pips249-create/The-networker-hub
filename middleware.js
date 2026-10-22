@@ -292,22 +292,40 @@ function buildIntlEventsItemListJsonLd(events) {
       const ss = timeMatch[3] != null ? String(Number(timeMatch[3])).padStart(2, '0') : '00';
       startDate = startsOn + 'T' + hh + ':' + mm + ':' + ss;
     }
+    const online =
+      String(row.countryCode || '')
+        .trim()
+        .toUpperCase() === 'OL' ||
+      String(row.countryName || '')
+        .trim()
+        .toLowerCase() === 'online';
     const eventNode = {
       '@type': 'Event',
       name: title,
       startDate: startDate,
-      eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+      eventAttendanceMode: online
+        ? 'https://schema.org/OnlineEventAttendanceMode'
+        : 'https://schema.org/OfflineEventAttendanceMode',
       eventStatus: 'https://schema.org/EventScheduled',
       url: externalUrl,
-      location: {
-        '@type': 'Place',
-        name: String(row.city || row.countryName || 'Venue TBA'),
-        address: {
-          '@type': 'PostalAddress',
-          addressLocality: String(row.city || ''),
-          addressCountry: String(row.countryCode || ''),
-        },
-      },
+      location: online
+        ? {
+            '@type': 'VirtualLocation',
+            url: externalUrl,
+            name:
+              row.city && String(row.city).trim().toLowerCase() !== 'online'
+                ? 'Online · ' + String(row.city)
+                : 'Online',
+          }
+        : {
+            '@type': 'Place',
+            name: String(row.city || row.countryName || 'Venue TBA'),
+            address: {
+              '@type': 'PostalAddress',
+              addressLocality: String(row.city || ''),
+              addressCountry: String(row.countryCode || ''),
+            },
+          },
       offers: {
         '@type': 'Offer',
         url: externalUrl,

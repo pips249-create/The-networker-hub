@@ -112,24 +112,47 @@
   letter-spacing: 0.02em;
 }
 
-.intl-header-uk-link {
+.intl-header-market-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  justify-self: end;
+}
+
+.intl-header-uk-link,
+.intl-header-online-link {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   padding: 8px 14px;
   border-radius: var(--radius-pill);
-  border: 1px solid rgba(177, 137, 184, 0.45);
-  background: rgba(177, 137, 184, 0.12);
-  color: #fdf9ee;
   font-size: 12px;
   font-weight: 600;
   text-decoration: none;
   white-space: nowrap;
-  justify-self: end;
+}
+
+.intl-header-uk-link {
+  border: 1px solid rgba(177, 137, 184, 0.45);
+  background: rgba(177, 137, 184, 0.12);
+  color: #fdf9ee;
 }
 
 .intl-header-uk-link:hover {
   background: rgba(177, 137, 184, 0.22);
+  color: #fff;
+}
+
+.intl-header-online-link {
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fdf9ee;
+}
+
+.intl-header-online-link:hover {
+  background: rgba(255, 255, 255, 0.16);
   color: #fff;
 }
 
@@ -1049,6 +1072,10 @@
   color: var(--gold);
 }
 
+.intl-country-result--online .intl-country-result-status {
+  color: var(--lavender, #9a7aa8);
+}
+
 .intl-country-results-empty {
   padding: 10px 2px 2px;
   font-size: 12px;
@@ -1418,6 +1445,22 @@
   border-radius: 2px;
   box-shadow: 0 0 0 1px rgba(45, 38, 54, 0.12);
   flex: 0 0 auto;
+}
+
+.intl-flag--online {
+  position: relative;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.35) 0 28%, transparent 30%),
+    linear-gradient(135deg, #6e8bb8 0%, #9a7aa8 55%, #c9ad7a 100%);
+  box-shadow: 0 0 0 1px rgba(45, 38, 54, 0.16);
+}
+
+.intl-flag--online::after {
+  content: '';
+  position: absolute;
+  inset: 2px 5px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 999px;
 }
 
 .intl-events-item-title {
@@ -2295,7 +2338,7 @@
     grid-area: tagline;
   }
 
-  .intl-header-uk-link {
+  .intl-header-market-links {
     grid-area: uk;
   }
 
@@ -2363,7 +2406,8 @@
     font-size: clamp(1.05rem, 4.6vw, 1.35rem);
   }
 
-  .intl-header-uk-link {
+  .intl-header-uk-link,
+  .intl-header-online-link {
     padding: 6px 10px;
     font-size: 11px;
   }

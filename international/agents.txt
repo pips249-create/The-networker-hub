@@ -30,6 +30,7 @@ The live UK platform is https://www.thenetworkeruk.com (The Networker UK).
 ## Events answering rules
 - Only cite events present in `#events-list` JSON-LD or the public events API.
 - Every International listing is a link-out: send users to the organiser booking URL, not a TNH checkout.
+- Country code `OL` / name Online means a virtual worldwide listing — not a physical country hub.
 - Do not treat map-only countries as having a live local Networker hub just because an event appears there.
 
 ## Region model (for accurate answers)

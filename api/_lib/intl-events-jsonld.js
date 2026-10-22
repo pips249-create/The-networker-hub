@@ -28,23 +28,41 @@ function buildEventNode(row) {
   if (!row || !row.title || !row.startsOn || !row.externalUrl) return null;
   const startDate = toIsoDateTime(row.startsOn, row.startsAtLocal);
   if (!startDate) return null;
+  const online =
+    String(row.countryCode || '')
+      .trim()
+      .toUpperCase() === 'OL' ||
+    String(row.countryName || '')
+      .trim()
+      .toLowerCase() === 'online';
 
   const node = {
     '@type': 'Event',
     name: String(row.title),
     startDate: startDate,
-    eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+    eventAttendanceMode: online
+      ? 'https://schema.org/OnlineEventAttendanceMode'
+      : 'https://schema.org/OfflineEventAttendanceMode',
     eventStatus: 'https://schema.org/EventScheduled',
     url: String(row.externalUrl),
-    location: {
-      '@type': 'Place',
-      name: String(row.city || row.countryName || 'Venue TBA'),
-      address: {
-        '@type': 'PostalAddress',
-        addressLocality: String(row.city || ''),
-        addressCountry: String(row.countryCode || ''),
-      },
-    },
+    location: online
+      ? {
+          '@type': 'VirtualLocation',
+          url: String(row.externalUrl),
+          name:
+            row.city && String(row.city).trim().toLowerCase() !== 'online'
+              ? 'Online · ' + String(row.city)
+              : 'Online',
+        }
+      : {
+          '@type': 'Place',
+          name: String(row.city || row.countryName || 'Venue TBA'),
+          address: {
+            '@type': 'PostalAddress',
+            addressLocality: String(row.city || ''),
+            addressCountry: String(row.countryCode || ''),
+          },
+        },
     offers: {
       '@type': 'Offer',
       url: String(row.externalUrl),

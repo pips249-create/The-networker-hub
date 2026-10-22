@@ -267,7 +267,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/css/hub.css?v=20260831intl30">
-<link rel="stylesheet" href="/css/international-home.css?v=20261021intlwide1">
+<link rel="stylesheet" href="/css/international-home.css?v=20261022intlonline1">
 <link rel="icon" href="/favicon.ico?v=20260825intl26" sizes="any">
 <link rel="icon" href="/assets/favicon.svg?v=20260825intl26" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/assets/logo-networker-international.png?v=20260825intl26">
@@ -299,10 +299,13 @@
       >
       <div class="intl-header-results" id="intl-header-results" role="listbox" aria-label="Country search results" hidden></div>
     </div>
-    <a class="intl-header-uk-link" href="https://www.thenetworkeruk.com" rel="noopener noreferrer">
-      <span class="intl-live-dot" aria-hidden="true"></span>
-      United Kingdom — live
-    </a>
+    <div class="intl-header-market-links">
+      <a class="intl-header-uk-link" href="https://www.thenetworkeruk.com" rel="noopener noreferrer">
+        <span class="intl-live-dot" aria-hidden="true"></span>
+        United Kingdom — live
+      </a>
+      <a class="intl-header-online-link" href="#events" id="intl-header-online-link">Online events</a>
+    </div>
   </div>
 </header>
 
@@ -726,12 +729,12 @@
           <input class="intl-field-input" id="intl-event-ends" name="endsOn" type="date">
         </div>
         <div>
-          <label class="intl-field-label" for="intl-event-city">City</label>
+          <label class="intl-field-label" for="intl-event-city" id="intl-event-city-label">City</label>
           <input class="intl-field-input" id="intl-event-city" name="city" type="text" required maxlength="120" placeholder="e.g. Dublin" autocomplete="address-level2">
         </div>
       </div>
 
-      <label class="intl-field-label" for="intl-event-country">Country</label>
+      <label class="intl-field-label" for="intl-event-country">Country or Online</label>
       <select class="intl-field-input" id="intl-event-country" name="countryCode" required>
         <option value="">Select a country</option>
       </select>
@@ -820,7 +823,7 @@
 </div>
 
 <script src="/js/hub-compliance-bootstrap.js?v=20260923cmp4" data-root="/"></script>
-<script src="/js/international-region-seed.js?v=20261020intlcanus1" defer></script>
-<script src="/js/international-home.js?v=20261021intlfilter1" defer></script>
+<script src="/js/international-region-seed.js?v=20261022intlonline1" defer></script>
+<script src="/js/international-home.js?v=20261022intlonline1" defer></script>
 </body>
 </html>
