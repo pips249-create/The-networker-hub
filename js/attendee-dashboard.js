@@ -88,8 +88,8 @@
       sub: 'Enquiries you sent, saved business listings, and search alerts for new matches.',
     },
     past: {
-      title: 'Past events',
-      sub: 'Events you have already attended.',
+      title: 'Events I’ve attended',
+      sub: 'Hub bookings plus events you claim — confirm with the organiser to review and build your Most networked score.',
     },
     'opportunity-enquiries': {
       title: 'My opportunity enquiries',
@@ -1278,8 +1278,17 @@
     document.querySelectorAll('.hub-side-nav-link[data-ad-route]').forEach((a) => {
       const navRoute = a.getAttribute('data-ad-route');
       let active = navRoute === currentRoute;
-      if (navRoute === 'tickets' && (currentRoute === 'tickets' || isTicketsScope(currentRoute))) {
-        active = true;
+      if (navRoute === 'past') {
+        active = currentRoute === 'tickets' && ticketsScope === 'past';
+      } else if (navRoute === 'tickets') {
+        active =
+          currentRoute === 'tickets' && ticketsScope !== 'past'
+            ? true
+            : currentRoute === 'tickets' && !ticketsScope
+              ? true
+              : false;
+        if (currentRoute === 'tickets' && ticketsScope === 'past') active = false;
+        if (currentRoute === 'tickets' && ticketsScope !== 'past') active = true;
       }
       if (navRoute === 'saved' && currentRoute === 'saved') active = true;
       if (
@@ -2861,6 +2870,7 @@
       el.textContent = String(n);
     };
     set('ad-side-tickets', upcomingList().length);
+    set('ad-side-past', pastList().length);
     const oppTotal =
       (opportunityEnquiries || []).length + savedOpportunities.length + savedOpportunitySearches.length;
     set('ad-side-opportunities', oppTotal);
@@ -3497,6 +3507,11 @@
         if (key === 'tickets') {
           setTicketsScope('upcoming');
           setRoute('tickets');
+          return;
+        }
+        if (key === 'past') {
+          setTicketsScope('past');
+          setRoute('past');
           return;
         }
         if (key === 'reviews') {
