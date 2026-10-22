@@ -22,6 +22,7 @@ const routes = {
   'alumni-invites': require('./_lib/routes/organiser-alumni-invites'),
   'ce-member-invites': require('./_lib/routes/organiser-ce-member-invites'),
   reviews: require('./_lib/routes/organiser-reviews'),
+  'attendance-claims': require('./_lib/routes/organiser-attendance-claims'),
   team: require('./_lib/routes/organiser-team'),
   activity: require('./_lib/routes/organiser-activity'),
   cancellations: require('./_lib/routes/organiser-cancellations'),

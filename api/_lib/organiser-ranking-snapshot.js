@@ -1,6 +1,7 @@
 const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
 const { publicOrganiserSlug } = require('./organiser-slug');
 const { sendTemplatedEmail } = require('./send-template-email');
+const { loadWeightedReviewStatsByOrganiser } = require('./attendance-claims');
 
 const MIN_REVIEWS_FOR_RANKING = 8;
 /** Soft volume floor so tiny 8/8 samples cannot dominate established groups. */
@@ -170,34 +171,55 @@ async function computeLiveRankingIndex(sb) {
   const eligibleByOrganiser = await loadEligibleAttendeeCountsByOrganiser(sb);
   if (error) throw new Error(error.message);
 
-  const ranked = (data || [])
-    .filter((row) => {
-      const status = String(row.listing_status || 'draft').toLowerCase();
-      if (status === 'unpublished') return false;
-      const published = status === 'published';
-      const verified = row.verification_status === 'Verified';
-      if (!published && !verified) return false;
-      const rating = Number(row.average_rating);
-      return Number.isFinite(rating) && rating > 0;
-    })
+  const candidates = (data || []).filter((row) => {
+    const status = String(row.listing_status || 'draft').toLowerCase();
+    if (status === 'unpublished') return false;
+    const published = status === 'published';
+    const verified = row.verification_status === 'Verified';
+    if (!published && !verified) return false;
+    const rating = Number(row.average_rating);
+    return Number.isFinite(rating) && rating > 0;
+  });
+
+  let weightedByOrganiser = new Map();
+  try {
+    weightedByOrganiser = await loadWeightedReviewStatsByOrganiser(
+      sb,
+      candidates.map((row) => row.id)
+    );
+  } catch {
+    weightedByOrganiser = new Map();
+  }
+
+  const ranked = candidates
     .map((row) => {
-      const reviewCount = Number(row.review_count) || 0;
       const eligibleAttendees = eligibleByOrganiser.get(row.id) || 0;
+      const weighted = weightedByOrganiser.get(row.id);
+      const reviewCount = weighted
+        ? Number(weighted.weightedReviewCount) || 0
+        : Number(row.review_count) || 0;
+      const averageRating = weighted
+        ? Number(weighted.weightedAverageRating) || 0
+        : Number(row.average_rating) || 0;
+      const displayReviewCount = Number(row.review_count) || 0;
       return {
         ...row,
         eligibleAttendees,
+        rankingReviewCount: reviewCount,
+        rankingAverageRating: averageRating,
+        displayReviewCount,
         reviewRate: reviewRate(reviewCount, eligibleAttendees),
       };
     })
     .filter((row) => {
-      const reviews = Number(row.review_count) || 0;
+      const reviews = Number(row.rankingReviewCount) || 0;
       const eligible = Number(row.eligibleAttendees) || 0;
       return (
         reviews >= MIN_REVIEWS_FOR_RANKING && eligible >= MIN_ELIGIBLE_ATTENDEES_FOR_RANKING
       );
     })
     .sort((a, b) => {
-      const ratingDiff = Number(b.average_rating) - Number(a.average_rating);
+      const ratingDiff = Number(b.rankingAverageRating) - Number(a.rankingAverageRating);
       if (ratingDiff !== 0) return ratingDiff;
       const rateDiff = Number(b.reviewRate) - Number(a.reviewRate);
       if (rateDiff !== 0) return rateDiff;
@@ -217,8 +239,8 @@ async function computeLiveRankingIndex(sb) {
       totalRanked: ranked.length,
       tier,
       label,
-      rating: Number(row.average_rating),
-      reviewCount: Number(row.review_count) || 0,
+      rating: Number(row.rankingAverageRating),
+      reviewCount: Number(row.displayReviewCount) || 0,
       eligibleAttendees: Number(row.eligibleAttendees) || 0,
       reviewRate: Number(row.reviewRate) || 0,
     });

@@ -36,6 +36,7 @@ const routes = {
   'guest-visit-eligibility': require('./_lib/routes/auth-guest-visit-eligibility'),
   'alumni-eligibility': require('./_lib/routes/auth-alumni-eligibility'),
   reviews: require('./_lib/routes/auth-reviews'),
+  'attendance-claims': require('./_lib/routes/auth-attendance-claims'),
   favourites: require('./_lib/routes/auth-favourites'),
   'opportunity-favourites': require('./_lib/routes/auth-opportunity-favourites'),
   'opportunity-saved-searches': require('./_lib/routes/auth-opportunity-saved-searches'),

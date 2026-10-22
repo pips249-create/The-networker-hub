@@ -18,6 +18,10 @@ const { listOpportunityEnquiriesSentBySession } = require('./supabase-opportunit
 const { listRosterGroupsForAttendee } = require('./organiser-member-roster');
 const { reconcileCancelledRegistrationRefunds } = require('./reconcile-cancelled-refunds');
 const { ticketIsApplication } = require('./supabase-application-submissions');
+const {
+  listClaimsForAttendee,
+  computeNetworkedScoreForAttendee,
+} = require('./attendance-claims');
 
 function deriveIsCategoryExclusivity(row) {
   const ev = row.events || {};
@@ -438,13 +442,17 @@ async function getAttendeeDashboardFromSupabase(session) {
       stats: buildStats([]),
       opportunityEnquiries,
       myGroups,
+      attendanceClaims: [],
+      networked: null,
     };
   }
 
-  const [rows, cancelledRowsRaw, reviewByEventId] = await Promise.all([
+  const [rows, cancelledRowsRaw, reviewByEventId, attendanceClaims, networked] = await Promise.all([
     listRegistrationsForAttendee(sb, attendeeId),
     listCancelledRegistrationsForAttendee(sb, attendeeId),
     listReviewsForAttendee(sb, attendeeId),
+    listClaimsForAttendee({ ...session, /* resolve via session */ }).catch(() => []),
+    computeNetworkedScoreForAttendee(sb, attendeeId).catch(() => null),
   ]);
 
   const cancelledRows = await reconcileCancelledRegistrationRefunds(sb, cancelledRowsRaw);
@@ -460,6 +468,8 @@ async function getAttendeeDashboardFromSupabase(session) {
     stats: buildStats(registrations),
     opportunityEnquiries,
     myGroups,
+    attendanceClaims,
+    networked,
   };
 }
 

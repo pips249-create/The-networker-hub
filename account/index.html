@@ -238,6 +238,21 @@
 
                 <div class="ad-saved-pane" data-tickets-pane="past" role="tabpanel" hidden>
                   <div class="ad-saved-pane-inner ad-saved-pane-inner--table">
+                    <aside class="ad-networked-card" id="ad-networked-card" hidden>
+                      <div class="ad-networked-card-copy">
+                        <p class="ad-networked-kicker">Most networked networker</p>
+                        <h3 class="ad-networked-title" id="ad-networked-title">Build your networker record</h3>
+                        <p class="ad-networked-text" id="ad-networked-text">
+                          Claim events you attended from our organiser list. Verified Hub tickets count fully; organiser-confirmed claims count as half toward this month’s nomination.
+                        </p>
+                      </div>
+                      <div class="ad-networked-card-actions">
+                        <p class="ad-networked-score" id="ad-networked-score" hidden></p>
+                        <button type="button" class="ad-btn ad-btn-primary" id="ad-claim-attendance-open">
+                          Add an event you attended
+                        </button>
+                      </div>
+                    </aside>
                     <div class="ad-table-scroll">
                       <div class="ad-table-wrap">
                         <table>
@@ -258,7 +273,7 @@
                         </table>
                       </div>
                     </div>
-                    <p class="ad-empty" id="ad-past-empty" hidden>You have no past events yet.</p>
+                    <p class="ad-empty" id="ad-past-empty" hidden>You have no past events yet. Add one you attended to start a claim.</p>
                     <nav class="ad-pagination" id="ad-pagination-past" aria-label="Past events pages" hidden></nav>
                   </div>
                 </div>
@@ -871,6 +886,27 @@
       </div>
     </div>
 
+    <div class="ad-claim-modal" id="ad-claim-modal" hidden>
+      <div class="ad-claim-modal-backdrop" id="ad-claim-modal-backdrop"></div>
+      <div
+        class="ad-claim-modal-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="ad-claim-modal-title"
+      >
+        <button type="button" class="ad-claim-modal-close" id="ad-claim-modal-close" aria-label="Close">×</button>
+        <h2 class="ad-claim-modal-title" id="ad-claim-modal-title">Add an event you attended</h2>
+        <p class="ad-claim-modal-sub">
+          Pick a past published event from our organiser list. We’ll email the organiser to confirm — if they say yes, you can leave an organiser-confirmed review and it counts toward Most networked networker.
+        </p>
+        <label class="ad-claim-label" for="ad-claim-search">Search events or organisers</label>
+        <input type="search" id="ad-claim-search" class="ad-claim-search" placeholder="e.g. breakfast · London · group name" autocomplete="off" />
+        <p class="ad-claim-error" id="ad-claim-error" hidden role="alert"></p>
+        <div class="ad-claim-results" id="ad-claim-results" role="list"></div>
+        <p class="ad-claim-hint" id="ad-claim-hint">Showing past events from the last 90 days that you can claim.</p>
+      </div>
+    </div>
+
     <div class="ad-share-modal" id="ad-share-modal" hidden>
       <div class="ad-share-modal-backdrop" id="ad-share-modal-backdrop"></div>
       <div
@@ -1120,6 +1156,6 @@
     <script src="../js/attendee-auth-gate.js?v=20261021confirm2"></script>
     <script src="../js/organiser-image-upload.js?v=20261002offerimage1" defer></script>
     <script src="../js/attendee-member-offers.js?v=20261015offers1" defer></script>
-    <script src="../js/attendee-dashboard.js?v=20260929offerform1" defer></script>
+    <script src="../js/attendee-dashboard.js?v=20261022claims1" defer></script>
   </body>
 </html>

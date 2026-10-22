@@ -247,6 +247,16 @@ const BRANDED_EMAIL_TEMPLATES = {
     marker: 'hub-email-layout-v3-purple-review-v2',
     subject: 'Still time to review {{event_name}}',
   },
+  attendance_claim_request: {
+    file: 'attendance-claim-request.html',
+    marker: 'hub-email-layout-v3-purple-attendance-claim',
+    subject: '{{attendee_name}} says they attended {{event_name}} — did they?',
+  },
+  attendance_claim_confirmed_review: {
+    file: 'attendance-claim-confirmed-review.html',
+    marker: 'hub-email-layout-v3-purple-attendance-claim',
+    subject: 'Confirmed — leave a review for {{organiser_name}}',
+  },
   account_welcome: {
     file: 'account-welcome.html',
     marker: 'hub-email-layout-v3-purple',

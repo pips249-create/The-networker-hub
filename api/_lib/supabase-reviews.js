@@ -104,26 +104,70 @@ async function submitReviewForAttendeeId(attendeeId, input) {
   if (registration && registration.no_show_at) {
     throw new Error('did_not_attend');
   }
-  if (!isEligibleRegistration(registration)) {
-    throw new Error('not_eligible');
+
+  let provenance = 'verified';
+  let attendanceClaimId = null;
+  if (isEligibleRegistration(registration)) {
+    provenance = 'verified';
+  } else {
+    const { findConfirmedClaimForReview } = require('./attendance-claims');
+    const claim = await findConfirmedClaimForReview(sb, resolvedAttendeeId, eventId);
+    if (!claim || claim.expired) {
+      throw new Error(claim?.reason === 'review_window_expired' ? 'claim_review_expired' : 'not_eligible');
+    }
+    provenance = 'organiser_confirmed';
+    attendanceClaimId = claim.id;
   }
 
   const organiserId = ev.organiser_id || null;
   if (!organiserId) throw new Error('missing_organiser');
 
-  const ins = await sb
+  const insertRow = {
+    attendee_id: resolvedAttendeeId,
+    event_id: eventId,
+    organiser_id: organiserId,
+    rating,
+    review_text: reviewText || null,
+    provenance,
+  };
+  if (attendanceClaimId) insertRow.attendance_claim_id = attendanceClaimId;
+
+  let ins = await sb
     .from('reviews')
-    .insert({
-      attendee_id: resolvedAttendeeId,
-      event_id: eventId,
-      organiser_id: organiserId,
-      rating,
-      review_text: reviewText || null,
-    })
-    .select('id, rating, review_text, created_at')
+    .insert(insertRow)
+    .select('id, rating, review_text, created_at, provenance')
     .single();
 
+  // Pre-migration environments: retry without provenance columns.
+  if (ins.error && /provenance|attendance_claim_id|column/i.test(ins.error.message || '')) {
+    if (provenance === 'organiser_confirmed') {
+      throw new Error('attendance_claims_unavailable');
+    }
+    ins = await sb
+      .from('reviews')
+      .insert({
+        attendee_id: resolvedAttendeeId,
+        event_id: eventId,
+        organiser_id: organiserId,
+        rating,
+        review_text: reviewText || null,
+      })
+      .select('id, rating, review_text, created_at')
+      .single();
+  }
+
   if (ins.error) throw new Error(ins.error.message);
+
+  if (attendanceClaimId && ins.data?.id) {
+    await sb
+      .from('attendance_claims')
+      .update({
+        review_id: ins.data.id,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', attendanceClaimId)
+      .eq('attendee_id', resolvedAttendeeId);
+  }
 
   let reviewCount = 1;
   try {
@@ -149,6 +193,7 @@ async function submitReviewForAttendeeId(attendeeId, input) {
     rating: ins.data.rating,
     reviewText: ins.data.review_text,
     createdAt: ins.data.created_at,
+    provenance: ins.data.provenance || provenance,
     reviewerReward,
   };
 }
@@ -257,8 +302,8 @@ async function listReviewsForOrganiserGroups(groupIds, groupsById, adminView) {
 
   async function runQuery(withAttendees) {
     const select = withAttendees
-      ? 'id, created_at, rating, review_text, organiser_response, organiser_id, event_id, events ( title ), attendees ( name, email, public_review_name )'
-      : 'id, created_at, rating, review_text, organiser_response, organiser_id, event_id, events ( title )';
+      ? 'id, created_at, rating, review_text, organiser_response, organiser_id, event_id, provenance, events ( title ), attendees ( name, email, public_review_name )'
+      : 'id, created_at, rating, review_text, organiser_response, organiser_id, event_id, provenance, events ( title )';
     let query = sb
       .from('reviews')
       .select(select)
@@ -281,7 +326,32 @@ async function listReviewsForOrganiserGroups(groupIds, groupsById, adminView) {
     rows = await runQuery(true);
   } catch (err) {
     const msg = String(err?.message || '').toLowerCase();
-    if (msg.includes('public_review_name')) {
+    if (msg.includes('provenance')) {
+      try {
+        const select =
+          'id, created_at, rating, review_text, organiser_response, organiser_id, event_id, events ( title ), attendees ( name, email, public_review_name )';
+        let query = sb
+          .from('reviews')
+          .select(select)
+          .order('created_at', { ascending: false })
+          .limit(500);
+        if (!adminView) {
+          if (!ids.length) return [];
+          if (ids.length === 1) query = query.eq('organiser_id', ids[0]);
+          else query = query.in('organiser_id', ids);
+        }
+        const { data, error } = await query;
+        if (error) throw new Error(error.message);
+        rows = data || [];
+      } catch (err2) {
+        const msg2 = String(err2?.message || '').toLowerCase();
+        if (msg2.includes('public_review_name')) {
+          rows = await runQuery(false);
+        } else {
+          rows = await runQuery(false);
+        }
+      }
+    } else if (msg.includes('public_review_name')) {
       try {
         const select =
           'id, created_at, rating, review_text, organiser_response, organiser_id, event_id, events ( title ), attendees ( name, email )';
@@ -310,6 +380,7 @@ async function listReviewsForOrganiserGroups(groupIds, groupsById, adminView) {
     const groupId = row.organiser_id || '';
     const group = groupsById && groupsById.get ? groupsById.get(groupId) : null;
     const authorName = reviewerDisplayName(row.attendees);
+    const provenance = String(row.provenance || 'verified');
     return {
       id: row.id,
       rating: row.rating,
@@ -323,6 +394,9 @@ async function listReviewsForOrganiserGroups(groupIds, groupsById, adminView) {
       eventId: row.event_id || null,
       eventTitle: String(row.events?.title || 'Event').trim(),
       date: row.created_at || '',
+      provenance,
+      badge:
+        provenance === 'organiser_confirmed' ? 'Organiser confirmed' : 'Verified attendee',
     };
   });
 }
@@ -334,6 +408,7 @@ module.exports = {
   replyToReviewAsOrganiser,
   eventHasEnded,
   isEligibleRegistration,
+  findRegistrationForReview,
   listReviewsForOrganiserGroups,
   reviewerDisplayName,
   reviewerInitials,

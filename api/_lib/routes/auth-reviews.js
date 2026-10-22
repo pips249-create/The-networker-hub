@@ -52,6 +52,8 @@ module.exports = async function handler(req, res) {
       'did_not_attend',
       'attendee_not_found',
       'missing_organiser',
+      'claim_review_expired',
+      'attendance_claims_unavailable',
     ]);
     if (clientErrors.has(msg)) {
       return json(res, 400, { ok: false, error: msg });

@@ -35,8 +35,9 @@
       '<h2 class="how-reviews-title" id="how-reviews-work-title">How reviews work</h2>' +
       '<div class="how-reviews-body">' +
       '<p>Reviews are sorted to surface the most useful feedback first — newer reviews, clearer comments, and ratings from verified bookings tend to appear higher.</p>' +
-      '<p>Only guests who booked through The Networker UK and attended can leave a review. Organisers can mark a no-show after the event so that person does not get a review email. Organisers can reply publicly from their dashboard; replies show on their profile.</p>' +
-      '<p>We moderate reviews flagged for policy issues. Ranking badges on The Networker UK need a published profile, at least <strong>8 reviews</strong>, and <strong>10+ past-event ticket purchases</strong>. Groups are ranked by average rating, then by review rate (reviews ÷ past-event ticket purchases).</p>' +
+      '<p>Most reviews come from guests who booked through The Networker UK and attended (<strong>Verified attendee</strong>). If you went to a listed event without a Hub ticket, you can claim attendance from My account; the organiser confirms by email, then you can leave an <strong>Organiser confirmed</strong> review (not the same as verified).</p>' +
+      '<p>Organisers can mark a no-show after a Hub booking so that person does not get a review email. Organisers can reply publicly from their dashboard; replies show on their profile.</p>' +
+      '<p>We moderate reviews flagged for policy issues. Ranking badges need a published profile, at least <strong>8 weighted reviews</strong> (organiser-confirmed count as half), and <strong>10+ past-event ticket purchases</strong>. Groups are ranked by weighted average rating, then by review rate. Organiser-confirmed reviews cannot make up more than half of a group’s ranking weight when verified reviews also exist.</p>' +
       '<p><a class="how-reviews-more" href="/rankings">See this month’s leaderboard →</a></p>' +
       '</div>' +
       '</div>';

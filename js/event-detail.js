@@ -3717,6 +3717,20 @@
     date.className = 'review-card-date';
     date.textContent = review.date || '';
     header.appendChild(name);
+    if (review.badge || review.provenance) {
+      const badge = document.createElement('span');
+      badge.className =
+        'org-review-provenance' +
+        (String(review.provenance || '') === 'organiser_confirmed'
+          ? ' org-review-provenance--organiser'
+          : ' org-review-provenance--verified');
+      badge.textContent =
+        review.badge ||
+        (String(review.provenance || '') === 'organiser_confirmed'
+          ? 'Organiser confirmed'
+          : 'Verified attendee');
+      header.appendChild(badge);
+    }
     header.appendChild(date);
     const stars = document.createElement('div');
     stars.className = 'review-card-stars';

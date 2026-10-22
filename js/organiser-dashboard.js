@@ -6191,7 +6191,9 @@
       });
     }
     if (eventsSubRoute === 'events-reviews') {
-      return ensureReviewsLoaded().then(() => renderReviews());
+      return ensureReviewsLoaded()
+        .then(() => loadAttendanceClaimPending())
+        .then(() => renderReviews());
     }
     renderEventsPanel(eventsSubRoute);
     const eventsPainted = eventsSourceList().length > 0 || state.eventsLoaded;
@@ -6324,8 +6326,11 @@
     else if (sub === 'events-tickets') renderTickets();
     else if (sub === 'events-attendees') renderAttendees();
     else if (sub === 'events-cancellations') renderCancellations();
-    else if (sub === 'events-reviews') renderReviews();
-    else if (sub === 'events-revenue') renderRevenue();
+    else if (sub === 'events-reviews') {
+      loadAttendanceClaimPending().then(function () {
+        renderReviews();
+      });
+    } else if (sub === 'events-revenue') renderRevenue();
   }
 
   function eventsVisibleCount() {
@@ -13162,12 +13167,82 @@
     );
   }
 
+  let attendanceClaimPending = [];
+
+  async function loadAttendanceClaimPending() {
+    try {
+      const { ok, data } = await api('/api/organiser/attendance-claims');
+      if (ok && data && data.ok && Array.isArray(data.claims)) {
+        attendanceClaimPending = data.claims;
+      } else {
+        attendanceClaimPending = [];
+      }
+    } catch {
+      attendanceClaimPending = [];
+    }
+  }
+
+  function renderAttendanceClaimPending(listEl) {
+    if (!listEl || !attendanceClaimPending.length) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'org-attendance-claims';
+    wrap.innerHTML =
+      '<h3 class="org-attendance-claims-title">Attendance claims awaiting you</h3>' +
+      '<p class="org-attendance-claims-lead">Someone says they attended your event without a Hub ticket. Confirm to unlock an organiser-confirmed review (not verified).</p>';
+    attendanceClaimPending.forEach(function (claim) {
+      const row = document.createElement('article');
+      row.className = 'org-attendance-claim-card';
+      row.innerHTML =
+        '<div class="org-attendance-claim-copy"><strong></strong><span></span></div>' +
+        '<div class="org-attendance-claim-actions">' +
+        '<button type="button" class="org-btn org-btn-primary org-btn-sm" data-claim-decision="yes">Yes, they attended</button>' +
+        '<button type="button" class="org-btn org-btn-sm" data-claim-decision="no">No</button>' +
+        '</div>';
+      row.querySelector('strong').textContent = claim.attendeeName || 'Attendee';
+      row.querySelector('span').textContent =
+        (claim.eventTitle || 'Event') +
+        (claim.eventDate ? ' · ' + formatDateShort(claim.eventDate) : '') +
+        (claim.attendeeEmail ? ' · ' + claim.attendeeEmail : '');
+      row.querySelectorAll('[data-claim-decision]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          respondAttendanceClaim(claim.id, btn.getAttribute('data-claim-decision'), btn);
+        });
+      });
+      wrap.appendChild(row);
+    });
+    listEl.appendChild(wrap);
+  }
+
+  async function respondAttendanceClaim(claimId, decision, btn) {
+    if (btn) btn.disabled = true;
+    try {
+      const { ok, data } = await api('/api/organiser/attendance-claims', {
+        method: 'POST',
+        body: JSON.stringify({ claimId: claimId, decision: decision }),
+      });
+      if (!ok || !data.ok) {
+        showOrganiserAlert((data && data.message) || 'Could not update this claim.', true);
+        if (btn) btn.disabled = false;
+        return;
+      }
+      attendanceClaimPending = attendanceClaimPending.filter(function (c) {
+        return c.id !== claimId;
+      });
+      showOrganiserAlert(data.message || 'Claim updated.', false);
+      renderReviews();
+    } catch (err) {
+      showOrganiserAlert(err.message || 'Could not update this claim.', true);
+      if (btn) btn.disabled = false;
+    }
+  }
+
   function renderReviews() {
     const listEl = document.getElementById('reviews-list');
     const empty = document.getElementById('reviews-empty');
     if (!listEl) return;
     const list = filteredReviewsList();
     listEl.innerHTML = '';
+    renderAttendanceClaimPending(listEl);
 
     const avg = averageReviewRating();
     const summary = document.getElementById('reviews-summary');
@@ -13178,16 +13253,23 @@
         (list.length === 1 ? '' : 's') +
         (avg != null && list.length
           ? ' · Overall average: <strong class="org-rating">★ ' + avg.toFixed(1) + '</strong>'
+          : '') +
+        (attendanceClaimPending.length
+          ? ' · <strong>' + attendanceClaimPending.length + ' attendance claim' + (attendanceClaimPending.length === 1 ? '' : 's') + '</strong>'
           : '');
     }
     renderReviewsRankingPill();
 
-    if (!list.length) {
+    if (!list.length && !attendanceClaimPending.length) {
       setOrgEmpty(empty, { show: true });
       updatePaginationNav('reviews', { totalPages: 1, start: 0, end: 0, total: 0, page: 1 });
       return;
     }
     setOrgEmpty(empty, { show: false });
+    if (!list.length) {
+      updatePaginationNav('reviews', { totalPages: 1, start: 0, end: 0, total: 0, page: 1 });
+      return;
+    }
     const pageInfo = paginateList(list, listPages.reviews);
     listPages.reviews = pageInfo.page;
     updatePaginationNav('reviews', pageInfo);
@@ -13196,12 +13278,28 @@
       const card = document.createElement('article');
       card.className = 'org-review-card';
       card.setAttribute('data-review-id', r.id);
+      const provenanceBadge =
+        r.badge || r.provenance
+          ? '<span class="org-review-provenance ' +
+            (String(r.provenance || '') === 'organiser_confirmed'
+              ? 'org-review-provenance--organiser'
+              : 'org-review-provenance--verified') +
+            '">' +
+            esc(
+              r.badge ||
+                (String(r.provenance || '') === 'organiser_confirmed'
+                  ? 'Organiser confirmed'
+                  : 'Verified attendee')
+            ) +
+            '</span>'
+          : '';
       card.innerHTML =
         '<div class="org-review-card-header"><div style="display:flex;align-items:center;gap:10px">' +
         '<div class="org-reviewer-avatar">' +
         esc(r.initials || '?') +
         '</div><div><div class="org-reviewer-name">' +
         esc(r.authorName) +
+        provenanceBadge +
         '</div><div class="org-reviewer-meta">' +
         esc(r.groupName) +
         ' · ' +
