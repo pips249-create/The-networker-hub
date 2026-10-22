@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * Smoke: Linked Out / Connected event pages require an account before leaving for the organiser site.
+ * Smoke: Connected events require an account before leaving for the organiser site.
+ * Link Out opens the organiser URL directly and must not promise ticket sync.
  */
 const assert = require('assert');
 const fs = require('fs');
@@ -16,11 +17,19 @@ assert.ok(
 );
 assert.ok(
   detailJs.includes('requireAccountForExternalBooking'),
-  'buy CTA must gate external booking behind an account'
+  'buy CTA must call requireAccountForExternalBooking'
+);
+assert.ok(
+  detailJs.includes('eventHasExternalRegistrationSync'),
+  'must distinguish Connected (sync) vs Link Out (no sync)'
+);
+assert.ok(
+  detailJs.includes('if (!eventHasExternalRegistrationSync(ev)) return true'),
+  'Link Out must skip the account gate and open the organiser site'
 );
 assert.ok(
   detailJs.includes('preferRegister: true'),
-  'gate should push Create free account ahead of Sign in'
+  'Connected gate should push Create free account ahead of Sign in'
 );
 assert.ok(
   detailJs.includes("intent.action === 'external_book'"),
@@ -28,15 +37,27 @@ assert.ok(
 );
 assert.ok(
   detailJs.includes("'Create free account to book'"),
-  'signed-out CTA copy must invite account creation'
+  'Connected signed-out CTA must invite account creation'
+);
+assert.ok(
+  detailJs.includes('externalBookingBuyLabel'),
+  'buy label must branch on Connected vs Link Out'
+);
+assert.ok(
+  detailJs.includes("when their booking syncs, your ticket shows in My account"),
+  'Connected gate copy may explain webhook sync'
+);
+assert.ok(
+  detailJs.includes('// Connected only — Link Out never syncs tickets into My account.'),
+  'sidebar sync nudge must be Connected-only'
 );
 assert.ok(
   eventHtml.includes('Create a free Networker UK account first'),
-  'sidebar nudge must explain why to join before booking'
+  'Connected sidebar nudge must explain why to join before booking'
 );
 assert.ok(
   eventHtml.includes('Already bought? Sign in to check registration'),
-  'already-bought path remains as a quiet secondary action'
+  'already-bought path remains for Connected listings'
 );
 assert.ok(
   !/<button[^>]*>\s*Sign in to check registration\s*<\/button>/.test(eventHtml),
