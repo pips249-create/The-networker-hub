@@ -385,9 +385,17 @@
     return page === 'add-your-event' || loc.indexOf('/add-your-event') !== -1;
   }
 
+  function listOrganiserPath(user) {
+    return user ? '/organiser/group-edit' : '/organiser/list-account';
+  }
+
   function isListOrganiserActive() {
     var loc = String(window.location.pathname || '').toLowerCase();
-    return loc.indexOf('/organiser/group-edit') !== -1 || loc.indexOf('/organiser/enable') !== -1;
+    return (
+      loc.indexOf('/organiser/group-edit') !== -1 ||
+      loc.indexOf('/organiser/list-account') !== -1 ||
+      loc.indexOf('/organiser/enable') !== -1
+    );
   }
 
   function isListOpportunityActive() {
@@ -406,6 +414,7 @@
   function listCtasHtml(user, mobileExtraClass) {
     if (!showListEventCta(user)) return '';
     var eventPath = listEventPath(user);
+    var organiserPath = listOrganiserPath(user);
     var eventActive = listMenuItemAttrs(isListEventActive(user));
     var organiserActive = listMenuItemAttrs(isListOrganiserActive());
     var opportunityActive = listMenuItemAttrs(isListOpportunityActive());
@@ -421,7 +430,7 @@
         eventActive +
         '>Event</a>' +
         '<a href="' +
-        href('/organiser/group-edit') +
+        href(organiserPath) +
         '" class="' +
         mobileExtraClass +
         ' nav-list-organiser nav-mobile-list-cta" data-hub-action="add-group"' +
@@ -450,7 +459,7 @@
       eventActive +
       '>Event</a>' +
       '<a role="menuitem" class="nav-dropdown-item nav-list-organiser" href="' +
-      href('/organiser/group-edit') +
+      href(organiserPath) +
       '" data-hub-action="add-group"' +
       organiserActive +
       '>Organiser</a>' +
@@ -1195,6 +1204,12 @@
         ) {
           e.preventDefault();
           window.HubOrganiserActions.goToGroupProfile();
+          return;
+        }
+        // Signed-out visitors: always land on the account-required page (no group-edit flash).
+        if (!lastNavUser) {
+          e.preventDefault();
+          window.location.href = href('/organiser/list-account');
         }
       });
     });

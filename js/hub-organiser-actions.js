@@ -65,10 +65,23 @@
     return sessionData;
   }
 
-  async function ensureOrganiserAccess(nextPath) {
+  var LIST_ACCOUNT_PATH = '/organiser/list-account';
+
+  function listAccountUrl(nextPath) {
+    var next = nextPath || '/organiser/group-edit';
+    if (next === '/organiser/group-edit' || next.indexOf('/organiser/group-edit') === 0) {
+      return path(LIST_ACCOUNT_PATH);
+    }
+    return loginUrl(next);
+  }
+
+  async function ensureOrganiserAccess(nextPath, options) {
+    options = options || {};
     var data = await fetchSession();
     if (!data.ok || !data.user) {
-      global.location.href = loginUrl(nextPath || '/organiser/enable');
+      global.location.href = options.accountGate
+        ? listAccountUrl(nextPath)
+        : loginUrl(nextPath || '/organiser/enable');
       return null;
     }
     data = await restoreOrganiserUiIfHidden(data);
@@ -226,7 +239,7 @@
   async function goToGroupProfile(options) {
     options = options || {};
     saveBrowseReturn();
-    var data = await ensureOrganiserAccess('/organiser/group-edit');
+    var data = await ensureOrganiserAccess('/organiser/group-edit', { accountGate: true });
     if (!data) return;
     try {
       sessionStorage.removeItem(GROUP_STORAGE_KEY);
@@ -502,6 +515,7 @@
     GROUP_STORAGE_KEY: GROUP_STORAGE_KEY,
     BROWSE_RETURN_KEY: BROWSE_RETURN_KEY,
     CLAIM_PROFILE_LOGIN: CLAIM_PROFILE_LOGIN,
+    LIST_ACCOUNT_PATH: LIST_ACCOUNT_PATH,
     goToClaimProfile: goToClaimProfile,
     goToGroupProfile: goToGroupProfile,
     goToAddEvent: goToAddEvent,

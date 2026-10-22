@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create an account to list your organiser – The Networker UK</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" href="/favicon.ico?v=20260823uk3" sizes="any" />
+    <link rel="icon" href="/assets/favicon.svg?v=20260823uk3" type="image/svg+xml" />
+    <link rel="icon" href="/assets/favicon-32.png?v=20260823uk" type="image/png" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png?v=20260823uk" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/hub.css?v=20261016signin1" />
+    <link rel="stylesheet" href="../css/auth.css?v=20260708" />
+    <link rel="stylesheet" href="../css/organiser-enable.css?v=20261022listacc1" />
+    <link rel="stylesheet" href="../css/hub-mobile.css?v=20261016signin1" />
+  </head>
+  <body class="auth-page auth-page--organiser-access">
+    <div id="hub-site-nav"></div>
+    <script src="../js/site-nav.js?v=20261022listacc1" data-root="../" data-page="organiser"></script>
+
+    <main class="auth-main auth-main--organiser-access" id="list-account-main" hidden>
+      <div class="org-enable-shell org-list-account-shell">
+        <div class="auth-card auth-card--organiser-enable org-list-account-card">
+          <header class="auth-welcome-head">
+            <p class="auth-welcome-kicker">List your organiser</p>
+            <h1>Create an account first</h1>
+            <p class="auth-lede auth-lede--welcome">
+              You must create a free Networker UK account before adding your organiser group. Once you&rsquo;re
+              signed in, you can set up your public organiser page and start listing events.
+            </p>
+          </header>
+
+          <ul class="auth-enable-points">
+            <li>Create a free account with your work email</li>
+            <li>Confirm your email to unlock organiser tools</li>
+            <li>Add your organiser group page (logo, description, contact)</li>
+            <li>List events and reach members browsing the UK directory</li>
+          </ul>
+
+          <div class="org-list-account-actions">
+            <a
+              class="auth-primary-btn"
+              id="list-account-register"
+              href="/register?intent=organiser&amp;next=%2Forganiser%2Fgroup-edit"
+              >Create a free account</a
+            >
+            <a
+              class="auth-secondary-link org-list-account-signin"
+              id="list-account-signin"
+              href="/login?intent=organiser&amp;next=%2Forganiser%2Fgroup-edit"
+              >Already have an account? Sign in</a
+            >
+          </div>
+
+          <p class="auth-form-foot auth-form-foot--enable-note">
+            Group already listed?
+            <a href="/register?intent=organiser-claim&amp;next=%2Forganiser%2F%3Fonboard%3Dclaim"
+              >Claim your organiser page</a
+            >
+            ·
+            <a href="/for-organisers">Why list on The Networker UK</a>
+          </p>
+        </div>
+      </div>
+    </main>
+
+    <div class="org-list-account-loading" id="list-account-loading" aria-live="polite">
+      <p>Checking your account&hellip;</p>
+    </div>
+
+    <script src="../js/organiser-list-account.js?v=20261022listacc1" defer></script>
+  </body>
+</html>

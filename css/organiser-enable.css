@@ -470,3 +470,48 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Signed-out gate before listing an organiser group */
+.org-list-account-shell {
+  max-width: 560px;
+}
+
+.org-list-account-card {
+  margin: 0 auto;
+}
+
+.org-list-account-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin: 0 0 20px;
+}
+
+.org-list-account-actions .auth-primary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  text-decoration: none;
+  box-sizing: border-box;
+}
+
+.org-list-account-signin {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.org-list-account-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40vh;
+  padding: 48px 20px;
+  color: var(--od-text-mid, #4a6272);
+  font-size: 15px;
+}
+
+.org-list-account-loading[hidden] {
+  display: none;
+}

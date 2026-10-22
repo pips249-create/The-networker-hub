@@ -20,6 +20,7 @@
     "test:seo-api-timeout": "node scripts/test-seo-api-timeout.js",
     "test:organiser-event-auto-claim": "node scripts/test-organiser-event-auto-claim.js",
     "test:organiser-claimed-no-event": "node scripts/test-organiser-claimed-no-event.js",
+    "test:list-organiser-account-gate": "node scripts/test-list-organiser-account-gate.js",
     "check:opportunities": "node scripts/smoke-test-opportunities.js",
     "check:opportunities:live": "node scripts/smoke-test-opportunities.js https://www.thenetworkeruk.com",
     "check:local": "node scripts/smoke-test-site.js http://localhost:3000",
