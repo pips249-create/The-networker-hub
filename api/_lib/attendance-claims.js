@@ -560,11 +560,19 @@ async function listPendingClaimsForOrganiser(session) {
   return (data || []).map(mapClaimRow);
 }
 
+function mapClaimOrganiserRow(row, matchHint) {
+  return {
+    id: row.id,
+    name: String(row.name || '').trim(),
+    slug: row.slug || null,
+    logo: String(row.photo_url || '').trim() || null,
+    matchHint: matchHint || null,
+  };
+}
+
 async function searchClaimableOrganisers(session, input) {
   if (!isSupabaseConfigured()) return [];
   const sb = getSupabaseAdmin();
-  const attendeeId = await resolveAttendeeId(sb, session);
-  if (!attendeeId) return [];
 
   const q = String(input?.q || '')
     .trim()
@@ -574,32 +582,79 @@ async function searchClaimableOrganisers(session, input) {
     .trim();
   if (q.length < 2) return [];
 
-  const { applyPublicOrganiserBrowseFilter } = require('./supabase-organisers-browse');
-  let query = sb
+  const { applyPublicOrganiserBrowseFilter, isPublicOrganiser } = require('./supabase-organisers-browse');
+  const byId = new Map();
+
+  // 1) Match organiser / group name (and slug).
+  let nameQuery = sb
     .from('organisers')
-    .select('id, name, slug, photo_url, listing_status, verification_status, outcode')
+    .select('id, name, slug, photo_url, listing_status, verification_status')
     .order('name', { ascending: true })
-    .limit(60);
-  query = applyPublicOrganiserBrowseFilter(query);
-  query = query.ilike('name', `%${q}%`);
+    .limit(40);
+  nameQuery = applyPublicOrganiserBrowseFilter(nameQuery);
+  nameQuery = nameQuery.ilike('name', `%${q}%`);
+  const nameRes = await nameQuery;
+  if (nameRes.error) throw new Error(nameRes.error.message);
+  (nameRes.data || []).forEach((row) => {
+    if (!row?.id || !String(row.name || '').trim()) return;
+    byId.set(row.id, mapClaimOrganiserRow(row, 'Group name match'));
+  });
 
-  const { data, error } = await query;
-  if (error) throw new Error(error.message);
+  // 2) Match past published event titles → surface that event's organiser.
+  //    People often type the event name (e.g. "The Networker Hub Example"), not the group name.
+  const nowIso = new Date().toISOString();
+  const oldest = addDaysIso(null, -CLAIM_WINDOW_DAYS);
+  const eventRes = await sb
+    .from('events')
+    .select(
+      'id, title, organiser_id, starts_at, organisers ( id, name, slug, photo_url, listing_status, verification_status )'
+    )
+    .eq('status', 'published')
+    .not('organiser_id', 'is', null)
+    .lt('starts_at', nowIso)
+    .gte('starts_at', oldest)
+    .ilike('title', `%${q}%`)
+    .order('starts_at', { ascending: false })
+    .limit(40);
+  if (eventRes.error) throw new Error(eventRes.error.message);
 
-  return (data || [])
-    .filter((row) => {
-      const name = String(row.name || '').trim().toLowerCase();
-      const slug = String(row.slug || '').trim().toLowerCase();
-      return name && (name.includes(q) || slug.includes(q));
-    })
-    .slice(0, 20)
-    .map((row) => ({
-      id: row.id,
-      name: String(row.name || '').trim(),
-      slug: row.slug || null,
-      logo: String(row.photo_url || '').trim() || null,
-      outcode: String(row.outcode || '').trim() || null,
-    }));
+  (eventRes.data || []).forEach((ev) => {
+    const org = ev.organisers;
+    const oid = ev.organiser_id || org?.id;
+    if (!oid || byId.has(oid)) return;
+    if (org?.id) {
+      if (!isPublicOrganiser(org) && String(org.listing_status || '').toLowerCase() !== 'published') {
+        // Still allow if they have a published past event matching the search.
+      }
+      const title = String(ev.title || '').trim();
+      byId.set(oid, mapClaimOrganiserRow(org, title ? `Event: ${title}` : 'Past event match'));
+      return;
+    }
+  });
+
+  // Fetch any organiser ids we only know from events without nested join.
+  const missingIds = (eventRes.data || [])
+    .map((ev) => ev.organiser_id)
+    .filter((id) => id && !byId.has(id));
+  if (missingIds.length) {
+    const unique = [...new Set(missingIds)].slice(0, 20);
+    const orgRes = await sb
+      .from('organisers')
+      .select('id, name, slug, photo_url, listing_status, verification_status')
+      .in('id', unique);
+    if (orgRes.error) throw new Error(orgRes.error.message);
+    (orgRes.data || []).forEach((row) => {
+      if (!row?.id || byId.has(row.id)) return;
+      const sample = (eventRes.data || []).find((ev) => ev.organiser_id === row.id);
+      const title = String(sample?.title || '').trim();
+      byId.set(row.id, mapClaimOrganiserRow(row, title ? `Event: ${title}` : 'Past event match'));
+    });
+  }
+
+  return [...byId.values()]
+    .filter((row) => row.name)
+    .sort((a, b) => a.name.localeCompare(b.name))
+    .slice(0, 20);
 }
 
 async function searchClaimablePastEvents(session, input) {
