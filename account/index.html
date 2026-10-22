@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20261016signin1" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260812footer11" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260929services2" />
-    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20261015offers1" />
+    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20261022offers2" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260812footer10" />
     <script src="../js/hub-defer-css.js?v=20260828perf2" data-hrefs="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap"></script>
 
@@ -707,6 +707,46 @@
                   <p class="ad-services-admin-note">Only platform admins can add or edit these. Members see published offers.</p>
                   <button type="button" class="ad-btn ad-btn-primary" id="ad-services-add">Add offer</button>
                 </div>
+                <div class="ad-services-filters" id="ad-services-filters" hidden>
+                  <label class="ad-services-search">
+                    <span class="visually-hidden">Search member offers</span>
+                    <input
+                      type="search"
+                      id="ad-services-search"
+                      name="q"
+                      placeholder="Search offers…"
+                      autocomplete="off"
+                      enterkeyhint="search"
+                    />
+                  </label>
+                  <label class="ad-services-filter">
+                    <span class="visually-hidden">Category</span>
+                    <select id="ad-services-category" name="category">
+                      <option value="">All categories</option>
+                    </select>
+                  </label>
+                  <label class="ad-services-filter">
+                    <span class="visually-hidden">Offer type</span>
+                    <select id="ad-services-perk" name="perk">
+                      <option value="">All offers</option>
+                      <option value="code">With promo code</option>
+                      <option value="ending">Ending soon</option>
+                    </select>
+                  </label>
+                  <label class="ad-services-filter ad-services-filter--status" id="ad-services-status-wrap" hidden>
+                    <span class="visually-hidden">Status</span>
+                    <select id="ad-services-status" name="status">
+                      <option value="">All statuses</option>
+                      <option value="live">Published</option>
+                      <option value="hidden">Hidden</option>
+                      <option value="ended">Ended</option>
+                    </select>
+                  </label>
+                  <button type="button" class="ad-btn ad-btn-ghost ad-btn-sm" id="ad-services-clear" hidden>
+                    Clear
+                  </button>
+                </div>
+                <p class="ad-services-filter-meta" id="ad-services-filter-meta" hidden aria-live="polite"></p>
                 <p class="ad-services-error" id="ad-services-error" hidden role="alert"></p>
                 <div class="ad-services-grid" id="ad-services-grid" role="list"></div>
                 <div class="ad-services-detail" id="ad-services-detail" hidden></div>
@@ -714,8 +754,8 @@
                   <div class="ad-empty-state-icon" aria-hidden="true">
                     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M20 12v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 1 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 1 0 0-5C13 2 12 7 12 7z"/></svg>
                   </div>
-                  <h3 class="ad-empty-state-title">Nothing listed yet</h3>
-                  <p class="ad-empty-state-text">Published offers will show up here.</p>
+                  <h3 class="ad-empty-state-title" id="ad-services-empty-title">Nothing listed yet</h3>
+                  <p class="ad-empty-state-text" id="ad-services-empty-text">Published offers will show up here.</p>
                 </div>
                 <div class="ad-services-pitch" id="ad-services-pitch">
                   <div class="ad-services-pitch-intro" id="ad-services-pitch-intro">
@@ -1119,7 +1159,7 @@
     <script src="../js/hub-side-nav.js?v=20260805hubmobile2" defer></script>
     <script src="../js/attendee-auth-gate.js?v=20261021confirm2"></script>
     <script src="../js/organiser-image-upload.js?v=20261002offerimage1" defer></script>
-    <script src="../js/attendee-member-offers.js?v=20261015offers1" defer></script>
+    <script src="../js/attendee-member-offers.js?v=20261022offers2" defer></script>
     <script src="../js/attendee-dashboard.js?v=20260929offerform1" defer></script>
   </body>
 </html>

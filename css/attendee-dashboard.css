@@ -1,4 +1,16 @@
 /* Attendee hub — purple theme (organiser palette swapped) */
+.attendee-dashboard-page .visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .attendee-dashboard-page {
   --ad-teal: #9d60a7;
   --ad-teal-dark: #7a3d8a;
@@ -3341,6 +3353,8 @@ body.ad-share-modal-open {
 
 /* Member offers — cards in the same shape as event / opportunity cards */
 .ad-services-admin[hidden],
+.ad-services-filters[hidden],
+.ad-services-filter-meta[hidden],
 .ad-services-error[hidden],
 .ad-service-form-error[hidden] {
   display: none !important;
@@ -3360,6 +3374,69 @@ body.ad-share-modal-open {
 
 .ad-services-admin-note {
   margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ad-text-mid);
+}
+
+.ad-services-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 12px;
+}
+
+.ad-services-search {
+  flex: 1 1 220px;
+  min-width: min(100%, 220px);
+}
+
+.ad-services-search input,
+.ad-services-filter select {
+  width: 100%;
+  min-height: 42px;
+  padding: 10px 12px;
+  border: 1px solid var(--ad-border-soft);
+  border-radius: 10px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ad-text-dark);
+  background: var(--ad-white);
+}
+
+.ad-services-search input::placeholder {
+  color: var(--ad-text-soft);
+}
+
+.ad-services-search input:focus,
+.ad-services-filter select:focus {
+  outline: 2px solid var(--ad-teal-light);
+  outline-offset: 1px;
+  border-color: var(--ad-teal);
+}
+
+.ad-services-filter {
+  flex: 0 1 160px;
+  min-width: min(100%, 140px);
+}
+
+.ad-services-filter--status {
+  flex-basis: 150px;
+}
+
+.ad-services-filters #ad-services-clear[hidden] {
+  display: none !important;
+}
+
+.ad-services-filters #ad-services-clear {
+  flex: 0 0 auto;
+  min-height: 42px;
+}
+
+.ad-services-filter-meta {
+  margin: 0 0 12px;
   font-size: 13px;
   line-height: 1.45;
   color: var(--ad-text-mid);
@@ -3402,6 +3479,21 @@ body.ad-share-modal-open {
   .ad-services-admin {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .ad-services-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ad-services-search,
+  .ad-services-filter {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .ad-services-filters #ad-services-clear {
+    width: 100%;
   }
 }
 
