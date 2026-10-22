@@ -18,7 +18,7 @@ list.forEach(function (row) {
   byCode[row.iso2] = row.name;
 });
 
-['AR', 'CN', 'PL', 'KE', 'TH', 'IE', 'US', 'ES', 'FR', 'DE'].forEach(function (code) {
+['AR', 'CN', 'PL', 'KE', 'TH', 'IE', 'US', 'ES', 'FR', 'DE', 'OL'].forEach(function (code) {
   assert.ok(byCode[code], 'missing ' + code);
 });
 
@@ -26,6 +26,11 @@ list.forEach(function (row) {
   assert.strictEqual(byCode[code], undefined, code + ' should be excluded');
 });
 
-assert.ok(list[0].name.localeCompare(list[1].name, 'en-GB') <= 0, 'should be sorted');
+assert.strictEqual(list[0].iso2, 'OL', 'Online should lead the country list');
+assert.strictEqual(list[0].name, 'Online');
+assert.ok(
+  list[1].name.localeCompare(list[2].name, 'en-GB') <= 0,
+  'remaining countries should be sorted'
+);
 
 console.log('test-intl-event-country-options: ok (' + list.length + ' countries)');

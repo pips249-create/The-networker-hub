@@ -76,6 +76,27 @@ const unavailable = validateInput(
 assert.strictEqual(unavailable.ok, false);
 assert.strictEqual(unavailable.error, 'country_unavailable');
 
+const online = normalizeInput({
+  ...base,
+  city: '',
+  countryCode: 'OL',
+  countryName: 'Online',
+});
+assert.strictEqual(online.countryCode, 'OL');
+assert.strictEqual(online.countryName, 'Online');
+assert.strictEqual(online.city, 'Online');
+assert.strictEqual(validateInput(online).ok, true);
+
+const onlineByName = normalizeInput({
+  ...base,
+  city: 'London (GMT)',
+  countryCode: 'OL',
+  countryName: 'virtual',
+});
+assert.strictEqual(onlineByName.countryName, 'Online');
+assert.strictEqual(onlineByName.city, 'London (GMT)');
+assert.strictEqual(validateInput(onlineByName).ok, true);
+
 const staffSource = normalizeInput({ ...base, source: 'admin_staff' });
 assert.strictEqual(staffSource.source, 'admin_staff');
 assert.strictEqual(validateInput(staffSource).ok, true);

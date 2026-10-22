@@ -8,6 +8,9 @@ const { supportEmail } = require('./hub-email-urls');
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const UNAVAILABLE_COUNTRY_CODES = new Set(['BY', 'IR', 'KP', 'RU', 'SY']);
+/** Pseudo country code for worldwide virtual / webinar listings (not an ISO region). */
+const ONLINE_COUNTRY_CODE = 'OL';
+const ONLINE_COUNTRY_NAME = 'Online';
 
 const PUBLIC_SELECT =
   'id, title, starts_on, ends_on, starts_at_local, city, country_code, country_name, organiser_name, organiser_website, description, external_url, image_url, created_at';
@@ -161,7 +164,7 @@ function normalizeInput(payload) {
     .trim()
     .toLowerCase()
     .slice(0, 64);
-  return {
+  const parsed = {
     title: String(payload.title || payload.eventTitle || payload.event_title || '')
       .trim()
       .slice(0, 160),
@@ -221,6 +224,26 @@ function normalizeInput(payload) {
     website: String(payload.website_hp || '').trim(),
     source: allowedSources.has(sourceRaw) ? sourceRaw : 'international_map',
   };
+  return normalizeOnlineFields(parsed);
+}
+
+function isOnlineCountry(code, name) {
+  const iso = String(code || '')
+    .trim()
+    .toUpperCase();
+  if (iso === ONLINE_COUNTRY_CODE) return true;
+  const label = String(name || '')
+    .trim()
+    .toLowerCase();
+  return label === 'online' || label === 'virtual' || label === 'worldwide online';
+}
+
+function normalizeOnlineFields(input) {
+  if (!input || !isOnlineCountry(input.countryCode, input.countryName)) return input;
+  input.countryCode = ONLINE_COUNTRY_CODE;
+  input.countryName = ONLINE_COUNTRY_NAME;
+  if (!input.city) input.city = ONLINE_COUNTRY_NAME;
+  return input;
 }
 
 function validateInput(input) {
@@ -247,11 +270,17 @@ function validateInput(input) {
       message: 'Enter a valid local start time (HH:MM), or leave it blank.',
     };
   }
+  normalizeOnlineFields(input);
+  const online = isOnlineCountry(input.countryCode, input.countryName);
   if (!input.city) {
-    return { ok: false, error: 'missing_city', message: 'Enter the city.' };
+    return {
+      ok: false,
+      error: 'missing_city',
+      message: online ? 'Enter Online or a host city / timezone note.' : 'Enter the city.',
+    };
   }
   if (!input.countryCode || input.countryCode.length !== 2 || !input.countryName) {
-    return { ok: false, error: 'invalid_country', message: 'Choose a country.' };
+    return { ok: false, error: 'invalid_country', message: 'Choose a country or Online.' };
   }
   if (input.countryCode === 'GB') {
     return {
@@ -261,7 +290,7 @@ function validateInput(input) {
         'For UK events, list on The Networker UK instead: https://www.thenetworkeruk.com/add-your-event',
     };
   }
-  if (UNAVAILABLE_COUNTRY_CODES.has(input.countryCode)) {
+  if (!online && UNAVAILABLE_COUNTRY_CODES.has(input.countryCode)) {
     return {
       ok: false,
       error: 'country_unavailable',
@@ -708,4 +737,7 @@ module.exports = {
   listAdminInternationalEventListings,
   updateInternationalEventListingStatus,
   UNAVAILABLE_COUNTRY_CODES,
+  ONLINE_COUNTRY_CODE,
+  ONLINE_COUNTRY_NAME,
+  isOnlineCountry,
 };

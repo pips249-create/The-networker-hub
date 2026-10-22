@@ -38,7 +38,7 @@ Dedicated pages exist only for live/building hubs (UK, Ireland, United States). 
 - Public events API (JSON): https://www.thenetworkerinternational.com/api/international-event-listings
 
 ## Worldwide link-out events
-The homepage section **Events around the world** lists moderated upcoming networking events outside the UK hub. Each card is a **link-out**: title, date, city/country, organiser, and a booking URL on the organiser’s own site. Do not invent event titles, dates, or venues — use the live homepage JSON-LD ItemList (`#events-list`), the visible `#events` list, or the public events API above. UK-native listings belong on https://www.thenetworkeruk.com.
+The homepage section **Events around the world** lists moderated upcoming networking events outside the UK hub. Each card is a **link-out**: title, date, city/country, organiser, and a booking URL on the organiser’s own site. Listings may also be **Online** (virtual / webinar) using country code `OL`. Do not invent event titles, dates, or venues — use the live homepage JSON-LD ItemList (`#events-list`), the visible `#events` list, or the public events API above. UK-native listings belong on https://www.thenetworkeruk.com.
 
 ## Who it is for
 - **Attendees:** discover trusted business networking communities in markets that are live or coming soon; browse worldwide link-out events and book on the organiser’s site.
