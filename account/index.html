@@ -918,8 +918,9 @@
         <div id="ad-claim-step-event" hidden>
           <button type="button" class="ad-claim-back" id="ad-claim-back">← Change group</button>
           <p class="ad-claim-selected-group" id="ad-claim-selected-group"></p>
-          <label class="ad-claim-label" for="ad-claim-event-search">Filter events (optional)</label>
-          <input type="search" id="ad-claim-event-search" class="ad-claim-search" placeholder="Filter by event title" autocomplete="off" />
+          <label class="ad-claim-label" for="ad-claim-event-date">When did you attend?</label>
+          <input type="date" id="ad-claim-event-date" class="ad-claim-search" autocomplete="off" />
+          <p class="ad-claim-date-hint" id="ad-claim-date-hint">Optional — leave blank to see all claimable events from the last 90 days.</p>
         </div>
         <p class="ad-claim-error" id="ad-claim-error" hidden role="alert"></p>
         <div class="ad-claim-results" id="ad-claim-results" role="list"></div>
@@ -1176,6 +1177,6 @@
     <script src="../js/attendee-auth-gate.js?v=20261021confirm2"></script>
     <script src="../js/organiser-image-upload.js?v=20261002offerimage1" defer></script>
     <script src="../js/attendee-member-offers.js?v=20261015offers1" defer></script>
-    <script src="../js/attendee-dashboard.js?v=20261022claimsuggest4" defer></script>
+    <script src="../js/attendee-dashboard.js?v=20261022claimdate5" defer></script>
   </body>
 </html>

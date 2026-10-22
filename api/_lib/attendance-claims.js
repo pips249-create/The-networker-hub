@@ -723,21 +723,44 @@ async function searchClaimableOrganisers(session, input) {
     .slice(0, 20);
 }
 
+/** Calendar YYYY-MM-DD in Europe/London for UK attendees. */
+function ymdLondon(iso) {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/London',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(d);
+}
+
+function emptyClaimableEventsResult(extra) {
+  return Object.assign(
+    { events: [], filteredByDate: false, windowDays: CLAIM_WINDOW_DAYS, blockedCount: 0 },
+    extra || {}
+  );
+}
+
 async function searchClaimablePastEvents(session, input) {
-  if (!isSupabaseConfigured()) return [];
+  if (!isSupabaseConfigured()) return emptyClaimableEventsResult();
   const sb = getSupabaseAdmin();
   const attendeeId = await resolveAttendeeId(sb, session);
-  if (!attendeeId) return [];
+  if (!attendeeId) return emptyClaimableEventsResult();
 
   const organiserId = String(input?.organiserId || input?.organiser_id || '').trim();
+  const dateStr = String(input?.date || input?.on || '')
+    .trim()
+    .slice(0, 10);
   const q = String(input?.q || '')
     .trim()
     .toLowerCase();
   // Group-first: require an organiser before listing events.
-  if (!isUuid(organiserId)) return [];
+  if (!isUuid(organiserId)) return emptyClaimableEventsResult();
 
   const nowIso = new Date().toISOString();
   const oldest = addDaysIso(null, -CLAIM_WINDOW_DAYS);
+  const dateOk = /^\d{4}-\d{2}-\d{2}$/.test(dateStr);
 
   let query = sb
     .from('events')
@@ -749,12 +772,23 @@ async function searchClaimablePastEvents(session, input) {
     .lt('starts_at', nowIso)
     .gte('starts_at', oldest)
     .order('starts_at', { ascending: false })
-    .limit(60);
+    .limit(80);
+
+  // Narrow at the DB when a date is set; exact London calendar day is applied after fetch.
+  if (dateOk) {
+    const noonUtc = new Date(`${dateStr}T12:00:00Z`);
+    const from = new Date(noonUtc.getTime() - 36 * 60 * 60 * 1000).toISOString();
+    const to = new Date(noonUtc.getTime() + 36 * 60 * 60 * 1000).toISOString();
+    query = query.gte('starts_at', from).lte('starts_at', to);
+  }
 
   const { data, error } = await query;
   if (error) throw new Error(error.message);
 
   let rows = data || [];
+  if (dateOk) {
+    rows = rows.filter((row) => ymdLondon(row.starts_at) === dateStr);
+  }
   if (q) {
     rows = rows.filter((row) => {
       const title = String(row.title || '').toLowerCase();
@@ -764,7 +798,9 @@ async function searchClaimablePastEvents(session, input) {
 
   // Exclude events already claimed/reviewed or with eligible registration.
   const eventIds = rows.map((r) => r.id);
-  if (!eventIds.length) return [];
+  if (!eventIds.length) {
+    return emptyClaimableEventsResult({ filteredByDate: dateOk });
+  }
 
   const [claimsRes, reviewsRes, regsRes] = await Promise.all([
     sb
@@ -789,7 +825,7 @@ async function searchClaimablePastEvents(session, input) {
     if (isEligibleRegistration(r)) blocked.add(r.event_id);
   });
 
-  return rows
+  const events = rows
     .filter((row) => !blocked.has(row.id) && eventHasEnded(row))
     .slice(0, 25)
     .map((row) => ({
@@ -803,6 +839,13 @@ async function searchClaimablePastEvents(session, input) {
       organiserSlug: row.organisers?.slug || null,
       organiserLogo: String(row.organisers?.photo_url || '').trim() || null,
     }));
+
+  return {
+    events,
+    filteredByDate: dateOk,
+    windowDays: CLAIM_WINDOW_DAYS,
+    blockedCount: blocked.size,
+  };
 }
 
 async function computeNetworkedScoreForAttendee(sb, attendeeId) {

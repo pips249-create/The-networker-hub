@@ -85,11 +85,18 @@ module.exports = async function handler(req, res) {
             message: 'Pick a group first, then choose an event.',
           });
         }
-        const events = await searchClaimablePastEvents(session, {
+        const result = await searchClaimablePastEvents(session, {
           organiserId,
+          date: url.searchParams.get('date') || url.searchParams.get('on') || '',
           q: url.searchParams.get('q') || '',
         });
-        return json(res, 200, { ok: true, events });
+        return json(res, 200, {
+          ok: true,
+          events: result.events || [],
+          filteredByDate: !!result.filteredByDate,
+          windowDays: result.windowDays || 90,
+          blockedCount: result.blockedCount || 0,
+        });
       }
 
       const [claims, networked] = await Promise.all([
