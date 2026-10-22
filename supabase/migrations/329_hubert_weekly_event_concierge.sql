@@ -8,7 +8,7 @@ update public.email_templates
 set
   name = 'Hubert Event Concierge (weekly)',
   description =
-    'Weekly digest from Hubert with nearby and popular upcoming events, plus a Meet Rosie section while The MarTech Summit is upcoming. Marketing opt-in only.',
+    'Weekly digest from Hubert with nearby and popular upcoming events, alternating Meet Rosie (MarTech Summit) and Meet Catherine (Business Show London) while those shows are upcoming. Marketing opt-in only.',
   subject = 'Hubert''s weekly event picks — week of {{week_label}}',
   placeholders = array[
     'user_name',

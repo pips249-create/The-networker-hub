@@ -1,11 +1,13 @@
 /**
- * Weekly Hubert Event Concierge cadence + Meet Rosie promo helpers.
+ * Weekly Hubert Event Concierge cadence + alternating Meet Rosie / Catherine promos.
  * Run: node scripts/test-hubert-weekly-concierge.js
  */
 const {
   isDueForHubertConcierge,
   hubertConciergeWeekLabel,
-  buildMeetRosieSectionHtml,
+  buildMeetTeamSectionHtml,
+  pickCofounderPromo,
+  utcIsoWeekNumber,
   HUBERT_CONCIERGE_INTERVAL_DAYS,
 } = require('../api/_lib/hubert-event-concierge');
 
@@ -34,18 +36,38 @@ assert(
 const weekLabel = hubertConciergeWeekLabel(now);
 assert(weekLabel === '19 October 2026', 'week label is Monday of that UTC week: ' + weekLabel);
 
-const promo = buildMeetRosieSectionHtml('https://www.thenetworkeruk.com', now);
-assert(/Meet Rosie \(the co-founder\) at The MarTech Summit/.test(promo), 'promo headline present');
-assert(
-  /the-martech-summit-london-2026/.test(promo),
-  'promo links to MarTech Summit event page'
-);
-assert(/about-rosie\.png/.test(promo), 'promo includes Rosie photo');
+const weekNum = utcIsoWeekNumber(now);
+assert(typeof weekNum === 'number' && weekNum > 0, 'ISO week number computed: ' + weekNum);
 
-const afterSummit = buildMeetRosieSectionHtml(
-  'https://www.thenetworkeruk.com',
-  new Date('2026-11-13T00:00:00Z')
+// 19 Oct 2026 Monday → even week → Rosie; force odd week via +7 days → Catherine
+const evenWeekDate = now;
+const oddWeekDate = new Date('2026-10-26T12:00:00Z'); // Monday 26 Oct
+const evenPromo = pickCofounderPromo(evenWeekDate);
+const oddPromo = pickCofounderPromo(oddWeekDate);
+assert(evenPromo && evenPromo.id === 'rosie_martech', 'even week picks Rosie @ MarTech');
+assert(
+  oddPromo && oddPromo.id === 'catherine_business_show',
+  'odd week picks Catherine @ Business Show'
 );
-assert(afterSummit === '', 'promo hidden after summit weekend');
+
+const rosieHtml = buildMeetTeamSectionHtml('https://www.thenetworkeruk.com', evenWeekDate);
+assert(/Meet Rosie \(the co-founder\) at The MarTech Summit/.test(rosieHtml), 'Rosie headline');
+assert(/the-martech-summit-london-2026/.test(rosieHtml), 'Rosie links MarTech event');
+assert(/about-rosie\.png/.test(rosieHtml), 'Rosie photo');
+
+const catherineHtml = buildMeetTeamSectionHtml('https://www.thenetworkeruk.com', oddWeekDate);
+assert(
+  /Meet Catherine at The Business Show London/.test(catherineHtml),
+  'Catherine headline'
+);
+assert(!/co-founder/.test(catherineHtml), 'Catherine copy does not say co-founder');
+assert(/the-business-show-london/.test(catherineHtml), 'Catherine links Business Show');
+assert(/about-catherine\.png/.test(catherineHtml), 'Catherine photo');
+
+const afterShows = buildMeetTeamSectionHtml(
+  'https://www.thenetworkeruk.com',
+  new Date('2026-11-14T00:00:00Z')
+);
+assert(afterShows === '', 'promo hidden after both November shows');
 
 console.log('All Hubert weekly concierge checks passed');

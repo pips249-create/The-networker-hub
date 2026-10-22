@@ -16611,11 +16611,11 @@
           '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f7f4fb;border:1px solid rgba(69,45,92,0.14);border-radius:14px;margin:8px 0 20px;">' +
           '<tr><td style="padding:22px 20px;">' +
           '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:13px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:0.6px;margin:0 0 6px;">Meet the team</p>' +
-          '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:18px;font-weight:700;color:#1c2040;margin:0 0 8px;line-height:1.3;">Meet Rosie (the co-founder) at The MarTech Summit</p>' +
-          '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;line-height:1.6;color:#635c5e;margin:0 0 14px;">Rosie will be at The MarTech Summit London — 10 &amp; 11 November 2026. Come say hello if you are there.</p>' +
+          '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:18px;font-weight:700;color:#1c2040;margin:0 0 8px;line-height:1.3;">Meet Catherine at The Business Show London</p>' +
+          '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;line-height:1.6;color:#635c5e;margin:0 0 14px;">Catherine from The Networker UK will be at The Business Show London — 11 &amp; 12 November 2026 at ExCeL. Come say hello if you are there.</p>' +
           '<a href="' +
           previewOrigin +
-          '/events/the-martech-summit-london-2026" style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:700;color:#5b2f99;text-decoration:none;">View The MarTech Summit &rarr;</a>' +
+          '/events/the-business-show-london" style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;font-weight:700;color:#5b2f99;text-decoration:none;">View The Business Show London &rarr;</a>' +
           '</td></tr></table>';
       } else if (slug === 'saved_organiser_new_listing') {
         SAMPLE_VARS.event_time = ' · ' + SAMPLE_VARS.event_time;
@@ -16768,7 +16768,7 @@
     // Cron/marketing emails the platform sends on its own schedule (no admin action needed).
     var AUTOMATED_EMAIL_INFO = {
       attendee_hubert_event_concierge:
-        'Weekly digest to signed-in member accounts (attendee linked to login) with marketing emails on — nearby and popular event picks, plus a Meet Rosie promo while The MarTech Summit is upcoming. Skips checkout-only contacts, organisers, and group-profile emails. Cron sends only when HUBERT_EVENT_CONCIERGE_EMAILS_ENABLED=true in Vercel.',
+        'Weekly digest to signed-in member accounts (attendee linked to login) with marketing emails on — nearby and popular event picks, alternating Meet Rosie (MarTech Summit) / Meet Catherine (Business Show London) while those November shows are upcoming. Skips checkout-only contacts, organisers, and group-profile emails. Cron sends only when HUBERT_EVENT_CONCIERGE_EMAILS_ENABLED=true in Vercel.',
       attendee_reengagement:
         'Sends after 30 days without a booking (60-day cooldown), marketing opt-in only.',
       attendee_signup_events_nudge:

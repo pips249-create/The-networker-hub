@@ -31,7 +31,7 @@ const MEMBER_QUESTIONS = [
   { q: "I tried to add my event but it doesn't show on the browse events page", expect: /Published|Draft|Approved|\/organiser\//i },
   { q: 'How can I advertise my business on the site?', expect: /rosie@|Sponsor|sponsor/i },
   { q: 'What does Rosie do?', expect: /co-founder|Rosie/i },
-  { q: 'What does Catherine do?', expect: /co-founder|Catherine/i },
+  { q: 'What does Catherine do?', expect: /product|technical|ticketing|Catherine/i },
   { q: 'Why did the networker hub start?', expect: /right room|careers|companies|mission/i },
   { q: 'How much does The Networker UK make per ticket?', expect: /4\.5%|booking fee|platform and payment/i },
   { q: 'How can I download the attendees for my next event', expect: /Attendees|CSV|\/organiser\//i },
