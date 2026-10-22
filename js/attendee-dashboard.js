@@ -4678,7 +4678,7 @@
     if (selected) selected.textContent = claimSelectedOrganiser.name || 'Selected group';
     if (sub) {
       sub.textContent =
-        'Search by the date you attended, then claim that past event. Only published events from the last 90 days that you have not already booked or claimed are listed.';
+        'Search by the date you attended, then claim that past event. Only past Hub events from the last 90 days that you have not already booked or claimed are listed.';
     }
     if (hint) {
       hint.hidden = false;
@@ -4836,7 +4836,7 @@
               'This group only has draft or unpublished past events in the last 90 days. Publish the event on the organiser dashboard, then try claiming again.';
           } else if (filteredByDate) {
             empty =
-              'No published claimable events on that date for this group. Try another date, or clear the date to see all claimable events from the last 90 days.';
+              'No claimable events on that date for this group. Try another date, clear the date to see all claimable nights, or confirm you picked the right group.';
           } else if (data && data.blockedCount > 0) {
             empty =
               'Every past event for this group in the last 90 days is already on your Hub bookings or claims. Pick another group to claim a different night.';

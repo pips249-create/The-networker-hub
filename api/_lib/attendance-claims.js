@@ -119,7 +119,9 @@ async function assertCanCreateClaim(sb, attendeeId, eventId) {
   const eventStatus = String(eventRow.status || '')
     .trim()
     .toLowerCase();
-  if (eventStatus !== 'published') {
+  // Past live events are often flipped to `archived` by organiser payouts/overview.
+  // Those were published — still claimable within the window.
+  if (eventStatus !== 'published' && eventStatus !== 'archived') {
     const err = new Error('event_not_claimable');
     err.code = 'event_not_claimable';
     throw err;
@@ -670,16 +672,16 @@ async function searchClaimableOrganisers(session, input) {
     byId.set(row.id, mapClaimOrganiserRow(row, 'Group name match'));
   });
 
-  // 2) Match past published event titles → surface that event's organiser.
+  // 2) Match past live event titles → surface that event's organiser.
   //    People type the event name (e.g. "The Networker Hub Example"), not the group name.
-  //    No 90-day cap here — claim window still applies when listing events for a group.
+  //    Include `archived` — past published nights are flipped to archived on organiser load.
   const nowIso = new Date().toISOString();
   const eventRes = await sb
     .from('events')
     .select(
       'id, title, organiser_id, starts_at, organisers ( id, name, slug, photo_url, listing_status, verification_status )'
     )
-    .eq('status', 'published')
+    .in('status', ['published', 'archived'])
     .not('organiser_id', 'is', null)
     .lt('starts_at', nowIso)
     .ilike('title', `%${q}%`)
@@ -758,7 +760,7 @@ async function findUnpublishedPastHint(sb, organiserId, { dateOk, dateStr, oldes
     .from('events')
     .select('id, starts_at, status')
     .eq('organiser_id', organiserId)
-    .neq('status', 'published')
+    .in('status', ['draft', 'unpublished'])
     .lt('starts_at', nowIso)
     .gte('starts_at', oldest)
     .order('starts_at', { ascending: false })
@@ -810,7 +812,7 @@ async function searchClaimablePastEvents(session, input) {
     .select(
       'id, title, slug, starts_at, ends_at, image_url, status, organiser_id, organisers ( id, name, slug, photo_url )'
     )
-    .eq('status', 'published')
+    .in('status', ['published', 'archived'])
     .eq('organiser_id', organiserId)
     .lt('starts_at', nowIso)
     .gte('starts_at', oldest)
