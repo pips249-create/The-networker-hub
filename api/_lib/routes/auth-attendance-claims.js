@@ -4,6 +4,7 @@ const {
   createAttendanceClaim,
   listClaimsForAttendee,
   searchClaimablePastEvents,
+  searchClaimableOrganisers,
   computeNetworkedScoreForAttendee,
 } = require('../attendance-claims');
 const { getSupabaseAdmin } = require('../supabase');
@@ -64,9 +65,24 @@ module.exports = async function handler(req, res) {
       const url = new URL(req.url, 'https://internal.local');
       const action = String(url.searchParams.get('action') || '').trim();
 
+      if (action === 'search-organisers') {
+        const organisers = await searchClaimableOrganisers(session, {
+          q: url.searchParams.get('q') || '',
+        });
+        return json(res, 200, { ok: true, organisers });
+      }
+
       if (action === 'search') {
+        const organiserId = url.searchParams.get('organiserId') || '';
+        if (!organiserId) {
+          return json(res, 200, {
+            ok: true,
+            events: [],
+            message: 'Pick a group first, then choose an event.',
+          });
+        }
         const events = await searchClaimablePastEvents(session, {
-          organiserId: url.searchParams.get('organiserId') || '',
+          organiserId,
           q: url.searchParams.get('q') || '',
         });
         return json(res, 200, { ok: true, events });

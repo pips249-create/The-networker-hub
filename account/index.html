@@ -908,14 +908,22 @@
       >
         <button type="button" class="ad-claim-modal-close" id="ad-claim-modal-close" aria-label="Close">×</button>
         <h2 class="ad-claim-modal-title" id="ad-claim-modal-title">Add an event you attended</h2>
-        <p class="ad-claim-modal-sub">
-          Pick a past published event from our organiser list. We’ll email the organiser to confirm — if they say yes, you can leave an organiser-confirmed review and it counts toward Most networked networker.
+        <p class="ad-claim-modal-sub" id="ad-claim-modal-sub">
+          First find the networking group, then pick the past event. We’ll email the organiser to confirm — if they say yes, you can leave an organiser-confirmed review.
         </p>
-        <label class="ad-claim-label" for="ad-claim-search">Search events or organisers</label>
-        <input type="search" id="ad-claim-search" class="ad-claim-search" placeholder="e.g. breakfast · London · group name" autocomplete="off" />
+        <div id="ad-claim-step-group">
+          <label class="ad-claim-label" for="ad-claim-search">Search for the group</label>
+          <input type="search" id="ad-claim-search" class="ad-claim-search" placeholder="e.g. Leeds Huddle · BNI · group name" autocomplete="off" />
+        </div>
+        <div id="ad-claim-step-event" hidden>
+          <button type="button" class="ad-claim-back" id="ad-claim-back">← Change group</button>
+          <p class="ad-claim-selected-group" id="ad-claim-selected-group"></p>
+          <label class="ad-claim-label" for="ad-claim-event-search">Filter events (optional)</label>
+          <input type="search" id="ad-claim-event-search" class="ad-claim-search" placeholder="Filter by event title" autocomplete="off" />
+        </div>
         <p class="ad-claim-error" id="ad-claim-error" hidden role="alert"></p>
         <div class="ad-claim-results" id="ad-claim-results" role="list"></div>
-        <p class="ad-claim-hint" id="ad-claim-hint">Showing past events from the last 90 days that you can claim.</p>
+        <p class="ad-claim-hint" id="ad-claim-hint">Type at least 2 letters to find a group.</p>
       </div>
     </div>
 
@@ -1168,6 +1176,6 @@
     <script src="../js/attendee-auth-gate.js?v=20261021confirm2"></script>
     <script src="../js/organiser-image-upload.js?v=20261002offerimage1" defer></script>
     <script src="../js/attendee-member-offers.js?v=20261015offers1" defer></script>
-    <script src="../js/attendee-dashboard.js?v=20261022attended1" defer></script>
+    <script src="../js/attendee-dashboard.js?v=20261022claimgroup1" defer></script>
   </body>
 </html>

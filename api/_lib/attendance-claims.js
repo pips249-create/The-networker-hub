@@ -560,6 +560,48 @@ async function listPendingClaimsForOrganiser(session) {
   return (data || []).map(mapClaimRow);
 }
 
+async function searchClaimableOrganisers(session, input) {
+  if (!isSupabaseConfigured()) return [];
+  const sb = getSupabaseAdmin();
+  const attendeeId = await resolveAttendeeId(sb, session);
+  if (!attendeeId) return [];
+
+  const q = String(input?.q || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[%_,.()]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (q.length < 2) return [];
+
+  const { applyPublicOrganiserBrowseFilter } = require('./supabase-organisers-browse');
+  let query = sb
+    .from('organisers')
+    .select('id, name, slug, photo_url, listing_status, verification_status, outcode')
+    .order('name', { ascending: true })
+    .limit(60);
+  query = applyPublicOrganiserBrowseFilter(query);
+  query = query.ilike('name', `%${q}%`);
+
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+
+  return (data || [])
+    .filter((row) => {
+      const name = String(row.name || '').trim().toLowerCase();
+      const slug = String(row.slug || '').trim().toLowerCase();
+      return name && (name.includes(q) || slug.includes(q));
+    })
+    .slice(0, 20)
+    .map((row) => ({
+      id: row.id,
+      name: String(row.name || '').trim(),
+      slug: row.slug || null,
+      logo: String(row.photo_url || '').trim() || null,
+      outcode: String(row.outcode || '').trim() || null,
+    }));
+}
+
 async function searchClaimablePastEvents(session, input) {
   if (!isSupabaseConfigured()) return [];
   const sb = getSupabaseAdmin();
@@ -570,6 +612,9 @@ async function searchClaimablePastEvents(session, input) {
   const q = String(input?.q || '')
     .trim()
     .toLowerCase();
+  // Group-first: require an organiser before listing events.
+  if (!isUuid(organiserId)) return [];
+
   const nowIso = new Date().toISOString();
   const oldest = addDaysIso(null, -CLAIM_WINDOW_DAYS);
 
@@ -579,15 +624,11 @@ async function searchClaimablePastEvents(session, input) {
       'id, title, slug, starts_at, ends_at, image_url, status, organiser_id, organisers ( id, name, slug, photo_url )'
     )
     .eq('status', 'published')
-    .not('organiser_id', 'is', null)
+    .eq('organiser_id', organiserId)
     .lt('starts_at', nowIso)
     .gte('starts_at', oldest)
     .order('starts_at', { ascending: false })
-    .limit(40);
-
-  if (isUuid(organiserId)) {
-    query = query.eq('organiser_id', organiserId);
-  }
+    .limit(60);
 
   const { data, error } = await query;
   if (error) throw new Error(error.message);
@@ -596,8 +637,7 @@ async function searchClaimablePastEvents(session, input) {
   if (q) {
     rows = rows.filter((row) => {
       const title = String(row.title || '').toLowerCase();
-      const orgName = String(row.organisers?.name || '').toLowerCase();
-      return title.includes(q) || orgName.includes(q);
+      return title.includes(q);
     });
   }
 
@@ -747,6 +787,7 @@ module.exports = {
   listClaimsForAttendee,
   listPendingClaimsForOrganiser,
   searchClaimablePastEvents,
+  searchClaimableOrganisers,
   computeNetworkedScoreForAttendee,
   loadWeightedReviewStatsByOrganiser,
   mapClaimRow,

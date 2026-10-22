@@ -16,6 +16,8 @@
   let opportunityEnquiries = [];
   let currentRoute = 'overview';
   let claimSearchTimer = null;
+  let claimEventSearchTimer = null;
+  let claimSelectedOrganiser = null;
   let savedScope = 'events';
   let savedScopePinned = false;
   let ticketsScope = 'upcoming';
@@ -4545,26 +4547,139 @@
       err.hidden = true;
       err.textContent = '';
     }
-    const input = document.getElementById('ad-claim-search');
-    if (input) {
-      input.value = '';
-      input.focus();
-    }
-    searchClaimableEvents('');
+    showClaimGroupStep();
   }
 
   function closeClaimModal() {
     const modal = document.getElementById('ad-claim-modal');
     if (modal) modal.hidden = true;
+    claimSelectedOrganiser = null;
+  }
+
+  function showClaimGroupStep() {
+    claimSelectedOrganiser = null;
+    const groupStep = document.getElementById('ad-claim-step-group');
+    const eventStep = document.getElementById('ad-claim-step-event');
+    const sub = document.getElementById('ad-claim-modal-sub');
+    const hint = document.getElementById('ad-claim-hint');
+    const results = document.getElementById('ad-claim-results');
+    if (groupStep) groupStep.hidden = false;
+    if (eventStep) eventStep.hidden = true;
+    if (sub) {
+      sub.textContent =
+        'First find the networking group, then pick the past event. We’ll email the organiser to confirm — if they say yes, you can leave an organiser-confirmed review.';
+    }
+    if (hint) {
+      hint.hidden = false;
+      hint.textContent = 'Type at least 2 letters to find a group.';
+    }
+    if (results) results.innerHTML = '';
+    const input = document.getElementById('ad-claim-search');
+    if (input) {
+      input.value = '';
+      input.focus();
+    }
+    const eventInput = document.getElementById('ad-claim-event-search');
+    if (eventInput) eventInput.value = '';
+  }
+
+  function showClaimEventStep(organiser) {
+    claimSelectedOrganiser = organiser || null;
+    if (!claimSelectedOrganiser || !claimSelectedOrganiser.id) return;
+    const groupStep = document.getElementById('ad-claim-step-group');
+    const eventStep = document.getElementById('ad-claim-step-event');
+    const selected = document.getElementById('ad-claim-selected-group');
+    const sub = document.getElementById('ad-claim-modal-sub');
+    const hint = document.getElementById('ad-claim-hint');
+    if (groupStep) groupStep.hidden = true;
+    if (eventStep) eventStep.hidden = false;
+    if (selected) selected.textContent = claimSelectedOrganiser.name || 'Selected group';
+    if (sub) {
+      sub.textContent =
+        'Choose the past event you attended. Only published events from the last 90 days that you have not already claimed are listed.';
+    }
+    if (hint) {
+      hint.hidden = false;
+      hint.textContent = 'Past events from this group in the last 90 days.';
+    }
+    const eventInput = document.getElementById('ad-claim-event-search');
+    if (eventInput) {
+      eventInput.value = '';
+      eventInput.focus();
+    }
+    searchClaimableEvents('');
+  }
+
+  function searchClaimableOrganisers(q) {
+    const results = document.getElementById('ad-claim-results');
+    const hint = document.getElementById('ad-claim-hint');
+    if (!results) return;
+    const query = String(q || '').trim();
+    if (query.length < 2) {
+      results.innerHTML = '';
+      if (hint) {
+        hint.hidden = false;
+        hint.textContent = 'Type at least 2 letters to find a group.';
+      }
+      return;
+    }
+    results.innerHTML = '<p class="ad-claim-hint">Searching groups…</p>';
+    const url =
+      '/api/auth/attendance-claims?action=search-organisers&q=' + encodeURIComponent(query);
+    fetch(url, { credentials: 'include', cache: 'no-store' })
+      .then(function (r) {
+        return r.json();
+      })
+      .then(function (data) {
+        const organisers = (data && data.ok && data.organisers) || [];
+        results.innerHTML = '';
+        if (!organisers.length) {
+          results.innerHTML =
+            '<p class="ad-claim-hint">No groups found. Try another name.</p>';
+          if (hint) hint.hidden = true;
+          return;
+        }
+        if (hint) {
+          hint.hidden = false;
+          hint.textContent = 'Select a group to see their past events.';
+        }
+        organisers.forEach(function (org) {
+          const row = document.createElement('div');
+          row.className = 'ad-claim-result';
+          row.setAttribute('role', 'listitem');
+          row.innerHTML =
+            '<div><p class="ad-claim-result-title"></p><p class="ad-claim-result-meta"></p></div>' +
+            '<button type="button" class="ad-btn ad-btn-primary ad-claim-pick-group">Choose</button>';
+          row.querySelector('.ad-claim-result-title').textContent = org.name || 'Group';
+          row.querySelector('.ad-claim-result-meta').textContent = [org.outcode, org.slug]
+            .filter(Boolean)
+            .join(' · ');
+          const btn = row.querySelector('.ad-claim-pick-group');
+          btn.addEventListener('click', function () {
+            showClaimEventStep(org);
+          });
+          results.appendChild(row);
+        });
+      })
+      .catch(function () {
+        results.innerHTML = '<p class="ad-claim-hint">Could not load groups. Try again.</p>';
+      });
   }
 
   function searchClaimableEvents(q) {
     const results = document.getElementById('ad-claim-results');
     const hint = document.getElementById('ad-claim-hint');
     if (!results) return;
-    results.innerHTML = '<p class="ad-claim-hint">Searching…</p>';
+    if (!claimSelectedOrganiser || !claimSelectedOrganiser.id) {
+      results.innerHTML = '<p class="ad-claim-hint">Pick a group first.</p>';
+      return;
+    }
+    results.innerHTML = '<p class="ad-claim-hint">Loading events…</p>';
     const url =
-      '/api/auth/attendance-claims?action=search&q=' + encodeURIComponent(String(q || '').trim());
+      '/api/auth/attendance-claims?action=search&organiserId=' +
+      encodeURIComponent(claimSelectedOrganiser.id) +
+      '&q=' +
+      encodeURIComponent(String(q || '').trim());
     fetch(url, { credentials: 'include', cache: 'no-store' })
       .then(function (r) {
         return r.json();
@@ -4574,11 +4689,14 @@
         results.innerHTML = '';
         if (!events.length) {
           results.innerHTML =
-            '<p class="ad-claim-hint">No claimable past events found. Try another search.</p>';
+            '<p class="ad-claim-hint">No claimable past events for this group in the last 90 days.</p>';
           if (hint) hint.hidden = true;
           return;
         }
-        if (hint) hint.hidden = false;
+        if (hint) {
+          hint.hidden = false;
+          hint.textContent = 'Past events from this group in the last 90 days.';
+        }
         events.forEach(function (ev) {
           const row = document.createElement('div');
           row.className = 'ad-claim-result';
@@ -4594,9 +4712,7 @@
             '<div><p class="ad-claim-result-title"></p><p class="ad-claim-result-meta"></p></div>' +
             '<button type="button" class="ad-btn ad-btn-primary ad-claim-submit">Claim</button>';
           row.querySelector('.ad-claim-result-title').textContent = ev.title || 'Event';
-          row.querySelector('.ad-claim-result-meta').textContent = [ev.organiserName, dateLabel]
-            .filter(Boolean)
-            .join(' · ');
+          row.querySelector('.ad-claim-result-meta').textContent = dateLabel || 'Past event';
           const btn = row.querySelector('.ad-claim-submit');
           btn.addEventListener('click', function () {
             submitAttendanceClaim(ev.id, btn);
@@ -4678,14 +4794,30 @@
     }
     const closeBtn = document.getElementById('ad-claim-modal-close');
     const backdrop = document.getElementById('ad-claim-modal-backdrop');
+    const backBtn = document.getElementById('ad-claim-back');
     if (closeBtn) closeBtn.addEventListener('click', closeClaimModal);
     if (backdrop) backdrop.addEventListener('click', closeClaimModal);
+    if (backBtn) {
+      backBtn.addEventListener('click', function () {
+        showClaimGroupStep();
+      });
+    }
     const search = document.getElementById('ad-claim-search');
     if (search) {
       search.addEventListener('input', function () {
         clearTimeout(claimSearchTimer);
         const q = search.value;
         claimSearchTimer = setTimeout(function () {
+          searchClaimableOrganisers(q);
+        }, 280);
+      });
+    }
+    const eventSearch = document.getElementById('ad-claim-event-search');
+    if (eventSearch) {
+      eventSearch.addEventListener('input', function () {
+        clearTimeout(claimEventSearchTimer);
+        const q = eventSearch.value;
+        claimEventSearchTimer = setTimeout(function () {
           searchClaimableEvents(q);
         }, 280);
       });

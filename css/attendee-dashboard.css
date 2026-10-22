@@ -4186,3 +4186,30 @@ body.ad-share-modal-open {
   color: #6b6570;
 }
 
+.ad-claim-back {
+  display: inline-flex;
+  align-items: center;
+  margin: 0 0 0.55rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #452d5c;
+  font-size: 0.85rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.ad-claim-back:hover {
+  text-decoration: underline;
+}
+
+.ad-claim-selected-group {
+  margin: 0 0 0.75rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 10px;
+  background: #f5f0e8;
+  font-size: 0.9rem;
+  font-weight: 650;
+  color: #1c2040;
+}
+
