@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
  * Email verification URL helpers used at signup and organiser payouts.
- * In-app redirects must not include the confirmation code: URL secrets must
- * not auto-confirm the address (welcome mail is gated on a typed code submit).
+ * Inbox CTAs may include the confirmation code for prefill; in-app redirects
+ * must not. Welcome still requires an explicit Confirm click (no auto-submit).
  */
 const assert = require('assert');
 const {

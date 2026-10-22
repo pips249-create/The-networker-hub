@@ -192,18 +192,25 @@
       return;
     }
 
-    // Never auto-submit ?code= / ?token= on load. Mail scanners and in-app
-    // redirects used to mark the address confirmed and fire the welcome email
-    // before the user entered the code from their inbox.
+    // Prefill from the inbox CTA (?code= / legacy ?token=) but never auto-submit.
+    // Mail scanners that only GET the link must not mark the address confirmed
+    // or fire Welcome before the user taps Confirm.
+    var urlCode = String(params().get('code') || params().get('token') || '')
+      .replace(/\D/g, '')
+      .slice(0, 6);
+    if (urlCode && codeEl) {
+      codeEl.value = urlCode;
+      showStatus('Code ready — tap Confirm your email to finish.', true);
+    }
     if (window.history.replaceState && (params().get('token') || params().get('code'))) {
       var scrub = new URL(window.location.href);
       scrub.searchParams.delete('token');
       scrub.searchParams.delete('code');
       window.history.replaceState({}, '', scrub.pathname + scrub.search + scrub.hash);
-      showError('Enter the 6-digit code from your email to confirm this address.');
     }
 
-    await maybeAutoSendVerificationCode();
+    // Do not resend after a prefilled inbox code — a fresh code would invalidate it.
+    if (!urlCode) await maybeAutoSendVerificationCode();
     if (codeEl) codeEl.focus();
   }
 
