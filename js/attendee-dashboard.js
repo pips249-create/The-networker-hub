@@ -4634,14 +4634,35 @@
       input.value = '';
       input.focus();
     }
-    const eventInput = document.getElementById('ad-claim-event-search');
-    if (eventInput) eventInput.value = '';
+    const eventDate = document.getElementById('ad-claim-event-date');
+    if (eventDate) eventDate.value = '';
     // Instant local suggestions, then refresh from API.
     renderClaimOrganiserResults(
       organisersFromPastBookingsLocal(),
       'No groups yet — type a group or past event name to search.'
     );
     searchClaimableOrganisers('');
+  }
+
+  function claimWindowDateBounds() {
+    const todayYmd = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'Europe/London',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(new Date());
+    const today = new Date(todayYmd + 'T12:00:00Z');
+    const max = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+    const min = new Date(today.getTime() - 90 * 24 * 60 * 60 * 1000);
+    function toYmd(d) {
+      return new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'UTC',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).format(d);
+    }
+    return { min: toYmd(min), max: toYmd(max) };
   }
 
   function showClaimEventStep(organiser) {
@@ -4657,18 +4678,21 @@
     if (selected) selected.textContent = claimSelectedOrganiser.name || 'Selected group';
     if (sub) {
       sub.textContent =
-        'Choose the past event you attended. Only published events from the last 90 days that you have not already claimed are listed.';
+        'Search by the date you attended, then claim that past event. Only published events from the last 90 days that you have not already booked or claimed are listed.';
     }
     if (hint) {
       hint.hidden = false;
-      hint.textContent = 'Past events from this group in the last 90 days.';
+      hint.textContent = 'Use the date field to find the night you attended.';
     }
-    const eventInput = document.getElementById('ad-claim-event-search');
-    if (eventInput) {
-      eventInput.value = '';
-      eventInput.focus();
+    const eventDate = document.getElementById('ad-claim-event-date');
+    if (eventDate) {
+      const bounds = claimWindowDateBounds();
+      eventDate.min = bounds.min;
+      eventDate.max = bounds.max;
+      eventDate.value = '';
+      eventDate.focus();
     }
-    searchClaimableEvents('');
+    searchClaimableEvents();
   }
 
   function filterLocalClaimOrganisers(q) {
@@ -4778,36 +4802,48 @@
       });
   }
 
-  function searchClaimableEvents(q) {
+  function searchClaimableEvents() {
     const results = document.getElementById('ad-claim-results');
     const hint = document.getElementById('ad-claim-hint');
+    const dateInput = document.getElementById('ad-claim-event-date');
     if (!results) return;
     if (!claimSelectedOrganiser || !claimSelectedOrganiser.id) {
       results.innerHTML = '<p class="ad-claim-hint">Pick a group first.</p>';
       return;
     }
+    const dateVal = dateInput ? String(dateInput.value || '').trim() : '';
     results.innerHTML = '<p class="ad-claim-hint">Loading events…</p>';
-    const url =
+    let url =
       '/api/auth/attendance-claims?action=search&organiserId=' +
-      encodeURIComponent(claimSelectedOrganiser.id) +
-      '&q=' +
-      encodeURIComponent(String(q || '').trim());
+      encodeURIComponent(claimSelectedOrganiser.id);
+    if (dateVal) url += '&date=' + encodeURIComponent(dateVal);
     fetch(url, { credentials: 'include', cache: 'no-store' })
       .then(function (r) {
         return r.json();
       })
       .then(function (data) {
         const events = (data && data.ok && data.events) || [];
+        const filteredByDate = !!(data && data.filteredByDate);
         results.innerHTML = '';
         if (!events.length) {
-          results.innerHTML =
-            '<p class="ad-claim-hint">No claimable past events for this group in the last 90 days.</p>';
+          let empty =
+            'No claimable past events for this group in the last 90 days. Events you already booked on the Hub can’t be claimed again — they already appear under Events I’ve attended.';
+          if (filteredByDate) {
+            empty =
+              'No claimable events on that date for this group. Try another date, or clear the date to see all claimable events from the last 90 days.';
+          } else if (data && data.blockedCount > 0) {
+            empty =
+              'Every past event for this group in the last 90 days is already on your Hub bookings or claims. Pick another group to claim a different night.';
+          }
+          results.innerHTML = '<p class="ad-claim-hint">' + esc(empty) + '</p>';
           if (hint) hint.hidden = true;
           return;
         }
         if (hint) {
           hint.hidden = false;
-          hint.textContent = 'Past events from this group in the last 90 days.';
+          hint.textContent = filteredByDate
+            ? 'Events on your chosen date — claim the one you attended.'
+            : 'Claimable past events for this group (last 90 days). Pick a date above to narrow the list.';
         }
         events.forEach(function (ev) {
           const row = document.createElement('div');
@@ -4818,6 +4854,7 @@
                 day: 'numeric',
                 month: 'short',
                 year: 'numeric',
+                timeZone: 'Europe/London',
               })
             : '';
           row.innerHTML =
@@ -4924,14 +4961,16 @@
         }, 280);
       });
     }
-    const eventSearch = document.getElementById('ad-claim-event-search');
-    if (eventSearch) {
-      eventSearch.addEventListener('input', function () {
+    const eventDate = document.getElementById('ad-claim-event-date');
+    if (eventDate) {
+      eventDate.addEventListener('change', function () {
+        searchClaimableEvents();
+      });
+      eventDate.addEventListener('input', function () {
         clearTimeout(claimEventSearchTimer);
-        const q = eventSearch.value;
         claimEventSearchTimer = setTimeout(function () {
-          searchClaimableEvents(q);
-        }, 280);
+          searchClaimableEvents();
+        }, 200);
       });
     }
   }

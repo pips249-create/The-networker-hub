@@ -4144,6 +4144,13 @@ body.ad-share-modal-open {
   margin-bottom: 0.75rem;
 }
 
+.ad-claim-date-hint {
+  margin: -0.45rem 0 0.75rem;
+  font-size: 0.75rem;
+  color: #7a7580;
+  line-height: 1.4;
+}
+
 .ad-claim-error {
   margin: 0 0 0.65rem;
   color: #9b1c1c;
