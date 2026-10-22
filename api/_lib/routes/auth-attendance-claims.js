@@ -96,6 +96,8 @@ module.exports = async function handler(req, res) {
           filteredByDate: !!result.filteredByDate,
           windowDays: result.windowDays || 90,
           blockedCount: result.blockedCount || 0,
+          unpublishedOnDate: !!result.unpublishedOnDate,
+          unpublishedInWindow: !!result.unpublishedInWindow,
         });
       }
 

@@ -4828,9 +4828,15 @@
         if (!events.length) {
           let empty =
             'No claimable past events for this group in the last 90 days. Events you already booked on the Hub can’t be claimed again — they already appear under Events I’ve attended.';
-          if (filteredByDate) {
+          if (data && data.unpublishedOnDate) {
             empty =
-              'No claimable events on that date for this group. Try another date, or clear the date to see all claimable events from the last 90 days.';
+              'This group has an event on that date, but it is still a draft (or unpublished). The organiser needs to publish it before you can claim attendance.';
+          } else if (data && data.unpublishedInWindow && !filteredByDate) {
+            empty =
+              'This group only has draft or unpublished past events in the last 90 days. Publish the event on the organiser dashboard, then try claiming again.';
+          } else if (filteredByDate) {
+            empty =
+              'No published claimable events on that date for this group. Try another date, or clear the date to see all claimable events from the last 90 days.';
           } else if (data && data.blockedCount > 0) {
             empty =
               'Every past event for this group in the last 90 days is already on your Hub bookings or claims. Pick another group to claim a different night.';

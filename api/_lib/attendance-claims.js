@@ -737,9 +737,52 @@ function ymdLondon(iso) {
 
 function emptyClaimableEventsResult(extra) {
   return Object.assign(
-    { events: [], filteredByDate: false, windowDays: CLAIM_WINDOW_DAYS, blockedCount: 0 },
+    {
+      events: [],
+      filteredByDate: false,
+      windowDays: CLAIM_WINDOW_DAYS,
+      blockedCount: 0,
+      unpublishedOnDate: false,
+      unpublishedInWindow: false,
+    },
     extra || {}
   );
+}
+
+/**
+ * Draft / unpublished past events are not claimable. Detect them so the UI can
+ * explain an empty result (e.g. organiser still has the night in Draft).
+ */
+async function findUnpublishedPastHint(sb, organiserId, { dateOk, dateStr, oldest, nowIso }) {
+  let query = sb
+    .from('events')
+    .select('id, starts_at, status')
+    .eq('organiser_id', organiserId)
+    .neq('status', 'published')
+    .lt('starts_at', nowIso)
+    .gte('starts_at', oldest)
+    .order('starts_at', { ascending: false })
+    .limit(40);
+  if (dateOk) {
+    const noonUtc = new Date(`${dateStr}T12:00:00Z`);
+    const from = new Date(noonUtc.getTime() - 36 * 60 * 60 * 1000).toISOString();
+    const to = new Date(noonUtc.getTime() + 36 * 60 * 60 * 1000).toISOString();
+    query = query.gte('starts_at', from).lte('starts_at', to);
+  }
+  const { data, error } = await query;
+  if (error) return { unpublishedOnDate: false, unpublishedInWindow: false };
+  let rows = data || [];
+  if (dateOk) {
+    rows = rows.filter((row) => ymdLondon(row.starts_at) === dateStr);
+    return {
+      unpublishedOnDate: rows.length > 0,
+      unpublishedInWindow: rows.length > 0,
+    };
+  }
+  return {
+    unpublishedOnDate: false,
+    unpublishedInWindow: rows.length > 0,
+  };
 }
 
 async function searchClaimablePastEvents(session, input) {
@@ -799,7 +842,13 @@ async function searchClaimablePastEvents(session, input) {
   // Exclude events already claimed/reviewed or with eligible registration.
   const eventIds = rows.map((r) => r.id);
   if (!eventIds.length) {
-    return emptyClaimableEventsResult({ filteredByDate: dateOk });
+    const unpublished = await findUnpublishedPastHint(sb, organiserId, {
+      dateOk,
+      dateStr,
+      oldest,
+      nowIso,
+    });
+    return emptyClaimableEventsResult({ filteredByDate: dateOk, ...unpublished });
   }
 
   const [claimsRes, reviewsRes, regsRes] = await Promise.all([
@@ -840,11 +889,29 @@ async function searchClaimablePastEvents(session, input) {
       organiserLogo: String(row.organisers?.photo_url || '').trim() || null,
     }));
 
+  if (!events.length) {
+    const unpublished = await findUnpublishedPastHint(sb, organiserId, {
+      dateOk,
+      dateStr,
+      oldest,
+      nowIso,
+    });
+    return {
+      events: [],
+      filteredByDate: dateOk,
+      windowDays: CLAIM_WINDOW_DAYS,
+      blockedCount: blocked.size,
+      ...unpublished,
+    };
+  }
+
   return {
     events,
     filteredByDate: dateOk,
     windowDays: CLAIM_WINDOW_DAYS,
     blockedCount: blocked.size,
+    unpublishedOnDate: false,
+    unpublishedInWindow: false,
   };
 }
 
