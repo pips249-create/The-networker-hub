@@ -2,7 +2,7 @@
  * Attendance claims: attendee claims → organiser Yes/No → organiser-confirmed review unlock.
  */
 const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
-const { resolveAttendeeId } = require('./supabase-favourites');
+const { resolveAttendeeId } = require('./attendee-id');
 const { eventHasEnded, isEligibleRegistration, findRegistrationForReview } = require('./supabase-reviews');
 const { createAttendanceClaimToken, verifyAttendanceClaimToken, DEFAULT_TTL_DAYS } = require('./attendance-claim-token');
 const {
