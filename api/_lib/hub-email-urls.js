@@ -218,6 +218,11 @@ function rosiePhotoUrl(siteUrl) {
   return toPublicAssetUrl('/assets/about-rosie.png?v=' + LOGO_ASSET_VERSION, siteUrl);
 }
 
+/** Co-founder photo for Meet Catherine / event promo blocks in member digests. */
+function catherinePhotoUrl(siteUrl) {
+  return toPublicAssetUrl('/assets/about-catherine.png?v=' + LOGO_ASSET_VERSION, siteUrl);
+}
+
 /**
  * Canonical public origin for every link in outbound email (never localhost).
  * Prefer PUBLIC_SITE_URL, then a public SITE_URL, else production.
@@ -330,5 +335,6 @@ module.exports = {
   logoFooterLightUrl,
   hubertIconUrl,
   rosiePhotoUrl,
+  catherinePhotoUrl,
   supportEmail,
 };

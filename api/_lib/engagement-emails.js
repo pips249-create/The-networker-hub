@@ -33,6 +33,7 @@ const {
   HUBERT_CONCIERGE_INTERVAL_DAYS,
   isDueForHubertConcierge,
   hubertConciergeWeekLabel,
+  buildMeetTeamSectionHtml,
   buildMeetRosieSectionHtml,
 } = require('./hubert-event-concierge');
 
@@ -1806,7 +1807,7 @@ async function sendDueHubertEventConciergeEmails(sb) {
   const claimedAt = now.toISOString();
   const weekLabel = hubertConciergeWeekLabel(now);
   const siteUrl = siteBase();
-  const meetRosieHtml = buildMeetRosieSectionHtml(siteUrl, now);
+  const meetTeamHtml = buildMeetTeamSectionHtml(siteUrl, now);
 
   const { data: attendees, error } = await sb
     .from('attendees')
@@ -1911,7 +1912,7 @@ async function sendDueHubertEventConciergeEmails(sb) {
             near_location_phrase: nearLocationPhrase(attendee.location, attendee.country_code),
             nearby_events_html: eventSections.nearby_events_html,
             popular_events_html: eventSections.popular_events_html,
-            meet_rosie_html: meetRosieHtml,
+            meet_rosie_html: meetTeamHtml,
             browse_events_url: browseEventsUrl(siteUrl),
             account_settings_url: accountSettingsUrl(siteUrl),
             location_footer_html: hubertLocationFooterHtml(
@@ -1986,6 +1987,7 @@ module.exports = {
   runEngagementEmailMaintenance,
   buildRecommendationsHtml,
   buildSignupNudgeEventsHtml,
+  buildMeetTeamSectionHtml,
   buildMeetRosieSectionHtml,
   isDueForHubertConcierge,
   hubertConciergeWeekLabel,
