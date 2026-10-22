@@ -29,6 +29,12 @@ const { claimRowTimestamp, releaseRowTimestamp } = require('./email-send-claim')
 const { areHubertEventConciergeEmailsEnabled } = require('./automated-email-sequences');
 const { hasLinkedAttendeeAccount } = require('./attendee-member-account');
 const { countryName, isUkCountryCode } = require('./profile-countries');
+const {
+  HUBERT_CONCIERGE_INTERVAL_DAYS,
+  isDueForHubertConcierge,
+  hubertConciergeWeekLabel,
+  buildMeetRosieSectionHtml,
+} = require('./hubert-event-concierge');
 
 const INTERNATIONAL_HUB_URL = 'https://www.thenetworkerinternational.com/';
 
@@ -130,7 +136,7 @@ const SIGNUP_NUDGE_FOLLOWUP_DELAY_DAYS = 10;
 const SIGNUP_NUDGE_FOLLOWUP_MAX_AGE_DAYS = 60;
 /** Skip Hubert if a signup nurture email landed this recently (avoids same-day doubles). */
 const HUBERT_AFTER_NURTURE_COOLDOWN_DAYS = 7;
-const HUBERT_CONCIERGE_BATCH_LIMIT = 50;
+const HUBERT_CONCIERGE_BATCH_LIMIT = 80;
 const REENGAGEMENT_BATCH_LIMIT = 25;
 
 function daysAgo(days) {
@@ -1780,16 +1786,6 @@ async function sendDueStripeConnectNudges(sb) {
   return result;
 }
 
-function isDueForHubertConcierge(sentAt) {
-  if (!sentAt) return true;
-  const sent = new Date(sentAt);
-  if (Number.isNaN(sent.getTime())) return true;
-  const now = new Date();
-  return (
-    sent.getUTCFullYear() < now.getUTCFullYear() || sent.getUTCMonth() < now.getUTCMonth()
-  );
-}
-
 function recentlyReceivedSignupNurture(attendee, withinDays) {
   const cutoff = Date.now() - withinDays * 24 * 60 * 60 * 1000;
   for (const key of ['signup_events_nudge_sent_at', 'signup_events_nudge_followup_sent_at']) {
@@ -1801,14 +1797,6 @@ function recentlyReceivedSignupNurture(attendee, withinDays) {
   return false;
 }
 
-function hubertConciergeMonthLabel(date) {
-  return date.toLocaleDateString('en-GB', {
-    month: 'long',
-    year: 'numeric',
-    timeZone: 'UTC',
-  });
-}
-
 async function sendDueHubertEventConciergeEmails(sb) {
   const result = { sent: 0, skipped: 0, errors: [] };
   if (!areHubertEventConciergeEmailsEnabled()) {
@@ -1816,8 +1804,9 @@ async function sendDueHubertEventConciergeEmails(sb) {
   }
   const now = new Date();
   const claimedAt = now.toISOString();
-  const monthLabel = hubertConciergeMonthLabel(now);
+  const weekLabel = hubertConciergeWeekLabel(now);
   const siteUrl = siteBase();
+  const meetRosieHtml = buildMeetRosieSectionHtml(siteUrl, now);
 
   const { data: attendees, error } = await sb
     .from('attendees')
@@ -1837,7 +1826,7 @@ async function sendDueHubertEventConciergeEmails(sb) {
 
   const dueCandidates = (attendees || []).filter((attendee) => {
     if (!hasLinkedAttendeeAccount(attendee)) return false;
-    if (!isDueForHubertConcierge(attendee.hubert_event_concierge_sent_at)) return false;
+    if (!isDueForHubertConcierge(attendee.hubert_event_concierge_sent_at, now)) return false;
     if (recentlyReceivedSignupNurture(attendee, HUBERT_AFTER_NURTURE_COOLDOWN_DAYS)) return false;
     return Boolean(String(attendee.email || '').trim());
   });
@@ -1857,7 +1846,7 @@ async function sendDueHubertEventConciergeEmails(sb) {
       continue;
     }
 
-    if (!isDueForHubertConcierge(attendee.hubert_event_concierge_sent_at)) {
+    if (!isDueForHubertConcierge(attendee.hubert_event_concierge_sent_at, now)) {
       result.skipped += 1;
       continue;
     }
@@ -1874,7 +1863,7 @@ async function sendDueHubertEventConciergeEmails(sb) {
     }
 
     // Attendee nurture — keep Hubert's picks off organiser / group-contact inboxes.
-    // Stamp the month so organisers do not keep consuming the monthly batch.
+    // Stamp so organisers do not keep consuming the weekly batch.
     if (isOrganiserAttendee(attendee, organiserKeys)) {
       await claimRowTimestamp(sb, {
         table: 'attendees',
@@ -1917,10 +1906,12 @@ async function sendDueHubertEventConciergeEmails(sb) {
           variables: {
             ...baseEmailVars(siteUrl),
             user_name: String(attendee.name || '').trim() || 'there',
-            month_label: monthLabel,
+            week_label: weekLabel,
+            month_label: weekLabel,
             near_location_phrase: nearLocationPhrase(attendee.location, attendee.country_code),
             nearby_events_html: eventSections.nearby_events_html,
             popular_events_html: eventSections.popular_events_html,
+            meet_rosie_html: meetRosieHtml,
             browse_events_url: browseEventsUrl(siteUrl),
             account_settings_url: accountSettingsUrl(siteUrl),
             location_footer_html: hubertLocationFooterHtml(
@@ -1929,7 +1920,7 @@ async function sendDueHubertEventConciergeEmails(sb) {
               attendee.country_code
             ),
           },
-          subject: "Hubert's event picks for " + monthLabel,
+          subject: "Hubert's weekly event picks — week of " + weekLabel,
         });
       } catch (sendErr) {
         await releaseRowTimestamp(sb, {
@@ -1995,4 +1986,8 @@ module.exports = {
   runEngagementEmailMaintenance,
   buildRecommendationsHtml,
   buildSignupNudgeEventsHtml,
+  buildMeetRosieSectionHtml,
+  isDueForHubertConcierge,
+  hubertConciergeWeekLabel,
+  HUBERT_CONCIERGE_INTERVAL_DAYS,
 };

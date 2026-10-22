@@ -275,7 +275,9 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
   }
 
   if (slug === 'attendee_hubert_event_concierge') {
-    vars.month_label = 'July 2026';
+    const { buildMeetRosieSectionHtml, hubertConciergeWeekLabel } = require('./hubert-event-concierge');
+    vars.week_label = hubertConciergeWeekLabel(new Date());
+    vars.month_label = vars.week_label;
     vars.near_location_phrase = 'near York';
     vars.account_settings_url = site + '/account/settings';
     vars.location_footer_html =
@@ -296,6 +298,7 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
         'Northbridge Network · Thursday 14 August 2026 · 6:00 PM · Manchester',
         vars.browse_events_url
       );
+    vars.meet_rosie_html = buildMeetRosieSectionHtml(site);
   }
 
   if (slug === 'saved_organiser_new_listing') {
