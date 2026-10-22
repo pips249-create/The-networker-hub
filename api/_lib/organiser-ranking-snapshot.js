@@ -1,7 +1,12 @@
 const { getSupabaseAdmin, isSupabaseConfigured } = require('./supabase');
 const { publicOrganiserSlug } = require('./organiser-slug');
 const { sendTemplatedEmail } = require('./send-template-email');
-const { loadWeightedReviewStatsByOrganiser } = require('./attendance-claims');
+
+function loadWeightedReviewStatsByOrganiser(sb, organiserIds) {
+  // Lazy require: attendance-claims → (historically) favourites → browse → ranking → here.
+  const { loadWeightedReviewStatsByOrganiser: load } = require('./attendance-claims');
+  return load(sb, organiserIds);
+}
 
 const MIN_REVIEWS_FOR_RANKING = 8;
 /** Soft volume floor so tiny 8/8 samples cannot dominate established groups. */
