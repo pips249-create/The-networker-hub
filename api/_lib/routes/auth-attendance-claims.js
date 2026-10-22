@@ -8,7 +8,7 @@ const {
   computeNetworkedScoreForAttendee,
 } = require('../attendance-claims');
 const { getSupabaseAdmin } = require('../supabase');
-const { resolveAttendeeId } = require('../supabase-favourites');
+const { resolveAttendeeId } = require('../attendee-id');
 
 function parseBody(req) {
   let body = req.body;
