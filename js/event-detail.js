@@ -1304,6 +1304,12 @@
     return Boolean(String(ev.externalPriceLabel || '').trim());
   }
 
+  /** Connected booking only — Link Out has no webhook, so tickets never sync to My account. */
+  function eventHasExternalRegistrationSync(ev) {
+    if (!eventIsExternalConnected(ev)) return false;
+    return String((ev && ev.checkoutMode) || '').trim() === 'external_connected';
+  }
+
   /**
    * Link Out / Connected: buyers pay on the organiser site.
    * Hide Hub quantity, booking fee, and "Before you pay" — only the listing price is informational.
@@ -1392,12 +1398,16 @@
 
   function externalBookingGateConfig(ev) {
     const organiserName = externalBookingOrganiserName(ev);
+    const syncs = eventHasExternalRegistrationSync(ev);
     return {
       title: 'Create a free account to book',
-      lead:
-        'Tickets are sold on ' +
-        organiserName +
-        '\u2019s website. Join free first — use the same email when you pay, and we\u2019ll show your ticket in My account when it syncs.',
+      lead: syncs
+        ? 'Tickets are sold on ' +
+          organiserName +
+          '\u2019s website. Join free with the same email you\u2019ll use when you pay — when their booking syncs, your ticket shows in My account.'
+        : 'Tickets are sold on ' +
+          organiserName +
+          '\u2019s website (we don\u2019t take payment here). Join free to save events and keep browsing — then we\u2019ll open their booking page.',
       checkoutFlag: true,
       preferRegister: true,
     };
@@ -1423,6 +1433,7 @@
     externalBookingSigninNudgeBound = true;
     checkBtn.addEventListener('click', function () {
       const ev = activeEvent();
+      if (!eventHasExternalRegistrationSync(ev)) return;
       if (ev && ev.id) {
         saveCheckoutIntent(ev, { action: 'external_registration_check' });
       }
@@ -1434,6 +1445,22 @@
         preferRegister: false,
       });
     });
+  }
+
+  function applyExternalBookingNudgeCopy(ev) {
+    const lead = document.querySelector('#external-booking-signin-nudge .external-booking-signin-nudge-lead');
+    const checkBtn = document.getElementById('external-booking-signin-btn');
+    if (!lead) return;
+    if (eventHasExternalRegistrationSync(ev)) {
+      lead.innerHTML =
+        'Create a free Networker UK account first, then book on the organiser\u2019s site with the ' +
+        '<strong>same email</strong>. When their booking syncs, your ticket shows in My account.';
+      if (checkBtn) checkBtn.hidden = false;
+    } else {
+      lead.textContent =
+        'Create a free Networker UK account to save events and keep browsing. Payment stays on the organiser\u2019s website — tickets for this listing stay on their site.';
+      if (checkBtn) checkBtn.hidden = true;
+    }
   }
 
   function externalRegistrationSigninNudgeEligible(ev) {
@@ -1464,6 +1491,7 @@
       el.hidden = true;
       return;
     }
+    applyExternalBookingNudgeCopy(ev);
     const signedIn = await isSignedInAttendee();
     el.hidden = signedIn;
     setExternalBookingBuyLabel(ev, signedIn);
