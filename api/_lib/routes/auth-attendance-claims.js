@@ -77,17 +77,18 @@ module.exports = async function handler(req, res) {
       }
 
       if (action === 'search') {
+        const date = url.searchParams.get('date') || url.searchParams.get('on') || '';
         const organiserId = url.searchParams.get('organiserId') || '';
-        if (!organiserId) {
+        if (!String(date || '').trim() && !String(organiserId || '').trim()) {
           return json(res, 200, {
             ok: true,
             events: [],
-            message: 'Pick a group first, then choose an event.',
+            message: 'Pick the date you attended to find claimable events.',
           });
         }
         const result = await searchClaimablePastEvents(session, {
           organiserId,
-          date: url.searchParams.get('date') || url.searchParams.get('on') || '',
+          date,
           q: url.searchParams.get('q') || '',
         });
         return json(res, 200, {
