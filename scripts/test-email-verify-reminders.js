@@ -111,7 +111,7 @@ assert.match(
 );
 
 const migration = fs.readFileSync(
-  path.join(__dirname, '../supabase/migrations/329_email_verify_reminder.sql'),
+  path.join(__dirname, '../supabase/migrations/330_email_verify_reminder.sql'),
   'utf8'
 );
 assert.match(migration, /organiser_email_verify_reminder_sent_at/);
