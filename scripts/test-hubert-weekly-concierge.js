@@ -57,9 +57,10 @@ assert(/about-rosie\.png/.test(rosieHtml), 'Rosie photo');
 
 const catherineHtml = buildMeetTeamSectionHtml('https://www.thenetworkeruk.com', oddWeekDate);
 assert(
-  /Meet Catherine \(the co-founder\) at The Business Show London/.test(catherineHtml),
+  /Meet Catherine at The Business Show London/.test(catherineHtml),
   'Catherine headline'
 );
+assert(!/co-founder/.test(catherineHtml), 'Catherine copy does not say co-founder');
 assert(/the-business-show-london/.test(catherineHtml), 'Catherine links Business Show');
 assert(/about-catherine\.png/.test(catherineHtml), 'Catherine photo');
 

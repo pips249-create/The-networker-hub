@@ -77,12 +77,12 @@ function pickCofounderPromo(now = new Date()) {
   return {
     id: 'catherine_business_show',
     name: 'Catherine',
-    roleLabel: 'the co-founder',
-    photoAlt: 'Catherine, co-founder of The Networker UK',
+    roleLabel: 'from The Networker UK',
+    photoAlt: 'Catherine from The Networker UK',
     photoUrlFn: catherinePhotoUrl,
-    headline: 'Meet Catherine (the co-founder) at The Business Show London',
+    headline: 'Meet Catherine at The Business Show London',
     body:
-      'Catherine will be at The Business Show London — 11 &amp; 12 November 2026 at ExCeL. Come say hello if you are there.',
+      'Catherine from The Networker UK will be at The Business Show London — 11 &amp; 12 November 2026 at ExCeL. Come say hello if you are there.',
     ctaLabel: 'View The Business Show London',
     eventPath: BUSINESS_SHOW_LONDON_EVENT_PATH,
   };
