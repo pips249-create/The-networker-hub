@@ -1086,9 +1086,13 @@
         showAlert('Your session expired — refresh the page and sign in again.');
         return;
       }
-      const nextPath =
-        '/organiser/group-edit' + (editId ? '?id=' + encodeURIComponent(editId) : '');
-      location.href = '../login?next=' + encodeURIComponent(nextPath);
+      // Prefer the account-required gate over a direct login hop (avoids a flash of this form).
+      if (editId) {
+        const nextPath = '/organiser/group-edit?id=' + encodeURIComponent(editId);
+        location.replace('../login?next=' + encodeURIComponent(nextPath) + '&intent=organiser');
+      } else {
+        location.replace('/organiser/list-account');
+      }
       return;
     }
 
