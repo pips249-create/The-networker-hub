@@ -317,6 +317,10 @@
     {
       "path": "/api/cron/directory-invite-nudge",
       "schedule": "20 8 * * *"
+    },
+    {
+      "path": "/api/cron/email-verify-reminders",
+      "schedule": "25 * * * *"
     }
   ],
   "functions": {

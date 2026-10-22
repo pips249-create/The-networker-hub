@@ -442,6 +442,11 @@ const BRANDED_EMAIL_TEMPLATES = {
     marker: 'hub-email-layout-v3-purple',
     subject: 'Confirm your email – The Networker UK',
   },
+  organiser_email_verify_reminder: {
+    file: 'organiser-email-verify-reminder.html',
+    marker: 'hub-email-layout-v3-purple',
+    subject: 'Still need to confirm your Networker UK email?',
+  },
   event_intake_received: {
     file: 'event-intake-received.html',
     marker: 'hub-email-layout-v3-purple',

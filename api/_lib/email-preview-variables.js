@@ -541,7 +541,7 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
       vars.dashboard_url || organiserDashboardUrl(site, { eventId: '00000000-0000-4000-8000-000000000099' });
   }
 
-  if (slug === 'organiser_email_verify') {
+  if (slug === 'organiser_email_verify' || slug === 'organiser_email_verify_reminder') {
     vars.verify_code = '482917';
     vars.verify_url =
       site + '/organiser/verify-email?code=482917&email=organiser%40example.com';

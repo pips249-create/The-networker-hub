@@ -51,7 +51,7 @@ async function ensureHubAccountRow(userId) {
   return getHubAccount(uid);
 }
 
-async function storeVerifyToken(userId, token) {
+async function storeVerifyToken(userId, token, options = {}) {
   const sb = getSupabaseAdmin();
   const uid = String(userId || '').trim();
   if (!uid) throw new Error('missing_user');
@@ -59,20 +59,32 @@ async function storeVerifyToken(userId, token) {
   await ensureHubAccountRow(uid);
 
   const expiresAt = new Date(Date.now() + TOKEN_TTL_MS).toISOString();
-  // Issuing a fresh code always re-opens confirmation — prior staff/provision
+  const onlyIfUnverified = Boolean(options.onlyIfUnverified);
+  // Issuing a fresh code normally re-opens confirmation — prior staff/provision
   // verified_at flags must not let Welcome or the verify page skip the code.
-  const { data, error } = await sb
+  // Reminder cron passes onlyIfUnverified so a confirm that won the race is not undone.
+  let query = sb
     .from('hub_accounts')
     .update({
       organiser_email_verify_token_hash: hashToken(token),
       organiser_email_verify_expires_at: expiresAt,
       organiser_email_verified_at: null,
     })
-    .eq('user_id', uid)
-    .select('user_id')
-    .maybeSingle();
+    .eq('user_id', uid);
+  if (onlyIfUnverified) {
+    query = query.is('organiser_email_verified_at', null);
+  }
+  const { data, error } = await query.select('user_id').maybeSingle();
   if (error) throw new Error(error.message);
   if (!data?.user_id) {
+    if (onlyIfUnverified) {
+      const hub = await getHubAccount(uid);
+      if (hub?.organiser_email_verified_at) {
+        const err = new Error('already_verified');
+        err.code = 'already_verified';
+        throw err;
+      }
+    }
     const err = new Error('hub_account_not_found');
     err.code = 'hub_account_not_found';
     throw err;
@@ -140,7 +152,7 @@ async function markOrganiserEmailVerified(userId) {
   return data;
 }
 
-async function sendOrganiserEmailVerification({ userId, email, name, revealCode }) {
+async function sendOrganiserEmailVerification({ userId, email, name, revealCode, slug }) {
   const address = String(email || '')
     .trim()
     .toLowerCase();
@@ -150,8 +162,14 @@ async function sendOrganiserEmailVerification({ userId, email, name, revealCode 
     throw err;
   }
 
+  const emailSlug =
+    String(slug || '').trim() === 'organiser_email_verify_reminder'
+      ? 'organiser_email_verify_reminder'
+      : 'organiser_email_verify';
+  const reminderSend = emailSlug === 'organiser_email_verify_reminder';
+
   const code = newVerifyCode();
-  await storeVerifyToken(userId, code);
+  await storeVerifyToken(userId, code, { onlyIfUnverified: reminderSend });
 
   // Email CTA includes the code so the confirm page can prefill it. The page
   // still requires an explicit Confirm click (no auto-submit) so mail scanners
@@ -165,7 +183,7 @@ async function sendOrganiserEmailVerification({ userId, email, name, revealCode 
 
   try {
     const result = await sendTemplatedEmail({
-      slug: 'organiser_email_verify',
+      slug: emailSlug,
       to: address,
       variables: {
         user_name: displayName,
@@ -174,7 +192,7 @@ async function sendOrganiserEmailVerification({ userId, email, name, revealCode 
         verify_url: verifyUrl,
       },
       skipEmailCheck: true,
-      resendTags: [{ name: 'category', value: 'organiser_email_verify' }],
+      resendTags: [{ name: 'category', value: emailSlug }],
     });
     const out = {
       ok: true,
