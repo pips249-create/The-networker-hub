@@ -16,6 +16,11 @@
   var imageFailed = false;
   var IMAGE_READ_ERROR = "Couldn't read that image. Use a JPG or PNG, or paste an image link.";
   var onChange = null;
+  var filterQuery = '';
+  var filterCategory = '';
+  var filterPerk = '';
+  var filterStatus = '';
+  var ENDING_SOON_DAYS = 30;
 
   function esc(s) {
     var d = document.createElement('div');
@@ -60,6 +65,178 @@
   function visibleOffers() {
     if (canManage) return offers.slice();
     return offers.filter(offerIsLive);
+  }
+
+  function offerEndsSoon(offer) {
+    var end = offer && offer.endsOn ? String(offer.endsOn).slice(0, 10) : '';
+    if (!end || end < londonToday()) return false;
+    var today = new Date(londonToday() + 'T00:00:00Z');
+    var ends = new Date(end + 'T00:00:00Z');
+    if (Number.isNaN(today.getTime()) || Number.isNaN(ends.getTime())) return false;
+    var diffDays = Math.round((ends.getTime() - today.getTime()) / 86400000);
+    return diffDays >= 0 && diffDays <= ENDING_SOON_DAYS;
+  }
+
+  function offerHaystack(offer) {
+    return [
+      offer.title,
+      offer.provider,
+      offer.category,
+      offer.highlight,
+      offer.summary,
+      offer.promoCode,
+    ]
+      .filter(Boolean)
+      .join(' ');
+  }
+
+  function offerMatchesQuery(offer, query) {
+    var q = String(query || '').trim();
+    if (!q) return true;
+    if (window.HubSearchMatch && typeof window.HubSearchMatch.haystackMatchesQuery === 'function') {
+      return window.HubSearchMatch.haystackMatchesQuery(offerHaystack(offer), q);
+    }
+    return offerHaystack(offer).toLowerCase().indexOf(q.toLowerCase()) !== -1;
+  }
+
+  function offerMatchesFilters(offer) {
+    if (!offerMatchesQuery(offer, filterQuery)) return false;
+    if (filterCategory) {
+      var category = String(offer.category || '').trim();
+      if (category.toLowerCase() !== filterCategory.toLowerCase()) return false;
+    }
+    if (filterPerk === 'code' && !String(offer.promoCode || '').trim()) return false;
+    if (filterPerk === 'ending' && !offerEndsSoon(offer)) return false;
+    if (canManage && filterStatus) {
+      if (filterStatus === 'live' && !offerIsLive(offer)) return false;
+      if (filterStatus === 'hidden' && offer.published) return false;
+      if (filterStatus === 'ended' && !offerHasEnded(offer)) return false;
+    }
+    return true;
+  }
+
+  function filteredOffers() {
+    return visibleOffers().filter(offerMatchesFilters);
+  }
+
+  function filtersActive() {
+    return Boolean(
+      String(filterQuery || '').trim() ||
+        filterCategory ||
+        filterPerk ||
+        (canManage && filterStatus)
+    );
+  }
+
+  function categoryOptions() {
+    var seen = {};
+    var list = [];
+    visibleOffers().forEach(function (offer) {
+      var category = String(offer.category || '').trim();
+      if (!category) return;
+      var key = category.toLowerCase();
+      if (seen[key]) return;
+      seen[key] = true;
+      list.push(category);
+    });
+    list.sort(function (a, b) {
+      return a.localeCompare(b, 'en', { sensitivity: 'base' });
+    });
+    return list;
+  }
+
+  function syncCategorySelect() {
+    var category = document.getElementById('ad-services-category');
+    if (!category) return;
+    var names = categoryOptions();
+    var signature = names.join('\u0001');
+    if (category.dataset.categorySignature !== signature) {
+      category.dataset.categorySignature = signature;
+      var current = filterCategory;
+      category.innerHTML = ['<option value="">All categories</option>']
+        .concat(
+          names.map(function (name) {
+            return '<option value="' + esc(name) + '">' + esc(name) + '</option>';
+          })
+        )
+        .join('');
+      if (current) {
+        var stillThere = names.some(function (name) {
+          return name.toLowerCase() === current.toLowerCase();
+        });
+        if (!stillThere) filterCategory = '';
+      }
+    }
+    if (category.value !== filterCategory) category.value = filterCategory;
+  }
+
+  function syncFilterControls() {
+    var bar = document.getElementById('ad-services-filters');
+    var search = document.getElementById('ad-services-search');
+    var perk = document.getElementById('ad-services-perk');
+    var status = document.getElementById('ad-services-status');
+    var statusWrap = document.getElementById('ad-services-status-wrap');
+    var clear = document.getElementById('ad-services-clear');
+    if (search && document.activeElement !== search && search.value !== filterQuery) {
+      search.value = filterQuery;
+    }
+    if (perk && perk.value !== filterPerk) perk.value = filterPerk;
+    if (status && status.value !== filterStatus) status.value = filterStatus;
+    if (statusWrap) statusWrap.hidden = !canManage;
+    syncCategorySelect();
+    if (clear) clear.hidden = !filtersActive();
+    if (bar) bar.hidden = false;
+  }
+
+  function updateFilterMeta(matched, total) {
+    var meta = document.getElementById('ad-services-filter-meta');
+    if (!meta) return;
+    if (!loaded || loading || loadError || !total) {
+      meta.hidden = true;
+      meta.textContent = '';
+      return;
+    }
+    if (!filtersActive()) {
+      meta.hidden = true;
+      meta.textContent = '';
+      return;
+    }
+    meta.hidden = false;
+    if (!matched) {
+      meta.textContent = 'No offers match these filters.';
+      return;
+    }
+    meta.textContent =
+      'Showing ' + matched + ' of ' + total + (total === 1 ? ' offer' : ' offers');
+  }
+
+  function setEmptyCopy(filteredOut) {
+    var title = document.getElementById('ad-services-empty-title');
+    var text = document.getElementById('ad-services-empty-text');
+    if (!title || !text) return;
+    if (filteredOut) {
+      title.textContent = 'No matching offers';
+      text.textContent = 'Try another search, category, or clear the filters.';
+      return;
+    }
+    title.textContent = 'Nothing listed yet';
+    text.textContent = 'Published offers will show up here.';
+  }
+
+  function clearFilters() {
+    filterQuery = '';
+    filterCategory = '';
+    filterPerk = '';
+    filterStatus = '';
+    var search = document.getElementById('ad-services-search');
+    var category = document.getElementById('ad-services-category');
+    var perk = document.getElementById('ad-services-perk');
+    var status = document.getElementById('ad-services-status');
+    if (search) search.value = '';
+    if (category) category.value = '';
+    if (perk) perk.value = '';
+    if (status) status.value = '';
+    render();
   }
 
   function publishedCount() {
@@ -311,10 +488,17 @@
   function showListChrome(show) {
     var grid = document.getElementById('ad-services-grid');
     var adminBar = document.getElementById('ad-services-admin');
+    var filters = document.getElementById('ad-services-filters');
+    var filterMeta = document.getElementById('ad-services-filter-meta');
     var detail = document.getElementById('ad-services-detail');
     var pitch = document.getElementById('ad-services-pitch');
     if (grid) grid.hidden = !show;
     if (adminBar) adminBar.hidden = !show || !canManage;
+    if (filters) filters.hidden = !show;
+    if (filterMeta && !show) {
+      filterMeta.hidden = true;
+      filterMeta.textContent = '';
+    }
     if (detail) detail.hidden = show;
     if (pitch) pitch.hidden = !show;
   }
@@ -350,15 +534,26 @@
       'Member offers',
       'Free trials, discounts, and practical help arranged for you.'
     );
-    var list = visibleOffers();
+    syncFilterControls();
+    var allVisible = visibleOffers();
+    var list = filteredOffers();
+    updateFilterMeta(list.length, allVisible.length);
     if (!loaded) {
       grid.innerHTML = '<p class="ad-services-loading">Loading offers…</p>';
       if (empty) empty.hidden = true;
       return;
     }
+    if (!allVisible.length) {
+      grid.innerHTML = '';
+      grid.hidden = true;
+      setEmptyCopy(false);
+      if (empty) empty.hidden = false;
+      return;
+    }
     if (!list.length) {
       grid.innerHTML = '';
       grid.hidden = true;
+      setEmptyCopy(true);
       if (empty) empty.hidden = false;
       return;
     }
@@ -641,7 +836,51 @@
     };
   }
 
+  function bindFilters() {
+    var search = document.getElementById('ad-services-search');
+    var category = document.getElementById('ad-services-category');
+    var perk = document.getElementById('ad-services-perk');
+    var status = document.getElementById('ad-services-status');
+    var clear = document.getElementById('ad-services-clear');
+    if (search && !search.dataset.boundServiceSearch) {
+      search.dataset.boundServiceSearch = '1';
+      search.addEventListener('input', function () {
+        filterQuery = String(search.value || '');
+        render();
+      });
+    }
+    if (category && !category.dataset.boundServiceCategory) {
+      category.dataset.boundServiceCategory = '1';
+      category.addEventListener('change', function () {
+        filterCategory = String(category.value || '');
+        render();
+      });
+    }
+    if (perk && !perk.dataset.boundServicePerk) {
+      perk.dataset.boundServicePerk = '1';
+      perk.addEventListener('change', function () {
+        filterPerk = String(perk.value || '');
+        render();
+      });
+    }
+    if (status && !status.dataset.boundServiceStatus) {
+      status.dataset.boundServiceStatus = '1';
+      status.addEventListener('change', function () {
+        filterStatus = String(status.value || '');
+        render();
+      });
+    }
+    if (clear && !clear.dataset.boundServiceClear) {
+      clear.dataset.boundServiceClear = '1';
+      clear.addEventListener('click', function () {
+        clearFilters();
+        if (search) search.focus();
+      });
+    }
+  }
+
   function bind() {
+    bindFilters();
     var add = document.getElementById('ad-services-add');
     if (add && !add.dataset.boundServiceAdd) {
       add.dataset.boundServiceAdd = '1';
