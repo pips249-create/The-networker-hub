@@ -280,11 +280,65 @@
           'Online checkout is not configured yet — contact hi@thenetworkeruk.com to subscribe.';
       } else if (data.active) {
         billingTip.textContent =
-          'Your plan is active. Use Manage billing to update your card or cancel. Assign organiser pages in your workspace, then set up your webhook secret below.';
+          'Your plan is active. Use Manage billing to update your card or cancel, or assign organiser pages under Organiser pages.';
       } else {
         billingTip.textContent = 'Choose a plan above. Payment is handled securely by Stripe (+ 20% VAT).';
       }
     }
+
+    applyActiveSubscriberLayout(data);
+  }
+
+  function applyActiveSubscriberLayout(data) {
+    var active = Boolean(data && data.ok && data.active);
+    var pricing = document.getElementById('cb-pricing');
+    var gotoPricingBtn = document.getElementById('cb-goto-pricing');
+    var guideFold = document.getElementById('cb-setup-guide-card');
+    var providersFold = document.getElementById('cb-providers-panel');
+    var syncFold = document.getElementById('cb-sync-fold');
+    var leadEl = document.getElementById('cb-page-lead');
+
+    if (pricing) pricing.hidden = active;
+    if (gotoPricingBtn) {
+      if (active) {
+        gotoPricingBtn.hidden = true;
+      } else if (data && data.ok) {
+        gotoPricingBtn.hidden = false;
+        gotoPricingBtn.textContent = 'Plans & pricing';
+      }
+    }
+
+    if (leadEl && data && data.ok) {
+      if (active) {
+        leadEl.innerHTML =
+          'Your Connected plan is active. Open <strong>Booking providers</strong> to manage webhooks, or check <strong>Recent sync attempts</strong> if a buyer is missing from Attendees.';
+      } else {
+        leadEl.innerHTML =
+          'Subscribe here, enable <strong>Eventbrite</strong>, <strong>Ticket Tailor</strong>, or <strong>your own website</strong> once per account, then link each event on <strong>Connected setup</strong>.';
+      }
+    }
+
+    // Collapsed by default for paid accounts; keep guides open when still choosing a plan.
+    if (guideFold && guideFold.tagName === 'DETAILS') {
+      if (!guideFold.dataset.userToggled) guideFold.open = !active;
+    }
+    if (providersFold && providersFold.tagName === 'DETAILS') {
+      if (!providersFold.dataset.userToggled) providersFold.open = false;
+    }
+    if (syncFold && syncFold.tagName === 'DETAILS') {
+      if (!syncFold.dataset.userToggled) syncFold.open = false;
+    }
+  }
+
+  function updateSyncFoldSummary(rowCount) {
+    var sub = document.getElementById('cb-sync-fold-sub');
+    if (!sub) return;
+    if (!rowCount) {
+      sub.textContent = 'No webhook attempts yet';
+      return;
+    }
+    sub.textContent =
+      rowCount === 1 ? '1 recent webhook — tap to expand' : rowCount + ' recent webhooks — tap to expand';
   }
 
   function setConnectedNavVisible(show) {
@@ -359,13 +413,10 @@
       setConnectedNavVisible(true);
       showComingSoonPanel(false);
       if (titleEl) titleEl.textContent = 'Connected booking';
-      if (leadEl) {
-        leadEl.innerHTML =
-          'Subscribe here, enable <strong>Eventbrite</strong>, <strong>Ticket Tailor</strong>, or <strong>your own website</strong> once per account, then link each event on <strong>Connected setup</strong>. Use <strong>Recent sync attempts</strong> when buyers do not appear on your attendee list.';
-      }
       if (linkOutPanel) linkOutPanel.hidden = true;
       if (connectedOnly) connectedOnly.hidden = false;
-      if (gotoPricing) gotoPricing.hidden = false;
+      // Pricing / lead copy refined in applyActiveSubscriberLayout after billing loads.
+      if (gotoPricing) gotoPricing.hidden = Boolean(data.active);
       return mode;
     }
 
@@ -481,6 +532,7 @@
     if (log) {
       log.innerHTML = '';
       var rows = data.recentSync || [];
+      updateSyncFoldSummary(rows.length);
       if (!rows.length) {
         var empty = document.createElement('li');
         empty.className = 'cb-sync-empty';
@@ -576,9 +628,29 @@
     gotoPricing.dataset.bound = '1';
     gotoPricing.addEventListener('click', function () {
       var el = document.getElementById('cb-pricing');
-      if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (el) {
+        el.hidden = false;
+        if (el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     });
   }
+
+  document.querySelectorAll('.cb-fold').forEach(function (fold) {
+    fold.addEventListener('toggle', function () {
+      fold.dataset.userToggled = '1';
+    });
+  });
+
+  document.querySelectorAll('[data-cb-open-fold]').forEach(function (link) {
+    link.addEventListener('click', function () {
+      var id = link.getAttribute('data-cb-open-fold');
+      var fold = id ? document.getElementById(id) : null;
+      if (fold && fold.tagName === 'DETAILS') {
+        fold.dataset.userToggled = '1';
+        fold.open = true;
+      }
+    });
+  });
 
   try {
     var scrollTarget = sessionStorage.getItem('cb_workspace_scroll');
@@ -586,6 +658,7 @@
       sessionStorage.removeItem('cb_workspace_scroll');
       requestAnimationFrame(function () {
         var el = document.getElementById(scrollTarget);
+        if (el && el.tagName === 'DETAILS') el.open = true;
         if (el && el.scrollIntoView) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
     }
