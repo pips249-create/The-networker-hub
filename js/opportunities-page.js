@@ -419,6 +419,37 @@
     if (!activeCitySlug) return true;
     if (item.matchesAllCities) return true;
     if (item.citySlugs && item.citySlugs.indexOf(activeCitySlug) !== -1) return true;
+
+    // County landings: match nested city hubs (Reading → Berkshire) and town names.
+    var catalog = window.HubOpportunitiesCatalog;
+    if (catalog && typeof catalog.listingMatchesCountySlug === 'function') {
+      if (catalog.isNetworkingCountySlug && catalog.isNetworkingCountySlug(activeCitySlug)) {
+        return catalog.listingMatchesCountySlug(item, activeCitySlug, activeCityName);
+      }
+    } else if (catalog && catalog.COUNTY_NESTED_SLUGS && catalog.COUNTY_NESTED_SLUGS[activeCitySlug]) {
+      var nested = catalog.COUNTY_NESTED_SLUGS[activeCitySlug] || [];
+      if (item.citySlugs) {
+        for (var n = 0; n < nested.length; n++) {
+          if (item.citySlugs.indexOf(nested[n]) !== -1) return true;
+        }
+      }
+      var terms = (catalog.COUNTY_PLACE_TERMS && catalog.COUNTY_PLACE_TERMS[activeCitySlug]) || [];
+      var hayNested = [
+        item.locationLabel,
+        item.searchText,
+        item.title,
+        item.desc,
+        (item.tags || []).join(' '),
+        (item.filterTags || []).join(' '),
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      for (var t = 0; t < terms.length; t++) {
+        if (terms[t] && hayNested.indexOf(terms[t]) !== -1) return true;
+      }
+    }
+
     var hay = [
       item.locationLabel,
       item.searchText,
@@ -431,7 +462,7 @@
       .join(' ')
       .toLowerCase();
     var city = activeCityName.toLowerCase();
-    return hay.indexOf(city) !== -1;
+    return city ? hay.indexOf(city) !== -1 : false;
   }
 
   function cacheEls() {
