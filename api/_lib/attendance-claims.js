@@ -119,7 +119,9 @@ async function assertCanCreateClaim(sb, attendeeId, eventId) {
   const eventStatus = String(eventRow.status || '')
     .trim()
     .toLowerCase();
-  if (eventStatus !== 'published') {
+  // Past live events are often flipped to `archived` by organiser payouts/overview.
+  // Those were published — still claimable within the window.
+  if (eventStatus !== 'published' && eventStatus !== 'archived') {
     const err = new Error('event_not_claimable');
     err.code = 'event_not_claimable';
     throw err;
@@ -670,16 +672,16 @@ async function searchClaimableOrganisers(session, input) {
     byId.set(row.id, mapClaimOrganiserRow(row, 'Group name match'));
   });
 
-  // 2) Match past published event titles → surface that event's organiser.
+  // 2) Match past live event titles → surface that event's organiser.
   //    People type the event name (e.g. "The Networker Hub Example"), not the group name.
-  //    No 90-day cap here — claim window still applies when listing events for a group.
+  //    Include `archived` — past published nights are flipped to archived on organiser load.
   const nowIso = new Date().toISOString();
   const eventRes = await sb
     .from('events')
     .select(
       'id, title, organiser_id, starts_at, organisers ( id, name, slug, photo_url, listing_status, verification_status )'
     )
-    .eq('status', 'published')
+    .in('status', ['published', 'archived'])
     .not('organiser_id', 'is', null)
     .lt('starts_at', nowIso)
     .ilike('title', `%${q}%`)
@@ -737,9 +739,52 @@ function ymdLondon(iso) {
 
 function emptyClaimableEventsResult(extra) {
   return Object.assign(
-    { events: [], filteredByDate: false, windowDays: CLAIM_WINDOW_DAYS, blockedCount: 0 },
+    {
+      events: [],
+      filteredByDate: false,
+      windowDays: CLAIM_WINDOW_DAYS,
+      blockedCount: 0,
+      unpublishedOnDate: false,
+      unpublishedInWindow: false,
+    },
     extra || {}
   );
+}
+
+/**
+ * Draft / unpublished past events are not claimable. Detect them so the UI can
+ * explain an empty result (e.g. organiser still has the night in Draft).
+ */
+async function findUnpublishedPastHint(sb, organiserId, { dateOk, dateStr, oldest, nowIso }) {
+  let query = sb
+    .from('events')
+    .select('id, starts_at, status')
+    .eq('organiser_id', organiserId)
+    .in('status', ['draft', 'unpublished'])
+    .lt('starts_at', nowIso)
+    .gte('starts_at', oldest)
+    .order('starts_at', { ascending: false })
+    .limit(40);
+  if (dateOk) {
+    const noonUtc = new Date(`${dateStr}T12:00:00Z`);
+    const from = new Date(noonUtc.getTime() - 36 * 60 * 60 * 1000).toISOString();
+    const to = new Date(noonUtc.getTime() + 36 * 60 * 60 * 1000).toISOString();
+    query = query.gte('starts_at', from).lte('starts_at', to);
+  }
+  const { data, error } = await query;
+  if (error) return { unpublishedOnDate: false, unpublishedInWindow: false };
+  let rows = data || [];
+  if (dateOk) {
+    rows = rows.filter((row) => ymdLondon(row.starts_at) === dateStr);
+    return {
+      unpublishedOnDate: rows.length > 0,
+      unpublishedInWindow: rows.length > 0,
+    };
+  }
+  return {
+    unpublishedOnDate: false,
+    unpublishedInWindow: rows.length > 0,
+  };
 }
 
 async function searchClaimablePastEvents(session, input) {
@@ -767,7 +812,7 @@ async function searchClaimablePastEvents(session, input) {
     .select(
       'id, title, slug, starts_at, ends_at, image_url, status, organiser_id, organisers ( id, name, slug, photo_url )'
     )
-    .eq('status', 'published')
+    .in('status', ['published', 'archived'])
     .eq('organiser_id', organiserId)
     .lt('starts_at', nowIso)
     .gte('starts_at', oldest)
@@ -799,7 +844,13 @@ async function searchClaimablePastEvents(session, input) {
   // Exclude events already claimed/reviewed or with eligible registration.
   const eventIds = rows.map((r) => r.id);
   if (!eventIds.length) {
-    return emptyClaimableEventsResult({ filteredByDate: dateOk });
+    const unpublished = await findUnpublishedPastHint(sb, organiserId, {
+      dateOk,
+      dateStr,
+      oldest,
+      nowIso,
+    });
+    return emptyClaimableEventsResult({ filteredByDate: dateOk, ...unpublished });
   }
 
   const [claimsRes, reviewsRes, regsRes] = await Promise.all([
@@ -840,11 +891,29 @@ async function searchClaimablePastEvents(session, input) {
       organiserLogo: String(row.organisers?.photo_url || '').trim() || null,
     }));
 
+  if (!events.length) {
+    const unpublished = await findUnpublishedPastHint(sb, organiserId, {
+      dateOk,
+      dateStr,
+      oldest,
+      nowIso,
+    });
+    return {
+      events: [],
+      filteredByDate: dateOk,
+      windowDays: CLAIM_WINDOW_DAYS,
+      blockedCount: blocked.size,
+      ...unpublished,
+    };
+  }
+
   return {
     events,
     filteredByDate: dateOk,
     windowDays: CLAIM_WINDOW_DAYS,
     blockedCount: blocked.size,
+    unpublishedOnDate: false,
+    unpublishedInWindow: false,
   };
 }
 

@@ -26,7 +26,7 @@ function clientError(code) {
   const map = {
     missing_event_id: 'Choose an event to claim.',
     event_not_found: 'That event could not be found.',
-    event_not_claimable: 'Only published past events can be claimed.',
+    event_not_claimable: 'Only past Hub events (published or archived) can be claimed.',
     event_not_finished: 'You can claim attendance after the event has finished.',
     claim_window_expired: 'That event is too old to claim (within 90 days).',
     missing_organiser: 'This event has no organiser profile to confirm attendance.',
@@ -96,6 +96,8 @@ module.exports = async function handler(req, res) {
           filteredByDate: !!result.filteredByDate,
           windowDays: result.windowDays || 90,
           blockedCount: result.blockedCount || 0,
+          unpublishedOnDate: !!result.unpublishedOnDate,
+          unpublishedInWindow: !!result.unpublishedInWindow,
         });
       }
 
