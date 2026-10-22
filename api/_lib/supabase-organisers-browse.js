@@ -434,11 +434,26 @@ async function fetchOrganiserReviews(sb, organiserId) {
   let data = [];
   try {
     data = await run(
-      'id, rating, review_text, organiser_response, created_at, attendees(name, email, public_review_name)'
+      'id, rating, review_text, organiser_response, created_at, provenance, attendees(name, email, public_review_name)'
     );
   } catch (err) {
     const msg = String(err?.message || '').toLowerCase();
-    if (msg.includes('public_review_name')) {
+    if (msg.includes('provenance')) {
+      try {
+        data = await run(
+          'id, rating, review_text, organiser_response, created_at, attendees(name, email, public_review_name)'
+        );
+      } catch (err2) {
+        const msg2 = String(err2?.message || '').toLowerCase();
+        if (msg2.includes('public_review_name')) {
+          data = await run(
+            'id, rating, review_text, organiser_response, created_at, attendees(name, email)'
+          );
+        } else {
+          throw err2;
+        }
+      }
+    } else if (msg.includes('public_review_name')) {
       data = await run('id, rating, review_text, organiser_response, created_at, attendees(name, email)');
     } else {
       throw err;
@@ -452,6 +467,11 @@ async function fetchOrganiserReviews(sb, organiserId) {
       text: String(row.review_text || '').trim(),
       reply: String(row.organiser_response || '').trim() || null,
       name: reviewerDisplayName(row.attendees),
+      provenance: String(row.provenance || 'verified'),
+      badge:
+        String(row.provenance || '') === 'organiser_confirmed'
+          ? 'Organiser confirmed'
+          : 'Verified attendee',
       date: row.created_at
         ? new Date(row.created_at).toLocaleDateString('en-GB', {
             day: 'numeric',

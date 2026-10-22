@@ -395,11 +395,33 @@
   padding: 16px 18px;
 }
 
+.org-review-provenance {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.org-review-provenance--verified {
+  color: #1f5c3a;
+  background: #e7f6ec;
+}
+
+.org-review-provenance--organiser {
+  color: #6b4f1d;
+  background: #f7efd8;
+}
+
 .org-review-card-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 8px 12px;
   margin-bottom: 6px;
 }
 

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Confirm attendance – The Networker UK</title>
+  <meta name="robots" content="noindex,nofollow">
+  <link rel="stylesheet" href="/css/site.css">
+  <style>
+    .ca-wrap {
+      max-width: 32rem;
+      margin: 3rem auto;
+      padding: 0 1.25rem 3rem;
+      font-family: "DM Sans", system-ui, sans-serif;
+      color: #1c2040;
+    }
+    .ca-card {
+      background: #fff;
+      border: 1px solid #e4e7f0;
+      border-radius: 16px;
+      padding: 1.75rem 1.5rem;
+      box-shadow: 0 8px 28px rgba(28, 32, 64, 0.06);
+    }
+    .ca-card h1 {
+      font-size: 1.35rem;
+      margin: 0 0 0.5rem;
+      font-weight: 650;
+    }
+    .ca-card p {
+      margin: 0 0 1rem;
+      line-height: 1.55;
+      color: #4b5168;
+    }
+    .ca-status {
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+    }
+    .ca-status--ok { color: #1f5c3a; }
+    .ca-status--err { color: #9b1c1c; }
+    .ca-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 1.25rem; }
+    .ca-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.65rem 1rem;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+    }
+    .ca-btn--primary { background: #452d5c; color: #fff; }
+    .ca-btn--ghost { background: #f3f1f6; color: #452d5c; }
+  </style>
+</head>
+<body>
+  <main class="ca-wrap">
+    <div class="ca-card" id="ca-card">
+      <p class="ca-status" id="ca-status">Checking this attendance claim…</p>
+      <h1 id="ca-title">Confirm attendance</h1>
+      <p id="ca-body">One moment while we record your answer.</p>
+      <div class="ca-actions" id="ca-actions" hidden>
+        <a class="ca-btn ca-btn--primary" href="/organiser/#events-reviews">Open reviews</a>
+        <a class="ca-btn ca-btn--ghost" href="/organiser/">Organiser workspace</a>
+      </div>
+    </div>
+  </main>
+  <script>
+    (function () {
+      var params = new URLSearchParams(window.location.search);
+      var token = params.get('token') || '';
+      var decision = (params.get('decision') || params.get('action') || '').toLowerCase();
+      var statusEl = document.getElementById('ca-status');
+      var titleEl = document.getElementById('ca-title');
+      var bodyEl = document.getElementById('ca-body');
+      var actionsEl = document.getElementById('ca-actions');
+
+      function show(ok, title, body) {
+        statusEl.textContent = ok ? 'Done' : 'Could not update';
+        statusEl.className = 'ca-status ' + (ok ? 'ca-status--ok' : 'ca-status--err');
+        titleEl.textContent = title;
+        bodyEl.textContent = body;
+        actionsEl.hidden = false;
+      }
+
+      if (!token || (decision !== 'yes' && decision !== 'no' && decision !== 'confirm' && decision !== 'deny')) {
+        show(false, 'Invalid link', 'This confirmation link is missing details. Open the email again or check pending claims in your workspace.');
+        return;
+      }
+
+      fetch('/api/attendance-claim', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: token, decision: decision }),
+      })
+        .then(function (r) {
+          return r.json().then(function (data) {
+            return { okHttp: r.ok, data: data || {} };
+          });
+        })
+        .then(function (res) {
+          if (!res.okHttp || !res.data.ok) {
+            show(
+              false,
+              'Link expired or already used',
+              res.data.message || 'We could not update this claim. Check pending claims in your organiser workspace.'
+            );
+            return;
+          }
+          var confirmed = res.data.decision === 'yes';
+          var name = (res.data.claim && res.data.claim.attendeeName) || 'The attendee';
+          var eventTitle = (res.data.claim && res.data.claim.eventTitle) || 'the event';
+          if (confirmed) {
+            show(
+              true,
+              'Attendance confirmed',
+              name +
+                ' can now leave an organiser-confirmed review for ' +
+                eventTitle +
+                '. It will be labelled Organiser confirmed — not Verified attendee.'
+            );
+          } else {
+            show(
+              true,
+              'Claim declined',
+              'Thanks — we told the system that ' + name + ' did not attend ' + eventTitle + '.'
+            );
+          }
+        })
+        .catch(function () {
+          show(false, 'Something went wrong', 'Please try again from the email, or open Reviews in your organiser workspace.');
+        });
+    })();
+  </script>
+</body>
+</html>

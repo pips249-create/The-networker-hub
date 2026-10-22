@@ -4014,3 +4014,175 @@ body.ad-share-modal-open {
   }
 }
 
+/* Attendance claims + Most networked */
+.ad-networked-card {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 1.25rem;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin: 0 0 1rem;
+  padding: 1rem 1.1rem;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #f7f1ea 0%, #eef2f8 100%);
+  border: 1px solid #e4d9c8;
+}
+
+.ad-networked-card[hidden] {
+  display: none !important;
+}
+
+.ad-networked-kicker {
+  margin: 0 0 0.25rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #8a6a2b;
+}
+
+.ad-networked-title {
+  margin: 0 0 0.35rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--ad-teal-dark, #1c2040);
+}
+
+.ad-networked-text {
+  margin: 0;
+  max-width: 36rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #5a5560;
+}
+
+.ad-networked-card-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.ad-networked-score {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #452d5c;
+}
+
+.ad-claim-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.ad-claim-modal[hidden] {
+  display: none !important;
+}
+
+.ad-claim-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(28, 32, 64, 0.45);
+}
+
+.ad-claim-modal-panel {
+  position: relative;
+  z-index: 1;
+  width: min(32rem, 100%);
+  max-height: min(90vh, 40rem);
+  overflow: auto;
+  background: #fff;
+  border-radius: 16px;
+  padding: 1.35rem 1.25rem 1.25rem;
+  box-shadow: 0 16px 48px rgba(28, 32, 64, 0.18);
+}
+
+.ad-claim-modal-close {
+  position: absolute;
+  top: 0.65rem;
+  right: 0.75rem;
+  border: none;
+  background: transparent;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: #6b6570;
+  cursor: pointer;
+}
+
+.ad-claim-modal-title {
+  margin: 0 1.5rem 0.4rem 0;
+  font-size: 1.2rem;
+}
+
+.ad-claim-modal-sub {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #5a5560;
+}
+
+.ad-claim-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 650;
+  margin-bottom: 0.35rem;
+  color: #4b4453;
+}
+
+.ad-claim-search {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #d7d2dc;
+  border-radius: 10px;
+  padding: 0.65rem 0.75rem;
+  font-size: 0.95rem;
+  margin-bottom: 0.75rem;
+}
+
+.ad-claim-error {
+  margin: 0 0 0.65rem;
+  color: #9b1c1c;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.ad-claim-hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.78rem;
+  color: #7a7580;
+}
+
+.ad-claim-results {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.ad-claim-result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.7rem 0.75rem;
+  border: 1px solid #e8e4ec;
+  border-radius: 12px;
+  background: #faf9fb;
+}
+
+.ad-claim-result-title {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 650;
+  color: #1c2040;
+}
+
+.ad-claim-result-meta {
+  margin: 0.15rem 0 0;
+  font-size: 0.78rem;
+  color: #6b6570;
+}
+

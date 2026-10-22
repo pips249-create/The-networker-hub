@@ -147,6 +147,7 @@ const GATE_BYPASS_PREFIXES = [
   '/api/cron/',
   '/api/health',
   '/api/email-review',
+  '/api/attendance-claim',
   '/api/track',
   '/api/sponsor-out',
   '/api/sponsor-analytics',

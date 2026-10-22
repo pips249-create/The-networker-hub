@@ -49,6 +49,7 @@
     "send-ticket-tailor-webhook": "node scripts/send-ticket-tailor-webhook.js",
     "send-external-booking-webhook": "node scripts/send-external-booking-webhook.js",
     "test-review-e2e": "node scripts/review-e2e-test.js",
+    "test-attendance-claims": "node scripts/test-attendance-claims.js",
     "test-guest-visit-e2e": "node scripts/guest-visit-e2e-test.js",
     "test-category-exclusivity-e2e": "node scripts/category-exclusivity-e2e-test.js",
     "check:connect-checkout": "node scripts/smoke-test-connect-checkout.js",

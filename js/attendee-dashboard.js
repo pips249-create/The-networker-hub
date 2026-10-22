@@ -6,6 +6,8 @@
   const listPages = { upcoming: 1, past: 1 };
   let registrations = [];
   let cancelledBookings = [];
+  let attendanceClaims = [];
+  let networkedScore = null;
   let savedEvents = [];
   let savedOrganisers = [];
   let myGroups = [];
@@ -13,6 +15,7 @@
   let savedOpportunitySearches = [];
   let opportunityEnquiries = [];
   let currentRoute = 'overview';
+  let claimSearchTimer = null;
   let savedScope = 'events';
   let savedScopePinned = false;
   let ticketsScope = 'upcoming';
@@ -446,16 +449,57 @@
     return registrations.filter(isUpcoming);
   }
 
+  function claimAsPastRow(claim) {
+    const status = String(claim.status || '');
+    let reviewStatus = 'ineligible';
+    if (status === 'confirmed' && claim.canReview) reviewStatus = 'pending';
+    else if (status === 'confirmed' && claim.reviewId) reviewStatus = 'reviewed';
+    else if (status === 'pending') reviewStatus = 'claim_pending';
+    else if (status === 'denied' || status === 'expired' || status === 'cancelled') {
+      reviewStatus = 'ineligible';
+    }
+    return {
+      id: 'claim:' + claim.id,
+      claimId: claim.id,
+      isAttendanceClaim: true,
+      eventId: claim.eventId,
+      slug: claim.eventSlug || '',
+      title: claim.eventTitle || 'Event',
+      date: claim.eventDate || claim.claimedAt || null,
+      endDate: null,
+      imageUrl: claim.imageUrl || null,
+      organiserLogo: claim.organiserLogo || null,
+      ticketLabel: 'Claimed attendance',
+      quantity: 1,
+      paymentStatus: status === 'confirmed' ? 'Confirmed' : status === 'pending' ? 'Awaiting organiser' : status,
+      applicationStatus: 'Approved',
+      organiserId: claim.organiserId || '',
+      organiserName: claim.organiserName || '',
+      organiserSlug: claim.organiserSlug || '',
+      reviewStatus: reviewStatus,
+      canReview: reviewStatus === 'pending',
+      canCancel: false,
+      rating: null,
+      reviewText: null,
+      organiserResponse: null,
+    };
+  }
+
   function pastList() {
-    return registrations.filter((r) => !isUpcoming(r));
+    const booked = registrations.filter((r) => !isUpcoming(r));
+    const bookedEventIds = new Set(booked.map((r) => String(r.eventId || '')));
+    const claimRows = (attendanceClaims || [])
+      .filter((c) => c && c.eventId && !bookedEventIds.has(String(c.eventId)))
+      .map(claimAsPastRow);
+    return booked.concat(claimRows);
   }
 
   function pendingReviewsList() {
-    return registrations.filter((r) => r.reviewStatus === 'pending');
+    return pastList().filter((r) => r.reviewStatus === 'pending');
   }
 
   function doneReviewsList() {
-    return registrations.filter((r) => r.reviewStatus === 'reviewed');
+    return pastList().filter((r) => r.reviewStatus === 'reviewed');
   }
 
   function thumbHtml(item) {
@@ -503,10 +547,15 @@
         reg && reg.organiserResponse && String(reg.organiserResponse).trim()
           ? ' · Reply'
           : '';
-      return '<span class="ad-badge ad-badge-green">✓ Reviewed' + esc(stars + reply) + '</span>';
+      const label =
+        reg && reg.isAttendanceClaim ? 'Organiser confirmed' : 'Reviewed';
+      return '<span class="ad-badge ad-badge-green">✓ ' + esc(label) + esc(stars + reply) + '</span>';
     }
     if (status === 'pending') {
       return '<span class="ad-badge ad-badge-red">⚠ Pending</span>';
+    }
+    if (status === 'claim_pending') {
+      return '<span class="ad-badge ad-badge-gold">Awaiting organiser</span>';
     }
     if (status === 'ineligible') {
       return '<span class="ad-badge ad-badge-grey">—</span>';
@@ -515,6 +564,12 @@
   }
 
   function paymentBadge(status, reg) {
+    if (reg && reg.isAttendanceClaim) {
+      const s = String(status || '');
+      if (s === 'Confirmed') return '<span class="ad-badge ad-badge-green">Confirmed</span>';
+      if (s === 'Awaiting organiser') return '<span class="ad-badge ad-badge-gold">Awaiting organiser</span>';
+      return '<span class="ad-badge ad-badge-grey">' + esc(s || 'Claim') + '</span>';
+    }
     if (reg && reg.isCancelled) {
       return refundStatusBadge(reg);
     }
@@ -4334,6 +4389,7 @@
       });
       renderEventRows('ad-upcoming-body', 'ad-upcoming-empty', 'ad-pagination-upcoming', 'upcoming', up, true);
     } else if (key === 'past') {
+      renderNetworkedCard();
       const past = pastList().sort((a, b) => {
         const da = a.date ? new Date(a.date).getTime() : 0;
         const db = b.date ? new Date(b.date).getTime() : 0;
@@ -4406,13 +4462,219 @@
   function applyDashboardData(data) {
     registrations = groupSeriesRegistrations(data.registrations || []);
     cancelledBookings = data.cancelledBookings || [];
+    attendanceClaims = data.attendanceClaims || [];
+    networkedScore = data.networked || null;
     opportunityEnquiries = data.opportunityEnquiries || [];
     myGroups = data.myGroups || [];
     dashboardReady = true;
     renderedRoutes.clear();
     renderStats(data.stats || {});
     renderRefundAlerts();
+    renderNetworkedCard();
     renderRouteTables(routeTablesKey(currentRoute), { force: true });
+  }
+
+  function renderNetworkedCard() {
+    const card = document.getElementById('ad-networked-card');
+    if (!card) return;
+    card.hidden = false;
+    const title = document.getElementById('ad-networked-title');
+    const text = document.getElementById('ad-networked-text');
+    const scoreEl = document.getElementById('ad-networked-score');
+    const n = networkedScore;
+    if (!n) {
+      if (title) title.textContent = 'Get nominated for Most networked networker';
+      if (text) {
+        text.textContent =
+          'Claim events you attended from our organiser list. Verified Hub tickets count fully; organiser-confirmed claims count as half toward this month’s nomination.';
+      }
+      if (scoreEl) {
+        scoreEl.hidden = true;
+        scoreEl.textContent = '';
+      }
+      return;
+    }
+    if (title) {
+      title.textContent = n.nominated
+        ? 'You’re in the running for ' + (n.periodLabel || 'this month')
+        : 'Get nominated for Most networked networker';
+    }
+    if (text) {
+      text.textContent = n.nominated
+        ? 'Keep claiming or booking events to stay ahead. Organiser-confirmed reviews are labelled clearly and count as half toward your score.'
+        : 'Reach a score of ' +
+          (n.nominationMin || 3) +
+          ' this month (verified attendances + half for organiser-confirmed claims) to get nominated.';
+    }
+    if (scoreEl) {
+      scoreEl.hidden = false;
+      scoreEl.textContent =
+        'Score ' +
+        n.score +
+        ' · ' +
+        n.verifiedCount +
+        ' verified · ' +
+        n.confirmedCount +
+        ' organiser-confirmed · ' +
+        n.distinctOrganisers +
+        ' groups';
+    }
+  }
+
+  function openClaimModal() {
+    const modal = document.getElementById('ad-claim-modal');
+    if (!modal) return;
+    modal.hidden = false;
+    const err = document.getElementById('ad-claim-error');
+    if (err) {
+      err.hidden = true;
+      err.textContent = '';
+    }
+    const input = document.getElementById('ad-claim-search');
+    if (input) {
+      input.value = '';
+      input.focus();
+    }
+    searchClaimableEvents('');
+  }
+
+  function closeClaimModal() {
+    const modal = document.getElementById('ad-claim-modal');
+    if (modal) modal.hidden = true;
+  }
+
+  function searchClaimableEvents(q) {
+    const results = document.getElementById('ad-claim-results');
+    const hint = document.getElementById('ad-claim-hint');
+    if (!results) return;
+    results.innerHTML = '<p class="ad-claim-hint">Searching…</p>';
+    const url =
+      '/api/auth/attendance-claims?action=search&q=' + encodeURIComponent(String(q || '').trim());
+    fetch(url, { credentials: 'include', cache: 'no-store' })
+      .then(function (r) {
+        return r.json();
+      })
+      .then(function (data) {
+        const events = (data && data.ok && data.events) || [];
+        results.innerHTML = '';
+        if (!events.length) {
+          results.innerHTML =
+            '<p class="ad-claim-hint">No claimable past events found. Try another search.</p>';
+          if (hint) hint.hidden = true;
+          return;
+        }
+        if (hint) hint.hidden = false;
+        events.forEach(function (ev) {
+          const row = document.createElement('div');
+          row.className = 'ad-claim-result';
+          row.setAttribute('role', 'listitem');
+          const dateLabel = ev.date
+            ? new Date(ev.date).toLocaleDateString('en-GB', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+              })
+            : '';
+          row.innerHTML =
+            '<div><p class="ad-claim-result-title"></p><p class="ad-claim-result-meta"></p></div>' +
+            '<button type="button" class="ad-btn ad-btn-primary ad-claim-submit">Claim</button>';
+          row.querySelector('.ad-claim-result-title').textContent = ev.title || 'Event';
+          row.querySelector('.ad-claim-result-meta').textContent = [ev.organiserName, dateLabel]
+            .filter(Boolean)
+            .join(' · ');
+          const btn = row.querySelector('.ad-claim-submit');
+          btn.addEventListener('click', function () {
+            submitAttendanceClaim(ev.id, btn);
+          });
+          results.appendChild(row);
+        });
+      })
+      .catch(function () {
+        results.innerHTML = '<p class="ad-claim-hint">Could not load events. Try again.</p>';
+      });
+  }
+
+  function submitAttendanceClaim(eventId, btn) {
+    const err = document.getElementById('ad-claim-error');
+    if (err) {
+      err.hidden = true;
+      err.textContent = '';
+    }
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Sending…';
+    }
+    fetch('/api/auth/attendance-claims', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ eventId: eventId }),
+    })
+      .then(function (r) {
+        return r.json().then(function (data) {
+          return { okHttp: r.ok, data: data || {} };
+        });
+      })
+      .then(function (res) {
+        if (!res.okHttp || !res.data.ok) {
+          if (err) {
+            err.hidden = false;
+            err.textContent = res.data.message || 'Could not start this claim.';
+          }
+          if (btn) {
+            btn.disabled = false;
+            btn.textContent = 'Claim';
+          }
+          return;
+        }
+        if (res.data.claim) {
+          attendanceClaims = [res.data.claim].concat(
+            (attendanceClaims || []).filter(function (c) {
+              return c.id !== res.data.claim.id;
+            })
+          );
+        }
+        closeClaimModal();
+        if (typeof showAdToast === 'function') {
+          showAdToast('Claim sent — we emailed the organiser to confirm.');
+        }
+        renderNetworkedCard();
+        renderRouteTables('past', { force: true });
+        updateSideCounts();
+      })
+      .catch(function () {
+        if (err) {
+          err.hidden = false;
+          err.textContent = 'Could not start this claim. Try again.';
+        }
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = 'Claim';
+        }
+      });
+  }
+
+  function bindClaimAttendanceUi() {
+    const openBtn = document.getElementById('ad-claim-attendance-open');
+    if (openBtn) {
+      openBtn.addEventListener('click', function () {
+        openClaimModal();
+      });
+    }
+    const closeBtn = document.getElementById('ad-claim-modal-close');
+    const backdrop = document.getElementById('ad-claim-modal-backdrop');
+    if (closeBtn) closeBtn.addEventListener('click', closeClaimModal);
+    if (backdrop) backdrop.addEventListener('click', closeClaimModal);
+    const search = document.getElementById('ad-claim-search');
+    if (search) {
+      search.addEventListener('input', function () {
+        clearTimeout(claimSearchTimer);
+        const q = search.value;
+        claimSearchTimer = setTimeout(function () {
+          searchClaimableEvents(q);
+        }, 280);
+      });
+    }
   }
 
   function renderAllTables() {
@@ -4577,6 +4839,7 @@
     bindPaymentModal();
     bindCancelModal();
     bindShareModal();
+    bindClaimAttendanceUi();
     document.addEventListener('click', (e) => {
       if (
         openUtilityMenu &&
