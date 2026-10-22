@@ -1173,9 +1173,17 @@
 }
 
 .intl-events-inner {
+  max-width: none;
+  width: 100%;
+  margin: 0;
+  padding: 36px 0 32px;
+}
+
+/* Title / filter stay readable; the rail spans nearly the full viewport. */
+.intl-events-copy {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 36px clamp(16px, 3vw, 28px) 32px;
+  padding: 0 clamp(16px, 3vw, 28px);
 }
 
 .intl-events-head {
@@ -1264,6 +1272,10 @@
   grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 8px;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0 clamp(10px, 1.5vw, 18px);
 }
 
 .intl-events-rail-wrap[hidden] {
