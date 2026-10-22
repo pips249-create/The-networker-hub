@@ -4556,24 +4556,79 @@
     claimSelectedOrganiser = null;
   }
 
+  function organisersFromPastBookingsLocal() {
+    const byId = {};
+    pastList().forEach(function (reg) {
+      const id = String(reg.organiserId || '').trim();
+      const name = String(reg.organiserName || '').trim();
+      if (!id || !name) return;
+      if (!byId[id]) {
+        byId[id] = {
+          id: id,
+          name: name,
+          slug: reg.organiserSlug || null,
+          logo: reg.organiserLogo || null,
+          matchHint: reg.title ? 'From your bookings · ' + reg.title : 'From your bookings',
+        };
+      }
+    });
+    return Object.keys(byId).map(function (k) {
+      return byId[k];
+    });
+  }
+
+  function renderClaimOrganiserResults(organisers, emptyMessage) {
+    const results = document.getElementById('ad-claim-results');
+    const hint = document.getElementById('ad-claim-hint');
+    if (!results) return;
+    results.innerHTML = '';
+    if (!organisers || !organisers.length) {
+      results.innerHTML =
+        '<p class="ad-claim-hint">' +
+        esc(emptyMessage || 'No groups matched. Try another name or event title.') +
+        '</p>';
+      if (hint) hint.hidden = true;
+      return;
+    }
+    if (hint) {
+      hint.hidden = false;
+      hint.textContent = 'Select a group to see their past events you can claim.';
+    }
+    organisers.forEach(function (org) {
+      const row = document.createElement('div');
+      row.className = 'ad-claim-result';
+      row.setAttribute('role', 'listitem');
+      row.innerHTML =
+        '<div><p class="ad-claim-result-title"></p><p class="ad-claim-result-meta"></p></div>' +
+        '<button type="button" class="ad-btn ad-btn-primary ad-claim-pick-group">Choose</button>';
+      row.querySelector('.ad-claim-result-title').textContent = org.name || 'Group';
+      row.querySelector('.ad-claim-result-meta').textContent = [org.matchHint, org.slug]
+        .filter(Boolean)
+        .join(' · ');
+      const btn = row.querySelector('.ad-claim-pick-group');
+      btn.addEventListener('click', function () {
+        showClaimEventStep(org);
+      });
+      results.appendChild(row);
+    });
+  }
+
   function showClaimGroupStep() {
     claimSelectedOrganiser = null;
     const groupStep = document.getElementById('ad-claim-step-group');
     const eventStep = document.getElementById('ad-claim-step-event');
     const sub = document.getElementById('ad-claim-modal-sub');
     const hint = document.getElementById('ad-claim-hint');
-    const results = document.getElementById('ad-claim-results');
     if (groupStep) groupStep.hidden = false;
     if (eventStep) eventStep.hidden = true;
     if (sub) {
       sub.textContent =
-        'First find the networking group, then pick the past event. We’ll email the organiser to confirm — if they say yes, you can leave an organiser-confirmed review.';
+        'Choose a group (from your bookings or search), then pick another past event from that group to claim.';
     }
     if (hint) {
       hint.hidden = false;
-      hint.textContent = 'Type at least 2 letters — group name or past event title.';
+      hint.textContent = 'Groups from your bookings appear below — or type a group/event name.';
     }
-    if (results) results.innerHTML = '';
     const input = document.getElementById('ad-claim-search');
     if (input) {
       input.value = '';
@@ -4581,6 +4636,12 @@
     }
     const eventInput = document.getElementById('ad-claim-event-search');
     if (eventInput) eventInput.value = '';
+    // Instant local suggestions, then refresh from API.
+    renderClaimOrganiserResults(
+      organisersFromPastBookingsLocal(),
+      'No groups yet — type a group or past event name to search.'
+    );
+    searchClaimableOrganisers('');
   }
 
   function showClaimEventStep(organiser) {
@@ -4610,20 +4671,74 @@
     searchClaimableEvents('');
   }
 
+  function filterLocalClaimOrganisers(q) {
+    const needle = String(q || '')
+      .trim()
+      .toLowerCase();
+    const local = organisersFromPastBookingsLocal();
+    if (!needle) return local;
+    return local.filter(function (org) {
+      const hay = [org.name, org.matchHint, org.slug]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return hay.indexOf(needle) !== -1;
+    });
+  }
+
+  function mergeClaimOrganisers(primary, secondary) {
+    const byId = {};
+    (primary || []).concat(secondary || []).forEach(function (org) {
+      if (!org || !org.id) return;
+      if (!byId[org.id]) byId[org.id] = org;
+    });
+    return Object.keys(byId).map(function (k) {
+      return byId[k];
+    });
+  }
+
   function searchClaimableOrganisers(q) {
     const results = document.getElementById('ad-claim-results');
     const hint = document.getElementById('ad-claim-hint');
     if (!results) return;
     const query = String(q || '').trim();
+    const localMatches = filterLocalClaimOrganisers(query);
+
+    // Instant local results (bookings on this dashboard) — never blank the list for short queries.
     if (query.length < 2) {
-      results.innerHTML = '';
-      if (hint) {
+      renderClaimOrganiserResults(
+        localMatches,
+        'No groups yet — type a group or past event name to search.'
+      );
+      if (hint && localMatches.length) {
         hint.hidden = false;
-        hint.textContent = 'Type at least 2 letters to find a group.';
+        hint.textContent = 'Groups from your bookings appear below — or type a group/event name.';
+      }
+      // Still refresh suggestions from API when opening / clearing the field.
+      if (query.length === 0) {
+        fetch('/api/auth/attendance-claims?action=suggest-organisers', {
+          credentials: 'include',
+          cache: 'no-store',
+        })
+          .then(function (r) {
+            return r.json().then(function (data) {
+              return { okHttp: r.ok, data: data || {} };
+            });
+          })
+          .then(function (res) {
+            if (!res.okHttp || !res.data.ok) return;
+            const merged = mergeClaimOrganisers(localMatches, res.data.organisers || []);
+            renderClaimOrganiserResults(
+              merged,
+              'No groups yet — type a group or past event name to search.'
+            );
+          })
+          .catch(function () {});
       }
       return;
     }
-    results.innerHTML = '<p class="ad-claim-hint">Searching groups…</p>';
+
+    renderClaimOrganiserResults(localMatches, 'Searching groups…');
     const url =
       '/api/auth/attendance-claims?action=search-organisers&q=' + encodeURIComponent(query);
     fetch(url, { credentials: 'include', cache: 'no-store' })
@@ -4634,44 +4749,32 @@
       })
       .then(function (res) {
         if (!res.okHttp || !res.data.ok) {
-          results.innerHTML =
-            '<p class="ad-claim-hint">' +
-            esc((res.data && res.data.message) || 'Could not search groups. Try again.') +
-            '</p>';
+          if (localMatches.length) {
+            renderClaimOrganiserResults(localMatches);
+            return;
+          }
+          renderClaimOrganiserResults(
+            [],
+            (res.data && res.data.message) || 'Could not search groups. Try again.'
+          );
           return;
         }
-        const organisers = res.data.organisers || [];
-        results.innerHTML = '';
-        if (!organisers.length) {
-          results.innerHTML =
-            '<p class="ad-claim-hint">No groups or past events matched. Try the group name or event title.</p>';
-          if (hint) hint.hidden = true;
-          return;
-        }
-        if (hint) {
+        const merged = mergeClaimOrganisers(localMatches, res.data.organisers || []);
+        renderClaimOrganiserResults(
+          merged,
+          'No groups matched. Try another name or a past event title.'
+        );
+        if (hint && merged.length) {
           hint.hidden = false;
-          hint.textContent = 'Select a group to see their past events.';
+          hint.textContent = 'Select a group to see their past events you can claim.';
         }
-        organisers.forEach(function (org) {
-          const row = document.createElement('div');
-          row.className = 'ad-claim-result';
-          row.setAttribute('role', 'listitem');
-          row.innerHTML =
-            '<div><p class="ad-claim-result-title"></p><p class="ad-claim-result-meta"></p></div>' +
-            '<button type="button" class="ad-btn ad-btn-primary ad-claim-pick-group">Choose</button>';
-          row.querySelector('.ad-claim-result-title').textContent = org.name || 'Group';
-          row.querySelector('.ad-claim-result-meta').textContent = [org.matchHint, org.slug]
-            .filter(Boolean)
-            .join(' · ');
-          const btn = row.querySelector('.ad-claim-pick-group');
-          btn.addEventListener('click', function () {
-            showClaimEventStep(org);
-          });
-          results.appendChild(row);
-        });
       })
       .catch(function () {
-        results.innerHTML = '<p class="ad-claim-hint">Could not load groups. Try again.</p>';
+        if (localMatches.length) {
+          renderClaimOrganiserResults(localMatches);
+          return;
+        }
+        renderClaimOrganiserResults([], 'Could not load groups. Try again.');
       });
   }
 
