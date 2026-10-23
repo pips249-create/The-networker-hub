@@ -3205,6 +3205,43 @@
     );
   }
 
+  function overviewNextIconHtml(kind) {
+    const glyphs = {
+      review: '★',
+      enquiry: '✉',
+      membership: '◈',
+    };
+    const glyph = glyphs[kind] || '•';
+    return (
+      '<span class="ad-overview-next-icon ad-overview-next-icon--' +
+      esc(kind) +
+      '" aria-hidden="true">' +
+      glyph +
+      '</span>'
+    );
+  }
+
+  function overviewNextTicketToolsHtml(reg) {
+    if (!reg) return '';
+    const calendarItems = calendarMenuItemsHtml(reg);
+    const canShare = canShowCalendarLinks(reg) && window.HubGoingShare;
+    if (!calendarItems && !canShare) return '';
+    const calendarBtn = calendarItems
+      ? '<div class="ad-utility-wrap ad-overview-next-cal">' +
+        '<button type="button" class="ad-overview-next-tool-btn" data-ad-utility-toggle aria-expanded="false" aria-haspopup="true">' +
+        'Add to your calendar <span class="ad-utility-chev" aria-hidden="true">▾</span></button>' +
+        '<div class="ad-utility-menu" role="menu" hidden>' +
+        calendarItems +
+        '</div></div>'
+      : '';
+    const shareBtn = canShare
+      ? '<button type="button" class="ad-overview-next-tool-btn ad-share-going" data-registration-id="' +
+        esc(reg.id || '') +
+        '">Share the event</button>'
+      : '';
+    return '<div class="ad-overview-next-tools">' + calendarBtn + shareBtn + '</div>';
+  }
+
   function renderOverviewNextUp() {
     const el = document.getElementById('ad-overview-next');
     if (!el) return;
@@ -3232,19 +3269,22 @@
         cta: 'Open tickets',
         route: 'tickets',
         media: thumbHtml(nextTicket),
+        registration: nextTicket,
+        lead: true,
       });
     }
 
     const pending = pendingReviewsList();
     if (pending.length) {
+      const org = String(pending[0].organiserName || '').trim();
       items.push({
         key: 'review',
         eyebrow: pending.length === 1 ? 'Review to write' : pending.length + ' reviews to write',
         title: pending[0].title || 'Past event',
-        meta: String(pending[0].organiserName || '').trim(),
+        meta: org ? org + ' · About a minute' : 'About a minute to help the group',
         cta: 'Leave review',
         route: 'reviews-pending',
-        media: thumbHtml(pending[0]),
+        media: overviewNextIconHtml('review'),
       });
     }
 
@@ -3259,9 +3299,10 @@
             ? 'Enquiry awaiting reply'
             : waiting.length + ' enquiries awaiting reply',
         title: waiting[0].opportunityTitle || 'Business listing',
-        meta: '',
+        meta: waiting.length === 1 ? 'Waiting for a reply' : waiting.length + ' still open',
         cta: 'View enquiries',
         route: 'opportunity-enquiries',
+        media: overviewNextIconHtml('enquiry'),
       });
     }
 
@@ -3273,9 +3314,10 @@
         key: 'membership',
         eyebrow: 'Membership',
         title: expiring[0].organiserName || 'Group',
-        meta: 'Expiring soon',
+        meta: 'Expiring soon — renew with the group',
         cta: 'View memberships',
         route: 'memberships',
+        media: overviewNextIconHtml('membership'),
       });
     }
 
@@ -3290,8 +3332,9 @@
       '<h2 class="ad-section-title">Next up</h2>' +
       '<div class="ad-overview-next-list" role="list">' +
       items
-        .map(function (item, index) {
-          const featured = index === 0;
+        .map(function (item) {
+          const isTicket = item.key === 'ticket';
+          const tools = isTicket ? overviewNextTicketToolsHtml(item.registration) : '';
           const copy =
             '<span class="ad-overview-next-eyebrow">' +
             esc(item.eyebrow) +
@@ -3302,42 +3345,60 @@
             (item.meta
               ? '<span class="ad-overview-next-meta">' + esc(item.meta) + '</span>'
               : '') +
-            '<span class="ad-overview-next-cta">' +
-            esc(item.cta) +
-            ' →</span>';
-          return (
-            '<button type="button" class="ad-overview-next-card ad-overview-next-card--' +
-            esc(item.key) +
-            (featured ? ' ad-overview-next-card--featured' : '') +
-            '" role="listitem" data-overview-next-route="' +
+            '<button type="button" class="ad-overview-next-cta" data-overview-next-route="' +
             esc(item.route) +
             '">' +
-            (featured && item.media
+            esc(item.cta) +
+            ' →</button>' +
+            tools;
+          return (
+            '<div class="ad-overview-next-card ad-overview-next-card--' +
+            esc(item.key) +
+            (item.lead || isTicket ? ' ad-overview-next-card--featured' : '') +
+            '" role="listitem">' +
+            (item.media
               ? '<span class="ad-overview-next-media">' + item.media + '</span>'
               : '') +
-            '<span class="ad-overview-next-copy">' +
+            '<div class="ad-overview-next-copy">' +
             copy +
-            '</span></button>'
+            '</div></div>'
           );
         })
         .join('') +
       '</div>';
 
+    function goOverviewNextRoute(route) {
+      if (route === 'tickets') {
+        setTicketsScope('upcoming');
+        setRoute('tickets');
+        return;
+      }
+      if (route === 'memberships') {
+        goToMemberships();
+        return;
+      }
+      setRoute(route || 'overview');
+    }
+
     el.querySelectorAll('[data-overview-next-route]').forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        const route = btn.getAttribute('data-overview-next-route') || 'overview';
-        if (route === 'tickets') {
-          setTicketsScope('upcoming');
-          setRoute('tickets');
-          return;
-        }
-        if (route === 'memberships') {
-          goToMemberships();
-          return;
-        }
-        setRoute(route);
+      btn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        goOverviewNextRoute(btn.getAttribute('data-overview-next-route'));
       });
     });
+
+    el.querySelectorAll('.ad-overview-next-card').forEach(function (card) {
+      const cta = card.querySelector('[data-overview-next-route]');
+      if (!cta) return;
+      card.addEventListener('click', function (e) {
+        if (e.target.closest('a, button, .ad-utility-wrap, .ad-overview-next-tools')) return;
+        goOverviewNextRoute(cta.getAttribute('data-overview-next-route'));
+      });
+    });
+
+    bindUtilityMenus(el);
+    bindCalendarLinks(el);
+    bindShareButtons(el);
   }
 
   function renderOverviewMembershipNudge() {

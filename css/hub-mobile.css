@@ -2410,6 +2410,17 @@ body.nav-menu-open {
     padding: 12px 14px;
   }
 
+  .attendee-dashboard-page .ad-overview-next-tools {
+    margin-top: 8px;
+    padding-top: 8px;
+    gap: 6px;
+  }
+
+  .attendee-dashboard-page .ad-overview-next-tool-btn {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
   .attendee-dashboard-page .ad-overview-review-nudge {
     margin-top: 16px;
   }
