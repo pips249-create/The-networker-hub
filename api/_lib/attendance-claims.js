@@ -15,7 +15,7 @@ const { sendTemplatedEmail } = require('./send-template-email');
 const { emailSiteBase } = require('./hub-email-urls');
 const { resolveOrganiserAccess } = require('./supabase-organiser-access');
 const { isUuid } = require('./uuid');
-const { reviewerDisplayName, organiserFacingAttendeeName } = require('./reviewer-display-name');
+const { organiserFacingAttendeeName } = require('./reviewer-display-name');
 
 const CLAIM_WINDOW_DAYS = 90;
 const RESPONSE_TTL_DAYS = DEFAULT_TTL_DAYS;
