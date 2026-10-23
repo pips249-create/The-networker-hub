@@ -105,7 +105,7 @@ async function assertCanCreateClaim(sb, attendeeId, eventId) {
   const { data: eventRow, error: evErr } = await sb
     .from('events')
     .select(
-      'id, title, slug, starts_at, ends_at, organiser_id, status, listing_status, image_url, organisers ( id, name, slug, photo_url, contact_email, email )'
+      'id, title, slug, starts_at, ends_at, organiser_id, status, image_url, organisers ( id, name, slug, photo_url, contact_email, email, listing_status )'
     )
     .eq('id', eventId)
     .maybeSingle();
