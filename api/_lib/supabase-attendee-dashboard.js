@@ -451,7 +451,7 @@ async function getAttendeeDashboardFromSupabase(session) {
     listRegistrationsForAttendee(sb, attendeeId),
     listCancelledRegistrationsForAttendee(sb, attendeeId),
     listReviewsForAttendee(sb, attendeeId),
-    listClaimsForAttendee({ ...session, /* resolve via session */ }).catch(() => []),
+    listClaimsForAttendee(session).catch(() => []),
     computeNetworkedScoreForAttendee(sb, attendeeId).catch(() => null),
   ]);
 

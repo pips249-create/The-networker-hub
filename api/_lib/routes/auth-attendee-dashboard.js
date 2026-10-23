@@ -47,6 +47,8 @@ module.exports = async function handler(req, res) {
     const stats = dash.stats || buildStats(registrations);
     const opportunityEnquiries = dash.opportunityEnquiries || [];
     const myGroups = dash.myGroups || [];
+    const attendanceClaims = dash.attendanceClaims || [];
+    const networked = dash.networked || null;
 
     return json(res, 200, {
       ok: true,
@@ -60,6 +62,8 @@ module.exports = async function handler(req, res) {
       stats,
       opportunityEnquiries,
       myGroups,
+      attendanceClaims,
+      networked,
       isDemo: false,
     });
   } catch (e) {
