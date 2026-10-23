@@ -492,23 +492,35 @@ async function respondToAttendanceClaim(options) {
   }
 
   if (confirm) {
-    // Do not await email — a slow/hung provider must not block the organiser
-    // confirmation page. Unlock still stands; attendee can review from dashboard.
+    // Claim is already unlocked. Try to email the attendee, but never block the
+    // organiser confirmation for more than a few seconds (Resend/template hangs
+    // were leaving the confirm page stuck on “Checking…”).
     const emailClaim = updated;
     const emailEvent = updated.events || claim.events;
     const emailAttendee = updated.attendees || claim.attendees;
     const emailOrg = updated.organisers || claim.organisers;
-    sendClaimConfirmedReviewEmail(emailClaim, emailEvent, emailAttendee, emailOrg)
-      .then(() =>
-        sb
-          .from('attendance_claims')
-          .update({
-            attendee_review_email_sent_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', updated.id)
-      )
-      .catch(() => {});
+    const emailJob = sendClaimConfirmedReviewEmail(emailClaim, emailEvent, emailAttendee, emailOrg).then(() =>
+      sb
+        .from('attendance_claims')
+        .update({
+          attendee_review_email_sent_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', updated.id)
+    );
+    try {
+      await Promise.race([
+        emailJob,
+        new Promise(function (_, reject) {
+          setTimeout(function () {
+            reject(Object.assign(new Error('email_timeout'), { code: 'email_timeout' }));
+          }, 6000);
+        }),
+      ]);
+    } catch {
+      // Non-fatal: unlock still stands; attendee can review from their dashboard.
+      emailJob.catch(function () {});
+    }
   }
 
   return { claim: mapClaimRow(updated), alreadyResponded: false };
