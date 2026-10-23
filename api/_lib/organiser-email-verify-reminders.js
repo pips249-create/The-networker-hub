@@ -1,6 +1,9 @@
 /**
  * One follow-up when a signup still has not confirmed their email.
  * Runs from the hourly email-verify-reminders cron (transactional — not nurture pause).
+ *
+ * Only accounts that already received a confirm code (token hash set at signup /
+ * enable / resend) are eligible. Soft-provisioned organiser logins are excluded.
  */
 const { claimRowTimestamp, releaseRowTimestamp } = require('./email-send-claim');
 const { sendOrganiserEmailVerification } = require('./organiser-email-verification');
@@ -31,10 +34,14 @@ async function sendDueOrganiserEmailVerifyReminders(sb, options) {
   const { data, error } = await sb
     .from('hub_accounts')
     .select(
-      'user_id, display_name, created_at, organiser_email_verified_at, organiser_email_verify_reminder_sent_at'
+      'user_id, display_name, created_at, organiser_email_verified_at, organiser_email_verify_reminder_sent_at, organiser_email_verify_token_hash'
     )
     .is('organiser_email_verified_at', null)
     .is('organiser_email_verify_reminder_sent_at', null)
+    // Signup/resend stores a hash before the first confirm email. Provisioned
+    // logins never get one until someone starts create-account — keep them out
+    // of this batch so they cannot starve real unfinished signups (limit 40).
+    .not('organiser_email_verify_token_hash', 'is', null)
     .gte('created_at', oldest)
     .lte('created_at', newest)
     .order('created_at', { ascending: true })
@@ -50,6 +57,7 @@ async function sendDueOrganiserEmailVerifyReminders(sb, options) {
       createdAt: row.created_at,
       verifiedAt: row.organiser_email_verified_at,
       reminderSentAt: row.organiser_email_verify_reminder_sent_at,
+      verifyTokenHash: row.organiser_email_verify_token_hash,
       now,
     });
     if (skip || !userId) {

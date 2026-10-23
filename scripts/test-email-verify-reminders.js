@@ -24,6 +24,7 @@ const hoursAgo = (h) => new Date(now - h * 60 * 60 * 1000).toISOString();
 assert.equal(
   emailVerifyReminderSkipReason({
     createdAt: hoursAgo(1),
+    verifyTokenHash: 'abc',
     now,
   }),
   'too_soon'
@@ -31,13 +32,31 @@ assert.equal(
 assert.equal(
   emailVerifyReminderSkipReason({
     createdAt: hoursAgo(3.5),
+    verifyTokenHash: 'abc',
     now,
   }),
   ''
 );
 assert.equal(
   emailVerifyReminderSkipReason({
+    createdAt: hoursAgo(3.5),
+    now,
+  }),
+  'never_started_verify',
+  'soft-provisioned hub_accounts have no verify token'
+);
+assert.equal(
+  emailVerifyReminderSkipReason({
+    createdAt: hoursAgo(3.5),
+    verifyTokenHash: '   ',
+    now,
+  }),
+  'never_started_verify'
+);
+assert.equal(
+  emailVerifyReminderSkipReason({
     createdAt: hoursAgo(50),
+    verifyTokenHash: 'abc',
     now,
   }),
   'too_old'
@@ -46,6 +65,7 @@ assert.equal(
   emailVerifyReminderSkipReason({
     createdAt: hoursAgo(4),
     verifiedAt: hoursAgo(1),
+    verifyTokenHash: 'abc',
     now,
   }),
   'already_verified'
@@ -54,6 +74,7 @@ assert.equal(
   emailVerifyReminderSkipReason({
     createdAt: hoursAgo(4),
     reminderSentAt: hoursAgo(1),
+    verifyTokenHash: 'abc',
     now,
   }),
   'already_sent'
@@ -61,6 +82,7 @@ assert.equal(
 assert.equal(
   emailVerifyReminderSkipReason({
     createdAt: '',
+    verifyTokenHash: 'abc',
     now,
   }),
   'missing_created_at'
@@ -104,6 +126,11 @@ const reminderSrc = fs.readFileSync(
 );
 assert.match(reminderSrc, /slug:\s*REMINDER_SLUG/);
 assert.match(reminderSrc, /organiser_email_verify_reminder_sent_at/);
+assert.match(
+  reminderSrc,
+  /\.not\(\s*['"]organiser_email_verify_token_hash['"]\s*,\s*['"]is['"]\s*,\s*null\s*\)/,
+  'must exclude soft-provisioned accounts with no confirm code'
+);
 assert.match(
   reminderSrc,
   /if \(hub\?\.organiser_email_verified_at\)/,
