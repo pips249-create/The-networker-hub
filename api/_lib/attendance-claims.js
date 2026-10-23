@@ -15,7 +15,7 @@ const { sendTemplatedEmail } = require('./send-template-email');
 const { emailSiteBase } = require('./hub-email-urls');
 const { resolveOrganiserAccess } = require('./supabase-organiser-access');
 const { isUuid } = require('./uuid');
-const { reviewerDisplayName } = require('./reviewer-display-name');
+const { reviewerDisplayName, organiserFacingAttendeeName } = require('./reviewer-display-name');
 
 const CLAIM_WINDOW_DAYS = 90;
 const RESPONSE_TTL_DAYS = DEFAULT_TTL_DAYS;
@@ -76,7 +76,8 @@ function mapClaimRow(row) {
     organiserSlug: org.slug || null,
     organiserLogo: String(org.photo_url || '').trim() || null,
     attendeeId: row.attendee_id || null,
-    attendeeName: reviewerDisplayName(att) || String(att.name || 'Attendee').trim(),
+    // Organiser-facing: real account name, never public "Networker ####" alias.
+    attendeeName: organiserFacingAttendeeName(att),
     attendeeEmail: String(att.email || '').trim() || null,
     claimedAt: row.claimed_at || row.created_at || null,
     expiresAt: row.expires_at || null,
@@ -255,7 +256,7 @@ async function sendClaimRequestEmail(claim, eventRow, attendee, organiser) {
     encodeURIComponent(token) +
     '&decision=no';
   const dashboardUrl = siteUrl + '/organiser/#events-reviews';
-  const attendeeName = reviewerDisplayName(attendee) || String(attendee?.name || 'An attendee').trim();
+  const attendeeName = organiserFacingAttendeeName(attendee);
   const organiserName = String(organiser?.name || eventRow.organisers?.name || 'there').trim();
   const to = String(organiser?.contact_email || organiser?.email || eventRow.organisers?.contact_email || eventRow.organisers?.email || '')
     .trim()
@@ -312,8 +313,8 @@ async function sendClaimConfirmedReviewEmail(claim, eventRow, attendee, organise
     slug: 'attendance_claim_confirmed_review',
     to,
     variables: {
-      user_name: reviewerDisplayName(attendee) || String(attendee?.name || 'there').trim(),
-      attendee_name: reviewerDisplayName(attendee) || String(attendee?.name || '').trim(),
+      user_name: organiserFacingAttendeeName(attendee) || 'there',
+      attendee_name: organiserFacingAttendeeName(attendee),
       event_name: String(eventRow?.title || 'the event').trim(),
       event_date: eventDate,
       organiser_name: organiserName,
