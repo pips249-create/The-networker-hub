@@ -492,23 +492,23 @@ async function respondToAttendanceClaim(options) {
   }
 
   if (confirm) {
-    try {
-      await sendClaimConfirmedReviewEmail(
-        updated,
-        updated.events || claim.events,
-        updated.attendees || claim.attendees,
-        updated.organisers || claim.organisers
-      );
-      await sb
-        .from('attendance_claims')
-        .update({
-          attendee_review_email_sent_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', updated.id);
-    } catch {
-      // Non-fatal: unlock still stands; attendee can review from dashboard.
-    }
+    // Do not await email — a slow/hung provider must not block the organiser
+    // confirmation page. Unlock still stands; attendee can review from dashboard.
+    const emailClaim = updated;
+    const emailEvent = updated.events || claim.events;
+    const emailAttendee = updated.attendees || claim.attendees;
+    const emailOrg = updated.organisers || claim.organisers;
+    sendClaimConfirmedReviewEmail(emailClaim, emailEvent, emailAttendee, emailOrg)
+      .then(() =>
+        sb
+          .from('attendance_claims')
+          .update({
+            attendee_review_email_sent_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', updated.id)
+      )
+      .catch(() => {});
   }
 
   return { claim: mapClaimRow(updated), alreadyResponded: false };
