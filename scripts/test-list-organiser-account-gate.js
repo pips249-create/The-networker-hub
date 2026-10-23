@@ -26,10 +26,14 @@ const nav = read('js/site-nav.js');
 const actions = read('js/hub-organiser-actions.js');
 const groupEdit = read('js/organiser-group-edit.js');
 
-assert(page.includes('Create an account first'), 'gate page explains account is required');
 assert(
-  page.includes('You must create a free Networker UK account before adding your organiser group'),
-  'gate page copy matches product intent'
+  page.includes('Your group\u2019s public page on The Networker UK') ||
+    page.includes('Your group&rsquo;s public page on The Networker UK'),
+  'gate page explains what listing an organiser means'
+);
+assert(
+  page.includes('You must create a free account before you can add your organiser group'),
+  'gate page still requires an account before adding a group'
 );
 assert(page.includes('/register?intent=organiser'), 'gate page links to create account');
 assert(page.includes('/login?intent=organiser'), 'gate page links to sign in');
