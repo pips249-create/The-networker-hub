@@ -53,6 +53,28 @@ function reviewerDisplayName(attendee) {
   return firstNameLastInitial(attendee?.name) || 'Attendee';
 }
 
+/**
+ * Name for organiser-only surfaces (attendance claims, booking lists, emails to the host).
+ * Never use the public anonymous "Networker ####" alias here — organisers need a real identity
+ * to decide Yes/No, and the email is already shown alongside.
+ */
+function organiserFacingAttendeeName(attendee) {
+  const fromAccount = firstNameLastInitial(attendee?.name) || String(attendee?.name || '').trim();
+  if (fromAccount) return fromAccount;
+  const email = String(attendee?.email || '')
+    .trim()
+    .toLowerCase();
+  if (email && email.includes('@')) {
+    const local = email.split('@')[0].replace(/[._+]+/g, ' ').trim();
+    if (local) {
+      return local.replace(/\b\w/g, function (c) {
+        return c.toUpperCase();
+      });
+    }
+  }
+  return 'Attendee';
+}
+
 function reviewerInitials(name) {
   const parts = String(name || '')
     .trim()
@@ -84,6 +106,7 @@ module.exports = {
   networkerNumberFromId,
   firstNameLastInitial,
   reviewerDisplayName,
+  organiserFacingAttendeeName,
   reviewerInitials,
   normalizeStoredPublicReviewName,
 };
