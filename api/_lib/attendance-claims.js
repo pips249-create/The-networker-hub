@@ -741,6 +741,7 @@ function emptyClaimableEventsResult(extra) {
   return Object.assign(
     {
       events: [],
+      draftEvents: [],
       filteredByDate: false,
       windowDays: CLAIM_WINDOW_DAYS,
       blockedCount: 0,
@@ -751,14 +752,32 @@ function emptyClaimableEventsResult(extra) {
   );
 }
 
+function mapDraftEventRow(row) {
+  const status = String(row.status || 'draft').toLowerCase();
+  return {
+    id: row.id,
+    title: String(row.title || 'Event').trim(),
+    slug: row.slug || null,
+    date: row.starts_at || null,
+    status,
+    claimable: false,
+    organiserId: row.organiser_id,
+    organiserName: String(row.organisers?.name || '').trim(),
+    organiserSlug: row.organisers?.slug || null,
+    organiserLogo: String(row.organisers?.photo_url || '').trim() || null,
+  };
+}
+
 /**
- * Draft / unpublished past events are not claimable. Detect them so the UI can
- * explain an empty result (e.g. organiser still has the night in Draft).
+ * Draft / unpublished past events are not claimable — return them so the UI can
+ * show the night and explain Publish is required (instead of a blank empty state).
  */
-async function findUnpublishedPastHint(sb, organiserId, { dateOk, dateStr, oldest, nowIso }) {
+async function findUnpublishedPastEvents(sb, organiserId, { dateOk, dateStr, oldest, nowIso, q }) {
   let query = sb
     .from('events')
-    .select('id, starts_at, status')
+    .select(
+      'id, title, slug, starts_at, status, organiser_id, organisers ( id, name, slug, photo_url )'
+    )
     .in('status', ['draft', 'unpublished'])
     .lt('starts_at', nowIso)
     .gte('starts_at', oldest)
@@ -772,18 +791,28 @@ async function findUnpublishedPastHint(sb, organiserId, { dateOk, dateStr, oldes
     query = query.gte('starts_at', from).lte('starts_at', to);
   }
   const { data, error } = await query;
-  if (error) return { unpublishedOnDate: false, unpublishedInWindow: false };
+  if (error) {
+    return { draftEvents: [], unpublishedOnDate: false, unpublishedInWindow: false };
+  }
   let rows = data || [];
   if (dateOk) {
     rows = rows.filter((row) => ymdLondon(row.starts_at) === dateStr);
-    return {
-      unpublishedOnDate: rows.length > 0,
-      unpublishedInWindow: rows.length > 0,
-    };
   }
+  const needle = String(q || '')
+    .trim()
+    .toLowerCase();
+  if (needle) {
+    rows = rows.filter((row) => {
+      const title = String(row.title || '').toLowerCase();
+      const orgName = String(row.organisers?.name || '').toLowerCase();
+      return title.includes(needle) || orgName.includes(needle);
+    });
+  }
+  const draftEvents = rows.slice(0, 15).map(mapDraftEventRow);
   return {
-    unpublishedOnDate: false,
-    unpublishedInWindow: rows.length > 0,
+    draftEvents,
+    unpublishedOnDate: dateOk && draftEvents.length > 0,
+    unpublishedInWindow: draftEvents.length > 0,
   };
 }
 
@@ -848,24 +877,20 @@ async function searchClaimablePastEvents(session, input) {
 
   // Exclude events already claimed/reviewed or with eligible registration.
   const eventIds = rows.map((r) => r.id);
+  const unpublishedOpts = {
+    dateOk,
+    dateStr,
+    oldest,
+    nowIso,
+    q,
+  };
+
   if (!eventIds.length) {
-    let unpublished = { unpublishedOnDate: false, unpublishedInWindow: false };
-    if (hasOrganiser) {
-      unpublished = await findUnpublishedPastHint(sb, organiserId, {
-        dateOk,
-        dateStr,
-        oldest,
-        nowIso,
-      });
-    } else if (dateOk) {
-      // Date-only search: see if anything draft exists that day (any group).
-      unpublished = await findUnpublishedPastHint(sb, null, {
-        dateOk,
-        dateStr,
-        oldest,
-        nowIso,
-      });
-    }
+    const unpublished = await findUnpublishedPastEvents(
+      sb,
+      hasOrganiser ? organiserId : null,
+      unpublishedOpts
+    );
     return emptyClaimableEventsResult({ filteredByDate: dateOk, ...unpublished });
   }
 
@@ -901,6 +926,7 @@ async function searchClaimablePastEvents(session, input) {
       slug: row.slug || null,
       date: row.starts_at || null,
       imageUrl: String(row.image_url || '').trim() || null,
+      claimable: true,
       organiserId: row.organiser_id,
       organiserName: String(row.organisers?.name || '').trim(),
       organiserSlug: row.organisers?.slug || null,
@@ -908,14 +934,11 @@ async function searchClaimablePastEvents(session, input) {
     }));
 
   if (!events.length) {
-    const unpublished = hasOrganiser
-      ? await findUnpublishedPastHint(sb, organiserId, {
-          dateOk,
-          dateStr,
-          oldest,
-          nowIso,
-        })
-      : { unpublishedOnDate: false, unpublishedInWindow: false };
+    const unpublished = await findUnpublishedPastEvents(
+      sb,
+      hasOrganiser ? organiserId : null,
+      unpublishedOpts
+    );
     return {
       events: [],
       filteredByDate: dateOk,
@@ -927,6 +950,7 @@ async function searchClaimablePastEvents(session, input) {
 
   return {
     events,
+    draftEvents: [],
     filteredByDate: dateOk,
     windowDays: CLAIM_WINDOW_DAYS,
     blockedCount: blocked.size,

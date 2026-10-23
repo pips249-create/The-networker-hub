@@ -4597,12 +4597,14 @@
     claimSelectedOrganiser = null;
   }
 
-  function renderClaimEventResults(events, emptyMessage, hintText) {
+  function renderClaimEventResults(events, draftEvents, emptyMessage, hintText) {
     const results = document.getElementById('ad-claim-results');
     const hint = document.getElementById('ad-claim-hint');
     if (!results) return;
     results.innerHTML = '';
-    if (!events || !events.length) {
+    const claimable = events || [];
+    const drafts = draftEvents || [];
+    if (!claimable.length && !drafts.length) {
       results.innerHTML =
         '<p class="ad-claim-hint">' +
         esc(emptyMessage || 'No claimable events found for that search.') +
@@ -4612,9 +4614,13 @@
     }
     if (hint) {
       hint.hidden = false;
-      hint.textContent = hintText || 'Claim the event you attended — we will email the organiser to confirm.';
+      hint.textContent =
+        hintText ||
+        (claimable.length
+          ? 'Claim the event you attended — we will email the organiser to confirm.'
+          : 'These nights are still draft — publish them on the organiser dashboard, then claim.');
     }
-    events.forEach(function (ev) {
+    claimable.forEach(function (ev) {
       const row = document.createElement('div');
       row.className = 'ad-claim-result';
       row.setAttribute('role', 'listitem');
@@ -4638,6 +4644,29 @@
       });
       results.appendChild(row);
     });
+    drafts.forEach(function (ev) {
+      const row = document.createElement('div');
+      row.className = 'ad-claim-result ad-claim-result--draft';
+      row.setAttribute('role', 'listitem');
+      const dateLabel = ev.date
+        ? new Date(ev.date).toLocaleDateString('en-GB', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+            timeZone: 'Europe/London',
+          })
+        : '';
+      const statusLabel = String(ev.status || 'draft') === 'unpublished' ? 'Unpublished' : 'Draft';
+      const meta = [ev.organiserName, dateLabel, statusLabel + ' — publish to claim']
+        .filter(Boolean)
+        .join(' · ');
+      row.innerHTML =
+        '<div><p class="ad-claim-result-title"></p><p class="ad-claim-result-meta"></p></div>' +
+        '<button type="button" class="ad-btn ad-claim-submit" disabled>Publish first</button>';
+      row.querySelector('.ad-claim-result-title').textContent = ev.title || 'Event';
+      row.querySelector('.ad-claim-result-meta').textContent = meta;
+      results.appendChild(row);
+    });
   }
 
   function searchClaimableEvents() {
@@ -4649,6 +4678,7 @@
     const q = nameInput ? String(nameInput.value || '').trim() : '';
     if (!dateVal) {
       renderClaimEventResults(
+        [],
         [],
         'Pick the date you attended to list matching past Hub events.'
       );
@@ -4666,28 +4696,32 @@
         if (!data || !data.ok) {
           renderClaimEventResults(
             [],
+            [],
             (data && data.message) || 'Could not search events. Try again.'
           );
           return;
         }
         const events = data.events || [];
+        const drafts = data.draftEvents || [];
         let empty =
-          'No claimable Hub events on that date. Try another day, or check the event was published (not draft).';
-        if (data.unpublishedOnDate) {
-          empty =
-            'There is an event on that date still in draft or unpublished. The organiser needs to publish it before you can claim.';
-        } else if (data.blockedCount > 0 && !events.length) {
+          'No Hub events on that date in the last 90 days. Try another day.';
+        if (data.blockedCount > 0 && !events.length && !drafts.length) {
           empty =
             'Events on that date are already on your Hub bookings or claims — they appear under Events I’ve attended.';
         }
         renderClaimEventResults(
           events,
+          drafts,
           empty,
-          'Events on your chosen date — claim the one you attended.'
+          events.length
+            ? 'Events on your chosen date — claim the one you attended.'
+            : drafts.length
+              ? 'Found — but still draft/unpublished. Publish on the organiser dashboard, then come back to claim.'
+              : ''
         );
       })
       .catch(function () {
-        renderClaimEventResults([], 'Could not load events. Try again.');
+        renderClaimEventResults([], [], 'Could not load events. Try again.');
       });
   }
 
