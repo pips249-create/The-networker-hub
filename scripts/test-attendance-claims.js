@@ -66,4 +66,31 @@ if (Math.abs(confirmedOnly.weightedAverageRating - 4.5) > 0.01) {
   process.exit(1);
 }
 
-console.log('OK: attendance claim token + ranking weights');
+const {
+  reviewerDisplayName,
+  organiserFacingAttendeeName,
+} = require('../api/_lib/reviewer-display-name');
+
+const anonAttendee = {
+  id: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+  name: 'Catherine Networker',
+  email: 'catherine@the-networker.co.uk',
+  public_review_name: '__networker__',
+};
+if (reviewerDisplayName(anonAttendee) !== 'Networker ' + require('../api/_lib/reviewer-display-name').networkerNumberFromId(anonAttendee.id)) {
+  console.error('FAIL: public review name should stay anonymous Networker alias');
+  process.exit(1);
+}
+if (organiserFacingAttendeeName(anonAttendee) !== 'Catherine N.') {
+  console.error(
+    'FAIL: organiser-facing claim name should use account name, got',
+    organiserFacingAttendeeName(anonAttendee)
+  );
+  process.exit(1);
+}
+if (organiserFacingAttendeeName({ email: 'jamie@thenetworkeruk.com' }) !== 'Jamie') {
+  console.error('FAIL: organiser-facing fallback from email local-part');
+  process.exit(1);
+}
+
+console.log('OK: attendance claim token + ranking weights + organiser-facing names');
