@@ -473,7 +473,8 @@
       organiserLogo: claim.organiserLogo || null,
       ticketLabel: 'Claimed attendance',
       quantity: 1,
-      paymentStatus: status === 'confirmed' ? 'Confirmed' : status === 'pending' ? 'Awaiting organiser' : status,
+      // Claims are not bookings — never surface a payment status in the table.
+      paymentStatus: '',
       applicationStatus: 'Approved',
       organiserId: claim.organiserId || '',
       organiserName: claim.organiserName || '',
@@ -567,10 +568,8 @@
 
   function paymentBadge(status, reg) {
     if (reg && reg.isAttendanceClaim) {
-      const s = String(status || '');
-      if (s === 'Confirmed') return '<span class="ad-badge ad-badge-green">Confirmed</span>';
-      if (s === 'Awaiting organiser') return '<span class="ad-badge ad-badge-gold">Awaiting organiser</span>';
-      return '<span class="ad-badge ad-badge-grey">' + esc(s || 'Claim') + '</span>';
+      // Attendance claims have no payment — status lives in Review only.
+      return '<span class="ad-badge ad-badge-grey">—</span>';
     }
     if (reg && reg.isCancelled) {
       return refundStatusBadge(reg);
@@ -842,6 +841,14 @@
         '">' +
         (hasReply ? 'View reply' : 'View review') +
         '</button>'
+      );
+    }
+    // Claims are not tickets — no View ticket / payment actions.
+    if (reg.isAttendanceClaim) {
+      return (
+        '<a class="ad-btn ad-btn-primary" href="' +
+        esc(eventHref(reg)) +
+        '">View event</a>'
       );
     }
     if (opts.showCancel && reg.canCancel) {
