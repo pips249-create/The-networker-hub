@@ -94,6 +94,7 @@ module.exports = async function handler(req, res) {
         return json(res, 200, {
           ok: true,
           events: result.events || [],
+          draftEvents: result.draftEvents || [],
           filteredByDate: !!result.filteredByDate,
           windowDays: result.windowDays || 90,
           blockedCount: result.blockedCount || 0,

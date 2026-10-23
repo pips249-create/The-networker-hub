@@ -4180,6 +4180,17 @@ body.ad-share-modal-open {
   background: #faf9fb;
 }
 
+.ad-claim-result--draft {
+  opacity: 0.92;
+  background: #f7f4ef;
+  border-style: dashed;
+}
+
+.ad-claim-result--draft .ad-claim-submit:disabled {
+  cursor: not-allowed;
+  opacity: 0.75;
+}
+
 .ad-claim-result-title {
   margin: 0;
   font-size: 0.92rem;
