@@ -65,7 +65,20 @@ module.exports = async function handler(req, res) {
         claimId: body.claimId || body.claim_id,
         decision: body.decision || body.action,
       });
-      return json(res, 200, { ok: true, ...result });
+      const confirmed = result.claim?.status === 'confirmed';
+      const already = Boolean(result.alreadyResponded);
+      return json(res, 200, {
+        ok: true,
+        ...result,
+        decision: confirmed ? 'yes' : 'no',
+        message: already
+          ? confirmed
+            ? 'You already confirmed this attendance claim.'
+            : 'You already declined this attendance claim.'
+          : confirmed
+            ? 'Attendance confirmed — they can leave an organiser-confirmed review.'
+            : 'Claim declined.',
+      });
     }
 
     return json(res, 405, { error: 'method_not_allowed' });

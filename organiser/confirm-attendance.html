@@ -5,69 +5,149 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Confirm attendance – The Networker UK</title>
   <meta name="robots" content="noindex,nofollow">
-  <link rel="stylesheet" href="/css/site.css">
+  <link rel="icon" href="/favicon.ico?v=20260823uk3" sizes="any" />
+  <link rel="icon" href="/assets/favicon.svg?v=20260823uk3" type="image/svg+xml" />
+  <link rel="icon" href="/assets/favicon-32.png?v=20260823uk" type="image/png" sizes="32x32" />
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png?v=20260823uk" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap"
+    rel="stylesheet"
+  />
+  <link rel="stylesheet" href="../css/hub.css?v=20261016signin1" />
+  <link rel="stylesheet" href="../css/auth.css?v=20260727ux" />
+  <link rel="stylesheet" href="../css/hub-mobile.css?v=20261016signin1" />
   <style>
-    .ca-wrap {
-      max-width: 32rem;
-      margin: 3rem auto;
-      padding: 0 1.25rem 3rem;
-      font-family: "DM Sans", system-ui, sans-serif;
-      color: #1c2040;
-    }
-    .ca-card {
-      background: #fff;
-      border: 1px solid #e4e7f0;
-      border-radius: 16px;
-      padding: 1.75rem 1.5rem;
-      box-shadow: 0 8px 28px rgba(28, 32, 64, 0.06);
-    }
-    .ca-card h1 {
-      font-size: 1.35rem;
-      margin: 0 0 0.5rem;
-      font-weight: 650;
-    }
-    .ca-card p {
-      margin: 0 0 1rem;
-      line-height: 1.55;
-      color: #4b5168;
+    .ca-kicker {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--gold, #b8860b);
+      margin: 0 0 8px;
     }
     .ca-status {
+      font-size: 13px;
       font-weight: 600;
-      margin-bottom: 0.75rem;
+      margin: 0 0 12px;
+      color: var(--text-muted, #635c5e);
     }
-    .ca-status--ok { color: #1f5c3a; }
-    .ca-status--err { color: #9b1c1c; }
-    .ca-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 1.25rem; }
-    .ca-btn {
+    .ca-status--ok { color: #2d6a3e; }
+    .ca-status--err { color: #8b3030; }
+    .ca-status--pending {
       display: inline-flex;
       align-items: center;
-      justify-content: center;
-      padding: 0.65rem 1rem;
-      border-radius: 10px;
-      font-weight: 600;
-      font-size: 0.95rem;
-      text-decoration: none;
-      border: none;
-      cursor: pointer;
+      gap: 8px;
     }
-    .ca-btn--primary { background: #452d5c; color: #fff; }
-    .ca-btn--ghost { background: #f3f1f6; color: #452d5c; }
+    .ca-spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid var(--lavender-soft, #d9c4e0);
+      border-top-color: var(--lavender-deep, #9a7aa8);
+      border-radius: 50%;
+      animation: ca-spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes ca-spin {
+      to { transform: rotate(360deg); }
+    }
+    .ca-actions,
+    .ca-choose {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .ca-actions[hidden],
+    .ca-choose[hidden] {
+      display: none !important;
+    }
+    .ca-actions a,
+    .ca-choose button {
+      display: block;
+      width: 100%;
+      box-sizing: border-box;
+      text-align: center;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 700;
+      padding: 13px 20px;
+      border-radius: var(--radius-sm, 10px);
+      text-decoration: none;
+      cursor: pointer;
+      border: none;
+    }
+    .ca-choose button:disabled {
+      opacity: 0.65;
+      cursor: wait;
+    }
+    .ca-btn--primary {
+      background: var(--lavender-deep, #9a7aa8);
+      color: #fff;
+    }
+    .ca-btn--primary:hover {
+      background: var(--charcoal, #4a4446);
+      color: #fff;
+    }
+    .ca-btn--confirm {
+      background: #2f6b45;
+      color: #fff;
+    }
+    .ca-btn--confirm:hover {
+      background: #245536;
+      color: #fff;
+    }
+    .ca-btn--ghost {
+      background: transparent;
+      color: var(--lavender-deep, #9a7aa8);
+      border: 2px solid var(--lavender-deep, #9a7aa8) !important;
+    }
+    .ca-btn--ghost:hover {
+      background: var(--lavender-light, #ebe0f0);
+      color: var(--charcoal, #4a4446);
+    }
+    .ca-btn--deny {
+      background: var(--lavender-light, #ebe0f0);
+      color: var(--charcoal, #4a4446);
+    }
+    .ca-brand-foot {
+      margin: 18px 0 0;
+      font-size: 12px;
+      color: var(--text-muted, #635c5e);
+      text-align: center;
+      line-height: 1.5;
+    }
   </style>
 </head>
-<body>
-  <main class="ca-wrap">
-    <div class="ca-card" id="ca-card">
-      <p class="ca-status" id="ca-status">Checking this attendance claim…</p>
+<body class="auth-page">
+  <div id="hub-site-nav"></div>
+  <script src="../js/site-nav.js?v=20261022listacc1" data-root="../" data-page="organiser"></script>
+
+  <main class="auth-main">
+    <div class="auth-card" id="ca-card">
+      <p class="ca-kicker">The Networker UK</p>
+      <p class="ca-status" id="ca-status" role="status">Attendance claim</p>
       <h1 id="ca-title">Confirm attendance</h1>
-      <p id="ca-body">One moment while we record your answer.</p>
-      <div class="ca-actions" id="ca-actions" hidden>
-        <a class="ca-btn ca-btn--primary" href="/organiser/#events-reviews">Open reviews</a>
-        <a class="ca-btn ca-btn--ghost" href="/organiser/">Organiser workspace</a>
+      <p class="auth-lede" id="ca-body">Loading…</p>
+
+      <div class="ca-choose" id="ca-choose" hidden>
+        <button type="button" class="ca-btn--confirm" id="ca-yes">Yes, they attended</button>
+        <button type="button" class="ca-btn--deny" id="ca-no">No, they did not</button>
       </div>
+
+      <div class="ca-actions" id="ca-actions" hidden>
+        <a class="ca-btn--primary" href="/organiser/#events-reviews">Open reviews</a>
+        <a class="ca-btn--ghost" href="/organiser/">Organiser workspace</a>
+      </div>
+
+      <p class="ca-brand-foot">Same team as the-networker.co.uk</p>
     </div>
   </main>
+
   <script>
     (function () {
+      var REQUEST_MS = 15000;
       var params = new URLSearchParams(window.location.search);
       var token = params.get('token') || '';
       var decision = (params.get('decision') || params.get('action') || '').toLowerCase();
@@ -75,63 +155,227 @@
       var titleEl = document.getElementById('ca-title');
       var bodyEl = document.getElementById('ca-body');
       var actionsEl = document.getElementById('ca-actions');
+      var chooseEl = document.getElementById('ca-choose');
+      var yesBtn = document.getElementById('ca-yes');
+      var noBtn = document.getElementById('ca-no');
+      var busy = false;
+
+      function setStatus(kind, text) {
+        statusEl.className =
+          'ca-status' +
+          (kind === 'ok' ? ' ca-status--ok' : kind === 'err' ? ' ca-status--err' : kind === 'pending' ? ' ca-status--pending' : '');
+        statusEl.innerHTML = '';
+        if (kind === 'pending') {
+          var spin = document.createElement('span');
+          spin.className = 'ca-spinner';
+          spin.setAttribute('aria-hidden', 'true');
+          statusEl.appendChild(spin);
+        }
+        var label = document.createElement('span');
+        label.textContent = text;
+        statusEl.appendChild(label);
+      }
+
+      function setButtonsEnabled(enabled) {
+        if (yesBtn) yesBtn.disabled = !enabled;
+        if (noBtn) noBtn.disabled = !enabled;
+      }
 
       function show(ok, title, body) {
-        statusEl.textContent = ok ? 'Done' : 'Could not update';
-        statusEl.className = 'ca-status ' + (ok ? 'ca-status--ok' : 'ca-status--err');
+        busy = false;
+        setStatus(ok ? 'ok' : 'err', ok ? 'Done' : 'Could not update');
         titleEl.textContent = title;
         bodyEl.textContent = body;
+        chooseEl.hidden = true;
+        actionsEl.hidden = false;
+        setButtonsEnabled(true);
+      }
+
+      function showPrompt(intended) {
+        busy = false;
+        setButtonsEnabled(true);
+        actionsEl.hidden = true;
+        chooseEl.hidden = false;
+
+        if (intended === 'yes' || intended === 'confirm') {
+          setStatus('', 'From your email');
+          titleEl.textContent = 'Confirm they attended?';
+          bodyEl.textContent =
+            'Tap below to unlock an organiser-confirmed review for this person. It will be labelled Organiser confirmed — not Verified attendee.';
+          yesBtn.hidden = false;
+          noBtn.hidden = true;
+          yesBtn.textContent = 'Yes, confirm attendance';
+          return;
+        }
+
+        if (intended === 'no' || intended === 'deny') {
+          setStatus('', 'From your email');
+          titleEl.textContent = 'Decline this claim?';
+          bodyEl.textContent =
+            'Tap below if they did not attend. They will not be able to leave an organiser-confirmed review for this event.';
+          yesBtn.hidden = true;
+          noBtn.hidden = false;
+          noBtn.textContent = 'No, they did not attend';
+          return;
+        }
+
+        setStatus('', 'Choose an answer');
+        titleEl.textContent = 'Did they attend?';
+        bodyEl.textContent =
+          'Confirm whether they attended, or open Reviews in your organiser workspace.';
+        yesBtn.hidden = false;
+        noBtn.hidden = false;
+        yesBtn.textContent = 'Yes, they attended';
+        noBtn.textContent = 'No, they did not';
         actionsEl.hidden = false;
       }
 
-      if (!token || (decision !== 'yes' && decision !== 'no' && decision !== 'confirm' && decision !== 'deny')) {
-        show(false, 'Invalid link', 'This confirmation link is missing details. Open the email again or check pending claims in your workspace.');
+      function restoreRetry(intended) {
+        busy = false;
+        setButtonsEnabled(true);
+        chooseEl.hidden = false;
+        if (intended === 'yes' || intended === 'confirm') {
+          yesBtn.hidden = false;
+          noBtn.hidden = true;
+          yesBtn.textContent = 'Try again — confirm attendance';
+        } else if (intended === 'no' || intended === 'deny') {
+          yesBtn.hidden = true;
+          noBtn.hidden = false;
+          noBtn.textContent = 'Try again — decline claim';
+        } else {
+          yesBtn.hidden = false;
+          noBtn.hidden = false;
+          yesBtn.textContent = 'Yes, they attended';
+          noBtn.textContent = 'No, they did not';
+        }
+      }
+
+      function parseJsonSafe(r) {
+        return r.text().then(function (text) {
+          if (!text) return {};
+          try {
+            return JSON.parse(text);
+          } catch (e) {
+            return { ok: false, message: 'Unexpected response from the server. Please try again.' };
+          }
+        });
+      }
+
+      function submitDecision(nextDecision) {
+        if (busy) return;
+        if (!token) {
+          show(
+            false,
+            'Invalid link',
+            'This confirmation link is missing details. Open the email again or check pending claims in your workspace.'
+          );
+          return;
+        }
+        busy = true;
+        setButtonsEnabled(false);
+        actionsEl.hidden = true;
+        setStatus('pending', 'Saving your answer…');
+        titleEl.textContent = nextDecision === 'yes' || nextDecision === 'confirm' ? 'Confirming attendance' : 'Declining claim';
+        bodyEl.textContent = 'This usually takes a moment.';
+
+        var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+        var timer = null;
+        if (controller) {
+          timer = setTimeout(function () {
+            try {
+              controller.abort();
+            } catch (e) {}
+          }, REQUEST_MS);
+        }
+
+        var fetchOpts = {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({ token: token, decision: nextDecision }),
+        };
+        if (controller) fetchOpts.signal = controller.signal;
+
+        fetch('/api/attendance-claim', fetchOpts)
+          .then(function (r) {
+            return parseJsonSafe(r).then(function (data) {
+              return { okHttp: r.ok, data: data || {} };
+            });
+          })
+          .then(function (res) {
+            if (!res.okHttp || !res.data.ok) {
+              show(
+                false,
+                'Could not update this claim',
+                res.data.message ||
+                  'Check pending claims in your organiser workspace, or try the link from your email again.'
+              );
+              restoreRetry(nextDecision);
+              return;
+            }
+            var confirmed = res.data.decision === 'yes';
+            var name = (res.data.claim && res.data.claim.attendeeName) || 'The attendee';
+            var eventTitle = (res.data.claim && res.data.claim.eventTitle) || 'the event';
+            var already = Boolean(res.data.alreadyResponded);
+            if (confirmed) {
+              show(
+                true,
+                already ? 'Already confirmed' : 'Attendance confirmed',
+                already
+                  ? name + ' was already confirmed for ' + eventTitle + '. They can leave an organiser-confirmed review from their account.'
+                  : name +
+                      ' can now leave an organiser-confirmed review for ' +
+                      eventTitle +
+                      '. We email them a review link when delivery is available.'
+              );
+            } else {
+              show(
+                true,
+                already ? 'Already declined' : 'Claim declined',
+                already
+                  ? 'This claim for ' + name + ' was already declined.'
+                  : 'Thanks — we recorded that ' + name + ' did not attend ' + eventTitle + '.'
+              );
+            }
+          })
+          .catch(function (err) {
+            var aborted = err && (err.name === 'AbortError' || err.code === 20);
+            show(
+              false,
+              aborted ? 'Taking too long' : 'Something went wrong',
+              aborted
+                ? 'The save did not finish in time. Tap again, or open Reviews in your organiser workspace.'
+                : 'Please try again, or open Reviews in your organiser workspace.'
+            );
+            restoreRetry(nextDecision);
+          })
+          .then(function () {
+            if (timer) clearTimeout(timer);
+          });
+      }
+
+      if (yesBtn) {
+        yesBtn.addEventListener('click', function () {
+          submitDecision('yes');
+        });
+      }
+      if (noBtn) {
+        noBtn.addEventListener('click', function () {
+          submitDecision('no');
+        });
+      }
+
+      if (!token) {
+        show(
+          false,
+          'Invalid link',
+          'This confirmation link is missing details. Open the email again or check pending claims in your workspace.'
+        );
         return;
       }
 
-      fetch('/api/attendance-claim', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: token, decision: decision }),
-      })
-        .then(function (r) {
-          return r.json().then(function (data) {
-            return { okHttp: r.ok, data: data || {} };
-          });
-        })
-        .then(function (res) {
-          if (!res.okHttp || !res.data.ok) {
-            show(
-              false,
-              'Link expired or already used',
-              res.data.message || 'We could not update this claim. Check pending claims in your organiser workspace.'
-            );
-            return;
-          }
-          var confirmed = res.data.decision === 'yes';
-          var name = (res.data.claim && res.data.claim.attendeeName) || 'The attendee';
-          var eventTitle = (res.data.claim && res.data.claim.eventTitle) || 'the event';
-          if (confirmed) {
-            show(
-              true,
-              'Attendance confirmed',
-              name +
-                ' can now leave an organiser-confirmed review for ' +
-                eventTitle +
-                '. It will be labelled Organiser confirmed — not Verified attendee.'
-            );
-          } else {
-            show(
-              true,
-              'Claim declined',
-              'Thanks — we told the system that ' + name + ' did not attend ' + eventTitle + '.'
-            );
-          }
-        })
-        .catch(function () {
-          show(false, 'Something went wrong', 'Please try again from the email, or open Reviews in your organiser workspace.');
-        });
+      // Explicit click — do not auto-POST on load (email scanners + hung saves looked like “nothing happened”).
+      showPrompt(decision);
     })();
   </script>
 </body>

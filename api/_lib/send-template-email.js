@@ -188,6 +188,8 @@ const TRANSACTIONAL_EMAIL_SLUGS = new Set([
   'event_intake_listed',
   'post_event_review_request',
   'post_event_review_reminder',
+  'attendance_claim_request',
+  'attendance_claim_confirmed_review',
   'event_saved_search_match',
   'guest_visit_followup',
   'alumni_fast_pass_invite',
@@ -764,6 +766,8 @@ function shouldSkipEmailAllowlist(slug) {
     slug === 'franchise_claim_invite_followup' ||
     slug === 'distributorship_claim_invite' ||
     slug === 'organiser_claim_confirmed' ||
+    slug === 'attendance_claim_request' ||
+    slug === 'attendance_claim_confirmed_review' ||
     slug === 'partner_programme_invite' ||
     slug === 'city_partner_payment_welcome' ||
     slug === 'county_partner_payment_welcome' ||
