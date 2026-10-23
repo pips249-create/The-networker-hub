@@ -105,7 +105,7 @@ async function assertCanCreateClaim(sb, attendeeId, eventId) {
   const { data: eventRow, error: evErr } = await sb
     .from('events')
     .select(
-      'id, title, slug, starts_at, ends_at, organiser_id, status, listing_status, image_url, organisers ( id, name, slug, photo_url, contact_email, email )'
+      'id, title, slug, starts_at, ends_at, organiser_id, status, image_url, organisers ( id, name, slug, photo_url, contact_email, email, listing_status )'
     )
     .eq('id', eventId)
     .maybeSingle();
@@ -832,9 +832,8 @@ async function searchClaimablePastEvents(session, input) {
   const hasOrganiser = isUuid(organiserId);
   const dateOk = /^\d{4}-\d{2}-\d{2}$/.test(dateStr);
 
-  // Date-first: a calendar day alone is enough. Group filter is optional.
-  // Without a date, still require a group so we do not dump every past Hub event.
-  if (!dateOk && !hasOrganiser) return emptyClaimableEventsResult();
+  // Group is required — attendees claim a night with a specific networking group.
+  if (!hasOrganiser) return emptyClaimableEventsResult();
 
   const nowIso = new Date().toISOString();
   const oldest = addDaysIso(null, -CLAIM_WINDOW_DAYS);
@@ -845,12 +844,11 @@ async function searchClaimablePastEvents(session, input) {
       'id, title, slug, starts_at, ends_at, image_url, status, organiser_id, organisers ( id, name, slug, photo_url )'
     )
     .in('status', ['published', 'archived'])
+    .eq('organiser_id', organiserId)
     .lt('starts_at', nowIso)
     .gte('starts_at', oldest)
     .order('starts_at', { ascending: false })
-    .limit(dateOk && !hasOrganiser ? 120 : 80);
-
-  if (hasOrganiser) query = query.eq('organiser_id', organiserId);
+    .limit(80);
 
   // Narrow at the DB when a date is set; exact London calendar day is applied after fetch.
   if (dateOk) {

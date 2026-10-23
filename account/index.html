@@ -909,18 +909,22 @@
         <button type="button" class="ad-claim-modal-close" id="ad-claim-modal-close" aria-label="Close">×</button>
         <h2 class="ad-claim-modal-title" id="ad-claim-modal-title">Add an event you attended</h2>
         <p class="ad-claim-modal-sub" id="ad-claim-modal-sub">
-          Pick the date you attended — we’ll list matching past Hub events. We’ll email the organiser to confirm; if they say yes, you can leave a review.
+          First choose the networking group, then pick the date you attended. We’ll email the organiser to confirm; if they say yes, you can leave a review.
         </p>
-        <div id="ad-claim-step-date">
-          <label class="ad-claim-label" for="ad-claim-event-date">When did you attend?</label>
-          <input type="date" id="ad-claim-event-date" class="ad-claim-search" autocomplete="off" required />
-          <p class="ad-claim-date-hint" id="ad-claim-date-hint">Searches all groups for that day (last 90 days). Optional: narrow by group or event name below.</p>
-          <label class="ad-claim-label" for="ad-claim-search">Filter by group or event name (optional)</label>
+        <div id="ad-claim-step-group">
+          <label class="ad-claim-label" for="ad-claim-search">Search for the group</label>
           <input type="search" id="ad-claim-search" class="ad-claim-search" placeholder="e.g. The Networker Hub · Pip’s Test" autocomplete="off" />
+        </div>
+        <div id="ad-claim-step-event" hidden>
+          <button type="button" class="ad-claim-back" id="ad-claim-back">← Change group</button>
+          <p class="ad-claim-selected-group" id="ad-claim-selected-group"></p>
+          <label class="ad-claim-label" for="ad-claim-event-date">When did you attend?</label>
+          <input type="date" id="ad-claim-event-date" class="ad-claim-search" autocomplete="off" />
+          <p class="ad-claim-date-hint" id="ad-claim-date-hint">Pick the day you attended. Leave blank to list every claimable event from this group in the last 90 days.</p>
         </div>
         <p class="ad-claim-error" id="ad-claim-error" hidden role="alert"></p>
         <div class="ad-claim-results" id="ad-claim-results" role="list"></div>
-        <p class="ad-claim-hint" id="ad-claim-hint">Choose a date to see claimable events.</p>
+        <p class="ad-claim-hint" id="ad-claim-hint">Groups from your bookings appear below — or type a group name.</p>
       </div>
     </div>
 
@@ -1173,6 +1177,6 @@
     <script src="../js/attendee-auth-gate.js?v=20261021confirm2"></script>
     <script src="../js/organiser-image-upload.js?v=20261002offerimage1" defer></script>
     <script src="../js/attendee-member-offers.js?v=20261015offers1" defer></script>
-    <script src="../js/attendee-dashboard.js?v=20261023claimdraftrow10" defer></script>
+    <script src="../js/attendee-dashboard.js?v=20261023claimgroup11" defer></script>
   </body>
 </html>
