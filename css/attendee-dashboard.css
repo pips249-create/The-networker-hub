@@ -4016,58 +4016,206 @@ body.ad-share-modal-open {
 
 /* Attendance claims + Most networked */
 .ad-networked-card {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem 1.25rem;
-  align-items: flex-start;
-  justify-content: space-between;
-  margin: 0 0 1rem;
-  padding: 1rem 1.1rem;
-  border-radius: 14px;
-  background: linear-gradient(135deg, #f7f1ea 0%, #eef2f8 100%);
-  border: 1px solid #e4d9c8;
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 1.15rem 1.35rem;
+  align-items: center;
+  margin: 0 0 1.15rem;
+  padding: 1.15rem 1.25rem;
+  border-radius: 18px;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 140% at 0% 0%, rgba(189, 147, 46, 0.18) 0%, transparent 55%),
+    radial-gradient(90% 120% at 100% 100%, rgba(157, 96, 167, 0.14) 0%, transparent 50%),
+    linear-gradient(135deg, #fff8ec 0%, #f4eef8 48%, #ebe4f4 100%);
+  border: 1px solid rgba(189, 147, 46, 0.35);
+  box-shadow: 0 10px 28px rgba(45, 27, 94, 0.07);
+}
+
+.ad-networked-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 5px;
+  background: linear-gradient(180deg, var(--ad-coral) 0%, var(--ad-teal) 100%);
 }
 
 .ad-networked-card[hidden] {
   display: none !important;
 }
 
+.ad-networked-meter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 5.75rem;
+}
+
+.ad-networked-meter-ring {
+  --ad-networked-pct: 0;
+  width: 5.5rem;
+  height: 5.5rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: conic-gradient(
+    var(--ad-coral) calc(var(--ad-networked-pct) * 1%),
+    rgba(45, 27, 94, 0.1) 0
+  );
+  box-shadow: inset 0 0 0 1px rgba(189, 147, 46, 0.25);
+}
+
+.ad-networked-meter-ring-inner {
+  width: 4.15rem;
+  height: 4.15rem;
+  border-radius: 50%;
+  background: #fffdf8;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.05rem;
+  box-shadow: 0 1px 0 rgba(45, 27, 94, 0.04);
+}
+
+.ad-networked-meter-score {
+  font-size: 1.55rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--ad-slate);
+}
+
+.ad-networked-meter-of {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--ad-coral);
+}
+
+.ad-networked-meter-label {
+  margin: 0.15rem 0 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ad-slate);
+}
+
+.ad-networked-meter-status {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ad-text-mid);
+  text-align: center;
+}
+
+.ad-networked-card--nominated .ad-networked-meter-ring {
+  background: conic-gradient(var(--ad-coral) 100%, rgba(45, 27, 94, 0.1) 0);
+}
+
+.ad-networked-card--nominated .ad-networked-meter-status {
+  color: var(--ad-coral);
+}
+
 .ad-networked-kicker {
   margin: 0 0 0.25rem;
   font-size: 0.72rem;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #8a6a2b;
+  color: var(--ad-coral);
 }
 
 .ad-networked-title {
   margin: 0 0 0.35rem;
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: var(--ad-teal-dark, #1c2040);
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ad-slate);
 }
 
 .ad-networked-text {
-  margin: 0;
-  max-width: 36rem;
+  margin: 0 0 0.85rem;
+  max-width: 38rem;
   font-size: 0.9rem;
   line-height: 1.5;
-  color: #5a5560;
+  color: var(--ad-text-mid);
+}
+
+.ad-networked-stats {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.ad-networked-stats li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 5.25rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(45, 27, 94, 0.08);
+}
+
+.ad-networked-stat-value {
+  font-size: 1.05rem;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--ad-slate);
+}
+
+.ad-networked-stat-label {
+  font-size: 0.68rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--ad-text-soft);
 }
 
 .ad-networked-card-actions {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: stretch;
   gap: 0.5rem;
 }
 
-.ad-networked-score {
-  margin: 0;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #452d5c;
+.ad-networked-card-actions .ad-btn {
+  white-space: nowrap;
+  box-shadow: 0 6px 16px rgba(189, 147, 46, 0.28);
+}
+
+@media (max-width: 820px) {
+  .ad-networked-card {
+    grid-template-columns: 1fr;
+    justify-items: start;
+  }
+
+  .ad-networked-meter {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.85rem;
+    min-width: 0;
+  }
+
+  .ad-networked-meter-label,
+  .ad-networked-meter-status {
+    text-align: left;
+  }
+
+  .ad-networked-card-actions {
+    width: 100%;
+  }
+
+  .ad-networked-card-actions .ad-btn {
+    width: 100%;
+  }
 }
 
 .ad-claim-modal {

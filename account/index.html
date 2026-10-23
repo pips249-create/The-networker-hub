@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20261016signin1" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260812footer11" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260929services2" />
-    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20261015offers1" />
+    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20261023networked1" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20260812footer10" />
     <script src="../js/hub-defer-css.js?v=20260828perf2" data-hrefs="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&display=swap"></script>
 
@@ -251,15 +251,43 @@
                 <div class="ad-saved-pane" data-tickets-pane="past" role="tabpanel" hidden>
                   <div class="ad-saved-pane-inner ad-saved-pane-inner--table">
                     <aside class="ad-networked-card" id="ad-networked-card" hidden>
+                      <div class="ad-networked-meter" aria-live="polite">
+                        <div
+                          class="ad-networked-meter-ring"
+                          id="ad-networked-meter-ring"
+                          role="img"
+                          aria-label="Monthly networked score"
+                        >
+                          <div class="ad-networked-meter-ring-inner">
+                            <span class="ad-networked-meter-score" id="ad-networked-meter-score">0</span>
+                            <span class="ad-networked-meter-of" id="ad-networked-meter-of">/ 3</span>
+                          </div>
+                        </div>
+                        <p class="ad-networked-meter-label" id="ad-networked-meter-label">This month</p>
+                        <p class="ad-networked-meter-status" id="ad-networked-meter-status">Toward nomination</p>
+                      </div>
                       <div class="ad-networked-card-copy">
                         <p class="ad-networked-kicker">Most networked networker</p>
                         <h3 class="ad-networked-title" id="ad-networked-title">Build your networker record</h3>
                         <p class="ad-networked-text" id="ad-networked-text">
                           Claim events you attended from our organiser list. Verified Hub tickets count fully; organiser-confirmed claims count as half toward this month’s nomination.
                         </p>
+                        <ul class="ad-networked-stats" id="ad-networked-stats" aria-label="Score breakdown">
+                          <li>
+                            <span class="ad-networked-stat-value" id="ad-networked-stat-verified">0</span>
+                            <span class="ad-networked-stat-label">Verified</span>
+                          </li>
+                          <li>
+                            <span class="ad-networked-stat-value" id="ad-networked-stat-claims">0</span>
+                            <span class="ad-networked-stat-label">Confirmed claims</span>
+                          </li>
+                          <li>
+                            <span class="ad-networked-stat-value" id="ad-networked-stat-groups">0</span>
+                            <span class="ad-networked-stat-label">Groups</span>
+                          </li>
+                        </ul>
                       </div>
                       <div class="ad-networked-card-actions">
-                        <p class="ad-networked-score" id="ad-networked-score" hidden></p>
                         <button type="button" class="ad-btn ad-btn-primary" id="ad-claim-attendance-open">
                           Add an event you attended
                         </button>
@@ -1177,6 +1205,6 @@
     <script src="../js/attendee-auth-gate.js?v=20261021confirm2"></script>
     <script src="../js/organiser-image-upload.js?v=20261002offerimage1" defer></script>
     <script src="../js/attendee-member-offers.js?v=20261015offers1" defer></script>
-    <script src="../js/attendee-dashboard.js?v=20261023claimgroup11" defer></script>
+    <script src="../js/attendee-dashboard.js?v=20261023networked1" defer></script>
   </body>
 </html>

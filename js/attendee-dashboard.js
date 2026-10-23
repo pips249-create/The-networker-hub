@@ -4495,22 +4495,54 @@
     const card = document.getElementById('ad-networked-card');
     if (!card) return;
     card.hidden = false;
+
+    const n = networkedScore || {
+      score: 0,
+      verifiedCount: 0,
+      confirmedCount: 0,
+      distinctOrganisers: 0,
+      nominationMin: 3,
+      nominated: false,
+      periodLabel: '',
+    };
+    const min = Number(n.nominationMin) > 0 ? Number(n.nominationMin) : 3;
+    const score = Number(n.score) || 0;
+    const pct = Math.max(0, Math.min(100, Math.round((score / min) * 100)));
+    const scoreLabel = Number.isInteger(score) ? String(score) : String(score);
+
     const title = document.getElementById('ad-networked-title');
     const text = document.getElementById('ad-networked-text');
-    const scoreEl = document.getElementById('ad-networked-score');
-    const n = networkedScore;
-    if (!n) {
-      if (title) title.textContent = 'Get nominated for Most networked networker';
-      if (text) {
-        text.textContent =
-          'Claim events you attended from our organiser list. Verified Hub tickets count fully; organiser-confirmed claims count as half toward this month’s nomination.';
-      }
-      if (scoreEl) {
-        scoreEl.hidden = true;
-        scoreEl.textContent = '';
-      }
-      return;
+    const ring = document.getElementById('ad-networked-meter-ring');
+    const scoreEl = document.getElementById('ad-networked-meter-score');
+    const ofEl = document.getElementById('ad-networked-meter-of');
+    const labelEl = document.getElementById('ad-networked-meter-label');
+    const statusEl = document.getElementById('ad-networked-meter-status');
+    const verifiedEl = document.getElementById('ad-networked-stat-verified');
+    const claimsEl = document.getElementById('ad-networked-stat-claims');
+    const groupsEl = document.getElementById('ad-networked-stat-groups');
+
+    card.classList.toggle('ad-networked-card--nominated', !!n.nominated);
+    if (ring) {
+      ring.style.setProperty('--ad-networked-pct', String(pct));
+      ring.setAttribute(
+        'aria-label',
+        'Monthly networked score ' + scoreLabel + ' of ' + min
+      );
     }
+    if (scoreEl) scoreEl.textContent = scoreLabel;
+    if (ofEl) ofEl.textContent = '/ ' + min;
+    if (labelEl) labelEl.textContent = n.periodLabel || 'This month';
+    if (statusEl) {
+      statusEl.textContent = n.nominated
+        ? 'Nominated'
+        : score > 0
+          ? Math.max(0, Math.round((min - score) * 10) / 10) + ' to go'
+          : 'Toward nomination';
+    }
+    if (verifiedEl) verifiedEl.textContent = String(n.verifiedCount || 0);
+    if (claimsEl) claimsEl.textContent = String(n.confirmedCount || 0);
+    if (groupsEl) groupsEl.textContent = String(n.distinctOrganisers || 0);
+
     if (title) {
       title.textContent = n.nominated
         ? 'You’re in the running for ' + (n.periodLabel || 'this month')
@@ -4518,23 +4550,10 @@
     }
     if (text) {
       text.textContent = n.nominated
-        ? 'Keep claiming or booking events to stay ahead. Organiser-confirmed reviews are labelled clearly and count as half toward your score.'
-        : 'Reach a score of ' +
-          (n.nominationMin || 3) +
-          ' this month (verified attendances + half for organiser-confirmed claims) to get nominated.';
-    }
-    if (scoreEl) {
-      scoreEl.hidden = false;
-      scoreEl.textContent =
-        'Score ' +
-        n.score +
-        ' · ' +
-        n.verifiedCount +
-        ' verified · ' +
-        n.confirmedCount +
-        ' organiser-confirmed · ' +
-        n.distinctOrganisers +
-        ' groups';
+        ? 'Keep claiming or booking events to stay ahead. Organiser-confirmed claims count as half; Hub tickets count fully.'
+        : 'Reach ' +
+          min +
+          ' this month to get nominated. Hub tickets count fully; organiser-confirmed claims count as half.';
     }
   }
 
