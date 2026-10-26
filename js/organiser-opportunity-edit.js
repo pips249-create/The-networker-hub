@@ -78,7 +78,7 @@
   const TYPE_CATEGORY_HINTS = {
     franchise: 'retail',
     networking: 'networking',
-    'network-marketing': 'mlm',
+    'network-marketing': 'network-marketing',
   };
 
   const MAX_CATEGORIES = 2;
@@ -102,7 +102,8 @@
     pets: 'Pets & Animals',
     leisure: 'Leisure, travel & hospitality',
     networking: 'Networking',
-    mlm: 'Network marketing',
+    'network-marketing': 'Network marketing',
+    mlm: 'Network marketing', // legacy slug — normalised on load/save
     general: 'Other',
   };
 
@@ -398,13 +399,16 @@
 
   function getSelectedCategories() {
     return Array.from(document.querySelectorAll('#oe-category-group input[name="oe-category"]:checked'))
-      .map((input) => input.value.trim())
+      .map((input) => normalizeCategoryId(input.value))
       .filter(Boolean)
       .slice(0, MAX_CATEGORIES);
   }
 
   function setSelectedCategories(categories) {
-    const selected = (categories || []).filter(Boolean).slice(0, MAX_CATEGORIES);
+    const selected = (categories || [])
+      .map(normalizeCategoryId)
+      .filter(Boolean)
+      .slice(0, MAX_CATEGORIES);
     const selectedSet = new Set(selected);
     document.querySelectorAll('#oe-category-group input[name="oe-category"]').forEach((input) => {
       input.checked = selectedSet.has(input.value);
@@ -412,11 +416,20 @@
     syncCategoryLimitHint(false);
   }
 
+  function normalizeCategoryId(raw) {
+    const id = String(raw || '')
+      .trim()
+      .toLowerCase();
+    if (!id) return '';
+    if (id === 'mlm') return 'network-marketing';
+    return id;
+  }
+
   function categoriesFromOpportunity(opp) {
     const ordered = [];
     const seen = {};
     function add(raw) {
-      const id = String(raw || '').trim();
+      const id = normalizeCategoryId(raw);
       if (!id || seen[id]) return;
       seen[id] = true;
       ordered.push(id);

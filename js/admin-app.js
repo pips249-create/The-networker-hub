@@ -26662,12 +26662,13 @@
     ['pets', 'Pets & Animals'],
     ['leisure', 'Leisure, travel & hospitality'],
     ['networking', 'Networking'],
-    ['mlm', 'Network marketing'],
+    ['network-marketing', 'Network marketing'],
     ['general', 'Other'],
   ];
 
   function opportunityCategoryOptions(selected) {
     var current = String(selected || 'general').trim() || 'general';
+    if (current === 'mlm') current = 'network-marketing';
     return OPPORTUNITY_CATEGORIES.map(function (pair) {
       return (
         '<option value="' +
@@ -27729,6 +27730,7 @@
 
   function opportunityCategoryLabel(category) {
     var current = String(category || 'general').trim() || 'general';
+    if (current === 'mlm') current = 'network-marketing';
     for (var i = 0; i < OPPORTUNITY_CATEGORIES.length; i += 1) {
       if (OPPORTUNITY_CATEGORIES[i][0] === current) return OPPORTUNITY_CATEGORIES[i][1];
     }

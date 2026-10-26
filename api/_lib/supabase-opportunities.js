@@ -213,11 +213,21 @@ function buildOpportunityTags(types, payload) {
   return tags;
 }
 
+/** Canonical industry/category slug — legacy "mlm" stored the banned word as the ID. */
+function normalizeCategoryId(raw) {
+  const id = String(raw || '')
+    .trim()
+    .toLowerCase();
+  if (!id) return '';
+  if (id === 'mlm') return 'network-marketing';
+  return id;
+}
+
 function normalizeCategories(payload) {
   const ordered = [];
   const seen = {};
   function add(raw) {
-    const id = String(raw || '').trim();
+    const id = normalizeCategoryId(raw);
     if (!id || seen[id]) return;
     seen[id] = true;
     ordered.push(id);
@@ -1898,6 +1908,7 @@ module.exports = {
   incrementOpportunityViewCount,
   normalizeType,
   normalizeTypes,
+  normalizeCategoryId,
   normalizeCategories,
   normalizeMeta,
   deriveOpportunityGeo,

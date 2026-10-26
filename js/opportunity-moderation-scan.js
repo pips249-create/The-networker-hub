@@ -60,13 +60,13 @@
 
   function collectOpportunityText(opportunity) {
     var meta = normalizeMeta(opportunity && opportunity.meta);
+    // Free-text fields only — skip category/type/tags so taxonomy slugs (e.g. legacy
+    // category "mlm") cannot false-positive recruitment / MLM pattern checks.
     var parts = [
       opportunity && opportunity.title,
       opportunity && opportunity.description,
       opportunity && opportunity.desc,
       opportunity && opportunity.host,
-      opportunity && opportunity.category,
-      opportunity && opportunity.type,
     ];
     if (opportunity && Array.isArray(opportunity.about)) {
       parts = parts.concat(opportunity.about);
@@ -74,9 +74,6 @@
     parts = parts.concat(meta.flatMap(function (m) {
       return [m.key, m.val];
     }));
-    if (opportunity && Array.isArray(opportunity.tags)) {
-      parts = parts.concat(opportunity.tags);
-    }
     return parts
       .map(function (p) {
         return String(p || '').trim();

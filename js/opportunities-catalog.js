@@ -33,7 +33,7 @@
     { id: 'pets', label: 'Pets & Animals' },
     { id: 'leisure', label: 'Leisure, travel & hospitality' },
     { id: 'networking', label: 'Networking' },
-    { id: 'mlm', label: 'Network marketing' },
+    { id: 'network-marketing', label: 'Network marketing' },
     { id: 'general', label: 'Other' },
   ];
 
@@ -41,6 +41,8 @@
     acc[opt.id] = opt.label;
     return acc;
   }, {});
+  // Legacy category slug (avoided in forms — "mlm" tripped content moderation).
+  CATEGORY_LABELS.mlm = 'Network marketing';
 
   var MLM_ASSET_SLUGS = {
     'VitaBlend UK': 'vitablend-uk',
@@ -128,7 +130,8 @@
     leisure: /travel|hotel|hospitality|leisure|holiday|tourism|entertainment/i,
     networking:
       /networking group|business networking|chamber of commerce|\bbni\b|networking club|referral group|networking (?:chapter|franchise)|ambassador programme|ambassador program/i,
-    mlm: /mlm|multi[\s-]?level|network marketing|direct sales|independent consultant|team build|downline|upline|ambassador/i,
+    'network-marketing':
+      /mlm|multi[\s-]?level|network marketing|direct sales|independent consultant|team build|downline|upline|ambassador/i,
     guaranteed_income: /guaranteed\s+(income|earnings|profit|return)|passive income|financial freedom|unlimited income|quit your job/i,
     unregulated_investment: /crypto(?:currency)?|forex|binary option|unregulated investment|high[\s-]?yield|hyip|ponzi/i,
   };
@@ -441,11 +444,20 @@
     return deriveCitySlugs(item);
   }
 
+  function normalizeCategoryId(raw) {
+    var id = String(raw || '')
+      .trim()
+      .toLowerCase();
+    if (!id) return '';
+    if (id === 'mlm') return 'network-marketing';
+    return id;
+  }
+
   function listingCategories(item) {
     var ordered = [];
     var seen = {};
     function add(raw) {
-      var id = String(raw || '').trim();
+      var id = normalizeCategoryId(raw);
       if (!id || seen[id]) return;
       seen[id] = true;
       ordered.push(id);
@@ -462,7 +474,7 @@
   }
 
   function listingHasCategory(item, categoryId) {
-    var id = String(categoryId || '').trim();
+    var id = normalizeCategoryId(categoryId);
     if (!id) return false;
     return listingCategories(item).indexOf(id) !== -1;
   }
