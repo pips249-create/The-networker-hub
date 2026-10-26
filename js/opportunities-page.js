@@ -358,7 +358,7 @@
         ]
   )
     .filter(function (opt) {
-      return opt.id !== 'mlm' && opt.id !== 'general';
+      return opt.id !== 'network-marketing' && opt.id !== 'mlm' && opt.id !== 'general';
     })
     .map(function (opt) {
       var shortById = {
@@ -2907,7 +2907,8 @@
     finance: 'Finance, legal & admin',
     recruitment: 'Recruitment & staffing',
     networking: 'Networking',
-    mlm: 'MLM & Network Marketing',
+    'network-marketing': 'Network marketing',
+    mlm: 'Network marketing', // legacy slug
   };
 
   var INVEST_LABELS = {

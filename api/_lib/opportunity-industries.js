@@ -1,7 +1,7 @@
 /**
  * Allow-listed industry directory pages for Opportunities AEO.
  * Keep labels in sync with js/opportunities-catalog.js CATEGORY_OPTIONS.
- * Excludes mlm + general (not used as Industry Sponsor / directory chips).
+ * Excludes network-marketing + general (not used as Industry Sponsor / directory chips).
  */
 
 const OPPORTUNITY_INDUSTRIES = {

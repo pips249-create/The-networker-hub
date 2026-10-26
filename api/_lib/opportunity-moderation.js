@@ -54,16 +54,15 @@ const VAGUE_INVESTMENT = /^(unlimited|n\/?a|tbc|tba|contact|enquire|varies|negot
 
 function collectOpportunityText(opportunity) {
   const meta = normalizeMeta(opportunity?.meta);
+  // Free-text fields only — skip category/type/tags so taxonomy slugs (e.g. legacy
+  // category "mlm") cannot false-positive recruitment / MLM pattern checks.
   const parts = [
     opportunity?.title,
     opportunity?.description,
     opportunity?.desc,
     opportunity?.host,
-    opportunity?.category,
-    opportunity?.type,
     ...(Array.isArray(opportunity?.about) ? opportunity.about : []),
     ...meta.flatMap((m) => [m.key, m.val]),
-    ...(Array.isArray(opportunity?.tags) ? opportunity.tags : []),
   ];
   return parts
     .map((p) => String(p || '').trim())
