@@ -205,6 +205,12 @@
       sendDefaultPii: false,
       ignoreErrors: [
         'NetworkError: A network error occurred.',
+        // Safari / WebKit: flaky mobile fetch often surfaces as TypeError "Load failed".
+        'Load failed',
+        'TypeError: Load failed',
+        'Failed to fetch',
+        'TypeError: Failed to fetch',
+        'NetworkError when attempting to fetch resource.',
         'Error invoking postMessage: Java object is gone',
         /Java object is gone/i,
         /undefined is not an object \(evaluating 'window\.webkit\.messageHandlers'\)/i,

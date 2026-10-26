@@ -55,7 +55,7 @@ The platform already shows disclaimers and blocks some MLM patterns in `js/oppor
 | Signal | Action |
 |--------|--------|
 | Guaranteed income / “quit your job in 90 days” | **Reject** |
-| Recruitment-primary network marketing (downline / upline / team-build income) | **Reject** |
+| Recruitment-primary network marketing (downline / upline / recruit-for-income) | **Reject** |
 | Product-selling network marketing (typed `network-marketing`, no recruitment pitch) | **Approve** if substantiated; not eligible for Premium Spotlight |
 | Investment opportunity without risk warning | **Reject** or require edit |
 | Legitimate franchise with territory + fee stated | **Approve** if substantiated |
