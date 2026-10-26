@@ -1299,12 +1299,29 @@
   }
 
   async function api(path, opts) {
-    const res = await fetch(path, {
-      credentials: 'include',
-      cache: 'no-store',
-      headers: { 'Content-Type': 'application/json', ...(opts && opts.headers) },
-      ...opts,
-    });
+    let res;
+    try {
+      res = await fetch(path, {
+        credentials: 'include',
+        cache: 'no-store',
+        headers: { 'Content-Type': 'application/json', ...(opts && opts.headers) },
+        ...opts,
+      });
+    } catch (err) {
+      // Safari often surfaces flaky mobile network as TypeError: "Load failed".
+      const detail = String((err && err.message) || err || '').trim();
+      return {
+        ok: false,
+        status: 0,
+        data: {
+          error: 'network_error',
+          message:
+            'Connection interrupted — check your signal and try again.' +
+            (detail && detail !== 'Load failed' && detail !== 'Failed to fetch' ? ' (' + detail + ')' : ''),
+        },
+        networkError: true,
+      };
+    }
     let data = {};
     try {
       data = await res.json();
@@ -3352,17 +3369,19 @@
       if (!res.ok) {
         const err = res.data.error || '';
         const msg =
-          err === 'opportunities_unavailable'
-            ? 'Opportunity listings are not available yet — contact support if this persists.'
-            : err === 'cover_upload_failed'
-              ? 'Your cover photo could not be uploaded. Try a smaller JPG or PNG (under 2MB) and save again.'
-              : err === 'review_submission_failed'
-                ? 'Your listing saved but could not be queued for review. Please try submitting again.'
-                : err === 'live_listing_resubmit_required'
-                  ? 'Live listings must be submitted for reapproval. Use Submit changes for reapproval — your subscription stays active.'
-                  : err === 'pending_review_locked'
-                    ? 'This listing could not be updated. Change the fields you need and save again — it stays on the same submission.'
-                    : res.data.message || err || 'Could not save opportunity';
+          err === 'network_error'
+            ? res.data.message || 'Connection interrupted — check your signal and try again.'
+            : err === 'opportunities_unavailable'
+              ? 'Opportunity listings are not available yet — contact support if this persists.'
+              : err === 'cover_upload_failed'
+                ? 'Your cover photo could not be uploaded. Try a smaller JPG or PNG (under 2MB) and save again.'
+                : err === 'review_submission_failed'
+                  ? 'Your listing saved but could not be queued for review. Please try submitting again.'
+                  : err === 'live_listing_resubmit_required'
+                    ? 'Live listings must be submitted for reapproval. Use Submit changes for reapproval — your subscription stays active.'
+                    : err === 'pending_review_locked'
+                      ? 'This listing could not be updated. Change the fields you need and save again — it stays on the same submission.'
+                      : res.data.message || err || 'Could not save opportunity';
         showAlert(msg);
         return;
       }
@@ -3613,6 +3632,11 @@
         if (res.ok && res.data.opportunity) {
           prefillFromOpportunity(res.data.opportunity);
           await loadOpenDaysForEdit(editId);
+        } else if (res.networkError || res.data.error === 'network_error') {
+          showAlert(
+            res.data.message ||
+              'Connection interrupted while loading this listing — check your signal and refresh.'
+          );
         } else {
           showAlert('Could not load this opportunity. Check you have access to this listing.');
         }
@@ -3631,15 +3655,22 @@
     };
 
     const loading = window.organiserPageLoading;
-    if (loading && loading.run) {
-      await loading.run('Loading', loadWork);
-    } else {
-      if (loading) loading.show('Loading');
-      try {
-        await loadWork();
-      } finally {
-        if (loading) loading.hide();
+    try {
+      if (loading && loading.run) {
+        await loading.run('Loading', loadWork);
+      } else {
+        if (loading) loading.show('Loading');
+        try {
+          await loadWork();
+        } finally {
+          if (loading) loading.hide();
+        }
       }
+    } catch (err) {
+      showAlert(
+        'Could not load this page — check your connection and refresh. ' +
+          String((err && err.message) || '')
+      );
     }
 
     document.getElementById('oe-unpublish-listing')?.addEventListener('click', function () {
@@ -3721,16 +3752,29 @@
 
   document.getElementById('oe-form').addEventListener('submit', (e) => {
     e.preventDefault();
-    saveOpportunity({ publish: true });
+    saveOpportunity({ publish: true }).catch(function (err) {
+      showAlert(String((err && err.message) || 'Could not save opportunity'));
+    });
   });
 
   document.getElementById('oe-save-draft').addEventListener('click', () => {
-    saveOpportunity({ publish: false });
+    saveOpportunity({ publish: false }).catch(function (err) {
+      showAlert(String((err && err.message) || 'Could not save draft'));
+    });
   });
 
+  function bootOpportunityEdit() {
+    init().catch(function (err) {
+      showAlert(
+        'Could not open the opportunity editor — check your connection and refresh. ' +
+          String((err && err.message) || '')
+      );
+    });
+  }
+
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', bootOpportunityEdit);
   } else {
-    init();
+    bootOpportunityEdit();
   }
 })();

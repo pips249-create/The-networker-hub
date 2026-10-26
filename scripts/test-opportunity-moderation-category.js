@@ -53,9 +53,29 @@ ok(
   serverResult === null || !serverResult.reasons.some((r) => r.id === 'recruitment_primary')
 );
 
+const everydayPitch = {
+  title: 'Utility Warehouse Partner',
+  description: 'Be your own boss and build your team selling energy and broadband.',
+  category: 'retail',
+  type: 'network-marketing',
+  meta: [
+    { key: 'Investment', val: '£0' },
+    { key: 'Location', val: 'UK-wide' },
+  ],
+};
+ok(
+  'client allows be your own boss / build your team',
+  clientScan.scanOpportunityRedFlags(everydayPitch, { includeMissingFields: false }) === null
+);
+ok(
+  'server allows be your own boss / build your team',
+  scanOpportunityRedFlags(everydayPitch) === null ||
+    !scanOpportunityRedFlags(everydayPitch).reasons.some((r) => r.id === 'recruitment_primary')
+);
+
 const stillBlocked = {
   title: 'Utility Warehouse Partner',
-  description: 'Be your own boss and build your downline.',
+  description: 'Earn from your downline and recruit for income.',
   category: 'retail',
   type: 'franchise',
   meta: [

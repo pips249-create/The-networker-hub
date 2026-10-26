@@ -11,9 +11,11 @@
   var RED_FLAG_PATTERNS = [
     {
       id: 'recruitment_primary',
-      label: 'Recruitment-primary network marketing (downline / team-build focus)',
+      // Keep hard recruitment signals only — everyday franchise pitch lines like
+      // "be your own boss" / "build your team" caused false blocks on legit listings.
+      label: 'Recruitment-primary network marketing (downline / upline focus)',
       regex:
-        /\bmlm\b|multi[\s-]?level(?:\s+market(?:ing)?)?|pyramid\s+schem|downline|upline|team[\s-]?build(?:ing)?|build\s+(?:your\s+)?(?:team|downline)|recruit(?:ing|ment)?\s+(?:for\s+)?(?:income|earnings|commission|others|people|distributors)|earn(?:ings)?\s+(?:from|by)\s+recruit|compensation\s+(?:based\s+)?on\s+recruit|get[\s-]?rich\s+quick|be\s+your\s+own\s+boss/i,
+        /\bmlm\b|multi[\s-]?level(?:\s+market(?:ing)?)?|pyramid\s+schem|downline|upline|recruit(?:ing|ment)?\s+(?:for\s+)?(?:income|earnings|commission|others|people|distributors)|earn(?:ings)?\s+(?:from|by)\s+recruit|compensation\s+(?:based\s+)?on\s+recruit|get[\s-]?rich\s+quick/i,
     },
     {
       id: 'guaranteed_income',
