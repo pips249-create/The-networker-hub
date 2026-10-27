@@ -903,12 +903,29 @@
           </aside>
           <section class="ee-booking-help-section ee-booking-help-section--accent org-connected-pricing" id="cb-pricing" aria-labelledby="cb-plans-title">
             <p class="cb-pricing-intro-badge" id="cb-pricing-intro-badge">Free to use</p>
-            <h2 id="cb-plans-title" class="org-page-subtitle">Connected booking is free</h2>
+            <h2 id="cb-plans-title" class="org-page-subtitle">What is Connected booking?</h2>
             <p class="ee-hint" id="cb-pricing-lede">
-              Keep checkout on Eventbrite, Ticket Tailor, or your own website. Sync buyers to your Networker UK attendee
-              list for verified reviews and round-ups — no monthly fee.
+              Connected lets you <strong>list events on The Networker UK</strong> while people keep booking on
+              <strong>Eventbrite</strong>, <strong>Ticket Tailor</strong>, or <strong>your own website</strong>. When
+              someone buys a ticket, we sync them onto your Networker UK attendee list so verified reviews and round-ups
+              still work. Checkout stays on your existing system — we do not take a cut of ticket sales.
+            </p>
+            <ul class="ee-hint" id="cb-free-benefits" style="margin: 12px 0 0; padding-left: 1.2rem; line-height: 1.55">
+              <li><strong>More reach</strong> — your events appear in the Networker UK directory and round-ups</li>
+              <li><strong>Same checkout</strong> — buyers finish payment where they already do</li>
+              <li><strong>Attendee sync</strong> — orders appear on your TNH attendee list (reviews included)</li>
+              <li><strong>Free</strong> — no monthly Connected fee; enable when you are ready</li>
+            </ul>
+            <p class="ee-hint" id="cb-what-you-do" style="margin-top: 12px">
+              After you enable Connected: turn on a booking provider once, then for each event open
+              <strong>Connected setup</strong>, paste the booking URL / event id, and publish.
             </p>
             <p class="ee-alert ee-alert-ok cb-checkout-banner" id="cb-checkout-banner" hidden role="status"></p>
+            <p class="ee-attendance-next" id="cb-activate-wrap" hidden style="margin-top: 16px">
+              <button type="button" class="ee-btn ee-btn-gold" id="cb-activate-free">
+                Enable Connected — free
+              </button>
+            </p>
             <div class="cb-plan-cards cb-plan-cards--pricing" id="cb-pricing-compare" hidden>
               <article class="cb-plan-card" data-cb-plan="starter">
                 <header class="cb-plan-card-head">
@@ -964,17 +981,12 @@
                 </div>
               </article>
             </div>
-            <ul class="ee-hint" id="cb-free-benefits" style="margin: 12px 0 0; padding-left: 1.2rem; line-height: 1.55">
-              <li>Unlimited Connected events on your organiser pages</li>
-              <li>Eventbrite, Ticket Tailor, or your own website</li>
-              <li>Real-time attendee sync for reviews and round-ups</li>
-            </ul>
             <div class="cb-poa-actions">
               <button type="button" class="ee-btn ee-btn-outline" id="cb-manage-billing" hidden>Manage billing</button>
               <a class="ee-btn ee-btn-outline" href="mailto:hi@thenetworkeruk.com?subject=Connected%20question">Questions? Email us</a>
-              <a class="ee-btn ee-btn-gold" href="#cb-providers-title">Set up a booking provider →</a>
+              <a class="ee-btn ee-btn-gold" id="cb-goto-providers" href="#cb-providers-title" hidden>Set up a booking provider →</a>
             </div>
-            <p class="ee-hint" id="cb-billing-tip">No subscription — enable a booking provider below, then link each event on Connected setup.</p>
+            <p class="ee-hint" id="cb-billing-tip">Read the summary above, then enable Connected when you are ready.</p>
             <p class="ee-hint ee-alert-warn" id="cb-slots-workspace-hint" hidden role="status">
               Choose which organiser pages use Connected on
               <a href="#groups" data-org-route="groups">Organiser pages</a> (tick your page(s) → Save assignment).
@@ -4212,7 +4224,7 @@
     <script src="../js/organiser-quarter-time.js?v=20260828openday2" defer></script>
     <script src="../js/organiser-setup-review.js?v=20260910impersonate1" defer></script>
     <script src="../js/organiser-connected-billing-banner.js?v=20260918setup1" defer></script>
-    <script src="../js/organiser-connected-booking-page.js?v=20261027free1" defer></script>
+    <script src="../js/organiser-connected-booking-page.js?v=20261027free2" defer></script>
     <script src="../js/organiser-connected-booking-providers.js?v=20261021test1" defer></script>
     <script src="../js/organiser-event-list-visibility.js?v=20260925recent1" defer></script>
     <script src="../js/organiser-dashboard.js?v=20261022claims1" defer></script>

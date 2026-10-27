@@ -10,7 +10,7 @@ Hub checkout (`checkout_mode: hub`) stays unchanged — tickets, membership, gue
 
 | | **Connected booking** (subscription) | **Link-out listing** (per event) |
 |--|--------------------------------------|----------------------------------|
-| **Billing** | Monthly plan (Starter / Growth / Scale) | **£9.99 + VAT once per event** |
+| **Billing** | Free (enable in workspace) | **Free** (redirect only) |
 | **Payment** | On organiser’s site | On organiser’s site |
 | **Hub shows** | Price label + link to book | Price label + **redirect URL** only |
 | **Webhook / API** | **Yes** — developer docs, HMAC POST | **No** |
@@ -48,7 +48,7 @@ When opening ticket/checkout setup for an event, organiser picks **one** model (
 
 ```
 [ Hub — sell on The Networker UK ]   [ Connected — subscription + webhook ]
-[ Link-out — £9.99/event, link only ]
+[ Link-out — free, link only ]
 ```
 
 If the event’s group is **not** on a Connected slot, hide Connected path (or show upgrade / assign slot).

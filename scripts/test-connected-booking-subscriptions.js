@@ -14,6 +14,7 @@ const {
 const {
   connectedBookingFreeEnabled,
   connectedBookingFreeDefaultPlan,
+  linkOutFreeEnabled,
   PLAN_GROUP_LIMITS,
 } = require('../api/_lib/connected-booking-util');
 
@@ -30,6 +31,11 @@ delete process.env.CONNECTED_BOOKING_REQUIRE_SUBSCRIPTION;
 assert.strictEqual(connectedBookingFreeEnabled(), true);
 assert.strictEqual(connectedBookingFreeDefaultPlan(), 'enterprise');
 assert.strictEqual(PLAN_GROUP_LIMITS.enterprise, null);
+const prevLinkOut = process.env.LINK_OUT_REQUIRE_PAYMENT;
+delete process.env.LINK_OUT_REQUIRE_PAYMENT;
+assert.strictEqual(linkOutFreeEnabled(), true);
+process.env.LINK_OUT_REQUIRE_PAYMENT = 'true';
+assert.strictEqual(linkOutFreeEnabled(), false);
 process.env.CONNECTED_BOOKING_REQUIRE_SUBSCRIPTION = 'true';
 assert.strictEqual(connectedBookingFreeEnabled(), false);
 process.env.CONNECTED_BOOKING_FREE_PLAN = 'scale';
@@ -39,6 +45,8 @@ if (prevRequire == null) delete process.env.CONNECTED_BOOKING_REQUIRE_SUBSCRIPTI
 else process.env.CONNECTED_BOOKING_REQUIRE_SUBSCRIPTION = prevRequire;
 if (prevFreePlan == null) delete process.env.CONNECTED_BOOKING_FREE_PLAN;
 else process.env.CONNECTED_BOOKING_FREE_PLAN = prevFreePlan;
+if (prevLinkOut == null) delete process.env.LINK_OUT_REQUIRE_PAYMENT;
+else process.env.LINK_OUT_REQUIRE_PAYMENT = prevLinkOut;
 
 const starter = connectedBookingPlanTotals('starter');
 assert.strictEqual(starter.monthlyExVatPence, 1900);

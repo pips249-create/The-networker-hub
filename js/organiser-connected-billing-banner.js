@@ -333,7 +333,7 @@
       'Connected billing uses <strong>slots</strong> on organiser pages (not one event at a time). ' +
       'Tick the page(s) below, click <strong>Save assignment</strong>, then check the <strong>Connected</strong> column. ' +
       'Upgrade your plan for more slots. ' +
-      'Only need a booking link on one event? Use <strong>Link-out listing (£9.99 + VAT per event)</strong> — hub button to your site, no webhook, no attendee list or verified reviews on The Networker UK.';
+      'Only need a booking link on one event? Use free <strong>Link-out listing</strong> — hub button to your site, no webhook, no attendee list or verified reviews on The Networker UK.';
 
     var warn = overPublished || overPages || needsPick;
 
@@ -377,8 +377,8 @@
           (overPages
             ? '<a class="org-btn org-btn-gold org-btn-sm" href="/organiser/#cb-pricing">Upgrade plan</a> '
             : '') +
-          '<a class="org-btn org-btn-outline org-btn-sm" href="/organiser/booking-options#link-out">Link-out £9.99 / event</a> ' +
-          '<a class="org-btn org-btn-outline org-btn-sm" href="/organiser/#connected-booking">Connected plan &amp; billing</a>';
+          '<a class="org-btn org-btn-outline org-btn-sm" href="/organiser/booking-options#link-out">Link-out (free)</a> ' +
+          '<a class="org-btn org-btn-outline org-btn-sm" href="/organiser/#connected-booking">Connected booking</a>';
       } else {
         actions =
           '<a class="org-btn org-btn-gold org-btn-sm" href="' +
@@ -386,7 +386,7 @@
           '">' +
           (needsPick ? 'Choose organiser pages' : 'Connected booking & sync log') +
           '</a> ' +
-          '<a class="org-btn org-btn-outline org-btn-sm" href="/organiser/booking-options#link-out">Link-out £9.99 / event</a> ' +
+          '<a class="org-btn org-btn-outline org-btn-sm" href="/organiser/booking-options#link-out">Link-out (free)</a> ' +
           (forOrgPage
             ? ''
             : '<a class="org-btn org-btn-outline org-btn-sm" href="/organiser/#groups">Organiser pages</a>');

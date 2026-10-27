@@ -8,6 +8,7 @@ const {
   connectedBookingPilotGrantPlan,
   connectedBookingFreeEnabled,
   connectedBookingFreeDefaultPlan,
+  linkOutFreeEnabled,
   connectedBookingPreviewLocked,
   newWebhookSecret,
   signWebhookPayload,
@@ -130,7 +131,7 @@ function connectedBookingSetupGuide(account, slotsMeta, hasWebhookSecret) {
     steps.push({
       key: 'subscribe',
       label: connectedBookingFreeEnabled()
-        ? 'Open this page once to activate Connected booking (free).'
+        ? 'Read what Connected does, then click Enable Connected (free).'
         : 'Activate a Connected plan (Subscribe or pilot grant).',
       done: false,
     });
@@ -138,7 +139,7 @@ function connectedBookingSetupGuide(account, slotsMeta, hasWebhookSecret) {
     steps.push({
       key: 'subscribe',
       label: connectedBookingFreeEnabled()
-        ? 'Connected booking active (free).'
+        ? 'Connected booking enabled (free).'
         : 'Connected plan active.',
       done: true,
     });
@@ -227,7 +228,8 @@ async function activateConnectedBookingComplimentary(sb, account, plan) {
 }
 
 /**
- * Free Connected (default) or legacy pilot-grant emails: activate without Stripe.
+ * Legacy pilot-grant emails still auto-activate on GET.
+ * Free Connected does not — organisers opt in via POST activate_free after reading the explainer.
  */
 async function ensureComplimentaryConnectedIfEligible(sb, account, sessionEmail) {
   if (!account?.id) {
@@ -237,19 +239,18 @@ async function ensureComplimentaryConnectedIfEligible(sb, account, sessionEmail)
     return { account, complimentaryGranted: false, alreadyActive: true };
   }
 
-  const free = connectedBookingFreeEnabled();
   const pilot = connectedBookingPilotGrantEligible(sessionEmail);
-  if (!free && !pilot) {
+  if (!pilot) {
     return { account, complimentaryGranted: false };
   }
 
-  const plan = free ? connectedBookingFreeDefaultPlan() : connectedBookingPilotGrantPlan();
+  const plan = connectedBookingPilotGrantPlan();
   const updated = await activateConnectedBookingComplimentary(sb, account, plan);
   return {
     account: updated,
     complimentaryGranted: true,
-    freeActivation: free,
-    pilotGranted: !free && pilot,
+    freeActivation: false,
+    pilotGranted: true,
   };
 }
 
@@ -371,7 +372,6 @@ module.exports = async function handler(req, res) {
     }
 
     let complimentaryGranted = false;
-    let freeActivation = false;
     if (req.method === 'GET') {
       const grantResult = await ensureComplimentaryConnectedIfEligible(
         sb,
@@ -380,7 +380,6 @@ module.exports = async function handler(req, res) {
       );
       account = grantResult.account;
       complimentaryGranted = Boolean(grantResult.complimentaryGranted);
-      freeActivation = Boolean(grantResult.freeActivation);
     }
 
     if (req.method === 'GET') {
@@ -405,14 +404,17 @@ module.exports = async function handler(req, res) {
       const hasCustomer = Boolean(String(account.connected_booking_stripe_customer_id || '').trim());
       const status = account.connected_booking_status || 'inactive';
       const free = connectedBookingFreeEnabled();
+      const linkOutFree = linkOutFreeEnabled();
+      const active = isConnectedPlanActive(account);
+      const sessionAllowed = connectedBookingAllowedForSession(auth.session);
+      const canActivateFree = Boolean(free && !active && sessionAllowed);
       const canStartCheckout =
         !free &&
         stripeCheckout &&
         (status === 'inactive' || status === 'cancelled' || status === 'past_due');
 
-      const sessionAllowed = connectedBookingAllowedForSession(auth.session);
       const canSeeConnected =
-        isConnectedPlanActive(account) ||
+        active ||
         accountHasAdminConnectedGrant(account) ||
         connectedBookingPilotGrantEligible(auth.session.email) ||
         (free && sessionAllowed) ||
@@ -422,9 +424,11 @@ module.exports = async function handler(req, res) {
         ok: true,
         featureEnabled: true,
         free,
+        linkOutFree,
+        canActivateFree,
         plan: account.connected_booking_plan || null,
         status,
-        active: isConnectedPlanActive(account),
+        active,
         groupCount,
         groupLimit: limit,
         hasWebhookSecret,
@@ -466,14 +470,14 @@ module.exports = async function handler(req, res) {
             : undefined),
         slots,
         connectedGranted: accountHasAdminConnectedGrant(account),
-        linkOutGranted: accountHasLinkOutGrant(account),
+        linkOutGranted: accountHasLinkOutGrant(account) || linkOutFree,
         navVisible: Boolean(
-          canSeeConnected || accountHasLinkOutGrant(account)
+          canSeeConnected || accountHasLinkOutGrant(account) || linkOutFree
         ),
         uiMode: (function () {
           const linkOutOnly =
             accountHasLinkOutGrant(account) &&
-            !isConnectedPlanActive(account) &&
+            !active &&
             !accountHasAdminConnectedGrant(account) &&
             !free;
           if (linkOutOnly) return 'link_out';
@@ -483,10 +487,9 @@ module.exports = async function handler(req, res) {
           ? {
               granted: true,
               plan: account.connected_booking_plan,
-              free: freeActivation || free,
-              message: freeActivation || free
-                ? 'Connected booking is free — activated for your account. Enable a booking provider below, then link each event on Connected setup.'
-                : 'Pilot access — Starter plan activated without charge for this login. Generate your webhook secret below.',
+              free: false,
+              message:
+                'Pilot access — plan activated without charge for this login. Generate your webhook secret below.',
             }
           : accountHasAdminConnectedGrant(account)
             ? {
@@ -495,13 +498,13 @@ module.exports = async function handler(req, res) {
                 message:
                   'Complimentary Connected booking allocated from Command Centre. Generate your webhook secret below if you want attendee sync.',
               }
-            : free && isConnectedPlanActive(account)
+            : free && active
               ? {
                   granted: true,
                   plan: account.connected_booking_plan,
                   free: true,
                   message:
-                    'Connected booking is free on your account. Enable a booking provider below, then link each event on Connected setup.',
+                    'Connected booking is enabled on your account. Enable a booking provider below, then link each event on Connected setup.',
                 }
               : undefined,
       });
@@ -583,6 +586,53 @@ module.exports = async function handler(req, res) {
       const email = String(auth.session.email || '').trim().toLowerCase();
       if (!email) {
         return json(res, 403, { ok: false, error: 'missing_email' });
+      }
+
+      if (body.action === 'activate_free') {
+        if (!connectedBookingFreeEnabled()) {
+          return json(res, 400, {
+            ok: false,
+            error: 'connected_booking_not_free',
+            message: 'Free activation is not available. Choose a paid plan instead.',
+          });
+        }
+        if (!connectedBookingAllowedForSession(auth.session)) {
+          return json(res, 403, {
+            ok: false,
+            error: 'preview_restricted',
+            message:
+              'Connected booking preview is limited to approved organiser accounts.',
+          });
+        }
+        if (isConnectedPlanActive(account)) {
+          return json(res, 200, {
+            ok: true,
+            alreadyActive: true,
+            plan: account.connected_booking_plan,
+            status: account.connected_booking_status,
+            active: true,
+          });
+        }
+        const plan = connectedBookingFreeDefaultPlan();
+        const updated = await activateConnectedBookingComplimentary(sb, account, plan);
+        try {
+          await maybeAutoAssignSingleStarterSlot(sb, updated);
+        } catch (autoErr) {
+          console.warn('[organiser-connected-booking] auto slot after activate', autoErr?.message || autoErr);
+        }
+        return json(res, 200, {
+          ok: true,
+          activated: true,
+          free: true,
+          plan: updated.connected_booking_plan,
+          status: updated.connected_booking_status,
+          active: true,
+          hasWebhookSecret: Boolean(
+            String(updated.connected_booking_webhook_secret || '').trim()
+          ),
+          message:
+            'Connected booking enabled. Next: choose Eventbrite, Ticket Tailor, or your own website below, then link each event.',
+        });
       }
 
       if (body.action === 'create_checkout') {
