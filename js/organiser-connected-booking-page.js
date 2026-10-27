@@ -223,8 +223,44 @@
 
   function applyBillingUi(data) {
     var billing = data.billing || {};
-    var canSubscribe = billing.canSubscribe !== false && billing.stripeCheckoutConfigured !== false;
+    var free = data.free === true;
+    var canSubscribe =
+      !free && billing.canSubscribe !== false && billing.stripeCheckoutConfigured !== false;
     var signedIn = data.ok === true;
+    var pricingCompare = document.getElementById('cb-pricing-compare');
+    var freeBenefits = document.getElementById('cb-free-benefits');
+    var plansTitle = document.getElementById('cb-plans-title');
+    var pricingBadge = document.getElementById('cb-pricing-intro-badge');
+    var pricingLede = document.getElementById('cb-pricing-lede');
+
+    if (free) {
+      if (pricingCompare) pricingCompare.hidden = true;
+      if (freeBenefits) freeBenefits.hidden = false;
+      if (plansTitle) plansTitle.textContent = 'Connected booking is free';
+      if (pricingBadge) pricingBadge.textContent = 'Free to use';
+      if (pricingLede) {
+        pricingLede.innerHTML =
+          'Keep checkout on Eventbrite, Ticket Tailor, or your own website. Sync buyers to your Networker UK attendee list for verified reviews and round-ups — <strong>no monthly fee</strong>.';
+      }
+      document.querySelectorAll('.cb-subscribe-btn').forEach(function (btn) {
+        btn.disabled = true;
+        btn.hidden = true;
+      });
+      var showPortal = false;
+      if (manageBilling) manageBilling.hidden = !showPortal;
+      if (manageBillingPanel) manageBillingPanel.hidden = !showPortal;
+      if (billingTip && signedIn) {
+        billingTip.textContent = data.active
+          ? 'Connected is active and free. Enable a booking provider below, then link each event on Connected setup.'
+          : 'Connected booking is free — refresh this page to activate, then enable a booking provider.';
+      }
+      return;
+    }
+
+    if (pricingCompare) pricingCompare.hidden = false;
+    if (freeBenefits) freeBenefits.hidden = true;
+    if (plansTitle) plansTitle.textContent = 'Choose your plan';
+    if (pricingBadge) pricingBadge.textContent = 'Introductory offer';
 
     applyPricingLabels(data.pricing);
 
@@ -234,6 +270,7 @@
     document.querySelectorAll('.cb-subscribe-btn').forEach(function (btn) {
       var plan = btn.getAttribute('data-cb-plan');
       var targetRank = planRank[plan] || 0;
+      btn.hidden = false;
       if (!signedIn) {
         btn.disabled = false;
         btn.textContent = 'Subscribe';
@@ -258,7 +295,7 @@
         btn.disabled = true;
         btn.textContent = 'Subscribed';
       } else {
-        btn.disabled = false;
+        btn.disabled = !canSubscribe;
         btn.textContent = 'Subscribe';
       }
     });
@@ -361,11 +398,16 @@
       if (titleEl) titleEl.textContent = 'Connected booking';
       if (leadEl) {
         leadEl.innerHTML =
-          'Subscribe here, enable <strong>Eventbrite</strong>, <strong>Ticket Tailor</strong>, or <strong>your own website</strong> once per account, then link each event on <strong>Connected setup</strong>. Use <strong>Recent sync attempts</strong> when buyers do not appear on your attendee list.';
+          data && data.free
+            ? 'Connected is <strong>free</strong>. Enable <strong>Eventbrite</strong>, <strong>Ticket Tailor</strong>, or <strong>your own website</strong> once per account, then link each event on <strong>Connected setup</strong>. Use <strong>Recent sync attempts</strong> when buyers do not appear on your attendee list.'
+            : 'Subscribe here, enable <strong>Eventbrite</strong>, <strong>Ticket Tailor</strong>, or <strong>your own website</strong> once per account, then link each event on <strong>Connected setup</strong>. Use <strong>Recent sync attempts</strong> when buyers do not appear on your attendee list.';
       }
       if (linkOutPanel) linkOutPanel.hidden = true;
       if (connectedOnly) connectedOnly.hidden = false;
-      if (gotoPricing) gotoPricing.hidden = false;
+      if (gotoPricing) {
+        gotoPricing.hidden = false;
+        gotoPricing.textContent = data && data.free ? 'Get started' : 'Plans & pricing';
+      }
       return mode;
     }
 

@@ -58,6 +58,26 @@ function connectedBookingPilotGrantEligible(email) {
   return Boolean(list && list.includes(em));
 }
 
+/**
+ * Connected booking is free by default (no Stripe subscribe).
+ * Set CONNECTED_BOOKING_REQUIRE_SUBSCRIPTION=true to restore paid plans.
+ */
+function connectedBookingFreeEnabled() {
+  const requirePaid = String(process.env.CONNECTED_BOOKING_REQUIRE_SUBSCRIPTION || '')
+    .trim()
+    .toLowerCase();
+  if (requirePaid === '1' || requirePaid === 'true' || requirePaid === 'yes') return false;
+  return true;
+}
+
+/** Default plan when activating free Connected — enterprise = unlimited organiser pages. */
+function connectedBookingFreeDefaultPlan() {
+  const plan = String(process.env.CONNECTED_BOOKING_FREE_PLAN || 'enterprise')
+    .trim()
+    .toLowerCase();
+  return plan in PLAN_GROUP_LIMITS ? plan : 'enterprise';
+}
+
 function connectedBookingPreviewLocked() {
   return Boolean(connectedBookingPreviewEmails()?.length);
 }
@@ -291,6 +311,8 @@ module.exports = {
   connectedBookingPilotGrantEmails,
   connectedBookingPilotGrantPlan,
   connectedBookingPilotGrantEligible,
+  connectedBookingFreeEnabled,
+  connectedBookingFreeDefaultPlan,
   connectedBookingPreviewLocked,
   connectedBookingAllowedForEmail,
   connectedBookingAllowedForSession,
