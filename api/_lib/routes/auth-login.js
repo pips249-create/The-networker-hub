@@ -22,6 +22,7 @@ const {
   redirectAfterOrganiserAuth,
   buildEmailVerifyRedirect,
 } = require('../organiser-auth-intent');
+const { parseVerifyEmailPath } = require('../organiser-email-verify-paths');
 const { getOrganiserAccessStatus } = require('../organiser-access-guard');
 const { touchLastSeen } = require('../hub-last-seen');
 
@@ -212,28 +213,40 @@ module.exports = async function handler(req, res) {
     });
 
     // Every account must confirm inbox access before My account / workspace.
+    // If login was reached from an inbox CTA (?code=…), keep that code on the
+    // verify redirect — rebuilding a code-free URL was wiping the prefill and
+    // often auto-sending a new code that invalidated the emailed digits.
     if (!isAdminRole(role)) {
       try {
         const accessStatus = await getOrganiserAccessStatus(sessionUser);
         if (!accessStatus.organiserEmailVerified) {
-          let nextAfterConfirm = redirect;
-          if (String(nextAfterConfirm || '').indexOf('/organiser/verify-email') === 0) {
-            nextAfterConfirm = body.next || (isOrganiserAuthIntent({
-              next: body.next,
-              intent: body.intent,
-            })
-              ? '/organiser/'
-              : '/welcome');
+          const organiserIntent = isOrganiserAuthIntent({
+            next: body.next,
+            intent: body.intent,
+          });
+          const defaultAfterConfirm = organiserIntent ? '/organiser/' : '/welcome';
+          const incoming =
+            parseVerifyEmailPath(body.next) || parseVerifyEmailPath(redirect);
+          let nextAfterConfirm = defaultAfterConfirm;
+          let inboxCode = '';
+          if (incoming) {
+            inboxCode = incoming.code || '';
+            nextAfterConfirm = incoming.next || defaultAfterConfirm;
+          } else if (String(redirect || '').indexOf('/organiser/verify-email') !== 0) {
+            nextAfterConfirm = redirect || defaultAfterConfirm;
           }
           redirect = buildEmailVerifyRedirect({
             next: nextAfterConfirm,
             email: sessionUser.email,
+            code: inboxCode || undefined,
           });
         }
       } catch {
+        const incoming = parseVerifyEmailPath(body.next);
         redirect = buildEmailVerifyRedirect({
-          next: body.next || '/welcome',
+          next: (incoming && incoming.next) || body.next || '/welcome',
           email: sessionUser.email,
+          code: (incoming && incoming.code) || undefined,
         });
       }
     }

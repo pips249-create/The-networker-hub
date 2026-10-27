@@ -10,7 +10,10 @@ const sbAuth = require('./supabase-auth');
 const { getSupabaseAdmin } = require('./supabase');
 const { getOrganiserAccessStatus } = require('./organiser-access-guard');
 const { sendOrganiserEmailVerification } = require('./organiser-email-verification');
-const { buildEmailVerifyRedirect } = require('./organiser-email-verify-paths');
+const {
+  buildEmailVerifyRedirect,
+  parseVerifyEmailPath,
+} = require('./organiser-email-verify-paths');
 
 const ORGANISER_ACCESS_PENDING_KEY = 'organiser_access_pending';
 
@@ -248,4 +251,6 @@ module.exports = {
   resolveOrganiserRedirect,
   redirectAfterOrganiserAuth,
   buildEmailVerifyRedirect,
+  parseVerifyEmailPath,
+  hasVerifyEmailToken,
 };

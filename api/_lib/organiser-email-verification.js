@@ -171,9 +171,9 @@ async function sendOrganiserEmailVerification({ userId, email, name, revealCode,
   const code = newVerifyCode();
   await storeVerifyToken(userId, code, { onlyIfUnverified: reminderSend });
 
-  // Email CTA includes the code so the confirm page can prefill it. The page
-  // still requires an explicit Confirm click (no auto-submit) so mail scanners
-  // cannot mark the address verified or fire Welcome early.
+  // Email CTA includes the code. GET never verifies — only a signed-in POST
+  // does. The confirm page submits that POST once a session exists so inbox
+  // opens finish without a second tap; mail scanners lack the session cookie.
   const emailVerifyPath = buildOrganiserVerifyEmailPath(code, address);
   const verifyUrl = siteHost() + emailVerifyPath;
   // In-app redirects stay code-free; only the inbox link carries the digits.
