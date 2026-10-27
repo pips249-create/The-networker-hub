@@ -3,6 +3,7 @@
  * Coordinates use PDF space: origin bottom-left, units in points.
  * Helvetica is declared with WinAnsiEncoding; text is mapped + octal-escaped
  * so UTF-8 source strings (em dashes, £, ×, etc.) render correctly.
+ * JPEG images can be embedded as XObjects (prepare with sharp elsewhere).
  */
 
 /** Windows-1252 / WinAnsi codepoints that differ from Unicode. */
@@ -179,20 +180,45 @@ function buildSimpleTextPdf(lines, options) {
 }
 
 /**
+ * Fit an image into a box (contain), returning draw rect bottom-left origin.
+ * @param {{width:number,height:number}} image
+ * @param {{x:number,y:number,w:number,h:number}} box
+ */
+function fitImageInBox(image, box) {
+  const iw = Math.max(1, Number(image && image.width) || 1);
+  const ih = Math.max(1, Number(image && image.height) || 1);
+  const boxW = Math.max(1, Number(box.w) || 1);
+  const boxH = Math.max(1, Number(box.h) || 1);
+  const scale = Math.min(boxW / iw, boxH / ih);
+  const w = iw * scale;
+  const h = ih * scale;
+  return {
+    x: Number(box.x) + (boxW - w) / 2,
+    y: Number(box.y) + (boxH - h) / 2,
+    w,
+    h,
+  };
+}
+
+/**
  * @param {Array<{
  *   width?: number,
  *   height?: number,
- *   items?: Array<
- *     | {x:number,y:number,size?:number,font?:'F1'|'F2',text:string,color?:string|number[]}
- *     | {type:'rect',x:number,y:number,w:number,h:number,fill?:string|number[],stroke?:string|number[],lineWidth?:number}
- *     | {type:'line',x1:number,y1:number,x2:number,y2:number,stroke?:string|number[],lineWidth?:number,dash?:number[]}
- *   >
+ *   images?: Array<{name:string,width:number,height:number,jpeg:Buffer}>,
+ *   items?: Array<object>
  * }>} pages
  */
 function buildPositionedPdf(pages) {
   const built = (pages || []).map((page) => {
     const width = page.width || 595.28;
     const height = page.height || 841.89;
+    const imageList = Array.isArray(page.images) ? page.images.filter(Boolean) : [];
+    const imageByName = new Map();
+    imageList.forEach((img, index) => {
+      const name = String(img.name || 'Im' + (index + 1));
+      imageByName.set(name, img);
+    });
+
     const parts = [];
     let inText = false;
     let currentFont = '';
@@ -267,6 +293,31 @@ function buildPositionedPdf(pages) {
         return;
       }
 
+      if (item.type === 'image') {
+        endText();
+        const name = String(item.name || '').trim();
+        if (!name || !imageByName.has(name)) return;
+        const x = Number(item.x) || 0;
+        const y = Number(item.y) || 0;
+        const w = Number(item.w) || 0;
+        const h = Number(item.h) || 0;
+        if (w <= 0 || h <= 0) return;
+        parts.push('q');
+        parts.push(
+          w.toFixed(2) +
+            ' 0 0 ' +
+            h.toFixed(2) +
+            ' ' +
+            x.toFixed(2) +
+            ' ' +
+            y.toFixed(2) +
+            ' cm'
+        );
+        parts.push('/' + name + ' Do');
+        parts.push('Q');
+        return;
+      }
+
       const text = String(item.text || '').slice(0, 120);
       if (!text) return;
       beginText();
@@ -289,9 +340,19 @@ function buildPositionedPdf(pages) {
       parts.push('(' + escapePdfText(text) + ') Tj');
     });
     endText();
-    return { width, height, stream: parts.join('\n') };
+    return {
+      width,
+      height,
+      stream: parts.join('\n'),
+      images: imageList,
+    };
   });
   return assemblePdf(built, true);
+}
+
+function toObjectBuffer(value) {
+  if (Buffer.isBuffer(value)) return value;
+  return Buffer.from(String(value || ''), 'utf8');
 }
 
 function assemblePdf(pages, withBold) {
@@ -314,18 +375,55 @@ function assemblePdf(pages, withBold) {
   }
 
   pages.forEach((page) => {
+    const imageEntries = [];
+    (page.images || []).forEach((img, index) => {
+      const name = String(img.name || 'Im' + (index + 1)).replace(/[^A-Za-z0-9]/g, '') || 'Im';
+      const jpeg = Buffer.isBuffer(img.jpeg) ? img.jpeg : Buffer.from([]);
+      if (!jpeg.length) return;
+      const width = Math.max(1, Math.round(Number(img.width) || 1));
+      const height = Math.max(1, Math.round(Number(img.height) || 1));
+      const dict =
+        '<< /Type /XObject /Subtype /Image /Width ' +
+        width +
+        ' /Height ' +
+        height +
+        ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ' +
+        jpeg.length +
+        ' >>\nstream\n';
+      const objIndex = objects.length;
+      objects.push(
+        Buffer.concat([Buffer.from(dict, 'utf8'), jpeg, Buffer.from('\nendstream\n', 'utf8')])
+      );
+      imageEntries.push({ name, objectNumber: objIndex + 1 });
+    });
+
     const stream = page.stream || '';
-    const streamLength = Buffer.byteLength(stream, 'utf8');
+    const streamBuf = Buffer.from(stream, 'utf8');
     const contentIndex = objects.length;
-    objects.push('<< /Length ' + streamLength + ' >>\nstream\n' + stream + '\nendstream\n');
+    objects.push(
+      Buffer.concat([
+        Buffer.from('<< /Length ' + streamBuf.length + ' >>\nstream\n', 'utf8'),
+        streamBuf,
+        Buffer.from('\nendstream\n', 'utf8'),
+      ])
+    );
     const pageIndex = objects.length;
     pageObjectIndexes.push(pageIndex);
+    let xObjectDict = '';
+    if (imageEntries.length) {
+      xObjectDict =
+        ' /XObject << ' +
+        imageEntries.map((e) => '/' + e.name + ' ' + e.objectNumber + ' 0 R').join(' ') +
+        ' >>';
+    }
     const resources =
       '<< /Font << /F1 ' +
       (fontRegularIndex + 1) +
       ' 0 R' +
       (withBold ? ' /F2 ' + (fontBoldIndex + 1) + ' 0 R' : '') +
-      ' >> >>';
+      ' >>' +
+      xObjectDict +
+      ' >>';
     objects.push(
       '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' +
         page.width +
@@ -347,22 +445,28 @@ function assemblePdf(pages, withBold) {
     pageObjectIndexes.length +
     ' >>\n';
 
-  let body = '%PDF-1.4\n';
+  const chunks = [Buffer.from('%PDF-1.4\n', 'utf8')];
   const offs = [0];
+  let offset = chunks[0].length;
   for (let i = 0; i < objects.length; i += 1) {
-    offs.push(Buffer.byteLength(body, 'utf8'));
-    body += i + 1 + ' 0 obj\n' + objects[i] + 'endobj\n';
+    offs.push(offset);
+    const head = Buffer.from(i + 1 + ' 0 obj\n', 'utf8');
+    const body = toObjectBuffer(objects[i]);
+    const tail = Buffer.from('endobj\n', 'utf8');
+    chunks.push(head, body, tail);
+    offset += head.length + body.length + tail.length;
   }
 
-  const xrefOffset = Buffer.byteLength(body, 'utf8');
-  body += 'xref\n0 ' + (objects.length + 1) + '\n';
-  body += '0000000000 65535 f \n';
+  const xrefOffset = offset;
+  let xref = 'xref\n0 ' + (objects.length + 1) + '\n';
+  xref += '0000000000 65535 f \n';
   for (let i = 1; i <= objects.length; i += 1) {
-    body += String(offs[i]).padStart(10, '0') + ' 00000 n \n';
+    xref += String(offs[i]).padStart(10, '0') + ' 00000 n \n';
   }
-  body += 'trailer\n<< /Size ' + (objects.length + 1) + ' /Root 1 0 R >>\n';
-  body += 'startxref\n' + xrefOffset + '\n%%EOF';
-  return Buffer.from(body, 'utf8');
+  xref += 'trailer\n<< /Size ' + (objects.length + 1) + ' /Root 1 0 R >>\n';
+  xref += 'startxref\n' + xrefOffset + '\n%%EOF';
+  chunks.push(Buffer.from(xref, 'utf8'));
+  return Buffer.concat(chunks);
 }
 
 module.exports = {
@@ -370,6 +474,7 @@ module.exports = {
   approxTextWidth,
   truncateToWidth,
   wrapText,
+  fitImageInBox,
   buildSimpleTextPdf,
   buildPositionedPdf,
 };

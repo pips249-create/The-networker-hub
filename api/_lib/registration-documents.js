@@ -16,7 +16,9 @@ const {
   buildPositionedPdf,
   wrapText,
   truncateToWidth,
+  fitImageInBox,
 } = require('./simple-pdf');
+const { loadTicketPdfLogos } = require('./ticket-pdf-logos');
 
 const REGISTRATION_SELECT = `
   id,
@@ -51,7 +53,8 @@ const REGISTRATION_SELECT = `
     organiser_id,
     organisers (
       id,
-      name
+      name,
+      photo_url
     )
   ),
   tickets (
@@ -148,6 +151,7 @@ function buildDocumentContext(registration) {
     attendeeEmail: String(attendee.email || registration.attendee_email || '').trim(),
     eventTitle: booked.title,
     organiserName: String(organiser.name || '').trim() || 'Event organiser',
+    organiserLogoUrl: String(organiser.photo_url || '').trim(),
     eventDate: formatDateTime(booked.date),
     eventEndDate: booked.endDate ? formatDateTime(booked.endDate) : '',
     location,
@@ -209,14 +213,18 @@ function formatWhenForTicket(startLabel, endLabel) {
   return start + '\nEnds ' + end;
 }
 
-function buildTicketPdf(context) {
+async function buildTicketPdf(context) {
+  const logos = await loadTicketPdfLogos(context);
+  const organiserLogo = logos.organiserLogo;
+  const hubLogo = logos.hubLogo;
+
   const pageW = 595.28;
   const pageH = 841.89;
   const margin = 36;
   const cardX = margin;
   const cardW = pageW - margin * 2;
   const cardTop = pageH - 48;
-  const headerH = 64;
+  const headerH = organiserLogo ? 78 : 64;
   const accent = '#452d5c';
   const accentSoft = '#f3eef5';
   const coral = '#bd932e';
@@ -253,8 +261,7 @@ function buildTicketPdf(context) {
     : '';
   const ticketLines = wrapText(ticketsLabel, 11, colW, 2);
 
-  // Build foreground content first; card chrome is prepended once height is known.
-  const refBlockH = 44;
+  const images = [];
   const contentItems = [
     {
       type: 'rect',
@@ -272,24 +279,80 @@ function buildTicketPdf(context) {
       h: headerH,
       fill: coral,
     },
-    {
+  ];
+
+  if (organiserLogo) {
+    images.push({
+      name: 'OrgLogo',
+      jpeg: organiserLogo.jpeg,
+      width: organiserLogo.width,
+      height: organiserLogo.height,
+    });
+    const logoPad = 8;
+    const logoBox = {
+      x: cardX + 18,
+      y: cardTop - headerH + 12,
+      w: 108,
+      h: headerH - 24,
+    };
+    contentItems.push({
+      type: 'rect',
+      x: logoBox.x,
+      y: logoBox.y,
+      w: logoBox.w,
+      h: logoBox.h,
+      fill: '#ffffff',
+    });
+    const fitted = fitImageInBox(organiserLogo, {
+      x: logoBox.x + logoPad,
+      y: logoBox.y + logoPad,
+      w: logoBox.w - logoPad * 2,
+      h: logoBox.h - logoPad * 2,
+    });
+    contentItems.push({
+      type: 'image',
+      name: 'OrgLogo',
+      x: fitted.x,
+      y: fitted.y,
+      w: fitted.w,
+      h: fitted.h,
+    });
+    contentItems.push({
+      x: logoBox.x + logoBox.w + 14,
+      y: cardTop - 28,
+      size: 9,
+      font: 'F2',
+      color: '#e8dbea',
+      text: 'EVENT TICKET',
+    });
+    contentItems.push({
+      x: logoBox.x + logoBox.w + 14,
+      y: cardTop - 48,
+      size: 16,
+      font: 'F2',
+      color: '#ffffff',
+      text: truncateToWidth(context.organiserName || 'Event organiser', 16, cardW - 160),
+    });
+  } else {
+    contentItems.push({
       x: cardX + 22,
       y: cardTop - 26,
       size: 9,
       font: 'F2',
       color: '#e8dbea',
       text: 'THE NETWORKER UK',
-    },
-    {
+    });
+    contentItems.push({
       x: cardX + 22,
       y: cardTop - 46,
       size: 18,
       font: 'F2',
       color: '#ffffff',
       text: 'Event ticket',
-    },
-  ];
+    });
+  }
 
+  const refBlockH = 44;
   let cursorY = cardTop - headerH - 20;
   contentItems.push({
     type: 'rect',
@@ -336,16 +399,21 @@ function buildTicketPdf(context) {
     });
   });
   cursorY -= eventLines.length * 20 + 4;
-  contentItems.push({
-    x: cardX + contentPad,
-    y: cursorY,
-    size: 10,
-    font: 'F1',
-    color: textMid,
-    text: organiserLine,
-  });
+  // Keep organiser line when logo is absent; with logo the header already names them.
+  if (!organiserLogo) {
+    contentItems.push({
+      x: cardX + contentPad,
+      y: cursorY,
+      size: 10,
+      font: 'F1',
+      color: textMid,
+      text: organiserLine,
+    });
+    cursorY -= 16;
+  } else {
+    cursorY -= 8;
+  }
 
-  cursorY -= 16;
   contentItems.push({
     type: 'line',
     x1: cardX + contentPad,
@@ -464,7 +532,13 @@ function buildTicketPdf(context) {
   cursorY -= 14 + Math.max(1 + attendeeExtra, ticketLines.length + 1) * 14 + 14;
 
   const footerTop = cursorY;
-  const footerH = 16 + instructionLines.length * 13 + (context.bookedAt ? 18 : 8) + 10;
+  const hubLogoBoxH = hubLogo ? 28 : 0;
+  const footerH =
+    16 +
+    instructionLines.length * 13 +
+    hubLogoBoxH +
+    (context.bookedAt ? 16 : 8) +
+    12;
   const footerBottom = footerTop - footerH;
   const cardY = footerBottom - 18;
   const cardH = cardTop - cardY;
@@ -487,6 +561,50 @@ function buildTicketPdf(context) {
       text: line,
     });
   });
+
+  let issuerY = footerTop - 14 - instructionLines.length * 13 - 10;
+  if (hubLogo) {
+    images.push({
+      name: 'HubLogo',
+      jpeg: hubLogo.jpeg,
+      width: hubLogo.width,
+      height: hubLogo.height,
+    });
+    const fittedHub = fitImageInBox(hubLogo, {
+      x: cardX + 28,
+      y: issuerY - 22,
+      w: 92,
+      h: 24,
+    });
+    contentItems.push({
+      type: 'image',
+      name: 'HubLogo',
+      x: fittedHub.x,
+      y: fittedHub.y,
+      w: fittedHub.w,
+      h: fittedHub.h,
+    });
+    contentItems.push({
+      x: cardX + 28 + 100,
+      y: issuerY - 8,
+      size: 8,
+      font: 'F1',
+      color: textSoft,
+      text: 'Issued via The Networker UK',
+    });
+    issuerY -= 28;
+  } else {
+    contentItems.push({
+      x: cardX + 28,
+      y: issuerY - 4,
+      size: 8,
+      font: 'F1',
+      color: textSoft,
+      text: 'Issued via The Networker UK',
+    });
+    issuerY -= 16;
+  }
+
   if (context.bookedAt) {
     contentItems.push({
       x: cardX + 28,
@@ -511,20 +629,11 @@ function buildTicketPdf(context) {
       lineWidth: 1,
     },
   ];
-  const footerNotes = [
-    {
-      x: cardX,
-      y: cardY - 22,
-      size: 8,
-      font: 'F1',
-      color: textSoft,
-      text: 'Issued by The Networker UK on behalf of the event organiser.',
-    },
-  ];
+  const footerNotes = [];
   if (context.eventUrl) {
     footerNotes.push({
       x: cardX,
-      y: cardY - 36,
+      y: cardY - 22,
       size: 8,
       font: 'F1',
       color: textSoft,
@@ -536,6 +645,7 @@ function buildTicketPdf(context) {
     {
       width: pageW,
       height: pageH,
+      images,
       items: pageChrome.concat(contentItems, footerNotes),
     },
   ]);
