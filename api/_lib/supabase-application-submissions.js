@@ -199,8 +199,41 @@ async function createApplicationFromSubmission(input) {
   };
 }
 
+async function registeredSeriesEventIdsForAttendee(sb, attendeeId, eventId) {
+  const id = String(eventId || '').trim();
+  if (!attendeeId || !id) return [];
+
+  const evRes = await sb
+    .from('events')
+    .select(
+      'id, series_group_id, organiser_id, title, recurrence_pattern, recurrence_end_date, duplicated_from_event_id, status, approval_status, starts_at'
+    )
+    .eq('id', id)
+    .maybeSingle();
+  if (evRes.error) throw new Error(evRes.error.message);
+  if (!evRes.data) return [];
+
+  const { fetchSeriesPeerRows } = require('./event-series-peers');
+  const peers = await fetchSeriesPeerRows(sb, evRes.data);
+  const peerIds = (peers || []).map((row) => row.id).filter(Boolean);
+  if (!peerIds.length) return [];
+
+  const { data, error } = await sb
+    .from('registrations')
+    .select('event_id')
+    .eq('attendee_id', attendeeId)
+    .in('event_id', peerIds)
+    .is('cancelled_at', null)
+    .neq('application_status', 'Denied')
+    .neq('payment_status', 'Refunded');
+  if (error) throw new Error(error.message);
+
+  return [...new Set((data || []).map((row) => row.event_id).filter(Boolean))];
+}
+
 /**
  * Whether the signed-in attendee already has an active application/registration for an event.
+ * Also returns registrations across sibling dates in a multi-date series.
  */
 async function getEventApplicationForSession(session, eventId) {
   if (!isSupabaseConfigured()) throw new Error('supabase_not_configured');
@@ -216,13 +249,13 @@ async function getEventApplicationForSession(session, eventId) {
     .trim()
     .toLowerCase();
   if (!email) {
-    return { hasApplication: false };
+    return { hasApplication: false, registeredSeriesEventIds: [] };
   }
 
   const sb = getSupabaseAdmin();
   const attendeeId = await resolveAttendeeId(sb, session);
   if (!attendeeId) {
-    return { hasApplication: false };
+    return { hasApplication: false, registeredSeriesEventIds: [] };
   }
 
   const { data, error } = await sb
@@ -237,8 +270,16 @@ async function getEventApplicationForSession(session, eventId) {
     .maybeSingle();
 
   if (error) throw new Error(error.message);
+
+  let registeredSeriesEventIds = [];
+  try {
+    registeredSeriesEventIds = await registeredSeriesEventIdsForAttendee(sb, attendeeId, id);
+  } catch (_) {
+    registeredSeriesEventIds = data?.id ? [id] : [];
+  }
+
   if (!data?.id) {
-    return { hasApplication: false };
+    return { hasApplication: false, registeredSeriesEventIds };
   }
 
   return {
@@ -247,11 +288,13 @@ async function getEventApplicationForSession(session, eventId) {
     applicationStatus: String(data.application_status || 'Approved').trim(),
     paymentStatus: String(data.payment_status || 'Pending').trim(),
     submittedAt: data.created_at || null,
+    registeredSeriesEventIds,
   };
 }
 
 module.exports = {
   createApplicationFromSubmission,
   getEventApplicationForSession,
+  registeredSeriesEventIdsForAttendee,
   ticketIsApplication,
 };

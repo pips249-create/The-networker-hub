@@ -235,14 +235,22 @@
     if (similarSection) similarSection.hidden = true;
 
     const total = seriesDates.length;
-    const word = total === 1 ? 'date' : 'dates';
+    const remainingCount = remaining.length;
     if (lede) {
-      lede.textContent =
-        'This event has ' +
-        total +
-        ' ' +
-        word +
-        '. Pick another session if you would like to come again.';
+      if (total === 2 && remainingCount === 1) {
+        lede.textContent =
+          'This event has 2 dates and you booked one. If that was by accident, add the other session below.';
+      } else if (remainingCount === 1) {
+        lede.textContent =
+          'This event has ' +
+          total +
+          ' dates. You still have one session left — book it below if you meant to come to more than one.';
+      } else {
+        lede.textContent =
+          'This event has ' +
+          total +
+          ' dates. Pick another session if you would like to come again.';
+      }
     }
 
     list.innerHTML = remaining
