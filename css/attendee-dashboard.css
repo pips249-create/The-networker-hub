@@ -911,7 +911,14 @@ button.ad-stat-link:focus-visible::after {
 }
 
 .ad-utility-menu.is-floating {
+  /* Avoid inheriting top: calc(100% + 4px) from the absolute rule — with
+     position:fixed that percentage is the viewport height and parks the menu
+     far below the More button until JS sets pixel coords. */
   position: fixed;
+  top: 0;
+  left: 0;
+  right: auto;
+  bottom: auto;
   z-index: 10060;
 }
 

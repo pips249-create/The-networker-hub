@@ -1149,6 +1149,14 @@
       menu.style.left = '';
       menu.style.right = '';
       menu.style.bottom = '';
+      menu.style.visibility = '';
+      // Return portaled menus to their original wrap so re-open still finds them.
+      const hostId = menu.getAttribute('data-ad-utility-host');
+      const host = hostId ? document.getElementById(hostId) : null;
+      if (host && menu.parentElement !== host) {
+        host.appendChild(menu);
+      }
+      menu.removeAttribute('data-ad-utility-host');
     });
     document.querySelectorAll('[data-ad-utility-toggle][aria-expanded="true"]').forEach((btn) => {
       btn.setAttribute('aria-expanded', 'false');
@@ -1157,19 +1165,34 @@
   }
 
   function positionUtilityMenu(btn, menu) {
+    const wrap = btn.closest('.ad-utility-wrap');
+    if (wrap) {
+      if (!wrap.id) {
+        wrap.id = 'ad-utility-host-' + Math.random().toString(36).slice(2, 9);
+      }
+      menu.setAttribute('data-ad-utility-host', wrap.id);
+      // Portal to body so position:fixed is viewport-relative even if a parent
+      // creates a containing block (transform/filter) and so table overflow
+      // cannot offset the menu away from the More button.
+      if (menu.parentElement !== document.body) {
+        document.body.appendChild(menu);
+      }
+    }
+
     const rect = btn.getBoundingClientRect();
     const pad = 8;
     const bottomReserve =
       window.matchMedia('(max-width: 768px)').matches && document.querySelector('.ad-bottom-nav')
         ? 88
         : pad;
-    menu.classList.add('is-floating');
+
+    menu.classList.add('is-floating', 'is-open');
     menu.hidden = false;
-    menu.classList.add('is-open');
-    menu.style.top = '';
-    menu.style.left = '';
-    menu.style.right = '';
-    menu.style.bottom = '';
+    menu.style.visibility = 'hidden';
+    menu.style.top = '0px';
+    menu.style.left = '0px';
+    menu.style.right = 'auto';
+    menu.style.bottom = 'auto';
 
     // Measure after open so we can clamp to the viewport (left-aligned More
     // buttons used to push a right-anchored menu off the left edge on mobile).
@@ -1194,6 +1217,7 @@
     }
     menu.style.left = Math.round(left) + 'px';
     menu.style.right = 'auto';
+    menu.style.visibility = '';
   }
 
   function bindUtilityMenus(root) {
@@ -1203,7 +1227,13 @@
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         const wrap = btn.closest('.ad-utility-wrap');
-        const menu = wrap && wrap.querySelector('.ad-utility-menu');
+        let menu = wrap && wrap.querySelector('.ad-utility-menu');
+        // Open menus are portaled to document.body — find them by host id.
+        if (!menu && wrap && wrap.id) {
+          menu = document.querySelector(
+            '.ad-utility-menu[data-ad-utility-host="' + wrap.id + '"]'
+          );
+        }
         if (!menu) return;
         const isOpen = menu.classList.contains('is-open');
         closeUtilityMenus();
