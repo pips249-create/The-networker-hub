@@ -1,8 +1,12 @@
-/** Connected booking monthly plans — prices ex VAT (GBP). */
+/**
+ * Connected booking monthly plans — prices ex VAT (GBP).
+ * Product default is free (see connectedBookingFreeEnabled); amounts kept for
+ * CONNECTED_BOOKING_REQUIRE_SUBSCRIPTION=true rollback / Stripe sync.
+ */
 
 const CONNECTED_BOOKING_VAT_RATE = 0.2;
 
-/** Introductory offer (ex VAT) — update Stripe price IDs after `npm run sync-stripe`. */
+/** Legacy paid amounts (ex VAT) — update Stripe price IDs after `npm run sync-stripe`. */
 const CONNECTED_BOOKING_PLAN_AMOUNTS_EX_VAT_PENCE = {
   starter: 1900,
   growth: 3900,

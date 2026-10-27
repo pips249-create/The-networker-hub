@@ -6,6 +6,9 @@ const {
   connectedBookingAllowedForSession,
   connectedBookingPilotGrantEligible,
   connectedBookingPilotGrantPlan,
+  connectedBookingFreeEnabled,
+  connectedBookingFreeDefaultPlan,
+  linkOutFreeEnabled,
   connectedBookingPreviewLocked,
   newWebhookSecret,
   signWebhookPayload,
@@ -127,11 +130,19 @@ function connectedBookingSetupGuide(account, slotsMeta, hasWebhookSecret) {
   if (!isConnectedPlanActive(account)) {
     steps.push({
       key: 'subscribe',
-      label: 'Activate a Connected plan (Subscribe or pilot grant).',
+      label: connectedBookingFreeEnabled()
+        ? 'Read what Connected does, then click Enable Connected (free).'
+        : 'Activate a Connected plan (Subscribe or pilot grant).',
       done: false,
     });
   } else {
-    steps.push({ key: 'subscribe', label: 'Connected plan active.', done: true });
+    steps.push({
+      key: 'subscribe',
+      label: connectedBookingFreeEnabled()
+        ? 'Connected booking enabled (free).'
+        : 'Connected plan active.',
+      done: true,
+    });
   }
   if (slotsMeta.schemaMissing) {
     steps.push({
@@ -185,14 +196,7 @@ function connectedBookingErrorFallback(err) {
   return 'Connected booking could not load. If subscribe/billing works, run migration 297 for organiser-page slots; otherwise run 292 and 298, then refresh.';
 }
 
-async function ensurePilotGrantIfEligible(sb, account, sessionEmail) {
-  if (!account?.id || !connectedBookingPilotGrantEligible(sessionEmail)) {
-    return { account, pilotGranted: false };
-  }
-  if (isConnectedPlanActive(account)) {
-    return { account, pilotGranted: false, pilotActive: true };
-  }
-  const plan = connectedBookingPilotGrantPlan();
+async function activateConnectedBookingComplimentary(sb, account, plan) {
   const patch = {
     connected_booking_plan: plan,
     connected_booking_status: 'active',
@@ -218,9 +222,36 @@ async function ensurePilotGrantIfEligible(sb, account, sessionEmail) {
       )
       .maybeSingle();
     if (fallbackErr) throw new Error(fallbackErr.message);
-    return { account: fallbackRow || account, pilotGranted: true };
+    return fallbackRow || account;
   }
-  return { account: updated || account, pilotGranted: true };
+  return updated || account;
+}
+
+/**
+ * Legacy pilot-grant emails still auto-activate on GET.
+ * Free Connected does not — organisers opt in via POST activate_free after reading the explainer.
+ */
+async function ensureComplimentaryConnectedIfEligible(sb, account, sessionEmail) {
+  if (!account?.id) {
+    return { account, complimentaryGranted: false };
+  }
+  if (isConnectedPlanActive(account)) {
+    return { account, complimentaryGranted: false, alreadyActive: true };
+  }
+
+  const pilot = connectedBookingPilotGrantEligible(sessionEmail);
+  if (!pilot) {
+    return { account, complimentaryGranted: false };
+  }
+
+  const plan = connectedBookingPilotGrantPlan();
+  const updated = await activateConnectedBookingComplimentary(sb, account, plan);
+  return {
+    account: updated,
+    complimentaryGranted: true,
+    freeActivation: false,
+    pilotGranted: true,
+  };
 }
 
 function stripeCheckoutPublicMessage(err) {
@@ -340,15 +371,15 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    let pilotGranted = false;
+    let complimentaryGranted = false;
     if (req.method === 'GET') {
-      const grantResult = await ensurePilotGrantIfEligible(
+      const grantResult = await ensureComplimentaryConnectedIfEligible(
         sb,
         account,
         auth.session.email
       );
       account = grantResult.account;
-      pilotGranted = grantResult.pilotGranted;
+      complimentaryGranted = Boolean(grantResult.complimentaryGranted);
     }
 
     if (req.method === 'GET') {
@@ -372,15 +403,32 @@ module.exports = async function handler(req, res) {
       const stripeCheckout = isStripeCheckoutConfigured();
       const hasCustomer = Boolean(String(account.connected_booking_stripe_customer_id || '').trim());
       const status = account.connected_booking_status || 'inactive';
+      const free = connectedBookingFreeEnabled();
+      const linkOutFree = linkOutFreeEnabled();
+      const active = isConnectedPlanActive(account);
+      const sessionAllowed = connectedBookingAllowedForSession(auth.session);
+      const canActivateFree = Boolean(free && !active && sessionAllowed);
       const canStartCheckout =
-        stripeCheckout && (status === 'inactive' || status === 'cancelled' || status === 'past_due');
+        !free &&
+        stripeCheckout &&
+        (status === 'inactive' || status === 'cancelled' || status === 'past_due');
+
+      const canSeeConnected =
+        active ||
+        accountHasAdminConnectedGrant(account) ||
+        connectedBookingPilotGrantEligible(auth.session.email) ||
+        (free && sessionAllowed) ||
+        (sessionAllowed && connectedBookingPreviewLocked());
 
       return json(res, 200, {
         ok: true,
         featureEnabled: true,
+        free,
+        linkOutFree,
+        canActivateFree,
         plan: account.connected_booking_plan || null,
         status,
-        active: isConnectedPlanActive(account),
+        active,
         groupCount,
         groupLimit: limit,
         hasWebhookSecret,
@@ -390,24 +438,30 @@ module.exports = async function handler(req, res) {
         billing: {
           stripeCheckoutConfigured: stripeCheckout,
           canSubscribe: canStartCheckout,
-          canManageBilling: stripeCheckout && hasCustomer && Boolean(account.connected_booking_stripe_subscription_id),
-          selfServePlans: ['starter', 'growth', 'scale'],
+          canManageBilling:
+            !free &&
+            stripeCheckout &&
+            hasCustomer &&
+            Boolean(account.connected_booking_stripe_subscription_id),
+          selfServePlans: free ? [] : ['starter', 'growth', 'scale'],
         },
-        pricing: {
-          starter: {
-            groups: PLAN_GROUP_LIMITS.starter,
-            monthlyExVat: CONNECTED_BOOKING_PLAN_AMOUNTS_EX_VAT_PENCE.starter / 100,
-          },
-          growth: {
-            groups: PLAN_GROUP_LIMITS.growth,
-            monthlyExVat: CONNECTED_BOOKING_PLAN_AMOUNTS_EX_VAT_PENCE.growth / 100,
-          },
-          scale: {
-            groups: PLAN_GROUP_LIMITS.scale,
-            monthlyExVat: CONNECTED_BOOKING_PLAN_AMOUNTS_EX_VAT_PENCE.scale / 100,
-          },
-          enterprise: { groups: null, note: 'Email Rosie and Catherine for 20+ groups.' },
-        },
+        pricing: free
+          ? null
+          : {
+              starter: {
+                groups: PLAN_GROUP_LIMITS.starter,
+                monthlyExVat: CONNECTED_BOOKING_PLAN_AMOUNTS_EX_VAT_PENCE.starter / 100,
+              },
+              growth: {
+                groups: PLAN_GROUP_LIMITS.growth,
+                monthlyExVat: CONNECTED_BOOKING_PLAN_AMOUNTS_EX_VAT_PENCE.growth / 100,
+              },
+              scale: {
+                groups: PLAN_GROUP_LIMITS.scale,
+                monthlyExVat: CONNECTED_BOOKING_PLAN_AMOUNTS_EX_VAT_PENCE.scale / 100,
+              },
+              enterprise: { groups: null, note: 'Email Rosie and Catherine for 20+ groups.' },
+            },
         recentSync: syncResult.logs,
         schemaWarning:
           syncResult.schemaWarning ||
@@ -416,38 +470,26 @@ module.exports = async function handler(req, res) {
             : undefined),
         slots,
         connectedGranted: accountHasAdminConnectedGrant(account),
-        linkOutGranted: accountHasLinkOutGrant(account),
-        // Keep nav/page off the general organiser population until they are granted,
-        // subscribed, or on the preview/pilot allowlist — not merely because the
-        // feature flag is on for API access.
+        linkOutGranted: accountHasLinkOutGrant(account) || linkOutFree,
         navVisible: Boolean(
-          isConnectedPlanActive(account) ||
-            accountHasAdminConnectedGrant(account) ||
-            accountHasLinkOutGrant(account) ||
-            connectedBookingPilotGrantEligible(auth.session.email) ||
-            (connectedBookingAllowedForSession(auth.session) &&
-              connectedBookingPreviewLocked())
+          canSeeConnected || accountHasLinkOutGrant(account) || linkOutFree
         ),
         uiMode: (function () {
           const linkOutOnly =
             accountHasLinkOutGrant(account) &&
-            !isConnectedPlanActive(account) &&
-            !accountHasAdminConnectedGrant(account);
+            !active &&
+            !accountHasAdminConnectedGrant(account) &&
+            !free;
           if (linkOutOnly) return 'link_out';
-          const canSeeConnected =
-            isConnectedPlanActive(account) ||
-            accountHasAdminConnectedGrant(account) ||
-            connectedBookingPilotGrantEligible(auth.session.email) ||
-            (connectedBookingAllowedForSession(auth.session) &&
-              connectedBookingPreviewLocked());
           return canSeeConnected ? 'connected' : 'hidden';
         })(),
-        pilotGrant: pilotGranted
+        pilotGrant: complimentaryGranted
           ? {
               granted: true,
               plan: account.connected_booking_plan,
+              free: false,
               message:
-                'Pilot access — Starter plan activated without charge for this login. Generate your webhook secret below.',
+                'Pilot access — plan activated without charge for this login. Generate your webhook secret below.',
             }
           : accountHasAdminConnectedGrant(account)
             ? {
@@ -456,7 +498,15 @@ module.exports = async function handler(req, res) {
                 message:
                   'Complimentary Connected booking allocated from Command Centre. Generate your webhook secret below if you want attendee sync.',
               }
-            : undefined,
+            : free && active
+              ? {
+                  granted: true,
+                  plan: account.connected_booking_plan,
+                  free: true,
+                  message:
+                    'Connected booking is enabled on your account. Enable a booking provider below, then link each event on Connected setup.',
+                }
+              : undefined,
       });
     }
 
@@ -538,7 +588,62 @@ module.exports = async function handler(req, res) {
         return json(res, 403, { ok: false, error: 'missing_email' });
       }
 
+      if (body.action === 'activate_free') {
+        if (!connectedBookingFreeEnabled()) {
+          return json(res, 400, {
+            ok: false,
+            error: 'connected_booking_not_free',
+            message: 'Free activation is not available. Choose a paid plan instead.',
+          });
+        }
+        if (!connectedBookingAllowedForSession(auth.session)) {
+          return json(res, 403, {
+            ok: false,
+            error: 'preview_restricted',
+            message:
+              'Connected booking preview is limited to approved organiser accounts.',
+          });
+        }
+        if (isConnectedPlanActive(account)) {
+          return json(res, 200, {
+            ok: true,
+            alreadyActive: true,
+            plan: account.connected_booking_plan,
+            status: account.connected_booking_status,
+            active: true,
+          });
+        }
+        const plan = connectedBookingFreeDefaultPlan();
+        const updated = await activateConnectedBookingComplimentary(sb, account, plan);
+        try {
+          await maybeAutoAssignSingleStarterSlot(sb, updated);
+        } catch (autoErr) {
+          console.warn('[organiser-connected-booking] auto slot after activate', autoErr?.message || autoErr);
+        }
+        return json(res, 200, {
+          ok: true,
+          activated: true,
+          free: true,
+          plan: updated.connected_booking_plan,
+          status: updated.connected_booking_status,
+          active: true,
+          hasWebhookSecret: Boolean(
+            String(updated.connected_booking_webhook_secret || '').trim()
+          ),
+          message:
+            'Connected booking enabled. Next: choose Eventbrite, Ticket Tailor, or your own website below, then link each event.',
+        });
+      }
+
       if (body.action === 'create_checkout') {
+        if (connectedBookingFreeEnabled()) {
+          return json(res, 400, {
+            ok: false,
+            error: 'connected_booking_free',
+            message:
+              'Connected booking is free — no subscription needed. Refresh this page to activate, then enable a booking provider.',
+          });
+        }
         if (!isStripeCheckoutConfigured()) {
           return json(res, 503, { ok: false, error: 'stripe_not_configured' });
         }

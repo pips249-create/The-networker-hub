@@ -2,7 +2,7 @@
 
 Organisers on a **Connected** monthly subscription list events on The Networker UK and take payment on their own website. Registrations arrive via a **real-time webhook** so attendee lists, round-ups, and **verified post-event reviews** work.
 
-**Link Out** (£9.99 per event) lists the event and redirects buyers to the organiser’s booking URL. There is **no integration** — no webhook, no verified reviews, round-ups, or other Connected benefits.
+**Link Out** (free) lists the event and redirects buyers to the organiser’s booking URL. There is **no integration** — no webhook, no verified reviews, round-ups, or other Connected benefits.
 
 ## Enable in production
 
@@ -37,37 +37,36 @@ When ready to launch for all organisers: **remove** `CONNECTED_BOOKING_PREVIEW_E
 2. Set `CONNECTED_BOOKING_ENABLED=true` on Vercel (or use preview emails above until launch).
 3. Ensure `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET` are set (same webhook endpoint as Hub checkout).
 4. After changing intro prices in `api/_lib/connected-booking-pricing.js`, run `npm run sync-stripe` and update Vercel **`STRIPE_CONNECTED_BOOKING_*_PRICE_ID`** env vars (checkout also works with dynamic line items if price IDs are missing).
-5. Organiser signs in → `/organiser/connected-booking` → **Subscribe** (Starter / Growth / Scale). VAT is added at checkout.
-6. After payment, Stripe webhook activates the account (`connected_booking_status=active`, plan set). A webhook secret is created automatically on first activation if missing.
-7. Organiser rotates webhook secret if needed on the same page; **Manage billing** opens Stripe Customer Portal.
+5. Organiser signs in → `/organiser/#connected-booking`. They see an explainer for what Connected is, then click **Enable Connected — free** (POST `activate_free`). That sets `connected_booking_status=active`, plan `enterprise` (or `CONNECTED_BOOKING_FREE_PLAN`), and creates a webhook secret if missing. Opening the page alone does **not** activate.
+6. To restore paid Stripe plans, set `CONNECTED_BOOKING_REQUIRE_SUBSCRIPTION=true` on Vercel. To restore Link Out payment/grants, set `LINK_OUT_REQUIRE_PAYMENT=true`.
+7. Organiser enables a booking provider and links events on Connected setup.
 8. Event: **Set up tickets** → the Connected booking card appears **only when** the organiser account plan is **active** (or the event was already on Connected). Otherwise the ticket page is unchanged.
 
-**Enterprise (20+ groups)** remains POA — email Rosie & Catherine from the pricing table.
-
-**Manual pilot (no Stripe):** admin PATCH `/api/organiser/connected-booking` with `connectedBookingStatus: active` and `connectedBookingPlan`.
+**Manual / Command Centre:** admin grants still work; admin PATCH `/api/organiser/connected-booking` with `connectedBookingStatus: active` and `connectedBookingPlan`.
 
 ## Webhook
 
 `POST /api/integrations/booking` — see `/organiser/connected-booking.html`.
 
-## Pricing (commercial)
+## Pricing
 
-| Plan | Organiser pages | Monthly (ex VAT, intro offer) |
+**Connected booking is free** (default). Opening Connected booking activates the account with unlimited organiser-page slots (`enterprise` plan).
+
+Paid tiers remain in code for rollback via `CONNECTED_BOOKING_REQUIRE_SUBSCRIPTION=true`:
+
+| Plan | Organiser pages | Monthly (ex VAT, legacy) |
 |------|-----------------|----------------------------|
 | Starter | 1 | £19 |
 | Growth | 5 | £39 |
 | Scale | 20 | £99 |
-| 20+ | POA | Contact Rosie & Catherine |
 
-Link Out: £9.99 per event, redirect only (see organiser copy on `/organiser/connected-booking`).
+**Link Out** is separate and **free** by default (redirect only) — see `/organiser/booking-options#link-out` and [EXTERNAL-CHECKOUT-FLOWS.md](./EXTERNAL-CHECKOUT-FLOWS.md).
 
-**Link-out listing (£9.99 + VAT per event)** — separate product from Connected; hub redirect only; no webhook, attendees, or verified reviews. See `/organiser/booking-options#link-out` and [EXTERNAL-CHECKOUT-FLOWS.md](./EXTERNAL-CHECKOUT-FLOWS.md).
-
-**UX:** after subscribe, **choose which organiser page(s)** use Connected on **Organiser pages** in the workspace (inline banner + **Connected** column). `/organiser/connected-booking` is for **subscribe, billing, and webhook** only. Connected events use a **slim setup** (display price + booking link + API docs), not hub ticket tiers. Link-out uses its own flow and `checkout_mode`.
+**UX:** explainer → Enable Connected → provider + event link. Connected events use a **slim setup** (display price + booking link + API docs), not hub ticket tiers.
 
 ## Group profiles vs Connected plan
 
-One Connected subscription applies to the whole **organiser account**. Plan tier limits how many **group profiles** (organiser pages) you can keep **published** at once — not how many events you list. Unlimited events per account on Connected plans.
+Free Connected uses the **enterprise** plan (no organiser-page slot cap). Unlimited events per account.
 
 ## Tests
 

@@ -65,12 +65,12 @@
             data for verified reviews and automated marketing.
           </p>
           <div class="cb-hero-actions">
-            <a class="ee-btn ee-btn-gold" href="#cb-pricing">Choose a plan</a>
-            <a class="ee-btn ee-btn-outline" href="/organiser/#connected-booking">Open organiser workspace</a>
+            <a class="ee-btn ee-btn-gold" href="/organiser/#connected-booking">Open Connected booking (free)</a>
+            <a class="ee-btn ee-btn-outline" href="#cb-pricing">How it works</a>
             <a class="ee-btn ee-btn-outline" href="#cb-webhook-docs">View developer setup</a>
           </div>
           <p class="ee-hint" style="margin-top: 12px">
-            Already subscribed? <strong>Recent sync attempts</strong>, Eventbrite webhooks, and provider setup live in
+            <strong>Recent sync attempts</strong>, Eventbrite webhooks, and provider setup live in
             <a href="/organiser/#connected-booking">Organiser workspace → Connected booking</a> — not on this marketing page.
           </p>
         </header>
@@ -147,127 +147,44 @@
           id="cb-pricing"
           aria-labelledby="cb-plans-title"
         >
-          <p class="cb-pricing-intro-badge">Introductory offer</p>
-          <h2 id="cb-plans-title">Choose your plan</h2>
+          <p class="cb-pricing-intro-badge">Free to use</p>
+          <h2 id="cb-plans-title">What is Connected booking?</h2>
           <p class="ee-booking-help-table-lede">
-            List on The Networker UK, take payment on your website, and sync registrations via webhook. One subscription
-            covers your <strong>organiser account</strong> — each tier sets how many <strong>organiser pages</strong> you
-            can use Connected booking on (unlimited events). <strong>Introductory offer</strong> prices ex VAT (20% added at Stripe checkout).
+            List events on The Networker UK while buyers keep paying on Eventbrite, Ticket Tailor, or your website. We
+            sync registrations so attendee lists, verified reviews, and round-ups still work — <strong>no monthly
+            fee</strong>, and we do not take a cut of ticket sales. In your organiser workspace you will see this
+            explanation first, then click <strong>Enable Connected — free</strong> when you are ready.
           </p>
           <p class="ee-booking-help-table-tip">
-            Need tickets, membership, or guest visits on The Networker UK instead?
+            Prefer to sell tickets on The Networker UK instead?
             <a href="/organiser/booking-options">Hub checkout</a> is free to list (4.5% + 20p booking fee per ticket). One
             model per event — you cannot mix Hub and Connected on the same listing.
           </p>
           <p class="ee-alert ee-alert-ok cb-checkout-banner" id="cb-checkout-banner" hidden role="status"></p>
           <p class="ee-hint cb-auth-status" id="cb-auth-status" hidden role="status"></p>
 
-          <div class="cb-plan-cards cb-plan-cards--pricing" id="cb-pricing-compare">
-            <article class="cb-plan-card" data-cb-plan="starter">
-              <header class="cb-plan-card-head">
-                <p class="cb-plan-card-name">Starter</p>
-                <p class="cb-plan-card-price">
-                  <span class="cb-plan-card-amount">£19</span>
-                  <span class="cb-plan-card-vat">+ VAT / mo</span>
-                </p>
-                <p class="cb-plan-card-tagline">1 organiser page</p>
-              </header>
-              <ul class="cb-plan-card-features">
-                <li>Unlimited event listings</li>
-                <li>Direct customer checkout on your site</li>
-                <li>Real-time webhook registration sync</li>
-                <li>Included in attendee round-up emails</li>
-              </ul>
-              <div class="cb-plan-card-foot">
-                <button type="button" class="cb-plan-card-btn cb-subscribe-btn" data-cb-plan="starter">
-                  Subscribe
-                </button>
-              </div>
-            </article>
-
-            <article class="cb-plan-card cb-plan-card--featured" data-cb-plan="growth">
-              <p class="cb-plan-card-badge">Most popular</p>
-              <header class="cb-plan-card-head">
-                <p class="cb-plan-card-name">Growth</p>
-                <p class="cb-plan-card-price">
-                  <span class="cb-plan-card-amount">£39</span>
-                  <span class="cb-plan-card-vat">+ VAT / mo</span>
-                </p>
-                <p class="cb-plan-card-tagline">Up to 5 organiser pages</p>
-              </header>
-              <ul class="cb-plan-card-features">
-                <li>All Starter features included</li>
-                <li>Manage up to 5 organiser pages on Connected</li>
-                <li>Priority placement in round-up emails</li>
-              </ul>
-              <div class="cb-plan-card-foot">
-                <button
-                  type="button"
-                  class="cb-plan-card-btn cb-plan-card-btn--primary cb-subscribe-btn"
-                  data-cb-plan="growth"
-                >
-                  Subscribe
-                </button>
-              </div>
-            </article>
-
-            <article class="cb-plan-card" data-cb-plan="scale">
-              <header class="cb-plan-card-head">
-                <p class="cb-plan-card-name">Scale</p>
-                <p class="cb-plan-card-price">
-                  <span class="cb-plan-card-amount">£99</span>
-                  <span class="cb-plan-card-vat">+ VAT / mo</span>
-                </p>
-                <p class="cb-plan-card-tagline">Up to 20 organiser pages</p>
-              </header>
-              <ul class="cb-plan-card-features">
-                <li>All Growth features included</li>
-                <li>Designed for large networks and event agencies</li>
-                <li>Dedicated account assistance</li>
-              </ul>
-              <div class="cb-plan-card-foot">
-                <button type="button" class="cb-plan-card-btn cb-subscribe-btn" data-cb-plan="scale">Subscribe</button>
-              </div>
-            </article>
-
-            <article class="cb-plan-card cb-plan-card--enterprise">
-              <header class="cb-plan-card-head">
-                <p class="cb-plan-card-name">Enterprise</p>
-                <p class="cb-plan-card-price">
-                  <span class="cb-plan-card-amount">POA</span>
-                </p>
-                <p class="cb-plan-card-tagline">20+ organiser pages</p>
-              </header>
-              <ul class="cb-plan-card-features">
-                <li>Custom volume discounts</li>
-                <li>Dedicated tech support</li>
-                <li>Tailored onboarding for your teams</li>
-              </ul>
-              <div class="cb-plan-card-foot">
-                <a
-                  class="cb-plan-card-btn cb-plan-card-btn--outline"
-                  href="mailto:rosie@thenetworkeruk.com,hi@thenetworkeruk.com?subject=Connected%20%E2%80%94%2020%2B%20organiser%20pages%20(POA)&amp;body=Hi%20Rosie%20and%20Catherine%2C%0A%0AI%20would%20like%20Connected%20for%20____%20organiser%20page(s).%0A%0AOrganisation%20name%3A%20%0AContact%20email%3A%20%0A%0AThank%20you."
-                  >Contact Rosie &amp; Catherine</a
-                >
-              </div>
-            </article>
-          </div>
+          <div class="cb-plan-cards cb-plan-cards--pricing" id="cb-pricing-compare" hidden></div>
+          <ul class="ee-hint" id="cb-free-benefits" style="margin: 12px 0 0; padding-left: 1.2rem; line-height: 1.55">
+            <li>Unlimited Connected event listings</li>
+            <li>Eventbrite, Ticket Tailor, or your own website</li>
+            <li>Real-time attendee sync for verified reviews and round-ups</li>
+          </ul>
 
           <div class="cb-poa-actions">
             <button type="button" class="ee-btn ee-btn-outline" id="cb-manage-billing" hidden>
               Manage billing
             </button>
+            <a class="ee-btn ee-btn-gold" href="/organiser/#connected-booking">Open organiser workspace →</a>
             <a class="ee-btn ee-btn-outline" href="mailto:hi@thenetworkeruk.com?subject=Connected%20question"
               >Questions? Email us</a
             >
           </div>
           <p class="ee-booking-help-table-tip" id="cb-billing-tip">
-            Sign in to subscribe. Payment is handled securely by Stripe.
+            No subscription — open Connected booking in your workspace, enable a provider, then link each event.
           </p>
           <p class="ee-hint ee-alert-warn" id="cb-slots-workspace-hint" hidden role="status">
             Choose which organiser pages use Connected on
-            <a href="/organiser/#groups">Organiser pages</a> in your workspace (subscription and webhook setup stay on
-            this page).
+            <a href="/organiser/#groups">Organiser pages</a> in your workspace if prompted.
           </p>
         </section>
 
@@ -384,9 +301,10 @@
         <aside class="ee-booking-help-panel ee-booking-help-panel--note cb-linkout-callout">
           <h2 class="cb-linkout-callout-title">Only need a listing link for one event?</h2>
           <p>
-            <strong>Link Out</strong> is <strong>£9.99 + VAT per event</strong>. Your listing sends buyers to your own
-            booking system — we do not process ticket sales and there is <strong>no integration</strong> with The
-            Networker UK. No webhook sync, verified reviews, round-up emails, or other Connected benefits.
+            <strong>Link Out</strong> is <strong>free</strong>. Your listing sends buyers to your own booking system —
+            we do not process ticket sales and there is <strong>no integration</strong> with The Networker UK. No
+            webhook sync, verified reviews, round-up emails, or other Connected benefits. Prefer attendee sync? Use
+            Connected instead.
           </p>
           <p class="cb-linkout-callout-cta">
             <a class="ee-btn ee-btn-outline" href="/organiser/booking-options#link-out">Explore Link Out</a>
@@ -396,7 +314,7 @@
     </div>
 
     <script src="../js/organiser-embed-bootstrap.js?v=20260918embed1" defer></script>
-    <script src="../js/organiser-connected-booking-page.js?v=20260918setup1" defer></script>
+    <script src="../js/organiser-connected-booking-page.js?v=20261027free2" defer></script>
     <script src="../js/organiser-connected-booking-providers.js?v=20261021test1" defer></script>
   </body>
 </html>

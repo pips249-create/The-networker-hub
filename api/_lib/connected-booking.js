@@ -11,6 +11,9 @@ const {
   connectedBookingPreviewLocked,
   connectedBookingPilotGrantEligible,
   connectedBookingPilotGrantPlan,
+  connectedBookingFreeEnabled,
+  connectedBookingFreeDefaultPlan,
+  linkOutFreeEnabled,
   normalizeConnectedBookingEmail,
   accountHasAdminConnectedGrant,
   accountHasLinkOutGrant,
@@ -88,8 +91,9 @@ async function assertConnectedBookingEntitlement(sb, organiserId, options) {
     const e = new Error('connected_booking_inactive');
     e.status = 403;
     e.code = 'connected_booking_inactive';
-    e.message =
-      'Connected booking is not active on your account. Subscribe or contact us to enable it.';
+    e.message = connectedBookingFreeEnabled()
+      ? 'Connected booking is not enabled on your account. Open Connected booking in your organiser workspace, read how it works, then click Enable Connected (free).'
+      : 'Connected booking is not active on your account. Subscribe or contact us to enable it.';
     throw e;
   }
   const limit = groupLimitForPlan(account.connected_booking_plan);
@@ -99,7 +103,9 @@ async function assertConnectedBookingEntitlement(sb, organiserId, options) {
       const e = new Error('connected_booking_group_limit');
       e.status = 403;
       e.code = 'connected_booking_group_limit';
-      e.message = `Your plan allows up to ${limit} group profile(s). Upgrade to add more.`;
+      e.message = connectedBookingFreeEnabled()
+        ? `Connected booking allows up to ${limit} group profile(s) on this account. Contact hi@thenetworkeruk.com if you need more.`
+        : `Your plan allows up to ${limit} group profile(s). Upgrade to add more.`;
       throw e;
     }
   }
@@ -158,15 +164,19 @@ async function assertLinkOutEntitlement(sb, organiserId) {
     e.code = 'link_out_no_account';
     throw e;
   }
-  if (!accountHasLinkOutGrant(account) && !isConnectedPlanActive(account)) {
-    const e = new Error('link_out_inactive');
-    e.status = 403;
-    e.code = 'link_out_inactive';
-    e.message =
-      'Link Out is not enabled on your account. Ask The Networker UK to allocate it, or use Connected booking.';
-    throw e;
+  if (
+    linkOutFreeEnabled() ||
+    accountHasLinkOutGrant(account) ||
+    isConnectedPlanActive(account)
+  ) {
+    return account;
   }
-  return account;
+  const e = new Error('link_out_inactive');
+  e.status = 403;
+  e.code = 'link_out_inactive';
+  e.message =
+    'Link Out is not enabled on your account. Ask The Networker UK to allocate it, or use Connected booking.';
+  throw e;
 }
 
 module.exports = {
@@ -181,6 +191,9 @@ module.exports = {
   connectedBookingPreviewLocked,
   connectedBookingPilotGrantEligible,
   connectedBookingPilotGrantPlan,
+  connectedBookingFreeEnabled,
+  connectedBookingFreeDefaultPlan,
+  linkOutFreeEnabled,
   accountHasAdminConnectedGrant,
   accountHasLinkOutGrant,
   emailForOrganiserAccountId,
