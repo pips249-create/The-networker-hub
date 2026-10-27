@@ -56,8 +56,11 @@ ok('series-bundle-checkout encodes partial-booking exception');
 
 const detailSrc = fs.readFileSync(path.join(root, 'js/event-detail.js'), 'utf8');
 assert.ok(
-  /Add the other date/.test(detailSrc) && /remainingSeriesBookableEntries/.test(detailSrc),
-  'event detail must offer adding the other date after a partial booking'
+  /Add the other date/.test(detailSrc) &&
+    /remainingSeriesBookableEntries/.test(detailSrc) &&
+    /has-remaining-dates/.test(detailSrc) &&
+    /category-exclusivity-application-status-primary-btn/.test(detailSrc),
+  'event detail must promote Add the other date as the primary recovery action'
 );
 ok('event-detail exposes Add the other date path');
 

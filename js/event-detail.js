@@ -4584,7 +4584,26 @@
   function applyAlreadyGoingStatusActions(ev, alreadyGoing) {
     const link = document.getElementById('category-exclusivity-application-status-link');
     const anotherBtn = document.getElementById('category-exclusivity-application-status-another-date');
+    const actions = document.getElementById('category-exclusivity-application-status-actions');
+    const statusPanel = document.getElementById('category-exclusivity-application-status');
     if (!link) return;
+
+    function setPrimaryAction(isAnotherPrimary) {
+      link.classList.toggle('category-exclusivity-application-status-link--primary', !isAnotherPrimary);
+      link.classList.toggle('category-exclusivity-application-status-link--secondary', isAnotherPrimary);
+      if (anotherBtn) {
+        anotherBtn.classList.toggle('category-exclusivity-application-status-secondary', !isAnotherPrimary);
+        anotherBtn.classList.toggle('category-exclusivity-application-status-primary-btn', isAnotherPrimary);
+      }
+      if (statusPanel) {
+        statusPanel.classList.toggle('has-remaining-dates', isAnotherPrimary);
+      }
+      if (actions && anotherBtn && isAnotherPrimary && anotherBtn.parentNode === actions) {
+        actions.insertBefore(anotherBtn, link);
+      } else if (actions && anotherBtn && !isAnotherPrimary && link.parentNode === actions) {
+        actions.insertBefore(link, anotherBtn);
+      }
+    }
 
     if (alreadyGoing) {
       link.textContent = 'View my tickets';
@@ -4592,14 +4611,20 @@
       if (anotherBtn) {
         if (eventIsExternalConnected(ev)) {
           anotherBtn.textContent = 'Buy another ticket on organiser site';
-          anotherBtn.hidden = !externalBookingUrlForEvent(ev);
+          const showExternal = Boolean(externalBookingUrlForEvent(ev));
+          anotherBtn.hidden = !showExternal;
+          setPrimaryAction(showExternal);
         } else {
           const remainingCount = remainingSeriesBookableEntries(ev && ev.id).length;
           anotherBtn.textContent =
             remainingCount === 1 ? 'Add the other date' : 'Book another date';
           const showAnother = seriesHasOtherBookableDates(ev && ev.id) && remainingCount >= 1;
           anotherBtn.hidden = !showAnother;
+          // Recovery is the main action — View my tickets stays available underneath.
+          setPrimaryAction(showAnother);
         }
+      } else {
+        setPrimaryAction(false);
       }
       return;
     }
@@ -4607,6 +4632,7 @@
     link.textContent = 'View in My account';
     link.href = '/account/';
     if (anotherBtn) anotherBtn.hidden = true;
+    setPrimaryAction(false);
   }
 
   function applyEventApplicationUi(ev) {
