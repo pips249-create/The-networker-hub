@@ -568,7 +568,13 @@ const FALLBACK_REPLIES = [
   {
     match: /book all (date|day|session)|all remaining date|bundle checkout|checkout.*every date/i,
     reply:
-      'When your listing has multiple dates with the same ticket price on each day, signed-in attendees see Book all remaining dates on the event page — one payment, registrations on every upcoming session they have not booked yet. Every tier must match by name and price on each date. Guest visit, alumni, member-only, and application tickets are excluded.',
+      'When your listing has multiple dates with the same ticket price on each day, signed-in attendees see Book all remaining dates on the event page — one payment, registrations on every upcoming session they have not booked yet. Every tier must match by name and price on each date. Guest visit, alumni, member-only, and application tickets are excluded. If someone accidentally books only one date, they can still add the remaining date(s) from the listing or the booking confirmation page.',
+  },
+  {
+    match:
+      /accidentally booked (one|1|only one)|booked (only )?one date|change (my )?mind.*(date|session)|add (the )?other date|booked (the )?wrong date|only booked (for )?one/i,
+    reply:
+      'Yes — if a multi-date listing has another upcoming session, they are not stuck. On the event page they will see You\'re already going for the date they booked, with Add the other date (or Book another date). On the booking confirmation page we also offer the remaining session. They can book the extra date separately; cancelling the first booking still follows the organiser\'s refund policy.',
   },
   {
     match: /early bird|early-bird/i,

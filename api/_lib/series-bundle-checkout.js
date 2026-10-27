@@ -356,12 +356,19 @@ async function resolveSeriesBundleItems(sb, { eventId, ticketId, email, userId }
     });
   }
 
-  if (items.length < 2) {
+  if (items.length < 1) {
     throw bundleError(
       'series_bundle_unavailable',
-      items.length === 1
-        ? 'Only one date is left to book for this ticket type — pick that date and checkout normally.'
-        : 'Book all dates is not available — dates may differ in price, be sold out, or you may already be registered.'
+      'Book all dates is not available — dates may differ in price, be sold out, or you may already be registered.'
+    );
+  }
+
+  // Fresh "book all" needs 2+ dates. After a partial booking, allow the last remaining
+  // date so someone who accidentally booked only one session can still add the rest.
+  if (items.length === 1 && alreadyRegistered.size === 0) {
+    throw bundleError(
+      'series_bundle_unavailable',
+      'Only one date is left to book for this ticket type — pick that date and checkout normally.'
     );
   }
 

@@ -16,6 +16,7 @@
   let seriesCalMonth = new Date().getMonth();
   let seriesCalYear = new Date().getFullYear();
   let ticketPanelSetEvent = null;
+  let registeredSeriesEventIds = [];
 
   const MOCK_ORGANISER_REVIEWS = [
     {
@@ -2189,6 +2190,25 @@
     });
   }
 
+  function registeredSeriesIdSet() {
+    return new Set(
+      (registeredSeriesEventIds || []).map(function (id) {
+        return String(id || '').trim();
+      }).filter(Boolean)
+    );
+  }
+
+  function remainingSeriesBookableEntries(excludeEventId) {
+    const booked = registeredSeriesIdSet();
+    const skipId = String(excludeEventId || '').trim();
+    return (seriesDatesList || []).filter(function (entry) {
+      if (!entry || !entry.id) return false;
+      if (skipId && entry.id === skipId) return false;
+      if (booked.has(entry.id)) return false;
+      return seriesEntryIsBookable(entry);
+    });
+  }
+
   function seriesBundleOffer(ev, tierEl) {
     if (!seriesDatesList || seriesDatesList.length <= 1 || !tierEl || !ev) return null;
     if (tierEl.getAttribute('data-series-pass') === '1') return null;
@@ -2202,17 +2222,24 @@
     );
     if (!tierName) return null;
 
+    const booked = registeredSeriesIdSet();
     const matches = seriesDatesList.filter(function (entry) {
       if (!seriesEntryIsBookable(entry)) return false;
       if (entry.isSoldOut || entry.isSalesClosed) return false;
+      if (booked.has(entry.id)) return false;
       return Boolean(findSeriesTierMatch(entry, tierName, unitPrice));
     });
-    if (matches.length < 2) return null;
+    // Fresh "book all" needs 2+ dates. After booking one date by accident, still offer
+    // the last remaining matching date so they can add it in one checkout.
+    const hasPartialSeriesBooking = booked.size > 0;
+    if (matches.length < 1) return null;
+    if (matches.length < 2 && !hasPartialSeriesBooking) return null;
 
     return {
       dateCount: matches.length,
       unitPrice: unitPrice,
       tierName: tierName,
+      partial: hasPartialSeriesBooking,
     };
   }
 
@@ -2235,15 +2262,20 @@
     const priceLabel =
       offer.unitPrice <= 0 ? 'free' : fmt(offer.unitPrice);
     if (label) {
-      label.textContent = 'Book all ' + offer.dateCount + ' remaining dates';
+      label.textContent =
+        offer.dateCount === 1
+          ? 'Add the remaining date'
+          : 'Book all ' + offer.dateCount + ' remaining dates';
     }
     if (hint) {
       hint.textContent =
-        'One checkout — ' +
-        offer.dateCount +
-        ' × ' +
-        priceLabel +
-        ' (same ticket type on every date).';
+        offer.dateCount === 1
+          ? 'One checkout for the date you have not booked yet (' + priceLabel + ').'
+          : 'One checkout — ' +
+            offer.dateCount +
+            ' × ' +
+            priceLabel +
+            ' (same ticket type on every date).';
     }
     return offer;
   }
@@ -2334,7 +2366,12 @@
         btn.classList.add('is-available');
         if (entry.isSoldOut) btn.classList.add('is-sold-out');
         if (entry.id === selectedSeriesEventId) btn.classList.add('is-selected');
-        btn.setAttribute('aria-label', formatSeriesSelectedLine(entry));
+        if (registeredSeriesIdSet().has(entry.id)) {
+          btn.classList.add('is-going');
+          btn.setAttribute('aria-label', formatSeriesSelectedLine(entry) + ' — already booked');
+        } else {
+          btn.setAttribute('aria-label', formatSeriesSelectedLine(entry));
+        }
         if (!seriesEntryIsBookable(entry)) {
           btn.classList.add('is-past');
           btn.disabled = true;
@@ -2388,11 +2425,7 @@
   }
 
   function seriesHasOtherBookableDates(currentEventId) {
-    if (!seriesDatesList || seriesDatesList.length <= 1) return false;
-    return seriesDatesList.some(function (entry) {
-      if (!entry || !entry.id || entry.id === currentEventId) return false;
-      return seriesEntryIsBookable(entry);
-    });
+    return remainingSeriesBookableEntries(currentEventId).length > 0;
   }
 
   function openSeriesDatePickerForAnotherDate() {
@@ -2400,6 +2433,23 @@
     if (!wrap) return;
     if (seriesDatesList.length > 1) wrap.hidden = false;
     if (wrap.hidden) return;
+
+    // One remaining date after an accidental single booking: jump straight there
+    // so checkout appears instead of trapping them on "You're already going".
+    const remaining = remainingSeriesBookableEntries(activeEvent() && activeEvent().id);
+    if (remaining.length === 1) {
+      selectSeriesDate(remaining[0]);
+      const tickets = document.getElementById('tickets');
+      if (tickets) {
+        try {
+          tickets.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } catch {
+          /* ignore */
+        }
+      }
+      return;
+    }
+
     setSeriesDatePickerOpen(true);
     try {
       wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
@@ -4488,6 +4538,7 @@
   function applicationStatusCopy(state, ev) {
     const status = String(state?.applicationStatus || '').trim();
     const payment = String(state?.paymentStatus || '').trim();
+    const remainingCount = remainingSeriesBookableEntries(ev && ev.id).length;
     if (status === 'Approved' && (payment === 'Paid' || payment === 'Free')) {
       if (eventIsExternalConnected(ev)) {
         return {
@@ -4499,7 +4550,12 @@
       }
       return {
         title: "You're already going",
-        lead: "You're registered for this date.",
+        lead:
+          remainingCount === 1
+            ? "You're registered for this date. If you meant to book both dates, you can still add the other one."
+            : remainingCount > 1
+              ? "You're registered for this date. If you meant to book more sessions, you can still add the remaining dates."
+              : "You're registered for this date.",
       };
     }
     if (status === 'Pending') {
@@ -4519,7 +4575,9 @@
       title: eventIsCategoryExclusivity(ev) ? 'Application submitted' : "You're already going",
       lead: eventIsCategoryExclusivity(ev)
         ? "You've already applied for this event."
-        : "You're registered for this date.",
+        : remainingCount >= 1
+          ? "You're registered for this date. You can still add another date in this series."
+          : "You're registered for this date.",
     };
   }
 
@@ -4536,8 +4594,10 @@
           anotherBtn.textContent = 'Buy another ticket on organiser site';
           anotherBtn.hidden = !externalBookingUrlForEvent(ev);
         } else {
-          anotherBtn.textContent = 'Book another date';
-          const showAnother = seriesHasOtherBookableDates(ev && ev.id);
+          const remainingCount = remainingSeriesBookableEntries(ev && ev.id).length;
+          anotherBtn.textContent =
+            remainingCount === 1 ? 'Add the other date' : 'Book another date';
+          const showAnother = seriesHasOtherBookableDates(ev && ev.id) && remainingCount >= 1;
           anotherBtn.hidden = !showAnother;
         }
       }
@@ -4583,6 +4643,7 @@
   async function refreshEventApplicationUi(ev) {
     if (!ev || !ev.id) {
       eventApplicationState = null;
+      registeredSeriesEventIds = [];
       applyEventApplicationUi(ev);
       return;
     }
@@ -4590,6 +4651,7 @@
     const signedIn = await isSignedInAttendee();
     if (!signedIn) {
       eventApplicationState = null;
+      registeredSeriesEventIds = [];
       applyEventApplicationUi(ev);
       return;
     }
@@ -4602,6 +4664,9 @@
       const data = await res.json().catch(function () {
         return {};
       });
+      registeredSeriesEventIds = Array.isArray(data.registeredSeriesEventIds)
+        ? data.registeredSeriesEventIds.filter(Boolean)
+        : [];
       if (res.ok && data.ok && data.hasApplication) {
         eventApplicationState = {
           hasApplication: true,
@@ -4615,8 +4680,11 @@
       }
     } catch (e) {
       eventApplicationState = null;
+      registeredSeriesEventIds = [];
     }
     applyEventApplicationUi(ev);
+    updateSeriesBundleOption(ev);
+    renderSeriesCalendar();
     if (ev && eventIsExternalConnected(ev)) {
       applyTicketPanelState(ev);
       syncExternalBookingSigninNudge(ev);
@@ -5590,7 +5658,11 @@
           qtyHint.textContent = '';
         } else if (bundleSelected) {
           qtyHint.hidden = false;
-          qtyHint.textContent = 'Booking all remaining dates in one checkout.';
+          const offer = seriesBundleOffer(evNow, getSelectedTierEl());
+          qtyHint.textContent =
+            offer && offer.dateCount === 1
+              ? 'Adding the remaining date you have not booked yet.'
+              : 'Booking all remaining dates in one checkout.';
         } else if (passSelected) {
           qtyHint.hidden = false;
           qtyHint.textContent = 'Full series pass — includes every date in this listing.';
