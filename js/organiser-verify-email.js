@@ -192,15 +192,15 @@
       return;
     }
 
-    // Prefill from the inbox CTA (?code= / legacy ?token=) but never auto-submit.
-    // Mail scanners that only GET the link must not mark the address confirmed
-    // or fire Welcome before the user taps Confirm.
+    // Inbox CTA (?code= / legacy ?token=): scrub the secret from the address bar,
+    // then POST once. We only reach here with a session — mail scanners that GET
+    // the link without cookies are sent to login and cannot fire Welcome early.
     var urlCode = String(params().get('code') || params().get('token') || '')
       .replace(/\D/g, '')
       .slice(0, 6);
     if (urlCode && codeEl) {
       codeEl.value = urlCode;
-      showStatus('Code ready — tap Confirm your email to finish.', true);
+      showStatus('Confirming your email…', true);
     }
     if (window.history.replaceState && (params().get('token') || params().get('code'))) {
       var scrub = new URL(window.location.href);
@@ -209,8 +209,13 @@
       window.history.replaceState({}, '', scrub.pathname + scrub.search + scrub.hash);
     }
 
+    if (urlCode) {
+      await submitCode(urlCode);
+      return;
+    }
+
     // Do not resend after a prefilled inbox code — a fresh code would invalidate it.
-    if (!urlCode) await maybeAutoSendVerificationCode();
+    await maybeAutoSendVerificationCode();
     if (codeEl) codeEl.focus();
   }
 
