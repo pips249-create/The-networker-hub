@@ -39,7 +39,7 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    const pdf = buildTicketPdf(context);
+    const pdf = await buildTicketPdf(context);
     const filename = 'ticket-' + context.bookingReference.replace(/[^a-z0-9-]+/gi, '-').toLowerCase() + '.pdf';
     res.statusCode = 200;
     res.setHeader('Content-Type', 'application/pdf');

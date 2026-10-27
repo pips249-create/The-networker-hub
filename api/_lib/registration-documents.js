@@ -11,7 +11,14 @@ const {
   registrationTicketRevenue,
   registrationBookingFee,
 } = require('./booking-fees');
-const { buildSimpleTextPdf } = require('./simple-pdf');
+const {
+  buildSimpleTextPdf,
+  buildPositionedPdf,
+  wrapText,
+  truncateToWidth,
+  fitImageInBox,
+} = require('./simple-pdf');
+const { loadTicketPdfLogos } = require('./ticket-pdf-logos');
 
 const REGISTRATION_SELECT = `
   id,
@@ -46,7 +53,8 @@ const REGISTRATION_SELECT = `
     organiser_id,
     organisers (
       id,
-      name
+      name,
+      photo_url
     )
   ),
   tickets (
@@ -143,6 +151,7 @@ function buildDocumentContext(registration) {
     attendeeEmail: String(attendee.email || registration.attendee_email || '').trim(),
     eventTitle: booked.title,
     organiserName: String(organiser.name || '').trim() || 'Event organiser',
+    organiserLogoUrl: String(organiser.photo_url || '').trim(),
     eventDate: formatDateTime(booked.date),
     eventEndDate: booked.endDate ? formatDateTime(booked.endDate) : '',
     location,
@@ -186,34 +195,460 @@ async function loadRegistrationForAttendee(session, registrationId) {
   return { sb, registration, context: buildDocumentContext(registration) };
 }
 
-function buildTicketPdf(context) {
-  const lines = [
-    'THE NETWORKER HUB — EVENT TICKET',
-    '',
-    'Booking reference: ' + context.bookingReference,
-    'Attendee: ' + context.attendeeName,
-    context.attendeeEmail ? 'Email: ' + context.attendeeEmail : '',
-    '',
-    'Event: ' + context.eventTitle,
-    'Organiser: ' + context.organiserName,
-    'When: ' + context.eventDate,
-    context.eventEndDate ? 'Ends: ' + context.eventEndDate : '',
-    'Where: ' + context.location,
-    'Tickets: ' + context.ticketLabel,
-    'Booked: ' + context.bookedAt,
-    'Total paid: ' + context.amountPaid,
-    '',
+function approxPaidWidth(text) {
+  return Math.max(24, String(text || '').length * 7);
+}
+
+function formatWhenForTicket(startLabel, endLabel) {
+  const start = String(startLabel || '').trim();
+  const end = String(endLabel || '').trim();
+  if (!start) return '—';
+  if (!end) return start;
+  const startParts = start.split(' at ');
+  const endParts = end.split(' at ');
+  if (startParts.length === 2 && endParts.length === 2 && startParts[0] === endParts[0]) {
+    // Same day: date on first line, times on second — avoids "10:00 –" wrapping alone.
+    return startParts[0] + '\n' + startParts[1] + ' – ' + endParts[1];
+  }
+  return start + '\nEnds ' + end;
+}
+
+async function buildTicketPdf(context) {
+  const logos = await loadTicketPdfLogos(context);
+  const organiserLogo = logos.organiserLogo;
+  const hubLogo = logos.hubLogo;
+
+  const pageW = 595.28;
+  const pageH = 841.89;
+  const margin = 36;
+  const cardX = margin;
+  const cardW = pageW - margin * 2;
+  const cardTop = pageH - 48;
+  const headerH = organiserLogo ? 78 : 64;
+  const accent = '#452d5c';
+  const accentSoft = '#f3eef5';
+  const coral = '#bd932e';
+  const textDark = '#2d1b3d';
+  const textMid = '#5a4a62';
+  const textSoft = '#7a6688';
+  const border = '#e8dbea';
+  const colGap = 18;
+  const colW = (cardW - 48 - colGap) / 2;
+  const contentPad = 24;
+
+  const instruction =
     context.isOnline && context.meetingLink
       ? 'Join online: ' + context.meetingLink
       : context.isOnline
         ? 'Online joining details will be emailed before the event.'
-        : 'Present this ticket at the event.',
-    '',
-    'Event page: ' + context.eventUrl,
-    '',
-    'Issued by The Networker UK on behalf of the event organiser.',
-  ].filter(Boolean);
-  return buildSimpleTextPdf(lines);
+        : 'Present this ticket at the event.';
+
+  const eventLines = wrapText(context.eventTitle || 'Event', 16, cardW - 48, 2);
+  const organiserLine = truncateToWidth(
+    'Organised by ' + (context.organiserName || 'Event organiser'),
+    10,
+    cardW - 48
+  );
+  const instructionLines = wrapText(instruction, 10, cardW - 48, 3);
+  const ticketsLabel = String(context.ticketLabel || '1 × Ticket');
+  const whenLines = String(formatWhenForTicket(context.eventDate, context.eventEndDate))
+    .split('\n')
+    .filter(Boolean);
+  const whereLines = wrapText(context.location || '—', 11, colW, 3);
+  const attendeeName = context.attendeeName || 'Attendee';
+  const attendeeEmail = context.attendeeEmail
+    ? truncateToWidth(context.attendeeEmail, 9, colW)
+    : '';
+  const ticketLines = wrapText(ticketsLabel, 11, colW, 2);
+
+  const images = [];
+  const contentItems = [
+    {
+      type: 'rect',
+      x: cardX,
+      y: cardTop - headerH,
+      w: cardW,
+      h: headerH,
+      fill: accent,
+    },
+    {
+      type: 'rect',
+      x: cardX,
+      y: cardTop - headerH,
+      w: 6,
+      h: headerH,
+      fill: coral,
+    },
+  ];
+
+  if (organiserLogo) {
+    images.push({
+      name: 'OrgLogo',
+      jpeg: organiserLogo.jpeg,
+      width: organiserLogo.width,
+      height: organiserLogo.height,
+    });
+    const logoPad = 8;
+    const logoBox = {
+      x: cardX + 18,
+      y: cardTop - headerH + 12,
+      w: 108,
+      h: headerH - 24,
+    };
+    contentItems.push({
+      type: 'rect',
+      x: logoBox.x,
+      y: logoBox.y,
+      w: logoBox.w,
+      h: logoBox.h,
+      fill: '#ffffff',
+    });
+    const fitted = fitImageInBox(organiserLogo, {
+      x: logoBox.x + logoPad,
+      y: logoBox.y + logoPad,
+      w: logoBox.w - logoPad * 2,
+      h: logoBox.h - logoPad * 2,
+    });
+    contentItems.push({
+      type: 'image',
+      name: 'OrgLogo',
+      x: fitted.x,
+      y: fitted.y,
+      w: fitted.w,
+      h: fitted.h,
+    });
+    contentItems.push({
+      x: logoBox.x + logoBox.w + 14,
+      y: cardTop - 28,
+      size: 9,
+      font: 'F2',
+      color: '#e8dbea',
+      text: 'EVENT TICKET',
+    });
+    contentItems.push({
+      x: logoBox.x + logoBox.w + 14,
+      y: cardTop - 48,
+      size: 16,
+      font: 'F2',
+      color: '#ffffff',
+      text: truncateToWidth(context.organiserName || 'Event organiser', 16, cardW - 160),
+    });
+  } else {
+    contentItems.push({
+      x: cardX + 22,
+      y: cardTop - 26,
+      size: 9,
+      font: 'F2',
+      color: '#e8dbea',
+      text: 'THE NETWORKER UK',
+    });
+    contentItems.push({
+      x: cardX + 22,
+      y: cardTop - 46,
+      size: 18,
+      font: 'F2',
+      color: '#ffffff',
+      text: 'Event ticket',
+    });
+  }
+
+  const refBlockH = 44;
+  let cursorY = cardTop - headerH - 20;
+  contentItems.push({
+    type: 'rect',
+    x: cardX + 18,
+    y: cursorY - 30,
+    w: cardW - 36,
+    h: 36,
+    fill: accentSoft,
+  });
+  contentItems.push({
+    x: cardX + 28,
+    y: cursorY - 6,
+    size: 8,
+    font: 'F2',
+    color: textSoft,
+    text: 'BOOKING REFERENCE',
+  });
+  contentItems.push({
+    x: cardX + 28,
+    y: cursorY - 22,
+    size: 16,
+    font: 'F2',
+    color: accent,
+    text: String(context.bookingReference || ''),
+  });
+  contentItems.push({
+    x: cardX + cardW - 28 - approxPaidWidth(context.amountPaid),
+    y: cursorY - 18,
+    size: 12,
+    font: 'F2',
+    color: coral,
+    text: String(context.amountPaid || ''),
+  });
+
+  cursorY -= refBlockH + 10;
+  eventLines.forEach((line, index) => {
+    contentItems.push({
+      x: cardX + contentPad,
+      y: cursorY - index * 20,
+      size: 16,
+      font: 'F2',
+      color: textDark,
+      text: line,
+    });
+  });
+  cursorY -= eventLines.length * 20 + 4;
+  // Keep organiser line when logo is absent; with logo the header already names them.
+  if (!organiserLogo) {
+    contentItems.push({
+      x: cardX + contentPad,
+      y: cursorY,
+      size: 10,
+      font: 'F1',
+      color: textMid,
+      text: organiserLine,
+    });
+    cursorY -= 16;
+  } else {
+    cursorY -= 8;
+  }
+
+  contentItems.push({
+    type: 'line',
+    x1: cardX + contentPad,
+    y1: cursorY,
+    x2: cardX + cardW - contentPad,
+    y2: cursorY,
+    stroke: border,
+    lineWidth: 1,
+  });
+
+  cursorY -= 18;
+  contentItems.push({
+    x: cardX + contentPad,
+    y: cursorY,
+    size: 8,
+    font: 'F2',
+    color: textSoft,
+    text: 'WHEN',
+  });
+  contentItems.push({
+    x: cardX + contentPad + colW + colGap,
+    y: cursorY,
+    size: 8,
+    font: 'F2',
+    color: textSoft,
+    text: 'WHERE',
+  });
+  whenLines.forEach((line, index) => {
+    contentItems.push({
+      x: cardX + contentPad,
+      y: cursorY - 14 - index * 14,
+      size: 11,
+      font: 'F1',
+      color: textDark,
+      text: line,
+    });
+  });
+  whereLines.forEach((line, index) => {
+    contentItems.push({
+      x: cardX + contentPad + colW + colGap,
+      y: cursorY - 14 - index * 14,
+      size: 11,
+      font: 'F1',
+      color: textDark,
+      text: line,
+    });
+  });
+
+  cursorY -= 14 + Math.max(whenLines.length, whereLines.length) * 14 + 12;
+  contentItems.push({
+    type: 'line',
+    x1: cardX + contentPad,
+    y1: cursorY,
+    x2: cardX + cardW - contentPad,
+    y2: cursorY,
+    stroke: border,
+    lineWidth: 1,
+  });
+
+  cursorY -= 18;
+  contentItems.push({
+    x: cardX + contentPad,
+    y: cursorY,
+    size: 8,
+    font: 'F2',
+    color: textSoft,
+    text: 'ATTENDEE',
+  });
+  contentItems.push({
+    x: cardX + contentPad + colW + colGap,
+    y: cursorY,
+    size: 8,
+    font: 'F2',
+    color: textSoft,
+    text: 'TICKETS',
+  });
+  contentItems.push({
+    x: cardX + contentPad,
+    y: cursorY - 14,
+    size: 11,
+    font: 'F2',
+    color: textDark,
+    text: truncateToWidth(attendeeName, 11, colW),
+  });
+  let attendeeExtra = 0;
+  if (attendeeEmail) {
+    attendeeExtra = 1;
+    contentItems.push({
+      x: cardX + contentPad,
+      y: cursorY - 28,
+      size: 9,
+      font: 'F1',
+      color: textMid,
+      text: attendeeEmail,
+    });
+  }
+  ticketLines.forEach((line, index) => {
+    contentItems.push({
+      x: cardX + contentPad + colW + colGap,
+      y: cursorY - 14 - index * 14,
+      size: 11,
+      font: 'F2',
+      color: textDark,
+      text: line,
+    });
+  });
+  contentItems.push({
+    x: cardX + contentPad + colW + colGap,
+    y: cursorY - 14 - ticketLines.length * 14,
+    size: 9,
+    font: 'F1',
+    color: textMid,
+    text: 'Total paid: ' + String(context.amountPaid || 'Free'),
+  });
+
+  cursorY -= 14 + Math.max(1 + attendeeExtra, ticketLines.length + 1) * 14 + 14;
+
+  const footerTop = cursorY;
+  const hubLogoBoxH = hubLogo ? 28 : 0;
+  const footerH =
+    16 +
+    instructionLines.length * 13 +
+    hubLogoBoxH +
+    (context.bookedAt ? 16 : 8) +
+    12;
+  const footerBottom = footerTop - footerH;
+  const cardY = footerBottom - 18;
+  const cardH = cardTop - cardY;
+
+  contentItems.push({
+    type: 'rect',
+    x: cardX + 18,
+    y: footerBottom,
+    w: cardW - 36,
+    h: footerH,
+    fill: accentSoft,
+  });
+  instructionLines.forEach((line, index) => {
+    contentItems.push({
+      x: cardX + 28,
+      y: footerTop - 14 - index * 13,
+      size: 10,
+      font: 'F1',
+      color: textDark,
+      text: line,
+    });
+  });
+
+  let issuerY = footerTop - 14 - instructionLines.length * 13 - 10;
+  if (hubLogo) {
+    images.push({
+      name: 'HubLogo',
+      jpeg: hubLogo.jpeg,
+      width: hubLogo.width,
+      height: hubLogo.height,
+    });
+    const fittedHub = fitImageInBox(hubLogo, {
+      x: cardX + 28,
+      y: issuerY - 22,
+      w: 92,
+      h: 24,
+    });
+    contentItems.push({
+      type: 'image',
+      name: 'HubLogo',
+      x: fittedHub.x,
+      y: fittedHub.y,
+      w: fittedHub.w,
+      h: fittedHub.h,
+    });
+    contentItems.push({
+      x: cardX + 28 + 100,
+      y: issuerY - 8,
+      size: 8,
+      font: 'F1',
+      color: textSoft,
+      text: 'Issued via The Networker UK',
+    });
+    issuerY -= 28;
+  } else {
+    contentItems.push({
+      x: cardX + 28,
+      y: issuerY - 4,
+      size: 8,
+      font: 'F1',
+      color: textSoft,
+      text: 'Issued via The Networker UK',
+    });
+    issuerY -= 16;
+  }
+
+  if (context.bookedAt) {
+    contentItems.push({
+      x: cardX + 28,
+      y: footerBottom + 10,
+      size: 8,
+      font: 'F1',
+      color: textSoft,
+      text: 'Booked ' + context.bookedAt,
+    });
+  }
+
+  const pageChrome = [
+    { type: 'rect', x: 0, y: 0, w: pageW, h: pageH, fill: '#f0ecf7' },
+    {
+      type: 'rect',
+      x: cardX,
+      y: cardY,
+      w: cardW,
+      h: cardH,
+      fill: '#ffffff',
+      stroke: border,
+      lineWidth: 1,
+    },
+  ];
+  const footerNotes = [];
+  if (context.eventUrl) {
+    footerNotes.push({
+      x: cardX,
+      y: cardY - 22,
+      size: 8,
+      font: 'F1',
+      color: textSoft,
+      text: truncateToWidth(context.eventUrl, 8, cardW),
+    });
+  }
+
+  return buildPositionedPdf([
+    {
+      width: pageW,
+      height: pageH,
+      images,
+      items: pageChrome.concat(contentItems, footerNotes),
+    },
+  ]);
 }
 
 function buildTaxInvoicePdf(context) {
