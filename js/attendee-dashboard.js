@@ -107,7 +107,7 @@
     },
     meet: {
       title: 'Meet people',
-      sub: 'Hubert is your matchmaker — describe who you want to meet and he’ll put forward up to five people.',
+      sub: 'I can introduce you to anyone — customers, investors, hires, or someone who’s already solved your problem. Try me.',
     },
     'reviews-pending': {
       title: 'Reviews to write',
