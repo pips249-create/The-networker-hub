@@ -296,8 +296,9 @@ async function ensureNewGroup(sb, spec, createdMap) {
   return created.id;
 }
 
-async function eventExists(sb, organiserId, titlePrefix, sourceIdValue) {
+async function eventExists(sb, organiserId, titlePrefix, sourceIdValue, startsAtIso) {
   if (String(organiserId).startsWith('dry-run:')) return false;
+  // Prefer source tag — monthly series share one title, so title-only match is unsafe.
   if (sourceIdValue) {
     const bySource = await sb
       .from('events')
@@ -306,15 +307,29 @@ async function eventExists(sb, organiserId, titlePrefix, sourceIdValue) {
       .maybeSingle();
     if (!bySource.error && bySource.data) return bySource.data;
   }
-  const { data, error } = await sb
+  let q = sb
     .from('events')
     .select('id, title, starts_at, image_url, checkout_mode, external_booking_url, external_price_label, airtable_id')
     .eq('organiser_id', organiserId)
     .ilike('title', titlePrefix + '%')
-    .gte('starts_at', new Date().toISOString())
-    .limit(5);
+    .limit(10);
+  if (startsAtIso) {
+    // Match the occurrence day in UTC (starts_at stored with offset).
+    const day = String(startsAtIso).slice(0, 10);
+    q = q.gte('starts_at', day + 'T00:00:00.000Z').lt('starts_at', day + 'T23:59:59.999Z');
+  } else {
+    q = q.gte('starts_at', new Date().toISOString());
+  }
+  const { data, error } = await q;
   if (error) throw new Error(error.message);
-  return (data && data[0]) || null;
+  if (!(data || []).length) return null;
+  if (sourceIdValue) {
+    const tagged = data.find((row) => row.airtable_id === sourceIdValue);
+    if (tagged) return tagged;
+    // Same day + title but different/missing source tag — treat as the occurrence.
+    return data[0];
+  }
+  return data[0];
 }
 
 function wantsLinkOut(spec) {
@@ -323,15 +338,24 @@ function wantsLinkOut(spec) {
 
 async function publishEvent(sb, organiserId, spec) {
   const useLinkOut = wantsLinkOut(spec);
+  const occurrenceStart = spec.date || (spec.occurrences && spec.occurrences[0] && spec.occurrences[0].date) || '';
   const existing = await eventExists(
     sb,
     organiserId,
     spec.titleMatch || spec.title.slice(0, 28),
-    spec.sourceId
+    spec.sourceId,
+    occurrenceStart
   );
   if (existing) {
     console.log(`  · skip (already listed): ${existing.title} @ ${existing.starts_at}`);
+    // Only refresh Link Out / source tag when this row is clearly the same occurrence.
+    const sameSource = !spec.sourceId || existing.airtable_id === spec.sourceId;
+    const sameDay =
+      !occurrenceStart ||
+      String(existing.starts_at || '').slice(0, 10) === String(occurrenceStart).slice(0, 10);
     if (
+      sameSource &&
+      sameDay &&
       useLinkOut &&
       (String(existing.checkout_mode || '') !== CHECKOUT_LINK_OUT ||
         !String(existing.external_booking_url || '').trim() ||
