@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>Mock: Booking flow in event drawer - The Networker UK</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/hub.css?v=20261016signin1" />
+    <link rel="stylesheet" href="../css/organiser-dashboard.css?v=20261016" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20261021eb2" />
+    <link rel="stylesheet" href="booking-flow-mock.css" />
+    <style>
+      body.bf-drawer-demo {
+        margin: 0;
+        min-height: 100vh;
+        background: #eef2f5;
+        font-family: 'DM Sans', system-ui, sans-serif;
+        color: #1a2e3b;
+      }
+      .bf-desk {
+        min-height: 100vh;
+        padding: 28px 32px;
+        background:
+          linear-gradient(90deg, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0.2)),
+          #e8eef2;
+      }
+      .bf-desk-card {
+        max-width: 420px;
+        background: #fff;
+        border-radius: 14px;
+        padding: 18px 20px;
+        border: 1px solid #d7e3ea;
+        box-shadow: 0 8px 24px rgba(13, 31, 60, 0.06);
+      }
+      .bf-desk-card h1 {
+        margin: 0 0 6px;
+        font-size: 1.25rem;
+      }
+      .bf-desk-card p {
+        margin: 0;
+        color: #4a6272;
+        font-size: 14px;
+        line-height: 1.45;
+      }
+      /* Force drawer open for the mock */
+      .bf-drawer-demo .org-event-drawer {
+        display: block !important;
+        position: fixed;
+        inset: 0;
+        z-index: 80;
+      }
+      .bf-drawer-demo .org-event-drawer-backdrop {
+        opacity: 1;
+        background: rgba(13, 31, 60, 0.35);
+      }
+      .bf-drawer-demo .org-group-drawer-panel {
+        transform: none;
+        width: min(720px, 92vw);
+      }
+      .bf-drawer-body {
+        flex: 1;
+        overflow: auto;
+        padding: 18px 20px 28px;
+        background: #f4f8fa;
+      }
+      .bf-drawer-actions {
+        position: sticky;
+        bottom: 0;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 20px;
+        padding-top: 14px;
+        background: linear-gradient(180deg, rgba(244, 248, 250, 0), #f4f8fa 28%);
+      }
+      .bf-step[hidden] {
+        display: none !important;
+      }
+      .bf-drawer-demo .bf-wrap {
+        max-width: none;
+        margin: 0;
+        padding: 0;
+      }
+      .bf-drawer-demo .bf-head {
+        margin: 0 0 14px;
+      }
+      .bf-drawer-demo .bf-title {
+        font-size: 1.45rem;
+      }
+      .bf-preview {
+        grid-template-columns: 1fr;
+      }
+      @media (min-width: 560px) {
+        .bf-preview {
+          grid-template-columns: 160px 1fr;
+        }
+      }
+      .bf-mock-banner {
+        margin: 0 0 14px;
+        padding: 8px 12px;
+        border-radius: 8px;
+        background: #eef2ff;
+        border: 1px solid #c7d2fe;
+        font-size: 13px;
+        color: #1c2040;
+      }
+    </style>
+  </head>
+  <body class="bf-drawer-demo org-event-drawer-open">
+    <div class="bf-desk" aria-hidden="true">
+      <div class="bf-desk-card">
+        <h1>My Events</h1>
+        <p>Dashboard stays visible behind the drawer while you set up tickets.</p>
+      </div>
+    </div>
+
+    <div class="org-group-drawer org-event-drawer is-open" aria-hidden="false">
+      <div class="org-group-drawer-backdrop" tabindex="-1"></div>
+      <aside class="org-group-drawer-panel" role="dialog" aria-modal="true" aria-labelledby="org-event-drawer-title">
+        <header class="org-group-drawer-head org-event-drawer-head">
+          <div class="org-event-drawer-toolbar">
+            <div class="org-event-drawer-toolbar-start">
+              <button type="button" class="org-event-drawer-back" id="bf-drawer-back" hidden>← Back</button>
+            </div>
+            <div class="org-event-drawer-toolbar-end">
+              <button type="button" class="org-group-drawer-close org-event-drawer-close" aria-label="Close">×</button>
+            </div>
+          </div>
+          <h2 class="org-group-drawer-title" id="org-event-drawer-title">Set up tickets</h2>
+          <div class="org-event-drawer-progress" id="org-event-drawer-progress">
+            <nav class="bf-progress" aria-label="Setup progress">
+              <span class="bf-progress-step is-current" data-progress="1">1. Book where</span>
+              <span class="bf-progress-step" data-progress="2">2. Connect</span>
+              <span class="bf-progress-step" data-progress="3">3. Check listing</span>
+            </nav>
+          </div>
+        </header>
+
+        <div class="bf-drawer-body">
+          <p class="bf-mock-banner">
+            <strong>UX mock:</strong> full Eventbrite path inside the event drawer, one step at a time.
+          </p>
+
+          <!-- STEP 1 -->
+          <section class="bf-step" data-step="1">
+            <header class="bf-head">
+              <p class="bf-kicker">Friday breakfast networking</p>
+              <h1 class="bf-title">Where do people book?</h1>
+              <p class="bf-lede">One choice for this event.</p>
+            </header>
+
+            <div class="bf-choices" role="listbox" aria-label="Booking system">
+              <button type="button" class="bf-choice" data-path="hub" role="option" aria-selected="false">
+                <span class="bf-choice-main">
+                  <strong>The Networker UK</strong>
+                  <span>Sell tickets here. Reviews and attendees built in.</span>
+                </span>
+                <span class="bf-choice-tag">Easiest</span>
+              </button>
+              <button type="button" class="bf-choice is-active" data-path="eventbrite" role="option" aria-selected="true">
+                <span class="bf-choice-main">
+                  <strong>
+                    <img src="../assets/connected-providers/eventbrite.svg" alt="" width="18" height="18" />
+                    Eventbrite
+                  </strong>
+                  <span>Keep Eventbrite checkout. Get attendees and verified reviews here.</span>
+                </span>
+              </button>
+              <button type="button" class="bf-choice" data-path="ticket_tailor" role="option" aria-selected="false">
+                <span class="bf-choice-main">
+                  <strong>Ticket Tailor</strong>
+                  <span>Keep Ticket Tailor checkout. Get attendees and verified reviews here.</span>
+                </span>
+              </button>
+              <button type="button" class="bf-choice" data-path="own_site" role="option" aria-selected="false">
+                <span class="bf-choice-main">
+                  <strong>My own website</strong>
+                  <span>Buyers pay on your site. Sync attendees and verified reviews here.</span>
+                </span>
+              </button>
+              <button type="button" class="bf-choice bf-choice--quiet" data-path="link_out" role="option" aria-selected="false">
+                <span class="bf-choice-main">
+                  <strong>Just a booking link</strong>
+                  <span>Free redirect only. No attendees. No verified reviews.</span>
+                </span>
+              </button>
+            </div>
+
+            <div class="bf-drawer-actions">
+              <button type="button" class="ee-btn ee-btn-gold" data-go="2">Continue</button>
+            </div>
+          </section>
+
+          <!-- STEP 2 -->
+          <section class="bf-step" data-step="2" hidden>
+            <header class="bf-head">
+              <p class="bf-kicker">Friday breakfast networking</p>
+              <h1 class="bf-title">Connect Eventbrite</h1>
+              <p class="bf-lede">
+                Checkout stays on Eventbrite. We pull listing details and sync buyers for verified reviews.
+              </p>
+            </header>
+
+            <section class="bf-panel">
+              <ul class="bf-benefits">
+                <li>Keep checkout</li>
+                <li>List here</li>
+                <li>Verified reviews</li>
+              </ul>
+
+              <details class="bf-howto" open>
+                <summary>How to get your token</summary>
+                <div class="bf-howto-body">
+                  <ol class="bf-howto-steps">
+                    <li>In Eventbrite: profile → <strong>Account settings</strong> → <strong>Developer</strong></li>
+                    <li>Create or copy your <strong>private token</strong></li>
+                    <li>Paste it below and press <strong>Test connection</strong></li>
+                  </ol>
+
+                  <div class="bf-mini-deck" data-bf-mini-deck>
+                    <div class="bf-mini-slide" data-bf-mini-slide="0">
+                      <figure class="bf-mini-shot" aria-hidden="true">
+                        <div class="bf-mini-shot-bar"><i></i><i></i><i></i></div>
+                        <div class="bf-mini-shot-screen">
+                          <div class="bf-mini-shot-nav">
+                            <span>Account</span>
+                            <span class="is-hot">Developer ←</span>
+                            <span>Webhooks</span>
+                          </div>
+                          <span class="bf-mini-shot-pin">1</span>
+                        </div>
+                      </figure>
+                      <p class="bf-mini-caption">Open Account settings, then Developer.</p>
+                    </div>
+                    <div class="bf-mini-slide" data-bf-mini-slide="1" hidden>
+                      <figure class="bf-mini-shot" aria-hidden="true">
+                        <div class="bf-mini-shot-bar"><i></i><i></i><i></i></div>
+                        <div class="bf-mini-shot-screen">
+                          <strong>API keys</strong>
+                          <div class="bf-mini-shot-token">••••••••••••••••••••</div>
+                          <span class="bf-mini-shot-pin">2</span>
+                        </div>
+                      </figure>
+                      <p class="bf-mini-caption">Copy the private token (not the public key).</p>
+                    </div>
+                    <div class="bf-mini-slide" data-bf-mini-slide="2" hidden>
+                      <figure class="bf-mini-shot" aria-hidden="true">
+                        <div class="bf-mini-shot-bar"><i></i><i></i><i></i></div>
+                        <div class="bf-mini-shot-screen">
+                          <strong>Paste here</strong>
+                          <div class="bf-mini-shot-token">Paste token → Test</div>
+                          <span class="bf-mini-shot-pin">3</span>
+                        </div>
+                      </figure>
+                      <p class="bf-mini-caption">Paste below, test, then continue.</p>
+                    </div>
+                    <div class="bf-mini-nav">
+                      <div class="bf-mini-dots" data-bf-mini-dots aria-label="Guide slides"></div>
+                      <div class="bf-mini-nav-btns">
+                        <button type="button" data-bf-mini-prev disabled>Back</button>
+                        <button type="button" data-bf-mini-next>Next</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <a class="bf-howto-link" href="../guides/connect-eventbrite#api-token" target="_blank" rel="noopener">
+                    Open full guide with screenshots →
+                  </a>
+                </div>
+              </details>
+
+              <div class="bf-primary-block">
+                <label for="bf-token">Eventbrite private token</label>
+                <input
+                  id="bf-token"
+                  type="password"
+                  autocomplete="off"
+                  placeholder="Paste from Account settings, Developer"
+                />
+                <button type="button" class="ee-btn ee-btn-outline" id="bf-test">Test connection</button>
+                <p class="bf-status" id="bf-status" hidden>Connected. Ready to pull this event.</p>
+                <p class="bf-help">We set up buyer sync for you. No webhook screens to copy.</p>
+              </div>
+            </section>
+
+            <div class="bf-drawer-actions">
+              <button type="button" class="ee-btn ee-btn-outline" data-go="1">Back</button>
+              <button type="button" class="ee-btn ee-btn-gold" data-go="3">Continue</button>
+            </div>
+          </section>
+
+          <!-- STEP 3 -->
+          <section class="bf-step" data-step="3" hidden>
+            <header class="bf-head">
+              <p class="bf-kicker">Pulled from Eventbrite</p>
+              <h1 class="bf-title">Check this listing</h1>
+              <p class="bf-lede">Confirm photo, description and details before it goes live.</p>
+            </header>
+
+            <section class="bf-panel">
+              <div class="bf-preview">
+                <figure class="bf-preview-photo" aria-label="Event photo">
+                  <div class="bf-preview-photo-empty">
+                    No photo pulled yet.<br />
+                    Add one for the listing.
+                  </div>
+                  <button type="button" class="bf-field-edit bf-field-edit--primary bf-preview-photo-edit">
+                    Add photo
+                  </button>
+                </figure>
+                <div class="bf-preview-body">
+                  <h3>Friday breakfast networking</h3>
+                  <p class="bf-preview-meta">Wed 12 Nov 2026 · 7:30am · Birmingham</p>
+                  <p class="bf-preview-desc">
+                    Informal breakfast for local business owners. Bring cards, leave with conversations. Tea and coffee
+                    included.
+                  </p>
+                </div>
+              </div>
+
+              <ul class="bf-fields" aria-label="Imported fields">
+                <li class="bf-field">
+                  <div>
+                    <strong>Photo</strong>
+                    <span>Missing from Eventbrite. Add one before publishing.</span>
+                  </div>
+                  <div class="bf-field-actions">
+                    <span class="bf-field-miss">Missing</span>
+                    <button type="button" class="bf-field-edit bf-field-edit--primary">Add photo</button>
+                  </div>
+                </li>
+                <li class="bf-field">
+                  <div>
+                    <strong>Title</strong>
+                    <span>Friday breakfast networking</span>
+                  </div>
+                  <div class="bf-field-actions">
+                    <span class="bf-field-ok">Pulled</span>
+                    <button type="button" class="bf-field-edit">Edit</button>
+                  </div>
+                </li>
+                <li class="bf-field">
+                  <div>
+                    <strong>Description</strong>
+                    <span>Imported. Shorten if you want.</span>
+                  </div>
+                  <div class="bf-field-actions">
+                    <span class="bf-field-ok">Pulled</span>
+                    <button type="button" class="bf-field-edit">Edit</button>
+                  </div>
+                </li>
+                <li class="bf-field">
+                  <div>
+                    <strong>Date and venue</strong>
+                    <span>Wed 12 Nov 2026 · 7:30am · Birmingham</span>
+                  </div>
+                  <div class="bf-field-actions">
+                    <span class="bf-field-ok">Pulled</span>
+                    <button type="button" class="bf-field-edit">Edit</button>
+                  </div>
+                </li>
+                <li class="bf-field">
+                  <div>
+                    <strong>Price shown</strong>
+                    <span>From £15</span>
+                  </div>
+                  <div class="bf-field-actions">
+                    <span class="bf-field-ok">Pulled</span>
+                    <button type="button" class="bf-field-edit">Edit</button>
+                  </div>
+                </li>
+                <li class="bf-field">
+                  <div>
+                    <strong>Organiser page</strong>
+                    <span>Midlands Business Breakfast</span>
+                  </div>
+                  <div class="bf-field-actions">
+                    <span class="bf-field-ok">Selected</span>
+                    <button type="button" class="bf-field-edit">Change</button>
+                  </div>
+                </li>
+                <li class="bf-field">
+                  <div>
+                    <strong>Verified reviews</strong>
+                    <span>Ready after buyers sync. No edit needed.</span>
+                  </div>
+                  <div class="bf-field-actions">
+                    <span class="bf-field-ok">Ready</span>
+                  </div>
+                </li>
+              </ul>
+            </section>
+
+            <div class="bf-drawer-actions">
+              <button type="button" class="ee-btn ee-btn-outline" data-go="2">Back</button>
+              <button type="button" class="ee-btn ee-btn-gold" id="bf-publish">Publish on The Networker UK</button>
+            </div>
+          </section>
+        </div>
+      </aside>
+    </div>
+
+    <script>
+      var step = 1;
+      var path = 'eventbrite';
+      var backBtn = document.getElementById('bf-drawer-back');
+      var progressEls = document.querySelectorAll('[data-progress]');
+
+      function showStep(n) {
+        step = n;
+        document.querySelectorAll('.bf-step').forEach(function (el) {
+          el.hidden = Number(el.getAttribute('data-step')) !== n;
+        });
+        progressEls.forEach(function (el) {
+          var p = Number(el.getAttribute('data-progress'));
+          el.classList.toggle('is-current', p === n);
+          el.classList.toggle('is-done', p < n);
+        });
+        backBtn.hidden = n === 1;
+        var body = document.querySelector('.bf-drawer-body');
+        if (body) body.scrollTop = 0;
+      }
+
+      document.querySelectorAll('.bf-choice').forEach(function (card) {
+        card.addEventListener('click', function () {
+          document.querySelectorAll('.bf-choice').forEach(function (c) {
+            c.classList.remove('is-active');
+            c.setAttribute('aria-selected', 'false');
+          });
+          card.classList.add('is-active');
+          card.setAttribute('aria-selected', 'true');
+          path = card.getAttribute('data-path') || 'eventbrite';
+        });
+      });
+
+      document.querySelectorAll('[data-go]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var next = Number(btn.getAttribute('data-go'));
+          if (next === 2 && path === 'hub') {
+            window.alert('Hub path stays in the drawer on the existing ticket steps (not shown in this Eventbrite mock).');
+            return;
+          }
+          if (next === 2 && path === 'link_out') {
+            window.alert('Link Out would show URL + price fields in this same drawer (short form).');
+            return;
+          }
+          showStep(next);
+        });
+      });
+
+      backBtn.addEventListener('click', function () {
+        showStep(Math.max(1, step - 1));
+      });
+
+      var testBtn = document.getElementById('bf-test');
+      if (testBtn) {
+        testBtn.addEventListener('click', function () {
+          document.getElementById('bf-status').hidden = false;
+        });
+      }
+
+      document.getElementById('bf-publish').addEventListener('click', function () {
+        window.alert('Mock only: listing would publish on The Networker UK.');
+      });
+
+      (function initMiniDeck() {
+        var deck = document.querySelector('[data-bf-mini-deck]');
+        if (!deck) return;
+        var slides = Array.prototype.slice.call(deck.querySelectorAll('[data-bf-mini-slide]'));
+        var dotsWrap = deck.querySelector('[data-bf-mini-dots]');
+        var prev = deck.querySelector('[data-bf-mini-prev]');
+        var next = deck.querySelector('[data-bf-mini-next]');
+        var index = 0;
+
+        slides.forEach(function (_slide, i) {
+          var dot = document.createElement('button');
+          dot.type = 'button';
+          dot.setAttribute('aria-label', 'Slide ' + (i + 1));
+          dot.addEventListener('click', function () {
+            showMini(i);
+          });
+          dotsWrap.appendChild(dot);
+        });
+
+        function showMini(i) {
+          index = i;
+          slides.forEach(function (slide, n) {
+            slide.hidden = n !== index;
+          });
+          Array.prototype.forEach.call(dotsWrap.children, function (dot, n) {
+            dot.classList.toggle('is-active', n === index);
+          });
+          prev.disabled = index === 0;
+          next.disabled = index === slides.length - 1;
+        }
+
+        prev.addEventListener('click', function () {
+          if (index > 0) showMini(index - 1);
+        });
+        next.addEventListener('click', function () {
+          if (index < slides.length - 1) showMini(index + 1);
+        });
+        showMini(0);
+      })();
+
+      showStep(1);
+    </script>
+  </body>
+</html>

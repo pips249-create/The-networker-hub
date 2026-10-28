@@ -26,7 +26,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../css/hub.css?v=20261016signin1">
 <link rel="stylesheet" href="../css/content-page.css">
-<link rel="stylesheet" href="../css/connect-eventbrite-guide.css?v=20261021slide1">
+<link rel="stylesheet" href="../css/connect-eventbrite-guide.css?v=20261028shot1">
 <link rel="icon" href="/favicon.ico?v=20260823uk3" sizes="any">
 <link rel="icon" href="/assets/favicon.svg?v=20260823uk3" type="image/svg+xml">
 <link rel="icon" href="/assets/favicon-32.png?v=20260823uk" type="image/png" sizes="32x32">
@@ -127,6 +127,21 @@
           <li>Set the action to <strong>order.placed</strong></li>
           <li>“Events: All” is fine</li>
         </ol>
+        <figure class="ceb-shot" aria-label="Where to paste the webhook URL in Eventbrite">
+          <div class="ceb-shot-frame" aria-hidden="true">
+            <div class="ceb-shot-chrome"><i></i><i></i><i></i><span>eventbrite.com · Webhooks</span></div>
+            <div class="ceb-shot-body ceb-shot-body--stack">
+              <p class="ceb-shot-heading">Add webhook</p>
+              <p class="ceb-shot-label">Payload URL</p>
+              <div class="ceb-shot-token ceb-shot-token--url">https://www.thenetworkeruk.com/w/eb/…</div>
+              <p class="ceb-shot-label">Actions</p>
+              <div class="ceb-shot-pill is-hot">order.placed</div>
+            </div>
+          </div>
+          <figcaption>
+            Illustrative layout. Swap for a real Eventbrite Webhooks screenshot when ready.
+          </figcaption>
+        </figure>
         <p class="ceb-slide-note">You do not repeat this for every event.</p>
       </article>
 
@@ -137,9 +152,33 @@
           Eventbrite’s ping is only a link to the order — not the buyer’s email. A
           <strong>private token</strong> from Eventbrite’s developer settings lets us load the buyer safely.
         </p>
-        <p>
-          On Connected setup or Booking providers, follow <strong>Save API token</strong>, paste the token, and save.
-        </p>
+        <ol>
+          <li>In Eventbrite: profile → <strong>Account settings</strong> → <strong>Developer</strong></li>
+          <li>Create or copy your <strong>private token</strong> (not the public key)</li>
+          <li>On Connected setup, paste it under <strong>Save API token</strong> and save</li>
+        </ol>
+        <figure class="ceb-shot" aria-label="Where to find the Eventbrite private token">
+          <div class="ceb-shot-frame" aria-hidden="true">
+            <div class="ceb-shot-chrome"><i></i><i></i><i></i><span>eventbrite.com · Account settings</span></div>
+            <div class="ceb-shot-body">
+              <aside class="ceb-shot-side">
+                <span>Account</span>
+                <span class="is-hot">Developer</span>
+                <span>Webhooks</span>
+              </aside>
+              <div class="ceb-shot-main">
+                <p class="ceb-shot-heading">API keys</p>
+                <p class="ceb-shot-label">Private token</p>
+                <div class="ceb-shot-token">••••••••••••••••••••••••</div>
+                <p class="ceb-shot-hint">Copy this · paste into The Networker UK</p>
+              </div>
+            </div>
+          </div>
+          <figcaption>
+            Illustrative layout. Replace with a real Eventbrite screenshot when you capture one.
+            Path: Account settings → Developer → private token.
+          </figcaption>
+        </figure>
         <p class="ceb-slide-note">
           Without this token, sales may reach us but buyers will not appear on your attendee list.
         </p>
