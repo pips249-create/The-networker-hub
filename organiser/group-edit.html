@@ -16,7 +16,7 @@
     />
     <link rel="stylesheet" href="../css/hub.css?v=20261016signin1" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260614" />
-    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20260811calbusy" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20261028eb1" />
     <link rel="stylesheet" href="../css/organiser-flow-tour.css?v=20260708" />
     <link rel="stylesheet" href="../css/hubert-widget.css?v=20260612" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20261016signin1" />
@@ -178,6 +178,73 @@
           </fieldset>
         </div>
 
+        <div class="ee-card" id="ge-booking-card" hidden>
+          <h2>Where do people book?</h2>
+          <p class="ee-hint" style="margin:0 0 14px">
+            Connect this once for this organiser page. Then you can import Eventbrite events onto The Networker UK
+            (checkout stays on Eventbrite; attendees sync here).
+          </p>
+
+          <div class="ge-booking-choices" role="list">
+            <div class="ge-booking-choice is-default">
+              <div>
+                <strong>The Networker UK</strong>
+                <span>Sell tickets here. No connection needed.</span>
+              </div>
+              <span class="ge-booking-tag">Easiest</span>
+            </div>
+            <button type="button" class="ge-booking-choice is-selected" id="ge-booking-eventbrite" data-ge-booking="eventbrite">
+              <span>
+                <strong>Eventbrite</strong>
+                <span>Keep Eventbrite checkout. Import events and sync buyers.</span>
+              </span>
+              <span class="ge-booking-status" id="ge-eb-status-pill">Not connected</span>
+            </button>
+            <div class="ge-booking-choice ge-booking-choice--muted">
+              <div>
+                <strong>Ticket Tailor</strong>
+                <span>Connect from Connected booking for now — organiser-page connect coming next.</span>
+              </div>
+              <span class="ge-booking-status ge-booking-status--soon">Soon</span>
+            </div>
+          </div>
+
+          <div class="ge-booking-panel" id="ge-eb-panel">
+            <h3 class="ge-booking-panel-title">Connect Eventbrite</h3>
+            <ol class="ge-booking-steps">
+              <li>In Eventbrite: profile → <strong>Account Settings</strong> → <strong>Developer Links</strong> → <strong>API Keys</strong></li>
+              <li>Open <strong>Show API key, client secret and tokens</strong> and copy the <strong>Private token</strong></li>
+              <li>Paste it below, then save</li>
+            </ol>
+            <p class="ee-hint" style="margin:0 0 10px">
+              <a href="/guides/connect-eventbrite#api-token" target="_blank" rel="noopener">Open full guide with screenshots →</a>
+            </p>
+            <div class="ee-field" style="margin:0">
+              <label for="ge-eb-token">Eventbrite private token</label>
+              <input
+                type="password"
+                id="ge-eb-token"
+                autocomplete="off"
+                placeholder="Paste Private token from API Keys"
+              />
+            </div>
+            <div class="ge-booking-actions">
+              <button type="button" class="ee-btn ee-btn-outline" id="ge-eb-save">Save connection</button>
+              <button type="button" class="ee-btn ee-btn-outline" id="ge-eb-refresh" hidden>Refresh Eventbrite events</button>
+            </div>
+            <p class="ge-booking-msg" id="ge-eb-msg" role="status" hidden></p>
+
+            <div class="ge-eb-import" id="ge-eb-import" hidden>
+              <h3 class="ge-booking-panel-title">Import from Eventbrite</h3>
+              <p class="ee-hint" style="margin:0 0 10px">
+                Pick an event to add as a draft on this organiser page. Checkout stays on Eventbrite.
+              </p>
+              <ul class="ge-eb-event-list" id="ge-eb-event-list"></ul>
+              <p class="ee-hint" id="ge-eb-empty" hidden>No Eventbrite events found for this account.</p>
+            </div>
+          </div>
+        </div>
+
         <div class="ee-actions ge-actions-stack">
           <button type="button" class="ee-btn ee-btn-primary" id="ge-save-changes" hidden>Save changes</button>
           <button type="button" class="ee-btn ee-btn-gold" id="ge-save-continue">Save and create event →</button>
@@ -203,5 +270,6 @@
     <script src="../js/organiser-flow-tour.js?v=20260723onboard" data-root="../" defer></script>
     <script src="../js/organiser-image-upload.js?v=20260605" defer></script>
     <script src="../js/organiser-group-edit.js?v=20261022listacc1" defer></script>
+    <script src="../js/organiser-group-booking-connect.js?v=20261028eb1" defer></script>
   </body>
 </html>

@@ -1158,6 +1158,9 @@
       if (onboardReview && !isEmbedded() && window.HubFlowTour) {
         window.HubFlowTour.startGroupTour({ onboardReview: true, force: true, delay: 350 });
       }
+      if (window.HubGroupBookingConnect && typeof window.HubGroupBookingConnect.init === 'function') {
+        window.HubGroupBookingConnect.init();
+      }
     } else {
       if (titleEl) titleEl.textContent = 'New organiser page';
       if (leadEl) {

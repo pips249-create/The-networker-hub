@@ -302,6 +302,75 @@ async function eventbriteOrganizationId(privateToken) {
   return orgs[0] && orgs[0].id ? String(orgs[0].id) : '';
 }
 
+/**
+ * List organisation events for the connected Eventbrite account (paginated).
+ * Returns compact rows for an import picker — not full listing patches.
+ */
+async function listEventbriteOrganizationEvents(privateToken, opts) {
+  const options = opts && typeof opts === 'object' ? opts : {};
+  const token = String(privateToken || '').trim();
+  if (!token) {
+    const e = new Error('eventbrite_token_missing');
+    e.status = 400;
+    throw e;
+  }
+  const orgId = String(options.organizationId || '').trim() || (await eventbriteOrganizationId(token));
+  if (!orgId) {
+    const e = new Error('eventbrite_organization_not_found');
+    e.status = 400;
+    e.message = 'Could not find an Eventbrite organisation for this token.';
+    throw e;
+  }
+  const status = String(options.status || 'live,started,draft').trim() || 'live,started,draft';
+  const pageSize = Math.min(50, Math.max(1, Number(options.pageSize) || 25));
+  const maxPages = Math.min(10, Math.max(1, Number(options.maxPages) || 4));
+  const events = [];
+  let continuation = '';
+  for (let page = 0; page < maxPages; page += 1) {
+    let requestUrl =
+      'https://www.eventbriteapi.com/v3/organizations/' +
+      encodeURIComponent(orgId) +
+      '/events/?status=' +
+      encodeURIComponent(status) +
+      '&order_by=start_desc&expand=venue&page_size=' +
+      encodeURIComponent(String(pageSize));
+    if (continuation) {
+      requestUrl += '&continuation=' + encodeURIComponent(continuation);
+    }
+    const result = await fetchEventbriteJson(requestUrl, token);
+    if (!result.ok) {
+      const e = new Error(
+        (result.data && (result.data.error_description || result.data.error)) ||
+          'eventbrite_events_list_failed'
+      );
+      e.status = result.status === 401 || result.status === 403 ? 401 : 502;
+      throw e;
+    }
+    const batch = Array.isArray(result.data && result.data.events) ? result.data.events : [];
+    batch.forEach(function (evt) {
+      if (!evt || typeof evt !== 'object') return;
+      const id = String(evt.id || '').trim();
+      if (!id) return;
+      const venue = evt.venue && typeof evt.venue === 'object' ? evt.venue : null;
+      const start = evt.start && typeof evt.start === 'object' ? evt.start : {};
+      events.push({
+        id: id,
+        title: eventbriteTitleText(evt),
+        start: String(start.utc || start.local || '').trim(),
+        status: String(evt.status || '').trim(),
+        url: String(evt.url || evt.public_url || '').trim(),
+        venue: venue ? String(venue.name || '').trim() : '',
+        online: eventbriteIsOnline(evt),
+      });
+    });
+    const pagination = result.data && result.data.pagination;
+    const hasMore = Boolean(pagination && pagination.has_more_items);
+    continuation = String((pagination && pagination.continuation) || '').trim();
+    if (!hasMore || !continuation) break;
+  }
+  return { organizationId: orgId, events: events };
+}
+
 function sameEventbriteWebhookUrl(a, b) {
   return eventbriteWebhookEndpoint({ endpoint_url: a }) === eventbriteWebhookEndpoint({ endpoint_url: b });
 }
@@ -631,6 +700,14 @@ function mapEventbriteEventToListingPatch(evt, opts) {
     }
   }
 
+  const logo = evt.logo && typeof evt.logo === 'object' ? evt.logo : null;
+  const logoUrl = String(
+    (logo && logo.original && logo.original.url) ||
+      (logo && logo.url) ||
+      ''
+  ).trim();
+  if (logoUrl) patch.photoUrl = logoUrl;
+
   return patch;
 }
 
@@ -645,7 +722,7 @@ async function fetchEventbriteEvent(externalEventId, privateToken) {
   const requestUrl =
     'https://www.eventbriteapi.com/v3/events/' +
     encodeURIComponent(id) +
-    '/?expand=venue,format';
+    '/?expand=venue,format,logo';
   const res = await fetch(requestUrl, {
     method: 'GET',
     headers: {
@@ -699,6 +776,8 @@ module.exports = {
   normalizeEventbriteOrderApiResponse,
   eventbritePrivateTokenFromConfig,
   fetchEventbriteEvent,
+  listEventbriteOrganizationEvents,
+  eventbriteOrganizationId,
   mapEventbriteEventToListingPatch,
   eventbriteDescriptionText,
   eventbriteTitleText,
