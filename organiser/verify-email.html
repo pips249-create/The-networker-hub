@@ -17,7 +17,7 @@
     />
     <link rel="stylesheet" href="../css/hub.css?v=20261016signin1" />
     <link rel="stylesheet" href="../css/auth.css?v=20260727ux" />
-    <link rel="stylesheet" href="../css/organiser-enable.css?v=20261028confirm9" />
+    <link rel="stylesheet" href="../css/organiser-enable.css?v=20261028confirm10" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20261016signin1" />
   </head>
   <body class="auth-page auth-page--organiser-access">
@@ -66,7 +66,14 @@
               <p class="auth-verify-resend-row">
                 <button type="button" class="auth-text-btn" id="verify-email-resend">Resend code</button>
               </p>
-              <a href="/welcome" class="auth-primary-btn" id="verify-email-continue" hidden>
+              <!-- Only revealed after a successful code confirm (never beside Sign in). -->
+              <a
+                href="/welcome"
+                class="auth-primary-btn"
+                id="verify-email-continue"
+                hidden
+                style="display: none"
+              >
                 Continue →
               </a>
             </div>
@@ -147,6 +154,6 @@
       </div>
     </main>
 
-    <script src="../js/organiser-verify-email.js?v=20261028confirm9" defer></script>
+    <script src="../js/organiser-verify-email.js?v=20261028confirm10" defer></script>
   </body>
 </html>

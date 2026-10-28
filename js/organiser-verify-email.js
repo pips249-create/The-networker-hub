@@ -90,6 +90,7 @@
     if (resendBtn) resendBtn.hidden = true;
     if (continueBtn) {
       continueBtn.hidden = false;
+      continueBtn.style.display = '';
       continueBtn.href = nextHref;
       if (goingToPayments) {
         continueBtn.textContent = 'Continue to bank details →';
@@ -119,13 +120,19 @@
     );
     if (confirmBtn) confirmBtn.textContent = 'Sign in to confirm →';
     if (resendBtn) resendBtn.hidden = true;
-    if (continueBtn) continueBtn.hidden = true;
+    hideContinueUntilVerified();
+  }
+
+  function hideContinueUntilVerified() {
+    if (!continueBtn) return;
+    continueBtn.hidden = true;
+    continueBtn.style.display = 'none';
   }
 
   function showReadyToConfirmUi(hasCode) {
     if (confirmBtn) confirmBtn.textContent = 'Confirm your email';
     if (resendBtn) resendBtn.hidden = false;
-    if (continueBtn) continueBtn.hidden = true;
+    hideContinueUntilVerified();
     if (hasCode) {
       showStatus('Code ready — tap Confirm your email to finish.', true);
     }

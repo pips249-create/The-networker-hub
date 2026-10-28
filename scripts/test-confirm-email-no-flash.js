@@ -62,6 +62,21 @@ assert.match(
   /Code ready — tap Confirm your email to finish/,
   'REGRESSION: signed-in prefill must ask them to tap Confirm'
 );
+assert.match(
+  verifyJs,
+  /hideContinueUntilVerified/,
+  'REGRESSION: Continue must stay hidden until the code succeeds (no dual CTAs)'
+);
+
+const verifyHtml = fs.readFileSync(
+  path.join(__dirname, '../organiser/verify-email.html'),
+  'utf8'
+);
+assert.match(
+  verifyHtml,
+  /id="verify-email-continue"[\s\S]*style="display:\s*none"/,
+  'REGRESSION: Continue link must start display:none so CSS cannot show it early'
+);
 
 const authJs = fs.readFileSync(path.join(__dirname, '../js/auth.js'), 'utf8');
 assert.match(
