@@ -44,46 +44,67 @@
           <summary>How to get your token</summary>
           <div class="bf-howto-body">
             <ol class="bf-howto-steps">
-              <li>In Eventbrite: profile → <strong>Account settings</strong> → <strong>Developer</strong></li>
-              <li>Create or copy your <strong>private token</strong></li>
+              <li>Profile menu → <strong>Account Settings</strong></li>
+              <li>Open <strong>Developer Links</strong> → <strong>API Keys</strong></li>
+              <li>
+                <strong>Create API Key</strong> (or open an existing one) →
+                <strong>Show API key, client secret and tokens</strong> → copy the
+                <strong>Private token</strong>
+              </li>
               <li>Paste it below and press <strong>Test connection</strong></li>
             </ol>
             <div class="bf-mini-deck" data-bf-mini-deck>
               <div class="bf-mini-slide" data-bf-mini-slide="0">
-                <figure class="bf-mini-shot" aria-hidden="true">
-                  <div class="bf-mini-shot-bar"><i></i><i></i><i></i></div>
-                  <div class="bf-mini-shot-screen">
-                    <div class="bf-mini-shot-nav">
-                      <span>Account</span>
-                      <span class="is-hot">Developer ←</span>
-                      <span>Webhooks</span>
-                    </div>
-                    <span class="bf-mini-shot-pin">1</span>
-                  </div>
+                <figure class="bf-mini-shot bf-mini-shot--photo">
+                  <img
+                    src="../assets/guides/eventbrite/01-account-settings-menu.webp"
+                    alt="Eventbrite profile menu with Account Settings"
+                    width="900"
+                    height="431"
+                    loading="lazy"
+                  />
                 </figure>
-                <p class="bf-mini-caption">Open Account settings, then Developer.</p>
+                <p class="bf-mini-caption">1. Open your profile menu → Account Settings.</p>
               </div>
               <div class="bf-mini-slide" data-bf-mini-slide="1" hidden>
-                <figure class="bf-mini-shot" aria-hidden="true">
-                  <div class="bf-mini-shot-bar"><i></i><i></i><i></i></div>
-                  <div class="bf-mini-shot-screen">
-                    <strong>API keys</strong>
-                    <div class="bf-mini-shot-token">••••••••••••••••••••</div>
-                    <span class="bf-mini-shot-pin">2</span>
-                  </div>
+                <figure class="bf-mini-shot bf-mini-shot--photo">
+                  <img
+                    src="../assets/guides/eventbrite/02-developer-links.webp"
+                    alt="Eventbrite account sidebar showing Developer Links"
+                    width="700"
+                    height="839"
+                    loading="lazy"
+                  />
                 </figure>
-                <p class="bf-mini-caption">Copy the private token (not the public key).</p>
+                <p class="bf-mini-caption">2. In the left menu, open Developer Links.</p>
               </div>
               <div class="bf-mini-slide" data-bf-mini-slide="2" hidden>
-                <figure class="bf-mini-shot" aria-hidden="true">
-                  <div class="bf-mini-shot-bar"><i></i><i></i><i></i></div>
-                  <div class="bf-mini-shot-screen">
-                    <strong>Paste here</strong>
-                    <div class="bf-mini-shot-token">Paste token → Test</div>
-                    <span class="bf-mini-shot-pin">3</span>
-                  </div>
+                <figure class="bf-mini-shot bf-mini-shot--photo">
+                  <img
+                    src="../assets/guides/eventbrite/03-api-keys.webp"
+                    alt="Eventbrite API Keys page with Show tokens link"
+                    width="900"
+                    height="218"
+                    loading="lazy"
+                  />
                 </figure>
-                <p class="bf-mini-caption">Paste below, test, then continue.</p>
+                <p class="bf-mini-caption">
+                  3. Create an API key if needed, then Show API key, client secret and tokens.
+                </p>
+              </div>
+              <div class="bf-mini-slide" data-bf-mini-slide="3" hidden>
+                <figure class="bf-mini-shot bf-mini-shot--photo">
+                  <img
+                    src="../assets/guides/eventbrite/04-create-api-key.webp"
+                    alt="Eventbrite Request a new key form"
+                    width="900"
+                    height="513"
+                    loading="lazy"
+                  />
+                </figure>
+                <p class="bf-mini-caption">
+                  4. If creating a new key, fill the form, then copy the Private token and paste it below.
+                </p>
               </div>
               <div class="bf-mini-nav">
                 <div class="bf-mini-dots" data-bf-mini-dots aria-label="Guide slides"></div>
@@ -105,7 +126,7 @@
             id="bf-token"
             type="password"
             autocomplete="off"
-            placeholder="Paste from Eventbrite Account settings, Developer"
+            placeholder="Paste Private token from API Keys"
           />
           <button type="button" class="ee-btn ee-btn-outline" id="bf-test">Test connection</button>
           <p class="bf-status" id="bf-status" hidden>Connected. Ready to pull this event.</p>

@@ -339,6 +339,33 @@
   margin: 16px 0 4px;
 }
 
+.ceb-shot-stack {
+  display: grid;
+  gap: 14px;
+  margin: 16px 0 4px;
+}
+
+.ceb-shot--photo {
+  margin: 0;
+}
+
+.ceb-shot--photo img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1.5px solid rgba(30, 58, 79, 0.14);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 10px 24px rgba(30, 58, 79, 0.06);
+}
+
+.ceb-shot--photo figcaption {
+  margin: 8px 2px 0;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: var(--ceb-muted);
+}
+
 .ceb-shot-frame {
   border: 1.5px solid rgba(30, 58, 79, 0.14);
   border-radius: 14px;
