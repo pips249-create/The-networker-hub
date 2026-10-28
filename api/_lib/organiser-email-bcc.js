@@ -1,5 +1,7 @@
 /**
- * Blind-copy organisers on attendee event emails.
+ * Blind-copy organisers on attendee event emails that do not already have a
+ * dedicated organiser alert (e.g. reminders, meeting-link updates).
+ * Booking confirmations skip BCC — organisers get organiser_new_registration.
  * Attendees never see the organiser address (BCC, not Reply-To / CC).
  */
 const { resolveOrganiserNotificationEmail } = require('./organiser-notification-email');
