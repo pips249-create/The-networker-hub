@@ -14,9 +14,9 @@
     <script src="../js/hub-session-prefetch.js?v=20260929session1"></script>
     <link rel="stylesheet" href="../css/hub-loading.css?v=20260630" />
     <link rel="stylesheet" href="../css/hub.css?v=20261016signin1" />
-    <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260812footer11" />
-    <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260929services2" />
-    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20261028meet3" />
+    <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20261028side1" />
+    <link rel="stylesheet" href="../css/hub-side-nav.css?v=20261028side1" />
+    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20261028side1" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20261023nextup2" />
     <script src="../js/hub-defer-css.js?v=20260828perf2" data-hrefs="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap"></script>
 
@@ -114,54 +114,6 @@
             <section class="ad-page is-active" id="ad-page-overview" data-ad-page="overview">
               <div class="ad-overview-next" id="ad-overview-next" hidden></div>
 
-              <!-- Hubert Matchmaker on Overview — admin-only until launch -->
-              <div class="hmm hmm--overview" id="ad-overview-hubert-meet" data-hmm-shell hidden>
-                <p class="hmm-admin-badge" data-hmm-admin-badge hidden>Admin preview — not visible to other members yet.</p>
-                <div class="hmm-hero">
-                  <img class="hmm-hero-avatar" src="../assets/hubert-icon.png" width="72" height="72" alt="" />
-                  <div class="hmm-hero-copy">
-                    <p class="hmm-hero-kicker">Your matchmaker</p>
-                    <h2 class="hmm-hero-title">Ask Hubert who you&rsquo;d like to meet</h2>
-                    <p class="hmm-hero-sub">
-                      Describe the person. Hubert puts forward up to five people — first name &amp; initial only.
-                      Upcoming events come first on each match.
-                    </p>
-                  </div>
-                </div>
-                <form class="hmm-composer" data-hmm-form>
-                  <label class="visually-hidden" for="hmm-overview-query">Who would you like to meet?</label>
-                  <div class="hmm-composer-row">
-                    <img class="hmm-composer-avatar" src="../assets/hubert-icon.png" width="40" height="40" alt="" />
-                    <input
-                      id="hmm-overview-query"
-                      class="hmm-composer-input"
-                      type="search"
-                      name="query"
-                      data-hmm-query
-                      maxlength="240"
-                      autocomplete="off"
-                      placeholder="e.g. fintech founders in Manchester looking for investors"
-                      required
-                    />
-                    <button type="submit" class="ad-btn ad-btn-primary hmm-composer-submit">Ask Hubert</button>
-                  </div>
-                  <p class="hmm-error" data-hmm-error hidden role="alert"></p>
-                </form>
-                <p class="hmm-preview-note" data-hmm-preview hidden role="status"></p>
-                <div class="hmm-results" data-hmm-results hidden role="list"></div>
-                <div class="ad-empty-state ad-empty-state--compact hmm-empty" data-hmm-empty hidden role="status">
-                  <h3 class="ad-empty-state-title">No matches in this preview</h3>
-                  <p class="ad-empty-state-text">Try another description of who you want to meet.</p>
-                </div>
-                <p class="hmm-overview-more">
-                  <a href="#meet" data-ad-route="meet">Open full Meet people page</a>
-                  <span class="hmm-overview-more-sep" aria-hidden="true">·</span>
-                  <button type="button" class="hmm-invite-link" data-hmm-invite disabled title="Coming next">
-                    Introduce someone to The Networker UK &amp; Hubert
-                  </button>
-                </p>
-              </div>
-
               <div class="ad-overview-portals" id="ad-overview-portals">
                 <button type="button" class="ad-portal ad-portal--events" data-ad-portal="tickets">
                   <span class="ad-portal-icon" aria-hidden="true">📅</span>
@@ -204,6 +156,54 @@
                   <span class="ad-portal-arrow" aria-hidden="true">→</span>
                 </button>
               </div>
+
+              <!-- Hubert Matchmaker on Overview — admin-only until launch; sits with other panels, not above portals -->
+              <div class="hmm hmm--overview" id="ad-overview-hubert-meet" data-hmm-shell hidden>
+                <p class="hmm-admin-badge" data-hmm-admin-badge hidden>Admin preview — not visible to other members yet.</p>
+                <div class="hmm-hero hmm-hero--compact">
+                  <img class="hmm-hero-avatar" src="../assets/hubert-icon.png" width="48" height="48" alt="" />
+                  <div class="hmm-hero-copy">
+                    <p class="hmm-hero-kicker">Meet people</p>
+                    <h2 class="hmm-hero-title">Ask Hubert who you&rsquo;d like to meet</h2>
+                    <p class="hmm-hero-sub">
+                      Describe the person — Hubert puts forward up to five matches (first name &amp; initial).
+                    </p>
+                  </div>
+                </div>
+                <form class="hmm-composer" data-hmm-form>
+                  <label class="visually-hidden" for="hmm-overview-query">Who would you like to meet?</label>
+                  <div class="hmm-composer-row">
+                    <img class="hmm-composer-avatar" src="../assets/hubert-icon.png" width="32" height="32" alt="" />
+                    <input
+                      id="hmm-overview-query"
+                      class="hmm-composer-input"
+                      type="search"
+                      name="query"
+                      data-hmm-query
+                      maxlength="240"
+                      autocomplete="off"
+                      placeholder="e.g. fintech founders in Manchester"
+                      required
+                    />
+                    <button type="submit" class="ad-btn ad-btn-primary hmm-composer-submit">Ask Hubert</button>
+                  </div>
+                  <p class="hmm-error" data-hmm-error hidden role="alert"></p>
+                </form>
+                <p class="hmm-preview-note" data-hmm-preview hidden role="status"></p>
+                <div class="hmm-results" data-hmm-results hidden role="list"></div>
+                <div class="ad-empty-state ad-empty-state--compact hmm-empty" data-hmm-empty hidden role="status">
+                  <h3 class="ad-empty-state-title">No matches in this preview</h3>
+                  <p class="ad-empty-state-text">Try another description of who you want to meet.</p>
+                </div>
+                <p class="hmm-overview-more">
+                  <a href="#meet" data-ad-route="meet">Open full Meet people page</a>
+                  <span class="hmm-overview-more-sep" aria-hidden="true">·</span>
+                  <button type="button" class="hmm-invite-link" data-hmm-invite disabled title="Coming next">
+                    Introduce someone to The Networker UK &amp; Hubert
+                  </button>
+                </p>
+              </div>
+
               <p class="ad-overview-discover" id="ad-overview-discover">
                 <a href="../events/">Browse events</a>
                 <a href="/opportunities/">Opportunities</a>
@@ -855,7 +855,7 @@
                   <p class="hmm-invite-kicker">Grow the network</p>
                   <h3 class="hmm-invite-title">Introduce someone to The Networker UK &amp; Hubert</h3>
                   <p class="hmm-invite-copy">
-                    Invite a contact to join the Hub. They won&rsquo;t get your details — just a Hubert email to create an account.
+                    Invite a contact to join The Networker UK. They won&rsquo;t get your details — just a Hubert email to create an account.
                   </p>
                   <button type="button" class="ad-btn ad-btn-ghost hmm-invite-cta" data-hmm-invite disabled title="Coming next">
                     Introduce someone

@@ -366,8 +366,9 @@
   margin-left: 6px;
   font-size: 10px;
   font-weight: 700;
-  color: var(--ad-text-soft);
-  background: var(--ad-teal-pale);
+  color: var(--ad-teal-dark);
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(122, 61, 138, 0.16);
   border-radius: 999px;
   padding: 1px 7px;
   vertical-align: middle;
@@ -4554,22 +4555,26 @@ body.ad-share-modal-open {
   max-width: 760px;
   margin: 0 0 28px;
   padding: 22px 22px 20px;
-  border-radius: 18px;
-  border: 1px solid rgba(125, 72, 150, 0.18);
-  background:
-    radial-gradient(120% 90% at 100% 0%, rgba(126, 200, 240, 0.28), transparent 55%),
-    radial-gradient(90% 80% at 0% 100%, rgba(200, 180, 240, 0.35), transparent 50%),
-    linear-gradient(160deg, #f7f2fb 0%, #efe8f7 48%, #e7f3fa 100%);
-  box-shadow: 0 10px 28px rgba(45, 27, 94, 0.06);
+  border-radius: var(--ad-radius, 12px);
+  border: 1px solid var(--ad-border-soft, #e8dbea);
+  background: var(--ad-white, #fff);
+  box-shadow: 0 2px 8px rgba(45, 27, 94, 0.05);
   overflow: hidden;
 }
 
-.hmm--overview {
-  margin-top: 4px;
-}
-
+/* Dedicated Meet people page can keep a soft wash; Overview must match Next up / portals */
 .hmm--page {
   margin-top: 0;
+  max-width: none;
+  background:
+    linear-gradient(160deg, #fbf8fd 0%, #ffffff 42%, #f5f8fb 100%);
+  border-color: rgba(125, 72, 150, 0.16);
+}
+
+.hmm--overview {
+  margin: 4px 0 20px;
+  max-width: none;
+  padding: 16px 18px 14px;
 }
 
 .hmm[hidden] {
@@ -4600,6 +4605,12 @@ body.ad-share-modal-open {
   margin-bottom: 18px;
 }
 
+.hmm-hero--compact {
+  gap: 12px;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
 .hmm-hero-avatar {
   flex: 0 0 auto;
   width: 64px;
@@ -4608,8 +4619,13 @@ body.ad-share-modal-open {
   object-fit: cover;
   background: #0d0d12;
   box-shadow:
-    0 0 0 3px rgba(255, 255, 255, 0.85),
-    0 8px 20px rgba(45, 27, 94, 0.18);
+    0 0 0 2px rgba(255, 255, 255, 0.95),
+    0 4px 12px rgba(45, 27, 94, 0.12);
+}
+
+.hmm--overview .hmm-hero-avatar {
+  width: 48px;
+  height: 48px;
 }
 
 .hmm-hero-avatar--lg {
@@ -4628,11 +4644,17 @@ body.ad-share-modal-open {
 
 .hmm-hero-title {
   margin: 0 0 6px;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 1.15rem;
+  font-weight: 750;
+  line-height: 1.25;
+  color: var(--hmm-ink);
+}
+
+.hmm--page .hmm-hero-title {
   font-family: 'DM Serif Display', 'DM Sans', Georgia, serif;
   font-size: clamp(1.35rem, 2.4vw, 1.75rem);
   font-weight: 400;
-  line-height: 1.2;
-  color: var(--hmm-ink);
 }
 
 .hmm-hero-sub {
@@ -4643,16 +4665,27 @@ body.ad-share-modal-open {
   color: var(--ad-text-mid);
 }
 
+.hmm--overview .hmm-hero-sub {
+  font-size: 13px;
+  line-height: 1.4;
+}
+
 .hmm-composer-row {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
   align-items: center;
   padding: 10px 10px 10px 12px;
+  border-radius: 12px;
+  background: var(--ad-teal-pale, #f3eef5);
+  border: 1px solid var(--ad-border-soft, #e8dbea);
+  box-shadow: none;
+}
+
+.hmm--page .hmm-composer-row {
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.88);
-  border: 1px solid rgba(125, 72, 150, 0.16);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(125, 72, 150, 0.16);
 }
 
 .hmm-composer-avatar {
@@ -4685,13 +4718,16 @@ body.ad-share-modal-open {
 
 .hmm-composer-row:focus-within {
   border-color: rgba(157, 96, 167, 0.55);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.9),
-    0 0 0 3px rgba(157, 96, 167, 0.16);
+  box-shadow: 0 0 0 3px rgba(157, 96, 167, 0.14);
 }
 
 .hmm-composer-submit {
   flex: 0 0 auto;
+  border-radius: 10px !important;
+  padding-inline: 16px;
+}
+
+.hmm--page .hmm-composer-submit {
   border-radius: 999px !important;
   padding-inline: 18px;
 }

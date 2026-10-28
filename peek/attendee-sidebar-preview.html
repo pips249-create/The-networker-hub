@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Preview: Attendee sidebar + Overview Hubert – The Networker UK</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="stylesheet" href="../css/hub.css?v=20261016signin1" />
+    <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20261028side1" />
+    <link rel="stylesheet" href="../css/hub-side-nav.css?v=20261028side1" />
+    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20261028side1" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap"
+    />
+    <style>
+      body {
+        margin: 0;
+      }
+      .peek-banner {
+        margin: 0;
+        padding: 10px 16px;
+        background: #2d1b5e;
+        color: #fff;
+        font: 600 13px/1.4 'DM Sans', system-ui, sans-serif;
+      }
+      .ad-dashboard-layout {
+        min-height: calc(100vh - 40px);
+      }
+      .ad-sidebar {
+        min-height: calc(100vh - 40px);
+      }
+      .ad-main {
+        padding: 24px 28px 40px;
+      }
+      .ad-overview-next-list {
+        margin-bottom: 12px;
+      }
+    </style>
+  </head>
+  <body class="attendee-dashboard-page hub-page-account">
+    <p class="peek-banner">Design preview — stronger side tabs + Overview Hubert panel that matches the page</p>
+    <div id="ad-shell">
+      <div class="ad-dashboard-layout">
+        <aside class="ad-sidebar">
+          <nav class="hub-side-nav hub-side-nav--minimal ad-dash-bar" aria-label="Attendee dashboard">
+            <a href="#overview" class="hub-side-nav-link is-active">Overview</a>
+            <a href="#tickets" class="hub-side-nav-link">
+              Event tickets
+              <span class="ad-side-count">2</span>
+            </a>
+            <a href="#past" class="hub-side-nav-link">
+              Events I&rsquo;ve attended
+              <span class="ad-side-count">2</span>
+            </a>
+            <span class="hub-side-nav-divider">Reviews</span>
+            <a href="#reviews" class="hub-side-nav-link">
+              Reviews to write
+              <span class="ad-side-count">1</span>
+            </a>
+            <span class="hub-side-nav-divider">Saved</span>
+            <a href="#saved" class="hub-side-nav-link">
+              Saved &amp; memberships
+              <span class="ad-side-count">13</span>
+            </a>
+            <a href="#opps" class="hub-side-nav-link">
+              Opportunities
+              <span class="ad-side-count">7</span>
+            </a>
+            <a href="#offers" class="hub-side-nav-link">
+              Member offers
+              <span class="ad-side-count">2</span>
+            </a>
+            <a href="#meet" class="hub-side-nav-link">
+              Meet people
+              <span class="ad-side-admin-pill" aria-hidden="true">Admin</span>
+            </a>
+            <span class="hub-side-nav-divider hub-side-nav-divider--partner">Partner with us</span>
+            <a href="#visibility" class="hub-side-nav-link">Grow your visibility</a>
+            <a href="/advertising" class="hub-side-nav-link hub-side-nav-link--partner">Advertising &amp; sponsorship</a>
+            <div class="hub-side-nav-util">
+              <a href="../events/">Browse events</a>
+              <a href="/account/settings">Profile &amp; preferences</a>
+            </div>
+          </nav>
+        </aside>
+
+        <div class="ad-main">
+          <div class="ad-wrap">
+            <header class="ad-page-head">
+              <p class="ad-hero-kicker">Attendee dashboard</p>
+              <h1 class="ad-welcome-name">Welcome back, Catherine Hancher 👋</h1>
+              <p class="ad-welcome-sub">You are going to Evolution Virtual Networking 29 October · 29 Oct 2026</p>
+            </header>
+
+            <div class="ad-overview-next">
+              <div class="ad-overview-next-list" role="list">
+                <div class="ad-overview-next-card ad-overview-next-card--ticket ad-overview-next-card--featured" role="listitem">
+                  <span class="ad-overview-next-media">
+                    <span class="ad-thumb-placeholder" aria-hidden="true" style="display:grid;place-items:center;width:88px;height:88px;border-radius:14px;background:#e8dbea;font-size:28px;">👋</span>
+                  </span>
+                  <div class="ad-overview-next-copy">
+                    <span class="ad-overview-next-eyebrow">Next booking</span>
+                    <span class="ad-overview-next-title">Evolution Virtual Networking 29 October</span>
+                    <span class="ad-overview-next-meta">29 Oct 2026 · 08:00–09:30</span>
+                  </div>
+                </div>
+                <div class="ad-overview-next-card ad-overview-next-card--review" role="listitem">
+                  <span class="ad-overview-next-icon ad-overview-next-icon--review" aria-hidden="true">★</span>
+                  <div class="ad-overview-next-copy">
+                    <span class="ad-overview-next-eyebrow">Review to write</span>
+                    <span class="ad-overview-next-title">The Networker UK Example</span>
+                    <span class="ad-overview-next-meta">The Networker UK · About a minute</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="ad-overview-portals">
+              <button type="button" class="ad-portal ad-portal--events">
+                <span class="ad-portal-icon" aria-hidden="true">📅</span>
+                <span class="ad-portal-body">
+                  <strong>Your tickets</strong>
+                  <span>2 upcoming</span>
+                </span>
+                <span class="ad-portal-arrow" aria-hidden="true">→</span>
+              </button>
+              <button type="button" class="ad-portal ad-portal--reviews">
+                <span class="ad-portal-icon" aria-hidden="true">★</span>
+                <span class="ad-portal-body">
+                  <strong>Reviews</strong>
+                  <span>1 to write</span>
+                </span>
+                <span class="ad-portal-arrow" aria-hidden="true">→</span>
+              </button>
+            </div>
+
+            <div class="hmm hmm--overview" id="ad-overview-hubert-meet">
+              <p class="hmm-admin-badge">Admin preview — not visible to other members yet.</p>
+              <div class="hmm-hero hmm-hero--compact">
+                <img class="hmm-hero-avatar" src="../assets/hubert-icon.png" width="48" height="48" alt="" />
+                <div class="hmm-hero-copy">
+                  <p class="hmm-hero-kicker">Meet people</p>
+                  <h2 class="hmm-hero-title">Ask Hubert who you&rsquo;d like to meet</h2>
+                  <p class="hmm-hero-sub">
+                    Describe the person — Hubert puts forward up to five matches (first name &amp; initial).
+                  </p>
+                </div>
+              </div>
+              <form class="hmm-composer" onsubmit="return false;">
+                <div class="hmm-composer-row">
+                  <img class="hmm-composer-avatar" src="../assets/hubert-icon.png" width="32" height="32" alt="" />
+                  <input
+                    class="hmm-composer-input"
+                    type="search"
+                    placeholder="e.g. fintech founders in Manchester"
+                  />
+                  <button type="submit" class="ad-btn ad-btn-primary hmm-composer-submit">Ask Hubert</button>
+                </div>
+              </form>
+              <p class="hmm-overview-more"><a href="#meet">Open full Meet people page</a></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
