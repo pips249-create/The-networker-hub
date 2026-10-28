@@ -6,9 +6,9 @@
     <title>Preview: Attendee sidebar + Overview Hubert – The Networker UK</title>
     <meta name="robots" content="noindex, nofollow" />
     <link rel="stylesheet" href="../css/hub.css?v=20261016signin1" />
-    <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20261028side2" />
-    <link rel="stylesheet" href="../css/hub-side-nav.css?v=20261028side2" />
-    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20261028side2" />
+    <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20261028side3" />
+    <link rel="stylesheet" href="../css/hub-side-nav.css?v=20261028side3" />
+    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20261028side3" />
     <link
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap"
@@ -33,13 +33,10 @@
       .ad-main {
         padding: 24px 28px 40px;
       }
-      .ad-overview-next-list {
-        margin-bottom: 12px;
-      }
     </style>
   </head>
   <body class="attendee-dashboard-page hub-page-account">
-    <p class="peek-banner">Design preview — stronger side tabs + Overview Hubert panel that matches the page</p>
+    <p class="peek-banner">Design preview — side tabs + Hubert as a portal-grid row</p>
     <div id="ad-shell">
       <div class="ad-dashboard-layout">
         <aside class="ad-sidebar">
@@ -117,48 +114,60 @@
             </div>
 
             <div class="ad-overview-portals">
+              <div class="hmm hmm--overview" id="ad-overview-hubert-meet">
+                <p class="hmm-admin-badge">Admin preview</p>
+                <div class="hmm-overview-bar">
+                  <span class="ad-portal-icon hmm-overview-icon" aria-hidden="true">
+                    <img src="../assets/hubert-icon.png" width="28" height="28" alt="" />
+                  </span>
+                  <div class="ad-portal-body hmm-overview-copy">
+                    <strong>Meet people</strong>
+                    <span>Ask Hubert who you&rsquo;d like to meet</span>
+                  </div>
+                  <form class="hmm-composer hmm-overview-ask" onsubmit="return false;">
+                    <input
+                      class="hmm-composer-input"
+                      type="search"
+                      placeholder="e.g. fintech founders in Manchester"
+                    />
+                    <button type="submit" class="ad-btn hmm-overview-submit">Ask Hubert</button>
+                  </form>
+                  <a class="hmm-overview-open" href="#meet">Open →</a>
+                </div>
+              </div>
+
               <button type="button" class="ad-portal ad-portal--events">
                 <span class="ad-portal-icon" aria-hidden="true">📅</span>
                 <span class="ad-portal-body">
                   <strong>Your tickets</strong>
-                  <span>2 upcoming</span>
+                  <span>2 upcoming events</span>
                 </span>
                 <span class="ad-portal-arrow" aria-hidden="true">→</span>
               </button>
-              <button type="button" class="ad-portal ad-portal--reviews">
+              <button type="button" class="ad-portal ad-portal--attended">
+                <span class="ad-portal-icon" aria-hidden="true">✓</span>
+                <span class="ad-portal-body">
+                  <strong>Events I&rsquo;ve attended</strong>
+                  <span>Claim events &amp; get nominated</span>
+                </span>
+                <span class="ad-portal-arrow" aria-hidden="true">→</span>
+              </button>
+              <button type="button" class="ad-portal ad-portal--reviews is-hot">
                 <span class="ad-portal-icon" aria-hidden="true">★</span>
                 <span class="ad-portal-body">
                   <strong>Reviews</strong>
-                  <span>1 to write</span>
+                  <span>1 waiting</span>
                 </span>
                 <span class="ad-portal-arrow" aria-hidden="true">→</span>
               </button>
-            </div>
-
-            <div class="hmm hmm--overview" id="ad-overview-hubert-meet">
-              <p class="hmm-admin-badge">Admin preview — not visible to other members yet.</p>
-              <div class="hmm-hero hmm-hero--compact">
-                <img class="hmm-hero-avatar" src="../assets/hubert-icon.png" width="48" height="48" alt="" />
-                <div class="hmm-hero-copy">
-                  <p class="hmm-hero-kicker">Meet people</p>
-                  <h2 class="hmm-hero-title">Ask Hubert who you&rsquo;d like to meet</h2>
-                  <p class="hmm-hero-sub">
-                    Describe the person — Hubert puts forward up to five matches (first name &amp; initial).
-                  </p>
-                </div>
-              </div>
-              <form class="hmm-composer" onsubmit="return false;">
-                <div class="hmm-composer-row">
-                  <img class="hmm-composer-avatar" src="../assets/hubert-icon.png" width="32" height="32" alt="" />
-                  <input
-                    class="hmm-composer-input"
-                    type="search"
-                    placeholder="e.g. fintech founders in Manchester"
-                  />
-                  <button type="submit" class="ad-btn ad-btn-primary hmm-composer-submit">Ask Hubert</button>
-                </div>
-              </form>
-              <p class="hmm-overview-more"><a href="#meet">Open full Meet people page</a></p>
+              <button type="button" class="ad-portal ad-portal--saved">
+                <span class="ad-portal-icon" aria-hidden="true">♥</span>
+                <span class="ad-portal-body">
+                  <strong>Saved</strong>
+                  <span>13 saved listings</span>
+                </span>
+                <span class="ad-portal-arrow" aria-hidden="true">→</span>
+              </button>
             </div>
           </div>
         </div>
