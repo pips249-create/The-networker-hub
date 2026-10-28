@@ -79,12 +79,14 @@ module.exports = async function handler(req, res) {
           throw e;
         }
       }
+      const emailCfg = emailConfigStatus();
       return json(res, 200, {
         ok: true,
         templates,
         testRecipients,
         testRecipientsWarning,
-        emailSendingConfigured: emailConfigStatus().emailSendingConfigured,
+        emailSendingConfigured: emailCfg.emailSendingConfigured,
+        resendOpenTrackingHint: emailCfg.resendOpenTrackingHint || '',
       });
     } catch (e) {
       return json(res, 500, { ok: false, error: 'email_templates_load_failed', message: e.message });

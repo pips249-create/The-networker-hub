@@ -146,6 +146,8 @@ module.exports = async function handler(req, res) {
         !email.emailSendingConfigured
           ? 'Add RESEND_API_KEY and RESEND_FROM in Vercel (and local.env for localhost test sends), then redeploy.'
           : null,
+      resendOpenTracking:
+        email.emailSendingConfigured ? email.resendOpenTrackingHint || null : null,
       missingCronSecret:
         cron.isProduction && !cron.hasCronSecret
           ? 'Add CRON_SECRET in Vercel Production env vars. Vercel Cron sends Authorization: Bearer <CRON_SECRET> automatically.'

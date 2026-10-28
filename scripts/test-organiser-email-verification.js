@@ -78,6 +78,76 @@ assert.match(
   /code:\s*inboxCode/,
   'login must pass the inbox code through to the confirm redirect'
 );
+assert.match(
+  loginSrc,
+  /skipVerificationEmail/,
+  'login must not mint a replacement code when recovering an inbox confirm link'
+);
+
+const intentSrc = fs.readFileSync(
+  path.join(__dirname, '../api/_lib/organiser-auth-intent.js'),
+  'utf8'
+);
+assert.match(
+  intentSrc,
+  /parseVerifyEmailPath\(next\)/,
+  'organiser intent must unwrap /organiser/verify-email before path matching'
+);
+assert.match(
+  intentSrc,
+  /shared by every account|post-confirm/,
+  'verify-email must not count as organiser intent on its own'
+);
+
+// Pure intent checks without loading Supabase (module pulls admin client at require-time).
+function isOrganiserAuthIntentForTest({ next, intent } = {}) {
+  const value = String(intent || '')
+    .trim()
+    .toLowerCase();
+  if (value === 'organiser' || value === 'organiser-claim') return true;
+  const verify = parseVerifyEmailPath(next);
+  if (verify) {
+    return isOrganiserAuthIntentForTest({ next: verify.next || '', intent: '' });
+  }
+  const raw = String(next || '').trim();
+  let pathOnly = '';
+  try {
+    pathOnly = /^https?:\/\//i.test(raw) ? new URL(raw).pathname || '' : raw.split('?')[0];
+  } catch {
+    pathOnly = raw.split('?')[0];
+  }
+  return /^\/organiser(\/|$)/.test(pathOnly);
+}
+
+assert.equal(
+  isOrganiserAuthIntentForTest({
+    next: '/organiser/verify-email?code=482917&email=a@b.com',
+  }),
+  false,
+  'bare confirm-email recovery is not organiser intent'
+);
+assert.equal(
+  isOrganiserAuthIntentForTest({
+    next: '/organiser/verify-email?code=482917&email=a@b.com&next=%2Fwelcome',
+  }),
+  false,
+  'confirm → welcome is not organiser intent'
+);
+assert.equal(
+  isOrganiserAuthIntentForTest({
+    next: '/organiser/verify-email?code=482917&email=a@b.com&next=%2Forganiser%2F',
+  }),
+  true,
+  'confirm → organiser workspace keeps organiser intent'
+);
+assert.equal(
+  isOrganiserAuthIntentForTest({ next: '/organiser/', intent: '' }),
+  true
+);
+assert.equal(
+  isOrganiserAuthIntentForTest({ next: '/welcome', intent: 'organiser' }),
+  true
+);
 
 const verifyPageSrc = fs.readFileSync(
   path.join(__dirname, '../js/organiser-verify-email.js'),
