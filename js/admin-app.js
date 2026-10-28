@@ -17346,7 +17346,15 @@
           } else if (data.testRecipientsWarning) {
             setEmailStatus(data.testRecipientsWarning, 'warn');
           } else {
-            setEmailStatus(templates.length + ' template' + (templates.length === 1 ? '' : 's') + ' loaded.');
+            setEmailStatus(
+              templates.length +
+                ' template' +
+                (templates.length === 1 ? '' : 's') +
+                ' loaded.' +
+                (data.resendOpenTrackingHint
+                  ? ' Note: Resend open tracking is off by default — Delivered does not mean unread.'
+                  : '')
+            );
           }
         })
         .catch(function () {
@@ -23727,6 +23735,9 @@
           '</div>' +
           (hints.missingResend
             ? '<p class="text-xs text-amber-800 mt-3">' + esc(hints.missingResend) + '</p>'
+            : '') +
+          (hints.resendOpenTracking
+            ? '<p class="text-xs text-amber-800 mt-2">' + esc(hints.resendOpenTracking) + '</p>'
             : '') +
           (hints.emailAllowlist
             ? '<p class="text-xs text-amber-800 mt-2">' + esc(hints.emailAllowlist) + '</p>'

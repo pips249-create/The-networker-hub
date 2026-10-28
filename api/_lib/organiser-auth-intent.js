@@ -63,6 +63,14 @@ function isOrganiserAuthIntent({ next, intent } = {}) {
     .trim()
     .toLowerCase();
   if (value === 'organiser' || value === 'organiser-claim') return true;
+  // /organiser/verify-email is shared by every account (attendee + organiser).
+  // Only the post-confirm ?next= destination can imply organiser intent — otherwise
+  // login treats a confirm-email recovery as organiser enable and resends a fresh
+  // code that invalidates the digits still in the inbox link.
+  const verify = parseVerifyEmailPath(next);
+  if (verify) {
+    return isOrganiserAuthIntent({ next: verify.next || '', intent: '' });
+  }
   const path = organiserPathFromNext(next);
   return /^\/organiser(\/|$)/.test(path);
 }

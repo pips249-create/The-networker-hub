@@ -79,7 +79,23 @@ Move to `p=quarantine` or `p=reject` once rua reports look clean (weeks, not day
 
 ---
 
-## 5. After DNS — reputation & content (Outlook Other / Junk)
+## 5. Open / click tracking (why everything stays “Delivered”)
+
+Resend **open and click tracking are off by default** on every domain. Until you enable them under **Resend → Domains → `mail.thenetworkeruk.com` → Configuration** (and verify the tracking CNAME Resend shows), the Emails list will never move past **Delivered** — even when people open and click.
+
+That is expected. It does **not** mean nobody is reading your mail.
+
+| Setting | Recommendation for `mail.thenetworkeruk.com` |
+|---------|-----------------------------------------------|
+| **Open tracking** | Leave **off** for transactional mail (confirmations, bookings, receipts). Open pixels can hurt inbox placement; rates are also inaccurate (Apple Mail Privacy, image blocking, Gmail clipping). |
+| **Click tracking** | Optional — turn **on** if you want Confirm / CTA click events in Resend. Requires a verified tracking subdomain (e.g. `links.mail.thenetworkeruk.com`). |
+| **Broadcasts** | If you send campaigns from a separate domain/subdomain, enable open+click there only. |
+
+Confirm-your-email success is still proven in-product (Welcome email after a successful code, or Command Centre → mark confirmed) — not by an “Opened” badge in Resend.
+
+---
+
+## 6. After DNS — reputation & content (Outlook Other / Junk)
 
 Authentication is the gate. Then:
 
@@ -97,7 +113,7 @@ Register for monitoring when volume grows:
 
 ---
 
-## 6. Verification checklist
+## 7. Verification checklist
 
 | Step | Done |
 |------|:----:|
@@ -109,11 +125,12 @@ Register for monitoring when volume grows:
 | Test to Gmail + Outlook lands in **Inbox** (not Other/Junk) | ☐ |
 | `RESEND_FROM` uses the verified domain (not `onboarding@resend.dev`) | ☐ |
 | `GET /api/auth/config-check` shows `emailSendingConfigured: true` | ☐ Open as admin / with `CONFIG_CHECK_SECRET` |
+| Understand Delivered ≠ unread (open tracking off by default — §5) | ☐ |
 | Free ticket smoke | ☑ `npm run check:free-ticket` (6 Aug) |
 
 ---
 
-## 7. Related
+## 8. Related
 
 - `docs/COMPLIANCE-RUNBOOK.md` — Tab 10 must-have
 - `AUTH-SETUP.md` / `SUPABASE-NO-EMAIL.md` — auth email vs Resend transactional

@@ -192,7 +192,14 @@ module.exports = async function handler(req, res) {
     let autoEnable = { enabled: false, redirect: null };
     if (isOrganiserAuthIntent({ next: body.next, intent: body.intent })) {
       try {
-        autoEnable = await maybeAutoEnableOrganiserAccess(sessionUser, res);
+        // Inbox confirm links already carry a live code. Auto-enable must not
+        // mint a replacement — that invalidated the prefilled digits and made
+        // Gmail/Outlook "sign in first" recoveries fail with invalid_token.
+        const inboxVerify = parseVerifyEmailPath(body.next);
+        const skipVerificationEmail = Boolean(inboxVerify && inboxVerify.code);
+        autoEnable = await maybeAutoEnableOrganiserAccess(sessionUser, res, {
+          skipVerificationEmail,
+        });
       } catch {
         /* login succeeds even if auto-enable fails */
       }
