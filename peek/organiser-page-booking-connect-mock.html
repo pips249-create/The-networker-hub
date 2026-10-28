@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>Mock: Organiser page booking connect - The Networker UK</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/hub.css?v=20261016signin1" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20261021eb2" />
+    <link rel="stylesheet" href="booking-flow-mock.css" />
+    <style>
+      .ge-mock-note {
+        margin: 0 0 16px;
+        padding: 10px 12px;
+        border-radius: 8px;
+        background: #eef2ff;
+        border: 1px solid #c7d2fe;
+        font-size: 13px;
+        color: #1c2040;
+      }
+      .ge-booking-card h2 {
+        margin: 0 0 6px;
+      }
+      .ge-booking-lede {
+        margin: 0 0 16px;
+        font-size: 15px;
+        line-height: 1.5;
+        color: #4a6272;
+      }
+      .ge-booking-choices {
+        display: grid;
+        gap: 10px;
+      }
+      .ge-booking-choice {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+        align-items: center;
+        width: 100%;
+        text-align: left;
+        padding: 14px 16px;
+        border: 1.5px solid #d7e3ea;
+        border-radius: 12px;
+        background: #fff;
+        font: inherit;
+        color: inherit;
+        cursor: pointer;
+      }
+      .ge-booking-choice:hover {
+        border-color: #0d6e7a;
+      }
+      .ge-booking-choice.is-selected {
+        border-color: #0d6e7a;
+        background: #e8f6f8;
+        box-shadow: inset 0 0 0 1px #0d6e7a;
+      }
+      .ge-booking-choice.is-connected {
+        border-color: #2f5d3a;
+      }
+      .ge-booking-choice strong {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 16px;
+      }
+      .ge-booking-choice strong img {
+        width: 18px;
+        height: 18px;
+      }
+      .ge-booking-choice span {
+        display: block;
+        margin-top: 3px;
+        font-size: 14px;
+        line-height: 1.4;
+        color: #4a6272;
+      }
+      .ge-booking-tag {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #6b5a1e;
+        background: #f5e6a8;
+        border-radius: 999px;
+        padding: 4px 9px;
+        white-space: nowrap;
+      }
+      .ge-booking-status {
+        font-size: 12px;
+        font-weight: 700;
+        border-radius: 999px;
+        padding: 4px 9px;
+        white-space: nowrap;
+      }
+      .ge-booking-status--ready {
+        color: #2f5d3a;
+        background: #e5f4ea;
+      }
+      .ge-booking-status--soon {
+        color: #7a94a3;
+        background: #eef3f6;
+      }
+      .ge-booking-panel {
+        margin-top: 14px;
+        padding: 16px;
+        border-radius: 12px;
+        border: 1px dashed #c5d5de;
+        background: #f7fafb;
+      }
+      .ge-booking-panel[hidden] {
+        display: none !important;
+      }
+      .ge-booking-panel h3 {
+        margin: 0 0 8px;
+        font-size: 1.05rem;
+      }
+      .ge-booking-panel p {
+        margin: 0 0 12px;
+        font-size: 14px;
+        line-height: 1.45;
+        color: #4a6272;
+      }
+      .ge-booking-next {
+        margin: 16px 0 0;
+        padding: 12px 14px;
+        border-radius: 10px;
+        background: #e8f6f8;
+        border: 1px solid #b7dde3;
+        font-size: 14px;
+        line-height: 1.45;
+        color: #1a2e3b;
+      }
+      .ge-booking-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 14px;
+      }
+      .ge-dim {
+        opacity: 0.55;
+      }
+    </style>
+  </head>
+  <body class="organiser-event-edit-page bf-mock">
+    <div class="ee-wrap bf-wrap" style="max-width: 720px">
+      <a class="ee-back" href="/organiser/#groups">← Back to organiser pages</a>
+      <p class="ge-mock-note">
+        <strong>UX mock:</strong> Booking / Connect sits on the organiser page, before events.
+      </p>
+
+      <h1 class="ee-title">Midlands Business Breakfast</h1>
+      <p class="ee-lead">Edit your public organiser page, then connect how people book.</p>
+
+      <section class="ee-card ge-dim" aria-hidden="true">
+        <h2>Profile details</h2>
+        <p class="ee-hint" style="margin: 0">Logo, name, description, website, socials…</p>
+      </section>
+
+      <section class="ee-card ge-booking-card" aria-labelledby="ge-booking-title">
+        <h2 id="ge-booking-title">Where do people book?</h2>
+        <p class="ge-booking-lede">
+          Connect this once for this organiser page. Then when you add events, we can pull them through
+          (or you sell on The Networker UK).
+        </p>
+
+        <div class="ge-booking-choices" role="listbox" aria-label="Booking system for this organiser page">
+          <button type="button" class="ge-booking-choice" data-provider="hub" role="option" aria-selected="false">
+            <span>
+              <strong>The Networker UK</strong>
+              <span>Sell tickets here. No connection needed. Reviews and attendees built in.</span>
+            </span>
+            <span class="ge-booking-tag">Easiest</span>
+          </button>
+
+          <button
+            type="button"
+            class="ge-booking-choice is-selected"
+            data-provider="eventbrite"
+            role="option"
+            aria-selected="true"
+          >
+            <span>
+              <strong>
+                <img src="../assets/connected-providers/eventbrite.svg" alt="" width="18" height="18" />
+                Eventbrite
+              </strong>
+              <span>Keep Eventbrite checkout. Import events and sync buyers for verified reviews.</span>
+            </span>
+            <span class="ge-booking-status" id="eb-status">Not connected</span>
+          </button>
+
+          <button type="button" class="ge-booking-choice" data-provider="ticket_tailor" role="option" aria-selected="false">
+            <span>
+              <strong>Ticket Tailor</strong>
+              <span>Keep Ticket Tailor checkout. Import events and sync buyers.</span>
+            </span>
+            <span class="ge-booking-status">Not connected</span>
+          </button>
+
+          <button type="button" class="ge-booking-choice" data-provider="trybooking" role="option" aria-selected="false">
+            <span>
+              <strong>TryBooking</strong>
+              <span>Keep TryBooking checkout. Import events and sync buyers.</span>
+            </span>
+            <span class="ge-booking-status ge-booking-status--soon">Coming soon</span>
+          </button>
+
+          <button type="button" class="ge-booking-choice" data-provider="own_site" role="option" aria-selected="false">
+            <span>
+              <strong>My own website</strong>
+              <span>Buyers pay on your site. Sync attendees after each sale.</span>
+            </span>
+            <span class="ge-booking-status">Not connected</span>
+          </button>
+
+          <button type="button" class="ge-booking-choice" data-provider="link_out" role="option" aria-selected="false">
+            <span>
+              <strong>Just a booking link</strong>
+              <span>Redirect only. No import. No attendees. No verified reviews.</span>
+            </span>
+          </button>
+        </div>
+
+        <div class="ge-booking-panel" id="panel-eventbrite">
+          <h3>Connect Eventbrite</h3>
+          <p>
+            Do this once for Midlands Business Breakfast. After that, Add event can import from your
+            Eventbrite account.
+          </p>
+
+          <details class="bf-howto" open>
+            <summary>How to get your token</summary>
+            <div class="bf-howto-body">
+              <ol class="bf-howto-steps">
+                <li>Profile menu → <strong>Account Settings</strong></li>
+                <li>Open <strong>Developer Links</strong> → <strong>API Keys</strong></li>
+                <li>
+                  <strong>Show API key, client secret and tokens</strong> → copy the
+                  <strong>Private token</strong>
+                </li>
+              </ol>
+              <div class="bf-mini-deck" data-bf-mini-deck>
+                <div class="bf-mini-slide" data-bf-mini-slide="0">
+                  <figure class="bf-mini-shot bf-mini-shot--photo">
+                    <img
+                      src="../assets/guides/eventbrite/01-account-settings-menu.webp"
+                      alt="Eventbrite profile menu with Account Settings"
+                      width="900"
+                      height="431"
+                      loading="lazy"
+                    />
+                  </figure>
+                  <p class="bf-mini-caption">1. Profile → Account Settings</p>
+                </div>
+                <div class="bf-mini-slide" data-bf-mini-slide="1" hidden>
+                  <figure class="bf-mini-shot bf-mini-shot--photo">
+                    <img
+                      src="../assets/guides/eventbrite/03-api-keys.webp"
+                      alt="Eventbrite API Keys page"
+                      width="900"
+                      height="218"
+                      loading="lazy"
+                    />
+                  </figure>
+                  <p class="bf-mini-caption">2. API Keys → Show tokens → copy Private token</p>
+                </div>
+                <div class="bf-mini-nav">
+                  <div class="bf-mini-dots" data-bf-mini-dots aria-label="Guide slides"></div>
+                  <div class="bf-mini-nav-btns">
+                    <button type="button" data-bf-mini-prev disabled>Back</button>
+                    <button type="button" data-bf-mini-next>Next</button>
+                  </div>
+                </div>
+              </div>
+              <a class="bf-howto-link" href="../guides/connect-eventbrite#api-token" target="_blank" rel="noopener">
+                Open full guide with screenshots →
+              </a>
+            </div>
+          </details>
+
+          <div class="bf-primary-block" style="margin-top: 14px">
+            <label for="ge-eb-token">Eventbrite private token</label>
+            <input id="ge-eb-token" type="password" autocomplete="off" placeholder="Paste Private token from API Keys" />
+            <div class="ge-booking-actions">
+              <button type="button" class="ee-btn ee-btn-outline" id="ge-eb-test">Test connection</button>
+              <button type="button" class="ee-btn ee-btn-gold" id="ge-eb-save">Save connection</button>
+            </div>
+            <p class="bf-status" id="ge-eb-status" hidden>Connected. Ready to import events for this organiser page.</p>
+          </div>
+        </div>
+
+        <div class="ge-booking-panel" id="panel-hub" hidden>
+          <h3>The Networker UK</h3>
+          <p>No connection needed. When you add events, sell tickets here with attendees and reviews built in.</p>
+        </div>
+
+        <div class="ge-booking-panel" id="panel-other" hidden>
+          <h3 id="panel-other-title">Connect provider</h3>
+          <p id="panel-other-copy">Same pattern as Eventbrite: connect once on this organiser page, then import or link events.</p>
+        </div>
+
+        <p class="ge-booking-next">
+          <strong>Next:</strong> Add event → we show events from the connected system (or Hub ticket setup if you chose
+          The Networker UK).
+        </p>
+      </section>
+
+      <section class="ee-card ge-dim" aria-hidden="true">
+        <h2>Publish organiser page</h2>
+        <p class="ee-hint" style="margin: 0">Save / publish controls sit as today…</p>
+      </section>
+
+      <div class="ee-actions" style="margin-top: 18px">
+        <button type="button" class="ee-btn ee-btn-gold">Save organiser page</button>
+      </div>
+    </div>
+
+    <script>
+      var provider = 'eventbrite';
+      var connected = { eventbrite: false };
+
+      function showPanel(key) {
+        document.getElementById('panel-eventbrite').hidden = key !== 'eventbrite';
+        document.getElementById('panel-hub').hidden = key !== 'hub';
+        var other = document.getElementById('panel-other');
+        other.hidden = key === 'eventbrite' || key === 'hub';
+        if (!other.hidden) {
+          var titles = {
+            ticket_tailor: 'Connect Ticket Tailor',
+            trybooking: 'TryBooking',
+            own_site: 'Connect your website',
+            link_out: 'Just a booking link',
+          };
+          var copy = {
+            ticket_tailor: 'Paste your Ticket Tailor API key once for this organiser page. Then Add event can import from Ticket Tailor.',
+            trybooking: 'Coming soon. Same organiser-page connect pattern when ready.',
+            own_site: 'We give you a sync link for this organiser page. Add it to your booking confirmation.',
+            link_out: 'No connection. On each event you paste a booking URL only. No import, no attendees.',
+          };
+          document.getElementById('panel-other-title').textContent = titles[key] || 'Connect';
+          document.getElementById('panel-other-copy').textContent = copy[key] || '';
+        }
+      }
+
+      document.querySelectorAll('.ge-booking-choice').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          document.querySelectorAll('.ge-booking-choice').forEach(function (b) {
+            b.classList.remove('is-selected');
+            b.setAttribute('aria-selected', 'false');
+          });
+          btn.classList.add('is-selected');
+          btn.setAttribute('aria-selected', 'true');
+          provider = btn.getAttribute('data-provider');
+          showPanel(provider);
+        });
+      });
+
+      document.getElementById('ge-eb-test').addEventListener('click', function () {
+        document.getElementById('ge-eb-status').hidden = false;
+      });
+      document.getElementById('ge-eb-save').addEventListener('click', function () {
+        connected.eventbrite = true;
+        document.getElementById('ge-eb-status').hidden = false;
+        var status = document.getElementById('eb-status');
+        status.textContent = 'Connected';
+        status.classList.add('ge-booking-status--ready');
+        document.querySelector('[data-provider="eventbrite"]').classList.add('is-connected');
+      });
+
+      (function initMiniDeck() {
+        var deck = document.querySelector('[data-bf-mini-deck]');
+        if (!deck) return;
+        var slides = Array.prototype.slice.call(deck.querySelectorAll('[data-bf-mini-slide]'));
+        var dotsWrap = deck.querySelector('[data-bf-mini-dots]');
+        var prev = deck.querySelector('[data-bf-mini-prev]');
+        var next = deck.querySelector('[data-bf-mini-next]');
+        var index = 0;
+        slides.forEach(function (_s, i) {
+          var dot = document.createElement('button');
+          dot.type = 'button';
+          dot.setAttribute('aria-label', 'Slide ' + (i + 1));
+          dot.addEventListener('click', function () {
+            showMini(i);
+          });
+          dotsWrap.appendChild(dot);
+        });
+        function showMini(i) {
+          index = i;
+          slides.forEach(function (slide, n) {
+            slide.hidden = n !== index;
+          });
+          Array.prototype.forEach.call(dotsWrap.children, function (dot, n) {
+            dot.classList.toggle('is-active', n === index);
+          });
+          prev.disabled = index === 0;
+          next.disabled = index === slides.length - 1;
+        }
+        prev.addEventListener('click', function () {
+          if (index > 0) showMini(index - 1);
+        });
+        next.addEventListener('click', function () {
+          if (index < slides.length - 1) showMini(index + 1);
+        });
+        showMini(0);
+      })();
+
+      showPanel('eventbrite');
+    </script>
+  </body>
+</html>
