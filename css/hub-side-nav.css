@@ -218,39 +218,43 @@
   color: var(--od-purple-dark);
 }
 
-/* Attendee (purple) — tabs need clear chip surfaces on the lavender rail */
+/* Attendee (purple) — solid chips so tabs read clearly on the lavender rail */
 .attendee-dashboard-page .hub-side-nav--minimal .hub-side-nav-link {
   color: var(--ad-slate, #2d1b5e);
   font-size: 15px;
   font-weight: 700;
-  background: rgba(255, 255, 255, 0.55);
-  border: 1px solid rgba(91, 47, 153, 0.12);
-  border-left: 3px solid transparent;
-  box-shadow: 0 1px 2px rgba(45, 27, 94, 0.04);
+  background: #ffffff;
+  border: 1px solid rgba(91, 47, 153, 0.2);
+  border-left: 3px solid rgba(157, 96, 167, 0.35);
+  box-shadow: 0 1px 3px rgba(45, 27, 94, 0.08);
 }
 
 .attendee-dashboard-page .hub-side-nav--minimal .hub-side-nav-link:hover {
-  background: rgba(255, 255, 255, 0.92);
+  background: #fff;
   color: var(--ad-teal-dark, #7a3d8a);
-  border-color: rgba(122, 61, 138, 0.28);
+  border-color: rgba(122, 61, 138, 0.4);
+  border-left-color: var(--ad-teal, #9d60a7);
+  box-shadow: 0 2px 6px rgba(45, 27, 94, 0.12);
 }
 
 .attendee-dashboard-page .hub-side-nav--minimal .hub-side-nav-link.is-active {
-  border-color: rgba(122, 61, 138, 0.35);
-  border-left-color: var(--ad-teal, #9d60a7);
-  background: var(--ad-white, #fff);
+  border-color: rgba(122, 61, 138, 0.45);
+  border-left-color: var(--ad-teal-dark, #7a3d8a);
+  background: #ffffff;
   color: var(--ad-slate, #2d1b5e);
   font-weight: 800;
-  box-shadow: 0 2px 8px rgba(73, 63, 149, 0.14);
+  box-shadow:
+    0 0 0 1px rgba(122, 61, 138, 0.12),
+    0 3px 10px rgba(73, 63, 149, 0.16);
 }
 
 .attendee-dashboard-page .hub-side-nav-divider {
-  color: #6b4578;
+  color: #5a3568;
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.12em;
   opacity: 1;
-  border-top-color: rgba(91, 47, 153, 0.28);
+  border-top-color: rgba(91, 47, 153, 0.32);
 }
 
 .attendee-dashboard-page .hub-side-nav-bottom {
@@ -282,17 +286,20 @@
 }
 
 .attendee-dashboard-page .hub-side-nav-link--partner {
-  color: #7a5a12;
-  background: rgba(189, 147, 46, 0.12);
-  border: 1px solid rgba(189, 147, 46, 0.28);
+  color: #5c4510;
+  background: #f6ecd0;
+  border: 1px solid rgba(189, 147, 46, 0.45);
+  border-left: 3px solid #bd932e;
   border-radius: 8px;
-  margin: 0 4px 6px;
+  margin: 0 0 6px;
   padding-left: 12px;
+  box-shadow: 0 1px 3px rgba(122, 90, 20, 0.1);
 }
 
 .attendee-dashboard-page .hub-side-nav-link--partner:hover {
-  background: rgba(189, 147, 46, 0.2);
-  color: #5c4510;
+  background: #f1e3bc;
+  color: #4a380c;
+  border-color: rgba(189, 147, 46, 0.6);
 }
 
 .organiser-dashboard-page .hub-side-nav-link--partner {
