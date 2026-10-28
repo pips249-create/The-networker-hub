@@ -70,6 +70,11 @@
     { "source": "/networking-groups/", "destination": "/events/?mode=organisers", "permanent": false },
     { "source": "/account/index.html", "destination": "/account/", "permanent": true },
     { "source": "/organiser/index.html", "destination": "/organiser/", "permanent": true },
+    {
+      "source": "/organiser/verify-email/",
+      "destination": "/organiser/verify-email",
+      "permanent": false
+    },
     { "source": "/admin/index.html", "destination": "/admin/", "permanent": true },
     {
       "source": "/assets/guides/business-opps-explainer-linkedin.pdf",

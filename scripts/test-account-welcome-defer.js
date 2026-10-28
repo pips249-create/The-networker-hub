@@ -123,14 +123,14 @@ assert.doesNotMatch(
   /await verifyToken\(legacyToken\)/,
   'confirm page must not call verifyToken directly with a legacy token helper'
 );
-assert.doesNotMatch(
+assert.match(
   verifyPageSrc,
   /await submitCode\(urlCode\)/,
-  'inbox opens must not auto-submit — people tap Confirm (GET never verifies)'
+  'signed-in inbox opens must POST the prefilled code (GET never verifies)'
 );
 assert.match(
   verifyPageSrc,
-  /mail scanners that only GET|never auto-submit/i,
+  /mail scanners that GET|without a session never reach here/i,
   'confirm page must document that scanners without a session cannot finish confirm'
 );
 assert.match(
