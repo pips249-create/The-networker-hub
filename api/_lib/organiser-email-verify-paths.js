@@ -1,16 +1,16 @@
 /**
  * URL helpers for organiser / account email confirmation.
  *
- * REGRESSION LOCK (Glenn / inbox drop-off): earlier “fixes” (#251 prefill,
- * #281 preserve-code-through-login, #284 skip organiser-intent resend) still
- * sent signed-out inbox clicks to /organiser/verify-email, which flashed the
- * code form then bounced to a bare login page. Inbox CTAs must open /login
- * with next=/organiser/verify-email?code=… so the first paint is sign-in (with
- * callout). The confirm page itself must never auto-redirect when signed out.
+ * Intended UX: email shows a 6-digit code → confirm screen → person types (or
+ * confirms a prefill) → then they can continue. GET never verifies.
+ *
+ * REGRESSION LOCK: signed-out inbox opens must NOT flash the code form then
+ * bounce to a bare login (#251/#281/#284 left that bounce in place). The
+ * confirm page stays put; Sign in preserves code= in ?next=; after login they
+ * still tap Confirm (no auto-submit).
  *
  * In-app redirects stay code-free unless recovering an inbox link through
  * login (see parseVerifyEmailPath + buildEmailVerifyRedirect({ code })).
- * GET never verifies — only POST after a session exists.
  */
 
 function organiserPathOnly(raw) {
@@ -76,23 +76,6 @@ function buildOrganiserVerifyEmailPath(code, email) {
   return path;
 }
 
-/**
- * Inbox email button target. Always /login?next=…/verify-email?code=…
- * so signed-out people never see the code screen flash away to a bare login.
- * Signed-in people are forwarded to the confirm page (and auto-submit) by
- * maybeRedirectAuthenticatedLogin.
- */
-function buildOrganiserVerifyEmailInboxCta(code, email) {
-  const verifyPath = buildOrganiserVerifyEmailPath(code, email);
-  const params = new URLSearchParams();
-  params.set('next', verifyPath);
-  const address = String(email || '')
-    .trim()
-    .toLowerCase();
-  if (address) params.set('email', address);
-  return '/login?' + params.toString();
-}
-
 /** Confirm-email screen with no secret. Safe to put in a browser redirect. */
 function verifyEmailPagePath(email) {
   const address = String(email || '')
@@ -129,7 +112,6 @@ function buildEmailVerifyRedirect({ next, email, code } = {}) {
 
 module.exports = {
   buildOrganiserVerifyEmailPath,
-  buildOrganiserVerifyEmailInboxCta,
   verifyEmailPagePath,
   buildEmailVerifyRedirect,
   parseVerifyEmailPath,

@@ -123,14 +123,14 @@ assert.doesNotMatch(
   /await verifyToken\(legacyToken\)/,
   'confirm page must not call verifyToken directly with a legacy token helper'
 );
-assert.match(
+assert.doesNotMatch(
   verifyPageSrc,
   /await submitCode\(urlCode\)/,
-  'signed-in inbox opens must POST the prefilled code (GET never verifies)'
+  'inbox opens must not auto-submit — people tap Confirm (GET never verifies)'
 );
 assert.match(
   verifyPageSrc,
-  /mail scanners that GET/i,
+  /mail scanners that only GET|never auto-submit/i,
   'confirm page must document that scanners without a session cannot finish confirm'
 );
 assert.match(
@@ -140,8 +140,8 @@ assert.match(
 );
 assert.match(
   verificationSrc,
-  /buildOrganiserVerifyEmailInboxCta\(code,\s*address\)/,
-  'confirm email CTA must open login with next=…/verify-email?code=… (no flash)'
+  /buildOrganiserVerifyEmailPath\(code,\s*address\)/,
+  'confirm email CTA must open the confirm screen with the code prefilled'
 );
 assert.match(
   verificationSrc,

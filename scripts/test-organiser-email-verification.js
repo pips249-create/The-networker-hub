@@ -10,20 +10,14 @@ const fs = require('fs');
 const path = require('path');
 const {
   buildOrganiserVerifyEmailPath,
-  buildOrganiserVerifyEmailInboxCta,
   verifyEmailPagePath,
   buildEmailVerifyRedirect,
   parseVerifyEmailPath,
 } = require('../api/_lib/organiser-email-verify-paths');
 
-const confirmPath = buildOrganiserVerifyEmailPath('482917', 'Organiser@Example.com');
-assert.match(confirmPath, /^\/organiser\/verify-email\?code=482917&email=/);
-assert(confirmPath.includes('organiser%40example.com'), 'email should be normalised and encoded');
-
-const inboxCta = buildOrganiserVerifyEmailInboxCta('482917', 'Organiser@Example.com');
-assert.match(inboxCta, /^\/login\?/);
-assert.match(inboxCta, /next=%2Forganiser%2Fverify-email%3Fcode%3D482917/);
-assert.match(inboxCta, /email=organiser%40example.com/);
+const inboxPath = buildOrganiserVerifyEmailPath('482917', 'Organiser@Example.com');
+assert.match(inboxPath, /^\/organiser\/verify-email\?code=482917&email=/);
+assert(inboxPath.includes('organiser%40example.com'), 'email should be normalised and encoded');
 
 const codeOnly = buildOrganiserVerifyEmailPath('000001', '');
 assert.equal(codeOnly, '/organiser/verify-email?code=000001');
@@ -165,10 +159,10 @@ const verifyPageSrc = fs.readFileSync(
   path.join(__dirname, '../js/organiser-verify-email.js'),
   'utf8'
 );
-assert.match(
+assert.doesNotMatch(
   verifyPageSrc,
   /await submitCode\(urlCode\)/,
-  'signed-in inbox opens must POST the prefilled code'
+  'inbox opens must not auto-submit — people type/tap Confirm on the confirm screen'
 );
 assert.match(
   verifyPageSrc,
@@ -179,6 +173,11 @@ assert.match(
   verifyPageSrc,
   /Sign in to confirm/,
   'signed-out confirm CTA must send people through login with the code'
+);
+assert.match(
+  verifyPageSrc,
+  /tap Confirm your email to finish/,
+  'signed-in prefill must wait for an explicit Confirm tap'
 );
 assert.doesNotMatch(
   verifyPageSrc,
