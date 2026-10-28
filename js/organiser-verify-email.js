@@ -256,6 +256,7 @@
   }
 
   async function init() {
+    hideContinueUntilVerified();
     var urlCode = normalizeCode(params().get('code') || params().get('token') || '');
     var emailFromQuery = String(params().get('email') || '').trim();
     if (addressEl && emailFromQuery) addressEl.textContent = emailFromQuery;
