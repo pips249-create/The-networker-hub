@@ -18412,6 +18412,29 @@
     );
   }
 
+  /** Staff coverage imports (e.g. meetup-coverage:group:YYYY-MM-DD on airtable_id). */
+  function coverageSourceBadge(ev) {
+    var raw = String((ev && (ev.airtable_id || ev.airtableId)) || '').trim();
+    if (!raw) return '';
+    var low = raw.toLowerCase();
+    var label = '';
+    var title = raw;
+    if (low.indexOf('meetup-coverage:') === 0) {
+      label = 'Meetup coverage';
+    } else if (low.indexOf('coverage:') === 0) {
+      label = 'Coverage import';
+    } else {
+      return '';
+    }
+    return (
+      '<span class="inline-flex items-center rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[10px] font-semibold text-sky-900" title="' +
+      attrEsc(title) +
+      '">' +
+      esc(label) +
+      '</span>'
+    );
+  }
+
   function eventCleanupHasActiveFilters() {
     return !!(
       eventCleanupState.q ||
@@ -22931,6 +22954,7 @@
       '<td class="py-2.5 pr-3"><div class="flex flex-wrap gap-1">' +
       listingStatusBadge(ev.status) +
       approvalStatusBadge(ev.approval_status) +
+      coverageSourceBadge(ev) +
       (Math.max(0, Number(ev.registration_count) || 0) > 0
         ? '<span class="inline-flex rounded-full border border-slate-200 bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700">' +
           esc(String(ev.registration_count)) +

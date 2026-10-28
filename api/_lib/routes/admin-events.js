@@ -179,7 +179,7 @@ async function listEventsForAdmin(query) {
   let dbQuery = sb.from('events').select(
     light
       ? 'id, title, organiser_id, starts_at, event_type, slug, city, featured, featured_until'
-      : 'id, title, description, image_url, photo_url, organiser_id, starts_at, ends_at, event_type, meeting_type, status, approval_status, vat_treatment, slug, city, venue, address, postcode, meeting_link, featured, featured_until, created_at, locked',
+      : 'id, title, description, image_url, photo_url, organiser_id, starts_at, ends_at, event_type, meeting_type, status, approval_status, vat_treatment, slug, city, venue, address, postcode, meeting_link, featured, featured_until, created_at, locked, airtable_id, checkout_mode, external_booking_url',
     { count: 'exact' }
   );
 
