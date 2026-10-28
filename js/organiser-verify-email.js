@@ -119,6 +119,7 @@
     );
     if (confirmBtn) confirmBtn.textContent = 'Sign in to confirm →';
     if (resendBtn) resendBtn.hidden = true;
+    if (continueBtn) continueBtn.hidden = true;
   }
 
   async function loadSession() {
