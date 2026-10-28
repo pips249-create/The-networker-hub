@@ -82,7 +82,7 @@ const NEW_GROUPS = [
   {
     key: 'techieBrunchClub',
     name: 'The Techie Brunch Club',
-    email: STAFF_PLACEHOLDER_EMAIL,
+    email: 'club@techiebrunch.com',
     website: 'https://www.meetup.com/the-techie-brunch-club/',
     description:
       'In-person tech and founder networking across London — North London Tech Community Days bring developers, designers, engineers and entrepreneurs together to meet collaborators and mentors.',
