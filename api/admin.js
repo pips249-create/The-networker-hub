@@ -54,6 +54,7 @@ const routes = {
   'jamie-targets': require('./_lib/routes/admin-jamie-targets'),
   'pips-activity': require('./_lib/routes/admin-pips-activity'),
   activity: require('./_lib/routes/admin-activity'),
+  'hubert-matchmaker': require('./_lib/routes/admin-hubert-matchmaker'),
 };
 
 module.exports = wrapHandler(async function handler(req, res) {
