@@ -6,6 +6,7 @@ const {
 } = require('./connected-booking-providers/adapters/eventbrite-api');
 const {
   CHECKOUT_EXTERNAL,
+  eventbriteImportAutoPublishEnabled,
   parseEventbriteEventIdFromUrl,
   preferEventbriteCheckoutUrl,
 } = require('./connected-booking-util');
@@ -17,6 +18,21 @@ const {
 } = require('./connected-booking-provider-store');
 const { loadLockedOrActiveSaleEvents, lockEventOnFirstSale } = require('./event-sale-lock');
 const { createEvent, updateEvent } = require('./supabase-organiser-events');
+
+/**
+ * Trusted Connected imports go live when date + booking URL + price are present.
+ * Incomplete / risky listings stay drafts. Explicit publish:false forces draft.
+ */
+function shouldAutoPublishEventbriteImport(patch, opts) {
+  const options = opts && typeof opts === 'object' ? opts : {};
+  if (options.publish === false || options.listingStatus === 'draft') return false;
+  if (options.publish === true || options.listingStatus === 'published') return true;
+  if (!eventbriteImportAutoPublishEnabled()) return false;
+  const date = String(patch && patch.date ? patch.date : '').trim();
+  const url = String(patch && patch.externalBookingUrl ? patch.externalBookingUrl : '').trim();
+  const price = String(patch && patch.externalPriceLabel ? patch.externalPriceLabel : '').trim();
+  return Boolean(date && url && price);
+}
 
 async function resolveEventbriteExternalId(sb, accountId, eventId, overrideId) {
   let externalEventId = String(overrideId || '').trim();
@@ -157,7 +173,8 @@ async function listImportableEventbriteEvents(sb, accountId, opts) {
 }
 
 /**
- * Create a TNH draft event from an Eventbrite event id and link it for Connected sync.
+ * Create a TNH event from an Eventbrite event id and link it for Connected sync.
+ * Complete trusted imports publish + auto-approve; incomplete ones stay drafts.
  */
 async function createEventFromEventbrite(sb, session, accountId, opts) {
   const options = opts && typeof opts === 'object' ? opts : {};
@@ -203,8 +220,11 @@ async function createEventFromEventbrite(sb, session, accountId, opts) {
   const bookingUrl =
     String(patch.externalBookingUrl || '').trim() ||
     preferEventbriteCheckoutUrl(String(ebEvent.url || ebEvent.public_url || '').trim());
+  if (bookingUrl && !patch.externalBookingUrl) patch.externalBookingUrl = bookingUrl;
 
-  const created = await createEvent({
+  const wantPublish = shouldAutoPublishEventbriteImport(patch, options);
+  const editorEmail = String(session.email || session.sub || '').trim();
+  const basePayload = {
     groupId: groupId,
     title: title,
     description: patch.description || '',
@@ -220,9 +240,40 @@ async function createEventFromEventbrite(sb, session, accountId, opts) {
     photoUrl: patch.photoUrl || '',
     checkoutMode: CHECKOUT_EXTERNAL,
     externalBookingUrl: bookingUrl,
-    listingStatus: options.publish ? 'published' : 'draft',
-    _editorEmail: String(session.email || session.sub || '').trim(),
-  });
+    externalPriceLabel: patch.externalPriceLabel || '',
+    _editorEmail: editorEmail,
+  };
+
+  let created = null;
+  let published = false;
+  let publishBlockedReason = '';
+
+  if (wantPublish) {
+    try {
+      created = await createEvent(
+        Object.assign({}, basePayload, { listingStatus: 'published' })
+      );
+      published = true;
+    } catch (publishErr) {
+      const code = String(publishErr && publishErr.code ? publishErr.code : '').trim();
+      const softFail =
+        code === 'missing_date' ||
+        code === 'missing_organiser' ||
+        code === 'missing_external_booking_url' ||
+        code === 'missing_external_price_label' ||
+        code === 'connected_booking_inactive' ||
+        code === 'connected_booking_slot_not_assigned' ||
+        code === 'connected_booking_no_account' ||
+        code === 'connected_booking_group_limit';
+      if (!softFail) throw publishErr;
+      publishBlockedReason = String(publishErr.message || code || 'publish_blocked').trim();
+    }
+  }
+
+  if (!created) {
+    created = await createEvent(Object.assign({}, basePayload, { listingStatus: 'draft' }));
+    published = false;
+  }
 
   const eventId = String(created && created.id ? created.id : '').trim();
   if (!eventId) {
@@ -239,6 +290,11 @@ async function createEventFromEventbrite(sb, session, accountId, opts) {
     externalEventUrl: bookingUrl,
   });
 
+  const live =
+    published &&
+    String(created.status || '').toLowerCase() === 'published' &&
+    String(created.approval_status || '').trim() === 'Approved';
+
   return {
     created: true,
     alreadyLinked: false,
@@ -247,6 +303,15 @@ async function createEventFromEventbrite(sb, session, accountId, opts) {
     eventLink: link,
     externalEventId: String(ebEvent.id || externalEventId).trim(),
     importedFields: Object.keys(patch),
+    published: live,
+    listingStatus: live ? 'published' : 'draft',
+    autoPublishAttempted: wantPublish,
+    publishBlockedReason: live ? '' : publishBlockedReason,
+    message: live
+      ? 'Imported and published on The Networker UK.'
+      : publishBlockedReason
+        ? 'Imported as a draft (' + publishBlockedReason + ').'
+        : 'Imported as a draft on The Networker UK.',
   };
 }
 
@@ -255,4 +320,5 @@ module.exports = {
   resolveEventbriteExternalId,
   listImportableEventbriteEvents,
   createEventFromEventbrite,
+  shouldAutoPublishEventbriteImport,
 };

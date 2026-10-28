@@ -2163,6 +2163,14 @@
     if (!hint) return;
     const n = seriesDatesList.length;
     const word = n === 1 ? 'date' : 'dates';
+    const base = activeEvent() || seriesBaseEvent;
+    if (base && eventIsExternalConnected(base)) {
+      hint.textContent =
+        'This event runs on multiple ' +
+        word +
+        '. Pick a date — Book opens that date’s page on the organiser’s website.';
+      return;
+    }
     hint.textContent =
       'This event runs on multiple ' +
       word +
@@ -2487,6 +2495,7 @@
     currentEvent = merged;
     updateEventDateMeta(merged);
     applyLocationBlock(merged);
+    updateCanonicalUrl(merged);
     const selectedEl = document.getElementById('ev-series-selected');
     if (selectedEl) selectedEl.textContent = 'Selected: ' + formatSeriesSelectedLine(entry);
     renderSeriesCalendar();
