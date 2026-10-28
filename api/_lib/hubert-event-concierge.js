@@ -1,5 +1,5 @@
 /**
- * Weekly Hubert Event Concierge helpers (cadence + alternating team event promos).
+ * Weekly Hubert Event Concierge helpers (cadence + team event promos).
  * Kept free of Supabase/send deps so scripts and previews can load it alone.
  */
 const { siteBase, rosiePhotoUrl, catherinePhotoUrl } = require('./hub-email-urls');
@@ -45,7 +45,7 @@ function hubertConciergeWeekLabel(date = new Date()) {
 }
 
 /**
- * ISO week number (UTC Monday week) — used to alternate Rosie / Catherine promos.
+ * ISO week number (UTC Monday week) — kept for callers/tests; promos no longer alternate.
  */
 function utcIsoWeekNumber(date = new Date()) {
   const monday = mondayOfUtcWeek(date);
@@ -53,15 +53,9 @@ function utcIsoWeekNumber(date = new Date()) {
   return Math.floor((monday - yearStart) / (7 * 24 * 60 * 60 * 1000)) + 1;
 }
 
-/**
- * Even ISO weeks → Rosie @ MarTech Summit; odd weeks → Catherine @ Business Show.
- * After both events, returns null so the digest has no promo block.
- */
-function pickCofounderPromo(now = new Date()) {
-  if (now.getTime() > COFOUNDER_EVENT_PROMO_UNTIL_MS) return null;
-  const week = utcIsoWeekNumber(now);
-  if (week % 2 === 0) {
-    return {
+function teamEventPromoDefs() {
+  return [
+    {
       id: 'rosie_martech',
       name: 'Rosie',
       roleLabel: 'the co-founder',
@@ -72,20 +66,37 @@ function pickCofounderPromo(now = new Date()) {
         'Rosie will be at The MarTech Summit London — 10 &amp; 11 November 2026. Come say hello if you are there.',
       ctaLabel: 'View The MarTech Summit',
       eventPath: MARTECH_SUMMIT_EVENT_PATH,
-    };
-  }
-  return {
-    id: 'catherine_business_show',
-    name: 'Catherine',
-    roleLabel: 'from The Networker UK',
-    photoAlt: 'Catherine from The Networker UK',
-    photoUrlFn: catherinePhotoUrl,
-    headline: 'Meet Catherine at The Business Show London',
-    body:
-      'Catherine from The Networker UK will be at The Business Show London — 11 &amp; 12 November 2026 at ExCeL. Come say hello if you are there.',
-    ctaLabel: 'View The Business Show London',
-    eventPath: BUSINESS_SHOW_LONDON_EVENT_PATH,
-  };
+    },
+    {
+      id: 'catherine_business_show',
+      name: 'Catherine',
+      roleLabel: 'from The Networker UK',
+      photoAlt: 'Catherine from The Networker UK',
+      photoUrlFn: catherinePhotoUrl,
+      headline: 'Meet Catherine at The Business Show London',
+      body:
+        'Catherine from The Networker UK will be at The Business Show London — 11 &amp; 12 November 2026 at ExCeL. Come say hello if you are there.',
+      ctaLabel: 'View The Business Show London',
+      eventPath: BUSINESS_SHOW_LONDON_EVENT_PATH,
+    },
+  ];
+}
+
+/**
+ * Both November show promos in every digest until the shows wrap.
+ * Returns [] after the cutoff so the digest has no promo block.
+ */
+function listTeamEventPromos(now = new Date()) {
+  if (now.getTime() > COFOUNDER_EVENT_PROMO_UNTIL_MS) return [];
+  return teamEventPromoDefs();
+}
+
+/**
+ * @deprecated Prefer listTeamEventPromos — returns Rosie promo only for older callers.
+ */
+function pickCofounderPromo(now = new Date()) {
+  const promos = listTeamEventPromos(now);
+  return promos[0] || null;
 }
 
 function buildCofounderPromoSectionHtml(promo, siteUrl) {
@@ -126,11 +137,13 @@ function buildCofounderPromoSectionHtml(promo, siteUrl) {
 }
 
 /**
- * Alternating weekly Meet Rosie / Meet Catherine promo.
- * Even weeks: Rosie @ MarTech Summit. Odd weeks: Catherine @ Business Show London.
+ * Meet Rosie @ MarTech + Meet Catherine @ Business Show in every weekly digest
+ * until both November shows wrap.
  */
 function buildMeetTeamSectionHtml(siteUrl, now = new Date()) {
-  return buildCofounderPromoSectionHtml(pickCofounderPromo(now), siteUrl);
+  return listTeamEventPromos(now)
+    .map((promo) => buildCofounderPromoSectionHtml(promo, siteUrl))
+    .join('');
 }
 
 /** @deprecated use buildMeetTeamSectionHtml — kept for older call sites / previews */
@@ -147,6 +160,7 @@ module.exports = {
   isDueForHubertConcierge,
   hubertConciergeWeekLabel,
   utcIsoWeekNumber,
+  listTeamEventPromos,
   pickCofounderPromo,
   buildMeetTeamSectionHtml,
   buildMeetRosieSectionHtml,
