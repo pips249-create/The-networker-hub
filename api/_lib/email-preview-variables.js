@@ -543,12 +543,8 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
 
   if (slug === 'organiser_email_verify' || slug === 'organiser_email_verify_reminder') {
     vars.verify_code = '482917';
-    // Match production inbox CTAs: login first with next=…/verify-email?code=…
     vars.verify_url =
-      site +
-      '/login?next=' +
-      encodeURIComponent('/organiser/verify-email?code=482917&email=organiser@example.com') +
-      '&email=organiser%40example.com';
+      site + '/organiser/verify-email?code=482917&email=organiser%40example.com';
   }
 
   if (slug === 'member_roster_invite' || slug === 'member_roster_existing' || slug === 'member_roster_pay_invite') {

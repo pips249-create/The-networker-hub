@@ -90,6 +90,7 @@
     if (resendBtn) resendBtn.hidden = true;
     if (continueBtn) {
       continueBtn.hidden = false;
+      continueBtn.style.display = '';
       continueBtn.href = nextHref;
       if (goingToPayments) {
         continueBtn.textContent = 'Continue to bank details →';
@@ -108,18 +109,33 @@
     signedIn = false;
     if (ledeEl) {
       ledeEl.innerHTML = hasCode
-        ? 'Sign in with the same email to finish — your confirmation code is ready below. After you sign in we apply it automatically.'
-        : 'Sign in with the same email, then enter the 6-digit code from your inbox. Check spam/junk if it is not there yet.';
+        ? 'Your confirmation code is ready below. Sign in with the same email, then tap <strong>Confirm your email</strong> on the next step to finish.'
+        : 'Sign in with the same email, then type the 6-digit code from your inbox and tap Confirm your email. Check spam/junk if it is not there yet.';
     }
     showStatus(
       hasCode
-        ? 'Code ready — sign in to confirm your email.'
+        ? 'Code ready — sign in, then confirm to continue.'
         : 'Sign in first, then enter your confirmation code.',
       true
     );
     if (confirmBtn) confirmBtn.textContent = 'Sign in to confirm →';
     if (resendBtn) resendBtn.hidden = true;
-    if (continueBtn) continueBtn.hidden = true;
+    hideContinueUntilVerified();
+  }
+
+  function hideContinueUntilVerified() {
+    if (!continueBtn) return;
+    continueBtn.hidden = true;
+    continueBtn.style.display = 'none';
+  }
+
+  function showReadyToConfirmUi(hasCode) {
+    if (confirmBtn) confirmBtn.textContent = 'Confirm your email';
+    if (resendBtn) resendBtn.hidden = false;
+    hideContinueUntilVerified();
+    if (hasCode) {
+      showStatus('Code ready — tap Confirm your email to finish.', true);
+    }
   }
 
   async function loadSession() {
@@ -178,7 +194,7 @@
     }
 
     if (!signedIn) {
-      // Keep the code on ?next= so login recovery can auto-finish after sign-in.
+      // Preserve the digits through sign-in; they still tap Confirm after login.
       window.location.href = loginHref(code);
       return;
     }
@@ -240,6 +256,7 @@
   }
 
   async function init() {
+    hideContinueUntilVerified();
     var urlCode = normalizeCode(params().get('code') || params().get('token') || '');
     var emailFromQuery = String(params().get('email') || '').trim();
     if (addressEl && emailFromQuery) addressEl.textContent = emailFromQuery;
@@ -253,7 +270,7 @@
     }
 
     // Stay on this page when signed out so the code screen does not flash away.
-    // Confirm / Sign in then takes them through login with the code preserved.
+    // They sign in, return here, type/confirm the code, then continue.
     if (!session.ok || !session.user) {
       showSignedOutUi(urlCode.length === 6);
       if (codeEl) codeEl.focus();
@@ -269,21 +286,16 @@
       return;
     }
 
-    // Inbox CTA (?code= / legacy ?token=): scrub the secret from the address bar,
-    // then POST once. Mail scanners that GET without cookies never reach here.
+    // Prefill from the inbox CTA (?code= / legacy ?token=) but never auto-submit.
+    // People must type or tap Confirm — mail scanners that only GET cannot finish.
     if (urlCode && codeEl) {
       codeEl.value = urlCode;
-      showStatus('Confirming your email…', true);
     }
     scrubCodeFromAddressBar();
-
-    if (urlCode) {
-      await submitCode(urlCode);
-      return;
-    }
+    showReadyToConfirmUi(urlCode.length === 6);
 
     // Do not resend after a prefilled inbox code — a fresh code would invalidate it.
-    await maybeAutoSendVerificationCode();
+    if (!urlCode) await maybeAutoSendVerificationCode();
     if (codeEl) codeEl.focus();
   }
 
