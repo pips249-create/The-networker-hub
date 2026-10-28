@@ -18,11 +18,12 @@ Until product explicitly turns Matchmaker on for everyone:
 Implementation branch: `cursor/hubert-matchmaker-8ac8` (off `main` after this spec).
 
 **Build progress**
-1. ~~Feature flag + admin gate~~ · dashboard **Meet people** search shell (`#meet`, admin-only) with stub shortlist (max 5, first name + initial, upcoming event primary on cards)
+1. ~~Feature flag + admin gate~~ · dashboard **Meet people** + Overview Hubert ask strip (admin-only), stub shortlist (max 5, first name + initial, event-first matches)
 2. Private seed + nominate (ops) — next
 3. Real BOH match API
-4. Request intro → Hubert email → B join to Accept/Decline
-5. Public site teaser (still gated until launch)
+4. Request intro → Hubert email → B join to Accept/Decline · **persist + count every intro**
+5. Intro tracking surfaces (admin totals + member “My intros”)
+6. Public site teaser (still gated until launch)
 
 ---
 
@@ -199,15 +200,53 @@ After Accept, B owns and edits their Hub profile text.
 
 ---
 
+## Intro tracking (required)
+
+Every intro is a row we can count — not just an email send.
+
+### What we store (per intro)
+
+| Field | Purpose |
+|-------|---------|
+| `id` | Primary key |
+| Requester (A) | Hub user / attendee id |
+| Target (B) | Member id **or** seed id + email |
+| Status | `pending` · `accepted` · `declined` · `expired` · `blocked` |
+| Topic / message | “What would you like to discuss?” |
+| Timestamps | created · emailed · responded · accepted |
+| Source | `search` · `nominate` · `overview` · `staff` |
+| Event context (optional) | Upcoming event id if shown on the card |
+
+**“Introductions done”** = status `accepted` (successful double opt-in).  
+Also report **requested** (all sends) and **pending** for ops.
+
+### Where people see the numbers
+
+| Surface | Who | What |
+|---------|-----|------|
+| **Admin / Command Centre** | Platform admins | Totals: requested, accepted, declined, pending; accept rate; last 7 / 30 days; link to recent intros |
+| **Meet people** (`#meet`) | The signed-in member | “My intros”: requested · pending · accepted (their outbound + inbound) |
+| **Overview** (optional strip) | Member | Small line under Hubert: e.g. `3 intros accepted` once they have any |
+| **Email / ops** | Staff | Same admin totals for weekly Hub health |
+
+Do **not** show other people’s intro counts on public profiles.
+
+### Build note
+
+Ship the `hubert_intro_requests` (name TBD) table in the same slice as Request intro / Accept — counters are queries over that table, not a separate analytics product.
+
+---
+
 ## Metrics
 
-- Searches run / shortlists shown / intro requests sent  
+- **Intros requested / accepted / declined / pending** (primary KPIs)  
+- Accept rate · time-to-Accept  
 - B account creates from intro email  
-- Accept rate / decline rate / time-to-Accept  
+- Searches run / shortlists shown  
 - % of Accepts who turn Discoverable on  
 - Share of shortlist cards that include an upcoming event  
 - Abuse: quota hits, blocks, reports  
-- Qualitative: useful intros via Hubert
+- Qualitative: useful intros via Hubert  
 
 ---
 
@@ -217,10 +256,11 @@ After Accept, B owns and edits their Hub profile text.
 2. Public teaser placement (home vs for-networkers vs both).  
 3. UI name: “Meet people” vs “Ask Hubert to introduce you.”  
 4. Whether A and B must share the **same** upcoming event to get the event boost, or any upcoming event on B is enough — **recommend: boost more if same event; still show B’s next event if different.**  
-5. Share on Accept: email only vs email + LinkedIn — **recommend both if LinkedIn set.**
+5. Share on Accept: email only vs email + LinkedIn — **recommend both if LinkedIn set.**  
+6. Admin home for intro totals — existing admin metrics panel vs dedicated Matchmaker section — **recommend dedicated Matchmaker block under admin.**
 
 ---
 
 ## One-line summary
 
-**Member-only Hubert search (admin-only while building), back-of-house matches capped at five (first name + initial; upcoming event primary when present), intro email that onboards B to Accept — Rosie-curated private seed for Phase 1, then members-first as the graph fills; no scrape, no public contacts.**
+**Member-only Hubert search (admin-only while building), back-of-house matches capped at five (first name + initial; upcoming event primary when present), intro email that onboards B to Accept — every intro persisted and counted (admin totals + member “My intros”); Rosie-curated private seed for Phase 1, then members-first as the graph fills; no scrape, no public contacts.**
