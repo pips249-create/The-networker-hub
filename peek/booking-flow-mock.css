@@ -231,6 +231,17 @@
   border: 1px solid #d7e3ea;
   background: #fff;
 }
+.bf-mini-shot--photo {
+  margin: 0 0 10px;
+}
+.bf-mini-shot--photo img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 220px;
+  object-fit: cover;
+  object-position: top left;
+}
 .bf-mini-shot-bar {
   display: flex;
   gap: 5px;

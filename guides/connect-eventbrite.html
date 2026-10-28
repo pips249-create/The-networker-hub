@@ -26,7 +26,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../css/hub.css?v=20261016signin1">
 <link rel="stylesheet" href="../css/content-page.css">
-<link rel="stylesheet" href="../css/connect-eventbrite-guide.css?v=20261028shot1">
+<link rel="stylesheet" href="../css/connect-eventbrite-guide.css?v=20261028shot2">
 <link rel="icon" href="/favicon.ico?v=20260823uk3" sizes="any">
 <link rel="icon" href="/assets/favicon.svg?v=20260823uk3" type="image/svg+xml">
 <link rel="icon" href="/assets/favicon-32.png?v=20260823uk" type="image/png" sizes="32x32">
@@ -153,32 +153,57 @@
           <strong>private token</strong> from Eventbrite’s developer settings lets us load the buyer safely.
         </p>
         <ol>
-          <li>In Eventbrite: profile → <strong>Account settings</strong> → <strong>Developer</strong></li>
-          <li>Create or copy your <strong>private token</strong> (not the public key)</li>
+          <li>Profile menu → <strong>Account Settings</strong></li>
+          <li>Left menu → <strong>Developer Links</strong> → <strong>API Keys</strong></li>
+          <li>
+            <strong>Create API Key</strong> if you do not have one, or open an existing app →
+            <strong>Show API key, client secret and tokens</strong>
+          </li>
+          <li>Copy the <strong>Private token</strong> (not the public key / client secret)</li>
           <li>On Connected setup, paste it under <strong>Save API token</strong> and save</li>
         </ol>
-        <figure class="ceb-shot" aria-label="Where to find the Eventbrite private token">
-          <div class="ceb-shot-frame" aria-hidden="true">
-            <div class="ceb-shot-chrome"><i></i><i></i><i></i><span>eventbrite.com · Account settings</span></div>
-            <div class="ceb-shot-body">
-              <aside class="ceb-shot-side">
-                <span>Account</span>
-                <span class="is-hot">Developer</span>
-                <span>Webhooks</span>
-              </aside>
-              <div class="ceb-shot-main">
-                <p class="ceb-shot-heading">API keys</p>
-                <p class="ceb-shot-label">Private token</p>
-                <div class="ceb-shot-token">••••••••••••••••••••••••</div>
-                <p class="ceb-shot-hint">Copy this · paste into The Networker UK</p>
-              </div>
-            </div>
-          </div>
-          <figcaption>
-            Illustrative layout. Replace with a real Eventbrite screenshot when you capture one.
-            Path: Account settings → Developer → private token.
-          </figcaption>
-        </figure>
+        <div class="ceb-shot-stack">
+          <figure class="ceb-shot ceb-shot--photo">
+            <img
+              src="../assets/guides/eventbrite/01-account-settings-menu-full.webp"
+              alt="Eventbrite profile menu open on Account Settings"
+              width="1200"
+              height="266"
+              loading="lazy"
+            />
+            <figcaption>1. Profile → Account Settings</figcaption>
+          </figure>
+          <figure class="ceb-shot ceb-shot--photo">
+            <img
+              src="../assets/guides/eventbrite/02-developer-links-full.webp"
+              alt="Eventbrite Account Information page with Developer Links in the sidebar"
+              width="1200"
+              height="537"
+              loading="lazy"
+            />
+            <figcaption>2. Open Developer Links in the left menu</figcaption>
+          </figure>
+          <figure class="ceb-shot ceb-shot--photo">
+            <img
+              src="../assets/guides/eventbrite/03-api-keys-full.webp"
+              alt="Eventbrite API Keys list with Show API key, client secret and tokens"
+              width="1200"
+              height="340"
+              loading="lazy"
+            />
+            <figcaption>3. API Keys → Show API key, client secret and tokens</figcaption>
+          </figure>
+          <figure class="ceb-shot ceb-shot--photo">
+            <img
+              src="../assets/guides/eventbrite/04-create-api-key-full.webp"
+              alt="Eventbrite Request a new key form"
+              width="1200"
+              height="561"
+              loading="lazy"
+            />
+            <figcaption>4. Or Create API Key, then copy the Private token</figcaption>
+          </figure>
+        </div>
         <p class="ceb-slide-note">
           Without this token, sales may reach us but buyers will not appear on your attendee list.
         </p>

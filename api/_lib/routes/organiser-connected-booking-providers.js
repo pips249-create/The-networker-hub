@@ -17,7 +17,11 @@ const {
 const { eventbritePrivateTokenFromConfig } = require('../connected-booking-providers/adapters/eventbrite-api');
 const { syncEventbriteAttendeesForConnection } = require('../eventbrite-attendee-sync');
 const { ticketTailorApiKeyFromConfig } = require('../connected-booking-providers/adapters/ticket-tailor-api');
-const { importEventbriteListingForEvent } = require('../eventbrite-listing-import');
+const {
+  importEventbriteListingForEvent,
+  listImportableEventbriteEvents,
+  createEventFromEventbrite,
+} = require('../eventbrite-listing-import');
 const { importTicketTailorListingForEvent } = require('../ticket-tailor-listing-import');
 const { resolveOrganiserAccountId } = require('../organiser-account-resolve');
 const {
@@ -233,6 +237,44 @@ module.exports = async function handler(req, res) {
             message: 'Paste your Eventbrite private token (Developer links in Eventbrite account settings).',
           });
         }
+        const {
+          isConnectedPlanActive,
+          connectedBookingFreeEnabled,
+          connectedBookingFreeDefaultPlan,
+          newWebhookSecret,
+        } = require('../connected-booking-util');
+        const { maybeAutoAssignSingleStarterSlot } = require('../connected-booking-slots');
+        let { data: account } = await sb
+          .from('organiser_accounts')
+          .select(
+            'id, connected_booking_plan, connected_booking_status, connected_booking_webhook_secret'
+          )
+          .eq('id', accountId)
+          .maybeSingle();
+        if (account && !isConnectedPlanActive(account) && connectedBookingFreeEnabled()) {
+          const patch = {
+            connected_booking_plan: connectedBookingFreeDefaultPlan(),
+            connected_booking_status: 'active',
+          };
+          if (!String(account.connected_booking_webhook_secret || '').trim()) {
+            patch.connected_booking_webhook_secret = newWebhookSecret();
+          }
+          const { data: activated } = await sb
+            .from('organiser_accounts')
+            .update(patch)
+            .eq('id', accountId)
+            .select(
+              'id, connected_booking_plan, connected_booking_status, connected_booking_webhook_secret'
+            )
+            .maybeSingle();
+          account = activated || Object.assign({}, account, patch);
+          try {
+            await maybeAutoAssignSingleStarterSlot(sb, account);
+          } catch (_slotErr) {
+            /* optional */
+          }
+        }
+        await ensureProviderConnection(sb, accountId, 'eventbrite');
         const conn = await mergeProviderConnectionConfig(sb, accountId, 'eventbrite', {
           eventbritePrivateToken: token,
         });
@@ -252,6 +294,7 @@ module.exports = async function handler(req, res) {
           ok: true,
           eventbriteApiTokenConfigured: Boolean(eventbritePrivateTokenFromConfig(conn.config)),
           attendeeSync,
+          connectedActivated: Boolean(account && isConnectedPlanActive(account)),
         });
       }
 
@@ -332,6 +375,107 @@ module.exports = async function handler(req, res) {
             ok: false,
             error: importErr.code || importErr.message || 'listing_import_failed',
             message: importErr.message,
+          });
+        }
+      }
+
+      if (action === 'list_eventbrite_events') {
+        try {
+          const listed = await listImportableEventbriteEvents(sb, accountId, {
+            status: body.status,
+            pageSize: body.pageSize || body.page_size,
+            maxPages: body.maxPages || body.max_pages,
+          });
+          return json(res, 200, {
+            ok: true,
+            organizationId: listed.organizationId,
+            events: listed.events,
+            tokenConfigured: listed.tokenConfigured,
+          });
+        } catch (listErr) {
+          return json(res, listErr.status || 500, {
+            ok: false,
+            error: listErr.code || listErr.message || 'eventbrite_list_failed',
+            message: listErr.message,
+          });
+        }
+      }
+
+      if (action === 'create_from_eventbrite') {
+        const groupId = String(body.groupId || body.organiserId || body.organiser_id || '').trim();
+        const externalEventId = String(
+          body.externalEventId || body.eventbriteEventId || body.external_event_id || ''
+        ).trim();
+        try {
+          if (!groupId) {
+            return json(res, 400, {
+              ok: false,
+              error: 'missing_group_id',
+              message: 'Choose an organiser page for this Eventbrite event.',
+            });
+          }
+          const { resolveOrganiserAccess } = require('../supabase-organiser-access');
+          const access = await resolveOrganiserAccess(auth.session);
+          const allowed = new Set(access.groupIds || []);
+          if (!allowed.has(groupId)) {
+            return json(res, 403, {
+              ok: false,
+              error: 'not_allowed',
+              message: 'You do not have access to that organiser page.',
+            });
+          }
+
+          const {
+            isConnectedPlanActive,
+            connectedBookingFreeEnabled,
+            connectedBookingFreeDefaultPlan,
+            newWebhookSecret,
+          } = require('../connected-booking-util');
+          const { maybeAutoAssignSingleStarterSlot } = require('../connected-booking-slots');
+          let { data: account } = await sb
+            .from('organiser_accounts')
+            .select(
+              'id, connected_booking_plan, connected_booking_status, connected_booking_webhook_secret'
+            )
+            .eq('id', accountId)
+            .maybeSingle();
+          if (account && !isConnectedPlanActive(account) && connectedBookingFreeEnabled()) {
+            const patch = {
+              connected_booking_plan: connectedBookingFreeDefaultPlan(),
+              connected_booking_status: 'active',
+            };
+            if (!String(account.connected_booking_webhook_secret || '').trim()) {
+              patch.connected_booking_webhook_secret = newWebhookSecret();
+            }
+            const { data: activated } = await sb
+              .from('organiser_accounts')
+              .update(patch)
+              .eq('id', accountId)
+              .select(
+                'id, connected_booking_plan, connected_booking_status, connected_booking_webhook_secret'
+              )
+              .maybeSingle();
+            account = activated || Object.assign({}, account, patch);
+            try {
+              await maybeAutoAssignSingleStarterSlot(sb, account);
+            } catch (_slotErr) {
+              /* optional */
+            }
+          }
+
+          await ensureProviderConnection(sb, accountId, 'eventbrite');
+
+          const result = await createEventFromEventbrite(sb, auth.session, accountId, {
+            groupId: groupId,
+            externalEventId: externalEventId,
+            publish: body.publish === true || body.listingStatus === 'published',
+          });
+          return json(res, 200, Object.assign({ ok: true }, result));
+        } catch (createErr) {
+          return json(res, createErr.status || 500, {
+            ok: false,
+            error: createErr.code || createErr.message || 'eventbrite_import_failed',
+            message: createErr.message,
           });
         }
       }
