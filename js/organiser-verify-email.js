@@ -108,7 +108,7 @@
     signedIn = false;
     if (ledeEl) {
       ledeEl.innerHTML = hasCode
-        ? 'Your confirmation code is ready below. Sign in with the same email, then tap <strong>Confirm your email</strong> to finish.'
+        ? 'Your confirmation code is ready below. Sign in with the same email, then tap <strong>Confirm your email</strong> on the next step to finish.'
         : 'Sign in with the same email, then type the 6-digit code from your inbox and tap Confirm your email. Check spam/junk if it is not there yet.';
     }
     showStatus(
