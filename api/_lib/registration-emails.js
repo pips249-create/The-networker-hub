@@ -225,12 +225,10 @@ async function sendRegistrationEmails(sb, registration) {
 
   if (attendeeEmail && !registration.ticket_email_sent) {
     try {
-      const organiserBcc = await resolveOrganiserBcc(sb, eventRow.organiser_id, attendeeEmail);
       await sendTemplatedEmail({
         slug: 'booking_confirmation',
         to: attendeeEmail,
         variables: vars,
-        bcc: organiserBcc,
       });
       sent.attendee = true;
     } catch (e) {
@@ -741,16 +739,10 @@ async function sendSeriesBundleConfirmation(sb, { primaryRegistration, bundleReg
 
   if (attendeeEmail && !primary.ticket_email_sent) {
     try {
-      const organiserBcc = await resolveOrganiserBcc(
-        sb,
-        anchorEvent?.organiser_id,
-        attendeeEmail
-      );
       await sendTemplatedEmail({
         slug: 'booking_confirmation',
         to: attendeeEmail,
         variables: vars,
-        bcc: organiserBcc,
       });
       await sb
         .from('registrations')
