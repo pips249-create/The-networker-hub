@@ -33,6 +33,8 @@
     "import:glasgow-gaps:apply": "node scripts/import-glasgow-coverage-gaps.js --apply",
     "import:brighton-gaps": "node scripts/import-brighton-coverage-gaps.js",
     "import:brighton-gaps:apply": "node scripts/import-brighton-coverage-gaps.js --apply",
+    "import:north-london-meetup": "node scripts/import-north-london-meetup-coverage.js",
+    "import:north-london-meetup:apply": "node scripts/import-north-london-meetup-coverage.js --apply",
     "seed-browse-events": "node scripts/seed-browse-events.js",
     "delete-seed-events": "node scripts/delete-seed-events.js",
     "test-external-booking-webhook": "node scripts/test-external-booking-webhook.js",
