@@ -104,12 +104,12 @@ function buildOpportunityIndustryFaqHtml(faqs, industry) {
 
   return (
     '<section class="networking-region-faq" id="networking-region-faq" data-hub-ssr-faq="1" aria-labelledby="networking-region-faq-heading">' +
+    '<div class="networking-region-faq-accent" aria-hidden="true"></div>' +
     '<div class="networking-region-faq-inner">' +
-    '<div class="networking-region-faq-head">' +
+    '<p class="networking-region-kicker">Common questions</p>' +
     '<h2 id="networking-region-faq-heading">' +
     label +
     ' opportunities — FAQ</h2>' +
-    '</div>' +
     '<div class="networking-region-faq-list" id="networking-region-faq-list">' +
     items +
     '</div>' +
