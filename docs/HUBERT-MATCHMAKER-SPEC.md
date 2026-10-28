@@ -1,114 +1,167 @@
 # Hubert Matchmaker — one-pager product spec
 
-**Status:** Draft for decision  
+**Status:** Draft for decision (revised)  
 **Owner:** Product  
-**Surface:** Attendee dashboard (`/account/`) + Hubert (chat + email)  
-**v1 scope:** Platform-wide people discovery (not event-only)
+**Surfaces:** Attendee dashboard (`/account/`), public teaser entry on the site, Hubert (chat + email)  
+**Phase 1:** Member-gated search · back-of-house matching · capped shortlist · open invite to non-members · Rosie/ops private seed  
+**Phase 2:** Members-first discovery (seed used less as density grows)
 
 ---
 
 ## Problem
 
-Networkers book events on The Networker UK but still struggle to find the *right people* — before, at, or between events. LinkedIn is noisy; event guest lists (when they exist) dump contacts without consent. We need a trusted, opt-in way to say “who I want to meet” and get intros.
+Networkers book events on The Networker UK but still struggle to find the *right people* — before, at, or between events. Guest lists (when they exist) dump contacts without consent; LinkedIn is noisy. We need Hubert-led intros that grow membership and stay trustworthy.
 
 ## Goal
 
-Hubert becomes the Hub’s matchmaker: members opt in, describe who they are / who they’re looking for, search the platform, and request connections. Contact details are shared only after the other person accepts.
+Hubert is the Hub’s matchmaker. Logged-in members describe who they want to meet; we match **back of house** and show a **short shortlist** (not a browsable directory of everyone). Requesting an intro emails B; B must create/sign in to Accept or Decline. Contact details are shared only after Accept.
 
-**Success (v1):** Opted-in supply grows; connection requests are sent and accepted; spam/complaints stay near zero.
-
----
-
-## Why start platform-wide (not event-scoped)
-
-| Choice | Why |
-|--------|-----|
-| **Start global** | Matches the Boardy-style “who do you want to meet?” intent; useful between events; one mental model |
-| **Still show next event** | On result cards when the person has an upcoming booking and is discoverable — context without limiting the pool |
-| **Trade-off** | Early search can feel thin until opt-in density rises — mitigate with checkout prompts, Hubert nudges, and structured tags (easy to complete) |
-
-Event-scoped “who’s going to X” remains a **v1.1** filter/tab on top of the same opt-in pool, not a separate product.
+**Success (Phase 1):** Intro requests sent; B’s create accounts and Accept; seed cohort from Rosie converts; spam/complaints near zero.
 
 ---
 
 ## Principles
 
-1. **Opt-in only** — default off; easy to turn off anytime.  
-2. **No public contact details** — never show phone or email in search/results, even if someone wants to be “open.”  
-3. **Double opt-in intros** — details reveal only when B accepts A’s request.  
-4. **Hubert is the face** — copy, chat entry, and emails come from Hubert; matching rules stay simple and auditable.  
-5. **Tags over essays** — reliable filters without requiring long bios.
+1. **Account required to search** — no anonymous people search; membership is the gate.  
+2. **Back-of-house matching** — A does not browse the full seed or member graph.  
+3. **Capped shortlist** — max **5** people put forward per search.  
+4. **Privacy on the shortlist** — show **first name + surname initial** only (e.g. `Jane S.`), not full legal name.  
+5. **No public contact details** — never show phone or email before Accept.  
+6. **Double opt-in** — details reveal only when B accepts.  
+7. **Hubert is the face** — search UX, emails, and invites use Hubert’s voice.  
+8. **Rosie/ops seed is curated** — manual blurbs (LI as research aid); **no LinkedIn scraping**.  
+9. **Upcoming event is primary card context** — when B is attending something, that sits alongside the intro CTA.
 
 ---
 
-## v1 product
+## Phasing
 
-### Profile (discoverability pack)
+| Phase | Matching pool | What A sees | Growth lever |
+|-------|---------------|-------------|--------------|
+| **1 – Open intros** | Discoverable members **+** private Rosie/ops seed | Up to 5 shortlist cards; non-members labelled as “not on the Hub yet” | B must join to respond → membership |
+| **2 – Members-first** | Prefer / default to discoverable members | Same UX; seed only to fill gaps or via explicit “invite someone you know” | Density from Phase 1 Accepts |
 
-Shown in account settings + short Hubert onboarding:
+Say this upfront in product copy so closing the loop later is not a surprise: *while we’re growing, Hubert may invite people who aren’t members yet; as the network fills, discovery focuses on members.*
+
+---
+
+## Entry points
+
+### 1. Attendee dashboard (primary product)
+
+- Dedicated **Meet people / Ask Hubert** area on `/account/` with the search bar.  
+- Hubert chat on account can route “who should I meet?” into the same flow.
+
+### 2. Elsewhere on the site (interest / acquisition)
+
+- Public teaser (e.g. home, `/for-networkers`, events browse): search-bar **lookalike** or “Ask Hubert who you’d like to meet.”  
+- Guests can type intent / see the promise; **running a real search requires sign-in / create account**.  
+- CTA: *Create a free account to see matches and request intros.*
+
+### 3. Checkout / RSVP (supply)
+
+- 1-click: include me so Hubert can put me forward for intros (discoverable / seed claim path as designed).
+
+---
+
+## Phase 1 product
+
+### A — Search (member only)
+
+1. A is signed in and has remaining **search quota**.  
+2. A enters who they want (tags and/or short natural ask + mandatory “what I’d like to discuss” before send).  
+3. System matches **BOH** against discoverable members + private seed.  
+4. A sees **at most 5** cards (see card layout below).  
+5. A selects who to request (also **intro-request capped** per week).
+
+**Soft reciprocity (recommended):** if A is not discoverable, Hubert nudges them to complete tags + opt in (full shortlist or higher limits after).
+
+### Shortlist card layout
+
+| Element | Rule |
+|---------|------|
+| Name | **First name + surname initial only** (e.g. `Alex M.`) — full name only after Accept (or on B’s own claimed profile) |
+| Role / company | Yes, if we have them |
+| Tags / why matched | Short line from matcher |
+| **Upcoming event** | **Primary feature when present** — event name + date sits with equal weight to the intro action (“You’ll both be at X” / “Alex is going to X”) |
+| Hub status | Member vs “Hubert can invite them to join” |
+| CTA | **Request intro** |
+
+If there is no upcoming event, omit that block; do not invent one. Event presence should **rank / prefer** candidates when quality is otherwise equal (same room > cold intro).
+
+### B — Intro email (join to respond)
+
+1. A requests intro → Hubert emails B.  
+2. Copy pattern: *“[First name] would like to connect about [topic]. Create a free Networker UK account to see the request and Accept or Decline.”*  
+3. B lands on claim/sign-in → sees full request context → **Accept & share details** / **Decline**.  
+4. On Accept: A gets B’s email (+ LinkedIn URL if set); names can show in full in the private thread/result.  
+5. On Accept: prompt B to confirm bio/tags + **Discoverable** (they become supply for the next search).  
+6. Decline / ignore: no contact reveal; pause further intros to the same seed contact after repeated non-response.
+
+### Private seed (Rosie / ops) — Phase 1 cold start
+
+| Allowed | Not allowed |
+|---------|-------------|
+| Manual nominate: name, company, role, email, LinkedIn URL, short blurb Rosie pastes/edits (LI About as **her** research aid) | Bulk scrape of LinkedIn connections or bios |
+| Use seed **only** in BOH matching + capped shortlist | Public directory of non-consenting people |
+| Higher staff nominate quota in Phase 1 | Auto-refresh bios from LinkedIn |
+
+After Accept, B owns and edits their Hub profile text.
+
+**Rosie’s LinkedIn** = distribution + human-curated seed, not an automated import pipe. She can also DM/post invite links; Hubert scales the email Accept loop.
+
+---
+
+## Profile fields (after claim / for discoverable members)
 
 | Field | Required for discoverable? | Notes |
 |-------|----------------------------|--------|
-| Display name | Yes | Existing `attendees.name` |
+| Name | Yes | Full name stored; **shortlist shows first + initial** |
 | Company / job title | Encouraged | Existing |
-| **Industry** (tag) | Yes | Reuse / extend existing industry list |
-| **I am a** (tag) | Yes | e.g. Founder, Recruiter, Investor, Service provider |
-| **Looking to meet** (tag(s)) | Yes | e.g. Clients, Co-founders, Suppliers, Investors |
-| Short headline (one line) | Optional | Better results; not a long bio |
-| LinkedIn URL | Optional | Paste only in v1 — no scraping |
-| Location / country | Optional | Existing; useful filter |
-| **Discoverable** toggle | Yes | Master opt-in |
+| **Industry** (tag) | Yes | Existing list where possible |
+| **I am a** (tag) | Yes | Founder, Recruiter, Investor, Service provider, … |
+| **Looking to meet** (tag(s)) | Yes | Clients, Co-founders, Suppliers, Investors, … |
+| Short blurb / headline | Encouraged | Confirmed by user; seed blurb is a starting point only |
+| LinkedIn URL | Optional | Paste / confirm — no scrape |
+| Location / country | Optional | Existing |
+| **Discoverable** | Yes | Opt-in to be put forward in shortlists |
 
-**Out of searchable profile:** phone, email, calendar OAuth.
-
-### Search (attendee dashboard + Hubert)
-
-- Entry points: `/account/` “Meet people” (or Hubert: “Who would you like to meet?”).  
-- Filters: industry, I am a, looking to meet, location/keywords on headline.  
-- Results (discoverable members only): name, company/title, tags, headline, **next upcoming event** (if any), CTA **Request connection**.  
-- Soft reciprocity (recommended): searching while not discoverable shows a Hubert prompt to opt in (blur or limited results until they do).
-
-### Connection request (double opt-in)
-
-1. A finds B → **Request connection**.  
-2. Mandatory: “What would you like to discuss?” (short text).  
-3. B gets **Hubert email** + dashboard notification: message + **Accept & share details** / **Decline**.  
-4. On Accept: A sees B’s email (and LinkedIn URL if set). Phone only if we add an explicit “share phone on accept” field later — **not in v1**.  
-5. On Decline / ignore: A sees polite closed state; no contact reveal.  
-6. Rate limits: e.g. N pending requests per day; block/report path.
-
-### Hubert’s role
-
-- Voice of opt-in prompts, search, and intro emails.  
-- Weekly concierge can later mention “people who match your tags” (post-v1 ok).  
-- Does **not** auto-email strangers without an explicit request from A.
+**Never before Accept:** phone, email.  
+**Out of Phase 1:** calendar OAuth.
 
 ---
 
-## Acquisition / cold start (platform-wide)
+## Product guards (limits & privacy)
 
-| Lever | Action |
-|-------|--------|
-| Ticket checkout / RSVP | 1-click: “Include my profile so other Hub members can request an intro via Hubert” |
-| Profile checklist | Industry + I am a + Looking to meet + Discoverable = “networking profile complete” |
-| Hubert chat / widget | “Turn on matching” short flow |
-| Soft gate on search | Opt in to see full results |
-| Organisers (later) | Promote Discover for their members — secondary |
-
-**LinkedIn:** paste URL in v1. Optional later: Sign in with LinkedIn to **prefill** name/headline — user confirms tags. **No profile scraping.**
-
-**Calendar:** out of scope for v1. After accept, users can share a booking link themselves if they want. Full Google/Microsoft calendar OAuth is a later experiment only.
+| Guard | Rule |
+|-------|------|
+| Search | Account required |
+| Results per search | **Max 5** |
+| Search quota | Per day/week (TBD numbers) |
+| Intro requests | Cap pending / per week |
+| Shortlist identity | **First name + surname initial** only |
+| Contact | Email (+ LinkedIn if set) only after Accept |
+| Non-response | Pause seed contacts who never Accept |
+| Prefer | Candidates with an **upcoming shared/relevant event** when scores are close |
 
 ---
 
-## Explicitly out of scope (v1)
+## Hubert’s role
 
-- Public phone/email on profiles  
-- Scraping LinkedIn  
+- Face of dashboard search, public teaser, and all intro/invite emails.  
+- Does **not** email B unless A explicitly requests that intro.  
+- Weekly concierge may later mention match opportunities (optional post–Phase 1).
+
+---
+
+## Explicitly out of scope (Phase 1)
+
+- Public phone/email on any card  
+- Full name on shortlist before Accept  
+- Scraping LinkedIn (connections or bios)  
 - Calendar read access  
-- Full Boardy-style free-text AI ranking (tags + filters first; NL on top later)  
-- Event-only guest lists as the only mode (global first; event filter in v1.1)  
-- Charging for intros (monetisation after proof)
+- Unlimited browse of the seed graph  
+- Charging for intros (monetise after proof)
 
 ---
 
@@ -116,34 +169,39 @@ Shown in account settings + short Hubert onboarding:
 
 | Layer | Reuse | New |
 |-------|--------|-----|
-| Auth / account | Session, `/account/`, settings | Discoverability fields + Meet UI |
-| Profile | `attendees` industry, role, company, location | Tags, headline, LinkedIn URL, `discoverable_at` |
-| Next event | Registrations / dashboard stats | Expose next event on **others’** cards when discoverable |
-| Email | Resend + templates (opportunity enquiry pattern) | `hubert-connection-request` / accepted templates |
-| Hubert | Widget, tone, concierge brand | Intents + copy for match / opt-in |
+| Auth / account | Session, `/account/`, register/login | Gate search; B claim/Accept page |
+| Profile | `attendees` fields | Tags, blurb, LinkedIn URL, `discoverable_at` |
+| Seed | — | Private seed table (ops-curated); not public API list |
+| Matching | Tags / text | BOH matcher → max 5; event boost from registrations |
+| Events | Bookings / next-event stats | Upcoming event as **primary** shortlist field when present |
+| Email | Resend + templates (enquiry pattern) | Hubert invite-to-join + Accept/Decline templates |
+| Site teaser | Marketing pages | Search CTA that forces account for real results |
+| Hubert | Widget, tone | Meet intents + copy |
 
 ---
 
 ## Metrics
 
-- % of active members with `discoverable` on  
-- % with all required tags complete  
-- Connection requests sent / accept rate / decline rate  
-- Time-to-first-accept  
-- Abuse: blocks, reports, rate-limit hits  
-- Qualitative: “met someone useful via Hubert”
+- Searches run / shortlists shown / intro requests sent  
+- B account creates from intro email  
+- Accept rate / decline rate / time-to-Accept  
+- % of Accepts who turn Discoverable on  
+- Share of shortlist cards that include an upcoming event  
+- Abuse: quota hits, blocks, reports  
+- Qualitative: useful intros via Hubert
 
 ---
 
 ## Open decisions
 
-1. Soft-gate search (must be discoverable to browse) — **recommend yes**.  
-2. Share on accept: email only vs email + LinkedIn — **recommend both if LinkedIn set**.  
-3. Naming in UI: “Meet people” vs “Ask Hubert to introduce you” — brand preference.  
-4. Whether checkout opt-in copies event attendance into a future “also show on this event’s list” flag (prep for v1.1) — **recommend store the same discoverable flag; add event filter later**.
+1. Exact search + intro quota numbers.  
+2. Public teaser placement (home vs for-networkers vs both).  
+3. UI name: “Meet people” vs “Ask Hubert to introduce you.”  
+4. Whether A and B must share the **same** upcoming event to get the event boost, or any upcoming event on B is enough — **recommend: boost more if same event; still show B’s next event if different.**  
+5. Share on Accept: email only vs email + LinkedIn — **recommend both if LinkedIn set.**
 
 ---
 
 ## One-line summary
 
-**Hubert-led, platform-wide, tag-based people search with double opt-in intros — no public contact details, no LinkedIn scrape, no calendar OAuth in v1; next event is context on the card, not the boundary of the product.**
+**Member-only Hubert search, back-of-house matches capped at five (first name + initial; upcoming event primary when present), intro email that onboards B to Accept — Rosie-curated private seed for Phase 1, then members-first as the graph fills; no scrape, no public contacts.**
