@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>Mock: Connect - The Networker UK</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/hub.css?v=20261016signin1" />
+    <link rel="stylesheet" href="../css/organiser-event-edit.css?v=20261021eb2" />
+    <link rel="stylesheet" href="booking-flow-mock.css" />
+  </head>
+  <body class="organiser-event-edit-page bf-mock">
+    <div class="ee-wrap bf-wrap">
+      <a class="ee-back" href="booking-system-first-choice-mock.html">← Back</a>
+
+      <header class="bf-head">
+        <p class="bf-kicker">Friday breakfast networking</p>
+        <h1 class="bf-title" id="bf-title">Connect Eventbrite</h1>
+        <p class="bf-lede" id="bf-lede">
+          Checkout stays on Eventbrite. We pull the listing details and sync buyers for verified reviews.
+        </p>
+      </header>
+
+      <nav class="bf-progress" aria-label="Setup progress">
+        <span class="bf-progress-step is-done">1. Book where</span>
+        <span class="bf-progress-step is-current">2. Connect</span>
+        <span class="bf-progress-step">3. Check listing</span>
+      </nav>
+
+      <section class="bf-panel">
+        <ul class="bf-benefits">
+          <li>Keep your checkout</li>
+          <li>List on The Networker UK</li>
+          <li>Verified reviews</li>
+        </ul>
+
+        <details class="bf-howto" open id="bf-howto">
+          <summary>How to get your token</summary>
+          <div class="bf-howto-body">
+            <ol class="bf-howto-steps">
+              <li>In Eventbrite: profile → <strong>Account settings</strong> → <strong>Developer</strong></li>
+              <li>Create or copy your <strong>private token</strong></li>
+              <li>Paste it below and press <strong>Test connection</strong></li>
+            </ol>
+            <div class="bf-mini-deck" data-bf-mini-deck>
+              <div class="bf-mini-slide" data-bf-mini-slide="0">
+                <figure class="bf-mini-shot" aria-hidden="true">
+                  <div class="bf-mini-shot-bar"><i></i><i></i><i></i></div>
+                  <div class="bf-mini-shot-screen">
+                    <div class="bf-mini-shot-nav">
+                      <span>Account</span>
+                      <span class="is-hot">Developer ←</span>
+                      <span>Webhooks</span>
+                    </div>
+                    <span class="bf-mini-shot-pin">1</span>
+                  </div>
+                </figure>
+                <p class="bf-mini-caption">Open Account settings, then Developer.</p>
+              </div>
+              <div class="bf-mini-slide" data-bf-mini-slide="1" hidden>
+                <figure class="bf-mini-shot" aria-hidden="true">
+                  <div class="bf-mini-shot-bar"><i></i><i></i><i></i></div>
+                  <div class="bf-mini-shot-screen">
+                    <strong>API keys</strong>
+                    <div class="bf-mini-shot-token">••••••••••••••••••••</div>
+                    <span class="bf-mini-shot-pin">2</span>
+                  </div>
+                </figure>
+                <p class="bf-mini-caption">Copy the private token (not the public key).</p>
+              </div>
+              <div class="bf-mini-slide" data-bf-mini-slide="2" hidden>
+                <figure class="bf-mini-shot" aria-hidden="true">
+                  <div class="bf-mini-shot-bar"><i></i><i></i><i></i></div>
+                  <div class="bf-mini-shot-screen">
+                    <strong>Paste here</strong>
+                    <div class="bf-mini-shot-token">Paste token → Test</div>
+                    <span class="bf-mini-shot-pin">3</span>
+                  </div>
+                </figure>
+                <p class="bf-mini-caption">Paste below, test, then continue.</p>
+              </div>
+              <div class="bf-mini-nav">
+                <div class="bf-mini-dots" data-bf-mini-dots aria-label="Guide slides"></div>
+                <div class="bf-mini-nav-btns">
+                  <button type="button" data-bf-mini-prev disabled>Back</button>
+                  <button type="button" data-bf-mini-next>Next</button>
+                </div>
+              </div>
+            </div>
+            <a class="bf-howto-link" href="../guides/connect-eventbrite#api-token" target="_blank" rel="noopener">
+              Open full guide with screenshots →
+            </a>
+          </div>
+        </details>
+
+        <div class="bf-primary-block" id="bf-connect-block">
+          <label for="bf-token" id="bf-token-label">Eventbrite private token</label>
+          <input
+            id="bf-token"
+            type="password"
+            autocomplete="off"
+            placeholder="Paste from Eventbrite Account settings, Developer"
+          />
+          <button type="button" class="ee-btn ee-btn-outline" id="bf-test">Test connection</button>
+          <p class="bf-status" id="bf-status" hidden>Connected. Ready to pull this event.</p>
+          <p class="bf-help" id="bf-help">
+            We set up buyer sync for you. You do not need webhook settings.
+          </p>
+        </div>
+      </section>
+
+      <div class="bf-actions">
+        <a class="ee-btn ee-btn-outline" href="booking-system-first-choice-mock.html">Back</a>
+        <button type="button" class="ee-btn ee-btn-gold" id="bf-continue">Continue to check listing</button>
+      </div>
+    </div>
+
+    <script>
+      var provider = new URLSearchParams(location.search).get('provider') || 'eventbrite';
+      var title = document.getElementById('bf-title');
+      var lede = document.getElementById('bf-lede');
+      var label = document.getElementById('bf-token-label');
+      var input = document.getElementById('bf-token');
+      var help = document.getElementById('bf-help');
+      var block = document.getElementById('bf-connect-block');
+
+      var howto = document.getElementById('bf-howto');
+      if (provider === 'ticket_tailor') {
+        title.textContent = 'Connect Ticket Tailor';
+        lede.textContent =
+          'Checkout stays on Ticket Tailor. We pull the listing details and sync buyers for verified reviews.';
+        label.textContent = 'Ticket Tailor API key';
+        input.placeholder = 'Paste from Box office, Settings, API';
+        if (howto) {
+          howto.querySelector('summary').textContent = 'How to get your API key';
+          howto.querySelector('.bf-howto-steps').innerHTML =
+            '<li>In Ticket Tailor: <strong>Box office</strong> → <strong>Settings</strong> → <strong>API</strong></li>' +
+            '<li>Create or copy your <strong>API key</strong></li>' +
+            '<li>Paste it below and press <strong>Test connection</strong></li>';
+          var guideLink = howto.querySelector('.bf-howto-link');
+          if (guideLink) guideLink.hidden = true;
+        }
+      } else if (provider === 'own_site') {
+        title.textContent = 'Connect your website';
+        lede.textContent =
+          'Checkout stays on your site. After each sale we sync the buyer for your attendee list and verified reviews.';
+        block.innerHTML =
+          '<p style="margin:0 0 8px;font-weight:600">Your sync link</p>' +
+          '<input readonly value="https://www.thenetworkeruk.com/w/site/••••" />' +
+          '<p class="bf-help">Add this to your booking confirmation (or Zapier / Make). We walk you through it next.</p>';
+        if (howto) howto.hidden = true;
+      }
+
+      var testBtn = document.getElementById('bf-test');
+      if (testBtn) {
+        testBtn.addEventListener('click', function () {
+          document.getElementById('bf-status').hidden = false;
+        });
+      }
+      document.getElementById('bf-continue').addEventListener('click', function () {
+        location.href = 'booking-system-next-confirm-mock.html?provider=' + encodeURIComponent(provider);
+      });
+
+      (function initMiniDeck() {
+        var deck = document.querySelector('[data-bf-mini-deck]');
+        if (!deck || (document.getElementById('bf-howto') || {}).hidden) return;
+        var slides = Array.prototype.slice.call(deck.querySelectorAll('[data-bf-mini-slide]'));
+        var dotsWrap = deck.querySelector('[data-bf-mini-dots]');
+        var prev = deck.querySelector('[data-bf-mini-prev]');
+        var next = deck.querySelector('[data-bf-mini-next]');
+        var index = 0;
+        slides.forEach(function (_slide, i) {
+          var dot = document.createElement('button');
+          dot.type = 'button';
+          dot.setAttribute('aria-label', 'Slide ' + (i + 1));
+          dot.addEventListener('click', function () {
+            showMini(i);
+          });
+          dotsWrap.appendChild(dot);
+        });
+        function showMini(i) {
+          index = i;
+          slides.forEach(function (slide, n) {
+            slide.hidden = n !== index;
+          });
+          Array.prototype.forEach.call(dotsWrap.children, function (dot, n) {
+            dot.classList.toggle('is-active', n === index);
+          });
+          prev.disabled = index === 0;
+          next.disabled = index === slides.length - 1;
+        }
+        prev.addEventListener('click', function () {
+          if (index > 0) showMini(index - 1);
+        });
+        next.addEventListener('click', function () {
+          if (index < slides.length - 1) showMini(index + 1);
+        });
+        showMini(0);
+      })();
+    </script>
+  </body>
+</html>
