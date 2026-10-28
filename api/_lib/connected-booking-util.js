@@ -313,6 +313,18 @@ function isConnectedPlanActive(account) {
   return String(account.connected_booking_status || '').trim() === 'active';
 }
 
+/**
+ * Auto-publish Eventbrite imports onto The Networker UK when the listing is complete.
+ * Set EVENTBRITE_IMPORT_AUTO_PUBLISH=false to force drafts only (pilot kill switch).
+ */
+function eventbriteImportAutoPublishEnabled() {
+  const raw = String(process.env.EVENTBRITE_IMPORT_AUTO_PUBLISH || '')
+    .trim()
+    .toLowerCase();
+  if (raw === '0' || raw === 'false' || raw === 'no' || raw === 'off') return false;
+  return true;
+}
+
 module.exports = {
   PLAN_GROUP_LIMITS,
   CHECKOUT_EXTERNAL,
@@ -325,6 +337,7 @@ module.exports = {
   connectedBookingPilotGrantEligible,
   connectedBookingFreeEnabled,
   connectedBookingFreeDefaultPlan,
+  eventbriteImportAutoPublishEnabled,
   linkOutFreeEnabled,
   connectedBookingPreviewLocked,
   connectedBookingAllowedForEmail,

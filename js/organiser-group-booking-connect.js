@@ -118,7 +118,7 @@
       li.querySelector('strong').textContent = evt.title || 'Eventbrite event';
       li.querySelector('.ge-eb-event-meta').textContent = meta || (already ? 'Already on The Networker UK' : '');
       var btn = li.querySelector('button');
-      btn.textContent = already ? 'Already linked' : 'Import as draft';
+      btn.textContent = already ? 'Already linked' : 'Import & publish';
       btn.disabled = already;
       if (!already) {
         btn.addEventListener('click', function () {
@@ -145,7 +145,7 @@
         renderEvents(res.data.events || []);
         setMsg(
           (res.data.events || []).length
-            ? 'Select an event to import as a draft on this organiser page.'
+            ? 'Select an event to import onto this organiser page. Complete listings publish automatically.'
             : 'No Eventbrite events found for this account.',
           'ok'
         );
@@ -182,13 +182,27 @@
           return;
         }
         var eventId = String(res.data.eventId || '').trim();
-        setMsg('Imported as a draft. Opening ticket setup…', 'ok');
-        if (eventId) {
-          window.location.href =
-            '/organiser/event-connected-setup?eventId=' + encodeURIComponent(eventId) + '&provider=eventbrite';
-        } else {
+        var published = Boolean(res.data.published);
+        setMsg(
+          res.data.message ||
+            (published
+              ? 'Imported and published on The Networker UK.'
+              : 'Imported as a draft on The Networker UK.'),
+          'ok'
+        );
+        if (!eventId) {
           refreshEvents();
+          return;
         }
+        if (published) {
+          window.location.href =
+            '/organiser/event-edit?id=' + encodeURIComponent(eventId);
+          return;
+        }
+        window.location.href =
+          '/organiser/event-connected-setup?eventId=' +
+          encodeURIComponent(eventId) +
+          '&provider=eventbrite';
       })
       .catch(function () {
         if (btn) btn.disabled = false;

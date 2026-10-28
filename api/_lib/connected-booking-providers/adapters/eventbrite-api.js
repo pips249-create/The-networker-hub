@@ -653,7 +653,65 @@ function eventbriteIsOnline(evt) {
   return false;
 }
 
-/** Map GET /v3/events/{id}/?expand=venue → organiser updateEvent payload fields. */
+/**
+ * Build a Hub external price label from Eventbrite event + ticket_classes.
+ * Returns '' when price cannot be inferred (import should stay draft if publishing).
+ */
+function eventbritePriceLabelFromEvent(evt) {
+  if (!evt || typeof evt !== 'object') return '';
+  if (evt.is_free === true) return 'Free';
+
+  const classes = Array.isArray(evt.ticket_classes) ? evt.ticket_classes : [];
+  const usable = classes.filter(function (c) {
+    return c && typeof c === 'object' && c.hidden !== true && c.deleted !== true;
+  });
+  if (usable.length && usable.every(function (c) {
+    return c.free === true || c.donation === true;
+  })) {
+    return 'Free';
+  }
+
+  const amounts = [];
+  usable.forEach(function (c) {
+    if (c.free === true) {
+      amounts.push(0);
+      return;
+    }
+    const cost = c.cost && typeof c.cost === 'object' ? c.cost : null;
+    if (!cost) return;
+    if (cost.value != null && Number.isFinite(Number(cost.value))) {
+      amounts.push(Number(cost.value) / 100);
+      return;
+    }
+    if (cost.major_value != null && Number.isFinite(Number(cost.major_value))) {
+      amounts.push(Number(cost.major_value));
+      return;
+    }
+    const display = String(cost.display || '').trim();
+    const m = display.match(/([\d,.]+)/);
+    if (m) {
+      const n = Number(String(m[1]).replace(/,/g, ''));
+      if (Number.isFinite(n)) amounts.push(n);
+    }
+  });
+
+  if (!amounts.length) {
+    if (evt.is_free === false) return '';
+    return '';
+  }
+
+  const min = Math.min.apply(null, amounts);
+  if (!(min > 0)) return 'Free';
+  const formatted = min % 1 === 0 ? String(min) : min.toFixed(2);
+  if (amounts.length === 1 || amounts.every(function (a) {
+    return a === min;
+  })) {
+    return '£' + formatted;
+  }
+  return 'From £' + formatted;
+}
+
+/** Map GET /v3/events/{id}/?expand=venue,ticket_classes → organiser updateEvent payload fields. */
 function mapEventbriteEventToListingPatch(evt, opts) {
   const options = opts && typeof opts === 'object' ? opts : {};
   const { preferEventbriteCheckoutUrl } = require('../../connected-booking-util');
@@ -700,6 +758,9 @@ function mapEventbriteEventToListingPatch(evt, opts) {
     }
   }
 
+  const priceLabel = eventbritePriceLabelFromEvent(evt);
+  if (priceLabel) patch.externalPriceLabel = priceLabel;
+
   const logo = evt.logo && typeof evt.logo === 'object' ? evt.logo : null;
   const logoUrl = String(
     (logo && logo.original && logo.original.url) ||
@@ -722,7 +783,7 @@ async function fetchEventbriteEvent(externalEventId, privateToken) {
   const requestUrl =
     'https://www.eventbriteapi.com/v3/events/' +
     encodeURIComponent(id) +
-    '/?expand=venue,format,logo';
+    '/?expand=venue,format,logo,ticket_classes';
   const res = await fetch(requestUrl, {
     method: 'GET',
     headers: {
@@ -779,6 +840,7 @@ module.exports = {
   listEventbriteOrganizationEvents,
   eventbriteOrganizationId,
   mapEventbriteEventToListingPatch,
+  eventbritePriceLabelFromEvent,
   eventbriteDescriptionText,
   eventbriteTitleText,
   eventbriteIsOnline,

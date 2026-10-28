@@ -23,6 +23,12 @@ Checkout stays on **Eventbrite**. TNH receives **`order.placed`** webhooks, load
 
 ## Per TNH event
 
+### Organiser page import (preferred)
+
+On **Organiser → Edit page → Where do people book? → Eventbrite**, save the private token, refresh the event list, then **Import & publish**. Complete listings (date + price + booking URL from Eventbrite) go live and auto-approve with Connected checkout + attendee link. Incomplete ones save as drafts. Kill switch: `EVENTBRITE_IMPORT_AUTO_PUBLISH=false`.
+
+### Manual per-event setup
+
 1. Open **Connected setup** (Set up tickets → Eventbrite → Continue).
 2. **Price shown on listing** + **Booking URL** (Eventbrite `/e/…` or checkout link — TNH rewrites common listing URLs to checkout on save).
 3. **Link registrations** — numeric Eventbrite event id (from the URL, or **Use id from booking URL**).
