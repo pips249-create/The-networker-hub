@@ -158,5 +158,37 @@ assert.match(
   /await submitCode\(urlCode\)/,
   'signed-in inbox opens must POST the prefilled code'
 );
+assert.match(
+  verifyPageSrc,
+  /showSignedOutUi/,
+  'signed-out inbox opens must keep the code screen (no flash redirect)'
+);
+assert.match(
+  verifyPageSrc,
+  /Sign in to confirm/,
+  'signed-out confirm CTA must send people through login with the code'
+);
+assert.doesNotMatch(
+  verifyPageSrc,
+  /window\.location\.href = '\/login\?next=' \+ encodeURIComponent\(returnTo\)/,
+  'must not auto-bounce signed-out visitors off the code screen'
+);
+
+const authJsSrc = fs.readFileSync(path.join(__dirname, '../js/auth.js'), 'utf8');
+assert.match(
+  authJsSrc,
+  /parseVerifyEmailNext/,
+  'login must parse inbox confirm links from ?next='
+);
+assert.match(
+  authJsSrc,
+  /applyConfirmEmailContext/,
+  'login must show a confirm-email callout for inbox recovery'
+);
+assert.match(
+  authJsSrc,
+  /verifyRecovery/,
+  'audience toggle must not wipe confirm-email ?next= (drops the code)'
+);
 
 console.log('OK  organiser email verification paths');

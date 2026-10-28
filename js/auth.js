@@ -31,6 +31,46 @@
   }
 
   /**
+   * Parse /organiser/verify-email from login ?next= (inbox CTA recovery).
+   * Mirrors api/_lib/organiser-email-verify-paths.parseVerifyEmailPath.
+   */
+  function parseVerifyEmailNext(raw) {
+    var value = String(raw || '').trim();
+    if (!value || value.indexOf('/organiser/verify-email') === -1) return null;
+    try {
+      var url = /^https?:\/\//i.test(value)
+        ? new URL(value)
+        : new URL(value, window.location.origin);
+      if (url.pathname.replace(/\/$/, '') !== '/organiser/verify-email') return null;
+      var digits = String(url.searchParams.get('code') || url.searchParams.get('token') || '')
+        .replace(/\D/g, '')
+        .slice(0, 6);
+      var nestedNext = String(url.searchParams.get('next') || '').trim();
+      if (nestedNext) {
+        try {
+          var nestedPath = /^https?:\/\//i.test(nestedNext)
+            ? new URL(nestedNext).pathname
+            : nestedNext.split('?')[0];
+          if (String(nestedPath || '').replace(/\/$/, '') === '/organiser/verify-email') {
+            nestedNext = '';
+          }
+        } catch (e) {
+          /* keep nestedNext */
+        }
+      }
+      return {
+        code: digits.length === 6 ? digits : '',
+        email: String(url.searchParams.get('email') || '')
+          .trim()
+          .toLowerCase(),
+        next: nestedNext,
+      };
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /**
    * Signup must land on an empty code form. A code in this URL is the secret
    * from the email, so drop it from in-app redirects.
    */
@@ -53,6 +93,13 @@
     if (intent === 'organiser' || intent === 'organiser-claim') return true;
     var next = getNextParam();
     if (!next) return false;
+    // Confirm-email is shared by every account — only the post-confirm ?next=
+    // can imply organiser intent (matches server isOrganiserAuthIntent).
+    var verify = parseVerifyEmailNext(next);
+    if (verify) {
+      next = verify.next || '';
+      if (!next) return false;
+    }
     try {
       var path = /^https?:\/\//i.test(next) ? new URL(next).pathname : next.split('?')[0];
       return /^\/organiser(\/|$)/.test(path);
@@ -171,6 +218,10 @@
   function prefillEmailFromQuery() {
     var params = new URLSearchParams(window.location.search);
     var queryEmail = (params.get('email') || '').trim();
+    if (!queryEmail) {
+      var verify = parseVerifyEmailNext(params.get('next') || '');
+      if (verify && verify.email) queryEmail = verify.email;
+    }
     var emailEl = document.getElementById('email');
     if (queryEmail && emailEl && !emailEl.value) emailEl.value = queryEmail;
   }
@@ -557,6 +608,40 @@
     }
   }
 
+  function applyConfirmEmailContext() {
+    if (!loginForm) return;
+    if (getIntentParam() === 'organiser-claim') return;
+    var verify = parseVerifyEmailNext(getNextParam());
+    if (!verify) return;
+
+    document.title = 'Confirm your email – Sign in – The Networker UK';
+
+    var callout = document.getElementById('auth-intent-callout');
+    if (callout) callout.hidden = false;
+
+    var kicker = document.getElementById('auth-intent-callout-kicker');
+    if (kicker) kicker.textContent = 'Confirm your email';
+
+    var calloutText = document.getElementById('auth-intent-callout-text');
+    if (calloutText) {
+      calloutText.textContent = verify.code
+        ? 'Sign in with the same email — we finish confirmation automatically with the code from your inbox.'
+        : 'Sign in with the same email, then enter the confirmation code from your inbox.';
+    }
+
+    var calloutNote = document.getElementById('auth-intent-callout-note');
+    if (calloutNote) calloutNote.hidden = true;
+
+    var loginTitle = document.getElementById('login-form-title');
+    if (loginTitle) loginTitle.textContent = 'Sign in to confirm your email';
+
+    var loginLede = document.getElementById('login-form-lede');
+    if (loginLede) {
+      loginLede.textContent =
+        'Use the email address your confirmation code was sent to. After you sign in we take you straight back to finish.';
+    }
+  }
+
   function applyOrganiserClaimContext() {
     var params = new URLSearchParams(window.location.search);
     if (params.get('intent') !== 'organiser-claim') return;
@@ -822,15 +907,18 @@
     function syncAudienceUrl(audience) {
       var urlParams = new URLSearchParams(window.location.search);
       var next = urlParams.get('next') || '';
+      // Inbox confirm recovery must keep ?next=…/verify-email?code=… — wiping it
+      // drops the digits and leaves a bare “default” login page.
+      var verifyRecovery = parseVerifyEmailNext(next);
 
       if (audience === 'organiser') {
         urlParams.set('intent', 'organiser');
-        if (!isOrganiserNextPath(next)) {
+        if (!verifyRecovery && !isOrganiserNextPath(next)) {
           urlParams.set('next', '/organiser/');
         }
       } else {
         urlParams.delete('intent');
-        if (isOrganiserNextPath(next)) {
+        if (!verifyRecovery && isOrganiserNextPath(next)) {
           urlParams.delete('next');
         }
       }
@@ -1148,6 +1236,7 @@
   applyEarlyAccessRegisterMode();
   applyOrganiserIntentContext();
   applyOrganiserClaimContext();
+  applyConfirmEmailContext();
   initLoginAudienceToggle();
   maybeRedirectAuthenticatedLogin();
   maybeShowAuthenticatedRegisterNotice();

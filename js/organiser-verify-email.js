@@ -8,6 +8,7 @@
   var confirmBtn = document.getElementById('verify-email-confirm');
   var resendBtn = document.getElementById('verify-email-resend');
   var continueBtn = document.getElementById('verify-email-continue');
+  var signedIn = false;
 
   function params() {
     return new URLSearchParams(window.location.search);
@@ -26,6 +27,31 @@
     } catch (e) {
       return '/welcome';
     }
+  }
+
+  function normalizeCode(raw) {
+    return String(raw || '')
+      .replace(/\D/g, '')
+      .slice(0, 6);
+  }
+
+  /** Return path for login that keeps the inbox code + email (even after address-bar scrub). */
+  function verifyReturnPath(code) {
+    var url = new URL(window.location.href);
+    var digits = normalizeCode(code);
+    if (digits.length === 6) url.searchParams.set('code', digits);
+    else {
+      url.searchParams.delete('code');
+      url.searchParams.delete('token');
+    }
+    return url.pathname + url.search + url.hash;
+  }
+
+  function loginHref(code) {
+    var href = '/login?next=' + encodeURIComponent(verifyReturnPath(code));
+    var email = String(params().get('email') || '').trim();
+    if (email) href += '&email=' + encodeURIComponent(email);
+    return href;
   }
 
   function showError(message) {
@@ -72,6 +98,23 @@
     window.setTimeout(function () {
       window.location.href = nextHref;
     }, 900);
+  }
+
+  function showSignedOutUi(hasCode) {
+    signedIn = false;
+    if (ledeEl) {
+      ledeEl.innerHTML = hasCode
+        ? 'Sign in with the same email to finish — your confirmation code is ready below. After you sign in we apply it automatically.'
+        : 'Sign in with the same email, then enter the 6-digit code from your inbox. Check spam/junk if it is not there yet.';
+    }
+    showStatus(
+      hasCode
+        ? 'Code ready — sign in to confirm your email.'
+        : 'Sign in first, then enter your confirmation code.',
+      true
+    );
+    if (confirmBtn) confirmBtn.textContent = 'Sign in to confirm →';
+    if (resendBtn) resendBtn.hidden = true;
   }
 
   async function loadSession() {
@@ -122,14 +165,19 @@
   }
 
   async function submitCode(raw) {
-    var code = String(raw || '')
-      .replace(/\D/g, '')
-      .slice(0, 6);
+    var code = normalizeCode(raw);
     showError('');
     if (code.length !== 6) {
       showError('Enter the 6-digit code from your email.');
       return;
     }
+
+    if (!signedIn) {
+      // Keep the code on ?next= so login recovery can auto-finish after sign-in.
+      window.location.href = loginHref(code);
+      return;
+    }
+
     if (confirmBtn) confirmBtn.disabled = true;
     try {
       var result = await verifyToken(code);
@@ -177,37 +225,52 @@
     }
   }
 
+  function scrubCodeFromAddressBar() {
+    if (!window.history.replaceState) return;
+    if (!params().get('token') && !params().get('code')) return;
+    var scrub = new URL(window.location.href);
+    scrub.searchParams.delete('token');
+    scrub.searchParams.delete('code');
+    window.history.replaceState({}, '', scrub.pathname + scrub.search + scrub.hash);
+  }
+
   async function init() {
-    var session = await loadSession();
+    var urlCode = normalizeCode(params().get('code') || params().get('token') || '');
+    var emailFromQuery = String(params().get('email') || '').trim();
+    if (addressEl && emailFromQuery) addressEl.textContent = emailFromQuery;
+    if (urlCode && codeEl) codeEl.value = urlCode;
+
+    var session;
+    try {
+      session = await loadSession();
+    } catch (e) {
+      session = { ok: false };
+    }
+
+    // Stay on this page when signed out so the code screen does not flash away.
+    // Confirm / Sign in then takes them through login with the code preserved.
     if (!session.ok || !session.user) {
-      var returnTo = window.location.pathname + window.location.search;
-      window.location.href = '/login?next=' + encodeURIComponent(returnTo);
+      showSignedOutUi(urlCode.length === 6);
+      if (codeEl) codeEl.focus();
       return;
     }
 
-    if (addressEl) addressEl.textContent = session.user.email || 'your email';
+    signedIn = true;
+    if (addressEl) addressEl.textContent = session.user.email || emailFromQuery || 'your email';
 
     if (session.organiserEmailVerified) {
+      scrubCodeFromAddressBar();
       showVerifiedUi('Your email is confirmed.');
       return;
     }
 
     // Inbox CTA (?code= / legacy ?token=): scrub the secret from the address bar,
-    // then POST once. We only reach here with a session — mail scanners that GET
-    // the link without cookies are sent to login and cannot fire Welcome early.
-    var urlCode = String(params().get('code') || params().get('token') || '')
-      .replace(/\D/g, '')
-      .slice(0, 6);
+    // then POST once. Mail scanners that GET without cookies never reach here.
     if (urlCode && codeEl) {
       codeEl.value = urlCode;
       showStatus('Confirming your email…', true);
     }
-    if (window.history.replaceState && (params().get('token') || params().get('code'))) {
-      var scrub = new URL(window.location.href);
-      scrub.searchParams.delete('token');
-      scrub.searchParams.delete('code');
-      window.history.replaceState({}, '', scrub.pathname + scrub.search + scrub.hash);
-    }
+    scrubCodeFromAddressBar();
 
     if (urlCode) {
       await submitCode(urlCode);
@@ -228,14 +291,16 @@
 
   if (codeEl) {
     codeEl.addEventListener('input', function () {
-      codeEl.value = String(codeEl.value || '')
-        .replace(/\D/g, '')
-        .slice(0, 6);
+      codeEl.value = normalizeCode(codeEl.value);
     });
   }
 
   if (resendBtn) {
     resendBtn.addEventListener('click', function () {
+      if (!signedIn) {
+        window.location.href = loginHref(codeEl && codeEl.value);
+        return;
+      }
       resend();
     });
   }
