@@ -4856,6 +4856,60 @@ body.ad-share-modal-open {
   text-decoration: underline;
 }
 
+.hmm-overview-more-sep {
+  margin: 0 8px;
+  color: var(--ad-text-soft);
+}
+
+.hmm-invite-link {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--ad-teal-dark);
+  cursor: not-allowed;
+  opacity: 0.7;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.hmm-invite-panel {
+  margin-top: 28px;
+  padding-top: 22px;
+  border-top: 1px dashed rgba(125, 72, 150, 0.25);
+}
+
+.hmm-invite-kicker {
+  margin: 0 0 4px;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ad-teal-dark);
+}
+
+.hmm-invite-title {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+  font-weight: 750;
+  color: var(--hmm-ink, #241536);
+}
+
+.hmm-invite-copy {
+  margin: 0 0 12px;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--ad-text-mid);
+  max-width: 36rem;
+}
+
+.hmm-invite-cta[disabled] {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
 .hmm .visually-hidden {
   position: absolute;
   width: 1px;

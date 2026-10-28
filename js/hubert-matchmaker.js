@@ -104,6 +104,11 @@
     ].slice(0, MAX_SHORTLIST);
   }
 
+  function personLabel(person) {
+    if (person.displayName) return person.displayName;
+    return shortDisplayName(person.fullName);
+  }
+
   function renderCard(person) {
     var hasEvent = Boolean(person.nextEvent && person.nextEvent.title);
     var status = person.onHub
@@ -132,7 +137,7 @@
       '<div class="hmm-match-body">' +
       '<div class="hmm-match-who">' +
       '<h3 class="hmm-match-name">' +
-      esc(shortDisplayName(person.fullName)) +
+      esc(personLabel(person)) +
       '</h3>' +
       '<p class="hmm-match-meta">' +
       esc([person.role, person.company].filter(Boolean).join(' · ')) +
@@ -152,7 +157,7 @@
     );
   }
 
-  function setResults(mount, people, query) {
+  function setResults(mount, people, query, meta) {
     var results = mount.els.results;
     var empty = mount.els.empty;
     var preview = mount.els.previewNote;
@@ -173,15 +178,41 @@
     if (empty) empty.hidden = true;
     if (preview) {
       preview.hidden = false;
+      var sourceNote =
+        meta && meta.source === 'live'
+          ? 'Live back-of-house matches'
+          : 'Preview matches';
       preview.innerHTML =
-        '<strong>Admin preview</strong> — up to ' +
+        '<strong>Admin preview</strong> — ' +
+        esc(sourceNote) +
+        ' (up to ' +
         MAX_SHORTLIST +
-        ' sample matches for “' +
+        ') for “' +
         esc(String(query || '').trim()) +
-        '”. Real matching &amp; intro email next.';
+        '”. No contact details are shown. Request intro comes next.';
     }
     results.innerHTML = list.map(renderCard).join('');
     results.hidden = false;
+  }
+
+  function paintAll(people, query, meta) {
+    mounts.forEach(function (m) {
+      if (m.els.input) m.els.input.value = query;
+      setResults(m, people, query, meta);
+    });
+  }
+
+  function fetchMatches(query) {
+    return fetch('/api/auth/hubert-matchmaker', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'search', query: query }),
+    }).then(function (res) {
+      return res.json().then(function (data) {
+        return { status: res.status, data: data };
+      });
+    });
   }
 
   function runSearch(mount, queryOverride) {
@@ -200,24 +231,41 @@
         err.textContent = 'Tell Hubert who you would like to meet.';
         err.hidden = false;
       }
-      setResults(mount, [], '');
+      paintAll([], '', null);
       return;
     }
 
     lastQuery = query;
-    var people = stubShortlist(query);
-    setResults(mount, people, query);
-
-    // Keep other mounts in sync (overview ↔ meet page).
-    mounts.forEach(function (other) {
-      if (other === mount) return;
-      if (other.els.input) other.els.input.value = query;
-      setResults(other, people, query);
-    });
-
-    if (mount.mode === 'overview' && typeof mount.onExpand === 'function') {
-      mount.onExpand(query);
+    if (mount.els.previewNote) {
+      mount.els.previewNote.hidden = false;
+      mount.els.previewNote.textContent = 'Hubert is matching…';
     }
+
+    fetchMatches(query)
+      .then(function (result) {
+        var data = result.data || {};
+        if (data.ok && Array.isArray(data.matches)) {
+          paintAll(data.matches, query, { source: 'live' });
+        } else if (result.status === 401 || result.status === 403) {
+          if (err) {
+            err.textContent = (data && data.message) || 'Sign in as an admin to use Hubert Matchmaker.';
+            err.hidden = false;
+          }
+          paintAll([], query, null);
+        } else {
+          // Offline / peek mock fallback
+          paintAll(stubShortlist(query), query, { source: 'stub' });
+        }
+        if (mount.mode === 'overview' && typeof mount.onExpand === 'function') {
+          mount.onExpand(query);
+        }
+      })
+      .catch(function () {
+        paintAll(stubShortlist(query), query, { source: 'stub' });
+        if (mount.mode === 'overview' && typeof mount.onExpand === 'function') {
+          mount.onExpand(query);
+        }
+      });
   }
 
   function cacheEls(root) {

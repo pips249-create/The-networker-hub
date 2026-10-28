@@ -58,6 +58,7 @@ const routes = {
   'member-offers': require('./_lib/routes/auth-member-offers'),
   'member-offer-previews': require('./_lib/routes/auth-member-offer-previews'),
   'member-offer-enquire': require('./_lib/routes/auth-member-offer-enquire'),
+  'hubert-matchmaker': require('./_lib/routes/auth-hubert-matchmaker'),
   'site-access': require('./_lib/routes/site-access'),
 };
 
