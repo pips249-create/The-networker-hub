@@ -1,10 +1,21 @@
 # Hubert Matchmaker — one-pager product spec
 
-**Status:** Draft for decision (revised)  
+**Status:** Approved for build (admin-only until launch)  
 **Owner:** Product  
 **Surfaces:** Attendee dashboard (`/account/`), public teaser entry on the site, Hubert (chat + email)  
 **Phase 1:** Member-gated search · back-of-house matching · capped shortlist · open invite to non-members · Rosie/ops private seed  
 **Phase 2:** Members-first discovery (seed used less as density grows)
+
+### Build visibility (non-negotiable while shipping)
+
+Until product explicitly turns Matchmaker on for everyone:
+
+- **UI, search, teaser, and Hubert meet intents are admin-only** (Hub admin / platform staff).
+- Regular attendees and logged-out visitors must **not** see the search bar, Meet people nav, or public teaser as a live feature.
+- Intro emails to real B’s stay **off or staff-triggered only** until soft launch (avoid accidental outbound while testing).
+- Prefer a single feature flag (e.g. `hubert_matchmaker` / admin gate) so we can flip visibility without a redesign.
+
+Implementation branch: `cursor/hubert-matchmaker-8ac8` (off `main` after this spec).
 
 ---
 
@@ -135,7 +146,8 @@ After Accept, B owns and edits their Hub profile text.
 
 | Guard | Rule |
 |-------|------|
-| Search | Account required |
+| **Pre-launch visibility** | **Admins only** until launch flag is on |
+| Search | Account required (and admin during build) |
 | Results per search | **Max 5** |
 | Search quota | Per day/week (TBD numbers) |
 | Intro requests | Cap pending / per week |
@@ -204,4 +216,4 @@ After Accept, B owns and edits their Hub profile text.
 
 ## One-line summary
 
-**Member-only Hubert search, back-of-house matches capped at five (first name + initial; upcoming event primary when present), intro email that onboards B to Accept — Rosie-curated private seed for Phase 1, then members-first as the graph fills; no scrape, no public contacts.**
+**Member-only Hubert search (admin-only while building), back-of-house matches capped at five (first name + initial; upcoming event primary when present), intro email that onboards B to Accept — Rosie-curated private seed for Phase 1, then members-first as the graph fills; no scrape, no public contacts.**
