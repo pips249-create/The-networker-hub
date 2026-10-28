@@ -4532,3 +4532,211 @@ body.ad-share-modal-open {
   color: #1c2040;
 }
 
+/* —— Hubert Matchmaker (Meet people) —— */
+.hub-side-nav-link .ad-side-admin-pill {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ad-teal-dark);
+  background: var(--ad-teal-light);
+  vertical-align: middle;
+}
+
+.hmm {
+  max-width: 720px;
+}
+
+.hmm-admin-badge {
+  display: inline-block;
+  margin: 0 0 12px;
+  padding: 6px 10px;
+  border-radius: var(--ad-radius-sm);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ad-teal-dark);
+  background: var(--ad-teal-pale);
+  border: 1px solid var(--ad-border-soft);
+}
+
+.hmm-admin-badge[hidden] {
+  display: none !important;
+}
+
+.hmm-lead {
+  margin: 0 0 20px;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--ad-text-mid);
+}
+
+.hmm-search-label {
+  display: block;
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--ad-text-dark);
+}
+
+.hmm-search-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.hmm-search-input {
+  flex: 1 1 220px;
+  min-width: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--ad-border-soft);
+  border-radius: var(--ad-radius-sm);
+  font: inherit;
+  font-size: 15px;
+  color: var(--ad-text-dark);
+  background: var(--ad-white);
+}
+
+.hmm-search-input:focus {
+  outline: 2px solid var(--ad-teal);
+  outline-offset: 1px;
+}
+
+.hmm-search-submit {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+
+.hmm-error {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--ad-red);
+}
+
+.hmm-error[hidden],
+.hmm-preview-note[hidden],
+.hmm-results[hidden],
+.hmm-empty[hidden] {
+  display: none !important;
+}
+
+.hmm-preview-note {
+  margin: 16px 0 0;
+  padding: 10px 12px;
+  border-radius: var(--ad-radius-sm);
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ad-text-mid);
+  background: var(--ad-teal-pale);
+  border: 1px dashed var(--ad-border-soft);
+}
+
+.hmm-results {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.hmm-card {
+  padding: 16px 18px;
+  border-radius: var(--ad-radius);
+  background: var(--ad-white);
+  border: 1px solid var(--ad-border-soft);
+}
+
+.hmm-card-top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.hmm-card-name {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ad-text-dark);
+}
+
+.hmm-card-meta {
+  margin: 0 0 6px;
+  font-size: 14px;
+  color: var(--ad-text-mid);
+}
+
+.hmm-card-status {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.hmm-card-status--member {
+  color: var(--ad-green);
+}
+
+.hmm-card-status--invite {
+  color: var(--ad-coral);
+}
+
+.hmm-card-cta[disabled] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.hmm-card-event {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: var(--ad-radius-sm);
+  background: linear-gradient(135deg, var(--ad-teal-pale), #fff);
+  border: 1px solid var(--ad-border-soft);
+}
+
+.hmm-card-event-kicker {
+  margin: 0 0 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ad-teal-dark);
+}
+
+.hmm-card-event-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--ad-text-dark);
+}
+
+.hmm-card-event-date {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--ad-text-mid);
+}
+
+.hmm-card-why {
+  margin: 12px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ad-text-soft);
+}
+
+.hmm-empty {
+  margin-top: 24px;
+}
+
+@media (max-width: 560px) {
+  .hmm-search-submit {
+    width: 100%;
+  }
+
+  .hmm-card-cta {
+    width: 100%;
+  }
+}
+
