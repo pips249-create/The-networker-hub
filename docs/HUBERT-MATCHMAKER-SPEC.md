@@ -113,21 +113,29 @@ If there is no upcoming event, omit that block; do not invent one. Event presenc
 1. A requests intro → Hubert emails B.  
 2. Copy pattern: *“[First name] would like to connect about [topic]. Create a free Networker UK account to see the request and Accept or Decline.”*  
 3. B lands on claim/sign-in → sees full request context → **Accept & share details** / **Decline**.  
-4. On Accept: A gets B’s email (+ LinkedIn URL if set); names can show in full in the private thread/result.  
-5. On Accept: prompt B to confirm bio/tags + **Discoverable** (they become supply for the next search).  
-6. Decline / ignore: no contact reveal; pause further intros to the same seed contact after repeated non-response.
+4. On Accept (especially non-member B): **2 quick tag taps** first — Industry / I am a, and Looking to meet — then reveal A’s **email + LinkedIn (if set)**. No essay fields.  
+5. Prompt **Discoverable** on so B becomes supply for future searches.  
+6. Decline / ignore: no contact reveal. Seed path: one reminder (day 5–7), then pause in BOH.
 
 ### Private seed (Rosie / ops) — Phase 1 cold start
 
+**Yes — Admin / Command Centre is where Rosie’s seed people are added** (not the public site, not attendee self-serve).
+
+| Surface | Role |
+|---------|------|
+| **Admin → Hubert Matchmaker → Seed list** | Rosie / Catherine / platform admins add or edit seed contacts: name, company, role, email, LinkedIn URL, short blurb, pause/active |
+| **Admin intro totals** | Same Matchmaker admin area shows requested / accepted / pending counts |
+| Attendee Meet people | Uses seed **only** via BOH shortlist — members never browse or edit Rosie’s list |
+
 | Allowed | Not allowed |
 |---------|-------------|
-| Manual nominate: name, company, role, email, LinkedIn URL, short blurb Rosie pastes/edits (LI About as **her** research aid) | Bulk scrape of LinkedIn connections or bios |
+| Manual nominate in admin (LI About as **Rosie’s** research aid when she pastes a blurb) | Bulk scrape of LinkedIn connections or bios |
 | Use seed **only** in BOH matching + capped shortlist | Public directory of non-consenting people |
-| Higher staff nominate quota in Phase 1 | Auto-refresh bios from LinkedIn |
+| Higher **staff** nominate / outreach quota in Phase 1 | Auto-refresh bios from LinkedIn |
 
 After Accept, B owns and edits their Hub profile text.
 
-**Rosie’s LinkedIn** = distribution + human-curated seed, not an automated import pipe. She can also DM/post invite links; Hubert scales the email Accept loop.
+**Rosie’s LinkedIn** = distribution + human-curated seed entered in admin, not an automated import pipe.
 
 ---
 
@@ -155,14 +163,26 @@ After Accept, B owns and edits their Hub profile text.
 | Guard | Rule |
 |-------|------|
 | **Pre-launch visibility** | **Admins only** until launch flag is on |
-| Search | Account required (and admin during build) |
-| Results per search | **Max 5** |
-| Search quota | Per day/week (TBD numbers) |
-| Intro requests | Cap pending / per week |
+| Search | Account required (and admin during build); soft reciprocity — tags + discoverable before full search |
+| Results per search | **Max 5** people put forward |
+| Search quota (members) | **3 searches / week** |
+| Intro requests (members) | **5 intro requests / week** (not more to start — see Quotas) |
+| Staff / Rosie | Higher seed nominate + reminder quotas (not bound by the member 5) |
+| Intent field | **≥ 25 characters** on “what I’d like to discuss”; soft-reject generics (“hi”, “networking”, “sales”) |
 | Shortlist identity | **First name + surname initial** only |
 | Contact | Email (+ LinkedIn if set) only after Accept |
-| Non-response | Pause seed contacts who never Accept |
-| Prefer | Candidates with an **upcoming shared/relevant event** when scores are close |
+| Seed non-response | **1** Hubert reminder at day 5–7; then **pause** in BOH pool |
+| Prefer | Tiered event boost: same event > B has another upcoming event > cold |
+
+### Quotas — do we want more than 5 intros / week?
+
+**Not at launch.** **5 intro requests / week** for members is the locked default:
+
+- Enough for 1–2 real connections around an event  
+- Stops Hubert becoming a free lead-scraping tool  
+- We can raise later (e.g. 8–10) if accept rates stay healthy and abuse is low  
+
+**Separate from member intros:** Rosie/admin seed outreach is staff tooling with its own higher limits.
 
 ---
 
@@ -191,7 +211,7 @@ After Accept, B owns and edits their Hub profile text.
 |-------|--------|-----|
 | Auth / account | Session, `/account/`, register/login | Gate search; B claim/Accept page |
 | Profile | `attendees` fields | Tags, blurb, LinkedIn URL, `discoverable_at` |
-| Seed | — | Private seed table (ops-curated); not public API list |
+| Seed | — | Private seed table + **Admin Matchmaker UI** for Rosie/ops |
 | Matching | Tags / text | BOH matcher → max 5; event boost from registrations |
 | Events | Bookings / next-event stats | Upcoming event as **primary** shortlist field when present |
 | Email | Resend + templates (enquiry pattern) | Hubert invite-to-join + Accept/Decline templates |
@@ -224,7 +244,7 @@ Also report **requested** (all sends) and **pending** for ops.
 
 | Surface | Who | What |
 |---------|-----|------|
-| **Admin / Command Centre** | Platform admins | Totals: requested, accepted, declined, pending; accept rate; last 7 / 30 days; link to recent intros |
+| **Admin → Hubert Matchmaker** | Rosie / platform admins | **Seed list** (add Rosie’s contacts) · intro totals (requested / accepted / declined / pending) · accept rate · recent intros |
 | **Meet people** (`#meet`) | The signed-in member | “My intros”: requested · pending · accepted (their outbound + inbound) |
 | **Overview** (optional strip) | Member | Small line under Hubert: e.g. `3 intros accepted` once they have any |
 | **Email / ops** | Staff | Same admin totals for weekly Hub health |
@@ -237,30 +257,39 @@ Ship the `hubert_intro_requests` (name TBD) table in the same slice as Request i
 
 ---
 
-## Metrics
+## Edge-case guards (locked)
 
-- **Intros requested / accepted / declined / pending** (primary KPIs)  
-- Accept rate · time-to-Accept  
-- B account creates from intro email  
-- Searches run / shortlists shown  
-- % of Accepts who turn Discoverable on  
-- Share of shortlist cards that include an upcoming event  
-- Abuse: quota hits, blocks, reports  
-- Qualitative: useful intros via Hubert  
+1. **Intent validation** — ≥ 25 characters; soft-reject generics (“hi”, “networking”, “sales”).  
+2. **Rosie seed follow-ups** — exactly **1** polite reminder at day 5–7, then auto-pause in BOH if still unaccepted.  
+3. **Non-member B onboarding** — 2 quick taps (industry/role + looking to meet) before contact reveal.  
+4. **Soft reciprocity** — A must set networking tags (+ discoverable) before running full searches.
 
----
+## Locked defaults
 
-## Open decisions
+| Decision | Locked choice |
+|----------|----------------|
+| Member quotas | **3 searches / week**, **5 intro requests / week** |
+| Placements | Dashboard (Overview + Meet) · public teaser on **Home** and **Event browse** |
+| UI framing | **“Ask Hubert to introduce you”** (concierge) |
+| Event boost | Same event > B attending another event > cold |
+| Share on Accept | **Email + LinkedIn URL (if set)** |
+| Admin seed | **Admin Matchmaker → Seed list** (Rosie/ops) |
+| Admin metrics | Dedicated **Matchmaker** block (intros + seed health) |
 
-1. Exact search + intro quota numbers.  
-2. Public teaser placement (home vs for-networkers vs both).  
-3. UI name: “Meet people” vs “Ask Hubert to introduce you.”  
-4. Whether A and B must share the **same** upcoming event to get the event boost, or any upcoming event on B is enough — **recommend: boost more if same event; still show B’s next event if different.**  
-5. Share on Accept: email only vs email + LinkedIn — **recommend both if LinkedIn set.**  
-6. Admin home for intro totals — existing admin metrics panel vs dedicated Matchmaker section — **recommend dedicated Matchmaker block under admin.**
+## Metrics (phased)
+
+**Phase 1 (ship with intros)**  
+- Intro funnel: requested / pending / accepted / declined  
+- Shared-event vs cold **Accept %**  
+- Search → ticket conversion (match showed event X → ticket for X within **48h**)
+
+**Phase 2 (when volume exists)**  
+- Shared-event check-in / show-up rate  
+- Retention cohorts (≥1 accepted intro vs 0)  
+- Organiser UTM / Hub adoption from Hubert promo links  
 
 ---
 
 ## One-line summary
 
-**Member-only Hubert search (admin-only while building), back-of-house matches capped at five (first name + initial; upcoming event primary when present), intro email that onboards B to Accept — every intro persisted and counted (admin totals + member “My intros”); Rosie-curated private seed for Phase 1, then members-first as the graph fills; no scrape, no public contacts.**
+**Ask Hubert to introduce you — member quotas 3 searches / 5 intros per week; Rosie adds seed contacts in Admin Matchmaker; BOH shortlist max five (first + initial; tiered event boost); join-to-Accept with 2-tag onboarding; every intro counted; Phase 1 metrics = funnel + shared-event Accept % + search-to-ticket.**
