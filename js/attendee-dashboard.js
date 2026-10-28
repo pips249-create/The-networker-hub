@@ -105,6 +105,10 @@
       title: 'Member offers',
       sub: 'Free trials, discounts, and practical help arranged for you.',
     },
+    meet: {
+      title: 'Meet people',
+      sub: 'Ask Hubert who you would like to meet. We put forward up to five people — first name and initial only.',
+    },
     'reviews-pending': {
       title: 'Reviews to write',
       sub: 'Leave feedback for networking groups after events you attended. Reviews show on their public profile and they can reply here.',
@@ -190,6 +194,7 @@
       }
       return '#services';
     }
+    if (currentRoute === 'meet') return '#meet';
     return '#' + currentRoute;
   }
 
@@ -2068,6 +2073,9 @@
     ) {
       return 'services';
     }
+    if (hash === 'meet' || hash === 'ask-hubert' || hash === 'hubert-meet') {
+      return 'meet';
+    }
     const allowed = [
       'overview',
       'tickets',
@@ -2076,6 +2084,7 @@
       'opportunity-enquiries',
       'visibility',
       'services',
+      'meet',
     ];
     return allowed.includes(hash) ? hash : 'overview';
   }
@@ -2666,6 +2675,15 @@
       setOpportunitySavedScope('enquiries');
       nextRoute = 'saved-opportunities';
     }
+    if (
+      nextRoute === 'meet' &&
+      window.__hubAttendeeUser &&
+      window.HubHubertMatchmaker &&
+      typeof window.HubHubertMatchmaker.canUseMatchmaker === 'function' &&
+      !window.HubHubertMatchmaker.canUseMatchmaker({ user: window.__hubAttendeeUser })
+    ) {
+      nextRoute = 'overview';
+    }
     currentRoute = nextRoute;
     closeUtilityMenus();
     updateLayoutHeader(layoutRouteKey(currentRoute));
@@ -2693,6 +2711,9 @@
     }
     if (currentRoute === 'services' && window.HubAttendeeServices) {
       window.HubAttendeeServices.render();
+    }
+    if (currentRoute === 'meet' && window.HubHubertMatchmaker) {
+      window.HubHubertMatchmaker.render();
     }
     syncRouteHash();
     if (dashboardReady) {
@@ -5352,6 +5373,7 @@
 
     if (signin) signin.hidden = true;
     if (shell) shell.hidden = false;
+    window.__hubAttendeeUser = sessionData.user || null;
     if (window.HubAttendeeServices) {
       window.HubAttendeeServices.init({
         isAdmin: Boolean(sessionData.user && sessionData.user.role === 'admin'),
@@ -5365,6 +5387,11 @@
         },
       });
     }
+    if (window.HubHubertMatchmaker) {
+      window.HubHubertMatchmaker.init({ session: sessionData });
+    }
+    // Re-apply route now that admin gate + __hubAttendeeUser are known.
+    setRoute(parseRoute());
     setDashboardLoading(true);
     renderWelcome(sessionData.user);
     initOrganiserContextBanner(sessionData);

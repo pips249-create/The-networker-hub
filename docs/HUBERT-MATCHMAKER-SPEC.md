@@ -17,6 +17,13 @@ Until product explicitly turns Matchmaker on for everyone:
 
 Implementation branch: `cursor/hubert-matchmaker-8ac8` (off `main` after this spec).
 
+**Build progress**
+1. ~~Feature flag + admin gate~~ · dashboard **Meet people** search shell (`#meet`, admin-only) with stub shortlist (max 5, first name + initial, upcoming event primary on cards)
+2. Private seed + nominate (ops) — next
+3. Real BOH match API
+4. Request intro → Hubert email → B join to Accept/Decline
+5. Public site teaser (still gated until launch)
+
 ---
 
 ## Problem
