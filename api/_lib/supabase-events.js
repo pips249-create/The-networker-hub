@@ -909,6 +909,11 @@ function seriesDatePayload(ev) {
     outcode: ev.outcode,
     lat: ev.lat,
     lng: ev.lng,
+    // Per-date Link Out / Connected booking targets (FSB etc. use a unique URL each date).
+    checkoutMode: ev.checkoutMode || null,
+    externalBookingUrl: ev.externalBookingUrl || '',
+    externalPriceLabel: ev.externalPriceLabel || '',
+    externalBookingNote: ev.externalBookingNote || '',
   };
 }
 
