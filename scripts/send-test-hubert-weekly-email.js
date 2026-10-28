@@ -1,13 +1,12 @@
 #!/usr/bin/env node
 /**
- * Send a test Hubert weekly popular-events digest (with Meet Rosie / Catherine promo).
+ * Send a test Hubert weekly popular-events digest (Meet Rosie + Meet Catherine promos).
  *
  * Usage:
  *   node scripts/send-test-hubert-weekly-email.js catherine@thenetworkeruk.com
- *   node scripts/send-test-hubert-weekly-email.js catherine@thenetworkeruk.com --promo catherine
- *   node scripts/send-test-hubert-weekly-email.js catherine@thenetworkeruk.com --promo rosie
  *
  * Requires RESEND_API_KEY (and usually RESEND_FROM) in local.env or .env.
+ * Does not touch production attendee send timestamps — safe test-only send.
  */
 const path = require('path');
 const fs = require('fs');
@@ -24,20 +23,15 @@ const { publicSiteBase } = require('../api/_lib/hub-email-urls');
 const {
   buildMeetTeamSectionHtml,
   hubertConciergeWeekLabel,
-  pickCofounderPromo,
+  listTeamEventPromos,
 } = require('../api/_lib/hubert-event-concierge');
 
-const args = process.argv.slice(2).filter((a) => a !== '--');
-const promoIdx = args.indexOf('--promo');
-const promoArg = promoIdx >= 0 ? String(args[promoIdx + 1] || '').trim().toLowerCase() : '';
-const to = String(args.find((a, i) => i !== promoIdx && i !== promoIdx + 1) || '')
+const to = String(process.argv[2] || '')
   .trim()
   .toLowerCase();
 
-if (!to) {
-  console.error(
-    'Usage: node scripts/send-test-hubert-weekly-email.js you@example.com [--promo rosie|catherine]'
-  );
+if (!to || to.startsWith('--')) {
+  console.error('Usage: node scripts/send-test-hubert-weekly-email.js you@example.com');
   process.exit(1);
 }
 
@@ -48,29 +42,11 @@ if (!process.env.RESEND_API_KEY) {
 
 const site = publicSiteBase(process.env.SITE_URL || process.env.PUBLIC_SITE_URL);
 const now = new Date();
-let promoNow = now;
-if (promoArg === 'catherine' || promoArg === 'business' || promoArg === 'business-show') {
-  // Force an odd ISO week so Catherine wins the alternation.
-  for (let i = 0; i < 14; i++) {
-    const candidate = new Date(now.getTime() + i * 24 * 60 * 60 * 1000);
-    if (pickCofounderPromo(candidate)?.id === 'catherine_business_show') {
-      promoNow = candidate;
-      break;
-    }
-  }
-} else if (promoArg === 'rosie' || promoArg === 'martech') {
-  for (let i = 0; i < 14; i++) {
-    const candidate = new Date(now.getTime() + i * 24 * 60 * 60 * 1000);
-    if (pickCofounderPromo(candidate)?.id === 'rosie_martech') {
-      promoNow = candidate;
-      break;
-    }
-  }
-}
-
-const weekLabel = hubertConciergeWeekLabel(promoNow);
-const meetHtml = buildMeetTeamSectionHtml(site, promoNow);
-const promo = pickCofounderPromo(promoNow);
+const weekLabel = hubertConciergeWeekLabel(now);
+const meetHtml = buildMeetTeamSectionHtml(site, now);
+const promoIds = listTeamEventPromos(now)
+  .map((p) => p.id)
+  .join(', ');
 
 const vars = mergeEmailPreviewVariables(
   'attendee_hubert_event_concierge',
@@ -97,7 +73,7 @@ sendTemplatedEmail({
     console.log('Sent Hubert weekly digest test to', to);
     console.log('Resend id:', result.id || 'n/a');
     console.log('Subject:', result.subject || 'n/a');
-    console.log('Promo:', promo ? promo.id + ' — ' + promo.headline : '(none)');
+    console.log('Promos:', promoIds || '(none)');
     console.log('Template source:', result.template_source || 'n/a');
   })
   .catch(function (e) {
