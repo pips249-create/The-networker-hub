@@ -48,7 +48,11 @@
   }
 
   function loginHref(code) {
-    var href = '/login?next=' + encodeURIComponent(verifyReturnPath(code));
+    // Always use the clean confirm path in ?next= so login recovery matches
+    // production URLs (not …/verify-email.html from a static/dev server).
+    var clean = new URL(verifyReturnPath(code), window.location.origin);
+    clean.pathname = '/organiser/verify-email';
+    var href = '/login?next=' + encodeURIComponent(clean.pathname + clean.search + clean.hash);
     var email = String(params().get('email') || '').trim();
     if (email) href += '&email=' + encodeURIComponent(email);
     return href;

@@ -34,6 +34,10 @@
    * Parse /organiser/verify-email from login ?next= (inbox CTA recovery).
    * Mirrors api/_lib/organiser-email-verify-paths.parseVerifyEmailPath.
    */
+  function isVerifyEmailPathname(pathname) {
+    return /^\/organiser\/verify-email(?:\.html)?\/?$/.test(String(pathname || ''));
+  }
+
   function parseVerifyEmailNext(raw) {
     var value = String(raw || '').trim();
     if (!value || value.indexOf('/organiser/verify-email') === -1) return null;
@@ -41,7 +45,7 @@
       var url = /^https?:\/\//i.test(value)
         ? new URL(value)
         : new URL(value, window.location.origin);
-      if (url.pathname.replace(/\/$/, '') !== '/organiser/verify-email') return null;
+      if (!isVerifyEmailPathname(url.pathname)) return null;
       var digits = String(url.searchParams.get('code') || url.searchParams.get('token') || '')
         .replace(/\D/g, '')
         .slice(0, 6);
@@ -51,7 +55,7 @@
           var nestedPath = /^https?:\/\//i.test(nestedNext)
             ? new URL(nestedNext).pathname
             : nestedNext.split('?')[0];
-          if (String(nestedPath || '').replace(/\/$/, '') === '/organiser/verify-email') {
+          if (isVerifyEmailPathname(nestedPath)) {
             nestedNext = '';
           }
         } catch (e) {
@@ -79,7 +83,7 @@
     if (raw.indexOf('/organiser/verify-email') === -1) return raw;
     try {
       var parsed = new URL(raw, window.location.origin);
-      if (parsed.pathname.replace(/\/$/, '') !== '/organiser/verify-email') return raw;
+      if (!isVerifyEmailPathname(parsed.pathname)) return raw;
       parsed.searchParams.delete('code');
       parsed.searchParams.delete('token');
       return parsed.pathname + parsed.search + parsed.hash;

@@ -35,7 +35,7 @@ function parseVerifyEmailPath(raw) {
     const url = /^https?:\/\//i.test(value)
       ? new URL(value)
       : new URL(value, 'https://example.com');
-    if (!/^\/organiser\/verify-email\/?$/.test(url.pathname)) return null;
+    if (!/^\/organiser\/verify-email(?:\.html)?\/?$/.test(url.pathname)) return null;
     const digits = normalizeVerifyCode(
       url.searchParams.get('code') || url.searchParams.get('token') || ''
     );
@@ -43,7 +43,7 @@ function parseVerifyEmailPath(raw) {
       .trim()
       .toLowerCase();
     let next = String(url.searchParams.get('next') || '').trim();
-    if (next && /^\/organiser\/verify-email\/?$/.test(organiserPathOnly(next))) {
+    if (next && /^\/organiser\/verify-email(?:\.html)?\/?$/.test(organiserPathOnly(next))) {
       next = '';
     }
     return {
@@ -86,11 +86,11 @@ function verifyEmailPagePath(email) {
  */
 function buildEmailVerifyRedirect({ next, email, code } = {}) {
   let destination = String(next || '').trim() || '/welcome';
-  if (/^\/organiser\/verify-email\/?$/.test(organiserPathOnly(destination))) {
+  if (/^\/organiser\/verify-email(?:\.html)?\/?$/.test(organiserPathOnly(destination))) {
     const nested = parseVerifyEmailPath(destination);
     destination = (nested && nested.next) || '/welcome';
   }
-  if (/^\/organiser\/verify-email\/?$/.test(organiserPathOnly(destination))) {
+  if (/^\/organiser\/verify-email(?:\.html)?\/?$/.test(organiserPathOnly(destination))) {
     destination = '/welcome';
   }
   const params = new URLSearchParams();

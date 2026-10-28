@@ -66,6 +66,12 @@ const parsedBare = parseVerifyEmailPath('/organiser/verify-email?email=a@b.com')
 assert.equal(parsedBare.code, '');
 assert.equal(parsedBare.next, '');
 
+const parsedHtml = parseVerifyEmailPath(
+  '/organiser/verify-email.html?code=482917&email=User@Example.com'
+);
+assert.equal(parsedHtml.code, '482917');
+assert.equal(parsedHtml.email, 'user@example.com');
+
 assert.equal(parseVerifyEmailPath('/welcome'), null);
 
 const loginSrc = fs.readFileSync(
