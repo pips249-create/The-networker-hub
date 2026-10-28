@@ -18440,6 +18440,8 @@
     var title = raw;
     if (low.indexOf('meetup-coverage:') === 0) {
       label = 'Meetup coverage';
+    } else if (low.indexOf('fsb-coverage:') === 0) {
+      label = 'FSB coverage';
     } else if (low.indexOf('coverage:') === 0) {
       label = 'Coverage import';
     } else {
