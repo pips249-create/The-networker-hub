@@ -19,8 +19,8 @@ Implementation branch: `cursor/hubert-matchmaker-8ac8` (off `main` after this sp
 
 **Build progress**
 1. ~~Feature flag + admin gate~~ · dashboard **Meet people** + Overview Hubert ask strip (admin-only), stub shortlist (max 5, first name + initial, event-first matches)
-2. Private seed + nominate (ops) — next
-3. Real BOH match API
+2. ~~Private seed + nominate (ops)~~ · Admin → Hubert Matchmaker seed list (migration `332_hubert_match_seed.sql`)
+3. Real BOH match API — next
 4. Request intro → Hubert email → B join to Accept/Decline · **persist + count every intro**
 5. Intro tracking surfaces (admin totals + member “My intros”)
 6. Public site teaser (still gated until launch)

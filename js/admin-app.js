@@ -243,6 +243,10 @@
       title: 'Founding organisers',
       subtitle: 'Manage Founding Organiser · 2026 badges, homepage showcase slots, and the group LinkedIn caption',
     },
+    'hubert-matchmaker': {
+      title: 'Hubert Matchmaker',
+      subtitle: 'Private seed list for Rosie/ops — BOH intros only (admin preview until launch)',
+    },
   };
 
   var ADMIN_GUIDES = {
@@ -539,7 +543,7 @@
   var ADMIN_NAV_SECTIONS_KEY = 'tnh_admin_nav_sections_v1';
   var ADMIN_HUB_TABS_KEY = 'tnh_admin_hub_tabs_v1';
   var NAV_SECTION_ROUTES = {
-    platform: ['system', 'analytics', 'international', 'rankings', 'accounts', 'support'],
+    platform: ['system', 'analytics', 'international', 'rankings', 'accounts', 'hubert-matchmaker', 'support'],
     listings: ['cleanup', 'event-intake', 'event-health', 'opportunities', 'moderation'],
     revenue: ['financials', 'revenue-mix', 'revenue-targets'],
     crm: ['pips-activity', 'jamie-targets', 'sales-kit', 'spotlight', 'sponsorship', 'referral-partners'],
@@ -34390,6 +34394,261 @@
     });
   }
 
+  var hubertSeedState = { status: 'active', q: '', cache: null };
+
+  function hubertSeedStatusLabel(status) {
+    if (status === 'active') return 'Active';
+    if (status === 'paused') return 'Paused';
+    if (status === 'converted') return 'Converted';
+    if (status === 'do_not_contact') return 'Do not contact';
+    return status || '—';
+  }
+
+  function renderHubertSeedRows(contacts) {
+    if (!contacts || !contacts.length) {
+      return (
+        '<tr><td colspan="6" class="px-3 py-8 text-sm text-slate-500 text-center">' +
+        'No seed contacts yet. Add people Rosie knows here — they are never a public directory.' +
+        '</td></tr>'
+      );
+    }
+    return contacts
+      .map(function (c) {
+        return (
+          '<tr class="border-t border-slate-100 align-top">' +
+          '<td class="px-3 py-3"><div class="font-semibold text-brand-900">' +
+          esc(c.fullName || '') +
+          '</div><div class="text-xs text-slate-500 mt-0.5">' +
+          esc(c.email || 'No email') +
+          '</div></td>' +
+          '<td class="px-3 py-3 text-sm text-slate-700">' +
+          esc([c.jobTitle, c.company].filter(Boolean).join(' · ') || '—') +
+          '<div class="text-xs text-slate-500 mt-1">' +
+          esc(c.industry || '') +
+          '</div></td>' +
+          '<td class="px-3 py-3 text-sm text-slate-600 max-w-[220px]">' +
+          esc((c.blurb || '').slice(0, 140)) +
+          (c.blurb && c.blurb.length > 140 ? '…' : '') +
+          '</td>' +
+          '<td class="px-3 py-3 text-xs font-semibold">' +
+          esc(hubertSeedStatusLabel(c.status)) +
+          '</td>' +
+          '<td class="px-3 py-3 text-xs text-slate-500 whitespace-nowrap">' +
+          esc((c.updatedAt || '').slice(0, 10) || '—') +
+          '</td>' +
+          '<td class="px-3 py-3 text-right whitespace-nowrap">' +
+          (c.status === 'active'
+            ? '<button type="button" class="rounded border border-slate-200 px-2 py-1 text-xs font-semibold hover:bg-slate-50" data-hmm-seed-pause="' +
+              esc(c.id) +
+              '">Pause</button> '
+            : '<button type="button" class="rounded border border-slate-200 px-2 py-1 text-xs font-semibold hover:bg-slate-50" data-hmm-seed-activate="' +
+              esc(c.id) +
+              '">Activate</button> ') +
+          '<button type="button" class="rounded border border-red-200 text-red-700 px-2 py-1 text-xs font-semibold hover:bg-red-50" data-hmm-seed-delete="' +
+          esc(c.id) +
+          '">Delete</button>' +
+          '</td></tr>'
+        );
+      })
+      .join('');
+  }
+
+  function bindHubertSeedActions(root) {
+    if (!root) return;
+    var form = root.querySelector('#hmm-seed-form');
+    if (form && !form.dataset.bound) {
+      form.dataset.bound = '1';
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var fd = new FormData(form);
+        var payload = {
+          fullName: String(fd.get('fullName') || '').trim(),
+          email: String(fd.get('email') || '').trim(),
+          company: String(fd.get('company') || '').trim(),
+          jobTitle: String(fd.get('jobTitle') || '').trim(),
+          industry: String(fd.get('industry') || '').trim(),
+          professionalRole: String(fd.get('professionalRole') || '').trim(),
+          lookingToMeet: String(fd.get('lookingToMeet') || '').trim(),
+          linkedinUrl: String(fd.get('linkedinUrl') || '').trim(),
+          blurb: String(fd.get('blurb') || '').trim(),
+          notes: String(fd.get('notes') || '').trim(),
+          source: 'rosie',
+          status: 'active',
+        };
+        var errEl = root.querySelector('#hmm-seed-form-error');
+        if (errEl) {
+          errEl.hidden = true;
+          errEl.textContent = '';
+        }
+        adminPost('/api/admin/hubert-matchmaker', payload)
+          .then(function (data) {
+            if (!data || data.ok === false) {
+              throw new Error((data && data.message) || (data && data.error) || 'save_failed');
+            }
+            form.reset();
+            loadHubertMatchmakerSeed();
+          })
+          .catch(function (err) {
+            if (errEl) {
+              errEl.hidden = false;
+              errEl.textContent = (err && err.message) || 'Could not save seed contact.';
+            }
+          });
+      });
+    }
+
+    root.querySelectorAll('[data-hmm-seed-pause]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = btn.getAttribute('data-hmm-seed-pause');
+        if (!id) return;
+        adminPost('/api/admin/hubert-matchmaker', { action: 'pause', id: id, pauseReason: 'manual_pause' }).then(
+          loadHubertMatchmakerSeed
+        );
+      });
+    });
+    root.querySelectorAll('[data-hmm-seed-activate]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = btn.getAttribute('data-hmm-seed-activate');
+        if (!id) return;
+        adminPost('/api/admin/hubert-matchmaker', { action: 'activate', id: id }).then(loadHubertMatchmakerSeed);
+      });
+    });
+    root.querySelectorAll('[data-hmm-seed-delete]').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var id = btn.getAttribute('data-hmm-seed-delete');
+        if (!id || !window.confirm('Delete this seed contact?')) return;
+        adminDelete('/api/admin/hubert-matchmaker', { id: id }).then(loadHubertMatchmakerSeed);
+      });
+    });
+
+    var statusSel = root.querySelector('#hmm-seed-status-filter');
+    var searchInput = root.querySelector('#hmm-seed-search');
+    var refreshBtn = root.querySelector('#hmm-seed-refresh');
+    if (statusSel && !statusSel.dataset.bound) {
+      statusSel.dataset.bound = '1';
+      statusSel.value = hubertSeedState.status || 'active';
+      statusSel.addEventListener('change', function () {
+        hubertSeedState.status = statusSel.value;
+        loadHubertMatchmakerSeed();
+      });
+    }
+    if (searchInput && !searchInput.dataset.bound) {
+      searchInput.dataset.bound = '1';
+      searchInput.value = hubertSeedState.q || '';
+      searchInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          hubertSeedState.q = searchInput.value.trim();
+          loadHubertMatchmakerSeed();
+        }
+      });
+    }
+    if (refreshBtn && !refreshBtn.dataset.bound) {
+      refreshBtn.dataset.bound = '1';
+      refreshBtn.addEventListener('click', function () {
+        var qEl = root.querySelector('#hmm-seed-search');
+        hubertSeedState.q = qEl ? qEl.value.trim() : '';
+        loadHubertMatchmakerSeed();
+      });
+    }
+  }
+
+  function paintHubertMatchmakerSeed(data) {
+    if (!main) return;
+    if (!data || data.ok === false) {
+      main.innerHTML =
+        '<div class="rounded-xl border border-amber-200 bg-amber-50 p-5 text-amber-950">' +
+        '<p class="font-semibold">Seed list not ready</p>' +
+        '<p class="text-sm mt-2">' +
+        esc(
+          (data && data.message) ||
+            'Run migration 332_hubert_match_seed.sql in Supabase, then refresh.'
+        ) +
+        '</p></div>';
+      return;
+    }
+    var totals = data.totals || {};
+    main.innerHTML =
+      '<div class="space-y-6">' +
+      '<div class="rounded-xl border border-violet-200 bg-gradient-to-br from-violet-50 to-sky-50 p-5">' +
+      '<p class="text-xs font-bold uppercase tracking-wider text-violet-800">Ask Hubert to introduce you</p>' +
+      '<h3 class="text-lg font-bold text-brand-900 mt-1">Private seed list</h3>' +
+      '<p class="text-sm text-slate-600 mt-1 max-w-3xl">Rosie and ops add warm contacts here. They only appear in back-of-house shortlists (max 5, first name + initial). Not a public directory.</p>' +
+      '<div class="mt-4 flex flex-wrap gap-3 text-sm">' +
+      '<span class="rounded-full bg-white/80 border border-violet-200 px-3 py-1 font-semibold text-violet-900">Active ' +
+      esc(String(totals.active || 0)) +
+      '</span>' +
+      '<span class="rounded-full bg-white/80 border border-slate-200 px-3 py-1 font-semibold text-slate-700">Paused ' +
+      esc(String(totals.paused || 0)) +
+      '</span>' +
+      '<span class="rounded-full bg-white/80 border border-slate-200 px-3 py-1 font-semibold text-slate-700">Converted ' +
+      esc(String(totals.converted || 0)) +
+      '</span>' +
+      '</div></div>' +
+      '<section class="rounded-xl border border-slate-200 bg-white shadow-sm p-5">' +
+      '<h3 class="font-bold text-brand-900">Add seed contact</h3>' +
+      '<form id="hmm-seed-form" class="mt-4 grid gap-3 sm:grid-cols-2">' +
+      '<label class="text-sm font-semibold text-slate-700">Full name<input required name="fullName" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>' +
+      '<label class="text-sm font-semibold text-slate-700">Email<input name="email" type="email" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>' +
+      '<label class="text-sm font-semibold text-slate-700">Company<input name="company" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>' +
+      '<label class="text-sm font-semibold text-slate-700">Job title<input name="jobTitle" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>' +
+      '<label class="text-sm font-semibold text-slate-700">Industry<input name="industry" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>' +
+      '<label class="text-sm font-semibold text-slate-700">I am a<input name="professionalRole" placeholder="Founder, Investor…" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>' +
+      '<label class="text-sm font-semibold text-slate-700 sm:col-span-2">Looking to meet<input name="lookingToMeet" placeholder="Clients, Investors (comma-separated)" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>' +
+      '<label class="text-sm font-semibold text-slate-700 sm:col-span-2">LinkedIn URL<input name="linkedinUrl" type="url" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></label>' +
+      '<label class="text-sm font-semibold text-slate-700 sm:col-span-2">Short blurb<textarea name="blurb" rows="3" maxlength="800" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="Paste/edit from LinkedIn About — do not scrape"></textarea></label>' +
+      '<label class="text-sm font-semibold text-slate-700 sm:col-span-2">Internal notes<textarea name="notes" rows="2" maxlength="1000" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"></textarea></label>' +
+      '<div class="sm:col-span-2 flex items-center gap-3">' +
+      '<button type="submit" class="rounded-lg bg-brand-700 text-white text-sm font-semibold px-4 py-2 hover:bg-brand-800">Save to seed list</button>' +
+      '<p id="hmm-seed-form-error" class="text-sm text-red-700" hidden></p>' +
+      '</div></form></section>' +
+      '<section class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">' +
+      '<div class="px-4 py-3 border-b border-slate-100 flex flex-wrap gap-2 items-center justify-between">' +
+      '<h3 class="font-bold text-brand-900">Seed contacts</h3>' +
+      '<div class="flex flex-wrap gap-2 items-center">' +
+      '<select id="hmm-seed-status-filter" class="rounded-lg border border-slate-300 text-sm px-2 py-1.5">' +
+      '<option value="">All statuses</option>' +
+      '<option value="active">Active</option>' +
+      '<option value="paused">Paused</option>' +
+      '<option value="converted">Converted</option>' +
+      '<option value="do_not_contact">Do not contact</option>' +
+      '</select>' +
+      '<input id="hmm-seed-search" type="search" placeholder="Search name, email, company" class="rounded-lg border border-slate-300 text-sm px-3 py-1.5 min-w-[180px]" />' +
+      '<button type="button" id="hmm-seed-refresh" class="rounded-lg border border-slate-300 text-sm font-semibold px-3 py-1.5 hover:bg-slate-50">Refresh</button>' +
+      '</div></div>' +
+      '<div class="overflow-x-auto"><table class="min-w-full text-left text-sm">' +
+      '<thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr>' +
+      '<th class="px-3 py-2 font-semibold">Person</th><th class="px-3 py-2 font-semibold">Role</th><th class="px-3 py-2 font-semibold">Blurb</th><th class="px-3 py-2 font-semibold">Status</th><th class="px-3 py-2 font-semibold">Updated</th><th class="px-3 py-2 font-semibold text-right">Actions</th>' +
+      '</tr></thead><tbody id="hmm-seed-tbody">' +
+      renderHubertSeedRows(data.contacts || []) +
+      '</tbody></table></div></section></div>';
+    bindHubertSeedActions(main);
+  }
+
+  function loadHubertMatchmakerSeed() {
+    if (!main) return;
+    var params = new URLSearchParams();
+    params.set('limit', '200');
+    if (hubertSeedState.status) params.set('status', hubertSeedState.status);
+    if (hubertSeedState.q) params.set('q', hubertSeedState.q);
+    main.innerHTML = '<p class="text-sm text-slate-500">Loading Hubert seed list…</p>';
+    adminGet('/api/admin/hubert-matchmaker?' + params.toString())
+      .then(function (data) {
+        hubertSeedState.cache = data;
+        paintHubertMatchmakerSeed(data);
+      })
+      .catch(function (err) {
+        paintHubertMatchmakerSeed({
+          ok: false,
+          message: (err && err.message) || 'Could not load seed list.',
+        });
+      });
+  }
+
+  function renderHubertMatchmaker() {
+    loadHubertMatchmakerSeed();
+  }
+
   var routes = {
     dashboard: renderDashboard,
     analytics: renderAnalyticsHub,
@@ -34412,6 +34671,7 @@
     featured: renderFeatured,
     support: renderSupportHub,
     sponsorship: renderSponsorshipHub,
+    'hubert-matchmaker': renderHubertMatchmaker,
     'referral-partners': renderAffiliatePartnersPage,
     'affiliate-partners': function () {
       location.replace('#referral-partners');
