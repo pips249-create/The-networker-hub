@@ -140,8 +140,8 @@ assert.match(
 );
 assert.match(
   verificationSrc,
-  /buildOrganiserVerifyEmailPath\(code,\s*address\)/,
-  'confirm email CTA must include the code so the page can prefill it'
+  /buildOrganiserVerifyEmailInboxCta\(code,\s*address\)/,
+  'confirm email CTA must open login with next=…/verify-email?code=… (no flash)'
 );
 assert.match(
   verificationSrc,

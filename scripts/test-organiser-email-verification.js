@@ -10,14 +10,20 @@ const fs = require('fs');
 const path = require('path');
 const {
   buildOrganiserVerifyEmailPath,
+  buildOrganiserVerifyEmailInboxCta,
   verifyEmailPagePath,
   buildEmailVerifyRedirect,
   parseVerifyEmailPath,
 } = require('../api/_lib/organiser-email-verify-paths');
 
-const inboxPath = buildOrganiserVerifyEmailPath('482917', 'Organiser@Example.com');
-assert.match(inboxPath, /^\/organiser\/verify-email\?code=482917&email=/);
-assert(inboxPath.includes('organiser%40example.com'), 'email should be normalised and encoded');
+const confirmPath = buildOrganiserVerifyEmailPath('482917', 'Organiser@Example.com');
+assert.match(confirmPath, /^\/organiser\/verify-email\?code=482917&email=/);
+assert(confirmPath.includes('organiser%40example.com'), 'email should be normalised and encoded');
+
+const inboxCta = buildOrganiserVerifyEmailInboxCta('482917', 'Organiser@Example.com');
+assert.match(inboxCta, /^\/login\?/);
+assert.match(inboxCta, /next=%2Forganiser%2Fverify-email%3Fcode%3D482917/);
+assert.match(inboxCta, /email=organiser%40example.com/);
 
 const codeOnly = buildOrganiserVerifyEmailPath('000001', '');
 assert.equal(codeOnly, '/organiser/verify-email?code=000001');
@@ -65,6 +71,12 @@ assert.equal(parsed.next, '/organiser/');
 const parsedBare = parseVerifyEmailPath('/organiser/verify-email?email=a@b.com');
 assert.equal(parsedBare.code, '');
 assert.equal(parsedBare.next, '');
+
+const parsedHtml = parseVerifyEmailPath(
+  '/organiser/verify-email.html?code=482917&email=User@Example.com'
+);
+assert.equal(parsedHtml.code, '482917');
+assert.equal(parsedHtml.email, 'user@example.com');
 
 assert.equal(parseVerifyEmailPath('/welcome'), null);
 
@@ -157,6 +169,38 @@ assert.match(
   verifyPageSrc,
   /await submitCode\(urlCode\)/,
   'signed-in inbox opens must POST the prefilled code'
+);
+assert.match(
+  verifyPageSrc,
+  /showSignedOutUi/,
+  'signed-out inbox opens must keep the code screen (no flash redirect)'
+);
+assert.match(
+  verifyPageSrc,
+  /Sign in to confirm/,
+  'signed-out confirm CTA must send people through login with the code'
+);
+assert.doesNotMatch(
+  verifyPageSrc,
+  /window\.location\.href = '\/login\?next=' \+ encodeURIComponent\(returnTo\)/,
+  'must not auto-bounce signed-out visitors off the code screen'
+);
+
+const authJsSrc = fs.readFileSync(path.join(__dirname, '../js/auth.js'), 'utf8');
+assert.match(
+  authJsSrc,
+  /parseVerifyEmailNext/,
+  'login must parse inbox confirm links from ?next='
+);
+assert.match(
+  authJsSrc,
+  /applyConfirmEmailContext/,
+  'login must show a confirm-email callout for inbox recovery'
+);
+assert.match(
+  authJsSrc,
+  /verifyRecovery/,
+  'audience toggle must not wipe confirm-email ?next= (drops the code)'
 );
 
 console.log('OK  organiser email verification paths');

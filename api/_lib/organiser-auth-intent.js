@@ -86,7 +86,7 @@ function hasVerifyEmailToken(next) {
   try {
     const url = /^https?:\/\//i.test(raw) ? new URL(raw) : new URL(raw, 'https://example.com');
     return (
-      /^\/organiser\/verify-email\/?$/.test(url.pathname) &&
+      /^\/organiser\/verify-email(?:\.html)?\/?$/.test(url.pathname) &&
       !!(url.searchParams.get('token') || url.searchParams.get('code'))
     );
   } catch {

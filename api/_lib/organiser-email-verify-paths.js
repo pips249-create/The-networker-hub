@@ -1,8 +1,14 @@
 /**
  * URL helpers for organiser / account email confirmation.
  *
- * Inbox CTAs include ?code= so a signed-in confirm page can finish in one step.
- * In-app redirects must stay code-free unless recovering an inbox link through
+ * REGRESSION LOCK (Glenn / inbox drop-off): earlier “fixes” (#251 prefill,
+ * #281 preserve-code-through-login, #284 skip organiser-intent resend) still
+ * sent signed-out inbox clicks to /organiser/verify-email, which flashed the
+ * code form then bounced to a bare login page. Inbox CTAs must open /login
+ * with next=/organiser/verify-email?code=… so the first paint is sign-in (with
+ * callout). The confirm page itself must never auto-redirect when signed out.
+ *
+ * In-app redirects stay code-free unless recovering an inbox link through
  * login (see parseVerifyEmailPath + buildEmailVerifyRedirect({ code })).
  * GET never verifies — only POST after a session exists.
  */
@@ -35,7 +41,7 @@ function parseVerifyEmailPath(raw) {
     const url = /^https?:\/\//i.test(value)
       ? new URL(value)
       : new URL(value, 'https://example.com');
-    if (!/^\/organiser\/verify-email\/?$/.test(url.pathname)) return null;
+    if (!/^\/organiser\/verify-email(?:\.html)?\/?$/.test(url.pathname)) return null;
     const digits = normalizeVerifyCode(
       url.searchParams.get('code') || url.searchParams.get('token') || ''
     );
@@ -43,7 +49,7 @@ function parseVerifyEmailPath(raw) {
       .trim()
       .toLowerCase();
     let next = String(url.searchParams.get('next') || '').trim();
-    if (next && /^\/organiser\/verify-email\/?$/.test(organiserPathOnly(next))) {
+    if (next && /^\/organiser\/verify-email(?:\.html)?\/?$/.test(organiserPathOnly(next))) {
       next = '';
     }
     return {
@@ -70,6 +76,23 @@ function buildOrganiserVerifyEmailPath(code, email) {
   return path;
 }
 
+/**
+ * Inbox email button target. Always /login?next=…/verify-email?code=…
+ * so signed-out people never see the code screen flash away to a bare login.
+ * Signed-in people are forwarded to the confirm page (and auto-submit) by
+ * maybeRedirectAuthenticatedLogin.
+ */
+function buildOrganiserVerifyEmailInboxCta(code, email) {
+  const verifyPath = buildOrganiserVerifyEmailPath(code, email);
+  const params = new URLSearchParams();
+  params.set('next', verifyPath);
+  const address = String(email || '')
+    .trim()
+    .toLowerCase();
+  if (address) params.set('email', address);
+  return '/login?' + params.toString();
+}
+
 /** Confirm-email screen with no secret. Safe to put in a browser redirect. */
 function verifyEmailPagePath(email) {
   const address = String(email || '')
@@ -86,11 +109,11 @@ function verifyEmailPagePath(email) {
  */
 function buildEmailVerifyRedirect({ next, email, code } = {}) {
   let destination = String(next || '').trim() || '/welcome';
-  if (/^\/organiser\/verify-email\/?$/.test(organiserPathOnly(destination))) {
+  if (/^\/organiser\/verify-email(?:\.html)?\/?$/.test(organiserPathOnly(destination))) {
     const nested = parseVerifyEmailPath(destination);
     destination = (nested && nested.next) || '/welcome';
   }
-  if (/^\/organiser\/verify-email\/?$/.test(organiserPathOnly(destination))) {
+  if (/^\/organiser\/verify-email(?:\.html)?\/?$/.test(organiserPathOnly(destination))) {
     destination = '/welcome';
   }
   const params = new URLSearchParams();
@@ -106,6 +129,7 @@ function buildEmailVerifyRedirect({ next, email, code } = {}) {
 
 module.exports = {
   buildOrganiserVerifyEmailPath,
+  buildOrganiserVerifyEmailInboxCta,
   verifyEmailPagePath,
   buildEmailVerifyRedirect,
   parseVerifyEmailPath,
