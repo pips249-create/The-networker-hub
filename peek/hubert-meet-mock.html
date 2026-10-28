@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <title>Preview: Meet people (Hubert) – The Networker UK</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../css/hub.css?v=20261016signin1" />
+    <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20260812footer11" />
+    <link rel="stylesheet" href="../css/hub-side-nav.css?v=20260929services2" />
+    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20261028meet2" />
+    <style>
+      body.attendee-dashboard-page {
+        margin: 0;
+      }
+      .hmm-mock-banner {
+        margin: 0;
+        padding: 10px 16px;
+        background: #1c2040;
+        color: #fff;
+        font-size: 13px;
+        text-align: center;
+      }
+      .hmm-mock-banner a {
+        color: #f6d58a;
+      }
+      .ad-dashboard-layout {
+        min-height: calc(100vh - 40px);
+      }
+      .ad-page.is-active {
+        display: block;
+      }
+      .ad-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 0;
+        cursor: pointer;
+        font: inherit;
+        font-weight: 700;
+        border-radius: 8px;
+        padding: 10px 16px;
+      }
+      .ad-btn-primary {
+        background: #bd932e;
+        color: #fff;
+      }
+    </style>
+  </head>
+  <body class="attendee-dashboard-page hub-page-account">
+    <p class="hmm-mock-banner">
+      Design preview — Hubert on <strong>Overview</strong> + <strong>Meet people</strong>
+      (same CSS/JS as production; no sign-in).
+      <a href="#overview-preview">Overview</a>
+      ·
+      <a href="#meet-preview">Meet page</a>
+    </p>
+
+    <div id="ad-shell">
+      <div class="ad-dashboard-layout">
+        <aside class="ad-sidebar">
+          <nav class="hub-side-nav hub-side-nav--minimal ad-dash-bar" aria-label="Attendee dashboard">
+            <a href="#overview-preview" class="hub-side-nav-link is-active">Overview</a>
+            <a href="#meet-preview" class="hub-side-nav-link">
+              Meet people
+              <span class="ad-side-admin-pill" aria-hidden="true">Admin</span>
+            </a>
+          </nav>
+        </aside>
+
+        <div class="ad-main">
+          <div class="ad-wrap">
+            <header class="ad-page-head" id="overview-preview">
+              <p class="ad-hero-kicker">Attendee dashboard</p>
+              <h1 class="ad-welcome-name">Welcome back, Pip</h1>
+              <p class="ad-welcome-sub">Ready when you are — find a room this week.</p>
+            </header>
+
+            <div class="hmm hmm--overview" id="ad-overview-hubert-meet" data-hmm-shell>
+              <p class="hmm-admin-badge" data-hmm-admin-badge>Admin preview — not visible to other members yet.</p>
+              <div class="hmm-hero">
+                <img class="hmm-hero-avatar" src="../assets/hubert-icon.png" width="72" height="72" alt="" />
+                <div class="hmm-hero-copy">
+                  <p class="hmm-hero-kicker">Your matchmaker</p>
+                  <h2 class="hmm-hero-title">Ask Hubert who you&rsquo;d like to meet</h2>
+                  <p class="hmm-hero-sub">
+                    Describe the person. Hubert puts forward up to five people — first name &amp; initial only.
+                    Upcoming events come first on each match.
+                  </p>
+                </div>
+              </div>
+              <form class="hmm-composer" data-hmm-form>
+                <label class="visually-hidden" for="hmm-overview-query">Who would you like to meet?</label>
+                <div class="hmm-composer-row">
+                  <img class="hmm-composer-avatar" src="../assets/hubert-icon.png" width="40" height="40" alt="" />
+                  <input
+                    id="hmm-overview-query"
+                    class="hmm-composer-input"
+                    type="search"
+                    data-hmm-query
+                    value="fintech founders in Manchester"
+                    required
+                  />
+                  <button type="submit" class="ad-btn ad-btn-primary hmm-composer-submit">Ask Hubert</button>
+                </div>
+                <p class="hmm-error" data-hmm-error hidden role="alert"></p>
+              </form>
+              <p class="hmm-preview-note" data-hmm-preview hidden role="status"></p>
+              <div class="hmm-results" data-hmm-results hidden role="list"></div>
+              <div class="hmm-empty" data-hmm-empty hidden></div>
+              <p class="hmm-overview-more"><a href="#meet-preview">Open full Meet people page</a></p>
+            </div>
+
+            <header class="ad-subpage-head" id="meet-preview" style="margin-top: 40px">
+              <div class="ad-subpage-head-grid">
+                <div class="ad-subpage-head-text">
+                  <p class="ad-subpage-kicker">Attendee dashboard</p>
+                  <h1 class="ad-subpage-title">Meet people</h1>
+                  <p class="ad-subpage-sub">
+                    Hubert is your matchmaker — describe who you want to meet and he’ll put forward up to five people.
+                  </p>
+                </div>
+              </div>
+            </header>
+
+            <section class="ad-page is-active" id="ad-page-meet" data-ad-page="meet">
+              <div class="hmm hmm--page" data-hmm-shell>
+                <p class="hmm-admin-badge" data-hmm-admin-badge>Admin preview — not visible to other members yet.</p>
+                <div class="hmm-hero hmm-hero--page">
+                  <img class="hmm-hero-avatar hmm-hero-avatar--lg" src="../assets/hubert-icon.png" width="96" height="96" alt="" />
+                  <div class="hmm-hero-copy">
+                    <p class="hmm-hero-kicker">Hubert</p>
+                    <h2 class="hmm-hero-title">Who would you like to meet?</h2>
+                    <p class="hmm-hero-sub">
+                      I’ll match back of house and put forward up to five people — first name and initial only.
+                      If they’re going to an event soon, that leads the match.
+                    </p>
+                  </div>
+                </div>
+                <form class="hmm-composer" data-hmm-form>
+                  <label class="visually-hidden" for="hmm-query">Who would you like to meet?</label>
+                  <div class="hmm-composer-row">
+                    <img class="hmm-composer-avatar" src="../assets/hubert-icon.png" width="40" height="40" alt="" />
+                    <input id="hmm-query" class="hmm-composer-input" type="search" data-hmm-query required />
+                    <button type="submit" class="ad-btn ad-btn-primary hmm-composer-submit">Ask Hubert</button>
+                  </div>
+                  <p class="hmm-error" data-hmm-error hidden role="alert"></p>
+                </form>
+                <p class="hmm-preview-note" data-hmm-preview hidden role="status"></p>
+                <div class="hmm-results" data-hmm-results hidden role="list"></div>
+                <div class="hmm-empty" data-hmm-empty hidden></div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="../js/hubert-matchmaker.js?v=20261028meet2"></script>
+    <script>
+      (function () {
+        var mm = window.HubHubertMatchmaker;
+        if (!mm) return;
+        var realCan = mm.canUseMatchmaker;
+        mm.canUseMatchmaker = function () {
+          return true;
+        };
+        mm.init({ session: { user: { role: 'admin', name: 'Admin' } } });
+        mm.canUseMatchmaker = realCan;
+        var form = document.querySelector('#ad-overview-hubert-meet [data-hmm-form]');
+        if (form) form.requestSubmit();
+      })();
+    </script>
+  </body>
+</html>
