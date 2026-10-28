@@ -629,7 +629,7 @@
     var calloutText = document.getElementById('auth-intent-callout-text');
     if (calloutText) {
       calloutText.textContent = verify.code
-        ? 'Sign in with the same email — then tap Confirm your email on the next screen to finish.'
+        ? 'Sign in with the same email — we finish confirmation with the code from your inbox.'
         : 'Sign in with the same email, then type the confirmation code from your inbox.';
     }
 
@@ -642,7 +642,7 @@
     var loginLede = document.getElementById('login-form-lede');
     if (loginLede) {
       loginLede.textContent =
-        'Use the email address your confirmation code was sent to. After you sign in, enter the code on the confirm screen to continue.';
+        'Use the email address your confirmation code was sent to. After you sign in we take you back to finish.';
     }
   }
 
