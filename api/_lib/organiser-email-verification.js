@@ -10,6 +10,7 @@ const { getHubAccount } = require('./supabase-auth');
 const { emailSiteBase } = require('./hub-email-urls');
 const {
   buildOrganiserVerifyEmailPath,
+  buildOrganiserVerifyEmailInboxCta,
   verifyEmailPagePath,
 } = require('./organiser-email-verify-paths');
 
@@ -171,10 +172,10 @@ async function sendOrganiserEmailVerification({ userId, email, name, revealCode,
   const code = newVerifyCode();
   await storeVerifyToken(userId, code, { onlyIfUnverified: reminderSend });
 
-  // Email CTA includes the code. GET never verifies — only a signed-in POST
-  // does. The confirm page submits that POST once a session exists so inbox
-  // opens finish without a second tap; mail scanners lack the session cookie.
-  const emailVerifyPath = buildOrganiserVerifyEmailPath(code, address);
+  // Inbox CTA opens /login?next=…/verify-email?code=… — never the confirm page
+  // alone. Signed-out people see sign-in with a callout (no flash). Signed-in
+  // people are forwarded to confirm, which POSTs the code. GET never verifies.
+  const emailVerifyPath = buildOrganiserVerifyEmailInboxCta(code, address);
   const verifyUrl = siteHost() + emailVerifyPath;
   // In-app redirects stay code-free; only the inbox link carries the digits.
   const safeVerifyPath = verifyEmailPagePath(address);
