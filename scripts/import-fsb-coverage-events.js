@@ -292,213 +292,32 @@ async function publishEvent(sb, spec) {
   return ev;
 }
 
+/** Venue / city cover images (not FSB logo placeholders). */
+const IMG = {
+  britishLibrary:
+    'https://images.unsplash.com/photo-1771139576882-95890e299938?w=1200&auto=format&fit=crop',
+  liverpool:
+    'https://images.unsplash.com/photo-1715523535328-d534f33f93d3?w=1200&auto=format&fit=crop',
+  glasgow:
+    'https://images.unsplash.com/photo-1621519604512-85ea63c15ca2?w=1200&auto=format&fit=crop',
+  cowork:
+    'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&auto=format&fit=crop',
+  networking:
+    'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=1200&auto=format&fit=crop',
+  meeting:
+    'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=1200&auto=format&fit=crop',
+  online:
+    'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=1200&auto=format&fit=crop',
+};
+
+/**
+ * Curated from the live events.fsb.org.uk calendar (prices/dates/URLs verified).
+ * Do not invent listings that are not on the FSB calendar.
+ */
 function buildEventSpecs() {
   return [
-    // —— Greater London ——
-    {
-      organiserId: ORG.greaterLondon,
-      regionKey: 'greater-london',
-      title: 'FSB Connect Networking Event, Central London - November',
-      titleMatch: 'FSB Connect Networking Event, Central London',
-      date: '2026-11-04T11:00:00',
-      endDate: '2026-11-04T12:30:00',
-      venue: 'The British Library',
-      addressLine1: '96 Euston Road',
-      city: 'London',
-      postcode: 'NW1 2DB',
-      description:
-        'Monthly Central London FSB Connect at the British Library Business & IP Centre — open informal networking for FSB members and non-members.',
-      priceNote: 'Free — book via Eventbrite.',
-      priceLabel: 'Free',
-      bookingUrl:
-        'https://www.eventbrite.co.uk/e/fsb-connect-networking-event-central-london-november-tickets-2002617391527',
-      sourceId: sourceId('greater-london', '2026-11-04'),
-    },
-    {
-      organiserId: ORG.greaterLondon,
-      regionKey: 'greater-london',
-      title: 'FSB Connect Wimbledon - November',
-      titleMatch: 'FSB Connect Wimbledon',
-      date: '2026-11-10T15:30:00',
-      endDate: '2026-11-10T18:30:00',
-      venue: '1-2 Wimbledon Bridge',
-      addressLine1: 'Wimbledon Bridge',
-      city: 'London',
-      postcode: 'SW19 7NW',
-      description:
-        'FSB Connect Wimbledon — local SME networking with FSB membership advisers and Metro Bank support. Free to attend; booking essential.',
-      priceNote: 'Free — book via FSB events.',
-      priceLabel: 'Free',
-      bookingUrl:
-        'https://events.fsb.org.uk/en/8d2bI2X7/g/fJqTd8nh8e/fsb-connect-in-wimbledon-nov-3aJ8PzoRR/overview',
-      sourceId: sourceId('greater-london', '2026-11-10'),
-    },
-    // —— East of England (Herts) ——
-    {
-      organiserId: ORG.eastOfEngland,
-      regionKey: 'east-of-england',
-      title: 'FSB Connect St Albans - November',
-      titleMatch: 'FSB Connect St Albans - November',
-      date: '2026-11-03T09:30:00',
-      endDate: '2026-11-03T11:30:00',
-      venue: 'Co-Space St Albans',
-      addressLine1: 'Jubilee Square',
-      city: 'St Albans',
-      postcode: 'AL1 3TJ',
-      description:
-        'Morning FSB Connect networking for small businesses around St Albans — informal conversation and local connections.',
-      priceNote: 'Free for FSB members · £5 for non-members — book via FSB events.',
-      priceLabel: 'From £5',
-      bookingUrl:
-        'https://events.fsb.org.uk/en/8d2bI2X7/g/fJqTd8nh8e/fsb-connect-st-albans-nov-3aJ8PzWMT',
-      sourceId: sourceId('east-of-england', '2026-11-03'),
-    },
-    {
-      organiserId: ORG.eastOfEngland,
-      regionKey: 'east-of-england',
-      title: 'FSB Connect St Albans - December',
-      titleMatch: 'FSB Connect St Albans - December',
-      date: '2026-12-01T09:30:00',
-      endDate: '2026-12-01T12:00:00',
-      venue: 'Co-Space St Albans',
-      addressLine1: 'Victoria Street',
-      city: 'St Albans',
-      postcode: 'AL1 3JJ',
-      description:
-        'FSB Connect St Albans — structured and informal networking for local businesses at Co-Space.',
-      priceNote: 'Free for FSB members · £5 for non-members — book via FSB events.',
-      priceLabel: 'From £5',
-      bookingUrl:
-        'https://events.fsb.org.uk/en/g/fJqTd8nh8e/fsb-connect-st-albans-dec-3aJ8PzWO5/overview',
-      sourceId: sourceId('east-of-england', '2026-12-01'),
-    },
-
-    // —— Wales ——
-    {
-      organiserId: ORG.wales,
-      regionKey: 'wales',
-      title: 'FSB Connect South East Wales - December (Cardiff)',
-      titleMatch: 'FSB Connect South East Wales - December',
-      date: '2026-12-03T09:00:00',
-      endDate: '2026-12-03T11:30:00',
-      venue: 'Space2B@The Maltings',
-      addressLine1: 'East Tyndall Street',
-      city: 'Cardiff',
-      postcode: 'CF24 5EA',
-      description:
-        'FSB Connect South East Wales in Cardiff — introductions, informal networking and small-business support at Space2B.',
-      priceNote: 'From £5 — book via FSB events.',
-      priceLabel: 'From £5',
-      bookingUrl:
-        'https://events.fsb.org.uk/en/8d2bI2X7/g/fJqTd8nh8e/fsb-connect-south-east-wales-december-3aJ8PzmXh/overview',
-      sourceId: sourceId('wales', '2026-12-03'),
-    },
-    {
-      organiserId: ORG.wales,
-      regionKey: 'wales',
-      title: 'FSB Connect North Wales - December',
-      titleMatch: 'FSB Connect North Wales - December',
-      date: '2026-12-16T09:30:00',
-      endDate: '2026-12-16T11:00:00',
-      venue: 'Coleg Cambria Business School',
-      addressLine1: 'Holywell Road, Northop',
-      city: 'Mold',
-      postcode: 'CH7 6AA',
-      description:
-        'Monthly FSB Connect North Wales — open to members and non-members for face-to-face small-business networking.',
-      priceNote: 'Free — book via FSB events.',
-      priceLabel: 'Free',
-      bookingUrl:
-        'https://events.fsb.org.uk/en/8d2bI2X7/g/fJqTd8nh8e/fsb-connect-in-north-wales-3aJ8Pz9Cz/overview',
-      sourceId: sourceId('wales', '2026-12-16'),
-    },
-    {
-      organiserId: ORG.wales,
-      regionKey: 'wales',
-      title: 'FSB Connect Online in Wales - 10 December',
-      titleMatch: 'FSB Connect Online in Wales',
-      date: '2026-12-10T13:00:00',
-      endDate: '2026-12-10T14:00:00',
-      venue: '',
-      addressLine1: '',
-      city: 'Online',
-      postcode: '',
-      online: true,
-      description: 'Online FSB Connect for Wales — join remotely for networking and updates.',
-      priceNote: 'Free — book via FSB events.',
-      priceLabel: 'Free',
-      bookingUrl:
-        'https://events.fsb.org.uk/en/8d2bI2X7/g/fJqTd8nh8e/fsb-connect-online-in-wales-10-december-3aJ8PzndR/overview',
-      sourceId: sourceId('wales', '2026-12-10'),
-    },
-
-    // —— Scotland (ensure Glasgow Link Out stays correct) ——
-    {
-      organiserId: ORG.scotland,
-      regionKey: 'scotland',
-      title: 'FSB Connect Glasgow - Oct',
-      titleMatch: 'FSB Connect Glasgow',
-      date: '2026-10-29T10:00:00',
-      endDate: '2026-10-29T12:00:00',
-      venue: 'FSB Scotland Office',
-      addressLine1: '58 Waterloo Street',
-      city: 'Glasgow',
-      postcode: 'G2 7DA',
-      description:
-        'Popular FSB Connect networking for small businesses and the self-employed at the FSB Scotland office.',
-      priceNote: 'Free for FSB members and non-members — book via FSB events.',
-      priceLabel: 'Free',
-      bookingUrl:
-        'https://events.fsb.org.uk/en/8d2bI2X7/g/fJqTd8nh8e/fsb-connect-glasgow-oct-3aJ8Pziib',
-      sourceId: sourceId('scotland', '2026-10-29'),
-    },
-
-    // —— North West ——
-    {
-      organiserId: ORG.northWest,
-      regionKey: 'north-west',
-      title: 'FSB Connect Liverpool - October',
-      titleMatch: 'FSB Connect Liverpool - October',
-      date: '2026-10-29T17:00:00',
-      endDate: '2026-10-29T19:00:00',
-      venue: 'The Municipal Hotel & Spa Liverpool - MGallery',
-      addressLine1: 'Dale Street',
-      city: 'Liverpool',
-      postcode: 'L2 2DH',
-      description:
-        'FSB Connect Liverpool with Colony Networking — evening networking for Merseyside small businesses at the Municipal Hotel.',
-      priceNote: 'Book via FSB events.',
-      priceLabel: 'Tickets available',
-      bookingUrl:
-        'https://events.fsb.org.uk/en/8d2bI2X7/g/fJqTd8nh8e/fsb-connect-liverpool-nov-3aJ8PzNFx',
-      sourceId: sourceId('north-west', '2026-10-29'),
-    },
-
-    // —— Brighton (dedicated Connect organiser page) ——
-    {
-      organiserId: ORG.brighton,
-      regionKey: 'brighton',
-      title: 'FSB Connect Brighton - November',
-      titleMatch: 'FSB Connect Brighton - November',
-      date: '2026-11-12T10:00:00',
-      endDate: '2026-11-12T12:00:00',
-      venue: 'Brighton Marina Yacht Club',
-      addressLine1: 'Brighton Marina',
-      city: 'Brighton',
-      postcode: 'BN2 5UF',
-      description:
-        'Monthly FSB Connect Brighton at Brighton Marina Yacht Club — second Thursday networking for members and non-members.',
-      priceNote: 'Book via FSB events.',
-      priceLabel: 'Tickets available',
-      bookingUrl:
-        'https://events.fsb.org.uk/en/8d2bI2X7/g/fJqTd8nh8e/fsb-connect-in-brighton-3aJ8P2pgr',
-      sourceId: sourceId('brighton', '2026-11-12'),
-    },
-
-    // —— Yorkshire ——
     {
       organiserId: ORG.yorkshire,
-      regionKey: 'yorkshire',
       title: 'FSB Connect Networking event, Ibis Styles Barnsley - October',
       titleMatch: 'FSB Connect Networking event, Ibis Styles Barnsley',
       date: '2026-10-28T10:00:00',
@@ -508,12 +327,165 @@ function buildEventSpecs() {
       city: 'Barnsley',
       postcode: 'S75 3TX',
       description:
-        'FSB Connect South Yorkshire networking at Ibis Styles Barnsley — welcoming, networking-first session for local small businesses.',
-      priceNote: 'Free — book via Eventbrite.',
+        'Free networking in Barnsley for South Yorkshire small businesses. Welcoming, networking-first session for local owners and the self-employed.',
+      priceNote: 'Free. Book via Eventbrite.',
       priceLabel: 'Free',
       bookingUrl:
         'https://www.eventbrite.co.uk/e/fsb-connect-networking-event-with-ibis-styles-barnsley-october-tickets-2002625798673',
+      imageUrl: IMG.networking,
       sourceId: sourceId('yorkshire', '2026-10-28'),
+    },
+    {
+      organiserId: ORG.scotland,
+      title: 'FSB Connect Glasgow - Oct',
+      titleMatch: 'FSB Connect Glasgow',
+      date: '2026-10-29T10:00:00',
+      endDate: '2026-10-29T12:00:00',
+      venue: 'FSB Scotland Office',
+      addressLine1: '58 Waterloo Street',
+      city: 'Glasgow',
+      postcode: 'G2 7DA',
+      description:
+        'Popular FSB Connect networking for small businesses and the self-employed at the FSB Scotland office. Tea, coffee and face-to-face introductions.',
+      priceNote: 'Free for FSB members and non-members. Book via FSB events.',
+      priceLabel: 'Free',
+      bookingUrl:
+        'https://events.fsb.org.uk/en/8d2bI2X7/g/fJqTd8nh8e/fsb-connect-glasgow-oct-3aJ8Pziib',
+      imageUrl: IMG.glasgow,
+      sourceId: sourceId('scotland', '2026-10-29'),
+    },
+    {
+      organiserId: ORG.eastOfEngland,
+      title: 'FSB Connect St Albans - November',
+      titleMatch: 'FSB Connect St Albans - November',
+      date: '2026-11-03T09:30:00',
+      endDate: '2026-11-03T12:00:00',
+      venue: 'Co-Space St Albans',
+      addressLine1: 'Jubilee Square',
+      city: 'St Albans',
+      postcode: 'AL1 3TJ',
+      description:
+        'Morning FSB Connect networking for small businesses around St Albans at Co-Space. Informal conversation and local connections. Tea and coffee included.',
+      priceNote: 'Free for FSB members, £5 for non-members. Book via FSB events.',
+      priceLabel: 'Free',
+      bookingUrl:
+        'https://events.fsb.org.uk/en/8d2bI2X7/g/fJqTd8nh8e/fsb-connect-st-albans-nov-3aJ8PzWMT',
+      imageUrl: IMG.cowork,
+      sourceId: sourceId('east-of-england', '2026-11-03'),
+    },
+    {
+      organiserId: ORG.greaterLondon,
+      title: 'FSB Connect Central London - November',
+      titleMatch: 'FSB Connect Central London',
+      date: '2026-11-04T11:00:00',
+      endDate: '2026-11-04T12:30:00',
+      venue: 'The British Library',
+      addressLine1: '96 Euston Road',
+      city: 'London',
+      postcode: 'NW1 2DB',
+      description:
+        'Monthly Central London FSB Connect at the British Library Business & IP Centre. Open informal networking for FSB members and non-members.',
+      priceNote: 'From £5. Book via FSB events.',
+      priceLabel: 'From £5',
+      bookingUrl:
+        'https://events.fsb.org.uk/en/8d2bI2X7/g/fJqTd8nh8e/fsb-connect-central-london-nov-3aJ8Pzjzd',
+      imageUrl: IMG.britishLibrary,
+      sourceId: sourceId('greater-london', '2026-11-04'),
+    },
+    {
+      organiserId: ORG.greaterLondon,
+      title: 'FSB Connect Wimbledon - November',
+      titleMatch: 'FSB Connect Wimbledon',
+      date: '2026-11-10T17:30:00',
+      endDate: '2026-11-10T19:30:00',
+      venue: 'Metro Bank London',
+      addressLine1: '1-2 Wimbledon Bridge',
+      city: 'London',
+      postcode: 'SW19 7NW',
+      description:
+        'FSB Connect Wimbledon at Metro Bank, Wimbledon Bridge. Local SME networking with FSB membership advisers and Metro Bank support. Free to attend; booking essential.',
+      priceNote: 'Free. Book via FSB events.',
+      priceLabel: 'Free',
+      bookingUrl:
+        'https://events.fsb.org.uk/en/8d2bI2X7/g/fJqTd8nh8e/fsb-connect-in-wimbledon-nov-3aJ8PzoRR/overview',
+      imageUrl: IMG.meeting,
+      sourceId: sourceId('greater-london', '2026-11-10'),
+    },
+    {
+      organiserId: ORG.northWest,
+      title: 'FSB Connect Liverpool - November',
+      titleMatch: 'FSB Connect Liverpool',
+      date: '2026-11-26T17:00:00',
+      endDate: '2026-11-26T19:00:00',
+      venue: 'The Municipal Hotel & Spa Liverpool - MGallery',
+      addressLine1: 'Dale Street',
+      city: 'Liverpool',
+      postcode: 'L2 2DH',
+      description:
+        'FSB Connect Liverpool with Colony Networking at The Municipal Hotel & Spa Liverpool (MGallery). Evening networking for Merseyside small businesses.',
+      priceNote: 'Members £7.50, non-members £15. Book via FSB events.',
+      priceLabel: 'From £7.50',
+      bookingUrl:
+        'https://events.fsb.org.uk/en/8d2bI2X7/g/fJqTd8nh8e/fsb-connect-liverpool-nov-3aJ8PzNFx',
+      imageUrl: IMG.liverpool,
+      sourceId: sourceId('north-west', '2026-11-26'),
+    },
+    {
+      organiserId: ORG.wales,
+      title: 'FSB Connect South East Wales - December (Cardiff)',
+      titleMatch: 'FSB Connect South East Wales - December',
+      date: '2026-12-03T09:00:00',
+      endDate: '2026-12-03T11:30:00',
+      venue: 'Space2B@The Maltings',
+      addressLine1: 'East Tyndall Street',
+      city: 'Cardiff',
+      postcode: 'CF24 5EA',
+      description:
+        'FSB Connect South East Wales in Cardiff at Space2B @ The Maltings. Introductions, informal networking and small-business support.',
+      priceNote: 'Members £5, non-members £7.50. Book via FSB events.',
+      priceLabel: 'From £5',
+      bookingUrl:
+        'https://events.fsb.org.uk/en/8d2bI2X7/g/fJqTd8nh8e/fsb-connect-south-east-wales-december-3aJ8PzmXh/overview',
+      imageUrl: IMG.networking,
+      sourceId: sourceId('wales', '2026-12-03'),
+    },
+    {
+      organiserId: ORG.wales,
+      title: 'FSB Connect Online in Wales - 10 December',
+      titleMatch: 'FSB Connect Online in Wales',
+      date: '2026-12-10T13:00:00',
+      endDate: '2026-12-10T14:00:00',
+      venue: '',
+      addressLine1: '',
+      city: 'Online',
+      postcode: '',
+      online: true,
+      description: 'Online FSB Connect for Wales. Join remotely for networking and updates.',
+      priceNote: 'Free. Book via FSB events.',
+      priceLabel: 'Free',
+      bookingUrl:
+        'https://events.fsb.org.uk/en/8d2bI2X7/g/fJqTd8nh8e/fsb-connect-online-in-wales-10-december-3aJ8PzndR/overview',
+      imageUrl: IMG.online,
+      sourceId: sourceId('wales', '2026-12-10'),
+    },
+    {
+      organiserId: ORG.wales,
+      title: 'FSB Connect North Wales - December',
+      titleMatch: 'FSB Connect North Wales - December',
+      date: '2026-12-16T09:30:00',
+      endDate: '2026-12-16T11:00:00',
+      venue: 'Coleg Cambria Business School',
+      addressLine1: 'Holywell Road, Northop',
+      city: 'Mold',
+      postcode: 'CH7 6AA',
+      description:
+        'Monthly FSB Connect North Wales at Coleg Cambria Business School, Northop. Open to members and non-members for face-to-face small-business networking.',
+      priceNote: 'Free. Book via FSB events.',
+      priceLabel: 'Free',
+      bookingUrl:
+        'https://events.fsb.org.uk/en/8d2bI2X7/g/fJqTd8nh8e/fsb-connect-north-wales-december-3aJ8PzoOD',
+      imageUrl: IMG.cowork,
+      sourceId: sourceId('wales', '2026-12-16'),
     },
   ];
 }
@@ -536,7 +508,6 @@ async function main() {
     ['scotland', ORG.scotland, 'FSB Scotland'],
     ['northWest', ORG.northWest, 'FSB North West'],
     ['yorkshire', ORG.yorkshire, 'FSB Yorkshire'],
-    ['brighton', ORG.brighton, 'FSB Connect Brighton'],
   ];
   const ok = new Set();
   for (const [key, id, label] of needed) {
