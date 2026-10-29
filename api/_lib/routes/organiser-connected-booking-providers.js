@@ -14,10 +14,12 @@ const {
   listEventLinksForAccount,
   deleteEventLink,
   mergeProviderConnectionConfig,
+  replaceProviderConnectionConfig,
 } = require('../connected-booking-provider-store');
 const {
   eventbritePrivateTokenFromConfig,
   eventbriteAuthMethodFromConfig,
+  stripEventbriteAuthFromConfig,
 } = require('../connected-booking-providers/adapters/eventbrite-api');
 const { syncEventbriteAttendeesForConnection } = require('../eventbrite-attendee-sync');
 const { syncEventbriteOrgEventsForAccount } = require('../eventbrite-org-event-sync');
@@ -310,6 +312,37 @@ module.exports = async function handler(req, res) {
           ok: true,
           authorizeUrl: authorizeUrl,
           redirectUri: eventbriteOAuthRedirectUri(),
+        });
+      }
+
+      if (action === 'disconnect_eventbrite') {
+        let listed;
+        try {
+          listed = await listProviderConnections(sb, accountId);
+        } catch (e) {
+          return json(res, 500, {
+            ok: false,
+            error: 'db_error',
+            message: e.message || 'Could not load provider connections.',
+          });
+        }
+        const existing = (listed.connections || []).find(function (row) {
+          return row && row.provider === 'eventbrite';
+        });
+        if (!existing) {
+          return json(res, 200, {
+            ok: true,
+            eventbriteApiTokenConfigured: false,
+            message: 'Eventbrite is not connected on this account.',
+          });
+        }
+        const cleared = stripEventbriteAuthFromConfig(existing.config);
+        const conn = await replaceProviderConnectionConfig(sb, accountId, 'eventbrite', cleared);
+        return json(res, 200, {
+          ok: true,
+          eventbriteApiTokenConfigured: Boolean(eventbritePrivateTokenFromConfig(conn.config)),
+          eventbriteAuthMethod: eventbriteAuthMethodFromConfig(conn.config) || null,
+          message: 'Eventbrite disconnected. You can connect a different account whenever you are ready.',
         });
       }
 

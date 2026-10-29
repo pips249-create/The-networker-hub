@@ -641,6 +641,34 @@ function eventbriteAuthMethodFromConfig(config) {
   return '';
 }
 
+/** Remove OAuth / private-token fields so the organiser can connect a different Eventbrite account. */
+function stripEventbriteAuthFromConfig(config) {
+  const next = Object.assign({}, config && typeof config === 'object' ? config : {});
+  [
+    'eventbriteAccessToken',
+    'eventbrite_access_token',
+    'accessToken',
+    'access_token',
+    'eventbritePrivateToken',
+    'eventbrite_private_token',
+    'privateToken',
+    'private_token',
+    'eventbriteRefreshToken',
+    'eventbrite_refresh_token',
+    'refreshToken',
+    'refresh_token',
+    'eventbriteAuthMethod',
+    'authMethod',
+    'eventbriteOAuthConnectedAt',
+    'eventbrite_oauth_connected_at',
+    'eventbriteTokenExpiresAt',
+    'eventbrite_token_expires_at',
+  ].forEach(function (key) {
+    delete next[key];
+  });
+  return next;
+}
+
 function stripBasicHtml(html) {
   return String(html || '')
     .replace(/<br\s*\/?>/gi, '\n')
@@ -884,6 +912,7 @@ module.exports = {
   normalizeEventbriteOrderApiResponse,
   eventbritePrivateTokenFromConfig,
   eventbriteAuthMethodFromConfig,
+  stripEventbriteAuthFromConfig,
   fetchEventbriteEvent,
   listEventbriteOrganizationEvents,
   eventbriteOrganizationId,

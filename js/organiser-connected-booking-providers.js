@@ -310,12 +310,17 @@
       '</ol>' +
       '</div>';
 
+    var disconnectBtn = connected
+      ? '<button type="button" class="ee-btn ee-btn-outline ee-btn-sm" data-cb-eb-disconnect>Disconnect Eventbrite</button>'
+      : '';
+
     // Connected: lead with import CTA + next steps; keep reconnect collapsed at the bottom.
     if (connected) {
       return (
         statusLine +
         '<div class="cb-provider-actions">' +
         primaryBtn +
+        disconnectBtn +
         '</div>' +
         after +
         tokenBlock
@@ -561,6 +566,46 @@
           .catch(function () {
             saveTokenBtn.disabled = false;
             setDetailStatus('Could not save token.', 'error');
+          });
+      });
+    }
+
+    var disconnectBtn = detail.querySelector('[data-cb-eb-disconnect]');
+    if (disconnectBtn) {
+      disconnectBtn.addEventListener('click', function () {
+        if (
+          !window.confirm(
+            'Disconnect Eventbrite from this organiser account? You can connect again afterwards (your own account or another).'
+          )
+        ) {
+          return;
+        }
+        disconnectBtn.disabled = true;
+        setDetailStatus('Disconnecting…');
+        patchProviders({ action: 'disconnect_eventbrite' })
+          .then(function (res) {
+            disconnectBtn.disabled = false;
+            if (!res.ok) {
+              setDetailStatus(
+                res.body.message || res.body.error || 'Could not disconnect Eventbrite.',
+                'error'
+              );
+              return;
+            }
+            setDetailStatus(res.body.message || 'Eventbrite disconnected.', 'ok');
+            loadProviders();
+            if (typeof window.refreshOrganiserConnectedBooking === 'function') {
+              window.refreshOrganiserConnectedBooking({ silent: true });
+            }
+            try {
+              document.dispatchEvent(new CustomEvent('org:eventbrite-disconnected'));
+            } catch (_e) {
+              /* ignore */
+            }
+          })
+          .catch(function () {
+            disconnectBtn.disabled = false;
+            setDetailStatus('Could not disconnect Eventbrite.', 'error');
           });
       });
     }
