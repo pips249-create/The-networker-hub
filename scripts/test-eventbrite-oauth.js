@@ -14,6 +14,7 @@ const {
 const {
   eventbritePrivateTokenFromConfig,
   eventbriteAuthMethodFromConfig,
+  stripEventbriteAuthFromConfig,
   eventbriteEventIdFromApiUrl,
   eventbriteWebhookActionList,
 } = require('../api/_lib/connected-booking-providers/adapters/eventbrite-api');
@@ -132,7 +133,17 @@ function testTokenFromConfig() {
     eventbriteAuthMethodFromConfig({ eventbritePrivateToken: 'x' }),
     'private_token'
   );
-  console.log('ok token preference');
+  const cleared = stripEventbriteAuthFromConfig({
+    eventbriteAccessToken: 'oauth-tok',
+    eventbritePrivateToken: 'priv-tok',
+    eventbriteAuthMethod: 'oauth',
+    eventbriteOAuthConnectedAt: '2026-01-01T00:00:00.000Z',
+    defaultImportGroupId: 'group-1',
+  });
+  assert.strictEqual(eventbritePrivateTokenFromConfig(cleared), '');
+  assert.strictEqual(eventbriteAuthMethodFromConfig(cleared), '');
+  assert.strictEqual(cleared.defaultImportGroupId, 'group-1');
+  console.log('ok token preference + disconnect strip');
 }
 
 function testEventIdFromApiUrl() {

@@ -125,6 +125,7 @@
     var connectBtn = qs('org-eb-connect');
     var refreshBtn = qs('org-eb-refresh');
     var dedupeBtn = qs('org-eb-dedupe');
+    var disconnectBtn = qs('org-eb-disconnect');
     var tokenWrap = qs('org-eb-token-wrap');
     var label = qs('org-eb-trigger-label');
     if (pill) {
@@ -140,10 +141,42 @@
     }
     if (refreshBtn) refreshBtn.hidden = !connected;
     if (dedupeBtn) dedupeBtn.hidden = !connected;
+    if (disconnectBtn) disconnectBtn.hidden = !connected;
     if (tokenWrap) tokenWrap.hidden = connected;
     if (label) {
       label.textContent = connected ? 'Eventbrite events' : 'Connect Eventbrite';
     }
+    if (!connected) {
+      renderEvents([]);
+    }
+  }
+
+  function disconnectEventbrite() {
+    if (
+      !window.confirm(
+        'Disconnect Eventbrite from this organiser account? You can connect again afterwards.'
+      )
+    ) {
+      return;
+    }
+    var btn = qs('org-eb-disconnect');
+    if (btn) btn.disabled = true;
+    setMsg('Disconnecting…');
+    return patchProviders({ action: 'disconnect_eventbrite' })
+      .then(function (res) {
+        if (btn) btn.disabled = false;
+        if (!res.ok) {
+          setMsg(res.data.message || res.data.error || 'Could not disconnect Eventbrite.', 'error');
+          return;
+        }
+        setConnectedUi(false);
+        setExpanded(true);
+        setMsg(res.data.message || 'Eventbrite disconnected. Connect again when ready.', 'ok');
+      })
+      .catch(function () {
+        if (btn) btn.disabled = false;
+        setMsg('Could not disconnect Eventbrite.', 'error');
+      });
   }
 
   function renderEvents(events) {
@@ -506,6 +539,20 @@
         dedupeImports();
       });
     }
+
+    var disconnectBtn = qs('org-eb-disconnect');
+    if (disconnectBtn && !disconnectBtn.dataset.bound) {
+      disconnectBtn.dataset.bound = '1';
+      disconnectBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        disconnectEventbrite();
+      });
+    }
+
+    document.addEventListener('org:eventbrite-disconnected', function () {
+      setConnectedUi(false);
+    });
 
     var saveBtn = qs('org-eb-save-token');
     if (saveBtn) saveBtn.addEventListener('click', saveToken);

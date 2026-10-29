@@ -7,15 +7,17 @@ const HUB_INVITE_PERSONAS = {
     key: 'catherine',
     name: 'Catherine Hancher',
     email: 'catherine@thenetworkeruk.com',
+    // Casual fallback when ops leave the custom note blank — avoid repeating
+    // the “warm intros / both sides say yes” body copy below.
     defaultNote:
-      'Catherine thought you’d be a good fit for The Networker UK and Hubert introductions.',
+      'Catherine thought you’d love connecting with our UK business network.',
   },
   rosie: {
     key: 'rosie',
     name: 'Rosie McGilvray',
     email: 'rosie@thenetworkeruk.com',
     defaultNote:
-      'Rosie thought you’d be a good fit for The Networker UK and Hubert introductions.',
+      'Rosie thought you’d love connecting with our UK business network.',
   },
 };
 

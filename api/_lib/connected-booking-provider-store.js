@@ -213,6 +213,19 @@ async function mergeProviderConnectionConfig(sb, accountId, provider, configPatc
   return updated;
 }
 
+async function replaceProviderConnectionConfig(sb, accountId, provider, nextConfig) {
+  const conn = await ensureProviderConnection(sb, accountId, provider);
+  const next = nextConfig && typeof nextConfig === 'object' ? nextConfig : {};
+  const { data: updated, error } = await sb
+    .from('connected_booking_provider_connections')
+    .update({ config: next, updated_at: new Date().toISOString() })
+    .eq('id', conn.id)
+    .select('id, organiser_account_id, provider, status, webhook_token, config, created_at, updated_at')
+    .single();
+  if (error) throw new Error(error.message);
+  return updated;
+}
+
 async function deleteEventLink(sb, accountId, eventId) {
   const { error } = await sb
     .from('connected_booking_event_links')
@@ -267,6 +280,7 @@ module.exports = {
   deleteEventLink,
   resolveConnectionByToken,
   mergeProviderConnectionConfig,
+  replaceProviderConnectionConfig,
   webhookTokenPreviousFromConfig,
   isMissingProviderTablesError,
 };

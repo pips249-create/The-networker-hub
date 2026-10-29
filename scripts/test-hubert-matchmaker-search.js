@@ -4,6 +4,8 @@ const {
   tokenize,
   eventSearchTokens,
   looksLikeEventAttendeeQuery,
+  extractQueryIntent,
+  isInternalMatchCandidate,
   scoreAgainstQuery,
   scoreEventTitle,
   eventBoost,
@@ -22,6 +24,8 @@ function assert(cond, msg) {
 
 assert(shortDisplayName('Alex Morgan') === 'Alex M.', 'display name');
 assert(tokenize('Fintech founders in Manchester').includes('fintech'), 'tokenize');
+assert(!tokenize('I am looking for people around the UK').includes('uk'), 'drops uk stopword');
+assert(!tokenize('I am looking for people around the UK').includes('looking'), 'drops looking stopword');
 
 const evolutionQ = 'Who attended evolution virtual networking this morning';
 assert(looksLikeEventAttendeeQuery(evolutionQ) === true, 'event-intent query');
@@ -51,7 +55,7 @@ const person = {
 
 assert(scoreAgainstQuery(person, tokenize('fintech founder')) >= 3, 'text score');
 assert(eventBoost(person, ['evt-1']) === 40, 'same-event boost');
-assert(eventBoost(person, ['other']) === 15, 'other-event boost');
+assert(eventBoost(person, ['other']) === 12, 'other-event boost');
 assert(eventBoost({ nextEvent: null }, []) === 0, 'no-event boost');
 
 const many = [];
@@ -75,6 +79,7 @@ const ranked = rankCandidates(many, 'fintech founders manchester', ['evt-1']);
 assert(ranked.length === MAX_SHORTLIST, 'caps at 5');
 assert(ranked[0].id === 'member:0', 'same-event ranks first');
 assert(!ranked.some((m) => m.email || m.linkedinUrl || m.phone), 'no contact fields');
+assert(/Matches what you asked|same upcoming event|Founder/i.test(ranked[0].why || ''), 'why explains fit');
 
 const attendeeOnly = {
   id: 'member:att',
@@ -120,5 +125,74 @@ assert(/couldn’t match that event/i.test(noEvent.title), 'empty: no event matc
 
 const thinPool = emptyStateCopy({ eventQuery: false, candidateCount: 0 });
 assert(/still thin/i.test(thinPool.text), 'empty: thin pool');
+
+const adsQ =
+  'I am looking for employees around the UK who might be interested in advertising on my site';
+assert(extractQueryIntent(adsQ).wantEmployees === true, 'employees intent');
+const tokensAds = tokenize(adsQ);
+assert(tokensAds.includes('employees'), 'keeps employees');
+assert(tokensAds.includes('advertising'), 'keeps advertising');
+assert(!tokensAds.includes('uk'), 'drops uk for ads query');
+
+const rosie = {
+  id: 'member:rosie',
+  kind: 'member',
+  fullName: 'Rosie McGilvray',
+  displayName: 'Rosie M.',
+  role: 'founder',
+  company: 'The Networker Group Ltd',
+  jobTitle: 'founder',
+  industry: '',
+  professionalRole: 'founder',
+  lookingToMeet: ['Partners'],
+  blurb: 'Building The Networker UK',
+  nextEvent: {
+    title: 'The Business Show London',
+    dateLabel: '11 Nov 2026',
+    eventId: 'e1',
+  },
+  matchedEvent: null,
+  onHub: true,
+  why: 'Member',
+};
+const marketer = {
+  id: 'member:marketer',
+  kind: 'member',
+  fullName: 'Alex Advert',
+  displayName: 'Alex A.',
+  role: 'Marketing manager',
+  company: 'AdCo',
+  jobTitle: 'Marketing manager',
+  industry: 'Advertising',
+  professionalRole: 'Employee',
+  lookingToMeet: ['Clients'],
+  blurb: 'UK employees interested in advertising and media buying for websites',
+  nextEvent: null,
+  matchedEvent: null,
+  onHub: true,
+  why: 'Member',
+};
+const adsRanked = rankCandidates([rosie, marketer], adsQ, []);
+assert(
+  !adsRanked.some((m) => m.id === 'member:rosie'),
+  'founder with upcoming event must not match employees/advertising ask'
+);
+assert(adsRanked.length === 1 && adsRanked[0].id === 'member:marketer', 'relevant marketer ranks');
+assert(/Role fits|Matches what you asked/i.test(adsRanked[0].why || ''), 'why not raw Member');
+
+const eventOnly = rankCandidates([rosie], 'fintech founders manchester', []);
+assert(eventOnly.length === 0, 'upcoming event alone does not admit a candidate');
+
+assert(
+  isInternalMatchCandidate({
+    fullName: 'Rosie McGilvray',
+    company: 'The Networker Group Ltd',
+  }) === true,
+  'Rosie / Networker Group excluded from supply'
+);
+assert(
+  isInternalMatchCandidate({ fullName: 'Alex Advert', company: 'AdCo' }) === false,
+  'external member not excluded'
+);
 
 console.log('ok — hubert matchmaker search ranking + event attendees');

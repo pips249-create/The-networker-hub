@@ -226,8 +226,9 @@
       };
     }
     return {
-      title: 'No one came back yet',
-      text: 'Try another way of describing who you need — a bit more context helps.',
+      title: 'No close matches yet',
+      text:
+        'Hubert only puts people forward when the ask fits. Try a clearer role or industry (e.g. “marketing managers who buy ads”), or check back as the pool grows.',
     };
   }
 
