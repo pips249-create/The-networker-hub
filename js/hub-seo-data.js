@@ -2527,7 +2527,7 @@ window.HUB_SEO_DATA = {
           "@id": "https://www.thenetworkeruk.com/guides/connect-eventbrite#webpage",
           "url": "https://www.thenetworkeruk.com/guides/connect-eventbrite",
           "name": "Connect Eventbrite – How-to guides – The Networker UK",
-          "description": "Connect Eventbrite once with OAuth — The Networker UK imports your live events automatically and syncs ticket buyers to your attendee list.",
+          "description": "Connect Eventbrite on My events, then Import each event onto your organiser page. Checkout stays on Eventbrite; ticket buyers sync to your attendee list.",
           "isPartOf": {
             "@type": "WebSite",
             "name": "The Networker UK",
@@ -2539,7 +2539,7 @@ window.HUB_SEO_DATA = {
           "@id": "https://www.thenetworkeruk.com/guides/connect-eventbrite#howto",
           "url": "https://www.thenetworkeruk.com/guides/connect-eventbrite",
           "name": "How to connect Eventbrite to The Networker UK",
-          "description": "Connect Eventbrite once with OAuth — The Networker UK imports your live events automatically and syncs ticket buyers to your attendee list.",
+          "description": "Connect Eventbrite on My events, then Import each event onto your organiser page. Checkout stays on Eventbrite; ticket buyers sync to your attendee list.",
           "step": [
             {
               "@type": "HowToStep",
@@ -2552,28 +2552,28 @@ window.HUB_SEO_DATA = {
               "@type": "HowToStep",
               "position": 2,
               "name": "Connect Eventbrite",
-              "text": "Expand Connect Eventbrite, choose which organiser page to import onto, then click Connect Eventbrite.",
-              "url": "https://www.thenetworkeruk.com/guides/connect-eventbrite#connect-oauth"
+              "text": "Expand the Connect Eventbrite row, choose which organiser page to Import onto, then click Connect Eventbrite and approve access on Eventbrite (or paste a private token).",
+              "url": "https://www.thenetworkeruk.com/guides/connect-eventbrite#connect-account"
             },
             {
               "@type": "HowToStep",
               "position": 3,
-              "name": "Allow access on Eventbrite",
-              "text": "On Eventbrite, confirm you are signed into the right organiser account and click Allow so The Networker UK can import events and sync buyers.",
-              "url": "https://www.thenetworkeruk.com/guides/connect-eventbrite#approve-eventbrite"
+              "name": "Your Eventbrite list drops down",
+              "text": "After connect, the panel shows your Eventbrite events under My events — same idea as a recurring series list.",
+              "url": "https://www.thenetworkeruk.com/guides/connect-eventbrite#event-list"
             },
             {
               "@type": "HowToStep",
               "position": 4,
-              "name": "Events import automatically",
-              "text": "You return to My events with Eventbrite Connected. Live events import onto your organiser page; complete ones publish; incomplete ones stay drafts. New live events keep arriving automatically.",
-              "url": "https://www.thenetworkeruk.com/guides/connect-eventbrite#events-import"
+              "name": "Import each event",
+              "text": "Click Import on each Eventbrite event you want on The Networker UK. Complete listings publish; incomplete ones stay drafts until you add price, date, or booking URL.",
+              "url": "https://www.thenetworkeruk.com/guides/connect-eventbrite#import-events"
             },
             {
               "@type": "HowToStep",
               "position": 5,
-              "name": "Check it worked",
-              "text": "After a test or real Eventbrite order, Recent sync attempts should show eventbrite:accepted and the buyer should appear on the event Attendees list.",
+              "name": "Check a sale synced",
+              "text": "After a test or real Eventbrite order, the buyer should appear on the event Attendees list and Recent sync attempts should show eventbrite:accepted.",
               "url": "https://www.thenetworkeruk.com/guides/connect-eventbrite#check-it-worked"
             }
           ]
