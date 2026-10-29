@@ -665,16 +665,40 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
   }
 
   if (slug === 'opportunity_listing_payment_receipt') {
+    const {
+      buildOpportunityListingVatReceipt,
+      buildVatBreakdownHtml,
+    } = require('./opportunity-listing-vat-receipt');
+    const previewReceipt = buildOpportunityListingVatReceipt(null, {
+      amountPaidPence: 3000,
+      invoiceNumber: 'INV-PREVIEW-001',
+    });
+    previewReceipt.invoiceUrl = site + '/organiser/#business-overview';
     vars.owner_name = vars.owner_name || 'Alex';
     vars.opportunity_title = vars.opportunity_title || 'Regional franchise opportunity';
-    vars.amount_paid = vars.amount_paid || '£30';
+    vars.amount_paid = vars.amount_paid || previewReceipt.amountPaid || '£30';
+    vars.amount_ex_vat = vars.amount_ex_vat || previewReceipt.amountExVat;
+    vars.amount_vat = vars.amount_vat || previewReceipt.amountVat;
+    vars.vat_number = vars.vat_number || previewReceipt.vatNumber;
+    vars.invoice_number = vars.invoice_number || previewReceipt.invoiceNumber;
+    vars.invoice_url = vars.invoice_url || previewReceipt.invoiceUrl;
+    vars.vat_breakdown_html =
+      vars.vat_breakdown_html ||
+      buildVatBreakdownHtml({ ...previewReceipt, amountPaid: vars.amount_paid });
+    vars.receipt_eyebrow = vars.receipt_eyebrow || 'VAT receipt';
     vars.receipt_intro =
-      vars.receipt_intro || 'Thanks — your opportunity listing payment went through.';
+      vars.receipt_intro ||
+      'Thanks — your opportunity listing payment went through. Here is your VAT receipt.';
     vars.period_note =
       vars.period_note ||
-      'Manage or cancel anytime from your organiser listing → Manage or cancel subscription.';
-    vars.cta_url = vars.cta_url || site + '/organiser/#business-overview';
-    vars.cta_label = vars.cta_label || 'Open listing billing';
+      'A VAT receipt is emailed each month while you stay subscribed. Manage or cancel anytime from your organiser listing → Manage or cancel subscription.';
+    vars.cta_url = vars.cta_url || previewReceipt.invoiceUrl;
+    vars.cta_label = vars.cta_label || 'Download VAT invoice (PDF)';
+    vars.billing_cta_html =
+      vars.billing_cta_html ||
+      '<p style="margin:12px 0 0;text-align:center;"><a href="' +
+        site +
+        '/organiser/#business-overview" style="display:inline-block;text-align:center;padding:12px 28px;background:transparent;border:2px solid #1c2040;border-radius:999px;color:#1c2040;font-size:15px;font-weight:700;text-decoration:none;">Open listing billing &rarr;</a></p>';
   }
 
   if (slug === 'event_details_updated') {

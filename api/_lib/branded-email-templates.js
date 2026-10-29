@@ -190,7 +190,7 @@ const BRANDED_EMAIL_TEMPLATES = {
   opportunity_listing_payment_receipt: {
     file: 'opportunity-listing-payment-receipt.html',
     marker: 'hub-email-layout-v3-navy-gold',
-    subject: 'Payment receipt — {{opportunity_title}}',
+    subject: 'VAT receipt — {{opportunity_title}}',
   },
   city_partner_slot_open: {
     file: 'city-partner-slot-open.html',

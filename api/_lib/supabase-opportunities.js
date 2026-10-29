@@ -1849,15 +1849,32 @@ async function handleOpportunityListingCheckout(session) {
 
   let receiptEmail = { skipped: true, reason: 'not_sent' };
   try {
-    const { formatGbpFromAmountTotal } = require('./stripe-checkout');
+    const { formatGbpFromAmountTotal, getStripeClient } = require('./stripe-checkout');
+    const { resolveOpportunityListingInvoice } = require('./opportunity-listing-vat-receipt');
     const { sendOpportunityListingPaymentReceipt } = require('./opportunity-emails');
+    let invoice = null;
+    try {
+      invoice = await resolveOpportunityListingInvoice(getStripeClient(), {
+        session,
+        subscriptionId,
+      });
+    } catch {
+      invoice = null;
+    }
     receiptEmail = await sendOpportunityListingPaymentReceipt(opportunity, {
       email:
         session.customer_details?.email ||
         session.customer_email ||
         metadata.owner_email ||
         '',
-      amountPaid: formatGbpFromAmountTotal(session.amount_total),
+      amountPaid: formatGbpFromAmountTotal(
+        invoice?.amount_paid != null ? invoice.amount_paid : session.amount_total
+      ),
+      amountPaidPence:
+        invoice?.amount_paid != null ? invoice.amount_paid : session.amount_total,
+      invoice,
+      session,
+      subscriptionId,
       isRenewal: false,
     });
   } catch (emailErr) {

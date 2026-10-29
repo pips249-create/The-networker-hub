@@ -149,8 +149,9 @@ async function sendOpportunityListingLiveEmail(opportunity) {
 }
 
 /**
- * Payment receipt for opportunity listing checkout / renewals.
- * Lives in organiser workspace billing (Stripe portal) — not the attendee dashboard.
+ * Monthly VAT receipt for opportunity listing checkout / renewals.
+ * Includes ex-VAT / VAT / total and a Stripe invoice PDF link when available.
+ * Billing portal remains on the organiser listing — not the attendee dashboard.
  */
 async function sendOpportunityListingPaymentReceipt(opportunity, opts) {
   const to = String(opts?.email || ownerEmailForOpportunity(opportunity) || '')
@@ -158,14 +159,50 @@ async function sendOpportunityListingPaymentReceipt(opportunity, opts) {
     .toLowerCase();
   if (!to) return { skipped: true, reason: 'no_owner_email' };
 
+  const {
+    buildOpportunityListingVatReceipt,
+    buildVatBreakdownHtml,
+    resolveOpportunityListingInvoice,
+  } = require('./opportunity-listing-vat-receipt');
+  const { getStripeClient, formatGbpFromAmountTotal } = require('./stripe-checkout');
+
+  let invoice = opts?.invoice && typeof opts.invoice === 'object' ? opts.invoice : null;
+  if (!invoice) {
+    try {
+      invoice = await resolveOpportunityListingInvoice(getStripeClient(), {
+        invoice: opts?.invoiceId || null,
+        session: opts?.session || null,
+        subscription: opts?.subscription || null,
+        subscriptionId: opts?.subscriptionId || null,
+      });
+    } catch {
+      invoice = null;
+    }
+  }
+
+  const amountPaidOpt = String(opts?.amountPaid || '').trim();
+  const amountPaidPence =
+    opts?.amountPaidPence != null
+      ? Number(opts.amountPaidPence)
+      : invoice?.amount_paid != null
+        ? Number(invoice.amount_paid)
+        : null;
+  const vatReceipt = buildOpportunityListingVatReceipt(invoice, {
+    amountPaidPence,
+    invoiceNumber: opts?.invoiceNumber,
+  });
+  const amountPaid = amountPaidOpt || vatReceipt.amountPaid || formatGbpFromAmountTotal(amountPaidPence) || 'Paid';
+
   const siteUrl = siteBase();
   const listing = buildOpportunityListingEmailVars(opportunity);
-  const amountPaid = String(opts?.amountPaid || '').trim();
   const isRenewal = Boolean(opts?.isRenewal);
   const editUrl =
     siteUrl +
     '/organiser/opportunity-edit?id=' +
     encodeURIComponent(String(opportunity?.id || ''));
+  const invoiceUrl = vatReceipt.invoiceUrl;
+  const primaryCtaUrl = invoiceUrl || editUrl;
+  const primaryCtaLabel = invoiceUrl ? 'Download VAT invoice (PDF)' : 'Open listing billing';
 
   await sendTemplatedEmail({
     slug: 'opportunity_listing_payment_receipt',
@@ -173,24 +210,41 @@ async function sendOpportunityListingPaymentReceipt(opportunity, opts) {
     variables: {
       owner_name: ownerNameFromOpportunity(opportunity, to),
       opportunity_title: listing.opportunity_title,
-      amount_paid: amountPaid || 'Paid',
+      amount_paid: amountPaid,
+      amount_ex_vat: vatReceipt.amountExVat,
+      amount_vat: vatReceipt.amountVat,
+      vat_number: vatReceipt.vatNumber,
+      invoice_number: vatReceipt.invoiceNumber,
+      invoice_url: invoiceUrl,
+      vat_breakdown_html: buildVatBreakdownHtml({ ...vatReceipt, amountPaid }),
+      receipt_eyebrow: isRenewal ? 'Monthly VAT receipt' : 'VAT receipt',
       receipt_intro: isRenewal
-        ? 'Thanks — your opportunity listing renewal went through.'
-        : 'Thanks — your opportunity listing payment went through.',
+        ? 'Thanks — your opportunity listing renewed. Here is this month\'s VAT receipt.'
+        : 'Thanks — your opportunity listing payment went through. Here is your VAT receipt.',
       period_note: listing.listing_until
         ? 'Your listing is paid until ' +
           listing.listing_until +
-          '. Manage or cancel from your organiser listing → Manage or cancel subscription.'
-        : 'Manage or cancel anytime from your organiser listing → Manage or cancel subscription.',
-      cta_url: editUrl,
-      cta_label: 'Open listing billing',
+          '. A VAT receipt is emailed each month while you stay subscribed. Manage or cancel from your organiser listing → Manage or cancel subscription.'
+        : 'A VAT receipt is emailed each month while you stay subscribed. Manage or cancel anytime from your organiser listing → Manage or cancel subscription.',
+      cta_url: primaryCtaUrl,
+      cta_label: primaryCtaLabel,
+      billing_cta_html: invoiceUrl
+        ? '<p style="margin:12px 0 0;text-align:center;"><a href="' +
+          editUrl +
+          '" style="display:inline-block;text-align:center;padding:12px 28px;background:transparent;border:2px solid #1c2040;border-radius:999px;color:#1c2040;font-size:15px;font-weight:700;text-decoration:none;">Open listing billing &rarr;</a></p>'
+        : '',
       dashboard_url: organiserBusinessDashboardUrl(siteUrl),
       site_url: siteUrl,
     },
-    subject:
-      (isRenewal ? 'Renewal receipt — ' : 'Payment receipt — ') + listing.opportunity_title,
+    subject: (isRenewal ? 'Monthly VAT receipt — ' : 'VAT receipt — ') + listing.opportunity_title,
   });
-  return { sent: true, to, isRenewal };
+  return {
+    sent: true,
+    to,
+    isRenewal,
+    invoiceNumber: vatReceipt.invoiceNumber || null,
+    invoiceUrl: invoiceUrl || null,
+  };
 }
 
 async function sendOpportunityListingPendingReviewEmail(opportunity) {

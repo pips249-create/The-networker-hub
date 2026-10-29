@@ -35,6 +35,7 @@ Organisers should:
 ## 3. Platform (Hub) obligations
 
 - VAT on **booking fees** and **opportunity listing fees** (£25/month + VAT) is charged by The Networker Group Ltd where applicable.
+- **Opportunity listing VAT receipts:** posters are emailed a VAT receipt on first payment and **each monthly renewal**, with ex-VAT / VAT / total, the platform VAT number, and a link to the Stripe invoice PDF. Past invoices also live in the listing’s **Manage or cancel subscription** (Stripe billing portal).
 - Stripe Checkout line items should show fees clearly — verify with Finance before scaling paid ticketing.
 - Organiser terms state organisers are responsible for their own tax and VAT on ticket revenue.
 
@@ -49,6 +50,7 @@ Organisers should:
 | Company VAT number on legal / checkout copy | Finance | ☑ 454 4092 94 |
 | Booking fee VAT treatment confirmed with accountant | Finance | ☐ |
 | Opportunity listing fee VAT on Stripe checkout verified | Finance | ☐ |
+| Opportunity listing monthly VAT receipt email (ex-VAT / VAT / PDF) | Product | ☑ Hub email on first pay + each renewal |
 | Organiser ticket VAT options (included / added / not registered) reviewed | Finance | ☐ |
 | Sample Stripe receipt meets requirements | Finance | ☐ |
 
