@@ -865,11 +865,12 @@
     const lead = document.getElementById('oe-listing-billing-lead');
     const expiry = document.getElementById('oe-listing-billing-expiry');
     const manageBtn = document.getElementById('oe-manage-listing-billing');
+    const invoicesBtn = document.getElementById('oe-view-vat-invoices');
     const hasSub = listingHasStripeSubscription(currentOpportunity);
 
     if (lead) {
       lead.innerHTML = hasSub
-        ? 'Your listing is billed <strong>£25/month + VAT</strong> (£30) via Stripe until you cancel. Use the button below to update your card or cancel — same secure Stripe portal you paid with.'
+        ? 'Your listing is billed <strong>£25/month + VAT</strong> (£30) via Stripe until you cancel. VAT invoices are listed below — use Manage or cancel for card updates or cancellation.'
         : 'Your listing fee is marked paid. If you need to stop billing, email <a href="mailto:hi@thenetworkeruk.com">hi@thenetworkeruk.com</a> and we will help straight away.';
     }
     if (expiry) {
@@ -893,6 +894,158 @@
       manageBtn.hidden = !hasSub;
       manageBtn.disabled = !hasSub;
     }
+    if (invoicesBtn) {
+      invoicesBtn.hidden = !hasSub;
+      if (hasSub) invoicesBtn.setAttribute('href', '#vat-invoices');
+    }
+    loadListingVatInvoices({ force: false });
+  }
+
+  let listingInvoicesLoadedFor = '';
+  let listingInvoicesLoading = false;
+
+  function escapeListingInvoiceText(value) {
+    return String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function renderListingVatInvoices(invoices) {
+    const list = document.getElementById('oe-listing-invoices-list');
+    const status = document.getElementById('oe-listing-invoices-status');
+    if (!list || !status) return;
+
+    const rows = Array.isArray(invoices) ? invoices : [];
+    if (!rows.length) {
+      list.hidden = true;
+      list.innerHTML = '';
+      status.hidden = false;
+      status.textContent =
+        'No paid invoices yet. After your first payment, monthly VAT invoices will appear here.';
+      return;
+    }
+
+    status.hidden = true;
+    status.textContent = '';
+    list.hidden = false;
+    list.innerHTML = rows
+      .map(function (inv) {
+        const dateLabel = escapeListingInvoiceText(inv.periodLabel || 'Paid invoice');
+        const number = escapeListingInvoiceText(inv.number || '');
+        const amounts = [inv.amountExVat, inv.amountVat, inv.amountPaid]
+          .filter(Boolean)
+          .length
+          ? escapeListingInvoiceText(
+              (inv.amountExVat || '') +
+                ' + VAT ' +
+                (inv.amountVat || '') +
+                ' = ' +
+                (inv.amountPaid || '')
+            )
+          : escapeListingInvoiceText(inv.amountPaid || '');
+        const pdfUrl = String(inv.invoicePdfUrl || inv.invoiceUrl || '').trim();
+        const hostedUrl = String(inv.hostedInvoiceUrl || '').trim();
+        let actions = '';
+        if (pdfUrl) {
+          actions +=
+            '<a href="' +
+            escapeListingInvoiceText(pdfUrl) +
+            '" target="_blank" rel="noopener noreferrer">Download PDF</a>';
+        }
+        if (hostedUrl && hostedUrl !== pdfUrl) {
+          actions +=
+            '<a href="' +
+            escapeListingInvoiceText(hostedUrl) +
+            '" target="_blank" rel="noopener noreferrer">View invoice</a>';
+        }
+        if (!actions) {
+          actions = '<span class="oe-listing-invoice-detail">Email hi@thenetworkeruk.com for a copy</span>';
+        }
+        return (
+          '<li class="oe-listing-invoice-row">' +
+          '<div class="oe-listing-invoice-meta">' +
+          '<span class="oe-listing-invoice-date">' +
+          dateLabel +
+          '</span>' +
+          '<span class="oe-listing-invoice-detail">' +
+          (number ? 'Invoice ' + number + (amounts ? ' · ' : '') : '') +
+          amounts +
+          '</span>' +
+          '</div>' +
+          '<div class="oe-listing-invoice-actions">' +
+          actions +
+          '</div>' +
+          '</li>'
+        );
+      })
+      .join('');
+  }
+
+  async function loadListingVatInvoices(options) {
+    const opts = options || {};
+    const status = document.getElementById('oe-listing-invoices-status');
+    const list = document.getElementById('oe-listing-invoices-list');
+    const billing = document.getElementById('oe-listing-billing');
+    if (!billing || billing.hidden) return;
+    if (!editId || !listingHasStripeSubscription(currentOpportunity)) {
+      if (status) {
+        status.hidden = false;
+        status.textContent =
+          'VAT invoices appear here once your Stripe subscription is linked.';
+      }
+      if (list) {
+        list.hidden = true;
+        list.innerHTML = '';
+      }
+      return;
+    }
+    if (!opts.force && listingInvoicesLoadedFor === editId) return;
+    if (listingInvoicesLoading) return;
+    listingInvoicesLoading = true;
+    if (status) {
+      status.hidden = false;
+      status.textContent = 'Loading invoices…';
+    }
+    try {
+      const res = await api(
+        '/api/organiser/opportunity-listing-invoices?opportunityId=' +
+          encodeURIComponent(editId),
+        { method: 'GET' }
+      );
+      if (!res.ok) {
+        throw new Error(
+          (res.data && (res.data.message || res.data.error)) || 'Could not load invoices.'
+        );
+      }
+      listingInvoicesLoadedFor = editId;
+      renderListingVatInvoices(res.data && res.data.invoices);
+      maybeScrollToVatInvoices();
+    } catch (err) {
+      if (status) {
+        status.hidden = false;
+        status.textContent =
+          String((err && err.message) || 'Could not load invoices.') +
+          ' You can still open Manage or cancel subscription in Stripe.';
+      }
+      if (list) {
+        list.hidden = true;
+        list.innerHTML = '';
+      }
+    } finally {
+      listingInvoicesLoading = false;
+    }
+  }
+
+  function maybeScrollToVatInvoices() {
+    if (String(window.location.hash || '').toLowerCase() !== '#vat-invoices') return;
+    const target = document.getElementById('vat-invoices');
+    const billing = document.getElementById('oe-listing-billing');
+    if (!target || (billing && billing.hidden)) return;
+    requestAnimationFrame(function () {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
   }
 
   function isSubmittedAwaitingApproval(opportunity) {
@@ -1097,6 +1250,7 @@
     const unpublishBtn = document.getElementById('oe-unpublish-listing');
     const deleteBtn = document.getElementById('oe-delete-draft');
     const billingBtn = document.getElementById('oe-manage-billing-danger');
+    const invoicesBtn = document.getElementById('oe-vat-invoices-danger');
     const lede = document.getElementById('oe-danger-zone-lede');
     const note = document.getElementById('oe-danger-zone-note');
     if (!zone || !editId || !currentOpportunity) {
@@ -1114,12 +1268,17 @@
     if (unpublishBtn) unpublishBtn.hidden = !canUnpublish;
     if (deleteBtn) deleteBtn.hidden = !canDelete;
     if (billingBtn) billingBtn.hidden = !canManageBilling;
+    if (invoicesBtn) {
+      invoicesBtn.hidden = !canManageBilling;
+      if (canManageBilling) invoicesBtn.setAttribute('href', '#vat-invoices');
+    }
     if (lede) {
       if (canManageBilling && canUnpublish) {
         lede.textContent =
-          'Cancel billing any time, or hide this listing from the public directory without stopping the subscription.';
+          'Download VAT invoices, cancel billing any time, or hide this listing from the public directory without stopping the subscription.';
       } else if (canManageBilling) {
-        lede.textContent = 'Manage your card or cancel the monthly listing subscription.';
+        lede.textContent =
+          'Download VAT invoices, or manage your card / cancel the monthly listing subscription.';
       } else if (canUnpublish) {
         lede.textContent = 'Hide this listing from the public directory.';
       } else {
@@ -1130,7 +1289,7 @@
       note.hidden = !(canUnpublish && canManageBilling);
       note.textContent =
         canUnpublish && canManageBilling
-          ? 'Unpublishing hides the listing but does not cancel billing — use Manage or cancel subscription to stop charges.'
+          ? 'Unpublishing hides the listing but does not cancel billing — use Manage or cancel subscription to stop charges. VAT invoices stay on this page.'
           : '';
     }
   }
@@ -3692,6 +3851,22 @@
       openListingBillingPortal().catch(function (err) {
         showAlert(String((err && err.message) || 'Could not open billing.'), true);
       });
+    });
+    function jumpToVatInvoices(e) {
+      if (e) e.preventDefault();
+      if (window.history && window.history.replaceState) {
+        window.history.replaceState(null, '', '#vat-invoices');
+      } else {
+        window.location.hash = 'vat-invoices';
+      }
+      loadListingVatInvoices({ force: true }).then(function () {
+        maybeScrollToVatInvoices();
+      });
+    }
+    document.getElementById('oe-view-vat-invoices')?.addEventListener('click', jumpToVatInvoices);
+    document.getElementById('oe-vat-invoices-danger')?.addEventListener('click', jumpToVatInvoices);
+    window.addEventListener('hashchange', function () {
+      maybeScrollToVatInvoices();
     });
     document.getElementById('oe-pay-stripe')?.addEventListener('click', function () {
       const id = editId || (currentOpportunity && currentOpportunity.id);
