@@ -4741,25 +4741,20 @@ body.ad-share-modal-open {
 }
 
 .hmm-hero-title {
-  margin: 0 0 6px;
-  font-family: 'DM Sans', system-ui, sans-serif;
-  font-size: 1.15rem;
-  font-weight: 750;
-  line-height: 1.25;
-  color: var(--hmm-ink);
-}
-
-.hmm--page .hmm-hero-title {
+  margin: 0 0 8px;
   font-family: 'DM Serif Display', 'DM Sans', Georgia, serif;
-  font-size: clamp(1.35rem, 2.4vw, 1.75rem);
+  font-size: clamp(1.55rem, 3vw, 2rem);
   font-weight: 400;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--hmm-ink);
 }
 
 .hmm-hero-sub {
   margin: 0;
-  max-width: 42rem;
-  font-size: 14px;
-  line-height: 1.5;
+  max-width: 38rem;
+  font-size: 15px;
+  line-height: 1.55;
   color: var(--ad-text-mid);
 }
 
