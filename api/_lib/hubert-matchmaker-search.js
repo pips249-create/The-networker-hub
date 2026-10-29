@@ -379,6 +379,21 @@ function formatDateLabel(iso) {
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+/** Platform ops must never appear as intro supply (Catherine / Rosie / Networker Group). */
+const INTERNAL_NAME_HINT =
+  /\b(rosie\s+mcgilvray|catherine\s+hancher|jamie\s+hancher)\b/i;
+const INTERNAL_COMPANY_HINT =
+  /\b(the\s+networker\s+group|networker\s+group\s+ltd|the\s+networker\s+uk)\b/i;
+
+function isInternalMatchCandidate(person) {
+  if (!person) return false;
+  const name = String(person.fullName || person.displayName || '').trim();
+  const company = String(person.company || '').trim();
+  if (INTERNAL_NAME_HINT.test(name)) return true;
+  if (INTERNAL_COMPANY_HINT.test(company)) return true;
+  return false;
+}
+
 function mapSeedRow(row) {
   return {
     id: 'seed:' + row.id,
@@ -619,6 +634,7 @@ async function searchMatchmaker(opts) {
 
   function addCandidate(person) {
     if (!person || !person.id) return;
+    if (isInternalMatchCandidate(person)) return;
     const existing = byId.get(person.id);
     if (!existing) {
       byId.set(person.id, person);
@@ -750,6 +766,7 @@ module.exports = {
   looksLikeEventAttendeeQuery,
   extractQueryIntent,
   roleFitScore,
+  isInternalMatchCandidate,
   scoreAgainstQuery,
   scoreEventTitle,
   eventBoost,

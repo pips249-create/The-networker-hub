@@ -5,6 +5,7 @@ const {
   eventSearchTokens,
   looksLikeEventAttendeeQuery,
   extractQueryIntent,
+  isInternalMatchCandidate,
   scoreAgainstQuery,
   scoreEventTitle,
   eventBoost,
@@ -181,5 +182,17 @@ assert(/Role fits|Matches what you asked/i.test(adsRanked[0].why || ''), 'why no
 
 const eventOnly = rankCandidates([rosie], 'fintech founders manchester', []);
 assert(eventOnly.length === 0, 'upcoming event alone does not admit a candidate');
+
+assert(
+  isInternalMatchCandidate({
+    fullName: 'Rosie McGilvray',
+    company: 'The Networker Group Ltd',
+  }) === true,
+  'Rosie / Networker Group excluded from supply'
+);
+assert(
+  isInternalMatchCandidate({ fullName: 'Alex Advert', company: 'AdCo' }) === false,
+  'external member not excluded'
+);
 
 console.log('ok — hubert matchmaker search ranking + event attendees');
