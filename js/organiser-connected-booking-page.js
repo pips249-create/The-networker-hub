@@ -257,124 +257,24 @@
   }
 
   function applyBillingUi(data) {
-    var billing = data.billing || {};
-    var free = data.free === true;
-    var canSubscribe =
-      !free && billing.canSubscribe !== false && billing.stripeCheckoutConfigured !== false;
-    var signedIn = data.ok === true;
+    // Pricing permanently removed from organiser Booking system page.
     var pricingCompare = document.getElementById('cb-pricing-compare');
-    var freeBenefits = document.getElementById('cb-free-benefits');
-    var whatYouDo = document.getElementById('cb-what-you-do');
+    var pricingSection = document.getElementById('cb-pricing');
     var activateWrap = document.getElementById('cb-activate-wrap');
     var gotoProviders = document.getElementById('cb-goto-providers');
-    var plansTitle = document.getElementById('cb-plans-title');
-    var pricingBadge = document.getElementById('cb-pricing-intro-badge');
-    var pricingLede = document.getElementById('cb-pricing-lede');
-
-    if (free) {
-      if (pricingCompare) pricingCompare.hidden = true;
-      if (freeBenefits) freeBenefits.hidden = false;
-      if (whatYouDo) whatYouDo.hidden = false;
-      if (plansTitle) {
-        plansTitle.textContent = data.active
-          ? 'Booking system is enabled'
-          : 'List here, take payment on your booking system';
-      }
-      if (pricingBadge) {
-        pricingBadge.textContent = data.active ? 'Enabled · free' : 'Free to use';
-      }
-      if (pricingLede && !data.active) {
-        pricingLede.innerHTML =
-          'Choose a <strong>booking system</strong> so you can <strong>list events on The Networker UK</strong> while people keep paying on <strong>Eventbrite</strong> or <strong>your own website</strong>. When someone buys a ticket, we sync them onto your Networker UK attendee list so verified reviews and round-ups still work. Checkout stays on your existing system — we do not take a cut of ticket sales.';
-      } else if (pricingLede && data.active) {
-        pricingLede.innerHTML =
-          'Connected is on for your account. Choose a <strong>live</strong> booking system below (greyed options are not ready yet), then link each event on <strong>Connected setup</strong>.';
-      }
-      if (activateWrap) activateWrap.hidden = !(signedIn && data.canActivateFree);
-      if (gotoProviders) gotoProviders.hidden = !data.active;
-      document.querySelectorAll('.cb-subscribe-btn').forEach(function (btn) {
-        btn.disabled = true;
-        btn.hidden = true;
-      });
-      var showPortal = false;
-      if (manageBilling) manageBilling.hidden = !showPortal;
-      if (manageBillingPanel) manageBillingPanel.hidden = !showPortal;
-      if (billingTip && signedIn) {
-        billingTip.textContent = data.active
-          ? 'Connected is enabled. Next: choose a live booking system, then link each event.'
-          : 'No charge — enable Connected when you understand the flow, then choose your booking system.';
-      }
-      return;
-    }
-
-    if (pricingCompare) pricingCompare.hidden = false;
-    if (freeBenefits) freeBenefits.hidden = true;
-    if (whatYouDo) whatYouDo.hidden = true;
+    if (pricingSection) pricingSection.hidden = true;
+    if (pricingCompare) pricingCompare.hidden = true;
     if (activateWrap) activateWrap.hidden = true;
     if (gotoProviders) gotoProviders.hidden = true;
-    if (plansTitle) plansTitle.textContent = 'Choose your plan';
-    if (pricingBadge) pricingBadge.textContent = 'Introductory offer';
-
-    applyPricingLabels(data.pricing);
-
-    var planRank = { starter: 1, growth: 2, scale: 3 };
-    var currentRank = planRank[String(data.plan || '').toLowerCase()] || 0;
-
     document.querySelectorAll('.cb-subscribe-btn').forEach(function (btn) {
-      var plan = btn.getAttribute('data-cb-plan');
-      var targetRank = planRank[plan] || 0;
-      btn.hidden = false;
-      if (!signedIn) {
-        btn.disabled = false;
-        btn.textContent = 'Subscribe';
-        return;
-      }
-      if (!billing.stripeCheckoutConfigured) {
-        btn.disabled = true;
-        btn.textContent = 'Checkout unavailable';
-        return;
-      }
-      if (data.active && data.plan === plan) {
-        btn.disabled = true;
-        btn.textContent = 'Current plan';
-      } else if (data.active && targetRank > currentRank) {
-        btn.disabled = false;
-        btn.textContent = 'Upgrade';
-      } else if (data.active && targetRank > 0 && targetRank < currentRank) {
-        btn.disabled = true;
-        btn.textContent = 'Use Manage billing';
-        btn.title = 'Change or downgrade your plan in Stripe billing portal.';
-      } else if (data.active) {
-        btn.disabled = true;
-        btn.textContent = 'Subscribed';
-      } else {
-        btn.disabled = !canSubscribe;
-        btn.textContent = 'Subscribe';
-      }
+      btn.disabled = true;
+      btn.hidden = true;
     });
-
-    document.querySelectorAll('.cb-plan-card[data-cb-plan]').forEach(function (card) {
-      card.classList.toggle(
-        'cb-plan-card--current',
-        signedIn && data.plan === card.getAttribute('data-cb-plan')
-      );
-    });
-
-    var showPortal = signedIn && billing.canManageBilling;
-    if (manageBilling) manageBilling.hidden = !showPortal;
-    if (manageBillingPanel) manageBillingPanel.hidden = !showPortal;
-
-    if (billingTip && signedIn) {
-      if (!billing.stripeCheckoutConfigured) {
-        billingTip.textContent =
-          'Online checkout is not configured yet — contact hi@thenetworkeruk.com to subscribe.';
-      } else if (data.active) {
-        billingTip.textContent =
-          'Your plan is active. Use Manage billing to update your card or cancel. Assign organiser pages in your workspace, then set up your webhook secret below.';
-      } else {
-        billingTip.textContent = 'Choose a plan above. Payment is handled securely by Stripe (+ 20% VAT).';
-      }
-    }
+    if (manageBilling) manageBilling.hidden = true;
+    if (manageBillingPanel) manageBillingPanel.hidden = true;
+    if (billingTip) billingTip.hidden = true;
+    void data;
+    void applyPricingLabels;
   }
 
   function setConnectedNavVisible(show) {
@@ -405,16 +305,16 @@
     setConnectedNavVisible(true);
     showComingSoonPanel(true);
     if (linkOutPanel) linkOutPanel.hidden = true;
-    if (connectedOnly) connectedOnly.hidden = true;
+    if (connectedOnly) connectedOnly.hidden = false;
     if (gotoPricing) gotoPricing.hidden = true;
     if (titleEl) titleEl.textContent = 'Booking system';
     if (leadEl) {
       leadEl.textContent =
-        'Choose which booking system your buyers use — Eventbrite or your own website today; more platforms coming soon — and sync buyers to your Networker UK attendee list for reviews and round-ups.';
+        'Want to connect an existing system into ours? Choose a provider below for the steps.';
     }
     if (adminPanel) adminPanel.hidden = true;
     var providersPanel = document.getElementById('cb-providers-panel');
-    if (providersPanel) providersPanel.hidden = true;
+    if (providersPanel) providersPanel.hidden = false;
     return 'coming_soon';
   }
 
@@ -437,10 +337,10 @@
       if (titleEl) titleEl.textContent = 'Link Out';
       if (leadEl) {
         leadEl.innerHTML =
-          'Your listings send buyers to <strong>your website</strong>. No Connected subscription or webhook setup.';
+          'Your listings send buyers to <strong>your website</strong>. Redirect only — no attendee sync.';
       }
       if (linkOutPanel) linkOutPanel.hidden = false;
-      if (connectedOnly) connectedOnly.hidden = true;
+      if (connectedOnly) connectedOnly.hidden = false;
       if (gotoPricing) gotoPricing.hidden = true;
       return mode;
     }
@@ -450,24 +350,12 @@
       showComingSoonPanel(false);
       if (titleEl) titleEl.textContent = 'Booking system';
       if (leadEl) {
-        if (data && data.free && data.active) {
-          leadEl.innerHTML =
-            'Connected is <strong>enabled</strong>. Choose a <strong>live</strong> booking system — <strong>Eventbrite</strong> or <strong>your own website</strong> — then link each event on <strong>Connected setup</strong>. Greyed platforms are not ready yet.';
-        } else if (data && data.free) {
-          leadEl.innerHTML =
-            'List on The Networker UK while checkout stays on your booking system. Read how it works below, then enable Connected when you are ready — <strong>free</strong>.';
-        } else {
-          leadEl.innerHTML =
-            'Subscribe here, choose a <strong>live</strong> booking system (<strong>Eventbrite</strong> or <strong>your own website</strong>) once per account, then link each event on <strong>Connected setup</strong>. Use <strong>Recent sync attempts</strong> when buyers do not appear on your attendee list.';
-        }
+        leadEl.textContent =
+          'Want to connect an existing system into ours? Choose a provider below for the steps.';
       }
       if (linkOutPanel) linkOutPanel.hidden = true;
       if (connectedOnly) connectedOnly.hidden = false;
-      if (gotoPricing) {
-        gotoPricing.hidden = false;
-        gotoPricing.textContent =
-          data && data.free ? (data.active ? 'How it works' : 'What is Connected?') : 'Plans & pricing';
-      }
+      if (gotoPricing) gotoPricing.hidden = true;
       return mode;
     }
 
@@ -539,10 +427,9 @@
     }
     applyBillingUi(data);
     if (signinHint) signinHint.hidden = true;
-    var showSetup = !(data.free && !data.active);
-    if (adminPanel) adminPanel.hidden = !showSetup;
+    if (adminPanel) adminPanel.hidden = false;
     var providersPanel = document.getElementById('cb-providers-panel');
-    if (providersPanel && workspaceConnectedPage) providersPanel.hidden = !showSetup;
+    if (providersPanel && workspaceConnectedPage) providersPanel.hidden = false;
 
     if (data.setup && data.setup.nextStep && !data.setup.readyForConnectedEvents) {
       setAuthStatus('Next: ' + data.setup.nextStep, data.schemaWarning ? 'error' : 'ok');

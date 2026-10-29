@@ -1,19 +1,63 @@
 (function () {
   var panel = document.getElementById('cb-providers-panel');
   var list = document.getElementById('cb-providers-list');
+  var detail = document.getElementById('cb-provider-detail');
   var schemaWarn = document.getElementById('cb-providers-schema-warn');
   var linkCard = document.getElementById('cb-providers-link-card');
   var linksCard = document.getElementById('cb-event-links-card');
   var linksTableWrap = document.getElementById('cb-event-links-table-wrap');
   var linkStatus = document.getElementById('cb-providers-link-status');
   var saveLinkBtn = document.getElementById('cb-providers-link-save');
+  var selectedId = '';
+  var lastProvidersData = null;
 
   var PROVIDER_LABELS = {
     eventbrite: 'Eventbrite',
     ticket_tailor: 'Ticket Tailor',
     luma: 'Luma',
     trybooking: 'TryBooking',
-    own_site: 'Your own website',
+    own_site: 'Your website',
+    meetup: 'Meetup',
+  };
+
+  var PROVIDER_MARK = {
+    eventbrite: 'EB',
+    ticket_tailor: 'TT',
+    trybooking: 'TB',
+    own_site: 'WWW',
+    luma: 'LU',
+    meetup: 'MU',
+  };
+
+  var PROVIDER_STEPS = {
+    eventbrite: [
+      'Open <a href="/organiser/#events-list">My events</a>.',
+      'Expand <strong>Connect Eventbrite</strong>.',
+      'Connect (or paste a private token), then Import each event onto an organiser page.',
+      'Optional: open the <a href="/guides/connect-eventbrite" target="_blank" rel="noopener noreferrer">Eventbrite guide</a>.',
+    ],
+    own_site: [
+      'Open an event → Connected setup / tickets and set your booking URL.',
+      'Enable your own website connection below to get a webhook URL.',
+      'After each sale, POST JSON with <code>eventId</code>, <code>orderId</code>, and <code>email</code>.',
+      'Follow the <a href="/guides/connect-own-website" target="_blank" rel="noopener noreferrer">own website guide</a>.',
+    ],
+    ticket_tailor: [
+      'Ticket Tailor connect is coming soon.',
+      'When live, you will enable it here and paste your Ticket Tailor event id on each listing.',
+    ],
+    trybooking: [
+      'TryBooking connect is coming soon.',
+      'When live, you will enable it here and link each TryBooking event.',
+    ],
+    luma: [
+      'Luma connect is coming soon.',
+      'When live, you will enable it here and link each Luma event.',
+    ],
+    meetup: [
+      'Meetup connect is coming soon.',
+      'When live, you will enable it here and link each Meetup event.',
+    ],
   };
 
   var EXTERNAL_ID_LABELS = {
@@ -22,6 +66,7 @@
     luma: 'Luma event id or slug',
     trybooking: 'TryBooking event id',
     own_site: 'Optional — TNH event id in webhook JSON',
+    meetup: 'Meetup event id',
   };
 
   if (!panel || !list) return;
@@ -155,7 +200,7 @@
           '</code></td>' +
           '<td><a class="ee-link" href="' +
           esc(setupHref) +
-          '">Connected setup</a></td>' +
+          '">Event setup</a></td>' +
           '</tr>'
         );
       })
@@ -168,88 +213,100 @@
       '</tbody></table>';
   }
 
-  function renderProviders(data) {
-    if (!data || !data.ok) return;
-    panel.hidden = false;
-    if (linkCard) linkCard.hidden = false;
+  function providerGuideHref(p) {
+    if (p && p.guidePath) return String(p.guidePath);
+    if (p && p.id === 'eventbrite') return '/guides/connect-eventbrite';
+    if (p && p.id === 'own_site') return '/guides/connect-own-website';
+    return '';
+  }
 
-    if (data.schemaMissing && schemaWarn) {
-      schemaWarn.hidden = false;
-      schemaWarn.textContent =
-        'Run Supabase migrations 299_connected_booking_provider_links.sql and 300_connected_booking_own_site_provider.sql to enable provider webhooks.';
-    } else if (schemaWarn) {
-      schemaWarn.hidden = true;
+  function renderDetail(p, data) {
+    if (!detail) return;
+    if (!p) {
+      detail.hidden = true;
+      detail.innerHTML = '';
+      return;
     }
+    var live = String(p.status || '').toLowerCase() === 'live';
+    var steps = PROVIDER_STEPS[p.id] || ['More details coming soon.'];
+    var stepsHtml =
+      '<ol class="cb-provider-steps">' +
+      steps
+        .map(function (step) {
+          return '<li>' + step + '</li>';
+        })
+        .join('') +
+      '</ol>';
 
-    list.innerHTML = '';
-    (data.providers || []).forEach(function (p) {
-      if (p.id === 'custom') return;
-      var live = String(p.status || '').toLowerCase() === 'live';
-      var li = document.createElement('li');
-      li.className = 'cb-providers-list-item' + (live ? '' : ' is-disabled');
-      var statusLabel = live ? 'Live' : 'Coming soon';
-      var enableBtn =
-        live && p.connectionStatus === 'not_configured'
-          ? '<button type="button" class="ee-btn ee-btn-outline ee-btn-sm" data-enable-provider="' +
-            esc(p.id) +
-            '">Enable</button>'
-          : '';
-      var guideBtn =
-        live && p.id === 'eventbrite'
-          ? '<a class="ee-btn ee-btn-outline ee-btn-sm" href="/guides/connect-eventbrite" target="_blank" rel="noopener noreferrer">Setup guide</a>'
-          : live && p.id === 'own_site'
-            ? '<a class="ee-btn ee-btn-outline ee-btn-sm" href="/guides/connect-own-website" target="_blank" rel="noopener noreferrer">Setup guide</a>'
-            : '';
-      var copyBtn =
-        live && p.webhookUrl
-          ? '<button type="button" class="ee-btn ee-btn-outline ee-btn-sm" data-copy-provider-webhook="' +
-            esc(p.webhookUrl) +
-            '">Copy webhook URL</button>'
-          : '';
-      var testBtn =
-        live && p.id === 'own_site' && p.webhookUrl
-          ? '<button type="button" class="ee-btn ee-btn-gold ee-btn-sm" data-send-test-booking="own_site">Send test booking</button>'
-          : '';
-      var webhookBlock = !live
-        ? '<p class="ee-hint">Not available to choose yet — we will unlock this booking system when it is ready.</p>'
-        : p.webhookUrl
-          ? '<p class="ee-hint cb-provider-webhook"><strong>Webhook URL</strong> (paste in ' +
-            esc(p.label) +
-            '):<br /><code class="cb-provider-webhook-url">' +
-            esc(p.webhookUrl) +
-            '</code></p>'
-          : '<p class="ee-hint">Click Enable to generate your webhook URL.</p>';
-      var actionBits = [copyBtn, testBtn, enableBtn, guideBtn].filter(Boolean).join(' ');
-      var actionsRow = actionBits
-        ? '<p class="ee-attendance-next">' + actionBits + '</p>'
+    var enableBtn =
+      live && p.connectionStatus === 'not_configured'
+        ? '<button type="button" class="ee-btn ee-btn-gold ee-btn-sm" data-enable-provider="' +
+          esc(p.id) +
+          '">Enable connection</button>'
         : '';
-      li.innerHTML =
-        '<div class="cb-provider-card' +
-        (live ? '' : ' cb-provider-card--disabled') +
-        '" aria-disabled="' +
-        (live ? 'false' : 'true') +
-        '">' +
-        '<p class="cb-provider-name"><strong>' +
-        esc(p.label) +
-        '</strong> <span class="cb-provider-badge' +
-        (live ? ' cb-provider-badge--live' : ' cb-provider-badge--soon') +
-        '">' +
-        esc(statusLabel) +
-        '</span></p>' +
-        '<p class="ee-hint">' +
-        esc(p.docsHint) +
-        '</p>' +
-        webhookBlock +
-        actionsRow +
-        '</div>';
-      list.appendChild(li);
-    });
+    var guideHref = providerGuideHref(p);
+    var guideBtn = guideHref
+      ? '<a class="ee-btn ee-btn-outline ee-btn-sm" href="' +
+        esc(guideHref) +
+        '" target="_blank" rel="noopener noreferrer">Open guide</a>'
+      : '';
+    var myEventsBtn =
+      live && p.id === 'eventbrite'
+        ? '<a class="ee-btn ee-btn-gold ee-btn-sm" href="/organiser/#events-list">Go to My events →</a>'
+        : '';
+    var copyBtn =
+      live && p.webhookUrl
+        ? '<button type="button" class="ee-btn ee-btn-outline ee-btn-sm" data-copy-provider-webhook="' +
+          esc(p.webhookUrl) +
+          '">Copy webhook URL</button>'
+        : '';
+    var testBtn =
+      live && p.id === 'own_site' && p.webhookUrl
+        ? '<button type="button" class="ee-btn ee-btn-outline ee-btn-sm" data-send-test-booking="own_site">Send test booking</button>'
+        : '';
+    var webhookBlock = !live
+      ? '<p class="ee-hint">This connection is not selectable yet.</p>'
+      : p.webhookUrl
+        ? '<p class="ee-hint cb-provider-webhook"><strong>Webhook URL</strong><br /><code class="cb-provider-webhook-url">' +
+          esc(p.webhookUrl) +
+          '</code></p>'
+        : live
+          ? '<p class="ee-hint">Enable the connection to generate your webhook URL (where needed).</p>'
+          : '';
 
-    bindCopyWebhookButtons(list);
-    bindSendTestBookingButtons(list, data.eventLinks || []);
-    renderEventLinks(data.eventLinks || []);
+    var statusLabel = live
+      ? p.connectionStatus === 'active' || p.eventbriteApiTokenConfigured
+        ? 'Connected'
+        : 'Live'
+      : 'Coming soon';
 
-    list.querySelectorAll('[data-enable-provider]').forEach(function (btn) {
+    detail.hidden = false;
+    detail.innerHTML =
+      '<div class="cb-provider-detail-inner">' +
+      '<div class="cb-provider-detail-head">' +
+      '<h3 class="cb-provider-detail-title">' +
+      esc(p.label || PROVIDER_LABELS[p.id] || p.id) +
+      '</h3>' +
+      '<span class="cb-provider-badge' +
+      (live ? ' cb-provider-badge--live' : ' cb-provider-badge--soon') +
+      '">' +
+      esc(statusLabel) +
+      '</span>' +
+      '</div>' +
+      '<p class="ee-hint">' +
+      esc(p.docsHint || '') +
+      '</p>' +
+      '<h4 class="cb-provider-steps-title">Steps</h4>' +
+      stepsHtml +
+      webhookBlock +
+      '<p class="ee-attendance-next">' +
+      [myEventsBtn, enableBtn, guideBtn, copyBtn, testBtn].filter(Boolean).join(' ') +
+      '</p>' +
+      '</div>';
+
+    bindCopyWebhookButtons(detail);
+    bindSendTestBookingButtons(detail, (data && data.eventLinks) || []);
+    detail.querySelectorAll('[data-enable-provider]').forEach(function (btn) {
       btn.addEventListener('click', function () {
         var provider = btn.getAttribute('data-enable-provider');
         btn.disabled = true;
@@ -280,6 +337,82 @@
     });
   }
 
+  function selectProvider(id) {
+    selectedId = String(id || '');
+    list.querySelectorAll('.cb-provider-tile').forEach(function (btn) {
+      var on = btn.getAttribute('data-provider-id') === selectedId;
+      btn.classList.toggle('is-selected', on);
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    var providers = (lastProvidersData && lastProvidersData.providers) || [];
+    var match = providers.filter(function (p) {
+      return p && p.id === selectedId;
+    })[0];
+    renderDetail(match, lastProvidersData);
+  }
+
+  function renderProviders(data) {
+    if (!data || !data.ok) return;
+    lastProvidersData = data;
+    panel.hidden = false;
+    if (linkCard) linkCard.hidden = true;
+
+    if (data.schemaMissing && schemaWarn) {
+      schemaWarn.hidden = false;
+      schemaWarn.textContent =
+        'Database update needed for provider webhooks (migrations 299/300). Email hi@thenetworkeruk.com if this persists.';
+    } else if (schemaWarn) {
+      schemaWarn.hidden = true;
+    }
+
+    list.innerHTML = '';
+    list.className = 'cb-provider-tiles';
+    (data.providers || []).forEach(function (p) {
+      if (!p || p.id === 'custom') return;
+      var live = String(p.status || '').toLowerCase() === 'live';
+      var li = document.createElement('li');
+      li.className = 'cb-provider-tile-wrap';
+      var btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className =
+        'cb-provider-tile' +
+        (live ? '' : ' is-soon') +
+        (selectedId === p.id ? ' is-selected' : '');
+      btn.setAttribute('data-provider-id', p.id);
+      btn.setAttribute('aria-pressed', selectedId === p.id ? 'true' : 'false');
+      btn.innerHTML =
+        '<span class="cb-provider-tile-mark cb-provider-tile-mark--' +
+        esc(p.id) +
+        '" aria-hidden="true">' +
+        esc(PROVIDER_MARK[p.id] || String(p.label || '?').slice(0, 2).toUpperCase()) +
+        '</span>' +
+        '<span class="cb-provider-tile-label">' +
+        esc(PROVIDER_LABELS[p.id] || p.label || p.id) +
+        '</span>' +
+        '<span class="cb-provider-tile-status">' +
+        (live ? 'Live' : 'Soon') +
+        '</span>';
+      btn.addEventListener('click', function () {
+        if (selectedId === p.id) {
+          selectedId = '';
+          selectProvider('');
+          return;
+        }
+        selectProvider(p.id);
+      });
+      li.appendChild(btn);
+      list.appendChild(li);
+    });
+
+    renderEventLinks(data.eventLinks || []);
+    if (selectedId) {
+      selectProvider(selectedId);
+    } else if (detail) {
+      detail.hidden = true;
+      detail.innerHTML = '';
+    }
+  }
+
   function loadProviders() {
     fetch('/api/organiser/connected-booking-providers', { credentials: 'include', cache: 'no-store' })
       .then(function (r) {
@@ -287,7 +420,7 @@
       })
       .then(function (data) {
         if (data && data.ok) renderProviders(data);
-        var eventbrite = (data && data.providers || []).filter(function (p) {
+        var eventbrite = ((data && data.providers) || []).filter(function (p) {
           return p && p.id === 'eventbrite' && p.eventbriteApiTokenConfigured;
         })[0];
         if (!eventbrite) return;
@@ -298,70 +431,31 @@
           body: JSON.stringify({ action: 'sync_eventbrite_attendees' }),
         }).catch(function () {});
       })
-      .catch(function () {
-        /* ignore */
-      });
-  }
-
-  var providerSelect = document.getElementById('cb-link-provider');
-  var externalIdLabel = document.getElementById('cb-link-external-id-label');
-  var externalIdInput = document.getElementById('cb-link-external-id');
-  var ownSiteHint = document.getElementById('cb-own-site-payload-hint');
-
-  function syncLinkFormForProvider() {
-    var p = providerSelect ? providerSelect.value : '';
-    var isOwn = p === 'own_site';
-    if (externalIdLabel) {
-      externalIdLabel.textContent = EXTERNAL_ID_LABELS[p] || 'Provider event id';
-    }
-    if (externalIdInput) {
-      if (p === 'ticket_tailor') {
-        externalIdInput.placeholder = 'ev_40980';
-      } else if (isOwn) {
-        externalIdInput.placeholder = 'Same as TNH event id if you link for records';
-      } else if (p === 'eventbrite') {
-        externalIdInput.placeholder = '2001520723363';
-      } else {
-        externalIdInput.placeholder = '';
-      }
-    }
-    if (ownSiteHint) ownSiteHint.hidden = !isOwn;
-  }
-
-  if (providerSelect) {
-    providerSelect.addEventListener('change', syncLinkFormForProvider);
-    syncLinkFormForProvider();
+      .catch(function () {});
   }
 
   if (saveLinkBtn) {
     saveLinkBtn.addEventListener('click', function () {
-      var eventId = document.getElementById('cb-link-event-id');
-      var provider = document.getElementById('cb-link-provider');
-      var externalId = document.getElementById('cb-link-external-id');
-      var payload = {
-        action: 'link_event',
-        eventId: eventId ? eventId.value.trim() : '',
-        provider: provider ? provider.value : '',
-        externalEventId: externalId ? externalId.value.trim() : '',
-      };
-      if (!payload.eventId) {
-        setLinkStatus('Enter TNH event id.', 'error');
+      var eventId = String((document.getElementById('cb-link-event-id') || {}).value || '').trim();
+      var provider = String((document.getElementById('cb-link-provider') || {}).value || '').trim();
+      var externalEventId = String(
+        (document.getElementById('cb-link-external-id') || {}).value || ''
+      ).trim();
+      if (!eventId || !provider) {
+        setLinkStatus('Event id and provider are required.', 'error');
         return;
-      }
-      if (payload.provider !== 'own_site' && !payload.externalEventId) {
-        setLinkStatus('Enter provider event id.', 'error');
-        return;
-      }
-      if (payload.provider === 'own_site' && !payload.externalEventId) {
-        payload.externalEventId = payload.eventId;
       }
       saveLinkBtn.disabled = true;
-      setLinkStatus('Saving…');
       fetch('/api/organiser/connected-booking-providers', {
         method: 'PATCH',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          action: 'link_event',
+          eventId: eventId,
+          provider: provider,
+          externalEventId: externalEventId,
+        }),
       })
         .then(function (r) {
           return r.json().then(function (body) {
@@ -374,12 +468,8 @@
             setLinkStatus(res.body.message || res.body.error || 'Could not save link.', 'error');
             return;
           }
-          setLinkStatus(
-            payload.provider === 'own_site'
-              ? 'Event noted. Webhook POSTs use eventId in JSON — linking is optional for your own site.'
-              : 'Event linked. New orders from this provider event id will sync here.',
-            'ok'
-          );
+          setLinkStatus('Event link saved.', 'ok');
+          loadProviders();
         })
         .catch(function () {
           saveLinkBtn.disabled = false;
@@ -388,8 +478,19 @@
     });
   }
 
-  window.addEventListener('hub-organiser-connected-booking', function (e) {
-    if (e && e.detail && e.detail.ok && e.detail.active) loadProviders();
+  var providerSelect = document.getElementById('cb-link-provider');
+  if (providerSelect) {
+    providerSelect.addEventListener('change', function () {
+      var label = document.getElementById('cb-link-external-id-label');
+      var hint = document.getElementById('cb-own-site-payload-hint');
+      var val = String(providerSelect.value || '');
+      if (label) label.textContent = EXTERNAL_ID_LABELS[val] || 'Provider event id';
+      if (hint) hint.hidden = val !== 'own_site';
+    });
+  }
+
+  window.addEventListener('hub-organiser-connected-booking', function () {
+    loadProviders();
   });
 
   loadProviders();

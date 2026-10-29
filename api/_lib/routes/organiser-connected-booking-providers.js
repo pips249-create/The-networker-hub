@@ -118,6 +118,7 @@ module.exports = async function handler(req, res) {
           connectionStatus: conn?.status || (p.id === 'custom' ? 'active' : 'not_configured'),
           webhookUrl,
           docsHint: p.docsHint,
+          guidePath: p.guidePath || '',
           eventbriteApiTokenConfigured:
             p.id === 'eventbrite' && conn
               ? Boolean(eventbritePrivateTokenFromConfig(conn.config))
