@@ -119,8 +119,8 @@
               <p class="auth-welcome-kicker">Step 3 of 3 — almost done</p>
               <h1>Tell us about your work</h1>
               <p class="auth-lede auth-lede--welcome">
-                This helps organisers print name badges and helps us understand who networks on The Networker UK.
-                Your industry and job title are not shown publicly unless you book an event.
+                Job title, company and location help organisers print name badges and know who&rsquo;s in the room.
+                Industry helps us understand who networks on The Networker UK.
               </p>
             </header>
 
@@ -167,10 +167,20 @@
                   placeholder="e.g. Acme Ltd"
                 />
               </div>
+              <div class="auth-field">
+                <label for="welcome-profile-location">Location <span class="auth-optional">(optional)</span></label>
+                <input
+                  type="text"
+                  id="welcome-profile-location"
+                  name="location"
+                  autocomplete="address-level2"
+                  placeholder="e.g. Manchester"
+                />
+              </div>
               <div class="auth-actions auth-actions--profile">
-                <button type="submit" class="auth-submit" id="welcome-profile-submit">Continue →</button>
+                <button type="submit" class="auth-submit" id="welcome-profile-submit">Save and continue →</button>
                 <button type="button" class="auth-welcome-skip-link auth-welcome-skip-btn" id="welcome-profile-skip">
-                  Skip for now
+                  I&rsquo;ll finish this in Profile &amp; preferences
                 </button>
               </div>
             </form>
@@ -181,7 +191,7 @@
 
     <script src="js/hub-organiser-actions.js?v=20261022listacc1" data-root=""></script>
     <script src="js/hub-profile-industries.js?v=20260902other1"></script>
-    <script src="js/hub-profile-completion.js?v=20260902other1"></script>
-    <script src="js/welcome.js?v=20261021confirm2"></script>
+    <script src="js/hub-profile-completion.js?v=20261029profile1"></script>
+    <script src="js/welcome.js?v=20261029profile1"></script>
   </body>
 </html>

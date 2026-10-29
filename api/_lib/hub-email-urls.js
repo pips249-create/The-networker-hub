@@ -68,9 +68,14 @@ function hubClaimAttendedUrl(siteUrl) {
   return hubAccountUrl(siteUrl) + '#past';
 }
 
+/** Profile & preferences (job title, company, location, industry, Hubert). */
+function hubAccountSettingsUrl(siteUrl) {
+  return siteBase(siteUrl) + '/account/settings';
+}
+
 /** Profile & preferences → Hubert introductions (headline / looking to meet / Include me). */
 function hubHubertProfileUrl(siteUrl) {
-  return siteBase(siteUrl) + '/account/settings#as-hubert-matchmaker';
+  return hubAccountSettingsUrl(siteUrl) + '#as-hubert-matchmaker';
 }
 
 function plainEmailAddress(value) {
@@ -335,6 +340,7 @@ module.exports = {
   opportunitiesBrowseUrl,
   hubAccountUrl,
   hubClaimAttendedUrl,
+  hubAccountSettingsUrl,
   hubHubertProfileUrl,
   unsubscribeUrl,
   oneClickUnsubscribeUrl,
