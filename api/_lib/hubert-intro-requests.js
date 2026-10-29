@@ -55,6 +55,30 @@ function firstName(fullName) {
   return parts[0] || 'there';
 }
 
+/** Job title · company for email / cards (empty if neither set). */
+function formatTitleCompany(jobTitle, company) {
+  const title = String(jobTitle || '')
+    .trim()
+    .replace(/\s+/g, ' ');
+  const co = String(company || '')
+    .trim()
+    .replace(/\s+/g, ' ');
+  if (title && co) return title + ' · ' + co;
+  return title || co || '';
+}
+
+/**
+ * e.g. "Catherine H. (Founder · Acme)" — privacy-safe short name + role line.
+ */
+function requesterEmailLabel(requester) {
+  const name = shortDisplayName(requester && requester.name);
+  const role = formatTitleCompany(
+    requester && (requester.job_title || requester.jobTitle),
+    requester && requester.company
+  );
+  return role ? name + ' (' + role + ')' : name;
+}
+
 /**
  * Shortlist / pending: first name + initial.
  * After both agree (accepted): first name only.
@@ -223,10 +247,28 @@ async function loadTarget(sb, target) {
 async function loadRequester(sb, attendeeId) {
   const { data, error } = await sb
     .from('attendees')
-    .select('id, name, email, company, job_title')
+    .select('id, name, email, company, job_title, matchmaker_blurb')
     .eq('id', attendeeId)
     .maybeSingle();
-  if (error) throw new Error(error.message);
+  if (error) {
+    // Older DBs may lack matchmaker_blurb — fall back without it.
+    const msg = String((error && error.message) || '').toLowerCase();
+    if (msg.includes('matchmaker_blurb') || error.code === 'PGRST204') {
+      const retry = await sb
+        .from('attendees')
+        .select('id, name, email, company, job_title')
+        .eq('id', attendeeId)
+        .maybeSingle();
+      if (retry.error) throw new Error(retry.error.message);
+      if (!retry.data) {
+        const err = new Error('attendee_not_found');
+        err.code = 'attendee_not_found';
+        throw err;
+      }
+      return retry.data;
+    }
+    throw new Error(error.message);
+  }
   if (!data) {
     const err = new Error('attendee_not_found');
     err.code = 'attendee_not_found';
@@ -289,6 +331,21 @@ async function sendIntroRequestEmail(intro, requester, target) {
     '/account/hubert-intro.html?token=' +
     encodeURIComponent(token) +
     '&decision=decline';
+  const shortName = shortDisplayName(requester.name);
+  const titleCompany = formatTitleCompany(requester.job_title, requester.company);
+  const requesterLabel = requesterEmailLabel(requester);
+  const blurb = String(requester.matchmaker_blurb || '')
+    .trim()
+    .replace(/\s+/g, ' ')
+    .slice(0, 420);
+  const aboutBits = [];
+  if (titleCompany) {
+    aboutBits.push(shortName + ' is ' + titleCompany + '.');
+  }
+  if (blurb) aboutBits.push(blurb);
+  const requester_about = aboutBits.length
+    ? aboutBits.join(' ')
+    : shortName + ' is a member on The Networker UK.';
   const eventContext = intro.event_title
     ? 'They mentioned you may both be around ' + intro.event_title + '.'
     : '';
@@ -298,7 +355,10 @@ async function sendIntroRequestEmail(intro, requester, target) {
     to: target.email,
     variables: {
       user_name: firstName(target.fullName),
-      requester_name: shortDisplayName(requester.name),
+      requester_name: shortName,
+      requester_title_company: titleCompany,
+      requester_label: requesterLabel,
+      requester_about: requester_about,
       topic: intro.topic,
       event_context: eventContext,
       accept_url: acceptUrl,
@@ -492,12 +552,15 @@ async function previewIntroFromToken(token) {
     throw err;
   }
   const requester = await loadRequester(sb, intro.requester_attendee_id);
+  const titleCompany = formatTitleCompany(requester.job_title, requester.company);
   return {
     id: intro.id,
     status: intro.status,
     topic: intro.topic,
     eventTitle: intro.event_title || null,
     requesterDisplayName: shortDisplayName(requester.name),
+    requesterTitleCompany: titleCompany || null,
+    requesterLabel: requesterEmailLabel(requester),
     expiresAt: intro.expires_at,
   };
 }
@@ -906,6 +969,8 @@ module.exports = {
   parseTargetId,
   shortDisplayName,
   firstName,
+  formatTitleCompany,
+  requesterEmailLabel,
   introDisplayName,
   softIntroStatus,
   publicIntroCard,

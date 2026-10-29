@@ -213,7 +213,8 @@
         topicEl.hidden = !(preview && preview.topic);
         if (preview && preview.topic) topicText.textContent = preview.topic;
 
-        var who = (preview && preview.requesterDisplayName) || 'Someone';
+        var who =
+          (preview && (preview.requesterLabel || preview.requesterDisplayName)) || 'Someone';
         if (intended === 'accept' || intended === 'yes') {
           setStatus('', 'From your email');
           titleEl.textContent = 'Accept introduction from ' + who + '?';
@@ -233,7 +234,7 @@
           return;
         }
         setStatus('', 'Choose an answer');
-        titleEl.textContent = who + ' would like to connect';
+        titleEl.textContent = who + ' would like to be introduced';
         bodyEl.textContent =
           'Hubert is The Networker UK’s matchmaker. Accept to open a Hub intro thread, or Decline — contact details stay private either way.';
         acceptBtn.hidden = false;

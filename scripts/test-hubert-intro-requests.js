@@ -7,6 +7,8 @@ const {
   parseTargetId,
   shortDisplayName,
   firstName,
+  formatTitleCompany,
+  requesterEmailLabel,
   introDisplayName,
   softIntroStatus,
   publicIntroCard,
@@ -31,6 +33,14 @@ assert(INTROS_PER_WEEK === 5, '5 intros / week');
 
 assert(shortDisplayName('Alex Morgan') === 'Alex M.', 'short name');
 assert(firstName('Alex Morgan') === 'Alex', 'first name');
+assert(formatTitleCompany('Founder', 'Acme') === 'Founder · Acme', 'title · company');
+assert(formatTitleCompany('Founder', '') === 'Founder', 'title only');
+assert(
+  requesterEmailLabel({ name: 'Catherine Hill', job_title: 'Founder', company: 'Acme' }) ===
+    'Catherine H. (Founder · Acme)',
+  'email label with role'
+);
+assert(requesterEmailLabel({ name: 'Catherine Hill' }) === 'Catherine H.', 'email label name only');
 assert(introDisplayName('Alex Morgan', 'pending') === 'Alex M.', 'pending keeps initial');
 assert(introDisplayName('Alex Morgan', 'accepted') === 'Alex', 'accepted = first name only');
 assert(softIntroStatus('declined').label.indexOf('Didn’t come through') === 0, 'soft decline label');

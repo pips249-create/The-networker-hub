@@ -1019,8 +1019,20 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
   }
 
   if (slug === 'hubert_intro_request') {
-    vars.user_name = vars.user_name || 'Alex';
-    vars.requester_name = vars.requester_name || 'Priya S.';
+    vars.user_name = vars.user_name || 'Rosie';
+    vars.requester_name = vars.requester_name || 'Catherine H.';
+    vars.requester_title_company =
+      vars.requester_title_company || 'Founder · The Networker UK';
+    vars.requester_label =
+      vars.requester_label ||
+      vars.requester_name +
+        (vars.requester_title_company ? ' (' + vars.requester_title_company + ')' : '');
+    vars.requester_about =
+      vars.requester_about ||
+      vars.requester_name +
+        ' is ' +
+        vars.requester_title_company +
+        '. Looking to meet operators and community partners around UK business events.';
     vars.topic =
       vars.topic ||
       'Comparing notes on fintech angels ahead of Manchester Founders Breakfast.';
