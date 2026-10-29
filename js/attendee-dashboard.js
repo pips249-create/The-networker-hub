@@ -1480,8 +1480,8 @@
       btn.dataset.boundTicketsScope = '1';
       btn.addEventListener('click', () => {
         const scope = btn.getAttribute('data-tickets-scope') || 'upcoming';
-        setTicketsScope(scope);
-        if (currentRoute !== 'tickets') setRoute('tickets');
+        // Route via the scope name so setRoute does not collapse "past" back to upcoming.
+        if (currentRoute !== 'tickets' || ticketsScope !== scope) setRoute(scope);
         else if (dashboardReady) renderRouteTables(ticketsScope, { force: true });
       });
     });
@@ -2696,6 +2696,10 @@
     if (isTicketsScope(nextRoute)) {
       setTicketsScope(nextRoute);
       nextRoute = 'tickets';
+    } else if (nextRoute === 'tickets') {
+      // Side/bottom nav "Event tickets" is the abstract tickets route (not a scope).
+      // Leaving past attendance must switch to upcoming — otherwise the click looks dead.
+      setTicketsScope('upcoming');
     }
     if (nextRoute === 'opportunity-enquiries') {
       setOpportunitySavedScope('enquiries');
