@@ -870,7 +870,7 @@
 
     if (lead) {
       lead.innerHTML = hasSub
-        ? 'Your listing is billed <strong>£25/month + VAT</strong> (£30) via Stripe until you cancel. VAT invoices are listed below — use Manage or cancel for card updates or cancellation.'
+        ? 'Your listing is billed <strong>£25/month + VAT</strong> (£30) via Stripe until you cancel. VAT invoices below are private to your organiser account (not on the public listing). Use Manage or cancel for card updates or cancellation.'
         : 'Your listing fee is marked paid. If you need to stop billing, email <a href="mailto:hi@thenetworkeruk.com">hi@thenetworkeruk.com</a> and we will help straight away.';
     }
     if (expiry) {
