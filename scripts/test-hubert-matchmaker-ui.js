@@ -44,10 +44,12 @@ const eventEmpty = mm.emptyStateCopy({
   matchedEvents: [],
   eventAttendeeCount: 0,
 });
-assert(/Hub event/i.test(eventEmpty.title), 'ui empty: unmatched event');
+assert(/match that event/i.test(eventEmpty.title), 'ui empty: unmatched event');
 
 assert(src.indexOf('profile_incomplete') !== -1, 'client handles profile_incomplete');
 assert(src.indexOf('Never auto-tick Include me') !== -1, 'no auto opt-in comment');
 assert(src.indexOf('applyProfileGate') !== -1, 'profile gate helper');
+assert(src.indexOf('confirmStopIncludingMe') !== -1, 'opt-out needs confirmation');
+assert(src.indexOf('Stop including me') !== -1, 'explicit opt-out control');
 
 console.log('ok — hubert-matchmaker ui helpers');

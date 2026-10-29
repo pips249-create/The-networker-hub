@@ -5,7 +5,7 @@
 const { setCors, json } = require('../auth');
 const { isSupabaseConfigured } = require('../supabase');
 const { previewIntroFromToken, respondToIntro } = require('../hubert-intro-requests');
-const { enforceRateLimitAsync } = require('../rate-limit');
+const { enforceRateLimit, enforceRateLimitAsync } = require('../rate-limit');
 
 function parseBody(req) {
   let body = req.body;
@@ -46,14 +46,6 @@ module.exports = async function handler(req, res) {
     return json(res, 503, { ok: false, error: 'supabase_not_configured' });
   }
 
-  const limited = await enforceRateLimitAsync(req, res, 'hubert_intro_decision', {
-    max: 40,
-    windowMs: 60 * 60 * 1000,
-  });
-  if (!limited.allowed) {
-    return json(res, 429, { ok: false, error: 'rate_limited', message: 'Too many attempts. Try again later.' });
-  }
-
   const body = req.method === 'POST' ? parseBody(req) : {};
   const token = readParam(req, body, 'token');
   if (!token) {
@@ -61,6 +53,14 @@ module.exports = async function handler(req, res) {
   }
 
   if (req.method === 'GET') {
+    // In-memory only — avoid a durable rate-limit RPC on every email open.
+    const limited = enforceRateLimit(req, res, 'hubert_intro_preview', {
+      max: 120,
+      windowMs: 60 * 60 * 1000,
+    });
+    if (!limited.allowed) {
+      return json(res, 429, { ok: false, error: 'rate_limited', message: 'Too many attempts. Try again later.' });
+    }
     try {
       const preview = await previewIntroFromToken(token);
       return json(res, 200, { ok: true, intro: preview });
@@ -73,6 +73,14 @@ module.exports = async function handler(req, res) {
         message: e && e.message ? e.message : 'Could not load this introduction.',
       });
     }
+  }
+
+  const limited = await enforceRateLimitAsync(req, res, 'hubert_intro_decision', {
+    max: 40,
+    windowMs: 60 * 60 * 1000,
+  });
+  if (!limited.allowed) {
+    return json(res, 429, { ok: false, error: 'rate_limited', message: 'Too many attempts. Try again later.' });
   }
 
   const decision = readParam(req, body, 'decision') || readParam(req, body, 'action');
@@ -97,7 +105,7 @@ module.exports = async function handler(req, res) {
           ? 'You already accepted this introduction.'
           : 'You already declined this introduction.'
         : accepted
-          ? 'You’re introduced — open the Hub thread to continue (no contact details shared).'
+          ? 'You’re introduced — open Meet people to continue (no contact details shared).'
           : 'Declined. Hubert won’t open an introduction.',
     });
   } catch (e) {

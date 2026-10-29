@@ -116,7 +116,7 @@ const noEvent = emptyStateCopy({
   eventAttendeeCount: 0,
   candidateCount: 0,
 });
-assert(/couldn’t match that Hub event/i.test(noEvent.title), 'empty: no event match');
+assert(/couldn’t match that event/i.test(noEvent.title), 'empty: no event match');
 
 const thinPool = emptyStateCopy({ eventQuery: false, candidateCount: 0 });
 assert(/still thin/i.test(thinPool.text), 'empty: thin pool');

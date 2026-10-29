@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20261016signin1" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20261029dash2" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20261029dash2" />
-    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20261029unlock1" />
+    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20261029include1" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20261023nextup2" />
     <script src="../js/hub-defer-css.js?v=20260828perf2" data-hrefs="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap"></script>
 
@@ -840,13 +840,25 @@
                         <label class="hmm-profile-chip"><input type="checkbox" value="Press" /><span>Press</span></label>
                       </div>
                     </fieldset>
-                    <label class="hmm-profile-discoverable">
-                      <input type="checkbox" data-hmm-profile-discoverable />
-                      <span>
-                        <strong>Include me so Hubert can put me forward</strong>
-                        <span class="hmm-profile-hint hmm-profile-hint--block">Required. Stays off until you tick it — you can turn it off anytime.</span>
-                      </span>
-                    </label>
+                    <div class="hmm-profile-discoverable" data-hmm-discoverable-wrap>
+                      <input type="checkbox" id="hmm-profile-discoverable" data-hmm-profile-discoverable />
+                      <div class="hmm-profile-discoverable-copy">
+                        <label for="hmm-profile-discoverable">
+                          <strong>Include me so Hubert can put me forward</strong>
+                        </label>
+                        <p class="hmm-profile-hint hmm-profile-hint--block" data-hmm-discoverable-hint>
+                          Required to unlock search. Stays off until you tick it. Turning it off needs confirmation.
+                        </p>
+                        <button
+                          type="button"
+                          class="hmm-discoverable-off"
+                          data-hmm-discoverable-off
+                          hidden
+                        >
+                          Stop including me
+                        </button>
+                      </div>
+                    </div>
                     <p class="hmm-profile-error" data-hmm-profile-error hidden role="alert"></p>
                     <p class="hmm-profile-status" data-hmm-profile-status hidden role="status"></p>
                     <button type="submit" class="ad-btn ad-btn-primary" data-hmm-profile-save>Save and continue</button>
@@ -1369,7 +1381,7 @@
     <script src="../js/attendee-auth-gate.js?v=20261021confirm2"></script>
     <script src="../js/organiser-image-upload.js?v=20261002offerimage1" defer></script>
     <script src="../js/attendee-member-offers.js?v=20261015offers1" defer></script>
-    <script src="../js/hubert-matchmaker.js?v=20261029intros1" defer></script>
+    <script src="../js/hubert-matchmaker.js?v=20261029privacy1" defer></script>
     <script src="../js/attendee-dashboard.js?v=20261029ticketsnav1" defer></script>
   </body>
 </html>
