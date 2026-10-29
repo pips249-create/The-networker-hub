@@ -306,11 +306,14 @@
     showComingSoonPanel(true);
     if (linkOutPanel) linkOutPanel.hidden = true;
     if (connectedOnly) connectedOnly.hidden = false;
-    if (gotoPricing) gotoPricing.hidden = true;
+    if (gotoPricing) {
+      gotoPricing.hidden = true;
+      gotoPricing.setAttribute('aria-hidden', 'true');
+    }
     if (titleEl) titleEl.textContent = 'Booking system';
     if (leadEl) {
       leadEl.textContent =
-        'Want to connect an existing system into ours? Choose a provider below for the steps.';
+        'Want to connect an existing system into ours? Tap a provider below to connect and follow the steps.';
     }
     if (adminPanel) adminPanel.hidden = true;
     var providersPanel = document.getElementById('cb-providers-panel');
@@ -351,11 +354,14 @@
       if (titleEl) titleEl.textContent = 'Booking system';
       if (leadEl) {
         leadEl.textContent =
-          'Want to connect an existing system into ours? Choose a provider below for the steps.';
+          'Want to connect an existing system into ours? Tap a provider below to connect and follow the steps.';
       }
       if (linkOutPanel) linkOutPanel.hidden = true;
       if (connectedOnly) connectedOnly.hidden = false;
-      if (gotoPricing) gotoPricing.hidden = true;
+      if (gotoPricing) {
+        gotoPricing.hidden = true;
+        gotoPricing.setAttribute('aria-hidden', 'true');
+      }
       return mode;
     }
 

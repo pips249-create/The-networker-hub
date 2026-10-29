@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="TryBooking">
+  <rect width="64" height="64" rx="14" fill="#E07A2F"/>
+  <path fill="#fff" d="M18 20h28v5.2H36.4V44h-6.2V25.2H18V20zm0 28h12.4v-4.4H18V48z"/>
+</svg>
