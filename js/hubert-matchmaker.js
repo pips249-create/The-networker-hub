@@ -175,6 +175,59 @@
     );
   }
 
+  function applyEmptyCopy(emptyEl, meta) {
+    if (!emptyEl) return;
+    var copy =
+      (meta && meta.empty) ||
+      emptyStateCopy(meta) || {
+        title: 'No one came back yet',
+        text: 'Try another way of describing who you need — a bit more context helps.',
+      };
+    var titleEl = emptyEl.querySelector('.ad-empty-state-title');
+    var textEl = emptyEl.querySelector('.ad-empty-state-text');
+    if (titleEl) titleEl.textContent = copy.title;
+    if (textEl) textEl.textContent = copy.text;
+  }
+
+  /** Mirrors api/_lib/hubert-matchmaker-search emptyStateCopy for offline/stub paths. */
+  function emptyStateCopy(meta) {
+    var m = meta || {};
+    if (m.eventQuery) {
+      var titles = Array.isArray(m.matchedEvents)
+        ? m.matchedEvents
+            .map(function (e) {
+              return e && e.title;
+            })
+            .filter(Boolean)
+        : [];
+      if (titles.length && Number(m.eventAttendeeCount || 0) === 0) {
+        return {
+          title: 'No bookings I can introduce yet',
+          text:
+            'I matched “' +
+            titles[0] +
+            '” on the Hub, but nobody’s booked that I can show. Try another session, or ask who you need by role.',
+        };
+      }
+      if (!titles.length) {
+        return {
+          title: 'I couldn’t match that Hub event',
+          text: 'Try the event name as it appears on The Networker — or describe who you need (role, city, problem).',
+        };
+      }
+    }
+    if (Number(m.candidateCount || 0) === 0) {
+      return {
+        title: 'No one came back yet',
+        text: 'The Hub pool is still thin for that ask. Try another description, or check back after more members opt in.',
+      };
+    }
+    return {
+      title: 'No one came back yet',
+      text: 'Try another way of describing who you need — a bit more context helps.',
+    };
+  }
+
   function setResults(mount, people, query, meta) {
     var results = mount.els.results;
     var empty = mount.els.empty;
@@ -188,7 +241,10 @@
     if (!list.length) {
       results.innerHTML = '';
       results.hidden = true;
-      if (empty) empty.hidden = !query;
+      if (empty) {
+        applyEmptyCopy(empty, meta);
+        empty.hidden = !query;
+      }
       if (preview) preview.hidden = true;
       return;
     }
@@ -200,6 +256,14 @@
         meta && meta.source === 'live'
           ? 'Live back-of-house matches'
           : 'Preview matches';
+      var eventNote = '';
+      if (meta && meta.eventQuery && Array.isArray(meta.matchedEvents) && meta.matchedEvents.length) {
+        eventNote =
+          ' Matched Hub event: ' +
+          esc(meta.matchedEvents[0].title || 'event') +
+          (meta.matchedEvents[0].dateLabel ? ' (' + esc(meta.matchedEvents[0].dateLabel) + ')' : '') +
+          '.';
+      }
       preview.innerHTML =
         '<strong>Admin preview</strong> — ' +
         esc(sourceNote) +
@@ -207,7 +271,9 @@
         MAX_SHORTLIST +
         ') for “' +
         esc(String(query || '').trim()) +
-        '”. No contact details are shown. Request intro emails them via Hubert.';
+        '”.' +
+        eventNote +
+        ' No contact details are shown. Request intro emails them via Hubert.';
     }
     results.innerHTML = list.map(renderCard).join('');
     results.hidden = false;
@@ -361,7 +427,8 @@
       .then(function (result) {
         var data = result.data || {};
         if (data.ok && Array.isArray(data.matches)) {
-          paintAll(data.matches, query, { source: 'live' });
+          var liveMeta = Object.assign({ source: 'live' }, data.meta || {});
+          paintAll(data.matches, query, liveMeta);
         } else if (result.status === 401 || result.status === 403) {
           if (err) {
             err.textContent = (data && data.message) || 'Sign in as an admin to use Hubert Matchmaker.';
@@ -1040,6 +1107,7 @@
     isMatchmakerPublic: isMatchmakerPublic,
     canUseMatchmaker: canUseMatchmaker,
     shortDisplayName: shortDisplayName,
+    emptyStateCopy: emptyStateCopy,
     init: init,
     render: render,
     search: search,

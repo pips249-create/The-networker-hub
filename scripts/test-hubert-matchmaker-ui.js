@@ -38,4 +38,12 @@ const stubs = mm._stubShortlist('fintech founders');
 assert(Array.isArray(stubs) && stubs.length === mm.MAX_SHORTLIST, 'max 5 stubs');
 assert(stubs.every((p) => p.id !== 'stub-6'), '6th stub excluded by cap');
 
+assert(typeof mm.emptyStateCopy === 'function', 'emptyStateCopy exported');
+const eventEmpty = mm.emptyStateCopy({
+  eventQuery: true,
+  matchedEvents: [],
+  eventAttendeeCount: 0,
+});
+assert(/Hub event/i.test(eventEmpty.title), 'ui empty: unmatched event');
+
 console.log('ok — hubert-matchmaker ui helpers');
