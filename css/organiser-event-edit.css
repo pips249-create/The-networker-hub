@@ -7531,6 +7531,12 @@ button.ge-booking-choice {
 }
 
 
+/* Booking system — hide leftover pricing CTA permanently */
+#cb-goto-pricing[hidden],
+.org-page--connected-booking #cb-goto-pricing {
+  display: none !important;
+}
+
 /* Booking system provider logo tiles */
 .cb-provider-tiles {
   list-style: none;
