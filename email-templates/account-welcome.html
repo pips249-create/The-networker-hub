@@ -73,7 +73,7 @@
             <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:0.5px;margin:0 0 8px;">Welcome</p>
             <h1 class="hero-title" style="font-family:'DM Sans',system-ui,sans-serif;font-size:28px;font-weight:600;color:#452d5c;letter-spacing:-0.03em;line-height:1.15;margin:0 0 10px;">Your Account is ready</h1>
             <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:400;color:#635c5e;line-height:1.7;margin:0;">
-              Hi {{user_name}}, welcome to <strong style="color:#9a7aa8;font-weight:600;">The Networker UK</strong>. Browse events, book tickets, explore business opportunities, and keep everything in one place.
+              Hi {{user_name}}, welcome to <strong style="color:#9a7aa8;font-weight:600;">The Networker UK</strong>. Browse events, book tickets, claim ones you&rsquo;ve already attended, explore business opportunities, and keep everything in one place.
             </p>
           </td>
         </tr>
@@ -103,7 +103,28 @@
                         <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:400;color:#635c5e;line-height:1.6;margin:0;">Favourite events to watch and leave feedback after you attend.</p>
                       </td>
                     </tr>
+                    <tr>
+                      <td class="feature-cell" style="padding:12px 0 0;vertical-align:top;">
+                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:600;color:#452d5c;margin:0 0 4px;">Events you&rsquo;ve already attended</p>
+                        <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:400;color:#635c5e;line-height:1.6;margin:0;">Claim past events from our organiser list toward Most networked networker.</p>
+                      </td>
+                    </tr>
                   </table>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+
+        <tr>
+          <td class="mobile-pad" style="padding:0 48px 20px;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#ebe0f0;border-radius:14px;border:1px solid #d9c4e0;">
+              <tr>
+                <td style="padding:22px 24px;">
+                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:#9a7aa8;text-transform:uppercase;letter-spacing:1px;margin:0 0 8px;">Already networking?</p>
+                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:600;color:#452d5c;margin:0 0 8px;line-height:1.35;">Tell us which events you have attended</p>
+                  <p style="font-family:'DM Sans',system-ui,sans-serif;font-size:15px;font-weight:400;color:#635c5e;line-height:1.65;margin:0 0 14px;">Claim them in My account to be nominated for <strong style="color:#452d5c;font-weight:600;">Most networked networker</strong>. Hub tickets count fully; organiser-confirmed claims count as half.</p>
+                  <a href="{{claim_attended_url}}" style="display:inline-block;padding:14px 28px;background:#452d5c;border-radius:999px;color:#ffffff;font-family:'DM Sans',system-ui,sans-serif;font-size:16px;font-weight:700;text-decoration:none;">Add events you&rsquo;ve attended &rarr;</a>
                 </td>
               </tr>
             </table>
