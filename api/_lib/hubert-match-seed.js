@@ -189,6 +189,24 @@ async function listSeedContacts(opts) {
   return { configured: true, contacts, totals };
 }
 
+async function getSeedContact(id) {
+  if (!isUuid(id)) {
+    const err = new Error('invalid_id');
+    err.status = 400;
+    throw err;
+  }
+  const { getSupabaseAdmin } = supabaseApi();
+  const sb = getSupabaseAdmin();
+  const { data, error } = await sb.from('hubert_match_seed').select('*').eq('id', id).maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!data) {
+    const err = new Error('not_found');
+    err.status = 404;
+    throw err;
+  }
+  return mapRow(data);
+}
+
 async function createSeedContact(fields, userId) {
   const { getSupabaseAdmin } = supabaseApi();
   const sb = getSupabaseAdmin();
@@ -263,6 +281,7 @@ module.exports = {
   isUuid,
   normalizeSeedInput,
   listSeedContacts,
+  getSeedContact,
   createSeedContact,
   updateSeedContact,
   deleteSeedContact,

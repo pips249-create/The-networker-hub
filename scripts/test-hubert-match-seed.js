@@ -2,6 +2,7 @@
 const {
   normalizeSeedInput,
   isUuid,
+  getSeedContact,
 } = require('../api/_lib/hubert-match-seed');
 
 function assert(cond, msg) {
@@ -33,5 +34,6 @@ assert(/^https:\/\//.test(good.fields.linkedin_url), 'prefixes linkedin url');
 
 const genericIntent = 'Networking';
 assert(genericIntent.length < 25, 'intent min reminder for later slice');
+assert(typeof getSeedContact === 'function', 'getSeedContact exported');
 
 console.log('ok — hubert match seed helpers');
