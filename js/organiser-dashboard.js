@@ -8604,6 +8604,11 @@
     if (sels[0] && sels[0].value !== prev) {
       filters.eventsGroup = sels[0].value || 'all';
     }
+    try {
+      document.dispatchEvent(new CustomEvent('org:groups-loaded'));
+    } catch (_e) {
+      /* ignore */
+    }
   }
 
   function eventEditorUrl(ev) {

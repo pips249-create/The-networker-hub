@@ -181,8 +181,9 @@
         <div class="ee-card" id="ge-booking-card" hidden>
           <h2>Already use a booking system?</h2>
           <p class="ee-hint" style="margin:0 0 14px">
-            Connect Eventbrite here — no separate enable step. Checkout stays on Eventbrite; we import live events
-            onto this page and sync buyers to your attendee list.
+            Prefer Eventbrite checkout? Mark it here. Connect and import from
+            <strong>My events</strong> — expand <strong>Connect Eventbrite</strong>, then Import
+            (same pattern as a recurring series list).
           </p>
 
           <div class="ge-booking-choices" role="listbox" aria-label="Booking system for this organiser page">
@@ -203,7 +204,7 @@
             >
               <span>
                 <strong>Eventbrite</strong>
-                <span>Keep Eventbrite checkout. Import events and sync buyers.</span>
+                <span>Keep Eventbrite checkout. Import from My events.</span>
               </span>
               <span class="ge-booking-status" id="ge-eb-status-pill">Not connected</span>
             </button>
@@ -236,59 +237,11 @@
           </div>
 
           <div class="ge-booking-panel" id="ge-eb-panel">
-            <h3 class="ge-booking-panel-title">Connect Eventbrite</h3>
-            <p class="ee-hint" style="margin:0 0 12px">
-              Click connect and approve The Networker UK in Eventbrite. We turn on sync for this account
-              automatically and import matching live events onto this page.
+            <p class="ee-hint" style="margin:0">
+              <a href="/organiser/#events-list" id="ge-eb-goto-events">Open My events → Connect Eventbrite</a>
+              to drop down your Eventbrite list and Import.
             </p>
-            <div class="ge-booking-actions">
-              <button type="button" class="ee-btn ee-btn-primary" id="ge-eb-oauth">Connect with Eventbrite</button>
-              <button type="button" class="ee-btn ee-btn-outline" id="ge-eb-refresh" hidden>Refresh Eventbrite events</button>
-              <button type="button" class="ee-btn ee-btn-outline" id="ge-eb-sync" hidden>Import new events</button>
-            </div>
-            <p class="ee-hint" style="margin:10px 0 0">
-              Prefer one-click connect above. Or paste a private token below — same result (import + attendee sync).
-              <a href="/guides/connect-eventbrite" target="_blank" rel="noopener">Guide →</a>
-            </p>
-            <div class="ge-eb-token-box" id="ge-eb-advanced" style="margin-top:14px">
-              <p class="ge-booking-panel-title" style="margin:0 0 8px;font-size:1rem">
-                Or paste your Eventbrite private token
-              </p>
-              <ol class="ge-booking-steps" style="margin-top:0">
-                <li>
-                  Eventbrite → profile → <strong>Account Settings</strong> →
-                  <strong>Developer Links</strong> → <strong>API Keys</strong>
-                </li>
-                <li>
-                  <strong>Show API key, client secret and tokens</strong> → copy
-                  <strong>Private token</strong> (not the client secret)
-                </li>
-                <li>Paste here → <strong>Save private token</strong></li>
-              </ol>
-              <div class="ee-field" style="margin:0">
-                <label for="ge-eb-token">Eventbrite private token</label>
-                <input
-                  type="password"
-                  id="ge-eb-token"
-                  autocomplete="off"
-                  placeholder="Paste Private token from API Keys"
-                />
-              </div>
-              <div class="ge-booking-actions" style="margin-top:10px">
-                <button type="button" class="ee-btn ee-btn-outline" id="ge-eb-save">Save private token</button>
-              </div>
-            </div>
             <p class="ge-booking-msg" id="ge-eb-msg" role="status" hidden></p>
-
-            <div class="ge-eb-import" id="ge-eb-import" hidden>
-              <h3 class="ge-booking-panel-title">Your Eventbrite events</h3>
-              <p class="ee-hint" style="margin:0 0 10px">
-                Matching live events are imported automatically after connect. You can still import one by hand
-                if needed. Complete listings (date + price + booking URL) publish; incomplete ones stay drafts.
-              </p>
-              <ul class="ge-eb-event-list" id="ge-eb-event-list"></ul>
-              <p class="ee-hint" id="ge-eb-empty" hidden>No Eventbrite events found for this account.</p>
-            </div>
           </div>
         </div>
 
@@ -317,6 +270,6 @@
     <script src="../js/organiser-flow-tour.js?v=20260723onboard" data-root="../" defer></script>
     <script src="../js/organiser-image-upload.js?v=20260605" defer></script>
     <script src="../js/organiser-group-edit.js?v=20261029token1" defer></script>
-    <script src="../js/organiser-group-booking-connect.js?v=20261029token1" defer></script>
+    <script src="../js/organiser-group-booking-connect.js?v=20261029ebdrop1" defer></script>
   </body>
 </html>
