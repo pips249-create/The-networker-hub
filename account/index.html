@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20261016signin1" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20261029dash2" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20261029dash2" />
-    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20261029profilesave1" />
+    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20261029unlock1" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20261023nextup2" />
     <script src="../js/hub-defer-css.js?v=20260828perf2" data-hrefs="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap"></script>
 
@@ -852,8 +852,11 @@
                     <button type="submit" class="ad-btn ad-btn-primary" data-hmm-profile-save>Save and continue</button>
                   </form>
                 </div>
-                <div class="hmm-ask-block" data-hmm-ask-block hidden>
+                <div class="hmm-ask-block hmm-ask-block--locked" data-hmm-ask-block>
                 <p class="hmm-ask-kicker">Ask Hubert</p>
+                <p class="hmm-ask-lock-note" data-hmm-ask-lock-note>
+                  Save your profile above (headline, who you want to meet, and Include me) to unlock search.
+                </p>
                 <form class="hmm-composer" data-hmm-form>
                   <label class="visually-hidden" for="hmm-query">What are you working on?</label>
                   <div class="hmm-composer-row">
@@ -868,8 +871,9 @@
                       autocomplete="off"
                       placeholder="e.g. raising seed and need fintech angels in Manchester"
                       required
+                      disabled
                     />
-                    <button type="submit" class="ad-btn ad-btn-primary hmm-composer-submit">Try Hubert</button>
+                    <button type="submit" class="ad-btn ad-btn-primary hmm-composer-submit" disabled>Try Hubert</button>
                   </div>
                   <p class="hmm-error" data-hmm-error hidden role="alert"></p>
                 </form>
@@ -1365,7 +1369,7 @@
     <script src="../js/attendee-auth-gate.js?v=20261021confirm2"></script>
     <script src="../js/organiser-image-upload.js?v=20261002offerimage1" defer></script>
     <script src="../js/attendee-member-offers.js?v=20261015offers1" defer></script>
-    <script src="../js/hubert-matchmaker.js?v=20261029profilesave1" defer></script>
+    <script src="../js/hubert-matchmaker.js?v=20261029unlock1" defer></script>
     <script src="../js/attendee-dashboard.js?v=20261029safarjson1" defer></script>
   </body>
 </html>
