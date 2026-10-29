@@ -1035,7 +1035,12 @@
     if (main) main.hidden = false;
     renderOrganiserWorkspace(sessionData);
     const hash = window.location.hash;
-    if (hash === '#email-preferences' || hash === '#organiser-workspace' || hash === '#privacy-data') {
+    if (
+      hash === '#email-preferences' ||
+      hash === '#organiser-workspace' ||
+      hash === '#privacy-data' ||
+      hash === '#as-hubert-matchmaker'
+    ) {
       const section = document.getElementById(hash.slice(1));
       if (section) {
         if (hash === '#email-preferences') section.classList.add('is-unsubscribe-target');
