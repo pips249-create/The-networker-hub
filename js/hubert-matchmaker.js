@@ -739,6 +739,114 @@
     });
   }
 
+  function confirmStopIncludingMe() {
+    return window.confirm(
+      'Stop putting you forward for Hubert intros?\n\nSearch will lock until you include yourself again. Contact details still stay private either way.'
+    );
+  }
+
+  function syncDiscoverableUi(profile) {
+    var wrap = document.querySelector('[data-hmm-discoverable-wrap]');
+    var disc = document.querySelector('[data-hmm-profile-discoverable]');
+    var offBtn = document.querySelector('[data-hmm-discoverable-off]');
+    var hint = document.querySelector('[data-hmm-discoverable-hint]');
+    var included = Boolean(disc && disc.checked);
+    if (wrap) wrap.classList.toggle('is-included', included);
+    if (offBtn) offBtn.hidden = !included;
+    if (hint) {
+      hint.textContent = included
+        ? 'You’re included. Use “Stop including me” if you want to opt out — it won’t untick from a casual click.'
+        : 'Required to unlock search. Stays off until you tick it. Turning it off needs confirmation.';
+    }
+    void disc;
+    void profile;
+  }
+
+  function bindDiscoverableGuard() {
+    var wrap = document.querySelector('[data-hmm-discoverable-wrap]');
+    var disc = document.querySelector('[data-hmm-profile-discoverable]');
+    var offBtn = document.querySelector('[data-hmm-discoverable-off]');
+    if (!disc || disc.dataset.hmmGuard === '1') return;
+    disc.dataset.hmmGuard = '1';
+
+    disc.addEventListener('click', function (e) {
+      if (!disc.checked) return; // allowing opt-in
+      // Already included — don’t let a casual click untick.
+      e.preventDefault();
+      if (offBtn) offBtn.focus();
+    });
+
+    disc.addEventListener('keydown', function (e) {
+      if (!disc.checked) return;
+      if (e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault();
+        if (offBtn) offBtn.focus();
+      }
+    });
+
+    if (offBtn && offBtn.dataset.hmmBound !== '1') {
+      offBtn.dataset.hmmBound = '1';
+      offBtn.addEventListener('click', function () {
+        if (!disc.checked) return;
+        if (!confirmStopIncludingMe()) return;
+        disc.checked = false;
+        syncDiscoverableUi(lastProfile);
+        setProfileStatus(true, 'Saving…');
+        offBtn.disabled = true;
+        fetch('/api/auth/profile', {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({ discoverable: false }),
+        })
+          .then(function (res) {
+            return res.json().then(function (data) {
+              return { status: res.status, data: data };
+            });
+          })
+          .then(function (result) {
+            var data = result.data || {};
+            if (!data.ok) {
+              disc.checked = true;
+              syncDiscoverableUi(lastProfile);
+              setProfileStatus(false, (data && data.message) || 'Could not turn inclusion off.');
+              return;
+            }
+            lastProfile = data.profile || lastProfile;
+            fillProfileForm(data.profile || { discoverable: false });
+            setProfileStatus(
+              false,
+              'You’re opted out. Tick Include me and save when you want Hubert to put you forward again.'
+            );
+          })
+          .catch(function () {
+            disc.checked = true;
+            syncDiscoverableUi(lastProfile);
+            setProfileStatus(false, 'Could not turn inclusion off — check your connection.');
+          })
+          .finally(function () {
+            offBtn.disabled = false;
+          });
+      });
+    }
+
+    var label = wrap && wrap.querySelector('label[for="hmm-profile-discoverable"]');
+    if (label && label.dataset.hmmBound !== '1') {
+      label.dataset.hmmBound = '1';
+      label.addEventListener('click', function (e) {
+        if (!disc.checked) return;
+        e.preventDefault();
+        if (offBtn) offBtn.focus();
+      });
+    }
+
+    if (wrap) {
+      wrap.addEventListener('change', function () {
+        syncDiscoverableUi(lastProfile);
+      });
+    }
+  }
+
   function fillProfileForm(profile) {
     var blurb = document.querySelector('[data-hmm-profile-blurb]');
     var looking = document.querySelector('[data-hmm-profile-looking]');
@@ -754,6 +862,7 @@
     );
     // Never auto-tick Include me — member must opt in.
     if (disc) disc.checked = Boolean(profile && profile.discoverable);
+    syncDiscoverableUi(profile || {});
     applyProfileGate(profile || {});
     if (profile && profile.matchmakerReady) {
       setProfileStatus(true, 'You’re ready — ask Hubert who you need.');
@@ -909,11 +1018,13 @@
     if (looking && !looking.querySelector('input[type="checkbox"]')) {
       renderLookingChips(looking, DEFAULT_LOOKING, []);
     }
+    bindDiscoverableGuard();
     var form = document.querySelector('[data-hmm-profile-form]');
     if (form && form.dataset.hmmBound !== '1') {
       form.dataset.hmmBound = '1';
       form.addEventListener('submit', saveMatchmakerProfile);
     }
+    syncDiscoverableUi(lastProfile);
     applyProfileGate(lastProfile);
   }
 

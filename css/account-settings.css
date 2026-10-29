@@ -548,6 +548,31 @@
   margin: 8px 0 4px;
 }
 
+.as-discoverable-choice.is-included #as-discoverable {
+  pointer-events: none;
+  accent-color: #2f6b45;
+}
+
+.as-discoverable-off {
+  display: inline-block;
+  margin: 6px 0 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #7a4a8c;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.as-discoverable-off:hover,
+.as-discoverable-off:focus-visible {
+  color: #5a2f6c;
+}
+
 #as-matchmaker-blurb {
   width: 100%;
   box-sizing: border-box;
