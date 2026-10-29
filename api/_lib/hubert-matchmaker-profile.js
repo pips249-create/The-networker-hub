@@ -111,6 +111,13 @@ function matchmakerProfileFromAttendee(attendee) {
   const discoverableAt = attendee?.discoverable_at || null;
   const discoverable = Boolean(discoverableAt);
   const matchmakerReady = Boolean(discoverable && savedBlurb && lookingToMeet.length);
+  const hubertIntrosInterestAt = attendee?.hubert_intros_interest_at || null;
+  const hubertIntrosPromptDismissedAt = attendee?.hubert_intros_prompt_dismissed_at || null;
+  const hubertIntrosInterested = Boolean(hubertIntrosInterestAt);
+  /** First-login modal: only if they have not opted in, dismissed, or finished setup. */
+  const shouldPromptHubertIntros = Boolean(
+    !matchmakerReady && !hubertIntrosInterested && !hubertIntrosPromptDismissedAt
+  );
   return {
     matchmakerBlurb: savedBlurb,
     suggestedBlurb,
@@ -126,6 +133,12 @@ function matchmakerProfileFromAttendee(attendee) {
       !lookingToMeet.length ? 'lookingToMeet' : null,
       !discoverable ? 'discoverable' : null,
     ].filter(Boolean),
+    hubertIntrosInterestAt,
+    hubertIntrosPromptDismissedAt,
+    hubertIntrosInterested,
+    /** Prefer Include-me checked when they already said yes at signup / Enable. */
+    preferDiscoverable: Boolean(hubertIntrosInterested && !discoverable),
+    shouldPromptHubertIntros,
   };
 }
 

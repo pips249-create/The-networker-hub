@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20261016signin1" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20261029dash2" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20261029dash2" />
-    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20261029hubertwhy1" />
+    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20261029optin1" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20261023nextup2" />
     <script src="../js/hub-defer-css.js?v=20260828perf2" data-hrefs="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap"></script>
 
@@ -1133,6 +1133,32 @@
       </div>
     </div>
 
+    <div class="ad-hubert-optin-modal" id="ad-hubert-optin-modal" hidden>
+      <div class="ad-hubert-optin-modal-backdrop" id="ad-hubert-optin-backdrop"></div>
+      <div
+        class="ad-hubert-optin-modal-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="ad-hubert-optin-title"
+      >
+        <button type="button" class="ad-hubert-optin-close" id="ad-hubert-optin-close" aria-label="Close">
+          ×
+        </button>
+        <div class="ad-hubert-optin-icon" aria-hidden="true">
+          <img src="../assets/hubert-icon.png" width="56" height="56" alt="" />
+        </div>
+        <h2 class="ad-hubert-optin-title" id="ad-hubert-optin-title">Meet people through Hubert</h2>
+        <p class="ad-hubert-optin-sub">
+          Hubert can match you with founders and attendees worth meeting — introductions stay on The Networker UK until
+          you both say yes. Enable intros to finish a short profile (you can turn this off anytime).
+        </p>
+        <div class="ad-hubert-optin-actions">
+          <button type="button" class="ad-btn ad-btn-primary" id="ad-hubert-optin-enable">Enable intros</button>
+          <button type="button" class="ad-btn ad-btn-ghost" id="ad-hubert-optin-later">Maybe later</button>
+        </div>
+      </div>
+    </div>
+
     <div class="ad-share-modal" id="ad-share-modal" hidden>
       <div class="ad-share-modal-backdrop" id="ad-share-modal-backdrop"></div>
       <div
@@ -1382,7 +1408,7 @@
     <script src="../js/attendee-auth-gate.js?v=20261021confirm2"></script>
     <script src="../js/organiser-image-upload.js?v=20261002offerimage1" defer></script>
     <script src="../js/attendee-member-offers.js?v=20261015offers1" defer></script>
-    <script src="../js/hubert-matchmaker.js?v=20261029privacy1" defer></script>
+    <script src="../js/hubert-matchmaker.js?v=20261029optin1" defer></script>
     <script src="../js/attendee-dashboard.js?v=20261029hubertwhy1" defer></script>
   </body>
 </html>
