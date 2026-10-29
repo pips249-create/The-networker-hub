@@ -7,6 +7,7 @@ const {
   browseEventsUrl,
   hubAccountUrl,
   hubClaimAttendedUrl,
+  hubAccountSettingsUrl,
   hubHubertProfileUrl,
   hubPaymentUrl,
   legalPolicyUrl,
@@ -14,6 +15,7 @@ const {
   unsubscribeUrl,
   logoNavUrl,
   logoFooterUrl,
+  logoEmailOnDarkUrl,
   hubertIconUrl,
   supportEmail,
   eventPublicUrl,
@@ -80,6 +82,7 @@ function basePreviewVars(siteUrl) {
     ticket_quantity_label: '1 × General admission',
     hub_account_url: hubAccountUrl(site) + '#saved',
     claim_attended_url: hubClaimAttendedUrl(site),
+    account_settings_url: hubAccountSettingsUrl(site),
     hubert_profile_url: hubHubertProfileUrl(site),
     hub_payment_url: hubPaymentUrl(site, registrationId),
     browse_events_url: browseEventsUrl(site),
@@ -306,14 +309,13 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
   }
 
   if (slug === 'hubert_hub_invite') {
-    const hubertInviteHeaderLogoDataUri = require('./hubert-hub-invite-header-logo-datauri');
-    const hubertInviteOnDarkLogoDataUri = require('./hubert-hub-invite-logo-datauri');
+    const onDark = logoEmailOnDarkUrl(site);
     vars.invitee_name = 'Alex Morgan';
     vars.invitee_first_name = 'Alex';
     vars.inviter_name = 'Priya Shah';
     vars.inviter_first_name = 'Priya';
     vars.invite_note =
-      'Thought you’d like The Networker UK — great events, and Hubert can introduce you to people worth meeting.';
+      'Thought you’d get a lot from Hubert — ask who you want to meet and he’ll open warm intros when both sides say yes.';
     vars.invite_note_section =
       '<p style="font-family:\'DM Sans\',system-ui,sans-serif;font-size:15px;line-height:1.65;color:#452d5c;margin:0 0 14px;padding:14px 16px;background:#f3eef5;border-radius:12px;text-align:left;">' +
       '<strong style="display:block;font-size:12px;letter-spacing:0.06em;text-transform:uppercase;margin:0 0 6px;color:#7a3d8a;">A note from them</strong>' +
@@ -326,9 +328,9 @@ function mergeEmailPreviewVariables(slug, extraVars, siteUrl) {
       '&intent=attendee&utm_source=hubert&utm_medium=email&utm_campaign=hub_invite';
     vars.account_url = site + '/account/';
     vars.hubert_icon_url = hubertIconUrl(site);
-    vars.logo_url = hubertInviteHeaderLogoDataUri;
-    vars.logo_footer_url = hubertInviteOnDarkLogoDataUri;
-    vars.logo_footer_light_url = hubertInviteOnDarkLogoDataUri;
+    vars.logo_url = onDark;
+    vars.logo_footer_url = onDark;
+    vars.logo_footer_light_url = onDark;
   }
 
   if (slug === 'saved_organiser_new_listing') {

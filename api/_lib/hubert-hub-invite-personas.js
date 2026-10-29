@@ -1,5 +1,5 @@
 /**
- * Named inviters for admin seed Hub invites (ops send as Catherine or Rosie).
+ * Named inviters for admin seed The Networker UK invites (ops send as Catherine or Rosie).
  * Member invites always use the signed-in individual — never these personas.
  */
 const HUB_INVITE_PERSONAS = {

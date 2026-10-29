@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Smoke for Hubert Hub invite registration + pure helpers.
+ * Smoke for The Networker UK (Hubert) invite registration + pure helpers.
  * Avoids loading send-template-email (needs @supabase/supabase-js).
  */
 const assert = require('assert');
@@ -28,21 +28,28 @@ const inviteHtml = fs.readFileSync(
   path.join(__dirname, '../email-templates/hubert-hub-invite.html'),
   'utf8'
 );
-assert.ok(inviteHtml.includes('Introductions via Hubert'), 'value prop: free intros');
-assert.ok(inviteHtml.includes('UK networking events'), 'value prop: events');
+assert.ok(inviteHtml.includes('I introduce you to people worth meeting'), 'Hubert-led headline');
+assert.ok(inviteHtml.includes('What Hubert does for you'), 'Hubert value block');
+assert.ok(inviteHtml.includes('Meet people with Hubert'), 'CTA centres Hubert');
+assert.ok(inviteHtml.includes('UK networking events') || inviteHtml.includes('networking events'), 'events still mentioned');
 assert.ok(inviteHtml.includes('logo_footer_light_url'), 'high-contrast footer logo');
-assert.ok(inviteHtml.includes('background:#f5f0e8'), 'cream header for logo contrast');
+assert.ok(inviteHtml.includes('background:#1c2040'), 'navy header/footer for on-dark logo');
+assert.ok(inviteHtml.includes('width="300"'), 'larger header logo');
 assert.ok(
-  fs
-    .readFileSync(path.join(__dirname, '../api/_lib/send-template-email.js'), 'utf8')
-    .includes('hubert-hub-invite-header-logo-datauri'),
-  'send path inlines cream-header logo'
+  !inviteHtml.includes('background:#f5f0e8'),
+  'cream header retired — lavender logo washed out'
 );
 assert.ok(
   fs
     .readFileSync(path.join(__dirname, '../api/_lib/send-template-email.js'), 'utf8')
+    .includes('logoEmailOnDarkUrl'),
+  'send path uses hosted on-dark logo'
+);
+assert.ok(
+  !fs
+    .readFileSync(path.join(__dirname, '../api/_lib/send-template-email.js'), 'utf8')
     .includes('hubert-hub-invite-logo-datauri'),
-  'send path inlines on-dark footer logo'
+  'send path no longer depends on data URIs (inbox clients strip them)'
 );
 assert.ok(
   fs.existsSync(path.join(__dirname, '../supabase/migrations/336_hubert_hub_invites.sql')),
@@ -175,7 +182,7 @@ async function runValidation() {
 
 runValidation()
   .then(function () {
-    console.log('ok — hubert hub invite');
+    console.log('ok — networker uk invite');
   })
   .catch(function (err) {
     console.error('FAIL:', err && err.message ? err.message : err);

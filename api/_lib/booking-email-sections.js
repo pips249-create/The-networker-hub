@@ -17,6 +17,7 @@ const {
   opportunitiesBrowseUrl,
   hubAccountUrl,
   hubClaimAttendedUrl,
+  hubAccountSettingsUrl,
   hubHubertProfileUrl,
   hubPaymentUrl,
   legalPolicyUrl,
@@ -220,6 +221,8 @@ function enrichAccountWelcomeVars(vars, sponsorSection) {
     hub_account_url: String(input.hub_account_url || '').trim() || hubAccountUrl(site),
     claim_attended_url:
       String(input.claim_attended_url || '').trim() || hubClaimAttendedUrl(site),
+    account_settings_url:
+      String(input.account_settings_url || '').trim() || hubAccountSettingsUrl(site),
     hubert_profile_url:
       String(input.hubert_profile_url || '').trim() || hubHubertProfileUrl(site),
     browse_events_url: String(input.browse_events_url || '').trim() || browseEventsUrl(site),
