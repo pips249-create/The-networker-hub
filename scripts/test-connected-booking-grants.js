@@ -13,10 +13,14 @@ const {
   accountHasLinkOutGrant,
   isExternalCheckoutEvent,
   isExternalLinkOutEvent,
+  connectedBookingFreeEnabled,
+  connectedBookingFreeDefaultPlan,
 } = require('../api/_lib/connected-booking-util');
 
-assert.strictEqual(normalizePlan('growth'), 'growth');
-assert.strictEqual(normalizePlan('nope'), 'starter');
+// Free Connected collapses Command Centre plan picks to unlimited enterprise.
+assert.strictEqual(connectedBookingFreeEnabled(), true);
+assert.strictEqual(normalizePlan('growth'), connectedBookingFreeDefaultPlan());
+assert.strictEqual(normalizePlan('nope'), connectedBookingFreeDefaultPlan());
 assert.strictEqual(CHECKOUT_LINK_OUT, 'external_link');
 assert.strictEqual(typeof findAllOrganiserAccountsByEmail, 'function');
 

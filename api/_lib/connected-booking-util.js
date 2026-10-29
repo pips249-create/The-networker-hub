@@ -46,18 +46,6 @@ function connectedBookingPilotGrantEmails() {
   return list.length ? list : null;
 }
 
-function connectedBookingPilotGrantPlan() {
-  const plan = String(process.env.CONNECTED_BOOKING_PILOT_GRANT_PLAN || 'starter').trim().toLowerCase();
-  return plan in PLAN_GROUP_LIMITS ? plan : 'starter';
-}
-
-function connectedBookingPilotGrantEligible(email) {
-  const em = normalizeConnectedBookingEmail(email);
-  if (!em) return false;
-  const list = connectedBookingPilotGrantEmails();
-  return Boolean(list && list.includes(em));
-}
-
 /**
  * Connected booking is free by default (no Stripe subscribe).
  * Set CONNECTED_BOOKING_REQUIRE_SUBSCRIPTION=true to restore paid plans.
@@ -70,12 +58,32 @@ function connectedBookingFreeEnabled() {
   return true;
 }
 
-/** Default plan when activating free Connected — enterprise = unlimited organiser pages. */
+/** Default plan when activating free Connected — enterprise = unlimited organiser pages (no slot caps). */
 function connectedBookingFreeDefaultPlan() {
   const plan = String(process.env.CONNECTED_BOOKING_FREE_PLAN || 'enterprise')
     .trim()
     .toLowerCase();
   return plan in PLAN_GROUP_LIMITS ? plan : 'enterprise';
+}
+
+/**
+ * Pilot grant plan. While Connected is free, always unlimited (enterprise) —
+ * ignore CONNECTED_BOOKING_PILOT_GRANT_PLAN=starter so organisers never see slot assignment.
+ * Limited pilot plans only apply when CONNECTED_BOOKING_REQUIRE_SUBSCRIPTION=true.
+ */
+function connectedBookingPilotGrantPlan() {
+  if (connectedBookingFreeEnabled()) {
+    return connectedBookingFreeDefaultPlan();
+  }
+  const plan = String(process.env.CONNECTED_BOOKING_PILOT_GRANT_PLAN || 'starter').trim().toLowerCase();
+  return plan in PLAN_GROUP_LIMITS ? plan : 'starter';
+}
+
+function connectedBookingPilotGrantEligible(email) {
+  const em = normalizeConnectedBookingEmail(email);
+  if (!em) return false;
+  const list = connectedBookingPilotGrantEmails();
+  return Boolean(list && list.includes(em));
 }
 
 /**

@@ -3,6 +3,9 @@ const assert = require('assert');
 const {
   groupLimitForPlan,
   isConnectedPlanActive,
+  connectedBookingFreeEnabled,
+  connectedBookingPilotGrantPlan,
+  connectedBookingFreeDefaultPlan,
 } = require('../api/_lib/connected-booking-util');
 const {
   assignConnectedBookingSlots,
@@ -15,6 +18,21 @@ assert.strictEqual(isConnectedPlanActive({ connected_booking_status: 'inactive' 
 
 assert.strictEqual(groupLimitForPlan('starter'), 1);
 assert.strictEqual(groupLimitForPlan('growth'), 5);
+assert.strictEqual(groupLimitForPlan('enterprise'), null);
+
+// Free Connected: pilot grants are unlimited (enterprise) — no slot assignment UX.
+assert.strictEqual(connectedBookingFreeEnabled(), true);
+assert.strictEqual(connectedBookingPilotGrantPlan(), connectedBookingFreeDefaultPlan());
+assert.strictEqual(groupLimitForPlan(connectedBookingPilotGrantPlan()), null);
+
+const enterpriseMeta = connectedBookingSlotsMeta(
+  { connected_booking_status: 'active', connected_booking_plan: 'enterprise' },
+  {
+    schemaMissing: false,
+    organisers: [{ id: 'a', slotAssigned: false }],
+  }
+);
+assert.strictEqual(enterpriseMeta.needsAssignment, false);
 
 const meta = connectedBookingSlotsMeta(
   { connected_booking_status: 'active', connected_booking_plan: 'starter' },
