@@ -354,11 +354,12 @@
         if (!ok) return;
         disc.checked = false;
         syncDiscoverableUi();
+        syncProfileDirty();
         const status = document.getElementById('as-matchmaker-status');
         if (status) {
           status.hidden = false;
           status.textContent =
-            'Inclusion turned off — tick Include me again and save if you want Hubert to put you forward.';
+            'Inclusion turned off — save your profile to confirm. Tick Include me again later if you want Hubert to put you forward.';
         }
       });
     }
