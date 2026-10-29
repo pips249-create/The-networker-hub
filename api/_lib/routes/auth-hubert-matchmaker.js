@@ -1,5 +1,6 @@
 /**
- * Auth — Hubert Matchmaker search + intro requests (admin-only until public launch flag).
+ * Auth — Hubert Matchmaker search, intro requests, and Hub invites
+ * (admin-only until public launch flag).
  */
 const { setCors, json, sessionFromRequest, requireAdminLive, isAdminRole } = require('../auth');
 const { isSupabaseConfigured, getSupabaseAdmin } = require('../supabase');
@@ -14,6 +15,12 @@ const {
   TOPIC_MIN_LEN,
   INTROS_PER_WEEK,
 } = require('../hubert-intro-requests');
+const {
+  sendHubInvite,
+  weeklyCapForSession,
+  countRecentInvites,
+  sessionUserId,
+} = require('../hubert-hub-invite');
 
 /** Flip via env when Matchmaker is ready for all members. */
 function isMatchmakerPublic() {
@@ -145,6 +152,53 @@ module.exports = async function handler(req, res) {
 
   const body = parseBody(req);
   const action = String(body.action || 'search').trim().toLowerCase();
+
+  if (action === 'invite' || action === 'invite_quota') {
+    try {
+      const sb = getSupabaseAdmin();
+      const attendeeId = await resolveAttendeeId(sb, session);
+
+      if (action === 'invite') {
+        const result = await sendHubInvite({
+          sb,
+          session,
+          inviteeName: body.inviteeName || body.name || '',
+          inviteeEmail: body.inviteeEmail || body.email || '',
+          note: body.note || body.message || '',
+          inviterAttendeeId: attendeeId,
+        });
+        const status = result.ok
+          ? 200
+          : result.error === 'quota_exceeded'
+            ? 429
+            : result.error === 'name_required' ||
+                result.error === 'email_invalid' ||
+                result.error === 'self_invite'
+              ? 400
+              : 502;
+        return json(res, status, result);
+      }
+
+      const cap = weeklyCapForSession(session);
+      const used = await countRecentInvites(sb, {
+        inviterUserId: sessionUserId(session),
+        inviterAttendeeId: attendeeId,
+      });
+      return json(res, 200, {
+        ok: true,
+        used,
+        remaining: Math.max(0, cap - used),
+        cap,
+      });
+    } catch (e) {
+      console.error('[hubert-matchmaker] invite failed', e && e.message ? e.message : e);
+      return json(res, 500, {
+        ok: false,
+        error: 'invite_failed',
+        message: 'Hubert could not send that invite just now.',
+      });
+    }
+  }
 
   if (action === 'search') {
     try {

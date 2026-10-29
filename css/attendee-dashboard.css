@@ -5194,6 +5194,88 @@ body.ad-share-modal-open {
   cursor: not-allowed;
 }
 
+.hmm-invite-form[hidden],
+.hmm-invite-error[hidden],
+.hmm-invite-quota[hidden],
+.hmm-invite-done[hidden],
+.hmm-invite-cta[hidden] {
+  display: none !important;
+}
+
+.hmm-invite-form {
+  display: grid;
+  gap: 12px;
+  margin-top: 4px;
+  max-width: 28rem;
+}
+
+.hmm-invite-field {
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--ad-slate, #241536);
+}
+
+.hmm-invite-optional {
+  font-weight: 500;
+  color: var(--ad-text-soft);
+}
+
+.hmm-invite-field input,
+.hmm-invite-field textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid rgba(125, 72, 150, 0.28);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ad-slate, #241536);
+  background: #fff;
+}
+
+.hmm-invite-field textarea {
+  resize: vertical;
+  min-height: 72px;
+}
+
+.hmm-invite-field input:focus,
+.hmm-invite-field textarea:focus {
+  outline: 2px solid rgba(125, 72, 150, 0.35);
+  outline-offset: 1px;
+}
+
+.hmm-invite-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.hmm-invite-error {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #9b1c1c;
+}
+
+.hmm-invite-quota {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--ad-text-mid);
+}
+
+.hmm-invite-done {
+  margin: 10px 0 0;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--ad-slate, #241536);
+  font-weight: 600;
+}
+
 .hmm .visually-hidden {
   position: absolute;
   width: 1px;

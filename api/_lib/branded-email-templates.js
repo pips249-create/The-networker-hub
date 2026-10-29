@@ -372,6 +372,11 @@ const BRANDED_EMAIL_TEMPLATES = {
     marker: 'hub-email-layout-v3-purple',
     subject: "Hubert's weekly event picks — week of {{week_label}}",
   },
+  hubert_hub_invite: {
+    file: 'hubert-hub-invite.html',
+    marker: 'hub-email-layout-v3-purple',
+    subject: '{{inviter_first_name}} thought of you on The Networker UK',
+  },
   organiser_low_upcoming_events: {
     file: 'organiser-low-upcoming-events.html',
     marker: 'hub-email-layout-v3-purple',

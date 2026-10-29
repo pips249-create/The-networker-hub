@@ -16,7 +16,7 @@
     <link rel="stylesheet" href="../css/hub.css?v=20261016signin1" />
     <link rel="stylesheet" href="../css/hub-dashboard-layout.css?v=20261029dash2" />
     <link rel="stylesheet" href="../css/hub-side-nav.css?v=20261029dash2" />
-    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20261029intro1" />
+    <link rel="stylesheet" href="../css/attendee-dashboard.css?v=20261029intro2" />
     <link rel="stylesheet" href="../css/hub-mobile.css?v=20261023nextup2" />
     <script src="../js/hub-defer-css.js?v=20260828perf2" data-hrefs="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700&family=DM+Serif+Display&display=swap"></script>
 
@@ -842,15 +842,36 @@
                 </div>
                 <div class="hmm-intros" data-hmm-intros hidden></div>
                 <div class="hmm-thread-panel" data-hmm-thread hidden></div>
-                <div class="hmm-invite-panel">
+                <div class="hmm-invite-panel" data-hmm-invite-panel>
                   <p class="hmm-invite-kicker">Know someone great?</p>
                   <h3 class="hmm-invite-title">Introduce them to The Networker UK &amp; Hubert</h3>
                   <p class="hmm-invite-copy">
                     I&rsquo;ll invite them to join The Networker UK. They won&rsquo;t see your details — just a note from me to get started.
                   </p>
-                  <button type="button" class="ad-btn ad-btn-ghost hmm-invite-cta" data-hmm-invite disabled title="Coming next">
+                  <button type="button" class="ad-btn ad-btn-ghost hmm-invite-cta" data-hmm-invite>
                     Introduce someone
                   </button>
+                  <form class="hmm-invite-form" data-hmm-invite-form hidden>
+                    <label class="hmm-invite-field">
+                      <span>Their name</span>
+                      <input type="text" name="inviteeName" data-hmm-invite-name maxlength="120" required autocomplete="name" placeholder="Alex Morgan" />
+                    </label>
+                    <label class="hmm-invite-field">
+                      <span>Their email</span>
+                      <input type="email" name="inviteeEmail" data-hmm-invite-email maxlength="200" required autocomplete="email" placeholder="alex@example.com" />
+                    </label>
+                    <label class="hmm-invite-field">
+                      <span>Optional note <span class="hmm-invite-optional">(shown as from Hubert)</span></span>
+                      <textarea name="note" data-hmm-invite-note maxlength="500" rows="3" placeholder="A short note to help them get started"></textarea>
+                    </label>
+                    <p class="hmm-invite-error" data-hmm-invite-error hidden role="alert"></p>
+                    <p class="hmm-invite-quota" data-hmm-invite-quota hidden></p>
+                    <div class="hmm-invite-actions">
+                      <button type="button" class="ad-btn ad-btn-ghost" data-hmm-invite-cancel>Cancel</button>
+                      <button type="submit" class="ad-btn ad-btn-primary" data-hmm-invite-submit>Send invite</button>
+                    </div>
+                  </form>
+                  <p class="hmm-invite-done" data-hmm-invite-done hidden role="status"></p>
                 </div>
               </div>
             </section>
@@ -1304,7 +1325,7 @@
     <script src="../js/attendee-auth-gate.js?v=20261021confirm2"></script>
     <script src="../js/organiser-image-upload.js?v=20261002offerimage1" defer></script>
     <script src="../js/attendee-member-offers.js?v=20261015offers1" defer></script>
-    <script src="../js/hubert-matchmaker.js?v=20261029intro1" defer></script>
-    <script src="../js/attendee-dashboard.js?v=20261029intro1" defer></script>
+    <script src="../js/hubert-matchmaker.js?v=20261029intro2" defer></script>
+    <script src="../js/attendee-dashboard.js?v=20261029intro2" defer></script>
   </body>
 </html>
