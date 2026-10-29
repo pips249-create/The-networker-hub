@@ -71,6 +71,7 @@
     if (fields.businessSector !== undefined) payload.businessSector = fields.businessSector;
     if (fields.jobTitle !== undefined) payload.jobTitle = fields.jobTitle;
     if (fields.company !== undefined) payload.company = fields.company;
+    if (fields.location !== undefined) payload.location = fields.location;
     if (fields.name !== undefined) payload.name = fields.name;
 
     return fetch('/api/auth/profile', {

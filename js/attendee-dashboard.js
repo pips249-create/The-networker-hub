@@ -1624,6 +1624,76 @@
     updateReviewNamePreview();
   }
 
+  const PROFILE_NUDGE_DISMISS_KEY = 'hub_profile_nudge_dismissed_v1';
+  let profileNudgeState = {
+    jobTitle: '',
+    company: '',
+    location: '',
+    businessSector: '',
+    loaded: false,
+  };
+
+  function profileNudgeMissingFields(profile) {
+    const p = profile || {};
+    const missing = [];
+    if (!String(p.jobTitle || '').trim()) missing.push('job title');
+    if (!String(p.company || '').trim()) missing.push('company');
+    if (!String(p.location || '').trim()) missing.push('location');
+    if (!String(p.businessSector || '').trim()) missing.push('industry');
+    return missing;
+  }
+
+  function isProfileNudgeDismissed() {
+    try {
+      return sessionStorage.getItem(PROFILE_NUDGE_DISMISS_KEY) === '1';
+    } catch {
+      return false;
+    }
+  }
+
+  function dismissProfileNudge() {
+    try {
+      sessionStorage.setItem(PROFILE_NUDGE_DISMISS_KEY, '1');
+    } catch {
+      /* ignore */
+    }
+    renderOverviewProfileNudge();
+  }
+
+  function renderOverviewProfileNudge() {
+    const el = document.getElementById('ad-overview-profile-nudge');
+    if (!el) return;
+    const missing = profileNudgeMissingFields(profileNudgeState);
+    if (!profileNudgeState.loaded || !missing.length || isProfileNudgeDismissed()) {
+      el.hidden = true;
+      el.innerHTML = '';
+      return;
+    }
+    const list =
+      missing.length === 1
+        ? missing[0]
+        : missing.slice(0, -1).join(', ') + ' and ' + missing[missing.length - 1];
+    el.hidden = false;
+    el.innerHTML =
+      '<div class="ad-overview-profile-nudge-card">' +
+      '<div>' +
+      '<p class="ad-overview-profile-nudge-kicker">Your profile</p>' +
+      '<h2 class="ad-section-title">Add a few details</h2>' +
+      '<p class="ad-overview-profile-nudge-copy">Still missing ' +
+      esc(list) +
+      ' — organisers use these on name badges and attendee lists.</p>' +
+      '</div>' +
+      '<div class="ad-overview-profile-nudge-actions">' +
+      '<a class="ad-btn ad-btn-primary" href="/account/settings">Complete your profile</a>' +
+      '<button type="button" class="ad-btn ad-btn-ghost" id="ad-profile-nudge-dismiss">Not now</button>' +
+      '</div>' +
+      '</div>';
+    const dismissBtn = document.getElementById('ad-profile-nudge-dismiss');
+    if (dismissBtn) {
+      dismissBtn.addEventListener('click', dismissProfileNudge);
+    }
+  }
+
   async function loadReviewNameState() {
     try {
       const res = await fetch('/api/auth/profile', { credentials: 'include' });
@@ -1638,11 +1708,19 @@
           String(data.profile.reviewNameExample || '').trim() || 'Alex M.';
         reviewNameState.reviewDisplayName =
           String(data.profile.reviewDisplayName || '').trim() || 'Attendee';
+        profileNudgeState = {
+          jobTitle: String(data.profile.jobTitle || '').trim(),
+          company: String(data.profile.company || '').trim(),
+          location: String(data.profile.location || '').trim(),
+          businessSector: String(data.profile.businessSector || '').trim(),
+          loaded: true,
+        };
       }
     } catch {
       /* keep existing state */
     }
     syncReviewNameFields();
+    renderOverviewProfileNudge();
   }
 
   async function savePublicReviewNameIfChanged() {
@@ -3693,6 +3771,7 @@
 
   function renderOverviewFeed() {
     renderOverviewNextUp();
+    renderOverviewProfileNudge();
     renderOverviewMembershipNudge();
     renderOverviewReviewNudge();
 
