@@ -3166,8 +3166,85 @@ tr.ad-row-highlight td {
 }
 
 /* Share on LinkedIn micro-modal */
-body.ad-share-modal-open {
+body.ad-share-modal-open,
+body.ad-hubert-optin-modal-open {
   overflow: hidden;
+}
+
+.ad-hubert-optin-modal[hidden] {
+  display: none !important;
+}
+
+.ad-hubert-optin-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1450;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.ad-hubert-optin-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(45, 27, 94, 0.45);
+}
+
+.ad-hubert-optin-modal-panel {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 440px);
+  background: var(--ad-white);
+  border-radius: var(--ad-radius);
+  padding: 28px 24px 22px;
+  box-shadow: 0 20px 50px rgba(45, 27, 94, 0.22);
+  text-align: center;
+}
+
+.ad-hubert-optin-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  border: none;
+  background: transparent;
+  font-size: 24px;
+  line-height: 1;
+  color: var(--ad-text-soft);
+  cursor: pointer;
+}
+
+.ad-hubert-optin-icon {
+  display: flex;
+  justify-content: center;
+  margin: 0 0 12px;
+}
+
+.ad-hubert-optin-icon img {
+  display: block;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+}
+
+.ad-hubert-optin-title {
+  margin: 0 28px 8px;
+  font-size: 1.2rem;
+  color: var(--ad-slate);
+}
+
+.ad-hubert-optin-sub {
+  margin: 0 0 20px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ad-text-mid);
+}
+
+.ad-hubert-optin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
 }
 
 .ad-share-modal[hidden] {

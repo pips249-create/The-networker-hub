@@ -346,6 +346,7 @@
       showMessage(msg, 'Creating your account…', 'success');
 
       var marketingEl = document.getElementById('register-marketing');
+      var hubertEl = document.getElementById('register-hubert');
 
       getRegisterTurnstileToken()
         .then(function (token) {
@@ -356,6 +357,7 @@
             next: next,
             intent: getIntentParam(),
             marketingOptIn: marketingEl ? marketingEl.checked : false,
+            hubertOptIn: hubertEl ? hubertEl.checked : false,
             termsAccepted: true,
           };
           if (token) payload.turnstileToken = token;

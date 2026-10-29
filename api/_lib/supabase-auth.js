@@ -476,10 +476,11 @@ function cryptoRandomPassword() {
   return crypto.randomBytes(24).toString('base64url');
 }
 
-async function registerUser({ email, password, name, marketingOptIn }) {
+async function registerUser({ email, password, name, marketingOptIn, hubertOptIn }) {
   const sb = getSupabaseAdmin();
   const em = email.trim().toLowerCase();
   const optedInToMarketing = Boolean(marketingOptIn);
+  const optedInToHubert = Boolean(hubertOptIn);
 
   // Silent imports create Auth users with unknown passwords and never sign in.
   // Allow those people to set a password via /register (organiser claim wave).
@@ -518,14 +519,22 @@ async function registerUser({ email, password, name, marketingOptIn }) {
   }
   if (accountResult.error) throw new Error(accountResult.error.message);
 
-  const attendeeUpsert = await sb.from('attendees').upsert(
-    {
-      email: em,
-      name: name || null,
-      supabase_user_id: userId,
-    },
-    { onConflict: 'email' }
-  );
+  const attendeeRow = {
+    email: em,
+    name: name || null,
+    supabase_user_id: userId,
+  };
+  if (optedInToHubert) {
+    attendeeRow.hubert_intros_interest_at = new Date().toISOString();
+  }
+  let attendeeUpsert = await sb.from('attendees').upsert(attendeeRow, { onConflict: 'email' });
+  if (
+    attendeeUpsert.error &&
+    /hubert_intros_interest_at/i.test(String(attendeeUpsert.error.message || ''))
+  ) {
+    delete attendeeRow.hubert_intros_interest_at;
+    attendeeUpsert = await sb.from('attendees').upsert(attendeeRow, { onConflict: 'email' });
+  }
   if (attendeeUpsert.error) throw new Error(attendeeUpsert.error.message);
 
   const attendeeRes = await sb.from('attendees').select('id').eq('email', em).maybeSingle();

@@ -849,6 +849,7 @@
   }
 
   function fillProfileForm(profile) {
+    lastProfile = profile || null;
     var blurb = document.querySelector('[data-hmm-profile-blurb]');
     var looking = document.querySelector('[data-hmm-profile-looking]');
     var disc = document.querySelector('[data-hmm-profile-discoverable]');
@@ -861,15 +862,118 @@
       (profile && profile.lookingToMeetOptions) || DEFAULT_LOOKING,
       (profile && profile.lookingToMeet) || []
     );
-    // Never auto-tick Include me — member must opt in.
-    if (disc) disc.checked = Boolean(profile && profile.discoverable);
+    // Include me stays opt-in — pre-check only when they already said yes at signup / Enable.
+    if (disc) {
+      disc.checked = Boolean(
+        profile && (profile.discoverable || profile.preferDiscoverable)
+      );
+    }
     syncDiscoverableUi(profile || {});
     applyProfileGate(profile || {});
     if (profile && profile.matchmakerReady) {
       setProfileStatus(true, 'You’re ready — ask Hubert who you need.');
+    } else if (profile && profile.hubertIntrosInterested) {
+      setProfileStatus(true, 'Finish your Hubert profile so introductions can start.');
     } else {
       setProfileStatus(true, '');
     }
+  }
+
+  function patchHubertOptIn(payload) {
+    return fetch('/api/auth/profile', {
+      method: 'PATCH',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(payload || {}),
+    }).then(function (res) {
+      return res.text().then(function (text) {
+        var data = {};
+        if (text) {
+          try {
+            data = JSON.parse(text);
+          } catch (err) {
+            return { ok: false };
+          }
+        }
+        return data;
+      });
+    });
+  }
+
+  function hideHubertOptInModal() {
+    var modal = document.getElementById('ad-hubert-optin-modal');
+    if (modal) modal.hidden = true;
+    document.body.classList.remove('ad-hubert-optin-modal-open');
+  }
+
+  function showHubertOptInModal() {
+    var modal = document.getElementById('ad-hubert-optin-modal');
+    if (!modal || modal.dataset.shown === '1') return;
+    modal.dataset.shown = '1';
+    modal.hidden = false;
+    document.body.classList.add('ad-hubert-optin-modal-open');
+  }
+
+  function goToHubertSetup() {
+    try {
+      if (window.location.hash !== '#meet') {
+        window.location.hash = 'meet';
+      }
+    } catch (e) {
+      /* ignore */
+    }
+    var panel = document.querySelector('[data-hmm-profile-gate]');
+    if (panel && typeof panel.scrollIntoView === 'function') {
+      panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    var blurb = document.querySelector('[data-hmm-profile-blurb]');
+    if (blurb) blurb.focus();
+  }
+
+  function bindHubertOptInModal() {
+    var modal = document.getElementById('ad-hubert-optin-modal');
+    if (!modal || modal.dataset.bound === '1') return;
+    modal.dataset.bound = '1';
+    var enableBtn = document.getElementById('ad-hubert-optin-enable');
+    var laterBtn = document.getElementById('ad-hubert-optin-later');
+    var closeBtn = document.getElementById('ad-hubert-optin-close');
+    var backdrop = document.getElementById('ad-hubert-optin-backdrop');
+
+    function dismissPrompt() {
+      hideHubertOptInModal();
+      patchHubertOptIn({ hubertIntrosPromptDismiss: true }).catch(function () {});
+    }
+
+    function enableIntros() {
+      hideHubertOptInModal();
+      patchHubertOptIn({ hubertIntrosInterest: true })
+        .then(function (data) {
+          if (data && data.ok && data.profile) fillProfileForm(data.profile);
+          else if (lastProfile) {
+            lastProfile.hubertIntrosInterested = true;
+            lastProfile.preferDiscoverable = true;
+            lastProfile.shouldPromptHubertIntros = false;
+            fillProfileForm(lastProfile);
+          }
+          goToHubertSetup();
+        })
+        .catch(function () {
+          goToHubertSetup();
+        });
+    }
+
+    if (enableBtn) enableBtn.addEventListener('click', enableIntros);
+    if (laterBtn) laterBtn.addEventListener('click', dismissPrompt);
+    if (closeBtn) closeBtn.addEventListener('click', dismissPrompt);
+    if (backdrop) backdrop.addEventListener('click', dismissPrompt);
+  }
+
+  function maybeShowHubertOptIn(profile) {
+    if (!profile || !profile.shouldPromptHubertIntros) return;
+    // Defer slightly so the dashboard paints first.
+    setTimeout(function () {
+      showHubertOptInModal();
+    }, 450);
   }
 
   function loadMatchmakerProfile() {
@@ -902,6 +1006,15 @@
           return;
         }
         fillProfileForm(data.profile || {});
+        maybeShowHubertOptIn(data.profile || {});
+        if (
+          data.profile &&
+          data.profile.hubertIntrosInterested &&
+          !data.profile.matchmakerReady &&
+          /hubert=setup|hubert_setup/i.test(window.location.search + window.location.hash)
+        ) {
+          goToHubertSetup();
+        }
       })
       .catch(function () {
         applyProfileGate(null);
@@ -1375,6 +1488,7 @@
     });
 
     bindProfilePanel();
+    bindHubertOptInModal();
     loadMatchmakerProfile();
     loadMyIntros();
     maybeOpenIntroFromUrl();
