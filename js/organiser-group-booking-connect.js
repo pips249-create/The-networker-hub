@@ -1,20 +1,31 @@
 /**
  * Organiser page — connect Eventbrite (OAuth primary) and import events onto this page.
+ * Works on standalone /organiser/group-edit and the workspace Edit drawer.
  */
 (function () {
   'use strict';
+
+  var activeGroupId = '';
 
   function qs(id) {
     return document.getElementById(id);
   }
 
   function groupIdFromPage() {
+    if (activeGroupId) return activeGroupId;
     try {
       var params = new URLSearchParams(window.location.search);
-      return String(params.get('id') || params.get('groupId') || '').trim();
+      var fromQuery = String(params.get('id') || params.get('groupId') || '').trim();
+      if (fromQuery) return fromQuery;
     } catch (_e) {
-      return '';
+      /* ignore */
     }
+    var card = qs('ge-booking-card');
+    if (card) {
+      var fromAttr = String(card.getAttribute('data-group-id') || '').trim();
+      if (fromAttr) return fromAttr;
+    }
+    return '';
   }
 
   function setMsg(text, kind) {
@@ -377,13 +388,30 @@
       });
   }
 
-  function init() {
+  function init(options) {
     var card = qs('ge-booking-card');
     if (!card) return;
+    options = options || {};
+    activeGroupId = String(options.groupId || options.editId || options.id || '').trim();
+    if (!activeGroupId) {
+      try {
+        var params = new URLSearchParams(window.location.search);
+        activeGroupId = String(params.get('id') || params.get('groupId') || '').trim();
+      } catch (_e) {
+        activeGroupId = '';
+      }
+    }
     var groupId = groupIdFromPage();
+    if (groupId) card.setAttribute('data-group-id', groupId);
+    else card.removeAttribute('data-group-id');
     // Show once the organiser page exists (edit mode). New pages save first.
     card.hidden = !groupId;
-    if (!groupId) return;
+    if (!groupId) {
+      setMsg('');
+      showConnectedControls(false);
+      setConnectedPill(false);
+      return;
+    }
 
     var oauthBtn = qs('ge-eb-oauth');
     if (oauthBtn && !oauthBtn.dataset.bound) {
@@ -450,7 +478,9 @@
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', function () {
+      init();
+    });
   } else {
     init();
   }

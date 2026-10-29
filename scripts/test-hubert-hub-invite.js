@@ -21,7 +21,7 @@ assert.ok(
   'email html exists'
 );
 assert.ok(
-  fs.existsSync(path.join(__dirname, '../supabase/migrations/334_hubert_hub_invites.sql')),
+  fs.existsSync(path.join(__dirname, '../supabase/migrations/336_hubert_hub_invites.sql')),
   'migration exists'
 );
 
