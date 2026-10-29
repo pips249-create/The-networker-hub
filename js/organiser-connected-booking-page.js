@@ -313,7 +313,7 @@
     if (titleEl) titleEl.textContent = 'Booking system';
     if (leadEl) {
       leadEl.textContent =
-        'Want to connect an existing system into ours? Tap a provider below to connect and follow the steps.';
+        'Choose where people book — sell on The Networker UK, or connect Eventbrite / your website below.';
     }
     if (adminPanel) adminPanel.hidden = true;
     var providersPanel = document.getElementById('cb-providers-panel');
@@ -354,7 +354,7 @@
       if (titleEl) titleEl.textContent = 'Booking system';
       if (leadEl) {
         leadEl.textContent =
-          'Want to connect an existing system into ours? Tap a provider below to connect and follow the steps.';
+          'Choose where people book — sell on The Networker UK, or connect Eventbrite / your website below.';
       }
       if (linkOutPanel) linkOutPanel.hidden = true;
       if (connectedOnly) connectedOnly.hidden = false;

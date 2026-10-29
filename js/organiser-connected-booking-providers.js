@@ -14,6 +14,7 @@
   var LOGO_BASE = '/assets/booking-providers/';
 
   var PROVIDER_LABELS = {
+    networker: 'The Networker UK',
     eventbrite: 'Eventbrite',
     ticket_tailor: 'Ticket Tailor',
     luma: 'Luma',
@@ -23,6 +24,7 @@
   };
 
   var PROVIDER_LOGOS = {
+    networker: '/assets/logo-hub-dark.png',
     eventbrite: LOGO_BASE + 'eventbrite.svg',
     ticket_tailor: LOGO_BASE + 'ticket-tailor.svg',
     trybooking: LOGO_BASE + 'trybooking.svg',
@@ -30,6 +32,24 @@
     luma: LOGO_BASE + 'luma.svg',
     meetup: LOGO_BASE + 'meetup.svg',
   };
+
+  /** First tile — hub booking (not an external webhook provider). */
+  var HUB_PROVIDER = {
+    id: 'networker',
+    label: 'The Networker UK',
+    status: 'live',
+    connectionStatus: 'active',
+    docsHint:
+      'Sell tickets here. Attendees, reviews, and round-ups are built in — no webhook to set up.',
+    guidePath: '/organiser/booking-options',
+  };
+
+  function allProviders(data) {
+    var remote = ((data && data.providers) || []).filter(function (p) {
+      return p && p.id && p.id !== 'custom' && p.id !== 'networker';
+    });
+    return [HUB_PROVIDER].concat(remote);
+  }
 
   var EXTERNAL_ID_LABELS = {
     eventbrite: 'Eventbrite numeric event id',
@@ -213,6 +233,7 @@
     if (p && p.guidePath) return String(p.guidePath);
     if (p && p.id === 'eventbrite') return '/guides/connect-eventbrite';
     if (p && p.id === 'own_site') return '/guides/connect-own-website';
+    if (p && p.id === 'networker') return '/organiser/booking-options';
     return '';
   }
 
@@ -223,12 +244,28 @@
     );
   }
 
+  function renderHubConnect() {
+    return (
+      '<p class="ee-hint">Checkout stays on The Networker UK. Buyers book from your listing — attendees and reviews land here automatically.</p>' +
+      '<ol class="cb-provider-steps">' +
+      '<li>Create or open an <a href="/organiser/#groups">organiser page</a> if you need one.</li>' +
+      '<li>Go to <a href="/organiser/#events-list">My events</a> → <strong>Create event</strong> (or open a draft).</li>' +
+      '<li>Choose <strong>Set up tickets</strong> and sell on <strong>The Networker UK</strong>.</li>' +
+      '<li>For paid tickets, connect payouts (Stripe) when prompted, then publish.</li>' +
+      '</ol>' +
+      '<div class="cb-provider-actions">' +
+      '<a class="ee-btn ee-btn-gold ee-btn-sm" href="/organiser/#events-list">Go to My events →</a>' +
+      '<a class="ee-btn ee-btn-outline ee-btn-sm" href="/organiser/group-edit">Add organiser page</a>' +
+      '</div>'
+    );
+  }
+
   function renderEventbriteConnect(p, data) {
     var connected = Boolean(p.eventbriteApiTokenConfigured);
     var canOauth = oauthAvailable(data, p);
     var statusLine = connected
       ? '<p class="ee-hint ee-alert-ok">Eventbrite is connected on this account.</p>'
-      : '<p class="ee-hint">Connect once here — then import events from <a href="/organiser/#events-list">My events</a>.</p>';
+      : '<p class="ee-hint">Connect once here — then import live events from My events.</p>';
 
     var primaryBtn = connected
       ? '<a class="ee-btn ee-btn-gold ee-btn-sm" href="/organiser/#events-list">Import events on My events →</a>'
@@ -255,13 +292,16 @@
       '<input class="ee-input" id="cb-eb-token" type="password" autocomplete="off" placeholder="Paste Private token from API Keys" />' +
       '<button type="button" class="ee-btn ee-btn-outline ee-btn-sm" data-cb-eb-save-token>Save &amp; connect</button>' +
       '</div>' +
-      '<p class="ee-hint">Screenshots: <a href="/guides/connect-eventbrite#api-token" target="_blank" rel="noopener noreferrer">full guide with pictures →</a></p>' +
+      '<p class="ee-hint">Need pictures? Open the <a href="/guides/connect-eventbrite" target="_blank" rel="noopener noreferrer">full Eventbrite guide</a> (starts at step 1).</p>' +
       '</div>' +
       '</details>';
 
+    var nextTitle = connected ? 'Import your events' : 'After you connect';
     var after =
       '<div class="cb-provider-after">' +
-      '<h4 class="cb-provider-steps-title">After you connect</h4>' +
+      '<h4 class="cb-provider-steps-title">' +
+      nextTitle +
+      '</h4>' +
       '<ol class="cb-provider-steps">' +
       '<li>Open <a href="/organiser/#events-list">My events</a>.</li>' +
       '<li>Expand <strong>Connect Eventbrite</strong> / <strong>Eventbrite events</strong>.</li>' +
@@ -270,7 +310,24 @@
       '</ol>' +
       '</div>';
 
-    return statusLine + '<p class="ee-attendance-next">' + primaryBtn + '</p>' + tokenBlock + after;
+    // Connected: lead with import CTA + next steps; keep reconnect collapsed at the bottom.
+    if (connected) {
+      return (
+        statusLine +
+        '<div class="cb-provider-actions">' +
+        primaryBtn +
+        '</div>' +
+        after +
+        tokenBlock
+      );
+    }
+
+    return (
+      statusLine +
+      (primaryBtn ? '<div class="cb-provider-actions">' + primaryBtn + '</div>' : '') +
+      tokenBlock +
+      after
+    );
   }
 
   function renderOwnSiteConnect(p) {
@@ -342,34 +399,51 @@
       return;
     }
     var live = String(p.status || '').toLowerCase() === 'live';
+    var isHub = p.id === 'networker';
     var guideHref = providerGuideHref(p);
-    var statusLabel = live
-      ? p.connectionStatus === 'active' || p.eventbriteApiTokenConfigured
-        ? 'Connected'
-        : 'Live'
-      : 'Coming soon';
+    var statusLabel = isHub
+      ? 'Easiest'
+      : live
+        ? p.connectionStatus === 'active' || p.eventbriteApiTokenConfigured
+          ? 'Connected'
+          : 'Live'
+        : 'Coming soon';
 
     var bodyHtml = '';
-    if (p.id === 'eventbrite' && live) bodyHtml = renderEventbriteConnect(p, data);
+    if (isHub) bodyHtml = renderHubConnect();
+    else if (p.id === 'eventbrite' && live) bodyHtml = renderEventbriteConnect(p, data);
     else if (p.id === 'own_site' && live) bodyHtml = renderOwnSiteConnect(p);
     else bodyHtml = renderSoonConnect(p);
 
+    var guideLabel = isHub ? 'How booking options work' : 'Open full guide';
     var guideBtn = guideHref
       ? '<a class="ee-btn ee-btn-outline ee-btn-sm" href="' +
         esc(guideHref) +
-        '" target="_blank" rel="noopener noreferrer">Open full guide with screenshots</a>'
+        '"' +
+        (isHub ? '' : ' target="_blank" rel="noopener noreferrer"') +
+        '>' +
+        esc(guideLabel) +
+        '</a>'
       : '';
+
+    var titleText = isHub
+      ? 'Sell tickets on The Networker UK'
+      : 'Connect ' + (p.label || PROVIDER_LABELS[p.id] || p.id);
+    var logoClass =
+      'cb-provider-detail-logo' + (isHub ? ' cb-provider-detail-logo--hub' : '');
 
     detail.hidden = false;
     detail.innerHTML =
       '<div class="cb-provider-detail-inner">' +
       '<p class="ee-booking-help-kicker">Step 2</p>' +
       '<div class="cb-provider-detail-head">' +
-      '<img class="cb-provider-detail-logo" src="' +
+      '<img class="' +
+      logoClass +
+      '" src="' +
       esc(PROVIDER_LOGOS[p.id] || '') +
       '" alt="" width="36" height="36" />' +
-      '<h3 class="cb-provider-detail-title">Connect ' +
-      esc(p.label || PROVIDER_LABELS[p.id] || p.id) +
+      '<h3 class="cb-provider-detail-title">' +
+      esc(titleText) +
       '</h3>' +
       '<span class="cb-provider-badge' +
       (live ? ' cb-provider-badge--live' : ' cb-provider-badge--soon') +
@@ -382,7 +456,7 @@
       '</p>' +
       '<p class="ee-hint cb-provider-detail-status" data-cb-detail-status hidden role="status"></p>' +
       bodyHtml +
-      (guideBtn ? '<p class="ee-attendance-next">' + guideBtn + '</p>' : '') +
+      (guideBtn ? '<div class="cb-provider-actions">' + guideBtn + '</div>' : '') +
       '</div>';
 
     bindCopyWebhookButtons(detail);
@@ -499,7 +573,7 @@
       btn.classList.toggle('is-selected', on);
       btn.setAttribute('aria-pressed', on ? 'true' : 'false');
     });
-    var providers = (lastProvidersData && lastProvidersData.providers) || [];
+    var providers = allProviders(lastProvidersData);
     var match = providers.filter(function (p) {
       return p && p.id === selectedId;
     })[0];
@@ -529,9 +603,10 @@
 
     list.innerHTML = '';
     list.className = 'cb-provider-tiles';
-    (data.providers || []).forEach(function (p) {
-      if (!p || p.id === 'custom') return;
+    allProviders(data).forEach(function (p) {
+      if (!p) return;
       var live = String(p.status || '').toLowerCase() === 'live';
+      var isHub = p.id === 'networker';
       var logo = PROVIDER_LOGOS[p.id] || '';
       var li = document.createElement('li');
       li.className = 'cb-provider-tile-wrap';
@@ -540,13 +615,18 @@
       btn.className =
         'cb-provider-tile' +
         (live ? '' : ' is-soon') +
+        (isHub ? ' cb-provider-tile--hub' : '') +
         (selectedId === p.id ? ' is-selected' : '');
       btn.setAttribute('data-provider-id', p.id);
       btn.setAttribute('aria-pressed', selectedId === p.id ? 'true' : 'false');
       btn.innerHTML =
-        '<span class="cb-provider-tile-logo-wrap" aria-hidden="true">' +
+        '<span class="cb-provider-tile-logo-wrap' +
+        (isHub ? ' cb-provider-tile-logo-wrap--hub' : '') +
+        '" aria-hidden="true">' +
         (logo
-          ? '<img class="cb-provider-tile-logo" src="' +
+          ? '<img class="cb-provider-tile-logo' +
+            (isHub ? ' cb-provider-tile-logo--hub' : '') +
+            '" src="' +
             esc(logo) +
             '" alt="" width="44" height="44" loading="lazy" />'
           : '') +
@@ -555,7 +635,7 @@
         esc(PROVIDER_LABELS[p.id] || p.label || p.id) +
         '</span>' +
         '<span class="cb-provider-tile-status">' +
-        (live ? 'Live' : 'Soon') +
+        (isHub ? 'Us' : live ? 'Live' : 'Soon') +
         '</span>';
       btn.addEventListener('click', function () {
         if (selectedId === p.id) {
@@ -578,6 +658,56 @@
     }
   }
 
+  function fallbackProvidersData() {
+    return {
+      ok: true,
+      providers: [
+        {
+          id: 'eventbrite',
+          label: 'Eventbrite',
+          status: 'live',
+          connectionStatus: 'not_configured',
+          docsHint:
+            'Connect Eventbrite here (OAuth or private token). Then import live events from My events.',
+          guidePath: '/guides/connect-eventbrite',
+        },
+        {
+          id: 'ticket_tailor',
+          label: 'Ticket Tailor',
+          status: 'beta',
+          docsHint: 'Coming soon — Ticket Tailor will connect from this page the same way as Eventbrite.',
+        },
+        {
+          id: 'trybooking',
+          label: 'TryBooking',
+          status: 'beta',
+          docsHint: 'Coming soon — connect TryBooking from this page when the tile unlocks.',
+        },
+        {
+          id: 'own_site',
+          label: 'Your own website',
+          status: 'live',
+          connectionStatus: 'not_configured',
+          docsHint:
+            'WordPress, Wix, or custom checkout — enable here, copy your webhook URL, and POST each booking.',
+          guidePath: '/guides/connect-own-website',
+        },
+        {
+          id: 'luma',
+          label: 'Luma',
+          status: 'beta',
+          docsHint: 'Coming soon — Luma will connect from this page when ready.',
+        },
+        {
+          id: 'meetup',
+          label: 'Meetup',
+          status: 'beta',
+          docsHint: 'Coming soon — Meetup will connect from this page when ready.',
+        },
+      ],
+    };
+  }
+
   function loadProviders() {
     fetch('/api/organiser/connected-booking-providers', { credentials: 'include', cache: 'no-store' })
       .then(function (r) {
@@ -585,13 +715,16 @@
       })
       .then(function (data) {
         if (data && data.ok) renderProviders(data);
+        else renderProviders(fallbackProvidersData());
         var eventbrite = ((data && data.providers) || []).filter(function (p) {
           return p && p.id === 'eventbrite' && p.eventbriteApiTokenConfigured;
         })[0];
         if (!eventbrite) return;
         patchProviders({ action: 'sync_eventbrite_attendees' }).catch(function () {});
       })
-      .catch(function () {});
+      .catch(function () {
+        renderProviders(fallbackProvidersData());
+      });
   }
 
   if (saveLinkBtn) {

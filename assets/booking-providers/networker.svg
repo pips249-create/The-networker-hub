@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="The Networker UK">
+  <rect width="64" height="64" rx="14" fill="#0D6E7A"/>
+  <circle cx="32" cy="24" r="8" fill="#FDF3DF"/>
+  <circle cx="18" cy="40" r="6" fill="#BD932E"/>
+  <circle cx="46" cy="40" r="6" fill="#BD932E"/>
+  <path fill="none" stroke="#FDF3DF" stroke-width="2.5" stroke-linecap="round" d="M26 28l-5 8M38 28l5 8M24 40h16"/>
+</svg>
