@@ -680,22 +680,40 @@
     }
   }
 
+  function missingReadyLabels(profile) {
+    var missing = (profile && profile.matchmakerMissing) || [];
+    var labels = [];
+    if (missing.indexOf('headline') !== -1) labels.push('a headline');
+    if (missing.indexOf('lookingToMeet') !== -1) labels.push('who you want to meet');
+    if (missing.indexOf('discoverable') !== -1) labels.push('Include me');
+    return labels;
+  }
+
   function applyProfileGate(profile) {
     lastProfile = profile || null;
     profileReady = Boolean(profile && profile.matchmakerReady);
     var panel = document.querySelector('[data-hmm-profile-panel]');
     var ask = document.querySelector('[data-hmm-ask-block]');
+    var lockNote = document.querySelector('[data-hmm-ask-lock-note]');
     var invite = document.querySelector('[data-hmm-invite-panel]');
     var heroTitle = document.querySelector('[data-hmm-hero-title]');
     var heroSub = document.querySelector('[data-hmm-hero-sub]');
     var saveBtn = document.querySelector('[data-hmm-profile-save]');
+    var pageInput = document.querySelector('#hmm-query');
+    var pageSubmit = document.querySelector('.hmm-composer-submit');
 
     if (panel) {
       panel.classList.toggle('hmm-setup--gate', !profileReady);
       panel.classList.toggle('hmm-setup--ready', profileReady);
       panel.hidden = false;
     }
-    if (ask) ask.hidden = !profileReady;
+    if (ask) {
+      ask.hidden = false;
+      ask.classList.toggle('hmm-ask-block--locked', !profileReady);
+    }
+    if (lockNote) lockNote.hidden = profileReady;
+    if (pageInput) pageInput.disabled = !profileReady;
+    if (pageSubmit) pageSubmit.disabled = !profileReady;
     if (invite) invite.hidden = !profileReady;
     if (heroTitle) {
       heroTitle.textContent = profileReady
@@ -713,10 +731,10 @@
 
     mounts.forEach(function (m) {
       if (!m || !m.els) return;
-      if (m.els.input) m.els.input.disabled = !profileReady && m.mode === 'overview';
+      if (m.els.input) m.els.input.disabled = !profileReady;
       if (m.els.form) {
         var submit = m.els.form.querySelector('button[type="submit"]');
-        if (submit && m.mode === 'overview') submit.disabled = !profileReady;
+        if (submit) submit.disabled = !profileReady;
       }
     });
   }
@@ -848,13 +866,17 @@
         }
         fillProfileForm(data.profile || {});
         if (data.profile && data.profile.matchmakerReady) {
-          setProfileStatus(true, 'Profile saved — Hubert is unlocked.');
+          setProfileStatus(true, 'Profile saved — search is unlocked below.');
           var ask = document.querySelector('[data-hmm-ask-block]');
           if (ask && ask.scrollIntoView) ask.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          if (document.querySelector('#hmm-query')) document.querySelector('#hmm-query').focus();
         } else {
+          var needed = missingReadyLabels(data.profile || {});
           setProfileStatus(
             false,
-            'Almost there — add a headline, pick who you want to meet, and tick Include me.'
+            needed.length
+              ? 'Saved, but still need ' + needed.join(', ') + ' before search unlocks.'
+              : 'Saved, but Hubert couldn’t confirm your profile yet. Pick who you want to meet, tick Include me, and save again.'
           );
         }
       })

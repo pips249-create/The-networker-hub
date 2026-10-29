@@ -421,6 +421,76 @@ async function updateProfile(session, body) {
       throw e;
     }
     attendee = updated;
+
+    const touchedMatchmaker =
+      body.matchmakerBlurb !== undefined ||
+      body.matchmaker_blurb !== undefined ||
+      body.lookingToMeet !== undefined ||
+      body.looking_to_meet !== undefined ||
+      body.discoverable !== undefined ||
+      body.discoverableAt !== undefined ||
+      body.discoverable_at !== undefined;
+    if (touchedMatchmaker) {
+      const fresh = await sb
+        .from('attendees')
+        .select(
+          'id, name, company, job_title, professional_role, business_sector, matchmaker_blurb, looking_to_meet, discoverable_at'
+        )
+        .eq('id', attendee.id)
+        .maybeSingle();
+      if (!fresh.error && fresh.data) {
+        attendee = { ...attendee, ...fresh.data };
+      }
+      const saved = matchmakerProfileFromAttendee(attendee);
+      const wantedBlurb =
+        body.matchmakerBlurb !== undefined || body.matchmaker_blurb !== undefined
+          ? cleanMatchmakerBlurb(
+              body.matchmakerBlurb !== undefined ? body.matchmakerBlurb : body.matchmaker_blurb
+            )
+          : null;
+      const wantedLooking =
+        body.lookingToMeet !== undefined || body.looking_to_meet !== undefined
+          ? cleanLookingToMeet(
+              body.lookingToMeet !== undefined ? body.lookingToMeet : body.looking_to_meet
+            )
+          : null;
+      const wantedDiscoverable =
+        body.discoverable !== undefined || body.discoverableAt !== undefined || body.discoverable_at !== undefined
+          ? parseDiscoverable(
+              body.discoverable !== undefined
+                ? body.discoverable
+                : body.discoverableAt !== undefined
+                  ? body.discoverableAt
+                  : body.discoverable_at,
+              attendee?.discoverable_at || null
+            )
+          : undefined;
+
+      if (wantedBlurb && saved.matchmakerBlurb !== wantedBlurb) {
+        const e = new Error(
+          'Headline didn’t save. Run migration 337 to reload the API schema, wait 30 seconds, then try again.'
+        );
+        e.status = 503;
+        e.code = 'matchmaker_persist_failed';
+        throw e;
+      }
+      if (wantedLooking && wantedLooking.length && saved.lookingToMeet.length === 0) {
+        const e = new Error(
+          '“Who you want to meet” didn’t save. Run migration 337 to reload the API schema, wait 30 seconds, then try again.'
+        );
+        e.status = 503;
+        e.code = 'matchmaker_persist_failed';
+        throw e;
+      }
+      if (wantedDiscoverable && !saved.discoverable) {
+        const e = new Error(
+          'Include me didn’t save. Run migration 337 to reload the API schema, wait 30 seconds, then try again.'
+        );
+        e.status = 503;
+        e.code = 'matchmaker_persist_failed';
+        throw e;
+      }
+    }
   }
 
   let hubAccount = null;

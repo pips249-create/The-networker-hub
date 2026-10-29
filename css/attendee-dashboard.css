@@ -5405,6 +5405,18 @@ body.ad-share-modal-open {
   margin: 0 0 8px;
 }
 
+.hmm-ask-block--locked .hmm-composer-row {
+  opacity: 0.55;
+}
+
+.hmm-ask-lock-note {
+  margin: 0 0 10px;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--ad-text-mid, #635c5e);
+  max-width: 36rem;
+}
+
 .hmm-ask-kicker {
   margin: 0 0 10px;
   font-size: 11px;
