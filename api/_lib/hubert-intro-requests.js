@@ -161,6 +161,25 @@ async function expireStaleIntros(sb) {
   if (error && isMissingIntroTableError(error)) throw missingIntroTableError();
 }
 
+/** Single-row expiry — used on email-link preview/respond so we don’t scan the whole table. */
+async function expireIntroIfNeeded(sb, intro) {
+  if (!intro || intro.status !== 'pending') return intro;
+  if (!intro.expires_at || new Date(intro.expires_at).getTime() > Date.now()) return intro;
+  const now = new Date().toISOString();
+  const { data, error } = await sb
+    .from('hubert_intro_requests')
+    .update({ status: 'expired', updated_at: now })
+    .eq('id', intro.id)
+    .eq('status', 'pending')
+    .select('*')
+    .maybeSingle();
+  if (error) {
+    if (isMissingIntroTableError(error)) throw missingIntroTableError();
+    throw new Error(error.message);
+  }
+  return data || { ...intro, status: 'expired', updated_at: now };
+}
+
 async function assertIntroQuota(sb, requesterAttendeeId) {
   const { count, error } = await sb
     .from('hubert_intro_requests')
@@ -544,14 +563,25 @@ async function previewIntroFromToken(token) {
     throw err;
   }
   const sb = getSupabaseAdmin();
-  await expireStaleIntros(sb);
-  const intro = await loadIntroById(sb, payload.introId);
+  let intro = await loadIntroById(sb, payload.introId);
   if (!intro) {
     const err = new Error('intro_not_found');
     err.code = 'intro_not_found';
     throw err;
   }
-  const requester = await loadRequester(sb, intro.requester_attendee_id);
+  intro = await expireIntroIfNeeded(sb, intro);
+  // Preview only needs name / role — skip matchmaker_blurb round-trip.
+  const { data: requester, error: reqErr } = await sb
+    .from('attendees')
+    .select('id, name, company, job_title')
+    .eq('id', intro.requester_attendee_id)
+    .maybeSingle();
+  if (reqErr) throw new Error(reqErr.message);
+  if (!requester) {
+    const err = new Error('attendee_not_found');
+    err.code = 'attendee_not_found';
+    throw err;
+  }
   const titleCompany = formatTitleCompany(requester.job_title, requester.company);
   return {
     id: intro.id,
@@ -597,13 +627,13 @@ async function respondToIntro(options) {
     throw err;
   }
 
-  await expireStaleIntros(sb);
-  const intro = await loadIntroById(sb, introId);
+  let intro = await loadIntroById(sb, introId);
   if (!intro) {
     const err = new Error('intro_not_found');
     err.code = 'intro_not_found';
     throw err;
   }
+  intro = await expireIntroIfNeeded(sb, intro);
 
   if (intro.status === 'accepted' || intro.status === 'declined') {
     return {
