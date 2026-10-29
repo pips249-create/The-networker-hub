@@ -68,6 +68,11 @@ function hubClaimAttendedUrl(siteUrl) {
   return hubAccountUrl(siteUrl) + '#past';
 }
 
+/** Profile & preferences → Hubert introductions (headline / looking to meet / Include me). */
+function hubHubertProfileUrl(siteUrl) {
+  return siteBase(siteUrl) + '/account/settings#as-hubert-matchmaker';
+}
+
 function plainEmailAddress(value) {
   const raw = String(value || '').trim();
   const angled = raw.match(/<([^<>]+)>/);
@@ -330,6 +335,7 @@ module.exports = {
   opportunitiesBrowseUrl,
   hubAccountUrl,
   hubClaimAttendedUrl,
+  hubHubertProfileUrl,
   unsubscribeUrl,
   oneClickUnsubscribeUrl,
   welcomeUrl,
