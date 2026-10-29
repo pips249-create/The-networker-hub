@@ -25,6 +25,11 @@ const {
   matchmakerProfileFromAttendee,
   assertMatchmakerReady,
 } = require('../hubert-matchmaker-profile');
+const {
+  SEARCHES_PER_WEEK,
+  getSearchQuota,
+  consumeSearchQuota,
+} = require('../hubert-matchmaker-search-quota');
 
 /** Flip via env when Matchmaker is ready for all members. */
 function isMatchmakerPublic() {
@@ -73,6 +78,7 @@ function mapIntroError(e) {
     invalid_target: 400,
     cannot_intro_self: 400,
     intro_quota_exceeded: 429,
+    search_quota_exceeded: 429,
     intro_already_pending: 409,
     target_not_found: 404,
     target_email_missing: 400,
@@ -169,6 +175,24 @@ module.exports = async function handler(req, res) {
       }
     }
 
+    let searchQuota = {
+      used: 0,
+      remaining: SEARCHES_PER_WEEK,
+      cap: SEARCHES_PER_WEEK,
+      searchQuotaPerWeek: SEARCHES_PER_WEEK,
+      enforced: false,
+    };
+    try {
+      const sb = getSupabaseAdmin();
+      const attendeeId = await resolveAttendeeId(sb, session);
+      searchQuota = await getSearchQuota(sb, session, attendeeId);
+    } catch (e) {
+      console.warn(
+        '[hubert-matchmaker] search quota meta skipped',
+        e && e.message ? e.message : e
+      );
+    }
+
     return json(res, 200, {
       ok: true,
       public: isMatchmakerPublic(),
@@ -176,6 +200,8 @@ module.exports = async function handler(req, res) {
       minQueryLength: MIN_QUERY_LEN,
       topicMinLength: TOPIC_MIN_LEN,
       introQuotaPerWeek: INTROS_PER_WEEK,
+      searchQuotaPerWeek: SEARCHES_PER_WEEK,
+      searchQuota,
     });
   }
 
@@ -233,6 +259,26 @@ module.exports = async function handler(req, res) {
     }
   }
 
+  if (action === 'search_quota') {
+    try {
+      const sb = getSupabaseAdmin();
+      const attendeeId = await resolveAttendeeId(sb, session);
+      const searchQuota = await getSearchQuota(sb, session, attendeeId);
+      return json(res, 200, {
+        ok: true,
+        ...searchQuota,
+        searchQuotaPerWeek: SEARCHES_PER_WEEK,
+      });
+    } catch (e) {
+      console.error('[hubert-matchmaker] search_quota failed', e && e.message ? e.message : e);
+      return json(res, 500, {
+        ok: false,
+        error: 'search_quota_failed',
+        message: 'Could not load search quota.',
+      });
+    }
+  }
+
   if (action === 'search') {
     try {
       const gated = await requireMatchmakerProfile(session);
@@ -244,12 +290,18 @@ module.exports = async function handler(req, res) {
         const status = result.error === 'query_too_short' ? 400 : 503;
         return json(res, status, result);
       }
+      const searchQuota = await consumeSearchQuota(gated.sb, session, gated.attendeeId, {
+        query: result.query,
+        matchCount: Array.isArray(result.matches) ? result.matches.length : 0,
+      });
       return json(res, 200, {
         ok: true,
         query: result.query,
         matches: result.matches,
         meta: result.meta,
         adminPreview: !isMatchmakerPublic(),
+        searchQuota,
+        searchQuotaPerWeek: SEARCHES_PER_WEEK,
       });
     } catch (e) {
       const mapped = mapIntroError(e);
@@ -259,6 +311,15 @@ module.exports = async function handler(req, res) {
           error: mapped.error,
           message: mapped.message,
           profile: mapped.profile,
+          matches: [],
+        });
+      }
+      if (mapped.error === 'search_quota_exceeded') {
+        return json(res, 429, {
+          ok: false,
+          error: 'search_quota_exceeded',
+          message: mapped.message,
+          searchQuota: e && e.quota ? e.quota : undefined,
           matches: [],
         });
       }

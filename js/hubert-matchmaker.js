@@ -18,6 +18,7 @@
   var pendingByTarget = {};
   var profileReady = false;
   var lastProfile = null;
+  var lastSearchQuota = null;
 
   function isMatchmakerPublic() {
     return HUBERT_MATCHMAKER_PUBLIC === true;
@@ -447,6 +448,7 @@
     fetchMatches(query)
       .then(function (result) {
         var data = result.data || {};
+        if (data.searchQuota) paintSearchQuota(data.searchQuota);
         if (data.ok && Array.isArray(data.matches)) {
           var liveMeta = Object.assign({ source: 'live' }, data.meta || {});
           paintAll(data.matches, query, liveMeta);
@@ -457,6 +459,17 @@
           if (err) {
             err.textContent = data.message || 'Finish your Hubert profile before searching.';
             err.hidden = false;
+          }
+        } else if (data && data.error === 'search_quota_exceeded') {
+          paintAll([], query, null);
+          if (err) {
+            err.textContent =
+              (data && data.message) || 'You’ve used this week’s searches. Try again next week.';
+            err.hidden = false;
+          }
+          if (mount.els.previewNote) {
+            mount.els.previewNote.hidden = true;
+            mount.els.previewNote.textContent = '';
           }
         } else if (result.status === 401 || result.status === 403) {
           if (err) {
@@ -1246,7 +1259,64 @@
       inviteCancel: root.querySelector('[data-hmm-invite-cancel]'),
       inviteSubmit: root.querySelector('[data-hmm-invite-submit]'),
       inviteDone: root.querySelector('[data-hmm-invite-done]'),
+      searchQuota: root.querySelector('[data-hmm-search-quota]'),
     };
+  }
+
+  function paintSearchQuota(quota) {
+    if (quota && typeof quota === 'object') {
+      lastSearchQuota = quota;
+    }
+    var q = lastSearchQuota;
+    mounts.forEach(function (mount) {
+      var el = mount.els && mount.els.searchQuota;
+      if (!el) return;
+      if (!q || !q.enforced) {
+        el.hidden = true;
+        el.textContent = '';
+        return;
+      }
+      var remaining = Number(q.remaining);
+      var cap = Number(q.cap);
+      if (!isFinite(remaining) || !isFinite(cap) || cap <= 0) {
+        el.hidden = true;
+        return;
+      }
+      el.hidden = false;
+      el.textContent =
+        remaining <= 0
+          ? 'You’ve used your ' + cap + ' searches this week.'
+          : remaining + ' of ' + cap + ' searches left this week.';
+    });
+  }
+
+  function refreshSearchQuota() {
+    return fetch('/api/auth/hubert-matchmaker', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'search_quota' }),
+    })
+      .then(function (res) {
+        return res.json().then(function (data) {
+          return { status: res.status, data: data };
+        });
+      })
+      .then(function (result) {
+        var data = result.data || {};
+        if (data.ok) {
+          paintSearchQuota({
+            used: data.used,
+            remaining: data.remaining,
+            cap: data.cap,
+            enforced: data.enforced !== false,
+            searchQuotaPerWeek: data.searchQuotaPerWeek,
+          });
+        }
+      })
+      .catch(function () {
+        /* optional enrichment */
+      });
   }
 
   function setInviteError(mount, message) {
@@ -1490,6 +1560,7 @@
     bindHubertOptInModal();
     loadMatchmakerProfile();
     loadMyIntros();
+    refreshSearchQuota();
     maybeOpenIntroFromUrl();
 
     if (lastQuery) {
