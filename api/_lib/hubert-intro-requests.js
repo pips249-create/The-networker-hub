@@ -55,6 +55,26 @@ function firstName(fullName) {
   return parts[0] || 'there';
 }
 
+/**
+ * Shortlist / pending: first name + initial.
+ * After both agree (accepted): first name only.
+ */
+function introDisplayName(fullName, status) {
+  if (String(status || '') === 'accepted') return firstName(fullName);
+  return shortDisplayName(fullName);
+}
+
+/** Soft member-facing status — never “declined”. */
+function softIntroStatus(status) {
+  const s = String(status || '').toLowerCase();
+  if (s === 'accepted') return { key: 'connected', label: 'Connected' };
+  if (s === 'pending') return { key: 'waiting', label: 'Waiting to hear back' };
+  if (s === 'declined' || s === 'expired' || s === 'blocked') {
+    return { key: 'closed', label: 'Didn’t come through' };
+  }
+  return { key: s || 'unknown', label: s || '' };
+}
+
 function normalizeTopic(raw) {
   return String(raw || '')
     .replace(/\s+/g, ' ')
@@ -191,13 +211,29 @@ async function loadRequester(sb, attendeeId) {
 }
 
 function publicIntroCard(row, opts) {
-  const requesterName = shortDisplayName(row.requester?.name || row.requester_name);
-  const counterpartName =
-    row.target_display_name ||
-    shortDisplayName(row.target?.name || row.target?.full_name || row.target_name);
+  const status = row.status;
+  const soft = softIntroStatus(status);
+  const requesterRaw = row.requester?.name || row.requester_name || '';
+  const counterpartRaw =
+    row.target_full_name ||
+    row.target?.name ||
+    row.target?.full_name ||
+    row.target_name ||
+    '';
+  const requesterName = introDisplayName(requesterRaw, status);
+  const counterpartName = row.target_display_name
+    ? String(row.target_display_name)
+    : introDisplayName(counterpartRaw, status);
+  // Name shown to the signed-in member for this row.
+  const otherName =
+    opts?.direction === 'inbound'
+      ? requesterName
+      : counterpartName || introDisplayName(counterpartRaw, status);
   return {
     id: row.id,
-    status: row.status,
+    status,
+    statusKey: soft.key,
+    statusLabel: soft.label,
     topic: row.topic,
     source: row.source,
     createdAt: row.created_at,
@@ -209,6 +245,8 @@ function publicIntroCard(row, opts) {
     direction: opts?.direction || null,
     requesterDisplayName: requesterName,
     counterpartDisplayName: counterpartName,
+    displayName: otherName,
+    connected: status === 'accepted',
     threadOpened: Boolean(row.thread_opened_at),
   };
 }
@@ -266,8 +304,9 @@ async function sendIntroAcceptedEmail(intro, requester, counterpartDisplayName) 
 
 async function openThread(sb, intro, requester, target) {
   const now = new Date().toISOString();
-  const aName = shortDisplayName(requester.name);
-  const bName = target.displayName;
+  // Both have agreed — first names only from here.
+  const aName = firstName(requester.name);
+  const bName = firstName(target.fullName || target.displayName);
   const eventBit = intro.event_title ? ' Shared context: ' + intro.event_title + '.' : '';
   const opener =
     'I’ve introduced ' +
@@ -497,25 +536,39 @@ async function respondToIntro(options) {
   const now = new Date().toISOString();
   const requester = await loadRequester(sb, intro.requester_attendee_id);
 
+  let targetFullName = '';
   let targetDisplay = 'them';
   let targetForThread = {
     displayName: 'them',
+    fullName: '',
     attendeeId: intro.target_attendee_id,
     seedId: intro.target_seed_id,
   };
 
   if (intro.target_attendee_id) {
     const t = await loadRequester(sb, intro.target_attendee_id);
-    targetDisplay = shortDisplayName(t.name);
-    targetForThread = { displayName: targetDisplay, attendeeId: t.id, seedId: null };
+    targetFullName = t.name || '';
+    targetDisplay = firstName(t.name);
+    targetForThread = {
+      displayName: targetDisplay,
+      fullName: targetFullName,
+      attendeeId: t.id,
+      seedId: null,
+    };
   } else if (intro.target_seed_id) {
     const { data: seed } = await sb
       .from('hubert_match_seed')
       .select('id, full_name, status')
       .eq('id', intro.target_seed_id)
       .maybeSingle();
-    targetDisplay = shortDisplayName(seed?.full_name);
-    targetForThread = { displayName: targetDisplay, attendeeId: null, seedId: seed?.id || null };
+    targetFullName = seed?.full_name || '';
+    targetDisplay = firstName(seed?.full_name);
+    targetForThread = {
+      displayName: targetDisplay,
+      fullName: targetFullName,
+      attendeeId: null,
+      seedId: seed?.id || null,
+    };
   }
 
   if (decline) {
@@ -532,11 +585,19 @@ async function respondToIntro(options) {
       .select('*')
       .maybeSingle();
     if (error) throw new Error(error.message);
+    // Soft card for the person who declined — asker never gets a decline email.
     return {
       alreadyResponded: false,
-      intro: publicIntroCard(updated || { ...intro, status: 'declined', responded_at: now }, {
-        direction: 'inbound',
-      }),
+      intro: publicIntroCard(
+        {
+          ...(updated || { ...intro, status: 'declined', responded_at: now }),
+          target_full_name: targetFullName,
+          target_display_name: shortDisplayName(targetFullName),
+        },
+        {
+          direction: 'inbound',
+        }
+      ),
     };
   }
 
@@ -578,17 +639,40 @@ async function respondToIntro(options) {
   return {
     alreadyResponded: false,
     intro: publicIntroCard(
-      { ...accepted, thread_opened_at: now, target_display_name: targetDisplay },
+      {
+        ...accepted,
+        thread_opened_at: now,
+        target_full_name: targetFullName,
+        target_display_name: targetDisplay,
+      },
       { direction: 'inbound' }
     ),
   };
+}
+
+async function resolveCounterpartFullName(sb, row) {
+  if (row.target_attendee_id) {
+    const t = await loadRequester(sb, row.target_attendee_id).catch(() => null);
+    return t?.name || '';
+  }
+  if (row.target_seed_id) {
+    const { data: seed } = await sb
+      .from('hubert_match_seed')
+      .select('full_name')
+      .eq('id', row.target_seed_id)
+      .maybeSingle();
+    return seed?.full_name || '';
+  }
+  return '';
 }
 
 async function listIntrosForSession(session) {
   if (!isSupabaseConfigured()) throw new Error('supabase_not_configured');
   const sb = getSupabaseAdmin();
   const attendeeId = await resolveAttendeeId(sb, session);
-  if (!attendeeId) return { outbound: [], inbound: [] };
+  if (!attendeeId) {
+    return { connections: [], requests: [], outbound: [], inbound: [] };
+  }
 
   await expireStaleIntros(sb);
 
@@ -610,20 +694,13 @@ async function listIntrosForSession(session) {
 
   const outbound = [];
   for (const row of outboundRows || []) {
-    let counterpart = 'Someone';
-    if (row.target_attendee_id) {
-      const t = await loadRequester(sb, row.target_attendee_id).catch(() => null);
-      counterpart = shortDisplayName(t?.name);
-    } else if (row.target_seed_id) {
-      const { data: seed } = await sb
-        .from('hubert_match_seed')
-        .select('full_name')
-        .eq('id', row.target_seed_id)
-        .maybeSingle();
-      counterpart = shortDisplayName(seed?.full_name);
-    }
+    const full = await resolveCounterpartFullName(sb, row);
+    const display = introDisplayName(full || 'Someone', row.status);
     outbound.push(
-      publicIntroCard({ ...row, target_display_name: counterpart }, { direction: 'outbound' })
+      publicIntroCard(
+        { ...row, target_full_name: full, target_display_name: display },
+        { direction: 'outbound' }
+      )
     );
   }
 
@@ -632,13 +709,27 @@ async function listIntrosForSession(session) {
     const r = await loadRequester(sb, row.requester_attendee_id).catch(() => null);
     inbound.push(
       publicIntroCard(
-        { ...row, requester: r, target_display_name: shortDisplayName(r?.name) },
+        {
+          ...row,
+          requester: r,
+          target_full_name: r?.name || '',
+          target_display_name: introDisplayName(r?.name || 'Someone', row.status),
+        },
         { direction: 'inbound' }
       )
     );
   }
 
-  return { outbound, inbound };
+  // Connections = mutual yes only (first names). Declines stay out of the list.
+  const connections = []
+    .concat(outbound, inbound)
+    .filter((row) => row.status === 'accepted')
+    .sort((a, b) => String(b.acceptedAt || b.createdAt || '').localeCompare(String(a.acceptedAt || a.createdAt || '')));
+
+  // Quiet “waiting” list for the asker — pending only, soft label. No declined rows.
+  const requests = outbound.filter((row) => row.status === 'pending');
+
+  return { connections, requests, outbound, inbound };
 }
 
 async function assertCanAccessThread(sb, intro, attendeeId) {
@@ -684,10 +775,20 @@ async function getIntroThread(session, introId) {
     .limit(100);
   if (error) throw new Error(error.message);
 
+  const direction = intro.requester_attendee_id === attendeeId ? 'outbound' : 'inbound';
+  const counterpartFull = await resolveCounterpartFullName(sb, intro);
+  const requester = await loadRequester(sb, intro.requester_attendee_id).catch(() => null);
+
   return {
-    intro: publicIntroCard(intro, {
-      direction: intro.requester_attendee_id === attendeeId ? 'outbound' : 'inbound',
-    }),
+    intro: publicIntroCard(
+      {
+        ...intro,
+        requester,
+        target_full_name: counterpartFull,
+        target_display_name: introDisplayName(counterpartFull || 'Someone', intro.status),
+      },
+      { direction }
+    ),
     messages: (messages || []).map((m) => ({
       id: m.id,
       createdAt: m.created_at,
@@ -753,6 +854,10 @@ module.exports = {
   validateTopic,
   parseTargetId,
   shortDisplayName,
+  firstName,
+  introDisplayName,
+  softIntroStatus,
+  publicIntroCard,
   createIntroRequest,
   previewIntroFromToken,
   respondToIntro,
