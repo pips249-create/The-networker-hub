@@ -5,12 +5,104 @@
  * Pool: discoverable members + private seed + Hub attendees of events
  * matched from the query (so “who attended Evolution…” works against
  * existing bookings, still privacy-safe).
+ *
+ * Ranking is intentionally keyword + light intent (no LLM round-trip yet):
+ * fast, but must not admit people solely for having any upcoming event.
  */
 const MAX_SHORTLIST = 5;
 const MIN_QUERY_LEN = 3;
+/** Meaningful text hits required unless this is an event-attendee lookup. */
+const MIN_TEXT_SCORE = 6;
 
 const EVENT_QUERY_HINT =
   /\b(attended|attendee|attendees|attending|who went|who was at|who'?s going|going to|this morning|this afternoon|yesterday|last night|today)\b/i;
+
+const EMPLOYEE_QUERY_HINT =
+  /\b(employees?|staff|hires?|hiring|recruit(?:ing|ment)?|job[\s-]?seekers?|candidates?|talent|workers?)\b/i;
+const FOUNDER_QUERY_HINT =
+  /\b(founders?|ceos?|owners?|entrepreneurs?|co[\s-]?founders?|managing directors?|mds?\b)\b/i;
+const INVESTOR_QUERY_HINT = /\b(investors?|angels?|vcs?|venture|funds?)\b/i;
+const CLIENT_QUERY_HINT =
+  /\b(clients?|customers?|buyers?|prospects?|advertisers?|sponsors?)\b/i;
+
+const FOUNDER_ROLE_HINT =
+  /\b(founder|co[\s-]?founder|ceo|owner|entrepreneur|managing director|\bmd\b)\b/i;
+const EMPLOYEE_ROLE_HINT =
+  /\b(employee|manager|director|lead|head of|specialist|executive|officer|associate|consultant|marketer|sales)\b/i;
+
+/** Filler words that match almost everyone (esp. “UK” on this platform). */
+const QUERY_STOP = new Set([
+  'am',
+  'looking',
+  'for',
+  'the',
+  'and',
+  'with',
+  'this',
+  'that',
+  'from',
+  'someone',
+  'people',
+  'person',
+  'who',
+  'want',
+  'meet',
+  'like',
+  'around',
+  'might',
+  'be',
+  'interested',
+  'in',
+  'on',
+  'or',
+  'my',
+  'me',
+  'i',
+  'a',
+  'an',
+  'of',
+  'to',
+  'at',
+  'is',
+  'are',
+  'was',
+  'were',
+  'any',
+  'some',
+  'please',
+  'find',
+  'show',
+  'list',
+  'need',
+  'needs',
+  'would',
+  'could',
+  'can',
+  'get',
+  'have',
+  'has',
+  'had',
+  'also',
+  'just',
+  'really',
+  'very',
+  'into',
+  'about',
+  'across',
+  'within',
+  'uk',
+  'united',
+  'kingdom',
+  'britain',
+  'british',
+  'networker',
+  'hubert',
+  'introduce',
+  'introduction',
+  'intro',
+  'connect',
+  'connection',
+]);
 
 const EVENT_STOP = new Set([
   'who',
@@ -84,16 +176,76 @@ function tokenize(query) {
     .replace(/[^a-z0-9+#&\s-]/gi, ' ')
     .split(/\s+/)
     .map((t) => t.trim())
-    .filter((t) => t.length >= 2)
+    .filter((t) => t.length >= 3 && !QUERY_STOP.has(t))
     .slice(0, 24);
 }
 
 function eventSearchTokens(query) {
-  return tokenize(query).filter((t) => t.length >= 3 && !EVENT_STOP.has(t));
+  return String(query || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9+#&\s-]/gi, ' ')
+    .split(/\s+/)
+    .map((t) => t.trim())
+    .filter((t) => t.length >= 3 && !EVENT_STOP.has(t) && !QUERY_STOP.has(t))
+    .slice(0, 24);
 }
 
 function looksLikeEventAttendeeQuery(query) {
   return EVENT_QUERY_HINT.test(String(query || ''));
+}
+
+/**
+ * Light intent from the ask — not an LLM; enough to stop “employees” → founders.
+ */
+function extractQueryIntent(query) {
+  const text = String(query || '');
+  const wantEmployees = EMPLOYEE_QUERY_HINT.test(text);
+  const wantFounders = FOUNDER_QUERY_HINT.test(text);
+  const wantInvestors = INVESTOR_QUERY_HINT.test(text);
+  const wantClients = CLIENT_QUERY_HINT.test(text);
+  return {
+    wantEmployees,
+    wantFounders,
+    wantInvestors,
+    wantClients,
+    /** Prefer role fit over weak keyword overlap. */
+    roleSensitive: wantEmployees || wantFounders || wantInvestors || wantClients,
+  };
+}
+
+function personRoleText(person) {
+  return [person.role, person.jobTitle, person.professionalRole, person.blurb]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+}
+
+function roleFitScore(person, intent) {
+  if (!intent || !intent.roleSensitive) return 0;
+  const role = personRoleText(person);
+  if (!role) return 0;
+  const isFounder = FOUNDER_ROLE_HINT.test(role);
+  const isEmployeeLike = EMPLOYEE_ROLE_HINT.test(role) && !isFounder;
+
+  if (intent.wantEmployees) {
+    if (isEmployeeLike) return 18;
+    if (isFounder) return -30;
+    return -8;
+  }
+  if (intent.wantFounders) {
+    if (isFounder) return 18;
+    if (isEmployeeLike) return -10;
+    return 0;
+  }
+  if (intent.wantInvestors) {
+    if (/\b(investor|angel|venture|vc)\b/i.test(role)) return 18;
+    return 0;
+  }
+  if (intent.wantClients) {
+    if (/\b(buyer|client|customer|procurement|marketing|advertis)/i.test(role)) return 12;
+    return 0;
+  }
+  return 0;
 }
 
 function haystackFor(person) {
@@ -118,20 +270,25 @@ function scoreAgainstQuery(person, tokens) {
   if (!hay) return 0;
   let score = 0;
   tokens.forEach((t) => {
-    if (hay.includes(t)) score += 3;
-    if (new RegExp('(?:^|\\s)' + t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).test(hay)) score += 1;
+    // Longer tokens (advertising, employees) weigh more than short leftovers.
+    const weight = t.length >= 8 ? 5 : t.length >= 5 ? 4 : 3;
+    if (hay.includes(t)) score += weight;
+    if (new RegExp('(?:^|\\s)' + t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).test(hay)) {
+      score += 2;
+    }
   });
   return score;
 }
 
 /**
- * Event boost tiers (spec): same event > other upcoming > none
+ * Event boost tiers (spec): same event > other upcoming > none.
+ * Used as a tie-breaker among relevant people — not an admission ticket.
  */
 function eventBoost(person, requesterEventIds) {
   const ids = Array.isArray(requesterEventIds) ? requesterEventIds : [];
   const theirs = person.nextEvent && person.nextEvent.eventId ? String(person.nextEvent.eventId) : '';
   if (theirs && ids.includes(theirs)) return 40;
-  if (person.nextEvent && person.nextEvent.title) return 15;
+  if (person.nextEvent && person.nextEvent.title) return 12;
   return 0;
 }
 
@@ -141,18 +298,31 @@ function matchedEventBoost(person) {
 
 function rankCandidates(candidates, query, requesterEventIds) {
   const tokens = tokenize(query);
+  const intent = extractQueryIntent(query);
+
   return (candidates || [])
     .map((person) => {
       const textScore = scoreAgainstQuery(person, tokens);
+      const roleScore = roleFitScore(person, intent);
       const boost = eventBoost(person, requesterEventIds);
       const matchedBoost = matchedEventBoost(person);
-      const total = textScore + boost + matchedBoost;
-      return { person, textScore, boost, matchedBoost, total };
+      const total = textScore + roleScore + boost + matchedBoost;
+      return { person, textScore, roleScore, boost, matchedBoost, total, intent };
     })
-    .filter((row) => row.textScore > 0 || row.boost >= 15 || row.matchedBoost > 0)
+    .filter((row) => {
+      // “Who attended X?” — booking match is enough.
+      if (row.matchedBoost > 0) return true;
+      // Otherwise require real topical overlap. Upcoming events alone are not a match.
+      if (row.textScore < MIN_TEXT_SCORE) return false;
+      // Hard role clash (e.g. founders for an employees ask) drop out.
+      if (row.roleScore <= -20) return false;
+      return true;
+    })
     .sort(
       (a, b) =>
         b.total - a.total ||
+        b.textScore - a.textScore ||
+        b.roleScore - a.roleScore ||
         b.matchedBoost - a.matchedBoost ||
         b.boost - a.boost ||
         String(a.person.displayName).localeCompare(String(b.person.displayName))
@@ -164,7 +334,7 @@ function rankCandidates(candidates, query, requesterEventIds) {
       displayName: row.person.displayName,
       role: row.person.role || '',
       company: row.person.company || '',
-      why: row.person.why || buildWhy(row),
+      why: buildWhy(row) || row.person.why || '',
       nextEvent: row.person.nextEvent
         ? {
             title: row.person.nextEvent.title,
@@ -188,9 +358,17 @@ function buildWhy(row) {
     const title = row.person.matchedEvent && row.person.matchedEvent.title;
     return title ? 'Booked for ' + title : 'Booked for a matching event';
   }
-  if (row.boost >= 40) return 'You’ll both be at the same upcoming event';
-  if (row.boost >= 15) return 'Has an upcoming event on The Networker UK';
-  if (row.textScore > 0) return 'Matches what you asked Hubert for';
+  if (row.roleScore >= 12 && row.intent && row.intent.wantEmployees) {
+    return 'Role fits who you asked to meet';
+  }
+  if (row.roleScore >= 12 && row.intent && row.intent.wantFounders) {
+    return 'Founder / owner — matches your ask';
+  }
+  if (row.boost >= 40 && row.textScore >= MIN_TEXT_SCORE) {
+    return 'You’ll both be at the same upcoming event';
+  }
+  if (row.textScore >= MIN_TEXT_SCORE) return 'Matches what you asked Hubert for';
+  if (row.boost >= 12) return 'Has an upcoming event on The Networker UK';
   return '';
 }
 
@@ -199,6 +377,21 @@ function formatDateLabel(iso) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
   return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+/** Platform ops must never appear as intro supply (Catherine / Rosie / Networker Group). */
+const INTERNAL_NAME_HINT =
+  /\b(rosie\s+mcgilvray|catherine\s+hancher|jamie\s+hancher)\b/i;
+const INTERNAL_COMPANY_HINT =
+  /\b(the\s+networker\s+group|networker\s+group\s+ltd|the\s+networker\s+uk)\b/i;
+
+function isInternalMatchCandidate(person) {
+  if (!person) return false;
+  const name = String(person.fullName || person.displayName || '').trim();
+  const company = String(person.company || '').trim();
+  if (INTERNAL_NAME_HINT.test(name)) return true;
+  if (INTERNAL_COMPANY_HINT.test(company)) return true;
+  return false;
 }
 
 function mapSeedRow(row) {
@@ -441,6 +634,7 @@ async function searchMatchmaker(opts) {
 
   function addCandidate(person) {
     if (!person || !person.id) return;
+    if (isInternalMatchCandidate(person)) return;
     const existing = byId.get(person.id);
     if (!existing) {
       byId.set(person.id, person);
@@ -556,18 +750,23 @@ function emptyStateCopy(meta) {
     };
   }
   return {
-    title: 'No one came back yet',
-    text: 'Try another way of describing who you need — a bit more context helps.',
+    title: 'No close matches yet',
+    text:
+      'Hubert only puts people forward when the ask fits. Try a clearer role or industry (e.g. “marketing managers who buy ads”), or check back as the pool grows.',
   };
 }
 
 module.exports = {
   MAX_SHORTLIST,
   MIN_QUERY_LEN,
+  MIN_TEXT_SCORE,
   shortDisplayName,
   tokenize,
   eventSearchTokens,
   looksLikeEventAttendeeQuery,
+  extractQueryIntent,
+  roleFitScore,
+  isInternalMatchCandidate,
   scoreAgainstQuery,
   scoreEventTitle,
   eventBoost,
