@@ -16837,6 +16837,7 @@
       'attendee_signup_events_nudge',
       'attendee_signup_events_nudge_followup',
       'attendee_hubert_event_concierge',
+      'hubert_hub_invite',
       'event_connections_list',
       'event_details_updated',
     ];

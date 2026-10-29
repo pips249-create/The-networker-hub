@@ -1,10 +1,16 @@
 /**
- * Auth — Hubert Matchmaker search (admin-only until public launch flag).
+ * Auth — Hubert Matchmaker search + Hub invite (admin-only until public launch flag).
  */
 const { setCors, json, sessionFromRequest, requireAdminLive, isAdminRole } = require('../auth');
 const { isSupabaseConfigured, getSupabaseAdmin } = require('../supabase');
 const { resolveAttendeeId } = require('../attendee-id');
 const { searchMatchmaker, MIN_QUERY_LEN } = require('../hubert-matchmaker-search');
+const {
+  sendHubInvite,
+  weeklyCapForSession,
+  countRecentInvites,
+  sessionUserId,
+} = require('../hubert-hub-invite');
 
 /** Flip via env when Matchmaker is ready for all members. */
 function isMatchmakerPublic() {
@@ -65,13 +71,50 @@ module.exports = async function handler(req, res) {
 
   const body = parseBody(req);
   const action = String(body.action || 'search').trim().toLowerCase();
-  if (action !== 'search') {
-    return json(res, 400, { ok: false, error: 'unknown_action' });
-  }
 
   try {
     const sb = getSupabaseAdmin();
     const attendeeId = await resolveAttendeeId(sb, session);
+
+    if (action === 'invite') {
+      const result = await sendHubInvite({
+        sb,
+        session,
+        inviteeName: body.inviteeName || body.name || '',
+        inviteeEmail: body.inviteeEmail || body.email || '',
+        note: body.note || body.message || '',
+        inviterAttendeeId: attendeeId,
+      });
+      const status = result.ok
+        ? 200
+        : result.error === 'quota_exceeded'
+          ? 429
+          : result.error === 'name_required' ||
+              result.error === 'email_invalid' ||
+              result.error === 'self_invite'
+            ? 400
+            : 502;
+      return json(res, status, result);
+    }
+
+    if (action === 'invite_quota') {
+      const cap = weeklyCapForSession(session);
+      const used = await countRecentInvites(sb, {
+        inviterUserId: sessionUserId(session),
+        inviterAttendeeId: attendeeId,
+      });
+      return json(res, 200, {
+        ok: true,
+        used,
+        remaining: Math.max(0, cap - used),
+        cap,
+      });
+    }
+
+    if (action !== 'search') {
+      return json(res, 400, { ok: false, error: 'unknown_action' });
+    }
+
     const result = await searchMatchmaker({
       query: body.query || body.q || '',
       excludeAttendeeId: attendeeId,
@@ -89,12 +132,15 @@ module.exports = async function handler(req, res) {
       adminPreview: !isMatchmakerPublic(),
     });
   } catch (e) {
-    console.error('[hubert-matchmaker] search failed', e && e.message ? e.message : e);
+    console.error('[hubert-matchmaker] request failed', e && e.message ? e.message : e);
     return json(res, 500, {
       ok: false,
-      error: 'search_failed',
-      message: 'Hubert could not run that search just now.',
-      matches: [],
+      error: action === 'invite' ? 'invite_failed' : 'search_failed',
+      message:
+        action === 'invite'
+          ? 'Hubert could not send that invite just now.'
+          : 'Hubert could not run that search just now.',
+      matches: action === 'search' ? [] : undefined,
     });
   }
 };
