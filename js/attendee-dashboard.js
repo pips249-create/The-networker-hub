@@ -107,7 +107,7 @@
     },
     meet: {
       title: 'Meet people',
-      sub: 'I can introduce you to anyone — customers, investors, hires, or someone who’s already solved your problem. Try me.',
+      sub: 'I can introduce you to the people you need — customers, investors, hires, or someone who’s already solved your problem.',
     },
     'reviews-pending': {
       title: 'Reviews to write',
