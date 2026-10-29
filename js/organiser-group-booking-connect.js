@@ -325,8 +325,15 @@
       .then(function (res) {
         if (btn) btn.disabled = false;
         if (!res.ok) {
-          var advanced = qs('ge-eb-advanced');
-          if (advanced) advanced.open = true;
+          var tokenInput = qs('ge-eb-token');
+          if (tokenInput && tokenInput.focus) {
+            try {
+              tokenInput.focus();
+              if (tokenInput.scrollIntoView) tokenInput.scrollIntoView({ block: 'nearest' });
+            } catch (_e) {
+              /* ignore */
+            }
+          }
           setMsg(
             res.data.message ||
               res.data.error ||
@@ -458,8 +465,15 @@
         if (oauthReturn.status === 'denied') {
           setMsg('Eventbrite connection was cancelled.', 'error');
         } else if (oauthReturn.status === 'not_configured') {
-          var advanced = qs('ge-eb-advanced');
-          if (advanced) advanced.open = true;
+          var tokenEl = qs('ge-eb-token');
+          if (tokenEl && tokenEl.focus) {
+            try {
+              tokenEl.focus();
+              if (tokenEl.scrollIntoView) tokenEl.scrollIntoView({ block: 'nearest' });
+            } catch (_e2) {
+              /* ignore */
+            }
+          }
           setMsg(
             'Eventbrite OAuth is not configured on this environment. Use a private token below.',
             'error'

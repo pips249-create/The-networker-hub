@@ -247,14 +247,23 @@
               <button type="button" class="ee-btn ee-btn-outline" id="ge-eb-sync" hidden>Import new events</button>
             </div>
             <p class="ee-hint" style="margin:10px 0 0">
-              <a href="/guides/connect-eventbrite" target="_blank" rel="noopener">Open full guide →</a>
+              Prefer one-click connect above. Or paste a private token below — same result (import + attendee sync).
+              <a href="/guides/connect-eventbrite" target="_blank" rel="noopener">Guide →</a>
             </p>
-            <details class="ge-eb-advanced" id="ge-eb-advanced" style="margin-top:14px">
-              <summary>Use a private API token instead</summary>
-              <ol class="ge-booking-steps" style="margin-top:10px">
-                <li>In Eventbrite: profile → <strong>Account Settings</strong> → <strong>Developer Links</strong> → <strong>API Keys</strong></li>
-                <li>Open <strong>Show API key, client secret and tokens</strong> and copy the <strong>Private token</strong></li>
-                <li>Paste it below, then save</li>
+            <div class="ge-eb-token-box" id="ge-eb-advanced" style="margin-top:14px">
+              <p class="ge-booking-panel-title" style="margin:0 0 8px;font-size:1rem">
+                Or paste your Eventbrite private token
+              </p>
+              <ol class="ge-booking-steps" style="margin-top:0">
+                <li>
+                  Eventbrite → profile → <strong>Account Settings</strong> →
+                  <strong>Developer Links</strong> → <strong>API Keys</strong>
+                </li>
+                <li>
+                  <strong>Show API key, client secret and tokens</strong> → copy
+                  <strong>Private token</strong> (not the client secret)
+                </li>
+                <li>Paste here → <strong>Save private token</strong></li>
               </ol>
               <div class="ee-field" style="margin:0">
                 <label for="ge-eb-token">Eventbrite private token</label>
@@ -268,7 +277,7 @@
               <div class="ge-booking-actions" style="margin-top:10px">
                 <button type="button" class="ee-btn ee-btn-outline" id="ge-eb-save">Save private token</button>
               </div>
-            </details>
+            </div>
             <p class="ge-booking-msg" id="ge-eb-msg" role="status" hidden></p>
 
             <div class="ge-eb-import" id="ge-eb-import" hidden>
@@ -307,7 +316,7 @@
     <script src="../js/hubert-organiser-guide.js?v=20260612" data-root="../" defer></script>
     <script src="../js/organiser-flow-tour.js?v=20260723onboard" data-root="../" defer></script>
     <script src="../js/organiser-image-upload.js?v=20260605" defer></script>
-    <script src="../js/organiser-group-edit.js?v=20261029drawer-eb1" defer></script>
-    <script src="../js/organiser-group-booking-connect.js?v=20261029drawer-eb1" defer></script>
+    <script src="../js/organiser-group-edit.js?v=20261029token1" defer></script>
+    <script src="../js/organiser-group-booking-connect.js?v=20261029token1" defer></script>
   </body>
 </html>

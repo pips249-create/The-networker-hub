@@ -7344,6 +7344,13 @@ button.cb-plan-card-btn:disabled {
   background: #fff;
 }
 
+.ge-eb-token-box {
+  padding: 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(26, 46, 59, 0.14);
+  background: #fff;
+}
+
 .ge-booking-choices {
   display: grid;
   gap: 10px;
